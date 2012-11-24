@@ -45,7 +45,7 @@ namespace de
         
     public:
         Vector2(Type a = 0, Type b = 0) : x(a), y(b) {}
-        Vector2(const Type* ab) : x(ab[0]), y(ab[1]) {}
+        Vector2(Type const *ab) : x(ab[0]), y(ab[1]) {}
 
         /// Conversion operator to a float vector.
         operator Vector2<dfloat> () const {
@@ -114,10 +114,10 @@ namespace de
             return de::max(x, y);
         }
         // Implements ISerializable.
-        void operator >> (Writer& to) const {
+        void operator >> (Writer &to) const {
             to << x << y;
         }
-        void operator << (Reader& from) {
+        void operator << (Reader &from) {
             from >> x >> y;
         }
         
@@ -127,7 +127,7 @@ namespace de
     };
     
     template <typename Type> 
-    QTextStream& operator << (QTextStream& os, const Vector2<Type>& vec2)
+    QTextStream &operator << (QTextStream &os, const Vector2<Type>& vec2)
     {
         os << "(" << vec2.x << ", " << vec2.y << ")";
         return os;
@@ -145,7 +145,7 @@ namespace de
     public:
         Vector3(Type a = 0, Type b = 0, Type c = 0) : Vector2<Type>(a, b), z(c) {}
         Vector3(const Vector2<Type>& v2) : Vector2<Type>(v2), z(0) {}
-        Vector3(const Type* abc) : Vector2<Type>(abc), z(abc[2]) {}
+        Vector3(Type const *abc) : Vector2<Type>(abc), z(abc[2]) {}
         
         /// Conversion operator to a float vector.
         operator Vector3<dfloat> () const {
@@ -218,11 +218,11 @@ namespace de
             return de::max(z, Vector2<Type>::max());
         }
         // Implements ISerializable.
-        void operator >> (Writer& to) const {
+        void operator >> (Writer &to) const {
             Vector2<Type>::operator >> (to);
             to << z;
         }
-        void operator << (Reader& from) {
+        void operator << (Reader &from) {
             Vector2<Type>::operator << (from);
             from >> z;
         }
@@ -232,7 +232,7 @@ namespace de
     };
     
     template <typename Type> 
-    QTextStream& operator << (QTextStream& os, const Vector3<Type>& vec3)
+    QTextStream &operator << (QTextStream &os, const Vector3<Type>& vec3)
     {
         os << "(" << vec3.x << ", " << vec3.y << ", " << vec3.z << ")";
         return os;
@@ -250,7 +250,7 @@ namespace de
     public:
         Vector4(Type a = 0, Type b = 0, Type c = 0, Type d = 0) : Vector3<Type>(a, b, c), w(d) {}
         Vector4(const Vector3<Type>& v3) : Vector3<Type>(v3), w(0) {}
-        Vector4(const Type* abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
+        Vector4(Type const *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
 
         /// Conversion operator to a float vector.
         operator Vector4<dfloat> () const {
@@ -326,11 +326,11 @@ namespace de
             return de::max(w, Vector3<Type>::max());
         }
         // Implements ISerializable.
-        void operator >> (Writer& to) const {
+        void operator >> (Writer &to) const {
             Vector3<Type>::operator >> (to);
             to << w;
         }
-        void operator << (Reader& from) {
+        void operator << (Reader &from) {
             Vector3<Type>::operator << (from);
             from >> w;
         }
@@ -340,7 +340,7 @@ namespace de
     };
     
     template <typename Type> 
-    QTextStream& operator << (QTextStream& os, const Vector4<Type>& vec4)
+    QTextStream &operator << (QTextStream &os, const Vector4<Type>& vec4)
     {
         os << "(" << vec4.x << ", " << vec4.y << ", " << vec4.z << ", " << vec4.w << ")";
         return os;

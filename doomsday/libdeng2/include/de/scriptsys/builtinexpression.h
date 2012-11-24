@@ -56,27 +56,27 @@ namespace de
     public:
         BuiltInExpression();
         
-        BuiltInExpression(Type type, Expression* argument);
+        BuiltInExpression(Type type, Expression *argument);
         
         ~BuiltInExpression();
         
-        void push(Evaluator& evaluator, Record* names = 0) const;
+        void push(Evaluator &evaluator, Record *names = 0) const;
 
-        Value* evaluate(Evaluator& evaluator) const;
+        Value *evaluate(Evaluator &evaluator) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
 
     public:
         /**
          * Checks if the identifier is one of the built-in functions.
          */
-        static Type findType(const String& identifier);
+        static Type findType(String const &identifier);
         
     private:  
         Type _type;
-        Expression* _arg;
+        Expression *_arg;
     };
 }
 

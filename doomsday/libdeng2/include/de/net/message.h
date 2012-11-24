@@ -36,15 +36,15 @@ public:
     typedef duint Channel;
 
 public:
-    Message(const IByteArray& other);
-    Message(const Address& addr, Channel channel, Size initialSize = 0);
-    Message(const Address& addr, Channel channel, const IByteArray& other);
-    Message(const Address& addr, Channel channel, const IByteArray& other, Offset at, Size count);
+    Message(IByteArray const &other);
+    Message(Address const &addr, Channel channel, Size initialSize = 0);
+    Message(Address const &addr, Channel channel, IByteArray const &other);
+    Message(Address const &addr, Channel channel, IByteArray const &other, Offset at, Size count);
 
     /**
      * Returns the address associated with the block.
      */
-    const Address& address() const {
+    Address const &address() const {
         return _address;
     }
 

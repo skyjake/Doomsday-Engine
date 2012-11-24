@@ -59,7 +59,7 @@ public:
      *
      * @throw IByteArray::OffsetError  Region's start or end goes outside the bounds of the array.
      */
-    virtual void get(Offset at, Byte* values, Size count) const = 0;
+    virtual void get(Offset at, Byte *values, Size count) const = 0;
 
     /**
      * Sets the bytes starting from location @a at to the given values.
@@ -74,7 +74,7 @@ public:
      * @throw IByteArray::OffsetError  @a at is past the end of the array. For example,
      * attempting to write to offset 1 when the array is empty.
      */
-    virtual void set(Offset at, const Byte* values, Size count) = 0;
+    virtual void set(Offset at, Byte const *values, Size count) = 0;
 };
 
 } // namespace de

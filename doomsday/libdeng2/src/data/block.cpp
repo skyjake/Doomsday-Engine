@@ -27,31 +27,31 @@ Block::Block(Size initialSize)
     resize(initialSize);
 }
 
-Block::Block(const IByteArray& other)
+Block::Block(IByteArray const &other)
 {
     // Read the other's data directly into our data buffer.
     resize(other.size());
-    other.get(0, (dbyte*) data(), other.size());
+    other.get(0, (dbyte *) data(), other.size());
 }
 
-Block::Block(const Block& other) : QByteArray(other), IByteArray(), IBlock()
+Block::Block(Block const &other) : QByteArray(other), IByteArray(), IBlock()
 {}
 
-Block::Block(const QByteArray& byteArray)
+Block::Block(QByteArray const &byteArray)
     : QByteArray(byteArray)
 {}
 
-Block::Block(IIStream& stream)
+Block::Block(IIStream &stream)
 {
     stream >> *this;
 }
 
-Block::Block(const IIStream& stream)
+Block::Block(IIStream const &stream)
 {
     stream >> *this;
 }
 
-Block::Block(const IByteArray& other, Offset at, Size count) : IByteArray()
+Block::Block(IByteArray const &other, Offset at, Size count) : IByteArray()
 {
     copyFrom(other, at, count);
 }
@@ -61,7 +61,7 @@ Block::Size Block::size() const
     return QByteArray::size();
 }
 
-void Block::get(Offset atPos, Byte* values, Size count) const
+void Block::get(Offset atPos, Byte *values, Size count) const
 {
     if(atPos + count > size())
     {
@@ -75,17 +75,17 @@ void Block::get(Offset atPos, Byte* values, Size count) const
     }
 }
 
-void Block::set(Offset at, const Byte* values, Size count)
+void Block::set(Offset at, Byte const *values, Size count)
 {
     if(at > size())
     {
         /// @throw OffsetError The accessed region of the block was out of range.
         throw OffsetError("Block::set", "Out of range");
     }
-    replace(at, count, QByteArray((const char*) values, count));
+    replace(at, count, QByteArray((char const *) values, count));
 }
 
-void Block::copyFrom(const IByteArray& array, Offset at, Size count)
+void Block::copyFrom(IByteArray const &array, Offset at, Size count)
 {
     // Read the other's data directly into our data buffer.
     resize(count);
@@ -97,25 +97,25 @@ void Block::resize(Size size)
     QByteArray::resize(size);
 }
 
-Block::Byte* Block::data()
+Block::Byte *Block::data()
 {
-    return reinterpret_cast<Byte*>(QByteArray::data());
+    return reinterpret_cast<Byte *>(QByteArray::data());
 }
 
-const Block::Byte* Block::data() const
+Block::Byte const *Block::data() const
 {
-    return reinterpret_cast<const Byte*>(QByteArray::data());
+    return reinterpret_cast<Byte const *>(QByteArray::data());
 }
 
-Block& Block::operator += (const Block& other)
+Block &Block::operator += (Block const &other)
 {
     append(other);
     return *this;
 }
 
-Block& Block::operator = (const Block& other)
+Block &Block::operator = (Block const &other)
 {
-    *static_cast<QByteArray*>(this) = static_cast<const QByteArray&>(other);
+    *static_cast<QByteArray *>(this) = static_cast<QByteArray const &>(other);
     return *this;
 }
 

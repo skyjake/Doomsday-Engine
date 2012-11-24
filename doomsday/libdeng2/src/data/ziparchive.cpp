@@ -129,7 +129,7 @@ struct LocalFileHeader : public ISerializable {
     Uint16 fileNameSize;
     Uint16 extraFieldSize;
 
-    void operator >> (Writer& to) const {
+    void operator >> (Writer &to) const {
         to  << signature
             << requiredVersion
             << flags
@@ -142,7 +142,7 @@ struct LocalFileHeader : public ISerializable {
             << fileNameSize
             << extraFieldSize;
     }
-    void operator << (Reader& from) {
+    void operator << (Reader &from) {
         from >> signature
              >> requiredVersion
              >> flags
@@ -183,7 +183,7 @@ struct CentralFileHeader : public ISerializable {
      * file comment (variable size)
      */
 
-    void operator >> (Writer& to) const {
+    void operator >> (Writer &to) const {
         to  << signature
             << version
             << requiredVersion
@@ -202,7 +202,7 @@ struct CentralFileHeader : public ISerializable {
             << externalAttrib
             << relOffset;
     }
-    void operator << (Reader& from) {
+    void operator << (Reader &from) {
         from >> signature
              >> version
              >> requiredVersion
@@ -232,7 +232,7 @@ struct CentralEnd : public ISerializable {
     Uint32 offset;
     Uint16 commentSize;
 
-    void operator >> (Writer& to) const {
+    void operator >> (Writer &to) const {
         to  << disk
             << centralStartDisk
             << diskEntryCount
@@ -241,7 +241,7 @@ struct CentralEnd : public ISerializable {
             << offset
             << commentSize;
     }
-    void operator << (Reader& from) {
+    void operator << (Reader &from) {
         from >> disk
              >> centralStartDisk
              >> diskEntryCount
@@ -259,7 +259,7 @@ using namespace internal;
 ZipArchive::ZipArchive() : Archive()
 {}
 
-ZipArchive::ZipArchive(const IByteArray& archive) : Archive(archive)
+ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
 {
     Reader reader(archive, littleEndianByteOrder);
 
@@ -375,9 +375,9 @@ ZipArchive::ZipArchive(const IByteArray& archive) : Archive(archive)
 ZipArchive::~ZipArchive()
 {}
 
-void ZipArchive::readFromSource(const Entry* e, const String&, IBlock& uncompressedData) const
+void ZipArchive::readFromSource(Entry const *e, const String&, IBlock &uncompressedData) const
 {
-    const ZipEntry& entry = *static_cast<const ZipEntry*>(e);
+    ZipEntry const &entry = *static_cast<ZipEntry const *>(e);
 
     if(entry.compression == NO_COMPRESSION)
     {
@@ -406,11 +406,11 @@ void ZipArchive::readFromSource(const Entry* e, const String&, IBlock& uncompres
 
         z_stream stream;
         std::memset(&stream, 0, sizeof(stream));
-        stream.next_in = const_cast<IByteArray::Byte*>(entry.dataInArchive->data());
+        stream.next_in = const_cast<IByteArray::Byte *>(entry.dataInArchive->data());
         stream.avail_in = entry.sizeInArchive;
         stream.zalloc = Z_NULL;
         stream.zfree = Z_NULL;
-        stream.next_out = const_cast<IByteArray::Byte*>(uncompressedData.data());
+        stream.next_out = const_cast<IByteArray::Byte *>(uncompressedData.data());
         stream.avail_out = entry.size;
 
         if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
@@ -438,7 +438,7 @@ void ZipArchive::readFromSource(const Entry* e, const String&, IBlock& uncompres
     }
 }
 
-void ZipArchive::operator >> (Writer& to) const
+void ZipArchive::operator >> (Writer &to) const
 {
     /**
      * ZIP archives will use little-endian byte order regardless of the byte
@@ -450,7 +450,7 @@ void ZipArchive::operator >> (Writer& to) const
     DENG2_FOR_EACH_CONST(Index, i, index())
     {
         // We will be updating relevant members of the entry.
-        ZipEntry& entry = *static_cast<ZipEntry*>(const_cast<Entry*>(i.value()));
+        ZipEntry &entry = *static_cast<ZipEntry *>(const_cast<Entry *>(i.value()));
         entry.update();
 
         // This is where the local file header is located.
@@ -495,11 +495,11 @@ void ZipArchive::operator >> (Writer& to) const
 
             z_stream stream;
             std::memset(&stream, 0, sizeof(stream));
-            stream.next_in = const_cast<IByteArray::Byte*>(entry.data->data());
+            stream.next_in = const_cast<IByteArray::Byte *>(entry.data->data());
             stream.avail_in = entry.data->size();
             stream.zalloc = Z_NULL;
             stream.zfree = Z_NULL;
-            stream.next_out = const_cast<IByteArray::Byte*>(archived.data());
+            stream.next_out = const_cast<IByteArray::Byte *>(archived.data());
             stream.avail_out = archived.size();
 
             if(deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
@@ -541,7 +541,7 @@ void ZipArchive::operator >> (Writer& to) const
     // Write the central directory.
     DENG2_FOR_EACH_CONST(Index, i, index())
     {
-        const ZipEntry& entry = *static_cast<const ZipEntry*>(i.value());
+        ZipEntry const &entry = *static_cast<ZipEntry const *>(i.value());
 
         CentralFileHeader header;
         header.signature = SIG_CENTRAL_FILE_HEADER;
@@ -574,7 +574,7 @@ void ZipArchive::operator >> (Writer& to) const
     to.seek(writer.offset());
 }
 
-bool ZipArchive::recognize(const File& file)
+bool ZipArchive::recognize(File const &file)
 {
     // For now, just check the name.
     String ext = file.name().fileNameExtension().lower();
@@ -582,9 +582,9 @@ bool ZipArchive::recognize(const File& file)
             ext == ".box" || ext == ".pk3" || ext == ".zip");
 }
 
-Archive::Entry* ZipArchive::newEntry()
+Archive::Entry *ZipArchive::newEntry()
 {
-    ZipEntry* entry = new ZipEntry;
+    ZipEntry *entry = new ZipEntry;
     entry->compression = NO_COMPRESSION; // Will be updated.
     return entry;
 }

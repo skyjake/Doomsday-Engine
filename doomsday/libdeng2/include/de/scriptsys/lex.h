@@ -54,7 +54,7 @@ namespace de
         class ModeSpan
         {
         public:
-            ModeSpan(Lex& lex, const ModeFlags& m) : _lex(lex), _originalMode(lex._mode) {
+            ModeSpan(Lex &lex, ModeFlags const &m) : _lex(lex), _originalMode(lex._mode) {
                 lex._mode = m;
             }
             
@@ -63,7 +63,7 @@ namespace de
             }
             
         private:
-            Lex& _lex;
+            Lex &_lex;
             ModeFlags _originalMode;
         };
         
@@ -76,10 +76,10 @@ namespace de
         static const String T_CURLY_CLOSE;
 
     public:
-        Lex(const String& input = "");
+        Lex(String const &input = "");
         
         /// Returns the input string in its entirety.
-        const String& input() const;
+        String const &input() const;
         
         /// Returns the current position of the analyzer.
         duint pos() const;
@@ -139,7 +139,7 @@ namespace de
 
     private:
         /// Input text being analyzed.
-        const String* _input;
+        String const *_input;
 
         mutable duint _nextPos;
 

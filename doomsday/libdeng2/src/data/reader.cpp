@@ -33,32 +33,32 @@ namespace de {
 
 struct Reader::Instance
 {
-    const ByteOrder& convert;
+    ByteOrder const &convert;
 
     // Random access source:
-    const IByteArray* source;
+    IByteArray const *source;
     IByteArray::Offset offset;
     IByteArray::Offset markOffset;
 
     // Stream source:
-    IIStream* stream;
-    const IIStream* constStream;
+    IIStream *stream;
+    IIStream const *constStream;
     dsize numReceivedBytes;
     Block incoming;     ///< Buffer for bytes received so far from the stream.
     bool marking;       ///< @c true, if marking is occurring (mark() called).
     Block markedData;   ///< All read data since the mark was set.
 
-    Instance(const ByteOrder& order, const IByteArray* src, IByteArray::Offset off)
+    Instance(ByteOrder const &order, IByteArray const *src, IByteArray::Offset off)
         : convert(order), source(src), offset(off), markOffset(off),
           stream(0), constStream(0), numReceivedBytes(0), marking(false)
     {}
 
-    Instance(const ByteOrder& order, IIStream* str)
+    Instance(ByteOrder const &order, IIStream *str)
         : convert(order), source(0), offset(0), markOffset(0),
           stream(str), constStream(0), numReceivedBytes(0), marking(false)
     {}
 
-    Instance(const ByteOrder& order, const IIStream* str)
+    Instance(ByteOrder const &order, IIStream const *str)
         : convert(order), source(0), offset(0), markOffset(0),
           stream(0), constStream(str), numReceivedBytes(0), marking(false)
     {}
@@ -94,7 +94,7 @@ struct Reader::Instance
         }
     }
 
-    void readBytes(IByteArray::Byte* ptr, dsize size)
+    void readBytes(IByteArray::Byte *ptr, dsize size)
     {
         if(source)
         {
@@ -151,81 +151,81 @@ struct Reader::Instance
     }
 };
 
-Reader::Reader(const IByteArray& source, const ByteOrder& byteOrder, IByteArray::Offset offset)
+Reader::Reader(IByteArray const &source, ByteOrder const &byteOrder, IByteArray::Offset offset)
     : d(new Instance(byteOrder, &source, offset))
 {}
 
-Reader::Reader(IIStream& stream, const ByteOrder& byteOrder)
+Reader::Reader(IIStream &stream, ByteOrder const &byteOrder)
     : d(new Instance(byteOrder, &stream))
 {}
 
-Reader::Reader(const IIStream& stream, const ByteOrder& byteOrder)
+Reader::Reader(IIStream const &stream, ByteOrder const &byteOrder)
     : d(new Instance(byteOrder, &stream))
 {}
 
-Reader& Reader::operator >> (char& byte)
+Reader &Reader::operator >> (char &byte)
 {
-    return *this >> reinterpret_cast<duchar&>(byte);
+    return *this >> reinterpret_cast<duchar &>(byte);
 }
 
-Reader& Reader::operator >> (dchar& byte)
+Reader &Reader::operator >> (dchar &byte)
 {
-    return *this >> reinterpret_cast<duchar&>(byte);
+    return *this >> reinterpret_cast<duchar &>(byte);
 }
 
-Reader& Reader::operator >> (duchar& byte)
+Reader &Reader::operator >> (duchar &byte)
 {
     d->readBytes(&byte, 1);
     return *this;
 }
 
-Reader& Reader::operator >> (dint16& word)
+Reader &Reader::operator >> (dint16& word)
 {
     return *this >> reinterpret_cast<duint16&>(word);
 }
 
-Reader& Reader::operator >> (duint16& word)
+Reader &Reader::operator >> (duint16& word)
 {
-    d->readBytes(reinterpret_cast<IByteArray::Byte*>(&word), 2);
+    d->readBytes(reinterpret_cast<IByteArray::Byte *>(&word), 2);
     d->convert.foreignToNative(word, word);
     return *this;
 }
 
-Reader& Reader::operator >> (dint32& dword)
+Reader &Reader::operator >> (dint32& dword)
 {
     return *this >> reinterpret_cast<duint32&>(dword);
 }
 
-Reader& Reader::operator >> (duint32& dword)
+Reader &Reader::operator >> (duint32& dword)
 {
-    d->readBytes(reinterpret_cast<IByteArray::Byte*>(&dword), 4);
+    d->readBytes(reinterpret_cast<IByteArray::Byte *>(&dword), 4);
     d->convert.foreignToNative(dword, dword);
     return *this;
 }
 
-Reader& Reader::operator >> (dint64& qword)
+Reader &Reader::operator >> (dint64& qword)
 {
     return *this >> reinterpret_cast<duint64&>(qword);
 }
 
-Reader& Reader::operator >> (duint64& qword)
+Reader &Reader::operator >> (duint64& qword)
 {
-    d->readBytes(reinterpret_cast<IByteArray::Byte*>(&qword), 8);
+    d->readBytes(reinterpret_cast<IByteArray::Byte *>(&qword), 8);
     d->convert.foreignToNative(qword, qword);
     return *this;
 }
 
-Reader& Reader::operator >> (dfloat& value)
+Reader &Reader::operator >> (dfloat &value)
 {
     return *this >> *reinterpret_cast<duint32*>(&value);
 }
 
-Reader& Reader::operator >> (ddouble& value)
+Reader &Reader::operator >> (ddouble &value)
 {
     return *this >> *reinterpret_cast<duint64*>(&value);
 }
 
-Reader& Reader::operator >> (String& text)
+Reader &Reader::operator >> (String &text)
 {
     duint size = 0;
     *this >> size;
@@ -242,7 +242,7 @@ Reader& Reader::operator >> (String& text)
     return *this;
 }
 
-Reader& Reader::operator >> (IByteArray& byteArray)
+Reader &Reader::operator >> (IByteArray &byteArray)
 {
     duint size = 0;
     *this >> size;
@@ -258,7 +258,7 @@ Reader& Reader::operator >> (IByteArray& byteArray)
     return *this;
 }
 
-Reader& Reader::operator >> (FixedByteArray& fixedByteArray)
+Reader &Reader::operator >> (FixedByteArray &fixedByteArray)
 {
     /**
      * @note  A temporary copy of the contents of the array is made
@@ -272,7 +272,7 @@ Reader& Reader::operator >> (FixedByteArray& fixedByteArray)
     return *this;
 }
 
-Reader& Reader::operator >> (Block& block)
+Reader &Reader::operator >> (Block &block)
 {
     duint size = 0;
     *this >> size;
@@ -283,13 +283,13 @@ Reader& Reader::operator >> (Block& block)
     return *this;
 }
 
-Reader& Reader::operator >> (IReadable& readable)
+Reader &Reader::operator >> (IReadable &readable)
 {
     readable << *this;
     return *this;
 }
 
-Reader& Reader::readUntil(IByteArray& byteArray, IByteArray::Byte delimiter)
+Reader &Reader::readUntil(IByteArray &byteArray, IByteArray::Byte delimiter)
 {
     int pos = 0;
     IByteArray::Byte b = 0;
@@ -300,7 +300,7 @@ Reader& Reader::readUntil(IByteArray& byteArray, IByteArray::Byte delimiter)
     return *this;
 }
 
-const IByteArray* Reader::source() const
+IByteArray const *Reader::source() const
 {
     return d->source;
 }
@@ -339,7 +339,7 @@ void Reader::rewind()
     d->rewind();
 }
 
-const ByteOrder& Reader::byteOrder() const
+ByteOrder const &Reader::byteOrder() const
 {
     return d->convert;
 }

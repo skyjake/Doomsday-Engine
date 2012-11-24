@@ -30,7 +30,7 @@ FunctionValue::FunctionValue() : _func(new Function())
     // We now hold the only reference to the function.
 }
 
-FunctionValue::FunctionValue(Function* func) : _func(func->ref<Function>())
+FunctionValue::FunctionValue(Function *func) : _func(func->ref<Function>())
 {}
 
 FunctionValue::~FunctionValue()
@@ -38,7 +38,7 @@ FunctionValue::~FunctionValue()
     _func->release();
 }
 
-Value* FunctionValue::duplicate() const
+Value *FunctionValue::duplicate() const
 {
     return new FunctionValue(_func);
 }
@@ -58,9 +58,9 @@ bool FunctionValue::isFalse() const
     return false;
 }
 
-dint FunctionValue::compare(const Value& value) const
+dint FunctionValue::compare(Value const &value) const
 {
-    const FunctionValue* other = dynamic_cast<const FunctionValue*>(&value);
+    FunctionValue const *other = dynamic_cast<FunctionValue const *>(&value);
     if(!other)
     {
         return -1;
@@ -77,9 +77,9 @@ dint FunctionValue::compare(const Value& value) const
     return -1;
 }
 
-void FunctionValue::call(Process& process, const Value& arguments) const
+void FunctionValue::call(Process &process, Value const &arguments) const
 {
-    const ArrayValue* array = dynamic_cast<const ArrayValue*>(&arguments);
+    ArrayValue const *array = dynamic_cast<ArrayValue const *>(&arguments);
     if(!array)
     {
         /// @throw IllegalError  The call arguments must be an array value.
@@ -88,12 +88,12 @@ void FunctionValue::call(Process& process, const Value& arguments) const
     process.call(*_func, *array);
 }
 
-void FunctionValue::operator >> (Writer& to) const
+void FunctionValue::operator >> (Writer &to) const
 {
     to << SerialId(FUNCTION) << *_func;
 }
 
-void FunctionValue::operator << (Reader& from)
+void FunctionValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

@@ -47,17 +47,17 @@ namespace de
 
     public:
         NameExpression();
-        NameExpression(const String& identifier, const Flags& flags = ByValue);
+        NameExpression(String const &identifier, Flags const &flags = ByValue);
         ~NameExpression();
 
         /// Returns the identifier in the name expression.
-        const String& identifier() const { return _identifier; }
+        String const &identifier() const { return _identifier; }
 
-        Value* evaluate(Evaluator& evaluator) const;
+        Value *evaluate(Evaluator &evaluator) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);                 
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);                 
         
     private:
         String _identifier;

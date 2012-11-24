@@ -42,13 +42,13 @@ namespace de
     class DENG2_PUBLIC ByteArrayFile : public File, public IByteArray
     {
     protected:
-        ByteArrayFile(const String& name = "") : File(name) {}
+        ByteArrayFile(String const &name = "") : File(name) {}
 
     public:
         // Implements IIOStream.
-        IOStream& operator << (const IByteArray& bytes);
-        IIStream& operator >> (IByteArray& bytes);
-        const IIStream& operator >> (IByteArray& bytes) const;
+        IOStream &operator << (IByteArray const &bytes);
+        IIStream &operator >> (IByteArray &bytes);
+        IIStream const &operator >> (IByteArray &bytes) const;
     };
 }
 

@@ -37,7 +37,7 @@ using namespace de;
 Record::Record()
 {}
 
-Record::Record(const Record& other) : ISerializable(), LogEntry::Arg::Base()
+Record::Record(Record const &other) : ISerializable(), LogEntry::Arg::Base()
 {
     for(Members::const_iterator i = other._members.begin(); i != other._members.end(); ++i)
     {
@@ -75,24 +75,24 @@ void Record::clear()
     }
 }
 
-bool Record::has(const String& name) const
+bool Record::has(String const &name) const
 {
     return hasMember(name) || hasSubrecord(name);
 }
 
-bool Record::hasMember(const String& variableName) const
+bool Record::hasMember(String const &variableName) const
 {
     Members::const_iterator found = _members.find(variableName);
     return found != _members.end();
 }
 
-bool Record::hasSubrecord(const String& subrecordName) const
+bool Record::hasSubrecord(String const &subrecordName) const
 {
     Subrecords::const_iterator found = _subrecords.find(subrecordName);
     return found != _subrecords.end();
 }
 
-Variable& Record::add(Variable* variable)
+Variable &Record::add(Variable *variable)
 {
     std::auto_ptr<Variable> var(variable);
     if(variable->name().empty())
@@ -109,48 +109,48 @@ Variable& Record::add(Variable* variable)
     return *variable;
 }
 
-Variable* Record::remove(Variable& variable)
+Variable *Record::remove(Variable &variable)
 {
     _members.erase(variable.name());
     return &variable;
 }
 
-Variable& Record::addNumber(const String& name, const Value::Number& number)
+Variable &Record::addNumber(String const &name, Value::Number const &number)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new NumberValue(number), Variable::AllowNumber));
 }
 
-Variable& Record::addText(const String& name, const Value::Text& text)
+Variable &Record::addText(String const &name, Value::Text const &text)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new TextValue(text), Variable::AllowText));
 }
 
-Variable& Record::addArray(const String& name)
+Variable &Record::addArray(String const &name)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new ArrayValue(), Variable::AllowArray));
 }
 
-Variable& Record::addDictionary(const String& name)
+Variable &Record::addDictionary(String const &name)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new DictionaryValue(), Variable::AllowDictionary));
 }
 
-Variable& Record::addBlock(const String& name)
+Variable &Record::addBlock(String const &name)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new BlockValue(), Variable::AllowBlock));
 }
     
-Record& Record::add(const String& name, Record* subrecord)
+Record &Record::add(String const &name, Record *subrecord)
 {
     std::auto_ptr<Record> sub(subrecord);
     /// @throw Variable::NameError Subrecord names must be valid variable names.
@@ -164,29 +164,29 @@ Record& Record::add(const String& name, Record* subrecord)
     return *subrecord;
 }
 
-Record& Record::addRecord(const String& name)
+Record &Record::addRecord(String const &name)
 {
     return add(name, new Record());
 }
 
-Record* Record::remove(const String& name)
+Record *Record::remove(String const &name)
 {
     Subrecords::iterator found = _subrecords.find(name);
     if(found != _subrecords.end())
     {
-        Record* rec = found->second;
+        Record *rec = found->second;
         _subrecords.erase(found);
         return rec;
     }
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
 }
     
-Variable& Record::operator [] (const String& name)
+Variable &Record::operator [] (String const &name)
 {
-    return const_cast<Variable&>((*const_cast<const Record*>(this))[name]);
+    return const_cast<Variable &>((*const_cast<Record const *>(this))[name]);
 }
     
-const Variable& Record::operator [] (const String& name) const
+Variable const &Record::operator [] (String const &name) const
 {
     // Path notation allows looking into subrecords.
     int pos = name.indexOf('.');
@@ -210,12 +210,12 @@ const Variable& Record::operator [] (const String& name) const
     throw NotFoundError("Record::operator []", "Variable '" + name + "' not found");
 }
 
-Record& Record::subrecord(const String& name)
+Record &Record::subrecord(String const &name)
 {
-    return const_cast<Record&>((const_cast<const Record*>(this))->subrecord(name));
+    return const_cast<Record &>((const_cast<Record const *>(this))->subrecord(name));
 }
 
-const Record& Record::subrecord(const String& name) const
+Record const &Record::subrecord(String const &name) const
 {
     // Path notation allows looking into subrecords.
     int pos = name.indexOf('.');
@@ -232,7 +232,7 @@ const Record& Record::subrecord(const String& name) const
     throw NotFoundError("Record::subrecords", "Subrecord '" + name + "' not found");
 }
     
-String Record::asText(const String& prefix, List* lines) const
+String Record::asText(String const &prefix, List *lines) const
 {
     // Recursive calls to collect all variables in the record.
     if(lines)
@@ -290,21 +290,21 @@ String Record::asText(const String& prefix, List* lines) const
     return result;
 }
 
-const Function* Record::function(const String& name) const
+Function const *Record::function(String const &name) const
 {
     try
     {
-        const FunctionValue* func = dynamic_cast<const FunctionValue*>(&(*this)[name].value());
+        FunctionValue const *func = dynamic_cast<FunctionValue const *>(&(*this)[name].value());
         if(func)
         {
             return &func->function();
         }
     }
-    catch(NotFoundError&) {}    
+    catch(NotFoundError &) {}    
     return 0;
 }
     
-void Record::operator >> (Writer& to) const
+void Record::operator >> (Writer &to) const
 {
     to << duint32(_members.size());
     for(Members::const_iterator i = _members.begin(); i != _members.end(); ++i)
@@ -322,7 +322,7 @@ void Record::operator >> (Writer& to) const
     }
 }
     
-void Record::operator << (Reader& from)
+void Record::operator << (Reader &from)
 {
     duint32 count = 0;
     from >> count;
@@ -344,7 +344,7 @@ void Record::operator << (Reader& from)
     }
 }
 
-QTextStream& de::operator << (QTextStream& os, const Record& record)
+QTextStream &de::operator << (QTextStream &os, Record const &record)
 {
     return os << record.asText();
 }

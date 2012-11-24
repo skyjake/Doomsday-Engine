@@ -59,17 +59,17 @@ public:
          */
         operator ddouble() const { return _seconds; }
 
-        bool operator < (const ddouble& d) const {
+        bool operator < (ddouble const &d) const {
             return _seconds < d;
         }
 
-        bool operator > (const ddouble& d) const {
+        bool operator > (ddouble const &d) const {
             return _seconds > d;
         }
 
-        Delta operator + (const ddouble& d) const;
+        Delta operator + (ddouble const &d) const;
 
-        Delta operator - (const ddouble& d) const;
+        Delta operator - (ddouble const &d) const;
 
         /**
          * Convert the delta to milliseconds.
@@ -109,19 +109,19 @@ public:
      */
     Time();
 
-    Time(const Time& other) : ISerializable(), _time(other._time) {}
+    Time(Time const &other) : ISerializable(), _time(other._time) {}
 
-    Time(const QDateTime& t) : ISerializable(), _time(t) {}
+    Time(QDateTime const &t) : ISerializable(), _time(t) {}
 
-    bool operator < (const Time& t) const;
+    bool operator < (Time const &t) const;
 
-    bool operator > (const Time& t) const { return t < *this; }
+    bool operator > (Time const &t) const { return t < *this; }
 
-    bool operator <= (const Time& t) const { return !(*this > t); }
+    bool operator <= (Time const &t) const { return !(*this > t); }
 
-    bool operator >= (const Time& t) const { return !(*this < t); }
+    bool operator >= (Time const &t) const { return !(*this < t); }
 
-    bool operator == (const Time& t) const;
+    bool operator == (Time const &t) const;
 
     /**
      * Add a delta to the point of time.
@@ -130,7 +130,7 @@ public:
      *
      * @return  Modified time.
      */
-    Time operator + (const Delta& delta) const;
+    Time operator + (Delta const &delta) const;
 
     /**
      * Subtract a delta from the point of time.
@@ -139,7 +139,7 @@ public:
      *
      * @return  Modified time.
      */
-    Time operator - (const Delta& delta) const { return *this + (-delta); }
+    Time operator - (Delta const &delta) const { return *this + (-delta); }
 
     /**
      * Modify point of time.
@@ -148,7 +148,7 @@ public:
      *
      * @return  Reference to this Time.
      */
-    Time& operator += (const Delta& delta);
+    Time &operator += (Delta const &delta);
 
     /**
      * Modify point of time.
@@ -157,14 +157,14 @@ public:
      *
      * @return  Reference to this Time.
      */
-    Time& operator -= (const Delta& delta) { return *this += -delta; }
+    Time &operator -= (Delta const &delta) { return *this += -delta; }
 
     /**
      * Difference between two times.
      *
      * @param earlierTime  Time at some point before this time.
      */
-    Delta operator - (const Time& earlierTime) const;
+    Delta operator - (Time const &earlierTime) const;
 
     /**
      * Difference between this time and the current point of time.
@@ -189,7 +189,7 @@ public:
      *
      * @return  Delta.
      */
-    Delta deltaTo(const Time& laterTime) const { return laterTime - *this; }
+    Delta deltaTo(Time const &laterTime) const { return laterTime - *this; }
 
     /**
      * Makes a text representation of the time (default is seconds since the epoch).
@@ -199,12 +199,12 @@ public:
     /**
      * Converts the time to a QDateTime.
      */
-    QDateTime& asDateTime() { return _time; }
+    QDateTime &asDateTime() { return _time; }
 
     /**
      * Converts the time to a QDateTime.
      */
-    const QDateTime& asDateTime() const { return _time; }
+    QDateTime const &asDateTime() const { return _time; }
 
     /**
      * Converts the time into a Date.
@@ -217,8 +217,8 @@ public:
     dint asBuildNumber() const;
 
     // Implements ISerializable.
-    void operator >> (Writer& to) const;
-    void operator << (Reader& from);
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
 private:
     QDateTime _time;
@@ -226,7 +226,7 @@ private:
     friend class Date;
 };
 
-DENG2_PUBLIC QTextStream& operator << (QTextStream& os, const Time& t);
+DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Time const &t);
 
 typedef Time::Delta TimeDelta;
 

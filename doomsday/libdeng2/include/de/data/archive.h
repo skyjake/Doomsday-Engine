@@ -98,7 +98,7 @@ namespace de
          *              byte array remains in existence for the lifetime
          *              of the Archive instance.
          */
-        Archive(const IByteArray& data);
+        Archive(IByteArray const &data);
         
         virtual ~Archive();
 
@@ -107,7 +107,7 @@ namespace de
          * constructed without a source (as empty) or has been detached from
          * its original source.
          */
-        const IByteArray* source() const;
+        IByteArray const *source() const;
 
         enum CacheAttachment {
             RemainAttachedToSource = 0,
@@ -131,7 +131,7 @@ namespace de
          *
          * @return  @c true or @c false.
          */
-        bool has(const String& path) const;
+        bool has(String const &path) const;
 
         /**
          * List the files in a specific folder of the archive.
@@ -141,7 +141,7 @@ namespace de
          * @return Entry names collected in a set. The names are relative to a
          * @a folder.
          */
-        Names listFiles(const String& folder = "") const;
+        Names listFiles(String const &folder = "") const;
 
         /**
          * List the folders in a specific folder of the archive.
@@ -151,7 +151,7 @@ namespace de
          * @return Folder entry names collected in a set. The names are
          * relative to @a folder.
          */
-        Names listFolders(const String& folder = "") const;
+        Names listFolders(String const &folder = "") const;
 
         /**
          * Returns information about the specified path. 
@@ -160,7 +160,7 @@ namespace de
          *
          * @return Type, size, and other metadata about the entry.
          */
-        File::Status status(const String& path) const;
+        File::Status status(String const &path) const;
 
         /**
          * Returns the deserialized data of an entry for read-only access. The
@@ -176,7 +176,7 @@ namespace de
          *
          * @return Immutable contents of the entry.
          */
-        const Block& entryBlock(const String& path) const;
+        Block const &entryBlock(String const &path) const;
 
         /**
          * Returns the deserialized data of an entry for read and write access.
@@ -191,7 +191,7 @@ namespace de
          *
          * @return Modifiable contents of the entry.
          */
-        Block& entryBlock(const String& path);
+        Block &entryBlock(String const &path);
 
         /**
          * Adds an entry to the archive. The entry will not be committed to the
@@ -200,7 +200,7 @@ namespace de
          * @param path  Path of the entry within the archive.
          * @param data  Data of the entry.
          */
-        void add(const String& path, const IByteArray& data);
+        void add(String const &path, IByteArray const &data);
 
         /**
          * Removes an entry from the archive. If there is deserialized data for
@@ -208,7 +208,7 @@ namespace de
          *
          * @param path  Path of the entry.
          */
-        void remove(const String& path);
+        void remove(String const &path);
         
         /**
          * Clears the index of the archive. All entries are deleted.
@@ -233,7 +233,7 @@ namespace de
          *
          * @param to  Where to write.
          */
-        virtual void operator >> (Writer& to) const = 0;
+        virtual void operator >> (Writer &to) const = 0;
 
     protected:
         /*
@@ -249,10 +249,10 @@ namespace de
             bool maybeChanged;      ///< @c true, if the data must be re-serialized when writing.
 
             /// Deserialized data. Can be @c NULL. Entry has ownership.
-            Block* data;
+            Block *data;
 
             /// Cached copy of the serialized data. Can be @c NULL. Entry has ownership.
-            mutable Block* dataInArchive;
+            mutable Block *dataInArchive;
 
             Entry() : offset(0), size(0), sizeInArchive(0), maybeChanged(false),
                 data(0), dataInArchive(0)
@@ -266,7 +266,7 @@ namespace de
             }
         };
 
-        typedef QMap<String, Entry*> Index;
+        typedef QMap<String, Entry *> Index;
 
         /**
          * Constructs a new entry. Subclass can extend Entry with more data if
@@ -274,7 +274,7 @@ namespace de
          *
          * @return New entry, ownership given to the caller.
          */
-        virtual Entry* newEntry() = 0;
+        virtual Entry *newEntry() = 0;
 
         /**
          * Reads an entry from the source archive. The implementation of this
@@ -285,7 +285,7 @@ namespace de
          * @param path   Path of the entry within the archive.
          * @param data   Data is written here.
          */
-        virtual void readFromSource(const Entry* entry, const String& path, IBlock& data) const = 0;
+        virtual void readFromSource(Entry const *entry, String const &path, IBlock &data) const = 0;
 
         /**
          * Inserts an entry into the archive's index.
@@ -293,7 +293,7 @@ namespace de
          * @param path   Path of the entry.
          * @param entry  Entry to insert. Ownership given to Archive.
          */
-        void insertToIndex(const String& path, Entry* entry);
+        void insertToIndex(String const &path, Entry *entry);
 
         /**
          * Returns the full entry index so that derived classes can iterate the
@@ -301,11 +301,11 @@ namespace de
          *
          * @return Entry index.
          */
-        const Index& index() const;
+        Index const &index() const;
 
     private:
         struct Instance;
-        Instance* d;
+        Instance *d;
     };
 }
 

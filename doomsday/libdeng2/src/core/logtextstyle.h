@@ -38,13 +38,13 @@ enum LogTextStyle
     LOG_MSG
 };
 
-const char* TEXT_STYLE_NORMAL = "$0";
-const char* TEXT_STYLE_STRONG = "$1";
-const char* TEXT_STYLE_LOG_TIME = "$2";
-const char* TEXT_STYLE_LOG_LEVEL = "$3";
-const char* TEXT_STYLE_LOG_BAD_LEVEL = "$4";
-const char* TEXT_STYLE_SECTION = "$5";
-const char* TEXT_STYLE_MESSAGE = "$6";
+char const *TEXT_STYLE_NORMAL = "$0";
+char const *TEXT_STYLE_STRONG = "$1";
+char const *TEXT_STYLE_LOG_TIME = "$2";
+char const *TEXT_STYLE_LOG_LEVEL = "$3";
+char const *TEXT_STYLE_LOG_BAD_LEVEL = "$4";
+char const *TEXT_STYLE_SECTION = "$5";
+char const *TEXT_STYLE_MESSAGE = "$6";
 
 }
 

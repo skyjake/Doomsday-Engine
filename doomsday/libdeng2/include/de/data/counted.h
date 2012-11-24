@@ -50,9 +50,9 @@ namespace de
          * a derived class.
          */
         template <typename Type>
-        Type* ref() {
+        Type *ref() {
             ++_refCount;
-            return static_cast<Type*>(this);
+            return static_cast<Type *>(this);
         }
         
         /**

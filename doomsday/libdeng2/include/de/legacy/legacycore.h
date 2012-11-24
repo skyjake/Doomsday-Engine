@@ -44,7 +44,7 @@ public:
      *
      * @param dengApp  Application instance.
      */
-    LegacyCore(App* dengApp);
+    LegacyCore(App *dengApp);
 
     ~LegacyCore();
 
@@ -114,12 +114,12 @@ public:
      * @param filePath  Path of a native file for writing output. "/home/" will
      *                  be automatically prepended to the path.
      */
-    void setLogFileName(const char* filePath);
+    void setLogFileName(char const *filePath);
 
     /**
      * Returns name of the the current log output file.
      */
-    const char* logFileName() const;
+    char const *logFileName() const;
 
     /**
      * Prints a fragment of text to the output log. The output is added to the log
@@ -131,22 +131,22 @@ public:
      * @param level  Log level for the message. Only the level in effect when a newline
      *               is printed will be entered into the log.
      */
-    void printLogFragment(const char* text, Log::LogLevel level = Log::MESSAGE);
+    void printLogFragment(char const *text, Log::LogLevel level = Log::MESSAGE);
 
     /**
      * Sets a callback to be called when an uncaught exception occurs.
      */
-    void setTerminateFunc(void (*func)(const char* msg));
+    void setTerminateFunc(void (*func)(char const *msg));
 
     /**
      * Returns the LegacyCore singleton instance.
      */
-    static LegacyCore& instance();
+    static LegacyCore &instance();
 
     /**
      * Returns the legacy network subsystem interface.
      */
-    LegacyNetwork& network();
+    LegacyNetwork &network();
 
 public slots:
     void callback();
@@ -168,10 +168,10 @@ public slots:
 private:
     // Private instance data.
     struct Instance;
-    Instance* d;
+    Instance *d;
 
     /// Globally available.
-    static LegacyCore* _appCore;
+    static LegacyCore *_appCore;
 };
 
 } // namespace de

@@ -97,7 +97,7 @@ namespace de
         };
 
         /// @return  Print-ready name for node @a type.
-        static String const& nodeTypeName(NodeType type);
+        static String const &nodeTypeName(NodeType type);
 
         /**
          * Identifier used with the search and iteration algorithms in place of
@@ -118,16 +118,16 @@ namespace de
         {
         private:
             Node();
-            Node(PathTree& tree, NodeType type, SegmentId segmentId, Node* parent = 0,
-                 void* userPointer = 0, int userValue = 0);
+            Node(PathTree &tree, NodeType type, SegmentId segmentId, Node *parent = 0,
+                 void *userPointer = 0, int userValue = 0);
             virtual ~Node();
 
         public:
             /// @return PathTree which owns this node.
-            PathTree& tree() const;
+            PathTree &tree() const;
 
             /// @return Parent of this node else @c NULL.
-            Node* parent() const;
+            Node *parent() const;
 
             /// @return @c true iff this node is a leaf.
             bool isLeaf() const;
@@ -138,7 +138,7 @@ namespace de
             }
 
             /// @return Name for this node's path segment.
-            String const& name() const;
+            String const &name() const;
 
             /// @return Hash for this node's path segment.
             Path::hash_type hash() const;
@@ -156,7 +156,7 @@ namespace de
              *
              * @todo This logic should be encapsulated in de::Path or de::Path::Segment. -ds
              */
-            int comparePath(de::Path const& searchPattern, ComparisonFlags flags) const;
+            int comparePath(de::Path const &searchPattern, ComparisonFlags flags) const;
 
             /**
              * Composes the path for this node. The whole path is upwardly
@@ -173,15 +173,15 @@ namespace de
             /**
              * Sets the user-specified custom pointer.
              */
-            Node& setUserPointer(void* ptr);
+            Node &setUserPointer(void *ptr);
 
             /// @return User-specified custom pointer.
-            void* userPointer() const;
+            void *userPointer() const;
 
             /**
              * Sets the user-specified custom pointer.
              */
-            Node& setUserValue(int value);
+            Node &setUserValue(int value);
 
             /// @return User-specified custom value.
             int userValue() const;
@@ -194,14 +194,14 @@ namespace de
 
         private:
             struct Instance;
-            Instance* d;
+            Instance *d;
         };
 
     public:
         /// The requested entry could not be found in the hierarchy.
         DENG2_ERROR(NotFoundError);
 
-        typedef QMultiHash<Path::hash_type, Node*> Nodes;
+        typedef QMultiHash<Path::hash_type, Node *> Nodes;
         typedef QList<String> FoundPaths;
 
     public:
@@ -232,7 +232,7 @@ namespace de
          *         the path @c "c:/somewhere/something" this is the node for the
          *         path segment "something".
          */
-        Node* insert(Path const& path);
+        Node *insert(Path const &path);
 
         /**
          * Destroy the tree's contents, free'ing all nodes.
@@ -250,7 +250,7 @@ namespace de
          *
          * @return Found node.
          */
-        Node const& find(Path const& path, ComparisonFlags flags) const;
+        Node const &find(Path const &path, ComparisonFlags flags) const;
 
         /**
          * @copydoc find()
@@ -268,7 +268,7 @@ namespace de
          *
          * @return Number of paths found.
          */
-        int findAllPaths(FoundPaths& found, ComparisonFlags flags = 0, QChar delimiter = '/') const;
+        int findAllPaths(FoundPaths &found, ComparisonFlags flags = 0, QChar delimiter = '/') const;
 
         /**
          * Traverse the node hierarchy making a callback for visited node. Traversal
@@ -286,19 +286,19 @@ namespace de
          *
          * @return  @c 0 iff iteration completed wholly.
          */
-        int traverse(ComparisonFlags flags, Node* parent, Path::hash_type hashKey,
-                     int (*callback) (Node& node, void* parameters), void* parameters = 0) const;
+        int traverse(ComparisonFlags flags, Node *parent, Path::hash_type hashKey,
+                     int (*callback) (Node &node, void *parameters), void *parameters = 0) const;
 
         /**
          * Provides access to the nodes for efficent traversals.
          */
-        Nodes const& nodes(NodeType type) const;
+        Nodes const &nodes(NodeType type) const;
 
-        inline Nodes const& leafNodes() const {
+        inline Nodes const &leafNodes() const {
             return nodes(Leaf);
         }
 
-        inline Nodes const& branchNodes() const {
+        inline Nodes const &branchNodes() const {
             return nodes(Branch);
         }
 
@@ -307,13 +307,13 @@ namespace de
          */
 
         /// @return The path segment associated with @a segmentId.
-        String const& segmentName(SegmentId segmentId) const;
+        String const &segmentName(SegmentId segmentId) const;
 
         /// @return Hash associated with @a segmentId.
         Path::hash_type segmentHash(SegmentId segmentId) const;
 
     private:
-        Instance* d;
+        Instance *d;
     };
 
     Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::Flags)

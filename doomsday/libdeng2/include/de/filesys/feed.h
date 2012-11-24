@@ -66,7 +66,7 @@ namespace de
          *
          * @see Folder::populate()
          */
-        virtual void populate(Folder& folder) = 0;
+        virtual void populate(Folder &folder) = 0;
         
         /**
          * Determines whether a file has become obsolete and needs to be pruned.
@@ -78,7 +78,7 @@ namespace de
          * @return  @c true, if the file should be pruned and deleted, otherwise
          *      @c false.
          */
-        virtual bool prune(File& file) const = 0;
+        virtual bool prune(File &file) const = 0;
         
         /**
          * Creates a new file with a given name and sets the new file's origin feed
@@ -88,14 +88,14 @@ namespace de
          *
          * @return  The new file. Caller gets ownership.
          */
-        virtual File* newFile(const String& name);
+        virtual File *newFile(String const &name);
         
         /**
          * Removes a file with the given name.
          *
          * @param name  Name of the removed file.
          */
-        virtual void removeFile(const String& name);
+        virtual void removeFile(String const &name);
     };
 }
 

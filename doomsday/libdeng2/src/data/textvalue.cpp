@@ -31,16 +31,16 @@
 using namespace de;
 using std::list;
 
-TextValue::TextValue(const String& initialValue)
+TextValue::TextValue(String const &initialValue)
     : _value(initialValue)
 {}
 
-TextValue::operator const String& () const
+TextValue::operator String const &() const
 {
     return _value;
 }
 
-Value* TextValue::duplicate() const
+Value *TextValue::duplicate() const
 {
     return new TextValue(_value);
 }
@@ -71,9 +71,9 @@ bool TextValue::isTrue() const
     return false;
 }
 
-dint TextValue::compare(const Value& value) const
+dint TextValue::compare(Value const &value) const
 {
-    const TextValue* other = dynamic_cast<const TextValue*>(&value);
+    TextValue const *other = dynamic_cast<TextValue const *>(&value);
     if(other)
     {
         return _value.compare(other->_value);
@@ -81,9 +81,9 @@ dint TextValue::compare(const Value& value) const
     return Value::compare(value);
 }
 
-void TextValue::sum(const Value& value)
+void TextValue::sum(Value const &value)
 {
-    const TextValue* other = dynamic_cast<const TextValue*>(&value);
+    TextValue const *other = dynamic_cast<TextValue const *>(&value);
     if(!other)
     {
         throw ArithmeticError("TextValue::sum", "Value cannot be summed");
@@ -92,9 +92,9 @@ void TextValue::sum(const Value& value)
     _value += other->_value;
 }
 
-void TextValue::multiply(const Value& value)
+void TextValue::multiply(Value const &value)
 {
-    const NumberValue* other = dynamic_cast<const NumberValue*>(&value);
+    NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
     if(!other)
     {
         throw ArithmeticError("Value::multiply", "Value cannot be multiplied");
@@ -121,9 +121,9 @@ void TextValue::multiply(const Value& value)
     }
 }
 
-void TextValue::divide(const Value& value)
+void TextValue::divide(Value const &value)
 {
-    const TextValue* other = dynamic_cast<const TextValue*>(&value);
+    TextValue const *other = dynamic_cast<TextValue const *>(&value);
     if(!other)
     {
         throw ArithmeticError("TextValue::divide", "Text cannot be divided");
@@ -131,11 +131,11 @@ void TextValue::divide(const Value& value)
     _value = _value / other->_value;
 }
 
-void TextValue::modulo(const Value& value)
+void TextValue::modulo(Value const &value)
 {
-    list<const Value*> args;
+    list<Value const *> args;
     
-    const ArrayValue* array = dynamic_cast<const ArrayValue*>(&value);
+    ArrayValue const *array = dynamic_cast<ArrayValue const *>(&value);
     if(array)
     {
         for(ArrayValue::Elements::const_iterator i = array->elements().begin();
@@ -153,11 +153,11 @@ void TextValue::modulo(const Value& value)
     _value = substitutePlaceholders(_value, args);
 }
 
-String TextValue::substitutePlaceholders(const String& pattern, const std::list<const Value*>& args)
+String TextValue::substitutePlaceholders(String const &pattern, const std::list<Value const *>& args)
 {
     QString result;
     QTextStream out(&result);
-    list<const Value*>::const_iterator arg = args.begin();
+    list<Value const *>::const_iterator arg = args.begin();
     
     for(String::const_iterator i = pattern.begin(); i != pattern.end(); ++i)
     {
@@ -183,12 +183,12 @@ String TextValue::substitutePlaceholders(const String& pattern, const std::list<
     return result;
 }
 
-void TextValue::operator >> (Writer& to) const
+void TextValue::operator >> (Writer &to) const
 {
     to << SerialId(TEXT) << _value;
 }
 
-void TextValue::operator << (Reader& from)
+void TextValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
@@ -199,7 +199,7 @@ void TextValue::operator << (Reader& from)
     from >> _value;
 }
 
-void TextValue::setValue(const String& text)
+void TextValue::setValue(String const &text)
 {
     _value = text;
 }

@@ -55,10 +55,10 @@ const String ScriptLex::ASSIGN("=");
 const String ScriptLex::SCOPE_ASSIGN(":=");
 const String ScriptLex::WEAK_ASSIGN("?=");
 
-ScriptLex::ScriptLex(const String& input) : Lex(input)
+ScriptLex::ScriptLex(String const &input) : Lex(input)
 {}
 
-duint ScriptLex::getStatement(TokenBuffer& output)
+duint ScriptLex::getStatement(TokenBuffer &output)
 {
     // Get rid of the previous contents of the token buffer.
     output.clear();
@@ -216,7 +216,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
                 "Character '" + String(1, c) + "' was unexpected");
         }
     }
-    catch(const OutOfInputError&)
+    catch(OutOfInputError const &)
     {
         // Open brackets left?
         for(int i = 0; i < MAX_BRACKETS; ++i)
@@ -234,7 +234,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
 }
 
 Token::Type
-ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer& output)
+ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &output)
 {
     Token::Type type =
         ( startChar == '\''? Token::LITERAL_STRING_APOSTROPHE :
@@ -353,9 +353,9 @@ bool ScriptLex::combinesWith(QChar a, QChar b)
     return false;
 }
 
-bool ScriptLex::isKeyword(const Token& token)
+bool ScriptLex::isKeyword(Token const &token)
 {
-    const QChar* keywords[] =
+    QChar const *keywords[] =
     {
         AND,
         BREAK,
@@ -397,7 +397,7 @@ bool ScriptLex::isKeyword(const Token& token)
     return false;
 }
 
-String ScriptLex::unescapeStringToken(const Token& token)
+String ScriptLex::unescapeStringToken(Token const &token)
 {
     DENG2_ASSERT(token.type() == Token::LITERAL_STRING_APOSTROPHE ||
              token.type() == Token::LITERAL_STRING_QUOTED ||
@@ -407,8 +407,8 @@ String ScriptLex::unescapeStringToken(const Token& token)
     QTextStream os(&result);
     bool escaped = false;
     
-    const QChar* begin = token.begin();
-    const QChar* end = token.end();
+    QChar const *begin = token.begin();
+    QChar const *end = token.end();
     
     // A long string?
     if(token.type() == Token::LITERAL_STRING_LONG)
@@ -424,7 +424,7 @@ String ScriptLex::unescapeStringToken(const Token& token)
         --end;
     }
     
-    for(const QChar* ptr = begin; ptr != end; ++ptr)
+    for(QChar const *ptr = begin; ptr != end; ++ptr)
     {
         if(escaped)
         {
@@ -472,7 +472,7 @@ String ScriptLex::unescapeStringToken(const Token& token)
             }
             else if(*ptr == 'x' && (end - ptr > 2))
             {
-                QString num(reinterpret_cast<const QChar*>(ptr + 1), 2);
+                QString num(reinterpret_cast<QChar const *>(ptr + 1), 2);
                 duint code = num.toInt(0, 16);
                 c = QChar(code);
                 ptr += 2; 
@@ -500,7 +500,7 @@ String ScriptLex::unescapeStringToken(const Token& token)
     return result;
 }
 
-ddouble ScriptLex::tokenToNumber(const Token& token)
+ddouble ScriptLex::tokenToNumber(Token const &token)
 {
     String str(token.str());
 

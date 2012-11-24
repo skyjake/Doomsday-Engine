@@ -160,7 +160,7 @@
  */
 #define DENG2_SELF(Type, Var) \
     DENG2_ASSERT(Var != 0); \
-    de::Type* self = reinterpret_cast<de::Type*>(Var);
+    de::Type *self = reinterpret_cast<de::Type *>(Var);
 
 /**
  * Macro for iterating through an STL container.

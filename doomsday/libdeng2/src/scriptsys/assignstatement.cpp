@@ -31,7 +31,7 @@ using namespace de;
 AssignStatement::AssignStatement() : _indexCount(0)
 {}
 
-AssignStatement::AssignStatement(Expression* target, const Indices& indices, Expression* value) 
+AssignStatement::AssignStatement(Expression *target, Indices const &indices, Expression *value) 
     : _indexCount(0)
 {
     _args.add(value);
@@ -46,15 +46,15 @@ AssignStatement::AssignStatement(Expression* target, const Indices& indices, Exp
 AssignStatement::~AssignStatement()
 {}
 
-void AssignStatement::execute(Context& context) const
+void AssignStatement::execute(Context &context) const
 {
-    Evaluator& eval = context.evaluator();
-    ArrayValue& results = eval.evaluateTo<ArrayValue>(&_args);
+    Evaluator &eval = context.evaluator();
+    ArrayValue &results = eval.evaluateTo<ArrayValue>(&_args);
 
     // We want to pop the value to assign as the first element.
     results.reverse();
 
-    RefValue* ref = dynamic_cast<RefValue*>(results.elements().front());
+    RefValue *ref = dynamic_cast<RefValue *>(results.elements().front());
     if(!ref)
     {
         throw LeftValueError("AssignStatement::execute",
@@ -68,7 +68,7 @@ void AssignStatement::execute(Context& context) const
     if(_indexCount > 0)
     {
         // The value we will be modifying.
-        Value* target = &ref->dereference();
+        Value *target = &ref->dereference();
 
         for(dint i = 0; i < _indexCount; ++i)
         {   
@@ -102,12 +102,12 @@ void AssignStatement::execute(Context& context) const
     context.proceed();
 }
 
-void AssignStatement::operator >> (Writer& to) const
+void AssignStatement::operator >> (Writer &to) const
 {
     to << SerialId(ASSIGN) << duint8(_indexCount) << _args;    
 }
 
-void AssignStatement::operator << (Reader& from)
+void AssignStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

@@ -64,7 +64,7 @@ namespace de
          * @param op Operation to perform.
          * @param operand Expression that provides the right-hand operand.
          */
-        OperatorExpression(Operator op, Expression* operand);
+        OperatorExpression(Operator op, Expression *operand);
 
         /**
          * Constructor for binary operations.
@@ -72,13 +72,13 @@ namespace de
          * @param leftOperand Expression that provides the left-hand operand.
          * @param rightOperand Expression that provides the right-hand operand.
          */
-        OperatorExpression(Operator op, Expression* leftOperand, Expression* rightOperand);
+        OperatorExpression(Operator op, Expression *leftOperand, Expression *rightOperand);
 
         ~OperatorExpression();
 
-        void push(Evaluator& evaluator, Record* names = 0) const;
+        void push(Evaluator &evaluator, Record *names = 0) const;
 
-        Value* evaluate(Evaluator& evaluator) const;
+        Value *evaluate(Evaluator &evaluator) const;
 
         /**
          * Verifies that @a value can be used as the l-value of an operator that
@@ -86,23 +86,23 @@ namespace de
          *
          * @param value  Value to check.
          */
-        static void verifyAssignable(Value* value);
+        static void verifyAssignable(Value *value);
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
     private:
         /// Performs the slice operation (Python semantics).
-        Value* performSlice(Value* leftValue, Value* rightValue) const;
+        Value *performSlice(Value *leftValue, Value *rightValue) const;
 
         /// Used to create return values of boolean operations.
-        static Value* newBooleanValue(bool isTrue);
+        static Value *newBooleanValue(bool isTrue);
                 
     private:
         Operator _op;
-        Expression* _leftOperand;
-        Expression* _rightOperand;
+        Expression *_leftOperand;
+        Expression *_rightOperand;
     };
 }
 

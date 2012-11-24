@@ -64,13 +64,13 @@ void FS::refresh()
     printIndex();
 }
 
-Folder& FS::makeFolder(const String& path)
+Folder &FS::makeFolder(String const &path)
 {
-    Folder* subFolder = d->root.tryLocate<Folder>(path);
+    Folder *subFolder = d->root.tryLocate<Folder>(path);
     if(!subFolder)
     {
         // This folder does not exist yet. Let's create it.
-        Folder& parentFolder = makeFolder(path.fileNamePath());
+        Folder &parentFolder = makeFolder(path.fileNamePath());
         subFolder = new Folder(path.fileName());
         parentFolder.add(subFolder);
         index(*subFolder);
@@ -78,7 +78,7 @@ Folder& FS::makeFolder(const String& path)
     return *subFolder;
 }
 
-File* FS::interpret(File* sourceData)
+File *FS::interpret(File *sourceData)
 {
     LOG_AS("FS::interpret");
     
@@ -108,23 +108,23 @@ File* FS::interpret(File* sourceData)
                 sourceData = 0;
                 return zip.release();
             }
-            catch(const Archive::FormatError&)
+            catch(Archive::FormatError const &)
             {
                 // Even though it was recognized as an archive, the file
                 // contents may still provide to be corrupted.
                 LOG_WARNING("Archive in %s is invalid") << sourceData->name();
             }
-            catch(const IByteArray::OffsetError&)
+            catch(IByteArray::OffsetError const &)
             {
                 LOG_WARNING("Archive in %s is truncated") << sourceData->name();
             }
-            catch(const IIStream::InputError&)
+            catch(IIStream::InputError const &)
             {
                 LOG_WARNING("%s cannot be read") << sourceData->name();
             }
         }
     }
-    catch(const Error& err)
+    catch(Error const &err)
     {
         LOG_ERROR("") << err.asText();
 
@@ -137,12 +137,12 @@ File* FS::interpret(File* sourceData)
     return sourceData;
 }
 
-const FS::Index& FS::nameIndex() const
+FS::Index const &FS::nameIndex() const
 {
     return d->index;
 }
 
-int FS::findAll(const String& path, FoundFiles& found) const
+int FS::findAll(String const &path, FoundFiles &found) const
 {
     LOG_AS("FS::findAll");
 
@@ -158,7 +158,7 @@ int FS::findAll(const String& path, FoundFiles& found) const
     ConstIndexRange range = d->index.equal_range(baseName);
     for(Index::const_iterator i = range.first; i != range.second; ++i)    
     {       
-        File* file = i->second;
+        File *file = i->second;
         if(file->path().endsWith(dir))
         {
             found.push_back(file);
@@ -167,23 +167,23 @@ int FS::findAll(const String& path, FoundFiles& found) const
     return found.size();
 }
 
-File& FS::find(const String& path) const
+File &FS::find(String const &path) const
 {
     return find<File>(path);
 }
 
-void FS::index(File& file)
+void FS::index(File &file)
 {
     const String lowercaseName = file.name().lower();
     
     d->index.insert(IndexEntry(lowercaseName, &file));
     
     // Also make an entry in the type index.
-    Index& indexOfType = d->typeIndex[DENG2_TYPE_NAME(file)];
+    Index &indexOfType = d->typeIndex[DENG2_TYPE_NAME(file)];
     indexOfType.insert(IndexEntry(lowercaseName, &file));
 }
 
-static void removeFromIndex(FS::Index& idx, File& file)
+static void removeFromIndex(FS::Index &idx, File &file)
 {
     if(idx.empty()) 
     {
@@ -204,13 +204,13 @@ static void removeFromIndex(FS::Index& idx, File& file)
     }
 }
 
-void FS::deindex(File& file)
+void FS::deindex(File &file)
 {
     removeFromIndex(d->index, file);
     removeFromIndex(d->typeIndex[DENG2_TYPE_NAME(file)], file);
 }
 
-const FS::Index& FS::indexFor(const String& typeName) const
+FS::Index const &FS::indexFor(String const &typeName) const
 {
     Instance::TypeIndex::const_iterator found = d->typeIndex.find(typeName);
     if(found != d->typeIndex.end())
@@ -241,7 +241,7 @@ void FS::printIndex()
     }
 }
 
-Folder& FS::root()
+Folder &FS::root()
 {
     return d->root;
 }

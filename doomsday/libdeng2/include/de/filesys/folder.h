@@ -66,20 +66,20 @@ namespace de
             };
             
         public:
-            Accessor(Folder& owner, Property prop);
+            Accessor(Folder &owner, Property prop);
             void update() const;
-            Value* duplicateContent() const;
+            Value *duplicateContent() const;
             
         private:
-            Folder& _owner;
+            Folder &_owner;
             Property _prop;
         };
         
-        typedef std::list<Feed*> Feeds;
-        typedef std::map<String, File*> Contents;
+        typedef std::list<Feed *> Feeds;
+        typedef std::map<String, File *> Contents;
         
     public:
-        Folder(const String& name = "");
+        Folder(String const &name = "");
         
         virtual ~Folder();
     
@@ -98,7 +98,7 @@ namespace de
         /**
          * Provides direct read-only access to the content of the folder.
          */
-        const Contents& contents() const;
+        Contents const &contents() const;
       
         /**
          * Destroys the contents of the folder. All contained file objects are deleted.
@@ -115,7 +115,7 @@ namespace de
          *
          * @return  The created file (write mode enabled).
          */
-        File& newFile(const String& name, bool replaceExisting = false);
+        File &newFile(String const &name, bool replaceExisting = false);
 
         /**
          * Creates a new file in the folder, replacing an existing file with the 
@@ -123,7 +123,7 @@ namespace de
          *
          * @param name  Name or path of the new file, relative to this folder.
          */
-        File& replaceFile(const String& name);
+        File &replaceFile(String const &name);
 
         /**
          * Removes a file from a folder. If it has an origin feed, the feed will be
@@ -131,14 +131,14 @@ namespace de
          *
          * @param name  Name or path of file to remove, relative to this folder.
          */
-        void removeFile(const String& name);
+        void removeFile(String const &name);
 
         /**
          * Checks whether the folder contains a file.
          *
          * @param name  File to check for. The name is not case sensitive.
          */
-        bool has(const String& name) const;
+        bool has(String const &name) const;
 
         /**
          * Adds an object to the folder. The object must be an instance of a class
@@ -150,9 +150,9 @@ namespace de
          * @return  Reference to @a fileObject, for convenience.
          */
         template <typename Type>
-        Type& add(Type* fileObject) {
+        Type &add(Type *fileObject) {
             DENG2_ASSERT(fileObject != 0);
-            add(static_cast<File*>(fileObject));
+            add(static_cast<File *>(fileObject));
             return *fileObject;
         }
         
@@ -163,7 +163,7 @@ namespace de
          *
          * @return  Reference to the file, for convenience.
          */
-        virtual File& add(File* file);
+        virtual File &add(File *file);
 
         /**
          * Removes a file from the folder, by name. The file is not deleted. The
@@ -172,12 +172,12 @@ namespace de
          * @return  The removed file object. Ownership of the object is given to
          * the caller.
          */
-        File* remove(const String& name);
+        File *remove(String const &name);
 
         template <typename Type>
-        Type* remove(Type* fileObject) {
+        Type *remove(Type *fileObject) {
             DENG2_ASSERT(fileObject != 0);
-            remove(*static_cast<File*>(fileObject));
+            remove(*static_cast<File *>(fileObject));
             return fileObject;
         }
 
@@ -188,7 +188,7 @@ namespace de
          * @return  The removed file object. Ownership of the object is given to
          * the caller.
          */
-        virtual File* remove(File& file);
+        virtual File *remove(File &file);
 
         /**
          * Locates a file in this folder or in one of its subfolders. Looks recursively
@@ -198,11 +198,11 @@ namespace de
          * 
          * @return  The located file, or @c NULL if the path was not found.
          */
-        virtual File* tryLocateFile(const String& path) const;
+        virtual File *tryLocateFile(String const &path) const;
         
         template <typename Type>
-        Type* tryLocate(const String& path) const {
-            return dynamic_cast<Type*>(tryLocateFile(path));
+        Type *tryLocate(String const &path) const {
+            return dynamic_cast<Type *>(tryLocateFile(path));
         }
 
         /**
@@ -214,8 +214,8 @@ namespace de
          * @return  The found file.
          */
         template <typename Type>
-        Type& locate(const String& path) const {
-            Type* found = tryLocate<Type>(path);
+        Type &locate(String const &path) const {
+            Type *found = tryLocate<Type>(path);
             if(!found) {
                 /// @throw NotFoundError  Path didn't exist, or the located file had
                 /// an incompatible type.
@@ -229,7 +229,7 @@ namespace de
          *
          * @param feed  Feed to attach to the folder. The folder gets ownership of the feed.
          */
-        void attach(Feed* feed);
+        void attach(Feed *feed);
         
         /**
          * Detaches a feed from the folder. The feed object is not deleted.
@@ -238,13 +238,13 @@ namespace de
          *
          * @return  The Feed object. Ownership is returned to the caller.
          */
-        Feed* detach(Feed& feed);
+        Feed *detach(Feed &feed);
 
         /**
          * Provides access to the list of Feeds for this folder. The feeds are responsible
          * for creating File and Folder instances in the folder.
          */
-        const Feeds& feeds() const { return _feeds; }
+        Feeds const &feeds() const { return _feeds; }
         
     private:
         /// A map of file names to file instances.

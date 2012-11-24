@@ -38,9 +38,9 @@ class DENG2_PUBLIC Block : public QByteArray, public IByteArray, public IBlock
 {
 public:
     Block(Size initialSize = 0);
-    Block(const IByteArray& array);
-    Block(const Block& other);
-    Block(const QByteArray& byteArray);
+    Block(IByteArray const &array);
+    Block(Block const &other);
+    Block(QByteArray const &byteArray);
 
     /**
      * Constructs a block by reading the contents of an input stream. The block
@@ -49,7 +49,7 @@ public:
      *
      * @param stream  Stream to read from.
      */
-    Block(IIStream& stream);
+    Block(IIStream &stream);
 
     /**
      * Constructs a block by reading the contents of an input stream in const
@@ -58,7 +58,7 @@ public:
      *
      * @param stream  Stream to read from.
      */
-    Block(const IIStream& stream);
+    Block(IIStream const &stream);
 
     /**
      * Construct a new block and copy its contents from the specified
@@ -68,26 +68,26 @@ public:
      * @param at     Offset within source data.
      * @param count  Number of bytes to copy. Also the size of the new block.
      */
-    Block(const IByteArray& array, Offset at, Size count);
+    Block(IByteArray const &array, Offset at, Size count);
 
     // Implements IByteArray.
     Size size() const;
-    void get(Offset at, Byte* values, Size count) const;
-    void set(Offset at, const Byte* values, Size count);
+    void get(Offset at, Byte *values, Size count) const;
+    void set(Offset at, Byte const *values, Size count);
 
     // Implements IBlock.
     void clear();
-    void copyFrom(const IByteArray& array, Offset at, Size count);
+    void copyFrom(IByteArray const &array, Offset at, Size count);
     void resize(Size size);
-    const Byte* data() const;
+    Byte const *data() const;
 
-    Byte* data();
+    Byte *data();
 
     /// Appends a block after this one.
-    Block& operator += (const Block& other);
+    Block &operator += (Block const &other);
 
     /// Copies the contents of another block.
-    Block& operator = (const Block& other);
+    Block &operator = (Block const &other);
 };
 
 } // namespace de

@@ -30,12 +30,12 @@ const duint UNDEFINED_POS = 0xffffffff;
 TokenRange::TokenRange() : _tokens(0), _start(0), _end(0)
 {}
 
-TokenRange::TokenRange(const TokenBuffer& tokens) : _tokens(&tokens), _start(0)
+TokenRange::TokenRange(TokenBuffer const &tokens) : _tokens(&tokens), _start(0)
 {
     _end = _tokens->size();
 }
 
-TokenRange::TokenRange(const TokenBuffer& tokens, duint start, duint end)
+TokenRange::TokenRange(TokenBuffer const &tokens, duint start, duint end)
     : _tokens(&tokens), _start(start), _end(end)
 {    
 }
@@ -65,7 +65,7 @@ duint TokenRange::tokenPos(duint index) const
     return index - _start;
 }
 
-const Token& TokenRange::token(duint pos) const
+Token const &TokenRange::token(duint pos) const
 {
     if(pos >= size())
     {
@@ -77,7 +77,7 @@ const Token& TokenRange::token(duint pos) const
     return _tokens->at(tokenIndex(pos));
 }
 
-const Token& TokenRange::firstToken() const
+Token const &TokenRange::firstToken() const
 {
     if(!size())
     {
@@ -87,7 +87,7 @@ const Token& TokenRange::firstToken() const
     return token(0);
 }
 
-const Token& TokenRange::lastToken() const
+Token const &TokenRange::lastToken() const
 {
     if(!size())
     {
@@ -97,7 +97,7 @@ const Token& TokenRange::lastToken() const
     return token(size() - 1);
 }
 
-bool TokenRange::beginsWith(const QChar* str) const
+bool TokenRange::beginsWith(QChar const *str) const
 {
     if(size())
     {
@@ -132,7 +132,7 @@ TokenRange TokenRange::between(duint startPos, duint endPos) const
     return TokenRange(*_tokens, tokenIndex(startPos), tokenIndex(endPos));
 }
 
-dint TokenRange::find(const QChar* token, dint startPos) const
+dint TokenRange::find(QChar const *token, dint startPos) const
 {
     duint len = size();
     DENG2_ASSERT(startPos >= 0 && startPos <= dint(len));
@@ -145,7 +145,7 @@ dint TokenRange::find(const QChar* token, dint startPos) const
     return -1;
 }
 
-dint TokenRange::findBracketless(const QChar* token, dint startPos) const
+dint TokenRange::findBracketless(QChar const *token, dint startPos) const
 {
     dint index = findIndexSkippingBrackets(token, tokenIndex(startPos));
     if(index >= 0)
@@ -155,13 +155,13 @@ dint TokenRange::findBracketless(const QChar* token, dint startPos) const
     return -1;
 }
 
-dint TokenRange::findIndexSkippingBrackets(const QChar* token, dint startIndex) const
+dint TokenRange::findIndexSkippingBrackets(QChar const *token, dint startIndex) const
 {
     DENG2_ASSERT(startIndex >= dint(_start) && startIndex <= dint(_end));
     
     for(duint i = startIndex; i < _end; ++i)
     {
-        const Token& t = _tokens->at(i);
+        Token const &t = _tokens->at(i);
         if(t.equals(Token::PARENTHESIS_OPEN) || t.equals(Token::BRACKET_OPEN) ||
            t.equals(Token::CURLY_OPEN))
         {
@@ -174,7 +174,7 @@ dint TokenRange::findIndexSkippingBrackets(const QChar* token, dint startIndex) 
     return -1;
 }
 
-bool TokenRange::getNextDelimited(const QChar* delimiter, TokenRange& subrange) const
+bool TokenRange::getNextDelimited(QChar const *delimiter, TokenRange &subrange) const
 {
     if(subrange.undefined())
     {
@@ -207,7 +207,7 @@ bool TokenRange::getNextDelimited(const QChar* delimiter, TokenRange& subrange) 
     return true;
 }
 
-void TokenRange::bracketTokens(const Token& openingToken, const QChar*& opening,
+void TokenRange::bracketTokens(Token const &openingToken, const QChar*& opening,
                                const QChar*& closing)
 {
     opening = NULL;
@@ -232,15 +232,15 @@ void TokenRange::bracketTokens(const Token& openingToken, const QChar*& opening,
 
 duint TokenRange::closingBracket(duint openBracketPos) const
 {
-    const QChar* openingToken;
-    const QChar* closingToken;
+    QChar const *openingToken;
+    QChar const *closingToken;
     
     bracketTokens(token(openBracketPos), openingToken, closingToken);
     
     int level = 1;
     for(dint i = tokenIndex(openBracketPos + 1); i < dint(_end); ++i)
     {
-        const Token& token = _tokens->at(i);
+        Token const &token = _tokens->at(i);
         if(token.equals(closingToken))
         {
             --level;
@@ -262,8 +262,8 @@ duint TokenRange::closingBracket(duint openBracketPos) const
 
 duint TokenRange::openingBracket(duint closeBracketPos) const
 {
-    const QChar* openingToken;
-    const QChar* closingToken;
+    QChar const *openingToken;
+    QChar const *closingToken;
     
     for(dint start = tokenIndex(closeBracketPos - 1); start >= 0; --start)
     {

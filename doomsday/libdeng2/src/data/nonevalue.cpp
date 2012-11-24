@@ -26,7 +26,7 @@ using namespace de;
 NoneValue::NoneValue()
 {}
 
-Value* NoneValue::duplicate() const
+Value *NoneValue::duplicate() const
 {
     return new NoneValue();
 }
@@ -41,9 +41,9 @@ bool NoneValue::isTrue() const
     return false;
 }
 
-dint NoneValue::compare(const Value& value) const
+dint NoneValue::compare(Value const &value) const
 {
-    const NoneValue* other = dynamic_cast<const NoneValue*>(&value);
+    NoneValue const *other = dynamic_cast<NoneValue const *>(&value);
     if(other)
     {
         // All nones are equal.
@@ -53,12 +53,12 @@ dint NoneValue::compare(const Value& value) const
     return 1;
 }
 
-void NoneValue::operator >> (Writer& to) const
+void NoneValue::operator >> (Writer &to) const
 {
     to << SerialId(NONE);
 }
 
-void NoneValue::operator << (Reader& from)
+void NoneValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

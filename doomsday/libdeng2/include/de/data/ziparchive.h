@@ -72,11 +72,11 @@ namespace de
          *              byte array remains in existence for the lifetime
          *              of the Archive instance.
          */
-        ZipArchive(const IByteArray& data);
+        ZipArchive(IByteArray const &data);
 
         virtual ~ZipArchive();
 
-        void operator >> (Writer& to) const;
+        void operator >> (Writer &to) const;
 
     public:
         /**
@@ -87,12 +87,12 @@ namespace de
          *
          * @return @c true, if the file looks like an archive.
          */
-        static bool recognize(const File& file);
+        static bool recognize(File const &file);
 
     protected:
-        Entry* newEntry();
+        Entry *newEntry();
 
-        void readFromSource(const Entry* entry, const String& path, IBlock& uncompressedData) const;
+        void readFromSource(Entry const *entry, String const &path, IBlock &uncompressedData) const;
 
         struct ZipEntry : public Entry
         {

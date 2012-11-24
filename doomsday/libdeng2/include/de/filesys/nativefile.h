@@ -45,7 +45,7 @@ namespace de
          * @param nativePath  Path in the native file system to access. Relative to the
          *                    current working directory.
          */
-        NativeFile(const String& name, const NativePath& nativePath);
+        NativeFile(String const &name, NativePath const &nativePath);
         
         virtual ~NativeFile();
 
@@ -55,21 +55,21 @@ namespace de
         /**
          * Returns the native path of the file.
          */
-        const NativePath& nativePath() const { return _nativePath; }
+        NativePath const &nativePath() const { return _nativePath; }
 
-        void setMode(const Flags& newMode);
+        void setMode(Flags const &newMode);
 
         // Implements IByteArray.
         Size size() const;
-        void get(Offset at, Byte* values, Size count) const;
-        void set(Offset at, const Byte* values, Size count);
+        void get(Offset at, Byte *values, Size count) const;
+        void set(Offset at, Byte const *values, Size count);
         
     protected:
         /// Returns the input stream.
-        QFile& input() const;
+        QFile &input() const;
 
         /// Returns the output stream.
-        QFile& output();
+        QFile &output();
 
         /// Close any open streams.
         void close();
@@ -79,10 +79,10 @@ namespace de
         NativePath _nativePath;
         
         /// Input stream.
-        mutable QFile* _in;
+        mutable QFile *_in;
         
         /// Output stream.
-        QFile* _out;
+        QFile *_out;
     };
 }
 

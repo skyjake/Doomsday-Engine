@@ -39,32 +39,32 @@ namespace de
         DENG2_ERROR(IllegalPatternError);
         
     public:
-        TextValue(const String& initialValue = "");
+        TextValue(String const &initialValue = "");
 
         /// Converts the TextValue to plain text.
-        operator const String& () const;
+        operator String const &() const;
 
-        Value* duplicate() const;
+        Value *duplicate() const;
         Number asNumber() const;
         Text asText() const;
         dsize size() const;
         bool isTrue() const;
-        dint compare(const Value& value) const;
-        void sum(const Value& value);
-        void multiply(const Value& value);
-        void divide(const Value& value);
-        void modulo(const Value& divisor);
+        dint compare(Value const &value) const;
+        void sum(Value const &value);
+        void multiply(Value const &value);
+        void divide(Value const &value);
+        void modulo(Value const &divisor);
         
-        static String substitutePlaceholders(const String& pattern, 
-            const std::list<const Value*>& args);
+        static String substitutePlaceholders(String const &pattern, 
+            const std::list<Value const *>& args);
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
         
     protected:
         /// Changes the text of the value.
-        void setValue(const String& text);
+        void setValue(String const &text);
         
     private:
         Text _value;

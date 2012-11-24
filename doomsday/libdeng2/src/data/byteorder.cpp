@@ -62,28 +62,28 @@ void ByteOrder::foreignToNative(const de::dint64& foreignValue, de::dint64& nati
                     reinterpret_cast<      de::duint64&>(nativeValue));
 }
 
-void ByteOrder::nativeToForeign(const de::dfloat& nativeValue, de::dfloat& foreignValue) const
+void ByteOrder::nativeToForeign(de::dfloat const &nativeValue, de::dfloat &foreignValue) const
 {
     DENG2_ASSERT(sizeof(de::dfloat) == sizeof(de::duint32));
     nativeToForeign(reinterpret_cast<const de::duint32&>(nativeValue),
                     reinterpret_cast<      de::duint32&>(foreignValue));
 }
 
-void ByteOrder::nativeToForeign(const de::ddouble& nativeValue, de::ddouble& foreignValue) const
+void ByteOrder::nativeToForeign(de::ddouble const &nativeValue, de::ddouble &foreignValue) const
 {
     DENG2_ASSERT(sizeof(de::ddouble) == sizeof(de::duint64));
     nativeToForeign(reinterpret_cast<const de::duint64&>(nativeValue),
                     reinterpret_cast<      de::duint64&>(foreignValue));
 }
 
-void ByteOrder::foreignToNative(const de::dfloat& foreignValue, de::dfloat& nativeValue) const
+void ByteOrder::foreignToNative(de::dfloat const &foreignValue, de::dfloat &nativeValue) const
 {
     DENG2_ASSERT(sizeof(de::dfloat) == sizeof(de::duint32));
     foreignToNative(reinterpret_cast<const de::duint32&>(foreignValue),
                     reinterpret_cast<      de::duint32&>(nativeValue));
 }
 
-void ByteOrder::foreignToNative(const de::ddouble& foreignValue, de::ddouble& nativeValue) const
+void ByteOrder::foreignToNative(de::ddouble const &foreignValue, de::ddouble &nativeValue) const
 {
     DENG2_ASSERT(sizeof(de::ddouble) == sizeof(de::duint64));
     foreignToNative(reinterpret_cast<const de::duint64&>(foreignValue),
@@ -201,8 +201,8 @@ void LittleEndianByteOrder::nativeToForeign(const de::duint64& nativeValue, de::
 de::duint64 de::swap64(const de::duint64& n)
 {
     de::duint64 result;
-    const dbyte* in = reinterpret_cast<const dbyte*>(&n);
-    dbyte* out = reinterpret_cast<dbyte*>(&result);
+    dbyte const *in = reinterpret_cast<dbyte const *>(&n);
+    dbyte *out = reinterpret_cast<dbyte *>(&result);
     
     out[0] = in[7];
     out[1] = in[6];

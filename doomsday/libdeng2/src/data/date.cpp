@@ -24,7 +24,7 @@ using namespace de;
 Date::Date()
 {}
 
-Date::Date(const Time& time) : Time(time)
+Date::Date(Time const &time) : Time(time)
 {}
 
 Time Date::asTime() const
@@ -40,7 +40,7 @@ String Date::asText() const
     return result;
 }
 
-QTextStream& de::operator << (QTextStream& os, const Date& d)
+QTextStream &de::operator << (QTextStream &os, Date const &d)
 {
     os << d.asDateTime().toString("yyyy-MM-dd");
     return os;

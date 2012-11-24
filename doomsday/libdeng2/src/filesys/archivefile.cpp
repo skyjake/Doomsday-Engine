@@ -23,7 +23,7 @@
 
 using namespace de;
 
-ArchiveFile::ArchiveFile(const String& name, Archive& archive, const String& entryPath)
+ArchiveFile::ArchiveFile(String const &name, Archive &archive, String const &entryPath)
     : ByteArrayFile(name), _archive(archive), _entryPath(entryPath)
 {}
 
@@ -53,17 +53,17 @@ IByteArray::Size ArchiveFile::size() const
     return archive().entryBlock(_entryPath).size();
 }
 
-void ArchiveFile::get(Offset at, Byte* values, Size count) const
+void ArchiveFile::get(Offset at, Byte *values, Size count) const
 {
     archive().entryBlock(_entryPath).get(at, values, count);
 }
 
-void ArchiveFile::set(Offset at, const Byte* values, Size count)
+void ArchiveFile::set(Offset at, Byte const *values, Size count)
 {
     verifyWriteAccess();
     
     // The entry will be marked for recompression (due to non-const access).
-    Block& entryBlock = archive().entryBlock(_entryPath);
+    Block &entryBlock = archive().entryBlock(_entryPath);
     entryBlock.set(at, values, count);
     
     // Update status.

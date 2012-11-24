@@ -23,10 +23,10 @@
 
 using namespace de;
 
-Lex::Lex(const String& input) : _input(&input), _lineCommentChar('#'), _mode(0)
+Lex::Lex(String const &input) : _input(&input), _lineCommentChar('#'), _mode(0)
 {}
 
-const String& Lex::input() const
+String const &Lex::input() const
 {
     return *_input;
 }
@@ -126,7 +126,7 @@ bool Lex::onlyWhiteOnLine()
             }
         }
     }
-    catch(const OutOfInputError&)
+    catch(OutOfInputError const &)
     {
         _state = saved;
         return true;

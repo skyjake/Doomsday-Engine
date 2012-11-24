@@ -27,7 +27,7 @@
 
 using namespace de;
 
-CatchStatement::CatchStatement(ArrayExpression* args) : _args(args)
+CatchStatement::CatchStatement(ArrayExpression *args) : _args(args)
 {
     if(!_args)
     {
@@ -40,7 +40,7 @@ CatchStatement::~CatchStatement()
     delete _args;
 }
 
-void CatchStatement::execute(Context& context) const
+void CatchStatement::execute(Context &context) const
 {
     context.proceed();
 }
@@ -50,7 +50,7 @@ bool CatchStatement::isFinal() const
     return flags.testFlag(FinalCompound);
 }
 
-bool CatchStatement::matches(const Error& err) const
+bool CatchStatement::matches(Error const &err) const
 {
     if(!_args->size())
     {
@@ -58,7 +58,7 @@ bool CatchStatement::matches(const Error& err) const
         return true;
     }
     
-    const NameExpression* name = dynamic_cast<const NameExpression*>(&_args->at(0));
+    NameExpression const *name = dynamic_cast<NameExpression const *>(&_args->at(0));
     DENG2_ASSERT(name != NULL);
     
     return (name->identifier() == "Error" ||   // Generic catch-all.
@@ -66,12 +66,12 @@ bool CatchStatement::matches(const Error& err) const
             String(err.name()).endsWith("_" + name->identifier())); // Sub-error match.
 }
 
-void CatchStatement::executeCatch(Context& context, const Error& err) const
+void CatchStatement::executeCatch(Context &context, Error const &err) const
 {
     if(_args->size() > 1)
     {
         // Place the error message into the specified variable.
-        RefValue& ref = context.evaluator().evaluateTo<RefValue>(&_args->at(1));
+        RefValue &ref = context.evaluator().evaluateTo<RefValue>(&_args->at(1));
         ref.assign(new TextValue(err.asText()));
     }
     
@@ -79,12 +79,12 @@ void CatchStatement::executeCatch(Context& context, const Error& err) const
     context.start(_compound.firstStatement(), next());
 }
 
-void CatchStatement::operator >> (Writer& to) const
+void CatchStatement::operator >> (Writer &to) const
 {
     to << SerialId(CATCH) << duint8(flags) << *_args << _compound;
 }
 
-void CatchStatement::operator << (Reader& from)
+void CatchStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

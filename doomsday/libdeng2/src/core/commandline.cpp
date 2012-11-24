@@ -34,10 +34,10 @@
 
 using namespace de;
 
-static char* duplicateStringAsUtf8(const QString& s)
+static char *duplicateStringAsUtf8(QString const &s)
 {
     QByteArray utf = s.toUtf8();
-    char* copy = (char*) malloc(utf.size() + 1);
+    char *copy = (char *) malloc(utf.size() + 1);
     memcpy(copy, utf.constData(), utf.size());
     copy[utf.size()] = 0;
     return copy;
@@ -50,7 +50,7 @@ struct CommandLine::Instance
     typedef QList<QString> Arguments;
     Arguments arguments;
 
-    typedef std::vector<char*> ArgumentPointers; // UTF-8 representation
+    typedef std::vector<char *> ArgumentPointers; // UTF-8 representation
     ArgumentPointers pointers;
 
     typedef std::vector<String> ArgumentStrings;
@@ -75,7 +75,7 @@ struct CommandLine::Instance
         pointers.push_back(0);
     }
 
-    void appendArg(const QString& arg)
+    void appendArg(QString const &arg)
     {
         arguments.append(arg);
 
@@ -92,7 +92,7 @@ struct CommandLine::Instance
         DENG2_ASSERT(pointers.back() == 0);
     }
 
-    void insert(duint pos, const String& arg)
+    void insert(duint pos, String const &arg)
     {
         if(pos > (duint) arguments.size())
         {
@@ -127,7 +127,7 @@ CommandLine::CommandLine()
     d = new Instance;
 }
 
-CommandLine::CommandLine(const QStringList& args)
+CommandLine::CommandLine(QStringList const &args)
 {
     d = new Instance;
 
@@ -145,7 +145,7 @@ CommandLine::CommandLine(const QStringList& args)
     }
 }
 
-CommandLine::CommandLine(const CommandLine& other)
+CommandLine::CommandLine(CommandLine const &other)
 {
     d = new Instance;
 
@@ -175,12 +175,12 @@ void CommandLine::clear()
     d->clear();
 }
 
-void CommandLine::append(const String& arg)
+void CommandLine::append(String const &arg)
 {
     d->appendArg(arg);
 }
 
-void CommandLine::insert(duint pos, const String& arg)
+void CommandLine::insert(duint pos, String const &arg)
 {
     d->insert(pos, arg);
 }
@@ -190,7 +190,7 @@ void CommandLine::remove(duint pos)
     d->remove(pos);
 }
 
-dint CommandLine::check(const String& arg, dint numParams) const
+dint CommandLine::check(String const &arg, dint numParams) const
 {
     // Do a search for arg.
     Instance::Arguments::const_iterator i = d->arguments.begin();
@@ -216,7 +216,7 @@ dint CommandLine::check(const String& arg, dint numParams) const
     return i - d->arguments.begin();
 }
 
-bool CommandLine::getParameter(const String& arg, String& param) const
+bool CommandLine::getParameter(String const &arg, String &param) const
 {
     dint pos = check(arg, 1);
     if(pos > 0)
@@ -227,7 +227,7 @@ bool CommandLine::getParameter(const String& arg, String& param) const
     return false;
 }
 
-dint CommandLine::has(const String& arg) const
+dint CommandLine::has(String const &arg) const
 {
     dint howMany = 0;
     
@@ -252,7 +252,7 @@ bool CommandLine::isOption(duint pos) const
     return isOption(d->arguments[pos]);
 }
 
-bool CommandLine::isOption(const String& arg)
+bool CommandLine::isOption(String const &arg)
 {
     return !(arg.empty() || arg[0] != '-');
 }
@@ -262,7 +262,7 @@ const String CommandLine::at(duint pos) const
     return d->arguments.at(pos);
 }
 
-const char* const* CommandLine::argv() const
+char const *const *CommandLine::argv() const
 {
     DENG2_ASSERT(*d->pointers.rbegin() == 0); // the list itself must be null-terminated
     return &d->pointers[0];
@@ -310,7 +310,7 @@ void CommandLine::makeAbsolutePath(duint pos)
     }
 }
 
-void CommandLine::parseResponseFile(const NativePath& nativePath)
+void CommandLine::parseResponseFile(NativePath const &nativePath)
 {
     QFile response(nativePath.expand());
     if(response.open(QFile::ReadOnly | QFile::Text))
@@ -323,7 +323,7 @@ void CommandLine::parseResponseFile(const NativePath& nativePath)
     }
 }
 
-void CommandLine::parse(const String& cmdLine)
+void CommandLine::parse(String const &cmdLine)
 {
     String::const_iterator i = cmdLine.begin();
 
@@ -395,19 +395,19 @@ void CommandLine::parse(const String& cmdLine)
         {
             isDone = true;
         }
-        else if(!word.empty()) // Make sure there *is* a word.
+        else if(!word.empty()) // Make sure there *is *a word.
         {
             d->appendArg(word);
         }
     }
 }
 
-void CommandLine::alias(const String& full, const String& alias)
+void CommandLine::alias(String const &full, String const &alias)
 {
     d->aliases[full.toStdString()].push_back(alias);
 }
 
-bool CommandLine::matches(const String& full, const String& fullOrAlias) const
+bool CommandLine::matches(String const &full, String const &fullOrAlias) const
 {
     if(!full.compareWithoutCase(fullOrAlias))
     {

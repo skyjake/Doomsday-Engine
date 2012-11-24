@@ -29,30 +29,30 @@ struct PathTree::Node::Instance
     bool isLeaf;
 
     /// PathTree which owns this node.
-    PathTree& tree;
+    PathTree &tree;
 
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
     PathTree::SegmentId segmentId;
 
     /// Parent node in the user's logical hierarchy.
-    PathTree::Node* parent;
+    PathTree::Node *parent;
 
     /// User-specified data pointer associated with this node.
-    void* userPointer;
+    void *userPointer;
 
     /// User-specified value associated with this node.
     int userValue;
 
-    Instance(PathTree& _tree, bool _isLeaf, PathTree::SegmentId _segmentId,
-             PathTree::Node* _parent)
+    Instance(PathTree &_tree, bool _isLeaf, PathTree::SegmentId _segmentId,
+             PathTree::Node *_parent)
         : isLeaf(_isLeaf), tree(_tree), segmentId(_segmentId), parent(_parent),
           userPointer(0), userValue(0)
     {}
 };
 
-PathTree::Node::Node(PathTree& tree, PathTree::NodeType type, PathTree::SegmentId fragmentId,
-    PathTree::Node* parent, void* userPointer, int userValue)
+PathTree::Node::Node(PathTree &tree, PathTree::NodeType type, PathTree::SegmentId fragmentId,
+    PathTree::Node *parent, void *userPointer, int userValue)
 {
     d = new Instance(tree, type == PathTree::Leaf, fragmentId, parent);
     setUserPointer(userPointer);
@@ -69,12 +69,12 @@ bool PathTree::Node::isLeaf() const
     return d->isLeaf;
 }
 
-PathTree& PathTree::Node::tree() const
+PathTree &PathTree::Node::tree() const
 {
     return d->tree;
 }
 
-PathTree::Node* PathTree::Node::parent() const
+PathTree::Node *PathTree::Node::parent() const
 {
     return d->parent;
 }
@@ -84,7 +84,7 @@ PathTree::SegmentId PathTree::Node::segmentId() const
     return d->segmentId;
 }
 
-String const& PathTree::Node::name() const
+String const &PathTree::Node::name() const
 {
     return tree().segmentName(d->segmentId);
 }
@@ -94,7 +94,7 @@ Path::hash_type PathTree::Node::hash() const
     return tree().segmentHash(d->segmentId);
 }
 
-void* PathTree::Node::userPointer() const
+void *PathTree::Node::userPointer() const
 {
     return d->userPointer;
 }
@@ -104,22 +104,22 @@ int PathTree::Node::userValue() const
     return d->userValue;
 }
 
-PathTree::Node& PathTree::Node::setUserPointer(void* ptr)
+PathTree::Node &PathTree::Node::setUserPointer(void *ptr)
 {
     d->userPointer = ptr;
     return *this;
 }
 
-PathTree::Node& PathTree::Node::setUserValue(int value)
+PathTree::Node &PathTree::Node::setUserValue(int value)
 {
     d->userValue = value;
     return *this;
 }
 
 /// @todo This logic should be encapsulated in de::Path or de::Path::Segment; use QChar.
-static int matchName(char const* string, char const* pattern)
+static int matchName(char const *string, char const *pattern)
 {
-    char const* in = string, *st = pattern;
+    char const *in = string, *st = pattern;
 
     while(*in)
     {
@@ -154,7 +154,7 @@ static int matchName(char const* string, char const* pattern)
     return *st == 0;
 }
 
-int PathTree::Node::comparePath(de::Path const& searchPattern, ComparisonFlags flags) const
+int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags flags) const
 {
     if(((flags & PathTree::NoLeaf)   && isLeaf()) ||
        ((flags & PathTree::NoBranch) && !isLeaf()))
@@ -162,12 +162,12 @@ int PathTree::Node::comparePath(de::Path const& searchPattern, ComparisonFlags f
 
     try
     {
-        de::Path::Segment const* snode = &searchPattern.lastSegment();
+        de::Path::Segment const *snode = &searchPattern.lastSegment();
 
         // In reverse order, compare each path node in the search term.
         int pathNodeCount = searchPattern.segmentCount();
 
-        PathTree::Node const* node = this;
+        PathTree::Node const *node = this;
         for(int i = 0; i < pathNodeCount; ++i)
         {
             bool const snameIsWild = !snode->toString().compare("*");
@@ -214,7 +214,7 @@ int PathTree::Node::comparePath(de::Path const& searchPattern, ComparisonFlags f
 }
 
 #ifdef LIBDENG_STACK_MONITOR
-static void* stackStart;
+static void *stackStart;
 static size_t maxStackDepth;
 #endif
 
@@ -231,12 +231,12 @@ namespace internal {
  * path (when descending), then allocates memory for the string, and finally
  * copies each fragment with the delimiters (on the way out).
  */
-static void pathConstructor(internal::PathConstructorParams& parm, PathTree::Node const& trav)
+static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Node const &trav)
 {
-    String const& fragment = trav.name();
+    String const &fragment = trav.name();
 
 #ifdef LIBDENG_STACK_MONITOR
-    maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
+    maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void *)&fragment);
 #endif
 
     parm.length += fragment.length();

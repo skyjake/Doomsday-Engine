@@ -52,8 +52,8 @@ namespace de
         DENG2_ERROR(WrongArgumentsError);
 
         typedef std::list<String> Arguments;
-        typedef std::map<String, Value*> Defaults;
-        typedef std::list<const Value*> ArgumentValues;
+        typedef std::map<String, Value *> Defaults;
+        typedef std::list<Value const *> ArgumentValues;
         
     public:
         Function();
@@ -64,24 +64,24 @@ namespace de
          * @param args      Names of the function arguments.
          * @param defaults  Default values for some or all of the arguments.
          */
-        Function(const Arguments& args, const Defaults& defaults);
+        Function(Arguments const &args, Defaults const &defaults);
         
         ~Function();
 
         /// Returns a human-readable representation of the function.
         String asText() const;
         
-        Compound& compound() { return _compound; }
+        Compound &compound() { return _compound; }
 
-        const Compound& compound() const { return _compound; }
+        Compound const &compound() const { return _compound; }
 
-        Arguments& arguments() { return _arguments; }
+        Arguments &arguments() { return _arguments; }
         
-        const Arguments& arguments() const { return _arguments; }
+        Arguments const &arguments() const { return _arguments; }
 
-        Defaults& defaults() { return _defaults; }
+        Defaults &defaults() { return _defaults; }
         
-        const Defaults& defaults() const { return _defaults; }
+        Defaults const &defaults() const { return _defaults; }
       
         /**
          * Maps a set of named and unnamed argument values to the list of values that
@@ -95,19 +95,19 @@ namespace de
          *                The values are in the order the arguments have been declared in
          *                the function statement.
          */
-        void mapArgumentValues(const ArrayValue& args, ArgumentValues& values) const;
+        void mapArgumentValues(ArrayValue const &args, ArgumentValues &values) const;
 
         /**
          * Sets the global namespace of the function. This is the namespace 
          * where the function was initially created.
          */
-        void setGlobals(Record* globals);
+        void setGlobals(Record *globals);
 
         /**
          * Returns the global namespace of the function.
          * Return @c NULL when the originating namespace has been deleted.
          */
-        Record* globals() const;
+        Record *globals() const;
         
         /**
          * Perform a native call of the function. 
@@ -123,14 +123,14 @@ namespace de
          *         native call handles everything, including placing the 
          *         return value into the evaluator.
          */
-        virtual bool callNative(Context& context, const ArgumentValues& args) const;
+        virtual bool callNative(Context &context, ArgumentValues const &args) const;
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
         // Observes Record deletion.
-        void recordBeingDeleted(Record& record);
+        void recordBeingDeleted(Record &record);
         
     private:
         /// Argument names.
@@ -145,7 +145,7 @@ namespace de
         /// Namespace where the function was created. This global namespace is
         /// used always when executing the function, regardless of where the
         /// function is called.
-        Record* _globals;
+        Record *_globals;
     };
 }
 

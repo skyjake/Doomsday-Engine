@@ -77,12 +77,12 @@ void Time::Delta::sleep() const
     }
 }
 
-Time::Delta Time::Delta::operator + (const ddouble& d) const
+Time::Delta Time::Delta::operator + (ddouble const &d) const
 {
     return _seconds + d;
 }
 
-Time::Delta Time::Delta::operator - (const ddouble& d) const
+Time::Delta Time::Delta::operator - (ddouble const &d) const
 {
     return _seconds - d;
 }
@@ -90,30 +90,30 @@ Time::Delta Time::Delta::operator - (const ddouble& d) const
 Time::Time() : _time(QDateTime::currentDateTime())
 {}
 
-bool Time::operator < (const Time& t) const
+bool Time::operator < (Time const &t) const
 {
     return (_time < t._time);
 }
 
-bool Time::operator == (const Time& t) const
+bool Time::operator == (Time const &t) const
 {
     return (_time == t._time);
 }
 
-Time Time::operator + (const Delta& delta) const
+Time Time::operator + (Delta const &delta) const
 {
     Time result = *this;
     result._time.addMSecs(delta.asMilliSeconds());
     return result;
 }
 
-Time& Time::operator += (const Delta& delta)
+Time &Time::operator += (Delta const &delta)
 {
     _time.addMSecs(delta.asMilliSeconds());
     return *this;
 }
 
-Time::Delta Time::operator - (const Time& earlierTime) const
+Time::Delta Time::operator - (Time const &earlierTime) const
 {
 #ifdef DENG2_QT_4_7_OR_NEWER
     return earlierTime._time.msecsTo(_time) / 1000.0;
@@ -149,7 +149,7 @@ Date Time::asDate() const
     return Date(*this);
 }
 
-void Time::operator >> (Writer& to) const
+void Time::operator >> (Writer &to) const
 {
     Block bytes;
     QDataStream s(&bytes, QIODevice::WriteOnly);
@@ -157,7 +157,7 @@ void Time::operator >> (Writer& to) const
     to << bytes;
 }
 
-void Time::operator << (Reader& from)
+void Time::operator << (Reader &from)
 {
     Block bytes;
     from >> bytes;
@@ -165,7 +165,7 @@ void Time::operator << (Reader& from)
     s >> _time;
 }
 
-QTextStream& de::operator << (QTextStream& os, const Time& t)
+QTextStream &de::operator << (QTextStream &os, Time const &t)
 {
     os << t.asText();
     return os;

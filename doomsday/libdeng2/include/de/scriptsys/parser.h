@@ -81,61 +81,61 @@ namespace de
         ~Parser();
         
         // Implements IParser.
-        void parse(const String& input, Script& output);
+        void parse(String const &input, Script &output);
 
-        void parseCompound(Compound& compound);
+        void parseCompound(Compound &compound);
 
-        void parseStatement(Compound& compound);
+        void parseStatement(Compound &compound);
         
-        Expression* parseConditionalCompound(Compound& compound, const CompoundFlags& flags = 0);
+        Expression *parseConditionalCompound(Compound &compound, CompoundFlags const &flags = 0);
 
-        IfStatement* parseIfStatement();
+        IfStatement *parseIfStatement();
 
-        WhileStatement* parseWhileStatement();
+        WhileStatement *parseWhileStatement();
                 
-        ForStatement* parseForStatement();
+        ForStatement *parseForStatement();
                 
-        ExpressionStatement* parseImportStatement();
+        ExpressionStatement *parseImportStatement();
                 
-        ExpressionStatement* parseDeclarationStatement();
+        ExpressionStatement *parseDeclarationStatement();
                 
-        ExpressionStatement* parseDeleteStatement();
+        ExpressionStatement *parseDeleteStatement();
 
-        FunctionStatement* parseFunctionStatement();
+        FunctionStatement *parseFunctionStatement();
         
-        void parseTryCatchSequence(Compound& compound);
+        void parseTryCatchSequence(Compound &compound);
                 
-        PrintStatement* parsePrintStatement();
+        PrintStatement *parsePrintStatement();
 
-        AssignStatement* parseAssignStatement();
+        AssignStatement *parseAssignStatement();
 
-        ExpressionStatement* parseExpressionStatement();
+        ExpressionStatement *parseExpressionStatement();
         
         /// Parse a range of tokens as a comma-separated argument list:
-        ArrayExpression* parseList(const TokenRange& range,
-                                   const QChar* separator = Token::COMMA,
-                                   const Expression::Flags& flags = Expression::ByValue);
+        ArrayExpression *parseList(TokenRange const &range,
+                                   QChar const *separator = Token::COMMA,
+                                   Expression::Flags const &flags = Expression::ByValue);
 
         /// Parse a range of tokens as an operator-based expression.
-        Expression* parseExpression(const TokenRange& range, 
-            const Expression::Flags& flags = Expression::ByValue);
+        Expression *parseExpression(TokenRange const &range, 
+            Expression::Flags const &flags = Expression::ByValue);
 
-        ArrayExpression* parseArrayExpression(const TokenRange& range);
+        ArrayExpression *parseArrayExpression(TokenRange const &range);
 
-        DictionaryExpression* parseDictionaryExpression(const TokenRange& range);
+        DictionaryExpression *parseDictionaryExpression(TokenRange const &range);
 
-        Expression* parseCallExpression(const TokenRange& nameRange, 
-            const TokenRange& argumentRange);
+        Expression *parseCallExpression(TokenRange const &nameRange, 
+            TokenRange const &argumentRange);
 
-        OperatorExpression* parseOperatorExpression(Operator op, 
-            const TokenRange& leftSide, const TokenRange& rightSide, 
-            const Expression::Flags& rightFlags = Expression::ByValue);
+        OperatorExpression *parseOperatorExpression(Operator op, 
+            TokenRange const &leftSide, TokenRange const &rightSide, 
+            Expression::Flags const &rightFlags = Expression::ByValue);
 
-        Expression* parseTokenExpression(const TokenRange& range, 
-            const Expression::Flags& flags = Expression::ByValue);
+        Expression *parseTokenExpression(TokenRange const &range, 
+            Expression::Flags const &flags = Expression::ByValue);
 
-        Operator findLowestOperator(const TokenRange& range, 
-            TokenRange& leftSide, TokenRange& rightSide);
+        Operator findLowestOperator(TokenRange const &range, 
+            TokenRange &leftSide, TokenRange &rightSide);
                 
     protected:  
         /// Gets the set of tokens for the next statement.

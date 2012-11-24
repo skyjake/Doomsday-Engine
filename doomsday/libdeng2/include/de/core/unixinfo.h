@@ -60,7 +60,7 @@ public:
      *
      * @return  Path.
      */
-    bool path(const String& key, String& value) const;
+    bool path(String const &key, String &value) const;
 
     /**
      * Returns a defaults preference.
@@ -70,11 +70,11 @@ public:
      *
      * @return  Value from a 'defaults' info file.
      */
-    bool defaults(const String& key, String& value) const;
+    bool defaults(String const &key, String &value) const;
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 };
 
 } // namespace de

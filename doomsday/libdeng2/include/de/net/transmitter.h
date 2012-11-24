@@ -43,21 +43,21 @@ public:
      *
      * @param data  Data to send.
      */
-    virtual void send(const IByteArray& data) = 0;
+    virtual void send(IByteArray const &data) = 0;
 
     /**
      * Sends a packet. The packet is first serialized and then sent.
      *
      * @param packet  Packet.
      */
-    virtual void sendPacket(const Packet& packet);
+    virtual void sendPacket(Packet const &packet);
 
     /**
      * Sends a packet. The packet is first serialized and then sent.
      *
      * @param packet  Packet.
      */
-    virtual Transmitter& operator << (const Packet& packet);
+    virtual Transmitter &operator << (Packet const &packet);
 
     // Implements IOStream.
     /**
@@ -65,7 +65,7 @@ public:
      *
      * @param data  Data to send.
      */
-    virtual IOStream& operator << (const IByteArray& data);
+    virtual IOStream &operator << (IByteArray const &data);
 };
 
 } // namespace de

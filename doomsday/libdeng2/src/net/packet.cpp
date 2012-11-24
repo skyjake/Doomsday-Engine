@@ -26,24 +26,24 @@
 
 using namespace de;
 
-Packet::Packet(const Type& t)
+Packet::Packet(Type const &t)
 {
     setType(t);
 }
 
-void Packet::setType(const Type& t)
+void Packet::setType(Type const &t)
 {
     DENG2_ASSERT(t.size() == TYPE_SIZE);
     _type = t;
 }
 
-void Packet::operator >> (Writer& to) const
+void Packet::operator >> (Writer &to) const
 {
     QByteArray bytes = _type.toLatin1();
     to << bytes[0] << bytes[1] << bytes[2] << bytes[3];
 }
 
-void Packet::operator << (Reader& from)
+void Packet::operator << (Reader &from)
 {
     char ident[5];
     from >> ident[0] >> ident[1] >> ident[2] >> ident[3];
@@ -60,7 +60,7 @@ void Packet::operator << (Reader& from)
 void Packet::execute() const
 {}
 
-bool Packet::checkType(Reader& from, const String& type)
+bool Packet::checkType(Reader &from, String const &type)
 {
     char ident[5];
     from.mark();

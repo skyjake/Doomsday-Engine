@@ -34,7 +34,7 @@ using namespace de;
 BuiltInExpression::BuiltInExpression() : _type(NONE), _arg(0)
 {}
 
-BuiltInExpression::BuiltInExpression(Type type, Expression* argument)
+BuiltInExpression::BuiltInExpression(Type type, Expression *argument)
     : _type(type), _arg(argument)
 {}
 
@@ -43,16 +43,16 @@ BuiltInExpression::~BuiltInExpression()
     delete _arg;
 }
 
-void BuiltInExpression::push(Evaluator& evaluator, Record*) const
+void BuiltInExpression::push(Evaluator &evaluator, Record *) const
 {
     Expression::push(evaluator);    
     _arg->push(evaluator);
 }
 
-Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
+Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 {
     std::auto_ptr<Value> value(evaluator.popResult());
-    ArrayValue* args = dynamic_cast<ArrayValue*>(value.get());
+    ArrayValue *args = dynamic_cast<ArrayValue *>(value.get());
     DENG2_ASSERT(args != NULL); // must be an array
     
     switch(_type)
@@ -76,13 +76,13 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
                        "DICTIONARY_KEYS" : "DICTIONARY_VALUES"));
         }
         
-        const DictionaryValue* dict = dynamic_cast<const DictionaryValue*>(&args->at(1));
+        DictionaryValue const *dict = dynamic_cast<DictionaryValue const *>(&args->at(1));
         if(!dict)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Argument must be a dictionary");
         }
-        ArrayValue* array = new ArrayValue();
+        ArrayValue *array = new ArrayValue();
         for(DictionaryValue::Elements::const_iterator i = dict->elements().begin();
             i != dict->elements().end(); ++i)
         {
@@ -108,13 +108,13 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
                 String(_type == RECORD_MEMBERS? "RECORD_MEMBERS" : "RECORD_SUBRECORDS"));
         }
         
-        const RecordValue* rec = dynamic_cast<const RecordValue*>(&args->at(1));
+        RecordValue const *rec = dynamic_cast<RecordValue const *>(&args->at(1));
         if(!rec)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Argument must be a record");
         }
-        DictionaryValue* dict = new DictionaryValue();
+        DictionaryValue *dict = new DictionaryValue();
         if(_type == RECORD_MEMBERS)
         {
             for(Record::Members::const_iterator i = rec->dereference().members().begin();
@@ -182,7 +182,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for DESERIALIZE");
         }
-        const BlockValue* block = dynamic_cast<const BlockValue*>(&args->at(1));
+        BlockValue const *block = dynamic_cast<BlockValue const *>(&args->at(1));
         if(block)
         {
             Reader reader(*block);
@@ -190,7 +190,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
         }
         /*
         // Alternatively allow deserializing from a text value.
-        const TextValue* text = dynamic_cast<const TextValue*>(&args->at(1));
+        TextValue const *text = dynamic_cast<TextValue const *>(&args->at(1));
         if(text)
         {
             return Value::constructFrom(Reader(Block(text->asText().toUtf8())));
@@ -206,7 +206,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
     return NULL;
 }
 
-void BuiltInExpression::operator >> (Writer& to) const
+void BuiltInExpression::operator >> (Writer &to) const
 {
     to << SerialId(BUILT_IN);
 
@@ -215,7 +215,7 @@ void BuiltInExpression::operator >> (Writer& to) const
     to << duint8(_type) << *_arg;
 }
 
-void BuiltInExpression::operator << (Reader& from)
+void BuiltInExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
@@ -236,10 +236,10 @@ void BuiltInExpression::operator << (Reader& from)
     _arg = Expression::constructFrom(from);
 }
 
-BuiltInExpression::Type BuiltInExpression::findType(const String& identifier)
+BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
 {
     struct {
-        const char* str;
+        char const *str;
         Type type;
     } types[] = {
         { "len",            LENGTH },

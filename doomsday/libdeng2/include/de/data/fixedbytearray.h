@@ -39,7 +39,7 @@ public:
      *
      * @param mainArray  Array that holds the data.
      */
-    FixedByteArray(IByteArray& mainArray);
+    FixedByteArray(IByteArray &mainArray);
 
     /**
      * Constructs a modifiable fixed-length byte array out of a portion
@@ -49,7 +49,7 @@ public:
      * @param at         Start of fixed-length region.
      * @param size       Size of fixed-length region.
      */
-    FixedByteArray(IByteArray& mainArray, Offset at, Size size);
+    FixedByteArray(IByteArray &mainArray, Offset at, Size size);
 
     /**
      * Constructs a non-modifiable fixed-length byte array out of an entire
@@ -57,7 +57,7 @@ public:
      *
      * @param mainArray  Array that holds the data.
      */
-    FixedByteArray(const IByteArray& mainArray);
+    FixedByteArray(IByteArray const &mainArray);
 
     /**
      * Constructs a non-modifiable fixed-length byte array out of a portion
@@ -67,9 +67,9 @@ public:
      * @param at         Start of fixed-length region.
      * @param size       Size of fixed-length region.
      */
-    FixedByteArray(const IByteArray& mainArray, Offset at, Size size);
+    FixedByteArray(IByteArray const &mainArray, Offset at, Size size);
 
-    void set(Offset at, const Byte* values, Size count);
+    void set(Offset at, Byte const *values, Size count);
 };
 
 } // namespace de

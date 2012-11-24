@@ -106,60 +106,60 @@ namespace de
          *      a NoneValue will be created for the variable.
          * @param varMode  Mode flags.
          */
-        Variable(const String& name = "", Value* initial = 0,
-                 const Flags& varMode = DefaultMode);
+        Variable(String const &name = "", Value *initial = 0,
+                 Flags const &varMode = DefaultMode);
             
         /**
          * Constructs a copy of another variable.
          *
          * @param other  Variable to copy.
          */
-        Variable(const Variable& other);
+        Variable(Variable const &other);
             
         virtual ~Variable();
         
         /**
          * Returns the name of the variable.
          */
-        const String& name() const { return _name; }
+        String const &name() const { return _name; }
         
         /**
          * Sets the value of the variable.
          *
          * @param v  New value. Variable gets ownership.
          */
-        void set(Value* v);
+        void set(Value *v);
         
         /**
          * Sets the value of the variable.
          *
          * @param v  New value. Variable gets ownership.
          */
-        Variable& operator = (Value* v);
+        Variable &operator = (Value *v);
         
         /**
          * Sets the value of the variable.
          *
          * @param v  New value. Variable takes a copy of this.
          */
-        void set(const Value& v);
+        void set(Value const &v);
         
         /**
          * Returns the value of the variable (non-modifiable).
          */
-        const Value& value() const;
+        Value const &value() const;
         
         /**
          * Returns the value of the variable.
          */
-        Value& value();
+        Value &value();
 
         /**
          * Returns the value of the variable.
          */
         template <typename Type>
-        Type& value() {
-            Type* v = dynamic_cast<Type*>(_value);
+        Type &value() {
+            Type *v = dynamic_cast<Type *>(_value);
             if(!v) {
                 /// @throw TypeError Casting to Type failed.
                 throw TypeError("Variable::value<Type>", "Illegal type conversion");
@@ -171,8 +171,8 @@ namespace de
          * Returns the value of the variable.
          */
         template <typename Type>
-        const Type& value() const {
-            const Type* v = dynamic_cast<const Type*>(_value);
+        Type const &value() const {
+            Type const *v = dynamic_cast<Type const *>(_value);
             if(!v) {
                 /// @throw TypeError Casting to Type failed.
                 throw TypeError("Variable::value<Type>", "Illegal type conversion");
@@ -190,7 +190,7 @@ namespace de
          *
          * @param flags  New mode flags that will replace the current ones.
          */
-        void setMode(const Flags& flags);
+        void setMode(Flags const &flags);
 
         /**
          * Checks that a value is valid, checking what is allowed in the mode
@@ -200,7 +200,7 @@ namespace de
          *
          * @return @c true, if the value is valid. @c false otherwise.
          */
-        bool isValid(const Value& v) const;
+        bool isValid(Value const &v) const;
         
         /**
          * Verifies that a value is valid, checking against what is allowed in the 
@@ -208,14 +208,14 @@ namespace de
          *
          * @param v  Value to test.
          */
-        void verifyValid(const Value& v) const;
+        void verifyValid(Value const &v) const;
         
         /**
          * Verifies that the variable can be assigned a new value.
          *
          * @param attemptedNewValue  The new value that is being assigned.
          */
-        void verifyWritable(const Value& attemptedNewValue);
+        void verifyWritable(Value const &attemptedNewValue);
         
         /**
          * Verifies that a string is a valid name for the variable. If not,
@@ -223,11 +223,11 @@ namespace de
          *
          * @param s  Name to test.
          */
-        static void verifyName(const String& s);
+        static void verifyName(String const &s);
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
         
     public:
         /**
@@ -235,7 +235,7 @@ namespace de
          *
          * @param variable  Variable.
          */
-        DENG2_DEFINE_AUDIENCE(Deletion, void variableBeingDeleted(Variable& variable))
+        DENG2_DEFINE_AUDIENCE(Deletion, void variableBeingDeleted(Variable &variable))
 
         /**
          * The value of the variable has changed.
@@ -243,13 +243,13 @@ namespace de
          * @param variable  Variable.
          * @param newValue  New value of the variable.
          */
-        DENG2_DEFINE_AUDIENCE(Change, void variableValueChanged(Variable& variable, const Value& newValue))
+        DENG2_DEFINE_AUDIENCE(Change, void variableValueChanged(Variable &variable, Value const &newValue))
 
     private:        
         String _name;
 
         /// Value of the variable.
-        Value* _value;
+        Value *_value;
 
         /// Mode flags.
         Flags _mode;

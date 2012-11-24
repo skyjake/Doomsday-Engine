@@ -34,7 +34,7 @@ using namespace de;
 FlowStatement::FlowStatement() : _type(PASS), _arg(0)
 {}
  
-FlowStatement::FlowStatement(Type type, Expression* countArgument) 
+FlowStatement::FlowStatement(Type type, Expression *countArgument) 
     : _type(type), _arg(countArgument) 
 {}
  
@@ -43,9 +43,9 @@ FlowStatement::~FlowStatement()
     delete _arg;
 }
          
-void FlowStatement::execute(Context& context) const
+void FlowStatement::execute(Context &context) const
 {
-    Evaluator& eval = context.evaluator();
+    Evaluator &eval = context.evaluator();
     
     switch(_type)
     {
@@ -93,7 +93,7 @@ void FlowStatement::execute(Context& context) const
     }
 }
 
-void FlowStatement::operator >> (Writer& to) const
+void FlowStatement::operator >> (Writer &to) const
 {
     to << SerialId(FLOW);
     duint8 header = duint8(_type);
@@ -108,7 +108,7 @@ void FlowStatement::operator >> (Writer& to) const
     }
 }
 
-void FlowStatement::operator << (Reader& from)
+void FlowStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

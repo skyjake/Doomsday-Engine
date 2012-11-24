@@ -24,21 +24,21 @@
 #if defined(UNIX) && defined(DENG2_QT_4_7_OR_NEWER) && !defined(DENG2_QT_4_8_OR_NEWER)
 #  define DENG2_USE_DLOPEN
 #  include <dlfcn.h>
-typedef void* Handle;
+typedef void *Handle;
 #else
-typedef QLibrary* Handle;
+typedef QLibrary *Handle;
 #endif
 
 using namespace de;
 
-const char* Library::DEFAULT_TYPE = "library/generic";
+char const *Library::DEFAULT_TYPE = "library/generic";
 
 struct Library::Instance
 {
     /// Handle to the shared library.
     Handle library;
 
-    typedef QMap<String, void*> Symbols;
+    typedef QMap<String, void *> Symbols;
     Symbols symbols;
 
     /// Type identifier for the library (e.g., "deng-plugin/generic").
@@ -61,7 +61,7 @@ struct Library::Instance
 #endif
 };
 
-Library::Library(const NativePath& nativePath) : d(0)
+Library::Library(NativePath const &nativePath) : d(0)
 {
     d = new Instance;
 
@@ -133,7 +133,7 @@ const String &Library::type() const
     return d->type;
 }
 
-void* Library::address(const String& name, SymbolLookupMode lookup)
+void *Library::address(String const &name, SymbolLookupMode lookup)
 {
     if(!d->library)
     {
@@ -149,9 +149,9 @@ void* Library::address(const String& name, SymbolLookupMode lookup)
     }
     
 #ifndef DENG2_USE_DLOPEN
-    void* ptr = d->library->resolve(name.toAscii().constData());
+    void *ptr = d->library->resolve(name.toAscii().constData());
 #else
-    void* ptr = dlsym(d->library, name.toAscii().constData());
+    void *ptr = dlsym(d->library, name.toAscii().constData());
 #endif
 
     if(!ptr)

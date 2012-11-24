@@ -24,17 +24,17 @@
 
 using namespace de;
 
-void TryStatement::execute(Context& context) const
+void TryStatement::execute(Context &context) const
 {
     context.start(_compound.firstStatement(), next());
 }
 
-void TryStatement::operator >> (Writer& to) const
+void TryStatement::operator >> (Writer &to) const
 {
     to << SerialId(TRY) << _compound;
 }
 
-void TryStatement::operator << (Reader& from)
+void TryStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

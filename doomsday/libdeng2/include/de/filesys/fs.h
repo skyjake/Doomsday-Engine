@@ -59,8 +59,8 @@ namespace de
 {
     namespace internal {
         template <typename Type>
-        inline bool cannotCastFileTo(File* file) {
-            return dynamic_cast<Type*>(file) == NULL;
+        inline bool cannotCastFileTo(File *file) {
+            return dynamic_cast<Type *>(file) == NULL;
         }
     }
         
@@ -103,11 +103,11 @@ namespace de
         /// between them. @ingroup errors
         DENG2_ERROR(AmbiguousError);
         
-        typedef std::multimap<String, File*> Index;
+        typedef std::multimap<String, File *> Index;
         typedef std::pair<Index::iterator, Index::iterator> IndexRange;
         typedef std::pair<Index::const_iterator, Index::const_iterator> ConstIndexRange;
-        typedef std::pair<String, File*> IndexEntry;
-        typedef std::list<File*> FoundFiles;
+        typedef std::pair<String, File *> IndexEntry;
+        typedef std::list<File *> FoundFiles;
         
     public:
         /**
@@ -120,7 +120,7 @@ namespace de
 
         void printIndex();
         
-        Folder& root();
+        Folder &root();
         
         /**
          * Refresh the file system. Populates all folders with files from the feeds.
@@ -133,7 +133,7 @@ namespace de
          *
          * @param path  Path of the folder. Relative to the root folder.
          */
-        Folder& makeFolder(const String& path);
+        Folder &makeFolder(String const &path);
 
         /**
          * Finds all files matching a full or partial path. The search is done
@@ -145,7 +145,7 @@ namespace de
          *
          * @return  Number of files found.
          */ 
-        int findAll(const String& path, FoundFiles& found) const;
+        int findAll(String const &path, FoundFiles &found) const;
         
         /**
          * Finds a single file matching a full or partial path. The search is
@@ -156,7 +156,7 @@ namespace de
          * 
          * @return  The found file.
          */
-        File& find(const String& path) const;
+        File &find(String const &path) const;
         
         /**
          * Finds a file of a specific type. The search is done using the file
@@ -170,7 +170,7 @@ namespace de
          * for manual searches.
          */
         template <typename Type>
-        Type& find(const String& path) const {
+        Type &find(String const &path) const {
             FoundFiles found;
             findAll(path, found);
             // Filter out the wrong types.
@@ -183,7 +183,7 @@ namespace de
                 /// @throw NotFoundError  No files found matching the condition.
                 throw NotFoundError("FS::find", "No files found matching '" + path + "'");
             }
-            return *dynamic_cast<Type*>(found.front());
+            return *dynamic_cast<Type *>(found.front());
         }
         
         /**
@@ -199,7 +199,7 @@ namespace de
          * sourceData is returned as-is and ownership is returned to the
          * caller.
          */
-        File* interpret(File* sourceData);
+        File *interpret(File *sourceData);
         
         /**
          * Provides access to the main index of the file system. This can be
@@ -207,7 +207,7 @@ namespace de
          *
          * @note The file names are indexed in lower case.
          */
-        const Index& nameIndex() const;
+        Index const &nameIndex() const;
         
         /**
          * Retrieves the index of files of a particular type.
@@ -219,28 +219,28 @@ namespace de
          *
          * For example, to look up the index for NativeFile instances:
          * @code
-         * FS::Index& nativeFileIndex = App::fileSystem().indexFor(TYPE_NAME(NativeFile));
+         * FS::Index &nativeFileIndex = App::fileSystem().indexFor(TYPE_NAME(NativeFile));
          * @endcode
          */
-        const Index& indexFor(const String& typeIdentifier) const;
+        Index const &indexFor(String const &typeIdentifier) const;
         
         /**
          * Adds a file to the main index.
          *
          * @param file  File to index.
          */
-        void index(File& file);
+        void index(File &file);
         
         /**
          * Removes a file from the main index.
          *
          * @param file  File to remove from the index.
          */
-        void deindex(File& file);
+        void deindex(File &file);
 
     private:  
         struct Instance;
-        Instance* d;
+        Instance *d;
     };
 }
 

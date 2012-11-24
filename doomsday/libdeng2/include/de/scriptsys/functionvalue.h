@@ -34,25 +34,25 @@ namespace de
     {
     public:
         FunctionValue();
-        FunctionValue(Function* func);
+        FunctionValue(Function *func);
         ~FunctionValue();
         
         /// Returns the function.
-        const Function& function() const { return *_func; }
+        Function const &function() const { return *_func; }
        
-        Value* duplicate() const;
+        Value *duplicate() const;
         Text asText() const;
         bool isTrue() const;
         bool isFalse() const;
-        dint compare(const Value& value) const;
-        void call(Process& process, const Value& arguments) const;
+        dint compare(Value const &value) const;
+        void call(Process &process, Value const &arguments) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
     private:
-        Function* _func;
+        Function *_func;
     };
 }
 

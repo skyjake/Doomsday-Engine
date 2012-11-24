@@ -46,7 +46,7 @@ namespace de
      * reassigned to the next new string. Zero is not a valid id.
      *
      * Each string can also have an associated, custom user-defined uint32 value
-     * and/or void* data pointer.
+     * and/or void *data pointer.
      *
      * The implementation has, at worst, O(log n) complexity for addition, removal,
      * string lookup, and user value/pointer set/get.
@@ -76,7 +76,7 @@ namespace de
          * @param strings  Array of strings to be interned (must contain at least @a count strings).
          * @param count  Number of strings to be interned.
          */
-        StringPool(String* strings, uint count);
+        StringPool(String *strings, uint count);
 
         /**
          * Destroys the stringpool.
@@ -152,7 +152,7 @@ namespace de
          * @param id     Id of a string.
          * @param ptr    User pointer.
          */
-        void setUserPointer(Id id, void* ptr);
+        void setUserPointer(Id id, void *ptr);
 
         /**
          * Retrieves the user-specified custom pointer associated with the string @a id.
@@ -161,7 +161,7 @@ namespace de
          *
          * @return User pointer.
          */
-        void* userPointer(Id id) const;
+        void *userPointer(Id id) const;
 
         /**
          * Is @a str considered to be in the pool?
@@ -192,7 +192,7 @@ namespace de
          * @return Reference to interned string. Do not change the contents of
          * the pool while retaining the returned reference.
          */
-        const String& stringRef(Id id) const;
+        String const &stringRef(Id id) const;
 
         /**
          * Removes a string from the pool.
@@ -222,11 +222,11 @@ namespace de
          * @return  @c 0 iff iteration completed wholly. Otherwise the non-zero value
          *          returned by @a callback.
          */
-        int iterate(int (*callback)(Id, void*), void* data) const;
+        int iterate(int (*callback)(Id, void *), void *data) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
 
 #if _DEBUG
         /**
@@ -238,7 +238,7 @@ namespace de
 
     private:
         struct Instance;
-        Instance* d;
+        Instance *d;
     };
 
 } // namespace de

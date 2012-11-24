@@ -55,10 +55,10 @@ public:
      * @param str Path. Any directory separators in the path are converted to
      * native ones.
      */
-    NativePath(const QString& str);
+    NativePath(QString const &str);
 
-    NativePath(const char* nullTerminatedCStr);
-    NativePath(const char* cStr, dsize length);
+    NativePath(char const *nullTerminatedCStr);
+    NativePath(char const *cStr, dsize length);
 
     /**
      * Assignment.
@@ -66,9 +66,9 @@ public:
      * @param str Path. Any directory separators in the path are converted to
      * native ones.
      */
-    NativePath& operator = (const QString& str);
+    NativePath &operator = (QString const &str);
 
-    NativePath& operator = (const char *nullTerminatedCStr);
+    NativePath &operator = (const char *nullTerminatedCStr);
 
     /**
      * Does a path concatenation on a native path. The directory separator
@@ -77,21 +77,21 @@ public:
      *
      * @param nativePath  Native path to concatenate.
      */
-    NativePath concatenatePath(const NativePath& nativePath) const;
+    NativePath concatenatePath(NativePath const &nativePath) const;
 
-    NativePath concatenatePath(const QString& nativePath) const;
+    NativePath concatenatePath(QString const &nativePath) const;
 
     /// A more convenient way to invoke concatenatePath().
-    NativePath operator / (const NativePath& nativePath) const;
+    NativePath operator / (NativePath const &nativePath) const;
 
     /**
      * Native path concatenation.
      * @param str  Path that is converted to a native path.
      * @return Concatenated path.
      */
-    NativePath operator / (const QString& str) const;
+    NativePath operator / (QString const &str) const;
 
-    NativePath operator / (const char* nullTerminatedCStr) const;
+    NativePath operator / (char const *nullTerminatedCStr) const;
 
     /// Extracts the path of the string, using native directory separators.
     NativePath fileNamePath() const;
@@ -116,7 +116,7 @@ public:
      *
      * @see App::nativeBasePath()
      */
-    NativePath expand(bool* didExpand = 0) const;
+    NativePath expand(bool *didExpand = 0) const;
 
     /**
      * Returns a prettier version of the path, where the base path is omitted

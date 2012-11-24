@@ -53,7 +53,7 @@ namespace de
          * @param owner    Process that owns the context.
          * @param globals  Optionally a global namespace. Lookups will stop here.
          */
-        Context(Type type, Process* owner, Record* globals = 0);
+        Context(Type type, Process *owner, Record *globals = 0);
         
         virtual ~Context();
 
@@ -61,13 +61,13 @@ namespace de
         Type type() { return _type; }
 
         /// Returns the process that owns this context.
-        Process& process() { return *_owner; }
+        Process &process() { return *_owner; }
 
         /// Returns the namespace of the context.
-        Record& names();
+        Record &names();
 
         /// Returns the expression evaluator of the context.
-        Evaluator& evaluator();
+        Evaluator &evaluator();
 
         /**
          * Start the execution of a series of statements.
@@ -80,10 +80,10 @@ namespace de
          * @param jumpBreak     The statement to jump to when a "break" statement
          *                      is encountered.
          */
-        void start(const Statement* statement,
-                   const Statement* flow = NULL,
-                   const Statement* jumpContinue = NULL,
-                   const Statement* jumpBreak = NULL);
+        void start(Statement const *statement,
+                   Statement const *flow = NULL,
+                   Statement const *jumpContinue = NULL,
+                   Statement const *jumpBreak = NULL);
 
         /**
          * Clears the evaluator and control flow. Does not empty the namespace.
@@ -93,7 +93,7 @@ namespace de
 
         /// Returns the currently executed statement.
         /// @return Statement, or @c NULL if no control flow information exists.
-        const Statement* current();
+        Statement const *current();
 
         /**
          * Execute the current statement.  
@@ -125,21 +125,21 @@ namespace de
         void jumpBreak(duint count = 1);
 
         /// Returns the current iteration value of the context.
-        Value* iterationValue();
+        Value *iterationValue();
 
         /**
          * Sets the iteration value of the context.
          *
          * @param value  Value to be iterated within the context.
          */
-        void setIterationValue(Value* value);
+        void setIterationValue(Value *value);
         
         /**
          * Returns the throwaway variable. This can be used for dumping 
          * values that are not needed. For instance, the weak assignment operator
          * will use this when the identifier already exists.
          */
-        Variable& throwaway() { return _throwaway; }
+        Variable &throwaway() { return _throwaway; }
         
     private:
         /**
@@ -158,46 +158,46 @@ namespace de
              * @param b        Statement where to jump to and flow from on "break".
              *                 @c NULL if breaking is not allowed.
              */
-            ControlFlow(const Statement* current, 
-                        const Statement* f = 0, 
-                        const Statement* c = 0, 
-                        const Statement* b = 0)
+            ControlFlow(Statement const *current, 
+                        Statement const *f = 0, 
+                        Statement const *c = 0, 
+                        Statement const *b = 0)
                 : flow(f), jumpContinue(c), jumpBreak(b), iteration(0), _current(current) {}
                 
             /// Returns the currently executed statement.
-            const Statement* current() const { return _current; }
+            Statement const *current() const { return _current; }
                 
             /// Sets the currently executed statement. When the statement
             /// changes, the phase is reset back to zero.
-            void setCurrent(const Statement* s) { _current = s; }
+            void setCurrent(Statement const *s) { _current = s; }
 
         public:
-            const Statement* flow;
-            const Statement* jumpContinue;
-            const Statement* jumpBreak;
-            Value* iteration;
+            Statement const *flow;
+            Statement const *jumpContinue;
+            Statement const *jumpBreak;
+            Value *iteration;
 
         private:
-            const Statement* _current;
+            Statement const *_current;
         };
         
     private:
         /// Returns the topmost control flow information.
-        ControlFlow& flow() { return _controlFlow.back(); }
+        ControlFlow &flow() { return _controlFlow.back(); }
 
         /// Pops the topmost control flow instance off of the stack. The 
         /// iteration value is deleted, if it has been defined.
         void popFlow();
 
         /// Sets the currently executed statement.
-        void setCurrent(const Statement* statement);
+        void setCurrent(Statement const *statement);
         
     private:        
         /// Type of the execution context.
         Type _type;
         
         /// The process that owns this context.
-        Process* _owner;
+        Process *_owner;
 
         /// Control flow stack.
         typedef std::vector<ControlFlow> FlowStack;
@@ -210,7 +210,7 @@ namespace de
         bool _ownsNamespace;
         
         /// The local namespace of this context.
-        Record* _names;
+        Record *_names;
         
         Variable _throwaway;
     };

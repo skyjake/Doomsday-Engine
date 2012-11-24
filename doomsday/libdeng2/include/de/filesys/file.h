@@ -72,7 +72,7 @@ namespace de
          *
          * @param file  The file object being deleted.
          */
-        DENG2_DEFINE_AUDIENCE(Deletion, void fileBeingDeleted(const File& file))
+        DENG2_DEFINE_AUDIENCE(Deletion, void fileBeingDeleted(File const &file))
 
         /**
          * Stores the status of a file (size, time of last modification).
@@ -87,19 +87,19 @@ namespace de
             };
             
         public:
-            Status(dsize s = 0, const Time& modTime = Time()) 
+            Status(dsize s = 0, Time const &modTime = Time()) 
                 : size(s), modifiedAt(modTime), _type(FILE) {}
                 
-            Status(Type t, dsize s = 0, const Time& modTime = Time())
+            Status(Type t, dsize s = 0, Time const &modTime = Time())
                 : size(s), modifiedAt(modTime), _type(t) {}
 
             Type type() const { return _type; }
             
-            bool operator == (const Status& s) const {
+            bool operator == (Status const &s) const {
                 return size == s.size && modifiedAt == s.modifiedAt;
             }
             
-            bool operator != (const Status& s) const { return !(*this == s); }
+            bool operator != (Status const &s) const { return !(*this == s); }
 
         public:
             dsize size;
@@ -129,17 +129,17 @@ namespace de
             };
             
         public:
-            Accessor(File& owner, Property prop);
+            Accessor(File &owner, Property prop);
             
             /// Update the text content of the accessor.
             void update() const;
             
             /// Returns a TextValue with the text content of the accessor,
             /// except for the SIZE property, which is duplicated as a NumberValue.
-            Value* duplicateContent() const;
+            Value *duplicateContent() const;
             
         private:
-            File& _owner;
+            File &_owner;
             Property _prop;
         };
 
@@ -174,20 +174,20 @@ namespace de
         virtual void clear();
 
         /// Returns a reference to the application's file system.
-        static FS& fileSystem();
+        static FS &fileSystem();
         
         /// Returns the name of the file.
-        const String& name() const { return _name; }
+        String const &name() const { return _name; }
 
         /**
          * Sets the parent folder of this file.
          */
-        void setParent(Folder* parent) { _parent = parent; }
+        void setParent(Folder *parent) { _parent = parent; }
 
         /**
          * Returns the parent folder. May be NULL.
          */
-        Folder* parent() const { return _parent; }
+        Folder *parent() const { return _parent; }
         
         /**
          * Sets the origin Feed of the File. The origin feed is the feed that is able
@@ -199,13 +199,13 @@ namespace de
          *
          * @param feed  The origin feed.
          */ 
-        void setOriginFeed(Feed* feed);
+        void setOriginFeed(Feed *feed);
         
         /**
          * Returns the origin Feed of the File.
          * @see setOriginFeed()
          */
-        Feed* originFeed() const { return _originFeed; }
+        Feed *originFeed() const { return _originFeed; }
         
         /**
          * Sets the source file of this file. The source is where this file is
@@ -217,7 +217,7 @@ namespace de
          *
          * @param source  Source file. The file takes ownership of @a source.
          */ 
-        void setSource(File* source);
+        void setSource(File *source);
         
         /**
          * Returns the source file.
@@ -225,7 +225,7 @@ namespace de
          * @return  Source file. Always returns a valid pointer.
          * @see setSource()
          */
-        const File* source() const;
+        File const *source() const;
         
         /**
          * Returns the source file.
@@ -233,19 +233,19 @@ namespace de
          * @return  Source file. Always returns a valid pointer.
          * @see setSource()
          */
-        File* source();
+        File *source();
         
         /**
          * Updates the status of the file.
          *
          * @param status  New status.
          */
-        virtual void setStatus(const Status& status);
+        virtual void setStatus(Status const &status);
 
         /**
          * Returns the status of the file.
          */
-        const Status& status() const;
+        Status const &status() const;
                         
         /**
          * Returns the size of the file.
@@ -266,7 +266,7 @@ namespace de
         /**
          * Returns the mode of the file.
          */
-        const Flags& mode() const;
+        Flags const &mode() const;
         
         /**
          * Changes the mode of the file. For example, using
@@ -275,13 +275,13 @@ namespace de
          *
          * @param newMode  Mode.
          */
-        virtual void setMode(const Flags& newMode);
+        virtual void setMode(Flags const &newMode);
 
         /// Returns the file information (const).
-        const Record& info() const { return _info; }
+        Record const &info() const { return _info; }
 
         /// Returns the file information.
-        Record& info() { return _info; }
+        Record &info() { return _info; }
         
         /**
          * Makes sure that the file has write access.
@@ -289,9 +289,9 @@ namespace de
         void verifyWriteAccess();
 
         // Implements IIOStream.
-        IOStream& operator << (const IByteArray& bytes);
-        IIStream& operator >> (IByteArray& bytes);
-        const IIStream& operator >> (IByteArray& bytes) const;
+        IOStream &operator << (IByteArray const &bytes);
+        IIStream &operator >> (IByteArray &bytes);
+        IIStream const &operator >> (IByteArray &bytes) const;
 
     protected:
         /**
@@ -299,18 +299,18 @@ namespace de
          *
          * @param name  Name of the file.
          */
-        File(const String& name = "");
+        File(String const &name = "");
     
     private:
         /// The parent folder.
-        Folder* _parent;
+        Folder *_parent;
         
         /// The source file (NULL for non-interpreted files).
-        File* _source;
+        File *_source;
                 
         /// Feed that generated the file. This feed is called upon when the file needs 
         /// to be pruned. May also be NULL.
-        Feed* _originFeed;
+        Feed *_originFeed;
         
         /// Name of the file.
         String _name;

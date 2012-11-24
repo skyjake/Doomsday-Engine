@@ -179,14 +179,14 @@ public:
          *
          * @param name  Name of the log section.
          */
-        Section(const char* name);
+        Section(char const *name);
         ~Section();
 
-        Log& log() const { return _log; }
+        Log &log() const { return _log; }
 
     private:
-        Log& _log;
-        const char* _name;
+        Log &_log;
+        char const *_name;
     };
 
 public:
@@ -199,14 +199,14 @@ public:
      * @param name  Name of the section. No copy of this string is made,
      *              so it must exist while the section is in use.
      */
-    void beginSection(const char* name);
+    void beginSection(char const *name);
 
     /**
      * Ends the topmost section in the log.
      *
      * @param name  Name of the topmost section.
      */
-    void endSection(const char* name);
+    void endSection(char const *name);
 
     /**
      * Creates a new log entry with the default (MESSAGE) level.
@@ -214,7 +214,7 @@ public:
      *
      * @param format  Format template of the entry.
      */
-    LogEntry& enter(const String& format);
+    LogEntry &enter(String const &format);
 
     /**
      * Creates a new log entry with the specified level.
@@ -223,13 +223,13 @@ public:
      * @param level   Level of the entry.
      * @param format  Format template of the entry.
      */
-    LogEntry& enter(LogLevel level, const String& format);
+    LogEntry &enter(LogLevel level, String const &format);
 
 public:
     /**
      * Returns the logger of the current thread.
      */
-    static Log& threadLog();
+    static Log &threadLog();
 
     /**
      * Deletes the current thread's log. Threads should call this before
@@ -238,10 +238,10 @@ public:
     static void disposeThreadLog();
 
 private:
-    typedef QList<const char*> SectionStack;
+    typedef QList<char const *> SectionStack;
     SectionStack _sectionStack;
 
-    LogEntry* _throwawayEntry;
+    LogEntry *_throwawayEntry;
 };
 
 /**
@@ -301,14 +301,14 @@ public:
         Arg(duint64 i)           : _type(INTEGER)        { _data.intValue   = dint64(i); }
         Arg(dint64 i)            : _type(INTEGER)        { _data.intValue   = i; }
         Arg(ddouble d)           : _type(FLOATING_POINT) { _data.floatValue = d; }
-        Arg(const void* p)       : _type(INTEGER)        { _data.intValue   = dint64(p); }
-        Arg(const char* s) : _type(STRING) {
+        Arg(void const *p)       : _type(INTEGER)        { _data.intValue   = dint64(p); }
+        Arg(char const *s) : _type(STRING) {
             _data.stringValue = new String(s);
         }
-        Arg(const String& s) : _type(STRING) {
+        Arg(String const &s) : _type(STRING) {
             _data.stringValue = new String(s.data(), s.size());
         }
-        Arg(const Base& arg) : _type(arg.logEntryArgType()) {
+        Arg(Base const &arg) : _type(arg.logEntryArgType()) {
             switch(_type) {
             case INTEGER:
                 _data.intValue = arg.asInt64();
@@ -370,7 +370,7 @@ public:
         union Data {
             dint64 intValue;
             ddouble floatValue;
-            String* stringValue;
+            String *stringValue;
         } _data;
     };
 
@@ -396,13 +396,13 @@ public:
      */
     LogEntry();
 
-    LogEntry(Log::LogLevel level, const String& section, const String& format);
+    LogEntry(Log::LogLevel level, String const &section, String const &format);
 
     ~LogEntry();
 
     /// Appends a new argument to the entry.
     template <typename ValueType>
-    inline LogEntry& operator << (const ValueType& v) {
+    inline LogEntry &operator << (ValueType const &v) {
         if(!_disabled) {
             _args.push_back(new Arg(v));
         }
@@ -415,16 +415,16 @@ public:
     Log::LogLevel level() const { return _level; }
 
     /// Converts the log entry to a string.
-    String asText(const Flags& flags = 0) const;
+    String asText(Flags const &flags = 0) const;
 
     /// Make this entry print without metadata.
-    LogEntry& simple() {
+    LogEntry &simple() {
         _defaultFlags |= Simple;
         return *this;
     }
 
 private:
-    void advanceFormat(String::const_iterator& i) const;
+    void advanceFormat(String::const_iterator &i) const;
 
 private:
     Time _when;
@@ -434,11 +434,11 @@ private:
     Flags _defaultFlags;
     bool _disabled;
 
-    typedef std::vector<Arg*> Args;
+    typedef std::vector<Arg *> Args;
     Args _args;
 };
 
-QTextStream& operator << (QTextStream& stream, const LogEntry::Arg& arg);
+QTextStream &operator << (QTextStream &stream, LogEntry::Arg const &arg);
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(LogEntry::Flags)
 

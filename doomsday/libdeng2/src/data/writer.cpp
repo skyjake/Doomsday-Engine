@@ -32,19 +32,19 @@ namespace de {
 
 struct Writer::Instance
 {
-    const ByteOrder& convert;
-    IByteArray* destination;
-    IOStream* stream;
+    ByteOrder const &convert;
+    IByteArray *destination;
+    IOStream *stream;
     IByteArray::Offset offset;
     const IByteArray::Offset fixedOffset;
 
-    Instance(const ByteOrder& order, IByteArray* dest, IByteArray::Offset off)
+    Instance(ByteOrder const &order, IByteArray *dest, IByteArray::Offset off)
         : convert(order), destination(dest), stream(0), offset(off), fixedOffset(0) {}
 
-    Instance(const ByteOrder& order, IOStream* str)
+    Instance(ByteOrder const &order, IOStream *str)
         : convert(order), destination(0), stream(str), offset(0), fixedOffset(0)
     {
-        destination = dynamic_cast<IByteArray*>(str);
+        destination = dynamic_cast<IByteArray *>(str);
         if(destination)
         {
             // The object that implements the stream may also implement a byte
@@ -54,7 +54,7 @@ struct Writer::Instance
         }
     }
 
-    Instance(const Instance& other, const ByteOrder& order)
+    Instance(Instance const &other, ByteOrder const &order)
         : convert    (order            ),
           destination(other.destination),
           stream     (other.stream     ),
@@ -62,7 +62,7 @@ struct Writer::Instance
           fixedOffset(other.fixedOffset)
     {}
 
-    void write(const IByteArray::Byte* ptr, dsize size)
+    void write(IByteArray::Byte const *ptr, dsize size)
     {
         if(destination)
         {
@@ -76,23 +76,23 @@ struct Writer::Instance
     }
 };
 
-Writer::Writer(IByteArray& destination, const ByteOrder& byteOrder, IByteArray::Offset offset)
+Writer::Writer(IByteArray &destination, ByteOrder const &byteOrder, IByteArray::Offset offset)
     : d(new Instance(byteOrder, &destination, offset))
 {}
 
-Writer::Writer(IByteArray& destination, IByteArray::Offset offset)
+Writer::Writer(IByteArray &destination, IByteArray::Offset offset)
     : d(new Instance(littleEndianByteOrder, &destination, offset))
 {}
 
-Writer::Writer(IOStream& stream, const ByteOrder& byteOrder)
+Writer::Writer(IOStream &stream, ByteOrder const &byteOrder)
     : d(new Instance(byteOrder, &stream))
 {}
 
-Writer::Writer(ByteArrayFile& destination, const ByteOrder& byteOrder, IByteArray::Offset offset)
-    : d(new Instance(byteOrder, static_cast<IByteArray*>(&destination), offset))
+Writer::Writer(ByteArrayFile &destination, ByteOrder const &byteOrder, IByteArray::Offset offset)
+    : d(new Instance(byteOrder, static_cast<IByteArray *>(&destination), offset))
 {}
 
-Writer::Writer(const Writer& other, const ByteOrder& byteOrder)
+Writer::Writer(Writer const &other, ByteOrder const &byteOrder)
     : d(new Instance(*other.d, byteOrder))
 {}
 
@@ -101,74 +101,74 @@ Writer::~Writer()
     delete d;
 }
 
-Writer& Writer::operator << (const char& byte)
+Writer &Writer::operator << (char const &byte)
 {
-    d->write(reinterpret_cast<const IByteArray::Byte*>(&byte), 1);
+    d->write(reinterpret_cast<IByteArray::Byte const *>(&byte), 1);
     return *this;
 }
 
-Writer& Writer::operator << (const dchar& byte)
+Writer &Writer::operator << (dchar const &byte)
 {
-    d->write(reinterpret_cast<const IByteArray::Byte*>(&byte), 1);
+    d->write(reinterpret_cast<IByteArray::Byte const *>(&byte), 1);
     return *this;
 }
 
-Writer& Writer::operator << (const duchar& byte)
+Writer &Writer::operator << (duchar const &byte)
 {
     d->write(&byte, 1);
     return *this;
 }
 
-Writer& Writer::operator << (const dint16& word)
+Writer &Writer::operator << (const dint16& word)
 {
     return *this << static_cast<duint16>(word);
 }   
 
-Writer& Writer::operator << (const duint16& word)
+Writer &Writer::operator << (const duint16& word)
 {
     duint16 netWord;
     d->convert.nativeToForeign(word, netWord);
-    d->write(reinterpret_cast<IByteArray::Byte*>(&netWord), 2);
+    d->write(reinterpret_cast<IByteArray::Byte *>(&netWord), 2);
     return *this;
 }
 
-Writer& Writer::operator << (const dint32& dword)
+Writer &Writer::operator << (const dint32& dword)
 {
     return *this << static_cast<duint32>(dword);
 }   
 
-Writer& Writer::operator << (const duint32& dword)
+Writer &Writer::operator << (const duint32& dword)
 {
     duint32 netDword;
     d->convert.nativeToForeign(dword, netDword);
-    d->write(reinterpret_cast<IByteArray::Byte*>(&netDword), 4);
+    d->write(reinterpret_cast<IByteArray::Byte *>(&netDword), 4);
     return *this;
 }
 
-Writer& Writer::operator << (const dint64& qword)
+Writer &Writer::operator << (const dint64& qword)
 {
     return *this << static_cast<duint64>(qword);
 }   
 
-Writer& Writer::operator << (const duint64& qword)
+Writer &Writer::operator << (const duint64& qword)
 {
     duint64 netQword;
     d->convert.nativeToForeign(qword, netQword);
-    d->write(reinterpret_cast<IByteArray::Byte*>(&netQword), 8);
+    d->write(reinterpret_cast<IByteArray::Byte *>(&netQword), 8);
     return *this;
 }
 
-Writer& Writer::operator << (const dfloat& value)
+Writer &Writer::operator << (dfloat const &value)
 {
     return *this << *reinterpret_cast<const duint32*>(&value);
 }
 
-Writer& Writer::operator << (const ddouble& value)
+Writer &Writer::operator << (ddouble const &value)
 {
     return *this << *reinterpret_cast<const duint64*>(&value);
 }
 
-Writer& Writer::operator << (const String& text)
+Writer &Writer::operator << (String const &text)
 {
     Block bytes = text.toUtf8();
 
@@ -180,13 +180,13 @@ Writer& Writer::operator << (const String& text)
     return *this;
 }
 
-Writer& Writer::operator << (const IByteArray& byteArray)
+Writer &Writer::operator << (IByteArray const &byteArray)
 {
     // First write the length of the array.
     return *this << duint32(byteArray.size()) << FixedByteArray(byteArray);
 }
 
-Writer& Writer::operator << (const FixedByteArray& fixedByteArray)
+Writer &Writer::operator << (FixedByteArray const &fixedByteArray)
 {
     /**
      * @note  A copy of @a fixedByteArray is done because there is no certainty
@@ -202,7 +202,7 @@ Writer& Writer::operator << (const FixedByteArray& fixedByteArray)
     return *this;
 }
 
-Writer& Writer::operator << (const Block& block)
+Writer &Writer::operator << (Block const &block)
 {
     // First write the length of the block.
     duint size = block.size();
@@ -212,18 +212,18 @@ Writer& Writer::operator << (const Block& block)
     return *this;
 }
 
-Writer& Writer::operator << (const IWritable& writable)
+Writer &Writer::operator << (IWritable const &writable)
 {
     writable >> *this;
     return *this;
 }
 
-const IByteArray* Writer::destination() const
+IByteArray const *Writer::destination() const
 {
     return d->destination;
 }
 
-IByteArray* Writer::destination()
+IByteArray *Writer::destination()
 {
     return d->destination;
 }
@@ -243,7 +243,7 @@ void Writer::setOffset(IByteArray::Offset offset)
     d->offset = offset;
 }
 
-const ByteOrder& Writer::byteOrder() const
+ByteOrder const &Writer::byteOrder() const
 {
     return d->convert;
 }

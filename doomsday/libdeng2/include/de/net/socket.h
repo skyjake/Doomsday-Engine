@@ -80,7 +80,7 @@ public:
      * @param address  Address to connect to.
      * @param timeOut  Maximum time to wait for connection.
      */
-    Socket(const Address& address, const Time::Delta& timeOut = 5);
+    Socket(Address const &address, Time::Delta const &timeOut = 5);
 
     virtual ~Socket();
 
@@ -115,7 +115,7 @@ public:
      *
      * @return  Reference to this socket.
      */
-    Socket& operator << (const IByteArray& data);
+    Socket &operator << (IByteArray const &data);
 
     /**
      * Returns the next received message. If nothing has been received,
@@ -123,14 +123,14 @@ public:
      *
      * @return  Received bytes. Caller gets ownership of the message.
      */
-    Message* receive();
+    Message *receive();
 
     /**
      * Returns a pointer to the next received message, if one is available.
      *
      * @return  Message. Socket retains ownership.
      */
-    Message* peek();
+    Message *peek();
 
     /**
      * Determines the IP address and port of the remote end of a connected socket.
@@ -180,7 +180,7 @@ private slots:
 
 protected:
     /// Create a Socket object for a previously opened socket.
-    Socket(QTcpSocket* existingSocket);
+    Socket(QTcpSocket *existingSocket);
 
     void initialize();
 
@@ -189,13 +189,13 @@ protected:
      * until all the data has been read correctly. An exception is
      * thrown if the connection fails.
      */
-    void receiveBytes(duint count, dbyte* buffer);
+    void receiveBytes(duint count, dbyte *buffer);
 
-    void send(const IByteArray& packet, duint channel);
+    void send(IByteArray const &packet, duint channel);
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 
     /**
      * ListenSocket creates instances of Socket so it needs to use

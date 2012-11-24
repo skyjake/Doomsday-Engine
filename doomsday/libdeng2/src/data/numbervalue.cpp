@@ -30,7 +30,7 @@ NumberValue::NumberValue(Number initialValue)
     : _value(initialValue) 
 {}
 
-Value* NumberValue::duplicate() const
+Value *NumberValue::duplicate() const
 {
     return new NumberValue(_value);
 }
@@ -53,9 +53,9 @@ bool NumberValue::isTrue() const
     return (_value != 0);
 }
 
-dint NumberValue::compare(const Value& value) const
+dint NumberValue::compare(Value const &value) const
 {
-    const NumberValue* other = dynamic_cast<const NumberValue*>(&value);
+    NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
     if(other)
     {
         if(fequal(_value, other->_value))
@@ -72,9 +72,9 @@ void NumberValue::negate()
     _value = -_value;
 }
 
-void NumberValue::sum(const Value& value)
+void NumberValue::sum(Value const &value)
 {
-    const NumberValue* other = dynamic_cast<const NumberValue*>(&value);
+    NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
     if(!other)
     {
         throw ArithmeticError("NumberValue::sum", "Values cannot be summed");
@@ -83,9 +83,9 @@ void NumberValue::sum(const Value& value)
     _value += other->_value;
 }
 
-void NumberValue::subtract(const Value& value)
+void NumberValue::subtract(Value const &value)
 {
-    const NumberValue* other = dynamic_cast<const NumberValue*>(&value);
+    NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
     if(!other)
     {
         throw ArithmeticError("Value::subtract", "Value cannot be subtracted from");    
@@ -94,9 +94,9 @@ void NumberValue::subtract(const Value& value)
     _value -= other->_value;
 }
 
-void NumberValue::divide(const Value& divisor)
+void NumberValue::divide(Value const &divisor)
 {
-    const NumberValue* other = dynamic_cast<const NumberValue*>(&divisor);
+    NumberValue const *other = dynamic_cast<NumberValue const *>(&divisor);
     if(!other)
     {
         throw ArithmeticError("NumberValue::divide", "Value cannot be divided");
@@ -105,9 +105,9 @@ void NumberValue::divide(const Value& divisor)
     _value /= other->_value;
 }
  
-void NumberValue::multiply(const Value& value)
+void NumberValue::multiply(Value const &value)
 {
-    const NumberValue* other = dynamic_cast<const NumberValue*>(&value);
+    NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
     if(!other)
     {
         throw ArithmeticError("NumberValue::multiply", "Value cannot be multiplied");
@@ -116,9 +116,9 @@ void NumberValue::multiply(const Value& value)
     _value *= other->_value;
 }
 
-void NumberValue::modulo(const Value& divisor)
+void NumberValue::modulo(Value const &divisor)
 {
-    const NumberValue* other = dynamic_cast<const NumberValue*>(&divisor);
+    NumberValue const *other = dynamic_cast<NumberValue const *>(&divisor);
     if(!other)
     {
         throw ArithmeticError("Value::modulo", "Modulo not defined");
@@ -128,12 +128,12 @@ void NumberValue::modulo(const Value& divisor)
     _value = int(_value) % int(other->_value);
 }
 
-void NumberValue::operator >> (Writer& to) const
+void NumberValue::operator >> (Writer &to) const
 {
     to << SerialId(NUMBER) << _value;
 }
 
-void NumberValue::operator << (Reader& from)
+void NumberValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

@@ -33,7 +33,7 @@ using namespace de;
 NameExpression::NameExpression()
 {}
 
-NameExpression::NameExpression(const String& identifier, const Flags& flags) 
+NameExpression::NameExpression(String const &identifier, Flags const &flags) 
     : _identifier(identifier)
 {
     setFlags(flags);
@@ -42,7 +42,7 @@ NameExpression::NameExpression(const String& identifier, const Flags& flags)
 NameExpression::~NameExpression()
 {}
 
-Value* NameExpression::evaluate(Evaluator& evaluator) const
+Value *NameExpression::evaluate(Evaluator &evaluator) const
 {
     //LOG_AS("NameExpression::evaluate");
     //std::cout << "NameExpression::evaluator: " << _flags.to_string() << "\n";
@@ -52,13 +52,13 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     Evaluator::Namespaces spaces;
     evaluator.namespaces(spaces);
     
-    Record* foundInNamespace = 0;
-    Variable* variable = 0;
-    Record* record = 0;
+    Record *foundInNamespace = 0;
+    Variable *variable = 0;
+    Record *record = 0;
     
     DENG2_FOR_EACH(Evaluator::Namespaces, i, spaces)
     {
-        Record& ns = **i;
+        Record &ns = **i;
         if(ns.hasMember(_identifier))
         {
             // The name exists in this namespace (as a variable).
@@ -172,7 +172,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
         "' does not exist");
 }
 
-void NameExpression::operator >> (Writer& to) const
+void NameExpression::operator >> (Writer &to) const
 {
     to << SerialId(NAME);
 
@@ -181,7 +181,7 @@ void NameExpression::operator >> (Writer& to) const
     to << _identifier;
 }
 
-void NameExpression::operator << (Reader& from)
+void NameExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

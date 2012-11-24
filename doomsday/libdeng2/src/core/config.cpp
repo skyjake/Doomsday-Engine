@@ -29,7 +29,7 @@
 
 using namespace de;
 
-Config::Config(const String& path) : _configPath(path)
+Config::Config(String const &path) : _configPath(path)
 {
     _writtenConfigPath = String("/home") / _configPath.fileNameWithoutExtension() + ".config";
 }
@@ -41,7 +41,7 @@ Config::~Config()
     {
         write();
     }
-    catch(const Error& err)
+    catch(Error const &err)
     {
         LOG_ERROR("") << err.asText();
     }
@@ -59,17 +59,17 @@ void Config::read()
     version->add(new NumberValue(verInfo.patch));
     version->add(new NumberValue(verInfo.build));
 
-    File& scriptFile = App::rootFolder().locate<File>(_configPath);
+    File &scriptFile = App::rootFolder().locate<File>(_configPath);
     bool shouldRunScript = false;
 
     try
     {
         // If we already have a saved copy of the config, read it.
-        File& file = App::rootFolder().locate<File>(_writtenConfigPath);
+        File &file = App::rootFolder().locate<File>(_writtenConfigPath);
         Reader(file) >> names();
         
         // If the saved config is from a different version, rerun the script.
-        const Value& oldVersion = names()["__version__"].value();
+        Value const &oldVersion = names()["__version__"].value();
         if(oldVersion.compare(*version))
         {
             // Version mismatch: store the old version in a separate variable.
@@ -92,12 +92,12 @@ void Config::read()
             shouldRunScript = true;
         }
     }
-    catch(const Folder::NotFoundError&)
+    catch(Folder::NotFoundError const &)
     {
         // It is missing if the config hasn't been written yet.
         shouldRunScript = true;
     }
-    catch(const Error& error)
+    catch(Error const &error)
     {
         LOG_WARNING(error.what());
 
@@ -120,36 +120,36 @@ void Config::read()
 
 void Config::write()
 {
-    File& file = App::rootFolder().replaceFile(_writtenConfigPath);
+    File &file = App::rootFolder().replaceFile(_writtenConfigPath);
     Writer(file) << names();    
 }
 
-Record& Config::names()
+Record &Config::names()
 {
     return _config.globals();
 }
 
-Value& Config::get(const String& name)
+Value &Config::get(String const &name)
 {
     return _config.globals()[name].value();
 }
 
-dint Config::geti(const String& name)
+dint Config::geti(String const &name)
 {
     return dint(get(name).asNumber());
 }
 
-duint Config::getui(const String& name)
+duint Config::getui(String const &name)
 {
     return duint(get(name).asNumber());
 }
 
-ddouble Config::getd(const String& name)
+ddouble Config::getd(String const &name)
 {
     return get(name).asNumber();
 }
 
-String Config::gets(const String& name)
+String Config::gets(String const &name)
 {
     return get(name).asText();
 }

@@ -43,13 +43,13 @@ public:
 
     int openServerSocket(duint16 port);
     int accept(int serverSocket);
-    int open(const Address& address);
+    int open(Address const &address);
     void close(int socket);
     de::Address peerAddress(int socket) const;
     bool isOpen(int socket);
 
-    int sendBytes(int socket, const IByteArray& data);
-    bool receiveBlock(int socket, Block& data);
+    int sendBytes(int socket, IByteArray const &data);
+    bool receiveBlock(int socket, Block &data);
 
     int newSocketSet();
     void deleteSocketSet(int set);
@@ -68,7 +68,7 @@ public:
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 };
 
 }

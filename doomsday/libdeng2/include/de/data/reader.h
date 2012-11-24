@@ -53,7 +53,7 @@ public:
      * @param byteOrder  Byte order to use.
      * @param offset     Offset in @a source where to start reading.
      */
-    Reader(const IByteArray& source, const ByteOrder& byteOrder = littleEndianByteOrder,
+    Reader(IByteArray const &source, ByteOrder const &byteOrder = littleEndianByteOrder,
            IByteArray::Offset offset = 0);
 
     /**
@@ -62,7 +62,7 @@ public:
      * @param stream     Stream where input is read.
      * @param byteOrder  Byte order to use.
      */
-    Reader(IIStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
+    Reader(IIStream &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
 
     /**
      * Constructs a new reader that reads from a const stream.
@@ -70,27 +70,27 @@ public:
      * @param stream     Const stream where input is read.
      * @param byteOrder  Byte order to use.
      */
-    Reader(const IIStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
+    Reader(IIStream const &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
 
     //@{ Read a number from the source buffer, in network byte order.
-    Reader& operator >> (char& byte);
-    Reader& operator >> (dchar& byte);
-    Reader& operator >> (duchar& byte);
-    Reader& operator >> (dint16& word);
-    Reader& operator >> (duint16& word);
-    Reader& operator >> (dint32& dword);
-    Reader& operator >> (duint32& dword);
-    Reader& operator >> (dint64& qword);
-    Reader& operator >> (duint64& qword);
-    Reader& operator >> (dfloat& value);
-    Reader& operator >> (ddouble& value);
+    Reader &operator >> (char &byte);
+    Reader &operator >> (dchar &byte);
+    Reader &operator >> (duchar &byte);
+    Reader &operator >> (dint16& word);
+    Reader &operator >> (duint16& word);
+    Reader &operator >> (dint32& dword);
+    Reader &operator >> (duint32& dword);
+    Reader &operator >> (dint64& qword);
+    Reader &operator >> (duint64& qword);
+    Reader &operator >> (dfloat &value);
+    Reader &operator >> (ddouble &value);
     //@}
 
     /// Reads a string from the source buffer.
-    Reader& operator >> (String& text);
+    Reader &operator >> (String &text);
 
     /// Reads a sequence bytes from the source buffer.
-    Reader& operator >> (IByteArray& byteArray);
+    Reader &operator >> (IByteArray &byteArray);
 
     /**
      * Reads a fixed-size sequence of bytes from the source buffer.
@@ -101,13 +101,13 @@ public:
      *
      * @return  Reference to the Reader.
      */
-    Reader& operator >> (FixedByteArray& fixedByteArray);
+    Reader &operator >> (FixedByteArray &fixedByteArray);
 
     /// Reads a Block from the source buffer.
-    Reader& operator >> (Block& block);
+    Reader &operator >> (Block &block);
 
     /// Reads a serializable object from the source buffer.
-    Reader& operator >> (IReadable& readable);
+    Reader &operator >> (IReadable &readable);
 
     /**
      * Reads bytes from the source buffer until a specified delimiter
@@ -117,12 +117,12 @@ public:
      * @param byteArray  Destination buffer.
      * @param delimiter  Delimiter value.
      */
-    Reader& readUntil(IByteArray& byteArray, IByteArray::Byte delimiter = 0);
+    Reader &readUntil(IByteArray &byteArray, IByteArray::Byte delimiter = 0);
 
     /**
      * Returns the source byte array of the reader.
      */
-    const IByteArray* source() const;
+    IByteArray const *source() const;
 
     /**
      * Returns the offset used by the reader.
@@ -163,11 +163,11 @@ public:
     /**
      * Returns the byte order of the writer.
      */
-    const ByteOrder& byteOrder() const;
+    ByteOrder const &byteOrder() const;
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 };
 
 } // namespace de

@@ -21,7 +21,7 @@
 
 namespace de {
 
-IOStream& ByteArrayFile::operator << (const IByteArray& bytes)
+IOStream &ByteArrayFile::operator << (IByteArray const &bytes)
 {
     // Append the bytes to the end of the file.
     Block block(bytes);
@@ -29,14 +29,14 @@ IOStream& ByteArrayFile::operator << (const IByteArray& bytes)
     return *this;
 }
 
-IIStream& ByteArrayFile::operator >> (IByteArray& bytes)
+IIStream &ByteArrayFile::operator >> (IByteArray &bytes)
 {
     // Behave as a const stream.
-    *const_cast<const ByteArrayFile*>(this) >> bytes;
+    *const_cast<ByteArrayFile const *>(this) >> bytes;
     return *this;
 }
 
-const IIStream& ByteArrayFile::operator >> (IByteArray& bytes) const
+IIStream const &ByteArrayFile::operator >> (IByteArray &bytes) const
 {
     // Read the entire contents of the file.
     Block block(File::size());

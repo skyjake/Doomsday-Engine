@@ -33,7 +33,7 @@ using std::auto_ptr;
 /// If execution continues for longer than this, a HangError is thrown.
 static const Time::Delta MAX_EXECUTION_TIME = 10;
 
-Process::Process(Record* externalGlobalNamespace) : _state(STOPPED), _workingPath("/")
+Process::Process(Record *externalGlobalNamespace) : _state(STOPPED), _workingPath("/")
 {
     // Push the first context on the stack. This bottommost context
     // is never popped from the stack. Its namespace is the global namespace
@@ -41,7 +41,7 @@ Process::Process(Record* externalGlobalNamespace) : _state(STOPPED), _workingPat
     _stack.push_back(new Context(Context::PROCESS, this, externalGlobalNamespace));
 }
 
-Process::Process(const Script& script) : _state(STOPPED), _workingPath("/")
+Process::Process(Script const &script) : _state(STOPPED), _workingPath("/")
 {
     _stack.push_back(new Context(Context::PROCESS, this));
 
@@ -68,7 +68,7 @@ duint Process::depth() const
     return _stack.size();
 }
 
-void Process::run(const Script& script)
+void Process::run(Script const &script)
 {
     if(_state != STOPPED)
     {
@@ -83,7 +83,7 @@ void Process::run(const Script& script)
     context().start(script.firstStatement());
     
     // Set up the automatic variables.
-    Record& ns = globals();
+    Record &ns = globals();
     if(ns.has("__file__"))
     {
         ns["__file__"].set(TextValue(script.path()));
@@ -159,7 +159,7 @@ void Process::execute()
                     "Script execution takes too long, or is stuck in an infinite loop");
             }
         }
-        catch(const Error& err)
+        catch(Error const &err)
         {
             //std::cerr << "Caught " << err.asText() << " at depth " << depth() << "\n";
             
@@ -187,22 +187,22 @@ void Process::execute()
     }
 }
 
-bool Process::jumpIntoCatch(const Error& err)
+bool Process::jumpIntoCatch(Error const &err)
 {
     dint level = 0;
 
     // Proceed along default flow.
     for(context().proceed(); context().current(); context().proceed())
     {
-        const Statement* statement = context().current();
-        const TryStatement* tryStatement = dynamic_cast<const TryStatement*>(statement);
+        Statement const *statement = context().current();
+        TryStatement const *tryStatement = dynamic_cast<TryStatement const *>(statement);
         if(tryStatement)
         {
             // Encountered a nested try statement.
             ++level;
             continue;
         }
-        const CatchStatement* catchStatement = dynamic_cast<const CatchStatement*>(statement);
+        CatchStatement const *catchStatement = dynamic_cast<CatchStatement const *>(statement);
         if(catchStatement)
         {
             if(!level)
@@ -226,15 +226,15 @@ bool Process::jumpIntoCatch(const Error& err)
     return false;
 }
 
-Context& Process::context(duint downDepth)
+Context &Process::context(duint downDepth)
 {
     DENG2_ASSERT(downDepth < depth());
     return **(_stack.rbegin() + downDepth);
 }
 
-Context* Process::popContext()
+Context *Process::popContext()
 {
-    Context* topmost = _stack.back();
+    Context *topmost = _stack.back();
     _stack.pop_back();
 
     // Pop a global namespace as well, if present.
@@ -247,7 +247,7 @@ Context* Process::popContext()
     return topmost;
 }
 
-void Process::finish(Value* returnValue)
+void Process::finish(Value *returnValue)
 {
     DENG2_ASSERT(depth() >= 1);
 
@@ -272,17 +272,17 @@ void Process::finish(Value* returnValue)
     }   
 }
 
-const String& Process::workingPath() const
+String const &Process::workingPath() const
 {
     return _workingPath;
 }
 
-void Process::setWorkingPath(const String& newWorkingPath)
+void Process::setWorkingPath(String const &newWorkingPath)
 {
     _workingPath = newWorkingPath;
 }
 
-void Process::call(const Function& function, const ArrayValue& arguments)
+void Process::call(Function const &function, ArrayValue const &arguments)
 {
     // First map the argument values.
     Function::ArgumentValues argValues;
@@ -315,13 +315,13 @@ void Process::call(const Function& function, const ArrayValue& arguments)
     }
 }
 
-void Process::namespaces(Namespaces& spaces)
+void Process::namespaces(Namespaces &spaces)
 {
     spaces.clear();
     
     DENG2_FOR_EACH_REVERSE(ContextStack, i, _stack)
     {
-        Context& context = **i;
+        Context &context = **i;
         spaces.push_back(&context.names());
         if(context.type() == Context::GLOBAL_NAMESPACE)
         {
@@ -331,7 +331,7 @@ void Process::namespaces(Namespaces& spaces)
     }
 }
 
-Record& Process::globals()
+Record &Process::globals()
 {
     return _stack[0]->names();
 }

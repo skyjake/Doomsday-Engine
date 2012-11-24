@@ -30,28 +30,28 @@ namespace de {
 
 struct ArchiveFeed::Instance
 {
-    ArchiveFeed& self;
+    ArchiveFeed &self;
 
     /// File where the archive is stored (in a serialized format).
-    File& file;
+    File &file;
 
     /// The archive can be physically stored here, as Archive doesn't make a
     /// copy of the buffer.
     Block serializedArchive;
 
-    Archive* arch;
+    Archive *arch;
 
     /// Mount point within the archive for this feed.
     String basePath;
 
     /// The feed whose archive this feed is using.
-    ArchiveFeed* parentFeed;
+    ArchiveFeed *parentFeed;
 
-    Instance(ArchiveFeed* feed, File& f) : self(*feed), file(f), arch(0), parentFeed(0)
+    Instance(ArchiveFeed *feed, File &f) : self(*feed), file(f), arch(0), parentFeed(0)
     {
         // If the file happens to be a byte array file, we can use it
         // directly to store the Archive.
-        IByteArray* bytes = dynamic_cast<IByteArray*>(&f);
+        IByteArray *bytes = dynamic_cast<IByteArray *>(&f);
 
         // Open the archive.
         if(bytes)
@@ -71,7 +71,7 @@ struct ArchiveFeed::Instance
         }
     }
 
-    Instance(ArchiveFeed* feed, ArchiveFeed& parentFeed, const String& path)
+    Instance(ArchiveFeed *feed, ArchiveFeed &parentFeed, String const &path)
         : self(*feed), file(parentFeed.d->file), arch(0), basePath(path), parentFeed(&parentFeed)
     {}
 
@@ -99,7 +99,7 @@ struct ArchiveFeed::Instance
         }
     }
 
-    Archive& archive()
+    Archive &archive()
     {
         if(parentFeed)
         {
@@ -108,7 +108,7 @@ struct ArchiveFeed::Instance
         return *arch;
     }
 
-    void populate(Folder& folder)
+    void populate(Folder &folder)
     {
         // Get a list of the files in this directory.
         Archive::Names names = archive().listFiles(basePath);
@@ -128,7 +128,7 @@ struct ArchiveFeed::Instance
             archFile->setStatus(archive().status(entry));
 
             // Create a new file that accesses this feed's archive and interpret the contents.
-            File* file = folder.fileSystem().interpret(archFile.release());
+            File *file = folder.fileSystem().interpret(archFile.release());
             folder.add(file);
 
             // We will decide on pruning this.
@@ -144,13 +144,13 @@ struct ArchiveFeed::Instance
         for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
         {
             String subBasePath = basePath / *i;
-            Folder& subFolder = folder.fileSystem().makeFolder(folder.path() / *i);
+            Folder &subFolder = folder.fileSystem().makeFolder(folder.path() / *i);
 
             // Does it already have the appropriate feed?
             for(Folder::Feeds::const_iterator i = subFolder.feeds().begin();
                 i != subFolder.feeds().end(); ++i)
             {
-                ArchiveFeed* archFeed = const_cast<ArchiveFeed*>(dynamic_cast<const ArchiveFeed*>(*i));
+                ArchiveFeed *archFeed = const_cast<ArchiveFeed *>(dynamic_cast<ArchiveFeed const *>(*i));
                 if(archFeed && &archFeed->archive() == &archive() && archFeed->basePath() == subBasePath)
                 {
                     // It's got it.
@@ -169,7 +169,7 @@ ArchiveFeed::ArchiveFeed(File &archiveFile)
     : d(new Instance(this, archiveFile))
 {}
 
-ArchiveFeed::ArchiveFeed(ArchiveFeed& parentFeed, const String& basePath)
+ArchiveFeed::ArchiveFeed(ArchiveFeed &parentFeed, String const &basePath)
     : d(new Instance(this, parentFeed, basePath))
 {}
 
@@ -180,20 +180,20 @@ ArchiveFeed::~ArchiveFeed()
     delete d;
 }
 
-void ArchiveFeed::populate(Folder& folder)
+void ArchiveFeed::populate(Folder &folder)
 {
     LOG_AS("ArchiveFeed::populate");
 
     d->populate(folder);
 }
 
-bool ArchiveFeed::prune(File& /*file*/) const
+bool ArchiveFeed::prune(File &/*file*/) const
 {
     /// @todo  Prune based on entry status.
     return true;
 }
 
-File* ArchiveFeed::newFile(const String& name)
+File *ArchiveFeed::newFile(String const &name)
 {
     String newEntry = d->basePath / name;
     if(archive().has(newEntry))
@@ -203,22 +203,22 @@ File* ArchiveFeed::newFile(const String& name)
     }
     // Add an empty entry.
     archive().add(newEntry, Block());
-    File* file = new ArchiveFile(name, archive(), newEntry);
+    File *file = new ArchiveFile(name, archive(), newEntry);
     file->setOriginFeed(this);
     return file;
 }
 
-void ArchiveFeed::removeFile(const String& name)
+void ArchiveFeed::removeFile(String const &name)
 {
     archive().remove(d->basePath / name);
 }
 
-Archive& ArchiveFeed::archive()
+Archive &ArchiveFeed::archive()
 {
     return d->archive();
 }
 
-const String& ArchiveFeed::basePath() const
+String const &ArchiveFeed::basePath() const
 {
     return d->basePath;
 }

@@ -32,7 +32,7 @@
 
 using namespace de;
 
-Statement* Statement::constructFrom(Reader& reader)
+Statement *Statement::constructFrom(Reader &reader)
 {
     SerialId id;
     reader.mark();

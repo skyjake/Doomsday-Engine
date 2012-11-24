@@ -85,14 +85,14 @@ namespace de
     public:
         virtual ~Expression();
 
-        virtual void push(Evaluator& evaluator, Record* names = 0) const;
+        virtual void push(Evaluator &evaluator, Record *names = 0) const;
         
-        virtual Value* evaluate(Evaluator& evaluator) const = 0;
+        virtual Value *evaluate(Evaluator &evaluator) const = 0;
         
         /**
          * Returns the flags of the expression.
          */
-        const Flags& flags () const;
+        Flags const &flags () const;
 
         /**
          * Sets the flags of the expression.
@@ -102,12 +102,12 @@ namespace de
         /**
          * Subclasses must call this in their serialization method.
          */
-        void operator >> (Writer& to) const;
+        void operator >> (Writer &to) const;
 
         /**
          * Subclasses must call this in their deserialization method.
          */
-        void operator << (Reader& from);
+        void operator << (Reader &from);
 
     public:
         /**
@@ -117,7 +117,7 @@ namespace de
          *
          * @return  The deserialized expression. Caller gets ownership.
          */
-        static Expression* constructFrom(Reader& reader);
+        static Expression *constructFrom(Reader &reader);
 
     protected:
         typedef dbyte SerialId;

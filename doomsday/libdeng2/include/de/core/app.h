@@ -33,7 +33,7 @@
 /**
  * Macro for conveniently accessing the de::App singleton instance.
  */
-#define DENG2_APP   (static_cast<de::App*>(qApp))
+#define DENG2_APP   (static_cast<de::App *>(qApp))
 
 namespace de
 {
@@ -61,7 +61,7 @@ namespace de
         Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
 
     public:
-        App(int& argc, char** argv, GUIMode guiMode);
+        App(int &argc, char** argv, GUIMode guiMode);
 
         ~App();
 
@@ -74,14 +74,14 @@ namespace de
          */
         void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
 
-        bool notify(QObject* receiver, QEvent* event);
+        bool notify(QObject *receiver, QEvent *event);
 
-        static App& app();
+        static App &app();
 
         /**
          * Returns the command line used to start the application.
          */
-        static CommandLine& commandLine();
+        static CommandLine &commandLine();
 
         /**
          * Returns the absolute native path of the application executable.
@@ -119,32 +119,32 @@ namespace de
          * @return @c true, if the current working directory was changed,
          * otherwise @c false.
          */
-        static bool setCurrentWorkPath(const NativePath& cwd);
+        static bool setCurrentWorkPath(NativePath const &cwd);
 
         /**
          * Returns the application's file system.
          */
-        static FS& fileSystem();
+        static FS &fileSystem();
 
         /**
          * Returns the root folder of the file system.
          */
-        static Folder& rootFolder();
+        static Folder &rootFolder();
 
         /**
          * Returns the /home folder.
          */
-        static Folder& homeFolder();
+        static Folder &homeFolder();
 
         /**
          * Returns the configuration.
          */
-        static Config& config();
+        static Config &config();
 
         /**
          * Returns the Unix system-level configuration preferences.
          */
-        static UnixInfo& unixInfo();
+        static UnixInfo &unixInfo();
 
         /**
          * Imports a script module that is located on the import path.
@@ -154,7 +154,7 @@ namespace de
          *
          * @return  The imported module.
          */
-        static Record& importModule(const String& name, const String& fromPath = "");
+        static Record &importModule(String const &name, String const &fromPath = "");
 
         /**
          * Emits the displayModeChanged() signal.
@@ -185,10 +185,10 @@ namespace de
         UnixInfo _unixInfo;
 
         /// The configuration.
-        Config* _config;
+        Config *_config;
 
         /// Resident modules.
-        typedef std::map<String, Module*> Modules;
+        typedef std::map<String, Module *> Modules;
         Modules _modules;
     };
 

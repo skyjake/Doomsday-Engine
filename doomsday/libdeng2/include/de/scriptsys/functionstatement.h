@@ -40,26 +40,26 @@ namespace de
     class FunctionStatement : public Statement
     {
     public:
-        FunctionStatement(Expression* identifier = 0);
+        FunctionStatement(Expression *identifier = 0);
         
         ~FunctionStatement();
 
-        void addArgument(const String& argName, Expression* defaultValue = 0);
+        void addArgument(String const &argName, Expression *defaultValue = 0);
 
         /// Returns the statement compound of the function.
-        Compound& compound();
+        Compound &compound();
         
-        void execute(Context& context) const;
+        void execute(Context &context) const;
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
 
     private:
-        Expression* _identifier;
+        Expression *_identifier;
         
         // The statement holds one reference to the function.
-        Function* _function;
+        Function *_function;
     
         /// Expression that evaluates into the default values of the method.
         DictionaryExpression _defaults;

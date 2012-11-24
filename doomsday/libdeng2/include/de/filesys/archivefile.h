@@ -41,25 +41,25 @@ namespace de
          * @param archive    Archive where the contents of the file are located.
          * @param entryPath  Path of the file's entry within the archive.
          */
-        ArchiveFile(const String& name, Archive& archive, const String& entryPath);
+        ArchiveFile(String const &name, Archive &archive, String const &entryPath);
         
         ~ArchiveFile();
 
         void clear();
 
         /// Returns the archive of the file.
-        Archive& archive() { return _archive; }
+        Archive &archive() { return _archive; }
 
         /// Returns the archive of the file (non-modifiable).
-        const Archive& archive() const { return _archive; }
+        Archive const &archive() const { return _archive; }
 
         // Implements IByteArray.
         Size size() const;
-        void get(Offset at, Byte* values, Size count) const;
-        void set(Offset at, const Byte* values, Size count);
+        void get(Offset at, Byte *values, Size count) const;
+        void set(Offset at, Byte const *values, Size count);
         
     private:
-        Archive& _archive;
+        Archive &_archive;
         
         /// Path of the entry within the archive.
         String _entryPath;

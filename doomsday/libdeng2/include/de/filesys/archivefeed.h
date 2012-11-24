@@ -45,7 +45,7 @@ namespace de
          *
          * @param archiveFile  File where the data comes from.
          */
-        ArchiveFeed(File& archiveFile);
+        ArchiveFeed(File &archiveFile);
         
         /**
          * Constructs an archive feed that populates the contents of a folder
@@ -54,28 +54,28 @@ namespace de
          * @param parentFeed  Feed whose archive will be used.
          * @param basePath    Path within the archive for the new feed.
          */
-        ArchiveFeed(ArchiveFeed& parentFeed, const String& basePath);
+        ArchiveFeed(ArchiveFeed &parentFeed, String const &basePath);
 
         virtual ~ArchiveFeed();
 
-        void populate(Folder& folder);
-        bool prune(File& file) const;
-        File* newFile(const String& name);
-        void removeFile(const String& name);
+        void populate(Folder &folder);
+        bool prune(File &file) const;
+        File *newFile(String const &name);
+        void removeFile(String const &name);
 
         /**
          * Returns the archive that the feed accesses.
          */
-        Archive& archive();
+        Archive &archive();
                     
         /**
          * Returns the base path within the archive.
          */
-        const String& basePath() const;
+        String const &basePath() const;
                     
     private:
         struct Instance;
-        Instance* d;
+        Instance *d;
     };
 }
 

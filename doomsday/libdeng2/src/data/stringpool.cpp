@@ -56,24 +56,24 @@ public:
         : _str(text), _id(0), _userValue(0), _userPointer(0)
     {}
 
-    CaselessString(CaselessString const& other)
+    CaselessString(CaselessString const &other)
         : ISerializable(), _str(other._str), _id(other._id), _userValue(other._userValue), _userPointer(0)
     {}
 
-    void setText(String& text)
+    void setText(String &text)
     {
         _str = text;
     }
-    operator String const* () const {
+    operator String const *() const {
         return &_str;
     }
-    operator String const& () const {
+    operator String const &() const {
         return _str;
     }
-    bool operator < (CaselessString const& other) const {
+    bool operator < (CaselessString const &other) const {
         return _str.compare(other, Qt::CaseInsensitive) < 0;
     }
-    bool operator == (CaselessString const& other) const {
+    bool operator == (CaselessString const &other) const {
         return !_str.compare(other, Qt::CaseInsensitive);
     }
     InternalId id() const {
@@ -88,17 +88,17 @@ public:
     void setUserValue(uint value) {
         _userValue = value;
     }
-    void* userPointer() const {
+    void *userPointer() const {
         return _userPointer;
     }
-    void setUserPointer(void* ptr) {
+    void setUserPointer(void *ptr) {
         _userPointer = ptr;
     }
     // Implements ISerializable.
-    void operator >> (Writer& to) const {
+    void operator >> (Writer &to) const {
         to << _str << duint32(_id) << duint32(_userValue);
     }
-    void operator << (Reader& from) {
+    void operator << (Reader &from) {
         from >> _str >> _id >> _userValue;
     }
 
@@ -106,7 +106,7 @@ private:
     String _str;
     InternalId _id; ///< The id that refers to this string.
     uint _userValue;
-    void* _userPointer;
+    void *_userPointer;
 };
 
 /**
@@ -116,35 +116,35 @@ private:
  */
 class CaselessStringRef {
 public:
-    CaselessStringRef(CaselessString const* s = 0) {
+    CaselessStringRef(CaselessString const *s = 0) {
         _str = s;
     }
-    CaselessStringRef(CaselessStringRef const& other) {
+    CaselessStringRef(CaselessStringRef const &other) {
         _str = other._str;
     }
-    CaselessString* toStr() const {
-        return const_cast<CaselessString*>(_str);
+    CaselessString *toStr() const {
+        return const_cast<CaselessString *>(_str);
     }
     InternalId id() const {
         DENG2_ASSERT(_str);
         return _str->id();
     }
-    bool operator < (CaselessStringRef const& other) const {
+    bool operator < (CaselessStringRef const &other) const {
         DENG2_ASSERT(_str);
         DENG2_ASSERT(other._str);
         return *_str < *other._str;
     }
-    bool operator == (CaselessStringRef const& other) const {
+    bool operator == (CaselessStringRef const &other) const {
         DENG2_ASSERT(_str);
         DENG2_ASSERT(other._str);
         return *_str == *other._str;
     }
 private:
-    CaselessString const* _str;
+    CaselessString const *_str;
 };
 
 typedef std::set<CaselessStringRef> Interns;
-typedef std::vector<CaselessString*> IdMap;
+typedef std::vector<CaselessString *> IdMap;
 typedef std::list<InternalId> AvailableIds;
 
 struct StringPool::Instance
@@ -210,9 +210,9 @@ struct StringPool::Instance
      * @param text  Text string to add to the interned strings. A copy is
      *              made of this.
      */
-    InternalId copyAndAssignUniqueId(String const& text)
+    InternalId copyAndAssignUniqueId(String const &text)
     {
-        CaselessString* str = new CaselessString(text);
+        CaselessString *str = new CaselessString(text);
 
         // This is a new string that is added to the pool.
         interns.insert(str); // O(log n)
@@ -220,7 +220,7 @@ struct StringPool::Instance
         return assignUniqueId(str);
     }
 
-    InternalId assignUniqueId(CaselessString* str) // O(1)
+    InternalId assignUniqueId(CaselessString *str) // O(1)
     {
         InternalId idx;
 
@@ -246,11 +246,11 @@ struct StringPool::Instance
         return idx;
     }
 
-    void releaseAndDestroy(InternalId id, Interns::iterator* iterToErase = 0)
+    void releaseAndDestroy(InternalId id, Interns::iterator *iterToErase = 0)
     {
         DENG2_ASSERT(id < idMap.size());
 
-        CaselessString* interned = idMap[id];
+        CaselessString *interned = idMap[id];
         DENG2_ASSERT(interned != 0);
 
         idMap[id] = 0;
@@ -275,7 +275,7 @@ StringPool::StringPool()
     d = new Instance();
 }
 
-StringPool::StringPool(String* strings, uint count)
+StringPool::StringPool(String *strings, uint count)
 {
     d = new Instance();
     for(uint i = 0; strings && i < count; ++i)
@@ -347,7 +347,7 @@ uint StringPool::userValue(Id id) const
     return d->idMap[internalId]->userValue(); // O(1)
 }
 
-void StringPool::setUserPointer(Id id, void* ptr)
+void StringPool::setUserPointer(Id id, void *ptr)
 {
     if(id == 0) return;
 
@@ -359,7 +359,7 @@ void StringPool::setUserPointer(Id id, void* ptr)
     d->idMap[internalId]->setUserPointer(ptr); // O(1)
 }
 
-void* StringPool::userPointer(Id id) const
+void *StringPool::userPointer(Id id) const
 {
     if(id == 0) return NULL;
 
@@ -388,7 +388,7 @@ String StringPool::string(Id id) const
     return stringRef(id);
 }
 
-const String& StringPool::stringRef(StringPool::Id id) const
+String const &StringPool::stringRef(StringPool::Id id) const
 {
     if(id == 0)
     {
@@ -421,7 +421,7 @@ bool StringPool::removeById(Id id)
     InternalId const internalId = IMPORT_ID(id);
     if(id >= d->idMap.size()) return false;
 
-    CaselessString* str = d->idMap[internalId];
+    CaselessString *str = d->idMap[internalId];
     if(!str) return false;
 
     d->interns.erase(str); // O(log n)
@@ -429,7 +429,7 @@ bool StringPool::removeById(Id id)
     return true;
 }
 
-int StringPool::iterate(int (*callback)(Id, void*), void* data) const
+int StringPool::iterate(int (*callback)(Id, void *), void *data) const
 {
     if(!callback) return 0;
     for(uint i = 0; i < d->idMap.size(); ++i)
@@ -442,7 +442,7 @@ int StringPool::iterate(int (*callback)(Id, void*), void* data) const
 }
 
 // Implements ISerializable.
-void StringPool::operator >> (Writer& to) const
+void StringPool::operator >> (Writer &to) const
 {
     // Number of strings altogether (includes unused ids).
     to << duint32(d->idMap.size());
@@ -455,7 +455,7 @@ void StringPool::operator >> (Writer& to) const
     }
 }
 
-void StringPool::operator << (Reader& from)
+void StringPool::operator << (Reader &from)
 {
     clear();
 
@@ -469,7 +469,7 @@ void StringPool::operator << (Reader& from)
     from >> numInterns;
     while(numInterns--)
     {
-        CaselessString* str = new CaselessString;
+        CaselessString *str = new CaselessString;
         from >> *str;
         d->interns.insert(str);
 
@@ -492,12 +492,12 @@ void StringPool::operator << (Reader& from)
 typedef struct {
     int padding; ///< Number of characters to left-pad output.
     uint count; ///< Running total of the number of strings printed.
-    StringPool const* pool; ///< StringPool instance being printed.
+    StringPool const *pool; ///< StringPool instance being printed.
 } printinternedstring_params_t;
 
-static int printInternedString(StringPool::Id internId, void* params)
+static int printInternedString(StringPool::Id internId, void *params)
 {
-    printinternedstring_params_t* p = (printinternedstring_params_t*)params;
+    printinternedstring_params_t *p = (printinternedstring_params_t *)params;
     QByteArray stringUtf8 = p->pool->string(internId).toUtf8();
     fprintf(stderr, "%*u %5u %s\n", p->padding, p->count++, internId, stringUtf8.constData());
     return 0; // Continue iteration.
@@ -511,7 +511,7 @@ void StringPool::print() const
     p.pool = this;
     p.count = 0;
 
-    fprintf(stderr, "StringPool [%p]\n    idx    id string\n", (void*)this);
+    fprintf(stderr, "StringPool [%p]\n    idx    id string\n", (void *)this);
     iterate(printInternedString, &p);
     fprintf(stderr, "  There is %u %s in the pool.\n", size(),
                     size() == 1? "string":"strings");

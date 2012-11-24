@@ -45,7 +45,7 @@ public:
      *
      * @param to  Writer using which the data is written.
      */
-    virtual void operator >> (Writer& to) const = 0;
+    virtual void operator >> (Writer &to) const = 0;
 };
 
 } // namespace de

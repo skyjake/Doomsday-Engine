@@ -29,7 +29,7 @@
 
 using namespace de;
 
-PrintStatement::PrintStatement(ArrayExpression* arguments) : _arg(arguments)
+PrintStatement::PrintStatement(ArrayExpression *arguments) : _arg(arguments)
 {
     if(!_arg)
     {
@@ -42,9 +42,9 @@ PrintStatement::~PrintStatement()
     delete _arg;
 }
 
-void PrintStatement::execute(Context& context) const
+void PrintStatement::execute(Context &context) const
 {
-    ArrayValue& value = context.evaluator().evaluateTo<ArrayValue>(_arg);
+    ArrayValue &value = context.evaluator().evaluateTo<ArrayValue>(_arg);
 
     String msg;
     QTextStream os(&msg);
@@ -68,12 +68,12 @@ void PrintStatement::execute(Context& context) const
     context.proceed();
 }
 
-void PrintStatement::operator >> (Writer& to) const
+void PrintStatement::operator >> (Writer &to) const
 {
     to << SerialId(PRINT) << *_arg;
 }
 
-void PrintStatement::operator << (Reader& from)
+void PrintStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

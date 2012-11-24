@@ -53,16 +53,16 @@ public:
          * @param t  Type of the element.
          * @param n  Case-independent name of the element.
          */
-        Element(Type t = None, const String& n = "") : _type(t) { setName(n); }
+        Element(Type t = None, String const &n = "") : _type(t) { setName(n); }
         virtual ~Element() {}
 
         Type type() const { return _type; }
         bool isKey() const { return _type == Key; }
         bool isList() const { return _type == List; }
         bool isBlock() const { return _type == Block; }
-        const String& name() const { return _name; }
+        String const &name() const { return _name; }
 
-        void setName(const String& name) { _name = name.toLower(); }
+        void setName(String const &name) { _name = name.toLower(); }
 
         virtual QStringList values() const = 0;
 
@@ -76,10 +76,10 @@ public:
      */
     class KeyElement : public Element {
     public:
-        KeyElement(const String& name, const String& value) : Element(Key, name), _value(value) {}
+        KeyElement(String const &name, String const &value) : Element(Key, name), _value(value) {}
 
-        void setValue(const String& v) { _value = v; }
-        const String& value() const { return _value; }
+        void setValue(String const &v) { _value = v; }
+        String const &value() const { return _value; }
 
         QStringList values() const {
             QStringList list;
@@ -96,8 +96,8 @@ public:
      */
     class ListElement : public Element {
     public:
-        ListElement(const String& name) : Element(List, name) {}
-        void add(const String& v) { _values << v; }
+        ListElement(String const &name) : Element(List, name) {}
+        void add(String const &v) { _values << v; }
         QStringList values() const { return _values; }
 
     private:
@@ -113,11 +113,11 @@ public:
     public:
         DENG2_ERROR(ValuesError);
 
-        typedef QHash<String, Element*> Contents;
-        typedef QList<Element*> ContentsInOrder;
+        typedef QHash<String, Element *> Contents;
+        typedef QList<Element *> ContentsInOrder;
 
     public:
-        BlockElement(const String& bType, const String& name) : Element(Block, name) {
+        BlockElement(String const &bType, String const &name) : Element(Block, name) {
             setBlockType(bType);
         }
         ~BlockElement();
@@ -127,11 +127,11 @@ public:
          */
         bool isRootBlock() const { return _blockType.isEmpty(); }
 
-        const String& blockType() const { return _blockType; }
+        String const &blockType() const { return _blockType; }
 
-        const ContentsInOrder& contentsInOrder() const { return _contentsInOrder; }
+        ContentsInOrder const &contentsInOrder() const { return _contentsInOrder; }
 
-        const Contents& contents() const { return _contents; }
+        Contents const &contents() const { return _contents; }
 
         QStringList values() const {
             throw ValuesError("Info::BlockElement::values",
@@ -140,19 +140,19 @@ public:
 
         int size() const { return _contents.size(); }
 
-        bool contains(const String& name) { return _contents.contains(name); }
+        bool contains(String const &name) { return _contents.contains(name); }
 
-        void setBlockType(const String& bType) { _blockType = bType.toLower(); }
+        void setBlockType(String const &bType) { _blockType = bType.toLower(); }
 
         void clear();
 
-        void add(Element* elem) {
+        void add(Element *elem) {
             DENG2_ASSERT(elem != 0);
             _contentsInOrder.append(elem);
             _contents.insert(elem->name(), elem);
         }
 
-        Element* find(const String& name) const {
+        Element *find(String const &name) const {
             Contents::const_iterator found = _contents.find(name);
             if(found == _contents.end()) return 0;
             return found.value();
@@ -164,10 +164,10 @@ public:
          *
          * @param name  Name of a key element in the block.
          */
-        String keyValue(const String& name) const {
-            Element* e = find(name);
+        String keyValue(String const &name) const {
+            Element *e = find(name);
             if(!e || !e->isKey()) return "";
-            return static_cast<KeyElement*>(e)->value();
+            return static_cast<KeyElement *>(e)->value();
         }
 
         /**
@@ -179,7 +179,7 @@ public:
          *
          * @return  The located element, or @c NULL.
          */
-        Element* findByPath(const String& path) const;
+        Element *findByPath(String const &path) const;
 
     private:
         String _blockType;
@@ -199,7 +199,7 @@ public:
      *
      * @param source  Info source text.
      */
-    Info(const String& source);
+    Info(String const &source);
 
     ~Info();
 
@@ -208,18 +208,18 @@ public:
      *
      * @param infoSource  Info text.
      */
-    void parse(const String& infoSource);
+    void parse(String const &infoSource);
 
     /**
      * Parses the Info contents from a native text file.
      *
      * @param nativePath  Path of a native file containing the Info source.
      */
-    void parseNativeFile(const String& nativePath);
+    void parseNativeFile(String const &nativePath);
 
-    const BlockElement& root() const;
+    BlockElement const &root() const;
 
-    const Element* findByPath(const String& path) const;
+    Element const *findByPath(String const &path) const;
 
     /**
      * Finds the value of a key.
@@ -230,11 +230,11 @@ public:
      * @return @c true, if the key was found and @a value is valid. If @c
      * false, the key was not found and @a value is not changed.
      */
-    bool findValueForKey(const String& key, String& value) const;
+    bool findValueForKey(String const &key, String &value) const;
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 };
 
 } // namespace de

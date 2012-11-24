@@ -29,7 +29,7 @@ using namespace de;
 ConstantExpression::ConstantExpression() : _value(0)
 {}
 
-ConstantExpression::ConstantExpression(Value* value) : _value(value) 
+ConstantExpression::ConstantExpression(Value *value) : _value(value) 
 {}
 
 ConstantExpression::~ConstantExpression()
@@ -37,33 +37,33 @@ ConstantExpression::~ConstantExpression()
     delete _value;
 }
 
-Value* ConstantExpression::evaluate(Evaluator&) const
+Value *ConstantExpression::evaluate(Evaluator &) const
 {
     DENG2_ASSERT(_value != 0);
     return _value->duplicate();
 }
 
-ConstantExpression* ConstantExpression::None()
+ConstantExpression *ConstantExpression::None()
 {
     return new ConstantExpression(new NoneValue());
 }        
 
-ConstantExpression* ConstantExpression::True()
+ConstantExpression *ConstantExpression::True()
 {
     return new ConstantExpression(new NumberValue(NumberValue::VALUE_TRUE));
 }
 
-ConstantExpression* ConstantExpression::False()
+ConstantExpression *ConstantExpression::False()
 {
     return new ConstantExpression(new NumberValue(NumberValue::VALUE_FALSE));
 }
 
-ConstantExpression* ConstantExpression::Pi()
+ConstantExpression *ConstantExpression::Pi()
 {
     return new ConstantExpression(new NumberValue(PI));
 }
 
-void ConstantExpression::operator >> (Writer& to) const
+void ConstantExpression::operator >> (Writer &to) const
 {
     to << SerialId(CONSTANT);
 
@@ -72,7 +72,7 @@ void ConstantExpression::operator >> (Writer& to) const
     to << *_value;
 }
 
-void ConstantExpression::operator << (Reader& from)
+void ConstantExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

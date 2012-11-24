@@ -45,13 +45,13 @@ namespace de
         Flags flags;
         
     public:
-        CatchStatement(ArrayExpression* args = 0);
+        CatchStatement(ArrayExpression *args = 0);
         ~CatchStatement();
         
-        Compound& compound() { return _compound; }
+        Compound &compound() { return _compound; }
         
         /// Skips the catch compound (called only during normal execution).
-        void execute(Context& context) const;
+        void execute(Context &context) const;
         
         bool isFinal() const;
         
@@ -62,7 +62,7 @@ namespace de
          *
          * @return  @c true, if the error is caught and catch compound should be executed.
          */
-        bool matches(const Error& err) const;
+        bool matches(Error const &err) const;
         
         /**
          * Assigns the exception to the specified variable and begins the catch compound.
@@ -70,14 +70,14 @@ namespace de
          * @param context  Execution context.
          * @param err      Error.
          */
-        void executeCatch(Context& context, const Error& err) const;
+        void executeCatch(Context &context, Error const &err) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
     private:
-        ArrayExpression* _args;
+        ArrayExpression *_args;
         Compound _compound;
     };
 

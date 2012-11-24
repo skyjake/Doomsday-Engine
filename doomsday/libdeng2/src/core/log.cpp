@@ -29,7 +29,7 @@
 
 namespace de {
 
-const char* MAIN_SECTION = "";
+char const *MAIN_SECTION = "";
 
 #ifdef DENG2_DEBUG
 /// If the section is longer than this, it will be alone on one line while
@@ -46,14 +46,14 @@ namespace internal {
  * The logs table is lockable so that multiple threads can access their logs at
  * the same time.
  */
-class Logs : public QMap<QThread*, Log*>, public Lockable
+class Logs : public QMap<QThread*, Log *>, public Lockable
 {
 public:
     Logs() {}
     ~Logs() {
         lock();
         // The logs are owned by the logs table.
-        foreach(Log* log, values()) {
+        foreach(Log *log, values()) {
             delete log;
         }
         unlock();
@@ -68,7 +68,7 @@ static internal::Logs logs;
 LogEntry::LogEntry() : _level(Log::TRACE), _disabled(true)
 {}
 
-LogEntry::LogEntry(Log::LogLevel level, const String& section, const String& format)
+LogEntry::LogEntry(Log::LogLevel level, String const &section, String const &format)
     : _level(level), _section(section), _format(format), _disabled(false)
 {
     if(!LogBuffer::appBuffer().isEnabled(level))
@@ -85,7 +85,7 @@ LogEntry::~LogEntry()
     }    
 }
 
-String LogEntry::asText(const Flags& formattingFlags) const
+String LogEntry::asText(Flags const &formattingFlags) const
 {
     Flags flags = formattingFlags;
     QString result;
@@ -106,7 +106,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
 
         if(!flags.testFlag(Styled))
         {
-            const char* levelNames[Log::MAX_LOG_LEVELS] = {
+            char const *levelNames[Log::MAX_LOG_LEVELS] = {
                 "(...)",
                 "(deb)",
                 "(vrb)",
@@ -121,7 +121,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
         }
         else
         {
-            const char* levelNames[Log::MAX_LOG_LEVELS] = {
+            char const *levelNames[Log::MAX_LOG_LEVELS] = {
                 "Trace",
                 "Debug",
                 "Verbose",
@@ -205,7 +205,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
     return result;
 }
 
-QTextStream& de::operator << (QTextStream& stream, const LogEntry::Arg& arg)
+QTextStream &de::operator << (QTextStream &stream, LogEntry::Arg const &arg)
 {
     switch(arg.type())
     {
@@ -224,7 +224,7 @@ QTextStream& de::operator << (QTextStream& stream, const LogEntry::Arg& arg)
     return stream;
 }
 
-Log::Section::Section(const char* name) : _log(threadLog()), _name(name)
+Log::Section::Section(char const *name) : _log(threadLog()), _name(name)
 {
     _log.beginSection(_name);
 }
@@ -245,23 +245,23 @@ Log::~Log()
     delete _throwawayEntry;
 }
 
-void Log::beginSection(const char* name)
+void Log::beginSection(char const *name)
 {
     _sectionStack.append(name);
 }
 
-void Log::endSection(const char* DENG2_DEBUG_ONLY(name))
+void Log::endSection(char const *DENG2_DEBUG_ONLY(name))
 {
     DENG2_ASSERT(_sectionStack.back() == name);
     _sectionStack.takeLast();
 }
 
-LogEntry& Log::enter(const String& format)
+LogEntry &Log::enter(String const &format)
 {
     return enter(MESSAGE, format);
 }
 
-LogEntry& Log::enter(Log::LogLevel level, const String& format)
+LogEntry &Log::enter(Log::LogLevel level, String const &format)
 {
     if(!LogBuffer::appBuffer().isEnabled(level))
     {
@@ -272,7 +272,7 @@ LogEntry& Log::enter(Log::LogLevel level, const String& format)
     // Collect the sections.
     String context;
     String latest;
-    foreach(const char* i, _sectionStack)
+    foreach(char const *i, _sectionStack)
     {
         if(i == latest)
         {
@@ -288,7 +288,7 @@ LogEntry& Log::enter(Log::LogLevel level, const String& format)
     }
 
     // Make a new entry.
-    LogEntry* entry = new LogEntry(level, context, format);
+    LogEntry *entry = new LogEntry(level, context, format);
     
     // Add it to the application's buffer. The buffer gets ownership.
     LogBuffer::appBuffer().add(entry);
@@ -296,11 +296,11 @@ LogEntry& Log::enter(Log::LogLevel level, const String& format)
     return *entry;
 }
 
-Log& Log::threadLog()
+Log &Log::threadLog()
 {
     // Each thread has its own log.
-    QThread* thread = QThread::currentThread();
-    Log* theLog = 0;
+    QThread *thread = QThread::currentThread();
+    Log *theLog = 0;
     logs.lock();
     internal::Logs::iterator found = logs.find(thread);
     if(found == logs.end())
@@ -319,7 +319,7 @@ Log& Log::threadLog()
 
 void Log::disposeThreadLog()
 {
-    QThread* thread = QThread::currentThread();
+    QThread *thread = QThread::currentThread();
     logs.lock();
     internal::Logs::iterator found = logs.find(thread);
     if(found != logs.end())

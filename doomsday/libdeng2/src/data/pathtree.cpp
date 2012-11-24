@@ -31,7 +31,7 @@ Path::hash_type const PathTree::no_hash = Path::hash_range;
 
 struct PathTree::Instance
 {
-    PathTree& self;
+    PathTree &self;
 
     /// Path name segment intern pool.
     StringPool segments;
@@ -46,7 +46,7 @@ struct PathTree::Instance
     PathTree::Nodes leafHash;
     PathTree::Nodes branchHash;
 
-    Instance(PathTree& d, int _flags)
+    Instance(PathTree &d, int _flags)
         : self(d), flags(_flags), size(0)
     {}
 
@@ -73,8 +73,8 @@ struct PathTree::Instance
      * @return Tree node that matches the name and type and which has the
      * specified parent node.
      */
-    PathTree::Node* direcNode(const Path::Segment& pathNode, PathTree::NodeType nodeType,
-                              PathTree::Node* parent)
+    PathTree::Node *direcNode(Path::Segment const &pathNode, PathTree::NodeType nodeType,
+                              PathTree::Node *parent)
     {
         // Have we already encountered this?
         String segment = pathNode.toString();
@@ -82,12 +82,12 @@ struct PathTree::Instance
         if(segmentId)
         {
             // The name is known. Perhaps we have.
-            PathTree::Nodes& hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
+            PathTree::Nodes &hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
             Path::hash_type hashKey = segments.userValue(segmentId);
             for(PathTree::Nodes::const_iterator i = hash.find(hashKey);
                 i != hash.end() && i.key() == hashKey; ++i)
             {
-                PathTree::Node* node = *i;
+                PathTree::Node *node = *i;
                 if(parent    != node->parent()) continue;
                 if(segmentId != node->segmentId()) continue;
 
@@ -115,7 +115,7 @@ struct PathTree::Instance
         // Are we out of indices?
         if(!segmentId) return NULL;
 
-        PathTree::Node* node = new PathTree::Node(self, nodeType, segmentId, parent);
+        PathTree::Node *node = new PathTree::Node(self, nodeType, segmentId, parent);
 
         // Insert the new node into the hash.
         if(nodeType == PathTree::Leaf)
@@ -161,13 +161,13 @@ struct PathTree::Instance
         return node;
     }
 
-    static void clearPathHash(PathTree::Nodes& ph)
+    static void clearPathHash(PathTree::Nodes &ph)
     {
         LOG_AS("PathTree::clearPathHash");
 
         DENG2_FOR_EACH(PathTree::Nodes, i, ph)
         {
-            PathTree::Node* node = *i;
+            PathTree::Node *node = *i;
 #ifdef DENG2_DEBUG
             if(node->userPointer())
             {
@@ -181,9 +181,9 @@ struct PathTree::Instance
     }
 };
 
-PathTree::Node* PathTree::insert(Path const &path)
+PathTree::Node *PathTree::insert(Path const &path)
 {
-    PathTree::Node* node = d->buildDirecNodes(path);
+    PathTree::Node *node = d->buildDirecNodes(path);
     if(node)
     {
         // There is now one more unique path in the directory.
@@ -202,7 +202,7 @@ PathTree::~PathTree()
     delete d;
 }
 
-String const& PathTree::nodeTypeName(NodeType type)
+String const &PathTree::nodeTypeName(NodeType type)
 {
     static String const nodeNames[] = {
         "branch",
@@ -226,14 +226,14 @@ void PathTree::clear()
     d->clear();
 }
 
-PathTree::Node const& PathTree::find(Path const& searchPath, ComparisonFlags flags) const
+PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags flags) const
 {
     if(!searchPath.isEmpty() && d->size)
     {
         Path::hash_type hashKey = searchPath.lastSegment().hash();
         if(!(flags & NoLeaf))
         {
-            Nodes& nodes = d->leafHash;
+            Nodes &nodes = d->leafHash;
             for(Nodes::const_iterator i = nodes.find(hashKey);
                 i != nodes.end() && i.key() == hashKey; ++i)
             {
@@ -248,7 +248,7 @@ PathTree::Node const& PathTree::find(Path const& searchPath, ComparisonFlags fla
 
         if(!(flags & NoBranch))
         {
-            Nodes& nodes = d->branchHash;
+            Nodes &nodes = d->branchHash;
             for(Nodes::const_iterator i = nodes.find(hashKey); i != nodes.end() && i.key() == hashKey; ++i)
             {
                 Node const &node = **i;
@@ -271,7 +271,7 @@ PathTree::Node &PathTree::find(const Path &path, ComparisonFlags flags)
     return const_cast<Node &>(node);
 }
 
-String const& PathTree::segmentName(SegmentId segmentId) const
+String const &PathTree::segmentName(SegmentId segmentId) const
 {
     return d->segments.stringRef(segmentId);
 }
@@ -281,23 +281,23 @@ Path::hash_type PathTree::segmentHash(SegmentId segmentId) const
     return d->segments.userValue(segmentId);
 }
 
-PathTree::Nodes const& PathTree::nodes(NodeType type) const
+PathTree::Nodes const &PathTree::nodes(NodeType type) const
 {
     return (type == Leaf? d->leafHash : d->branchHash);
 }
 
-static void collectPathsInHash(PathTree::FoundPaths& found, PathTree::Nodes const& ph, QChar delimiter)
+static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes const &ph, QChar delimiter)
 {
     if(ph.empty()) return;
 
     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
     {
-        const PathTree::Node& node = **i;
+        PathTree::Node const &node = **i;
         found.push_back(node.composePath(delimiter));
     }
 }
 
-int PathTree::findAllPaths(FoundPaths& found, ComparisonFlags flags, QChar delimiter) const
+int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar delimiter) const
 {
     int numFoundSoFar = found.count();
     if(!(flags & NoBranch))
@@ -312,8 +312,8 @@ int PathTree::findAllPaths(FoundPaths& found, ComparisonFlags flags, QChar delim
 }
 
 static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
-                              PathTree::NodeType type, int flags, PathTree::Node* parent,
-                              int (*callback) (PathTree::Node&, void*), void* parameters)
+                              PathTree::NodeType type, int flags, PathTree::Node *parent,
+                              int (*callback) (PathTree::Node&, void *), void *parameters)
 {
     int result = 0;
 
@@ -322,7 +322,7 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
         throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1, valid range is [0..%2).").arg(hashKey).arg(Path::hash_range-1));
     }
 
-    PathTree::Nodes const& nodes = pathTree.nodes(type);
+    PathTree::Nodes const &nodes = pathTree.nodes(type);
 
     // Are we iterating nodes with a known hash?
     if(hashKey != PathTree::no_hash)
@@ -353,8 +353,8 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
     return result;
 }
 
-int PathTree::traverse(ComparisonFlags flags, PathTree::Node* parent, Path::hash_type hashKey,
-                       int (*callback) (PathTree::Node&, void*), void* parameters) const
+int PathTree::traverse(ComparisonFlags flags, PathTree::Node *parent, Path::hash_type hashKey,
+                       int (*callback) (PathTree::Node&, void *), void *parameters) const
 {
     int result = 0;
     if(callback)
@@ -387,7 +387,7 @@ void PathTree::debugPrint(QChar delimiter) const
 }
 
 #if 0
-static void printDistributionOverviewElement(const int* colWidths, const char* name,
+static void printDistributionOverviewElement(int const *colWidths, char const *name,
     size_t numEmpty, size_t maxHeight, size_t numCollisions, size_t maxCollisions,
     size_t sum, size_t total)
 {
@@ -408,7 +408,7 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
         variance = coverage = collision = 0;
     }
 
-    const int* col = colWidths;
+    int const *col = colWidths;
     Con_Printf("%*s ",    *col++, name);
     Con_Printf("%*lu ",   *col++, (unsigned long)total);
     Con_Printf("%*lu",    *col++, Path::hash_range - (unsigned long)numEmpty);
@@ -421,7 +421,7 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
     Con_Printf("%*lu\n",  *col++, (unsigned long)maxHeight);
 }
 
-static void printDistributionOverview(PathTree* pt,
+static void printDistributionOverview(PathTree *pt,
     size_t nodeCountSum[PATHTREENODE_TYPE_COUNT],
     size_t nodeCountTotal[PATHTREENODE_TYPE_COUNT],
     size_t nodeBucketCollisions[PATHTREENODE_TYPE_COUNT], size_t nodeBucketCollisionsTotal,
@@ -446,7 +446,7 @@ static void printDistributionOverview(PathTree* pt,
 
     // Calculate minimum field widths:
     int colWidths[NUMCOLS];
-    int* col = colWidths;
+    int *col = colWidths;
     *col = 0;
     for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
@@ -480,7 +480,7 @@ static void printDistributionOverview(PathTree* pt,
     Con_FPrintf(CPF_YELLOW, "Directory Distribution (p:%p):\n", pt);
 
     // Level1 headings:
-    int* span = &spans[0][0];
+    int *span = &spans[0][0];
     Con_Printf("%*s", *span++ +  5/2, "nodes");         Con_Printf("%-*s|", *span++ -  5/2, "");
     Con_Printf("%*s", *span++ +  4/2, "hash");          Con_Printf("%-*s|", *span++ -  4/2, "");
     Con_Printf("%*s", *span++ + 10/2, "collisions");    Con_Printf("%-*s|", *span++ - 10/2, "");
@@ -522,14 +522,14 @@ static void printDistributionOverview(PathTree* pt,
 #endif
 
 #if 0
-static void printDistributionHistogram(PathTree* pt, ushort size,
+static void printDistributionHistogram(PathTree *pt, ushort size,
     size_t nodeCountTotal[PATHTREENODE_TYPE_COUNT])
 {
 #define NUMCOLS             4/*range+total+PATHTREENODE_TYPE_COUNT*/
 
     size_t totalForRange, total, nodeCount[PATHTREENODE_TYPE_COUNT];
     int hashIndexDigits, col, colWidths[2+/*range+total*/PATHTREENODE_TYPE_COUNT];
-    PathTreeNode* node;
+    PathTreeNode *node;
     int j;
     DENG2_ASSERT(pt);
 
@@ -687,7 +687,7 @@ void PathTree::debugPrintHashDistribution() const
            nodeBucketEmpty[PATHTREENODE_TYPE_COUNT], nodeBucketEmptyTotal = 0,
            nodeCount[PATHTREENODE_TYPE_COUNT];
     size_t totalForRange;
-    PathTreeNode* node;
+    PathTreeNode *node;
     DENG2_ASSERT(pt);
 
     nodeCountTotal[PathTree::Node::Branch] = countNodesInPathHash(*hashAddressForNodeType(pt, PathTree::Node::Branch));
@@ -715,7 +715,7 @@ void PathTree::debugPrintHashDistribution() const
             for(node = (**phAdr)[i].head; node; node = node->next)
             {
                 size_t height = 0;
-                PathTreeNode* other = node;
+                PathTreeNode *other = node;
 
                 ++nodeCount[PT_LEAF];
 

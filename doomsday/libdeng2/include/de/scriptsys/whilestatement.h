@@ -38,22 +38,22 @@ namespace de
         WhileStatement() : _loopCondition(0) {}
         ~WhileStatement();
         
-        void setCondition(Expression* condition) {
+        void setCondition(Expression *condition) {
             _loopCondition = condition;
         }
         
-        Compound& compound() {
+        Compound &compound() {
             return _compound;
         }
         
-        void execute(Context& context) const;
+        void execute(Context &context) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
 
     private:
-        Expression* _loopCondition;
+        Expression *_loopCondition;
         Compound _compound;
     };
 }

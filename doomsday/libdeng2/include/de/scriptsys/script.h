@@ -55,7 +55,7 @@ namespace de
          *
          * @param source  Script source.
          */
-        Script(const String& source);
+        Script(String const &source);
         
         /**
          * Parses the source file info statements. The path of the source file
@@ -63,19 +63,19 @@ namespace de
          *
          * @param file  Source file.
          */
-        Script(const File& file);
+        Script(File const &file);
         
         virtual ~Script();
 
-        const String& path() const { return _path; }
+        String const &path() const { return _path; }
 
         /// Returns the statement that begins the script. This is where
         /// a process begins the execution of a script.
-        const Statement* firstStatement() const;
+        Statement const *firstStatement() const;
 
         /// Returns a modifiable reference to the main statement compound
         /// of the script.
-        Compound& compound() {
+        Compound &compound() {
             return _compound;
         }
         

@@ -25,7 +25,7 @@
 
 using namespace de;
 
-Folder::Folder(const String& name) : File(name)
+Folder::Folder(String const &name) : File(name)
 {
     setStatus(Status::FOLDER);
     
@@ -76,7 +76,7 @@ void Folder::populate()
         // touch them.
         bool mustPrune = false;
 
-        File* file = i->second;
+        File *file = i->second;
         
         // If the file has a designated feed, ask it about pruning.
         if(file->originFeed() && file->originFeed()->prune(*file))
@@ -121,7 +121,7 @@ void Folder::populate()
     // Call populate on subfolders.
     for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
     {
-        Folder* folder = dynamic_cast<Folder*>(i->second);
+        Folder *folder = dynamic_cast<Folder *>(i->second);
         if(folder)
         {
             folder->populate();
@@ -129,12 +129,12 @@ void Folder::populate()
     }
 }
 
-const Folder::Contents& Folder::contents() const
+Folder::Contents const &Folder::contents() const
 {
     return _contents;
 }
 
-File& Folder::newFile(const String& newPath, bool replaceExisting)
+File &Folder::newFile(String const &newPath, bool replaceExisting)
 {
     String path = newPath.fileNamePath();
     if(!path.empty())
@@ -153,7 +153,7 @@ File& Folder::newFile(const String& newPath, bool replaceExisting)
     // The first feed able to create a file will get the honors.
     for(Feeds::iterator i = _feeds.begin(); i != _feeds.end(); ++i)
     {
-        File* file = (*i)->newFile(newPath);
+        File *file = (*i)->newFile(newPath);
         if(file)
         {
             // Allow writing to the new file.
@@ -170,12 +170,12 @@ File& Folder::newFile(const String& newPath, bool replaceExisting)
         "' in folder '" + Folder::path() + "'");
 }
 
-File& Folder::replaceFile(const String& newPath)
+File &Folder::replaceFile(String const &newPath)
 {
     return newFile(newPath, true);
 }
 
-void Folder::removeFile(const String& removePath)
+void Folder::removeFile(String const &removePath)
 {
     String path = removePath.fileNamePath();
     if(!path.empty())
@@ -187,8 +187,8 @@ void Folder::removeFile(const String& removePath)
     verifyWriteAccess();
     
     // It should now be in this folder.
-    File& file = locate<File>(removePath);
-    Feed* originFeed = file.originFeed();
+    File &file = locate<File>(removePath);
+    Feed *originFeed = file.originFeed();
 
     // This'll close it and remove it from the index.
     delete &file;
@@ -201,12 +201,12 @@ void Folder::removeFile(const String& removePath)
     
 }
 
-bool Folder::has(const String& name) const
+bool Folder::has(String const &name) const
 {
     return (_contents.find(name.lower()) != _contents.end());
 }
 
-File& Folder::add(File* file)
+File &Folder::add(File *file)
 {
     DENG2_ASSERT(file != 0);
     if(has(file->name()))
@@ -220,7 +220,7 @@ File& Folder::add(File* file)
     return *file;
 }
 
-File* Folder::remove(File& file)
+File *Folder::remove(File &file)
 {
     for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
     {
@@ -234,11 +234,11 @@ File* Folder::remove(File& file)
     return &file;
 }
 
-File* Folder::tryLocateFile(const String& path) const
+File *Folder::tryLocateFile(String const &path) const
 {
     if(path.empty())
     {
-        return const_cast<Folder*>(this);
+        return const_cast<Folder *>(this);
     }
 
     if(path[0] == '/')
@@ -282,7 +282,7 @@ File* Folder::tryLocateFile(const String& path) const
     Contents::const_iterator found = _contents.find(component.lower());
     if(found != _contents.end())
     {
-        Folder* subFolder = dynamic_cast<Folder*>(found->second);
+        Folder *subFolder = dynamic_cast<Folder *>(found->second);
         if(subFolder)
         {
             // Continue recursively to the next component.
@@ -294,24 +294,24 @@ File* Folder::tryLocateFile(const String& path) const
     return 0;
 }
 
-void Folder::attach(Feed* feed)
+void Folder::attach(Feed *feed)
 {
     _feeds.push_back(feed);
 }
 
-Feed* Folder::detach(Feed& feed)
+Feed *Folder::detach(Feed &feed)
 {
     _feeds.remove(&feed);
     return &feed;
 }
 
-Folder::Accessor::Accessor(Folder& owner, Property prop) : _owner(owner), _prop(prop)
+Folder::Accessor::Accessor(Folder &owner, Property prop) : _owner(owner), _prop(prop)
 {}
 
 void Folder::Accessor::update() const
 {
     // We need to alter the value content.
-    Accessor* nonConst = const_cast<Accessor*>(this);
+    Accessor *nonConst = const_cast<Accessor *>(this);
     
     switch(_prop)
     {
@@ -321,7 +321,7 @@ void Folder::Accessor::update() const
     }    
 }
 
-Value* Folder::Accessor::duplicateContent() const
+Value *Folder::Accessor::duplicateContent() const
 {
     return new NumberValue(asNumber());
 }

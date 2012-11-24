@@ -40,14 +40,14 @@ namespace de {
 class DENG2_PUBLIC Error : public std::runtime_error
 {
 public:
-    Error(const QString& where, const QString& message);
+    Error(QString const &where, QString const &message);
     ~Error() throw();
 
     QString name() const;
     virtual QString asText() const;
 
 protected:
-    void setName(const QString& name);
+    void setName(QString const &name);
 
 private:
     std::string _name;
@@ -64,9 +64,9 @@ private:
 #define DENG2_SUB_ERROR(Parent, Name) \
     class Name : public Parent { \
     public: \
-        Name(const QString& message) \
+        Name(QString const &message) \
             : Parent("-", message) { Parent::setName(#Name); } \
-        Name(const QString& where, const QString& message) \
+        Name(QString const &where, QString const &message) \
             : Parent(where, message) { Parent::setName(#Name); } \
         virtual void raise() const { throw *this; } \
     } /**< @note One must put a semicolon after the macro invocation. */

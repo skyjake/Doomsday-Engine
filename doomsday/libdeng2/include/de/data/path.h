@@ -115,9 +115,9 @@ public:
          *
          * @return @c true, iff the segments are equal.
          */
-        bool operator == (const Segment& other) const;
+        bool operator == (Segment const &other) const;
 
-        bool operator != (const Segment& other) const {
+        bool operator != (Segment const &other) const {
             return !(*this == other);
         }
 
@@ -143,16 +143,16 @@ public:
      *              (implicit sharing): all white space is included in the path.
      * @param sep   Character used to separate path segments in @a path.
      */
-    Path(const String& path, QChar sep = '/');
+    Path(String const &path, QChar sep = '/');
 
     /**
      * Construct a path by duplicating @a other.
      */
-    Path(const Path& other);
+    Path(Path const &other);
 
     virtual ~Path();
 
-    inline Path& operator = (Path other) {
+    inline Path &operator = (Path other) {
         std::swap(d, other.d);
         return *this;
     }
@@ -161,7 +161,7 @@ public:
      * Swaps this Path with @a other.
      * @param other  Path.
      */
-    inline void swap(Path& other) {
+    inline void swap(Path &other) {
         std::swap(d, other.d);
     }
 
@@ -173,7 +173,7 @@ public:
      *
      * @return @c true, iff the paths are equal.
      */
-    bool operator == (const Path& other) const;
+    bool operator == (Path const &other) const;
 
     /**
      * Determines if @a other is not equal to this path. The test is case
@@ -183,7 +183,7 @@ public:
      *
      * @return @c true, iff the paths are not equal.
      */
-    bool operator != (const Path& other) const {
+    bool operator != (Path const &other) const {
         return !(*this == other);
     }
 
@@ -195,7 +195,7 @@ public:
      *
      * @return Concatenated path.
      */
-    Path operator / (const Path& other) const;
+    Path operator / (Path const &other) const;
 
     /**
      * Concatenate paths together. This path's separator will be used for
@@ -208,7 +208,7 @@ public:
      */
     Path operator / (QString other) const;
 
-    Path operator / (const char* otherNullTerminatedUtf8) const;
+    Path operator / (char const *otherNullTerminatedUtf8) const;
 
     /**
      * Convert this path to a text string.
@@ -225,7 +225,7 @@ public:
     /**
      * Returns a reference to the path as a string.
      */
-    const String& toStringRef() const;
+    String const &toStringRef() const;
 
     /**
      * Returns @c true if the path is empty; otherwise @c false.
@@ -247,7 +247,7 @@ public:
     /**
      * Clear the path.
      */
-    Path& clear();
+    Path &clear();
 
     /**
      * Assigns a new path with '/' separators.
@@ -256,7 +256,7 @@ public:
      *
      * @return This Path.
      */
-    Path& operator = (const String& newPath);
+    Path &operator = (String const &newPath);
 
     /**
      * Changes the path.
@@ -264,7 +264,7 @@ public:
      * @param newPath  New path.
      * @param sep      Character used to separate path segments in @a path.
      */
-    Path& set(const String& newPath, QChar sep = '/');
+    Path &set(String const &newPath, QChar sep = '/');
 
     /**
      * Returns a copy of the path where all segment separators have been
@@ -305,7 +305,7 @@ public:
      * @return  Referenced segment. Do not keep the returned reference after
      * making a change to the path.
      */
-    const Segment& segment(int index) const;
+    Segment const &segment(int index) const;
 
     /**
      * Retrieve a reference to the segment at @a reverseIndex. In this method
@@ -329,7 +329,7 @@ public:
      * @return  Referenced segment. Do not keep the returned reference after
      * making a change to the path.
      */
-    const Segment& reverseSegment(int reverseIndex) const;
+    Segment const &reverseSegment(int reverseIndex) const;
 
     /**
      * @return  Total number of segments in the segment map. There is always
@@ -341,7 +341,7 @@ public:
      * @return First (i.e., left-most) segment in the path. If the path is
      * empty, the returned segment is an empty, zero-length segment.
      */
-    inline Segment const& firstSegment() const {
+    inline Segment const &firstSegment() const {
         return segment(0);
     }
 
@@ -349,7 +349,7 @@ public:
      * @return  Last (i.e., right-most) segment in the path. If the path is empty,
      * the returned segment is an empty, zero-length segment.
      */
-    inline Segment const& lastSegment() const {
+    inline Segment const &lastSegment() const {
         return segment(segmentCount() - 1);
     }
 
@@ -360,11 +360,11 @@ public:
     }
 
     // Implements ISerializable.
-    void operator >> (Writer& to) const;
-    void operator << (Reader& from);
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
 private:
-    Instance* d;
+    Instance *d;
 };
 
 } // namespace de
@@ -372,7 +372,7 @@ private:
 namespace std {
     // std::swap specialization for de::Path
     template <>
-    inline void swap<de::Path>(de::Path& a, de::Path& b) {
+    inline void swap<de::Path>(de::Path &a, de::Path &b) {
         a.swap(b);
     }
 }

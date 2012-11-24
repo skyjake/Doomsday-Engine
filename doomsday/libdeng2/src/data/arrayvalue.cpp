@@ -31,7 +31,7 @@ using namespace de;
 ArrayValue::ArrayValue() : Value(), _iteration(0)
 {}
 
-ArrayValue::ArrayValue(const ArrayValue& other) : Value()
+ArrayValue::ArrayValue(ArrayValue const &other) : Value()
 {
     for(Elements::const_iterator i = other._elements.begin();
         i != other._elements.end(); ++i)
@@ -46,7 +46,7 @@ ArrayValue::~ArrayValue()
     clear();
 }
 
-Value* ArrayValue::duplicate() const
+Value *ArrayValue::duplicate() const
 {
     return new ArrayValue(*this);
 }
@@ -80,9 +80,9 @@ dsize ArrayValue::size() const
     return _elements.size();
 }
 
-const Value& ArrayValue::element(const Value& indexValue) const
+Value const &ArrayValue::element(Value const &indexValue) const
 {
-    const NumberValue* v = dynamic_cast<const NumberValue*>(&indexValue);
+    NumberValue const *v = dynamic_cast<NumberValue const *>(&indexValue);
     if(!v)
     {
         /// @throw IllegalIndexError @a indexValue is not a NumberValue.
@@ -93,14 +93,14 @@ const Value& ArrayValue::element(const Value& indexValue) const
     return **elem;
 }
 
-Value& ArrayValue::element(const Value& index)
+Value &ArrayValue::element(Value const &index)
 {
-    return const_cast<Value&>(const_cast<const ArrayValue*>(this)->element(index));
+    return const_cast<Value &>(const_cast<ArrayValue const *>(this)->element(index));
 }
 
-void ArrayValue::setElement(const Value& indexValue, Value* value)
+void ArrayValue::setElement(Value const &indexValue, Value *value)
 {
-    const NumberValue* v = dynamic_cast<const NumberValue*>(&indexValue);
+    NumberValue const *v = dynamic_cast<NumberValue const *>(&indexValue);
     if(!v)
     {
         /// @throw IllegalIndexError @a indexValue is not a NumberValue.
@@ -109,7 +109,7 @@ void ArrayValue::setElement(const Value& indexValue, Value* value)
     replace(v->as<dint>(), value);
 }
 
-bool ArrayValue::contains(const Value& value) const
+bool ArrayValue::contains(Value const &value) const
 {
     for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
@@ -121,13 +121,13 @@ bool ArrayValue::contains(const Value& value) const
     return false;
 }
 
-Value* ArrayValue::begin()
+Value *ArrayValue::begin()
 {
     _iteration = 0;
     return next();
 }
 
-Value* ArrayValue::next()
+Value *ArrayValue::next()
 {
     if(_iteration < dint(_elements.size()))
     {
@@ -141,9 +141,9 @@ bool ArrayValue::isTrue() const
     return _elements.size() > 0;
 }
 
-dint ArrayValue::compare(const Value& value) const
+dint ArrayValue::compare(Value const &value) const
 {
-    const ArrayValue* other = dynamic_cast<const ArrayValue*>(&value);
+    ArrayValue const *other = dynamic_cast<ArrayValue const *>(&value);
     if(other)
     {
         if(size() < other->size())
@@ -168,9 +168,9 @@ dint ArrayValue::compare(const Value& value) const
     return Value::compare(value);    
 }
 
-void ArrayValue::sum(const Value& value)
+void ArrayValue::sum(Value const &value)
 {
-    const ArrayValue* array = dynamic_cast<const ArrayValue*>(&value);
+    ArrayValue const *array = dynamic_cast<ArrayValue const *>(&value);
     if(!array)
     {
         /// @throw ArithmeticError @a value was not an Array. ArrayValue can only be summed
@@ -184,17 +184,17 @@ void ArrayValue::sum(const Value& value)
     }
 }
 
-void ArrayValue::add(Value* value)
+void ArrayValue::add(Value *value)
 {
     _elements.push_back(value);
 }
 
-void ArrayValue::add(const String& text)
+void ArrayValue::add(String const &text)
 {
     add(new TextValue(text));
 }
 
-const Value& ArrayValue::at(dint index) const
+Value const &ArrayValue::at(dint index) const
 {
     return **indexToIterator(index);
 }
@@ -233,7 +233,7 @@ ArrayValue::Elements::const_iterator ArrayValue::indexToIterator(dint index) con
     }    
 }
 
-void ArrayValue::insert(dint index, Value* value)
+void ArrayValue::insert(dint index, Value *value)
 {
     if(index == dint(size()))
     {
@@ -245,7 +245,7 @@ void ArrayValue::insert(dint index, Value* value)
     }
 }
 
-void ArrayValue::replace(dint index, Value* value)
+void ArrayValue::replace(dint index, Value *value)
 {
     Elements::iterator elem = indexToIterator(index);
     delete *elem;
@@ -259,10 +259,10 @@ void ArrayValue::remove(dint index)
     _elements.erase(elem);
 }
     
-Value* ArrayValue::pop()
+Value *ArrayValue::pop()
 {
     DENG2_ASSERT(size() > 0);
-    Value* popped = _elements.back();
+    Value *popped = _elements.back();
     _elements.pop_back();
     return popped;
 }
@@ -282,7 +282,7 @@ void ArrayValue::clear()
     _elements.clear();
 }
 
-void ArrayValue::operator >> (Writer& to) const
+void ArrayValue::operator >> (Writer &to) const
 {
     to << SerialId(ARRAY) << duint(_elements.size());
     for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
@@ -291,7 +291,7 @@ void ArrayValue::operator >> (Writer& to) const
     }
 }
 
-void ArrayValue::operator << (Reader& from)
+void ArrayValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

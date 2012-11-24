@@ -39,9 +39,9 @@ ForStatement::~ForStatement()
     delete _iteration;
 }
 
-void ForStatement::execute(Context& context) const
+void ForStatement::execute(Context &context) const
 {
-    Evaluator& eval = context.evaluator();
+    Evaluator &eval = context.evaluator();
     if(!context.iterationValue())
     {
         eval.evaluate(_iteration);
@@ -50,11 +50,11 @@ void ForStatement::execute(Context& context) const
     }
 
     // The variable gets ownership of this value.
-    Value* nextValue = context.iterationValue()->next();
+    Value *nextValue = context.iterationValue()->next();
     if(nextValue)
     {
         // Assign the variable specified.
-        RefValue& ref = eval.evaluateTo<RefValue>(_iterator);
+        RefValue &ref = eval.evaluateTo<RefValue>(_iterator);
         ref.assign(nextValue);
         
         // Let's begin the compound.
@@ -67,12 +67,12 @@ void ForStatement::execute(Context& context) const
     }            
 }
 
-void ForStatement::operator >> (Writer& to) const
+void ForStatement::operator >> (Writer &to) const
 {
     to << SerialId(FOR) << *_iterator << *_iteration << _compound;
 }
 
-void ForStatement::operator << (Reader& from)
+void ForStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

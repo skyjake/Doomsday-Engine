@@ -44,7 +44,7 @@ public:
      *
      * @param from  Reader where the data is read from.
      */
-    virtual void operator << (Reader& from) = 0;
+    virtual void operator << (Reader &from) = 0;
 };
 
 } // namespace de

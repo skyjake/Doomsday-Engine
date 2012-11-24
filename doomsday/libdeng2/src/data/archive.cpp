@@ -23,10 +23,10 @@ namespace de {
 
 struct Archive::Instance
 {
-    Archive& self;
+    Archive &self;
 
     /// Source data provided at construction.
-    const IByteArray* source;
+    IByteArray const *source;
 
     /// Index maps entry paths to their metadata.
     Archive::Index index;
@@ -34,10 +34,10 @@ struct Archive::Instance
     /// Contents of the archive have been modified.
     bool modified;
 
-    Instance(Archive& a, const IByteArray* src) : self(a), source(src), modified(false)
+    Instance(Archive &a, IByteArray const *src) : self(a), source(src), modified(false)
     {}
 
-    void readEntry(const String& path, IBlock& deserializedData) const
+    void readEntry(String const &path, IBlock &deserializedData) const
     {
         Archive::Index::const_iterator found = index.find(path);
         if(found == index.end())
@@ -47,7 +47,7 @@ struct Archive::Instance
                 "Entry '" + path + "' cannot not found in the archive");
         }
 
-        const Entry& entry = *found.value();
+        Entry const &entry = *found.value();
 
         if(!entry.size)
         {
@@ -70,7 +70,7 @@ struct Archive::Instance
 Archive::Archive() : d(new Instance(*this, 0))
 {}
 
-Archive::Archive(const IByteArray& archive) : d(new Instance(*this, &archive))
+Archive::Archive(IByteArray const &archive) : d(new Instance(*this, &archive))
 {}
 
 Archive::~Archive()
@@ -80,7 +80,7 @@ Archive::~Archive()
     delete d;
 }
 
-const IByteArray* Archive::source() const
+IByteArray const *Archive::source() const
 {
     return d->source;
 }
@@ -94,7 +94,7 @@ void Archive::cache(CacheAttachment attach)
     }
     DENG2_FOR_EACH(Index, i, d->index)
     {
-        Entry& entry = *i.value();
+        Entry &entry = *i.value();
         if(!entry.data && !entry.dataInArchive)
         {
             entry.dataInArchive = new Block(*d->source, entry.offset, entry.sizeInArchive);
@@ -106,12 +106,12 @@ void Archive::cache(CacheAttachment attach)
     }
 }
 
-bool Archive::has(const String& path) const
+bool Archive::has(String const &path) const
 {
     return d->index.find(path) != d->index.end();
 }
 
-Archive::Names Archive::listFiles(const String& folder) const
+Archive::Names Archive::listFiles(String const &folder) const
 {
     Names names;
     
@@ -131,7 +131,7 @@ Archive::Names Archive::listFiles(const String& folder) const
     return names;
 }
 
-Archive::Names Archive::listFolders(const String& folder) const
+Archive::Names Archive::listFolders(String const &folder) const
 {
     Names names;
     
@@ -151,7 +151,7 @@ Archive::Names Archive::listFolders(const String& folder) const
     return names;
 }
 
-File::Status Archive::status(const String& path) const
+File::Status Archive::status(String const &path) const
 {
     Index::const_iterator found = d->index.find(path);
     if(found == d->index.end())
@@ -168,7 +168,7 @@ File::Status Archive::status(const String& path) const
         found.value()->modifiedAt);
 }
 
-const Block& Archive::entryBlock(const String& path) const
+Block const &Archive::entryBlock(String const &path) const
 {
     Index::const_iterator found = d->index.find(path);
     if(found == d->index.end())
@@ -179,7 +179,7 @@ const Block& Archive::entryBlock(const String& path) const
     }
     
     // We'll need to modify the entry.
-    Entry& entry = *const_cast<Entry*>(found.value());
+    Entry &entry = *const_cast<Entry *>(found.value());
     if(entry.data)
     {
         // Got it.
@@ -191,18 +191,18 @@ const Block& Archive::entryBlock(const String& path) const
     return *entry.data;
 }
 
-Block& Archive::entryBlock(const String& path)
+Block &Archive::entryBlock(String const &path)
 {
-    const Block& block = const_cast<const Archive*>(this)->entryBlock(path);
+    Block const &block = const_cast<Archive const *>(this)->entryBlock(path);
     
     // Mark for recompression.
     d->index.find(path).value()->maybeChanged = true;
     d->modified = true;
     
-    return const_cast<Block&>(block);
+    return const_cast<Block &>(block);
 }
 
-void Archive::add(const String& path, const IByteArray& data)
+void Archive::add(String const &path, IByteArray const &data)
 {
     // Get rid of the earlier entry with this path.
     if(has(path))
@@ -210,7 +210,7 @@ void Archive::add(const String& path, const IByteArray& data)
         remove(path);
     }
 
-    Entry* entry = newEntry();
+    Entry *entry = newEntry();
     entry->data = new Block(data);
     entry->modifiedAt = Time();
     entry->maybeChanged = true;
@@ -221,7 +221,7 @@ void Archive::add(const String& path, const IByteArray& data)
     d->modified = true;
 }
 
-void Archive::remove(const String& path)
+void Archive::remove(String const &path)
 {
     Index::iterator found = d->index.find(path);
     if(found != d->index.end())
@@ -251,7 +251,7 @@ bool Archive::modified() const
     return d->modified;
 }
 
-void Archive::insertToIndex(const String& path, Entry* entry)
+void Archive::insertToIndex(String const &path, Entry *entry)
 {
     if(d->index.contains(path))
     {
@@ -260,7 +260,7 @@ void Archive::insertToIndex(const String& path, Entry* entry)
     d->index[path] = entry;
 }
 
-const Archive::Index& Archive::index() const
+Archive::Index const &Archive::index() const
 {
     return d->index;
 }

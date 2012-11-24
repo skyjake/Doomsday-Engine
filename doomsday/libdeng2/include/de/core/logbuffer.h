@@ -45,7 +45,7 @@ public:
     /// There was a problem opening the output file. @ingroup errors
     DENG2_ERROR(FileError);
 
-    typedef QList<const LogEntry*> Entries;
+    typedef QList<LogEntry const *> Entries;
 
 public:
     /**
@@ -67,7 +67,7 @@ public:
      *
      * @param entry  Entry to add.
      */
-    void add(LogEntry* entry);
+    void add(LogEntry *entry);
 
     void clear();
 
@@ -87,7 +87,7 @@ public:
      * @param count    Number of entries to get. If zero, all entries are
      *                 returned.
      */
-    void latestEntries(Entries& entries, int count = 0) const;
+    void latestEntries(Entries &entries, int count = 0) const;
 
     /**
      * Enables log entries at or over a level. When a level is disabled, the
@@ -117,9 +117,9 @@ public:
      *
      * @param path  Path of the file.
      */
-    void setOutputFile(const String& path);
+    void setOutputFile(String const &path);
 
-    void fileBeingDeleted(const File& file);
+    void fileBeingDeleted(File const &file);
 
 public:
     /**
@@ -129,9 +129,9 @@ public:
      *
      * @param appBuffer  LogBuffer instance.
      */
-    static void setAppBuffer(LogBuffer& appBuffer);
+    static void setAppBuffer(LogBuffer &appBuffer);
 
-    static LogBuffer& appBuffer();
+    static LogBuffer &appBuffer();
 
 public slots:
     /**
@@ -141,10 +141,10 @@ public slots:
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 
     /// The globally available application buffer.
-    static LogBuffer* _appBuffer;
+    static LogBuffer *_appBuffer;
 };
 
 } // namespace de

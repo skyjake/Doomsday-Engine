@@ -56,7 +56,7 @@ ushort Path::Segment::hash() const
     return hashKey;
 }
 
-bool Path::Segment::operator == (const Path::Segment& other) const
+bool Path::Segment::operator == (Path::Segment const &other) const
 {
     return !range.compare(other.range, Qt::CaseInsensitive);
 }
@@ -115,12 +115,12 @@ struct Path::Instance
      * List of the extra segments that don't fit in segments, in reverse
      * order.
      */
-    QList<Path::Segment*> extraSegments;
+    QList<Path::Segment *> extraSegments;
 
     Instance() : separator('/'), segmentCount(0)
     {}
 
-    Instance(const String& p, QChar sep) : path(p), separator(sep), segmentCount(0)
+    Instance(String const &p, QChar sep) : path(p), separator(sep), segmentCount(0)
     {}
 
     ~Instance()
@@ -149,9 +149,9 @@ struct Path::Instance
      *
      * @return  New segment.
      */
-    Path::Segment* allocSegment(const QStringRef& range)
+    Path::Segment *allocSegment(QStringRef const &range)
     {
-        Path::Segment* segment;
+        Path::Segment *segment;
         if(segmentCount < SEGMENT_BUFFER_SIZE)
         {
             segment = segments + segmentCount;
@@ -193,8 +193,8 @@ struct Path::Instance
             return;
         }
 
-        const QChar* segBegin = path.constData();
-        const QChar* segEnd   = path.constData() + path.length() - 1;
+        QChar const *segBegin = path.constData();
+        QChar const *segEnd   = path.constData() + path.length() - 1;
 
         // Skip over any trailing delimiters.
         for(int i = path.length();
@@ -202,7 +202,7 @@ struct Path::Instance
             --segEnd) {}
 
         // Scan the path for segments, in reverse order.
-        const QChar* from;
+        QChar const *from;
         forever
         {
             // Find the start of the next segment.
@@ -231,18 +231,18 @@ struct Path::Instance
     }
 
 private:
-    Instance& operator = (const Instance&); // no assignment
-    Instance(const Instance&); // no copying
+    Instance &operator = (Instance const &); // no assignment
+    Instance(Instance const &); // no copying
 };
 
 Path::Path() : d(new Instance)
 {}
 
-Path::Path(const String& path, QChar sep)
+Path::Path(String const &path, QChar sep)
     : LogEntry::Arg::Base(), d(new Instance(path, sep))
 {}
 
-Path::Path(const Path& other)
+Path::Path(Path const &other)
     : LogEntry::Arg::Base(), d(new Instance(other.d->path, other.d->separator))
 {}
 
@@ -257,12 +257,12 @@ int Path::segmentCount() const
     return d->segmentCount;
 }
 
-const Path::Segment& Path::segment(int index) const
+Path::Segment const &Path::segment(int index) const
 {
     return reverseSegment(segmentCount() - 1 - index);
 }
 
-const Path::Segment& Path::reverseSegment(int reverseIndex) const
+Path::Segment const &Path::reverseSegment(int reverseIndex) const
 {
     d->parse();
 
@@ -282,7 +282,7 @@ const Path::Segment& Path::reverseSegment(int reverseIndex) const
     return *d->extraSegments[reverseIndex - SEGMENT_BUFFER_SIZE];
 }
 
-bool Path::operator == (const Path& other) const
+bool Path::operator == (Path const &other) const
 {
     if(this == &other) return true;
 
@@ -301,7 +301,7 @@ bool Path::operator == (const Path& other) const
     return true;
 }
 
-Path Path::operator / (const Path& other) const
+Path Path::operator / (Path const &other) const
 {
     // Unify the separators.
     String otherPath = other.d->path;
@@ -318,7 +318,7 @@ Path Path::operator / (QString other) const
     return *this / Path(other);
 }
 
-Path Path::operator / (const char* otherNullTerminatedUtf8) const
+Path Path::operator / (char const *otherNullTerminatedUtf8) const
 {
     return *this / Path(otherNullTerminatedUtf8);
 }
@@ -328,7 +328,7 @@ String Path::toString() const
     return d->path;
 }
 
-const String& Path::toStringRef() const
+String const &Path::toStringRef() const
 {
     return d->path;
 }
@@ -358,20 +358,20 @@ QChar Path::last() const
     return d->path.last();
 }
 
-Path& Path::clear()
+Path &Path::clear()
 {
     d->path.clear();
     d->clearSegments();
     return *this;
 }
 
-Path& Path::operator = (const String& newPath)
+Path &Path::operator = (String const &newPath)
 {
     set(newPath, '/');
     return *this;
 }
 
-Path& Path::set(const String& newPath, QChar sep)
+Path &Path::set(String const &newPath, QChar sep)
 {
     d->path = newPath; // implicitly shared
     d->separator = sep;
@@ -404,12 +404,12 @@ Block Path::toUtf8() const
     return d->path.toUtf8();
 }
 
-void Path::operator >> (Writer& to) const
+void Path::operator >> (Writer &to) const
 {
     to << d->path.toUtf8() << d->separator.unicode();
 }
 
-void Path::operator << (Reader& from)
+void Path::operator << (Reader &from)
 {
     clear();
 
@@ -558,7 +558,7 @@ static int Path_UnitTest()
             DENG2_ASSERT(d.fileName() == String(d).fileName());
         }
     }
-    catch(Error const& er)
+    catch(Error const &er)
     {
         qWarning() << er.asText();
         return false;

@@ -46,19 +46,19 @@ namespace de
     public:
         FlowStatement();
         
-        FlowStatement(Type type, Expression* countArgument = 0);
+        FlowStatement(Type type, Expression *countArgument = 0);
         
         ~FlowStatement();
         
-        void execute(Context& context) const;
+        void execute(Context &context) const;
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
     private:        
         Type _type;
-        Expression* _arg;
+        Expression *_arg;
     };
 }
 

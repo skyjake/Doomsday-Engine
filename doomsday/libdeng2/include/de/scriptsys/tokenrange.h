@@ -51,12 +51,12 @@ namespace de
         TokenRange();
         
         /// Constructor that uses the entire range of tokens.
-        TokenRange(const TokenBuffer& tokens);
+        TokenRange(TokenBuffer const &tokens);
         
         /// Constructor that uses a specific set of tokens.
-        TokenRange(const TokenBuffer& tokens, duint startIndex, duint endIndex);
+        TokenRange(TokenBuffer const &tokens, duint startIndex, duint endIndex);
 
-        const TokenBuffer& buffer() const {
+        TokenBuffer const &buffer() const {
             return *_tokens;
         }
 
@@ -79,14 +79,14 @@ namespace de
 
         /// Returns a specific token from the token buffer.
         /// @param pos Position of the token within the range.
-        const Token& token(duint pos) const;
+        Token const &token(duint pos) const;
 
-        const Token& firstToken() const;
+        Token const &firstToken() const;
         
-        const Token& lastToken() const;
+        Token const &lastToken() const;
 
         /// Determines whether the range begins with a specific token.
-        bool beginsWith(const QChar* token) const;
+        bool beginsWith(QChar const *token) const;
 
         /**
          * Composes a subrange that starts from a specific position.
@@ -121,7 +121,7 @@ namespace de
          *
          * @return @c true, if token was found, otherwise @c false.
          */
-        bool has(const QChar* token) const {
+        bool has(QChar const *token) const {
             return find(token) >= 0;
         }
         
@@ -133,7 +133,7 @@ namespace de
          *
          * @return @c true, if token was found, otherwise @c false.
          */
-        bool hasBracketless(const QChar* token) const {
+        bool hasBracketless(QChar const *token) const {
             return findIndexSkippingBrackets(token, _start) >= 0;
         }
 
@@ -145,9 +145,9 @@ namespace de
          *
          * @return Position of the token, or -1 if not found.
          */
-        dint find(const QChar* token, dint startPos = 0) const;
+        dint find(QChar const *token, dint startPos = 0) const;
         
-        dint findBracketless(const QChar* token, dint startPos = 0) const;
+        dint findBracketless(QChar const *token, dint startPos = 0) const;
 
         /**
          * Finds the index of a specific token within the range. When 
@@ -158,7 +158,7 @@ namespace de
          *
          * @return Index of the token, or -1 if not found.
          */
-        dint findIndexSkippingBrackets(const QChar* token, dint startIndex) const;
+        dint findIndexSkippingBrackets(QChar const *token, dint startIndex) const;
         
         /**
          * Finds the next token subrange which is delimited with @c
@@ -172,7 +172,7 @@ namespace de
          * @return  @c true, if the next delimited subrange found successfully.
          *          Otherwise @c false.
          */ 
-        bool getNextDelimited(const QChar* delimiter, TokenRange& subrange) const;
+        bool getNextDelimited(QChar const *delimiter, TokenRange &subrange) const;
         
         /**
          * Locates the matching closing bracket. If the matching bracket
@@ -203,11 +203,11 @@ namespace de
         String asText() const;
         
     public:    
-        static void bracketTokens(const Token& openingToken,
+        static void bracketTokens(Token const &openingToken,
             const QChar*& opening, const QChar*& closing);
         
     private:
-        const TokenBuffer* _tokens;
+        TokenBuffer const *_tokens;
         
         /// Index of the start of the range. This is the first token in 
         /// the range.

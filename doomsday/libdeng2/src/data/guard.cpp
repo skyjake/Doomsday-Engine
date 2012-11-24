@@ -22,12 +22,12 @@
 
 using namespace de;
 
-Guard::Guard(const de::Lockable& target) : _target(&target)
+Guard::Guard(de::Lockable const &target) : _target(&target)
 {
     _target->lock();
 }
 
-Guard::Guard(const de::Lockable* target) : _target(target)
+Guard::Guard(de::Lockable const *target) : _target(target)
 {
     DENG2_ASSERT(target != 0);
     _target->lock();

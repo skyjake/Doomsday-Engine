@@ -75,19 +75,19 @@ public:
 
 public:
     String();
-    String(const String& other);
-    String(const QString& text);
-    String(const char* nullTerminatedCStr);
-    String(const char* cStr, size_type length);
-    String(const QChar* nullTerminatedStr);
-    String(const QChar* str, size_type length);
+    String(String const &other);
+    String(QString const &text);
+    String(char const *nullTerminatedCStr);
+    String(char const *cStr, size_type length);
+    String(QChar const *nullTerminatedStr);
+    String(QChar const *str, size_type length);
     String(size_type length, QChar ch);
-    String(const QString& str, size_type index, size_type length);
+    String(QString const &str, size_type index, size_type length);
     String(const_iterator start, const_iterator end);
     String(iterator start, iterator end);
 
     /// Conversion to a character pointer.
-    operator const QChar* () const {
+    operator QChar const *() const {
         return data();
     }
 
@@ -100,10 +100,10 @@ public:
     /// Returns the last character of the string.
     QChar last() const;
 
-    bool beginsWith(const QString& s, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
+    bool beginsWith(QString const &s, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
         return startsWith(s, cs);
     }
-    bool beginsWith(const QChar& c, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
+    bool beginsWith(QChar const &c, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
         return startsWith(c, cs);
     }
 
@@ -119,7 +119,7 @@ public:
      * @param path     Path to concatenate.
      * @param dirChar  Directory/folder separator character.
      */
-    String concatenatePath(const String& path, QChar dirChar = '/') const;
+    String concatenatePath(String const &path, QChar dirChar = '/') const;
 
     /**
      * Does a path concatenation on this string and the argument. Note that if
@@ -128,7 +128,7 @@ public:
      *
      * @param path  Path to concatenate.
      */
-    String operator / (const String& path) const;
+    String operator / (String const &path) const;
 
     /**
      * Does a record member concatenation on a variable name. Record members
@@ -136,7 +136,7 @@ public:
      *
      * @param member  Identifier to append to this string.
      */
-    String concatenateMember(const String& member) const;
+    String concatenateMember(String const &member) const;
 
     /// Removes whitespace from the beginning and end of the string.
     /// @return Copy of the string without whitespace.
@@ -183,7 +183,7 @@ public:
      * @return 0, if @a a and @a b are identical. Positive, if @a a > @a b.
      *         Negative, if @a a < @a b.
      */
-    dint compareWithCase(const String& str) const;
+    dint compareWithCase(String const &str) const;
 
     /**
      * Compare two strings (case insensitive).
@@ -191,7 +191,7 @@ public:
      * @return 0, if @a a and @a b are identical. Positive, if @a a > @a b.
      *         Negative, if @a a < @a b.
      */
-    dint compareWithoutCase(const String& str) const;
+    dint compareWithoutCase(String const &str) const;
 
     /**
      * Converts the string to UTF-8 and returns it as a byte block.
@@ -233,20 +233,20 @@ public:
      * @return Integer parsed from the string (@c *ok set to true). @c 0 if
      * the conversion fails (@c *ok set to @c false).
      */
-    dint toInt(bool* ok = 0, int base = 10, IntConversionFlags flags = AllowOnlyWhitespace) const;
+    dint toInt(bool *ok = 0, int base = 10, IntConversionFlags flags = AllowOnlyWhitespace) const;
 
 public:
     /**
      * Builds a String out of an array of bytes that contains a UTF-8 string.
      */
-    static String fromUtf8(const IByteArray& byteArray);
+    static String fromUtf8(IByteArray const &byteArray);
 
     /**
      * Builds a String out of an array of bytes that contains a Latin1 string.
      */
-    static String fromLatin1(const IByteArray& byteArray);
+    static String fromLatin1(IByteArray const &byteArray);
 
-    static dint compareWithCase(const QChar* a, const QChar* b, dsize count);
+    static dint compareWithCase(QChar const *a, QChar const *b, dsize count);
 
     /**
      * Advances the iterator until a nonspace character is encountered.
@@ -254,7 +254,7 @@ public:
      * @param i  Iterator to advance.
      * @param end  End of the string. Will not advance past this.
      */
-    static void skipSpace(String::const_iterator& i, const String::const_iterator& end);
+    static void skipSpace(String::const_iterator &i, const String::const_iterator &end);
 
     /**
      * Formats data according to formatting instructions. Outputs a
@@ -268,12 +268,12 @@ public:
      *
      * @return  Formatted argument as a string.
      */
-    static String patternFormat(String::const_iterator& formatIter,
-        const String::const_iterator& formatEnd,
-        const IPatternArg& arg);
+    static String patternFormat(String::const_iterator &formatIter,
+        const String::const_iterator &formatEnd,
+        IPatternArg const &arg);
 
-    static void advanceFormat(String::const_iterator& i,
-        const String::const_iterator& end);
+    static void advanceFormat(String::const_iterator &i,
+        const String::const_iterator &end);
 };
 
 /**
@@ -281,7 +281,7 @@ public:
  * string. Later versions have a QString constructor that needs no length
  * when constructing a string from QChar*.
  */
-size_t qchar_strlen(const QChar* str);
+size_t qchar_strlen(QChar const *str);
 
 } // namespace de
 

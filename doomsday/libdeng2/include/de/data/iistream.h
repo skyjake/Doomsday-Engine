@@ -54,7 +54,7 @@ public:
      *
      * @return Reference to this IIStream object.
      */
-    virtual IIStream& operator >> (IByteArray& bytes) = 0;
+    virtual IIStream &operator >> (IByteArray &bytes) = 0;
 
     /**
      * Reads all the available bytes into the array @a bytes. If there is
@@ -70,7 +70,7 @@ public:
      *
      * @return Reference to this IIStream object.
      */
-    virtual const IIStream& operator >> (IByteArray& bytes) const = 0;
+    virtual IIStream const &operator >> (IByteArray &bytes) const = 0;
 };
 
 } // namespace de

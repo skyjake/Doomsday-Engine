@@ -57,7 +57,7 @@ public:
 
     /// Returns an incoming connection. Caller takes ownership of
     /// the returned object.
-    Socket* accept();
+    Socket *accept();
 
 signals:
     /**
@@ -71,7 +71,7 @@ protected slots:
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 };
 
 } // namespace de

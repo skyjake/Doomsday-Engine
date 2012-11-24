@@ -27,7 +27,7 @@ const Variable::Flags AccessorValue::VARIABLE_MODE = Variable::AllowText |
 AccessorValue::AccessorValue()
 {}
 
-Value* AccessorValue::duplicate() const
+Value *AccessorValue::duplicate() const
 {
     update();
     return duplicateContent();
@@ -57,43 +57,43 @@ bool AccessorValue::isTrue() const
     return TextValue::isTrue();
 }
 
-dint AccessorValue::compare(const Value& value) const
+dint AccessorValue::compare(Value const &value) const
 {
     update();
     return TextValue::compare(value);
 }
 
-void AccessorValue::sum(const Value& /*value*/)
+void AccessorValue::sum(Value const &/*value*/)
 {
     /// @throw ArithmeticError  Attempted to modify the value of the accessor.
     throw ArithmeticError("AccessorValue::sum", "Accessor values cannot be modified");
 }
 
-void AccessorValue::multiply(const Value& /*value*/)
+void AccessorValue::multiply(Value const &/*value*/)
 {
     /// @throw ArithmeticError  Attempted to modify the value of the accessor.
     throw ArithmeticError("AccessorValue::multiply", "Accessor values cannot be modified");
 }
 
-void AccessorValue::divide(const Value& /*value*/)
+void AccessorValue::divide(Value const &/*value*/)
 {
     /// @throw ArithmeticError  Attempted to modify the value of the accessor.
     throw ArithmeticError("AccessorValue::divide", "Accessor values cannot be modified");
 }
 
-void AccessorValue::modulo(const Value& /*divisor*/)
+void AccessorValue::modulo(Value const &/*divisor*/)
 {
     /// @throw ArithmeticError  Attempted to modify the value of the accessor.
     throw ArithmeticError("AccessorValue::modulo", "Accessor values cannot be modified");
 }
 
-void AccessorValue::operator >> (Writer& /*to*/) const
+void AccessorValue::operator >> (Writer &/*to*/) const
 {
     /// @throw CannotSerializeError  Attempted to serialize the accessor.
     throw CannotSerializeError("AccessorValue::operator >>", "Accessor cannot be serialized");
 }
 
-void AccessorValue::operator << (Reader& /*from*/)
+void AccessorValue::operator << (Reader &/*from*/)
 {
     /// @throw CannotSerializeError  Attempted to deserialize the accessor.
     throw CannotSerializeError("AccessorValue::operator <<", "Accessor cannot be deserialized");

@@ -63,7 +63,7 @@ namespace de
         DENG2_ERROR(SymbolMissingError);
         
         /// Default type identifier.
-        static const char* DEFAULT_TYPE;
+        static char const *DEFAULT_TYPE;
         
         // Common function profiles.
         /**
@@ -72,7 +72,7 @@ namespace de
          *
          * @return  Type identifier string.
          */
-        typedef const char* (*deng_LibraryType)(void);
+        typedef char const *(*deng_LibraryType)(void);
         
         /**
          * Performs any one-time initialization necessary for the usage of the plugin.
@@ -92,31 +92,31 @@ namespace de
          *
          * @return  Audio subsystem. 
          */
-        typedef Audio* (*deng_NewAudio)(void);
+        typedef Audio *(*deng_NewAudio)(void);
         
         /**
          * Constructs a new game world.
          */
-        typedef World* (*deng_NewWorld)(void);
+        typedef World *(*deng_NewWorld)(void);
         
         /**
          * Constructs a new game map.
          */
-        typedef Map* (*deng_NewMap)();
+        typedef Map *(*deng_NewMap)();
         
         /**
          * Constructs a new object.
          */
-        typedef Object* (*deng_NewObject)(void);
+        typedef Object *(*deng_NewObject)(void);
         
         /**
          * Constructs a new user.
          */
-        typedef User* (*deng_NewUser)(void);
+        typedef User *(*deng_NewUser)(void);
         
         typedef dint (*deng_GetInteger)(dint id);
-        typedef const char* (*deng_GetString)(dint id);
-        typedef void* (*deng_GetAddress)(dint id);
+        typedef char const *(*deng_GetString)(dint id);
+        typedef void *(*deng_GetAddress)(dint id);
         typedef void (*deng_Ticker)(ddouble tickLength);
         
     public:
@@ -125,7 +125,7 @@ namespace de
          * 
          * @param nativePath  Path of the shared library to load.
          */
-        Library(const NativePath& nativePath);
+        Library(NativePath const &nativePath);
         
         /**
          * Unloads the shared library.
@@ -138,7 +138,7 @@ namespace de
          * automatically when the library is first loaded, and can then be
          * queried at any time even after the library has been unloaded.
          */
-        const String& type() const;
+        String const &type() const;
 
         enum SymbolLookupMode {
             RequiredSymbol, ///< Symbol must be exported.
@@ -155,14 +155,14 @@ namespace de
          * @return  A pointer to the symbol. Returns @c NULL if an optional symbol is
          * not found.
          */
-        void* address(const String& name, SymbolLookupMode lookup = RequiredSymbol);
+        void *address(String const &name, SymbolLookupMode lookup = RequiredSymbol);
 
         /**
          * Checks if the library exports a specific symbol.
          * @param name  Name of the exported symbol.
          * @return @c true if the symbol is exported, @c false if not.
          */
-        bool hasSymbol(const String& name) const;
+        bool hasSymbol(String const &name) const;
 
         /**
          * Gets the address of a symbol. Throws an exception if a required symbol
@@ -174,15 +174,15 @@ namespace de
          * @return Pointer to the symbol as type @a Type.
          */
         template <typename Type>
-        Type symbol(const String& name, SymbolLookupMode lookup = RequiredSymbol) {
+        Type symbol(String const &name, SymbolLookupMode lookup = RequiredSymbol) {
             /**
              * @note Casting to a pointer-to-function type: see
              * http://www.trilithium.com/johan/2004/12/problem-with-dlsym/
              */
             // This is not 100% portable to all possible memory architectures; thus:
-            DENG2_ASSERT(sizeof(void*) == sizeof(Type));
+            DENG2_ASSERT(sizeof(void *) == sizeof(Type));
 
-            union { void* original; Type target; } forcedCast;
+            union { void *original; Type target; } forcedCast;
             forcedCast.original = address(name, lookup);
             return forcedCast.target;
         }
@@ -198,14 +198,14 @@ namespace de
          * @return @c true, if the symbol was found. Otherwise @c false.
          */
         template <typename Type>
-        bool setSymbolPtr(Type& ptr, const String& name, SymbolLookupMode lookup = RequiredSymbol) {
+        bool setSymbolPtr(Type &ptr, String const &name, SymbolLookupMode lookup = RequiredSymbol) {
             ptr = symbol<Type>(name, lookup);
             return ptr != 0;
         }
 
     private:  
         struct Instance;
-        Instance* d;
+        Instance *d;
     };
 }
 

@@ -25,7 +25,7 @@ using namespace de;
 Address::Address() : _port(0)
 {}
 
-Address::Address(const char* address, duint16 port)
+Address::Address(char const *address, duint16 port)
     : _port(port)
 {
     if(QLatin1String(address) == "localhost")
@@ -38,20 +38,20 @@ Address::Address(const char* address, duint16 port)
     }
 }
 
-Address::Address(const QHostAddress& host, duint16 port)
+Address::Address(QHostAddress const &host, duint16 port)
     : _host(host), _port(port)
 {}
 
-Address::Address(const Address& other)
+Address::Address(Address const &other)
     : LogEntry::Arg::Base(), _host(other._host), _port(other._port)
 {}
 
-bool Address::operator == (const Address& other) const
+bool Address::operator == (Address const &other) const
 {
     return _host == other._host && _port == other._port;
 }
 
-bool Address::matches(const Address& other, duint32 mask)
+bool Address::matches(Address const &other, duint32 mask)
 {
     return (_host.toIPv4Address() & mask) == (other._host.toIPv4Address() & mask);
 }
@@ -66,7 +66,7 @@ String Address::asText() const
     return result;
 }
 
-QTextStream& de::operator << (QTextStream& os, const Address& address)
+QTextStream &de::operator << (QTextStream &os, Address const &address)
 {
     os << address.asText();
     return os;

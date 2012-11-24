@@ -36,7 +36,7 @@
 
 namespace de {
 
-static QString toNative(const QString& s)
+static QString toNative(QString const &s)
 {
     // This will resolve parent references (".."), multiple separators
     // (hello//world), and self-references (".").
@@ -54,38 +54,38 @@ NativePath::NativePath(const char *nullTerminatedCStr)
 {
 }
 
-NativePath::NativePath(const char* cStr, dsize length)
+NativePath::NativePath(char const *cStr, dsize length)
     : Path(toNative(QString::fromUtf8(cStr, length)), DIR_SEPARATOR)
 {}
 
-NativePath& NativePath::operator = (const QString& str)
+NativePath &NativePath::operator = (QString const &str)
 {
     set(toNative(str), DIR_SEPARATOR);
     return *this;
 }
 
-NativePath& NativePath::operator = (const char *nullTerminatedCStr)
+NativePath &NativePath::operator = (const char *nullTerminatedCStr)
 {
     return (*this) = QString(nullTerminatedCStr);
 }
 
-NativePath NativePath::concatenatePath(const NativePath& nativePath) const
+NativePath NativePath::concatenatePath(NativePath const &nativePath) const
 {
     if(nativePath.isAbsolute()) return nativePath;
     return toString().concatenatePath(nativePath, QChar(DIR_SEPARATOR));
 }
 
-NativePath NativePath::concatenatePath(const QString& nativePath) const
+NativePath NativePath::concatenatePath(QString const &nativePath) const
 {
     return concatenatePath(NativePath(nativePath));
 }
 
-NativePath NativePath::operator / (const NativePath& nativePath) const
+NativePath NativePath::operator / (NativePath const &nativePath) const
 {
     return concatenatePath(nativePath);
 }
 
-NativePath NativePath::operator / (const QString& str) const
+NativePath NativePath::operator / (QString const &str) const
 {
     return *this / NativePath(str);
 }
@@ -105,7 +105,7 @@ bool NativePath::isAbsolute() const
     return QDir::isAbsolutePath(expand());
 }
 
-NativePath NativePath::expand(bool* didExpand) const
+NativePath NativePath::expand(bool *didExpand) const
 {
     if(first() == '>' || first() == '}')
     {
@@ -123,7 +123,7 @@ NativePath NativePath::expand(bool* didExpand) const
         {
             // Parse the user's home directory (from passwd).
             QByteArray userName = path.mid(1, firstSlash - 1).toLatin1();
-            struct passwd* pw = getpwnam(userName);
+            struct passwd *pw = getpwnam(userName);
             if(!pw)
             {
                 /// @throws UnknownUserError  User is not known.

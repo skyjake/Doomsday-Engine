@@ -125,14 +125,14 @@ struct HuffCode {
 };
 
 struct HuffBuffer {
-    dbyte* data;
+    dbyte *data;
     duint size;
 };
 
 struct Huffman
 {
     // The root of the Huffman tree.
-    HuffNode* huffRoot;
+    HuffNode *huffRoot;
 
     // The lookup table for encoding.
     HuffCode huffCodes[256];
@@ -153,7 +153,7 @@ struct Huffman
         for(i = 0; i < 256; ++i)
         {
             // These are the leaves of the tree.
-            node = (HuffNode*) calloc(1, sizeof(HuffNode));
+            node = (HuffNode *) calloc(1, sizeof(HuffNode));
             node->freq = freqs[i];
             node->value = i;
             Huff_QueueInsert(&queue, node);
@@ -162,7 +162,7 @@ struct Huffman
         // Build the tree.
         for(i = 0; i < 255; ++i)
         {
-            node = (HuffNode*) calloc(1, sizeof(HuffNode));
+            node = (HuffNode *) calloc(1, sizeof(HuffNode));
             node->left = Huff_QueueExtract(&queue);
             node->right = Huff_QueueExtract(&queue);
             node->freq = node->left->freq + node->right->freq;
@@ -340,7 +340,7 @@ struct Huffman
             else
                 buffer->size *= 2;
         }
-        buffer->data = (dbyte*) realloc(buffer->data, buffer->size);
+        buffer->data = (dbyte *) realloc(buffer->data, buffer->size);
     }
 
     /**
@@ -365,13 +365,13 @@ struct Huffman
         memset(buffer, 0, sizeof(*buffer));
     }
 
-    dbyte* encode(const dbyte *data, dsize size, dsize *encodedSize)
+    dbyte *encode(const dbyte *data, dsize size, dsize *encodedSize)
     {
         HuffBuffer huffEnc;
         dsize i;
         duint code;
         int remaining, fits;
-        dbyte* out, bit;
+        dbyte *out, bit;
 
         memset(&huffEnc, 0, sizeof(huffEnc));
 
@@ -430,13 +430,13 @@ struct Huffman
         return huffEnc.data;
     }
 
-    dbyte* decode(const dbyte *data, dsize size, dsize *decodedSize)
+    dbyte *decode(const dbyte *data, dsize size, dsize *decodedSize)
     {
         HuffBuffer huffDec;
-        HuffNode* node;
+        HuffNode *node;
         dsize outBytes = 0;
-        const dbyte* in = data;
-        const dbyte* lastIn = in + size - 1;
+        dbyte const *in = data;
+        dbyte const *lastIn = in + size - 1;
         dbyte bit = 3, lastByteBits;
 
         memset(&huffDec, 0, sizeof(huffDec));
@@ -500,11 +500,11 @@ struct Huffman
 
 static internal::Huffman huff;
 
-Block codec::huffmanEncode(const Block& data)
+Block codec::huffmanEncode(Block const &data)
 {
     Block result;
     dsize size = 0;
-    dbyte* coded = huff.encode(data.data(), data.size(), &size);
+    dbyte *coded = huff.encode(data.data(), data.size(), &size);
     if(coded)
     {
         result.copyFrom(ByteRefArray(coded, size), 0, size);
@@ -513,11 +513,11 @@ Block codec::huffmanEncode(const Block& data)
     return result;
 }
 
-Block codec::huffmanDecode(const Block& codedData)
+Block codec::huffmanDecode(Block const &codedData)
 {
     Block result;
     dsize size = 0;
-    dbyte* decoded = huff.decode(codedData.data(), codedData.size(), &size);
+    dbyte *decoded = huff.decode(codedData.data(), codedData.size(), &size);
     if(decoded)
     {
         result.copyFrom(ByteRefArray(decoded, size), 0, size);

@@ -24,7 +24,7 @@
 
 namespace de {
 
-Error::Error(const QString& where, const QString& message)
+Error::Error(QString const &where, QString const &message)
     : std::runtime_error(("(" + where + ") " + message).toStdString()), _name("")
 {
     //std::cerr << "Constructed Error " << this << ": " << asText().toAscii().constData() << "\n";
@@ -46,7 +46,7 @@ QString Error::asText() const
     return "[" + name() + "] " + std::runtime_error::what();
 }
 
-void Error::setName(const QString& name)
+void Error::setName(QString const &name)
 {
     if(_name.size()) _name += "_";
     _name += name.toStdString();

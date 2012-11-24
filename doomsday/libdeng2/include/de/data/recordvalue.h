@@ -59,36 +59,36 @@ namespace de
          * @param record     Record.
          * @param ownership  OWNS_RECORD, if the value is given ownership of @a record.
          */
-        RecordValue(Record* record, OwnershipFlags ownership = 0);
+        RecordValue(Record *record, OwnershipFlags ownership = 0);
         
         virtual ~RecordValue();
         
         /**
          * Returns the record this reference points to.
          */
-        Record* record() const { return _record; }
+        Record *record() const { return _record; }
 
         void verify() const;
-        Record& dereference();
-        const Record& dereference() const;
+        Record &dereference();
+        Record const &dereference() const;
         
-        Value* duplicate() const;
+        Value *duplicate() const;
         Text asText() const;
         dsize size() const;
-        Value* duplicateElement(const Value& value) const;
-        bool contains(const Value& value) const;
+        Value *duplicateElement(Value const &value) const;
+        bool contains(Value const &value) const;
         bool isTrue() const;
-        dint compare(const Value& value) const;
+        dint compare(Value const &value) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
         
         // Observes Record deletion.
-        void recordBeingDeleted(Record& record);
+        void recordBeingDeleted(Record &record);
         
     public:
-        Record* _record;
+        Record *_record;
         OwnershipFlags _ownership;
     };
 

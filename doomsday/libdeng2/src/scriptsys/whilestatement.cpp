@@ -32,9 +32,9 @@ WhileStatement::~WhileStatement()
     delete _loopCondition;
 }
 
-void WhileStatement::execute(Context& context) const
+void WhileStatement::execute(Context &context) const
 {
-    Evaluator& eval = context.evaluator();
+    Evaluator &eval = context.evaluator();
 
     if(eval.evaluate(_loopCondition).isTrue())
     {
@@ -47,12 +47,12 @@ void WhileStatement::execute(Context& context) const
     }
 }
 
-void WhileStatement::operator >> (Writer& to) const
+void WhileStatement::operator >> (Writer &to) const
 {
     to << SerialId(WHILE) << *_loopCondition << _compound;
 }
 
-void WhileStatement::operator << (Reader& from)
+void WhileStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

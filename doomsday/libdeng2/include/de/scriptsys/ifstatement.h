@@ -49,31 +49,31 @@ namespace de
         /** 
          * Sets the condition expression of the latest branch.
          */
-        void setBranchCondition(Expression* expression);
+        void setBranchCondition(Expression *expression);
 
         /**
          * Returns the compound of the latest branch.
          */
-        Compound& branchCompound();
+        Compound &branchCompound();
 
         /** 
          * Returns the else-compound of the statement.
          */
-        Compound& elseCompound() {
+        Compound &elseCompound() {
             return _elseCompound;
         }
 
-        void execute(Context& context) const;
+        void execute(Context &context) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
 
     private:
         struct Branch {
-            Expression* condition;
-            Compound* compound;
-            Branch(Compound* c = 0) : condition(0), compound(c) {}
+            Expression *condition;
+            Compound *compound;
+            Branch(Compound *c = 0) : condition(0), compound(c) {}
         };
         typedef std::list<Branch> Branches;
 

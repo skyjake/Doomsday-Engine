@@ -37,7 +37,7 @@ namespace de
 
     /// Absolute value.
     template <typename Type>
-    inline Type abs(const Type& a) {
+    inline Type abs(Type const &a) {
         if(a < 0.0) {
             return -a;
         }
@@ -45,25 +45,25 @@ namespace de
     }
 
     // Special case, this is never negative.
-    inline duint abs(const duint& a) {
+    inline duint abs(duint const &a) {
         return a;
     }
 
     /// Minimum of two values.
     template <typename Type>
-    inline const Type& min(const Type& a, const Type& b) {
+    inline Type const &min(Type const &a, Type const &b) {
         return (a < b? a : b);
     }
 
     /// Maximum of two values.
     template <typename Type>
-    inline const Type& max(const Type& a, const Type& b) {
+    inline Type const &max(Type const &a, Type const &b) {
         return (a > b? a : b);
     }
     
     /// Clamp value within range.
     template <typename Type>
-    inline Type clamp(const Type& low, const Type& value, const Type& high) {
+    inline Type clamp(Type const &low, Type const &value, Type const &high) {
         return min(max(value, low), high);
     }
     
@@ -74,7 +74,7 @@ namespace de
 
     /// General comparison function.
     template <typename Type>
-    inline dint cmp(const Type& a, const Type& b) {
+    inline dint cmp(Type const &a, Type const &b) {
         if(a < b) return -1;
         if(a > b) return 1;
         return 0;

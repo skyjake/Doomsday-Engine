@@ -41,12 +41,12 @@ void ArrayExpression::clear()
     _arguments.clear();
 }
 
-void ArrayExpression::add(Expression* arg)
+void ArrayExpression::add(Expression *arg)
 {
     _arguments.push_back(arg);
 }
 
-void ArrayExpression::push(Evaluator& evaluator, Record* names) const
+void ArrayExpression::push(Evaluator &evaluator, Record *names) const
 {
     Expression::push(evaluator, names);
     
@@ -59,15 +59,15 @@ void ArrayExpression::push(Evaluator& evaluator, Record* names) const
     }
 }
 
-const Expression& ArrayExpression::at(dint pos) const
+Expression const &ArrayExpression::at(dint pos) const
 {
     return *_arguments.at(pos);
 }
 
-Value* ArrayExpression::evaluate(Evaluator& evaluator) const
+Value *ArrayExpression::evaluate(Evaluator &evaluator) const
 {
     // Collect the right number of results into the array.
-    ArrayValue* value = new ArrayValue;
+    ArrayValue *value = new ArrayValue;
     for(dint count = _arguments.size(); count > 0; --count)
     {
         value->add(evaluator.popResult());
@@ -76,7 +76,7 @@ Value* ArrayExpression::evaluate(Evaluator& evaluator) const
     return value;
 }
 
-void ArrayExpression::operator >> (Writer& to) const
+void ArrayExpression::operator >> (Writer &to) const
 {
     to << SerialId(ARRAY);
 
@@ -89,7 +89,7 @@ void ArrayExpression::operator >> (Writer& to) const
     }
 }
 
-void ArrayExpression::operator << (Reader& from)
+void ArrayExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

@@ -42,11 +42,11 @@ namespace de
         
         virtual ~Statement() {}
 
-        virtual void execute(Context& context) const = 0;
+        virtual void execute(Context &context) const = 0;
 
-        Statement* next() const { return _next; }
+        Statement *next() const { return _next; }
         
-        void setNext(Statement* statement) { _next = statement; }
+        void setNext(Statement *statement) { _next = statement; }
 
     public:
         /**
@@ -56,7 +56,7 @@ namespace de
          *
          * @return  The deserialized statement. Caller gets ownership.
          */
-        static Statement* constructFrom(Reader& from);
+        static Statement *constructFrom(Reader &from);
 
     protected:
         typedef dbyte SerialId;
@@ -77,7 +77,7 @@ namespace de
     private:
         /// Pointer to the statement that follows this one, or NULL if
         /// this is the final statement.
-        Statement* _next;
+        Statement *_next;
     };
 }
 

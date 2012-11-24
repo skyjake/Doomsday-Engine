@@ -31,7 +31,7 @@
 
 namespace de {
 
-LegacyCore* LegacyCore::_appCore;
+LegacyCore *LegacyCore::_appCore;
 
 struct LegacyCore::Instance
 {
@@ -42,10 +42,10 @@ struct LegacyCore::Instance
         Loop() : interval(1), paused(false), func(0) {}
     };
     QList<Loop> loopStack;
-    void (*terminateFunc)(const char*);
+    void (*terminateFunc)(char const *);
 
-    App* app;
-    QTimer* loopTimer;
+    App *app;
+    QTimer *loopTimer;
     LegacyNetwork network;
     Loop loop;
 
@@ -59,7 +59,7 @@ struct LegacyCore::Instance
     ~Instance() {}
 };
 
-LegacyCore::LegacyCore(App* dengApp)
+LegacyCore::LegacyCore(App *dengApp)
 {
     _appCore = this;
     d = new Instance;
@@ -82,14 +82,14 @@ LegacyCore::~LegacyCore()
     _appCore = 0;
 }
 
-LegacyCore& LegacyCore::instance()
+LegacyCore &LegacyCore::instance()
 {
     DENG2_ASSERT(_appCore != 0);
     DENG2_ASSERT(_appCore->d != 0);
     return *_appCore;
 }
 
-LegacyNetwork& LegacyCore::network()
+LegacyNetwork &LegacyCore::network()
 {
     return instance().d->network;
 }
@@ -192,7 +192,7 @@ void LegacyCore::stop(int exitCode)
 void LegacyCore::timer(duint32 milliseconds, void (*func)(void))
 {
     // The timer will delete itself after it's triggered.
-    internal::CallbackTimer* timer = new internal::CallbackTimer(func, this);
+    internal::CallbackTimer *timer = new internal::CallbackTimer(func, this);
     timer->start(milliseconds);
 }
 
@@ -208,7 +208,7 @@ const char *LegacyCore::logFileName() const
     return d->logName.c_str();
 }
 
-void LegacyCore::printLogFragment(const char* text, Log::LogLevel level)
+void LegacyCore::printLogFragment(char const *text, Log::LogLevel level)
 {
     d->currentLogLine += text;
 
@@ -220,7 +220,7 @@ void LegacyCore::printLogFragment(const char* text, Log::LogLevel level)
     }
 }
 
-void LegacyCore::setTerminateFunc(void (*func)(const char*))
+void LegacyCore::setTerminateFunc(void (*func)(char const *))
 {
     d->terminateFunc = func;
 }

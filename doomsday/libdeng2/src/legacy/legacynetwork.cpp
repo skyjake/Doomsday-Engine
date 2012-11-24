@@ -32,15 +32,15 @@ struct LegacyNetwork::Instance
     int idGen;
 
     /// All the currently open sockets, mapped by id.
-    typedef QHash<int, Socket*> Sockets;
+    typedef QHash<int, Socket *> Sockets;
     Sockets sockets;
 
-    typedef QHash<int, ListenSocket*> ServerSockets;
+    typedef QHash<int, ListenSocket *> ServerSockets;
     ServerSockets serverSockets;
 
     /// Socket sets for monitoring multiple sockets conveniently.
     struct SocketSet {
-        QList<Socket*> members;
+        QList<Socket *> members;
     };
     typedef QHash<int, SocketSet> SocketSets;
     SocketSets sets;
@@ -48,10 +48,10 @@ struct LegacyNetwork::Instance
     Instance() : idGen(0) {}
     ~Instance() {
         // Cleanup time! Delete all existing sockets.
-        foreach(Socket* s, sockets.values()) {
+        foreach(Socket *s, sockets.values()) {
             delete s;
         }
-        foreach(ListenSocket* s, serverSockets.values()) {
+        foreach(ListenSocket *s, serverSockets.values()) {
             delete s;
         }
     }
@@ -75,7 +75,7 @@ LegacyNetwork::~LegacyNetwork()
 
 int LegacyNetwork::openServerSocket(duint16 port)
 {
-    ListenSocket* sock = new ListenSocket(port);
+    ListenSocket *sock = new ListenSocket(port);
     int id = d->nextId();
     d->serverSockets.insert(id, sock);
     return id;
@@ -85,8 +85,8 @@ int LegacyNetwork::accept(int serverSocket)
 {
     DENG2_ASSERT(d->serverSockets.contains(serverSocket));
 
-    ListenSocket* serv = d->serverSockets[serverSocket];
-    Socket* sock = serv->accept();
+    ListenSocket *serv = d->serverSockets[serverSocket];
+    Socket *sock = serv->accept();
     if(!sock) return 0;
 
     int id = d->nextId();
@@ -94,17 +94,17 @@ int LegacyNetwork::accept(int serverSocket)
     return id;
 }
 
-int LegacyNetwork::open(const Address& address)
+int LegacyNetwork::open(Address const &address)
 {
     LOG_AS("LegacyNetwork::open");
     try
     {
-        Socket* sock = new Socket(address);
+        Socket *sock = new Socket(address);
         int id = d->nextId();
         d->sockets.insert(id, sock);
         return id;
     }
-    catch(const Socket::ConnectionError& er)
+    catch(Socket::ConnectionError const &er)
     {
         LOG_WARNING(er.asText());
         return 0;
@@ -142,7 +142,7 @@ de::Address LegacyNetwork::peerAddress(int socket) const
     {
         return d->sockets[socket]->peerAddress();
     }
-    catch(const Socket::BrokenError& er)
+    catch(Socket::BrokenError const &er)
     {
         LOG_AS("LegacyNetwork::peerAddress");
         LOG_WARNING(er.asText());
@@ -150,14 +150,14 @@ de::Address LegacyNetwork::peerAddress(int socket) const
     }
 }
 
-int LegacyNetwork::sendBytes(int socket, const IByteArray& data)
+int LegacyNetwork::sendBytes(int socket, IByteArray const &data)
 {
     DENG2_ASSERT(d->sockets.contains(socket));
     try
     {
         d->sockets[socket]->send(data);
     }
-    catch(const Socket::BrokenError& er)
+    catch(Socket::BrokenError const &er)
     {
         LOG_AS("LegacyNetwork::sendBytes");
         LOG_WARNING("Could not send data to socket (%s): ")
@@ -168,11 +168,11 @@ int LegacyNetwork::sendBytes(int socket, const IByteArray& data)
     return data.size();
 }
 
-bool LegacyNetwork::receiveBlock(int socket, Block& data)
+bool LegacyNetwork::receiveBlock(int socket, Block &data)
 {
     DENG2_ASSERT(d->sockets.contains(socket));
     data.clear();
-    Message* msg = d->sockets[socket]->receive();
+    Message *msg = d->sockets[socket]->receive();
     if(!msg)
     {
         // Nothing was received yet; should've checked first!
@@ -215,7 +215,7 @@ bool LegacyNetwork::checkSetForActivity(int set)
 {
     DENG2_ASSERT(d->sets.contains(set));
 
-    foreach(Socket* sock, d->sets[set].members)
+    foreach(Socket *sock, d->sets[set].members)
     {
         if(sock->hasIncoming())
         {

@@ -63,7 +63,7 @@ namespace de
                          *   script or has been terminated. */
         };
         
-        typedef std::list<Record*> Namespaces;
+        typedef std::list<Record *> Namespaces;
 
     public:
         /**
@@ -75,7 +75,7 @@ namespace de
          *                                 The process does not get ownership of the
          *                                 external global namespace.
          */
-        Process(Record* externalGlobalNamespace = 0);
+        Process(Record *externalGlobalNamespace = 0);
         
         /**
          * Constructs a new process. The process is initialized to RUNNING state.
@@ -85,7 +85,7 @@ namespace de
          *                must remain in existence while the process is running,
          *                as it is the owner of the statements.
          */
-        Process(const Script& script);
+        Process(Script const &script);
         
         virtual ~Process();
 
@@ -103,7 +103,7 @@ namespace de
           *               must remain in existence while the process is running,
           *               as it is the owner of the statements.
          */
-        void run(const Script& script);
+        void run(Script const &script);
 
         /**
          * Suspends or resumes execution of the script.
@@ -129,7 +129,7 @@ namespace de
          * @param returnValue  Value to use as the return value from the 
          *                     context. Takes ownership of the value.
          */
-        void finish(Value* returnValue = 0);
+        void finish(Value *returnValue = 0);
 
         /**
          * Changes the working path of the process. File system access within the 
@@ -137,12 +137,12 @@ namespace de
          *
          * @param newWorkingPath  New working path for the process.
          */
-        void setWorkingPath(const String& newWorkingPath);
+        void setWorkingPath(String const &newWorkingPath);
 
         /**
          * Returns the current working path.
          */
-        const String& workingPath() const;
+        String const &workingPath() const;
 
         /**
          * Return an execution context. By default returns the topmost context.
@@ -152,7 +152,7 @@ namespace de
          *
          * @return  Context at @a downDepth.
          */
-        Context& context(duint downDepth = 0);
+        Context &context(duint downDepth = 0);
                 
         /**
          * Performs a function call. A new context is created on the context 
@@ -166,7 +166,7 @@ namespace de
          *                   named arguments of the call. The rest of the array
          *                   are the unnamed arguments.
          */
-        void call(const Function& function, const ArrayValue& arguments);
+        void call(Function const &function, ArrayValue const &arguments);
         
         /**
          * Collects the namespaces currently visible. This includes the process's
@@ -175,13 +175,13 @@ namespace de
          * @param spaces  The namespaces are collected here. The order is important:
          *                earlier namespaces shadow the subsequent ones.
          */
-        void namespaces(Namespaces& spaces);
+        void namespaces(Namespaces &spaces);
 
         /**
          * Returns the global namespace of the process. This is always the 
          * bottommost context in the stack.
          */
-        Record& globals();
+        Record &globals();
         
     protected:
         /// Pops contexts off the stack until depth @a downToLevel is reached.
@@ -189,17 +189,17 @@ namespace de
         
         /// Pops the topmost context off the stack and returns it. Ownership given
         /// to caller.
-        Context* popContext();
+        Context *popContext();
         
         /// Fast forward to a suitable catch statement for @a err.
         /// @return  @c true, if suitable catch statement found.
-        bool jumpIntoCatch(const Error& err);
+        bool jumpIntoCatch(Error const &err);
                 
     private:
         State _state;
         
         // The execution environment.
-        typedef std::vector<Context*> ContextStack;
+        typedef std::vector<Context *> ContextStack;
         ContextStack _stack;
         
         /// This is the current working folder of the process. Relative paths

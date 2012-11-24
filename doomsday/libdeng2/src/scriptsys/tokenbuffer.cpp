@@ -38,7 +38,7 @@ const String Token::COLON(":");
 const String Token::COMMA(",");
 const String Token::SEMICOLON(";");
 
-bool Token::equals(const QChar* str) const
+bool Token::equals(QChar const *str) const
 {
     if(size() < (int) qchar_strlen(str))
     {
@@ -48,7 +48,7 @@ bool Token::equals(const QChar* str) const
     return !String::compareWithCase(str, _begin, size());
 }
 
-bool Token::beginsWith(const QChar* str) const
+bool Token::beginsWith(QChar const *str) const
 {
     int length = qchar_strlen(str);
     if(length > size())
@@ -89,7 +89,7 @@ void TokenBuffer::clear()
     _formPool = 0;
 }
 
-QChar* TokenBuffer::advanceToPoolWithSpace(duint minimum)
+QChar *TokenBuffer::advanceToPoolWithSpace(duint minimum)
 {
     for(;; ++_formPool)
     {
@@ -97,13 +97,13 @@ QChar* TokenBuffer::advanceToPoolWithSpace(duint minimum)
         {
             // Need a new pool.
             _pools.push_back(Pool());
-            Pool& newFp = _pools[_formPool];
+            Pool &newFp = _pools[_formPool];
             newFp.size = POOL_SIZE + minimum;
             newFp.chars.resize(newFp.size);
             return newFp.chars.data();
         }
 
-        Pool& fp = _pools[_formPool];
+        Pool &fp = _pools[_formPool];
         if(fp.rover + minimum < fp.size)
         {
             return &fp.chars.data()[fp.rover];
@@ -129,7 +129,7 @@ void TokenBuffer::newToken(duint line)
     }
 
     // Determine which pool to use and the starting address.
-    QChar* begin = advanceToPoolWithSpace(0);
+    QChar *begin = advanceToPoolWithSpace(0);
     
     _tokens.push_back(Token(begin, begin, line));
     _forming = &_tokens.back();
@@ -145,12 +145,12 @@ void TokenBuffer::appendChar(QChar c)
     // If we run out of space in the pool, we'll need to relocate the
     // token to a new pool. If the pool is new, or there are no tokens
     // in it yet, we can resize the pool in place.
-    Pool& fp = _pools[_formPool];
+    Pool &fp = _pools[_formPool];
     if(_forming->end() - fp.chars.data() >= dint(fp.size))
     {
         // The pool is full. Find a new pool and move the token.
         String tok = _forming->str();
-        QChar* newBegin = advanceToPoolWithSpace(tok.size());
+        QChar *newBegin = advanceToPoolWithSpace(tok.size());
         memmove(newBegin, tok.data(), tok.size() * sizeof(QChar));
         *_forming = Token(newBegin, newBegin + tok.size(), _forming->line());
     }
@@ -178,7 +178,7 @@ duint TokenBuffer::size() const
     return _tokens.size();
 }
 
-const Token& TokenBuffer::at(duint i) const
+Token const &TokenBuffer::at(duint i) const
 {
     if(i >= _tokens.size())
     {
@@ -188,7 +188,7 @@ const Token& TokenBuffer::at(duint i) const
     return _tokens[i];
 }
 
-const Token& TokenBuffer::latest() const
+Token const &TokenBuffer::latest() const
 {
     return _tokens.back();
 }

@@ -40,18 +40,18 @@ namespace de
          * @param arguments  Array expression that contains all the arguments
          *                   of the print statement. Ownership transferred to the statement.
          */
-        PrintStatement(ArrayExpression* arguments = 0);
+        PrintStatement(ArrayExpression *arguments = 0);
 
         ~PrintStatement();
         
-        void execute(Context& context) const;
+        void execute(Context &context) const;
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
     private:
-        ArrayExpression* _arg;
+        ArrayExpression *_arg;
     };
 }
 

@@ -26,12 +26,12 @@ using namespace de;
 Script::Script()
 {}
 
-Script::Script(const String& source)
+Script::Script(String const &source)
 {
     Parser().parse(source, *this);
 }
 
-Script::Script(const File& file) : _path(file.path())
+Script::Script(File const &file) : _path(file.path())
 {
     Parser().parse(String::fromUtf8(Block(file)), *this);
 }
@@ -39,7 +39,7 @@ Script::Script(const File& file) : _path(file.path())
 Script::~Script()
 {}
 
-const Statement* Script::firstStatement() const
+Statement const *Script::firstStatement() const
 {
     return _compound.firstStatement();
 }

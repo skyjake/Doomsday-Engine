@@ -21,23 +21,23 @@
 
 using namespace de;
 
-FixedByteArray::FixedByteArray(IByteArray& mainArray) 
+FixedByteArray::FixedByteArray(IByteArray &mainArray) 
     : ByteSubArray(mainArray, 0, mainArray.size())
 {}
 
-FixedByteArray::FixedByteArray(IByteArray& mainArray, Offset at, Size size)
+FixedByteArray::FixedByteArray(IByteArray &mainArray, Offset at, Size size)
     : ByteSubArray(mainArray, at, size)
 {}
 
-FixedByteArray::FixedByteArray(const IByteArray& mainArray)
+FixedByteArray::FixedByteArray(IByteArray const &mainArray)
     : ByteSubArray(mainArray, 0, mainArray.size())
 {}
 
-FixedByteArray::FixedByteArray(const IByteArray& mainArray, Offset at, Size size)
+FixedByteArray::FixedByteArray(IByteArray const &mainArray, Offset at, Size size)
     : ByteSubArray(mainArray, at, size)
 {}
     
-void FixedByteArray::set(Offset at, const Byte* values, Size count)
+void FixedByteArray::set(Offset at, Byte const *values, Size count)
 {
     // Increasing the size is not allowed.
     if(at + count > size())

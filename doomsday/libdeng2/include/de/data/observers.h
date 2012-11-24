@@ -80,7 +80,7 @@ namespace de
     class Observers
     {
     public:
-        typedef std::set<Type*> Members;
+        typedef std::set<Type *> Members;
         typedef typename Members::iterator iterator;
         typedef typename Members::const_iterator const_iterator;
         typedef typename Members::size_type size_type;
@@ -92,7 +92,7 @@ namespace de
          */
         class Loop {
         public:
-            Loop(Observers& observers) : _observers(observers) {
+            Loop(Observers &observers) : _observers(observers) {
                 _next = observers.begin();
                 next();
             }
@@ -106,18 +106,18 @@ namespace de
                     ++_next;
                 }
             }
-            iterator& get() {
+            iterator &get() {
                 return _current;
             }
-            Type* operator -> () {
+            Type *operator -> () {
                 return *get();
             }
-            Loop& operator ++ () {
+            Loop &operator ++ () {
                 next();
                 return *this;
             }
         private:
-            Observers& _observers;
+            Observers &_observers;
             iterator _current;
             iterator _next;
         };
@@ -136,17 +136,17 @@ namespace de
 
         /// Add an observer into the set. The set does not receive
         /// ownership of the observer instance.
-        void add(Type* observer) {
+        void add(Type *observer) {
             checkExists();
             _members->insert(observer);
         }            
 
-        Observers<Type>& operator += (Type* observer) {
+        Observers<Type>& operator += (Type *observer) {
             add(observer);
             return *this;
         }
         
-        void remove(Type* observer) {
+        void remove(Type *observer) {
             if(_members) {
                 _members->erase(observer);
             }
@@ -156,7 +156,7 @@ namespace de
             }
         }
         
-        Observers<Type>& operator -= (Type* observer) {
+        Observers<Type>& operator -= (Type *observer) {
             remove(observer);
             return *this;
         }
@@ -200,7 +200,7 @@ namespace de
         }
         
     private:
-        Members* _members;
+        Members *_members;
     };
 }
 

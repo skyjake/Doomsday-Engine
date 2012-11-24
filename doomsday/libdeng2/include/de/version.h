@@ -60,7 +60,7 @@ public:
      * @param version      Version number in the form "x.y.z".
      * @param buildNumber  Build number.
      */
-    Version(const String& version, int buildNumber);
+    Version(String const &version, int buildNumber);
 
     /**
      * Forms a version string in the form "x.y.z". If a release label is
@@ -81,13 +81,13 @@ public:
      *
      * @param version  Version string. Cannot include a label.
      */
-    void parseVersionString(const String& version);
+    void parseVersionString(String const &version);
 
-    bool operator < (const Version& other) const;
+    bool operator < (Version const &other) const;
 
-    bool operator == (const Version& other) const;
+    bool operator == (Version const &other) const;
 
-    bool operator > (const Version& other) const;
+    bool operator > (Version const &other) const;
 };
 
 } // namespace de

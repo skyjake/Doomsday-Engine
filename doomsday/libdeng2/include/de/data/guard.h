@@ -47,12 +47,12 @@ public:
     /**
      * The target object is locked.
      */
-    Guard(const Lockable& target);
+    Guard(Lockable const &target);
 
     /**
      * The target object is locked.
      */
-    Guard(const Lockable* target);
+    Guard(Lockable const *target);
 
     /**
      * The target object is unlocked.
@@ -62,7 +62,7 @@ public:
     void assertLocked() const;
 
 private:
-    const Lockable* _target;
+    Lockable const *_target;
 };
 
 } // namespace de

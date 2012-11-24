@@ -45,30 +45,30 @@ class IOutputStream
 public:
     virtual ~IOutputStream() {}
     virtual void flush() {}
-    virtual IOutputStream& operator << (const QString& text) = 0;
+    virtual IOutputStream &operator << (QString const &text) = 0;
 };
 
 /// @internal Stream that outputs to a de::File.
 class FileOutputStream : public IOutputStream
 {
 public:
-    FileOutputStream(File* f) : _file(f) {}
+    FileOutputStream(File *f) : _file(f) {}
     void flush() {
         if(_file) _file->flush();
     }
-    IOutputStream& operator << (const QString& text) {
+    IOutputStream &operator << (QString const &text) {
         if(_file) *_file << Block(text.toUtf8());
         return *this;
     }
 private:
-    File* _file;
+    File *_file;
 };
 
 /// @internal Stream that outputs to a QTextStream.
 class TextOutputStream : public IOutputStream
 {
 public:
-    TextOutputStream(QTextStream* ts) : _ts(ts) {
+    TextOutputStream(QTextStream *ts) : _ts(ts) {
         if(_ts) _ts->setCodec("UTF-8");
     }
     ~TextOutputStream() {
@@ -77,12 +77,12 @@ public:
     void flush() {
         if(_ts) _ts->flush();
     }
-    IOutputStream& operator << (const QString& text) {
+    IOutputStream &operator << (QString const &text) {
         if(_ts) (*_ts) << text;
         return *this;
     }
 private:
-    QTextStream* _ts;
+    QTextStream *_ts;
 };
 
 /// @internal Stream that outputs to QDebug.
@@ -95,30 +95,30 @@ public:
     ~DebugOutputStream() {
         delete _qs;
     }
-    IOutputStream& operator << (const QString& text) {
+    IOutputStream &operator << (QString const &text) {
         _qs->nospace();
         (*_qs) << text.toUtf8().constData();
         _qs->nospace();
         return *this;
     }
 private:
-    QDebug* _qs;
+    QDebug *_qs;
 };
 
 } // namespace internal
 
 struct LogBuffer::Instance
 {
-    typedef QList<LogEntry*> EntryList;
+    typedef QList<LogEntry *> EntryList;
 
     dint enabledOverLevel;
     dint maxEntryCount;
     bool standardOutput;
-    File* outputFile;
+    File *outputFile;
     EntryList entries;
     EntryList toBeFlushed;
     Time lastFlushedAt;
-    QTimer* autoFlushTimer;
+    QTimer *autoFlushTimer;
 
     Instance(duint maxEntryCount)
         : enabledOverLevel(Log::MESSAGE),
@@ -129,7 +129,7 @@ struct LogBuffer::Instance
     {}
 };
 
-LogBuffer* LogBuffer::_appBuffer = 0;
+LogBuffer *LogBuffer::_appBuffer = 0;
 
 LogBuffer::LogBuffer(duint maxEntryCount) 
     : d(new Instance(maxEntryCount))
@@ -170,7 +170,7 @@ dsize LogBuffer::size() const
     return d->entries.size();
 }
 
-void LogBuffer::latestEntries(Entries& entries, int count) const
+void LogBuffer::latestEntries(Entries &entries, int count) const
 {
     DENG2_GUARD(this);
     entries.clear();
@@ -189,7 +189,7 @@ void LogBuffer::setMaxEntryCount(duint maxEntryCount)
     d->maxEntryCount = maxEntryCount;
 }
 
-void LogBuffer::add(LogEntry* entry)
+void LogBuffer::add(LogEntry *entry)
 {       
     DENG2_GUARD(this);
 
@@ -226,7 +226,7 @@ void LogBuffer::enableStandardOutput(bool yes)
     d->standardOutput = yes;
 }
 
-void LogBuffer::setOutputFile(const String& path)
+void LogBuffer::setOutputFile(String const &path)
 {
     flush();
 
@@ -275,7 +275,7 @@ void LogBuffer::flush()
             DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
             {
                 // Error messages will go to stderr instead of stdout.
-                QList<IOutputStream*> os;
+                QList<IOutputStream *> os;
                 os << ((*i)->level() >= Log::WARNING? &errs : &outs) << &fs;
 
 #ifdef _DEBUG
@@ -368,7 +368,7 @@ void LogBuffer::flush()
                     // Check for formatting symbols.
                     lineText.replace("$R", String(maxLen - minimumIndent, '-'));
 
-                    foreach(IOutputStream* stream, os)
+                    foreach(IOutputStream *stream, os)
                     {
                         if(stream) *stream << lineText;
                     }
@@ -387,18 +387,18 @@ void LogBuffer::flush()
                         pos++; // Skip whitespace.
                     }
 
-                    foreach(IOutputStream* stream, os)
+                    foreach(IOutputStream *stream, os)
                     {
                         if(stream) *stream << "\n";
                     }
                 }
             }
         }
-        catch(const de::Error& error)
+        catch(de::Error const &error)
         {
-            QList<IOutputStream*> os;
+            QList<IOutputStream *> os;
             os << &errs << &fs;
-            foreach(IOutputStream* stream, os)
+            foreach(IOutputStream *stream, os)
             {
                 if(stream) *stream << "Exception during log flush:\n" << error.what() << "\n";
             }
@@ -415,13 +415,13 @@ void LogBuffer::flush()
     // Too many entries? Now they can be destroyed since we have flushed everything.
     while(d->entries.size() > d->maxEntryCount)
     {
-        LogEntry* old = d->entries.front();
+        LogEntry *old = d->entries.front();
         d->entries.pop_front();
         delete old;
     }
 }
 
-void LogBuffer::fileBeingDeleted(const File& file)
+void LogBuffer::fileBeingDeleted(File const &file)
 {
     DENG2_ASSERT(d->outputFile == &file);
     DENG2_UNUSED(file);
@@ -434,7 +434,7 @@ void LogBuffer::setAppBuffer(LogBuffer &appBuffer)
     _appBuffer = &appBuffer;
 }
 
-LogBuffer& LogBuffer::appBuffer()
+LogBuffer &LogBuffer::appBuffer()
 {
     DENG2_ASSERT(_appBuffer != 0);
     return *_appBuffer;

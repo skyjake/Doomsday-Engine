@@ -112,7 +112,7 @@ struct Header : public ISerializable
     Header() : size(0), isHuffmanCoded(false), isDeflated(false), channel(0)
     {}
 
-    void operator >> (Writer& writer) const
+    void operator >> (Writer &writer) const
     {
         if(size <= MAX_SIZE_SMALL && !isDeflated)
         {
@@ -141,7 +141,7 @@ struct Header : public ISerializable
     /**
     * Throws an exception if the header is malformed/incomplete.
     */
-    void operator << (Reader& reader)
+    void operator << (Reader &reader)
     {
         // Start reading the header.
         dbyte b;
@@ -200,10 +200,10 @@ struct Socket::Instance
     duint activeChannel;
 
     /// Pointer to the internal socket data.
-    QTcpSocket* socket;
+    QTcpSocket *socket;
 
     /// Buffer for incoming received messages.
-    QList<Message*> receivedMessages;
+    QList<Message *> receivedMessages;
 
     /// Number of bytes waiting to be written to the socket.
     dint64 bytesToBeWritten;
@@ -221,10 +221,10 @@ struct Socket::Instance
     ~Instance()
     {
         // Delete received messages left in the buffer.
-        foreach(Message* msg, receivedMessages) delete msg;
+        foreach(Message *msg, receivedMessages) delete msg;
     }
 
-    void serializeAndSendMessage(const IByteArray& packet)
+    void serializeAndSendMessage(IByteArray const &packet)
     {
         Block payload(packet);
         Block huffData;
@@ -319,7 +319,7 @@ struct Socket::Instance
                     // Remove the read bytes from the buffer.
                     receivedBytes.remove(0, reader.offset());
                 }
-                catch(const de::Error&)
+                catch(de::Error const &)
                 {
                     // It seems we don't have a full header yet.
                     return;
@@ -369,7 +369,7 @@ struct Socket::Instance
     }
 };
 
-Socket::Socket(const Address& address, const Time::Delta& timeOut)
+Socket::Socket(Address const &address, Time::Delta const &timeOut)
 {
     LOG_AS("Socket");
 
@@ -397,7 +397,7 @@ Socket::Socket(const Address& address, const Time::Delta& timeOut)
                  d->socket->state() == QAbstractSocket::ConnectedState);
 }
 
-Socket::Socket(QTcpSocket* existingSocket)
+Socket::Socket(QTcpSocket *existingSocket)
 {
     d = new Instance;
     d->socket = existingSocket;
@@ -464,13 +464,13 @@ void Socket::send(const IByteArray &packet)
     send(packet, d->activeChannel);
 }
 
-Socket& Socket::operator << (const IByteArray& packet)
+Socket &Socket::operator << (IByteArray const &packet)
 {
     send(packet, d->activeChannel);
     return *this;
 }
 
-void Socket::send(const IByteArray& packet, duint /*channel*/)
+void Socket::send(IByteArray const &packet, duint /*channel*/)
 {
     if(!d->socket)
     {
@@ -500,7 +500,7 @@ void Socket::readIncomingBytes()
     }
 }
 
-Message* Socket::receive()
+Message *Socket::receive()
 {
     if(d->receivedMessages.isEmpty())
     {
@@ -509,7 +509,7 @@ Message* Socket::receive()
     return d->receivedMessages.takeFirst();
 }
 
-Message* Socket::peek()
+Message *Socket::peek()
 {
     if(d->receivedMessages.isEmpty())
     {

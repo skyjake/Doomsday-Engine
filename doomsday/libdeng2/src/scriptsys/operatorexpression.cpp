@@ -37,7 +37,7 @@ using namespace de;
 OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(0), _rightOperand(0)
 {}
 
-OperatorExpression::OperatorExpression(Operator op, Expression* operand)
+OperatorExpression::OperatorExpression(Operator op, Expression *operand)
     : _op(op), _leftOperand(0), _rightOperand(operand)
 {
     if(op != PLUS && op != MINUS && op != NOT)
@@ -47,7 +47,7 @@ OperatorExpression::OperatorExpression(Operator op, Expression* operand)
     }
 }
 
-OperatorExpression::OperatorExpression(Operator op, Expression* leftOperand, Expression* rightOperand)
+OperatorExpression::OperatorExpression(Operator op, Expression *leftOperand, Expression *rightOperand)
     : _op(op), _leftOperand(leftOperand), _rightOperand(rightOperand)
 {
     if(op == NOT)
@@ -63,7 +63,7 @@ OperatorExpression::~OperatorExpression()
     delete _rightOperand;
 }
 
-void OperatorExpression::push(Evaluator& evaluator, Record* names) const
+void OperatorExpression::push(Evaluator &evaluator, Record *names) const
 {
     Expression::push(evaluator);
     
@@ -84,26 +84,26 @@ void OperatorExpression::push(Evaluator& evaluator, Record* names) const
     }
 }
 
-Value* OperatorExpression::newBooleanValue(bool isTrue)
+Value *OperatorExpression::newBooleanValue(bool isTrue)
 {
     return new NumberValue(isTrue? NumberValue::VALUE_TRUE : NumberValue::VALUE_FALSE);
 }
 
-void OperatorExpression::verifyAssignable(Value* value)
+void OperatorExpression::verifyAssignable(Value *value)
 {
-    if(!dynamic_cast<RefValue*>(value))
+    if(!dynamic_cast<RefValue *>(value))
     {
         throw NotAssignableError("OperatorExpression::verifyAssignable",
             "Cannot assign to: " + value->asText());
     }
 }
 
-Value* OperatorExpression::evaluate(Evaluator& evaluator) const
+Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 {
     // Get the operands.
-    Value* rightValue = (_op == MEMBER? 0 : evaluator.popResult());
-    Value* leftValue = (_leftOperand? evaluator.popResult() : 0);
-    Value* result = (leftValue? leftValue : rightValue);
+    Value *rightValue = (_op == MEMBER? 0 : evaluator.popResult());
+    Value *leftValue = (_leftOperand? evaluator.popResult() : 0);
+    Value *result = (leftValue? leftValue : rightValue);
 
     try
     {
@@ -217,7 +217,7 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
 
         case MEMBER: 
         {
-            const RecordValue* recValue = dynamic_cast<const RecordValue*>(leftValue);
+            RecordValue const *recValue = dynamic_cast<RecordValue const *>(leftValue);
             if(!recValue)
             {
                 throw ScopeError("OperatorExpression::evaluate",
@@ -242,7 +242,7 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
                 "Operator " + operatorToText(_op) + " not implemented");
         }
     }
-    catch(const Error&)
+    catch(Error const &)
     {
         delete rightValue;
         delete leftValue;
@@ -256,7 +256,7 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
     return result;
 }
 
-void OperatorExpression::operator >> (Writer& to) const
+void OperatorExpression::operator >> (Writer &to) const
 {
     to << SerialId(OPERATOR);
 
@@ -274,7 +274,7 @@ void OperatorExpression::operator >> (Writer& to) const
     }
 }
 
-void OperatorExpression::operator << (Reader& from)
+void OperatorExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
@@ -303,11 +303,11 @@ void OperatorExpression::operator << (Reader& from)
     }
 }
 
-Value* OperatorExpression::performSlice(Value* leftValue, Value* rightValue) const
+Value *OperatorExpression::performSlice(Value *leftValue, Value *rightValue) const
 {
     DENG2_ASSERT(rightValue->size() >= 2);
 
-    const ArrayValue* args = dynamic_cast<ArrayValue*>(rightValue);
+    ArrayValue const *args = dynamic_cast<ArrayValue *>(rightValue);
     DENG2_ASSERT(args != NULL); // Parser makes sure.
 
     // The resulting slice of leftValue's elements.
@@ -332,8 +332,8 @@ Value* OperatorExpression::performSlice(Value* leftValue, Value* rightValue) con
     bool unspecifiedEnd = false;
 
     // Check the start index of the slice.
-    const Value* startValue = args->elements()[0];
-    if(dynamic_cast<const NoneValue*>(startValue))
+    Value const *startValue = args->elements()[0];
+    if(dynamic_cast<NoneValue const *>(startValue))
     {
         unspecifiedStart = true;
     }
@@ -343,8 +343,8 @@ Value* OperatorExpression::performSlice(Value* leftValue, Value* rightValue) con
     }
 
     // Check the end index of the slice.
-    const Value* endValue = args->elements()[1];
-    if(dynamic_cast<const NoneValue*>(endValue))
+    Value const *endValue = args->elements()[1];
+    if(dynamic_cast<NoneValue const *>(endValue))
     {
         unspecifiedEnd = true;
     }

@@ -29,8 +29,8 @@ namespace internal {
 
 class Infos
 {
-    Info* etcInfo;
-    Info* userInfo;
+    Info *etcInfo;
+    Info *userInfo;
 
 public:
     Infos(String fileName) : etcInfo(0), userInfo(0)
@@ -56,7 +56,7 @@ public:
         delete etcInfo;
     }
 
-    bool find(const String& key, String& value) const
+    bool find(String const &key, String &value) const
     {
         // User-specific info overrides the system-level info.
         if(userInfo && userInfo->findValueForKey(key, value))
@@ -77,8 +77,8 @@ using namespace internal;
 
 struct UnixInfo::Instance
 {
-    Infos* paths;
-    Infos* defaults;
+    Infos *paths;
+    Infos *defaults;
 
     Instance() : paths(0), defaults(0)
     {}
@@ -110,7 +110,7 @@ UnixInfo::~UnixInfo()
     delete d;
 }
 
-bool UnixInfo::path(const String& key, String& value) const
+bool UnixInfo::path(String const &key, String &value) const
 {
     if(d->paths)
     {
@@ -119,7 +119,7 @@ bool UnixInfo::path(const String& key, String& value) const
     return false;
 }
 
-bool UnixInfo::defaults(const String& key, String& value) const
+bool UnixInfo::defaults(String const &key, String &value) const
 {
     if(d->defaults)
     {

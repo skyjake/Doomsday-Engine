@@ -35,7 +35,7 @@ void Waitable::wait()
     wait(WAITABLE_TIMEOUT);
 }
 
-void Waitable::wait(const Time::Delta& timeOut)
+void Waitable::wait(Time::Delta const &timeOut)
 {
     // Wait until the resource becomes available.
     if(!_semaphore.tryAcquire(1, int(timeOut.asMilliSeconds())))

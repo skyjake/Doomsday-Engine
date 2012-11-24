@@ -82,7 +82,7 @@ namespace de
         static const String WEAK_ASSIGN;
 
     public:
-        ScriptLex(const String& input = "");
+        ScriptLex(String const &input = "");
         
         /**
          * Analyze one complete statement from the input.
@@ -91,7 +91,7 @@ namespace de
          *
          * @return  The number of tokens added to the output token buffer.
          */
-        duint getStatement(TokenBuffer& output);
+        duint getStatement(TokenBuffer &output);
 
         /** 
          * Parse a string. 
@@ -104,24 +104,24 @@ namespace de
          * @return Type of the parsed string.
          */
         Token::Type parseString(QChar startChar, duint startIndentation,
-            TokenBuffer& output);
+            TokenBuffer &output);
 
     public:
         /// Determines whether a character is an operator character.
         static bool isOperator(QChar c);
 
         /// Determines whether a token is a Haw script keyword.
-        static bool isKeyword(const Token& token);
+        static bool isKeyword(Token const &token);
         
         /// Determines whether one character should join another to 
         /// form a longer token.
         static bool combinesWith(QChar a, QChar b);
         
         /// Unescapes a string token into a std::string.
-        static String unescapeStringToken(const Token& token);
+        static String unescapeStringToken(Token const &token);
         
         /// Converts a token to a number.
-        static ddouble tokenToNumber(const Token& token);
+        static ddouble tokenToNumber(Token const &token);
     };
 }
 

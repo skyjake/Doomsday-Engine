@@ -37,7 +37,7 @@ namespace codec {
  *
  * @return Encoded block of bits.
  */
-Block huffmanEncode(const Block& data);
+Block huffmanEncode(Block const &data);
 
 /**
  * Decodes the coded message using the Huffman tree.
@@ -45,7 +45,7 @@ Block huffmanEncode(const Block& data);
  *
  * @return Decoded block of data.
  */
-Block huffmanDecode(const Block& codedData);
+Block huffmanDecode(Block const &codedData);
 
 } // namespace codec
 } // namespace de
