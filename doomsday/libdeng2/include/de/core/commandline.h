@@ -166,7 +166,7 @@ namespace de
          *
          * @param nativePath  File to parse.
          */
-        void parseResponseFile(const String& nativePath);
+        void parseResponseFile(const NativePath& nativePath);
 
         /**
          * Breaks down a single string containing arguments.

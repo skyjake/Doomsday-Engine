@@ -283,15 +283,6 @@ void CommandLine::makeAbsolutePath(duint pos)
         bool converted = false;
         QDir dir(NativePath(arg).expand()); // note: strips trailing slash
 
-        /*
-#ifdef UNIX
-        if(dir.path().startsWith("~/"))
-        {
-            dir.setPath(QDir::home().filePath(dir.path().mid(2)));
-            converted = true;
-        }
-        else
-#endif*/
         if(!QDir::isAbsolutePath(arg))
         {
             dir.setPath(d->initialDir.filePath(dir.path()));
@@ -319,11 +310,9 @@ void CommandLine::makeAbsolutePath(duint pos)
     }
 }
 
-void CommandLine::parseResponseFile(const String& nativePath)
+void CommandLine::parseResponseFile(const NativePath& nativePath)
 {
-    /// @todo Symbols like ~ should be expanded in @a nativePath.
-
-    QFile response(nativePath);
+    QFile response(nativePath.expand());
     if(response.open(QFile::ReadOnly | QFile::Text))
     {
         parse(QString::fromUtf8(response.readAll().constData()));
