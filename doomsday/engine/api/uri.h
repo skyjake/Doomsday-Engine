@@ -82,7 +82,7 @@ Uri* Uri_New(void);
  * Uri_Delete() once it is no longer needed.
  *
  * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
- * @param defaultResourceClasslasslass  If no scheme is defined in @a path and this is not @c FC_NULL,
+ * @param defaultResourceClass  If no scheme is defined in @a path and this is not @c FC_NULL,
  *      look for an appropriate default scheme for this class of resource.
  */
 Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass);
@@ -169,7 +169,7 @@ Uri* Uri_SetPath(Uri* uri, char const* path);
  *
  * @param uri   Uri instance.
  * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
- * @param defaultResourceClasslasslass  If no scheme is defined in @a path and this is not
+ * @param defaultResourceClass  If no scheme is defined in @a path and this is not
  *              @c FC_NULL, look for an appropriate default scheme for this class
  *              of resource.
  *

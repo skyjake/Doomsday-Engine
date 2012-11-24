@@ -32,7 +32,7 @@ namespace de
 {
     /**
      * Data structure for modelling a hierarchical relationship tree of
-     * Path + data value pairs.
+     * Path + data value pairs. @ingroup data
      *
      * @em Segment is the term given to a components of a hierarchical path.
      * For example, the path <pre>"c:/somewhere/something"</pre> contains three
@@ -112,7 +112,7 @@ namespace de
 #endif
 
         /**
-         * Node is the base class for all nodes of a PathTree.
+         * Base class for all nodes of a PathTree. @ingroup data
          */
         class DENG2_PUBLIC Node
         {
