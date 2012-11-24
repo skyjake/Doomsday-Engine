@@ -253,7 +253,7 @@ namespace de
         Node const& find(Path const& path, ComparisonFlags flags) const;
 
         /**
-         * @copydoc Node const& find(Path const& path, ComparisonFlags flags) const
+         * @copydoc find()
          */
         Node &find(Path const &path, ComparisonFlags flags);
 
