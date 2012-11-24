@@ -32,7 +32,7 @@
 
 namespace de {
 
-App::App(int &argc, char** argv, GUIMode guiMode)
+App::App(int &argc, char **argv, GUIMode guiMode)
     : QApplication(argc, argv, guiMode == GUIEnabled),
       _cmdLine(arguments()),
       _config(0)

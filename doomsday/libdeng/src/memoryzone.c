@@ -245,7 +245,7 @@ memblock_t *Z_GetBlock(void *ptr)
  * @param tracked  Pointer to a tracked memory block. Will be updated
  *                 if affected by the operation.
  */
-static void freeBlock(void *ptr, memblock_t** tracked)
+static void freeBlock(void *ptr, memblock_t **tracked)
 {
     memblock_t     *block, *other;
     memvolume_t    *volume;

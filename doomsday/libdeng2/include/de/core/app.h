@@ -61,7 +61,7 @@ namespace de
         Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
 
     public:
-        App(int &argc, char** argv, GUIMode guiMode);
+        App(int &argc, char **argv, GUIMode guiMode);
 
         ~App();
 

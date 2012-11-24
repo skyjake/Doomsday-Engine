@@ -586,7 +586,7 @@ static void printDistributionHistogram(PathTree *pt, ushort size,
 
     for(Path::hash_type i = 0; i < Path::hash_range; ++i)
     {
-        pathtree_pathhash_t** phAdr;
+        pathtree_pathhash_t **phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
         if(*phAdr)
         for(node = (**phAdr)[i].head; node; node = node->next)
@@ -700,7 +700,7 @@ void PathTree::debugPrintHashDistribution() const
 
     for(Path::hash_type i = 0; i < Path::hash_range; ++i)
     {
-        pathtree_pathhash_t** phAdr;
+        pathtree_pathhash_t **phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
         nodeCount[PathTree::Node::Branch] = 0;
         if(*phAdr)
