@@ -62,8 +62,8 @@ namespace de
      * by third parties while it is the source of the Archive.
      *
      * It is possible to detach an Archive instance from its source byte array
-     * by calling cache(DetachFromSource). This forces all entries to be copied
-     * to Archive-owned memory (in original serialized form).
+     * by calling @c cache(DetachFromSource). This forces all entries to be
+     * copied to Archive-owned memory (in original serialized form).
      *
      * @see ArchiveFeed, ArchiveFile
      *
