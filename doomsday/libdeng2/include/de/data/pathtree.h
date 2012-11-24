@@ -58,7 +58,7 @@ namespace de
      * Somewhat similar to a Prefix Tree (Trie) representationally although
      * that is where the similarity ends.
      */
-    class PathTree
+    class DENG2_PUBLIC PathTree
     {
         struct Instance; // needs to be friended by Node
 
@@ -114,7 +114,7 @@ namespace de
         /**
          * Node is the base class for all nodes of a PathTree.
          */
-        class Node
+        class DENG2_PUBLIC Node
         {
         private:
             Node();
