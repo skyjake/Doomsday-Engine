@@ -30,15 +30,15 @@
 extern "C" {
 #endif
 
-DENG_PUBLIC void* M_Malloc(size_t size);
+DENG_PUBLIC void *M_Malloc(size_t size);
 
-DENG_PUBLIC void* M_Calloc(size_t size);
+DENG_PUBLIC void *M_Calloc(size_t size);
 
-DENG_PUBLIC void* M_Realloc(void* ptr, size_t size);
+DENG_PUBLIC void *M_Realloc(void *ptr, size_t size);
 
-DENG_PUBLIC void* M_MemDup(const void* ptr, size_t size);
+DENG_PUBLIC void *M_MemDup(void const *ptr, size_t size);
 
-DENG_PUBLIC void M_Free(void* ptr);
+DENG_PUBLIC void M_Free(void *ptr);
 
 #ifdef __cplusplus
 } // extern "C"

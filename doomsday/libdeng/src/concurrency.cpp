@@ -32,7 +32,7 @@
 
 static uint mainThreadId = 0; ///< ID of the main thread.
 
-CallbackThread::CallbackThread(systhreadfunc_t func, void* param)
+CallbackThread::CallbackThread(systhreadfunc_t func, void *param)
     : _callback(func), _parm(param), _returnValue(0),
       _exitStatus(DENG_THREAD_STOPPED_NORMALLY),
       _terminationFunc(0)
@@ -77,7 +77,7 @@ void CallbackThread::run()
         }
         _exitStatus = DENG_THREAD_STOPPED_NORMALLY;
     }
-    catch(const std::exception& error)
+    catch(std::exception const &error)
     {
         LOG_AS("CallbackThread");
         LOG_ERROR(QString("Uncaught exception: ") + error.what());
@@ -127,14 +127,14 @@ void Thread_Sleep(int milliseconds)
 
 thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm)
 {
-    CallbackThread* t = new CallbackThread(startpos, parm);
+    CallbackThread *t = new CallbackThread(startpos, parm);
     t->start();
     return t;
 }
 
 void Thread_KillAbnormally(thread_t handle)
 {
-    QThread* t = reinterpret_cast<QThread*>(handle);
+    QThread *t = reinterpret_cast<QThread *>(handle);
     if(!handle)
     {
         t = QThread::currentThread();
@@ -145,17 +145,17 @@ void Thread_KillAbnormally(thread_t handle)
 
 void Thread_SetCallback(thread_t thread, void (*terminationFunc)(systhreadexitstatus_t))
 {
-    CallbackThread* t = reinterpret_cast<CallbackThread*>(thread);
+    CallbackThread *t = reinterpret_cast<CallbackThread *>(thread);
     DENG_ASSERT(t);
     if(!t) return;
 
     t->setTerminationFunc(terminationFunc);
 }
 
-int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t* exitStatus)
+int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitStatus)
 {
-    CallbackThread* t = reinterpret_cast<CallbackThread*>(handle);
-    assert(static_cast<QThread*>(t) != QThread::currentThread());
+    CallbackThread *t = reinterpret_cast<CallbackThread *>(handle);
+    assert(static_cast<QThread *>(t) != QThread::currentThread());
     t->wait(timeoutMs);
     if(!t->isFinished())
     {
@@ -172,7 +172,7 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t* exitSt
 
 uint32_t Sys_ThreadId(thread_t handle)
 {
-    QThread* t = reinterpret_cast<QThread*>(handle);
+    QThread *t = reinterpret_cast<QThread *>(handle);
     if(!t) t = QThread::currentThread();
     return uint32_t(PTR2INT(t));
 }
@@ -183,7 +183,7 @@ uint32_t Sys_CurrentThreadId(void)
 }
 
 /// @todo remove the name parameter
-mutex_t Sys_CreateMutex(const char*)
+mutex_t Sys_CreateMutex(const char *)
 {
     return new QMutex(QMutex::Recursive);
 }
@@ -192,13 +192,13 @@ void Sys_DestroyMutex(mutex_t handle)
 {
     if(handle)
     {
-        delete reinterpret_cast<QMutex*>(handle);
+        delete reinterpret_cast<QMutex *>(handle);
     }
 }
 
 void Sys_Lock(mutex_t handle)
 {
-    QMutex* m = reinterpret_cast<QMutex*>(handle);
+    QMutex *m = reinterpret_cast<QMutex *>(handle);
     assert(m != 0);
     if(m)
     {
@@ -208,7 +208,7 @@ void Sys_Lock(mutex_t handle)
 
 void Sys_Unlock(mutex_t handle)
 {
-    QMutex* m = reinterpret_cast<QMutex*>(handle);
+    QMutex *m = reinterpret_cast<QMutex *>(handle);
     assert(m != 0);
     if(m)
     {

@@ -64,32 +64,32 @@ struct smoother_s {
 #endif
 };
 
-Smoother* Smoother_New()
+Smoother *Smoother_New()
 {
-    Smoother* sm = static_cast<Smoother*>(calloc(sizeof(Smoother), 1));
+    Smoother *sm = static_cast<Smoother *>(calloc(sizeof(Smoother), 1));
     return sm;
 }
 
-void Smoother_SetMaximumPastNowDelta(Smoother* sm, float delta)
+void Smoother_SetMaximumPastNowDelta(Smoother *sm, float delta)
 {
     DENG_ASSERT(sm);
     sm->maxDeltaBetweenPastAndNow = delta;
 }
 
-void Smoother_Delete(Smoother* sm)
+void Smoother_Delete(Smoother *sm)
 {
     DENG_ASSERT(sm);
     free(sm);
 }
 
-void Smoother_Debug(const Smoother* sm)
+void Smoother_Debug(Smoother const *sm)
 {
     DENG_ASSERT(sm);
     LOG_DEBUG("Smoother_Debug: [past=%3.3f / now=%3.3f / future=%3.3f] at=%3.3f")
             << sm->past.time << sm->now.time << sm->points[0].time << sm->at;
 }
 
-static boolean Smoother_IsValid(const Smoother* sm)
+static boolean Smoother_IsValid(Smoother const *sm)
 {
     DENG_ASSERT(sm);
     if(sm->past.time == 0 || sm->now.time == 0)
@@ -100,7 +100,7 @@ static boolean Smoother_IsValid(const Smoother* sm)
     return true;
 }
 
-void Smoother_Clear(Smoother* sm)
+void Smoother_Clear(Smoother *sm)
 {
     float maxDelta;
 
@@ -111,14 +111,14 @@ void Smoother_Clear(Smoother* sm)
     sm->maxDeltaBetweenPastAndNow = maxDelta;
 }
 
-void Smoother_AddPosXY(Smoother* sm, float time, coord_t x, coord_t y)
+void Smoother_AddPosXY(Smoother *sm, float time, coord_t x, coord_t y)
 {
     Smoother_AddPos(sm, time, x, y, 0, false);
 }
 
-void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor)
+void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor)
 {
-    pos_t* last;
+    pos_t *last;
     DENG_ASSERT(sm);
 
     // Is it the same point?
@@ -185,7 +185,7 @@ replaceLastPoint:
     }
 }
 
-boolean Smoother_EvaluateComponent(const Smoother* sm, int component, coord_t* v)
+boolean Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v)
 {
     coord_t xyz[3];
 
@@ -198,10 +198,10 @@ boolean Smoother_EvaluateComponent(const Smoother* sm, int component, coord_t* v
     return true;
 }
 
-boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz)
+boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
 {
-    const pos_t* past;
-    const pos_t* now;
+    const pos_t *past;
+    const pos_t *now;
     float t;
     int i;
 
@@ -225,8 +225,8 @@ boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz)
         xyz[VZ] = past->xyz[VZ];
 /*#if _DEBUG
         Con_Message("Smoother_Evaluate: falling behind\n");
-        ((Smoother*)sm)->prevEval[0] = xyz[0];
-        ((Smoother*)sm)->prevEval[1] = xyz[1];
+        ((Smoother *)sm)->prevEval[0] = xyz[0];
+        ((Smoother *)sm)->prevEval[1] = xyz[1];
 #endif*/
         return true;
     }
@@ -239,8 +239,8 @@ boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz)
         xyz[VZ] = now->xyz[VZ];
 /*#if _DEBUG
         Con_Message("Smoother_Evaluate: stalling\n");
-        ((Smoother*)sm)->prevEval[0] = xyz[0];
-        ((Smoother*)sm)->prevEval[1] = xyz[1];
+        ((Smoother *)sm)->prevEval[0] = xyz[0];
+        ((Smoother *)sm)->prevEval[1] = xyz[1];
 #endif*/
         return true;
     }
@@ -261,32 +261,32 @@ boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz)
         {
             float diff[2] = { xyz[0] - sm->prevEval[0], xyz[1] - sm->prevEval[1] };
             Con_Message("Smoother_Evaluate: [%05.3f] diff = %+06.3f  %+06.3f\n", dt, diff[0]/dt, diff[1]/dt);
-            ((Smoother*)sm)->prevEval[0] = xyz[0];
-            ((Smoother*)sm)->prevEval[1] = xyz[1];
+            ((Smoother *)sm)->prevEval[0] = xyz[0];
+            ((Smoother *)sm)->prevEval[1] = xyz[1];
         }
-        ((Smoother*)sm)->prevAt = sm->at;
+        ((Smoother *)sm)->prevAt = sm->at;
     }
 #endif*/
     return true;
 }
 
-boolean Smoother_IsOnFloor(const Smoother* sm)
+boolean Smoother_IsOnFloor(Smoother const *sm)
 {
     DENG_ASSERT(sm);
 
-    const pos_t* past = &sm->past;
-    const pos_t* now = &sm->now;
+    const pos_t *past = &sm->past;
+    const pos_t *now = &sm->now;
 
     if(!Smoother_IsValid(sm)) return false;
     return (past->onFloor && now->onFloor);
 }
 
-boolean Smoother_IsMoving(const Smoother* sm)
+boolean Smoother_IsMoving(Smoother const *sm)
 {
     DENG_ASSERT(sm);
 
-    const pos_t* past = &sm->past;
-    const pos_t* now = &sm->now;
+    const pos_t *past = &sm->past;
+    const pos_t *now = &sm->now;
 
     // The smoother is moving if the current past and present are different
     // points in time and space.
@@ -296,7 +296,7 @@ boolean Smoother_IsMoving(const Smoother* sm)
              !INRANGE_OF(past->xyz[VZ], now->xyz[VZ], SMOOTHER_MOVE_EPSILON));
 }
 
-void Smoother_Advance(Smoother* sm, float period)
+void Smoother_Advance(Smoother *sm, float period)
 {
     int i;
 

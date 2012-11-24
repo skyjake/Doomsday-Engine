@@ -25,7 +25,7 @@
 
 typedef struct blockset_block_s {
     size_t count;   ///< Number of used elements.
-    void* elements; ///< Block of memory where elements are.
+    void *elements; ///< Block of memory where elements are.
 } blockset_block_t;
 
 /**
@@ -33,9 +33,9 @@ typedef struct blockset_block_s {
  *
  * @param set  Block set into which the new block is added.
  */
-static void addBlockToSet(blockset_t* set)
+static void addBlockToSet(blockset_t *set)
 {
-    blockset_block_t* block = 0;
+    blockset_block_t *block = 0;
 
     DENG_ASSERT(set);
 
@@ -49,15 +49,15 @@ static void addBlockToSet(blockset_t* set)
     block->count = 0;
 }
 
-void* BlockSet_Allocate(blockset_t* set)
+void *BlockSet_Allocate(blockset_t *set)
 {
     DENG_ASSERT(set);
     {
-    blockset_block_t* block = &set->_blocks[set->_blockCount - 1];
+    blockset_block_t *block = &set->_blocks[set->_blockCount - 1];
 
     // When this is called, there is always an available element in the topmost
     // block. We will return it.
-    void* element = ((byte*)block->elements) + (set->_elementSize * block->count);
+    void *element = ((byte *)block->elements) + (set->_elementSize * block->count);
 
     // Reserve the element in this block.
     ++block->count;
@@ -79,9 +79,9 @@ void* BlockSet_Allocate(blockset_t* set)
     }
 }
 
-blockset_t* BlockSet_New(size_t sizeOfElement, size_t batchSize)
+blockset_t *BlockSet_New(size_t sizeOfElement, size_t batchSize)
 {
-    blockset_t* set;
+    blockset_t *set;
 
     DENG_ASSERT(sizeOfElement > 0);
     DENG_ASSERT(batchSize > 0);
@@ -98,14 +98,14 @@ blockset_t* BlockSet_New(size_t sizeOfElement, size_t batchSize)
     return set;
 }
 
-size_t BlockSet_Count(blockset_t* set)
+size_t BlockSet_Count(blockset_t *set)
 {
     DENG_ASSERT(set);
 
     return set->_elementsInUse;
 }
 
-void BlockSet_Delete(blockset_t* set)
+void BlockSet_Delete(blockset_t *set)
 {
     size_t i;
 

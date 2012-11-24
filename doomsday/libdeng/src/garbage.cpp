@@ -30,7 +30,7 @@
 
 struct Garbage
 {
-    typedef std::map<void*, GarbageDestructor> Allocs; // O(log n) search
+    typedef std::map<void *, GarbageDestructor> Allocs; // O(log n) search
     Allocs allocs;
     bool beingRecycled;
 
@@ -42,11 +42,11 @@ struct Garbage
         recycle();
     }
 
-    bool contains(const void* ptr) const
+    bool contains(void const *ptr) const
     {
         if(beingRecycled) return false;
 
-        Allocs::const_iterator i = allocs.find(const_cast<void*>(ptr));
+        Allocs::const_iterator i = allocs.find(const_cast<void *>(ptr));
         return i != allocs.end();
     }
 
@@ -69,15 +69,15 @@ struct Garbage
     }
 };
 
-typedef std::map<uint, Garbage*> Garbages; // threadId => Garbage
+typedef std::map<uint, Garbage *> Garbages; // threadId => Garbage
 static QMutex garbageMutex; // for accessing Garbages
-static Garbages* garbages;
+static Garbages *garbages;
 
-static Garbage* garbageForThread(uint thread)
+static Garbage *garbageForThread(uint thread)
 {
     DENG_ASSERT(garbages != 0);
 
-    Garbage* result;
+    Garbage *result;
     garbageMutex.lock();
     Garbages::iterator i = garbages->find(thread);
     if(i != garbages->end())
@@ -118,42 +118,42 @@ void Garbage_ClearForThread(void)
     Garbages::iterator i = garbages->find(Sys_CurrentThreadId());
     if(i != garbages->end())
     {
-        Garbage* g = i->second;
+        Garbage *g = i->second;
         delete g;
         garbages->erase(i);
     }
     garbageMutex.unlock();
 }
 
-void Garbage_Trash(void* ptr)
+void Garbage_Trash(void *ptr)
 {
-    Garbage* g = garbageForThread(Sys_CurrentThreadId());
+    Garbage *g = garbageForThread(Sys_CurrentThreadId());
     g->allocs[ptr] = Z_Contains(ptr)? Z_Free : free;
 }
 
-void Garbage_TrashInstance(void* ptr, GarbageDestructor destructor)
+void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor)
 {
-    Garbage* g = garbageForThread(Sys_CurrentThreadId());
+    Garbage *g = garbageForThread(Sys_CurrentThreadId());
     g->allocs[ptr] = destructor;
 }
 
-boolean Garbage_IsTrashed(const void* ptr)
+boolean Garbage_IsTrashed(void const *ptr)
 {
     if(!garbages) return false;
-    Garbage* g = garbageForThread(Sys_CurrentThreadId());
+    Garbage *g = garbageForThread(Sys_CurrentThreadId());
     return g->contains(ptr);
 }
 
-void Garbage_Untrash(void* ptr)
+void Garbage_Untrash(void *ptr)
 {
-    Garbage* g = garbageForThread(Sys_CurrentThreadId());
+    Garbage *g = garbageForThread(Sys_CurrentThreadId());
     DENG_ASSERT(g->contains(ptr));
     g->allocs.erase(ptr);
 }
 
-void Garbage_RemoveIfTrashed(void* ptr)
+void Garbage_RemoveIfTrashed(void *ptr)
 {
-    Garbage* g = garbageForThread(Sys_CurrentThreadId());
+    Garbage *g = garbageForThread(Sys_CurrentThreadId());
     Garbage::Allocs::iterator found = g->allocs.find(ptr);
     if(found != g->allocs.end())
     {
@@ -163,6 +163,6 @@ void Garbage_RemoveIfTrashed(void* ptr)
 
 void Garbage_Recycle(void)
 {
-    Garbage* g = garbageForThread(Sys_CurrentThreadId());
+    Garbage *g = garbageForThread(Sys_CurrentThreadId());
     g->recycle();
 }

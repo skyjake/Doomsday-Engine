@@ -50,11 +50,11 @@ struct reader_s; // The reader instance (opaque).
  */
 typedef struct reader_s Reader;
 
-typedef char  (*Reader_Callback_ReadInt8) (Reader*);
-typedef short (*Reader_Callback_ReadInt16)(Reader*);
-typedef int   (*Reader_Callback_ReadInt32)(Reader*);
-typedef float (*Reader_Callback_ReadFloat)(Reader*);
-typedef void  (*Reader_Callback_ReadData) (Reader*, char* data, int len);
+typedef char  (*Reader_Callback_ReadInt8) (Reader *);
+typedef short (*Reader_Callback_ReadInt16)(Reader *);
+typedef int   (*Reader_Callback_ReadInt32)(Reader *);
+typedef float (*Reader_Callback_ReadFloat)(Reader *);
+typedef void  (*Reader_Callback_ReadData) (Reader *, char *data, int len);
 
 /**
  * Initializes the reader. The reader will use @a buffer as the reading buffer.
@@ -64,13 +64,13 @@ typedef void  (*Reader_Callback_ReadData) (Reader*, char* data, int len);
  * @param buffer  Buffer to use for reading.
  * @param len     Length of the buffer.
  */
-DENG_PUBLIC Reader* Reader_NewWithBuffer(const byte* buffer, size_t len);
+DENG_PUBLIC Reader *Reader_NewWithBuffer(byte const *buffer, size_t len);
 
 /**
  * Constructs a new reader that has no memory buffer of its own. Instead, all the
  * read operations will get routed to user-provided callbacks.
  */
-DENG_PUBLIC Reader* Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
+DENG_PUBLIC Reader *Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
                                             Reader_Callback_ReadInt16 readInt16,
                                             Reader_Callback_ReadInt32 readInt32,
                                             Reader_Callback_ReadFloat readFloat,
@@ -79,23 +79,23 @@ DENG_PUBLIC Reader* Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
 /**
  * Destroys the reader.
  */
-DENG_PUBLIC void Reader_Delete(Reader* reader);
+DENG_PUBLIC void Reader_Delete(Reader *reader);
 
 /**
  * Returns the current position of the reader.
  */
-DENG_PUBLIC size_t Reader_Pos(const Reader* reader);
+DENG_PUBLIC size_t Reader_Pos(Reader const *reader);
 
 /**
  * Returns the size of the reading buffer.
  */
-DENG_PUBLIC size_t Reader_Size(const Reader* reader);
+DENG_PUBLIC size_t Reader_Size(Reader const *reader);
 
 /**
  * Determines whether the reader is in the end of buffer, i.e., there is nothing
  * more to read.
  */
-DENG_PUBLIC boolean Reader_AtEnd(const Reader* reader);
+DENG_PUBLIC boolean Reader_AtEnd(Reader const *reader);
 
 /**
  * Sets the position of the reading cursor in the buffer.
@@ -103,33 +103,33 @@ DENG_PUBLIC boolean Reader_AtEnd(const Reader* reader);
  * @param reader  Reader.
  * @param newPos  New position.
  */
-DENG_PUBLIC void Reader_SetPos(Reader* reader, size_t newPos);
+DENG_PUBLIC void Reader_SetPos(Reader *reader, size_t newPos);
 
 /**
  * Reads a value from the source buffer.
  */
 ///@{
-DENG_PUBLIC int8_t      Reader_ReadChar   (Reader* reader);
-DENG_PUBLIC byte        Reader_ReadByte   (Reader* reader);
-DENG_PUBLIC int16_t     Reader_ReadInt16  (Reader* reader);
-DENG_PUBLIC uint16_t    Reader_ReadUInt16 (Reader* reader);
-DENG_PUBLIC int32_t     Reader_ReadInt32  (Reader* reader);
-DENG_PUBLIC uint32_t    Reader_ReadUInt32 (Reader* reader);
-DENG_PUBLIC float       Reader_ReadFloat  (Reader* reader);
+DENG_PUBLIC int8_t      Reader_ReadChar   (Reader *reader);
+DENG_PUBLIC byte        Reader_ReadByte   (Reader *reader);
+DENG_PUBLIC int16_t     Reader_ReadInt16  (Reader *reader);
+DENG_PUBLIC uint16_t    Reader_ReadUInt16 (Reader *reader);
+DENG_PUBLIC int32_t     Reader_ReadInt32  (Reader *reader);
+DENG_PUBLIC uint32_t    Reader_ReadUInt32 (Reader *reader);
+DENG_PUBLIC float       Reader_ReadFloat  (Reader *reader);
 ///@}
 
 /**
  * Reads @a len bytes into @a buffer.
  */
-DENG_PUBLIC void Reader_Read(Reader* reader, void* buffer, size_t len);
+DENG_PUBLIC void Reader_Read(Reader *reader, void *buffer, size_t len);
 
 /**
  * Only 15 bits can be used for the number because the high bit of the
  * lower byte is used to determine whether the upper byte follows or not.
  */
-DENG_PUBLIC uint16_t Reader_ReadPackedUInt16(Reader* reader);
+DENG_PUBLIC uint16_t Reader_ReadPackedUInt16(Reader *reader);
 
-DENG_PUBLIC uint32_t Reader_ReadPackedUInt32(Reader* reader);
+DENG_PUBLIC uint32_t Reader_ReadPackedUInt32(Reader *reader);
 
 #ifdef __cplusplus
 } // extern "C"

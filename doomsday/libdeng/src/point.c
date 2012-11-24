@@ -32,38 +32,38 @@ struct point2f_s {
     Point2Rawf raw;
 };
 
-Point2* Point2_New(void)
+Point2 *Point2_New(void)
 {
-    Point2* p = M_Calloc(sizeof *p);
+    Point2 *p = M_Calloc(sizeof *p);
     return p;
 }
 
-Point2* Point2_NewWithCoords(int x, int y)
+Point2 *Point2_NewWithCoords(int x, int y)
 {
-    Point2* p = Point2_New();
+    Point2 *p = Point2_New();
     Point2_SetXY(p, x, y);
     return p;
 }
 
-Point2* Point2_NewFromRaw(const Point2Raw* rawPoint)
+Point2 *Point2_NewFromRaw(Point2Raw const *rawPoint)
 {
     DENG_ASSERT(rawPoint);
     return Point2_NewWithCoords(rawPoint->x, rawPoint->y);
 }
 
-void Point2_Delete(Point2* p)
+void Point2_Delete(Point2 *p)
 {
     DENG_ASSERT(p);
     M_Free(p);
 }
 
-boolean Point2_IsNull(const Point2* p)
+boolean Point2_IsNull(Point2 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x == 0 && p->raw.y == 0;
 }
 
-Point2Raw* Point2_Raw(const Point2* p, Point2Raw* rawPoint)
+Point2Raw *Point2_Raw(Point2 const *p, Point2Raw *rawPoint)
 {
     DENG_ASSERT(p);
     if(!rawPoint) return NULL;
@@ -71,44 +71,44 @@ Point2Raw* Point2_Raw(const Point2* p, Point2Raw* rawPoint)
     return rawPoint;
 }
 
-int Point2_X(const Point2* p)
+int Point2_X(Point2 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x;
 }
 
-int Point2_Y(const Point2* p)
+int Point2_Y(Point2 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.y;
 }
 
-void Point2_SetX(Point2* p, int x)
+void Point2_SetX(Point2 *p, int x)
 {
     DENG_ASSERT(p);
     p->raw.x = x;
 }
 
-void Point2_SetY(Point2* p, int y)
+void Point2_SetY(Point2 *p, int y)
 {
     DENG_ASSERT(p);
     p->raw.y = y;
 }
 
-const int* Point2_XY(const Point2* p)
+int const *Point2_XY(Point2 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.xy;
 }
 
-void Point2_SetXY(Point2* p, int x, int y)
+void Point2_SetXY(Point2 *p, int x, int y)
 {
     DENG_ASSERT(p);
     p->raw.x = x;
     p->raw.y = y;
 }
 
-void Point2_Translate(Point2* p, const Point2Raw* delta)
+void Point2_Translate(Point2 *p, Point2Raw const *delta)
 {
     DENG_ASSERT(p);
     if(!delta) return;
@@ -116,70 +116,70 @@ void Point2_Translate(Point2* p, const Point2Raw* delta)
     p->raw.y += delta->y;
 }
 
-void Point2_TranslateXY(Point2* p, int x, int y)
+void Point2_TranslateXY(Point2 *p, int x, int y)
 {
     DENG_ASSERT(p);
     p->raw.x += x;
     p->raw.y += y;
 }
 
-void Point2_TranslateX(Point2* p, int x)
+void Point2_TranslateX(Point2 *p, int x)
 {
     DENG_ASSERT(p);
     p->raw.x += x;
 }
 
-void Point2_TranslateY(Point2* p, int y)
+void Point2_TranslateY(Point2 *p, int y)
 {
     DENG_ASSERT(p);
     p->raw.y += y;
 }
 
-void Point2_Sum(Point2* p, const Point2* other)
+void Point2_Sum(Point2 *p, Point2 const *other)
 {
     DENG_ASSERT(p && other);
     p->raw.x += Point2_X(other);
     p->raw.y += Point2_Y(other);
 }
 
-boolean Point2_Equality(const Point2* p, const Point2* other)
+boolean Point2_Equality(Point2 const *p, Point2 const *other)
 {
     DENG_ASSERT(p && other);
     return p == other || (p->raw.x == Point2_X(other) && p->raw.y == Point2_Y(other));
 }
 
-Point2f* Point2f_New(void)
+Point2f *Point2f_New(void)
 {
-    Point2f* p = M_Calloc(sizeof *p);
+    Point2f *p = M_Calloc(sizeof *p);
     return p;
 }
 
-Point2f* Point2f_NewWithCoords(double x, double y)
+Point2f *Point2f_NewWithCoords(double x, double y)
 {
-    Point2f* p = Point2f_New();
+    Point2f *p = Point2f_New();
     Point2f_SetXY(p, x, y);
     return p;
 }
 
-Point2f* Point2f_NewFromRaw(const Point2Rawf* rawPoint)
+Point2f *Point2f_NewFromRaw(Point2Rawf const *rawPoint)
 {
     DENG_ASSERT(rawPoint);
     return Point2f_NewWithCoords(rawPoint->x, rawPoint->y);
 }
 
-void Point2f_Delete(Point2f* p)
+void Point2f_Delete(Point2f *p)
 {
     DENG_ASSERT(p);
     M_Free(p);
 }
 
-boolean Point2f_IsNull(const Point2f* p)
+boolean Point2f_IsNull(Point2f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x == 0 && p->raw.y == 0;
 }
 
-Point2Rawf* Point2f_Raw(const Point2f* p, Point2Rawf* rawPoint)
+Point2Rawf *Point2f_Raw(Point2f const *p, Point2Rawf *rawPoint)
 {
     DENG_ASSERT(p);
     if(!rawPoint) return NULL;
@@ -187,44 +187,44 @@ Point2Rawf* Point2f_Raw(const Point2f* p, Point2Rawf* rawPoint)
     return rawPoint;
 }
 
-double Point2f_X(const Point2f* p)
+double Point2f_X(Point2f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x;
 }
 
-double Point2f_Y(const Point2f* p)
+double Point2f_Y(Point2f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.y;
 }
 
-void Point2f_SetX(Point2f* p, double x)
+void Point2f_SetX(Point2f *p, double x)
 {
     DENG_ASSERT(p);
     p->raw.x = x;
 }
 
-void Point2f_SetY(Point2f* p, double y)
+void Point2f_SetY(Point2f *p, double y)
 {
     DENG_ASSERT(p);
     p->raw.y = y;
 }
 
-const double* Point2f_XY(const Point2f* p)
+double const *Point2f_XY(Point2f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.xy;
 }
 
-void Point2f_SetXY(Point2f* p, double x, double y)
+void Point2f_SetXY(Point2f *p, double x, double y)
 {
     DENG_ASSERT(p);
     p->raw.x = x;
     p->raw.y = y;
 }
 
-void Point2f_Translate(Point2f* p, const Point2Rawf* delta)
+void Point2f_Translate(Point2f *p, Point2Rawf const *delta)
 {
     DENG_ASSERT(p);
     if(!delta) return;
@@ -232,33 +232,33 @@ void Point2f_Translate(Point2f* p, const Point2Rawf* delta)
     p->raw.y += delta->y;
 }
 
-void Point2f_TranslateXY(Point2f* p, double x, double y)
+void Point2f_TranslateXY(Point2f *p, double x, double y)
 {
     DENG_ASSERT(p);
     p->raw.x += x;
     p->raw.y += y;
 }
 
-void Point2f_TranslateX(Point2f* p, double x)
+void Point2f_TranslateX(Point2f *p, double x)
 {
     DENG_ASSERT(p);
     p->raw.x += x;
 }
 
-void Point2f_TranslateY(Point2f* p, double y)
+void Point2f_TranslateY(Point2f *p, double y)
 {
     DENG_ASSERT(p);
     p->raw.y += y;
 }
 
-void Point2f_Sum(Point2f* p, const Point2f* other)
+void Point2f_Sum(Point2f *p, Point2f const *other)
 {
     DENG_ASSERT(p && other);
     p->raw.x += Point2f_X(other);
     p->raw.y += Point2f_Y(other);
 }
 
-boolean Point2f_Equality(const Point2f* p, const Point2f* other)
+boolean Point2f_Equality(Point2f const *p, Point2f const *other)
 {
     DENG_ASSERT(p && other);
     return p == other || (p->raw.x == Point2f_X(other) && p->raw.y == Point2f_Y(other));
@@ -274,38 +274,38 @@ struct point3f_s {
     Point3Rawf raw;
 };
 
-Point3* Point3_New(void)
+Point3 *Point3_New(void)
 {
-    Point3* p = M_Calloc(sizeof *p);
+    Point3 *p = M_Calloc(sizeof *p);
     return p;
 }
 
-Point3* Point3_NewWithCoords(int x, int y, int z)
+Point3 *Point3_NewWithCoords(int x, int y, int z)
 {
-    Point3* p = Point3_New();
+    Point3 *p = Point3_New();
     Point3_SetXYZ(p, x, y, z);
     return p;
 }
 
-Point3* Point3_NewFromRaw(const Point3Raw* rawPoint)
+Point3 *Point3_NewFromRaw(Point3Raw const *rawPoint)
 {
     DENG_ASSERT(rawPoint);
     return Point3_NewWithCoords(rawPoint->x, rawPoint->y, rawPoint->z);
 }
 
-void Point3_Delete(Point3* p)
+void Point3_Delete(Point3 *p)
 {
     DENG_ASSERT(p);
     M_Free(p);
 }
 
-boolean Point3_IsNull(const Point3* p)
+boolean Point3_IsNull(Point3 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x == 0 && p->raw.y == 0 && p->raw.z == 0;
 }
 
-Point3Raw* Point3_Raw(const Point3* p, Point3Raw* rawPoint)
+Point3Raw *Point3_Raw(Point3 const *p, Point3Raw *rawPoint)
 {
     DENG_ASSERT(p);
     if(!rawPoint) return NULL;
@@ -313,49 +313,49 @@ Point3Raw* Point3_Raw(const Point3* p, Point3Raw* rawPoint)
     return rawPoint;
 }
 
-int Point3_X(const Point3* p)
+int Point3_X(Point3 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x;
 }
 
-int Point3_Y(const Point3* p)
+int Point3_Y(Point3 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.y;
 }
 
-int Point3_Z(const Point3* p)
+int Point3_Z(Point3 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.z;
 }
 
-void Point3_SetX(Point3* p, int x)
+void Point3_SetX(Point3 *p, int x)
 {
     DENG_ASSERT(p);
     p->raw.x = x;
 }
 
-void Point3_SetY(Point3* p, int y)
+void Point3_SetY(Point3 *p, int y)
 {
     DENG_ASSERT(p);
     p->raw.y = y;
 }
 
-void Point3_SetZ(Point3* p, int z)
+void Point3_SetZ(Point3 *p, int z)
 {
     DENG_ASSERT(p);
     p->raw.z = z;
 }
 
-const int* Point3_XYZ(const Point3* p)
+int const *Point3_XYZ(Point3 const *p)
 {
     DENG_ASSERT(p);
     return p->raw.xyz;
 }
 
-void Point3_SetXYZ(Point3* p, int x, int y, int z)
+void Point3_SetXYZ(Point3 *p, int x, int y, int z)
 {
     DENG_ASSERT(p);
     p->raw.x = x;
@@ -363,7 +363,7 @@ void Point3_SetXYZ(Point3* p, int x, int y, int z)
     p->raw.z = z;
 }
 
-void Point3_Translate(Point3* p, int x, int y, int z)
+void Point3_Translate(Point3 *p, int x, int y, int z)
 {
     DENG_ASSERT(p);
     p->raw.x += x;
@@ -371,25 +371,25 @@ void Point3_Translate(Point3* p, int x, int y, int z)
     p->raw.z += z;
 }
 
-void Point3_TranslateX(Point3* p, int x)
+void Point3_TranslateX(Point3 *p, int x)
 {
     DENG_ASSERT(p);
     p->raw.x += x;
 }
 
-void Point3_TranslateY(Point3* p, int y)
+void Point3_TranslateY(Point3 *p, int y)
 {
     DENG_ASSERT(p);
     p->raw.y += y;
 }
 
-void Point3_TranslateZ(Point3* p, int z)
+void Point3_TranslateZ(Point3 *p, int z)
 {
     DENG_ASSERT(p);
     p->raw.z += z;
 }
 
-void Point3_Sum(Point3* p, const Point3* other)
+void Point3_Sum(Point3 *p, Point3 const *other)
 {
     DENG_ASSERT(p && other);
     p->raw.x += Point3_X(other);
@@ -397,7 +397,7 @@ void Point3_Sum(Point3* p, const Point3* other)
     p->raw.z += Point3_Z(other);
 }
 
-boolean Point3_Equality(const Point3* p, const Point3* other)
+boolean Point3_Equality(Point3 const *p, Point3 const *other)
 {
     DENG_ASSERT(p && other);
     return p == other || (p->raw.x == Point3_X(other) &&
@@ -405,38 +405,38 @@ boolean Point3_Equality(const Point3* p, const Point3* other)
                           p->raw.z == Point3_Z(other));
 }
 
-Point3f* Point3f_New(void)
+Point3f *Point3f_New(void)
 {
-    Point3f* p = M_Calloc(sizeof *p);
+    Point3f *p = M_Calloc(sizeof *p);
     return p;
 }
 
-Point3f* Point3f_NewWithCoords(double x, double y, double z)
+Point3f *Point3f_NewWithCoords(double x, double y, double z)
 {
-    Point3f* p = Point3f_New();
+    Point3f *p = Point3f_New();
     Point3f_SetXYZ(p, x, y, z);
     return p;
 }
 
-Point3f* Point3f_NewFromRaw(const Point3Rawf* rawPoint)
+Point3f *Point3f_NewFromRaw(Point3Rawf const *rawPoint)
 {
     DENG_ASSERT(rawPoint);
     return Point3f_NewWithCoords(rawPoint->x, rawPoint->y, rawPoint->z);
 }
 
-void Point3f_Delete(Point3f* p)
+void Point3f_Delete(Point3f *p)
 {
     DENG_ASSERT(p);
     M_Free(p);
 }
 
-boolean Point3f_IsNull(const Point3f* p)
+boolean Point3f_IsNull(Point3f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x == 0 && p->raw.y == 0 && p->raw.z == 0;
 }
 
-Point3Rawf* Point3f_Raw(const Point3f* p, Point3Rawf* rawPoint)
+Point3Rawf *Point3f_Raw(Point3f const *p, Point3Rawf *rawPoint)
 {
     DENG_ASSERT(p);
     if(!rawPoint) return NULL;
@@ -444,49 +444,49 @@ Point3Rawf* Point3f_Raw(const Point3f* p, Point3Rawf* rawPoint)
     return rawPoint;
 }
 
-double Point3f_X(const Point3f* p)
+double Point3f_X(Point3f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.x;
 }
 
-double Point3f_Y(const Point3f* p)
+double Point3f_Y(Point3f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.y;
 }
 
-double Point3f_Z(const Point3f* p)
+double Point3f_Z(Point3f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.z;
 }
 
-void Point3f_SetX(Point3f* p, double x)
+void Point3f_SetX(Point3f *p, double x)
 {
     DENG_ASSERT(p);
     p->raw.x = x;
 }
 
-void Point3f_SetY(Point3f* p, double y)
+void Point3f_SetY(Point3f *p, double y)
 {
     DENG_ASSERT(p);
     p->raw.y = y;
 }
 
-void Point3f_SetZ(Point3f* p, double z)
+void Point3f_SetZ(Point3f *p, double z)
 {
     DENG_ASSERT(p);
     p->raw.z = z;
 }
 
-const double* Point3f_XYZ(const Point3f* p)
+double const *Point3f_XYZ(Point3f const *p)
 {
     DENG_ASSERT(p);
     return p->raw.xyz;
 }
 
-void Point3f_SetXYZ(Point3f* p, double x, double y, double z)
+void Point3f_SetXYZ(Point3f *p, double x, double y, double z)
 {
     DENG_ASSERT(p);
     p->raw.x = x;
@@ -494,7 +494,7 @@ void Point3f_SetXYZ(Point3f* p, double x, double y, double z)
     p->raw.z = z;
 }
 
-void Point3f_Translate(Point3f* p, double x, double y, double z)
+void Point3f_Translate(Point3f *p, double x, double y, double z)
 {
     DENG_ASSERT(p);
     p->raw.x += x;
@@ -502,25 +502,25 @@ void Point3f_Translate(Point3f* p, double x, double y, double z)
     p->raw.z += z;
 }
 
-void Point3f_TranslateX(Point3f* p, double x)
+void Point3f_TranslateX(Point3f *p, double x)
 {
     DENG_ASSERT(p);
     p->raw.x += x;
 }
 
-void Point3f_TranslateY(Point3f* p, double y)
+void Point3f_TranslateY(Point3f *p, double y)
 {
     DENG_ASSERT(p);
     p->raw.y += y;
 }
 
-void Point3f_TranslateZ(Point3f* p, double z)
+void Point3f_TranslateZ(Point3f *p, double z)
 {
     DENG_ASSERT(p);
     p->raw.z += z;
 }
 
-void Point3f_Sum(Point3f* p, const Point3f* other)
+void Point3f_Sum(Point3f *p, Point3f const *other)
 {
     DENG_ASSERT(p && other);
     p->raw.x += Point3f_X(other);
@@ -528,7 +528,7 @@ void Point3f_Sum(Point3f* p, const Point3f* other)
     p->raw.z += Point3f_Z(other);
 }
 
-boolean Point3f_Equality(const Point3f* p, const Point3f* other)
+boolean Point3f_Equality(Point3f const *p, Point3f const *other)
 {
     DENG_ASSERT(p && other);
     return p == other || (p->raw.x == Point3f_X(other) &&

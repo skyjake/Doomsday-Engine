@@ -69,29 +69,29 @@ DENG_PUBLIC boolean Z_IsInited(void);
 /**
  * You can pass a NULL user if the tag is < PU_PURGELEVEL.
  */
-DENG_PUBLIC void* Z_Malloc(size_t size, int tag, void* ptr);
+DENG_PUBLIC void *Z_Malloc(size_t size, int tag, void *ptr);
 
 /**
  * Memory allocation utility: malloc and clear.
  */
-DENG_PUBLIC void* Z_Calloc(size_t size, int tag, void* user);
+DENG_PUBLIC void *Z_Calloc(size_t size, int tag, void *user);
 
 /**
  * Only resizes blocks with no user. If a block with a user is
  * reallocated, the user will lose its current block and be set to
  * NULL. Does not change the tag of existing blocks.
  */
-DENG_PUBLIC void* Z_Realloc(void* ptr, size_t n, int mallocTag);
+DENG_PUBLIC void *Z_Realloc(void *ptr, size_t n, int mallocTag);
 
 /**
  * Realloc and set possible new memory to zero.
  */
-DENG_PUBLIC void* Z_Recalloc(void* ptr, size_t n, int callocTag);
+DENG_PUBLIC void *Z_Recalloc(void *ptr, size_t n, int callocTag);
 
 /**
  * Free memory that was allocated with Z_Malloc.
  */
-DENG_PUBLIC void Z_Free(void* ptr);
+DENG_PUBLIC void Z_Free(void *ptr);
 
 /**
  * Free memory blocks in all volumes with a tag in the specified range.
@@ -106,21 +106,21 @@ DENG_PUBLIC void Z_CheckHeap(void);
 /**
  * Change the tag of a memory block.
  */
-DENG_PUBLIC void Z_ChangeTag2(void* ptr, int tag);
+DENG_PUBLIC void Z_ChangeTag2(void *ptr, int tag);
 
 /**
  * Change the user of a memory block.
  */
-DENG_PUBLIC void Z_ChangeUser(void* ptr, void* newUser);
+DENG_PUBLIC void Z_ChangeUser(void *ptr, void *newUser);
 
-DENG_PUBLIC uint32_t Z_GetId(void* ptr);
+DENG_PUBLIC uint32_t Z_GetId(void *ptr);
 
 /**
  * Get the user of a memory block.
  */
-DENG_PUBLIC void* Z_GetUser(void* ptr);
+DENG_PUBLIC void *Z_GetUser(void *ptr);
 
-DENG_PUBLIC int Z_GetTag(void* ptr);
+DENG_PUBLIC int Z_GetTag(void *ptr);
 
 /**
  * Checks if @a ptr points to memory inside the memory zone.
@@ -128,7 +128,7 @@ DENG_PUBLIC int Z_GetTag(void* ptr);
  * @return @c true, if @a ptr points to a valid allocated memory block
  * inside the zone.
  */
-DENG_PUBLIC boolean Z_Contains(void* ptr);
+DENG_PUBLIC boolean Z_Contains(void *ptr);
 
 /**
  * Copies @a text into a buffer allocated from the zone.
@@ -138,9 +138,9 @@ DENG_PUBLIC boolean Z_Contains(void* ptr);
  *
  * @return  Copy of the string (in the zone).
  */
-DENG_PUBLIC char* Z_StrDup(const char* text);
+DENG_PUBLIC char *Z_StrDup(char const *text);
 
-DENG_PUBLIC void* Z_MemDup(const void* ptr, size_t size);
+DENG_PUBLIC void *Z_MemDup(void const *ptr, size_t size);
 
 struct zblockset_s;
 typedef struct zblockset_s zblockset_t;
@@ -154,7 +154,7 @@ typedef struct zblockset_s zblockset_t;
  *
  * @return  Ptr to the newly created blockset.
  */
-DENG_PUBLIC zblockset_t* ZBlockSet_New(size_t sizeOfElement, uint32_t batchSize, int tag);
+DENG_PUBLIC zblockset_t *ZBlockSet_New(size_t sizeOfElement, uint32_t batchSize, int tag);
 
 /**
  * Destroy the entire blockset.
@@ -163,7 +163,7 @@ DENG_PUBLIC zblockset_t* ZBlockSet_New(size_t sizeOfElement, uint32_t batchSize,
  *
  * @param set  The blockset to be freed.
  */
-DENG_PUBLIC void ZBlockSet_Delete(zblockset_t* set);
+DENG_PUBLIC void ZBlockSet_Delete(zblockset_t *set);
 
 /**
  * Return a ptr to the next unused element in the blockset.
@@ -172,7 +172,7 @@ DENG_PUBLIC void ZBlockSet_Delete(zblockset_t* set);
  *
  * @return  Ptr to the next unused element in the blockset.
  */
-DENG_PUBLIC void* ZBlockSet_Allocate(zblockset_t* set);
+DENG_PUBLIC void *ZBlockSet_Allocate(zblockset_t *set);
 
 #define Z_ChangeTag(p,t) { \
     if(Z_GetId(p) != LIBDENG_ZONEID) \
@@ -186,7 +186,7 @@ DENG_PUBLIC void Z_PrintStatus(void);
 #ifdef DENG_DEBUG
 struct memzone_private_s;
 typedef struct memzone_private_s MemoryZonePrivateData;
-DENG_PUBLIC void Z_GetPrivateData(MemoryZonePrivateData* pd);
+DENG_PUBLIC void Z_GetPrivateData(MemoryZonePrivateData *pd);
 #endif
 
 #ifdef __cplusplus

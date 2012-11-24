@@ -40,9 +40,9 @@ typedef struct {
     int             steps;
 } animator_t;
 
-DENG_PUBLIC void Animator_Init(animator_t* v, float val);
-DENG_PUBLIC void Animator_Set(animator_t* v, float val, int steps);
-DENG_PUBLIC void Animator_Think(animator_t* v);
+DENG_PUBLIC void Animator_Init(animator_t *v, float val);
+DENG_PUBLIC void Animator_Set(animator_t *v, float val, int steps);
+DENG_PUBLIC void Animator_Think(animator_t *v);
 
 /**
  * 2D vector animator.

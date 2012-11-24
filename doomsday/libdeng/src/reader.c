@@ -41,7 +41,7 @@ typedef struct readerfuncs_s {
 
 struct reader_s
 {
-    const byte* data;       // The data buffer.
+    byte const *data;       // The data buffer.
     size_t size;            // Size of the data buffer.
     size_t pos;             // Current position in the buffer.
 
@@ -49,7 +49,7 @@ struct reader_s
     readerfuncs_t func;
 };
 
-static boolean Reader_Check(const Reader* reader, size_t len)
+static boolean Reader_Check(Reader const *reader, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One byte for the code.
@@ -79,21 +79,21 @@ static boolean Reader_Check(const Reader* reader, size_t len)
     return true;
 }
 
-Reader* Reader_NewWithBuffer(const byte* buffer, size_t len)
+Reader *Reader_NewWithBuffer(byte const *buffer, size_t len)
 {
-    Reader* rd = M_Calloc(sizeof(Reader));
+    Reader *rd = M_Calloc(sizeof(Reader));
     rd->size = len;
     rd->data = buffer;
     return rd;
 }
 
-Reader* Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
+Reader *Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
                                 Reader_Callback_ReadInt16 readInt16,
                                 Reader_Callback_ReadInt32 readInt32,
                                 Reader_Callback_ReadFloat readFloat,
                                 Reader_Callback_ReadData  readData)
 {
-    Reader* rd = M_Calloc(sizeof(Reader));
+    Reader *rd = M_Calloc(sizeof(Reader));
     rd->useCustomFuncs = true;
     rd->func.readInt8 = readInt8;
     rd->func.readInt16 = readInt16;
@@ -103,24 +103,24 @@ Reader* Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
     return rd;
 }
 
-void Reader_Delete(Reader* reader)
+void Reader_Delete(Reader *reader)
 {
     M_Free(reader);
 }
 
-size_t Reader_Pos(const Reader* reader)
+size_t Reader_Pos(Reader const *reader)
 {
     if(!reader) return 0;
     return reader->pos;
 }
 
-size_t Reader_Size(const Reader* reader)
+size_t Reader_Size(Reader const *reader)
 {
     if(!reader) return 0;
     return reader->size;
 }
 
-void Reader_SetPos(Reader* reader, size_t newPos)
+void Reader_SetPos(Reader *reader, size_t newPos)
 {
     if(!reader) return;
     if(reader->useCustomFuncs) return;
@@ -128,14 +128,14 @@ void Reader_SetPos(Reader* reader, size_t newPos)
     Reader_Check(reader, 0);
 }
 
-boolean Reader_AtEnd(const Reader* reader)
+boolean Reader_AtEnd(Reader const *reader)
 {
     Reader_Check(reader, 0);
     if(reader->useCustomFuncs) return false;
     return reader->pos == reader->size;
 }
 
-int8_t Reader_ReadChar(Reader* reader)
+int8_t Reader_ReadChar(Reader *reader)
 {
     int8_t result = 0;
     if(Reader_Check(reader, 1))
@@ -143,7 +143,7 @@ int8_t Reader_ReadChar(Reader* reader)
         if(!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_CHAR);
-            result = ((int8_t*)reader->data)[reader->pos++];
+            result = ((int8_t *)reader->data)[reader->pos++];
         }
         else
         {
@@ -154,7 +154,7 @@ int8_t Reader_ReadChar(Reader* reader)
     return result;
 }
 
-byte Reader_ReadByte(Reader* reader)
+byte Reader_ReadByte(Reader *reader)
 {
     byte result = 0;
     if(Reader_Check(reader, 1))
@@ -173,7 +173,7 @@ byte Reader_ReadByte(Reader* reader)
     return result;
 }
 
-int16_t Reader_ReadInt16(Reader* reader)
+int16_t Reader_ReadInt16(Reader *reader)
 {
     int16_t result = 0;
     if(Reader_Check(reader, 2))
@@ -181,7 +181,7 @@ int16_t Reader_ReadInt16(Reader* reader)
         if(!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_INT16);
-            result = LittleEndianByteOrder_ToNativeInt16( *(int16_t*) &reader->data[reader->pos] );
+            result = LittleEndianByteOrder_ToNativeInt16( *(int16_t *) &reader->data[reader->pos] );
             reader->pos += 2;
         }
         else
@@ -193,7 +193,7 @@ int16_t Reader_ReadInt16(Reader* reader)
     return result;
 }
 
-uint16_t Reader_ReadUInt16(Reader* reader)
+uint16_t Reader_ReadUInt16(Reader *reader)
 {
     uint16_t result = 0;
     if(Reader_Check(reader, 2))
@@ -201,7 +201,7 @@ uint16_t Reader_ReadUInt16(Reader* reader)
         if(!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_UINT16);
-            result = LittleEndianByteOrder_ToNativeUInt16( *(uint16_t*) &reader->data[reader->pos] );
+            result = LittleEndianByteOrder_ToNativeUInt16( *(uint16_t *) &reader->data[reader->pos] );
             reader->pos += 2;
         }
         else
@@ -213,7 +213,7 @@ uint16_t Reader_ReadUInt16(Reader* reader)
     return result;
 }
 
-int32_t Reader_ReadInt32(Reader* reader)
+int32_t Reader_ReadInt32(Reader *reader)
 {
     int32_t result = 0;
     if(Reader_Check(reader, 4))
@@ -221,7 +221,7 @@ int32_t Reader_ReadInt32(Reader* reader)
         if(!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_INT32);
-            result = LittleEndianByteOrder_ToNativeInt32( *(int32_t*) &reader->data[reader->pos] );
+            result = LittleEndianByteOrder_ToNativeInt32( *(int32_t *) &reader->data[reader->pos] );
             reader->pos += 4;
         }
         else
@@ -233,7 +233,7 @@ int32_t Reader_ReadInt32(Reader* reader)
     return result;
 }
 
-uint32_t Reader_ReadUInt32(Reader* reader)
+uint32_t Reader_ReadUInt32(Reader *reader)
 {
     uint32_t result = 0;
     if(Reader_Check(reader, 4))
@@ -241,7 +241,7 @@ uint32_t Reader_ReadUInt32(Reader* reader)
         if(!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_UINT32);
-            result = LittleEndianByteOrder_ToNativeUInt32( *(uint32_t*) &reader->data[reader->pos] );
+            result = LittleEndianByteOrder_ToNativeUInt32( *(uint32_t *) &reader->data[reader->pos] );
             reader->pos += 4;
         }
         else
@@ -253,7 +253,7 @@ uint32_t Reader_ReadUInt32(Reader* reader)
     return result;
 }
 
-float Reader_ReadFloat(Reader* reader)
+float Reader_ReadFloat(Reader *reader)
 {
     float result = 0;
     if(Reader_Check(reader, 4))
@@ -261,7 +261,7 @@ float Reader_ReadFloat(Reader* reader)
         if(!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_FLOAT);
-            result = LittleEndianByteOrder_ToNativeFloat( *(float*) &reader->data[reader->pos] );
+            result = LittleEndianByteOrder_ToNativeFloat( *(float *) &reader->data[reader->pos] );
             reader->pos += 4;
         }
         else
@@ -273,7 +273,7 @@ float Reader_ReadFloat(Reader* reader)
     return result;
 }
 
-void Reader_Read(Reader* reader, void* buffer, size_t len)
+void Reader_Read(Reader *reader, void *buffer, size_t len)
 {
     if(!len) return;
 
@@ -293,7 +293,7 @@ void Reader_Read(Reader* reader, void* buffer, size_t len)
     }
 }
 
-uint16_t Reader_ReadPackedUInt16(Reader* reader)
+uint16_t Reader_ReadPackedUInt16(Reader *reader)
 {
     ushort pack = Reader_ReadByte(reader);
     if(pack & 0x80)
@@ -304,7 +304,7 @@ uint16_t Reader_ReadPackedUInt16(Reader* reader)
     return pack;
 }
 
-uint32_t Reader_ReadPackedUInt32(Reader* reader)
+uint32_t Reader_ReadPackedUInt32(Reader *reader)
 {
     byte pack = 0;
     int pos = 0;

@@ -40,12 +40,12 @@ extern "C" {
  *
  * @param ptr  Pointer to memory. Can be allocated with malloc() or Z_Malloc().
  */
-DENG_PUBLIC void Garbage_Trash(void* ptr);
+DENG_PUBLIC void Garbage_Trash(void *ptr);
 
 /**
  * Pointer to an instance destructor;
  */
-typedef void (*GarbageDestructor)(void*);
+typedef void (*GarbageDestructor)(void *);
 
 /**
  * Puts an object up for garbage collection in the current thread. The object
@@ -54,7 +54,7 @@ typedef void (*GarbageDestructor)(void*);
  * @param ptr  Pointer to the object.
  * @param destructor  Function that destroys the object.
  */
-DENG_PUBLIC void Garbage_TrashInstance(void* ptr, GarbageDestructor destructor);
+DENG_PUBLIC void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor);
 
 /**
  * Determines whether a memory pointer has been trashed. Only the current
@@ -64,7 +64,7 @@ DENG_PUBLIC void Garbage_TrashInstance(void* ptr, GarbageDestructor destructor);
  *
  * @return @c true if the pointer is in the trash.
  */
-DENG_PUBLIC boolean Garbage_IsTrashed(const void* ptr);
+DENG_PUBLIC boolean Garbage_IsTrashed(void const *ptr);
 
 /**
  * Removes a region from the current thread's collector, if it is still there.
@@ -73,7 +73,7 @@ DENG_PUBLIC boolean Garbage_IsTrashed(const void* ptr);
  *
  * @param ptr  Pointer to memory allocated from the @ref memzone.
  */
-DENG_PUBLIC void Garbage_Untrash(void* ptr);
+DENG_PUBLIC void Garbage_Untrash(void *ptr);
 
 /**
  * Removes a pointer from the garbage. This needs to be called if the
@@ -81,7 +81,7 @@ DENG_PUBLIC void Garbage_Untrash(void* ptr);
  *
  * @param ptr  Pointer to memory.
  */
-DENG_PUBLIC void Garbage_RemoveIfTrashed(void* ptr);
+DENG_PUBLIC void Garbage_RemoveIfTrashed(void *ptr);
 
 /**
  * Frees all pointers given over to the current thread's garbage collector.

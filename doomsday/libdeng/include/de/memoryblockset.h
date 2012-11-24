@@ -58,7 +58,7 @@ typedef struct blockset_s {
     size_t _blockCount;
 
     /// Vector of blocks in the set.
-    struct blockset_block_s* _blocks;
+    struct blockset_block_s *_blocks;
 } blockset_t;
 
 /**
@@ -71,7 +71,7 @@ typedef struct blockset_s {
  *
  * @return  Ptr to the newly created blockset.
  */
-DENG_PUBLIC blockset_t* BlockSet_New(size_t sizeOfElement, size_t batchSize);
+DENG_PUBLIC blockset_t *BlockSet_New(size_t sizeOfElement, size_t batchSize);
 
 /**
  * Free an entire blockset. All memory allocated is released for all elements
@@ -79,7 +79,7 @@ DENG_PUBLIC blockset_t* BlockSet_New(size_t sizeOfElement, size_t batchSize);
  *
  * @param set  The blockset to be freed.
  */
-DENG_PUBLIC void BlockSet_Delete(blockset_t* set);
+DENG_PUBLIC void BlockSet_Delete(blockset_t *set);
 
 /**
  * Return a ptr to the next unused element in the blockset.
@@ -88,10 +88,10 @@ DENG_PUBLIC void BlockSet_Delete(blockset_t* set);
  *
  * @return  Ptr to the next unused element in the blockset.
  */
-DENG_PUBLIC void* BlockSet_Allocate(blockset_t* set);
+DENG_PUBLIC void *BlockSet_Allocate(blockset_t *set);
 
 /// @return  Total number of elements from the set that are currently in use.
-DENG_PUBLIC size_t BlockSet_Count(blockset_t* set);
+DENG_PUBLIC size_t BlockSet_Count(blockset_t *set);
 
 #ifdef __cplusplus
 } // extern "C"

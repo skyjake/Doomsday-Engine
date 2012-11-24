@@ -123,8 +123,8 @@ typedef int64_t         int_from_pointer_t;
 #else
 typedef int32_t         int_from_pointer_t;
 #endif
-#define PTR2INT(x)      ( (int_from_pointer_t) ((void*)(x)) )
-#define INT2PTR(type,x) ( (type*) ((int_from_pointer_t)(x)) )
+#define PTR2INT(x)      ( (int_from_pointer_t) ((void *)(x)) )
+#define INT2PTR(type,x) ( (type *) ((int_from_pointer_t)(x)) )
 
 /*
  * Limits.
