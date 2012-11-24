@@ -29,7 +29,7 @@
 
 using namespace de;
 
-DirectoryFeed::DirectoryFeed(const NativePath &nativePath, Flags const &mode)
+DirectoryFeed::DirectoryFeed(NativePath const &nativePath, Flags const &mode)
     : _nativePath(nativePath), _mode(mode) {}
 
 DirectoryFeed::~DirectoryFeed()

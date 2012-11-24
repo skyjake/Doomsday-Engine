@@ -98,12 +98,12 @@ public:
     Writer &operator << (char const &byte);
     Writer &operator << (dchar const &byte);
     Writer &operator << (duchar const &byte);
-    Writer &operator << (const dint16& word);
-    Writer &operator << (const duint16& word);
-    Writer &operator << (const dint32& dword);
-    Writer &operator << (const duint32& dword);
-    Writer &operator << (const dint64& qword);
-    Writer &operator << (const duint64& qword);
+    Writer &operator << (dint16 const &word);
+    Writer &operator << (duint16 const &word);
+    Writer &operator << (dint32 const &dword);
+    Writer &operator << (duint32 const &dword);
+    Writer &operator << (dint64 const &qword);
+    Writer &operator << (duint64 const &qword);
     Writer &operator << (dfloat const &value);
     Writer &operator << (ddouble const &value);
     //@}

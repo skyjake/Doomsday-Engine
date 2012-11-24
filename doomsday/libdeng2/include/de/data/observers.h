@@ -141,7 +141,7 @@ namespace de
             _members->insert(observer);
         }            
 
-        Observers<Type>& operator += (Type *observer) {
+        Observers<Type> &operator += (Type *observer) {
             add(observer);
             return *this;
         }
@@ -156,7 +156,7 @@ namespace de
             }
         }
         
-        Observers<Type>& operator -= (Type *observer) {
+        Observers<Type> &operator -= (Type *observer) {
             remove(observer);
             return *this;
         }

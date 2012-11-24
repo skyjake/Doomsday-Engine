@@ -179,36 +179,36 @@ Reader &Reader::operator >> (duchar &byte)
     return *this;
 }
 
-Reader &Reader::operator >> (dint16& word)
+Reader &Reader::operator >> (dint16 &word)
 {
-    return *this >> reinterpret_cast<duint16&>(word);
+    return *this >> reinterpret_cast<duint16 &>(word);
 }
 
-Reader &Reader::operator >> (duint16& word)
+Reader &Reader::operator >> (duint16 &word)
 {
     d->readBytes(reinterpret_cast<IByteArray::Byte *>(&word), 2);
     d->convert.foreignToNative(word, word);
     return *this;
 }
 
-Reader &Reader::operator >> (dint32& dword)
+Reader &Reader::operator >> (dint32 &dword)
 {
-    return *this >> reinterpret_cast<duint32&>(dword);
+    return *this >> reinterpret_cast<duint32 &>(dword);
 }
 
-Reader &Reader::operator >> (duint32& dword)
+Reader &Reader::operator >> (duint32 &dword)
 {
     d->readBytes(reinterpret_cast<IByteArray::Byte *>(&dword), 4);
     d->convert.foreignToNative(dword, dword);
     return *this;
 }
 
-Reader &Reader::operator >> (dint64& qword)
+Reader &Reader::operator >> (dint64 &qword)
 {
-    return *this >> reinterpret_cast<duint64&>(qword);
+    return *this >> reinterpret_cast<duint64 &>(qword);
 }
 
-Reader &Reader::operator >> (duint64& qword)
+Reader &Reader::operator >> (duint64 &qword)
 {
     d->readBytes(reinterpret_cast<IByteArray::Byte *>(&qword), 8);
     d->convert.foreignToNative(qword, qword);
@@ -217,12 +217,12 @@ Reader &Reader::operator >> (duint64& qword)
 
 Reader &Reader::operator >> (dfloat &value)
 {
-    return *this >> *reinterpret_cast<duint32*>(&value);
+    return *this >> *reinterpret_cast<duint32 *>(&value);
 }
 
 Reader &Reader::operator >> (ddouble &value)
 {
-    return *this >> *reinterpret_cast<duint64*>(&value);
+    return *this >> *reinterpret_cast<duint64 *>(&value);
 }
 
 Reader &Reader::operator >> (String &text)

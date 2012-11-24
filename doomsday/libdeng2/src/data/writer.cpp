@@ -119,12 +119,12 @@ Writer &Writer::operator << (duchar const &byte)
     return *this;
 }
 
-Writer &Writer::operator << (const dint16& word)
+Writer &Writer::operator << (dint16 const &word)
 {
     return *this << static_cast<duint16>(word);
 }   
 
-Writer &Writer::operator << (const duint16& word)
+Writer &Writer::operator << (duint16 const &word)
 {
     duint16 netWord;
     d->convert.nativeToForeign(word, netWord);
@@ -132,12 +132,12 @@ Writer &Writer::operator << (const duint16& word)
     return *this;
 }
 
-Writer &Writer::operator << (const dint32& dword)
+Writer &Writer::operator << (dint32 const &dword)
 {
     return *this << static_cast<duint32>(dword);
 }   
 
-Writer &Writer::operator << (const duint32& dword)
+Writer &Writer::operator << (duint32 const &dword)
 {
     duint32 netDword;
     d->convert.nativeToForeign(dword, netDword);
@@ -145,12 +145,12 @@ Writer &Writer::operator << (const duint32& dword)
     return *this;
 }
 
-Writer &Writer::operator << (const dint64& qword)
+Writer &Writer::operator << (dint64 const &qword)
 {
     return *this << static_cast<duint64>(qword);
 }   
 
-Writer &Writer::operator << (const duint64& qword)
+Writer &Writer::operator << (duint64 const &qword)
 {
     duint64 netQword;
     d->convert.nativeToForeign(qword, netQword);
@@ -160,12 +160,12 @@ Writer &Writer::operator << (const duint64& qword)
 
 Writer &Writer::operator << (dfloat const &value)
 {
-    return *this << *reinterpret_cast<const duint32*>(&value);
+    return *this << *reinterpret_cast<duint32 const *>(&value);
 }
 
 Writer &Writer::operator << (ddouble const &value)
 {
-    return *this << *reinterpret_cast<const duint64*>(&value);
+    return *this << *reinterpret_cast<duint64 const *>(&value);
 }
 
 Writer &Writer::operator << (String const &text)

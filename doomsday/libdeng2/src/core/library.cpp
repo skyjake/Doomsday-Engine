@@ -128,7 +128,7 @@ Library::~Library()
     delete d;
 }
 
-const String &Library::type() const
+String const &Library::type() const
 {
     return d->type;
 }
@@ -168,7 +168,7 @@ void *Library::address(String const &name, SymbolLookupMode lookup)
     return ptr;
 }
 
-bool Library::hasSymbol(const String &name) const
+bool Library::hasSymbol(String const &name) const
 {
     // First check the symbols cache.
     if(d->symbols.find(name) != d->symbols.end()) return true;

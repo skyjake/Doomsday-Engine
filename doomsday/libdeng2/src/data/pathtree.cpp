@@ -146,7 +146,7 @@ struct PathTree::Instance
         PathTree::Node *node = 0, *parent = 0;
         for(int i = path.segmentCount() - 1; i >= (hasLeaf? 1 : 0); --i)
         {
-            const Path::Segment &pn = path.reverseSegment(i);
+            Path::Segment const &pn = path.reverseSegment(i);
             //qDebug() << "Add branch: " << pn.toString();
             node = direcNode(pn, PathTree::Branch, parent);
             parent = node;
@@ -154,7 +154,7 @@ struct PathTree::Instance
 
         if(hasLeaf)
         {
-            const Path::Segment &pn = path.lastSegment();
+            Path::Segment const &pn = path.lastSegment();
             //qDebug() << "Add leaf: " << pn.toString();
             node = direcNode(pn, PathTree::Leaf, parent);
         }
@@ -265,7 +265,7 @@ PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags fla
     throw NotFoundError("PathTree::find", "No paths found matching \"" + searchPath + "\"");
 }
 
-PathTree::Node &PathTree::find(const Path &path, ComparisonFlags flags)
+PathTree::Node &PathTree::find(Path const &path, ComparisonFlags flags)
 {
     Node const &node = const_cast<PathTree const *>(this)->find(path, flags);
     return const_cast<Node &>(node);

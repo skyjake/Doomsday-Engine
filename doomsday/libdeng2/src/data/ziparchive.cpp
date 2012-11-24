@@ -84,7 +84,7 @@ struct DOSTime {
     duint16 hours;
 
     DOSTime(duint16 h, duint16 m, duint16 s) : seconds(s), minutes(m), hours(h) {}
-    DOSTime(const duint16& i) {
+    DOSTime(duint16 const &i) {
         seconds = (i & 0x1f) * 2;
         minutes = (i >> 5) & 0x3f;
         hours = i >> 11;
@@ -106,7 +106,7 @@ struct DOSDate {
     duint16 year;
 
     DOSDate(duint16 y, duint16 m, duint16 d) : dayOfMonth(d), month(m), year(y) {}
-    DOSDate(const duint16& i) {
+    DOSDate(duint16 const &i) {
         dayOfMonth = i & 0x1f;
         month = (i >> 5) & 0xf;
         year = i >> 9;

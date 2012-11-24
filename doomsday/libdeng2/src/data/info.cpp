@@ -451,7 +451,7 @@ void Info::BlockElement::clear()
     _contentsInOrder.clear();
 }
 
-Info::Element *Info::BlockElement::findByPath(const String &path) const
+Info::Element *Info::BlockElement::findByPath(String const &path) const
 {
     String name;
     String remainder;

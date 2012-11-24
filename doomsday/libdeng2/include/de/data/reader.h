@@ -76,12 +76,12 @@ public:
     Reader &operator >> (char &byte);
     Reader &operator >> (dchar &byte);
     Reader &operator >> (duchar &byte);
-    Reader &operator >> (dint16& word);
-    Reader &operator >> (duint16& word);
-    Reader &operator >> (dint32& dword);
-    Reader &operator >> (duint32& dword);
-    Reader &operator >> (dint64& qword);
-    Reader &operator >> (duint64& qword);
+    Reader &operator >> (dint16 &word);
+    Reader &operator >> (duint16 &word);
+    Reader &operator >> (dint32 &dword);
+    Reader &operator >> (duint32 &dword);
+    Reader &operator >> (dint64 &qword);
+    Reader &operator >> (duint64 &qword);
     Reader &operator >> (dfloat &value);
     Reader &operator >> (ddouble &value);
     //@}

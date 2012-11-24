@@ -153,7 +153,7 @@ void TextValue::modulo(Value const &value)
     _value = substitutePlaceholders(_value, args);
 }
 
-String TextValue::substitutePlaceholders(String const &pattern, const std::list<Value const *>& args)
+String TextValue::substitutePlaceholders(String const &pattern, const std::list<Value const *> &args)
 {
     QString result;
     QTextStream out(&result);

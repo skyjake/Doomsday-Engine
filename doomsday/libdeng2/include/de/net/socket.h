@@ -104,7 +104,7 @@ public:
      *
      * @param packet  Data to send.
      */
-    void send(const IByteArray &packet);
+    void send(IByteArray const &packet);
 
     /**
      * Sends the given data over the socket.  Copies the data into

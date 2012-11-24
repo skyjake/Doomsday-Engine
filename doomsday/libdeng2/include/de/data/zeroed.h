@@ -34,7 +34,7 @@ namespace de
         Zeroed(Type const &v = 0) : value(v) {}
         operator Type const &() const { return value; }
         operator Type &() { return value; }
-        Zeroed<Type>& operator = (Type const &v) { 
+        Zeroed<Type> &operator = (Type const &v) { 
             value = v; 
             return *this; 
         }

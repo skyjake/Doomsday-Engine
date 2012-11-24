@@ -459,7 +459,7 @@ void Socket::setChannel(duint number)
     d->activeChannel = number;
 }
 
-void Socket::send(const IByteArray &packet)
+void Socket::send(IByteArray const &packet)
 {
     send(packet, d->activeChannel);
 }

@@ -365,7 +365,7 @@ struct Huffman
         memset(buffer, 0, sizeof(*buffer));
     }
 
-    dbyte *encode(const dbyte *data, dsize size, dsize *encodedSize)
+    dbyte *encode(dbyte const *data, dsize size, dsize *encodedSize)
     {
         HuffBuffer huffEnc;
         dsize i;
@@ -430,7 +430,7 @@ struct Huffman
         return huffEnc.data;
     }
 
-    dbyte *decode(const dbyte *data, dsize size, dsize *decodedSize)
+    dbyte *decode(dbyte const *data, dsize size, dsize *decodedSize)
     {
         HuffBuffer huffDec;
         HuffNode *node;

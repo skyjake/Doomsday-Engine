@@ -131,7 +131,7 @@ NativePath App::currentWorkPath()
     return NativePath::workPath();
 }
 
-bool App::setCurrentWorkPath(const NativePath &cwd)
+bool App::setCurrentWorkPath(NativePath const &cwd)
 {
     return QDir::setCurrent(cwd);
 }

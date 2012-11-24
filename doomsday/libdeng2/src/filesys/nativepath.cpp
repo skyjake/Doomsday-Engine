@@ -46,10 +46,10 @@ static QString toNative(QString const &s)
 NativePath::NativePath() : Path()
 {}
 
-NativePath::NativePath(const QString &str) : Path(toNative(str), DIR_SEPARATOR)
+NativePath::NativePath(QString const &str) : Path(toNative(str), DIR_SEPARATOR)
 {}
 
-NativePath::NativePath(const char *nullTerminatedCStr)
+NativePath::NativePath(char const *nullTerminatedCStr)
     : Path(toNative(nullTerminatedCStr), DIR_SEPARATOR)
 {
 }
@@ -64,7 +64,7 @@ NativePath &NativePath::operator = (QString const &str)
     return *this;
 }
 
-NativePath &NativePath::operator = (const char *nullTerminatedCStr)
+NativePath &NativePath::operator = (char const *nullTerminatedCStr)
 {
     return (*this) = QString(nullTerminatedCStr);
 }
@@ -90,7 +90,7 @@ NativePath NativePath::operator / (QString const &str) const
     return *this / NativePath(str);
 }
 
-NativePath NativePath::operator / (const char *nullTerminatedCStr) const
+NativePath NativePath::operator / (char const *nullTerminatedCStr) const
 {
     return *this / NativePath(nullTerminatedCStr);
 }

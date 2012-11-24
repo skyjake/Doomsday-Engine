@@ -68,7 +68,7 @@ public:
      */
     NativePath &operator = (QString const &str);
 
-    NativePath &operator = (const char *nullTerminatedCStr);
+    NativePath &operator = (char const *nullTerminatedCStr);
 
     /**
      * Does a path concatenation on a native path. The directory separator
