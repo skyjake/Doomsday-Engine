@@ -246,7 +246,7 @@ Uri::Uri(Path const &path) : d(new Instance)
     setPath(path);
 }
 
-Uri::Uri(Uri const &other) : d(new Instance(*other.d))
+Uri::Uri(Uri const &other) : LogEntry::Arg::Base(), d(new Instance(*other.d))
 {}
 
 Uri Uri::fromNativePath(NativePath const &path, resourceclassid_t defaultResourceClass)

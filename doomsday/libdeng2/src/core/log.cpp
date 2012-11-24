@@ -205,7 +205,7 @@ String LogEntry::asText(Flags const &formattingFlags) const
     return result;
 }
 
-QTextStream &de::operator << (QTextStream &stream, LogEntry::Arg const &arg)
+QTextStream &operator << (QTextStream &stream, LogEntry::Arg const &arg)
 {
     switch(arg.type())
     {

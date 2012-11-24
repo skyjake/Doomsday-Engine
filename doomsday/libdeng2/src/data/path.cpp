@@ -243,7 +243,8 @@ Path::Path(String const &path, QChar sep)
 {}
 
 Path::Path(Path const &other)
-    : LogEntry::Arg::Base(), d(new Instance(other.d->path, other.d->separator))
+    : ISerializable(), LogEntry::Arg::Base(),
+      d(new Instance(other.d->path, other.d->separator))
 {}
 
 Path::~Path()

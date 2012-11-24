@@ -165,7 +165,7 @@ void Time::operator << (Reader &from)
     s >> _time;
 }
 
-QTextStream &de::operator << (QTextStream &os, Time const &t)
+QTextStream &operator << (QTextStream &os, Time const &t)
 {
     os << t.asText();
     return os;
