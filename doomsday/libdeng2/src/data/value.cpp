@@ -74,7 +74,7 @@ Value *Value::duplicateElement(Value const &index) const
     return element(index).duplicate();
 }
 
-void Value::setElement(Value const &/*index*/, Value */*elementValue*/)
+void Value::setElement(Value const &/*index*/, Value *)
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError("Value::setElement", "Value cannot be indexed");
