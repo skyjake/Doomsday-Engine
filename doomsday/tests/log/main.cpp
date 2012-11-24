@@ -24,7 +24,7 @@
 
 using namespace de;
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     try
     {
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
             }
         }
     }
-    catch(const Error& err)
+    catch(Error const &err)
     {
         qWarning() << err.asText();
     }

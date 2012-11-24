@@ -28,7 +28,7 @@
 
 using namespace de;
 
-int main(int, char**)
+int main(int, char **)
 {
     try
     {
@@ -51,11 +51,11 @@ int main(int, char**)
 
         // Another string.
         s = String("abc");
-        String const& is = p.internAndRetrieve(s);
+        String const &is = p.internAndRetrieve(s);
         DENG2_ASSERT(!is.compare(s));
 
         String s2 = String("ABC");
-        String const& is2 = p.internAndRetrieve(s2);
+        String const &is2 = p.internAndRetrieve(s2);
         DENG2_ASSERT(!is2.compare(s));
 
         DENG2_ASSERT(p.intern(is2) == 2);
@@ -102,7 +102,7 @@ int main(int, char**)
         p.clear();
         DENG2_ASSERT(p.empty());
     }
-    catch(const Error& err)
+    catch(Error const &err)
     {
         qWarning() << err.asText() << "\n";
     }

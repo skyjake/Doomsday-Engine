@@ -30,7 +30,7 @@
 
 using namespace de;
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     try
     {
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
         Reader(b) >> rec2;        
         LOG_MSG("After being deserialized:\n") << rec2;
     }
-    catch(const Error& err)
+    catch(Error const &err)
     {
         qWarning() << err.asText();
     }

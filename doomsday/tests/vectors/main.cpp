@@ -22,7 +22,7 @@
 
 using namespace de;
 
-int main(int, char**)
+int main(int, char **)
 {
     try
     {
@@ -75,7 +75,7 @@ int main(int, char**)
         qDebug() << "s < t: " << (s < t) << " <- first operand causes conversion to Vector2";
         qDebug() << "t < s: " << (t < s);
     }
-    catch(const Error& err)
+    catch(Error const &err)
     {
         qWarning() << err.asText() << "\n";
     }
