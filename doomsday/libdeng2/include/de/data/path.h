@@ -72,7 +72,7 @@ public:
      * @see URI paths are composed of "segments":
      * http://tools.ietf.org/html/rfc3986#section-3.3
      */
-    struct Segment
+    struct DENG2_PUBLIC Segment
     {
         /**
          * Segments are implicitly converted to text strings.
