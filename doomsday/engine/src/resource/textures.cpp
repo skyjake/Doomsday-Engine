@@ -265,10 +265,10 @@ static TextureRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
     {
         // This is a URN of the form; urn:schemename:uniqueid
         textureschemeid_t schemeId = Textures_ParseSchemeName(uri.pathCStr());
-        int uidPos = uri.path().indexOf(':');
+        int uidPos = uri.path().toStringRef().indexOf(':');
         if(uidPos >= 0)
         {
-            int uid = uri.path().mid(uidPos + 1 /*skip scheme delimiter*/).toInt();
+            int uid = uri.path().toString().mid(uidPos + 1 /*skip scheme delimiter*/).toInt();
             textureid_t id = Textures_TextureForUniqueId(schemeId, uid);
             if(id != NOTEXTUREID)
             {

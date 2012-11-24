@@ -105,7 +105,7 @@ namespace de
 
         /// Identifier used with the search and iteration algorithms in place of a
         /// hash when the user does not wish to narrow the set of considered nodes.
-        static Uri::hash_type const no_hash;
+        static Path::hash_type const no_hash;
 
 #if _DEBUG
         static void debugPrint(PathTree& pathtree, QChar delimiter = '/');
@@ -142,7 +142,7 @@ namespace de
             String const& name() const;
 
             /// @return Hash for this node's path fragment.
-            Uri::hash_type hash() const;
+            Path::hash_type hash() const;
 
             /**
              * @param searchPattern  Mapped search pattern (path).
@@ -218,7 +218,7 @@ namespace de
         /// The requested entry could not be found in the hierarchy.
         DENG2_ERROR(NotFoundError);
 
-        typedef QMultiHash<Uri::hash_type, Node*> Nodes;
+        typedef QMultiHash<Path::hash_type, Node*> Nodes;
         typedef QList<String> FoundPaths;
 
     public:
@@ -297,7 +297,7 @@ namespace de
          *
          * @return  @c 0 iff iteration completed wholly.
          */
-        int traverse(int flags, Node* parent, Uri::hash_type hashKey,
+        int traverse(int flags, Node* parent, Path::hash_type hashKey,
                      int (*callback) (Node& node, void* parameters), void* parameters = 0);
 
         /**
@@ -321,7 +321,7 @@ namespace de
         String const& fragmentName(FragmentId fragmentId) const;
 
         /// @return Hash associated with @a fragmentId.
-        Uri::hash_type fragmentHash(FragmentId fragmentId) const;
+        Path::hash_type fragmentHash(FragmentId fragmentId) const;
 
     private:
         Instance* d;

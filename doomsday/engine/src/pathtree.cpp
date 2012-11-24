@@ -65,7 +65,7 @@ struct PathTree::Instance
         size = 0;
     }
 
-    PathTree::FragmentId internFragmentAndUpdateIdHashMap(String fragment, Uri::hash_type hashKey)
+    PathTree::FragmentId internFragmentAndUpdateIdHashMap(String fragment, Path::hash_type hashKey)
     {
         PathTree::FragmentId internId = fragments.intern(fragment);
         fragments.setUserValue(internId, hashKey);
@@ -76,7 +76,7 @@ struct PathTree::Instance
      * @return Tree node that matches the name and type and which has the
      * specified parent node.
      */
-    PathTree::Node* direcNode(const Uri::Segment& pathNode, PathTree::NodeType nodeType,
+    PathTree::Node* direcNode(const Path::Segment& pathNode, PathTree::NodeType nodeType,
                               PathTree::Node* parent)
     {
         // Have we already encountered this?
@@ -86,7 +86,7 @@ struct PathTree::Instance
         {
             // The name is known. Perhaps we have.
             PathTree::Nodes& hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
-            Uri::hash_type hashKey = fragments.userValue(fragmentId);
+            Path::hash_type hashKey = fragments.userValue(fragmentId);
             for(PathTree::Nodes::const_iterator i = hash.find(hashKey);
                 i != hash.end() && i.key() == hashKey; ++i)
             {
@@ -104,7 +104,7 @@ struct PathTree::Instance
          */
 
         // Do we need a new identifier (and hash)?
-        Uri::hash_type hashKey;
+        Path::hash_type hashKey;
         if(!fragmentId)
         {
             hashKey    = pathNode.hash();
@@ -138,19 +138,18 @@ struct PathTree::Instance
      *
      * @return  The node that identifies the given path.
      */
-    PathTree::Node* buildDirecNodes(Uri const& uri)
+    PathTree::Node* buildDirecNodes(Path const& path)
     {
-        /// @todo This messy logic could be addressed by improving Uri's API.
-        ///       Now that the names of a path can be accessed randomly with no
-        ///       impact on performance - there is no need to index the nodes in
-        ///       reverse (right to left) order. -ds
+        /// @todo This messy logic should be addressed. Now that the names of a
+        /// path can be accessed randomly with no impact on performance - there
+        /// is no need to index the nodes in reverse (right to left) order. -ds
 
-        bool const hasLeaf = !uri.path().endsWith("/");
+        bool const hasLeaf = !path.toStringRef().endsWith("/");
 
         PathTree::Node* node = 0, *parent = 0;
-        for(int i = uri.segmentCount() - 1; i >= (hasLeaf? 1 : 0); --i)
+        for(int i = path.segmentCount() - 1; i >= (hasLeaf? 1 : 0); --i)
         {
-            const Uri::Segment& pn = uri.segment(i);
+            const Path::Segment& pn = path.reverseSegment(i);
             //qDebug() << "Add branch: " << pn.toString();
             node = direcNode(pn, PathTree::Branch, parent);
             parent = node;
@@ -158,7 +157,7 @@ struct PathTree::Instance
 
         if(hasLeaf)
         {
-            const Uri::Segment& pn = uri.firstSegment();
+            const Path::Segment& pn = path.lastSegment();
             //qDebug() << "Add leaf: " << pn.toString();
             node = direcNode(pn, PathTree::Leaf, parent);
         }
@@ -186,7 +185,7 @@ struct PathTree::Instance
 
 PathTree::Node* PathTree::insert(Uri const& path)
 {
-    PathTree::Node* node = d->buildDirecNodes(path);
+    PathTree::Node* node = d->buildDirecNodes(path.path());
     if(node)
     {
         // There is now one more unique path in the directory.
@@ -233,7 +232,7 @@ PathTree::Node& PathTree::find(Uri const& searchPath, int flags)
 {
     if(!searchPath.isEmpty() && d->size)
     {
-        Uri::hash_type hashKey = searchPath.firstSegment().hash();
+        Path::hash_type hashKey = searchPath.path().lastSegment().hash();
         if(!(flags & PCF_NO_LEAF))
         {
             Nodes& nodes = d->leafHash;
@@ -273,7 +272,7 @@ String const& PathTree::fragmentName(FragmentId fragmentId) const
     return d->fragments.stringRef(fragmentId);
 }
 
-Uri::hash_type PathTree::fragmentHash(FragmentId fragmentId) const
+Path::hash_type PathTree::fragmentHash(FragmentId fragmentId) const
 {
     return d->fragments.userValue(fragmentId);
 }
@@ -307,14 +306,14 @@ int PathTree::findAllPaths(FoundPaths& found, int flags, QChar delimiter)
     return found.count() - numFoundSoFar;
 }
 
-static int iteratePathsInHash(PathTree& pathTree, Uri::hash_type hashKey, PathTree::NodeType type, int flags,
+static int iteratePathsInHash(PathTree& pathTree, Path::hash_type hashKey, PathTree::NodeType type, int flags,
     PathTree::Node* parent, int (*callback) (PathTree::Node&, void*), void* parameters)
 {
     int result = 0;
 
-    if(hashKey != PathTree::no_hash && hashKey >= Uri::hash_range)
+    if(hashKey != PathTree::no_hash && hashKey >= Path::hash_range)
     {
-        throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1, valid range is [0..%2).").arg(hashKey).arg(Uri::hash_range-1));
+        throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1, valid range is [0..%2).").arg(hashKey).arg(Path::hash_range-1));
     }
 
     PathTree::Nodes const& nodes = pathTree.nodes(type);
@@ -348,7 +347,7 @@ static int iteratePathsInHash(PathTree& pathTree, Uri::hash_type hashKey, PathTr
     return result;
 }
 
-int PathTree::traverse(int flags, PathTree::Node* parent, Uri::hash_type hashKey,
+int PathTree::traverse(int flags, PathTree::Node* parent, Path::hash_type hashKey,
     int (*callback) (PathTree::Node&, void*), void* parameters)
 {
     int result = 0;
@@ -395,7 +394,7 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
         float mean = (signed)sum / total;
         variance = ((signed)sumSqr - (signed)sum * mean) / (((signed)total)-1);
 
-        coverage  = 100 / (float)Uri::hash_range * (Uri::hash_range - numEmpty);
+        coverage  = 100 / (float)Path::hash_range * (Path::hash_range - numEmpty);
         collision = 100 / (float) total * numCollisions;
     }
     else
@@ -406,7 +405,7 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
     const int* col = colWidths;
     Con_Printf("%*s ",    *col++, name);
     Con_Printf("%*lu ",   *col++, (unsigned long)total);
-    Con_Printf("%*lu",    *col++, Uri::hash_range - (unsigned long)numEmpty);
+    Con_Printf("%*lu",    *col++, Path::hash_range - (unsigned long)numEmpty);
     Con_Printf(":%-*lu ", *col++, (unsigned long)numEmpty);
     Con_Printf("%*lu ",   *col++, (unsigned long)maxCollisions);
     Con_Printf("%*lu ",   *col++, (unsigned long)numCollisions);
@@ -536,7 +535,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     if(0 == total) return;
 
     // Calculate minimum field widths:
-    hashIndexDigits = M_NumDigits(Uri::hash_range);
+    hashIndexDigits = M_NumDigits(Path::hash_range);
     col = 0;
     if(size != 0)
         colWidths[col] = 2/*braces*/+hashIndexDigits*2+3/*elipses*/;
@@ -576,10 +575,10 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     Con_Printf("\n");
     Con_PrintRuler();
 
-    { Uri::hash_type from = 0, n = 0, range = (size != 0? Uri::hash_range / size: 0);
+    { Path::hash_type from = 0, n = 0, range = (size != 0? Path::hash_range / size: 0);
     memset(nodeCount, 0, sizeof(nodeCount));
 
-    for(Uri::hash_type i = 0; i < Uri::hash_range; ++i)
+    for(Path::hash_type i = 0; i < Path::hash_range; ++i)
     {
         pathtree_pathhash_t** phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
@@ -592,7 +591,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
         for(node = (**phAdr)[i].head; node; node = node->next)
             ++nodeCount[PT_LEAF];
 
-        if(size != 0 && (++n != range && i != Uri::hash_range-1))
+        if(size != 0 && (++n != range && i != Path::hash_range-1))
             continue;
 
         totalForRange = 0;
@@ -693,7 +692,7 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
     memset(nodeBucketCollisionsMax, 0, sizeof(nodeBucketCollisionsMax));
     memset(nodeBucketEmpty, 0, sizeof(nodeBucketEmpty));
 
-    for(Uri::hash_type i = 0; i < Uri::hash_range; ++i)
+    for(Path::hash_type i = 0; i < Path::hash_range; ++i)
     {
         pathtree_pathhash_t** phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
@@ -776,6 +775,6 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
 }
 #endif
 
-Uri::hash_type const PathTree::no_hash = Uri::hash_range;
+Path::hash_type const PathTree::no_hash = Path::hash_range;
 
 } // namespace de

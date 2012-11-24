@@ -1,6 +1,5 @@
-/**
- * @file uri.cpp
- * Universal Resource Identifier. @ingroup base
+/** @file uri.cpp Universal Resource Identifier.
+ * @ingroup base
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -35,248 +34,97 @@
 #include "dualstring.h"
 #include "game.h"
 
-/// Size of the fixed-size path node buffer.
-#define SEGMENT_BUFFER_SIZE         24
-
 namespace de {
 
-Uri::hash_type const Uri::hash_range = 512;
-
-ushort Uri::Segment::hash() const
+/**
+ * Extracts the scheme from a string.
+ *
+ * @param stringWithScheme  The scheme is removed from the string.
+ *
+ * @return Scheme, or empty string if no valid scheme was present.
+ */
+static String extractScheme(String &stringWithScheme)
 {
-    // Is it time to compute the hash?
-    if(!gotHashKey)
+    String scheme;
+    int pos = stringWithScheme.indexOf(':');
+    if(pos > URI_MINSCHEMELENGTH) // could be Windows-style driver letter "c:"
     {
-        String str = String(from, length());
-        hashKey = 0;
-        int op = 0;
-        for(int i = 0; i < str.length(); ++i)
-        {
-            ushort unicode = str.at(i).toLower().unicode();
-            switch(op)
-            {
-            case 0: hashKey ^= unicode; ++op;   break;
-            case 1: hashKey *= unicode; ++op;   break;
-            case 2: hashKey -= unicode;   op=0; break;
-            }
-        }
-        hashKey %= hash_range;
-        gotHashKey = true;
+        scheme = stringWithScheme.left(pos);
+        stringWithScheme.remove(0, pos + 1);
     }
-    return hashKey;
-}
-
-int Uri::Segment::length() const
-{
-    if(!qstrcmp(to, "") && !qstrcmp(from, ""))
-        return 0;
-    return (to - from) + 1;
-}
-
-String Uri::Segment::toString() const
-{
-    return String(from, length());
+    return scheme;
 }
 
 struct Uri::Instance
 {
-    /// Total number of segments in the path.
-    int segmentCount;
+    Path path; ///< Path of the Uri.
+
+    DualString strPath; // Redundant; for legacy access, remove this!
+
+    DualString scheme; ///< Scheme of the Uri.
+
+    /// Cached copy of the resolved path.
+    Path resolvedPath;
 
     /**
-     * Segment map of the path. The map is composed of two parts: the first
-     * SEGMENT_BUFFER_SIZE elements are placed into a fixed-size buffer which is
-     * allocated along with the Instance, and additional segments are allocated
-     * dynamically and linked in the extraSegments list.
-     *
-     * This optimized representation should mean that the majority of paths
-     * can be represented without dynamically allocating memory from the heap.
-     */
-    Uri::Segment segmentBuffer[SEGMENT_BUFFER_SIZE];
-
-    /**
-     * List of the extra segments that don't fit in segmentBuffer, in reverse
-     * order.
-     */
-    QList<Uri::Segment*> extraSegments;
-
-    /// Cached copy of the resolved Uri.
-    String resolved;
-
-    /**
-     * The cached copy only applies when this game is loaded.
+     * The cached path only applies when this game is loaded.
      *
      * @note Add any other conditions here that result in different results for
      * resolveUri().
      */
-    void* resolvedForGame;
+    void *resolvedForGame;
 
-    DualString scheme;
-    DualString path;
+    Instance() : resolvedForGame(0)
+    {}
 
-    Instance()
-        : segmentCount(-1), resolvedForGame(0)
-    {
-        memset(segmentBuffer, 0, sizeof(segmentBuffer));
-    }
-
-    ~Instance()
-    {
-        clearMap();
-    }
-
-    /// @return  @c true iff @a node comes from the fixed-size
-    /// Uri::Instance::segmentBuffer.
-    inline bool isStaticSegment(Uri::Segment const& node)
-    {
-        return &node >= segmentBuffer &&
-               &node < (segmentBuffer + sizeof(*segmentBuffer) * SEGMENT_BUFFER_SIZE);
-    }
-
-    /**
-     * Return the segment map to an empty state.
-     *
-     * @post The map will need to be rebuilt with mapPath().
-     */
-    void clearMap()
-    {
-        while(!extraSegments.isEmpty())
-        {
-            delete extraSegments.takeFirst();
-        }
-        memset(segmentBuffer, 0, sizeof(segmentBuffer));
-        segmentCount = -1;
-    }
-
-    /**
-     * Allocate a new segment, from either the fixed-size segmentBuffer if it
-     * isn't full, or dynamically from the heap.
-     *
-     * Use isStaticSegment() to determine if the segment is from segmentBuffer.
-     *
-     * @return  New segment.
-     */
-    Uri::Segment* allocSegment(char const* from, char const* to)
-    {
-        Uri::Segment* segment;
-        if(segmentCount < SEGMENT_BUFFER_SIZE)
-        {
-            segment = segmentBuffer + segmentCount;
-            memset(segment, 0, sizeof(*segment));
-        }
-        else
-        {
-            // Allocate an "extra" node.
-            segment = new Uri::Segment();
-            extraSegments.append(segment);
-        }
-
-        segment->from = from;
-        segment->to   = to;
-
-        // There is now one more segment in the map.
-        segmentCount++;
-
-        return segment;
-    }
-
-    /**
-     * Build the path segment map.
-     * If the URI is modified (path changed), the existing map is invalidated and
-     * needs to be remapped.
-     */
-    void mapPath()
-    {
-        // Already been here?
-        if(segmentCount >= 0) return;
-
-        segmentCount = 0;
-        extraSegments.clear();
-
-        if(path.isEmpty())
-        {
-            // There always has to be at least one segment.
-            allocSegment("", "");
-            return;
-        }
-
-        char const* segBegin = path.utf8CStr();
-        char const* segEnd = segBegin + path.length() - 1;
-
-        // Skip over any trailing delimiters.
-        for(int i = path.length(); *segEnd && *segEnd == '/' && i-- > 0; segEnd--)
-        {}
-
-        // Scan the path for segments, in reverse order.
-        char const* from;
-        forever
-        {
-            // Find the start of the next segment.
-            for(from = segEnd; from > segBegin && !(*from == '/'); from--)
-            {}
-
-            allocSegment(*from == '/'? from + 1 : from, segEnd);
-
-            // Are there no more parent directories?
-            if(from == segBegin) break;
-
-            // So far so good. Move one directory level upwards.
-            // The next name ends here.
-            segEnd = from - 1;
-        }
-
-        // Deal with the special case of a Unix style zero-length root name.
-        if(*segBegin == '/')
-        {
-            allocSegment("", "");
-        }
-    }
+    Instance(const Instance &other)
+        : path           (other.path),
+          strPath        (other.strPath),
+          scheme         (other.scheme),
+          resolvedPath   (other.resolvedPath),
+          resolvedForGame(other.resolvedForGame)
+    {}
 
     void clearCachedResolved()
     {
-        resolved.clear();
+        resolvedPath.clear();
         resolvedForGame = 0;
     }
 
-    void parseScheme(resourceclassid_t defaultResourceClass)
+    void parseRawUri(String rawUri, QChar sep, resourceclassid_t defaultResourceClass)
     {
-        LOG_AS("Uri::parseScheme");
+        LOG_AS("Uri::parseRawUri");
 
         clearCachedResolved();
 
-        int sepPos = path.indexOf(':');
-        if(sepPos > URI_MINSCHEMELENGTH)
-        {
-            scheme = path.left(sepPos);
+        scheme = extractScheme(rawUri); // scheme removed
+        path.set(rawUri, sep);
+        strPath = path.toString(); // for legacy code
 
+        if(!scheme.isEmpty())
+        {
             if(defaultResourceClass == RC_NULL || App_FileSystem()->knownScheme(scheme))
             {
-                path = path.mid(sepPos + 1);
+                // Scheme is accepted as is.
                 return;
             }
-
-            LOG_WARNING("Unknown scheme in path \"%s\", using default.") << path;
-            path = path.mid(sepPos + 1);
-        }
-        else
-        {
-            scheme.clear();
+            LOG_WARNING("Unknown scheme \"%s\" for path \"%s\", using default instead.") << scheme << strPath;
         }
 
         // Attempt to guess the scheme by interpreting the path?
         if(defaultResourceClass == RC_UNKNOWN)
         {
-            defaultResourceClass = DD_GuessFileTypeFromFileName(path).defaultClass();
+            defaultResourceClass = DD_GuessFileTypeFromFileName(strPath).defaultClass();
         }
 
         if(VALID_RESOURCECLASSID(defaultResourceClass))
         {
-            FS1::Scheme& fsScheme = App_FileSystem()->scheme(DD_ResourceClassById(defaultResourceClass).defaultScheme());
+            FS1::Scheme &fsScheme = App_FileSystem()->scheme(DD_ResourceClassById(defaultResourceClass).defaultScheme());
             scheme = fsScheme.name();
         }
     }
 
-    String resolveSymbol(QStringRef const& symbol)
+    String resolveSymbol(QStringRef const &symbol) const
     {
         if(!symbol.compare("App.DataPath", Qt::CaseInsensitive))
         {
@@ -288,7 +136,7 @@ struct Uri::Instance
         }
         else if(!symbol.compare("Game.IdentityKey", Qt::CaseInsensitive))
         {
-            de::Game& game = *reinterpret_cast<de::Game*>(App_CurrentGame());
+            de::Game &game = *reinterpret_cast<de::Game *>(App_CurrentGame());
             if(isNullGame(game))
             {
                 /// @throw ResolveSymbolError  An unresolveable symbol was encountered.
@@ -305,7 +153,7 @@ struct Uri::Instance
                 throw ResolveSymbolError("Uri::resolveSymbol", "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
             }
 
-            return String((char*)gx.GetVariable(DD_PLUGIN_NAME));
+            return String((char *)gx.GetVariable(DD_PLUGIN_NAME));
         }
         else
         {
@@ -314,45 +162,45 @@ struct Uri::Instance
         }
     }
 
-    inline String parseExpression(QStringRef const& expression)
+    inline String parseExpression(QStringRef const &expression) const
     {
         // Presently the expression consists of a single symbol.
         return resolveSymbol(expression);
     }
 
-    void resolve(String& result)
+    String resolve() const
     {
         LOG_AS("Uri::resolve");
 
-        String const pathStr = path;
+        String result;
 
         // Keep scanning the path for embedded expressions.
         QStringRef expression;
         int expEnd = 0, expBegin;
-        while((expBegin = pathStr.indexOf('$', expEnd)) >= 0)
+        while((expBegin = strPath.indexOf('$', expEnd)) >= 0)
         {
             // Is the next char the start-of-expression character?
-            if(pathStr.at(expBegin + 1) == '(')
+            if(strPath.at(expBegin + 1) == '(')
             {
                 // Copy everything up to the '$'.
-                result += pathStr.mid(expEnd, expBegin - expEnd);
+                result += strPath.mid(expEnd, expBegin - expEnd);
 
                 // Skip over the '$'.
                 ++expBegin;
 
                 // Find the end-of-expression character.
-                expEnd = pathStr.indexOf(')', expBegin);
+                expEnd = strPath.indexOf(')', expBegin);
                 if(expEnd < 0)
                 {
-                    LOG_WARNING("Missing closing ')' in expression \"" + pathStr + "\", ignoring.");
-                    expEnd = pathStr.length();
+                    LOG_WARNING("Missing closing ')' in expression \"" + strPath + "\", ignoring.");
+                    expEnd = strPath.length();
                 }
 
                 // Skip over the '('.
                 ++expBegin;
 
                 // The range of the expression substring is now known.
-                expression = pathStr.midRef(expBegin, expEnd - expBegin);
+                expression = strPath.midRef(expBegin, expEnd - expBegin);
 
                 result += parseExpression(expression);
             }
@@ -366,109 +214,39 @@ struct Uri::Instance
         }
 
         // Copy anything remaining.
-        result += pathStr.mid(expEnd);
+        result += strPath.mid(expEnd);
+
+        return result;
     }
 
 private:
-    Instance& operator = (const Instance&); // no assignment
-    Instance(const Instance&); // no copying
+    Instance &operator = (Instance const &); // no assignment
 };
 
-Uri::Uri(String path, resourceclassid_t defaultResourceClass, QChar sep)
+Uri::Uri() : d(new Instance)
+{}
+
+Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, QChar sep)
+    : d(new Instance)
 {
-    d = new Instance();
-    if(!path.isEmpty())
+    if(!percentEncoded.isEmpty())
     {
-        setUri(path, defaultResourceClass, sep);
+        setUri(percentEncoded, defaultResourceClass, sep);
     }
 }
 
-Uri::Uri()
-{
-    d = new Instance();
-}
+Uri::Uri(Uri const &other) : d(new Instance(*other.d))
+{}
 
-Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
-{
-    d = new Instance();
-
-    d->resolved        = other.d->resolved;
-    d->resolvedForGame = other.d->resolvedForGame;
-    d->scheme          = other.scheme();
-    d->path            = other.path();
-}
-
-Uri Uri::fromNativePath(NativePath const& path, resourceclassid_t defaultResourceClass)
+Uri Uri::fromNativePath(NativePath const &path, resourceclassid_t defaultResourceClass)
 {
     return Uri(path.expand().withSeparators('/'), defaultResourceClass);
 }
 
-Uri Uri::fromNativeDirPath(NativePath const& nativeDirPath, resourceclassid_t defaultResourceClass)
+Uri Uri::fromNativeDirPath(NativePath const &nativeDirPath, resourceclassid_t defaultResourceClass)
 {
     // Uri follows the convention of having a slash at the end for directories.
     return Uri(nativeDirPath.expand().withSeparators('/') + '/', defaultResourceClass);
-}
-
-Uri::~Uri()
-{
-    delete d;
-}
-
-int Uri::segmentCount() const
-{
-    d->mapPath();
-    return d->segmentCount;
-}
-
-Uri::Segment const& Uri::segment(int index) const
-{
-    d->mapPath();
-
-    if(index < 0 || index >= d->segmentCount)
-    {
-        /// @throw NotSegmentError  Attempt to reference a nonexistent segment.
-        throw NotSegmentError("Uri::segment", String("Index #%1 references a nonexistent segment").arg(index));
-    }
-
-    // Is this in the static buffer?
-    if(index < SEGMENT_BUFFER_SIZE)
-    {
-        return d->segmentBuffer[index];
-    }
-
-    // No - an extra segment.
-    return *d->extraSegments[index - SEGMENT_BUFFER_SIZE];
-}
-
-bool Uri::operator == (Uri const& other) const
-{
-    if(this == &other) return true;
-
-    // First, lets check if the scheme differs.
-    if(d->scheme.compareWithoutCase(other.scheme())) return false;
-
-    // Is resolving not necessary?
-    if(!d->path.compareWithoutCase(other.path())) return true;
-
-    // We must be able to resolve both paths to compare.
-    try
-    {
-        String const& thisPath = resolved();
-        String const& otherPath = other.resolved();
-
-        // Do not match partial paths.
-        if(thisPath.length() != otherPath.length()) return false;
-
-        return thisPath.compareWithoutCase(otherPath) == 0;
-    }
-    catch(ResolveError const&)
-    {} // Ignore the error.
-    return false;
-}
-
-bool Uri::operator != (Uri const& other) const
-{
-    return !(*this == other);
 }
 
 bool Uri::isEmpty() const
@@ -476,99 +254,128 @@ bool Uri::isEmpty() const
     return d->path.isEmpty();
 }
 
-Uri& Uri::clear()
+Uri::~Uri()
 {
-    d->scheme.clear();
+    delete d;
+}
+
+bool Uri::operator == (Uri const &other) const
+{
+    if(this == &other) return true;
+
+    // First, lets check if the scheme differs.
+    if(d->scheme.compareWithoutCase(other.d->scheme)) return false;
+
+    // We can skip resolving if the paths are identical.
+    if(d->path == other.d->path) return true;
+
+    // We must be able to resolve both paths to compare.
+    try
+    {
+        // Do not match partial paths.
+        if(resolvedRef().length() != other.resolvedRef().length()) return false;
+
+        return resolvedRef().compareWithoutCase(other.resolvedRef()) == 0;
+    }
+    catch(ResolveError const &)
+    {
+        // Ignore the error.
+    }
+    return false;
+}
+
+Uri &Uri::clear()
+{
     d->path.clear();
+    d->strPath.clear();
+    d->scheme.clear();
     d->clearCachedResolved();
-    d->clearMap();
     return *this;
 }
 
-String const& Uri::scheme() const
+String const &Uri::scheme() const
 {
     return d->scheme;
 }
 
-String const& Uri::path() const
+Path const &Uri::path() const
 {
     return d->path;
 }
 
-char const* Uri::schemeCStr() const
+char const *Uri::schemeCStr() const
 {
     return d->scheme.utf8CStr();
 }
 
-char const* Uri::pathCStr() const
+char const *Uri::pathCStr() const
 {
-    return d->path.utf8CStr();
+    return d->strPath.utf8CStr();
 }
 
-ddstring_s const* Uri::schemeStr() const
+ddstring_s const *Uri::schemeStr() const
 {
     return d->scheme.toStr();
 }
 
-ddstring_s const* Uri::pathStr() const
+ddstring_s const *Uri::pathStr() const
 {
-    return d->path.toStr();
+    return d->strPath.toStr();
 }
 
 String Uri::resolved() const
 {
+    return resolvedRef();
+}
+
+String const &Uri::resolvedRef() const
+{
 #ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING
-    if(d->resolvedForGame && d->resolvedForGame == (void*) App_CurrentGame())
+    if(d->resolvedForGame && d->resolvedForGame == (void *) App_CurrentGame())
     {
         // We can just return the previously prepared resolved URI.
-        return d->resolved;
+        return d->resolvedPath.toStringRef();
     }
 #endif
 
     d->clearCachedResolved();
 
-    String result;
-    d->resolve(result);
-
     // Keep a copy of this, we'll likely need it many, many times.
-    d->resolved = result;
-    d->resolvedForGame = (void*) App_CurrentGame();
+    d->resolvedPath = d->resolve();
 
-    return d->resolved;
+    DENG2_ASSERT(d->resolvedPath.separator() == QChar('/'));
+
+    d->resolvedForGame = (void *) App_CurrentGame();
+
+    return d->resolvedPath.toStringRef();
 }
 
-Uri& Uri::setScheme(String newScheme)
+Uri &Uri::setScheme(String newScheme)
 {
     d->scheme = newScheme;
     d->clearCachedResolved();
     return *this;
 }
 
-Uri& Uri::setPath(String newPath, QChar sep)
+Uri &Uri::setPath(Path const &newPath)
 {
-    if(sep != '/')
-    {
-        newPath = newPath.replace(sep, QString("/"), Qt::CaseInsensitive);
-    }
-    d->path = newPath;
+    // Force to slashes.
+    d->path = newPath.withSeparators('/');
+
+    d->strPath = d->path.toStringRef(); // legacy support
     d->clearCachedResolved();
-    d->clearMap();
     return *this;
 }
 
-Uri& Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar sep)
+Uri &Uri::setPath(String newPath, QChar sep)
+{
+    return setPath(Path(newPath.trimmed(), sep));
+}
+
+Uri &Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar sep)
 {
     LOG_AS("Uri::setUri");
-
-    if(sep != '/')
-    {
-        rawUri = rawUri.replace(sep, QString("/"), Qt::CaseInsensitive);
-    }
-
-    d->path = rawUri.trimmed();
-    d->parseScheme(defaultResourceClass);
-    d->clearCachedResolved();
-    d->clearMap();
+    d->parseRawUri(rawUri.trimmed(), sep, defaultResourceClass);
     return *this;
 }
 
@@ -581,11 +388,11 @@ String Uri::compose(QChar sep) const
     }
     else
     {
-        result += d->path;
+        result = d->path;
     }
     if(sep != '/')
     {
-        result = result.replace('/', sep, Qt::CaseInsensitive);
+        result.replace('/', sep);
     }
     return result;
 }
@@ -593,7 +400,7 @@ String Uri::compose(QChar sep) const
 String Uri::asText() const
 {
     // Just compose it for now, we can worry about making it 'pretty' later.
-    AutoStr* path = AutoStr_FromTextStd(compose().toUtf8().constData());
+    AutoStr *path = AutoStr_FromTextStd(compose().toUtf8().constData());
     Str_PercentDecode(path);
     return String(Str_Text(path));
 }
@@ -602,7 +409,7 @@ void Uri::debugPrint(int indent, PrintFlags flags, String unresolvedText) const
 {
     indent = MAX_OF(0, indent);
 
-    bool resolvedPath = (flags & OutputResolved) && !d->resolved.isEmpty();
+    bool resolvedPath = (flags & OutputResolved) && !d->resolvedPath.isEmpty();
     if(unresolvedText.isEmpty()) unresolvedText = "--(!)incomplete";
 
     LOG_DEBUG("%s\"%s\"%s%s")
@@ -610,25 +417,22 @@ void Uri::debugPrint(int indent, PrintFlags flags, String unresolvedText) const
         << ((flags & TransformPathPrettify)? NativePath(asText()).pretty() : asText())
         << ((flags & OutputResolved)? (resolvedPath? "=> " : unresolvedText) : "")
         << ((flags & OutputResolved) && resolvedPath?
-                ((flags & TransformPathPrettify)? NativePath(d->resolved).pretty() : NativePath(d->resolved))
+                ((flags & TransformPathPrettify)? NativePath(d->resolvedPath).pretty() : NativePath(d->resolvedPath).toString())
               : "");
 }
 
-void Uri::operator >> (Writer& to) const
+void Uri::operator >> (Writer &to) const
 {
-    to << d->scheme.toUtf8() << d->path.toUtf8();
+    to << d->scheme << d->path;
 }
 
-void Uri::operator << (Reader& from)
+void Uri::operator << (Reader &from)
 {
     clear();
 
-    Block b;
-    from >> b;
-    setScheme(String::fromUtf8(b));
+    from >> d->scheme >> d->path;
 
-    from >> b;
-    setPath(String::fromUtf8(b));
+    d->strPath = d->path;
 }
 
 #ifdef _DEBUG
@@ -641,14 +445,14 @@ LIBDENG_DEFINE_UNITTEST(Uri)
         {
             Uri u;
             DENG_ASSERT(u.isEmpty());
-            DENG_ASSERT(u.segmentCount() == 1);
+            DENG_ASSERT(u.path().segmentCount() == 1);
         }
 
         // Test a zero-length path.
         {
             Uri u("", RC_NULL);
             DENG_ASSERT(u.isEmpty());
-            DENG_ASSERT(u.segmentCount() == 1);
+            DENG_ASSERT(u.path().segmentCount() == 1);
         }
 
         // Equality and copying.
@@ -660,11 +464,12 @@ LIBDENG_DEFINE_UNITTEST(Uri)
 
             Uri c = a;
             DENG_ASSERT(c == a);
-            DENG_ASSERT(c.segment(1).toString() == "some");
+            DENG_ASSERT(c.path().reverseSegment(1).toString() == "some");
 
             b = a;
             DENG_ASSERT(b == a);
-            DENG_ASSERT(b.segment(1).toString() == "some");
+            //qDebug() << b.reverseSegment(1);
+            DENG_ASSERT(b.path().reverseSegment(1).toString() == "some");
         }
 
         // Swapping.
@@ -672,68 +477,57 @@ LIBDENG_DEFINE_UNITTEST(Uri)
             Uri a("a/b/c", RC_NULL);
             Uri b("d/e", RC_NULL);
 
-            DENG_ASSERT(a.segmentCount() == 3);
-            DENG_ASSERT(a.segment(1).toString() == "b");
+            DENG_ASSERT(a.path().segmentCount() == 3);
+            DENG_ASSERT(a.path().reverseSegment(1).toString() == "b");
 
             std::swap(a, b);
 
-            DENG_ASSERT(a.segmentCount() == 2);
-            DENG_ASSERT(a.segment(1).toString() == "d");
-            DENG_ASSERT(b.segmentCount() == 3);
-            DENG_ASSERT(b.segment(1).toString() == "b");
+            DENG_ASSERT(a.path().segmentCount() == 2);
+            DENG_ASSERT(a.path().reverseSegment(1).toString() == "d");
+            DENG_ASSERT(b.path().segmentCount() == 3);
+            DENG_ASSERT(b.path().reverseSegment(1).toString() == "b");
         }
 
         // Test a Windows style path with a drive plus file path.
         {
             Uri u("c:/something.ext", RC_NULL);
-            DENG_ASSERT(u.segmentCount() == 2);
+            DENG_ASSERT(u.path().segmentCount() == 2);
 
-            DENG_ASSERT(u.segment(0).length() == 13);
-            DENG_ASSERT(u.segment(0).toString() == "something.ext");
+            DENG_ASSERT(u.path().reverseSegment(0).length() == 13);
+            DENG_ASSERT(u.path().reverseSegment(0).toString() == "something.ext");
 
-            DENG_ASSERT(u.segment(1).length() == 2);
-            DENG_ASSERT(u.segment(1).toString() == "c:");
+            DENG_ASSERT(u.path().reverseSegment(1).length() == 2);
+            DENG_ASSERT(u.path().reverseSegment(1).toString() == "c:");
         }
 
         // Test a Unix style path with a zero-length root node name.
         {
             Uri u("/something.ext", RC_NULL);
-            DENG_ASSERT(u.segmentCount() == 2);
+            DENG_ASSERT(u.path().segmentCount() == 2);
 
-            DENG_ASSERT(u.segment(0).length() == 13);
-            DENG_ASSERT(u.segment(0).toString() == "something.ext");
+            DENG_ASSERT(u.path().reverseSegment(0).length() == 13);
+            DENG_ASSERT(u.path().reverseSegment(0).toString() == "something.ext");
 
-            DENG_ASSERT(u.segment(1).length() == 0);
-            DENG_ASSERT(u.segment(1).toString() == "");
+            DENG_ASSERT(u.path().reverseSegment(1).length() == 0);
+            DENG_ASSERT(u.path().reverseSegment(1).toString() == "");
         }
 
         // Test a relative directory.
         {
             Uri u("some/dir/structure/", RC_NULL);
-            DENG_ASSERT(u.segmentCount() == 3);
+            DENG_ASSERT(u.path().segmentCount() == 3);
 
-            DENG_ASSERT(u.segment(0).length() == 9);
-            DENG_ASSERT(u.segment(0).toString() == "structure");
+            DENG_ASSERT(u.path().reverseSegment(0).length() == 9);
+            DENG_ASSERT(u.path().reverseSegment(0).toString() == "structure");
 
-            DENG_ASSERT(u.segment(1).length() == 3);
-            DENG_ASSERT(u.segment(1).toString() == "dir");
+            DENG_ASSERT(u.path().reverseSegment(1).length() == 3);
+            DENG_ASSERT(u.path().reverseSegment(1).toString() == "dir");
 
-            DENG_ASSERT(u.segment(2).length() == 4);
-            DENG_ASSERT(u.segment(2).toString() == "some");
-        }
-
-        // Test the extra segments.
-        {
-            Uri u("/30/29/28/27/26/25/24/23/22/21/20/19/18/17/16/15/14/13/12/11/10/9/8/7/6/5/4/3/2/1/0", RC_NULL);
-            DENG_ASSERT(u.segmentCount() == 32);
-
-            DENG_ASSERT(u.segment(0).toString()  == "0");
-            DENG_ASSERT(u.segment(23).toString() == "23");
-            DENG_ASSERT(u.segment(24).toString() == "24");
-            DENG_ASSERT(u.segment(30).toString() == "30");
+            DENG_ASSERT(u.path().reverseSegment(2).length() == 4);
+            DENG_ASSERT(u.path().reverseSegment(2).toString() == "some");
         }
     }
-    catch(Error const& er)
+    catch(Error const &er)
     {
         qWarning() << er.asText();
         return false;

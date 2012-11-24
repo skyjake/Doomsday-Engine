@@ -197,7 +197,7 @@ struct FS1::Instance
             scheme.rebuild();
 
             // The in-scheme name is the file name sans extension.
-            String name = search.firstSegment().toString().fileNameWithoutExtension();
+            String name = search.path().lastSegment().toString().fileNameWithoutExtension();
 
             // Perform the search.
             FS1::Scheme::FoundNodes foundNodes;

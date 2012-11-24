@@ -1,6 +1,5 @@
-/**
- * @file uri.hh
- * Universal Resource Identifier. @ingroup base
+/** @file uri.hh Universal Resource Identifier.
+ * @ingroup base
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -25,17 +24,13 @@
 
 #ifdef __cplusplus
 
-#include <algorithm> // std::swap
-#include <de/libdeng2.h>
-#include <de/ISerializable>
-
 #include "resourceclass.h"
 
 /// Schemes must be at least this many characters.
 #define DENG2_URI_MIN_SCHEME_LENGTH     2
 
-#include <de/Error>
 #include <de/Log>
+#include <de/Error>
 #include <de/NativePath>
 #include <de/String>
 
@@ -45,24 +40,16 @@ namespace de {
 
 /**
  * Assists working with URIs and maps them to engine-managed resources.
+ * @ingroup base
+ *
+ * Uri is derived from Path. It augments Path with schemes and path symbolics.
  *
  * Universal resource identifiers (URIs) are a way to identify specific
  * entities in a hierarchy.
- *
- * @todo Derive from Qt::QUrl, which implements the official URI
- * specification more fully? Do we really need all the parts of an URI for
- * our needs?
- *
- * @ingroup base
  */
-class Uri : public ISerializable, public LogEntry::Arg::Base
+class Uri : public LogEntry::Arg::Base
 {
-    struct Instance; // needs to be friended by Uri::Segment
-
 public:
-    /// A nonexistent path segment was referenced. @ingroup errors
-    DENG2_ERROR(NotSegmentError);
-
     /// Base class for resolve-related errors. @ingroup errors
     DENG2_ERROR(ResolveError);
 
@@ -71,12 +58,6 @@ public:
 
     /// An unresolveable symbol was encountered in the embedded expression. @ingroup errors
     DENG2_SUB_ERROR(ResolveError, ResolveSymbolError);
-
-    /// Type used to represent a path name hash key.
-    typedef ushort hash_type;
-
-    /// Range of a path name hash key; [0..hash_range)
-    static hash_type const hash_range;
 
     /**
      * Flags for printing URIs.
@@ -89,78 +70,34 @@ public:
     };
     Q_DECLARE_FLAGS(PrintFlags, PrintFlag)
 
-    /**
-     * Marks a segment in the URI's path. Makes no copy of the segments in the
-     * path, only stores the location within the URI where they begin and end.
-     *
-     * Examples:
-     * - Empty path (as produced by the default Uri constructor) => one empty segment ""
-     * - Unix-style root directory "/" => two empty segments "", ""
-     * - Windows-style root directory "c:/" => "c:", ""
-     * - relative path "some/dir/file.ext" => "some", "dir", file.ext"
-     * - Unix-style absolute path "/some/file.ext" => "", "some", file.ext"
-     *
-     * Note that only the path is broken down to segments. The other parts of a
-     * URI are not processed in this fashion.
-     *
-     * @see URI paths are composed of segments:
-     * http://tools.ietf.org/html/rfc3986#section-3.3
-     */
-    struct Segment
-    {
-        /**
-         * Returns the segment as a string.
-         */
-        String toString() const;
-
-        /// @return  Length of the segment in characters.
-        int length() const;
-
-        /**
-         * Returns a somewhat-random number in the range [0..Uri::hash_range)
-         * generated from the segment.
-         *
-         * @return  The generated hash key.
-         */
-        hash_type hash() const;
-
-        friend class Uri;
-        friend struct Uri::Instance;
-
-    private:
-        mutable bool gotHashKey;
-        mutable hash_type hashKey;
-        char const* from;
-        char const* to;
-    };
-
 public:
     /**
-     * Construct a default (empty) Uri instance.
+     * Construct an empty Uri instance.
      */
     Uri();
 
     /**
-     * Construct a Uri instance from @a path.
+     * Construct a Uri instance from a text string.
      *
-     * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
-     *
-     * @param defaultResourceClass  If no scheme is defined in @a path and this
-     *      is not @c RC_NULL, ask the resource locator whether it knows of an
-     *      appropriate default scheme for this class of resource.
-     *
-     * @param sep  Character used to separate path segments in @a path.
+     * @param percentEncoded   String to be parsed. Assumed to be in
+     *                         percent-encoded representation.
+     * @param defaultResClass  (TODO: define this. -jk)
+     *                         If no scheme is defined in @a percentEncoded and
+     *                         this is RC_UNKNOWN, the resource locator
+     *                         guesses an appropriate scheme for this class of resource.
+     * @param sep              Character used to separate path segments
+     *                         in @a path.
      */
-    Uri(String path, resourceclassid_t defaultResourceClass = RC_UNKNOWN, QChar sep = '/');
+    Uri(String const &percentEncoded, resourceclassid_t defaultResClass = RC_UNKNOWN, QChar sep = '/');
 
     /**
      * Construct a Uri instance by duplicating @a other.
      */
-    Uri(Uri const& other);
+    Uri(Uri const &other);
 
     ~Uri();
 
-    inline Uri& operator = (Uri other) {
+    inline Uri &operator = (Uri other) {
         std::swap(d, other.d);
         return *this;
     }
@@ -169,13 +106,15 @@ public:
      * Swaps this Uri with @a other.
      * @param other  Uri.
      */
-    inline void swap(Uri& other) {
+    inline void swap(Uri &other) {
         std::swap(d, other.d);
     }
 
-    bool operator == (Uri const& other) const;
+    bool operator == (Uri const &other) const;
 
-    bool operator != (Uri const& other) const;
+    bool operator != (Uri const &other) const {
+        return !(*this == other);
+    }
 
     /**
      * Constructs a Uri instance from a NativePath that refers to a file in
@@ -186,7 +125,7 @@ public:
      * @param path  Native path to a file in the native file system.
      * @param defaultResourceClass  Default resource class.
      */
-    static Uri fromNativePath(NativePath const& path,
+    static Uri fromNativePath(NativePath const &path,
                               resourceclassid_t defaultResourceClass = RC_NULL);
 
     /**
@@ -199,7 +138,7 @@ public:
      *                       file system.
      * @param defaultResourceClass  Default resource class.
      */
-    static Uri fromNativeDirPath(NativePath const& nativeDirPath,
+    static Uri fromNativeDirPath(NativePath const &nativeDirPath,
                                  resourceclassid_t defaultResourceClass = RC_NULL);
 
     /**
@@ -212,14 +151,14 @@ public:
     }
 
     /**
-     * Returns true if the path component of the URI is empty; otherwise false.
+     * Determines if the URI's path is empty.
      */
     bool isEmpty() const;
 
     /**
      * Clear the URI returning it to an empty state.
      */
-    Uri& clear();
+    Uri &clear();
 
     /**
      * Attempt to resolve this URI. Substitutes known symbolics in the possibly
@@ -230,47 +169,57 @@ public:
      */
     String resolved() const;
 
-    /**
-     * @return  Scheme of the URI.
-     */
-    String const& scheme() const;
+    String const &resolvedRef() const;
 
     /**
-     * @return  Path of the URI.
+     * @return Scheme of the URI.
      */
-    String const& path() const;
+    String const &scheme() const;
 
     /**
-     * @return  Scheme of the URI as plain text (UTF-8 encoding).
+     * @return Path of the URI.
      */
-    char const* schemeCStr() const;
+    Path const &path() const;
 
     /**
-     * @return  Path of the URI as plain text (UTF-8 encoding).
+     * @return Scheme of the URI as plain text (UTF-8 encoding).
      */
-    char const* pathCStr() const;
-
-    /**
-     * @return  Scheme of the URI as plain text (UTF-8 encoding).
-     */
-    struct ddstring_s const* schemeStr() const;
+    char const *schemeCStr() const;
 
     /**
      * @return  Path of the URI as plain text (UTF-8 encoding).
      */
-    struct ddstring_s const* pathStr() const;
+    char const *pathCStr() const;
+
+    /**
+     * @return  Scheme of the URI as plain text (UTF-8 encoding).
+     */
+    struct ddstring_s const *schemeStr() const;
+
+    /**
+     * @return  Path of the URI as plain text (UTF-8 encoding).
+     */
+    struct ddstring_s const *pathStr() const;
 
     /**
      * Change the scheme of the URI to @a newScheme.
      */
-    Uri& setScheme(String newScheme);
+    Uri &setScheme(String newScheme);
 
     /**
      * Change the path of the URI to @a newPath.
      *
-     * @param sep  Character used to separate path segments in @a path.
+     * @param newPath  New path for the URI.
      */
-    Uri& setPath(String newPath, QChar sep = '/');
+    Uri &setPath(Path const &newPath);
+
+    /**
+     * Change the path of the URI to @a newPath.
+     *
+     * @param newPath  New path for the URI.
+     * @param sep      Character used to separate path segments in @a path.
+     */
+    Uri &setPath(String newPath, QChar sep = '/');
 
     /**
      * Update this URI by parsing new values from the specified arguments.
@@ -283,8 +232,7 @@ public:
      *
      * @param sep  Character used to separate path segments in @a path.
      */
-    Uri& setUri(String newUri, resourceclassid_t defaultResourceClass = RC_UNKNOWN,
-                QChar sep = '/');
+    Uri &setUri(String newUri, resourceclassid_t defaultResourceClass = RC_UNKNOWN, QChar sep = '/');
 
     /**
      * Compose from this URI a plain-text representation. Any internal encoding
@@ -296,54 +244,6 @@ public:
      * @return  Plain-text String representation.
      */
     String compose(QChar sep = '/') const;
-
-    /**
-     * Retrieve the segment with index @a index. Note that segments are indexed
-     * in reverse order (right to left) and NOT the autological left to right
-     * order. There is always at least one segment (index 0).
-     *
-     * For example, if the path is "c:/mystuff/myaddon.addon" the corresponding
-     * segment map is arranged as follows:
-     * <pre>
-     *   [0:{myaddon.addon}, 1:{mystuff}, 2:{c:}].
-     * </pre>
-     *
-     * @note The zero-length name in UNIX-style absolute paths is also treated
-     *       as a segment. For example, the path "/Users/username" has three
-     *       segments ("username", "Users", "").
-     *
-     * @param index  Reverse-index of the segment to lookup. All paths have
-     *               at least one segment (even empty ones) thus index @c 0 will
-     *               always be valid.
-     *
-     * @return  Referenced segment.
-     */
-    Segment const& segment(int index) const;
-
-    /**
-     * @return  Total number of segments in the URI segment map. There is always
-     * at least one segment.
-     * @see segment()
-     */
-    int segmentCount() const;
-
-    /**
-     * @return  First segment in the path. If the path is empty, the returned
-     * segment is an empty (zero-length) segment.
-     * @see segment()
-     */
-    inline Segment const& firstSegment() const {
-        return segment(0);
-    }
-
-    /**
-     * @return  Last segment in the path. If the path is empty, the returned
-     * segment is an empty (zero-length) segment.
-     * @see segment()
-     */
-    inline Segment const& lastSegment() const {
-        return segment(segmentCount() - 1);
-    }
 
     /**
      * Transform the URI into a human-friendly representation. Percent-encoded
@@ -367,11 +267,12 @@ public:
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
 
     // Implements ISerializable.
-    void operator >> (Writer& to) const;
-    void operator << (Reader& from);
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
 private:
-    Instance* d;
+    struct Instance;
+    Instance *d;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::PrintFlags)
@@ -381,7 +282,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::PrintFlags)
 namespace std {
     // std::swap specialization for de::Uri
     template <>
-    inline void swap<de::Uri>(de::Uri& a, de::Uri& b) {
+    inline void swap<de::Uri>(de::Uri &a, de::Uri &b) {
         a.swap(b);
     }
 }

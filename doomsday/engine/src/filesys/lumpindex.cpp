@@ -383,7 +383,7 @@ lumpnum_t LumpIndex::indexForPath(de::Uri const& search) const
     DENG_ASSERT(d->hashMap);
 
     // Perform the search.
-    ushort hash = search.firstSegment().hash() % d->hashMap->size();
+    ushort hash = search.path().lastSegment().hash() % d->hashMap->size();
     if((*d->hashMap)[hash].head == -1) return -1;
 
     for(int idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)

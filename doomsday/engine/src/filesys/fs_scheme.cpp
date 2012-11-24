@@ -438,8 +438,8 @@ bool FS1::Scheme::addSearchPath(SearchPath const& search, FS1::PathGroup group)
 
     // Ensure this is a well formed path.
     if(search.isEmpty() ||
-       !search.path().compareWithoutCase("/") ||
-       !search.path().endsWith("/"))
+       !search.path().toString().compareWithoutCase("/") ||
+       !search.path().toString().endsWith("/"))
         return false;
 
     // The addition of a new search path means the scheme is now dirty.

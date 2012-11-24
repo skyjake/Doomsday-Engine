@@ -41,16 +41,16 @@ namespace de {
  * Paths are used when identifying and organizing structured data. One
  * practical example is file system paths.
  *
- * Internally, the class avoids duplicating the provided path String, instead
- * relying on the implicit sharing of QString.
+ * Internally, the class avoids duplicating the provided path String (i.e.,
+ * string is not altered), instead relying on the implicit sharing of QString.
  */
-class Path : public ISerializable, public LogEntry::Arg::Base
+class DENG2_PUBLIC Path : public ISerializable, public LogEntry::Arg::Base
 {
     struct Instance; // needs to be friended by Path::Segment
 
 public:
-    /// A nonexistent path segment was referenced. @ingroup errors
-    DENG2_ERROR(NotSegmentError);
+    /// Segment index was out of bounds. @ingroup errors
+    DENG2_ERROR(OutOfBoundsError);
 
     /// Type used to represent a path segment hash key.
     typedef ushort hash_type;
@@ -105,9 +105,15 @@ public:
         hash_type hash() const;
 
         /**
-         * Case insensitive equality test.
+         * Case and separator insensitive equality test.
+         *
+         * Examples:
+         * - "hello/world" (sep: /) == "HELLO/World" (sep: /)
+         * - "hello/world" (sep: /) == "Hello|World" (sep: |)
+         *
          * @param other Other segment.
-         * @return @c true, if the segments are equal.
+         *
+         * @return @c true, iff the segments are equal.
          */
         bool operator == (const Segment& other) const;
 
@@ -133,10 +139,11 @@ public:
     /**
      * Construct a path from @a path.
      *
-     * @param path  Path to be parsed.
+     * @param path  Path to be parsed. The supplied string is used as-is
+     *              (implicit sharing): all white space is included in the path.
      * @param sep   Character used to separate path segments in @a path.
      */
-    Path(String path, QChar sep = '/');
+    Path(const String& path, QChar sep = '/');
 
     /**
      * Construct a path by duplicating @a other.
@@ -183,14 +190,36 @@ public:
     /**
      * Convert this path to a text string.
      */
-    operator String () const {
-        return asText();
+    operator String() const {
+        return toString();
     }
+
+    /**
+     * Convert this path to a text string.
+     */
+    String toString() const;
+
+    /**
+     * Returns a reference to the path as a string.
+     */
+    const String& toStringRef() const;
 
     /**
      * Returns @c true if the path is empty; otherwise @c false.
      */
     bool isEmpty() const;
+
+    /// Returns the length of the path.
+    int length() const;
+
+    /// Returns the length of the path.
+    dsize size() const;
+
+    /// Returns the first character of the path.
+    QChar first() const;
+
+    /// Returns the last character of the path.
+    QChar last() const;
 
     /**
      * Clear the path.
@@ -209,7 +238,8 @@ public:
     /**
      * Changes the path.
      *
-     * @param sep  Character used to separate path segments in @a path.
+     * @param newPath  New path.
+     * @param sep      Character used to separate path segments in @a path.
      */
     Path& set(const String& newPath, QChar sep = '/');
 
@@ -222,6 +252,18 @@ public:
      * @return  Path with new separators.
      */
     Path withSeparators(QChar sep = '/') const;
+
+    /**
+     * Returns the character used as segment separator.
+     */
+    QChar separator() const;
+
+    /**
+     * Returns the file name portion of the path, i.e., the last segment.
+     */
+    String fileName() const;
+
+    Block toUtf8() const;
 
     /**
      * Retrieve a reference to the segment at @a index. In this method the
@@ -290,7 +332,9 @@ public:
 
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
-    String asText() const;
+    String asText() const {
+        return toString();
+    }
 
     // Implements ISerializable.
     void operator >> (Writer& to) const;

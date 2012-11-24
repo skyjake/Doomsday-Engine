@@ -74,7 +74,7 @@ bool UpdaterSettings::deleteAfterUpdate() const
 de::NativePath UpdaterSettings::pathToDeleteAtStartup() const
 {
     de::NativePath p(QSettings().value(STK_DELETE_PATH).toString());
-    de::String ext = p.fileNameExtension();
+    de::String ext = p.toString().fileNameExtension();
     if(p.fileName().startsWith("doomsday") && (ext == ".exe" || ext == ".deb" || ext == ".dmg"))
     {
         return p;
@@ -90,8 +90,8 @@ bool UpdaterSettings::isDefaultDownloadPath() const
 
 de::NativePath UpdaterSettings::downloadPath() const
 {
-    de::NativePath dir = QSettings().value(STK_DOWNLOAD_PATH, defaultDownloadPath()).toString();
-    if(dir == "${DEFAULT}")
+    de::NativePath dir = QSettings().value(STK_DOWNLOAD_PATH, defaultDownloadPath().toString()).toString();
+    if(dir.toString() == "${DEFAULT}")
     {
         dir = defaultDownloadPath();
     }
@@ -104,7 +104,7 @@ void UpdaterSettings::setDownloadPath(de::NativePath downloadPath)
     {
         downloadPath = "${DEFAULT}";
     }
-    QSettings().setValue(STK_DOWNLOAD_PATH, downloadPath);
+    QSettings().setValue(STK_DOWNLOAD_PATH, downloadPath.toString());
 }
 
 void UpdaterSettings::setFrequency(UpdaterSettings::Frequency freq)
@@ -139,7 +139,7 @@ void UpdaterSettings::useDefaultDownloadPath()
 
 void UpdaterSettings::setPathToDeleteAtStartup(de::NativePath deletePath)
 {
-    QSettings().setValue(STK_DELETE_PATH, deletePath);
+    QSettings().setValue(STK_DELETE_PATH, deletePath.toString());
 }
 
 de::NativePath UpdaterSettings::defaultDownloadPath()

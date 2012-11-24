@@ -238,7 +238,7 @@ private:
 Path::Path() : d(new Instance)
 {}
 
-Path::Path(String path, QChar sep)
+Path::Path(const String& path, QChar sep)
     : LogEntry::Arg::Base(), d(new Instance(path, sep))
 {}
 
@@ -268,8 +268,8 @@ const Path::Segment& Path::reverseSegment(int reverseIndex) const
 
     if(reverseIndex < 0 || reverseIndex >= d->segmentCount)
     {
-        /// @throw NotSegmentError  Attempt to reference a nonexistent segment.
-        throw NotSegmentError("Path::reverseSegment", String("Reverse index %1 is out of range").arg(reverseIndex));
+        /// @throw OutOfBoundsError  Attempt to reference a nonexistent segment.
+        throw OutOfBoundsError("Path::reverseSegment", String("Reverse index %1 is out of bounds").arg(reverseIndex));
     }
 
     // Is this in the static buffer?
@@ -301,9 +301,39 @@ bool Path::operator == (const Path& other) const
     return true;
 }
 
+String Path::toString() const
+{
+    return d->path;
+}
+
+const String& Path::toStringRef() const
+{
+    return d->path;
+}
+
 bool Path::isEmpty() const
 {
     return d->path.isEmpty();
+}
+
+int Path::length() const
+{
+    return d->path.length();
+}
+
+dsize Path::size() const
+{
+    return length();
+}
+
+QChar Path::first() const
+{
+    return d->path.first();
+}
+
+QChar Path::last() const
+{
+    return d->path.last();
 }
 
 Path& Path::clear()
@@ -329,14 +359,27 @@ Path& Path::set(const String& newPath, QChar sep)
 
 Path Path::withSeparators(QChar sep) const
 {
+    if(sep == d->separator) return *this;
+
     String modPath = d->path;
     modPath.replace(d->separator, sep);
     return Path(modPath, sep);
 }
 
-String Path::asText() const
+QChar Path::separator() const
 {
-    return d->path;
+    return d->separator;
+}
+
+String Path::fileName() const
+{
+    if(last() == d->separator) return "";
+    return lastSegment();
+}
+
+Block Path::toUtf8() const
+{
+    return d->path.toUtf8();
 }
 
 void Path::operator >> (Writer& to) const
@@ -455,6 +498,42 @@ static int Path_UnitTest()
             DENG2_ASSERT(p.reverseSegment(23).toString() == "23");
             DENG2_ASSERT(p.reverseSegment(24).toString() == "24");
             DENG2_ASSERT(p.reverseSegment(30).toString() == "30");
+        }
+
+        // Test separators.
+        {
+            Path a("a.b.c.d", '.');
+            Path b("con-variable", '-');
+
+            DENG2_ASSERT(a.segmentCount() == 4);
+            DENG2_ASSERT(a.segment(1).toString() == "b");
+
+            DENG2_ASSERT(b.segmentCount() == 2);
+            DENG2_ASSERT(b.segment(0).toString() == "con");
+            DENG2_ASSERT(b.segment(1).toString() == "variable");
+        }
+
+        // Test fileName().
+        {
+            Path p;
+            Path a("hello");
+            Path b("hello/world");
+            Path c("hello/world/");
+            Path d("hello/world/  ");
+
+            /*
+            qDebug() << p << "=>" << p.fileName();
+            qDebug() << a << "=>" << a.fileName();
+            qDebug() << b << "=>" << b.fileName();
+            qDebug() << c << "=>" << c.fileName();
+            qDebug() << d << "=>" << d.fileName();
+            */
+
+            DENG2_ASSERT(p.fileName() == String(p).fileName());
+            DENG2_ASSERT(a.fileName() == String(a).fileName());
+            DENG2_ASSERT(b.fileName() == String(b).fileName());
+            DENG2_ASSERT(c.fileName() == String(c).fileName());
+            DENG2_ASSERT(d.fileName() == String(d).fileName());
         }
     }
     catch(Error const& er)

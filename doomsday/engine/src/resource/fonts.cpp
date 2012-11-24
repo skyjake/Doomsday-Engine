@@ -262,10 +262,10 @@ static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
     {
         // This is a URN of the form; urn:schemename:uniqueid
         fontschemeid_t schemeId = Fonts_ParseScheme(uri.pathCStr());
-        int uidPos = uri.path().indexOf(':');
+        int uidPos = uri.path().toStringRef().indexOf(':');
         if(uidPos >= 0)
         {
-            int uid = uri.path().mid(uidPos + 1/*skip scheme delimiter*/).toInt();
+            int uid = uri.path().toStringRef().mid(uidPos + 1/*skip scheme delimiter*/).toInt();
             fontid_t id = Fonts_FontForUniqueId(schemeId, uid);
             if(id != NOFONTID)
             {

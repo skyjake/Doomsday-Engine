@@ -91,7 +91,7 @@ String const& PathTree::Node::name() const
     return tree().fragmentName(d->fragmentId);
 }
 
-Uri::hash_type PathTree::Node::hash() const
+Path::hash_type PathTree::Node::hash() const
 {
     return tree().fragmentHash(d->fragmentId);
 }
@@ -164,10 +164,10 @@ int PathTree::Node::comparePath(de::Uri const& searchPattern, int flags) const
 
     try
     {
-        de::Uri::Segment const* snode = &searchPattern.firstSegment();
+        de::Path::Segment const* snode = &searchPattern.path().lastSegment();
 
         // In reverse order, compare each path node in the search term.
-        int pathNodeCount = searchPattern.segmentCount();
+        int pathNodeCount = searchPattern.path().segmentCount();
 
         PathTree::Node const* node = this;
         for(int i = 0; i < pathNodeCount; ++i)
@@ -206,10 +206,10 @@ int PathTree::Node::comparePath(de::Uri const& searchPattern, int flags) const
 
             // So far so good. Move one level up the hierarchy.
             node  = node->parent();
-            snode = &searchPattern.segment(i + 1);
+            snode = &searchPattern.path().reverseSegment(i + 1);
         }
     }
-    catch(de::Uri::NotSegmentError const&)
+    catch(de::Path::OutOfBoundsError const &)
     {} // Ignore this error.
 
     return 1;
