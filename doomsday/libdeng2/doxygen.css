@@ -600,6 +600,10 @@ dl.reflist dd {
         -webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.15);
 }
 
+div.textblock {
+        max-width: 900px;
+}
+
 .memdoc {
         max-width: 900px;
         /*
