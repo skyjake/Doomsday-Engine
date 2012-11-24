@@ -25,9 +25,9 @@
 #include <QDir>
 
 #ifdef WIN32
-#  define DIR_SEPARATOR '\\'
+#  define DIR_SEPARATOR QChar('\\')
 #else
-#  define DIR_SEPARATOR '/'
+#  define DIR_SEPARATOR QChar('/')
 #  ifdef UNIX
 #    include <sys/types.h>
 #    include <pwd.h>
@@ -43,24 +43,24 @@ static QString toNative(const QString& s)
     return QDir::toNativeSeparators(QDir::cleanPath(s));
 }
 
-NativePath::NativePath()
+NativePath::NativePath() : Path()
 {}
 
-NativePath::NativePath(const QString &str) : String(toNative(str))
+NativePath::NativePath(const QString &str) : Path(toNative(str), DIR_SEPARATOR)
 {}
 
 NativePath::NativePath(const char *nullTerminatedCStr)
-    : String(toNative(nullTerminatedCStr))
+    : Path(toNative(nullTerminatedCStr), DIR_SEPARATOR)
 {
 }
 
-NativePath::NativePath(const char* cStr, size_type length)
-    : String(toNative(QString::fromUtf8(cStr, length)))
+NativePath::NativePath(const char* cStr, dsize length)
+    : Path(toNative(QString::fromUtf8(cStr, length)), DIR_SEPARATOR)
 {}
 
 NativePath& NativePath::operator = (const QString& str)
 {
-    *static_cast<String*>(this) = toNative(str);
+    set(toNative(str), DIR_SEPARATOR);
     return *this;
 }
 
@@ -72,7 +72,7 @@ NativePath& NativePath::operator = (const char *nullTerminatedCStr)
 NativePath NativePath::concatenatePath(const NativePath& nativePath) const
 {
     if(nativePath.isAbsolute()) return nativePath;
-    return String::concatenatePath(nativePath, QChar(DIR_SEPARATOR));
+    return toString().concatenatePath(nativePath, QChar(DIR_SEPARATOR));
 }
 
 NativePath NativePath::concatenatePath(const QString& nativePath) const
@@ -97,7 +97,7 @@ NativePath NativePath::operator / (const char *nullTerminatedCStr) const
 
 NativePath NativePath::fileNamePath() const
 {
-    return String::fileNamePath(DIR_SEPARATOR);
+    return String(*this).fileNamePath(DIR_SEPARATOR);
 }
 
 bool NativePath::isAbsolute() const
@@ -110,18 +110,19 @@ NativePath NativePath::expand(bool* didExpand) const
     if(first() == '>' || first() == '}')
     {
         if(didExpand) *didExpand = true;
-        return App::app().nativeBasePath() / mid(1);
+        return App::app().nativeBasePath() / toString().mid(1);
     }
 #ifdef UNIX
     else if(first() == '~')
     {
         if(didExpand) *didExpand = true;
 
-        int firstSlash = indexOf('/');
+        const String path = toString();
+        int firstSlash = path.indexOf('/');
         if(firstSlash > 1)
         {
             // Parse the user's home directory (from passwd).
-            QByteArray userName = mid(1, firstSlash - 1).toLatin1();
+            QByteArray userName = path.mid(1, firstSlash - 1).toLatin1();
             struct passwd* pw = getpwnam(userName);
             if(!pw)
             {
@@ -130,11 +131,13 @@ NativePath NativePath::expand(bool* didExpand) const
                                        String("Unknown user '%1'").arg(QLatin1String(userName)));
             }
 
-            return NativePath(pw->pw_dir) / mid(firstSlash + 1);
+            return NativePath(pw->pw_dir) / path.mid(firstSlash + 1);
         }
-
-        // Replace with the HOME path.
-        return NativePath(QDir::homePath()) / mid(2);
+        else
+        {
+            // Replace with the HOME path.
+            return NativePath(QDir::homePath()) / path.mid(2);
+        }
     }
 #endif
 
@@ -143,11 +146,11 @@ NativePath NativePath::expand(bool* didExpand) const
     return *this;
 }
 
-NativePath NativePath::pretty() const
+String NativePath::pretty() const
 {
-    if(empty()) return *this;
+    if(isEmpty()) return *this;
 
-    NativePath result = *this;
+    String result = *this;
 
     // Hide relative directives like '}'
     if(result.length() > 1 && (result.first() == '}' || result.first() == '>'))
@@ -170,9 +173,7 @@ NativePath NativePath::pretty() const
 
 String NativePath::withSeparators(QChar sep) const
 {
-    String s = *this;
-    s.replace(QChar(DIR_SEPARATOR), sep);
-    return s;
+    return Path::withSeparators(sep);
 }
 
 NativePath NativePath::workPath()

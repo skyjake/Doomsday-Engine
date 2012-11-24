@@ -31,6 +31,14 @@ namespace de {
 
 const char* MAIN_SECTION = "";
 
+#ifdef DENG2_DEBUG
+/// If the section is longer than this, it will be alone on one line while
+/// the rest of the entry continues after a break.
+static const int LINE_BREAKING_SECTION_LENGTH = 30;
+#else
+static const int LINE_BREAKING_SECTION_LENGTH = 55;
+#endif
+
 namespace internal {
 
 /**
@@ -139,6 +147,12 @@ String LogEntry::asText(const Flags& formattingFlags) const
         else
         {
             output << TEXT_STYLE_SECTION << _section << ": ";
+        }
+
+        // If the section is very long, it's clearer to break the line here.
+        if(_section.length() > LINE_BREAKING_SECTION_LENGTH)
+        {
+            output << "\n";
         }
     }
 

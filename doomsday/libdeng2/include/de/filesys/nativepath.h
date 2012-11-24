@@ -23,25 +23,25 @@
 #ifndef LIBDENG2_NATIVEPATH_H
 #define LIBDENG2_NATIVEPATH_H
 
-#include "../String"
+#include "../Path"
 
 namespace de {
 
 /**
- * Specialized String that is used for manipulating paths of the native file
- * system. Always uses the directory separator characters appropriate for the
- * native file system: any directory separators present in the strings are
- * automatically converted to the native ones.
+ * Manipulates paths of the native file system. Always uses the directory
+ * separator characters appropriate for the native file system: any directory
+ * separators present in the strings are automatically converted to the native
+ * ones.
  *
- * Note that some of the methods of String are overridden, for instance
- * String::fileNamePath(), so that they operate using native separator
- * characters.
+ * The public interface of NativePath closely mirrors that of String, e.g.,
+ * String::fileNamePath(), so that equivalent operations are provided except
+ * with native separator characters.
  */
-class DENG2_PUBLIC NativePath : public String
+class DENG2_PUBLIC NativePath : public Path
 {
 public:
     /// An unknown user name was encounterd in the string. @ingroup errors
-    DENG2_SUB_ERROR(Error, UnknownUserError);
+    DENG2_ERROR(UnknownUserError);
 
 public:
     /**
@@ -58,7 +58,7 @@ public:
     NativePath(const QString& str);
 
     NativePath(const char* nullTerminatedCStr);
-    NativePath(const char* cStr, size_type length);
+    NativePath(const char* cStr, dsize length);
 
     /**
      * Assignment.
@@ -127,7 +127,7 @@ public:
      * from absolute to relative, the result should only be used for paths
      * appearing in messages intended for the user.
      */
-    NativePath pretty() const;
+    String pretty() const;
 
     /**
      * Converts all separator characters in the path to @a sep and returns the

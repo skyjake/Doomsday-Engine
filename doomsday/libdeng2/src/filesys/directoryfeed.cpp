@@ -212,7 +212,7 @@ void DirectoryFeed::changeWorkingDir(const NativePath& nativePath)
 void DirectoryFeed::createDir(const NativePath& nativePath)
 {
     NativePath parentPath = nativePath.fileNamePath();
-    if(!parentPath.empty() && !exists(parentPath))
+    if(!parentPath.isEmpty() && !exists(parentPath))
     {
         createDir(parentPath);
     }

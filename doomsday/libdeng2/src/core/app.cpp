@@ -97,7 +97,9 @@ NativePath App::nativeBinaryPath()
     path = DENG_LIBRARY_DIR;
 # endif
     // Also check the system config files.
-    _unixInfo.path("libdir", path);
+    String configured;
+    _unixInfo.path("libdir", configured);
+    path = configured;
 #endif
     return path;
 }
@@ -153,7 +155,9 @@ NativePath App::nativeBasePath()
     path = DENG_BASE_DIR;
 # endif
     // Also check the system config files.
-    _unixInfo.path("basedir", path);
+    String configured;
+    _unixInfo.path("basedir", configured);
+    path = configured;
 #endif
     return path;
 }
