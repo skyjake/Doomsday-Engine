@@ -40,7 +40,7 @@
 // Substrings in CVar names are delimited by this character.
 #define CVARDIRECTORY_DELIMITER         '-'
 
-typedef de::PathTree CVarDirectory;
+typedef de::UserDataPathTree CVarDirectory;
 
 D_CMD(HelpWhat);
 D_CMD(HelpApropos);

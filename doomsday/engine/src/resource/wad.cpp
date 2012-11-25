@@ -181,10 +181,10 @@ struct Wad::Instance
     size_t arcRecordsOffset;
 
     /// Directory containing structure and info records for all lumps.
-    PathTree* lumpDirectory;
+    UserDataPathTree* lumpDirectory;
 
     /// LUT which maps logical lump indices to PathTreeNodes.
-    typedef std::vector<PathTree::Node*> LumpNodeLut;
+    typedef std::vector<UserDataNode*> LumpNodeLut;
     LumpNodeLut* lumpNodeLut;
 
     /// Lump data cache.
@@ -221,7 +221,7 @@ struct Wad::Instance
         if(lumpCache) delete lumpCache;
     }
 
-    static int clearWadFileWorker(PathTree::Node& node, void* /*parameters*/)
+    static int clearWadFileWorker(UserDataNode& node, void* /*parameters*/)
     {
         WadFile* lump = reinterpret_cast<WadFile*>(node.userPointer());
         if(lump)
@@ -313,7 +313,7 @@ struct Wad::Instance
         Str_Reserve(Str_Init(&absPath), LUMPNAME_T_LASTINDEX + 4/*.lmp*/);
 
         // Intialize the directory.
-        lumpDirectory = new PathTree(PathTree::MultiLeaf);
+        lumpDirectory = new UserDataPathTree(PathTree::MultiLeaf);
 
         // Build our runtime representation from the archived lump directory.
         wadlumprecord_t const* arcRecord = arcRecords;
@@ -335,7 +335,7 @@ struct Wad::Instance
                                      littleEndianByteOrder.toNative(arcRecord->size),
                                      littleEndianByteOrder.toNative(arcRecord->size)),
                             self);
-            PathTree::Node* node = lumpDirectory->insert(Path(Str_Text(&absPath)));
+            UserDataNode* node = lumpDirectory->insert(Path(Str_Text(&absPath)));
             node->setUserPointer(lump);
         }
 
@@ -345,7 +345,7 @@ struct Wad::Instance
         delete[] arcRecords;
     }
 
-    static int buildLumpNodeLutWorker(PathTree::Node& node, void* parameters)
+    static int buildLumpNodeLutWorker(UserDataNode& node, void* parameters)
     {
         Instance* wadInst = (Instance*)parameters;
         WadFile* lump = reinterpret_cast<WadFile*>(node.userPointer());

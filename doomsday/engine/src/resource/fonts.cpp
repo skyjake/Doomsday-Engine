@@ -40,7 +40,7 @@
 #include "resource/fonts.h"
 #include "resource/bitmapfont.h"
 
-typedef de::PathTree FontRepository;
+typedef de::UserDataPathTree FontRepository;
 
 /**
  * FontRecord. Stores metadata for a unique Font in the collection.
@@ -98,7 +98,7 @@ static inline FontRepository* repositoryBySchemeId(fontschemeid_t id)
     return schemes[id - FONTSCHEME_FIRST].repository;
 }
 
-static fontschemeid_t schemeIdForRepository(FontRepository& pt)
+static fontschemeid_t schemeIdForRepository(de::PathTree const &pt)
 {
     for(uint i = uint(FONTSCHEME_FIRST); i <= uint(FONTSCHEME_LAST); ++i)
     {

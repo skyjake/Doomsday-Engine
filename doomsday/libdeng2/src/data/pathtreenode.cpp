@@ -38,25 +38,16 @@ struct PathTree::Node::Instance
     /// Parent node in the user's logical hierarchy.
     PathTree::Node *parent;
 
-    /// User-specified data pointer associated with this node.
-    void *userPointer;
-
-    /// User-specified value associated with this node.
-    int userValue;
-
     Instance(PathTree &_tree, bool _isLeaf, PathTree::SegmentId _segmentId,
              PathTree::Node *_parent)
-        : isLeaf(_isLeaf), tree(_tree), segmentId(_segmentId), parent(_parent),
-          userPointer(0), userValue(0)
+        : isLeaf(_isLeaf), tree(_tree), segmentId(_segmentId), parent(_parent)
     {}
 };
 
 PathTree::Node::Node(PathTree &tree, PathTree::NodeType type, PathTree::SegmentId fragmentId,
-    PathTree::Node *parent, void *userPointer, int userValue)
+                     PathTree::Node *parent)
 {
     d = new Instance(tree, type == PathTree::Leaf, fragmentId, parent);
-    setUserPointer(userPointer);
-    setUserValue(userValue);
 }
 
 PathTree::Node::~Node()
@@ -92,28 +83,6 @@ String const &PathTree::Node::name() const
 Path::hash_type PathTree::Node::hash() const
 {
     return tree().segmentHash(d->segmentId);
-}
-
-void *PathTree::Node::userPointer() const
-{
-    return d->userPointer;
-}
-
-int PathTree::Node::userValue() const
-{
-    return d->userValue;
-}
-
-PathTree::Node &PathTree::Node::setUserPointer(void *ptr)
-{
-    d->userPointer = ptr;
-    return *this;
-}
-
-PathTree::Node &PathTree::Node::setUserValue(int value)
-{
-    d->userValue = value;
-    return *this;
 }
 
 /// @todo This logic should be encapsulated in de::Path or de::Path::Segment; use QChar.
@@ -290,14 +259,18 @@ Path PathTree::Node::composePath(QChar sep) const
 
     // Include a terminating path delimiter for branches.
     if(!sep.isNull() && !isLeaf())
-        parm.length += 1; // A single character.
+    {
+        parm.length++; // A single character.
+    }
 
     // Recursively construct the path from fragments and delimiters.
     pathConstructor(parm, *this);
 
     // Terminating delimiter for branches.
     if(!sep.isNull() && !isLeaf())
+    {
         parm.composedPath += sep;
+    }
 
     DENG2_ASSERT(parm.composedPath.length() == (int)parm.length);
 
@@ -307,6 +280,35 @@ Path PathTree::Node::composePath(QChar sep) const
 #endif
 
     return Path(parm.composedPath, sep);
+}
+
+UserDataNode::UserDataNode(PathTree &tree, PathTree::NodeType type, PathTree::SegmentId segmentId,
+                           PathTree::Node *parent, void *userPointer, int userValue)
+    : PathTree::Node(tree, type, segmentId, parent),
+      _pointer(userPointer),
+      _value(userValue)
+{}
+
+void *UserDataNode::userPointer() const
+{
+    return _pointer;
+}
+
+int UserDataNode::userValue() const
+{
+    return _value;
+}
+
+UserDataNode &UserDataNode::setUserPointer(void *ptr)
+{
+    _pointer = ptr;
+    return *this;
+}
+
+UserDataNode &UserDataNode::setUserValue(int value)
+{
+    _value = value;
+    return *this;
 }
 
 } // namespace de

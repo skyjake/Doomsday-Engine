@@ -47,7 +47,7 @@
 /// Number of elements to block-allocate in the material index to materialbind map.
 #define MATERIALS_BINDINGMAP_BLOCK_ALLOC (32)
 
-typedef de::PathTree MaterialRepository;
+typedef de::UserDataPathTree MaterialRepository;
 
 /**
  * Contains extended info about a material binding (see MaterialBind).
@@ -248,7 +248,7 @@ static inline MaterialRepository& schemeById(materialschemeid_t id)
     return *schemes[id-MATERIALSCHEME_FIRST];
 }
 
-static materialschemeid_t schemeIdForDirectory(MaterialRepository& directory)
+static materialschemeid_t schemeIdForDirectory(de::PathTree const &directory)
 {
     for(uint i = uint(MATERIALSCHEME_FIRST); i <= uint(MATERIALSCHEME_LAST); ++i)
     {
@@ -582,13 +582,14 @@ static void destroyBindings(void)
     {
         if(!schemes[i]) continue;
 
-        DENG2_FOR_EACH_CONST(MaterialRepository::Nodes, nodeIt, schemes[i]->leafNodes())
+        de::PathTreeIterator<MaterialRepository> iter(schemes[i]->leafNodes());
+        while(iter.hasNext())
         {
-            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userPointer());
+            MaterialBind* mb = reinterpret_cast<MaterialBind*>(iter.next().userPointer());
             if(mb)
             {
                 // Detach our user data from this node.
-                (*nodeIt)->setUserPointer(0);
+                iter.value().setUserPointer(0);
                 delete mb;
             }
         }
@@ -681,9 +682,10 @@ void Materials_ClearDefinitionLinks(void)
     {
         MaterialRepository& matDirectory = schemeById(materialschemeid_t(i));
 
-        DENG2_FOR_EACH_CONST(MaterialRepository::Nodes, nodeIt, matDirectory.leafNodes())
+        de::PathTreeIterator<MaterialRepository> iter(matDirectory.leafNodes());
+        while(iter.hasNext())
         {
-            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userPointer());
+            MaterialBind* mb = reinterpret_cast<MaterialBind*>(iter.next().userPointer());
             if(mb)
             {
                 clearBindingDefinitionLinks(mb);
@@ -1515,9 +1517,10 @@ static MaterialRepository::Node** collectDirectoryNodes(materialschemeid_t schem
     {
         MaterialRepository& matDirectory = schemeById(materialschemeid_t(i));
 
-        DENG2_FOR_EACH_CONST(MaterialRepository::Nodes, nodeIt, matDirectory.leafNodes())
+        de::PathTreeIterator<MaterialRepository> iter(matDirectory.leafNodes());
+        while(iter.hasNext())
         {
-            MaterialRepository::Node& node = **nodeIt;
+            MaterialRepository::Node& node = iter.next();
             if(!like.isEmpty())
             {
                 de::String path = node.composePath();

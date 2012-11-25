@@ -172,10 +172,10 @@ struct FS1::Scheme::Instance
 
     /// Associated path directory.
     /// @todo It should not be necessary for a unique directory per scheme.
-    PathTree directory;
+    UserDataPathTree directory;
 
     /// As the directory is relative, this special node serves as the root.
-    PathTree::Node* rootNode;
+    UserDataNode* rootNode;
 
     /// Name hash table.
     NameHash nameHash;
@@ -227,7 +227,7 @@ struct FS1::Scheme::Instance
         }
     }
 
-    PathTree::Node* addDirectoryPathNodes(String path)
+    UserDataNode* addDirectoryPathNodes(String path)
     {
         if(path.isEmpty()) return 0;
 
@@ -283,7 +283,7 @@ struct FS1::Scheme::Instance
         String filePath, bool /*isFolder*/, int flags)
     {
         // Add this path to the directory.
-        PathTree::Node* node = addDirectoryPathNodes(filePath);
+        UserDataNode* node = addDirectoryPathNodes(filePath);
         if(!node) return;
 
         if(!node->isLeaf())

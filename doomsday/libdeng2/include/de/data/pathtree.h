@@ -116,10 +116,9 @@ namespace de
          */
         class DENG2_PUBLIC Node
         {
-        private:
-            Node();
-            Node(PathTree &tree, NodeType type, SegmentId segmentId, Node *parent = 0,
-                 void *userPointer = 0, int userValue = 0);
+        protected:
+            Node(PathTree &tree, NodeType type, SegmentId segmentId, Node *parent = 0);
+
             virtual ~Node();
 
         public:
@@ -170,26 +169,10 @@ namespace de
              */
             Path composePath(QChar sep = '/') const;
 
-            /**
-             * Sets the user-specified custom pointer.
-             */
-            Node &setUserPointer(void *ptr);
-
-            /// @return User-specified custom pointer.
-            void *userPointer() const;
-
-            /**
-             * Sets the user-specified custom pointer.
-             */
-            Node &setUserValue(int value);
-
-            /// @return User-specified custom value.
-            int userValue() const;
-
             friend class PathTree;
             friend struct PathTree::Instance;
 
-        private:
+        protected:
             SegmentId segmentId() const;
 
         private:
@@ -291,13 +274,28 @@ namespace de
 
         /**
          * Provides access to the nodes for efficent traversals.
+         *
+         * @param type  Type of nodes to return: Leaf or Branch.
+         *
+         * @return Collection of nodes.
+         * @see PathTreeIterator
          */
         Nodes const &nodes(NodeType type) const;
 
+        /**
+         * Provides access to the leaf nodes for efficent traversals.
+         * @return Collection of nodes.
+         * @see PathTreeIterator
+         */
         inline Nodes const &leafNodes() const {
             return nodes(Leaf);
         }
 
+        /**
+         * Provides access to the branch nodes for efficent traversals.
+         * @return Collection of nodes.
+         * @see PathTreeIterator
+         */
         inline Nodes const &branchNodes() const {
             return nodes(Branch);
         }
@@ -312,12 +310,162 @@ namespace de
         /// @return Hash associated with @a segmentId.
         Path::hash_type segmentHash(SegmentId segmentId) const;
 
+    protected:
+        /**
+         * Construct a new Node instance. Derived classes can override this to
+         * construct specialized nodes.
+         *
+         * @param type       Type of the node.
+         * @param segmentId  Path segment ID of the node.
+         * @param parent     Parent node of the new node.
+         *
+         * @return New node. Caller gets ownership.
+         */
+        virtual Node *newNode(NodeType type, SegmentId segmentId, Node *parent);
+
     private:
         Instance *d;
     };
 
     Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::Flags)
     Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::ComparisonFlags)
+
+    /**
+     * Utility template for specialized PathTree classes. @ingroup data
+     */
+    template <typename Type>
+    class PathTreeT : public PathTree
+    {
+    public:
+        typedef Type Node; // shadow PathTree::Node
+        typedef QMultiHash<Path::hash_type, Type *> Nodes;
+
+    public:
+        explicit PathTreeT(Flags flags = 0) : PathTree(flags) {}
+
+        inline Type *insert(Path const &path) {
+            return static_cast<Type *>(PathTree::insert(path));
+        }
+
+        inline Type const &find(Path const &path, ComparisonFlags flags) const {
+            return static_cast<Type const &>(PathTree::find(path, flags));
+        }
+
+        inline Type &find(Path const &path, ComparisonFlags flags) {
+            return static_cast<Type &>(PathTree::find(path, flags));
+        }
+
+        inline int traverse(ComparisonFlags flags, Type *parent, Path::hash_type hashKey,
+                            int (*callback) (Type &node, void *parameters), void *parameters = 0) const {
+            return PathTree::traverse(flags, parent, hashKey,
+                                      reinterpret_cast<int (*)(PathTree::Node &, void *)>(callback),
+                                      parameters);
+        }
+
+    protected:
+        PathTree::Node *newNode(NodeType type, SegmentId segmentId, PathTree::Node *parent) {
+            return new Type(*this, type, segmentId, parent);
+        }
+    };
+
+    /**
+     * Iterator template for PathTree nodes. Can be used to iterate any set of
+     * Nodes returned by a PathTree (PathTree::nodes(), PathTree::leafNodes(),
+     * PathTree::branchNodes()). @ingroup data
+     *
+     * Example of using the iterator.
+     * @code
+     *  PathTreeIterator<MyTree> it(myTree.leafNodes());
+     *  while(it.hasNext()) {
+     *      MyTree::Node &node = it.next();
+     *      // ...
+     *  }
+     * @endcode
+     *
+     * @note Follows the Qt iterator conventions.
+     */
+    template <typename TreeType>
+    class PathTreeIterator
+    {
+    public:
+        PathTreeIterator(PathTree::Nodes const &nodes) : _nodes(nodes) {
+            _next = _iter = _nodes.begin();
+            if(_next != _nodes.end()) ++_next;
+            _current = _nodes.end();
+        }
+
+        inline bool hasNext() const {
+            return _iter != _nodes.end();
+        }
+
+        /**
+         * Advances the iterator over one node.
+         *
+         * @return The node that the iterator jumped over while advancing.
+         */
+        inline typename TreeType::Node &next() {
+            _current = _iter;
+            typename TreeType::Node &val = value();
+            _iter = _next;
+            if(_next != _nodes.end()) ++_next;
+            return val;
+        }
+
+        Path::hash_type key() const {
+            DENG2_ASSERT(_current != _nodes.end());
+            return _current.key();
+        }
+
+        typename TreeType::Node &value() const {
+            DENG2_ASSERT(_current != _nodes.end());
+            return *static_cast<typename TreeType::Node *>(_current.value());
+        }
+
+    private:
+        PathTree::Nodes const &_nodes;
+        PathTree::Nodes::const_iterator _iter, _next, _current;
+    };
+
+    /**
+     * PathTree node with a custom integer value and a void pointer. @ingroup data
+     */
+    class DENG2_PUBLIC UserDataNode : public PathTree::Node
+    {
+    public:
+        UserDataNode(PathTree &tree, PathTree::NodeType type, PathTree::SegmentId segmentId,
+                     PathTree::Node *parent = 0, void *userPointer = 0, int userValue = 0);
+
+        /**
+         * Sets the user-specified custom pointer.
+         *
+         * @param ptr  Pointer to user's data. Ownership not transferred.
+         *
+         * @return Reference to this node.
+         */
+        UserDataNode &setUserPointer(void *ptr);
+
+        /// @return User-specified custom pointer.
+        void *userPointer() const;
+
+        /**
+         * Sets the user-specified custom value.
+         *
+         * @return Reference to this node.
+         */
+        UserDataNode &setUserValue(int value);
+
+        /// @return User-specified custom value.
+        int userValue() const;
+
+    private:
+        /// User-specified data pointer associated with this node.
+        void *_pointer;
+
+        /// User-specified value associated with this node.
+        int _value;
+    };
+
+    typedef PathTreeT<UserDataNode> UserDataPathTree;
 
 } // namespace de
 

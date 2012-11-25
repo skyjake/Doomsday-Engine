@@ -115,7 +115,7 @@ struct PathTree::Instance
         // Are we out of indices?
         if(!segmentId) return NULL;
 
-        PathTree::Node *node = new PathTree::Node(self, nodeType, segmentId, parent);
+        PathTree::Node *node = self.newNode(nodeType, segmentId, parent);
 
         // Insert the new node into the hash.
         if(nodeType == PathTree::Leaf)
@@ -168,13 +168,6 @@ struct PathTree::Instance
         DENG2_FOR_EACH(PathTree::Nodes, i, ph)
         {
             PathTree::Node *node = *i;
-#ifdef DENG2_DEBUG
-            if(node->userPointer())
-            {
-                /// Assert instead? -jk
-                LOG_ERROR("Node %p has non-NULL user data.") << de::dintptr(node);
-            }
-#endif
             delete node;
         }
         ph.clear();
@@ -187,7 +180,7 @@ PathTree::Node *PathTree::insert(Path const &path)
     if(node)
     {
         // There is now one more unique path in the directory.
-        d->size += 1;
+        d->size++;
     }
     return node;
 }
@@ -279,6 +272,11 @@ String const &PathTree::segmentName(SegmentId segmentId) const
 Path::hash_type PathTree::segmentHash(SegmentId segmentId) const
 {
     return d->segments.userValue(segmentId);
+}
+
+PathTree::Node *PathTree::newNode(PathTree::NodeType type, PathTree::SegmentId segmentId, PathTree::Node *parent)
+{
+    return new Node(*this, type, segmentId, parent);
 }
 
 PathTree::Nodes const &PathTree::nodes(NodeType type) const
