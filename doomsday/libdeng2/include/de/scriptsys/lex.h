@@ -68,12 +68,12 @@ namespace de
         };
         
         // Constants.
-        static const String T_PARENTHESIS_OPEN;
-        static const String T_PARENTHESIS_CLOSE;
-        static const String T_BRACKET_OPEN;
-        static const String T_BRACKET_CLOSE;
-        static const String T_CURLY_OPEN;
-        static const String T_CURLY_CLOSE;
+        static String const T_PARENTHESIS_OPEN;
+        static String const T_PARENTHESIS_CLOSE;
+        static String const T_BRACKET_OPEN;
+        static String const T_BRACKET_CLOSE;
+        static String const T_CURLY_OPEN;
+        static String const T_CURLY_CLOSE;
 
     public:
         Lex(String const &input = "");

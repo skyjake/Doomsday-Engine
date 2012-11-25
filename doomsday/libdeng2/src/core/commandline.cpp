@@ -257,7 +257,7 @@ bool CommandLine::isOption(String const &arg)
     return !(arg.empty() || arg[0] != '-');
 }
 
-const String CommandLine::at(duint pos) const
+String CommandLine::at(duint pos) const
 {
     return d->arguments.at(pos);
 }

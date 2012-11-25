@@ -41,7 +41,7 @@ public:
     DENG2_SUB_ERROR(DeserializationError, InvalidTypeError);
 
     /// Length of a type identifier.
-    static const dint TYPE_SIZE = 4;
+    static dint const TYPE_SIZE = 4;
 
     typedef String Type;
 

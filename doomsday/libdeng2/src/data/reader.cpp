@@ -265,7 +265,7 @@ Reader &Reader::operator >> (FixedByteArray &fixedByteArray)
      * because the destination byte array is not guaranteed to be
      * a memory buffer where you can copy the contents directly.
      */
-    const dsize size = fixedByteArray.size();
+    dsize const size = fixedByteArray.size();
     QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
     d->readBytes(data.data(), size);
     fixedByteArray.set(0, data.data(), size);

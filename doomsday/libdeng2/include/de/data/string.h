@@ -71,7 +71,7 @@ public:
     typedef dint size_type;
 
 public:
-    static const size_type npos;
+    static size_type const npos;
 
 public:
     String();

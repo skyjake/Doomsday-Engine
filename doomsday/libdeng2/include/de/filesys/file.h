@@ -261,7 +261,7 @@ namespace de
          * @return Path of the object. This is not a native path, but instead 
          *         intended for de::FS.
          */
-        const String path() const;
+        String const path() const;
 
         /**
          * Returns the mode of the file.

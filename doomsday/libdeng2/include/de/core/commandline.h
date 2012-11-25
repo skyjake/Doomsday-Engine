@@ -144,7 +144,7 @@ namespace de
          */
         static bool isOption(String const &arg);
 
-        const String at(duint pos) const;
+        String at(duint pos) const;
 
         /**
          * Returns a list of pointers to the arguments. The list contains

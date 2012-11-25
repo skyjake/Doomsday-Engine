@@ -34,9 +34,9 @@ char const *MAIN_SECTION = "";
 #ifdef DENG2_DEBUG
 /// If the section is longer than this, it will be alone on one line while
 /// the rest of the entry continues after a break.
-static const int LINE_BREAKING_SECTION_LENGTH = 35;
+static int const LINE_BREAKING_SECTION_LENGTH = 35;
 #else
-static const int LINE_BREAKING_SECTION_LENGTH = 60;
+static int const LINE_BREAKING_SECTION_LENGTH = 60;
 #endif
 
 namespace internal {

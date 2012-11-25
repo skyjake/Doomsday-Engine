@@ -26,17 +26,17 @@
 using namespace de;
 
 // Default size of one allocation pool.
-static const duint POOL_SIZE = 1024;
+static duint const POOL_SIZE = 1024;
 
-const String Token::PARENTHESIS_OPEN = "(";
-const String Token::PARENTHESIS_CLOSE = ")";
-const String Token::BRACKET_OPEN = "[";
-const String Token::BRACKET_CLOSE = "]";
-const String Token::CURLY_OPEN = "{";
-const String Token::CURLY_CLOSE = "}";
-const String Token::COLON(":");
-const String Token::COMMA(",");
-const String Token::SEMICOLON(";");
+String const Token::PARENTHESIS_OPEN = "(";
+String const Token::PARENTHESIS_CLOSE = ")";
+String const Token::BRACKET_OPEN = "[";
+String const Token::BRACKET_CLOSE = "]";
+String const Token::CURLY_OPEN = "{";
+String const Token::CURLY_CLOSE = "}";
+String const Token::COLON(":");
+String const Token::COMMA(",");
+String const Token::SEMICOLON(";");
 
 bool Token::equals(QChar const *str) const
 {

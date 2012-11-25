@@ -169,7 +169,7 @@ int LegacyCore::runEventLoop()
 
 void LegacyCore::setLoopRate(int freqHz)
 {
-    const int oldInterval = d->loop.interval;
+    int const oldInterval = d->loop.interval;
     d->loop.interval = qMax(1, 1000/freqHz);
 
     if(oldInterval != d->loop.interval)

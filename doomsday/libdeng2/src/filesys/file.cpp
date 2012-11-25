@@ -81,7 +81,7 @@ void File::setOriginFeed(Feed *feed)
     _originFeed = feed;
 }
 
-const String File::path() const
+String const File::path() const
 {
     String thePath = name();
     for(Folder *i = _parent; i; i = i->_parent)

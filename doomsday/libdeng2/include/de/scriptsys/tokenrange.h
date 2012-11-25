@@ -204,7 +204,7 @@ namespace de
         
     public:    
         static void bracketTokens(Token const &openingToken,
-            const QChar*& opening, const QChar*& closing);
+            QChar const * &opening, QChar const * &closing);
         
     private:
         TokenBuffer const *_tokens;

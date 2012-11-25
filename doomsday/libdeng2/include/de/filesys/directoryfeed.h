@@ -117,7 +117,7 @@ namespace de
         void populateFile(Folder &folder, String const &entryName);
 
     private:
-        const NativePath _nativePath;
+        NativePath const _nativePath;
         Flags _mode;
     };
 

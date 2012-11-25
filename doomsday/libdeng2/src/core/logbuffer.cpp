@@ -32,7 +32,7 @@
 
 namespace de {
 
-const Time::Delta FLUSH_INTERVAL = .2; // seconds
+Time::Delta const FLUSH_INTERVAL = .2; // seconds
 
 namespace internal {
 
@@ -267,9 +267,9 @@ void LogBuffer::flush()
         {
 #ifdef _DEBUG
             // Debug builds include a timestamp and msg type indicator.
-            const duint MAX_LENGTH = 110;
+            duint const MAX_LENGTH = 110;
 #else
-            const duint MAX_LENGTH = 89;
+            duint const MAX_LENGTH = 89;
 #endif
 
             DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
@@ -295,15 +295,15 @@ void LogBuffer::flush()
                 while(pos != String::npos)
                 {
 #ifdef _DEBUG
-                    const int minimumIndent = 25;
+                    int const minimumIndent = 25;
 #else
-                    const int minimumIndent = 0;
+                    int const minimumIndent = 0;
 #endif
 
                     // Find the length of the current line.
                     String::size_type next = message.indexOf('\n', pos);
                     duint lineLen = (next == String::npos? message.size() - pos : next - pos);
-                    const duint maxLen = (pos > 0? MAX_LENGTH - wrapIndent : MAX_LENGTH);
+                    duint const maxLen = (pos > 0? MAX_LENGTH - wrapIndent : MAX_LENGTH);
                     if(lineLen > maxLen)
                     {
                         // Wrap overly long lines.

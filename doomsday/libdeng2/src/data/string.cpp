@@ -26,7 +26,7 @@
 
 using namespace de;
 
-const String::size_type String::npos = -1;
+String::size_type const String::npos = -1;
 
 String::String()
 {}

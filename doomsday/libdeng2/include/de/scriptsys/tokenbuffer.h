@@ -48,15 +48,15 @@ namespace de
         };
 
         // Token constants.
-        static const String PARENTHESIS_OPEN;
-        static const String PARENTHESIS_CLOSE;
-        static const String BRACKET_OPEN;
-        static const String BRACKET_CLOSE;
-        static const String CURLY_OPEN;
-        static const String CURLY_CLOSE;
-        static const String COLON;
-        static const String COMMA;
-        static const String SEMICOLON;
+        static String const PARENTHESIS_OPEN;
+        static String const PARENTHESIS_CLOSE;
+        static String const BRACKET_OPEN;
+        static String const BRACKET_CLOSE;
+        static String const CURLY_OPEN;
+        static String const CURLY_CLOSE;
+        static String const COLON;
+        static String const COMMA;
+        static String const SEMICOLON;
 
     public:
         Token(QChar *begin = 0, QChar *end = 0, duint line = 0)

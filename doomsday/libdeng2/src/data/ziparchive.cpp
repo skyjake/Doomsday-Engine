@@ -290,7 +290,7 @@ ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
     CentralEnd summary;
     reader >> summary;
 
-    const duint entryCount = summary.totalEntryCount;
+    duint const entryCount = summary.totalEntryCount;
 
     // The ZIP must have only one part, all entries in the same archive.
     if(entryCount != summary.diskEntryCount)

@@ -36,7 +36,7 @@ struct Writer::Instance
     IByteArray *destination;
     IOStream *stream;
     IByteArray::Offset offset;
-    const IByteArray::Offset fixedOffset;
+    IByteArray::Offset const fixedOffset;
 
     Instance(ByteOrder const &order, IByteArray *dest, IByteArray::Offset off)
         : convert(order), destination(dest), stream(0), offset(off), fixedOffset(0) {}
@@ -195,7 +195,7 @@ Writer &Writer::operator << (FixedByteArray const &fixedByteArray)
      */
     
     // Read the entire contents of the array.
-    const dsize size = fixedByteArray.size();
+    dsize const size = fixedByteArray.size();
     QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
     fixedByteArray.get(0, data.data(), size);
     d->write(data.data(), size);

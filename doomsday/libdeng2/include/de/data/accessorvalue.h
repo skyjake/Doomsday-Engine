@@ -34,7 +34,7 @@ namespace de
     {
     public:
         /// Mode to use for variables that have an accessor value.
-        static const Variable::Flags VARIABLE_MODE;
+        static Variable::Flags const VARIABLE_MODE;
         
     public:
         AccessorValue();

@@ -26,7 +26,7 @@
 
 using namespace de;
 
-static const FS::Index emptyIndex;
+static FS::Index const emptyIndex;
 
 struct FS::Instance
 {
@@ -174,7 +174,7 @@ File &FS::find(String const &path) const
 
 void FS::index(File &file)
 {
-    const String lowercaseName = file.name().lower();
+    String const lowercaseName = file.name().lower();
     
     d->index.insert(IndexEntry(lowercaseName, &file));
     

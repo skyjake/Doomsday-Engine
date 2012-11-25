@@ -48,38 +48,38 @@ namespace de
         DENG2_SUB_ERROR(SyntaxError, MismatchedBracketError);
         
         // Keywords.
-        static const String AND;
-        static const String OR;
-        static const String NOT;
-        static const String ELSIF;
-        static const String ELSE;
-        static const String THROW;
-        static const String CATCH;
-        static const String IN;
-        static const String END;
-        static const String IF;
-        static const String WHILE;
-        static const String FOR;
-        static const String DEF;
-        static const String TRY;
-        static const String IMPORT;
-        static const String RECORD;
-        static const String DEL;
-        static const String PASS;
-        static const String CONTINUE;
-        static const String BREAK;
-        static const String RETURN;
-        static const String PRINT;
-        static const String CONST;
-        static const String T_TRUE;
-        static const String T_FALSE;
-        static const String NONE;
-        static const String PI;
+        static String const AND;
+        static String const OR;
+        static String const NOT;
+        static String const ELSIF;
+        static String const ELSE;
+        static String const THROW;
+        static String const CATCH;
+        static String const IN;
+        static String const END;
+        static String const IF;
+        static String const WHILE;
+        static String const FOR;
+        static String const DEF;
+        static String const TRY;
+        static String const IMPORT;
+        static String const RECORD;
+        static String const DEL;
+        static String const PASS;
+        static String const CONTINUE;
+        static String const BREAK;
+        static String const RETURN;
+        static String const PRINT;
+        static String const CONST;
+        static String const T_TRUE;
+        static String const T_FALSE;
+        static String const NONE;
+        static String const PI;
 
         // Operators.
-        static const String ASSIGN;
-        static const String SCOPE_ASSIGN;
-        static const String WEAK_ASSIGN;
+        static String const ASSIGN;
+        static String const SCOPE_ASSIGN;
+        static String const WEAK_ASSIGN;
 
     public:
         ScriptLex(String const &input = "");

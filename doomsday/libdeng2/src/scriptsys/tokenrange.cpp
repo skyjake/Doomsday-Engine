@@ -25,7 +25,7 @@
 using namespace de;
 
 /// This position is used for marking an undefined position in the range.
-const duint UNDEFINED_POS = 0xffffffff;
+duint const UNDEFINED_POS = 0xffffffff;
 
 TokenRange::TokenRange() : _tokens(0), _start(0), _end(0)
 {}
@@ -207,8 +207,8 @@ bool TokenRange::getNextDelimited(QChar const *delimiter, TokenRange &subrange) 
     return true;
 }
 
-void TokenRange::bracketTokens(Token const &openingToken, const QChar*& opening,
-                               const QChar*& closing)
+void TokenRange::bracketTokens(Token const &openingToken, QChar const * &opening,
+                               QChar const * &closing)
 {
     opening = NULL;
     closing = NULL;

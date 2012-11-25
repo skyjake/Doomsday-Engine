@@ -21,7 +21,7 @@
 
 using namespace de;
 
-const Variable::Flags AccessorValue::VARIABLE_MODE = Variable::AllowText |
+Variable::Flags const AccessorValue::VARIABLE_MODE = Variable::AllowText |
     Variable::ReadOnly | Variable::NoSerialize;
 
 AccessorValue::AccessorValue()

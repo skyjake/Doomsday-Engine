@@ -32,8 +32,8 @@
 
 namespace de
 {
-    const ddouble PI = 3.14159265358979323846;
-    const ddouble EPSILON = 1.0e-7;
+    ddouble const PI = 3.14159265358979323846;
+    ddouble const EPSILON = 1.0e-7;
 
     /// Absolute value.
     template <typename Type>

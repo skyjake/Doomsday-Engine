@@ -75,14 +75,14 @@
 namespace de {
 
 /// Version of the block transfer protocol.
-static const duint PROTOCOL_VERSION = 0;
+static duint const PROTOCOL_VERSION = 0;
 
 /// Maximum number of channels.
-static const duint MAX_CHANNELS = 2;
+static duint const MAX_CHANNELS = 2;
 
-static const int MAX_SIZE_SMALL  = 127; // bytes
-static const int MAX_SIZE_MEDIUM = 4095; // bytes
-static const int MAX_SIZE_LARGE  = DENG2_SOCKET_MAX_PAYLOAD_SIZE;
+static int const MAX_SIZE_SMALL  = 127; // bytes
+static int const MAX_SIZE_MEDIUM = 4095; // bytes
+static int const MAX_SIZE_LARGE  = DENG2_SOCKET_MAX_PAYLOAD_SIZE;
 
 /// Threshold for input data size: messages smaller than this are first compressed
 /// with Doomsday's Huffman codes. If the result is smaller than the deflated data,
@@ -252,7 +252,7 @@ struct Socket::Instance
 
         if(!header.size) // Try deflate.
         {
-            const int level = (payload.size() < 2*MAX_SIZE_MEDIUM? 6 /*default*/ : 9 /*best*/);
+            int const level = (payload.size() < 2*MAX_SIZE_MEDIUM? 6 /*default*/ : 9 /*best*/);
             QByteArray deflated = qCompress(payload, level);
 
             if(!deflated.size())

@@ -27,7 +27,7 @@
 namespace de {
 
 /// Size of the fixed-size portion of the segment buffer.
-static const int SEGMENT_BUFFER_SIZE = 24;
+static int const SEGMENT_BUFFER_SIZE = 24;
 
 static String emptyPath;
 

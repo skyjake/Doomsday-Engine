@@ -23,37 +23,37 @@
 
 using namespace de;
 
-const String ScriptLex::AND("and");
-const String ScriptLex::OR("or");
-const String ScriptLex::NOT("not");
-const String ScriptLex::IF("if");
-const String ScriptLex::ELSIF("elsif");
-const String ScriptLex::ELSE("else");
-const String ScriptLex::END("end");
-const String ScriptLex::THROW("throw");
-const String ScriptLex::CATCH("catch");
-const String ScriptLex::IN("in");
-const String ScriptLex::WHILE("while");
-const String ScriptLex::FOR("for");
-const String ScriptLex::DEF("def");
-const String ScriptLex::TRY("try");
-const String ScriptLex::IMPORT("import");
-const String ScriptLex::RECORD("record");
-const String ScriptLex::DEL("del");
-const String ScriptLex::PASS("pass");
-const String ScriptLex::CONTINUE("continue");
-const String ScriptLex::BREAK("break");
-const String ScriptLex::RETURN("return");
-const String ScriptLex::CONST("const");
-const String ScriptLex::PRINT("print");
-const String ScriptLex::T_TRUE("True");
-const String ScriptLex::T_FALSE("False");
-const String ScriptLex::NONE("None");
-const String ScriptLex::PI("Pi");
+String const ScriptLex::AND("and");
+String const ScriptLex::OR("or");
+String const ScriptLex::NOT("not");
+String const ScriptLex::IF("if");
+String const ScriptLex::ELSIF("elsif");
+String const ScriptLex::ELSE("else");
+String const ScriptLex::END("end");
+String const ScriptLex::THROW("throw");
+String const ScriptLex::CATCH("catch");
+String const ScriptLex::IN("in");
+String const ScriptLex::WHILE("while");
+String const ScriptLex::FOR("for");
+String const ScriptLex::DEF("def");
+String const ScriptLex::TRY("try");
+String const ScriptLex::IMPORT("import");
+String const ScriptLex::RECORD("record");
+String const ScriptLex::DEL("del");
+String const ScriptLex::PASS("pass");
+String const ScriptLex::CONTINUE("continue");
+String const ScriptLex::BREAK("break");
+String const ScriptLex::RETURN("return");
+String const ScriptLex::CONST("const");
+String const ScriptLex::PRINT("print");
+String const ScriptLex::T_TRUE("True");
+String const ScriptLex::T_FALSE("False");
+String const ScriptLex::NONE("None");
+String const ScriptLex::PI("Pi");
 
-const String ScriptLex::ASSIGN("=");
-const String ScriptLex::SCOPE_ASSIGN(":=");
-const String ScriptLex::WEAK_ASSIGN("?=");
+String const ScriptLex::ASSIGN("=");
+String const ScriptLex::SCOPE_ASSIGN(":=");
+String const ScriptLex::WEAK_ASSIGN("?=");
 
 ScriptLex::ScriptLex(String const &input) : Lex(input)
 {}
