@@ -222,14 +222,14 @@ namespace internal {
     struct PathConstructorParams {
         size_t length;
         String composedPath;
-        QChar delimiter;
+        QChar separator;
     };
 }
 
 /**
  * Recursive path constructor. First finds the root and the full length of the
  * path (when descending), then allocates memory for the string, and finally
- * copies each fragment with the delimiters (on the way out).
+ * copies each segment with the separators (on the way out).
  */
 static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Node const &trav)
 {
@@ -243,9 +243,9 @@ static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Nod
 
     if(trav.parent())
     {
-        if(!parm.delimiter.isNull())
+        if(!parm.separator.isNull())
         {
-            // There also needs to be a delimiter (a single character).
+            // There also needs to be a separator (a single character).
             parm.length += 1;
         }
 
@@ -253,8 +253,8 @@ static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Nod
         pathConstructor(parm, *trav.parent());
 
         // Append the separator.
-        if(!parm.delimiter.isNull())
-            parm.composedPath.append(parm.delimiter);
+        if(!parm.separator.isNull())
+            parm.composedPath.append(parm.separator);
     }
     // We've arrived at the deepest level. The full length is now known.
     // Ensure there's enough memory for the string.
@@ -281,23 +281,23 @@ static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Nod
  *
  * Perhaps a fixed size MRU cache? -ds
  */
-Path PathTree::Node::composePath(QChar delimiter) const
+Path PathTree::Node::composePath(QChar sep) const
 {
-    internal::PathConstructorParams parm = { 0, String(), delimiter };
+    internal::PathConstructorParams parm = { 0, String(), sep };
 #ifdef LIBDENG_STACK_MONITOR
     stackStart = &parm;
 #endif
 
     // Include a terminating path delimiter for branches.
-    if(!delimiter.isNull() && !isLeaf())
+    if(!sep.isNull() && !isLeaf())
         parm.length += 1; // A single character.
 
     // Recursively construct the path from fragments and delimiters.
     pathConstructor(parm, *this);
 
     // Terminating delimiter for branches.
-    if(!delimiter.isNull() && !isLeaf())
-        parm.composedPath += delimiter;
+    if(!sep.isNull() && !isLeaf())
+        parm.composedPath += sep;
 
     DENG2_ASSERT(parm.composedPath.length() == (int)parm.length);
 
@@ -306,7 +306,7 @@ Path PathTree::Node::composePath(QChar delimiter) const
     LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
 #endif
 
-    return Path(parm.composedPath, delimiter);
+    return Path(parm.composedPath, sep);
 }
 
 } // namespace de

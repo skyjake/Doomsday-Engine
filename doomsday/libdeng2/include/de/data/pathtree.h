@@ -38,8 +38,8 @@ namespace de
      * For example, the path <pre>"c:/somewhere/something"</pre> contains three
      * path segments: <pre>[ 0: "c:", 1: "somewhere", 2: "something" ]</pre>
      *
-     * @em Delimiter is the term given to the separators between segments.
-     * (Such as forward slashes in an UNIX-style file path).
+     * Segments are separated by @em separator @em characters. For instance,
+     * UNIX file paths use forward slashes as separators.
      *
      * Internally, segments are "pooled" such that only one instance of a
      * segment is included in the model of the whole tree. Potentially, this
@@ -47,12 +47,12 @@ namespace de
      * necessary to represent the complete hierarchy as a set of fully composed
      * paths.
      *
-     * Delimiters are not included in the hierarchy model. Not including the
-     * delimiters allows for optimal dynamic replacement when recomposing the
+     * Separators are not included in the hierarchy model. Not including the
+     * separators allows for optimal dynamic replacement when recomposing the
      * original paths (also reducing the memory overhead for the whole data
      * set). One potential use for this feature when representing file path
      * hierarchies is "ambidextrously" recomposing paths with either forward or
-     * backward slashes, irrespective of the delimiter used at path insertion
+     * backward slashes, irrespective of the separator used at path insertion
      * time.
      *
      * Somewhat similar to a Prefix Tree (Trie) representationally although
@@ -107,7 +107,7 @@ namespace de
         static Path::hash_type const no_hash;
 
 #ifdef DENG2_DEBUG
-        void debugPrint(QChar delimiter = '/') const;
+        void debugPrint(QChar separator = '/') const;
         void debugPrintHashDistribution() const;
 #endif
 
@@ -162,13 +162,13 @@ namespace de
              * Composes the path for this node. The whole path is upwardly
              * reconstructed toward the root of the hierarchy.
              *
-             * @param delimiter Names in the composed path hierarchy will be delimited
-             *                  with this character. Paths to branches always include
-             *                  a terminating delimiter.
+             * @param sep  Segments in the composed path hierarchy are separatered
+             *             with this character. Paths to branches always include
+             *             a terminating separator.
              *
              * @return The composed uri.
              */
-            Path composePath(QChar delimiter = '/') const;
+            Path composePath(QChar sep = '/') const;
 
             /**
              * Sets the user-specified custom pointer.
@@ -222,7 +222,7 @@ namespace de
 
         /**
          * Add a new path into the hierarchy. Duplicates are automatically pruned.
-         * Delimiters in the path are completely ignored.
+         * Separators in the path are completely ignored.
          *
          * @param path  New path to be added to the tree. Note that this path is
          *              NOT resolved before insertion, so any symbolics contained
@@ -260,15 +260,15 @@ namespace de
         /**
          * Collate all referenced paths in the hierarchy into a list.
          *
-         * @param found      Set of paths that match the result.
-         * @param flags      Comparison behavior flags.
-         * @param delimiter  Names in the composed path hierarchy will be delimited
-         *                   with this character. Paths to branches always include
-         *                   a terminating delimiter.
+         * @param found  Set of paths that match the result.
+         * @param flags  Comparison behavior flags.
+         * @param sep    Segments in the composed path will be separated
+         *               with this character. Paths to branches always include
+         *               a terminating separator.
          *
          * @return Number of paths found.
          */
-        int findAllPaths(FoundPaths &found, ComparisonFlags flags = 0, QChar delimiter = '/') const;
+        int findAllPaths(FoundPaths &found, ComparisonFlags flags = 0, QChar sep = '/') const;
 
         /**
          * Traverse the node hierarchy making a callback for visited node. Traversal

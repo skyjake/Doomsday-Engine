@@ -286,27 +286,27 @@ PathTree::Nodes const &PathTree::nodes(NodeType type) const
     return (type == Leaf? d->leafHash : d->branchHash);
 }
 
-static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes const &ph, QChar delimiter)
+static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes const &ph, QChar separator)
 {
     if(ph.empty()) return;
 
     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
     {
         PathTree::Node const &node = **i;
-        found.push_back(node.composePath(delimiter));
+        found.push_back(node.composePath(separator));
     }
 }
 
-int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar delimiter) const
+int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar separator) const
 {
     int numFoundSoFar = found.count();
     if(!(flags & NoBranch))
     {
-        collectPathsInHash(found, branchNodes(), delimiter);
+        collectPathsInHash(found, branchNodes(), separator);
     }
     if(!(flags & NoLeaf))
     {
-        collectPathsInHash(found, leafNodes(), delimiter);
+        collectPathsInHash(found, leafNodes(), separator);
     }
     return found.count() - numFoundSoFar;
 }
@@ -369,12 +369,12 @@ int PathTree::traverse(ComparisonFlags flags, PathTree::Node *parent, Path::hash
 }
 
 #ifdef DENG2_DEBUG
-void PathTree::debugPrint(QChar delimiter) const
+void PathTree::debugPrint(QChar separator) const
 {
     LOG_AS("PathTree");
     LOG_INFO("[%p]:") << de::dintptr(this);
     FoundPaths found;
-    if(findAllPaths(found, 0, delimiter))
+    if(findAllPaths(found, 0, separator))
     {
         qSort(found.begin(), found.end());
 
