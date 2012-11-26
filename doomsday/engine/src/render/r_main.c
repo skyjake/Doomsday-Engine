@@ -171,7 +171,7 @@ static fontid_t loadSystemFont(const char* name)
     assert(name && name[0]);
 
     // Compose the resource name.
-    uri = Uri_NewWithPath2(FN_SYSTEM_NAME":", RC_NULL);
+    uri = Uri_NewWithPath2("System:", RC_NULL);
     Uri_SetPath(uri, name);
 
     // Compose the resource data path.

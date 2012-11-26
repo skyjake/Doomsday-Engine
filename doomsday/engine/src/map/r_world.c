@@ -1735,7 +1735,7 @@ static material_t* chooseFixMaterial(SideDef* s, SideDefSection section)
     if(choice2) return choice2;
 
     // We'll assign the special "missing" material...
-    return Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":missing"));
+    return Materials_ToMaterial(Materials_ResolveUriCString("System:missing"));
 }
 
 static void addMissingMaterial(SideDef* s, SideDefSection section)

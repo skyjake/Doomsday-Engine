@@ -1675,13 +1675,13 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
             if(renderTextures == 2)
             {
                 // Lighting debug mode; render using System:gray.
-                mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":gray"));
+                mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
             }
             else if(!surface->material ||
                     ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))
             {
                 // Missing material debug mode; render using System:missing.
-                mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":missing"));
+                mat = Materials_ToMaterial(Materials_ResolveUriCString("System:missing"));
             }
             else
             {
@@ -2796,10 +2796,10 @@ static void Rend_RenderPlanes(void)
         else if(texMode == 1)
             // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
-            mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":missing"));
+            mat = Materials_ToMaterial(Materials_ResolveUriCString("System:missing"));
         else
             // For lighting debug, render all solid surfaces using the gray texture.
-            mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":gray"));
+            mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
 
         V2f_Copy(texOffset, suf->visOffset);
         // Add the Y offset to orient the Y flipped texture.
@@ -3970,7 +3970,7 @@ static void Rend_RenderBoundingBoxes(void)
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":bbox"));
+    mat = Materials_ToMaterial(Materials_ResolveUriCString("System:bbox"));
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(mat, spec, true);

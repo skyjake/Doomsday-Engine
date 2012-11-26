@@ -485,18 +485,18 @@ textureschemeid_t Textures_ParseSchemeName(const char* str)
         textureschemeid_t id;
     } schemeNameIdMap[TEXTURESCHEME_COUNT+1] = {
         // Ordered according to a best guess of occurance frequency.
-        { TS_TEXTURES_NAME,     sizeof(TS_TEXTURES_NAME)-1,     TS_TEXTURES },
-        { TS_FLATS_NAME,        sizeof(TS_FLATS_NAME)-1,        TS_FLATS },
-        { TS_SPRITES_NAME,      sizeof(TS_SPRITES_NAME)-1,      TS_SPRITES },
-        { TS_PATCHES_NAME,      sizeof(TS_PATCHES_NAME)-1,      TS_PATCHES },
-        { TS_SYSTEM_NAME,       sizeof(TS_SYSTEM_NAME)-1,       TS_SYSTEM },
-        { TS_DETAILS_NAME,      sizeof(TS_DETAILS_NAME)-1,      TS_DETAILS },
-        { TS_REFLECTIONS_NAME,  sizeof(TS_REFLECTIONS_NAME)-1,  TS_REFLECTIONS },
-        { TS_MASKS_NAME,        sizeof(TS_MASKS_NAME)-1,        TS_MASKS },
-        { TS_MODELSKINS_NAME,   sizeof(TS_MODELSKINS_NAME)-1,   TS_MODELSKINS },
-        { TS_MODELREFLECTIONSKINS_NAME, sizeof(TS_MODELREFLECTIONSKINS_NAME)-1, TS_MODELREFLECTIONSKINS },
-        { TS_LIGHTMAPS_NAME,    sizeof(TS_LIGHTMAPS_NAME)-1,    TS_LIGHTMAPS },
-        { TS_FLAREMAPS_NAME,    sizeof(TS_FLAREMAPS_NAME)-1,    TS_FLAREMAPS },
+        { "Textures",     sizeof("Textures")-1,     TS_TEXTURES },
+        { "Flats",        sizeof("Flats")-1,        TS_FLATS },
+        { "Sprites",      sizeof("Sprites")-1,      TS_SPRITES },
+        { "Patches",      sizeof("Patches")-1,      TS_PATCHES },
+        { "System",       sizeof("System")-1,       TS_SYSTEM },
+        { "Details",      sizeof("Details")-1,      TS_DETAILS },
+        { "Reflections",  sizeof("Reflections")-1,  TS_REFLECTIONS },
+        { "Masks",        sizeof("Masks")-1,        TS_MASKS },
+        { "ModelSkins",   sizeof("ModelSkins")-1,   TS_MODELSKINS },
+        { "ModelReflectionSkins", sizeof("ModelReflectionSkins")-1, TS_MODELREFLECTIONSKINS },
+        { "Lightmaps",    sizeof("Lightmaps")-1,    TS_LIGHTMAPS },
+        { "Flaremaps",    sizeof("Flaremaps")-1,    TS_FLAREMAPS },
         { NULL,                 0,                              TS_INVALID }
     };
 
@@ -522,18 +522,18 @@ const Str* Textures_SchemeName(textureschemeid_t id)
 {
     static const de::Str names[1+TEXTURESCHEME_COUNT] = {
         /* No scheme name */            "",
-        /* TS_SYSTEM */                 TS_SYSTEM_NAME,
-        /* TS_FLATS */                  TS_FLATS_NAME,
-        /* TS_TEXTURES */               TS_TEXTURES_NAME,
-        /* TS_SPRITES */                TS_SPRITES_NAME,
-        /* TS_PATCHES */                TS_PATCHES_NAME,
-        /* TS_DETAILS */                TS_DETAILS_NAME,
-        /* TS_REFLECTIONS */            TS_REFLECTIONS_NAME,
-        /* TS_MASKS */                  TS_MASKS_NAME,
-        /* TS_MODELSKINS */             TS_MODELSKINS_NAME,
-        /* TS_MODELREFLECTIONSKINS */   TS_MODELREFLECTIONSKINS_NAME,
-        /* TS_LIGHTMAPS */              TS_LIGHTMAPS_NAME,
-        /* TS_FLAREMAPS */              TS_FLAREMAPS_NAME
+        /* TS_SYSTEM */                 "System",
+        /* TS_FLATS */                  "Flats",
+        /* TS_TEXTURES */               "Textures",
+        /* TS_SPRITES */                "Sprites",
+        /* TS_PATCHES */                "Patches",
+        /* TS_DETAILS */                "Details",
+        /* TS_REFLECTIONS */            "Reflections",
+        /* TS_MASKS */                  "Masks",
+        /* TS_MODELSKINS */             "ModelSkins",
+        /* TS_MODELREFLECTIONSKINS */   "ModelReflectionSkins",
+        /* TS_LIGHTMAPS */              "Lightmaps",
+        /* TS_FLAREMAPS */              "Flaremaps"
     };
     if(VALID_TEXTURESCHEMEID(id))
     {

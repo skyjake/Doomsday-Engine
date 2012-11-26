@@ -121,8 +121,8 @@ void BusyVisual_PrepareFont(void)
             const char* name;
             const char* path;
         } fonts[] = {
-            { FN_SYSTEM_NAME":normal12", "}data/fonts/normal12.dfn" },
-            { FN_SYSTEM_NAME":normal18", "}data/fonts/normal18.dfn" }
+            { "System:normal12", "}data/fonts/normal12.dfn" },
+            { "System:normal18", "}data/fonts/normal18.dfn" }
         };
         int fontIdx = !(Window_Width(theWindow) > 640)? 0 : 1;
         Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);

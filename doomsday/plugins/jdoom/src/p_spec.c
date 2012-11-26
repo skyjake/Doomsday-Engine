@@ -164,8 +164,8 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 
         if(i == 0 || isTexture != lastIsTexture)
         {
-            Uri_SetScheme(startUri, isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME);
-            Uri_SetScheme(endUri, isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME);
+            Uri_SetScheme(startUri, isTexture? "Textures" : "Flats");
+            Uri_SetScheme(endUri, isTexture? "Textures" : "Flats");
             lastIsTexture = isTexture;
         }
         Str_PercentEncode(Str_StripRight(Str_Set(&startPath, animDefs[i].startname)));
@@ -210,7 +210,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         for(n = startFrame; n <= endFrame; ++n)
         {
             Str_Clear(&framePath);
-            Str_Appendf(&framePath, "%s:%i", isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME, n);
+            Str_Appendf(&framePath, "%s:%i", isTexture? "Textures" : "Flats", n);
             Uri_SetPath(frameUrn, Str_Text(&framePath));
 
             R_AddAnimGroupFrame(groupNum, frameUrn, ticsPerFrame, 0);

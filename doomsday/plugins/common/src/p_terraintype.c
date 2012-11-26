@@ -170,24 +170,24 @@ void P_InitTerrainTypes(void)
         const char* ttName;
     } defs[] = {
 #if __JDOOM__ || __JDOOM64__
-        { MS_FLATS_NAME":FWATER1",  "Water" },
-        { MS_FLATS_NAME":LAVA1",    "Lava" },
-        { MS_FLATS_NAME":BLOOD1",   "Blood" },
-        { MS_FLATS_NAME":NUKAGE1",  "Nukage" },
-        { MS_FLATS_NAME":SLIME01",  "Slime" },
+        { "Flats:FWATER1",  "Water" },
+        { "Flats:LAVA1",    "Lava" },
+        { "Flats:BLOOD1",   "Blood" },
+        { "Flats:NUKAGE1",  "Nukage" },
+        { "Flats:SLIME01",  "Slime" },
 #endif
 #if __JHERETIC__
-        { MS_FLATS_NAME":FLTWAWA1", "Water" },
-        { MS_FLATS_NAME":FLTFLWW1", "Water" },
-        { MS_FLATS_NAME":FLTLAVA1", "Lava" },
-        { MS_FLATS_NAME":FLATHUH1", "Lava" },
-        { MS_FLATS_NAME":FLTSLUD1", "Sludge" },
+        { "Flats:FLTWAWA1", "Water" },
+        { "Flats:FLTFLWW1", "Water" },
+        { "Flats:FLTLAVA1", "Lava" },
+        { "Flats:FLATHUH1", "Lava" },
+        { "Flats:FLTSLUD1", "Sludge" },
 #endif
 #if __JHEXEN__
-        { MS_FLATS_NAME":X_005",    "Water" },
-        { MS_FLATS_NAME":X_001",    "Lava" },
-        { MS_FLATS_NAME":X_009",    "Sludge" },
-        { MS_FLATS_NAME":F_033",    "Ice" },
+        { "Flats:X_005",    "Water" },
+        { "Flats:X_001",    "Lava" },
+        { "Flats:X_009",    "Sludge" },
+        { "Flats:F_033",    "Ice" },
 #endif
         { 0, 0 }
     };

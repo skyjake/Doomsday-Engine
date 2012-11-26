@@ -1520,7 +1520,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     {
                         READLABEL;
                         RV_URI("Material", &sl->material, 0)
-                        RV_URI("Texture", &sl->material, MS_TEXTURES_NAME )
+                        RV_URI("Texture", &sl->material, "Textures" )
                         RV_FLAGS("Flags", sl->flags, "slf_")
                         RV_FLT("Offset", sl->offset)
                         RV_FLT("Color limit", sl->colorLimit)
@@ -1631,7 +1631,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     {
                         READLABEL;
                         RV_URI("Material", &sl->material, 0)
-                        RV_URI("Texture", &sl->material, MS_TEXTURES_NAME)
+                        RV_URI("Texture", &sl->material, "Textures")
                         RV_FLAGS("Flags", sl->flags, "slf_")
                         RV_FLT("Offset", sl->offset)
                         RV_FLT("Color limit", sl->colorLimit)
@@ -1730,7 +1730,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     {
                         // A new material path.
                         ddstring_t schemeName; Str_Init(&schemeName);
-                        Str_Set(&schemeName, ISLABEL("Material")? "" : ISLABEL("Texture")? MS_TEXTURES_NAME : MS_FLATS_NAME);
+                        Str_Set(&schemeName, ISLABEL("Material")? "" : ISLABEL("Texture")? "Textures" : "Flats");
                         mn = (uri_s**) DED_NewEntry((void**)&tenv->materials, &tenv->count, sizeof(*mn));
                         FINDBEGIN;
                         for(;;)
@@ -1764,7 +1764,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     READLABEL;
                     if(ISLABEL("ID"))
                     {
-                        READURI(&cfont->uri, FN_GAME_NAME)
+                        READURI(&cfont->uri, "Game")
                         CHECKSC;
                     }
                     else if(M_IsStringValidInt(label))
@@ -1926,15 +1926,15 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_FLAGS("Flags", dtl->flags, "dtf_")
                 if(ISLABEL("Texture"))
                 {
-                    READURI(&dtl->material1, MS_TEXTURES_NAME)
+                    READURI(&dtl->material1, "Textures")
                 }
                 else if(ISLABEL("Wall")) // Alias
                 {
-                    READURI(&dtl->material1, MS_TEXTURES_NAME)
+                    READURI(&dtl->material1, "Textures")
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READURI(&dtl->material2, MS_FLATS_NAME)
+                    READURI(&dtl->material2, "Flats")
                 }
                 else if(ISLABEL("Lump"))
                 {
@@ -1991,11 +1991,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
                 else if(ISLABEL("Texture"))
                 {
-                    READURI(&ref->material, MS_TEXTURES_NAME)
+                    READURI(&ref->material, "Textures")
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READURI(&ref->material, MS_FLATS_NAME)
+                    READURI(&ref->material, "Flats")
                 }
                 else RV_END
                 CHECKSC;
@@ -2040,11 +2040,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READURI(&gen->material, MS_FLATS_NAME)
+                    READURI(&gen->material, "Flats")
                 }
                 else if(ISLABEL("Texture"))
                 {
-                    READURI(&gen->material, MS_TEXTURES_NAME)
+                    READURI(&gen->material, "Textures")
                 }
                 else
                 RV_STR("Mobj", gen->type)
@@ -2205,11 +2205,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
                 else if(ISLABEL("Texture"))
                 {
-                    READURI(&decor->material, MS_TEXTURES_NAME)
+                    READURI(&decor->material, "Textures")
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READURI(&decor->material, MS_FLATS_NAME)
+                    READURI(&decor->material, "Flats")
                 }
                 else if(ISLABEL("Light"))
                 {
@@ -2283,7 +2283,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 {
                     ded_group_member_t* memb;
                     ddstring_t schemeName; Str_Init(&schemeName);
-                    Str_Set(&schemeName, ISLABEL("Texture")? MS_TEXTURES_NAME : MS_FLATS_NAME);
+                    Str_Set(&schemeName, ISLABEL("Texture")? "Textures" : "Flats");
 
                     // Need to allocate new stage?
                     if(sub >= grp->count.num)
@@ -2420,7 +2420,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
                 else if(ISLABEL("Act texture")) // Alias
                 {
-                    READURI(&l->actMaterial, MS_TEXTURES_NAME)
+                    READURI(&l->actMaterial, "Textures")
                 }
                 else if(ISLABEL("Deact material"))
                 {
@@ -2428,7 +2428,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
                 else if(ISLABEL("Deact texture")) // Alias
                 {
-                    READURI(&l->deactMaterial, MS_TEXTURES_NAME)
+                    READURI(&l->deactMaterial, "Textures")
                 }
                 else
                 RV_INT("Act type", l->actLineType)

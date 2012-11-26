@@ -426,8 +426,8 @@ fontschemeid_t Fonts_ParseScheme(char const* str)
         fontschemeid_t id;
     } schemes[FONTSCHEME_COUNT+1] = {
         // Ordered according to a best guess of occurance frequency.
-        { FN_GAME_NAME,     sizeof(FN_GAME_NAME)   - 1, FS_GAME   },
-        { FN_SYSTEM_NAME,   sizeof(FN_SYSTEM_NAME) - 1, FS_SYSTEM },
+        { "Game",     sizeof("Game")   - 1, FS_GAME   },
+        { "System",   sizeof("System") - 1, FS_SYSTEM },
         { NULL,             0,                          FS_ANY    }
     };
     size_t len, n;
@@ -453,8 +453,8 @@ ddstring_t const* Fonts_SchemeName(fontschemeid_t id)
 {
     static de::Str const schemes[1 + FONTSCHEME_COUNT] = {
         /* No scheme name */ "",
-        /* FS_SYSTEM */         FN_SYSTEM_NAME,
-        /* FS_SYSTEM */         FN_GAME_NAME
+        /* FS_SYSTEM */      "System",
+        /* FS_GAME */        "Game"
     };
     if(VALID_FONTSCHEMEID(id))
         return schemes[1 + (id - FONTSCHEME_FIRST)];

@@ -621,10 +621,10 @@ materialschemeid_t Materials_ParseSchemeName(const char* str)
 {
     if(!str || 0 == strlen(str)) return MS_ANY;
 
-    if(!stricmp(str, MS_TEXTURES_NAME)) return MS_TEXTURES;
-    if(!stricmp(str, MS_FLATS_NAME))    return MS_FLATS;
-    if(!stricmp(str, MS_SPRITES_NAME))  return MS_SPRITES;
-    if(!stricmp(str, MS_SYSTEM_NAME))   return MS_SYSTEM;
+    if(!stricmp(str, "Textures")) return MS_TEXTURES;
+    if(!stricmp(str, "Flats"))    return MS_FLATS;
+    if(!stricmp(str, "Sprites"))  return MS_SPRITES;
+    if(!stricmp(str, "System"))   return MS_SYSTEM;
 
     return MS_INVALID; // Unknown.
 }
@@ -633,10 +633,10 @@ Str const* Materials_SchemeName(materialschemeid_t id)
 {
     static de::Str const names[1+MATERIALSCHEME_COUNT] = {
         /* No scheme name */    "",
-        /* MS_SYSTEM */         MS_SYSTEM_NAME,
-        /* MS_FLATS */          MS_FLATS_NAME,
-        /* MS_TEXTURES */       MS_TEXTURES_NAME,
-        /* MS_SPRITES */        MS_SPRITES_NAME
+        /* MS_SYSTEM */         "System",
+        /* MS_FLATS */          "Flats",
+        /* MS_TEXTURES */       "Textures",
+        /* MS_SPRITES */        "Sprites"
     };
     if(VALID_MATERIALSCHEMEID(id))
         return names[1 + (id - MATERIALSCHEME_FIRST)];

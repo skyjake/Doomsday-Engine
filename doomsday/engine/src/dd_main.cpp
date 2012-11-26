@@ -627,7 +627,7 @@ void DD_StartTitle(void)
                                                Window_Height(theWindow));
     for(i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
-        Str_Appendf(&setupCmds, "prefont %i "FN_SYSTEM_NAME":%s\n", i, fontName);
+        Str_Appendf(&setupCmds, "prefont %i System:%s\n", i, fontName);
     }
 
     // Configure the predefined colors.

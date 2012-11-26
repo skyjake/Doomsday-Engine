@@ -1274,25 +1274,9 @@ typedef struct {
 #define AGF_PRECACHE            0x4000 // Group is just for precaching.
 /**@}*/
 
-/**
- * @defgroup scheme Schemes
- * @ingroup resource
- */
-
-/**
+/*
  * Material Schemes
  */
-
-/**
- * @defgroup materialSchemeNames  Material Scheme Names
- * @ingroup scheme
- */
-///@{
-#define MS_SYSTEM_NAME          "System"
-#define MS_FLATS_NAME           "Flats"
-#define MS_TEXTURES_NAME        "Textures"
-#define MS_SPRITES_NAME         "Sprites"
-///@}
 
 typedef enum materialschemeid_e {
     MS_ANY = -1,
@@ -1310,28 +1294,9 @@ typedef enum materialschemeid_e {
 /// @c true= val can be interpreted as a valid material scheme identifier.
 #define VALID_MATERIALSCHEMEID(val) ((val) >= MATERIALSCHEME_FIRST && (val) <= MATERIALSCHEME_LAST)
 
-/**
+/*
  * Texture Schemes
  */
-
-/**
- * @defgroup textureSchemeNames  Texture Scheme Names
- * @ingroup scheme
- */
-///@{
-#define TS_SYSTEM_NAME          "System"
-#define TS_FLATS_NAME           "Flats"
-#define TS_TEXTURES_NAME        "Textures"
-#define TS_SPRITES_NAME         "Sprites"
-#define TS_PATCHES_NAME         "Patches"
-#define TS_DETAILS_NAME         "Details"
-#define TS_REFLECTIONS_NAME     "Reflections"
-#define TS_MASKS_NAME           "Masks"
-#define TS_MODELSKINS_NAME      "ModelSkins"
-#define TS_MODELREFLECTIONSKINS_NAME "ModelReflectionSkins"
-#define TS_LIGHTMAPS_NAME       "Lightmaps"
-#define TS_FLAREMAPS_NAME       "Flaremaps"
-///@}
 
 /// Texture scheme identifiers. @ingroup scheme
 typedef enum textureschemeid_e {
@@ -1358,18 +1323,9 @@ typedef enum textureschemeid_e {
 /// @c true= val can be interpreted as a valid texture scheme identifier.
 #define VALID_TEXTURESCHEMEID(val) ((val) >= TEXTURESCHEME_FIRST && (val) <= TEXTURESCHEME_LAST)
 
-/**
+/*
  * Font Schemes
  */
-
-/**
- * @defgroup fontSchemeNames  Font Scheme Names
- * @ingroup scheme
- */
-///@{
-#define FN_SYSTEM_NAME          "System"
-#define FN_GAME_NAME            "Game"
-///@}
 
 /// Font scheme identifier. @ingroup scheme
 typedef enum fontschemeid_e {
