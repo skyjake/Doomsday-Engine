@@ -79,7 +79,7 @@ PathTree::Node &PathTree::Node::parent() const
     return *d->parent;
 }
 
-const PathTree::Nodes &PathTree::Node::children() const
+const PathTree::Node::Children &PathTree::Node::children() const
 {
     DENG2_ASSERT(d->children != 0);
     return *d->children;

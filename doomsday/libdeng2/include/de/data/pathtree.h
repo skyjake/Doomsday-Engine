@@ -123,7 +123,7 @@ public:
      * spell out all the arguments provided by PathTree.
      *
      * Not public as only PathTree itself constructs instances, others can
-     * threat this as an opaque type.
+     * treat this as an opaque type.
      */
     struct NodeArgs
     {
@@ -154,12 +154,12 @@ public:
         PathTree &tree() const;
 
         /// @return Parent of this node. For nodes at the root level,
-        /// this is the tree's special root node.
+        /// the parent is the tree's special root node.
         Node &parent() const;
 
         /// Returns the children of a branch node. Note that leaf nodes
         /// have no children -- calling this for leaf nodes is not allowed.
-        Nodes const &children() const;
+        Children const &children() const;
 
         /// Determines if the node is at the root level of the tree
         /// (no other node is its parent).
