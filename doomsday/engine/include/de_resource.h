@@ -22,7 +22,7 @@
 #ifndef LIBDENG_RESOURCE_SUBSYSTEM_H
 #define LIBDENG_RESOURCE_SUBSYSTEM_H
 
-#include "resource/colorpalette.h"
+#include "resource/colorpalettes.h"
 #include "resource/r_data.h"
 #include "resource/materials.h"
 #include "resource/materialvariant.h"

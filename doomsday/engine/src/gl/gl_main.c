@@ -45,7 +45,7 @@
 #include "de_defs.h"
 
 #include "gl/texturecontent.h"
-#include "resource/colorpalette.h"
+#include "resource/colorpalettes.h"
 #include "resource/texturevariant.h"
 #include "resource/materialvariant.h"
 #include "ui/displaymode.h"

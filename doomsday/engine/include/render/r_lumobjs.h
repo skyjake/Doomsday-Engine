@@ -30,6 +30,7 @@
 #define LIBDENG_REFRESH_LUMINOUS_H
 
 #include "dd_types.h"
+#include "color.h"
 #include "m_vector.h"
 #include "map/p_mapdata.h"
 #include "resource/r_data.h"

@@ -146,6 +146,7 @@ DENG_HEADERS += \
     include/client/cl_player.h \
     include/client/cl_sound.h \
     include/client/cl_world.h \
+    include/color.h \
     include/con_bar.h \
     include/con_bind.h \
     include/con_config.h \
@@ -292,6 +293,7 @@ DENG_HEADERS += \
     include/render/vignette.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
+    include/resource/colorpalettes.h \
     include/resource/font.h \
     include/resource/fonts.h \
     include/resource/hq2x.h \
@@ -446,6 +448,7 @@ SOURCES += \
     src/client/cl_player.c \
     src/client/cl_sound.c \
     src/client/cl_world.c \
+    src/color.cpp \
     src/con_bar.c \
     src/con_config.c \
     src/con_data.cpp \
@@ -573,6 +576,7 @@ SOURCES += \
     src/render/vignette.c \
     src/resource/bitmapfont.c \
     src/resource/colorpalette.c \
+    src/resource/colorpalettes.cpp \
     src/resource/fonts.cpp \
     src/resource/hq2x.c \
     src/resource/image.cpp \
