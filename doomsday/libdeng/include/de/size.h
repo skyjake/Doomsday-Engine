@@ -82,6 +82,9 @@ typedef struct Size2Rawf_s {
         };
         double widthHeight[2];
     };
+#ifdef __cplusplus
+    Size2Rawf_s(double w = 0, double h = 0) : width(w), height(h) {}
+#endif
 } Size2Rawf;
 
 struct size2f_s; // The Size2f instance (opaque).

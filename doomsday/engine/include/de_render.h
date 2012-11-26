@@ -33,7 +33,6 @@
 #include "render/rend_halo.h"
 #include "render/rend_list.h"
 #include "render/rend_particle.h"
-#include "render/rend_sprite.h"
 #include "render/rend_model.h"
 #include "render/rend_shadow.h"
 #include "render/rend_fakeradio.h"
@@ -44,6 +43,7 @@
 #include "render/rend_dynlight.h"
 #include "render/rendpoly.h"
 #include "render/sky.h"
+#include "render/sprite.h"
 #include "render/vignette.h"
 #include "render/vlight.h"
 

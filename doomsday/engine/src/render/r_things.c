@@ -1109,7 +1109,7 @@ void R_ProjectSprite(mobj_t* mo)
     }
     matFlipT = false;
 
-    spec = Rend_SpriteMaterialSpec(mo->tclass, mo->tmap);
+    spec = Sprite_MaterialSpec(mo->tclass, mo->tmap);
     ms   = Materials_Prepare(mat, spec, true);
 
     // An invalid sprite texture?

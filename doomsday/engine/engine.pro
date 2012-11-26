@@ -286,9 +286,9 @@ DENG_HEADERS += \
     include/render/rend_model.h \
     include/render/rend_particle.h \
     include/render/rend_shadow.h \
-    include/render/rend_sprite.h \
     include/render/rendpoly.h \
     include/render/sky.h \
+    include/render/sprite.h \
     include/render/vignette.h \
     include/render/vlight.h \
     include/resource/animgroups.h \
@@ -572,9 +572,9 @@ SOURCES += \
     src/render/rend_model.c \
     src/render/rend_particle.c \
     src/render/rend_shadow.c \
-    src/render/rend_sprite.c \
     src/render/rendpoly.cpp \
     src/render/sky.cpp \
+    src/render/sprite.cpp \
     src/render/vignette.c \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \

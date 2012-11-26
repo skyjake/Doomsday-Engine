@@ -80,7 +80,7 @@ typedef struct rendmaskedwallparams_s {
         float color[4];
     } vertices[4];
 
-    Point2Rawf texOffset;
+    double texOffset[2];
     float texCoord[2][2]; ///< u and v coordinates.
 
     DGLuint modTex; ///< Texture to modulate with.

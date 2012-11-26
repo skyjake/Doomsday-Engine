@@ -47,7 +47,7 @@
 
 #include "render/r_things.h"
 #include "render/rend_model.h"
-#include "render/rend_sprite.h"
+#include "render/sprite.h"
 
 using namespace de;
 
@@ -956,7 +956,7 @@ static void scaleModelToSprite(modeldef_t& mf, int sprite, int frame)
 
     if(!spr.numFrames || spr.spriteFrames == NULL) return;
 
-    materialvariantspecification_t const* spec = Rend_SpriteMaterialSpec(0, 0);
+    materialvariantspecification_t const* spec = Sprite_MaterialSpec(0, 0);
     materialsnapshot_t const* ms = Materials_Prepare(spr.spriteFrames[frame].mats[0], spec, true);
 
 #if _DEBUG

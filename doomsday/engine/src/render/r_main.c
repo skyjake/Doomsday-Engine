@@ -1360,7 +1360,7 @@ void Rend_CacheForMobjType(int num)
     if(novideo || !((useModels && precacheSkins) || precacheSprites)) return;
     if(num < 0 || num >= defs.count.mobjs.num) return;
 
-    spec = Rend_SpriteMaterialSpec(0/*tclass*/, 0/*tmap*/);
+    spec = Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
 
     /// @todo Optimize: Traverses the entire state list!
     for(i = 0; i < defs.count.states.num; ++i)
@@ -1418,7 +1418,7 @@ void Rend_CacheForMap()
 
     if(precacheSprites)
     {
-        materialvariantspecification_t const* spec = Rend_SpriteMaterialSpec(0/*tclass*/, 0/*tmap*/);
+        materialvariantspecification_t const* spec = Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
         int i, k, m;
         for(i = 0; i < numSprites; ++i)
         {

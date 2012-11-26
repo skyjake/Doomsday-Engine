@@ -499,8 +499,8 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
 
     if(texOffset)
     {
-        VS_WALL(vis)->texOffset.x = texOffset[VX];
-        VS_WALL(vis)->texOffset.y = texOffset[VY];
+        VS_WALL(vis)->texOffset[0] = texOffset[VX];
+        VS_WALL(vis)->texOffset[1] = texOffset[VY];
     }
 
     // Masked walls are sometimes used for special effects like arcs,
@@ -514,9 +514,9 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
         const materialsnapshot_t* ms = Materials_PrepareVariant(material);
         int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
 
-        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset.x / ms->size.width;
+        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms->size.width;
         VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / ms->size.width;
-        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset.y / ms->size.height;
+        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / ms->size.height;
         VS_WALL(vis)->texCoord[1][VY] = VS_WALL(vis)->texCoord[0][VY] +
                 (rvertices[3].pos[VZ] - rvertices[0].pos[VZ]) / ms->size.height;
 

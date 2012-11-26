@@ -1,7 +1,5 @@
 /**
- * @file render/rend_sprite.h
- *
- * Rendering Map Objects as 2D Sprites. @ingroup render
+ * @file render/sprite.h Rendering Map Objects as 2D Sprites.
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
@@ -25,6 +23,9 @@
 #define LIBDENG_RENDER_SPRITE_H
 
 #include "resource/materialvariant.h"
+
+/// @addtogroup render
+///@{
 
 typedef struct rendpspriteparams_s
 {
@@ -68,9 +69,11 @@ void Rend_Draw2DPlayerSprites(void);
 
 void Rend_Draw3DPlayerSprites(void);
 
-materialvariantspecification_t const* Rend_SpriteMaterialSpec(int tclass, int tmap);
+materialvariantspecification_t const* Sprite_MaterialSpec(int tclass, int tmap);
 
 void Rend_RenderSprite(rendspriteparams_t const* params);
+
+///@}
 
 #ifdef __cplusplus
 } // extern "C"
