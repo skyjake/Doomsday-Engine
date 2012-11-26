@@ -32,6 +32,7 @@
 #include "gl/sys_opengl.h"
 #include "m_vector.h"
 #include "resource/materialvariant.h"
+#include "render/rendpoly.h"
 
 #define MIN_OPEN                (.1f)
 #define EDGE_OPEN_THRESHOLD     (8) // world units (Z axis)
@@ -967,8 +968,9 @@ static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
     tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texHeight;
 }
 
-static void renderShadowSeg(const rvertex_t* origVertices, const rendershadowseg_params_t* segp,
-    const rendsegradio_params_t* p)
+static void renderShadowSeg(const rvertex_t* origVertices,
+                            const rendershadowseg_params_t* segp,
+                            const rendsegradio_params_t* p)
 {
     float texOrigin[2][3];
     ColorRawf* rcolors;

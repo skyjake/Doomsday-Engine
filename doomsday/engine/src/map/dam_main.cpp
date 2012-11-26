@@ -354,7 +354,7 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
             //       theMap to be set first.
             P_SetCurrentMap(map);
 
-            R_InitFakeRadioForMap();
+            Rend_RadioInitForMap();
 
             { uint startTime = Timer_RealMilliseconds();
             GameMap_InitSkyFix(map);

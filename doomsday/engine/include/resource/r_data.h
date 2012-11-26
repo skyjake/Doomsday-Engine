@@ -63,12 +63,6 @@ typedef struct glcommand_vertex_s {
     int             index;
 } glcommand_vertex_t;
 
-typedef struct shadowlink_s {
-    struct shadowlink_s* next;
-    LineDef*        lineDef;
-    byte            side;
-} shadowlink_t;
-
 typedef struct {
     lumpnum_t lumpNum;
     short offX; /// block origin (always UL), which has allready

@@ -268,7 +268,6 @@ DENG_HEADERS += \
     include/network/ui_mpi.h \
     include/r_util.h \
     include/render/r_draw.h \
-    include/render/r_fakeradio.h \
     include/render/r_main.h \
     include/render/r_lgrid.h \
     include/render/r_lumobjs.h \
