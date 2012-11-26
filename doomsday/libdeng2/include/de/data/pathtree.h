@@ -80,8 +80,7 @@ public:
      */
     enum Flag
     {
-        MultiLeaf = 0x1,    ///< There can be more than one leaf with a given name.
-        NoLocalBranchIndex = 0x2 ///< Branch nodes will not have an index of their immediate child nodes.
+        MultiLeaf = 0x1     ///< There can be more than one leaf with a given name.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
