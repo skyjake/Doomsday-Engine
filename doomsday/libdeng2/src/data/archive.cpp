@@ -203,13 +203,10 @@ void Archive::add(Path const &path, IByteArray const &data)
 
     DENG2_ASSERT(d->index != 0);
 
-    Entry *entry = &static_cast<Entry &>(d->index->insert(path));
-
-    DENG2_ASSERT(entry != 0); // does this actually happen and when?
-
-    entry->data         = new Block(data);
-    entry->modifiedAt   = Time();
-    entry->maybeChanged = true;
+    Entry &entry = static_cast<Entry &>(d->index->insert(path));
+    entry.data         = new Block(data);
+    entry.modifiedAt   = Time();
+    entry.maybeChanged = true;
 
     // The rest of the data gets updated when the archive is written.
 
@@ -248,8 +245,6 @@ Archive::Entry &Archive::insertEntry(Path const &path)
 {
     LOG_AS("Archive");
     DENG2_ASSERT(d->index != 0);
-
-    LOG_DEBUG("Inserting %s") << path;
 
     // Remove any existing node at this path.
     d->index->remove(path, PathTree::MatchFull | PathTree::NoBranch);
