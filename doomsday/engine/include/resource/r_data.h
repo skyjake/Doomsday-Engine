@@ -136,7 +136,6 @@ AutoStr *R_ComposePatchPath(patchid_t id);
 
 struct texture_s *R_CreateSkinTex(Uri const *filePath, boolean isShinySkin);
 
-struct texture_s *R_RegisterModelSkin(char const *skin, char const *modelfn, boolean isReflection);
 struct texture_s *R_FindModelSkinForResourcePath(Uri const *resourcePath);
 struct texture_s *R_FindModelReflectionSkinForResourcePath(Uri const *resourcePath);
 

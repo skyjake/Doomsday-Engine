@@ -24,6 +24,13 @@
  * 02110-1301 USA</small>
  */
 
+#include <QDir>
+#include <de/App>
+#include <de/ByteOrder>
+#include <de/NativePath>
+#include <de/StringPool>
+#include <de/memory.h>
+
 #include "de_platform.h"
 
 #include <cmath>
@@ -33,19 +40,11 @@
 #include "de_filesys.h"
 #include "de_graphics.h"
 #include "de_play.h"
-#include "de_misc.h" // for M_CycleIntoRange()
+#include "de_resource.h"
 
 #include "def_main.h"
+#include "m_misc.h" // for M_CycleIntoRange()
 
-#include <de/ByteOrder>
-#include <de/NativePath>
-#include <de/StringPool>
-#include <de/memory.h>
-
-#include "resource/models.h"
-#include "resource/texture.h"
-#include "resource/texturevariant.h"
-#include "resource/materialvariant.h"
 #include "render/r_things.h"
 #include "render/rend_model.h"
 #include "render/rend_sprite.h"
@@ -481,15 +480,56 @@ static inline String const& findModelPath(modelid_t id)
     return modelRepository->stringRef(id);
 }
 
-static bool registerSkin(model_t& mdl, int skinIndex)
+static String findSkinPath(String skinFileName, String modelFilePath)
 {
-    LOG_AS("registerSkin");
+    // Try the "first choice" directory first.
+    if(!modelFilePath.isEmpty())
+    {
+        // The "first choice" directory is that in which the model file resides.
+        try
+        {
+            de::Uri searchPath = de::Uri(Path(modelFilePath.fileNamePath() / skinFileName));
+            return App_FileSystem()->findPath(searchPath, RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+        }
+        catch(FS1::NotFoundError const&)
+        {} // Ignore this error.
+    }
+
+    de::Uri searchPath = de::Uri(Path(skinFileName)).setScheme("Models");
+    return App_FileSystem()->findPath(searchPath, RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+}
+
+static texture_s *registerSkin(char const *skinFileName, char const *modelFilePath,
+    bool isShinySkin)
+{
+    if(!skinFileName || !skinFileName[0]) return 0;
+
+    try
+    {
+        String found = findSkinPath(String(skinFileName), String(modelFilePath? modelFilePath : ""));
+        if(!QDir::isAbsolutePath(found))
+        {
+            String basePath = App::app().nativeBasePath().withSeparators('/');
+            found = basePath / found;
+        }
+
+        de::Uri uri = de::Uri(Path(found));
+        return R_CreateSkinTex(reinterpret_cast<uri_s *>(&uri), isShinySkin);
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+    return 0;
+}
+
+static bool registerModelIndexedSkin(model_t& mdl, int skinIndex)
+{
+    LOG_AS("registerModelIndexedSkin");
 
     String const& modelFilePath = findModelPath(mdl.modelId);
     dmd_skin_t& skin = mdl.skins[skinIndex];
 
     QByteArray modelFilePathUtf8 = modelFilePath.toUtf8();
-    skin.texture = R_RegisterModelSkin(skin.name, modelFilePathUtf8.constData(), false);
+    skin.texture = registerSkin(skin.name, modelFilePathUtf8.constData(), false);
     if(skin.texture) return true;
 
     LOG_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\", ignoring.")
@@ -502,7 +542,7 @@ static void registerAllSkins(model_t& mdl)
     int numFoundSkins = 0;
     for(int i = 0; i < mdl.info.numSkins; ++i)
     {
-        if(registerSkin(mdl, i))
+        if(registerModelIndexedSkin(mdl, i))
         {
             // We have found one more skin for this model.
             numFoundSkins += 1;
@@ -533,7 +573,7 @@ static void registerAllSkins(model_t& mdl)
     if(!numFoundSkins)
     {
         LOG_WARNING("Failed to locate a skin for model \"%s\". This model will be rendered without a skin.")
-                << NativePath(findModelPath(mdl.modelId)).pretty();
+            << NativePath(findModelPath(mdl.modelId)).pretty();
     }
 }
 
@@ -967,7 +1007,7 @@ static short newModelSkin(model_t& mdl, de::Uri const& skinUri)
     memset(mdl.skins + added, 0, sizeof(dmd_skin_t));
 
     strncpy(mdl.skins[added].name, fileName, 64);
-    registerSkin(mdl, added);
+    registerModelIndexedSkin(mdl, added);
 
     // Did we get a dupe?
     for(int i = 0; i < mdl.info.numSkins - 1; ++i)
@@ -1165,7 +1205,7 @@ static void setupModel(ded_model_t& def)
         }
 
         QByteArray modelFilePath = modelRepository->string(sub->modelId).toUtf8();
-        sub->shinySkin = R_RegisterModelSkin(subdef->shinySkin, modelFilePath.constData(), true);
+        sub->shinySkin = registerSkin(subdef->shinySkin, modelFilePath.constData(), true);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
