@@ -103,6 +103,8 @@ struct texture_s* Textures_ToTexture(textureid_t textureId);
 /// @return  Texture associated with the scheme-unique identifier @a index else @c NOTEXTUREID.
 textureid_t Textures_TextureForUniqueId(textureschemeid_t schemeId, int uniqueId);
 
+struct texture_s *Textures_TextureForResourcePath(textureschemeid_t schemeId, Uri const *resourcePath);
+
 /// @return  Scheme-unique identfier associated with the identified @a textureId.
 int Textures_UniqueId(textureid_t textureId);
 

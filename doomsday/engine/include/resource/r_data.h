@@ -136,8 +136,13 @@ AutoStr *R_ComposePatchPath(patchid_t id);
 
 struct texture_s *R_CreateSkinTex(Uri const *filePath, boolean isShinySkin);
 
-struct texture_s *R_FindModelSkinForResourcePath(Uri const *resourcePath);
-struct texture_s *R_FindModelReflectionSkinForResourcePath(Uri const *resourcePath);
+struct texture_s *R_CreateLightMap(Uri const *resourcePath);
+
+struct texture_s *R_CreateFlareTexture(Uri const *resourcePath);
+
+struct texture_s *R_CreateReflectionTexture(Uri const *resourcePath);
+
+struct texture_s *R_CreateMaskTexture(Uri const *resourcePath, Size2Raw const *size);
 
 /**
  * Construct a DetailTexture according to the paramaters of the definition.
@@ -148,19 +153,6 @@ struct texture_s *R_FindModelReflectionSkinForResourcePath(Uri const *resourcePa
  * @return  DetailTexture inferred from the definition or @c NULL if invalid.
  */
 struct texture_s *R_CreateDetailTextureFromDef(ded_detailtexture_t const *def);
-struct texture_s *R_FindDetailTextureForResourcePath(Uri const *resourcePath);
-
-struct texture_s *R_CreateLightMap(Uri const *resourcePath);
-struct texture_s *R_FindLightMapForResourcePath(Uri const *resourcePath);
-
-struct texture_s *R_CreateFlareTexture(Uri const *resourcePath);
-struct texture_s *R_FindFlareTextureForResourcePath(Uri const *resourcePath);
-
-struct texture_s *R_CreateReflectionTexture(Uri const *resourcePath);
-struct texture_s *R_FindReflectionTextureForResourcePath(Uri const *resourcePath);
-
-struct texture_s *R_CreateMaskTexture(Uri const *resourcePath, Size2Raw const *size);
-struct texture_s *R_FindMaskTextureForResourcePath(Uri const *resourcePath);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -738,6 +738,41 @@ textureid_t Textures_TextureForUniqueId(textureschemeid_t schemeId, int uniqueId
     return NOTEXTUREID; // Not found.
 }
 
+Texture *Textures_TextureForResourcePath(textureschemeid_t schemeId, Uri const *path)
+{
+    if(!VALID_TEXTURESCHEMEID(schemeId)) return 0;
+    if(!path || Uri_IsEmpty(path)) return 0;
+
+    TextureRepository& directory = schemeById(schemeId);
+
+    DENG2_FOR_EACH_CONST(TextureRepository::Nodes, nodeIt, directory.leafNodes())
+    {
+        TextureRepository::Node& node = **nodeIt;
+        TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userPointer());
+        if(!record) continue;
+
+        // If we have bound a texture it can provide the id.
+        textureid_t textureId = NOTEXTUREID;
+        if(record->texture)
+            textureId = Texture_PrimaryBind(record->texture);
+
+        // Otherwise look it up.
+        if(!validTextureId(textureId))
+            textureId = findBindIdForDirectoryNode(node);
+
+        // Sanity check.
+        DENG2_ASSERT(validTextureId(textureId));
+
+        de::Uri const *resourcePath = reinterpret_cast<de::Uri const *>(Textures_ResourcePath(textureId));
+        if(*resourcePath == *(de::Uri const *)path)
+        {
+            return Textures_ToTexture(textureId);
+        }
+    }
+
+    return 0;
+}
+
 textureid_t Textures_ResolveUri2(Uri const* _uri, boolean quiet)
 {
     LOG_AS("Textures::resolveUri");

@@ -1057,36 +1057,36 @@ void Materials_Ticker(timespan_t time)
     }
 }
 
-static Texture* findDetailTextureForDef(ded_detailtexture_t const& def)
+static inline Texture *findDetailTextureForDef(ded_detailtexture_t const &def)
 {
-    return R_FindDetailTextureForResourcePath(def.detailTex);
+    return Textures_TextureForResourcePath(TS_DETAILS, def.detailTex);
 }
 
-static Texture* findShinyTextureForDef(ded_reflection_t const& def)
+static inline Texture *findShinyTextureForDef(ded_reflection_t const &def)
 {
-    return R_FindReflectionTextureForResourcePath(def.shinyMap);
+    return Textures_TextureForResourcePath(TS_REFLECTIONS, def.shinyMap);
 }
 
-static Texture* findShinyMaskTextureForDef(ded_reflection_t const& def)
+static inline Texture *findShinyMaskTextureForDef(ded_reflection_t const &def)
 {
-    return R_FindMaskTextureForResourcePath(def.maskMap);
+    return Textures_TextureForResourcePath(TS_MASKS, def.maskMap);
 }
 
-static void updateMaterialTextureLinks(MaterialBind& mb)
+static void updateMaterialTextureLinks(MaterialBind &mb)
 {
-    material_t* mat = mb.material();
+    material_t *mat = mb.material();
 
     // We may need to need to construct and attach the info.
     updateMaterialBindInfo(mb, true /* create if not present */);
 
     if(!mat) return;
 
-    ded_detailtexture_t const* dtlDef = mb.detailTextureDef();
+    ded_detailtexture_t const *dtlDef = mb.detailTextureDef();
     Material_SetDetailTexture(mat,  (dtlDef? findDetailTextureForDef(*dtlDef) : NULL));
     Material_SetDetailStrength(mat, (dtlDef? dtlDef->strength : 0));
     Material_SetDetailScale(mat,    (dtlDef? dtlDef->scale : 0));
 
-    ded_reflection_t const* refDef = mb.reflectionDef();
+    ded_reflection_t const *refDef = mb.reflectionDef();
     Material_SetShinyTexture(mat,     (refDef? findShinyTextureForDef(*refDef) : NULL));
     Material_SetShinyMaskTexture(mat, (refDef? findShinyMaskTextureForDef(*refDef) : NULL));
     Material_SetShinyBlendmode(mat,   (refDef? refDef->blendMode : BM_ADD));

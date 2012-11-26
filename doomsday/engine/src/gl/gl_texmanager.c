@@ -2803,7 +2803,7 @@ DGLuint GL_PrepareLightMap(const Uri* filePath)
         Texture* tex;
         if(!Str_CompareIgnoreCase(Uri_Path(filePath), "-")) return 0;
 
-        tex = R_FindLightMapForResourcePath(filePath);
+        tex = Textures_TextureForResourcePath(TS_LIGHTMAPS, filePath);
         if(tex)
         {
             texturevariantspecification_t* texSpec =
@@ -2829,7 +2829,7 @@ DGLuint GL_PrepareFlareTexture(const Uri* uri, int oldIdx)
         if(Str_At(path, 0) >= '1' && Str_At(path, 0) <= '4' && !Str_At(path, 1))
             return GL_PrepareSysFlareTexture(Str_At(path, 0) - '1');
 
-        tex = R_FindFlareTextureForResourcePath(uri);
+        tex = Textures_TextureForResourcePath(TS_FLAREMAPS, uri);
         if(tex)
         {
             texturevariantspecification_t* texSpec =
