@@ -74,8 +74,11 @@ public:
     /// @return  @c true iff @a lumpNum can be interpreted as a valid lump index.
     bool isValidIndex(lumpnum_t lumpNum) const;
 
-    /// @return  Index associated with the last lump with variable-length @a path if found else @c -1
-    lumpnum_t indexForPath(Uri const& path) const;
+    /// Returns the index associated to the last lump matching @a path; otherwise @c -1.
+    lumpnum_t lastIndexForPath(Path const& path) const;
+
+    /// Returns the index associated to the first lump matching @a path; otherwise @c -1.
+    lumpnum_t firstIndexForPath(Path const &path) const;
 
     /**
      * Lookup a file at specific offset in the index.

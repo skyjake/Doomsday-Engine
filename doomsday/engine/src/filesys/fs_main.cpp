@@ -244,7 +244,7 @@ struct FS1::Instance
         }
 
         // First check the Zip lump index.
-        lumpnum_t lumpNum = zipFileIndex.indexForPath(de::Uri(path, RC_NULL));
+        lumpnum_t lumpNum = zipFileIndex.lastIndexForPath(path);
         if(lumpNum >= 0)
         {
             return &zipFileIndex.lump(lumpNum);
@@ -731,7 +731,7 @@ lumpnum_t FS1::lumpNumForName(String name)
     }
 
     // Perform the search.
-    return d->primaryIndex.indexForPath(de::Uri(name, RC_NULL));
+    return d->primaryIndex.lastIndexForPath(Path(name));
 }
 
 void FS1::releaseFile(de::File1& file)

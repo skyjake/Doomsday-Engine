@@ -29,6 +29,8 @@
 #include "resource/wad.h"
 #include "resource/zip.h"
 
+#include <de/Path>
+
 namespace de {
 
 struct MetaFile::Instance
@@ -166,7 +168,7 @@ static lumpnum_t lumpNumForIdentityKey(LumpIndex const& lumpIndex, String idKey)
         name += ".lmp";
     }
 
-    lumpnum_t lumpNum = lumpIndex.indexForPath(de::Uri(name, RC_NULL));
+    lumpnum_t lumpNum = lumpIndex.lastIndexForPath(Path(name));
     if(lumpNum < 0) return -1;
 
     // Check the condition.
