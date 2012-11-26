@@ -1,36 +1,30 @@
-/**\file gl_texmanager.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2002 Graham Jackson <no contact email published>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * GL-Texture management routines.
+ * @file gl_texmanager.cpp GL-Texture management
  *
- * This file needs to be split into smaller portions.
+ * @todo This file needs to be split into smaller portions.
+ *
+ * @author Copyright &copy; 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2002 Graham Jackson <no contact email published>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <ctype.h>
+#include <cstdlib>
+#include <cctype>
+#include <cmath>
 
 #ifdef UNIX
 #   include "de_platform.h"
@@ -43,28 +37,32 @@
 #include "de_graphics.h"
 #include "de_render.h"
 #include "de_resource.h"
-#include "de_misc.h"
 #include "de_play.h"
 #include "de_ui.h"
 
+#include "m_misc.h" // For M_Ceil/Floor/WeightPow2()
 #include "def_main.h"
+
+#include <de/memory.h>
+#include <de/memoryzone.h>
 
 typedef enum {
     METHOD_IMMEDIATE = 0,
     METHOD_DEFERRED
 } uploadcontentmethod_t;
 
-typedef struct {
+struct GraphicFileType
+{
     /// Symbolic name of the resource type.
-    char const* name;
+    char const *name;
 
     /// Known file extension.
-    char const* ext;
+    char const *ext;
 
-    boolean (*interpretFunc)(FileHandle* hndl, char const* filePath, image_t* img);
+    boolean (*interpretFunc)(FileHandle *hndl, char const *filePath, image_t *img);
 
-    char const* (*getLastErrorFunc) (void); ///< Can be NULL.
-} GraphicFileType;
+    char const *(*getLastErrorFunc)(); ///< Can be NULL.
+};
 
 typedef struct texturevariantspecificationlist_node_s {
     struct texturevariantspecificationlist_node_s* next;
@@ -169,7 +167,7 @@ void GL_TexRegister(void)
 
 static __inline GLint glMinFilterForVariantSpec(const variantspecification_t* spec)
 {
-    assert(spec);
+    DENG_ASSERT(spec);
     if(spec->minFilter >= 0) // Constant logical value.
     {
         return (spec->mipmapped? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST) + spec->minFilter;
@@ -180,7 +178,7 @@ static __inline GLint glMinFilterForVariantSpec(const variantspecification_t* sp
 
 static __inline GLint glMagFilterForVariantSpec(const variantspecification_t* spec)
 {
-    assert(spec);
+    DENG_ASSERT(spec);
     if(spec->magFilter >= 0) // Constant logical value.
     {
         return GL_NEAREST + spec->magFilter;
@@ -199,14 +197,14 @@ static __inline GLint glMagFilterForVariantSpec(const variantspecification_t* sp
 
 static __inline int logicalAnisoLevelForVariantSpec(const variantspecification_t* spec)
 {
-    assert(spec);
+    DENG_ASSERT(spec);
     return spec->anisoFilter < 0? texAniso : spec->anisoFilter;
 }
 
 static texturevariantspecification_t* unlinkVariantSpecification(texturevariantspecification_t* spec)
 {
     variantspecificationlist_t** listHead;
-    assert(initedOk && spec);
+    DENG_ASSERT(initedOk && spec);
 
     // Select list head according to variant specification type.
     switch(spec->type)
@@ -244,7 +242,7 @@ static texturevariantspecification_t* unlinkVariantSpecification(texturevariants
                 prevNode->next = prevNode->next->next;
             }
         }
-        free(node);
+        M_Free(node);
     }
 
     return spec;
@@ -252,24 +250,24 @@ static texturevariantspecification_t* unlinkVariantSpecification(texturevariants
 
 static void destroyVariantSpecification(texturevariantspecification_t* spec)
 {
-    assert(spec);
+    DENG_ASSERT(spec);
     unlinkVariantSpecification(spec);
     if(spec->type == TST_GENERAL && (TS_GENERAL(spec)->flags & TSF_HAS_COLORPALETTE_XLAT))
-        free(TS_GENERAL(spec)->translated);
-    free(spec);
+        M_Free(TS_GENERAL(spec)->translated);
+    M_Free(spec);
 }
 
 static texturevariantspecification_t* copyVariantSpecification(
     const texturevariantspecification_t* tpl)
 {
-    texturevariantspecification_t* spec = (texturevariantspecification_t*) malloc(sizeof *spec);
+    texturevariantspecification_t* spec = (texturevariantspecification_t*) M_Malloc(sizeof *spec);
     if(!spec)
         Con_Error("Textures::copyVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecification.", (unsigned long) sizeof *spec);
 
     memcpy(spec, tpl, sizeof(texturevariantspecification_t));
     if(TS_GENERAL(tpl)->flags & TSF_HAS_COLORPALETTE_XLAT)
     {
-        colorpalettetranslationspecification_t* cpt = (colorpalettetranslationspecification_t*) malloc(sizeof *cpt);
+        colorpalettetranslationspecification_t* cpt = (colorpalettetranslationspecification_t*) M_Malloc(sizeof *cpt);
         if(!cpt)
             Con_Error("Textures::copyVariantSpecification: Failed on allocation of %lu bytes for new ColorPaletteTranslationSpecification.", (unsigned long) sizeof *cpt);
 
@@ -282,7 +280,7 @@ static texturevariantspecification_t* copyVariantSpecification(
 static texturevariantspecification_t* copyDetailVariantSpecification(
     const texturevariantspecification_t* tpl)
 {
-    texturevariantspecification_t* spec = (texturevariantspecification_t*) malloc(sizeof *spec);
+    texturevariantspecification_t* spec = (texturevariantspecification_t*) M_Malloc(sizeof *spec);
     if(!spec)
         Con_Error("Textures::copyDetailVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecification.", (unsigned long) sizeof *spec);
     memcpy(spec, tpl, sizeof(texturevariantspecification_t));
@@ -312,7 +310,7 @@ static int compareVariantSpecifications(const variantspecification_t* a,
     {
         const colorpalettetranslationspecification_t* cptA = a->translated;
         const colorpalettetranslationspecification_t* cptB = b->translated;
-        assert(cptA && cptB);
+        DENG_ASSERT(cptA && cptB);
         if(cptA->tClass != cptB->tClass) return 0;
         if(cptA->tMap != cptB->tMap) return 0;
     }
@@ -329,7 +327,7 @@ static int compareDetailVariantSpecifications(const detailvariantspecification_t
 static colorpalettetranslationspecification_t* applyColorPaletteTranslationSpecification(
     colorpalettetranslationspecification_t* spec, int tClass, int tMap)
 {
-    assert(initedOk && spec);
+    DENG_ASSERT(initedOk && spec);
 
     spec->tClass = MAX_OF(0, tClass);
     spec->tMap   = MAX_OF(0, tMap);
@@ -348,7 +346,7 @@ static variantspecification_t* applyVariantSpecification(
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter, boolean mipmapped,
     boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
-    assert(initedOk && spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
+    DENG_ASSERT(initedOk && spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
 
     flags &= ~TSF_INTERNAL_MASK;
 
@@ -381,7 +379,7 @@ static detailvariantspecification_t* applyDetailVariantSpecification(
     detailvariantspecification_t* spec, float contrast)
 {
     const int quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
-    assert(spec);
+    DENG_ASSERT(spec);
 
     spec->contrast = 255 * (int)MINMAX_OF(0, contrast * quantFactor + .5f, quantFactor) * (1/(float)quantFactor);
     return spec;
@@ -389,7 +387,7 @@ static detailvariantspecification_t* applyDetailVariantSpecification(
 
 static int hashDetailVariantSpecification(const detailvariantspecification_t* spec)
 {
-    assert(spec);
+    DENG_ASSERT(spec);
     return (int) (spec->contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
 }
 
@@ -397,9 +395,9 @@ static texturevariantspecification_t* linkVariantSpecification(
     texturevariantspecificationtype_t type, texturevariantspecification_t* spec)
 {
     texturevariantspecificationlist_node_t* node;
-    assert(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && spec);
+    DENG_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && spec);
 
-    node = (texturevariantspecificationlist_node_t*) malloc(sizeof *node);
+    node = (texturevariantspecificationlist_node_t*) M_Malloc(sizeof *node);
     if(!node)
         Con_Error("Textures::linkVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecificationListNode.", (unsigned long) sizeof *node);
 
@@ -425,7 +423,7 @@ static texturevariantspecification_t* findVariantSpecification(
     boolean canCreate)
 {
     texturevariantspecificationlist_node_t* node;
-    assert(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && tpl);
+    DENG_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && tpl);
 
     // Select list head according to variant specification type.
     switch(type)
@@ -467,7 +465,7 @@ static texturevariantspecification_t* getVariantSpecificationForContext(
     static texturevariantspecification_t tpl;
     static colorpalettetranslationspecification_t cptTpl;
     boolean haveCpt = false;
-    assert(initedOk);
+    DENG_ASSERT(initedOk);
 
     tpl.type = TST_GENERAL;
     if(0 != tClass || 0 != tMap)
@@ -488,7 +486,7 @@ static texturevariantspecification_t* getDetailVariantSpecificationForContext(
     float contrast)
 {
     static texturevariantspecification_t tpl;
-    assert(initedOk);
+    DENG_ASSERT(initedOk);
 
     tpl.type = TST_DETAIL;
     applyDetailVariantSpecification(TS_DETAIL(&tpl), contrast);
@@ -498,7 +496,7 @@ static texturevariantspecification_t* getDetailVariantSpecificationForContext(
 static void emptyVariantSpecificationList(variantspecificationlist_t* list)
 {
     texturevariantspecificationlist_node_t* node = (texturevariantspecificationlist_node_t*) list;
-    assert(initedOk);
+    DENG_ASSERT(initedOk);
 
     while(node)
     {
@@ -542,7 +540,7 @@ static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t* li
 
 static int pruneUnusedVariantSpecifications(texturevariantspecificationtype_t specType)
 {
-    assert(initedOk);
+    DENG_ASSERT(initedOk);
     switch(specType)
     {
     case TST_GENERAL: return pruneUnusedVariantSpecificationsInList(variantSpecs);
@@ -563,7 +561,7 @@ static int pruneUnusedVariantSpecifications(texturevariantspecificationtype_t sp
 static void destroyVariantSpecifications(void)
 {
     int i;
-    assert(initedOk);
+    DENG_ASSERT(initedOk);
 
     emptyVariantSpecificationList(variantSpecs); variantSpecs = NULL;
     for(i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
@@ -596,7 +594,7 @@ static int chooseVariantWorker(TextureVariant* variant, void* context)
 {
     choosevariantworker_paramaters_t* p = (choosevariantworker_paramaters_t*) context;
     const texturevariantspecification_t* cand = TextureVariant_Spec(variant);
-    assert(p);
+    DENG_ASSERT(p);
 
     switch(p->method)
     {
@@ -624,7 +622,7 @@ static TextureVariant* chooseVariant(choosevariantmethod_t method, Texture* tex,
     const texturevariantspecification_t* spec)
 {
     choosevariantworker_paramaters_t params;
-    assert(initedOk && tex && spec);
+    DENG_ASSERT(initedOk && tex && spec);
 
     params.method = method;
     params.spec = spec;
@@ -654,7 +652,7 @@ static int releaseVariantGLTexture(TextureVariant* variant, void* paramaters)
 
 static void uploadContent(uploadcontentmethod_t uploadMethod, const texturecontent_t* content)
 {
-    assert(content);
+    DENG_ASSERT(content);
     if(METHOD_IMMEDIATE == uploadMethod)
     {   // Do this right away. No need to take a copy.
         GL_UploadTextureContent(content);
@@ -666,7 +664,7 @@ static void uploadContent(uploadcontentmethod_t uploadMethod, const textureconte
 static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploadMethod,
     const texturecontent_t* content, TextureVariant* variant)
 {
-    assert(content && variant);
+    DENG_ASSERT(content && variant);
     if(!novideo)
     {
         uploadContent(uploadMethod, content);
@@ -678,7 +676,7 @@ static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploa
 static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
     const texturecontent_t* content)
 {
-    assert(content);
+    DENG_ASSERT(content);
     if(novideo) return;
     if(METHOD_IMMEDIATE == uploadMethod)
     {
@@ -695,7 +693,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
 {
     const variantspecification_t* spec;
     TexSource source = TEXS_NONE;
-    assert(tex && baseSpec && image);
+    DENG_ASSERT(tex && baseSpec && image);
 
     spec = TS_GENERAL(baseSpec);
     switch(Textures_Scheme(Textures_Id(tex)))
@@ -746,7 +744,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            assert(spec->translated);
+            DENG_ASSERT(spec->translated);
             tclass = spec->translated->tClass;
             tmap   = spec->translated->tMap;
         }
@@ -779,7 +777,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            assert(spec->translated);
+            DENG_ASSERT(spec->translated);
             tclass = spec->translated->tClass;
             tmap   = spec->translated->tMap;
         }
@@ -877,7 +875,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
     dgltexformat_t dglFormat;
     texturecontent_t c;
     float s, t;
-    assert(image);
+    DENG_ASSERT(image);
 
     if(spec->toAlpha)
     {
@@ -885,7 +883,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
         {   // Paletted.
             uint8_t* newPixels = GL_ConvertBuffer(image->pixels, image->size.width, image->size.height,
                 ((image->flags & IMGF_IS_MASKED)? 2 : 1), R_ToColorPalette(image->paletteId), 3);
-            free(image->pixels);
+            M_Free(image->pixels);
             image->pixels = newPixels;
             image->pixelSize = 3;
             image->paletteId = 0;
@@ -920,7 +918,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
                 ((image->flags & IMGF_IS_MASKED)? 2 : 1), R_ToColorPalette(image->paletteId), 4);
             if(newPixels != image->pixels)
             {
-                free(image->pixels);
+                M_Free(image->pixels);
                 image->pixels = newPixels;
                 image->pixelSize = 4;
                 image->paletteId = 0;
@@ -934,7 +932,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
                 0, &image->size.width, &image->size.height);
             if(newPixels != image->pixels)
             {
-                free(image->pixels);
+                M_Free(image->pixels);
                 image->pixels = newPixels;
             }
 
@@ -956,7 +954,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
                     (origMasked? 2 : 1), R_ToColorPalette(origPaletteId), 4);
                 if(newPixels != image->pixels)
                 {
-                    free(image->pixels);
+                    M_Free(image->pixels);
                     image->pixels = newPixels;
                     image->pixelSize = (origMasked? 2 : 1);
                     image->paletteId = origPaletteId;
@@ -1053,7 +1051,7 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant* tex, 
     float baMul, hiMul, loMul, s, t;
     int grayMipmapFactor, pw, ph, flags = 0;
     texturecontent_t c;
-    assert(image);
+    DENG_ASSERT(image);
 
     grayMipmapFactor = spec->contrast;
 
@@ -1156,7 +1154,7 @@ void GL_ResetTextureManager(void)
 int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* a,
     const texturevariantspecification_t* b)
 {
-    assert(a && b);
+    DENG_ASSERT(a && b);
     if(a == b) return 1;
     if(a->type != b->type) return 0;
     switch(a->type)
@@ -1209,7 +1207,7 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* ba
         const variantspecification_t* spec = TS_GENERAL(baseSpec);
         texturevariantusagecontext_t tc = spec->context;
         int glMinFilterNameIdx, glMagFilterNameIdx;
-        assert(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
+        DENG_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
         if(spec->minFilter >= 0) // Constant logical value.
         {
@@ -1252,7 +1250,7 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* ba
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
             const colorpalettetranslationspecification_t* cpt = spec->translated;
-            assert(cpt);
+            DENG_ASSERT(cpt);
             Con_Printf(" translated:(tclass:%i tmap:%i)", cpt->tClass, cpt->tMap);
         }
         Con_Printf("\n");
@@ -1278,10 +1276,10 @@ texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
 #ifdef _DEBUG
     if(tClass || tMap)
     {
-        assert(tvs->data.variant.flags & TSF_HAS_COLORPALETTE_XLAT);
-        assert(tvs->data.variant.translated);
-        assert(tvs->data.variant.translated->tClass == tClass);
-        assert(tvs->data.variant.translated->tMap == tMap);
+        DENG_ASSERT(tvs->data.variant.flags & TSF_HAS_COLORPALETTE_XLAT);
+        DENG_ASSERT(tvs->data.variant.translated);
+        DENG_ASSERT(tvs->data.variant.translated->tClass == tClass);
+        DENG_ASSERT(tvs->data.variant.translated->tMap == tMap);
     }
 #endif
 
@@ -1307,9 +1305,10 @@ void GL_ShutdownTextureManager(void)
 static void calcGammaTable(void)
 {
     double invGamma = 1.0f - MINMAX_OF(0, texGamma, 1); // Clamp to a sane range.
-    int i;
-    for(i = 0; i < 256; ++i)
-        gammaTable[i] = (byte)(255.0f * pow(i / 255.0f, invGamma));
+    for(int i = 0; i < 256; ++i)
+    {
+        gammaTable[i] = byte(255.0f * pow(double(i / 255.0f), invGamma));
+    }
 }
 
 void GL_LoadSystemTextures(void)
@@ -1417,7 +1416,7 @@ void GL_PruneTextureVariantSpecifications(void)
 
 void Image_Init(image_t* img)
 {
-    assert(img);
+    DENG_ASSERT(img);
     img->size.width = 0;
     img->size.height = 0;
     img->pixelSize = 0;
@@ -1428,7 +1427,7 @@ void Image_Init(image_t* img)
 
 void Image_PrintMetadata(image_t const* image)
 {
-    assert(image);
+    DENG_ASSERT(image);
     Con_Printf("dimensions:[%ix%i] flags:%i %s:%i\n", image->size.width, image->size.height,
         image->flags, 0 != image->paletteId? "colorpalette" : "pixelsize",
         0 != image->paletteId? image->paletteId : image->pixelSize);
@@ -1561,7 +1560,7 @@ uint8_t* Image_LoadFromFile(image_t* img, FileHandle* file)
         if(out != img->pixels)
         {
             // Had to allocate a larger buffer, free the old and attach the new.
-            free(img->pixels);
+            M_Free(img->pixels);
             img->pixels = out;
         }
         // Color keying is done; now we have 4 bytes per pixel.
@@ -1582,7 +1581,7 @@ uint8_t* GL_LoadImage(image_t* img, const char* filePath)
 {
     FileHandle* file = F_Open(filePath, "rb");
     uint8_t* pixels = NULL;
-    assert(img);
+    DENG_ASSERT(img);
 
     if(file)
     {
@@ -1600,9 +1599,9 @@ uint8_t* GL_LoadImageStr(image_t* img, const ddstring_t* filePath)
 
 void Image_Destroy(image_t* img)
 {
-    assert(img);
+    DENG_ASSERT(img);
     if(!img->pixels) return;
-    free(img->pixels);
+    M_Free(img->pixels);
     img->pixels = NULL;
 }
 
@@ -1710,7 +1709,7 @@ boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* 
     uint8_t* image, *faded, *out;
     const uint8_t* in;
     float invFactor;
-    assert(pixels);
+    DENG_ASSERT(pixels);
 
     if(!(GL_RGB == loadFormat || GL_LUMINANCE == loadFormat))
         Con_Error("GL_UploadTextureGrayMipmap: Unsupported load format %i.", (int) loadFormat);
@@ -1734,8 +1733,8 @@ boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* 
     invFactor = 1 - grayFactor;
 
     // Buffer used for the faded texture.
-    faded = malloc(numpels / 4);
-    image = malloc(numpels);
+    faded = (uint8_t*) M_Malloc(numpels / 4);
+    image = (uint8_t*) M_Malloc(numpels);
 
     // Initial fading.
     in = pixels;
@@ -1768,10 +1767,10 @@ boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* 
     }
 
     // Do we need to free the temp buffer?
-    free(faded);
-    free(image);
+    M_Free(faded);
+    M_Free(image);
 
-    assert(!Sys_GLCheckError());
+    DENG_ASSERT(!Sys_GLCheckError());
     return true;
 }
 
@@ -1781,7 +1780,7 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
     const int packRowLength = 0, packAlignment = 1, packSkipRows = 0, packSkipPixels = 0;
     const int unpackRowLength = 0, unpackAlignment = 1, unpackSkipRows = 0, unpackSkipPixels = 0;
     int mipLevel = 0;
-    assert(pixels);
+    DENG_ASSERT(pixels);
 
     if(!(GL_LUMINANCE_ALPHA == loadFormat || GL_LUMINANCE == loadFormat ||
          GL_RGB == loadFormat || GL_RGBA == loadFormat))
@@ -1868,7 +1867,7 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
                 Con_Error("GL_UploadTexture: Unknown error resizing mipmap level #%i.", mipLevel);
 
             if(image != pixels)
-                free(image);
+                M_Free(image);
             image = newimage;
 
             w = neww;
@@ -1876,7 +1875,7 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
         }
 
         if(image != pixels)
-            free(image);
+            M_Free(image);
     }
     else
     {
@@ -1885,7 +1884,7 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
     }
 
     glPopClientAttrib();
-    assert(!Sys_GLCheckError());
+    DENG_ASSERT(!Sys_GLCheckError());
 
     return true;
 }
@@ -1893,7 +1892,7 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
 /// @note Texture parameters will NOT be set here!
 void GL_UploadTextureContent(const texturecontent_t* content)
 {
-    assert(content);
+    DENG_ASSERT(content);
     {
     boolean generateMipmaps = ((content->flags & (TXCF_MIPMAP|TXCF_GRAY_MIPMAP)) != 0);
     boolean applyTexGamma   = ((content->flags & TXCF_APPLY_GAMMACORRECTION) != 0);
@@ -1911,7 +1910,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
             DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 2 : 1, R_ToColorPalette(content->paletteId),
             DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 4 : 3);
         if(loadPixels != content->pixels)
-            free((uint8_t*)loadPixels);
+            M_Free((uint8_t*)loadPixels);
         loadPixels = newPixels;
         dglFormat = DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? DGL_RGBA : DGL_RGB;
     }
@@ -1929,7 +1928,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
             src = loadPixels;
             if(loadPixels == content->pixels)
             {
-                localBuffer = (uint8_t*) malloc(comps * numPels);
+                localBuffer = (uint8_t*) M_Malloc(comps * numPels);
                 if(!localBuffer)
                     Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for"
                               "tex-gamma translation buffer.", (unsigned long) (comps * numPels));
@@ -1954,7 +1953,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
             if(localBuffer)
             {
                 if(loadPixels != content->pixels)
-                    free((uint8_t*)loadPixels);
+                    M_Free((uint8_t*)loadPixels);
                 loadPixels = localBuffer;
             }
         }
@@ -1969,7 +1968,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
                 // Need to add an alpha channel.
                 uint8_t* newPixels = GL_ConvertBuffer(loadPixels, loadWidth, loadHeight, 3, 0, 4);
                 if(loadPixels != content->pixels)
-                    free((uint8_t*)loadPixels);
+                    M_Free((uint8_t*)loadPixels);
                 loadPixels = newPixels;
                 dglFormat = DGL_RGBA;
             }
@@ -1979,7 +1978,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
             if(filtered != loadPixels)
             {
                 if(loadPixels != content->pixels)
-                    free((uint8_t*)loadPixels);
+                    M_Free((uint8_t*)loadPixels);
                 loadPixels = filtered;
             }
         }
@@ -1991,7 +1990,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
         long i, numPixels = content->width * content->height;
         uint8_t* pixel, *localBuffer;
 
-        localBuffer = (uint8_t*) malloc(2 * numPixels);
+        localBuffer = (uint8_t*) M_Malloc(2 * numPixels);
         if(!localBuffer)
             Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for luminance conversion buffer.", (unsigned long) (2 * numPixels));
 
@@ -2004,7 +2003,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
         }
 
         if(loadPixels != content->pixels)
-            free((uint8_t*)loadPixels);
+            M_Free((uint8_t*)loadPixels);
         loadPixels = localBuffer;
     }
 
@@ -2014,7 +2013,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
         long i, numPixels = content->width * content->height;
         uint8_t* pixel, *localBuffer;
 
-        localBuffer = (uint8_t*) malloc(2 * numPixels);
+        localBuffer = (uint8_t*) M_Malloc(2 * numPixels);
         if(!localBuffer)
             Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for luminance conversion buffer.", (unsigned long) (2 * numPixels));
 
@@ -2028,7 +2027,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
         }
 
         if(loadPixels != content->pixels)
-            free((uint8_t*)loadPixels);
+            M_Free((uint8_t*)loadPixels);
         loadPixels = localBuffer;
         dglFormat = DGL_LUMINANCE_PLUS_A8;
     }
@@ -2048,7 +2047,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
         if(noStretch)
         {
             // Copy the texture into a power-of-two canvas.
-            uint8_t* localBuffer = (uint8_t*) calloc(1, comps * loadWidth * loadHeight);
+            uint8_t* localBuffer = (uint8_t*) M_Calloc(comps * loadWidth * loadHeight);
             int i;
 
             if(!localBuffer)
@@ -2062,7 +2061,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
             }
 
             if(loadPixels != content->pixels)
-                free((uint8_t*)loadPixels);
+                M_Free((uint8_t*)loadPixels);
             loadPixels = localBuffer;
         }
         else
@@ -2070,7 +2069,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
             // Stretch into a new power-of-two texture.
             uint8_t* newPixels = GL_ScaleBuffer(loadPixels, width, height, comps, loadWidth, loadHeight);
             if(loadPixels != content->pixels)
-                free((uint8_t*)loadPixels);
+                M_Free((uint8_t*)loadPixels);
             loadPixels = newPixels;
         }
     }
@@ -2136,7 +2135,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
     }
 
     if(loadPixels != content->pixels)
-        free((uint8_t*)loadPixels);
+        M_Free((uint8_t*)loadPixels);
     }
 }
 
@@ -2293,7 +2292,7 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
     // Column offsets begin immediately following the header.
     const int32_t* columnOfs = (const int32_t*)((const uint8_t*) patch + sizeof(doompatch_header_t));
     // \todo Validate column offset is within the Patch!
-    assert(buffer && texwidth > 0 && texheight > 0 && patch);
+    DENG_ASSERT(buffer && texwidth > 0 && texheight > 0 && patch);
 
     w = SHORT(patch->width);
 
@@ -2341,7 +2340,7 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
                     if(trans >= 0)
                     {
                         // Check bounds.
-                        assert(trans + palidx < 256 * NUM_TRANSLATION_TABLES);
+                        DENG_ASSERT(trans + palidx < 256 * NUM_TRANSLATION_TABLES);
 
                         palidx = translationTables[trans + palidx];
                     }
@@ -2373,7 +2372,7 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
 static boolean palettedIsMasked(const uint8_t* pixels, int width, int height)
 {
     int i;
-    assert(pixels);
+    DENG_ASSERT(pixels);
     // Jump to the start of the alpha data.
     pixels += width * height;
     for(i = 0; i < width * height; ++i)
@@ -2386,7 +2385,7 @@ static boolean palettedIsMasked(const uint8_t* pixels, int width, int height)
 TexSource GL_LoadDetailTextureLump(image_t* image, FileHandle* file)
 {
     TexSource source = TEXS_NONE;
-    assert(image && file);
+    DENG_ASSERT(image && file);
 
     if(Image_LoadFromFile(image, file))
     {
@@ -2417,7 +2416,7 @@ TexSource GL_LoadDetailTextureLump(image_t* image, FileHandle* file)
 
         image->pixelSize = 1;
         bufSize = (size_t)image->size.width * image->size.height;
-        image->pixels = (uint8_t*) malloc(bufSize);
+        image->pixels = (uint8_t*) M_Malloc(bufSize);
         if(!image->pixels)
             Con_Error("GL_LoadDetailTextureLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) bufSize);
         if(fileLength < bufSize)
@@ -2433,7 +2432,7 @@ TexSource GL_LoadDetailTextureLump(image_t* image, FileHandle* file)
 TexSource GL_LoadFlatLump(image_t* image, FileHandle* file)
 {
     TexSource source = TEXS_NONE;
-    assert(image && file);
+    DENG_ASSERT(image && file);
 
     if(Image_LoadFromFile(image, file))
     {
@@ -2456,7 +2455,7 @@ TexSource GL_LoadFlatLump(image_t* image, FileHandle* file)
         image->paletteId = defaultColorPalette;
 
         bufSize = MAX_OF(fileLength, (size_t)image->size.width * image->size.height);
-        image->pixels = (uint8_t*) malloc(bufSize);
+        image->pixels = (uint8_t*) M_Malloc(bufSize);
         if(!image->pixels)
             Con_Error("GL_LoadFlatLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) bufSize);
         if(fileLength < bufSize)
@@ -2475,7 +2474,7 @@ TexSource GL_LoadFlatLump(image_t* image, FileHandle* file)
 static TexSource loadPatchLump(image_t* image, FileHandle* file, int tclass, int tmap, int border)
 {
     TexSource source = TEXS_NONE;
-    assert(image && file);
+    DENG_ASSERT(image && file);
 
     if(Image_LoadFromFile(image, file))
     {
@@ -2497,7 +2496,7 @@ static TexSource loadPatchLump(image_t* image, FileHandle* file, int tclass, int
                 image->size.height = SHORT(patch->height) + border*2;
                 image->pixelSize = 1;
                 image->paletteId = defaultColorPalette;
-                image->pixels = (uint8_t*) calloc(1, 2 * image->size.width * image->size.height);
+                image->pixels = (uint8_t*) M_Calloc(2 * image->size.width * image->size.height);
                 if(!image->pixels)
                     Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image->size.width * image->size.height));
 
@@ -2540,7 +2539,7 @@ TexSource GL_LoadPatchLumpAsPatch(image_t* image, FileHandle* file, int tclass, 
 }
 
 DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
-    int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT, int otherFlags)
+    int /*minFilter*/, int magFilter, int /*anisoFilter*/, int wrapS, int wrapT, int otherFlags)
 {
     image_t image;
     DGLuint texture = 0;
@@ -2570,14 +2569,14 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
 {
     patchcompositetex_t* texDef;
     int i;
-    assert(image && tex);
+    DENG_ASSERT(image && tex);
 
 #if _DEBUG
     if(Textures_Scheme(Textures_Id(tex)) != TS_TEXTURES)
         Con_Error("GL_LoadPatchComposite: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
     texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
-    assert(texDef);
+    DENG_ASSERT(texDef);
 
     Image_Init(image);
     image->pixelSize = 1;
@@ -2585,7 +2584,7 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     image->size.height = texDef->size.height;
     image->paletteId = defaultColorPalette;
 
-    image->pixels = (uint8_t*) calloc(1, 2 * image->size.width * image->size.height);
+    image->pixels = (uint8_t*) M_Calloc(2 * image->size.width * image->size.height);
     if(!image->pixels)
         Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for new Image pixel data.", (unsigned long) (2 * image->size.width * image->size.height));
 
@@ -2624,14 +2623,14 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
 {
     patchcompositetex_t* texDef;
     int i, width, height, offX, offY;
-    assert(image && tex);
+    DENG_ASSERT(image && tex);
 
 #if _DEBUG
     if(Textures_Scheme(Textures_Id(tex)) != TS_TEXTURES)
         Con_Error("GL_LoadPatchCompositeAsSky: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
     texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
-    assert(texDef);
+    DENG_ASSERT(texDef);
 
     /**
      * Heretic sky textures are reported to be 128 tall, despite the patch
@@ -2661,7 +2660,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
     image->size.height = height;
     image->paletteId = defaultColorPalette;
 
-    image->pixels = (uint8_t*) calloc(1, 2 * image->size.width * image->size.height);
+    image->pixels = (uint8_t*) M_Calloc(2 * image->size.width * image->size.height);
     if(!image->pixels)
         Con_Error("GL_LoadPatchCompositeAsSky: Failed on allocation of %lu bytes for new Image pixel data.", (unsigned long) (2 * image->size.width * image->size.height));
 
@@ -2734,7 +2733,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
                 size_t bufSize = 3 * RAW_WIDTH * RAW_HEIGHT;
 
                 Image_Init(image);
-                image->pixels = malloc(bufSize);
+                image->pixels = (uint8_t*) M_Malloc(bufSize);
                 if(fileLength < bufSize)
                     memset(image->pixels, 0, bufSize);
 
@@ -2827,7 +2826,9 @@ DGLuint GL_PrepareFlareTexture(const Uri* uri, int oldIdx)
             return 0; // Use the automatic selection logic.
 
         if(Str_At(path, 0) >= '1' && Str_At(path, 0) <= '4' && !Str_At(path, 1))
-            return GL_PrepareSysFlareTexture(Str_At(path, 0) - '1');
+        {
+            return GL_PrepareSysFlareTexture(flaretexid_t(Str_At(path, 0) - '1'));
+        }
 
         tex = Textures_TextureForResourcePath(TS_FLAREMAPS, uri);
         if(tex)
@@ -2841,7 +2842,7 @@ DGLuint GL_PrepareFlareTexture(const Uri* uri, int oldIdx)
     }
     else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
     {
-        return GL_PrepareSysFlareTexture(oldIdx-1);
+        return GL_PrepareSysFlareTexture(flaretexid_t(oldIdx - 1));
     }
     return 0; // Use the automatic selection logic.
 }
@@ -2859,7 +2860,7 @@ TextureVariant* GL_PreparePatchTexture2(Texture* tex, int wrapS, int wrapT)
         return 0;
     }
     pTex = (patchtex_t*)Texture_UserDataPointer(tex);
-    assert(pTex);
+    DENG_ASSERT(pTex);
 
     texSpec = GL_TextureVariantSpecificationForContext(TC_UI,
             0 | ((pTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
@@ -2876,7 +2877,7 @@ TextureVariant* GL_PreparePatchTexture(Texture* tex)
 boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
     int* optWidth, int* optHeight)
 {
-    assert(optWidth && optHeight);
+    DENG_ASSERT(optWidth && optHeight);
     if(GL_state.features.texNonPowTwo && !isMipMapped)
     {
         *optWidth  = width;
@@ -3079,12 +3080,12 @@ static int setVariantMinFilterWorker(Texture* tex, void* paramaters)
 }
 #endif
 
-void GL_SetAllTexturesMinFilter(int minFilter)
+void GL_SetAllTexturesMinFilter(int /*minFilter*/)
 {
+#if 0
     int localMinFilter = minFilter;
     /// @todo This is no longer correct logic. Changing the global minification
     ///        filter should not modify the uploaded texture content.
-#if 0
     Textures_Iterate2(TS_ANY, setVariantMinFilterWorker, (void*)&localMinFilter);
 #endif
 }
@@ -3092,7 +3093,7 @@ void GL_SetAllTexturesMinFilter(int minFilter)
 static void performImageAnalyses(Texture* tex, const image_t* image,
     const texturevariantspecification_t* spec, boolean forceUpdate)
 {
-    assert(spec && image);
+    DENG_ASSERT(spec && image);
 
     // Do we need color palette info?
     if(TST_GENERAL == spec->type && image->paletteId != 0)
@@ -3102,7 +3103,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
 
         if(firstInit)
         {
-            cp = (colorpalette_analysis_t*) malloc(sizeof *cp);
+            cp = (colorpalette_analysis_t*) M_Malloc(sizeof *cp);
             if(!cp)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new ColorPaletteAnalysis.", (unsigned long) sizeof *cp);
             Texture_SetAnalysisDataPointer(tex, TA_COLORPALETTE, cp);
@@ -3120,7 +3121,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
 
         if(firstInit)
         {
-            pl = (pointlight_analysis_t*) malloc(sizeof *pl);
+            pl = (pointlight_analysis_t*) M_Malloc(sizeof *pl);
             if(!pl)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new PointLightAnalysis.", (unsigned long) sizeof *pl);
             Texture_SetAnalysisDataPointer(tex, TA_SPRITE_AUTOLIGHT, pl);
@@ -3141,7 +3142,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
 
         if(firstInit)
         {
-            aa = (averagealpha_analysis_t*) malloc(sizeof *aa);
+            aa = (averagealpha_analysis_t*) M_Malloc(sizeof *aa);
             if(!aa)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageAlphaAnalysis.", (unsigned long) sizeof *aa);
             Texture_SetAnalysisDataPointer(tex, TA_ALPHA, aa);
@@ -3179,7 +3180,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
 
         if(firstInit)
         {
-            ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
+            ac = (averagecolor_analysis_t*) M_Malloc(sizeof *ac);
             if(!ac)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
             Texture_SetAnalysisDataPointer(tex, TA_COLOR, ac);
@@ -3208,7 +3209,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
 
         if(firstInit)
         {
-            ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
+            ac = (averagecolor_analysis_t*) M_Malloc(sizeof *ac);
             if(!ac)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
             Texture_SetAnalysisDataPointer(tex, TA_COLOR_AMPLIFIED, ac);
@@ -3238,7 +3239,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
 
         if(firstInit)
         {
-            ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
+            ac = (averagecolor_analysis_t*) M_Malloc(sizeof *ac);
             if(!ac)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
             Texture_SetAnalysisDataPointer(tex, TA_LINE_TOP_COLOR, ac);
@@ -3267,7 +3268,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
 
         if(firstInit)
         {
-            ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
+            ac = (averagecolor_analysis_t*) M_Malloc(sizeof *ac);
             if(!ac)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
             Texture_SetAnalysisDataPointer(tex, TA_LINE_BOTTOM_COLOR, ac);
@@ -3295,7 +3296,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
     uploadcontentmethod_t uploadMethod;
     TexSource source = TEXS_NONE;
     image_t image;
-    assert(initedOk && spec);
+    DENG_ASSERT(initedOk && spec);
 
     // Load the source image data.
     if(TS_TEXTURES == Textures_Scheme(Textures_Id(tex)))
@@ -3306,7 +3307,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
             patchcompositetex_t* texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
-            assert(texDef);
+            DENG_ASSERT(texDef);
 
             Str_Init(&searchPath);
             Str_Appendf(&searchPath, "Textures:%s", Str_Text(&texDef->name));
@@ -3419,7 +3420,7 @@ static TextureVariant* findVariantForSpec(Texture* tex,
     {
         /// No luck, try fuzzy.
         variant = chooseVariant(METHOD_FUZZY, tex, spec);
-        assert(NULL == variant);
+        DENG_ASSERT(NULL == variant);
     }
 #endif
     return variant;
@@ -3563,7 +3564,7 @@ static int releaseGLTexturesByColorPaletteWorker(Texture* tex, void* paramaters)
 {
     colorpalette_analysis_t* cp = (colorpalette_analysis_t*) Texture_AnalysisDataPointer(tex, TA_COLORPALETTE);
     colorpaletteid_t paletteId = *(colorpaletteid_t*)paramaters;
-    assert(tex && paramaters);
+    DENG_ASSERT(tex && paramaters);
 
     if(cp && cp->paletteId == paletteId)
     {
@@ -3579,8 +3580,8 @@ void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
 
 void GL_InitTextureContent(texturecontent_t* content)
 {
-    assert(content);
-    content->format = 0;
+    DENG_ASSERT(content);
+    content->format = dgltexformat_t(0);
     content->name = 0;
     content->pixels = 0;
     content->paletteId = 0;
@@ -3601,9 +3602,9 @@ texturecontent_t* GL_ConstructTextureContentCopy(const texturecontent_t* other)
     uint8_t* pixels;
     int bytesPerPixel;
     size_t bufferSize;
-    assert(other);
+    DENG_ASSERT(other);
 
-    c = (texturecontent_t*)malloc(sizeof *c);
+    c = (texturecontent_t*)M_Malloc(sizeof *c);
     if(!c)
         Con_Error("GL_ConstructTextureContentCopy: Failed on allocation of %lu bytes for new TextureContent.", (unsigned long) sizeof *c);
 
@@ -3612,7 +3613,7 @@ texturecontent_t* GL_ConstructTextureContentCopy(const texturecontent_t* other)
     // Duplicate the image buffer.
     bytesPerPixel = BytesPerPixelFmt(other->format);
     bufferSize = bytesPerPixel * other->width * other->height;
-    pixels = malloc(bufferSize);
+    pixels = (uint8_t*) M_Malloc(bufferSize);
     memcpy(pixels, other->pixels, bufferSize);
     c->pixels = pixels;
     return c;
@@ -3620,9 +3621,9 @@ texturecontent_t* GL_ConstructTextureContentCopy(const texturecontent_t* other)
 
 void GL_DestroyTextureContent(texturecontent_t* content)
 {
-    assert(content);
-    if(content->pixels) free((uint8_t*)content->pixels);
-    free(content);
+    DENG_ASSERT(content);
+    if(content->pixels) M_Free((uint8_t*)content->pixels);
+    M_Free(content);
 }
 
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
@@ -3707,12 +3708,15 @@ boolean GL_DumpImage(const image_t* origImg, const char* filePath)
 
 D_CMD(LowRes)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argv); DENG_UNUSED(argc);
     GL_LowRes();
     return true;
 }
 
 D_CMD(TexReset)
 {
+    DENG_UNUSED(src);
+
     if(argc == 2 && !stricmp(argv[1], "raw"))
     {
         // Reset just raw images.
@@ -3728,10 +3732,12 @@ D_CMD(TexReset)
 
 D_CMD(MipMap)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc);
+
     int newMipMode = strtol(argv[1], NULL, 0);
     if(newMipMode < 0 || newMipMode > 5)
     {
-        Con_Message("Invalid mipmapping mode %i specified. Valid range is [0...5].\n", newMipMode);
+        Con_Message("Invalid mipmapping mode %i specified. Valid range is [0..5).\n", newMipMode);
         return false;
     }
 

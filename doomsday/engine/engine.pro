@@ -490,7 +490,7 @@ SOURCES += \
     src/gl/gl_drawvectorgraphic.c \
     src/gl/gl_main.c \
     src/gl/gl_tex.c \
-    src/gl/gl_texmanager.c \
+    src/gl/gl_texmanager.cpp \
     src/gl/svg.c \
     src/gl/sys_opengl.c \
     src/gridmap.c \

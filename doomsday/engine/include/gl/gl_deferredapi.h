@@ -38,6 +38,10 @@
 
 #include "sys_opengl.h" // ensure native OpenGL has been included
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define glEnable(x)             Deferred_glEnable(x)
 #define glDisable(x)            Deferred_glDisable(x)
 #define glDeleteTextures(x, y)  Deferred_glDeleteTextures(x, y)
@@ -52,6 +56,9 @@ void Deferred_glFogi(GLenum p, GLint v);
 void Deferred_glFogf(GLenum p, GLfloat v);
 void Deferred_glFogfv(GLenum p, const GLfloat* v);
 
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
+#endif // LIBDENG_DISABLE_DEFERRED_GL_API
 #endif // LIBDENG_DEFERRED_GL_API_H

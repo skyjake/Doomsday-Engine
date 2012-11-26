@@ -44,6 +44,10 @@ typedef struct averagealpha_analysis_s {
     float coverage; ///< Fraction representing the ratio of alpha to non-alpha pixels.
 } averagealpha_analysis_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param pixels  Luminance image to be enhanced.
  * @param width  Width of the image in pixels.
@@ -249,5 +253,9 @@ boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat,
  */
 void GL_DeSaturatePalettedImage(uint8_t* buffer, struct colorpalette_s* palette,
     int width, int height);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_IMAGE_MANIPULATION_H

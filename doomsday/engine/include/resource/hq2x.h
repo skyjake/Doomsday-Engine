@@ -1,9 +1,8 @@
 /**
- * @file hq2x.h
- * High-Quality 2x Graphics Resizing. @ingroup resource
+ * @file hq2x.h High-Quality 2x Graphics Resizing.
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,8 +18,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_GRAPHICS_HQ2X_H
-#define LIBDENG_GRAPHICS_HQ2X_H
+#ifndef LIBDENG_RESOURCE_HQ2X_H
+#define LIBDENG_RESOURCE_HQ2X_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/// @addtogroup resource
+///@{
 
 /**
  * Initialize the lookup tables used in the hq2x algorithm.
@@ -43,6 +49,12 @@ void GL_InitSmartFilterHQ2x(void);
  * @param height  Height of the source image in pixels.
  * @param flags  @ref imageConversionFlags
  */
-uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags);
+uint8_t *GL_SmartFilterHQ2x(uint8_t const *src, int width, int height, int flags);
 
-#endif /* LIBDENG_GRAPHICS_HQ2X_H */
+///@}
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif /* LIBDENG_RESOURCE_HQ2X_H */
