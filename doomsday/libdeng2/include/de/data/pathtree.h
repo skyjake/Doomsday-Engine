@@ -66,12 +66,16 @@ class DENG2_PUBLIC PathTree
 public:
     class Node; // forward declaration
 
+    typedef QMultiHash<Path::hash_type, Node *> Nodes;
+    typedef QList<String> FoundPaths;
+
     /**
      * Flags that affect the properties of the tree.
      */
     enum Flag
     {
-        MultiLeaf = 0x1     ///< There can be more than one leaf with a given name.
+        MultiLeaf = 0x1,    ///< There can be more than one leaf with a given name.
+        NoLocalBranchIndex = 0x2 ///< Branch nodes will not have an index of their immediate child nodes.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -140,6 +144,9 @@ public:
      */
     class DENG2_PUBLIC Node
     {
+    public:
+        typedef PathTree::Nodes Children;
+
     protected:
         Node(NodeArgs const &args);
 
@@ -153,12 +160,21 @@ public:
         /// this is the tree's special root node.
         Node &parent() const;
 
+        /// Returns the children of a branch node. Note that leaf nodes
+        /// have no children -- calling this for leaf nodes is not allowed.
+        Nodes const &children() const;
+
         /// Determines if the node is at the root level of the tree
         /// (no other node is its parent).
         bool isAtRootLevel() const;
 
         /// @return @c true iff this node is a leaf.
         bool isLeaf() const;
+
+        /// @return @c true iff this node is a branch.
+        inline bool isBranch() const {
+            return !isLeaf();
+        }
 
         /// @return Type of this node.
         inline NodeType type() const {
@@ -204,6 +220,8 @@ public:
 
     protected:
         SegmentId segmentId() const;
+        void addChild(Node &node);
+        void removeChild(Node &node);
 
     private:
         struct Instance;
@@ -214,9 +232,6 @@ public:
     /// The requested entry could not be found in the hierarchy.
     DENG2_ERROR(NotFoundError);
 
-    typedef QMultiHash<Path::hash_type, Node *> Nodes;
-    typedef QList<String> FoundPaths;
-
 public:
     explicit PathTree(Flags flags = 0);
 
@@ -225,10 +240,15 @@ public:
     /// @return  @c true iff there are no paths in the hierarchy. Same as @c size() == 0
     bool empty() const;
 
-    /// @return  Total number of unique paths in the hierarchy.
+    inline bool isEmpty() const { return empty(); }
+
+    /// Returns the flags that affect the properties of the tree.
+    Flags flags() const;
+
+    /// Total number of unique paths in the hierarchy.
     int size() const;
 
-    /// @return  Total number of unique paths in the hierarchy. Same as @ref size().
+    /// Total number of unique paths in the hierarchy. Same as @ref size().
     inline int count() const {
         return size();
     }

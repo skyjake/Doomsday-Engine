@@ -25,28 +25,38 @@ namespace de {
 
 struct PathTree::Node::Instance
 {
-    /// @c true = this is a leaf node.
-    bool isLeaf;
-
     /// PathTree which owns this node.
     PathTree &tree;
+
+    /// Parent node in the user's logical hierarchy.
+    PathTree::Node *parent;
+
+    /// @c NULL for leaves, index of children for branches.
+    PathTree::Node::Children *children;
 
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
     PathTree::SegmentId segmentId;
 
-    /// Parent node in the user's logical hierarchy.
-    PathTree::Node *parent;
-
-    Instance(PathTree &_tree, bool _isLeaf, PathTree::SegmentId _segmentId,
+    Instance(PathTree &_tree, bool isLeaf, PathTree::SegmentId _segmentId,
              PathTree::Node *_parent)
-        : isLeaf(_isLeaf), tree(_tree), segmentId(_segmentId), parent(_parent)
-    {}
+        : tree(_tree), parent(_parent), children(0), segmentId(_segmentId)
+    {
+        if(!isLeaf) children = new PathTree::Node::Children;
+    }
+
+    ~Instance()
+    {
+        delete children;
+    }
 };
 
 PathTree::Node::Node(PathTree::NodeArgs const &args)
 {
     d = new Instance(args.tree, args.type == PathTree::Leaf, args.segmentId, args.parent);
+
+    // Let the parent know of the new child node.
+    if(d->parent) d->parent->addChild(*this);
 }
 
 PathTree::Node::~Node()
@@ -56,7 +66,7 @@ PathTree::Node::~Node()
 
 bool PathTree::Node::isLeaf() const
 {
-    return d->isLeaf;
+    return d->children == 0;
 }
 
 PathTree &PathTree::Node::tree() const
@@ -69,6 +79,12 @@ PathTree::Node &PathTree::Node::parent() const
     return *d->parent;
 }
 
+const PathTree::Nodes &PathTree::Node::children() const
+{
+    DENG2_ASSERT(d->children != 0);
+    return *d->children;
+}
+
 bool PathTree::Node::isAtRootLevel() const
 {
     return d->parent == &d->tree.rootBranch();
@@ -77,6 +93,26 @@ bool PathTree::Node::isAtRootLevel() const
 PathTree::SegmentId PathTree::Node::segmentId() const
 {
     return d->segmentId;
+}
+
+void PathTree::Node::addChild(PathTree::Node &node)
+{
+    if(!d->tree.flags().testFlag(PathTree::NoLocalBranchIndex))
+    {
+        DENG2_ASSERT(d->children != 0);
+
+        d->children->insert(node.hash(), &node);
+    }
+}
+
+void PathTree::Node::removeChild(PathTree::Node &node)
+{
+    if(!d->tree.flags().testFlag(PathTree::NoLocalBranchIndex))
+    {
+        DENG2_ASSERT(d->children != 0);
+
+        d->children->remove(node.hash(), &node);
+    }
 }
 
 String const &PathTree::Node::name() const
@@ -130,7 +166,7 @@ static int matchName(char const *string, char const *pattern)
 int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags flags) const
 {
     if(((flags & PathTree::NoLeaf)   && isLeaf()) ||
-       ((flags & PathTree::NoBranch) && !isLeaf()))
+       ((flags & PathTree::NoBranch) && isBranch()))
         return 1;
 
     try
@@ -262,7 +298,7 @@ Path PathTree::Node::path(QChar sep) const
 #endif
 
     // Include a terminating path delimiter for branches.
-    if(!sep.isNull() && !isLeaf())
+    if(!sep.isNull() && isBranch())
     {
         parm.length++; // A single character.
     }
@@ -271,7 +307,7 @@ Path PathTree::Node::path(QChar sep) const
     pathConstructor(parm, *this);
 
     // Terminating delimiter for branches.
-    if(!sep.isNull() && !isLeaf())
+    if(!sep.isNull() && isBranch())
     {
         parm.composedPath += sep;
     }

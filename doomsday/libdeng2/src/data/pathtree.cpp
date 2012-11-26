@@ -170,6 +170,7 @@ struct PathTree::Instance
                 // This is the leaf node we're looking for.
                 if(compFlags.testFlag(RelinquishMatching))
                 {
+                    node->parent().removeChild(*node);
                     hash.erase(i);
                 }
                 return node;
@@ -271,6 +272,11 @@ bool PathTree::empty() const
     return size() == 0;
 }
 
+PathTree::Flags PathTree::flags() const
+{
+    return d->flags;
+}
+
 void PathTree::clear()
 {
     d->clear();
@@ -350,7 +356,8 @@ int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar separ
 }
 
 static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
-                              PathTree::NodeType type, int flags, PathTree::Node const *parent,
+                              PathTree::NodeType type, PathTree::ComparisonFlags flags,
+                              PathTree::Node const *parent,
                               int (*callback) (PathTree::Node &, void *), void *parameters)
 {
     int result = 0;
@@ -360,16 +367,16 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
         throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1, valid range is [0..%2).").arg(hashKey).arg(Path::hash_range-1));
     }
 
-    PathTree::Nodes const &nodes = pathTree.nodes(type);
+    PathTree::Nodes const *nodes = &pathTree.nodes(type);
 
     // Are we iterating nodes with a known hash?
     if(hashKey != PathTree::no_hash)
     {
         // Yes.
-        PathTree::Nodes::const_iterator i = nodes.constFind(hashKey);
-        for(; i != nodes.end() && i.key() == hashKey; ++i)
+        PathTree::Nodes::const_iterator i = nodes->constFind(hashKey);
+        for(; i != nodes->end() && i.key() == hashKey; ++i)
         {
-            if(!((flags & PathTree::MatchParent) && parent != &(*i)->parent()))
+            if(!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
             {
                 result = callback(**i, parameters);
                 if(result) break;
@@ -378,10 +385,25 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
     }
     else
     {
-        // No - iterate all nodes.
-        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, nodes)
+        // No known hash, but if the parent is known, we can narrow our search
+        // to all the parent's children.
+        if(!pathTree.flags().testFlag(PathTree::NoLocalBranchIndex) &&
+           flags.testFlag(PathTree::MatchParent) && parent)
         {
-            if(!((flags & PathTree::MatchParent) && parent != &(*i)->parent()))
+            nodes = &parent->children();
+        }
+
+        // No known hash -- iterate all potential nodes.
+        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, *nodes)
+        {
+            if(flags.testFlag(PathTree::MatchParent) && (*i)->type() != type)
+            {
+                // Wrong kind of node -- branches could maintain separate indexes
+                // for branches and leaves...
+                continue;
+            }
+
+            if(!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
             {
                 result = callback(**i, parameters);
                 if(result) break;

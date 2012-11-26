@@ -27,7 +27,8 @@ struct Archive::Instance
     /// Source data provided at construction.
     IByteArray const *source;
 
-    /// Index maps entry paths to their metadata. Created by concrete subclasses.
+    /// Index maps entry paths to their metadata. Created by concrete subclasses
+    /// but we have the ownership.
     PathTree *index;
 
     /// Contents of the archive have been modified.
@@ -35,6 +36,11 @@ struct Archive::Instance
 
     Instance(Archive &a, IByteArray const *src) : self(a), source(src), index(0), modified(false)
     {}
+
+    ~Instance()
+    {
+        delete index;
+    }
 
     void readEntry(Path const &path, IBlock &deserializedData) const
     {
@@ -55,12 +61,6 @@ struct Archive::Instance
         }
 
         self.readFromSource(entry, path, deserializedData);
-    }
-
-    static int addToNames(PathTree::Node &entry, void *ptr)
-    {
-        reinterpret_cast<Archive::Names *>(ptr)->insert(entry.name());
-        return 0; // continue
     }
 };
 
@@ -121,8 +121,11 @@ dint Archive::listFiles(Archive::Names& names, Path const &folder) const
     PathTree::Node const &parent = d->index->find(folder, PathTree::MatchFull | PathTree::NoLeaf);
 
     // Traverse the parent's nodes.
-    d->index->traverse(PathTree::NoBranch | PathTree::MatchParent, &parent, PathTree::no_hash,
-                       Archive::Instance::addToNames, &names);
+    for(PathTreeIterator<PathTree> iter(parent.children()); iter.hasNext(); )
+    {
+        PathTree::Node const &node = iter.next();
+        if(node.isLeaf()) names.insert(node.name());
+    }
 
     return names.size();
 }
@@ -137,8 +140,11 @@ dint Archive::listFolders(Archive::Names &names, Path const &folder) const
     PathTree::Node const &parent = d->index->find(folder, PathTree::MatchFull | PathTree::NoLeaf);
 
     // Traverse the parent's nodes.
-    d->index->traverse(PathTree::NoLeaf | PathTree::MatchParent, &parent, PathTree::no_hash,
-                       Archive::Instance::addToNames, &names);
+    for(PathTreeIterator<PathTree> iter(parent.children()); iter.hasNext(); )
+    {
+        PathTree::Node const &node = iter.next();
+        if(node.isBranch()) names.insert(node.name());
+    }
 
     return names.size();
 }
