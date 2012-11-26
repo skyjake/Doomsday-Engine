@@ -408,19 +408,20 @@ int Info_FindValue(Info *info, char const *path, char *buffer, size_t bufSize)
 int UnixInfo_GetConfigValue(char const *configFile, char const *key, char *dest, size_t destLen)
 {
     de::UnixInfo &info = de::App::unixInfo();
-    de::String foundValue;
 
     // "paths" is the only config file currently being used.
     if(!qstrcmp(configFile, "paths"))
     {
+        de::NativePath foundValue;
         if(info.path(key, foundValue))
         {
-            qstrncpy(dest, foundValue.toUtf8().constData(), destLen);
+            qstrncpy(dest, foundValue.toString().toUtf8().constData(), destLen);
             return true;
         }
     }
     else if(!qstrcmp(configFile, "defaults"))
     {
+        de::String foundValue;
         if(info.defaults(key, foundValue))
         {
             qstrncpy(dest, foundValue.toUtf8().constData(), destLen);

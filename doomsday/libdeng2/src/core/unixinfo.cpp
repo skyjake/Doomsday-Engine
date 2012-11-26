@@ -110,11 +110,16 @@ UnixInfo::~UnixInfo()
     delete d;
 }
 
-bool UnixInfo::path(String const &key, String &value) const
+bool UnixInfo::path(String const &key, NativePath &value) const
 {
     if(d->paths)
     {
-        return d->paths->find(key, value);
+        String s;
+        if(d->paths->find(key, s))
+        {
+            value = s;
+            return true;
+        }
     }
     return false;
 }
