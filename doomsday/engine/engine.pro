@@ -305,6 +305,7 @@ DENG_HEADERS += \
     include/resource/materialvariant.h \
     include/resource/models.h \
     include/resource/patchcompositetexture.h \
+    include/resource/patchname.h \
     include/resource/pcx.h \
     include/resource/r_data.h \
     include/resource/rawtexture.h \
@@ -591,6 +592,7 @@ SOURCES += \
     src/resource/materialvariant.cpp \
     src/resource/models.cpp \
     src/resource/patchcompositetexture.cpp \
+    src/resource/patchname.cpp \
     src/resource/pcx.c \
     src/resource/r_data.c \
     src/resource/rawtexture.cpp \
