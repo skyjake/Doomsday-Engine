@@ -42,12 +42,15 @@ struct PathTree::Instance
     /// Total number of unique paths in the directory.
     int size;
 
-    /// Path node hashes.
-    PathTree::Nodes leafHash;
-    PathTree::Nodes branchHash;
+    /// Node that represents the one root branch of all nodes.
+    PathTree::Node rootNode;
+
+    /// Path node hashes (leaves and branches).
+    PathTree::NodeHash hash;
 
     Instance(PathTree &d, int _flags)
-        : self(d), flags(_flags), size(0)
+        : self(d), flags(_flags), size(0),
+          rootNode(PathTree::NodeArgs(d, PathTree::Branch, 0))
     {}
 
     ~Instance()
@@ -57,8 +60,8 @@ struct PathTree::Instance
 
     void clear()
     {
-        clearPathHash(leafHash);
-        clearPathHash(branchHash);
+        clearPathHash(hash.leaves);
+        clearPathHash(hash.branches);
         size = 0;
     }
 
@@ -73,22 +76,22 @@ struct PathTree::Instance
      * @return Tree node that matches the name and type and which has the
      * specified parent node.
      */
-    PathTree::Node *direcNode(Path::Segment const &pathNode, PathTree::NodeType nodeType,
-                              PathTree::Node *parent)
+    PathTree::Node *nodeForSegment(Path::Segment const &segment, PathTree::NodeType nodeType,
+                                   PathTree::Node *parent)
     {
+        PathTree::Nodes const &hash = self.nodes(nodeType);
+
         // Have we already encountered this?
-        String segment = pathNode.toString();
         PathTree::SegmentId segmentId = segments.isInterned(segment);
         if(segmentId)
         {
             // The name is known. Perhaps we have.
-            PathTree::Nodes &hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
             Path::hash_type hashKey = segments.userValue(segmentId);
             for(PathTree::Nodes::const_iterator i = hash.find(hashKey);
                 i != hash.end() && i.key() == hashKey; ++i)
             {
                 PathTree::Node *node = *i;
-                if(parent    != node->parent()) continue;
+                if(parent    != &node->parent()) continue;
                 if(segmentId != node->segmentId()) continue;
 
                 if(nodeType == PathTree::Branch || !(flags & PathTree::MultiLeaf))
@@ -104,7 +107,7 @@ struct PathTree::Instance
         Path::hash_type hashKey;
         if(!segmentId)
         {
-            hashKey   = pathNode.hash();
+            hashKey   = segment.hash();
             segmentId = internSegmentAndUpdateIdHashMap(segment, hashKey);
         }
         else
@@ -112,20 +115,10 @@ struct PathTree::Instance
             hashKey = self.segmentHash(segmentId);
         }
 
-        // Are we out of indices?
-        if(!segmentId) return NULL;
-
-        PathTree::Node *node = new PathTree::Node(self, nodeType, segmentId, parent);
+        PathTree::Node *node = self.newNode(PathTree::NodeArgs(self, nodeType, segmentId, parent));
 
         // Insert the new node into the hash.
-        if(nodeType == PathTree::Leaf)
-        {
-            leafHash.insert(hashKey, node);
-        }
-        else // Branch
-        {
-            branchHash.insert(hashKey, node);
-        }
+        const_cast<Nodes &>(hash).insert(hashKey, node);
 
         return node;
     }
@@ -135,20 +128,16 @@ struct PathTree::Instance
      *
      * @return  The node that identifies the given path.
      */
-    PathTree::Node *buildDirecNodes(Path const &path)
+    PathTree::Node *buildNodesForPath(Path const &path)
     {
-        /// @todo This messy logic should be revised. Now that the names of a
-        /// path can be accessed randomly with no impact on performance - there
-        /// is no need to index the nodes in reverse (right to left) order. -ds
-
         bool const hasLeaf = !path.toStringRef().endsWith("/");
 
-        PathTree::Node *node = 0, *parent = 0;
-        for(int i = path.segmentCount() - 1; i >= (hasLeaf? 1 : 0); --i)
+        PathTree::Node *node = 0, *parent = &rootNode;
+        for(int i = 0; i < path.segmentCount() - (hasLeaf? 1 : 0); ++i)
         {
-            Path::Segment const &pn = path.reverseSegment(i);
+            Path::Segment const &pn = path.segment(i);
             //qDebug() << "Add branch: " << pn.toString();
-            node = direcNode(pn, PathTree::Branch, parent);
+            node = nodeForSegment(pn, PathTree::Branch, parent);
             parent = node;
         }
 
@@ -156,9 +145,60 @@ struct PathTree::Instance
         {
             Path::Segment const &pn = path.lastSegment();
             //qDebug() << "Add leaf: " << pn.toString();
-            node = direcNode(pn, PathTree::Leaf, parent);
+            node = nodeForSegment(pn, PathTree::Leaf, parent);
         }
         return node;
+    }
+
+    PathTree::Node *findInHash(PathTree::Nodes &hash, Path::hash_type hashKey,
+                               Path const &searchPath,
+                               PathTree::ComparisonFlags compFlags)
+    {
+        for(Nodes::iterator i = hash.find(hashKey);
+            i != hash.end() && i.key() == hashKey; ++i)
+        {
+            PathTree::Node *node = *i;
+            if(!node->comparePath(searchPath, compFlags))
+            {
+                // This is the leaf node we're looking for.
+                if(compFlags.testFlag(RelinquishMatching))
+                {
+                    node->parent().removeChild(*node);
+                    hash.erase(i);
+                }
+                return node;
+            }
+        }
+        return 0;
+    }
+
+    PathTree::Node *find(Path const &searchPath, PathTree::ComparisonFlags compFlags)
+    {
+        if(searchPath.isEmpty() && !compFlags.testFlag(NoBranch))
+        {
+            return &rootNode;
+        }
+
+        PathTree::Node *found = 0;
+        if(size)
+        {
+            Path::hash_type hashKey = searchPath.lastSegment().hash();
+
+            if(!compFlags.testFlag(NoLeaf))
+            {
+                if((found = findInHash(hash.leaves, hashKey, searchPath, compFlags)) != 0)
+                    return found;
+            }
+
+            if(!compFlags.testFlag(NoBranch))
+            {
+                if((found = findInHash(hash.branches, hashKey, searchPath, compFlags)) != 0)
+                    return found;
+            }
+        }
+
+        // The referenced node could not be found.
+        return 0;
     }
 
     static void clearPathHash(PathTree::Nodes &ph)
@@ -168,28 +208,35 @@ struct PathTree::Instance
         DENG2_FOR_EACH(PathTree::Nodes, i, ph)
         {
             PathTree::Node *node = *i;
-#ifdef DENG2_DEBUG
-            if(node->userPointer())
-            {
-                /// Assert instead? -jk
-                LOG_ERROR("Node %p has non-NULL user data.") << de::dintptr(node);
-            }
-#endif
             delete node;
         }
         ph.clear();
     }
 };
 
-PathTree::Node *PathTree::insert(Path const &path)
+PathTree::Node &PathTree::insert(Path const &path)
 {
-    PathTree::Node *node = d->buildDirecNodes(path);
+    PathTree::Node *node = d->buildNodesForPath(path);
+    DENG2_ASSERT(node != 0);
+
+    // There is now one more unique path in the tree.
+    d->size++;
+
+    return *node;
+}
+
+bool PathTree::remove(Path const &path, ComparisonFlags flags)
+{
+    PathTree::Node *node = d->find(path, flags | RelinquishMatching);
     if(node)
     {
-        // There is now one more unique path in the directory.
-        d->size += 1;
+        delete node;
+
+        // One less unique path in the tree.
+        d->size--;
+        return true;
     }
-    return node;
+    return false;
 }
 
 PathTree::PathTree(Flags flags)
@@ -221,48 +268,31 @@ bool PathTree::empty() const
     return size() == 0;
 }
 
+PathTree::Flags PathTree::flags() const
+{
+    return d->flags;
+}
+
 void PathTree::clear()
 {
     d->clear();
 }
 
+bool PathTree::has(Path const &path, ComparisonFlags flags) const
+{    
+    flags &= ~RelinquishMatching; // never relinquish
+    return d->find(path, flags) != 0;
+}
+
 PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags flags) const
 {
-    if(!searchPath.isEmpty() && d->size)
+    Node const *found = d->find(searchPath, flags);
+    if(!found)
     {
-        Path::hash_type hashKey = searchPath.lastSegment().hash();
-        if(!(flags & NoLeaf))
-        {
-            Nodes &nodes = d->leafHash;
-            for(Nodes::const_iterator i = nodes.find(hashKey);
-                i != nodes.end() && i.key() == hashKey; ++i)
-            {
-                Node const &node = **i;
-                if(!node.comparePath(searchPath, flags))
-                {
-                    // This is the node we're looking for.
-                    return node;
-                }
-            }
-        }
-
-        if(!(flags & NoBranch))
-        {
-            Nodes &nodes = d->branchHash;
-            for(Nodes::const_iterator i = nodes.find(hashKey); i != nodes.end() && i.key() == hashKey; ++i)
-            {
-                Node const &node = **i;
-                if(!node.comparePath(searchPath, flags))
-                {
-                    // This is the node we're looking for.
-                    return node;
-                }
-            }
-        }
+        /// @throw NotFoundError  The referenced node could not be found.
+        throw NotFoundError("PathTree::find", "No paths found matching \"" + searchPath + "\"");
     }
-
-    /// @throw NotFoundError  The referenced node could not be found.
-    throw NotFoundError("PathTree::find", "No paths found matching \"" + searchPath + "\"");
+    return *found;
 }
 
 PathTree::Node &PathTree::find(Path const &path, ComparisonFlags flags)
@@ -281,9 +311,19 @@ Path::hash_type PathTree::segmentHash(SegmentId segmentId) const
     return d->segments.userValue(segmentId);
 }
 
+PathTree::Node const &PathTree::rootBranch() const
+{
+    return d->rootNode;
+}
+
+PathTree::Node *PathTree::newNode(NodeArgs const &args)
+{
+    return new Node(args);
+}
+
 PathTree::Nodes const &PathTree::nodes(NodeType type) const
 {
-    return (type == Leaf? d->leafHash : d->branchHash);
+    return (type == Leaf? d->hash.leaves : d->hash.branches);
 }
 
 static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes const &ph, QChar separator)
@@ -293,7 +333,7 @@ static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes cons
     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
     {
         PathTree::Node const &node = **i;
-        found.push_back(node.composePath(separator));
+        found.push_back(node.path(separator));
     }
 }
 
@@ -302,17 +342,18 @@ int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar separ
     int numFoundSoFar = found.count();
     if(!(flags & NoBranch))
     {
-        collectPathsInHash(found, branchNodes(), separator);
+        collectPathsInHash(found, d->hash.branches, separator);
     }
     if(!(flags & NoLeaf))
     {
-        collectPathsInHash(found, leafNodes(), separator);
+        collectPathsInHash(found, d->hash.leaves, separator);
     }
     return found.count() - numFoundSoFar;
 }
 
 static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
-                              PathTree::NodeType type, int flags, PathTree::Node *parent,
+                              PathTree::NodeType type, PathTree::ComparisonFlags flags,
+                              PathTree::Node const *parent,
                               int (*callback) (PathTree::Node &, void *), void *parameters)
 {
     int result = 0;
@@ -322,16 +363,24 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
         throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1, valid range is [0..%2).").arg(hashKey).arg(Path::hash_range-1));
     }
 
-    PathTree::Nodes const &nodes = pathTree.nodes(type);
+    PathTree::Nodes const *nodes = &pathTree.nodes(type);
+
+    // If the parent is known, we can narrow our search to all the parent's
+    // children.
+    if(!pathTree.flags().testFlag(PathTree::NoLocalBranchIndex) &&
+       flags.testFlag(PathTree::MatchParent) && parent)
+    {
+        nodes = &parent->childNodes(type);
+    }
 
     // Are we iterating nodes with a known hash?
     if(hashKey != PathTree::no_hash)
     {
         // Yes.
-        PathTree::Nodes::const_iterator i = nodes.constFind(hashKey);
-        for(; i != nodes.end() && i.key() == hashKey; ++i)
+        PathTree::Nodes::const_iterator i = nodes->constFind(hashKey);
+        for(; i != nodes->end() && i.key() == hashKey; ++i)
         {
-            if(!((flags & PathTree::MatchParent) && parent != (*i)->parent()))
+            if(!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
             {
                 result = callback(**i, parameters);
                 if(result) break;
@@ -340,10 +389,10 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
     }
     else
     {
-        // No - iterate all nodes.
-        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, nodes)
+        // No known hash -- iterate all potential nodes.
+        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, *nodes)
         {
-            if(!((flags & PathTree::MatchParent) && parent != (*i)->parent()))
+            if(!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
             {
                 result = callback(**i, parameters);
                 if(result) break;
@@ -353,7 +402,7 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
     return result;
 }
 
-int PathTree::traverse(ComparisonFlags flags, PathTree::Node *parent, Path::hash_type hashKey,
+int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path::hash_type hashKey,
                        int (*callback) (PathTree::Node &, void *), void *parameters) const
 {
     int result = 0;

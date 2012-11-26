@@ -1,5 +1,4 @@
-/*
- * The Doomsday Engine Project -- libdeng2
+/** @file archive.cpp Collection of named memory blocks stored inside a byte array.
  *
  * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -28,27 +27,25 @@ struct Archive::Instance
     /// Source data provided at construction.
     IByteArray const *source;
 
-    /// Index maps entry paths to their metadata.
-    Archive::Index index;
+    /// Index maps entry paths to their metadata. Created by concrete subclasses
+    /// but we have the ownership.
+    PathTree *index;
 
     /// Contents of the archive have been modified.
     bool modified;
 
-    Instance(Archive &a, IByteArray const *src) : self(a), source(src), modified(false)
+    Instance(Archive &a, IByteArray const *src) : self(a), source(src), index(0), modified(false)
     {}
 
-    void readEntry(String const &path, IBlock &deserializedData) const
+    ~Instance()
     {
-        Archive::Index::const_iterator found = index.find(path);
-        if(found == index.end())
-        {
-            /// @throw NotFoundError @a path was not found in the archive.
-            throw NotFoundError("Archive::readEntry",
-                "Entry '" + path + "' cannot not found in the archive");
-        }
+        delete index;
+    }
 
-        Entry const &entry = *found.value();
-
+    void readEntry(Path const &path, IBlock &deserializedData) const
+    {
+        Entry const &entry = static_cast<Entry const &>(
+                    index->find(path, PathTree::MatchFull | PathTree::NoBranch));
         if(!entry.size)
         {
             // Empty entry; nothing to do.
@@ -63,7 +60,7 @@ struct Archive::Instance
             return;
         }
 
-        self.readFromSource(&entry, path, deserializedData);
+        self.readFromSource(entry, path, deserializedData);
     }
 };
 
@@ -92,9 +89,10 @@ void Archive::cache(CacheAttachment attach)
         // Nothing to read from.
         return;
     }
-    DENG2_FOR_EACH(Index, i, d->index)
+    PathTreeIterator<PathTree> iter(d->index->leafNodes());
+    while(iter.hasNext())
     {
-        Entry &entry = *i.value();
+        Entry &entry = static_cast<Entry &>(iter.next());
         if(!entry.data && !entry.dataInArchive)
         {
             entry.dataInArchive = new Block(*d->source, entry.offset, entry.sizeInArchive);
@@ -106,80 +104,67 @@ void Archive::cache(CacheAttachment attach)
     }
 }
 
-bool Archive::has(String const &path) const
+bool Archive::hasEntry(Path const &path) const
 {
-    return d->index.find(path) != d->index.end();
+    DENG2_ASSERT(d->index != 0);
+
+    return d->index->has(path, PathTree::MatchFull | PathTree::NoBranch);
 }
 
-Archive::Names Archive::listFiles(String const &folder) const
+dint Archive::listFiles(Archive::Names& names, Path const &folder) const
 {
-    Names names;
-    
-    String prefix = folder.empty()? "" : folder / "";
-    DENG2_FOR_EACH_CONST(Index, i, d->index)
+    DENG2_ASSERT(d->index != 0);
+
+    names.clear();
+
+    // Find the folder in the index.
+    PathTree::Node const &parent = d->index->find(folder, PathTree::MatchFull | PathTree::NoLeaf);
+
+    // Traverse the parent's nodes.
+    for(PathTreeIterator<PathTree> iter(parent.children().leaves); iter.hasNext(); )
     {
-        if(i.key().beginsWith(prefix))
-        {
-            String relative = i.key().substr(prefix.size());
-            if(relative.fileNamePath().empty())
-            {
-                // This is a file in the folder.
-                names.insert(relative);
-            }
-        }
+        names.insert(iter.next().name());
     }
-    return names;
+
+    return names.size();
 }
 
-Archive::Names Archive::listFolders(String const &folder) const
+dint Archive::listFolders(Archive::Names &names, Path const &folder) const
 {
-    Names names;
-    
-    String prefix = folder.empty()? "" : folder / "";
-    DENG2_FOR_EACH_CONST(Index, i, d->index)
-    {
-        if(i.key().beginsWith(prefix))
-        {
-            String relative = String(i.key().substr(prefix.size())).fileNamePath();
-            if(!relative.empty() && relative.fileNamePath().empty())
-            {
-                // This is a subfolder in the folder.
-                names.insert(relative);
-            }
-        }
-    }    
-    return names;
-}
+    DENG2_ASSERT(d->index != 0);
 
-File::Status Archive::status(String const &path) const
-{
-    Index::const_iterator found = d->index.find(path);
-    if(found == d->index.end())
+    names.clear();
+
+    // Find the folder in the index.
+    PathTree::Node const &parent = d->index->find(folder, PathTree::MatchFull | PathTree::NoLeaf);
+
+    // Traverse the parent's nodes.
+    for(PathTreeIterator<PathTree> iter(parent.children().branches); iter.hasNext(); )
     {
-        /// @throw NotFoundError  @a path was not found in the archive.
-        throw NotFoundError("Archive::fileStatus",
-            "Entry '" + path + "' cannot not found in the archive");
+        names.insert(iter.next().name());
     }
+
+    return names.size();
+}
+
+File::Status Archive::status(Path const &path) const
+{
+    DENG2_ASSERT(d->index != 0);
+
+    Entry const &found = static_cast<Entry const &>(d->index->find(path, PathTree::MatchFull));
 
     return File::Status(
-        // Is it a folder?
-        (!found.value()->size && path.endsWith("/"))? File::Status::FOLDER : File::Status::FILE,
-        found.value()->size,
-        found.value()->modifiedAt);
+        found.isLeaf()? File::Status::FILE : File::Status::FOLDER,
+        found.size,
+        found.modifiedAt);
 }
 
-Block const &Archive::entryBlock(String const &path) const
+Block const &Archive::entryBlock(Path const &path) const
 {
-    Index::const_iterator found = d->index.find(path);
-    if(found == d->index.end())
-    {
-        /// @throw NotFoundError  @a path was not found in the archive.
-        throw NotFoundError("Archive::block",
-            "Entry '" + path + "' cannot not found in the archive");
-    }
-    
+    DENG2_ASSERT(d->index != 0);
+
     // We'll need to modify the entry.
-    Entry &entry = *const_cast<Entry *>(found.value());
+    Entry &entry = static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch));
     if(entry.data)
     {
         // Got it.
@@ -191,58 +176,56 @@ Block const &Archive::entryBlock(String const &path) const
     return *entry.data;
 }
 
-Block &Archive::entryBlock(String const &path)
+Block &Archive::entryBlock(Path const &path)
 {
     Block const &block = const_cast<Archive const *>(this)->entryBlock(path);
     
     // Mark for recompression.
-    d->index.find(path).value()->maybeChanged = true;
+    static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch)).maybeChanged = true;
     d->modified = true;
     
     return const_cast<Block &>(block);
 }
 
-void Archive::add(String const &path, IByteArray const &data)
+void Archive::add(Path const &path, IByteArray const &data)
 {
-    // Get rid of the earlier entry with this path.
-    if(has(path))
+    if(path.isEmpty())
     {
-        remove(path);
+        /// @throws InvalidPathError  Provided path was not a valid path.
+        throw InvalidPathError("Archive::add",
+                               QString("'%1' is an invalid path for an entry").arg(path));
     }
 
-    Entry *entry = newEntry();
-    entry->data = new Block(data);
-    entry->modifiedAt = Time();
-    entry->maybeChanged = true;
+    // Get rid of the earlier entry with this path.
+    remove(path);
+
+    DENG2_ASSERT(d->index != 0);
+
+    Entry &entry = static_cast<Entry &>(d->index->insert(path));
+    entry.data         = new Block(data);
+    entry.modifiedAt   = Time();
+    entry.maybeChanged = true;
 
     // The rest of the data gets updated when the archive is written.
 
-    d->index[path] = entry;
     d->modified = true;
 }
 
-void Archive::remove(String const &path)
+void Archive::remove(Path const &path)
 {
-    Index::iterator found = d->index.find(path);
-    if(found != d->index.end())
+    DENG2_ASSERT(d->index != 0);
+
+    if(d->index->remove(path, PathTree::MatchFull | PathTree::NoBranch))
     {
-        delete found.value();
-        d->index.erase(found);
         d->modified = true;
-        return;
     }
-    /// @throw NotFoundError  The path does not exist in the archive.
-    throw NotFoundError("Archive::remove", "Entry '" + path + "' not found");
 }
 
 void Archive::clear()
 {
-    // Free deserialized data.
-    DENG2_FOR_EACH(Index, i, d->index)
-    {
-        delete i.value();
-    }
-    d->index.clear();
+    DENG2_ASSERT(d->index != 0);
+
+    d->index->clear();
     d->modified = true;
 }
 
@@ -251,18 +234,27 @@ bool Archive::modified() const
     return d->modified;
 }
 
-void Archive::insertToIndex(String const &path, Entry *entry)
+void Archive::setIndex(PathTree *tree)
 {
-    if(d->index.contains(path))
-    {
-        delete d->index[path];
-    }
-    d->index[path] = entry;
+    d->index = tree;
 }
 
-Archive::Index const &Archive::index() const
+Archive::Entry &Archive::insertEntry(Path const &path)
 {
-    return d->index;
+    LOG_AS("Archive");
+    DENG2_ASSERT(d->index != 0);
+
+    // Remove any existing node at this path.
+    d->index->remove(path, PathTree::MatchFull | PathTree::NoBranch);
+
+    return static_cast<Entry &>(d->index->insert(path));
+}
+
+PathTree const &Archive::index() const
+{
+    DENG2_ASSERT(d->index != 0);
+
+    return *d->index;
 }
 
 } // namespace de

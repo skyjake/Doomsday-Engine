@@ -172,10 +172,10 @@ struct FS1::Scheme::Instance
 
     /// Associated path directory.
     /// @todo It should not be necessary for a unique directory per scheme.
-    PathTree directory;
+    UserDataPathTree directory;
 
     /// As the directory is relative, this special node serves as the root.
-    PathTree::Node* rootNode;
+    UserDataNode* rootNode;
 
     /// Name hash table.
     NameHash nameHash;
@@ -227,7 +227,7 @@ struct FS1::Scheme::Instance
         }
     }
 
-    PathTree::Node* addDirectoryPathNodes(String path)
+    UserDataNode* addDirectoryPathNodes(String path)
     {
         if(path.isEmpty()) return 0;
 
@@ -247,12 +247,12 @@ struct FS1::Scheme::Instance
             // Time to construct the relative base node?
             if(!rootNode)
             {
-                rootNode = directory.insert(Path("./"));
+                rootNode = &directory.insert(Path("./"));
             }
             return rootNode;
         }
 
-        return directory.insert(Path(path));
+        return &directory.insert(path);
     }
 
     void addDirectoryChildNodes(PathTree::Node& node, int flags)
@@ -260,7 +260,7 @@ struct FS1::Scheme::Instance
         if(node.isLeaf()) return;
 
         // Compose the search pattern. We're interested in *everything*.
-        String searchPattern = node.composePath() / "*";
+        String searchPattern = node.path() / "*";
 
         // Process this search.
         FS1::PathList found;
@@ -283,7 +283,7 @@ struct FS1::Scheme::Instance
         String filePath, bool /*isFolder*/, int flags)
     {
         // Add this path to the directory.
-        PathTree::Node* node = addDirectoryPathNodes(filePath);
+        UserDataNode* node = addDirectoryPathNodes(filePath);
         if(!node) return;
 
         if(!node->isLeaf())
@@ -298,7 +298,7 @@ struct FS1::Scheme::Instance
                     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, directory.leafNodes())
                     {
                         PathTree::Node& sibling = **i;
-                        if(sibling.parent() == node)
+                        if(&sibling.parent() == node)
                         {
                             self.add(sibling);
                         }
@@ -545,7 +545,7 @@ void FS1::Scheme::debugPrint() const
 
             LOG_DEBUG("  %u - %u:\"%s\" => %s")
                 << schemeIdx << key << fileRef.name()
-                << NativePath(fileRef.directoryNode().composePath()).pretty();
+                << NativePath(fileRef.directoryNode().path()).pretty();
 
             ++schemeIdx;
         }

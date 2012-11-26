@@ -25,38 +25,38 @@ namespace de {
 
 struct PathTree::Node::Instance
 {
-    /// @c true = this is a leaf node.
-    bool isLeaf;
-
     /// PathTree which owns this node.
     PathTree &tree;
+
+    /// Parent node in the user's logical hierarchy.
+    PathTree::Node *parent;
+
+    /// @c NULL for leaves, index of children for branches.
+    PathTree::Node::Children *children;
 
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
     PathTree::SegmentId segmentId;
 
-    /// Parent node in the user's logical hierarchy.
-    PathTree::Node *parent;
-
-    /// User-specified data pointer associated with this node.
-    void *userPointer;
-
-    /// User-specified value associated with this node.
-    int userValue;
-
-    Instance(PathTree &_tree, bool _isLeaf, PathTree::SegmentId _segmentId,
+    Instance(PathTree &_tree, bool isLeaf, PathTree::SegmentId _segmentId,
              PathTree::Node *_parent)
-        : isLeaf(_isLeaf), tree(_tree), segmentId(_segmentId), parent(_parent),
-          userPointer(0), userValue(0)
-    {}
+        : tree(_tree), parent(_parent), children(0), segmentId(_segmentId)
+    {
+        if(!isLeaf) children = new PathTree::Node::Children;
+    }
+
+    ~Instance()
+    {
+        delete children;
+    }
 };
 
-PathTree::Node::Node(PathTree &tree, PathTree::NodeType type, PathTree::SegmentId fragmentId,
-    PathTree::Node *parent, void *userPointer, int userValue)
+PathTree::Node::Node(PathTree::NodeArgs const &args)
 {
-    d = new Instance(tree, type == PathTree::Leaf, fragmentId, parent);
-    setUserPointer(userPointer);
-    setUserValue(userValue);
+    d = new Instance(args.tree, args.type == PathTree::Leaf, args.segmentId, args.parent);
+
+    // Let the parent know of the new child node.
+    if(d->parent) d->parent->addChild(*this);
 }
 
 PathTree::Node::~Node()
@@ -66,7 +66,7 @@ PathTree::Node::~Node()
 
 bool PathTree::Node::isLeaf() const
 {
-    return d->isLeaf;
+    return d->children == 0;
 }
 
 PathTree &PathTree::Node::tree() const
@@ -74,14 +74,57 @@ PathTree &PathTree::Node::tree() const
     return d->tree;
 }
 
-PathTree::Node *PathTree::Node::parent() const
+PathTree::Node &PathTree::Node::parent() const
 {
-    return d->parent;
+    return *d->parent;
+}
+
+const PathTree::Node::Children &PathTree::Node::children() const
+{
+    DENG2_ASSERT(d->children != 0);
+    return *d->children;
+}
+
+PathTree::Nodes const &PathTree::Node::childNodes(PathTree::NodeType type) const
+{
+    DENG2_ASSERT(d->children != 0);
+    return (type == PathTree::Leaf? d->children->leaves : d->children->branches);
+}
+
+PathTree::Nodes &PathTree::Node::childNodes(PathTree::NodeType type)
+{
+    DENG2_ASSERT(d->children != 0);
+    return (type == PathTree::Leaf? d->children->leaves : d->children->branches);
+}
+
+bool PathTree::Node::isAtRootLevel() const
+{
+    return d->parent == &d->tree.rootBranch();
 }
 
 PathTree::SegmentId PathTree::Node::segmentId() const
 {
     return d->segmentId;
+}
+
+void PathTree::Node::addChild(PathTree::Node &node)
+{
+    if(!d->tree.flags().testFlag(PathTree::NoLocalBranchIndex))
+    {
+        DENG2_ASSERT(d->children != 0);
+
+        childNodes(node.type()).insert(node.hash(), &node);
+    }
+}
+
+void PathTree::Node::removeChild(PathTree::Node &node)
+{
+    if(!d->tree.flags().testFlag(PathTree::NoLocalBranchIndex))
+    {
+        DENG2_ASSERT(d->children != 0);
+
+        childNodes(node.type()).remove(node.hash(), &node);
+    }
 }
 
 String const &PathTree::Node::name() const
@@ -92,28 +135,6 @@ String const &PathTree::Node::name() const
 Path::hash_type PathTree::Node::hash() const
 {
     return tree().segmentHash(d->segmentId);
-}
-
-void *PathTree::Node::userPointer() const
-{
-    return d->userPointer;
-}
-
-int PathTree::Node::userValue() const
-{
-    return d->userValue;
-}
-
-PathTree::Node &PathTree::Node::setUserPointer(void *ptr)
-{
-    d->userPointer = ptr;
-    return *this;
-}
-
-PathTree::Node &PathTree::Node::setUserValue(int value)
-{
-    d->userValue = value;
-    return *this;
 }
 
 /// @todo This logic should be encapsulated in de::Path or de::Path::Segment; use QChar.
@@ -157,7 +178,7 @@ static int matchName(char const *string, char const *pattern)
 int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags flags) const
 {
     if(((flags & PathTree::NoLeaf)   && isLeaf()) ||
-       ((flags & PathTree::NoBranch) && !isLeaf()))
+       ((flags & PathTree::NoBranch) && isBranch()))
         return 1;
 
     try
@@ -193,17 +214,17 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
             // Have we arrived at the search target?
             if(i == pathNodeCount - 1)
             {
-                return !(!(flags & MatchFull) || !node->parent());
+                return !(!(flags & MatchFull) || node->isAtRootLevel());
             }
 
             // Is the hierarchy too shallow?
-            if(!node->parent())
+            if(node->isAtRootLevel())
             {
                 return 1;
             }
 
             // So far so good. Move one level up the hierarchy.
-            node  = node->parent();
+            node  = &node->parent();
             snode = &searchPattern.reverseSegment(i + 1);
         }
     }
@@ -241,7 +262,7 @@ static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Nod
 
     parm.length += fragment.length();
 
-    if(trav.parent())
+    if(!trav.isAtRootLevel())
     {
         if(!parm.separator.isNull())
         {
@@ -250,7 +271,7 @@ static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Nod
         }
 
         // Descend to parent level.
-        pathConstructor(parm, *trav.parent());
+        pathConstructor(parm, trav.parent());
 
         // Append the separator.
         if(!parm.separator.isNull())
@@ -281,7 +302,7 @@ static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Nod
  *
  * Perhaps a fixed size MRU cache? -ds
  */
-Path PathTree::Node::composePath(QChar sep) const
+Path PathTree::Node::path(QChar sep) const
 {
     internal::PathConstructorParams parm = { 0, String(), sep };
 #ifdef LIBDENG_STACK_MONITOR
@@ -289,15 +310,19 @@ Path PathTree::Node::composePath(QChar sep) const
 #endif
 
     // Include a terminating path delimiter for branches.
-    if(!sep.isNull() && !isLeaf())
-        parm.length += 1; // A single character.
+    if(!sep.isNull() && isBranch())
+    {
+        parm.length++; // A single character.
+    }
 
     // Recursively construct the path from fragments and delimiters.
     pathConstructor(parm, *this);
 
     // Terminating delimiter for branches.
-    if(!sep.isNull() && !isLeaf())
+    if(!sep.isNull() && isBranch())
+    {
         parm.composedPath += sep;
+    }
 
     DENG2_ASSERT(parm.composedPath.length() == (int)parm.length);
 
@@ -307,6 +332,34 @@ Path PathTree::Node::composePath(QChar sep) const
 #endif
 
     return Path(parm.composedPath, sep);
+}
+
+UserDataNode::UserDataNode(PathTree::NodeArgs const &args, void *userPointer, int userValue)
+    : PathTree::Node(args),
+      _pointer(userPointer),
+      _value(userValue)
+{}
+
+void *UserDataNode::userPointer() const
+{
+    return _pointer;
+}
+
+int UserDataNode::userValue() const
+{
+    return _value;
+}
+
+UserDataNode &UserDataNode::setUserPointer(void *ptr)
+{
+    _pointer = ptr;
+    return *this;
+}
+
+UserDataNode &UserDataNode::setUserValue(int value)
+{
+    _value = value;
+    return *this;
 }
 
 } // namespace de

@@ -41,7 +41,7 @@
 #include "resource/fonts.h"
 #include "resource/bitmapfont.h"
 
-typedef de::PathTree FontRepository;
+typedef de::UserDataPathTree FontRepository;
 
 /**
  * FontRecord. Stores metadata for a unique Font in the collection.
@@ -99,7 +99,7 @@ static inline FontRepository* repositoryBySchemeId(fontschemeid_t id)
     return schemes[id - FONTSCHEME_FIRST].repository;
 }
 
-static fontschemeid_t schemeIdForRepository(FontRepository& pt)
+static fontschemeid_t schemeIdForRepository(de::PathTree const &pt)
 {
     for(uint i = uint(FONTSCHEME_FIRST); i <= uint(FONTSCHEME_LAST); ++i)
     {
@@ -143,7 +143,7 @@ static inline fontschemeid_t schemeIdForDirectoryNode(FontRepository::Node const
 static de::Uri composeUriForDirectoryNode(FontRepository::Node const& node)
 {
     Str const* schemeName = Fonts_SchemeName(schemeIdForDirectoryNode(node));
-    return de::Uri(node.composePath()).setScheme(Str_Text(schemeName));
+    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
 }
 
 /// @pre fontIdMap has been initialized and is large enough!
@@ -810,7 +810,7 @@ fontid_t Fonts_Declare(Uri* _uri, int uniqueId)//, const Uri* resourcePath)
         fontschemeid_t schemeId = Fonts_ParseScheme(uri.schemeCStr());
         FontScheme& fn = schemes[schemeId - FONTSCHEME_FIRST];
 
-        node = fn.repository->insert(uri.path());
+        node = &fn.repository->insert(uri.path());
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.
@@ -1082,7 +1082,7 @@ AutoStr* Fonts_ComposePath(fontid_t id)
 #endif
         return AutoStr_NewStd();
     }
-    QByteArray path = node->composePath().toUtf8();
+    QByteArray path = node->path().toUtf8();
     return AutoStr_FromTextStd(path.constData());
 }
 
@@ -1373,7 +1373,7 @@ static int collectDirectoryNodeWorker(FontRepository::Node& node, void* paramete
 
     if(!p->like.isEmpty())
     {
-        de::String path = node.composePath();
+        de::String path = node.path();
         if(!path.beginsWith(p->like, Qt::CaseInsensitive)) return 0; // Continue iteration.
     }
 
@@ -1443,8 +1443,8 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     // Decode paths before determining a lexicographical delta.
     FontRepository::Node const& nodeA = **(FontRepository::Node const**)a;
     FontRepository::Node const& nodeB = **(FontRepository::Node const**)b;
-    QByteArray pathAUtf8 = nodeA.composePath().toUtf8();
-    QByteArray pathBUtf8 = nodeB.composePath().toUtf8();
+    QByteArray pathAUtf8 = nodeA.path().toUtf8();
+    QByteArray pathBUtf8 = nodeB.path().toUtf8();
     AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8.constData()));
     AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8.constData()));
     return qstricmp(Str_Text(pathA), Str_Text(pathB));
@@ -1623,7 +1623,7 @@ ddstring_t** Fonts_CollectNames(int* rCount)
         for(FontRepository::Node** iter = foundFonts; *iter; ++iter)
         {
             FontRepository::Node& node = **iter;
-            QByteArray path = node.composePath().toUtf8();
+            QByteArray path = node.path().toUtf8();
             list[idx++] = Str_Set(Str_NewStd(), path.constData());
         }
         list[idx] = NULL; // Terminate.

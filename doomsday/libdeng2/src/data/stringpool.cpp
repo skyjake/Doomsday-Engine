@@ -33,7 +33,7 @@
 #endif
 
 /// Macro used for converting internal ids to externally visible Ids.
-#define EXPORT_ID(i)    (uint(i) + 1)
+#define EXPORT_ID(i)    (duint32(i) + 1)
 #define IMPORT_ID(i)    (Id((i) - 1))
 
 namespace de {
@@ -156,7 +156,7 @@ struct StringPool::Instance
     IdMap idMap;
 
     /// Number of strings in the pool (must always be idMap.size() - available.size()).
-    size_t count;
+    dsize count;
 
     /// List of currently unused ids in idMap.
     AvailableIds available;
@@ -172,7 +172,7 @@ struct StringPool::Instance
 
     void clear()
     {
-        for(uint i = 0; i < idMap.size(); ++i)
+        for(dsize i = 0; i < idMap.size(); ++i)
         {
             if(!idMap[i]) continue; // Unused slot.
             delete idMap[i];
@@ -300,10 +300,10 @@ bool StringPool::empty() const
     return !d->count;
 }
 
-uint StringPool::size() const
+dsize StringPool::size() const
 {
     d->assertCount();
-    return uint(d->count);
+    return d->count;
 }
 
 StringPool::Id StringPool::intern(String str)
@@ -513,8 +513,8 @@ void StringPool::print() const
 
     fprintf(stderr, "StringPool [%p]\n    idx    id string\n", (void *)this);
     iterate(printInternedString, &p);
-    fprintf(stderr, "  There is %u %s in the pool.\n", size(),
-                    size() == 1? "string":"strings");
+    fprintf(stderr, "  There is %u %s in the pool.\n", (duint) size(),
+            size() == 1? "string":"strings");
 }
 #endif
 

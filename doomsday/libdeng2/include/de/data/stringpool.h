@@ -61,8 +61,9 @@ namespace de
         /// String identifier was invalid. @ingroup errors
         DENG2_ERROR(InvalidIdError);
 
-        /// String identifier. Each string is assigned its own Id.
-        typedef uint Id;
+        /// String identifier. Each string is assigned its own Id. Because this is
+        /// 32-bit, there can be approximately 4.2 billion unique strings in the pool.
+        typedef duint32 Id;
 
     public:
         /**
@@ -74,7 +75,7 @@ namespace de
          * Constructs an empty StringPool and interns a number of strings.
          *
          * @param strings  Array of strings to be interned (must contain at least @a count strings).
-         * @param count  Number of strings to be interned.
+         * @param count    Number of strings to be interned.
          */
         StringPool(String *strings, uint count);
 
@@ -98,7 +99,7 @@ namespace de
          * Determines the number of strings in the pool.
          * @return Number of strings in the pool.
          */
-        uint size() const;
+        dsize size() const;
 
         /**
          * Interns string @a str. If this string is not already in the pool, a new

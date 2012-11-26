@@ -257,10 +257,14 @@ struct CentralEnd : public ISerializable {
 using namespace internal;
 
 ZipArchive::ZipArchive() : Archive()
-{}
+{
+    setIndex(new Index);
+}
 
 ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
 {
+    setIndex(new Index);
+
     Reader reader(archive, littleEndianByteOrder);
 
     // Locate the central directory. Start from the earliest location where
@@ -341,31 +345,29 @@ ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
                 "Entry '" + fileName + "' is encrypted and thus cannot be read");
         }
 
-        // Make an index entry for this.
-        QScopedPointer<ZipEntry> entry(new ZipEntry);
-        entry->size              = header.size;
-        entry->sizeInArchive     = header.compressedSize;
-        entry->compression       = header.compression;
-        entry->crc32             = header.crc32;
-        entry->localHeaderOffset = header.relOffset;
-
-        // Unpack the last modified time from the ZIP entry header.
-        DOSDate lastModDate(header.lastModDate);
-        DOSTime lastModTime(header.lastModTime);
-        entry->modifiedAt = QDateTime(QDate(lastModDate.year + 1980, lastModDate.month, lastModDate.dayOfMonth),
-                                      QTime(lastModTime.hours, lastModTime.minutes, lastModTime.seconds));
-
         // Read the local file header, which contains the correct extra
         // field size (Info-ZIP!).
         reader.mark();
         reader.setOffset(header.relOffset);
-
         LocalFileHeader localHeader;
         reader >> localHeader;
 
-        entry->offset = reader.offset() + header.fileNameSize + localHeader.extraFieldSize;
+        // Make an index entry for this.
+        ZipEntry &entry = static_cast<ZipEntry &>(insertEntry(fileName));
 
-        insertToIndex(fileName, entry.take());
+        entry.size              = header.size;
+        entry.sizeInArchive     = header.compressedSize;
+        entry.compression       = header.compression;
+        entry.crc32             = header.crc32;
+        entry.localHeaderOffset = header.relOffset;
+
+        // Unpack the last modified time from the ZIP entry header.
+        DOSDate lastModDate(header.lastModDate);
+        DOSTime lastModTime(header.lastModTime);
+        entry.modifiedAt = QDateTime(QDate(lastModDate.year + 1980, lastModDate.month, lastModDate.dayOfMonth),
+                                     QTime(lastModTime.hours, lastModTime.minutes, lastModTime.seconds));
+
+        entry.offset = reader.offset() + header.fileNameSize + localHeader.extraFieldSize;
 
         // Back to the central directory.
         reader.rewind();
@@ -375,9 +377,9 @@ ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
 ZipArchive::~ZipArchive()
 {}
 
-void ZipArchive::readFromSource(Entry const *e, String const &, IBlock &uncompressedData) const
+void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompressedData) const
 {
-    ZipEntry const &entry = *static_cast<ZipEntry const *>(e);
+    ZipEntry const &entry = static_cast<ZipEntry const &>(e);
 
     if(entry.compression == NO_COMPRESSION)
     {
@@ -438,6 +440,11 @@ void ZipArchive::readFromSource(Entry const *e, String const &, IBlock &uncompre
     }
 }
 
+ZipArchive::Index const &ZipArchive::index() const
+{
+    return static_cast<Index const &>(Archive::index());
+}
+
 void ZipArchive::operator >> (Writer &to) const
 {
     /**
@@ -447,11 +454,13 @@ void ZipArchive::operator >> (Writer &to) const
     Writer writer(to, littleEndianByteOrder);
 
     // First write the local headers.
-    DENG2_FOR_EACH_CONST(Index, i, index())
+    for(PathTreeIterator<Index> iter(index().leafNodes()); iter.hasNext(); )
     {
         // We will be updating relevant members of the entry.
-        ZipEntry &entry = *static_cast<ZipEntry *>(const_cast<Entry *>(i.value()));
+        ZipEntry &entry = iter.next();
         entry.update();
+
+        String const fullPath = entry.path();
 
         // This is where the local file header is located.
         entry.localHeaderOffset = writer.offset();
@@ -466,13 +475,13 @@ void ZipArchive::operator >> (Writer &to) const
         header.crc32 = entry.crc32;
         header.compressedSize = entry.sizeInArchive;
         header.size = entry.size;
-        header.fileNameSize = i.key().size();
+        header.fileNameSize = fullPath.size();
 
         // Can we use the data already in the source archive?
         if((entry.dataInArchive || source()) && !entry.maybeChanged)
         {
             // Yes, we can.
-            writer << header << FixedByteArray(i.key().toLatin1());
+            writer << header << FixedByteArray(fullPath.toLatin1());
             IByteArray::Offset newOffset = writer.offset();
             if(entry.dataInArchive)
             {
@@ -516,7 +525,7 @@ void ZipArchive::operator >> (Writer &to) const
                 // Compression was ok.
                 header.compression = entry.compression = DEFLATED;
                 header.compressedSize = entry.sizeInArchive = stream.total_out;
-                writer << header << FixedByteArray(i.key().toLatin1());
+                writer << header << FixedByteArray(fullPath.toLatin1());
                 entry.offset = writer.offset();
                 writer << FixedByteArray(archived, 0, entry.sizeInArchive);
             }
@@ -525,7 +534,7 @@ void ZipArchive::operator >> (Writer &to) const
                 // We won't compress.
                 header.compression = entry.compression = NO_COMPRESSION;
                 header.compressedSize = entry.sizeInArchive = entry.data->size();
-                writer << header << FixedByteArray(i.key().toLatin1());
+                writer << header << FixedByteArray(fullPath.toLatin1());
                 entry.offset = writer.offset();
                 writer << FixedByteArray(*entry.data);
             }
@@ -539,9 +548,10 @@ void ZipArchive::operator >> (Writer &to) const
     summary.offset = writer.offset();
 
     // Write the central directory.
-    DENG2_FOR_EACH_CONST(Index, i, index())
+    for(PathTreeIterator<Index> iter(index().leafNodes()); iter.hasNext(); )
     {
-        ZipEntry const &entry = *static_cast<ZipEntry const *>(i.value());
+        ZipEntry const &entry = iter.next();
+        String const fullPath = entry.path();
 
         CentralFileHeader header;
         header.signature = SIG_CENTRAL_FILE_HEADER;
@@ -554,10 +564,10 @@ void ZipArchive::operator >> (Writer &to) const
         header.crc32 = entry.crc32;
         header.compressedSize = entry.sizeInArchive;
         header.size = entry.size;
-        header.fileNameSize = i.key().size();
+        header.fileNameSize = fullPath.size();
         header.relOffset = entry.localHeaderOffset;
 
-        writer << header << FixedByteArray(i.key().toLatin1());
+        writer << header << FixedByteArray(fullPath.toLatin1());
     }
 
     // Size of the central directory.
@@ -580,13 +590,6 @@ bool ZipArchive::recognize(File const &file)
     String ext = file.name().fileNameExtension().lower();
     return (ext == ".pack" || ext == ".demo" || ext == ".save" || ext == ".addon" ||
             ext == ".box" || ext == ".pk3" || ext == ".zip");
-}
-
-Archive::Entry *ZipArchive::newEntry()
-{
-    ZipEntry *entry = new ZipEntry;
-    entry->compression = NO_COMPRESSION; // Will be updated.
-    return entry;
 }
 
 void ZipArchive::ZipEntry::update()

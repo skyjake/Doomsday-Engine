@@ -157,7 +157,7 @@ public:
      */
     Uri composeUri(QChar delimiter = '/') const
     {
-        return directoryNode().composePath(delimiter);
+        return directoryNode().path(delimiter);
     }
 
     /**
@@ -228,10 +228,10 @@ struct Zip::Instance
     Zip* self;
 
     /// Directory containing structure and info records for all lumps.
-    PathTree* lumpDirectory;
+    UserDataPathTree* lumpDirectory;
 
     /// LUT which maps logical lump indices to PathTreeNodes.
-    typedef std::vector<PathTree::Node*> LumpNodeLut;
+    typedef std::vector<UserDataNode*> LumpNodeLut;
     LumpNodeLut* lumpNodeLut;
 
     /// Lump data cache.
@@ -253,7 +253,7 @@ struct Zip::Instance
         if(lumpCache) delete lumpCache;
     }
 
-    static int clearZipFileWorker(PathTree::Node& node, void* /*parameters*/)
+    static int clearZipFileWorker(UserDataNode& node, void* /*parameters*/)
     {
         ZipFile* rec = reinterpret_cast<ZipFile*>(node.userPointer());
         if(rec)
@@ -376,7 +376,7 @@ struct Zip::Instance
                 if(entryCount == 0) break;
 
                 // Intialize the directory.
-                lumpDirectory = new PathTree(PathTree::MultiLeaf);
+                lumpDirectory = new UserDataPathTree(PathTree::MultiLeaf);
             }
 
             // Position the read cursor at the start of the buffered central centralDirectory.
@@ -470,7 +470,7 @@ struct Zip::Instance
                                          lumpIdx, baseOffset, ULONG(header->size),
                                          compressedSize),
                                 self);
-                PathTree::Node* node = lumpDirectory->insert(filePath);
+                UserDataNode* node = &lumpDirectory->insert(filePath);
                 node->setUserPointer(record);
 
                 lumpIdx++;
@@ -481,7 +481,7 @@ struct Zip::Instance
         M_Free(centralDirectory);
     }
 
-    static int buildLumpNodeLutWorker(PathTree::Node& node, void* parameters)
+    static int buildLumpNodeLutWorker(UserDataNode& node, void* parameters)
     {
         Instance* zipInst = (Instance*)parameters;
         ZipFile* lumpRecord = reinterpret_cast<ZipFile*>(node.userPointer());

@@ -40,7 +40,7 @@
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
-typedef de::PathTree TextureRepository;
+typedef de::UserDataPathTree TextureRepository;
 
 /**
  * POD object. Contains metadata for a unique Texture in the collection.
@@ -108,7 +108,7 @@ static inline TextureRepository& schemeById(textureschemeid_t id)
     return *schemes[id-TEXTURESCHEME_FIRST].directory;
 }
 
-static textureschemeid_t schemeIdForDirectory(TextureRepository const& directory)
+static textureschemeid_t schemeIdForDirectory(de::PathTree const &directory)
 {
     for(uint i = uint(TEXTURESCHEME_FIRST); i <= uint(TEXTURESCHEME_LAST); ++i)
     {
@@ -153,7 +153,7 @@ static inline textureschemeid_t schemeIdForDirectoryNode(TextureRepository::Node
 static de::Uri composeUriForDirectoryNode(TextureRepository::Node const& node)
 {
     Str const* schemeName = Textures_SchemeName(schemeIdForDirectoryNode(node));
-    return de::Uri(node.composePath()).setScheme(Str_Text(schemeName));
+    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
 }
 
 /// @pre textureIdMap has been initialized and is large enough!
@@ -450,9 +450,10 @@ void Textures_Shutdown(void)
 
         if(tn->directory)
         {
-            DENG2_FOR_EACH_CONST(TextureRepository::Nodes, nodeIt, tn->directory->leafNodes())
+            de::PathTreeIterator<TextureRepository> iter(tn->directory->leafNodes());
+            while(iter.hasNext())
             {
-                destroyRecord(*reinterpret_cast<TextureRepository::Node*>(*nodeIt));
+                destroyRecord(iter.next());
             }
             delete tn->directory; tn->directory = 0;
         }
@@ -614,9 +615,10 @@ void Textures_ClearScheme(textureschemeid_t schemeId)
         textureschemeid_t iter = textureschemeid_t(i);
         TextureScheme* tn = &schemes[iter - TEXTURESCHEME_FIRST];
 
-        DENG2_FOR_EACH_CONST(TextureRepository::Nodes, nodeIt, tn->directory->leafNodes())
+        de::PathTreeIterator<TextureRepository> it(tn->directory->leafNodes());
+        while(it.hasNext())
         {
-            TextureRepository::Node& node = **nodeIt;
+            TextureRepository::Node& node = it.next();
             destroyBoundTexture(node);
             destroyRecord(node);
         }
@@ -664,9 +666,10 @@ static void findUniqueIdBounds(TextureScheme* tn, int* minId, int* maxId)
     if(minId) *minId = DDMAXINT;
     if(maxId) *maxId = DDMININT;
 
-    DENG2_FOR_EACH_CONST(TextureRepository::Nodes, i, tn->directory->leafNodes())
+    de::PathTreeIterator<TextureRepository> iter(tn->directory->leafNodes());
+    while(iter.hasNext())
     {
-        TextureRecord const* record = reinterpret_cast<TextureRecord*>((*i)->userPointer());
+        TextureRecord const* record = reinterpret_cast<TextureRecord*>(iter.next().userPointer());
         if(!record) continue;
 
         if(minId && record->uniqueId < *minId) *minId = record->uniqueId;
@@ -711,9 +714,10 @@ static void rebuildUniqueIdMap(textureschemeid_t schemeId)
     {
         memset(tn->uniqueIdMap, NOTEXTUREID, sizeof(*tn->uniqueIdMap) * tn->uniqueIdMapSize);
 
-        DENG2_FOR_EACH_CONST(TextureRepository::Nodes, i, tn->directory->leafNodes())
+        de::PathTreeIterator<TextureRepository> iter(tn->directory->leafNodes());
+        while(iter.hasNext())
         {
-            TextureRepository::Node& node = **i;
+            TextureRepository::Node& node = iter.next();
             TextureRecord const* record = reinterpret_cast<TextureRecord*>(node.userPointer());
             if(!record) continue;
             linkRecordInUniqueIdMap(record, tn, findBindIdForDirectoryNode(node));
@@ -870,7 +874,7 @@ static textureid_t Textures_Declare2(de::Uri& uri, int uniqueId, de::Uri const* 
         textureschemeid_t schemeId = Textures_ParseSchemeName(uri.schemeCStr());
         TextureScheme* tn = &schemes[schemeId - TEXTURESCHEME_FIRST];
 
-        node = tn->directory->insert(uri.path());
+        node = &tn->directory->insert(uri.path());
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.
@@ -1067,7 +1071,7 @@ AutoStr* Textures_ComposePath(textureid_t id)
     TextureRepository::Node* node = directoryNodeForBindId(id);
     if(node)
     {
-        QByteArray path = node->composePath().toUtf8();
+        QByteArray path = node->path().toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
 
@@ -1144,9 +1148,10 @@ int Textures_Iterate2(textureschemeid_t schemeId,
     {
         TextureRepository& directory = schemeById(textureschemeid_t(i));
 
-        DENG2_FOR_EACH_CONST(TextureRepository::Nodes, nodeIt, directory.leafNodes())
+        de::PathTreeIterator<TextureRepository> iter(directory.leafNodes());
+        while(iter.hasNext())
         {
-            TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userPointer());
+            TextureRecord* record = reinterpret_cast<TextureRecord*>(iter.next().userPointer());
             if(!record || !record->texture) continue;
 
             int result = callback(record->texture, parameters);
@@ -1182,10 +1187,10 @@ int Textures_IterateDeclared2(textureschemeid_t schemeId,
     {
         TextureRepository& directory = schemeById(textureschemeid_t(i));
 
-        DENG2_FOR_EACH_CONST(TextureRepository::Nodes, nodeIt, directory.leafNodes())
+        de::PathTreeIterator<TextureRepository> iter(directory.leafNodes());
+        while(iter.hasNext())
         {
-            TextureRepository::Node& node = **nodeIt;
-            TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userPointer());
+            TextureRecord* record = reinterpret_cast<TextureRecord*>(iter.next().userPointer());
             if(!record) continue;
 
             // If we have bound a texture it can provide the id.
@@ -1195,7 +1200,7 @@ int Textures_IterateDeclared2(textureschemeid_t schemeId,
 
             // Otherwise look it up.
             if(!validTextureId(textureId))
-                textureId = findBindIdForDirectoryNode(node);
+                textureId = findBindIdForDirectoryNode(iter.value());
 
             // Sanity check.
             DENG2_ASSERT(validTextureId(textureId));
@@ -1319,12 +1324,13 @@ static TextureRepository::Node** collectDirectoryNodes(textureschemeid_t schemeI
     {
         TextureRepository& directory = schemeById(textureschemeid_t(i));
 
-        DENG2_FOR_EACH_CONST(TextureRepository::Nodes, nodeIt, directory.leafNodes())
+        de::PathTreeIterator<TextureRepository> iter(directory.leafNodes());
+        while(iter.hasNext())
         {
-            TextureRepository::Node& node = **nodeIt;
+            TextureRepository::Node& node = iter.next();
             if(!like.isEmpty())
             {
-                de::String path = node.composePath();
+                de::String path = node.path();
                 if(!path.beginsWith(like)) continue; // Continue iteration.
             }
 
@@ -1369,8 +1375,8 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     // Decode paths before determining a lexicographical delta.
     TextureRepository::Node const& nodeA = **(TextureRepository::Node const**)a;
     TextureRepository::Node const& nodeB = **(TextureRepository::Node const**)b;
-    QByteArray pathAUtf8 = nodeA.composePath().toUtf8();
-    QByteArray pathBUtf8 = nodeB.composePath().toUtf8();
+    QByteArray pathAUtf8 = nodeA.path().toUtf8();
+    QByteArray pathBUtf8 = nodeB.path().toUtf8();
     AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8));
     AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8));
     return Str_CompareIgnoreCase(pathA, Str_Text(pathB));

@@ -241,6 +241,8 @@ public:
      */
     Uri &setPath(String newPath, QChar sep = '/');
 
+    Uri &setPath(char const *newPathUtf8, char sep = '/');
+
     /**
      * Update this URI by parsing new values from the specified arguments.
      *

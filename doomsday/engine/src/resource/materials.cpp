@@ -47,7 +47,7 @@
 /// Number of elements to block-allocate in the material index to materialbind map.
 #define MATERIALS_BINDINGMAP_BLOCK_ALLOC (32)
 
-typedef de::PathTree MaterialRepository;
+typedef de::UserDataPathTree MaterialRepository;
 
 /**
  * Contains extended info about a material binding (see MaterialBind).
@@ -248,7 +248,7 @@ static inline MaterialRepository& schemeById(materialschemeid_t id)
     return *schemes[id-MATERIALSCHEME_FIRST];
 }
 
-static materialschemeid_t schemeIdForDirectory(MaterialRepository& directory)
+static materialschemeid_t schemeIdForDirectory(de::PathTree const &directory)
 {
     for(uint i = uint(MATERIALSCHEME_FIRST); i <= uint(MATERIALSCHEME_LAST); ++i)
     {
@@ -265,7 +265,7 @@ static materialschemeid_t schemeIdForDirectory(MaterialRepository& directory)
 static de::Uri composeUriForDirectoryNode(MaterialRepository::Node const& node)
 {
     Str const* schemeName = Materials_SchemeName(schemeIdForDirectory(node.tree()));
-    return de::Uri(node.composePath()).setScheme(Str_Text(schemeName));
+    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
 }
 
 static MaterialAnim* getAnimGroup(int number)
@@ -464,7 +464,7 @@ static bool newMaterialBind(de::Uri& uri, material_t* material)
     MaterialRepository::Node* node;
     MaterialBind* mb;
 
-    node = matDirectory.insert(uri.path());
+    node = &matDirectory.insert(uri.path());
 
     // Is this a new binding?
     mb = reinterpret_cast<MaterialBind*>(node->userPointer());
@@ -582,13 +582,14 @@ static void destroyBindings(void)
     {
         if(!schemes[i]) continue;
 
-        DENG2_FOR_EACH_CONST(MaterialRepository::Nodes, nodeIt, schemes[i]->leafNodes())
+        de::PathTreeIterator<MaterialRepository> iter(schemes[i]->leafNodes());
+        while(iter.hasNext())
         {
-            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userPointer());
+            MaterialBind* mb = reinterpret_cast<MaterialBind*>(iter.next().userPointer());
             if(mb)
             {
                 // Detach our user data from this node.
-                (*nodeIt)->setUserPointer(0);
+                iter.value().setUserPointer(0);
                 delete mb;
             }
         }
@@ -681,9 +682,10 @@ void Materials_ClearDefinitionLinks(void)
     {
         MaterialRepository& matDirectory = schemeById(materialschemeid_t(i));
 
-        DENG2_FOR_EACH_CONST(MaterialRepository::Nodes, nodeIt, matDirectory.leafNodes())
+        de::PathTreeIterator<MaterialRepository> iter(matDirectory.leafNodes());
+        while(iter.hasNext())
         {
-            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userPointer());
+            MaterialBind* mb = reinterpret_cast<MaterialBind*>(iter.next().userPointer());
             if(mb)
             {
                 clearBindingDefinitionLinks(mb);
@@ -895,7 +897,7 @@ AutoStr* Materials_ComposePath(materialid_t id)
     if(bind)
     {
         MaterialRepository::Node& node = bind->directoryNode();
-        QByteArray path = node.composePath().toUtf8();
+        QByteArray path = node.path().toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
 
@@ -1515,12 +1517,13 @@ static MaterialRepository::Node** collectDirectoryNodes(materialschemeid_t schem
     {
         MaterialRepository& matDirectory = schemeById(materialschemeid_t(i));
 
-        DENG2_FOR_EACH_CONST(MaterialRepository::Nodes, nodeIt, matDirectory.leafNodes())
+        de::PathTreeIterator<MaterialRepository> iter(matDirectory.leafNodes());
+        while(iter.hasNext())
         {
-            MaterialRepository::Node& node = **nodeIt;
+            MaterialRepository::Node& node = iter.next();
             if(!like.isEmpty())
             {
-                de::String path = node.composePath();
+                de::String path = node.path();
                 if(!path.beginsWith(like, Qt::CaseInsensitive)) continue;
             }
 
@@ -1561,8 +1564,8 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     // Decode paths before determining a lexicographical delta.
     MaterialRepository::Node const& nodeA = **(MaterialRepository::Node const**)a;
     MaterialRepository::Node const& nodeB = **(MaterialRepository::Node const**)b;
-    QByteArray pathAUtf8 = nodeA.composePath().toUtf8();
-    QByteArray pathBUtf8 = nodeB.composePath().toUtf8();
+    QByteArray pathAUtf8 = nodeA.path().toUtf8();
+    QByteArray pathBUtf8 = nodeB.path().toUtf8();
     AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8.constData()));
     AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8.constData()));
     return Str_CompareIgnoreCase(pathA, Str_Text(pathB));
