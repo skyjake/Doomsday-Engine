@@ -750,9 +750,10 @@ Texture *Textures_TextureForResourcePath(textureschemeid_t schemeId, Uri const *
 
     TextureRepository& directory = schemeById(schemeId);
 
-    DENG2_FOR_EACH_CONST(TextureRepository::Nodes, nodeIt, directory.leafNodes())
+    de::PathTreeIterator<TextureRepository> iter(directory.leafNodes());
+    while(iter.hasNext())
     {
-        TextureRepository::Node& node = **nodeIt;
+        TextureRepository::Node& node = iter.next();
         TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userPointer());
         if(!record) continue;
 
