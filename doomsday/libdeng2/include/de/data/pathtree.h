@@ -55,9 +55,6 @@ namespace de
  * hierarchies is "ambidextrously" recomposing paths with either forward or
  * backward slashes, irrespective of the separator used at path insertion
  * time.
- *
- * Somewhat similar to a Prefix Tree (Trie) representationally although
- * that is where the similarity ends.
  */
 class DENG2_PUBLIC PathTree
 {
