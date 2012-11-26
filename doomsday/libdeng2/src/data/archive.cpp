@@ -104,7 +104,7 @@ void Archive::cache(CacheAttachment attach)
     }
 }
 
-bool Archive::has(Path const &path) const
+bool Archive::hasEntry(Path const &path) const
 {
     DENG2_ASSERT(d->index != 0);
 

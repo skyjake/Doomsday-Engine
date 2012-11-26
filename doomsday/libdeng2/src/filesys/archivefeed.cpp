@@ -197,7 +197,7 @@ bool ArchiveFeed::prune(File &/*file*/) const
 File *ArchiveFeed::newFile(String const &name)
 {
     String newEntry = d->basePath / name;
-    if(archive().has(newEntry))
+    if(archive().hasEntry(newEntry))
     {
         /// @throw AlreadyExistsError  The entry @a name already exists in the archive.
         throw AlreadyExistsError("ArchiveFeed::newFile", name + ": already exists");

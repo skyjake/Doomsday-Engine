@@ -127,18 +127,18 @@ namespace de
         void cache(CacheAttachment attach = DetachFromSource);
 
         /**
-         * Determines whether the archive contains an entry.
+         * Determines whether the archive contains an entry (not a folder).
          *
          * @param path  Path of the entry.
          *
          * @return  @c true or @c false.
          */
-        bool has(Path const &path) const;
+        bool hasEntry(Path const &path) const;
 
         /**
          * List the files in a specific folder of the archive.
          *
-         * @param folder  Folder path to look in.
+         * @param folder  Folder path to look in. By default looks in the root.
          * @param names   Entry names collected in a set. The names are relative to a
          *                @a folder and are in alphabetical order.
          *
@@ -149,9 +149,10 @@ namespace de
         /**
          * List the folders in a specific folder of the archive.
          *
-         * @param folder  Folder path to look in.
+         * @param folder  Folder path to look in. By default looks in the root.
          * @param names   Folder entry names collected in a set. The names are
          *                relative to @a folder and are in alphabetical order.
+         *
          * @return Number of names returned in @a names.
          */
         dint listFolders(Names &names, Path const &folder = Path()) const;
