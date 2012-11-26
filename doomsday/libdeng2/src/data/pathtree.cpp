@@ -72,11 +72,10 @@ struct PathTree::Instance
      * @return Tree node that matches the name and type and which has the
      * specified parent node.
      */
-    PathTree::Node *direcNode(Path::Segment const &pathNode, PathTree::NodeType nodeType,
-                              PathTree::Node *parent)
+    PathTree::Node *nodeForSegment(Path::Segment const &segment, PathTree::NodeType nodeType,
+                                   PathTree::Node *parent)
     {
         // Have we already encountered this?
-        String segment = pathNode.toString();
         PathTree::SegmentId segmentId = segments.isInterned(segment);
         if(segmentId)
         {
@@ -103,7 +102,7 @@ struct PathTree::Instance
         Path::hash_type hashKey;
         if(!segmentId)
         {
-            hashKey   = pathNode.hash();
+            hashKey   = segment.hash();
             segmentId = internSegmentAndUpdateIdHashMap(segment, hashKey);
         }
         else
@@ -134,7 +133,7 @@ struct PathTree::Instance
      *
      * @return  The node that identifies the given path.
      */
-    PathTree::Node *buildDirecNodes(Path const &path)
+    PathTree::Node *buildNodesForPath(Path const &path)
     {
         /// @todo This messy logic should be revised. Now that the names of a
         /// path can be accessed randomly with no impact on performance - there
@@ -147,7 +146,7 @@ struct PathTree::Instance
         {
             Path::Segment const &pn = path.reverseSegment(i);
             //qDebug() << "Add branch: " << pn.toString();
-            node = direcNode(pn, PathTree::Branch, parent);
+            node = nodeForSegment(pn, PathTree::Branch, parent);
             parent = node;
         }
 
@@ -155,7 +154,7 @@ struct PathTree::Instance
         {
             Path::Segment const &pn = path.lastSegment();
             //qDebug() << "Add leaf: " << pn.toString();
-            node = direcNode(pn, PathTree::Leaf, parent);
+            node = nodeForSegment(pn, PathTree::Leaf, parent);
         }
         return node;
     }
@@ -213,7 +212,7 @@ struct PathTree::Instance
 
 PathTree::Node *PathTree::insert(Path const &path)
 {
-    PathTree::Node *node = d->buildDirecNodes(path);
+    PathTree::Node *node = d->buildNodesForPath(path);
     if(node)
     {
         // There is now one more unique path in the directory.
