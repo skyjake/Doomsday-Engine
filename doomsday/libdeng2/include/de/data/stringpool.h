@@ -61,6 +61,9 @@ namespace de
         /// String identifier was invalid. @ingroup errors
         DENG2_ERROR(InvalidIdError);
 
+        /// The pool does not have any available identifiers. @ingroup errors
+        DENG2_ERROR(FullError);
+
         /// String identifier. Each string is assigned its own Id. Because this is
         /// 32-bit, there can be approximately 4.2 billion unique strings in the pool.
         typedef duint32 Id;
