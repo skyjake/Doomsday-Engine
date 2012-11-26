@@ -75,6 +75,9 @@ extern int      frameCount;
 extern int      extraLight;
 extern float    extraLightDelta;
 extern int      rendInfoTris;
+
+extern byte precacheMapMaterials, precacheSprites, precacheSkins;
+
 extern fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
 extern fixed_t  fineTangent[FINEANGLES / 2];
@@ -160,6 +163,18 @@ void R_LoadSystemFonts(void);
 
 const char* R_ChooseFixedFont(void);
 const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
+
+/**
+ * Prepare resources for the current Map.
+ */
+void Rend_CacheForMap(void);
+
+/**
+ * Prepare all texture resources for the specified mobjtype.
+ *
+ * @note Part of the Doomsday public API.
+ */
+void Rend_CacheForMobjType(int mobjtypeNum);
 
 #ifdef __cplusplus
 } // extern "C"

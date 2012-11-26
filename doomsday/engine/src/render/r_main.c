@@ -22,14 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Refresh Subsystem.
- *
- * The refresh daemon has the highest-level rendering code.
- * The view window is handled by refresh. The more specialized
- * rendering code in rend_*.c does things inside the view window.
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
@@ -47,6 +39,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "gl/svg.h"
 #include "render/vignette.h"
 
 // MACROS ------------------------------------------------------------------
@@ -90,6 +83,10 @@ float extraLightDelta;
 float frameTimePos; // 0...1: fractional part for sharp game tics.
 
 int loadInStartupMode = false;
+
+byte precacheSkins = true;
+byte precacheMapMaterials = true;
+byte precacheSprites = true;
 
 fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
@@ -1310,6 +1307,151 @@ void R_RenderViewPorts(void)
     // Restore things back to normal.
     displayPlayer = oldDisplay;
     R_UseViewPort(NULL);
+}
+
+static int findSpriteOwner(thinker_t* th, void* context)
+{
+    mobj_t* mo = (mobj_t*) th;
+    spritedef_t* sprDef = (spritedef_t*) context;
+
+    if(mo->type >= 0 && mo->type < defs.count.mobjs.num)
+    {
+        /// @todo optimize: traverses the entire state list!
+        int i;
+        for(i = 0; i < defs.count.states.num; ++i)
+        {
+            if(stateOwners[i] != &mobjInfo[mo->type]) continue;
+
+            if(&sprites[states[i].sprite] == sprDef)
+                return true; // Found one.
+        }
+    }
+
+    return false; // Continue iteration.
+}
+
+static void cacheSpritesForState(int stateIndex, materialvariantspecification_t const* spec)
+{
+    state_t* state;
+    spritedef_t* sprDef;
+    int i, k;
+
+    if(stateIndex < 0 || stateIndex >= defs.count.states.num) return;
+    if(!spec) return;
+
+    state = &states[stateIndex];
+    sprDef = &sprites[state->sprite];
+
+    for(i = 0; i < sprDef->numFrames; ++i)
+    {
+        spriteframe_t* sprFrame = &sprDef->spriteFrames[i];
+        for(k = 0; k < 8; ++k)
+        {
+            Materials_Precache(sprFrame->mats[k], spec, true);
+        }
+    }
+}
+
+/// @note Part of the Doomsday public API.
+void Rend_CacheForMobjType(int num)
+{
+    materialvariantspecification_t const* spec;
+    int i;
+
+    if(novideo || !((useModels && precacheSkins) || precacheSprites)) return;
+    if(num < 0 || num >= defs.count.mobjs.num) return;
+
+    spec = Rend_SpriteMaterialSpec(0/*tclass*/, 0/*tmap*/);
+
+    /// @todo Optimize: Traverses the entire state list!
+    for(i = 0; i < defs.count.states.num; ++i)
+    {
+        if(stateOwners[i] != &mobjInfo[num]) continue;
+
+        Models_CacheForState(i);
+
+        if(precacheSprites)
+        {
+            cacheSpritesForState(i, spec);
+        }
+        /// @todo What about sounds?
+    }
+}
+
+void Rend_CacheForMap()
+{
+    // Don't precache when playing demo.
+    if(isDedicated || playback) return;
+
+    // Precaching from 100 to 200.
+    Con_SetProgress(100);
+
+    if(precacheMapMaterials)
+    {
+        materialvariantspecification_t const* spec = Rend_MapSurfaceDiffuseMaterialSpec();
+        uint i, k;
+
+        for(i = 0; i < NUM_SIDEDEFS; ++i)
+        {
+            SideDef* side = SIDE_PTR(i);
+
+            if(side->SW_middlematerial)
+                Materials_Precache(side->SW_middlematerial, spec, true);
+
+            if(side->SW_topmaterial)
+                Materials_Precache(side->SW_topmaterial, spec, true);
+
+            if(side->SW_bottommaterial)
+                Materials_Precache(side->SW_bottommaterial, spec, true);
+        }
+
+        for(i = 0; i < NUM_SECTORS; ++i)
+        {
+            Sector* sec = SECTOR_PTR(i);
+            if(!sec->lineDefCount) continue;
+
+            for(k = 0; k < sec->planeCount; ++k)
+            {
+                Materials_Precache(sec->SP_planematerial(k), spec, true);
+            }
+        }
+    }
+
+    if(precacheSprites)
+    {
+        materialvariantspecification_t const* spec = Rend_SpriteMaterialSpec(0/*tclass*/, 0/*tmap*/);
+        int i, k, m;
+        for(i = 0; i < numSprites; ++i)
+        {
+            spritedef_t* sprDef = &sprites[i];
+
+            if(GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1/* All mobjs are public*/,
+                                       findSpriteOwner, sprDef))
+            {
+                // This sprite is used by some state of at least one mobj.
+
+                // Precache all the frames.
+                for(k = 0; k < sprDef->numFrames; ++k)
+                {
+                    spriteframe_t* sprFrame = &sprDef->spriteFrames[k];
+                    for(m = 0; m < 8; ++m)
+                    {
+                        Materials_Precache(sprFrame->mats[m], spec, true);
+                    }
+                }
+            }
+        }
+    }
+
+     // Sky models usually have big skins.
+    R_SkyPrecache();
+
+    // Precache model skins?
+    if(useModels && precacheSkins)
+    {
+        // All mobjs are public.
+        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, Models_CacheForMobj, NULL);
+    }
 }
 
 D_CMD(ViewGrid)

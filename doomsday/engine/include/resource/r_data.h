@@ -135,7 +135,6 @@ typedef struct {
 
 extern int levelFullBright;
 
-extern byte precacheMapMaterials, precacheSprites, precacheSkins;
 extern int gameDataFormat;
 
 void R_InitSystemTextures(void);
@@ -198,17 +197,6 @@ boolean         R_UpdateSidedef(struct sidedef_s* side, boolean forceUpdate);
 boolean         R_UpdatePlane(struct plane_s* pln, boolean forceUpdate);
 boolean         R_UpdateSurface(struct surface_s* suf, boolean forceUpdate);
 
-/**
- * Prepare resources for the current Map.
- */
-void R_PrecacheForMap(void);
-
-/**
- * Prepare all texture resources for the specified mobjtype.
- *
- * \note Part of the Doomsday public API.
- */
-void R_PrecacheMobjNum(int mobjtypeNum);
 
 /**
  * @return  @c true if the given decoration works under the specified circumstances.

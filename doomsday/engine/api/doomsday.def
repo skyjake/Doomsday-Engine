@@ -424,7 +424,7 @@ EXPORTS
 ;   Sys_TicksPerSecond          @46 NONAME
 ;    Sys_GetTime                 @47 NONAME
 ;    Sys_GetSeconds              @48 NONAME
-;    Timer_RealMilliseconds             @49 NONAME
+;    Timer_RealMilliseconds      @49 NONAME
     Sys_Sleep                   @50 NONAME
     Sys_CriticalMessage         @51 NONAME
     Sys_Quit                    @52 NONAME
@@ -451,7 +451,7 @@ EXPORTS
 
 ; Play.
     LineDef_BoxOnSide           @60 NONAME
-    LineDef_BoxOnSide_FixedPrecision     @46 NONAME
+    LineDef_BoxOnSide_FixedPrecision @46 NONAME
     LineDef_PointDistance       @208 NONAME
     LineDef_PointXYDistance     @209 NONAME
     LineDef_PointOnSide         @695 NONAME
@@ -598,7 +598,7 @@ EXPORTS
     P_RegisterMapObjProperty    @412 NONAME
 
 ; Play: Mobjs.
-    P_MobjCreateXYZ                @357 NONAME
+    P_MobjCreateXYZ             @357 NONAME
     P_MobjDestroy               @358 NONAME
     P_MobjLink                  @66 NONAME
     P_MobjUnlink                @67 NONAME
@@ -645,7 +645,7 @@ EXPORTS
     R_SetupFogDefaults          @854 NONAME
     R_SetupFog                  @855 NONAME
 
-    R_PrecacheMobjNum           @427 NONAME
+    Rend_CacheForMobjType       @427 NONAME
     Models_CacheForState        @240 NONAME
 
     R_RenderPlayerView          @90 NONAME

@@ -52,7 +52,7 @@ static de::StringPool* entityDefs;
 typedef std::map<int, de::StringPool::Id> EntityDefIdMap;
 static EntityDefIdMap entityDefIdMap;
 
-extern boolean mapSetup;
+extern "C" boolean mapSetup; // We are currently setting up a map.
 
 Uri* mapUri; // Name by which the game referred to the current map.
 

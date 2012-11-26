@@ -766,11 +766,11 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
         for(i = 0; types[i].type != 0; ++i)
         {
             if(types[i].gameModeBits & gameModeBits)
-                R_PrecacheMobjNum(types[i].type);
+                Rend_CacheForMobjType(types[i].type);
         }
 
         if(IS_NETGAME)
-            R_PrecacheMobjNum(MT_IFOG);
+            Rend_CacheForMobjType(MT_IFOG);
 #endif
     }
 

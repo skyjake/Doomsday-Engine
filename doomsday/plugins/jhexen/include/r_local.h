@@ -76,9 +76,6 @@ extern int flyheight;
 extern int sscount, linecount, loopcount;
 extern int extralight;
 
-void            R_InitData(void);
-void            R_UpdateData(void);
-
 extern fixed_t  pspritescale, pspriteiscale;
 
 void            R_UpdateTranslationTables(void);

@@ -1502,7 +1502,7 @@ void R_SetupMap(int mode, int flags)
         R_MapInitSurfaceLists();
 
         startTime = Timer_Seconds();
-        R_PrecacheForMap();
+        Rend_CacheForMap();
         Materials_ProcessCacheQueue();
         VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Timer_Seconds() - startTime) )
 
