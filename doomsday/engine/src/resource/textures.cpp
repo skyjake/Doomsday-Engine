@@ -1177,6 +1177,28 @@ int Textures_IterateDeclared(textureschemeid_t schemeId,
     return Textures_IterateDeclared2(schemeId, callback, NULL/*no parameters*/);
 }
 
+/// @note Part of the Doomsday public API.
+int R_TextureUniqueId2(Uri const* uri, boolean quiet)
+{
+    textureid_t texId = Textures_ResolveUri2(uri, quiet);
+    if(texId != NOTEXTUREID)
+    {
+        return Textures_UniqueId(texId);
+    }
+    if(!quiet)
+    {
+        AutoStr* path = Uri_ToString(uri);
+        Con_Message("Warning: Unknown Texture \"%s\"\n", Str_Text(path));
+    }
+    return -1;
+}
+
+/// @note Part of the Doomsday public API.
+int R_TextureUniqueId(Uri const* uri)
+{
+    return R_TextureUniqueId2(uri, false);
+}
+
 static int printVariantInfo(TextureVariant* variant, void* parameters)
 {
     uint* variantIdx = (uint*)parameters;

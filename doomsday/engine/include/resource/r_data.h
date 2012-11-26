@@ -195,8 +195,6 @@ void R_UnloadSvgs(void);
 
 void R_ShutdownSvgs(void);
 
-int R_TextureUniqueId2(const Uri* uri, boolean quiet);
-int R_TextureUniqueId(const Uri* uri); /* quiet=false */
 
 
 struct font_s* R_CreateFontFromFile(Uri* uri, char const* resourcePath);

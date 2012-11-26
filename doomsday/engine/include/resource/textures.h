@@ -191,6 +191,9 @@ int Textures_Iterate(textureschemeid_t schemeId, int (*callback)(struct texture_
 int Textures_IterateDeclared2(textureschemeid_t schemeId, int (*callback)(textureid_t textureId, void* parameters), void* parameters);
 int Textures_IterateDeclared(textureschemeid_t schemeId, int (*callback)(textureid_t textureId, void* parameters)); /*parameters=NULL*/
 
+int R_TextureUniqueId2(Uri const *uri, boolean quiet);
+int R_TextureUniqueId(Uri const *uri/*, quiet = false */);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
