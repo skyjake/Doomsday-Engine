@@ -172,7 +172,7 @@ static void clearVariables(void)
 static cvar_t* addVariable(cvartemplate_t const& tpl)
 {
     de::Path path(tpl.path, CVARDIRECTORY_DELIMITER);
-    CVarDirectory::Node* node = cvarDirectory->insert(path);
+    CVarDirectory::Node* node = &cvarDirectory->insert(path);
     cvar_t* newVar;
 
     if(node->userPointer())
@@ -445,7 +445,7 @@ AutoStr* CVar_ComposePath(cvar_t const* var)
 {
     DENG_ASSERT(var);
     CVarDirectory::Node& node = *reinterpret_cast<CVarDirectory::Node*>(var->directoryNode);
-    QByteArray path = node.composePath(CVARDIRECTORY_DELIMITER).toUtf8();
+    QByteArray path = node.path(CVARDIRECTORY_DELIMITER).toUtf8();
     return AutoStr_FromTextStd(path.constData());
 }
 

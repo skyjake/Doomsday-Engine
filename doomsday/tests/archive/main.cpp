@@ -72,7 +72,7 @@ int main(int argc, char **argv)
         File &zip2 = app.homeFolder().replaceFile("test2.zip");
         zip2.setMode(File::Write | File::Truncate);
         ZipArchive arch;
-        arch.add("world.txt", content.toUtf8());
+        arch.add(Path("world.txt"), content.toUtf8());
         Writer(zip2) << arch;
         LOG_MSG("Wrote ") << zip2.path();
         LOG_MSG("") << zip2.info();

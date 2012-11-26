@@ -383,6 +383,11 @@ Uri &Uri::setPath(String newPath, QChar sep)
     return setPath(Path(newPath.trimmed(), sep));
 }
 
+Uri &Uri::setPath(char const *newPathUtf8, char sep)
+{
+    return setPath(Path(QString::fromUtf8(newPathUtf8).trimmed(), sep));
+}
+
 Uri &Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar sep)
 {
     LOG_AS("Uri::setUri");

@@ -460,7 +460,7 @@ void ZipArchive::operator >> (Writer &to) const
         ZipEntry &entry = iter.next();
         entry.update();
 
-        String const fullPath = entry.composePath();
+        String const fullPath = entry.path();
 
         // This is where the local file header is located.
         entry.localHeaderOffset = writer.offset();
@@ -551,7 +551,7 @@ void ZipArchive::operator >> (Writer &to) const
     for(PathTreeIterator<Index> iter(index().leafNodes()); iter.hasNext(); )
     {
         ZipEntry const &entry = iter.next();
-        String const fullPath = entry.composePath();
+        String const fullPath = entry.path();
 
         CentralFileHeader header;
         header.signature = SIG_CENTRAL_FILE_HEADER;

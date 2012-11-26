@@ -193,14 +193,11 @@ void Archive::add(Path const &path, IByteArray const &data)
     }
 
     // Get rid of the earlier entry with this path.
-    if(has(path))
-    {
-        remove(path);
-    }
+    remove(path);
 
     DENG2_ASSERT(d->index != 0);
 
-    Entry *entry = static_cast<Entry *>(d->index->insert(path));
+    Entry *entry = &static_cast<Entry &>(d->index->insert(path));
 
     DENG2_ASSERT(entry != 0); // does this actually happen and when?
 
@@ -243,12 +240,15 @@ void Archive::setIndex(PathTree *tree)
 
 Archive::Entry &Archive::insertEntry(Path const &path)
 {
+    LOG_AS("Archive");
     DENG2_ASSERT(d->index != 0);
+
+    LOG_DEBUG("Inserting %s") << path;
 
     // Remove any existing node at this path.
     d->index->remove(path, PathTree::MatchFull | PathTree::NoBranch);
 
-    return static_cast<Entry &>(*d->index->insert(path));
+    return static_cast<Entry &>(d->index->insert(path));
 }
 
 PathTree const &Archive::index() const

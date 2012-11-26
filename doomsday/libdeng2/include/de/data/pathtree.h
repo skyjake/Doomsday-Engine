@@ -83,9 +83,11 @@ public:
         NoBranch    = 0x1,  ///< Do not consider branches as possible candidates.
         NoLeaf      = 0x2,  ///< Do not consider leaves as possible candidates.
         MatchParent = 0x4,  ///< Only consider nodes whose parent matches the provided reference node.
-        MatchFull   = 0x8   /**< Whole path must match completely (i.e., path begins
+        MatchFull   = 0x8,  /**< Whole path must match completely (i.e., path begins
                                  from the same root point) otherwise allow partial
                                  (i.e., relative) matches. */
+        RelinquishMatching = 0x10 /**< Matching node's ownership is relinquished; the node is
+                                       removed from the tree. */
     };
     Q_DECLARE_FLAGS(ComparisonFlags, ComparisonFlag)
 
@@ -147,8 +149,13 @@ public:
         /// @return PathTree which owns this node.
         PathTree &tree() const;
 
-        /// @return Parent of this node else @c NULL.
-        Node *parent() const;
+        /// @return Parent of this node. For nodes at the root level,
+        /// this is the tree's special root node.
+        Node &parent() const;
+
+        /// Determines if the node is at the root level of the tree
+        /// (no other node is its parent).
+        bool isAtRootLevel() const;
 
         /// @return @c true iff this node is a leaf.
         bool isLeaf() const;
@@ -181,7 +188,8 @@ public:
 
         /**
          * Composes the path for this node. The whole path is upwardly
-         * reconstructed toward the root of the hierarchy.
+         * reconstructed toward the root of the hierarchy -- you should
+         * consider the performance aspects, if calling this method very often.
          *
          * @param sep  Segments in the composed path hierarchy are separatered
          *             with this character. Paths to branches always include
@@ -189,7 +197,7 @@ public:
          *
          * @return The composed path.
          */
-        Path composePath(QChar sep = '/') const;
+        Path path(QChar sep = '/') const;
 
         friend class PathTree;
         friend struct PathTree::Instance;
@@ -233,11 +241,11 @@ public:
      *              NOT resolved before insertion, so any symbolics contained
      *              within will also be present in the name hierarchy.
      *
-     * @return Tail node for the inserted path else @c NULL. For example, given
+     * @return Tail node for the inserted path. For example, given
      *         the path @c "c:/somewhere/something" this is the node for the
      *         path segment "something".
      */
-    Node *insert(Path const &path);
+    Node &insert(Path const &path);
 
     /**
      * Removes matching nodes from the tree.
@@ -262,7 +270,7 @@ public:
      *
      * @return @c true, if the node exists; otherwise @c false.
      */
-    bool has(Path const &path, ComparisonFlags flags = 0);
+    bool has(Path const &path, ComparisonFlags flags = 0) const;
 
     /**
      * Find a single node in the hierarchy.
@@ -352,6 +360,8 @@ public:
     /// @return Hash associated with @a segmentId.
     Path::hash_type segmentHash(SegmentId segmentId) const;
 
+    Node const &rootBranch() const;
+
 protected:
     /**
      * Construct a new Node instance. Derived classes can override this to
@@ -383,8 +393,8 @@ public:
 public:
     explicit PathTreeT(Flags flags = 0) : PathTree(flags) {}
 
-    inline Type *insert(Path const &path) {
-        return static_cast<Type *>(PathTree::insert(path));
+    inline Type &insert(Path const &path) {
+        return static_cast<Type &>(PathTree::insert(path));
     }
 
     inline Type const &find(Path const &path, ComparisonFlags flags) const {

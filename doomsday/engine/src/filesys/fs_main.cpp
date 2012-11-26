@@ -210,7 +210,7 @@ struct FS1::Instance
                     if(!node.comparePath(search.path(), PathTree::NoBranch))
                     {
                         // This is the file we are looking for.
-                        return node.composePath();
+                        return node.path();
                     }
                 }
             }

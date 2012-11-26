@@ -205,6 +205,8 @@ struct Path::Instance
         QChar const *from;
         forever
         {
+            if(segEnd < segBegin) break; // E.g., path is "/"
+
             // Find the start of the next segment.
             for(from = segEnd; from > segBegin && !(*from == separator); from--)
             {}

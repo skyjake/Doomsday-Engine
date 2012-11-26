@@ -151,7 +151,7 @@ public:
      * @param nullTerminatedCStr  Path to be parsed. All white space is included in the path.
      * @param sep   Character used to separate path segments.
      */
-    Path(char const *nullTerminatedCStr, char sep = '/');
+    Path(char const *nullTerminatedCStr, char sep);
 
     /**
      * Construct a path by duplicating @a other.

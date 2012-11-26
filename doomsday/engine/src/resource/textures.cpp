@@ -152,7 +152,7 @@ static inline textureschemeid_t schemeIdForDirectoryNode(TextureRepository::Node
 static de::Uri composeUriForDirectoryNode(TextureRepository::Node const& node)
 {
     Str const* schemeName = Textures_SchemeName(schemeIdForDirectoryNode(node));
-    return de::Uri(node.composePath()).setScheme(Str_Text(schemeName));
+    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
 }
 
 /// @pre textureIdMap has been initialized and is large enough!
@@ -838,7 +838,7 @@ static textureid_t Textures_Declare2(de::Uri& uri, int uniqueId, de::Uri const* 
         textureschemeid_t schemeId = Textures_ParseSchemeName(uri.schemeCStr());
         TextureScheme* tn = &schemes[schemeId - TEXTURESCHEME_FIRST];
 
-        node = tn->directory->insert(uri.path());
+        node = &tn->directory->insert(uri.path());
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.
@@ -1035,7 +1035,7 @@ AutoStr* Textures_ComposePath(textureid_t id)
     TextureRepository::Node* node = directoryNodeForBindId(id);
     if(node)
     {
-        QByteArray path = node->composePath().toUtf8();
+        QByteArray path = node->path().toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
 
@@ -1272,7 +1272,7 @@ static TextureRepository::Node** collectDirectoryNodes(textureschemeid_t schemeI
             TextureRepository::Node& node = iter.next();
             if(!like.isEmpty())
             {
-                de::String path = node.composePath();
+                de::String path = node.path();
                 if(!path.beginsWith(like)) continue; // Continue iteration.
             }
 
@@ -1317,8 +1317,8 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     // Decode paths before determining a lexicographical delta.
     TextureRepository::Node const& nodeA = **(TextureRepository::Node const**)a;
     TextureRepository::Node const& nodeB = **(TextureRepository::Node const**)b;
-    QByteArray pathAUtf8 = nodeA.composePath().toUtf8();
-    QByteArray pathBUtf8 = nodeB.composePath().toUtf8();
+    QByteArray pathAUtf8 = nodeA.path().toUtf8();
+    QByteArray pathBUtf8 = nodeB.path().toUtf8();
     AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8));
     AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8));
     return Str_CompareIgnoreCase(pathA, Str_Text(pathB));

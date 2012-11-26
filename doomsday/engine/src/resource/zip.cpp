@@ -157,7 +157,7 @@ public:
      */
     Uri composeUri(QChar delimiter = '/') const
     {
-        return directoryNode().composePath(delimiter);
+        return directoryNode().path(delimiter);
     }
 
     /**
@@ -470,7 +470,7 @@ struct Zip::Instance
                                          lumpIdx, baseOffset, ULONG(header->size),
                                          compressedSize),
                                 self);
-                UserDataNode* node = lumpDirectory->insert(filePath);
+                UserDataNode* node = &lumpDirectory->insert(filePath);
                 node->setUserPointer(record);
 
                 lumpIdx++;

@@ -1985,7 +1985,7 @@ static int DD_StartupWorker(void* parm)
     }
 
     // Add required engine resource files.
-    de::Uri searchPath = de::Uri("Packages:doomsday.pk3");
+    de::Uri searchPath("Packages:doomsday.pk3");
     AutoStr* foundPath = AutoStr_NewStd();
     if(!F_FindPath(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath) ||
        !tryLoadFile(de::Uri(Str_Text(foundPath), RC_NULL)))

@@ -64,9 +64,14 @@ PathTree &PathTree::Node::tree() const
     return d->tree;
 }
 
-PathTree::Node *PathTree::Node::parent() const
+PathTree::Node &PathTree::Node::parent() const
 {
-    return d->parent;
+    return *d->parent;
+}
+
+bool PathTree::Node::isAtRootLevel() const
+{
+    return d->parent == &d->tree.rootBranch();
 }
 
 PathTree::SegmentId PathTree::Node::segmentId() const
@@ -161,17 +166,17 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
             // Have we arrived at the search target?
             if(i == pathNodeCount - 1)
             {
-                return !(!(flags & MatchFull) || !node->parent());
+                return !(!(flags & MatchFull) || node->isAtRootLevel());
             }
 
             // Is the hierarchy too shallow?
-            if(!node->parent())
+            if(node->isAtRootLevel())
             {
                 return 1;
             }
 
             // So far so good. Move one level up the hierarchy.
-            node  = node->parent();
+            node  = &node->parent();
             snode = &searchPattern.reverseSegment(i + 1);
         }
     }
@@ -209,7 +214,7 @@ static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Nod
 
     parm.length += fragment.length();
 
-    if(trav.parent())
+    if(!trav.isAtRootLevel())
     {
         if(!parm.separator.isNull())
         {
@@ -218,7 +223,7 @@ static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Nod
         }
 
         // Descend to parent level.
-        pathConstructor(parm, *trav.parent());
+        pathConstructor(parm, trav.parent());
 
         // Append the separator.
         if(!parm.separator.isNull())
@@ -249,7 +254,7 @@ static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Nod
  *
  * Perhaps a fixed size MRU cache? -ds
  */
-Path PathTree::Node::composePath(QChar sep) const
+Path PathTree::Node::path(QChar sep) const
 {
     internal::PathConstructorParams parm = { 0, String(), sep };
 #ifdef LIBDENG_STACK_MONITOR

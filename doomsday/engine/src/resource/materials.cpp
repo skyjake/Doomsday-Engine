@@ -265,7 +265,7 @@ static materialschemeid_t schemeIdForDirectory(de::PathTree const &directory)
 static de::Uri composeUriForDirectoryNode(MaterialRepository::Node const& node)
 {
     Str const* schemeName = Materials_SchemeName(schemeIdForDirectory(node.tree()));
-    return de::Uri(node.composePath()).setScheme(Str_Text(schemeName));
+    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
 }
 
 static MaterialAnim* getAnimGroup(int number)
@@ -464,7 +464,7 @@ static bool newMaterialBind(de::Uri& uri, material_t* material)
     MaterialRepository::Node* node;
     MaterialBind* mb;
 
-    node = matDirectory.insert(uri.path());
+    node = &matDirectory.insert(uri.path());
 
     // Is this a new binding?
     mb = reinterpret_cast<MaterialBind*>(node->userPointer());
@@ -897,7 +897,7 @@ AutoStr* Materials_ComposePath(materialid_t id)
     if(bind)
     {
         MaterialRepository::Node& node = bind->directoryNode();
-        QByteArray path = node.composePath().toUtf8();
+        QByteArray path = node.path().toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
 
@@ -1523,7 +1523,7 @@ static MaterialRepository::Node** collectDirectoryNodes(materialschemeid_t schem
             MaterialRepository::Node& node = iter.next();
             if(!like.isEmpty())
             {
-                de::String path = node.composePath();
+                de::String path = node.path();
                 if(!path.beginsWith(like, Qt::CaseInsensitive)) continue;
             }
 
@@ -1564,8 +1564,8 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     // Decode paths before determining a lexicographical delta.
     MaterialRepository::Node const& nodeA = **(MaterialRepository::Node const**)a;
     MaterialRepository::Node const& nodeB = **(MaterialRepository::Node const**)b;
-    QByteArray pathAUtf8 = nodeA.composePath().toUtf8();
-    QByteArray pathBUtf8 = nodeB.composePath().toUtf8();
+    QByteArray pathAUtf8 = nodeA.path().toUtf8();
+    QByteArray pathBUtf8 = nodeB.path().toUtf8();
     AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8.constData()));
     AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8.constData()));
     return Str_CompareIgnoreCase(pathA, Str_Text(pathB));
