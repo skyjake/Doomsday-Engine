@@ -290,6 +290,7 @@ DENG_HEADERS += \
     include/render/rend_shadow.h \
     include/render/rend_sky.h \
     include/render/rend_sprite.h \
+    include/render/rendpoly.h \
     include/render/vignette.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
@@ -573,6 +574,7 @@ SOURCES += \
     src/render/rend_shadow.c \
     src/render/rend_sky.c \
     src/render/rend_sprite.c \
+    src/render/rendpoly.cpp \
     src/render/vignette.c \
     src/resource/bitmapfont.c \
     src/resource/colorpalette.c \

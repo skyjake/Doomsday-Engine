@@ -223,7 +223,7 @@ boolean P_LoadMap(char const* uriCString)
         LG_InitForMap();
 
         if(!isDedicated)
-            R_InitRendVerticesPool();
+            R_InitRendPolyPools();
 
         return true;
     }

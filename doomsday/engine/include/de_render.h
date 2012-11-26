@@ -45,6 +45,7 @@
 #include "render/rend_decor.h"
 #include "render/rend_console.h"
 #include "render/rend_dynlight.h"
+#include "render/rendpoly.h"
 #include "render/vignette.h"
 
 #include "map/r_world.h"

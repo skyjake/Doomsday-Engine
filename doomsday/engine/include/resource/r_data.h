@@ -63,100 +63,10 @@ struct font_s;
 #define DTLF_NO_IWAD        0x1 // Don't use if from IWAD.
 #define DTLF_PWAD           0x2 // Can use if from PWAD.
 #define DTLF_EXTERNAL       0x4 // Can use if from external resource.
-
-/**
- * @defgroup textureUnitFlags  Texture Unit Flags
- * @ingroup flags
- */
-///@{
-#define TUF_TEXTURE_IS_MANAGED    0x1 ///< A managed texture is bound to this unit.
-///@}
-
-typedef struct rtexmapunit_texture_s {
-    union {
-        struct {
-            DGLuint name; ///< Texture used on this layer (if any).
-            int magMode; ///< GL texture magnification filter.
-        } gl;
-        struct texturevariant_s* variant;
-    };
-    /// @ref textureUnitFlags
-    int flags;
-} rtexmapunit_texture_t;
-
-/**
- * Texture unit state. POD.
- *
- * A simple Record data structure for storing properties used for
- * configuring a GL texture unit during render.
- */
-typedef struct rtexmapuint_s {
-    /// Info about the bound texture for this unit.
-    rtexmapunit_texture_t texture;
-
-    /// Currently used only with reflection.
-    blendmode_t blendMode;
-
-    /// Opacity of this layer [0..1].
-    float opacity;
-
-    /// Texture-space scale multiplier.
-    vec2f_t scale;
-
-    /// Texture-space origin translation (unscaled).
-    vec2f_t offset;
-} rtexmapunit_t;
-
-/// Manipulators, for convenience.
-void Rtu_Init(rtexmapunit_t* rtu);
-
-boolean Rtu_HasTexture(const rtexmapunit_t* rtu);
-
-/// Change the scale property.
-void Rtu_SetScale(rtexmapunit_t* rtu, float s, float t);
-void Rtu_SetScalev(rtexmapunit_t* rtu, float const st[2]);
-
-/**
- * Multiply the offset and scale properties by @a scalar.
- * \note @a scalar is applied to both scale and offset properties
- * however the offset remains independent from scale (i.e., it is
- * still considered "unscaled").
- */
-void Rtu_Scale(rtexmapunit_t* rtu, float scalar);
-void Rtu_ScaleST(rtexmapunit_t* rtu, float const scalarST[2]);
-
-/// Change the offset property.
-void Rtu_SetOffset(rtexmapunit_t* rtu, float s, float t);
-void Rtu_SetOffsetv(rtexmapunit_t* rtu, float const st[2]);
-
-/// Translate the offset property.
-void Rtu_TranslateOffset(rtexmapunit_t* rtu, float s, float t);
-void Rtu_TranslateOffsetv(rtexmapunit_t* rtu, float const st[2]);
-
-/**
- * Logical texture unit indices.
- */
-typedef enum {
-    RTU_PRIMARY = 0,
-    RTU_PRIMARY_DETAIL,
-    RTU_INTER,
-    RTU_INTER_DETAIL,
-    RTU_REFLECTION,
-    RTU_REFLECTION_MASK,
-    NUM_TEXMAP_UNITS
-} rtexmapunitid_t;
-
 typedef struct glcommand_vertex_s {
     float           s, t;
     int             index;
 } glcommand_vertex_t;
-
-typedef struct rvertex_s {
-    float           pos[3];
-} rvertex_t;
-typedef struct rtexcoord_s {
-    float           st[2];
-} rtexcoord_t;
 
 typedef struct shadowlink_s {
     struct shadowlink_s* next;
@@ -255,7 +165,6 @@ typedef struct {
 
 extern int levelFullBright;
 
-extern byte rendInfoRPolys;
 extern byte precacheMapMaterials, precacheSprites, precacheSkins;
 
 extern byte* translationTables;
@@ -263,26 +172,6 @@ extern byte* translationTables;
 extern int gameDataFormat;
 
 void            R_UpdateData(void);
-void            R_InitRendVerticesPool(void);
-rvertex_t*      R_AllocRendVertices(uint num);
-ColorRawf*       R_AllocRendColors(uint num);
-rtexcoord_t*    R_AllocRendTexCoords(uint num);
-void            R_FreeRendVertices(rvertex_t* rvertices);
-void            R_FreeRendColors(ColorRawf* rcolors);
-void            R_FreeRendTexCoords(rtexcoord_t* rtexcoords);
-void            R_InfoRendVerticesPool(void);
-
-void R_DivVerts(rvertex_t* dst, const rvertex_t* src,
-    walldivnode_t* leftDivFirst, uint leftDivCount, walldivnode_t* rightDivFirst, uint rightDivCount);
-
-void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
-    walldivnode_t* leftDivFirst, uint leftDivCount, walldivnode_t* rightDivFirst, uint rightDivCount,
-    float bL, float tL, float bR, float tR);
-
-void R_DivVertColors(ColorRawf* dst, const ColorRawf* src,
-    walldivnode_t* leftDivFirst, uint leftDivCount, walldivnode_t* rightDivFirst, uint rightDivCount,
-    float bL, float tL, float bR, float tR);
-
 void R_InitTranslationTables(void);
 void R_UpdateTranslationTables(void);
 

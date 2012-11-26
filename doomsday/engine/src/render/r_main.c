@@ -1178,7 +1178,7 @@ void R_RenderPlayerView(int num)
         Con_Printf("LumObjs: %-4i\n", LO_GetNumLuminous());
     }
 
-    R_InfoRendVerticesPool();
+    R_PrintRendPoolInfo();
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
     {
