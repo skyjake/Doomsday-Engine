@@ -46,16 +46,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define RAWTEX_HASH_SIZE    128
-#define RAWTEX_HASH(x)      (rawtexhash + (((unsigned) x) & (RAWTEX_HASH_SIZE - 1)))
-
 // TYPES -------------------------------------------------------------------
 
 typedef char patchname_t[9];
-
-typedef struct rawtexhash_s {
-    rawtex_t*     first;
-} rawtexhash_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -76,8 +69,6 @@ byte precacheSprites = true;
 int gameDataFormat; // Use a game-specifc data format where applicable.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static rawtexhash_t rawtexhash[RAWTEX_HASH_SIZE];
 
 // CODE --------------------------------------------------------------------
 
@@ -322,108 +313,6 @@ AutoStr* R_ComposePatchPath(patchid_t id)
     textureid_t texId = Textures_TextureForUniqueId(TS_PATCHES, id);
     if(texId == NOTEXTUREID) return AutoStr_NewStd();
     return Textures_ComposePath(texId);
-}
-
-rawtex_t** R_CollectRawTexs(int* count)
-{
-    rawtex_t* r, **list;
-    int i, num;
-
-    // First count the number of patchtexs.
-    for(num = 0, i = 0; i < RAWTEX_HASH_SIZE; ++i)
-    {
-        for(r = rawtexhash[i].first; r; r = r->next)
-            num++;
-    }
-
-    // Tell this to the caller.
-    if(count) *count = num;
-
-    // Allocate the array, plus one for the terminator.
-    list = Z_Malloc(sizeof(r) * (num + 1), PU_APPSTATIC, NULL);
-
-    // Collect the pointers.
-    for(num = 0, i = 0; i < RAWTEX_HASH_SIZE; ++i)
-    {
-        for(r = rawtexhash[i].first; r; r = r->next)
-            list[num++] = r;
-    }
-
-    // Terminate.
-    list[num] = NULL;
-
-    return list;
-}
-
-rawtex_t* R_FindRawTex(lumpnum_t lumpNum)
-{
-    rawtex_t* i;
-
-    if(-1 == lumpNum || lumpNum >= F_LumpCount())
-    {
-#if _DEBUG
-        Con_Message("Warning:R_FindRawTex: LumpNum #%i out of bounds (%i), returning NULL.\n",
-                lumpNum, F_LumpCount());
-#endif
-        return NULL;
-    }
-
-    for(i = RAWTEX_HASH(lumpNum)->first; i; i = i->next)
-    {
-        if(i->lumpNum == lumpNum)
-            return i;
-    }
-    return 0;
-}
-
-rawtex_t* R_GetRawTex(lumpnum_t lumpNum)
-{
-    rawtexhash_t* hash = 0;
-    rawtex_t* r;
-
-    if(-1 == lumpNum || lumpNum >= F_LumpCount())
-    {
-#if _DEBUG
-        Con_Message("Warning:R_GetRawTex: LumpNum #%i out of bounds (%i), returning NULL.\n",
-                lumpNum, F_LumpCount());
-#endif
-        return NULL;
-    }
-
-    // Check if this lumpNum has already been loaded as a rawtex.
-    r = R_FindRawTex(lumpNum);
-    if(r) return r;
-
-    // Hmm, this is an entirely new rawtex.
-    r = Z_Calloc(sizeof(*r), PU_REFRESHRAW, 0);
-    Str_Copy(Str_Init(&r->name), F_LumpName(lumpNum));
-    r->lumpNum = lumpNum;
-
-    // Link to the hash.
-    hash = RAWTEX_HASH(lumpNum);
-    r->next = hash->first;
-    hash->first = r;
-
-    return r;
-}
-
-void R_InitRawTexs(void)
-{
-    memset(rawtexhash, 0, sizeof(rawtexhash));
-}
-
-void R_UpdateRawTexs(void)
-{
-    int i;
-    rawtex_t* rawTex;
-    for(i = 0; i < RAWTEX_HASH_SIZE; ++i)
-    for(rawTex = rawtexhash[i].first; NULL != rawTex; rawTex = rawTex->next)
-    {
-        Str_Free(&rawTex->name);
-    }
-
-    Z_FreeTags(PU_REFRESHRAW, PU_REFRESHRAW);
-    R_InitRawTexs();
 }
 
 static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
@@ -1538,11 +1427,6 @@ Texture* R_FindModelReflectionSkinForResourcePath(const Uri* path)
     result = Textures_IterateDeclared2(TS_MODELREFLECTIONSKINS, findModelSkinForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
-}
-
-void R_UpdateData(void)
-{
-    R_UpdateRawTexs();
 }
 
 /**

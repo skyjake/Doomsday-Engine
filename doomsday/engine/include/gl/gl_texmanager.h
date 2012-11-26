@@ -36,7 +36,8 @@
 #define LIBDENG_GLTEXTURE_MANAGER_H
 
 #include "filehandle.h"
-#include "resource/r_data.h" // should not be included here
+#include "resource/r_data.h" // For flaretexid_t, lightingtexid_t, etc...
+#include "resource/rawtexture.h"
 #include "resource/texture.h"
 #include "resource/texturevariantspecification.h"
 

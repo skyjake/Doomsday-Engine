@@ -31,6 +31,7 @@
 #include "resource/font.h"
 #include "resource/fonts.h"
 #include "resource/models.h"
+#include "resource/rawtexture.h"
 #include "resource/wad.h"
 #include "resource/zip.h"
 

@@ -110,17 +110,6 @@ typedef struct doompatch_header_s {
 } doompatch_header_t;
 #pragma pack()
 
-/**
- * A rawtex is a lump raw graphic that has been prepared for render.
- */
-typedef struct rawtex_s {
-    ddstring_t name; ///< Percent-encoded.
-    lumpnum_t lumpNum;
-    DGLuint tex; /// Name of the associated DGL texture.
-    short width, height;
-    byte masked;
-    struct rawtex_s* next;
-} rawtex_t;
 
 
 /**
@@ -154,8 +143,6 @@ extern int levelFullBright;
 
 extern byte precacheMapMaterials, precacheSprites, precacheSkins;
 extern int gameDataFormat;
-
-void            R_UpdateData(void);
 
 void R_InitSystemTextures(void);
 void R_InitPatchComposites(void);
@@ -207,28 +194,8 @@ struct texture_s* R_FindReflectionTextureForResourcePath(const Uri* resourcePath
 
 struct texture_s* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size);
 struct texture_s* R_FindMaskTextureForResourcePath(const Uri* resourcePath);
-
-void R_InitRawTexs(void);
-void R_UpdateRawTexs(void);
-
-/**
- * Returns a rawtex_t* for the given lump if one already exists else @c NULL.
- */
-rawtex_t* R_FindRawTex(lumpnum_t lumpNum);
-
-/**
- * Get a rawtex_t data structure for a raw texture specified with a WAD lump
- * number. Allocates a new rawtex_t if it hasn't been loaded yet.
- */
-rawtex_t* R_GetRawTex(lumpnum_t lumpNum);
-
-/**
- * Returns a NULL-terminated array of pointers to all the rawtexs.
- * The array must be freed with Z_Free.
- */
-rawtex_t** R_CollectRawTexs(int* count);
-
-
+struct texture_s *R_CreateDetailTextureFromDef(ded_detailtexture_t const *def);
+struct texture_s *R_FindDetailTextureForResourcePath(Uri const *resourcePath);
 
 //boolean         R_UpdateBspLeaf(struct BspLeaf* bspLeaf, boolean forceUpdate);
 boolean         R_UpdateSector(struct sector_s* sec, boolean forceUpdate);

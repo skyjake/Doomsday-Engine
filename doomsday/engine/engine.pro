@@ -308,6 +308,7 @@ DENG_HEADERS += \
     include/resource/models.h \
     include/resource/pcx.h \
     include/resource/r_data.h \
+    include/resource/rawtexture.h \
     include/resource/texture.h \
     include/resource/textures.h \
     include/resource/texturevariant.h \
@@ -593,6 +594,7 @@ SOURCES += \
     src/resource/models.cpp \
     src/resource/pcx.c \
     src/resource/r_data.c \
+    src/resource/rawtexture.cpp \
     src/resource/texture.cpp \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \

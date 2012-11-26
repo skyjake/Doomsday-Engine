@@ -530,7 +530,7 @@ void R_Update(void)
     // Re-read definitions.
     Def_Read();
 
-    R_UpdateData();
+    R_UpdateRawTexs();
     R_InitSprites(); // Fully reinitialize sprites.
     Models_Init(); // Defs might've changed.
 
