@@ -2026,6 +2026,34 @@ StringArray* Def_ListStateIDs(void)
     return array;
 }
 
+boolean R_IsValidLightDecoration(ded_decorlight_t const* lightDef)
+{
+    return (lightDef &&
+            (lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
+             lightDef->color[2] != 0));
+}
+
+boolean R_IsAllowedDecoration(ded_decor_t* def, boolean hasExternal, boolean isCustom)
+{
+    if(hasExternal) return (def->flags & DCRF_EXTERNAL) != 0;
+    if(!isCustom)   return (def->flags & DCRF_NO_IWAD ) == 0;
+    return (def->flags & DCRF_PWAD) != 0;
+}
+
+boolean R_IsAllowedReflection(ded_reflection_t* def, boolean hasExternal, boolean isCustom)
+{
+    if(hasExternal) return (def->flags & REFF_EXTERNAL) != 0;
+    if(!isCustom)   return (def->flags & REFF_NO_IWAD ) == 0;
+    return (def->flags & REFF_PWAD) != 0;
+}
+
+boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, boolean hasExternal, boolean isCustom)
+{
+    if(hasExternal) return (def->flags & DTLF_EXTERNAL) != 0;
+    if(!isCustom)   return (def->flags & DTLF_NO_IWAD ) == 0;
+    return (def->flags & DTLF_PWAD) != 0;
+}
+
 /**
  * Prints a list of all the registered mobjs to the console.
  * @todo Does this belong here?

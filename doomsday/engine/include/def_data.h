@@ -357,6 +357,11 @@ typedef struct {
     int             ceilInterval[2];
 } ded_sectortype_t;
 
+// Flags for detail texture definitions.
+#define DTLF_NO_IWAD        0x1 // Don't use if from IWAD.
+#define DTLF_PWAD           0x2 // Can use if from PWAD.
+#define DTLF_EXTERNAL       0x4 // Can use if from external resource.
+
 typedef struct ded_detailtexture_s {
     Uri*            material1;
     Uri*            material2;
@@ -423,11 +428,21 @@ typedef struct ded_decorlight_s {
 // There is a fixed number of light decorations in each decoration.
 #define DED_DECOR_NUM_LIGHTS    16
 
+// Flags for decoration definitions.
+#define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
+#define DCRF_PWAD           0x2 // Can use if from PWAD.
+#define DCRF_EXTERNAL       0x4 // Can use if from external resource.
+
 typedef struct ded_decor_s {
     Uri*            material;
     ded_flags_t     flags;
     ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
 } ded_decor_t;
+
+// Flags for reflection definitions.
+#define REFF_NO_IWAD        0x1 // Don't use if from IWAD.
+#define REFF_PWAD           0x2 // Can use if from PWAD.
+#define REFF_EXTERNAL       0x4 // Can use if from external resource.
 
 typedef struct ded_reflection_s {
     Uri*            material;

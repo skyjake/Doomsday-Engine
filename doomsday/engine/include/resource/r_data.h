@@ -44,20 +44,6 @@ extern "C" {
 struct texture_s;
 struct font_s;
 
-// Flags for material decorations.
-#define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
-#define DCRF_PWAD           0x2 // Can use if from PWAD.
-#define DCRF_EXTERNAL       0x4 // Can use if from external resource.
-
-// Flags for material reflections.
-#define REFF_NO_IWAD        0x1 // Don't use if from IWAD.
-#define REFF_PWAD           0x2 // Can use if from PWAD.
-#define REFF_EXTERNAL       0x4 // Can use if from external resource.
-
-// Flags for material detailtexs.
-#define DTLF_NO_IWAD        0x1 // Don't use if from IWAD.
-#define DTLF_PWAD           0x2 // Can use if from PWAD.
-#define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 typedef struct glcommand_vertex_s {
     float           s, t;
     int             index;
@@ -198,22 +184,6 @@ boolean         R_UpdatePlane(struct plane_s* pln, boolean forceUpdate);
 boolean         R_UpdateSurface(struct surface_s* suf, boolean forceUpdate);
 
 
-/**
- * @return  @c true if the given decoration works under the specified circumstances.
- */
-boolean R_IsAllowedDecoration(ded_decor_t* def, boolean hasExternal, boolean isCustom);
-
-/**
- * @return  @c true if the given reflection works under the specified circumstances.
- */
-boolean R_IsAllowedReflection(ded_reflection_t* def, boolean hasExternal, boolean isCustom);
-
-/**
- * @return  @c true if the given decoration works under the specified circumstances.
- */
-boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, boolean hasExternal, boolean isCustom);
-
-boolean R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
 
 void R_InitSvgs(void);
 
