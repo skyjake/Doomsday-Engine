@@ -127,14 +127,6 @@ typedef struct rawtex_s {
     struct rawtex_s* next;
 } rawtex_t;
 
-typedef struct {
-    float           approxDist; // Only an approximation.
-    float           vector[3]; // Light direction vector.
-    float           color[3]; // How intense the light is (0..1, RGB).
-    float           offset;
-    float           lightSide, darkSide; // Factors for world light.
-    boolean         affectedByAmbient;
-} vlight_t;
 
 /**
  * Textures used in the lighting system.
@@ -266,7 +258,6 @@ void R_PrecacheForMap(void);
  * \note Part of the Doomsday public API.
  */
 void R_PrecacheMobjNum(int mobjtypeNum);
-boolean R_DrawVLightVector(const vlight_t* light, void* context);
 
 /**
  * @return  @c true if the given decoration works under the specified circumstances.

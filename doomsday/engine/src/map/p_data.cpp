@@ -32,6 +32,7 @@
 #include "game.h"
 #include "map/propertyvalue.h"
 #include "render/rend_bias.h"
+#include "render/vlight.h"
 #include "m_bams.h"
 
 #include <map>

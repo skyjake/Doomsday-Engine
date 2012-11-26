@@ -196,13 +196,6 @@ typedef struct vispsprite_s {
     } data;
 } vispsprite_t;
 
-typedef struct collectaffectinglights_params_s {
-    coord_t         origin[3];
-    float*          ambientColor;
-    BspLeaf*        bspLeaf;
-    boolean         starkLight; // World light has a more pronounced effect.
-} collectaffectinglights_params_t;
-
 extern spritedef_t* sprites;
 extern int numSprites;
 extern float pspOffset[2], pspLightLevelMultiplier;
@@ -253,31 +246,6 @@ void R_ClearVisSprites(void);
 
 void R_InitSprites(void);
 void R_ShutdownSprites(void);
-
-uint R_CollectAffectingLights(const collectaffectinglights_params_t* params);
-
-/**
- * Initialize the vlight system in preparation for rendering view(s) of the
- * game world. Called by R_InitLevel().
- */
-void VL_InitForMap(void);
-
-/**
- * Moves all used vlight nodes to the list of unused nodes, so they can be
- * reused.
- */
-void VL_InitForNewFrame(void);
-
-/**
- * Calls func for all vlights in the given list.
- *
- * @param listIdx  Identifier of the list to process.
- * @param data  Ptr to pass to the callback.
- * @param func  Callback to make for each object.
- *
- * @return  @c true, iff every callback returns @c true.
- */
-boolean VL_ListIterator(uint listIdx, void* data, boolean (*func) (const vlight_t*, void*));
 
 #ifdef __cplusplus
 } // extern "C"

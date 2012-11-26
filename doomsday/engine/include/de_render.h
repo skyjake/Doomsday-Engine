@@ -47,6 +47,7 @@
 #include "render/rend_dynlight.h"
 #include "render/rendpoly.h"
 #include "render/vignette.h"
+#include "render/vlight.h"
 
 #include "map/r_world.h"
 #include "r_util.h"

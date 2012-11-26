@@ -2290,23 +2290,3 @@ font_t* R_CreateFontFromDef(ded_compositefont_t* def)
     }
     return font;
 }
-
-boolean R_DrawVLightVector(const vlight_t* light, void* context)
-{
-    coord_t distFromViewer = fabs(*((coord_t*)context));
-    if(distFromViewer < 1600-8)
-    {
-        float alpha = 1 - distFromViewer / 1600, scale = 100;
-
-        LIBDENG_ASSERT_IN_MAIN_THREAD();
-        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-        glBegin(GL_LINES);
-            glColor4f(light->color[CR], light->color[CG], light->color[CB], alpha);
-            glVertex3f(scale * light->vector[VX], scale * light->vector[VZ], scale * light->vector[VY]);
-            glColor4f(light->color[CR], light->color[CG], light->color[CB], 0);
-            glVertex3f(0, 0, 0);
-        glEnd();
-    }
-    return true; // Continue iteration.
-}
