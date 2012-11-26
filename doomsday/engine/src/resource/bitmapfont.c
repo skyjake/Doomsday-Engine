@@ -572,8 +572,14 @@ void BitmapCompositeFont_Prepare(font_t* font)
         ++numPatches;
     }
 
-    font->_noCharSize.width  = avgSize.width  / numPatches;
-    font->_noCharSize.height = avgSize.height / numPatches;
+    if(numPatches)
+    {
+        avgSize.width  /= numPatches;
+        avgSize.height /= numPatches;
+    }
+
+    font->_noCharSize.width  = avgSize.width;
+    font->_noCharSize.height = avgSize.height;
 
     // We have prepared all patches.
     font->_isDirty = false;

@@ -209,6 +209,9 @@ int Fonts_Iterate(fontschemeid_t schemeId, int (*callback)(struct font_s* font, 
 int Fonts_IterateDeclared2(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void* paramaters), void* paramaters);
 int Fonts_IterateDeclared(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void* paramaters)); /*paramaters=NULL*/
 
+struct font_s *R_CreateFontFromFile(Uri *uri, char const *resourcePath);
+struct font_s *R_CreateFontFromDef(ded_compositefont_t *def);
+
 /*
  * Here follows miscellaneous routines currently awaiting refactoring into the
  * revised resource and texture management APIs.
