@@ -2029,7 +2029,7 @@ const float* R_GetSectorLightColor(const Sector* sector)
     static float oldRendSkyLight = -1;
     if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(sector))
     {
-        const ColorRawf* ambientColor = R_SkyAmbientColor();
+        const ColorRawf* ambientColor = Sky_AmbientColor();
         if(rendSkyLight != oldRendSkyLight ||
            !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor[CR], .001f) ||
            !INRANGE_OF(ambientColor->green, oldSkyAmbientColor[CG], .001f) ||

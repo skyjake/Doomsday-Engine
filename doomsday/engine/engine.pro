@@ -272,7 +272,6 @@ DENG_HEADERS += \
     include/render/r_lgrid.h \
     include/render/r_lumobjs.h \
     include/render/r_shadow.h \
-    include/render/r_sky.h \
     include/render/r_things.h \
     include/render/rend_bias.h \
     include/render/rend_clip.h \
@@ -287,9 +286,9 @@ DENG_HEADERS += \
     include/render/rend_model.h \
     include/render/rend_particle.h \
     include/render/rend_shadow.h \
-    include/render/rend_sky.h \
     include/render/rend_sprite.h \
     include/render/rendpoly.h \
+    include/render/sky.h \
     include/render/vignette.h \
     include/render/vlight.h \
     include/resource/animgroups.h \
@@ -559,7 +558,6 @@ SOURCES += \
     src/render/r_lgrid.c \
     src/render/r_lumobjs.c \
     src/render/r_shadow.c \
-    src/render/r_sky.c \
     src/render/r_things.c \
     src/render/rend_bias.c \
     src/render/rend_clip.cpp \
@@ -574,9 +572,9 @@ SOURCES += \
     src/render/rend_model.c \
     src/render/rend_particle.c \
     src/render/rend_shadow.c \
-    src/render/rend_sky.c \
     src/render/rend_sprite.c \
     src/render/rendpoly.cpp \
+    src/render/sky.cpp \
     src/render/vignette.c \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \

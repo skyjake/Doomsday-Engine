@@ -512,7 +512,6 @@ void R_Init(void)
     R_InitRawTexs();
     R_InitSvgs();
     R_InitViewWindow();
-    R_SkyInit();
     Rend_Init();
     frameCount = 0;
 }
@@ -1444,7 +1443,7 @@ void Rend_CacheForMap()
     }
 
      // Sky models usually have big skins.
-    R_SkyPrecache();
+    Sky_Cache();
 
     // Precache model skins?
     if(useModels && precacheSkins)

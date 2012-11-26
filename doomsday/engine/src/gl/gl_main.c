@@ -484,7 +484,7 @@ void GL_Shutdown(void)
     GL_ShutdownDeferredTask();
     FR_Shutdown();
     Rend_ModelShutdown();
-    Rend_SkyShutdown();
+    Sky_Shutdown();
     Rend_Reset();
     GL_ShutdownRefresh();
 

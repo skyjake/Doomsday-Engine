@@ -188,7 +188,7 @@ void Rend_Register(void)
     Rend_DecorRegister();
     SB_Register();
     LG_Register();
-    Rend_SkyRegister();
+    Sky_Register();
     Rend_ModelRegister();
     Rend_ParticleRegister();
     Rend_RadioRegister();
@@ -209,7 +209,7 @@ void Rend_Init(void)
 {
     C_Init();
     RL_Init();
-    Rend_SkyInit();
+    Sky_Init();
 }
 
 void Rend_Shutdown(void)

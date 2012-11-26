@@ -333,7 +333,7 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
                     skyDef = &mapInfo->sky;
             }
 
-            R_SetupSky(skyDef);
+            Sky_Configure(skyDef);
 
             // Setup accordingly.
             if(mapInfo)
