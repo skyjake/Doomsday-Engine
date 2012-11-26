@@ -39,31 +39,14 @@
 struct texture_s;
 struct font_s;
 
-typedef struct {
-    lumpnum_t lumpNum;
-    short offX; /// block origin (always UL), which has allready
-    short offY; /// Accounted for the patch's internal origin
-} texpatch_t;
-
-#define TXDF_NODRAW         0x0001 /// Not to be drawn.
-#define TXDF_CUSTOM         0x0002 /// Definition does not define a texture that originates from the current game.
-
-// Describes a rectangular texture, which is composed of one
-// or more texpatch_t structures that arrange graphic patches.
-typedef struct {
-    ddstring_t name; ///< Percent-encoded.
-    /// Size of the texture in logical pixels.
-    Size2Raw size;
-    short flags;
-    /// Index of this resource according to the logic of the original game's indexing algorithm.
-    int origIndex;
-    short patchCount;
-    texpatch_t* patches; // [patchcount] drawn back to front into the cached texture.
-} patchcompositetex_t;
-
-// Patch flags.
+/**
+ * @defgroup patchFlags Patch flags
+ * @ingroup flags
+ * @{
+ */
 #define PF_MONOCHROME         0x1
 #define PF_UPSCALE_AND_SHARPEN 0x2
+///@}
 
 typedef struct patchtex_s {
     short flags;
