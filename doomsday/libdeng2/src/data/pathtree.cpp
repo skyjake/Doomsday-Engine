@@ -45,9 +45,8 @@ struct PathTree::Instance
     /// Node that represents the one root branch of all nodes.
     PathTree::Node rootNode;
 
-    /// Path node hashes.
-    PathTree::Nodes leafHash;
-    PathTree::Nodes branchHash;
+    /// Path node hashes (leaves and branches).
+    PathTree::NodeHash hash;
 
     Instance(PathTree &d, int _flags)
         : self(d), flags(_flags), size(0),
@@ -61,8 +60,8 @@ struct PathTree::Instance
 
     void clear()
     {
-        clearPathHash(leafHash);
-        clearPathHash(branchHash);
+        clearPathHash(hash.leaves);
+        clearPathHash(hash.branches);
         size = 0;
     }
 
@@ -80,12 +79,13 @@ struct PathTree::Instance
     PathTree::Node *nodeForSegment(Path::Segment const &segment, PathTree::NodeType nodeType,
                                    PathTree::Node *parent)
     {
+        PathTree::Nodes const &hash = self.nodes(nodeType);
+
         // Have we already encountered this?
         PathTree::SegmentId segmentId = segments.isInterned(segment);
         if(segmentId)
         {
             // The name is known. Perhaps we have.
-            PathTree::Nodes &hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
             Path::hash_type hashKey = segments.userValue(segmentId);
             for(PathTree::Nodes::const_iterator i = hash.find(hashKey);
                 i != hash.end() && i.key() == hashKey; ++i)
@@ -118,14 +118,7 @@ struct PathTree::Instance
         PathTree::Node *node = self.newNode(PathTree::NodeArgs(self, nodeType, segmentId, parent));
 
         // Insert the new node into the hash.
-        if(nodeType == PathTree::Leaf)
-        {
-            leafHash.insert(hashKey, node);
-        }
-        else // Branch
-        {
-            branchHash.insert(hashKey, node);
-        }
+        const_cast<Nodes &>(hash).insert(hashKey, node);
 
         return node;
     }
@@ -193,13 +186,13 @@ struct PathTree::Instance
 
             if(!compFlags.testFlag(NoLeaf))
             {
-                if((found = findInHash(leafHash, hashKey, searchPath, compFlags)) != 0)
+                if((found = findInHash(hash.leaves, hashKey, searchPath, compFlags)) != 0)
                     return found;
             }
 
             if(!compFlags.testFlag(NoBranch))
             {
-                if((found = findInHash(branchHash, hashKey, searchPath, compFlags)) != 0)
+                if((found = findInHash(hash.branches, hashKey, searchPath, compFlags)) != 0)
                     return found;
             }
         }
@@ -330,7 +323,7 @@ PathTree::Node *PathTree::newNode(NodeArgs const &args)
 
 PathTree::Nodes const &PathTree::nodes(NodeType type) const
 {
-    return (type == Leaf? d->leafHash : d->branchHash);
+    return (type == Leaf? d->hash.leaves : d->hash.branches);
 }
 
 static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes const &ph, QChar separator)
@@ -349,11 +342,11 @@ int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar separ
     int numFoundSoFar = found.count();
     if(!(flags & NoBranch))
     {
-        collectPathsInHash(found, branchNodes(), separator);
+        collectPathsInHash(found, d->hash.branches, separator);
     }
     if(!(flags & NoLeaf))
     {
-        collectPathsInHash(found, leafNodes(), separator);
+        collectPathsInHash(found, d->hash.leaves, separator);
     }
     return found.count() - numFoundSoFar;
 }
@@ -372,6 +365,14 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
 
     PathTree::Nodes const *nodes = &pathTree.nodes(type);
 
+    // If the parent is known, we can narrow our search to all the parent's
+    // children.
+    if(!pathTree.flags().testFlag(PathTree::NoLocalBranchIndex) &&
+       flags.testFlag(PathTree::MatchParent) && parent)
+    {
+        nodes = &parent->childNodes(type);
+    }
+
     // Are we iterating nodes with a known hash?
     if(hashKey != PathTree::no_hash)
     {
@@ -388,24 +389,9 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
     }
     else
     {
-        // No known hash, but if the parent is known, we can narrow our search
-        // to all the parent's children.
-        if(!pathTree.flags().testFlag(PathTree::NoLocalBranchIndex) &&
-           flags.testFlag(PathTree::MatchParent) && parent)
-        {
-            nodes = &parent->children();
-        }
-
         // No known hash -- iterate all potential nodes.
         DENG2_FOR_EACH_CONST(PathTree::Nodes, i, *nodes)
         {
-            if(flags.testFlag(PathTree::MatchParent) && (*i)->type() != type)
-            {
-                // Wrong kind of node -- branches could maintain separate indexes
-                // for branches and leaves...
-                continue;
-            }
-
             if(!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
             {
                 result = callback(**i, parameters);

@@ -67,6 +67,15 @@ public:
     typedef QList<String> FoundPaths;
 
     /**
+     * Leaves and branches are stored in separate hashes.
+     * Note that one can always unite the hashes (see QMultiHash).
+     */
+    struct DENG2_PUBLIC NodeHash {
+        Nodes leaves;
+        Nodes branches;
+    };
+
+    /**
      * Flags that affect the properties of the tree.
      */
     enum Flag
@@ -142,7 +151,7 @@ public:
     class DENG2_PUBLIC Node
     {
     public:
-        typedef PathTree::Nodes Children;
+        typedef PathTree::NodeHash Children;
 
     protected:
         Node(NodeArgs const &args);
@@ -160,6 +169,16 @@ public:
         /// Returns the children of a branch node. Note that leaf nodes
         /// have no children -- calling this for leaf nodes is not allowed.
         Children const &children() const;
+
+        /**
+         * Returns the children of a branch node. Note that leaf nodes
+         * have no children -- calling this for leaf nodes is not allowed.
+         *
+         * @param type  Type of hash to return (leaves or branches).
+         *
+         * @return Hash of nodes.
+         */
+        Nodes const &childNodes(NodeType type) const;
 
         /// Determines if the node is at the root level of the tree
         /// (no other node is its parent).
@@ -219,6 +238,7 @@ public:
         SegmentId segmentId() const;
         void addChild(Node &node);
         void removeChild(Node &node);
+        Nodes &childNodes(NodeType type);
 
     private:
         struct Instance;

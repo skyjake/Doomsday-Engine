@@ -85,6 +85,18 @@ const PathTree::Node::Children &PathTree::Node::children() const
     return *d->children;
 }
 
+PathTree::Nodes const &PathTree::Node::childNodes(PathTree::NodeType type) const
+{
+    DENG2_ASSERT(d->children != 0);
+    return (type == PathTree::Leaf? d->children->leaves : d->children->branches);
+}
+
+PathTree::Nodes &PathTree::Node::childNodes(PathTree::NodeType type)
+{
+    DENG2_ASSERT(d->children != 0);
+    return (type == PathTree::Leaf? d->children->leaves : d->children->branches);
+}
+
 bool PathTree::Node::isAtRootLevel() const
 {
     return d->parent == &d->tree.rootBranch();
@@ -101,7 +113,7 @@ void PathTree::Node::addChild(PathTree::Node &node)
     {
         DENG2_ASSERT(d->children != 0);
 
-        d->children->insert(node.hash(), &node);
+        childNodes(node.type()).insert(node.hash(), &node);
     }
 }
 
@@ -111,7 +123,7 @@ void PathTree::Node::removeChild(PathTree::Node &node)
     {
         DENG2_ASSERT(d->children != 0);
 
-        d->children->remove(node.hash(), &node);
+        childNodes(node.type()).remove(node.hash(), &node);
     }
 }
 

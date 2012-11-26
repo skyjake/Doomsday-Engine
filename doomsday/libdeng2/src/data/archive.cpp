@@ -121,10 +121,9 @@ dint Archive::listFiles(Archive::Names& names, Path const &folder) const
     PathTree::Node const &parent = d->index->find(folder, PathTree::MatchFull | PathTree::NoLeaf);
 
     // Traverse the parent's nodes.
-    for(PathTreeIterator<PathTree> iter(parent.children()); iter.hasNext(); )
+    for(PathTreeIterator<PathTree> iter(parent.children().leaves); iter.hasNext(); )
     {
-        PathTree::Node const &node = iter.next();
-        if(node.isLeaf()) names.insert(node.name());
+        names.insert(iter.next().name());
     }
 
     return names.size();
@@ -140,10 +139,9 @@ dint Archive::listFolders(Archive::Names &names, Path const &folder) const
     PathTree::Node const &parent = d->index->find(folder, PathTree::MatchFull | PathTree::NoLeaf);
 
     // Traverse the parent's nodes.
-    for(PathTreeIterator<PathTree> iter(parent.children()); iter.hasNext(); )
+    for(PathTreeIterator<PathTree> iter(parent.children().branches); iter.hasNext(); )
     {
-        PathTree::Node const &node = iter.next();
-        if(node.isBranch()) names.insert(node.name());
+        names.insert(iter.next().name());
     }
 
     return names.size();
