@@ -30,6 +30,11 @@ struct texturevariantspecification_s;
 /// Absolute maximum number of vertices per submodel supported by this module.
 #define RENDER_MAX_MODEL_VERTS  16192
 
+typedef struct glcommand_vertex_s {
+    float s, t;
+    int index;
+} glcommand_vertex_t;
+
 /// @todo Split this large inflexible structure into logical subcomponent pieces.
 typedef struct rendmodelparams_s {
 // Animation, frame interpolation.

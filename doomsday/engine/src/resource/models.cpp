@@ -489,7 +489,7 @@ static bool registerSkin(model_t& mdl, int skinIndex)
     dmd_skin_t& skin = mdl.skins[skinIndex];
 
     QByteArray modelFilePathUtf8 = modelFilePath.toUtf8();
-    skin.texture = R_RegisterModelSkin(0, skin.name, modelFilePathUtf8.constData(), false);
+    skin.texture = R_RegisterModelSkin(skin.name, modelFilePathUtf8.constData(), false);
     if(skin.texture) return true;
 
     LOG_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\", ignoring.")
@@ -1165,7 +1165,7 @@ static void setupModel(ded_model_t& def)
         }
 
         QByteArray modelFilePath = modelRepository->string(sub->modelId).toUtf8();
-        sub->shinySkin = R_RegisterModelSkin(NULL, subdef->shinySkin, modelFilePath.constData(), true);
+        sub->shinySkin = R_RegisterModelSkin(subdef->shinySkin, modelFilePath.constData(), true);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)

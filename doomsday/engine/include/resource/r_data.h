@@ -33,21 +33,11 @@
 #include "gl/gl_main.h"
 #include "dd_def.h"
 #include "thinker.h"
-#include "m_nodepile.h"
 #include "def_data.h"
 #include "textures.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct texture_s;
 struct font_s;
-
-typedef struct glcommand_vertex_s {
-    float           s, t;
-    int             index;
-} glcommand_vertex_t;
 
 typedef struct {
     lumpnum_t lumpNum;
@@ -96,39 +86,38 @@ typedef struct doompatch_header_s {
  * Textures used in the lighting system.
  */
 typedef enum lightingtexid_e {
-    LST_DYNAMIC, // Round dynamic light
-    LST_GRADIENT, // Top-down gradient
-    LST_RADIO_CO, // FakeRadio closed/open corner shadow
-    LST_RADIO_CC, // FakeRadio closed/closed corner shadow
-    LST_RADIO_OO, // FakeRadio open/open shadow
-    LST_RADIO_OE, // FakeRadio open/edge shadow
+    LST_DYNAMIC, ///< Round dynamic light
+    LST_GRADIENT, ///< Top-down gradient
+    LST_RADIO_CO, ///< FakeRadio closed/open corner shadow
+    LST_RADIO_CC, ///< FakeRadio closed/closed corner shadow
+    LST_RADIO_OO, ///< FakeRadio open/open shadow
+    LST_RADIO_OE, ///< FakeRadio open/edge shadow
     LST_CAMERA_VIGNETTE,
     NUM_LIGHTING_TEXTURES
 } lightingtexid_t;
 
 typedef enum flaretexid_e {
     FXT_ROUND,
-    FXT_FLARE, // (flare)
-    FXT_BRFLARE, // (brFlare)
-    FXT_BIGFLARE, // (bigFlare)
+    FXT_FLARE,
+    FXT_BRFLARE,
+    FXT_BIGFLARE,
     NUM_SYSFLARE_TEXTURES
 } flaretexid_t;
 
 typedef struct {
-    DGLuint         tex;
+    DGLuint tex;
 } ddtexture_t;
 
-
-extern int levelFullBright;
-
-extern int gameDataFormat;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void R_InitSystemTextures(void);
-void R_InitPatchComposites(void);
+void R_InitPatchCompositeTextures(void);
 void R_InitFlatTextures(void);
 void R_InitSpriteTextures(void);
 
-patchid_t R_DeclarePatch(const char* name);
+patchid_t R_DeclarePatch(char const *name);
 
 /**
  * Retrieve extended info for the patch associated with @a id.
@@ -136,67 +125,43 @@ patchid_t R_DeclarePatch(const char* name);
  * @param info  Extend info will be written here if found.
  * @return  @c true= Extended info for this patch was found.
  */
-boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
+boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info);
 
 /// @return  Uri for the patch associated with @a id. Should be released with Uri_Delete()
-Uri* R_ComposePatchUri(patchid_t id);
+Uri *R_ComposePatchUri(patchid_t id);
 
 /// @return  Path for the patch associated with @a id. A zero-length string is
 ///          returned if the id is invalid/unknown.
-AutoStr* R_ComposePatchPath(patchid_t id);
+AutoStr *R_ComposePatchPath(patchid_t id);
 
-struct texture_s* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin);
+struct texture_s *R_CreateSkinTex(Uri const *filePath, boolean isShinySkin);
 
-struct texture_s* R_RegisterModelSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isReflection);
-struct texture_s* R_FindModelSkinForResourcePath(const Uri* resourcePath);
-struct texture_s* R_FindModelReflectionSkinForResourcePath(const Uri* resourcePath);
+struct texture_s *R_RegisterModelSkin(char const *skin, char const *modelfn, boolean isReflection);
+struct texture_s *R_FindModelSkinForResourcePath(Uri const *resourcePath);
+struct texture_s *R_FindModelReflectionSkinForResourcePath(Uri const *resourcePath);
 
 /**
  * Construct a DetailTexture according to the paramaters of the definition.
- * \note May return an existing DetailTexture if it is concluded that the
+ * @note May return an existing DetailTexture if it is concluded that the
  * definition does not infer a unique DetailTexture.
  *
  * @param def  Definition describing the desired DetailTexture.
  * @return  DetailTexture inferred from the definition or @c NULL if invalid.
  */
-struct texture_s* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def);
-struct texture_s* R_FindDetailTextureForResourcePath(const Uri* resourcePath);
-
-struct texture_s* R_CreateLightMap(const Uri* resourcePath);
-struct texture_s* R_FindLightMapForResourcePath(const Uri* resourcePath);
-
-struct texture_s* R_CreateFlareTexture(const Uri* resourcePath);
-struct texture_s* R_FindFlareTextureForResourcePath(const Uri* resourcePath);
-
-struct texture_s* R_CreateReflectionTexture(const Uri* resourcePath);
-struct texture_s* R_FindReflectionTextureForResourcePath(const Uri* resourcePath);
-
-struct texture_s* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size);
-struct texture_s* R_FindMaskTextureForResourcePath(const Uri* resourcePath);
 struct texture_s *R_CreateDetailTextureFromDef(ded_detailtexture_t const *def);
 struct texture_s *R_FindDetailTextureForResourcePath(Uri const *resourcePath);
 
-//boolean         R_UpdateBspLeaf(struct BspLeaf* bspLeaf, boolean forceUpdate);
-boolean         R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
-boolean         R_UpdateLinedef(struct linedef_s* line, boolean forceUpdate);
-boolean         R_UpdateSidedef(struct sidedef_s* side, boolean forceUpdate);
-boolean         R_UpdatePlane(struct plane_s* pln, boolean forceUpdate);
-boolean         R_UpdateSurface(struct surface_s* suf, boolean forceUpdate);
+struct texture_s *R_CreateLightMap(Uri const *resourcePath);
+struct texture_s *R_FindLightMapForResourcePath(Uri const *resourcePath);
 
+struct texture_s *R_CreateFlareTexture(Uri const *resourcePath);
+struct texture_s *R_FindFlareTextureForResourcePath(Uri const *resourcePath);
 
+struct texture_s *R_CreateReflectionTexture(Uri const *resourcePath);
+struct texture_s *R_FindReflectionTextureForResourcePath(Uri const *resourcePath);
 
-void R_InitSvgs(void);
-
-/**
- * Unload any resources needed for vector graphics.
- * Called during shutdown and before a renderer restart.
- */
-void R_UnloadSvgs(void);
-
-void R_ShutdownSvgs(void);
-
-
-
+struct texture_s *R_CreateMaskTexture(Uri const *resourcePath, Size2Raw const *size);
+struct texture_s *R_FindMaskTextureForResourcePath(Uri const *resourcePath);
 
 #ifdef __cplusplus
 } // extern "C"

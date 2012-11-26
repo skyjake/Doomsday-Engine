@@ -52,6 +52,7 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#include "gl/svg.h"
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
@@ -130,6 +131,8 @@ char* startupFiles = "";
 
 // Id of the currently running title finale if playing, else zero.
 finaleid_t titleFinale;
+
+int gameDataFormat; // Use a game-specifc data format where applicable.
 
 static NullFileType nullFileType;
 static NullResourceClass nullResourceClass;

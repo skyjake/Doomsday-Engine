@@ -196,6 +196,7 @@ typedef struct vispsprite_s {
     } data;
 } vispsprite_t;
 
+extern int levelFullBright;
 extern spritedef_t* sprites;
 extern int numSprites;
 extern float pspOffset[2], pspLightLevelMultiplier;

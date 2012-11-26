@@ -24,14 +24,14 @@
 
 #include "resource/animgroups.h"
 #include "resource/colorpalettes.h"
+#include "resource/font.h"
+#include "resource/fonts.h"
 #include "resource/r_data.h"
 #include "resource/materials.h"
 #include "resource/materialvariant.h"
-#include "resource/textures.h"
-#include "resource/font.h"
-#include "resource/fonts.h"
 #include "resource/models.h"
 #include "resource/rawtexture.h"
+#include "resource/textures.h"
 #include "resource/wad.h"
 #include "resource/zip.h"
 

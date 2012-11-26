@@ -80,6 +80,8 @@ extern finaleid_t titleFinale;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
+extern int gameDataFormat;
+
 /// @return  The Game collection.
 struct gamecollection_s* App_GameCollection();
 
