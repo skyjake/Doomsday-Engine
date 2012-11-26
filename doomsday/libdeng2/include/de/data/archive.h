@@ -26,10 +26,9 @@
 #include "../String"
 #include "../Time"
 #include "../File"
-#include "../Zeroed"
+#include "../PathTree"
 
-#include <QSet>
-#include <QMap>
+#include <set>
 
 namespace de
 {
@@ -74,14 +73,17 @@ namespace de
     public:
         /// Base class for format-related errors. @ingroup errors
         DENG2_ERROR(FormatError);
-                
+
+        /// Provided path was not valid. @ingroup errors
+        DENG2_ERROR(InvalidPathError);
+
         /// The requested entry does not exist in the archive. @ingroup errors
         DENG2_ERROR(NotFoundError);
         
         /// There is an error related to content processing. @ingroup errors
         DENG2_ERROR(ContentError);
         
-        typedef QSet<String> Names;
+        typedef std::set<String> Names; // alphabetical order
         
     public:
         /**
@@ -131,27 +133,28 @@ namespace de
          *
          * @return  @c true or @c false.
          */
-        bool has(String const &path) const;
+        bool has(Path const &path) const;
 
         /**
          * List the files in a specific folder of the archive.
          *
          * @param folder  Folder path to look in.
+         * @param names   Entry names collected in a set. The names are relative to a
+         *                @a folder and are in alphabetical order.
          *
-         * @return Entry names collected in a set. The names are relative to a
-         * @a folder.
+         * @return Number of names returned in @a names.
          */
-        Names listFiles(String const &folder = "") const;
+        dint listFiles(Names &names, Path const &folder = Path()) const;
 
         /**
          * List the folders in a specific folder of the archive.
          *
          * @param folder  Folder path to look in.
-         *
-         * @return Folder entry names collected in a set. The names are
-         * relative to @a folder.
+         * @param names   Folder entry names collected in a set. The names are
+         *                relative to @a folder and are in alphabetical order.
+         * @return Number of names returned in @a names.
          */
-        Names listFolders(String const &folder = "") const;
+        dint listFolders(Names &names, Path const &folder = Path()) const;
 
         /**
          * Returns information about the specified path. 
@@ -160,7 +163,7 @@ namespace de
          *
          * @return Type, size, and other metadata about the entry.
          */
-        File::Status status(String const &path) const;
+        File::Status status(Path const &path) const;
 
         /**
          * Returns the deserialized data of an entry for read-only access. The
@@ -176,7 +179,7 @@ namespace de
          *
          * @return Immutable contents of the entry.
          */
-        Block const &entryBlock(String const &path) const;
+        Block const &entryBlock(Path const &path) const;
 
         /**
          * Returns the deserialized data of an entry for read and write access.
@@ -191,7 +194,7 @@ namespace de
          *
          * @return Modifiable contents of the entry.
          */
-        Block &entryBlock(String const &path);
+        Block &entryBlock(Path const &path);
 
         /**
          * Adds an entry to the archive. The entry will not be committed to the
@@ -200,7 +203,7 @@ namespace de
          * @param path  Path of the entry within the archive.
          * @param data  Data of the entry.
          */
-        void add(String const &path, IByteArray const &data);
+        void add(Path const &path, IByteArray const &data);
 
         /**
          * Removes an entry from the archive. If there is deserialized data for
@@ -208,7 +211,7 @@ namespace de
          *
          * @param path  Path of the entry.
          */
-        void remove(String const &path);
+        void remove(Path const &path);
         
         /**
          * Clears the index of the archive. All entries are deleted.
@@ -240,7 +243,7 @@ namespace de
          * Interface for derived classes:
          */
         /// Base class for archive entries.
-        struct Entry
+        struct Entry : public PathTree::Node
         {
             dsize offset;           ///< Offset from the start of the source array.
             dsize size;             ///< Deserialized size.
@@ -252,10 +255,15 @@ namespace de
             Block *data;
 
             /// Cached copy of the serialized data. Can be @c NULL. Entry has ownership.
-            mutable Block *dataInArchive;
+            Block mutable *dataInArchive;
 
-            Entry() : offset(0), size(0), sizeInArchive(0), maybeChanged(false),
-                data(0), dataInArchive(0)
+            Entry(PathTree::NodeArgs const &args) : Node(args),
+                  offset(0),
+                  size(0),
+                  sizeInArchive(0),
+                  maybeChanged(false),
+                  data(0),
+                  dataInArchive(0)
             {}
 
             virtual ~Entry()
@@ -266,15 +274,14 @@ namespace de
             }
         };
 
-        typedef QMap<String, Entry *> Index;
-
         /**
-         * Constructs a new entry. Subclass can extend Entry with more data if
-         * necessary.
+         * Sets the index used by the Archive. A concrete subclass must call
+         * this in their constructor; Archive does not create an index on its
+         * own.
          *
-         * @return New entry, ownership given to the caller.
+         * @param tree  PathTree with entries of suitable type. Ownership given to Archive.
          */
-        virtual Entry *newEntry() = 0;
+        void setIndex(PathTree *tree);
 
         /**
          * Reads an entry from the source archive. The implementation of this
@@ -285,15 +292,17 @@ namespace de
          * @param path   Path of the entry within the archive.
          * @param data   Data is written here.
          */
-        virtual void readFromSource(Entry const *entry, String const &path, IBlock &data) const = 0;
+        virtual void readFromSource(Entry const &entry, Path const &path, IBlock &data) const = 0;
 
         /**
-         * Inserts an entry into the archive's index.
+         * Inserts an entry into the archive's index. If the path already
+         * exists in the index, the old entry is deleted first.
          *
          * @param path   Path of the entry.
-         * @param entry  Entry to insert. Ownership given to Archive.
+         *
+         * @return Inserted entry.
          */
-        void insertToIndex(String const &path, Entry *entry);
+        Entry &insertEntry(Path const &path);
 
         /**
          * Returns the full entry index so that derived classes can iterate the
@@ -301,7 +310,7 @@ namespace de
          *
          * @return Entry index.
          */
-        Index const &index() const;
+        PathTree const &index() const;
 
     private:
         struct Instance;

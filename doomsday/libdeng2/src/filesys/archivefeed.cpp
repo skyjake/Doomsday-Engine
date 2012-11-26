@@ -111,7 +111,8 @@ struct ArchiveFeed::Instance
     void populate(Folder &folder)
     {
         // Get a list of the files in this directory.
-        Archive::Names names = archive().listFiles(basePath);
+        Archive::Names names;
+        archive().listFiles(names, basePath);
 
         DENG2_FOR_EACH(Archive::Names, i, names)
         {
@@ -139,7 +140,7 @@ struct ArchiveFeed::Instance
         }
 
         // Also populate subfolders.
-        names = archive().listFolders(basePath);
+        archive().listFolders(names, basePath);
 
         for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
         {

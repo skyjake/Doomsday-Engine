@@ -242,6 +242,10 @@ Path::Path(String const &path, QChar sep)
     : LogEntry::Arg::Base(), d(new Instance(path, sep))
 {}
 
+Path::Path(char const *nullTerminatedCStr, char sep)
+    : LogEntry::Arg::Base(), d(new Instance(QString::fromUtf8(nullTerminatedCStr), sep))
+{}
+
 Path::Path(Path const &other)
     : ISerializable(), LogEntry::Arg::Base(),
       d(new Instance(other.d->path, other.d->separator))

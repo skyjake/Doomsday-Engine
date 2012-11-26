@@ -44,10 +44,9 @@ struct PathTree::Node::Instance
     {}
 };
 
-PathTree::Node::Node(PathTree &tree, PathTree::NodeType type, PathTree::SegmentId fragmentId,
-                     PathTree::Node *parent)
+PathTree::Node::Node(PathTree::NodeArgs const &args)
 {
-    d = new Instance(tree, type == PathTree::Leaf, fragmentId, parent);
+    d = new Instance(args.tree, args.type == PathTree::Leaf, args.segmentId, args.parent);
 }
 
 PathTree::Node::~Node()
@@ -282,9 +281,8 @@ Path PathTree::Node::composePath(QChar sep) const
     return Path(parm.composedPath, sep);
 }
 
-UserDataNode::UserDataNode(PathTree &tree, PathTree::NodeType type, PathTree::SegmentId segmentId,
-                           PathTree::Node *parent, void *userPointer, int userValue)
-    : PathTree::Node(tree, type, segmentId, parent),
+UserDataNode::UserDataNode(PathTree::NodeArgs const &args, void *userPointer, int userValue)
+    : PathTree::Node(args),
       _pointer(userPointer),
       _value(userValue)
 {}

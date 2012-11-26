@@ -146,6 +146,14 @@ public:
     Path(String const &path, QChar sep = '/');
 
     /**
+     * Construct a path from a UTF-8 C-style string.
+     *
+     * @param nullTerminatedCStr  Path to be parsed. All white space is included in the path.
+     * @param sep   Character used to separate path segments.
+     */
+    Path(char const *nullTerminatedCStr, char sep = '/');
+
+    /**
      * Construct a path by duplicating @a other.
      */
     Path(Path const &other);

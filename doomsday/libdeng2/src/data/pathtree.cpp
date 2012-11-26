@@ -46,8 +46,7 @@ struct PathTree::Instance
     PathTree::Nodes leafHash;
     PathTree::Nodes branchHash;
 
-    Instance(PathTree &d, int _flags)
-        : self(d), flags(_flags), size(0)
+    Instance(PathTree &d, int _flags) : self(d), flags(_flags), size(0)
     {}
 
     ~Instance()
@@ -115,7 +114,7 @@ struct PathTree::Instance
         // Are we out of indices?
         if(!segmentId) return NULL;
 
-        PathTree::Node *node = self.newNode(nodeType, segmentId, parent);
+        PathTree::Node *node = self.newNode(PathTree::NodeArgs(self, nodeType, segmentId, parent));
 
         // Insert the new node into the hash.
         if(nodeType == PathTree::Leaf)
@@ -161,6 +160,44 @@ struct PathTree::Instance
         return node;
     }
 
+    PathTree::Node const *find(Path const &searchPath, PathTree::ComparisonFlags compFlags) const
+    {
+        if(!searchPath.isEmpty() && size)
+        {
+            Path::hash_type hashKey = searchPath.lastSegment().hash();
+            if(!(compFlags & PathTree::NoLeaf))
+            {
+                for(Nodes::const_iterator i = leafHash.find(hashKey);
+                    i != leafHash.end() && i.key() == hashKey; ++i)
+                {
+                    PathTree::Node const &node = **i;
+                    if(!node.comparePath(searchPath, compFlags))
+                    {
+                        // This is the leaf node we're looking for.
+                        return &node;
+                    }
+                }
+            }
+
+            if(!(compFlags & PathTree::NoBranch))
+            {
+                for(Nodes::const_iterator i = branchHash.find(hashKey);
+                    i != branchHash.end() && i.key() == hashKey; ++i)
+                {
+                    PathTree::Node const &node = **i;
+                    if(!node.comparePath(searchPath, compFlags))
+                    {
+                        // This is the branch node we're looking for.
+                        return &node;
+                    }
+                }
+            }
+        }
+
+        // The referenced node could not be found.
+        return 0;
+    }
+
     static void clearPathHash(PathTree::Nodes &ph)
     {
         LOG_AS("PathTree::clearPathHash");
@@ -183,6 +220,12 @@ PathTree::Node *PathTree::insert(Path const &path)
         d->size++;
     }
     return node;
+}
+
+bool PathTree::remove(Path const &path, ComparisonFlags flags)
+{
+    DENG2_ASSERT(false);
+    return false;
 }
 
 PathTree::PathTree(Flags flags)
@@ -219,43 +262,20 @@ void PathTree::clear()
     d->clear();
 }
 
+bool PathTree::has(Path const &path, ComparisonFlags flags)
+{
+    return d->find(path, flags) != 0;
+}
+
 PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags flags) const
 {
-    if(!searchPath.isEmpty() && d->size)
+    Node const *found = d->find(searchPath, flags);
+    if(!found)
     {
-        Path::hash_type hashKey = searchPath.lastSegment().hash();
-        if(!(flags & NoLeaf))
-        {
-            Nodes &nodes = d->leafHash;
-            for(Nodes::const_iterator i = nodes.find(hashKey);
-                i != nodes.end() && i.key() == hashKey; ++i)
-            {
-                Node const &node = **i;
-                if(!node.comparePath(searchPath, flags))
-                {
-                    // This is the node we're looking for.
-                    return node;
-                }
-            }
-        }
-
-        if(!(flags & NoBranch))
-        {
-            Nodes &nodes = d->branchHash;
-            for(Nodes::const_iterator i = nodes.find(hashKey); i != nodes.end() && i.key() == hashKey; ++i)
-            {
-                Node const &node = **i;
-                if(!node.comparePath(searchPath, flags))
-                {
-                    // This is the node we're looking for.
-                    return node;
-                }
-            }
-        }
+        /// @throw NotFoundError  The referenced node could not be found.
+        throw NotFoundError("PathTree::find", "No paths found matching \"" + searchPath + "\"");
     }
-
-    /// @throw NotFoundError  The referenced node could not be found.
-    throw NotFoundError("PathTree::find", "No paths found matching \"" + searchPath + "\"");
+    return *found;
 }
 
 PathTree::Node &PathTree::find(Path const &path, ComparisonFlags flags)
@@ -274,9 +294,9 @@ Path::hash_type PathTree::segmentHash(SegmentId segmentId) const
     return d->segments.userValue(segmentId);
 }
 
-PathTree::Node *PathTree::newNode(PathTree::NodeType type, PathTree::SegmentId segmentId, PathTree::Node *parent)
+PathTree::Node *PathTree::newNode(NodeArgs const &args)
 {
-    return new Node(*this, type, segmentId, parent);
+    return new Node(args);
 }
 
 PathTree::Nodes const &PathTree::nodes(NodeType type) const
@@ -310,7 +330,7 @@ int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar separ
 }
 
 static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
-                              PathTree::NodeType type, int flags, PathTree::Node *parent,
+                              PathTree::NodeType type, int flags, PathTree::Node const *parent,
                               int (*callback) (PathTree::Node &, void *), void *parameters)
 {
     int result = 0;
@@ -351,7 +371,7 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
     return result;
 }
 
-int PathTree::traverse(ComparisonFlags flags, PathTree::Node *parent, Path::hash_type hashKey,
+int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path::hash_type hashKey,
                        int (*callback) (PathTree::Node &, void *), void *parameters) const
 {
     int result = 0;

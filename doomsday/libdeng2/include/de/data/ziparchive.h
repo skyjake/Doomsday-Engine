@@ -90,9 +90,7 @@ namespace de
         static bool recognize(File const &file);
 
     protected:
-        Entry *newEntry();
-
-        void readFromSource(Entry const *entry, String const &path, IBlock &uncompressedData) const;
+        void readFromSource(Entry const &entry, Path const &path, IBlock &uncompressedData) const;
 
         struct ZipEntry : public Entry
         {
@@ -100,12 +98,16 @@ namespace de
             duint32 crc32;              ///< CRC32 checksum.
             dsize localHeaderOffset;    ///< Offset of the local file header.
 
-            ZipEntry() : Entry(), compression(0), crc32(0), localHeaderOffset(0)
-            {}
+            ZipEntry(PathTree::NodeArgs const &args) : Entry(args),
+                  compression(0), crc32(0), localHeaderOffset(0) {}
 
             /// Recalculates CRC32 of the entry.
             void update();
         };
+
+        typedef PathTreeT<ZipEntry> Index;
+
+        Index const &index() const;
     };
 }
 
