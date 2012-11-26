@@ -44,11 +44,6 @@ extern "C" {
 struct texture_s;
 struct font_s;
 
-// Maximum number of palette translation tables.
-#define NUM_TRANSLATION_CLASSES         3
-#define NUM_TRANSLATION_MAPS_PER_CLASS  7
-#define NUM_TRANSLATION_TABLES            (NUM_TRANSLATION_CLASSES * NUM_TRANSLATION_MAPS_PER_CLASS)
-
 // Flags for material decorations.
 #define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
 #define DCRF_PWAD           0x2 // Can use if from PWAD.
@@ -158,14 +153,9 @@ typedef struct {
 extern int levelFullBright;
 
 extern byte precacheMapMaterials, precacheSprites, precacheSkins;
-
-extern byte* translationTables;
-
 extern int gameDataFormat;
 
 void            R_UpdateData(void);
-void R_InitTranslationTables(void);
-void R_UpdateTranslationTables(void);
 
 void R_InitSystemTextures(void);
 void R_InitPatchComposites(void);

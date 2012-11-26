@@ -73,8 +73,6 @@ byte precacheSkins = true;
 byte precacheMapMaterials = true;
 byte precacheSprites = true;
 
-byte* translationTables = NULL;
-
 int gameDataFormat; // Use a game-specifc data format where applicable.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -1548,19 +1546,6 @@ Texture* R_FindModelReflectionSkinForResourcePath(const Uri* path)
 void R_UpdateData(void)
 {
     R_UpdateRawTexs();
-}
-
-void R_InitTranslationTables(void)
-{
-    // The translation tables consist of a number of translation maps, each
-    // containing 256 palette indices.
-    translationTables = Z_Calloc(NUM_TRANSLATION_TABLES * 256, PU_REFRESHTRANS, 0);
-}
-
-void R_UpdateTranslationTables(void)
-{
-    Z_FreeTags(PU_REFRESHTRANS, PU_REFRESHTRANS);
-    R_InitTranslationTables();
 }
 
 /**
