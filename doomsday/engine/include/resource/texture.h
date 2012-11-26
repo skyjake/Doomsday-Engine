@@ -79,7 +79,7 @@ public:
      *    for the resultant texture.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture(textureid_t bindId, void* userData=NULL);
+    Texture(textureid_t bindId, void *userData = 0);
 
     /**
      * @param bindId  Unique identifier of the primary binding in the owning
@@ -90,7 +90,7 @@ public:
      *    image at load time.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture(textureid_t bindId, const Size2Raw& size, void* userData=NULL);
+    Texture(textureid_t bindId, Size2Raw const &dimensions, void *userData = 0);
 
     ~Texture();
 
@@ -107,8 +107,8 @@ public:
     /**
      * Retrieve the value of the associated user data pointer.
      * @return  Associated data pointer value.
-     **/
-    void* userDataPointer() const;
+     */
+    void *userDataPointer() const;
 
     /**
      * Set the user data pointer value. Ownership of the data is not given to
@@ -120,7 +120,7 @@ public:
      *
      * @param userData  User data pointer value.
      */
-    void setUserDataPointer(void* userData);
+    void setUserDataPointer(void *userData);
 
     /**
      * Add a new prepared variant to the list of resources for this Texture.
@@ -128,7 +128,7 @@ public:
      *
      * @param variant  Variant instance to add to the resource list.
      */
-    de::TextureVariant& addVariant(de::TextureVariant& variant);
+    TextureVariant &addVariant(TextureVariant &variant);
 
     /// @return  Number of variants for this texture.
     uint variantCount() const;
@@ -140,7 +140,7 @@ public:
      * Retrieve the value of an identified @a analysis data pointer.
      * @return  Associated data pointer value.
      **/
-    void* analysisDataPointer(texture_analysisid_t analysis) const;
+    void *analysisDataPointer(texture_analysisid_t analysis) const;
 
     /**
      * Set the value of an identified @a analysis data pointer. Ownership of
@@ -153,7 +153,7 @@ public:
      * @param analysis  Identifier of the data being attached.
      * @param data  Data to be attached.
      */
-    void setAnalysisDataPointer(texture_analysisid_t analysis, void* data);
+    void setAnalysisDataPointer(texture_analysisid_t analysis, void *data);
 
     /// @return  Logical width (not necessarily the same as pixel width).
     int width() const;
@@ -162,7 +162,7 @@ public:
     int height() const;
 
     /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
-    const Size2Raw& size() const { return dimensions; }
+    Size2Raw const &dimensions() const { return dimensions_; }
 
     /**
      * Change logical width.
@@ -180,12 +180,12 @@ public:
      * Change logical pixel dimensions.
      * @param size  New size.
      */
-    void setSize(const Size2Raw& size);
+    void setDimensions(Size2Raw const &dimensions);
 
     /**
      * Provides access to the list of variant textures for efficent traversals.
      */
-    const Variants& variantList() const { return variants; }
+    Variants const &variantList() const { return variants; }
 
 private:
     Flags flags;
@@ -197,14 +197,14 @@ private:
     Variants variants;
 
     /// User data associated with this texture.
-    void* userData;
+    void *userData;
 
     /// Dimensions in logical pixels.
-    Size2Raw dimensions;
+    Size2Raw dimensions_;
 
     /// Table of analyses object ptrs, used for various purposes depending
     /// on the variant specification.
-    void* analyses[TEXTURE_ANALYSIS_COUNT];
+    void *analyses[TEXTURE_ANALYSIS_COUNT];
 };
 
 } // namespace de
@@ -241,10 +241,10 @@ void Texture_FlagCustom(Texture* tex, boolean yes);
 
 int Texture_Width(const Texture* tex);
 int Texture_Height(const Texture* tex);
-const Size2Raw* Texture_Size(const Texture* tex);
+const Size2Raw* Texture_Dimensions(const Texture* tex);
 void Texture_SetWidth(Texture* tex, int width);
 void Texture_SetHeight(Texture* tex, int height);
-void Texture_SetSize(Texture* tex, const Size2Raw* size);
+void Texture_SetDimensions(Texture* tex, const Size2Raw* size);
 
 /**
  * Iterate over all derived TextureVariants, making a callback for each.

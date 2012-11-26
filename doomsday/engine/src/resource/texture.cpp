@@ -36,16 +36,16 @@
 #include <de/memory.h>
 
 de::Texture::Texture(textureid_t bindId, void* _userData)
-    : flags(), primaryBindId(bindId), variants(), userData(_userData), dimensions()
+    : flags(), primaryBindId(bindId), variants(), userData(_userData), dimensions_()
 {
     memset(analyses, 0, sizeof(analyses));
 }
 
 de::Texture::Texture(textureid_t bindId, const Size2Raw& size, void* _userData)
-    : flags(), primaryBindId(bindId), variants(), userData(_userData), dimensions()
+    : flags(), primaryBindId(bindId), variants(), userData(_userData), dimensions_()
 {
     memset(analyses, 0, sizeof(analyses));
-    setSize(size);
+    setDimensions(size);
 }
 
 de::Texture::~Texture()
@@ -116,30 +116,30 @@ void de::Texture::flagCustom(bool yes)
 
 int de::Texture::width() const
 {
-    return dimensions.width;
+    return dimensions_.width;
 }
 
 void de::Texture::setWidth(int newWidth)
 {
-    dimensions.width = newWidth;
+    dimensions_.width = newWidth;
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
 int de::Texture::height() const
 {
-    return dimensions.height;
+    return dimensions_.height;
 }
 
 void de::Texture::setHeight(int newHeight)
 {
-    dimensions.height = newHeight;
+    dimensions_.height = newHeight;
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
-void de::Texture::setSize(const Size2Raw& newSize)
+void de::Texture::setDimensions(const Size2Raw& newSize)
 {
-    dimensions.width  = newSize.width;
-    dimensions.height = newSize.height;
+    dimensions_.width  = newSize.width;
+    dimensions_.height = newSize.height;
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
@@ -158,8 +158,8 @@ void de::Texture::setAnalysisDataPointer(texture_analysisid_t analysisId, void* 
         textureid_t textureId = Textures_Id(reinterpret_cast<struct texture_s*>(this));
         de::Uri* uri = reinterpret_cast<de::Uri*>(Textures_ComposeUri(textureId));
         LOG_AS("Texture::attachAnalysis");
-        LOG_WARNING("Image analysis (id:%i) already present for \"%s\", will replace.")
-            << int(analysisId) << uri;
+        LOG_DEBUG("Image analysis (id:%i) already present for \"%s\" (replaced).")
+            << int(analysisId) << *uri;
         delete uri;
 #endif
     }
@@ -260,64 +260,64 @@ void* Texture_AnalysisDataPointer(const Texture* tex, texture_analysisid_t analy
     return self->analysisDataPointer(analysisId);
 }
 
-void Texture_SetAnalysisDataPointer(Texture* tex, texture_analysisid_t analysis, void* data)
+void Texture_SetAnalysisDataPointer(Texture *tex, texture_analysisid_t analysis, void *data)
 {
     SELF(tex);
     self->setAnalysisDataPointer(analysis, data);
 }
 
-boolean Texture_IsCustom(const Texture* tex)
+boolean Texture_IsCustom(Texture const *tex)
 {
     SELF_CONST(tex);
     return CPP_BOOL(self->isCustom());
 }
 
-void Texture_FlagCustom(Texture* tex, boolean yes)
+void Texture_FlagCustom(Texture *tex, boolean yes)
 {
     SELF(tex);
     self->flagCustom(bool(yes));
 }
 
-void Texture_SetSize(Texture* tex, const Size2Raw* newSize)
+void Texture_SetDimensions(Texture *tex, Size2Raw const *newSize)
 {
     SELF(tex);
     if(!newSize)
-        LegacyCore_FatalError("Texture_SetSize: Attempted with invalid newSize argument (=NULL).");
-    self->setSize(*newSize);
+        LegacyCore_FatalError("Texture_SetDimensions: Attempted with invalid newSize argument (=NULL).");
+    self->setDimensions(*newSize);
 }
 
-int Texture_Width(const Texture* tex)
+int Texture_Width(Texture const *tex)
 {
     SELF_CONST(tex);
     return self->width();
 }
 
-void Texture_SetWidth(Texture* tex, int newWidth)
+void Texture_SetWidth(Texture *tex, int newWidth)
 {
     SELF(tex);
     self->setWidth(newWidth);
 }
 
-int Texture_Height(const Texture* tex)
+int Texture_Height(Texture const *tex)
 {
     SELF_CONST(tex);
     return self->height();
 }
 
-const Size2Raw* Texture_Size(const Texture* tex)
+Size2Raw const *Texture_Dimensions(Texture const *tex)
 {
     SELF_CONST(tex);
-    return &self->size();
+    return &self->dimensions();
 }
 
-void Texture_SetHeight(Texture* tex, int newHeight)
+void Texture_SetHeight(Texture *tex, int newHeight)
 {
     SELF(tex);
     self->setHeight(newHeight);
 }
 
-int Texture_IterateVariants(struct texture_s* tex,
-    int (*callback)(struct texturevariant_s* variant, void* parameters), void* parameters)
+int Texture_IterateVariants(Texture *tex,
+    int (*callback)(TextureVariant *variant, void *parameters), void *parameters)
 {
     SELF(tex);
     int result = 0;
@@ -325,8 +325,8 @@ int Texture_IterateVariants(struct texture_s* tex,
     {
         DENG2_FOR_EACH_CONST(de::Texture::Variants, i, self->variantList())
         {
-            de::TextureVariant* variant = const_cast<de::TextureVariant*>(*i);
-            result = callback(reinterpret_cast<TextureVariant*>(variant), parameters);
+            de::TextureVariant *variant = const_cast<de::TextureVariant *>(*i);
+            result = callback(reinterpret_cast<TextureVariant *>(variant), parameters);
             if(result) break;
         }
     }

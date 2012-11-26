@@ -3350,7 +3350,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
                               Str_Text(path), image.size.width, image.size.height) )
         Uri_Delete(uri);
 #endif
-        Texture_SetSize(tex, &image.size);
+        Texture_SetDimensions(tex, &image.size);
     }
 
     performImageAnalyses(tex, &image, spec, true /*Always update*/);

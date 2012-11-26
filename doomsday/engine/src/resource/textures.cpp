@@ -902,10 +902,10 @@ textureid_t Textures_Declare(Uri* uri, int uniqueId, Uri const* resourcePath)
     return Textures_Declare2(reinterpret_cast<de::Uri&>(*uri), uniqueId, reinterpret_cast<de::Uri const*>(resourcePath));
 }
 
-Texture* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw* size,
+Texture* Textures_CreateWithDimensions(textureid_t id, boolean custom, const Size2Raw* size,
     void* userData)
 {
-    LOG_AS("Textures_CreateWithSize");
+    LOG_AS("Textures_CreateWithDimensions");
 
     if(!size)
     {
@@ -933,7 +933,7 @@ Texture* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw*
         delete uri;
 #endif
         Texture_FlagCustom(tex, custom);
-        Texture_SetSize(tex, size);
+        Texture_SetDimensions(tex, size);
         Texture_SetUserDataPointer(tex, userData);
         /// @todo Materials and Surfaces should be notified of this!
         return tex;
@@ -948,7 +948,7 @@ Texture* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw*
 Texture* Textures_Create(textureid_t id, boolean custom, void* userData)
 {
     Size2Raw size(0, 0);
-    return Textures_CreateWithSize(id, custom, &size, userData);
+    return Textures_CreateWithDimensions(id, custom, &size, userData);
 }
 
 int Textures_UniqueId(textureid_t id)
