@@ -98,8 +98,8 @@ NativePath App::nativeBinaryPath()
 # endif
     // Also check the system config files.
     String configured;
-    _unixInfo.path("libdir", configured);
-    path = configured;
+    if(_unixInfo.path("libdir", configured))
+        path = configured;
 #endif
     return path;
 }
@@ -156,8 +156,8 @@ NativePath App::nativeBasePath()
 # endif
     // Also check the system config files.
     String configured;
-    _unixInfo.path("basedir", configured);
-    path = configured;
+    if(_unixInfo.path("basedir", configured))
+        path = configured;
 #endif
     return path;
 }
