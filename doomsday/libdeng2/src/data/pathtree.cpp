@@ -181,7 +181,10 @@ struct PathTree::Instance
 
     PathTree::Node *find(Path const &searchPath, PathTree::ComparisonFlags compFlags)
     {
-        if(searchPath.isEmpty()) return &rootNode;
+        if(searchPath.isEmpty() && !compFlags.testFlag(NoBranch))
+        {
+            return &rootNode;
+        }
 
         PathTree::Node *found = 0;
         if(size)
