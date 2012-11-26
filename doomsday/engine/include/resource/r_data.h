@@ -279,46 +279,6 @@ void R_ShutdownSvgs(void);
 int R_TextureUniqueId2(const Uri* uri, boolean quiet);
 int R_TextureUniqueId(const Uri* uri); /* quiet=false */
 
-typedef struct animframe_s {
-    textureid_t texture;
-    ushort tics;
-    ushort randomTics;
-} animframe_t;
-
-typedef struct animgroup_s {
-    int id;
-    int flags;
-    int count;
-    animframe_t* frames;
-} animgroup_t;
-
-/// @return  Number of animation/precache groups.
-int R_AnimGroupCount(void);
-
-/// To be called to destroy all animation groups when they are no longer needed.
-void R_ClearAnimGroups(void);
-
-/// @return  AnimGroup associated with @a animGroupNum else @c NULL
-const animgroup_t* R_ToAnimGroup(int animGroupNum);
-
-/**
- * Create a new animation group.
- * @return  Logical (unique) identifier reference associated with the new group.
- */
-int R_CreateAnimGroup(int flags);
-
-/**
- * Append a new @a texture frame to the identified @a animGroupNum.
- *
- * @param animGroupNum  Logical identifier reference to the group being modified.
- * @param texture  Texture frame to be inserted into the group.
- * @param tics  Base duration of the new frame in tics.
- * @param randomTics  Extra frame duration in tics (randomized on each cycle).
- */
-void R_AddAnimGroupFrame(int animGroupNum, const Uri* texture, int tics, int randomTics);
-
-/// @return  @c true iff @a texture is linked to the identified @a animGroupNum.
-boolean R_IsTextureInAnimGroup(const Uri* texture, int animGroupNum);
 
 struct font_s* R_CreateFontFromFile(Uri* uri, char const* resourcePath);
 struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);

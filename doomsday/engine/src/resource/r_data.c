@@ -79,9 +79,6 @@ int gameDataFormat; // Use a game-specifc data format where applicable.
 
 static rawtexhash_t rawtexhash[RAWTEX_HASH_SIZE];
 
-static int numgroups;
-static animgroup_t* groups;
-
 // CODE --------------------------------------------------------------------
 
 /// @note Part of the Doomsday public API.
@@ -2067,120 +2064,6 @@ Texture* R_FindMaskTextureForResourcePath(const Uri* path)
     result = Textures_IterateDeclared2(TS_MASKS, findMaskTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
-}
-
-static animgroup_t* getAnimGroup(int number)
-{
-    if(--number < 0 || number >= numgroups) return NULL;
-    return &groups[number];
-}
-
-static boolean isInAnimGroup(const animgroup_t* group, textureid_t texId)
-{
-    int i;
-    assert(group);
-
-    if(texId == NOTEXTUREID) return false;
-    for(i = 0; i < group->count; ++i)
-    {
-        if(group->frames[i].texture == texId)
-            return true;
-    }
-    return false;
-}
-
-void R_ClearAnimGroups(void)
-{
-    int i;
-    if(numgroups <= 0) return;
-
-    for(i = 0; i < numgroups; ++i)
-    {
-        animgroup_t* grp = &groups[i];
-        if(grp->frames) Z_Free(grp->frames);
-    }
-    Z_Free(groups), groups = NULL;
-    numgroups = 0;
-}
-
-const animgroup_t* R_ToAnimGroup(int animGroupNum)
-{
-    animgroup_t* grp = getAnimGroup(animGroupNum);
-#if _DEBUG
-    if(!grp)
-    {
-        Con_Message("Warning:R_ToAnimGroup: Invalid group #%i, returning NULL.\n", animGroupNum);
-    }
-#endif
-    return grp;
-}
-
-int R_AnimGroupCount(void)
-{
-    return numgroups;
-}
-
-/// \note Part of the Doomsday public API.
-int R_CreateAnimGroup(int flags)
-{
-    animgroup_t* group;
-
-    // Allocating one by one is inefficient but it doesn't really matter.
-    groups = Z_Realloc(groups, sizeof *groups * ++numgroups, PU_APPSTATIC);
-    if(!groups)
-        Con_Error("R_CreateAnimGroup: Failed on (re)allocation of %lu bytes enlarging AnimGroup list.", (unsigned long) sizeof *groups * numgroups);
-    group = &groups[numgroups-1];
-
-    // Init the new group.
-    memset(group, 0, sizeof *group);
-    group->id = numgroups; // 1-based index.
-    group->flags = flags;
-
-    return group->id;
-}
-
-/// \note Part of the Doomsday public API.
-void R_AddAnimGroupFrame(int groupNum, const Uri* texture, int tics, int randomTics)
-{
-    animgroup_t* group = getAnimGroup(groupNum);
-    animframe_t* frame;
-    textureid_t texId;
-
-    if(!group)
-    {
-#if _DEBUG
-        Con_Message("Warning:R_AddAnimGroupFrame: Unknown anim group #%i, ignoring.\n", groupNum);
-#endif
-        return;
-    }
-
-    texId = Textures_ResolveUri2(texture, true/*quiet please*/);
-    if(texId == NOTEXTUREID)
-    {
-#if _DEBUG
-        AutoStr* path = Uri_ToString(texture);
-        Con_Message("Warning::R_AddAnimGroupFrame: Invalid texture uri \"%s\", ignoring.\n", Str_Text(path));
-#endif
-        return;
-    }
-
-    // Allocate a new animframe.
-    group->frames = Z_Realloc(group->frames, sizeof *group->frames * ++group->count, PU_APPSTATIC);
-    if(!group->frames)
-        Con_Error("R_AddAnimGroupFrame: Failed on (re)allocation of %lu bytes enlarging AnimFrame list for group #%i.", (unsigned long) sizeof *group->frames * group->count, groupNum);
-
-    frame = &group->frames[group->count - 1];
-
-    frame->texture = texId;
-    frame->tics = tics;
-    frame->randomTics = randomTics;
-}
-
-boolean R_IsTextureInAnimGroup(const Uri* texture, int groupNum)
-{
-    animgroup_t* group = getAnimGroup(groupNum);
-    if(!group) return false;
-    return isInAnimGroup(group, Textures_ResolveUri2(texture, true/*quiet please*/));
 }
 
 font_t* R_CreateFontFromFile(Uri* uri, char const* resourcePath)

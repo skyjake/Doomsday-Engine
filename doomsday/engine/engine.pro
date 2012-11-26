@@ -293,6 +293,7 @@ DENG_HEADERS += \
     include/render/rendpoly.h \
     include/render/vignette.h \
     include/render/vlight.h \
+    include/resource/animgroups.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
     include/resource/colorpalettes.h \
@@ -578,6 +579,7 @@ SOURCES += \
     src/render/rendpoly.cpp \
     src/render/vignette.c \
     src/render/vlight.cpp \
+    src/resource/animgroups.cpp \
     src/resource/bitmapfont.c \
     src/resource/colorpalette.c \
     src/resource/colorpalettes.cpp \
