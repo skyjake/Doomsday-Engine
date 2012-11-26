@@ -30,6 +30,7 @@
 #include "map/r_world.h"        // for ddMapSetup
 #include "filesys/fs_util.h"    // for F_PrettyPath
 #include "gl/gl_texmanager.h"
+#include "resource/patchcompositetexture.h"
 #include "resource/texturevariant.h"
 #include "resource/textures.h"
 

@@ -580,7 +580,7 @@ SOURCES += \
     src/render/vignette.c \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \
-    src/resource/bitmapfont.c \
+    src/resource/bitmapfont.cpp \
     src/resource/colorpalette.c \
     src/resource/colorpalettes.cpp \
     src/resource/fonts.cpp \
@@ -594,7 +594,7 @@ SOURCES += \
     src/resource/patchcompositetexture.cpp \
     src/resource/patchname.cpp \
     src/resource/pcx.c \
-    src/resource/r_data.c \
+    src/resource/r_data.cpp \
     src/resource/rawtexture.cpp \
     src/resource/texture.cpp \
     src/resource/textures.cpp \

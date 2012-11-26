@@ -48,14 +48,18 @@ struct font_s;
 #define PF_UPSCALE_AND_SHARPEN 0x2
 ///@}
 
-typedef struct patchtex_s {
+typedef struct patchtex_s
+{
+    /// @ref patchFlags
     short flags;
+
     /// Offset to texture origin in logical pixels.
     short offX, offY;
 } patchtex_t;
 
 #pragma pack(1)
-typedef struct doompatch_header_s {
+typedef struct doompatch_header_s
+{
     int16_t width; /// Bounding box size.
     int16_t height;
     int16_t leftOffset; /// Pixels to the left of origin.
@@ -63,7 +67,34 @@ typedef struct doompatch_header_s {
 } doompatch_header_t;
 #pragma pack()
 
+#ifdef __cplusplus
+#include <de/IReadable>
+#include <de/Reader>
 
+struct PatchHeader : public de::IReadable
+{
+    /// Dimensions of the patch in texels.
+    Size2Raw dimensions;
+
+    /// Origin offset for the patch in texels.
+    Point2Raw origin;
+
+    /// Implements IReadable.
+    void operator << (de::Reader &from)
+    {
+        dint16 width, height;
+        from >> width >> height;
+        dimensions.width  = width;
+        dimensions.height = height;
+
+        dint16 xOrigin, yOrigin;
+        from >> xOrigin >> yOrigin;
+        origin.x = xOrigin;
+        origin.y = yOrigin;
+    }
+};
+
+#endif
 
 /**
  * Textures used in the lighting system.
