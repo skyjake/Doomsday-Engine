@@ -295,6 +295,7 @@ DENG_HEADERS += \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
     include/resource/colorpalettes.h \
+    include/resource/compositetexture.h \
     include/resource/font.h \
     include/resource/fonts.h \
     include/resource/hq2x.h \
@@ -304,7 +305,6 @@ DENG_HEADERS += \
     include/resource/materials.h \
     include/resource/materialvariant.h \
     include/resource/models.h \
-    include/resource/patchcompositetexture.h \
     include/resource/patchname.h \
     include/resource/pcx.h \
     include/resource/r_data.h \
@@ -583,6 +583,7 @@ SOURCES += \
     src/resource/bitmapfont.cpp \
     src/resource/colorpalette.c \
     src/resource/colorpalettes.cpp \
+    src/resource/compositetexture.cpp \
     src/resource/fonts.cpp \
     src/resource/hq2x.c \
     src/resource/image.cpp \
@@ -591,7 +592,6 @@ SOURCES += \
     src/resource/materials.cpp \
     src/resource/materialvariant.cpp \
     src/resource/models.cpp \
-    src/resource/patchcompositetexture.cpp \
     src/resource/patchname.cpp \
     src/resource/pcx.c \
     src/resource/r_data.cpp \
