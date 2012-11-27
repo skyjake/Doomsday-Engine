@@ -27,6 +27,7 @@ namespace de {
 
 /**
  * Interface that allows communication via an output stream of bytes.
+ * @ingroup data
  */
 class IOStream
 {
