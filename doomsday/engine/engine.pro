@@ -137,7 +137,6 @@ DENG_HEADERS += \
     include/audio/s_wav.h \
     include/audio/sys_audio.h \
     include/audio/sys_audiod_dummy.h \
-    include/binarytree.h \
     include/busymode.h \
     include/cbuffer.h \
     include/client/cl_def.h \
@@ -215,6 +214,7 @@ DENG_HEADERS += \
     include/m_vector.h \
     include/map/blockmap.h \
     include/map/blockmapvisual.h \
+    include/map/bsp/bsptreenode.h \
     include/map/bsp/hedgeinfo.h \
     include/map/bsp/hedgeintercept.h \
     include/map/bsp/hedgetip.h \
@@ -435,7 +435,6 @@ SOURCES += \
     src/audio/s_sfx.c \
     src/audio/s_wav.c \
     src/audio/sys_audiod_dummy.c \
-    src/binarytree.cpp \
     src/busymode.cpp \
     src/cbuffer.c \
     src/client/cl_frame.c \
