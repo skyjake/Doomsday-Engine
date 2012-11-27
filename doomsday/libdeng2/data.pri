@@ -69,6 +69,7 @@ HEADERS += \
     include/de/data/ireadable.h \
     include/de/data/iserializable.h \
     include/de/data/iwritable.h \
+    include/de/data/json.h \
     include/de/data/lockable.h \
     include/de/data/nonevalue.h \
     include/de/data/numbervalue.h \
@@ -108,6 +109,7 @@ SOURCES += \
     src/data/guard.cpp \
     src/data/huffman.cpp \
     src/data/info.cpp \
+    src/data/json.cpp \
     src/data/lockable.cpp \
     src/data/nonevalue.cpp \
     src/data/numbervalue.cpp \

@@ -1,6 +1,5 @@
-/**
- * @file json.cpp
- * JSON parser. @ingroup data
+/** @file json.cpp JSON parser.
+ * @ingroup data
  *
  * Parses JSON and outputs a QVariant with the data.
  *
@@ -23,13 +22,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_JSON_H
-#define LIBDENG_JSON_H
-
-#ifdef __cplusplus
+#ifndef LIBDENG2_JSON_H
+#define LIBDENG2_JSON_H
 
 #include <QVariant>
 #include <de/String>
+
+namespace de {
 
 /**
  * Parses text as JSON and returns the data structured in a QVariant.
@@ -38,8 +37,8 @@
  *
  * @return Parsed data, or an invalid variant if an error occurred.
  */
-QVariant parseJSON(const de::String& jsonText);
+DENG2_PUBLIC QVariant parseJSON(String const &jsonText);
 
-#endif // __cplusplus
+}
 
-#endif // LIBDENG_JSON_H
+#endif // LIBDENG2_JSON_H

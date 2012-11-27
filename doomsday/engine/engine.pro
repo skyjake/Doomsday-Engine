@@ -202,7 +202,6 @@ DENG_HEADERS += \
     include/gl/sys_opengl.h \
     include/gl/texturecontent.h \
     include/gridmap.h \
-    include/json.h \
     include/kdtree.h \
     include/library.h \
     include/m_bams.h \
@@ -486,7 +485,6 @@ SOURCES += \
     src/gl/svg.c \
     src/gl/sys_opengl.c \
     src/gridmap.c \
-    src/json.cpp \
     src/kdtree.c \
     src/library.cpp \
     src/m_bams.c \

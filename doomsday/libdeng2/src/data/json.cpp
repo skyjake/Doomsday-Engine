@@ -1,6 +1,5 @@
-/**
- * @file json.cpp
- * JSON parser. @ingroup data
+/** @file json.cpp JSON parser.
+ * @ingroup data
  *
  * Parses JSON and outputs a QVariant with the data.
  *
@@ -21,22 +20,26 @@
  * 02110-1301 USA</small>
  */
 
-#include "json.h"
+#include "de/data/json.h"
 #include <QVarLengthArray>
 #include <de/Log>
 #include <de/Error>
 #include <QDebug>
 
+namespace de {
+
+namespace internal {
+
 /**
- * Not exposed outside this source file; use parseJSON() instead.
+ * @internal Not exposed outside this source file; use parseJSON() instead.
  */
 class JSONParser
 {
-    const QString& source;
+    QString const &source;
     int pos;
 
 public:
-    JSONParser(const QString& s) : source(s), pos(0)
+    JSONParser(QString const &s) : source(s), pos(0)
     {
         skipWhite();
     }
@@ -77,7 +80,7 @@ public:
         return source[pos++];
     }
 
-    void error(const QString& message)
+    void error(QString const &message)
     {
         throw de::Error("JSONParser", de::String("Error at position %1 (%2^%3): %4")
                         .arg(pos).arg(source.mid(pos - 4, 4)).arg(source.mid(pos, 4)).arg(message));
@@ -294,15 +297,19 @@ public:
     }
 };
 
-QVariant parseJSON(const de::String& jsonText)
+} // internal
+
+QVariant parseJSON(String const &jsonText)
 {
     try
     {
-        return JSONParser(jsonText).parse();
+        return internal::JSONParser(jsonText).parse();
     }
-    catch(const de::Error& er)
+    catch(de::Error const &er)
     {
         LOG_WARNING(er.asText());
         return QVariant(); // invalid
     }
 }
+
+} // de
