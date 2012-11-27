@@ -33,7 +33,7 @@
 
 using namespace de;
 
-FunctionStatement::FunctionStatement(Expression* identifier)
+FunctionStatement::FunctionStatement(Expression *identifier)
     : _identifier(identifier)
 {
     _function = new Function();
@@ -45,12 +45,12 @@ FunctionStatement::~FunctionStatement()
     _function->release();
 }
 
-Compound& FunctionStatement::compound()
+Compound &FunctionStatement::compound()
 {
     return _function->compound();
 }
 
-void FunctionStatement::addArgument(const String& argName, Expression* defaultValue)
+void FunctionStatement::addArgument(String const &argName, Expression *defaultValue)
 {
     _function->arguments().push_back(argName);
     if(defaultValue)
@@ -59,9 +59,9 @@ void FunctionStatement::addArgument(const String& argName, Expression* defaultVa
     }
 }
 
-void FunctionStatement::execute(Context& context) const
+void FunctionStatement::execute(Context &context) const
 {
-    Evaluator& eval = context.evaluator();
+    Evaluator &eval = context.evaluator();
 
     // Set the function's namespace.
     _function->setGlobals(&context.process().globals());
@@ -71,7 +71,7 @@ void FunctionStatement::execute(Context& context) const
     std::auto_ptr<RefValue> ref(eval.popResultAs<RefValue>());
 
     // Evaluate the argument default values.
-    DictionaryValue& dict = eval.evaluateTo<DictionaryValue>(&_defaults);
+    DictionaryValue &dict = eval.evaluateTo<DictionaryValue>(&_defaults);
     DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, dict.elements())
     {
         _function->defaults()[i->first.value->asText()] = i->second->duplicate();
@@ -83,12 +83,12 @@ void FunctionStatement::execute(Context& context) const
     context.proceed();
 }
 
-void FunctionStatement::operator >> (Writer& to) const
+void FunctionStatement::operator >> (Writer &to) const
 {
     to << SerialId(FUNCTION) << *_identifier << *_function << _defaults;
 }
 
-void FunctionStatement::operator << (Reader& from)
+void FunctionStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

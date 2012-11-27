@@ -65,6 +65,12 @@ static coord_t getFriction(mobj_t* mo)
     return P_MobjGetFriction(mo);
 }
 
+boolean Mobj_IsVoodooDoll(mobj_t const *mo)
+{
+    if(!mo) return false;
+    return (mo->player && mo->player->plr->mo != mo);
+}
+
 void Mobj_XYMoveStopping(mobj_t* mo)
 {
     player_t* player = mo->player;
@@ -114,7 +120,7 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     }
 #endif
 
-    isVoodooDoll = (player && player->plr->mo != mo);
+    isVoodooDoll = Mobj_IsVoodooDoll(mo);
     belowWalkStop = (INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
                      INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD));
     if(player)
@@ -167,6 +173,12 @@ boolean Mobj_IsPlayerClMobj(mobj_t* mo)
             return true;
     }
     return false;
+}
+
+boolean Mobj_IsPlayer(mobj_t const *mo)
+{
+    if(!mo) return false;
+    return (mo->player != 0);
 }
 
 boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround)

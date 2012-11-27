@@ -18,7 +18,7 @@
  */
 
 #include <de/App>
-#include <de/Archive>
+#include <de/ZipArchive>
 #include <de/Block>
 #include <de/Date>
 #include <de/FixedByteArray>
@@ -30,7 +30,7 @@
 
 using namespace de;
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     try
     {
@@ -43,25 +43,25 @@ int main(int argc, char** argv)
         Reader(b, littleEndianByteOrder) >> v;
         LOG_MSG("%x") << v;
 
-        Folder& zip = app.fileSystem().find<Folder>("test.zip");
+        Folder &zip = app.fileSystem().find<Folder>("test.zip");
 
         LOG_MSG("Here's test.zip's info:\n") << zip.info();
         LOG_MSG("Root folder's info:\n") << app.rootFolder().info();
         
-        const File& hello = zip.locate<File>("hello.txt");
+        File const &hello = zip.locate<File>("hello.txt");
         File::Status stats = hello.status();
         LOG_MSG("hello.txt size: %i bytes, modified at %s") << stats.size << Date(stats.modifiedAt);
         
-        String content = String::fromUtf8(hello);
+        String content = String::fromUtf8(Block(hello));
         LOG_MSG("The contents: \"%s\"") << content;
 
         try
         {
             // Make a second entry.
-            File& worldTxt = zip.newFile("world.txt");
+            File &worldTxt = zip.newFile("world.txt");
             Writer(worldTxt) << FixedByteArray(content.toUtf8());
         }
-        catch(const File::IOError&)
+        catch(File::OutputError const &)
         {
             LOG_WARNING("Cannot change files in read-only mode.");
         }
@@ -69,15 +69,15 @@ int main(int argc, char** argv)
         // test2.zip won't appear in the file system as a folder unless
         // FS::refresh() is called. newFile() doesn't interpret anything, just
         // makes a plain file.
-        File& zip2 = app.homeFolder().replaceFile("test2.zip");
+        File &zip2 = app.homeFolder().replaceFile("test2.zip");
         zip2.setMode(File::Write | File::Truncate);
-        Archive arch;
-        arch.add("world.txt", content.toUtf8());
+        ZipArchive arch;
+        arch.add(Path("world.txt"), content.toUtf8());
         Writer(zip2) << arch;
         LOG_MSG("Wrote ") << zip2.path();
         LOG_MSG("") << zip2.info();
     }
-    catch(const Error& err)
+    catch(Error const &err)
     {
         qWarning() << err.asText();
     }

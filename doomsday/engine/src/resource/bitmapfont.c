@@ -27,16 +27,15 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_system.h"
 #include "de_filesys.h"
 
 #include "m_misc.h"
-#include "fonts.h"
 
-#include "texturevariant.h"
-#include "bitmapfont.h"
+#include "resource/fonts.h"
+#include "resource/texturevariant.h"
+#include "resource/bitmapfont.h"
 
 void Font_Init(font_t* font, fonttype_t type, fontid_t bindId)
 {
@@ -560,7 +559,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
         ch->geometry.size.height += font->_marginHeight * 2;
         ch->border = 0;
 
-        texId = Textures_TextureForUniqueId(TN_PATCHES, patch);
+        texId = Textures_TextureForUniqueId(TS_PATCHES, patch);
         ch->tex = GL_PrepareTextureVariant(Textures_ToTexture(texId), BitmapCompositeFont_CharSpec());
         if(ch->tex && TextureVariant_Source(ch->tex) == TEXS_ORIGINAL)
         {

@@ -23,8 +23,8 @@
 #ifndef LIBDENG_MAP_LINEDEF
 #define LIBDENG_MAP_LINEDEF
 
-#include "r_data.h"
-#include "p_dmu.h"
+#include "resource/r_data.h"
+#include "map/p_dmu.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,11 +33,31 @@ extern "C" {
 /**
  * On which side of this LineDef does the specified box lie?
  *
+ * @param line  Linedef.
+ * @param box   Bounding box.
+ *
  * @return  @c <0= bbox is wholly on the left side.
  *          @c  0= line intersects bbox.
  *          @c >0= bbox wholly on the right side.
  */
 int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
+
+/**
+ * On which side of this LineDef does the specified box lie? The test is
+ * carried out using fixed-point math for behavior compatible with vanilla
+ * DOOM. Note that this means there is a maximum size for both the bounding box
+ * and the line: neither can exceed the fixed-point 16.16 range (about 65k
+ * units).
+ *
+ * @param line  Linedef.
+ * @param box   Bounding box.
+ *
+ * @return One of the following:
+ * - Negative: bbox is entirely on the left side.
+ * - Zero: line intersects bbox.
+ * - Positive: bbox isentirely on the right side.
+ */
+int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
 
 /**
  * @param offset  Returns the position of the nearest point along the line [0..1].
@@ -149,7 +169,7 @@ int LineDef_GetProperty(const LineDef* lineDef, setargs_t* args);
 int LineDef_SetProperty(LineDef* lineDef, const setargs_t* args);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_MAP_LINEDEF

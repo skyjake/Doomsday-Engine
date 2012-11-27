@@ -40,7 +40,7 @@
 #include "de_defs.h"
 
 #include "materialarchive.h"
-#include "r_world.h"
+#include "map/r_world.h"
 
 // This is absolute maximum bandwidth rating. Frame size is practically
 // unlimited with this score.
@@ -118,7 +118,7 @@ void Sv_GetInfo(serverinfo_t* info)
     F_ComposePWADFileList(info->pwads, sizeof(info->pwads), ";");
 
     // This should be a CRC number that describes all the loaded data.
-    info->wadNumber = F_CRCNumber();
+    info->loadedFilesCRC = F_LoadedFilesCRC();
 }
 
 /**
@@ -136,7 +136,7 @@ size_t Sv_InfoToString(serverinfo_t* info, ddstring_t* msg)
     Str_Appendf(msg, "mode:%s\n", info->gameIdentityKey);
     Str_Appendf(msg, "setup:%s\n", info->gameConfig);
     Str_Appendf(msg, "iwad:%s\n", info->iwad);
-    Str_Appendf(msg, "wcrc:%i\n", info->wadNumber);
+    Str_Appendf(msg, "wcrc:%i\n", info->loadedFilesCRC);
     Str_Appendf(msg, "pwads:%s\n", info->pwads);
     Str_Appendf(msg, "map:%s\n", info->map);
     Str_Appendf(msg, "nump:%i\n", info->numPlayers);
@@ -247,7 +247,7 @@ boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info)
     }
     else if(!strcmp(label, "wcrc"))
     {
-        info->wadNumber = strtol(value, 0, 0);
+        info->loadedFilesCRC = strtol(value, 0, 0);
     }
     else if(!strcmp(label, "pwads"))
     {

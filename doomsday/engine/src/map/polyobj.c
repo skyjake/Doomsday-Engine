@@ -23,7 +23,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_misc.h"
 
 static void rotatePoint(int an, coord_t* x, coord_t* y, coord_t startSpotX, coord_t startSpotY);

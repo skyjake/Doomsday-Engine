@@ -88,7 +88,7 @@ public:
          * to log which methods are entered and exited, and mark certain points within
          * methods. Intended only for developers and debug builds.
          */
-        TRACE,
+        TRACE = 0,
 
         /**
          * Debug messages are intended for normal debugging. They should be enabled
@@ -96,7 +96,7 @@ public:
          * a ZIP archive's file count and size once an archive has been successfully
          * opened. Intended only for developers and debug builds.
          */
-        DEBUG,
+        DEBUG = 1,
 
         /**
          * Verbose messages should be used to log technical information that is only
@@ -106,43 +106,69 @@ public:
          * number of log entries, such as an entry about reading the contents of a
          * file within a ZIP archive (which would be suitable for the DEBUG level).
          */
-        VERBOSE,
+        VERBOSE = 2,
 
         /**
          * Normal log entries are intended for regular users. An example: message about
          * which map is being loaded.
          */
-        MESSAGE,
+        MESSAGE = 3,
 
         /**
          * Info messages are intended for situations that are particularly noteworthy.
          * An info message should be used for instance when a script has been stopped
          * because of an uncaught exception occurred during its execution.
          */
-        INFO,
+        INFO = 4,
 
         /**
          * Warning messages are reserved for recoverable error situations. A warning
          * might be logged for example when the expected resource could not be found,
          * and a fallback resource was used instead.
          */
-        WARNING,
+        WARNING = 5,
 
         /**
          * Error messages are intended for nonrecoverable errors. The error is grave
          * enough to cause the shutting down of the current game, but the engine can
          * still remain running.
          */
-        ERROR,
+        ERROR = 6,
 
         /**
          * Critical messages are intended for fatal errors that cause the engine to be
          * shut down.
          */
-        CRITICAL,
+        CRITICAL = 7,
 
         MAX_LOG_LEVELS
     };
+
+    static String levelToText(LogLevel level)
+    {
+        switch(level)
+        {
+        case TRACE:     return "TRACE";
+        case DEBUG:     return "DEBUG";
+        case VERBOSE:   return "VERBOSE";
+        case MESSAGE:   return "MESSAGE";
+        case INFO:      return "INFO";
+        case WARNING:   return "WARNING";
+        case ERROR:     return "ERROR";
+        case CRITICAL:  return "CRITICAL";
+        default:        return "";
+        }
+    }
+
+    static LogLevel textToLevel(String text)
+    {
+        for(int i = TRACE; i < MAX_LOG_LEVELS; ++i)
+        {
+            if(!levelToText(LogLevel(i)).compareWithoutCase(text))
+                return LogLevel(i);
+        }
+        throw Error("Log::textToLevel", "'" + text + "' is not a valid log level");
+    }
 
     class DENG2_PUBLIC Section
     {
@@ -153,14 +179,14 @@ public:
          *
          * @param name  Name of the log section.
          */
-        Section(const char* name);
+        Section(char const *name);
         ~Section();
 
-        Log& log() const { return _log; }
+        Log &log() const { return _log; }
 
     private:
-        Log& _log;
-        const char* _name;
+        Log &_log;
+        char const *_name;
     };
 
 public:
@@ -173,14 +199,14 @@ public:
      * @param name  Name of the section. No copy of this string is made,
      *              so it must exist while the section is in use.
      */
-    void beginSection(const char* name);
+    void beginSection(char const *name);
 
     /**
      * Ends the topmost section in the log.
      *
      * @param name  Name of the topmost section.
      */
-    void endSection(const char* name);
+    void endSection(char const *name);
 
     /**
      * Creates a new log entry with the default (MESSAGE) level.
@@ -188,7 +214,7 @@ public:
      *
      * @param format  Format template of the entry.
      */
-    LogEntry& enter(const String& format);
+    LogEntry &enter(String const &format);
 
     /**
      * Creates a new log entry with the specified level.
@@ -197,13 +223,13 @@ public:
      * @param level   Level of the entry.
      * @param format  Format template of the entry.
      */
-    LogEntry& enter(LogLevel level, const String& format);
+    LogEntry &enter(LogLevel level, String const &format);
 
 public:
     /**
      * Returns the logger of the current thread.
      */
-    static Log& threadLog();
+    static Log &threadLog();
 
     /**
      * Deletes the current thread's log. Threads should call this before
@@ -212,10 +238,10 @@ public:
     static void disposeThreadLog();
 
 private:
-    typedef QList<const char*> SectionStack;
+    typedef QList<char const *> SectionStack;
     SectionStack _sectionStack;
 
-    LogEntry* _throwawayEntry;
+    LogEntry *_throwawayEntry;
 };
 
 /**
@@ -275,14 +301,14 @@ public:
         Arg(duint64 i)           : _type(INTEGER)        { _data.intValue   = dint64(i); }
         Arg(dint64 i)            : _type(INTEGER)        { _data.intValue   = i; }
         Arg(ddouble d)           : _type(FLOATING_POINT) { _data.floatValue = d; }
-        Arg(const void* p)       : _type(INTEGER)        { _data.intValue   = dint64(p); }
-        Arg(const char* s) : _type(STRING) {
+        Arg(void const *p)       : _type(INTEGER)        { _data.intValue   = dint64(p); }
+        Arg(char const *s) : _type(STRING) {
             _data.stringValue = new String(s);
         }
-        Arg(const String& s) : _type(STRING) {
+        Arg(String const &s) : _type(STRING) {
             _data.stringValue = new String(s.data(), s.size());
         }
-        Arg(const Base& arg) : _type(arg.logEntryArgType()) {
+        Arg(Base const &arg) : _type(arg.logEntryArgType()) {
             switch(_type) {
             case INTEGER:
                 _data.intValue = arg.asInt64();
@@ -344,7 +370,7 @@ public:
         union Data {
             dint64 intValue;
             ddouble floatValue;
-            String* stringValue;
+            String *stringValue;
         } _data;
     };
 
@@ -365,13 +391,18 @@ public:
     DENG2_ERROR(IllegalFormatError);
 
 public:
+    /**
+     * Constructs a disabled log entry.
+     */
     LogEntry();
-    LogEntry(Log::LogLevel level, const String& section, const String& format);
+
+    LogEntry(Log::LogLevel level, String const &section, String const &format);
+
     ~LogEntry();
 
     /// Appends a new argument to the entry.
     template <typename ValueType>
-    inline LogEntry& operator << (const ValueType& v) {
+    inline LogEntry &operator << (ValueType const &v) {
         if(!_disabled) {
             _args.push_back(new Arg(v));
         }
@@ -384,16 +415,16 @@ public:
     Log::LogLevel level() const { return _level; }
 
     /// Converts the log entry to a string.
-    String asText(const Flags& flags = 0) const;
+    String asText(Flags const &flags = 0) const;
 
     /// Make this entry print without metadata.
-    LogEntry& simple() {
+    LogEntry &simple() {
         _defaultFlags |= Simple;
         return *this;
     }
 
 private:
-    void advanceFormat(String::const_iterator& i) const;
+    void advanceFormat(String::const_iterator &i) const;
 
 private:
     Time _when;
@@ -403,11 +434,11 @@ private:
     Flags _defaultFlags;
     bool _disabled;
 
-    typedef std::vector<Arg*> Args;
+    typedef std::vector<Arg *> Args;
     Args _args;
 };
 
-QTextStream& operator << (QTextStream& stream, const LogEntry::Arg& arg);
+QTextStream &operator << (QTextStream &stream, LogEntry::Arg const &arg);
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(LogEntry::Flags)
 

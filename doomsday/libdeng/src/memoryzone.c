@@ -63,10 +63,10 @@
 
 #define MINFRAGMENT (sizeof(memblock_t)+32)
 
-#define ALIGNED(x) (((x) + sizeof(void*) - 1)&(~(sizeof(void*) - 1)))
+#define ALIGNED(x) (((x) + sizeof(void *) - 1)&(~(sizeof(void *) - 1)))
 
 /// Special user pointer for blocks that are in use but have no single owner.
-#define MEMBLOCK_USER_ANONYMOUS    ((void*) 2)
+#define MEMBLOCK_USER_ANONYMOUS    ((void *) 2)
 
 // Used for block allocation of memory from the zone.
 typedef struct zblockset_block_s {
@@ -80,7 +80,7 @@ typedef struct zblockset_block_s {
     size_t elementSize;
 
     /// Block of memory where elements are.
-    void* elements;
+    void *elements;
 } zblockset_block_t;
 
 static memvolume_t *volumeRoot;
@@ -89,7 +89,7 @@ static memvolume_t *volumeLast;
 static mutex_t zoneMutex = 0;
 
 static size_t Z_AllocatedMemory(void);
-static size_t allocatedMemoryInVolume(memvolume_t* volume);
+static size_t allocatedMemoryInVolume(memvolume_t *volume);
 
 static __inline void lockZone(void)
 {
@@ -245,7 +245,7 @@ memblock_t *Z_GetBlock(void *ptr)
  * @param tracked  Pointer to a tracked memory block. Will be updated
  *                 if affected by the operation.
  */
-static void freeBlock(void* ptr, memblock_t** tracked)
+static void freeBlock(void *ptr, memblock_t **tracked)
 {
     memblock_t     *block, *other;
     memvolume_t    *volume;
@@ -288,8 +288,8 @@ static void freeBlock(void* ptr, memblock_t** tracked)
      */
     if(block->seqFirst)
     {
-        memblock_t* first = block->seqFirst;
-        memblock_t* iter = first;
+        memblock_t *first = block->seqFirst;
+        memblock_t *iter = first;
         while(iter->seqFirst == first)
         {
             iter->seqFirst = iter->seqLast = NULL;
@@ -347,17 +347,17 @@ void Z_Free(void *ptr)
     freeBlock(ptr, 0);
 }
 
-static __inline boolean isFreeBlock(memblock_t* block)
+static __inline boolean isFreeBlock(memblock_t *block)
 {
     return !block->user;
 }
 
-static __inline boolean isRootBlock(memvolume_t* vol, memblock_t* block)
+static __inline boolean isRootBlock(memvolume_t *vol, memblock_t *block)
 {
     return block == &vol->zone->blockList;
 }
 
-static __inline memblock_t* advanceBlock(memvolume_t* vol, memblock_t* block)
+static __inline memblock_t *advanceBlock(memvolume_t *vol, memblock_t *block)
 {
     block = block->next;
     if(isRootBlock(vol, block))
@@ -368,9 +368,9 @@ static __inline memblock_t* advanceBlock(memvolume_t* vol, memblock_t* block)
     return block;
 }
 
-static __inline memblock_t* rewindRover(memvolume_t* vol, memblock_t* rover, int maxSteps, size_t optimal)
+static __inline memblock_t *rewindRover(memvolume_t *vol, memblock_t *rover, int maxSteps, size_t optimal)
 {
-    memblock_t* base = rover;
+    memblock_t *base = rover;
     size_t prevBest = 0;
     int i;
 
@@ -389,7 +389,7 @@ static __inline memblock_t* rewindRover(memvolume_t* vol, memblock_t* rover, int
     return base;
 }
 
-static boolean isVolumeTooFull(memvolume_t* vol)
+static boolean isVolumeTooFull(memvolume_t *vol)
 {
     return vol->allocatedBytes > vol->size * .95f;
 }
@@ -401,10 +401,10 @@ static boolean isVolumeTooFull(memvolume_t* vol)
  */
 static void rewindStaticRovers(void)
 {
-    memvolume_t* volume;
+    memvolume_t *volume;
     for(volume = volumeRoot; volume; volume = volume->next)
     {
-        memblock_t* block;
+        memblock_t *block;
         for(block = volume->zone->blockList.next;
             !isRootBlock(volume, block); block = block->next)
         {
@@ -418,10 +418,10 @@ static void rewindStaticRovers(void)
     }
 }
 
-static void splitFreeBlock(memblock_t* block, size_t size)
+static void splitFreeBlock(memblock_t *block, size_t size)
 {
     // There will be a new free fragment after the block.
-    memblock_t* newBlock = (memblock_t *) ((byte*) block + size);
+    memblock_t *newBlock = (memblock_t *) ((byte *) block + size);
     newBlock->size = block->size - size;
     newBlock->user = NULL;       // free block
     newBlock->tag = 0;
@@ -438,10 +438,10 @@ static void splitFreeBlock(memblock_t* block, size_t size)
     block->size = size;
 }
 
-void* Z_Malloc(size_t size, int tag, void *user)
+void *Z_Malloc(size_t size, int tag, void *user)
 {
-    memblock_t* start, *iter;
-    memvolume_t* volume;
+    memblock_t *start, *iter;
+    memvolume_t *volume;
 
     if(tag < PU_APPSTATIC || tag > PU_PURGELEVEL)
     {
@@ -463,7 +463,7 @@ void* Z_Malloc(size_t size, int tag, void *user)
     size += sizeof(memblock_t);
 
     // Iterate through memory volumes until we can find one with enough free
-    // memory. (Note: we *will* find one that's large enough.)
+    // memory. (Note: we *will *find one that's large enough.)
     for(volume = volumeRoot; ; volume = volume->next)
     {
         uint numChecked = 0;
@@ -527,7 +527,7 @@ void* Z_Malloc(size_t size, int tag, void *user)
             {
                 if(iter->tag >= PU_PURGELEVEL)
                 {
-                    memblock_t* old = iter;
+                    memblock_t *old = iter;
                     iter = iter->prev; // Step back.
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
                     freeBlock(old->area, &start);
@@ -740,11 +740,11 @@ void Z_CheckHeap(void)
 
         // Does the last block extend all the way to the end?
         block = volume->zone->blockList.prev;
-        if((byte*)block - ((byte*)volume->zone + sizeof(memzone_t)) + block->size != volume->size - sizeof(memzone_t))
+        if((byte *)block - ((byte *)volume->zone + sizeof(memzone_t)) + block->size != volume->size - sizeof(memzone_t))
         {
             LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_CRITICAL,
                     "Z_CheckHeap: last block does not cover the end (%u != %u)\n",
-                     (byte*)block - ((byte*)volume->zone + sizeof(memzone_t)) + block->size,
+                     (byte *)block - ((byte *)volume->zone + sizeof(memzone_t)) + block->size,
                      volume->size - sizeof(memzone_t));
             LegacyCore_FatalError("Z_CheckHeap: zone is corrupted");
         }
@@ -768,7 +768,7 @@ void Z_CheckHeap(void)
                     LegacyCore_FatalError("Z_CheckHeap: two consecutive free blocks");
                 if(block->user == (void **) -1)
                 {
-                    DENG_ASSERT(block->user != (void**) -1);
+                    DENG_ASSERT(block->user != (void **) -1);
                     LegacyCore_FatalError("Z_CheckHeap: bad user pointer");
                 }
 
@@ -838,14 +838,14 @@ void Z_ChangeUser(void *ptr, void *newUser)
     unlockZone();
 }
 
-uint Z_GetId(void* ptr)
+uint Z_GetId(void *ptr)
 {
-    return ((memblock_t*) ((byte*)(ptr) - sizeof(memblock_t)))->id;
+    return ((memblock_t *) ((byte *)(ptr) - sizeof(memblock_t)))->id;
 }
 
 void *Z_GetUser(void *ptr)
 {
-    memblock_t* block = Z_GetBlock(ptr);
+    memblock_t *block = Z_GetBlock(ptr);
 
     DENG_ASSERT(block->id == LIBDENG_ZONEID);
     return block->user;
@@ -856,16 +856,16 @@ void *Z_GetUser(void *ptr)
  */
 int Z_GetTag(void *ptr)
 {
-    memblock_t* block = Z_GetBlock(ptr);
+    memblock_t *block = Z_GetBlock(ptr);
 
     DENG_ASSERT(block->id == LIBDENG_ZONEID);
     return block->tag;
 }
 
-boolean Z_Contains(void* ptr)
+boolean Z_Contains(void *ptr)
 {
-    memvolume_t* volume;
-    memblock_t* block = Z_GetBlock(ptr);
+    memvolume_t *volume;
+    memblock_t *block = Z_GetBlock(ptr);
     if(block->id != LIBDENG_ZONEID)
     {
         // Could be in the zone, but does not look like an allocated block.
@@ -874,7 +874,7 @@ boolean Z_Contains(void* ptr)
     // Check which volume is it.
     for(volume = volumeRoot; volume; volume = volume->next)
     {
-        if((char*)ptr > (char*)volume->zone && (char*)ptr < (char*)volume->zone + volume->size)
+        if((char *)ptr > (char *)volume->zone && (char *)ptr < (char *)volume->zone + volume->size)
         {
             // There it is.
             return true;
@@ -932,20 +932,20 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
     return p;
 }
 
-char* Z_StrDup(const char* text)
+char *Z_StrDup(char const *text)
 {
     if(!text) return 0;
     {
     size_t len = strlen(text);
-    char* buf = Z_Malloc(len + 1, PU_APPSTATIC, 0);
+    char *buf = Z_Malloc(len + 1, PU_APPSTATIC, 0);
     strcpy(buf, text);
     return buf;
     }
 }
 
-void* Z_MemDup(const void* ptr, size_t size)
+void *Z_MemDup(void const *ptr, size_t size)
 {
-    void* copy = Z_Malloc(size, PU_APPSTATIC, 0);
+    void *copy = Z_Malloc(size, PU_APPSTATIC, 0);
     memcpy(copy, ptr, size);
     return copy;
 }
@@ -965,9 +965,9 @@ uint Z_VolumeCount(void)
     return count;
 }
 
-static size_t allocatedMemoryInVolume(memvolume_t* volume)
+static size_t allocatedMemoryInVolume(memvolume_t *volume)
 {
-    memblock_t* block;
+    memblock_t *block;
     size_t total = 0;
 
     for(block = volume->zone->blockList.next; !isRootBlock(volume, block);
@@ -986,7 +986,7 @@ static size_t allocatedMemoryInVolume(memvolume_t* volume)
  */
 static size_t Z_AllocatedMemory(void)
 {
-    memvolume_t* volume;
+    memvolume_t *volume;
     size_t total = 0;
 
     lockZone();
@@ -1043,13 +1043,13 @@ void Z_PrintStatus(void)
  * Allocate a new block of memory to be used for linear object allocations.
  * A "zblock" (its from the zone).
  *
- * @param zblockset_t*  Block set into which the new block is added.
+ * @param zblockset_t * Block set into which the new block is added.
  */
-static void addBlockToSet(zblockset_t* set)
+static void addBlockToSet(zblockset_t *set)
 {
     assert(set);
     {
-    zblockset_block_t* block = 0;
+    zblockset_block_t *block = 0;
 
     // Get a new block by resizing the blocks array. This is done relatively
     // seldom, since there is a large number of elements per each block.
@@ -1070,10 +1070,10 @@ static void addBlockToSet(zblockset_t* set)
     }
 }
 
-void* ZBlockSet_Allocate(zblockset_t* set)
+void *ZBlockSet_Allocate(zblockset_t *set)
 {
-    zblockset_block_t* block = 0;
-    void* element = 0;
+    zblockset_block_t *block = 0;
+    void *element = 0;
 
     assert(set);
     lockZone();
@@ -1082,7 +1082,7 @@ void* ZBlockSet_Allocate(zblockset_t* set)
 
     // When this is called, there is always an available element in the topmost
     // block. We will return it.
-    element = ((byte*)block->elements) + (block->elementSize * block->count);
+    element = ((byte *)block->elements) + (block->elementSize * block->count);
 
     // Reserve the element.
     block->count++;
@@ -1101,9 +1101,9 @@ void* ZBlockSet_Allocate(zblockset_t* set)
     return element;
 }
 
-zblockset_t* ZBlockSet_New(size_t sizeOfElement, uint32_t batchSize, int tag)
+zblockset_t *ZBlockSet_New(size_t sizeOfElement, uint32_t batchSize, int tag)
 {
-    zblockset_t* set;
+    zblockset_t *set;
 
     DENG_ASSERT(sizeOfElement > 0);
     DENG_ASSERT(batchSize > 0);
@@ -1120,7 +1120,7 @@ zblockset_t* ZBlockSet_New(size_t sizeOfElement, uint32_t batchSize, int tag)
     return set;
 }
 
-void ZBlockSet_Delete(zblockset_t* set)
+void ZBlockSet_Delete(zblockset_t *set)
 {
     lockZone();
     assert(set);
@@ -1137,7 +1137,7 @@ void ZBlockSet_Delete(zblockset_t* set)
 }
 
 #ifdef DENG_DEBUG
-void Z_GetPrivateData(MemoryZonePrivateData* pd)
+void Z_GetPrivateData(MemoryZonePrivateData *pd)
 {
     pd->volumeCount     = Z_VolumeCount();
     pd->volumeRoot      = volumeRoot;

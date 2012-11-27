@@ -58,7 +58,7 @@
 #define stricmp _stricmp
 #define strnicmp _strnicmp
 #define open _open
-#define close _close
+//#define close _close
 //#define read _read
 //#define write _write
 #define access _access
@@ -75,7 +75,7 @@ extern "C" {
 const char* strcasestr(const char* text, const char* sub);
 
 #ifdef __cplusplus
-} extern "C"
+} // extern "C"
 #endif
 
 #endif                          // WIN32

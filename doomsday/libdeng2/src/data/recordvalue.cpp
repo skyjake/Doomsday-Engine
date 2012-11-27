@@ -27,7 +27,7 @@
 
 using namespace de;
 
-RecordValue::RecordValue(Record* record, OwnershipFlags o) : _record(record), _ownership(o)
+RecordValue::RecordValue(Record *record, OwnershipFlags o) : _record(record), _ownership(o)
 {
     DENG2_ASSERT(_record != NULL);
     if(!_ownership.testFlag(OwnsRecord))
@@ -59,19 +59,19 @@ void RecordValue::verify() const
     }
 }
 
-Record& RecordValue::dereference()
+Record &RecordValue::dereference()
 {
     verify();
     return *_record;
 }
 
-const Record& RecordValue::dereference() const
+Record const &RecordValue::dereference() const
 {
     verify();
     return *_record;
 }
 
-Value* RecordValue::duplicate() const
+Value *RecordValue::duplicate() const
 {
     verify();
     return new RecordValue(_record);
@@ -87,10 +87,10 @@ dsize RecordValue::size() const
     return dereference().members().size() + dereference().subrecords().size();
 }
 
-Value* RecordValue::duplicateElement(const Value& value) const
+Value *RecordValue::duplicateElement(Value const &value) const
 {
     // We're expecting text.
-    const TextValue* text = dynamic_cast<const TextValue*>(&value);
+    TextValue const *text = dynamic_cast<TextValue const *>(&value);
     if(!text)
     {
         throw IllegalIndexError("RecordValue::duplicateElement", 
@@ -98,20 +98,20 @@ Value* RecordValue::duplicateElement(const Value& value) const
     }
     if(dereference().hasMember(*text))
     {
-        return new RefValue(const_cast<Variable*>(&dereference()[*text]));
+        return new RefValue(const_cast<Variable *>(&dereference()[*text]));
     }
     if(dereference().hasSubrecord(*text))
     {
-        return new RecordValue(const_cast<Record*>(&dereference().subrecord(*text)));
+        return new RecordValue(const_cast<Record *>(&dereference().subrecord(*text)));
     }
     throw NotFoundError("RecordValue::duplicateElement",
         "'" + text->asText() + "' does not exist in the record");
 }
 
-bool RecordValue::contains(const Value& value) const
+bool RecordValue::contains(Value const &value) const
 {
     // We're expecting text.
-    const TextValue* text = dynamic_cast<const TextValue*>(&value);
+    TextValue const *text = dynamic_cast<TextValue const *>(&value);
     if(!text)
     {
         throw IllegalIndexError("RecordValue::contains", 
@@ -125,24 +125,24 @@ bool RecordValue::isTrue() const
     return size() > 0;
 }
 
-dint RecordValue::compare(const Value& value) const
+dint RecordValue::compare(Value const &value) const
 {
-    const RecordValue* recValue = dynamic_cast<const RecordValue*>(&value);
+    RecordValue const *recValue = dynamic_cast<RecordValue const *>(&value);
     if(!recValue)
     {
         // Can't be the same.
-        return cmp(reinterpret_cast<const void*>(this), 
-                   reinterpret_cast<const void*>(&value));
+        return cmp(reinterpret_cast<void const *>(this), 
+                   reinterpret_cast<void const *>(&value));
     }
     return cmp(recValue->_record, _record);
 }
 
-void RecordValue::operator >> (Writer& to) const
+void RecordValue::operator >> (Writer &to) const
 {
     to << SerialId(RECORD) << dereference();
 }
 
-void RecordValue::operator << (Reader& from)
+void RecordValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
@@ -155,7 +155,7 @@ void RecordValue::operator << (Reader& from)
     from >> dereference();
 }
 
-void RecordValue::recordBeingDeleted(Record& DENG2_DEBUG_ONLY(record))
+void RecordValue::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
 {
     DENG2_ASSERT(_record == &record);
     DENG2_ASSERT(!_ownership.testFlag(OwnsRecord));

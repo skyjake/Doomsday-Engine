@@ -69,27 +69,6 @@ typedef char            filename_t[FILENAME_T_MAXLEN];
 
 typedef void (*con_textfilter_t) (char* text);
 
-/**
- * Resource Class.
- *
- * @ingroup fs
- */
-typedef enum {
-    RC_NULL = -2,           ///< Not a real class, used internally during resource locator init.
-    RC_UNKNOWN = -1,        ///< Attempt to guess the class using heuristic evaluation of the path.
-    RESOURCECLASS_FIRST = 0,
-    RC_PACKAGE = RESOURCECLASS_FIRST,
-    RC_DEFINITION,
-    RC_GRAPHIC,
-    RC_MODEL,
-    RC_SOUND,
-    RC_MUSIC,
-    RC_FONT,
-    RESOURCECLASS_COUNT
-} resourceclass_t;
-
-#define VALID_RESOURCE_CLASS(n)     ((n) >= RESOURCECLASS_FIRST && (n) < RESOURCECLASS_COUNT)
-
 #define BAMS_BITS   16
 
 #if BAMS_BITS == 32
@@ -121,6 +100,9 @@ struct surface_s;
 struct material_s;
 
 #include <de/str.h>
-#include "uri.h"
+#include <de/fixedpoint.h>
+#include "resourceclass.h"
+#include "filetype.h"
+#include "uri.h" // C wrapper for de::Uri
 
 #endif /* ENGINE_TYPES_H */

@@ -88,7 +88,7 @@ struct UpdaterSettingsDialog::Instance
 
         pathList = new QComboBox;
         pathList->addItem(defaultLocationName(),
-                          UpdaterSettings::defaultDownloadPath());
+                          UpdaterSettings::defaultDownloadPath().toString());
         pathList->addItem(tr("Select folder..."), "");
         form->addRow(tr("&Download location:"), pathList);
 

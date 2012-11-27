@@ -102,7 +102,7 @@ boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float 
  * @param height  Height of the element to fit into the available region.
  * @param availWidth  Width of the available region.
  * @param availHeight  Height of the available region.
- * @param scaleMode  @see scaleModes
+ * @param scaleMode  @ref scaleModes
  *
  * @return  @c true if aligning to the horizontal axis else the vertical.
  */
@@ -118,11 +118,11 @@ boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
  * @param height  Height of the element to fit into the available region.
  * @param availWidth  Width of the available region.
  * @param availHeight  Height of the available region.
- * @param overrideMode  Scale mode override, for caller-convenience. @see scaleModes
+ * @param overrideMode  Scale mode override, for caller-convenience. @ref scaleModes
  * @param stretchEpsilon  Range within which aspect ratios are considered
  *      identical for "smart stretching".
  *
- * @return  Chosen scale mode @see scaleModes.
+ * @return  Chosen scale mode @ref scaleModes.
  */
 scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode, float stretchEpsilon);

@@ -29,13 +29,13 @@
 #include "de_console.h"
 #include "de_play.h"
 #include "de_bsp.h"
-#include "de_refresh.h"
 #include "de_misc.h"
 #include "de_edit.h"
 #include "de_dam.h"
 #include "de_filesys.h"
 
 #include <de/StringPool>
+
 #include "audio/s_environ.h"
 
 typedef struct {
@@ -1826,7 +1826,7 @@ static void assignSurfaceMaterial(Surface* suf, ddstring_t const* materialUri)
         else
         {
             // No, attempt to resolve this URI and update the dictionary.
-            // First try the preferred namespace, then any.
+            // First try the preferred scheme, then any.
             materialid_t materialId = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
             if(materialId == NOMATERIALID)
             {

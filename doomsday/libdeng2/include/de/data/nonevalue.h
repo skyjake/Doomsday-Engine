@@ -34,14 +34,14 @@ namespace de
     public:
         NoneValue();
 
-        Value* duplicate() const;
+        Value *duplicate() const;
         Text asText() const;
         bool isTrue() const;
-        dint compare(const Value& value) const;
+        dint compare(Value const &value) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
     };
 }
 

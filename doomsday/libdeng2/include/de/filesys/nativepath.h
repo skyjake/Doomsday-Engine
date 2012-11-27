@@ -1,6 +1,6 @@
 /**
  * @file nativepath.h
- * File paths for the native file system. @ingroup fs
+ * File paths for the native file system.
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
@@ -23,25 +23,25 @@
 #ifndef LIBDENG2_NATIVEPATH_H
 #define LIBDENG2_NATIVEPATH_H
 
-#include "../String"
+#include "../Path"
 
 namespace de {
 
 /**
- * Specialized String that is used for manipulating paths of the native file
- * system. Always uses the directory separator characters appropriate for the
- * native file system: any directory separators present in the strings are
- * automatically converted to the native ones.
+ * Manipulates paths of the native file system. Always uses the directory
+ * separator characters appropriate for the native file system: any directory
+ * separators present in the strings are automatically converted to the native
+ * ones.
  *
- * Note that some of the methods of String are overridden, for instance
- * String::fileNamePath(), so that they operate using native separator
- * characters.
+ * The public interface of NativePath closely mirrors that of String, e.g.,
+ * String::fileNamePath(), so that equivalent operations are provided except
+ * with native separator characters.
  */
-class DENG2_PUBLIC NativePath : public String
+class DENG2_PUBLIC NativePath : public Path
 {
 public:
     /// An unknown user name was encounterd in the string. @ingroup errors
-    DENG2_SUB_ERROR(Error, UnknownUserError);
+    DENG2_ERROR(UnknownUserError);
 
 public:
     /**
@@ -55,10 +55,10 @@ public:
      * @param str Path. Any directory separators in the path are converted to
      * native ones.
      */
-    NativePath(const QString& str);
+    NativePath(QString const &str);
 
-    NativePath(const char* nullTerminatedCStr);
-    NativePath(const char* cStr, size_type length);
+    NativePath(char const *nullTerminatedCStr);
+    NativePath(char const *cStr, dsize length);
 
     /**
      * Assignment.
@@ -66,9 +66,9 @@ public:
      * @param str Path. Any directory separators in the path are converted to
      * native ones.
      */
-    NativePath& operator = (const QString& str);
+    NativePath &operator = (QString const &str);
 
-    NativePath& operator = (const char *nullTerminatedCStr);
+    NativePath &operator = (char const *nullTerminatedCStr);
 
     /**
      * Does a path concatenation on a native path. The directory separator
@@ -77,21 +77,21 @@ public:
      *
      * @param nativePath  Native path to concatenate.
      */
-    NativePath concatenatePath(const NativePath& nativePath) const;
+    NativePath concatenatePath(NativePath const &nativePath) const;
 
-    NativePath concatenatePath(const QString& nativePath) const;
+    NativePath concatenatePath(QString const &nativePath) const;
 
     /// A more convenient way to invoke concatenatePath().
-    NativePath operator / (const NativePath& nativePath) const;
+    NativePath operator / (NativePath const &nativePath) const;
 
     /**
      * Native path concatenation.
      * @param str  Path that is converted to a native path.
      * @return Concatenated path.
      */
-    NativePath operator / (const QString& str) const;
+    NativePath operator / (QString const &str) const;
 
-    NativePath operator / (const char* nullTerminatedCStr) const;
+    NativePath operator / (char const *nullTerminatedCStr) const;
 
     /// Extracts the path of the string, using native directory separators.
     NativePath fileNamePath() const;
@@ -116,7 +116,7 @@ public:
      *
      * @see App::nativeBasePath()
      */
-    NativePath expand(bool* didExpand = 0) const;
+    NativePath expand(bool *didExpand = 0) const;
 
     /**
      * Returns a prettier version of the path, where the base path is omitted
@@ -127,7 +127,7 @@ public:
      * from absolute to relative, the result should only be used for paths
      * appearing in messages intended for the user.
      */
-    NativePath pretty() const;
+    String pretty() const;
 
     /**
      * Converts all separator characters in the path to @a sep and returns the

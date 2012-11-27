@@ -25,14 +25,14 @@
 
 #include "de/animator.h"
 
-void Animator_Init(animator_t* v, float val)
+void Animator_Init(animator_t *v, float val)
 {
     DENG_ASSERT(v);
     v->target = v->value = val;
     v->steps = 0;
 }
 
-void Animator_Set(animator_t* v, float val, int steps)
+void Animator_Set(animator_t *v, float val, int steps)
 {
     DENG_ASSERT(v);
     v->target = val;
@@ -41,7 +41,7 @@ void Animator_Set(animator_t* v, float val, int steps)
         v->value = v->target;
 }
 
-void Animator_Think(animator_t* v)
+void Animator_Think(animator_t *v)
 {
     DENG_ASSERT(v);
     if(v->steps <= 0)

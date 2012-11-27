@@ -68,7 +68,7 @@ void Sys_OpenTextEditor(const char* filename);
 #endif
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_FILESYS_SYSTEM_H */

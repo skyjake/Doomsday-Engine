@@ -48,7 +48,7 @@ namespace de
          *
          * @param sourcePath  Path of the source file.
          */
-        Module(const String& sourcePath);
+        Module(String const &sourcePath);
         
         /**
          * Constructs a new module. The source script is loaded from a 
@@ -56,19 +56,19 @@ namespace de
          *
          * @param sourceFile  Script source file.
          */
-        Module(const File& sourceFile);
+        Module(File const &sourceFile);
         
         virtual ~Module();
         
         /// Returns the module's source script's absolute path.
-        const String& sourcePath() const { return _sourcePath; }
+        String const &sourcePath() const { return _sourcePath; }
         
         /// Returns the namespace of the module. The import statement gives access
         /// to this.
-        Record& names();
+        Record &names();
 
     protected:
-        void initialize(const Script& script);
+        void initialize(Script const &script);
         
     private:
         /// Path of the script source file. Used to identify whether a script has
@@ -77,7 +77,7 @@ namespace de
         
         /// Process where the source script of the module was executed. Owns
         /// the namespace of the module.
-        Process* _process;
+        Process *_process;
     };
 }
 

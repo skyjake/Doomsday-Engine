@@ -1,7 +1,6 @@
 /**
  * @file stringpool.h
- *
- * Pool of String (case insensitive). @ingroup data
+ * Pool of strings (case insensitive).
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -47,18 +46,27 @@ namespace de
      * reassigned to the next new string. Zero is not a valid id.
      *
      * Each string can also have an associated, custom user-defined uint32 value
-     * and/or void* data pointer.
+     * and/or void *data pointer.
      *
      * The implementation has, at worst, O(log n) complexity for addition, removal,
      * string lookup, and user value/pointer set/get.
      *
      * @todo Add case-sensitive mode.
+     *
+     * @ingroup data
      */
     class DENG2_PUBLIC StringPool : public ISerializable
     {
     public:
-        /// String identifier. Each string is assigned its own Id.
-        typedef uint Id;
+        /// String identifier was invalid. @ingroup errors
+        DENG2_ERROR(InvalidIdError);
+
+        /// The pool does not have any available identifiers. @ingroup errors
+        DENG2_ERROR(FullError);
+
+        /// String identifier. Each string is assigned its own Id. Because this is
+        /// 32-bit, there can be approximately 4.2 billion unique strings in the pool.
+        typedef duint32 Id;
 
     public:
         /**
@@ -70,9 +78,9 @@ namespace de
          * Constructs an empty StringPool and interns a number of strings.
          *
          * @param strings  Array of strings to be interned (must contain at least @a count strings).
-         * @param count  Number of strings to be interned.
+         * @param count    Number of strings to be interned.
          */
-        StringPool(String* strings, uint count);
+        StringPool(String *strings, uint count);
 
         /**
          * Destroys the stringpool.
@@ -94,7 +102,7 @@ namespace de
          * Determines the number of strings in the pool.
          * @return Number of strings in the pool.
          */
-        uint size() const;
+        dsize size() const;
 
         /**
          * Interns string @a str. If this string is not already in the pool, a new
@@ -118,7 +126,7 @@ namespace de
          *
          * @return The interned copy of the string owned by the pool.
          */
-        String const& internAndRetrieve(String str);
+        String internAndRetrieve(String str);
 
         /**
          * Sets the user-specified custom value associated with the string @a id.
@@ -127,7 +135,7 @@ namespace de
          * @param id     Id of a string.
          * @param value  User value.
          */
-        StringPool& setUserValue(Id id, uint value);
+        void setUserValue(Id id, uint value);
 
         /**
          * Retrieves the user-specified custom value associated with the string @a id.
@@ -148,7 +156,7 @@ namespace de
          * @param id     Id of a string.
          * @param ptr    User pointer.
          */
-        StringPool& setUserPointer(Id id, void* ptr);
+        void setUserPointer(Id id, void *ptr);
 
         /**
          * Retrieves the user-specified custom pointer associated with the string @a id.
@@ -157,7 +165,7 @@ namespace de
          *
          * @return User pointer.
          */
-        void* userPointer(Id id) const;
+        void *userPointer(Id id) const;
 
         /**
          * Is @a str considered to be in the pool?
@@ -174,9 +182,21 @@ namespace de
          *
          * @param id    Id of the string to retrieve.
          *
-         * @return  Interned string associated with @a internId. Owned by the pool.
+         * @return  Interned string associated with @a internId.
          */
-        String const& string(Id id) const;
+        String string(Id id) const;
+
+        /**
+         * Returns a reference to an interned string. Only use this when the
+         * pool is being accessed as a const object -- the returned references
+         * may become invalid when the pool is changed.
+         *
+         * @param id  Id of the string to retrieve.
+         *
+         * @return Reference to interned string. Do not change the contents of
+         * the pool while retaining the returned reference.
+         */
+        String const &stringRef(Id id) const;
 
         /**
          * Removes a string from the pool.
@@ -206,11 +226,11 @@ namespace de
          * @return  @c 0 iff iteration completed wholly. Otherwise the non-zero value
          *          returned by @a callback.
          */
-        int iterate(int (*callback)(Id, void*), void* data) const;
+        int iterate(int (*callback)(Id, void *), void *data) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
 
 #if _DEBUG
         /**
@@ -222,7 +242,7 @@ namespace de
 
     private:
         struct Instance;
-        Instance* d;
+        Instance *d;
     };
 
 } // namespace de

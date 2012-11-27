@@ -65,7 +65,7 @@ signals:
 
 private:
     duint16 _port;
-    TcpServer* _socket;
+    TcpServer *_socket;
     volatile bool _shouldStop;
 };
 

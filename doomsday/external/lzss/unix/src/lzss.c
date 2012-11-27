@@ -59,7 +59,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-#include "../../../engine/include/sys_findfile.h"
+#include "../../../engine/include/filesys/sys_findfile.h"
 #include "lzss.h"
 
 // MACROS ------------------------------------------------------------------

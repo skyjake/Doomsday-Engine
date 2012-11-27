@@ -21,11 +21,11 @@
 
 namespace de {
 
-ByteSubArray::ByteSubArray(IByteArray& mainArray, Offset at, Size size)
+ByteSubArray::ByteSubArray(IByteArray &mainArray, Offset at, Size size)
     : _mainArray(&mainArray), _constMainArray(&mainArray), _at(at), _size(size)
 {}
 
-ByteSubArray::ByteSubArray(const IByteArray& mainArray, Offset at, Size size)
+ByteSubArray::ByteSubArray(IByteArray const &mainArray, Offset at, Size size)
     : _mainArray(0), _constMainArray(&mainArray), _at(at), _size(size)
 {}
 
@@ -34,12 +34,12 @@ ByteSubArray::Size ByteSubArray::size() const
     return _size;
 }
 
-void ByteSubArray::get(Offset at, Byte* values, Size count) const
+void ByteSubArray::get(Offset at, Byte *values, Size count) const
 {
     _constMainArray->get(_at + at, values, count);
 }
 
-void ByteSubArray::set(Offset at, const Byte* values, Size count)
+void ByteSubArray::set(Offset at, Byte const *values, Size count)
 {
     if(!_mainArray)
     {

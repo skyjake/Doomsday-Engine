@@ -23,47 +23,47 @@
 #include "de/memory.h"
 
 struct rect_s {
-    Point2* origin;
-    Size2* size;
+    Point2 *origin;
+    Size2 *size;
 };
 
 struct rectf_s {
-    Point2f* origin;
-    Size2f* size;
+    Point2f *origin;
+    Size2f *size;
 };
 
-Rect* Rect_New(void)
+Rect *Rect_New(void)
 {
-    Rect* r = M_Malloc(sizeof *r);
+    Rect *r = M_Malloc(sizeof *r);
     r->origin = Point2_New();
     r->size = Size2_New();
     return r;
 }
 
-Rect* Rect_NewWithOriginSize(const Point2* origin, const Size2* size)
+Rect *Rect_NewWithOriginSize(Point2 const *origin, Size2 const *size)
 {
-    Rect* r = Rect_New();
+    Rect *r = Rect_New();
     Rect_SetOrigin(r, origin);
     Rect_SetSize(r, size);
     return r;
 }
 
-Rect* Rect_NewWithOriginSize2(int x, int y, int width, int height)
+Rect *Rect_NewWithOriginSize2(int x, int y, int width, int height)
 {
-    Rect* r = Rect_New();
+    Rect *r = Rect_New();
     Rect_SetXY(r, x, y);
     Rect_SetWidthHeight(r, width, height);
     return r;
 }
 
-Rect* Rect_NewFromRaw(const RectRaw* rawRect)
+Rect *Rect_NewFromRaw(RectRaw const *rawRect)
 {
     DENG_ASSERT(rawRect);
     return Rect_NewWithOriginSize2(rawRect->origin.x, rawRect->origin.y,
                                    rawRect->size.width, rawRect->size.height);
 }
 
-void Rect_Delete(Rect* r)
+void Rect_Delete(Rect *r)
 {
     DENG_ASSERT(r);
     Point2_Delete(r->origin);
@@ -71,7 +71,7 @@ void Rect_Delete(Rect* r)
     M_Free(r);
 }
 
-void Rect_Copy(Rect* r, const Rect* other)
+void Rect_Copy(Rect *r, Rect const *other)
 {
     DENG_ASSERT(r);
     if(!other) return;
@@ -79,7 +79,7 @@ void Rect_Copy(Rect* r, const Rect* other)
     Size2_SetWidthHeight(r->size, Rect_Width(other), Rect_Height(other));
 }
 
-Rect* Rect_CopyRaw(Rect* r, const RectRaw* rawRect)
+Rect *Rect_CopyRaw(Rect *r, RectRaw const *rawRect)
 {
     DENG_ASSERT(r);
     if(rawRect)
@@ -90,7 +90,7 @@ Rect* Rect_CopyRaw(Rect* r, const RectRaw* rawRect)
     return r;
 }
 
-RectRaw* Rect_Raw(const Rect* r, RectRaw* rawRect)
+RectRaw *Rect_Raw(Rect const *r, RectRaw *rawRect)
 {
     DENG_ASSERT(r);
     if(!rawRect) return NULL;
@@ -99,121 +99,121 @@ RectRaw* Rect_Raw(const Rect* r, RectRaw* rawRect)
     return rawRect;
 }
 
-boolean Rect_IsNull(const Rect* r)
+boolean Rect_IsNull(Rect const *r)
 {
     DENG_ASSERT(r);
     return Size2_IsNull(r->size);
 }
 
-int Rect_Width(const Rect* r)
+int Rect_Width(Rect const *r)
 {
     DENG_ASSERT(r);
     return Size2_Width(r->size);
 }
 
-int Rect_Height(const Rect* r)
+int Rect_Height(Rect const *r)
 {
     DENG_ASSERT(r);
     return Size2_Height(r->size);
 }
 
-void Rect_SetWidth(Rect* r, int width)
+void Rect_SetWidth(Rect *r, int width)
 {
     DENG_ASSERT(r);
     Size2_SetWidth(r->size, width);
 }
 
-void Rect_SetHeight(Rect* r, int height)
+void Rect_SetHeight(Rect *r, int height)
 {
     DENG_ASSERT(r);
     Size2_SetHeight(r->size, height);
 }
 
-const Point2* Rect_Origin(const Rect* r)
+Point2 const *Rect_Origin(Rect const *r)
 {
     DENG_ASSERT(r);
     return r->origin;
 }
 
-int Rect_X(const Rect* r)
+int Rect_X(Rect const *r)
 {
     DENG_ASSERT(r);
     return Point2_X(r->origin);
 }
 
-int Rect_Y(const Rect* r)
+int Rect_Y(Rect const *r)
 {
     DENG_ASSERT(r);
     return Point2_Y(r->origin);
 }
 
-void Rect_SetOrigin(Rect* r, const Point2* origin)
+void Rect_SetOrigin(Rect *r, Point2 const *origin)
 {
     DENG_ASSERT(r);
     Point2_SetXY(r->origin, Point2_X(origin), Point2_Y(origin));
 }
 
-void Rect_SetX(Rect* r, int x)
+void Rect_SetX(Rect *r, int x)
 {
     DENG_ASSERT(r);
     Point2_SetX(r->origin, x);
 }
 
-void Rect_SetY(Rect* r, int y)
+void Rect_SetY(Rect *r, int y)
 {
     DENG_ASSERT(r);
     Point2_SetY(r->origin, y);
 }
 
-void Rect_SetXY(Rect* r, int x, int y)
+void Rect_SetXY(Rect *r, int x, int y)
 {
     DENG_ASSERT(r);
     Point2_SetXY(r->origin, x, y);
 }
 
-void Rect_TranslateX(Rect* r, int x)
+void Rect_TranslateX(Rect *r, int x)
 {
     DENG_ASSERT(r);
     Point2_TranslateX(r->origin, x);
 }
 
-void Rect_TranslateY(Rect* r, int y)
+void Rect_TranslateY(Rect *r, int y)
 {
     DENG_ASSERT(r);
     Point2_TranslateY(r->origin, y);
 }
 
-void Rect_TranslateXY(Rect* r, int x, int y)
+void Rect_TranslateXY(Rect *r, int x, int y)
 {
     DENG_ASSERT(r);
     Point2_TranslateXY(r->origin, x, y);
 }
 
-void Rect_Translate(Rect* r, const Point2Raw* delta)
+void Rect_Translate(Rect *r, Point2Raw const *delta)
 {
     DENG_ASSERT(r);
     Point2_Translate(r->origin, delta);
 }
 
-const Size2* Rect_Size(const Rect* r)
+Size2 const *Rect_Size(Rect const *r)
 {
     DENG_ASSERT(r);
     return r->size;
 }
 
-void Rect_SetSize(Rect* r, const Size2* size)
+void Rect_SetSize(Rect *r, Size2 const *size)
 {
     DENG_ASSERT(r);
     Size2_SetWidthHeight(r->size, Size2_Width(size), Size2_Height(size));
 }
 
-void Rect_SetWidthHeight(Rect* r, int width, int height)
+void Rect_SetWidthHeight(Rect *r, int width, int height)
 {
     DENG_ASSERT(r);
     Size2_SetWidthHeight(r->size, width, height);
 }
 
-Point2Raw* Rect_TopLeft(const Rect* r, Point2Raw* point)
+Point2Raw *Rect_TopLeft(Rect const *r, Point2Raw *point)
 {
     DENG_ASSERT(r);
     if(!point) return NULL;
@@ -222,7 +222,7 @@ Point2Raw* Rect_TopLeft(const Rect* r, Point2Raw* point)
     return point;
 }
 
-Point2Raw* Rect_TopRight(const Rect* r, Point2Raw* point)
+Point2Raw *Rect_TopRight(Rect const *r, Point2Raw *point)
 {
     DENG_ASSERT(r);
     if(!point) return NULL;
@@ -231,7 +231,7 @@ Point2Raw* Rect_TopRight(const Rect* r, Point2Raw* point)
     return point;
 }
 
-Point2Raw* Rect_BottomLeft(const Rect* r, Point2Raw* point)
+Point2Raw *Rect_BottomLeft(Rect const *r, Point2Raw *point)
 {
     DENG_ASSERT(r);
     if(!point) return NULL;
@@ -240,7 +240,7 @@ Point2Raw* Rect_BottomLeft(const Rect* r, Point2Raw* point)
     return point;
 }
 
-Point2Raw* Rect_BottomRight(const Rect* r, Point2Raw* point)
+Point2Raw *Rect_BottomRight(Rect const *r, Point2Raw *point)
 {
     DENG_ASSERT(r);
     if(!point) return NULL;
@@ -249,7 +249,7 @@ Point2Raw* Rect_BottomRight(const Rect* r, Point2Raw* point)
     return point;
 }
 
-Rect* Rect_Normalize(Rect* r)
+Rect *Rect_Normalize(Rect *r)
 {
     DENG_ASSERT(r);
     if(Size2_Width(r->size) < 0)
@@ -259,7 +259,7 @@ Rect* Rect_Normalize(Rect* r)
     return r;
 }
 
-RectRaw* Rect_Normalized(const Rect* rect, RectRaw* normalized)
+RectRaw *Rect_Normalized(Rect const *rect, RectRaw *normalized)
 {
     if(!normalized) return NULL;
 
@@ -279,7 +279,7 @@ RectRaw* Rect_Normalized(const Rect* rect, RectRaw* normalized)
 }
 
 /// @pre  This and @a other have been normalized.
-static Rect* Rect_UniteRaw2(Rect* r, const RectRaw* other)
+static Rect *Rect_UniteRaw2(Rect *r, RectRaw const *other)
 {
     Point2Raw oldOrigin;
     DENG_ASSERT(r && other);
@@ -297,7 +297,7 @@ static Rect* Rect_UniteRaw2(Rect* r, const RectRaw* other)
     return r;
 }
 
-Rect* Rect_UniteRaw(Rect* r, const RectRaw* other)
+Rect *Rect_UniteRaw(Rect *r, RectRaw const *other)
 {
     RectRaw otherNormalized;
 
@@ -312,13 +312,13 @@ Rect* Rect_UniteRaw(Rect* r, const RectRaw* other)
     return Rect_UniteRaw2(Rect_Normalize(r), &otherNormalized);
 }
 
-Rect* Rect_Unite(Rect* r, const Rect* other)
+Rect *Rect_Unite(Rect *r, Rect const *other)
 {
     RectRaw rawOther;
     return Rect_UniteRaw2(Rect_Normalize(r), Rect_Normalized(other, &rawOther));
 }
 
-RectRaw* Rect_United(const Rect* rect, const Rect* other, RectRaw* united)
+RectRaw *Rect_United(Rect const *rect, Rect const *other, RectRaw *united)
 {
     RectRaw normA, normB;
 
@@ -347,7 +347,7 @@ RectRaw* Rect_United(const Rect* rect, const Rect* other, RectRaw* united)
     return united;
 }
 
-boolean Rect_Equality(const Rect* r, const Rect* other)
+boolean Rect_Equality(Rect const *r, Rect const *other)
 {
     DENG_ASSERT(r);
     if(!other) return false;
@@ -355,38 +355,38 @@ boolean Rect_Equality(const Rect* r, const Rect* other)
                           Size2_Equality(r->size, Rect_Size(other)));
 }
 
-Rectf* Rectf_New(void)
+Rectf *Rectf_New(void)
 {
-    Rectf* r = M_Calloc(sizeof *r);
+    Rectf *r = M_Calloc(sizeof *r);
     r->origin = Point2f_New();
     r->size = Size2f_New();
     return r;
 }
 
-Rectf* Rectf_NewWithOriginSize(const Point2f* origin, const Size2f* size)
+Rectf *Rectf_NewWithOriginSize(Point2f const *origin, Size2f const *size)
 {
-    Rectf* r = Rectf_New();
+    Rectf *r = Rectf_New();
     Rectf_SetOrigin(r, origin);
     Rectf_SetSize(r, size);
     return r;
 }
 
-Rectf* Rectf_NewWithOriginSize2(double x, double y, double width, double height)
+Rectf *Rectf_NewWithOriginSize2(double x, double y, double width, double height)
 {
-    Rectf* r = Rectf_New();
+    Rectf *r = Rectf_New();
     Rectf_SetXY(r, x, y);
     Rectf_SetWidthHeight(r, width, height);
     return r;
 }
 
-Rectf* Rectf_NewFromRaw(const RectRawf* rawRect)
+Rectf *Rectf_NewFromRaw(RectRawf const *rawRect)
 {
     DENG_ASSERT(rawRect);
     return Rectf_NewWithOriginSize2(rawRect->origin.x, rawRect->origin.y,
                                     rawRect->size.width, rawRect->size.height);
 }
 
-void Rectf_Delete(Rectf* r)
+void Rectf_Delete(Rectf *r)
 {
     DENG_ASSERT(r);
     Point2f_Delete(r->origin);
@@ -394,7 +394,7 @@ void Rectf_Delete(Rectf* r)
     M_Free(r);
 }
 
-void Rectf_Copy(Rectf* r, const Rectf* other)
+void Rectf_Copy(Rectf *r, Rectf const *other)
 {
     DENG_ASSERT(r);
     if(!other) return;
@@ -402,7 +402,7 @@ void Rectf_Copy(Rectf* r, const Rectf* other)
     Size2f_SetWidthHeight(r->size, Rectf_Width(other), Rectf_Height(other));
 }
 
-Rectf* Rectf_CopyRaw(Rectf* r, const RectRawf* rawRect)
+Rectf *Rectf_CopyRaw(Rectf *r, RectRawf const *rawRect)
 {
     DENG_ASSERT(r);
     if(rawRect)
@@ -413,7 +413,7 @@ Rectf* Rectf_CopyRaw(Rectf* r, const RectRawf* rawRect)
     return r;
 }
 
-RectRawf* Rectf_Raw(const Rectf* r, RectRawf* rawRect)
+RectRawf *Rectf_Raw(Rectf const *r, RectRawf *rawRect)
 {
     DENG_ASSERT(r);
     if(!rawRect) return NULL;
@@ -422,121 +422,121 @@ RectRawf* Rectf_Raw(const Rectf* r, RectRawf* rawRect)
     return rawRect;
 }
 
-boolean Rectf_IsNull(const Rectf* r)
+boolean Rectf_IsNull(Rectf const *r)
 {
     DENG_ASSERT(r);
     return Size2f_IsNull(r->size);
 }
 
-double Rectf_Width(const Rectf* r)
+double Rectf_Width(Rectf const *r)
 {
     DENG_ASSERT(r);
     return Size2f_Width(r->size);
 }
 
-double Rectf_Height(const Rectf* r)
+double Rectf_Height(Rectf const *r)
 {
     DENG_ASSERT(r);
     return Size2f_Height(r->size);
 }
 
-const Point2f* Rectf_Origin(const Rectf* r)
+Point2f const *Rectf_Origin(Rectf const *r)
 {
     DENG_ASSERT(r);
     return r->origin;
 }
 
-double Rectf_X(const Rectf* r)
+double Rectf_X(Rectf const *r)
 {
     DENG_ASSERT(r);
     return Point2f_X(r->origin);
 }
 
-double Rectf_Y(const Rectf* r)
+double Rectf_Y(Rectf const *r)
 {
     DENG_ASSERT(r);
     return Point2f_Y(r->origin);
 }
 
-void Rectf_SetOrigin(Rectf* r, const Point2f* origin)
+void Rectf_SetOrigin(Rectf *r, Point2f const *origin)
 {
     DENG_ASSERT(r);
     Point2f_SetXY(r->origin, Point2f_X(origin), Point2f_Y(origin));
 }
 
-void Rectf_SetX(Rectf* r, double x)
+void Rectf_SetX(Rectf *r, double x)
 {
     DENG_ASSERT(r);
     Point2f_SetX(r->origin, x);
 }
 
-void Rectf_SetY(Rectf* r, double y)
+void Rectf_SetY(Rectf *r, double y)
 {
     DENG_ASSERT(r);
     Point2f_SetY(r->origin, y);
 }
 
-void Rectf_SetXY(Rectf* r, double x, double y)
+void Rectf_SetXY(Rectf *r, double x, double y)
 {
     DENG_ASSERT(r);
     Point2f_SetXY(r->origin, x, y);
 }
 
-void Rectf_Translate(Rectf* r, const Point2Rawf* delta)
+void Rectf_Translate(Rectf *r, Point2Rawf const *delta)
 {
     DENG_ASSERT(r);
     Point2f_Translate(r->origin, delta);
 }
 
-void Rectf_TranslateX(Rectf* r, double x)
+void Rectf_TranslateX(Rectf *r, double x)
 {
     DENG_ASSERT(r);
     Point2f_TranslateX(r->origin, x);
 }
 
-void Rectf_TranslateY(Rectf* r, double y)
+void Rectf_TranslateY(Rectf *r, double y)
 {
     DENG_ASSERT(r);
     Point2f_TranslateY(r->origin, y);
 }
 
-void Rectf_TranslateXY(Rectf* r, double x, double y)
+void Rectf_TranslateXY(Rectf *r, double x, double y)
 {
     DENG_ASSERT(r);
     Point2f_TranslateXY(r->origin, x, y);
 }
 
-void Rectf_SetWidth(Rectf* r, double width)
+void Rectf_SetWidth(Rectf *r, double width)
 {
     DENG_ASSERT(r);
     Size2f_SetWidth(r->size, width);
 }
 
-void Rectf_SetHeight(Rectf* r, double height)
+void Rectf_SetHeight(Rectf *r, double height)
 {
     DENG_ASSERT(r);
     Size2f_SetHeight(r->size, height);
 }
 
-const Size2f* Rectf_Size(const Rectf* r)
+Size2f const *Rectf_Size(Rectf const *r)
 {
     DENG_ASSERT(r);
     return r->size;
 }
 
-void Rectf_SetSize(Rectf* r, const Size2f* size)
+void Rectf_SetSize(Rectf *r, Size2f const *size)
 {
     DENG_ASSERT(r);
     Size2f_SetWidthHeight(r->size, Size2f_Width(size), Size2f_Height(size));
 }
 
-void Rectf_SetWidthHeight(Rectf* r, double width, double height)
+void Rectf_SetWidthHeight(Rectf *r, double width, double height)
 {
     DENG_ASSERT(r);
     Size2f_SetWidthHeight(r->size, width, height);
 }
 
-Point2Rawf* Rectf_TopLeft(const Rectf* r, Point2Rawf* point)
+Point2Rawf *Rectf_TopLeft(Rectf const *r, Point2Rawf *point)
 {
     DENG_ASSERT(r);
     if(!point) return NULL;
@@ -545,7 +545,7 @@ Point2Rawf* Rectf_TopLeft(const Rectf* r, Point2Rawf* point)
     return point;
 }
 
-Point2Rawf* Rectf_TopRight(const Rectf* r, Point2Rawf* point)
+Point2Rawf *Rectf_TopRight(Rectf const *r, Point2Rawf *point)
 {
     DENG_ASSERT(r);
     if(!point) return NULL;
@@ -554,7 +554,7 @@ Point2Rawf* Rectf_TopRight(const Rectf* r, Point2Rawf* point)
     return point;
 }
 
-Point2Rawf* Rectf_BottomLeft(const Rectf* r, Point2Rawf* point)
+Point2Rawf *Rectf_BottomLeft(Rectf const *r, Point2Rawf *point)
 {
     DENG_ASSERT(r);
     if(!point) return NULL;
@@ -563,7 +563,7 @@ Point2Rawf* Rectf_BottomLeft(const Rectf* r, Point2Rawf* point)
     return point;
 }
 
-Point2Rawf* Rectf_BottomRight(const Rectf* r, Point2Rawf* point)
+Point2Rawf *Rectf_BottomRight(Rectf const *r, Point2Rawf *point)
 {
     DENG_ASSERT(r);
     if(!point) return NULL;
@@ -572,7 +572,7 @@ Point2Rawf* Rectf_BottomRight(const Rectf* r, Point2Rawf* point)
     return point;
 }
 
-Rectf* Rectf_Normalize(Rectf* r)
+Rectf *Rectf_Normalize(Rectf *r)
 {
     DENG_ASSERT(r);
     if(Size2f_Width(r->size) < 0)
@@ -582,7 +582,7 @@ Rectf* Rectf_Normalize(Rectf* r)
     return r;
 }
 
-RectRawf* Rectf_Normalized(const Rectf* rect, RectRawf* normalized)
+RectRawf *Rectf_Normalized(Rectf const *rect, RectRawf *normalized)
 {
     if(!normalized) return NULL;
 
@@ -602,7 +602,7 @@ RectRawf* Rectf_Normalized(const Rectf* rect, RectRawf* normalized)
 }
 
 /// @pre  This and @a other have been normalized.
-static Rectf* Rectf_UniteRaw2(Rectf* r, const RectRawf* other)
+static Rectf *Rectf_UniteRaw2(Rectf *r, RectRawf const *other)
 {
     Point2Rawf oldOrigin;
     DENG_ASSERT(r && other);
@@ -620,7 +620,7 @@ static Rectf* Rectf_UniteRaw2(Rectf* r, const RectRawf* other)
     return r;
 }
 
-Rectf* Rectf_UniteRaw(Rectf* r, const RectRawf* other)
+Rectf *Rectf_UniteRaw(Rectf *r, RectRawf const *other)
 {
     RectRawf otherNormalized;
 
@@ -635,13 +635,13 @@ Rectf* Rectf_UniteRaw(Rectf* r, const RectRawf* other)
     return Rectf_UniteRaw2(Rectf_Normalize(r), &otherNormalized);
 }
 
-Rectf* Rectf_Unite(Rectf* r, const Rectf* other)
+Rectf *Rectf_Unite(Rectf *r, Rectf const *other)
 {
     RectRawf rawOther;
     return Rectf_UniteRaw2(Rectf_Normalize(r), Rectf_Normalized(other, &rawOther));
 }
 
-RectRawf* Rectf_United(const Rectf* rect, const Rectf* other, RectRawf* united)
+RectRawf *Rectf_United(Rectf const *rect, Rectf const *other, RectRawf *united)
 {
     RectRawf normA, normB;
 
@@ -670,7 +670,7 @@ RectRawf* Rectf_United(const Rectf* rect, const Rectf* other, RectRawf* united)
     return united;
 }
 
-boolean Rectf_Equality(const Rectf* r, const Rectf* other)
+boolean Rectf_Equality(Rectf const *r, Rectf const *other)
 {
     DENG_ASSERT(r);
     if(!other) return false;

@@ -23,7 +23,7 @@
 
 using namespace de;
 
-Context::Context(Type type, Process* owner, Record* globals)
+Context::Context(Type type, Process *owner, Record *globals)
     : _type(type), _owner(owner), _evaluator(*this), _ownsNamespace(false), _names(globals)
 {
     if(!_names)
@@ -44,18 +44,18 @@ Context::~Context()
     reset();
 }
 
-Evaluator& Context::evaluator()
+Evaluator &Context::evaluator()
 {
     return _evaluator;
 }
 
-Record& Context::names() 
+Record &Context::names() 
 {
     return *_names;
 }
 
-void Context::start(const Statement* statement, const Statement* fallback, 
-    const Statement* jumpContinue, const Statement* jumpBreak)
+void Context::start(Statement const *statement, Statement const *fallback, 
+    Statement const *jumpContinue, Statement const *jumpBreak)
 {
     _controlFlow.push_back(ControlFlow(statement, fallback, jumpContinue, jumpBreak));
 
@@ -88,7 +88,7 @@ bool Context::execute()
 
 void Context::proceed()
 {
-    const Statement* st = NULL;
+    Statement const *st = NULL;
     if(current())
     {
         st = current()->next();
@@ -104,7 +104,7 @@ void Context::proceed()
 
 void Context::jumpContinue()
 {
-    const Statement* st = NULL;
+    Statement const *st = NULL;
     while(!st && _controlFlow.size())
     {
         st = _controlFlow.back().jumpContinue;
@@ -124,7 +124,7 @@ void Context::jumpBreak(duint count)
         throw JumpError("Context::jumpBreak", "Invalid number of nested breaks");
     }
     
-    const Statement* st = NULL;
+    Statement const *st = NULL;
     while((!st || count > 0) && _controlFlow.size())
     {
         st = _controlFlow.back().jumpBreak;
@@ -146,7 +146,7 @@ void Context::jumpBreak(duint count)
     proceed();
 }
 
-const Statement* Context::current()
+Statement const *Context::current()
 {
     if(_controlFlow.size())
     {
@@ -155,7 +155,7 @@ const Statement* Context::current()
     return NULL;
 }
 
-void Context::setCurrent(const Statement* statement)
+void Context::setCurrent(Statement const *statement)
 {
     if(_controlFlow.size())
     {
@@ -168,17 +168,17 @@ void Context::setCurrent(const Statement* statement)
     }
 }
 
-Value* Context::iterationValue()
+Value *Context::iterationValue()
 {
     DENG2_ASSERT(_controlFlow.size());
     return _controlFlow.back().iteration;
 }
 
-void Context::setIterationValue(Value* value)
+void Context::setIterationValue(Value *value)
 {
     DENG2_ASSERT(_controlFlow.size());
     
-    ControlFlow& fl = flow();
+    ControlFlow &fl = flow();
     if(fl.iteration)
     {
         delete fl.iteration;

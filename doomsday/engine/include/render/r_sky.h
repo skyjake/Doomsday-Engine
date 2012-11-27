@@ -29,11 +29,7 @@
 #ifndef LIBDENG_REFRESH_SKY_H
 #define LIBDENG_REFRESH_SKY_H
 
-#include "models.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "resource/models.h"
 
 #define MAX_SKY_LAYERS                   ( 2 )
 #define MAX_SKY_MODELS                   ( 32 )
@@ -41,7 +37,7 @@ extern "C" {
 #define DEFAULT_SKY_HEIGHT               ( .666667f )
 #define DEFAULT_SKY_HORIZON_OFFSET       ( 0 )
 #define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
-#define DEFAULT_SKY_SPHERE_MATERIAL      ( MN_TEXTURES_NAME":SKY1" )
+#define DEFAULT_SKY_SPHERE_MATERIAL      ( MS_TEXTURES_NAME":SKY1" )
 #define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
 
 typedef struct skymodel_s {
@@ -53,9 +49,13 @@ typedef struct skymodel_s {
     float yaw;
 } skymodel_t;
 
-extern boolean alwaysDrawSphere;
-extern boolean skyModelsInited;
-extern skymodel_t skyModels[MAX_SKY_MODELS];
+DENG_EXTERN_C boolean alwaysDrawSphere;
+DENG_EXTERN_C boolean skyModelsInited;
+DENG_EXTERN_C skymodel_t skyModels[MAX_SKY_MODELS];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /// Initialize this module.
 void R_SkyInit(void);

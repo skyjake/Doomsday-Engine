@@ -52,7 +52,6 @@
 #include "con_main.h"
 #include "ui/nativeui.h"
 #include "ui/window.h"
-#include "json.h"
 #include "updater.h"
 #include "downloaddialog.h"
 #include "processcheckdialog.h"
@@ -65,6 +64,7 @@
 #include <de/Time>
 #include <de/Date>
 #include <de/Log>
+#include <de/data/json.h>
 
 static Updater* updater = 0;
 
@@ -267,12 +267,12 @@ struct Updater::Instance
             return;
         }
 
-        QVariant result = parseJSON(QString::fromUtf8(reply->readAll()));
+        QVariant result = de::parseJSON(QString::fromUtf8(reply->readAll()));
         if(!result.isValid()) return;
 
-        QVariantMap map = result.toMap();
+        QVariantMap map  = result.toMap();
         latestPackageUri = map["direct_download_uri"].toString();
-        latestLogUri = map["release_changeloguri"].toString();
+        latestLogUri     = map["release_changeloguri"].toString();
 
         // Check if a fallback location is specified for the download.
         if(map.contains("direct_download_fallback_uri"))

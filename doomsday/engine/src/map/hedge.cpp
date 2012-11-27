@@ -2,7 +2,7 @@
  * @file hedge.cpp
  * Map half-edge implementation. @ingroup map
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2003-2012 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -23,7 +23,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
-#include "de_refresh.h"
 
 #include <de/Log>
 

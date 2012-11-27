@@ -161,6 +161,8 @@ double M_PointXYDistance(double aX, double aY, double bX, double bY);
  */
 int M_BoxOnLineSide(const struct aaboxd_s* box, double const linePoint[2], double const lineDirection[2]);
 
+int M_BoxOnLineSide_FixedPrecision(const fixed_t box[], const fixed_t linePoint[], const fixed_t lineDirection[]);
+
 /**
  * Check the spatial relationship between the given box and a partitioning line.
  *
@@ -205,6 +207,7 @@ int M_RatioReduce(int* numerator, int* denominator);
 
 slopetype_t M_SlopeType(double const direction[2]);
 slopetype_t M_SlopeTypeXY(double directionX, double directionY);
+slopetype_t M_SlopeTypeXY_FixedPrecision(fixed_t dx, fixed_t dy);
 
 int M_NumDigits(int num);
 

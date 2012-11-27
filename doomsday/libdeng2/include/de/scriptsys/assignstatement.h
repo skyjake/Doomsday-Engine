@@ -39,7 +39,7 @@ namespace de
         /// Trying to assign into something other than a reference (RefValue). @ingroup errors
         DENG2_ERROR(LeftValueError);
         
-        typedef std::vector<Expression*> Indices;
+        typedef std::vector<Expression *> Indices;
         
     public:
         AssignStatement();
@@ -54,15 +54,15 @@ namespace de
          *                the assignment. 
          * @param value   Expression that determines the value of the variable.
          */
-        AssignStatement(Expression* target, const Indices& indices, Expression* value);
+        AssignStatement(Expression *target, Indices const &indices, Expression *value);
         
         ~AssignStatement();
         
-        void execute(Context& context) const;
+        void execute(Context &context) const;
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
     private:
         ArrayExpression _args;

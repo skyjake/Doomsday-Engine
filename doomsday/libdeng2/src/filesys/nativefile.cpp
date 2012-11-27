@@ -22,8 +22,8 @@
 
 using namespace de;
 
-NativeFile::NativeFile(const String& name, const NativePath& nativePath)
-    : File(name), _nativePath(nativePath), _in(0), _out(0)
+NativeFile::NativeFile(String const &name, NativePath const &nativePath)
+    : ByteArrayFile(name), _nativePath(nativePath), _in(0), _out(0)
 {}
 
 NativeFile::~NativeFile()
@@ -73,9 +73,9 @@ NativeFile::Size NativeFile::size() const
     return status().size;
 }
 
-void NativeFile::get(Offset at, Byte* values, Size count) const
+void NativeFile::get(Offset at, Byte *values, Size count) const
 {
-    QFile& in = input();
+    QFile &in = input();
     if(at + count > size())
     {
         /// @throw IByteArray::OffsetError  The region specified for reading extends
@@ -83,12 +83,12 @@ void NativeFile::get(Offset at, Byte* values, Size count) const
         throw OffsetError("NativeFile::get", "Cannot read past end of file");
     }
     in.seek(at);
-    in.read(reinterpret_cast<char*>(values), count);
+    in.read(reinterpret_cast<char *>(values), count);
 }
 
-void NativeFile::set(Offset at, const Byte* values, Size count)
+void NativeFile::set(Offset at, Byte const *values, Size count)
 {
-    QFile& out = output();
+    QFile &out = output();
     if(at > size())
     {
         /// @throw IByteArray::OffsetError  @a at specified a position beyond the
@@ -96,9 +96,10 @@ void NativeFile::set(Offset at, const Byte* values, Size count)
         throw OffsetError("NativeFile::set", "Cannot write past end of file");
     }
     out.seek(at);
-    out.write(reinterpret_cast<const char*>(values), count);
+    out.write(reinterpret_cast<char const *>(values), count);
     if(out.error() != QFile::NoError)
     {
+        /// @throw OutputError  Failure to write to the native file.
         throw OutputError("NativeFile::set", "Error writing to file:" +
                           out.errorString());
     }
@@ -109,13 +110,13 @@ void NativeFile::set(Offset at, const Byte* values, Size count)
     setStatus(st);
 }
 
-void NativeFile::setMode(const Flags& newMode)
+void NativeFile::setMode(Flags const &newMode)
 {
     close();
     File::setMode(newMode);
 }
 
-QFile& NativeFile::input() const
+QFile &NativeFile::input() const
 {
     if(!_in)
     {
@@ -132,7 +133,7 @@ QFile& NativeFile::input() const
     return *_in;
 }
 
-QFile& NativeFile::output()
+QFile &NativeFile::output()
 {
     if(!_out)
     {

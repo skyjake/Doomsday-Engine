@@ -43,7 +43,7 @@ typedef enum mapformatid_e {
 
 /**
  * Helper macro for determining whether a value can be interpreted as a logical
- * map format identifier (@see mapformatid_t).
+ * map format identifier (see mapformatid_t).
  */
 #define VALID_MAPFORMATID(v)        ((v) >= MF_DOOM && (v) < NUM_MAPFORMATS)
 
@@ -85,7 +85,7 @@ public:
 private:
     inline de::String const& findMaterialInDictionary(MaterialDictId id)
     {
-        return materials.string(id);
+        return materials.stringRef(id);
     }
 
     /// @todo fixme: A real performance killer...

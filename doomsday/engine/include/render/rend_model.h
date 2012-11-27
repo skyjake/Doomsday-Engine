@@ -23,9 +23,7 @@
 #ifndef LIBDENG_RENDER_MODEL_H
 #define LIBDENG_RENDER_MODEL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "resource/models.h"
 
 struct texturevariantspecification_s;
 
@@ -68,11 +66,15 @@ typedef struct rendmodelparams_s {
     boolean         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
 } rendmodelparams_t;
 
-extern int modelLight;
-extern int frameInter;
-extern int mirrorHudModels;
-extern int modelShinyMultitex;
-extern float rendModelLOD;
+DENG_EXTERN_C int modelLight;
+DENG_EXTERN_C int frameInter;
+DENG_EXTERN_C int mirrorHudModels;
+DENG_EXTERN_C int modelShinyMultitex;
+DENG_EXTERN_C float rendModelLOD;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Registers the console commands and variables used by this module.
@@ -107,6 +109,8 @@ void Rend_ModelShutdown(void);
  *          than RENDER_MAX_MODEL_VERTS.
  */
 boolean Rend_ModelExpandVertexBuffers(uint numVertices);
+
+void Rend_ModelSetFrame(modeldef_t* modef, int frame);
 
 /**
  * Lookup the texture specification for diffuse model skins.

@@ -33,14 +33,14 @@
 
 #include "cbuffer.h"
 #include "m_misc.h"
-#include "pathtree.h"
 
+#include <de/PathTree>
 #include <de/memoryblockset.h>
 
 // Substrings in CVar names are delimited by this character.
 #define CVARDIRECTORY_DELIMITER         '-'
 
-typedef de::PathTree CVarDirectory;
+typedef de::UserDataPathTree CVarDirectory;
 
 D_CMD(HelpWhat);
 D_CMD(HelpApropos);
@@ -127,7 +127,7 @@ static int clearVariable(CVarDirectory::Node& node, void* parameters)
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
-                cvarDirectory->traverse(PCF_NO_BRANCH, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
+                cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
                 M_Free(*ptr); *ptr = Str_Text(emptyStr);
                 break;
 
@@ -136,7 +136,7 @@ static int clearVariable(CVarDirectory::Node& node, void* parameters)
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
-                cvarDirectory->traverse(PCF_NO_BRANCH, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
+                cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
                 Uri_Delete((Uri*)*ptr); *ptr = emptyUri;
                 break;
 
@@ -158,9 +158,9 @@ static void clearVariables(void)
 {
     /// If _DEBUG we'll traverse all nodes and verify our clear logic.
 #if _DEBUG
-    int flags = 0;
+    de::PathTree::ComparisonFlags flags;
 #else
-    int flags = PCF_NO_BRANCH;
+    de::PathTree::ComparisonFlags flags = de::PathTree::NoBranch;
 #endif
     if(!cvarDirectory) return;
 
@@ -171,8 +171,8 @@ static void clearVariables(void)
 /// Construct a new variable from the specified template and add it to the database.
 static cvar_t* addVariable(cvartemplate_t const& tpl)
 {
-    de::Uri path = de::Uri(tpl.path, RC_NULL, CVARDIRECTORY_DELIMITER);
-    CVarDirectory::Node* node = cvarDirectory->insert(path);
+    de::Path path(tpl.path, CVARDIRECTORY_DELIMITER);
+    CVarDirectory::Node* node = &cvarDirectory->insert(path);
     cvar_t* newVar;
 
     if(node->userPointer())
@@ -359,7 +359,7 @@ static void updateKnownWords(void)
     countCVarParams.ignoreHidden = true;
     if(cvarDirectory)
     {
-        cvarDirectory->traverse(PCF_NO_BRANCH, NULL, CVarDirectory::no_hash, countVariable, &countCVarParams);
+        cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &countCVarParams);
     }
 
     // Build the known words table.
@@ -386,7 +386,7 @@ static void updateKnownWords(void)
     if(0 != countCVarParams.count)
     {
         /// @note cvars are NOT sorted.
-        cvarDirectory->traverse(PCF_NO_BRANCH, NULL, CVarDirectory::no_hash, addVariableToKnownWords, &knownWordIdx);
+        cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, addVariableToKnownWords, &knownWordIdx);
     }
 
     // Add aliases?
@@ -445,7 +445,7 @@ AutoStr* CVar_ComposePath(cvar_t const* var)
 {
     DENG_ASSERT(var);
     CVarDirectory::Node& node = *reinterpret_cast<CVarDirectory::Node*>(var->directoryNode);
-    QByteArray path = node.composePath(CVARDIRECTORY_DELIMITER).toUtf8();
+    QByteArray path = node.path(CVARDIRECTORY_DELIMITER).toUtf8();
     return AutoStr_FromTextStd(path.constData());
 }
 
@@ -777,8 +777,8 @@ cvar_t* Con_FindVariable(char const* path)
 
     try
     {
-        CVarDirectory::Node& node = cvarDirectory->find(de::Uri(path, RC_NULL, CVARDIRECTORY_DELIMITER),
-                                                        PCF_NO_BRANCH | PCF_MATCH_FULL);
+        CVarDirectory::Node const &node = cvarDirectory->find(de::Path(path, CVARDIRECTORY_DELIMITER),
+                                                              de::PathTree::NoBranch | de::PathTree::MatchFull);
         return (cvar_t*) node.userPointer();
     }
     catch(CVarDirectory::NotFoundError const&)
@@ -1763,14 +1763,14 @@ D_CMD(PrintVarStats)
         {
             p.count = 0;
             p.type = cvartype_t(i);
-            cvarDirectory->traverse(PCF_NO_BRANCH, NULL, CVarDirectory::no_hash, countVariable, &p);
+            cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &p);
             Con_Printf("%12s: %u\n", Str_Text(CVar_TypeName(p.type)), p.count);
         }
         p.count = 0;
         p.type = cvartype_t(-1);
         p.hidden = true;
 
-        cvarDirectory->traverse(PCF_NO_BRANCH, NULL, CVarDirectory::no_hash, countVariable, &p);
+        cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &p);
         numCVars = cvarDirectory->size();
         numCVarsHidden = p.count;
     }
@@ -1778,8 +1778,8 @@ D_CMD(PrintVarStats)
 
     if(cvarDirectory)
     {
-        CVarDirectory::debugPrintHashDistribution(*cvarDirectory);
-        CVarDirectory::debugPrint(*cvarDirectory, CVARDIRECTORY_DELIMITER);
+        cvarDirectory->debugPrintHashDistribution();
+        cvarDirectory->debugPrint(CVARDIRECTORY_DELIMITER);
     }
     return true;
 }

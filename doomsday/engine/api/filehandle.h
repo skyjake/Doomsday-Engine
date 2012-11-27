@@ -27,20 +27,12 @@
 
 #include <de/types.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /// Seek methods
 typedef enum {
     SeekSet = 0,
     SeekCur = 1,
     SeekEnd = 2
 } SeekMethod;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #ifdef __cplusplus
 

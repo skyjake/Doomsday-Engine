@@ -49,14 +49,14 @@ struct ListenSocket::Instance
 {
 #if 0
     /// Pointer to the internal socket data.
-    internal::Doorman* doorman;
+    internal::Doorman *doorman;
 #endif
 
-    QTcpServer* socket;
+    QTcpServer *socket;
     duint16 port;
 
     /// Incoming connections.
-    QList<QTcpSocket*> incoming;
+    QList<QTcpSocket *> incoming;
 
     Instance() : socket(0), port(0) {}
     ~Instance() {
@@ -96,18 +96,18 @@ void ListenSocket::acceptNewConnection()
     emit incomingConnection();
 }
 
-Socket* ListenSocket::accept()
+Socket *ListenSocket::accept()
 {
     if(d->incoming.empty())
     {
         return 0;
     }
     /*
-    QTcpSocket* s = new QTcpSocket;
+    QTcpSocket *s = new QTcpSocket;
     s->setSocketDescriptor(d->incoming.takeFirst());
     */
 
-    QTcpSocket* s = d->incoming.takeFirst();
+    QTcpSocket *s = d->incoming.takeFirst();
     LOG_MSG("Accepted new connection from %s.") << s->peerAddress().toString();
 
     // We can use this constructor because we are Socket's friend.

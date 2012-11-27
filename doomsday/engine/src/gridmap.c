@@ -25,7 +25,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h" // For debug display
-#include "de_refresh.h" // For debug display
 #include "de_render.h" // For debug display
 #include "m_vector.h" // For debug display
 

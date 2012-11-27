@@ -51,12 +51,12 @@ namespace de
         /// All variables and subrecords in the record must have a name. @ingroup errors
         DENG2_ERROR(UnnamedError);
         
-        typedef std::map<String, Variable*> Members;
-        typedef std::map<String, Record*> Subrecords;
+        typedef std::map<String, Variable *> Members;
+        typedef std::map<String, Record *> Subrecords;
         typedef std::pair<String, String> KeyValue;
         typedef std::list<KeyValue> List;
         
-        DENG2_DEFINE_AUDIENCE(Deletion, void recordBeingDeleted(Record& record))
+        DENG2_DEFINE_AUDIENCE(Deletion, void recordBeingDeleted(Record &record))
         
     public:
         Record();
@@ -66,7 +66,7 @@ namespace de
          *
          * @param other  Record to copy.
          */
-        Record(const Record& other);
+        Record(Record const &other);
         
         virtual ~Record();
 
@@ -78,17 +78,17 @@ namespace de
         /**
          * Determines if the record contains a variable or a subrecord named @a variableName.
          */
-        bool has(const String& name) const;
+        bool has(String const &name) const;
 
         /**
          * Determines if the record contains a variable named @a variableName.
          */
-        bool hasMember(const String& variableName) const;
+        bool hasMember(String const &variableName) const;
 
         /**
          * Determines if the record contains a subrecord named @a subrecordName.
          */
-        bool hasSubrecord(const String& subrecordName) const;
+        bool hasSubrecord(String const &subrecordName) const;
         
         /**
          * Adds a new variable to the record. 
@@ -98,7 +98,7 @@ namespace de
          *
          * @return @a variable, for convenience.
          */
-        Variable& add(Variable* variable);
+        Variable &add(Variable *variable);
 
         /**
          * Removes a variable from the record.
@@ -107,7 +107,7 @@ namespace de
          *
          * @return  Caller gets ownership of the removed variable.
          */
-        Variable* remove(Variable& variable);
+        Variable *remove(Variable &variable);
         
         /**
          * Adds a number variable to the record. The variable is set up to only accept
@@ -118,7 +118,7 @@ namespace de
          *
          * @return  The number variable.
          */
-        Variable& addNumber(const String& variableName, const Value::Number& number);
+        Variable &addNumber(String const &variableName, Value::Number const &number);
         
         /**
          * Adds a text variable to the record. The variable is set up to only accept
@@ -129,7 +129,7 @@ namespace de
          *
          * @return  The text variable.
          */
-        Variable& addText(const String& variableName, const Value::Text& text);
+        Variable &addText(String const &variableName, Value::Text const &text);
         
         /**
          * Adds an array variable to the record. The variable is set up to only accept
@@ -139,7 +139,7 @@ namespace de
          *
          * @return  The array variable.
          */
-        Variable& addArray(const String& variableName);
+        Variable &addArray(String const &variableName);
 
         /**
          * Adds a dictionary variable to the record. The variable is set up to only accept
@@ -149,7 +149,7 @@ namespace de
          *
          * @return  The dictionary variable.
          */
-        Variable& addDictionary(const String& variableName);
+        Variable &addDictionary(String const &variableName);
         
         /**
          * Adds a block variable to the record. The variable is set up to only accept
@@ -159,7 +159,7 @@ namespace de
          *
          * @return  The block variable.
          */
-        Variable& addBlock(const String& variableName);
+        Variable &addBlock(String const &variableName);
         
         /**
          * Adds a new subrecord to the record. 
@@ -170,7 +170,7 @@ namespace de
          *
          * @return @a subrecord, for convenience.
          */
-        Record& add(const String& name, Record* subrecord);
+        Record &add(String const &name, Record *subrecord);
 
         /**
          * Adds a new empty subrecord to the record.
@@ -179,7 +179,7 @@ namespace de
          *
          * @return  The new subrecord.
          */
-        Record& addRecord(const String& name);
+        Record &addRecord(String const &name);
 
         /**
          * Removes a subrecord from the record.
@@ -188,7 +188,7 @@ namespace de
          *
          * @return  Caller gets ownership of the removed record.
          */
-        Record* remove(const String& name);
+        Record *remove(String const &name);
         
         /**
          * Looks up a variable in the record. Variables in subrecords can be accessed
@@ -198,7 +198,7 @@ namespace de
          *
          * @return  Variable.
          */
-        Variable& operator [] (const String& name);
+        Variable &operator [] (String const &name);
         
         /**
          * Looks up a variable in the record. Variables in subrecords can be accessed
@@ -208,7 +208,7 @@ namespace de
          *
          * @return  Variable (non-modifiable).
          */
-        const Variable& operator [] (const String& name) const;
+        Variable const &operator [] (String const &name) const;
 
         /**
          * Looks up a subrecord in the record.
@@ -217,7 +217,7 @@ namespace de
          *
          * @return  Subrecord.
          */
-        Record& subrecord(const String& name);
+        Record &subrecord(String const &name);
 
         /**
          * Looks up a subrecord in the record.
@@ -226,17 +226,17 @@ namespace de
          *
          * @return  Subrecord (non-modifiable).
          */
-        const Record& subrecord(const String& name) const;
+        Record const &subrecord(String const &name) const;
 
         /**
          * Returns a non-modifiable map of the members.
          */
-        const Members& members() const { return _members; }
+        Members const &members() const { return _members; }
         
         /**
          * Returns a non-modifiable map of the subrecords.
          */
-        const Subrecords& subrecords() const { return _subrecords; }
+        Subrecords const &subrecords() const { return _subrecords; }
 
         /**
          * Creates a text representation of the record. Each variable name is 
@@ -247,7 +247,7 @@ namespace de
          *
          * @return  Text representation.
          */
-        String asText(const String& prefix, List* lines) const;
+        String asText(String const &prefix, List *lines) const;
 
         /**
          * Convenience template for getting the value of a variable in a 
@@ -258,7 +258,7 @@ namespace de
          * @return  Value cast to a specific value type.
          */
         template <typename ValueType>
-        const ValueType& value(const String& name) const {
+        ValueType const &value(String const &name) const {
             return (*this)[name].value<ValueType>();
         }
         
@@ -270,11 +270,11 @@ namespace de
          * @return  The function, or @c NULL if the member does not exist or
          *          has some other value than FunctionValue.
          */
-        const Function* function(const String& name) const;
+        Function const *function(String const &name) const;
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
         
         // Implements LogEntry::Arg::Base.
         LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
@@ -286,7 +286,7 @@ namespace de
     };
     
     /// Converts the record into a human-readable text representation.
-    DENG2_PUBLIC QTextStream& operator << (QTextStream& os, const Record& record);
+    DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Record const &record);
 }
 
 #endif /* LIBDENG2_RECORD_H */

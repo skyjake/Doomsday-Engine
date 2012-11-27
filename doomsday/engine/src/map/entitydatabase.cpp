@@ -21,7 +21,7 @@
 
 #include "de_base.h"
 #include "map/p_mapdata.h"
-#include "propertyvalue.h"
+#include "map/propertyvalue.h"
 
 #include <map>
 #include <de/Error>

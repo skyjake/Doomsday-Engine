@@ -75,7 +75,7 @@ typedef struct cbuffer_s CBuffer;
  *
  * @param maxNumLines  Maximum number of lines the buffer can hold.
  * @param maxLineLength  Maximum length of a text line in characters.
- * @param flags  @see consoleBufferFlags
+ * @param flags  @ref consoleBufferFlags
  */
 CBuffer* CBuffer_New(uint maxNumLines, uint maxLineLength, int flags);
 
@@ -85,7 +85,7 @@ void CBuffer_Delete(CBuffer* cb);
  * Write the given text string (plus optional flags) to the buffer.
  *
  * @param cb   Console buffer.
- * @param flags  @see consoleBufferLineFlags
+ * @param flags  @ref consoleBufferLineFlags
  * @param txt  Ptr to the text string to be written.
  */
 void CBuffer_Write(CBuffer* cb, int flags, const char* txt);
@@ -141,7 +141,7 @@ const cbline_t* CBuffer_GetLine(CBuffer* cb, uint idx);
  *                      negative, the index is from the end of list.
  * @param list          Ptr to an array of console buffer ptrs which we'll
  *                      write to and terminate with @c NULL.
- * @param blflags       @see bufferLineFlags
+ * @param blflags       @ref bufferLineFlags
  *
  * @return              The number of elements written back to the buffer.
  */

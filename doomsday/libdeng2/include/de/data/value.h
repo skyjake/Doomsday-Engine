@@ -61,7 +61,7 @@ namespace de
          *
          * @return New Value object. Caller gets ownership of the object.
          */
-        virtual Value* duplicate() const = 0;
+        virtual Value *duplicate() const = 0;
 
         /**
          * Convert the value to a number.  Implementing this is
@@ -77,7 +77,7 @@ namespace de
          *
          * @return Value as number.
          */
-        virtual Number asSafeNumber(const Number& defaultValue = 0.0) const;
+        virtual Number asSafeNumber(Number const &defaultValue = 0.0) const;
         
         /**
          * Convert the value to into a text string.  All values have
@@ -99,7 +99,7 @@ namespace de
          * 
          * @return  Element value (non-modifiable).
          */
-        virtual const Value& element(const Value& index) const;
+        virtual Value const &element(Value const &index) const;
 
         /**
          * Get a specific element of the value.  This is meaningful with 
@@ -109,7 +109,7 @@ namespace de
          *
          * @return  Element value (modifiable).
          */
-        virtual Value& element(const Value& index);
+        virtual Value &element(Value const &index);
 
         /**
          * Duplicates an element of the value. This is necessary when the 
@@ -120,7 +120,7 @@ namespace de
          *
          * @return  Duplicate of the element value. Caller gets ownership.
          */
-        virtual Value* duplicateElement(const Value& index) const;
+        virtual Value *duplicateElement(Value const &index) const;
         
         /**
          * Set a specific element of the value. This is meaningful only with
@@ -131,7 +131,7 @@ namespace de
          * @param elementValue  New value for the element. This value will take
          *                      ownership of @a elementValue.
          */
-        virtual void setElement(const Value& index, Value* elementValue);
+        virtual void setElement(Value const &index, Value *elementValue);
 
         /**
          * Determines whether the value contains the equivalent of another
@@ -141,7 +141,7 @@ namespace de
          *
          * @return @c true, if the value is there, otherwise @c false.
          */
-        virtual bool contains(const Value& value) const;
+        virtual bool contains(Value const &value) const;
 
         /**
          * Begin iteration of contained values. This is only meaningful with
@@ -150,7 +150,7 @@ namespace de
          * @return  The first value. Caller gets ownership. @c NULL, if there 
          *      are no items.
          */
-        virtual Value* begin();
+        virtual Value *begin();
 
         /**
          * Iterate the next value. This is only meaningful with iterable 
@@ -159,7 +159,7 @@ namespace de
          * @return @c NULL, if the iteration is over. Otherwise a new Value
          * containing the next iterated value. Caller gets ownership.
          */
-        virtual Value* next();
+        virtual Value *next();
 
         /**
          * Determine if the value can be thought of as a logical truth.
@@ -179,7 +179,7 @@ namespace de
          * @return 0, if the values are equal. 1, if @a value is greater than
          *      this value. -1, if @a value is less than this value.
          */
-        virtual dint compare(const Value& value) const;
+        virtual dint compare(Value const &value) const;
         
         /**
          * Negate the value of this value.
@@ -190,38 +190,38 @@ namespace de
          * Calculate the sum of this value and an another value, storing the
          * result in this value.
          */
-        virtual void sum(const Value& value);
+        virtual void sum(Value const &value);
 
         /**
          * Calculate the subtraction of this value and an another value, 
          * storing the result in this value.
          */
-        virtual void subtract(const Value& subtrahend);
+        virtual void subtract(Value const &subtrahend);
         
         /**
          * Calculate the division of this value divided by @a divisor, storing
          * the result in this value.
          */
-        virtual void divide(const Value& divisor);
+        virtual void divide(Value const &divisor);
         
         /**
          * Calculate the multiplication of this value by @a value, storing
          * the result in this value.
          */
-        virtual void multiply(const Value& value);
+        virtual void multiply(Value const &value);
         
         /**
          * Calculate the modulo of this value divided by @a divisor, storing
          * the result in this value.
          */
-        virtual void modulo(const Value& divisor);
+        virtual void modulo(Value const &divisor);
         
         /**
          * Assign value. Only supported by reference values.
          *
          * @param value  Value to assign. Referenced object gets ownership.
          */
-        virtual void assign(Value* value);
+        virtual void assign(Value *value);
         
         /**
          * Applies the call operator on the value. 
@@ -231,7 +231,7 @@ namespace de
          *
          * @return  Result of the call operator, which can be anything.
          */
-        virtual void call(Process& process, const Value& arguments) const;
+        virtual void call(Process &process, Value const &arguments) const;
         
     public:
         /**
@@ -241,7 +241,7 @@ namespace de
          *
          * @return  Value. Caller gets owernship.
          */
-        static Value* constructFrom(Reader& reader);
+        static Value *constructFrom(Reader &reader);
         
     protected:
         typedef dbyte SerialId;

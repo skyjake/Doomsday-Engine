@@ -40,7 +40,7 @@ public:
      */
     Date();
 
-    Date(const Time& time);
+    Date(Time const &time);
 
     int year() const { return asDateTime().date().year(); }
     int month() const { return asDateTime().date().month(); }
@@ -48,7 +48,7 @@ public:
     int hours() const { return asDateTime().time().hour(); }
     int minutes() const { return asDateTime().time().minute(); }
     int seconds() const { return asDateTime().time().second(); }
-    int daysTo(const Date& other) const { return asDateTime().date().daysTo(other.asDateTime().date()); }
+    int daysTo(Date const &other) const { return asDateTime().date().daysTo(other.asDateTime().date()); }
 
     /**
      * Forms a textual representation of the date.
@@ -68,7 +68,7 @@ public:
     }
 };
 
-DENG2_PUBLIC QTextStream& operator << (QTextStream& os, const Date& date);
+DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Date const &date);
 
 }
 

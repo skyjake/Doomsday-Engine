@@ -48,7 +48,7 @@ typedef uint textureid_t;
 /// Special value used to signify an invalid texture id.
 #define NOTEXTUREID                 0
 
-enum texturenamespaceid_e; // Defined in dd_share.h
+enum textureschemeid_e; // Defined in dd_share.h
 struct texture_s;
 
 /// Register the console commands, variables, etc..., of this module.
@@ -61,23 +61,23 @@ void Textures_Init(void);
 void Textures_Shutdown(void);
 
 /**
- * Try to interpret a texture namespace identifier from @a str. If found to match a known
- * namespace name, return the associated identifier. If the reference @a str is not valid
- * (i.e., NULL or a zero-length string) then the special identifier @c TN_ANY is returned.
- * Otherwise @c TN_INVALID.
+ * Try to interpret a texture scheme identifier from @a str. If found to match a known
+ * scheme name, return the associated identifier. If the reference @a str is not valid
+ * (i.e., NULL or a zero-length string) then the special identifier @c TS_ANY is returned.
+ * Otherwise @c TS_INVALID.
  */
-texturenamespaceid_t Textures_ParseNamespace(const char* str);
+textureschemeid_t Textures_ParseSchemeName(const char* str);
 
-/// @return  Name associated with the identified @a namespaceId else a zero-length string.
-const Str* Textures_NamespaceName(texturenamespaceid_t namespaceId);
+/// @return  Name associated with the identified @a schemeId else a zero-length string.
+const Str* Textures_SchemeName(textureschemeid_t schemeId);
 
 /// @return  Total number of unique Textures in the collection.
 uint Textures_Size(void);
 
-/// @return  Number of unique Textures in the identified @a namespaceId.
-uint Textures_Count(texturenamespaceid_t namespaceId);
+/// @return  Number of unique Textures in the identified @a schemeId.
+uint Textures_Count(textureschemeid_t schemeId);
 
-/// Clear all textures in all namespaces (and release any acquired GL-textures).
+/// Clear all textures in all schemes (and release any acquired GL-textures).
 void Textures_Clear(void);
 
 /// Clear all textures flagged 'runtime' (and release any acquired GL-textures).
@@ -87,12 +87,12 @@ void Textures_ClearRuntime(void);
 void Textures_ClearSystem(void);
 
 /**
- * Clear all textures in the identified namespace(s) (and release any acquired GL-textures).
+ * Clear all textures in the identified scheme(s) (and release any acquired GL-textures).
  *
- * @param namespaceId  Unique identifier of the namespace to process or
- *                     @c TN_ANY to clear all textures in any namespace.
+ * @param schemeId  Unique identifier of the scheme to process or
+ *                  @c TS_ANY to clear all textures in any scheme.
  */
-void Textures_ClearNamespace(texturenamespaceid_t namespaceId);
+void Textures_ClearScheme(textureschemeid_t schemeId);
 
 /// @return  Unique identifier of the primary name for @a texture else @c NOTEXTUREID.
 textureid_t Textures_Id(struct texture_s* texture);
@@ -100,18 +100,18 @@ textureid_t Textures_Id(struct texture_s* texture);
 /// @return  Texture associated with unique identifier @a textureId else @c NULL.
 struct texture_s* Textures_ToTexture(textureid_t textureId);
 
-/// @return  Texture associated with the namespace-unique identifier @a index else @c NOTEXTUREID.
-textureid_t Textures_TextureForUniqueId(texturenamespaceid_t namespaceId, int uniqueId);
+/// @return  Texture associated with the scheme-unique identifier @a index else @c NOTEXTUREID.
+textureid_t Textures_TextureForUniqueId(textureschemeid_t schemeId, int uniqueId);
 
-/// @return  Namespace-unique identfier associated with the identified @a textureId.
+/// @return  Scheme-unique identfier associated with the identified @a textureId.
 int Textures_UniqueId(textureid_t textureId);
 
 /// @return  Declared, percent-encoded path to this data resource,
 ///          else a "null" Uri (no scheme or path).
 const Uri* Textures_ResourcePath(textureid_t textureId);
 
-/// @return  Unique identifier of the namespace this name is in.
-texturenamespaceid_t Textures_Namespace(textureid_t textureId);
+/// @return  Unique identifier of the scheme this name is in.
+textureschemeid_t Textures_Scheme(textureid_t textureId);
 
 /// @return  Symbolic, percent-encoded name/path-to this texture as a string.
 ///          Must be destroyed with Str_Delete().
@@ -143,7 +143,7 @@ textureid_t Textures_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)
  * is released (and any GL-textures acquired for it).
  *
  * @param uri           Uri representing a path to the texture in the virtual hierarchy.
- * @param uniqueId      Namespace-unique identifier to associate with the texture.
+ * @param uniqueId      Scheme-unique identifier to associate with the texture.
  * @param resourcepath  The path to the underlying data resource.
  *
  * @return  Unique identifier for this texture unless @a uri is invalid, in which case
@@ -167,32 +167,32 @@ struct texture_s* Textures_Create(textureid_t id, boolean custom, void* userData
  * Iterate over defined Textures in the collection making a callback for each visited.
  * Iteration ends when all textures have been visited or a callback returns non-zero.
  *
- * @param namespaceId   If a valid namespace identifier, only consider textures in this
- *                      namespace, otherwise visit all textures.
+ * @param schemeId      If a valid scheme identifier, only consider textures in this
+ *                      scheme, otherwise visit all textures.
  * @param callback      Callback function ptr.
  * @param parameters    Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Textures_Iterate2(texturenamespaceid_t namespaceId, int (*callback)(struct texture_s* texture, void* parameters), void* parameters);
-int Textures_Iterate(texturenamespaceid_t namespaceId, int (*callback)(struct texture_s* texture, void* parameters)); /*parameters=NULL*/
+int Textures_Iterate2(textureschemeid_t schemeId, int (*callback)(struct texture_s* texture, void* parameters), void* parameters);
+int Textures_Iterate(textureschemeid_t schemeId, int (*callback)(struct texture_s* texture, void* parameters)); /*parameters=NULL*/
 
 /**
  * Iterate over declared textures in the collection making a callback for each visited.
  * Iteration ends when all textures have been visited or a callback returns non-zero.
  *
- * @param namespaceId   If a valid namespace identifier, only consider textures in this
- *                      namespace, otherwise visit all textures.
+ * @param schemeId      If a valid scheme identifier, only consider textures in this
+ *                      scheme, otherwise visit all textures.
  * @param callback      Callback function ptr.
  * @param parameters    Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Textures_IterateDeclared2(texturenamespaceid_t namespaceId, int (*callback)(textureid_t textureId, void* parameters), void* parameters);
-int Textures_IterateDeclared(texturenamespaceid_t namespaceId, int (*callback)(textureid_t textureId, void* parameters)); /*parameters=NULL*/
+int Textures_IterateDeclared2(textureschemeid_t schemeId, int (*callback)(textureid_t textureId, void* parameters), void* parameters);
+int Textures_IterateDeclared(textureschemeid_t schemeId, int (*callback)(textureid_t textureId, void* parameters)); /*parameters=NULL*/
 
 #ifdef __cplusplus
-} //extern "C"
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_RESOURCE_TEXTURES_H */

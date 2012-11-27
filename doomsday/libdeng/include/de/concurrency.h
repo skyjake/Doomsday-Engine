@@ -26,11 +26,11 @@
 
 #include <de/libdeng.h>
 
-typedef void* thread_t;
-typedef int (*systhreadfunc_t) (void* parm);
+typedef void *thread_t;
+typedef int (*systhreadfunc_t) (void *parm);
 
-typedef void* mutex_t;
-typedef void* sem_t;
+typedef void *mutex_t;
+typedef void *sem_t;
 
 typedef enum systhreadexitstatus_e {
     DENG_THREAD_STOPPED_NORMALLY,
@@ -51,7 +51,7 @@ class CallbackThread : public QThread
     Q_OBJECT
 
 public:
-    CallbackThread(systhreadfunc_t func, void* parm = 0);
+    CallbackThread(systhreadfunc_t func, void *parm = 0);
     ~CallbackThread();
 
     void run();
@@ -64,7 +64,7 @@ protected slots:
 
 private:
     systhreadfunc_t _callback;
-    void* _parm;
+    void *_parm;
     int _returnValue;
     systhreadexitstatus_t _exitStatus;
     void (*_terminationFunc)(systhreadexitstatus_t);
@@ -93,7 +93,7 @@ extern "C" {
  *
  * @return Thread handle.
  */
-DENG_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void* parm);
+DENG_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm);
 
 DENG_PUBLIC void Thread_Sleep(int milliseconds);
 
@@ -118,7 +118,7 @@ DENG_PUBLIC void Thread_SetCallback(thread_t thread, void (*terminationFunc)(sys
  *
  * @return  Return value of the thread.
  */
-DENG_PUBLIC int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t* exitStatus);
+DENG_PUBLIC int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitStatus);
 
 /**
  * @param handle  Handle to the thread to return the id of.
@@ -131,7 +131,7 @@ DENG_PUBLIC uint32_t Sys_CurrentThreadId(void);
 
 DENG_PUBLIC boolean Sys_InMainThread(void);
 
-DENG_PUBLIC mutex_t Sys_CreateMutex(const char* name);
+DENG_PUBLIC mutex_t Sys_CreateMutex(char const *name);
 
 DENG_PUBLIC void Sys_DestroyMutex(mutex_t mutexHandle);
 

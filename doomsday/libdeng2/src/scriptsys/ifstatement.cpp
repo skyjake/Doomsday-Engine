@@ -46,19 +46,19 @@ void IfStatement::newBranch()
     _branches.push_back(Branch(new Compound()));
 }
 
-void IfStatement::setBranchCondition(Expression* condition)
+void IfStatement::setBranchCondition(Expression *condition)
 {
     _branches.back().condition = condition;
 }
 
-Compound& IfStatement::branchCompound()
+Compound &IfStatement::branchCompound()
 {
     return *_branches.back().compound;
 }
 
-void IfStatement::execute(Context& context) const
+void IfStatement::execute(Context &context) const
 {
-    Evaluator& eval = context.evaluator();
+    Evaluator &eval = context.evaluator();
 
     for(Branches::const_iterator i = _branches.begin(); i != _branches.end(); ++i)
     {
@@ -78,7 +78,7 @@ void IfStatement::execute(Context& context) const
     }
 }
 
-void IfStatement::operator >> (Writer& to) const
+void IfStatement::operator >> (Writer &to) const
 {
     to << SerialId(IF);
     
@@ -93,7 +93,7 @@ void IfStatement::operator >> (Writer& to) const
     to << _elseCompound;
 }
 
-void IfStatement::operator << (Reader& from)
+void IfStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

@@ -29,12 +29,12 @@ using namespace de;
 DictionaryValue::DictionaryValue() : /*_iteration(0),*/ _validIteration(false)
 {}
 
-DictionaryValue::DictionaryValue(const DictionaryValue& other)
+DictionaryValue::DictionaryValue(DictionaryValue const &other)
     : Value(), /*_iteration(0),*/ _validIteration(false)
 {
     for(Elements::const_iterator i = other._elements.begin(); i != other._elements.end(); ++i)
     {
-        Value* value = i->second->duplicate();
+        Value *value = i->second->duplicate();
         _elements[ValueRef(i->first.value->duplicate())] = value;
     }
 }
@@ -54,7 +54,7 @@ void DictionaryValue::clear()
     _elements.clear();
 }
 
-void DictionaryValue::add(Value* key, Value* value)
+void DictionaryValue::add(Value *key, Value *value)
 {
     Elements::iterator existing = _elements.find(ValueRef(key));
     
@@ -74,7 +74,7 @@ void DictionaryValue::add(Value* key, Value* value)
     }
 }
 
-Value* DictionaryValue::duplicate() const
+Value *DictionaryValue::duplicate() const
 {
     return new DictionaryValue(*this);
 }
@@ -107,7 +107,7 @@ dsize DictionaryValue::size() const
     return _elements.size();
 }
 
-const Value& DictionaryValue::element(const Value& index) const
+Value const &DictionaryValue::element(Value const &index) const
 {
     Elements::const_iterator i = _elements.find(ValueRef(&index));
     if(i == _elements.end())
@@ -118,12 +118,12 @@ const Value& DictionaryValue::element(const Value& index) const
     return *i->second;
 }
 
-Value& DictionaryValue::element(const Value& index)
+Value &DictionaryValue::element(Value const &index)
 {
-    return const_cast<Value&>(const_cast<const DictionaryValue*>(this)->element(index));
+    return const_cast<Value &>(const_cast<DictionaryValue const *>(this)->element(index));
 }
 
-void DictionaryValue::setElement(const Value& index, Value* value)
+void DictionaryValue::setElement(Value const &index, Value *value)
 {
     Elements::iterator i = _elements.find(ValueRef(&index));
     if(i == _elements.end())
@@ -138,18 +138,18 @@ void DictionaryValue::setElement(const Value& index, Value* value)
     }
 }
 
-bool DictionaryValue::contains(const Value& value) const
+bool DictionaryValue::contains(Value const &value) const
 {
     return _elements.find(ValueRef(&value)) != _elements.end();
 }
 
-Value* DictionaryValue::begin()
+Value *DictionaryValue::begin()
 {
     _validIteration = false;
     return next();
 }
 
-Value* DictionaryValue::next()
+Value *DictionaryValue::next()
 {
     if(!_validIteration)
     {
@@ -160,7 +160,7 @@ Value* DictionaryValue::next()
     {
         return 0;
     }
-    ArrayValue* pair = new ArrayValue;
+    ArrayValue *pair = new ArrayValue;
     pair->add(_iteration->first.value->duplicate());
     pair->add(_iteration->second->duplicate());
     ++_iteration;
@@ -172,9 +172,9 @@ bool DictionaryValue::isTrue() const
     return size() > 0;
 }
 
-dint DictionaryValue::compare(const Value& value) const
+dint DictionaryValue::compare(Value const &value) const
 {
-    const DictionaryValue* other = dynamic_cast<const DictionaryValue*>(&value);
+    DictionaryValue const *other = dynamic_cast<DictionaryValue const *>(&value);
     if(other)
     {
         if(size() < other->size())
@@ -202,9 +202,9 @@ dint DictionaryValue::compare(const Value& value) const
     return Value::compare(value);
 }
 
-void DictionaryValue::sum(const Value& value)
+void DictionaryValue::sum(Value const &value)
 {
-    const DictionaryValue* other = dynamic_cast<const DictionaryValue*>(&value);
+    DictionaryValue const *other = dynamic_cast<DictionaryValue const *>(&value);
     if(!other)
     {
         throw ArithmeticError("DictionaryValue::sum", "Values cannot be summed");
@@ -217,7 +217,7 @@ void DictionaryValue::sum(const Value& value)
     }
 }
 
-void DictionaryValue::subtract(const Value& subtrahend)
+void DictionaryValue::subtract(Value const &subtrahend)
 {
     Elements::iterator i = _elements.find(ValueRef(&subtrahend));
     if(i == _elements.end())
@@ -229,7 +229,7 @@ void DictionaryValue::subtract(const Value& subtrahend)
     _elements.erase(i);
 }
 
-void DictionaryValue::operator >> (Writer& to) const
+void DictionaryValue::operator >> (Writer &to) const
 {
     to << SerialId(DICTIONARY) << duint(_elements.size());
 
@@ -242,7 +242,7 @@ void DictionaryValue::operator >> (Writer& to) const
     }
 }
 
-void DictionaryValue::operator << (Reader& from)
+void DictionaryValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

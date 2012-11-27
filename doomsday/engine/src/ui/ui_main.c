@@ -34,16 +34,16 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_system.h"
 #include "de_graphics.h"
 #include "de_render.h"
 #include "de_ui.h"
 #include "de_misc.h"
 
-#include "image.h"
-#include "texturecontent.h"
-#include "rend_console.h" // \todo Move Rend_ConsoleUpdateTitle somewhere more suitable.
+#include "resource/image.h"
+#include "resource/fonts.h"
+#include "gl/texturecontent.h"
+#include "render/rend_console.h" // move Rend_ConsoleUpdateTitle somewhere more suitable
 
 // MACROS ------------------------------------------------------------------
 

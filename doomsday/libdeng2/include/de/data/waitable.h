@@ -50,7 +50,7 @@ namespace de
 
         /// Wait for the specified period of time to secure the
         /// resource.  If timeout occurs, an exception is thrown.
-        void wait(const Time::Delta& timeOut);
+        void wait(Time::Delta const &timeOut);
         
         /// Mark the resource as available by incrementing the
         /// semaphore value.

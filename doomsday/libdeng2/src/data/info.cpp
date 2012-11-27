@@ -38,7 +38,7 @@ struct Info::Instance
      * Initialize the parser for reading a block of source content.
      * @param source  Text to be parsed.
      */
-    void init(const String& source)
+    void init(String const &source)
     {
         rootBlock.clear();
 
@@ -107,7 +107,7 @@ struct Info::Instance
         {
             nextChar();
         }
-        catch(const EndOfFile&)
+        catch(EndOfFile const &)
         {
             // If the file ends right after the line, we'll get the EOF
             // exception.  We can safely ignore it for now.
@@ -157,7 +157,7 @@ struct Info::Instance
                 nextChar();
             }
         }
-        catch(const EndOfFile&)
+        catch(EndOfFile const &)
         {}
 
         return currentToken;
@@ -170,9 +170,9 @@ struct Info::Instance
      *
      * @return Parsed element. Caller gets owernship.
      */
-    Element* get()
+    Element *get()
     {
-        Element* e = parseElement();
+        Element *e = parseElement();
         if(!e) throw OutOfElements("");
         return e;
     }
@@ -181,7 +181,7 @@ struct Info::Instance
      * Returns the next element from the source file.
      * @return An instance of one of the Element classes, or @c NULL if there are none.
      */
-    Element* parseElement()
+    Element *parseElement()
     {
         String key;
         String next;
@@ -192,7 +192,7 @@ struct Info::Instance
             // The next token decides what kind of element we have here.
             next = nextToken();
         }
-        catch(const EndOfFile&)
+        catch(EndOfFile const &)
         {
             // The file ended.
             return 0;
@@ -276,7 +276,7 @@ struct Info::Instance
                // The value will be composed of any number of sub-strings.
                forever { value += parseString(); }
             }
-            catch(const de::Error&)
+            catch(de::Error const &)
             {
                 // No more strings to append.
                 return value;
@@ -293,7 +293,7 @@ struct Info::Instance
      * Parse a key element.
      * @param name Name of the parsed key element.
      */
-    KeyElement* parseKeyElement(const String& name)
+    KeyElement *parseKeyElement(String const &name)
     {
         String value;
 
@@ -320,7 +320,7 @@ struct Info::Instance
     /**
      * Parse a list element, identified by the given name.
      */
-    ListElement* parseListElement(const String& name)
+    ListElement *parseListElement(String const &name)
     {
         if(peekToken() != "<")
         {
@@ -364,7 +364,7 @@ struct Info::Instance
      * Parse a block element, identified by the given name.
      * @param blockType Identifier of the block.
      */
-    BlockElement* parseBlockElement(const String& blockType)
+    BlockElement *parseBlockElement(String const &blockType)
     {
         QScopedPointer<BlockElement> block(new BlockElement(blockType, peekToken()));
         int startLine = currentLine;
@@ -394,7 +394,7 @@ struct Info::Instance
 
             while(peekToken() != endToken)
             {
-                Element* element = parseElement();
+                Element *element = parseElement();
                 if(!element)
                 {
                     throw SyntaxError("Info::parseBlockElement",
@@ -404,7 +404,7 @@ struct Info::Instance
                 block->add(element);
             }
         }
-        catch(const EndOfFile&)
+        catch(EndOfFile const &)
         {
             throw SyntaxError("Info::parseBlockElement",
                               QString("End of file encountered unexpectedly while parsing a block element (block started on line %1).")
@@ -417,12 +417,12 @@ struct Info::Instance
         return block.take();
     }
 
-    void parse(const String& source)
+    void parse(String const &source)
     {
         init(source);
         forever
         {
-            Element* e = parseElement();
+            Element *e = parseElement();
             if(!e) break;
             rootBlock.add(e);
         }
@@ -451,7 +451,7 @@ void Info::BlockElement::clear()
     _contentsInOrder.clear();
 }
 
-Info::Element* Info::BlockElement::findByPath(const String &path) const
+Info::Element *Info::BlockElement::findByPath(String const &path) const
 {
     String name;
     String remainder;
@@ -468,13 +468,13 @@ Info::Element* Info::BlockElement::findByPath(const String &path) const
     name = name.trimmed();
 
     // Does this element exist?
-    Element* e = find(name);
+    Element *e = find(name);
     if(!e) return 0;
 
     if(e->isBlock())
     {
         // Descend into sub-blocks.
-        return static_cast<BlockElement*>(e)->findByPath(remainder);
+        return static_cast<BlockElement *>(e)->findByPath(remainder);
     }
     return e;
 }
@@ -484,7 +484,7 @@ Info::Info()
     d = new Instance;
 }
 
-Info::Info(const String& source)
+Info::Info(String const &source)
 {
     QScopedPointer<Instance> inst(new Instance); // parsing may throw exception
     inst->parse(source);
@@ -496,12 +496,12 @@ Info::~Info()
     delete d;
 }
 
-void Info::parse(const String& infoSource)
+void Info::parse(String const &infoSource)
 {
     d->parse(infoSource);
 }
 
-void Info::parseNativeFile(const String& nativePath)
+void Info::parseNativeFile(String const &nativePath)
 {
     QFile file(nativePath);
     if(file.open(QFile::ReadOnly | QFile::Text))
@@ -510,23 +510,23 @@ void Info::parseNativeFile(const String& nativePath)
     }
 }
 
-const Info::BlockElement& Info::root() const
+Info::BlockElement const &Info::root() const
 {
     return d->rootBlock;
 }
 
-const Info::Element* Info::findByPath(const String& path) const
+Info::Element const *Info::findByPath(String const &path) const
 {
     if(path.isEmpty()) return &d->rootBlock;
     return d->rootBlock.findByPath(path);
 }
 
-bool Info::findValueForKey(const String& key, String& value) const
+bool Info::findValueForKey(String const &key, String &value) const
 {
-    const Element* element = findByPath(key);
+    Element const *element = findByPath(key);
     if(element && element->isKey())
     {
-        value = static_cast<const KeyElement*>(element)->value();
+        value = static_cast<KeyElement const *>(element)->value();
         return true;
     }
     return false;

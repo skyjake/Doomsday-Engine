@@ -31,13 +31,13 @@ namespace de
     class TryStatement : public Statement
     {
     public:
-        void execute(Context& context) const;
+        void execute(Context &context) const;
         
-        Compound& compound() { return _compound; }
+        Compound &compound() { return _compound; }
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
     private:
         Compound _compound;

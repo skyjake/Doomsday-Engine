@@ -109,7 +109,9 @@ DENG_API_HEADERS = \
     api/dengproject.h \
     api/doomsday.h \
     api/filehandle.h \
+    api/filetype.h \
     api/materialarchive.h \
+    api/resourceclass.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
@@ -125,6 +127,7 @@ DENG_HEADERS += \
 DENG_HEADERS += \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
+    include/audio/m_mus2midi.h \
     include/audio/s_cache.h \
     include/audio/s_environ.h \
     include/audio/s_logic.h \
@@ -134,7 +137,6 @@ DENG_HEADERS += \
     include/audio/s_wav.h \
     include/audio/sys_audio.h \
     include/audio/sys_audiod_dummy.h \
-    include/binarytree.h \
     include/busymode.h \
     include/cbuffer.h \
     include/client/cl_def.h \
@@ -148,7 +150,6 @@ DENG_HEADERS += \
     include/con_bind.h \
     include/con_config.h \
     include/con_main.h \
-    include/consolewindow.h \
     include/dd_def.h \
     include/dd_games.h \
     include/dd_help.h \
@@ -169,20 +170,26 @@ DENG_HEADERS += \
     include/de_network.h \
     include/de_platform.h \
     include/de_play.h \
-    include/de_refresh.h \
+    include/de_resource.h \
     include/de_render.h \
     include/de_system.h \
     include/de_ui.h \
     include/def_data.h \
     include/def_main.h \
+    include/dualstring.h \
     include/edit_bias.h \
     include/edit_bsp.h \
     include/edit_map.h \
-    include/file.h \
-    include/filehandlebuilder.h \
-    include/fileinfo.h \
-    include/fs_main.h \
-    include/fs_util.h \
+    include/filesys/file.h \
+    include/filesys/filehandlebuilder.h \
+    include/filesys/fileinfo.h \
+    include/filesys/fs_main.h \
+    include/filesys/fs_util.h \
+    include/filesys/lumpindex.h \
+    include/filesys/metafile.h \
+    include/filesys/searchpath.h \
+    include/filesys/sys_direc.h \
+    include/filesys/sys_findfile.h \
     include/game.h \
     include/gl/gl_defer.h \
     include/gl/gl_deferredapi.h \
@@ -193,24 +200,20 @@ DENG_HEADERS += \
     include/gl/gl_texmanager.h \
     include/gl/svg.h \
     include/gl/sys_opengl.h \
+    include/gl/texturecontent.h \
     include/gridmap.h \
-    include/json.h \
     include/kdtree.h \
     include/library.h \
-    include/lumpcache.h \
-    include/lumpindex.h \
     include/m_bams.h \
     include/m_decomp64.h \
-    include/m_linkedlist.h \
-    include/m_md5.h \
     include/m_misc.h \
-    include/m_mus2midi.h \
     include/m_nodepile.h \
     include/m_profiler.h \
     include/m_stack.h \
     include/m_vector.h \
     include/map/blockmap.h \
     include/map/blockmapvisual.h \
+    include/map/bsp/bsptreenode.h \
     include/map/bsp/hedgeinfo.h \
     include/map/bsp/hedgeintercept.h \
     include/map/bsp/hedgetip.h \
@@ -243,6 +246,8 @@ DENG_HEADERS += \
     include/map/p_ticker.h \
     include/map/plane.h \
     include/map/polyobj.h \
+    include/map/propertyvalue.h \
+    include/map/r_world.h \
     include/map/sector.h \
     include/map/sidedef.h \
     include/map/surface.h \
@@ -257,18 +262,15 @@ DENG_HEADERS += \
     include/network/protocol.h \
     include/network/sys_network.h \
     include/network/ui_mpi.h \
-    include/pathtree.h \
-    include/propertyvalue.h \
-    include/r_main.h \
-    include/r_things.h \
     include/r_util.h \
-    include/r_world.h \
     include/render/r_draw.h \
     include/render/r_fakeradio.h \
+    include/render/r_main.h \
     include/render/r_lgrid.h \
     include/render/r_lumobjs.h \
     include/render/r_shadow.h \
     include/render/r_sky.h \
+    include/render/r_things.h \
     include/render/rend_bias.h \
     include/render/rend_clip.h \
     include/render/rend_console.h \
@@ -291,6 +293,7 @@ DENG_HEADERS += \
     include/resource/fonts.h \
     include/resource/hq2x.h \
     include/resource/image.h \
+    include/resource/lumpcache.h \
     include/resource/material.h \
     include/resource/materials.h \
     include/resource/materialvariant.h \
@@ -302,8 +305,8 @@ DENG_HEADERS += \
     include/resource/texturevariant.h \
     include/resource/texturevariantspecification.h \
     include/resource/tga.h \
-    include/resourcenamespace.h \
-    include/resourcerecord.h \
+    include/resource/wad.h \
+    include/resource/zip.h \
     include/server/sv_def.h \
     include/server/sv_frame.h \
     include/server/sv_infine.h \
@@ -311,12 +314,8 @@ DENG_HEADERS += \
     include/server/sv_pool.h \
     include/server/sv_sound.h \
     include/sys_console.h \
-    include/sys_direc.h \
-    include/sys_findfile.h \
-    include/sys_reslocator.h \
     include/sys_system.h \
     include/tab_anorms.h \
-    include/texturecontent.h \
     include/ui/b_command.h \
     include/ui/b_context.h \
     include/ui/b_device.h \
@@ -325,6 +324,7 @@ DENG_HEADERS += \
     include/ui/busyvisual.h \
     include/ui/canvas.h \
     include/ui/canvaswindow.h \
+    include/ui/consolewindow.h \
     include/ui/dd_input.h \
     include/ui/displaymode.h \
     include/ui/displaymode_native.h \
@@ -342,8 +342,7 @@ DENG_HEADERS += \
     include/ui/window.h \
     include/ui/zonedebug.h \
     include/updater.h \
-    include/wad.h \
-    include/zip.h \
+    include/uri.hh \
     src/updater/downloaddialog.h \
     src/updater/processcheckdialog.h \
     src/updater/updateavailabledialog.h \
@@ -354,8 +353,6 @@ DENG_HEADERS += \
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
-    $$DENG_INCLUDE_DIR/render \
-    $$DENG_INCLUDE_DIR/resource \
     $$DENG_API_DIR
 
 HEADERS += \
@@ -421,13 +418,14 @@ else:unix {
 }
 
 deng_nodisplaymode {
-    SOURCES += src/displaymode_dummy.c
+    SOURCES += src/ui/displaymode_dummy.c
 }
 
 # Platform-independent sources.
 SOURCES += \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
+    src/audio/m_mus2midi.c \
     src/audio/s_cache.c \
     src/audio/s_environ.cpp \
     src/audio/s_logic.c \
@@ -436,7 +434,6 @@ SOURCES += \
     src/audio/s_sfx.c \
     src/audio/s_wav.c \
     src/audio/sys_audiod_dummy.c \
-    src/binarytree.cpp \
     src/busymode.cpp \
     src/cbuffer.c \
     src/client/cl_frame.c \
@@ -461,14 +458,20 @@ SOURCES += \
     src/def_data.c \
     src/def_main.cpp \
     src/def_read.cpp \
+    src/dualstring.cpp \
     src/edit_bias.c \
     src/edit_bsp.cpp \
     src/edit_map.cpp \
-    src/file.cpp \
-    src/filehandle.cpp \
-    src/fileid.cpp \
-    src/fs_main.cpp \
-    src/fs_util.cpp \
+    src/filesys/file.cpp \
+    src/filesys/filehandle.cpp \
+    src/filesys/fileid.cpp \
+    src/filesys/fs_main.cpp \
+    src/filesys/fs_scheme.cpp \
+    src/filesys/fs_util.cpp \
+    src/filesys/lumpindex.cpp \
+    src/filesys/metafile.cpp \
+    src/filesys/searchpath.cpp \
+    src/filesys/sys_direc.c \
     src/game.cpp \
     src/gl/dgl_common.c \
     src/gl/dgl_draw.c \
@@ -482,16 +485,11 @@ SOURCES += \
     src/gl/svg.c \
     src/gl/sys_opengl.c \
     src/gridmap.c \
-    src/json.cpp \
     src/kdtree.c \
     src/library.cpp \
-    src/lumpindex.cpp \
     src/m_bams.c \
     src/m_decomp64.c \
-    src/m_linkedlist.c \
-    src/m_md5.c \
     src/m_misc.c \
-    src/m_mus2midi.c \
     src/m_nodepile.c \
     src/m_stack.c \
     src/m_vector.c \
@@ -524,6 +522,8 @@ SOURCES += \
     src/map/p_ticker.c \
     src/map/plane.c \
     src/map/polyobj.c \
+    src/map/propertyvalue.cpp \
+    src/map/r_world.c \
     src/map/sector.c \
     src/map/sidedef.c \
     src/map/surface.c \
@@ -539,19 +539,15 @@ SOURCES += \
     src/network/protocol.c \
     src/network/sys_network.c \
     src/network/ui_mpi.c \
-    src/pathtree.cpp \
-    src/pathtreenode.cpp \
-    src/propertyvalue.cpp \
-    src/r_main.c \
-    src/r_things.c \
     src/r_util.c \
-    src/r_world.c \
     src/render/r_draw.c \
     src/render/r_fakeradio.c \
+    src/render/r_main.c \
     src/render/r_lgrid.c \
     src/render/r_lumobjs.c \
     src/render/r_shadow.c \
     src/render/r_sky.c \
+    src/render/r_things.c \
     src/render/rend_bias.c \
     src/render/rend_clip.cpp \
     src/render/rend_console.c \
@@ -584,16 +580,14 @@ SOURCES += \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \
     src/resource/tga.c \
-    src/resourcenamespace.cpp \
-    src/resourcerecord.cpp \
+    src/resource/wad.cpp \
+    src/resource/zip.cpp \
     src/server/sv_frame.c \
     src/server/sv_infine.c \
     src/server/sv_main.c \
     src/server/sv_missile.c \
     src/server/sv_pool.c \
     src/server/sv_sound.cpp \
-    src/sys_direc.c \
-    src/sys_reslocator.cpp \
     src/sys_system.c \
     src/tab_tables.c \
     src/ui/b_command.c \
@@ -626,17 +620,12 @@ SOURCES += \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
     src/uri.cpp \
-    src/wad.cpp \
-    src/zip.cpp
+    src/uri_wrapper.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h
     SOURCES += src/audio/sys_audiod_sdlmixer.c
 }
-
-# Use the fixed-point math from libcommon.
-# TODO: Move it to the engine.
-SOURCES += ../plugins/common/src/m_fixed.c
 
 OTHER_FILES += \
     data/cphelp.txt \

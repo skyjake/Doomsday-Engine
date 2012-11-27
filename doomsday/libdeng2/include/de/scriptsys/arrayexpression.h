@@ -50,9 +50,9 @@ namespace de
          * @param arg  Argument expression to add. Ownership transferred
          *             to the array expression.
          */
-        void add(Expression* arg);
+        void add(Expression *arg);
 
-        void push(Evaluator& evaluator, Record* names = 0) const;
+        void push(Evaluator &evaluator, Record *names = 0) const;
 
         /**
          * Returns one of the expressions in the array.
@@ -61,11 +61,11 @@ namespace de
          *
          * @return  Expression.
          */
-        const Expression& at(dint pos) const;
+        Expression const &at(dint pos) const;
 
-        const Expression& front() const { return at(0); }
+        Expression const &front() const { return at(0); }
         
-        const Expression& back() const { return at(size() - 1); }
+        Expression const &back() const { return at(size() - 1); }
 
         /**
          * Collects the result values of the arguments and puts them 
@@ -73,14 +73,14 @@ namespace de
          *
          * @return ArrayValue with the results of the argument evaluations.
          */
-        Value* evaluate(Evaluator& evaluator) const;
+        Value *evaluate(Evaluator &evaluator) const;
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
     private:
-        typedef std::vector<Expression*> Arguments;
+        typedef std::vector<Expression *> Arguments;
         Arguments _arguments;
     };
 }

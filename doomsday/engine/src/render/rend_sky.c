@@ -29,10 +29,10 @@
 #include "de_graphics.h"
 #include "de_render.h"
 
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
-#include "r_sky.h"
+#include "render/r_sky.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 /**
  * @defgroup skySphereRenderFlags  Sky Render Flags
@@ -140,7 +140,7 @@ static void renderSkyModels(void)
         params.inter = inter;
         params.mf = sky->model;
         params.alwaysInterpolate = true;
-        R_SetModelFrame(sky->model, sky->frame);
+        Rend_ModelSetFrame(sky->model, sky->frame);
         params.yaw = sky->yaw;
         for(c = 0; c < 4; ++c)
         {
@@ -255,14 +255,14 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         if(renderTextures == 2)
         {
-            mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
+            mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":gray"));
         }
         else
         {
             mat = R_SkyLayerMaterial(layer);
             if(!mat)
             {
-                mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":missing"));
+                mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":missing"));
                 rs.texXFlip = false;
             }
         }

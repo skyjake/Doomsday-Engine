@@ -51,6 +51,7 @@ public_file.write(banner)
 internal_file.write("#ifndef __DOOMSDAY_PLAY_MAP_DATA_TYPES_H__\n")
 internal_file.write("#define __DOOMSDAY_PLAY_MAP_DATA_TYPES_H__\n\n")
 internal_file.write("#include \"p_mapdata.h\"\n\n")
+internal_file.write("#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n")
 
 # Begin writing to the public header.
 public_file.write("#ifndef __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__\n")
@@ -58,7 +59,7 @@ public_file.write("#define __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__\n\n")
 
 for input_line in sys.stdin.readlines():
     line = input_line.strip()
-    
+
     if verbatim:
         if line == 'end':
             println(verbatim, "")
@@ -66,11 +67,11 @@ for input_line in sys.stdin.readlines():
         else:
             println(verbatim, input_line.rstrip())
         continue
-    
+
     # Skip empty lines and comments.
     if len(line) == 0 or line[0] == '#':
         continue
-        
+
     # If there is a comment on the line, get rid of it.
     comment_stripped = line
     line_comment = ''
@@ -78,10 +79,10 @@ for input_line in sys.stdin.readlines():
         index = comment_stripped.index('//')
         line_comment = comment_stripped[index:]
         comment_stripped = comment_stripped[:index]
-        
+
     tokens = comment_stripped.split()
     count = len(tokens)
-    
+
     if current is None:
         if count == 1:
             if tokens[0] == 'internal':
@@ -103,7 +104,7 @@ for input_line in sys.stdin.readlines():
         if count == 3:
             # Use "-" to omit the DDVT type declaration (internal usage only).
             if tokens[0] != '-':
-                println(public_file, 
+                println(public_file,
                     "#define DMT_%s_%s DDVT_%s" % (publicName.upper(),
                                                    tokens[2].upper(),
                                                    tokens[0].upper()), line_comment)
@@ -114,18 +115,18 @@ for input_line in sys.stdin.readlines():
                 pos = c_type.index('[')
                 indexed = c_type[pos:]
                 c_type = c_type[:pos]
-                
+
             # Translate the type into a real C type.
             if '_s' in c_type:
                 c_type = 'struct ' + c_type
             for symbol, real in type_replacements.items():
                 c_type = c_type.replace(symbol, real)
-            
+
             # Add some visual padding to align the members.
             padding = 24 - len(c_type) - 4
             if padding < 1: padding = 1
-            
-            println(internal_file, "    %s%s%s%s;" % (c_type, ' '*padding, tokens[2], indexed), 
+
+            println(internal_file, "    %s%s%s%s;" % (c_type, ' '*padding, tokens[2], indexed),
                     line_comment)
         elif count == 1:
             if tokens[0] == 'end':
@@ -136,7 +137,8 @@ for input_line in sys.stdin.readlines():
                 error(input_line, 'syntax error')
         else:
             error(input_line, "unknown definition in struct %s" % current)
-        
+
 # End the header files.
+internal_file.write("#ifdef __cplusplus\n} // extern \"C\"\n#endif\n\n")
 internal_file.write("#endif\n")
 public_file.write("#endif\n")

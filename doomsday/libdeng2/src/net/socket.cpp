@@ -72,17 +72,17 @@
 #include "de/Reader"
 #include "de/data/huffman.h"
 
-using namespace de;
+namespace de {
 
 /// Version of the block transfer protocol.
-static const duint PROTOCOL_VERSION = 0;
+static duint const PROTOCOL_VERSION = 0;
 
 /// Maximum number of channels.
-static const duint MAX_CHANNELS = 2;
+static duint const MAX_CHANNELS = 2;
 
-static const int MAX_SIZE_SMALL  = 127; // bytes
-static const int MAX_SIZE_MEDIUM = 4095; // bytes
-static const int MAX_SIZE_LARGE  = DENG2_SOCKET_MAX_PAYLOAD_SIZE;
+static int const MAX_SIZE_SMALL  = 127; // bytes
+static int const MAX_SIZE_MEDIUM = 4095; // bytes
+static int const MAX_SIZE_LARGE  = DENG2_SOCKET_MAX_PAYLOAD_SIZE;
 
 /// Threshold for input data size: messages smaller than this are first compressed
 /// with Doomsday's Huffman codes. If the result is smaller than the deflated data,
@@ -97,6 +97,8 @@ static const int MAX_SIZE_LARGE  = DENG2_SOCKET_MAX_PAYLOAD_SIZE;
 #define TRMF_SIZE_MASK_MEDIUM   0x3f
 #define TRMF_SIZE_SHIFT         7
 
+namespace internal {
+
 /**
  * Network message header.
  */
@@ -110,7 +112,7 @@ struct Header : public ISerializable
     Header() : size(0), isHuffmanCoded(false), isDeflated(false), channel(0)
     {}
 
-    void operator >> (Writer& writer) const
+    void operator >> (Writer &writer) const
     {
         if(size <= MAX_SIZE_SMALL && !isDeflated)
         {
@@ -139,7 +141,7 @@ struct Header : public ISerializable
     /**
     * Throws an exception if the header is malformed/incomplete.
     */
-    void operator << (Reader& reader)
+    void operator << (Reader &reader)
     {
         // Start reading the header.
         dbyte b;
@@ -179,6 +181,10 @@ struct Header : public ISerializable
     }
 };
 
+} // namespace internal
+
+using namespace internal;
+
 struct Socket::Instance
 {
     enum ReceptionState {
@@ -194,10 +200,10 @@ struct Socket::Instance
     duint activeChannel;
 
     /// Pointer to the internal socket data.
-    QTcpSocket* socket;
+    QTcpSocket *socket;
 
     /// Buffer for incoming received messages.
-    QList<Message*> receivedMessages;
+    QList<Message *> receivedMessages;
 
     /// Number of bytes waiting to be written to the socket.
     dint64 bytesToBeWritten;
@@ -215,10 +221,10 @@ struct Socket::Instance
     ~Instance()
     {
         // Delete received messages left in the buffer.
-        foreach(Message* msg, receivedMessages) delete msg;
+        foreach(Message *msg, receivedMessages) delete msg;
     }
 
-    void serializeAndSendMessage(const IByteArray& packet)
+    void serializeAndSendMessage(IByteArray const &packet)
     {
         Block payload(packet);
         Block huffData;
@@ -246,7 +252,7 @@ struct Socket::Instance
 
         if(!header.size) // Try deflate.
         {
-            const int level = (payload.size() < 2*MAX_SIZE_MEDIUM? 6 /*default*/ : 9 /*best*/);
+            int const level = (payload.size() < 2*MAX_SIZE_MEDIUM? 6 /*default*/ : 9 /*best*/);
             QByteArray deflated = qCompress(payload, level);
 
             if(!deflated.size())
@@ -313,7 +319,7 @@ struct Socket::Instance
                     // Remove the read bytes from the buffer.
                     receivedBytes.remove(0, reader.offset());
                 }
-                catch(const de::Error&)
+                catch(de::Error const &)
                 {
                     // It seems we don't have a full header yet.
                     return;
@@ -363,7 +369,7 @@ struct Socket::Instance
     }
 };
 
-Socket::Socket(const Address& address, const Time::Delta& timeOut)
+Socket::Socket(Address const &address, Time::Delta const &timeOut)
 {
     LOG_AS("Socket");
 
@@ -391,7 +397,7 @@ Socket::Socket(const Address& address, const Time::Delta& timeOut)
                  d->socket->state() == QAbstractSocket::ConnectedState);
 }
 
-Socket::Socket(QTcpSocket* existingSocket)
+Socket::Socket(QTcpSocket *existingSocket)
 {
     d = new Instance;
     d->socket = existingSocket;
@@ -453,18 +459,18 @@ void Socket::setChannel(duint number)
     d->activeChannel = number;
 }
 
-void Socket::send(const IByteArray &packet)
+void Socket::send(IByteArray const &packet)
 {
     send(packet, d->activeChannel);
 }
 
-Socket& Socket::operator << (const IByteArray& packet)
+Socket &Socket::operator << (IByteArray const &packet)
 {
     send(packet, d->activeChannel);
     return *this;
 }
 
-void Socket::send(const IByteArray& packet, duint /*channel*/)
+void Socket::send(IByteArray const &packet, duint /*channel*/)
 {
     if(!d->socket)
     {
@@ -494,7 +500,7 @@ void Socket::readIncomingBytes()
     }
 }
 
-Message* Socket::receive()
+Message *Socket::receive()
 {
     if(d->receivedMessages.isEmpty())
     {
@@ -503,7 +509,7 @@ Message* Socket::receive()
     return d->receivedMessages.takeFirst();
 }
 
-Message* Socket::peek()
+Message *Socket::peek()
 {
     if(d->receivedMessages.isEmpty())
     {
@@ -567,3 +573,5 @@ void Socket::bytesWereWritten(qint64 bytes)
     d->bytesToBeWritten -= bytes;
     DENG2_ASSERT(d->bytesToBeWritten >= 0);
 }
+
+} // namespace de

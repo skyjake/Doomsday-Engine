@@ -38,26 +38,26 @@ namespace de
         DENG2_ERROR(KeyError);
         
         struct ValueRef {
-            ValueRef(const Value* v) : value(v) {}
-            ValueRef(const ValueRef& other) : value(other.value) {}
+            ValueRef(Value const *v) : value(v) {}
+            ValueRef(ValueRef const &other) : value(other.value) {}
                  
             // Operators for the map.
-            bool operator < (const ValueRef& other) const {
+            bool operator < (ValueRef const &other) const {
                 return value->compare(*other.value) < 0;
             }
                         
-            const Value* value;
+            Value const *value;
         };
         
-        typedef std::map<ValueRef, Value*> Elements;
+        typedef std::map<ValueRef, Value *> Elements;
         
     public:
         DictionaryValue();
-        DictionaryValue(const DictionaryValue& other);
+        DictionaryValue(DictionaryValue const &other);
         ~DictionaryValue();
 
         /// Returns a direct reference to the elements map.
-        const Elements& elements() const { return _elements; }
+        Elements const &elements() const { return _elements; }
 
         /**
          * Clears the dictionary of all values.
@@ -71,26 +71,26 @@ namespace de
          * @param key  Key.
          * @param value  Value.
          */ 
-        void add(Value* key, Value* value);
+        void add(Value *key, Value *value);
         
         // Implementations of pure virtual methods.
-        Value* duplicate() const;
+        Value *duplicate() const;
         Text asText() const;
         dsize size() const;     
-        const Value& element(const Value& index) const; 
-        Value& element(const Value& index); 
-        void setElement(const Value& index, Value* value);
-        bool contains(const Value& value) const;
-        Value* begin();
-        Value* next();
+        Value const &element(Value const &index) const; 
+        Value &element(Value const &index); 
+        void setElement(Value const &index, Value *value);
+        bool contains(Value const &value) const;
+        Value *begin();
+        Value *next();
         bool isTrue() const;
-        dint compare(const Value& value) const;
-        void sum(const Value& value);
-        void subtract(const Value& subtrahend);
+        dint compare(Value const &value) const;
+        void sum(Value const &value);
+        void subtract(Value const &subtrahend);
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
         
     private:
         Elements _elements;

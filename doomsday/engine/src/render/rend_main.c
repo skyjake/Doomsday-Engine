@@ -31,7 +31,6 @@
 #include "de_console.h"
 #include "de_edit.h"
 #include "de_render.h"
-#include "de_refresh.h"
 #include "de_play.h"
 #include "de_graphics.h"
 #include "de_misc.h"
@@ -39,10 +38,9 @@
 #include "de_system.h"
 
 #include "network/net_main.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 #include "map/blockmapvisual.h"
-#include "vignette.h"
 
 // Surface (tangent-space) Vector Flags.
 #define SVF_TANGENT             0x01
@@ -366,7 +364,7 @@ void Rend_VertexColorsApplyTorchLight(ColorRawf* colors, const rvertex_t* vertic
  * @param line          Line to determine the potentially visible sections of.
  * @param backSide      If non-zero consider the back side, else the front.
  *
- * @return @see sideSectionFlags denoting which sections are potentially visible.
+ * @return @ref sideSectionFlags denoting which sections are potentially visible.
  */
 static byte pvisibleLineSections(LineDef* line, int backSide)
 {
@@ -1677,13 +1675,13 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
             if(renderTextures == 2)
             {
                 // Lighting debug mode; render using System:gray.
-                mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
+                mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":gray"));
             }
             else if(!surface->material ||
                     ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))
             {
                 // Missing material debug mode; render using System:missing.
-                mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":missing"));
+                mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":missing"));
             }
             else
             {
@@ -2174,7 +2172,7 @@ static boolean hedgeBackClosedForSkyFix(const HEdge* hedge)
 /**
  * Determine which sky fixes are necessary for the specified @a hedge.
  * @param hedge  HEdge to be evaluated.
- * @param skyCap  The fixes we are interested in. @see skyCapFlags.
+ * @param skyCap  The fixes we are interested in. @ref skyCapFlags.
  * @return
  */
 static int chooseHEdgeSkyFixes(HEdge* hedge, int skyCap)
@@ -2798,10 +2796,10 @@ static void Rend_RenderPlanes(void)
         else if(texMode == 1)
             // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
-            mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":missing"));
+            mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":missing"));
         else
             // For lighting debug, render all solid surfaces using the gray texture.
-            mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
+            mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":gray"));
 
         V2f_Copy(texOffset, suf->visOffset);
         // Add the Y offset to orient the Y flipped texture.
@@ -3972,7 +3970,7 @@ static void Rend_RenderBoundingBoxes(void)
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":bbox"));
+    mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":bbox"));
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(mat, spec, true);

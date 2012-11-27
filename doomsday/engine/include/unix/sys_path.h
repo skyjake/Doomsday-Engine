@@ -41,7 +41,7 @@ char* _fullpath(char* full, const char* original, int len);
 void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_FILESYS_PATH_H */

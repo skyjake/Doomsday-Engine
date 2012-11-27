@@ -32,12 +32,18 @@
 #include "dd_types.h"
 #include "dd_plugin.h"
 #ifndef __cplusplus // Kludge: this isn't yet C++ compatible
-#  include "textures.h"
+#  include "resource/textures.h"
 #endif
-#include "sys_direc.h"
+#include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>
 
 #ifdef __cplusplus
+
+#include <QList>
+#include <QMap>
+#include <de/String>
+#include "resourceclass.h"
+
 extern "C" {
 #endif
 
@@ -140,17 +146,72 @@ void* DD_GetVariable(int ddvalue);
 
 ddplayer_t* DD_GetPlayer(int number);
 
-texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
+void DD_CreateResourceClasses();
+void DD_ClearResourceClasses();
 
-materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
+#ifdef __cplusplus
+} // extern "C"
 
-fontnamespaceid_t DD_ParseFontNamespace(const char* str);
+namespace de {
 
-/// @return  Symbolic name of the material namespace associated with @a namespaceId.
-const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid_t texNamespaceId);
+typedef QList<ResourceClass*> ResourceClasses;
+
+/// Map of symbolic file type names to file types.
+typedef QMap<String, FileType*> FileTypes;
+
+}
+
+/**
+ * Lookup a FileType by symbolic name.
+ *
+ * @param name  Symbolic name of the type.
+ * @return  FileType associated with @a name. May return a null-object.
+ */
+de::FileType& DD_FileTypeByName(de::String name);
+
+/**
+ * Attempts to determine which "type" should be attributed to a resource, solely
+ * by examining the name (e.g., a file name/path).
+ *
+ * @return  Type determined for this resource. May return a null-object.
+ */
+de::FileType& DD_GuessFileTypeFromFileName(de::String name);
+
+/// Returns the registered file types for efficient traversal.
+de::FileTypes const& DD_FileTypes();
+
+/**
+ * Lookup a ResourceClass by id.
+ *
+ * @todo Refactor away.
+ *
+ * @param classId  Unique identifier of the class.
+ * @return  ResourceClass associated with @a id.
+ */
+de::ResourceClass& DD_ResourceClassById(resourceclassid_t classId);
+
+/**
+ * Lookup a ResourceClass by symbolic name.
+ *
+ * @param name  Symbolic name of the class.
+ * @return  ResourceClass associated with @a name; otherwise @c 0 (not found).
+ */
+de::ResourceClass& DD_ResourceClassByName(de::String name);
+
+extern "C" {
+#endif // __cplusplus
+
+textureschemeid_t DD_ParseTextureSchemeName(const char* str);
+
+materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
+
+fontschemeid_t DD_ParseFontSchemeName(const char* str);
+
+/// @return  Symbolic name of the material scheme associated with @a schemeId.
+const ddstring_t* DD_MaterialSchemeNameForTextureScheme(textureschemeid_t schemeId);
 
 /// @return  Unique identifier of the material associated with the identified @a uniqueId texture.
-materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId);
+materialid_t DD_MaterialForTextureUniqueId(textureschemeid_t schemeId, int uniqueId);
 
 const char* value_Str(int val);
 
@@ -161,7 +222,7 @@ void DD_DestroyGames(void);
 
 boolean DD_GameInfo(struct gameinfo_s* info);
 
-void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags, char const* names, void* params);
+void DD_AddGameResource(gameid_t game, resourceclassid_t classId, int rflags, char const* names, void* params);
 
 gameid_t DD_DefineGame(struct gamedef_s const* def);
 

@@ -38,19 +38,19 @@
 #include "de/garbage.h"
 #include <de/c_wrapper.h>
 
-static void* zoneAlloc(size_t n) {
+static void *zoneAlloc(size_t n) {
     return Z_Malloc(n, PU_APPSTATIC, 0);
 }
 
-static void* zoneCalloc(size_t n) {
+static void *zoneCalloc(size_t n) {
     return Z_Calloc(n, PU_APPSTATIC, 0);
 }
 
-static void* stdCalloc(size_t n) {
+static void *stdCalloc(size_t n) {
     return M_Calloc(n);
 }
 
-static void autoselectMemoryManagement(ddstring_t* str)
+static void autoselectMemoryManagement(ddstring_t *str)
 {
     if(!str->memFree && !str->memAlloc && !str->memCalloc)
     {
@@ -109,7 +109,7 @@ static void allocateString(ddstring_t *str, size_t forLength, int preserve)
  * automatically cleared, so they don't need initialization.
  * The string will use the memory zone.
  */
-ddstring_t* Str_Init(ddstring_t* str)
+ddstring_t *Str_Init(ddstring_t *str)
 {
     DENG_ASSERT(str);
     if(!str) return 0;
@@ -132,7 +132,7 @@ ddstring_t* Str_Init(ddstring_t* str)
 /**
  * The string will use standard memory allocation.
  */
-ddstring_t* Str_InitStd(ddstring_t* str)
+ddstring_t *Str_InitStd(ddstring_t *str)
 {
     memset(str, 0, sizeof(*str));
 
@@ -143,15 +143,15 @@ ddstring_t* Str_InitStd(ddstring_t* str)
     return str;
 }
 
-ddstring_t* Str_InitStatic(ddstring_t* str, const char* staticConstStr)
+ddstring_t *Str_InitStatic(ddstring_t *str, char const *staticConstStr)
 {
     memset(str, 0, sizeof(*str));
-    str->str = (char*) staticConstStr;
+    str->str = (char *) staticConstStr;
     str->length = (staticConstStr? strlen(staticConstStr) : 0);
     return str;
 }
 
-void Str_Free(ddstring_t* str)
+void Str_Free(ddstring_t *str)
 {
     DENG_ASSERT(str);
     if(!str) return;
@@ -172,26 +172,26 @@ void Str_Free(ddstring_t* str)
 
 ddstring_t *Str_NewStd(void)
 {
-    ddstring_t* str = (ddstring_t*) M_Calloc(sizeof(ddstring_t));
+    ddstring_t *str = (ddstring_t *) M_Calloc(sizeof(ddstring_t));
     Str_InitStd(str);
     return str;
 }
 
-ddstring_t* Str_New(void)
+ddstring_t *Str_New(void)
 {
-    ddstring_t* str = (ddstring_t*) M_Calloc(sizeof(ddstring_t));
+    ddstring_t *str = (ddstring_t *) M_Calloc(sizeof(ddstring_t));
     Str_Init(str);
     return str;
 }
 
-ddstring_t* Str_NewFromReader(Reader* reader)
+ddstring_t *Str_NewFromReader(Reader *reader)
 {
-    ddstring_t* str = Str_New();
+    ddstring_t *str = Str_New();
     Str_Read(str, reader);
     return str;
 }
 
-static void deleteString(Str* str)
+static void deleteString(Str *str)
 {
     DENG_ASSERT(str);
     if(!str) return;
@@ -200,7 +200,7 @@ static void deleteString(Str* str)
     M_Free(str);
 }
 
-void Str_Delete(Str* str)
+void Str_Delete(Str *str)
 {
     DENG_ASSERT(!Garbage_IsTrashed(str));
 
@@ -214,12 +214,12 @@ void Str_Delete(Str* str)
     deleteString(str);
 }
 
-ddstring_t* Str_Clear(ddstring_t* str)
+ddstring_t *Str_Clear(ddstring_t *str)
 {
     return Str_Set(str, "");
 }
 
-ddstring_t* Str_Reserve(ddstring_t* str, int length)
+ddstring_t *Str_Reserve(ddstring_t *str, int length)
 {
     DENG_ASSERT(str);
     if(!str) return 0;
@@ -231,7 +231,7 @@ ddstring_t* Str_Reserve(ddstring_t* str, int length)
     return str;
 }
 
-ddstring_t* Str_ReserveNotPreserving(ddstring_t* str, int length)
+ddstring_t *Str_ReserveNotPreserving(ddstring_t *str, int length)
 {
     DENG_ASSERT(str);
     if(!str) return 0;
@@ -243,14 +243,14 @@ ddstring_t* Str_ReserveNotPreserving(ddstring_t* str, int length)
     return str;
 }
 
-ddstring_t* Str_Set(ddstring_t* str, const char* text)
+ddstring_t *Str_Set(ddstring_t *str, char const *text)
 {
     DENG_ASSERT(str);
     if(!str) return 0;
 
     {
     size_t incoming = strlen(text);
-    char* copied = M_Malloc(incoming + 1); // take a copy in case text points to (a part of) str->str
+    char *copied = M_Malloc(incoming + 1); // take a copy in case text points to (a part of) str->str
     strcpy(copied, text);
     allocateString(str, incoming, false);
     strcpy(str->str, copied);
@@ -260,7 +260,7 @@ ddstring_t* Str_Set(ddstring_t* str, const char* text)
     }
 }
 
-ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append)
+ddstring_t *Str_AppendWithoutAllocs(ddstring_t *str, const ddstring_t *append)
 {
     DENG_ASSERT(str);
     DENG_ASSERT(append);
@@ -274,7 +274,7 @@ ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append)
     return str;
 }
 
-ddstring_t* Str_AppendCharWithoutAllocs(ddstring_t* str, char ch)
+ddstring_t *Str_AppendCharWithoutAllocs(ddstring_t *str, char ch)
 {
     DENG_ASSERT(str);
     DENG_ASSERT(ch); // null not accepted
@@ -287,7 +287,7 @@ ddstring_t* Str_AppendCharWithoutAllocs(ddstring_t* str, char ch)
     return str;
 }
 
-ddstring_t* Str_Append(ddstring_t* str, const char* append)
+ddstring_t *Str_Append(ddstring_t *str, char const *append)
 {
     DENG_ASSERT(str);
     if(!str) return 0;
@@ -297,7 +297,7 @@ ddstring_t* Str_Append(ddstring_t* str, const char* append)
         size_t incoming = strlen(append);
         // Take a copy in case append_text points to (a part of) ds->str, which may
         // be invalidated by allocateString.
-        char* copied = M_Malloc(incoming + 1);
+        char *copied = M_Malloc(incoming + 1);
 
         strcpy(copied, append);
         allocateString(str, str->length + incoming, true);
@@ -309,7 +309,7 @@ ddstring_t* Str_Append(ddstring_t* str, const char* append)
     return str;
 }
 
-ddstring_t* Str_AppendChar(ddstring_t* str, char ch)
+ddstring_t *Str_AppendChar(ddstring_t *str, char ch)
 {
     char append[2];
     append[0] = ch;
@@ -317,7 +317,7 @@ ddstring_t* Str_AppendChar(ddstring_t* str, char ch)
     return Str_Append(str, append);
 }
 
-ddstring_t* Str_Appendf(ddstring_t* str, const char* format, ...)
+ddstring_t *Str_Appendf(ddstring_t *str, char const *format, ...)
 {
     DENG_ASSERT(str);
     if(!str) return 0;
@@ -334,10 +334,10 @@ ddstring_t* Str_Appendf(ddstring_t* str, const char* format, ...)
     }
 }
 
-ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int count)
+ddstring_t *Str_PartAppend(ddstring_t *str, char const *append, int start, int count)
 {
     int partLen;
-    char* copied;
+    char *copied;
 
     DENG_ASSERT(str);
     DENG_ASSERT(append);
@@ -362,9 +362,9 @@ ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int c
     return str;
 }
 
-ddstring_t* Str_Prepend(ddstring_t* str, const char* prepend)
+ddstring_t *Str_Prepend(ddstring_t *str, char const *prepend)
 {
-    char* copied;
+    char *copied;
     size_t incoming;
 
     DENG_ASSERT(str);
@@ -388,7 +388,7 @@ ddstring_t* Str_Prepend(ddstring_t* str, const char* prepend)
     return str;
 }
 
-ddstring_t* Str_PrependChar(ddstring_t* str, char ch)
+ddstring_t *Str_PrependChar(ddstring_t *str, char ch)
 {
     char prepend[2];
     prepend[0] = ch;
@@ -396,18 +396,18 @@ ddstring_t* Str_PrependChar(ddstring_t* str, char ch)
     return Str_Prepend(str, prepend);
 }
 
-char* Str_Text(const ddstring_t* str)
+char *Str_Text(const ddstring_t *str)
 {
     if(!str) return "[null]";
     return str->str ? str->str : "";
 }
 
-int Str_Length(const ddstring_t* str)
+int Str_Length(const ddstring_t *str)
 {
     return (int) Str_Size(str);
 }
 
-size_t Str_Size(const Str* str)
+size_t Str_Size(Str const *str)
 {
     DENG_ASSERT(str);
 
@@ -419,13 +419,13 @@ size_t Str_Size(const Str* str)
     return strlen(Str_Text(str));
 }
 
-boolean Str_IsEmpty(const ddstring_t* str)
+boolean Str_IsEmpty(const ddstring_t *str)
 {
     DENG_ASSERT(str);
     return Str_Length(str) == 0;
 }
 
-ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
+ddstring_t *Str_Copy(ddstring_t *str, const ddstring_t *other)
 {
     DENG_ASSERT(str);
     DENG_ASSERT(other);
@@ -437,7 +437,8 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
     {
         // The original string has no memory allocated; it's a static string.
         allocateString(str, other->length, false);
-        strcpy(str->str, other->str);
+        if(other->str)
+            strcpy(str->str, other->str);
         str->length = other->length;
     }
     else
@@ -451,7 +452,7 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
     return str;
 }
 
-ddstring_t* Str_CopyOrClear(ddstring_t* dest, const ddstring_t* src)
+ddstring_t *Str_CopyOrClear(ddstring_t *dest, const ddstring_t *src)
 {
     DENG_ASSERT(dest);
     if(!dest) return 0;
@@ -463,7 +464,7 @@ ddstring_t* Str_CopyOrClear(ddstring_t* dest, const ddstring_t* src)
     return Str_Clear(dest);
 }
 
-ddstring_t* Str_StripLeft2(ddstring_t* str, int* count)
+ddstring_t *Str_StripLeft2(ddstring_t *str, int *count)
 {
     int i, num;
     boolean isDone;
@@ -504,12 +505,12 @@ ddstring_t* Str_StripLeft2(ddstring_t* str, int* count)
     return str;
 }
 
-ddstring_t* Str_StripLeft(ddstring_t* str)
+ddstring_t *Str_StripLeft(ddstring_t *str)
 {
     return Str_StripLeft2(str, NULL/*not interested in the stripped character count*/);
 }
 
-ddstring_t* Str_StripRight2(ddstring_t* str, int* count)
+ddstring_t *Str_StripRight2(ddstring_t *str, int *count)
 {
     int i, num;
 
@@ -537,12 +538,12 @@ ddstring_t* Str_StripRight2(ddstring_t* str, int* count)
     return str;
 }
 
-ddstring_t* Str_StripRight(ddstring_t* str)
+ddstring_t *Str_StripRight(ddstring_t *str)
 {
     return Str_StripRight2(str, NULL/*not interested in the stripped character count*/);
 }
 
-ddstring_t* Str_Strip2(ddstring_t* str, int* count)
+ddstring_t *Str_Strip2(ddstring_t *str, int *count)
 {
     int right_count, left_count;
     Str_StripLeft2(Str_StripRight2(str, &right_count), &left_count);
@@ -550,12 +551,12 @@ ddstring_t* Str_Strip2(ddstring_t* str, int* count)
     return str;
 }
 
-ddstring_t* Str_Strip(ddstring_t* str)
+ddstring_t *Str_Strip(ddstring_t *str)
 {
     return Str_Strip2(str, NULL/*not interested in the stripped character count*/);
 }
 
-const char* Str_GetLine(ddstring_t* str, const char* src)
+char const *Str_GetLine(ddstring_t *str, char const *src)
 {
     DENG_ASSERT(str);
     if(!str) return 0;
@@ -584,19 +585,19 @@ const char* Str_GetLine(ddstring_t* str, const char* src)
     return src;
 }
 
-int Str_Compare(const ddstring_t* str, const char* text)
+int Str_Compare(const ddstring_t *str, char const *text)
 {
     DENG_ASSERT(str);
     return strcmp(Str_Text(str), text);
 }
 
-int Str_CompareIgnoreCase(const ddstring_t* str, const char* text)
+int Str_CompareIgnoreCase(const ddstring_t *str, char const *text)
 {
     DENG_ASSERT(str);
     return strcasecmp(Str_Text(str), text);
 }
 
-const char* Str_CopyDelim2(ddstring_t* str, const char* src, char delimiter, int cdflags)
+char const *Str_CopyDelim2(ddstring_t *str, char const *src, char delimiter, int cdflags)
 {
     DENG_ASSERT(str);
     if(!str) return 0;
@@ -605,7 +606,7 @@ const char* Str_CopyDelim2(ddstring_t* str, const char* src, char delimiter, int
 
     if(!src) return 0;
 
-    { const char* cursor;
+    { char const *cursor;
     ddstring_t buf; Str_Init(&buf);
     for(cursor = src; *cursor && *cursor != delimiter; ++cursor)
     {
@@ -628,12 +629,12 @@ const char* Str_CopyDelim2(ddstring_t* str, const char* src, char delimiter, int
     }
 }
 
-const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delimiter)
+char const *Str_CopyDelim(ddstring_t *dest, char const *src, char delimiter)
 {
     return Str_CopyDelim2(dest, src, delimiter, CDF_OMIT_DELIMITER | CDF_OMIT_WHITESPACE);
 }
 
-char Str_At(const ddstring_t* str, int index)
+char Str_At(const ddstring_t *str, int index)
 {
     DENG_ASSERT(str);
     if(!str) return 0;
@@ -643,7 +644,7 @@ char Str_At(const ddstring_t* str, int index)
     return str->str[index];
 }
 
-char Str_RAt(const ddstring_t* str, int reverseIndex)
+char Str_RAt(const ddstring_t *str, int reverseIndex)
 {
     DENG_ASSERT(str);
     if(!str) return 0;
@@ -653,7 +654,7 @@ char Str_RAt(const ddstring_t* str, int reverseIndex)
     return str->str[str->length - 1 - reverseIndex];
 }
 
-void Str_Truncate(ddstring_t* str, int position)
+void Str_Truncate(ddstring_t *str, int position)
 {
     DENG_ASSERT(str);
     if(!str) return;
@@ -667,7 +668,7 @@ void Str_Truncate(ddstring_t* str, int position)
 }
 
 /// @note Derived from Qt's QByteArray q_toPercentEncoding
-ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const char* includeChars)
+ddstring_t *Str_PercentEncode2(ddstring_t *str, char const *excludeChars, char const *includeChars)
 {
     boolean didEncode = false;
     int i, span, begin, len;
@@ -732,17 +733,17 @@ ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const 
     return str;
 }
 
-ddstring_t* Str_PercentEncode(ddstring_t* str)
+ddstring_t *Str_PercentEncode(ddstring_t *str)
 {
     return Str_PercentEncode2(str, 0/*no exclusions*/, 0/*no forced inclussions*/);
 }
 
 /// @note Derived from Qt's QByteArray q_fromPercentEncoding
-ddstring_t* Str_PercentDecode(ddstring_t* str)
+ddstring_t *Str_PercentDecode(ddstring_t *str)
 {
     int i, len, outlen, a, b;
-    const char* inputPtr;
-    char* data;
+    char const *inputPtr;
+    char *data;
     char c;
 
     DENG_ASSERT(str);
@@ -790,7 +791,7 @@ ddstring_t* Str_PercentDecode(ddstring_t* str)
     return str;
 }
 
-void Str_Write(const ddstring_t* str, Writer* writer)
+void Str_Write(const ddstring_t *str, Writer *writer)
 {
     size_t len = Str_Length(str);
 
@@ -800,56 +801,56 @@ void Str_Write(const ddstring_t* str, Writer* writer)
     Writer_Write(writer, Str_Text(str), len);
 }
 
-void Str_Read(ddstring_t* str, Reader* reader)
+void Str_Read(ddstring_t *str, Reader *reader)
 {
     size_t len = Reader_ReadUInt32(reader);
-    char* buf = malloc(len + 1);
+    char *buf = malloc(len + 1);
     Reader_Read(reader, buf, len);
     buf[len] = 0;
     Str_Set(str, buf);
     free(buf);
 }
 
-AutoStr* AutoStr_New(void)
+AutoStr *AutoStr_New(void)
 {
     return AutoStr_FromStr(Str_New());
 }
 
-AutoStr* AutoStr_NewStd(void)
+AutoStr *AutoStr_NewStd(void)
 {
     return AutoStr_FromStr(Str_NewStd());
 }
 
-void AutoStr_Delete(AutoStr* as)
+void AutoStr_Delete(AutoStr *as)
 {
     deleteString(as);
 }
 
-AutoStr* AutoStr_FromStr(Str* str)
+AutoStr *AutoStr_FromStr(Str *str)
 {
     DENG_ASSERT(str);
     Garbage_TrashInstance(str, (GarbageDestructor) AutoStr_Delete);
     return str;
 }
 
-AutoStr* AutoStr_FromText(const char* text)
+AutoStr *AutoStr_FromText(char const *text)
 {
     return Str_Set(AutoStr_New(), text);
 }
 
-AutoStr* AutoStr_FromTextStd(const char *text)
+AutoStr *AutoStr_FromTextStd(const char *text)
 {
     return Str_Set(AutoStr_NewStd(), text);
 }
 
-ddstring_t* Str_FromAutoStr(AutoStr* as)
+ddstring_t *Str_FromAutoStr(AutoStr *as)
 {
     DENG_ASSERT(as);
     Garbage_Untrash(as);
     return as;
 }
 
-int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
+int dd_vsnprintf(char *str, size_t size, char const *format, va_list ap)
 {
     int result = vsnprintf(str, size, format, ap);
 

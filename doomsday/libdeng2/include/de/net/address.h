@@ -46,11 +46,11 @@ public:
      * @param address  Network address. E.g., "localhost" or "127.0.0.1".
      * @param port     Port number.
      */
-    Address(const QHostAddress& address, duint16 port = 0);
+    Address(QHostAddress const &address, duint16 port = 0);
 
-    Address(const char* address, duint16 port = 0);
+    Address(char const *address, duint16 port = 0);
 
-    Address(const Address& other);
+    Address(Address const &other);
 
     /**
      * Checks two addresses for equality.
@@ -59,11 +59,11 @@ public:
      *
      * @return @c true if the addresses are equal.
      */
-    bool operator == (const Address& other) const;
+    bool operator == (Address const &other) const;
 
-    const QHostAddress& host() const { return _host; }
+    QHostAddress const &host() const { return _host; }
 
-    void setHost(const QHostAddress& host) { _host = host; }
+    void setHost(QHostAddress const &host) { _host = host; }
 
     duint16 port() const { return _port; }
 
@@ -76,7 +76,7 @@ public:
      * @param mask  Net mask. Use to check if subnets match. The default
      *      checks if two IP addresses match.
      */
-    bool matches(const Address& other, duint32 mask = 0xffffffff);
+    bool matches(Address const &other, duint32 mask = 0xffffffff);
 
     /**
      * Converts the address to text.
@@ -91,7 +91,7 @@ private:
     duint16 _port;
 };
 
-DENG2_PUBLIC QTextStream& operator << (QTextStream& os, const Address& address);
+DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Address const &address);
 
 } // namespace de
 

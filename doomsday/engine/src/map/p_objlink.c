@@ -26,7 +26,6 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
@@ -326,7 +325,7 @@ int RIT_LinkObjToBspLeaf(BspLeaf* bspLeaf, void* paramaters)
  * BspLeaf and into the (relative) back BspLeaf.
  *
  * @param bspLeaf  BspLeaf to attempt to spread over to.
- * @param parameters  @see contactfinderparams_t
+ * @param parameters  @ref contactfinderparams_t
  *
  * @return  Always @c true. (This function is also used as an iterator.)
  */

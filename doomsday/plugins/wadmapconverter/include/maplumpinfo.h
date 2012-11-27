@@ -55,7 +55,7 @@ typedef enum maplumptype_e {
 
 /**
  * Helper macro for determining whether a value can be interpreted as a logical
- * map lump type identifier (@see MapLumpType).
+ * map lump type identifier (see MapLumpType).
  */
 #define VALID_MAPLUMPTYPE(v)    ((v) >= FIRST_MAPLUMP_TYPE && (v) < NUM_MAPLUMP_TYPES)
 

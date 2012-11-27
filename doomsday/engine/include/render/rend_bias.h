@@ -117,7 +117,7 @@ int             SB_ToIndex(source_t* source);
 void            SB_SetColor(float* dest, float* src);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_RENDER_SHADOWBIAS_H

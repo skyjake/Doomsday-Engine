@@ -32,7 +32,7 @@ using namespace de;
 Function::Function() : _globals(0)
 {}
 
-Function::Function(const Arguments& args, const Defaults& defaults) 
+Function::Function(Arguments const &args, Defaults const &defaults) 
     : _arguments(args), _defaults(defaults), _globals(0)
 {}
 
@@ -72,9 +72,9 @@ String Function::asText() const
     return result;
 }
 
-void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values) const
+void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values) const
 {
-    const DictionaryValue* labeledArgs = dynamic_cast<const DictionaryValue*>(
+    DictionaryValue const *labeledArgs = dynamic_cast<DictionaryValue const *>(
         args.elements().front());
     DENG2_ASSERT(labeledArgs != NULL);
 
@@ -110,7 +110,7 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
             {
                 values.push_back(&labeledArgs->element(TextValue(*i)));
             }
-            catch(const DictionaryValue::KeyError&)
+            catch(DictionaryValue::KeyError const &)
             {
                 // Check the defaults.
                 Defaults::const_iterator k = _defaults.find(*i);
@@ -139,7 +139,7 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
     }    
 }
 
-void Function::setGlobals(Record* globals)
+void Function::setGlobals(Record *globals)
 {
     LOG_AS("Function::setGlobals");
     
@@ -154,12 +154,12 @@ void Function::setGlobals(Record* globals)
     }
 }
 
-Record* Function::globals() const
+Record *Function::globals() const
 {
     return _globals;
 }
 
-bool Function::callNative(Context& /*context*/, const ArgumentValues& DENG2_DEBUG_ONLY(args)) const
+bool Function::callNative(Context &/*context*/, ArgumentValues const &DENG2_DEBUG_ONLY(args)) const
 {
     DENG2_ASSERT(args.size() == _arguments.size());
     
@@ -167,7 +167,7 @@ bool Function::callNative(Context& /*context*/, const ArgumentValues& DENG2_DEBU
     return false;
 }
 
-void Function::operator >> (Writer& to) const
+void Function::operator >> (Writer &to) const
 {
     // Number of arguments.
     to << duint16(_arguments.size());
@@ -191,7 +191,7 @@ void Function::operator >> (Writer& to) const
     to << _compound;        
 }
 
-void Function::operator << (Reader& from)
+void Function::operator << (Reader &from)
 {
     duint16 count = 0;
     
@@ -219,7 +219,7 @@ void Function::operator << (Reader& from)
     from >> _compound;
 }
 
-void Function::recordBeingDeleted(Record& DENG2_DEBUG_ONLY(record))
+void Function::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
 {
     // The namespace of the record is being deleted.
     DENG2_ASSERT(_globals == &record);

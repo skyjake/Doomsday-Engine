@@ -562,7 +562,7 @@ struct font_s* R_CreateFontFromFile(Uri* uri, char const* resourcePath);
 struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_REFRESH_DATA_H

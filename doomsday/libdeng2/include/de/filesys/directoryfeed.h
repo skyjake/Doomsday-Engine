@@ -68,14 +68,14 @@ namespace de
          * @param nativePath  Path of the native directory.
          * @param mode        Feed mode.
          */
-        DirectoryFeed(const NativePath& nativePath, const Flags& mode = 0);
+        DirectoryFeed(NativePath const &nativePath, Flags const &mode = 0);
         
         virtual ~DirectoryFeed();
         
-        void populate(Folder& folder);
-        bool prune(File& file) const;
-        File* newFile(const String& name);
-        void removeFile(const String& name);
+        void populate(Folder &folder);
+        bool prune(File &file) const;
+        File *newFile(String const &name);
+        void removeFile(String const &name);
 
     public:
         /**
@@ -83,14 +83,14 @@ namespace de
          *
          * @param nativePath  New path to use as the working directory.
          */
-        static void changeWorkingDir(const NativePath& nativePath);
+        static void changeWorkingDir(NativePath const &nativePath);
 
         /**
          * Creates a native directory relative to the current working directory.
          *
          * @param nativePath  Native directory to create.
          */
-        static void createDir(const NativePath& nativePath);
+        static void createDir(NativePath const &nativePath);
 
         /**
          * Determines whether a native path exists.
@@ -99,7 +99,7 @@ namespace de
          *
          * @return @c true if the path exists, @c false otherwise.
          */
-        static bool exists(const NativePath& nativePath);
+        static bool exists(NativePath const &nativePath);
 
         /**
          * Determines the status of a file in the directory.
@@ -110,14 +110,14 @@ namespace de
          *
          * @return  Status of the file.
          */
-        static File::Status fileStatus(const NativePath& nativePath);
+        static File::Status fileStatus(NativePath const &nativePath);
 
     protected:
-        void populateSubFolder(Folder& folder, const String& entryName);
-        void populateFile(Folder& folder, const String& entryName);
+        void populateSubFolder(Folder &folder, String const &entryName);
+        void populateFile(Folder &folder, String const &entryName);
 
     private:
-        const NativePath _nativePath;
+        NativePath const _nativePath;
         Flags _mode;
     };
 

@@ -39,13 +39,13 @@ Value::Number Value::asNumber() const
     throw ConversionError("Value::asNumber", "Illegal conversion");
 }
 
-Value::Number Value::asSafeNumber(const Number& defaultValue) const
+Value::Number Value::asSafeNumber(Number const &defaultValue) const
 {
     try
     {
         return asNumber();
     }
-    catch(const Error&)
+    catch(Error const &)
     {
         return defaultValue;
     }
@@ -57,42 +57,42 @@ dsize Value::size() const
     throw IllegalError("Value::size", "Size is meaningless");
 }
 
-const Value& Value::element(const Value& /*index*/) const
+Value const &Value::element(Value const &/*index*/) const
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError("Value::element", "Value cannot be indexed");
 }
 
-Value& Value::element(const Value& /*index*/)
+Value &Value::element(Value const &/*index*/)
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError("Value::element", "Value cannot be indexed");
 }
 
-Value* Value::duplicateElement(const Value& index) const
+Value *Value::duplicateElement(Value const &index) const
 {
     return element(index).duplicate();
 }
 
-void Value::setElement(const Value& /*index*/, Value* /*elementValue*/)
+void Value::setElement(Value const &/*index*/, Value *)
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError("Value::setElement", "Value cannot be indexed");
 }
 
-bool Value::contains(const Value& /*value*/) const
+bool Value::contains(Value const &/*value*/) const
 {
     /// @throw IllegalError Value cannot contain other values.
     throw IllegalError("Value::contains", "Value is not a container");
 }
 
-Value* Value::begin()
+Value *Value::begin()
 {
     /// @throw IllegalError Value is not iterable.
     throw IllegalError("Value::begin", "Value is not iterable");
 }
 
-Value* Value::next()
+Value *Value::next()
 {
     /// @throw IllegalError Value is not iterable.
     throw IllegalError("Value::next", "Value is not iterable");
@@ -104,7 +104,7 @@ bool Value::isFalse() const
     return !isTrue();
 }
 
-dint Value::compare(const Value& value) const
+dint Value::compare(Value const &value) const
 {
     // Default to a generic text-based comparison.
     dint result = asText().compare(value.asText());
@@ -117,54 +117,55 @@ void Value::negate()
     throw ArithmeticError("Value::negate", "Value cannot be negated");
 }
  
-void Value::sum(const Value& /*value*/)
+void Value::sum(Value const &/*value*/)
 {
     /// @throw ArithmeticError Value cannot be summed.
     throw ArithmeticError("Value::sum", "Value cannot be summed");
 }
 
-void Value::subtract(const Value& /*subtrahend*/)
+void Value::subtract(Value const &/*subtrahend*/)
 {
     /// @throw ArithmeticError Value cannot be subtracted from.
     throw ArithmeticError("Value::subtract", "Value cannot be subtracted from");    
 }
  
-void Value::divide(const Value& /*divisor*/)
+void Value::divide(Value const &/*divisor*/)
 {
     /// @throw ArithmeticError Value cannot be divided.
     throw ArithmeticError("Value::divide", "Value cannot be divided");
 }
  
-void Value::multiply(const Value& /*value*/)
+void Value::multiply(Value const &/*value*/)
 {
     /// @throw ArithmeticError Value cannot be multiplied.
     throw ArithmeticError("Value::multiply", "Value cannot be multiplied");
 }
  
-void Value::modulo(const Value& /*divisor*/)
+void Value::modulo(Value const &/*divisor*/)
 {
     /// @throw ArithmeticError Module operation is not defined for the value.
     throw ArithmeticError("Value::modulo", "Modulo not defined");
 }
 
-void Value::assign(Value* value)
+void Value::assign(Value *value)
 {
     delete value;
     /// @throw IllegalError Cannot assign to value.
     throw IllegalError("Value::assign", "Cannot assign to value");
 }
 
-void Value::call(Process& /*process*/, const Value& /*arguments*/) const
+void Value::call(Process &/*process*/, Value const &/*arguments*/) const
 {
     /// @throw IllegalError Value cannot be called.
     throw IllegalError("Value::call", "Value cannot be called");
 }
 
-Value* Value::constructFrom(Reader& reader)
+Value *Value::constructFrom(Reader &reader)
 {
     SerialId id;
+    reader.mark();
     reader >> id;
-    reader.rewind(sizeof(id));
+    reader.rewind();
     
     std::auto_ptr<Value> result;
     switch(id)

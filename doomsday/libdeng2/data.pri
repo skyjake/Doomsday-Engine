@@ -4,6 +4,7 @@ HEADERS += \
     include/de/ArrayValue \
     include/de/Audience \
     include/de/BigEndianByteOrder \
+    include/de/BinaryTree \
     include/de/Block \
     include/de/BlockValue \
     include/de/ByteOrder \
@@ -16,6 +17,9 @@ HEADERS += \
     include/de/Guard \
     include/de/IBlock \
     include/de/IByteArray \
+    include/de/IIOStream \
+    include/de/IIStream \
+    include/de/IOStream \
     include/de/IReadable \
     include/de/ISerializable \
     include/de/IWritable \
@@ -24,6 +28,8 @@ HEADERS += \
     include/de/Lockable \
     include/de/NoneValue \
     include/de/NumberValue \
+    include/de/Path \
+    include/de/PathTree \
     include/de/Reader \
     include/de/Record \
     include/de/RecordValue \
@@ -38,9 +44,11 @@ HEADERS += \
     include/de/WaitableFIFO \
     include/de/Writer \
     include/de/Zeroed \
+    include/de/ZipArchive \
     include/de/data/accessorvalue.h \
     include/de/data/archive.h \
     include/de/data/arrayvalue.h \
+    include/de/data/binarytree.h \
     include/de/data/block.h \
     include/de/data/blockvalue.h \
     include/de/data/byteorder.h \
@@ -54,14 +62,20 @@ HEADERS += \
     include/de/data/huffman.h \
     include/de/data/iblock.h \
     include/de/data/ibytearray.h \
+    include/de/data/iiostream.h \
+    include/de/data/iistream.h \
     include/de/data/info.h \
+    include/de/data/iostream.h \
     include/de/data/ireadable.h \
     include/de/data/iserializable.h \
     include/de/data/iwritable.h \
+    include/de/data/json.h \
     include/de/data/lockable.h \
     include/de/data/nonevalue.h \
     include/de/data/numbervalue.h \
     include/de/data/observers.h \
+    include/de/data/path.h \
+    include/de/data/pathtree.h \
     include/de/data/reader.h \
     include/de/data/record.h \
     include/de/data/recordvalue.h \
@@ -75,12 +89,14 @@ HEADERS += \
     include/de/data/waitable.h \
     include/de/data/waitablefifo.h \
     include/de/data/writer.h \
-    include/de/data/zeroed.h
+    include/de/data/zeroed.h \
+    include/de/data/ziparchive.h
 
 SOURCES += \
     src/data/accessorvalue.cpp \
     src/data/archive.cpp \
     src/data/arrayvalue.cpp \
+    src/data/binarytree_wrapper.cpp \
     src/data/block.cpp \
     src/data/blockvalue.cpp \
     src/data/byteorder.cpp \
@@ -93,9 +109,13 @@ SOURCES += \
     src/data/guard.cpp \
     src/data/huffman.cpp \
     src/data/info.cpp \
+    src/data/json.cpp \
     src/data/lockable.cpp \
     src/data/nonevalue.cpp \
     src/data/numbervalue.cpp \
+    src/data/path.cpp \
+    src/data/pathtree.cpp \
+    src/data/pathtreenode.cpp \
     src/data/reader.cpp \
     src/data/record.cpp \
     src/data/recordvalue.cpp \
@@ -107,4 +127,5 @@ SOURCES += \
     src/data/value.cpp \
     src/data/variable.cpp \
     src/data/waitable.cpp \
-    src/data/writer.cpp
+    src/data/writer.cpp \
+    src/data/ziparchive.cpp

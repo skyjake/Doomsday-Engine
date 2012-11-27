@@ -25,13 +25,15 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 
+#include "map/r_world.h"
+#include "render/r_sky.h"
+#include "def_data.h"
 #include "client/cl_def.h"
 #include "m_vector.h"
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 /**
  * @defgroup skyLayerFlags  Sky Layer Flags
@@ -252,7 +254,7 @@ static void R_SetupSkyModels(ded_sky_t* def)
         ++i, modef++, sm++)
     {
         // Is the model ID set?
-        sm->model = R_CheckIDModelFor(modef->id);
+        sm->model = Models_Definition(modef->id);
         if(!sm->model) continue;
 
         // There is a model here.
@@ -280,7 +282,7 @@ void R_SkyPrecache(void)
         for(i = 0, sky = skyModels; i < MAX_SKY_MODELS; ++i, sky++)
         {
             if(!sky->def) continue;
-            R_PrecacheModel(sky->model);
+            Models_Cache(sky->model);
         }
     }
 }

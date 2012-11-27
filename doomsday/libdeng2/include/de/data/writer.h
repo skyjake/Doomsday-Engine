@@ -24,12 +24,16 @@
 #include "../IByteArray"
 #include "../ByteOrder"
 
+#include <algorithm> // std::swap
+
 namespace de {
 
 class IWritable;
 class String;
 class Block;
+class ByteArrayFile;
 class FixedByteArray;
+class IOStream;
 
 /**
  * Provides a protocol for writing data in a specific byte order into a byte
@@ -41,6 +45,10 @@ class FixedByteArray;
 class DENG2_PUBLIC Writer
 {
 public:
+    /// Seeking is not possible, e.g., when writing to a stream. @ingroup errors
+    DENG2_ERROR(SeekError);
+
+public:
     /**
      * Constructs a new writer.
      *
@@ -48,7 +56,7 @@ public:
      * @param byteOrder    Byte order to use. The byte order defaults to little-endian byte order.
      * @param offset       Offset in @a destination where to start writing.
      */
-    Writer(IByteArray& destination, const ByteOrder& byteOrder = littleEndianByteOrder,
+    Writer(IByteArray &destination, ByteOrder const &byteOrder = littleEndianByteOrder,
            IByteArray::Offset offset = 0);
 
     /**
@@ -57,48 +65,75 @@ public:
      * @param destination  Byte array to write to.
      * @param offset       Offset in @a destination where to start writing.
      */
-    Writer(IByteArray& destination, IByteArray::Offset offset);
+    Writer(IByteArray &destination, IByteArray::Offset offset);
+
+    /**
+     * Constructs a new writer for writing to an I/O stream.
+     *
+     * @param stream     Stream to write to.
+     * @param byteOrder  Byte order to use.
+     */
+    Writer(IOStream &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
+
+    /**
+     * Constructs a new writer for writing into a byte array file.
+     *
+     * @param destination  Byte array file to write to.
+     * @param byteOrder    Byte order to use.
+     * @param offset       Offset in @a destination where to start writing.
+     */
+    Writer(ByteArrayFile &destination, ByteOrder const &byteOrder = littleEndianByteOrder,
+           IByteArray::Offset offset = 0);
+
+    /**
+     * Copy constructor.
+     *
+     * @param other  Writer.
+     */
+    Writer(Writer const &other);
 
     /**
      * Constructs a new writer that uses the current offset of @a other as its
      * zero offset.
      *
      * @param other      Writer.
-     * @param byteOrder  Byte order. Defaults to little-endian.
+     * @param byteOrder  Byte order.
      */
-    Writer(const Writer& other, const ByteOrder& byteOrder = littleEndianByteOrder);
+    Writer(Writer const &other, ByteOrder const &byteOrder);
+
+    virtual ~Writer();
 
     //@{ Write a number to the destination buffer, in the chosen byte order.
-    Writer& operator << (const char& byte);
-    Writer& operator << (const dchar& byte);
-    Writer& operator << (const duchar& byte);
-    Writer& operator << (const dint16& word);
-    Writer& operator << (const duint16& word);
-    Writer& operator << (const dint32& dword);
-    Writer& operator << (const duint32& dword);
-    Writer& operator << (const dint64& qword);
-    Writer& operator << (const duint64& qword);
-    Writer& operator << (const dfloat& value);
-    Writer& operator << (const ddouble& value);
+    Writer &operator << (char const &byte);
+    Writer &operator << (dchar const &byte);
+    Writer &operator << (duchar const &byte);
+    Writer &operator << (dint16 const &word);
+    Writer &operator << (duint16 const &word);
+    Writer &operator << (dint32 const &dword);
+    Writer &operator << (duint32 const &dword);
+    Writer &operator << (dint64 const &qword);
+    Writer &operator << (duint64 const &qword);
+    Writer &operator << (dfloat const &value);
+    Writer &operator << (ddouble const &value);
     //@}
 
     /// Write a string to the destination buffer.
-    Writer& operator << (const String& text);
+    Writer &operator << (String const &text);
 
     /// Writes a sequence bytes to the destination buffer.
-    Writer& operator << (const IByteArray& byteArray);
+    Writer &operator << (IByteArray const &byteArray);
 
     /**
      * Writes a fixed-size sequence of bytes to the destination buffer.
      * The size of the sequence is not included in the written data.
      * When reading, the reader must know the size beforehand.
-     * @see Reader::operator >> (FixedByteArray& fixedByteArray)
+     * @see Reader::operator >> (FixedByteArray &fixedByteArray)
      *
      * @param fixedByteArray  Data to write.
      *
      * @return  Reference to the Writer.
      */
-    Writer& operator << (const FixedByteArray& fixedByteArray);
+    Writer &operator << (FixedByteArray const &fixedByteArray);
 
     /**
      * Writes @a block into the destination buffer. Writes the size of the
@@ -109,55 +144,47 @@ public:
      *
      * @return  Reference to the Writer.
      */
-    Writer& operator << (const Block& block);
+    Writer &operator << (Block const &block);
 
     /// Writes a writable object into the destination buffer.
-    Writer& operator << (const IWritable& writable);
+    Writer &operator << (IWritable const &writable);
 
     /**
      * Returns the destination byte array used by the writer.
      */
-    const IByteArray& destination() const {
-        return _destination;
-    }
+    IByteArray const *destination() const;
 
     /**
      * Returns the destination byte array used by the writer.
      */
-    IByteArray& destination() {
-        return _destination;
-    }
+    IByteArray *destination();
 
     /**
      * Returns the offset used by the writer.
      */
-    IByteArray::Offset offset() const {
-        return _offset;
-    }
+    IByteArray::Offset offset() const;
 
-    void setOffset(IByteArray::Offset offset) {
-        _offset = offset;
-    }
+    void setOffset(IByteArray::Offset offset);
 
     /**
      * Returns the byte order of the writer.
      */
-    const ByteOrder& byteOrder() const {
-        return _convert;
-    }
+    ByteOrder const &byteOrder() const;
 
     /**
      * Moves the writer offset forward by a number of bytes.
      *
-     * @param count  Number of bytes to move forward.
+     * @param count Number of bytes to move forward (negative to move backward).
      */
     void seek(dint count);
 
+    inline void swap(Writer &other) {
+        std::swap(d, other.d);
+    }
+
 private:
-    IByteArray& _destination;
-    IByteArray::Offset _offset;
-    const IByteArray::Offset _fixedOffset;
-    const ByteOrder& _convert;
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace de

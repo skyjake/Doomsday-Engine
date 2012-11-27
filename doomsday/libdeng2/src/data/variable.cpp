@@ -31,7 +31,7 @@
 
 using namespace de;
 
-Variable::Variable(const String& name, Value* initial, const Flags& m)
+Variable::Variable(String const &name, Value *initial, Flags const &m)
     : _name(name), _value(0), _mode(m)
 {
     verifyName(_name);
@@ -44,7 +44,7 @@ Variable::Variable(const String& name, Value* initial, const Flags& m)
     _value = v.release();
 }
 
-Variable::Variable(const Variable& other) 
+Variable::Variable(Variable const &other) 
     : ISerializable(), _name(other._name), _value(other._value->duplicate()), _mode(other._mode)
 {}
 
@@ -54,13 +54,13 @@ Variable::~Variable()
     delete _value;
 }
 
-Variable& Variable::operator = (Value* v)
+Variable &Variable::operator = (Value *v)
 {
     set(v);
     return *this;
 }
 
-void Variable::set(Value* v)
+void Variable::set(Value *v)
 {
     std::auto_ptr<Value> val(v);
     // If the value would change, must check if this is allowed.
@@ -72,7 +72,7 @@ void Variable::set(Value* v)
     DENG2_FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
 }
 
-void Variable::set(const Value& v)
+void Variable::set(Value const &v)
 {
     verifyWritable(v);
     verifyValid(v);
@@ -82,13 +82,13 @@ void Variable::set(const Value& v)
     DENG2_FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
 }
 
-const Value& Variable::value() const
+Value const &Variable::value() const
 {
     DENG2_ASSERT(_value != 0);
     return *_value;
 }
 
-Value& Variable::value()
+Value &Variable::value()
 {
     DENG2_ASSERT(_value != 0);
     return *_value;
@@ -99,20 +99,20 @@ Variable::Flags Variable::mode() const
     return _mode;
 }
 
-void Variable::setMode(const Flags& flags)
+void Variable::setMode(Flags const &flags)
 {
     _mode = flags;
 }
 
-bool Variable::isValid(const Value& v) const
+bool Variable::isValid(Value const &v) const
 {
     /// @todo  Make sure this actually works and add func, record, ref.
-    if((dynamic_cast<const NoneValue*>(&v) && !_mode.testFlag(AllowNone)) ||
-        (dynamic_cast<const NumberValue*>(&v) && !_mode.testFlag(AllowNumber)) ||
-        (dynamic_cast<const TextValue*>(&v) && !_mode.testFlag(AllowText)) ||
-        (dynamic_cast<const ArrayValue*>(&v) && !_mode.testFlag(AllowArray)) ||
-        (dynamic_cast<const DictionaryValue*>(&v) && !_mode.testFlag(AllowDictionary)) ||
-        (dynamic_cast<const BlockValue*>(&v) && !_mode.testFlag(AllowBlock)))
+    if((dynamic_cast<NoneValue const *>(&v) && !_mode.testFlag(AllowNone)) ||
+        (dynamic_cast<NumberValue const *>(&v) && !_mode.testFlag(AllowNumber)) ||
+        (dynamic_cast<TextValue const *>(&v) && !_mode.testFlag(AllowText)) ||
+        (dynamic_cast<ArrayValue const *>(&v) && !_mode.testFlag(AllowArray)) ||
+        (dynamic_cast<DictionaryValue const *>(&v) && !_mode.testFlag(AllowDictionary)) ||
+        (dynamic_cast<BlockValue const *>(&v) && !_mode.testFlag(AllowBlock)))
     {
         return false;
     }
@@ -120,7 +120,7 @@ bool Variable::isValid(const Value& v) const
     return true;
 }
 
-void Variable::verifyValid(const Value& v) const
+void Variable::verifyValid(Value const &v) const
 {
     if(!isValid(v))
     {
@@ -130,7 +130,7 @@ void Variable::verifyValid(const Value& v) const
     }
 }
 
-void Variable::verifyWritable(const Value& attemptedNewValue)
+void Variable::verifyWritable(Value const &attemptedNewValue)
 {
     if(_mode & ReadOnly)
     {
@@ -147,7 +147,7 @@ void Variable::verifyWritable(const Value& attemptedNewValue)
     }
 }
 
-void Variable::verifyName(const String& s)
+void Variable::verifyName(String const &s)
 {
     if(s.indexOf('.') != String::npos)
     {
@@ -156,7 +156,7 @@ void Variable::verifyName(const String& s)
     }
 }
 
-void Variable::operator >> (Writer& to) const
+void Variable::operator >> (Writer &to) const
 {
     if(!_mode.testFlag(NoSerialize))
     {
@@ -164,7 +164,7 @@ void Variable::operator >> (Writer& to) const
     }
 }
 
-void Variable::operator << (Reader& from)
+void Variable::operator << (Reader &from)
 {
     duint32 modeFlags = 0;
     from >> _name >> modeFlags;
@@ -174,7 +174,7 @@ void Variable::operator << (Reader& from)
     {
         _value = Value::constructFrom(from);
     }
-    catch(const Error&)
+    catch(Error const &)
     {
         // Always need to have a value.
         _value = new NoneValue();

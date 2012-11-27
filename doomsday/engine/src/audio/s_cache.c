@@ -39,7 +39,6 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
-#include "de_refresh.h"
 #include "de_audio.h"
 #include "de_misc.h"
 
@@ -581,7 +580,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
             Uri* searchPath = Uri_NewWithPath2(info->lumpName, RC_SOUND);
             AutoStr* foundPath = AutoStr_NewStd();
 
-            if(F_FindResource2(RC_SOUND, searchPath, foundPath) &&
+            if(F_FindPath(RC_SOUND, searchPath, foundPath) &&
                (data = WAV_Load(Str_Text(foundPath), &bytesPer, &rate, &numSamples)))
             {
                 // Loading was successful.

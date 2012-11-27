@@ -25,7 +25,7 @@
 
 using namespace de;
 
-LibraryFile::LibraryFile(File* source)
+LibraryFile::LibraryFile(File *source)
     : File(source->name()), _library(0)
 {
     DENG2_ASSERT(source != 0);
@@ -41,7 +41,7 @@ LibraryFile::~LibraryFile()
     delete _library;
 }
 
-Library& LibraryFile::library()
+Library &LibraryFile::library()
 {
     if(_library)
     {
@@ -49,7 +49,7 @@ Library& LibraryFile::library()
     }
     
     /// @todo A method for File for making a NativeFile out of any File.
-    NativeFile* native = dynamic_cast<NativeFile*>(source());
+    NativeFile *native = dynamic_cast<NativeFile *>(source());
     if(!native)
     {
         /// @throw UnsupportedSourceError Currently shared libraries are only loaded directly
@@ -71,13 +71,13 @@ void LibraryFile::clear()
     }
 }
 
-bool LibraryFile::hasUnderscoreName(const String& nameAfterUnderscore) const
+bool LibraryFile::hasUnderscoreName(String const &nameAfterUnderscore) const
 {
     return name().contains("_" + nameAfterUnderscore + ".") ||
            name().endsWith("_" + nameAfterUnderscore);
 }
 
-bool LibraryFile::recognize(const File& file)
+bool LibraryFile::recognize(File const &file)
 {
     // Check the extension first.
     if(QLibrary::isLibrary(file.name()))
@@ -97,7 +97,7 @@ bool LibraryFile::recognize(const File& file)
     // On Mac OS X, shared libraries are in the folder bundle format.
     // The LibraryFile will point to the actual binary inside the bundle.
     // Libraries must be loaded from native files.
-    const NativeFile* native = dynamic_cast<const NativeFile*>(&file);
+    NativeFile const *native = dynamic_cast<NativeFile const *>(&file);
     if(native)
     {
         // Check if the parent folder is a bundle.

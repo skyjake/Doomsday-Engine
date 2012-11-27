@@ -28,14 +28,13 @@
 #include "de_system.h"
 #include "de_graphics.h"
 #include "de_render.h"
-#include "de_refresh.h"
 #include "de_ui.h"
 
-#include "image.h"
-#include "texturecontent.h"
 #include "cbuffer.h"
-#include "font.h"
-
+#include "gl/texturecontent.h"
+#include "resource/image.h"
+#include "resource/font.h"
+#include "resource/fonts.h"
 #include "ui/busyvisual.h"
 
 static fontid_t busyFont = 0;

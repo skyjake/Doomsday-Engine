@@ -123,7 +123,7 @@ static __inline int UILog_PrevMessageIdx(const uiwidget_t* obj, int current)
 /**
  * Push a new message into the log.
  *
- * @param flags  @see messageFlags
+ * @param flags  @ref messageFlags
  * @param text  Message to be added.
  * @param tics  Length of time the message should be visible.
  */

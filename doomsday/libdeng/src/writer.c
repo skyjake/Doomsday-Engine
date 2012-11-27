@@ -41,7 +41,7 @@ typedef struct writerfuncs_s {
 
 struct writer_s
 {
-    byte* data;             // The data buffer.
+    byte *data;             // The data buffer.
     size_t size;            // Size of the data buffer.
     size_t pos;             // Current position in the buffer.
     boolean isDynamic;      // The buffer will be reallocated when needed.
@@ -51,7 +51,7 @@ struct writer_s
     writerfuncs_t func;     // Callbacks for write operations.
 };
 
-static boolean Writer_Check(const Writer* writer, size_t len)
+static boolean Writer_Check(Writer const *writer, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One extra byte for the check code.
@@ -74,7 +74,7 @@ static boolean Writer_Check(const Writer* writer, size_t len)
         // Dynamic buffers will expand.
         if(writer->isDynamic && len)
         {
-            Writer* modWriter = (Writer*) writer;
+            Writer *modWriter = (Writer *) writer;
             while((int)modWriter->size < (int)writer->pos + (int)len)
             {
                 modWriter->size *= 2;
@@ -100,17 +100,17 @@ static boolean Writer_Check(const Writer* writer, size_t len)
     return true;
 }
 
-Writer* Writer_NewWithBuffer(byte* buffer, size_t maxLen)
+Writer *Writer_NewWithBuffer(byte *buffer, size_t maxLen)
 {
-    Writer* w = M_Calloc(sizeof(Writer));
+    Writer *w = M_Calloc(sizeof(Writer));
     w->size = maxLen;
     w->data = buffer;
     return w;
 }
 
-Writer* Writer_NewWithDynamicBuffer(size_t maxLen)
+Writer *Writer_NewWithDynamicBuffer(size_t maxLen)
 {
-    Writer* w = M_Calloc(sizeof(Writer));
+    Writer *w = M_Calloc(sizeof(Writer));
     w->isDynamic = true;
     w->maxDynamicSize = maxLen;
     w->size = 256;
@@ -118,13 +118,13 @@ Writer* Writer_NewWithDynamicBuffer(size_t maxLen)
     return w;
 }
 
-Writer* Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
+Writer *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
                                 Writer_Callback_WriteInt16 writeInt16,
                                 Writer_Callback_WriteInt32 writeInt32,
                                 Writer_Callback_WriteFloat writeFloat,
                                 Writer_Callback_WriteData  writeData)
 {
-    Writer* w = M_Calloc(sizeof(Writer));
+    Writer *w = M_Calloc(sizeof(Writer));
     w->useCustomFuncs = true;
     w->func.writeInt8 = writeInt8;
     w->func.writeInt16 = writeInt16;
@@ -134,7 +134,7 @@ Writer* Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
     return w;
 }
 
-void Writer_Delete(Writer* writer)
+void Writer_Delete(Writer *writer)
 {
     if(writer->isDynamic)
     {
@@ -144,24 +144,24 @@ void Writer_Delete(Writer* writer)
     M_Free(writer);
 }
 
-size_t Writer_Size(const Writer* writer)
+size_t Writer_Size(Writer const *writer)
 {
     if(!writer) return 0;
     return writer->pos;
 }
 
-size_t Writer_TotalBufferSize(const Writer* writer)
+size_t Writer_TotalBufferSize(Writer const *writer)
 {
     if(!writer) return 0;
     return writer->size;
 }
 
-size_t Writer_BytesLeft(const Writer* writer)
+size_t Writer_BytesLeft(Writer const *writer)
 {
     return Writer_TotalBufferSize(writer) - Writer_Size(writer);
 }
 
-const byte* Writer_Data(const Writer* writer)
+byte const *Writer_Data(Writer const *writer)
 {
     if(Writer_Check(writer, 0))
     {
@@ -170,20 +170,20 @@ const byte* Writer_Data(const Writer* writer)
     return 0;
 }
 
-void Writer_SetPos(Writer* writer, size_t newPos)
+void Writer_SetPos(Writer *writer, size_t newPos)
 {
     if(!writer || writer->useCustomFuncs) return;
     writer->pos = newPos;
     Writer_Check(writer, 0);
 }
 
-void Writer_WriteChar(Writer* writer, char v)
+void Writer_WriteChar(Writer *writer, char v)
 {
     if(!Writer_Check(writer, 1)) return;
     if(!writer->useCustomFuncs)
     {
         Writer_TypeCheck(writer, WTCC_CHAR);
-        ((int8_t*)writer->data)[writer->pos++] = v;
+        ((int8_t *)writer->data)[writer->pos++] = v;
     }
     else
     {
@@ -192,7 +192,7 @@ void Writer_WriteChar(Writer* writer, char v)
     }
 }
 
-void Writer_WriteByte(Writer* writer, byte v)
+void Writer_WriteByte(Writer *writer, byte v)
 {
     if(!Writer_Check(writer, 1)) return;
     if(!writer->useCustomFuncs)
@@ -207,14 +207,14 @@ void Writer_WriteByte(Writer* writer, byte v)
     }
 }
 
-void Writer_WriteInt16(Writer* writer, int16_t v)
+void Writer_WriteInt16(Writer *writer, int16_t v)
 {
     if(Writer_Check(writer, 2))
     {
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_INT16);
-            *(int16_t*) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignInt16(v);
+            *(int16_t *) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignInt16(v);
             writer->pos += 2;
         }
         else
@@ -225,14 +225,14 @@ void Writer_WriteInt16(Writer* writer, int16_t v)
     }
 }
 
-void Writer_WriteUInt16(Writer* writer, uint16_t v)
+void Writer_WriteUInt16(Writer *writer, uint16_t v)
 {
     if(Writer_Check(writer, 2))
     {
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_UINT16);
-            *(uint16_t*) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignUInt16(v);
+            *(uint16_t *) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignUInt16(v);
             writer->pos += 2;
         }
         else
@@ -243,14 +243,14 @@ void Writer_WriteUInt16(Writer* writer, uint16_t v)
     }
 }
 
-void Writer_WriteInt32(Writer* writer, int32_t v)
+void Writer_WriteInt32(Writer *writer, int32_t v)
 {
     if(Writer_Check(writer, 4))
     {
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_INT32);
-            *(int32_t*) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignInt32(v);
+            *(int32_t *) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignInt32(v);
             writer->pos += 4;
         }
         else
@@ -261,14 +261,14 @@ void Writer_WriteInt32(Writer* writer, int32_t v)
     }
 }
 
-void Writer_WriteUInt32(Writer* writer, uint32_t v)
+void Writer_WriteUInt32(Writer *writer, uint32_t v)
 {
     if(Writer_Check(writer, 4))
     {
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_UINT32);
-            *(uint32_t*) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignUInt32(v);
+            *(uint32_t *) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignUInt32(v);
             writer->pos += 4;
         }
         else
@@ -279,14 +279,14 @@ void Writer_WriteUInt32(Writer* writer, uint32_t v)
     }
 }
 
-void Writer_WriteFloat(Writer* writer, float v)
+void Writer_WriteFloat(Writer *writer, float v)
 {
     if(Writer_Check(writer, 4))
     {
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_FLOAT);
-            *(float*) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignFloat(v);
+            *(float *) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignFloat(v);
             writer->pos += 4;
         }
         else
@@ -297,7 +297,7 @@ void Writer_WriteFloat(Writer* writer, float v)
     }
 }
 
-void Writer_Write(Writer* writer, const void* buffer, size_t len)
+void Writer_Write(Writer *writer, void const *buffer, size_t len)
 {
     if(!len) return;
 
@@ -317,7 +317,7 @@ void Writer_Write(Writer* writer, const void* buffer, size_t len)
     }
 }
 
-void Writer_WritePackedUInt16(Writer* writer, uint16_t v)
+void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
 {
     if(v & 0x8000)
     {
@@ -338,7 +338,7 @@ void Writer_WritePackedUInt16(Writer* writer, uint16_t v)
     }
 }
 
-void Writer_WritePackedUInt32(Writer* writer, uint32_t l)
+void Writer_WritePackedUInt32(Writer *writer, uint32_t l)
 {
     while(l >= 0x80)
     {

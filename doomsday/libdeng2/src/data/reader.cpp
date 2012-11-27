@@ -21,84 +21,214 @@
 #include "de/String"
 #include "de/Block"
 #include "de/ISerializable"
+#include "de/IIStream"
 #include "de/FixedByteArray"
+#include "de/ByteRefArray"
 #include "de/data/byteorder.h"
 
 #include <QTextStream>
+#include <cstring>
 
-using namespace de;
+namespace de {
 
-Reader::Reader(const IByteArray& source, const ByteOrder& byteOrder, IByteArray::Offset offset)
-    : _source(source), _offset(offset), _convert(byteOrder)
+struct Reader::Instance
+{
+    ByteOrder const &convert;
+
+    // Random access source:
+    IByteArray const *source;
+    IByteArray::Offset offset;
+    IByteArray::Offset markOffset;
+
+    // Stream source:
+    IIStream *stream;
+    IIStream const *constStream;
+    dsize numReceivedBytes;
+    Block incoming;     ///< Buffer for bytes received so far from the stream.
+    bool marking;       ///< @c true, if marking is occurring (mark() called).
+    Block markedData;   ///< All read data since the mark was set.
+
+    Instance(ByteOrder const &order, IByteArray const *src, IByteArray::Offset off)
+        : convert(order), source(src), offset(off), markOffset(off),
+          stream(0), constStream(0), numReceivedBytes(0), marking(false)
+    {}
+
+    Instance(ByteOrder const &order, IIStream *str)
+        : convert(order), source(0), offset(0), markOffset(0),
+          stream(str), constStream(0), numReceivedBytes(0), marking(false)
+    {}
+
+    Instance(ByteOrder const &order, IIStream const *str)
+        : convert(order), source(0), offset(0), markOffset(0),
+          stream(0), constStream(str), numReceivedBytes(0), marking(false)
+    {}
+
+    /**
+     * Reads bytes from the stream and adds them to the incoming buffer.
+     *
+     * @param expectedSize  Number of bytes that the reader is expecting to read.
+     */
+    void update(dsize expectedSize = 0)
+    {
+        if(incoming.size() >= expectedSize)
+        {
+            // No need to update yet.
+            return;
+        }
+
+        if(stream)
+        {
+            // Modifiable stream: read new bytes, append accumulation.
+            Block b;
+            *stream >> b;
+            incoming += b;
+        }
+        else if(constStream)
+        {
+            Block b;
+            *constStream >> b;
+            // Immutable stream: append only bytes we haven't seen yet.
+            b.remove(0, numReceivedBytes);
+            incoming += b;
+            numReceivedBytes += b.size();
+        }
+    }
+
+    void readBytes(IByteArray::Byte *ptr, dsize size)
+    {
+        if(source)
+        {
+            source->get(offset, ptr, size);
+            offset += size;
+        }
+        else if(stream || constStream)
+        {
+            update(size);
+            if(incoming.size() >= size)
+            {
+                std::memcpy(ptr, incoming.constData(), size);
+                if(marking)
+                {
+                    // We'll need this for rewinding a bit later.
+                    markedData += incoming.left(size);
+                }
+                incoming.remove(0, size);
+            }
+            else
+            {
+                throw IIStream::InputError("Reader::readBytes",
+                        QString("Attempted to read %1 bytes from stream while only %2 "
+                                "bytes are available").arg(size).arg(incoming.size()));
+            }
+        }
+    }
+
+    void mark()
+    {
+        if(source)
+        {
+            markOffset = offset;
+        }
+        else
+        {
+            markedData.clear();
+            marking = true;
+        }
+    }
+
+    void rewind()
+    {
+        if(source)
+        {
+            offset = markOffset;
+        }
+        else
+        {
+            incoming.prepend(markedData);
+            markedData.clear();
+            marking = false;
+        }
+    }
+};
+
+Reader::Reader(const Reader &other) : d(new Instance(*other.d))
 {}
 
-Reader& Reader::operator >> (char& byte)
+Reader::Reader(IByteArray const &source, ByteOrder const &byteOrder, IByteArray::Offset offset)
+    : d(new Instance(byteOrder, &source, offset))
+{}
+
+Reader::Reader(IIStream &stream, ByteOrder const &byteOrder)
+    : d(new Instance(byteOrder, &stream))
+{}
+
+Reader::Reader(IIStream const &stream, ByteOrder const &byteOrder)
+    : d(new Instance(byteOrder, &stream))
+{}
+
+Reader &Reader::operator >> (char &byte)
 {
-    return *this >> reinterpret_cast<duchar&>(byte);
+    return *this >> reinterpret_cast<duchar &>(byte);
 }
 
-Reader& Reader::operator >> (dchar& byte)
+Reader &Reader::operator >> (dchar &byte)
 {
-    return *this >> reinterpret_cast<duchar&>(byte);
+    return *this >> reinterpret_cast<duchar &>(byte);
 }
 
-Reader& Reader::operator >> (duchar& byte)
+Reader &Reader::operator >> (duchar &byte)
 {
-    _source.get(_offset, &byte, 1);
-    ++_offset;
+    d->readBytes(&byte, 1);
     return *this;
 }
 
-Reader& Reader::operator >> (dint16& word)
+Reader &Reader::operator >> (dint16 &word)
 {
-    return *this >> reinterpret_cast<duint16&>(word);
+    return *this >> reinterpret_cast<duint16 &>(word);
 }
 
-Reader& Reader::operator >> (duint16& word)
+Reader &Reader::operator >> (duint16 &word)
 {
-    _source.get(_offset, reinterpret_cast<IByteArray::Byte*>(&word), 2);
-    _offset += 2;
-    _convert.foreignToNative(word, word);
+    d->readBytes(reinterpret_cast<IByteArray::Byte *>(&word), 2);
+    d->convert.foreignToNative(word, word);
     return *this;
 }
 
-Reader& Reader::operator >> (dint32& dword)
+Reader &Reader::operator >> (dint32 &dword)
 {
-    return *this >> reinterpret_cast<duint32&>(dword);
+    return *this >> reinterpret_cast<duint32 &>(dword);
 }
 
-Reader& Reader::operator >> (duint32& dword)
+Reader &Reader::operator >> (duint32 &dword)
 {
-    _source.get(_offset, reinterpret_cast<IByteArray::Byte*>(&dword), 4);
-    _offset += 4;
-    _convert.foreignToNative(dword, dword);
+    d->readBytes(reinterpret_cast<IByteArray::Byte *>(&dword), 4);
+    d->convert.foreignToNative(dword, dword);
     return *this;
 }
 
-Reader& Reader::operator >> (dint64& qword)
+Reader &Reader::operator >> (dint64 &qword)
 {
-    return *this >> reinterpret_cast<duint64&>(qword);
+    return *this >> reinterpret_cast<duint64 &>(qword);
 }
 
-Reader& Reader::operator >> (duint64& qword)
+Reader &Reader::operator >> (duint64 &qword)
 {
-    _source.get(_offset, reinterpret_cast<IByteArray::Byte*>(&qword), 8);
-    _offset += 8;
-    _convert.foreignToNative(qword, qword);
+    d->readBytes(reinterpret_cast<IByteArray::Byte *>(&qword), 8);
+    d->convert.foreignToNative(qword, qword);
     return *this;
 }
 
-Reader& Reader::operator >> (dfloat& value)
+Reader &Reader::operator >> (dfloat &value)
 {
-    return *this >> *reinterpret_cast<duint32*>(&value);
+    return *this >> *reinterpret_cast<duint32 *>(&value);
 }
 
-Reader& Reader::operator >> (ddouble& value)
+Reader &Reader::operator >> (ddouble &value)
 {
-    return *this >> *reinterpret_cast<duint64*>(&value);
+    return *this >> *reinterpret_cast<duint64 *>(&value);
 }
 
-Reader& Reader::operator >> (String& text)
+Reader &Reader::operator >> (String &text)
 {
     duint size = 0;
     *this >> size;
@@ -115,7 +245,7 @@ Reader& Reader::operator >> (String& text)
     return *this;
 }
 
-Reader& Reader::operator >> (IByteArray& byteArray)
+Reader &Reader::operator >> (IByteArray &byteArray)
 {
     duint size = 0;
     *this >> size;
@@ -126,44 +256,43 @@ Reader& Reader::operator >> (IByteArray& byteArray)
      * a memory buffer where you can copy the contents directly.
      */
     QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
-    _source.get(_offset, data.data(), size);
-    _offset += size;
+    d->readBytes(data.data(), size);
     byteArray.set(0, data.data(), size);
     return *this;
 }
 
-Reader& Reader::operator >> (FixedByteArray& fixedByteArray)
+Reader &Reader::operator >> (FixedByteArray &fixedByteArray)
 {
     /**
      * @note  A temporary copy of the contents of the array is made
      * because the destination byte array is not guaranteed to be
      * a memory buffer where you can copy the contents directly.
      */
-    const dsize size = fixedByteArray.size();
+    dsize const size = fixedByteArray.size();
     QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
-    _source.get(_offset, data.data(), size);
-    _offset += size;
+    d->readBytes(data.data(), size);
     fixedByteArray.set(0, data.data(), size);
     return *this;
 }
 
-Reader& Reader::operator >> (Block& block)
+Reader &Reader::operator >> (Block &block)
 {
     duint size = 0;
     *this >> size;
 
-    block.copyFrom(_source, _offset, size);
-    _offset += size;
+    block.resize(size);
+    d->readBytes(block.data(), size);
+
     return *this;
 }
 
-Reader& Reader::operator >> (IReadable& readable)
+Reader &Reader::operator >> (IReadable &readable)
 {
     readable << *this;
     return *this;
 }
 
-Reader& Reader::readUntil(IByteArray& byteArray, IByteArray::Byte delimiter)
+Reader &Reader::readUntil(IByteArray &byteArray, IByteArray::Byte delimiter)
 {
     int pos = 0;
     IByteArray::Byte b = 0;
@@ -174,23 +303,48 @@ Reader& Reader::readUntil(IByteArray& byteArray, IByteArray::Byte delimiter)
     return *this;
 }
 
+IByteArray const *Reader::source() const
+{
+    return d->source;
+}
+
+IByteArray::Offset Reader::offset() const
+{
+    return d->offset;
+}
+
+void Reader::setOffset(IByteArray::Offset offset)
+{
+    d->offset = offset;
+}
+
 void Reader::seek(dint count)
 {
-    if(IByteArray::Offset(_offset + count) >= _source.size())
+    if(!d->source)
+    {
+        throw SeekError("Reader::seek", "Cannot seek when reading from a stream");
+    }
+
+    if(IByteArray::Offset(d->offset + count) >= d->source->size())
     {
         throw IByteArray::OffsetError("Reader::seek", "Seek past bounds of source data");
     }
-    _offset += count;
+    d->offset += count;
 }
 
-void Reader::rewind(dint count)
+void Reader::mark()
 {
-    if(IByteArray::Offset(_offset - count) >= _source.size())
-    {
-        QString msg;
-        QTextStream os(&msg);
-        os << "(count: " << count << ", offset: " << _offset << ", size: " << _source.size() << ")";
-        throw IByteArray::OffsetError("Reader::rewind", "Rewound past bounds of source data " + msg);
-    }
-    _offset -= count;
+    d->mark();
 }
+
+void Reader::rewind()
+{
+    d->rewind();
+}
+
+ByteOrder const &Reader::byteOrder() const
+{
+    return d->convert;
+}
+
+} // namespace de

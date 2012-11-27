@@ -33,16 +33,17 @@ using namespace de;
 Expression::~Expression()
 {}
 
-void Expression::push(Evaluator& evaluator, Record* names) const
+void Expression::push(Evaluator &evaluator, Record *names) const
 {
     evaluator.push(this, names);
 }
 
-Expression* Expression::constructFrom(Reader& reader)
+Expression *Expression::constructFrom(Reader &reader)
 {
     SerialId id;
+    reader.mark();
     reader >> id;
-    reader.rewind(sizeof(id));
+    reader.rewind();
     
     std::auto_ptr<Expression> result;
     switch(id)
@@ -82,7 +83,7 @@ Expression* Expression::constructFrom(Reader& reader)
     return result.release();    
 }
 
-const Expression::Flags& Expression::flags () const
+Expression::Flags const &Expression::flags () const
 {
     return _flags;
 }
@@ -92,13 +93,13 @@ void Expression::setFlags(Flags f)
     _flags = f;
 }
 
-void Expression::operator >> (Writer& to) const
+void Expression::operator >> (Writer &to) const
 {
     // Save the flags.
     to << duint16(_flags);
 }
 
-void Expression::operator << (Reader& from)
+void Expression::operator << (Reader &from)
 {
     // Restore the flags.
     duint16 f;

@@ -32,6 +32,7 @@
 #include "dd_types.h"
 #include "m_vector.h"
 #include "map/p_mapdata.h"
+#include "resource/r_data.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -207,7 +208,7 @@ int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t rad
  * the BSP leaf specified. This is due to an optimization within the lumobj
  * management which separates them according to their position in the BSP.
  *
- * @param flags  @see projectLightFlags
+ * @param flags  @ref projectLightFlags
  * @param bspLeaf  BspLeaf within which the quad wholly resides.
  * @param blendFactor  Multiplied with projection alpha.
  * @param topLeft  Top left coordinates of the surface being projected to.

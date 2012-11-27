@@ -49,12 +49,11 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_network.h"
 #include "de_misc.h"
 #include "de_ui.h"
 
-#include "fs_util.h"
+#include "filesys/fs_util.h"
 #include "dd_winit.h"
 #include "ui/displaymode.h"
 

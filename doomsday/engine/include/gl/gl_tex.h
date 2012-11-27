@@ -23,7 +23,7 @@
 #ifndef LIBDENG_IMAGE_MANIPULATION_H
 #define LIBDENG_IMAGE_MANIPULATION_H
 
-#include "r_data.h"
+#include "resource/r_data.h"
 
 typedef struct colorpalette_analysis_s {
     colorpaletteid_t paletteId;

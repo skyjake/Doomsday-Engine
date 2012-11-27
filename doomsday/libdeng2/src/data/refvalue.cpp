@@ -23,7 +23,7 @@
 
 using namespace de;
 
-RefValue::RefValue(Variable* variable) : _variable(variable)
+RefValue::RefValue(Variable *variable) : _variable(variable)
 {
     if(_variable)
     {
@@ -48,19 +48,19 @@ void RefValue::verify() const
     }
 }
 
-Value& RefValue::dereference()
+Value &RefValue::dereference()
 {
     verify();
     return _variable->value();
 }
 
-const Value& RefValue::dereference() const
+Value const &RefValue::dereference() const
 {
     verify();
     return _variable->value();
 }
 
-Value* RefValue::duplicate() const
+Value *RefValue::duplicate() const
 {
     return new RefValue(_variable);
 }
@@ -80,32 +80,32 @@ dsize RefValue::size() const
     return dereference().size();
 }
 
-const Value& RefValue::element(const Value& index) const
+Value const &RefValue::element(Value const &index) const
 {
     return dereference().element(index);
 }
 
-Value& RefValue::element(const Value& index)
+Value &RefValue::element(Value const &index)
 {
     return dereference().element(index);
 }
 
-void RefValue::setElement(const Value& index, Value* elementValue)
+void RefValue::setElement(Value const &index, Value *elementValue)
 {
     dereference().setElement(index, elementValue);
 }
 
-bool RefValue::contains(const Value& value) const
+bool RefValue::contains(Value const &value) const
 {
     return dereference().contains(value);
 }
 
-Value* RefValue::begin()
+Value *RefValue::begin()
 {
     return dereference().begin();
 }
 
-Value* RefValue::next()
+Value *RefValue::next()
 {
     return dereference().next();
 }
@@ -120,7 +120,7 @@ bool RefValue::isFalse() const
     return dereference().isFalse();
 }
 
-dint RefValue::compare(const Value& value) const
+dint RefValue::compare(Value const &value) const
 {
     return dereference().compare(value);
 }
@@ -130,54 +130,54 @@ void RefValue::negate()
     dereference().negate();
 }
 
-void RefValue::sum(const Value& value)
+void RefValue::sum(Value const &value)
 {
     dereference().sum(value);
 }
 
-void RefValue::subtract(const Value& subtrahend)
+void RefValue::subtract(Value const &subtrahend)
 {
     dereference().subtract(subtrahend);
 }
 
-void RefValue::divide(const Value& divisor)
+void RefValue::divide(Value const &divisor)
 {
     dereference().divide(divisor);
 }
 
-void RefValue::multiply(const Value& value)
+void RefValue::multiply(Value const &value)
 {
     dereference().multiply(value);
 }
 
-void RefValue::modulo(const Value& divisor)
+void RefValue::modulo(Value const &divisor)
 {
     dereference().modulo(divisor);
 }
 
-void RefValue::assign(Value* value)
+void RefValue::assign(Value *value)
 {
     verify();
     _variable->set(value);
 }
 
-void RefValue::call(Process& process, const Value& arguments) const
+void RefValue::call(Process &process, Value const &arguments) const
 {
     dereference().call(process, arguments);
 }
 
-void RefValue::operator >> (Writer& to) const
+void RefValue::operator >> (Writer &to) const
 {
     to << dereference();
 }
 
-void RefValue::operator << (Reader& /*from*/)
+void RefValue::operator << (Reader &/*from*/)
 {
     // Should never happen.
     DENG2_ASSERT(false);
 }
 
-void RefValue::variableBeingDeleted(Variable& DENG2_DEBUG_ONLY(variable))
+void RefValue::variableBeingDeleted(Variable &DENG2_DEBUG_ONLY(variable))
 {
     DENG2_ASSERT(_variable == &variable);
     _variable = 0;

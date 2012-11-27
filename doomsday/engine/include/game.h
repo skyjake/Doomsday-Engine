@@ -44,7 +44,7 @@ extern "C" {
 #define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
 ///@}
 
-struct resourcerecord_s;
+struct metafile_s;
 struct gamedef_s;
 
 #ifdef __cplusplus
@@ -57,20 +57,20 @@ struct gamedef_s;
 
 namespace de {
 
-class ResourceRecord;
 class File1;
+class MetaFile;
 class GameCollection;
 
 /**
- * Game.  Used to record top-level game configurations registered by
- * the loaded game plugin(s).
+ * Records top-level game configurations registered by the loaded game
+ * plugin(s).
  *
  * @ingroup core
  */
 class Game
 {
 public:
-    typedef QMultiMap<resourceclass_t, ResourceRecord*> Resources;
+    typedef QMultiMap<resourceclassid_t, MetaFile*> MetaFiles;
 
 public:
     /**
@@ -111,22 +111,20 @@ public:
     Game& setPluginId(pluginid_t newId);
 
     /**
-     * Add a new resource to the list of resources.
+     * Add a new metafile to the list of metafiles.
      *
-     * @note Resource registration order defines the order in which resources of each
-     *       type are loaded.
+     * @note Registration order defines load order (among files of the same class).
      *
-     * @param rclass  Class of resource being added.
-     * @param record  ResourceRecord to add.
+     * @param metafile  MetaFile to add.
      */
-    Game& addResource(resourceclass_t rclass, ResourceRecord& record);
+    Game& addMetafile(MetaFile& metafile);
 
-    bool allStartupResourcesFound() const;
+    bool allStartupFilesFound() const;
 
     /**
-     * Provides access to resources for efficent traversals.
+     * Provides access to the metafiles for efficent traversals.
      */
-    Resources const& resources() const;
+    MetaFiles const& metafiles() const;
 
     /**
      * Is @a file required by this game? This decision is made by comparing the
@@ -160,15 +158,15 @@ public:
     static void printBanner(Game const& game);
 
     /**
-     * Print the list of resources for @a Game.
+     * Print the list of resource files for @a Game.
      *
-     * @param game          Game to list resources of.
-     * @param rflags        Only consider resources whose @ref resourceFlags match
+     * @param game          Game to list the files of.
+     * @param rflags        Only consider files whose @ref fileFlags match
      *                      this value. If @c <0 the flags are ignored.
      * @param printStatus   @c true to  include the current availability/load status
-     *                      of each resource.
+     *                      of each file.
      */
-    static void printResources(Game const& game, int rflags, bool printStatus = true);
+    static void printFiles(Game const& game, int rflags, bool printStatus = true);
 
     /**
      * Print extended information about game @a info.
@@ -195,7 +193,7 @@ public:
 public:
     NullGame();
 
-    Game& addResource(resourceclass_t /*rclass*/, struct resourcerecord_s& /*record*/) {
+    Game& addMetafile(struct metafile_s& /*record*/) {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
     }
 
@@ -203,11 +201,11 @@ public:
         return false; // Never.
     }
 
-    bool allStartupResourcesFound() const {
+    bool allStartupFilesFound() const {
         return true; // Always.
     }
 
-    struct resourcerecord_s* const* resources(resourceclass_t /*rclass*/, int* /*count*/) const {
+    struct metafile_s* const* metafiles(resourceclassid_t /*classId*/, int* /*count*/) const {
         return 0;
     }
 
@@ -239,9 +237,9 @@ void Game_Delete(Game* game);
 
 boolean Game_IsNullObject(Game const* game);
 
-struct game_s* Game_AddResource(Game* game, resourceclass_t rclass, struct resourcerecord_s* record);
+struct game_s* Game_AddMetafile(Game* game, struct metafile_s* record);
 
-boolean Game_AllStartupResourcesFound(Game const* game);
+boolean Game_AllStartupFilesFound(Game const* game);
 
 Game* Game_SetPluginId(Game* game, pluginid_t pluginId);
 

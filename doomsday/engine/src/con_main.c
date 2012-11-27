@@ -47,7 +47,6 @@
 #include "de_system.h"
 #include "de_network.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_edit.h"
 #include "de_play.h"
@@ -57,11 +56,11 @@
 #include "de_defs.h"
 #include "de_filesys.h"
 
+#include "resource/fonts.h"
 #include "ui/displaymode.h"
 #include "ui/busyvisual.h"
 #include "updater/downloaddialog.h"
 #include "cbuffer.h"
-#include "font.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -24,8 +24,6 @@
 #include "../File"
 
 #include <QObject>
-#include <QTimer>
-#include <QList>
 
 namespace de {
 
@@ -39,7 +37,7 @@ class LogEntry;
  *
  * @ingroup core
  */
-class LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(File, Deletion)
+class DENG2_PUBLIC LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(File, Deletion)
 {
     Q_OBJECT
 
@@ -47,14 +45,16 @@ public:
     /// There was a problem opening the output file. @ingroup errors
     DENG2_ERROR(FileError);
 
-    typedef QList<const LogEntry*> Entries;
+    typedef QList<LogEntry const *> Entries;
 
 public:
     /**
      * Constructs a new log buffer. By default log levels starting with MESSAGE
-     * are enabled. Output goes to stdout/stderr. @see enableStandardOutput().
+     * are enabled. Output goes to stdout/stderr.
      *
      * @param maxEntryCount  Maximum number of entries to keep in memory.
+     *
+     * @see enableStandardOutput()
      */
     LogBuffer(duint maxEntryCount = 1000);
 
@@ -67,7 +67,7 @@ public:
      *
      * @param entry  Entry to add.
      */
-    void add(LogEntry* entry);
+    void add(LogEntry *entry);
 
     void clear();
 
@@ -87,7 +87,7 @@ public:
      * @param count    Number of entries to get. If zero, all entries are
      *                 returned.
      */
-    void latestEntries(Entries& entries, int count = 0) const;
+    void latestEntries(Entries &entries, int count = 0) const;
 
     /**
      * Enables log entries at or over a level. When a level is disabled, the
@@ -96,13 +96,12 @@ public:
     void enable(Log::LogLevel overLevel = Log::MESSAGE);
 
     /**
-     * Disables the log. @see enable()
+     * Disables the log.
+     * @see enable()
      */
     void disable() { enable(Log::MAX_LOG_LEVELS); }
 
-    bool enabled(Log::LogLevel overLevel = Log::MESSAGE) const {
-        return _enabledOverLevel <= overLevel;
-    }
+    bool isEnabled(Log::LogLevel overLevel = Log::MESSAGE) const;
 
     /**
      * Enables or disables standard output of log messages. When enabled,
@@ -111,18 +110,16 @@ public:
      *
      * @param yes  @c true or @c false.
      */
-    void enableStandardOutput(bool yes = true) {
-        _standardOutput = yes;
-    }
+    void enableStandardOutput(bool yes = true);
 
     /**
      * Sets the path of the file used for writing log entries to.
      *
      * @param path  Path of the file.
      */
-    void setOutputFile(const String& path);
+    void setOutputFile(String const &path);
 
-    void fileBeingDeleted(const File& file);
+    void fileBeingDeleted(File const &file);
 
 public:
     /**
@@ -132,9 +129,9 @@ public:
      *
      * @param appBuffer  LogBuffer instance.
      */
-    static void setAppBuffer(LogBuffer& appBuffer);
+    static void setAppBuffer(LogBuffer &appBuffer);
 
-    static LogBuffer& appBuffer();
+    static LogBuffer &appBuffer();
 
 public slots:
     /**
@@ -143,19 +140,11 @@ public slots:
     void flush();
 
 private:
-    typedef QList<LogEntry*> EntryList;
-
-    dint _enabledOverLevel;
-    dint _maxEntryCount;
-    bool _standardOutput;
-    File* _outputFile;
-    EntryList _entries;
-    EntryList _toBeFlushed;
-    Time _lastFlushedAt;
-    QTimer* _autoFlushTimer;
+    struct Instance;
+    Instance *d;
 
     /// The globally available application buffer.
-    static LogBuffer* _appBuffer;
+    static LogBuffer *_appBuffer;
 };
 
 } // namespace de

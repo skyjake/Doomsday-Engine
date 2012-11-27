@@ -10,6 +10,11 @@ echo "Source directory: $SRCDIR"
 
 BUILDDIR=engine
 
+if [ ! -e $BUILDDIR/doomsday.app ]; then
+    echo "Built product not found, skipping bundling."
+    exit
+fi
+
 mv $BUILDDIR/doomsday.app $BUILDDIR/Doomsday.app
 
 APPDIR=$BUILDDIR/Doomsday.app/Contents

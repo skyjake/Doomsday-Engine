@@ -32,21 +32,40 @@
 
 namespace de {
 
-App::App(int& argc, char** argv, GUIMode guiMode)
+App::App(int &argc, char **argv, GUIMode guiMode)
     : QApplication(argc, argv, guiMode == GUIEnabled),
       _cmdLine(arguments()),
       _config(0)
 {
     // This instance of LogBuffer is used globally.
     LogBuffer::setAppBuffer(_logBuffer);
+
+    // Set the log message level.
 #ifdef DENG2_DEBUG
-    _logBuffer.enable(Log::DEBUG);
+    Log::LogLevel level = Log::DEBUG;
+#else
+    Log::LogLevel level = Log::MESSAGE;
 #endif
-    //_logBuffer.enable(Log::TRACE);
+    try
+    {
+        int pos;
+        if((pos = _cmdLine.check("-loglevel", 1)) > 0)
+        {
+            level = Log::textToLevel(_cmdLine.at(pos + 1));
+        }
+    }
+    catch(Error const &er)
+    {
+        qWarning("%s", er.asText().toAscii().constData());
+    }
+    // Aliases have not been defined at this point.
+    level = qMax(Log::TRACE, Log::LogLevel(level - _cmdLine.has("-verbose") - _cmdLine.has("-v")));
+    _logBuffer.enable(level);
 
     _appPath = applicationFilePath();
 
     LOG_INFO("Application path: ") << _appPath;
+    LOG_INFO("Enabled log entry level: ") << Log::levelToText(level);
 
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command
@@ -110,7 +129,7 @@ NativePath App::currentWorkPath()
     return NativePath::workPath();
 }
 
-bool App::setCurrentWorkPath(const NativePath &cwd)
+bool App::setCurrentWorkPath(NativePath const &cwd)
 {
     return QDir::setCurrent(cwd);
 }
@@ -143,7 +162,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 {
     bool allowPlugins = !flags.testFlag(DisablePlugins);
 
-    Folder& binFolder = _fs.makeFolder("/bin");
+    Folder &binFolder = _fs.makeFolder("/bin");
 
     // Initialize the built-in folders. This hooks up the default native
     // directories into the appropriate places in the file system.
@@ -190,7 +209,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     QScopedPointer<Config> conf(new Config("/config/deng.de"));
     conf->read();
 
-    LogBuffer& logBuf = LogBuffer::appBuffer();
+    LogBuffer &logBuf = LogBuffer::appBuffer();
 
     // Update the log buffer max entry count: number of items to hold in memory.
     logBuf.setMaxEntryCount(conf->getui("log.bufferSize"));
@@ -199,7 +218,11 @@ void App::initSubsystems(SubsystemInitFlags flags)
     logBuf.setOutputFile(conf->gets("log.file"));
 
     // The level of enabled messages.
-    logBuf.enable(Log::LogLevel(conf->getui("log.level")));
+    /**
+     * @todo We are presently controlling the log levels depending on build
+     * configuration, so ignore what the config says.
+     */
+    //logBuf.enable(Log::LogLevel(conf->getui("log.level")));
 
     if(allowPlugins)
     {
@@ -215,13 +238,13 @@ void App::initSubsystems(SubsystemInitFlags flags)
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
 }
 
-bool App::notify(QObject* receiver, QEvent* event)
+bool App::notify(QObject *receiver, QEvent *event)
 {
     try
     {
         return QApplication::notify(receiver, event);
     }
-    catch(const std::exception& error)
+    catch(std::exception const &error)
     {
         emit uncaughtException(error.what());
     }
@@ -232,12 +255,12 @@ bool App::notify(QObject* receiver, QEvent* event)
     return false;
 }
 
-App& App::app()
+App &App::app()
 {
     return *DENG2_APP;
 }
 
-CommandLine& App::commandLine()
+CommandLine &App::commandLine()
 {
     return DENG2_APP->_cmdLine;
 }
@@ -247,42 +270,42 @@ NativePath App::executablePath()
     return DENG2_APP->_appPath;
 }
 
-FS& App::fileSystem()
+FS &App::fileSystem()
 {
     return DENG2_APP->_fs;
 }
 
-Folder& App::rootFolder()
+Folder &App::rootFolder()
 {
     return fileSystem().root();
 }
 
-Folder& App::homeFolder()
+Folder &App::homeFolder()
 {
     return rootFolder().locate<Folder>("/home");
 }
 
-Config& App::config()
+Config &App::config()
 {
     DENG2_ASSERT(DENG2_APP->_config != 0);
     return *DENG2_APP->_config;
 }
 
-UnixInfo& App::unixInfo()
+UnixInfo &App::unixInfo()
 {
     return DENG2_APP->_unixInfo;
 }
 
-static int sortFilesByModifiedAt(const File* a, const File* b)
+static int sortFilesByModifiedAt(File const *a, File const *b)
 {
     return cmp(a->status().modifiedAt, b->status().modifiedAt);
 }
 
-Record& App::importModule(const String& name, const String& fromPath)
+Record &App::importModule(String const &name, String const &fromPath)
 {
     LOG_AS("App::importModule");
 
-    App& self = app();
+    App &self = app();
 
     // There are some special modules.
     if(name == "Config")
@@ -303,12 +326,12 @@ Record& App::importModule(const String& name, const String& fromPath)
     std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
     defaultImportPath->add("");
     defaultImportPath->add("*"); // Newest module with a matching name.
-    ArrayValue* importPath = defaultImportPath.get();
+    ArrayValue *importPath = defaultImportPath.get();
     try
     {
         importPath = &config().names()["importPath"].value<ArrayValue>();
     }
-    catch(const Record::NotFoundError&)
+    catch(Record::NotFoundError const &)
     {}
 
     // Search the import path (array of paths).
@@ -317,7 +340,7 @@ Record& App::importModule(const String& name, const String& fromPath)
         String dir = (*i)->asText();
         String p;
         FS::FoundFiles matching;
-        File* found = 0;
+        File *found = 0;
         if(dir.empty())
         {
             if(!fromPath.empty())
@@ -351,7 +374,7 @@ Record& App::importModule(const String& name, const String& fromPath)
         }
         if(found)
         {
-            Module* module = new Module(*found);
+            Module *module = new Module(*found);
             self._modules[name] = module;
             return module->names();
         }

@@ -29,7 +29,7 @@
 #ifndef LIBDENG_REFRESH_DRAW_H
 #define LIBDENG_REFRESH_DRAW_H
 
-#include "texture.h"
+#include "resource/texture.h"
 
 #ifdef __cplusplus
 extern "C" {

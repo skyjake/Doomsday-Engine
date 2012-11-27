@@ -36,26 +36,26 @@ namespace de
         BlockValue();
         
         /// Copies the content of an existing block.
-        BlockValue(const Block& block);
+        BlockValue(Block const &block);
 
         /// Converts the BlockValue to a plain byte array (non-modifiable).
-        operator const IByteArray& () const;
+        operator IByteArray const &() const;
 
         /// Converts the BlockValue to a plain byte array.
-        operator IByteArray& ();
+        operator IByteArray &();
 
         /// Empties the block value.
         void clear();
 
-        Value* duplicate() const;
+        Value *duplicate() const;
         Text asText() const;
         dsize size() const;
         bool isTrue() const;
-        void sum(const Value& value);
+        void sum(Value const &value);
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
         
     private:
         Block _value;

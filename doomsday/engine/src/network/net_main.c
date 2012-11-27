@@ -43,9 +43,9 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
-#include "rend_bias.h"
-#include "rend_console.h"
-#include "r_lgrid.h"
+#include "render/rend_bias.h"
+#include "render/rend_console.h"
+#include "render/r_lgrid.h"
 #include "map/blockmapvisual.h"
 
 // MACROS ------------------------------------------------------------------
@@ -888,7 +888,7 @@ void Net_PrintServerInfo(int index, serverinfo_t *info)
                    info->canJoin ? ' ' : '*', info->version, info->plugin,
                    info->address, info->port);
         Con_Printf("    %s p:%ims %-40s\n", info->map, info->ping, info->description);
-        Con_Printf("    %s (crc:%x) %s\n", info->gameIdentityKey, info->wadNumber, info->gameConfig);
+        Con_Printf("    %s (crc:%x) %s\n", info->gameIdentityKey, info->loadedFilesCRC, info->gameConfig);
 
         // Optional: PWADs in use.
         if(info->pwads[0])

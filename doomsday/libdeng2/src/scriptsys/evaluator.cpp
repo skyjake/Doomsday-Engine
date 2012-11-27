@@ -25,7 +25,7 @@
 
 using namespace de;
 
-Evaluator::Evaluator(Context& owner) : _context(owner), _current(0), _names(0)
+Evaluator::Evaluator(Context &owner) : _context(owner), _current(0), _names(0)
 {}
 
 Evaluator::~Evaluator()
@@ -34,7 +34,7 @@ Evaluator::~Evaluator()
     clearResults();
 }
 
-Process& Evaluator::process()
+Process &Evaluator::process()
 { 
     return _context.process(); 
 }
@@ -47,7 +47,7 @@ void Evaluator::reset()
     clearNames();
 }
 
-Value& Evaluator::evaluate(const Expression* expression)
+Value &Evaluator::evaluate(Expression const *expression)
 {
     DENG2_ASSERT(_names == NULL);
     DENG2_ASSERT(_stack.empty());
@@ -82,7 +82,7 @@ Value& Evaluator::evaluate(const Expression* expression)
     return result();
 }
 
-void Evaluator::namespaces(Namespaces& spaces)
+void Evaluator::namespaces(Namespaces &spaces)
 {
     if(_names)
     {
@@ -102,7 +102,7 @@ bool Evaluator::hasResult() const
     return _results.size() == 1;
 }
 
-Value& Evaluator::result()
+Value &Evaluator::result()
 {
     if(_results.empty())
     {
@@ -111,12 +111,12 @@ Value& Evaluator::result()
     return *_results.front();
 }
 
-void Evaluator::push(const Expression* expression, Record* names)
+void Evaluator::push(Expression const *expression, Record *names)
 {
     _stack.push_back(ScopedExpression(expression, names));
 }
 
-void Evaluator::pushResult(Value* value)
+void Evaluator::pushResult(Value *value)
 {
     // NULLs are not pushed onto the results stack as they indicate that
     // no result was given.
@@ -126,11 +126,11 @@ void Evaluator::pushResult(Value* value)
     }
 }
 
-Value* Evaluator::popResult()
+Value *Evaluator::popResult()
 {
     DENG2_ASSERT(_results.size() > 0);
 
-    Value* result = _results.back();
+    Value *result = _results.back();
     _results.pop_back();
     return result;
 }

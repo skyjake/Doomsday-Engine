@@ -21,17 +21,17 @@
 
 using namespace de;
 
-Message::Message(const IByteArray& other) : Block(other), _channel(0)
+Message::Message(IByteArray const &other) : Block(other), _channel(0)
 {}
 
-Message::Message(const Address& addr, Channel channel, Size initialSize)
+Message::Message(Address const &addr, Channel channel, Size initialSize)
     : Block(initialSize), _address(addr), _channel(channel)
 {}
 
-Message::Message(const Address& addr, Channel channel, const IByteArray& other)
+Message::Message(Address const &addr, Channel channel, IByteArray const &other)
     : Block(other), _address(addr), _channel(channel)
 {}
 
-Message::Message(const Address& addr, Channel channel, const IByteArray& other, Offset at, Size count)
+Message::Message(Address const &addr, Channel channel, IByteArray const &other, Offset at, Size count)
     : Block(other, at, count), _address(addr), _channel(channel)
 {}

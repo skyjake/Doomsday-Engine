@@ -60,7 +60,7 @@ boolean Joystick_IsPresent(void);
 void Joystick_GetState(joystate_t* state);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // LIBDENG_SYSTEM_JOYSTICK_H

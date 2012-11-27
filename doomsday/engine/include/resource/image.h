@@ -107,7 +107,7 @@ void Image_ConvertToAlpha(image_t* image, boolean makeWhite);
 void Image_ConvertToLuminance(image_t* image, boolean retainAlpha);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_IMAGE_H */

@@ -40,12 +40,11 @@
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 
 #include "def_main.h"
-#include "texturevariant.h"
+#include "resource/texturevariant.h"
 #include "m_profiler.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1164,7 +1163,7 @@ void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName)
 
 /**
  * Choose a specialised polytype from the specified primitive configuration.
- * @param flags  @see rendpolyFlags
+ * @param flags  @ref rendpolyFlags
  */
 static __inline rendpolytype_t choosePolyType(int flags)
 {

@@ -41,7 +41,7 @@ public:
     DENG2_SUB_ERROR(DeserializationError, InvalidTypeError);
 
     /// Length of a type identifier.
-    static const dint TYPE_SIZE = 4;
+    static dint const TYPE_SIZE = 4;
 
     typedef String Type;
 
@@ -51,26 +51,26 @@ public:
      *
      * @param type  Type identifier of the packet.
      */
-    Packet(const Type& type);
+    Packet(Type const &type);
 
     virtual ~Packet() {}
 
     /**
      * Returns the type identifier of the packet.
      */
-    const Type& type() const { return _type; }
+    Type const &type() const { return _type; }
 
     /**
      * Determines where the packet was received from.
      */
-    const Address& from() const { return _from; }
+    Address const &from() const { return _from; }
 
     /**
      * Sets the address where the packet was received from.
      *
      * @param from  Address of the sender.
      */
-    void setFrom(const Address& from) { _from = from; }
+    void setFrom(Address const &from) { _from = from; }
 
     /**
      * Execute whatever action the packet defines. This is called for all packets
@@ -80,8 +80,8 @@ public:
     virtual void execute() const;
 
     // Implements ISerializable.
-    void operator >> (Writer& to) const;
-    void operator << (Reader& from);
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
 protected:
     /**
@@ -89,7 +89,7 @@ protected:
      *
      * @param t  Type identifier. Must be exactly TYPE_SIZE characters long.
      */
-    void setType(const Type& t);
+    void setType(Type const &t);
 
 public:
     /**
@@ -99,7 +99,7 @@ public:
      * @param from  Reader.
      * @param type  Packet identifier.
      */
-    static bool checkType(Reader& from, const String& type);
+    static bool checkType(Reader &from, String const &type);
 
 private:
     /// The type is identified with a four-character string.

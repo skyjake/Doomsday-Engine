@@ -23,8 +23,8 @@
 #ifndef LIBDENG_MAP_PLANE
 #define LIBDENG_MAP_PLANE
 
-#include "r_data.h"
-#include "p_dmu.h"
+#include "resource/r_data.h"
+#include "map/p_dmu.h"
 
 // Return the index of plane within a sector's planes array.
 #define GET_PLANE_IDX(pln)      ( (int) ((pln) - (pln)->sector->planes[0]) )

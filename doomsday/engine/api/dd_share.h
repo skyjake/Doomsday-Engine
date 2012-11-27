@@ -66,12 +66,6 @@ extern "C" {
 /// Maximum number of players supported by the engine.
 #define DDMAXPLAYERS        16
 
-/// Base default paths for data files.
-#define DD_BASEPATH_DATA    "}data/"
-
-/// Base default paths for definition files.
-#define DD_BASEPATH_DEFS    "}defs/"
-
 // The case-independent strcmps have different names.
 #if WIN32
 # define strcasecmp _stricmp
@@ -368,12 +362,12 @@ typedef struct gameinfo_s {
 void Game_Notify(int notification, void* param);
 
 /**
- * @defgroup resourceFlags Resource Flags
- * @ingroup apiFlags resource
+ * @defgroup fileFlags File Flags
+ * @ingroup apiFlags fs
  */
 ///@{
-#define RF_STARTUP          0x1 ///< A required resource needed for and loaded during game start up (can't be a virtual file).
-#define RF_FOUND            0x2 ///< Resource has been located.
+#define FF_STARTUP          0x1 ///< A required file needed for and loaded during game start up (can't be a virtual file).
+#define FF_FOUND            0x2 ///< File has been located.
 ///@}
 
 /**
@@ -381,9 +375,6 @@ void Game_Notify(int notification, void* param);
  * @ingroup base
  */
 ///@{
-#define FRACBITS            16
-#define FRACUNIT            (1<<FRACBITS)
-#define FRACEPSILON         (1.0f/65535.f) // ~ 1.5e-5
 #define FLOATEPSILON        .000001f
 
 /**
@@ -409,49 +400,6 @@ void Game_Notify(int notification, void* param);
 #define ANG180              0x80000000
 #define ANG270              0xc0000000
 
-#define FIX2FLT(x)      ( (x) / (float) FRACUNIT )
-#define Q_FIX2FLT(x)    ( (float)((x)>>FRACBITS) )
-#define FLT2FIX(x)      ( (fixed_t) ((x)*FRACUNIT) )
-
-#if !defined( DENG_NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
-
-    __inline fixed_t FixedMul(fixed_t a, fixed_t b) {
-        __asm {
-            // The parameters in eax and ebx.
-            mov eax, a
-            mov ebx, b
-            // The multiplying.
-            imul ebx
-            shrd eax, edx, 16
-            // eax should hold the return value.
-        }
-        // A value is returned regardless of the compiler warning.
-    }
-    __inline fixed_t FixedDiv2(fixed_t a, fixed_t b) {
-        __asm {
-            // The parameters.
-            mov eax, a
-            mov ebx, b
-            // The operation.
-            cdq
-            shld edx, eax, 16
-            sal eax, 16
-            idiv ebx
-            // And the value returns in eax.
-        }
-        // A value is returned regardless of the compiler warning.
-    }
-
-#else
-
-// Don't use inline assembler in fixed-point calculations.
-// (link with plugins/common/m_fixed.c)
-fixed_t         FixedMul(fixed_t a, fixed_t b);
-fixed_t         FixedDiv2(fixed_t a, fixed_t b);
-#endif
-
-// This one is always in plugins/common/m_fixed.c.
-fixed_t         FixedDiv(fixed_t a, fixed_t b);
 ///@}
 
 //------------------------------------------------------------------------
@@ -1281,121 +1229,121 @@ typedef struct {
 /**@}*/
 
 /**
- * @defgroup namespace Namespaces
+ * @defgroup scheme Schemes
  * @ingroup resource
  */
 
 /**
- * Material Namespaces
+ * Material Schemes
  */
 
 /**
- * @defgroup materialNamespaceNames  Material Namespace Names
- * @ingroup namespace
- * @{
- */
-#define MN_SYSTEM_NAME          "System"
-#define MN_FLATS_NAME           "Flats"
-#define MN_TEXTURES_NAME        "Textures"
-#define MN_SPRITES_NAME         "Sprites"
-/**@}*/
-
-typedef enum materialnamespaceid_e {
-    MN_ANY = -1,
-    MATERIALNAMESPACE_FIRST = 1000,
-    MN_SYSTEM = MATERIALNAMESPACE_FIRST,
-    MN_FLATS,
-    MN_TEXTURES,
-    MN_SPRITES,
-    MATERIALNAMESPACE_LAST = MN_SPRITES,
-    MN_INVALID /// Special value used to signify an invalid namespace identifier.
-} materialnamespaceid_t;
-
-#define MATERIALNAMESPACE_COUNT  (MATERIALNAMESPACE_LAST - MATERIALNAMESPACE_FIRST + 1)
-
-/// @c true= val can be interpreted as a valid material namespace identifier.
-#define VALID_MATERIALNAMESPACEID(val) ((val) >= MATERIALNAMESPACE_FIRST && (val) <= MATERIALNAMESPACE_LAST)
-
-/**
- * Texture Namespaces
- */
-
-/**
- * @defgroup textureNamespaceNames  Texture Namespace Names
- * @ingroup namespace
+ * @defgroup materialSchemeNames  Material Scheme Names
+ * @ingroup scheme
  */
 ///@{
-#define TN_SYSTEM_NAME          "System"
-#define TN_FLATS_NAME           "Flats"
-#define TN_TEXTURES_NAME        "Textures"
-#define TN_SPRITES_NAME         "Sprites"
-#define TN_PATCHES_NAME         "Patches"
-#define TN_DETAILS_NAME         "Details"
-#define TN_REFLECTIONS_NAME     "Reflections"
-#define TN_MASKS_NAME           "Masks"
-#define TN_MODELSKINS_NAME      "ModelSkins"
-#define TN_MODELREFLECTIONSKINS_NAME "ModelReflectionSkins"
-#define TN_LIGHTMAPS_NAME       "Lightmaps"
-#define TN_FLAREMAPS_NAME       "Flaremaps"
+#define MS_SYSTEM_NAME          "System"
+#define MS_FLATS_NAME           "Flats"
+#define MS_TEXTURES_NAME        "Textures"
+#define MS_SPRITES_NAME         "Sprites"
 ///@}
 
-/// Texture namespace identifiers. @ingroup namespace
-typedef enum texturenamespaceid_e {
-    TN_ANY = -1,
-    TEXTURENAMESPACE_FIRST = 2000,
-    TN_SYSTEM = TEXTURENAMESPACE_FIRST,
-    TN_FLATS,
-    TN_TEXTURES,
-    TN_SPRITES,
-    TN_PATCHES,
-    TN_DETAILS,
-    TN_REFLECTIONS,
-    TN_MASKS,
-    TN_MODELSKINS,
-    TN_MODELREFLECTIONSKINS,
-    TN_LIGHTMAPS,
-    TN_FLAREMAPS,
-    TEXTURENAMESPACE_LAST = TN_FLAREMAPS,
-    TN_INVALID /// Special value used to signify an invalid namespace identifier.
-} texturenamespaceid_t;
+typedef enum materialschemeid_e {
+    MS_ANY = -1,
+    MATERIALSCHEME_FIRST = 1000,
+    MS_SYSTEM = MATERIALSCHEME_FIRST,
+    MS_FLATS,
+    MS_TEXTURES,
+    MS_SPRITES,
+    MATERIALSCHEME_LAST = MS_SPRITES,
+    MS_INVALID /// Special value used to signify an invalid scheme identifier.
+} materialschemeid_t;
 
-#define TEXTURENAMESPACE_COUNT  (TEXTURENAMESPACE_LAST - TEXTURENAMESPACE_FIRST + 1)
+#define MATERIALSCHEME_COUNT  (MATERIALSCHEME_LAST - MATERIALSCHEME_FIRST + 1)
 
-/// @c true= val can be interpreted as a valid texture namespace identifier.
-#define VALID_TEXTURENAMESPACEID(val) ((val) >= TEXTURENAMESPACE_FIRST && (val) <= TEXTURENAMESPACE_LAST)
+/// @c true= val can be interpreted as a valid material scheme identifier.
+#define VALID_MATERIALSCHEMEID(val) ((val) >= MATERIALSCHEME_FIRST && (val) <= MATERIALSCHEME_LAST)
 
 /**
- * Font Namespaces
+ * Texture Schemes
  */
 
 /**
- * @defgroup fontNamespaceNames  Font Namespace Names
- * @ingroup namespace
- * @{
+ * @defgroup textureSchemeNames  Texture Scheme Names
+ * @ingroup scheme
  */
+///@{
+#define TS_SYSTEM_NAME          "System"
+#define TS_FLATS_NAME           "Flats"
+#define TS_TEXTURES_NAME        "Textures"
+#define TS_SPRITES_NAME         "Sprites"
+#define TS_PATCHES_NAME         "Patches"
+#define TS_DETAILS_NAME         "Details"
+#define TS_REFLECTIONS_NAME     "Reflections"
+#define TS_MASKS_NAME           "Masks"
+#define TS_MODELSKINS_NAME      "ModelSkins"
+#define TS_MODELREFLECTIONSKINS_NAME "ModelReflectionSkins"
+#define TS_LIGHTMAPS_NAME       "Lightmaps"
+#define TS_FLAREMAPS_NAME       "Flaremaps"
+///@}
+
+/// Texture scheme identifiers. @ingroup scheme
+typedef enum textureschemeid_e {
+    TS_ANY = -1,
+    TEXTURESCHEME_FIRST = 2000,
+    TS_SYSTEM = TEXTURESCHEME_FIRST,
+    TS_FLATS,
+    TS_TEXTURES,
+    TS_SPRITES,
+    TS_PATCHES,
+    TS_DETAILS,
+    TS_REFLECTIONS,
+    TS_MASKS,
+    TS_MODELSKINS,
+    TS_MODELREFLECTIONSKINS,
+    TS_LIGHTMAPS,
+    TS_FLAREMAPS,
+    TEXTURESCHEME_LAST = TS_FLAREMAPS,
+    TS_INVALID /// Special value used to signify an invalid scheme identifier.
+} textureschemeid_t;
+
+#define TEXTURESCHEME_COUNT  (TEXTURESCHEME_LAST - TEXTURESCHEME_FIRST + 1)
+
+/// @c true= val can be interpreted as a valid texture scheme identifier.
+#define VALID_TEXTURESCHEMEID(val) ((val) >= TEXTURESCHEME_FIRST && (val) <= TEXTURESCHEME_LAST)
+
+/**
+ * Font Schemes
+ */
+
+/**
+ * @defgroup fontSchemeNames  Font Scheme Names
+ * @ingroup scheme
+ */
+///@{
 #define FN_SYSTEM_NAME          "System"
 #define FN_GAME_NAME            "Game"
 ///@}
 
-/// Font namespace identifier. @ingroup namespace
-typedef enum fontnamespaceid_e {
-    FN_ANY = -1,
-    FONTNAMESPACE_FIRST = 3000,
-    FN_SYSTEM = FONTNAMESPACE_FIRST,
-    FN_GAME,
-    FONTNAMESPACE_LAST = FN_GAME,
-    FN_INVALID ///< Special value used to signify an invalid namespace identifier.
-} fontnamespaceid_t;
+/// Font scheme identifier. @ingroup scheme
+typedef enum fontschemeid_e {
+    FS_ANY = -1,
+    FONTSCHEME_FIRST = 3000,
+    FS_SYSTEM = FONTSCHEME_FIRST,
+    FS_GAME,
+    FONTSCHEME_LAST = FS_GAME,
+    FS_INVALID ///< Special value used to signify an invalid scheme identifier.
+} fontschemeid_t;
 
-#define FONTNAMESPACE_COUNT         (FONTNAMESPACE_LAST - FONTNAMESPACE_FIRST + 1)
+#define FONTSCHEME_COUNT         (FONTSCHEME_LAST - FONTSCHEME_FIRST + 1)
 
 /**
- * Determines whether @a val can be interpreted as a valid font namespace
- * identifier. @ingroup namespace
+ * Determines whether @a val can be interpreted as a valid font scheme
+ * identifier. @ingroup scheme
  * @param val Integer value.
  * @return @c true or @c false.
  */
-#define VALID_FONTNAMESPACEID(val)  ((val) >= FONTNAMESPACE_FIRST && (val) <= FONTNAMESPACE_LAST)
+#define VALID_FONTSCHEMEID(val)  ((val) >= FONTSCHEME_FIRST && (val) <= FONTSCHEME_LAST)
 
 /// Patch Info
 typedef struct {
@@ -1733,7 +1681,7 @@ typedef struct serverinfo_s {
     char            gameConfig[40];
     char            map[20];
     char            clientNames[128];
-    unsigned int    wadNumber;
+    unsigned int    loadedFilesCRC;
     char            iwad[32];   ///< Obsolete.
     char            pwads[128];
     int             data[3];

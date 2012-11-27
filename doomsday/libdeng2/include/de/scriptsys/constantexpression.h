@@ -42,24 +42,24 @@ namespace de
          * @param value  Value of the expression. The expression takes 
          *               ownership of the value object.
          */ 
-        ConstantExpression(Value* value);
+        ConstantExpression(Value *value);
         
         ~ConstantExpression();
         
-        Value* evaluate(Evaluator& evaluator) const;
+        Value *evaluate(Evaluator &evaluator) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
     public:
-        static ConstantExpression* None();        
-        static ConstantExpression* True();
-        static ConstantExpression* False();
-        static ConstantExpression* Pi();
+        static ConstantExpression *None();        
+        static ConstantExpression *True();
+        static ConstantExpression *False();
+        static ConstantExpression *Pi();
 
     private:
-        Value* _value;
+        Value *_value;
     };
 }
 

@@ -27,11 +27,11 @@
 #include "de_console.h"
 #include "de_network.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_audio.h"
 #include "de_misc.h"
 
 #include "map/generators.h"
+#include "resource/models.h"
 
 #define ORDER(x,y,a,b)      ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 #define DOT2F(a,b)          ( FIX2FLT(a[VX])*FIX2FLT(b[VX]) + FIX2FLT(a[VY])*FIX2FLT(b[VY]) )
@@ -479,7 +479,7 @@ static void P_NewParticle(ptcgen_t* gen)
     // Check for model-only generators.
     if(gen->source)
     {
-        inter = R_CheckModelFor(gen->source, &mf, &nextmf);
+        inter = Models_ModelForMobj(gen->source, &mf, &nextmf);
         if(((!mf || !useModels) && def->flags & PGF_MODEL_ONLY) ||
            (mf && useModels && mf->flags & MFF_NO_PARTICLES))
             return;

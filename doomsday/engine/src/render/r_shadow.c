@@ -28,7 +28,6 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_play.h"
 
@@ -61,7 +60,7 @@ static shadowprojectionlist_t* projectionLists;
 /**
  * Create a new projection list.
  *
- * @param flags  @see surfaceProjectionListFlags
+ * @param flags  @ref surfaceProjectionListFlags
  * @return  Unique identifier attributed to the new list.
  */
 static uint newList(void)

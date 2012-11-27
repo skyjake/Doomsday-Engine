@@ -27,13 +27,12 @@
 #include "de_filesys.h"
 #include "de_render.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_ui.h"
 
-#include "image.h"
-#include "texturecontent.h"
+#include "resource/image.h"
+#include "gl/texturecontent.h"
 #include "map/generators.h"
 
 // Point + custom textures.
@@ -106,10 +105,18 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
     byte result = 0;
     image_t image;
     AutoStr* foundPath  = AutoStr_NewStd();
-    Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "Textures:Particle%02i", particleTex)));
+    AutoStr* texName = Str_Appendf(AutoStr_NewStd(), "Textures:Particle%02i", particleTex);
 
-    if(F_FindResource4(RC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, "-ck") &&
-       GL_LoadImage(&image, Str_Text(foundPath)))
+    // First look for a colorkeyed version.
+    Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "%s-ck", Str_Text(texName))));
+    boolean found = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
+    if(!found)
+    {
+        Uri_SetUri(searchPath, Str_Text(texName));
+        found = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
+    }
+
+    if(found && GL_LoadImage(&image, Str_Text(foundPath)))
     {
         result = 2;
     }
@@ -387,7 +394,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         params->inter = M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
     }
 
-    R_SetModelFrame(params->mf, frame);
+    Rend_ModelSetFrame(params->mf, frame);
     // Set the correct orientation for the particle.
     if(params->mf->sub[0].flags & MFF_MOVEMENT_YAW)
     {

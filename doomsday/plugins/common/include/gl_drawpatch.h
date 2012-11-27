@@ -47,8 +47,8 @@ extern "C" {
 /**
  * @param patchId  Unique identifier of the patch to be drawn.
  * @param origin  Orient drawing about this offset (topleft:[0,0]).
- * @param alignFlags  @see alignmentFlags
- * @param patchFlags  @see drawPatchFlags
+ * @param alignFlags  @ref alignmentFlags
+ * @param patchFlags  @ref drawPatchFlags
  */
 void GL_DrawPatch3(patchid_t id, const Point2Raw* origin, int alignFlags, int patchFlags);
 void GL_DrawPatch2(patchid_t id, const Point2Raw* origin, int alignFlags);

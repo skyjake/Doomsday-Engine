@@ -27,7 +27,6 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
@@ -35,9 +34,9 @@
 #include "de_defs.h"
 
 #include "gl/sys_opengl.h"
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 BEGIN_PROF_TIMERS()
   PROF_LUMOBJ_INIT_ADD,
@@ -200,7 +199,7 @@ static void clearProjectionLists(void)
 /**
  * Create a new projection list.
  *
- * @param flags  @see lightProjectionListFlags
+ * @param flags  @ref lightProjectionListFlags
  * @return  Unique identifier attributed to the new list.
  */
 static uint newProjectionList(int flags)
@@ -228,7 +227,7 @@ static uint newProjectionList(int flags)
  * @param listIdx  Address holding the list index to retrieve.
  *      If the referenced list index is non-zero return the associated list.
  *      Otherwise allocate a new list and write it's index back to this address.
- * @param flags  @see ProjectionListFlags
+ * @param flags  @ref ProjectionListFlags
  * @return  ProjectionList associated with the (possibly newly attributed) index.
  */
 static lightprojectionlist_t* getProjectionList(uint* listIdx, int flags)
@@ -331,7 +330,7 @@ static listnode_t* linkProjectionToList(listnode_t* node, lightprojectionlist_t*
  * @param listIdx  Address holding the list index to retrieve.
  *      If the referenced list index is non-zero return the associated list.
  *      Otherwise allocate a new list and write it's index back to this address.
- * @param flags  @see ProjectionListFlags
+ * @param flags  @ref ProjectionListFlags
  *      Used when constructing a new projection list to configure it.
  * @param texture  GL identifier to texture attributed to the new projection.
  * @param s  GL texture coordinates on the S axis [left, right] in texture space.
@@ -773,7 +772,7 @@ static void addLuminous(mobj_t* mo)
     }
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
+    if(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TS_SPRITES)
         Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 

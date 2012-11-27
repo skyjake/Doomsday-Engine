@@ -23,8 +23,8 @@
 #ifndef LIBDENG_MAP_VERTEX
 #define LIBDENG_MAP_VERTEX
 
-#include "r_data.h"
-#include "p_dmu.h"
+#include "resource/r_data.h"
+#include "map/p_dmu.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,7 +62,7 @@ int Vertex_GetProperty(const Vertex* vertex, setargs_t* args);
 int Vertex_SetProperty(Vertex* vertex, const setargs_t* args);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_MAP_VERTEX

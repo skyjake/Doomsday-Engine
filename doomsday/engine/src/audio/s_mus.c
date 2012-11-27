@@ -33,8 +33,7 @@
 #include "de_misc.h"
 
 #include "audio/sys_audio.h"
-#include "sys_reslocator.h"
-#include "m_mus2midi.h"
+#include "audio/m_mus2midi.h"
 
 D_CMD(PlayMusic);
 D_CMD(PauseMusic);
@@ -250,7 +249,7 @@ int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
 
     // Try the resource locator.
     searchPath = Uri_NewWithPath2(def->lumpName, RC_MUSIC);
-    result = F_FindResource2(RC_MUSIC, searchPath, retPath);
+    result = F_FindPath(RC_MUSIC, searchPath, retPath);
     Uri_Delete(searchPath);
     return result;
 }

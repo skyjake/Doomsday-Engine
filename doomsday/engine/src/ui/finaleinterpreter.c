@@ -29,7 +29,6 @@
 #include "de_play.h"
 #include "de_defs.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_network.h"
 #include "de_audio.h"
@@ -38,6 +37,7 @@
 #include "de_infine.h"
 #include "de_ui.h"
 #include "de_filesys.h"
+#include "de_resource.h"
 
 #define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))
 
@@ -2009,16 +2009,16 @@ DEFFC(TextFromDef)
 DEFFC(TextFromLump)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    lumpnum_t absoluteLumpNum;
+    lumpnum_t lumpNum;
 
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
 
-    absoluteLumpNum = F_LumpNumForName(OP_CSTRING(3));
-    if(absoluteLumpNum >= 0)
+    lumpNum = F_LumpNumForName(OP_CSTRING(3));
+    if(lumpNum >= 0)
     {
         int lumpIdx;
-        size_t lumpSize = F_LumpLength(absoluteLumpNum);
-        struct file1_s* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+        size_t lumpSize = F_LumpLength(lumpNum);
+        struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
         const uint8_t* lumpPtr = F_CacheLump(file, lumpIdx);
         size_t bufSize = 2 * lumpSize + 1, i;
         char* str, *out;

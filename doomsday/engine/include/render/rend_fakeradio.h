@@ -77,7 +77,7 @@ void Rend_RadioBspLeafEdges(BspLeaf* bspLeaf);
 void Rend_DrawShadowOffsetVerts(void);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_RENDER_FAKERADIO_H

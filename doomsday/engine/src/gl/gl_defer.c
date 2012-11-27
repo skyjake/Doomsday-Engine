@@ -32,7 +32,7 @@
 #include "de_graphics.h"
 #include "m_misc.h"
 
-#include "texturecontent.h"
+#include "gl/texturecontent.h"
 
 #define NUM_RESERVED_TEXTURENAMES  512
 

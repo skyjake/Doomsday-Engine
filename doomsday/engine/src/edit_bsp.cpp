@@ -121,7 +121,7 @@ static void buildHEdgeLut(BspBuilder& builder, GameMap* map)
     parm.builder = &builder;
     parm.curIdx = 0;
     parm.hedgeLUT = &map->hedges;
-    BspTreeNode::InOrder(*builder.root(), hedgeCollector, &parm);
+    builder.root()->traverseInOrder(hedgeCollector, &parm);
 }
 
 static void finishHEdges(GameMap* map)
@@ -241,7 +241,7 @@ static void hardenBSP(BspBuilder& builder, GameMap* dest)
     p.dest = dest;
     p.leafCurIndex = 0;
     p.nodeCurIndex = 0;
-    BspTreeNode::PostOrder(*rootNode, populateBspObjectLuts, &p);
+    rootNode->traversePostOrder(populateBspObjectLuts, &p);
 }
 
 static void copyVertex(Vertex& vtx, Vertex const& other)

@@ -93,6 +93,9 @@ struct font_s;
 #include <de/memoryzone.h>
 #include <de/smoother.h>
 
+// Play: World data access (Map Data Updates and access to other information).
+#include "dd_world.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -160,8 +163,8 @@ gameid_t DD_GameIdForKey(char const* identityKey);
  * recent.
  *
  * @param game      Unique identifier/name of the game.
- * @param rclass    Class of resource being added.
- * @param rflags    Resource flags (see @ref resourceFlags).
+ * @param classId   Class of resource being defined.
+ * @param fFlags    File flags (see @ref fileFlags).
  * @param names     One or more known potential names, seperated by semicolon
  *                  (e.g., <pre> "name1;name2" </pre>). Valid names include
  *                  absolute or relative file paths, possibly with encoded
@@ -171,7 +174,7 @@ gameid_t DD_GameIdForKey(char const* identityKey);
  *                  For package resources this may be C-String containing a
  *                  semicolon delimited list of identity keys.
  */
-void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags,
+void DD_AddGameResource(gameid_t game, resourceclassid_t classId, int fFlags,
                         const char* names, void* params);
 
 /**
@@ -189,10 +192,10 @@ boolean DD_GameInfo(GameInfo* info);
     ddplayer_t*     DD_GetPlayer(int number);
 ///@}
 
-/// @addtogroup namespace
+/// @addtogroup scheme
 ///@{
-texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
-materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
+textureschemeid_t DD_ParseTextureSchemeName(const char* str);
+materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
 ///@}
 
 /**
@@ -200,7 +203,7 @@ materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
  * @ingroup resource
  */
 ///@{
-materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId);
+materialid_t DD_MaterialForTextureUniqueId(textureschemeid_t texSchemeId, int uniqueId);
 ///@}
 
 /// @addtogroup defs
@@ -417,6 +420,8 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
 
 int LineDef_BoxOnSide(LineDef* line, const AABoxd* box);
 
+int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
+
 coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
 coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
 
@@ -487,9 +492,6 @@ AutoStr* P_MapSourceFile(char const* uri);
 
 boolean P_LoadMap(const char* uri);
 ///@}
-
-// Play: World data access (Map Data Updates and access to other information).
-#include "dd_world.h"
 
 /// @addtogroup playsim
 ///@{
@@ -599,7 +601,7 @@ void R_SetupFogDefaults(void);
 void R_SetupFog(float start, float end, float density, float* rgb);
 
 void R_PrecacheMobjNum(int mobjtypeNum);
-void R_PrecacheModelsForState(int stateIndex);
+void Models_CacheForState(int stateIndex);
 
 void R_RenderPlayerView(int num);
 

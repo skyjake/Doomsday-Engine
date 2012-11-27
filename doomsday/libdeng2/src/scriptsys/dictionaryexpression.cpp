@@ -45,14 +45,14 @@ void DictionaryExpression::clear()
     _arguments.clear();
 }
 
-void DictionaryExpression::add(Expression* key, Expression* value)
+void DictionaryExpression::add(Expression *key, Expression *value)
 {
     DENG2_ASSERT(key != NULL);
     DENG2_ASSERT(value != NULL);
     _arguments.push_back(ExpressionPair(key, value));
 }
 
-void DictionaryExpression::push(Evaluator& evaluator, Record* names) const
+void DictionaryExpression::push(Evaluator &evaluator, Record *names) const
 {
     Expression::push(evaluator, names);
     
@@ -66,11 +66,11 @@ void DictionaryExpression::push(Evaluator& evaluator, Record* names) const
     }    
 }
 
-Value* DictionaryExpression::evaluate(Evaluator& evaluator) const
+Value *DictionaryExpression::evaluate(Evaluator &evaluator) const
 {
     std::auto_ptr<DictionaryValue> dict(new DictionaryValue);
     
-    std::list<Value*> keys, values;
+    std::list<Value *> keys, values;
     
     // Collect the right number of results into the array.
     for(Arguments::const_reverse_iterator i = _arguments.rbegin();
@@ -82,8 +82,8 @@ Value* DictionaryExpression::evaluate(Evaluator& evaluator) const
 
     // Insert the keys and values into the dictionary in the correct
     // order, i.e., the same order as they are in the source.
-    std::list<Value*>::reverse_iterator key = keys.rbegin();
-    std::list<Value*>::reverse_iterator value = values.rbegin();
+    std::list<Value *>::reverse_iterator key = keys.rbegin();
+    std::list<Value *>::reverse_iterator value = values.rbegin();
     for(; key != keys.rend(); ++key, ++value)
     {
         dict->add(*key, *value);
@@ -92,7 +92,7 @@ Value* DictionaryExpression::evaluate(Evaluator& evaluator) const
     return dict.release();
 }
 
-void DictionaryExpression::operator >> (Writer& to) const
+void DictionaryExpression::operator >> (Writer &to) const
 {
     to << SerialId(DICTIONARY);
 
@@ -105,7 +105,7 @@ void DictionaryExpression::operator >> (Writer& to) const
     }
 }
 
-void DictionaryExpression::operator << (Reader& from)
+void DictionaryExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

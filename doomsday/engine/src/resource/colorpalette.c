@@ -26,7 +26,7 @@
 #include "de_console.h"
 #include "m_misc.h" // for M_ReadBits
 
-#include "colorpalette.h"
+#include "resource/colorpalette.h"
 
 #define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
 

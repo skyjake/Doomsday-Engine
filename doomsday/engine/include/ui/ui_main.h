@@ -29,11 +29,11 @@
 #ifndef LIBDENG_UI_MAIN_H
 #define LIBDENG_UI_MAIN_H
 
+#include <de/rect.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <de/rect.h>
 
 #define IS_ACTKEY(x)    (x == ' ' || x == DDKEY_RETURN)
 
@@ -406,7 +406,7 @@ int UI_TextOutWrapEx(const char* text, const Point2Raw* origin, const Size2Raw* 
 void UI_DrawHelpBox(const Point2Raw* origin, const Size2Raw* size, float alpha, char* text);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_UI_MAIN_H */

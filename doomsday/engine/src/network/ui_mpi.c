@@ -334,7 +334,7 @@ void MPIUpdateServerInfo(ui_object_t *ob)
 
     sprintf(warningString,
             "This server is using %x, " "but you have %x. "
-            "Errors may occur during game play.", info.wadNumber, myCrc);
+            "Errors may occur during game play.", info.loadedFilesCRC, myCrc);
 
     // Show IWAD warning?
     if(!(lst_found.count >= 1 && lst_found.selection >= 0 &&
@@ -469,7 +469,7 @@ void MPIUpdateServerList(void)
                 memset(&info, 0, sizeof(info));
                 N_GetHostInfo(i, &info);
                 MPIFormatServerInfo(lstit_found[i].text, &info);
-                lstit_found[i].data = info.wadNumber;
+                lstit_found[i].data = info.loadedFilesCRC;
                 lstit_found[i].data2 = i;
             }
             lst_found.count = num;
@@ -495,7 +495,7 @@ void MPIUpdateServerList(void)
             }
 
             MPIFormatServerInfo(lstit_found[k].text, &info);
-            lstit_found[k].data = info.wadNumber;
+            lstit_found[k].data = info.loadedFilesCRC;
             // Connection will be formed using this index.
             lstit_found[k].data2 = i;
             k++;
@@ -656,7 +656,7 @@ void DD_NetSetup(int serverMode)
         UI_FlagGroup(ob_client, 4, UIF_HIDDEN, searchMode == SEARCH_MASTER);
         lst_found.selection = -1;
         lst_found.count = 0;
-        myCrc = F_CRCNumber();
+        myCrc = F_LoadedFilesCRC();
         UI_FlagGroup(ob_client, 5, UIF_DISABLED, true); // warnings
         UI_FlagGroup(ob_client, UIG_CONNECT, UIF_DISABLED, true);
         MPIUpdateServerList();

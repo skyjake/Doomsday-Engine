@@ -46,9 +46,9 @@ namespace de
          * @param key  Evaluates the key.
          * @param value  Evaluates the value. 
          */
-        void add(Expression* key, Expression* value);
+        void add(Expression *key, Expression *value);
 
-        void push(Evaluator& evaluator, Record* names = 0) const;
+        void push(Evaluator &evaluator, Record *names = 0) const;
 
         /**
          * Collects the result keys and values of the arguments and puts them 
@@ -58,14 +58,14 @@ namespace de
          *
          * @return DictionaryValue with the results of the argument evaluations.
          */
-        Value* evaluate(Evaluator& evaluator) const;
+        Value *evaluate(Evaluator &evaluator) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
 
     private:
-        typedef std::pair<Expression*, Expression*> ExpressionPair;
+        typedef std::pair<Expression *, Expression *> ExpressionPair;
         typedef std::vector<ExpressionPair> Arguments;
         Arguments _arguments;
     };

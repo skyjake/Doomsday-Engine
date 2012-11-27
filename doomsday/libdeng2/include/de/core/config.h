@@ -44,7 +44,7 @@ namespace de
          *
          * @param path  Name of the configuration file to read.
          */
-        Config(const String& path);
+        Config(String const &path);
 
         /**
          * Destructor. The configuration is automatically saved.
@@ -58,24 +58,24 @@ namespace de
         void write();
 
         /// Returns the value of @a name as a Value.
-        Value& get(const String& name);
+        Value &get(String const &name);
 
         /// Returns the value of @a name as an integer.
-        dint geti(const String& name);
+        dint geti(String const &name);
 
         /// Returns the value of @a name as an unsigned integer.
-        duint getui(const String& name);
+        duint getui(String const &name);
 
         /// Returns the value of @a name as a double-precision floating point number.
-        ddouble getd(const String& name);
+        ddouble getd(String const &name);
 
         /// Returns the value of @a name as a string.
-        String gets(const String& name);
+        String gets(String const &name);
     
         /**
          * Returns the configuration namespace.
          */
-        Record& names();
+        Record &names();
         
     private:
         /// Configuration file name.

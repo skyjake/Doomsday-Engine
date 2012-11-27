@@ -21,6 +21,7 @@
 #define LIBDENG2_ARCHIVEFEED_H
 
 #include "../Feed"
+#include "../ByteArrayFile"
 #include "../String"
 
 namespace de
@@ -35,12 +36,16 @@ namespace de
     class ArchiveFeed : public Feed
     {
     public:
+        /// Provided source file cannot be used as a feed source. @ingroup errors
+        DENG2_ERROR(InvalidSourceError);
+
+    public:
         /**
          * Constructs a new archive feed.
          *
          * @param archiveFile  File where the data comes from.
          */
-        ArchiveFeed(File& archiveFile);
+        ArchiveFeed(File &archiveFile);
         
         /**
          * Constructs an archive feed that populates the contents of a folder
@@ -49,36 +54,28 @@ namespace de
          * @param parentFeed  Feed whose archive will be used.
          * @param basePath    Path within the archive for the new feed.
          */
-        ArchiveFeed(ArchiveFeed& parentFeed, const String& basePath);
+        ArchiveFeed(ArchiveFeed &parentFeed, String const &basePath);
 
         virtual ~ArchiveFeed();
 
-        void populate(Folder& folder);
-        bool prune(File& file) const;
-        File* newFile(const String& name);
-        void removeFile(const String& name);
+        void populate(Folder &folder);
+        bool prune(File &file) const;
+        File *newFile(String const &name);
+        void removeFile(String const &name);
 
         /**
          * Returns the archive that the feed accesses.
          */
-        Archive& archive();
+        Archive &archive();
                     
         /**
          * Returns the base path within the archive.
          */
-        const String& basePath() const { return _basePath; }
+        String const &basePath() const;
                     
     private:
-        /// File where the archive is stored.
-        File& _file;
-        
-        Archive* _archive;
-        
-        /// Mount point within the archive for this feed.
-        String _basePath;
-        
-        /// The feed whose archive this feed is using.
-        ArchiveFeed* _parentFeed;
+        struct Instance;
+        Instance *d;
     };
 }
 

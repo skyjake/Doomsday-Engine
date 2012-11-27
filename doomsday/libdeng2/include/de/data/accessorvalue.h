@@ -34,7 +34,7 @@ namespace de
     {
     public:
         /// Mode to use for variables that have an accessor value.
-        static const Variable::Flags VARIABLE_MODE;
+        static Variable::Flags const VARIABLE_MODE;
         
     public:
         AccessorValue();
@@ -44,20 +44,20 @@ namespace de
 
         /// Creates a new value with the content of the accessor. The returned
         /// value should not be an AccessorValue.
-        virtual Value* duplicateContent() const = 0;
+        virtual Value *duplicateContent() const = 0;
 
-        Value* duplicate() const;
+        Value *duplicate() const;
         Number asNumber() const;
         Text asText() const;
         dsize size() const;
         bool isTrue() const;
-        dint compare(const Value& value) const;
-        void sum(const Value& value);
-        void multiply(const Value& value);
-        void divide(const Value& value);
-        void modulo(const Value& divisor);
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        dint compare(Value const &value) const;
+        void sum(Value const &value);
+        void multiply(Value const &value);
+        void divide(Value const &value);
+        void modulo(Value const &divisor);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
     };
 }
 

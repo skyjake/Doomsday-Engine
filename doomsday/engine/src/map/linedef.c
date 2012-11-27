@@ -23,13 +23,12 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_render.h"
 
 #include "m_bams.h"
 #include "m_misc.h"
-#include "materialvariant.h"
-#include "materials.h"
+#include "resource/materialvariant.h"
+#include "resource/materials.h"
 
 #include "map/linedef.h"
 
@@ -56,7 +55,7 @@ static boolean backClosedForBlendNeighbor(LineDef* lineDef, int side, boolean ig
 {
     Sector* frontSec;
     Sector* backSec;
-    assert(lineDef);
+    DENG_ASSERT(lineDef);
 
     if(!lineDef->L_frontsidedef)   return false;
     if(!lineDef->L_backsidedef) return true;
@@ -88,7 +87,7 @@ static LineDef* findBlendNeighbor(LineDef* l, byte side, byte right,
 
 coord_t LineDef_PointDistance(LineDef* line, coord_t const point[2], coord_t* offset)
 {
-    assert(line);
+    DENG_ASSERT(line);
     return V2d_PointLineDistance(point, line->L_v1origin, line->direction, offset);
 }
 
@@ -100,7 +99,7 @@ coord_t LineDef_PointXYDistance(LineDef* line, coord_t x, coord_t y, coord_t* of
 
 coord_t LineDef_PointOnSide(const LineDef* line, coord_t const point[2])
 {
-    assert(line);
+    DENG_ASSERT(line);
     if(!point)
     {
         DEBUG_Message(("LineDef_PointOnSide: Invalid arguments, returning >0.\n"));
@@ -117,13 +116,47 @@ coord_t LineDef_PointXYOnSide(const LineDef* line, coord_t x, coord_t y)
 
 int LineDef_BoxOnSide(LineDef* line, const AABoxd* box)
 {
-    assert(line);
+    DENG_ASSERT(line);
     return M_BoxOnLineSide(box, line->L_v1origin, line->direction);
+}
+
+int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box)
+{
+    fixed_t xbox[4];
+    fixed_t pos[2];
+    fixed_t delta[2];
+    double offset[2];
+
+    DENG_ASSERT(line);
+
+    /*
+     * Apply an offset to both the box and the line to bring everything into
+     * the 16.16 fixed-point range. We'll use the midpoint of the line as the
+     * origin, as typically this test is called when a bounding box is
+     * somewhere in the vicinity of the line. The offset is floored to integers
+     * so we won't change the discretization of the fractional part into 16-bit
+     * precision.
+     */
+    offset[VX] = floor(line->L_v1origin[VX] + line->direction[VX]/2);
+    offset[VY] = floor(line->L_v1origin[VY] + line->direction[VY]/2);
+
+    xbox[BOXLEFT]   = FLT2FIX(box->minX - offset[VX]);
+    xbox[BOXRIGHT]  = FLT2FIX(box->maxX - offset[VX]);
+    xbox[BOXBOTTOM] = FLT2FIX(box->minY - offset[VY]);
+    xbox[BOXTOP]    = FLT2FIX(box->maxY - offset[VY]);
+
+    pos[VX]         = FLT2FIX(line->L_v1origin[VX] - offset[VX]);
+    pos[VY]         = FLT2FIX(line->L_v1origin[VY] - offset[VY]);
+
+    delta[VX]       = FLT2FIX(line->direction[VX]);
+    delta[VY]       = FLT2FIX(line->direction[VY]);
+
+    return M_BoxOnLineSide_FixedPrecision(xbox, pos, delta);
 }
 
 void LineDef_SetDivline(const LineDef* line, divline_t* dl)
 {
-    assert(line);
+    DENG_ASSERT(line);
 
     if(!dl) return;
 
@@ -180,7 +213,7 @@ void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
 
 void LineDef_UpdateSlope(LineDef* line)
 {
-    assert(line);
+    DENG_ASSERT(line);
     V2d_Subtract(line->direction, line->L_v2origin, line->L_v1origin);
     line->slopeType = M_SlopeType(line->direction);
 }
@@ -191,7 +224,7 @@ void LineDef_UpdateSlope(LineDef* line)
 void LineDef_UnitVector(LineDef* line, float* unitvec)
 {
     coord_t len;
-    assert(line);
+    DENG_ASSERT(line);
 
     len = M_ApproxDistance(line->direction[VX], line->direction[VY]);
     if(len)
@@ -207,7 +240,7 @@ void LineDef_UnitVector(LineDef* line, float* unitvec)
 
 void LineDef_UpdateAABox(LineDef* line)
 {
-    assert(line);
+    DENG_ASSERT(line);
 
     line->aaBox.minX = MIN_OF(line->L_v2origin[VX], line->L_v1origin[VX]);
     line->aaBox.minY = MIN_OF(line->L_v2origin[VY], line->L_v1origin[VY]);

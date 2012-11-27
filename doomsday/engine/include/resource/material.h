@@ -106,7 +106,7 @@ short Material_Flags(const material_t* mat);
 
 /**
  * Change the public Material Flags.
- * @param flags  @see materialFlags
+ * @param flags  @ref materialFlags
  */
 void Material_SetFlags(material_t* mat, short flags);
 

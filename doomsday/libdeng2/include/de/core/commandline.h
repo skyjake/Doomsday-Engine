@@ -57,9 +57,9 @@ namespace de
          *
          * @param args  Arguments to use.
          */
-        CommandLine(const QStringList& args);
+        CommandLine(QStringList const &args);
 
-        CommandLine(const CommandLine& other);
+        CommandLine(CommandLine const &other);
 
         virtual ~CommandLine();
 
@@ -82,7 +82,7 @@ namespace de
          *
          * @param arg  Argument to append.
          */
-        void append(const String& arg);
+        void append(String const &arg);
 
         /**
          * Inserts a new argument to the list of arguments at index @a pos.
@@ -90,7 +90,7 @@ namespace de
          * @param pos  Index at which the new argument will be at.
          * @param arg  Argument to insert.
          */
-        void insert(duint pos, const String& arg);
+        void insert(duint pos, String const &arg);
 
         /**
          * Removes an argument by index.
@@ -111,7 +111,7 @@ namespace de
          *
          * @return  Index of the argument, if found. Otherwise zero.
          */
-        dint check(const String& arg, dint count = 0) const;
+        dint check(String const &arg, dint count = 0) const;
 
         /**
          * Gets the parameter for an argument.
@@ -123,7 +123,7 @@ namespace de
          * @return  @c true, if parameter was successfully returned.
          *      Otherwise @c false, in which case @a param is not modified.
          */
-        bool getParameter(const String& arg, String& param) const;
+        bool getParameter(String const &arg, String &param) const;
 
         /**
          * Determines whether @a arg exists in the list of arguments.
@@ -132,7 +132,7 @@ namespace de
          *
          * @return  Number of times @a arg is found in the arguments.
          */
-        dint has(const String& arg) const;
+        dint has(String const &arg) const;
 
         /**
          * Determines whether an argument is an option, i.e., it begins with a hyphen.
@@ -142,15 +142,15 @@ namespace de
         /**
          * Determines whether an argument is an option, i.e., it begins with a hyphen.
          */
-        static bool isOption(const String& arg);
+        static bool isOption(String const &arg);
 
-        const String at(duint pos) const;
+        String at(duint pos) const;
 
         /**
          * Returns a list of pointers to the arguments. The list contains
          * count() strings and is NULL-terminated.
          */
-        const char* const* argv() const;
+        char const *const *argv() const;
 
         /**
          * Converts the argument at position @a pos into an absolute native path.
@@ -166,7 +166,7 @@ namespace de
          *
          * @param nativePath  File to parse.
          */
-        void parseResponseFile(const String& nativePath);
+        void parseResponseFile(NativePath const &nativePath);
 
         /**
          * Breaks down a single string containing arguments.
@@ -179,7 +179,7 @@ namespace de
          *
          * @param cmdLine  String containing the arguments.
          */ 
-        void parse(const String& cmdLine);
+        void parse(String const &cmdLine);
         
         /**
          * Defines a new alias for a full argument.
@@ -187,13 +187,13 @@ namespace de
          * @param full  The full argument, e.g., "--help"
          * @param alias  Alias for the full argument, e.g., "-h"
          */
-        void alias(const String& full, const String& alias);
+        void alias(String const &full, String const &alias);
 
         /**
          * @return @c true, iff the two parameters are equivalent according to
          * the abbreviations.
          */
-        bool matches(const String& full, const String& fullOrAlias) const;
+        bool matches(String const &full, String const &fullOrAlias) const;
         
         /**
          * Spawns a new process using the command line. The first argument
@@ -206,7 +206,7 @@ namespace de
         
     private:
         struct Instance;
-        Instance* d;
+        Instance *d;
     };
 }
 

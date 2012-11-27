@@ -53,21 +53,21 @@ namespace de
         template <typename Type>
         Type as() const { return Type(_value); }
 
-        Value* duplicate() const;
+        Value *duplicate() const;
         Number asNumber() const;
         Text asText() const;
         bool isTrue() const;
-        dint compare(const Value& value) const;
+        dint compare(Value const &value) const;
         void negate();        
-        void sum(const Value& value);        
-        void subtract(const Value& value);
-        void divide(const Value& divisor);
-        void multiply(const Value& value);
-        void modulo(const Value& divisor);
+        void sum(Value const &value);        
+        void subtract(Value const &value);
+        void divide(Value const &divisor);
+        void multiply(Value const &value);
+        void modulo(Value const &divisor);
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
         
     private:
         Number _value;

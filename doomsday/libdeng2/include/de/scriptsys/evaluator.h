@@ -45,18 +45,18 @@ namespace de
         /// Result is of wrong type. @ingroup errors
         DENG2_ERROR(ResultTypeError);
         
-        typedef std::list<Record*> Namespaces;
+        typedef std::list<Record *> Namespaces;
     
     public:
-        Evaluator(Context& owner);
+        Evaluator(Context &owner);
         ~Evaluator();
 
-        Context& context() { return _context; }
+        Context &context() { return _context; }
 
         /**
          * Returns the process that owns this evaluator.
          */
-        Process& process();
+        Process &process();
 
         /**
          * Resets the evaluator so it's ready for another expression.
@@ -70,11 +70,11 @@ namespace de
          *
          * @return  Result of the evaluation.
          */
-        Value& evaluate(const Expression* expression);
+        Value &evaluate(Expression const *expression);
 
         template <typename Type>
-        Type& evaluateTo(const Expression* expr) {
-            Type* r = dynamic_cast<Type*>(&evaluate(expr));
+        Type &evaluateTo(Expression const *expr) {
+            Type *r = dynamic_cast<Type *>(&evaluate(expr));
             if(!r) {
                 throw ResultTypeError("Evaluator::result<Type>", "Unexpected result type");
             }
@@ -90,7 +90,7 @@ namespace de
          * @return  Namespace scope of the current evaluation. If @c NULL,
          *          expressions should assume that all namespaces are available.
          */
-        Record* names() const;
+        Record *names() const;
 
         /**
          * Collect the namespaces currently visible.
@@ -98,7 +98,7 @@ namespace de
          * @param spaces  List of namespaces. The order is important: the earlier
          *                namespaces shadow the subsequent ones.
          */
-        void namespaces(Namespaces& spaces);
+        void namespaces(Namespaces &spaces);
 
         /**
          * Insert the given expression to the top of the expression stack.
@@ -106,7 +106,7 @@ namespace de
          * @param expression  Expression to push on the stack.
          * @param names       Namespace scope for this expression only.
          */
-        void push(const Expression* expression, Record* names = 0);
+        void push(Expression const *expression, Record *names = 0);
 
         /**
          * Push a value onto the result stack.
@@ -114,7 +114,7 @@ namespace de
          * @param value  Value to push on the result stack. The evaluator
          *               gets ownership of the value.
          */
-        void pushResult(Value* value);
+        void pushResult(Value *value);
         
         /**
          * Pop a value off of the result stack. 
@@ -122,7 +122,7 @@ namespace de
          * @return  Value resulting from expression evaluation. Caller
          *          gets ownership of the returned object.
          */
-        Value* popResult();
+        Value *popResult();
         
         /**
          * Pop a value off of the result stack, making sure it has a specific type.
@@ -131,12 +131,12 @@ namespace de
          *          gets ownership of the returned object.
          */
         template <typename Type>
-        Type* popResultAs() {
-            if(!dynamic_cast<Type*>(&result())) {
+        Type *popResultAs() {
+            if(!dynamic_cast<Type *>(&result())) {
                 throw ResultTypeError("Evaluator::result<Type>", 
                     "Result type is not compatible with Type");
             }
-            return dynamic_cast<Type*>(popResult());
+            return dynamic_cast<Type *>(popResult());
         }
         
         /**
@@ -150,7 +150,7 @@ namespace de
          *
          * @return  The final result of the evaluation. 
          */
-        Value& result();
+        Value &result();
                 
     private:
         void clearNames();
@@ -158,21 +158,21 @@ namespace de
         void clearStack();
         
         /// The context that owns this evaluator.
-        Context& _context;
+        Context &_context;
         
         struct ScopedExpression {
-            const Expression* expression;
-            Record* names;
-            ScopedExpression(const Expression* e = 0, Record* n = 0) : expression(e), names(n) {}
+            Expression const *expression;
+            Record *names;
+            ScopedExpression(Expression const *e = 0, Record *n = 0) : expression(e), names(n) {}
         };
         typedef std::vector<ScopedExpression> Expressions;
-        typedef std::vector<Value*> Results;
+        typedef std::vector<Value *> Results;
 
         /// The expression that is currently being evaluated.
-        const Expression* _current;
+        Expression const *_current;
         
         /// Namespace for the current expression.
-        Record* _names;
+        Record *_names;
         
         Expressions _stack;
         Results _results;

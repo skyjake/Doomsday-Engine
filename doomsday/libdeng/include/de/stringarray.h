@@ -46,7 +46,7 @@ typedef struct stringarray_s StringArray;
  *
  * @return StringArray instance. Must be deleted with StringArray_Delete().
  */
-DENG_PUBLIC StringArray* StringArray_New(void);
+DENG_PUBLIC StringArray *StringArray_New(void);
 
 /**
  * Creates a new sub-array that contains copies of a subset of the
@@ -60,32 +60,32 @@ DENG_PUBLIC StringArray* StringArray_New(void);
  *      The returned array will contain @a count strings and
  *      must be deleted with StringArray_Delete().
  */
-DENG_PUBLIC StringArray* StringArray_NewSub(const StringArray* ar, int fromIndex, int count);
+DENG_PUBLIC StringArray *StringArray_NewSub(StringArray const *ar, int fromIndex, int count);
 
 /**
  * Destructs the string array @a ar.
  * @param ar  StringArray instance.
  */
-DENG_PUBLIC void StringArray_Delete(StringArray* ar);
+DENG_PUBLIC void StringArray_Delete(StringArray *ar);
 
 /**
  * Empties the contents of string array @a ar.
  * @param ar  StringArray instance.
  */
-DENG_PUBLIC void StringArray_Clear(StringArray* ar);
+DENG_PUBLIC void StringArray_Clear(StringArray *ar);
 
 /**
  * Returns the number of strings in the array.
  * @param ar  StringArray instance.
  */
-DENG_PUBLIC int StringArray_Size(const StringArray* ar);
+DENG_PUBLIC int StringArray_Size(StringArray const *ar);
 
 /**
  * Appends a string at the end of the array.
  * @param ar  StringArray instance.
  * @param str  Text string to append. A copy is made of the contents.
  */
-DENG_PUBLIC void StringArray_Append(StringArray* ar, const char* str);
+DENG_PUBLIC void StringArray_Append(StringArray *ar, char const *str);
 
 /**
  * Appends an array of text strings at the end of the array.
@@ -93,14 +93,14 @@ DENG_PUBLIC void StringArray_Append(StringArray* ar, const char* str);
  * @param other  Another StringArray instance whose strings will be appended
  * to the end of @a ar.
  */
-DENG_PUBLIC void StringArray_AppendArray(StringArray* ar, const StringArray* other);
+DENG_PUBLIC void StringArray_AppendArray(StringArray *ar, StringArray const *other);
 
 /**
  * Inserts a string to the start of the array.
  * @param ar  StringArray instance.
  * @param str  Text string to prepend. A copy is made of the contents.
  */
-DENG_PUBLIC void StringArray_Prepend(StringArray* ar, const char* str);
+DENG_PUBLIC void StringArray_Prepend(StringArray *ar, char const *str);
 
 /**
  * Inserts a string to the array.
@@ -110,7 +110,7 @@ DENG_PUBLIC void StringArray_Prepend(StringArray* ar, const char* str);
  *      is complete. When inserting at position @em n, strings at positions
  *      <i>n+1..last</i> will be pushed to positions <i>n+2..last+1</i>.
  */
-DENG_PUBLIC void StringArray_Insert(StringArray* ar, const char* str, int atIndex);
+DENG_PUBLIC void StringArray_Insert(StringArray *ar, char const *str, int atIndex);
 
 /**
  * Removes the string at position @a index.
@@ -118,7 +118,7 @@ DENG_PUBLIC void StringArray_Insert(StringArray* ar, const char* str, int atInde
  * @param index  Position to remove. When removing position @em n, strings
  *      at positions <i>n+1..last</i> will be pulled to positions <i>n..last-1</i>.
  */
-DENG_PUBLIC void StringArray_Remove(StringArray* ar, int index);
+DENG_PUBLIC void StringArray_Remove(StringArray *ar, int index);
 
 /**
  * Removes a range of strings from the array.
@@ -127,7 +127,7 @@ DENG_PUBLIC void StringArray_Remove(StringArray* ar, int index);
  * @param count  Length of the removed range. Use -1 to extend to range
  *      to the end of the array.
  */
-DENG_PUBLIC void StringArray_RemoveRange(StringArray* ar, int fromIndex, int count);
+DENG_PUBLIC void StringArray_RemoveRange(StringArray *ar, int fromIndex, int count);
 
 /**
  * Finds string @a str in the array (case sensitive) and returns its position.
@@ -138,7 +138,7 @@ DENG_PUBLIC void StringArray_RemoveRange(StringArray* ar, int fromIndex, int cou
  *
  * @note Search operation performance is O(n).
  */
-DENG_PUBLIC int StringArray_IndexOf(const StringArray* ar, const char* str);
+DENG_PUBLIC int StringArray_IndexOf(StringArray const *ar, char const *str);
 
 /**
  * Returns a non-modifiable string at position @a index.
@@ -147,7 +147,7 @@ DENG_PUBLIC int StringArray_IndexOf(const StringArray* ar, const char* str);
  *
  * @return  Text string.
  */
-DENG_PUBLIC const char* StringArray_At(const StringArray* ar, int index);
+DENG_PUBLIC char const *StringArray_At(StringArray const *ar, int index);
 
 /**
  * Returns a modifiable string at position @a index.
@@ -156,7 +156,7 @@ DENG_PUBLIC const char* StringArray_At(const StringArray* ar, int index);
  *
  * @return  ddstring_t instance that can be modified.
  */
-DENG_PUBLIC Str* StringArray_StringAt(StringArray* ar, int index);
+DENG_PUBLIC Str *StringArray_StringAt(StringArray *ar, int index);
 
 /**
  * Checks if the array contains a string (case sensitive).
@@ -167,21 +167,21 @@ DENG_PUBLIC Str* StringArray_StringAt(StringArray* ar, int index);
  *
  * @note Performance is O(n).
  */
-DENG_PUBLIC boolean StringArray_Contains(const StringArray* ar, const char* str);
+DENG_PUBLIC boolean StringArray_Contains(StringArray const *ar, char const *str);
 
 /**
  * Serializes the array of strings using @a writer.
  * @param ar StringArray instance.
  * @param writer  Writer instance.
  */
-DENG_PUBLIC void StringArray_Write(const StringArray* ar, Writer* writer);
+DENG_PUBLIC void StringArray_Write(StringArray const *ar, Writer *writer);
 
 /**
  * Deserializes the array of strings from @a reader.
  * @param ar StringArray instance.
  * @param reader  Reader instance.
  */
-DENG_PUBLIC void StringArray_Read(StringArray* ar, Reader* reader);
+DENG_PUBLIC void StringArray_Read(StringArray *ar, Reader *reader);
 
 #ifdef __cplusplus
 } // extern "C"

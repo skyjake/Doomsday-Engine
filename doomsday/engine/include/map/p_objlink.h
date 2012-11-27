@@ -97,7 +97,7 @@ typedef struct {
  * Create a new object => BspLeaf contact in the objlink blockmap.
  * Can be used as an iterator.
  *
- * @params paramaters  @see linkobjtobspleafparams_t
+ * @params paramaters  @ref linkobjtobspleafparams_t
  * @return  @c false (always).
  */
 int RIT_LinkObjToBspLeaf(BspLeaf* bspLeaf, void* paramaters);

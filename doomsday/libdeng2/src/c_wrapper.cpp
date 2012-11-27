@@ -34,14 +34,14 @@
 
 #define DENG2_LEGACYCORE()      de::LegacyCore::instance()
 #define DENG2_LEGACYNETWORK()   DENG2_LEGACYCORE().network()
-#define DENG2_COMMANDLINE()     static_cast<de::App*>(qApp)->commandLine()
+#define DENG2_COMMANDLINE()     static_cast<de::App *>(qApp)->commandLine()
 
-LegacyCore* LegacyCore_New(void* dengApp)
+LegacyCore *LegacyCore_New(void *dengApp)
 {
-    return reinterpret_cast<LegacyCore*>(new de::LegacyCore(reinterpret_cast<de::App*>(dengApp)));
+    return reinterpret_cast<LegacyCore *>(new de::LegacyCore(reinterpret_cast<de::App *>(dengApp)));
 }
 
-void LegacyCore_Delete(LegacyCore* lc)
+void LegacyCore_Delete(LegacyCore *lc)
 {
     if(lc)
     {
@@ -51,9 +51,9 @@ void LegacyCore_Delete(LegacyCore* lc)
     }
 }
 
-LegacyCore* LegacyCore_Instance()
+LegacyCore *LegacyCore_Instance()
 {
-    return reinterpret_cast<LegacyCore*>(&de::LegacyCore::instance());
+    return reinterpret_cast<LegacyCore *>(&de::LegacyCore::instance());
 }
 
 int LegacyCore_RunEventLoop()
@@ -101,14 +101,14 @@ void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void))
     DENG2_LEGACYCORE().timer(milliseconds, callback);
 }
 
-int LegacyCore_SetLogFile(const char* filePath)
+int LegacyCore_SetLogFile(char const *filePath)
 {
     try
     {
         DENG2_LEGACYCORE().setLogFileName(filePath);
         return true;
     }
-    catch(const de::LogBuffer::FileError& er)
+    catch(de::LogBuffer::FileError const &er)
     {
         LOG_AS("LegacyCore_SetLogFile");
         LOG_WARNING(er.asText());
@@ -116,17 +116,17 @@ int LegacyCore_SetLogFile(const char* filePath)
     }
 }
 
-const char* LegacyCore_LogFile()
+char const *LegacyCore_LogFile()
 {
     return DENG2_LEGACYCORE().logFileName();
 }
 
-void LegacyCore_PrintLogFragment(const char* text)
+void LegacyCore_PrintLogFragment(char const *text)
 {
     DENG2_LEGACYCORE().printLogFragment(text);
 }
 
-void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, const char* format, ...)
+void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, char const *format, ...)
 {
     // Validate the level.
     de::Log::LogLevel logLevel = de::Log::LogLevel(level);
@@ -136,7 +136,7 @@ void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, const char
     }
 
     // If this level is not enabled, just ignore.
-    if(!de::LogBuffer::appBuffer().enabled(logLevel)) return;
+    if(!de::LogBuffer::appBuffer().isEnabled(logLevel)) return;
 
     char buffer[2048];
     va_list args;
@@ -147,17 +147,17 @@ void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, const char
     DENG2_LEGACYCORE().printLogFragment(buffer, logLevel);
 }
 
-void LegacyCore_SetTerminateFunc(void (*func)(const char*))
+void LegacyCore_SetTerminateFunc(void (*func)(char const *))
 {
     DENG2_LEGACYCORE().setTerminateFunc(func);
 }
 
-void LegacyCore_FatalError(const char* msg)
+void LegacyCore_FatalError(char const *msg)
 {
     DENG2_LEGACYCORE().handleUncaughtException(msg);
 }
 
-void CommandLine_Alias(const char* longname, const char* shortname)
+void CommandLine_Alias(char const *longname, char const *shortname)
 {
     DENG2_COMMANDLINE().alias(longname, shortname);
 }
@@ -167,14 +167,14 @@ int CommandLine_Count(void)
     return DENG2_COMMANDLINE().count();
 }
 
-const char* CommandLine_At(int i)
+char const *CommandLine_At(int i)
 {
     DENG2_ASSERT(i >= 0);
     DENG2_ASSERT(i < DENG2_COMMANDLINE().count());
     return *(DENG2_COMMANDLINE().argv() + i);
 }
 
-const char* CommandLine_PathAt(int i)
+char const *CommandLine_PathAt(int i)
 {
     DENG2_COMMANDLINE().makeAbsolutePath(i);
     return CommandLine_At(i);
@@ -182,7 +182,7 @@ const char* CommandLine_PathAt(int i)
 
 static int argLastMatch = 0; // used only in ArgCheck/ArgNext (not thread-safe)
 
-const char* CommandLine_Next(void)
+char const *CommandLine_Next(void)
 {
     if(!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
     {
@@ -192,7 +192,7 @@ const char* CommandLine_Next(void)
     return CommandLine_At(++argLastMatch);
 }
 
-const char* CommandLine_NextAsPath(void)
+char const *CommandLine_NextAsPath(void)
 {
     if(!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
     {
@@ -203,17 +203,17 @@ const char* CommandLine_NextAsPath(void)
     return CommandLine_Next();
 }
 
-int CommandLine_Check(const char* check)
+int CommandLine_Check(char const *check)
 {
     return argLastMatch = DENG2_COMMANDLINE().check(check);
 }
 
-int CommandLine_CheckWith(const char* check, int num)
+int CommandLine_CheckWith(char const *check, int num)
 {
     return argLastMatch = DENG2_COMMANDLINE().check(check, num);
 }
 
-int CommandLine_Exists(const char* check)
+int CommandLine_Exists(char const *check)
 {
     return DENG2_COMMANDLINE().has(check);
 }
@@ -223,7 +223,7 @@ int CommandLine_IsOption(int i)
     return DENG2_COMMANDLINE().isOption(i);
 }
 
-int CommandLine_IsMatchingAlias(const char* original, const char* originalOrAlias)
+int CommandLine_IsMatchingAlias(char const *original, char const *originalOrAlias)
 {
     return DENG2_COMMANDLINE().matches(original, originalOrAlias);
 }
@@ -249,7 +249,7 @@ int LegacyNetwork_OpenServerSocket(unsigned short port)
     {
         return DENG2_LEGACYNETWORK().openServerSocket(port);
     }
-    catch(const de::Error& er)
+    catch(de::Error const &er)
     {
         LOG_AS("LegacyNetwork_OpenServerSocket");
         LOG_WARNING(er.asText());
@@ -262,12 +262,12 @@ int LegacyNetwork_Accept(int serverSocket)
     return DENG2_LEGACYNETWORK().accept(serverSocket);
 }
 
-int LegacyNetwork_Open(const char* ipAddress, unsigned short port)
+int LegacyNetwork_Open(char const *ipAddress, unsigned short port)
 {
     return DENG2_LEGACYNETWORK().open(de::Address(ipAddress, port));
 }
 
-void LegacyNetwork_GetPeerAddress(int socket, char* host, int hostMaxSize, unsigned short* port)
+void LegacyNetwork_GetPeerAddress(int socket, char *host, int hostMaxSize, unsigned short *port)
 {
     de::Address peer = DENG2_LEGACYNETWORK().peerAddress(socket);
     std::memset(host, 0, hostMaxSize);
@@ -280,19 +280,19 @@ void LegacyNetwork_Close(int socket)
     DENG2_LEGACYNETWORK().close(socket);
 }
 
-int LegacyNetwork_Send(int socket, const void* data, int size)
+int LegacyNetwork_Send(int socket, void const *data, int size)
 {
     return DENG2_LEGACYNETWORK().sendBytes(
-                socket, de::ByteRefArray(reinterpret_cast<const de::IByteArray::Byte*>(data), size));
+                socket, de::ByteRefArray(reinterpret_cast<de::IByteArray::Byte const *>(data), size));
 }
 
-unsigned char* LegacyNetwork_Receive(int socket, int *size)
+unsigned char *LegacyNetwork_Receive(int socket, int *size)
 {
     de::Block data;
     if(DENG2_LEGACYNETWORK().receiveBlock(socket, data))
     {
         // Successfully got a block of data. Return a copy of it.
-        unsigned char* buffer = new unsigned char[data.size()];
+        unsigned char *buffer = new unsigned char[data.size()];
         std::memcpy(buffer, data.constData(), data.size());
         *size = data.size();
         return buffer;
@@ -305,7 +305,7 @@ unsigned char* LegacyNetwork_Receive(int socket, int *size)
     }
 }
 
-void LegacyNetwork_FreeBuffer(unsigned char* buffer)
+void LegacyNetwork_FreeBuffer(unsigned char *buffer)
 {
     delete [] buffer;
 }
@@ -348,35 +348,35 @@ int LegacyNetwork_SocketSet_Activity(int set)
     return DENG2_LEGACYNETWORK().checkSetForActivity(set);
 }
 
-Info* Info_NewFromString(const char* utf8text)
+Info *Info_NewFromString(char const *utf8text)
 {
     try
     {
-        return reinterpret_cast<Info*>(new de::Info(QString::fromUtf8(utf8text)));
+        return reinterpret_cast<Info *>(new de::Info(QString::fromUtf8(utf8text)));
     }
-    catch(const de::Error& er)
+    catch(de::Error const &er)
     {
         LOG_WARNING(er.asText());
         return 0;
     }
 }
 
-Info* Info_NewFromFile(const char* nativePath)
+Info *Info_NewFromFile(char const *nativePath)
 {
     try
     {
         QScopedPointer<de::Info> info(new de::Info);
         info->parseNativeFile(QString::fromUtf8(nativePath));
-        return reinterpret_cast<Info*>(info.take());
+        return reinterpret_cast<Info *>(info.take());
     }
-    catch(const de::Error& er)
+    catch(de::Error const &er)
     {
         LOG_WARNING(er.asText());
         return 0;
     }
 }
 
-void Info_Delete(Info* info)
+void Info_Delete(Info *info)
 {
     if(info)
     {
@@ -385,14 +385,14 @@ void Info_Delete(Info* info)
     }
 }
 
-int Info_FindValue(Info* info, const char* path, char* buffer, size_t bufSize)
+int Info_FindValue(Info *info, char const *path, char *buffer, size_t bufSize)
 {
     if(!info) return false;
 
     DENG2_SELF(Info, info);
-    const de::Info::Element* element = self->findByPath(path);
+    de::Info::Element const *element = self->findByPath(path);
     if(!element || !element->isKey()) return false;
-    QString value = static_cast<const de::Info::KeyElement*>(element)->value();
+    QString value = static_cast<de::Info::KeyElement const *>(element)->value();
     if(buffer)
     {
         qstrncpy(buffer, value.toUtf8().constData(), bufSize);
@@ -405,22 +405,23 @@ int Info_FindValue(Info* info, const char* path, char* buffer, size_t bufSize)
     }
 }
 
-int UnixInfo_GetConfigValue(const char* configFile, const char* key, char* dest, size_t destLen)
+int UnixInfo_GetConfigValue(char const *configFile, char const *key, char *dest, size_t destLen)
 {
-    de::UnixInfo& info = de::App::unixInfo();
-    de::String foundValue;
+    de::UnixInfo &info = de::App::unixInfo();
 
     // "paths" is the only config file currently being used.
     if(!qstrcmp(configFile, "paths"))
     {
+        de::NativePath foundValue;
         if(info.path(key, foundValue))
         {
-            qstrncpy(dest, foundValue.toUtf8().constData(), destLen);
+            qstrncpy(dest, foundValue.toString().toUtf8().constData(), destLen);
             return true;
         }
     }
     else if(!qstrcmp(configFile, "defaults"))
     {
+        de::String foundValue;
         if(info.defaults(key, foundValue))
         {
             qstrncpy(dest, foundValue.toUtf8().constData(), destLen);

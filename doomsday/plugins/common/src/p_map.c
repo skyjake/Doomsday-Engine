@@ -1006,18 +1006,22 @@ int PIT_CheckLine(LineDef* ld, void* data)
        tmBox.maxY <= aaBox->minY)
         return false;
 
-    if(LineDef_BoxOnSide(ld, &tmBox))
-        return false;
-
     /*
-    if(IS_CLIENT)
+     * Real player mobjs are allowed to use high-precision, non-vanilla
+     * collision testing -- the rest of the playsim uses coord_t, and we don't
+     * want conflicting results (e.g., getting stuck in tight spaces).
+     */
+    if(Mobj_IsPlayer(tmThing) && !Mobj_IsVoodooDoll(tmThing))
     {
-        // On clientside, missiles don't collide with anything.
-        if(tmThing->ddFlags & DDMF_MISSILE)
-        {
+        if(LineDef_BoxOnSide(ld, &tmBox)) // double precision floats
             return false;
-        }
-    }*/
+    }
+    else
+    {
+        // Fixed-precision math gives better compatibility with vanilla DOOM.
+        if(LineDef_BoxOnSide_FixedPrecision(ld, &tmBox))
+            return false;
+    }
 
     // A line has been hit
     xline = P_ToXLine(ld);

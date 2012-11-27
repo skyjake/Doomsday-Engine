@@ -1,6 +1,6 @@
 /**
  * @file materials.cpp
- * Materials collection, namespaces, bindings and other management. @ingroup resource
+ * Materials collection, schemes, bindings and other management. @ingroup resource
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -25,19 +25,18 @@
 #include "de_system.h"
 #include "de_filesys.h"
 #include "de_network.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
 
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
-#include "pathtree.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 #include <de/Error>
 #include <de/Log>
+#include <de/PathTree>
 #include <de/memory.h>
 #include <de/memoryblockset.h>
 #include <de/memoryzone.h>
@@ -48,10 +47,11 @@
 /// Number of elements to block-allocate in the material index to materialbind map.
 #define MATERIALS_BINDINGMAP_BLOCK_ALLOC (32)
 
-typedef de::PathTree MaterialRepository;
+typedef de::UserDataPathTree MaterialRepository;
 
 /**
- * POD object. Contains extended info about a material binding (@see MaterialBind).
+ * Contains extended info about a material binding (see MaterialBind).
+ * @note POD object.
  */
 struct MaterialBindInfo
 {
@@ -208,9 +208,9 @@ static VariantCacheQueue* variantCacheQueue;
  * 4) Material name bindings are semi-independant from the materials. There
  *    may be multiple name bindings for a given material (aliases).
  *    The only requirement is that their symbolic names must be unique among
- *    those in the same namespace.
+ *    those in the same scheme.
  * 5) Super-fast look up by public material identifier.
- * 6) Fast look up by material name (a hashing scheme is used).
+ * 6) Fast look up by material name (hashing is used).
  */
 static blockset_t* materialsBlockSet;
 static MaterialList* materials;
@@ -222,8 +222,8 @@ static uint bindingCount;
 static uint bindingIdMapSize;
 static MaterialBind** bindingIdMap;
 
-// Material namespaces contain mappings between names and MaterialBind instances.
-static MaterialRepository* namespaces[MATERIALNAMESPACE_COUNT];
+// Material schemes contain mappings between names and MaterialBind instances.
+static MaterialRepository* schemes[MATERIALSCHEME_COUNT];
 
 void Materials_Register(void)
 {
@@ -241,31 +241,31 @@ static void errorIfNotInited(const char* callerName)
                                     .arg(callerName));
 }
 
-static inline MaterialRepository& getDirectoryForNamespaceId(materialnamespaceid_t id)
+static inline MaterialRepository& schemeById(materialschemeid_t id)
 {
-    DENG2_ASSERT(VALID_MATERIALNAMESPACEID(id));
-    DENG2_ASSERT(namespaces[id-MATERIALNAMESPACE_FIRST]);
-    return *namespaces[id-MATERIALNAMESPACE_FIRST];
+    DENG2_ASSERT(VALID_MATERIALSCHEMEID(id));
+    DENG2_ASSERT(schemes[id-MATERIALSCHEME_FIRST]);
+    return *schemes[id-MATERIALSCHEME_FIRST];
 }
 
-static materialnamespaceid_t namespaceIdForDirectory(MaterialRepository& directory)
+static materialschemeid_t schemeIdForDirectory(de::PathTree const &directory)
 {
-    for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)
+    for(uint i = uint(MATERIALSCHEME_FIRST); i <= uint(MATERIALSCHEME_LAST); ++i)
     {
-        uint idx = i - MATERIALNAMESPACE_FIRST;
-        if(namespaces[idx] == &directory) return materialnamespaceid_t(i);
+        uint idx = i - MATERIALSCHEME_FIRST;
+        if(schemes[idx] == &directory) return materialschemeid_t(i);
     }
 
     // Should never happen.
-    throw de::Error("Materials::namespaceIdForDirectory",
+    throw de::Error("Materials::schemeIdForDirectory",
                     de::String().sprintf("Failed to determine id for directory %p.", (void*)&directory));
 }
 
 /// @return  Newly composed Uri for @a node. Must be deleted when no longer needed.
 static de::Uri composeUriForDirectoryNode(MaterialRepository::Node const& node)
 {
-    Str const* namespaceName = Materials_NamespaceName(namespaceIdForDirectory(node.tree()));
-    return node.composeUri().setScheme(Str_Text(namespaceName));
+    Str const* schemeName = Materials_SchemeName(schemeIdForDirectory(node.tree()));
+    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
 }
 
 static MaterialAnim* getAnimGroup(int number)
@@ -460,11 +460,11 @@ static void updateMaterialBindInfo(MaterialBind& mb, bool canCreateInfo)
 
 static bool newMaterialBind(de::Uri& uri, material_t* material)
 {
-    MaterialRepository& matDirectory = getDirectoryForNamespaceId(Materials_ParseNamespace(Str_Text(uri.scheme())));
+    MaterialRepository& matDirectory = schemeById(Materials_ParseSchemeName(uri.schemeCStr()));
     MaterialRepository::Node* node;
     MaterialBind* mb;
 
-    node = matDirectory.insert(uri);
+    node = &matDirectory.insert(uri.path());
 
     // Is this a new binding?
     mb = reinterpret_cast<MaterialBind*>(node->userPointer());
@@ -550,9 +550,9 @@ void Materials_Init(void)
     bindingIdMap = NULL;
     bindingIdMapSize = 0;
 
-    for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
+    for(i = 0; i < MATERIALSCHEME_COUNT; ++i)
     {
-        namespaces[i] = new MaterialRepository();
+        schemes[i] = new MaterialRepository();
     }
 
     initedOk = true;
@@ -578,21 +578,22 @@ static void destroyBindings(void)
     int i;
     DENG2_ASSERT(initedOk);
 
-    for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
+    for(i = 0; i < MATERIALSCHEME_COUNT; ++i)
     {
-        if(!namespaces[i]) continue;
+        if(!schemes[i]) continue;
 
-        DENG2_FOR_EACH_CONST(MaterialRepository::Nodes, nodeIt, namespaces[i]->leafNodes())
+        de::PathTreeIterator<MaterialRepository> iter(schemes[i]->leafNodes());
+        while(iter.hasNext())
         {
-            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userPointer());
+            MaterialBind* mb = reinterpret_cast<MaterialBind*>(iter.next().userPointer());
             if(mb)
             {
                 // Detach our user data from this node.
-                (*nodeIt)->setUserPointer(0);
+                iter.value().setUserPointer(0);
                 delete mb;
             }
         }
-        delete namespaces[i]; namespaces[i] = NULL;
+        delete schemes[i]; schemes[i] = NULL;
     }
 
     // Clear the binding index/map.
@@ -617,41 +618,41 @@ void Materials_Shutdown(void)
     initedOk = false;
 }
 
-materialnamespaceid_t Materials_ParseNamespace(const char* str)
+materialschemeid_t Materials_ParseSchemeName(const char* str)
 {
-    if(!str || 0 == strlen(str)) return MN_ANY;
+    if(!str || 0 == strlen(str)) return MS_ANY;
 
-    if(!stricmp(str, MN_TEXTURES_NAME)) return MN_TEXTURES;
-    if(!stricmp(str, MN_FLATS_NAME))    return MN_FLATS;
-    if(!stricmp(str, MN_SPRITES_NAME))  return MN_SPRITES;
-    if(!stricmp(str, MN_SYSTEM_NAME))   return MN_SYSTEM;
+    if(!stricmp(str, MS_TEXTURES_NAME)) return MS_TEXTURES;
+    if(!stricmp(str, MS_FLATS_NAME))    return MS_FLATS;
+    if(!stricmp(str, MS_SPRITES_NAME))  return MS_SPRITES;
+    if(!stricmp(str, MS_SYSTEM_NAME))   return MS_SYSTEM;
 
-    return MN_INVALID; // Unknown.
+    return MS_INVALID; // Unknown.
 }
 
-Str const* Materials_NamespaceName(materialnamespaceid_t id)
+Str const* Materials_SchemeName(materialschemeid_t id)
 {
-    static de::Str const namespaces[1+MATERIALNAMESPACE_COUNT] = {
-        /* No namespace name */ "",
-        /* MN_SYSTEM */         MN_SYSTEM_NAME,
-        /* MN_FLATS */          MN_FLATS_NAME,
-        /* MN_TEXTURES */       MN_TEXTURES_NAME,
-        /* MN_SPRITES */        MN_SPRITES_NAME
+    static de::Str const names[1+MATERIALSCHEME_COUNT] = {
+        /* No scheme name */    "",
+        /* MS_SYSTEM */         MS_SYSTEM_NAME,
+        /* MS_FLATS */          MS_FLATS_NAME,
+        /* MS_TEXTURES */       MS_TEXTURES_NAME,
+        /* MS_SPRITES */        MS_SPRITES_NAME
     };
-    if(VALID_MATERIALNAMESPACEID(id))
-        return namespaces[1 + (id - MATERIALNAMESPACE_FIRST)];
-    return namespaces[0];
+    if(VALID_MATERIALSCHEMEID(id))
+        return names[1 + (id - MATERIALSCHEME_FIRST)];
+    return names[0];
 }
 
-materialnamespaceid_t Materials_Namespace(materialid_t id)
+materialschemeid_t Materials_Scheme(materialid_t id)
 {
     MaterialBind* bind = getMaterialBindForId(id);
     if(!bind)
     {
-        DEBUG_Message(("Warning: Materials::Namespace: Attempted with unbound materialId #%u, returning 'any' namespace.\n", id));
-        return MN_ANY;
+        DEBUG_Message(("Warning: Materials::Scheme: Attempted with unbound materialId #%u, returning 'any' scheme.\n", id));
+        return MS_ANY;
     }
-    return namespaceIdForDirectory(bind->directoryNode().tree());
+    return schemeIdForDirectory(bind->directoryNode().tree());
 }
 
 static void clearBindingDefinitionLinks(MaterialBind* mb)
@@ -677,13 +678,14 @@ void Materials_ClearDefinitionLinks(void)
         Material_SetDefinition(mat, NULL);
     }
 
-    for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)
+    for(uint i = uint(MATERIALSCHEME_FIRST); i <= uint(MATERIALSCHEME_LAST); ++i)
     {
-        MaterialRepository& matDirectory = getDirectoryForNamespaceId(materialnamespaceid_t(i));
+        MaterialRepository& matDirectory = schemeById(materialschemeid_t(i));
 
-        DENG2_FOR_EACH_CONST(MaterialRepository::Nodes, nodeIt, matDirectory.leafNodes())
+        de::PathTreeIterator<MaterialRepository> iter(matDirectory.leafNodes());
+        while(iter.hasNext())
         {
-            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userPointer());
+            MaterialBind* mb = reinterpret_cast<MaterialBind*>(iter.next().userPointer());
             if(mb)
             {
                 clearBindingDefinitionLinks(mb);
@@ -756,35 +758,35 @@ materialid_t Materials_Id(material_t* mat)
  * @ingroup flags
  */
 ///@{
-#define VMUF_ALLOW_NAMESPACE_ANY        0x1 ///< The Scheme component of the uri may be of zero-length; signifying "any namespace".
+#define VMUF_ALLOW_ANY_SCHEME           0x1 ///< The Scheme component of the uri may be of zero-length; signifying "any scheme".
 ///@}
 
 /**
  * @param uri  Uri to be validated.
- * @param flags  @see validateMaterialUriFlags
+ * @param flags  @ref validateMaterialUriFlags
  * @param quiet  @c true= Do not output validation remarks to the log.
  * @return  @c true if @a Uri passes validation.
  */
 static bool validateMaterialUri(de::Uri const& uri, int flags, boolean quiet=false)
 {
-    materialnamespaceid_t namespaceId;
+    materialschemeid_t schemeId;
 
     if(uri.isEmpty())
     {
         if(!quiet)
         {
-            LOG_MSG("Invalid path in Material uri \"%s\".") <<uri;
+            LOG_MSG("Invalid path in material URI \"%s\".") <<uri;
         }
         return false;
     }
 
-    namespaceId = Materials_ParseNamespace(Str_Text(uri.scheme()));
-    if(!((flags & VMUF_ALLOW_NAMESPACE_ANY) && namespaceId == MN_ANY) &&
-       !VALID_MATERIALNAMESPACEID(namespaceId))
+    schemeId = Materials_ParseSchemeName(uri.schemeCStr());
+    if(!((flags & VMUF_ALLOW_ANY_SCHEME) && schemeId == MS_ANY) &&
+       !VALID_MATERIALSCHEMEID(schemeId))
     {
         if(!quiet)
         {
-            LOG_MSG("Unknown namespace in Material uri \"%s\".") << uri;
+            LOG_MSG("Unknown scheme in material URI \"%s\".") << uri;
         }
         return false;
     }
@@ -795,7 +797,7 @@ static bool validateMaterialUri(de::Uri const& uri, int flags, boolean quiet=fal
 /**
  * Given a directory and path, search the Materials collection for a match.
  *
- * @param directory  Namespace-specific MaterialRepository to search in.
+ * @param directory  Scheme-specific MaterialRepository to search in.
  * @param path  Path of the material to search for.
  * @return  Found Material else @c NULL
  */
@@ -803,7 +805,7 @@ static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, d
 {
     try
     {
-        MaterialRepository::Node& node = matDirectory.find(de::Uri(path, RC_NULL), PCF_NO_BRANCH | PCF_MATCH_FULL);
+        MaterialRepository::Node& node = matDirectory.find(path, de::PathTree::NoBranch | de::PathTree::MatchFull);
         return reinterpret_cast<MaterialBind*>(node.userPointer());
     }
     catch(MaterialRepository::NotFoundError const&)
@@ -814,26 +816,26 @@ static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, d
 /// @pre @a uri has already been validated and is well-formed.
 static MaterialBind* findMaterialBindForUri(de::Uri const& uri)
 {
-    materialnamespaceid_t namespaceId = Materials_ParseNamespace(Str_Text(uri.scheme()));
-    char const* path = Str_Text(uri.path());
-    MaterialBind* bind = NULL;
-    if(namespaceId != MN_ANY)
+    materialschemeid_t schemeId = Materials_ParseSchemeName(uri.schemeCStr());
+    de::String const& path = uri.path();
+    MaterialBind* bind = 0;
+    if(schemeId != MS_ANY)
     {
-        // Caller wants a material in a specific namespace.
-        bind = findMaterialBindForPath(getDirectoryForNamespaceId(namespaceId), path);
+        // Caller wants a material in a specific scheme.
+        bind = findMaterialBindForPath(schemeById(schemeId), path);
     }
     else
     {
-        // Caller does not care which namespace.
-        // Check for the material in these namespaces in priority order.
-        static const materialnamespaceid_t order[] = {
-            MN_SPRITES, MN_TEXTURES, MN_FLATS, MN_ANY
+        // Caller does not care which scheme.
+        // Check for the material in these schemes in priority order.
+        static const materialschemeid_t order[] = {
+            MS_SPRITES, MS_TEXTURES, MS_FLATS, MS_ANY
         };
         int n = 0;
         do
         {
-            bind = findMaterialBindForPath(getDirectoryForNamespaceId(order[n]), path);
-        } while(!bind && order[++n] != MN_ANY);
+            bind = findMaterialBindForPath(schemeById(order[n]), path);
+        } while(!bind && order[++n] != MS_ANY);
     }
     return bind;
 }
@@ -845,7 +847,7 @@ materialid_t Materials_ResolveUri2(Uri const* _uri, boolean quiet)
     if(!initedOk || !_uri) return NOMATERIALID;
 
     de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
-    if(!validateMaterialUri(uri, VMUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
+    if(!validateMaterialUri(uri, VMUF_ALLOW_ANY_SCHEME, true /*quiet please*/))
     {
 #if _DEBUG
         LOG_WARNING("\"%s\" failed validation, returning NOMATERIALID.") << uri;
@@ -895,7 +897,7 @@ AutoStr* Materials_ComposePath(materialid_t id)
     if(bind)
     {
         MaterialRepository::Node& node = bind->directoryNode();
-        QByteArray path = node.composePath().toUtf8();
+        QByteArray path = node.path().toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
 
@@ -1362,10 +1364,10 @@ uint Materials_Size(void)
     return materialCount;
 }
 
-uint Materials_Count(materialnamespaceid_t namespaceId)
+uint Materials_Count(materialschemeid_t schemeId)
 {
-    if(!VALID_MATERIALNAMESPACEID(namespaceId) || !Materials_Size()) return 0;
-    return getDirectoryForNamespaceId(namespaceId).size();
+    if(!VALID_MATERIALSCHEMEID(schemeId) || !Materials_Size()) return 0;
+    return schemeById(schemeId).size();
 }
 
 const struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
@@ -1474,13 +1476,13 @@ static void printMaterialInfo(material_t* mat)
     Uri_Delete(uri);
 }
 
-static void printMaterialOverview(material_t* mat, bool printNamespace)
+static void printMaterialOverview(material_t* mat, bool printScheme)
 {
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Size()));
     Uri* uri = Materials_ComposeUri(Materials_Id(mat));
-    AutoStr* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(AutoStr_FromTextStd(Str_Text(Uri_Path(uri)))));
+    AutoStr* path = (printScheme? Uri_ToString(uri) : Str_PercentDecode(AutoStr_FromTextStd(Str_Text(Uri_Path(uri)))));
 
-    Con_Printf("%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
+    Con_Printf("%-*s %*u %s\n", printScheme? 22 : 14, F_PrettyPath(Str_Text(path)),
                numUidDigits, Materials_Id(mat),
                !Material_IsCustom(mat) ? "game" : (Material_Definition(mat)->autoGenerated? "addon" : "def"));
 
@@ -1493,34 +1495,35 @@ static void printMaterialOverview(material_t* mat, bool printNamespace)
  * However this is only presently used for the material search/listing console commands
  * so is not hugely important right now.
  */
-static MaterialRepository::Node** collectDirectoryNodes(materialnamespaceid_t namespaceId,
+static MaterialRepository::Node** collectDirectoryNodes(materialschemeid_t schemeId,
     de::String like, int* count, MaterialRepository::Node** storage)
 {
-    materialnamespaceid_t fromId, toId;
+    materialschemeid_t fromId, toId;
 
-    if(VALID_MATERIALNAMESPACEID(namespaceId))
+    if(VALID_MATERIALSCHEMEID(schemeId))
     {
-        // Only consider materials in this namespace.
-        fromId = toId = namespaceId;
+        // Only consider materials in this scheme.
+        fromId = toId = schemeId;
     }
     else
     {
-        // Consider materials in any namespace.
-        fromId = MATERIALNAMESPACE_FIRST;
-        toId   = MATERIALNAMESPACE_LAST;
+        // Consider materials in any scheme.
+        fromId = MATERIALSCHEME_FIRST;
+        toId   = MATERIALSCHEME_LAST;
     }
 
     int idx = 0;
     for(uint i = uint(fromId); i <= uint(toId); ++i)
     {
-        MaterialRepository& matDirectory = getDirectoryForNamespaceId(materialnamespaceid_t(i));
+        MaterialRepository& matDirectory = schemeById(materialschemeid_t(i));
 
-        DENG2_FOR_EACH_CONST(MaterialRepository::Nodes, nodeIt, matDirectory.leafNodes())
+        de::PathTreeIterator<MaterialRepository> iter(matDirectory.leafNodes());
+        while(iter.hasNext())
         {
-            MaterialRepository::Node& node = **nodeIt;
+            MaterialRepository::Node& node = iter.next();
             if(!like.isEmpty())
             {
-                de::String path = node.composePath();
+                de::String path = node.path();
                 if(!path.beginsWith(like, Qt::CaseInsensitive)) continue;
             }
 
@@ -1553,7 +1556,7 @@ static MaterialRepository::Node** collectDirectoryNodes(materialnamespaceid_t na
     storage = (MaterialRepository::Node**)M_Malloc(sizeof *storage * (idx+1));
     if(!storage)
         Con_Error("Materials::collectDirectoryNodes: Failed on allocation of %lu bytes for new MaterialRepository::Node collection.", (unsigned long) (sizeof* storage * (idx+1)));
-    return collectDirectoryNodes(namespaceId, like, count, storage);
+    return collectDirectoryNodes(schemeId, like, count, storage);
 }
 
 static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
@@ -1561,25 +1564,25 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     // Decode paths before determining a lexicographical delta.
     MaterialRepository::Node const& nodeA = **(MaterialRepository::Node const**)a;
     MaterialRepository::Node const& nodeB = **(MaterialRepository::Node const**)b;
-    QByteArray pathAUtf8 = nodeA.composePath().toUtf8();
-    QByteArray pathBUtf8 = nodeB.composePath().toUtf8();
+    QByteArray pathAUtf8 = nodeA.path().toUtf8();
+    QByteArray pathBUtf8 = nodeB.path().toUtf8();
     AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8.constData()));
     AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8.constData()));
     return Str_CompareIgnoreCase(pathA, Str_Text(pathB));
 }
 
-static size_t printMaterials2(materialnamespaceid_t namespaceId, char const* like,
-    bool printNamespace)
+static size_t printMaterials2(materialschemeid_t schemeId, char const* like,
+    bool printSchemeName)
 {
     int numFoundDigits, numUidDigits, idx, count = 0;
-    MaterialRepository::Node** foundMaterials = collectDirectoryNodes(namespaceId, like, &count, NULL);
+    MaterialRepository::Node** foundMaterials = collectDirectoryNodes(schemeId, like, &count, NULL);
     MaterialRepository::Node** iter;
 
     if(!foundMaterials) return 0;
 
-    if(!printNamespace)
-        Con_FPrintf(CPF_YELLOW, "Known materials in namespace '%s'", Str_Text(Materials_NamespaceName(namespaceId)));
-    else // Any namespace.
+    if(!printSchemeName)
+        Con_FPrintf(CPF_YELLOW, "Known materials in scheme '%s'", Str_Text(Materials_SchemeName(schemeId)));
+    else // Any scheme.
         Con_FPrintf(CPF_YELLOW, "Known materials");
 
     if(like && like[0])
@@ -1590,7 +1593,7 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, char const* lik
     numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits(count));
     numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Size()));
     Con_Printf(" %*s: %-*s %*s origin\n", numFoundDigits, "idx",
-        printNamespace? 22 : 14, printNamespace? "namespace:path" : "path", numUidDigits, "uid");
+        printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path", numUidDigits, "uid");
     Con_PrintRuler();
 
     // Sort and print the index.
@@ -1603,35 +1606,35 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, char const* lik
         MaterialBind* mb = reinterpret_cast<MaterialBind*>(node->userPointer());
         material_t* mat = mb->material();
         Con_Printf(" %*i: ", numFoundDigits, idx++);
-        printMaterialOverview(mat, printNamespace);
+        printMaterialOverview(mat, printSchemeName);
     }
 
     M_Free(foundMaterials);
     return count;
 }
 
-static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
+static void printMaterials(materialschemeid_t schemeId, const char* like)
 {
     size_t printTotal = 0;
-    // Do we care which namespace?
-    if(namespaceId == MN_ANY && like && like[0])
+    // Do we care which scheme?
+    if(schemeId == MS_ANY && like && like[0])
     {
-        printTotal = printMaterials2(namespaceId, like, true);
+        printTotal = printMaterials2(schemeId, like, true);
         Con_PrintRuler();
     }
-    // Only one namespace to print?
-    else if(VALID_MATERIALNAMESPACEID(namespaceId))
+    // Only one scheme to print?
+    else if(VALID_MATERIALSCHEMEID(schemeId))
     {
-        printTotal = printMaterials2(namespaceId, like, false);
+        printTotal = printMaterials2(schemeId, like, false);
         Con_PrintRuler();
     }
     else
     {
-        // Collect and sort in each namespace separately.
+        // Collect and sort in each scheme separately.
         int i;
-        for(i = MATERIALNAMESPACE_FIRST; i <= MATERIALNAMESPACE_LAST; ++i)
+        for(i = MATERIALSCHEME_FIRST; i <= MATERIALSCHEME_LAST; ++i)
         {
-            size_t printed = printMaterials2((materialnamespaceid_t)i, like, false);
+            size_t printed = printMaterials2((materialschemeid_t)i, like, false);
             if(printed != 0)
             {
                 printTotal += printed;
@@ -1915,52 +1918,52 @@ D_CMD(ListMaterials)
         return true;
     }
 
-    materialnamespaceid_t namespaceId = MN_ANY;
+    materialschemeid_t schemeId = MS_ANY;
     char const* like = 0;
     de::Uri uri;
 
-    // "listmaterials [namespace] [name]"
+    // "listmaterials [scheme] [path]"
     if(argc > 2)
     {
         uri.setScheme(argv[1]).setPath(argv[2]);
 
-        namespaceId = DD_ParseMaterialNamespace(Str_Text(uri.scheme()));
-        if(!VALID_MATERIALNAMESPACEID(namespaceId))
+        schemeId = DD_ParseMaterialSchemeName(uri.schemeCStr());
+        if(!VALID_MATERIALSCHEMEID(schemeId))
         {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
+            Con_Printf("Invalid scheme \"%s\".\n", uri.schemeCStr());
             return false;
         }
-        like = Str_Text(uri.path());
+        like = uri.pathCStr();
     }
-    // "listmaterials [namespace:name]" i.e., a partial Uri
+    // "listmaterials [scheme:path]" (i.e., a partial Uri)
     else if(argc > 1)
     {
         uri.setUri(argv[1], RC_NULL);
-        if(!Str_IsEmpty(uri.scheme()))
+        if(!uri.scheme().isEmpty())
         {
-            namespaceId = DD_ParseMaterialNamespace(Str_Text(uri.scheme()));
-            if(!VALID_MATERIALNAMESPACEID(namespaceId))
+            schemeId = DD_ParseMaterialSchemeName(uri.schemeCStr());
+            if(!VALID_MATERIALSCHEMEID(schemeId))
             {
-                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
+                Con_Printf("Invalid scheme \"%s\".\n", uri.schemeCStr());
                 return false;
             }
 
-            if(!Str_IsEmpty(uri.path()))
-                like = Str_Text(uri.path());
+            if(!uri.path().isEmpty())
+                like = uri.pathCStr();
         }
         else
         {
-            namespaceId = DD_ParseMaterialNamespace(Str_Text(uri.path()));
+            schemeId = DD_ParseMaterialSchemeName(uri.pathCStr());
 
-            if(!VALID_MATERIALNAMESPACEID(namespaceId))
+            if(!VALID_MATERIALSCHEMEID(schemeId))
             {
-                namespaceId = MN_ANY;
+                schemeId = MS_ANY;
                 like = argv[1];
             }
         }
     }
 
-    printMaterials(namespaceId, like);
+    printMaterials(schemeId, like);
 
     return true;
 }
@@ -2038,12 +2041,12 @@ D_CMD(InspectMaterial)
     de::Uri search = de::Uri(Str_Text(&path), RC_NULL);
     Str_Free(&path);
 
-    if(!Str_IsEmpty(search.scheme()))
+    if(!search.scheme().isEmpty())
     {
-        materialnamespaceid_t namespaceId = DD_ParseMaterialNamespace(Str_Text(search.scheme()));
-        if(!VALID_MATERIALNAMESPACEID(namespaceId))
+        materialschemeid_t schemeId = DD_ParseMaterialSchemeName(search.schemeCStr());
+        if(!VALID_MATERIALSCHEMEID(schemeId))
         {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(search.scheme()));
+            Con_Printf("Invalid scheme \"%s\".\n", search.schemeCStr());
             return false;
         }
     }
@@ -2067,15 +2070,15 @@ D_CMD(PrintMaterialStats)
     DENG2_UNUSED(src); DENG2_UNUSED(argc); DENG2_UNUSED(argv);
 
     Con_FPrintf(CPF_YELLOW, "Material Statistics:\n");
-    for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)
+    for(uint i = uint(MATERIALSCHEME_FIRST); i <= uint(MATERIALSCHEME_LAST); ++i)
     {
-        materialnamespaceid_t namespaceId = materialnamespaceid_t(i);
-        MaterialRepository& matDirectory = getDirectoryForNamespaceId(namespaceId);
+        materialschemeid_t schemeId = materialschemeid_t(i);
+        MaterialRepository& matDirectory = schemeById(schemeId);
         uint size = matDirectory.size();
 
-        Con_Printf("Namespace: %s (%u %s)\n", Str_Text(Materials_NamespaceName(namespaceId)), size, size==1? "material":"materials");
-        MaterialRepository::debugPrintHashDistribution(matDirectory);
-        MaterialRepository::debugPrint(matDirectory);
+        Con_Printf("Scheme: %s (%u %s)\n", Str_Text(Materials_SchemeName(schemeId)), size, size==1? "material":"materials");
+        matDirectory.debugPrintHashDistribution();
+        matDirectory.debugPrint();
     }
     return true;
 }

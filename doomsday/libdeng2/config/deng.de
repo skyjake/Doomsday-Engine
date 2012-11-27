@@ -38,5 +38,5 @@ const log.ERROR    = 6
 const log.CRITICAL = 7
 
 log.file       ?= '/home/doomsday.out'
-log.level      ?= log.DEBUG
+log.level      ?= log.MESSAGE
 log.bufferSize ?= 1000

@@ -151,8 +151,8 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 
         if(i == 0 || isTexture != lastIsTexture)
         {
-            Uri_SetScheme(startUri, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
-            Uri_SetScheme(endUri, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+            Uri_SetScheme(startUri, isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME);
+            Uri_SetScheme(endUri, isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME);
             lastIsTexture = isTexture;
         }
 
@@ -199,7 +199,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         for(n = startFrame; n <= endFrame; ++n)
         {
             Str_Clear(&framePath);
-            Str_Appendf(&framePath, "%s:%i", isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME, n);
+            Str_Appendf(&framePath, "%s:%i", isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME, n);
             Uri_SetPath(frameUrn, Str_Text(&framePath));
 
             R_AddAnimGroupFrame(groupNum, frameUrn, ticsPerFrame, 0);

@@ -71,13 +71,13 @@ void R_PrecachePSprites(void)
         {
             pclass = players[CONSOLEPLAYER].class_;
 
-            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_UP]);
-            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_DOWN]);
-            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_READY]);
-            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK]);
-            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_FLASH]);
+            Models_CacheForState(weaponInfo[i][pclass].mode[k].states[WSN_UP]);
+            Models_CacheForState(weaponInfo[i][pclass].mode[k].states[WSN_DOWN]);
+            Models_CacheForState(weaponInfo[i][pclass].mode[k].states[WSN_READY]);
+            Models_CacheForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK]);
+            Models_CacheForState(weaponInfo[i][pclass].mode[k].states[WSN_FLASH]);
 #if __JHERETIC__ || __JHEXEN__
-            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK_HOLD]);
+            Models_CacheForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK_HOLD]);
 #endif
         }
     }

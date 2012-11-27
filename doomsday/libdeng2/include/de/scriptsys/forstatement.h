@@ -40,25 +40,25 @@ namespace de
     public:
         ForStatement();
         
-        ForStatement(Expression* iter, Expression* iteration) 
+        ForStatement(Expression *iter, Expression *iteration) 
             : _iterator(iter), _iteration(iteration) {}
         
         ~ForStatement();
         
         /// Returns the compound of the statement.
-        Compound& compound() {
+        Compound &compound() {
             return _compound;
         }
         
-        void execute(Context& context) const;
+        void execute(Context &context) const;
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
 
     private:
-        Expression* _iterator;
-        Expression* _iteration;
+        Expression *_iterator;
+        Expression *_iteration;
         Compound _compound;
     };
 }

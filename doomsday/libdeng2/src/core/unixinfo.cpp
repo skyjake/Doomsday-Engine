@@ -1,6 +1,6 @@
 /**
  * @file unixinfo.cpp
- * Unix system-level configuration. @ingroup core
+ * Unix system-level configuration.
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
@@ -24,12 +24,13 @@
 #include "de/Info"
 #include <QDir>
 
-using namespace de;
+namespace de {
+namespace internal {
 
 class Infos
 {
-    Info* etcInfo;
-    Info* userInfo;
+    Info *etcInfo;
+    Info *userInfo;
 
 public:
     Infos(String fileName) : etcInfo(0), userInfo(0)
@@ -55,7 +56,7 @@ public:
         delete etcInfo;
     }
 
-    bool find(const String& key, String& value) const
+    bool find(String const &key, String &value) const
     {
         // User-specific info overrides the system-level info.
         if(userInfo && userInfo->findValueForKey(key, value))
@@ -70,10 +71,14 @@ public:
     }
 };
 
+} // namespace internal
+
+using namespace internal;
+
 struct UnixInfo::Instance
 {
-    Infos* paths;
-    Infos* defaults;
+    Infos *paths;
+    Infos *defaults;
 
     Instance() : paths(0), defaults(0)
     {}
@@ -105,16 +110,21 @@ UnixInfo::~UnixInfo()
     delete d;
 }
 
-bool UnixInfo::path(const String& key, String& value) const
+bool UnixInfo::path(String const &key, NativePath &value) const
 {
     if(d->paths)
     {
-        return d->paths->find(key, value);
+        String s;
+        if(d->paths->find(key, s))
+        {
+            value = s;
+            return true;
+        }
     }
     return false;
 }
 
-bool UnixInfo::defaults(const String& key, String& value) const
+bool UnixInfo::defaults(String const &key, String &value) const
 {
     if(d->defaults)
     {
@@ -122,3 +132,5 @@ bool UnixInfo::defaults(const String& key, String& value) const
     }
     return false;
 }
+
+} // namespace de

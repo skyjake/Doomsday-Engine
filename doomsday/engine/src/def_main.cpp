@@ -30,22 +30,13 @@
 #include "de_base.h"
 #include "de_system.h"
 #include "de_platform.h"
-#include "de_refresh.h"
 #include "de_console.h"
 #include "de_audio.h"
 #include "de_misc.h"
 #include "de_graphics.h"
 #include "de_ui.h"
 #include "de_filesys.h"
-
-#include "r_data.h"
-
-#include "resourcerecord.h"
-#include "bitmapfont.h"
-#include "font.h"
-#include "lumpindex.h"
-#include "resourcenamespace.h"
-#include "texture.h"
+#include "de_resource.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
@@ -356,8 +347,8 @@ ded_value_t* Def_GetValueByUri(Uri const* _uri)
     if(!_uri) return 0;
     de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
 
-    if(qstricmp("Values", Str_Text(uri.scheme()))) return 0;
-    return Def_GetValueById(Str_Text(uri.path()));
+    if(uri.scheme().compareWithoutCase("Values")) return 0;
+    return Def_GetValueById(uri.pathCStr());
 }
 
 ded_mapinfo_t* Def_GetMapInfo(Uri const* _uri)
@@ -403,21 +394,21 @@ ded_material_t* Def_GetMaterial(char const* uriCString)
     {
         de::Uri uri = de::Uri(uriCString, RC_NULL);
 
-        if(Str_IsEmpty(uri.scheme()))
+        if(uri.scheme().isEmpty())
         {
-            // Caller doesn't care which namespace - use a priority search order.
+            // Caller doesn't care which scheme - use a priority search order.
             de::Uri temp = de::Uri(uri);
 
-            temp.setScheme(MN_SPRITES_NAME);
+            temp.setScheme(MS_SPRITES_NAME);
             def = findMaterialDef(temp);
             if(!def)
             {
-                temp.setScheme(MN_TEXTURES_NAME);
+                temp.setScheme(MS_TEXTURES_NAME);
                 def = findMaterialDef(temp);
             }
             if(!def)
             {
-                temp.setScheme(MN_FLATS_NAME);
+                temp.setScheme(MS_FLATS_NAME);
                 def = findMaterialDef(temp);
             }
         }
@@ -448,9 +439,9 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
     {
         de::Uri uri = de::Uri(uriCString, RC_NULL);
 
-        if(Str_IsEmpty(uri.scheme()))
+        if(uri.scheme().isEmpty())
         {
-            // Caller doesn't care which namespace - use a priority search order.
+            // Caller doesn't care which scheme - use a priority search order.
             de::Uri temp = de::Uri(uri);
 
             temp.setScheme(FN_GAME_NAME);
@@ -718,16 +709,28 @@ static void Def_InitTextDef(ddtext_t* txt, char const* str)
     txt->text = (char*) M_Realloc(txt->text, strlen(txt->text) + 1);
 }
 
-void Def_ReadProcessDED(char const* fileName)
+void Def_ReadProcessDED(char const* path)
 {
     LOG_AS("Def_ReadProcessDED");
 
-    if(!fileName || !fileName[0]) return;
+    if(!path || !path[0]) return;
 
-    if(!App_FileSystem()->checkFileId(fileName))
-        LOG_WARNING("\"%s\" not found!") << de::NativePath(fileName).pretty();
+    de::Uri path_ = de::Uri(path, RC_NULL);
+    if(!App_FileSystem()->accessFile(path_))
+    {
+        LOG_WARNING("\"%s\" not found!") << de::NativePath(path_.asText()).pretty();
+        return;
+    }
 
-    if(!DED_Read(&defs, fileName))
+    // We use the File Ids to prevent loading the same files multiple times.
+    if(!App_FileSystem()->checkFileId(path_))
+    {
+        // Already handled.
+        LOG_DEBUG("\"%s\" has already been read.") << de::NativePath(path_.asText()).pretty();
+        return;
+    }
+
+    if(!DED_Read(&defs, path))
     {
         Con_Error("Def_ReadProcessDED: %s\n", dedReadError);
     }
@@ -829,7 +832,7 @@ static void readAllDefinitions(void)
     // Start with engine's own top-level definition file, it is always read first.
     de::Uri searchPath = de::Uri("doomsday.ded", RC_DEFINITION);
     AutoStr* foundPath = AutoStr_NewStd();
-    if(F_FindResource2(RC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
+    if(F_FindPath(RC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
     {
         VERBOSE2( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(foundPath))) )
         readDefinitionFile(Str_Text(foundPath));
@@ -842,12 +845,12 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        de::Game::Resources const& gameResources = reinterpret_cast<de::Game*>(App_CurrentGame())->resources();
+        de::Game::MetaFiles const& gameResources = reinterpret_cast<de::Game*>(App_CurrentGame())->metafiles();
         int packageIdx = 0;
-        for(de::Game::Resources::const_iterator i = gameResources.find(RC_DEFINITION);
+        for(de::Game::MetaFiles::const_iterator i = gameResources.find(RC_DEFINITION);
             i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
         {
-            de::ResourceRecord& record = **i;
+            de::MetaFile& record = **i;
             /// Try to locate this resource now.
             QString const& path = record.resolvedPath(true/*try to locate*/);
 
@@ -941,7 +944,7 @@ void Def_GenerateGroupsFromAnims(void)
             gmbr->tics = frame->tics;
             gmbr->randomTics = frame->randomTics;
             gmbr->material = Textures_ComposeUri(frame->texture);
-            Uri_SetScheme(gmbr->material, Str_Text(DD_MaterialNamespaceNameForTextureNamespace(Textures_Namespace(frame->texture))));
+            Uri_SetScheme(gmbr->material, Str_Text(DD_MaterialSchemeNameForTextureScheme(Textures_Scheme(frame->texture))));
         }
     }
 }
@@ -961,7 +964,7 @@ static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* 
     mat->autoGenerated = true;
 
     mat->uri = Uri_Dup(texUri);
-    Uri_SetScheme(mat->uri, MN_TEXTURES_NAME);
+    Uri_SetScheme(mat->uri, MS_TEXTURES_NAME);
 
     tex = Textures_ToTexture(texId);
     if(tex)
@@ -1001,7 +1004,7 @@ static int generateMaterialDefForFlatTexture(textureid_t texId, void* parameters
     mat->autoGenerated = true;
 
     mat->uri = Uri_Dup(texUri);
-    Uri_SetScheme(mat->uri, MN_FLATS_NAME);
+    Uri_SetScheme(mat->uri, MS_FLATS_NAME);
 
     stage = DED_AddMaterialLayerStage(&mat->layers[0]);
     st = &mat->layers[0].stages[stage];
@@ -1039,7 +1042,7 @@ static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramete
     mat->autoGenerated = true;
 
     mat->uri = Uri_Dup(texUri);
-    Uri_SetScheme(mat->uri, MN_SPRITES_NAME);
+    Uri_SetScheme(mat->uri, MS_SPRITES_NAME);
 
     stage = DED_AddMaterialLayerStage(&mat->layers[0]);
     st = &mat->layers[0].stages[stage];
@@ -1064,9 +1067,9 @@ static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramete
 
 void Def_GenerateAutoMaterials(void)
 {
-    Textures_IterateDeclared(TN_TEXTURES, generateMaterialDefForPatchCompositeTexture);
-    Textures_IterateDeclared(TN_FLATS,    generateMaterialDefForFlatTexture);
-    Textures_IterateDeclared(TN_SPRITES,  generateMaterialDefForSpriteTexture);
+    Textures_IterateDeclared(TS_TEXTURES, generateMaterialDefForPatchCompositeTexture);
+    Textures_IterateDeclared(TS_FLATS,    generateMaterialDefForFlatTexture);
+    Textures_IterateDeclared(TS_SPRITES,  generateMaterialDefForSpriteTexture);
 }
 
 void Def_Read(void)
@@ -1077,9 +1080,8 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        de::ResourceNamespace* rnamespace = F_DefaultResourceNamespaceForClass(RC_MODEL);
-        DENG_ASSERT(rnamespace);
-        rnamespace->reset();
+        de::FS1::Scheme& scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
+        scheme.reset();
 
         Materials_ClearDefinitionLinks();
         Fonts_ClearDefinitionLinks();
@@ -1422,35 +1424,34 @@ static void initAnimGroup(ded_group_t* def)
 
 void Def_PostInit(void)
 {
-    ded_ptcstage_t* st;
-    ded_ptcgen_t* gen;
-    modeldef_t* modef;
     char name[40];
-    int i, k;
 
     // Particle generators: model setup.
-    for(i = 0, gen = defs.ptcGens; i < defs.count.ptcGens.num; ++i, gen++)
+    ded_ptcgen_t* gen = defs.ptcGens;
+    for(int i = 0; i < defs.count.ptcGens.num; ++i, gen++)
     {
-        for(k = 0, st = gen->stages; k < gen->stageCount.num; ++k, st++)
+        ded_ptcstage_t* st = gen->stages;
+        for(int k = 0; k < gen->stageCount.num; ++k, st++)
         {
             if(st->type < PTC_MODEL || st->type >= PTC_MODEL + MAX_PTC_MODELS)
                 continue;
 
             sprintf(name, "Particle%02i", st->type - PTC_MODEL);
-            if(!(modef = R_CheckIDModelFor(name)) || modef->sub[0].model <= 0)
+            modeldef_t* modef;
+            if(!(modef = Models_Definition(name)) || modef->sub[0].modelId <= 0)
             {
                 st->model = -1;
                 continue;
             }
 
+            model_t* mdl = Models_ToModel(modef->sub[0].modelId);
+            DENG_ASSERT(mdl);
+
             st->model = modef - modefs;
-            st->frame =
-                R_ModelFrameNumForName(modef->sub[0].model, st->frameName);
+            st->frame = mdl->frameNumForName(st->frameName);
             if(st->endFrameName[0])
             {
-                st->endFrame =
-                    R_ModelFrameNumForName(modef->sub[0].model,
-                                           st->endFrameName);
+                st->endFrame = mdl->frameNumForName(st->endFrameName);
             }
             else
             {
@@ -1460,16 +1461,16 @@ void Def_PostInit(void)
     }
 
     // Detail textures.
-    Textures_ClearNamespace(TN_DETAILS);
-    for(i = 0; i < defs.count.details.num; ++i)
+    Textures_ClearScheme(TS_DETAILS);
+    for(int i = 0; i < defs.count.details.num; ++i)
     {
         R_CreateDetailTextureFromDef(&defs.details[i]);
     }
 
     // Lightmaps and flare textures.
-    Textures_ClearNamespace(TN_LIGHTMAPS);
-    Textures_ClearNamespace(TN_FLAREMAPS);
-    for(i = 0; i < defs.count.lights.num; ++i)
+    Textures_ClearScheme(TS_LIGHTMAPS);
+    Textures_ClearScheme(TS_FLAREMAPS);
+    for(int i = 0; i < defs.count.lights.num; ++i)
     {
         ded_light_t* lig = &defs.lights[i];
 
@@ -1480,11 +1481,11 @@ void Def_PostInit(void)
         R_CreateFlareTexture(lig->flare);
     }
 
-    for(i = 0; i < defs.count.decorations.num; ++i)
+    for(int i = 0; i < defs.count.decorations.num; ++i)
     {
         ded_decor_t* decor = &defs.decorations[i];
 
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
+        for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
             ded_decorlight_t* lig = &decor->lights[k];
 
@@ -1499,9 +1500,9 @@ void Def_PostInit(void)
     }
 
     // Surface reflections.
-    Textures_ClearNamespace(TN_REFLECTIONS);
-    Textures_ClearNamespace(TN_MASKS);
-    for(i = 0; i < defs.count.reflections.num; ++i)
+    Textures_ClearScheme(TS_REFLECTIONS);
+    Textures_ClearScheme(TS_MASKS);
+    for(int i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t* ref = &defs.reflections[i];
         Size2Raw size;
@@ -1515,7 +1516,7 @@ void Def_PostInit(void)
 
     // Animation groups.
     Materials_ClearAnimGroups();
-    for(i = 0; i < defs.count.groups.num; ++i)
+    for(int i = 0; i < defs.count.groups.num; ++i)
     {
         initAnimGroup(&defs.groups[i]);
     }

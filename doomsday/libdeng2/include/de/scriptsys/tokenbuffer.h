@@ -48,18 +48,18 @@ namespace de
         };
 
         // Token constants.
-        static const String PARENTHESIS_OPEN;
-        static const String PARENTHESIS_CLOSE;
-        static const String BRACKET_OPEN;
-        static const String BRACKET_CLOSE;
-        static const String CURLY_OPEN;
-        static const String CURLY_CLOSE;
-        static const String COLON;
-        static const String COMMA;
-        static const String SEMICOLON;
+        static String const PARENTHESIS_OPEN;
+        static String const PARENTHESIS_CLOSE;
+        static String const BRACKET_OPEN;
+        static String const BRACKET_CLOSE;
+        static String const CURLY_OPEN;
+        static String const CURLY_CLOSE;
+        static String const COLON;
+        static String const COMMA;
+        static String const SEMICOLON;
 
     public:
-        Token(QChar* begin = 0, QChar* end = 0, duint line = 0)
+        Token(QChar *begin = 0, QChar *end = 0, duint line = 0)
             : _type(UNKNOWN), _begin(begin), _end(end), _line(line) {}
 
         void setType(Type type) { _type = type; }
@@ -68,22 +68,22 @@ namespace de
 
         /// Returns the address of the beginning of the token.
         /// @return Pointer to the first character of the token.
-        const QChar* begin() const { return _begin; }
+        QChar const *begin() const { return _begin; }
 
         /// Returns the address of the end of the token.
         /// @return Pointer to the character just after the last
         /// character of the token.
-        const QChar* end() const { return _end; }
+        QChar const *end() const { return _end; }
 
         /// Returns the address of the beginning of the token.
         /// @return Pointer to the first character of the token.
-        QChar* begin() { return _begin; }
+        QChar *begin() { return _begin; }
 
         /// Returns the address of the end of the token.
         /// @return Pointer to the character just after the last
         /// character of the token. This is where a new character is
         /// appended when the token is being compiled.
-        QChar* end() { return _end; }
+        QChar *end() { return _end; }
 
         /// Determines the length of the token.
         /// @return Length of the token as number of characters.
@@ -102,11 +102,11 @@ namespace de
 
         /// Determines whether the token equals @c str. Case sensitive.
         /// @return @c true if an exact match, otherwise @c false.
-        bool equals(const QChar* str) const;
+        bool equals(QChar const *str) const;
 
         /// Determines whether the token begins with @c str. Case
         /// sensitive. @return @c true if an exact match, otherwise @c false.
-        bool beginsWith(const QChar* str) const;
+        bool beginsWith(QChar const *str) const;
 
         /// Determines the line on which the token begins in the source.
         duint line() const { return _line; }
@@ -119,7 +119,7 @@ namespace de
         /// This includes nothing extra but the text of the token.
         String str() const;
 
-        static const char* typeToText(Type type) {
+        static char const *typeToText(Type type) {
             switch(type)
             {
             case UNKNOWN:
@@ -144,8 +144,8 @@ namespace de
 
     private:
         Type _type;     ///< Type of the token.
-        QChar* _begin;  ///< Points to the first character.
-        QChar* _end;    ///< Points to the last character + 1.
+        QChar *_begin;  ///< Points to the first character.
+        QChar *_end;    ///< Points to the last character + 1.
         duint _line;    ///< On which line the token begins.
     };
 
@@ -192,9 +192,9 @@ namespace de
         bool empty() const { return !size(); }
         
         /// Returns a specific token in the buffer.
-        const Token& at(duint i) const;
+        Token const &at(duint i) const;
         
-        const Token& latest() const;
+        Token const &latest() const;
         
     private:
         /**
@@ -211,7 +211,7 @@ namespace de
             Pool() : size(0), rover(0) {}
         };
         
-        QChar* advanceToPoolWithSpace(duint minimum);
+        QChar *advanceToPoolWithSpace(duint minimum);
                 
         typedef std::vector<Pool> Pools;
         Pools _pools;
@@ -220,7 +220,7 @@ namespace de
         Tokens _tokens;
         
         /// Token being currently formed.
-        Token* _forming;
+        Token *_forming;
         
         /// Index of pool used for token forming.
         duint _formPool;

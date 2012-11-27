@@ -29,10 +29,7 @@
 #include "de_edit.h"
 #include "de_filesys.h"
 #include "de_network.h"
-#include "de_refresh.h"
 #include "de_render.h"
-
-#include "lumpindex.h"
 
 // Should we be caching successfully loaded maps?
 byte mapCache = true;
@@ -95,7 +92,6 @@ static void freeArchivedMap(archivedmap_t& dam)
 /// Create a new archived map record.
 static archivedmap_t* createArchivedMap(de::Uri const& uri, ddstring_t const* cachedMapPath)
 {
-    char const* mapId = Str_Text(uri.path());
     archivedmap_t* dam = allocArchivedMap();
 
     dam->uri = reinterpret_cast<uri_s*>(new de::Uri(uri));
@@ -103,8 +99,11 @@ static archivedmap_t* createArchivedMap(de::Uri const& uri, ddstring_t const* ca
     Str_Init(&dam->cachedMapPath);
     Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
 
-    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath), F_LumpNumForName(mapId)))
+    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath),
+                      F_LumpNumForName(uri.path().toString().toAscii().constData())))
+    {
         dam->cachedMapFound = true;
+    }
 
     LOG_DEBUG("Added record for map '%s'.") << uri;
 
@@ -241,8 +240,7 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
     if(!dam)
     {
         // We've not yet attempted to load this map.
-        char const* markerLumpName = Str_Text(uri.path());
-        lumpnum_t markerLumpNum   = F_LumpNumForName(markerLumpName);
+        lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toAscii().constData());
         if(0 > markerLumpNum) return false;
 
         // Compose the cache directory path and ensure it exists.
@@ -314,7 +312,7 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
 
             // Generate the unique map id.
             lumpnum_t markerLumpNum = App_FileSystem()->lumpNumForName(Str_Text(Uri_Path(map->uri)));
-            de::File1& markerLump   = App_FileSystem()->nameIndexForLump(markerLumpNum).lump(markerLumpNum);
+            de::File1& markerLump   = App_FileSystem()->nameIndex().lump(markerLumpNum);
 
             de::String uniqueId     = DAM_ComposeUniqueId(markerLump);
             QByteArray uniqueIdUtf8 = uniqueId.toUtf8();

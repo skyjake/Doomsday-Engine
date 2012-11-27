@@ -29,13 +29,10 @@
 #include <QDebug>
 #include <string>
 
-using namespace de;
+namespace de {
 
-LegacyCore* LegacyCore::_appCore;
+LegacyCore *LegacyCore::_appCore;
 
-/**
- * @internal Private instance data for LegacyCore.
- */
 struct LegacyCore::Instance
 {
     struct Loop {
@@ -45,10 +42,10 @@ struct LegacyCore::Instance
         Loop() : interval(1), paused(false), func(0) {}
     };
     QList<Loop> loopStack;
-    void (*terminateFunc)(const char*);
+    void (*terminateFunc)(char const *);
 
-    App* app;
-    QTimer* loopTimer;
+    App *app;
+    QTimer *loopTimer;
     LegacyNetwork network;
     Loop loop;
 
@@ -62,7 +59,7 @@ struct LegacyCore::Instance
     ~Instance() {}
 };
 
-LegacyCore::LegacyCore(App* dengApp)
+LegacyCore::LegacyCore(App *dengApp)
 {
     _appCore = this;
     d = new Instance;
@@ -85,14 +82,14 @@ LegacyCore::~LegacyCore()
     _appCore = 0;
 }
 
-LegacyCore& LegacyCore::instance()
+LegacyCore &LegacyCore::instance()
 {
     DENG2_ASSERT(_appCore != 0);
     DENG2_ASSERT(_appCore->d != 0);
     return *_appCore;
 }
 
-LegacyNetwork& LegacyCore::network()
+LegacyNetwork &LegacyCore::network()
 {
     return instance().d->network;
 }
@@ -172,7 +169,7 @@ int LegacyCore::runEventLoop()
 
 void LegacyCore::setLoopRate(int freqHz)
 {
-    const int oldInterval = d->loop.interval;
+    int const oldInterval = d->loop.interval;
     d->loop.interval = qMax(1, 1000/freqHz);
 
     if(oldInterval != d->loop.interval)
@@ -195,23 +192,23 @@ void LegacyCore::stop(int exitCode)
 void LegacyCore::timer(duint32 milliseconds, void (*func)(void))
 {
     // The timer will delete itself after it's triggered.
-    internal::CallbackTimer* timer = new internal::CallbackTimer(func, this);
+    internal::CallbackTimer *timer = new internal::CallbackTimer(func, this);
     timer->start(milliseconds);
 }
 
-void LegacyCore::setLogFileName(const char *filePath)
+void LegacyCore::setLogFileName(char const *filePath)
 {
     String p = String("/home") / filePath;
     d->logName = p.toStdString();
     LogBuffer::appBuffer().setOutputFile(p);
 }
 
-const char *LegacyCore::logFileName() const
+char const *LegacyCore::logFileName() const
 {
     return d->logName.c_str();
 }
 
-void LegacyCore::printLogFragment(const char* text, Log::LogLevel level)
+void LegacyCore::printLogFragment(char const *text, Log::LogLevel level)
 {
     d->currentLogLine += text;
 
@@ -223,7 +220,7 @@ void LegacyCore::printLogFragment(const char* text, Log::LogLevel level)
     }
 }
 
-void LegacyCore::setTerminateFunc(void (*func)(const char*))
+void LegacyCore::setTerminateFunc(void (*func)(char const *))
 {
     d->terminateFunc = func;
 }
@@ -242,3 +239,5 @@ void LegacyCore::handleUncaughtException(QString message)
 
     if(d->terminateFunc) d->terminateFunc(message.toUtf8().constData());
 }
+
+} // namespace de

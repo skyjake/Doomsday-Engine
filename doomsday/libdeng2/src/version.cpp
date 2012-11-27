@@ -38,7 +38,7 @@ Version::Version() : build(Time().asBuildNumber())
     label = LIBDENG2_RELEASE_LABEL;
 }
 
-Version::Version(const String& version, int buildNumber) : build(buildNumber)
+Version::Version(String const &version, int buildNumber) : build(buildNumber)
 {
     parseVersionString(version);
 }
@@ -62,7 +62,7 @@ String Version::asText() const
  *
  * @param version  Version string.
  */
-void Version::parseVersionString(const String& version)
+void Version::parseVersionString(String const &version)
 {
     QStringList parts = version.split('.');
     major = parts[0].toInt();
@@ -70,7 +70,7 @@ void Version::parseVersionString(const String& version)
     patch = parts[2].toInt();
 }
 
-bool Version::operator < (const Version& other) const
+bool Version::operator < (Version const &other) const
 {
     if(major == other.major)
     {
@@ -87,13 +87,13 @@ bool Version::operator < (const Version& other) const
     return major < other.major;
 }
 
-bool Version::operator == (const Version& other) const
+bool Version::operator == (Version const &other) const
 {
     return major == other.major && minor == other.minor &&
            patch == other.patch && build == other.build;
 }
 
-bool Version::operator > (const Version& other) const
+bool Version::operator > (Version const &other) const
 {
     return !(*this < other || *this == other);
 }

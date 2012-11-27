@@ -42,16 +42,12 @@
 #include "de_filesys.h"
 #include "de_graphics.h"
 #include "de_render.h"
-#include "de_refresh.h"
+#include "de_resource.h"
 #include "de_misc.h"
 #include "de_play.h"
 #include "de_ui.h"
 
 #include "def_main.h"
-#include "colorpalette.h"
-#include "image.h"
-#include "texturecontent.h"
-#include "texturevariant.h"
 
 typedef enum {
     METHOD_IMMEDIATE = 0,
@@ -59,11 +55,16 @@ typedef enum {
 } uploadcontentmethod_t;
 
 typedef struct {
-    const char* name; // Format/handler name.
-    const char* ext; // Expected file extension.
-    boolean (*loadFunc)(image_t* img, FileHandle* file);
-    const char* (*getLastErrorFunc) (void); // Can be NULL.
-} imagehandler_t;
+    /// Symbolic name of the resource type.
+    char const* name;
+
+    /// Known file extension.
+    char const* ext;
+
+    boolean (*interpretFunc)(FileHandle* hndl, char const* filePath, image_t* img);
+
+    char const* (*getLastErrorFunc) (void); ///< Can be NULL.
+} GraphicFileType;
 
 typedef struct texturevariantspecificationlist_node_s {
     struct texturevariantspecificationlist_node_s* next;
@@ -85,10 +86,10 @@ static int hashDetailVariantSpecification(const detailvariantspecification_t* sp
 
 static void calcGammaTable(void);
 
-static boolean tryLoadPCX(image_t* img, FileHandle* file);
-static boolean tryLoadPNG(image_t* img, FileHandle* file);
-static boolean tryLoadJPG(image_t* img, FileHandle* file);
-static boolean tryLoadTGA(image_t* img, FileHandle* file);
+static boolean interpretPcx(FileHandle* hndl, char const* filePath, image_t* img);
+static boolean interpretPng(FileHandle* hndl, char const* filePath, image_t* img);
+static boolean interpretJpg(FileHandle* hndl, char const* filePath, image_t* img);
+static boolean interpretTga(FileHandle* hndl, char const* filePath, image_t* img);
 
 int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
@@ -126,12 +127,12 @@ ddtexture_t sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
 static boolean initedOk = false; // Init done.
 
-// Image file handlers.
-static const imagehandler_t handlers[] = {
-    { "PNG",    "png",      tryLoadPNG, 0 },
-    { "JPG",    "jpg",      tryLoadJPG, 0 }, // TODO: add alternate "jpeg" extension
-    { "TGA",    "tga",      tryLoadTGA, TGA_LastError },
-    { "PCX",    "pcx",      tryLoadPCX, PCX_LastError },
+// Graphic resource types.
+static GraphicFileType const graphicTypes[] = {
+    { "PNG",    "png",      interpretPng, 0 },
+    { "JPG",    "jpg",      interpretJpg, 0 }, // TODO: add alternate "jpeg" extension
+    { "TGA",    "tga",      interpretTga, TGA_LastError },
+    { "PCX",    "pcx",      interpretPcx, PCX_LastError },
     { 0 } // Terminate.
 };
 
@@ -529,7 +530,7 @@ static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t* li
     while(node)
     {
         texturevariantspecificationlist_node_t* next = node->next;
-        if(!Textures_Iterate2(TN_ANY, findTextureUsingVariantSpecificationWorker, (void*)node->spec))
+        if(!Textures_Iterate2(TS_ANY, findTextureUsingVariantSpecificationWorker, (void*)node->spec))
         {
             destroyVariantSpecification(node->spec);
             ++numPruned;
@@ -697,17 +698,17 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
     assert(tex && baseSpec && image);
 
     spec = TS_GENERAL(baseSpec);
-    switch(Textures_Namespace(Textures_Id(tex)))
+    switch(Textures_Scheme(Textures_Id(tex)))
     {
-    case TN_FLATS:
+    case TS_FLATS:
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
             const Str suffix = { "-ck" };
             AutoStr* path = Textures_ComposePath(Textures_Id(tex));
 
-            // First try the flats namespace then the old-fashioned "flat-name"
-            // in the textures namespace.
+            // First try the flats scheme then the old-fashioned "flat-name"
+            // in the textures scheme.
             AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(), "Flats:%s", Str_Text(path));
             source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
 
@@ -741,7 +742,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         }
         break;
 
-    case TN_PATCHES: {
+    case TS_PATCHES: {
         int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
@@ -774,7 +775,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         }
         break; }
 
-    case TN_SPRITES: {
+    case TS_SPRITES: {
         int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
@@ -826,7 +827,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         }
         break; }
 
-    case TN_DETAILS: {
+    case TS_DETAILS: {
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
         if(Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
         {
@@ -845,20 +846,20 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         }
         break; }
 
-    case TN_SYSTEM:
-    case TN_REFLECTIONS:
-    case TN_MASKS:
-    case TN_LIGHTMAPS:
-    case TN_FLAREMAPS:
-    case TN_MODELSKINS:
-    case TN_MODELREFLECTIONSKINS: {
+    case TS_SYSTEM:
+    case TS_REFLECTIONS:
+    case TS_MASKS:
+    case TS_LIGHTMAPS:
+    case TS_FLAREMAPS:
+    case TS_MODELSKINS:
+    case TS_MODELREFLECTIONSKINS: {
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
         AutoStr* path = Uri_Compose(resourcePath);
         source = GL_LoadExtTextureEX(image, Str_Text(path), NULL, true/*quiet please*/);
         break; }
 
     default:
-        Con_Error("Textures::loadSourceImage: Unknown texture namespace %i.", (int) Textures_Namespace(Textures_Id(tex)));
+        Con_Error("Textures::loadSourceImage: Unknown texture scheme %i.", (int) Textures_Scheme(Textures_Id(tex)));
         exit(1); // Unreachable.
     }
     return source;
@@ -1356,7 +1357,7 @@ void GL_ReleaseSystemTextures(void)
     }
     memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
-    GL_ReleaseTexturesByNamespace(TN_SYSTEM);
+    GL_ReleaseTexturesByScheme(TS_SYSTEM);
 
     UI_ReleaseTextures();
     Rend_ParticleReleaseSystemTextures();
@@ -1376,17 +1377,17 @@ void GL_ReleaseRuntimeTextures(void)
     RL_DeleteLists();
 
     // texture-wrapped GL textures; textures, flats, sprites...
-    GL_ReleaseTexturesByNamespace(TN_FLATS);
-    GL_ReleaseTexturesByNamespace(TN_TEXTURES);
-    GL_ReleaseTexturesByNamespace(TN_PATCHES);
-    GL_ReleaseTexturesByNamespace(TN_SPRITES);
-    GL_ReleaseTexturesByNamespace(TN_DETAILS);
-    GL_ReleaseTexturesByNamespace(TN_REFLECTIONS);
-    GL_ReleaseTexturesByNamespace(TN_MASKS);
-    GL_ReleaseTexturesByNamespace(TN_MODELSKINS);
-    GL_ReleaseTexturesByNamespace(TN_MODELREFLECTIONSKINS);
-    GL_ReleaseTexturesByNamespace(TN_LIGHTMAPS);
-    GL_ReleaseTexturesByNamespace(TN_FLAREMAPS);
+    GL_ReleaseTexturesByScheme(TS_FLATS);
+    GL_ReleaseTexturesByScheme(TS_TEXTURES);
+    GL_ReleaseTexturesByScheme(TS_PATCHES);
+    GL_ReleaseTexturesByScheme(TS_SPRITES);
+    GL_ReleaseTexturesByScheme(TS_DETAILS);
+    GL_ReleaseTexturesByScheme(TS_REFLECTIONS);
+    GL_ReleaseTexturesByScheme(TS_MASKS);
+    GL_ReleaseTexturesByScheme(TS_MODELSKINS);
+    GL_ReleaseTexturesByScheme(TS_MODELREFLECTIONSKINS);
+    GL_ReleaseTexturesByScheme(TS_LIGHTMAPS);
+    GL_ReleaseTexturesByScheme(TS_FLAREMAPS);
     GL_ReleaseTexturesForRawImages();
 
     Rend_ParticleReleaseExtraTextures();
@@ -1425,7 +1426,7 @@ void Image_Init(image_t* img)
     img->pixels = 0;
 }
 
-void Image_PrintMetadata(const image_t* image)
+void Image_PrintMetadata(image_t const* image)
 {
     assert(image);
     Con_Printf("dimensions:[%ix%i] flags:%i %s:%i\n", image->size.width, image->size.height,
@@ -1433,54 +1434,90 @@ void Image_PrintMetadata(const image_t* image)
         0 != image->paletteId? image->paletteId : image->pixelSize);
 }
 
-static boolean tryLoadPCX(image_t* img, FileHandle* file)
+static boolean interpretPcx(FileHandle* hndl, char const* filePath, image_t* img)
 {
-    assert(img && file);
+    DENG_ASSERT(hndl && img);
+    DENG_UNUSED(filePath);
     Image_Init(img);
-    img->pixels = PCX_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
+    img->pixels = PCX_Load(hndl, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
 }
 
-static boolean tryLoadJPG(image_t* img, FileHandle* file)
+static boolean interpretJpg(FileHandle* hndl, char const* filePath, image_t* img)
 {
-    assert(img && file);
-    return Image_LoadFromFileWithFormat(img, "JPG", file);
+    DENG_ASSERT(hndl && img);
+    DENG_UNUSED(filePath);
+    return Image_LoadFromFileWithFormat(img, "JPG", hndl);
 }
 
-static boolean tryLoadPNG(image_t* img, FileHandle* file)
+static boolean interpretPng(FileHandle* hndl, char const* filePath, image_t* img)
 {
-    assert(img && file);
+    DENG_ASSERT(hndl && img);
+    DENG_UNUSED(filePath);
     /*
     Image_Init(img);
-    img->pixels = PNG_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
+    img->pixels = PNG_Load(hndl, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
     */
-    return Image_LoadFromFileWithFormat(img, "PNG", file);
+    return Image_LoadFromFileWithFormat(img, "PNG", hndl);
 }
 
-static boolean tryLoadTGA(image_t* img, FileHandle* file)
+static boolean interpretTga(FileHandle* hndl, char const* filePath, image_t* img)
 {
-    assert(img && file);
+    DENG_ASSERT(hndl && img);
+    DENG_UNUSED(filePath);
     Image_Init(img);
-    img->pixels = TGA_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
+    img->pixels = TGA_Load(hndl, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
 }
 
-const imagehandler_t* findHandlerFromFileName(const char* filePath)
+GraphicFileType const* guessGraphicFileTypeFromFileName(char const* filePath)
 {
-    const imagehandler_t* hdlr = 0; // No handler for this format.
-    const char* p = F_FindFileExtension(filePath);
+    char const* p = F_FindFileExtension(filePath);
     if(p)
     {
-        int i = 0;
-        do
+        int i;
+        for(i = 0; graphicTypes[i].ext; ++i)
         {
-            if(!stricmp(p, handlers[i].ext))
-                hdlr = &handlers[i];
-        } while(0 == hdlr && 0 != handlers[++i].ext);
+            GraphicFileType const* type = &graphicTypes[i];
+            if(!stricmp(p, type->ext))
+            {
+                return type;
+            }
+        }
     }
-    return hdlr;
+    return 0; // Unknown.
 }
+
+static void interpretGraphic(FileHandle* hndl, char const* filePath, image_t* img)
+{
+    DENG_ASSERT(img && hndl);
+{
+    // Firstly try the interpreter for the guessed resource types.
+    GraphicFileType const* rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
+    if(rtypeGuess)
+    {
+        rtypeGuess->interpretFunc(hndl, filePath, img);
+    }
+
+    // If not yet interpreted - try each recognisable format in order.
+    if(!img->pixels)
+    {
+        // Try each recognisable format instead.
+        /// @todo Order here should be determined by the resource locator.
+        int i;
+        for(i = 0; graphicTypes[i].name; ++i)
+        {
+            GraphicFileType const* graphicType = &graphicTypes[i];
+
+            // Already tried this?
+            if(graphicType == rtypeGuess) continue;
+
+            graphicTypes[i].interpretFunc(hndl, filePath, img);
+            if(img->pixels) break;
+        }
+    }
+}}
 
 /// @return  @c true if the given path name is formed with the "color keyed" suffix.
 static boolean isColorKeyed(const char* path)
@@ -1502,42 +1539,23 @@ static boolean isColorKeyed(const char* path)
 
 uint8_t* Image_LoadFromFile(image_t* img, FileHandle* file)
 {
-    const imagehandler_t* hdlr;
-    const char* fileName;
-    assert(img && file);
+    DENG_ASSERT(img && file);
+{
+    char const* filePath = Str_Text(F_ComposePath(FileHandle_File_const(file)));
 
     Image_Init(img);
+    interpretGraphic(file, filePath, img);
 
-    fileName = Str_Text(F_ComposePath(FileHandle_File_const(file)));
-
-    // Firstly try the expected format given the file name.
-    hdlr = findHandlerFromFileName(fileName);
-    if(hdlr)
-    {
-        hdlr->loadFunc(img, file);
-    }
-
-    if(!img->pixels)
-    {
-        // Try each recognisable format instead.
-        /// \todo Order here should be determined by the resource locator.
-        int i;
-        for(i = 0; handlers[i].name && !img->pixels; ++i)
-        {
-            if(&handlers[i] == hdlr) continue; // We already know its not in this format.
-            handlers[i].loadFunc(img, file);
-        }
-    }
-
+    // Still not interpreted?
     if(!img->pixels)
     {
         VERBOSE2( Con_Message("Image_LoadFromFile: \"%s\" unrecognized, trying fallback loader...\n",
-                              F_PrettyPath(fileName)) )
+                              F_PrettyPath(filePath)) )
         return NULL; // Not a recognised format. It may still be loadable, however.
     }
 
     // How about some color-keying?
-    if(isColorKeyed(fileName))
+    if(isColorKeyed(filePath))
     {
         uint8_t* out = ApplyColorKeying(img->pixels, img->size.width, img->size.height, img->pixelSize);
         if(out != img->pixels)
@@ -1555,10 +1573,10 @@ uint8_t* Image_LoadFromFile(image_t* img, FileHandle* file)
         img->flags |= IMGF_IS_MASKED;
 
     VERBOSE( Con_Message("Image_LoadFromFile: \"%s\" (%ix%i)\n",
-                         F_PrettyPath(fileName), img->size.width, img->size.height) )
+                         F_PrettyPath(filePath), img->size.width, img->size.height) )
 
     return img->pixels;
-}
+}}
 
 uint8_t* GL_LoadImage(image_t* img, const char* filePath)
 {
@@ -2122,20 +2140,25 @@ void GL_UploadTextureContent(const texturecontent_t* content)
     }
 }
 
-TexSource GL_LoadExtTextureEX(image_t* image, char const* _searchPath,
+TexSource GL_LoadExtTextureEX(image_t* image, char const* searchPath,
     char const* optionalSuffix, boolean silent)
 {
-    DENG_ASSERT(image && _searchPath);
+    DENG_ASSERT(image && searchPath);
 {
-    Uri* searchPath = Uri_NewWithPath2(_searchPath, RC_GRAPHIC);
     AutoStr* foundPath = AutoStr_NewStd();
-
-    boolean found = F_FindResource4(RC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, optionalSuffix);
-    Uri_Delete(searchPath);
+    // First look for a version with an optional suffix.
+    Uri* search = Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "%s%s", searchPath, optionalSuffix? optionalSuffix : "")), RC_GRAPHIC);
+    boolean found = F_FindPath(RC_GRAPHIC, search, foundPath);
+    if(!found)
+    {
+        Uri_SetUri2(search, searchPath, RC_GRAPHIC);
+        found = F_FindPath(RC_GRAPHIC, search, foundPath);
+    }
+    Uri_Delete(search);
 
     if(!found || !GL_LoadImage(image, Str_Text(foundPath)))
     {       
-        if(!silent) Con_Message("GL_LoadExtTextureEX: Warning, failed to locate \"%s\"\n", _searchPath);
+        if(!silent) Con_Message("GL_LoadExtTextureEX: Warning, failed to locate \"%s\"\n", searchPath);
         return TEXS_NONE;
     }
 
@@ -2191,7 +2214,7 @@ TexSource GL_LoadExtTexture(image_t* image, char const* _searchPath, gfxmode_t m
     Uri* searchPath = Uri_NewWithPath2(_searchPath, RC_GRAPHIC);
     AutoStr* foundPath = AutoStr_NewStd();
 
-    if(F_FindResource2(RC_GRAPHIC, searchPath, foundPath) &&
+    if(F_FindPath(RC_GRAPHIC, searchPath, foundPath) &&
        GL_LoadImage(image, Str_Text(foundPath)))
     {
         // Force it to grayscale?
@@ -2550,7 +2573,7 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     assert(image && tex);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(tex)) != TN_TEXTURES)
+    if(Textures_Scheme(Textures_Id(tex)) != TS_TEXTURES)
         Con_Error("GL_LoadPatchComposite: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
     texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
@@ -2604,7 +2627,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
     assert(image && tex);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(tex)) != TN_TEXTURES)
+    if(Textures_Scheme(Textures_Id(tex)) != TS_TEXTURES)
         Con_Error("GL_LoadPatchCompositeAsSky: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
     texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
@@ -2687,7 +2710,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
     // First try to find an external resource.
     Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "Patches:%s", Str_Text(&r->name))));
 
-    if(F_FindResource2(RC_GRAPHIC, searchPath, foundPath) &&
+    if(F_FindPath(RC_GRAPHIC, searchPath, foundPath) &&
        GL_LoadImage(image, Str_Text(foundPath)))
     {
         // "External" image loaded.
@@ -2828,7 +2851,7 @@ TextureVariant* GL_PreparePatchTexture2(Texture* tex, int wrapS, int wrapT)
     texturevariantspecification_t* texSpec;
     patchtex_t* pTex;
     if(novideo || !tex) return 0;
-    if(Textures_Namespace(Textures_Id(tex)) != TN_PATCHES)
+    if(Textures_Scheme(Textures_Id(tex)) != TS_PATCHES)
     {
 #if _DEBUG
         Con_Message("Warning:GL_PreparePatchTexture: Attempted to prepare non-patch [%p].\n", (void*)tex);
@@ -3016,7 +3039,7 @@ void GL_DoTexReset(void)
 
 void GL_DoResetDetailTextures(void)
 {
-    GL_ReleaseTexturesByNamespace(TN_DETAILS);
+    GL_ReleaseTexturesByScheme(TS_DETAILS);
 }
 
 void GL_ReleaseTexturesForRawImages(void)
@@ -3062,7 +3085,7 @@ void GL_SetAllTexturesMinFilter(int minFilter)
     /// @todo This is no longer correct logic. Changing the global minification
     ///        filter should not modify the uploaded texture content.
 #if 0
-    Textures_Iterate2(TN_ANY, setVariantMinFilterWorker, (void*)&localMinFilter);
+    Textures_Iterate2(TS_ANY, setVariantMinFilterWorker, (void*)&localMinFilter);
 #endif
 }
 
@@ -3275,7 +3298,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
     assert(initedOk && spec);
 
     // Load the source image data.
-    if(TN_TEXTURES == Textures_Namespace(Textures_Id(tex)))
+    if(TS_TEXTURES == Textures_Scheme(Textures_Id(tex)))
     {
         // Try to load a replacement version of this texture?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
@@ -3519,9 +3542,9 @@ int GL_ReleaseGLTexturesByTexture(Texture* tex)
     return GL_ReleaseGLTexturesByTexture2(tex, NULL);
 }
 
-void GL_ReleaseTexturesByNamespace(texturenamespaceid_t texNamespace)
+void GL_ReleaseTexturesByScheme(textureschemeid_t schemeId)
 {
-    Textures_Iterate(texNamespace, GL_ReleaseGLTexturesByTexture2);
+    Textures_Iterate(schemeId, GL_ReleaseGLTexturesByTexture2);
 }
 
 void GL_ReleaseVariantTexturesBySpec(Texture* tex, texturevariantspecification_t* spec)
@@ -3551,7 +3574,7 @@ static int releaseGLTexturesByColorPaletteWorker(Texture* tex, void* paramaters)
 
 void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
 {
-    Textures_Iterate2(TN_ANY, releaseGLTexturesByColorPaletteWorker, (void*)&paletteId);
+    Textures_Iterate2(TS_ANY, releaseGLTexturesByColorPaletteWorker, (void*)&paletteId);
 }
 
 void GL_InitTextureContent(texturecontent_t* content)
@@ -3648,7 +3671,7 @@ AutoStr* GL_ComposeCacheNameForTexture(Texture* tex)
     textureid_t texId = Textures_Id(tex);
     AutoStr* path = Textures_ComposePath(texId);
     AutoStr* cacheName = Str_Appendf(AutoStr_NewStd(), "texcache/%s/%s.png",
-                                     Str_Text(Textures_NamespaceName(Textures_Namespace(texId))), Str_Text(path));
+                                     Str_Text(Textures_SchemeName(Textures_Scheme(texId))), Str_Text(path));
     return cacheName;
 }
 

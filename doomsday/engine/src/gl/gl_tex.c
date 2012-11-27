@@ -28,9 +28,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 
-#include "colorpalette.h"
+#include "resource/colorpalette.h"
+#include "resource/r_data.h"
 
 static uint8_t* scratchBuffer = NULL;
 static size_t scratchBufferSize = 0;

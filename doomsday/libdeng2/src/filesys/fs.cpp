@@ -21,12 +21,12 @@
 #include "de/LibraryFile"
 #include "de/DirectoryFeed"
 #include "de/ArchiveFeed"
-#include "de/Archive"
+#include "de/ZipArchive"
 #include "de/Log"
 
 using namespace de;
 
-static const FS::Index emptyIndex;
+static FS::Index const emptyIndex;
 
 struct FS::Instance
 {
@@ -64,13 +64,13 @@ void FS::refresh()
     printIndex();
 }
 
-Folder& FS::makeFolder(const String& path)
+Folder &FS::makeFolder(String const &path)
 {
-    Folder* subFolder = d->root.tryLocate<Folder>(path);
+    Folder *subFolder = d->root.tryLocate<Folder>(path);
     if(!subFolder)
     {
         // This folder does not exist yet. Let's create it.
-        Folder& parentFolder = makeFolder(path.fileNamePath());
+        Folder &parentFolder = makeFolder(path.fileNamePath());
         subFolder = new Folder(path.fileName());
         parentFolder.add(subFolder);
         index(*subFolder);
@@ -78,7 +78,7 @@ Folder& FS::makeFolder(const String& path)
     return *subFolder;
 }
 
-File* FS::interpret(File* sourceData)
+File *FS::interpret(File *sourceData)
 {
     LOG_AS("FS::interpret");
     
@@ -93,34 +93,56 @@ File* FS::interpret(File* sourceData)
             // It is a shared library intended for Doomsday.
             return new LibraryFile(sourceData);
         }
-        if(Archive::recognize(*sourceData))
+        if(ZipArchive::recognize(*sourceData))
         {
-            LOG_VERBOSE("Interpreted ") << sourceData->name() << " as a ZIP archive";
-        
-            // It is a ZIP archive. The folder will own the source file.
-            std::auto_ptr<Folder> zip(new Folder(sourceData->name()));
-            zip->setSource(sourceData);    
-            zip->attach(new ArchiveFeed(*sourceData));
-            return zip.release();
+            try
+            {
+                LOG_VERBOSE("Interpreted %s as a ZIP archive") << sourceData->name();
+
+                // It is a ZIP archive: we will represent it as a folder.
+                std::auto_ptr<Folder> zip(new Folder(sourceData->name()));
+                // Create the feed.
+                zip->attach(new ArchiveFeed(*sourceData));
+                // Archive opened successfully, give ownership of the source to the folder.
+                zip->setSource(sourceData);
+                sourceData = 0;
+                return zip.release();
+            }
+            catch(Archive::FormatError const &)
+            {
+                // Even though it was recognized as an archive, the file
+                // contents may still provide to be corrupted.
+                LOG_WARNING("Archive in %s is invalid") << sourceData->name();
+            }
+            catch(IByteArray::OffsetError const &)
+            {
+                LOG_WARNING("Archive in %s is truncated") << sourceData->name();
+            }
+            catch(IIStream::InputError const &)
+            {
+                LOG_WARNING("%s cannot be read") << sourceData->name();
+            }
         }
     }
-    catch(const Error& err)
+    catch(Error const &err)
     {
         LOG_ERROR("") << err.asText();
 
-        // We were given responsibility of the source file.
+        // The error is one we don't know how to handle. We were given
+        // responsibility of the source file, so it has to be deleted.
         delete sourceData;
+
         throw;
     }
     return sourceData;
 }
 
-const FS::Index& FS::nameIndex() const
+FS::Index const &FS::nameIndex() const
 {
     return d->index;
 }
 
-int FS::findAll(const String& path, FoundFiles& found) const
+int FS::findAll(String const &path, FoundFiles &found) const
 {
     LOG_AS("FS::findAll");
 
@@ -136,7 +158,7 @@ int FS::findAll(const String& path, FoundFiles& found) const
     ConstIndexRange range = d->index.equal_range(baseName);
     for(Index::const_iterator i = range.first; i != range.second; ++i)    
     {       
-        File* file = i->second;
+        File *file = i->second;
         if(file->path().endsWith(dir))
         {
             found.push_back(file);
@@ -145,23 +167,23 @@ int FS::findAll(const String& path, FoundFiles& found) const
     return found.size();
 }
 
-File& FS::find(const String& path) const
+File &FS::find(String const &path) const
 {
     return find<File>(path);
 }
 
-void FS::index(File& file)
+void FS::index(File &file)
 {
-    const String lowercaseName = file.name().lower();
+    String const lowercaseName = file.name().lower();
     
     d->index.insert(IndexEntry(lowercaseName, &file));
     
     // Also make an entry in the type index.
-    Index& indexOfType = d->typeIndex[DENG2_TYPE_NAME(file)];
+    Index &indexOfType = d->typeIndex[DENG2_TYPE_NAME(file)];
     indexOfType.insert(IndexEntry(lowercaseName, &file));
 }
 
-static void removeFromIndex(FS::Index& idx, File& file)
+static void removeFromIndex(FS::Index &idx, File &file)
 {
     if(idx.empty()) 
     {
@@ -182,13 +204,13 @@ static void removeFromIndex(FS::Index& idx, File& file)
     }
 }
 
-void FS::deindex(File& file)
+void FS::deindex(File &file)
 {
     removeFromIndex(d->index, file);
     removeFromIndex(d->typeIndex[DENG2_TYPE_NAME(file)], file);
 }
 
-const FS::Index& FS::indexFor(const String& typeName) const
+FS::Index const &FS::indexFor(String const &typeName) const
 {
     Instance::TypeIndex::const_iterator found = d->typeIndex.find(typeName);
     if(found != d->typeIndex.end())
@@ -219,7 +241,7 @@ void FS::printIndex()
     }
 }
 
-Folder& FS::root()
+Folder &FS::root()
 {
     return d->root;
 }

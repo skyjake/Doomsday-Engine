@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "displaymode_native.h"
+#include "ui/displaymode_native.h"
 #include "dd_share.h"
 
 void DisplayMode_Native_Init(void)

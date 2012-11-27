@@ -42,7 +42,7 @@ namespace de
 
         virtual ~Compound();
 
-        const Statement* firstStatement() const;
+        Statement const *firstStatement() const;
         
         /// Determines the size of the compound.
         /// @return Number of statements in the compound.
@@ -58,7 +58,7 @@ namespace de
          * @param statement  Statement object. The Compound takes ownership
          *                   of the object.
          */
-        void add(Statement* statement);
+        void add(Statement *statement);
         
         /**
          * Deletes all statements.
@@ -66,11 +66,11 @@ namespace de
         void clear();
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
                 
     private:
-        typedef std::list<Statement*> Statements;
+        typedef std::list<Statement *> Statements;
         Statements _statements;
     };
 }

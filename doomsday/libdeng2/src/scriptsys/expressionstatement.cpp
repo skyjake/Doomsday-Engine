@@ -31,18 +31,18 @@ ExpressionStatement::~ExpressionStatement()
     delete _expression;
 }
 
-void ExpressionStatement::execute(Context& context) const
+void ExpressionStatement::execute(Context &context) const
 {
     context.evaluator().evaluate(_expression);
     context.proceed();
 }
 
-void ExpressionStatement::operator >> (Writer& to) const
+void ExpressionStatement::operator >> (Writer &to) const
 {
     to << SerialId(EXPRESSION) << *_expression;
 }
 
-void ExpressionStatement::operator << (Reader& from)
+void ExpressionStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

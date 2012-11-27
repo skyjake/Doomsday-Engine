@@ -53,7 +53,7 @@ Parser::Parser()
 Parser::~Parser()
 {}
 
-void Parser::parse(const String& input, Script& output)
+void Parser::parse(String const &input, Script &output)
 {
     // Lexical analyzer for Haw scripts.
     _analyzer = ScriptLex(input);
@@ -81,7 +81,7 @@ duint Parser::nextStatement()
     return result;
 }
 
-void Parser::parseCompound(Compound& compound)
+void Parser::parseCompound(Compound &compound)
 {
     while(_statementRange.size() > 0) 
     {
@@ -101,11 +101,11 @@ void Parser::parseCompound(Compound& compound)
     }
 }
 
-void Parser::parseStatement(Compound& compound)
+void Parser::parseStatement(Compound &compound)
 {
     DENG2_ASSERT(!_statementRange.empty());
     
-    const Token& firstToken = _statementRange.firstToken();
+    Token const &firstToken = _statementRange.firstToken();
 
     // Statements with a compound: if, for, while, def.
     if(firstToken.equals(ScriptLex::IF))
@@ -159,7 +159,7 @@ void Parser::parseStatement(Compound& compound)
     {
         // Break may have an expression argument that tells us how many
         // nested compounds to break out of.
-        Expression* breakCount = 0;
+        Expression *breakCount = 0;
         if(_statementRange.size() > 1)
         {
             breakCount = parseExpression(_statementRange.startingFrom(1));
@@ -168,7 +168,7 @@ void Parser::parseStatement(Compound& compound)
     }
     else if(firstToken.equals(ScriptLex::RETURN) || firstToken.equals(ScriptLex::THROW))
     {
-        Expression* argValue = 0;
+        Expression *argValue = 0;
         if(_statementRange.size() > 1)
         {
             argValue = parseExpression(_statementRange.startingFrom(1));
@@ -196,7 +196,7 @@ void Parser::parseStatement(Compound& compound)
     nextStatement();
 }
 
-IfStatement* Parser::parseIfStatement()
+IfStatement *Parser::parseIfStatement()
 {
     // The "end" keyword is necessary in the full form.
     bool expectEnd = !_statementRange.has(Token::COLON);
@@ -235,7 +235,7 @@ IfStatement* Parser::parseIfStatement()
     return statement.release(); 
 }
 
-WhileStatement* Parser::parseWhileStatement()
+WhileStatement *Parser::parseWhileStatement()
 {
     // "while" expr ":" statement
     // "while" expr "\n" compound
@@ -245,7 +245,7 @@ WhileStatement* Parser::parseWhileStatement()
     return statement.release();
 }
 
-ForStatement* Parser::parseForStatement()
+ForStatement *Parser::parseForStatement()
 {
     // "for" by-ref-expr "in" expr ":" statement
     // "for" by-ref-expr "in" expr "\n" compound
@@ -260,7 +260,7 @@ ForStatement* Parser::parseForStatement()
     
     auto_ptr<Expression> iter(parseExpression(_statementRange.between(1, inPos),
         Expression::ByReference | Expression::NewVariable | Expression::LocalOnly));
-    Expression* iterable = parseExpression(_statementRange.between(inPos + 1, colonPos));
+    Expression *iterable = parseExpression(_statementRange.between(inPos + 1, colonPos));
     
     auto_ptr<ForStatement> statement(new ForStatement(iter.release(), iterable));
 
@@ -270,7 +270,7 @@ ForStatement* Parser::parseForStatement()
     return statement.release();
 }
 
-ExpressionStatement* Parser::parseImportStatement()
+ExpressionStatement *Parser::parseImportStatement()
 {
     // "import" ["record"] name-expr ["," name-expr]*
  
@@ -294,7 +294,7 @@ ExpressionStatement* Parser::parseImportStatement()
     return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), Token::COMMA, flags));
 }
 
-ExpressionStatement* Parser::parseDeclarationStatement()
+ExpressionStatement *Parser::parseDeclarationStatement()
 {
     // "record" name-expr ["," name-expr]*
 
@@ -307,7 +307,7 @@ ExpressionStatement* Parser::parseDeclarationStatement()
     return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA, flags));
 }
 
-ExpressionStatement* Parser::parseDeleteStatement()
+ExpressionStatement *Parser::parseDeleteStatement()
 {
     // "del" name-expr ["," name-expr]*
     
@@ -320,7 +320,7 @@ ExpressionStatement* Parser::parseDeleteStatement()
         Expression::Delete | Expression::LocalOnly));
 }
 
-FunctionStatement* Parser::parseFunctionStatement()
+FunctionStatement *Parser::parseFunctionStatement()
 {
     dint pos = _statementRange.find(Token::PARENTHESIS_OPEN);
     if(pos < 0)
@@ -370,7 +370,7 @@ FunctionStatement* Parser::parseFunctionStatement()
     return statement.release();
 }
 
-void Parser::parseTryCatchSequence(Compound& compound)
+void Parser::parseTryCatchSequence(Compound &compound)
 {
     // "try" cond-compound catch-compound [catch-compound]*
     // catch-compound: "catch" name-expr ["," ref-name-expr] cond-compound
@@ -385,7 +385,7 @@ void Parser::parseTryCatchSequence(Compound& compound)
         throw UnexpectedTokenError("Parser::parseTryCatchSequence",
             "Expected 'catch', but got " + _statementRange.firstToken().asText());
     }
-    CatchStatement* finalCatch = 0;
+    CatchStatement *finalCatch = 0;
     bool expectEnd = false;
     while(_statementRange.firstToken().equals(ScriptLex::CATCH))
     {
@@ -431,9 +431,9 @@ void Parser::parseTryCatchSequence(Compound& compound)
     }
 }
 
-PrintStatement* Parser::parsePrintStatement()
+PrintStatement *Parser::parsePrintStatement()
 {    
-    ArrayExpression* args = 0;
+    ArrayExpression *args = 0;
     if(_statementRange.size() == 1) // Just the keyword.
     {
         args = new ArrayExpression();
@@ -446,7 +446,7 @@ PrintStatement* Parser::parsePrintStatement()
     return new PrintStatement(args);    
 }
 
-AssignStatement* Parser::parseAssignStatement()
+AssignStatement *Parser::parseAssignStatement()
 {
     Expression::Flags flags = Expression::NewVariable | Expression::ByReference | Expression::LocalOnly;
     
@@ -479,7 +479,7 @@ AssignStatement* Parser::parseAssignStatement()
         {
             dint startPos = _statementRange.openingBracket(bracketPos);
             nameEndPos = startPos;
-            Expression* indexExpr = parseExpression(
+            Expression *indexExpr = parseExpression(
                 _statementRange.between(startPos + 1, bracketPos));
             indices.push_back(indexExpr);
             bracketPos = nameEndPos - 1;
@@ -494,14 +494,14 @@ AssignStatement* Parser::parseAssignStatement()
         auto_ptr<Expression> lValue(parseExpression(_statementRange.endingTo(nameEndPos), flags));
         auto_ptr<Expression> rValue(parseExpression(_statementRange.startingFrom(pos + 1)));
 
-        AssignStatement* st = new AssignStatement(lValue.get(), indices, rValue.get());
+        AssignStatement *st = new AssignStatement(lValue.get(), indices, rValue.get());
 
         lValue.release();
         rValue.release();
         
         return st;
     }
-    catch(const Error&)
+    catch(Error const &)
     {
         // Cleanup.
         for(AssignStatement::Indices::iterator i = indices.begin(); i != indices.end(); ++i)
@@ -512,12 +512,12 @@ AssignStatement* Parser::parseAssignStatement()
     }
 }
 
-ExpressionStatement* Parser::parseExpressionStatement()
+ExpressionStatement *Parser::parseExpressionStatement()
 {
     return new ExpressionStatement(parseExpression(_statementRange));
 }
 
-Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundFlags& flags)
+Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags const &flags)
 {
     // keyword [expr] ":" statement
     // keyword [expr] "\n" compound
@@ -563,8 +563,8 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
     return condition.release();
 }
 
-ArrayExpression* Parser::parseList(const TokenRange& range, const QChar* separator,
-    const Expression::Flags& flags)
+ArrayExpression *Parser::parseList(TokenRange const &range, QChar const *separator,
+    Expression::Flags const &flags)
 {
     auto_ptr<ArrayExpression> exp(new ArrayExpression);
     if(range.size() > 0)
@@ -579,7 +579,7 @@ ArrayExpression* Parser::parseList(const TokenRange& range, const QChar* separat
     return exp.release();
 }
 
-Expression* Parser::parseExpression(const TokenRange& fullRange, const Expression::Flags& flags)
+Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Flags const &flags)
 {
     TokenRange range = fullRange;
     
@@ -626,7 +626,7 @@ Expression* Parser::parseExpression(const TokenRange& fullRange, const Expressio
     }
 }
 
-ArrayExpression* Parser::parseArrayExpression(const TokenRange& range)
+ArrayExpression *Parser::parseArrayExpression(TokenRange const &range)
 {
     if(!range.firstToken().equals(Token::BRACKET_OPEN) ||
         range.closingBracket(0) != range.size() - 1)
@@ -638,7 +638,7 @@ ArrayExpression* Parser::parseArrayExpression(const TokenRange& range)
     return parseList(range.between(1, range.size() - 1));
 }
 
-DictionaryExpression* Parser::parseDictionaryExpression(const TokenRange& range)
+DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
 {
     if(!range.firstToken().equals(Token::CURLY_OPEN) ||
         range.closingBracket(0) != range.size() - 1)
@@ -665,14 +665,14 @@ DictionaryExpression* Parser::parseDictionaryExpression(const TokenRange& range)
             }
             
             auto_ptr<Expression> key(parseExpression(delim.endingTo(colonPos)));
-            Expression* value = parseExpression(delim.startingFrom(colonPos + 1));
+            Expression *value = parseExpression(delim.startingFrom(colonPos + 1));
             exp->add(key.release(), value);
         }
     }
     return exp.release();
 }
 
-Expression* Parser::parseCallExpression(const TokenRange& nameRange, const TokenRange& argumentRange)
+Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange const &argumentRange)
 {
     //std::cerr << "call name: " << nameRange.asText() << "\n";
     //std::cerr << "call args: " << argumentRange.asText() << "\n";
@@ -689,7 +689,7 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
     // The named arguments are evaluated by a dictionary which is always
     // included as the first expression in the array.
     auto_ptr<ArrayExpression> args(new ArrayExpression);
-    DictionaryExpression* namedArgs = new DictionaryExpression;
+    DictionaryExpression *namedArgs = new DictionaryExpression;
     args->add(namedArgs);
     
     TokenRange argsRange = argumentRange.shrink(1);
@@ -710,7 +710,7 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
                         "Labeled argument '" + delim.asText() + "' is malformed");
                 }
                 // Create a dictionary entry for this.
-                Expression* value = parseExpression(delim.startingFrom(2));
+                Expression *value = parseExpression(delim.startingFrom(2));
                 namedArgs->add(new ConstantExpression(new TextValue(delim.firstToken().str())), value);
             }
             else
@@ -734,8 +734,8 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
     return new OperatorExpression(CALL, identifier.release(), args.release());
 }
 
-OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRange& leftSide, 
-    const TokenRange& rightSide, const Expression::Flags& rightFlags)
+OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange const &leftSide, 
+    TokenRange const &rightSide, Expression::Flags const &rightFlags)
 {
     //std::cerr << "left: " << leftSide.asText() << ", right: " << rightSide.asText() << "\n";
     
@@ -743,7 +743,7 @@ OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRang
     {
         // Must be unary.
         auto_ptr<Expression> operand(parseExpression(rightSide));
-        OperatorExpression* x = new OperatorExpression(op, operand.get());
+        OperatorExpression *x = new OperatorExpression(op, operand.get());
         operand.release();
         return x;
     }
@@ -755,7 +755,7 @@ OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRang
         auto_ptr<Expression> leftOperand(parseExpression(leftSide, leftFlags));
         auto_ptr<Expression> rightOperand(op == SLICE? parseList(rightSide, Token::COLON) :
             parseExpression(rightSide, rightFlags));
-        OperatorExpression* x = new OperatorExpression(op, leftOperand.get(), rightOperand.get());
+        OperatorExpression *x = new OperatorExpression(op, leftOperand.get(), rightOperand.get());
         x->setFlags(rightFlags);
         rightOperand.release();
         leftOperand.release();
@@ -763,7 +763,7 @@ OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRang
     }
 }
 
-Expression* Parser::parseTokenExpression(const TokenRange& range, const Expression::Flags& flags)
+Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Flags const &flags)
 {
     if(!range.size())
     {
@@ -772,7 +772,7 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
             range.buffer().at(range.tokenIndex(0)).asText());
     }
 
-    const Token& token = range.token(0);
+    Token const &token = range.token(0);
 
     if(token.type() == Token::KEYWORD)
     {
@@ -824,7 +824,7 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
     }
 }
 
-Operator Parser::findLowestOperator(const TokenRange& range, TokenRange& leftSide, TokenRange& rightSide)
+Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSide, TokenRange &rightSide)
 {
     enum {
         MAX_RANK            = 0x7fffffff,
@@ -854,7 +854,7 @@ Operator Parser::findLowestOperator(const TokenRange& range, TokenRange& leftSid
         Operator op = NONE;
         Direction direction = LEFT_TO_RIGHT;
         
-        const Token& token = range.token(i);
+        Token const &token = range.token(i);
         
         if(token.equals(Token::PARENTHESIS_OPEN))
         {
@@ -907,7 +907,7 @@ Operator Parser::findLowestOperator(const TokenRange& range, TokenRange& leftSid
         else
         {
             const struct {
-                const char* token;
+                char const *token;
                 Operator op;
                 int rank;
                 Direction direction;

@@ -40,18 +40,18 @@ namespace de
          *
          * @param expression  Statement gets ownership.
          */ 
-        ExpressionStatement(Expression* expression = 0) : _expression(expression) {}
+        ExpressionStatement(Expression *expression = 0) : _expression(expression) {}
         
         ~ExpressionStatement();
         
-        void execute(Context& context) const;
+        void execute(Context &context) const;
         
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);         
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);         
         
     private:
-        Expression* _expression;
+        Expression *_expression;
     };
 }
 

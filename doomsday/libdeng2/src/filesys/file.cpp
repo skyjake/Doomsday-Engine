@@ -26,18 +26,17 @@
 
 using namespace de;
 
-File::File(const String& fileName)
+File::File(String const &fileName)
     : _parent(0), _originFeed(0), _name(fileName)
 {
     _source = this;
     
     // Create the default set of info variables common to all files.
-    _info.add(new Variable("name", new Accessor(*this, Accessor::NAME), Accessor::VARIABLE_MODE));
-    _info.add(new Variable("path", new Accessor(*this, Accessor::PATH), Accessor::VARIABLE_MODE));
-    _info.add(new Variable("type", new Accessor(*this, Accessor::TYPE), Accessor::VARIABLE_MODE));
-    _info.add(new Variable("size", new Accessor(*this, Accessor::SIZE), Accessor::VARIABLE_MODE));
-    _info.add(new Variable("modifiedAt", new Accessor(*this, Accessor::MODIFIED_AT),
-        Accessor::VARIABLE_MODE));
+    _info.add(new Variable("name",       new Accessor(*this, Accessor::NAME),        Accessor::VARIABLE_MODE));
+    _info.add(new Variable("path",       new Accessor(*this, Accessor::PATH),        Accessor::VARIABLE_MODE));
+    _info.add(new Variable("type",       new Accessor(*this, Accessor::TYPE),        Accessor::VARIABLE_MODE));
+    _info.add(new Variable("size",       new Accessor(*this, Accessor::SIZE),        Accessor::VARIABLE_MODE));
+    _info.add(new Variable("modifiedAt", new Accessor(*this, Accessor::MODIFIED_AT), Accessor::VARIABLE_MODE));
 }
 
 File::~File()
@@ -72,27 +71,27 @@ void File::clear()
     verifyWriteAccess();
 }
 
-FS& File::fileSystem()
+FS &File::fileSystem()
 {
     return DENG2_APP->fileSystem();
 }
 
-void File::setOriginFeed(Feed* feed)
+void File::setOriginFeed(Feed *feed)
 {
     _originFeed = feed;
 }
 
-const String File::path() const
+String const File::path() const
 {
     String thePath = name();
-    for(Folder* i = _parent; i; i = i->_parent)
+    for(Folder *i = _parent; i; i = i->_parent)
     {
         thePath = i->name() / thePath;
     }
     return "/" + thePath;
 }
         
-void File::setSource(File* source)
+void File::setSource(File *source)
 {
     if(_source != this)
     {
@@ -102,7 +101,7 @@ void File::setSource(File* source)
     _source = source;
 }        
         
-const File* File::source() const
+File const *File::source() const
 {
     if(_source != this)
     {
@@ -111,7 +110,7 @@ const File* File::source() const
     return _source;
 }
 
-File* File::source()
+File *File::source()
 {
     if(_source != this)
     {
@@ -120,7 +119,7 @@ File* File::source()
     return _source;
 }
 
-void File::setStatus(const Status& status)
+void File::setStatus(Status const &status)
 {
     // The source file status is the official one.
     if(this != _source)
@@ -133,7 +132,7 @@ void File::setStatus(const Status& status)
     }
 }
 
-const File::Status& File::status() const 
+File::Status const &File::status() const 
 {
     if(this != _source)
     {
@@ -142,7 +141,7 @@ const File::Status& File::status() const
     return _status;
 }
 
-void File::setMode(const Flags& newMode)
+void File::setMode(Flags const &newMode)
 {
     if(this != _source)
     {
@@ -154,7 +153,7 @@ void File::setMode(const Flags& newMode)
     }
 }
 
-const File::Flags& File::mode() const
+File::Flags const &File::mode() const
 {
     if(this != _source)
     {
@@ -172,25 +171,30 @@ void File::verifyWriteAccess()
     }
 }
 
-File::Size File::size() const
+IOStream &File::operator << (IByteArray const &bytes)
+{
+    DENG2_UNUSED(bytes);
+    throw OutputError("File::operator <<", "File does not accept a byte stream");
+}
+
+IIStream &File::operator >> (IByteArray &bytes)
+{
+    DENG2_UNUSED(bytes);
+    throw InputError("File::operator >>", "File does not produce a byte stream");
+}
+
+IIStream const &File::operator >> (IByteArray &bytes) const
+{
+    DENG2_UNUSED(bytes);
+    throw InputError("File::operator >>", "File does not offer an immutable byte stream");
+}
+
+dsize File::size() const
 {
     return status().size;
 }
 
-void File::get(Offset at, Byte* /*values*/, Size count) const
-{
-    if(at >= size() || at + count > size())
-    {
-        throw OffsetError("File::get", "Out of range");
-    }
-}
-
-void File::set(Offset /*at*/, const Byte* /*values*/, Size /*count*/)
-{
-    verifyWriteAccess();
-}
-
-File::Accessor::Accessor(File& owner, Property prop) : _owner(owner), _prop(prop)
+File::Accessor::Accessor(File &owner, Property prop) : _owner(owner), _prop(prop)
 {
     /// @todo Accessor should listen for deletion of the owner file.
     update();
@@ -199,7 +203,7 @@ File::Accessor::Accessor(File& owner, Property prop) : _owner(owner), _prop(prop
 void File::Accessor::update() const
 {
     // We need to alter the value content.
-    Accessor* nonConst = const_cast<Accessor*>(this);
+    Accessor *nonConst = const_cast<Accessor *>(this);
     
     switch(_prop)
     {
@@ -225,7 +229,7 @@ void File::Accessor::update() const
     }
 }
 
-Value* File::Accessor::duplicateContent() const
+Value *File::Accessor::duplicateContent() const
 {
     if(_prop == SIZE)
     {

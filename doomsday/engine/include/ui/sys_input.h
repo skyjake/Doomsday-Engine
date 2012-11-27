@@ -120,7 +120,7 @@ void Mouse_Poll(void);
 void Mouse_GetState(mousestate_t *state);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif

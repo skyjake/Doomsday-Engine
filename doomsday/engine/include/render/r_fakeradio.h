@@ -43,6 +43,8 @@
 #ifndef LIBDENG_REFRESH_FAKERADIO_H
 #define LIBDENG_REFRESH_FAKERADIO_H
 
+#include "map/linedef.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

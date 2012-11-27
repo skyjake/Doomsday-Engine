@@ -62,7 +62,7 @@
 #include "de_platform.h"
 
 #include "ui/window.h"
-#include "consolewindow.h"
+#include "ui/consolewindow.h"
 #include "ui/canvaswindow.h"
 #include "ui/displaymode.h"
 #include "../updater/downloaddialog.h"
@@ -72,7 +72,7 @@
 #include "con_main.h"
 #include "gl/gl_main.h"
 #include "ui/ui_main.h"
-#include "fs_util.h"
+#include "filesys/fs_util.h"
 
 #include <de/c_wrapper.h>
 #include <de/Log>

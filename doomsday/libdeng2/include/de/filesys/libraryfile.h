@@ -49,7 +49,7 @@ namespace de
          *
          * @param source  Library file. Ownership transferred to LibraryFile.
          */
-        LibraryFile(File* source);
+        LibraryFile(File *source);
 
         /**
          * When the LibraryFile is deleted the library is gets unloaded.
@@ -69,7 +69,7 @@ namespace de
          *
          * @return  The library.
          */
-        Library& library();
+        Library &library();
         
         /**
          * Unloads the library.
@@ -84,7 +84,7 @@ namespace de
          *
          * @param nameAfterUnderscore  Part of the name following underscore.
          */
-        bool hasUnderscoreName(const String& nameAfterUnderscore) const;
+        bool hasUnderscoreName(String const &nameAfterUnderscore) const;
 
     public:
         /**
@@ -92,10 +92,10 @@ namespace de
          *
          * @param file  File whose content to recognize.
          */
-        static bool recognize(const File& file);
+        static bool recognize(File const &file);
         
     private:
-        Library* _library;
+        Library *_library;
     };
 }
 

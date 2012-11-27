@@ -25,7 +25,7 @@
 #include "dd_types.h"
 #include "dd_share.h"
 #include "de_console.h"
-#include "image.h"
+#include "resource/image.h"
 
 /*
  * RGB color space.

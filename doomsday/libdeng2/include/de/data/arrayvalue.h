@@ -42,15 +42,15 @@ namespace de
         DENG2_ERROR(IllegalIndexError);
 
         /// Type for the elements. Public because const access to the elements is public.
-        typedef std::vector<Value*> Elements;
+        typedef std::vector<Value *> Elements;
         
     public:
         ArrayValue();
-        ArrayValue(const ArrayValue& other);
+        ArrayValue(ArrayValue const &other);
         ~ArrayValue();
 
         /// Const accessor to the array elements.
-        const Elements& elements() const { return _elements; }
+        Elements const &elements() const { return _elements; }
         
         /**
          * Adds a new Value to the elements of the array. The value is
@@ -58,21 +58,21 @@ namespace de
          * @param value Value to add to the array. The array takes 
          *     ownership of the object.
          */
-        void add(Value* value);
+        void add(Value *value);
         
         /**
          * Adds a new TextValue to the elements of the array. The value is
          * added to the end of the list of elements.
          * param text Text to add to the array.
          */
-        void add(const String& text);
+        void add(String const &text);
         
         /**
          * Pops the last element and gives its ownership to the caller.
          *
          * @return Last element of the array. Ownership transferred.
          */
-        Value* pop();
+        Value *pop();
 
         /**
          * Inserts a new Value into the elements of the array at an 
@@ -80,7 +80,7 @@ namespace de
          * @param index  Index for the new Value. 
          * @param value  Value to add. The array takes ownership of the object.
          */ 
-        void insert(dint index, Value* value);
+        void insert(dint index, Value *value);
         
         /**
          * Replaces an existing Value in the array. The previous value
@@ -89,7 +89,7 @@ namespace de
          * @param index  Index of the Value.
          * @param value  New value. The array takes ownership of the object.
          */
-        void replace(dint index, Value* value);
+        void replace(dint index, Value *value);
         
         /**
          * Removes a Value from the array. The Value will be destroyed.
@@ -104,11 +104,11 @@ namespace de
          *
          * @return  Element at the index.
          */
-        const Value& at(dint index) const;
+        Value const &at(dint index) const;
         
-        const Value& front() const { return at(0); }
+        Value const &front() const { return at(0); }
         
-        const Value& back() const { return at(size() - 1); }
+        Value const &back() const { return at(size() - 1); }
         
         /**
          * Empties the array of all values.
@@ -119,22 +119,22 @@ namespace de
         void reverse();
         
         // Implementations of pure virtual methods.
-        Value* duplicate() const;
+        Value *duplicate() const;
         Text asText() const;
         dsize size() const;     
-        const Value& element(const Value& index) const; 
-        Value& element(const Value& index); 
-        void setElement(const Value& index, Value* value);
-        bool contains(const Value& value) const;
-        Value* begin();
-        Value* next();
+        Value const &element(Value const &index) const; 
+        Value &element(Value const &index); 
+        void setElement(Value const &index, Value *value);
+        bool contains(Value const &value) const;
+        Value *begin();
+        Value *next();
         bool isTrue() const;
-        dint compare(const Value& value) const;
-        void sum(const Value& value);
+        dint compare(Value const &value) const;
+        void sum(Value const &value);
 
         // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
     
     private:
         Elements::iterator indexToIterator(dint index);

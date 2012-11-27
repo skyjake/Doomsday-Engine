@@ -32,16 +32,15 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_play.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_ui.h"
 
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -346,7 +345,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     ms = Materials_Prepare(sprFrame->mats[0], spec, true);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
+    if(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TS_SPRITES)
         Con_Error("setupPSpriteParams: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
@@ -431,7 +430,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     }
     else if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
-        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
+        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":gray"));
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
@@ -513,11 +512,6 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         glDisable(GL_TEXTURE_2D);
 }
 
-/**
- * Draws 2D HUD sprites.
- *
- * \note If they were already drawn 3D, this won't do anything.
- */
 void Rend_Draw2DPlayerSprites(void)
 {
     int                 i;
@@ -839,16 +833,6 @@ static boolean generateHaloForVisSprite(const vissprite_t* spr, boolean primary)
                         (spr->data.flare.flags & RFF_NO_TURN));
 }
 
-/**
- * Render sprites, 3D models, masked wall segments and halos, ordered
- * back to front. Halos are rendered with Z-buffer tests and writes
- * disabled, so they don't go into walls or interfere with real objects.
- * It means that halos can be partly occluded by objects that are closer
- * to the viewpoint, but that's the price to pay for not having access to
- * the actual Z-buffer per-pixel depth information. The other option would
- * be for halos to shine through masked walls, sprites and models, which
- * looks even worse. (Plus, they are *halos*, not real lens flares...)
- */
 void Rend_DrawMasked(void)
 {
     boolean flareDrawn = false;
@@ -926,7 +910,7 @@ static MaterialVariant* chooseSpriteMaterial(const rendspriteparams_t* p)
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
+        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":gray"));
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
             1, -2, -1, true, true, false, false);
@@ -935,6 +919,13 @@ static MaterialVariant* chooseSpriteMaterial(const rendspriteparams_t* p)
 
     // Use the pre-chosen sprite.
     return p->material;
+}
+
+materialvariantspecification_t const* Rend_SpriteMaterialSpec(int tclass, int tmap)
+{
+    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tclass, tmap,
+                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                    1, -2, -1, true, true, true, false);
 }
 
 void Rend_RenderSprite(const rendspriteparams_t* params)
@@ -970,7 +961,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
 
         TextureVariant_Coords(MST(ms, MTU_PRIMARY), &s, &t);
 
-        if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) == TN_SPRITES)
+        if(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) == TS_SPRITES)
         {
             pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
             assert(pTex);

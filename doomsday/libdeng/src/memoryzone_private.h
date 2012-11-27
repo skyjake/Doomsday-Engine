@@ -52,14 +52,14 @@ size_t Z_FreeMemory(void);
 
 typedef struct memblock_s {
     size_t          size; // Including header and possibly tiny fragments.
-    void**          user; // NULL if a free block.
+    void **         user; // NULL if a free block.
     int             tag; // Purge level.
     int             id; // Should be LIBDENG_ZONEID.
-    struct memvolume_s* volume; // Volume this block belongs to.
-    struct memblock_s* next, *prev;
-    struct memblock_s* seqLast, *seqFirst;
+    struct memvolume_s *volume; // Volume this block belongs to.
+    struct memblock_s *next, *prev;
+    struct memblock_s *seqLast, *seqFirst;
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
-    void*           area; // The real memory area.
+    void *          area; // The real memory area.
     size_t          areaSize; // Size of the allocated memory area.
 #endif
 } memblock_t;
@@ -67,8 +67,8 @@ typedef struct memblock_s {
 typedef struct {
     size_t          size; // Total bytes malloced, including header.
     memblock_t      blockList; // Start / end cap for linked list.
-    memblock_t*     rover;
-    memblock_t*     staticRover;
+    memblock_t *    rover;
+    memblock_t *    staticRover;
 } memzone_t;
 
 /**
@@ -76,7 +76,7 @@ typedef struct {
  * necessary.
  */
 typedef struct memvolume_s {
-    memzone_t* zone;
+    memzone_t *zone;
     size_t size;
     size_t allocatedBytes;  ///< Total number of allocated bytes.
     struct memvolume_s *next;
@@ -102,14 +102,14 @@ struct zblockset_s {
     size_t _elementSize;
     int _tag; /// All blocks in a blockset have the same tag.
     unsigned int _blockCount;
-    struct zblockset_block_s* _blocks;
+    struct zblockset_block_s *_blocks;
 };
 
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
-memblock_t* Z_GetBlock(void* ptr);
+memblock_t *Z_GetBlock(void *ptr);
 #else
 // Real memory zone allocates memory from a custom heap.
-#define Z_GetBlock(ptr) ((memblock_t*) ((byte*)(ptr) - sizeof(memblock_t)))
+#define Z_GetBlock(ptr) ((memblock_t *) ((byte *)(ptr) - sizeof(memblock_t)))
 #endif
 
 #ifdef DENG_DEBUG
@@ -120,7 +120,7 @@ memblock_t* Z_GetBlock(void* ptr);
 struct memzone_private_s {
     void (*lock)(void);
     void (*unlock)(void);
-    boolean (*isVolumeTooFull)(memvolume_t*);
+    boolean (*isVolumeTooFull)(memvolume_t *);
     int volumeCount;
     memvolume_t *volumeRoot;
 };

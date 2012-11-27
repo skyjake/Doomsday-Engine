@@ -23,9 +23,9 @@
 #define LIBDENG_BSPBUILDER_BSPTREENODE
 
 #include "map/p_mapdata.h"
-#include "binarytree.h"
+#include <de/BinaryTree>
 
 /// Nodes in BspBuilder's internal tree are modelled with this type.
-typedef de::BinaryTree<runtime_mapdata_header_t*> BspTreeNode;
+typedef de::BinaryTree<runtime_mapdata_header_t *> BspTreeNode;
 
 #endif /// LIBDENG_BSPBUILDER_BSPTREENODE

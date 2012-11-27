@@ -23,7 +23,7 @@
 #ifndef LIBDENG_MAP_HEDGE
 #define LIBDENG_MAP_HEDGE
 
-#include "r_data.h"
+#include "resource/r_data.h"
 #include "p_dmu.h"
 
 #ifdef __cplusplus
@@ -80,7 +80,7 @@ int HEdge_GetProperty(const HEdge* hedge, setargs_t* args);
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_MAP_HEDGE

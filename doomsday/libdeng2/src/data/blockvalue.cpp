@@ -28,15 +28,15 @@ using namespace de;
 BlockValue::BlockValue()
 {}
 
-BlockValue::BlockValue(const Block& block) : _value(block) 
+BlockValue::BlockValue(Block const &block) : _value(block) 
 {}
 
-BlockValue::operator const IByteArray& () const
+BlockValue::operator IByteArray const &() const
 {
     return _value;
 }
 
-BlockValue::operator IByteArray& ()
+BlockValue::operator IByteArray &()
 {
     return _value;
 }
@@ -46,7 +46,7 @@ void BlockValue::clear()
     _value.clear();
 }
 
-Value* BlockValue::duplicate() const
+Value *BlockValue::duplicate() const
 {
     return new BlockValue(_value);
 }
@@ -69,9 +69,9 @@ bool BlockValue::isTrue() const
     return _value.size() > 0;
 }
 
-void BlockValue::sum(const Value& value)
+void BlockValue::sum(Value const &value)
 {
-    const BlockValue* other = dynamic_cast<const BlockValue*>(&value);
+    BlockValue const *other = dynamic_cast<BlockValue const *>(&value);
     if(!other)
     {
         /// @throw ArithmeticError @a value was not a BlockValue. BlockValue can only be
@@ -81,12 +81,12 @@ void BlockValue::sum(const Value& value)
     _value += other->_value;
 }
 
-void BlockValue::operator >> (Writer& to) const
+void BlockValue::operator >> (Writer &to) const
 {
     to << SerialId(BLOCK) << _value;
 }
 
-void BlockValue::operator << (Reader& from)
+void BlockValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;

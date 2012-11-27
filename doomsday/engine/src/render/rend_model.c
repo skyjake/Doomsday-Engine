@@ -37,14 +37,13 @@
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 
 #include "network/net_main.h" // for gametic
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)         qatan2(y,x)
@@ -137,6 +136,22 @@ boolean Rend_ModelExpandVertexBuffers(uint numVertices)
     // Defer resizing of the render buffer until draw time as it may be repeatedly expanded.
     vertexBufferMax = numVertices;
     return true;
+}
+
+void Rend_ModelSetFrame(modeldef_t* modef, int frame)
+{
+    int i;
+    for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
+    {
+        submodeldef_t* subdef = &modef->sub[i];
+        model_t* mdl;
+        if(!subdef->modelId) continue;
+
+        // Modify the modeldef itself: set the current frame.
+        mdl = Models_ToModel(subdef->modelId);
+        DENG_ASSERT(mdl);
+        subdef->frame = frame % mdl->info.numFrames;
+    }
 }
 
 /// @return  @c true= Vertex buffer is large enough to handle @a numVertices.
@@ -474,17 +489,19 @@ static __inline float Mod_Lerp(float start, float end, float pos)
  */
 static model_frame_t* Mod_GetVisibleFrame(modeldef_t* mf, int subnumber, int mobjid)
 {
-    model_t* mdl = R_ModelForId(mf->sub[subnumber].model);
+    model_t* mdl = Models_ToModel(mf->sub[subnumber].modelId);
     int index = mf->sub[subnumber].frame;
 
     if(mf->flags & MFF_IDFRAME)
     {
         index += mobjid % mf->sub[subnumber].frameRange;
     }
+
+    DENG_ASSERT(mdl);
     if(index >= mdl->info.numFrames)
     {
         Con_Error("Mod_GetVisibleFrame: Frame index out of bounds.\n"
-                  "  (Model: %s)\n", Str_Text(R_ComposePathForModelId(mdl->model)));
+                  "  (Model: %s)\n", Str_Text(Models_ComposePath(mdl->modelId)));
     }
     return mdl->frames + index;
 }
@@ -797,7 +814,7 @@ static int chooseSelSkin(modeldef_t* mf, int submodel, int selector)
 static int chooseSkin(modeldef_t* mf, int submodel, int id, int selector, int tmap)
 {
     submodeldef_t* smf = &mf->sub[submodel];
-    model_t* mdl = R_ModelForId(smf->model);
+    model_t* mdl = Models_ToModel(smf->modelId);
     int skin = smf->skin;
 
     // Selskin overrides the skin range.
@@ -829,6 +846,7 @@ static int chooseSkin(modeldef_t* mf, int submodel, int id, int selector, int tm
     if(smf->flags & MFF_SKINTRANS)
         skin = tmap;
 
+    DENG_ASSERT(mdl);
     if(skin < 0 || skin >= mdl->info.numSkins)
         skin = 0;
 
@@ -858,7 +876,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 {
     modeldef_t* mf = params->mf, *mfNext = params->nextMF;
     submodeldef_t* smf = &mf->sub[number];
-    model_t* mdl = R_ModelForId(smf->model);
+    model_t* mdl = Models_ToModel(smf->modelId);
     model_frame_t* frame = Mod_GetVisibleFrame(mf, number, params->id);
     model_frame_t* nextFrame = NULL;
 
@@ -923,7 +941,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         // Check for possible interpolation.
         if(frameInter && mfNext && !(smf->flags & MFF_DONT_INTERPOLATE))
         {
-            if(mfNext->sub[number].model == smf->model)
+            if(mfNext->sub[number].modelId == smf->modelId)
             {
                 nextFrame = Mod_GetVisibleFrame(mfNext, number, params->id);
             }
@@ -1143,7 +1161,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
+        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":gray"));
         if(mat)
         {
             const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
@@ -1360,7 +1378,7 @@ void Rend_RenderModel(const rendmodelparams_t* params)
     // Render all the submodels of this model.
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
     {
-        if(params->mf->sub[i].model)
+        if(params->mf->sub[i].modelId)
         {
             boolean disableZ = (params->mf->flags & MFF_DISABLE_Z_WRITE ||
                                 params->mf->sub[i].flags & MFF_DISABLE_Z_WRITE);

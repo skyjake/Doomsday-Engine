@@ -42,7 +42,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
     }
 
     uri = Uri_New();
-    Uri_SetScheme(uri, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+    Uri_SetScheme(uri, isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME);
     Str_Init(&path);
     Str_PercentEncode(Str_Set(&path, sc_String));
     Uri_SetPath(uri, Str_Text(&path));
@@ -92,7 +92,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
                     ddstring_t framePath;
 
                     Str_Init(&framePath);
-                    Str_Appendf(&framePath, "%s:%i", isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME, texNumBase + picNum - 1);
+                    Str_Appendf(&framePath, "%s:%i", isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME, texNumBase + picNum - 1);
                     Uri_SetPath(frameUrn, Str_Text(&framePath));
 
                     R_AddAnimGroupFrame(groupNumber, frameUrn, min, (max > 0? max - min : 0));

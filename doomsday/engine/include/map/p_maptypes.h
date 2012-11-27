@@ -5,6 +5,10 @@
 
 #include "p_mapdata.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LO_prev     link[0]
 #define LO_next     link[1]
 
@@ -481,5 +485,9 @@ typedef struct bspnode_s {
     runtime_mapdata_header_t* children[2];
     uint                index; /// Unique. Set when saving the BSP.
 } BspNode;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

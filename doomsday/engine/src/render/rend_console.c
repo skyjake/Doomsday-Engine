@@ -31,16 +31,11 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 #include "de_render.h"
+#include "de_resource.h"
 #include "de_ui.h"
 
 #include "cbuffer.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
-#include "font.h"
-
-#include "rend_console.h"
 
 // Console (display) Modes:
 typedef enum {

@@ -39,17 +39,15 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_misc.h"
 #include "de_ui.h"
 #include "de_defs.h"
-#include "r_draw.h"
 
-#include "colorpalette.h"
-#include "texturecontent.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "gl/texturecontent.h"
+#include "resource/colorpalette.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 #include "ui/displaymode.h"
 
 /*

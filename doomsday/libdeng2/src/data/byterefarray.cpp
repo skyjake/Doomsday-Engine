@@ -22,10 +22,10 @@
 
 using namespace de;
 
-ByteRefArray::ByteRefArray(Byte* base, Size size) : _writeBase(base), _readBase(base), _size(size)
+ByteRefArray::ByteRefArray(Byte *base, Size size) : _writeBase(base), _readBase(base), _size(size)
 {}
 
-ByteRefArray::ByteRefArray(const Byte* base, Size size) : _writeBase(0), _readBase(base), _size(size)
+ByteRefArray::ByteRefArray(Byte const *base, Size size) : _writeBase(0), _readBase(base), _size(size)
 {}
 
 ByteRefArray::Size ByteRefArray::size() const
@@ -33,7 +33,7 @@ ByteRefArray::Size ByteRefArray::size() const
     return _size;
 }
 
-void ByteRefArray::get(Offset at, Byte* values, Size count) const
+void ByteRefArray::get(Offset at, Byte *values, Size count) const
 {
     if(at + count > size())
     {
@@ -43,7 +43,7 @@ void ByteRefArray::get(Offset at, Byte* values, Size count) const
     std::memmove(values, _readBase + at, count);
 }
 
-void ByteRefArray::set(Offset at, const Byte* values, Size count)
+void ByteRefArray::set(Offset at, Byte const *values, Size count)
 {
     if(!_writeBase)
     {

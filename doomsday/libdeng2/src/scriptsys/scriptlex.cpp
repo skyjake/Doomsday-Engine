@@ -23,42 +23,42 @@
 
 using namespace de;
 
-const String ScriptLex::AND("and");
-const String ScriptLex::OR("or");
-const String ScriptLex::NOT("not");
-const String ScriptLex::IF("if");
-const String ScriptLex::ELSIF("elsif");
-const String ScriptLex::ELSE("else");
-const String ScriptLex::END("end");
-const String ScriptLex::THROW("throw");
-const String ScriptLex::CATCH("catch");
-const String ScriptLex::IN("in");
-const String ScriptLex::WHILE("while");
-const String ScriptLex::FOR("for");
-const String ScriptLex::DEF("def");
-const String ScriptLex::TRY("try");
-const String ScriptLex::IMPORT("import");
-const String ScriptLex::RECORD("record");
-const String ScriptLex::DEL("del");
-const String ScriptLex::PASS("pass");
-const String ScriptLex::CONTINUE("continue");
-const String ScriptLex::BREAK("break");
-const String ScriptLex::RETURN("return");
-const String ScriptLex::CONST("const");
-const String ScriptLex::PRINT("print");
-const String ScriptLex::T_TRUE("True");
-const String ScriptLex::T_FALSE("False");
-const String ScriptLex::NONE("None");
-const String ScriptLex::PI("Pi");
+String const ScriptLex::AND("and");
+String const ScriptLex::OR("or");
+String const ScriptLex::NOT("not");
+String const ScriptLex::IF("if");
+String const ScriptLex::ELSIF("elsif");
+String const ScriptLex::ELSE("else");
+String const ScriptLex::END("end");
+String const ScriptLex::THROW("throw");
+String const ScriptLex::CATCH("catch");
+String const ScriptLex::IN("in");
+String const ScriptLex::WHILE("while");
+String const ScriptLex::FOR("for");
+String const ScriptLex::DEF("def");
+String const ScriptLex::TRY("try");
+String const ScriptLex::IMPORT("import");
+String const ScriptLex::RECORD("record");
+String const ScriptLex::DEL("del");
+String const ScriptLex::PASS("pass");
+String const ScriptLex::CONTINUE("continue");
+String const ScriptLex::BREAK("break");
+String const ScriptLex::RETURN("return");
+String const ScriptLex::CONST("const");
+String const ScriptLex::PRINT("print");
+String const ScriptLex::T_TRUE("True");
+String const ScriptLex::T_FALSE("False");
+String const ScriptLex::NONE("None");
+String const ScriptLex::PI("Pi");
 
-const String ScriptLex::ASSIGN("=");
-const String ScriptLex::SCOPE_ASSIGN(":=");
-const String ScriptLex::WEAK_ASSIGN("?=");
+String const ScriptLex::ASSIGN("=");
+String const ScriptLex::SCOPE_ASSIGN(":=");
+String const ScriptLex::WEAK_ASSIGN("?=");
 
-ScriptLex::ScriptLex(const String& input) : Lex(input)
+ScriptLex::ScriptLex(String const &input) : Lex(input)
 {}
 
-duint ScriptLex::getStatement(TokenBuffer& output)
+duint ScriptLex::getStatement(TokenBuffer &output)
 {
     // Get rid of the previous contents of the token buffer.
     output.clear();
@@ -216,7 +216,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
                 "Character '" + String(1, c) + "' was unexpected");
         }
     }
-    catch(const OutOfInputError&)
+    catch(OutOfInputError const &)
     {
         // Open brackets left?
         for(int i = 0; i < MAX_BRACKETS; ++i)
@@ -234,7 +234,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
 }
 
 Token::Type
-ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer& output)
+ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &output)
 {
     Token::Type type =
         ( startChar == '\''? Token::LITERAL_STRING_APOSTROPHE :
@@ -353,9 +353,9 @@ bool ScriptLex::combinesWith(QChar a, QChar b)
     return false;
 }
 
-bool ScriptLex::isKeyword(const Token& token)
+bool ScriptLex::isKeyword(Token const &token)
 {
-    const QChar* keywords[] =
+    QChar const *keywords[] =
     {
         AND,
         BREAK,
@@ -397,7 +397,7 @@ bool ScriptLex::isKeyword(const Token& token)
     return false;
 }
 
-String ScriptLex::unescapeStringToken(const Token& token)
+String ScriptLex::unescapeStringToken(Token const &token)
 {
     DENG2_ASSERT(token.type() == Token::LITERAL_STRING_APOSTROPHE ||
              token.type() == Token::LITERAL_STRING_QUOTED ||
@@ -407,8 +407,8 @@ String ScriptLex::unescapeStringToken(const Token& token)
     QTextStream os(&result);
     bool escaped = false;
     
-    const QChar* begin = token.begin();
-    const QChar* end = token.end();
+    QChar const *begin = token.begin();
+    QChar const *end = token.end();
     
     // A long string?
     if(token.type() == Token::LITERAL_STRING_LONG)
@@ -424,7 +424,7 @@ String ScriptLex::unescapeStringToken(const Token& token)
         --end;
     }
     
-    for(const QChar* ptr = begin; ptr != end; ++ptr)
+    for(QChar const *ptr = begin; ptr != end; ++ptr)
     {
         if(escaped)
         {
@@ -472,7 +472,7 @@ String ScriptLex::unescapeStringToken(const Token& token)
             }
             else if(*ptr == 'x' && (end - ptr > 2))
             {
-                QString num(reinterpret_cast<const QChar*>(ptr + 1), 2);
+                QString num(reinterpret_cast<QChar const *>(ptr + 1), 2);
                 duint code = num.toInt(0, 16);
                 c = QChar(code);
                 ptr += 2; 
@@ -500,7 +500,7 @@ String ScriptLex::unescapeStringToken(const Token& token)
     return result;
 }
 
-ddouble ScriptLex::tokenToNumber(const Token& token)
+ddouble ScriptLex::tokenToNumber(Token const &token)
 {
     String str(token.str());
 

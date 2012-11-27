@@ -29,13 +29,13 @@
 
 using namespace de;
 
-DirectoryFeed::DirectoryFeed(const NativePath &nativePath, const Flags& mode)
+DirectoryFeed::DirectoryFeed(NativePath const &nativePath, Flags const &mode)
     : _nativePath(nativePath), _mode(mode) {}
 
 DirectoryFeed::~DirectoryFeed()
 {}
 
-void DirectoryFeed::populate(Folder& folder)
+void DirectoryFeed::populate(Folder &folder)
 {
     if(_mode & AllowWrite)
     {
@@ -68,14 +68,14 @@ void DirectoryFeed::populate(Folder& folder)
     }
 }
 
-void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
+void DirectoryFeed::populateSubFolder(Folder &folder, String const &entryName)
 {
     LOG_AS("DirectoryFeed::populateSubFolder");
 
     if(entryName != "." && entryName != "..")
     {
         NativePath subFeedPath = _nativePath / entryName;
-        Folder& subFolder = folder.fileSystem().makeFolder(folder.path() / entryName);
+        Folder &subFolder = folder.fileSystem().makeFolder(folder.path() / entryName);
 
         if(_mode & AllowWrite)
         {
@@ -86,7 +86,7 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
         for(Folder::Feeds::const_iterator i = subFolder.feeds().begin();
             i != subFolder.feeds().end(); ++i)
         {
-            const DirectoryFeed* dirFeed = dynamic_cast<const DirectoryFeed*>(*i);
+            DirectoryFeed const *dirFeed = dynamic_cast<DirectoryFeed const *>(*i);
             if(dirFeed && dirFeed->_nativePath == subFeedPath)
             {
                 // Already got this fed. Nothing else needs done.
@@ -100,7 +100,7 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
     }
 }
 
-void DirectoryFeed::populateFile(Folder& folder, const String& entryName)
+void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
 {
     if(folder.has(entryName))
     {
@@ -118,7 +118,7 @@ void DirectoryFeed::populateFile(Folder& folder, const String& entryName)
         nativeFile->setMode(File::Write);
     }
 
-    File* file = folder.fileSystem().interpret(nativeFile.release());
+    File *file = folder.fileSystem().interpret(nativeFile.release());
     folder.add(file);
 
     // We will decide on pruning this.
@@ -128,14 +128,14 @@ void DirectoryFeed::populateFile(Folder& folder, const String& entryName)
     folder.fileSystem().index(*file);
 }
 
-bool DirectoryFeed::prune(File& file) const
+bool DirectoryFeed::prune(File &file) const
 {
     LOG_AS("DirectoryFeed::prune");
     
     /// Rules for pruning:
     /// - A file sourced by NativeFile will be pruned if it's out of sync with the hard 
     ///   drive version (size, time of last modification).
-    NativeFile* nativeFile = dynamic_cast<NativeFile*>(file.source());
+    NativeFile *nativeFile = dynamic_cast<NativeFile *>(file.source());
     if(nativeFile)
     {
         try
@@ -147,7 +147,7 @@ bool DirectoryFeed::prune(File& file) const
                 return true;
             }
         }
-        catch(const StatusError&)
+        catch(StatusError const &)
         {
             // Get rid of it.
             return true;
@@ -156,12 +156,12 @@ bool DirectoryFeed::prune(File& file) const
     
     /// - A Folder will be pruned if the corresponding directory does not exist (providing
     ///   a DirectoryFeed is the sole feed in the folder).
-    Folder* subFolder = dynamic_cast<Folder*>(&file);
+    Folder *subFolder = dynamic_cast<Folder *>(&file);
     if(subFolder)
     {
         if(subFolder->feeds().size() == 1)
         {
-            DirectoryFeed* dirFeed = dynamic_cast<DirectoryFeed*>(subFolder->feeds().front());
+            DirectoryFeed *dirFeed = dynamic_cast<DirectoryFeed *>(subFolder->feeds().front());
             if(dirFeed && !exists(dirFeed->_nativePath))
             {
                 LOG_VERBOSE("%s: no longer exists, pruning!") << _nativePath;
@@ -174,7 +174,7 @@ bool DirectoryFeed::prune(File& file) const
     return false;
 }
 
-File* DirectoryFeed::newFile(const String& name)
+File *DirectoryFeed::newFile(String const &name)
 {
     NativePath newPath = _nativePath / name;
     if(exists(newPath))
@@ -182,12 +182,12 @@ File* DirectoryFeed::newFile(const String& name)
         /// @throw AlreadyExistsError  The file @a name already exists in the native directory.
         throw AlreadyExistsError("DirectoryFeed::newFile", name + ": already exists");
     }
-    File* file = new NativeFile(name, newPath);
+    File *file = new NativeFile(name, newPath);
     file->setOriginFeed(this);
     return file;
 }
 
-void DirectoryFeed::removeFile(const String& name)
+void DirectoryFeed::removeFile(String const &name)
 {
     NativePath path = _nativePath / name;
     if(!exists(path))
@@ -199,7 +199,7 @@ void DirectoryFeed::removeFile(const String& name)
     QDir::current().remove(path);
 }
 
-void DirectoryFeed::changeWorkingDir(const NativePath& nativePath)
+void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
 {
     if(!App::setCurrentWorkPath(nativePath))
     {
@@ -209,10 +209,10 @@ void DirectoryFeed::changeWorkingDir(const NativePath& nativePath)
     }
 }
 
-void DirectoryFeed::createDir(const NativePath& nativePath)
+void DirectoryFeed::createDir(NativePath const &nativePath)
 {
     NativePath parentPath = nativePath.fileNamePath();
-    if(!parentPath.empty() && !exists(parentPath))
+    if(!parentPath.isEmpty() && !exists(parentPath))
     {
         createDir(parentPath);
     }
@@ -224,12 +224,12 @@ void DirectoryFeed::createDir(const NativePath& nativePath)
     }
 }
 
-bool DirectoryFeed::exists(const NativePath& nativePath)
+bool DirectoryFeed::exists(NativePath const &nativePath)
 {
     return QDir::current().exists(nativePath);
 }
 
-File::Status DirectoryFeed::fileStatus(const NativePath& nativePath)
+File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
 {
     QFileInfo info(nativePath);
 
