@@ -375,9 +375,6 @@ void Game_Notify(int notification, void* param);
  * @ingroup base
  */
 ///@{
-#define FRACBITS            16
-#define FRACUNIT            (1<<FRACBITS)
-#define FRACEPSILON         (1.0f/65535.f) // ~ 1.5e-5
 #define FLOATEPSILON        .000001f
 
 /**
@@ -403,49 +400,6 @@ void Game_Notify(int notification, void* param);
 #define ANG180              0x80000000
 #define ANG270              0xc0000000
 
-#define FIX2FLT(x)      ( (x) / (float) FRACUNIT )
-#define Q_FIX2FLT(x)    ( (float)((x)>>FRACBITS) )
-#define FLT2FIX(x)      ( (fixed_t) ((x)*FRACUNIT) )
-
-#if !defined( DENG_NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
-
-    __inline fixed_t FixedMul(fixed_t a, fixed_t b) {
-        __asm {
-            // The parameters in eax and ebx.
-            mov eax, a
-            mov ebx, b
-            // The multiplying.
-            imul ebx
-            shrd eax, edx, 16
-            // eax should hold the return value.
-        }
-        // A value is returned regardless of the compiler warning.
-    }
-    __inline fixed_t FixedDiv2(fixed_t a, fixed_t b) {
-        __asm {
-            // The parameters.
-            mov eax, a
-            mov ebx, b
-            // The operation.
-            cdq
-            shld edx, eax, 16
-            sal eax, 16
-            idiv ebx
-            // And the value returns in eax.
-        }
-        // A value is returned regardless of the compiler warning.
-    }
-
-#else
-
-// Don't use inline assembler in fixed-point calculations.
-// (link with plugins/common/m_fixed.c)
-fixed_t         FixedMul(fixed_t a, fixed_t b);
-fixed_t         FixedDiv2(fixed_t a, fixed_t b);
-#endif
-
-// This one is always in plugins/common/m_fixed.c.
-fixed_t         FixedDiv(fixed_t a, fixed_t b);
 ///@}
 
 //------------------------------------------------------------------------

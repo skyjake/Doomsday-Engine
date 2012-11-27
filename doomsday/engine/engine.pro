@@ -627,10 +627,6 @@ SOURCES += \
     SOURCES += src/audio/sys_audiod_sdlmixer.c
 }
 
-# Use the fixed-point math from libcommon.
-# TODO: Move it to the engine.
-SOURCES += ../plugins/common/src/m_fixed.c
-
 OTHER_FILES += \
     data/cphelp.txt \
     include/mapdata.hs \

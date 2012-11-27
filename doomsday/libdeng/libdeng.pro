@@ -63,6 +63,7 @@ HEADERS += \
     include/de/animator.h \
     include/de/concurrency.h \
     include/de/ddstring.h \
+    include/de/fixedpoint.h \
     include/de/garbage.h \
     include/de/libdeng.h \
     include/de/memory.h \
@@ -85,6 +86,7 @@ HEADERS += \
 SOURCES += \
     src/animator.c \
     src/concurrency.cpp \
+    src/fixedpoint.c \
     src/garbage.cpp \
     src/libdeng.c \
     src/memory.c \
