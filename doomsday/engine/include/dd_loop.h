@@ -1,6 +1,5 @@
-/**
- * @file dd_loop.h
- * Main loop and the core timer. @ingroup base
+/** @file dd_loop.h Main loop and the core timer.
+ * @ingroup base
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
