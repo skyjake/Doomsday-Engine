@@ -1,8 +1,4 @@
-/**
- * @file m_md5.h
- *
- * MD5 Hash Generator.
- *
+/** @file md5.h MD5 hash generator.
  * @ingroup misc
  *
  * @author Copyright &copy; 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -18,15 +14,14 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG_MISC_MD5_H
 #define LIBDENG_MISC_MD5_H
 
-#include "dd_types.h"
+#include "types.h"
 
 #ifdef __cplusplus
 extern "C" {

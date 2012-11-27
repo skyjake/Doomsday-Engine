@@ -1,9 +1,5 @@
-/**
- * @file m_mus2midi.c
- *
- * MUS to MIDI conversion. @ingroup audio
- *
- * Converts Doom's MUS music format to equivalent MIDI data.
+/** @file m_mus2midi.c MUS to MIDI conversion.
+ * @ingroup audio
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
@@ -222,12 +218,6 @@ static boolean getNextEvent(midi_event_t* ev)
     return true;
 }
 
-/**
- * @param data          The MUS data to convert.
- * @param length        The length of the data in bytes.
- * @param outFile       Name of the file the resulting MIDI data will be
- *                      written to.
- */
 boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
 {
     unsigned char buffer[80];

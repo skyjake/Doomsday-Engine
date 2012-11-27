@@ -1,10 +1,8 @@
-/** @file template.c.template Brief description of the source file.
- * @ingroup group
+/** @file m_mus2midi.h MUS to MIDI conversion.
+ * @ingroup audio
  *
- * @todo Update the fields above as appropriate.
- *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,3 +17,18 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
+
+#ifndef __DOOMSDAY_MUS2MIDI_H__
+#define __DOOMSDAY_MUS2MIDI_H__
+
+/**
+ * Converts DOOM MUS format music into MIDI music. The output is written to a
+ * native file.
+ *
+ * @param data     The MUS data to convert.
+ * @param length   The length of the data in bytes.
+ * @param outFile  Name of the file the resulting MIDI data will be written to.
+ */
+boolean M_Mus2Midi(void* data, size_t length, const char* outFile);
+
+#endif

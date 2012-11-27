@@ -33,7 +33,7 @@
 #include "de_misc.h"
 
 #include "audio/sys_audio.h"
-#include "m_mus2midi.h"
+#include "audio/m_mus2midi.h"
 
 D_CMD(PlayMusic);
 D_CMD(PauseMusic);

@@ -127,6 +127,7 @@ DENG_HEADERS += \
 DENG_HEADERS += \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
+    include/audio/m_mus2midi.h \
     include/audio/s_cache.h \
     include/audio/s_environ.h \
     include/audio/s_logic.h \
@@ -207,10 +208,7 @@ DENG_HEADERS += \
     include/library.h \
     include/m_bams.h \
     include/m_decomp64.h \
-    include/m_linkedlist.h \
-    include/m_md5.h \
     include/m_misc.h \
-    include/m_mus2midi.h \
     include/m_nodepile.h \
     include/m_profiler.h \
     include/m_stack.h \
@@ -428,6 +426,7 @@ deng_nodisplaymode {
 SOURCES += \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
+    src/audio/m_mus2midi.c \
     src/audio/s_cache.c \
     src/audio/s_environ.cpp \
     src/audio/s_logic.c \
@@ -493,10 +492,7 @@ SOURCES += \
     src/library.cpp \
     src/m_bams.c \
     src/m_decomp64.c \
-    src/m_linkedlist.c \
-    src/m_md5.c \
     src/m_misc.c \
-    src/m_mus2midi.c \
     src/m_nodepile.c \
     src/m_stack.c \
     src/m_vector.c \
