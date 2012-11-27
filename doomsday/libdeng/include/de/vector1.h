@@ -1,6 +1,5 @@
-/**
- * @file m_vector.h
- * Vector math. @ingroup data
+/** @file vector1.h Vector math (2D, 3D, 4D).
+ * @ingroup math
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -20,118 +19,120 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DATA_VECTOR
-#define LIBDENG_DATA_VECTOR
+#ifndef LIBDENG_VECTOR_H
+#define LIBDENG_VECTOR_H
 
-#include "dd_types.h"
+#include "types.h"
+#include "fixedpoint.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * 2-dimensions:
+ * @defgroup vec2 2D Vectors
+ * @ingroup math
+ * @{
  */
 
 // Floating-point.
 typedef float vectorcompf_t;
 typedef vectorcompf_t vec2f_t[2];
-typedef const float const_pvec2f_t[2];
+typedef float const const_pvec2f_t[2];
 typedef vectorcompf_t* pvec2f_t;
 typedef vec2f_t* arvec2f_t;
 
 // Double floating-point.
 typedef double vectorcompd_t;
 typedef vectorcompd_t vec2d_t[2];
-typedef const double const_pvec2d_t[2];
+typedef double const const_pvec2d_t[2];
 typedef vectorcompd_t* pvec2d_t;
 typedef vec2d_t* arvec2d_t;
 
-fixed_t V2x_Intersection(fixed_t const v1[2], fixed_t const v1Delta[2],
-    fixed_t const v2[2], fixed_t const v2Delta[2]);
+DENG_PUBLIC fixed_t V2x_Intersection(fixed_t const v1[2], fixed_t const v1Delta[2], fixed_t const v2[2], fixed_t const v2Delta[2]);
 
-int V2x_PointOnLineSide(fixed_t const point[2], fixed_t const lineOrigin[2], fixed_t const lineDirection[2]);
+DENG_PUBLIC int V2x_PointOnLineSide(fixed_t const point[2], fixed_t const lineOrigin[2], fixed_t const lineDirection[2]);
 
 /**
  * Set the vector's x and y components.
  */
-void V2f_Set(pvec2f_t vec, vectorcompf_t x, vectorcompf_t y);
+DENG_PUBLIC void V2f_Set(pvec2f_t vec, vectorcompf_t x, vectorcompf_t y);
 
-void V2f_SetFixed(pvec2f_t vec, fixed_t x, fixed_t y);
+DENG_PUBLIC void V2f_SetFixed(pvec2f_t vec, fixed_t x, fixed_t y);
 
 /**
  * 2-dimensional vector length.
  */
-float V2f_Length(float const vector[2]);
+DENG_PUBLIC float V2f_Length(float const vector[2]);
 
 /**
  * The distance between two points.
  */
-float V2f_Distance(const pvec2f_t a, const pvec2f_t b);
+DENG_PUBLIC float V2f_Distance(pvec2f_t const a, pvec2f_t const b);
 
 /**
  * Normalize a 2-dimensional vector.
  *
  * @return  The length of the vector.
  */
-float V2f_Normalize(pvec2f_t vec);
+DENG_PUBLIC float V2f_Normalize(pvec2f_t vec);
 
 /**
  * Make a copy of the source vector.
  */
-void V2f_Copy(pvec2f_t dest, const_pvec2f_t src);
-void V2f_Copyd(pvec2f_t dest, const_pvec2d_t src);
+DENG_PUBLIC void V2f_Copy(pvec2f_t dest, const_pvec2f_t src);
+DENG_PUBLIC void V2f_Copyd(pvec2f_t dest, const_pvec2d_t src);
 
 /**
  * Multiply the vector by the scalar.
  */
-void V2f_Scale(pvec2f_t vector, float scalar);
+DENG_PUBLIC void V2f_Scale(pvec2f_t vector, float scalar);
 
 /**
  * Rotate the vector by a radian angle.
  */
-void V2f_Rotate(pvec2f_t vec, float radians);
+DENG_PUBLIC void V2f_Rotate(pvec2f_t vec, float radians);
 
 /**
  * Calculate the sum of two 2-dimensional vectors.
  */
-void V2f_Sum(pvec2f_t dest, const_pvec2f_t src1, const_pvec2f_t src2);
+DENG_PUBLIC void V2f_Sum(pvec2f_t dest, const_pvec2f_t src1, const_pvec2f_t src2);
 
 /**
  * Subtract src1 from src2, return result in 'dest'.
  */
-void V2f_Subtract(pvec2f_t dest, const_pvec2f_t src1, const_pvec2f_t src2);
+DENG_PUBLIC void V2f_Subtract(pvec2f_t dest, const_pvec2f_t src1, const_pvec2f_t src2);
 
 /**
  * Calculate the dot product of the two vectors.
  */
-float V2f_DotProduct(const pvec2f_t a, const pvec2f_t b);
+DENG_PUBLIC float V2f_DotProduct(pvec2f_t const a, pvec2f_t const b);
 
 /**
  * Calculate the scalar projection of 'a' onto 'b': dot(a,b)/len(b)
  */
-float V2f_ScalarProject(const pvec2f_t a, const pvec2f_t b);
+DENG_PUBLIC float V2f_ScalarProject(pvec2f_t const a, pvec2f_t const b);
 
 /**
  * Project 'a' onto 'b' and store the resulting vector to 'dest':
  * dot(a,b)/dot(b,b)*b
  */
-float V2f_Project(pvec2f_t dest, const pvec2f_t a, const pvec2f_t b);
+DENG_PUBLIC float V2f_Project(pvec2f_t dest, pvec2f_t const a, pvec2f_t const b);
 
 /**
  * @return  @c true, if the two vectors are parallel.
  */
-boolean V2f_IsParallel(const pvec2f_t a, const pvec2f_t b);
+DENG_PUBLIC boolean V2f_IsParallel(pvec2f_t const a, pvec2f_t const b);
 
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-boolean V2f_IsZero(const pvec2f_t vec);
+DENG_PUBLIC boolean V2f_IsZero(pvec2f_t const vec);
 
 /**
  * The line must be exactly one unit long!
  */
-float V2f_PointUnitLineDistance(float const point[2], float const linePoint[2], float const lineDirection[2]);
+DENG_PUBLIC float V2f_PointUnitLineDistance(float const point[2], float const linePoint[2], float const lineDirection[2]);
 
 /**
  * Determine where the two lines cross each other.  Notice that the
@@ -139,102 +140,102 @@ float V2f_PointUnitLineDistance(float const point[2], float const linePoint[2], 
  *
  * @return  A scaling factor for the first line.
  */
-float V2f_Intersection(const_pvec2f_t p1, const_pvec2f_t delta1, const_pvec2f_t p2, const_pvec2f_t delta2, pvec2f_t point);
+DENG_PUBLIC float V2f_Intersection(const_pvec2f_t p1, const_pvec2f_t delta1, const_pvec2f_t p2, const_pvec2f_t delta2, pvec2f_t point);
 
 /**
  * Intersection of lines a->b and c->d.  Unlike V2f_Intersection(), the
  * arguments are all points.
  */
-float V2f_Intercept(const pvec2f_t a, const pvec2f_t b, const pvec2f_t c, const pvec2f_t d, pvec2f_t point);
+DENG_PUBLIC float V2f_Intercept(pvec2f_t const a, pvec2f_t const b, pvec2f_t const c, pvec2f_t const d, pvec2f_t point);
 
 /**
  * @return  @c true, if the two lines intercept.
  */
-boolean V2f_Intercept2(const pvec2f_t a, const pvec2f_t b, const pvec2f_t c, const pvec2f_t d, pvec2f_t point, float *abFrac, float *cdFrac);
+DENG_PUBLIC boolean V2f_Intercept2(pvec2f_t const a, pvec2f_t const b, pvec2f_t const c, pvec2f_t const d, pvec2f_t point, float *abFrac, float *cdFrac);
 
 /**
  * Linear interpolation between a and b, by c.
  */
-void V2f_Lerp(pvec2f_t dest, const pvec2f_t a, const pvec2f_t b, float c);
+DENG_PUBLIC void V2f_Lerp(pvec2f_t dest, pvec2f_t const a, pvec2f_t const b, float c);
 
 /**
  * Left/top is the min-point.  Right/bottom is the max-point.
  */
-void V2f_InitBox(arvec2f_t box, const pvec2f_t point);
+DENG_PUBLIC void V2f_InitBox(arvec2f_t box, pvec2f_t const point);
 
-void V2f_AddToBox(arvec2f_t box, const pvec2f_t point);
+DENG_PUBLIC void V2f_AddToBox(arvec2f_t box, pvec2f_t const point);
 
-void V2f_UniteBox(arvec2f_t box, const arvec2f_t other);
+DENG_PUBLIC void V2f_UniteBox(arvec2f_t box, arvec2f_t const other);
 
-void V2f_CopyBox(arvec2f_t dest, const arvec2f_t src);
-void V2f_CopyBoxd(arvec2f_t dest, const arvec2d_t src);
+DENG_PUBLIC void V2f_CopyBox(arvec2f_t dest, arvec2f_t const src);
+DENG_PUBLIC void V2f_CopyBoxd(arvec2f_t dest, arvec2d_t const src);
 
 /**
  * Set the vector's x and y components.
  */
-void V2d_Set(pvec2d_t vec, vectorcompd_t x, vectorcompd_t y);
+DENG_PUBLIC void V2d_Set(pvec2d_t vec, vectorcompd_t x, vectorcompd_t y);
 
-void V2d_SetFixed(pvec2d_t vec, fixed_t x, fixed_t y);
+DENG_PUBLIC void V2d_SetFixed(pvec2d_t vec, fixed_t x, fixed_t y);
 
 /**
  * 2-dimensional vector length.
  */
-double V2d_Length(const pvec2d_t vector);
+DENG_PUBLIC double V2d_Length(pvec2d_t const vector);
 
 /**
  * The distance between two points.
  */
-double V2d_Distance(const pvec2d_t a, const pvec2d_t b);
+DENG_PUBLIC double V2d_Distance(pvec2d_t const a, pvec2d_t const b);
 
 /**
  * Normalize a 2-dimensional vector.
  *
  * @return  The length of the vector.
  */
-double V2d_Normalize(pvec2d_t vec);
+DENG_PUBLIC double V2d_Normalize(pvec2d_t vec);
 
 /**
  * Make a copy of the source vector.
  */
-void V2d_Copy(pvec2d_t dest, const_pvec2d_t src);
-void V2d_Copyf(pvec2d_t dest, const_pvec2f_t srcf);
+DENG_PUBLIC void V2d_Copy(pvec2d_t dest, const_pvec2d_t src);
+DENG_PUBLIC void V2d_Copyf(pvec2d_t dest, const_pvec2f_t srcf);
 
 /**
  * Multiply the vector by the scalar.
  */
-void V2d_Scale(pvec2d_t vector, double scalar);
+DENG_PUBLIC void V2d_Scale(pvec2d_t vector, double scalar);
 
 /**
  * Rotate the vector by a radian angle.
  */
-void V2d_Rotate(pvec2d_t vec, double radians);
+DENG_PUBLIC void V2d_Rotate(pvec2d_t vec, double radians);
 
 /**
  * Calculate the sum of two 2-dimensional vectors.
  */
-void V2d_Sum(pvec2d_t dest, const_pvec2d_t src1, const_pvec2d_t src2);
+DENG_PUBLIC void V2d_Sum(pvec2d_t dest, const_pvec2d_t src1, const_pvec2d_t src2);
 
 /**
  * Subtract src1 from src2, return result in 'dest'.
  */
-void V2d_Subtract(pvec2d_t dest, const_pvec2d_t src1, const_pvec2d_t src2);
+DENG_PUBLIC void V2d_Subtract(pvec2d_t dest, const_pvec2d_t src1, const_pvec2d_t src2);
 
 /**
  * Distance from the line to a point.
  */
-double V2d_PointLineDistance(double const point[2], double const linePoint[2],
+DENG_PUBLIC double V2d_PointLineDistance(double const point[2], double const linePoint[2],
     double const lineDirection[2], double* offset);
 
 /**
  * Compute the parallel distance from the line to a point.
  */
-double V2d_PointLineParaDistance(double const point[2], double const lineDirection[2],
+DENG_PUBLIC double V2d_PointLineParaDistance(double const point[2], double const lineDirection[2],
     double linePara, double lineLength);
 
 /**
  * Compute the perpendicular distance from the line to a point.
  */
-double V2d_PointLinePerpDistance(double const point[2], double const lineDirection[2],
+DENG_PUBLIC double V2d_PointLinePerpDistance(double const point[2], double const lineDirection[2],
     double linePerp, double lineLength);
 
 /**
@@ -248,7 +249,7 @@ double V2d_PointLinePerpDistance(double const point[2], double const lineDirecti
  *         @c =0 Point lies directly on the line.
  *         @c >0 Point is to the right of the line.
  */
-double V2d_PointOnLineSide(double const point[2], double const lineOrigin[2],
+DENG_PUBLIC double V2d_PointOnLineSide(double const point[2], double const lineOrigin[2],
     double const lineDirection[2]);
 
 /**
@@ -264,37 +265,37 @@ double V2d_PointOnLineSide(double const point[2], double const lineOrigin[2],
  *         @c =0 Point lies directly on the line.
  *         @c >0 Point is to the right of the line.
  */
-double V2d_PointOnLineSide2(double const point[2], double const lineDirection[2],
+DENG_PUBLIC double V2d_PointOnLineSide2(double const point[2], double const lineDirection[2],
     double linePerp, double lineLength, double epsilon);
 
 /**
  * Calculate the dot product of the two vectors.
  */
-double V2d_DotProduct(double const a[2], double const b[2]);
+DENG_PUBLIC double V2d_DotProduct(double const a[2], double const b[2]);
 
 /**
  * Calculate the scalar projection of 'a' onto 'b': dot(a,b)/len(b)
  */
-double V2d_ScalarProject(const pvec2d_t a, const pvec2d_t b);
+DENG_PUBLIC double V2d_ScalarProject(pvec2d_t const a, pvec2d_t const b);
 
 /**
  * Project 'a' onto 'b' and store the resulting vector to 'dest':
  * dot(a,b)/dot(b,b)*b
  */
-double V2d_Project(double dest[2], double const a[2], double const b[2]);
+DENG_PUBLIC double V2d_Project(double dest[2], double const a[2], double const b[2]);
 
-double V2d_ProjectOnLine(double dest[2], double const point[2],
+DENG_PUBLIC double V2d_ProjectOnLine(double dest[2], double const point[2],
     double const lineOrigin[2], double const lineDirection[2]);
 
 /**
  * @return  @c true, if the two vectors are parallel.
  */
-boolean V2d_IsParallel(const pvec2d_t a, const pvec2d_t b);
+DENG_PUBLIC boolean V2d_IsParallel(pvec2d_t const a, pvec2d_t const b);
 
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-boolean V2d_IsZero(const pvec2d_t vec);
+DENG_PUBLIC boolean V2d_IsZero(pvec2d_t const vec);
 
 /**
  * Determine where the two lines cross each other.  Notice that the
@@ -302,100 +303,104 @@ boolean V2d_IsZero(const pvec2d_t vec);
  *
  * @return  A scaling factor for the first line.
  */
-double V2d_Intersection(const_pvec2d_t p1, const_pvec2d_t delta1, const_pvec2d_t p2, const_pvec2d_t delta2, pvec2d_t point);
+DENG_PUBLIC double V2d_Intersection(const_pvec2d_t p1, const_pvec2d_t delta1, const_pvec2d_t p2, const_pvec2d_t delta2, pvec2d_t point);
 
 /**
  * Intersection of lines a->b and c->d.  Unlike V2d_Intersection(), the
  * arguments are all points.
  */
-double V2d_Intercept(const pvec2d_t a, const pvec2d_t b, const pvec2d_t c, const pvec2d_t d, pvec2d_t point);
+DENG_PUBLIC double V2d_Intercept(pvec2d_t const a, pvec2d_t const b, pvec2d_t const c, pvec2d_t const d, pvec2d_t point);
 
 /**
  * @return  @c true, if the two lines intercept.
  */
-boolean V2d_Intercept2(const pvec2d_t a, const pvec2d_t b, const pvec2d_t c, const pvec2d_t d, pvec2d_t point, double *abFrac, double *cdFrac);
+DENG_PUBLIC boolean V2d_Intercept2(pvec2d_t const a, pvec2d_t const b, pvec2d_t const c, pvec2d_t const d, pvec2d_t point, double *abFrac, double *cdFrac);
 
 /**
  * Linear interpolation between a and b, by c.
  */
-void V2d_Lerp(pvec2d_t dest, const pvec2d_t a, const pvec2d_t b, double c);
+DENG_PUBLIC void V2d_Lerp(pvec2d_t dest, pvec2d_t const a, pvec2d_t const b, double c);
 
 /**
  * Left/top is the min-point.  Right/bottom is the max-point.
  */
-void V2d_InitBox(arvec2d_t box, const pvec2d_t point);
+DENG_PUBLIC void V2d_InitBox(arvec2d_t box, pvec2d_t const point);
 
-void V2d_AddToBox(arvec2d_t box, const pvec2d_t point);
+DENG_PUBLIC void V2d_AddToBox(arvec2d_t box, pvec2d_t const point);
 
-void V2d_UniteBox(arvec2d_t box, const arvec2d_t other);
+DENG_PUBLIC void V2d_UniteBox(arvec2d_t box, arvec2d_t const other);
 
-void V2d_CopyBox(arvec2d_t dest, const arvec2d_t src);
+DENG_PUBLIC void V2d_CopyBox(arvec2d_t dest, arvec2d_t const src);
+
+/// @}
 
 /**
- * 3-dimensions:
+ * @defgroup vec3 3D Vectors
+ * @ingroup math
+ * @{
  */
 
 // Floating-point.
 typedef vectorcompf_t vec3f_t[3];
-typedef const float const_pvec3f_t[3];
+typedef float const const_pvec3f_t[3];
 typedef vectorcompf_t* pvec3f_t;
 typedef vec3f_t* arvec3f_t;
 
 // Double floating-point.
 typedef vectorcompd_t vec3d_t[3];
-typedef const double const_pvec3d_t[3];
+typedef double const const_pvec3d_t[3];
 typedef vectorcompd_t* pvec3d_t;
 typedef vec3d_t* arvec3d_t;
 
 /**
  * Set the vector's x, y and z components.
  */
-void V3f_Set(pvec3f_t vec, vectorcompf_t x, vectorcompf_t y, vectorcompf_t z);
+DENG_PUBLIC void V3f_Set(pvec3f_t vec, vectorcompf_t x, vectorcompf_t y, vectorcompf_t z);
 
-void V3f_SetFixed(pvec3f_t vec, fixed_t x, fixed_t y, fixed_t z);
+DENG_PUBLIC void V3f_SetFixed(pvec3f_t vec, fixed_t x, fixed_t y, fixed_t z);
 
 /**
  * 3-dimensional vector length.
  */
-float V3f_Length(const pvec3f_t vec);
+DENG_PUBLIC float V3f_Length(pvec3f_t const vec);
 
 /**
  * The distance between two points.
  */
-float V3f_Distance(const pvec3f_t a, const pvec3f_t b);
+DENG_PUBLIC float V3f_Distance(pvec3f_t const a, pvec3f_t const b);
 
 /**
  * Normalize a 3-dimensional vector.
  *
  * @return  The length of the vector.
  */
-float V3f_Normalize(pvec3f_t vec);
+DENG_PUBLIC float V3f_Normalize(pvec3f_t vec);
 
 /**
  * Make a copy of the source vector.
  */
-void V3f_Copy(pvec3f_t dest, const_pvec3f_t src);
-void V3f_Copyd(pvec3f_t dest, const_pvec3d_t src);
+DENG_PUBLIC void V3f_Copy(pvec3f_t dest, const_pvec3f_t src);
+DENG_PUBLIC void V3f_Copyd(pvec3f_t dest, const_pvec3d_t src);
 
 /**
  * Multiply the vector by the scalar.
  */
-void V3f_Scale(pvec3f_t vec, float scalar);
+DENG_PUBLIC void V3f_Scale(pvec3f_t vec, float scalar);
 
 /**
  * Calculate the sum of two 3-dimensional vectors.
  */
-void V3f_Sum(pvec3f_t dest, const_pvec3f_t src1, const_pvec3f_t src2);
+DENG_PUBLIC void V3f_Sum(pvec3f_t dest, const_pvec3f_t src1, const_pvec3f_t src2);
 
 /**
  * Subtract src1 from src2, return result in 'dest'.
  */
-void V3f_Subtract(pvec3f_t dest, const_pvec3f_t src1, const_pvec3f_t src2);
+DENG_PUBLIC void V3f_Subtract(pvec3f_t dest, const_pvec3f_t src1, const_pvec3f_t src2);
 
 /**
  * Calculate the dot product of the two vectors.
  */
-float V3f_DotProduct(const_pvec3f_t a, const_pvec3f_t b);
+DENG_PUBLIC float V3f_DotProduct(const_pvec3f_t a, const_pvec3f_t b);
 
 /**
  * Calculate the cross product of two vectors.
@@ -404,8 +409,8 @@ float V3f_DotProduct(const_pvec3f_t a, const_pvec3f_t b);
  * @param src1  First vector.
  * @param src2  Second vector.
  */
-void V3f_CrossProduct(pvec3f_t dest, const_pvec3f_t a, const_pvec3f_t b);
-void V3f_CrossProductd(pvec3f_t dest, const_pvec3d_t ad, const_pvec3d_t bd);
+DENG_PUBLIC void V3f_CrossProduct(pvec3f_t dest, const_pvec3f_t a, const_pvec3f_t b);
+DENG_PUBLIC void V3f_CrossProductd(pvec3f_t dest, const_pvec3d_t ad, const_pvec3d_t bd);
 
 /**
  * Cross product of two vectors composed of three points.
@@ -415,7 +420,7 @@ void V3f_CrossProductd(pvec3f_t dest, const_pvec3d_t ad, const_pvec3d_t bd);
  * @param v2  Second vector.
  * @param v3  Third vector.
  */
-void V3f_PointCrossProduct(pvec3f_t dest, const pvec3f_t v1, const pvec3f_t v2, const pvec3f_t v3);
+DENG_PUBLIC void V3f_PointCrossProduct(pvec3f_t dest, pvec3f_t const v1, pvec3f_t const v2, pvec3f_t const v3);
 
 /**
  * Find the closest point in the plane, to an arbitary point.
@@ -427,22 +432,22 @@ void V3f_PointCrossProduct(pvec3f_t dest, const pvec3f_t v1, const pvec3f_t v2, 
  *
  * @return  Distance from the closest point on the plane to the specified arbitary point.
  */
-float V3f_ClosestPointOnPlane(pvec3f_t dest, const_pvec3f_t planeNormal, const_pvec3f_t planePoint, const_pvec3f_t arbPoint);
+DENG_PUBLIC float V3f_ClosestPointOnPlane(pvec3f_t dest, const_pvec3f_t planeNormal, const_pvec3f_t planePoint, const_pvec3f_t arbPoint);
 
 /**
  * Determine which axis of the given vector is the major.
  */
-int V3f_MajorAxis(const pvec3f_t vec);
+int V3f_MajorAxis(pvec3f_t const vec);
 
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-boolean V3f_IsZero(const pvec3f_t vec);
+DENG_PUBLIC boolean V3f_IsZero(pvec3f_t const vec);
 
 /**
  * Linear interpolation between a and b, by c.
  */
-void V3f_Lerp(pvec3f_t dest, const pvec3f_t a, const pvec3f_t b, float c);
+DENG_PUBLIC void V3f_Lerp(pvec3f_t dest, pvec3f_t const a, pvec3f_t const b, float c);
 
 /**
  * Given a normalized normal, construct up and right vectors, oriented about
@@ -452,58 +457,58 @@ void V3f_Lerp(pvec3f_t dest, const pvec3f_t a, const pvec3f_t b, float c);
  * @param bitangent  The 'up' vector will be written back here.
  * @param normal  Normal to construct tangents for.
  */
-void V3f_BuildTangents(pvec3f_t tangent, pvec3f_t bitangent, const_pvec3f_t normal);
+DENG_PUBLIC void V3f_BuildTangents(pvec3f_t tangent, pvec3f_t bitangent, const_pvec3f_t normal);
 
 /**
  * Set the vector's x, y and z components.
  */
-void V3d_Set(pvec3d_t vec, vectorcompd_t x, vectorcompd_t y, vectorcompd_t z);
+DENG_PUBLIC void V3d_Set(pvec3d_t vec, vectorcompd_t x, vectorcompd_t y, vectorcompd_t z);
 
-void V3d_SetFixed(pvec3d_t vec, fixed_t x, fixed_t y, fixed_t z);
+DENG_PUBLIC void V3d_SetFixed(pvec3d_t vec, fixed_t x, fixed_t y, fixed_t z);
 
 /**
  * 3-dimensional vector length.
  */
-double V3d_Length(const pvec3d_t vec);
+DENG_PUBLIC double V3d_Length(pvec3d_t const vec);
 
 /**
  * The distance between two points.
  */
-double V3d_Distance(double const a[3], double const b[3]);
+DENG_PUBLIC double V3d_Distance(double const a[3], double const b[3]);
 
 /**
  * Normalize a 3-dimensional vector.
  *
  * @return  The length of the vector.
  */
-double V3d_Normalize(pvec3d_t vec);
+DENG_PUBLIC double V3d_Normalize(pvec3d_t vec);
 
 /**
  * Make a copy of the source vector.
  */
-void V3d_Copy(pvec3d_t dest, const_pvec3d_t src);
-void V3d_Copyf(pvec3d_t dest, const_pvec3f_t src);
+DENG_PUBLIC void V3d_Copy(pvec3d_t dest, const_pvec3d_t src);
+DENG_PUBLIC void V3d_Copyf(pvec3d_t dest, const_pvec3f_t src);
 
 /**
  * Multiply the vector by the scalar.
  */
-void V3d_Scale(pvec3d_t vec, double scalar);
+DENG_PUBLIC void V3d_Scale(pvec3d_t vec, double scalar);
 
 /**
  * Calculate the sum of two 3-dimensional vectors.
  */
-void V3d_Sum(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
+DENG_PUBLIC void V3d_Sum(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
 
 /**
  * Subtract src1 from src2, return result in 'dest'.
  */
-void V3d_Subtract(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
+DENG_PUBLIC void V3d_Subtract(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
 
 /**
  * Calculate the dot product of the two vectors.
  */
-double V3d_DotProduct(const_pvec3d_t a, const_pvec3d_t b);
-double V3d_DotProductf(const_pvec3d_t a, const_pvec3f_t b);
+DENG_PUBLIC double V3d_DotProduct(const_pvec3d_t a, const_pvec3d_t b);
+DENG_PUBLIC double V3d_DotProductf(const_pvec3d_t a, const_pvec3f_t b);
 
 /**
  * Calculate the cross product of two vectors.
@@ -512,7 +517,7 @@ double V3d_DotProductf(const_pvec3d_t a, const_pvec3f_t b);
  * @param src1  First vector.
  * @param src2  Second vector.
  */
-void V3d_CrossProduct(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
+DENG_PUBLIC void V3d_CrossProduct(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
 
 /**
  * Cross product of two vectors composed of three points.
@@ -522,7 +527,7 @@ void V3d_CrossProduct(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
  * @param v2  Second vector.
  * @param v3  Third vector.
  */
-void V3d_PointCrossProduct(pvec3d_t dest, const pvec3d_t v1, const pvec3d_t v2, const pvec3d_t v3);
+DENG_PUBLIC void V3d_PointCrossProduct(pvec3d_t dest, pvec3d_t const v1, pvec3d_t const v2, pvec3d_t const v3);
 
 /**
  * Find the closest point in the plane, to an arbitary point.
@@ -534,23 +539,23 @@ void V3d_PointCrossProduct(pvec3d_t dest, const pvec3d_t v1, const pvec3d_t v2, 
  *
  * @return  Distance from the closest point on the plane to the specified arbitary point.
  */
-double V3d_ClosestPointOnPlane(pvec3d_t dest, const_pvec3d_t planeNormal, const_pvec3d_t planePoint, const_pvec3d_t arbPoint);
-double V3d_ClosestPointOnPlanef(pvec3d_t dest, const_pvec3f_t planeNormalf, const_pvec3d_t planePoint, const_pvec3d_t arbPoint);
+DENG_PUBLIC double V3d_ClosestPointOnPlane(pvec3d_t dest, const_pvec3d_t planeNormal, const_pvec3d_t planePoint, const_pvec3d_t arbPoint);
+DENG_PUBLIC double V3d_ClosestPointOnPlanef(pvec3d_t dest, const_pvec3f_t planeNormalf, const_pvec3d_t planePoint, const_pvec3d_t arbPoint);
 
 /**
  * Determine which axis of the given vector is the major.
  */
-int V3d_MajorAxis(const pvec3d_t vec);
+int V3d_MajorAxis(pvec3d_t const vec);
 
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-boolean V3d_IsZero(const pvec3d_t vec);
+DENG_PUBLIC boolean V3d_IsZero(pvec3d_t const vec);
 
 /**
  * Linear interpolation between a and b, by c.
  */
-void V3d_Lerp(pvec3d_t dest, const pvec3d_t a, const pvec3d_t b, double c);
+DENG_PUBLIC void V3d_Lerp(pvec3d_t dest, pvec3d_t const a, pvec3d_t const b, double c);
 
 /**
  * Given a normalized normal, construct up and right vectors, oriented about
@@ -560,132 +565,138 @@ void V3d_Lerp(pvec3d_t dest, const pvec3d_t a, const pvec3d_t b, double c);
  * @param bitangent  The 'up' vector will be written back here.
  * @param normal  Normal to construct tangents for.
  */
-void V3d_BuildTangents(pvec3d_t tangent, pvec3d_t bitangent, const_pvec3d_t normal);
+DENG_PUBLIC void V3d_BuildTangents(pvec3d_t tangent, pvec3d_t bitangent, const_pvec3d_t normal);
+
+/// @}
 
 /**
- * 4-dimensions:
+ * @defgroup vec4 4D Vectors
+ * @ingroup math
+ * @{
  */
 
 typedef vectorcompf_t vec4f_t[4];
-typedef const float const_pvec4f_t[4];
+typedef float const const_pvec4f_t[4];
 typedef vectorcompf_t* pvec4f_t;
 typedef vec4f_t* arvec4f_t;
 
 /**
  * Set the vector's x, y, z and w components.
  */
-void V4f_Set(pvec4f_t vec, vectorcompf_t x, vectorcompf_t y, vectorcompf_t z, vectorcompf_t w);
+DENG_PUBLIC void V4f_Set(pvec4f_t vec, vectorcompf_t x, vectorcompf_t y, vectorcompf_t z, vectorcompf_t w);
 
-void V4f_SetFixed(pvec4f_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w);
+DENG_PUBLIC void V4f_SetFixed(pvec4f_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w);
 
 /**
  * 4-dimensional vector length.
  */
-float V4f_Length(const pvec4f_t vec);
+DENG_PUBLIC float V4f_Length(pvec4f_t const vec);
 
 /**
  * The distance between two points.
  */
-float V4f_Distance(const pvec4f_t a, const pvec4f_t b);
+DENG_PUBLIC float V4f_Distance(pvec4f_t const a, pvec4f_t const b);
 
 /**
  * Normalize a 4-dimensional vector.
  *
  * @return  The length of the vector.
  */
-float V4f_Normalize(pvec4f_t vec);
+DENG_PUBLIC float V4f_Normalize(pvec4f_t vec);
 
 /**
  * Make a copy of the source vector.
  */
-void V4f_Copy(pvec4f_t dest, const_pvec4f_t src);
+DENG_PUBLIC void V4f_Copy(pvec4f_t dest, const_pvec4f_t src);
 
 /**
  * Multiply the vector by the scalar.
  */
-void V4f_Scale(pvec4f_t vec, float scalar);
+DENG_PUBLIC void V4f_Scale(pvec4f_t vec, float scalar);
 
 /**
  * Calculate the sum of two 4-dimensional vectors.
  */
-void V4f_Sum(pvec4f_t dest, const_pvec4f_t src1, const_pvec4f_t src2);
+DENG_PUBLIC void V4f_Sum(pvec4f_t dest, const_pvec4f_t src1, const_pvec4f_t src2);
 
 /**
  * Subtract src1 from src2, return result in 'dest'.
  */
-void V4f_Subtract(pvec4f_t dest, const_pvec4f_t src1, const_pvec4f_t src2);
+DENG_PUBLIC void V4f_Subtract(pvec4f_t dest, const_pvec4f_t src1, const_pvec4f_t src2);
 
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-boolean V4f_IsZero(const pvec4f_t vec);
+DENG_PUBLIC boolean V4f_IsZero(pvec4f_t const vec);
 
 /**
  * Linear interpolation between a and b, by c.
  */
-void V4f_Lerp(pvec4f_t dest, const pvec4f_t a, const pvec4f_t b, float c);
+DENG_PUBLIC void V4f_Lerp(pvec4f_t dest, pvec4f_t const a, pvec4f_t const b, float c);
 
 typedef vectorcompd_t vec4d_t[4];
-typedef const double const_pvec4d_t[4];
+typedef double const const_pvec4d_t[4];
 typedef vectorcompd_t* pvec4d_t;
 typedef vec4d_t* arvec4d_t;
 
 /**
  * Set the vector's x, y, z and w components.
  */
-void V4d_Set(pvec4d_t vec, vectorcompd_t x, vectorcompd_t y, vectorcompd_t z, vectorcompd_t w);
+DENG_PUBLIC void V4d_Set(pvec4d_t vec, vectorcompd_t x, vectorcompd_t y, vectorcompd_t z, vectorcompd_t w);
 
-void V4d_SetFixed(pvec4d_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w);
+DENG_PUBLIC void V4d_SetFixed(pvec4d_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w);
 
 /**
  * 4-dimensional vector length.
  */
-double V4d_Length(const pvec4d_t vec);
+DENG_PUBLIC double V4d_Length(pvec4d_t const vec);
 
 /**
  * The distance between two points.
  */
-double V4d_Distance(const pvec4d_t a, const pvec4d_t b);
+DENG_PUBLIC double V4d_Distance(pvec4d_t const a, pvec4d_t const b);
 
 /**
  * Normalize a 4-dimensional vector.
  *
  * @return  The length of the vector.
  */
-double V4d_Normalize(pvec4d_t vec);
+DENG_PUBLIC double V4d_Normalize(pvec4d_t vec);
 
 /**
  * Make a copy of the source vector.
  */
-void V4d_Copy(pvec4d_t dest, const_pvec4d_t src);
+DENG_PUBLIC void V4d_Copy(pvec4d_t dest, const_pvec4d_t src);
 
 /**
  * Multiply the vector by the scalar.
  */
-void V4d_Scale(pvec4d_t vec, double scalar);
+DENG_PUBLIC void V4d_Scale(pvec4d_t vec, double scalar);
 
 /**
  * Calculate the sum of two 4-dimensional vectors.
  */
-void V4d_Sum(pvec4d_t dest, const_pvec4d_t src1, const_pvec4d_t src2);
+DENG_PUBLIC void V4d_Sum(pvec4d_t dest, const_pvec4d_t src1, const_pvec4d_t src2);
 
 /**
  * Subtract src1 from src2, return result in 'dest'.
  */
-void V4d_Subtract(pvec4d_t dest, const_pvec4d_t src1, const_pvec4d_t src2);
+DENG_PUBLIC void V4d_Subtract(pvec4d_t dest, const_pvec4d_t src1, const_pvec4d_t src2);
 
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-boolean V4d_IsZero(const pvec4d_t vec);
+DENG_PUBLIC boolean V4d_IsZero(pvec4d_t const vec);
 
 /**
  * Linear interpolation between a and b, by c.
  */
-void V4d_Lerp(pvec4d_t dest, const pvec4d_t a, const pvec4d_t b, double c);
+DENG_PUBLIC void V4d_Lerp(pvec4d_t dest, pvec4d_t const a, pvec4d_t const b, double c);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_DATA_VECTOR
+#endif // LIBDENG_VECTOR_H

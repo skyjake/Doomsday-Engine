@@ -31,7 +31,6 @@
 
 #include "m_misc.h"
 #include "m_bams.h"
-#include "m_vector.h"
 #include "m_nodepile.h"
 #include "m_profiler.h"
 #include "m_stack.h"
@@ -39,5 +38,6 @@
 #include "m_decomp64.h"
 #include <de/stringarray.h>
 #include <de/smoother.h>
+#include <de/vector1.h>
 
 #endif /* LIBDENG_MISC_H */

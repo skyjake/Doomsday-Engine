@@ -25,7 +25,7 @@
 #ifndef LIBDENG_MAP_UTILITIES_H
 #define LIBDENG_MAP_UTILITIES_H
 
-#include "m_vector.h"
+#include <de/vector1.h>
 #include "p_object.h"
 
 #ifdef __cplusplus

@@ -33,7 +33,7 @@
 #include "map/dam_main.h"
 #include "render/rend_bias.h"
 #include "m_nodepile.h"
-#include "m_vector.h"
+#include <de/vector1.h>
 
 #ifdef __cplusplus
 extern "C" {

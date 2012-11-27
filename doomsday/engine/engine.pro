@@ -210,7 +210,6 @@ DENG_HEADERS += \
     include/m_nodepile.h \
     include/m_profiler.h \
     include/m_stack.h \
-    include/m_vector.h \
     include/map/blockmap.h \
     include/map/blockmapvisual.h \
     include/map/bsp/bsptreenode.h \
@@ -492,7 +491,6 @@ SOURCES += \
     src/m_misc.c \
     src/m_nodepile.c \
     src/m_stack.c \
-    src/m_vector.c \
     src/map/blockmap.c \
     src/map/blockmapvisual.c \
     src/map/bsp/hplane.cpp \

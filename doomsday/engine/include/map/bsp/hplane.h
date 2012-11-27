@@ -29,7 +29,7 @@
 #define LIBDENG_BSP_HPLANE
 
 #include "dd_types.h"
-#include "m_vector.h"
+#include <de/vector1.h>
 #include <list>
 
 namespace de {

@@ -40,7 +40,7 @@ static mutex_t timerMutex;         // To prevent Data races in the timer
 static QTime startedAt;
 static uint timerOffset = 0;
 
-const static uint TIMER_WARP_INTERVAL = 12*60*60*1000;
+static uint const TIMER_WARP_INTERVAL = 12*60*60*1000;
 
 void Timer_Shutdown(void)
 {

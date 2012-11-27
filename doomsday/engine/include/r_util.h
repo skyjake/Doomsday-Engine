@@ -29,7 +29,7 @@
 #ifndef LIBDENG_REFRESH_UTIL_H
 #define LIBDENG_REFRESH_UTIL_H
 
-#include "m_vector.h"
+#include <de/vector1.h>
 #include "map/p_mapdata.h"
 
 /**
