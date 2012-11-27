@@ -27,6 +27,7 @@
 #include "resource/image.h"
 
 #include <de/Log>
+#include <de/NativePath>
 #include <QByteArray>
 #include <QImage>
 
@@ -34,18 +35,49 @@
 #  define constBits bits
 #endif
 
-void Image_ConvertToLuminance(image_t* image, boolean retainAlpha)
+using namespace de;
+
+void Image_Init(image_t *img)
 {
-    uint8_t* alphaChannel = NULL, *ptr = NULL;
+    DENG_ASSERT(img);
+    img->size.width = 0;
+    img->size.height = 0;
+    img->pixelSize = 0;
+    img->flags = 0;
+    img->paletteId = 0;
+    img->pixels = 0;
+}
+
+void Image_Destroy(image_t *img)
+{
+    DENG_ASSERT(img);
+    if(!img->pixels) return;
+
+    M_Free(img->pixels);
+    img->pixels = 0;
+}
+
+void Image_PrintMetadata(image_t const *image)
+{
+    DENG_ASSERT(image);
+    Con_Printf("dimensions:[%ix%i] flags:%i %s:%i\n", image->size.width, image->size.height,
+               image->flags, 0 != image->paletteId? "colorpalette" : "pixelsize",
+               0 != image->paletteId? image->paletteId : image->pixelSize);
+}
+
+void Image_ConvertToLuminance(image_t *image, boolean retainAlpha)
+{
+    DENG_ASSERT(image);
+    LOG_AS("GL_ConvertToLuminance");
+
+    uint8_t* alphaChannel = 0, *ptr = 0;
     long p, numPels;
-    assert(image);
 
     // Is this suitable?
     if(0 != image->paletteId || (image->pixelSize < 3 && (image->flags & IMGF_IS_MASKED)))
     {
 #if _DEBUG
-        Con_Message("Warning:GL_ConvertToLuminance: Attempt to convert "
-                    "paletted/masked image. I don't know this format!");
+        LOG_WARNING("Attempt to convert paletted/masked image. I don't know this format!");
 #endif
         return;
     }
@@ -57,11 +89,13 @@ void Image_ConvertToLuminance(image_t* image, boolean retainAlpha)
     {
         // Yes. Take a copy.
         alphaChannel = reinterpret_cast<uint8_t*>(malloc(numPels));
-        if(!alphaChannel)
-            Con_Error("GL_ConvertToLuminance: Failed on allocation of %lu bytes for pixel alpha relocation buffer.", (unsigned long) numPels);
+        if(!alphaChannel) Con_Error("GL_ConvertToLuminance: Failed on allocation of %lu bytes for pixel alpha relocation buffer.", (unsigned long) numPels);
+
         ptr = image->pixels;
         for(p = 0; p < numPels; ++p, ptr += image->pixelSize)
+        {
             alphaChannel[p] = ptr[3];
+        }
     }
 
     // Average the RGB colors.
@@ -78,71 +112,71 @@ void Image_ConvertToLuminance(image_t* image, boolean retainAlpha)
     {
         memcpy(image->pixels + numPels, alphaChannel, numPels);
         image->pixelSize = 2;
-        free(alphaChannel);
+        M_Free(alphaChannel);
         return;
     }
 
     image->pixelSize = 1;
 }
 
-void Image_ConvertToAlpha(image_t* image, boolean makeWhite)
+void Image_ConvertToAlpha(image_t *image, boolean makeWhite)
 {
-    long p, total;
-    assert(image);
+    DENG_ASSERT(image);
+
     Image_ConvertToLuminance(image, true);
 
-    total = image->size.width * image->size.height;
-    for(p = 0; p < total; ++p)
+    long total = image->size.width * image->size.height;
+    for(long p = 0; p < total; ++p)
     {
         image->pixels[total + p] = image->pixels[p];
-        if(makeWhite)
-            image->pixels[p] = 255;
+        if(makeWhite) image->pixels[p] = 255;
     }
     image->pixelSize = 2;
 }
 
-boolean Image_HasAlpha(const image_t* image)
+boolean Image_HasAlpha(image_t const *image)
 {
-    assert(image);
+    DENG_ASSERT(image);
+    LOG_AS("Image_HasAlpha");
 
     if(0 != image->paletteId || (image->flags & IMGF_IS_MASKED))
     {
 #if _DEBUG
-        Con_Message("Warning:Image_HasAlpha: Attempt to determine alpha for "
-            "paletted/masked image. I don't know this format!");
+        LOG_WARNING("Attempt to determine alpha for paletted/masked image. I don't know this format!");
 #endif
         return false;
     }
 
     if(image->pixelSize == 3)
+    {
         return false;
+    }
 
     if(image->pixelSize == 4)
     {
-        long i, numpels = image->size.width * image->size.height;
-        const uint8_t* in = image->pixels;
-        boolean hasAlpha = false;
-        for(i = 0; i < numpels; ++i, in += 4)
+        long const numpels = image->size.width * image->size.height;
+        uint8_t const *in = image->pixels;
+        for(long i = 0; i < numpels; ++i, in += 4)
+        {
             if(in[3] < 255)
             {
-                hasAlpha = true;
-                break;
+                return true;
             }
-        return hasAlpha;
+        }
     }
     return false;
 }
 
-boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, FileHandle* _hndl)
+boolean Image_LoadFromFileWithFormat(image_t *img, char const *format, filehandle_s *_hndl)
 {
     /// @todo There are too many copies made here. It would be best if image_t
     /// contained an instance of QImage. -jk
 
     DENG_ASSERT(img);
     DENG_ASSERT(_hndl);
-    de::FileHandle& hndl = *reinterpret_cast<de::FileHandle*>(_hndl);
+    de::FileHandle &hndl = *reinterpret_cast<de::FileHandle *>(_hndl);
 
-    // It is assumed that file's position stays the same (could be trying multiple loaders).
+    // It is assumed that file's position stays the same (could be trying multiple interpreters).
     size_t initPos = hndl.tell();
 
     Image_Init(img);
@@ -160,14 +194,14 @@ boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, FileHandl
         return false;
     }
 
-    //Con_Message("Loading %s\n", Str_Text(hndl->file().path());
+    //LOG_TRACE("Loading \"%s\"...") << NativePath(hndl->file().composePath()).pretty();
 
     // Convert paletted images to RGB.
     if(image.colorCount())
     {
         image = image.convertToFormat(QImage::Format_ARGB32);
-        assert(!image.colorCount());
-        assert(image.depth() == 32);
+        DENG_ASSERT(!image.colorCount());
+        DENG_ASSERT(image.depth() == 32);
     }
 
     // Swap the red and blue channels for GL.
@@ -178,35 +212,36 @@ boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, FileHandl
     img->pixelSize   = image.depth() / 8;
 
     LOG_TRACE("Image_Load: size %i x %i depth %i alpha %b bytes %i")
-              << img->size.width << img->size.height << img->pixelSize
-              << image.hasAlphaChannel() << image.byteCount();
+        << img->size.width << img->size.height << img->pixelSize
+        << image.hasAlphaChannel() << image.byteCount();
 
-    img->pixels = reinterpret_cast<uint8_t*>(M_MemDup(image.constBits(), image.byteCount()));
+    img->pixels = reinterpret_cast<uint8_t *>(M_MemDup(image.constBits(), image.byteCount()));
 
     // Back to the original file position.
     hndl.seek(initPos, SeekSet);
     return true;
 }
 
-boolean Image_Save(const image_t* img, const char* filePath)
+boolean Image_Save(image_t const *img, char const *filePath)
 {
     DENG_ASSERT(img);
 
     // Compose the full path.
-    AutoStr* fullPath = AutoStr_FromTextStd(filePath);
-    if(Str_IsEmpty(fullPath))
+    String fullPath = String(filePath);
+    if(fullPath.isEmpty())
     {
         static int n = 0;
-        Str_Appendf(fullPath, "image%ix%i-%3i.png", img->size.width, img->size.height, n++);
+        fullPath = String("image%1x%2-%3").arg(img->size.width).arg(img->size.height).arg(n++, 3);
     }
-    else if(!F_FindFileExtension(Str_Text(fullPath)))
+
+    if(fullPath.fileNameExtension().isEmpty())
     {
-        Str_Append(fullPath, ".png");
+        fullPath += ".png";
     }
-    F_ToNativeSlashes(fullPath, fullPath);
 
     // Swap red and blue channels then save.
     QImage image = QImage(img->pixels, img->size.width, img->size.height, QImage::Format_ARGB32);
     image = image.rgbSwapped();
-    return CPP_BOOL(image.save(Str_Text(fullPath)));
+
+    return CPP_BOOL(image.save(NativePath(fullPath)));
 }

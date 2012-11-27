@@ -36,13 +36,13 @@ namespace de {
 class PatchName : public IReadable
 {
 public:
-    explicit PatchName(String _name = "", lumpnum_t _lumpNum = -2);
+    explicit PatchName(String percentEncodedName = "", lumpnum_t _lumpNum = -2);
 
     /// Returns the percent-endcoded symbolic name of the patch.
-    String name() const;
+    String percentEncodedName() const;
 
     /// Returns the percent-endcoded symbolic name of the patch.
-    String const &nameRef() const;
+    String const &percentEncodedNameRef() const;
 
     /// Returns the lump number of the associated patch.
     /// @pre The global patchNames data is available.
@@ -52,7 +52,8 @@ public:
     void operator << (Reader &from);
 
 private:
-    String name_;
+    String name;
+
     lumpnum_t lumpNum_;
 };
 

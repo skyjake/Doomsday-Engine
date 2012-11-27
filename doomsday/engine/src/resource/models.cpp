@@ -674,8 +674,6 @@ static model_t* interpretModel(de::FileHandle& hndl, String path, modelid_t mode
  */
 static model_t* loadModel(String path)
 {
-    LOG_AS("loadModel");
-
     // Have we already loaded this?
     modelid_t modelId = modelRepository->intern(path);
     model_t* mdl = Models_ToModel(modelId);

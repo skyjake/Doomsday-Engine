@@ -30,7 +30,7 @@
 #include "map/r_world.h"        // for ddMapSetup
 #include "filesys/fs_util.h"    // for F_PrettyPath
 #include "gl/gl_texmanager.h"
-#include "resource/patchcompositetexture.h"
+#include "resource/compositetexture.h"
 #include "resource/texturevariant.h"
 #include "resource/textures.h"
 
@@ -348,25 +348,20 @@ static void destroyTexture(Texture* tex)
     case TS_FLATS: break;
 
     case TS_TEXTURES: {
-        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserDataPointer(tex);
-        if(pcTex)
-        {
-            Str_Free(&pcTex->name);
-            if(pcTex->patches) M_Free(pcTex->patches);
-            M_Free(pcTex);
-        }
-        break;
-    }
+        de::CompositeTexture* pcTex = reinterpret_cast<de::CompositeTexture *>(Texture_UserDataPointer(tex));
+        if(pcTex) delete pcTex;
+        break; }
+
     case TS_SPRITES: {
-        patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
+        patchtex_t* pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(tex));
         if(pTex) M_Free(pTex);
-        break;
-    }
+        break; }
+
     case TS_PATCHES: {
-        patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
+        patchtex_t* pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(tex));
         if(pTex) M_Free(pTex);
-        break;
-    }
+        break; }
+
     default:
         throw de::Error("Textures::destroyTexture",
                         de::String("Internal error, invalid scheme id %1.")

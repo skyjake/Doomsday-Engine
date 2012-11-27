@@ -200,8 +200,6 @@ uint8_t* GL_LoadImageStr(struct image_s* img, const ddstring_t* filePath);
 TexSource GL_LoadRawTex(struct image_s* image, const rawtex_t* r);
 
 TexSource GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
-TexSource GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
-    const char* optionalSuffix, boolean quiet);
 
 TexSource GL_LoadFlatLump(struct image_s* image, FileHandle* file);
 
