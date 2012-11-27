@@ -151,6 +151,9 @@ struct Reader::Instance
     }
 };
 
+Reader::Reader(const Reader &other) : d(new Instance(*other.d))
+{}
+
 Reader::Reader(IByteArray const &source, ByteOrder const &byteOrder, IByteArray::Offset offset)
     : d(new Instance(byteOrder, &source, offset))
 {}

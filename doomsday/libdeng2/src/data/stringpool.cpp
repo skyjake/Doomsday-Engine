@@ -36,6 +36,8 @@
 #define EXPORT_ID(i)    (duint32(i) + 1)
 #define IMPORT_ID(i)    (Id((i) - 1))
 
+#define MAXIMUM_VALID_ID (0xffffffff - 1)
+
 namespace de {
 
 static String const nullString = "(nullptr)";
@@ -233,6 +235,12 @@ struct StringPool::Instance
         }
         else
         {
+            if(idMap.size() >= MAXIMUM_VALID_ID)
+            {
+                throw StringPool::FullError("StringPool::assignUniqueId",
+                                            "Out of valid 32-bit identifiers");
+            }
+
             // Expand the idMap.
             idx = idMap.size();
             idMap.push_back(str); // O(1) (amortized)

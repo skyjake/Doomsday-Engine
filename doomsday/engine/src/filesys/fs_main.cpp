@@ -273,10 +273,7 @@ struct FS1::Instance
         DENG_ASSERT(!path.isEmpty());
 
         // We must have an absolute path - prepend the CWD if necessary.
-        if(QDir::isRelativePath(path))
-        {
-            path = NativePath::workPath() / path;
-        }
+        path = NativePath::workPath() / path;
 
         // Translate mymode to the C-lib's fopen() mode specifiers.
         char mode[8] = "";
@@ -326,10 +323,7 @@ struct FS1::Instance
         LOG_AS("FS1::openFile");
 
         // We must have an absolute path.
-        if(QDir::isRelativePath(path))
-        {
-            path = App_BasePath() / path;
-        }
+        path = App_BasePath() / path;
 
         LOG_TRACE("Trying \"%s\"...") << NativePath(path).pretty();
 
@@ -1341,7 +1335,8 @@ struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t ba
 {
     try
     {
-        String path = NativePath(nativePath).expand().withSeparators('/');
+        // Relative paths are relative to the native working directory.
+        String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
         return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
     }
     catch(FS1::NotFoundError const&)

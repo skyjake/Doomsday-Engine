@@ -100,6 +100,7 @@ struct surface_s;
 struct material_s;
 
 #include <de/str.h>
+#include <de/fixedpoint.h>
 #include "resourceclass.h"
 #include "filetype.h"
 #include "uri.h" // C wrapper for de::Uri

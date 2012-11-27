@@ -29,7 +29,8 @@
 #include "def_data.h"
 #include "client/cl_def.h"
 #include "map/r_world.h"
-#include "m_vector.h"
+
+#include <de/vector1.h>
 
 #include "resource/texture.h"
 #include "resource/texturevariant.h"

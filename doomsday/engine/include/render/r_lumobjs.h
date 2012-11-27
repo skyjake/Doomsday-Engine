@@ -31,7 +31,7 @@
 
 #include "dd_types.h"
 #include "color.h"
-#include "m_vector.h"
+#include <de/vector1.h>
 #include "map/p_mapdata.h"
 #include "resource/r_data.h"
 

@@ -38,6 +38,8 @@
 #include "de_render.h"
 #include "de_misc.h"
 
+#include <de/vector1.h>
+
 #include "def_main.h"
 #include "resource/materialvariant.h"
 

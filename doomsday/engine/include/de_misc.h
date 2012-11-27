@@ -31,16 +31,13 @@
 
 #include "m_misc.h"
 #include "m_bams.h"
-#include "m_vector.h"
 #include "m_nodepile.h"
 #include "m_profiler.h"
-#include "m_md5.h"
-#include "m_linkedlist.h"
 #include "m_stack.h"
-#include "binarytree.h"
 #include "gridmap.h"
 #include "m_decomp64.h"
 #include <de/stringarray.h>
 #include <de/smoother.h>
+#include <de/vector1.h>
 
 #endif /* LIBDENG_MISC_H */

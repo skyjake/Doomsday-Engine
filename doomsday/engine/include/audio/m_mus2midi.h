@@ -1,8 +1,8 @@
-/** @file con_config.h Config files.
- * @ingroup console
+/** @file m_mus2midi.h MUS to MIDI conversion.
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,32 +18,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_CONSOLE_CONFIG_H
-#define LIBDENG_CONSOLE_CONFIG_H
+#ifndef __DOOMSDAY_MUS2MIDI_H__
+#define __DOOMSDAY_MUS2MIDI_H__
 
-#include "dd_share.h"
+/**
+ * Converts DOOM MUS format music into MIDI music. The output is written to a
+ * native file.
+ *
+ * @param data     The MUS data to convert.
+ * @param length   The length of the data in bytes.
+ * @param outFile  Name of the file the resulting MIDI data will be written to.
+ */
+boolean M_Mus2Midi(void* data, size_t length, const char* outFile);
 
-#ifdef __cplusplus
-extern "C" {
 #endif
-
-// Flags for Con_ParseCommands2.
-#define CPCF_SET_DEFAULT            0x1
-#define CPCF_ALLOW_SAVE_STATE       0x2
-#define CPCF_ALLOW_SAVE_BINDINGS    0x4
-
-boolean Con_ParseCommands(const char* fileName);
-
-boolean Con_ParseCommands2(const char* fileName, int flags);
-
-void Con_SaveDefaults(void);
-
-boolean Con_WriteState(const char* fileName, const char* bindingsFileName);
-
-D_CMD(WriteConsole);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_CONSOLE_CONFIG_H */

@@ -41,6 +41,20 @@ void Mobj_XYMoveStopping(mobj_t* mo);
 boolean Mobj_IsPlayerClMobj(mobj_t* mo);
 
 /**
+ * Determines if a mobj is a player mobj. It could still be a voodoo doll, also.
+ * @param mo  Map object.
+ * @return @c true, iff the mobj is a player.
+ */
+boolean Mobj_IsPlayer(mobj_t const *mo);
+
+/**
+ * Determines if a mobj is a voodoo doll.
+ * @param mo  Map object.
+ * @return @c true, iff the mobj is a voodoo doll.
+ */
+boolean Mobj_IsVoodooDoll(mobj_t const *mo);
+
+/**
  * @param allAround  @c false= only look 180 degrees in front.
  * @return  @c true iff a player was targeted.
  */

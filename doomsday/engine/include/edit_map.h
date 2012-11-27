@@ -28,7 +28,6 @@
 #ifndef __DOOMSDAY_MAP_EDITOR_H__
 #define __DOOMSDAY_MAP_EDITOR_H__
 
-#include "binarytree.h"
 #include "map/p_mapdata.h"
 #include "resource/materials.h"
 

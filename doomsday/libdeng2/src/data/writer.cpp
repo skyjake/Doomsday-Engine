@@ -92,6 +92,10 @@ Writer::Writer(ByteArrayFile &destination, ByteOrder const &byteOrder, IByteArra
     : d(new Instance(byteOrder, static_cast<IByteArray *>(&destination), offset))
 {}
 
+Writer::Writer(Writer const &other)
+    : d(new Instance(*other.d, other.d->convert))
+{}
+
 Writer::Writer(Writer const &other, ByteOrder const &byteOrder)
     : d(new Instance(*other.d, byteOrder))
 {}

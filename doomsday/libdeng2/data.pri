@@ -4,6 +4,7 @@ HEADERS += \
     include/de/ArrayValue \
     include/de/Audience \
     include/de/BigEndianByteOrder \
+    include/de/BinaryTree \
     include/de/Block \
     include/de/BlockValue \
     include/de/ByteOrder \
@@ -47,6 +48,7 @@ HEADERS += \
     include/de/data/accessorvalue.h \
     include/de/data/archive.h \
     include/de/data/arrayvalue.h \
+    include/de/data/binarytree.h \
     include/de/data/block.h \
     include/de/data/blockvalue.h \
     include/de/data/byteorder.h \
@@ -67,6 +69,7 @@ HEADERS += \
     include/de/data/ireadable.h \
     include/de/data/iserializable.h \
     include/de/data/iwritable.h \
+    include/de/data/json.h \
     include/de/data/lockable.h \
     include/de/data/nonevalue.h \
     include/de/data/numbervalue.h \
@@ -93,6 +96,7 @@ SOURCES += \
     src/data/accessorvalue.cpp \
     src/data/archive.cpp \
     src/data/arrayvalue.cpp \
+    src/data/binarytree_wrapper.cpp \
     src/data/block.cpp \
     src/data/blockvalue.cpp \
     src/data/byteorder.cpp \
@@ -105,6 +109,7 @@ SOURCES += \
     src/data/guard.cpp \
     src/data/huffman.cpp \
     src/data/info.cpp \
+    src/data/json.cpp \
     src/data/lockable.cpp \
     src/data/nonevalue.cpp \
     src/data/numbervalue.cpp \

@@ -127,6 +127,7 @@ DENG_HEADERS += \
 DENG_HEADERS += \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
+    include/audio/m_mus2midi.h \
     include/audio/s_cache.h \
     include/audio/s_environ.h \
     include/audio/s_logic.h \
@@ -136,7 +137,6 @@ DENG_HEADERS += \
     include/audio/s_wav.h \
     include/audio/sys_audio.h \
     include/audio/sys_audiod_dummy.h \
-    include/binarytree.h \
     include/busymode.h \
     include/cbuffer.h \
     include/client/cl_def.h \
@@ -203,21 +203,17 @@ DENG_HEADERS += \
     include/gl/sys_opengl.h \
     include/gl/texturecontent.h \
     include/gridmap.h \
-    include/json.h \
     include/kdtree.h \
     include/library.h \
     include/m_bams.h \
     include/m_decomp64.h \
-    include/m_linkedlist.h \
-    include/m_md5.h \
     include/m_misc.h \
-    include/m_mus2midi.h \
     include/m_nodepile.h \
     include/m_profiler.h \
     include/m_stack.h \
-    include/m_vector.h \
     include/map/blockmap.h \
     include/map/blockmapvisual.h \
+    include/map/bsp/bsptreenode.h \
     include/map/bsp/hedgeinfo.h \
     include/map/bsp/hedgeintercept.h \
     include/map/bsp/hedgetip.h \
@@ -434,6 +430,7 @@ deng_nodisplaymode {
 SOURCES += \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
+    src/audio/m_mus2midi.c \
     src/audio/s_cache.c \
     src/audio/s_environ.cpp \
     src/audio/s_logic.c \
@@ -442,7 +439,6 @@ SOURCES += \
     src/audio/s_sfx.c \
     src/audio/s_wav.c \
     src/audio/sys_audiod_dummy.c \
-    src/binarytree.cpp \
     src/busymode.cpp \
     src/cbuffer.c \
     src/client/cl_frame.c \
@@ -495,18 +491,13 @@ SOURCES += \
     src/gl/svg.c \
     src/gl/sys_opengl.c \
     src/gridmap.c \
-    src/json.cpp \
     src/kdtree.c \
     src/library.cpp \
     src/m_bams.c \
     src/m_decomp64.c \
-    src/m_linkedlist.c \
-    src/m_md5.c \
     src/m_misc.c \
-    src/m_mus2midi.c \
     src/m_nodepile.c \
     src/m_stack.c \
-    src/m_vector.c \
     src/map/blockmap.c \
     src/map/blockmapvisual.c \
     src/map/bsp/hplane.cpp \
@@ -646,10 +637,6 @@ SOURCES += \
     HEADERS += include/audio/sys_audiod_sdlmixer.h
     SOURCES += src/audio/sys_audiod_sdlmixer.c
 }
-
-# Use the fixed-point math from libcommon.
-# TODO: Move it to the engine.
-SOURCES += ../plugins/common/src/m_fixed.c
 
 OTHER_FILES += \
     data/cphelp.txt \

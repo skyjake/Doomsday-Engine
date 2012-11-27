@@ -24,6 +24,7 @@
 #define LIBDENG2_UNIXINFO_H
 
 #include "../String"
+#include "../NativePath"
 
 namespace de {
 
@@ -58,9 +59,9 @@ public:
      * @param key    Path identifier.
      * @param value  The value is returned here.
      *
-     * @return  Path.
+     * @return  @c true, if the path was defined; otherwise @c false.
      */
-    bool path(String const &key, String &value) const;
+    bool path(String const &key, NativePath &value) const;
 
     /**
      * Returns a defaults preference.
@@ -68,7 +69,7 @@ public:
      * @param key    Path identifier.
      * @param value  The value is returned here.
      *
-     * @return  Value from a 'defaults' info file.
+     * @return @c true, iff the value is defined in the 'defaults' info file.
      */
     bool defaults(String const &key, String &value) const;
 

@@ -63,6 +63,7 @@ HEADERS += \
     include/de/animator.h \
     include/de/concurrency.h \
     include/de/ddstring.h \
+    include/de/fixedpoint.h \
     include/de/garbage.h \
     include/de/libdeng.h \
     include/de/memory.h \
@@ -79,12 +80,14 @@ HEADERS += \
     include/de/timer.h \
     include/de/types.h \
     include/de/unittest.h \
+    include/de/vector1.h \
     include/de/writer.h
 
 # Sources and private headers
 SOURCES += \
     src/animator.c \
     src/concurrency.cpp \
+    src/fixedpoint.c \
     src/garbage.cpp \
     src/libdeng.c \
     src/memory.c \
@@ -99,7 +102,8 @@ SOURCES += \
     src/str.c \
     src/stringarray.cpp \
     src/timer.cpp \
-    src/writer.c \
+    src/vector1.c \
+    src/writer.c
 
 # Installation ---------------------------------------------------------------
 

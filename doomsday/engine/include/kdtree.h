@@ -25,8 +25,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_KDTREE
-#define LIBDENG_KDTREE
+#ifndef LIBDENG_KDTREE_H
+#define LIBDENG_KDTREE_H
 
 #include "de_platform.h"
 
@@ -86,4 +86,4 @@ int KdTreeNode_Traverse(KdTreeNode* kdTreeNode, int (*callback)(KdTreeNode*, voi
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_KDTREE
+#endif /// LIBDENG_KDTREE_H

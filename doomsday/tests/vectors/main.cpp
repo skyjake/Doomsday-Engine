@@ -18,6 +18,9 @@
  */
 
 #include <de/Vector>
+#include <de/Writer>
+#include <de/Reader>
+#include <de/Block>
 #include <QDebug>
 
 using namespace de;
@@ -74,6 +77,24 @@ int main(int, char **)
         qDebug() << "t > s: " << (t > s);
         qDebug() << "s < t: " << (s < t) << " <- first operand causes conversion to Vector2";
         qDebug() << "t < s: " << (t < s);
+
+        Vector2d u(3.1415926535, 3.33333333333333333333333);
+        qDebug() << "u:" << u.asText();
+        Block block, block2;
+        //Writer writer(block); writer << u;
+        Writer(block) << u;
+
+        Writer writer(block2);
+        writer << u;
+
+        Vector2d w;
+        Reader(block) >> w;
+
+        Vector2d y;
+        Reader reader(block2);
+        reader >> y;
+        qDebug() << "w:" << w.asText();
+        qDebug() << "y:" << w.asText();
     }
     catch(Error const &err)
     {

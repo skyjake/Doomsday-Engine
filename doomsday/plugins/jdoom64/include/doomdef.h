@@ -41,6 +41,7 @@
 #endif
 
 #include <de/c_wrapper.h>
+#include <de/fixedpoint.h>
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"

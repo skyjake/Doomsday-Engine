@@ -367,8 +367,7 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
 
     // If the parent is known, we can narrow our search to all the parent's
     // children.
-    if(!pathTree.flags().testFlag(PathTree::NoLocalBranchIndex) &&
-       flags.testFlag(PathTree::MatchParent) && parent)
+    if(flags.testFlag(PathTree::MatchParent) && parent)
     {
         nodes = &parent->childNodes(type);
     }

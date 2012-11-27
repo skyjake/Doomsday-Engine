@@ -32,7 +32,7 @@
 #include <stdio.h>
 
 #include "dd_types.h"
-#include "m_vector.h"
+#include <de/vector1.h>
 #include "filehandle.h"
 
 #ifdef __cplusplus
@@ -41,8 +41,7 @@ extern "C" {
 
 struct aaboxd_s;
 
-#define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
-                     (c) == '\r')
+#define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 
 // File system utility routines.
 size_t M_ReadFile(char const* path, char** buffer);

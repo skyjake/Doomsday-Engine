@@ -87,7 +87,6 @@ SOURCES += \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.c \
-    $$common_src/m_fixed.c \
     $$common_src/mobj.c \
     $$common_src/p_actor.c \
     $$common_src/p_ceiling.c \

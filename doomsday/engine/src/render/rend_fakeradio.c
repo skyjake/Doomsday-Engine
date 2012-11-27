@@ -30,7 +30,7 @@
 #include "de_play.h"
 
 #include "gl/sys_opengl.h"
-#include "m_vector.h"
+#include <de/vector1.h>
 #include "resource/materialvariant.h"
 #include "render/rendpoly.h"
 

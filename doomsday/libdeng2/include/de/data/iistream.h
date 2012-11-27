@@ -27,6 +27,7 @@ namespace de {
 
 /**
  * Interface that allows communication via an input stream of bytes.
+ * @ingroup data
  *
  * When reading from the stream, it can either be in modifiable (non-const) or
  * immutable (const) mode. When reading bytes from a modifiable stream, the

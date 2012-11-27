@@ -149,11 +149,12 @@ String LogEntry::asText(Flags const &formattingFlags) const
             output << TEXT_STYLE_SECTION << _section << ": ";
         }
 
+        /*
         // If the section is very long, it's clearer to break the line here.
         if(_section.length() > LINE_BREAKING_SECTION_LENGTH)
         {
             output << "\n";
-        }
+        }*/
     }
 
     if(flags.testFlag(Styled))

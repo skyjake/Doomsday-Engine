@@ -109,22 +109,16 @@ PathTree::SegmentId PathTree::Node::segmentId() const
 
 void PathTree::Node::addChild(PathTree::Node &node)
 {
-    if(!d->tree.flags().testFlag(PathTree::NoLocalBranchIndex))
-    {
-        DENG2_ASSERT(d->children != 0);
+    DENG2_ASSERT(d->children != 0);
 
-        childNodes(node.type()).insert(node.hash(), &node);
-    }
+    childNodes(node.type()).insert(node.hash(), &node);
 }
 
 void PathTree::Node::removeChild(PathTree::Node &node)
 {
-    if(!d->tree.flags().testFlag(PathTree::NoLocalBranchIndex))
-    {
-        DENG2_ASSERT(d->children != 0);
+    DENG2_ASSERT(d->children != 0);
 
-        childNodes(node.type()).remove(node.hash(), &node);
-    }
+    childNodes(node.type()).remove(node.hash(), &node);
 }
 
 String const &PathTree::Node::name() const
