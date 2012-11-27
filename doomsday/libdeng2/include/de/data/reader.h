@@ -24,6 +24,8 @@
 #include "../IByteArray"
 #include "../ByteOrder"
 
+#include <algorithm>
+
 namespace de {
 
 class Block;
@@ -46,6 +48,13 @@ public:
     DENG2_ERROR(SeekError);
 
 public:
+    /**
+     * Copy constructor.
+     *
+     * @param other  Reader.
+     */
+    Reader(Reader const &other);
+
     /**
      * Constructs a new reader.
      *
@@ -164,6 +173,10 @@ public:
      * Returns the byte order of the writer.
      */
     ByteOrder const &byteOrder() const;
+
+    inline void swap(Reader &other) {
+        std::swap(d, other.d);
+    }
 
 private:
     struct Instance;

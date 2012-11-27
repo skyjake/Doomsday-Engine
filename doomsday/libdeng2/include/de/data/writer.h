@@ -24,6 +24,8 @@
 #include "../IByteArray"
 #include "../ByteOrder"
 
+#include <algorithm> // std::swap
+
 namespace de {
 
 class IWritable;
@@ -84,13 +86,20 @@ public:
            IByteArray::Offset offset = 0);
 
     /**
+     * Copy constructor.
+     *
+     * @param other  Writer.
+     */
+    Writer(Writer const &other);
+
+    /**
      * Constructs a new writer that uses the current offset of @a other as its
      * zero offset.
      *
      * @param other      Writer.
-     * @param byteOrder  Byte order. Defaults to little-endian.
+     * @param byteOrder  Byte order.
      */
-    Writer(Writer const &other, ByteOrder const &byteOrder = littleEndianByteOrder);
+    Writer(Writer const &other, ByteOrder const &byteOrder);
 
     virtual ~Writer();
 
@@ -168,6 +177,10 @@ public:
      * @param count Number of bytes to move forward (negative to move backward).
      */
     void seek(dint count);
+
+    inline void swap(Writer &other) {
+        std::swap(d, other.d);
+    }
 
 private:
     struct Instance;
