@@ -1061,7 +1061,7 @@ static int DD_ActivateGameWorker(void* parameters)
     DENG_ASSERT(p);
 
     // Texture resources are located now, prior to initializing the game.
-    R_InitPatchCompositeTextures();
+    R_InitCompositeTextures();
     R_InitFlatTextures();
     R_InitSpriteTextures();
 
@@ -1904,7 +1904,7 @@ boolean DD_Init(void)
         initPathMappings();
         App_FileSystem()->resetAllSchemes();
 
-        R_InitPatchCompositeTextures();
+        R_InitCompositeTextures();
         R_InitFlatTextures();
         R_InitSpriteTextures();
 
@@ -2134,7 +2134,7 @@ void DD_UpdateEngineState(void)
     // Re-build the filesystem subspace schemes as there may be new resources to be found.
     App_FileSystem()->resetAllSchemes();
 
-    R_InitPatchCompositeTextures();
+    R_InitCompositeTextures();
     R_InitFlatTextures();
     R_InitSpriteTextures();
 

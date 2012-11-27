@@ -30,7 +30,7 @@
 #include "resource/materials.h"
 #include "resource/materialvariant.h"
 #include "resource/models.h"
-#include "resource/patchcompositetexture.h"
+#include "resource/compositetexture.h"
 #include "resource/rawtexture.h"
 #include "resource/textures.h"
 #include "resource/wad.h"

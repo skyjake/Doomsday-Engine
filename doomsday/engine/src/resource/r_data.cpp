@@ -24,6 +24,7 @@
 
 #include <QDir>
 #include <QList>
+#include <QMap>
 #include <de/App>
 #include <de/ByteRefArray>
 #include <de/Log>
@@ -324,323 +325,202 @@ static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
     return result;
 }
 
-#pragma pack(1)
-struct DoomTexturePatchDef
-{
-    int16_t originX;
-    int16_t originY;
-    int16_t patch;
-    int16_t stepDir;
-    int16_t colorMap;
-};
-
-struct DoomTextureDef
-{
-    byte name[8];
-    int16_t unused;
-    byte scale[2]; ///< [x, y] Used by ZDoom, div 8.
-    int16_t width;
-    int16_t height;
-    int32_t columnDirectoryPadding;
-    int16_t patchCount;
-    DoomTexturePatchDef patches[1];
-};
-#pragma pack()
+typedef QList<CompositeTexture*> CompositeTextures;
 
 /**
- * Read DOOM and Strife format texture definitions from the specified lump.
+ * Reads patch composite texture definitions from @a file.
+ *
+ * @param data  The data buffer to be read.
+ * @param origIndexBase  Base value for the "original index" logic.
+ * @param archiveCount  Will be updated with the total number of definitions
+ *                      in the file (which may not necessarily equal the total
+ *                      number of definitions which are actually read).
  */
-static patchcompositetex_t **readDoomTextureDefLump(de::File1 &lump, int *origIndexBase,
-    bool firstNull, int *numDefs)
+static CompositeTextures readCompositeTextureDefs(IByteArray &data,
+    int origIndexBase, int& archiveCount)
 {
-    DENG_ASSERT(origIndexBase);
-    LOG_AS("readTextureDefs");
+    LOG_AS("readCompositeTextureDefs");
 
-    patchcompositetex_t **result = 0; // The resulting set of validated definitions.
+    CompositeTextures result; ///< The resulting set of validated definitions.
 
-    LOG_VERBOSE("Processing \"%s:%s\"...")
-        << NativePath(lump.container().composeUri().asText()).pretty()
-        << NativePath(lump.composeUri().asText()).pretty();
+    // The game data format determines the format of the archived data.
+    CompositeTexture::ArchiveFormat format =
+            (gameDataFormat == 0? CompositeTexture::DoomFormat : CompositeTexture::StrifeFormat);
 
-    // Buffer the whole lump.
-    int *maptex1 = (int *) M_Malloc(lump.size());
-    if(!maptex1) Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for temporary copy of archived DOOM texture definitions.", (unsigned long) lump.size());
+    de::Reader reader = de::Reader(data);
 
-    lump.read((uint8_t *)maptex1, 0, lump.size());
+    // First is a count of the total number of definitions.
+    dint32 definitionCount;
+    reader >> definitionCount;
 
-    // The data begins with a count of the total number of definitions in the lump.
-    int numTexDefs = LONG(*maptex1);
-
-    byte *validTexDefs = (byte *) M_Calloc(sizeof(*validTexDefs) * numTexDefs);
-    if(!validTexDefs) Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for valid texture record list.", (unsigned long) sizeof(*validTexDefs) * numTexDefs);
-
-    short *texDefNumPatches = (short *) M_Calloc(sizeof(*texDefNumPatches) * numTexDefs);
-    if(!texDefNumPatches) Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for texture patch count record list.", (unsigned long) sizeof(*texDefNumPatches) * numTexDefs);
-
-    /**
-     * Pass #1
-     * Count total number of texture and patch defs we'll need and check
-     * for missing patches and any other irregularities.
-     */
-    int numValidTexDefs = 0;
-    size_t numValidPatchRefs = 0;
-    int *directory = maptex1 + 1;
-    for(int i = 0; i < numTexDefs; ++i, directory++)
+    // Next is directory of offsets to the definitions.
+    typedef QMap<dint32, int> Offsets;
+    Offsets offsets;
+    for(int i = 0; i < definitionCount; ++i)
     {
-        size_t offset = LONG(*directory);
-        if(offset > lump.size())
+        dint32 offset;
+        reader >> offset;
+
+        // Ensure the offset is within valid range.
+        if(offset < 0 || (unsigned) offset < definitionCount * sizeof(offset) ||
+           offset > reader.source()->size())
         {
-            LOG_WARNING("Invalid offset %u for definition %i, ignoring.") << offset << i;
+            LOG_WARNING("Invalid offset %i for definition #%i, ignoring.") << offset << i;
+        }
+        else
+        {
+            offsets.insert(offset, origIndexBase + i);
+        }
+    }
+
+    // Seek to each offset and deserialize the definition.
+    DENG2_FOR_EACH_CONST(Offsets, i, offsets)
+    {
+        // Read the next definition.
+        reader.setOffset(i.key());
+        CompositeTexture* def = CompositeTexture::constructFrom(reader, patchNames, format);
+
+        // Attribute the "original index".
+        def->setOrigIndex(i.value());
+
+        bool validated = true;
+        DENG2_FOR_EACH_CONST(CompositeTexture::Components, it, def->components())
+        {
+            if(it->lumpNum() >= 0)
+            {
+                // The composite contains at least one known component image
+                // it is therefore valid.
+                validated = true;
+            }
+        }
+
+        if(validated)
+        {
+            // Add it to the list.
+            result.push_back(def);
             continue;
         }
 
-        ByteRefArray lump = ByteRefArray((byte const *) maptex1 + offset, lump.size());
-        de::Reader from   = de::Reader(lump);
-        PatchCompositeTexture texDef =
-                gameDataFormat == 0? PatchCompositeTexture::fromDoomFormat(from) :
-                                     PatchCompositeTexture::fromStrifeFormat(from);
-
-        texDef.validate(patchNames);
-
-        dint16 patchIdx = 0;
-        DENG2_FOR_EACH_CONST(PatchCompositeTexture::Patches, it, texDef.patches())
-        {
-            PatchCompositeTexture::Patch const &patchDef = *it;
-            if(patchDef.lumpNum >= 0)
-            {
-                ++texDefNumPatches[i];
-                ++numValidPatchRefs;
-            }
-            else
-            {
-                LOG_WARNING("Missing patch #%i in definition \"%s\".")
-                    << patchIdx << texDef.percentEncodedNameRef();
-            }
-        }
-
-        if(texDefNumPatches[i] > 0)
-        {
-            // This is a valid texture definition.
-            validTexDefs[i] = true;
-            numValidTexDefs++;
-        }
+        delete def;
     }
 
-    if(numValidTexDefs > 0 && numValidPatchRefs > 0)
-    {
-        /**
-         * Pass #2
-         * There is at least one valid texture def in this lump so convert
-         * to the internal format.
-         */
-
-        // Build the texturedef index.
-        result = (patchcompositetex_t **) M_Malloc(sizeof(*result) * numValidTexDefs);
-        directory = maptex1 + 1;
-        size_t n = 0;
-        for(int i = 0; i < numTexDefs; ++i, directory++)
-        {
-            if(!validTexDefs[i]) continue;
-
-            size_t offset = LONG(*directory);
-            patchcompositetex_t* texDef = 0;
-
-            // Read and create the texture def.
-            DoomTextureDef *mtexture = (DoomTextureDef *) ((byte *) maptex1 + offset);
-
-            texDef = (patchcompositetex_t *) M_Malloc(sizeof(*texDef));
-            if(!texDef) Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for new PatchComposite.", (unsigned long) sizeof *texDef);
-
-            texDef->patchCount = texDefNumPatches[i];
-            texDef->flags = 0;
-            texDef->origIndex = (*origIndexBase) + i;
-
-            Str_Init(&texDef->name);
-            Str_PercentEncode(Str_StripRight(Str_PartAppend(&texDef->name, (char const *) mtexture->name, 0, 8)));
-
-            texDef->size.width  = SHORT(mtexture->width);
-            texDef->size.height = SHORT(mtexture->height);
-
-            texDef->patches = (texpatch_t *) M_Malloc(sizeof(*texDef->patches) * texDef->patchCount);
-            if(!texDef->patches) Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for new TexPatch list for texture definition '%s'.", (unsigned long) sizeof *texDef->patches * texDef->patchCount, Str_Text(&texDef->name));
-
-            DoomTexturePatchDef *mpatch = &mtexture->patches[0];
-            texpatch_t *patch  = texDef->patches;
-            for(short j = 0; j < SHORT(mtexture->patchCount); ++j, mpatch++)
-            {
-                short pnamesIndex = SHORT(mpatch->patch);
-                lumpnum_t lumpNum = patchNames[pnamesIndex].lumpNum();
-                if(lumpNum < 0) continue;
-
-                patch->offX = SHORT(mpatch->originX);
-                patch->offY = SHORT(mpatch->originY);
-                patch->lumpNum = lumpNum;
-                patch++;
-            }
-
-            /**
-             * Vanilla DOOM's implementation of the texture collection has a flaw which
-             * results in the first texture being used dually as a "NULL" texture.
-             */
-            if(firstNull && i == 0)
-            {
-                texDef->flags |= TXDF_NODRAW;
-            }
-
-            /// Is this a custom texture?
-            int j = 0;
-            while(j < texDef->patchCount && !(texDef->flags & TXDF_CUSTOM))
-            {
-                de::File1 &file = App_FileSystem()->nameIndex().lump(texDef->patches[j].lumpNum);
-                if(file.container().hasCustom())
-                    texDef->flags |= TXDF_CUSTOM;
-                else
-                    j++;
-            }
-
-            // Add it to the list.
-            result[n++] = texDef;
-        }
-    }
-
-    *origIndexBase += numTexDefs;
-
-    LOG_INFO("Loaded %s texture definitions from \"%s:%s\".")
-        << (numValidTexDefs == numTexDefs? "all" : String("%1 of %1").arg(numValidTexDefs).arg(numTexDefs))
-        << NativePath(lump.container().composeUri().asText()).pretty()
-        << NativePath(lump.composeUri().asText()).pretty();
-
-    // Free all temporary storage.
-    M_Free(validTexDefs);
-    M_Free(texDefNumPatches);
-    M_Free(maptex1);
-
-    if(numDefs) *numDefs = numValidTexDefs;
-
+    archiveCount = definitionCount;
     return result;
 }
 
 /**
- * @brief Many PWADs include new TEXTURE1/2 lumps including the IWAD
- * texture definitions, with new definitions appended. In order to correctly
- * determine whether a defined texture originates from an IWAD we must
- * compare all definitions against those in the IWAD and if matching,
- * they should be considered as IWAD resources, even though the doomtexture
- * definition does not come from an IWAD lump.
+
  */
-static patchcompositetex_t **loadPatchCompositeDefs(int *numDefs)
+static CompositeTextures loadCompositeTextureDefs()
 {
-    LOG_AS("loadPatchCompositeDefs");
+    LOG_AS("loadCompositeTextureDefs");
 
     // Load the patch names from the PNAMES lump.
     loadPatchNames("PNAMES");
 
     // If no patch names - there is no point continuing further.
-    if(!patchNames.count())
-    {
-        if(numDefs) *numDefs = 0;
-        return 0;
-    }
+    if(!patchNames.count()) return CompositeTextures();
 
-    // Collect a list of all definition files we intend to process.
-    QList<de::File1 *> defLumps = collectPatchCompositeDefinitionFiles();
+    // Collate an ordered list of all the definition files we intend to process.
+    QList<de::File1 *> defFiles = collectPatchCompositeDefinitionFiles();
 
-    // Process the definition files.
-    patchcompositetex_t **list = 0, **listCustom = 0, ***eList = 0;
-    int count = 0, countCustom = 0, *eCount = 0;
+    /**
+     * Definitions are read into two discreet sets.
+     *
+     * Older add-ons contain copies of the original games' texture definitions,
+     * with their own new definitions appended on the end. However, Doomsday needs
+     * to classify all definitions according to whether they originate from the
+     * original game data. To achieve the correct user-expected results, we must
+     * compare each definition originating from an add-on to determine whether it
+     * should instead be classified as "original" data.
+     */
+    CompositeTextures defs, customDefs;
 
+    // Process each definition file.
     int origIndexBase = 0;
-    bool firstNull = true;
-    DENG2_FOR_EACH_CONST(QList<de::File1 *>, i, defLumps)
+    DENG2_FOR_EACH_CONST(QList<de::File1 *>, i, defFiles)
     {
-        // Read in the new texture defs.
-        de::File1 &lump = **i;
-        int newNumTexDefs;
-        patchcompositetex_t **newTexDefs = readDoomTextureDefLump(lump, &origIndexBase,
-                                                                  firstNull, &newNumTexDefs);
+        de::File1 &file = **i;
 
-        bool isCustom = lump.container().hasCustom();
+        LOG_VERBOSE("Processing \"%s:%s\"...")
+            << NativePath(file.container().composeUri().asText()).pretty()
+            << NativePath(file.composeUri().asText()).pretty();
 
-        eList  = (!isCustom? &list  : &listCustom);
-        eCount = (!isCustom? &count : &countCustom);
-        if(*eList)
+        // Buffer the file.
+        ByteRefArray dataBuffer = ByteRefArray(file.cache(), file.size());
+
+        // Read the next set of definitions.
+        int archiveCount;
+        CompositeTextures newDefs = readCompositeTextureDefs(dataBuffer, origIndexBase, archiveCount);
+
+        // We have now finished with this file.
+        file.unlock();
+
+        // In which set do these belong?
+        CompositeTextures* existingDefs =
+                (file.container().hasCustom()? &customDefs : &defs);
+
+        if(!existingDefs->isEmpty())
         {
-            // Merge with the existing doomtexturedefs.
-            patchcompositetex_t **newList = (patchcompositetex_t **) M_Malloc(sizeof(*newList) * ((*eCount) + newNumTexDefs));
-            if(!newList) Con_Error("loadPatchCompositeDefs: Failed on allocation of %lu bytes for merged PatchComposite list.", (unsigned long) sizeof *newList * ((*eCount) + newNumTexDefs));
-
-            int n = 0;
-            for(int i = 0; i < *eCount; ++i)
-            {
-                newList[n++] = (*eList)[i];
-            }
-            for(int i = 0; i < newNumTexDefs; ++i)
-            {
-                newList[n++] = newTexDefs[i];
-            }
-
-            M_Free(*eList);
-            M_Free(newTexDefs);
-
-            *eList = newList;
-            *eCount += newNumTexDefs;
+            // Merge with the existing definitions.
+            existingDefs->append(newDefs);
         }
         else
         {
-            *eList = newTexDefs;
-            *eCount = newNumTexDefs;
+            *existingDefs = newDefs;
         }
 
-        // No more "not-drawn" textures.
-        firstNull = false;
+        // Maintain the original index.
+        origIndexBase += archiveCount;
+
+        // Print a summary.
+        LOG_INFO("Loaded %s texture definitions from \"%s:%s\".")
+            << (newDefs.count() == archiveCount? "all" : String("%1 of %1").arg(newDefs.count()).arg(archiveCount))
+            << NativePath(file.container().composeUri().asText()).pretty()
+            << NativePath(file.composeUri().asText()).pretty();
     }
 
-    int patchCompositeTexturesCount = 0;
-    patchcompositetex_t **patchCompositeTextures = 0;
-
-    if(listCustom)
+    if(customDefs.count())
     {
-        // There are custom doomtexturedefs, cross compare with the IWAD
-        // originals to see if they have been changed.
-        int i = 0;
-        while(i < count)
+        // Custom definitions were found - we must cross compare them.
+        for(int i = 0; i < defs.count(); ++i)
         {
-            patchcompositetex_t *orig = list[i];
+            CompositeTexture *orig = defs[i];
             bool hasReplacement = false;
 
-            for(int j = 0; j < countCustom; ++j)
+            for(int j = 0; j < customDefs.count(); ++j)
             {
-                patchcompositetex_t *custom = listCustom[j];
+                CompositeTexture *custom = customDefs[j];
 
-                if(!Str_CompareIgnoreCase(&orig->name, Str_Text(&custom->name)))
+                if(!orig->percentEncodedName().compareWithoutCase(custom->percentEncodedName()))
                 {
-                    // This is a newer version of an IWAD doomtexturedef.
-                    if(custom->flags & TXDF_CUSTOM)
+                    // Definition 'custom' is destined to replace 'orig'.
+                    if(custom->flags().testFlag(CompositeTexture::Custom))
                     {
-                        hasReplacement = true; // Uses a non-IWAD patch.
+                        hasReplacement = true; // Uses a custom patch.
                     }
                     // Do the definitions differ?
-                    else if(custom->size.height != orig->size.height ||
-                            custom->size.width  != orig->size.width  ||
-                            custom->patchCount  != orig->patchCount)
+                    else if(custom->height()      != orig->height() ||
+                            custom->width()       != orig->width()  ||
+                            custom->componentCount()  != orig->componentCount())
                     {
-                        custom->flags |= TXDF_CUSTOM;
+                        custom->flags() |= CompositeTexture::Custom;
                         hasReplacement = true;
                     }
                     else
                     {
                         // Check the patches.
                         short k = 0;
-                        while(k < orig->patchCount && !(custom->flags & TXDF_CUSTOM))
+                        while(k < orig->componentCount() && !custom->flags().testFlag(CompositeTexture::Custom))
                         {
-                            texpatch_t *origP   = orig->patches   + k;
-                            texpatch_t *customP = custom->patches + k;
+                            CompositeTexture::Component const &origP   = orig->components()[k];
+                            CompositeTexture::Component const &customP = custom->components()[k];
 
-                            if(origP->lumpNum != customP->lumpNum &&
-                               origP->offX != customP->offX &&
-                               origP->offY != customP->offY)
+                            if(origP.lumpNum() != customP.lumpNum() &&
+                               origP.xOrigin() != customP.xOrigin() &&
+                               origP.yOrigin() != customP.yOrigin())
                             {
-                                custom->flags |= TXDF_CUSTOM;
+                                custom->flags() |= CompositeTexture::Custom;
                                 hasReplacement = true;
                             }
                             else
@@ -651,8 +531,10 @@ static patchcompositetex_t **loadPatchCompositeDefs(int *numDefs)
                     }
 
                     // The non-drawable flag must pass to the replacement.
-                    if(hasReplacement && (orig->flags & TXDF_NODRAW))
-                        custom->flags |= TXDF_NODRAW;
+                    if(hasReplacement && orig->flags().testFlag(CompositeTexture::NoDraw))
+                    {
+                        custom->flags() |= CompositeTexture::NoDraw;
+                    }
                     break;
                 }
             }
@@ -660,106 +542,90 @@ static patchcompositetex_t **loadPatchCompositeDefs(int *numDefs)
             if(hasReplacement)
             {
                 // Let the PWAD "copy" override the IWAD original.
-                Str_Free(&orig->name);
-                if(orig->patches) M_Free(orig->patches);
-                M_Free(orig);
-                if(i < count - 1)
-                    memmove(list + i, list + i + 1, sizeof(*list) * (count - i - 1));
-                count--;
-            }
-            else
-            {
-                i++;
+                defs.takeAt(i);
+                delete orig;
+
+                --i; // Process the current item again.
             }
         }
 
-        // List contains only non-replaced doomtexturedefs, merge them.
-        patchcompositetex_t **newList = (patchcompositetex_t **) M_Malloc(sizeof(*newList) * (count + countCustom));
-        if(!newList) Con_Error("loadPatchCompositeDefs: Failed on allocation of %lu bytes for the unique PatchComposite list.", (unsigned long) sizeof(*newList) * (count + countCustom));
+        /*
+         * List now contains only those definitions which are not superceeded
+         * by those in the custom list.
+         */
 
-        int n = 0;
-        for(i = 0; i < count; ++i)
-        {
-            newList[n++] = list[i];
-        }
-        for(i = 0; i < countCustom; ++i)
-        {
-            newList[n++] = listCustom[i];
-        }
-
-        M_Free(list);
-        M_Free(listCustom);
-
-        patchCompositeTextures = newList;
-        patchCompositeTexturesCount = count + countCustom;
-    }
-    else
-    {
-        patchCompositeTextures = list;
-        patchCompositeTexturesCount = count;
+        // Add definitions from the custom list to the end of the main set.
+        defs.append(customDefs);
     }
 
-    if(numDefs) *numDefs = patchCompositeTexturesCount;
-    return patchCompositeTextures;
+    return defs;
 }
 
-/// @note Definitions for Textures that are not created successfully
-///       will be pruned from the set.
-static void createTexturesForPatchCompositeDefs(patchcompositetex_t **defs, int count)
+/**
+ * @param defs  Definitions to be processed.
+ */
+static void processCompositeTextureDefs(CompositeTextures &defs)
 {
-    DENG_ASSERT(defs);
-    LOG_AS("createTexturesForPatchCompositeDefs");
-
-    de::Uri uri;
-    uri.setScheme("Textures");
-
-    for(int i = 0; i < count; ++i)
+    LOG_AS("processCompositeTextureDefs");
+    bool isFirst = true;
+    while(!defs.isEmpty())
     {
-        patchcompositetex_t *pcTex = defs[i];
+        CompositeTexture &def = *defs.takeFirst();
 
-        uri.setPath(Str_Text(&pcTex->name));
-
-        textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), pcTex->origIndex, NULL);
-        if(texId == NOTEXTUREID) continue; // Invalid uri?
-
-        if(de::Texture *tex = reinterpret_cast<de::Texture *>(Textures_ToTexture(texId)))
+        de::Uri uri = de::Uri(Path(def.percentEncodedName())).setScheme("Textures");
+        textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), def.origIndex(), 0);
+        if(texId != NOTEXTUREID)
         {
-            patchcompositetex_t *oldPcTex = reinterpret_cast<patchcompositetex_t *>(tex->userDataPointer());
+            /*
+             * Vanilla DOOM's implementation of the texture collection has a flaw
+             * which results in the first texture being used dually as a "NULL"
+             * texture.
+             */
+            if(isFirst)
+            {
+                def.flags() |= CompositeTexture::NoDraw;
+                isFirst = false;
+            }
 
-            tex->flagCustom(!!(pcTex->flags & TXDF_CUSTOM));
-            tex->setDimensions(pcTex->size);
-            tex->setUserDataPointer((void*)pcTex);
+            // Are we redefining an existing texture?
+            if(de::Texture *tex = reinterpret_cast<de::Texture *>(
+                                  Textures_ToTexture(texId)))
+            {
+                // Yes. Destroy the existing definition (*should* exist).
+                CompositeTexture *oldDef = reinterpret_cast<CompositeTexture *>(tex->userDataPointer());
+                if(oldDef) delete oldDef;
 
-            Str_Free(&oldPcTex->name);
-            if(oldPcTex->patches) M_Free(oldPcTex->patches);
-            M_Free(oldPcTex);
+                // Reconfigure and attach the new definition.
+                tex->flagCustom(def.flags().testFlag(CompositeTexture::Custom));
+                tex->setDimensions(def.dimensions());
+                tex->setUserDataPointer((void *)&def);
+                continue;
+            }
+
+            // A new texture.
+            if(Textures_CreateWithDimensions(texId, def.flags().testFlag(CompositeTexture::Custom),
+                                             &def.dimensions(), (void *)&def))
+            {
+                continue;
+            }
         }
-        else if(!Textures_CreateWithDimensions(texId, !!(pcTex->flags & TXDF_CUSTOM), &pcTex->size, (void *)pcTex))
-        {
-            LOG_WARNING("Failed defining Texture for patch composite '%s', ignoring.") << Str_Text(&pcTex->name);
-            Str_Free(&pcTex->name);
-            if(pcTex->patches) M_Free(pcTex->patches);
-            M_Free(pcTex);
-            defs[i] = 0;
-        }
+
+        LOG_WARNING("Failed defining Texture for patch composite \"%s\", ignoring.")
+            << NativePath(uri.asText()).pretty();
+
+        delete &def;
     }
 }
 
-void R_InitPatchCompositeTextures()
+void R_InitCompositeTextures()
 {
     LOG_VERBOSE("Initializing PatchComposite textures...");
     uint usedTime = Timer_RealMilliseconds();
 
     // Load texture definitions from TEXTURE1/2 lumps.
-    int defsCount;
-    patchcompositetex_t **defs = loadPatchCompositeDefs(&defsCount);
-    if(defs)
-    {
-        createTexturesForPatchCompositeDefs(defs, defsCount);
-        M_Free(defs);
-    }
+    processCompositeTextureDefs(loadCompositeTextureDefs());
 
-    LOG_INFO(de::String("R_InitPatchComposites: Done in %1 seconds.").arg(double((Timer_RealMilliseconds() - usedTime) / 1000.0f), 0, 'g', 2));
+    LOG_INFO(String("R_InitPatchComposites: Done in %1 seconds.").arg(double((Timer_RealMilliseconds() - usedTime) / 1000.0f), 0, 'g', 2));
 }
 
 static inline de::Uri composeFlatUri(String percentEncodedPath)

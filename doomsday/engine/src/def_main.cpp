@@ -949,9 +949,9 @@ void Def_GenerateGroupsFromAnims(void)
     }
 }
 
-static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* parameters)
+static int generateMaterialDefForCompositeTexture(textureid_t texId, void* /*parameters*/)
 {
-    DENG_UNUSED(parameters);
+    LOG_AS("generateMaterialDefForCompositeTexture");
 
     Uri* texUri = Textures_ComposeUri(texId);
     ded_material_layer_stage_t* st;
@@ -969,17 +969,18 @@ static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* 
     tex = Textures_ToTexture(texId);
     if(tex)
     {
-        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserDataPointer(tex);
-        assert(pcTex);
+        de::CompositeTexture* pcTex = reinterpret_cast<de::CompositeTexture *>(Texture_UserDataPointer(tex));
+        DENG_ASSERT(pcTex);
         mat->width  = Texture_Width(tex);
         mat->height = Texture_Height(tex);
-        mat->flags = ((pcTex->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0);
+        mat->flags = (pcTex->flags().testFlag(de::CompositeTexture::NoDraw)? MATF_NO_DRAW : 0);
     }
 #if _DEBUG
     else
     {
         AutoStr* path = Uri_ToString(texUri);
-        Con_Message("Warning:generateMaterialDefForPatchCompositeTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
+        LOG_WARNING("Texture \"%s\" yet defined, resultant Material will inherit dimensions.")
+            << Str_Text(path);
     }
 #endif
 
@@ -1067,7 +1068,7 @@ static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramete
 
 void Def_GenerateAutoMaterials(void)
 {
-    Textures_IterateDeclared(TS_TEXTURES, generateMaterialDefForPatchCompositeTexture);
+    Textures_IterateDeclared(TS_TEXTURES, generateMaterialDefForCompositeTexture);
     Textures_IterateDeclared(TS_FLATS,    generateMaterialDefForFlatTexture);
     Textures_IterateDeclared(TS_SPRITES,  generateMaterialDefForSpriteTexture);
 }

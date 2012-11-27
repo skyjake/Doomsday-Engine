@@ -28,8 +28,8 @@
 
 namespace de {
 
-PatchName::PatchName(String _name, lumpnum_t _lumpNum)
-    : name_(_name), lumpNum_(_lumpNum)
+PatchName::PatchName(String percentEncodedName, lumpnum_t _lumpNum)
+    : name(percentEncodedName), lumpNum_(_lumpNum)
 {}
 
 lumpnum_t PatchName::lumpNum()
@@ -42,7 +42,7 @@ lumpnum_t PatchName::lumpNum()
         // Perform the search.
         try
         {
-            lumpNum_ = App_FileSystem()->lumpNumForName(name_);
+            lumpNum_ = App_FileSystem()->lumpNumForName(name);
         }
         catch(FS1::NotFoundError const &er)
         {
@@ -62,18 +62,18 @@ void PatchName::operator << (Reader &from)
 
     // WAD format allows characters not normally permitted in native paths.
     // To achieve uniformity we apply a percent encoding to the "raw" names.
-    name_ = QString(QByteArray(asciiName).toPercentEncoding());
+    name = QString(QByteArray(asciiName).toPercentEncoding());
 
     // The cached found lump number is no longer valid.
     lumpNum_ = -2;
 }
 
-String PatchName::name() const {
-    return name_;
+String PatchName::percentEncodedName() const {
+    return name;
 }
 
-String const &PatchName::nameRef() const {
-    return name_;
+String const &PatchName::percentEncodedNameRef() const {
+    return name;
 }
 
 } // namespace de
