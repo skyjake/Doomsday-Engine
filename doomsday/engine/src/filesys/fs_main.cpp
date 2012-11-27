@@ -273,10 +273,7 @@ struct FS1::Instance
         DENG_ASSERT(!path.isEmpty());
 
         // We must have an absolute path - prepend the CWD if necessary.
-        if(QDir::isRelativePath(path))
-        {
-            path = NativePath::workPath() / path;
-        }
+        path = NativePath::workPath() / path;
 
         // Translate mymode to the C-lib's fopen() mode specifiers.
         char mode[8] = "";
@@ -324,12 +321,6 @@ struct FS1::Instance
         if(path.isEmpty()) return 0;
 
         LOG_AS("FS1::openFile");
-
-        // We must have an absolute path.
-        if(QDir::isRelativePath(path))
-        {
-            path = App_BasePath() / path;
-        }
 
         LOG_TRACE("Trying \"%s\"...") << NativePath(path).pretty();
 
