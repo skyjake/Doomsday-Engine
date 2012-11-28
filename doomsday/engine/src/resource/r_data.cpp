@@ -383,34 +383,27 @@ static CompositeTextures readCompositeTextureDefs(IByteArray &data,
         // Attribute the "original index".
         def->setOrigIndex(i.value());
 
-        bool validated = true;
+        // If the composite contains at least one known component image it is
+        // considered valid and we will therefore produce a Texture for it.
         DENG2_FOR_EACH_CONST(CompositeTexture::Components, it, def->components())
         {
             if(it->lumpNum() >= 0)
             {
-                // The composite contains at least one known component image
-                // it is therefore valid.
-                validated = true;
+                // Its valid - include in the result.
+                result.push_back(def);
+                def = 0;
+                break;
             }
         }
 
-        if(validated)
-        {
-            // Add it to the list.
-            result.push_back(def);
-            continue;
-        }
-
-        delete def;
+        // Failed to validate? Dump it.
+        if(def) delete def;
     }
 
     archiveCount = definitionCount;
     return result;
 }
 
-/**
-
- */
 static CompositeTextures loadCompositeTextureDefs()
 {
     LOG_AS("loadCompositeTextureDefs");
@@ -500,8 +493,8 @@ static CompositeTextures loadCompositeTextureDefs()
                         hasReplacement = true; // Uses a custom patch.
                     }
                     // Do the definitions differ?
-                    else if(custom->height()      != orig->height() ||
-                            custom->width()       != orig->width()  ||
+                    else if(custom->height()          != orig->height() ||
+                            custom->width()           != orig->width()  ||
                             custom->componentCount()  != orig->componentCount())
                     {
                         custom->flags() |= CompositeTexture::Custom;
