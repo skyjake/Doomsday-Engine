@@ -557,7 +557,7 @@ static CompositeTextures loadCompositeTextureDefs()
 /**
  * @param defs  Definitions to be processed.
  */
-static void processCompositeTextureDefs(CompositeTextures defs)
+static void processCompositeTextureDefs(CompositeTextures &defs)
 {
     LOG_AS("processCompositeTextureDefs");
     bool isFirst = true;
@@ -616,7 +616,10 @@ void R_InitCompositeTextures()
     uint usedTime = Timer_RealMilliseconds();
 
     // Load texture definitions from TEXTURE1/2 lumps.
-    processCompositeTextureDefs(loadCompositeTextureDefs());
+    CompositeTextures texs = loadCompositeTextureDefs();
+    processCompositeTextureDefs(texs);
+
+    DENG_ASSERT(texs.isEmpty());
 
     LOG_INFO(String("R_InitPatchComposites: Done in %1 seconds.").arg(double((Timer_RealMilliseconds() - usedTime) / 1000.0f), 0, 'g', 2));
 }
