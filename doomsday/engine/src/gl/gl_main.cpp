@@ -1,33 +1,25 @@
-/**\file gl_main.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Graphics Subsystem.
+ * @file gl_main.cpp GL-Graphics Subsystem
+ * @ingroup gl
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #ifdef UNIX
 #ifdef HAVE_CONFIG_H
@@ -50,38 +42,6 @@
 #include "resource/materialvariant.h"
 #include "ui/displaymode.h"
 
-/*
-#if defined(WIN32) && defined(WIN32_GAMMA)
-#endif
-*/
-
-/*
-// SDL's gamma settings seem more robust.
-#if 0
-#if defined(UNIX) && defined(HAVE_X11_EXTENSIONS_XF86VMODE_H)
-#  define XFREE_GAMMA
-#  include <X11/Xlib.h>
-#  include <X11/extensions/xf86vmode.h>
-#endif
-#endif
-
-#ifdef MACOSX
-#  define MAC_GAMMA
-#else
-#  if !defined(WIN32_GAMMA) && !defined(XFREE_GAMMA)
-#    define SDL_GAMMA
-#    include <SDL.h>
-#  endif
-#endif*/
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(Fog);
 D_CMD(SetBPP);
 D_CMD(SetRes);
@@ -91,44 +51,35 @@ D_CMD(ToggleFullscreen);
 D_CMD(DisplayModeInfo);
 D_CMD(ListDisplayModes);
 
-void    GL_SetGamma(void);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+void GL_SetGamma();
 
 extern int maxnumnodes;
 extern boolean fillOutlines;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// The default resolution (config file).
 int     defResX = 640, defResY = 480, defBPP = 32;
 int     defFullscreen = true;
-int numTexUnits = 1;
-boolean envModAdd;              // TexEnv: modulate and add is available.
+
+int     numTexUnits = 1;
+boolean envModAdd; // TexEnv: modulate and add is available.
 int     test3dfx = 0;
-//int     r_framecounter;         // Used only for statistics.
-int     r_detail = true;        // Render detail textures (if available).
+int     r_detail = true; // Render detail textures (if available).
 
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
 float   glNearClip, glFarClip;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean initGLOk = false;
-//static gramp_t original_gamma_ramp;
+
 static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
+
 static int fogModeDefault = 0;
-static byte fsaaEnabled = true; // default value also specified in CanvasWindow
-static byte vsyncEnabled = true;
+
+static byte fsaaEnabled   = true; // default value also specified in CanvasWindow
+static byte vsyncEnabled  = true;
 
 static viewport_t currentView;
 
-// CODE --------------------------------------------------------------------
-
-static void videoFSAAChanged(void)
+static void videoFSAAChanged()
 {
     if(!novideo && Window_Main())
     {
@@ -136,7 +87,7 @@ static void videoFSAAChanged(void)
     }
 }
 
-static void videoVsyncChanged(void)
+static void videoVsyncChanged()
 {
     if(!novideo && Window_Main())
     {
@@ -148,55 +99,54 @@ static void videoVsyncChanged(void)
     }
 }
 
-void GL_Register(void)
+void GL_Register()
 {
     // Cvars
-    C_VAR_INT("rend-dev-wireframe", &renderWireframe, CVF_NO_ARCHIVE, 0, 2);
-    C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2);
+    C_VAR_INT  ("rend-dev-wireframe",    &renderWireframe,  CVF_NO_ARCHIVE, 0, 2);
+    C_VAR_INT  ("rend-fog-default",      &fogModeDefault,   0, 0, 2);
 
     // * Render-HUD
-    C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX,
-                0, 0);
-    C_VAR_FLOAT("rend-hud-fov-shift", &weaponFOVShift, CVF_NO_MAX, 0, 1);
-    C_VAR_BYTE("rend-hud-stretch", &weaponScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale,CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-hud-fov-shift",    &weaponFOVShift,   CVF_NO_MAX, 0, 1);
+    C_VAR_BYTE ("rend-hud-stretch",      &weaponScaleMode,  0, SCALEMODE_FIRST, SCALEMODE_LAST);
 
     // * Render-Mobj
-    C_VAR_INT("rend-mobj-smooth-move", &useSRVO, 0, 0, 2);
-    C_VAR_INT("rend-mobj-smooth-turn", &useSRVOAngle, 0, 0, 1);
+    C_VAR_INT  ("rend-mobj-smooth-move", &useSRVO,          0, 0, 2);
+    C_VAR_INT  ("rend-mobj-smooth-turn", &useSRVOAngle,     0, 0, 1);
 
     // * video
-    C_VAR_BYTE2("vid-vsync", &vsyncEnabled, 0, 0, 1, videoVsyncChanged);
-    C_VAR_BYTE2("vid-fsaa", &fsaaEnabled, 0, 0, 1, videoFSAAChanged);
-    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 320, 0);
-    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 240, 0);
-    C_VAR_INT("vid-bpp", &defBPP, CVF_READ_ONLY|CVF_NO_ARCHIVE, 16, 32);
-    C_VAR_INT("vid-fullscreen", &defFullscreen, CVF_READ_ONLY|CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_FLOAT("vid-gamma", &vid_gamma, 0, 0.1f, 6);
-    C_VAR_FLOAT("vid-contrast", &vid_contrast, 0, 0, 10);
-    C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
+    C_VAR_BYTE2("vid-vsync",             &vsyncEnabled,     0, 0, 1, videoVsyncChanged);
+    C_VAR_BYTE2("vid-fsaa",              &fsaaEnabled,      0, 0, 1, videoFSAAChanged);
+    C_VAR_INT  ("vid-res-x",             &defResX,          CVF_NO_MAX | CVF_READ_ONLY | CVF_NO_ARCHIVE, 320, 0);
+    C_VAR_INT  ("vid-res-y",             &defResY,          CVF_NO_MAX | CVF_READ_ONLY | CVF_NO_ARCHIVE, 240, 0);
+    C_VAR_INT  ("vid-bpp",               &defBPP,           CVF_READ_ONLY | CVF_NO_ARCHIVE, 16, 32);
+    C_VAR_INT  ("vid-fullscreen",        &defFullscreen,    CVF_READ_ONLY | CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_FLOAT("vid-gamma",             &vid_gamma,        0, 0.1f, 6);
+    C_VAR_FLOAT("vid-contrast",          &vid_contrast,     0, 0, 10);
+    C_VAR_FLOAT("vid-bright",            &vid_bright,       0, -2, 2);
 
     // Ccmds
-    C_CMD_FLAGS("fog", NULL, Fog, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("displaymode", "", DisplayModeInfo, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("listdisplaymodes", "", ListDisplayModes, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setcolordepth", "i", SetBPP, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setfullres", "ii", SetFullRes, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setwinres", "ii", SetWinRes, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("togglefullscreen", "", ToggleFullscreen, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("fog",              NULL,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("displaymode",      "",     DisplayModeInfo,    CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("listdisplaymodes", "",     ListDisplayModes,   CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setcolordepth",    "i",    SetBPP,             CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setbpp",           "i",    SetBPP,             CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setres",           "ii",   SetRes,             CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setfullres",       "ii",   SetFullRes,         CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setwinres",        "ii",   SetWinRes,          CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setvidramp",       "",     UpdateGammaRamp,    CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("togglefullscreen", "",     ToggleFullscreen,   CMDF_NO_DEDICATED);
 
     GL_TexRegister();
 }
 
-boolean GL_IsInited(void)
+boolean GL_IsInited()
 {
     return initGLOk;
 }
 
 #if defined(WIN32) || defined(MACOSX)
-void GL_AssertContextActive(void)
+void GL_AssertContextActive()
 {
 #ifdef WIN32
     assert(wglGetCurrentContext() != 0);
@@ -206,10 +156,7 @@ void GL_AssertContextActive(void)
 }
 #endif
 
-/**
- * Swaps buffers / blits the back buffer to the front.
- */
-void GL_DoUpdate(void)
+void GL_DoUpdate()
 {
     // Check for color adjustment changes.
     if(oldgamma != vid_gamma || oldcontrast != vid_contrast ||
@@ -237,33 +184,13 @@ void GL_GetGammaRamp(displaycolortransfer_t *ramp)
     if(!gamma_support) return;
 
     DisplayMode_GetColorTransfer(ramp);
-
-    /*
-#ifdef SDL_GAMMA
-    gamma_support = true;
-    if(SDL_GetGammaRamp(ramp, ramp + 256, ramp + 512) < 0)
-    {
-        gamma_support = false;
-    }
-#endif
-    */
-
 }
 
-void GL_SetGammaRamp(const displaycolortransfer_t* ramp)
+void GL_SetGammaRamp(displaycolortransfer_t const *ramp)
 {
     if(!gamma_support) return;
 
     DisplayMode_SetColorTransfer(ramp);
-
-    /*
-#ifdef SDL_GAMMA
-    if(SDL_SetGammaRamp(ramp, ramp + 256, ramp + 512) < 0)
-    {
-        Con_Message("Failed to set gamma with SDL.\n");
-    }
-#endif
-    */
 }
 
 /**
@@ -276,46 +203,50 @@ void GL_SetGammaRamp(const displaycolortransfer_t* ramp)
  * @param contrast      Steepness.
  * @param bright        Brightness, uniform offset.
  */
-void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast, float bright)
+void GL_MakeGammaRamp(ushort *ramp, float gamma, float contrast, float bright)
 {
-    int         i;
-    double      ideal[256]; // After processing clamped to unsigned short.
-    double      norm;
+    DENG_ASSERT(ramp);
+
+    double ideal[256]; // After processing clamped to unsigned short.
 
     // Don't allow stupid values.
     if(contrast < 0.1f)
         contrast = 0.1f;
-    if(bright > 0.8f)
-        bright = 0.8f;
-    if(bright < -0.8f)
-        bright = -0.8f;
+
+    if(bright > 0.8f)  bright = 0.8f;
+    if(bright < -0.8f) bright = -0.8f;
 
     // Init the ramp as a line with the steepness defined by contrast.
-    for(i = 0; i < 256; ++i)
+    for(int i = 0; i < 256; ++i)
+    {
         ideal[i] = i * contrast - (contrast - 1) * 127;
+    }
 
     // Apply the gamma curve.
     if(gamma != 1)
     {
-        if(gamma <= 0.1f)
-            gamma = 0.1f;
-        norm = pow(255, 1 / gamma - 1); // Normalizing factor.
-        for(i = 0; i < 256; ++i)
-            ideal[i] = pow(ideal[i], 1 / gamma) / norm;
+        if(gamma <= 0.1f) gamma = 0.1f;
+
+        double norm = pow(255, 1 / double(gamma) - 1); // Normalizing factor.
+        for(int i = 0; i < 256; ++i)
+        {
+            ideal[i] = pow(ideal[i], 1 / double(gamma)) / norm;
+        }
     }
 
     // The last step is to add the brightness offset.
-    for(i = 0; i < 256; ++i)
+    for(int i = 0; i < 256; ++i)
+    {
         ideal[i] += bright * 128;
+    }
 
     // Clamp it and write the ramp table.
-    for(i = 0; i < 256; ++i)
+    for(int i = 0; i < 256; ++i)
     {
         ideal[i] *= 0x100; // Byte => word
-        if(ideal[i] < 0)
-            ideal[i] = 0;
-        if(ideal[i] > 0xffff)
-            ideal[i] = 0xffff;
+        if(ideal[i] < 0)        ideal[i] = 0;
+        if(ideal[i] > 0xffff)   ideal[i] = 0xffff;
+
         ramp[i] = ramp[i + 256] = ramp[i + 512] = (unsigned short) ideal[i];
     }
 }
@@ -323,21 +254,21 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast, float b
 /**
  * Updates the gamma ramp based on vid_gamma, vid_contrast and vid_bright.
  */
-void GL_SetGamma(void)
+void GL_SetGamma()
 {
     displaycolortransfer_t myramp;
 
-    oldgamma = vid_gamma;
+    oldgamma    = vid_gamma;
     oldcontrast = vid_contrast;
-    oldbright = vid_bright;
+    oldbright   = vid_bright;
 
     GL_MakeGammaRamp(myramp.table, vid_gamma, vid_contrast, vid_bright);
     GL_SetGammaRamp(&myramp);
 }
 
-static void printConfiguration(void)
+static void printConfiguration()
 {
-    static const char* enabled[] = { "disabled", "enabled" };
+    static char const *enabled[] = { "disabled", "enabled" };
 
     Con_Printf("Render configuration:\n");
     Con_Printf("  Multisampling: %s", enabled[GL_state.features.multisample? 1:0]);
@@ -353,13 +284,7 @@ static void printConfiguration(void)
         Con_Message("  glFinish() forced before swapping buffers.\n");
 }
 
-/**
- * One-time initialization of GL and the renderer. This is done very early
- * on during engine startup and is supposed to be fast. All subsystems
- * cannot yet be initialized, such as the texture management, so any rendering
- * occuring before GL_Init() must be done with manually prepared textures.
- */
-boolean GL_EarlyInit(void)
+boolean GL_EarlyInit()
 {
     if(novideo) return true;
     if(initGLOk) return true; // Already initialized.
@@ -411,12 +336,7 @@ boolean GL_EarlyInit(void)
     return true;
 }
 
-/**
- * Finishes GL initialization. This can be called once the virtual file
- * system has been fully loaded up, and the console variables have been
- * read from the config file.
- */
-void GL_Init(void)
+void GL_Init()
 {
     if(novideo) return;
 
@@ -433,10 +353,7 @@ void GL_Init(void)
     R_SetViewGrid(1, 1);
 }
 
-/**
- * Initializes the graphics library for refresh. Also called at update.
- */
-void GL_InitRefresh(void)
+void GL_InitRefresh()
 {
     if(novideo) return;
     GL_InitTextureManager();
@@ -445,10 +362,7 @@ void GL_InitRefresh(void)
     R_InitSystemTextures();
 }
 
-/**
- * Called once at final shutdown.
- */
-void GL_ShutdownRefresh(void)
+void GL_ShutdownRefresh()
 {
     Textures_Shutdown();
     R_DestroyColorPalettes();
@@ -456,10 +370,7 @@ void GL_ShutdownRefresh(void)
     GL_ShutdownTextureManager();
 }
 
-/**
- * Kills the graphics library for good.
- */
-void GL_Shutdown(void)
+void GL_Shutdown()
 {
     if(!initGLOk)
         return; // Not yet initialized fully.
@@ -491,21 +402,10 @@ void GL_Shutdown(void)
     // Shutdown OpenGL.
     Sys_GLShutdown();
 
-    /*
-    // Restore original gamma.
-    if(!CommandLine_Exists("-leaveramp"))
-    {
-        GL_SetGammaRamp(original_gamma_ramp);
-    }
-    */
-
     initGLOk = false;
 }
 
-/**
- * Initializes the renderer to 2D state.
- */
-void GL_Init2DState(void)
+void GL_Init2DState()
 {
     // The variables.
     glNearClip = 5;
@@ -545,7 +445,7 @@ void GL_Init2DState(void)
     glFogfv(GL_FOG_COLOR, fogColor);
 }
 
-void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewdata_t* viewData)
+void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t const *viewData)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -574,7 +474,7 @@ void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewda
     GL_ProjectionMatrix();
 }
 
-void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewData)
+void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -583,7 +483,9 @@ void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewD
     {
     case 1: { // After Restore Step 1 normal player sprites are rendered.
         int height = (float)(port->geometry.size.width * viewData->window.size.height / viewData->window.size.width) / port->geometry.size.height * SCREENHEIGHT;
-        scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT, port->geometry.size.width, port->geometry.size.height, weaponScaleMode);
+        scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT,
+                                           port->geometry.size.width, port->geometry.size.height,
+                                           scalemode_t(weaponScaleMode));
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -626,8 +528,8 @@ void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewD
         // Depth testing must be disabled so that psprite 1 will be drawn
         // on top of psprite 0 (Doom plasma rifle fire).
         glDisable(GL_DEPTH_TEST);
-        break;
-      }
+        break; }
+
     case 2: // After Restore Step 2 we're back in 2D rendering mode.
         glViewport(currentView.geometry.origin.x, FLIP(currentView.geometry.origin.y + currentView.geometry.size.height - 1),
                    currentView.geometry.size.width, currentView.geometry.size.height);
@@ -645,7 +547,7 @@ void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewD
     }
 }
 
-void GL_ProjectionMatrix(void)
+void GL_ProjectionMatrix()
 {
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
@@ -666,11 +568,7 @@ void GL_UseFog(int yes)
     usingFog = yes;
 }
 
-/**
- * GL is reset back to the state it was right after initialization.
- * Use GL_TotalRestore to bring back online.
- */
-void GL_TotalReset(void)
+void GL_TotalReset()
 {
     if(isDedicated) return;
 
@@ -686,10 +584,7 @@ void GL_TotalReset(void)
 #endif
 }
 
-/**
- * Called after a GL_TotalReset to bring GL back online.
- */
-void GL_TotalRestore(void)
+void GL_TotalRestore()
 {
     ded_mapinfo_t* mapInfo = NULL;
     GameMap* map;
@@ -721,40 +616,6 @@ void GL_TotalRestore(void)
 #endif
 }
 
-/**
- * Copies the current contents of the frame buffer and returns a pointer
- * to data containing 24-bit RGB triplets. The caller must free the
- * returned buffer using free()!
- */
-unsigned char* GL_GrabScreen(void)
-{
-    unsigned char* buffer = NULL;
-
-    if(!isDedicated && !novideo)
-    {
-        /*
-        const int width  = Window_Width(theWindow);
-        const int height = Window_Height(theWindow);
-
-        buffer = (unsigned char*) malloc(width * height * 3);
-        if(!buffer)
-            Con_Error("GL_GrabScreen: Failed on allocation of %lu bytes for frame buffer content copy.", (unsigned long) (width * height * 3));
-
-        if(!GL_Grab(0, 0, width, height, DGL_RGB, (void*) buffer))
-        {
-            free(buffer);
-            buffer = NULL;
-#if _DEBUG
-            Con_Message("Warning:GL_GrabScreen: Failed copying frame buffer content.\n");
-#endif
-        }*/
-    }
-    return buffer;
-}
-
-/**
- * Set the GL blending mode.
- */
 void GL_BlendMode(blendmode_t mode)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -814,7 +675,7 @@ void GL_BlendMode(blendmode_t mode)
     }
 }
 
-void GL_LowRes(void)
+void GL_LowRes()
 {
     // Set everything as low as they go.
     filterSprites = 0;
@@ -936,7 +797,7 @@ void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
 }
 
-void GL_SetNoTexture(void)
+void GL_SetNoTexture()
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -946,7 +807,7 @@ void GL_SetNoTexture(void)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-int GL_ChooseSmartFilter(int width, int height, int flags)
+int GL_ChooseSmartFilter(int width, int height, int /*flags*/)
 {
     if(width >= MINTEXWIDTH && height >= MINTEXHEIGHT)
         return 2; // hq2x
@@ -1240,11 +1101,10 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
     */
 }
 
-/**
- * Change graphics mode resolution.
- */
 D_CMD(SetRes)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     int attribs[] = {
         DDWA_WIDTH, atoi(argv[1]),
         DDWA_HEIGHT, atoi(argv[2]),
@@ -1255,6 +1115,8 @@ D_CMD(SetRes)
 
 D_CMD(SetFullRes)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc);
+
     int attribs[] = {
         DDWA_WIDTH, atoi(argv[1]),
         DDWA_HEIGHT, atoi(argv[2]),
@@ -1266,6 +1128,8 @@ D_CMD(SetFullRes)
 
 D_CMD(SetWinRes)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc);
+
     int attribs[] = {
         DDWA_WIDTH, atoi(argv[1]),
         DDWA_HEIGHT, atoi(argv[2]),
@@ -1277,6 +1141,8 @@ D_CMD(SetWinRes)
 
 D_CMD(ToggleFullscreen)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     /// @todo Currently not supported: the window should be recreated when
     /// switching at runtime so that its frameless flag has the appropriate
     /// effect.
@@ -1292,6 +1158,8 @@ D_CMD(ToggleFullscreen)
 
 D_CMD(SetBPP)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc);
+
     int attribs[] = {
         DDWA_COLOR_DEPTH_BITS, atoi(argv[1]),
         DDWA_END
@@ -1301,8 +1169,10 @@ D_CMD(SetBPP)
 
 D_CMD(DisplayModeInfo)
 {
-    const Window* wnd = Window_Main();
-    const DisplayMode* mode = DisplayMode_Current();
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
+    Window const *wnd = Window_Main();
+    DisplayMode const *mode = DisplayMode_Current();
 
     Con_Message("Current display mode: %i x %i x %i (%i:%i",
                 mode->width, mode->height, mode->depth, mode->ratioX, mode->ratioY);
@@ -1323,13 +1193,12 @@ D_CMD(DisplayModeInfo)
 
 D_CMD(ListDisplayModes)
 {
-    const DisplayMode* mode;
-    int i;
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
     Con_Message("There are %i display modes available:\n", DisplayMode_Count());
-    for(i = 0; i < DisplayMode_Count(); ++i)
+    for(int i = 0; i < DisplayMode_Count(); ++i)
     {
-        mode = DisplayMode_ByIndex(i);
+        DisplayMode const *mode = DisplayMode_ByIndex(i);
         if(mode->refreshRate > 0)
         {
             Con_Message("  %i x %i x %i (%i:%i, refresh: %.1f Hz)\n", mode->width, mode->height,
@@ -1346,6 +1215,8 @@ D_CMD(ListDisplayModes)
 
 D_CMD(UpdateGammaRamp)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     GL_SetGamma();
     Con_Printf("Gamma ramp set.\n");
     return true;
@@ -1353,17 +1224,15 @@ D_CMD(UpdateGammaRamp)
 
 D_CMD(Fog)
 {
-    int                 i;
+    DENG_UNUSED(src);
 
     if(argc == 1)
     {
         Con_Printf("Usage: %s (cmd) (args)\n", argv[0]);
         Con_Printf("Commands: on, off, mode, color, start, end, density.\n");
         Con_Printf("Modes: linear, exp, exp2.\n");
-        //Con_Printf( "Hints: fastest, nicest, dontcare.\n");
         Con_Printf("Color is given as RGB (0-255).\n");
-        Con_Printf
-            ("Start and end are for linear fog, density for exponential.\n");
+        Con_Printf("Start and end are for linear fog, density for exponential.\n");
         return true;
     }
 
@@ -1371,58 +1240,65 @@ D_CMD(Fog)
     {
         GL_UseFog(true);
         Con_Printf("Fog is now active.\n");
+        return true;
     }
-    else if(!stricmp(argv[1], "off"))
+    if(!stricmp(argv[1], "off"))
     {
         GL_UseFog(false);
         Con_Printf("Fog is now disabled.\n");
+        return true;
     }
-    else if(!stricmp(argv[1], "mode") && argc == 3)
+    if(!stricmp(argv[1], "color") && argc == 5)
+    {
+        for(int i = 0; i < 3; i++)
+        {
+            fogColor[i] = strtol(argv[2 + i], NULL, 0) / 255.0f;
+        }
+        fogColor[3] = 1;
+
+        glFogfv(GL_FOG_COLOR, fogColor);
+        Con_Printf("Fog color set.\n");
+        return true;
+    }
+    if(!stricmp(argv[1], "start") && argc == 3)
+    {
+        glFogf(GL_FOG_START, (GLfloat) strtod(argv[2], NULL));
+        Con_Printf("Fog start distance set.\n");
+        return true;
+    }
+    if(!stricmp(argv[1], "end") && argc == 3)
+    {
+        glFogf(GL_FOG_END, (GLfloat) strtod(argv[2], NULL));
+        Con_Printf("Fog end distance set.\n");
+        return true;
+    }
+    if(!stricmp(argv[1], "density") && argc == 3)
+    {
+        glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], NULL));
+        Con_Printf("Fog density set.\n");
+        return true;
+    }
+    if(!stricmp(argv[1], "mode") && argc == 3)
     {
         if(!stricmp(argv[2], "linear"))
         {
             glFogi(GL_FOG_MODE, GL_LINEAR);
             Con_Printf("Fog mode set to linear.\n");
+            return true;
         }
-        else if(!stricmp(argv[2], "exp"))
+        if(!stricmp(argv[2], "exp"))
         {
             glFogi(GL_FOG_MODE, GL_EXP);
             Con_Printf("Fog mode set to exp.\n");
+            return true;
         }
-        else if(!stricmp(argv[2], "exp2"))
+        if(!stricmp(argv[2], "exp2"))
         {
             glFogi(GL_FOG_MODE, GL_EXP2);
             Con_Printf("Fog mode set to exp2.\n");
+            return true;
         }
-        else
-            return false;
     }
-    else if(!stricmp(argv[1], "color") && argc == 5)
-    {
-        for(i = 0; i < 3; i++)
-            fogColor[i] = strtol(argv[2 + i], NULL, 0) / 255.0f;
-        fogColor[3] = 1;
-        glFogfv(GL_FOG_COLOR, fogColor);
-        Con_Printf("Fog color set.\n");
-    }
-    else if(!stricmp(argv[1], "start") && argc == 3)
-    {
-        glFogf(GL_FOG_START, (GLfloat) strtod(argv[2], NULL));
-        Con_Printf("Fog start distance set.\n");
-    }
-    else if(!stricmp(argv[1], "end") && argc == 3)
-    {
-        glFogf(GL_FOG_END, (GLfloat) strtod(argv[2], NULL));
-        Con_Printf("Fog end distance set.\n");
-    }
-    else if(!stricmp(argv[1], "density") && argc == 3)
-    {
-        glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], NULL));
-        Con_Printf("Fog density set.\n");
-    }
-    else
-        return false;
 
-    // Exit with a success.
-    return true;
+    return false;
 }

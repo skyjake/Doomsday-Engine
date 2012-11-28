@@ -485,7 +485,7 @@ SOURCES += \
     src/gl/gl_deferredapi.c \
     src/gl/gl_draw.c \
     src/gl/gl_drawvectorgraphic.c \
-    src/gl/gl_main.c \
+    src/gl/gl_main.cpp \
     src/gl/gl_tex.c \
     src/gl/gl_texmanager.cpp \
     src/gl/svg.c \

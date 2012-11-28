@@ -784,7 +784,7 @@ EXPORTS
     GL_DrawSvg3                 @320 NONAME
 
 ; Graphics.
-    GL_GrabScreen               @109 NONAME
+;    GL_GrabScreen               @109 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
     GL_ConfigureBorderedProjection @507 NONAME

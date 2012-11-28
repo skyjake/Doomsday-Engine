@@ -686,7 +686,6 @@ void R_SkyParams(int layer, int param, void* data);
 ///@{
 
 void GL_UseFog(int yes);
-byte* GL_GrabScreen(void);
 void GL_SetFilter(boolean enable);
 void GL_SetFilterColor(float r, float g, float b, float a);
 
