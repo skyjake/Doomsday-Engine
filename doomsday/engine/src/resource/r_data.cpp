@@ -30,7 +30,7 @@
 #include <de/Log>
 #include <de/Reader>
 #include <de/String>
-#include <de/timer.h>
+#include <de/Time>
 #include <de/memory.h>
 
 #include "de_base.h"
@@ -612,8 +612,9 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
 
 void R_InitCompositeTextures()
 {
+    de::Time begunAt;
+
     LOG_VERBOSE("Initializing PatchComposite textures...");
-    uint usedTime = Timer_RealMilliseconds();
 
     // Load texture definitions from TEXTURE1/2 lumps.
     CompositeTextures texs = loadCompositeTextureDefs();
@@ -621,7 +622,7 @@ void R_InitCompositeTextures()
 
     DENG_ASSERT(texs.isEmpty());
 
-    LOG_INFO(String("R_InitPatchComposites: Done in %1 seconds.").arg(double((Timer_RealMilliseconds() - usedTime) / 1000.0f), 0, 'g', 2));
+    LOG_INFO(String("R_InitPatchComposites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 static inline de::Uri composeFlatUri(String percentEncodedPath)
@@ -643,8 +644,9 @@ static inline de::Uri composeFlatResourceUrn(lumpnum_t lumpNum)
 
 void R_InitFlatTextures()
 {
+    de::Time begunAt;
+
     LOG_VERBOSE("Initializing Flat textures...");
-    uint usedTime = Timer_RealMilliseconds();
 
     LumpIndex const &index = App_FileSystem()->nameIndex();
     lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
@@ -708,7 +710,7 @@ void R_InitFlatTextures()
         }
     }
 
-    LOG_INFO(String("R_InitFlatTetxures: Done in %1 seconds.").arg(double((Timer_RealMilliseconds() - usedTime) / 1000.0f), 0, 'g', 2));
+    LOG_INFO(String("R_InitFlatTetxures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void R_DefineSpriteTexture(textureid_t texId)
@@ -805,8 +807,9 @@ static inline de::Uri composeSpriteResourceUrn(lumpnum_t lumpNum)
 
 void R_InitSpriteTextures()
 {
+    de::Time begunAt;
+
     LOG_VERBOSE("Initializing Sprite textures...");
-    uint usedTime = Timer_RealMilliseconds();
 
     int uniqueId = 1/*1-based index*/;
 
@@ -871,7 +874,7 @@ void R_InitSpriteTextures()
     // Define any as yet undefined sprite textures.
     defineAllSpriteTextures();
 
-    LOG_INFO(String("R_InitSpriteTextures: Done in %1 seconds.").arg(double((Timer_RealMilliseconds() - usedTime) / 1000.0f), 0, 'g', 2));
+    LOG_INFO(String("R_InitSpriteTextures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 texture_s *R_CreateSkinTex(uri_s const *filePath, boolean isShinySkin)
