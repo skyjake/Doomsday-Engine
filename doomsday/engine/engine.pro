@@ -551,7 +551,7 @@ SOURCES += \
     src/render/r_lgrid.c \
     src/render/r_lumobjs.c \
     src/render/r_shadow.c \
-    src/render/r_things.c \
+    src/render/r_things.cpp \
     src/render/rend_bias.c \
     src/render/rend_clip.cpp \
     src/render/rend_console.c \

@@ -1,46 +1,31 @@
-/**\file r_things.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Object Management and Refresh.
+ * @file r_things.cpp Map Object Management and Refresh
+ * @ingroup render
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @author Copyright &copy; 1993-1996 by id Software, Inc.
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * Sprite rotation 0 is facing the viewer, rotation 1 is one angle
- * turn CLOCKWISE around the axis. This is not the same as the angle,
- * which increases counter clockwise (protractor).
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <math.h>
-#include <assert.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cctype>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -58,12 +43,8 @@
 
 #include <de/memoryblockset.h>
 
-// MACROS ------------------------------------------------------------------
-
 #define MAX_FRAMES              (128)
 #define MAX_OBJECT_RADIUS       (128)
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct spriterecord_frame_s {
     byte frame[2];
@@ -79,16 +60,6 @@ typedef struct spriterecord_s {
     struct spriterecord_s* next;
 } spriterecord_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 float weaponOffsetScale = 0.3183f; // 1/Pi
 int weaponOffsetScaleY = 1000;
 float weaponFOVShift = 45;
@@ -100,6 +71,7 @@ float pspOffset[2] = {0, 0};
 float pspLightLevelMultiplier = 1;
 // useSRVO: 1 = models only, 2 = sprites + models
 int useSRVO = 2, useSRVOAngle = true;
+
 int psp3d;
 
 // Variables used to look up and range check sprites patches.
@@ -114,8 +86,6 @@ int levelFullBright = false;
 
 vissprite_t visSprSortedHead;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static vissprite_t overflowVisSprite;
 
 // Tempory storage, used when reading sprite definitions.
@@ -123,9 +93,7 @@ static int numSpriteRecords;
 static spriterecord_t* spriteRecords;
 static blockset_t* spriteRecordBlockSet, *spriteRecordFrameBlockSet;
 
-// CODE --------------------------------------------------------------------
-
-static void clearSpriteDefs(void)
+static void clearSpriteDefs()
 {
     int i;
     if(numSprites <= 0) return;
@@ -181,24 +149,37 @@ static spriterecord_t* findSpriteRecordForName(const ddstring_t* name)
     return rec;
 }
 
-static int buildSpriteRotationsWorker(textureid_t texId, void* parameters)
+/**
+ * In DOOM, a sprite frame is a patch texture contained in a lump
+ * existing between the S_START and S_END marker lumps (in WAD) whose
+ * lump name matches the following pattern:
+ *
+ *      NAME|A|R(A|R) (for example: "TROOA0" or "TROOA2A8")
+ *
+ * NAME: Four character name of the sprite.
+ * A: Animation frame ordinal 'A'... (ASCII).
+ * R: Rotation angle 0...8
+ *    0 : Use this frame for ALL angles.
+ *    1...8 : Angle of rotation in 45 degree increments.
+ *
+ * The second set of (optional) frame and rotation characters instruct
+ * that the same sprite frame is to be used for an additional frame
+ * but that the sprite patch should be flipped horizontally (right to
+ * left) during the loading phase.
+ *
+ * Sprite rotation 0 is facing the viewer, rotation 1 is one angle
+ * turn CLOCKWISE around the axis. This is not the same as the angle,
+ * which increases counter clockwise (protractor).
+ */
+static int buildSpriteRotationsWorker(textureid_t texId, void * /*parameters*/)
 {
-    AutoStr* path;
-    Str decodedPath;
-    spriterecord_frame_t* frame;
-    spriterecord_t* rec;
-    boolean link;
-    Uri* uri;
-
-    DENG_UNUSED(parameters);
-
     // Have we already encountered this name?
-    path = Textures_ComposePath(texId);
-    rec = findSpriteRecordForName(path);
+    AutoStr *path = Textures_ComposePath(texId);
+    spriterecord_t *rec = findSpriteRecordForName(path);
     if(!rec)
     {
         // An entirely new sprite.
-        rec = BlockSet_Allocate(spriteRecordBlockSet);
+        rec = (spriterecord_t *) BlockSet_Allocate(spriteRecordBlockSet);
         strncpy(rec->name, Str_Text(path), 4);
         rec->name[4] = '\0';
         rec->numFrames = 0;
@@ -210,11 +191,11 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* parameters)
     }
 
     // Add the frame(s).
-    Str_InitStd(&decodedPath);
+    Str decodedPath; Str_InitStd(&decodedPath);
     Str_PercentDecode(Str_Set(&decodedPath, Str_Text(path)));
 
-    link = false;
-    frame = rec->frames;
+    boolean link = false;
+    spriterecord_frame_t *frame = rec->frames;
     if(rec->frames)
     {
         while(!(frame->frame[0]    == toupper(Str_At(&decodedPath, 4)) - 'A' + 1 &&
@@ -225,11 +206,11 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* parameters)
     if(!frame)
     {
         // A new frame.
-        frame = BlockSet_Allocate(spriteRecordFrameBlockSet);
+        frame = (spriterecord_frame_t *) BlockSet_Allocate(spriteRecordFrameBlockSet);
         link = true;
     }
 
-    uri = Uri_NewWithPath2("Sprites:", RC_NULL);
+    Uri* uri = Uri_NewWithPath2("Sprites:", RC_NULL);
     Uri_SetPath(uri, Str_Text(path));
     frame->mat = Materials_ToMaterial(Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -257,25 +238,7 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* parameters)
     return 0; // Continue iteration.
 }
 
-/**
- * In DOOM, a sprite frame is a patch texture contained in a lump
- * existing between the S_START and S_END marker lumps (in WAD) whose
- * lump name matches the following pattern:
- *
- *      NAME|A|R(A|R) (for example: "TROOA0" or "TROOA2A8")
- *
- * NAME: Four character name of the sprite.
- * A: Animation frame ordinal 'A'... (ASCII).
- * R: Rotation angle 0...8
- *    0 : Use this frame for ALL angles.
- *    1...8 : Angle of rotation in 45 degree increments.
- *
- * The second set of (optional) frame and rotation characters instruct
- * that the same sprite frame is to be used for an additional frame
- * but that the sprite patch should be flipped horizontally (right to
- * left) during the loading phase.
- */
-static void buildSpriteRotations(void)
+static void buildSpriteRotations()
 {
     uint startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
 
@@ -298,7 +261,7 @@ static void buildSpriteRotations(void)
  * additional letter/number appended.  The rotation character can be 0 to
  * signify no rotations.
  */
-static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
+static void initSpriteDefs(spriterecord_t *const *sprRecords, int num)
 {
     clearSpriteDefs();
 
@@ -308,18 +271,18 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
         spriteframe_t sprTemp[MAX_FRAMES];
         int maxFrame, rotation, n, j;
 
-        sprites = (spritedef_t*)malloc(sizeof *sprites * numSprites);
-        if(!sprites)
-            Con_Error("initSpriteDefs: Failed on allocation of %lu bytes for SpriteDef list.", (unsigned long) sizeof *sprites * numSprites);
+        sprites = (spritedef_t *) M_Malloc(sizeof(*sprites) * numSprites);
+        if(!sprites) Con_Error("initSpriteDefs: Failed on allocation of %lu bytes for SpriteDef list.", (unsigned long) sizeof(*sprites) * numSprites);
 
         for(n = 0; n < num; ++n)
         {
-            spritedef_t* sprDef = &sprites[n];
-            const spriterecord_frame_t* frame;
-            const spriterecord_t* rec;
+            spritedef_t *sprDef = &sprites[n];
+            spriterecord_frame_t const *frame;
+            spriterecord_t const *rec;
 
             if(!sprRecords[n])
-            {   // A record for a sprite we were unable to locate.
+            {
+                // A record for a sprite we were unable to locate.
                 sprDef->numFrames = 0;
                 sprDef->spriteFrames = NULL;
                 continue;
@@ -334,10 +297,12 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
             do
             {
                 installSpriteLump(sprTemp, &maxFrame, frame->mat, frame->frame[0] - 1,
-                    frame->rotation[0], false);
+                                  frame->rotation[0], false);
                 if(frame->frame[1])
+                {
                     installSpriteLump(sprTemp, &maxFrame, frame->mat, frame->frame[1] - 1,
-                        frame->rotation[1], true);
+                                      frame->rotation[1], true);
+                }
             } while((frame = frame->next));
 
             /**
@@ -379,16 +344,15 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
             strncpy(sprDef->name, rec->name, 4);
             sprDef->name[4] = '\0';
             sprDef->numFrames = maxFrame;
-            sprDef->spriteFrames = (spriteframe_t*)malloc(sizeof *sprDef->spriteFrames * maxFrame);
-            if(!sprDef->spriteFrames)
-                Con_Error("R_InitSpriteDefs: Failed on allocation of %lu bytes for sprite frame list.", (unsigned long) sizeof *sprDef->spriteFrames * maxFrame);
+            sprDef->spriteFrames = (spriteframe_t*) M_Malloc(sizeof(*sprDef->spriteFrames) * maxFrame);
+            if(!sprDef->spriteFrames) Con_Error("R_InitSpriteDefs: Failed on allocation of %lu bytes for sprite frame list.", (unsigned long) sizeof(*sprDef->spriteFrames) * maxFrame);
 
             memcpy(sprDef->spriteFrames, sprTemp, sizeof *sprDef->spriteFrames * maxFrame);
         }
     }
 }
 
-void R_InitSprites(void)
+void R_InitSprites()
 {
     uint startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
 
@@ -416,8 +380,8 @@ void R_InitSprites(void)
         int max = MAX_OF(numSpriteRecords, countSprNames.num);
         if(max > 0)
         {
-            spriterecord_t* rec, **list = M_Calloc(sizeof(spriterecord_t*) * max);
-            int n = max-1;
+            spriterecord_t *rec, **list = (spriterecord_t **) M_Calloc(sizeof(spriterecord_t *) * max);
+            int n = max - 1;
 
             rec = spriteRecords;
             do
@@ -434,59 +398,49 @@ void R_InitSprites(void)
     // Kludge end
 
     // We are now done with the sprite records.
-    BlockSet_Delete(spriteRecordBlockSet);
-    spriteRecordBlockSet = NULL;
-    BlockSet_Delete(spriteRecordFrameBlockSet);
-    spriteRecordFrameBlockSet = NULL;
+    BlockSet_Delete(spriteRecordBlockSet); spriteRecordBlockSet = 0;
+    BlockSet_Delete(spriteRecordFrameBlockSet); spriteRecordFrameBlockSet = 0;
     numSpriteRecords = 0;
 
     VERBOSE2( Con_Message("R_InitSprites: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
 }
 
-void R_ShutdownSprites(void)
+void R_ShutdownSprites()
 {
     clearSpriteDefs();
 }
 
-material_t* R_GetMaterialForSprite(int sprite, int frame)
+material_t *R_GetMaterialForSprite(int sprite, int frame)
 {
     if((unsigned) sprite < (unsigned) numSprites)
     {
-        spritedef_t* sprDef = &sprites[sprite];
+        spritedef_t *sprDef = &sprites[sprite];
         if(frame < sprDef->numFrames)
             return sprDef->spriteFrames[frame].mats[0];
     }
-    //Con_Message("Warning:R_GetMaterialForSprite: Invalid sprite %i and/or frame %i.\n", sprite, frame);
+    //LOG_WARNING("R_GetMaterialForSprite: Invalid sprite %i and/or frame %i.") << sprite << frame;
     return NULL;
 }
 
-boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
+boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
 {
-    spritedef_t* sprDef;
-    spriteframe_t* sprFrame;
-    patchtex_t* pTex;
-    material_t* mat;
-    const materialvariantspecification_t* spec;
-    const materialsnapshot_t* ms;
-    const variantspecification_t* texSpec;
+    LOG_AS("R_GetSpriteInfo");
 
     if((unsigned) sprite >= (unsigned) numSprites)
     {
-        Con_Message("Warning:R_GetSpriteInfo: Invalid sprite number %i.\n", sprite);
+        LOG_WARNING("Invalid sprite number %i.") << sprite;
         return false;
     }
-
-    sprDef = &sprites[sprite];
+    spritedef_t *sprDef = &sprites[sprite];
 
     if(frame >= sprDef->numFrames)
     {
         // We have no information to return.
-        Con_Message("Warning:R_GetSpriteInfo: Invalid sprite frame %i.\n", frame);
+        LOG_WARNING("Invalid sprite frame %i.") << frame;
         memset(info, 0, sizeof(*info));
         return false;
     }
-
-    sprFrame = &sprDef->spriteFrames[frame];
+    spriteframe_t *sprFrame = &sprDef->spriteFrames[frame];
 
     if(novideo)
     {
@@ -497,21 +451,24 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
         return true;
     }
 
-    mat = sprFrame->mats[0];
+    material_t *mat = sprFrame->mats[0];
 
-    spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1, false, true, true, false);
-    ms = Materials_Prepare(mat, spec, false);
+    /// @todo fixme: We should not be using the PSprite spec here. -ds
+    materialvariantspecification_t const *spec =
+            Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
+                                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
+                                                     false, true, true, false);
+    materialsnapshot_t const *ms = Materials_Prepare(mat, spec, false);
 
 #if _DEBUG
     if(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TS_SPRITES)
         Con_Error("R_GetSpriteInfo: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
-    assert(pTex);
-    texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
-    assert(texSpec);
+    patchtex_t *pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
+    DENG_ASSERT(pTex);
+    variantspecification_t const *texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
+    DENG_ASSERT(texSpec);
 
     info->numFrames = sprDef->numFrames;
     info->material = mat;
@@ -525,43 +482,30 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     return true;
 }
 
-/// @return  Default sprite material specification.
-static const materialvariantspecification_t* spriteMaterialSpec(void)
-{
-    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE,
-                                                    GL_CLAMP_TO_EDGE, 1, -2, -1,
-                                                    true, true, true, false);
-}
-
-static modeldef_t* currentModelDefForMobj(mobj_t* mo)
+static modeldef_t *currentModelDefForMobj(mobj_t *mo)
 {
     // If models are being used, use the model's radius.
     if(useModels)
     {
-        modeldef_t* mf, *nextmf;
+        modeldef_t *mf, *nextmf;
         Models_ModelForMobj(mo, &mf, &nextmf);
         return mf;
     }
-    return NULL;
+    return 0;
 }
 
-coord_t R_VisualRadius(mobj_t* mo)
+coord_t R_VisualRadius(mobj_t *mo)
 {
-    material_t* material;
-    modeldef_t* mf;
-
     // If models are being used, use the model's radius.
-    mf = currentModelDefForMobj(mo);
-    if(mf)
+    if(modeldef_t *mf = currentModelDefForMobj(mo))
     {
         return mf->visualRadius;
     }
 
     // Use the sprite frame's width?
-    material = R_GetMaterialForSprite(mo->sprite, mo->frame);
-    if(material)
+    if(material_t *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
     {
-        const materialsnapshot_t* ms = Materials_Prepare(material, spriteMaterialSpec(), true);
+        materialsnapshot_t const *ms = Materials_Prepare(material, Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
         return ms->size.width / 2;
     }
 
@@ -569,12 +513,12 @@ coord_t R_VisualRadius(mobj_t* mo)
     return mo->radius;
 }
 
-float R_ShadowStrength(mobj_t* mo)
+float R_ShadowStrength(mobj_t *mo)
 {
-    const float minSpriteAlphaLimit = .1f;
+    DENG_ASSERT(mo);
 
+    float const minSpriteAlphaLimit = .1f;
     float ambientLightLevel, strength = .65f; ///< Default strength factor.
-    assert(mo);
 
     // Is this mobj in a valid state for shadow casting?
     if(!mo->state || !mo->bspLeaf) return 0;
@@ -600,19 +544,19 @@ float R_ShadowStrength(mobj_t* mo)
     // Sprites have their own shadow strength factor.
     if(!currentModelDefForMobj(mo))
     {
-        material_t* mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
+        material_t *mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
         if(mat)
         {
             // Ensure we've prepared this.
-            const materialsnapshot_t* ms = Materials_Prepare(mat, spriteMaterialSpec(), true);
-            const averagealpha_analysis_t* aa = (const averagealpha_analysis_t*) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
+            materialsnapshot_t const *ms = Materials_Prepare(mat, Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
+            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
             float weightedSpriteAlpha;
             if(!aa) Con_Error("R_ShadowStrength: Texture id:%u has no TA_ALPHA analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
             // We use an average which factors in the coverage ratio
             // of alpha:non-alpha pixels.
             /// @todo Constant weights could stand some tweaking...
-            weightedSpriteAlpha = aa->alpha * (0.4f + (1-aa->coverage) * 0.6f);
+            weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
 
             // Almost entirely translucent sprite? => no shadow.
             if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
@@ -629,10 +573,10 @@ float R_ShadowStrength(mobj_t* mo)
     return (0.6f - ambientLightLevel * 0.4f) * strength;
 }
 
-float R_Alpha(mobj_t* mo)
+float R_Alpha(mobj_t *mo)
 {
-    assert(mo);
-    {
+    DENG_ASSERT(mo);
+
     float alpha = (mo->ddFlags & DDMF_BRIGHTSHADOW)? .80f :
                         (mo->ddFlags & DDMF_SHADOW)? .33f :
                      (mo->ddFlags & DDMF_ALTSHADOW)? .66f : 1;
@@ -653,17 +597,16 @@ float R_Alpha(mobj_t* mo)
         alpha *= 1 - mo->translucency * reciprocal255;
     }
     return alpha;
-    }
 }
 
-void R_ClearVisSprites(void)
+void R_ClearVisSprites()
 {
     visSpriteP = visSprites;
 }
 
-vissprite_t* R_NewVisSprite(void)
+vissprite_t *R_NewVisSprite()
 {
-    vissprite_t*        spr;
+    vissprite_t *spr;
 
     if(visSpriteP == &visSprites[MAXVISSPRITES])
     {
@@ -680,20 +623,16 @@ vissprite_t* R_NewVisSprite(void)
     return spr;
 }
 
-/**
- * If 3D models are found for psprites, here we will create vissprites for
- * them.
- */
-void R_ProjectPlayerSprites(void)
+void R_ProjectPlayerSprites()
 {
     int i;
     float inter;
-    modeldef_t* mf, *nextmf;
-    ddpsprite_t* psp;
+    modeldef_t *mf, *nextmf;
+    ddpsprite_t *psp;
     boolean isFullBright = (levelFullBright != 0);
     boolean isModel;
-    ddplayer_t* ddpl = &viewPlayer->shared;
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    ddplayer_t *ddpl = &viewPlayer->shared;
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
     psp3d = false;
 
@@ -706,8 +645,7 @@ void R_ProjectPlayerSprites(void)
     {
         for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
         {
-            if(!psp->statePtr)
-                continue;
+            if(!psp->statePtr) continue;
 
             // If one of the psprites is fullbright, both are.
             if(psp->statePtr->flags & STF_FULLBRIGHT)
@@ -722,13 +660,13 @@ void R_ProjectPlayerSprites(void)
         spr->type = VPSPR_SPRITE;
         spr->psp = psp;
 
-        if(!psp->statePtr)
-            continue;
+        if(!psp->statePtr) continue;
 
         // First, determine whether this is a model or a sprite.
         isModel = false;
         if(useModels)
-        {   // Is there a model for this frame?
+        {
+            // Is there a model for this frame?
             mobj_t dummy;
 
             // Setup a dummy for the call to R_CheckModelFor.
@@ -736,12 +674,12 @@ void R_ProjectPlayerSprites(void)
             dummy.tics = psp->tics;
 
             inter = Models_ModelForMobj(&dummy, &mf, &nextmf);
-            if(mf)
-                isModel = true;
+            if(mf) isModel = true;
         }
 
         if(isModel)
-        {   // Yes, draw a 3D model (in Rend_Draw3DPlayerSprites).
+        {
+            // Yes, draw a 3D model (in Rend_Draw3DPlayerSprites).
             // There are 3D psprites.
             psp3d = true;
 
@@ -781,7 +719,8 @@ void R_ProjectPlayerSprites(void)
             spr->data.model.stateFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
         }
         else
-        {   // No, draw a 2D sprite (in Rend_DrawPlayerSprites).
+        {
+            // No, draw a 2D sprite (in Rend_DrawPlayerSprites).
             spr->type = VPSPR_SPRITE;
 
             // Adjust the center slightly so an angle can be calculated.
@@ -820,8 +759,8 @@ float R_MovementXYZPitch(float momx, float momy, float momz)
 }
 
 typedef struct {
-    vissprite_t* vis;
-    const mobj_t* mo;
+    vissprite_t *vis;
+    mobj_t const *mo;
     boolean floorAdjust;
 } vismobjzparams_t;
 
@@ -830,11 +769,11 @@ typedef struct {
  * may be slightly different than the actual Z coordinate due to smoothed
  * plane movement.
  */
-int RIT_VisMobjZ(Sector* sector, void* parameters)
+int RIT_VisMobjZ(Sector *sector, void *parameters)
 {
-    vismobjzparams_t* p = (vismobjzparams_t*) parameters;
-    assert(sector);
-    assert(p);
+    DENG_ASSERT(sector);
+    DENG_ASSERT(parameters);
+    vismobjzparams_t *p = (vismobjzparams_t *) parameters;
 
     if(p->floorAdjust && p->mo->origin[VZ] == sector->SP_floorheight)
     {
@@ -850,17 +789,14 @@ int RIT_VisMobjZ(Sector* sector, void* parameters)
 }
 
 static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
-                                          float x, float y, float z, float distance, float visOffX, float visOffY, float visOffZ,
-                                          float secFloor, float secCeil,
-                                          float floorClip, float top,
-                                          material_t* mat, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
-                                          float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
-                                          uint vLightListIdx,
-                                          int tClass, int tMap, BspLeaf* bspLeaf,
-                                          boolean floorAdjust, boolean fitTop, boolean fitBottom,
-                                          boolean viewAligned)
+    float x, float y, float z, float distance, float visOffX, float visOffY, float visOffZ,
+    float /*secFloor*/, float /*secCeil*/, float /*floorClip*/, float /*top*/,
+    material_t *mat, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
+    float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
+    uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeaf,
+    boolean /*floorAdjust*/, boolean /*fitTop*/, boolean /*fitBottom*/, boolean viewAligned)
 {
-    const materialvariantspecification_t* spec;
+    materialvariantspecification_t const *spec;
     MaterialVariant* variant;
 
     if(!params) return; // Wha?
@@ -870,7 +806,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     variant = Materials_ChooseVariant(mat, spec, true, true);
 
 #ifdef _DEBUG
-    if(tClass || tMap) assert(spec->primarySpec->data.variant.translated);
+    if(tClass || tMap) DENG_ASSERT(spec->primarySpec->data.variant.translated);
 #endif
 
     params->center[VX] = x;
@@ -898,14 +834,13 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 }
 
 void setupModelParamsForVisSprite(rendmodelparams_t *params,
-                                  float x, float y, float z, float distance,
-                                  float visOffX, float visOffY, float visOffZ, float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
-                                  struct modeldef_s* mf, struct modeldef_s* nextMF, float inter,
-                                  float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
-                                  uint vLightListIdx,
-                                  int id, int selector, BspLeaf* bspLeaf, int mobjDDFlags, int tmap,
-                                  boolean viewAlign, boolean fullBright,
-                                  boolean alwaysInterpolate)
+    float x, float y, float z, float distance, float visOffX, float visOffY, float visOffZ,
+    float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
+    struct modeldef_s *mf, struct modeldef_s *nextMF, float inter,
+    float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
+    uint vLightListIdx,
+    int id, int selector, BspLeaf * /*bspLeaf*/, int mobjDDFlags, int tmap,
+    boolean viewAlign, boolean /*fullBright*/, boolean alwaysInterpolate)
 {
     if(!params)
         return; // Hmm...
@@ -1006,31 +941,28 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
     }
 }
 
-/**
- * Generates a vissprite for a mobj if it might be visible.
- */
-void R_ProjectSprite(mobj_t* mo)
+void R_ProjectSprite(mobj_t *mo)
 {
-    Sector* moSec;
+    Sector *moSec;
     float thangle = 0, alpha, yaw = 0, pitch = 0;
     coord_t distance, gzt, floorClip, secFloor, secCeil;
     vec3d_t visOff;
-    spritedef_t* sprDef;
-    spriteframe_t* sprFrame = NULL;
+    spritedef_t *sprDef;
+    spriteframe_t *sprFrame = NULL;
     boolean matFlipS, matFlipT;
-    vissprite_t* vis;
+    vissprite_t *vis;
     boolean align, fullBright, viewAlign, floorAdjust;
-    modeldef_t* mf = 0, *nextmf = 0;
+    modeldef_t *mf = 0, *nextmf = 0;
     float interp = 0;
-    patchtex_t* pTex;
+    patchtex_t *pTex;
     vismobjzparams_t params;
     visspritetype_t visType = VSPR_SPRITE;
     float ambientColor[3];
     uint vLightListIdx = 0;
-    material_t* mat;
-    const materialvariantspecification_t* spec;
-    const materialsnapshot_t* ms;
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    material_t *mat;
+    materialvariantspecification_t const *spec;
+    materialsnapshot_t const *ms;
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     coord_t moPos[3];
 
     if(!mo) return;
@@ -1116,7 +1048,7 @@ void R_ProjectSprite(mobj_t* mo)
     if(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TS_SPRITES) return;
 
     pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
-    assert(pTex);
+    DENG_ASSERT(pTex);
 
     // Align to the view plane?
     align = (mo->ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1;
@@ -1482,7 +1414,7 @@ void R_AddSprites(BspLeaf* bspLeaf)
     bspLeaf->addSpriteCount = frameCount;
 }
 
-void R_SortVisSprites(void)
+void R_SortVisSprites()
 {
     int i, count;
     vissprite_t* ds, *best = 0;
@@ -1539,10 +1471,6 @@ void R_SortVisSprites(void)
     }
 }
 
-/**
- * @return              The current floatbob offset for the mobj, if the mobj
- *                      is flagged for bobbing, else @c 0.
- */
 coord_t R_GetBobOffset(mobj_t* mo)
 {
     if(mo->ddFlags & DDMF_BOB)
