@@ -479,7 +479,7 @@ SOURCES += \
     src/filesys/searchpath.cpp \
     src/filesys/sys_direc.c \
     src/game.cpp \
-    src/gl/dgl_common.c \
+    src/gl/dgl_common.cpp \
     src/gl/dgl_draw.c \
     src/gl/gl_defer.c \
     src/gl/gl_deferredapi.c \

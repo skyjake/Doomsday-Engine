@@ -144,6 +144,11 @@ void GL_UseFog(int yes);
 
 void GL_LowRes(void);
 
+/**
+ * Configure the GL state for the specified texture modulation mode.
+ *
+ * @param mode  Modulation mode ident.
+ */
 void GL_ModulateTexture(int mode);
 
 /**

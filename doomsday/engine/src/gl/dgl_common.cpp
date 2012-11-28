@@ -1,28 +1,24 @@
-/**\file dgl_common.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file dgl_common.cpp Misc Drawing Routines
+ * @ingroup gl
  *
- *\author Copyright © 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <math.h>
@@ -35,26 +31,12 @@
 
 #include "gl/sys_opengl.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// FUNCTION PROTOTYPES -----------------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 /**
  * Requires a texture environment mode that can add and multiply.
  * Nvidia's and ATI's appropriate extensions are supported, other cards will
  * not be able to utilize multitextured lights.
  */
-void envAddColoredAlpha(int activate, GLenum addFactor)
+static void envAddColoredAlpha(int activate, GLenum addFactor)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -108,7 +90,7 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
  * The last texture unit is always used for the texture modulation.
  * TUs 1...n-1 are used for dynamic lights.
  */
-void envModMultiTex(int activate)
+static void envModMultiTex(int activate)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -131,11 +113,6 @@ void envModMultiTex(int activate)
     }
 }
 
-/**
- * Configure the GL state for the specified texture modulation mode.
- *
- * @param mode          Modulation mode ident.
- */
 void GL_ModulateTexture(int mode)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -334,20 +311,6 @@ void GL_BlendOp(int op)
     glBlendEquationEXT(op);
 }
 
-/*
-boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void *buffer)
-{
-    if(format != DGL_RGB) return false;
-
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
-    // y+height-1 is the bottom edge of the rectangle. It's
-    // flipped to change the origin.
-    glReadPixels(x, FLIP(y + height - 1), width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-    return true;
-}
-*/
-
 void GL_SetVSync(boolean on)
 {
     // Outside the main thread we'll need to defer the call.
@@ -397,7 +360,7 @@ void GL_SetMultisample(boolean on)
 #endif
 }
 
-void DGL_SetScissor(const RectRaw* rect)
+void DGL_SetScissor(RectRaw const *rect)
 {
     if(!rect) return;
 
@@ -417,15 +380,14 @@ void DGL_SetScissor2(int x, int y, int width, int height)
     DGL_SetScissor(&rect);
 }
 
-void DGL_Scissor(RectRaw* rect)
+void DGL_Scissor(RectRaw *rect)
 {
-    GLint v[4];
-
     if(!rect) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    GLint v[4];
     glGetIntegerv(GL_SCISSOR_BOX, (GLint*)v);
     // Y is flipped.
     v[1] = FLIP(v[1] + v[3] - 1);
@@ -436,14 +398,12 @@ void DGL_Scissor(RectRaw* rect)
     rect->size.height = v[3];
 }
 
-boolean DGL_GetIntegerv(int name, int* v)
+boolean DGL_GetIntegerv(int name, int *v)
 {
-    float color[4];
-    int i;
-
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    float color[4];
     switch(name)
     {
     case DGL_MODULATE_ADD_COMBINE:
@@ -460,28 +420,30 @@ boolean DGL_GetIntegerv(int name, int* v)
 
     case DGL_CURRENT_COLOR_R:
         glGetFloatv(GL_CURRENT_COLOR, color);
-        *v = (int) (color[0] * 255);
+        *v = int(color[0] * 255);
         break;
 
     case DGL_CURRENT_COLOR_G:
         glGetFloatv(GL_CURRENT_COLOR, color);
-        *v = (int) (color[1] * 255);
+        *v = int(color[1] * 255);
         break;
 
     case DGL_CURRENT_COLOR_B:
         glGetFloatv(GL_CURRENT_COLOR, color);
-        *v = (int) (color[2] * 255);
+        *v = int(color[2] * 255);
         break;
 
     case DGL_CURRENT_COLOR_A:
         glGetFloatv(GL_CURRENT_COLOR, color);
-        *v = (int) (color[3] * 255);
+        *v = int(color[3] * 255);
         break;
 
     case DGL_CURRENT_COLOR_RGBA:
         glGetFloatv(GL_CURRENT_COLOR, color);
-        for(i = 0; i < 4; i++)
-            v[i] = (int) (color[i] * 255);
+        for(int i = 0; i < 4; ++i)
+        {
+            v[i] = int(color[i] * 255);
+        }
         break;
 
     default:
@@ -493,8 +455,7 @@ boolean DGL_GetIntegerv(int name, int* v)
 
 int DGL_GetInteger(int name)
 {
-    int         values[10];
-
+    int values[10];
     DGL_GetIntegerv(name, values);
     return values[0];
 }
@@ -507,7 +468,7 @@ boolean DGL_SetInteger(int name, int value)
     switch(name)
     {
     case DGL_ACTIVE_TEXTURE:
-        glActiveTexture(GL_TEXTURE0 + (byte)value);
+        glActiveTexture(GL_TEXTURE0 + byte(value));
         break;
 
     case DGL_MODULATE_TEXTURE:
@@ -521,13 +482,12 @@ boolean DGL_SetInteger(int name, int value)
     return true;
 }
 
-boolean DGL_GetFloatv(int name, float* v)
+boolean DGL_GetFloatv(int name, float *v)
 {
-    float color[4];
-
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    float color[4];
     switch(name)
     {
     case DGL_CURRENT_COLOR_R:
@@ -551,13 +511,13 @@ boolean DGL_GetFloatv(int name, float* v)
         break;
 
     case DGL_CURRENT_COLOR_RGBA:
-        {
-        int i;
         glGetFloatv(GL_CURRENT_COLOR, color);
-        for(i = 0; i < 4; ++i)
+        for(int i = 0; i < 4; ++i)
+        {
             v[i] = color[i];
-        break;
         }
+        break;
+
     default:
         return false;
     }
@@ -686,25 +646,25 @@ void DGL_BlendFunc(int param1, int param2)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBlendFunc(param1 == DGL_ZERO ? GL_ZERO : param1 ==
-                DGL_ONE ? GL_ONE : param1 ==
-                DGL_DST_COLOR ? GL_DST_COLOR : param1 ==
-                DGL_ONE_MINUS_DST_COLOR ? GL_ONE_MINUS_DST_COLOR : param1
-                == DGL_SRC_ALPHA ? GL_SRC_ALPHA : param1 ==
-                DGL_ONE_MINUS_SRC_ALPHA ? GL_ONE_MINUS_SRC_ALPHA : param1
-                == DGL_DST_ALPHA ? GL_DST_ALPHA : param1 ==
-                DGL_ONE_MINUS_DST_ALPHA ? GL_ONE_MINUS_DST_ALPHA : param1
-                ==
-                DGL_SRC_ALPHA_SATURATE ? GL_SRC_ALPHA_SATURATE : GL_ZERO,
-                param2 == DGL_ZERO ? GL_ZERO : param2 ==
-                DGL_ONE ? GL_ONE : param2 ==
-                DGL_SRC_COLOR ? GL_SRC_COLOR : param2 ==
-                DGL_ONE_MINUS_SRC_COLOR ? GL_ONE_MINUS_SRC_COLOR : param2
-                == DGL_SRC_ALPHA ? GL_SRC_ALPHA : param2 ==
-                DGL_ONE_MINUS_SRC_ALPHA ? GL_ONE_MINUS_SRC_ALPHA : param2
-                == DGL_DST_ALPHA ? GL_DST_ALPHA : param2 ==
-                DGL_ONE_MINUS_DST_ALPHA ? GL_ONE_MINUS_DST_ALPHA :
-                GL_ZERO);
+    glBlendFunc(param1 == DGL_ZERO                ? GL_ZERO :
+                param1 == DGL_ONE                 ? GL_ONE  :
+                param1 == DGL_DST_COLOR           ? GL_DST_COLOR :
+                param1 == DGL_ONE_MINUS_DST_COLOR ? GL_ONE_MINUS_DST_COLOR :
+                param1 == DGL_SRC_ALPHA           ? GL_SRC_ALPHA :
+                param1 == DGL_ONE_MINUS_SRC_ALPHA ? GL_ONE_MINUS_SRC_ALPHA :
+                param1 == DGL_DST_ALPHA           ? GL_DST_ALPHA :
+                param1 == DGL_ONE_MINUS_DST_ALPHA ? GL_ONE_MINUS_DST_ALPHA :
+                param1 == DGL_SRC_ALPHA_SATURATE  ? GL_SRC_ALPHA_SATURATE :
+                                                    GL_ZERO,
+                param2 == DGL_ZERO                ? GL_ZERO :
+                param2 == DGL_ONE                 ? GL_ONE :
+                param2 == DGL_SRC_COLOR           ? GL_SRC_COLOR :
+                param2 == DGL_ONE_MINUS_SRC_COLOR ? GL_ONE_MINUS_SRC_COLOR :
+                param2 == DGL_SRC_ALPHA           ? GL_SRC_ALPHA :
+                param2 == DGL_ONE_MINUS_SRC_ALPHA ? GL_ONE_MINUS_SRC_ALPHA :
+                param2 == DGL_DST_ALPHA           ? GL_DST_ALPHA :
+                param2 == DGL_ONE_MINUS_DST_ALPHA ? GL_ONE_MINUS_DST_ALPHA :
+                                                    GL_ZERO);
 }
 
 void DGL_BlendMode(blendmode_t mode)
@@ -753,24 +713,24 @@ static int DGL_ToGLWrapCap(DGLint cap)
     }
 }
 
-void DGL_SetMaterialUI(material_t* mat, DGLint wrapS, DGLint wrapT)
+void DGL_SetMaterialUI(material_t *mat, DGLint wrapS, DGLint wrapT)
 {
     GL_SetMaterialUI2(mat, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
 }
 
 void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 {
-    Texture* tex = Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, id));
+    Texture *tex = Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, id));
     if(!tex) return;
     GL_BindTexture(GL_PreparePatchTexture2(tex, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT)));
 }
 
-void DGL_SetPSprite(material_t* mat)
+void DGL_SetPSprite(material_t *mat)
 {
     GL_SetPSprite(mat, 0, 0);
 }
 
-void DGL_SetPSprite2(material_t* mat, int tclass, int tmap)
+void DGL_SetPSprite2(material_t *mat, int tclass, int tmap)
 {
     GL_SetPSprite(mat, tclass, tmap);
 }
@@ -825,8 +785,7 @@ void DGL_Scalef(float x, float y, float z)
     glScalef(x, y, z);
 }
 
-void DGL_Ortho(float left, float top, float right, float bottom, float znear,
-               float zfar)
+void DGL_Ortho(float left, float top, float right, float bottom, float znear, float zfar)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -834,79 +793,35 @@ void DGL_Ortho(float left, float top, float right, float bottom, float znear,
     glOrtho(left, right, bottom, top, znear, zfar);
 }
 
-void DGL_DeleteTextures(int num, const DGLuint *names)
+void DGL_DeleteTextures(int num, DGLuint const *names)
 {
-    if(!num || !names)
-        return;
+    if(!num || !names) return;
 
-    glDeleteTextures(num, (const GLuint*) names);
+    glDeleteTextures(num, (GLuint const *) names);
 }
 
 int DGL_Bind(DGLuint texture)
 {
     GL_BindTextureUnmanaged(texture, GL_LINEAR);
-    assert(!Sys_GLCheckError());
+    DENG_ASSERT(!Sys_GLCheckError());
     return 0;
 }
 
-#if 0 // Currently unused.
-int DGL_Project(int num, dgl_fc3vertex_t *inVertices,
-               dgl_fc3vertex_t *outVertices)
-{
-    GLdouble    modelMatrix[16], projMatrix[16];
-    GLint       viewport[4];
-    GLdouble    x, y, z;
-    int         i, numOut;
-    dgl_fc3vertex_t *in = inVertices, *out = outVertices;
-
-    if(num == 0)
-        return 0;
-
-    // Get the data we'll need in the operation.
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
-    glGetDoublev(GL_PROJECTION_MATRIX, projMatrix);
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    for(i = numOut = 0; i < num; ++i, in++)
-    {
-        if(gluProject
-           (in->pos[VX], in->pos[VY], in->pos[VZ], modelMatrix, projMatrix,
-            viewport, &x, &y, &z) == GL_TRUE)
-        {
-            // A success: add to the out vertices.
-            out->pos[VX] = (float) x;
-            out->pos[VY] = (float) FLIP(y);
-            out->pos[VZ] = (float) z;
-
-            // Check that it's truly visible.
-            if(out->pos[VX] < 0 || out->pos[VY] < 0 ||
-               out->pos[VX] >= theWindow->width ||
-               out->pos[VY] >= theWindow->height)
-                continue;
-
-            memcpy(out->color, in->color, sizeof(in->color));
-            numOut++;
-            out++;
-        }
-    }
-    return numOut;
-}
-#endif
-
 DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
-    const uint8_t* pixels, int flags, int minFilter, int magFilter,
+    uint8_t const *pixels, int flags, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT)
 {
-    return GL_NewTextureWithParams2(format, width, height, (uint8_t*)pixels,
-        flags, 0,
-        (minFilter == DGL_LINEAR? GL_LINEAR :
-         minFilter == DGL_NEAREST? GL_NEAREST :
-         minFilter == DGL_NEAREST_MIPMAP_NEAREST? GL_NEAREST_MIPMAP_NEAREST :
-         minFilter == DGL_LINEAR_MIPMAP_NEAREST? GL_LINEAR_MIPMAP_NEAREST :
-         minFilter == DGL_NEAREST_MIPMAP_LINEAR? GL_NEAREST_MIPMAP_LINEAR :
-         GL_LINEAR_MIPMAP_LINEAR),
-        (magFilter == DGL_LINEAR? GL_LINEAR : GL_NEAREST), anisoFilter,
-        (wrapS == DGL_CLAMP? GL_CLAMP :
-         wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
-        (wrapT == DGL_CLAMP? GL_CLAMP :
-         wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+    return GL_NewTextureWithParams2(format, width, height, (uint8_t *)pixels, flags, 0,
+                                    (minFilter == DGL_LINEAR                 ? GL_LINEAR :
+                                     minFilter == DGL_NEAREST                ? GL_NEAREST :
+                                     minFilter == DGL_NEAREST_MIPMAP_NEAREST ? GL_NEAREST_MIPMAP_NEAREST :
+                                     minFilter == DGL_LINEAR_MIPMAP_NEAREST  ? GL_LINEAR_MIPMAP_NEAREST :
+                                     minFilter == DGL_NEAREST_MIPMAP_LINEAR  ? GL_NEAREST_MIPMAP_LINEAR :
+                                                                               GL_LINEAR_MIPMAP_LINEAR),
+                                    (magFilter == DGL_LINEAR                 ? GL_LINEAR : GL_NEAREST),
+                                    anisoFilter,
+                                    (wrapS == DGL_CLAMP         ? GL_CLAMP :
+                                     wrapS == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT),
+                                    (wrapT == DGL_CLAMP         ? GL_CLAMP :
+                                     wrapT == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT));
 }
