@@ -406,10 +406,11 @@ DENG_PUBLIC float V3f_DotProduct(const_pvec3f_t a, const_pvec3f_t b);
  * Calculate the cross product of two vectors.
  *
  * @param dest  Result will be written back here.
- * @param src1  First vector.
- * @param src2  Second vector.
+ * @param a     First vector.
+ * @param b     Second vector.
  */
 DENG_PUBLIC void V3f_CrossProduct(pvec3f_t dest, const_pvec3f_t a, const_pvec3f_t b);
+
 DENG_PUBLIC void V3f_CrossProductd(pvec3f_t dest, const_pvec3d_t ad, const_pvec3d_t bd);
 
 /**
