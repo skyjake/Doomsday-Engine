@@ -88,7 +88,7 @@ void V2f_SetFixed(pvec2f_t vec, fixed_t x, fixed_t y)
 float V2f_Length(float const vec[])
 {
     if(vec[VX] == 0 && vec[VY] == 0) return 0;
-    return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY]);
+    return (float) sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY]);
 }
 
 float V2f_Distance(pvec2f_t const a, pvec2f_t const b)
@@ -118,7 +118,7 @@ void V2f_Copy(pvec2f_t dest, const_pvec2f_t src)
 void V2f_Copyd(pvec2f_t dest, const_pvec2d_t src)
 {
     vec2f_t other;
-    V2f_Set(other, src[VX], src[VY]);
+    V2f_Set(other, (float) src[VX], (float) src[VY]);
     V2f_Copy(dest, other);
 }
 
@@ -130,8 +130,8 @@ void V2f_Scale(pvec2f_t vec, float scalar)
 
 void V2f_Rotate(pvec2f_t vec, float radians)
 {
-    float const c = cos(radians);
-    float const s = sin(radians);
+    float const c = (float) cos(radians);
+    float const s = (float) sin(radians);
     float const x = c * vec[VX] - s * vec[VY];
     float const y = s * vec[VX] + c * vec[VY];
 
@@ -205,8 +205,8 @@ boolean V2f_IsZero(pvec2f_t const vec)
 
 float V2f_PointUnitLineDistance(float const point[], float const linePoint[], float const lineDirection[])
 {
-    return fabs(((linePoint[VY] - point[VY]) * (lineDirection[VX] - linePoint[VX]) -
-                 (linePoint[VX] - point[VX]) * (lineDirection[VY] - linePoint[VY])));
+    return (float) fabs(((linePoint[VY] - point[VY]) * (lineDirection[VX] - linePoint[VX]) -
+                         (linePoint[VX] - point[VX]) * (lineDirection[VY] - linePoint[VY])));
 }
 
 float V2f_Intersection(const_pvec2f_t p1, const_pvec2f_t delta1, const_pvec2f_t p2,
@@ -329,8 +329,8 @@ void V2f_CopyBox(arvec2f_t dest, arvec2f_t const src)
 void V2f_CopyBoxd(arvec2f_t dest, arvec2d_t const src)
 {
     vec2f_t other[2];
-    V2f_Set(other[0], src[0][VX], src[0][VY]);
-    V2f_Set(other[1], src[1][VX], src[1][VY]);
+    V2f_Set(other[0], (float) src[0][VX], (float) src[0][VY]);
+    V2f_Set(other[1], (float) src[1][VX], (float) src[1][VY]);
     V2f_CopyBox(dest, other);
 }
 
@@ -678,7 +678,7 @@ void V3f_SetFixed(pvec3f_t vec, fixed_t x, fixed_t y, fixed_t z)
 float V3f_Length(pvec3f_t const vec)
 {
     if(vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0) return 0;
-    return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY] + vec[VZ] * vec[VZ]);
+    return (float) sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY] + vec[VZ] * vec[VZ]);
 }
 
 float V3f_Distance(pvec3f_t const a, pvec3f_t const b)
@@ -709,7 +709,7 @@ void V3f_Copy(pvec3f_t dest, const_pvec3f_t src)
 
 void V3f_Copyd(pvec3f_t dest, const_pvec3d_t src)
 {
-    V3f_Set(dest,  src[VX], src[VY], src[VZ]);
+    V3f_Set(dest, (float) src[VX], (float) src[VY], (float) src[VZ]);
 }
 
 void V3f_Scale(pvec3f_t vec, float scalar)
@@ -1093,8 +1093,8 @@ void V4f_SetFixed(pvec4f_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w)
 float V4f_Length(pvec4f_t const vec)
 {
     if(vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0) return 0;
-    return sqrt(vec[0] * vec[0] + vec[1] * vec[1] +
-                vec[2] * vec[2] + vec[3] * vec[3]);
+    return (float) sqrt(vec[0] * vec[0] + vec[1] * vec[1] +
+                        vec[2] * vec[2] + vec[3] * vec[3]);
 }
 
 float V4f_Distance(pvec4f_t const a, pvec4f_t const b)

@@ -891,15 +891,15 @@ EXPORTS
     bamsAtan2                   @145 NONAME
 
     ; Vectors.
-    V2d_Sum                     @54 NONAME
-    V2d_Scale                   @57 NONAME
-    V2d_Subtract                @341 NONAME
-    V2d_Rotate                  @344 NONAME
-    V2d_PointOnLineSide         @376 NONAME
-    V2d_PointLineDistance       @442 NONAME
-    V2d_ProjectOnLine           @443 NONAME
-    V2d_Intersection            @349 NONAME
-    V2d_Copy                    @857 NONAME
+;    V2d_Sum                     @54 NONAME
+;    V2d_Scale                   @57 NONAME
+;    V2d_Subtract                @341 NONAME
+;    V2d_Rotate                  @344 NONAME
+;    V2d_PointOnLineSide         @376 NONAME
+;    V2d_PointLineDistance       @442 NONAME
+;    V2d_ProjectOnLine           @443 NONAME
+;    V2d_Intersection            @349 NONAME
+;    V2d_Copy                    @857 NONAME
 
     ; Utilities.
     M_ApproxDistance            @58 NONAME
