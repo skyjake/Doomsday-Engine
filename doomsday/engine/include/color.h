@@ -49,6 +49,10 @@ typedef struct ColorRawf_s {
             float _alpha;
         };
     };
+#ifdef __cplusplus
+    ColorRawf_s(float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.f)
+        : red(r), green(g), blue(b), _alpha(a) {}
+#endif
 } ColorRawf;
 
 float ColorRawf_AverageColor(ColorRawf* color);

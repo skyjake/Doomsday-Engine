@@ -246,6 +246,11 @@ Uri::Uri(Path const &path) : d(new Instance)
     setPath(path);
 }
 
+Uri::Uri(char const *nullTerminatedCStr) : d(new Instance)
+{
+    setUri(nullTerminatedCStr);
+}
+
 Uri::Uri(Uri const &other) : LogEntry::Arg::Base(), d(new Instance(*other.d))
 {}
 

@@ -363,7 +363,7 @@ static CompositeTextures readCompositeTextureDefs(IByteArray &data,
 
         // Ensure the offset is within valid range.
         if(offset < 0 || (unsigned) offset < definitionCount * sizeof(offset) ||
-           offset > reader.source()->size())
+           (dsize) offset > reader.source()->size())
         {
             LOG_WARNING("Invalid offset %i for definition #%i, ignoring.") << offset << i;
         }
@@ -557,7 +557,7 @@ static CompositeTextures loadCompositeTextureDefs()
 /**
  * @param defs  Definitions to be processed.
  */
-static void processCompositeTextureDefs(CompositeTextures &defs)
+static void processCompositeTextureDefs(CompositeTextures defs)
 {
     LOG_AS("processCompositeTextureDefs");
     bool isFirst = true;

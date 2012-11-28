@@ -111,6 +111,15 @@ public:
     Uri(Path const &path);
 
     /**
+     * Construct a Uri instance from a UTF-8 C-style text string, using RC_UNKNOWN
+     * as the default resource class.
+     *
+     * @param nullTerminatedCStr  String to be parsed. Assumed to be in
+     *                            percent-encoded representation.
+     */
+    Uri(char const* nullTerminatedCStr);
+
+    /**
      * Construct a Uri instance by duplicating @a other.
      */
     Uri(Uri const &other);

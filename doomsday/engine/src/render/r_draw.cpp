@@ -25,6 +25,7 @@
 #include "de_graphics.h"
 #include "de_play.h"
 
+#include "render/r_draw.h"
 #include "gl/sys_opengl.h"
 #include "resource/texture.h"
 #include "resource/texturevariant.h"

@@ -182,9 +182,9 @@ materialvariantspecification_t const *Sky_SphereMaterialSpec(bool masked)
 
 static void calculateSkyAmbientColor()
 {
-    ColorRawf avgMaterialColor = { 0, 0, 0, 0 };
-    ColorRawf bottomCapColor = { 0, 0, 0, 0 };
-    ColorRawf topCapColor = { 0, 0, 0, 0 };
+    ColorRawf avgMaterialColor;
+    ColorRawf bottomCapColor;
+    ColorRawf topCapColor;
     skylayer_t *slayer;
     int i, avgCount;
 
@@ -391,7 +391,8 @@ int Sky_FirstActiveLayer()
 
 ColorRawf const *Sky_AmbientColor()
 {
-    static ColorRawf const white = { 1.0f, 1.0f, 1.0f, 0 };
+    static ColorRawf const white(1.0f, 1.0f, 1.0f, 0);
+
     if(skyAmbientColorDefined || rendSkyLightAuto)
     {
         if(!skyAmbientColorDefined)

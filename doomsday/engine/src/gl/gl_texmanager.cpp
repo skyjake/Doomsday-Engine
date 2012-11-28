@@ -138,7 +138,7 @@ static GraphicFileType const graphicTypes[] = {
     { "JPG",    "jpg",      interpretJpg, 0 }, // TODO: add alternate "jpeg" extension
     { "TGA",    "tga",      interpretTga, TGA_LastError },
     { "PCX",    "pcx",      interpretPcx, PCX_LastError },
-    { 0 } // Terminate.
+    { 0,        0,          0,            0 } // Terminate.
 };
 
 static variantspecificationlist_t *variantSpecs;

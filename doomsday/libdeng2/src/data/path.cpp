@@ -244,9 +244,18 @@ Path::Path(String const &path, QChar sep)
     : LogEntry::Arg::Base(), d(new Instance(path, sep))
 {}
 
+Path::Path(const QString &str)
+    : LogEntry::Arg::Base(), d(new Instance(str, '/'))
+{}
+
 Path::Path(char const *nullTerminatedCStr, char sep)
     : LogEntry::Arg::Base(), d(new Instance(QString::fromUtf8(nullTerminatedCStr), sep))
 {}
+
+Path::Path(const char *nullTerminatedCStr)
+    : LogEntry::Arg::Base(), d(new Instance(QString::fromUtf8(nullTerminatedCStr), '/'))
+{
+}
 
 Path::Path(Path const &other)
     : ISerializable(), LogEntry::Arg::Base(),
@@ -256,6 +265,16 @@ Path::Path(Path const &other)
 Path::~Path()
 {
     delete d;
+}
+
+Path Path::operator + (QString const &str) const
+{
+    return Path(d->path + str, d->separator);
+}
+
+Path Path::operator + (const char *nullTerminatedCStr) const
+{
+    return Path(d->path + QString(nullTerminatedCStr), d->separator);
 }
 
 int Path::segmentCount() const
@@ -327,7 +346,7 @@ Path Path::operator / (QString other) const
 
 Path Path::operator / (char const *otherNullTerminatedUtf8) const
 {
-    return *this / Path(otherNullTerminatedUtf8);
+    return *this / Path(otherNullTerminatedUtf8, '/');
 }
 
 String Path::toString() const
