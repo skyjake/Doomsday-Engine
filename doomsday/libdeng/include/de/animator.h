@@ -31,6 +31,10 @@
 /// @addtogroup math
 ///@{
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Animator instance.
  */
@@ -70,6 +74,10 @@ typedef animator_t animatorvector4_t[4];
 DENG_PUBLIC void AnimatorVector4_Init(animatorvector4_t v, float x, float y, float z, float w);
 DENG_PUBLIC void AnimatorVector4_Set(animatorvector4_t v, float x, float y, float z, float w, int steps);
 DENG_PUBLIC void AnimatorVector4_Think(animatorvector4_t v);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 ///@}
 

@@ -618,7 +618,7 @@ SOURCES += \
     src/ui/nativeui.cpp \
     src/ui/p_control.c \
     src/ui/sys_input.c \
-    src/ui/ui2_main.c \
+    src/ui/ui2_main.cpp \
     src/ui/ui_main.c \
     src/ui/ui_panel.c \
     src/ui/window.cpp \
