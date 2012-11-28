@@ -1,29 +1,27 @@
-/**\file r_lumobjs.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file lumobj.cpp Luminous Object Management
+ * @ingroup render
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -44,12 +42,13 @@ BEGIN_PROF_TIMERS()
 END_PROF_TIMERS()
 
 typedef struct lumlistnode_s {
-    struct lumlistnode_s* next;
-    struct lumlistnode_s* nextUsed;
-    void* data;
+    struct lumlistnode_s *next;
+    struct lumlistnode_s *nextUsed;
+    void *data;
 } lumlistnode_t;
+
 typedef struct listnode_s {
-    struct listnode_s* next, *nextUsed;
+    struct listnode_s *next, *nextUsed;
     dynlight_t projection;
 } listnode_t;
 
@@ -63,7 +62,7 @@ typedef struct listnode_s {
 
 typedef struct {
     int flags; /// @see lightProjectionListFlags
-    listnode_t* head;
+    listnode_t *head;
 } lightprojectionlist_t;
 
 /// Orientation is toward the projectee.
@@ -77,7 +76,7 @@ typedef struct {
     pvec3f_t normal; /// Normalized normal of the surface being projected to.
 } lightprojectparams_t;
 
-static boolean iterateBspLeafLumObjs(BspLeaf* bspLeaf, boolean (*func) (void*, void*), void* data);
+static boolean iterateBspLeafLumObjs(BspLeaf *bspLeaf, boolean (*func) (void *, void *), void *data);
 
 extern int useBias;
 
@@ -92,44 +91,44 @@ int useMobjAutoLights = true; // Enable automaticaly calculated lights
 byte rendInfoLums = false;
 byte devDrawLums = false; // Display active lumobjs?
 
-static zblockset_t* luminousBlockSet = NULL;
-static uint numLuminous = 0, maxLuminous = 0;
-static lumobj_t** luminousList = NULL;
-static coord_t* luminousDist = NULL;
-static byte* luminousClipped = NULL;
-static uint* luminousOrder = NULL;
+static zblockset_t *luminousBlockSet;
+static uint numLuminous, maxLuminous;
+static lumobj_t **luminousList;
+static coord_t *luminousDist;
+static byte *luminousClipped;
+static uint *luminousOrder;
 
 // List of unused and used list nodes, for linking lumobjs with BSP leafs.
-static lumlistnode_t* listNodeFirst = NULL, *listNodeCursor = NULL;
+static lumlistnode_t *listNodeFirst, *listNodeCursor;
 
 // List of lumobjs for each BSP leaf;
-static lumlistnode_t** bspLeafLumObjList = NULL;
+static lumlistnode_t **bspLeafLumObjList;
 
 // Projection list nodes.
-static listnode_t* firstNode, *cursorNode;
+static listnode_t *firstNode, *cursorNode;
 
 // Light projection (dynlight) lists.
 static uint projectionListCount, cursorList;
-static lightprojectionlist_t* projectionLists;
+static lightprojectionlist_t *projectionLists;
 
 void LO_Register(void)
 {
-    C_VAR_INT("rend-mobj-light-auto", &useMobjAutoLights, 0, 0, 1);
-    C_VAR_INT("rend-light-num", &loMaxLumobjs, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-light-radius-scale", &loRadiusFactor, 0, 0.1f, 10);
-    C_VAR_INT("rend-light-radius-max", &loMaxRadius, 0, 64, 512);
+    C_VAR_INT  ("rend-mobj-light-auto",     &useMobjAutoLights, 0,              0, 1);
+    C_VAR_INT  ("rend-light-num",           &loMaxLumobjs,      CVF_NO_MAX,     0, 0);
+    C_VAR_FLOAT("rend-light-radius-scale",  &loRadiusFactor,    0,              0.1f, 10);
+    C_VAR_INT  ("rend-light-radius-max",    &loMaxRadius,       0,              64, 512);
 
-    C_VAR_BYTE("rend-info-lums", &rendInfoLums, 0, 0, 1);
-    C_VAR_BYTE("rend-dev-lums", &devDrawLums, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE ("rend-info-lums",           &rendInfoLums,      0,              0, 1);
+    C_VAR_BYTE ("rend-dev-lums",            &devDrawLums,       CVF_NO_ARCHIVE, 0, 1);
 }
 
 static lumlistnode_t* allocListNode(void)
 {
     lumlistnode_t* ln;
 
-    if(listNodeCursor == NULL)
+    if(!listNodeCursor)
     {
-        ln = Z_Malloc(sizeof(*ln), PU_APPSTATIC, 0);
+        ln = (lumlistnode_t*) Z_Malloc(sizeof(*ln), PU_APPSTATIC, 0);
 
         // Link to the list of list nodes.
         ln->nextUsed = listNodeFirst;
@@ -141,16 +140,16 @@ static lumlistnode_t* allocListNode(void)
         listNodeCursor = listNodeCursor->nextUsed;
     }
 
-    ln->next = NULL;
-    ln->data = NULL;
+    ln->next = 0;
+    ln->data = 0;
 
     return ln;
 }
 
-static void linkLumObjToSSec(lumobj_t* lum, BspLeaf* bspLeaf)
+static void linkLumObjToSSec(lumobj_t *lum, BspLeaf *bspLeaf)
 {
-    lumlistnode_t* ln = allocListNode();
-    lumlistnode_t** root;
+    lumlistnode_t *ln = allocListNode();
+    lumlistnode_t **root;
 
     root = &bspLeafLumObjList[GET_BSPLEAF_IDX(bspLeaf)];
     ln->next = *root;
@@ -158,27 +157,29 @@ static void linkLumObjToSSec(lumobj_t* lum, BspLeaf* bspLeaf)
     *root = ln;
 }
 
-static uint lumToIndex(const lumobj_t* lum)
+static uint lumToIndex(lumobj_t const *lum)
 {
-    uint i;
-    for(i = 0; i < numLuminous; ++i)
+    for(uint i = 0; i < numLuminous; ++i)
+    {
         if(luminousList[i] == lum)
             return i;
+    }
     Con_Error("lumToIndex: Invalid lumobj.\n");
     return 0;
 }
 
 static void initProjectionLists(void)
 {
-    static boolean firstTime = true;
+    static bool firstTime = true;
     if(firstTime)
     {
-        firstNode = NULL;
-        cursorNode = NULL;
-        firstTime = false;
+        firstNode  = 0;
+        cursorNode = 0;
+        firstTime  = false;
     }
+
     // All memory for the lists is allocated from Zone so we can "forget" it.
-    projectionLists = NULL;
+    projectionLists = 0;
     projectionListCount = 0;
     cursorList = 0;
 }
@@ -204,7 +205,7 @@ static void clearProjectionLists(void)
  */
 static uint newProjectionList(int flags)
 {
-    lightprojectionlist_t* list;
+    lightprojectionlist_t *list;
 
     // Do we need to allocate more lists?
     if(++cursorList >= projectionListCount)
@@ -212,8 +213,8 @@ static uint newProjectionList(int flags)
         projectionListCount *= 2;
         if(!projectionListCount) projectionListCount = 2;
 
-        projectionLists = (lightprojectionlist_t*)Z_Realloc(projectionLists, projectionListCount * sizeof *projectionLists, PU_MAP);
-        if(!projectionLists) Con_Error(__FILE__":newProjectionList failed on allocation of %lu bytes resizing the projection list.", (unsigned long) (projectionListCount * sizeof *projectionLists));
+        projectionLists = (lightprojectionlist_t *)Z_Realloc(projectionLists, projectionListCount * sizeof(*projectionLists), PU_MAP);
+        if(!projectionLists) Con_Error(__FILE__":newProjectionList failed on allocation of %lu bytes resizing the projection list.", (unsigned long) (projectionListCount * sizeof(*projectionLists)));
     }
 
     list = &projectionLists[cursorList-1];
@@ -224,31 +225,32 @@ static uint newProjectionList(int flags)
 }
 
 /**
- * @param listIdx  Address holding the list index to retrieve.
- *      If the referenced list index is non-zero return the associated list.
- *      Otherwise allocate a new list and write it's index back to this address.
- * @param flags  @ref ProjectionListFlags
+ * @param listIdx   Address holding the list index to retrieve. If the referenced
+ *                  list index is non-zero return the associated list. Otherwise
+ *                  allocate a new list and write it's index back to this address.
+ * @param flags     @ref ProjectionListFlags
+ *
  * @return  ProjectionList associated with the (possibly newly attributed) index.
  */
-static lightprojectionlist_t* getProjectionList(uint* listIdx, int flags)
+static lightprojectionlist_t *getProjectionList(uint *listIdx, int flags)
 {
     // Do we need to allocate a list?
     if(!(*listIdx))
     {
         *listIdx = newProjectionList(flags);
     }
-    return projectionLists + ((*listIdx)-1); // 1-based index.
+    return projectionLists + ((*listIdx) - 1); // 1-based index.
 }
 
-static listnode_t* newListNode(void)
+static listnode_t *newListNode(void)
 {
-    listnode_t* node;
+    listnode_t *node;
 
     // Do we need to allocate mode nodes?
     if(cursorNode == NULL)
     {
-        node = (listnode_t*)Z_Malloc(sizeof *node, PU_APPSTATIC, NULL);
-        if(!node) Con_Error(__FILE__":newListNode failed on allocation of %lu bytes for new node.", (unsigned long) sizeof *node);
+        node = (listnode_t *) Z_Malloc(sizeof(*node), PU_APPSTATIC, NULL);
+        if(!node) Con_Error(__FILE__":newListNode failed on allocation of %lu bytes for new node.", (unsigned long) sizeof(*node));
 
         // Link the new node to the list.
         node->nextUsed = firstNode;
@@ -264,13 +266,13 @@ static listnode_t* newListNode(void)
     return node;
 }
 
-static listnode_t* newProjection(DGLuint texture, const float s[2],
-    const float t[2], const float color[3], float alpha)
+static listnode_t *newProjection(DGLuint texture, float const s[2],
+    float const t[2], float const color[3], float alpha)
 {
-    assert(texture != 0 && s && t && color);
-    {
-    listnode_t* node = newListNode();
-    dynlight_t* tp = &node->projection;
+    DENG_ASSERT(texture != 0 && s && t && color);
+
+    listnode_t *node = newListNode();
+    dynlight_t *tp = &node->projection;
 
     tp->texture = texture;
     tp->s[0] = s[0];
@@ -283,23 +285,23 @@ static listnode_t* newProjection(DGLuint texture, const float s[2],
     tp->color.rgba[CA] = MINMAX_OF(0, alpha, 1);
 
     return node;
-    }
 }
 
-static __inline float calcProjectionLuminosity(dynlight_t* tp)
+static inline float calcProjectionLuminosity(dynlight_t *tp)
 {
-    assert(tp);
+    DENG_ASSERT(tp);
     return ColorRawf_AverageColorMulAlpha(&tp->color);
 }
 
 /// @return  Same as @a node for convenience (chaining).
-static listnode_t* linkProjectionToList(listnode_t* node, lightprojectionlist_t* list)
+static listnode_t *linkProjectionToList(listnode_t *node, lightprojectionlist_t *list)
 {
-    assert(node && list);
+    DENG_ASSERT(node && list);
+
     if((list->flags & SPLF_SORT_LUMINOUS_DESC) && list->head)
     {
         float luma = calcProjectionLuminosity(&node->projection);
-        listnode_t* iter = list->head, *last = iter;
+        listnode_t *iter = list->head, *last = iter;
         do
         {
             // Is this brighter than that being added?
@@ -327,19 +329,19 @@ static listnode_t* linkProjectionToList(listnode_t* node, lightprojectionlist_t*
  * Construct a new surface projection (and a list, if one has not already been
  * constructed for the referenced index).
  *
- * @param listIdx  Address holding the list index to retrieve.
- *      If the referenced list index is non-zero return the associated list.
- *      Otherwise allocate a new list and write it's index back to this address.
- * @param flags  @ref ProjectionListFlags
- *      Used when constructing a new projection list to configure it.
- * @param texture  GL identifier to texture attributed to the new projection.
- * @param s  GL texture coordinates on the S axis [left, right] in texture space.
- * @param t  GL texture coordinates on the T axis [bottom, top] in texture space.
+ * @param listIdx   Address holding the list index to retrieve. If the referenced
+ *                  list index is non-zero return the associated list. Otherwise
+ *                  allocate a new list and write it's index back to this address.
+ * @param flags     @ref ProjectionListFlags Used when constructing a new projection
+ *                  list to configure it.
+ * @param texture   GL identifier to texture attributed to the new projection.
+ * @param s         GL texture coordinates on the S axis [left, right] in texture space.
+ * @param t         GL texture coordinates on the T axis [bottom, top] in texture space.
  * @param colorRGB  RGB color attributed to the new projection.
- * @param alpha  Alpha attributed to the new projection.
+ * @param alpha     Alpha attributed to the new projection.
  */
-static void newLightProjection(uint* listIdx, int flags, DGLuint texture,
-    const float s[2], const float t[2], const float colorRGB[3], float alpha)
+static void newLightProjection(uint *listIdx, int flags, DGLuint texture,
+    float const s[2], float const t[2], float const colorRGB[3], float alpha)
 {
     linkProjectionToList(newProjection(texture, s, t, colorRGB, alpha), getProjectionList(listIdx, flags));
 }
@@ -352,16 +354,14 @@ static void newLightProjection(uint* listIdx, int flags, DGLuint texture,
  * @param color  Lumobj color.
  * @param light  Ambient light level of the surface being projected to.
  */
-static void calcLightColor(float outRGB[3], const float color[3], float light)
+static void calcLightColor(float outRGB[3], float const color[3], float light)
 {
-    int i;
-
     light = MINMAX_OF(0, light, 1) * dynlightFactor;
     // In fog additive blending is used; the normal fog color is way too bright.
     if(usingFog) light *= dynlightFogBright;
 
     // Multiply light with (ambient) color.
-    for(i = 0; i < 3; ++i)
+    for(int i = 0; i < 3; ++i)
     {
         outRGB[i] = light * color[i];
     }
@@ -381,12 +381,12 @@ typedef struct {
  *
  * @return  @c 0 = continue iteration.
  */
-static int projectPlaneLightToSurface(const lumobj_t* lum, void* paramaters)
+static int projectPlaneLightToSurface(lumobj_t const *lum, void *paramaters)
 {
-    assert(lum && paramaters);
-    {
-    projectlighttosurfaceiteratorparams_t* p = (projectlighttosurfaceiteratorparams_t*)paramaters;
-    lightprojectparams_t* spParams = &p->spParams;
+    DENG_ASSERT(lum && paramaters);
+
+    projectlighttosurfaceiteratorparams_t *p = (projectlighttosurfaceiteratorparams_t *)paramaters;
+    lightprojectparams_t *spParams = &p->spParams;
     coord_t bottom = spParams->v2[VZ], top = spParams->v1[VZ];
     float glowHeight, s[2], t[2], color[3];
 
@@ -429,22 +429,21 @@ static int projectPlaneLightToSurface(const lumobj_t* lum, void* paramaters)
     calcLightColor(color, LUM_PLANE(lum)->color, LUM_PLANE(lum)->intensity);
 
     newLightProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
-        LUM_PLANE(lum)->tex, s, t, color, 1 * spParams->blendFactor);
+                       LUM_PLANE(lum)->tex, s, t, color, 1 * spParams->blendFactor);
 
     return 0; // Continue iteration.
-    }
 }
 
-static boolean genTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float scale,
+static bool genTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float scale,
     const_pvec3d_t v1, const_pvec3d_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
 {
     // Counteract aspect correction slightly (not too round mind).
     return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
 }
 
-static DGLuint chooseOmniLightTexture(lumobj_t* lum, const lightprojectparams_t* spParams)
+static DGLuint chooseOmniLightTexture(lumobj_t *lum, lightprojectparams_t const *spParams)
 {
-    assert(lum && lum->type == LT_OMNI && spParams);
+    DENG_ASSERT(lum && lum->type == LT_OMNI && spParams);
     if(spParams->flags & PLF_TEX_CEILING)
         return LUM_OMNI(lum)->ceilTex;
     if(spParams->flags & PLF_TEX_FLOOR)
@@ -461,12 +460,12 @@ static DGLuint chooseOmniLightTexture(lumobj_t* lum, const lightprojectparams_t*
  *
  * @return  @c 0 = continue iteration.
  */
-static int projectOmniLightToSurface(lumobj_t* lum, void* paramaters)
+static int projectOmniLightToSurface(lumobj_t *lum, void *paramaters)
 {
     assert(lum && paramaters);
-    {
-    projectlighttosurfaceiteratorparams_t* p = (projectlighttosurfaceiteratorparams_t*)paramaters;
-    lightprojectparams_t* spParams = &p->spParams;
+
+    projectlighttosurfaceiteratorparams_t *p = (projectlighttosurfaceiteratorparams_t *)paramaters;
+    lightprojectparams_t *spParams = &p->spParams;
     float luma, scale, color[3];
     vec3d_t lumCenter, vToLum, point;
     coord_t dist;
@@ -511,21 +510,21 @@ static int projectOmniLightToSurface(lumobj_t* lum, void* paramaters)
 
     // Project this light.
     scale = 1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist);
-    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->tangent, spParams->bitangent)) return false; // Continue iteration.
+    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2,
+                     spParams->tangent, spParams->bitangent)) return false; // Continue iteration.
 
     // Attach to the projection list.
     calcLightColor(color, LUM_OMNI(lum)->color, luma);
     newLightProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
-        tex, s, t, color, 1 * spParams->blendFactor);
+                       tex, s, t, color, 1 * spParams->blendFactor);
 
     return false; // Continue iteration.
-    }
 }
 
 void LO_InitForMap(void)
 {
     // First initialize the BSP leaf links (root pointers).
-    bspLeafLumObjList = Z_Calloc(sizeof(*bspLeafLumObjList) * NUM_BSPLEAFS, PU_MAPSTATIC, 0);
+    bspLeafLumObjList = (lumlistnode_t **) Z_Calloc(sizeof(*bspLeafLumObjList) * NUM_BSPLEAFS, PU_MAPSTATIC, 0);
 
     maxLuminous = 0;
     luminousBlockSet = 0; // Will have already been free'd.
@@ -574,7 +573,7 @@ void LO_BeginWorldFrame(void)
     // Start reusing nodes from the first one in the list.
     listNodeCursor = listNodeFirst;
     if(bspLeafLumObjList)
-        memset(bspLeafLumObjList, 0, sizeof(lumlistnode_t*) * NUM_BSPLEAFS);
+        memset(bspLeafLumObjList, 0, sizeof(lumlistnode_t *) * NUM_BSPLEAFS);
     numLuminous = 0;
 }
 
@@ -583,11 +582,11 @@ uint LO_GetNumLuminous(void)
     return numLuminous;
 }
 
-static lumobj_t* allocLumobj(void)
+static lumobj_t *allocLumobj(void)
 {
 #define LUMOBJ_BATCH_SIZE       (32)
 
-    lumobj_t* lum;
+    lumobj_t *lum;
 
     // Only allocate memory when it's needed.
     /// @todo No upper limit?
@@ -600,34 +599,33 @@ static lumobj_t* allocLumobj(void)
             luminousBlockSet = ZBlockSet_New(sizeof(lumobj_t), LUMOBJ_BATCH_SIZE, PU_MAP);
         }
 
-        luminousList = M_Realloc(luminousList, sizeof(lumobj_t*) * newMax);
+        luminousList = (lumobj_t **) M_Realloc(luminousList, sizeof(lumobj_t *) * newMax);
 
         // Add the new lums to the end of the list.
         for(i = maxLuminous; i < newMax; ++i)
-            luminousList[i] = ZBlockSet_Allocate(luminousBlockSet);
+        {
+            luminousList[i] = (lumobj_t *) ZBlockSet_Allocate(luminousBlockSet);
+        }
 
         maxLuminous = newMax;
 
         // Resize the associated buffers used for per-frame stuff.
-        luminousDist =
-            M_Realloc(luminousDist, sizeof(*luminousDist) * maxLuminous);
-        luminousClipped =
-            M_Realloc(luminousClipped, sizeof(*luminousClipped) * maxLuminous);
-        luminousOrder =
-            M_Realloc(luminousOrder, sizeof(*luminousOrder) * maxLuminous);
+        luminousDist    = (coord_t *) M_Realloc(luminousDist,    sizeof(*luminousDist)    * maxLuminous);
+        luminousClipped =    (byte *) M_Realloc(luminousClipped, sizeof(*luminousClipped) * maxLuminous);
+        luminousOrder   =    (uint *) M_Realloc(luminousOrder,   sizeof(*luminousOrder)   * maxLuminous);
     }
 
     lum = luminousList[numLuminous - 1];
-    memset(lum, 0, sizeof(*lum));
+    std::memset(lum, 0, sizeof(*lum));
 
     return lum;
 
 #undef LUMOBJ_BATCH_SIZE
 }
 
-static lumobj_t* createLuminous(lumtype_t type, BspLeaf* bspLeaf)
+static lumobj_t *createLuminous(lumtype_t type, BspLeaf *bspLeaf)
 {
-    lumobj_t* lum = allocLumobj();
+    lumobj_t *lum = allocLumobj();
 
     lum->type = type;
     lum->bspLeaf = bspLeaf;
@@ -639,7 +637,7 @@ static lumobj_t* createLuminous(lumtype_t type, BspLeaf* bspLeaf)
     return lum;
 }
 
-uint LO_NewLuminous(lumtype_t type, BspLeaf* bspLeaf)
+uint LO_NewLuminous(lumtype_t type, BspLeaf *bspLeaf)
 {
     createLuminous(type, bspLeaf);
     return numLuminous; // == index + 1
@@ -652,26 +650,26 @@ lumobj_t* LO_GetLuminous(uint idx)
     return NULL;
 }
 
-uint LO_ToIndex(const lumobj_t* lum)
+uint LO_ToIndex(lumobj_t const *lum)
 {
     return lumToIndex(lum)+1;
 }
 
-boolean LO_IsClipped(uint idx, int i)
+boolean LO_IsClipped(uint idx, int /*i*/)
 {
     if(!(idx == 0 || idx > numLuminous))
         return (luminousClipped[idx - 1]? true : false);
     return false;
 }
 
-boolean LO_IsHidden(uint idx, int i)
+boolean LO_IsHidden(uint idx, int /*i*/)
 {
     if(!(idx == 0 || idx > numLuminous))
         return (luminousClipped[idx - 1] == 2? true : false);
     return false;
 }
 
-coord_t LO_DistanceToViewer(uint idx, int i)
+coord_t LO_DistanceToViewer(uint idx, int /*i*/)
 {
     if(!(idx == 0 || idx > numLuminous))
         return luminousDist[idx - 1];
@@ -680,7 +678,7 @@ coord_t LO_DistanceToViewer(uint idx, int i)
 
 float LO_AttenuationFactor(uint idx, coord_t distance)
 {
-    lumobj_t* lum = LO_GetLuminous(idx);
+    lumobj_t *lum = LO_GetLuminous(idx);
     if(lum)
     switch(lum->type)
     {
@@ -704,21 +702,19 @@ float LO_AttenuationFactor(uint idx, coord_t distance)
  *
  * @param mo  Ptr to the mobj to register.
  */
-static void addLuminous(mobj_t* mo)
+static void addLuminous(mobj_t *mo)
 {
     uint i;
     float mul, center;
     int radius;
     float rgb[3], yOffset, size;
-    lumobj_t* l;
-    ded_light_t* def;
-    spritedef_t* sprDef;
-    spriteframe_t* sprFrame;
-    patchtex_t* pTex;
-    material_t* mat;
-    const materialsnapshot_t* ms;
-    const materialvariantspecification_t* spec;
-    const pointlight_analysis_t* pl;
+    lumobj_t *l;
+    ded_light_t *def;
+    spritedef_t *sprDef;
+    spriteframe_t *sprFrame;
+    patchtex_t *pTex;
+    material_t *mat;
+    pointlight_analysis_t const *pl;
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
@@ -745,20 +741,16 @@ static void addLuminous(mobj_t* mo)
     mat = sprFrame->mats[0];
 
 #if _DEBUG
-    if(!mat)
-        Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.", (int) mo->sprite, mo->frame);
+    if(!mat) Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.", (int) mo->sprite, mo->frame);
 #endif
 
     // Ensure we have up-to-date information about the material.
-    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-    ms = Materials_Prepare(mat, spec, true);
+    materialvariantspecification_t const *spec = Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
+    materialsnapshot_t const *ms = Materials_Prepare(mat, spec, true);
     if(!MSU_texture(ms, MTU_PRIMARY)) return; // An invalid sprite texture.
 
-    pl = (const pointlight_analysis_t*)
-        Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
-    if(!pl)
-        Con_Error("addLuminous: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+    pl = (pointlight_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
+    if(!pl) Con_Error("addLuminous: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
     size = pl->brightMul;
     yOffset = ms->size.height * pl->originY;
@@ -776,8 +768,8 @@ static void addLuminous(mobj_t* mo)
         Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
-    assert(pTex);
+    pTex = (patchtex_t *) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
+    DENG_ASSERT(pTex);
 
     center = -pTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
@@ -881,10 +873,10 @@ static void addLuminous(mobj_t* mo)
 }
 
 /// Used to sort lumobjs by distance from viewpoint.
-static int C_DECL lumobjSorter(const void* e1, const void* e2)
+static int lumobjSorter(void const *e1, void const *e2)
 {
-    coord_t a = luminousDist[*(const uint *) e1];
-    coord_t b = luminousDist[*(const uint *) e2];
+    coord_t a = luminousDist[*(uint const *) e1];
+    coord_t b = luminousDist[*(uint const *) e2];
     if(a > b) return 1;
     if(a < b) return -1;
     return 0;
@@ -892,9 +884,6 @@ static int C_DECL lumobjSorter(const void* e1, const void* e2)
 
 void LO_BeginFrame(void)
 {
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    uint i;
-
     if(useDynLights || useLightDecorations)
     {
         /**
@@ -905,15 +894,15 @@ void LO_BeginFrame(void)
         clearProjectionLists();
     }
 
-    if(!(numLuminous > 0))
-        return;
+    if(!(numLuminous > 0)) return;
 
 BEGIN_PROF( PROF_LUMOBJ_FRAME_SORT );
 
-    // Update lumobj distances ready for linking and sorting.
-    for(i = 0; i < numLuminous; ++i)
+    // Update viewer => lumobj distances ready for linking and sorting.
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    for(uint i = 0; i < numLuminous; ++i)
     {
-        lumobj_t* lum = luminousList[i];
+        lumobj_t *lum = luminousList[i];
         coord_t delta[3];
 
         V3d_Subtract(delta, lum->origin, viewData->current.origin);
@@ -923,21 +912,22 @@ BEGIN_PROF( PROF_LUMOBJ_FRAME_SORT );
     }
 
     if(loMaxLumobjs > 0 && numLuminous > loMaxLumobjs)
-    {   // Sort lumobjs by distance from the viewer. Then clip all lumobjs
+    {
+        // Sort lumobjs by distance from the viewer. Then clip all lumobjs
         // so that only the closest are visible (max loMaxLumobjs).
-        uint n;
 
         // Init the lumobj indices, sort array.
-        for(i = 0; i < numLuminous; ++i)
+        for(uint i = 0; i < numLuminous; ++i)
+        {
             luminousOrder[i] = i;
-
+        }
         qsort(luminousOrder, numLuminous, sizeof(uint), lumobjSorter);
 
         // Mark all as hidden.
-        memset(luminousClipped, 2, numLuminous * sizeof(*luminousClipped));
+        std::memset(luminousClipped, 2, numLuminous * sizeof(*luminousClipped));
 
-        n = 0;
-        for(i = 0; i < numLuminous; ++i)
+        uint n = 0;
+        for(uint i = 0; i < numLuminous; ++i)
         {
             if(n++ > loMaxLumobjs)
                 break;
@@ -949,7 +939,7 @@ BEGIN_PROF( PROF_LUMOBJ_FRAME_SORT );
     else
     {
         // Mark all as clipped.
-        memset(luminousClipped, 1, numLuminous * sizeof(*luminousClipped));
+        std::memset(luminousClipped, 1, numLuminous * sizeof(*luminousClipped));
     }
 
     // objLinks already contains links if there are any light decorations
@@ -963,19 +953,13 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
  * Generate one dynlight node for each plane glow.
  * The light is attached to the appropriate dynlight node list.
  */
-static boolean createGlowLightForSurface(Surface* suf, void* paramaters)
+static boolean createGlowLightForSurface(Surface *suf, void * /*paramaters*/)
 {
     switch(DMU_GetType(suf->owner))
     {
     case DMU_PLANE: {
-        Plane* pln = (Plane*)suf->owner;
-        Sector* sec = pln->sector;
-        const averagecolor_analysis_t* avgColorAmplified;
-        const materialvariantspecification_t* spec;
-        const materialsnapshot_t* ms;
-        linkobjtobspleafparams_t params;
-        lumobj_t* lum;
-        uint i;
+        Plane *pln = reinterpret_cast<Plane *>(suf->owner);
+        Sector *sec = pln->sector;
 
         // Only produce a light for sectors with open space.
         /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.
@@ -983,18 +967,15 @@ static boolean createGlowLightForSurface(Surface* suf, void* paramaters)
             return true; // Continue iteration.
 
         // Are we glowing at this moment in time?
-        spec = Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-        ms = Materials_Prepare(suf->material, spec, true);
+        materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
+        materialsnapshot_t const *ms = Materials_Prepare(suf->material, spec, true);
         if(!(ms->glowing > .001f)) return true; // Continue iteration.
 
-        avgColorAmplified = (const averagecolor_analysis_t*)
-            Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_COLOR_AMPLIFIED);
-        if(!avgColorAmplified)
-            Con_Error("createGlowLightForSurface: Texture id:%u has no TA_COLOR_AMPLIFIED analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+        averagecolor_analysis_t const *avgColorAmplified = (averagecolor_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_COLOR_AMPLIFIED);
+        if(!avgColorAmplified) Con_Error("createGlowLightForSurface: Texture id:%u has no TA_COLOR_AMPLIFIED analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
-        lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);
+        lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);
         V3d_Copy(lum->origin, pln->PS_base.origin);
         lum->origin[VZ] = pln->visHeight; // base.origin[VZ] is not smoothed
 
@@ -1005,22 +986,23 @@ static boolean createGlowLightForSurface(Surface* suf, void* paramaters)
         lum->maxDistance = 0;
         lum->decorSource = 0;
 
-        params.obj = lum;
-        params.type = OT_LUMOBJ;
-        RIT_LinkObjToBspLeaf(sec->bspLeafs[0], (void*)&params);
-        for(i = 1; i < sec->bspLeafCount; ++i)
+        linkobjtobspleafparams_t parm;
+        parm.obj = lum;
+        parm.type = OT_LUMOBJ;
+        RIT_LinkObjToBspLeaf(sec->bspLeafs[0], (void*)&parm);
+        for(uint i = 1; i < sec->bspLeafCount; ++i)
         {
             linkLumObjToSSec(lum, sec->bspLeafs[i]);
-            RIT_LinkObjToBspLeaf(sec->bspLeafs[i], (void*)&params);
+            RIT_LinkObjToBspLeaf(sec->bspLeafs[i], (void*)&parm);
         }
-        break;
-      }
+        break; }
+
     case DMU_SIDEDEF:
         return true; // Not yet supported by this algorithm.
 
     default:
         Con_Error("createGlowLightForSurface: Internal error, unknown type %s.",
-            DMU_Str(DMU_GetType(suf->owner)));
+                  DMU_Str(DMU_GetType(suf->owner)));
     }
     return true;
 }
@@ -1033,12 +1015,10 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
     if(useDynLights)
     {
-        Sector* seciter;
-        uint i;
-        for(i = 0, seciter = sectors; i < NUM_SECTORS; seciter++, ++i)
+        Sector* seciter = sectors;
+        for(uint i = 0; i < NUM_SECTORS; ++i, ++seciter)
         {
-            mobj_t* iter;
-            for(iter = seciter->mobjList; iter; iter = iter->sNext)
+            for(mobj_t* iter = seciter->mobjList; iter; iter = iter->sNext)
             {
                 iter->lumIdx = 0;
                 addLuminous(iter);
@@ -1062,14 +1042,14 @@ END_PROF( PROF_LUMOBJ_INIT_ADD );
 typedef struct lumobjiterparams_s {
     coord_t origin[2];
     coord_t radius;
-    void* paramaters;
-    int (*callback) (const lumobj_t*, coord_t distance, void* paramaters);
+    void *paramaters;
+    int (*callback) (lumobj_t const *, coord_t distance, void *paramaters);
 } lumobjiterparams_t;
 
-int LOIT_RadiusLumobjs(void* ptr, void* paramaters)
+int LOIT_RadiusLumobjs(void *ptr, void *paramaters)
 {
-    const lumobj_t* lum = (const lumobj_t*) ptr;
-    lumobjiterparams_t* p = (lumobjiterparams_t*)paramaters;
+    lumobj_t const *lum = (lumobj_t const *) ptr;
+    lumobjiterparams_t* p = (lumobjiterparams_t *)paramaters;
     coord_t dist = M_ApproxDistance(lum->origin[VX] - p->origin[VX], lum->origin[VY] - p->origin[VY]);
     int result = false; // Continue iteration.
     if(dist <= p->radius)
@@ -1079,42 +1059,42 @@ int LOIT_RadiusLumobjs(void* ptr, void* paramaters)
     return result;
 }
 
-int LO_LumobjsRadiusIterator2(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t radius,
-    int (*callback) (const lumobj_t*, coord_t distance, void* paramaters), void* paramaters)
+int LO_LumobjsRadiusIterator2(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius,
+    int (*callback) (lumobj_t const *, coord_t distance, void *paramaters), void *paramaters)
 {
-    lumobjiterparams_t p;
     if(!bspLeaf || !callback) return 0;
 
-    p.origin[VX] = x;
-    p.origin[VY] = y;
-    p.radius = radius;
-    p.callback = callback;
-    p.paramaters = paramaters;
+    lumobjiterparams_t parm;
+    parm.origin[VX] = x;
+    parm.origin[VY] = y;
+    parm.radius     = radius;
+    parm.callback   = callback;
+    parm.paramaters = paramaters;
 
-    return R_IterateBspLeafContacts2(bspLeaf, OT_LUMOBJ, LOIT_RadiusLumobjs, (void*) &p);
+    return R_IterateBspLeafContacts2(bspLeaf, OT_LUMOBJ, LOIT_RadiusLumobjs, (void *) &parm);
 }
 
-int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t radius,
-    int (*callback) (const lumobj_t*, coord_t distance, void* paramaters))
+int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius,
+    int (*callback) (lumobj_t const *, coord_t distance, void *paramaters))
 {
-    return LO_LumobjsRadiusIterator2(bspLeaf, x, y, radius, callback, NULL);
+    return LO_LumobjsRadiusIterator2(bspLeaf, x, y, radius, callback, 0/* no parameters*/);
 }
 
-boolean LOIT_ClipLumObj(void* data, void* context)
+boolean LOIT_ClipLumObj(void *data, void * /*context*/)
 {
-    lumobj_t* lum = (lumobj_t*) data;
+    lumobj_t *lum = reinterpret_cast<lumobj_t *>(data);
+
+    // We are only interested in omnilights.
+    if(lum->type != LT_OMNI) return true;
+
+    // Has this already been occluded?
     uint lumIdx = lumToIndex(lum);
-    vec3d_t origin;
-
-    if(lum->type != LT_OMNI)
-        return true; // Only interested in omnilights.
-
-    if(luminousClipped[lumIdx] > 1)
-        return true; // Already hidden by some other means.
+    if(luminousClipped[lumIdx] > 1) return true;
 
     luminousClipped[lumIdx] = 0;
 
     /// @todo Determine the exact centerpoint of the light in addLuminous!
+    vec3d_t origin;
     V3d_Set(origin, lum->origin[VX], lum->origin[VY], lum->origin[VZ] + LUM_OMNI(lum)->zOff);
 
     /**
@@ -1132,7 +1112,6 @@ boolean LOIT_ClipLumObj(void* data, void* context)
     else
     {
         vec3d_t eye;
-
         V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
         luminousClipped[lumIdx] = 1;
@@ -1150,34 +1129,30 @@ void LO_ClipInBspLeaf(uint bspLeafIdx)
     iterateBspLeafLumObjs(GameMap_BspLeaf(theMap, bspLeafIdx), LOIT_ClipLumObj, NULL);
 }
 
-boolean LOIT_ClipLumObjBySight(void* data, void* context)
+boolean LOIT_ClipLumObjBySight(void *data, void *context)
 {
-    lumobj_t* lum = (lumobj_t*) data;
+    // We are only interested in omnilights.
+    lumobj_t *lum = reinterpret_cast<lumobj_t *>(data);
+    if(lum->type != LT_OMNI) return true;
+
     uint lumIdx = lumToIndex(lum);
-    BspLeaf* bspLeaf = (BspLeaf*) context;
-
-    if(lum->type != LT_OMNI)
-        return true; // Only interested in omnilights.
-
     if(!luminousClipped[lumIdx])
     {
         vec2d_t eye;
-        uint i;
-
         V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
 
         // We need to figure out if any of the polyobj's segments lies
         // between the viewpoint and the lumobj.
-        for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
+        BspLeaf *bspLeaf = (BspLeaf *) context;
+        for(uint i = 0; i < bspLeaf->polyObj->lineCount; ++i)
         {
-            LineDef* line = bspLeaf->polyObj->lines[i];
-            HEdge* hedge = line->L_frontside.hedgeLeft;
+            LineDef *line = bspLeaf->polyObj->lines[i];
+            HEdge *hedge = line->L_frontside.hedgeLeft;
 
             // Ignore hedges facing the wrong way.
             if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
             {
                 vec2d_t origin;
-
                 V2d_Set(origin, lum->origin[VX], lum->origin[VY]);
                 if(V2d_Intercept2(origin, eye, hedge->HE_v1origin, hedge->HE_v2origin, NULL, NULL, NULL))
                 {
@@ -1197,27 +1172,29 @@ void LO_ClipInBspLeafBySight(uint bspLeafIdx)
     iterateBspLeafLumObjs(leaf, LOIT_ClipLumObjBySight, leaf);
 }
 
-static boolean iterateBspLeafLumObjs(BspLeaf* bspLeaf, boolean (*func) (void*, void*),
-    void* data)
+static boolean iterateBspLeafLumObjs(BspLeaf *bspLeaf, boolean (*func) (void *, void *), void *data)
 {
-    lumlistnode_t* ln = bspLeafLumObjList[GET_BSPLEAF_IDX(bspLeaf)];
+    lumlistnode_t *ln = bspLeafLumObjList[GET_BSPLEAF_IDX(bspLeaf)];
     while(ln)
     {
         if(!func(ln->data, data))
+        {
             return false;
+        }
         ln = ln->next;
     }
     return true;
 }
 
-void LO_UnlinkMobjLumobj(mobj_t* mo)
+void LO_UnlinkMobjLumobj(mobj_t *mo)
 {
+    if(!mo) return;
     mo->lumIdx = 0;
 }
 
-int LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
+int LOIT_UnlinkMobjLumobj(thinker_t *th, void * /*context*/)
 {
-    LO_UnlinkMobjLumobj((mobj_t*) th);
+    LO_UnlinkMobjLumobj((mobj_t *) th);
     return false; // Continue iteration.
 }
 
@@ -1235,45 +1212,45 @@ void LO_UnlinkMobjLumobjs(void)
  *
  * @return  @c 0 = continue iteration.
  */
-int RIT_ProjectLightToSurfaceIterator(void* obj, void* paramaters)
+int RIT_ProjectLightToSurfaceIterator(void *obj, void *paramaters)
 {
-    lumobj_t* lum = (lumobj_t*)obj;
-    assert(obj);
+    DENG_ASSERT(obj);
+    lumobj_t *lum = reinterpret_cast<lumobj_t *>(obj);
     switch(lum->type)
     {
     case LT_OMNI:  return  projectOmniLightToSurface(lum, paramaters);
     case LT_PLANE: return projectPlaneLightToSurface(lum, paramaters);
     default:
-        Con_Error("RIT_ProjectLightToSurface: Invalid lumobj type %i.", (int) lum->type);
+        Con_Error("RIT_ProjectLightToSurface: Invalid lumobj type %i.", int(lum->type));
         exit(1); // Unreachable.
     }
 }
 
-uint LO_ProjectToSurface(int flags, BspLeaf* bspLeaf, float blendFactor,
+uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
     vec3d_t topLeft, vec3d_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal)
 {
-    projectlighttosurfaceiteratorparams_t p;
+    projectlighttosurfaceiteratorparams_t parm;
 
-    p.listIdx = 0;
-    p.spParams.blendFactor = blendFactor;
-    p.spParams.flags = flags;
-    p.spParams.v1 = topLeft;
-    p.spParams.v2 = bottomRight;
-    p.spParams.tangent = tangent;
-    p.spParams.bitangent = bitangent;
-    p.spParams.normal = normal;
+    parm.listIdx               = 0;
+    parm.spParams.blendFactor  = blendFactor;
+    parm.spParams.flags        = flags;
+    parm.spParams.v1           = topLeft;
+    parm.spParams.v2           = bottomRight;
+    parm.spParams.tangent      = tangent;
+    parm.spParams.bitangent    = bitangent;
+    parm.spParams.normal       = normal;
 
-    R_IterateBspLeafContacts2(bspLeaf, OT_LUMOBJ, RIT_ProjectLightToSurfaceIterator, (void*)&p);
+    R_IterateBspLeafContacts2(bspLeaf, OT_LUMOBJ, RIT_ProjectLightToSurfaceIterator, (void *)&parm);
     // Did we produce a projection list?
-    return p.listIdx;
+    return parm.listIdx;
 }
 
-int LO_IterateProjections2(uint listIdx, int (*callback) (const dynlight_t*, void*), void* paramaters)
+int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, void *), void *paramaters)
 {
     int result = 0; // Continue iteration.
     if(callback && listIdx != 0 && listIdx <= projectionListCount)
     {
-        listnode_t* node = projectionLists[listIdx-1].head;
+        listnode_t *node = projectionLists[listIdx-1].head;
         while(node)
         {
             result = callback(&node->projection, paramaters);
@@ -1283,19 +1260,17 @@ int LO_IterateProjections2(uint listIdx, int (*callback) (const dynlight_t*, voi
     return result;
 }
 
-int LO_IterateProjections(uint listIdx, int (*callback) (const dynlight_t*, void*))
+int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, void *))
 {
     return LO_IterateProjections2(listIdx, callback, NULL);
 }
 
 void LO_DrawLumobjs(void)
 {
-    static const float  black[4] = { 0, 0, 0, 0 };
+    static float const black[4] = { 0, 0, 0, 0 };
     float color[4];
-    uint i;
 
-    if(!devDrawLums)
-        return;
+    if(!devDrawLums) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -1303,17 +1278,15 @@ void LO_DrawLumobjs(void)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
-    for(i = 0; i < numLuminous; ++i)
+    for(uint i = 0; i < numLuminous; ++i)
     {
-        lumobj_t* lum = luminousList[i];
+        lumobj_t *lum = luminousList[i];
+
+        if(!(lum->type == LT_OMNI || lum->type == LT_PLANE)) continue;
+
+        if(lum->type == LT_OMNI && loMaxLumobjs > 0 && luminousClipped[i] == 2) continue;
+
         vec3d_t lumCenter;
-
-        if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
-            continue;
-
-        if(lum->type == LT_OMNI && loMaxLumobjs > 0 && luminousClipped[i] == 2)
-            continue;
-
         V3d_Copy(lumCenter, lum->origin);
         if(lum->type == LT_OMNI)
             lumCenter[VZ] += LUM_OMNI(lum)->zOff;
@@ -1358,8 +1331,8 @@ void LO_DrawLumobjs(void)
                 glVertex3f(0, 0, scale);
             }
             glEnd();
-            break;
-          }
+            break; }
+
         case LT_PLANE: {
             float scale = LUM_PLANE(lum)->intensity * 200;
 
@@ -1379,8 +1352,8 @@ void LO_DrawLumobjs(void)
 
             }
             glEnd();
-            break;
-          }
+            break; }
+
         default: break;
         }
 

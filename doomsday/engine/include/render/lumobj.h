@@ -1,33 +1,27 @@
-/**\file r_lumobjs.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Lumobj (luminous object) management.
+ * @file lumobj.h Luminous Object Management
+ * @ingroup render
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_REFRESH_LUMINOUS_H
-#define LIBDENG_REFRESH_LUMINOUS_H
+#ifndef LIBDENG_RENDER_LUMINOUS_H
+#define LIBDENG_RENDER_LUMINOUS_H
 
 #include "dd_types.h"
 #include "color.h"
@@ -35,13 +29,9 @@
 #include "map/p_mapdata.h"
 #include "resource/r_data.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Lumobject types.
+// Luminous object types.
 typedef enum {
-    LT_OMNI, ///< Omni (spherical) light.
+    LT_OMNI,  ///< Omni (spherical) light.
     LT_PLANE  ///< Planar light.
 } lumtype_t;
 
@@ -52,9 +42,9 @@ typedef enum {
 typedef struct lumobj_s {
     lumtype_t type;
     coord_t origin[3]; // Center of the obj.
-    BspLeaf* bspLeaf;
+    BspLeaf *bspLeaf;
     coord_t maxDistance;
-    void* decorSource; // decorsource_t ptr, else @c NULL.
+    void *decorSource; // decorsource_t ptr, else @c NULL.
 
     union lumobj_data_u {
         struct lumobj_omni_s {
@@ -74,7 +64,7 @@ typedef struct lumobj_s {
 } lumobj_t;
 
 /**
- * Dynlight. Lumobj Projection (POD) stores the results of projection.
+ * Dynlight stores a luminous object => surface projection.
  */
 typedef struct {
     DGLuint texture;
@@ -82,13 +72,17 @@ typedef struct {
     ColorRawf color;
 } dynlight_t;
 
-extern boolean loInited;
+DENG_EXTERN_C boolean loInited;
 
-extern uint loMaxLumobjs;
-extern int loMaxRadius;
-extern float loRadiusFactor;
-extern byte rendInfoLums;
-extern int useMobjAutoLights;
+DENG_EXTERN_C uint loMaxLumobjs;
+DENG_EXTERN_C int loMaxRadius;
+DENG_EXTERN_C float loRadiusFactor;
+DENG_EXTERN_C byte rendInfoLums;
+DENG_EXTERN_C int useMobjAutoLights;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /// Register the console commands, variables, etc..., of this module.
 void LO_Register(void);
@@ -128,13 +122,13 @@ uint LO_GetNumLuminous(void);
  * Construct a new lumobj and link it into @a bspLeaf.
  * @return  Logical index (name) for referencing the new lumobj.
  */
-uint LO_NewLuminous(lumtype_t type, BspLeaf* bspLeaf);
+uint LO_NewLuminous(lumtype_t type, BspLeaf *bspLeaf);
 
 /// @return  Lumobj associated with logical index @a idx else @c NULL.
-lumobj_t* LO_GetLuminous(uint idx);
+lumobj_t *LO_GetLuminous(uint idx);
 
 /// @return  Logical index associated with lumobj @a lum.
-uint LO_ToIndex(const lumobj_t* lum);
+uint LO_ToIndex(lumobj_t const *lum);
 
 /// @return  @c true if the lumobj is clipped for the viewer.
 boolean LO_IsClipped(uint idx, int i);
@@ -148,8 +142,8 @@ coord_t LO_DistanceToViewer(uint idx, int i);
 /**
  * Calculate a distance attentuation factor for a lumobj.
  *
- * @param idx  Logical index associated with the lumobj.
- * @param distance  Distance between the lumobj and the viewer.
+ * @param idx           Logical index associated with the lumobj.
+ * @param distance      Distance between the lumobj and the viewer.
  *
  * @return  Attentuation factor [0..1]
  */
@@ -158,7 +152,7 @@ float LO_AttenuationFactor(uint idx, coord_t distance);
 /**
  * Clip lumobj, omni lights in the given BspLeaf.
  *
- * @param bspLeafIdx  BspLeaf index in which lights will be clipped.
+ * @param bspLeafIdx    BspLeaf index in which lights will be clipped.
  */
 void LO_ClipInBspLeaf(uint bspLeafIdx);
 
@@ -167,7 +161,7 @@ void LO_ClipInBspLeaf(uint bspLeafIdx);
  * the lumobjs must be clipped more carefully. Here we check if the line of
  * sight intersects any of the polyobj hedges that face the camera.
  *
- * @param bspLeafIdx  BspLeaf index in which lumobjs will be clipped.
+ * @param bspLeafIdx    BspLeaf index in which lumobjs will be clipped.
  */
 void LO_ClipInBspLeafBySight(uint bspLeafIdx);
 
@@ -176,19 +170,17 @@ void LO_ClipInBspLeafBySight(uint bspLeafIdx);
  * a callback for each visited. Iteration ends when all selected luminous objects
  * have been visited or a callback returns non-zero.
  *
- * @param bspLeaf  BspLeaf in which the origin resides.
- * @param x  X coordinate of the origin (must be within @a bspLeaf).
- * @param y  Y coordinate of the origin (must be within @a bspLeaf).
- * @param radius  Radius of the range around the origin point.
- * @param callback  Callback to make for each object.
- * @param paramaters  Data to pass to the callback.
+ * @param bspLeaf       BspLeaf in which the origin resides.
+ * @param x             X coordinate of the origin (must be within @a bspLeaf).
+ * @param y             Y coordinate of the origin (must be within @a bspLeaf).
+ * @param radius        Radius of the range around the origin point.
+ * @param callback      Callback to make for each object.
+ * @param paramaters    Data to pass to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int LO_LumobjsRadiusIterator2(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t radius,
-    int (*callback) (const lumobj_t* lum, coord_t distance, void* paramaters), void* paramaters);
-int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t radius,
-    int (*callback) (const lumobj_t* lum, coord_t distance, void* paramaters)); /* paramaters = NULL */
+int LO_LumobjsRadiusIterator2(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius, int (*callback) (lumobj_t const *lum, coord_t distance, void *paramaters), void* paramaters);
+int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius, int (*callback) (lumobj_t const *lum, coord_t distance, void *paramaters)/*, paramaters = 0 */);
 
 /**
  * @defgroup projectLightFlags  Flags for LO_ProjectToSurface
@@ -209,20 +201,20 @@ int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t rad
  * the BSP leaf specified. This is due to an optimization within the lumobj
  * management which separates them according to their position in the BSP.
  *
- * @param flags  @ref projectLightFlags
- * @param bspLeaf  BspLeaf within which the quad wholly resides.
- * @param blendFactor  Multiplied with projection alpha.
- * @param topLeft  Top left coordinates of the surface being projected to.
- * @param bottomRight  Bottom right coordinates of the surface being projected to.
- * @param topLeft  Top left coordinates of the surface being projected to.
- * @param bottomRight  Bottom right coordinates of the surface being projected to.
- * @param tangent  Normalized tangent of the surface being projected to.
- * @param bitangent  Normalized bitangent of the surface being projected to.
- * @param normal  Normalized normal of the surface being projected to.
+ * @param flags         @ref projectLightFlags
+ * @param bspLeaf       BspLeaf within which the quad wholly resides.
+ * @param blendFactor   Multiplied with projection alpha.
+ * @param topLeft       Top left coordinates of the surface being projected to.
+ * @param bottomRight   Bottom right coordinates of the surface being projected to.
+ * @param topLeft       Top left coordinates of the surface being projected to.
+ * @param bottomRight   Bottom right coordinates of the surface being projected to.
+ * @param tangent       Normalized tangent of the surface being projected to.
+ * @param bitangent     Normalized bitangent of the surface being projected to.
+ * @param normal        Normalized normal of the surface being projected to.
  *
  * @return  Projection list identifier if surface is lit else @c 0.
  */
-uint LO_ProjectToSurface(int flags, BspLeaf* bspLeaf, float blendFactor,
+uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
     vec3d_t topLeft, vec3d_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal);
 
 /**
@@ -230,14 +222,14 @@ uint LO_ProjectToSurface(int flags, BspLeaf* bspLeaf, float blendFactor,
  * a callback for each visited. Iteration ends when all selected projections
  * have been visited or a callback returns non-zero.
  *
- * @param listIdx  Unique identifier of the list to process.
- * @param callback  Callback to make for each visited projection.
- * @param paramaters  Passed to the callback.
+ * @param listIdx       Unique identifier of the list to process.
+ * @param callback      Callback to make for each visited projection.
+ * @param paramaters    Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int LO_IterateProjections2(uint listIdx, int (*callback) (const dynlight_t*, void*), void* paramaters);
-int LO_IterateProjections(uint listIdx, int (*callback) (const dynlight_t*, void*)/* paramaters=NULL*/);
+int LO_IterateProjections2(uint listIdx, int (*callback) (dynlight_t const *, void *), void *paramaters);
+int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, void*)/*, paramaters = 0*/);
 
 void LO_DrawLumobjs(void);
 
@@ -245,4 +237,4 @@ void LO_DrawLumobjs(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_REFRESH_LUMINOUS_H
+#endif /// LIBDENG_RENDER_LUMINOUS_H
