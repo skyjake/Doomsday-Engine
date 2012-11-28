@@ -545,7 +545,7 @@ SOURCES += \
     src/network/sys_network.c \
     src/network/ui_mpi.c \
     src/r_util.c \
-    src/render/r_draw.c \
+    src/render/r_draw.cpp \
     src/render/r_fakeradio.c \
     src/render/r_main.c \
     src/render/r_lgrid.c \

@@ -1,32 +1,24 @@
-/**\file r_draw.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Misc Drawing Routines.
+ * @file r_draw.cpp Misc Drawing Routines
+ * @ingroup render
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
 #include "de_console.h"
@@ -38,11 +30,8 @@
 #include "resource/texturevariant.h"
 #include "resource/materialvariant.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-enum { // A logical ordering (twice around).
+// A logical ordering (twice around).
+enum {
     BG_BACKGROUND,
     BG_TOP,
     BG_RIGHT,
@@ -54,52 +43,32 @@ enum { // A logical ordering (twice around).
     BG_BOTTOMLEFT
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// View border width.
-int bwidth;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static boolean inited = false;
-static Uri* borderGraphicsNames[9];
+static bool inited = false;
+static int borderSize;
+static Uri *borderGraphicsNames[9];
 static patchid_t borderPatches[9];
 
-// CODE --------------------------------------------------------------------
-
-static void loadViewBorderPatches(void)
+static void loadViewBorderPatches()
 {
-    patchinfo_t info;
-    uint i;
-
     borderPatches[0] = 0;
-    for(i = 1; i < 9; ++i)
+    for(uint i = 1; i < 9; ++i)
     {
         borderPatches[i] = R_DeclarePatch(Str_Text(Uri_Path(borderGraphicsNames[i])));
     }
 
-    // Detemine the view border width.
-    bwidth = 0;
+    // Detemine the view border size.
+    borderSize = 0;
+    patchinfo_t info;
     if(!R_GetPatchInfo(borderPatches[BG_TOP], &info)) return;
-    bwidth = info.geometry.size.height;
+    borderSize = info.geometry.size.height;
 }
 
-void R_SetBorderGfx(const Uri* const* paths)
+void R_SetBorderGfx(Uri const *const *paths)
 {
-    uint i;
-    assert(inited);
-
+    DENG_ASSERT(inited);
     if(!paths) Con_Error("R_SetBorderGfx: Missing argument.");
 
-    for(i = 0; i < 9; ++i)
+    for(uint i = 0; i < 9; ++i)
     {
         if(paths[i])
         {
@@ -121,48 +90,50 @@ void R_SetBorderGfx(const Uri* const* paths)
 
 void R_InitViewWindow(void)
 {
-    int i;
-
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         R_SetupDefaultViewWindow(i);
     }
 
     if(inited)
     {
-        for(i = 0; i < 9; ++i)
+        for(int i = 0; i < 9; ++i)
         {
             if(borderGraphicsNames[i])
+            {
                 Uri_Delete(borderGraphicsNames[i]);
+            }
         }
     }
     memset(borderGraphicsNames, 0, sizeof(borderGraphicsNames));
     memset(borderPatches, 0, sizeof(borderPatches));
-    bwidth = 0;
+    borderSize = 0;
     inited = true;
 }
 
 void R_ShutdownViewWindow(void)
 {
-    uint i;
     if(!inited) return;
 
-    for(i = 0; i < 9; ++i)
+    for(uint i = 0; i < 9; ++i)
     {
         if(borderGraphicsNames[i])
             Uri_Delete(borderGraphicsNames[i]);
     }
+
     memset(borderGraphicsNames, 0, sizeof(borderGraphicsNames));
     inited = false;
 }
 
-void R_DrawPatch3(Texture* tex, int x, int y, int w, int h, boolean useOffsets)
+void R_DrawPatch3(Texture *tex, int x, int y, int w, int h, boolean useOffsets)
 {
     if(!tex) return;
+
     if(Textures_Scheme(Textures_Id(tex)) != TS_PATCHES)
     {
 #if _DEBUG
-        Con_Message("Warning:R_DrawPatch3: Attempted to draw a non-patch [%p].\n", (void*)tex);
+        LOG_AS("R_DrawPatch3");
+        LOG_WARNING("Attempted to draw a non-patch [%p].") << de::dintptr(tex);
 #endif
         return;
     }
@@ -170,8 +141,8 @@ void R_DrawPatch3(Texture* tex, int x, int y, int w, int h, boolean useOffsets)
     GL_BindTexture(GL_PreparePatchTexture(tex));
     if(useOffsets)
     {
-        patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
-        assert(pTex);
+        patchtex_t *pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(tex));
+        DENG_ASSERT(pTex);
 
         x += pTex->offX;
         y += pTex->offY;
@@ -180,17 +151,17 @@ void R_DrawPatch3(Texture* tex, int x, int y, int w, int h, boolean useOffsets)
     GL_DrawRectf2Color(x, y, w, h, 1, 1, 1, 1);
 }
 
-void R_DrawPatch2(Texture* tex, int x, int y, int w, int h)
+void R_DrawPatch2(Texture *tex, int x, int y, int w, int h)
 {
     R_DrawPatch3(tex, x, y, w, h, true);
 }
 
-void R_DrawPatch(Texture* tex, int x, int y)
+void R_DrawPatch(Texture *tex, int x, int y)
 {
     R_DrawPatch2(tex, x, y, Texture_Width(tex), Texture_Height(tex));
 }
 
-void R_DrawPatchTiled(Texture* tex, int x, int y, int w, int h, int wrapS, int wrapT)
+void R_DrawPatchTiled(Texture *tex, int x, int y, int w, int h, int wrapS, int wrapT)
 {
     if(!tex) return;
 
@@ -198,18 +169,19 @@ void R_DrawPatchTiled(Texture* tex, int x, int y, int w, int h, int wrapS, int w
     GL_DrawRectf2Tiled(x, y, w, h, Texture_Width(tex), Texture_Height(tex));
 }
 
-/**
- * Draws the border around the view for different size windows.
- */
+materialvariantspecification_t const *Ui_MaterialSpec()
+{
+    return Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                                    0, -3, 0, false, false, false, false);
+}
+
 void R_DrawViewBorder(void)
 {
-    const viewport_t* port = R_CurrentViewPort();
-    const viewdata_t* vd = R_ViewData(displayPlayer);
-    material_t* mat;
-    int border;
-    assert(inited);
+    DENG_ASSERT(inited);
 
-    assert(port && vd);
+    viewport_t const *port = R_CurrentViewPort();
+    viewdata_t const *vd = R_ViewData(displayPlayer);
+    DENG_ASSERT(port && vd);
 
     if(0 == vd->window.size.width || 0 == vd->window.size.height) return;
     if(vd->window.size.width == port->geometry.size.width && vd->window.size.height == port->geometry.size.height) return;
@@ -223,26 +195,25 @@ void R_DrawViewBorder(void)
     glPushMatrix();
 
     // Scale from viewport space to fixed 320x200 space.
+    int border;
     if(port->geometry.size.width >= port->geometry.size.height)
     {
-        glScalef((float)SCREENHEIGHT/port->geometry.size.height, (float)SCREENHEIGHT/port->geometry.size.height, 1);
-        border = (float) bwidth / SCREENHEIGHT * port->geometry.size.height;
+        glScalef(float(SCREENHEIGHT) / port->geometry.size.height, float(SCREENHEIGHT) / port->geometry.size.height, 1);
+        border = float(borderSize) / SCREENHEIGHT * port->geometry.size.height;
     }
     else
     {
-        glScalef((float)SCREENWIDTH/port->geometry.size.width, (float)SCREENWIDTH/port->geometry.size.width, 1);
-        border = (float) bwidth / SCREENWIDTH * port->geometry.size.width;
+        glScalef(float(SCREENWIDTH) / port->geometry.size.width, float(SCREENWIDTH) / port->geometry.size.width, 1);
+        border = float(borderSize) / SCREENWIDTH * port->geometry.size.width;
     }
 
     glColor4f(1, 1, 1, 1);
 
     // View background.
-    mat = Materials_ToMaterial(Materials_ResolveUri2(borderGraphicsNames[BG_BACKGROUND], true/*quiet please*/));
+    material_t *mat = Materials_ToMaterial(Materials_ResolveUri2(borderGraphicsNames[BG_BACKGROUND], true/*quiet please*/));
     if(mat)
     {
-        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-            MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, -3, 0, false, false, false, false);
-        const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
+        materialsnapshot_t const *ms = Materials_Prepare(mat, Ui_MaterialSpec(), true);
 
         GL_BindTexture(MST(ms, MTU_PRIMARY));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms->size.width, ms->size.height, 0, 0,
