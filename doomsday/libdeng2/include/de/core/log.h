@@ -383,7 +383,17 @@ public:
 
         /// Use escape sequences to format the entry with text styles
         /// (for graphical output).
-        Styled = 0x2
+        Styled = 0x2,
+
+        /// Omit the section from the entry text.
+        OmitSection = 0x4,
+
+        /// Indicate that the section is the same as on the previous line.
+        SectionSameAsBefore = 0x8,
+
+        /// Parts of the section can be abbreviated because they are clear
+        /// from the context (e.g., previous line).
+        AbbreviateSection = 0x10
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -396,7 +406,7 @@ public:
      */
     LogEntry();
 
-    LogEntry(Log::LogLevel level, String const &section, String const &format);
+    LogEntry(Log::LogLevel level, String const &section, int sectionDepth, String const &format);
 
     ~LogEntry();
 
@@ -414,8 +424,24 @@ public:
 
     Log::LogLevel level() const { return _level; }
 
-    /// Converts the log entry to a string.
-    String asText(Flags const &flags = 0) const;
+    /// Returns a reference to the entry's section part. Reference is valid
+    /// for the lifetime of the entry.
+    String const &section() const { return _section; }
+
+    /// Returns the number of sub-sections in the entry's section part.
+    int sectionDepth() const { return _sectionDepth; }
+
+    /**
+     * Converts the log entry to a string.
+     *
+     * @param flags           Flags that control how the text is composed.
+     * @param shortenSection  Number of characters to cut from the beginning of the section.
+     *                        With AbbreviateSection this limits which portion of the
+     *                        section is subject to abbreviation.
+     *
+     * @return Composed textual representation of the entry.
+     */
+    String asText(Flags const &flags = 0, int shortenSection = 0) const;
 
     /// Make this entry print without metadata.
     LogEntry &simple() {
@@ -430,6 +456,7 @@ private:
     Time _when;
     Log::LogLevel _level;
     String _section;
+    int _sectionDepth;
     String _format;
     Flags _defaultFlags;
     bool _disabled;

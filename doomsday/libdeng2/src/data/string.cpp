@@ -349,6 +349,17 @@ dint String::compareWithoutCase(String const &str) const
     return compare(str, Qt::CaseInsensitive);
 }
 
+int String::commonPrefixLength(const String &str) const
+{
+    int count = 0;
+    int len = qMin(str.size(), size());
+    for(int i = 0; i < len; ++i, ++count)
+    {
+        if(at(i) != str.at(i)) break;
+    }
+    return count;
+}
+
 dint String::compareWithCase(QChar const *a, QChar const *b, dsize count)
 {
     return QString(a, count).compare(QString(b, count), Qt::CaseSensitive);

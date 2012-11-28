@@ -26,18 +26,15 @@
 #include <QMap>
 #include <QTextStream>
 #include <QThread>
+#include <QStringList>
 
 namespace de {
 
 char const *MAIN_SECTION = "";
 
-#ifdef DENG2_DEBUG
 /// If the section is longer than this, it will be alone on one line while
 /// the rest of the entry continues after a break.
 static int const LINE_BREAKING_SECTION_LENGTH = 35;
-#else
-static int const LINE_BREAKING_SECTION_LENGTH = 60;
-#endif
 
 namespace internal {
 
@@ -65,11 +62,11 @@ public:
 /// The logs table contains the log of each thread that uses logging.
 static internal::Logs logs;
 
-LogEntry::LogEntry() : _level(Log::TRACE), _disabled(true)
+LogEntry::LogEntry() : _level(Log::TRACE), _sectionDepth(0), _disabled(true)
 {}
 
-LogEntry::LogEntry(Log::LogLevel level, String const &section, String const &format)
-    : _level(level), _section(section), _format(format), _disabled(false)
+LogEntry::LogEntry(Log::LogLevel level, String const &section, int sectionDepth, String const &format)
+    : _level(level), _section(section), _sectionDepth(sectionDepth), _format(format), _disabled(false)
 {
     if(!LogBuffer::appBuffer().isEnabled(level))
     {
@@ -85,8 +82,10 @@ LogEntry::~LogEntry()
     }    
 }
 
-String LogEntry::asText(Flags const &formattingFlags) const
+String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
 {
+    /// @todo This functionality belongs in an entry formatter class.
+
     Flags flags = formattingFlags;
     QString result;
     QTextStream output(&result);
@@ -138,23 +137,75 @@ String LogEntry::asText(Flags const &formattingFlags) const
     }
 
     // Section name.
-    if(!_section.empty())
+    if(!flags.testFlag(OmitSection) && !_section.empty())
     {
-        if(!flags.testFlag(Styled))
+        if(flags.testFlag(Styled))
         {
-            output << _section << ": ";
+            output << TEXT_STYLE_SECTION;
+        }
+
+        // Process the section: shortening and possible abbreviation.
+        QString sect;
+        if(flags.testFlag(AbbreviateSection))
+        {
+            /*
+             * We'll split the section into parts, and then abbreviate some of
+             * the parts, trying not to lose too much information.
+             * @a shortenSection controls how much of the section can be
+             * abbreviated (num of chars from beginning).
+             */
+            QStringList parts = _section.split(" > ");
+            int len = 0;
+            while(!parts.isEmpty())
+            {
+                if(!sect.isEmpty())
+                {
+                    len += 3;
+                    sect += " > ";
+                }
+
+                if(len + parts.first().size() >= shortenSection) break;
+
+                len += parts.first().size();
+                if(sect.isEmpty())
+                {
+                    // Never abbreviate the first part.
+                    sect += parts.first();
+                }
+                else
+                {
+                    sect += "..";
+                }
+                parts.removeFirst();
+            }
+            // Append the remainer as-is.
+            sect += _section.mid(len);
         }
         else
         {
-            output << TEXT_STYLE_SECTION << _section << ": ";
+            if(shortenSection < _section.size())
+            {
+                sect = _section.right(_section.size() - shortenSection);
+            }
         }
 
-        /*
-        // If the section is very long, it's clearer to break the line here.
-        if(_section.length() > LINE_BREAKING_SECTION_LENGTH)
+        if(flags.testFlag(SectionSameAsBefore))
         {
-            output << "\n";
-        }*/
+            if(!shortenSection || sect.isEmpty())
+            {
+                output << "^ : ";
+            }
+            else
+            {
+                output << "^" << sect << ": ";
+            }
+        }
+        else
+        {
+            // If the section is very long, it's clearer to break the line here.
+            char const *separator = (sect.size() > LINE_BREAKING_SECTION_LENGTH? ":\n    " : ": ");
+            output << sect << separator;
+        }
     }
 
     if(flags.testFlag(Styled))
@@ -165,8 +216,7 @@ String LogEntry::asText(Flags const &formattingFlags) const
     // Message text with the arguments formatted.
     if(_args.empty())
     {
-        // Just verbatim.
-        output << _format;
+        output << _format; // Verbatim.
     }
     else
     {
@@ -273,6 +323,7 @@ LogEntry &Log::enter(Log::LogLevel level, String const &format)
     // Collect the sections.
     String context;
     String latest;
+    int depth = 0;
     foreach(char const *i, _sectionStack)
     {
         if(i == latest)
@@ -286,10 +337,11 @@ LogEntry &Log::enter(Log::LogLevel level, String const &format)
         }
         latest = i;
         context += i;
+        ++depth;
     }
 
     // Make a new entry.
-    LogEntry *entry = new LogEntry(level, context, format);
+    LogEntry *entry = new LogEntry(level, context, depth, format);
     
     // Add it to the application's buffer. The buffer gets ownership.
     LogBuffer::appBuffer().add(entry);
