@@ -100,10 +100,9 @@ String String::operator / (String const &path) const
 
 String String::concatenatePath(String const &other, QChar dirChar) const
 {
-    if(other.first() == dirChar)
+    if(QDir::isAbsolutePath(other))
     {
-        // The other begins with a slash, therefore it's an absolute path.
-        // Use it as is.
+        // The other path is absolute - use as is.
         return other;
     }
 
