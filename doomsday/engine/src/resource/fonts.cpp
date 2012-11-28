@@ -143,7 +143,7 @@ static inline fontschemeid_t schemeIdForDirectoryNode(FontRepository::Node const
 static de::Uri composeUriForDirectoryNode(FontRepository::Node const& node)
 {
     Str const* schemeName = Fonts_SchemeName(schemeIdForDirectoryNode(node));
-    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
+    return de::Uri(Str_Text(schemeName), node.path());
 }
 
 /// @pre fontIdMap has been initialized and is large enough!

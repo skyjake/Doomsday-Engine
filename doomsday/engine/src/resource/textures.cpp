@@ -153,7 +153,7 @@ static inline textureschemeid_t schemeIdForDirectoryNode(TextureRepository::Node
 static de::Uri composeUriForDirectoryNode(TextureRepository::Node const& node)
 {
     Str const* schemeName = Textures_SchemeName(schemeIdForDirectoryNode(node));
-    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
+    return de::Uri(Str_Text(schemeName), node.path());
 }
 
 /// @pre textureIdMap has been initialized and is large enough!

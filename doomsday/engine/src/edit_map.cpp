@@ -1830,7 +1830,7 @@ static void assignSurfaceMaterial(Surface* suf, ddstring_t const* materialUri)
             materialid_t materialId = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
             if(materialId == NOMATERIALID)
             {
-                de::Uri tmp = de::Uri(Str_Text(materialUri), RC_NULL).setScheme("");
+                de::Uri tmp(de::Path(Str_Text(materialUri)));
                 materialId = Materials_ResolveUri(reinterpret_cast<uri_s*>(&tmp));
             }
             material = Materials_ToMaterial(materialId);

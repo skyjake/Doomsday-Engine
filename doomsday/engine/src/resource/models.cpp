@@ -495,7 +495,7 @@ static String findSkinPath(String skinFileName, String modelFilePath)
         {} // Ignore this error.
     }
 
-    de::Uri searchPath = de::Uri(Path(skinFileName)).setScheme("Models");
+    de::Uri searchPath = de::Uri("Models", Path(skinFileName));
     return App_FileSystem()->findPath(searchPath, RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
 }
 

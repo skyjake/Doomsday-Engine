@@ -60,8 +60,8 @@ void R_InitSystemTextures()
     for(uint i = 0; !names[i].isEmpty(); ++i)
     {
         Path path = names[i];
-        de::Uri uri = de::Uri(path).setScheme("System");
-        de::Uri resourcePath = de::Uri(path).setScheme("Graphics");
+        de::Uri uri("System", path);
+        de::Uri resourcePath("Graphics", path);
 
         textureid_t texId = Textures_Declare(reinterpret_cast<uri_s*>(&uri), i + 1/*1-based index*/,
                                              reinterpret_cast<uri_s*>(&resourcePath));
@@ -104,7 +104,7 @@ patchid_t R_DeclarePatch(char const *name)
 
     // WAD format allows characters not normally permitted in native paths.
     // To achieve uniformity we apply a percent encoding to the "raw" names.
-    de::Uri uri = de::Uri(Path(QString(QByteArray(name, qstrlen(name)).toPercentEncoding()))).setScheme("Patches");
+    de::Uri uri("Patches", Path(QString(QByteArray(name, qstrlen(name)).toPercentEncoding())));
 
     // Already defined as a patch?
     textureid_t texId = Textures_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
@@ -125,7 +125,7 @@ patchid_t R_DeclarePatch(char const *name)
 
     // Compose the path to the data resource.
     de::File1& file = App_FileSystem()->nameIndex().lump(lumpNum);
-    de::Uri resourceUri = de::Uri(Path(file.name())).setScheme("Lumps");
+    de::Uri resourceUri("Lumps", Path(file.name()));
 
     int uniqueId = Textures_Count(TS_PATCHES) + 1; // 1-based index.
     texId = Textures_Declare(reinterpret_cast<uri_s*>(&uri), uniqueId,
@@ -565,7 +565,7 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
     {
         CompositeTexture &def = *defs.takeFirst();
 
-        de::Uri uri = de::Uri(Path(def.percentEncodedName())).setScheme("Textures");
+        de::Uri uri("Textures", Path(def.percentEncodedName()));
         textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), def.origIndex(), 0);
         if(texId != NOTEXTUREID)
         {
@@ -627,7 +627,7 @@ void R_InitCompositeTextures()
 
 static inline de::Uri composeFlatUri(String percentEncodedPath)
 {
-    return de::Uri(Path(percentEncodedPath.fileNameWithoutExtension())).setScheme("Flats");
+    return de::Uri("Flats", Path(percentEncodedPath.fileNameWithoutExtension()));
 }
 
 /**
@@ -639,7 +639,7 @@ static inline de::Uri composeFlatUri(String percentEncodedPath)
  */
 static inline de::Uri composeFlatResourceUrn(lumpnum_t lumpNum)
 {
-    return de::Uri(Path(String("%1").arg(lumpNum))).setScheme("LumpDir");
+    return de::Uri("LumpDir", Path(String("%1").arg(lumpNum)));
 }
 
 void R_InitFlatTextures()
@@ -801,7 +801,7 @@ static bool validateSpriteName(String name)
 #if 0
 static inline de::Uri composeSpriteResourceUrn(lumpnum_t lumpNum)
 {
-    return de::Uri(Path(String("%1").arg(lumpNum))).setScheme("LumpDir");
+    return de::Uri("LumpDir", Path(String("%1").arg(lumpNum)));
 }
 #endif
 
@@ -850,11 +850,11 @@ void R_InitSpriteTextures()
         }
 
         // Compose the resource name.
-        de::Uri uri = de::Uri(Path(fileName)).setScheme("Sprites");
+        de::Uri uri("Sprites", Path(fileName));
 
         // Compose the data resource path.
         //de::Uri resourcePath = composeSpriteResourceUrn(i);
-        de::Uri resourcePath = de::Uri(Path(fileName)).setScheme("Lumps");
+        de::Uri resourcePath("Lumps", Path(fileName));
 
         texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId,
                                  reinterpret_cast<uri_s *>(&resourcePath));
@@ -902,7 +902,7 @@ texture_s *R_CreateSkinTex(uri_s const *filePath, boolean isShinySkin)
         return 0;
     }
 
-    de::Uri uri = de::Uri(Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
+    de::Uri uri(Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
     uri.setScheme((isShinySkin? "ModelReflectionSkins" : "ModelSkins"));
 
     textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, filePath);
@@ -941,7 +941,7 @@ texture_s *R_CreateDetailTextureFromDef(ded_detailtexture_t const *def)
         return 0;
     }
 
-    de::Uri uri = de::Uri(Path(String("%1").arg(uniqueId, 8, 10, QChar('0')))).setScheme("Details");
+    de::Uri uri("Details", Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
     textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, def->detailTex);
     if(texId == NOTEXTUREID) return 0; // Invalid URI?
 
@@ -974,7 +974,7 @@ texture_s *R_CreateLightMap(uri_s const *resourcePath)
         return 0;
     }
 
-    de::Uri uri = de::Uri(Path(String("%1").arg(uniqueId, 8, 10, QChar('0')))).setScheme("Lightmaps");
+    de::Uri uri("Lightmaps", Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
     textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, resourcePath);
     if(texId == NOTEXTUREID) return 0; // Invalid URI?
 
@@ -1018,7 +1018,7 @@ texture_s *R_CreateFlareTexture(uri_s const *resourcePath)
     }
 
     // Create a texture for it.
-    de::Uri uri = de::Uri(Path(String("%1").arg(uniqueId, 8, 10, QChar('0')))).setScheme("Flaremaps");
+    de::Uri uri("Flaremaps", Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
     textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, resourcePath);
     if(texId == NOTEXTUREID) return 0; // Invalid URI?
 
@@ -1053,7 +1053,7 @@ texture_s *R_CreateReflectionTexture(uri_s const *resourcePath)
         return 0;
     }
 
-    de::Uri uri = de::Uri(Path(String("%1").arg(uniqueId, 8, 10, QChar('0')))).setScheme("Reflections");
+    de::Uri uri("Reflections", Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
     textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, resourcePath);
     if(texId == NOTEXTUREID) return 0; // Invalid URI?
 
@@ -1090,7 +1090,7 @@ texture_s *R_CreateMaskTexture(uri_s const *resourcePath, Size2Raw const *size)
         return 0;
     }
 
-    de::Uri uri = de::Uri(Path(String("%1").arg(uniqueId, 8, 10, QChar('0')))).setScheme("Masks");
+    de::Uri uri("Masks", Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
     textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, resourcePath);
     if(texId == NOTEXTUREID) return 0; // Invalid URI?
 

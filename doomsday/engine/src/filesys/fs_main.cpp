@@ -572,7 +572,7 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
             String ext = searchPath.fileNameExtension();
             if(!ext.isEmpty() && ext.compare(".*"))
             {
-                String found = d->findPath(de::Uri(searchPath, RC_NULL).setScheme(search.scheme()));
+                String found = d->findPath(de::Uri(search.scheme(), searchPath));
                 if(!found.isEmpty()) return found;
 
                 // If we are looking for a particular file type, get out of here.
@@ -591,7 +591,7 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
                 DENG2_FOR_EACH_CONST(QStringList, i, (*typeIt)->knownFileNameExtensions())
                 {
                     String const& ext = *i;
-                    String found = d->findPath(de::Uri(searchPathWithoutFileNameExtension + ext, RC_NULL).setScheme(search.scheme()));
+                    String found = d->findPath(de::Uri(search.scheme(), searchPathWithoutFileNameExtension + ext));
                     if(!found.isEmpty()) return found;
                 }
             };

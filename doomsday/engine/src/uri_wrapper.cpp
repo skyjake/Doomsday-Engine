@@ -245,7 +245,7 @@ static de::Uri::PrintFlags translateFlags(int flags)
 {
     de::Uri::PrintFlags pf;
     if(flags & UPF_OUTPUT_RESOLVED)           pf |= de::Uri::OutputResolved;
-    if(flags & UPF_TRANSFORM_PATH_MAKEPRETTY) pf |= de::Uri::TransformPathPrettify;
+    if(flags & UPF_TRANSFORM_PATH_MAKEPRETTY) pf |= de::Uri::PrettifyPath;
     return pf;
 }
 

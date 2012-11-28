@@ -265,7 +265,7 @@ static materialschemeid_t schemeIdForDirectory(de::PathTree const &directory)
 static de::Uri composeUriForDirectoryNode(MaterialRepository::Node const& node)
 {
     Str const* schemeName = Materials_SchemeName(schemeIdForDirectory(node.tree()));
-    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
+    return de::Uri(Str_Text(schemeName), node.path());
 }
 
 static MaterialAnim* getAnimGroup(int number)

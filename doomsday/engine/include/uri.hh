@@ -64,9 +64,10 @@ public:
      */
     enum PrintFlag
     {
-        OutputResolved = 0x1,           ///< Include the resolved path in the output.
-        TransformPathPrettify = 0x2,    ///< Transform paths making them "pretty".
-        DefaultPrintFlags = OutputResolved | TransformPathPrettify
+        OutputResolved = 0x1,   ///< Include the resolved path in the output.
+        PrettifyPath   = 0x2,   ///< Transform paths making them "pretty".
+
+        DefaultPrintFlags = OutputResolved | PrettifyPath
     };
     Q_DECLARE_FLAGS(PrintFlags, PrintFlag)
 
@@ -91,6 +92,14 @@ public:
      *                        in @a path.
      */
     Uri(String const &percentEncoded, resourceclassid_t defaultResClass = RC_UNKNOWN, QChar sep = '/');
+
+    /**
+     * Construct a Uri from a textual scheme and a path.
+     *
+     * @param scheme  Scheme for the Uri.
+     * @param path    Path for the Uri.
+     */
+    Uri(String const &scheme, Path const &path);
 
     /**
      * Construct a Uri instance from a path. Note that Path instances can

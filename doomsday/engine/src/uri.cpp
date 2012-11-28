@@ -236,6 +236,12 @@ Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, Q
     }
 }
 
+Uri::Uri(String const &scheme, Path const &path) : d(new Instance)
+{
+    setScheme(scheme);
+    setPath(path);
+}
+
 Uri::Uri(resourceclassid_t resClass, Path const &path) : d(new Instance)
 {
     setUri(path.toString(), resClass, path.separator());
@@ -435,10 +441,10 @@ void Uri::debugPrint(int indent, PrintFlags flags, String unresolvedText) const
 
     LOG_DEBUG("%s\"%s\"%s%s")
         << String(indent, ' ') << ""
-        << ((flags & TransformPathPrettify)? NativePath(asText()).pretty() : asText())
+        << ((flags & PrettifyPath)? NativePath(asText()).pretty() : asText())
         << ((flags & OutputResolved)? (resolvedPath? "=> " : unresolvedText) : "")
         << ((flags & OutputResolved) && resolvedPath?
-                ((flags & TransformPathPrettify)? NativePath(d->resolvedPath).pretty() : NativePath(d->resolvedPath).toString())
+                ((flags & PrettifyPath)? NativePath(d->resolvedPath).pretty() : NativePath(d->resolvedPath).toString())
               : "");
 }
 
