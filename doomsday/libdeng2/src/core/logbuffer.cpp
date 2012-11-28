@@ -343,7 +343,7 @@ void LogBuffer::flush()
                 String::size_type pos = 0;
                 while(pos != String::npos)
                 {
-#ifdef _DEBUG
+#ifdef DENG2_DEBUG
                     int const minimumIndent = 25;
 #else
                     int const minimumIndent = 0;

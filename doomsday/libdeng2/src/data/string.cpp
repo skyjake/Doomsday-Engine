@@ -349,7 +349,7 @@ dint String::compareWithoutCase(String const &str) const
     return compare(str, Qt::CaseInsensitive);
 }
 
-int String::commonPrefixLength(const String &str) const
+int String::commonPrefixLength(String const &str) const
 {
     int count = 0;
     int len = qMin(str.size(), size());
