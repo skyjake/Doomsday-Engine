@@ -84,14 +84,16 @@ struct font_s;
 
 #include "dd_share.h"
 #include "dd_plugin.h"
+
 #include "filehandle.h"
+#include <de/memoryzone.h>
 #include <de/point.h>
+#include <de/reader.h>
 #include <de/rect.h>
 #include <de/size.h>
-#include <de/reader.h>
-#include <de/writer.h>
-#include <de/memoryzone.h>
 #include <de/smoother.h>
+#include <de/vector1.h>
+#include <de/writer.h>
 
 // Play: World data access (Map Data Updates and access to other information).
 #include "dd_world.h"
@@ -759,16 +761,6 @@ angle_t M_PointXYToAngle(double x, double y);
 
 angle_t M_PointToAngle2(double const a[2], double const b[2]);
 angle_t M_PointXYToAngle2(double x1, double y1, double x2, double y2);
-
-void V2d_Copy(double dest[2], double const src[2]);
-void V2d_Scale(double vector[2], double scalar);
-void V2d_Sum(double dest[2], double const a[2], double const b[2]);
-void V2d_Subtract(double dest[2], double const a[2], double const b[2]);
-void V2d_Rotate(double vec[2], double radians);
-double V2d_PointOnLineSide(double const point[2], double const lineOrigin[2], double const lineDirection[2]);
-double V2d_PointLineDistance(double const point[2], double const linePoint[2], double const lineDirection[2], double* offset);
-double V2d_ProjectOnLine(double dest[2], double const point[2], double const lineOrigin[2], double const lineDirection[2]);
-double V2d_Intersection(double const linePointA[2], double const lineDirectionA[2], double const linePointB[2], double const lineDirectionB[2], double point[2]);
 
 int M_RatioReduce(int* numerator, int* denominator);
 int M_CeilPow2(int num);
