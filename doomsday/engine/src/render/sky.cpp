@@ -213,18 +213,18 @@ static void calculateSkyAmbientColor()
         {
             averagecolor_analysis_t const *avgColor = (averagecolor_analysis_t const *)
                 Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_COLOR);
-            if(!avgColor) Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_COLOR analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+            if(!avgColor) Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_COLOR analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
 
             if(i == firstSkyLayer)
             {
                 Texture const *tex = MSU_texture(ms, MTU_PRIMARY);
                 averagecolor_analysis_t const *avgLineColor = (averagecolor_analysis_t const *) Texture_AnalysisDataPointer(tex, TA_LINE_TOP_COLOR);
-                if(!avgLineColor) Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_LINE_TOP_COLOR analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+                if(!avgLineColor) Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_LINE_TOP_COLOR analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
 
                 V3f_Copy(topCapColor.rgb, avgLineColor->color.rgb);
 
                 avgLineColor = (averagecolor_analysis_t const *) Texture_AnalysisDataPointer(tex, TA_LINE_BOTTOM_COLOR);
-                if(!avgLineColor) Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_LINE_BOTTOM_COLOR analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+                if(!avgLineColor) Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_LINE_BOTTOM_COLOR analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
 
                 V3f_Copy(bottomCapColor.rgb, avgLineColor->color.rgb);
             }
@@ -823,7 +823,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
                     Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY),
                                                 (setupCap == HC_TOP? TA_LINE_TOP_COLOR : TA_LINE_BOTTOM_COLOR));
             float const fadeoutLimit = Sky_LayerFadeoutLimit(layer);
-            if(!avgLineColor) Con_Error("configureRenderHemisphereStateForLayer: Texture id:%u has no %s analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)), (setupCap == HC_TOP? "TA_LINE_TOP_COLOR" : "TA_LINE_BOTTOM_COLOR"));
+            if(!avgLineColor) Con_Error("configureRenderHemisphereStateForLayer: Texture id:%u has no %s analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))), (setupCap == HC_TOP? "TA_LINE_TOP_COLOR" : "TA_LINE_BOTTOM_COLOR"));
 
             V3f_Copy(rs.capColor.rgb, avgLineColor->color.rgb);
             // Is the colored fadeout in use?

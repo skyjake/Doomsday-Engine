@@ -24,8 +24,9 @@
 #define LIBDENG_RESOURCE_TEXTURE_H
 
 #include <de/size.h>
-#include "textures.h"
 #include "texturevariant.h"
+
+typedef int textureid_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,6 +54,7 @@ typedef enum {
 #ifdef __cplusplus
 
 #include <list>
+#include <QFlag>
 
 namespace de {
 
@@ -79,7 +81,7 @@ public:
      *    for the resultant texture.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture(textureid_t bindId, void *userData = 0);
+    Texture(textureid_t bindId, Flags flags = 0, void *userData = 0);
 
     /**
      * @param bindId  Unique identifier of the primary binding in the owning
@@ -90,7 +92,7 @@ public:
      *    image at load time.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture(textureid_t bindId, Size2Raw const &dimensions, void *userData = 0);
+    Texture(textureid_t bindId, Size2Raw const &dimensions, Flags flags = 0, void *userData = 0);
 
     ~Texture();
 
@@ -130,10 +132,13 @@ public:
      */
     TextureVariant &addVariant(TextureVariant &variant);
 
-    /// @return  Number of variants for this texture.
+    /// @return  Number of variants for the texture.
     uint variantCount() const;
 
-    /// Destroy all prepared variants owned by this texture.
+    /// Destroy all analyses for the texture.
+    void clearAnalyses();
+
+    /// Destroy all prepared variants for the texture.
     void clearVariants();
 
     /**

@@ -690,7 +690,8 @@ bool FS1::checkFileId(de::Uri const& path)
     if(place != d->fileIds.end() && *place == fileId) return false;
 
 #ifdef _DEBUG
-    LOG_DEBUG("Added FileId %s - \"%s\"") << fileId << fileId.path(); /* path() is debug-only */
+    LOG_AS("FS1::addFileId")
+    LOG_DEBUG("\"%s\" => %s") << fileId.path() << fileId; /* path() is debug-only */
 #endif
 
     d->fileIds.insert(place, fileId);

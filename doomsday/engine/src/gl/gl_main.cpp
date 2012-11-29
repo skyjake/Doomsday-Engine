@@ -364,7 +364,6 @@ void GL_InitRefresh()
 
 void GL_ShutdownRefresh()
 {
-    Textures_Shutdown();
     R_DestroyColorPalettes();
 
     GL_ShutdownTextureManager();
@@ -397,6 +396,7 @@ void GL_Shutdown()
     Rend_ModelShutdown();
     Sky_Shutdown();
     Rend_Reset();
+    Textures_Shutdown();
     GL_ShutdownRefresh();
 
     // Shutdown OpenGL.

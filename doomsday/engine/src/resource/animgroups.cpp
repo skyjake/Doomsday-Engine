@@ -21,9 +21,8 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_resource.h"
 #include <de/memoryzone.h>
-
-#include "resource/animgroups.h"
 
 static int numgroups;
 static animgroup_t *groups;
@@ -92,9 +91,11 @@ int R_CreateAnimGroup(int flags)
 }
 
 /// @note Part of the Doomsday public API.
-void R_AddAnimGroupFrame(int groupNum, Uri const *texture, int tics, int randomTics)
+void R_AddAnimGroupFrame(int groupNum, Uri const *textureUri, int tics, int randomTics)
 {
     LOG_AS("R_AddAnimGroupFrame");
+
+    if(!textureUri) return;
 
     animgroup_t *group = getAnimGroup(groupNum);
     if(!group)
@@ -103,11 +104,10 @@ void R_AddAnimGroupFrame(int groupNum, Uri const *texture, int tics, int randomT
         return;
     }
 
-    textureid_t texId = Textures_ResolveUri2(texture, true/*quiet please*/);
-    if(texId == NOTEXTUREID)
+    de::TextureMetaFile *metafile = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri));
+    if(!metafile)
     {
-        AutoStr *path = Uri_ToString(texture);
-        LOG_DEBUG("Invalid texture uri \"%s\", ignoring.") << Str_Text(path);
+        LOG_DEBUG("Invalid texture uri \"%s\", ignoring.") << reinterpret_cast<de::Uri const &>(*textureUri);
         return;
     }
 
@@ -116,14 +116,17 @@ void R_AddAnimGroupFrame(int groupNum, Uri const *texture, int tics, int randomT
     if(!group->frames) Con_Error("R_AddAnimGroupFrame: Failed on (re)allocation of %lu bytes enlarging AnimFrame list for group #%i.", (unsigned long) sizeof(*group->frames) * group->count, groupNum);
 
     animframe_t *frame = &group->frames[group->count - 1];
-    frame->texture = texId;
+    frame->texture = metafile->lookupTextureId();
     frame->tics = tics;
     frame->randomTics = randomTics;
 }
 
 boolean R_IsTextureInAnimGroup(Uri const *texture, int groupNum)
 {
+    if(!texture) return false;
     animgroup_t *group = getAnimGroup(groupNum);
     if(!group) return false;
-    return isInAnimGroup(group, Textures_ResolveUri2(texture, true/*quiet please*/));
+    de::TextureMetaFile *metafile = App_Textures()->find(reinterpret_cast<de::Uri const &>(*texture));
+    if(!metafile) return false;
+    return isInAnimGroup(group, metafile->lookupTextureId());
 }

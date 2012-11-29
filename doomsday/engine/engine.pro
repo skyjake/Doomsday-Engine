@@ -306,6 +306,7 @@ DENG_HEADERS += \
     include/resource/r_data.h \
     include/resource/rawtexture.h \
     include/resource/texture.h \
+    include/resource/texturemetafile.h \
     include/resource/textures.h \
     include/resource/texturevariant.h \
     include/resource/texturevariantspecification.h \

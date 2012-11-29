@@ -282,6 +282,9 @@ public:
      * @param sep  Character to use to replace path segment separators.
      *
      * @return  Plain-text String representation.
+     *
+     * @todo Should define a set of flags to determine which components of the
+     *       URI to include in the string, like @ref debugPrint() -ds
      */
     String compose(QChar sep = '/') const;
 

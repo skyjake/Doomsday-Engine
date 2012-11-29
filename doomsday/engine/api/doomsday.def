@@ -21,7 +21,7 @@ EXPORTS
     DD_GetVariable              @43 NONAME
     DD_GetPlayer                @44 NONAME
     DD_MaterialForTextureUniqueId @234 NONAME
-    DD_ParseTextureSchemeName    @502 NONAME
+;    DD_ParseTextureSchemeName    @502 NONAME
     DD_ParseMaterialSchemeName   @503 NONAME
 
 ; Base: Types.
@@ -673,8 +673,8 @@ EXPORTS
     R_ComposePatchUri           @247 NONAME
     R_ComposePatchPath          @858 NONAME
 
-    R_TextureUniqueId           @438 NONAME
-    R_TextureUniqueId2          @501 NONAME
+    Textures_UniqueId           @438 NONAME
+    Textures_UniqueId2          @501 NONAME
 
     R_CreateAnimGroup           @241 NONAME
     R_AddAnimGroupFrame         @242 NONAME

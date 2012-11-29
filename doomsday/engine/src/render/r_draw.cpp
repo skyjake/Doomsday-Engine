@@ -24,12 +24,10 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_play.h"
+#include "de_resource.h"
 
 #include "render/r_draw.h"
 #include "gl/sys_opengl.h"
-#include "resource/texture.h"
-#include "resource/texturevariant.h"
-#include "resource/materialvariant.h"
 
 // A logical ordering (twice around).
 enum {
@@ -47,6 +45,8 @@ enum {
 static bool inited = false;
 static int borderSize;
 static Uri *borderGraphicsNames[9];
+
+/// @todo Declare the patches with URNs to avoid unnecessary duplication here -ds
 static patchid_t borderPatches[9];
 
 static void loadViewBorderPatches()
@@ -130,7 +130,8 @@ void R_DrawPatch3(Texture *tex, int x, int y, int w, int h, boolean useOffsets)
 {
     if(!tex) return;
 
-    if(Textures_Scheme(Textures_Id(tex)) != TS_PATCHES)
+    de::Textures &textures = *App_Textures();
+    if(textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*tex))).scheme().compareWithoutCase("Patches"))
     {
 #if _DEBUG
         LOG_AS("R_DrawPatch3");
@@ -224,10 +225,11 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        R_DrawPatchTiled(Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, borderPatches[BG_TOP])), vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, borderPatches[BG_BOTTOM])), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, borderPatches[BG_LEFT])), vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
-        R_DrawPatchTiled(Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, borderPatches[BG_RIGHT])), vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        de::Textures &textures = *App_Textures();
+        R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOP]).texture()),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOM]).texture()), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_LEFT]).texture()),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_RIGHT]).texture()),  vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
     }
 
     glMatrixMode(GL_TEXTURE);
@@ -235,10 +237,11 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        R_DrawPatch3(Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, borderPatches[BG_TOPLEFT])), vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
-        R_DrawPatch3(Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, borderPatches[BG_TOPRIGHT])), vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
-        R_DrawPatch3(Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, borderPatches[BG_BOTTOMRIGHT])), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);
-        R_DrawPatch3(Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, borderPatches[BG_BOTTOMLEFT])), vd->window.origin.x - border, vd->window.origin.y + vd->window.size.height, border, border, false);
+        de::Textures &textures = *App_Textures();
+        R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPLEFT]).texture()),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
+        R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPRIGHT]).texture()),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
+        R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMRIGHT]).texture()), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);
+        R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMLEFT]).texture()),  vd->window.origin.x - border, vd->window.origin.y + vd->window.size.height, border, border, false);
     }
 
     glDisable(GL_TEXTURE_2D);

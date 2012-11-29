@@ -119,21 +119,17 @@ void GL_ReleaseRuntimeTextures(void);
 void GL_ReleaseSystemTextures(void);
 
 /**
- * Release all textures in the identified scheme(s).
+ * Release all textures in the identified scheme.
  *
- * @param schemeId  Unique identifier of the scheme to process or @c TS_ANY
- *     to release all textures in any scheme.
+ * @param schemeName  Symbolic name of the texture scheme to process.
  */
-void GL_ReleaseTexturesByScheme(textureschemeid_t schemeId);
+void GL_ReleaseTexturesByScheme(char const *schemeName);
 
 /**
  * Release all textures associated with the specified @a texture.
  * @param texture  Logical Texture. Can be @c NULL, in which case this is a null-op.
- *
- * @note Can also be used as an iterator callback.
  */
-int GL_ReleaseGLTexturesByTexture2(Texture* texture, void* paramaters);
-int GL_ReleaseGLTexturesByTexture(Texture* texture); /*paramaters=NULL*/
+void GL_ReleaseGLTexturesByTexture(Texture* texture);
 
 /**
  * Release all textures associated with the specified variant @a texture.
@@ -309,8 +305,8 @@ void GL_BindTexture(struct texturevariant_s* tex);
 DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
     int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT, int flags);
 
-DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare);
-DGLuint GL_PrepareLightMap(const Uri* path);
+DGLuint GL_PrepareSysFlaremap(flaretexid_t flare);
+DGLuint GL_PrepareLightmap(Uri const *path);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
 DGLuint GL_PrepareRawTexture(rawtex_t* rawTex);
 
@@ -324,20 +320,16 @@ struct texturevariant_s* GL_PreparePatchTexture(Texture* tex);
  *
  * @param name          Name of a flare texture or "0" to "4".
  * @param oldIdx        Old method of flare texture selection, by id.
+ *
+ * @return  @c 0= Use the automatic selection logic.
  */
-DGLuint GL_PrepareFlareTexture(const Uri* path, int oldIdx);
+DGLuint GL_PrepareFlareTexture(Uri const *path, int oldIdx);
 
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags);
 DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT);
-
-/**
- * @param tex           Texture instance to compose the cache name of.
- * @return The chosen cache name for this texture.
- */
-AutoStr* GL_ComposeCacheNameForTexture(Texture* tex);
 
 /**
  * Dump the pixel data of @a img to an ARGB32 at @a filePath.

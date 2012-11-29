@@ -28,6 +28,7 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_filesys.h"
+#include "de_resource.h"
 
 #include "gl/sys_opengl.h"
 
@@ -720,9 +721,18 @@ void DGL_SetMaterialUI(material_t *mat, DGLint wrapS, DGLint wrapT)
 
 void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 {
-    Texture *tex = Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, id));
-    if(!tex) return;
-    GL_BindTexture(GL_PreparePatchTexture2(tex, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT)));
+    try
+    {
+        Texture *tex = reinterpret_cast<texture_s *>(App_Textures()->scheme("Patches").findByUniqueId(id).texture());
+        if(!tex) return;
+
+        GL_BindTexture(GL_PreparePatchTexture2(tex, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT)));
+    }
+    catch(de::Textures::Scheme::NotFoundError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
 }
 
 void DGL_SetPSprite(material_t *mat)

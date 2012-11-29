@@ -26,9 +26,7 @@
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_audio.h"
-
-#include "resource/texturevariant.h"
-#include "resource/materialvariant.h"
+#include "de_resource.h"
 
 #include <de/memory.h>
 #include <de/memoryzone.h>
@@ -1021,37 +1019,40 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                         ms->size.height + TS_GENERAL(texSpec)->border*2, 0);
                 TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
 
-                switch(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))))
+                de::Textures &textures = *App_Textures();
+                de::Uri uri = textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
+                if(!uri.scheme().compareWithoutCase("Sprites"))
                 {
-                case TS_SPRITES: {
-                    patchtex_t *sTex = (patchtex_t *)Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
+                    patchtex_t *sTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
                     if(sTex)
                     {
                         V3f_Set(offset, sTex->offX, sTex->offY, 0);
-                        break;
-                    }}
-
-                    // Fall through.
-                default:
+                    }
+                    else
+                    {
+                        V3f_Set(offset, 0, 0, 0);
+                    }
+                }
+                else
+                {
                     V3f_Set(offset, 0, 0, 0);
-                    break;
                 }
             }
             break; }
 
         case PFT_PATCH: {
-            Texture *texture = Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, f->texRef.patch));
+            de::Texture *texture = App_Textures()->scheme("Patches").findByUniqueId(f->texRef.patch).texture();
             if(texture)
             {
-                TextureVariant *tex = GL_PreparePatchTexture(texture);
+                TextureVariant *tex = GL_PreparePatchTexture(reinterpret_cast<texture_s *>(texture));
                 GL_BindTexture(tex);
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
-                patchtex_t* pTex = reinterpret_cast<patchtex_t*>(Texture_UserDataPointer(texture));
+                patchtex_t* pTex = reinterpret_cast<patchtex_t *>(texture->userDataPointer());
                 DENG_ASSERT(pTex);
                 V3f_Set(offset, pTex->offX, pTex->offY, 0);
-                V3f_Set(dimensions, Texture_Width(texture), Texture_Height(texture), 0);
+                V3f_Set(dimensions, texture->width(), texture->height(), 0);
             }
             break; }
 

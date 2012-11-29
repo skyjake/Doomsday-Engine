@@ -750,7 +750,7 @@ static void addLuminous(mobj_t *mo)
     if(!MSU_texture(ms, MTU_PRIMARY)) return; // An invalid sprite texture.
 
     pl = (pointlight_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
-    if(!pl) Con_Error("addLuminous: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+    if(!pl) Con_Error("addLuminous: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
 
     size = pl->brightMul;
     yOffset = ms->size.height * pl->originY;
@@ -764,11 +764,12 @@ static void addLuminous(mobj_t *mo)
     }
 
 #if _DEBUG
-    if(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TS_SPRITES)
+    de::Textures &textures = *App_Textures();
+    if(textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)))).scheme().compareWithoutCase("Sprites"))
         Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t *) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
+    pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
     DENG_ASSERT(pTex);
 
     center = -pTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
@@ -860,9 +861,9 @@ static void addLuminous(mobj_t *mo)
 
     if(def)
     {
-        LUM_OMNI(l)->tex = GL_PrepareLightMap(def->sides);
-        LUM_OMNI(l)->ceilTex = GL_PrepareLightMap(def->up);
-        LUM_OMNI(l)->floorTex = GL_PrepareLightMap(def->down);
+        LUM_OMNI(l)->tex = GL_PrepareLightmap(def->sides);
+        LUM_OMNI(l)->ceilTex = GL_PrepareLightmap(def->up);
+        LUM_OMNI(l)->floorTex = GL_PrepareLightmap(def->down);
     }
     else
     {
@@ -972,7 +973,7 @@ static boolean createGlowLightForSurface(Surface *suf, void * /*paramaters*/)
         if(!(ms->glowing > .001f)) return true; // Continue iteration.
 
         averagecolor_analysis_t const *avgColorAmplified = (averagecolor_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_COLOR_AMPLIFIED);
-        if(!avgColorAmplified) Con_Error("createGlowLightForSurface: Texture id:%u has no TA_COLOR_AMPLIFIED analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+        if(!avgColorAmplified) Con_Error("createGlowLightForSurface: Texture id:%u has no TA_COLOR_AMPLIFIED analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
 
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
         lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);

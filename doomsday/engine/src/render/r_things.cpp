@@ -34,12 +34,10 @@
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_resource.h"
 
 #include "def_main.h"
 #include "m_stack.h"
-#include "resource/texture.h"
-#include "resource/texturevariant.h"
-#include "resource/materialvariant.h"
 
 #include <de/memoryblockset.h>
 
@@ -138,13 +136,13 @@ static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
     sprTemp[frame].flip[rotation] = (byte) flipped;
 }
 
-static spriterecord_t* findSpriteRecordForName(const ddstring_t* name)
+static spriterecord_t* findSpriteRecordForName(char const *name)
 {
     spriterecord_t* rec = NULL;
-    if(name && !Str_IsEmpty(name) && spriteRecords)
+    if(name && name[0] && spriteRecords)
     {
         rec = spriteRecords;
-        while(strnicmp(rec->name, Str_Text(name), 4) && (rec = rec->next)) {}
+        while(strnicmp(rec->name, name, 4) && (rec = rec->next)) {}
     }
     return rec;
 }
@@ -171,16 +169,18 @@ static spriterecord_t* findSpriteRecordForName(const ddstring_t* name)
  * turn CLOCKWISE around the axis. This is not the same as the angle,
  * which increases counter clockwise (protractor).
  */
-static int buildSpriteRotationsWorker(textureid_t texId, void * /*parameters*/)
+static void buildSprite(de::TextureMetaFile &metafile)
 {
     // Have we already encountered this name?
-    AutoStr *path = Textures_ComposePath(texId);
-    spriterecord_t *rec = findSpriteRecordForName(path);
+    de::String decodedPath = QString(QByteArray::fromPercentEncoding(metafile.path().toUtf8()));
+    QByteArray decodedPathUtf8 = decodedPath.toUtf8();
+
+    spriterecord_t *rec = findSpriteRecordForName(decodedPathUtf8.constData());
     if(!rec)
     {
         // An entirely new sprite.
         rec = (spriterecord_t *) BlockSet_Allocate(spriteRecordBlockSet);
-        strncpy(rec->name, Str_Text(path), 4);
+        strncpy(rec->name, decodedPathUtf8.constData(), 4);
         rec->name[4] = '\0';
         rec->numFrames = 0;
         rec->frames = NULL;
@@ -191,15 +191,15 @@ static int buildSpriteRotationsWorker(textureid_t texId, void * /*parameters*/)
     }
 
     // Add the frame(s).
-    Str decodedPath; Str_InitStd(&decodedPath);
-    Str_PercentDecode(Str_Set(&decodedPath, Str_Text(path)));
+    int const frameNumber    = decodedPath.at(4).toUpper().unicode() - QChar('A').unicode() + 1;
+    int const rotationNumber = decodedPath.at(5).digitValue();
 
-    boolean link = false;
+    bool link = false;
     spriterecord_frame_t *frame = rec->frames;
     if(rec->frames)
     {
-        while(!(frame->frame[0]    == toupper(Str_At(&decodedPath, 4)) - 'A' + 1 &&
-                frame->rotation[0] == toupper(Str_At(&decodedPath, 5)) - '0') &&
+        while(!(frame->frame[0]    == frameNumber &&
+                frame->rotation[0] == rotationNumber) &&
               (frame = frame->next)) {}
     }
 
@@ -210,21 +210,21 @@ static int buildSpriteRotationsWorker(textureid_t texId, void * /*parameters*/)
         link = true;
     }
 
-    Uri* uri = Uri_NewWithPath2("Sprites:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(path));
-    frame->mat = Materials_ToMaterial(Materials_ResolveUri(uri));
-    Uri_Delete(uri);
+    de::Uri uri = de::Uri("Sprites", metafile.path());
+    frame->mat = Materials_ToMaterial(Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
 
-    frame->frame[0]    = toupper(Str_At(&decodedPath, 4)) - 'A' + 1;
-    frame->rotation[0] = toupper(Str_At(&decodedPath, 5)) - '0';
-    if(Str_At(&decodedPath, 6))
+    frame->frame[0]    = frameNumber;
+    frame->rotation[0] = rotationNumber;
+
+    // Not mirrored?
+    if(decodedPath.length() >= 8)
     {
-        frame->frame[1]    = toupper(Str_At(&decodedPath, 6)) - 'A' + 1;
-        frame->rotation[1] = toupper(Str_At(&decodedPath, 7)) - '0';
+        frame->frame[1]    = decodedPath.at(6).toUpper().unicode() - QChar('A').unicode() + 1;
+        frame->rotation[1] = decodedPath.at(7).digitValue();
     }
     else
     {
-        frame->frame[1] = 0;
+        frame->frame[1]    = 0;
         frame->rotation[1] = 0;
     }
 
@@ -233,23 +233,24 @@ static int buildSpriteRotationsWorker(textureid_t texId, void * /*parameters*/)
         frame->next = rec->frames;
         rec->frames = frame;
     }
-
-    Str_Free(&decodedPath);
-    return 0; // Continue iteration.
 }
 
-static void buildSpriteRotations()
+static void buildSprites()
 {
-    uint startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
+    de::Time begunAt;
 
     numSpriteRecords = 0;
     spriteRecords = 0;
     spriteRecordBlockSet = BlockSet_New(sizeof(spriterecord_t), 64),
     spriteRecordFrameBlockSet = BlockSet_New(sizeof(spriterecord_frame_t), 256);
 
-    Textures_IterateDeclared(TS_SPRITES, buildSpriteRotationsWorker);
+    de::PathTreeIterator<de::PathTree> iter(App_Textures()->scheme("Sprites").index().leafNodes());
+    while(iter.hasNext())
+    {
+        buildSprite(static_cast<de::TextureMetaFile &>(iter.next()));
+    }
 
-    VERBOSE2( Con_Message("buildSpriteRotations: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
+    LOG_INFO(de::String("buildSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 /**
@@ -354,11 +355,10 @@ static void initSpriteDefs(spriterecord_t *const *sprRecords, int num)
 
 void R_InitSprites()
 {
-    uint startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
+    de::Time begunAt;
 
-    VERBOSE( Con_Message("Initializing Sprites...\n") )
-
-    buildSpriteRotations();
+    LOG_VERBOSE("Building Sprites...");
+    buildSprites();
 
     /**
      * @attention Kludge:
@@ -402,7 +402,7 @@ void R_InitSprites()
     BlockSet_Delete(spriteRecordFrameBlockSet); spriteRecordFrameBlockSet = 0;
     numSpriteRecords = 0;
 
-    VERBOSE2( Con_Message("R_InitSprites: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+    LOG_INFO(de::String("R_InitSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void R_ShutdownSprites()
@@ -461,7 +461,8 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     materialsnapshot_t const *ms = Materials_Prepare(mat, spec, false);
 
 #if _DEBUG
-    if(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TS_SPRITES)
+    de::Textures &textures = *App_Textures();
+    if(textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)))).scheme().compareWithoutCase("Sprites"))
         Con_Error("R_GetSpriteInfo: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
@@ -551,7 +552,7 @@ float R_ShadowStrength(mobj_t *mo)
             materialsnapshot_t const *ms = Materials_Prepare(mat, Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
             averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
             float weightedSpriteAlpha;
-            if(!aa) Con_Error("R_ShadowStrength: Texture id:%u has no TA_ALPHA analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+            if(!aa) Con_Error("R_ShadowStrength: Texture id:%u has no TA_ALPHA analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
 
             // We use an average which factors in the coverage ratio
             // of alpha:non-alpha pixels.
@@ -1045,9 +1046,10 @@ void R_ProjectSprite(mobj_t *mo)
     ms   = Materials_Prepare(mat, spec, true);
 
     // An invalid sprite texture?
-    if(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TS_SPRITES) return;
+    de::Textures &textures = *App_Textures();
+    if(textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)))).scheme().compareWithoutCase("Sprites")) return;
 
-    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
+    pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
     DENG_ASSERT(pTex);
 
     // Align to the view plane?
@@ -1305,7 +1307,7 @@ void R_ProjectSprite(mobj_t *mo)
         pl = (const pointlight_analysis_t*)
             Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
         if(!pl)
-            Con_Error("R_ProjectSprite: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+            Con_Error("R_ProjectSprite: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
 
         lum = LO_GetLuminous(mo->lumIdx);
         def = (mo->state? stateLights[mo->state - states] : 0);

@@ -1249,35 +1249,6 @@ typedef enum materialschemeid_e {
 #define VALID_MATERIALSCHEMEID(val) ((val) >= MATERIALSCHEME_FIRST && (val) <= MATERIALSCHEME_LAST)
 
 /*
- * Texture Schemes
- */
-
-/// Texture scheme identifiers. @ingroup scheme
-typedef enum textureschemeid_e {
-    TS_ANY = -1,
-    TEXTURESCHEME_FIRST = 2000,
-    TS_SYSTEM = TEXTURESCHEME_FIRST,
-    TS_FLATS,
-    TS_TEXTURES,
-    TS_SPRITES,
-    TS_PATCHES,
-    TS_DETAILS,
-    TS_REFLECTIONS,
-    TS_MASKS,
-    TS_MODELSKINS,
-    TS_MODELREFLECTIONSKINS,
-    TS_LIGHTMAPS,
-    TS_FLAREMAPS,
-    TEXTURESCHEME_LAST = TS_FLAREMAPS,
-    TS_INVALID /// Special value used to signify an invalid scheme identifier.
-} textureschemeid_t;
-
-#define TEXTURESCHEME_COUNT  (TEXTURESCHEME_LAST - TEXTURESCHEME_FIRST + 1)
-
-/// @c true= val can be interpreted as a valid texture scheme identifier.
-#define VALID_TEXTURESCHEMEID(val) ((val) >= TEXTURESCHEME_FIRST && (val) <= TEXTURESCHEME_LAST)
-
-/*
  * Font Schemes
  */
 

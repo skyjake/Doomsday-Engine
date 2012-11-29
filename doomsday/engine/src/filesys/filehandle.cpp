@@ -124,6 +124,8 @@ void FileHandleBuilder::shutdown(void)
 
 FileHandle* FileHandleBuilder::fromLump(File1& lump, bool dontBuffer)
 {
+    LOG_AS("FileHandle::fromLump");
+
     de::FileHandle* hndl = new de::FileHandle();
     // Init and load in the lump data.
     hndl->d->file = &lump;
@@ -135,7 +137,7 @@ FileHandle* FileHandleBuilder::fromLump(File1& lump, bool dontBuffer)
         if(!hndl->d->data) Con_Error("FileHandleBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.", (unsigned long) hndl->d->size);
 
 #if _DEBUG
-        LOG_VERBOSE("FileHandle [%p] buffering \"%s:%s\"...")
+        LOG_VERBOSE("[%p] Buffering \"%s:%s\"...")
             << dintptr(hndl) << NativePath(lump.container().composePath()).pretty() << NativePath(lump.composePath()).pretty();
 #endif
         lump.read((uint8_t*)hndl->d->data, 0, lump.size());

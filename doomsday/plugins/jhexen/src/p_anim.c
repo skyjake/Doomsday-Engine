@@ -48,7 +48,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
     Uri_SetPath(uri, Str_Text(&path));
     Str_Free(&path);
 
-    texNumBase = R_TextureUniqueId2(uri, !isCustom);
+    texNumBase = Textures_UniqueId2(uri, !isCustom);
     if(texNumBase != -1)
         ignore = false;
 

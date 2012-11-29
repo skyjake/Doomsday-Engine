@@ -196,7 +196,6 @@ boolean DD_GameInfo(GameInfo* info);
 
 /// @addtogroup scheme
 ///@{
-textureschemeid_t DD_ParseTextureSchemeName(const char* str);
 materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
 ///@}
 
@@ -205,7 +204,7 @@ materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
  * @ingroup resource
  */
 ///@{
-materialid_t DD_MaterialForTextureUniqueId(textureschemeid_t texSchemeId, int uniqueId);
+materialid_t DD_MaterialForTextureUniqueId(char const *schemeName, int uniqueId);
 ///@}
 
 /// @addtogroup defs
@@ -648,8 +647,8 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 Uri* R_ComposePatchUri(patchid_t id);
 AutoStr* R_ComposePatchPath(patchid_t id);
 
-int R_TextureUniqueId2(const Uri* uri, boolean quiet);
-int R_TextureUniqueId(const Uri* uri); /*quiet=false*/
+int Textures_UniqueId2(const Uri* uri, boolean quiet);
+int Textures_UniqueId(const Uri* uri); /*quiet=false*/
 
 int R_CreateAnimGroup(int flags);
 void R_AddAnimGroupFrame(int groupNum, const Uri* texture, int tics, int randomTics);

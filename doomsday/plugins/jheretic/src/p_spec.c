@@ -311,8 +311,8 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         Str_PercentEncode(Str_StripRight(Str_Set(&endPath, animDefs[i].endname)));
         Uri_SetPath(endUri, Str_Text(&endPath));
 
-        startFrame = R_TextureUniqueId2(startUri, !isCustom);
-        endFrame   = R_TextureUniqueId2(endUri, !isCustom);
+        startFrame = Textures_UniqueId2(startUri, !isCustom);
+        endFrame   = Textures_UniqueId2(endUri, !isCustom);
         if(-1 == startFrame || -1 == endFrame) continue;
 
         numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;

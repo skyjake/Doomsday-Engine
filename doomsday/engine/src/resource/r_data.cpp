@@ -57,22 +57,23 @@ void R_InitSystemTextures()
     {   "unknown", "missing", "bbox", "gray", "" };
 
     LOG_VERBOSE("Initializing System textures...");
+    Textures &textures = *App_Textures();
+
     for(uint i = 0; !names[i].isEmpty(); ++i)
     {
         Path path = names[i];
         de::Uri uri("System", path);
         de::Uri resourcePath("Graphics", path);
 
-        textureid_t texId = Textures_Declare(reinterpret_cast<uri_s*>(&uri), i + 1/*1-based index*/,
-                                             reinterpret_cast<uri_s*>(&resourcePath));
-        if(texId == NOTEXTUREID) continue; // Invalid uri?
+        TextureMetaFile *metafile = textures.declare(uri, i + 1/*1-based index*/, &resourcePath);
+        if(!metafile) continue; // Invalid uri?
 
         // Have we defined this yet?
-        de::Texture *tex = reinterpret_cast<de::Texture*>(Textures_ToTexture(texId));
-        if(!tex && !Textures_Create(texId, true/*is-custom*/, 0))
+        if(metafile->texture()) continue;
+
+        if(!metafile->define(de::Texture::Custom))
         {
-            LOG_WARNING("Failed to define Texture for system texture \"%s\".")
-                << NativePath(uri.asText()).pretty();
+            LOG_WARNING("Failed to define Texture for system texture \"%s\".") << uri;
         }
     }
 }
@@ -80,15 +81,33 @@ void R_InitSystemTextures()
 /// @note Part of the Doomsday public API.
 AutoStr *R_ComposePatchPath(patchid_t id)
 {
-    textureid_t texId = Textures_TextureForUniqueId(TS_PATCHES, id);
-    if(texId == NOTEXTUREID) return AutoStr_NewStd();
-    return Textures_ComposePath(texId);
+    try
+    {
+        TextureMetaFile &metafile = App_Textures()->scheme("Patches").findByUniqueId(id);
+        return AutoStr_FromTextStd(metafile.path().toUtf8().constData());
+    }
+    catch(Textures::Scheme::NotFoundError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+    return AutoStr_NewStd();
 }
 
 /// @note Part of the Doomsday public API.
 uri_s *R_ComposePatchUri(patchid_t id)
 {
-    return Textures_ComposeUri(Textures_TextureForUniqueId(TS_PATCHES, id));
+    try
+    {
+        TextureMetaFile &metafile = App_Textures()->scheme("Patches").findByUniqueId(id);
+        return reinterpret_cast<uri_s *>(new de::Uri(metafile.composeUri()));
+    }
+    catch(Textures::Scheme::NotFoundError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+    return reinterpret_cast<uri_s *>(new de::Uri());
 }
 
 /// @note Part of the Doomsday public API.
@@ -102,38 +121,37 @@ patchid_t R_DeclarePatch(char const *name)
         return 0;
     }
 
+    Textures &textures = *App_Textures();
+
     // WAD format allows characters not normally permitted in native paths.
     // To achieve uniformity we apply a percent encoding to the "raw" names.
     de::Uri uri("Patches", Path(QString(QByteArray(name, qstrlen(name)).toPercentEncoding())));
 
     // Already defined as a patch?
-    textureid_t texId = Textures_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
-    if(texId)
+    if(TextureMetaFile *metafile = textures.find(uri))
     {
         /// @todo We should instead define Materials from patches and return the material id.
-        return patchid_t( Textures_UniqueId(texId) );
+        return patchid_t( metafile->uniqueId() );
     }
 
     Path lumpPath = uri.path() + ".lmp";
     lumpnum_t lumpNum = App_FileSystem()->nameIndex().lastIndexForPath(lumpPath);
     if(lumpNum < 0)
     {
-        LOG_WARNING("Failed to locate lump for \"%s\", ignoring.")
-            << NativePath(uri.asText()).pretty();
+        LOG_WARNING("Failed to locate lump for \"%s\", ignoring.") << uri;
         return 0;
     }
 
     // Compose the path to the data resource.
-    de::File1& file = App_FileSystem()->nameIndex().lump(lumpNum);
+    de::File1 &file = App_FileSystem()->nameIndex().lump(lumpNum);
     de::Uri resourceUri("Lumps", Path(file.name()));
 
-    int uniqueId = Textures_Count(TS_PATCHES) + 1; // 1-based index.
-    texId = Textures_Declare(reinterpret_cast<uri_s*>(&uri), uniqueId,
-                             reinterpret_cast<uri_s*>(&resourceUri));
-    if(texId == NOTEXTUREID) return 0; // Invalid uri?
+    int uniqueId = textures.scheme("Patches").count() + 1; // 1-based index.
+    TextureMetaFile *metafile = textures.declare(uri, uniqueId, &resourceUri);
+    if(!metafile) return 0; // Invalid uri?
 
     // Generate a new patch.
-    patchtex_t *p = (patchtex_t*) M_Malloc(sizeof(*p));
+    patchtex_t *p = (patchtex_t *) M_Malloc(sizeof(*p));
     if(!p) Con_Error("R_DeclarePatch: Failed on allocation of %u bytes for new PatchTex.", (unsigned long) sizeof(*p));
 
     // Take a copy of the current patch loading state so that future texture
@@ -151,34 +169,36 @@ patchid_t R_DeclarePatch(char const *name)
     PatchHeader patchHdr;
     from >> patchHdr;
 
+    file.unlock();
+
     p->offX = -patchHdr.origin.x;
     p->offY = -patchHdr.origin.y;
 
-    de::Texture *tex = reinterpret_cast<de::Texture*>(Textures_ToTexture(texId));
+    de::Texture *tex = metafile->texture();
+    de::Texture::Flags flags;
+    if(file.container().hasCustom()) flags |= de::Texture::Custom;
+
     if(!tex)
     {
-        tex = reinterpret_cast<de::Texture*>(Textures_CreateWithDimensions(texId, file.container().hasCustom(), &patchHdr.dimensions, (void *)p));
-        file.unlock();
-
+        tex = metafile->define(patchHdr.dimensions, flags);
         if(!tex)
         {
-            LOG_WARNING("Failed defining Texture for Patch texture \"%s\".")
-                << NativePath(uri.asText()).pretty();
+            LOG_WARNING("Failed defining Texture for Patch texture \"%s\".") << uri;
             M_Free(p);
             return 0;
         }
+
+        tex->setUserDataPointer((void *)p);
     }
     else
     {
         patchtex_t *oldPatch = reinterpret_cast<patchtex_t *>(tex->userDataPointer());
 
-        tex->flagCustom(file.container().hasCustom());
+        tex->flagCustom(!!(flags & de::Texture::Custom));
         tex->setDimensions(patchHdr.dimensions);
         tex->setUserDataPointer((void *)p);
 
         M_Free(oldPatch);
-
-        file.unlock();
     }
 
     return uniqueId;
@@ -191,9 +211,13 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 
     memset(info, 0, sizeof(patchinfo_t));
 
-    de::Texture *tex = reinterpret_cast<de::Texture*>(Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, id)));
-    if(tex)
+    if(!id) return false;
+
+    try
     {
+        de::Texture *tex = App_Textures()->scheme("Patches").findByUniqueId(id).texture();
+        if(!tex) return false;
+
         patchtex_t const *pTex = reinterpret_cast<patchtex_t *>(tex->userDataPointer());
         DENG_ASSERT(pTex);
 
@@ -215,10 +239,10 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         // Kludge end.
         return true;
     }
-
-    if(id != 0)
+    catch(de::Textures::Scheme::NotFoundError const &er)
     {
-        LOG_DEBUG("Invalid Patch id #%i, returning false.") << id;
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
     }
     return false;
 }
@@ -238,7 +262,7 @@ static void loadPatchNames(String lumpName)
         if(file.size() < 4)
         {
             LOG_WARNING("File \"%s\" (#%i) does not appear to be valid PNAMES data.")
-                << de::NativePath(file.composeUri().asText()).pretty() << lumpNum;
+                << NativePath(file.composeUri().asText()).pretty() << lumpNum;
             return;
         }
 
@@ -560,14 +584,16 @@ static CompositeTextures loadCompositeTextureDefs()
 static void processCompositeTextureDefs(CompositeTextures &defs)
 {
     LOG_AS("processCompositeTextureDefs");
+    Textures &textures = *App_Textures();
+
     bool isFirst = true;
     while(!defs.isEmpty())
     {
         CompositeTexture &def = *defs.takeFirst();
-
         de::Uri uri("Textures", Path(def.percentEncodedName()));
-        textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), def.origIndex(), 0);
-        if(texId != NOTEXTUREID)
+
+        TextureMetaFile *metafile = textures.declare(uri, def.origIndex(), 0);
+        if(metafile)
         {
             /*
              * Vanilla DOOM's implementation of the texture collection has a flaw
@@ -580,32 +606,36 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
                 isFirst = false;
             }
 
+            de::Texture::Flags flags;
+            if(def.flags().testFlag(CompositeTexture::Custom)) flags |= de::Texture::Custom;
+
             // Are we redefining an existing texture?
-            if(de::Texture *tex = reinterpret_cast<de::Texture *>(
-                                  Textures_ToTexture(texId)))
+            if(de::Texture *tex = metafile->texture())
             {
                 // Yes. Destroy the existing definition (*should* exist).
                 CompositeTexture *oldDef = reinterpret_cast<CompositeTexture *>(tex->userDataPointer());
-                if(oldDef) delete oldDef;
+                if(oldDef)
+                {
+                    tex->setUserDataPointer(0);
+                    delete oldDef;
+                }
 
                 // Reconfigure and attach the new definition.
-                tex->flagCustom(def.flags().testFlag(CompositeTexture::Custom));
+                tex->flagCustom(!!(flags & de::Texture::Custom));
                 tex->setDimensions(def.dimensions());
                 tex->setUserDataPointer((void *)&def);
+
                 continue;
             }
-
             // A new texture.
-            if(Textures_CreateWithDimensions(texId, def.flags().testFlag(CompositeTexture::Custom),
-                                             &def.dimensions(), (void *)&def))
+            else if(de::Texture *tex = metafile->define(def.dimensions(), flags))
             {
+                tex->setUserDataPointer((void *)&def);
                 continue;
             }
         }
 
-        LOG_WARNING("Failed defining Texture for patch composite \"%s\", ignoring.")
-            << NativePath(uri.asText()).pretty();
-
+        LOG_WARNING("Failed defining Texture for patch composite \"%s\", ignoring.") << uri;
         delete &def;
     }
 }
@@ -622,7 +652,7 @@ void R_InitCompositeTextures()
 
     DENG_ASSERT(texs.isEmpty());
 
-    LOG_INFO(String("R_InitPatchComposites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("R_InitCompositeTextures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 static inline de::Uri composeFlatUri(String percentEncodedPath)
@@ -647,37 +677,37 @@ void R_InitFlatTextures()
     de::Time begunAt;
 
     LOG_VERBOSE("Initializing Flat textures...");
+    Textures &textures = *App_Textures();
 
     LumpIndex const &index = App_FileSystem()->nameIndex();
     lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
     if(firstFlatMarkerLumpNum >= 0)
     {
         lumpnum_t lumpNum;
-        de::File1 *blockFile = 0;
+        de::File1 *blockContainer = 0;
         for(lumpNum = index.size(); lumpNum --> firstFlatMarkerLumpNum + 1;)
         {
-            de::File1 &lump = index.lump(lumpNum);
-            String percentEncodedName = lump.name().fileNameWithoutExtension();
-            de::File1 *containerFile = &lump.container();
+            de::File1 &file = index.lump(lumpNum);
+            String percentEncodedName = file.name().fileNameWithoutExtension();
 
-            if(blockFile && blockFile != containerFile)
+            if(blockContainer && blockContainer != &file.container())
             {
-                blockFile = 0;
+                blockContainer = 0;
             }
 
-            if(!blockFile)
+            if(!blockContainer)
             {
                 if(!percentEncodedName.compareWithoutCase("F_END") ||
                    !percentEncodedName.compareWithoutCase("FF_END"))
                 {
-                    blockFile = containerFile;
+                    blockContainer = &file.container();
                 }
                 continue;
             }
 
             if(!percentEncodedName.compareWithoutCase("F_START"))
             {
-                blockFile = 0;
+                blockContainer = 0;
                 continue;
             }
 
@@ -687,7 +717,7 @@ void R_InitFlatTextures()
                !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
             de::Uri uri = composeFlatUri(percentEncodedName);
-            if(Textures_ResolveUri2(reinterpret_cast<uri_s *>(&uri), true/*quiet please*/) == NOTEXTUREID) // A new flat?
+            if(!textures.find(uri)) // A new flat?
             {
                 /**
                  * Kludge Assume 64x64 else when the flat is loaded it will inherit the
@@ -696,15 +726,17 @@ void R_InitFlatTextures()
                  *
                  * @todo Always determine size from the lowres original.
                  */
-                Size2Raw const size = Size2Raw(64, 64);
+                Size2Raw const dimensions(64, 64);
                 int const uniqueId = lumpNum - (firstFlatMarkerLumpNum + 1);
                 de::Uri resourcePath = composeFlatResourceUrn(lumpNum);
-                textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId,
-                                                     reinterpret_cast<uri_s *>(&resourcePath));
-                if(!Textures_CreateWithDimensions(texId, lump.hasCustom(), &size, NULL))
+                TextureMetaFile *metafile = textures.declare(uri, uniqueId, &resourcePath);
+
+                de::Texture::Flags flags;
+                if(file.container().hasCustom()) flags |= de::Texture::Custom;
+
+                if(metafile && !metafile->define(dimensions, flags))
                 {
-                    LOG_WARNING("Failed defining Texture for new flat \"%s\", ignoring.")
-                        << NativePath(uri.asText()).pretty();
+                    LOG_WARNING("Failed defining Texture for new flat \"%s\", ignoring.") << uri;
                 }
             }
         }
@@ -713,37 +745,35 @@ void R_InitFlatTextures()
     LOG_INFO(String("R_InitFlatTetxures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-void R_DefineSpriteTexture(textureid_t texId)
+void R_DefineSpriteTexture(TextureMetaFile &metafile)
 {
     LOG_AS("R_DefineSpriteTexture");
 
-    // Have we already encountered this name?
-    de::Texture *tex = reinterpret_cast<de::Texture *>(Textures_ToTexture(texId));
+    // Have we already defined this texture?
+    de::Texture *tex = metafile.texture();
     if(!tex)
     {
         // A new sprite texture.
+        tex = metafile.define(0);
+        if(!tex)
+        {
+            LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.")
+                << metafile.composeUri();
+        }
+
         patchtex_t *pTex = (patchtex_t *) M_Malloc(sizeof(*pTex));
         if(!pTex) Con_Error("R_InitSpriteTextures: Failed on allocation of %lu bytes for new PatchTex.", (unsigned long) sizeof(*pTex));
         pTex->offX = pTex->offY = 0; // Deferred until texture load time.
-
-        tex = reinterpret_cast<de::Texture *>(Textures_Create(texId, 0, (void *)pTex));
-        if(!tex)
-        {
-            M_Free(pTex);
-
-            de::Uri *uri = reinterpret_cast<de::Uri *>(Textures_ComposeUri(texId));
-            LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.")
-                << NativePath(uri->asText()).pretty();
-            delete uri;
-        }
+        tex->setUserDataPointer((void *)pTex);
     }
 
-    de::Uri const *resourceUri = reinterpret_cast<de::Uri const *>(Textures_ResourcePath(texId));
-    if(!tex || !resourceUri) return;
+    if(!tex) return;
+    de::Uri const &resourceUri = metafile.resourceUri();
+    if(resourceUri.isEmpty()) return;
 
     try
     {
-        String const &resourcePath = resourceUri->resolvedRef();
+        String const &resourcePath = resourceUri.resolvedRef();
         lumpnum_t lumpNum = App_FileSystem()->nameIndex().lastIndexForPath(resourcePath);
         de::File1& file = App_FileSystem()->nameIndex().lump(lumpNum);
 
@@ -761,16 +791,16 @@ void R_DefineSpriteTexture(textureid_t texId)
     {} // Ignore this error.
 }
 
-static int defineSpriteTextureWorker(textureid_t texId, void *)
+static int defineSpriteTextureWorker(TextureMetaFile &metafile, void * /*parameters*/)
 {
-    R_DefineSpriteTexture(texId);
+    R_DefineSpriteTexture(metafile);
     return 0; // Continue iteration.
 }
 
 /// @todo Defer until necessary (sprite is first de-referenced).
 static void defineAllSpriteTextures()
 {
-    Textures_IterateDeclared(TS_SPRITES, defineSpriteTextureWorker);
+    App_Textures()->iterateDeclared("Sprites", defineSpriteTextureWorker);
 }
 
 /// Returns @c true iff @a name is a well-formed sprite name.
@@ -821,7 +851,6 @@ void R_InitSpriteTextures()
     {
         de::File1 &file = index.lump(i);
         String fileName = file.name().fileNameWithoutExtension();
-        textureid_t texId;
 
         if(fileName.beginsWith('S', Qt::CaseInsensitive) && fileName.length() >= 5)
         {
@@ -849,16 +878,11 @@ void R_InitSpriteTextures()
             continue;
         }
 
-        // Compose the resource name.
-        de::Uri uri("Sprites", Path(fileName));
-
         // Compose the data resource path.
-        //de::Uri resourcePath = composeSpriteResourceUrn(i);
-        de::Uri resourcePath("Lumps", Path(fileName));
+        //de::Uri resourceUri = composeSpriteResourceUrn(i);
+        de::Uri resourceUri("Lumps", Path(fileName));
 
-        texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId,
-                                 reinterpret_cast<uri_s *>(&resourcePath));
-        if(texId == NOTEXTUREID)
+        if(!App_Textures()->declare(de::Uri("Sprites", Path(fileName)), uniqueId, &resourceUri))
         {
             continue; // Invalid uri?
         }
@@ -877,140 +901,178 @@ void R_InitSpriteTextures()
     LOG_INFO(String("R_InitSpriteTextures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-texture_s *R_CreateSkinTex(uri_s const *filePath, boolean isShinySkin)
+texture_s *R_CreateSkinTex(uri_s const *_resourceUri, boolean isShinySkin)
 {
-    if(!filePath || Str_IsEmpty(Uri_Path(filePath))) return 0;
-
     LOG_AS("R_CreateSkinTex");
 
-    // Have we already created one for this?
-    texture_s *tex;
-    if(!isShinySkin)
-    {
-        tex = Textures_TextureForResourcePath(TS_MODELSKINS, filePath);
-    }
-    else
-    {
-        tex = Textures_TextureForResourcePath(TS_MODELREFLECTIONSKINS, filePath);
-    }
-    if(tex) return tex;
+    if(!_resourceUri) return 0;
+    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
 
-    int uniqueId = Textures_Count(isShinySkin? TS_MODELREFLECTIONSKINS : TS_MODELSKINS)+1;
+    if(resourceUri.isEmpty()) return 0;
+
+    Textures &textures = *App_Textures();
+    Textures::Scheme &scheme = textures.scheme(isShinySkin? "ModelReflectionSkins" : "ModelSkins");
+
+    // Have we already created one for this?
+    try
+    {
+        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
+        if(tex) return reinterpret_cast<texture_s *>(tex);
+    }
+    catch(Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
+
+    int uniqueId = scheme.count() + 1; // 1-based index
     if(M_NumDigits(uniqueId) > 8)
     {
-        LOG_WARNING("Failed to create ModelSkin (max:%i), ignoring.") << DDMAXINT;
+        LOG_WARNING("Failed declaring new model skin (max:%i), ignoring.") << DDMAXINT;
         return 0;
     }
 
-    de::Uri uri(Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-    uri.setScheme((isShinySkin? "ModelReflectionSkins" : "ModelSkins"));
+    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
 
-    textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, filePath);
-    if(texId == NOTEXTUREID) return 0; // Invalid uri?
+    TextureMetaFile *metafile = textures.declare(uri, uniqueId, &resourceUri);
+    if(!metafile) return 0; // Invalid uri?
 
-    tex = Textures_ToTexture(texId);
+    de::Texture *tex = metafile->texture();
     if(!tex)
     {
         // Create a texture for it.
-        tex = Textures_Create(texId, true/*is-custom*/, NULL);
+        tex = metafile->define(de::Texture::Custom);
         if(!tex)
         {
-            LOG_WARNING("Failed defining Texture for ModelSkin \"%s\", ignoring.")
-                << NativePath(uri.asText()).pretty();
-            return 0;
+            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
         }
     }
 
-    return tex;
+    return reinterpret_cast<texture_s *>(tex);
 }
 
-texture_s *R_CreateDetailTextureFromDef(ded_detailtexture_t const *def)
+texture_s *R_CreateDetailTexture(uri_s const *_resourceUri)
 {
-    LOG_AS("R_CreateDetailTextureFromDef");
+    LOG_AS("R_CreateDetailTexture");
 
-    if(!def->detailTex || Uri_IsEmpty(def->detailTex)) return 0;
+    if(!_resourceUri) return 0;
+    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
+
+    if(resourceUri.isEmpty()) return 0;
+
+    Textures &textures = *App_Textures();
+    Textures::Scheme &scheme = textures.scheme("Details");
 
     // Have we already created one for this?
-    texture_s *tex = Textures_TextureForResourcePath(TS_DETAILS, def->detailTex);
-    if(tex) return tex;
+    try
+    {
+        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
+        if(tex) return reinterpret_cast<texture_s *>(tex);
+    }
+    catch(Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
 
-    int uniqueId = Textures_Count(TS_DETAILS) + 1; // 1-based index.
+    int uniqueId = scheme.count() + 1; // 1-based index.
     if(M_NumDigits(uniqueId) > 8)
     {
-        LOG_WARNING("Failed creating new detail texture (max:%i).") << DDMAXINT;
+        LOG_WARNING("Failed declaring new detail texture (max:%i).") << DDMAXINT;
         return 0;
     }
 
-    de::Uri uri("Details", Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-    textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, def->detailTex);
-    if(texId == NOTEXTUREID) return 0; // Invalid URI?
+    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
+    TextureMetaFile *metafile = textures.declare(uri, uniqueId, &resourceUri);
+    if(!metafile) return 0; // Invalid URI?
 
-    tex = Textures_ToTexture(texId);
-    if(!tex && !Textures_Create(texId, true/*is-custom*/, 0))
+    de::Texture *tex = metafile->texture();
+    if(!tex)
     {
-        LOG_WARNING("Failed defining Texture for detail texture \"%s\", ignoring.")
-            << NativePath(uri.asText()).pretty();
-        return 0;
+        // Create a texture for it.
+        tex = metafile->define(de::Texture::Custom);
+        if(!tex)
+        {
+            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
+        }
     }
 
-    return tex;
+    return reinterpret_cast<texture_s *>(tex);
 }
 
-texture_s *R_CreateLightMap(uri_s const *resourcePath)
+texture_s *R_CreateLightmap(uri_s const *_resourceUri)
 {
-    LOG_AS("R_CreateLightMap");
+    LOG_AS("R_CreateLightmap");
 
-    if(!resourcePath || Uri_IsEmpty(resourcePath)) return 0;
-    if(!Str_CompareIgnoreCase(Uri_Path(resourcePath), "-")) return 0;
+    if(!_resourceUri) return 0;
+    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
+
+    if(resourceUri.isEmpty()) return 0;
+    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return 0;
+
+    Textures &textures = *App_Textures();
+    Textures::Scheme &scheme = textures.scheme("Lightmaps");
 
     // Have we already created one for this?
-    texture_s *tex = Textures_TextureForResourcePath(TS_LIGHTMAPS, resourcePath);
-    if(tex) return tex;
+    try
+    {
+        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
+        if(tex) return reinterpret_cast<texture_s *>(tex);
+    }
+    catch(Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
 
-    int uniqueId = Textures_Count(TS_LIGHTMAPS) + 1; // 1-based index.
+
+    int uniqueId = scheme.count() + 1; // 1-based index.
     if(M_NumDigits(uniqueId) > 8)
     {
         LOG_WARNING("Failed declaring new lightmap (max:%i), ignoring.") << DDMAXINT;
         return 0;
     }
 
-    de::Uri uri("Lightmaps", Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-    textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, resourcePath);
-    if(texId == NOTEXTUREID) return 0; // Invalid URI?
+    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
 
-    tex = Textures_ToTexture(texId);
+    TextureMetaFile *metafile = textures.declare(uri, uniqueId, &resourceUri);
+    if(!metafile) return 0; // Invalid URI?
+
+    de::Texture *tex = metafile->texture();
     if(!tex)
     {
         // Create a texture for it.
-        tex = Textures_Create(texId, true/*is-custom*/, 0);
+        tex = metafile->define(de::Texture::Custom);
         if(!tex)
         {
-            LOG_WARNING("Failed defining Texture for lightmap \"%s\", ignoring.")
-                << NativePath(uri.asText()).pretty();
-            return 0;
+            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
         }
     }
-    return tex;
+
+    return reinterpret_cast<texture_s *>(tex);
 }
 
-texture_s *R_CreateFlareTexture(uri_s const *resourcePath)
+texture_s *R_CreateFlaremap(uri_s const *_resourceUri)
 {
-    LOG_AS("R_CreateFlareTexture");
+    LOG_AS("R_CreateFlaremap");
 
-    if(!resourcePath || Uri_IsEmpty(resourcePath)) return 0;
-    if(!Str_CompareIgnoreCase(Uri_Path(resourcePath), "-")) return 0;
+    if(!_resourceUri) return 0;
+    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
+
+    if(resourceUri.isEmpty()) return 0;
+    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return 0;
 
     // Perhaps a "built-in" flare texture id?
     // Try to convert the id to a system flare tex constant idx
-    if(Str_At(Uri_Path(resourcePath), 0) >= '0' && Str_At(Uri_Path(resourcePath), 0) <= '4' &&
-      !Str_At(Uri_Path(resourcePath), 1))
+    String const &resourcePathStr = resourceUri.path().toStringRef();
+    if(resourcePathStr.length() == 1 &&
+       resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
         return 0;
 
-    // Have we already created one for this?
-    texture_s *tex = Textures_TextureForResourcePath(TS_FLAREMAPS, resourcePath);
-    if(tex) return tex;
+    Textures &textures = *App_Textures();
+    Textures::Scheme &scheme = textures.scheme("Flaremaps");
 
-    int uniqueId = Textures_Count(TS_FLAREMAPS) + 1; // 1-based index.
+    // Have we already created one for this?
+    try
+    {
+        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
+        if(tex) return reinterpret_cast<texture_s *>(tex);
+    }
+    catch(Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
+
+    int uniqueId = scheme.count() + 1; // 1-based index.
     if(M_NumDigits(uniqueId) > 8)
     {
         LOG_WARNING("Failed declaring new flare texture (max:%i), ignoring.") << DDMAXINT;
@@ -1018,98 +1080,120 @@ texture_s *R_CreateFlareTexture(uri_s const *resourcePath)
     }
 
     // Create a texture for it.
-    de::Uri uri("Flaremaps", Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-    textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, resourcePath);
-    if(texId == NOTEXTUREID) return 0; // Invalid URI?
+    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
 
-    tex = Textures_ToTexture(texId);
+    TextureMetaFile *metafile = textures.declare(uri, uniqueId, &resourceUri);
+    if(!metafile) return 0; // Invalid URI?
+
+    de::Texture *tex = metafile->texture();
     if(!tex)
     {
-        tex = Textures_Create(texId, true/*is-custom*/, 0);
+        tex = metafile->define(de::Texture::Custom);
         if(!tex)
         {
-            LOG_WARNING("Failed defining Texture for flare texture \"%s\", ignoring.")
-                << NativePath(uri.asText()).pretty();
-            return 0;
+            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
         }
     }
-    return tex;
+
+    return reinterpret_cast<texture_s *>(tex);
 }
 
-texture_s *R_CreateReflectionTexture(uri_s const *resourcePath)
+texture_s *R_CreateReflectionTexture(uri_s const *_resourceUri)
 {
     LOG_AS("R_CreateReflectionTexture");
 
-    if(!resourcePath || Uri_IsEmpty(resourcePath)) return 0;
+    if(!_resourceUri) return 0;
+    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
+
+    if(resourceUri.isEmpty()) return 0;
+
+    Textures &textures = *App_Textures();
+    Textures::Scheme &scheme = textures.scheme("Reflections");
 
     // Have we already created one for this?
-    texture_s *tex = Textures_TextureForResourcePath(TS_REFLECTIONS, resourcePath);
-    if(tex) return tex;
+    try
+    {
+        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
+        if(tex) return reinterpret_cast<texture_s *>(tex);
+    }
+    catch(Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
 
-    int uniqueId = Textures_Count(TS_REFLECTIONS) + 1; // 1-based index.
+    int uniqueId = scheme.count() + 1; // 1-based index.
     if(M_NumDigits(uniqueId) > 8)
     {
         LOG_WARNING("Failed declaring new shiny texture (max:%i), ignoring.") << DDMAXINT;
         return 0;
     }
 
-    de::Uri uri("Reflections", Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-    textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, resourcePath);
-    if(texId == NOTEXTUREID) return 0; // Invalid URI?
+    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
 
-    tex = Textures_ToTexture(texId);
+    TextureMetaFile *metafile = textures.declare(uri, uniqueId, &resourceUri);
+    if(!metafile) return 0; // Invalid URI?
+
+    de::Texture *tex = metafile->texture();
     if(!tex)
     {
         // Create a texture for it.
-        tex = Textures_Create(texId, true/*is-custom*/, 0);
+        tex = metafile->define(de::Texture::Custom);
         if(!tex)
         {
-            LOG_WARNING("Failed defining Texture for shiny texture \"%s\", ignoring.")
-                << NativePath(uri.asText()).pretty();
-            return 0;
+            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
         }
     }
 
-    return tex;
+    return reinterpret_cast<texture_s *>(tex);
 }
 
-texture_s *R_CreateMaskTexture(uri_s const *resourcePath, Size2Raw const *size)
+texture_s *R_CreateMaskTexture(uri_s const *_resourceUri, Size2Raw const *dimensions)
 {
+    DENG_ASSERT(dimensions);
     LOG_AS("R_CreateMaskTexture");
 
-    if(!resourcePath || Uri_IsEmpty(resourcePath)) return 0;
+    if(!_resourceUri) return 0;
+    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
+
+    if(resourceUri.isEmpty()) return 0;
+
+    Textures &textures = *App_Textures();
+    Textures::Scheme &scheme = textures.scheme("Masks");
 
     // Have we already created one for this?
-    texture_s *tex = Textures_TextureForResourcePath(TS_MASKS, resourcePath);
-    if(tex) return tex;
+    if(resourceUri.isEmpty()) return 0;
+    try
+    {
+        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
+        if(tex) return reinterpret_cast<texture_s *>(tex);
+    }
+    catch(Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
 
-    int uniqueId = Textures_Count(TS_MASKS) + 1; // 1-based index.
+    int uniqueId = scheme.count() + 1; // 1-based index.
     if(M_NumDigits(uniqueId) > 8)
     {
         LOG_WARNING("Failed declaring mask texture (max:%i), ignoring.") << DDMAXINT;
         return 0;
     }
 
-    de::Uri uri("Masks", Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-    textureid_t texId = Textures_Declare(reinterpret_cast<uri_s *>(&uri), uniqueId, resourcePath);
-    if(texId == NOTEXTUREID) return 0; // Invalid URI?
+    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
 
-    tex = Textures_ToTexture(texId);
+    TextureMetaFile *metafile = textures.declare(uri, uniqueId, &resourceUri);
+    if(!metafile) return 0; // Invalid URI?
+
+    de::Texture *tex = metafile->texture();
     if(tex)
     {
-        Texture_SetDimensions(tex, size);
+        tex->setDimensions(*dimensions);
     }
     else
     {
         // Create a texture for it.
-        tex = Textures_CreateWithDimensions(texId, true/*is-custom*/, size, 0);
+        tex = metafile->define(*dimensions, de::Texture::Custom);
         if(!tex)
         {
-            LOG_WARNING("Failed defining Texture for mask texture \"%s\", ignoring.")
-                << NativePath(uri.asText()).pretty();
-            return 0;
+            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
         }
     }
 
-    return tex;
+    return reinterpret_cast<texture_s *>(tex);
 }

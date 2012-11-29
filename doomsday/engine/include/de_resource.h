@@ -23,6 +23,7 @@
 #define LIBDENG_RESOURCE_SUBSYSTEM_H
 
 #include "resource/animgroups.h"
+#include "resource/bitmapfont.h"
 #include "resource/colorpalettes.h"
 #include "resource/font.h"
 #include "resource/fonts.h"
@@ -35,5 +36,9 @@
 #include "resource/textures.h"
 #include "resource/wad.h"
 #include "resource/zip.h"
+
+#ifdef __cplusplus
+#  include "resource/texturemetafile.h"
+#endif
 
 #endif /* LIBDENG_RESOURCE_SUBSYSTEM_H */

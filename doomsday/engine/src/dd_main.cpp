@@ -515,6 +515,54 @@ void DD_CreateFileSystemSchemes()
     }
 }
 
+void DD_CreateTextureSchemes()
+{
+    LOG_VERBOSE("Initializing Textures subsystem...");
+
+    Textures &textures = *App_Textures();
+    textures.createScheme("System");
+    textures.createScheme("Flats");
+    textures.createScheme("Textures");
+    textures.createScheme("Sprites");
+    textures.createScheme("Patches");
+    textures.createScheme("Details");
+    textures.createScheme("Reflections");
+    textures.createScheme("Masks");
+    textures.createScheme("ModelSkins");
+    textures.createScheme("ModelReflectionSkins");
+    textures.createScheme("Lightmaps");
+    textures.createScheme("Flaremaps");
+}
+
+void DD_ClearRuntimeTextureSchemes()
+{
+    Textures &textures = *App_Textures();
+    if(!textures.count()) return;
+
+    textures.scheme("Flats").clear();
+    textures.scheme("Textures").clear();
+    textures.scheme("Patches").clear();
+    textures.scheme("Sprites").clear();
+    textures.scheme("Details").clear();
+    textures.scheme("Reflections").clear();
+    textures.scheme("Masks").clear();
+    textures.scheme("ModelSkins").clear();
+    textures.scheme("ModelReflectionSkins").clear();
+    textures.scheme("Lightmaps").clear();
+    textures.scheme("Flaremaps").clear();
+
+    GL_PruneTextureVariantSpecifications();
+}
+
+void DD_ClearSystemTextureSchemes()
+{
+    Textures &textures = *App_Textures();
+    if(!textures.count()) return;
+
+    textures.scheme("System").clear();
+    GL_PruneTextureVariantSpecifications();
+}
+
 /**
  * Register the engine commands and variables.
  */
@@ -1368,7 +1416,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         R_DestroyColorPalettes();
 
         Fonts_ClearRuntime();
-        Textures_ClearRuntime();
+        DD_ClearRuntimeTextureSchemes();
 
         Sfx_InitLogical();
 
@@ -2007,9 +2055,13 @@ static int DD_StartupWorker(void* parm)
     // Execute the startup script (Startup.cfg).
     Con_ParseCommands("startup.cfg");
 
-    // Get the material manager up and running.
     Con_SetProgress(90);
     GL_EarlyInitTextureManager();
+
+    Textures_Init();
+    DD_CreateTextureSchemes();
+
+    // Get the material manager up and running.
     Materials_Init();
 
     Con_SetProgress(140);
@@ -2505,15 +2557,9 @@ void DD_SetVariable(int ddvalue, void *parm)
 }
 
 /// @note Part of the Doomsday public API.
-materialschemeid_t DD_ParseMaterialSchemeName(const char* str)
+materialschemeid_t DD_ParseMaterialSchemeName(char const *str)
 {
     return Materials_ParseSchemeName(str);
-}
-
-/// @note Part of the Doomsday public API.
-textureschemeid_t DD_ParseTextureSchemeName(const char* str)
-{
-    return Textures_ParseSchemeName(str);
 }
 
 /// @note Part of the Doomsday public API.
@@ -2522,43 +2568,60 @@ fontschemeid_t DD_ParseFontSchemeName(const char* str)
     return Fonts_ParseScheme(str);
 }
 
-const ddstring_t* DD_MaterialSchemeNameForTextureScheme(textureschemeid_t texSchemeId)
+ddstring_t const *DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
 {
-    static const materialschemeid_t schemeIds[TEXTURESCHEME_COUNT] = {
-        /* TS_SYSTEM */    MS_SYSTEM,
-        /* TS_FLATS */     MS_FLATS,
-        /* TS_TEXTURES */  MS_TEXTURES,
-        /* TS_SPRITES */   MS_SPRITES,
-        /* TS_PATCHES */   MS_ANY, // No materials for these yet.
-
-        // -- No Materials for these --
-        /* TS_DETAILS */              MS_INVALID,
-        /* TS_REFLECTIONS */          MS_INVALID,
-        /* TS_MASKS */                MS_INVALID,
-        /* TS_MODELSKINS */           MS_INVALID,
-        /* TS_MODELREFLECTIONSKINS */ MS_INVALID,
-        /* TS_LIGHTMAPS */            MS_INVALID,
-        /* TS_FLAREMAPS */            MS_INVALID
-    };
     materialschemeid_t schemeId = MS_INVALID; // Unknown.
-    if(VALID_TEXTURESCHEMEID(texSchemeId))
-        schemeId = schemeIds[texSchemeId-TEXTURESCHEME_FIRST];
+
+    if(!textureSchemeName.compareWithoutCase("Textures"))
+    {
+        schemeId = MS_TEXTURES;
+    }
+    else if(!textureSchemeName.compareWithoutCase("Flats"))
+    {
+        schemeId = MS_FLATS;
+    }
+    else if(!textureSchemeName.compareWithoutCase("Sprites"))
+    {
+        schemeId = MS_SPRITES;
+    }
+    else if(!textureSchemeName.compareWithoutCase("Patches"))
+    {
+        schemeId = MS_ANY; // No materials for these yet.
+    }
+    else if(!textureSchemeName.compareWithoutCase("System"))
+    {
+        schemeId = MS_SYSTEM;
+    }
+
     return Materials_SchemeName(schemeId);
 }
 
-materialid_t DD_MaterialForTextureUniqueId(textureschemeid_t schemeId, int uniqueId)
+ddstring_t const *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
 {
-    textureid_t texId = Textures_TextureForUniqueId(schemeId, uniqueId);
+    if(!textureSchemeName) return Materials_SchemeName(MS_INVALID);
+    return DD_MaterialSchemeNameForTextureScheme(Str_Text(textureSchemeName));
+}
 
-    if(texId == NOTEXTUREID) return NOMATERIALID;
-
-    de::Uri* uri = reinterpret_cast<de::Uri*>(Textures_ComposeUri(texId));
-    if(!uri) return NOMATERIALID;
-
-    uri->setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(schemeId)));
-    materialid_t matId = Materials_ResolveUri2(reinterpret_cast<uri_s*>(uri), true/*quiet please*/);
-    delete uri;
-    return matId;
+/// @todo Replace with a version accepting a URN -ds
+materialid_t DD_MaterialForTextureUniqueId(char const *schemeName, int uniqueId)
+{
+    try
+    {
+        de::Uri uri = App_Textures()->scheme(schemeName).findByUniqueId(uniqueId).composeUri();
+        uri.setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(uri.scheme())));
+        return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
+    }
+    catch(Textures::UnknownSchemeError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+    catch(Textures::Scheme::NotFoundError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+    return NOMATERIALID;
 }
 
 /**

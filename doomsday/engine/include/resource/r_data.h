@@ -157,25 +157,16 @@ Uri *R_ComposePatchUri(patchid_t id);
 ///          returned if the id is invalid/unknown.
 AutoStr *R_ComposePatchPath(patchid_t id);
 
-struct texture_s *R_CreateSkinTex(Uri const *filePath, boolean isShinySkin);
-
-struct texture_s *R_CreateLightMap(Uri const *resourcePath);
-
-struct texture_s *R_CreateFlareTexture(Uri const *resourcePath);
-
-struct texture_s *R_CreateReflectionTexture(Uri const *resourcePath);
-
-struct texture_s *R_CreateMaskTexture(Uri const *resourcePath, Size2Raw const *size);
-
-/**
- * Construct a DetailTexture according to the paramaters of the definition.
- * @note May return an existing DetailTexture if it is concluded that the
- * definition does not infer a unique DetailTexture.
- *
- * @param def  Definition describing the desired DetailTexture.
- * @return  DetailTexture inferred from the definition or @c NULL if invalid.
+/*
+ * TODO: Merge/generalize these very similar routines.
  */
-struct texture_s *R_CreateDetailTextureFromDef(ded_detailtexture_t const *def);
+
+struct texture_s *R_CreateSkinTex(Uri const *resourceUri, boolean isShinySkin);
+struct texture_s *R_CreateLightmap(Uri const *resourceUri);
+struct texture_s *R_CreateFlaremap(Uri const *resourceUri);
+struct texture_s *R_CreateReflectionTexture(Uri const *resourceUri);
+struct texture_s *R_CreateMaskTexture(Uri const *resourceUri, Size2Raw const *dimensions);
+struct texture_s *R_CreateDetailTexture(Uri const *resourceUri);
 
 #ifdef __cplusplus
 } // extern "C"

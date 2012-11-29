@@ -26,12 +26,9 @@
 #include "de_render.h"
 #include "de_system.h"
 #include "de_filesys.h"
+#include "de_resource.h"
 
-#include "resource/fonts.h"
-#include "resource/texturevariant.h"
 #include "m_misc.h" // For M_CeilPow2()
-
-#include "resource/bitmapfont.h"
 
 #include <de/memory.h>
 
@@ -546,7 +543,6 @@ void BitmapCompositeFont_Prepare(font_t *font)
     {
         bitmapcompositefont_char_t *ch = &cf->_chars[i];
         patchid_t patch = ch->patch;
-        textureid_t texId;
         patchinfo_t info;
 
         if(0 == patch) continue;
@@ -560,8 +556,8 @@ void BitmapCompositeFont_Prepare(font_t *font)
         ch->geometry.size.height += font->_marginHeight * 2;
         ch->border = 0;
 
-        texId = Textures_TextureForUniqueId(TS_PATCHES, patch);
-        ch->tex = GL_PrepareTextureVariant(Textures_ToTexture(texId), BitmapCompositeFont_CharSpec());
+        de::Texture *tex = App_Textures()->scheme("Patches").findByUniqueId(patch).texture();
+        ch->tex = GL_PrepareTextureVariant(reinterpret_cast<texture_s *>(tex), BitmapCompositeFont_CharSpec());
         if(ch->tex && TextureVariant_Source(ch->tex) == TEXS_ORIGINAL)
         {
             // Upscale & Sharpen will have been applied.

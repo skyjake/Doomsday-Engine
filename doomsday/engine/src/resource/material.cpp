@@ -22,11 +22,9 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
+#include "de_resource.h"
 #include "m_misc.h"
 
-#include "resource/texture.h"
-#include "resource/materialvariant.h"
-#include "resource/material.h"
 #include "audio/s_environ.h"
 
 #include <de/memory.h>
@@ -109,10 +107,13 @@ void Material_SetDefinition(material_t* mat, struct ded_material_s* def)
     mat->_isCustom = false;
     if(def->layers[0].stageCount.num > 0 && def->layers[0].stages[0].texture)
     {
-        textureid_t texId = Textures_ResolveUri2(def->layers[0].stages[0].texture, true/*quiet please*/);
-        if(texId != NOTEXTUREID)
+        de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture);
+        if(de::TextureMetaFile *metafile = App_Textures()->find(*texUri))
         {
-            mat->_isCustom = Texture_IsCustom(Textures_ToTexture(texId));
+            if(de::Texture *tex = metafile->texture())
+            {
+                mat->_isCustom = tex->isCustom();
+            }
         }
     }
 }
