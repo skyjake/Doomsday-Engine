@@ -199,7 +199,7 @@ void Parser::parseStatement(Compound &compound)
 IfStatement *Parser::parseIfStatement()
 {
     // The "end" keyword is necessary in the full form.
-    bool expectEnd = !_statementRange.has(Token::COLON);
+    bool expectEnd = !_statementRange.hasBracketless(Token::COLON);
     
     auto_ptr<IfStatement> statement(new IfStatement());
     statement->newBranch();
@@ -209,7 +209,7 @@ IfStatement *Parser::parseIfStatement()
     
     while(_statementRange.beginsWith(ScriptLex::ELSIF))
     {
-        expectEnd = !_statementRange.has(Token::COLON);
+        expectEnd = !_statementRange.hasBracketless(Token::COLON);
         statement->newBranch();
         statement->setBranchCondition(
             parseConditionalCompound(statement->branchCompound(), 
@@ -280,9 +280,10 @@ ExpressionStatement *Parser::parseImportStatement()
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }
     dint startAt = 1;
-    Expression::Flags flags = Expression::Import
-            | Expression::NotInScope
-            | Expression::LocalOnly;
+    Expression::Flags flags =
+            Expression::Import     |
+            Expression::NotInScope |
+            Expression::LocalOnly;
     if(_statementRange.size() >= 3 && _statementRange.token(1).equals(ScriptLex::RECORD))
     {
         // Take a copy of the imported record instead of referencing it.
@@ -524,7 +525,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
     TokenRange range = _statementRange;
     
     // See if there is a colon on this line.
-    dint colon = range.find(Token::COLON);
+    dint colon = range.findBracketless(Token::COLON);
     
     auto_ptr<Expression> condition;
     if(flags.testFlag(HasCondition))
