@@ -53,6 +53,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     evaluator.namespaces(spaces);
     
     Record *foundInNamespace = 0;
+    Record *higherNamespace = 0;
     Variable *variable = 0;
     
     DENG2_FOR_EACH(Evaluator::Namespaces, i, spaces)
@@ -63,16 +64,12 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
             // The name exists in this namespace.
             variable = &ns[_identifier];
             foundInNamespace = &ns;
+
+            // Also note the higher namespace (for export).
+            Evaluator::Namespaces::iterator next = i;
+            if(++next != spaces.end()) higherNamespace = *next;
             break;
         }
-        /*
-        if(ns.hasSubrecord(_identifier))
-        {
-            // The name exists in this namespace (as a record).
-            record = &ns.subrecord(_identifier);
-            foundInNamespace = &ns;
-        }
-        */
         if(flags().testFlag(LocalOnly))
         {
             break;
@@ -95,22 +92,15 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     // Should we delete the identifier?
     if(flags().testFlag(Delete))
     {
-        if(!variable) // && !record)
+        if(!variable)
         {
             throw NotFoundError("NameExpression::evaluate",
                 "Cannot delete nonexistent identifier '" + _identifier + "'");
         }
         DENG2_ASSERT(foundInNamespace != 0);
-        //if(variable)
-        //{
 
         delete foundInNamespace->remove(*variable);
 
-        /*}
-        else if(record)
-        {
-            delete foundInNamespace->remove(_identifier);
-        }*/
         return new NoneValue();
     }
 
@@ -125,12 +115,40 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
 
     // If nothing is found and we are permitted to create new variables, do so.
     // Occurs when assigning into new variables.
-    if(!variable /*&& !record*/ && flags().testFlag(NewVariable))
+    if(!variable && flags().testFlag(NewVariable))
     {
         variable = new Variable(_identifier);
 
         // Add it to the local namespace.
         spaces.front()->add(variable);
+
+        // Take note of the namespaces.
+        foundInNamespace = spaces.front();
+        if(!higherNamespace && spaces.size() > 1)
+        {
+            Evaluator::Namespaces::iterator i = spaces.begin();
+            higherNamespace = *(++i);
+        }
+    }
+
+    // Export variable into a higher namespace?
+    if(flags().testFlag(Export))
+    {
+        if(!variable)
+        {
+            throw NotFoundError("NameExpression::evaluate",
+                                "Cannot export nonexistent identifier '" + _identifier + "'");
+        }
+        if(!higherNamespace)
+        {
+            throw NotFoundError("NameExpression::evaluate",
+                                "No higher namespace for exporting '" + _identifier + "' into");
+        }
+        if(higherNamespace != foundInNamespace)
+        {
+            foundInNamespace->remove(*variable);
+            higherNamespace->add(variable);
+        }
     }
 
     // Should we import a namespace?
@@ -154,13 +172,6 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         }
 
         return new RecordValue(record);
-
-        /*
-        // Take a copy if requested ("import record").
-        if(flags().testFlag(NewRecord))
-        {
-            record = &spaces.front()->add(_identifier, new Record(*record));
-        }*/
     }
     
     if(variable)
@@ -177,28 +188,6 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
             return variable->value().duplicate();
         }
     }
-
-    /*
-    // We may be permitted to create a new record.
-    if(flags() & NewRecord)
-    {
-        if(!record)
-        {
-            // Add it to the local namespace.
-            record = &spaces.front()->addRecord(_identifier);
-        }
-        else
-        {
-            // Create a variable referencing the record.
-            spaces.front()->add(new Variable(_identifier, new RecordValue(record)));
-        }
-    }
-    if(record)
-    {
-        // Records can only be referenced.
-        return new RecordValue(record);
-    }
-    */
     
     throw NotFoundError("NameExpression::evaluate", "Identifier '" + _identifier + 
         "' does not exist");

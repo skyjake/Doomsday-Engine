@@ -187,7 +187,11 @@ void Parser::parseStatement(Compound &compound)
     {
         compound.add(parseAssignStatement());
     }
-    else 
+    else if(firstToken.equals(ScriptLex::EXPORT))
+    {
+        compound.add(parseExportStatement());
+    }
+    else
     {
         compound.add(parseExpressionStatement());
     }
@@ -291,6 +295,20 @@ ExpressionStatement *Parser::parseImportStatement()
         startAt = 2;
     }
     return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), Token::COMMA, flags));
+}
+
+ExpressionStatement *Parser::parseExportStatement()
+{
+    // "export" name-expr ["," name-expr]*
+
+    if(_statementRange.size() < 2)
+    {
+        throw MissingTokenError("Parser::parseExportStatement",
+            "Expected identifier to follow " + _statementRange.firstToken().asText());
+    }
+
+    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
+                                             Expression::Export | Expression::LocalOnly));
 }
 
 ExpressionStatement *Parser::parseDeclarationStatement()
@@ -449,6 +467,13 @@ AssignStatement *Parser::parseAssignStatement()
 {
     Expression::Flags flags = Expression::NewVariable | Expression::ByReference | Expression::LocalOnly;
     
+    /// "export" will export the newly assigned variable.
+    if(_statementRange.firstToken().equals(ScriptLex::EXPORT))
+    {
+        flags |= Expression::Export;
+        _statementRange = _statementRange.startingFrom(1);
+    }
+
     /// "const" makes read-only variables.
     if(_statementRange.firstToken().equals(ScriptLex::CONST))
     {

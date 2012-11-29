@@ -78,7 +78,10 @@ namespace de
             NotInScope = 0x100,
 
             /// Variable will be set to read-only mode.
-            ReadOnly = 0x200
+            ReadOnly = 0x200,
+
+            /// Variable will be raised into a higher namespace.
+            Export = 0x400
         };
         Q_DECLARE_FLAGS(Flags, Flag)
 
