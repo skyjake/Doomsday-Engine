@@ -68,7 +68,7 @@ void Config::read()
         File &file = App::rootFolder().locate<File>(_writtenConfigPath);
         Reader(file) >> names();
 
-        LOG_DEBUG("Serialized Config:\n") << names();
+        LOG_DEBUG("Found serialized Config:\n") << names();
         
         // If the saved config is from a different version, rerun the script.
         Value const &oldVersion = names()["__version__"].value();

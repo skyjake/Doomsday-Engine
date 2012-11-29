@@ -32,13 +32,42 @@
 
 namespace de {
 
+struct App::Instance
+{
+    CommandLine cmdLine;
+
+    LogBuffer logBuffer;
+
+    /// Path of the application executable.
+    NativePath appPath;
+
+    /// The file system.
+    FS fs;
+
+    UnixInfo unixInfo;
+
+    /// The configuration.
+    Config *config;
+
+    /// Resident modules.
+    typedef std::map<String, Module *> Modules;
+    Modules modules;
+
+    Instance(QStringList args) : cmdLine(args), config(0)
+    {}
+
+    ~Instance()
+    {
+        delete config;
+    }
+};
+
 App::App(int &argc, char **argv, GUIMode guiMode)
     : QApplication(argc, argv, guiMode == GUIEnabled),
-      _cmdLine(arguments()),
-      _config(0)
+      d(new Instance(arguments()))
 {
     // This instance of LogBuffer is used globally.
-    LogBuffer::setAppBuffer(_logBuffer);
+    LogBuffer::setAppBuffer(d->logBuffer);
 
     // Set the log message level.
 #ifdef DENG2_DEBUG
@@ -49,9 +78,9 @@ App::App(int &argc, char **argv, GUIMode guiMode)
     try
     {
         int pos;
-        if((pos = _cmdLine.check("-loglevel", 1)) > 0)
+        if((pos = d->cmdLine.check("-loglevel", 1)) > 0)
         {
-            level = Log::textToLevel(_cmdLine.at(pos + 1));
+            level = Log::textToLevel(d->cmdLine.at(pos + 1));
         }
     }
     catch(Error const &er)
@@ -59,20 +88,20 @@ App::App(int &argc, char **argv, GUIMode guiMode)
         qWarning("%s", er.asText().toAscii().constData());
     }
     // Aliases have not been defined at this point.
-    level = qMax(Log::TRACE, Log::LogLevel(level - _cmdLine.has("-verbose") - _cmdLine.has("-v")));
-    _logBuffer.enable(level);
+    level = qMax(Log::TRACE, Log::LogLevel(level - d->cmdLine.has("-verbose") - d->cmdLine.has("-v")));
+    d->logBuffer.enable(level);
 
-    _appPath = applicationFilePath();
+    d->appPath = applicationFilePath();
 
-    LOG_INFO("Application path: ") << _appPath;
+    LOG_INFO("Application path: ") << d->appPath;
     LOG_INFO("Enabled log entry level: ") << Log::levelToText(level);
 
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command
     // line argument. The working directory needs to be changed.
-    if(_cmdLine.count() >= 2 && _cmdLine.at(1).beginsWith("-psn"))
+    if(d->cmdLine.count() >= 2 && d->cmdLine.at(1).beginsWith("-psn"))
     {
-        DirectoryFeed::changeWorkingDir(_cmdLine.at(0).fileNamePath() + "/..");
+        DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
     }
 #endif
 }
@@ -81,23 +110,22 @@ App::~App()
 {
     LOG_AS("~App");
 
-    delete _config;
-    _config = 0;
+    delete d;
 }
 
 NativePath App::nativeBinaryPath()
 {
     NativePath path;
 #ifdef WIN32
-    path = _appPath.fileNamePath() / "plugins";
+    path = d->appPath.fileNamePath() / "plugins";
 #else
 # ifdef MACOSX
-    path = _appPath.fileNamePath() / "../DengPlugins";
+    path = d->appPath.fileNamePath() / "../DengPlugins";
 # else
     path = DENG_LIBRARY_DIR;
 # endif
     // Also check the system config files.
-    _unixInfo.path("libdir", path);
+    d->unixInfo.path("libdir", path);
 #endif
     return path;
 }
@@ -105,10 +133,10 @@ NativePath App::nativeBinaryPath()
 NativePath App::nativeHomePath()
 {
     int i;
-    if((i = _cmdLine.check("-userdir", 1)))
+    if((i = d->cmdLine.check("-userdir", 1)))
     {
-        _cmdLine.makeAbsolutePath(i + 1);
-        return _cmdLine.at(i + 1);
+        d->cmdLine.makeAbsolutePath(i + 1);
+        return d->cmdLine.at(i + 1);
     }
 
 #ifdef MACOSX
@@ -137,15 +165,15 @@ bool App::setCurrentWorkPath(NativePath const &cwd)
 NativePath App::nativeBasePath()
 {
     int i;
-    if((i = _cmdLine.check("-basedir", 1)))
+    if((i = d->cmdLine.check("-basedir", 1)))
     {
-        _cmdLine.makeAbsolutePath(i + 1);
-        return _cmdLine.at(i + 1);
+        d->cmdLine.makeAbsolutePath(i + 1);
+        return d->cmdLine.at(i + 1);
     }
 
     NativePath path;
 #ifdef WIN32
-    path = _appPath.fileNamePath() / "..";
+    path = d->appPath.fileNamePath() / "..";
 #else
 # ifdef MACOSX
     path = ".";
@@ -153,7 +181,7 @@ NativePath App::nativeBasePath()
     path = DENG_BASE_DIR;
 # endif
     // Also check the system config files.
-    _unixInfo.path("basedir", path);
+    d->unixInfo.path("basedir", path);
 #endif
     return path;
 }
@@ -162,20 +190,20 @@ void App::initSubsystems(SubsystemInitFlags flags)
 {
     bool allowPlugins = !flags.testFlag(DisablePlugins);
 
-    Folder &binFolder = _fs.makeFolder("/bin");
+    Folder &binFolder = d->fs.makeFolder("/bin");
 
     // Initialize the built-in folders. This hooks up the default native
     // directories into the appropriate places in the file system.
     // All of these are in read-only mode.
 #ifdef MACOSX
-    NativePath appDir = _appPath.fileNamePath();
+    NativePath appDir = d->appPath.fileNamePath();
     binFolder.attach(new DirectoryFeed(appDir));
     if(allowPlugins)
     {
         binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
     }
-    _fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
-    _fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "../Resources/config"));
+    d->fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
+    d->fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "../Resources/config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
 
 #elif WIN32
@@ -183,9 +211,9 @@ void App::initSubsystems(SubsystemInitFlags flags)
     {
         binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
     }
-    NativePath appDir = _appPath.fileNamePath();
-    _fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
-    _fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "..\\config"));
+    NativePath appDir = d->appPath.fileNamePath();
+    d->fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
+    d->fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "..\\config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
 
 #else // UNIX
@@ -193,29 +221,29 @@ void App::initSubsystems(SubsystemInitFlags flags)
     {
         binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
     }
-    _fs.makeFolder("/data").attach(new DirectoryFeed(nativeBasePath() / "data"));
-    _fs.makeFolder("/config").attach(new DirectoryFeed(nativeBasePath() / "config"));
+    d->fs.makeFolder("/data").attach(new DirectoryFeed(nativeBasePath() / "data"));
+    d->fs.makeFolder("/config").attach(new DirectoryFeed(nativeBasePath() / "config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data/modules"));
 #endif
 
     // User's home folder.
-    _fs.makeFolder("/home").attach(new DirectoryFeed(nativeHomePath(),
+    d->fs.makeFolder("/home").attach(new DirectoryFeed(nativeHomePath(),
         DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
 
     // Populate the file system.
-    _fs.refresh();
+    d->fs.refresh();
 
     // The configuration.
-    QScopedPointer<Config> conf(new Config("/config/deng.de"));
-    conf->read();
+    d->config = new Config("/config/deng.de");
+    d->config->read();
 
     LogBuffer &logBuf = LogBuffer::appBuffer();
 
     // Update the log buffer max entry count: number of items to hold in memory.
-    logBuf.setMaxEntryCount(conf->getui("log.bufferSize"));
+    logBuf.setMaxEntryCount(d->config->getui("log.bufferSize"));
 
     // Set the log output file.
-    logBuf.setOutputFile(conf->gets("log.file"));
+    logBuf.setOutputFile(d->config->gets("log.file"));
 
     // The level of enabled messages.
     /**
@@ -231,9 +259,6 @@ void App::initSubsystems(SubsystemInitFlags flags)
         loadPlugins();
 #endif
     }
-
-    // Successful construction without errors, so drop our guard.
-    _config = conf.take();
 
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
 }
@@ -262,17 +287,17 @@ App &App::app()
 
 CommandLine &App::commandLine()
 {
-    return DENG2_APP->_cmdLine;
+    return DENG2_APP->d->cmdLine;
 }
 
 NativePath App::executablePath()
 {
-    return DENG2_APP->_appPath;
+    return DENG2_APP->d->appPath;
 }
 
 FS &App::fileSystem()
 {
-    return DENG2_APP->_fs;
+    return DENG2_APP->d->fs;
 }
 
 Folder &App::rootFolder()
@@ -287,13 +312,13 @@ Folder &App::homeFolder()
 
 Config &App::config()
 {
-    DENG2_ASSERT(DENG2_APP->_config != 0);
-    return *DENG2_APP->_config;
+    DENG2_ASSERT(DENG2_APP->d->config != 0);
+    return *DENG2_APP->d->config;
 }
 
 UnixInfo &App::unixInfo()
 {
-    return DENG2_APP->_unixInfo;
+    return DENG2_APP->d->unixInfo;
 }
 
 static int sortFilesByModifiedAt(File const *a, File const *b)
@@ -314,8 +339,8 @@ Record &App::importModule(String const &name, String const &fromPath)
     }
 
     // Maybe we already have this module?
-    Modules::iterator found = self._modules.find(name);
-    if(found != self._modules.end())
+    Instance::Modules::iterator found = self.d->modules.find(name);
+    if(found != self.d->modules.end())
     {
         return found->second->names();
     }
@@ -375,7 +400,7 @@ Record &App::importModule(String const &name, String const &fromPath)
         if(found)
         {
             Module *module = new Module(*found);
-            self._modules[name] = module;
+            self.d->modules[name] = module;
             return module->names();
         }
     }
