@@ -35,8 +35,12 @@ namespace de
     class Function;
     
     /**
-     * A set of variables. A record may have any number of subrecords.
-     * Note that the members of a record do not have an order.
+     * A set of variables. A record may have any number of subrecords. Note
+     * that the members of a record do not have an order.
+     *
+     * A @m subrecord is a record that is owned by one of the members of the
+     * main record. The ownership chain is as follows: Record -> Variable ->
+     * RecordValue -> Record.
      *
      * @see http://en.wikipedia.org/wiki/Record_(computer_science)
      *
@@ -162,18 +166,20 @@ namespace de
         Variable &addBlock(String const &variableName);
         
         /**
-         * Adds a new subrecord to the record. 
+         * Adds a new subrecord to the record. Adds a variable named @a name
+         * and gives ownership of @a subrecord to it.
          *
          * @param name  Name to use for the subrecord. This must be a valid variable name.
          * @param subrecord  Record to add. This record gets ownership
-         *      of the subrecord. The variable must have a name.
+         *      of the subrecord.
          *
          * @return @a subrecord, for convenience.
          */
         Record &add(String const &name, Record *subrecord);
 
         /**
-         * Adds a new empty subrecord to the record.
+         * Adds a new empty subrecord to the record. Adds a variable named @a
+         * name and creates a new record owned by it.
          *
          * @param name  Name to use for the subrecord. This must be a valid variable name.
          *
@@ -231,12 +237,12 @@ namespace de
         /**
          * Returns a non-modifiable map of the members.
          */
-        Members const &members() const { return _members; }
+        Members const &members() const;
         
         /**
-         * Returns a non-modifiable map of the subrecords.
+         * Collects a map of all the subrecords present in the record.
          */
-        Subrecords const &subrecords() const { return _subrecords; }
+        Subrecords subrecords() const;
 
         /**
          * Creates a text representation of the record. Each variable name is 
@@ -280,9 +286,9 @@ namespace de
         LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
         String asText() const { return asText("", 0); }
         
-    private:  
-        Members _members;
-        Subrecords _subrecords;
+    private:
+        struct Instance;
+        Instance * d;
     };
     
     /// Converts the record into a human-readable text representation.

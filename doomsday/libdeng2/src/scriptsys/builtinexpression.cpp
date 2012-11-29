@@ -125,8 +125,8 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         }
         else
         {
-            for(Record::Subrecords::const_iterator i = rec->dereference().subrecords().begin();
-                i != rec->dereference().subrecords().end(); ++i)
+            Record::Subrecords subs = rec->dereference().subrecords();
+            DENG2_FOR_EACH(Record::Subrecords, i, subs)
             {
                 dict->add(new TextValue(i->first), new RecordValue(i->second));
             }

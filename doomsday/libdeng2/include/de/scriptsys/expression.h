@@ -58,8 +58,8 @@ namespace de
             /// If missing, create a new variable.
             NewVariable = 0x4,
 
-            /// If missing, create a new record.
-            NewRecord = 0x8,
+            /// If missing, create a new subrecord (i.e., Variable that owns a Record).
+            NewSubrecord = 0x8,
 
             /// Identifier must exist and will be deleted.
             Delete = 0x10,

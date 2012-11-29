@@ -281,14 +281,12 @@ ExpressionStatement *Parser::parseImportStatement()
     }
     dint startAt = 1;
     Expression::Flags flags = Expression::Import
-            | Expression::NewRecord
             | Expression::NotInScope
             | Expression::LocalOnly;
     if(_statementRange.size() >= 3 && _statementRange.token(1).equals(ScriptLex::RECORD))
     {
         // Take a copy of the imported record instead of referencing it.
         flags |= Expression::ByValue;
-        flags &= ~Expression::NewRecord; // don't create a variable referencing it
         startAt = 2;
     }
     return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), Token::COMMA, flags));
@@ -303,7 +301,7 @@ ExpressionStatement *Parser::parseDeclarationStatement()
         throw MissingTokenError("Parser::parseDeclarationStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
-    Expression::Flags flags = Expression::LocalOnly | Expression::NewRecord;
+    Expression::Flags flags = Expression::LocalOnly | Expression::NewSubrecord;
     return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA, flags));
 }
 
@@ -464,6 +462,7 @@ AssignStatement *Parser::parseAssignStatement()
         pos = _statementRange.find(ScriptLex::SCOPE_ASSIGN);
         if(pos < 0)
         {
+            // Must be weak assingment, then.
             pos = _statementRange.find(ScriptLex::WEAK_ASSIGN);
             flags |= Expression::ThrowawayIfInScope;
         }

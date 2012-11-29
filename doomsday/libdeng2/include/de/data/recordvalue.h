@@ -44,6 +44,9 @@ namespace de
         
         /// The index used for accessing the record is of the wrong type. @ingroup errors
         DENG2_ERROR(IllegalIndexError);
+
+        /// The value does not own a record when expected to. @ingroup errors
+        DENG2_ERROR(OwnershipError);
         
         enum OwnershipFlag
         {
@@ -57,16 +60,36 @@ namespace de
          * Constructs a new reference to a record.
          *
          * @param record     Record.
-         * @param ownership  OWNS_RECORD, if the value is given ownership of @a record.
+         * @param ownership  OwnsRecord, if the value is given ownership of @a record.
          */
         RecordValue(Record *record, OwnershipFlags ownership = 0);
         
         virtual ~RecordValue();
+
+        bool hasOwnership() const;
+
+        /**
+         * Determines if the value had ownership of the record prior to
+         * serialization and deserialization.
+         */
+        bool usedToHaveOwnership() const;
         
         /**
          * Returns the record this reference points to.
          */
         Record *record() const { return _record; }
+
+        /**
+         * Sets the record that the value is referencing.
+         *
+         * @param record  Record to reference. Ownership is not given.
+         */
+        void setRecord(Record *record);
+
+        /**
+         * Gives away ownership of the record, if the value owns the record.
+         */
+        Record *takeRecord();
 
         void verify() const;
         Record &dereference();
@@ -90,6 +113,7 @@ namespace de
     public:
         Record *_record;
         OwnershipFlags _ownership;
+        OwnershipFlags _oldOwnership;
     };
 
     Q_DECLARE_OPERATORS_FOR_FLAGS(RecordValue::OwnershipFlags)
