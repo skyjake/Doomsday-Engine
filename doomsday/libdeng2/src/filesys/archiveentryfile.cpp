@@ -17,17 +17,17 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/ArchiveFile"
+#include "de/ArchiveEntryFile"
 #include "de/Archive"
 #include "de/Block"
 
-using namespace de;
+namespace de {
 
-ArchiveFile::ArchiveFile(String const &name, Archive &archive, String const &entryPath)
+ArchiveEntryFile::ArchiveEntryFile(String const &name, Archive &archive, String const &entryPath)
     : ByteArrayFile(name), _archive(archive), _entryPath(entryPath)
 {}
 
-ArchiveFile::~ArchiveFile()
+ArchiveEntryFile::~ArchiveEntryFile()
 {
     DENG2_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion.clear();
@@ -35,7 +35,7 @@ ArchiveFile::~ArchiveFile()
     deindex();
 }
 
-void ArchiveFile::clear()
+void ArchiveEntryFile::clear()
 {
     File::clear();
     
@@ -48,17 +48,17 @@ void ArchiveFile::clear()
     setStatus(st);
 }
 
-IByteArray::Size ArchiveFile::size() const
+IByteArray::Size ArchiveEntryFile::size() const
 {
     return archive().entryBlock(_entryPath).size();
 }
 
-void ArchiveFile::get(Offset at, Byte *values, Size count) const
+void ArchiveEntryFile::get(Offset at, Byte *values, Size count) const
 {
     archive().entryBlock(_entryPath).get(at, values, count);
 }
 
-void ArchiveFile::set(Offset at, Byte const *values, Size count)
+void ArchiveEntryFile::set(Offset at, Byte const *values, Size count)
 {
     verifyWriteAccess();
     
@@ -72,3 +72,5 @@ void ArchiveFile::set(Offset at, Byte const *values, Size count)
     st.modifiedAt = Time();
     setStatus(st);
 }
+
+} // namespace de
