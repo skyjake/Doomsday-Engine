@@ -39,7 +39,7 @@
  *
  * To facilitate efficient O(log n) searches over the entire file system,
  * de::FS maintains an index of all files and folders by name. There is
- * additionally a separate index for each file type (e.g., de::ArchiveFile).
+ * additionally a separate index for each file type (e.g., de::ArchiveEntryFile).
  *
  * The file system has to be manually refreshed when the underlying data
  * changes. For instance, when new files are written to a folder on the hard
@@ -52,7 +52,7 @@
  * like a tree of native files. Files within archives can be read and written
  * just like native files, and the containing archives will be updated as
  * needed.
- * @see de::ArchiveFile, de::ArchiveFeed, and de::FS::interpret()
+ * @see de::ArchiveEntryFile, de::ArchiveFeed, and de::FS::interpret()
  */
 
 namespace de

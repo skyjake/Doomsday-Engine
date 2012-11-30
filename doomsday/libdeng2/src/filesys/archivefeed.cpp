@@ -18,7 +18,7 @@
  */
 
 #include "de/ArchiveFeed"
-#include "de/ArchiveFile"
+#include "de/ArchiveEntryFile"
 #include "de/ByteArrayFile"
 #include "de/ZipArchive"
 #include "de/Writer"
@@ -124,9 +124,9 @@ struct ArchiveFeed::Instance
 
             String entry = basePath / *i;
 
-            std::auto_ptr<ArchiveFile> archFile(new ArchiveFile(*i, archive(), entry));
+            std::auto_ptr<ArchiveEntryFile> archFile(new ArchiveEntryFile(*i, archive(), entry));
             // Use the status of the entry within the archive.
-            archFile->setStatus(archive().status(entry));
+            archFile->setStatus(archive().entryStatus(entry));
 
             // Create a new file that accesses this feed's archive and interpret the contents.
             File *file = folder.fileSystem().interpret(archFile.release());
@@ -204,7 +204,7 @@ File *ArchiveFeed::newFile(String const &name)
     }
     // Add an empty entry.
     archive().add(newEntry, Block());
-    File *file = new ArchiveFile(name, archive(), newEntry);
+    File *file = new ArchiveEntryFile(name, archive(), newEntry);
     file->setOriginFeed(this);
     return file;
 }
