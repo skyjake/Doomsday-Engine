@@ -20,11 +20,15 @@
 #include "de/App"
 #include "de/ArrayValue"
 #include "de/DirectoryFeed"
-#include "de/Folder"
+#include "de/PackageFolder"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/Module"
 #include "de/Version"
+#include "de/Block"
+#include "de/ZipArchive"
+#include "de/ArchiveFeed"
+#include "de/Writer"
 #include "de/math.h"
 
 #include <QDesktopServices>
@@ -34,6 +38,8 @@ namespace de {
 
 struct App::Instance
 {
+    App &app;
+
     CommandLine cmdLine;
 
     LogBuffer logBuffer;
@@ -44,6 +50,10 @@ struct App::Instance
     /// The file system.
     FS fs;
 
+    /// Archive where persistent data should be stored. Written to /home/persist.pack.
+    /// The archive is owned by the file system.
+    Archive *persistentData;
+
     UnixInfo unixInfo;
 
     /// The configuration.
@@ -53,18 +63,64 @@ struct App::Instance
     typedef std::map<String, Module *> Modules;
     Modules modules;
 
-    Instance(QStringList args) : cmdLine(args), config(0)
+    Instance(App &a, QStringList args) : app(a), cmdLine(args), persistentData(0), config(0)
     {}
 
     ~Instance()
     {
         delete config;
     }
+
+    void initFileSystem(bool allowPlugins)
+    {
+        Folder &binFolder = fs.makeFolder("/bin");
+
+        // Initialize the built-in folders. This hooks up the default native
+        // directories into the appropriate places in the file system.
+        // All of these are in read-only mode.
+#ifdef MACOSX
+        NativePath appDir = appPath.fileNamePath();
+        binFolder.attach(new DirectoryFeed(appDir));
+        if(allowPlugins)
+        {
+            binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
+        }
+        fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
+        fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "../Resources/config"));
+        //fs.makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
+
+#elif WIN32
+        if(allowPlugins)
+        {
+            binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
+        }
+        NativePath appDir = appPath.fileNamePath();
+        fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
+        fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "..\\config"));
+        //fs.>makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
+
+#else // UNIX
+        if(allowPlugins)
+        {
+            binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
+        }
+        fs.makeFolder("/data").attach(new DirectoryFeed(app.nativeBasePath() / "data"));
+        fs.makeFolder("/config").attach(new DirectoryFeed(app.nativeBasePath() / "config"));
+        //fs.makeFolder("/modules").attach(new DirectoryFeed("data/modules"));
+#endif
+
+        // User's home folder.
+        fs.makeFolder("/home").attach(new DirectoryFeed(app.nativeHomePath(),
+            DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+
+        // Populate the file system.
+        fs.refresh();
+    }
 };
 
 App::App(int &argc, char **argv, GUIMode guiMode)
     : QApplication(argc, argv, guiMode == GUIEnabled),
-      d(new Instance(arguments()))
+      d(new Instance(*this, arguments()))
 {
     // This instance of LogBuffer is used globally.
     LogBuffer::setAppBuffer(d->logBuffer);
@@ -152,6 +208,13 @@ NativePath App::nativeHomePath()
     return nativeHome;
 }
 
+Archive &App::persistentData()
+{
+    DENG2_ASSERT(DENG2_APP->d->persistentData != 0);
+
+    return *DENG2_APP->d->persistentData;
+}
+
 NativePath App::currentWorkPath()
 {
     return NativePath::workPath();
@@ -190,48 +253,19 @@ void App::initSubsystems(SubsystemInitFlags flags)
 {
     bool allowPlugins = !flags.testFlag(DisablePlugins);
 
-    Folder &binFolder = d->fs.makeFolder("/bin");
+    d->initFileSystem(allowPlugins);
 
-    // Initialize the built-in folders. This hooks up the default native
-    // directories into the appropriate places in the file system.
-    // All of these are in read-only mode.
-#ifdef MACOSX
-    NativePath appDir = d->appPath.fileNamePath();
-    binFolder.attach(new DirectoryFeed(appDir));
-    if(allowPlugins)
+    if(!homeFolder().has("persist.pack"))
     {
-        binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
-    }
-    d->fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
-    d->fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "../Resources/config"));
-    //fs_->makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
+        // Recreate the persistent state data package.
+        ZipArchive arch;
+        arch.add("Info", String("# Package for Doomsday's persistent state.\n").toUtf8());
+        Writer(homeFolder().newFile("persist.pack")) << arch;
 
-#elif WIN32
-    if(allowPlugins)
-    {
-        binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
-    }
-    NativePath appDir = d->appPath.fileNamePath();
-    d->fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
-    d->fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "..\\config"));
-    //fs_->makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
+        homeFolder().populate(Folder::PopulateJustThisFolder);
+    }            
 
-#else // UNIX
-    if(allowPlugins)
-    {
-        binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
-    }
-    d->fs.makeFolder("/data").attach(new DirectoryFeed(nativeBasePath() / "data"));
-    d->fs.makeFolder("/config").attach(new DirectoryFeed(nativeBasePath() / "config"));
-    //fs_->makeFolder("/modules").attach(new DirectoryFeed("data/modules"));
-#endif
-
-    // User's home folder.
-    d->fs.makeFolder("/home").attach(new DirectoryFeed(nativeHomePath(),
-        DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
-
-    // Populate the file system.
-    d->fs.refresh();
+    d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
 
     // The configuration.
     d->config = new Config("/config/deng.de");
@@ -307,7 +341,7 @@ Folder &App::rootFolder()
 
 Folder &App::homeFolder()
 {
-    return rootFolder().locate<Folder>("/home");
+    return rootFolder().locate<Folder>("home");
 }
 
 Config &App::config()
