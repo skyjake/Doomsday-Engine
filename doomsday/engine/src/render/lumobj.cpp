@@ -22,6 +22,7 @@
 
 #include <cstdio>
 #include <cmath>
+#include <cstring> // memset
 
 #include "de_base.h"
 #include "de_console.h"

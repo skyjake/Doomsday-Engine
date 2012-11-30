@@ -32,6 +32,7 @@
 
 #include <de/memory.h>
 #include <de/memoryzone.h>
+#include <cstring> // memcpy, memmove
 
 fidata_text_t *P_CreateText(fi_objectid_t id, char const *name, fontid_t fontNum);
 void P_DestroyText(fidata_text_t *text);
