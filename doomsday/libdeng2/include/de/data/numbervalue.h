@@ -48,12 +48,12 @@ namespace de
 
         enum SemanticHint {
             Boolean = 0x1,      ///< The number is intended to be a boolean value.
-            DefaultSemantic = 0
+            Generic = 0         ///< Generic number.
         };
         Q_DECLARE_FLAGS(SemanticHints, SemanticHint)
         
     public:
-        NumberValue(Number initialValue = 0, SemanticHints semantic = DefaultSemantic);
+        NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
 
         /**
          * Conversion template that forces a cast to another type.
