@@ -64,7 +64,7 @@ void Folder::clear()
     _contents.clear();
 }
 
-void Folder::populate()
+void Folder::populate(PopulationBehavior behavior)
 {
     LOG_AS("Folder");
     
@@ -118,13 +118,16 @@ void Folder::populate()
         (*i)->populate(*this);
     }
     
-    // Call populate on subfolders.
-    for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
+    if(behavior == PopulateFullTree)
     {
-        Folder *folder = dynamic_cast<Folder *>(i->second);
-        if(folder)
+        // Call populate on subfolders.
+        for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
         {
-            folder->populate();
+            Folder *folder = dynamic_cast<Folder *>(i->second);
+            if(folder)
+            {
+                folder->populate();
+            }
         }
     }
 }
