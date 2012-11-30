@@ -852,15 +852,15 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
 Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSide, TokenRange &rightSide)
 {
     enum {
-        MAX_RANK            = 0x7fffffff,
-        RANK_MEMBER         = 13,
-        RANK_CALL           = 14,
-        RANK_INDEX          = 14,
-        RANK_SLICE          = 14,
-        RANK_DOT            = 15,
-        RANK_ARRAY          = MAX_RANK - 1,
-        RANK_DICTIONARY     = RANK_ARRAY,
-        RANK_PARENTHESIS    = MAX_RANK - 1
+        MAX_RANK         = 0x7fffffff,
+        RANK_MEMBER      = 13,
+        RANK_CALL        = 14,
+        RANK_INDEX       = 14,
+        RANK_SLICE       = 14,
+        RANK_DOT         = 15,
+        RANK_ARRAY       = MAX_RANK - 1,
+        RANK_DICTIONARY  = RANK_ARRAY,
+        RANK_PARENTHESIS = MAX_RANK - 1
     };
     enum Direction {
         LEFT_TO_RIGHT,
