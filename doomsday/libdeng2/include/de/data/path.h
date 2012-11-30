@@ -195,7 +195,7 @@ public:
     /**
      * @copydoc operator+
      */
-    Path operator + (char const *nullTerminatedCStr) const;
+    Path operator + (char const *str) const;
 
     /**
      * Swaps this Path with @a other.
