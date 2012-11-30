@@ -664,6 +664,28 @@ print 'Calling deserialized function that throws an exception...'
 try: dsns.erroneous(); catch: print 'Caught.'
 del dsns
 
+sections.subsection('Serializing record references.')
+def recordRefTest()
+    record hello
+    hello.entry = 'World'
+
+    record hello.subrec
+    hello.subrec.another = 123
+
+    hello.recref = hello.subrec
+
+    print 'Original record:'
+    print hello
+
+    hello.subrec.another = 456
+    print 'Modified:'
+    print hello
+
+    print 'After serialization:'
+    print deserialize(serialize(hello))
+end
+recordRefTest()
+
 sections.subsection('Importing modules: import record.')
 print 'Getting rid of the imported sections module (which is just a reference).'
 print "Note that this has no effect on sections's own namespace."
