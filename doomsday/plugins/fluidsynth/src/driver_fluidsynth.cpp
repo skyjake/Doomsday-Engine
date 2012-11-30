@@ -61,7 +61,7 @@ int DS_Init(void)
 
     // Set up a reasonable configuration.
     fsConfig = new_fluid_settings();
-    fluid_settings_setnum(fsConfig, "synth.gain", 0.4);
+    fluid_settings_setnum(fsConfig, "synth.gain", MAX_SYNTH_GAIN);
 
     // Create the synthesizer.
     fsSynth = new_fluid_synth(fsConfig);

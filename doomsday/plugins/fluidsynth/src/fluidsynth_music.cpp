@@ -386,6 +386,10 @@ void DM_Music_Set(int prop, float value)
         {
             DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, musicVolume);
         }
+        else if(DMFluid_Driver())
+        {
+            fluid_synth_set_gain(DMFluid_Synth(), MAX_SYNTH_GAIN * musicVolume);
+        }
         DSFLUIDSYNTH_TRACE("Music_Set: MUSIP_VOLUME = " << musicVolume);
         break;
 
