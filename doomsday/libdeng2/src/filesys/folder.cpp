@@ -147,7 +147,15 @@ File &Folder::newFile(String const &newPath, bool replaceExisting)
 
     if(replaceExisting && has(newPath))
     {
-        removeFile(newPath);
+        try
+        {
+            removeFile(newPath);
+        }
+        catch(Feed::RemoveError const &er)
+        {
+            LOG_WARNING("Failed to replace %s: existing file could not be removed.\n")
+                    << newPath << er.asText();
+        }
     }
     
     // The first feed able to create a file will get the honors.
@@ -187,11 +195,11 @@ void Folder::removeFile(String const &removePath)
     verifyWriteAccess();
     
     // It should now be in this folder.
-    File &file = locate<File>(removePath);
-    Feed *originFeed = file.originFeed();
+    File *file = &locate<File>(removePath);
+    Feed *originFeed = file->originFeed();
 
     // This'll close it and remove it from the index.
-    delete &file;
+    delete file;
     
     // The origin feed will remove the original data of the file (e.g., the native file).
     if(originFeed)
