@@ -340,15 +340,10 @@ String Record::asText(String const &prefix, List *lines) const
         // Collect lines from this record.
         for(Members::const_iterator i = d->members.begin(); i != d->members.end(); ++i)
         {
-            if(d->isSubrecord(*i->second))
-            {
-                static_cast<RecordValue &>(i->second->value()).record()->asText(i->first.concatenateMember(""), lines);
-            }
-            else
-            {
-                KeyValue kv(prefix + i->first, i->second->value().asText());
-                lines->push_back(kv);
-            }
+            String separator = (d->isSubrecord(*i->second)? "." : ":");
+
+            KeyValue kv(prefix + i->first + separator, i->second->value().asText());
+            lines->push_back(kv);
         }
         return "";
     }
@@ -373,7 +368,7 @@ String Record::asText(String const &prefix, List *lines) const
     for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
         if(i != allLines.begin()) os << "\n";
-        os << qSetFieldWidth(maxLength.x) << i->first << qSetFieldWidth(0) << ": ";
+        os << qSetFieldWidth(maxLength.x) << i->first << qSetFieldWidth(0) << " ";
         // Print the value line by line.
         int pos = 0;
         while(pos >= 0)
@@ -381,7 +376,7 @@ String Record::asText(String const &prefix, List *lines) const
             int next = i->second.indexOf('\n', pos);
             if(pos > 0)
             {
-                os << qSetFieldWidth(maxLength.x) << "" << qSetFieldWidth(0) << "  ";
+                os << qSetFieldWidth(maxLength.x) << "" << qSetFieldWidth(0) << " ";
             }
             os << i->second.substr(pos, next != String::npos? next - pos + 1 : next);
             pos = next;

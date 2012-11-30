@@ -178,10 +178,13 @@ dint RecordValue::compare(Value const &value) const
     return cmp(recValue->_record, _record);
 }
 
+// Flags for serialization:
+static duint8 const OWNS_RECORD = 0x1;
+
 void RecordValue::operator >> (Writer &to) const
 {
     duint8 flags = 0;
-    if(hasOwnership()) flags |= OwnsRecord;
+    if(hasOwnership()) flags |= OWNS_RECORD;
     to << SerialId(RECORD) << flags << dereference();
 }
 
@@ -199,7 +202,7 @@ void RecordValue::operator << (Reader &from)
     // Old flags.
     duint8 flags = 0;
     from >> flags;
-    _oldOwnership = OwnershipFlags(flags & OwnsRecord? OwnsRecord : 0);
+    _oldOwnership = OwnershipFlags(flags & OWNS_RECORD? OwnsRecord : 0);
 
     from >> dereference();
 }
