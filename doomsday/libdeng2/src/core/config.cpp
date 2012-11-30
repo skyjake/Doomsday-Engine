@@ -19,6 +19,7 @@
  
 #include "de/Config"
 #include "de/App"
+#include "de/Archive"
 #include "de/Log"
 #include "de/Folder"
 #include "de/ArrayValue"
@@ -27,12 +28,27 @@
 #include "de/Writer"
 #include "de/Version"
 
-using namespace de;
+namespace de {
 
-Config::Config(String const &path) : _configPath(path)
+struct Config::Instance
 {
-    _writtenConfigPath = String("/home") / _configPath.fileNameWithoutExtension() + ".config";
-}
+    /// Configuration file name.
+    Path configPath;
+
+    /// Path where the configuration is written (inside persist.pack).
+    Path writtenConfigPath;
+
+    /// The configuration namespace.
+    Process config;
+
+    Instance(Path const &path) : configPath(path)
+    {
+        writtenConfigPath = Path("modules/Config");
+    }
+};
+
+Config::Config(Path const &path) : d(new Instance(path))
+{}
 
 Config::~Config()
 {
@@ -45,6 +61,8 @@ Config::~Config()
     {
         LOG_ERROR("") << err.asText();
     }
+
+    delete d;
 }
 
 void Config::read()
@@ -59,14 +77,14 @@ void Config::read()
     version->add(new NumberValue(verInfo.patch));
     version->add(new NumberValue(verInfo.build));
 
-    File &scriptFile = App::rootFolder().locate<File>(_configPath);
+    File &scriptFile = App::rootFolder().locate<File>(d->configPath);
     bool shouldRunScript = false;
 
     try
     {
         // If we already have a saved copy of the config, read it.
-        File &file = App::rootFolder().locate<File>(_writtenConfigPath);
-        Reader(file) >> names();
+        Archive const &persist = App::persistentData();
+        Reader(persist.entryBlock(d->writtenConfigPath)) >> names();
 
         LOG_DEBUG("Found serialized Config:\n") << names();
         
@@ -75,26 +93,26 @@ void Config::read()
         if(oldVersion.compare(*version))
         {
             // Version mismatch: store the old version in a separate variable.
-            _config.globals().add(new Variable("__oldversion__", oldVersion.duplicate(),
-                                               Variable::AllowArray | Variable::ReadOnly));
+            d->config.globals().add(new Variable("__oldversion__", oldVersion.duplicate(),
+                                                 Variable::AllowArray | Variable::ReadOnly));
             shouldRunScript = true;
         }
         else
         {
             // Versions match.
-            LOG_MSG("") << _writtenConfigPath << " matches version " << version->asText();
+            LOG_MSG("") << d->writtenConfigPath << " matches version " << version->asText();
         }
 
         // Also check the timestamp of written config vs. they config script.
         // If script is newer, it should be rerun.
-        if(scriptFile.status().modifiedAt > file.status().modifiedAt)
+        if(scriptFile.status().modifiedAt > persist.entryStatus(d->writtenConfigPath).modifiedAt)
         {
             LOG_MSG("%s is newer than %s, rerunning the script.")
-                    << _configPath << _writtenConfigPath;
+                    << d->configPath << d->writtenConfigPath;
             shouldRunScript = true;
         }
     }
-    catch(Folder::NotFoundError const &)
+    catch(Archive::NotFoundError const &)
     {
         // It is missing if the config hasn't been written yet.
         shouldRunScript = true;
@@ -108,32 +126,31 @@ void Config::read()
     }
             
     // The version of libdeng2 is automatically included in the namespace.
-    _config.globals().add(new Variable("__version__", version.take(),
-                                       Variable::AllowArray | Variable::ReadOnly));
+    d->config.globals().add(new Variable("__version__", version.take(),
+                                         Variable::AllowArray | Variable::ReadOnly));
 
     if(shouldRunScript)
     {
         // Read the main configuration.
         Script script(scriptFile);
-        _config.run(script);
-        _config.execute();
+        d->config.run(script);
+        d->config.execute();
     }
 }
 
 void Config::write()
 {
-    File &file = App::rootFolder().replaceFile(_writtenConfigPath);
-    Writer(file) << names();    
+    Writer(App::persistentData().entryBlock(d->writtenConfigPath)) << names();
 }
 
 Record &Config::names()
 {
-    return _config.globals();
+    return d->config.globals();
 }
 
 Value &Config::get(String const &name)
 {
-    return _config.globals()[name].value();
+    return d->config.globals()[name].value();
 }
 
 dint Config::geti(String const &name)
@@ -155,3 +172,5 @@ String Config::gets(String const &name)
 {
     return get(name).asText();
 }
+
+} // namespace de

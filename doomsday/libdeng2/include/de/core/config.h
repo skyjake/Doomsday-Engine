@@ -22,6 +22,7 @@
 
 #include "../Process"
 #include "../String"
+#include "../Path"
 
 namespace de
 {
@@ -44,7 +45,7 @@ namespace de
          *
          * @param path  Name of the configuration file to read.
          */
-        Config(String const &path);
+        Config(Path const &path);
 
         /**
          * Destructor. The configuration is automatically saved.
@@ -78,14 +79,8 @@ namespace de
         Record &names();
         
     private:
-        /// Configuration file name.
-        String _configPath;
-        
-        /// Path where the configuration is written.
-        String _writtenConfigPath;
-        
-        /// The configuration namespace.
-        Process _config;
+        struct Instance;
+        Instance *d;
     };
 }
 
