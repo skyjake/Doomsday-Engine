@@ -22,6 +22,8 @@
 
 #include "../Value"
 
+#include <QFlags>
+
 namespace de
 {
     /**
@@ -40,12 +42,18 @@ namespace de
         /// Truth values for logical operations. They are treated as
         /// number values.
         enum {
-            VALUE_FALSE = 0,
-            VALUE_TRUE = 1
+            False = 0,
+            True  = 1
         };
+
+        enum SemanticHint {
+            Boolean = 0x1,      ///< The number is intended to be a boolean value.
+            Generic = 0         ///< Generic number.
+        };
+        Q_DECLARE_FLAGS(SemanticHints, SemanticHint)
         
     public:
-        NumberValue(Number initialValue = 0);
+        NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
 
         /**
          * Conversion template that forces a cast to another type.
@@ -71,7 +79,10 @@ namespace de
         
     private:
         Number _value;
+        SemanticHints _semantic;
     };
+
+    Q_DECLARE_OPERATORS_FOR_FLAGS(NumberValue::SemanticHints)
 }
 
 #endif /* LIBDENG2_NUMBERVALUE_H */

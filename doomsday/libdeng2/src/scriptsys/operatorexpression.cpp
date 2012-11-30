@@ -31,9 +31,6 @@
 
 using namespace de;
 
-#define HAS_LEFT_OPERAND    0x80
-#define OPERATOR_MASK       0x7f
-
 OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(0), _rightOperand(0)
 {}
 
@@ -86,7 +83,8 @@ void OperatorExpression::push(Evaluator &evaluator, Record *names) const
 
 Value *OperatorExpression::newBooleanValue(bool isTrue)
 {
-    return new NumberValue(isTrue? NumberValue::VALUE_TRUE : NumberValue::VALUE_FALSE);
+    return new NumberValue(isTrue? NumberValue::True : NumberValue::False,
+                           NumberValue::Boolean);
 }
 
 void OperatorExpression::verifyAssignable(Value *value)
@@ -255,6 +253,10 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
     
     return result;
 }
+
+// Flags for serialization:
+static duint8 const HAS_LEFT_OPERAND = 0x80;
+static duint8 const OPERATOR_MASK    = 0x7f;
 
 void OperatorExpression::operator >> (Writer &to) const
 {

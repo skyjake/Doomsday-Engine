@@ -172,24 +172,8 @@ namespace de
         void displayModeChanged();
 
     private:
-        CommandLine _cmdLine;
-
-        LogBuffer _logBuffer;
-
-        /// Path of the application executable.
-        NativePath _appPath;
-
-        /// The file system.
-        FS _fs;
-
-        UnixInfo _unixInfo;
-
-        /// The configuration.
-        Config *_config;
-
-        /// Resident modules.
-        typedef std::map<String, Module *> Modules;
-        Modules _modules;
+        struct Instance;
+        Instance *d;
     };
 
     Q_DECLARE_OPERATORS_FOR_FLAGS(App::SubsystemInitFlags)

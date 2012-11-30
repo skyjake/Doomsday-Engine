@@ -96,6 +96,8 @@ namespace de
         ForStatement *parseForStatement();
                 
         ExpressionStatement *parseImportStatement();
+
+        ExpressionStatement *parseExportStatement();
                 
         ExpressionStatement *parseDeclarationStatement();
                 

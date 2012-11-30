@@ -15,28 +15,61 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-# Main configuration for libdeng2.
-# Read by all applications.
+#----------------------------------------------------------------------------
+# MAIN CONFIGURATION FOR LIBDENG2
+#
+# Read by all applications, but only when the script has been updated or
+# the __version__ has changed.
 
-importPath = ['', '/modules']
+hasBeenRun ?= False
 
-# The default audio and video subsystems.
-video = 'opengl'
-audio = 'fmod'
+# Cleanup: this is a persistent namespace (the built-in module "Config"),
+# old stuff may be hanging around.
+if hasBeenRun: del useDefaults
 
-# Log parameters.
-record log
+def useDefaults(dest = None)
+    # Applies the default configuration.
+    # - dest: Record where to set the values. If not specified, the
+    #         Config namespace is used.
+    if dest == None:
+        print "Defaults are set in the main Config namespace."
+        import Config
+        dest = Config
 
-# Log message levels.
-const log.TRACE    = 0
-const log.DEBUG    = 1
-const log.VERBOSE  = 2
-const log.MESSAGE  = 3
-const log.INFO     = 4
-const log.WARNING  = 5
-const log.ERROR    = 6
-const log.CRITICAL = 7
+    dest.importPath = ['', '/modules']
 
-log.file       ?= '/home/doomsday.out'
-log.level      ?= log.MESSAGE
-log.bufferSize ?= 1000
+    # The default audio and video subsystems.
+    dest.video = 'opengl'
+    dest.audio = 'fmod'
+
+    # Log parameters.
+    record dest.log
+
+    # Log message levels.
+    const dest.log.TRACE    = 0
+    const dest.log.DEBUG    = 1
+    const dest.log.VERBOSE  = 2
+    const dest.log.MESSAGE  = 3
+    const dest.log.INFO     = 4
+    const dest.log.WARNING  = 5
+    const dest.log.ERROR    = 6
+    const dest.log.CRITICAL = 7
+
+    dest.log.file       = '/home/doomsday.out'
+    dest.log.level      = dest.log.MESSAGE
+    dest.log.bufferSize = 1000
+end
+
+# Check the previous version and decide what to do.
+if not hasBeenRun
+    useDefaults()
+    hasBeenRun = True
+elsif '__oldversion__' in locals()
+    if __version__[3] > __oldversion__[3]
+        # Current build number is newer.
+        print 'Detected new build:', __oldversion__[3], '=>', __version__[3]
+    elsif __version__[0:2] > __oldversion__[0:2]
+        # Current version is newer.
+        print 'Detected new release:', __oldversion__, '=>', __version__
+    end
+end

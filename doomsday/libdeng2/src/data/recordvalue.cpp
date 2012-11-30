@@ -27,27 +27,68 @@
 
 using namespace de;
 
-RecordValue::RecordValue(Record *record, OwnershipFlags o) : _record(record), _ownership(o)
+RecordValue::RecordValue(Record *record, OwnershipFlags o)
+    : _record(record), _ownership(o), _oldOwnership(o)
 {
     DENG2_ASSERT(_record != NULL);
+
     if(!_ownership.testFlag(OwnsRecord))
     {
         // If we don't own it, someone may delete the record.
-        _record->audienceForDeletion.add(this);
+        _record->audienceForDeletion += this;
     }
 }
 
 RecordValue::~RecordValue()
 {
-    if(_ownership & OwnsRecord)
+    setRecord(0);
+}
+
+bool RecordValue::hasOwnership() const
+{
+    return _ownership.testFlag(OwnsRecord);
+}
+
+bool RecordValue::usedToHaveOwnership() const
+{
+    return _oldOwnership.testFlag(OwnsRecord);
+}
+
+void RecordValue::setRecord(Record *record)
+{
+    if(record == _record) return; // Got it already.
+
+    if(hasOwnership())
     {
         delete _record;
     }
     else if(_record)
     {
-        _record->audienceForDeletion.remove(this);
+        _record->audienceForDeletion -= this;
     }
-    
+
+    _record = record;
+    _ownership = 0;
+
+    if(_record)
+    {
+        // Since we don't own it, someone may delete the record.
+        _record->audienceForDeletion += this;
+    }
+}
+
+Record *RecordValue::takeRecord()
+{
+    verify();
+    if(!hasOwnership())
+    {
+        /// @throw OwnershipError Cannot give away ownership of a record that is not owned.
+        throw OwnershipError("RecordValue::takeRecord", "Value does not own the record");
+    }
+    Record *rec = _record;
+    _record = 0;
+    _ownership = 0;
+    return rec;
 }
 
 void RecordValue::verify() const
@@ -84,7 +125,7 @@ Value::Text RecordValue::asText() const
 
 dsize RecordValue::size() const
 {
-    return dereference().members().size() + dereference().subrecords().size();
+    return dereference().members().size();
 }
 
 Value *RecordValue::duplicateElement(Value const &value) const
@@ -96,13 +137,13 @@ Value *RecordValue::duplicateElement(Value const &value) const
         throw IllegalIndexError("RecordValue::duplicateElement", 
             "Records must be indexed with text values");
     }
+    if(dereference().hasSubrecord(*text)) // note: subrecords are members, too
+    {
+        return new RecordValue(const_cast<Record *>(&dereference().subrecord(*text)));
+    }
     if(dereference().hasMember(*text))
     {
         return new RefValue(const_cast<Variable *>(&dereference()[*text]));
-    }
-    if(dereference().hasSubrecord(*text))
-    {
-        return new RecordValue(const_cast<Record *>(&dereference().subrecord(*text)));
     }
     throw NotFoundError("RecordValue::duplicateElement",
         "'" + text->asText() + "' does not exist in the record");
@@ -137,9 +178,14 @@ dint RecordValue::compare(Value const &value) const
     return cmp(recValue->_record, _record);
 }
 
+// Flags for serialization:
+static duint8 const OWNS_RECORD = 0x1;
+
 void RecordValue::operator >> (Writer &to) const
 {
-    to << SerialId(RECORD) << dereference();
+    duint8 flags = 0;
+    if(hasOwnership()) flags |= OWNS_RECORD;
+    to << SerialId(RECORD) << flags << dereference();
 }
 
 void RecordValue::operator << (Reader &from)
@@ -152,6 +198,12 @@ void RecordValue::operator << (Reader &from)
         /// serialized value was invalid.
         throw DeserializationError("RecordValue::operator <<", "Invalid ID");
     }
+
+    // Old flags.
+    duint8 flags = 0;
+    from >> flags;
+    _oldOwnership = OwnershipFlags(flags & OWNS_RECORD? OwnsRecord : 0);
+
     from >> dereference();
 }
 

@@ -168,6 +168,16 @@ if False: print "Lots of useless stuff here"
 elsif True
     print "From the elsif"
 end
+
+if False
+    print 'a)'
+elsif False
+    print 'b)'
+elsif True > False
+    print 'c)'
+end
+print 'After the a), b), c)'
+
 if True: print 'Everything on one line.'; else: print 'Goes unseen.'
 if False; print 'Goes unseen again.'; else; print 'And with semicolons (requires "end").'; end
 
@@ -599,6 +609,33 @@ end
 globalAssign()
 print 'a =', a
 
+sections.subsection('Exporting variable from a function.')
+def exporting()
+    abc = 'Value from exporting()'
+    export abc
+end
+abc = 'Value in global namespace'
+print 'Before: abc =', abc
+exporting()
+print 'After: abc =', abc
+
+sections.subsection('Exporting a record.')
+def exporting2()
+    record bunny
+    bunny.ear = 'value'
+    export bunny
+end
+exporting2()
+print 'bunny =', bunny
+
+sections.subsection('Exporting while assigning.')
+del abc
+def exporting3()
+    export abc = 'Value from exporting3()'
+end
+exporting3()
+print 'abc =', abc
+
 sections.subsection('Built-in function locals() returns the local namespace as a record.')
 print 'At global level:'
 print locals()
@@ -626,6 +663,28 @@ print dsns.func3(1, 2, 3)
 print 'Calling deserialized function that throws an exception...'
 try: dsns.erroneous(); catch: print 'Caught.'
 del dsns
+
+sections.subsection('Serializing record references.')
+def recordRefTest()
+    record hello
+    hello.entry = 'World'
+
+    record hello.subrec
+    hello.subrec.another = 123
+
+    hello.recref = hello.subrec
+
+    print 'Original record:'
+    print hello
+
+    hello.subrec.another = 456
+    print 'Modified:'
+    print hello
+
+    print 'After serialization:'
+    print deserialize(serialize(hello))
+end
+recordRefTest()
 
 sections.subsection('Importing modules: import record.')
 print 'Getting rid of the imported sections module (which is just a reference).'

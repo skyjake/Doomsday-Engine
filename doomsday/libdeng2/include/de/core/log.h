@@ -52,6 +52,17 @@
     de::Block __logSectionUtf8 = __logSectionName.toUtf8(); \
     LOG_AS(__logSectionUtf8.constData());
 
+#ifdef DENG2_DEBUG
+/**
+ * Makes a developer-only TRACE level log entry. Only enabled in debug builds;
+ * use this for internal messages that are only useful to / understood by
+ * developers when debugging.
+ */
+#  define LOG_DEV_TRACE(str) LOG().enter(de::Log::TRACE, str)
+#else
+#  define LOG_DEV_TRACE(str) LOG().throwaway()
+#endif
+
 #define LOG_TRACE(str)      LOG().enter(de::Log::TRACE, str)
 #define LOG_DEBUG(str)      LOG().enter(de::Log::DEBUG, str)
 #define LOG_VERBOSE(str)    LOG().enter(de::Log::VERBOSE, str)
@@ -224,6 +235,14 @@ public:
      * @param format  Format template of the entry.
      */
     LogEntry &enter(LogLevel level, String const &format);
+
+    /**
+     * Returns the special, disabled log entry that can be used as a
+     * target when giving arguments to nonexistent log entries.
+     *
+     * @return Throwaway entry.
+     */
+    LogEntry &throwaway() { return *_throwawayEntry; }
 
 public:
     /**

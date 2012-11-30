@@ -50,12 +50,12 @@ ConstantExpression *ConstantExpression::None()
 
 ConstantExpression *ConstantExpression::True()
 {
-    return new ConstantExpression(new NumberValue(NumberValue::VALUE_TRUE));
+    return new ConstantExpression(new NumberValue(NumberValue::True, NumberValue::Boolean));
 }
 
 ConstantExpression *ConstantExpression::False()
 {
-    return new ConstantExpression(new NumberValue(NumberValue::VALUE_FALSE));
+    return new ConstantExpression(new NumberValue(NumberValue::False, NumberValue::Boolean));
 }
 
 ConstantExpression *ConstantExpression::Pi()
