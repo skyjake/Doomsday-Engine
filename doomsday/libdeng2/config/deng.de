@@ -23,13 +23,14 @@
 
 hasBeenRun ?= False
 
-# Cleanup: this is a persistent namespace, old stuff may be hanging around.
+# Cleanup: this is a persistent namespace (the built-in module "Config"),
+# old stuff may be hanging around.
 if hasBeenRun: del useDefaults
 
-# Applies the default configuration.
-# - rec: Record where to set the values.
 def useDefaults(dest = None)
-    # By default, use the Config namespace.
+    # Applies the default configuration.
+    # - dest: Record where to set the values. If not specified, the
+    #         Config namespace is used.
     if dest == None:
         print "Defaults are set in the main Config namespace."
         import Config
