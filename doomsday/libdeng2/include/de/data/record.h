@@ -38,7 +38,7 @@ namespace de
      * A set of variables. A record may have any number of subrecords. Note
      * that the members of a record do not have an order.
      *
-     * A @m subrecord is a record that is owned by one of the members of the
+     * A @em subrecord is a record that is owned by one of the members of the
      * main record. The ownership chain is as follows: Record -> Variable ->
      * RecordValue -> Record.
      *

@@ -49,6 +49,8 @@ struct ArchiveFeed::Instance
 
     Instance(ArchiveFeed *feed, File &f) : self(*feed), file(f), arch(0), parentFeed(0)
     {
+        /// @todo Observe the file for deletion.
+
         // If the file happens to be a byte array file, we can use it
         // directly to store the Archive.
         IByteArray *bytes = dynamic_cast<IByteArray *>(&f);

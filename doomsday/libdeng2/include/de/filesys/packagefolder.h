@@ -26,10 +26,20 @@
 namespace de {
 
 /**
- * Specialized Folder that hosts a data package archive. When a ZIP-format file
- * is interpreted, it will be represented in the file system by a
- * PackageFolder, while the contents of the ZIP file are represented by
- * ArchiveEntryFile instances.
+ * Specialized Folder that hosts a data package archive.
+ *
+ * A @em package is a collection is files packaged into a single unit (possibly
+ * using an Archive). Examples of packages are add-on packages (in various
+ * formats, e.g., PK3/ZIP archive or the Snowberry add-on bundle), savegames,
+ * custom maps, and demos.
+ *
+ * When a ZIP-format file is interpreted, it will be represented in the file
+ * system by a PackageFolder, while the contents of the ZIP file are
+ * represented by ArchiveEntryFile instances.
+ *
+ * @todo In addition to providing easy access to the Archive of the package,
+ * PackageFolder should also make it convenient to access the metadata of the
+ * package (read from the contained Info file).
  *
  * @see ArchiveFeed
  */
@@ -41,7 +51,9 @@ public:
      * and a feed is attached for populating the folder with entries from the
      * archive.
      *
-     * @param sourceArchiveFile  Source file that contains an archive.
+     * @param sourceArchiveFile  Source file that contains an archive. The
+     *                           ArchiveFeed that will be attached to the
+     *                           PackageFolder uses this file as its source.
      * @param name               Name for the folder.
      */
     PackageFolder(File &sourceArchiveFile, String const &name = "");
