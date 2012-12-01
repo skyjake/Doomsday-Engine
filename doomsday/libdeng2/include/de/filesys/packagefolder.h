@@ -26,9 +26,9 @@
 namespace de {
 
 /**
- * Specialized Folder that hosts a data package archive.
+ * Specialized Folder that hosts a data package.
  *
- * A @em package is a collection is files packaged into a single unit (possibly
+ * A @em package is a collection of files packaged into a single unit (possibly
  * using an Archive). Examples of packages are add-on packages (in various
  * formats, e.g., PK3/ZIP archive or the Snowberry add-on bundle), savegames,
  * custom maps, and demos.
