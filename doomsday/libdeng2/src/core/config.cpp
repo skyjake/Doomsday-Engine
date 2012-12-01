@@ -36,15 +36,15 @@ struct Config::Instance
     Path configPath;
 
     /// Path where the configuration is written (inside persist.pack).
-    Path writtenConfigPath;
+    Path persistentPath;
 
     /// The configuration namespace.
     Process config;
 
-    Instance(Path const &path) : configPath(path)
-    {
-        writtenConfigPath = Path("modules/Config");
-    }
+    Instance(Path const &path)
+        : configPath(path),
+          persistentPath("modules/Config")
+    {}
 };
 
 Config::Config(Path const &path) : d(new Instance(path))
@@ -84,7 +84,7 @@ void Config::read()
     {
         // If we already have a saved copy of the config, read it.
         Archive const &persist = App::persistentData();
-        Reader(persist.entryBlock(d->writtenConfigPath)) >> names();
+        Reader(persist.entryBlock(d->persistentPath)) >> names();
 
         LOG_DEBUG("Found serialized Config:\n") << names();
         
@@ -100,15 +100,15 @@ void Config::read()
         else
         {
             // Versions match.
-            LOG_MSG("") << d->writtenConfigPath << " matches version " << version->asText();
+            LOG_MSG("") << d->persistentPath << " matches version " << version->asText();
         }
 
         // Also check the timestamp of written config vs. they config script.
         // If script is newer, it should be rerun.
-        if(scriptFile.status().modifiedAt > persist.entryStatus(d->writtenConfigPath).modifiedAt)
+        if(scriptFile.status().modifiedAt > persist.entryStatus(d->persistentPath).modifiedAt)
         {
             LOG_MSG("%s is newer than %s, rerunning the script.")
-                    << d->configPath << d->writtenConfigPath;
+                    << d->configPath << d->persistentPath;
             shouldRunScript = true;
         }
     }
@@ -140,7 +140,7 @@ void Config::read()
 
 void Config::write()
 {
-    Writer(App::persistentData().entryBlock(d->writtenConfigPath)) << names();
+    Writer(App::persistentData().entryBlock(d->persistentPath)) << names();
 }
 
 Record &Config::names()
