@@ -125,6 +125,10 @@ App::App(int &argc, char **argv, GUIMode guiMode)
     // This instance of LogBuffer is used globally.
     LogBuffer::setAppBuffer(d->logBuffer);
 
+    // Do not flush the log buffer until we've found out where messages should
+    // be flushed (Config.log.file).
+    d->logBuffer.enableFlushing(false);
+
     // Set the log message level.
 #ifdef DENG2_DEBUG
     Log::LogLevel level = Log::DEBUG;
@@ -285,6 +289,9 @@ void App::initSubsystems(SubsystemInitFlags flags)
      * configuration, so ignore what the config says.
      */
     //logBuf.enable(Log::LogLevel(conf->getui("log.level")));
+
+    // We can start flushing now when the destination is known.
+    logBuf.enableFlushing(true);
 
     if(allowPlugins)
     {

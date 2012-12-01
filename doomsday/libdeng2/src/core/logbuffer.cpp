@@ -114,6 +114,7 @@ struct LogBuffer::Instance
     dint enabledOverLevel;
     dint maxEntryCount;
     bool standardOutput;
+    bool flushingEnabled;
     File *outputFile;
     EntryList entries;
     EntryList toBeFlushed;
@@ -128,6 +129,7 @@ struct LogBuffer::Instance
         : enabledOverLevel(Log::MESSAGE),
           maxEntryCount(maxEntryCount),
           standardOutput(true),
+          flushingEnabled(true),
           outputFile(0),
           autoFlushTimer(0),
           sectionDepthOfPreviousLine(0)
@@ -231,6 +233,11 @@ void LogBuffer::enableStandardOutput(bool yes)
     d->standardOutput = yes;
 }
 
+void LogBuffer::enableFlushing(bool yes)
+{
+    d->flushingEnabled = yes;
+}
+
 void LogBuffer::setOutputFile(String const &path)
 {
     flush();
@@ -255,6 +262,8 @@ void LogBuffer::flush()
     using internal::FileOutputStream;
     using internal::TextOutputStream;
     using internal::DebugOutputStream;
+
+    if(!d->flushingEnabled) return;
 
     DENG2_GUARD(this);
 

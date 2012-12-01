@@ -113,6 +113,13 @@ public:
     void enableStandardOutput(bool yes = true);
 
     /**
+     * Enables or disables flushing of log messages.
+     *
+     * @param yes  @c true or @c false.
+     */
+    void enableFlushing(bool yes = true);
+
+    /**
      * Sets the path of the file used for writing log entries to.
      *
      * @param path  Path of the file.
