@@ -110,7 +110,7 @@ File *FS::interpret(File *sourceData)
             catch(Archive::FormatError const &)
             {
                 // Even though it was recognized as an archive, the file
-                // contents may still provide to be corrupted.
+                // contents may still prove to be corrupted.
                 LOG_WARNING("Archive in %s is invalid") << sourceData->name();
             }
             catch(IByteArray::OffsetError const &)
