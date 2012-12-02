@@ -212,6 +212,14 @@ Variable &Record::addNumber(String const &name, Value::Number const &number)
     return add(new Variable(name, new NumberValue(number), Variable::AllowNumber));
 }
 
+Variable &Record::addBoolean(String const &name, bool booleanValue)
+{
+    /// @throw Variable::NameError @a name is not a valid variable name.
+    Variable::verifyName(name);
+    return add(new Variable(name, new NumberValue(booleanValue, NumberValue::Boolean),
+                            Variable::AllowNumber));
+}
+
 Variable &Record::addText(String const &name, Value::Text const &text)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.

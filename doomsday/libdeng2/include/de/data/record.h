@@ -123,6 +123,17 @@ namespace de
          * @return  The number variable.
          */
         Variable &addNumber(String const &variableName, Value::Number const &number);
+
+        /**
+         * Adds a number variable to the record with a Boolean semantic hint.
+         * The variable is set up to only accept number values.
+         *
+         * @param variableName  Name of the variable.
+         * @param booleanValue  Value of the variable (@c true or @c false).
+         *
+         * @return  The number variable.
+         */
+        Variable &addBoolean(String const &variableName, bool booleanValue);
         
         /**
          * Adds a text variable to the record. The variable is set up to only accept
