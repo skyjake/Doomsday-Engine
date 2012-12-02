@@ -254,7 +254,8 @@ protected:
         DICTIONARY,
         BLOCK,
         FUNCTION,
-        RECORD
+        RECORD,
+        TIME
     };
 };
 

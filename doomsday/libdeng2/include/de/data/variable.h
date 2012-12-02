@@ -89,10 +89,14 @@ namespace de
             /// RefValue allowed as value.
             AllowRef = 0x400,
 
+            /// TimeValue allowed as value.
+            AllowTime = 0x800,
+
             /// The default mode allows reading and writing all types of values,
             /// including NoneValue.
             DefaultMode = AllowNone | AllowNumber | AllowText | AllowArray |
-                AllowDictionary | AllowBlock | AllowFunction | AllowRecord | AllowRef
+                AllowDictionary | AllowBlock | AllowFunction | AllowRecord |
+                AllowRef | AllowTime
         };
         //@}
         Q_DECLARE_FLAGS(Flags, Flag)

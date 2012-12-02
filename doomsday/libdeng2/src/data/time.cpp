@@ -27,6 +27,9 @@
 #include <QDataStream>
 
 namespace de {
+
+static String const ISO_FORMAT = "yyyy-MM-dd hh:mm:ss.zzz";
+
 namespace internal {
 
 class SleeperThread : public QThread
@@ -90,6 +93,16 @@ Time::Delta Time::Delta::operator - (ddouble const &d) const
 Time::Time() : _time(QDateTime::currentDateTime())
 {}
 
+Time Time::invalidTime()
+{
+    return Time(QDateTime());
+}
+
+bool Time::isValid() const
+{
+    return _time.isValid();
+}
+
 bool Time::operator < (Time const &t) const
 {
     return (_time < t._time);
@@ -103,13 +116,13 @@ bool Time::operator == (Time const &t) const
 Time Time::operator + (Delta const &delta) const
 {
     Time result = *this;
-    result._time.addMSecs(delta.asMilliSeconds());
+    result += delta;
     return result;
 }
 
 Time &Time::operator += (Delta const &delta)
 {
-    _time.addMSecs(delta.asMilliSeconds());
+    _time = _time.addMSecs(delta.asMilliSeconds());
     return *this;
 }
 
@@ -131,7 +144,11 @@ String Time::asText(Format format) const
 {
     if(format == ISOFormat)
     {
-        return _time.toString("yyyy-MM-dd hh:mm:ss.zzz");
+        return _time.toString(ISO_FORMAT);
+    }
+    else if(format == ISODateOnly)
+    {
+        return _time.toString("yyyy-MM-dd");
     }
     else if(format == FriendlyFormat)
     {
@@ -139,9 +156,27 @@ String Time::asText(Format format) const
     }
     else
     {
-        return QString("#%1 ").arg(asBuildNumber(), -4) +
-                _time.toString("hh:mm:ss.zzz");
+        return QString("#%1 ").arg(asBuildNumber(), -4) + _time.toString("hh:mm:ss.zzz");
     }
+}
+
+Time Time::fromText(String const &text, Time::Format format)
+{
+    DENG2_ASSERT(format == ISOFormat || format == ISODateOnly || format == FriendlyFormat);
+
+    if(format == ISOFormat)
+    {
+        return Time(QDateTime::fromString(text, ISO_FORMAT));
+    }
+    else if(format == ISODateOnly)
+    {
+        return Time(QDateTime::fromString(text, "yyyy-MM-dd"));
+    }
+    else if(format == FriendlyFormat)
+    {
+        return Time(QDateTime::fromString(text, Qt::TextDate));
+    }
+    return Time();
 }
 
 Date Time::asDate() const

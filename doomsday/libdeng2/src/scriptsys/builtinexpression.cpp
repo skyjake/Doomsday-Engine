@@ -26,6 +26,7 @@
 #include "de/RefValue"
 #include "de/RecordValue"
 #include "de/BlockValue"
+#include "de/TimeValue"
 #include "de/Writer"
 #include "de/Reader"
 
@@ -138,7 +139,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         if(args->size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
-                "Expected exactly one argument for AS_NUMBER");
+                                      "Expected exactly one argument for AS_NUMBER");
         }
         return new NumberValue(args->at(1).asNumber());
 
@@ -146,10 +147,49 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         if(args->size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
-                "Expected exactly one argument for AS_TEXT");
+                                      "Expected exactly one argument for AS_TEXT");
         }
         return new TextValue(args->at(1).asText());
-        
+
+    case AS_TIME:
+        if(args->size() == 1)
+        {
+            // Current time.
+            return new TimeValue;
+        }
+        if(args->size() == 2)
+        {
+            Time t = Time::fromText(args->at(1).asText());
+            if(!t.isValid())
+            {
+                // Maybe just a date?
+                t = Time::fromText(args->at(1).asText(), Time::ISODateOnly);
+            }
+            return new TimeValue(t);
+        }
+        throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                  "Expected less than two arguments for AS_TIME");
+
+    case TIME_DELTA:
+    {
+        if(args->size() != 3)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                      "Expected exactly two arguments for TIME_DELTA");
+        }
+        TimeValue const *fromTime = dynamic_cast<TimeValue const *>(&args->at(1));
+        if(!fromTime)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate", "Argument 1 of TIME_DELTA must be a time");
+        }
+        TimeValue const *toTime = dynamic_cast<TimeValue const *>(&args->at(2));
+        if(!toTime)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate", "Argument 2 of TIME_DELTA must be a time");
+        }
+        return new NumberValue(toTime->time() - fromTime->time());
+    }
+
     case LOCAL_NAMESPACE:
     {
         // Collect the namespaces to search.
@@ -242,17 +282,19 @@ BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
         char const *str;
         Type type;
     } types[] = {
-        { "len",            LENGTH },
-        { "dictkeys",       DICTIONARY_KEYS },
-        { "dictvalues",     DICTIONARY_VALUES },
-        { "Text",           AS_TEXT },
-        { "Number",         AS_NUMBER },
-        { "locals",         LOCAL_NAMESPACE },
-        { "members",        RECORD_MEMBERS },
-        { "subrecords",     RECORD_SUBRECORDS },
-        { "serialize",      SERIALIZE },
-        { "deserialize",    DESERIALIZE },
-        { NULL,             NONE }
+        { "len",         LENGTH },
+        { "dictkeys",    DICTIONARY_KEYS },
+        { "dictvalues",  DICTIONARY_VALUES },
+        { "Text",        AS_TEXT },
+        { "Number",      AS_NUMBER },
+        { "locals",      LOCAL_NAMESPACE },
+        { "members",     RECORD_MEMBERS },
+        { "subrecords",  RECORD_SUBRECORDS },
+        { "serialize",   SERIALIZE },
+        { "deserialize", DESERIALIZE },
+        { "Time",        AS_TIME },
+        { "timedelta",   TIME_DELTA },
+        { NULL,          NONE }
     };
     
     for(duint i = 0; types[i].str; ++i)

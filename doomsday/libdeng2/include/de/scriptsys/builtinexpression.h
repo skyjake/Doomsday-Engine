@@ -50,7 +50,9 @@ namespace de
             AS_NUMBER = 7,
             LOCAL_NAMESPACE = 8,
             SERIALIZE = 9,
-            DESERIALIZE = 10
+            DESERIALIZE = 10,
+            AS_TIME = 11,
+            TIME_DELTA = 12
         };
         
     public:

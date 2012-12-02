@@ -26,6 +26,7 @@
 #include "de/BlockValue"
 #include "de/FunctionValue"
 #include "de/RecordValue"
+#include "de/TimeValue"
 #include "de/Reader"
 
 using namespace de;
@@ -200,6 +201,10 @@ Value *Value::constructFrom(Reader &reader)
 
     case RECORD:
         result.reset(new RecordValue(new Record, RecordValue::OwnsRecord));
+        break;
+
+    case TIME:
+        result.reset(new TimeValue);
         break;
         
     default:

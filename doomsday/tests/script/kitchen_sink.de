@@ -25,7 +25,7 @@ import sections
 # ---------------------------------------------------------------------------
 sections.begin('BASIC EXPRESSIONS')
 
-sections.subsection('Basic types (number, text, array, dictionary).')
+sections.subsection('Basic types (number, text, array, dictionary, time).')
 print 5, 5.5, -3.141592657
 print 0x100, 0X123
 print "Hello", 'World'
@@ -34,6 +34,7 @@ newlines."""
 print [1, 2, 3]
 print [1, [2, 3], 4]
 print {'a': 'b', 1: ['b', {5:6, 6:7}], ['array', 'as', 'key']: 'oh my'}
+print 'The time is now:', Time()
 
 sections.subsection('Constants: True, False, None, Pi.')
 print True, False, None, Pi
@@ -45,8 +46,12 @@ print 'len({1:2, 3:5, 8:13}) =', len({1:2, 3:5, 8:13})
 print 'dictkeys({1:2, 3:5, 8:13}) =', dictkeys({1:2, 3:5, 8:13})
 print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
 
-sections.subsection('Built-in functions: Text(), Number().')
+sections.subsection('Built-in functions: Text(), Number(), Time(), timedelta().')
 print Text(123), Number("123")
+print "Beginning of March 2011:", Time("2011-03-01")
+print Time("2000-01-02 03:04:05.678")
+print 'Invalid time:', Time("123-123")
+print 'Thousand seconds later:', timedelta(Time(), Time() + 1000)
 
 sections.subsection('Built-in functions: serialize() and deserialize().')
 a = [1, 'One', {1:'One'}]
@@ -65,11 +70,13 @@ print 'Larger than 32-bit:', 0xffffffffff + 0xffffffffff
 print 'Text:', 'Hello' + 'World'
 print 'Array:', [1, 2, 3] + ['a', 'b', 'c']
 print 'Dictionary:', {1:2, 3:4} + {'a':'b', 'c':'d'}
+print 'Time:', Time() + 3600
 
 sections.subsection('Operators: -')
 print 'Numbers:', 1 - 1, -.5 - .5
 print 'Larger than 32-bit:', 0xffffffffff - 0xffffffffff
 print 'Dictionary:', {'a':'A', 'b':'B'} - 'a'
+print 'Time:', Time() - 3600, timedelta(Time(), Time() - 3600)
 
 sections.subsection('Operators: *')
 print 'Numbers:', 1 * 2, 2.5 * 4, (2 + 6) * 45

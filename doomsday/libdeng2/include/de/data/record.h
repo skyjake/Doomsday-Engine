@@ -145,6 +145,8 @@ namespace de
          * @return  The text variable.
          */
         Variable &addText(String const &variableName, Value::Text const &text);
+
+        Variable &addTime(String const &variableName, Time const &time);
         
         /**
          * Adds an array variable to the record. The variable is set up to only accept

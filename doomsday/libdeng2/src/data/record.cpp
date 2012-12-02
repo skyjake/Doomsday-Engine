@@ -28,6 +28,7 @@
 #include "de/BlockValue"
 #include "de/RecordValue"
 #include "de/FunctionValue"
+#include "de/TimeValue"
 #include "de/Vector"
 
 #include <QTextStream>
@@ -225,6 +226,13 @@ Variable &Record::addText(String const &name, Value::Text const &text)
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new TextValue(text), Variable::AllowText));
+}
+
+Variable &Record::addTime(String const &name, Time const &time)
+{
+    /// @throw Variable::NameError @a name is not a valid variable name.
+    Variable::verifyName(name);
+    return add(new Variable(name, new TimeValue(time), Variable::AllowTime));
 }
 
 Variable &Record::addArray(String const &name)
