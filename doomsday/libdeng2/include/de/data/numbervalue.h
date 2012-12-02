@@ -24,65 +24,66 @@
 
 #include <QFlags>
 
-namespace de
+namespace de {
+
+/**
+ * The NumberValue class is a subclass of Value that holds a single
+ * double precision floating point number.
+ *
+ * All numbers are stored using ddouble. Integer values can be represented
+ * exactly with doubles:
+ * http://en.wikipedia.org/wiki/Floating_point#IEEE_754:_floating_point_in_modern_computers
+ *
+ * @ingroup data
+ */
+class DENG2_PUBLIC NumberValue : public Value
 {
-    /**
-     * The NumberValue class is a subclass of Value that holds a single
-     * double precision floating point number.
-     *
-     * All numbers are stored using ddouble. Integer values can be represented
-     * exactly with doubles:
-     * http://en.wikipedia.org/wiki/Floating_point#IEEE_754:_floating_point_in_modern_computers
-     *
-     * @ingroup data
-     */
-    class DENG2_PUBLIC NumberValue : public Value
-    {
-    public:
-        /// Truth values for logical operations. They are treated as
-        /// number values.
-        enum {
-            False = 0,
-            True  = 1
-        };
-
-        enum SemanticHint {
-            Boolean = 0x1,      ///< The number is intended to be a boolean value.
-            Generic = 0         ///< Generic number.
-        };
-        Q_DECLARE_FLAGS(SemanticHints, SemanticHint)
-        
-    public:
-        NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
-
-        /**
-         * Conversion template that forces a cast to another type.
-         */
-        template <typename Type>
-        Type as() const { return Type(_value); }
-
-        Value *duplicate() const;
-        Number asNumber() const;
-        Text asText() const;
-        bool isTrue() const;
-        dint compare(Value const &value) const;
-        void negate();        
-        void sum(Value const &value);        
-        void subtract(Value const &value);
-        void divide(Value const &divisor);
-        void multiply(Value const &value);
-        void modulo(Value const &divisor);
-
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);
-        
-    private:
-        Number _value;
-        SemanticHints _semantic;
+public:
+    /// Truth values for logical operations. They are treated as
+    /// number values.
+    enum {
+        False = 0,
+        True  = 1
     };
 
-    Q_DECLARE_OPERATORS_FOR_FLAGS(NumberValue::SemanticHints)
-}
+    enum SemanticHint {
+        Boolean = 0x1,      ///< The number is intended to be a boolean value.
+        Generic = 0         ///< Generic number.
+    };
+    Q_DECLARE_FLAGS(SemanticHints, SemanticHint)
+
+public:
+    NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
+
+    /**
+     * Conversion template that forces a cast to another type.
+     */
+    template <typename Type>
+    Type as() const { return Type(_value); }
+
+    Value *duplicate() const;
+    Number asNumber() const;
+    Text asText() const;
+    bool isTrue() const;
+    dint compare(Value const &value) const;
+    void negate();
+    void sum(Value const &value);
+    void subtract(Value const &value);
+    void divide(Value const &divisor);
+    void multiply(Value const &value);
+    void modulo(Value const &divisor);
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    Number _value;
+    SemanticHints _semantic;
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(NumberValue::SemanticHints)
+
+} // namespace de
 
 #endif /* LIBDENG2_NUMBERVALUE_H */

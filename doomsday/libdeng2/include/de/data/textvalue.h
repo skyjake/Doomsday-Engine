@@ -25,50 +25,51 @@
 
 #include <list>
 
-namespace de
+namespace de {
+
+/**
+ * The TextValue class is a subclass of Value that holds a text string.
+ *
+ * @ingroup data
+ */
+class DENG2_PUBLIC TextValue : public Value
 {
-    /**
-     * The TextValue class is a subclass of Value that holds a text string.
-     *
-     * @ingroup data
-     */
-    class DENG2_PUBLIC TextValue : public Value
-    {
-    public:
-        /// An error occurs in string pattern replacements. @ingroup errors
-        DENG2_ERROR(IllegalPatternError);
-        
-    public:
-        TextValue(String const &initialValue = "");
+public:
+    /// An error occurs in string pattern replacements. @ingroup errors
+    DENG2_ERROR(IllegalPatternError);
 
-        /// Converts the TextValue to plain text.
-        operator String const &() const;
+public:
+    TextValue(String const &initialValue = "");
 
-        Value *duplicate() const;
-        Number asNumber() const;
-        Text asText() const;
-        dsize size() const;
-        bool isTrue() const;
-        dint compare(Value const &value) const;
-        void sum(Value const &value);
-        void multiply(Value const &value);
-        void divide(Value const &value);
-        void modulo(Value const &divisor);
-        
-        static String substitutePlaceholders(String const &pattern, 
-            const std::list<Value const *> &args);
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);
-        
-    protected:
-        /// Changes the text of the value.
-        void setValue(String const &text);
-        
-    private:
-        Text _value;
-    };
-}
+    /// Converts the TextValue to plain text.
+    operator String const &() const;
+
+    Value *duplicate() const;
+    Number asNumber() const;
+    Text asText() const;
+    dsize size() const;
+    bool isTrue() const;
+    dint compare(Value const &value) const;
+    void sum(Value const &value);
+    void multiply(Value const &value);
+    void divide(Value const &value);
+    void modulo(Value const &divisor);
+
+    static String substitutePlaceholders(String const &pattern,
+        const std::list<Value const *> &args);
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+protected:
+    /// Changes the text of the value.
+    void setValue(String const &text);
+
+private:
+    Text _value;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_TEXTVALUE_H */
