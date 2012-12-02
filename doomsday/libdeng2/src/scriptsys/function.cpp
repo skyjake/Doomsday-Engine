@@ -54,7 +54,7 @@ String Function::asText() const
 {
     String result;
     QTextStream os(&result);
-    os << "[Function " << this << " (";
+    os << "(Function " << this << " (";
     DENG2_FOR_EACH_CONST(Arguments, i, _arguments)
     {
         if(i != _arguments.begin())
@@ -68,7 +68,7 @@ String Function::asText() const
             os << "=" << def->second->asText();
         }
     }
-    os << ")]";
+    os << "))";
     return result;
 }
 

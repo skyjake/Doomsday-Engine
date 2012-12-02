@@ -63,14 +63,25 @@ public:
     Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
 
 public:
+    /**
+     * Construct an App instance. The application will not be fully usable
+     * until initSubsystems() has been called -- you should call
+     * initSubsystems() as soon as possible after construction. Never throws
+     * an exception.
+     *
+     * @param argc     Argument count. Note that App holds the reference.
+     * @param argv     Arguments.
+     * @param guiMode  GUI can be enabled (client) or disabled (server).
+     */
     App(int &argc, char **argv, GUIMode guiMode);
 
     ~App();
 
     /**
-     * Initializes all the application's subsystems. This includes Config
-     * and FS. Has to be called manually in the application's
-     * initialization routine.
+     * Finishes App construction by initializing all the application's
+     * subsystems. This includes Config and FS. Has to be called manually in
+     * the application's initialization routine. An exception will be thrown if
+     * initialization cannot be successfully completed.
      *
      * @param flags  How to/which subsystems to initialize.
      */

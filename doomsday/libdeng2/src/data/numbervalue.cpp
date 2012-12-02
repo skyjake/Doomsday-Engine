@@ -30,6 +30,18 @@ NumberValue::NumberValue(Number initialValue, SemanticHints semantic)
     : _value(initialValue), _semantic(semantic)
 {}
 
+NumberValue::NumberValue(dsize initialSize)
+    : _value(initialSize), _semantic(Generic)
+{}
+
+NumberValue::NumberValue(dint initialInteger)
+    : _value(initialInteger), _semantic(Generic)
+{}
+
+NumberValue::NumberValue(bool initialBoolean)
+    : _value(initialBoolean? True : False), _semantic(Boolean)
+{}
+
 Value *NumberValue::duplicate() const
 {
     return new NumberValue(_value, _semantic);

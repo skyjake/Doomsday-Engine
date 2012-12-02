@@ -54,6 +54,9 @@ public:
 
 public:
     NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
+    NumberValue(dsize initialSize);
+    NumberValue(dint initialInteger);
+    NumberValue(bool initialBoolean);
 
     /**
      * Conversion template that forces a cast to another type.

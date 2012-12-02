@@ -55,8 +55,7 @@ public:
     void divide(Value const &value);
     void modulo(Value const &divisor);
 
-    static String substitutePlaceholders(String const &pattern,
-        const std::list<Value const *> &args);
+    static String substitutePlaceholders(String const &pattern, const std::list<Value const *> &args);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
