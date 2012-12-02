@@ -32,7 +32,6 @@
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QNetworkAccessManager>
-#include <QSettings>
 #include <QTextStream>
 #include <QDir>
 #include <QDebug>
@@ -551,6 +550,8 @@ void Updater::checkNowShowingProgress()
 
 void Updater_Init(void)
 {
+    UpdaterSettings::initialize();
+
     updater = new Updater;
 }
 

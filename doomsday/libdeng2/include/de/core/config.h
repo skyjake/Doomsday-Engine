@@ -40,6 +40,10 @@ namespace de
     class DENG2_PUBLIC Config
     {
     public:
+        /// Attempted to get the value of a variable while expecting the wrong type. @ingroup errors
+        DENG2_ERROR(ValueTypeError);
+
+    public:
         /**
          * Constructs a new configuration.
          *
@@ -64,6 +68,9 @@ namespace de
         /// Returns the value of @a name as an integer.
         dint geti(String const &name);
 
+        /// Returns the value of @a name as a boolean.
+        bool getb(String const &name);
+
         /// Returns the value of @a name as an unsigned integer.
         duint getui(String const &name);
 
@@ -72,6 +79,17 @@ namespace de
 
         /// Returns the value of @a name as a string.
         String gets(String const &name);
+
+        template <typename ValueType>
+        ValueType &getAs(String const &name) {
+            ValueType *v = dynamic_cast<ValueType *>(&get(name));
+            if(!v)
+            {
+                throw ValueTypeError("Config::getAs", String("Cannot cast to expected type (") +
+                                     DENG2_TYPE_NAME(ValueType) + ")");
+            }
+            return *v;
+        }
     
         /**
          * Returns the configuration namespace.

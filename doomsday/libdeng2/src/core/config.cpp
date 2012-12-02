@@ -158,6 +158,11 @@ dint Config::geti(String const &name)
     return dint(get(name).asNumber());
 }
 
+bool Config::getb(String const &name)
+{
+    return get(name).isTrue();
+}
+
 duint Config::getui(String const &name)
 {
     return duint(get(name).asNumber());

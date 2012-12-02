@@ -2,9 +2,6 @@
  * @file updatersettings.h
  * Persistent settings for automatic updates. @ingroup updater
  *
- * @todo  There should be a unified persistent configuration subsystem that
- * combines the characteristics of QSettings and console variables.
- *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
@@ -32,7 +29,8 @@
 
 /**
  * Convenient interface to the Updater settings. All changes to the settings
- * are immediately saved persistently.
+ * are immediately saved persistently. In practice, the values are stored in
+ * Config.updater.
  */
 class UpdaterSettings
 {
@@ -52,6 +50,12 @@ public:
     };
 
 public:
+    /**
+     * Initializes the settings by restoring them from the persistent
+     * application data (Config.updater) or by using the default values.
+     */
+    static void initialize();
+
     UpdaterSettings();
 
     Frequency frequency() const;
