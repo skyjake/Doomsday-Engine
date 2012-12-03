@@ -134,6 +134,28 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         }
         return dict;
     }
+
+    case AS_RECORD:
+    {
+        if(args->size() == 1)
+        {
+            // No arguments: produce an owned, empty Record.
+            return new RecordValue(new Record, RecordValue::OwnsRecord);
+        }
+        if(args->size() == 2)
+        {
+            // One argument: make an owned copy of a referenced record.
+            RecordValue const *rec = dynamic_cast<RecordValue const *>(&args->at(1));
+            if(!rec)
+            {
+                throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                          "Argument 1 of AS_RECORD must be a record");
+            }
+            return new RecordValue(new Record(*rec->record()), RecordValue::OwnsRecord);
+        }
+        throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                  "Expected less than two arguments for AS_RECORD");
+    }
     
     case AS_NUMBER:
         if(args->size() != 2)
@@ -294,6 +316,7 @@ BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
         { "deserialize", DESERIALIZE },
         { "Time",        AS_TIME },
         { "timedelta",   TIME_DELTA },
+        { "Record",      AS_RECORD },
         { NULL,          NONE }
     };
     

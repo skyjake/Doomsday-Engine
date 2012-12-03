@@ -52,7 +52,8 @@ namespace de
             SERIALIZE = 9,
             DESERIALIZE = 10,
             AS_TIME = 11,
-            TIME_DELTA = 12
+            TIME_DELTA = 12,
+            AS_RECORD = 13
         };
         
     public:
