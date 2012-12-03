@@ -95,4 +95,7 @@ if '__oldversion__' in locals()
         # Current version is newer.
         print 'Detected new release:', __oldversion__, '=>', __version__
     end
+
+    # The above should be done only once after upgrading.
+    del __oldversion__
 end
