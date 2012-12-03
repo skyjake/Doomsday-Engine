@@ -570,10 +570,16 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
             range.token(1).asText() + " was unexpected");
     }
     
-    if(colon > 0 && colon < dint(range.size()) - 1)
+    if(colon > 0)
     {
-        // The colon is not the last token. There must be a statement 
-        // continuing on the same line.
+        if(colon == dint(range.size()) - 1)
+        {
+            // The color is the last token: this is most likely a programmer error.
+            throw MissingTokenError("Parser::parseConditionalCompound",
+                                    "Expected at least one token to follow " +
+                                    range.token(colon).asText());
+        }
+        // There must be a statement continuing on the same line.
         _statementRange = _statementRange.startingFrom(colon + 1);
         parseStatement(compound);
     }
