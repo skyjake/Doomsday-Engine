@@ -125,6 +125,15 @@ print 'Reversing:', fullArray[::-1]
 print 'Reverse slice:', fullArray[4:2:-1]
 print 'Stepping:', fullArray[::2], fullArray[1:6:2]
 
+print 'Text can be sliced as well...'
+fullString = "abcdefg"
+print 'Full:', fullString
+print 'Sliced:', fullString[2:4], fullString[3:], fullString[:3]
+print 'Nega-sliced:', fullString[-4:-2]
+print 'Reversing:', fullString[::-1]
+print 'Reverse slice:', fullString[4:2:-1]
+print 'Stepping:', fullString[::2], fullString[1:6:2]
+
 sections.subsection('Operators: not.')
 print not True
 print not False
@@ -431,6 +440,10 @@ sections.begin('RECORDS')
 sections.subsection('Creating a record.')
 record myrec
 print len(myrec)
+print "Alternative way using Record()."
+del myrec
+myrec = Record()
+print len(myrec)
 
 sections.subsection('Creating variables into a record.')
 myrec.newMember = 100
@@ -467,12 +480,35 @@ print myrec['subrec']
 print myrec['subrec']['something']
 print members(myrec)['newMember']
 
+sections.subsection('Creating new members using [].')
+myrec['assignedElement'] = 3000
+print myrec
+
 sections.subsection('Having two variables reference the same record.')
 reference = myrec
 print len(reference)
 reference.otherMember = 150
 print "Here's the record:"
 print myrec
+reference.memberViaRef = 'added via ref'
+print "Added a member via a reference:"
+print reference
+
+sections.subsection('Making a copy of a record.')
+def recCopyTest()
+    print "Record() can be used to make a copy of a record."
+    reference = Record(myrec)
+    print reference
+    print "Now we can modify the new record without affecting myrec."
+    reference.superGreat = 'wow'
+    del reference.subrec
+    print reference
+    print "Original:"
+    print myrec
+    print "Locals:"
+    print locals()
+end
+recCopyTest()
 
 sections.subsection('Deleting members from record.')
 print 'Before deleting:'
@@ -516,6 +552,28 @@ def func2b(a)
     end
 end
 print func2b(1), func2b(''), func2b(True), func2b(False)
+
+sections.subsection('Returning a record from a function.')
+def recFunc()
+    record a
+    a.value = "recFunc"
+    return a
+end
+
+try: print recFunc()
+catch NullError
+    print "Records are passed by reference; the returned record went out of scope."
+end
+
+del recFunc
+def recFunc()
+    record a
+    a.value = "recFunc"
+    return Record(a)
+end
+print "Let's try again, making a copy for the return value."
+print recFunc()
+del recFunc
 
 sections.subsection('Passing arguments.')
 a = 'At process scope.'
