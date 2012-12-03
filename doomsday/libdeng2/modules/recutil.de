@@ -24,21 +24,14 @@ def copyMissingMembers(src, dest)
     # the missing members to 'dest'. Private keys in 'src' are ignored.
     # - src:  Source record.
     # - dest: Destination record.
-    print "inserting missing members"
 
     for name in dictkeys(members(src))
         # Private members should be ignored.
         if name[:2] == "__": continue
 
-        print "Checking member", name
         if not name in members(dest)
-            if name in subrecords(src)
-                print "=> adding subrecord", name
-                dest[name] = Record()
-            else
-                print "=> setting member", name, "=", src[name]
-                dest[name] = src[name]
-            end
+            if name in subrecords(src): dest[name] = Record()
+            else: dest[name] = src[name]
         end
 
         if name in subrecords(src): copyMissingMembers(src[name], dest[name])

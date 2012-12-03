@@ -76,9 +76,9 @@ def setDefaults(d = None)
 end
 
 def updateWithDefaults()
+    # Any values not already in Config are copied from defaults.
     record defaults
     setDefaults(defaults)
-    # Anything that is not already in Config should be added.
     import recutil, Config
     recutil.copyMissingMembers(defaults, Config)
 end
