@@ -51,7 +51,7 @@ def setDefaults(d = None)
 
     d.window.fsaa = True
 
-    d.window.main.rect       = [0, 0, 640, 480]
+    d.window.main.rect       = [50, 50, 640, 480]
     d.window.main.colorDepth = 32
     d.window.main.center     = True
     d.window.main.maximize   = False

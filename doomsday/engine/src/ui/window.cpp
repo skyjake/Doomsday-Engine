@@ -266,6 +266,16 @@ struct ddwindow_s
         return false;
     }
 
+    QRect centeredGeometry() const
+    {
+        // Center the window.
+        QSize screenSize = desktopRect().size();
+        LOG_DEBUG("centeredGeometry: Current desktop rect %ix%i") << screenSize.width() << screenSize.height();
+        return QRect(desktopRect().topLeft() +
+                     QPoint((screenSize.width() - width())/2, (screenSize.height() - height())/2),
+                     QSize(width(), height()));
+    }
+
     /**
      * Applies the information stored in the Window instance to the actual
      * widget geometry. Centering is applied in this stage (it only affects the
@@ -280,7 +290,7 @@ struct ddwindow_s
         // While we're adjusting the window, the window move/resizing callbacks
         // should've mess with the geometry values.
         needWait = true;
-        LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE * 2, endWindowWait);
+        LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE * 20, endWindowWait);
 
         bool modeChanged = applyDisplayMode();
 
@@ -349,10 +359,7 @@ struct ddwindow_s
             if(flags & DDWF_CENTER)
             {
                 // Center the window.
-                QSize screenSize = desktopRect().size();
-                geom = QRect(desktopRect().topLeft() + QPoint((screenSize.width() - width())/2,
-                                                              (screenSize.height() - height())/2),
-                             geom.size());
+                geom = centeredGeometry();
             }
 
             if(flags & DDWF_MAXIMIZE)
@@ -453,6 +460,7 @@ struct ddwindow_s
         else
         {
             flags &= ~flag;
+            if(flag & DDWF_CENTER) LOG_DEBUG("Clearing DDWF_CENTER");
         }
     }
 
@@ -468,6 +476,8 @@ struct ddwindow_s
 
     bool applyAttributes(int* attribs)
     {
+        LOG_AS("applyAttributes");
+
         //bool wasFullscreen = (flags & DDWF_FULLSCREEN) != 0;
         bool changed = false;
 
@@ -665,7 +675,7 @@ static void updateMainWindowLayout(void)
 
     if(win->needShowNormal)
     {
-        LOG_DEBUG("Main window to normal mode.");
+        LOG_DEBUG("Main window to normal mode (center:%b).") << ((win->flags & DDWF_CENTER) != 0);
         win->needShowNormal = false;
         win->widget->showNormal();
     }
@@ -675,6 +685,11 @@ static void useAppliedGeometryForWindows(void)
 {
     Window* win = Window_Main();
     if(!win || !win->widget) return;
+
+    if(win->flags & DDWF_CENTER)
+    {
+        win->appliedGeometry = win->centeredGeometry();
+    }
 
     DEBUG_Message(("Using applied geometry: (%i,%i) %ix%i\n",
                    win->appliedGeometry.x(),
@@ -1117,10 +1132,12 @@ static void updateWindowStateAfterUserChange()
 
 static void windowWasMoved(CanvasWindow& cw)
 {
+    LOG_AS("windowWasMoved");
+
     Window* win = canvasToWindow(cw.canvas());
     DENG_ASSERT(win);
 
-    if(!(win->flags & DDWF_FULLSCREEN))
+    if(!(win->flags & DDWF_FULLSCREEN) && !win->needWait)
     {
         // The window was moved from its initial position; it is therefore
         // not centered any more (most likely).
@@ -1532,7 +1549,8 @@ void Window_SaveState(Window* wnd)
 
 void Window_RestoreState(Window* wnd)
 {
-    assert(wnd);
+    LOG_AS("Window_RestoreState");
+    DENG_ASSERT(wnd);
 
     // Console windows can not be restored.
     if(wnd->type == WT_CONSOLE) return;
