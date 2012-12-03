@@ -48,12 +48,15 @@
 #include <QApplication>
 #include <QPaintEvent>
 #include <QDesktopWidget>
-#include <QSettings>
 #include <QDebug>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <de/App>
+#include <de/Config>
+#include <de/Record>
+#include <de/NumberValue>
+#include <de/ArrayValue>
 
 #ifdef MACOSX
 #  include "ui/displaymode_native.h"
@@ -905,10 +908,12 @@ static boolean setDDWindow(Window *window, int newWidth, int newHeight,
  */
 boolean Sys_InitWindowManager(void)
 {
+    LOG_AS("Sys_InitWindowManager");
+
     if(winManagerInited)
         return true; // Already been here.
 
-    Con_Message("Sys_InitWindowManager: Using Qt window management.\n");
+    LOG_MSG("Using Qt window management.");
 
     CanvasWindow::setDefaultGLFormat();
 
@@ -1490,10 +1495,12 @@ const Size2Raw* Window_Size(const Window* wnd)
     return &wnd->geometry.size;
 }
 
+/*
 static QString settingsKey(uint idx, const char* name)
 {
     return QString("window/%1/").arg(idx) + name;
 }
+*/
 
 void Window_SaveState(Window* wnd)
 {
@@ -1502,16 +1509,25 @@ void Window_SaveState(Window* wnd)
     // Console windows are not saved.
     if(wnd->type == WT_CONSOLE) return;
 
-    assert(wnd == &mainWindow); /// @todo  Figure out the window index if there are many.
     uint idx = mainWindowIdx;
-    assert(idx == 1);
 
-    QSettings st;
-    st.setValue(settingsKey(idx, "rect"), wnd->normalRect());
-    st.setValue(settingsKey(idx, "center"), (wnd->flags & DDWF_CENTER) != 0);
-    st.setValue(settingsKey(idx, "maximize"), (wnd->flags & DDWF_MAXIMIZE) != 0);
-    st.setValue(settingsKey(idx, "fullscreen"), (wnd->flags & DDWF_FULLSCREEN) != 0);
-    st.setValue(settingsKey(idx, "colorDepth"), Window_ColorDepthBits(wnd));
+    DENG_ASSERT(idx == 1);
+    DENG_ASSERT(wnd == &mainWindow); /// @todo  Figure out the window index if there are many.
+
+    de::Config &config = de::App::config();
+
+    QRect normRect = wnd->normalRect();
+    de::ArrayValue* rect = new de::ArrayValue;
+    *rect << de::NumberValue(normRect.left())
+          << de::NumberValue(normRect.top())
+          << de::NumberValue(normRect.width())
+          << de::NumberValue(normRect.height());
+    config.names()["window.main.rect"] = rect;
+
+    config.names()["window.main.center"] = new de::NumberValue((wnd->flags & DDWF_CENTER) != 0);
+    config.names()["window.main.maximize"] = new de::NumberValue((wnd->flags & DDWF_MAXIMIZE) != 0);
+    config.names()["window.main.fullscreen"] = new de::NumberValue((wnd->flags & DDWF_FULLSCREEN) != 0);
+    config.names()["window.main.colorDepth"] = new de::NumberValue(Window_ColorDepthBits(wnd));
 }
 
 void Window_RestoreState(Window* wnd)
@@ -1525,17 +1541,23 @@ void Window_RestoreState(Window* wnd)
     uint idx = mainWindowIdx;
     assert(idx == 1);
 
+    de::Config &config = de::App::config();
+
     // The default state of the window is determined by these values.
-    QSettings st;
-    QRect geom = st.value(settingsKey(idx, "rect"), QRect(0, 0, 640, 480)).toRect();
-    wnd->normalGeometry.origin.x = wnd->geometry.origin.x = geom.x();
-    wnd->normalGeometry.origin.y = wnd->geometry.origin.y = geom.y();
-    wnd->normalGeometry.size.width = wnd->geometry.size.width = geom.width();
-    wnd->normalGeometry.size.height = wnd->geometry.size.height = geom.height();
-    wnd->colorDepthBits = st.value(settingsKey(idx, "colorDepth"), 32).toInt();
-    wnd->setFlag(DDWF_CENTER, st.value(settingsKey(idx, "center"), true).toBool());
-    wnd->setFlag(DDWF_MAXIMIZE, st.value(settingsKey(idx, "maximize"), false).toBool());
-    wnd->setFlag(DDWF_FULLSCREEN, st.value(settingsKey(idx, "fullscreen"), true).toBool());
+    de::ArrayValue &rect = config.getAs<de::ArrayValue>("window.main.rect");
+    if(rect.size() >= 4)
+    {
+        QRect geom(rect.at(0).asNumber(), rect.at(1).asNumber(),
+                   rect.at(2).asNumber(), rect.at(3).asNumber());
+        wnd->normalGeometry.origin.x = wnd->geometry.origin.x = geom.x();
+        wnd->normalGeometry.origin.y = wnd->geometry.origin.y = geom.y();
+        wnd->normalGeometry.size.width = wnd->geometry.size.width = geom.width();
+        wnd->normalGeometry.size.height = wnd->geometry.size.height = geom.height();
+    }
+    wnd->colorDepthBits = config.geti("window.main.colorDepth");
+    wnd->setFlag(DDWF_CENTER, config.getb("window.main.center"));
+    wnd->setFlag(DDWF_MAXIMIZE, config.getb("window.main.maximize"));
+    wnd->setFlag(DDWF_FULLSCREEN, config.getb("window.main.fullscreen"));
 }
 
 void Window_TrapMouse(const Window* wnd, boolean enable)
@@ -1567,7 +1589,7 @@ void Window_UpdateCanvasFormat(Window* wnd)
     wnd->needRecreateCanvas = true;
 
     // Save the relevant format settings.
-    QSettings().setValue("window/fsaa", bool(Con_GetByte("vid-fsaa") != 0));
+    de::App::config().names()["window.fsaa"] = new de::NumberValue(Con_GetByte("vid-fsaa") != 0);
 }
 
 #if defined(UNIX) && !defined(MACOSX)
