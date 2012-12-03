@@ -41,7 +41,7 @@ contains(QMAKE_HOST.arch, x86_64) {
 }
 
 # Target location for plugin libraries.
-DENG_PLUGIN_LIB_DIR = $$DENG_LIB_DIR/doomsday-plugins
+DENG_PLUGIN_LIB_DIR = $$DENG_LIB_DIR/doomsday
 
 # When installing libraries to a non-standard location, instruct
 # the linker where to find them.
