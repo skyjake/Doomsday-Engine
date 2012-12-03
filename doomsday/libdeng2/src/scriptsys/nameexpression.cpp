@@ -88,21 +88,6 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         throw AlreadyExistsError("NameExpression::evaluate", 
             "Identifier '" + _identifier + "' already exists");
     }
-    
-    // Should we delete the identifier?
-    if(flags().testFlag(Delete))
-    {
-        if(!variable)
-        {
-            throw NotFoundError("NameExpression::evaluate",
-                "Cannot delete nonexistent identifier '" + _identifier + "'");
-        }
-        DENG2_ASSERT(foundInNamespace != 0);
-
-        delete foundInNamespace->remove(*variable);
-
-        return new NoneValue();
-    }
 
     // Create a new subrecord in the namespace? ("record xyz")
     if(flags().testFlag(NewSubrecord))
