@@ -86,8 +86,7 @@ struct App::Instance
             binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
         }
         fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
-        fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "../Resources/config"));
-        //fs.makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
+        fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "../Resources/modules"));
 
 #elif WIN32
         if(allowPlugins)
@@ -96,8 +95,7 @@ struct App::Instance
         }
         NativePath appDir = appPath.fileNamePath();
         fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
-        fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "..\\config"));
-        //fs.>makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
+        fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "..\\modules"));
 
 #else // UNIX
         if(allowPlugins)
@@ -105,8 +103,7 @@ struct App::Instance
             binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
         }
         fs.makeFolder("/data").attach(new DirectoryFeed(app.nativeBasePath() / "data"));
-        fs.makeFolder("/config").attach(new DirectoryFeed(app.nativeBasePath() / "config"));
-        //fs.makeFolder("/modules").attach(new DirectoryFeed("data/modules"));
+        fs.makeFolder("/modules").attach(new DirectoryFeed(app.nativeBasePath() / "modules"));
 #endif
 
         // User's home folder.
@@ -272,7 +269,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
 
     // The configuration.
-    d->config = new Config("/config/deng.de");
+    d->config = new Config("/modules/Config.de");
     d->config->read();
 
     LogBuffer &logBuf = LogBuffer::appBuffer();

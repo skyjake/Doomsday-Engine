@@ -65,6 +65,7 @@ Type: files; Name: "{app}\bin\dpwadmapconverter.dll"
 Type: files; Name: "{app}\data\jdoom\jDoom.pk3"
 Type: files; Name: "{app}\data\jheretic\jHeretic.pk3"
 Type: files; Name: "{app}\data\jhexen\jHexen.pk3"
+Type: filesandordirs; Name: "{app}\config"
 
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -120,7 +121,8 @@ Source: "doc\LICENSE"; DestDir: "{app}\doc"; Components: Engine
 Source: "doc\readme.txt"; DestDir: "{app}\doc"; Components: Engine
 
 ; Resources
-Source: "config\deng.de"; DestDir: "{app}\config"; Components: Engine
+Source: "modules\Config.de"; DestDir: "{app}\modules"; Components: Engine
+Source: "modules\recutil.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "data\doomsday.pk3"; DestDir: "{app}\data"; Components: Engine
 Source: "data\graphics\background.pcx"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine

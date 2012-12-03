@@ -108,7 +108,8 @@ SOURCES += \
     src/core/unixinfo.cpp
 
 OTHER_FILES += \
-    config/deng.de
+    modules/Config.de \
+    modules/recutil.de
 
 # Installation ---------------------------------------------------------------
 

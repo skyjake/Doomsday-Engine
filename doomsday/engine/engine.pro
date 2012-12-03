@@ -648,7 +648,9 @@ OTHER_FILES += \
 
 data.files = $$OUT_PWD/../doomsday.pk3
 
-cfg.files = $$DENG_CONFIG_DIR/deng.de
+mod.files = \
+    $$DENG_MODULES_DIR/Config.de \
+    $$DENG_MODULES_DIR/recutil.de
 
 startupdata.files = \
     data/cphelp.txt
@@ -680,13 +682,13 @@ macx {
         res/macx/English.lproj \
         res/macx/deng.icns
 
-    cfg.path          = $${res.path}/config
     data.path         = $${res.path}
+    mod.path          = $${res.path}/modules
     startupdata.path  = $${res.path}/data
     startupfonts.path = $${res.path}/data/fonts
     startupgfx.path   = $${res.path}/data/graphics
 
-    QMAKE_BUNDLE_DATA += cfg res data startupfonts startupdata startupgfx
+    QMAKE_BUNDLE_DATA += mod res data startupfonts startupdata startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
@@ -724,14 +726,14 @@ macx {
 
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data startupdata startupgfx startupfonts cfg
+    INSTALLS += target data startupdata startupgfx startupfonts mod
 
     target.path       = $$DENG_BIN_DIR
     data.path         = $$DENG_DATA_DIR
     startupdata.path  = $$DENG_DATA_DIR
     startupgfx.path   = $$DENG_DATA_DIR/graphics
     startupfonts.path = $$DENG_DATA_DIR/fonts
-    cfg.path          = $$DENG_BASE_DIR/config
+    mod.path          = $$DENG_BASE_DIR/modules
 
     win32 {
         # Windows-specific installation.

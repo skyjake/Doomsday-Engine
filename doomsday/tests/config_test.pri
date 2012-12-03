@@ -1,10 +1,12 @@
 include(../config.pri)
 include(../dep_deng2.pri)
 
-cfg.files = $$DENG_CONFIG_DIR/deng.de
+mod.files = \
+    $$DENG_MODULES_DIR/Config.de \
+    $$DENG_MODULES_DIR/recutil.de
 
 macx {
-    cfg.path = Contents/Resources/config
+    mod.path = Contents/Resources/modules
 
     defineTest(deployTest) {
         # Arg 1: target name (without .app)
@@ -17,7 +19,7 @@ macx {
         # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
         fixInstallName($${1}.app/Contents/MacOS/$${1}, libdeng2.2.dylib, ..)
 
-        QMAKE_BUNDLE_DATA += cfg
+        QMAKE_BUNDLE_DATA += mod
         export(QMAKE_BUNDLE_DATA)
     }
 }
@@ -25,19 +27,19 @@ else:win32 {
     CONFIG += console
 
     target.path = $$DENG_BIN_DIR
-    cfg.path = $$DENG_DATA_DIR/config
+    mod.path = $$DENG_DATA_DIR/modules
 
     defineTest(deployTest) {
-        INSTALLS += cfg target
+        INSTALLS += mod target
         export(INSTALLS)
     }
 }
 else {
     target.path = $$DENG_BIN_DIR
-    cfg.path = $$DENG_DATA_DIR/config
+    mod.path = $$DENG_DATA_DIR/modules
 
     defineTest(deployTest) {
-        INSTALLS += cfg target
+        INSTALLS += mod target
         export(INSTALLS)
     }
 }
