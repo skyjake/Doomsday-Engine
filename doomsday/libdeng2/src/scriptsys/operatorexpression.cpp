@@ -322,15 +322,57 @@ void OperatorExpression::operator << (Reader &from)
     }
 }
 
+namespace internal {
+    struct SliceTarget {
+        SliceTarget(Value *v) : value(v) {}
+        virtual ~SliceTarget() {
+            delete value;
+        }
+        Value *take() {
+            Value *v = value;
+            value = 0;
+            return v;
+        }
+        virtual void append(Value const &src, dint index) = 0;
+        Value *value;
+    };
+    struct ArraySliceTarget : public SliceTarget {
+        ArraySliceTarget() : SliceTarget(new ArrayValue) {}
+        ArrayValue &array() { return *static_cast<ArrayValue *>(value); }
+        void append(Value const &src, dint index) {
+            array().add(src.duplicateElement(NumberValue(index)));
+        }
+    };
+    struct TextSliceTarget : public SliceTarget {
+        TextSliceTarget() : SliceTarget(new TextValue) {}
+        TextValue &text() { return *static_cast<TextValue *>(value); }
+        void append(Value const &src, dint index) {
+            text().sum(TextValue(String(1, src.asText().at(index))));
+        }
+    };
+}
+
 Value *OperatorExpression::performSlice(Value *leftValue, Value *rightValue) const
 {
+    using internal::SliceTarget;
+    using internal::TextSliceTarget;
+    using internal::ArraySliceTarget;
+
     DENG2_ASSERT(rightValue->size() >= 2);
 
     ArrayValue const *args = dynamic_cast<ArrayValue *>(rightValue);
     DENG2_ASSERT(args != NULL); // Parser makes sure.
 
     // The resulting slice of leftValue's elements.
-    std::auto_ptr<ArrayValue> slice(new ArrayValue());
+    std::auto_ptr<SliceTarget> slice;
+    if(dynamic_cast<TextValue *>(leftValue))
+    {
+        slice.reset(new TextSliceTarget);
+    }
+    else
+    {
+        slice.reset(new ArraySliceTarget);
+    }
 
     // Determine the stepping of the slice.
     dint step = 1;
@@ -399,8 +441,10 @@ Value *OperatorExpression::performSlice(Value *leftValue, Value *rightValue) con
 
     for(dint i = begin; (end >= begin && i < end) || (begin > end && i > end); i += step)
     {
-        slice->add(leftValue->duplicateElement(NumberValue(i)));
-    }        
+        slice->append(*leftValue, i);
+    }
 
-    return slice.release();
+    return slice->take();
 }
+
+} // namespace de
