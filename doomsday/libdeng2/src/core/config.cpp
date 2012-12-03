@@ -72,10 +72,10 @@ void Config::read()
     // Current version.
     Version verInfo;
     QScopedPointer<ArrayValue> version(new ArrayValue());
-    version->add(new NumberValue(verInfo.major));
-    version->add(new NumberValue(verInfo.minor));
-    version->add(new NumberValue(verInfo.patch));
-    version->add(new NumberValue(verInfo.build));
+    *version << NumberValue(verInfo.major)
+             << NumberValue(verInfo.minor)
+             << NumberValue(verInfo.patch)
+             << NumberValue(verInfo.build);
 
     File &scriptFile = App::rootFolder().locate<File>(d->configPath);
     bool shouldRunScript = false;

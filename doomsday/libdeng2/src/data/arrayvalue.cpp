@@ -258,6 +258,18 @@ void ArrayValue::remove(dint index)
     delete *elem;
     _elements.erase(elem);
 }
+
+ArrayValue &ArrayValue::operator << (Value *value)
+{
+    add(value);
+    return *this;
+}
+
+ArrayValue &ArrayValue::operator << (Value const &value)
+{
+    add(value.duplicate());
+    return *this;
+}
     
 Value *ArrayValue::pop()
 {

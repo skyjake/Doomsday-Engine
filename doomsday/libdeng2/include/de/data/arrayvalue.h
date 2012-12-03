@@ -98,6 +98,24 @@ public:
     void remove(dint index);
 
     /**
+     * Adds a value to the array.
+     *
+     * @param value  Value to add. Array gets ownership.
+     *
+     * @return Reference to the array.
+     */
+    ArrayValue &operator << (Value *value);
+
+    /**
+     * Adds a value to the array.
+     *
+     * @param value  Value to add. A duplicate of this value is added to the array.
+     *
+     * @return Reference to the array.
+     */
+    ArrayValue &operator << (Value const &value);
+
+    /**
      * Returns a reference to a value in the array.
      *
      * @param index  Index of the element.
