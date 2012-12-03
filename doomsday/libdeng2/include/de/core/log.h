@@ -56,11 +56,12 @@
 /**
  * Makes a developer-only TRACE level log entry. Only enabled in debug builds;
  * use this for internal messages that are only useful to / understood by
- * developers when debugging.
+ * developers when debugging. (Note that parameters differ compared to the
+ * normal LOG_* macros.)
  */
-#  define LOG_DEV_TRACE(str) LOG().enter(de::Log::TRACE, str)
+#  define LOG_DEV_TRACE(form, args) LOG().enter(de::Log::TRACE, form) << args
 #else
-#  define LOG_DEV_TRACE(str) LOG().throwaway()
+#  define LOG_DEV_TRACE(form, args)
 #endif
 
 #define LOG_TRACE(str)      LOG().enter(de::Log::TRACE, str)
