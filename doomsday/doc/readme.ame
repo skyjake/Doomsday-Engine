@@ -1,4 +1,9 @@
-@macro{TITLE}{ Doomsday Engine }
+@ifndef{MAN}{
+    @macro{TITLE}{ Doomsday Engine }
+}
+@else{
+    @macro{TITLE}{ doomsday }
+}
 @macro{ONELINER}{ Enhanced source port of Doom, Heretic and Hexen }
 @macro{VERSION}{ Version 1.9.10 }
 @macro{AUTHOR}{ Deng Team }
