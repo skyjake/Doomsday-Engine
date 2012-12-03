@@ -22,6 +22,8 @@
 #include "de/Context"
 #include "de/Evaluator"
 #include "de/Writer"
+#include "de/ArrayValue"
+#include "de/RefValue"
 #include "de/Reader"
 
 using namespace de;
@@ -34,6 +36,8 @@ ExpressionStatement::~ExpressionStatement()
 void ExpressionStatement::execute(Context &context) const
 {
     context.evaluator().evaluate(_expression);
+    // ...the result will not be used for anything.
+
     context.proceed();
 }
 

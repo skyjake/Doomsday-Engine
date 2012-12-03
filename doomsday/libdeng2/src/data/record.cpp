@@ -30,6 +30,7 @@
 #include "de/FunctionValue"
 #include "de/TimeValue"
 #include "de/Vector"
+#include "de/String"
 
 #include <QTextStream>
 #include <QMap>
@@ -45,14 +46,14 @@ static duint32 recordIdCounter = 0;
 
 struct Record::Instance
 {
+    Record &self;
     Record::Members members;
-    //Record::Subrecords subrecords;
     duint32 uniqueId; ///< Identifier to track serialized references.
     duint32 oldUniqueId;
 
     typedef QMap<duint32, Record *> RefMap;
 
-    Instance() : uniqueId(++recordIdCounter), oldUniqueId(0)
+    Instance(Record &r) : self(r), uniqueId(++recordIdCounter), oldUniqueId(0)
     {}
 
     bool isSubrecord(Variable const &var) const
@@ -72,6 +73,31 @@ struct Record::Instance
             }
         }
         return subs;
+    }
+
+    Variable const *findMemberByPath(String const &name)
+    {
+        // Path notation allows looking into subrecords.
+        int pos = name.indexOf('.');
+        if(pos >= 0)
+        {
+            String subName = name.substr(0, pos);
+            String remaining = name.substr(pos + 1);
+            if(members.find(subName) != members.end())
+            {
+                // If it has a RecordValue then we can descend into it.
+                return &self.value<RecordValue>(subName).dereference()[remaining];
+            }
+            return &self.subrecord(subName)[remaining];
+        }
+
+        Members::const_iterator found = members.find(name);
+        if(found != members.end())
+        {
+            return found->second;
+        }
+
+        return 0;
     }
 
     /**
@@ -104,8 +130,8 @@ struct Record::Instance
                 duint32 oldTargetId = value->record()->d->oldUniqueId;
                 if(refMap.contains(oldTargetId))
                 {
-                    LOG_DEV_TRACE("RecordValue %p restored to reference record %i (%p)")
-                            << value << oldTargetId << refMap[oldTargetId];
+                    LOG_DEV_TRACE("RecordValue %p restored to reference record %i (%p)",
+                                  value << oldTargetId << refMap[oldTargetId]);
 
                     // Relink the value to its target.
                     value->setRecord(refMap[oldTargetId]);
@@ -115,22 +141,18 @@ struct Record::Instance
     }
 };
 
-Record::Record() : d(new Instance)
+Record::Record() : d(new Instance(*this))
 {}
 
 Record::Record(Record const &other)
-    : ISerializable(), LogEntry::Arg::Base(), d(new Instance)
+    : ISerializable(), LogEntry::Arg::Base(), d(new Instance(*this))
 {
     DENG2_FOR_EACH_CONST(Members, i, other.d->members)
     {
-        d->members[i->first] = new Variable(*i->second);
+        Variable *var = new Variable(*i->second);
+        var->audienceForDeletion += this;
+        d->members[i->first] = var;
     }
-    /*
-    DENG2_FOR_EACH_CONST(Subrecords, i, other.d->subrecords)
-    {
-        d->subrecords[i->first] = new Record(*i->second);
-    }
-    */
 }
 
 Record::~Record()
@@ -147,38 +169,29 @@ void Record::clear()
     {
         DENG2_FOR_EACH(Members, i, d->members)
         {
+            i->second->audienceForDeletion -= this;
             delete i->second;
         }
         d->members.clear();
     }
-    /*
-    if(!d->subrecords.empty())
-    {
-        DENG2_FOR_EACH(Subrecords, i, d->subrecords)
-        {
-            delete i->second;
-        }
-        d->subrecords.clear();
-    }*/
 }
 
 bool Record::has(String const &name) const
 {
-    return hasMember(name); // || hasSubrecord(name);
+    return hasMember(name);
 }
 
 bool Record::hasMember(String const &variableName) const
 {
-    Members::const_iterator found = d->members.find(variableName);
-    return found != d->members.end();
+    return d->findMemberByPath(variableName) != 0;
 }
 
 bool Record::hasSubrecord(String const &subrecordName) const
 {
-    Members::const_iterator found = d->members.find(subrecordName);
-    if(found != d->members.end())
+    Variable const *found = d->findMemberByPath(subrecordName);
+    if(found)
     {
-        return d->isSubrecord(*found->second);
+        return d->isSubrecord(*found);
     }
     return false;
 }
@@ -196,12 +209,14 @@ Variable &Record::add(Variable *variable)
         // Delete the previous variable with this name.
         delete d->members[variable->name()];
     }
+    var->audienceForDeletion += this;
     d->members[variable->name()] = var.release();
     return *variable;
 }
 
 Variable *Record::remove(Variable &variable)
 {
+    variable.audienceForDeletion -= this;
     d->members.erase(variable.name());
     return &variable;
 }
@@ -295,23 +310,10 @@ Variable &Record::operator [] (String const &name)
 Variable const &Record::operator [] (String const &name) const
 {
     // Path notation allows looking into subrecords.
-    int pos = name.indexOf('.');
-    if(pos >= 0)
+    Variable const *found = d->findMemberByPath(name);
+    if(found)
     {
-        String subName = name.substr(0, pos);
-        String remaining = name.substr(pos + 1);
-        if(hasMember(subName))
-        {
-            // It is a variable. If it has a RecordValue then we can descend into it.
-            return value<RecordValue>(subName).dereference()[remaining];
-        }
-        return subrecord(subName)[remaining];
-    }
-    
-    Members::const_iterator found = d->members.find(name);
-    if(found != d->members.end())
-    {
-        return *found->second;
+        return *found;
     }
     throw NotFoundError("Record::operator []", "Variable '" + name + "' not found");
 }
@@ -424,16 +426,6 @@ void Record::operator >> (Writer &to) const
     {
         to << *i->second;
     }
-    /*
-    // Any subrecords?
-    to << duint32(d->subrecords.size());
-    if(!d->subrecords.empty())
-    {
-        for(Subrecords::const_iterator i = d->subrecords.begin(); i != d->subrecords.end(); ++i)
-        {
-            to << i->first << *i->second;
-        }
-    }*/
 }
     
 void Record::operator << (Reader &from)
@@ -466,23 +458,24 @@ void Record::operator << (Reader &from)
         add(var.release());
     }
 
-    /*
-    // Also subrecords.
-    from >> count;
-
-    while(count-- > 0)
-    {
-        std::auto_ptr<Record> sub(new Record());
-        String subName;
-        from >> subName >> *sub.get();
-
-
-        add(subName, sub.release());
-    }
-    */
-
     // Find referenced records and relink them to their original targets.
     d->reconnectReferencesAfterDeserialization(refMap);
+
+    // Observe all members for deletion.
+    DENG2_FOR_EACH(Members, i, d->members)
+    {
+        i->second->audienceForDeletion += this;
+    }
+}
+
+void Record::variableBeingDeleted(Variable &variable)
+{
+    DENG2_ASSERT(d->findMemberByPath(variable.name()) != 0);
+
+    LOG_DEV_TRACE("Variable %p deleted, removing from Record %p", &variable << this);
+
+    // Remove from our index.
+    d->members.erase(variable.name());
 }
 
 QTextStream &operator << (QTextStream &os, Record const &record)
@@ -490,4 +483,4 @@ QTextStream &operator << (QTextStream &os, Record const &record)
     return os << record.asText();
 }
 
-} // de
+} // namespace de

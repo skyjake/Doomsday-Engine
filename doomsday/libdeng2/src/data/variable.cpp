@@ -35,13 +35,13 @@ using namespace de;
 Variable::Variable(String const &name, Value *initial, Flags const &m)
     : _name(name), _value(0), _mode(m)
 {
-    verifyName(_name);
+    std::auto_ptr<Value> v(initial);
     if(!initial)
     {
-        initial = new NoneValue();
+        v.reset(new NoneValue);
     }
-    std::auto_ptr<Value> v(initial);
-    verifyValid(*initial);
+    verifyName(_name);
+    verifyValid(*v);
     _value = v.release();
 }
 

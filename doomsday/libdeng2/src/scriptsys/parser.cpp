@@ -29,6 +29,7 @@
 #include "de/ForStatement"
 #include "de/FlowStatement"
 #include "de/AssignStatement"
+#include "de/DeleteStatement"
 #include "de/FunctionStatement"
 #include "de/TryStatement"
 #include "de/CatchStatement"
@@ -324,7 +325,7 @@ ExpressionStatement *Parser::parseDeclarationStatement()
     return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA, flags));
 }
 
-ExpressionStatement *Parser::parseDeleteStatement()
+DeleteStatement *Parser::parseDeleteStatement()
 {
     // "del" name-expr ["," name-expr]*
     
@@ -333,8 +334,8 @@ ExpressionStatement *Parser::parseDeleteStatement()
         throw MissingTokenError("Parser::parseDeleteStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
-    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
-        Expression::Delete | Expression::LocalOnly));
+    return new DeleteStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
+                                         Expression::LocalOnly | Expression::ByReference));
 }
 
 FunctionStatement *Parser::parseFunctionStatement()
@@ -589,7 +590,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
 }
 
 ArrayExpression *Parser::parseList(TokenRange const &range, QChar const *separator,
-    Expression::Flags const &flags)
+                                   Expression::Flags const &flags)
 {
     auto_ptr<ArrayExpression> exp(new ArrayExpression);
     if(range.size() > 0)
@@ -774,14 +775,18 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
     }
     else
     {
-        Expression::Flags leftFlags = (leftOperandByReference(op)? Expression::ByReference : Expression::ByValue);
-            
+        Expression::Flags leftOpFlags = (leftOperandByReference(op)?
+                                             Expression::ByReference : Expression::ByValue);
+
+        Expression::Flags rightOpFlags = rightFlags;
+        if(op != MEMBER) rightOpFlags &= ~Expression::ByReference;
+
         // Binary operation.
-        auto_ptr<Expression> leftOperand(parseExpression(leftSide, leftFlags));
+        auto_ptr<Expression> leftOperand(parseExpression(leftSide, leftOpFlags));
         auto_ptr<Expression> rightOperand(op == SLICE? parseList(rightSide, Token::COLON) :
-            parseExpression(rightSide, rightFlags));
+            parseExpression(rightSide, rightOpFlags));
         OperatorExpression *x = new OperatorExpression(op, leftOperand.get(), rightOperand.get());
-        x->setFlags(rightFlags);
+        x->setFlags(rightFlags); // original flags
         rightOperand.release();
         leftOperand.release();
         return x;

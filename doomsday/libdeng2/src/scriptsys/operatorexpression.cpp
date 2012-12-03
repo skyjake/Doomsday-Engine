@@ -21,6 +21,7 @@
 #include "de/Evaluator"
 #include "de/Value"
 #include "de/NumberValue"
+#include "de/TextValue"
 #include "de/ArrayValue"
 #include "de/RefValue"
 #include "de/RecordValue"
@@ -29,7 +30,7 @@
 #include "de/Reader"
 #include "de/math.h"
 
-using namespace de;
+namespace de {
 
 OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(0), _rightOperand(0)
 {}
@@ -206,8 +207,24 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             break;
 
         case INDEX:
-            result = leftValue->duplicateElement(*rightValue);
+        {
+            LOG_DEV_TRACE("INDEX: types %s [ %s ] byref:%b",
+                          DENG2_TYPE_NAME(*leftValue) << DENG2_TYPE_NAME(*rightValue)
+                          << flags().testFlag(ByReference));
+
+            // As a special case, records can be indexed also by reference.
+            RecordValue *recValue = dynamic_cast<RecordValue *>(leftValue);
+            if(flags().testFlag(ByReference) && recValue)
+            {
+                result = new RefValue(&recValue->dereference()[rightValue->asText()]);
+            }
+            else
+            {
+                // Index by value.
+                result = leftValue->duplicateElement(*rightValue);
+            }
             break;
+        }
 
         case SLICE:
             result = performSlice(leftValue, rightValue);

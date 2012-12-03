@@ -21,6 +21,7 @@
 #include "de/TextValue"
 #include "de/RefValue"
 #include "de/NoneValue"
+#include "de/Variable"
 #include "de/Writer"
 #include "de/Reader"
 #include "de/math.h"
@@ -115,6 +116,7 @@ Record const &RecordValue::dereference() const
 Value *RecordValue::duplicate() const
 {
     verify();
+    /// The return duplicated value does not own the record, just references it.
     return new RecordValue(_record);
 }
 
@@ -128,6 +130,18 @@ dsize RecordValue::size() const
     return dereference().members().size();
 }
 
+void RecordValue::setElement(Value const &index, Value *elementValue)
+{
+    // We're expecting text.
+    TextValue const *text = dynamic_cast<TextValue const *>(&index);
+    if(!text)
+    {
+        throw IllegalIndexError("RecordValue::setElement",
+                                "Records must be indexed with text values");
+    }
+    dereference().add(new Variable(text->asText(), elementValue));
+}
+
 Value *RecordValue::duplicateElement(Value const &value) const
 {
     // We're expecting text.
@@ -135,18 +149,14 @@ Value *RecordValue::duplicateElement(Value const &value) const
     if(!text)
     {
         throw IllegalIndexError("RecordValue::duplicateElement", 
-            "Records must be indexed with text values");
-    }
-    if(dereference().hasSubrecord(*text)) // note: subrecords are members, too
-    {
-        return new RecordValue(const_cast<Record *>(&dereference().subrecord(*text)));
+                                "Records must be indexed with text values");
     }
     if(dereference().hasMember(*text))
     {
-        return new RefValue(const_cast<Variable *>(&dereference()[*text]));
+        return dereference()[*text].value().duplicate();
     }
     throw NotFoundError("RecordValue::duplicateElement",
-        "'" + text->asText() + "' does not exist in the record");
+                        "'" + text->asText() + "' does not exist in the record");
 }
 
 bool RecordValue::contains(Value const &value) const
@@ -156,7 +166,7 @@ bool RecordValue::contains(Value const &value) const
     if(!text)
     {
         throw IllegalIndexError("RecordValue::contains", 
-            "Records must be indexed with text values");
+                                "Records must be indexed with text values");
     }
     return dereference().has(*text);
 }

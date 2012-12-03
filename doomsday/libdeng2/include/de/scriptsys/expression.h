@@ -62,7 +62,7 @@ namespace de
             NewSubrecord = 0x8,
 
             /// Identifier must exist and will be deleted.
-            Delete = 0x10,
+            //Delete = 0x10,
 
             /// Imports an external namespace into the local namespace (as a reference).
             Import = 0x20,

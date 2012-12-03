@@ -98,6 +98,7 @@ public:
     Value *duplicate() const;
     Text asText() const;
     dsize size() const;
+    void setElement(Value const &index, Value *elementValue);
     Value *duplicateElement(Value const &value) const;
     bool contains(Value const &value) const;
     bool isTrue() const;
@@ -113,7 +114,7 @@ public:
 public:
     Record *_record;
     OwnershipFlags _ownership;
-    OwnershipFlags _oldOwnership;
+    OwnershipFlags _oldOwnership; // prior to serialization
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(RecordValue::OwnershipFlags)
