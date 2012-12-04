@@ -297,22 +297,20 @@ static void stopWorker()
 
 static void stopPlayer()
 {
-    if(DMFluid_Driver()) return;
-
     DSFLUIDSYNTH_TRACE("stopPlayer: fsPlayer " << fsPlayer);
-
     if(!fsPlayer) return;
 
-    // Destroy the sfx buffer.
-    DENG_ASSERT(sfxBuf != 0);
-    DSFLUIDSYNTH_TRACE("stopPlayer: Destroying SFX buffer " << sfxBuf);
+    if(!DMFluid_Driver())
+    {
+        // Destroy the sfx buffer.
+        DENG_ASSERT(sfxBuf != 0);
+        DSFLUIDSYNTH_TRACE("stopPlayer: Destroying SFX buffer " << sfxBuf);
 
-    DMFluid_Sfx()->Destroy(sfxBuf);
-    sfxBuf = 0;
+        DMFluid_Sfx()->Destroy(sfxBuf);
+        sfxBuf = 0;
 
-    stopWorker();
-
-    DSFLUIDSYNTH_TRACE("stopPlayer: " << fsPlayer);
+        stopWorker();
+    }
 
     delete_fluid_player(fsPlayer);
     fsPlayer = 0;

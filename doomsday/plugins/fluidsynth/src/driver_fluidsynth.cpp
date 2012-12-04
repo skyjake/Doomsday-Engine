@@ -85,6 +85,8 @@ int DS_Init(void)
         Con_Message("Failed to create FluidSynth audio driver '%s'.\n", driverName);
         return false;
     }
+#else
+    fsDriver = NULL;
 #endif
 
     DSFLUIDSYNTH_TRACE("DS_Init: FluidSynth initialized.");
