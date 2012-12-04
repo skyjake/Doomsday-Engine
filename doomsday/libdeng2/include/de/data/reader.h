@@ -83,6 +83,8 @@ public:
      */
     Reader(IIStream const &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
 
+    virtual ~Reader();
+
     //@{ Read a number from the source buffer, in network byte order.
     Reader &operator >> (char &byte);
     Reader &operator >> (dchar &byte);
