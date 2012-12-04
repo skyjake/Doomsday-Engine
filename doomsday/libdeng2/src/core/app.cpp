@@ -47,6 +47,9 @@ struct App::Instance
     /// Path of the application executable.
     NativePath appPath;
 
+    /// Path of the FS1 main data folder (the "base dir") in the native file system.
+    NativePath cachedBasePath;
+
     /// The file system.
     FS fs;
 
@@ -228,11 +231,13 @@ bool App::setCurrentWorkPath(NativePath const &cwd)
 
 NativePath App::nativeBasePath()
 {
+    if(!d->cachedBasePath.isEmpty()) return d->cachedBasePath;
+
     int i;
     if((i = d->cmdLine.check("-basedir", 1)))
     {
         d->cmdLine.makeAbsolutePath(i + 1);
-        return d->cmdLine.at(i + 1);
+        return (d->cachedBasePath = d->cmdLine.at(i + 1));
     }
 
     NativePath path;
@@ -247,7 +252,7 @@ NativePath App::nativeBasePath()
     // Also check the system config files.
     d->unixInfo.path("basedir", path);
 #endif
-    return path;
+    return (d->cachedBasePath = path);
 }
 
 void App::initSubsystems(SubsystemInitFlags flags)

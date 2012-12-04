@@ -102,7 +102,10 @@ public:
     static NativePath executablePath();
 
     /**
-     * Returns the native path of the data base directory.
+     * Returns the native path of the data base folder.
+     *
+     * In libdeng2, the base folder is the location where all the common
+     * data files are located, e.g., /usr/share/doomsday on Linux.
      */
     NativePath nativeBasePath();
 
