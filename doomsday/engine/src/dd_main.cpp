@@ -2602,25 +2602,26 @@ ddstring_t const *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textur
     return DD_MaterialSchemeNameForTextureScheme(Str_Text(textureSchemeName));
 }
 
-/// @todo Replace with a version accepting a URN -ds
-materialid_t DD_MaterialForTextureUniqueId(char const *schemeName, int uniqueId)
+materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
 {
+    if(!_textureUri) return NOMATERIALID;
+
+    de::Uri const &textureUri = reinterpret_cast<de::Uri const &>(*_textureUri);
     try
     {
-        de::Uri uri = App_Textures()->scheme(schemeName).findByUniqueId(uniqueId).composeUri();
-        uri.setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(uri.scheme())));
-        return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
+        if(TextureManifest *manifest = App_Textures()->find(textureUri))
+        {
+            de::Uri uri = manifest->composeUri();
+            uri.setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(uri.scheme())));
+            return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
+        }
     }
     catch(Textures::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
     }
-    catch(Textures::Scheme::NotFoundError const &er)
-    {
-        // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
-    }
+
     return NOMATERIALID;
 }
 

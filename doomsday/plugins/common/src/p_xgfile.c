@@ -321,6 +321,11 @@ void XG_WriteTypes(FILE* f)
 }
 #endif
 
+static Uri* readTextureUrn(void)
+{
+    return Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:Textures:%i", ReadShort())), RC_NULL);
+}
+
 void XG_ReadXGLump(lumpnum_t lumpNum)
 {
     int lc = 0, sc = 0, i;
@@ -384,8 +389,19 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
             li->actChain = ReadShort();
             li->deactChain = ReadShort();
             li->wallSection = ReadByte();
-            li->actMaterial = DD_MaterialForTextureUniqueId("Textures", ReadShort());
-            li->deactMaterial = DD_MaterialForTextureUniqueId("Textures", ReadShort());
+
+            {
+                Uri* textureUrn = readTextureUrn();
+                li->actMaterial   = DD_MaterialForTextureUri(textureUrn);
+                Uri_Delete(textureUrn);
+            }
+
+            {
+                Uri* textureUrn = readTextureUrn();
+                li->deactMaterial = DD_MaterialForTextureUri(textureUrn);
+                Uri_Delete(textureUrn);
+            }
+
             ReadString(&li->actMsg);
             ReadString(&li->deactMsg);
             li->materialMoveAngle = ReadFloat();

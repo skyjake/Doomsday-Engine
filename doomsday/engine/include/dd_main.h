@@ -213,8 +213,8 @@ fontschemeid_t DD_ParseFontSchemeName(const char* str);
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 ddstring_t const *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName);
 
-/// @return  Unique identifier of the material associated with the identified @a uniqueId texture.
-materialid_t DD_MaterialForTextureUniqueId(char const *schemeName, int uniqueId);
+/// @return  Unique identifier of the material associated with specified @a textureUri.
+materialid_t DD_MaterialForTextureUri(Uri const *uri);
 
 const char* value_Str(int val);
 
