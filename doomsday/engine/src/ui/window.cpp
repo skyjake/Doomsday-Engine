@@ -1534,7 +1534,7 @@ void Window_SaveState(Window* wnd)
     de::Config &config = de::App::config();
 
     QRect normRect = wnd->normalRect();
-    de::ArrayValue* rect = new de::ArrayValue;
+    de::ArrayValue *rect = new de::ArrayValue;
     *rect << de::NumberValue(normRect.left())
           << de::NumberValue(normRect.top())
           << de::NumberValue(normRect.width())
