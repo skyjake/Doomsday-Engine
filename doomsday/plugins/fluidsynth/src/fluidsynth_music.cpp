@@ -60,7 +60,7 @@ public:
 
     ~RingBuffer()
     {
-        delete _buf;
+        delete [] _buf;
         Sys_DestroyMutex(_mutex);
     }
 
