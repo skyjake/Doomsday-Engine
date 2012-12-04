@@ -83,9 +83,9 @@ class LogBuffer;
 class LogEntry;
 
 /**
- * Logs provide means for adding log entries into the log entry buffer. The
- * thread's Log keeps track of the section stack. Each thread uses its own
- * logs.
+ * Provides means for adding log entries into the log entry buffer (LogBuffer).
+ * A thread's Log keeps track of the thread-local section stack, but there is
+ * only one LogBuffer where all the entries are collected.
  *
  * @ingroup core
  */
@@ -267,6 +267,12 @@ private:
 /**
  * An entry to be stored in the log entry buffer. Log entries are created with
  * Log::enter().
+ *
+ * Log entry arguments are appended after the creation of the entry and even
+ * after it has been inserted to the buffer. Therefore it is possible that an
+ * entry is being flushed while another thread is still adding arguments to it.
+ * Due to this entries are lockable and will be locked whenever
+ * LogEntry::asText() is being executed or when an argument is being added.
  *
  * @ingroup core
  */

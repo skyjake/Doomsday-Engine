@@ -205,6 +205,7 @@ public:
     /**
      * Parses a text string into a Time.
      *
+     * @param text    Text that contains a date and/or time.
      * @param format  Format of the text string.
      *
      * @return Time that corresponds @a text.
