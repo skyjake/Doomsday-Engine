@@ -959,9 +959,9 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
         de::Uri *texUri = reinterpret_cast<de::Uri *>(layer.stages[0].texture);
         if(texUri) // Not unused.
         {
-            if(de::TextureMetaFile *metafile = textures.find(*texUri))
+            if(de::TextureManifest *manifest = textures.find(*texUri))
             {
-                tex = metafile->texture();
+                tex = manifest->texture();
                 if(!tex)
                 {
                     LOG_WARNING("Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i).")

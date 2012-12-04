@@ -2761,8 +2761,8 @@ DGLuint GL_PrepareLightmap(uri_s const *_resourceUri)
 
         try
         {
-            TextureMetaFile &metafile = App_Textures()->scheme("Lightmaps").findByResourceUri(resourceUri);
-            if(de::Texture *tex = metafile.texture())
+            TextureManifest &manifest = App_Textures()->scheme("Lightmaps").findByResourceUri(resourceUri);
+            if(de::Texture *tex = manifest.texture())
             {
                 /// @todo fixme: Render context texture specs should be defined only once.
                 texturevariantspecification_t *texSpec =
@@ -2802,8 +2802,8 @@ DGLuint GL_PrepareFlareTexture(uri_s const *_resourceUri, int oldIdx)
 
         try
         {
-            TextureMetaFile &metafile = App_Textures()->scheme("Flaremaps").findByResourceUri(resourceUri);
-            if(de::Texture *tex = metafile.texture())
+            TextureManifest &manifest = App_Textures()->scheme("Flaremaps").findByResourceUri(resourceUri);
+            if(de::Texture *tex = manifest.texture())
             {
                 texturevariantspecification_t *texSpec =
                     GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
@@ -3517,8 +3517,8 @@ void GL_ReleaseTexturesByScheme(char const *schemeName)
     PathTreeIterator<Textures::Scheme::Index> iter(App_Textures()->scheme(schemeName).index().leafNodes());
     while(iter.hasNext())
     {
-        TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
-        GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(metafile.texture()));
+        TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+        GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(manifest.texture()));
     }
 }
 

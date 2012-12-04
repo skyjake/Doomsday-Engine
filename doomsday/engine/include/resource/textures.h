@@ -43,7 +43,7 @@ typedef int textureid_t;
 
 namespace de {
 
-class TextureMetaFile;
+class TextureManifest;
 
 /**
  * @em Clearing a texture is to 'undefine' it - any names bound to it will be
@@ -62,29 +62,29 @@ class TextureMetaFile;
 class Textures
 {
 public:
-    typedef class TextureMetaFile MetaFile;
+    typedef class TextureManifest Manifest;
 
     class Scheme; // forward declaration
 
     struct ResourceClass
     {
         /**
-         * Interpret a metafile producing a new logical Texture instance..
+         * Interpret a manifest producing a new logical Texture instance..
          *
-         * @param metafile  The file to be interpreted.
+         * @param manifest  The manifest to be interpreted.
          * @param dimensions  Logical dimensions. Components can be @c 0 in
          *                  which case their value will be inherited from the
          *                  actual pixel dimensions of the image at load time.
          * @param flags     Texture Flags.
          * @param userData  User data to associate with the resultant texture.
          */
-        static Texture *interpret(MetaFile &metafile, Size2Raw const &dimensions,
+        static Texture *interpret(Manifest &manifest, Size2Raw const &dimensions,
                                   Texture::Flags flags, void *userData = 0);
 
         /**
          * @copydoc interpret()
          */
-        static Texture *interpret(MetaFile &metafile, Texture::Flags flags,
+        static Texture *interpret(Manifest &manifest, Texture::Flags flags,
                                   void *userData = 0);
     };
 
@@ -97,11 +97,11 @@ public:
         /// Minimum length of a symbolic name.
         static int const min_name_length = URI_MINSCHEMELENGTH;
 
-        /// Texture metafiles within the scheme are placed into a tree.
-        typedef PathTreeT<MetaFile> Index;
+        /// Texture manifests within the scheme are placed into a tree.
+        typedef PathTreeT<Manifest> Index;
 
     public:
-        /// The requested metafile could not be found in the index.
+        /// The requested manifest could not be found in the index.
         DENG2_ERROR(NotFoundError);
 
     public:
@@ -118,64 +118,64 @@ public:
         /// @return  Symbolic name of this scheme (e.g., "ModelSkins").
         String const& name() const;
 
-        /// @return  Total number of metafiles in the scheme.
+        /// @return  Total number of manifests in the scheme.
         int size() const;
 
-        /// @return  Total number of metafiles in the scheme. Same as @ref size().
+        /// @return  Total number of manifests in the scheme. Same as @ref size().
         inline int count() const {
             return size();
         }
 
         /**
-         * Clear all metafiles in the scheme (any GL textures which have been
+         * Clear all manifests in the scheme (any GL textures which have been
          * acquired for associated textures will be released).
          */
         void clear();
 
         /**
-         * Insert a new metafile at the given @a path into the scheme.
-         * If a metafile already exists at this path, the existing metafile is
+         * Insert a new manifest at the given @a path into the scheme.
+         * If a manifest already exists at this path, the existing manifest is
          * returned and this is a no-op.
          *
-         * @param path  Virtual path for the resultant metafile.
-         * @return  The (possibly newly created) metafile at @a path.
+         * @param path  Virtual path for the resultant manifest.
+         * @return  The (possibly newly created) manifest at @a path.
          */
-        MetaFile &insertMetaFile(Path const &path);
+        Manifest &insertManifest(Path const &path);
 
         /**
-         * Search the scheme for a metafile matching @a path.
+         * Search the scheme for a manifest matching @a path.
          *
-         * @return  Found metafile.
+         * @return  Found manifest.
          */
-        MetaFile const &find(Path const &path) const;
+        Manifest const &find(Path const &path) const;
 
         /// @copydoc find()
-        MetaFile &find(Path const &path);
+        Manifest &find(Path const &path);
 
         /**
-         * Search the scheme for a metafile whose associated resource
+         * Search the scheme for a manifest whose associated resource
          * URI matches @a uri.
          *
-         * @return  Found metafile.
+         * @return  Found manifest.
          */
-        MetaFile const &findByResourceUri(Uri const &uri) const;
+        Manifest const &findByResourceUri(Uri const &uri) const;
 
         /// @copydoc findByResourceUri()
-        MetaFile &findByResourceUri(Uri const &uri);
+        Manifest &findByResourceUri(Uri const &uri);
 
         /**
-         * Search the scheme for a metafile whose associated unique
+         * Search the scheme for a manifest whose associated unique
          * identifier matches @a uniqueId.
          *
-         * @return  Found metafile.
+         * @return  Found manifest.
          */
-        MetaFile const &findByUniqueId(int uniqueId) const;
+        Manifest const &findByUniqueId(int uniqueId) const;
 
         /// @copydoc findByUniqueId()
-        MetaFile &findByUniqueId(int uniqueId);
+        Manifest &findByUniqueId(int uniqueId);
 
         /**
-         * Provides access to the metafile index for efficient traversal.
+         * Provides access to the manifest index for efficient traversal.
          */
         Index const &index() const;
 
@@ -254,8 +254,8 @@ public:
     /// @return  Unique identifier of the primary name for @a texture else @c NOTEXTUREID.
     textureid_t id(Texture &texture) const;
 
-    /// @return  Unique identifier of the primary name for @a metafile else @c NOTEXTUREID.
-    textureid_t idForMetaFile(MetaFile const &metafile) const;
+    /// @return  Unique identifier of the primary name for @a manifest else @c NOTEXTUREID.
+    textureid_t idForManifest(Manifest const &manifest) const;
 
     /// @return  Texture associated with unique identifier @a textureId else @c 0.
     Texture *toTexture(textureid_t textureId) const;
@@ -276,32 +276,33 @@ public:
      * @param search  The search term.
      * @return Found unique identifier; otherwise @c NOTEXTUREID.
      */
-    MetaFile *find(Uri const &search) const;
+    Manifest *find(Uri const &search) const;
 
     /**
-     * Declare a texture in the collection. If a texture with the specified
-     * @a uri already exists, its unique identifier is returned. If the given
-     * @a resourcePath differs from that already defined for the pre-existing
-     * texture, any associated Texture instance is released (any GL-textures
-     * acquired for it).
+     * Declare a texture in the collection, producing a manifest for a logical
+     * Texture which will be defined later. If a manifest with the specified
+     * @a uri already exists the existing manifest will be returned.
+     *
+     * If either the unique id or the @a resourceUri differs from that which
+     * is already defined in pre-existing manifest, any associated logical
+     * Texture instance is released (any GL-textures acquired for it).
      *
      * @param uri           Uri representing a path to the texture in the
      *                      virtual hierarchy.
      * @param uniqueId      Scheme-unique identifier to associate with the
      *                      texture.
-     * @param resourcepath  The path to the underlying data resource.
+     * @param resourceUri   Uri to the associated data resource.
      *
-     * @return  MetaFile for this texture unless @a uri is invalid, in which
-     *          case @c 0 is returned.
+     * @return  Manifest for this URI; otherwise @c 0 if @a uri is invalid.
      */
-    MetaFile *declare(Uri const &uri, int uniqueId, Uri const *resourceUri);
+    Manifest *declare(Uri const &uri, int uniqueId, Uri const *resourceUri);
 
     /**
-     * Removes a file from any indexes.
+     * Removes the manifest from any indexes.
      *
-     * @param metafile      Metafile to remove from the index.
+     * @param manifest      Manifest to remove from the index.
      */
-    void deindex(MetaFile &metafile);
+    void deindex(Manifest &manifest);
 
     /**
      * Iterate over defined Textures in the collection making a callback for
@@ -340,13 +341,13 @@ public:
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int iterateDeclared(String nameOfScheme, int (*callback)(MetaFile &metafile, void *parameters),
+    int iterateDeclared(String nameOfScheme, int (*callback)(Manifest &manifest, void *parameters),
                         void* parameters = 0) const;
 
     /**
      * @copydoc iterate()
      */
-    inline int iterateDeclared(int (*callback)(MetaFile &metafile, void *parameters),
+    inline int iterateDeclared(int (*callback)(Manifest &manifest, void *parameters),
                                void* parameters = 0) const {
         return iterateDeclared("", callback, parameters);
     }

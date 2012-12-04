@@ -32,7 +32,7 @@
 #include "filesys/fs_main.h"
 #include "filesys/fs_util.h"
 #include "filesys/lumpindex.h"
-#include "filesys/metafile.h"
+#include "filesys/manifest.h"
 #include "filesys/sys_direc.h"
 #include "filesys/sys_findfile.h"
 

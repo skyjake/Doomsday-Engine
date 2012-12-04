@@ -104,8 +104,8 @@ void R_AddAnimGroupFrame(int groupNum, Uri const *textureUri, int tics, int rand
         return;
     }
 
-    de::TextureMetaFile *metafile = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri));
-    if(!metafile)
+    de::TextureManifest *manifest = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri));
+    if(!manifest)
     {
         LOG_DEBUG("Invalid texture uri \"%s\", ignoring.") << reinterpret_cast<de::Uri const &>(*textureUri);
         return;
@@ -116,7 +116,7 @@ void R_AddAnimGroupFrame(int groupNum, Uri const *textureUri, int tics, int rand
     if(!group->frames) Con_Error("R_AddAnimGroupFrame: Failed on (re)allocation of %lu bytes enlarging AnimFrame list for group #%i.", (unsigned long) sizeof(*group->frames) * group->count, groupNum);
 
     animframe_t *frame = &group->frames[group->count - 1];
-    frame->texture = metafile->lookupTextureId();
+    frame->texture = manifest->lookupTextureId();
     frame->tics = tics;
     frame->randomTics = randomTics;
 }
@@ -126,7 +126,7 @@ boolean R_IsTextureInAnimGroup(Uri const *texture, int groupNum)
     if(!texture) return false;
     animgroup_t *group = getAnimGroup(groupNum);
     if(!group) return false;
-    de::TextureMetaFile *metafile = App_Textures()->find(reinterpret_cast<de::Uri const &>(*texture));
-    if(!metafile) return false;
-    return isInAnimGroup(group, metafile->lookupTextureId());
+    de::TextureManifest *manifest = App_Textures()->find(reinterpret_cast<de::Uri const &>(*texture));
+    if(!manifest) return false;
+    return isInAnimGroup(group, manifest->lookupTextureId());
 }

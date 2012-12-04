@@ -187,7 +187,7 @@ DENG_HEADERS += \
     include/filesys/fs_main.h \
     include/filesys/fs_util.h \
     include/filesys/lumpindex.h \
-    include/filesys/metafile.h \
+    include/filesys/manifest.h \
     include/filesys/searchpath.h \
     include/filesys/sys_direc.h \
     include/filesys/sys_findfile.h \
@@ -306,7 +306,7 @@ DENG_HEADERS += \
     include/resource/r_data.h \
     include/resource/rawtexture.h \
     include/resource/texture.h \
-    include/resource/texturemetafile.h \
+    include/resource/texturemanifest.h \
     include/resource/textures.h \
     include/resource/texturevariant.h \
     include/resource/texturevariantspecification.h \
@@ -476,7 +476,7 @@ SOURCES += \
     src/filesys/fs_scheme.cpp \
     src/filesys/fs_util.cpp \
     src/filesys/lumpindex.cpp \
-    src/filesys/metafile.cpp \
+    src/filesys/manifest.cpp \
     src/filesys/searchpath.cpp \
     src/filesys/sys_direc.c \
     src/game.cpp \

@@ -1,7 +1,7 @@
 /**
- * @file metafile.h
+ * @file manifest.h
  *
- * Metafile. @ingroup fs
+ * Manifest. @ingroup fs
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -21,8 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_METAFILE_H
-#define LIBDENG_METAFILE_H
+#ifndef LIBDENG_MANIFEST_H
+#define LIBDENG_MANIFEST_H
 
 #ifdef __cplusplus
 
@@ -39,7 +39,7 @@ namespace de
      *
      * @ingroup core
      */
-    class MetaFile
+    class Manifest
     {
     public:
         /**
@@ -47,8 +47,8 @@ namespace de
          * @param fFlags    @ref fileFlags
          * @param name      An expected name for the associated file.
          */
-        MetaFile(resourceclassid_t rClass, int fFlags, String* name = 0);
-        ~MetaFile();
+        Manifest(resourceclassid_t rClass, int fFlags, String* name = 0);
+        ~Manifest();
 
         /// @return Class of the associated resource.
         resourceclassid_t resourceClass() const;
@@ -66,12 +66,12 @@ namespace de
          * Attempt to locate this file by systematically resolving and then
          * checking each search path.
          */
-        MetaFile& locateFile();
+        Manifest& locateFile();
 
         /**
          * "Forget" the currently located file if one has been found.
          */
-        MetaFile& forgetFile();
+        Manifest& forgetFile();
 
         /**
          * Attempt to resolve a path to (and maybe locate) this file.
@@ -85,29 +85,29 @@ namespace de
         String const& resolvedPath(bool tryLocate = true);
 
         /**
-         * Add a new file segment identity key to the list for this metafile.
+         * Add a new file segment identity key to the list for this manifest.
          *
          * @param newIdentityKey    New identity key (e.g., a lump/file name).
          * @param didAdd            If not @c =0, the outcome will be written here.
          */
-        MetaFile& addIdentityKey(String newIdentityKey, bool* didAdd = 0);
+        Manifest& addIdentityKey(String newIdentityKey, bool* didAdd = 0);
 
         /**
-         * Add a new file name to the list of names for this metafile.
+         * Add a new file name to the list of names for this manifest.
          *
          * @param newName       New name for this file. Newer names have precedence.
          * @param didAdd        If not @c =0, the outcome will be written here.
          */
-        MetaFile& addName(String newName, bool* didAdd = 0);
+        Manifest& addName(String newName, bool* didAdd = 0);
 
         /**
          * Print information about a file to the console.
          *
-         * @param metafile      Metafile for the file.
+         * @param manifest      Manifest for the file.
          * @param showStatus    @c true = print loaded/located status for the
          *                      associated file.
          */
-        static void consolePrint(MetaFile& metafile, bool showStatus = true);
+        static void consolePrint(Manifest& manifest, bool showStatus = true);
 
     private:
         struct Instance;
@@ -118,4 +118,4 @@ namespace de
 
 #endif // __cplusplus
 
-#endif /* LIBDENG_METAFILE_H */
+#endif /* LIBDENG_MANIFEST_H */

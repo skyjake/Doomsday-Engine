@@ -49,9 +49,9 @@ MaterialVariant::MaterialVariant(material_t &generalCase,
         de::Uri *texUri = reinterpret_cast<de::Uri *>(def.layers[i].stages[0].texture);
         if(texUri)
         {
-            if(TextureMetaFile *metafile = App_Textures()->find(*texUri))
+            if(TextureManifest *manifest = App_Textures()->find(*texUri))
             {
-                layers[i].texture = reinterpret_cast<texture_s *>(metafile->texture());
+                layers[i].texture = reinterpret_cast<texture_s *>(manifest->texture());
             }
         }
 
