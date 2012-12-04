@@ -2755,7 +2755,7 @@ static de::File1* tryLoadFile(de::Uri const& search, size_t baseOffset)
         if(App_FileSystem()->accessFile(search))
         {
             // Must already be loaded.
-            Con_Message("\"%s\" already loaded.\n", NativePath(search.asText()).pretty().toUtf8().constData());
+            LOG_VERBOSE("\"%s\" already loaded.") << NativePath(search.asText()).pretty();
         }
     }
     return 0;

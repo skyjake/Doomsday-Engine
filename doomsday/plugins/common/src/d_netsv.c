@@ -753,8 +753,10 @@ void NetSv_SendGameState(int flags, int to)
 
     // Print a short message that describes the game state.
     str = Uri_Resolved(mapUri);
+#ifdef _DEBUG
     Con_Message("NetSv_SendGameState: Game setup: %s %s %s\n",
                 gameInfo.identityKey, Str_Text(str), gameConfigString);
+#endif
 
     // Send an update to all the players in the game.
     for(i = 0; i < MAXPLAYERS; ++i)
