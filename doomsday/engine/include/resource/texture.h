@@ -26,6 +26,7 @@
 #include <de/size.h>
 #include "texturevariant.h"
 
+/// Unique identifier associated with each texture name in a texture collection.
 typedef int textureid_t;
 
 #ifdef __cplusplus

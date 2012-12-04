@@ -22,7 +22,7 @@
 #ifndef LIBDENG_RESOURCE_ANIMGROUPS_H
 #define LIBDENG_RESOURCE_ANIMGROUPS_H
 
-#include "resource/textures.h"
+#include "resource/texture.h"
 
 #ifdef __cplusplus
 extern "C" {

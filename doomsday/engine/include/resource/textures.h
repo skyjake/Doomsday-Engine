@@ -25,9 +25,6 @@
 
 #include "uri.h"
 
-/// Unique identifier associated with each texture name in the collection.
-typedef int textureid_t;
-
 /// Special value used to signify an invalid texture id.
 #define NOTEXTUREID             0
 
@@ -361,7 +358,7 @@ private:
 
 de::Textures* App_Textures();
 
-#endif __cplusplus
+#endif // __cplusplus
 
 /*
  * C wrapper API
