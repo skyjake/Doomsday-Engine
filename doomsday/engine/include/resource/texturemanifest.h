@@ -31,10 +31,11 @@
 namespace de {
 
 class Textures;
+class TextureScheme;
 
 /**
- * Models a texture reference and the associated metadata for a resource
- * in the Textures collection.
+ * Models a reference to and the associated metadata for a would-be logical
+ * Texture resource in the Textures collection.
  */
 class TextureManifest : public PathTree::Node
 {
@@ -43,7 +44,7 @@ public:
     virtual ~TextureManifest();
 
     /**
-     * Interpret the TextureManifest creating a new logical Texture instance.
+     * Interpret the manifest creating a new logical Texture instance.
      *
      * @param dimensions  Logical dimensions. Components can be @c 0 in which
      *                  case their value will be inherited from the actual
@@ -61,7 +62,7 @@ public:
     /**
      * Returns the owning scheme of the TextureManifest.
      */
-    Textures::Scheme &scheme() const;
+    TextureScheme &scheme() const;
 
     /**
      * Compose a URI of the form "scheme:path" for the TextureManifest.

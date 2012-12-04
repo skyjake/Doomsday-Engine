@@ -40,10 +40,10 @@ typedef int textureid_t;
 #include <de/PathTree>
 #include <de/size.h>
 #include "resource/texture.h"
+#include "resource/texturemanifest.h"
+#include "resource/texturescheme.h"
 
 namespace de {
-
-class TextureManifest;
 
 /**
  * @em Clearing a texture is to 'undefine' it - any names bound to it will be
@@ -63,8 +63,7 @@ class Textures
 {
 public:
     typedef class TextureManifest Manifest;
-
-    class Scheme; // forward declaration
+    typedef class TextureScheme Scheme;
 
     struct ResourceClass
     {
@@ -86,105 +85,6 @@ public:
          */
         static Texture *interpret(Manifest &manifest, Texture::Flags flags,
                                   void *userData = 0);
-    };
-
-    /**
-     * Scheme defines a texture system subspace.
-     */
-    class Scheme
-    {
-    public:
-        /// Minimum length of a symbolic name.
-        static int const min_name_length = URI_MINSCHEMELENGTH;
-
-        /// Texture manifests within the scheme are placed into a tree.
-        typedef PathTreeT<Manifest> Index;
-
-    public:
-        /// The requested manifest could not be found in the index.
-        DENG2_ERROR(NotFoundError);
-
-    public:
-        /**
-         * Construct a new (empty) texture subspace scheme.
-         *
-         * @param symbolicName  Symbolic name of the new subspace scheme. Must
-         *                      have at least @ref min_name_length characters.
-         */
-        explicit Scheme(String symbolicName);
-
-        ~Scheme();
-
-        /// @return  Symbolic name of this scheme (e.g., "ModelSkins").
-        String const& name() const;
-
-        /// @return  Total number of manifests in the scheme.
-        int size() const;
-
-        /// @return  Total number of manifests in the scheme. Same as @ref size().
-        inline int count() const {
-            return size();
-        }
-
-        /**
-         * Clear all manifests in the scheme (any GL textures which have been
-         * acquired for associated textures will be released).
-         */
-        void clear();
-
-        /**
-         * Insert a new manifest at the given @a path into the scheme.
-         * If a manifest already exists at this path, the existing manifest is
-         * returned and this is a no-op.
-         *
-         * @param path  Virtual path for the resultant manifest.
-         * @return  The (possibly newly created) manifest at @a path.
-         */
-        Manifest &insertManifest(Path const &path);
-
-        /**
-         * Search the scheme for a manifest matching @a path.
-         *
-         * @return  Found manifest.
-         */
-        Manifest const &find(Path const &path) const;
-
-        /// @copydoc find()
-        Manifest &find(Path const &path);
-
-        /**
-         * Search the scheme for a manifest whose associated resource
-         * URI matches @a uri.
-         *
-         * @return  Found manifest.
-         */
-        Manifest const &findByResourceUri(Uri const &uri) const;
-
-        /// @copydoc findByResourceUri()
-        Manifest &findByResourceUri(Uri const &uri);
-
-        /**
-         * Search the scheme for a manifest whose associated unique
-         * identifier matches @a uniqueId.
-         *
-         * @return  Found manifest.
-         */
-        Manifest const &findByUniqueId(int uniqueId) const;
-
-        /// @copydoc findByUniqueId()
-        Manifest &findByUniqueId(int uniqueId);
-
-        /**
-         * Provides access to the manifest index for efficient traversal.
-         */
-        Index const &index() const;
-
-        /// @todo Refactor away -ds
-        void markUniqueIdLutDirty();
-
-    private:
-        struct Instance;
-        Instance *d;
     };
 
     /// Texture system subspace schemes.

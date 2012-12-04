@@ -307,6 +307,7 @@ DENG_HEADERS += \
     include/resource/rawtexture.h \
     include/resource/texture.h \
     include/resource/texturemanifest.h \
+    include/resource/texturescheme.h \
     include/resource/textures.h \
     include/resource/texturevariant.h \
     include/resource/texturevariantspecification.h \
@@ -590,6 +591,7 @@ SOURCES += \
     src/resource/rawtexture.cpp \
     src/resource/texture.cpp \
     src/resource/texturemanifest.cpp \
+    src/resource/texturescheme.cpp \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \
     src/resource/tga.c \
