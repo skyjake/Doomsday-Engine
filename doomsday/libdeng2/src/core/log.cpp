@@ -21,6 +21,7 @@
 #include "de/Time"
 #include "de/Date"
 #include "de/LogBuffer"
+#include "de/Guard"
 #include "logtextstyle.h"
 
 #include <QMap>
@@ -76,6 +77,8 @@ LogEntry::LogEntry(Log::LogLevel level, String const &section, int sectionDepth,
 
 LogEntry::~LogEntry()
 {
+    DENG2_GUARD(this); // cannot delete if someone has a lock
+
     for(Args::iterator i = _args.begin(); i != _args.end(); ++i) 
     {
         delete *i;
@@ -84,6 +87,8 @@ LogEntry::~LogEntry()
 
 String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
 {
+    DENG2_GUARD(this); // others shouldn't touch the entry while we're converting
+
     /// @todo This functionality belongs in an entry formatter class.
 
     Flags flags = formattingFlags;

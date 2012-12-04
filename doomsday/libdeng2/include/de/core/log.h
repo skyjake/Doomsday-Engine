@@ -270,7 +270,7 @@ private:
  *
  * @ingroup core
  */
-class DENG2_PUBLIC LogEntry
+class DENG2_PUBLIC LogEntry : public Lockable
 {
 public:
     /**
@@ -434,7 +434,9 @@ public:
     template <typename ValueType>
     inline LogEntry &operator << (ValueType const &v) {
         if(!_disabled) {
+            lock();
             _args.push_back(new Arg(v));
+            unlock();
         }
         return *this;
     }
