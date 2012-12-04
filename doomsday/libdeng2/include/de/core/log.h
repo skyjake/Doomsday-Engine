@@ -498,8 +498,10 @@ public:
     }
 
     ~LogEntryStager() {
-        // Ownership of the entries is transferred to the LogEntry.
-        LOG().enter(_level, _format, _args);
+        if(!_disabled) {
+            // Ownership of the entries is transferred to the LogEntry.
+            LOG().enter(_level, _format, _args);
+        }
     }
 
 private:
