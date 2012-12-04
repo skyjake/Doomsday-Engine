@@ -20,7 +20,7 @@ EXPORTS
     DD_SetVariable              @10 NONAME
     DD_GetVariable              @43 NONAME
     DD_GetPlayer                @44 NONAME
-    DD_MaterialForTextureUniqueId @234 NONAME
+    DD_MaterialForTextureUri     @234 NONAME
 ;    DD_ParseTextureSchemeName    @502 NONAME
     DD_ParseMaterialSchemeName   @503 NONAME
 

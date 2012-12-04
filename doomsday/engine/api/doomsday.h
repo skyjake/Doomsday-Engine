@@ -204,7 +204,7 @@ materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
  * @ingroup resource
  */
 ///@{
-materialid_t DD_MaterialForTextureUniqueId(char const *schemeName, int uniqueId);
+materialid_t DD_MaterialForTextureUri(Uri const *textureUri);
 ///@}
 
 /// @addtogroup defs
