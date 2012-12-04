@@ -589,6 +589,7 @@ SOURCES += \
     src/resource/r_data.cpp \
     src/resource/rawtexture.cpp \
     src/resource/texture.cpp \
+    src/resource/texturemanifest.cpp \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \
     src/resource/tga.c \
