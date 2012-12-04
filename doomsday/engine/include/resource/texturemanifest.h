@@ -22,7 +22,6 @@
 #ifndef LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 #define LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 
-#include <QList>
 #include <de/PathTree>
 #include <de/size.h>
 #include "uri.hh"
