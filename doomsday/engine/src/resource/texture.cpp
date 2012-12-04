@@ -24,9 +24,8 @@
 #include <cstring>
 
 #include "de_base.h"
-#if _DEBUG
-#  include "gl/gl_texmanager.h" // For GL_PrintTextureVariantSpecification()
-#endif
+
+#include "gl/gl_texmanager.h"
 #include "resource/compositetexture.h"
 #include "resource/texturevariant.h"
 #include "resource/texture.h"

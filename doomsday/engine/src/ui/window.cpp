@@ -1526,9 +1526,9 @@ void Window_SaveState(Window* wnd)
     // Console windows are not saved.
     if(wnd->type == WT_CONSOLE) return;
 
-    uint idx = mainWindowIdx;
+    //uint idx = mainWindowIdx;
+    //DENG_ASSERT(idx == 1);
 
-    DENG_ASSERT(idx == 1);
     DENG_ASSERT(wnd == &mainWindow); /// @todo  Figure out the window index if there are many.
 
     de::Config &config = de::App::config();
