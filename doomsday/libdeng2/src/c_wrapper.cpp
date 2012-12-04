@@ -129,10 +129,10 @@ void LegacyCore_PrintLogFragment(char const *text)
 void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, char const *format, ...)
 {
     // Validate the level.
-    de::Log::LogLevel logLevel = de::Log::LogLevel(level);
+    de::LogEntry::Level logLevel = de::LogEntry::Level(level);
     if(level < DE2_LOG_TRACE || level > DE2_LOG_CRITICAL)
     {
-        logLevel = de::Log::MESSAGE;
+        logLevel = de::LogEntry::MESSAGE;
     }
 
     // If this level is not enabled, just ignore.

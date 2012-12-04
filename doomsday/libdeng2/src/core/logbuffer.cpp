@@ -126,7 +126,7 @@ struct LogBuffer::Instance
     int sectionDepthOfPreviousLine;
 
     Instance(duint maxEntryCount)
-        : enabledOverLevel(Log::MESSAGE),
+        : enabledOverLevel(LogEntry::MESSAGE),
           maxEntryCount(maxEntryCount),
           standardOutput(true),
           flushingEnabled(true),
@@ -218,12 +218,12 @@ void LogBuffer::add(LogEntry *entry)
     }
 }
 
-void LogBuffer::enable(Log::LogLevel overLevel)
+void LogBuffer::enable(LogEntry::Level overLevel)
 {
     d->enabledOverLevel = overLevel;
 }
 
-bool LogBuffer::isEnabled(Log::LogLevel overLevel) const
+bool LogBuffer::isEnabled(LogEntry::Level overLevel) const
 {
     return d->enabledOverLevel <= overLevel;
 }
@@ -297,7 +297,7 @@ void LogBuffer::flush()
             {
                 // Error messages will go to stderr instead of stdout.
                 QList<IOutputStream *> os;
-                os << ((*i)->level() >= Log::WARNING? &errs : &outs) << &fs;
+                os << ((*i)->level() >= LogEntry::WARNING? &errs : &outs) << &fs;
 
                 String const &section = (*i)->section();
 

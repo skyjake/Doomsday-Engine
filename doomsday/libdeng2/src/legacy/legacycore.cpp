@@ -208,7 +208,7 @@ char const *LegacyCore::logFileName() const
     return d->logName.c_str();
 }
 
-void LegacyCore::printLogFragment(char const *text, Log::LogLevel level)
+void LegacyCore::printLogFragment(char const *text, LogEntry::Level level)
 {
     d->currentLogLine += text;
 

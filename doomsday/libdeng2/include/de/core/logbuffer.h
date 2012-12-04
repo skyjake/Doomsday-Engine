@@ -96,15 +96,15 @@ public:
      * Enables log entries at or over a level. When a level is disabled, the
      * entries will not be added to the log entry buffer.
      */
-    void enable(Log::LogLevel overLevel = Log::MESSAGE);
+    void enable(LogEntry::Level overLevel = LogEntry::MESSAGE);
 
     /**
      * Disables the log.
      * @see enable()
      */
-    void disable() { enable(Log::MAX_LOG_LEVELS); }
+    void disable() { enable(LogEntry::MAX_LOG_LEVELS); }
 
-    bool isEnabled(Log::LogLevel overLevel = Log::MESSAGE) const;
+    bool isEnabled(LogEntry::Level overLevel = LogEntry::MESSAGE) const;
 
     /**
      * Enables or disables standard output of log messages. When enabled,

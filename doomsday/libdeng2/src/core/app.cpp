@@ -128,16 +128,16 @@ App::App(int &argc, char **argv, GUIMode guiMode)
 
     // Set the log message level.
 #ifdef DENG2_DEBUG
-    Log::LogLevel level = Log::DEBUG;
+    LogEntry::Level level = LogEntry::DEBUG;
 #else
-    Log::LogLevel level = Log::MESSAGE;
+    LogEntry::Level level = LogEntry::MESSAGE;
 #endif
     try
     {
         int pos;
         if((pos = d->cmdLine.check("-loglevel", 1)) > 0)
         {
-            level = Log::textToLevel(d->cmdLine.at(pos + 1));
+            level = LogEntry::textToLevel(d->cmdLine.at(pos + 1));
         }
     }
     catch(Error const &er)
@@ -145,13 +145,13 @@ App::App(int &argc, char **argv, GUIMode guiMode)
         qWarning("%s", er.asText().toAscii().constData());
     }
     // Aliases have not been defined at this point.
-    level = qMax(Log::TRACE, Log::LogLevel(level - d->cmdLine.has("-verbose") - d->cmdLine.has("-v")));
+    level = qMax(LogEntry::TRACE, LogEntry::Level(level - d->cmdLine.has("-verbose") - d->cmdLine.has("-v")));
     d->logBuffer.enable(level);
 
     d->appPath = applicationFilePath();
 
     LOG_INFO("Application path: ") << d->appPath;
-    LOG_INFO("Enabled log entry level: ") << Log::levelToText(level);
+    LOG_INFO("Enabled log entry level: ") << LogEntry::levelToText(level);
 
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command

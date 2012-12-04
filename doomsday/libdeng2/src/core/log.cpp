@@ -63,11 +63,11 @@ public:
 /// The logs table contains the log of each thread that uses logging.
 static internal::Logs logs;
 
-LogEntry::LogEntry() : _level(Log::TRACE), _sectionDepth(0), _disabled(true)
+LogEntry::LogEntry() : _level(TRACE), _sectionDepth(0), _disabled(true)
 {}
 
-LogEntry::LogEntry(Log::LogLevel level, String const &section, int sectionDepth, String const &format)
-    : _level(level), _section(section), _sectionDepth(sectionDepth), _format(format), _disabled(false)
+LogEntry::LogEntry(Level level, String const &section, int sectionDepth, String const &format, Args args)
+    : _level(level), _section(section), _sectionDepth(sectionDepth), _format(format), _disabled(false), _args(args)
 {
     if(!LogBuffer::appBuffer().isEnabled(level))
     {
@@ -77,8 +77,7 @@ LogEntry::LogEntry(Log::LogLevel level, String const &section, int sectionDepth,
 
 LogEntry::~LogEntry()
 {
-    DENG2_GUARD(this); // cannot delete if someone has a lock
-
+    // The entry has ownership of its args.
     for(Args::iterator i = _args.begin(); i != _args.end(); ++i) 
     {
         delete *i;
@@ -87,8 +86,6 @@ LogEntry::~LogEntry()
 
 String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
 {
-    DENG2_GUARD(this); // others shouldn't touch the entry while we're converting
-
     /// @todo This functionality belongs in an entry formatter class.
 
     Flags flags = formattingFlags;
@@ -110,7 +107,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
 
         if(!flags.testFlag(Styled))
         {
-            char const *levelNames[Log::MAX_LOG_LEVELS] = {
+            char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
                 "(...)",
                 "(deb)",
                 "(vrb)",
@@ -125,7 +122,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         }
         else
         {
-            char const *levelNames[Log::MAX_LOG_LEVELS] = {
+            char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
                 "Trace",
                 "Debug",
                 "Verbose",
@@ -136,7 +133,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                 "FATAL!"        
             };
             output << "\t" 
-                << (_level >= Log::WARNING? TEXT_STYLE_LOG_BAD_LEVEL : TEXT_STYLE_LOG_LEVEL)
+                << (_level >= LogEntry::WARNING? TEXT_STYLE_LOG_BAD_LEVEL : TEXT_STYLE_LOG_LEVEL)
                 << levelNames[_level] << "\t\r";
         }
     }
@@ -314,13 +311,15 @@ void Log::endSection(char const *DENG2_DEBUG_ONLY(name))
 
 LogEntry &Log::enter(String const &format)
 {
-    return enter(MESSAGE, format);
+    return enter(LogEntry::MESSAGE, format, LogEntry::Args());
 }
 
-LogEntry &Log::enter(Log::LogLevel level, String const &format)
+LogEntry &Log::enter(LogEntry::Level level, String const &format, LogEntry::Args arguments)
 {
     if(!LogBuffer::appBuffer().isEnabled(level))
     {
+        DENG2_ASSERT(arguments.isEmpty());
+
         // If the level is disabled, no messages are entered into it.
         return *_throwawayEntry;
     }
@@ -346,7 +345,7 @@ LogEntry &Log::enter(Log::LogLevel level, String const &format)
     }
 
     // Make a new entry.
-    LogEntry *entry = new LogEntry(level, context, depth, format);
+    LogEntry *entry = new LogEntry(level, context, depth, format, arguments);
     
     // Add it to the application's buffer. The buffer gets ownership.
     LogBuffer::appBuffer().add(entry);
@@ -386,6 +385,11 @@ void Log::disposeThreadLog()
         logs.remove(found.key());
     }
     logs.unlock();
+}
+
+LogEntryStager::LogEntryStager(LogEntry::Level level, const String &format) : _level(level), _format(format)
+{
+    _disabled = !LogBuffer::appBuffer().isEnabled(level);
 }
 
 } // namespace de

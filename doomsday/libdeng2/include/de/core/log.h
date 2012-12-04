@@ -52,6 +52,17 @@
     de::Block __logSectionUtf8 = __logSectionName.toUtf8(); \
     LOG_AS(__logSectionUtf8.constData());
 
+#define LOG_TRACE(str)      de::LogEntryStager(de::LogEntry::TRACE,    str)
+#define LOG_DEBUG(str)      de::LogEntryStager(de::LogEntry::DEBUG,    str)
+#define LOG_VERBOSE(str)    de::LogEntryStager(de::LogEntry::VERBOSE,  str)
+#define LOG_MSG(str)        de::LogEntryStager(de::LogEntry::MESSAGE,  str)
+#define LOG_INFO(str)       de::LogEntryStager(de::LogEntry::INFO,     str)
+#define LOG_WARNING(str)    de::LogEntryStager(de::LogEntry::WARNING,  str)
+#define LOG_ERROR(str)      de::LogEntryStager(de::LogEntry::ERROR,    str)
+#define LOG_CRITICAL(str)   de::LogEntryStager(de::LogEntry::CRITICAL, str)
+
+#define LOG_AT_LEVEL(level, str)   de::LogEntryStager(level, str)
+
 #ifdef DENG2_DEBUG
 /**
  * Makes a developer-only TRACE level log entry. Only enabled in debug builds;
@@ -59,19 +70,10 @@
  * developers when debugging. (Note that parameters differ compared to the
  * normal LOG_* macros.)
  */
-#  define LOG_DEV_TRACE(form, args) LOG().enter(de::Log::TRACE, form) << args
+#  define LOG_DEV_TRACE(form, args) LOG_TRACE(form) << args
 #else
 #  define LOG_DEV_TRACE(form, args)
 #endif
-
-#define LOG_TRACE(str)      LOG().enter(de::Log::TRACE, str)
-#define LOG_DEBUG(str)      LOG().enter(de::Log::DEBUG, str)
-#define LOG_VERBOSE(str)    LOG().enter(de::Log::VERBOSE, str)
-#define LOG_MSG(str)        LOG().enter(str)
-#define LOG_INFO(str)       LOG().enter(de::Log::INFO, str)
-#define LOG_WARNING(str)    LOG().enter(de::Log::WARNING, str)
-#define LOG_ERROR(str)      LOG().enter(de::Log::ERROR, str)
-#define LOG_CRITICAL(str)   LOG().enter(de::Log::CRITICAL, str)
 
 #ifdef WIN32
 #   undef ERROR
@@ -80,20 +82,25 @@
 namespace de {
 
 class LogBuffer;
-class LogEntry;
+
 
 /**
- * Provides means for adding log entries into the log entry buffer (LogBuffer).
- * A thread's Log keeps track of the thread-local section stack, but there is
- * only one LogBuffer where all the entries are collected.
+ * An entry to be stored in the log entry buffer. Log entries are created with
+ * Log::enter().
+ *
+ * Log entry arguments are appended after the creation of the entry and even
+ * after it has been inserted to the buffer. Therefore it is possible that an
+ * entry is being flushed while another thread is still adding arguments to it.
+ * Due to this entries are lockable and will be locked whenever
+ * LogEntry::asText() is being executed or when an argument is being added.
  *
  * @ingroup core
  */
-class DENG2_PUBLIC Log
+class DENG2_PUBLIC LogEntry
 {
 public:
     /// Level of the log entry.
-    enum LogLevel
+    enum Level
     {
         /**
          * Trace messages are intended for low-level debugging. They should be used
@@ -156,7 +163,7 @@ public:
         MAX_LOG_LEVELS
     };
 
-    static String levelToText(LogLevel level)
+    static String levelToText(Level level)
     {
         switch(level)
         {
@@ -172,113 +179,16 @@ public:
         }
     }
 
-    static LogLevel textToLevel(String text)
+    static Level textToLevel(String text)
     {
         for(int i = TRACE; i < MAX_LOG_LEVELS; ++i)
         {
-            if(!levelToText(LogLevel(i)).compareWithoutCase(text))
-                return LogLevel(i);
+            if(!levelToText(Level(i)).compareWithoutCase(text))
+                return Level(i);
         }
         throw Error("Log::textToLevel", "'" + text + "' is not a valid log level");
     }
 
-    class DENG2_PUBLIC Section
-    {
-    public:
-        /**
-         * The Section does not take a copy of @c name, so whatever
-         * it's pointing to must exist while the Section exists.
-         *
-         * @param name  Name of the log section.
-         */
-        Section(char const *name);
-        ~Section();
-
-        Log &log() const { return _log; }
-
-    private:
-        Log &_log;
-        char const *_name;
-    };
-
-public:
-    Log();
-    virtual ~Log();
-
-    /**
-     * Begins a new section in the log. Sections can be nested.
-     *
-     * @param name  Name of the section. No copy of this string is made,
-     *              so it must exist while the section is in use.
-     */
-    void beginSection(char const *name);
-
-    /**
-     * Ends the topmost section in the log.
-     *
-     * @param name  Name of the topmost section.
-     */
-    void endSection(char const *name);
-
-    /**
-     * Creates a new log entry with the default (MESSAGE) level.
-     * Append the parameters of the entry using the << operator.
-     *
-     * @param format  Format template of the entry.
-     */
-    LogEntry &enter(String const &format);
-
-    /**
-     * Creates a new log entry with the specified level.
-     * Append the parameters of the entry using the << operator.
-     *
-     * @param level   Level of the entry.
-     * @param format  Format template of the entry.
-     */
-    LogEntry &enter(LogLevel level, String const &format);
-
-    /**
-     * Returns the special, disabled log entry that can be used as a
-     * target when giving arguments to nonexistent log entries.
-     *
-     * @return Throwaway entry.
-     */
-    LogEntry &throwaway() { return *_throwawayEntry; }
-
-public:
-    /**
-     * Returns the logger of the current thread.
-     */
-    static Log &threadLog();
-
-    /**
-     * Deletes the current thread's log. Threads should call this before
-     * they quit.
-     */
-    static void disposeThreadLog();
-
-private:
-    typedef QList<char const *> SectionStack;
-    SectionStack _sectionStack;
-
-    LogEntry *_throwawayEntry;
-};
-
-/**
- * An entry to be stored in the log entry buffer. Log entries are created with
- * Log::enter().
- *
- * Log entry arguments are appended after the creation of the entry and even
- * after it has been inserted to the buffer. Therefore it is possible that an
- * entry is being flushed while another thread is still adding arguments to it.
- * Due to this entries are lockable and will be locked whenever
- * LogEntry::asText() is being executed or when an argument is being added.
- *
- * @ingroup core
- */
-class DENG2_PUBLIC LogEntry : public Lockable
-{
-public:
     /**
      * Argument for a log entry.
      *
@@ -426,31 +336,22 @@ public:
     /// The format string has incorrect syntax. @ingroup errors
     DENG2_ERROR(IllegalFormatError);
 
+    typedef QList<Arg *> Args;
+
 public:
     /**
      * Constructs a disabled log entry.
      */
     LogEntry();
 
-    LogEntry(Log::LogLevel level, String const &section, int sectionDepth, String const &format);
+    LogEntry(Level level, String const &section, int sectionDepth, String const &format, Args args);
 
     ~LogEntry();
-
-    /// Appends a new argument to the entry.
-    template <typename ValueType>
-    inline LogEntry &operator << (ValueType const &v) {
-        if(!_disabled) {
-            lock();
-            _args.push_back(new Arg(v));
-            unlock();
-        }
-        return *this;
-    }
 
     /// Returns the timestamp of the entry.
     Time when() const { return _when; }
 
-    Log::LogLevel level() const { return _level; }
+    Level level() const { return _level; }
 
     /// Returns a reference to the entry's section part. Reference is valid
     /// for the lifetime of the entry.
@@ -471,31 +372,142 @@ public:
      */
     String asText(Flags const &flags = 0, int shortenSection = 0) const;
 
-    /// Make this entry print without metadata.
-    LogEntry &simple() {
-        _defaultFlags |= Simple;
-        return *this;
-    }
-
 private:
     void advanceFormat(String::const_iterator &i) const;
 
 private:
     Time _when;
-    Log::LogLevel _level;
+    Level _level;
     String _section;
     int _sectionDepth;
     String _format;
     Flags _defaultFlags;
     bool _disabled;
-
-    typedef std::vector<Arg *> Args;
     Args _args;
 };
 
 QTextStream &operator << (QTextStream &stream, LogEntry::Arg const &arg);
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(LogEntry::Flags)
+
+/**
+ * Provides means for adding log entries into the log entry buffer (LogBuffer).
+ * A thread's Log keeps track of the thread-local section stack, but there is
+ * only one LogBuffer where all the entries are collected.
+ *
+ * @ingroup core
+ */
+class DENG2_PUBLIC Log
+{
+public:
+    class DENG2_PUBLIC Section
+    {
+    public:
+        /**
+         * The Section does not take a copy of @c name, so whatever
+         * it's pointing to must exist while the Section exists.
+         *
+         * @param name  Name of the log section.
+         */
+        Section(char const *name);
+        ~Section();
+
+        Log &log() const { return _log; }
+
+    private:
+        Log &_log;
+        char const *_name;
+    };
+
+public:
+    Log();
+    virtual ~Log();
+
+    /**
+     * Begins a new section in the log. Sections can be nested.
+     *
+     * @param name  Name of the section. No copy of this string is made,
+     *              so it must exist while the section is in use.
+     */
+    void beginSection(char const *name);
+
+    /**
+     * Ends the topmost section in the log.
+     *
+     * @param name  Name of the topmost section.
+     */
+    void endSection(char const *name);
+
+    /**
+     * Creates a new log entry with the default (MESSAGE) level.
+     * Append the parameters of the entry using the << operator.
+     *
+     * @param format  Format template of the entry.
+     */
+    LogEntry &enter(String const &format);
+
+    /**
+     * Creates a new log entry with the specified level.
+     * Append the parameters of the entry using the << operator.
+     *
+     * @param level   Level of the entry.
+     * @param format  Format template of the entry.
+     * @param arguments  List of arguments. The entry is given ownership of
+     *                each Arg instance.
+     */
+    LogEntry &enter(LogEntry::Level level, String const &format, LogEntry::Args arguments = LogEntry::Args());
+
+public:
+    /**
+     * Returns the logger of the current thread.
+     */
+    static Log &threadLog();
+
+    /**
+     * Deletes the current thread's log. Threads should call this before
+     * they quit.
+     */
+    static void disposeThreadLog();
+
+private:
+    typedef QList<char const *> SectionStack;
+    SectionStack _sectionStack;
+
+    LogEntry *_throwawayEntry;
+};
+
+/**
+ * Stages a log entry for insertion into LogBuffer. Instances of LogEntryStager are
+ * built on the stack.
+ *
+ * You should use the LOG_* macros instead of using LogEntryStager directly.
+ */
+class DENG2_PUBLIC LogEntryStager
+{
+public:
+    LogEntryStager(LogEntry::Level level, String const &format);
+
+    /// Appends a new argument to the entry.
+    template <typename ValueType>
+    inline LogEntryStager &operator << (ValueType const &v) {
+        if(!_disabled) {
+            // Args are created only if the level is enabled.
+            _args.append(new LogEntry::Arg(v));
+        }
+        return *this;
+    }
+
+    ~LogEntryStager() {
+        // Ownership of the entries is transferred to the LogEntry.
+        LOG().enter(_level, _format, _args);
+    }
+
+private:
+    bool _disabled;
+    LogEntry::Level _level;
+    String _format;
+    LogEntry::Args _args;
+};
 
 } // namespace de
 
