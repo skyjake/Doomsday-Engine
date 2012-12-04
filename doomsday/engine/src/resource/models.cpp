@@ -213,6 +213,7 @@ static void loadMd2(de::FileHandle& file, model_t& mdl)
     // Read the header.
     bool readHeaderOk = readMd2Header(file, oldHdr);
     DENG_ASSERT(readHeaderOk);
+    DENG_UNUSED(readHeaderOk); // should this be checked?
 
     // Convert it to DMD.
     hdr.magic = MD2_MAGIC;
@@ -326,6 +327,7 @@ static void loadDmd(de::FileHandle& file, model_t& mdl)
     // Read the header.
     bool readHeaderOk = readHeaderDmd(file, mdl.header);
     DENG_ASSERT(readHeaderOk);
+    DENG_UNUSED(readHeaderOk); // should this be checked?
 
     dmd_info_t& inf = mdl.info;
 

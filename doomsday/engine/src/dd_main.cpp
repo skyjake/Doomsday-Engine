@@ -127,7 +127,7 @@ int isDedicated;
 int verbose; // For debug messages (-verbose).
 
 // List of file names, whitespace seperating (written to .cfg).
-char* startupFiles = "";
+char* startupFiles = (char*) ""; // ignore warning
 
 // Id of the currently running title finale if playing, else zero.
 finaleid_t titleFinale;
