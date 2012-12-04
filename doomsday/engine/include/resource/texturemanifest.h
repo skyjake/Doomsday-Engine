@@ -44,7 +44,9 @@ public:
     virtual ~TextureManifest();
 
     /**
-     * Interpret the manifest creating a new logical Texture instance.
+     * Derive a new logical Texture instance by interpreting the manifest.
+     * The first time a texture is derived from the manifest, said texture
+     * is assigned to the manifest (ownership is assumed).
      *
      * @param dimensions  Logical dimensions. Components can be @c 0 in which
      *                  case their value will be inherited from the actual
@@ -52,12 +54,12 @@ public:
      * @param flags     Flags.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture *define(Size2Raw const &dimensions, Texture::Flags flags);
+    Texture *derive(Size2Raw const &dimensions, Texture::Flags flags);
 
     /**
-     * @copydoc define()
+     * @copydoc derive()
      */
-    Texture *define(Texture::Flags flags);
+    Texture *derive(Texture::Flags flags);
 
     /**
      * Returns the owning scheme of the TextureManifest.

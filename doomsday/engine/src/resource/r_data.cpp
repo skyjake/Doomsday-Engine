@@ -71,7 +71,7 @@ void R_InitSystemTextures()
         // Have we defined this yet?
         if(manifest->texture()) continue;
 
-        if(!manifest->define(de::Texture::Custom))
+        if(!manifest->derive(de::Texture::Custom))
         {
             LOG_WARNING("Failed to define Texture for system texture \"%s\".") << uri;
         }
@@ -180,7 +180,7 @@ patchid_t R_DeclarePatch(char const *name)
 
     if(!tex)
     {
-        tex = manifest->define(patchHdr.dimensions, flags);
+        tex = manifest->derive(patchHdr.dimensions, flags);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for Patch texture \"%s\".") << uri;
@@ -628,7 +628,7 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
                 continue;
             }
             // A new texture.
-            else if(de::Texture *tex = manifest->define(def.dimensions(), flags))
+            else if(de::Texture *tex = manifest->derive(def.dimensions(), flags))
             {
                 tex->setUserDataPointer((void *)&def);
                 continue;
@@ -734,7 +734,7 @@ void R_InitFlatTextures()
                 de::Texture::Flags flags;
                 if(file.container().hasCustom()) flags |= de::Texture::Custom;
 
-                if(manifest && !manifest->define(dimensions, flags))
+                if(manifest && !manifest->derive(dimensions, flags))
                 {
                     LOG_WARNING("Failed defining Texture for new flat \"%s\", ignoring.") << uri;
                 }
@@ -754,7 +754,7 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
     if(!tex)
     {
         // A new sprite texture.
-        tex = manifest.define(0);
+        tex = manifest.derive(0);
         if(!tex)
         {
             LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.")
@@ -938,7 +938,7 @@ texture_s *R_CreateSkinTex(uri_s const *_resourceUri, boolean isShinySkin)
     if(!tex)
     {
         // Create a texture for it.
-        tex = manifest->define(de::Texture::Custom);
+        tex = manifest->derive(de::Texture::Custom);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
@@ -984,7 +984,7 @@ texture_s *R_CreateDetailTexture(uri_s const *_resourceUri)
     if(!tex)
     {
         // Create a texture for it.
-        tex = manifest->define(de::Texture::Custom);
+        tex = manifest->derive(de::Texture::Custom);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
@@ -1033,7 +1033,7 @@ texture_s *R_CreateLightmap(uri_s const *_resourceUri)
     if(!tex)
     {
         // Create a texture for it.
-        tex = manifest->define(de::Texture::Custom);
+        tex = manifest->derive(de::Texture::Custom);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
@@ -1088,7 +1088,7 @@ texture_s *R_CreateFlaremap(uri_s const *_resourceUri)
     de::Texture *tex = manifest->texture();
     if(!tex)
     {
-        tex = manifest->define(de::Texture::Custom);
+        tex = manifest->derive(de::Texture::Custom);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
@@ -1135,7 +1135,7 @@ texture_s *R_CreateReflectionTexture(uri_s const *_resourceUri)
     if(!tex)
     {
         // Create a texture for it.
-        tex = manifest->define(de::Texture::Custom);
+        tex = manifest->derive(de::Texture::Custom);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
@@ -1188,7 +1188,7 @@ texture_s *R_CreateMaskTexture(uri_s const *_resourceUri, Size2Raw const *dimens
     else
     {
         // Create a texture for it.
-        tex = manifest->define(*dimensions, de::Texture::Custom);
+        tex = manifest->derive(*dimensions, de::Texture::Custom);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;

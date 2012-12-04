@@ -48,7 +48,7 @@ Textures &TextureManifest::textures()
     return *App_Textures();
 }
 
-Texture *TextureManifest::define(Size2Raw const &dimensions, Texture::Flags flags)
+Texture *TextureManifest::derive(Size2Raw const &dimensions, Texture::Flags flags)
 {
     if(Texture *tex = texture())
     {
@@ -68,9 +68,9 @@ Texture *TextureManifest::define(Size2Raw const &dimensions, Texture::Flags flag
     return tex;
 }
 
-Texture *TextureManifest::define(Texture::Flags flags)
+Texture *TextureManifest::derive(Texture::Flags flags)
 {
-    return define(Size2Raw(0, 0), flags);
+    return derive(Size2Raw(0, 0), flags);
 }
 
 Textures::Scheme &TextureManifest::scheme() const
