@@ -1556,8 +1556,8 @@ void Window_RestoreState(Window* wnd)
     if(wnd->type == WT_CONSOLE) return;
 
     assert(wnd == &mainWindow);  /// @todo  Figure out the window index if there are many.
-    uint idx = mainWindowIdx;
-    assert(idx == 1);
+    //uint idx = mainWindowIdx;
+    //assert(idx == 1);
 
     de::Config &config = de::App::config();
 

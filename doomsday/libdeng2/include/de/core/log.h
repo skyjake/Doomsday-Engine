@@ -477,8 +477,8 @@ private:
 };
 
 /**
- * Stages a log entry for insertion into LogBuffer. Instances of LogEntryStager are
- * built on the stack.
+ * Stages a log entry for insertion into LogBuffer. Instances of LogEntryStager
+ * are built on the stack.
  *
  * You should use the LOG_* macros instead of using LogEntryStager directly.
  */
