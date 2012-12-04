@@ -22,27 +22,28 @@
 
 #include "../Value"
 
-namespace de
+namespace de {
+
+/**
+ * The NoneValue class is a subclass of Value that does not contain any actual data.
+ *
+ * @ingroup data
+ */
+class DENG2_PUBLIC NoneValue : public Value
 {
-    /**
-     * The NoneValue class is a subclass of Value that does not contain any actual data.
-     *
-     * @ingroup data
-     */
-    class DENG2_PUBLIC NoneValue : public Value
-    {
-    public:
-        NoneValue();
+public:
+    NoneValue();
 
-        Value *duplicate() const;
-        Text asText() const;
-        bool isTrue() const;
-        dint compare(Value const &value) const;
+    Value *duplicate() const;
+    Text asText() const;
+    bool isTrue() const;
+    dint compare(Value const &value) const;
 
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);
-    };
-}
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_NONEVALUE_H */

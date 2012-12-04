@@ -516,7 +516,7 @@ key:
 Sound samples can be replaced with WAV files. The supported formats are 8-bit
 and 16-bit mono PCM with no compression. The @file{Sfx} resource class
 directory is searched using the lump names of the original samples. For
-example, to replace jDoom's rocket launcher sound, the file
+example, to replace the rocket launcher sound in @plugin{libdoom}, the file
 @file{dsrlaunc.wav} would be placed in the @file{Sfx} directory.
 
 Another way to specify an external resource file is to use the Sound

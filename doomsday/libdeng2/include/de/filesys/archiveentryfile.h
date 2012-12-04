@@ -17,8 +17,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIBDENG2_ARCHIVEFILE_H
-#define LIBDENG2_ARCHIVEFILE_H
+#ifndef LIBDENG2_ARCHIVEENTRYFILE_H
+#define LIBDENG2_ARCHIVEENTRYFILE_H
 
 #include "../ByteArrayFile"
 
@@ -27,11 +27,11 @@ namespace de
     class Archive;
     
     /**
-     * Accesses data of a file within an archive.
+     * Accesses data of an entry within an archive.
      *
      * @ingroup fs
      */
-    class ArchiveFile : public ByteArrayFile
+    class ArchiveEntryFile : public ByteArrayFile
     {
     public:
         /**
@@ -41,9 +41,9 @@ namespace de
          * @param archive    Archive where the contents of the file are located.
          * @param entryPath  Path of the file's entry within the archive.
          */
-        ArchiveFile(String const &name, Archive &archive, String const &entryPath);
+        ArchiveEntryFile(String const &name, Archive &archive, String const &entryPath);
         
-        ~ArchiveFile();
+        ~ArchiveEntryFile();
 
         void clear();
 
@@ -66,4 +66,4 @@ namespace de
     };
 }
 
-#endif /* LIBDENG2_ARCHIVEFILE_H */
+#endif /* LIBDENG2_ARCHIVEENTRYFILE_H */

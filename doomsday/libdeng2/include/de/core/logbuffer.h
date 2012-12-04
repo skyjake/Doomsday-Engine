@@ -30,10 +30,13 @@ namespace de {
 class LogEntry;
 
 /**
- * Buffer for log entries. Log entries get creates in thread-specific logs and
- * then get flushed to the LogBuffer.
+ * Central buffer for log entries.
  *
- * The application owns one of these.
+ * Log entries may be created in any thread, and they get collected into a
+ * central LogBuffer. The buffer is flushed whenever a new entry triggers the
+ * flush condition, which means flushing may occur in any thread.
+ *
+ * The application owns an instance of LogBuffer.
  *
  * @ingroup core
  */
@@ -111,6 +114,13 @@ public:
      * @param yes  @c true or @c false.
      */
     void enableStandardOutput(bool yes = true);
+
+    /**
+     * Enables or disables flushing of log messages.
+     *
+     * @param yes  @c true or @c false.
+     */
+    void enableFlushing(bool yes = true);
 
     /**
      * Sets the path of the file used for writing log entries to.

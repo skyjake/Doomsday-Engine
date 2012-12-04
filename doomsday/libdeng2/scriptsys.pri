@@ -6,6 +6,7 @@ HEADERS += \
     include/de/Compound \
     include/de/ConstantExpression \
     include/de/Context \
+    include/de/DeleteStatement \
     include/de/DictionaryExpression \
     include/de/Evaluator \
     include/de/Expression \
@@ -41,6 +42,7 @@ HEADERS += \
     include/de/scriptsys/compound.h \
     include/de/scriptsys/constantexpression.h \
     include/de/scriptsys/context.h \
+    include/de/scriptsys/deletestatement.h \
     include/de/scriptsys/dictionaryexpression.h \
     include/de/scriptsys/evaluator.h \
     include/de/scriptsys/expression.h \
@@ -76,6 +78,7 @@ SOURCES += \
     src/scriptsys/compound.cpp \
     src/scriptsys/constantexpression.cpp \
     src/scriptsys/context.cpp \
+    src/scriptsys/deletestatement.cpp \
     src/scriptsys/dictionaryexpression.cpp \
     src/scriptsys/evaluator.cpp \
     src/scriptsys/expression.cpp \

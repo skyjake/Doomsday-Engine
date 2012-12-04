@@ -25,7 +25,7 @@ import sections
 # ---------------------------------------------------------------------------
 sections.begin('BASIC EXPRESSIONS')
 
-sections.subsection('Basic types (number, text, array, dictionary).')
+sections.subsection('Basic types (number, text, array, dictionary, time).')
 print 5, 5.5, -3.141592657
 print 0x100, 0X123
 print "Hello", 'World'
@@ -34,6 +34,7 @@ newlines."""
 print [1, 2, 3]
 print [1, [2, 3], 4]
 print {'a': 'b', 1: ['b', {5:6, 6:7}], ['array', 'as', 'key']: 'oh my'}
+print 'The time is now:', Time()
 
 sections.subsection('Constants: True, False, None, Pi.')
 print True, False, None, Pi
@@ -45,8 +46,12 @@ print 'len({1:2, 3:5, 8:13}) =', len({1:2, 3:5, 8:13})
 print 'dictkeys({1:2, 3:5, 8:13}) =', dictkeys({1:2, 3:5, 8:13})
 print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
 
-sections.subsection('Built-in functions: Text(), Number().')
+sections.subsection('Built-in functions: Text(), Number(), Time(), timedelta().')
 print Text(123), Number("123")
+print "Beginning of March 2011:", Time("2011-03-01")
+print Time("2000-01-02 03:04:05.678")
+print 'Invalid time:', Time("123-123")
+print 'Thousand seconds later:', timedelta(Time(), Time() + 1000)
 
 sections.subsection('Built-in functions: serialize() and deserialize().')
 a = [1, 'One', {1:'One'}]
@@ -65,11 +70,13 @@ print 'Larger than 32-bit:', 0xffffffffff + 0xffffffffff
 print 'Text:', 'Hello' + 'World'
 print 'Array:', [1, 2, 3] + ['a', 'b', 'c']
 print 'Dictionary:', {1:2, 3:4} + {'a':'b', 'c':'d'}
+print 'Time:', Time() + 3600
 
 sections.subsection('Operators: -')
 print 'Numbers:', 1 - 1, -.5 - .5
 print 'Larger than 32-bit:', 0xffffffffff - 0xffffffffff
 print 'Dictionary:', {'a':'A', 'b':'B'} - 'a'
+print 'Time:', Time() - 3600, timedelta(Time(), Time() - 3600)
 
 sections.subsection('Operators: *')
 print 'Numbers:', 1 * 2, 2.5 * 4, (2 + 6) * 45
@@ -117,6 +124,15 @@ print 'Nega-sliced:', fullArray[-4:-2]
 print 'Reversing:', fullArray[::-1]
 print 'Reverse slice:', fullArray[4:2:-1]
 print 'Stepping:', fullArray[::2], fullArray[1:6:2]
+
+print 'Text can be sliced as well...'
+fullString = "abcdefg"
+print 'Full:', fullString
+print 'Sliced:', fullString[2:4], fullString[3:], fullString[:3]
+print 'Nega-sliced:', fullString[-4:-2]
+print 'Reversing:', fullString[::-1]
+print 'Reverse slice:', fullString[4:2:-1]
+print 'Stepping:', fullString[::2], fullString[1:6:2]
 
 sections.subsection('Operators: not.')
 print not True
@@ -168,6 +184,16 @@ if False: print "Lots of useless stuff here"
 elsif True
     print "From the elsif"
 end
+
+if False
+    print 'a)'
+elsif False
+    print 'b)'
+elsif True > False
+    print 'c)'
+end
+print 'After the a), b), c)'
+
 if True: print 'Everything on one line.'; else: print 'Goes unseen.'
 if False; print 'Goes unseen again.'; else; print 'And with semicolons (requires "end").'; end
 
@@ -414,6 +440,10 @@ sections.begin('RECORDS')
 sections.subsection('Creating a record.')
 record myrec
 print len(myrec)
+print "Alternative way using Record()."
+del myrec
+myrec = Record()
+print len(myrec)
 
 sections.subsection('Creating variables into a record.')
 myrec.newMember = 100
@@ -450,12 +480,35 @@ print myrec['subrec']
 print myrec['subrec']['something']
 print members(myrec)['newMember']
 
+sections.subsection('Creating new members using [].')
+myrec['assignedElement'] = 3000
+print myrec
+
 sections.subsection('Having two variables reference the same record.')
 reference = myrec
 print len(reference)
 reference.otherMember = 150
 print "Here's the record:"
 print myrec
+reference.memberViaRef = 'added via ref'
+print "Added a member via a reference:"
+print reference
+
+sections.subsection('Making a copy of a record.')
+def recCopyTest()
+    print "Record() can be used to make a copy of a record."
+    reference = Record(myrec)
+    print reference
+    print "Now we can modify the new record without affecting myrec."
+    reference.superGreat = 'wow'
+    del reference.subrec
+    print reference
+    print "Original:"
+    print myrec
+    print "Locals:"
+    print locals()
+end
+recCopyTest()
 
 sections.subsection('Deleting members from record.')
 print 'Before deleting:'
@@ -499,6 +552,28 @@ def func2b(a)
     end
 end
 print func2b(1), func2b(''), func2b(True), func2b(False)
+
+sections.subsection('Returning a record from a function.')
+def recFunc()
+    record a
+    a.value = "recFunc"
+    return a
+end
+
+try: print recFunc()
+catch NullError
+    print "Records are passed by reference; the returned record went out of scope."
+end
+
+del recFunc
+def recFunc()
+    record a
+    a.value = "recFunc"
+    return Record(a)
+end
+print "Let's try again, making a copy for the return value."
+print recFunc()
+del recFunc
 
 sections.subsection('Passing arguments.')
 a = 'At process scope.'
@@ -599,6 +674,33 @@ end
 globalAssign()
 print 'a =', a
 
+sections.subsection('Exporting variable from a function.')
+def exporting()
+    abc = 'Value from exporting()'
+    export abc
+end
+abc = 'Value in global namespace'
+print 'Before: abc =', abc
+exporting()
+print 'After: abc =', abc
+
+sections.subsection('Exporting a record.')
+def exporting2()
+    record bunny
+    bunny.ear = 'value'
+    export bunny
+end
+exporting2()
+print 'bunny =', bunny
+
+sections.subsection('Exporting while assigning.')
+del abc
+def exporting3()
+    export abc = 'Value from exporting3()'
+end
+exporting3()
+print 'abc =', abc
+
 sections.subsection('Built-in function locals() returns the local namespace as a record.')
 print 'At global level:'
 print locals()
@@ -626,6 +728,28 @@ print dsns.func3(1, 2, 3)
 print 'Calling deserialized function that throws an exception...'
 try: dsns.erroneous(); catch: print 'Caught.'
 del dsns
+
+sections.subsection('Serializing record references.')
+def recordRefTest()
+    record hello
+    hello.entry = 'World'
+
+    record hello.subrec
+    hello.subrec.another = 123
+
+    hello.recref = hello.subrec
+
+    print 'Original record:'
+    print hello
+
+    hello.subrec.another = 456
+    print 'Modified:'
+    print hello
+
+    print 'After serialization:'
+    print deserialize(serialize(hello))
+end
+recordRefTest()
 
 sections.subsection('Importing modules: import record.')
 print 'Getting rid of the imported sections module (which is just a reference).'

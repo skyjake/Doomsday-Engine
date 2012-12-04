@@ -518,9 +518,8 @@ void ZipArchive::operator >> (Writer &to) const
                 throw DeflateError("ZipArchive::operator >>", "Deflate init failed");
             }
 
-            deflate(&stream, Z_FINISH);
-            int result = deflateEnd(&stream);
-            if(result == Z_OK)
+            int result = deflate(&stream, Z_FINISH);
+            if(result == Z_STREAM_END)
             {
                 // Compression was ok.
                 header.compression = entry.compression = DEFLATED;
@@ -538,6 +537,9 @@ void ZipArchive::operator >> (Writer &to) const
                 entry.offset = writer.offset();
                 writer << FixedByteArray(*entry.data);
             }
+
+            // Clean up.
+            deflateEnd(&stream);
         }
     }
 

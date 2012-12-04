@@ -58,11 +58,11 @@ namespace de
             /// If missing, create a new variable.
             NewVariable = 0x4,
 
-            /// If missing, create a new record.
-            NewRecord = 0x8,
+            /// If missing, create a new subrecord (i.e., Variable that owns a Record).
+            NewSubrecord = 0x8,
 
             /// Identifier must exist and will be deleted.
-            Delete = 0x10,
+            //Delete = 0x10,
 
             /// Imports an external namespace into the local namespace (as a reference).
             Import = 0x20,
@@ -78,7 +78,10 @@ namespace de
             NotInScope = 0x100,
 
             /// Variable will be set to read-only mode.
-            ReadOnly = 0x200
+            ReadOnly = 0x200,
+
+            /// Variable will be raised into a higher namespace.
+            Export = 0x400
         };
         Q_DECLARE_FLAGS(Flags, Flag)
 

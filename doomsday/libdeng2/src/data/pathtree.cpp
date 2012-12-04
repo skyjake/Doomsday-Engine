@@ -42,6 +42,8 @@ struct PathTree::Instance
     /// Total number of unique paths in the directory.
     int size;
 
+    int numNodesOwned;
+
     /// Node that represents the one root branch of all nodes.
     PathTree::Node rootNode;
 
@@ -49,7 +51,7 @@ struct PathTree::Instance
     PathTree::NodeHash hash;
 
     Instance(PathTree &d, int _flags)
-        : self(d), flags(_flags), size(0),
+        : self(d), flags(_flags), size(0), numNodesOwned(0),
           rootNode(PathTree::NodeArgs(d, PathTree::Branch, 0))
     {}
 
@@ -63,6 +65,8 @@ struct PathTree::Instance
         clearPathHash(hash.leaves);
         clearPathHash(hash.branches);
         size = 0;
+
+        DENG2_ASSERT(numNodesOwned == 0);
     }
 
     PathTree::SegmentId internSegmentAndUpdateIdHashMap(String segment, Path::hash_type hashKey)
@@ -120,6 +124,8 @@ struct PathTree::Instance
         // Insert the new node into the hash.
         const_cast<Nodes &>(hash).insert(hashKey, node);
 
+        numNodesOwned++;
+
         return node;
     }
 
@@ -165,6 +171,9 @@ struct PathTree::Instance
                 {
                     node->parent().removeChild(*node);
                     hash.erase(i);
+                    numNodesOwned--;
+
+                    DENG2_ASSERT(numNodesOwned >= 0);
                 }
                 return node;
             }
@@ -201,7 +210,7 @@ struct PathTree::Instance
         return 0;
     }
 
-    static void clearPathHash(PathTree::Nodes &ph)
+    void clearPathHash(PathTree::Nodes &ph)
     {
         LOG_AS("PathTree::clearPathHash");
 
@@ -209,6 +218,9 @@ struct PathTree::Instance
         {
             PathTree::Node *node = *i;
             delete node;
+
+            numNodesOwned--;
+            DENG2_ASSERT(numNodesOwned >= 0);
         }
         ph.clear();
     }

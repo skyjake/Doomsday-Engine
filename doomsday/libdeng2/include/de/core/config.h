@@ -22,6 +22,7 @@
 
 #include "../Process"
 #include "../String"
+#include "../Path"
 
 namespace de
 {
@@ -39,12 +40,16 @@ namespace de
     class DENG2_PUBLIC Config
     {
     public:
+        /// Attempted to get the value of a variable while expecting the wrong type. @ingroup errors
+        DENG2_ERROR(ValueTypeError);
+
+    public:
         /**
          * Constructs a new configuration.
          *
          * @param path  Name of the configuration file to read.
          */
-        Config(String const &path);
+        Config(Path const &path);
 
         /**
          * Destructor. The configuration is automatically saved.
@@ -63,6 +68,9 @@ namespace de
         /// Returns the value of @a name as an integer.
         dint geti(String const &name);
 
+        /// Returns the value of @a name as a boolean.
+        bool getb(String const &name);
+
         /// Returns the value of @a name as an unsigned integer.
         duint getui(String const &name);
 
@@ -71,6 +79,17 @@ namespace de
 
         /// Returns the value of @a name as a string.
         String gets(String const &name);
+
+        template <typename ValueType>
+        ValueType &getAs(String const &name) {
+            ValueType *v = dynamic_cast<ValueType *>(&get(name));
+            if(!v)
+            {
+                throw ValueTypeError("Config::getAs", String("Cannot cast to expected type (") +
+                                     DENG2_TYPE_NAME(ValueType) + ")");
+            }
+            return *v;
+        }
     
         /**
          * Returns the configuration namespace.
@@ -78,14 +97,8 @@ namespace de
         Record &names();
         
     private:
-        /// Configuration file name.
-        String _configPath;
-        
-        /// Path where the configuration is written.
-        String _writtenConfigPath;
-        
-        /// The configuration namespace.
-        Process _config;
+        struct Instance;
+        Instance *d;
     };
 }
 

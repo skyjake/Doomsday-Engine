@@ -56,12 +56,39 @@ struct Reader::Instance
     Instance(ByteOrder const &order, IIStream *str)
         : convert(order), source(0), offset(0), markOffset(0),
           stream(str), constStream(0), numReceivedBytes(0), marking(false)
-    {}
+    {
+        upgradeToByteArray();
+    }
 
     Instance(ByteOrder const &order, IIStream const *str)
         : convert(order), source(0), offset(0), markOffset(0),
           stream(0), constStream(str), numReceivedBytes(0), marking(false)
-    {}
+    {
+        upgradeToByteArray();
+    }
+
+    /**
+     * Byte arrays provide more freedom with reading. If the streaming object
+     * happens to support the byte array interface, Reader will use it instead.
+     */
+    void upgradeToByteArray()
+    {
+        if(stream)
+        {
+            if((source = dynamic_cast<IByteArray const *>(stream)) != 0)
+            {
+                stream = 0;
+            }
+        }
+
+        if(constStream)
+        {
+            if((source = dynamic_cast<IByteArray const *>(constStream)) != 0)
+            {
+                constStream = 0;
+            }
+        }
+    }
 
     /**
      * Reads bytes from the stream and adds them to the incoming buffer.
@@ -165,6 +192,11 @@ Reader::Reader(IIStream &stream, ByteOrder const &byteOrder)
 Reader::Reader(IIStream const &stream, ByteOrder const &byteOrder)
     : d(new Instance(byteOrder, &stream))
 {}
+
+Reader::~Reader()
+{
+    delete d;
+}
 
 Reader &Reader::operator >> (char &byte)
 {

@@ -52,6 +52,18 @@
     de::Block __logSectionUtf8 = __logSectionName.toUtf8(); \
     LOG_AS(__logSectionUtf8.constData());
 
+#ifdef DENG2_DEBUG
+/**
+ * Makes a developer-only TRACE level log entry. Only enabled in debug builds;
+ * use this for internal messages that are only useful to / understood by
+ * developers when debugging. (Note that parameters differ compared to the
+ * normal LOG_* macros.)
+ */
+#  define LOG_DEV_TRACE(form, args) LOG().enter(de::Log::TRACE, form) << args
+#else
+#  define LOG_DEV_TRACE(form, args)
+#endif
+
 #define LOG_TRACE(str)      LOG().enter(de::Log::TRACE, str)
 #define LOG_DEBUG(str)      LOG().enter(de::Log::DEBUG, str)
 #define LOG_VERBOSE(str)    LOG().enter(de::Log::VERBOSE, str)
@@ -71,9 +83,9 @@ class LogBuffer;
 class LogEntry;
 
 /**
- * Logs provide means for adding log entries into the log entry buffer. The
- * thread's Log keeps track of the section stack. Each thread uses its own
- * logs.
+ * Provides means for adding log entries into the log entry buffer (LogBuffer).
+ * A thread's Log keeps track of the thread-local section stack, but there is
+ * only one LogBuffer where all the entries are collected.
  *
  * @ingroup core
  */
@@ -225,6 +237,14 @@ public:
      */
     LogEntry &enter(LogLevel level, String const &format);
 
+    /**
+     * Returns the special, disabled log entry that can be used as a
+     * target when giving arguments to nonexistent log entries.
+     *
+     * @return Throwaway entry.
+     */
+    LogEntry &throwaway() { return *_throwawayEntry; }
+
 public:
     /**
      * Returns the logger of the current thread.
@@ -248,9 +268,15 @@ private:
  * An entry to be stored in the log entry buffer. Log entries are created with
  * Log::enter().
  *
+ * Log entry arguments are appended after the creation of the entry and even
+ * after it has been inserted to the buffer. Therefore it is possible that an
+ * entry is being flushed while another thread is still adding arguments to it.
+ * Due to this entries are lockable and will be locked whenever
+ * LogEntry::asText() is being executed or when an argument is being added.
+ *
  * @ingroup core
  */
-class DENG2_PUBLIC LogEntry
+class DENG2_PUBLIC LogEntry : public Lockable
 {
 public:
     /**
@@ -414,7 +440,9 @@ public:
     template <typename ValueType>
     inline LogEntry &operator << (ValueType const &v) {
         if(!_disabled) {
+            lock();
             _args.push_back(new Arg(v));
+            unlock();
         }
         return *this;
     }

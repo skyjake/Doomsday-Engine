@@ -24,6 +24,8 @@
 
 #include "dd_share.h" // For lumpnum_t
 
+#include <de/str.h>
+
 /**
  * A rawtex is a lump raw graphic that has been prepared for render.
  */

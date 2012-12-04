@@ -147,7 +147,7 @@ dint Archive::listFolders(Archive::Names &names, Path const &folder) const
     return names.size();
 }
 
-File::Status Archive::status(Path const &path) const
+File::Status Archive::entryStatus(Path const &path) const
 {
     DENG2_ASSERT(d->index != 0);
 
@@ -163,25 +163,41 @@ Block const &Archive::entryBlock(Path const &path) const
 {
     DENG2_ASSERT(d->index != 0);
 
-    // We'll need to modify the entry.
-    Entry &entry = static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch));
-    if(entry.data)
+    try
     {
-        // Got it.
+        // We'll need to modify the entry.
+        Entry &entry = static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch));
+        if(entry.data)
+        {
+            // Got it.
+            return *entry.data;
+        }
+        std::auto_ptr<Block> cached(new Block);
+        d->readEntry(path, *cached.get());
+        entry.data = cached.release();
         return *entry.data;
     }
-    std::auto_ptr<Block> cached(new Block);
-    d->readEntry(path, *cached.get());
-    entry.data = cached.release();
-    return *entry.data;
+    catch(PathTree::NotFoundError const &)
+    {
+        /// @throw NotFoundError Entry with @a path was not found.
+        throw NotFoundError("Archive::entryBlock", String("'%1' not found").arg(path));
+    }
 }
 
 Block &Archive::entryBlock(Path const &path)
 {
+    if(!hasEntry(path))
+    {
+        add(path, Block());
+    }
+
     Block const &block = const_cast<Archive const *>(this)->entryBlock(path);
     
     // Mark for recompression.
-    static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch)).maybeChanged = true;
+    Entry &entry = static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch));
+    entry.maybeChanged = true;
+    entry.modifiedAt   = Time();
+
     d->modified = true;
     
     return const_cast<Block &>(block);

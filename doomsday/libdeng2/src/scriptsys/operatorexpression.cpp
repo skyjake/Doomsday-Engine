@@ -21,6 +21,7 @@
 #include "de/Evaluator"
 #include "de/Value"
 #include "de/NumberValue"
+#include "de/TextValue"
 #include "de/ArrayValue"
 #include "de/RefValue"
 #include "de/RecordValue"
@@ -29,10 +30,7 @@
 #include "de/Reader"
 #include "de/math.h"
 
-using namespace de;
-
-#define HAS_LEFT_OPERAND    0x80
-#define OPERATOR_MASK       0x7f
+namespace de {
 
 OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(0), _rightOperand(0)
 {}
@@ -86,7 +84,8 @@ void OperatorExpression::push(Evaluator &evaluator, Record *names) const
 
 Value *OperatorExpression::newBooleanValue(bool isTrue)
 {
-    return new NumberValue(isTrue? NumberValue::VALUE_TRUE : NumberValue::VALUE_FALSE);
+    return new NumberValue(isTrue? NumberValue::True : NumberValue::False,
+                           NumberValue::Boolean);
 }
 
 void OperatorExpression::verifyAssignable(Value *value)
@@ -208,8 +207,24 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             break;
 
         case INDEX:
-            result = leftValue->duplicateElement(*rightValue);
+        {
+            LOG_DEV_TRACE("INDEX: types %s [ %s ] byref:%b",
+                          DENG2_TYPE_NAME(*leftValue) << DENG2_TYPE_NAME(*rightValue)
+                          << flags().testFlag(ByReference));
+
+            // As a special case, records can be indexed also by reference.
+            RecordValue *recValue = dynamic_cast<RecordValue *>(leftValue);
+            if(flags().testFlag(ByReference) && recValue)
+            {
+                result = new RefValue(&recValue->dereference()[rightValue->asText()]);
+            }
+            else
+            {
+                // Index by value.
+                result = leftValue->duplicateElement(*rightValue);
+            }
             break;
+        }
 
         case SLICE:
             result = performSlice(leftValue, rightValue);
@@ -255,6 +270,10 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
     
     return result;
 }
+
+// Flags for serialization:
+static duint8 const HAS_LEFT_OPERAND = 0x80;
+static duint8 const OPERATOR_MASK    = 0x7f;
 
 void OperatorExpression::operator >> (Writer &to) const
 {
@@ -303,15 +322,57 @@ void OperatorExpression::operator << (Reader &from)
     }
 }
 
+namespace internal {
+    struct SliceTarget {
+        SliceTarget(Value *v) : value(v) {}
+        virtual ~SliceTarget() {
+            delete value;
+        }
+        Value *take() {
+            Value *v = value;
+            value = 0;
+            return v;
+        }
+        virtual void append(Value const &src, dint index) = 0;
+        Value *value;
+    };
+    struct ArraySliceTarget : public SliceTarget {
+        ArraySliceTarget() : SliceTarget(new ArrayValue) {}
+        ArrayValue &array() { return *static_cast<ArrayValue *>(value); }
+        void append(Value const &src, dint index) {
+            array().add(src.duplicateElement(NumberValue(index)));
+        }
+    };
+    struct TextSliceTarget : public SliceTarget {
+        TextSliceTarget() : SliceTarget(new TextValue) {}
+        TextValue &text() { return *static_cast<TextValue *>(value); }
+        void append(Value const &src, dint index) {
+            text().sum(TextValue(String(1, src.asText().at(index))));
+        }
+    };
+}
+
 Value *OperatorExpression::performSlice(Value *leftValue, Value *rightValue) const
 {
+    using internal::SliceTarget;
+    using internal::TextSliceTarget;
+    using internal::ArraySliceTarget;
+
     DENG2_ASSERT(rightValue->size() >= 2);
 
     ArrayValue const *args = dynamic_cast<ArrayValue *>(rightValue);
     DENG2_ASSERT(args != NULL); // Parser makes sure.
 
     // The resulting slice of leftValue's elements.
-    std::auto_ptr<ArrayValue> slice(new ArrayValue());
+    std::auto_ptr<SliceTarget> slice;
+    if(dynamic_cast<TextValue *>(leftValue))
+    {
+        slice.reset(new TextSliceTarget);
+    }
+    else
+    {
+        slice.reset(new ArraySliceTarget);
+    }
 
     // Determine the stepping of the slice.
     dint step = 1;
@@ -380,8 +441,10 @@ Value *OperatorExpression::performSlice(Value *leftValue, Value *rightValue) con
 
     for(dint i = begin; (end >= begin && i < end) || (begin > end && i > end); i += step)
     {
-        slice->add(leftValue->duplicateElement(NumberValue(i)));
-    }        
+        slice->append(*leftValue, i);
+    }
 
-    return slice.release();
+    return slice->take();
 }
+
+} // namespace de

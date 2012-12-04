@@ -38,6 +38,7 @@ String const ScriptLex::FOR("for");
 String const ScriptLex::DEF("def");
 String const ScriptLex::TRY("try");
 String const ScriptLex::IMPORT("import");
+String const ScriptLex::EXPORT("export");
 String const ScriptLex::RECORD("record");
 String const ScriptLex::DEL("del");
 String const ScriptLex::PASS("pass");
@@ -370,6 +371,7 @@ bool ScriptLex::isKeyword(Token const &token)
         FOR,
         IF,
         IMPORT,
+        EXPORT,
         IN,
         NOT,
         OR,

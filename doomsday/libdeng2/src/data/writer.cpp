@@ -199,10 +199,8 @@ Writer &Writer::operator << (FixedByteArray const &fixedByteArray)
      */
     
     // Read the entire contents of the array.
-    dsize const size = fixedByteArray.size();
-    QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
-    fixedByteArray.get(0, data.data(), size);
-    d->write(data.data(), size);
+    Block copy(fixedByteArray);
+    d->write(copy.data(), copy.size());
     return *this;
 }
 

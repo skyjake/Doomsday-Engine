@@ -1,7 +1,7 @@
 # API documentation for the engine
 @INCLUDE = ../../doomsday.doxy
 
-PROJECT_NAME        = jHexen
+PROJECT_NAME        = libhexen
 OUTPUT_DIRECTORY    = ../../apidoc/jhexen/
 
 INPUT               = src include res ../common/src ../common/include

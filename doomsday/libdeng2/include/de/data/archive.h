@@ -64,7 +64,7 @@ namespace de
      * by calling @c cache(DetachFromSource). This forces all entries to be
      * copied to Archive-owned memory (in original serialized form).
      *
-     * @see ArchiveFeed, ArchiveFile
+     * @see ArchiveFeed, ArchiveEntryFile
      *
      * @ingroup data
      */
@@ -164,7 +164,7 @@ namespace de
          *
          * @return Type, size, and other metadata about the entry.
          */
-        File::Status status(Path const &path) const;
+        File::Status entryStatus(Path const &path) const;
 
         /**
          * Returns the deserialized data of an entry for read-only access. The
@@ -176,11 +176,15 @@ namespace de
          * existing serialized data of the entry can be used as-is when the
          * archive is written.
          *
-         * @param path  Entry path.
+         * @param path  Entry path. The entry must already exist in the archive.
          *
          * @return Immutable contents of the entry.
          */
         Block const &entryBlock(Path const &path) const;
+
+        inline Block const &constEntryBlock(Path const &path) const {
+            return entryBlock(path);
+        }
 
         /**
          * Returns the deserialized data of an entry for read and write access.
@@ -191,7 +195,7 @@ namespace de
          * entry's data is automatically marked for re-serialization in case
          * the archive is written.
          *
-         * @param path  Entry path. The entry must already exist in the archive.
+         * @param path  Entry path. If doesn't exist, a new entry will be added.
          *
          * @return Modifiable contents of the entry.
          */

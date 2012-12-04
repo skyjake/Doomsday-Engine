@@ -47,7 +47,7 @@ DENG_WIN_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/windows
 # Binaries and generated files are placed here.
 DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
 
-DENG_CONFIG_DIR = $$PWD/libdeng2/config
+DENG_MODULES_DIR = $$PWD/libdeng2/modules
 
 # Versions -------------------------------------------------------------------
 
