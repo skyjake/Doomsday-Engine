@@ -945,8 +945,11 @@ void Def_GenerateGroupsFromAnims(void)
             gmbr = &grp->members[idx];
             gmbr->tics = frame->tics;
             gmbr->randomTics = frame->randomTics;
-            de::Uri textureUri = textures.composeUri(frame->texture);
-            gmbr->material = reinterpret_cast<uri_s *>(new de::Uri(Str_Text(DD_MaterialSchemeNameForTextureScheme(textureUri.scheme())), textureUri.path()));
+            if(de::Texture *tex = textures.toTexture(frame->texture))
+            {
+                de::Uri textureUri = tex->manifest().composeUri();
+                gmbr->material = reinterpret_cast<uri_s *>(new de::Uri(Str_Text(DD_MaterialSchemeNameForTextureScheme(textureUri.scheme())), textureUri.path()));
+            }
         }
     }
 }

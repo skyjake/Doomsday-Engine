@@ -520,7 +520,7 @@ static int findTextureUsingVariantSpecificationWorker(de::Texture &tex, void *pa
     {
         if((*i)->spec() == spec)
         {
-            return App_Textures()->id(tex);
+            return 1; // Found one; stop.
         }
     }
     return 0; // Continue iteration.
@@ -684,15 +684,13 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     TexSource source = TEXS_NONE;
 
     spec = TS_GENERAL(&baseSpec);
-    Textures &textures = *App_Textures();
-    textureid_t texId = textures.id(tex);
-    de::Uri uri = textures.composeUri(texId);
-    if(!uri.scheme().compareWithoutCase("Flats"))
+    if(!tex.manifest().schemeName().compareWithoutCase("Flats"))
     {
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isCustom()))
         {
             // First try the flats scheme.
+            de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
 
             if(!source)
@@ -704,7 +702,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
 
         if(source == TEXS_NONE)
         {
-            de::Uri const &resourceUri = textures.resourceUri(texId);
+            de::Uri const &resourceUri = tex.manifest().resourceUri();
             lumpnum_t lumpNum = -1;
 
             if(!resourceUri.scheme().compareWithoutCase("Lumps"))
@@ -730,7 +728,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
             {} // Ignore this error.
         }
     }
-    else if(!uri.scheme().compareWithoutCase("Patches"))
+    else if(!tex.manifest().schemeName().compareWithoutCase("Patches"))
     {
         int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
@@ -743,12 +741,13 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         // Attempt to load an external replacement for this patch?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isCustom()))
         {
+            de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
         }
 
         if(source == TEXS_NONE)
         {
-            de::Uri const &resourceUri = textures.resourceUri(texId);
+            de::Uri const &resourceUri = tex.manifest().resourceUri();
             if(!resourceUri.scheme().compareWithoutCase("Lumps"))
             {
                 lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(resourceUri.path());
@@ -769,7 +768,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
             }
         }
     }
-    else if(!uri.scheme().compareWithoutCase("Sprites"))
+    else if(!tex.manifest().schemeName().compareWithoutCase("Sprites"))
     {
         int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
@@ -782,6 +781,8 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         // Attempt to load an external replacement for this sprite?
         if(!noHighResPatches)
         {
+            de::Uri uri = tex.manifest().composeUri();
+
             // Prefer psprite or translated versions if available.
             if(TC_PSPRITE_DIFFUSE == spec->context)
             {
@@ -800,7 +801,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
 
         if(source == TEXS_NONE)
         {
-            de::Uri const &resourceUri = textures.resourceUri(texId);
+            de::Uri const &resourceUri = tex.manifest().resourceUri();
             if(!resourceUri.scheme().compareWithoutCase("Lumps"))
             {
                 lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(resourceUri.path());
@@ -821,9 +822,9 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
             }
         }
     }
-    else if(!uri.scheme().compareWithoutCase("Details"))
+    else if(!tex.manifest().schemeName().compareWithoutCase("Details"))
     {
-        de::Uri const &resourceUri = textures.resourceUri(texId);
+        de::Uri const &resourceUri = tex.manifest().resourceUri();
         if(resourceUri.scheme().compareWithoutCase("Lumps"))
         {
             source = loadExternalTexture(image, resourceUri.compose());
@@ -847,7 +848,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     }
     else
     {
-        de::Uri const &resourceUri = textures.resourceUri(texId);
+        de::Uri const &resourceUri = tex.manifest().resourceUri();
         source = loadExternalTexture(image, resourceUri.compose());
     }
     return source;
@@ -1067,8 +1068,7 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(de::TextureVariant *t
         grayMipmapFactor = (uint8_t)(255 * MINMAX_OF(0, spec->contrast / 255.f - shift, 1));
 
         // Announce the normalization.
-        Textures &textures = *App_Textures();
-        de::Uri uri = textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*tex->generalCase())));
+        de::Uri uri = reinterpret_cast<de::Texture &>(*tex->generalCase()).manifest().composeUri();
         LOG_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).")
             << uri << baMul << hiMul << loMul;
     }
@@ -2520,17 +2520,15 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
     return texture;
 }
 
-TexSource GL_LoadPatchComposite(image_t *image, texture_s *_tex)
+TexSource GL_LoadPatchComposite(image_t *image, de::Texture &tex)
 {
-    DENG_ASSERT(image && _tex);
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
+    DENG_ASSERT(image);
     LOG_AS("GL_LoadPatchComposite");
 
-    Textures &textures = *App_Textures();
-#if _DEBUG
-    if(textures.composeUri(textures.id(tex)).scheme().compareWithoutCase("Textures"))
-        Con_Error("GL_LoadPatchComposite: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void *)&tex, textures.id(tex));
-#endif
+    if(tex.manifest().schemeName().compareWithoutCase("Textures"))
+        throw Error("GL_LoadPatchComposite", String("Texture \"%1\" [%2] is not a CompositeTexture!")
+                                               .arg(tex.manifest().composeUri().asText())
+                                               .arg(de::dintptr(&tex)));
 
     CompositeTexture *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG_ASSERT(texDef);
@@ -2557,7 +2555,7 @@ TexSource GL_LoadPatchComposite(image_t *image, texture_s *_tex)
         }
         else
         {
-            de::Uri uri = textures.composeUri(textures.id(tex));
+            de::Uri uri = tex.manifest().composeUri();
             LOG_WARNING("File \"%s:%s\" (#%u) does not appear to be a valid Patch. It will be missing from texture \"%s\".")
                 << NativePath(file.container().composePath()).pretty()
                 << NativePath(file.composePath()).pretty()
@@ -2576,17 +2574,22 @@ TexSource GL_LoadPatchComposite(image_t *image, texture_s *_tex)
     return TEXS_ORIGINAL;
 }
 
-TexSource GL_LoadPatchCompositeAsSky(image_t *image, texture_s *_tex, boolean zeroMask)
+TexSource GL_LoadPatchComposite(image_t *image, texture_s *_tex)
 {
     DENG_ASSERT(image && _tex);
     de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
+    return GL_LoadPatchComposite(image, tex);
+}
+
+TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean zeroMask)
+{
+    DENG_ASSERT(image);
     LOG_AS("GL_LoadPatchCompositeAsSky");
 
-    Textures &textures = *App_Textures();
-#if _DEBUG
-    if(textures.composeUri(textures.id(tex)).scheme().compareWithoutCase("Textures"))
-        Con_Error("GL_LoadPatchCompositeAsSky: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void *)&tex, textures.id(tex));
-#endif
+    if(tex.manifest().schemeName().compareWithoutCase("Textures"))
+        throw Error("GL_LoadPatchComposite", String("Texture \"%1\" [%2] is not a CompositeTexture!")
+                                               .arg(tex.manifest().composeUri().asText())
+                                               .arg(de::dintptr(&tex)));
 
     CompositeTexture *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG_ASSERT(texDef);
@@ -2640,7 +2643,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, texture_s *_tex, boolean ze
         }
         else
         {
-            de::Uri uri = textures.composeUri(textures.id(tex));
+            de::Uri uri = tex.manifest().composeUri();
             LOG_WARNING("File \"%s:%s\" (#%u) does not appear to be a valid Patch. It will be missing from texture \"%s\".")
                 << NativePath(file.container().composePath()).pretty()
                 << NativePath(file.composePath()).pretty()
@@ -2656,6 +2659,13 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, texture_s *_tex, boolean ze
     }
 
     return TEXS_ORIGINAL;
+}
+
+TexSource GL_LoadPatchCompositeAsSky(image_t *image, texture_s *_tex, boolean zeroMask)
+{
+    DENG_ASSERT(image && _tex);
+    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
+    return GL_LoadPatchCompositeAsSky(image, tex, zeroMask);
 }
 
 TexSource GL_LoadRawTex(image_t *image, rawtex_t const *r)
@@ -2829,8 +2839,7 @@ texturevariant_s* GL_PreparePatchTexture2(texture_s* _tex, int wrapS, int wrapT)
 
     de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
 
-    Textures &textures = *App_Textures();
-    if(textures.composeUri(textures.id(tex)).scheme().compareWithoutCase("Patches"))
+    if(tex.manifest().schemeName().compareWithoutCase("Patches"))
     {
 #if _DEBUG
         LOG_AS("GL_PreparePatchTexture");
@@ -3272,12 +3281,10 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     DENG_ASSERT(initedOk && spec);
     LOG_AS("tryLoadImageAndPrepareVariant");
 
-    Textures &textures = *App_Textures();
-
     // Load the source image data.
     TexSource source = TEXS_NONE;
     image_t image;
-    if(!textures.composeUri(textures.id(tex)).scheme().compareWithoutCase("Textures"))
+    if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Try to load a replacement version of this texture?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isCustom()))
@@ -3317,9 +3324,8 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     if(0 == tex.width() || 0 == tex.height())
     {
 #if _DEBUG
-        de::Uri uri = textures.composeUri(textures.id(tex));
         LOG_VERBOSE("Logical dimensions for \"%s\" taken from image pixels (%ix%i).")
-            << NativePath(uri.asText()).pretty() << image.size.width << image.size.height;
+            << tex.manifest().composeUri() << image.size.width << image.size.height;
 #endif
         tex.setDimensions(image.size);
     }
@@ -3357,9 +3363,8 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     Image_Destroy(&image);
 
 #ifdef _DEBUG
-    de::Uri uri = textures.composeUri(textures.id(tex));
     LOG_VERBOSE("Prepared \"%s\" variant (glName:%u)%s")
-        << uri << uint((*variant)->glName())
+        << tex.manifest().composeUri() << uint((*variant)->glName())
         << (METHOD_IMMEDIATE == uploadMethod? " while not busy!" : "");
 
     VERBOSE2(
@@ -3646,8 +3651,7 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
  */
 Path GL_ComposeCachePathForTexture(de::Texture &tex)
 {
-    Textures &textures = *App_Textures();
-    de::Uri uri = textures.composeUri(textures.id(tex));
+    de::Uri uri = tex.manifest().composeUri();
     return String("texcache") / uri.scheme() / uri.path() + ".png";
 }
 

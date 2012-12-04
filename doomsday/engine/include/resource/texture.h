@@ -59,6 +59,8 @@ typedef enum {
 
 namespace de {
 
+class TextureManifest;
+
 /**
  * Presents an abstract interface to all supported texture types so that
  * they may be managed transparently.
@@ -77,23 +79,21 @@ public:
 
 public:
     /**
-     * @param bindId  Unique identifier of the primary binding in the owning
-     *    collection. Can be @c NOTEXTUREID in which case there is no binding
-     *    for the resultant texture.
+     * @param manifest  Manifest derived to yield the texture.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture(textureid_t bindId, Flags flags = 0, void *userData = 0);
+    Texture(TextureManifest &manifest, Flags flags = 0, void *userData = 0);
 
     /**
-     * @param bindId  Unique identifier of the primary binding in the owning
-     *    collection. Can be @c NOTEXTUREID in which case there is no binding
-     *    for the resultant texture.
-     * @param size Logical size of the texture. Components can be zero in which
-     *    case their value will be inherited from the actual pixel size of the
-     *    image at load time.
+     * @param manifest  Manifest derived to yield the Texture.
+     * @param dimensions Logical dimensions of the texture in map space
+     *                   coordinates. If width=0 and height=0, their value
+     *                  will be inferred from the actual pixel dimensions
+     *                  of the image resource at load time.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture(textureid_t bindId, Size2Raw const &dimensions, Flags flags = 0, void *userData = 0);
+    Texture(TextureManifest &manifest, Size2Raw const &dimensions,
+            Flags flags = 0, void *userData = 0);
 
     ~Texture();
 
@@ -103,9 +103,10 @@ public:
     /// Change the "custom" status of this texture instance.
     void flagCustom(bool yes);
 
-    textureid_t primaryBind() const { return primaryBindId; }
-
-    void setPrimaryBind(textureid_t bindId);
+    /**
+     * Returns the TextureManifest derived to yield the texture.
+     */
+    TextureManifest &manifest() const;
 
     /**
      * Retrieve the value of the associated user data pointer.
@@ -197,7 +198,7 @@ private:
     Flags flags;
 
     /// Unique identifier of the primary binding in the owning collection.
-    textureid_t primaryBindId;
+    TextureManifest &manifest_;
 
     /// List of variants (e.g., color translations).
     Variants variants;
@@ -205,7 +206,7 @@ private:
     /// User data associated with this texture.
     void *userData;
 
-    /// Dimensions in logical pixels.
+    /// "Logical" dimensions in map coordinate space units.
     Size2Raw dimensions_;
 
     /// Table of analyses object ptrs, used for various purposes depending
@@ -225,13 +226,6 @@ extern "C" {
 struct texture_s; // The texture instance (opaque).
 typedef struct texture_s Texture;
 
-Texture* Texture_NewWithSize(textureid_t bindId, const Size2Raw* size, void* userData);
-Texture* Texture_New(textureid_t bindId, void* userData);
-void Texture_Delete(Texture* tex);
-
-textureid_t Texture_PrimaryBind(const Texture* tex);
-void Texture_SetPrimaryBind(Texture* tex, textureid_t bindId);
-
 void* Texture_UserDataPointer(const Texture* tex);
 void Texture_SetUserDataPointer(Texture* tex, void* userData);
 
@@ -245,6 +239,7 @@ void Texture_SetAnalysisDataPointer(Texture* tex, texture_analysisid_t analysis,
 boolean Texture_IsCustom(const Texture* tex);
 void Texture_FlagCustom(Texture* tex, boolean yes);
 
+textureid_t Texture_PrimaryBind(const Texture* tex);
 int Texture_Width(const Texture* tex);
 int Texture_Height(const Texture* tex);
 const Size2Raw* Texture_Dimensions(const Texture* tex);

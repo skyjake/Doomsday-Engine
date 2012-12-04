@@ -317,11 +317,8 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -2, 0, false, true, true, false);
     ms = Materials_Prepare(sprFrame->mats[0], spec, true);
 
-#if _DEBUG
-    de::Textures &textures = *App_Textures();
-    if(textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)))).scheme().compareWithoutCase("Sprites"))
-        Con_Error("setupPSpriteParams: Internal error, material snapshot's primary texture is not a SpriteTex!");
-#endif
+    if(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().schemeName().compareWithoutCase("Sprites"))
+        throw de::Error("setupPSpriteParams", "Material snapshot's primary texture is not a patchtex_t");
 
     pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
     DENG_ASSERT(pTex);
@@ -933,8 +930,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
 
         TextureVariant_Coords(MST(ms, MTU_PRIMARY), &s, &t);
 
-        de::Textures &textures = *App_Textures();
-        if(!textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)))).scheme().compareWithoutCase("Sprites"))
+        if(!reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().schemeName().compareWithoutCase("Sprites"))
         {
             pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
             DENG_ASSERT(pTex);

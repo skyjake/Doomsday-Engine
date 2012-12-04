@@ -57,7 +57,7 @@ Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Size2Raw 
     Texture::Flags flags, void *userData)
 {
     LOG_AS("Textures::ResourceClass::interpret");
-    return new Texture(manifest.lookupTextureId(), dimensions, flags, userData);
+    return new Texture(manifest, dimensions, flags, userData);
 }
 
 Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Texture::Flags flags,
@@ -104,7 +104,7 @@ struct Textures::Instance
     /// @pre textureIdLut has been initialized and is large enough!
     void unlinkFromTextureIdLut(TextureManifest &manifest)
     {
-        textureid_t texId = manifest.lookupTextureId();
+        textureid_t texId = self.idForManifest(manifest);
         if(!validTextureId(texId)) return; // Not linked.
         textureIdLut[texId - 1/*1-based index*/] = 0;
     }
@@ -375,42 +375,6 @@ TextureManifest *Textures::declare(Uri const &uri, int uniqueId, Uri const *reso
     return manifest;
 }
 
-int Textures::uniqueId(textureid_t id) const
-{
-    LOG_AS("Textures::uniqueId");
-    if(TextureManifest *manifest = d->manifestByTextureId(id))
-    {
-        return manifest->uniqueId();
-    }
-
-#if _DEBUG
-    if(id != NOTEXTUREID)
-        LOG_WARNING("Attempted with unbound textureId #%u, returning zero.") << id;
-#endif
-    return 0;
-}
-
-Uri const &Textures::resourceUri(textureid_t id) const
-{
-    LOG_AS("Textures::resourcePath");
-    if(TextureManifest *manifest = d->manifestByTextureId(id))
-    {
-        return manifest->resourceUri();
-    }
-
-#if _DEBUG
-    if(id != NOTEXTUREID)
-        LOG_WARNING("Attempted with unbound textureId #%u, returning null-object.") << id;
-#endif
-    return emptyUri;
-}
-
-textureid_t Textures::id(Texture &tex) const
-{
-    LOG_AS("Textures::id");
-    return tex.primaryBind();
-}
-
 textureid_t Textures::idForManifest(Textures::Manifest const &manifest) const
 {
     LOG_AS("Textures::idForManifest");
@@ -453,21 +417,6 @@ Textures::Scheme &Textures::scheme(String name) const
 Textures::Schemes const& Textures::allSchemes() const
 {
     return d->schemes;
-}
-
-Uri Textures::composeUri(textureid_t id) const
-{
-    LOG_AS("Textures::composeUri");
-    if(TextureManifest *manifest = d->manifestByTextureId(id))
-    {
-        return manifest->composeUri();
-    }
-
-#if _DEBUG
-    if(id != NOTEXTUREID)
-        LOG_WARNING("Attempted with unbound textureId #%u, returning null-object.") << id;
-#endif
-    return Uri();
 }
 
 int Textures::iterate(String nameOfScheme,
@@ -558,8 +507,7 @@ static void printVariantInfo(TextureVariant &variant)
 
 static void printTextureInfo(Texture &tex)
 {
-    Textures &textures = *App_Textures();
-    Uri uri = textures.composeUri(textures.id(tex));
+    Uri uri = tex.manifest().composeUri();
     QByteArray path = NativePath(uri.asText()).pretty().toUtf8();
 
     Con_Printf("Texture \"%s\" [%p] x%u origin:%s\n",

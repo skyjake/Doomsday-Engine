@@ -460,11 +460,8 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
                                                      false, true, true, false);
     materialsnapshot_t const *ms = Materials_Prepare(mat, spec, false);
 
-#if _DEBUG
-    de::Textures &textures = *App_Textures();
-    if(textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)))).scheme().compareWithoutCase("Sprites"))
-        Con_Error("R_GetSpriteInfo: Internal error, material snapshot's primary texture is not a SpriteTex!");
-#endif
+    if(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().schemeName().compareWithoutCase("Sprites"))
+        Con_Error("R_GetSpriteInfo: Material snapshot's primary texture is not a patchtex_t");
 
     patchtex_t *pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
     DENG_ASSERT(pTex);
@@ -552,7 +549,11 @@ float R_ShadowStrength(mobj_t *mo)
             materialsnapshot_t const *ms = Materials_Prepare(mat, Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
             averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
             float weightedSpriteAlpha;
-            if(!aa) Con_Error("R_ShadowStrength: Texture id:%u has no TA_ALPHA analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
+            if(!aa)
+            {
+                QByteArray uri = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText().toUtf8();
+                Con_Error("R_ShadowStrength: Texture \"%s\" has no TA_ALPHA analysis", uri.constData());
+            }
 
             // We use an average which factors in the coverage ratio
             // of alpha:non-alpha pixels.
@@ -1046,8 +1047,8 @@ void R_ProjectSprite(mobj_t *mo)
     ms   = Materials_Prepare(mat, spec, true);
 
     // An invalid sprite texture?
-    de::Textures &textures = *App_Textures();
-    if(textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)))).scheme().compareWithoutCase("Sprites")) return;
+    if(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))
+       .manifest().schemeName().compareWithoutCase("Sprites")) return;
 
     pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
     DENG_ASSERT(pTex);
@@ -1304,10 +1305,12 @@ void R_ProjectSprite(mobj_t *mo)
             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1,-2, -1, true, true, true, false);
         ms = Materials_Prepare(mat, spec, true);
 
-        pl = (const pointlight_analysis_t*)
-            Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
+        pl = (pointlight_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
         if(!pl)
-            Con_Error("R_ProjectSprite: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
+        {
+            QByteArray uri = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText().toUtf8();
+            Con_Error("R_ProjectSprite: Texture \"%s\" has no TA_SPRITE_AUTOLIGHT analysis", uri.constData());
+        }
 
         lum = LO_GetLuminous(mo->lumIdx);
         def = (mo->state? stateLights[mo->state - states] : 0);

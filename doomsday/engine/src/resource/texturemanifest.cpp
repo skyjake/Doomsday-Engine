@@ -89,6 +89,11 @@ Textures::Scheme &TextureManifest::scheme() const
     throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%p].").arg(de::dintptr(this)));
 }
 
+String const &TextureManifest::schemeName() const
+{
+    return scheme().name();
+}
+
 Uri TextureManifest::composeUri(QChar sep) const
 {
     return Uri(scheme().name(), path(sep));
@@ -117,14 +122,6 @@ bool TextureManifest::setResourceUri(Uri const &newUri)
 
 textureid_t TextureManifest::lookupTextureId() const
 {
-    // If we have bound a texture it can provide the id.
-    if(texture_)
-    {
-        textureid_t texId = texture_->primaryBind();
-        if(texId != NOTEXTUREID) return texId;
-    }
-
-    // Otherwise look it up.
     return textures().idForManifest(*this);
 }
 

@@ -65,6 +65,9 @@ public:
      */
     TextureScheme &scheme() const;
 
+    /// Convenience method for returning the name of the owning scheme.
+    String const &schemeName() const;
+
     /**
      * Compose a URI of the form "scheme:path" for the TextureManifest.
      *
