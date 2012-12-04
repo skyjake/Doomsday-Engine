@@ -26,7 +26,7 @@
 #include "de_filesys.h"
 
 #include "updater/downloaddialog.h"
-#include "filesys/metafile.h"
+#include "filesys/manifest.h"
 
 #include <de/Error>
 #include <de/Log>
@@ -41,7 +41,7 @@ struct Game::Instance
     pluginid_t pluginId;
 
     /// Records for required game files (e.g., doomu.wad).
-    Game::MetaFiles metafiles;
+    Game::Manifests manifests;
 
     /// Unique identifier string (e.g., "doom1-ultimate").
     ddstring_t identityKey;
@@ -59,7 +59,7 @@ struct Game::Instance
     ddstring_t bindingConfig;
 
     Instance(char const* _identityKey, char const* configDir)
-        : pluginId(0), metafiles()
+        : pluginId(0), manifests()
     {
         Str_Set(Str_InitStd(&identityKey), _identityKey);
         DENG_ASSERT(!Str_IsEmpty(&identityKey));
@@ -82,10 +82,10 @@ struct Game::Instance
 
     ~Instance()
     {
-        DENG2_FOR_EACH(Game::MetaFiles, i, metafiles)
+        DENG2_FOR_EACH(Game::Manifests, i, manifests)
         {
-            MetaFile* metafile = *i;
-            delete metafile;
+            Manifest* manifest = *i;
+            delete manifest;
         }
 
         Str_Free(&identityKey);
@@ -114,23 +114,23 @@ GameCollection& Game::collection() const
     return *reinterpret_cast<de::GameCollection*>(App_GameCollection());
 }
 
-Game& Game::addMetafile(MetaFile& metafile)
+Game& Game::addManifest(Manifest& manifest)
 {
     // Ensure we don't add duplicates.
-    MetaFiles::const_iterator found = d->metafiles.find(metafile.resourceClass(), &metafile);
-    if(found == d->metafiles.end())
+    Manifests::const_iterator found = d->manifests.find(manifest.resourceClass(), &manifest);
+    if(found == d->manifests.end())
     {
-        d->metafiles.insert(metafile.resourceClass(), &metafile);
+        d->manifests.insert(manifest.resourceClass(), &manifest);
     }
     return *this;
 }
 
 bool Game::allStartupFilesFound() const
 {
-    DENG2_FOR_EACH_CONST(MetaFiles, i, d->metafiles)
+    DENG2_FOR_EACH_CONST(Manifests, i, d->manifests)
     {
-        MetaFile& metafile = **i;
-        int const flags = metafile.fileFlags();
+        Manifest& manifest = **i;
+        int const flags = manifest.fileFlags();
 
         if((flags & FF_STARTUP) && !(flags & FF_FOUND))
             return false;
@@ -174,9 +174,9 @@ ddstring_t const& Game::author() const
     return d->author;
 }
 
-Game::MetaFiles const& Game::metafiles() const
+Game::Manifests const& Game::manifests() const
 {
-    return d->metafiles;
+    return d->manifests;
 }
 
 bool Game::isRequiredFile(File1& file)
@@ -190,13 +190,13 @@ bool Game::isRequiredFile(File1& file)
 
     bool isRequired = false;
 
-    for(MetaFiles::const_iterator i = d->metafiles.find(RC_PACKAGE);
-        i != d->metafiles.end() && i.key() == RC_PACKAGE; ++i)
+    for(Manifests::const_iterator i = d->manifests.find(RC_PACKAGE);
+        i != d->manifests.end() && i.key() == RC_PACKAGE; ++i)
     {
-        MetaFile& metafile = **i;
-        if(!(metafile.fileFlags() & FF_STARTUP)) continue;
+        Manifest& manifest = **i;
+        if(!(manifest.fileFlags() & FF_STARTUP)) continue;
 
-        if(!metafile.resolvedPath(true/*try locate*/).compare(absolutePath, Qt::CaseInsensitive))
+        if(!manifest.resolvedPath(true/*try locate*/).compare(absolutePath, Qt::CaseInsensitive))
         {
             isRequired = true;
             break;
@@ -223,17 +223,17 @@ void Game::printFiles(Game const& game, int rflags, bool printStatus)
     int numPrinted = 0;
 
     // Group output by resource class.
-    MetaFiles const& metafiles = game.metafiles();
+    Manifests const& manifests = game.manifests();
     for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         resourceclassid_t const classId = resourceclassid_t(i);
-        for(MetaFiles::const_iterator i = metafiles.find(classId);
-            i != metafiles.end() && i.key() == classId; ++i)
+        for(Manifests::const_iterator i = manifests.find(classId);
+            i != manifests.end() && i.key() == classId; ++i)
         {
-            MetaFile& metafile = **i;
-            if(rflags >= 0 && (rflags & metafile.fileFlags()))
+            Manifest& manifest = **i;
+            if(rflags >= 0 && (rflags & manifest.fileFlags()))
             {
-                MetaFile::consolePrint(metafile, printStatus);
+                Manifest::consolePrint(manifest, printStatus);
                 numPrinted += 1;
             }
         }
@@ -329,11 +329,11 @@ boolean Game_IsNullObject(Game const* game)
     return de::isNullGame(*reinterpret_cast<de::Game const*>(game));
 }
 
-struct game_s* Game_AddMetafile(struct game_s* game, struct metafile_s* metafile)
+struct game_s* Game_AddManifest(struct game_s* game, struct manifest_s* manifest)
 {
     SELF(game);
-    DENG_ASSERT(metafile);
-    self->addMetafile(reinterpret_cast<de::MetaFile&>(*metafile));
+    DENG_ASSERT(manifest);
+    self->addManifest(reinterpret_cast<de::Manifest&>(*manifest));
     return game;
 }
 

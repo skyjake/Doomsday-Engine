@@ -33,7 +33,7 @@
 #include <de/PathTree>
 
 #include "resource/compositetexture.h"
-#include "resource/texturemetafile.h"
+#include "resource/texturemanifest.h"
 #include "resource/textures.h"
 
 char const *TexSource_Name(TexSource source)
@@ -53,405 +53,17 @@ namespace de {
 
 static Uri emptyUri;
 
-Texture *Textures::ResourceClass::interpret(TextureMetaFile &metafile, Size2Raw const &dimensions,
+Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Size2Raw const &dimensions,
     Texture::Flags flags, void *userData)
 {
     LOG_AS("Textures::ResourceClass::interpret");
-    return new Texture(metafile.lookupTextureId(), dimensions, flags, userData);
+    return new Texture(manifest.lookupTextureId(), dimensions, flags, userData);
 }
 
-Texture *Textures::ResourceClass::interpret(TextureMetaFile &metafile, Texture::Flags flags,
+Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Texture::Flags flags,
     void *userData)
 {
-    return interpret(metafile, Size2Raw(0, 0), flags, userData);
-}
-
-TextureMetaFile::TextureMetaFile(PathTree::NodeArgs const &args) : Node(args),
-    uniqueId_(0), resourceUri_(), texture_(0)
-{}
-
-TextureMetaFile::~TextureMetaFile()
-{
-    LOG_AS("~TextureMetaFile");
-    if(texture_)
-    {
-#if _DEBUG
-        LOG_WARNING("\"%s\" still has an associated texture!")
-            << composeUri();
-#endif
-        delete texture_;
-    }
-
-    textures().deindex(*this);
-}
-
-Textures &TextureMetaFile::textures()
-{
-    return *App_Textures();
-}
-
-Texture *TextureMetaFile::define(Size2Raw const &dimensions, Texture::Flags flags)
-{
-    if(Texture *tex = texture())
-    {
-#if _DEBUG
-        LOG_WARNING("A Texture with uri \"%s\" already exists, returning existing.")
-            << composeUri();
-#endif
-        tex->setDimensions(dimensions);
-        tex->flagCustom(!!(flags & Texture::Custom));
-
-        /// @todo Materials and Surfaces should be notified of this!
-        return tex;
-    }
-
-    Texture *tex = Textures::ResourceClass::interpret(*this, dimensions, flags);
-    if(!texture()) setTexture(tex);
-    return tex;
-}
-
-Texture *TextureMetaFile::define(Texture::Flags flags)
-{
-    return define(Size2Raw(0, 0), flags);
-}
-
-Textures::Scheme &TextureMetaFile::scheme() const
-{
-    LOG_AS("TextureMetaFile::scheme");
-    /// @todo Optimize: TextureMetaFile should contain a link to the owning Textures::Scheme.
-    Textures::Schemes const &schemes = textures().allSchemes();
-    DENG2_FOR_EACH_CONST(Textures::Schemes, i, schemes)
-    {
-        Textures::Scheme &scheme = **i;
-        if(&scheme.index() == &tree()) return scheme;
-    }
-
-    // This should never happen...
-    /// @throw Error Failed to determine the scheme of the metafile.
-    throw Error("TextureMetaFile::scheme", String("Failed to determine scheme for metafile [%p].").arg(de::dintptr(this)));
-}
-
-Uri TextureMetaFile::composeUri(QChar sep) const
-{
-    return Uri(scheme().name(), path(sep));
-}
-
-Uri TextureMetaFile::composeUrn() const
-{
-    return Uri("urn", String("%1:%2").arg(scheme().name()).arg(uniqueId_, 0, 10));
-}
-
-Uri const &TextureMetaFile::resourceUri() const
-{
-    return resourceUri_;
-}
-
-bool TextureMetaFile::setResourceUri(Uri const &newUri)
-{
-    // Avoid resolving; compare as text.
-    if(resourceUri_.asText() != newUri.asText())
-    {
-        resourceUri_ = newUri;
-        return true;
-    }
-    return false;
-}
-
-textureid_t TextureMetaFile::lookupTextureId() const
-{
-    // If we have bound a texture it can provide the id.
-    if(texture_)
-    {
-        textureid_t texId = texture_->primaryBind();
-        if(texId != NOTEXTUREID) return texId;
-    }
-
-    // Otherwise look it up.
-    return textures().idForMetaFile(*this);
-}
-
-Texture *TextureMetaFile::texture() const
-{
-    return texture_;
-}
-
-void TextureMetaFile::setTexture(Texture *newTexture)
-{
-    texture_ = newTexture;
-}
-
-int TextureMetaFile::uniqueId() const
-{
-    return uniqueId_;
-}
-
-bool TextureMetaFile::setUniqueId(int newUniqueId)
-{
-    if(uniqueId_ == newUniqueId) return false;
-
-    uniqueId_ = newUniqueId;
-    // We'll need to rebuild the id map too.
-    scheme().markUniqueIdLutDirty();
-    return true;
-}
-
-struct Textures::Scheme::Instance
-{
-    /// Symbolic name of the scheme.
-    String name;
-
-    /// Mappings from paths to metafiles.
-    Textures::Scheme::Index *index_;
-
-    /// LUT which translates scheme-unique-ids to their associated metafile (if any).
-    /// Index with uniqueId - uniqueIdBase.
-    QList<TextureMetaFile *> uniqueIdLut;
-    bool uniqueIdLutDirty;
-    int uniqueIdBase;
-
-    Instance(String symbolicName)
-        : name(symbolicName), index_(new Textures::Scheme::Index()),
-          uniqueIdLut(), uniqueIdLutDirty(false), uniqueIdBase(0)
-    {}
-
-    ~Instance()
-    {
-        if(index_)
-        {
-            PathTreeIterator<PathTree> iter(index_->leafNodes());
-            while(iter.hasNext())
-            {
-                TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
-                deindex(metafile);
-            }
-            delete index_;
-        }
-    }
-
-    bool inline uniqueIdInLutRange(int uniqueId) const
-    {
-        return (uniqueId - uniqueIdBase >= 0 && (uniqueId - uniqueIdBase) < uniqueIdLut.size());
-    }
-
-    void findUniqueIdRange(int *minId, int *maxId)
-    {
-        if(!minId && !maxId) return;
-
-        if(!index_)
-        {
-            if(minId) *minId = 0;
-            if(maxId) *maxId = 0;
-            return;
-        }
-
-        if(minId) *minId = DDMAXINT;
-        if(maxId) *maxId = DDMININT;
-
-        PathTreeIterator<PathTree> iter(index_->leafNodes());
-        while(iter.hasNext())
-        {
-            TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
-            int const uniqueId = metafile.uniqueId();
-            if(minId && uniqueId < *minId) *minId = uniqueId;
-            if(maxId && uniqueId > *maxId) *maxId = uniqueId;
-        }
-    }
-
-    void deindex(TextureMetaFile &metafile)
-    {
-        /// @todo Only destroy the texture if this is the last remaining reference.
-        Texture *texture = metafile.texture();
-        if(texture)
-        {
-            delete texture;
-            metafile.setTexture(0);
-        }
-
-        unlinkInUniqueIdLut(metafile);
-    }
-
-    /// @pre uniqueIdLut is large enough if initialized!
-    void unlinkInUniqueIdLut(TextureMetaFile &metafile)
-    {
-        // If the lut is already considered 'dirty' do not unlink.
-        if(!uniqueIdLutDirty)
-        {
-            int uniqueId = metafile.uniqueId();
-            DENG_ASSERT(uniqueIdInLutRange(uniqueId));
-            uniqueIdLut[uniqueId - uniqueIdBase] = 0;
-        }
-    }
-
-    /// @pre uniqueIdLut has been initialized and is large enough!
-    void linkInUniqueIdLut(TextureMetaFile &metafile)
-    {
-        int uniqueId = metafile.uniqueId();
-        DENG_ASSERT(uniqueIdInLutRange(uniqueId));
-        uniqueIdLut[uniqueId - uniqueIdBase] = &metafile;
-    }
-
-    void rebuildUniqueIdLut()
-    {
-        // Is a rebuild necessary?
-        if(!uniqueIdLutDirty) return;
-
-        // Determine the size of the LUT.
-        int minId, maxId;
-        findUniqueIdRange(&minId, &maxId);
-
-        int lutSize = 0;
-        if(minId > maxId) // None found?
-        {
-            uniqueIdBase = 0;
-        }
-        else
-        {
-            uniqueIdBase = minId;
-            lutSize = maxId - minId + 1;
-        }
-
-        // Fill the LUT with initial values.
-        uniqueIdLut.reserve(lutSize);
-        int i = 0;
-        for(; i < uniqueIdLut.size(); ++i)
-        {
-            uniqueIdLut[i] = 0;
-        }
-        for(; i < lutSize; ++i)
-        {
-            uniqueIdLut.push_back(0);
-        }
-
-        if(lutSize)
-        {
-            // Populate the LUT.
-            PathTreeIterator<PathTree> iter(index_->leafNodes());
-            while(iter.hasNext())
-            {
-                linkInUniqueIdLut(static_cast<TextureMetaFile &>(iter.next()));
-            }
-        }
-
-        uniqueIdLutDirty = false;
-    }
-};
-
-Textures::Scheme::Scheme(String symbolicName)
-{
-    d = new Instance(symbolicName);
-}
-
-Textures::Scheme::~Scheme()
-{
-    delete d;
-}
-
-void Textures::Scheme::clear()
-{
-    if(d->index_)
-    {
-        PathTreeIterator<PathTree> iter(d->index_->leafNodes());
-        while(iter.hasNext())
-        {
-            TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
-            d->deindex(metafile);
-        }
-        d->index_->clear();
-        d->uniqueIdLutDirty = true;
-    }
-}
-
-String const &Textures::Scheme::name() const
-{
-    return d->name;
-}
-
-int Textures::Scheme::size() const
-{
-    return d->index_->size();
-}
-
-TextureMetaFile &Textures::Scheme::insertMetaFile(Path const &path)
-{
-    int sizeBefore = d->index_->size();
-    TextureMetaFile &metafile = d->index_->insert(path);
-    if(d->index_->size() != sizeBefore)
-    {
-        // We'll need to rebuild the unique id LUT after this.
-        d->uniqueIdLutDirty = true;
-    }
-    return metafile;
-}
-
-TextureMetaFile const &Textures::Scheme::find(Path const &path) const
-{
-    try
-    {
-        return d->index_->find(path, PathTree::NoBranch | PathTree::MatchFull);
-    }
-    catch(Scheme::Index::NotFoundError const &er)
-    {
-        throw NotFoundError("Textures::Scheme::find", er.asText());
-    }
-}
-
-TextureMetaFile &Textures::Scheme::find(Path const &path)
-{
-    TextureMetaFile const &found = const_cast<Textures::Scheme const *>(this)->find(path);
-    return const_cast<TextureMetaFile &>(found);
-}
-
-TextureMetaFile const &Textures::Scheme::findByResourceUri(Uri const &uri) const
-{
-    if(!uri.isEmpty())
-    {
-        PathTreeIterator<PathTree> iter(d->index_->leafNodes());
-        while(iter.hasNext())
-        {
-            TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
-            if(metafile.resourceUri() == uri)
-            {
-                return metafile;
-            }
-        }
-    }
-    /// @throw NotFoundError  No metafile was found with a matching resource URI.
-    throw NotFoundError("Textures::Scheme::findByResourceUri", "No metafile found with a resource URI matching \"" + uri + "\"");
-}
-
-TextureMetaFile &Textures::Scheme::findByResourceUri(Uri const &uri)
-{
-    TextureMetaFile const &found = const_cast<Textures::Scheme const *>(this)->findByResourceUri(uri);
-    return const_cast<TextureMetaFile &>(found);
-}
-
-TextureMetaFile const &Textures::Scheme::findByUniqueId(int uniqueId) const
-{
-    d->rebuildUniqueIdLut();
-
-    if(d->uniqueIdInLutRange(uniqueId))
-    {
-        TextureMetaFile *metafile = d->uniqueIdLut[uniqueId - d->uniqueIdBase];
-        if(metafile) return *metafile;
-    }
-    /// @throw NotFoundError  No metafile was found with a matching resource URI.
-    throw NotFoundError("Textures::Scheme::findByUniqueId", "No metafile found with a unique ID matching \"" + QString("%1").arg(uniqueId) + "\"");
-}
-
-TextureMetaFile &Textures::Scheme::findByUniqueId(int uniqueId)
-{
-    TextureMetaFile const &found = const_cast<Textures::Scheme const *>(this)->findByUniqueId(uniqueId);
-    return const_cast<TextureMetaFile &>(found);
-}
-
-Textures::Scheme::Index const &Textures::Scheme::index() const
-{
-    return *d->index_;
-}
-
-void Textures::Scheme::markUniqueIdLutDirty()
-{
-    d->uniqueIdLutDirty = true;
+    return interpret(manifest, Size2Raw(0, 0), flags, userData);
 }
 
 enum ValidateUriFlag
@@ -466,8 +78,8 @@ struct Textures::Instance
 {
     Textures& self;
 
-    // LUT which translates textureid_t => TextureMetaFile*. Index with textureid_t-1
-    QList<TextureMetaFile *> textureIdLut;
+    // LUT which translates textureid_t => TextureManifest*. Index with textureid_t-1
+    QList<TextureManifest *> textureIdLut;
 
     /// System subspace schemes containing the textures.
     Textures::Schemes schemes;
@@ -490,20 +102,20 @@ struct Textures::Instance
     }
 
     /// @pre textureIdLut has been initialized and is large enough!
-    void unlinkFromTextureIdLut(TextureMetaFile &metafile)
+    void unlinkFromTextureIdLut(TextureManifest &manifest)
     {
-        textureid_t texId = metafile.lookupTextureId();
+        textureid_t texId = manifest.lookupTextureId();
         if(!validTextureId(texId)) return; // Not linked.
         textureIdLut[texId - 1/*1-based index*/] = 0;
     }
 
-    TextureMetaFile *metafileByTextureId(textureid_t id)
+    TextureManifest *manifestByTextureId(textureid_t id)
     {
         if(!validTextureId(id)) return 0;
         return textureIdLut[id - 1/*1-based index*/];
     }
 
-    TextureMetaFile *metafileByUri(Uri const &validatedUri)
+    TextureManifest *manifestByUri(Uri const &validatedUri)
     {
         // Is this a URN? (of the form "urn:schemename:uniqueid")
         if(!validatedUri.scheme().compareWithoutCase("urn"))
@@ -528,7 +140,7 @@ struct Textures::Instance
         // No, this is a URI.
         String const &path = validatedUri.path();
 
-        // Does the user want a metafile in a specific scheme?
+        // Does the user want a manifest in a specific scheme?
         if(!validatedUri.scheme().isEmpty())
         {
             try
@@ -678,9 +290,9 @@ static void release(Texture *tex)
 Texture *Textures::toTexture(textureid_t id) const
 {
     LOG_AS("Textures::toTexture");
-    if(TextureMetaFile *metafile = d->metafileByTextureId(id))
+    if(TextureManifest *manifest = d->manifestByTextureId(id))
     {
-        return metafile->texture();
+        return manifest->texture();
     }
 
 #if _DEBUG
@@ -690,7 +302,7 @@ Texture *Textures::toTexture(textureid_t id) const
     return 0;
 }
 
-TextureMetaFile *Textures::find(Uri const &uri) const
+TextureManifest *Textures::find(Uri const &uri) const
 {
     LOG_AS("Textures::find");
 
@@ -705,10 +317,10 @@ TextureMetaFile *Textures::find(Uri const &uri) const
     }
 
     // Perform the search.
-    return d->metafileByUri(uri);
+    return d->manifestByUri(uri);
 }
 
-TextureMetaFile *Textures::declare(Uri const &uri, int uniqueId, Uri const *resourceUri)
+TextureManifest *Textures::declare(Uri const &uri, int uniqueId, Uri const *resourceUri)
 {
     LOG_AS("Textures::declare");
 
@@ -722,17 +334,17 @@ TextureMetaFile *Textures::declare(Uri const &uri, int uniqueId, Uri const *reso
     }
 
     // Have we already created a binding for this?
-    TextureMetaFile *metafile = d->metafileByUri(uri);
-    if(!metafile)
+    TextureManifest *manifest = d->manifestByUri(uri);
+    if(!manifest)
     {
         /*
          * A new binding.
          */
-        metafile = &scheme(uri.scheme()).insertMetaFile(uri.path());
-        metafile->setUniqueId(uniqueId);
+        manifest = &scheme(uri.scheme()).insertManifest(uri.path());
+        manifest->setUniqueId(uniqueId);
 
         // Link it into the id LUT.
-        d->textureIdLut.push_back(metafile);
+        d->textureIdLut.push_back(manifest);
     }
 
     /**
@@ -743,32 +355,32 @@ TextureMetaFile *Textures::declare(Uri const &uri, int uniqueId, Uri const *reso
     // responsibility is to release textures when they change.
     bool releaseTexture = false;
 
-    if(resourceUri && metafile->setResourceUri(*resourceUri))
+    if(resourceUri && manifest->setResourceUri(*resourceUri))
     {
         releaseTexture = true;
     }
 
-    if(metafile->setUniqueId(uniqueId))
+    if(manifest->setUniqueId(uniqueId))
     {
         releaseTexture = true;
     }
 
-    if(releaseTexture && metafile->texture())
+    if(releaseTexture && manifest->texture())
     {
         // The mapped resource is being replaced, so release any existing Texture.
         /// @todo Only release if this Texture is bound to only this binding.
-        release(metafile->texture());
+        release(manifest->texture());
     }
 
-    return metafile;
+    return manifest;
 }
 
 int Textures::uniqueId(textureid_t id) const
 {
     LOG_AS("Textures::uniqueId");
-    if(TextureMetaFile *metafile = d->metafileByTextureId(id))
+    if(TextureManifest *manifest = d->manifestByTextureId(id))
     {
-        return metafile->uniqueId();
+        return manifest->uniqueId();
     }
 
 #if _DEBUG
@@ -781,9 +393,9 @@ int Textures::uniqueId(textureid_t id) const
 Uri const &Textures::resourceUri(textureid_t id) const
 {
     LOG_AS("Textures::resourcePath");
-    if(TextureMetaFile *metafile = d->metafileByTextureId(id))
+    if(TextureManifest *manifest = d->manifestByTextureId(id))
     {
-        return metafile->resourceUri();
+        return manifest->resourceUri();
     }
 
 #if _DEBUG
@@ -799,11 +411,11 @@ textureid_t Textures::id(Texture &tex) const
     return tex.primaryBind();
 }
 
-textureid_t Textures::idForMetaFile(Textures::MetaFile const &metafile) const
+textureid_t Textures::idForManifest(Textures::Manifest const &manifest) const
 {
-    LOG_AS("Textures::idForMetaFile");
+    LOG_AS("Textures::idForManifest");
     /// @todo Optimize: (Low priority) do not use a linear search.
-    int index = d->textureIdLut.indexOf(const_cast<Textures::MetaFile *>(&metafile));
+    int index = d->textureIdLut.indexOf(const_cast<Textures::Manifest *>(&manifest));
     if(index >= 0)
     {
         return textureid_t(index + 1); // 1-based index.
@@ -846,9 +458,9 @@ Textures::Schemes const& Textures::allSchemes() const
 Uri Textures::composeUri(textureid_t id) const
 {
     LOG_AS("Textures::composeUri");
-    if(TextureMetaFile *metafile = d->metafileByTextureId(id))
+    if(TextureManifest *manifest = d->manifestByTextureId(id))
     {
-        return metafile->composeUri();
+        return manifest->composeUri();
     }
 
 #if _DEBUG
@@ -868,10 +480,10 @@ int Textures::iterate(String nameOfScheme,
         PathTreeIterator<PathTree> iter(scheme(nameOfScheme).index().leafNodes());
         while(iter.hasNext())
         {
-            TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
-            if(!metafile.texture()) continue;
+            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+            if(!manifest.texture()) continue;
 
-            int result = callback(*metafile.texture(), parameters);
+            int result = callback(*manifest.texture(), parameters);
             if(result) return result;
         }
     }
@@ -882,10 +494,10 @@ int Textures::iterate(String nameOfScheme,
             PathTreeIterator<PathTree> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
-                if(!metafile.texture()) continue;
+                TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+                if(!manifest.texture()) continue;
 
-                int result = callback(*metafile.texture(), parameters);
+                int result = callback(*manifest.texture(), parameters);
                 if(result) return result;
             }
         }
@@ -894,7 +506,7 @@ int Textures::iterate(String nameOfScheme,
 }
 
 int Textures::iterateDeclared(String nameOfScheme,
-    int (*callback)(TextureMetaFile &metafile, void *parameters), void *parameters) const
+    int (*callback)(TextureManifest &manifest, void *parameters), void *parameters) const
 {
     if(!callback) return 0;
 
@@ -903,8 +515,8 @@ int Textures::iterateDeclared(String nameOfScheme,
         PathTreeIterator<PathTree> iter(scheme(nameOfScheme).index().leafNodes());
         while(iter.hasNext())
         {
-            TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
-            int result = callback(metafile, parameters);
+            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+            int result = callback(manifest, parameters);
             if(result) return result;
         }
     }
@@ -915,8 +527,8 @@ int Textures::iterateDeclared(String nameOfScheme,
             PathTreeIterator<PathTree> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
-                int result = callback(metafile, parameters);
+                TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+                int result = callback(manifest, parameters);
                 if(result) return result;
             }
         }
@@ -925,9 +537,9 @@ int Textures::iterateDeclared(String nameOfScheme,
     return 0;
 }
 
-void Textures::deindex(TextureMetaFile &metafile)
+void Textures::deindex(TextureManifest &manifest)
 {
-    d->unlinkFromTextureIdLut(metafile);
+    d->unlinkFromTextureIdLut(manifest);
 }
 
 static void printVariantInfo(TextureVariant &variant)
@@ -972,25 +584,25 @@ static void printTextureInfo(Texture &tex)
     }
 }
 
-static void printTextureSummary(TextureMetaFile &metafile, bool printSchemeName)
+static void printTextureSummary(TextureManifest &manifest, bool printSchemeName)
 {
-    Uri uri = metafile.composeUri();
+    Uri uri = manifest.composeUri();
     QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
 
-    QByteArray resourceUri = metafile.resourceUri().asText().toUtf8();
+    QByteArray resourceUri = manifest.resourceUri().asText().toUtf8();
     if(resourceUri.isEmpty()) resourceUri = "N/A";
 
-    Con_FPrintf(!metafile.texture()? CPF_LIGHT : CPF_WHITE,
+    Con_FPrintf(!manifest.texture()? CPF_LIGHT : CPF_WHITE,
                 "%-*s %-6s x%u %s\n", printSchemeName? 22 : 14, path.constData(),
-                !metafile.texture()? "unknown" : metafile.texture()->isCustom()? "addon" : "game",
-                metafile.texture()->variantCount(), resourceUri.constData());
+                !manifest.texture()? "unknown" : manifest.texture()->isCustom()? "addon" : "game",
+                manifest.texture()->variantCount(), resourceUri.constData());
 }
 
 /**
  * @todo This logic should be implemented in de::PathTree -ds
  */
-static QList<TextureMetaFile *> collectTextureMetaFiles(Textures::Scheme *scheme,
-    Path const &path, QList<TextureMetaFile *> *storage = 0)
+static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme,
+    Path const &path, QList<TextureManifest *> *storage = 0)
 {
     int count = 0;
 
@@ -1000,16 +612,16 @@ static QList<TextureMetaFile *> collectTextureMetaFiles(Textures::Scheme *scheme
         PathTreeIterator<Textures::Scheme::Index> iter(scheme->index().leafNodes());
         while(iter.hasNext())
         {
-            TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
+            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
             if(!path.isEmpty())
             {
                 /// @todo Use PathTree::Node::compare()
-                if(!metafile.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
+                if(!manifest.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
             }
 
             if(storage) // Store mode.
             {
-                storage->push_back(&metafile);
+                storage->push_back(&manifest);
             }
             else // Count mode.
             {
@@ -1026,16 +638,16 @@ static QList<TextureMetaFile *> collectTextureMetaFiles(Textures::Scheme *scheme
             PathTreeIterator<Textures::Scheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                TextureMetaFile &metafile = static_cast<TextureMetaFile &>(iter.next());
+                TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
                 if(!path.isEmpty())
                 {
                     /// @todo Use PathTree::Node::compare()
-                    if(!metafile.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
+                    if(!manifest.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
                 }
 
                 if(storage) // Store mode.
                 {
-                    storage->push_back(&metafile);
+                    storage->push_back(&manifest);
                 }
                 else // Count mode.
                 {
@@ -1050,19 +662,19 @@ static QList<TextureMetaFile *> collectTextureMetaFiles(Textures::Scheme *scheme
         return *storage;
     }
 
-    QList<TextureMetaFile*> result;
+    QList<TextureManifest*> result;
     if(count == 0) return result;
 
     result.reserve(count);
-    return collectTextureMetaFiles(scheme, path, &result);
+    return collectTextureManifests(scheme, path, &result);
 }
 
 /**
- * Decode and then lexicographically compare the two metafile
+ * Decode and then lexicographically compare the two manifest
  * paths, returning @c true if @a is less than @a b.
  */
-static bool compareTextureMetaFilePathsAssending(TextureMetaFile const *a,
-                                          TextureMetaFile const *b)
+static bool compareTextureManifestPathsAssending(TextureManifest const *a,
+                                          TextureManifest const *b)
 {
     String pathA = QString(QByteArray::fromPercentEncoding(a->path().toUtf8()));
     String pathB = QString(QByteArray::fromPercentEncoding(b->path().toUtf8()));
@@ -1084,7 +696,7 @@ static bool compareTextureMetaFilePathsAssending(TextureMetaFile const *a,
  */
 static int printTextures2(Textures::Scheme *scheme, Path const &path, int flags)
 {
-    QList<TextureMetaFile *> found = collectTextureMetaFiles(scheme, path);
+    QList<TextureManifest *> found = collectTextureManifests(scheme, path);
     if(found.isEmpty()) return 0;
 
     bool const printSchemeName = !(flags & PTF_TRANSFORM_PATH_NO_SCHEME);
@@ -1110,9 +722,9 @@ static int printTextures2(Textures::Scheme *scheme, Path const &path, int flags)
     Con_PrintRuler();
 
     // Sort and print the index.
-    qSort(found.begin(), found.end(), compareTextureMetaFilePathsAssending);
+    qSort(found.begin(), found.end(), compareTextureManifestPathsAssending);
     int idx = 0;
-    DENG2_FOR_EACH(QList<TextureMetaFile *>, i, found)
+    DENG2_FOR_EACH(QList<TextureManifest *>, i, found)
     {
         Con_Printf(" %*i: ", numFoundDigits, idx++);
         printTextureSummary(**i, printSchemeName);
@@ -1233,9 +845,9 @@ int Textures_UniqueId2(Uri const *_uri, boolean quiet)
     de::Uri const &uri = reinterpret_cast<de::Uri const &>(*_uri);
 
     de::Textures &textures = *App_Textures();
-    if(de::TextureMetaFile *metafile = textures.find(uri))
+    if(de::TextureManifest *manifest = textures.find(uri))
     {
-        return metafile->uniqueId();
+        return manifest->uniqueId();
     }
 
     if(!quiet)
@@ -1293,8 +905,8 @@ D_CMD(InspectTexture)
         return false;
     }
 
-    if(de::TextureMetaFile *metafile = textures.find(search))
-    if(de::Texture* tex = metafile->texture())
+    if(de::TextureManifest *manifest = textures.find(search))
+    if(de::Texture* tex = manifest->texture())
     {
         de::printTextureInfo(*tex);
         return true;

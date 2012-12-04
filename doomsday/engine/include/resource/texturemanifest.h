@@ -1,5 +1,5 @@
 /**
- * @file texturemetafile.h
+ * @file texturemanifest.h
  * @ingroup resource
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
@@ -19,10 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_TEXTUREMETAFILE_H
-#define LIBDENG_RESOURCE_TEXTUREMETAFILE_H
+#ifndef LIBDENG_RESOURCE_TEXTUREMANIFEST_H
+#define LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 
-#include <QList>
 #include <de/PathTree>
 #include <de/size.h>
 #include "uri.hh"
@@ -31,19 +30,22 @@
 namespace de {
 
 class Textures;
+class TextureScheme;
 
 /**
- * Models a texture reference and the associated metadata for a resource
- * in the Textures collection.
+ * Models a reference to and the associated metadata for a would-be logical
+ * Texture resource in the Textures collection.
  */
-class TextureMetaFile : public PathTree::Node
+class TextureManifest : public PathTree::Node
 {
 public:
-    TextureMetaFile(PathTree::NodeArgs const &args);
-    virtual ~TextureMetaFile();
+    TextureManifest(PathTree::NodeArgs const &args);
+    virtual ~TextureManifest();
 
     /**
-     * Interpret the TextureMetaFile creating a new logical Texture instance.
+     * Derive a new logical Texture instance by interpreting the manifest.
+     * The first time a texture is derived from the manifest, said texture
+     * is assigned to the manifest (ownership is assumed).
      *
      * @param dimensions  Logical dimensions. Components can be @c 0 in which
      *                  case their value will be inherited from the actual
@@ -51,38 +53,38 @@ public:
      * @param flags     Flags.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture *define(Size2Raw const &dimensions, Texture::Flags flags);
+    Texture *derive(Size2Raw const &dimensions, Texture::Flags flags);
 
     /**
-     * @copydoc define()
+     * @copydoc derive()
      */
-    Texture *define(Texture::Flags flags);
+    Texture *derive(Texture::Flags flags);
 
     /**
-     * Returns the owning scheme of the TextureMetaFile.
+     * Returns the owning scheme of the TextureManifest.
      */
-    Textures::Scheme &scheme() const;
+    TextureScheme &scheme() const;
 
     /**
-     * Compose a URI of the form "scheme:path" for the TextureMetaFile.
+     * Compose a URI of the form "scheme:path" for the TextureManifest.
      *
      * The scheme component of the URI will contain the symbolic name of
-     * the scheme for the TextureMetaFile.
+     * the scheme for the TextureManifest.
      *
      * The path component of the URI will contain the percent-encoded path
-     * of the TextureMetaFile.
+     * of the TextureManifest.
      */
     Uri composeUri(QChar sep = '/') const;
 
     /**
      * Compose a URN of the form "urn:scheme:uniqueid" for the texture
-     * TextureMetaFile.
+     * TextureManifest.
      *
      * The scheme component of the URI will contain the identifier 'urn'.
      *
      * The path component of the URI is a string which contains both the
      * symbolic name of the scheme followed by the unique id of the texture
-     * TextureMetaFile, separated with a colon.
+     * TextureManifest, separated with a colon.
      *
      * @see uniqueId(), setUniqueId()
      */
@@ -94,7 +96,7 @@ public:
     Uri const &resourceUri() const;
 
     /**
-     * Change the resource URI associated with the metafile.
+     * Change the resource URI associated with the manifest.
      *
      * @return  @c true iff @a newUri differed to the existing URI, which
      *          was subsequently changed.
@@ -102,25 +104,25 @@ public:
     bool setResourceUri(Uri const &newUri);
 
     /**
-     * Returns the logical Texture instance associated with the metafile;
+     * Returns the logical Texture instance associated with the manifest;
      * otherwise @c 0.
      */
     Texture *texture() const;
 
     /**
-     * Change the logical Texture associated with the metafile.
+     * Change the logical Texture associated with the manifest.
      *
      * @param newTexture  New logical Texture to associate.
      */
     void setTexture(Texture *newTexture);
 
     /**
-     * Returns the scheme-unique identifier for the metafile.
+     * Returns the scheme-unique identifier for the manifest.
      */
     int uniqueId() const;
 
     /**
-     * Change the unique identifier associated with the metafile.
+     * Change the unique identifier associated with the manifest.
      *
      * @return  @c true iff @a newUniqueId differed to the existing unique
      *          identifier, which was subsequently changed.
@@ -146,4 +148,4 @@ private:
 
 } // namespace de
 
-#endif /// LIBDENG_RESOURCE_TEXTUREMETAFILE_H
+#endif /// LIBDENG_RESOURCE_TEXTUREMANIFEST_H

@@ -25,7 +25,7 @@
 #include "de_filesys.h"
 #include "dd_games.h"
 
-#include "filesys/metafile.h"
+#include "filesys/manifest.h"
 #include "resource/zip.h"
 
 namespace de {
@@ -198,9 +198,9 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
         App_FileSystem()->resetAllSchemes();
     }
 
-    DENG2_FOR_EACH_CONST(Game::MetaFiles, i, game.metafiles())
+    DENG2_FOR_EACH_CONST(Game::Manifests, i, game.manifests())
     {
-        MetaFile& record = **i;
+        Manifest& record = **i;
 
         // We are only interested in startup resources at this time.
         if(!(record.fileFlags() & FF_STARTUP)) continue;

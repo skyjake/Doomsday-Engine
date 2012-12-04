@@ -1,7 +1,7 @@
 /**
- * @file metafile.cpp
+ * @file manifest.cpp
  *
- * MetaFile. @ingroup fs
+ * Manifest. @ingroup fs
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -25,7 +25,7 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "filesys/metafile.h"
+#include "filesys/manifest.h"
 #include "resource/wad.h"
 #include "resource/zip.h"
 
@@ -33,7 +33,7 @@
 
 namespace de {
 
-struct MetaFile::Instance
+struct Manifest::Instance
 {
     /// Class of resource.
     resourceclassid_t classId;
@@ -48,7 +48,7 @@ struct MetaFile::Instance
     /// Used for identification purposes.
     QStringList identityKeys;
 
-    /// Index (in MetaFile::Instance::names) of the name used to locate
+    /// Index (in Manifest::Instance::names) of the name used to locate
     /// this resource if found. Set during resource location.
     int foundNameIndex;
 
@@ -62,18 +62,18 @@ struct MetaFile::Instance
     {}
 };
 
-MetaFile::MetaFile(resourceclassid_t fClass, int fFlags, String* name)
+Manifest::Manifest(resourceclassid_t fClass, int fFlags, String* name)
 {
     d = new Instance(fClass, fFlags);
     if(name) addName(*name);
 }
 
-MetaFile::~MetaFile()
+Manifest::~Manifest()
 {
     delete d;
 }
 
-MetaFile& MetaFile::addName(String newName, bool* didAdd)
+Manifest& Manifest::addName(String newName, bool* didAdd)
 {
     // Is this name unique? We don't want duplicates.
     if(newName.isEmpty() || d->names.contains(newName, Qt::CaseInsensitive))
@@ -89,7 +89,7 @@ MetaFile& MetaFile::addName(String newName, bool* didAdd)
     return *this;
 }
 
-MetaFile& MetaFile::addIdentityKey(String newIdentityKey, bool* didAdd)
+Manifest& Manifest::addIdentityKey(String newIdentityKey, bool* didAdd)
 {
     // Is this key unique? We don't want duplicates.
     if(newIdentityKey.isEmpty() || d->identityKeys.contains(newIdentityKey, Qt::CaseInsensitive))
@@ -264,7 +264,7 @@ static bool validateZip(String const& filePath, QStringList const& /*identityKey
     return false;
 }
 
-MetaFile& MetaFile::locateFile()
+Manifest& Manifest::locateFile()
 {
     // Already found?
     if(d->flags & FF_FOUND) return *this;
@@ -309,7 +309,7 @@ MetaFile& MetaFile::locateFile()
     return *this;
 }
 
-MetaFile& MetaFile::forgetFile()
+Manifest& Manifest::forgetFile()
 {
     if(d->flags & FF_FOUND)
     {
@@ -320,7 +320,7 @@ MetaFile& MetaFile::forgetFile()
     return *this;
 }
 
-String const& MetaFile::resolvedPath(bool tryLocate)
+String const& Manifest::resolvedPath(bool tryLocate)
 {
     if(tryLocate)
     {
@@ -329,30 +329,30 @@ String const& MetaFile::resolvedPath(bool tryLocate)
     return d->foundPath;
 }
 
-resourceclassid_t MetaFile::resourceClass() const
+resourceclassid_t Manifest::resourceClass() const
 {
     return d->classId;
 }
 
-int MetaFile::fileFlags() const
+int Manifest::fileFlags() const
 {
     return d->flags;
 }
 
-QStringList const& MetaFile::identityKeys() const
+QStringList const& Manifest::identityKeys() const
 {
     return d->identityKeys;
 }
 
-QStringList const& MetaFile::names() const
+QStringList const& Manifest::names() const
 {
     return d->names;
 }
 
-void MetaFile::consolePrint(MetaFile& metafile, bool showStatus)
+void Manifest::consolePrint(Manifest& manifest, bool showStatus)
 {
-    QByteArray names = metafile.names().join(";").toUtf8();
-    bool const resourceFound = !!(metafile.fileFlags() & FF_FOUND);
+    QByteArray names = manifest.names().join(";").toUtf8();
+    bool const resourceFound = !!(manifest.fileFlags() & FF_FOUND);
 
     if(showStatus)
         Con_Printf("%s", !resourceFound? " ! ":"   ");
@@ -361,7 +361,7 @@ void MetaFile::consolePrint(MetaFile& metafile, bool showStatus)
 
     if(showStatus)
     {
-        QByteArray foundPath = resourceFound? metafile.resolvedPath(false/*don't try to locate*/).toUtf8() : QByteArray("");
+        QByteArray foundPath = resourceFound? manifest.resolvedPath(false/*don't try to locate*/).toUtf8() : QByteArray("");
         Con_Printf(" %s%s", !resourceFound? "- missing" : "- found ", F_PrettyPath(foundPath.constData()));
     }
     Con_Printf("\n");

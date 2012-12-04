@@ -38,7 +38,7 @@
 #include "resource/zip.h"
 
 #ifdef __cplusplus
-#  include "resource/texturemetafile.h"
+#  include "resource/texturemanifest.h"
 #endif
 
 #endif /* LIBDENG_RESOURCE_SUBSYSTEM_H */

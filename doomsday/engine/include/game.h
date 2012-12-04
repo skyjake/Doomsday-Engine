@@ -44,7 +44,7 @@ extern "C" {
 #define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
 ///@}
 
-struct metafile_s;
+struct manifest_s;
 struct gamedef_s;
 
 #ifdef __cplusplus
@@ -58,7 +58,7 @@ struct gamedef_s;
 namespace de {
 
 class File1;
-class MetaFile;
+class Manifest;
 class GameCollection;
 
 /**
@@ -70,7 +70,7 @@ class GameCollection;
 class Game
 {
 public:
-    typedef QMultiMap<resourceclassid_t, MetaFile*> MetaFiles;
+    typedef QMultiMap<resourceclassid_t, Manifest*> Manifests;
 
 public:
     /**
@@ -111,20 +111,20 @@ public:
     Game& setPluginId(pluginid_t newId);
 
     /**
-     * Add a new metafile to the list of metafiles.
+     * Add a new manifest to the list of manifests.
      *
      * @note Registration order defines load order (among files of the same class).
      *
-     * @param metafile  MetaFile to add.
+     * @param manifest  Manifest to add.
      */
-    Game& addMetafile(MetaFile& metafile);
+    Game& addManifest(Manifest& manifest);
 
     bool allStartupFilesFound() const;
 
     /**
-     * Provides access to the metafiles for efficent traversals.
+     * Provides access to the manifests for efficent traversals.
      */
-    MetaFiles const& metafiles() const;
+    Manifests const& manifests() const;
 
     /**
      * Is @a file required by this game? This decision is made by comparing the
@@ -193,7 +193,7 @@ public:
 public:
     NullGame();
 
-    Game& addMetafile(struct metafile_s& /*record*/) {
+    Game& addManifest(struct manifest_s& /*record*/) {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
     }
 
@@ -205,7 +205,7 @@ public:
         return true; // Always.
     }
 
-    struct metafile_s* const* metafiles(resourceclassid_t /*classId*/, int* /*count*/) const {
+    struct manifest_s* const* manifests(resourceclassid_t /*classId*/, int* /*count*/) const {
         return 0;
     }
 
@@ -237,7 +237,7 @@ void Game_Delete(Game* game);
 
 boolean Game_IsNullObject(Game const* game);
 
-struct game_s* Game_AddMetafile(Game* game, struct metafile_s* record);
+struct game_s* Game_AddManifest(Game* game, struct manifest_s* record);
 
 boolean Game_AllStartupFilesFound(Game const* game);
 

@@ -169,10 +169,10 @@ static spriterecord_t* findSpriteRecordForName(char const *name)
  * turn CLOCKWISE around the axis. This is not the same as the angle,
  * which increases counter clockwise (protractor).
  */
-static void buildSprite(de::TextureMetaFile &metafile)
+static void buildSprite(de::TextureManifest &manifest)
 {
     // Have we already encountered this name?
-    de::String decodedPath = QString(QByteArray::fromPercentEncoding(metafile.path().toUtf8()));
+    de::String decodedPath = QString(QByteArray::fromPercentEncoding(manifest.path().toUtf8()));
     QByteArray decodedPathUtf8 = decodedPath.toUtf8();
 
     spriterecord_t *rec = findSpriteRecordForName(decodedPathUtf8.constData());
@@ -210,7 +210,7 @@ static void buildSprite(de::TextureMetaFile &metafile)
         link = true;
     }
 
-    de::Uri uri = de::Uri("Sprites", metafile.path());
+    de::Uri uri = de::Uri("Sprites", manifest.path());
     frame->mat = Materials_ToMaterial(Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
 
     frame->frame[0]    = frameNumber;
@@ -247,7 +247,7 @@ static void buildSprites()
     de::PathTreeIterator<de::PathTree> iter(App_Textures()->scheme("Sprites").index().leafNodes());
     while(iter.hasNext())
     {
-        buildSprite(static_cast<de::TextureMetaFile &>(iter.next()));
+        buildSprite(static_cast<de::TextureManifest &>(iter.next()));
     }
 
     LOG_INFO(de::String("buildSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));

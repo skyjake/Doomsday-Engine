@@ -789,7 +789,7 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
     return true;
 }
 
-static void loadResource(MetaFile& record)
+static void loadResource(Manifest& record)
 {
     DENG_ASSERT(record.resourceClass() == RC_PACKAGE);
 
@@ -866,13 +866,13 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
      */
     Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
 
-    de::Game::MetaFiles const& gameMetafiles = games->currentGame().metafiles();
-    int const numPackages = gameMetafiles.count(RC_PACKAGE);
+    de::Game::Manifests const& gameManifests = games->currentGame().manifests();
+    int const numPackages = gameManifests.count(RC_PACKAGE);
     int packageIdx = 0;
-    for(de::Game::MetaFiles::const_iterator i = gameMetafiles.find(RC_PACKAGE);
-        i != gameMetafiles.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
+    for(de::Game::Manifests::const_iterator i = gameManifests.find(RC_PACKAGE);
+        i != gameManifests.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
     {
-        MetaFile& record = **i;
+        Manifest& record = **i;
         loadResource(record);
 
         // Update our progress.
@@ -1266,8 +1266,8 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
 
     // Construct and attach the new resource record.
     de::Game& game = games->byId(gameId);
-    MetaFile* record = new MetaFile(classId, rflags);
-    game.addMetafile(*record);
+    Manifest* record = new Manifest(classId, rflags);
+    game.addManifest(*record);
 
     // Add the name list to the resource record.
     QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
