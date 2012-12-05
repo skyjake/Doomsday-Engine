@@ -485,7 +485,7 @@ static modeldef_t *currentModelDefForMobj(mobj_t *mo)
     // If models are being used, use the model's radius.
     if(useModels)
     {
-        modeldef_t *mf, *nextmf;
+        modeldef_t *mf = 0, *nextmf = 0;
         Models_ModelForMobj(mo, &mf, &nextmf);
         return mf;
     }

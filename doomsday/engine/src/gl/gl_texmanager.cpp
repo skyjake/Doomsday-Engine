@@ -23,6 +23,7 @@
  */
 
 #include <cstdlib>
+#include <cstring> // memset, memcpy
 #include <cctype>
 #include <cmath>
 
