@@ -444,20 +444,20 @@ public:
 
     /**
      * Creates a new log entry with the default (MESSAGE) level.
-     * Append the parameters of the entry using the << operator.
      *
-     * @param format  Format template of the entry.
+     * @param format     Format template of the entry.
+     * @param arguments  List of arguments. The entry is given ownership of
+     *                   each Arg instance.
      */
-    LogEntry &enter(String const &format);
+    LogEntry &enter(String const &format, LogEntry::Args arguments = LogEntry::Args());
 
     /**
-     * Creates a new log entry with the specified level.
-     * Append the parameters of the entry using the << operator.
+     * Creates a new log entry with the specified log entry level.
      *
-     * @param level   Level of the entry.
-     * @param format  Format template of the entry.
+     * @param level      Level of the entry.
+     * @param format     Format template of the entry.
      * @param arguments  List of arguments. The entry is given ownership of
-     *                each Arg instance.
+     *                   each Arg instance.
      */
     LogEntry &enter(LogEntry::Level level, String const &format, LogEntry::Args arguments = LogEntry::Args());
 

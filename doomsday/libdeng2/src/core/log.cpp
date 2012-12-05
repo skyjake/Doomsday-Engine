@@ -309,9 +309,9 @@ void Log::endSection(char const *DENG2_DEBUG_ONLY(name))
     _sectionStack.takeLast();
 }
 
-LogEntry &Log::enter(String const &format)
+LogEntry &Log::enter(String const &format, LogEntry::Args arguments)
 {
-    return enter(LogEntry::MESSAGE, format, LogEntry::Args());
+    return enter(LogEntry::MESSAGE, format, arguments);
 }
 
 LogEntry &Log::enter(LogEntry::Level level, String const &format, LogEntry::Args arguments)
@@ -387,9 +387,13 @@ void Log::disposeThreadLog()
     logs.unlock();
 }
 
-LogEntryStager::LogEntryStager(LogEntry::Level level, const String &format) : _level(level), _format(format)
+LogEntryStager::LogEntryStager(LogEntry::Level level, String const &format) : _level(level)
 {
     _disabled = !LogBuffer::appBuffer().isEnabled(level);
+    if(!_disabled)
+    {
+        _format = format;
+    }
 }
 
 } // namespace de
