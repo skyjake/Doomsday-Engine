@@ -312,17 +312,29 @@ bool Path::operator == (Path const &other) const
 {
     if(this == &other) return true;
 
-    if(d->separator == other.d->separator)
-    {
-        // The same separators, do a string-based test.
-        return !d->path.compareWithoutCase(other.d->path);
-    }
-
-    // The separators are different, let's compare the segments.
     if(segmentCount() != other.segmentCount()) return false;
+
+    // If the hashes are different, the segments can't be the same.
     for(int i = 0; i < d->segmentCount; ++i)
     {
-        if(segment(i) != other.segment(i)) return false;
+        if(segment(i).hash() != other.segment(i).hash())
+            return false;
+    }
+
+    // Probably the same, but we have to make sure by comparing
+    // the textual segments.
+    if(d->separator == other.d->separator)
+    {
+        // The same separators, do one string-based test.
+        return !d->path.compareWithoutCase(other.d->path);
+    }
+    else
+    {
+        // Do a string-based test for each segment separately.
+        for(int i = 0; i < d->segmentCount; ++i)
+        {
+            if(segment(i) != other.segment(i)) return false;
+        }
     }
     return true;
 }
