@@ -813,12 +813,12 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
         File1 const& lump = **i;
         PathTree::Node const& node = lump.directoryNode();
 
-        String* filePath = 0;
+        String filePath;
         bool patternMatched;
         if(!(flags & SearchPath::NoDescend))
         {
-            filePath = new String(lump.composePath());
-            patternMatched = F_MatchFileName(filePath->constData(), searchPattern.constData());
+            filePath = lump.composePath();
+            patternMatched = F_MatchFileName(filePath.constData(), searchPattern.constData());
         }
         else
         {
@@ -828,14 +828,12 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
         if(!patternMatched) continue;
 
         // Not yet composed the path?
-        if(!filePath)
+        if(filePath.isEmpty())
         {
-            filePath = new String(lump.composePath());
+            filePath = lump.composePath();
         }
 
-        found.push_back(PathListItem(*filePath, !node.isLeaf()? A_SUBDIR : 0));
-
-        delete filePath;
+        found.push_back(PathListItem(filePath, !node.isLeaf()? A_SUBDIR : 0));
     }
 
     /*
