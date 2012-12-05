@@ -262,7 +262,6 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
     if(!dam->lastLoadAttemptFailed)
     {
         GameMap* map = NULL;
-        ded_mapinfo_t* mapInfo;
 
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
@@ -281,7 +280,6 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
 
         if(loadedOK)
         {
-            ded_sky_t* skyDef = NULL;
             vec2d_t min, max;
             uint i;
 
@@ -319,13 +317,14 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
             qstrncpy(map->uniqueId, uniqueIdUtf8.constData(), sizeof(map->uniqueId));
 
             // See what mapinfo says about this map.
-            mapInfo = Def_GetMapInfo(map->uri);
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(map->uri);
             if(!mapInfo)
             {
                 de::Uri mapUri = de::Uri("*", RC_NULL);
                 mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s*>(&mapUri));
             }
 
+            ded_sky_t* skyDef = 0;
             if(mapInfo)
             {
                 skyDef = Def_GetSky(mapInfo->skyID);
