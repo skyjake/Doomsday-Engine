@@ -22,7 +22,6 @@
 
 #include "../Time"
 #include "../String"
-#include "../Lockable"
 
 #include <QList>
 #include <vector>
@@ -88,11 +87,10 @@ class LogBuffer;
  * An entry to be stored in the log entry buffer. Log entries are created with
  * Log::enter().
  *
- * Log entry arguments are appended after the creation of the entry and even
- * after it has been inserted to the buffer. Therefore it is possible that an
- * entry is being flushed while another thread is still adding arguments to it.
- * Due to this entries are lockable and will be locked whenever
- * LogEntry::asText() is being executed or when an argument is being added.
+ * Log entry arguments must be created before the entry itself is created. The
+ * LogEntryStager class is designed to help with this. Once an entry is
+ * inserted to the log buffer, no modifications may be done to it any more
+ * because another thread may need it immediately for flushing.
  *
  * @ingroup core
  */
@@ -190,7 +188,8 @@ public:
     }
 
     /**
-     * Argument for a log entry.
+     * Argument for a log entry. The arguments of an entry are usually created
+     * automatically by LogEntryStager.
      *
      * @ingroup core
      */
@@ -207,7 +206,10 @@ public:
         };
 
         /**
-         * Base class for classes that support adding to the arguments.
+         * Base class for classes that support adding to the arguments. Any
+         * class that is derived from this class may be used as an argument for
+         * log entries. In practice, all arguments are converted to either
+         * numbers (64-bit integer or double) or text strings.
          */
         class Base {
         public:
@@ -392,8 +394,10 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(LogEntry::Flags)
 
 /**
  * Provides means for adding log entries into the log entry buffer (LogBuffer).
- * A thread's Log keeps track of the thread-local section stack, but there is
- * only one LogBuffer where all the entries are collected.
+ * Each thread has its own Log instance. A thread's Log keeps track of the
+ * thread-local section stack.
+ *
+ * Note that there is only one LogBuffer where all the entries are collected.
  *
  * @ingroup core
  */
@@ -480,7 +484,7 @@ private:
  * Stages a log entry for insertion into LogBuffer. Instances of LogEntryStager
  * are built on the stack.
  *
- * You should use the LOG_* macros instead of using LogEntryStager directly.
+ * You should use the @c LOG_* macros instead of using LogEntryStager directly.
  */
 class DENG2_PUBLIC LogEntryStager
 {
