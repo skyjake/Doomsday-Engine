@@ -804,7 +804,6 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     }
 
     de::Uri patternMap = de::Uri(searchPattern, RC_NULL);
-    QByteArray searchPatternUtf8 = searchPattern.toUtf8();
 
     /*
      * Check the Zip directory.
@@ -819,8 +818,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
         if(!(flags & SearchPath::NoDescend))
         {
             filePath = new String(lump.composePath());
-            QByteArray filePathUtf8 = filePath->toUtf8();
-            patternMatched = F_MatchFileName(filePathUtf8.constData(), searchPatternUtf8.constData());
+            patternMatched = F_MatchFileName(filePath->constData(), searchPattern.constData());
         }
         else
         {
@@ -847,7 +845,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     {
         DENG2_FOR_EACH_CONST(LumpMappings, i, d->lumpMappings)
         {
-            if(!F_MatchFileName(i->first.toUtf8().constData(), searchPatternUtf8.constData())) continue;
+            if(!F_MatchFileName(i->first.constData(), searchPattern.constData())) continue;
 
             found.push_back(PathListItem(i->first, 0 /*only filepaths (i.e., leaves) can be mapped to lumps*/));
         }
@@ -888,8 +886,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
                     if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
                     {
                         String foundPath = searchDirectory / NativePath(Str_Text(&fd.name)).withSeparators('/');
-                        QByteArray foundPathUtf8 = foundPath.toUtf8();
-                        if(!F_MatchFileName(foundPathUtf8.constData(), searchPatternUtf8.constData())) continue;
+                        if(!F_MatchFileName(foundPath.constData(), searchPattern.constData())) continue;
 
                         nativeFilePaths.push_back(PathListItem(foundPath, fd.attrib));
                     }
