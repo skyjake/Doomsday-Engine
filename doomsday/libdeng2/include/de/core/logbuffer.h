@@ -22,6 +22,7 @@
 
 #include "../Log"
 #include "../File"
+#include "../Lockable"
 
 #include <QObject>
 

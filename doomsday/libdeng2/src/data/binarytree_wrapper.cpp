@@ -126,14 +126,16 @@ BinaryTree *BinaryTree_SetUserData(BinaryTree *tree, void *userData)
     return PUBLIC(&self->setUserData(userData));
 }
 
-typedef struct {
-    int (*callback) (BinaryTree *, void *);
-    void *parameters;
-} callback_wrapper_t;
+namespace de { namespace internal {
+    struct CallbackWrapper {
+        int (*callback) (::BinaryTree *, void *);
+        void *parameters;
+    };
+}}
 
 static int callbackWrapper(de::BinaryTree<void *> &tree, void *parameters)
 {
-    callback_wrapper_t *p = static_cast<callback_wrapper_t *>(parameters);
+    de::internal::CallbackWrapper *p = static_cast<de::internal::CallbackWrapper *>(parameters);
     return p->callback(PUBLIC(&tree), p->parameters);
 }
 
@@ -141,7 +143,7 @@ int BinaryTree_PreOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *),
 {
     if(!tree || !callback) return false; // Continue iteration.
 
-    callback_wrapper_t parm;
+    de::internal::CallbackWrapper parm;
     parm.callback = callback;
     parm.parameters = parameters;
 
@@ -153,7 +155,7 @@ int BinaryTree_InOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *), 
 {
     if(!tree || !callback) return false; // Continue iteration.
 
-    callback_wrapper_t parm;
+    de::internal::CallbackWrapper parm;
     parm.callback = callback;
     parm.parameters = parameters;
 
@@ -165,7 +167,7 @@ int BinaryTree_PostOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *)
 {
     if(!tree || !callback) return false; // Continue iteration.
 
-    callback_wrapper_t parm;
+    de::internal::CallbackWrapper parm;
     parm.callback = callback;
     parm.parameters = parameters;
 
