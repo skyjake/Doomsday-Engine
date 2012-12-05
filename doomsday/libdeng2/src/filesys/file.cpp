@@ -197,7 +197,6 @@ dsize File::size() const
 File::Accessor::Accessor(File &owner, Property prop) : _owner(owner), _prop(prop)
 {
     /// @todo Accessor should listen for deletion of the owner file.
-    update();
 }
 
 void File::Accessor::update() const

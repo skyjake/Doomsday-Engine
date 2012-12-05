@@ -34,7 +34,7 @@
 #include "de_play.h"
 #include "de_misc.h"
 
-#include "render/r_sky.h"
+#include "render/sky.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -124,7 +124,7 @@ void P_Ticker(timespan_t time)
 
     if(DD_IsSharpTick())
     {
-        R_SkyTicker();
+        Sky_Ticker();
 
         // Check all mobjs (always public).
         GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, P_MobjTicker, NULL);

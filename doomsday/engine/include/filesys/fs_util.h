@@ -171,14 +171,6 @@ boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
 const char* F_PrettyPath(const char* path);
 
 /**
- * This is a case-insensitive test.
- * I do hope this algorithm works like it should...
- *
- * @return  @c true, if @a filePath matches the pattern.
- */
-int F_MatchFileName(const char* filePath, const char* pattern);
-
-/**
  * Write the data associated with the specified lump index to @a fileName.
  *
  * @param lumpNum           Absolute index of the lump to open.
@@ -207,6 +199,20 @@ boolean F_Dump(void const* data, size_t size, char const* path);
 
 #ifdef __cplusplus
 } // extern "C"
+
+#include <QChar>
+
+/**
+ * Performs a case-insensitive pattern match. The pattern can contain
+ * wildcards.
+ *
+ * @param filePath  Path to match.
+ * @param pattern   Pattern with * and ? as wildcards.
+ *
+ * @return  @c true, if @a filePath matches the pattern.
+ */
+bool F_MatchFileName(QChar const *filePath, QChar const *pattern);
+
 #endif
 
 #endif /// LIBDENG_FILESYS_UTIL_H

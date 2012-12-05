@@ -44,7 +44,7 @@ void RefValue::verify() const
     if(!_variable)
     {
         /// @throw NullError The value no longer points to a variable.
-        throw NullError("RefValue::verify", "Value no longer references a variable");
+        throw NullError("RefValue::verify", "Value does not reference a variable");
     }
 }
 

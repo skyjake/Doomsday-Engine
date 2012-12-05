@@ -47,10 +47,7 @@ namespace de
         
         /// Creating a directory failed. @ingroup errors
         DENG2_ERROR(CreateDirError);
-        
-        /// Failed to remove a file. @ingroup errors
-        DENG2_ERROR(RemoveError);
-        
+                
         enum Flag
         {
             /// Opens all files and folders in write mode.

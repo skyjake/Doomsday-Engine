@@ -52,6 +52,7 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#include "gl/svg.h"
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
@@ -126,10 +127,12 @@ int isDedicated;
 int verbose; // For debug messages (-verbose).
 
 // List of file names, whitespace seperating (written to .cfg).
-char* startupFiles = "";
+char* startupFiles = (char*) ""; // ignore warning
 
 // Id of the currently running title finale if playing, else zero.
 finaleid_t titleFinale;
+
+int gameDataFormat; // Use a game-specifc data format where applicable.
 
 static NullFileType nullFileType;
 static NullResourceClass nullResourceClass;
@@ -512,6 +515,54 @@ void DD_CreateFileSystemSchemes()
     }
 }
 
+void DD_CreateTextureSchemes()
+{
+    LOG_VERBOSE("Initializing Textures subsystem...");
+
+    Textures &textures = *App_Textures();
+    textures.createScheme("System");
+    textures.createScheme("Flats");
+    textures.createScheme("Textures");
+    textures.createScheme("Sprites");
+    textures.createScheme("Patches");
+    textures.createScheme("Details");
+    textures.createScheme("Reflections");
+    textures.createScheme("Masks");
+    textures.createScheme("ModelSkins");
+    textures.createScheme("ModelReflectionSkins");
+    textures.createScheme("Lightmaps");
+    textures.createScheme("Flaremaps");
+}
+
+void DD_ClearRuntimeTextureSchemes()
+{
+    Textures &textures = *App_Textures();
+    if(!textures.count()) return;
+
+    textures.scheme("Flats").clear();
+    textures.scheme("Textures").clear();
+    textures.scheme("Patches").clear();
+    textures.scheme("Sprites").clear();
+    textures.scheme("Details").clear();
+    textures.scheme("Reflections").clear();
+    textures.scheme("Masks").clear();
+    textures.scheme("ModelSkins").clear();
+    textures.scheme("ModelReflectionSkins").clear();
+    textures.scheme("Lightmaps").clear();
+    textures.scheme("Flaremaps").clear();
+
+    GL_PruneTextureVariantSpecifications();
+}
+
+void DD_ClearSystemTextureSchemes()
+{
+    Textures &textures = *App_Textures();
+    if(!textures.count()) return;
+
+    textures.scheme("System").clear();
+    GL_PruneTextureVariantSpecifications();
+}
+
 /**
  * Register the engine commands and variables.
  */
@@ -627,7 +678,7 @@ void DD_StartTitle(void)
                                                Window_Height(theWindow));
     for(i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
-        Str_Appendf(&setupCmds, "prefont %i "FN_SYSTEM_NAME":%s\n", i, fontName);
+        Str_Appendf(&setupCmds, "prefont %i System:%s\n", i, fontName);
     }
 
     // Configure the predefined colors.
@@ -738,7 +789,7 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
     return true;
 }
 
-static void loadResource(MetaFile& record)
+static void loadResource(Manifest& record)
 {
     DENG_ASSERT(record.resourceClass() == RC_PACKAGE);
 
@@ -815,13 +866,13 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
      */
     Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
 
-    de::Game::MetaFiles const& gameMetafiles = games->currentGame().metafiles();
-    int const numPackages = gameMetafiles.count(RC_PACKAGE);
+    de::Game::Manifests const& gameManifests = games->currentGame().manifests();
+    int const numPackages = gameManifests.count(RC_PACKAGE);
     int packageIdx = 0;
-    for(de::Game::MetaFiles::const_iterator i = gameMetafiles.find(RC_PACKAGE);
-        i != gameMetafiles.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
+    for(de::Game::Manifests::const_iterator i = gameManifests.find(RC_PACKAGE);
+        i != gameManifests.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
     {
-        MetaFile& record = **i;
+        Manifest& record = **i;
         loadResource(record);
 
         // Update our progress.
@@ -1058,7 +1109,7 @@ static int DD_ActivateGameWorker(void* parameters)
     DENG_ASSERT(p);
 
     // Texture resources are located now, prior to initializing the game.
-    R_InitPatchComposites();
+    R_InitCompositeTextures();
     R_InitFlatTextures();
     R_InitSpriteTextures();
 
@@ -1215,8 +1266,8 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
 
     // Construct and attach the new resource record.
     de::Game& game = games->byId(gameId);
-    MetaFile* record = new MetaFile(classId, rflags);
-    game.addMetafile(*record);
+    Manifest* record = new Manifest(classId, rflags);
+    game.addManifest(*record);
 
     // Add the name list to the resource record.
     QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
@@ -1365,7 +1416,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         R_DestroyColorPalettes();
 
         Fonts_ClearRuntime();
-        Textures_ClearRuntime();
+        DD_ClearRuntimeTextureSchemes();
 
         Sfx_InitLogical();
 
@@ -1901,7 +1952,7 @@ boolean DD_Init(void)
         initPathMappings();
         App_FileSystem()->resetAllSchemes();
 
-        R_InitPatchComposites();
+        R_InitCompositeTextures();
         R_InitFlatTextures();
         R_InitSpriteTextures();
 
@@ -2004,9 +2055,13 @@ static int DD_StartupWorker(void* parm)
     // Execute the startup script (Startup.cfg).
     Con_ParseCommands("startup.cfg");
 
-    // Get the material manager up and running.
     Con_SetProgress(90);
     GL_EarlyInitTextureManager();
+
+    Textures_Init();
+    DD_CreateTextureSchemes();
+
+    // Get the material manager up and running.
     Materials_Init();
 
     Con_SetProgress(140);
@@ -2131,7 +2186,7 @@ void DD_UpdateEngineState(void)
     // Re-build the filesystem subspace schemes as there may be new resources to be found.
     App_FileSystem()->resetAllSchemes();
 
-    R_InitPatchComposites();
+    R_InitCompositeTextures();
     R_InitFlatTextures();
     R_InitSpriteTextures();
 
@@ -2502,15 +2557,9 @@ void DD_SetVariable(int ddvalue, void *parm)
 }
 
 /// @note Part of the Doomsday public API.
-materialschemeid_t DD_ParseMaterialSchemeName(const char* str)
+materialschemeid_t DD_ParseMaterialSchemeName(char const *str)
 {
     return Materials_ParseSchemeName(str);
-}
-
-/// @note Part of the Doomsday public API.
-textureschemeid_t DD_ParseTextureSchemeName(const char* str)
-{
-    return Textures_ParseSchemeName(str);
 }
 
 /// @note Part of the Doomsday public API.
@@ -2519,43 +2568,61 @@ fontschemeid_t DD_ParseFontSchemeName(const char* str)
     return Fonts_ParseScheme(str);
 }
 
-const ddstring_t* DD_MaterialSchemeNameForTextureScheme(textureschemeid_t texSchemeId)
+ddstring_t const *DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
 {
-    static const materialschemeid_t schemeIds[TEXTURESCHEME_COUNT] = {
-        /* TS_SYSTEM */    MS_SYSTEM,
-        /* TS_FLATS */     MS_FLATS,
-        /* TS_TEXTURES */  MS_TEXTURES,
-        /* TS_SPRITES */   MS_SPRITES,
-        /* TS_PATCHES */   MS_ANY, // No materials for these yet.
-
-        // -- No Materials for these --
-        /* TS_DETAILS */              MS_INVALID,
-        /* TS_REFLECTIONS */          MS_INVALID,
-        /* TS_MASKS */                MS_INVALID,
-        /* TS_MODELSKINS */           MS_INVALID,
-        /* TS_MODELREFLECTIONSKINS */ MS_INVALID,
-        /* TS_LIGHTMAPS */            MS_INVALID,
-        /* TS_FLAREMAPS */            MS_INVALID
-    };
     materialschemeid_t schemeId = MS_INVALID; // Unknown.
-    if(VALID_TEXTURESCHEMEID(texSchemeId))
-        schemeId = schemeIds[texSchemeId-TEXTURESCHEME_FIRST];
+
+    if(!textureSchemeName.compareWithoutCase("Textures"))
+    {
+        schemeId = MS_TEXTURES;
+    }
+    else if(!textureSchemeName.compareWithoutCase("Flats"))
+    {
+        schemeId = MS_FLATS;
+    }
+    else if(!textureSchemeName.compareWithoutCase("Sprites"))
+    {
+        schemeId = MS_SPRITES;
+    }
+    else if(!textureSchemeName.compareWithoutCase("Patches"))
+    {
+        schemeId = MS_ANY; // No materials for these yet.
+    }
+    else if(!textureSchemeName.compareWithoutCase("System"))
+    {
+        schemeId = MS_SYSTEM;
+    }
+
     return Materials_SchemeName(schemeId);
 }
 
-materialid_t DD_MaterialForTextureUniqueId(textureschemeid_t schemeId, int uniqueId)
+ddstring_t const *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
 {
-    textureid_t texId = Textures_TextureForUniqueId(schemeId, uniqueId);
+    if(!textureSchemeName) return Materials_SchemeName(MS_INVALID);
+    return DD_MaterialSchemeNameForTextureScheme(Str_Text(textureSchemeName));
+}
 
-    if(texId == NOTEXTUREID) return NOMATERIALID;
+materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
+{
+    if(!_textureUri) return NOMATERIALID;
 
-    de::Uri* uri = reinterpret_cast<de::Uri*>(Textures_ComposeUri(texId));
-    if(!uri) return NOMATERIALID;
+    de::Uri const &textureUri = reinterpret_cast<de::Uri const &>(*_textureUri);
+    try
+    {
+        if(TextureManifest *manifest = App_Textures()->find(textureUri))
+        {
+            de::Uri uri = manifest->composeUri();
+            uri.setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(uri.scheme())));
+            return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
+        }
+    }
+    catch(Textures::UnknownSchemeError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
 
-    uri->setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(schemeId)));
-    materialid_t matId = Materials_ResolveUri2(reinterpret_cast<uri_s*>(uri), true/*quiet please*/);
-    delete uri;
-    return matId;
+    return NOMATERIALID;
 }
 
 /**
@@ -2688,7 +2755,7 @@ static de::File1* tryLoadFile(de::Uri const& search, size_t baseOffset)
         if(App_FileSystem()->accessFile(search))
         {
             // Must already be loaded.
-            Con_Message("\"%s\" already loaded.\n", NativePath(search.asText()).pretty().toUtf8().constData());
+            LOG_VERBOSE("\"%s\" already loaded.") << NativePath(search.asText()).pretty();
         }
     }
     return 0;

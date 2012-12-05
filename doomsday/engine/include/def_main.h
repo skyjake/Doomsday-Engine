@@ -139,6 +139,26 @@ StringArray* Def_ListMobjTypeIDs(void);
  */
 StringArray* Def_ListStateIDs(void);
 
+/**
+ * Returns @c true iff @a def is compatible with the specified context.
+ */
+boolean R_IsAllowedDecoration(ded_decor_t *def, boolean hasExternal, boolean isCustom);
+
+/**
+ * Returns @c true iff @a def is compatible with the specified context.
+ */
+boolean R_IsAllowedReflection(ded_reflection_t *def, boolean hasExternal, boolean isCustom);
+
+/**
+ * Returns @c true iff @a def is compatible with the specified context.
+ */
+boolean R_IsAllowedDetailTex(ded_detailtexture_t *def, boolean hasExternal, boolean isCustom);
+
+/**
+ * Returns @c true iff @a lightDef is considered valid.
+ */
+boolean R_IsValidLightDecoration(ded_decorlight_t const *def);
+
 D_CMD(ListMobjs);
 
 #ifdef __cplusplus

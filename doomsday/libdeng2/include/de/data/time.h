@@ -100,7 +100,8 @@ public:
     enum Format {
         ISOFormat,
         BuildNumberAndTime,
-        FriendlyFormat
+        FriendlyFormat,
+        ISODateOnly
     };
 
 public:
@@ -112,6 +113,10 @@ public:
     Time(Time const &other) : ISerializable(), _time(other._time) {}
 
     Time(QDateTime const &t) : ISerializable(), _time(t) {}
+
+    static Time invalidTime();
+
+    bool isValid() const;
 
     bool operator < (Time const &t) const;
 
@@ -192,9 +197,20 @@ public:
     Delta deltaTo(Time const &laterTime) const { return laterTime - *this; }
 
     /**
-     * Makes a text representation of the time (default is seconds since the epoch).
+     * Makes a text representation of the time (default is ISO format, e.g.,
+     * 2012-12-02 13:08:21.851).
      */
     String asText(Format format = ISOFormat) const;
+
+    /**
+     * Parses a text string into a Time.
+     *
+     * @param text    Text that contains a date and/or time.
+     * @param format  Format of the text string.
+     *
+     * @return Time that corresponds @a text.
+     */
+    static Time fromText(String const &text, Format format = ISOFormat);
 
     /**
      * Converts the time to a QDateTime.

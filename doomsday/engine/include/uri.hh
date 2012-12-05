@@ -64,9 +64,10 @@ public:
      */
     enum PrintFlag
     {
-        OutputResolved = 0x1,           ///< Include the resolved path in the output.
-        TransformPathPrettify = 0x2,    ///< Transform paths making them "pretty".
-        DefaultPrintFlags = OutputResolved | TransformPathPrettify
+        OutputResolved = 0x1,   ///< Include the resolved path in the output.
+        PrettifyPath   = 0x2,   ///< Transform paths making them "pretty".
+
+        DefaultPrintFlags = OutputResolved | PrettifyPath
     };
     Q_DECLARE_FLAGS(PrintFlags, PrintFlag)
 
@@ -93,6 +94,14 @@ public:
     Uri(String const &percentEncoded, resourceclassid_t defaultResClass = RC_UNKNOWN, QChar sep = '/');
 
     /**
+     * Construct a Uri from a textual scheme and a path.
+     *
+     * @param scheme  Scheme for the Uri.
+     * @param path    Path for the Uri.
+     */
+    Uri(String const &scheme, Path const &path);
+
+    /**
      * Construct a Uri instance from a path. Note that Path instances can
      * never contain a scheme as a prefix, so @a resClass is mandatory.
      *
@@ -109,6 +118,15 @@ public:
      * @param path      Path of the URI.
      */
     Uri(Path const &path);
+
+    /**
+     * Construct a Uri instance from a UTF-8 C-style text string, using RC_UNKNOWN
+     * as the default resource class.
+     *
+     * @param nullTerminatedCStr  String to be parsed. Assumed to be in
+     *                            percent-encoded representation.
+     */
+    Uri(char const* nullTerminatedCStr);
 
     /**
      * Construct a Uri instance by duplicating @a other.
@@ -264,6 +282,9 @@ public:
      * @param sep  Character to use to replace path segment separators.
      *
      * @return  Plain-text String representation.
+     *
+     * @todo Should define a set of flags to determine which components of the
+     *       URI to include in the string, like @ref debugPrint() -ds
      */
     String compose(QChar sep = '/') const;
 

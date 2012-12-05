@@ -194,6 +194,16 @@ public:
     dint compareWithoutCase(String const &str) const;
 
     /**
+     * Compares two strings (case sensitive) to see how many characters they
+     * have in common starting from the left.
+     *
+     * @param str  String.
+     *
+     * @return  Number of characters the two strings have in common from the left.
+     */
+    int commonPrefixLength(String const &str) const;
+
+    /**
      * Converts the string to UTF-8 and returns it as a byte block.
      */
     Block toUtf8() const;

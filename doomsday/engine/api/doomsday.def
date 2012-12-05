@@ -20,8 +20,8 @@ EXPORTS
     DD_SetVariable              @10 NONAME
     DD_GetVariable              @43 NONAME
     DD_GetPlayer                @44 NONAME
-    DD_MaterialForTextureUniqueId @234 NONAME
-    DD_ParseTextureSchemeName    @502 NONAME
+    DD_MaterialForTextureUri     @234 NONAME
+;    DD_ParseTextureSchemeName    @502 NONAME
     DD_ParseMaterialSchemeName   @503 NONAME
 
 ; Base: Types.
@@ -424,7 +424,7 @@ EXPORTS
 ;   Sys_TicksPerSecond          @46 NONAME
 ;    Sys_GetTime                 @47 NONAME
 ;    Sys_GetSeconds              @48 NONAME
-;    Timer_RealMilliseconds             @49 NONAME
+;    Timer_RealMilliseconds      @49 NONAME
     Sys_Sleep                   @50 NONAME
     Sys_CriticalMessage         @51 NONAME
     Sys_Quit                    @52 NONAME
@@ -451,7 +451,7 @@ EXPORTS
 
 ; Play.
     LineDef_BoxOnSide           @60 NONAME
-    LineDef_BoxOnSide_FixedPrecision     @46 NONAME
+    LineDef_BoxOnSide_FixedPrecision @46 NONAME
     LineDef_PointDistance       @208 NONAME
     LineDef_PointXYDistance     @209 NONAME
     LineDef_PointOnSide         @695 NONAME
@@ -598,7 +598,7 @@ EXPORTS
     P_RegisterMapObjProperty    @412 NONAME
 
 ; Play: Mobjs.
-    P_MobjCreateXYZ                @357 NONAME
+    P_MobjCreateXYZ             @357 NONAME
     P_MobjDestroy               @358 NONAME
     P_MobjLink                  @66 NONAME
     P_MobjUnlink                @67 NONAME
@@ -645,7 +645,7 @@ EXPORTS
     R_SetupFogDefaults          @854 NONAME
     R_SetupFog                  @855 NONAME
 
-    R_PrecacheMobjNum           @427 NONAME
+    Rend_CacheForMobjType       @427 NONAME
     Models_CacheForState        @240 NONAME
 
     R_RenderPlayerView          @90 NONAME
@@ -673,8 +673,8 @@ EXPORTS
     R_ComposePatchUri           @247 NONAME
     R_ComposePatchPath          @858 NONAME
 
-    R_TextureUniqueId           @438 NONAME
-    R_TextureUniqueId2          @501 NONAME
+    Textures_UniqueId           @438 NONAME
+    Textures_UniqueId2          @501 NONAME
 
     R_CreateAnimGroup           @241 NONAME
     R_AddAnimGroupFrame         @242 NONAME
@@ -784,7 +784,7 @@ EXPORTS
     GL_DrawSvg3                 @320 NONAME
 
 ; Graphics.
-    GL_GrabScreen               @109 NONAME
+;    GL_GrabScreen               @109 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
     GL_ConfigureBorderedProjection @507 NONAME
@@ -891,15 +891,15 @@ EXPORTS
     bamsAtan2                   @145 NONAME
 
     ; Vectors.
-    V2d_Sum                     @54 NONAME
-    V2d_Scale                   @57 NONAME
-    V2d_Subtract                @341 NONAME
-    V2d_Rotate                  @344 NONAME
-    V2d_PointOnLineSide         @376 NONAME
-    V2d_PointLineDistance       @442 NONAME
-    V2d_ProjectOnLine           @443 NONAME
-    V2d_Intersection            @349 NONAME
-    V2d_Copy                    @857 NONAME
+;    V2d_Sum                     @54 NONAME
+;    V2d_Scale                   @57 NONAME
+;    V2d_Subtract                @341 NONAME
+;    V2d_Rotate                  @344 NONAME
+;    V2d_PointOnLineSide         @376 NONAME
+;    V2d_PointLineDistance       @442 NONAME
+;    V2d_ProjectOnLine           @443 NONAME
+;    V2d_Intersection            @349 NONAME
+;    V2d_Copy                    @857 NONAME
 
     ; Utilities.
     M_ApproxDistance            @58 NONAME

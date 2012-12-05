@@ -131,7 +131,7 @@ public:
      * @param level  Log level for the message. Only the level in effect when a newline
      *               is printed will be entered into the log.
      */
-    void printLogFragment(char const *text, Log::LogLevel level = Log::MESSAGE);
+    void printLogFragment(char const *text, LogEntry::Level level = LogEntry::MESSAGE);
 
     /**
      * Sets a callback to be called when an uncaught exception occurs.

@@ -2163,7 +2163,7 @@ END_PROF( PROF_RL_RENDER_SKYMASK );
         glStencilFunc(GL_EQUAL, 1, 0xffffffff);
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-        Rend_RenderSky();
+        Sky_Render();
 
         if(!devRendSkyAlways)
         {

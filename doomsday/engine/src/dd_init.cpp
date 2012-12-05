@@ -57,7 +57,6 @@
  */
 
 #include <QApplication>
-#include <QSettings>
 #include <QAction>
 #include <QMenuBar>
 #include <QNetworkProxyFactory>

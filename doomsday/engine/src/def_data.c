@@ -37,7 +37,7 @@
 #include "de_misc.h"
 #include "de_graphics.h"
 
-#include "render/r_sky.h"
+#include "render/sky.h"
 #include "def_data.h"
 
 // Helper Routines -------------------------------------------------------

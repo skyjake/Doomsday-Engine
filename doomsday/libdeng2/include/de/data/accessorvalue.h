@@ -23,43 +23,44 @@
 #include "../TextValue"
 #include "../Variable"
 
-namespace de
+namespace de {
+
+/**
+ * Special text value that provides access to properties of another object.
+ *
+ * @ingroup data
+ */
+class AccessorValue : public TextValue
 {
-    /**
-     * Special text value that provides access to properties of another object.
-     *
-     * @ingroup data
-     */
-    class AccessorValue : public TextValue
-    {
-    public:
-        /// Mode to use for variables that have an accessor value.
-        static Variable::Flags const VARIABLE_MODE;
-        
-    public:
-        AccessorValue();
-        
-        /// Update the text content of the accessor.
-        virtual void update() const = 0;
+public:
+    /// Mode to use for variables that have an accessor value.
+    static Variable::Flags const VARIABLE_MODE;
 
-        /// Creates a new value with the content of the accessor. The returned
-        /// value should not be an AccessorValue.
-        virtual Value *duplicateContent() const = 0;
+public:
+    AccessorValue();
 
-        Value *duplicate() const;
-        Number asNumber() const;
-        Text asText() const;
-        dsize size() const;
-        bool isTrue() const;
-        dint compare(Value const &value) const;
-        void sum(Value const &value);
-        void multiply(Value const &value);
-        void divide(Value const &value);
-        void modulo(Value const &divisor);
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);
-    };
-}
+    /// Update the text content of the accessor.
+    virtual void update() const = 0;
+
+    /// Creates a new value with the content of the accessor. The returned
+    /// value should not be an AccessorValue.
+    virtual Value *duplicateContent() const = 0;
+
+    Value *duplicate() const;
+    Number asNumber() const;
+    Text asText() const;
+    dsize size() const;
+    bool isTrue() const;
+    dint compare(Value const &value) const;
+    void sum(Value const &value);
+    void multiply(Value const &value);
+    void divide(Value const &value);
+    void modulo(Value const &divisor);
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_ACCESSORVALUE_H */
     

@@ -244,9 +244,18 @@ Path::Path(String const &path, QChar sep)
     : LogEntry::Arg::Base(), d(new Instance(path, sep))
 {}
 
+Path::Path(const QString &str)
+    : LogEntry::Arg::Base(), d(new Instance(str, '/'))
+{}
+
 Path::Path(char const *nullTerminatedCStr, char sep)
     : LogEntry::Arg::Base(), d(new Instance(QString::fromUtf8(nullTerminatedCStr), sep))
 {}
+
+Path::Path(const char *nullTerminatedCStr)
+    : LogEntry::Arg::Base(), d(new Instance(QString::fromUtf8(nullTerminatedCStr), '/'))
+{
+}
 
 Path::Path(Path const &other)
     : ISerializable(), LogEntry::Arg::Base(),
@@ -256,6 +265,16 @@ Path::Path(Path const &other)
 Path::~Path()
 {
     delete d;
+}
+
+Path Path::operator + (QString const &str) const
+{
+    return Path(d->path + str, d->separator);
+}
+
+Path Path::operator + (const char *nullTerminatedCStr) const
+{
+    return Path(d->path + QString(nullTerminatedCStr), d->separator);
 }
 
 int Path::segmentCount() const
@@ -293,17 +312,29 @@ bool Path::operator == (Path const &other) const
 {
     if(this == &other) return true;
 
-    if(d->separator == other.d->separator)
-    {
-        // The same separators, do a string-based test.
-        return !d->path.compareWithoutCase(other.d->path);
-    }
-
-    // The separators are different, let's compare the segments.
     if(segmentCount() != other.segmentCount()) return false;
+
+    // If the hashes are different, the segments can't be the same.
     for(int i = 0; i < d->segmentCount; ++i)
     {
-        if(segment(i) != other.segment(i)) return false;
+        if(segment(i).hash() != other.segment(i).hash())
+            return false;
+    }
+
+    // Probably the same, but we have to make sure by comparing
+    // the textual segments.
+    if(d->separator == other.d->separator)
+    {
+        // The same separators, do one string-based test.
+        return !d->path.compareWithoutCase(other.d->path);
+    }
+    else
+    {
+        // Do a string-based test for each segment separately.
+        for(int i = 0; i < d->segmentCount; ++i)
+        {
+            if(segment(i) != other.segment(i)) return false;
+        }
     }
     return true;
 }
@@ -327,7 +358,7 @@ Path Path::operator / (QString other) const
 
 Path Path::operator / (char const *otherNullTerminatedUtf8) const
 {
-    return *this / Path(otherNullTerminatedUtf8);
+    return *this / Path(otherNullTerminatedUtf8, '/');
 }
 
 String Path::toString() const

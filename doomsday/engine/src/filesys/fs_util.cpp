@@ -622,22 +622,25 @@ const char* F_PrettyPath(const char* path)
 #undef NUM_BUFS
 }
 
-int F_MatchFileName(const char* string, const char* pattern)
+bool F_MatchFileName(QChar const *string, QChar const *pattern)
 {
-    const char* in = string, *st = pattern;
+    static QChar const ASTERISK('*');
+    static QChar const QUESTION_MARK('?');
 
-    while(*in)
+    QChar const *in = string, *st = pattern;
+
+    while(!in->isNull())
     {
-        if(*st == '*')
+        if(*st == ASTERISK)
         {
             st++;
             continue;
         }
 
-        if(*st != '?' && (tolower((unsigned char) *st) != tolower((unsigned char) *in)))
+        if(*st != QUESTION_MARK && st->toLower() != in->toLower())
         {
             // A mismatch. Hmm. Go back to a previous '*'.
-            while(st >= pattern && *st != '*')
+            while(st >= pattern && *st != ASTERISK)
                 st--;
             if(st < pattern)
                 return false; // No match!
@@ -650,10 +653,10 @@ int F_MatchFileName(const char* string, const char* pattern)
     }
 
     // Match is good if the end of the pattern was reached.
-    while(*st == '*')
+    while(*st == ASTERISK)
         st++; // Skip remaining asterisks.
 
-    return *st == 0;
+    return st->isNull();
 }
 
 boolean F_Dump(void const* data, size_t size, char const* path)

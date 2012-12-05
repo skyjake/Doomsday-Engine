@@ -53,6 +53,9 @@ namespace de
         /// system. @ingroup errors
         DENG2_ERROR(AlreadyExistsError);
         
+        /// Failed to remove a file. @ingroup errors
+        DENG2_ERROR(RemoveError);
+
     public:
         Feed();
         

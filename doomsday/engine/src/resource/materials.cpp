@@ -29,10 +29,9 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
+#include "de_resource.h"
 
-#include "resource/texture.h"
-#include "resource/texturevariant.h"
-#include "resource/materialvariant.h"
+#include "resource/materials.h"
 
 #include <de/Error>
 #include <de/Log>
@@ -265,7 +264,7 @@ static materialschemeid_t schemeIdForDirectory(de::PathTree const &directory)
 static de::Uri composeUriForDirectoryNode(MaterialRepository::Node const& node)
 {
     Str const* schemeName = Materials_SchemeName(schemeIdForDirectory(node.tree()));
-    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
+    return de::Uri(Str_Text(schemeName), node.path());
 }
 
 static MaterialAnim* getAnimGroup(int number)
@@ -622,10 +621,10 @@ materialschemeid_t Materials_ParseSchemeName(const char* str)
 {
     if(!str || 0 == strlen(str)) return MS_ANY;
 
-    if(!stricmp(str, MS_TEXTURES_NAME)) return MS_TEXTURES;
-    if(!stricmp(str, MS_FLATS_NAME))    return MS_FLATS;
-    if(!stricmp(str, MS_SPRITES_NAME))  return MS_SPRITES;
-    if(!stricmp(str, MS_SYSTEM_NAME))   return MS_SYSTEM;
+    if(!stricmp(str, "Textures")) return MS_TEXTURES;
+    if(!stricmp(str, "Flats"))    return MS_FLATS;
+    if(!stricmp(str, "Sprites"))  return MS_SPRITES;
+    if(!stricmp(str, "System"))   return MS_SYSTEM;
 
     return MS_INVALID; // Unknown.
 }
@@ -634,10 +633,10 @@ Str const* Materials_SchemeName(materialschemeid_t id)
 {
     static de::Str const names[1+MATERIALSCHEME_COUNT] = {
         /* No scheme name */    "",
-        /* MS_SYSTEM */         MS_SYSTEM_NAME,
-        /* MS_FLATS */          MS_FLATS_NAME,
-        /* MS_TEXTURES */       MS_TEXTURES_NAME,
-        /* MS_SPRITES */        MS_SPRITES_NAME
+        /* MS_SYSTEM */         "System",
+        /* MS_FLATS */          "Flats",
+        /* MS_TEXTURES */       "Textures",
+        /* MS_SPRITES */        "Sprites"
     };
     if(VALID_MATERIALSCHEMEID(id))
         return names[1 + (id - MATERIALSCHEME_FIRST)];
@@ -932,14 +931,14 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
 
     LOG_AS("Materials::createFromDef");
 
-    if(!initedOk || !def->uri) return NULL;
+    if(!initedOk || !def->uri) return 0;
     de::Uri& uri = reinterpret_cast<de::Uri&>(*def->uri);
 
     // We require a properly formed uri.
     if(!validateMaterialUri(uri, 0, (verbose >= 1)))
     {
         LOG_WARNING("Failed creating Material \"%s\" from definition %p, ignoring.") << uri << de::dintptr(def);
-        return NULL;
+        return 0;
     }
 
     // Have we already created a material for this?
@@ -950,29 +949,36 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
         return bind->material();
     }
 
+    de::Textures &textures = *App_Textures();
+
     // Ensure the primary layer has a valid texture reference.
-    textureid_t texId = NOTEXTUREID;
+    de::Texture *tex = 0;
     if(def->layers[0].stageCount.num > 0)
     {
         ded_material_layer_t const& layer = def->layers[0];
-        if(layer.stages[0].texture) // Not unused.
+        de::Uri *texUri = reinterpret_cast<de::Uri *>(layer.stages[0].texture);
+        if(texUri) // Not unused.
         {
-            texId = Textures_ResolveUri2(layer.stages[0].texture, true/*quiet please*/);
-            if(texId == NOTEXTUREID)
+            if(de::TextureManifest *manifest = textures.find(*texUri))
             {
-                LOG_WARNING("Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i).")
-                    << reinterpret_cast<de::Uri*>(layer.stages[0].texture)
-                    << reinterpret_cast<de::Uri*>(def->uri)
-                    << 0 << 0;
+                tex = manifest->texture();
+                if(!tex)
+                {
+                    LOG_WARNING("Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i).")
+                        << reinterpret_cast<de::Uri*>(layer.stages[0].texture)
+                        << reinterpret_cast<de::Uri*>(def->uri)
+                        << 0 << 0;
+                }
             }
         }
     }
-    if(texId == NOTEXTUREID) return NULL;
+
+    if(!tex) return 0;
 
     // A new Material.
     material_t* mat = linkMaterialToGlobalList(allocMaterial());
     mat->_flags = def->flags;
-    mat->_isCustom = Texture_IsCustom(Textures_ToTexture(texId));
+    mat->_isCustom = tex->isCustom();
     mat->_def = def;
     Size2_SetWidthHeight(mat->_size, MAX_OF(0, def->width), MAX_OF(0, def->height));
     mat->_envClass = S_MaterialEnvClassForUri(reinterpret_cast<Uri const*>(&uri));
@@ -1059,38 +1065,53 @@ void Materials_Ticker(timespan_t time)
     }
 }
 
-static Texture* findDetailTextureForDef(ded_detailtexture_t const& def)
+static de::Texture *findTextureByResourceUri(de::String nameOfScheme, de::Uri const &resourceUri)
 {
-    return R_FindDetailTextureForResourcePath(def.detailTex);
+    if(resourceUri.isEmpty()) return 0;
+    try
+    {
+        return App_Textures()->scheme(nameOfScheme).findByResourceUri(resourceUri).texture();
+    }
+    catch(de::Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
+    return 0;
 }
 
-static Texture* findShinyTextureForDef(ded_reflection_t const& def)
+static de::Texture *findDetailTextureForDef(ded_detailtexture_t const &def)
 {
-    return R_FindReflectionTextureForResourcePath(def.shinyMap);
+    if(!def.detailTex) return 0;
+    return findTextureByResourceUri("Details", reinterpret_cast<de::Uri const &>(*def.detailTex));
 }
 
-static Texture* findShinyMaskTextureForDef(ded_reflection_t const& def)
+static de::Texture *findShinyTextureForDef(ded_reflection_t const &def)
 {
-    return R_FindMaskTextureForResourcePath(def.maskMap);
+    if(!def.shinyMap) return 0;
+    return findTextureByResourceUri("Reflections", reinterpret_cast<de::Uri const &>(*def.shinyMap));
 }
 
-static void updateMaterialTextureLinks(MaterialBind& mb)
+static de::Texture *findShinyMaskTextureForDef(ded_reflection_t const &def)
 {
-    material_t* mat = mb.material();
+    if(!def.maskMap) return 0;
+    return findTextureByResourceUri("Masks", reinterpret_cast<de::Uri const &>(*def.maskMap));
+}
+
+static void updateMaterialTextureLinks(MaterialBind &mb)
+{
+    material_t *mat = mb.material();
 
     // We may need to need to construct and attach the info.
     updateMaterialBindInfo(mb, true /* create if not present */);
 
     if(!mat) return;
 
-    ded_detailtexture_t const* dtlDef = mb.detailTextureDef();
-    Material_SetDetailTexture(mat,  (dtlDef? findDetailTextureForDef(*dtlDef) : NULL));
+    ded_detailtexture_t const *dtlDef = mb.detailTextureDef();
+    Material_SetDetailTexture(mat,  reinterpret_cast<texture_s *>(dtlDef? findDetailTextureForDef(*dtlDef) : NULL));
     Material_SetDetailStrength(mat, (dtlDef? dtlDef->strength : 0));
     Material_SetDetailScale(mat,    (dtlDef? dtlDef->scale : 0));
 
-    ded_reflection_t const* refDef = mb.reflectionDef();
-    Material_SetShinyTexture(mat,     (refDef? findShinyTextureForDef(*refDef) : NULL));
-    Material_SetShinyMaskTexture(mat, (refDef? findShinyMaskTextureForDef(*refDef) : NULL));
+    ded_reflection_t const *refDef = mb.reflectionDef();
+    Material_SetShinyTexture(mat,     reinterpret_cast<texture_s *>(refDef? findShinyTextureForDef(*refDef) : NULL));
+    Material_SetShinyMaskTexture(mat, reinterpret_cast<texture_s *>(refDef? findShinyMaskTextureForDef(*refDef) : NULL));
     Material_SetShinyBlendmode(mat,   (refDef? refDef->blendMode : BM_ADD));
     float const black[3] = { 0, 0, 0 };
     Material_SetShinyMinColor(mat,    (refDef? refDef->minColor : black));
@@ -1432,16 +1453,14 @@ static int printVariantInfo(MaterialVariant* variant, void* parameters)
     // Print layer info:
     for(i = 0; i < layers; ++i)
     {
-        const materialvariant_layer_t* l = MaterialVariant_Layer(variant, i);
-        Uri* uri = Textures_ComposeUri(Textures_Id(l->texture));
-        AutoStr* path = Uri_ToString(uri);
+        materialvariant_layer_t const *l = MaterialVariant_Layer(variant, i);
+        de::Uri uri = reinterpret_cast<de::Texture &>(*l->texture).manifest().composeUri();
+        QByteArray path = de::NativePath(uri.asText()).pretty().toUtf8();
 
-        Con_Printf("  #%i: Stage:%i Tics:%i Texture:(\"%s\" uid:%u)"
+        Con_Printf("  #%i: Stage:%i Tics:%i Texture:\"%s\""
                    "\n      Offset: %.2f x %.2f Glow:%.2f\n",
-                   i, l->stage, (int)l->tics, F_PrettyPath(Str_Text(path)), Textures_Id(l->texture),
+                   i, l->stage, (int)l->tics, path.constData(),
                    l->texOrigin[0], l->texOrigin[1], l->glow);
-
-        Uri_Delete(uri);
     }
 
     ++(*variantIdx);
@@ -1843,7 +1862,8 @@ void Materials_AnimateAnimGroup(MaterialAnim* group)
         /*{ ded_material_t* def = Material_Definition(mat);
         if(def && def->layers[0].stageCount.num > 1)
         {
-            if(Textures_ResolveUri(def->layers[0].stages[0].texture))
+            de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture)
+            if(texUri && de::Textures::resolveUri(*texUri))
                 continue; // Animated elsewhere.
         }}*/
 

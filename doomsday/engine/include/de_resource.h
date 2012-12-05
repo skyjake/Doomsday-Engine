@@ -22,15 +22,23 @@
 #ifndef LIBDENG_RESOURCE_SUBSYSTEM_H
 #define LIBDENG_RESOURCE_SUBSYSTEM_H
 
-#include "resource/colorpalette.h"
+#include "resource/animgroups.h"
+#include "resource/bitmapfont.h"
+#include "resource/colorpalettes.h"
+#include "resource/font.h"
+#include "resource/fonts.h"
 #include "resource/r_data.h"
 #include "resource/materials.h"
 #include "resource/materialvariant.h"
-#include "resource/textures.h"
-#include "resource/font.h"
-#include "resource/fonts.h"
 #include "resource/models.h"
+#include "resource/compositetexture.h"
+#include "resource/rawtexture.h"
+#include "resource/textures.h"
 #include "resource/wad.h"
 #include "resource/zip.h"
+
+#ifdef __cplusplus
+#  include "resource/texturemanifest.h"
+#endif
 
 #endif /* LIBDENG_RESOURCE_SUBSYSTEM_H */

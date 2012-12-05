@@ -24,7 +24,7 @@
 #define LIBDENG_MAP_BLOCKMAP_H
 
 #include "dd_types.h"
-#include "m_vector.h"
+#include <de/vector1.h>
 
 /// @todo It should not be necessary to expose the Gridmap implementation.
 #include "gridmap.h"

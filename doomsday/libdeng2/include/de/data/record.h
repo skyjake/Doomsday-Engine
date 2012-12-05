@@ -35,14 +35,19 @@ namespace de
     class Function;
     
     /**
-     * A set of variables. A record may have any number of subrecords.
-     * Note that the members of a record do not have an order.
+     * A set of variables. A record may have any number of subrecords. Note
+     * that the members of a record do not have an order.
+     *
+     * A @em subrecord is a record that is owned by one of the members of the
+     * main record. The ownership chain is as follows: Record -> Variable ->
+     * RecordValue -> Record.
      *
      * @see http://en.wikipedia.org/wiki/Record_(computer_science)
      *
      * @ingroup data
      */
-    class DENG2_PUBLIC Record : public ISerializable, public LogEntry::Arg::Base
+    class DENG2_PUBLIC Record : public ISerializable, public LogEntry::Arg::Base,
+                                DENG2_OBSERVES(Variable, Deletion)
     {
     public:
         /// Unknown variable name was given. @ingroup errors
@@ -119,6 +124,17 @@ namespace de
          * @return  The number variable.
          */
         Variable &addNumber(String const &variableName, Value::Number const &number);
+
+        /**
+         * Adds a number variable to the record with a Boolean semantic hint.
+         * The variable is set up to only accept number values.
+         *
+         * @param variableName  Name of the variable.
+         * @param booleanValue  Value of the variable (@c true or @c false).
+         *
+         * @return  The number variable.
+         */
+        Variable &addBoolean(String const &variableName, bool booleanValue);
         
         /**
          * Adds a text variable to the record. The variable is set up to only accept
@@ -130,6 +146,8 @@ namespace de
          * @return  The text variable.
          */
         Variable &addText(String const &variableName, Value::Text const &text);
+
+        Variable &addTime(String const &variableName, Time const &time);
         
         /**
          * Adds an array variable to the record. The variable is set up to only accept
@@ -162,18 +180,20 @@ namespace de
         Variable &addBlock(String const &variableName);
         
         /**
-         * Adds a new subrecord to the record. 
+         * Adds a new subrecord to the record. Adds a variable named @a name
+         * and gives ownership of @a subrecord to it.
          *
          * @param name  Name to use for the subrecord. This must be a valid variable name.
          * @param subrecord  Record to add. This record gets ownership
-         *      of the subrecord. The variable must have a name.
+         *      of the subrecord.
          *
          * @return @a subrecord, for convenience.
          */
         Record &add(String const &name, Record *subrecord);
 
         /**
-         * Adds a new empty subrecord to the record.
+         * Adds a new empty subrecord to the record. Adds a variable named @a
+         * name and creates a new record owned by it.
          *
          * @param name  Name to use for the subrecord. This must be a valid variable name.
          *
@@ -231,12 +251,12 @@ namespace de
         /**
          * Returns a non-modifiable map of the members.
          */
-        Members const &members() const { return _members; }
+        Members const &members() const;
         
         /**
-         * Returns a non-modifiable map of the subrecords.
+         * Collects a map of all the subrecords present in the record.
          */
-        Subrecords const &subrecords() const { return _subrecords; }
+        Subrecords subrecords() const;
 
         /**
          * Creates a text representation of the record. Each variable name is 
@@ -279,10 +299,13 @@ namespace de
         // Implements LogEntry::Arg::Base.
         LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
         String asText() const { return asText("", 0); }
-        
-    private:  
-        Members _members;
-        Subrecords _subrecords;
+
+        // Observes Variable deletion.
+        void variableBeingDeleted(Variable &variable);
+
+    private:
+        struct Instance;
+        Instance * d;
     };
     
     /// Converts the record into a human-readable text representation.

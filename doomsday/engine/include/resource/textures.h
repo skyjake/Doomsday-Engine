@@ -1,21 +1,9 @@
 /**
- * @file textures.h
- * Textures collection. @ingroup resource
+ * @file textures.h Texture Resource Collection.
+ * @ingroup resource
  *
- * "Clear"ing a Texture is to 'undefine' it - any names bound to it are deleted,
- * any GL textures acquired for it are 'released'. The Texture instance record
- * used to represent it is also deleted.
- *
- * "Release"ing a Texture will leave it defined (any names bound to it will
- * persist) and any GL textures acquired for it are so too released. Note that
- * the Texture instance record used to represent it will NOT be deleted.
- *
- * Thus there are two general states for textures in the collection:
- *
- *   1) Declared but not defined.
- *   2) Declared and defined.
- *
- * @authors Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -35,161 +23,253 @@
 #ifndef LIBDENG_RESOURCE_TEXTURES_H
 #define LIBDENG_RESOURCE_TEXTURES_H
 
-#include "dd_share.h"
 #include "uri.h"
+
+/// Special value used to signify an invalid texture id.
+#define NOTEXTUREID             0
+
+#ifdef __cplusplus
+
+#include <QList>
+#include <de/Error>
+#include <de/Path>
+#include <de/String>
+#include <de/PathTree>
+#include <de/size.h>
+#include "resource/texture.h"
+#include "resource/texturemanifest.h"
+#include "resource/texturescheme.h"
+
+namespace de {
+
+/**
+ * @em Clearing a texture is to 'undefine' it - any names bound to it will be
+ * deleted and any GL textures acquired for it are 'released'. The logical
+ * Texture instance used to represent it is also deleted.
+ *
+ * @em Releasing a texture will leave it defined (any names bound to it will
+ * persist) but any GL textures acquired for it are 'released'. Note that the
+ * logical Texture instance used to represent is NOT be deleted.
+ *
+ * Thus there are two general states for textures in the collection:
+ *
+ *   A) Declared but not defined.
+ *   B) Declared and defined.
+ */
+class Textures
+{
+public:
+    typedef class TextureManifest Manifest;
+    typedef class TextureScheme Scheme;
+
+    struct ResourceClass
+    {
+        /**
+         * Interpret a manifest producing a new logical Texture instance..
+         *
+         * @param manifest  The manifest to be interpreted.
+         * @param dimensions  Logical dimensions. Components can be @c 0 in
+         *                  which case their value will be inherited from the
+         *                  actual pixel dimensions of the image at load time.
+         * @param flags     Texture Flags.
+         * @param userData  User data to associate with the resultant texture.
+         */
+        static Texture *interpret(Manifest &manifest, Size2Raw const &dimensions,
+                                  Texture::Flags flags, void *userData = 0);
+
+        /**
+         * @copydoc interpret()
+         */
+        static Texture *interpret(Manifest &manifest, Texture::Flags flags,
+                                  void *userData = 0);
+    };
+
+    /// Texture system subspace schemes.
+    typedef QList<Scheme*> Schemes;
+
+public:
+    /// An unknown scheme was referenced. @ingroup errors
+    DENG2_ERROR(UnknownSchemeError);
+
+public:
+    /**
+     * Constructs a new texture resource collection.
+     */
+    Textures();
+
+    virtual ~Textures();
+
+    /// Register the console commands, variables, etc..., of this module.
+    static void consoleRegister();
+
+    /**
+     * Lookup a subspace scheme by symbolic name.
+     *
+     * @param name  Symbolic name of the scheme.
+     * @return  Scheme associated with @a name.
+     *
+     * @throws UnknownSchemeError If @a name is unknown.
+     */
+    Scheme &scheme(String name) const;
+
+    /**
+     * Create a new subspace scheme.
+     *
+     * @param name      Unique symbolic name of the new scheme. Must be at
+     *                  least @c Scheme::min_name_length characters long.
+     */
+    Scheme &createScheme(String name);
+
+    /**
+     * Returns @c true iff a Scheme exists with the symbolic @a name.
+     */
+    bool knownScheme(String name) const;
+
+    /**
+     * Returns a list of all the schemes for efficient traversal.
+     */
+    Schemes const &allSchemes() const;
+
+    /**
+     * Clear all textures in all schemes.
+     * @see Scheme::clear().
+     */
+    inline void clearAllSchemes()
+    {
+        Schemes schemes = allSchemes();
+        DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->clear(); }
+    }
+
+    /// @return  Total number of unique Textures in the collection.
+    int size() const;
+
+    /// @return  Total number of unique Textures in the collection. Same as @ref size()
+    inline int count() const {
+        return size();
+    }
+
+    /**
+     * Removes the manifest from any indexes.
+     *
+     * @param manifest      Manifest to remove from the index.
+     */
+    void deindex(Manifest &manifest);
+
+    /**
+     * Find a single declared texture.
+     *
+     * @param search  The search term.
+     * @return Found unique identifier; otherwise @c NOTEXTUREID.
+     */
+    Manifest *find(Uri const &search) const;
+
+    /**
+     * Declare a texture in the collection, producing a manifest for a logical
+     * Texture which will be defined later. If a manifest with the specified
+     * @a uri already exists the existing manifest will be returned.
+     *
+     * If either the unique id or the @a resourceUri differs from that which
+     * is already defined in pre-existing manifest, any associated logical
+     * Texture instance is released (any GL-textures acquired for it).
+     *
+     * @param uri           Uri representing a path to the texture in the
+     *                      virtual hierarchy.
+     * @param uniqueId      Scheme-unique identifier to associate with the
+     *                      texture.
+     * @param resourceUri   Uri to the associated data resource.
+     *
+     * @return  Manifest for this URI; otherwise @c 0 if @a uri is invalid.
+     */
+    Manifest *declare(Uri const &uri, int uniqueId, Uri const *resourceUri);
+
+    /**
+     * Iterate over defined Textures in the collection making a callback for
+     * each visited. Iteration ends when all textures have been visited or a
+     * callback returns non-zero.
+     *
+     * @param nameOfScheme  If a known symbolic scheme name, only consider
+     *                      textures within this scheme. Can be @ zero-length
+     *                      string, in which case visit all textures.
+     * @param callback      Callback function ptr.
+     * @param parameters    Passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int iterate(String nameOfScheme, int (*callback)(Texture &texture, void *parameters),
+                void *parameters = 0) const;
+
+    /**
+     * @copydoc iterate()
+     */
+    inline int iterate(int (*callback)(Texture &texture, void *parameters),
+                       void *parameters = 0) const {
+        return iterate("", callback, parameters);
+    }
+
+    /**
+     * Iterate over declared textures in the collection making a callback for
+     * each visited. Iteration ends when all textures have been visited or a
+     * callback returns non-zero.
+     *
+     * @param nameOfScheme  If a known symbolic scheme name, only consider
+     *                      textures within this scheme. Can be @ zero-length
+     *                      string, in which case visit all textures.
+     * @param callback      Callback function ptr.
+     * @param parameters    Passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int iterateDeclared(String nameOfScheme, int (*callback)(Manifest &manifest, void *parameters),
+                        void* parameters = 0) const;
+
+    /**
+     * @copydoc iterate()
+     */
+    inline int iterateDeclared(int (*callback)(Manifest &manifest, void *parameters),
+                               void* parameters = 0) const {
+        return iterateDeclared("", callback, parameters);
+    }
+
+private:
+    struct Instance;
+    Instance *d;
+
+public:
+    /*
+     * Here follows legacy interface methods awaiting removal -ds
+     */
+
+    /// @return  Unique identifier of the primary name for @a manifest else @c NOTEXTUREID.
+    /// @deprecated Texture ids are now obsolete. Reference/point-to the manifest instead.
+    textureid_t idForManifest(Manifest const &manifest) const;
+
+    /// @return  Texture associated with unique identifier @a textureId else @c 0.
+    /// @deprecated Texture ids are now obsolete. Reference/point-to the manifest instead.
+    Texture *toTexture(textureid_t textureId) const;
+};
+
+} // namespace de
+
+de::Textures* App_Textures();
+
+#endif // __cplusplus
+
+/*
+ * C wrapper API
+ */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/// Unique identifier associated with each texture name in the collection.
-typedef uint textureid_t;
-
-/// Special value used to signify an invalid texture id.
-#define NOTEXTUREID                 0
-
-enum textureschemeid_e; // Defined in dd_share.h
-struct texture_s;
-
-/// Register the console commands, variables, etc..., of this module.
-void Textures_Register(void);
-
-/// Initialize this module.
+/// Initialize this module. Cannot be re-initialized, must shutdown first.
 void Textures_Init(void);
 
 /// Shutdown this module.
 void Textures_Shutdown(void);
 
-/**
- * Try to interpret a texture scheme identifier from @a str. If found to match a known
- * scheme name, return the associated identifier. If the reference @a str is not valid
- * (i.e., NULL or a zero-length string) then the special identifier @c TS_ANY is returned.
- * Otherwise @c TS_INVALID.
- */
-textureschemeid_t Textures_ParseSchemeName(const char* str);
-
-/// @return  Name associated with the identified @a schemeId else a zero-length string.
-const Str* Textures_SchemeName(textureschemeid_t schemeId);
-
-/// @return  Total number of unique Textures in the collection.
-uint Textures_Size(void);
-
-/// @return  Number of unique Textures in the identified @a schemeId.
-uint Textures_Count(textureschemeid_t schemeId);
-
-/// Clear all textures in all schemes (and release any acquired GL-textures).
-void Textures_Clear(void);
-
-/// Clear all textures flagged 'runtime' (and release any acquired GL-textures).
-void Textures_ClearRuntime(void);
-
-/// Clear all textures flagged 'system' (and release any acquired GL-textures).
-void Textures_ClearSystem(void);
-
-/**
- * Clear all textures in the identified scheme(s) (and release any acquired GL-textures).
- *
- * @param schemeId  Unique identifier of the scheme to process or
- *                  @c TS_ANY to clear all textures in any scheme.
- */
-void Textures_ClearScheme(textureschemeid_t schemeId);
-
-/// @return  Unique identifier of the primary name for @a texture else @c NOTEXTUREID.
-textureid_t Textures_Id(struct texture_s* texture);
-
-/// @return  Texture associated with unique identifier @a textureId else @c NULL.
-struct texture_s* Textures_ToTexture(textureid_t textureId);
-
-/// @return  Texture associated with the scheme-unique identifier @a index else @c NOTEXTUREID.
-textureid_t Textures_TextureForUniqueId(textureschemeid_t schemeId, int uniqueId);
-
-/// @return  Scheme-unique identfier associated with the identified @a textureId.
-int Textures_UniqueId(textureid_t textureId);
-
-/// @return  Declared, percent-encoded path to this data resource,
-///          else a "null" Uri (no scheme or path).
-const Uri* Textures_ResourcePath(textureid_t textureId);
-
-/// @return  Unique identifier of the scheme this name is in.
-textureschemeid_t Textures_Scheme(textureid_t textureId);
-
-/// @return  Symbolic, percent-encoded name/path-to this texture as a string.
-///          Must be destroyed with Str_Delete().
-AutoStr* Textures_ComposePath(textureid_t textureId);
-
-/// @return  URI to this texture, percent-encoded. Must be destroyed with Uri_Delete().
-Uri* Textures_ComposeUri(textureid_t textureId);
-
-/// @return  Unique URN to this texture. Must be destroyed with Uri_Delete().
-Uri* Textures_ComposeUrn(textureid_t textureId);
-
-/**
- * Search the Textures collection for a texture associated with @a uri.
- *
- * @param uri  Either a path or a URN.
- * @return  Unique identifier of the found texture else @c NOTEXTUREID.
- */
-textureid_t Textures_ResolveUri2(const Uri* uri, boolean quiet);
-textureid_t Textures_ResolveUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
-
-/// Same as Textures::ResolveUri except @a uri is a C-string.
-textureid_t Textures_ResolveUriCString2(const char* uri, boolean quiet);
-textureid_t Textures_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
-
-/**
- * Declare a texture in the collection. If a texture with the specified @a uri already
- * exists, its unique identifier is returned. If the given @a resourcePath differs from
- * that already defined for the pre-existing texture, any associated Texture instance
- * is released (and any GL-textures acquired for it).
- *
- * @param uri           Uri representing a path to the texture in the virtual hierarchy.
- * @param uniqueId      Scheme-unique identifier to associate with the texture.
- * @param resourcepath  The path to the underlying data resource.
- *
- * @return  Unique identifier for this texture unless @a uri is invalid, in which case
- *          @c NOTEXTUREID is returned.
- */
-textureid_t Textures_Declare(Uri* uri, int uniqueId, Uri const* resourcePath);
-
-/**
- * Create/update a Texture instance in the collection.
- *
- * @param id        Unique identifier of the previously declared Texture.
- * @param custom    @c true= this is a custom texture.
- * @param size      Logical size. Components can be @c 0 in which case their value will
- *                  be inherited from the actual pixel size of the texture at load time.
- * @param userData  User data to associate with the resultant texture.
- */
-struct texture_s* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw* size, void* userData);
-struct texture_s* Textures_Create(textureid_t id, boolean custom, void* userData); /* width=0, height=0*/
-
-/**
- * Iterate over defined Textures in the collection making a callback for each visited.
- * Iteration ends when all textures have been visited or a callback returns non-zero.
- *
- * @param schemeId      If a valid scheme identifier, only consider textures in this
- *                      scheme, otherwise visit all textures.
- * @param callback      Callback function ptr.
- * @param parameters    Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int Textures_Iterate2(textureschemeid_t schemeId, int (*callback)(struct texture_s* texture, void* parameters), void* parameters);
-int Textures_Iterate(textureschemeid_t schemeId, int (*callback)(struct texture_s* texture, void* parameters)); /*parameters=NULL*/
-
-/**
- * Iterate over declared textures in the collection making a callback for each visited.
- * Iteration ends when all textures have been visited or a callback returns non-zero.
- *
- * @param schemeId      If a valid scheme identifier, only consider textures in this
- *                      scheme, otherwise visit all textures.
- * @param callback      Callback function ptr.
- * @param parameters    Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int Textures_IterateDeclared2(textureschemeid_t schemeId, int (*callback)(textureid_t textureId, void* parameters), void* parameters);
-int Textures_IterateDeclared(textureschemeid_t schemeId, int (*callback)(textureid_t textureId, void* parameters)); /*parameters=NULL*/
+int Textures_UniqueId2(Uri const *uri, boolean quiet);
+int Textures_UniqueId(Uri const *uri/*, quiet = false */);
 
 #ifdef __cplusplus
 } // extern "C"

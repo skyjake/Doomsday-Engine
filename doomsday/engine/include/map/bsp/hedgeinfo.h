@@ -29,7 +29,7 @@
 #define LIBDENG_BSP_HEDGEINFO
 
 #include "m_misc.h"
-#include "m_vector.h"
+#include <de/vector1.h>
 #include "map/p_mapdata.h"
 
 namespace de {

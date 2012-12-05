@@ -248,7 +248,7 @@ void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
         colors->table[i + 512] = xRamp[tx + 2*rampSize];
     }
 
-    delete xRamp;
+    delete [] xRamp;
 }
 
 void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
@@ -274,5 +274,5 @@ void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
     XF86VidModeSetGammaRamp(dpy, QX11Info::appScreen(), rampSize,
                             xRamp, xRamp + rampSize, xRamp + 2*rampSize);
 
-    delete xRamp;
+    delete [] xRamp;
 }

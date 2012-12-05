@@ -2575,7 +2575,7 @@ D_CMD(Font)
         {
             Uri* uri = Fonts_ComposeUri(newFont);
             Con_SetFont(newFont);
-            if(!Str_CompareIgnoreCase(Uri_Scheme(uri), FN_GAME_NAME))
+            if(!Str_CompareIgnoreCase(Uri_Scheme(uri), "Game"))
             {
                 Con_SetFontScale(1.5f, 2);
                 Con_SetFontLeading(1.25f);

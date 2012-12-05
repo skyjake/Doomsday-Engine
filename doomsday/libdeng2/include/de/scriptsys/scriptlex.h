@@ -63,6 +63,7 @@ namespace de
         static String const DEF;
         static String const TRY;
         static String const IMPORT;
+        static String const EXPORT;
         static String const RECORD;
         static String const DEL;
         static String const PASS;

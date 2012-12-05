@@ -39,6 +39,7 @@ namespace de
     class WhileStatement;
     class ForStatement;
     class AssignStatement;
+    class DeleteStatement;
     class FunctionStatement;
     class ArrayExpression;
     class DictionaryExpression;
@@ -96,10 +97,12 @@ namespace de
         ForStatement *parseForStatement();
                 
         ExpressionStatement *parseImportStatement();
+
+        ExpressionStatement *parseExportStatement();
                 
         ExpressionStatement *parseDeclarationStatement();
                 
-        ExpressionStatement *parseDeleteStatement();
+        DeleteStatement *parseDeleteStatement();
 
         FunctionStatement *parseFunctionStatement();
         

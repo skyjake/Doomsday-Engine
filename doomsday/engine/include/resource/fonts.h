@@ -113,7 +113,7 @@ fontid_t Fonts_Id(struct font_s* font);
 struct font_s* Fonts_ToFont(fontid_t fontId);
 
 /// @return  Font associated with the scheme-unique identifier @a index else @c NOFONTID.
-textureid_t Fonts_FontForUniqueId(fontschemeid_t schemeId, int uniqueId);
+fontid_t Fonts_FontForUniqueId(fontschemeid_t schemeId, int uniqueId);
 
 /// @return  Scheme-unique identfier associated with the identified @a fontId.
 int Fonts_UniqueId(fontid_t fontId);
@@ -208,6 +208,9 @@ int Fonts_Iterate(fontschemeid_t schemeId, int (*callback)(struct font_s* font, 
  */
 int Fonts_IterateDeclared2(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void* paramaters), void* paramaters);
 int Fonts_IterateDeclared(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void* paramaters)); /*paramaters=NULL*/
+
+struct font_s *R_CreateFontFromFile(Uri *uri, char const *resourcePath);
+struct font_s *R_CreateFontFromDef(ded_compositefont_t *def);
 
 /*
  * Here follows miscellaneous routines currently awaiting refactoring into the

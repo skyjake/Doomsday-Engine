@@ -29,8 +29,12 @@
 #ifndef LIBDENG_REFRESH_UTIL_H
 #define LIBDENG_REFRESH_UTIL_H
 
-#include "m_vector.h"
+#include <de/vector1.h>
 #include "map/p_mapdata.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Which side of the partition does the point lie?
@@ -128,5 +132,9 @@ scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availH
     scalemode_t overrideMode, float stretchEpsilon);
 scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REFRESH_UTIL_H */

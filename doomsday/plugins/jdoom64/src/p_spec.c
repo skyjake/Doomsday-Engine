@@ -151,8 +151,8 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 
         if(i == 0 || isTexture != lastIsTexture)
         {
-            Uri_SetScheme(startUri, isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME);
-            Uri_SetScheme(endUri, isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME);
+            Uri_SetScheme(startUri, isTexture? "Textures" : "Flats");
+            Uri_SetScheme(endUri, isTexture? "Textures" : "Flats");
             lastIsTexture = isTexture;
         }
 
@@ -162,8 +162,8 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         Str_PercentEncode(Str_StripRight(Str_Set(&endPath, animDefs[i].endname)));
         Uri_SetPath(endUri, Str_Text(&endPath));
 
-        startFrame = R_TextureUniqueId2(startUri, !isCustom);
-        endFrame   = R_TextureUniqueId2(endUri, !isCustom);
+        startFrame = Textures_UniqueId2(startUri, !isCustom);
+        endFrame   = Textures_UniqueId2(endUri, !isCustom);
         if(-1 == startFrame || -1 == endFrame) continue;
 
         numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
@@ -199,7 +199,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         for(n = startFrame; n <= endFrame; ++n)
         {
             Str_Clear(&framePath);
-            Str_Appendf(&framePath, "%s:%i", isTexture? TS_TEXTURES_NAME : TS_FLATS_NAME, n);
+            Str_Appendf(&framePath, "%s:%i", isTexture? "Textures" : "Flats", n);
             Uri_SetPath(frameUrn, Str_Text(&framePath));
 
             R_AddAnimGroupFrame(groupNum, frameUrn, ticsPerFrame, 0);

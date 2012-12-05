@@ -146,12 +146,26 @@ public:
     Path(String const &path, QChar sep = '/');
 
     /**
+     * Construct a path from @a str with '/' as the segment separator.
+     *
+     * @param str  String.
+     */
+    Path(QString const &str);
+
+    /**
      * Construct a path from a UTF-8 C-style string.
      *
      * @param nullTerminatedCStr  Path to be parsed. All white space is included in the path.
      * @param sep   Character used to separate path segments.
      */
     Path(char const *nullTerminatedCStr, char sep);
+
+    /**
+     * Construct a path from a UTF-8 C-style string that uses '/' separators.
+     *
+     * @param nullTerminatedCStr  Path to be parsed. All white space is included in the path.
+     */
+    Path(char const *nullTerminatedCStr);
 
     /**
      * Construct a path by duplicating @a other.
@@ -164,6 +178,24 @@ public:
         std::swap(d, other.d);
         return *this;
     }
+
+    /**
+     * Append a string.
+     *
+     * @param str  String.
+     *
+     * @return Path with @a str added to the end.
+     *
+     * @note This is a plain string append, not a path concatenation: use the /
+     * operator for concatenating paths in a way that takes care of separators
+     * and path relativity.
+     */
+    Path operator + (QString const &str) const;
+
+    /**
+     * @copydoc operator+
+     */
+    Path operator + (char const *str) const;
 
     /**
      * Swaps this Path with @a other.

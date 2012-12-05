@@ -20,6 +20,7 @@
 #include "de/Statement"
 #include "de/AssignStatement"
 #include "de/CatchStatement"
+#include "de/DeleteStatement"
 #include "de/ExpressionStatement"
 #include "de/ForStatement"
 #include "de/FunctionStatement"
@@ -49,7 +50,11 @@ Statement *Statement::constructFrom(Reader &reader)
     case CATCH:
         result.reset(new CatchStatement);
         break;
-        
+
+    case DELETE:
+        result.reset(new DeleteStatement);
+        break;
+
     case EXPRESSION:
         result.reset(new ExpressionStatement);
         break;

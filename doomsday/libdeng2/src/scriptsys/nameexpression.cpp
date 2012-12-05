@@ -53,86 +53,112 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     evaluator.namespaces(spaces);
     
     Record *foundInNamespace = 0;
+    Record *higherNamespace = 0;
     Variable *variable = 0;
-    Record *record = 0;
     
     DENG2_FOR_EACH(Evaluator::Namespaces, i, spaces)
     {
         Record &ns = **i;
         if(ns.hasMember(_identifier))
         {
-            // The name exists in this namespace (as a variable).
+            // The name exists in this namespace.
             variable = &ns[_identifier];
             foundInNamespace = &ns;
+
+            // Also note the higher namespace (for export).
+            Evaluator::Namespaces::iterator next = i;
+            if(++next != spaces.end()) higherNamespace = *next;
             break;
         }
-        if(ns.hasSubrecord(_identifier))
-        {
-            // The name exists in this namespace (as a record).
-            record = &ns.subrecord(_identifier);
-            foundInNamespace = &ns;
-        }
-        if(flags() & LocalOnly)
+        if(flags().testFlag(LocalOnly))
         {
             break;
         }
     }
 
-    if(variable && (flags() & ThrowawayIfInScope))
+    if(flags().testFlag(ThrowawayIfInScope) && variable)
     {
         foundInNamespace = 0;
         variable = &evaluator.context().throwaway();
     }
 
     // If a new variable/record is required and one is in scope, we cannot continue.
-    if((variable || record) && (flags() & NotInScope))
+    if(flags().testFlag(NotInScope) && variable)
     {
         throw AlreadyExistsError("NameExpression::evaluate", 
             "Identifier '" + _identifier + "' already exists");
     }
-    
-    // Should we import a namespace?
-    if(flags() & Import)
+
+    // Create a new subrecord in the namespace? ("record xyz")
+    if(flags().testFlag(NewSubrecord))
     {
-        record = &App::importModule(_identifier,
-            evaluator.process().globals()["__file__"].value().asText());
-            
-        // Take a copy if requested.
-        if(flags() & ByValue)
-        {
-            record = &spaces.front()->add(_identifier, new Record(*record));
-        }
-    }
-    
-    // Should we delete the identifier?
-    if(flags() & Delete)
-    {
-        if(!variable && !record)
-        {
-            throw NotFoundError("NameExpression::evaluate", 
-                "Cannot delete nonexistent identifier '" + _identifier + "'");
-        }
-        DENG2_ASSERT(foundInNamespace != 0);
-        if(variable)
-        {
-            delete foundInNamespace->remove(*variable);
-        }
-        else if(record)
-        {
-            delete foundInNamespace->remove(_identifier);
-        }
-        return new NoneValue();
+        // Replaces existing member with this identifier.
+        Record &record = spaces.front()->addRecord(_identifier);
+
+        return new RecordValue(&record);
     }
 
     // If nothing is found and we are permitted to create new variables, do so.
     // Occurs when assigning into new variables.
-    if(!variable && !record && (flags() & NewVariable))
+    if(!variable && flags().testFlag(NewVariable))
     {
         variable = new Variable(_identifier);
-        
+
         // Add it to the local namespace.
         spaces.front()->add(variable);
+
+        // Take note of the namespaces.
+        foundInNamespace = spaces.front();
+        if(!higherNamespace && spaces.size() > 1)
+        {
+            Evaluator::Namespaces::iterator i = spaces.begin();
+            higherNamespace = *(++i);
+        }
     }
+
+    // Export variable into a higher namespace?
+    if(flags().testFlag(Export))
+    {
+        if(!variable)
+        {
+            throw NotFoundError("NameExpression::evaluate",
+                                "Cannot export nonexistent identifier '" + _identifier + "'");
+        }
+        if(!higherNamespace)
+        {
+            throw NotFoundError("NameExpression::evaluate",
+                                "No higher namespace for exporting '" + _identifier + "' into");
+        }
+        if(higherNamespace != foundInNamespace)
+        {
+            foundInNamespace->remove(*variable);
+            higherNamespace->add(variable);
+        }
+    }
+
+    // Should we import a namespace?
+    if(flags() & Import)
+    {
+        Record *record = &App::importModule(_identifier,
+            evaluator.process().globals()["__file__"].value().asText());
+
+        // Overwrite any existing member with this identifier.
+        spaces.front()->add(variable = new Variable(_identifier));
+
+        if(flags().testFlag(ByValue))
+        {
+            // Take a copy of the record ("import record").
+            *variable = new RecordValue(new Record(*record), RecordValue::OwnsRecord);
+        }
+        else
+        {
+            // The variable will merely reference the module.
+            *variable = new RecordValue(record);
+        }
+
+        return new RecordValue(record);
+    }
+    
     if(variable)
     {
         // Variables can be referred to by reference or value.
@@ -146,26 +172,6 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
             // Variables evaluate to their values.
             return variable->value().duplicate();
         }
-    }
-
-    // We may be permitted to create a new record.
-    if(flags() & NewRecord)
-    {
-        if(!record)
-        {
-            // Add it to the local namespace.
-            record = &spaces.front()->addRecord(_identifier);
-        }
-        else
-        {
-            // Create a variable referencing the record.
-            spaces.front()->add(new Variable(_identifier, new RecordValue(record)));
-        }
-    }
-    if(record)
-    {
-        // Records can only be referenced.
-        return new RecordValue(record);
     }
     
     throw NotFoundError("NameExpression::evaluate", "Identifier '" + _identifier + 

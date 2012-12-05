@@ -25,6 +25,7 @@
 #include "de/ArrayValue"
 #include "de/DictionaryValue"
 #include "de/BlockValue"
+#include "de/TimeValue"
 #include "de/Reader"
 #include "de/Writer"
 #include "de/Log"
@@ -34,13 +35,13 @@ using namespace de;
 Variable::Variable(String const &name, Value *initial, Flags const &m)
     : _name(name), _value(0), _mode(m)
 {
-    verifyName(_name);
+    std::auto_ptr<Value> v(initial);
     if(!initial)
     {
-        initial = new NoneValue();
+        v.reset(new NoneValue);
     }
-    std::auto_ptr<Value> v(initial);
-    verifyValid(*initial);
+    verifyName(_name);
+    verifyValid(*v);
     _value = v.release();
 }
 
@@ -107,12 +108,13 @@ void Variable::setMode(Flags const &flags)
 bool Variable::isValid(Value const &v) const
 {
     /// @todo  Make sure this actually works and add func, record, ref.
-    if((dynamic_cast<NoneValue const *>(&v) && !_mode.testFlag(AllowNone)) ||
-        (dynamic_cast<NumberValue const *>(&v) && !_mode.testFlag(AllowNumber)) ||
-        (dynamic_cast<TextValue const *>(&v) && !_mode.testFlag(AllowText)) ||
-        (dynamic_cast<ArrayValue const *>(&v) && !_mode.testFlag(AllowArray)) ||
-        (dynamic_cast<DictionaryValue const *>(&v) && !_mode.testFlag(AllowDictionary)) ||
-        (dynamic_cast<BlockValue const *>(&v) && !_mode.testFlag(AllowBlock)))
+    if((dynamic_cast<NoneValue const *>(&v)       && !_mode.testFlag(AllowNone)) ||
+       (dynamic_cast<NumberValue const *>(&v)     && !_mode.testFlag(AllowNumber)) ||
+       (dynamic_cast<TextValue const *>(&v)       && !_mode.testFlag(AllowText)) ||
+       (dynamic_cast<ArrayValue const *>(&v)      && !_mode.testFlag(AllowArray)) ||
+       (dynamic_cast<DictionaryValue const *>(&v) && !_mode.testFlag(AllowDictionary)) ||
+       (dynamic_cast<BlockValue const *>(&v)      && !_mode.testFlag(AllowBlock)) ||
+       (dynamic_cast<TimeValue const *>(&v)       && !_mode.testFlag(AllowTime)))
     {
         return false;
     }

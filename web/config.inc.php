@@ -39,5 +39,6 @@ $siteconfig['RobotRevisitDays'] = 3;
 $siteconfig['Keywords'] = array(
     'Doomsday', 'Doomsday Engine', 'Deng',
     'Doom', 'Heretic', 'Hexen',
-    'jDoom',  'jHeretic', 'jHexen',
+    'libdoom', 'libheretic', 'libhexen',
+    'jDoom', 'jHeretic', 'jHexen',
     'sourceport', 'first person shooter', 'fps');

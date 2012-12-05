@@ -2,9 +2,6 @@
  * @file updatersettings.cpp
  * Persistent settings for automatic updates. @ingroup updater
  *
- * @todo  There should be a unified persistent configuration subsystem that
- * combines the characteristics of QSettings and console variables.
- *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
@@ -26,54 +23,90 @@
 #include "updatersettings.h"
 #include "versioninfo.h"
 #include <QDateTime>
-#include <QSettings>
 #include <QDesktopServices>
+#include <de/Record>
+#include <de/App>
+#include <de/Config>
+#include <de/TextValue>
+#include <de/NumberValue>
+#include <de/TimeValue>
 
-#define STK_FREQUENCY       "updater/frequency"
-#define STK_CHANNEL         "updater/channel"
-#define STK_LAST_CHECKED    "updater/lastChecked"
-#define STK_ONLY_MANUAL     "updater/onlyManually"
-#define STK_DELETE          "updater/delete"
-#define STK_DOWNLOAD_PATH   "updater/downloadPath"
-#define STK_DELETE_PATH     "updater/deleteAtStartup"
+using namespace de;
+
+#define VAR_FREQUENCY       "frequency"
+#define VAR_CHANNEL         "channel"
+#define VAR_LAST_CHECKED    "lastChecked"
+#define VAR_ONLY_MANUAL     "onlyManually"
+#define VAR_DELETE          "delete"
+#define VAR_DOWNLOAD_PATH   "downloadPath"
+#define VAR_DELETE_PATH     "deleteAtStartup"
+
+#define SUBREC_NAME         "updater"
+#define CONF(name)          SUBREC_NAME "." name
+
+#define SYMBOL_DEFAULT_DOWNLOAD "${DEFAULT}"
+
+void UpdaterSettings::initialize()
+{
+    Config &config = App::config();
+
+    if(!config.names().has(SUBREC_NAME))
+    {
+        // Looks like we don't have existing values stored. Let's set up a
+        // Record with the defaults.
+        Record *s = new Record;
+
+        s->addNumber(VAR_FREQUENCY, Weekly);
+        s->addNumber(VAR_CHANNEL, QString(DOOMSDAY_RELEASE_TYPE) == "Stable"? Stable : Unstable);
+        s->addTime(VAR_LAST_CHECKED, Time::invalidTime());
+
+        bool checkByDefault = false;
+#if defined(UNIX) && !defined(MACOSX)
+        // On Unix platforms don't do automatic checks by default.
+        checkByDefault = true;
+#endif
+        s->addBoolean(VAR_ONLY_MANUAL, checkByDefault);
+
+        s->addBoolean(VAR_DELETE, true);
+        s->addText(VAR_DELETE_PATH, "");
+        s->addText(VAR_DOWNLOAD_PATH, SYMBOL_DEFAULT_DOWNLOAD);
+
+        config.names().add(SUBREC_NAME, s);
+    }
+}
 
 UpdaterSettings::UpdaterSettings()
 {}
 
 UpdaterSettings::Frequency UpdaterSettings::frequency() const
 {
-    return Frequency(QSettings().value(STK_FREQUENCY, Weekly).toInt());
+    return Frequency(App::config().geti(CONF(VAR_FREQUENCY)));
 }
 
 UpdaterSettings::Channel UpdaterSettings::channel() const
 {
-    return Channel(QSettings().value(STK_CHANNEL,
-            QString(DOOMSDAY_RELEASE_TYPE) == "Stable"? Stable : Unstable).toInt());
+    return Channel(App::config().geti(CONF(VAR_CHANNEL)));
 }
 
 de::Time UpdaterSettings::lastCheckTime() const
 {
-    return QSettings().value(STK_LAST_CHECKED).toDateTime();
+    // Note that the variable has only AllowTime as the mode.
+    return App::config().getAs<TimeValue>(CONF(VAR_LAST_CHECKED)).time();
 }
 
 bool UpdaterSettings::onlyCheckManually() const
 {
-    bool byDefault = false;
-#if defined(UNIX) && !defined(MACOSX)
-    // On Unix platforms don't do automatic checks by default.
-    byDefault = true;
-#endif
-    return QSettings().value(STK_ONLY_MANUAL, byDefault).toBool();
+    return App::config().getb(CONF(VAR_ONLY_MANUAL));
 }
 
 bool UpdaterSettings::deleteAfterUpdate() const
 {
-    return QSettings().value(STK_DELETE, true).toBool();
+    return App::config().getb(CONF(VAR_DELETE));
 }
 
 de::NativePath UpdaterSettings::pathToDeleteAtStartup() const
 {
-    de::NativePath p(QSettings().value(STK_DELETE_PATH).toString());
+    de::NativePath p = App::config().gets(CONF(VAR_DELETE_PATH));
     de::String ext = p.toString().fileNameExtension();
     if(p.fileName().startsWith("doomsday") && (ext == ".exe" || ext == ".deb" || ext == ".dmg"))
     {
@@ -90,8 +123,8 @@ bool UpdaterSettings::isDefaultDownloadPath() const
 
 de::NativePath UpdaterSettings::downloadPath() const
 {
-    de::NativePath dir = QSettings().value(STK_DOWNLOAD_PATH, defaultDownloadPath().toString()).toString();
-    if(dir.toString() == "${DEFAULT}")
+    de::NativePath dir = App::config().gets(CONF(VAR_DOWNLOAD_PATH));
+    if(dir.toString() == SYMBOL_DEFAULT_DOWNLOAD)
     {
         dir = defaultDownloadPath();
     }
@@ -102,34 +135,34 @@ void UpdaterSettings::setDownloadPath(de::NativePath downloadPath)
 {
     if(downloadPath == defaultDownloadPath())
     {
-        downloadPath = "${DEFAULT}";
+        downloadPath = SYMBOL_DEFAULT_DOWNLOAD;
     }
-    QSettings().setValue(STK_DOWNLOAD_PATH, downloadPath.toString());
+    App::config().names()[CONF(VAR_DOWNLOAD_PATH)] = new TextValue(downloadPath);
 }
 
 void UpdaterSettings::setFrequency(UpdaterSettings::Frequency freq)
 {
-    QSettings().setValue(STK_FREQUENCY, int(freq));
+    App::config().names()[CONF(VAR_FREQUENCY)] = new NumberValue(dint(freq));
 }
 
 void UpdaterSettings::setChannel(UpdaterSettings::Channel channel)
 {
-    QSettings().setValue(STK_CHANNEL, int(channel));
+    App::config().names()[CONF(VAR_CHANNEL)] = new NumberValue(dint(channel));
 }
 
 void UpdaterSettings::setLastCheckTime(const de::Time &time)
 {
-    QSettings().setValue(STK_LAST_CHECKED, time.asDateTime());
+    App::config().names()[CONF(VAR_LAST_CHECKED)] = new TimeValue(time);
 }
 
 void UpdaterSettings::setOnlyCheckManually(bool onlyManually)
 {
-    QSettings().setValue(STK_ONLY_MANUAL, onlyManually);
+    App::config().names()[CONF(VAR_ONLY_MANUAL)] = new NumberValue(onlyManually);
 }
 
 void UpdaterSettings::setDeleteAfterUpdate(bool deleteAfter)
 {
-    QSettings().setValue(STK_DELETE, deleteAfter);
+    App::config().names()[CONF(VAR_DELETE)] = new NumberValue(deleteAfter);
 }
 
 void UpdaterSettings::useDefaultDownloadPath()
@@ -139,7 +172,7 @@ void UpdaterSettings::useDefaultDownloadPath()
 
 void UpdaterSettings::setPathToDeleteAtStartup(de::NativePath deletePath)
 {
-    QSettings().setValue(STK_DELETE_PATH, deletePath.toString());
+    App::config().names()[CONF(VAR_DELETE_PATH)] = new TextValue(deletePath);
 }
 
 de::NativePath UpdaterSettings::defaultDownloadPath()

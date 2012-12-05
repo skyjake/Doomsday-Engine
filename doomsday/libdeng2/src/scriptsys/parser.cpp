@@ -29,6 +29,7 @@
 #include "de/ForStatement"
 #include "de/FlowStatement"
 #include "de/AssignStatement"
+#include "de/DeleteStatement"
 #include "de/FunctionStatement"
 #include "de/TryStatement"
 #include "de/CatchStatement"
@@ -187,7 +188,11 @@ void Parser::parseStatement(Compound &compound)
     {
         compound.add(parseAssignStatement());
     }
-    else 
+    else if(firstToken.equals(ScriptLex::EXPORT))
+    {
+        compound.add(parseExportStatement());
+    }
+    else
     {
         compound.add(parseExpressionStatement());
     }
@@ -199,7 +204,7 @@ void Parser::parseStatement(Compound &compound)
 IfStatement *Parser::parseIfStatement()
 {
     // The "end" keyword is necessary in the full form.
-    bool expectEnd = !_statementRange.has(Token::COLON);
+    bool expectEnd = !_statementRange.hasBracketless(Token::COLON);
     
     auto_ptr<IfStatement> statement(new IfStatement());
     statement->newBranch();
@@ -209,7 +214,7 @@ IfStatement *Parser::parseIfStatement()
     
     while(_statementRange.beginsWith(ScriptLex::ELSIF))
     {
-        expectEnd = !_statementRange.has(Token::COLON);
+        expectEnd = !_statementRange.hasBracketless(Token::COLON);
         statement->newBranch();
         statement->setBranchCondition(
             parseConditionalCompound(statement->branchCompound(), 
@@ -280,18 +285,31 @@ ExpressionStatement *Parser::parseImportStatement()
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }
     dint startAt = 1;
-    Expression::Flags flags = Expression::Import
-            | Expression::NewRecord
-            | Expression::NotInScope
-            | Expression::LocalOnly;
+    Expression::Flags flags =
+            Expression::Import     |
+            Expression::NotInScope |
+            Expression::LocalOnly;
     if(_statementRange.size() >= 3 && _statementRange.token(1).equals(ScriptLex::RECORD))
     {
         // Take a copy of the imported record instead of referencing it.
         flags |= Expression::ByValue;
-        flags &= ~Expression::NewRecord; // don't create a variable referencing it
         startAt = 2;
     }
     return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), Token::COMMA, flags));
+}
+
+ExpressionStatement *Parser::parseExportStatement()
+{
+    // "export" name-expr ["," name-expr]*
+
+    if(_statementRange.size() < 2)
+    {
+        throw MissingTokenError("Parser::parseExportStatement",
+            "Expected identifier to follow " + _statementRange.firstToken().asText());
+    }
+
+    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
+                                             Expression::Export | Expression::LocalOnly));
 }
 
 ExpressionStatement *Parser::parseDeclarationStatement()
@@ -303,11 +321,11 @@ ExpressionStatement *Parser::parseDeclarationStatement()
         throw MissingTokenError("Parser::parseDeclarationStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
-    Expression::Flags flags = Expression::LocalOnly | Expression::NewRecord;
+    Expression::Flags flags = Expression::LocalOnly | Expression::NewSubrecord;
     return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA, flags));
 }
 
-ExpressionStatement *Parser::parseDeleteStatement()
+DeleteStatement *Parser::parseDeleteStatement()
 {
     // "del" name-expr ["," name-expr]*
     
@@ -316,8 +334,8 @@ ExpressionStatement *Parser::parseDeleteStatement()
         throw MissingTokenError("Parser::parseDeleteStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
-    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
-        Expression::Delete | Expression::LocalOnly));
+    return new DeleteStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
+                                         Expression::LocalOnly | Expression::ByReference));
 }
 
 FunctionStatement *Parser::parseFunctionStatement()
@@ -450,6 +468,13 @@ AssignStatement *Parser::parseAssignStatement()
 {
     Expression::Flags flags = Expression::NewVariable | Expression::ByReference | Expression::LocalOnly;
     
+    /// "export" will export the newly assigned variable.
+    if(_statementRange.firstToken().equals(ScriptLex::EXPORT))
+    {
+        flags |= Expression::Export;
+        _statementRange = _statementRange.startingFrom(1);
+    }
+
     /// "const" makes read-only variables.
     if(_statementRange.firstToken().equals(ScriptLex::CONST))
     {
@@ -464,6 +489,7 @@ AssignStatement *Parser::parseAssignStatement()
         pos = _statementRange.find(ScriptLex::SCOPE_ASSIGN);
         if(pos < 0)
         {
+            // Must be weak assingment, then.
             pos = _statementRange.find(ScriptLex::WEAK_ASSIGN);
             flags |= Expression::ThrowawayIfInScope;
         }
@@ -525,7 +551,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
     TokenRange range = _statementRange;
     
     // See if there is a colon on this line.
-    dint colon = range.find(Token::COLON);
+    dint colon = range.findBracketless(Token::COLON);
     
     auto_ptr<Expression> condition;
     if(flags.testFlag(HasCondition))
@@ -544,10 +570,16 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
             range.token(1).asText() + " was unexpected");
     }
     
-    if(colon > 0 && colon < dint(range.size()) - 1)
+    if(colon > 0)
     {
-        // The colon is not the last token. There must be a statement 
-        // continuing on the same line.
+        if(colon == dint(range.size()) - 1)
+        {
+            // The color is the last token: this is most likely a programmer error.
+            throw MissingTokenError("Parser::parseConditionalCompound",
+                                    "Expected at least one token to follow " +
+                                    range.token(colon).asText());
+        }
+        // There must be a statement continuing on the same line.
         _statementRange = _statementRange.startingFrom(colon + 1);
         parseStatement(compound);
     }
@@ -564,7 +596,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
 }
 
 ArrayExpression *Parser::parseList(TokenRange const &range, QChar const *separator,
-    Expression::Flags const &flags)
+                                   Expression::Flags const &flags)
 {
     auto_ptr<ArrayExpression> exp(new ArrayExpression);
     if(range.size() > 0)
@@ -749,14 +781,18 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
     }
     else
     {
-        Expression::Flags leftFlags = (leftOperandByReference(op)? Expression::ByReference : Expression::ByValue);
-            
+        Expression::Flags leftOpFlags = (leftOperandByReference(op)?
+                                             Expression::ByReference : Expression::ByValue);
+
+        Expression::Flags rightOpFlags = rightFlags;
+        if(op != MEMBER) rightOpFlags &= ~Expression::ByReference;
+
         // Binary operation.
-        auto_ptr<Expression> leftOperand(parseExpression(leftSide, leftFlags));
+        auto_ptr<Expression> leftOperand(parseExpression(leftSide, leftOpFlags));
         auto_ptr<Expression> rightOperand(op == SLICE? parseList(rightSide, Token::COLON) :
-            parseExpression(rightSide, rightFlags));
+            parseExpression(rightSide, rightOpFlags));
         OperatorExpression *x = new OperatorExpression(op, leftOperand.get(), rightOperand.get());
-        x->setFlags(rightFlags);
+        x->setFlags(rightFlags); // original flags
         rightOperand.release();
         leftOperand.release();
         return x;
@@ -827,15 +863,15 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
 Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSide, TokenRange &rightSide)
 {
     enum {
-        MAX_RANK            = 0x7fffffff,
-        RANK_MEMBER         = 13,
-        RANK_CALL           = 14,
-        RANK_INDEX          = 14,
-        RANK_SLICE          = 14,
-        RANK_DOT            = 15,
-        RANK_ARRAY          = MAX_RANK - 1,
-        RANK_DICTIONARY     = RANK_ARRAY,
-        RANK_PARENTHESIS    = MAX_RANK - 1
+        MAX_RANK         = 0x7fffffff,
+        RANK_MEMBER      = 13,
+        RANK_CALL        = 14,
+        RANK_INDEX       = 14,
+        RANK_SLICE       = 14,
+        RANK_DOT         = 15,
+        RANK_ARRAY       = MAX_RANK - 1,
+        RANK_DICTIONARY  = RANK_ARRAY,
+        RANK_PARENTHESIS = MAX_RANK - 1
     };
     enum Direction {
         LEFT_TO_RIGHT,

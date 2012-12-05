@@ -29,7 +29,7 @@
 #ifndef LIBDENG_RENDER_SHADOWBIAS_H
 #define LIBDENG_RENDER_SHADOWBIAS_H
 
-#include "m_vector.h"
+#include <de/vector1.h>
 
 #ifdef __cplusplus
 extern "C" {

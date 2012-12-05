@@ -1,8 +1,5 @@
-/**
- * file dd_loop.c
- * Core timer implementation. @ingroup base
- *
- * The engine's main loop.
+/** @file dd_loop.c Main loop and the core timer.
+ * @ingroup base
  *
  * @authors Copyright Â© 2003-2012 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
  * @authors Copyright Â© 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -94,9 +91,8 @@ static void runTics(void);
 void DD_RegisterLoop(void)
 {
     C_VAR_BYTE("input-sharp-lateprocessing", &processSharpEventsAfterTickers, 0, 0, 1);
-    C_VAR_INT("refresh-rate-maximum", &maxFrameRate, 0, 35, 1000);
-    C_VAR_INT("rend-dev-framecount", &rFrameCount,
-              CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
+    C_VAR_INT ("refresh-rate-maximum",       &maxFrameRate, 0, 35, 1000);
+    C_VAR_INT ("rend-dev-framecount",        &rFrameCount, CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
     C_VAR_BYTE("rend-info-deltas-frametime", &devShowFrameTimeDeltas, CVF_NO_ARCHIVE, 0, 1);
 }
 

@@ -146,6 +146,7 @@ DENG_HEADERS += \
     include/client/cl_player.h \
     include/client/cl_sound.h \
     include/client/cl_world.h \
+    include/color.h \
     include/con_bar.h \
     include/con_bind.h \
     include/con_config.h \
@@ -186,7 +187,7 @@ DENG_HEADERS += \
     include/filesys/fs_main.h \
     include/filesys/fs_util.h \
     include/filesys/lumpindex.h \
-    include/filesys/metafile.h \
+    include/filesys/manifest.h \
     include/filesys/searchpath.h \
     include/filesys/sys_direc.h \
     include/filesys/sys_findfile.h \
@@ -210,7 +211,6 @@ DENG_HEADERS += \
     include/m_nodepile.h \
     include/m_profiler.h \
     include/m_stack.h \
-    include/m_vector.h \
     include/map/blockmap.h \
     include/map/blockmapvisual.h \
     include/map/bsp/bsptreenode.h \
@@ -263,13 +263,11 @@ DENG_HEADERS += \
     include/network/sys_network.h \
     include/network/ui_mpi.h \
     include/r_util.h \
+    include/render/lumobj.h \
     include/render/r_draw.h \
-    include/render/r_fakeradio.h \
     include/render/r_main.h \
     include/render/r_lgrid.h \
-    include/render/r_lumobjs.h \
     include/render/r_shadow.h \
-    include/render/r_sky.h \
     include/render/r_things.h \
     include/render/rend_bias.h \
     include/render/rend_clip.h \
@@ -284,11 +282,16 @@ DENG_HEADERS += \
     include/render/rend_model.h \
     include/render/rend_particle.h \
     include/render/rend_shadow.h \
-    include/render/rend_sky.h \
-    include/render/rend_sprite.h \
+    include/render/rendpoly.h \
+    include/render/sky.h \
+    include/render/sprite.h \
     include/render/vignette.h \
+    include/render/vlight.h \
+    include/resource/animgroups.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
+    include/resource/colorpalettes.h \
+    include/resource/compositetexture.h \
     include/resource/font.h \
     include/resource/fonts.h \
     include/resource/hq2x.h \
@@ -298,9 +301,13 @@ DENG_HEADERS += \
     include/resource/materials.h \
     include/resource/materialvariant.h \
     include/resource/models.h \
+    include/resource/patchname.h \
     include/resource/pcx.h \
     include/resource/r_data.h \
+    include/resource/rawtexture.h \
     include/resource/texture.h \
+    include/resource/texturemanifest.h \
+    include/resource/texturescheme.h \
     include/resource/textures.h \
     include/resource/texturevariant.h \
     include/resource/texturevariantspecification.h \
@@ -443,6 +450,7 @@ SOURCES += \
     src/client/cl_player.c \
     src/client/cl_sound.c \
     src/client/cl_world.c \
+    src/color.cpp \
     src/con_bar.c \
     src/con_config.c \
     src/con_data.cpp \
@@ -469,19 +477,19 @@ SOURCES += \
     src/filesys/fs_scheme.cpp \
     src/filesys/fs_util.cpp \
     src/filesys/lumpindex.cpp \
-    src/filesys/metafile.cpp \
+    src/filesys/manifest.cpp \
     src/filesys/searchpath.cpp \
     src/filesys/sys_direc.c \
     src/game.cpp \
-    src/gl/dgl_common.c \
+    src/gl/dgl_common.cpp \
     src/gl/dgl_draw.c \
     src/gl/gl_defer.c \
     src/gl/gl_deferredapi.c \
     src/gl/gl_draw.c \
     src/gl/gl_drawvectorgraphic.c \
-    src/gl/gl_main.c \
+    src/gl/gl_main.cpp \
     src/gl/gl_tex.c \
-    src/gl/gl_texmanager.c \
+    src/gl/gl_texmanager.cpp \
     src/gl/svg.c \
     src/gl/sys_opengl.c \
     src/gridmap.c \
@@ -492,7 +500,6 @@ SOURCES += \
     src/m_misc.c \
     src/m_nodepile.c \
     src/m_stack.c \
-    src/m_vector.c \
     src/map/blockmap.c \
     src/map/blockmapvisual.c \
     src/map/bsp/hplane.cpp \
@@ -540,14 +547,13 @@ SOURCES += \
     src/network/sys_network.c \
     src/network/ui_mpi.c \
     src/r_util.c \
-    src/render/r_draw.c \
+    src/render/lumobj.cpp \
+    src/render/r_draw.cpp \
     src/render/r_fakeradio.c \
     src/render/r_main.c \
     src/render/r_lgrid.c \
-    src/render/r_lumobjs.c \
     src/render/r_shadow.c \
-    src/render/r_sky.c \
-    src/render/r_things.c \
+    src/render/r_things.cpp \
     src/render/rend_bias.c \
     src/render/rend_clip.cpp \
     src/render/rend_console.c \
@@ -561,11 +567,16 @@ SOURCES += \
     src/render/rend_model.c \
     src/render/rend_particle.c \
     src/render/rend_shadow.c \
-    src/render/rend_sky.c \
-    src/render/rend_sprite.c \
+    src/render/rendpoly.cpp \
+    src/render/sky.cpp \
+    src/render/sprite.cpp \
     src/render/vignette.c \
-    src/resource/bitmapfont.c \
+    src/render/vlight.cpp \
+    src/resource/animgroups.cpp \
+    src/resource/bitmapfont.cpp \
     src/resource/colorpalette.c \
+    src/resource/colorpalettes.cpp \
+    src/resource/compositetexture.cpp \
     src/resource/fonts.cpp \
     src/resource/hq2x.c \
     src/resource/image.cpp \
@@ -574,9 +585,13 @@ SOURCES += \
     src/resource/materials.cpp \
     src/resource/materialvariant.cpp \
     src/resource/models.cpp \
+    src/resource/patchname.cpp \
     src/resource/pcx.c \
-    src/resource/r_data.c \
+    src/resource/r_data.cpp \
+    src/resource/rawtexture.cpp \
     src/resource/texture.cpp \
+    src/resource/texturemanifest.cpp \
+    src/resource/texturescheme.cpp \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \
     src/resource/tga.c \
@@ -607,7 +622,7 @@ SOURCES += \
     src/ui/nativeui.cpp \
     src/ui/p_control.c \
     src/ui/sys_input.c \
-    src/ui/ui2_main.c \
+    src/ui/ui2_main.cpp \
     src/ui/ui_main.c \
     src/ui/ui_panel.c \
     src/ui/window.cpp \
@@ -637,7 +652,9 @@ OTHER_FILES += \
 
 data.files = $$OUT_PWD/../doomsday.pk3
 
-cfg.files = $$DENG_CONFIG_DIR/deng.de
+mod.files = \
+    $$DENG_MODULES_DIR/Config.de \
+    $$DENG_MODULES_DIR/recutil.de
 
 startupdata.files = \
     data/cphelp.txt
@@ -669,13 +686,13 @@ macx {
         res/macx/English.lproj \
         res/macx/deng.icns
 
-    cfg.path          = $${res.path}/config
     data.path         = $${res.path}
+    mod.path          = $${res.path}/modules
     startupdata.path  = $${res.path}/data
     startupfonts.path = $${res.path}/data/fonts
     startupgfx.path   = $${res.path}/data/graphics
 
-    QMAKE_BUNDLE_DATA += cfg res data startupfonts startupdata startupgfx
+    QMAKE_BUNDLE_DATA += mod res data startupfonts startupdata startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
@@ -713,14 +730,14 @@ macx {
 
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data startupdata startupgfx startupfonts cfg
+    INSTALLS += target data startupdata startupgfx startupfonts mod
 
     target.path       = $$DENG_BIN_DIR
     data.path         = $$DENG_DATA_DIR
     startupdata.path  = $$DENG_DATA_DIR
     startupgfx.path   = $$DENG_DATA_DIR/graphics
     startupfonts.path = $$DENG_DATA_DIR/fonts
-    cfg.path          = $$DENG_BASE_DIR/config
+    mod.path          = $$DENG_BASE_DIR/modules
 
     win32 {
         # Windows-specific installation.

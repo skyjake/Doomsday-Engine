@@ -114,18 +114,25 @@ struct LogBuffer::Instance
     dint enabledOverLevel;
     dint maxEntryCount;
     bool standardOutput;
+    bool flushingEnabled;
     File *outputFile;
     EntryList entries;
     EntryList toBeFlushed;
     Time lastFlushedAt;
     QTimer *autoFlushTimer;
 
+    /// @todo These belong in the formatter.
+    String sectionOfPreviousLine;
+    int sectionDepthOfPreviousLine;
+
     Instance(duint maxEntryCount)
-        : enabledOverLevel(Log::MESSAGE),
+        : enabledOverLevel(LogEntry::MESSAGE),
           maxEntryCount(maxEntryCount),
           standardOutput(true),
+          flushingEnabled(true),
           outputFile(0),
-          autoFlushTimer(0)
+          autoFlushTimer(0),
+          sectionDepthOfPreviousLine(0)
     {}
 };
 
@@ -211,12 +218,12 @@ void LogBuffer::add(LogEntry *entry)
     }
 }
 
-void LogBuffer::enable(Log::LogLevel overLevel)
+void LogBuffer::enable(LogEntry::Level overLevel)
 {
     d->enabledOverLevel = overLevel;
 }
 
-bool LogBuffer::isEnabled(Log::LogLevel overLevel) const
+bool LogBuffer::isEnabled(LogEntry::Level overLevel) const
 {
     return d->enabledOverLevel <= overLevel;
 }
@@ -224,6 +231,11 @@ bool LogBuffer::isEnabled(Log::LogLevel overLevel) const
 void LogBuffer::enableStandardOutput(bool yes)
 {
     d->standardOutput = yes;
+}
+
+void LogBuffer::enableFlushing(bool yes)
+{
+    d->flushingEnabled = yes;
 }
 
 void LogBuffer::setOutputFile(String const &path)
@@ -251,6 +263,8 @@ void LogBuffer::flush()
     using internal::TextOutputStream;
     using internal::DebugOutputStream;
 
+    if(!d->flushingEnabled) return;
+
     DENG2_GUARD(this);
 
     if(!d->toBeFlushed.isEmpty())
@@ -265,6 +279,13 @@ void LogBuffer::flush()
 #endif
         try
         {
+            /**
+             * @todo This is a hard-coded line formatter with fixed line length
+             * and the assumption of fixed-width fonts. In the future there
+             * should be multiple formatters that can be plugged into
+             * LogBuffer, and this one should be used only for debug output and
+             * the log text file (doomsday.out).
+             */
 #ifdef _DEBUG
             // Debug builds include a timestamp and msg type indicator.
             duint const MAX_LENGTH = 110;
@@ -276,14 +297,51 @@ void LogBuffer::flush()
             {
                 // Error messages will go to stderr instead of stdout.
                 QList<IOutputStream *> os;
-                os << ((*i)->level() >= Log::WARNING? &errs : &outs) << &fs;
+                os << ((*i)->level() >= LogEntry::WARNING? &errs : &outs) << &fs;
 
-#ifdef _DEBUG
-                String message = (*i)->asText();
-#else
+                String const &section = (*i)->section();
+
+                int cutSection = 0;
+#ifndef DENG2_DEBUG
                 // In a release build we can dispense with the metadata.
-                String message = (*i)->asText(LogEntry::Simple);
+                LogEntry::Flags entryFlags = LogEntry::Simple;
+#else
+                LogEntry::Flags entryFlags;
 #endif
+                // Compare the current entry's section with the previous one
+                // and if there is an opportunity to omit or abbreviate.
+                if(!d->sectionOfPreviousLine.isEmpty()
+                        && (*i)->sectionDepth() >= 1
+                        && d->sectionDepthOfPreviousLine <= (*i)->sectionDepth())
+                {
+                    if(d->sectionOfPreviousLine == section)
+                    {
+                        // Previous section is exactly the same, omit completely.
+                        entryFlags |= LogEntry::SectionSameAsBefore;
+                    }
+                    else if(section.startsWith(d->sectionOfPreviousLine))
+                    {
+                        // Previous section is partially the same, omit the common beginning.
+                        cutSection = d->sectionOfPreviousLine.size();
+                        entryFlags |= LogEntry::SectionSameAsBefore;
+                    }
+                    else
+                    {
+                        int prefix = section.commonPrefixLength(d->sectionOfPreviousLine);
+                        if(prefix > 5)
+                        {
+                            // Some commonality with previous section, we can abbreviate
+                            // those parts of the section.
+                            entryFlags |= LogEntry::AbbreviateSection;
+                            cutSection = prefix;
+                        }
+                    }
+                }
+                String message = (*i)->asText(entryFlags, cutSection);
+
+                // Remember for the next line.
+                d->sectionOfPreviousLine      = section;
+                d->sectionDepthOfPreviousLine = (*i)->sectionDepth();
 
                 // The wrap indentation will be determined dynamically based on the content
                 // of the line.
@@ -294,7 +352,7 @@ void LogBuffer::flush()
                 String::size_type pos = 0;
                 while(pos != String::npos)
                 {
-#ifdef _DEBUG
+#ifdef DENG2_DEBUG
                     int const minimumIndent = 25;
 #else
                     int const minimumIndent = 0;

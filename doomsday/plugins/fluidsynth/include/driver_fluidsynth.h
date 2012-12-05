@@ -46,6 +46,8 @@ fluid_synth_t* DMFluid_Synth();
 fluid_audio_driver_t* DMFluid_Driver();
 audiointerface_sfx_generic_t* DMFluid_Sfx();
 
+#define MAX_SYNTH_GAIN      0.4
+
 #ifdef DENG_DSFLUIDSYNTH_DEBUG
 #  define DSFLUIDSYNTH_TRACE(args)  std::cerr << "[dsFluidSynth] " << args << std::endl;
 #else

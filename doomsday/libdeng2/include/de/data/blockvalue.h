@@ -23,43 +23,44 @@
 #include "../Value"
 #include "../Block"
 
-namespace de
+namespace de {
+
+/**
+ * The BlockValue class is a subclass of Value that holds a data block.
+ *
+ * @ingroup data
+ */
+class DENG2_PUBLIC BlockValue : public Value
 {
-    /**
-     * The BlockValue class is a subclass of Value that holds a data block.
-     *
-     * @ingroup data
-     */
-    class DENG2_PUBLIC BlockValue : public Value
-    {
-    public:
-        BlockValue();
-        
-        /// Copies the content of an existing block.
-        BlockValue(Block const &block);
+public:
+    BlockValue();
 
-        /// Converts the BlockValue to a plain byte array (non-modifiable).
-        operator IByteArray const &() const;
+    /// Copies the content of an existing block.
+    BlockValue(Block const &block);
 
-        /// Converts the BlockValue to a plain byte array.
-        operator IByteArray &();
+    /// Converts the BlockValue to a plain byte array (non-modifiable).
+    operator IByteArray const &() const;
 
-        /// Empties the block value.
-        void clear();
+    /// Converts the BlockValue to a plain byte array.
+    operator IByteArray &();
 
-        Value *duplicate() const;
-        Text asText() const;
-        dsize size() const;
-        bool isTrue() const;
-        void sum(Value const &value);
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);
-        
-    private:
-        Block _value;
-    };
-}
+    /// Empties the block value.
+    void clear();
+
+    Value *duplicate() const;
+    Text asText() const;
+    dsize size() const;
+    bool isTrue() const;
+    void sum(Value const &value);
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    Block _value;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_BLOCKVALUE_H */

@@ -458,8 +458,8 @@ bool FS1::Scheme::addSearchPath(SearchPath const& search, FS1::PathGroup group)
     // Prepend to the path list - newer paths have priority.
     d->searchPaths.insert(group, search);
 
-    LOG_DEBUG("'%s' path \"%s\" added to scheme '%s'.")
-        << nameForPathGroup(group) << search << name();
+    LOG_DEBUG("\"%s\" added to scheme '%s' (group:%s).")
+        << search << name() << nameForPathGroup(group);
 
     return true;
 }

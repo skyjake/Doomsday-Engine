@@ -1071,6 +1071,8 @@ int M_ScreenShot(const char* name, int bits)
     ddstring_t fullName;
     boolean result;
 
+    DENG_UNUSED(bits);
+
     Str_Init(&fullName);
     Str_Set(&fullName, name);
     if(!F_FindFileExtension(name))
@@ -1081,43 +1083,6 @@ int M_ScreenShot(const char* name, int bits)
     result = Window_GrabToFile(Window_Main(), Str_Text(&fullName));
     Str_Free(&fullName);
     return result;
-
-    /*
-    byte* screen = (byte*) GL_GrabScreen();
-    Str fullName;
-    FILE* file;
-
-    if(!screen)
-    {
-        Con_Message("Warning:M_ScreenShot: Failed acquiring frame buffer content.\n");
-        return false;
-    }
-
-    // Compose the final file name.
-    Str_InitStd(&fullName); Str_Set(&fullName, name);
-    if(!F_FindFileExtension(Str_Text(&fullName)))
-        Str_Append(&fullName, ".tga");
-    F_ToNativeSlashes(&fullName, &fullName);
-
-    file = fopen(Str_Text(&fullName), "wb");
-    if(!file)
-    {
-        Con_Message("Warning: M_Screenshot: Failed opening \"%s\" for write.\n", F_PrettyPath(Str_Text(&fullName)));
-        Str_Free(&fullName);
-        return false;
-    }
-
-    bits = (bits == 24? 24 : 16);
-    if(bits == 16)
-        TGA_Save16_rgb888(file, Window_Width(theWindow), Window_Height(theWindow), screen);
-    else
-        TGA_Save24_rgb888(file, Window_Width(theWindow), Window_Height(theWindow), screen);
-
-    fclose(file);
-    Str_Free(&fullName);
-    free(screen);
-    return true;
-    */
 }
 
 /**

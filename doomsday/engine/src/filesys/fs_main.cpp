@@ -244,7 +244,7 @@ struct FS1::Instance
         }
 
         // First check the Zip lump index.
-        lumpnum_t lumpNum = zipFileIndex.indexForPath(de::Uri(path, RC_NULL));
+        lumpnum_t lumpNum = zipFileIndex.lastIndexForPath(path);
         if(lumpNum >= 0)
         {
             return &zipFileIndex.lump(lumpNum);
@@ -273,10 +273,7 @@ struct FS1::Instance
         DENG_ASSERT(!path.isEmpty());
 
         // We must have an absolute path - prepend the CWD if necessary.
-        if(QDir::isRelativePath(path))
-        {
-            path = NativePath::workPath() / path;
-        }
+        path = NativePath::workPath() / path;
 
         // Translate mymode to the C-lib's fopen() mode specifiers.
         char mode[8] = "";
@@ -326,10 +323,7 @@ struct FS1::Instance
         LOG_AS("FS1::openFile");
 
         // We must have an absolute path.
-        if(QDir::isRelativePath(path))
-        {
-            path = App_BasePath() / path;
-        }
+        path = App_BasePath() / path;
 
         LOG_TRACE("Trying \"%s\"...") << NativePath(path).pretty();
 
@@ -578,7 +572,7 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
             String ext = searchPath.fileNameExtension();
             if(!ext.isEmpty() && ext.compare(".*"))
             {
-                String found = d->findPath(de::Uri(searchPath, RC_NULL).setScheme(search.scheme()));
+                String found = d->findPath(de::Uri(search.scheme(), searchPath));
                 if(!found.isEmpty()) return found;
 
                 // If we are looking for a particular file type, get out of here.
@@ -597,7 +591,7 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
                 DENG2_FOR_EACH_CONST(QStringList, i, (*typeIt)->knownFileNameExtensions())
                 {
                     String const& ext = *i;
-                    String found = d->findPath(de::Uri(searchPathWithoutFileNameExtension + ext, RC_NULL).setScheme(search.scheme()));
+                    String found = d->findPath(de::Uri(search.scheme(), searchPathWithoutFileNameExtension + ext));
                     if(!found.isEmpty()) return found;
                 }
             };
@@ -696,7 +690,8 @@ bool FS1::checkFileId(de::Uri const& path)
     if(place != d->fileIds.end() && *place == fileId) return false;
 
 #ifdef _DEBUG
-    LOG_DEBUG("Added FileId %s - \"%s\"") << fileId << fileId.path(); /* path() is debug-only */
+    LOG_AS("FS1::addFileId")
+    LOG_DEBUG("\"%s\" => %s") << fileId.path() << fileId; /* path() is debug-only */
 #endif
 
     d->fileIds.insert(place, fileId);
@@ -731,7 +726,7 @@ lumpnum_t FS1::lumpNumForName(String name)
     }
 
     // Perform the search.
-    return d->primaryIndex.indexForPath(de::Uri(name, RC_NULL));
+    return d->primaryIndex.lastIndexForPath(Path(name));
 }
 
 void FS1::releaseFile(de::File1& file)
@@ -809,7 +804,6 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     }
 
     de::Uri patternMap = de::Uri(searchPattern, RC_NULL);
-    QByteArray searchPatternUtf8 = searchPattern.toUtf8();
 
     /*
      * Check the Zip directory.
@@ -824,8 +818,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
         if(!(flags & SearchPath::NoDescend))
         {
             filePath = new String(lump.composePath());
-            QByteArray filePathUtf8 = filePath->toUtf8();
-            patternMatched = F_MatchFileName(filePathUtf8.constData(), searchPatternUtf8.constData());
+            patternMatched = F_MatchFileName(filePath->constData(), searchPattern.constData());
         }
         else
         {
@@ -852,7 +845,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     {
         DENG2_FOR_EACH_CONST(LumpMappings, i, d->lumpMappings)
         {
-            if(!F_MatchFileName(i->first.toUtf8().constData(), searchPatternUtf8.constData())) continue;
+            if(!F_MatchFileName(i->first.constData(), searchPattern.constData())) continue;
 
             found.push_back(PathListItem(i->first, 0 /*only filepaths (i.e., leaves) can be mapped to lumps*/));
         }
@@ -893,8 +886,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
                     if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
                     {
                         String foundPath = searchDirectory / NativePath(Str_Text(&fd.name)).withSeparators('/');
-                        QByteArray foundPathUtf8 = foundPath.toUtf8();
-                        if(!F_MatchFileName(foundPathUtf8.constData(), searchPatternUtf8.constData())) continue;
+                        if(!F_MatchFileName(foundPath.constData(), searchPattern.constData())) continue;
 
                         nativeFilePaths.push_back(PathListItem(foundPath, fd.attrib));
                     }
@@ -1341,7 +1333,8 @@ struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t ba
 {
     try
     {
-        String path = NativePath(nativePath).expand().withSeparators('/');
+        // Relative paths are relative to the native working directory.
+        String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
         return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
     }
     catch(FS1::NotFoundError const&)

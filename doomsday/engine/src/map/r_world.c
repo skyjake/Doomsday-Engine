@@ -1502,7 +1502,7 @@ void R_SetupMap(int mode, int flags)
         R_MapInitSurfaceLists();
 
         startTime = Timer_Seconds();
-        R_PrecacheForMap();
+        Rend_CacheForMap();
         Materials_ProcessCacheQueue();
         VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Timer_Seconds() - startTime) )
 
@@ -1735,7 +1735,7 @@ static material_t* chooseFixMaterial(SideDef* s, SideDefSection section)
     if(choice2) return choice2;
 
     // We'll assign the special "missing" material...
-    return Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":missing"));
+    return Materials_ToMaterial(Materials_ResolveUriCString("System:missing"));
 }
 
 static void addMissingMaterial(SideDef* s, SideDefSection section)
@@ -2029,7 +2029,7 @@ const float* R_GetSectorLightColor(const Sector* sector)
     static float oldRendSkyLight = -1;
     if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(sector))
     {
-        const ColorRawf* ambientColor = R_SkyAmbientColor();
+        const ColorRawf* ambientColor = Sky_AmbientColor();
         if(rendSkyLight != oldRendSkyLight ||
            !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor[CR], .001f) ||
            !INRANGE_OF(ambientColor->green, oldSkyAmbientColor[CG], .001f) ||

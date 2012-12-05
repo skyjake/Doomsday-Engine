@@ -71,7 +71,8 @@ namespace de
             IF,
             PRINT,
             TRY,
-            WHILE
+            WHILE,
+            DELETE
         };
                 
     private:

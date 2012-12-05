@@ -84,14 +84,16 @@ struct font_s;
 
 #include "dd_share.h"
 #include "dd_plugin.h"
+
 #include "filehandle.h"
+#include <de/memoryzone.h>
 #include <de/point.h>
+#include <de/reader.h>
 #include <de/rect.h>
 #include <de/size.h>
-#include <de/reader.h>
-#include <de/writer.h>
-#include <de/memoryzone.h>
 #include <de/smoother.h>
+#include <de/vector1.h>
+#include <de/writer.h>
 
 // Play: World data access (Map Data Updates and access to other information).
 #include "dd_world.h"
@@ -194,7 +196,6 @@ boolean DD_GameInfo(GameInfo* info);
 
 /// @addtogroup scheme
 ///@{
-textureschemeid_t DD_ParseTextureSchemeName(const char* str);
 materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
 ///@}
 
@@ -203,7 +204,7 @@ materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
  * @ingroup resource
  */
 ///@{
-materialid_t DD_MaterialForTextureUniqueId(textureschemeid_t texSchemeId, int uniqueId);
+materialid_t DD_MaterialForTextureUri(Uri const *textureUri);
 ///@}
 
 /// @addtogroup defs
@@ -600,7 +601,7 @@ void R_SetupMap(int mode, int flags);
 void R_SetupFogDefaults(void);
 void R_SetupFog(float start, float end, float density, float* rgb);
 
-void R_PrecacheMobjNum(int mobjtypeNum);
+void Rend_CacheForMobjType(int mobjtypeNum);
 void Models_CacheForState(int stateIndex);
 
 void R_RenderPlayerView(int num);
@@ -646,8 +647,8 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 Uri* R_ComposePatchUri(patchid_t id);
 AutoStr* R_ComposePatchPath(patchid_t id);
 
-int R_TextureUniqueId2(const Uri* uri, boolean quiet);
-int R_TextureUniqueId(const Uri* uri); /*quiet=false*/
+int Textures_UniqueId2(const Uri* uri, boolean quiet);
+int Textures_UniqueId(const Uri* uri); /*quiet=false*/
 
 int R_CreateAnimGroup(int flags);
 void R_AddAnimGroupFrame(int groupNum, const Uri* texture, int tics, int randomTics);
@@ -686,7 +687,6 @@ void R_SkyParams(int layer, int param, void* data);
 ///@{
 
 void GL_UseFog(int yes);
-byte* GL_GrabScreen(void);
 void GL_SetFilter(boolean enable);
 void GL_SetFilterColor(float r, float g, float b, float a);
 
@@ -760,16 +760,6 @@ angle_t M_PointXYToAngle(double x, double y);
 
 angle_t M_PointToAngle2(double const a[2], double const b[2]);
 angle_t M_PointXYToAngle2(double x1, double y1, double x2, double y2);
-
-void V2d_Copy(double dest[2], double const src[2]);
-void V2d_Scale(double vector[2], double scalar);
-void V2d_Sum(double dest[2], double const a[2], double const b[2]);
-void V2d_Subtract(double dest[2], double const a[2], double const b[2]);
-void V2d_Rotate(double vec[2], double radians);
-double V2d_PointOnLineSide(double const point[2], double const lineOrigin[2], double const lineDirection[2]);
-double V2d_PointLineDistance(double const point[2], double const linePoint[2], double const lineDirection[2], double* offset);
-double V2d_ProjectOnLine(double dest[2], double const point[2], double const lineOrigin[2], double const lineDirection[2]);
-double V2d_Intersection(double const linePointA[2], double const lineDirectionA[2], double const linePointB[2], double const lineDirectionB[2], double point[2]);
 
 int M_RatioReduce(int* numerator, int* denominator);
 int M_CeilPow2(int num);

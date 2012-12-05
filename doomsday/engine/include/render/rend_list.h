@@ -29,7 +29,8 @@
 #ifndef LIBDENG_REND_LIST_H
 #define LIBDENG_REND_LIST_H
 
-#include "resource/r_data.h"
+//#include "resource/r_data.h"
+#include "render/rendpoly.h"
 
 #ifdef __cplusplus
 extern "C" {

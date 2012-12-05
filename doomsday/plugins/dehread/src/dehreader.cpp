@@ -44,6 +44,7 @@
 
 using namespace de;
 
+#if 0
 /**
  * Logging is routed through DehReader's special case handler.
  */
@@ -63,6 +64,7 @@ using namespace de;
 #define LOG_WARNING(str)    DehReader::log(de::Log::WARNING, str)
 #define LOG_ERROR(str)      DehReader::log(de::Log::ERROR, str)
 #define LOG_CRITICAL(str)   DehReader::log(de::Log::CRITICAL, str)
+#endif
 
 static int stackDepth;
 static const int maxIncludeDepth = MAX_OF(0, DEHREADER_INCLUDE_DEPTH_MAX);
@@ -110,10 +112,12 @@ public:
         stackDepth--;
     }
 
+#if 0
     LogEntry& log(Log::LogLevel level, const String& format)
     {
         return LOG().enter(level, format);
     }
+#endif
 
     /**
      * Doom version numbers in the patch use the orignal game versions,
@@ -669,7 +673,7 @@ public:
                     }
                     catch(const Error& er)
                     {
-                        LOG().enter(Log::WARNING, er.asText() + ".");
+                        LOG_WARNING(er.asText() + ".");
                     }
                 }
             }
@@ -1771,6 +1775,6 @@ void readDehPatch(const Block& patch, DehReaderFlags flags)
     }
     catch(const Error& er)
     {
-        LOG().enter(Log::WARNING, er.asText() + ".");
+        LOG_WARNING(er.asText() + ".");
     }
 }

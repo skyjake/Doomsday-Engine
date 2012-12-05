@@ -779,11 +779,11 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
         for(i = 0; types[i].type != 0; ++i)
         {
             if(types[i].gameModeBits & gameModeBits)
-                R_PrecacheMobjNum(types[i].type);
+                Rend_CacheForMobjType(types[i].type);
         }
 
         if(IS_NETGAME)
-            R_PrecacheMobjNum(MT_IFOG);
+            Rend_CacheForMobjType(MT_IFOG);
 #endif
     }
 
@@ -890,7 +890,7 @@ static void P_FinalizeMap(void)
     if(!(gameModeBits & (GM_DOOM2_HACX|GM_DOOM_CHEX)))
     {
         uint i, k;
-        material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(MS_TEXTURES_NAME":NUKE24"));
+        material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
         material_t* bottomMat, *midMat;
         float yoff;
         SideDef* sidedef;

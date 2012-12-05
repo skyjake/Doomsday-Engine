@@ -77,6 +77,11 @@ namespace de
         
         typedef std::list<Feed *> Feeds;
         typedef std::map<String, File *> Contents;
+
+        enum PopulationBehavior {
+            PopulateFullTree       = 0,     ///< The full tree is populated.
+            PopulateJustThisFolder = 0x1    ///< Do not descend into subfolders while populating.
+        };
         
     public:
         Folder(String const &name = "");
@@ -84,16 +89,19 @@ namespace de
         virtual ~Folder();
     
         /**
-         * Populates the folder with a set of File instances. Each feed attached to 
-         * the folder will contribute. Every populated file will also be
-         * added to the file system's main index. 
+         * Populates the folder with a set of File instances. Each feed
+         * attached to the folder will contribute. Every populated file will
+         * also be added to the file system's main index.
          *
-         * Repopulation is nondestructive as long as the source data has not changed.
-         * Population may be performed more than once during the lifetime of the folder,
-         * for example when it's necessary to synchronize it with the contents of a 
-         * native hard drive directory.
+         * Repopulation is nondestructive as long as the source data has not
+         * changed. Population may be performed more than once during the
+         * lifetime of the folder, for example when it's necessary to
+         * synchronize it with the contents of a native hard drive directory.
+         *
+         * @param behavior  Behavior of the population operation, see
+         *                  Folder::PopulationBehavior.
          */
-        virtual void populate();
+        virtual void populate(PopulationBehavior behavior = PopulateFullTree);
 
         /**
          * Provides direct read-only access to the content of the folder.

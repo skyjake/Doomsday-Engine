@@ -100,10 +100,9 @@ String String::operator / (String const &path) const
 
 String String::concatenatePath(String const &other, QChar dirChar) const
 {
-    if(other.first() == dirChar)
+    if(QDir::isAbsolutePath(other))
     {
-        // The other begins with a slash, therefore it's an absolute path.
-        // Use it as is.
+        // The other path is absolute - use as is.
         return other;
     }
 
@@ -348,6 +347,17 @@ dint String::compareWithCase(String const &str) const
 dint String::compareWithoutCase(String const &str) const
 {
     return compare(str, Qt::CaseInsensitive);
+}
+
+int String::commonPrefixLength(String const &str) const
+{
+    int count = 0;
+    int len = qMin(str.size(), size());
+    for(int i = 0; i < len; ++i, ++count)
+    {
+        if(at(i) != str.at(i)) break;
+    }
+    return count;
 }
 
 dint String::compareWithCase(QChar const *a, QChar const *b, dsize count)

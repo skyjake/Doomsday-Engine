@@ -32,6 +32,7 @@
 #include "game.h"
 #include "map/propertyvalue.h"
 #include "render/rend_bias.h"
+#include "render/vlight.h"
 #include "m_bams.h"
 
 #include <map>
@@ -51,7 +52,7 @@ static de::StringPool* entityDefs;
 typedef std::map<int, de::StringPool::Id> EntityDefIdMap;
 static EntityDefIdMap entityDefIdMap;
 
-extern boolean mapSetup;
+extern "C" boolean mapSetup; // We are currently setting up a map.
 
 Uri* mapUri; // Name by which the game referred to the current map.
 
@@ -223,7 +224,7 @@ boolean P_LoadMap(char const* uriCString)
         LG_InitForMap();
 
         if(!isDedicated)
-            R_InitRendVerticesPool();
+            R_InitRendPolyPools();
 
         return true;
     }

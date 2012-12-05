@@ -308,7 +308,7 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
             // The 'realistic' halos just use the blurry round
             // texture unless custom.
             if(!tex)
-                tex = GL_PrepareSysFlareTexture(FXT_ROUND);
+                tex = GL_PrepareSysFlaremap(FXT_ROUND);
         }
         else
         {
@@ -319,16 +319,16 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
                     // The "Very Bright" condition.
                     radius *= .65f;
                     if(!i)
-                        tex = GL_PrepareSysFlareTexture(FXT_BIGFLARE);
+                        tex = GL_PrepareSysFlaremap(FXT_BIGFLARE);
                     else
-                        tex = GL_PrepareSysFlareTexture(fl->texture);
+                        tex = GL_PrepareSysFlaremap(fl->texture);
                 }
                 else
                 {
                     if(!i)
-                        tex = GL_PrepareSysFlareTexture(FXT_ROUND);
+                        tex = GL_PrepareSysFlaremap(FXT_ROUND);
                     else
-                        tex = GL_PrepareSysFlareTexture(fl->texture);
+                        tex = GL_PrepareSysFlaremap(fl->texture);
                 }
             }
         }

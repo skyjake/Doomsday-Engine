@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <de/NativePath>
 #include <de/PathTree>
 
 #include "de_base.h"
@@ -142,7 +143,7 @@ static inline fontschemeid_t schemeIdForDirectoryNode(FontRepository::Node const
 static de::Uri composeUriForDirectoryNode(FontRepository::Node const& node)
 {
     Str const* schemeName = Fonts_SchemeName(schemeIdForDirectoryNode(node));
-    return de::Uri(node.path()).setScheme(Str_Text(schemeName));
+    return de::Uri(Str_Text(schemeName), node.path());
 }
 
 /// @pre fontIdMap has been initialized and is large enough!
@@ -242,11 +243,11 @@ static bool validateUri(de::Uri const& uri, int flags, bool quiet = false)
  * @param path  Path of the font to search for.
  * @return  Found DirectoryNode else @c NULL
  */
-static FontRepository::Node* findDirectoryNodeForPath(FontRepository& directory, de::String path)
+static FontRepository::Node* findDirectoryNodeForPath(FontRepository& directory, de::Path const& path)
 {
     try
     {
-        FontRepository::Node &node = directory.find(de::Path(path), de::PathTree::NoBranch | de::PathTree::MatchFull);
+        FontRepository::Node &node = directory.find(path, de::PathTree::NoBranch | de::PathTree::MatchFull);
         return &node;
     }
     catch(FontRepository::NotFoundError const&)
@@ -271,12 +272,12 @@ static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
                 return findDirectoryNodeForBindId(id);
             }
         }
-        return NULL;
+        return 0;
     }
 
     // This is a URI.
     fontschemeid_t schemeId = Fonts_ParseScheme(uri.schemeCStr());
-    de::String const& path = uri.path();
+    de::Path const& path = uri.path();
     if(schemeId != FS_ANY)
     {
         // Caller wants a font in a specific scheme.
@@ -289,13 +290,17 @@ static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
         FS_GAME, FS_SYSTEM, FS_ANY
     };
 
-    FontRepository::Node* node = NULL;
-    int n = 0;
-    do
+    for(int i = 0; order[i] != FS_ANY; ++i)
     {
-        node = findDirectoryNodeForPath(*repositoryBySchemeId(order[n]), path);
-    } while(!node && order[++n] != FS_ANY);
-    return node;
+        FontRepository &repository = *repositoryBySchemeId(order[i]);
+        FontRepository::Node* node = findDirectoryNodeForPath(repository, path);
+        if(node)
+        {
+            return node;
+        }
+    }
+
+    return 0;
 }
 
 static void destroyFont(font_t* font)
@@ -426,8 +431,8 @@ fontschemeid_t Fonts_ParseScheme(char const* str)
         fontschemeid_t id;
     } schemes[FONTSCHEME_COUNT+1] = {
         // Ordered according to a best guess of occurance frequency.
-        { FN_GAME_NAME,     sizeof(FN_GAME_NAME)   - 1, FS_GAME   },
-        { FN_SYSTEM_NAME,   sizeof(FN_SYSTEM_NAME) - 1, FS_SYSTEM },
+        { "Game",     sizeof("Game")   - 1, FS_GAME   },
+        { "System",   sizeof("System") - 1, FS_SYSTEM },
         { NULL,             0,                          FS_ANY    }
     };
     size_t len, n;
@@ -453,8 +458,8 @@ ddstring_t const* Fonts_SchemeName(fontschemeid_t id)
 {
     static de::Str const schemes[1 + FONTSCHEME_COUNT] = {
         /* No scheme name */ "",
-        /* FS_SYSTEM */         FN_SYSTEM_NAME,
-        /* FS_SYSTEM */         FN_GAME_NAME
+        /* FS_SYSTEM */      "System",
+        /* FS_GAME */        "Game"
     };
     if(VALID_FONTSCHEMEID(id))
         return schemes[1 + (id - FONTSCHEME_FIRST)];
@@ -493,7 +498,7 @@ void Fonts_ClearRuntime(void)
 
 void Fonts_ClearSystem(void)
 {
-    if(!Textures_Size()) return;
+    if(!App_Textures()->count()) return;
 
     Fonts_ClearScheme(FS_SYSTEM);
     GL_PruneTextureVariantSpecifications();
@@ -770,13 +775,14 @@ fontid_t Fonts_Declare(Uri* _uri, int uniqueId)//, const Uri* resourcePath)
 {
     LOG_AS("Fonts::declare");
 
-    DENG_ASSERT(_uri);
+    if(!_uri) return NOFONTID;
     de::Uri& uri = reinterpret_cast<de::Uri&>(*_uri);
 
-    // We require a properly formed uri (but not a urn - this is a path).
+    // We require a properly formed URI (but not a URN - this is a path).
     if(!validateUri(uri, VFUF_NO_URN, (verbose >= 1)))
     {
-        LOG_WARNING("Failed creating Font \"%s\", ignoring.") << uri;
+        LOG_WARNING("Failed creating Font \"%s\", ignoring.")
+            << de::NativePath(uri.asText()).pretty();
         return NOFONTID;
     }
 
@@ -1234,6 +1240,89 @@ int Fonts_IterateDeclared(fontschemeid_t schemeId,
     int (*callback)(fontid_t fontId, void* parameters))
 {
     return Fonts_IterateDeclared2(schemeId, callback, NULL/*no parameters*/);
+}
+
+font_t* R_CreateFontFromFile(Uri* uri, char const* resourcePath)
+{
+    LOG_AS("R_CreateFontFromFile");
+
+    if(!uri || !resourcePath || !resourcePath[0] || !F_Access(resourcePath))
+    {
+        LOG_WARNING("Invalid Uri or ResourcePath reference, ignoring.");
+        return 0;
+    }
+
+    fontschemeid_t schemeId = Fonts_ParseScheme(Str_Text(Uri_Scheme(uri)));
+    if(!VALID_FONTSCHEMEID(schemeId))
+    {
+        AutoStr* path = Uri_ToString(uri);
+        LOG_WARNING("Invalid font scheme in Font Uri \"%s\", ignoring.") << Str_Text(path);
+        return 0;
+    }
+
+    int uniqueId = Fonts_Count(schemeId) + 1; // 1-based index.
+    fontid_t fontId = Fonts_Declare(uri, uniqueId/*, resourcePath*/);
+    if(fontId == NOFONTID) return 0; // Invalid URI?
+
+    // Have we already encountered this name?
+    font_t* font = Fonts_ToFont(fontId);
+    if(font)
+    {
+        Fonts_RebuildFromFile(font, resourcePath);
+    }
+    else
+    {
+        // A new font.
+        font = Fonts_CreateFromFile(fontId, resourcePath);
+        if(!font)
+        {
+            AutoStr* path = Uri_ToString(uri);
+            LOG_WARNING("Failed defining new Font for \"%s\", ignoring.") << Str_Text(path);
+        }
+    }
+    return font;
+}
+
+font_t* R_CreateFontFromDef(ded_compositefont_t* def)
+{
+    LOG_AS("R_CreateFontFromDef");
+
+    if(!def || !def->uri)
+    {
+        LOG_WARNING("Invalid Definition or Uri reference, ignoring.");
+        return 0;
+    }
+    de::Uri const &uri = reinterpret_cast<de::Uri const &>(*def->uri);
+
+    fontschemeid_t schemeId = Fonts_ParseScheme(uri.schemeCStr());
+    if(!VALID_FONTSCHEMEID(schemeId))
+    {
+        LOG_WARNING("Invalid URI scheme in font definition \"%s\", ignoring.")
+            << de::NativePath(uri.asText()).pretty();
+        return NULL;
+    }
+
+    int uniqueId = Fonts_Count(schemeId) + 1; // 1-based index.
+    fontid_t fontId = Fonts_Declare(def->uri, uniqueId);
+    if(fontId == NOFONTID) return 0; // Invalid URI?
+
+    // Have we already encountered this name?
+    font_t* font = Fonts_ToFont(fontId);
+    if(font)
+    {
+        Fonts_RebuildFromDef(font, def);
+    }
+    else
+    {
+        // A new font.
+        font = Fonts_CreateFromDef(fontId, def);
+        if(!font)
+        {
+            LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
+                << de::NativePath(uri.asText()).pretty();
+        }
+    }
+    return font;
 }
 
 static void printFontOverview(FontRepository::Node& node, bool printSchemeName)

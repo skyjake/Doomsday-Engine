@@ -25,74 +25,100 @@
 
 #include <QFlags>
 
-namespace de
+namespace de {
+
+/**
+ * References a Record. Operations done on a RecordValue are actually performed on
+ * the record.
+ *
+ * @ingroup data
+ */
+class DENG2_PUBLIC RecordValue : public Value, DENG2_OBSERVES(Record, Deletion)
 {
-    /**
-     * References a Record. Operations done on a RecordValue are actually performed on
-     * the record.
-     *
-     * @ingroup data
-     */
-    class DENG2_PUBLIC RecordValue : public Value, DENG2_OBSERVES(Record, Deletion)
+public:
+    /// Attempt to access the record after it has been deleted. @ingroup errors
+    DENG2_ERROR(NullError);
+
+    /// An identifier that does not exist in the record was accessed. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
+    /// The index used for accessing the record is of the wrong type. @ingroup errors
+    DENG2_ERROR(IllegalIndexError);
+
+    /// The value does not own a record when expected to. @ingroup errors
+    DENG2_ERROR(OwnershipError);
+
+    enum OwnershipFlag
     {
-    public:
-        /// Attempt to access the record after it has been deleted. @ingroup errors
-        DENG2_ERROR(NullError);
-        
-        /// An identifier that does not exist in the record was accessed. @ingroup errors
-        DENG2_ERROR(NotFoundError);
-        
-        /// The index used for accessing the record is of the wrong type. @ingroup errors
-        DENG2_ERROR(IllegalIndexError);
-        
-        enum OwnershipFlag
-        {
-            /// The value has ownership of the record.
-            OwnsRecord = 0x1
-        };
-        Q_DECLARE_FLAGS(OwnershipFlags, OwnershipFlag)
-        
-    public:
-        /**
-         * Constructs a new reference to a record.
-         *
-         * @param record     Record.
-         * @param ownership  OWNS_RECORD, if the value is given ownership of @a record.
-         */
-        RecordValue(Record *record, OwnershipFlags ownership = 0);
-        
-        virtual ~RecordValue();
-        
-        /**
-         * Returns the record this reference points to.
-         */
-        Record *record() const { return _record; }
-
-        void verify() const;
-        Record &dereference();
-        Record const &dereference() const;
-        
-        Value *duplicate() const;
-        Text asText() const;
-        dsize size() const;
-        Value *duplicateElement(Value const &value) const;
-        bool contains(Value const &value) const;
-        bool isTrue() const;
-        dint compare(Value const &value) const;
-
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);
-        
-        // Observes Record deletion.
-        void recordBeingDeleted(Record &record);
-        
-    public:
-        Record *_record;
-        OwnershipFlags _ownership;
+        /// The value has ownership of the record.
+        OwnsRecord = 0x1
     };
+    Q_DECLARE_FLAGS(OwnershipFlags, OwnershipFlag)
 
-    Q_DECLARE_OPERATORS_FOR_FLAGS(RecordValue::OwnershipFlags)
-}
+public:
+    /**
+     * Constructs a new reference to a record.
+     *
+     * @param record     Record.
+     * @param ownership  OwnsRecord, if the value is given ownership of @a record.
+     */
+    RecordValue(Record *record, OwnershipFlags ownership = 0);
+
+    virtual ~RecordValue();
+
+    bool hasOwnership() const;
+
+    /**
+     * Determines if the value had ownership of the record prior to
+     * serialization and deserialization.
+     */
+    bool usedToHaveOwnership() const;
+
+    /**
+     * Returns the record this reference points to.
+     */
+    Record *record() const { return _record; }
+
+    /**
+     * Sets the record that the value is referencing.
+     *
+     * @param record  Record to reference. Ownership is not given.
+     */
+    void setRecord(Record *record);
+
+    /**
+     * Gives away ownership of the record, if the value owns the record.
+     */
+    Record *takeRecord();
+
+    void verify() const;
+    Record &dereference();
+    Record const &dereference() const;
+
+    Value *duplicate() const;
+    Text asText() const;
+    dsize size() const;
+    void setElement(Value const &index, Value *elementValue);
+    Value *duplicateElement(Value const &value) const;
+    bool contains(Value const &value) const;
+    bool isTrue() const;
+    dint compare(Value const &value) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+    // Observes Record deletion.
+    void recordBeingDeleted(Record &record);
+
+public:
+    Record *_record;
+    OwnershipFlags _ownership;
+    OwnershipFlags _oldOwnership; // prior to serialization
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(RecordValue::OwnershipFlags)
+
+} // namespace de
 
 #endif /* LIBDENG2_RECORDVALUE_H */

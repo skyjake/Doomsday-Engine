@@ -152,7 +152,7 @@ void P_InitSwitchList(void)
     int i, index;
     ddstring_t path;
     Uri* uri = Uri_New();
-    Uri_SetScheme(uri, MS_TEXTURES_NAME);
+    Uri_SetScheme(uri, "Textures");
 
     Str_Init(&path);
 
@@ -230,7 +230,7 @@ void P_InitSwitchList(void)
     }
 
     uri = Uri_New();
-    Uri_SetScheme(uri, MS_TEXTURES_NAME);
+    Uri_SetScheme(uri, "Textures");
 
     Str_Init(&path);
     for(index = 0, i = 0; ; ++i)

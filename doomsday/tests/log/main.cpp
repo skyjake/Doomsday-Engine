@@ -31,18 +31,18 @@ int main(int argc, char **argv)
         App app(argc, argv, App::GUIDisabled);
         app.initSubsystems(App::DisablePlugins);
 
-        for(int i = 0; i < Log::MAX_LOG_LEVELS; ++i)
+        for(int i = 0; i < LogEntry::MAX_LOG_LEVELS; ++i)
         {
-            Log::LogLevel level = Log::LogLevel(i);
+            LogEntry::Level level = LogEntry::Level(i);
             LogBuffer::appBuffer().enable(level);
-            LOG().enter(level, "Enabled level ") << Log::levelToText(level);
+            LOG_AT_LEVEL(level, "Enabled level ") << LogEntry::levelToText(level);
 
-            for(int k = 0; k < Log::MAX_LOG_LEVELS; ++k)
+            for(int k = 0; k < LogEntry::MAX_LOG_LEVELS; ++k)
             {
-                Log::LogLevel other = Log::LogLevel(k);
-                LOG().enter(other, "- (currently enabled %8s) entry at level %8s: visible: %b")
-                        << Log::levelToText(level)
-                        << Log::levelToText(other)
+                LogEntry::Level other = LogEntry::Level(k);
+                LOG_AT_LEVEL(other, "- (currently enabled %8s) entry at level %8s: visible: %b")
+                        << LogEntry::levelToText(level)
+                        << LogEntry::levelToText(other)
                         << LogBuffer::appBuffer().isEnabled(other);
             }
         }

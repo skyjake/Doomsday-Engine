@@ -80,6 +80,7 @@ HEADERS += \
     include/de/timer.h \
     include/de/types.h \
     include/de/unittest.h \
+    include/de/vector1.h \
     include/de/writer.h
 
 # Sources and private headers
@@ -101,7 +102,8 @@ SOURCES += \
     src/str.c \
     src/stringarray.cpp \
     src/timer.cpp \
-    src/writer.c \
+    src/vector1.c \
+    src/writer.c
 
 # Installation ---------------------------------------------------------------
 

@@ -29,11 +29,11 @@ IOStream &ByteArrayFile::operator << (IByteArray const &bytes)
     return *this;
 }
 
-IIStream &ByteArrayFile::operator >> (IByteArray &bytes)
+IIStream &ByteArrayFile::operator >> (IByteArray &)
 {
-    // Behave as a const stream.
-    *const_cast<ByteArrayFile const *>(this) >> bytes;
-    return *this;
+    // Bytes cannot be read from a byte array file in such a way that they would
+    // be gone from the array.
+    throw InputError("ByteArrayFile::operator >>", "ByteArrayFile is an immutable stream");
 }
 
 IIStream const &ByteArrayFile::operator >> (IByteArray &bytes) const

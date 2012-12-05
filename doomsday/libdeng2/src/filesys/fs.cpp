@@ -21,6 +21,7 @@
 #include "de/LibraryFile"
 #include "de/DirectoryFeed"
 #include "de/ArchiveFeed"
+#include "de/PackageFolder"
 #include "de/ZipArchive"
 #include "de/Log"
 
@@ -97,21 +98,19 @@ File *FS::interpret(File *sourceData)
         {
             try
             {
-                LOG_VERBOSE("Interpreted %s as a ZIP archive") << sourceData->name();
+                LOG_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->name();
 
                 // It is a ZIP archive: we will represent it as a folder.
-                std::auto_ptr<Folder> zip(new Folder(sourceData->name()));
-                // Create the feed.
-                zip->attach(new ArchiveFeed(*sourceData));
+                std::auto_ptr<PackageFolder> package(new PackageFolder(*sourceData, sourceData->name()));
+
                 // Archive opened successfully, give ownership of the source to the folder.
-                zip->setSource(sourceData);
-                sourceData = 0;
-                return zip.release();
+                package->setSource(sourceData);
+                return package.release();
             }
             catch(Archive::FormatError const &)
             {
                 // Even though it was recognized as an archive, the file
-                // contents may still provide to be corrupted.
+                // contents may still prove to be corrupted.
                 LOG_WARNING("Archive in %s is invalid") << sourceData->name();
             }
             catch(IByteArray::OffsetError const &)
@@ -226,17 +225,21 @@ FS::Index const &FS::indexFor(String const &typeName) const
 
 void FS::printIndex()
 {
+    LOG_DEBUG("Main FS index has %i entries") << d->index.size();
+
     for(Index::iterator i = d->index.begin(); i != d->index.end(); ++i)
     {
-        LOG_DEBUG("\"%s\": ") << i->first << i->second->path();
+        LOG_TRACE("\"%s\": ") << i->first << i->second->path();
     }
     
     for(Instance::TypeIndex::iterator k = d->typeIndex.begin(); k != d->typeIndex.end(); ++k)
     {
-        LOG_DEBUG("\nIndex for type '%s':") << k->first;
+        LOG_DEBUG("Index for type '%s' has %i entries") << k->first << k->second.size();
+
+        LOG_AS_STRING(k->first);
         for(Index::iterator i = k->second.begin(); i != k->second.end(); ++i)
         {
-            LOG_DEBUG("\"%s\": ") << i->first << i->second->path();
+            LOG_TRACE("\"%s\": ") << i->first << i->second->path();
         }
     }
 }

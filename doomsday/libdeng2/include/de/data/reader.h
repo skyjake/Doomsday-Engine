@@ -66,7 +66,8 @@ public:
            IByteArray::Offset offset = 0);
 
     /**
-     * Constructs a new reader that reads from a stream.
+     * Constructs a new reader that reads from a mutable stream. The bytes are
+     * expected to be removed from the stream once read.
      *
      * @param stream     Stream where input is read.
      * @param byteOrder  Byte order to use.
@@ -74,12 +75,15 @@ public:
     Reader(IIStream &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
 
     /**
-     * Constructs a new reader that reads from a const stream.
+     * Constructs a new reader that reads from an immutable stream. The bytes
+     * remain in the stream.
      *
      * @param stream     Const stream where input is read.
      * @param byteOrder  Byte order to use.
      */
     Reader(IIStream const &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
+
+    virtual ~Reader();
 
     //@{ Read a number from the source buffer, in network byte order.
     Reader &operator >> (char &byte);

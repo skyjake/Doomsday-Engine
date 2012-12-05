@@ -22,14 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Refresh Subsystem.
- *
- * The refresh daemon has the highest-level rendering code.
- * The view window is handled by refresh. The more specialized
- * rendering code in rend_*.c does things inside the view window.
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
@@ -47,6 +39,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "gl/svg.h"
 #include "render/vignette.h"
 
 // MACROS ------------------------------------------------------------------
@@ -90,6 +83,10 @@ float extraLightDelta;
 float frameTimePos; // 0...1: fractional part for sharp game tics.
 
 int loadInStartupMode = false;
+
+byte precacheSkins = true;
+byte precacheMapMaterials = true;
+byte precacheSprites = true;
 
 fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
@@ -171,7 +168,7 @@ static fontid_t loadSystemFont(const char* name)
     assert(name && name[0]);
 
     // Compose the resource name.
-    uri = Uri_NewWithPath2(FN_SYSTEM_NAME":", RC_NULL);
+    uri = Uri_NewWithPath2("System:", RC_NULL);
     Uri_SetPath(uri, name);
 
     // Compose the resource data path.
@@ -515,9 +512,85 @@ void R_Init(void)
     R_InitRawTexs();
     R_InitSvgs();
     R_InitViewWindow();
-    R_SkyInit();
     Rend_Init();
     frameCount = 0;
+}
+
+static void R_UpdateMap(void)
+{
+    ded_mapinfo_t *mapInfo;
+    ded_sky_t* skyDef;
+    uint i;
+
+    if(!theMap) return;
+
+    // Update all world surfaces.
+    for(i = 0; i < NUM_SECTORS; ++i)
+    {
+        Sector* sec = &sectors[i];
+        uint j;
+        for(j = 0; j < sec->planeCount; ++j)
+        {
+            Surface_Update(&sec->SP_planesurface(j));
+        }
+    }
+
+    for(i = 0; i < NUM_SIDEDEFS; ++i)
+    {
+        SideDef* side = &sideDefs[i];
+        Surface_Update(&side->SW_topsurface);
+        Surface_Update(&side->SW_middlesurface);
+        Surface_Update(&side->SW_bottomsurface);
+    }
+
+    for(i = 0; i < NUM_POLYOBJS; ++i)
+    {
+        Polyobj* po = polyObjs[i];
+        LineDef** lineIter;
+        for(lineIter = po->lines; *lineIter; lineIter++)
+        {
+            LineDef* line = *lineIter;
+            SideDef* side = line->L_frontsidedef;
+            Surface_Update(&side->SW_middlesurface);
+        }
+    }
+
+    R_MapInitSurfaceLists();
+
+    // See what mapinfo says about this map.
+    mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+    if(!mapInfo)
+    {
+        Uri *mapUri = Uri_NewWithPath2("*", RC_NULL);
+        mapInfo = Def_GetMapInfo(mapUri);
+        Uri_Delete(mapUri);
+    }
+
+    // Reconfigure the sky
+    skyDef = 0;
+    if(mapInfo)
+    {
+        skyDef = Def_GetSky(mapInfo->skyID);
+        if(!skyDef) skyDef = &mapInfo->sky;
+    }
+    Sky_Configure(skyDef);
+
+    if(mapInfo)
+    {
+        theMap->globalGravity     = mapInfo->gravity;
+        theMap->ambientLightLevel = mapInfo->ambient * 255;
+    }
+    else
+    {
+        // No theMap info found, so set some basic stuff.
+        theMap->globalGravity = 1.0f;
+        theMap->ambientLightLevel = 0;
+    }
+
+    theMap->effectiveGravity = theMap->globalGravity;
+
+    // Recalculate the light range mod matrix.
+    Rend_CalcLightModRange();
 }
 
 /**
@@ -530,7 +603,7 @@ void R_Update(void)
     // Re-read definitions.
     Def_Read();
 
-    R_UpdateData();
+    R_UpdateRawTexs();
     R_InitSprites(); // Fully reinitialize sprites.
     Models_Init(); // Defs might've changed.
 
@@ -551,41 +624,7 @@ void R_Update(void)
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
     }}
 
-    if(theMap)
-    {
-        uint i;
-
-        // Update all world surfaces.
-        for(i = 0; i < NUM_SECTORS; ++i)
-        {
-            Sector* sec = &sectors[i];
-            uint j;
-            for(j = 0; j < sec->planeCount; ++j)
-                Surface_Update(&sec->SP_planesurface(j));
-        }
-
-        for(i = 0; i < NUM_SIDEDEFS; ++i)
-        {
-            SideDef* side = &sideDefs[i];
-            Surface_Update(&side->SW_topsurface);
-            Surface_Update(&side->SW_middlesurface);
-            Surface_Update(&side->SW_bottomsurface);
-        }
-
-        for(i = 0; i < NUM_POLYOBJS; ++i)
-        {
-            Polyobj* po = polyObjs[i];
-            LineDef** lineIter;
-            for(lineIter = po->lines; *lineIter; lineIter++)
-            {
-                LineDef* line = *lineIter;
-                SideDef* side = line->L_frontsidedef;
-                Surface_Update(&side->SW_middlesurface);
-            }
-        }
-
-        R_MapInitSurfaceLists();
-    }
+    R_UpdateMap();
 
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
@@ -1081,7 +1120,6 @@ void R_RenderBlankView(void)
 void R_RenderPlayerView(int num)
 {
     extern boolean firstFrameAfterLoad;
-    extern int psp3d;// modelTriCount;
 
     int oldFlags = 0;
     player_t* player;
@@ -1178,7 +1216,7 @@ void R_RenderPlayerView(int num)
         Con_Printf("LumObjs: %-4i\n", LO_GetNumLuminous());
     }
 
-    R_InfoRendVerticesPool();
+    R_PrintRendPoolInfo();
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
     {
@@ -1310,6 +1348,151 @@ void R_RenderViewPorts(void)
     // Restore things back to normal.
     displayPlayer = oldDisplay;
     R_UseViewPort(NULL);
+}
+
+static int findSpriteOwner(thinker_t* th, void* context)
+{
+    mobj_t* mo = (mobj_t*) th;
+    spritedef_t* sprDef = (spritedef_t*) context;
+
+    if(mo->type >= 0 && mo->type < defs.count.mobjs.num)
+    {
+        /// @todo optimize: traverses the entire state list!
+        int i;
+        for(i = 0; i < defs.count.states.num; ++i)
+        {
+            if(stateOwners[i] != &mobjInfo[mo->type]) continue;
+
+            if(&sprites[states[i].sprite] == sprDef)
+                return true; // Found one.
+        }
+    }
+
+    return false; // Continue iteration.
+}
+
+static void cacheSpritesForState(int stateIndex, materialvariantspecification_t const* spec)
+{
+    state_t* state;
+    spritedef_t* sprDef;
+    int i, k;
+
+    if(stateIndex < 0 || stateIndex >= defs.count.states.num) return;
+    if(!spec) return;
+
+    state = &states[stateIndex];
+    sprDef = &sprites[state->sprite];
+
+    for(i = 0; i < sprDef->numFrames; ++i)
+    {
+        spriteframe_t* sprFrame = &sprDef->spriteFrames[i];
+        for(k = 0; k < 8; ++k)
+        {
+            Materials_Precache(sprFrame->mats[k], spec, true);
+        }
+    }
+}
+
+/// @note Part of the Doomsday public API.
+void Rend_CacheForMobjType(int num)
+{
+    materialvariantspecification_t const* spec;
+    int i;
+
+    if(novideo || !((useModels && precacheSkins) || precacheSprites)) return;
+    if(num < 0 || num >= defs.count.mobjs.num) return;
+
+    spec = Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
+
+    /// @todo Optimize: Traverses the entire state list!
+    for(i = 0; i < defs.count.states.num; ++i)
+    {
+        if(stateOwners[i] != &mobjInfo[num]) continue;
+
+        Models_CacheForState(i);
+
+        if(precacheSprites)
+        {
+            cacheSpritesForState(i, spec);
+        }
+        /// @todo What about sounds?
+    }
+}
+
+void Rend_CacheForMap()
+{
+    // Don't precache when playing demo.
+    if(isDedicated || playback) return;
+
+    // Precaching from 100 to 200.
+    Con_SetProgress(100);
+
+    if(precacheMapMaterials)
+    {
+        materialvariantspecification_t const* spec = Rend_MapSurfaceDiffuseMaterialSpec();
+        uint i, k;
+
+        for(i = 0; i < NUM_SIDEDEFS; ++i)
+        {
+            SideDef* side = SIDE_PTR(i);
+
+            if(side->SW_middlematerial)
+                Materials_Precache(side->SW_middlematerial, spec, true);
+
+            if(side->SW_topmaterial)
+                Materials_Precache(side->SW_topmaterial, spec, true);
+
+            if(side->SW_bottommaterial)
+                Materials_Precache(side->SW_bottommaterial, spec, true);
+        }
+
+        for(i = 0; i < NUM_SECTORS; ++i)
+        {
+            Sector* sec = SECTOR_PTR(i);
+            if(!sec->lineDefCount) continue;
+
+            for(k = 0; k < sec->planeCount; ++k)
+            {
+                Materials_Precache(sec->SP_planematerial(k), spec, true);
+            }
+        }
+    }
+
+    if(precacheSprites)
+    {
+        materialvariantspecification_t const* spec = Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
+        int i, k, m;
+        for(i = 0; i < numSprites; ++i)
+        {
+            spritedef_t* sprDef = &sprites[i];
+
+            if(GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1/* All mobjs are public*/,
+                                       findSpriteOwner, sprDef))
+            {
+                // This sprite is used by some state of at least one mobj.
+
+                // Precache all the frames.
+                for(k = 0; k < sprDef->numFrames; ++k)
+                {
+                    spriteframe_t* sprFrame = &sprDef->spriteFrames[k];
+                    for(m = 0; m < 8; ++m)
+                    {
+                        Materials_Precache(sprFrame->mats[m], spec, true);
+                    }
+                }
+            }
+        }
+    }
+
+     // Sky models usually have big skins.
+    Sky_Cache();
+
+    // Precache model skins?
+    if(useModels && precacheSkins)
+    {
+        // All mobjs are public.
+        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, Models_CacheForMobj, NULL);
+    }
 }
 
 D_CMD(ViewGrid)

@@ -23,7 +23,10 @@
 #include <QApplication>
 #include <QGLFormat>
 #include <QMoveEvent>
-#include <QSettings>
+#include <de/App>
+#include <de/Config>
+#include <de/Record>
+#include <de/NumberValue>
 #include <de/Log>
 #include <de/c_wrapper.h>
 
@@ -221,7 +224,7 @@ bool CanvasWindow::setDefaultGLFormat() // static
 
     // The value of the "vid-fsaa" variable is written to this settings
     // key when the value of the variable changes.
-    bool configured = QSettings().value("window/fsaa", true).toBool();
+    bool configured = de::App::config().getb("window.fsaa");
 
     if(CommandLine_Exists("-nofsaa") || !configured)
     {

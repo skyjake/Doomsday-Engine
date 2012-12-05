@@ -81,7 +81,7 @@ namespace de
     public:
         /**
          * Determines whether a File looks like it could be accessed using
-         * Archive.
+         * ZipArchive.
          *
          * @param file  File to check.
          *

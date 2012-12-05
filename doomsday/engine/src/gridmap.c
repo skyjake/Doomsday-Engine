@@ -26,7 +26,7 @@
 #include "de_console.h"
 #include "de_graphics.h" // For debug display
 #include "de_render.h" // For debug display
-#include "m_vector.h" // For debug display
+#include <de/vector1.h> // For debug display
 
 #include "gridmap.h"
 

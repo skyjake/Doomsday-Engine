@@ -21,43 +21,53 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_resource.h"
 #include "m_misc.h"
-#include "resource/texture.h"
-#include "resource/materialvariant.h"
+#include "render/r_main.h"
 #include <de/Error>
 #include <de/LegacyCore>
 #include <de/Log>
 #include <de/memory.h>
 
-de::MaterialVariant::MaterialVariant(material_t& generalCase,
-    const materialvariantspecification_t& spec, const ded_material_t& def)
+namespace de {
+
+MaterialVariant::MaterialVariant(material_t &generalCase,
+    materialvariantspecification_t const &spec, ded_material_t const &def)
     : material(&generalCase),
       hasTranslation(false), current(0), next(0), inter(0),
       varSpec(&spec), snapshot_(0), snapshotPrepareFrame_(0)
 {
     // Initialize layers.
-    const int layerCount = Material_LayerCount(material);
+    int const layerCount = Material_LayerCount(material);
     for(int i = 0; i < layerCount; ++i)
     {
         layers[i].stage = 0;
         layers[i].tics = def.layers[i].stages[0].tics;
         layers[i].glow = def.layers[i].stages[0].glow;
 
-        layers[i].texture = Textures_ToTexture(Textures_ResolveUri2(def.layers[i].stages[0].texture, true/*quiet please*/));
+        layers[i].texture = 0;
+        de::Uri *texUri = reinterpret_cast<de::Uri *>(def.layers[i].stages[0].texture);
+        if(texUri)
+        {
+            if(TextureManifest *manifest = App_Textures()->find(*texUri))
+            {
+                layers[i].texture = reinterpret_cast<texture_s *>(manifest->texture());
+            }
+        }
 
         layers[i].texOrigin[0] = def.layers[i].stages[0].texOrigin[0];
         layers[i].texOrigin[1] = def.layers[i].stages[0].texOrigin[1];
     }
 }
 
-de::MaterialVariant::~MaterialVariant()
+MaterialVariant::~MaterialVariant()
 {
     if(snapshot_) M_Free(snapshot_);
 }
 
-void de::MaterialVariant::ticker(timespan_t /*time*/)
+void MaterialVariant::ticker(timespan_t /*time*/)
 {
-    const ded_material_t* def = Material_Definition(material);
+    ded_material_t const *def = Material_Definition(material);
     if(!def)
     {
         // Material is no longer valid. We can't yet purge them because
@@ -67,12 +77,12 @@ void de::MaterialVariant::ticker(timespan_t /*time*/)
     }
 
     // Update layers.
-    const int layerCount = Material_LayerCount(material);
+    int const layerCount = Material_LayerCount(material);
     for(int i = 0; i < layerCount; ++i)
     {
-        const ded_material_layer_t* lDef = &def->layers[i];
-        const ded_material_layer_stage_t* lsDef, *lsDefNext;
-        materialvariant_layer_t* layer = &layers[i];
+        ded_material_layer_t const *lDef = &def->layers[i];
+        ded_material_layer_stage_t const *lsDef, *lsDefNext;
+        materialvariant_layer_t *layer = &layers[i];
         float inter;
 
         if(!(lDef->stageCount.num > 1)) continue;
@@ -100,8 +110,9 @@ void de::MaterialVariant::ticker(timespan_t /*time*/)
             inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
         }
 
-        /*const Texture* glTex;
-        if((glTex = Textures_ResolveUri(lsDef->texture)))
+        /* Texture const *glTex;
+        de::Uri *texUri = reinterpret_cast<de::Uri *>(lsDef->texture);
+        if(texUri && (glTex = Textures::resolveUri(*texUri)))
         {
             layer->tex = Texture_Id(glTex);
             setTranslationPoint(inter);
@@ -130,66 +141,66 @@ void de::MaterialVariant::ticker(timespan_t /*time*/)
     }
 }
 
-void de::MaterialVariant::resetAnim()
+void MaterialVariant::resetAnim()
 {
-    const int layerCount = Material_LayerCount(material);
+    int const layerCount = Material_LayerCount(material);
     for(int i = 0; i < layerCount; ++i)
     {
-        materialvariant_layer_t* ml = &layers[i];
+        materialvariant_layer_t *ml = &layers[i];
         if(ml->stage == -1) break;
         ml->stage = 0;
     }
 }
 
-const materialvariant_layer_t* de::MaterialVariant::layer(int layer)
+materialvariant_layer_t const *MaterialVariant::layer(int layer)
 {
     if(layer >= 0 && layer < Material_LayerCount(material))
         return &layers[layer];
     return 0;
 }
 
-materialsnapshot_t& de::MaterialVariant::attachSnapshot(materialsnapshot_t& newSnapshot)
+materialsnapshot_t &MaterialVariant::attachSnapshot(materialsnapshot_t &newSnapshot)
 {
     if(snapshot_)
     {
         LOG_AS("MaterialVariant::AttachSnapshot");
-        LOG_WARNING("A snapshot is already attached to %p, it will be replaced.") << (void*) this;
+        LOG_WARNING("A snapshot is already attached to %p, it will be replaced.") << (void *) this;
         M_Free(snapshot_);
     }
     snapshot_ = &newSnapshot;
     return newSnapshot;
 }
 
-materialsnapshot_t* de::MaterialVariant::detachSnapshot()
+materialsnapshot_t *MaterialVariant::detachSnapshot()
 {
-    materialsnapshot_t* detachedSnapshot = snapshot_;
+    materialsnapshot_t *detachedSnapshot = snapshot_;
     snapshot_ = 0;
     return detachedSnapshot;
 }
 
-void de::MaterialVariant::setSnapshotPrepareFrame(int frame)
+void MaterialVariant::setSnapshotPrepareFrame(int frame)
 {
     snapshotPrepareFrame_ = frame;
 }
 
-de::MaterialVariant* de::MaterialVariant::translationNext()
+MaterialVariant *MaterialVariant::translationNext()
 {
     if(!hasTranslation) return this;
     return next;
 }
 
-de::MaterialVariant* de::MaterialVariant::translationCurrent()
+MaterialVariant* MaterialVariant::translationCurrent()
 {
     if(!hasTranslation) return this;
     return current;
 }
 
-float de::MaterialVariant::translationPoint()
+float MaterialVariant::translationPoint()
 {
     return inter;
 }
 
-void de::MaterialVariant::setTranslation(MaterialVariant* newCurrent, MaterialVariant* newNext)
+void MaterialVariant::setTranslation(MaterialVariant *newCurrent, MaterialVariant *newNext)
 {
     if(newCurrent && newNext && (newCurrent != this || newNext != this))
     {
@@ -205,34 +216,36 @@ void de::MaterialVariant::setTranslation(MaterialVariant* newCurrent, MaterialVa
     inter = 0;
 }
 
-void de::MaterialVariant::setTranslationPoint(float newInter)
+void MaterialVariant::setTranslationPoint(float newInter)
 {
     inter = newInter;
 }
 
-/**
+} // namespace de
+
+/*
  * C wrapper API
- **/
+ */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::MaterialVariant*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::MaterialVariant *>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<const de::MaterialVariant*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::MaterialVariant const *>(inst) : NULL
 
 #define TOPUBLIC(inst) \
-    (inst) != 0? reinterpret_cast<MaterialVariant*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<MaterialVariant *>(inst) : NULL
 
 #define TOPUBLIC_CONST(inst) \
-    (inst) != 0? reinterpret_cast<const MaterialVariant*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<MaterialVariant const *>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    de::MaterialVariant* self = TOINTERNAL(inst)
+    de::MaterialVariant *self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    const de::MaterialVariant* self = TOINTERNAL_CONST(inst)
+    de::MaterialVariant const *self = TOINTERNAL_CONST(inst)
 
 MaterialVariant* MaterialVariant_New(struct material_s* generalCase,
     const materialvariantspecification_t* spec)

@@ -196,7 +196,11 @@ void DirectoryFeed::removeFile(String const &name)
         throw NotFoundError("DirectoryFeed::removeFile", name + ": not found");
     }
 
-    QDir::current().remove(path);
+    if(!QDir::current().remove(path))
+    {
+        /// @throw RemoveError  The file @a name exists but could not be removed.
+        throw RemoveError("DirectoryFeed::removeFile", name + ": cannot remove");
+    }
 }
 
 void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)

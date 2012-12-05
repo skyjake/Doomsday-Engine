@@ -210,10 +210,10 @@ static int readRecord(MaterialArchive* mArc, materialarchive_record_t* rec, Read
         oldMNI = Reader_ReadByte(reader);
         switch(oldMNI % 4)
         {
-        case 0: Uri_SetScheme(rec->uri, MS_TEXTURES_NAME); break;
-        case 1: Uri_SetScheme(rec->uri, MS_FLATS_NAME);    break;
-        case 2: Uri_SetScheme(rec->uri, MS_SPRITES_NAME);  break;
-        case 3: Uri_SetScheme(rec->uri, MS_SYSTEM_NAME);   break;
+        case 0: Uri_SetScheme(rec->uri, "Textures"); break;
+        case 1: Uri_SetScheme(rec->uri, "Flats");    break;
+        case 2: Uri_SetScheme(rec->uri, "Sprites");  break;
+        case 3: Uri_SetScheme(rec->uri, "System");   break;
         }
         Uri_SetPath(rec->uri, Str_Text(&path));
         Str_Free(&path);
@@ -371,12 +371,12 @@ void MaterialArchive_Read(MaterialArchive* arc, int forcedVersion, Reader* reade
     }
 
     arc->count = 0;
-    readMaterialGroup(arc, (forcedVersion >= 1? "" : MS_FLATS_NAME":"), reader);
+    readMaterialGroup(arc, (forcedVersion >= 1? "" : "Flats:"), reader);
 
     if(arc->version == 0)
     {
         // The old format saved flats and textures in seperate groups.
         arc->numFlats = arc->count;
-        readMaterialGroup(arc, (forcedVersion >= 1? "" : MS_TEXTURES_NAME":"), reader);
+        readMaterialGroup(arc, (forcedVersion >= 1? "" : "Textures:"), reader);
     }
 }

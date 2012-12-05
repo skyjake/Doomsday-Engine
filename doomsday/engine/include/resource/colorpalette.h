@@ -1,49 +1,55 @@
-/**\file colorpalette.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file colorpalette.h Color Palette.
  *
- *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_REFRESH_COLORPALETTE_H
-#define LIBDENG_REFRESH_COLORPALETTE_H
+#ifndef LIBDENG_RESOURCE_COLORPALETTE_H
+#define LIBDENG_RESOURCE_COLORPALETTE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @defgroup colorPaletteFlags  Color Palette Flags
  * @ingroup flags
- * @{
  */
+///@{
 #define CPF_UPDATE_18TO8        0x1 /// The 18To8 LUT needs updating.
-/**@}*/
+///@}
 
 #define COLORPALETTE_MAX_COMPONENT_BITS (16) // Max bits per component.
 
+/**
+ * Color Palette.
+ *
+ * @ingroup resource
+ */
 typedef struct colorpalette_s {
     /// @see colorPaletteFlags
     uint8_t _flags;
 
     /// R8G8B88 color triplets [_num * 3].
-    uint8_t* _colorData;
+    uint8_t *_colorData;
     int _colorCount;
 
     /// Nearest color lookup table.
-    int* _18To8LUT;
+    int *_18To8LUT;
 } colorpalette_t;
 
 colorpalette_t* ColorPalette_New(void);
@@ -58,13 +64,13 @@ colorpalette_t* ColorPalette_New(void);
  * @param colorData  Color triplets (at least @a numColors * 3).
  * @param colorCount  Number of color triplets.
  */
-colorpalette_t* ColorPalette_NewWithColorTable(const int compOrder[3],
-    const uint8_t compBits[3], const uint8_t* colorData, int colorCount);
+colorpalette_t *ColorPalette_NewWithColorTable(int const compOrder[3],
+    uint8_t const compBits[3], uint8_t const *colorData, int colorCount);
 
-void ColorPalette_Delete(colorpalette_t* pal);
+void ColorPalette_Delete(colorpalette_t *pal);
 
 /// @return  Number of colors in the palette.
-ushort ColorPalette_Size(colorpalette_t* pal);
+ushort ColorPalette_Size(colorpalette_t *pal);
 
 /**
  * Replace the entire color table.
@@ -77,8 +83,8 @@ ushort ColorPalette_Size(colorpalette_t* pal);
  * @param colorData  Color triplets (at least @a numColors * 3).
  * @param colorCount  Number of color triplets.
  */
-void ColorPalette_ReplaceColorTable(colorpalette_t* pal, const int compOrder[3],
-    const uint8_t compBits[3], const uint8_t* colorData, int colorCount);
+void ColorPalette_ReplaceColorTable(colorpalette_t *pal, int const compOrder[3],
+    uint8_t const compBits[3], uint8_t const *colorData, int colorCount);
 
 /**
  * Lookup a color in the palette.
@@ -90,7 +96,7 @@ void ColorPalette_ReplaceColorTable(colorpalette_t* pal, const int compOrder[3],
  * @param colorIdx  Index of the color to lookup.
  * @param rgb  Associated R8G8B8 color triplet is written here.
  */
-void ColorPalette_Color(const colorpalette_t* pal, int colorIdx, uint8_t rgb[3]);
+void ColorPalette_Color(colorpalette_t const *pal, int colorIdx, uint8_t rgb[3]);
 
 /**
  * Given an R8G8B8 color triplet return the closet matching color index.
@@ -100,7 +106,11 @@ void ColorPalette_Color(const colorpalette_t* pal, int colorIdx, uint8_t rgb[3])
  *
  * @return  Closet matching color index or @c -1 if no colors in the palette.
  */
-int ColorPalette_NearestIndexv(colorpalette_t* pal, const uint8_t rgb[3]);
-int ColorPalette_NearestIndex(colorpalette_t* pal, uint8_t red, uint8_t green, uint8_t blue);
+int ColorPalette_NearestIndexv(colorpalette_t *pal, uint8_t const rgb[3]);
+int ColorPalette_NearestIndex(colorpalette_t *pal, uint8_t red, uint8_t green, uint8_t blue);
 
-#endif /* LIBDENG_REFRESH_COLORPALETTE_H */
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif /* LIBDENG_RESOURCE_COLORPALETTE_H */

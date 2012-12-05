@@ -1,57 +1,31 @@
-/**\file r_fakeradio.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Runtime Map Shadowing (FakeRadio)
+ * @file r_fakeradio.c Faked Radiosity Lighting
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_misc.h"
 #include "de_play.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+#include "de_render.h"
 
 static zblockset_t *shadowLinksBlockSet;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Line1 and line2 are the (dx,dy)s for two lines, connected at the
@@ -122,14 +96,7 @@ double R_ShadowEdgeWidth(const pvec2d_t edge)
     return normalWidth;
 }
 
-/**
- * Updates all the shadow offsets for the given vertex.
- *
- * \pre Lineowner rings MUST be set up.
- *
- * @param vtx           Ptr to the vertex being updated.
- */
-void R_UpdateVertexShadowOffsets(Vertex* vtx)
+void Rend_RadioUpdateVertexShadowOffsets(Vertex* vtx)
 {
     vec2d_t left, right;
 
@@ -221,7 +188,7 @@ int RIT_ShadowBspLeafLinker(BspLeaf* bspLeaf, void* parm)
     return false; // Continue iteration.
 }
 
-boolean R_IsShadowingLinedef(LineDef* line)
+boolean Rend_RadioIsShadowingLineDef(LineDef* line)
 {
     if(line)
     {
@@ -236,7 +203,7 @@ boolean R_IsShadowingLinedef(LineDef* line)
     return false;
 }
 
-void R_InitFakeRadioForMap(void)
+void Rend_RadioInitForMap(void)
 {
     uint startTime = Timer_RealMilliseconds();
 
@@ -249,7 +216,7 @@ void R_InitFakeRadioForMap(void)
 
     for(i = 0; i < NUM_VERTEXES; ++i)
     {
-        R_UpdateVertexShadowOffsets(VERTEX_PTR(i));
+        Rend_RadioUpdateVertexShadowOffsets(VERTEX_PTR(i));
     }
 
     /**
@@ -269,7 +236,7 @@ void R_InitFakeRadioForMap(void)
     for(i = 0; i < NUM_LINEDEFS; ++i)
     {
         LineDef* line = LINE_PTR(i);
-        if(!R_IsShadowingLinedef(line)) continue;
+        if(!Rend_RadioIsShadowingLineDef(line)) continue;
 
         for(j = 0; j < 2; ++j)
         {

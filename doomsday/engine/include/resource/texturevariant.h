@@ -146,7 +146,7 @@ void TextureVariant_Coords(const TextureVariant* tex, float* s, float* t);
 void TextureVariant_SetCoords(TextureVariant* tex, float s, float t);
 
 unsigned int TextureVariant_GLName(const TextureVariant* tex);
-void TextureVariant_SetGLName(TextureVariant* tex, DGLuint glName);
+void TextureVariant_SetGLName(TextureVariant* tex, unsigned int glName);
 
 #ifdef __cplusplus
 } // extern "C"

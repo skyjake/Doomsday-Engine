@@ -61,9 +61,9 @@ int main(int argc, char **argv)
             File &worldTxt = zip.newFile("world.txt");
             Writer(worldTxt) << FixedByteArray(content.toUtf8());
         }
-        catch(File::OutputError const &)
+        catch(File::OutputError const &er)
         {
-            LOG_WARNING("Cannot change files in read-only mode.");
+            LOG_WARNING("Cannot change files in read-only mode:\n") << er.asText();
         }
 
         // test2.zip won't appear in the file system as a folder unless

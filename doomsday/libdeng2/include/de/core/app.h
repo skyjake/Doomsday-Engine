@@ -35,164 +35,175 @@
  */
 #define DENG2_APP   (static_cast<de::App *>(qApp))
 
-namespace de
+namespace de {
+
+class Archive;
+
+/**
+ * Application whose event loop is protected against uncaught exceptions.
+ * Catches the exception and shuts down the app cleanly.
+ */
+class DENG2_PUBLIC App : public QApplication
 {
-    /**
-     * Application whose event loop is protected against uncaught exceptions.
-     * Catches the exception and shuts down the app cleanly.
-     */
-    class DENG2_PUBLIC App : public QApplication
-    {
-        Q_OBJECT
+    Q_OBJECT
 
-    public:
-        /// The object or resource that was being looked for was not found. @ingroup errors
-        DENG2_ERROR(NotFoundError);
+public:
+    /// The object or resource that was being looked for was not found. @ingroup errors
+    DENG2_ERROR(NotFoundError);
 
-        enum GUIMode {
-            GUIDisabled = 0,
-            GUIEnabled = 1
-        };
-
-        enum SubsystemInitFlag {
-            DefaultSubsystems   = 0x0,
-            DisablePlugins      = 0x1
-        };
-        Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
-
-    public:
-        App(int &argc, char **argv, GUIMode guiMode);
-
-        ~App();
-
-        /**
-         * Initializes all the application's subsystems. This includes Config
-         * and FS. Has to be called manually in the application's
-         * initialization routine.
-         *
-         * @param flags  How to/which subsystems to initialize.
-         */
-        void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
-
-        bool notify(QObject *receiver, QEvent *event);
-
-        static App &app();
-
-        /**
-         * Returns the command line used to start the application.
-         */
-        static CommandLine &commandLine();
-
-        /**
-         * Returns the absolute native path of the application executable.
-         */
-        static NativePath executablePath();
-
-        /**
-         * Returns the native path of the data base directory.
-         */
-        NativePath nativeBasePath();
-
-        /**
-         * Returns the native path of where to load binaries (plugins). This
-         * is where "/bin" points to.
-         */
-        NativePath nativeBinaryPath();
-
-        /**
-         * Returns the native path where user-specific runtime files should be
-         * placed (this is where "/home" points to). The user can override the
-         * location using the @em -userdir command line option.
-         */
-        NativePath nativeHomePath();
-
-        /**
-         * Returns the application's current native working directory.
-         */
-        static NativePath currentWorkPath();
-
-        /**
-         * Changes the application's current native working directory.
-         *
-         * @param cwd  New working directory for the application.
-         *
-         * @return @c true, if the current working directory was changed,
-         * otherwise @c false.
-         */
-        static bool setCurrentWorkPath(NativePath const &cwd);
-
-        /**
-         * Returns the application's file system.
-         */
-        static FS &fileSystem();
-
-        /**
-         * Returns the root folder of the file system.
-         */
-        static Folder &rootFolder();
-
-        /**
-         * Returns the /home folder.
-         */
-        static Folder &homeFolder();
-
-        /**
-         * Returns the configuration.
-         */
-        static Config &config();
-
-        /**
-         * Returns the Unix system-level configuration preferences.
-         */
-        static UnixInfo &unixInfo();
-
-        /**
-         * Imports a script module that is located on the import path.
-         *
-         * @param name      Name of the module.
-         * @param fromPath  Absolute path of the script doing the importing.
-         *
-         * @return  The imported module.
-         */
-        static Record &importModule(String const &name, String const &fromPath = "");
-
-        /**
-         * Emits the displayModeChanged() signal.
-         *
-         * @todo In the future when de::App (or a sub-object owned by it) is
-         * responsible for display modes, this should be handled internally and
-         * not via this public interface where anybody can call it.
-         */
-        void notifyDisplayModeChanged();
-
-    signals:
-        void uncaughtException(QString message);
-
-        /// Emitted when the display mode has changed.
-        void displayModeChanged();
-
-    private:
-        CommandLine _cmdLine;
-
-        LogBuffer _logBuffer;
-
-        /// Path of the application executable.
-        NativePath _appPath;
-
-        /// The file system.
-        FS _fs;
-
-        UnixInfo _unixInfo;
-
-        /// The configuration.
-        Config *_config;
-
-        /// Resident modules.
-        typedef std::map<String, Module *> Modules;
-        Modules _modules;
+    enum GUIMode {
+        GUIDisabled = 0,
+        GUIEnabled = 1
     };
 
-    Q_DECLARE_OPERATORS_FOR_FLAGS(App::SubsystemInitFlags)
-}
+    enum SubsystemInitFlag {
+        DefaultSubsystems   = 0x0,
+        DisablePlugins      = 0x1
+    };
+    Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
+
+public:
+    /**
+     * Construct an App instance. The application will not be fully usable
+     * until initSubsystems() has been called -- you should call
+     * initSubsystems() as soon as possible after construction. Never throws
+     * an exception.
+     *
+     * @param argc     Argument count. Note that App holds the reference.
+     * @param argv     Arguments.
+     * @param guiMode  GUI can be enabled (client) or disabled (server).
+     */
+    App(int &argc, char **argv, GUIMode guiMode);
+
+    ~App();
+
+    /**
+     * Finishes App construction by initializing all the application's
+     * subsystems. This includes Config and FS. Has to be called manually in
+     * the application's initialization routine. An exception will be thrown if
+     * initialization cannot be successfully completed.
+     *
+     * @param flags  How to/which subsystems to initialize.
+     */
+    void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
+
+    bool notify(QObject *receiver, QEvent *event);
+
+    static App &app();
+
+    /**
+     * Returns the command line used to start the application.
+     */
+    static CommandLine &commandLine();
+
+    /**
+     * Returns the absolute native path of the application executable.
+     */
+    static NativePath executablePath();
+
+    /**
+     * Returns the native path of the data base folder.
+     *
+     * In libdeng2, the base folder is the location where all the common
+     * data files are located, e.g., /usr/share/doomsday on Linux.
+     */
+    NativePath nativeBasePath();
+
+    /**
+     * Returns the native path of where to load binaries (plugins). This
+     * is where "/bin" points to.
+     */
+    NativePath nativeBinaryPath();
+
+    /**
+     * Returns the native path where user-specific runtime files should be
+     * placed (this is where "/home" points to). The user can override the
+     * location using the @em -userdir command line option.
+     */
+    NativePath nativeHomePath();
+
+    /**
+     * Returns the archive for storing persistent engine state into. Typically
+     * the contents are updated when subsystems are being shut down. When the
+     * file system is being shut down, the <code>/home/persist.pack</code>
+     * package is written to disk.
+     *
+     * @return Persistent data archive.
+     */
+    static Archive &persistentData();
+
+    /**
+     * Returns the application's current native working directory.
+     */
+    static NativePath currentWorkPath();
+
+    /**
+     * Changes the application's current native working directory.
+     *
+     * @param cwd  New working directory for the application.
+     *
+     * @return @c true, if the current working directory was changed,
+     * otherwise @c false.
+     */
+    static bool setCurrentWorkPath(NativePath const &cwd);
+
+    /**
+     * Returns the application's file system.
+     */
+    static FS &fileSystem();
+
+    /**
+     * Returns the root folder of the file system.
+     */
+    static Folder &rootFolder();
+
+    /**
+     * Returns the /home folder.
+     */
+    static Folder &homeFolder();
+
+    /**
+     * Returns the configuration.
+     */
+    static Config &config();
+
+    /**
+     * Returns the Unix system-level configuration preferences.
+     */
+    static UnixInfo &unixInfo();
+
+    /**
+     * Imports a script module that is located on the import path.
+     *
+     * @param name      Name of the module.
+     * @param fromPath  Absolute path of the script doing the importing.
+     *
+     * @return  The imported module.
+     */
+    static Record &importModule(String const &name, String const &fromPath = "");
+
+    /**
+     * Emits the displayModeChanged() signal.
+     *
+     * @todo In the future when de::App (or a sub-object owned by it) is
+     * responsible for display modes, this should be handled internally and
+     * not via this public interface where anybody can call it.
+     */
+    void notifyDisplayModeChanged();
+
+signals:
+    void uncaughtException(QString message);
+
+    /// Emitted when the display mode has changed.
+    void displayModeChanged();
+
+private:
+    struct Instance;
+    Instance *d;
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(App::SubsystemInitFlags)
+
+} // namespace de
 
 #endif // LIBDENG2_APP_H

@@ -34,6 +34,20 @@ typedef struct svgline_s SvgLine;
 struct svg_s; // The svg instance (opaque).
 typedef struct svg_s Svg;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void R_InitSvgs(void);
+
+/**
+ * Unload any resources needed for vector graphics.
+ * Called during shutdown and before a renderer restart.
+ */
+void R_UnloadSvgs(void);
+
+void R_ShutdownSvgs(void);
+
 void Svg_Delete(Svg* svg);
 
 void Svg_Draw(Svg* svg);
@@ -46,7 +60,7 @@ void Svg_Unload(Svg* svg);
 svgid_t Svg_UniqueId(Svg* svg);
 
 /**
- * Static non-members:
+ * Static members:
  */
 
 /**
@@ -55,5 +69,9 @@ svgid_t Svg_UniqueId(Svg* svg);
  * @return  Newly created Svg instance if definition was valid else @a NULL
  */
 Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint numLines);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_REFRESH_SVG_H

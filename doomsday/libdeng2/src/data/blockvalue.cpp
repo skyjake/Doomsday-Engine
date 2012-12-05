@@ -55,7 +55,7 @@ Value::Text BlockValue::asText() const
 {
     Text result;
     QTextStream os(&result);
-    os << "[Block of " << _value.size() << " bytes]";
+    os << "(Block of " << _value.size() << " bytes)";
     return result;
 }
 

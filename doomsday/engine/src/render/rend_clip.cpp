@@ -28,7 +28,7 @@
 #include "de_render.h"
 
 #include "m_bams.h"
-#include "m_vector.h"
+#include <de/vector1.h>
 
 #include <de/Log>
 
