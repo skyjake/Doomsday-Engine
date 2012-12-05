@@ -1450,18 +1450,16 @@ static int printVariantInfo(MaterialVariant* variant, void* parameters)
         Uri_Delete(nextUri);
     }
 
-    de::Textures &textures = *App_Textures();
-
     // Print layer info:
     for(i = 0; i < layers; ++i)
     {
         materialvariant_layer_t const *l = MaterialVariant_Layer(variant, i);
-        de::Uri uri = textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*l->texture)));
+        de::Uri uri = reinterpret_cast<de::Texture &>(*l->texture).manifest().composeUri();
         QByteArray path = de::NativePath(uri.asText()).pretty().toUtf8();
 
-        Con_Printf("  #%i: Stage:%i Tics:%i Texture:(\"%s\" uid:%u)"
+        Con_Printf("  #%i: Stage:%i Tics:%i Texture:\"%s\""
                    "\n      Offset: %.2f x %.2f Glow:%.2f\n",
-                   i, l->stage, (int)l->tics, path.constData(), textures.id(reinterpret_cast<de::Texture &>(*l->texture)),
+                   i, l->stage, (int)l->tics, path.constData(),
                    l->texOrigin[0], l->texOrigin[1], l->glow);
     }
 

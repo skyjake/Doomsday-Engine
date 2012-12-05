@@ -516,6 +516,83 @@ void R_Init(void)
     frameCount = 0;
 }
 
+static void R_UpdateMap(void)
+{
+    ded_mapinfo_t *mapInfo;
+    ded_sky_t* skyDef;
+    uint i;
+
+    if(!theMap) return;
+
+    // Update all world surfaces.
+    for(i = 0; i < NUM_SECTORS; ++i)
+    {
+        Sector* sec = &sectors[i];
+        uint j;
+        for(j = 0; j < sec->planeCount; ++j)
+        {
+            Surface_Update(&sec->SP_planesurface(j));
+        }
+    }
+
+    for(i = 0; i < NUM_SIDEDEFS; ++i)
+    {
+        SideDef* side = &sideDefs[i];
+        Surface_Update(&side->SW_topsurface);
+        Surface_Update(&side->SW_middlesurface);
+        Surface_Update(&side->SW_bottomsurface);
+    }
+
+    for(i = 0; i < NUM_POLYOBJS; ++i)
+    {
+        Polyobj* po = polyObjs[i];
+        LineDef** lineIter;
+        for(lineIter = po->lines; *lineIter; lineIter++)
+        {
+            LineDef* line = *lineIter;
+            SideDef* side = line->L_frontsidedef;
+            Surface_Update(&side->SW_middlesurface);
+        }
+    }
+
+    R_MapInitSurfaceLists();
+
+    // See what mapinfo says about this map.
+    mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+    if(!mapInfo)
+    {
+        Uri *mapUri = Uri_NewWithPath2("*", RC_NULL);
+        mapInfo = Def_GetMapInfo(mapUri);
+        Uri_Delete(mapUri);
+    }
+
+    // Reconfigure the sky
+    skyDef = 0;
+    if(mapInfo)
+    {
+        skyDef = Def_GetSky(mapInfo->skyID);
+        if(!skyDef) skyDef = &mapInfo->sky;
+    }
+    Sky_Configure(skyDef);
+
+    if(mapInfo)
+    {
+        theMap->globalGravity     = mapInfo->gravity;
+        theMap->ambientLightLevel = mapInfo->ambient * 255;
+    }
+    else
+    {
+        // No theMap info found, so set some basic stuff.
+        theMap->globalGravity = 1.0f;
+        theMap->ambientLightLevel = 0;
+    }
+
+    theMap->effectiveGravity = theMap->globalGravity;
+
+    // Recalculate the light range mod matrix.
+    Rend_CalcLightModRange();
+}
+
 /**
  * Re-initialize almost everything.
  */
@@ -547,41 +624,7 @@ void R_Update(void)
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
     }}
 
-    if(theMap)
-    {
-        uint i;
-
-        // Update all world surfaces.
-        for(i = 0; i < NUM_SECTORS; ++i)
-        {
-            Sector* sec = &sectors[i];
-            uint j;
-            for(j = 0; j < sec->planeCount; ++j)
-                Surface_Update(&sec->SP_planesurface(j));
-        }
-
-        for(i = 0; i < NUM_SIDEDEFS; ++i)
-        {
-            SideDef* side = &sideDefs[i];
-            Surface_Update(&side->SW_topsurface);
-            Surface_Update(&side->SW_middlesurface);
-            Surface_Update(&side->SW_bottomsurface);
-        }
-
-        for(i = 0; i < NUM_POLYOBJS; ++i)
-        {
-            Polyobj* po = polyObjs[i];
-            LineDef** lineIter;
-            for(lineIter = po->lines; *lineIter; lineIter++)
-            {
-                LineDef* line = *lineIter;
-                SideDef* side = line->L_frontsidedef;
-                Surface_Update(&side->SW_middlesurface);
-            }
-        }
-
-        R_MapInitSurfaceLists();
-    }
+    R_UpdateMap();
 
     // The rendering lists have persistent data that has changed during
     // the re-initialization.

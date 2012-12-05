@@ -148,24 +148,12 @@ public:
         return size();
     }
 
-    /// @return  Unique identifier of the primary name for @a texture else @c NOTEXTUREID.
-    textureid_t id(Texture &texture) const;
-
-    /// @return  Unique identifier of the primary name for @a manifest else @c NOTEXTUREID.
-    textureid_t idForManifest(Manifest const &manifest) const;
-
-    /// @return  Texture associated with unique identifier @a textureId else @c 0.
-    Texture *toTexture(textureid_t textureId) const;
-
-    /// @return  Scheme-unique identfier associated with the identified @a textureId.
-    int uniqueId(textureid_t textureId) const;
-
-    /// @return  Declared, percent-encoded path to this data resource,
-    ///          else a "null" Uri (no scheme or path).
-    Uri const &resourceUri(textureid_t textureId) const;
-
-    /// @return  URI to this texture, percent-encoded.
-    Uri composeUri(textureid_t textureId) const;
+    /**
+     * Removes the manifest from any indexes.
+     *
+     * @param manifest      Manifest to remove from the index.
+     */
+    void deindex(Manifest &manifest);
 
     /**
      * Find a single declared texture.
@@ -193,13 +181,6 @@ public:
      * @return  Manifest for this URI; otherwise @c 0 if @a uri is invalid.
      */
     Manifest *declare(Uri const &uri, int uniqueId, Uri const *resourceUri);
-
-    /**
-     * Removes the manifest from any indexes.
-     *
-     * @param manifest      Manifest to remove from the index.
-     */
-    void deindex(Manifest &manifest);
 
     /**
      * Iterate over defined Textures in the collection making a callback for
@@ -249,10 +230,22 @@ public:
         return iterateDeclared("", callback, parameters);
     }
 
-
 private:
     struct Instance;
     Instance *d;
+
+public:
+    /*
+     * Here follows legacy interface methods awaiting removal -ds
+     */
+
+    /// @return  Unique identifier of the primary name for @a manifest else @c NOTEXTUREID.
+    /// @deprecated Texture ids are now obsolete. Reference/point-to the manifest instead.
+    textureid_t idForManifest(Manifest const &manifest) const;
+
+    /// @return  Texture associated with unique identifier @a textureId else @c 0.
+    /// @deprecated Texture ids are now obsolete. Reference/point-to the manifest instead.
+    Texture *toTexture(textureid_t textureId) const;
 };
 
 } // namespace de

@@ -961,6 +961,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
 
     if(p->numFrames)
     {
+        /// @todo Optimize: Texture/Material searches should be NOT be done here -ds
         fidata_pic_frame_t *f = p->frames[frame];
 
         flipTextureS = (f->flags.flip != 0);
@@ -1020,8 +1021,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                         ms->size.height + TS_GENERAL(texSpec)->border*2, 0);
                 TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
 
-                de::Textures &textures = *App_Textures();
-                de::Uri uri = textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
+                de::Uri uri = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri();
                 if(!uri.scheme().compareWithoutCase("Sprites"))
                 {
                     patchtex_t *sTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));

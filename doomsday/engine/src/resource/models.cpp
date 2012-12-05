@@ -959,11 +959,8 @@ static void scaleModelToSprite(modeldef_t& mf, int sprite, int frame)
     materialvariantspecification_t const* spec = Sprite_MaterialSpec(0, 0);
     materialsnapshot_t const* ms = Materials_Prepare(spr.spriteFrames[frame].mats[0], spec, true);
 
-#if _DEBUG
-    Textures &textures = *App_Textures();
-    if(textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)))).scheme().compareWithoutCase("Sprites"))
+    if(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().schemeName().compareWithoutCase("Sprites"))
         throw Error("scaleModelToSprite", "Material snapshot primary texture is not a SpriteTex");
-#endif
 
     patchtex_t* pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     DENG_ASSERT(pTex);

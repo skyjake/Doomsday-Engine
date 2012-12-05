@@ -130,8 +130,7 @@ void R_DrawPatch3(Texture *tex, int x, int y, int w, int h, boolean useOffsets)
 {
     if(!tex) return;
 
-    de::Textures &textures = *App_Textures();
-    if(textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*tex))).scheme().compareWithoutCase("Patches"))
+    if(reinterpret_cast<de::Texture &>(*tex).manifest().schemeName().compareWithoutCase("Patches"))
     {
 #if _DEBUG
         LOG_AS("R_DrawPatch3");

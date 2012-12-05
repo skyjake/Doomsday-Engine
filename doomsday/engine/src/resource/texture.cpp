@@ -37,14 +37,14 @@
 
 namespace de {
 
-Texture::Texture(textureid_t bindId, Flags _flags, void *_userData)
-    : flags(_flags), primaryBindId(bindId), variants(), userData(_userData), dimensions_()
+Texture::Texture(TextureManifest &_manifest, Flags _flags, void *_userData)
+    : flags(_flags), manifest_(_manifest), variants(), userData(_userData), dimensions_()
 {
     memset(analyses, 0, sizeof(analyses));
 }
 
-Texture::Texture(textureid_t bindId, Size2Raw const &size, Flags _flags, void *_userData)
-    : flags(_flags), primaryBindId(bindId), variants(), userData(_userData), dimensions_()
+Texture::Texture(TextureManifest &_manifest, Size2Raw const &size, Flags _flags, void *_userData)
+    : flags(_flags), manifest_(_manifest), variants(), userData(_userData), dimensions_()
 {
     std::memset(analyses, 0, sizeof(analyses));
     setDimensions(size);
@@ -55,19 +55,18 @@ Texture::~Texture()
     GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(this));
 
     /// @todo Texture should employ polymorphism.
-    Textures &textures = *App_Textures();
-    de::Uri uri = textures.composeUri(textures.id(*this));
-    if(!uri.scheme().compareWithoutCase("Textures"))
+    TextureScheme const &scheme = manifest_.scheme();
+    if(!scheme.name().compareWithoutCase("Textures"))
     {
         CompositeTexture* pcTex = reinterpret_cast<CompositeTexture *>(userDataPointer());
         if(pcTex) delete pcTex;
     }
-    else if(!uri.scheme().compareWithoutCase("Sprites"))
+    else if(!scheme.name().compareWithoutCase("Sprites"))
     {
         patchtex_t* pTex = reinterpret_cast<patchtex_t *>(userDataPointer());
         if(pTex) M_Free(pTex);
     }
-    else if(!uri.scheme().compareWithoutCase("Patches"))
+    else if(!scheme.name().compareWithoutCase("Patches"))
     {
         patchtex_t* pTex = reinterpret_cast<patchtex_t *>(userDataPointer());
         if(pTex) M_Free(pTex);
@@ -75,6 +74,11 @@ Texture::~Texture()
 
     clearAnalyses();
     clearVariants();
+}
+
+TextureManifest &Texture::manifest() const
+{
+    return manifest_;
 }
 
 void Texture::clearAnalyses()
@@ -96,12 +100,9 @@ void Texture::clearVariants()
         uint glName = (*i)->glName();
         if(glName)
         {
-            Textures &textures = *App_Textures();
-            textureid_t texId = textures.id(*this);
-            Uri uri = textures.composeUri(texId);
             LOG_AS("Texture::clearVariants")
-            LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p id:%i]. Perhaps it wasn't released?")
-                << glName << uri << (void *)this << int(texId);
+            LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
+                << glName << manifest_.composeUri() << (void *)this;
             GL_PrintTextureVariantSpecification((*i)->spec());
         }
 #endif
@@ -110,19 +111,13 @@ void Texture::clearVariants()
     variants.clear();
 }
 
-void Texture::setPrimaryBind(textureid_t bindId)
-{
-    primaryBindId = bindId;
-}
-
 void Texture::setUserDataPointer(void *newUserData)
 {
     if(userData && newUserData)
     {
-        textureid_t textureId = App_Textures()->id(*this);
         LOG_AS("Texture::setUserDataPointer");
-        LOG_DEBUG("User data already present for [%p id:%i], will be replaced.")
-            << (void *)this << int(textureId);
+        LOG_DEBUG("User data already present for \"%s\" [%p], will be replaced.")
+            << manifest_.composeUri() << de::dintptr(this);
     }
     userData = newUserData;
 }
@@ -190,12 +185,9 @@ void Texture::setAnalysisDataPointer(texture_analysisid_t analysisId, void *data
     if(analyses[analysisId] && data)
     {
 #if _DEBUG
-        Textures &textures = *App_Textures();
-        textureid_t texId = textures.id(*this);
-        Uri uri = textures.composeUri(texId);
         LOG_AS("Texture::attachAnalysis");
         LOG_DEBUG("Image analysis (id:%i) already present for \"%s\" (replaced).")
-            << int(analysisId) << uri;
+            << int(analysisId) << manifest_.composeUri();
 #endif
     }
     analyses[analysisId] = data;
@@ -220,39 +212,6 @@ void Texture::setAnalysisDataPointer(texture_analysisid_t analysisId, void *data
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
     de::Texture const *self = TOINTERNAL_CONST(inst)
-
-Texture *Texture_NewWithSize(textureid_t bindId, Size2Raw const *size, void *userData)
-{
-    if(!size)
-        LegacyCore_FatalError("Texture_NewWithSize: Attempted with invalid size argument (=NULL).");
-    return reinterpret_cast<Texture *>(new de::Texture(bindId, *size, 0, userData));
-}
-
-Texture *Texture_New(textureid_t bindId, void *userData)
-{
-    return reinterpret_cast<Texture *>(new de::Texture(bindId, 0, userData));
-}
-
-void Texture_Delete(Texture *tex)
-{
-    if(tex)
-    {
-        SELF(tex);
-        delete self;
-    }
-}
-
-textureid_t Texture_PrimaryBind(Texture const *tex)
-{
-    SELF_CONST(tex);
-    return self->primaryBind();
-}
-
-void Texture_SetPrimaryBind(Texture *tex, textureid_t bindId)
-{
-    SELF(tex);
-    self->setPrimaryBind(bindId);
-}
 
 void *Texture_UserDataPointer(Texture const *tex)
 {

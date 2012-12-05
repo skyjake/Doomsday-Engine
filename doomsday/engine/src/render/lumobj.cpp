@@ -751,7 +751,7 @@ static void addLuminous(mobj_t *mo)
     if(!MSU_texture(ms, MTU_PRIMARY)) return; // An invalid sprite texture.
 
     pl = (pointlight_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
-    if(!pl) Con_Error("addLuminous: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
+    if(!pl) throw de::Error("addLuminous", QString("Texture \"%1\" has no TA_SPRITE_AUTOLIGHT analysis").arg(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText()));
 
     size = pl->brightMul;
     yOffset = ms->size.height * pl->originY;
@@ -764,11 +764,8 @@ static void addLuminous(mobj_t *mo)
             yOffset = def->offset[VY];
     }
 
-#if _DEBUG
-    de::Textures &textures = *App_Textures();
-    if(textures.composeUri(textures.id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)))).scheme().compareWithoutCase("Sprites"))
-        Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
-#endif
+    if(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().schemeName().compareWithoutCase("Sprites"))
+        throw de::Error("LO_AddLuminous", "Material snapshot's primary texture is not a patchtex_t");
 
     pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
     DENG_ASSERT(pTex);
@@ -974,7 +971,7 @@ static boolean createGlowLightForSurface(Surface *suf, void * /*paramaters*/)
         if(!(ms->glowing > .001f)) return true; // Continue iteration.
 
         averagecolor_analysis_t const *avgColorAmplified = (averagecolor_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_COLOR_AMPLIFIED);
-        if(!avgColorAmplified) Con_Error("createGlowLightForSurface: Texture id:%u has no TA_COLOR_AMPLIFIED analysis.", App_Textures()->id(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))));
+        if(!avgColorAmplified) throw de::Error("createGlowLightForSurface", QString("Texture \"%1\" has no TA_COLOR_AMPLIFIED analysis)").arg(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText()));
 
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
         lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);

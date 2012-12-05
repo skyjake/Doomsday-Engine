@@ -59,7 +59,7 @@ public:
     ~TextureScheme();
 
     /// @return  Symbolic name of this scheme (e.g., "ModelSkins").
-    String const& name() const;
+    String const &name() const;
 
     /// @return  Total number of manifests in the scheme.
     int size() const;
