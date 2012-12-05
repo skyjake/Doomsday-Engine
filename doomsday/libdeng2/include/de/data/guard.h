@@ -26,18 +26,21 @@ namespace de {
 
 /**
  * Locks the variable @a varName until the end of the current scope.
- * assertLocked() is called so the compiler does not complain about the unused
- * variable.
  *
  * @param varName  Name of the variable to guard. Must be just a single
  *                 identifier with no operators or anything else.
  */
-#define DENG2_GUARD(varName)    Guard _guarding_##varName(varName); _guarding_##varName.assertLocked();
+#define DENG2_GUARD(varName) \
+    Guard _guarding_##varName(varName); \
+    DENG2_UNUSED(_guarding_##varName);
 
 class Lockable;
 
 /**
- * Utility for locking a Lockable object for the lifetime of the Guard.
+ * Utility for locking a Lockable object for the lifetime of the Guard. Note
+ * that using this is preferable to manual locking and unlocking: if an
+ * exception occurs while the target is locked, unlocking will be taken care of
+ * automatically when the Guard goes out of scope.
  *
  * @ingroup data
  */

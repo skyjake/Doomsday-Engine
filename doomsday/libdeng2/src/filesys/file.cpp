@@ -23,6 +23,7 @@
 #include "de/Folder"
 #include "de/Date"
 #include "de/NumberValue"
+#include "de/Guard"
 
 using namespace de;
 
@@ -201,6 +202,8 @@ File::Accessor::Accessor(File &owner, Property prop) : _owner(owner), _prop(prop
 
 void File::Accessor::update() const
 {
+    DENG2_GUARD(_owner);
+
     // We need to alter the value content.
     Accessor *nonConst = const_cast<Accessor *>(this);
     
