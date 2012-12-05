@@ -242,6 +242,8 @@ struct LumpIndex::Instance
 
     void pruneDuplicates()
     {
+        if(!(flags & LIF_NEED_PRUNE_DUPLICATES)) return;
+
         int const numRecords = lumps.size();
         if(numRecords <= 1) return;
 
