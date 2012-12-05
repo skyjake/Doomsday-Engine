@@ -1,7 +1,6 @@
 /**
- * @file fs_scheme.cpp
- *
- * File system (subspace) scheme. @ingroup fs
+ * @file fs_scheme.cpp File System Subspace Scheme.
+ * @ingroup fs
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -22,6 +21,7 @@
  */
 
 #include <QDir>
+#include <cstring>
 
 #include "de_base.h"
 #include "de_filesys.h"
@@ -42,25 +42,25 @@ namespace de {
 class FileRef
 {
 public:
-    FileRef(PathTree::Node& _directoryNode)
+    FileRef(PathTree::Node &_directoryNode)
         : directoryNode_(&_directoryNode)
     {}
 
-    PathTree::Node& directoryNode() const {
+    PathTree::Node &directoryNode() const {
         return *directoryNode_;
     }
 
-    FileRef& setDirectoryNode(PathTree::Node& newDirectoryNode) {
+    FileRef &setDirectoryNode(PathTree::Node &newDirectoryNode) {
         directoryNode_ = &newDirectoryNode;
         return *this;
     }
 
 #if _DEBUG
-    String const& name() const {
+    String const &name() const {
         return name_;
     }
 
-    FileRef& setName(String const& newName) {
+    FileRef &setName(String const &newName) {
         name_ = newName;
         return *this;
     }
@@ -68,7 +68,7 @@ public:
 
 private:
     /// Directory node for this resource in the owning PathTree
-    PathTree::Node* directoryNode_;
+    PathTree::Node *directoryNode_;
 
 #if _DEBUG
     /// Symbolic name of this resource.
@@ -90,18 +90,18 @@ public:
 
     struct Node
     {
-        Node* next;
+        Node *next;
         FileRef fileRef;
 
-        Node(PathTree::Node& resourceNode)
+        Node(PathTree::Node &resourceNode)
             : next(0), fileRef(resourceNode)
         {}
     };
 
     struct Bucket
     {
-        Node* first;
-        Node* last;
+        Node *first;
+        Node *last;
     };
 
 public:
@@ -110,7 +110,7 @@ public:
 public:
     NameHash()
     {
-        memset(buckets, 0, sizeof(buckets));
+        std::memset(buckets, 0, sizeof(buckets));
     }
 
     ~NameHash()
@@ -124,7 +124,7 @@ public:
         {
             while(buckets[hashKey].first)
             {
-                NameHash::Node* nextNode = buckets[hashKey].first->next;
+                NameHash::Node *nextNode = buckets[hashKey].first->next;
                 delete buckets[hashKey].first;
                 buckets[hashKey].first = nextNode;
             }
@@ -132,9 +132,9 @@ public:
         }
     }
 
-    Node* findDirectoryNode(hash_type hashKey, PathTree::Node const& directoryNode)
+    Node *findDirectoryNode(hash_type hashKey, PathTree::Node const &directoryNode)
     {
-        Node* node = buckets[hashKey].first;
+        Node *node = buckets[hashKey].first;
         while(node && &node->fileRef.directoryNode() != &directoryNode)
         {
             node = node->next;
@@ -142,7 +142,7 @@ public:
         return node;
     }
 
-    static hash_type hashName(String const& str)
+    static hash_type hashName(String const &str)
     {
         hash_type hashKey = 0;
         int op = 0;
@@ -162,7 +162,7 @@ public:
 
 struct FS1::Scheme::Instance
 {
-    FS1::Scheme& self;
+    FS1::Scheme &self;
 
     /// Symbolic name.
     String name;
@@ -175,7 +175,7 @@ struct FS1::Scheme::Instance
     UserDataPathTree directory;
 
     /// As the directory is relative, this special node serves as the root.
-    UserDataNode* rootNode;
+    UserDataNode *rootNode;
 
     /// Name hash table.
     NameHash nameHash;
@@ -187,7 +187,7 @@ struct FS1::Scheme::Instance
     /// Each set is in order of greatest-importance, right to left.
     FS1::Scheme::SearchPaths searchPaths;
 
-    Instance(FS1::Scheme& d, String _name, FS1::Scheme::Flags _flags)
+    Instance(FS1::Scheme &d, String _name, FS1::Scheme::Flags _flags)
         : self(d), name(_name), flags(_flags), directory(), rootNode(0),
           nameHash(), nameHashIsDirty(true)
     {}
@@ -199,15 +199,15 @@ struct FS1::Scheme::Instance
      *
      * @param searchPath  The path to resolve and search.
      */
-    void addFromSearchPath(SearchPath const& searchPath)
+    void addFromSearchPath(SearchPath const &searchPath)
     {
         try
         {
             // Add new nodes on this path and/or re-process previously seen nodes.
-            addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, searchPath.resolved(),
-                                                       true/*is-directory*/, searchPath.flags());
+            addDirectoryPathAndMaybeDescendBranch(true/*do descend*/, searchPath.resolved(),
+                                                  true/*is-directory*/, searchPath.flags());
         }
-        catch(de::Uri::ResolveError const& er)
+        catch(de::Uri::ResolveError const &er)
         {
             LOG_DEBUG(er.asText());
         }
@@ -227,14 +227,14 @@ struct FS1::Scheme::Instance
         }
     }
 
-    UserDataNode* addDirectoryPathNodes(String path)
+    UserDataNode *addDirectoryPath(String path)
     {
         if(path.isEmpty()) return 0;
 
         // Try to make it a relative path.
         if(QDir::isAbsolutePath(path))
         {
-            const String basePath = App_BasePath();
+            String const basePath = App_BasePath();
             if(path.beginsWith(basePath))
             {
                 path = path.mid(basePath.length() + 1);
@@ -255,7 +255,7 @@ struct FS1::Scheme::Instance
         return &directory.insert(path);
     }
 
-    void addDirectoryChildNodes(PathTree::Node& node, int flags)
+    void addDirectoryChildren(PathTree::Node &node, int flags)
     {
         if(node.isLeaf()) return;
 
@@ -267,9 +267,9 @@ struct FS1::Scheme::Instance
         App_FileSystem()->findAllPaths(searchPattern, flags, found);
         DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
         {
-            addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SearchPath::NoDescend),
-                                                       i->path, !!(i->attrib & A_SUBDIR),
-                                                       flags);
+            addDirectoryPathAndMaybeDescendBranch(!(flags & SearchPath::NoDescend),
+                                                  i->path, !!(i->attrib & A_SUBDIR),
+                                                  flags);
         }
     }
 
@@ -279,11 +279,11 @@ struct FS1::Scheme::Instance
      * param isFolder           @c true = @a filePath is a folder in the virtual file system.
      * @param flags             @ref searchPathFlags
      */
-    void addDirectoryPathNodesAndMaybeDescendBranch(bool descendBranch,
+    void addDirectoryPathAndMaybeDescendBranch(bool descendBranch,
         String filePath, bool /*isFolder*/, int flags)
     {
         // Add this path to the directory.
-        UserDataNode* node = addDirectoryPathNodes(filePath);
+        UserDataNode *node = addDirectoryPath(filePath);
         if(!node) return;
 
         if(!node->isLeaf())
@@ -297,7 +297,7 @@ struct FS1::Scheme::Instance
                     // Process it again?
                     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, directory.leafNodes())
                     {
-                        PathTree::Node& sibling = **i;
+                        PathTree::Node &sibling = **i;
                         if(&sibling.parent() == node)
                         {
                             self.add(sibling);
@@ -306,7 +306,7 @@ struct FS1::Scheme::Instance
                 }
                 else
                 {
-                    addDirectoryChildNodes(*node, flags);
+                    addDirectoryChildren(*node, flags);
 
                     // This node is now considered processed.
                     node->setUserValue(true);
@@ -334,7 +334,7 @@ FS1::Scheme::~Scheme()
     delete d;
 }
 
-String const& FS1::Scheme::name() const
+String const &FS1::Scheme::name() const
 {
     return d->name;
 }
@@ -374,12 +374,12 @@ void FS1::Scheme::rebuild()
 #endif*/
 }
 
-static inline String composeSchemeName(String const& filePath)
+static inline String composeSchemeName(String const &filePath)
 {
     return filePath.fileNameWithoutExtension();
 }
 
-bool FS1::Scheme::add(PathTree::Node& resourceNode)
+bool FS1::Scheme::add(PathTree::Node &resourceNode)
 {
     // We are only interested in leafs (i.e., files and not folders).
     if(!resourceNode.isLeaf()) return false;
@@ -389,7 +389,7 @@ bool FS1::Scheme::add(PathTree::Node& resourceNode)
 
     // Is this a new file?
     bool isNewNode = false;
-    NameHash::Node* hashNode = d->nameHash.findDirectoryNode(hashKey, resourceNode);
+    NameHash::Node *hashNode = d->nameHash.findDirectoryNode(hashKey, resourceNode);
     if(!hashNode)
     {
         isNewNode = true;
@@ -402,7 +402,7 @@ bool FS1::Scheme::add(PathTree::Node& resourceNode)
 #endif
 
         // Link it to the list for this bucket.
-        NameHash::Bucket& bucket = d->nameHash.buckets[hashKey];
+        NameHash::Bucket &bucket = d->nameHash.buckets[hashKey];
         if(bucket.last) bucket.last->next = hashNode;
         bucket.last = hashNode;
         if(!bucket.first) bucket.first = hashNode;
@@ -413,13 +413,13 @@ bool FS1::Scheme::add(PathTree::Node& resourceNode)
     }
 
     // (Re)configure this record.
-    FileRef* fileRef = &hashNode->fileRef;
+    FileRef *fileRef = &hashNode->fileRef;
     fileRef->setDirectoryNode(resourceNode);
 
     return isNewNode;
 }
 
-static String const& nameForPathGroup(FS1::PathGroup group)
+static String const &nameForPathGroup(FS1::PathGroup group)
 {
     static String const names[] = {
         "Override",
@@ -431,7 +431,7 @@ static String const& nameForPathGroup(FS1::PathGroup group)
     return names[int(group)];
 }
 
-bool FS1::Scheme::addSearchPath(SearchPath const& search, FS1::PathGroup group)
+bool FS1::Scheme::addSearchPath(SearchPath const &search, FS1::PathGroup group)
 {
     LOG_AS("Scheme::addSearchPath");
 
@@ -464,7 +464,7 @@ bool FS1::Scheme::addSearchPath(SearchPath const& search, FS1::PathGroup group)
     return true;
 }
 
-void FS1::Scheme::clearSearchPathGroup(PathGroup group)
+void FS1::Scheme::clearSearchPathGroup(FS1::PathGroup group)
 {
     d->searchPaths.remove(group);
 }
@@ -474,12 +474,12 @@ void FS1::Scheme::clearAllSearchPaths()
     d->searchPaths.clear();
 }
 
-FS1::Scheme::SearchPaths const& FS1::Scheme::allSearchPaths() const
+FS1::Scheme::SearchPaths const &FS1::Scheme::allSearchPaths() const
 {
     return d->searchPaths;
 }
 
-int FS1::Scheme::findAll(String name, FoundNodes& found)
+int FS1::Scheme::findAll(String name, FoundNodes &found)
 {
     int numFoundSoFar = found.count();
 
@@ -497,11 +497,11 @@ int FS1::Scheme::findAll(String name, FoundNodes& found)
 
     for(NameHash::hash_type key = fromKey; key < toKey + 1; ++key)
     {
-        NameHash::Bucket& bucket = d->nameHash.buckets[key];
-        for(NameHash::Node* hashNode = bucket.first; hashNode; hashNode = hashNode->next)
+        NameHash::Bucket &bucket = d->nameHash.buckets[key];
+        for(NameHash::Node *hashNode = bucket.first; hashNode; hashNode = hashNode->next)
         {
-            FileRef& fileRef = hashNode->fileRef;
-            PathTree::Node& node = fileRef.directoryNode();
+            FileRef &fileRef = hashNode->fileRef;
+            PathTree::Node &node = fileRef.directoryNode();
 
             if(!name.isEmpty() && !node.name().beginsWith(name, Qt::CaseInsensitive)) continue;
 
@@ -512,7 +512,7 @@ int FS1::Scheme::findAll(String name, FoundNodes& found)
     return found.count() - numFoundSoFar;
 }
 
-bool FS1::Scheme::mapPath(String& path) const
+bool FS1::Scheme::mapPath(String &path) const
 {
     if(path.isEmpty()) return false;
 
@@ -538,10 +538,10 @@ void FS1::Scheme::debugPrint() const
     uint schemeIdx = 0;
     for(NameHash::hash_type key = 0; key < NameHash::hash_range; ++key)
     {
-        NameHash::Bucket& bucket = d->nameHash.buckets[key];
-        for(NameHash::Node* node = bucket.first; node; node = node->next)
+        NameHash::Bucket &bucket = d->nameHash.buckets[key];
+        for(NameHash::Node *node = bucket.first; node; node = node->next)
         {
-            FileRef const& fileRef = node->fileRef;
+            FileRef const &fileRef = node->fileRef;
 
             LOG_DEBUG("  %u - %u:\"%s\" => %s")
                 << schemeIdx << key << fileRef.name()
@@ -555,4 +555,4 @@ void FS1::Scheme::debugPrint() const
 }
 #endif
 
-} // scheme de
+} // namespace de
