@@ -340,8 +340,8 @@ bool Path::operator == (Path const &other) const
         {
             if(segment(i) != other.segment(i)) return false;
         }
+        return true;
     }
-    return true;
 }
 
 bool Path::operator < (Path const &other) const
@@ -356,10 +356,10 @@ bool Path::operator < (Path const &other) const
         // Do a string-based test for each segment separately.
         for(int i = 0; i < d->segmentCount; ++i)
         {
-            if(segment(i) < other.segment(i)) return true;
+            if(!(segment(i) < other.segment(i))) return false;
         }
+        return true;
     }
-    return false;
 }
 
 Path Path::operator / (Path const &other) const
