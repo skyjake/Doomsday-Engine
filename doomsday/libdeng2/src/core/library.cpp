@@ -65,7 +65,7 @@ Library::Library(NativePath const &nativePath) : d(0)
 {
     d = new Instance;
 
-    LOG_AS("Library::Library");
+    LOG_AS("Library");
     LOG_TRACE("Loading ") << nativePath.pretty();
 
 #ifndef DENG2_USE_DLOPEN
