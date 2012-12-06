@@ -901,15 +901,15 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
     return found.count() - numFoundSoFar;
 }
 
-de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const& info)
+de::File1 &FS1::interpret(de::FileHandle &hndl, String filePath, FileInfo const &info)
 {
     DENG_ASSERT(!filePath.isEmpty());
 
-    de::File1* interpretedFile = 0;
+    de::File1 *interpretedFile = 0;
 
     // Firstly try the interpreter for the guessed resource types.
-    FileType const& ftypeGuess = DD_GuessFileTypeFromFileName(filePath);
-    if(NativeFileType const* fileType = dynamic_cast<NativeFileType const*>(&ftypeGuess))
+    FileType const &ftypeGuess = DD_GuessFileTypeFromFileName(filePath);
+    if(NativeFileType const* fileType = dynamic_cast<NativeFileType const *>(&ftypeGuess))
     {
         interpretedFile = fileType->interpret(hndl, filePath, info);
     }
@@ -917,10 +917,10 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const&
     // If not yet interpreted - try each recognisable format in order.
     if(!interpretedFile)
     {
-        FileTypes const& fileTypes = DD_FileTypes();
+        FileTypes const &fileTypes = DD_FileTypes();
         DENG2_FOR_EACH_CONST(FileTypes, i, fileTypes)
         {
-            if(NativeFileType const* fileType = dynamic_cast<NativeFileType const*>(*i))
+            if(NativeFileType const *fileType = dynamic_cast<NativeFileType const *>(*i))
             {
                 // Already tried this?
                 if(fileType == &ftypeGuess) continue;
@@ -935,7 +935,7 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const&
     if(!interpretedFile)
     {
         // Use a generic file.
-        File1* container = (hndl.hasFile() && hndl.file().isContained())? &hndl.file().container() : 0;
+        File1 *container = (hndl.hasFile() && hndl.file().isContained())? &hndl.file().container() : 0;
         interpretedFile = new File1(hndl, filePath, info, container);
     }
 
