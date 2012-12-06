@@ -622,7 +622,7 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
  * paths, returning @c true if @a is less than @a b.
  */
 static bool compareTextureManifestPathsAssending(TextureManifest const *a,
-                                          TextureManifest const *b)
+                                                 TextureManifest const *b)
 {
     String pathA = QString(QByteArray::fromPercentEncoding(a->path().toUtf8()));
     String pathB = QString(QByteArray::fromPercentEncoding(b->path().toUtf8()));
@@ -640,10 +640,10 @@ static bool compareTextureManifestPathsAssending(TextureManifest const *a,
 #define DEFAULT_PRINTTEXTUREFLAGS           0
 
 /**
- * @param schemeName    Texture subspace scheme being printed. Can be @c NULL in
- *                      which case textures are printed from all schemes.
- * @param like          Texture path search term.
- * @param flags         @ref printTextureFlags
+ * @param scheme    Texture subspace scheme being printed. Can be @c NULL in
+ *                  which case textures are printed from all schemes.
+ * @param like      Texture path search term.
+ * @param flags     @ref printTextureFlags
  */
 static int printTextures2(Textures::Scheme *scheme, Path const &like, int flags)
 {
@@ -726,10 +726,10 @@ static void printTextures(de::Uri const &search, int flags = DEFAULT_PRINTTEXTUR
  *              representation.
  *
  *              Supported forms (where <> denote keyword component names):
- *               - [0: <scheme>:<path>]
- *               - [0: <scheme>]             (if @a matchSchemeOnly)
- *               - [0: <path>]
- *               - [0: <scheme>, 1: <path>]
+ *               - [0: "<scheme>:<path>"]
+ *               - [0: "<scheme>"]              (if @a matchSchemeOnly)
+ *               - [0: "<path>"]
+ *               - [0: "<scheme>", 1: "<path>"]
  * @param argc  The number of elements in @a argv.
  * @param matchSchemeOnly  @c true= check if the sole argument matches a known scheme.
  */

@@ -1,5 +1,4 @@
-/**
- * @file texture.h Logical Texture
+/** @file texture.h Logical Texture
  * @ingroup resource
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -257,6 +256,7 @@ void Texture_SetDimensions(Texture* tex, const Size2Raw* size);
  * Iteration ends once all variants have been visited, or immediately upon
  * a callback returning non-zero.
  *
+ * @param tex       Texture instance.
  * @param callback  Callback to make for each processed variant.
  * @param parameters  Passed to the callback.
  *

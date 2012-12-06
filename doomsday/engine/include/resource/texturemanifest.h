@@ -52,7 +52,7 @@ public:
     Texture *derive(Texture::Flags flags);
 
     /**
-     * @copydoc
+     * @copydoc derive()
      * @param dimensions  Logical dimensions. Components can be @c 0 in which
      *                  case their value will be inherited from the actual
      *                  pixel dimensions of the image at load time.
