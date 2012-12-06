@@ -58,12 +58,12 @@ enum uploadcontentmethod_t
 struct GraphicFileType
 {
     /// Symbolic name of the resource type.
-    char const *name;
+    String name;
 
     /// Known file extension.
-    char const *ext;
+    String ext;
 
-    bool (*interpretFunc)(filehandle_s &hndl, char const *filePath, image_t &img);
+    bool (*interpretFunc)(de::FileHandle &hndl, String filePath, image_t &img);
 
     char const *(*getLastErrorFunc)(); ///< Can be NULL.
 };
@@ -89,10 +89,10 @@ static int hashDetailVariantSpecification(detailvariantspecification_t const *sp
 
 static void calcGammaTable();
 
-static bool interpretPcx(filehandle_s &hndl, char const *filePath, image_t &img);
-static bool interpretPng(filehandle_s &hndl, char const *filePath, image_t &img);
-static bool interpretJpg(filehandle_s &hndl, char const *filePath, image_t &img);
-static bool interpretTga(filehandle_s &hndl, char const *filePath, image_t &img);
+static bool interpretPcx(de::FileHandle &hndl, String filePath, image_t &img);
+static bool interpretPng(de::FileHandle &hndl, String filePath, image_t &img);
+static bool interpretJpg(de::FileHandle &hndl, String filePath, image_t &img);
+static bool interpretTga(de::FileHandle &hndl, String filePath, image_t &img);
 
 static TexSource loadExternalTexture(image_t &image, String searchPath,
                                      String optionalSuffix = "");
@@ -139,7 +139,7 @@ static GraphicFileType const graphicTypes[] = {
     { "JPG",    "jpg",      interpretJpg, 0 }, // TODO: add alternate "jpeg" extension
     { "TGA",    "tga",      interpretTga, TGA_LastError },
     { "PCX",    "pcx",      interpretPcx, PCX_LastError },
-    { 0,        0,          0,            0 } // Terminate.
+    { "",       "",         0,            0 } // Terminate.
 };
 
 static variantspecificationlist_t *variantSpecs;
@@ -1404,53 +1404,57 @@ void GL_PruneTextureVariantSpecifications()
 #endif
 }
 
-static bool interpretPcx(filehandle_s &hndl, char const * /*filePath*/, image_t &img)
+static bool interpretPcx(de::FileHandle &hndl, String /*filePath*/, image_t &img)
 {
     Image_Init(&img);
-    img.pixels = PCX_Load(&hndl, &img.size.width, &img.size.height, &img.pixelSize);
+    img.pixels = PCX_Load(reinterpret_cast<filehandle_s *>(&hndl),
+                          &img.size.width, &img.size.height, &img.pixelSize);
     return (0 != img.pixels);
 }
 
-static bool interpretJpg(filehandle_s &hndl, char const * /*filePath*/, image_t &img)
+static bool interpretJpg(de::FileHandle &hndl, String /*filePath*/, image_t &img)
 {
-    return Image_LoadFromFileWithFormat(&img, "JPG", &hndl);
+    return Image_LoadFromFileWithFormat(&img, "JPG", reinterpret_cast<filehandle_s *>(&hndl));
 }
 
-static bool interpretPng(filehandle_s &hndl, char const * /*filePath*/, image_t &img)
+static bool interpretPng(de::FileHandle &hndl, String /*filePath*/, image_t &img)
 {
     /*
     Image_Init(&img);
-    img.pixels = PNG_Load(&hndl, &img.size.width, &img.size.height, &img.pixelSize);
+    img.pixels = PNG_Load(reinterpret_cast<filehandle_s *>(&hndl),
+                          &img.size.width, &img.size.height, &img.pixelSize);
     return (0 != img.pixels);
     */
-    return Image_LoadFromFileWithFormat(&img, "PNG", &hndl);
+    return Image_LoadFromFileWithFormat(&img, "PNG", reinterpret_cast<filehandle_s *>(&hndl));
 }
 
-static bool interpretTga(filehandle_s &hndl, char const * /*filePath*/, image_t &img)
+static bool interpretTga(de::FileHandle &hndl, String /*filePath*/, image_t &img)
 {
     Image_Init(&img);
-    img.pixels = TGA_Load(&hndl, &img.size.width, &img.size.height, &img.pixelSize);
+    img.pixels = TGA_Load(reinterpret_cast<filehandle_s *>(&hndl),
+                          &img.size.width, &img.size.height, &img.pixelSize);
     return (0 != img.pixels);
 }
 
-GraphicFileType const *guessGraphicFileTypeFromFileName(char const *filePath)
+GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
 {
-    char const *p = F_FindFileExtension(filePath);
-    if(p)
+    // The path must have an extension for this.
+    String ext = fileName.fileNameExtension();
+    if(!ext.isEmpty())
     {
-        for(int i = 0; graphicTypes[i].ext; ++i)
+        for(int i = 0; !graphicTypes[i].ext.isEmpty(); ++i)
         {
-            GraphicFileType const *type = &graphicTypes[i];
-            if(!qstricmp(p, type->ext))
+            GraphicFileType const &type = graphicTypes[i];
+            if(!ext.compareWithoutCase(type.ext))
             {
-                return type;
+                return &type;
             }
         }
     }
     return 0; // Unknown.
 }
 
-static void interpretGraphic(filehandle_s &hndl, char const *filePath, image_t &img)
+static void interpretGraphic(de::FileHandle &hndl, String filePath, image_t &img)
 {
     // Firstly try the interpreter for the guessed resource types.
     GraphicFileType const *rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
@@ -1464,7 +1468,7 @@ static void interpretGraphic(filehandle_s &hndl, char const *filePath, image_t &
     {
         // Try each recognisable format instead.
         /// @todo Order here should be determined by the resource locator.
-        for(int i = 0; graphicTypes[i].name; ++i)
+        for(int i = 0; !graphicTypes[i].name.isEmpty(); ++i)
         {
             GraphicFileType const *graphicType = &graphicTypes[i];
 
@@ -1477,38 +1481,28 @@ static void interpretGraphic(filehandle_s &hndl, char const *filePath, image_t &
     }
 }
 
-/// @return  @c true if the given path name is formed with the "color keyed" suffix.
-static bool isColorKeyed(char const *path)
+/// @return  @c true if the file name in @a path ends with the "color key" suffix.
+static inline bool isColorKeyed(String path)
 {
-    bool result = false;
-    if(path && path[0])
-    {
-        ddstring_t buf; Str_Init(&buf);
-        F_FileName(&buf, path);
-        if(Str_Length(&buf) > 3)
-        {
-            result = (0 == qstricmp(Str_Text(&buf) + Str_Length(&buf) - 3, "-ck"));
-        }
-        Str_Free(&buf);
-    }
-    return result;
+    return path.fileNameWithoutExtension().endsWith("-ck", Qt::CaseInsensitive);
 }
 
-uint8_t *Image_LoadFromFile(image_t *img, filehandle_s *file)
+uint8_t *Image_LoadFromFile(image_t *img, filehandle_s *_file)
 {
-    DENG_ASSERT(img && file);
+    DENG_ASSERT(img && _file);
+    de::FileHandle &file = reinterpret_cast<de::FileHandle &>(*_file);
     LOG_AS("Image_LoadFromFile");
 
-    char const* filePath = Str_Text(F_ComposePath(FileHandle_File_const(file)));
+    String filePath = file.file().composePath();
 
     Image_Init(img);
-    interpretGraphic(*file, filePath, *img);
+    interpretGraphic(file, filePath, *img);
 
     // Still not interpreted?
     if(!img->pixels)
     {
         LOG_VERBOSE("\"%s\" unrecognized, trying fallback loader...")
-            << F_PrettyPath(filePath);
+            << NativePath(filePath).pretty();
         return NULL; // Not a recognised format. It may still be loadable, however.
     }
 
@@ -1534,7 +1528,7 @@ uint8_t *Image_LoadFromFile(image_t *img, filehandle_s *file)
     }
 
     LOG_VERBOSE("\"%s\" (%ix%i)")
-        << F_PrettyPath(filePath) << img->size.width << img->size.height;
+        << NativePath(filePath).pretty() << img->size.width << img->size.height;
 
     return img->pixels;
 }
