@@ -198,7 +198,7 @@ namespace de
         String description() const;
 
         /**
-         * Returns a textural description of this file only. Subclasses must
+         * Returns a textual description of this file only. Subclasses must
          * override this method to provide a description relevant to the
          * subclass.
          *
