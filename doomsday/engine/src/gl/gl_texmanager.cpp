@@ -1069,7 +1069,7 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(de::TextureVariant *t
         grayMipmapFactor = (uint8_t)(255 * MINMAX_OF(0, spec->contrast / 255.f - shift, 1));
 
         // Announce the normalization.
-        de::Uri uri = reinterpret_cast<de::Texture &>(*tex->generalCase()).manifest().composeUri();
+        de::Uri uri = tex->generalCase().manifest().composeUri();
         LOG_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).")
             << uri << baMul << hiMul << loMul;
     }
@@ -2471,13 +2471,14 @@ static TexSource loadPatchLump(image_t *image, filehandle_s *hndl, int tclass, i
 }
 
 TexSource GL_LoadPatchLumpAsPatch(image_t *image, filehandle_s *hndl, int tclass, int tmap, int border,
-    texture_s *tex)
+    texture_s *_tex)
 {
     TexSource source = loadPatchLump(image, hndl, tclass, tmap, border);
-    if(source == TEXS_ORIGINAL && tex)
+    if(source == TEXS_ORIGINAL && _tex)
     {
+        de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
         // Loaded from a lump assumed to be in DOOM's Patch format.
-        patchtex_t* pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(tex));
+        patchtex_t* pTex = reinterpret_cast<patchtex_t *>(tex.userDataPointer());
         if(pTex)
         {
             // Load the extended metadata from the lump.
@@ -3051,34 +3052,10 @@ void GL_ReleaseTexturesForRawImages()
     Z_Free(rawTexs);
 }
 
-#if 0
-static int setVariantMinFilter(TextureVariant* tex, void* parameters)
-{
-    DGLuint glName = TextureVariant_GLName(tex);
-    if(glName)
-    {
-        int minFilter = *((int*)parameters);
-        glBindTexture(GL_TEXTURE_2D, glName);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
-    }
-    return 0; // Continue iteration.
-}
-
-static int setVariantMinFilterWorker(Texture* tex, void* parameters)
-{
-    Texture_IterateVariants(tex, setVariantMinFilter, parameters);
-    return 0; // Continue iteration.
-}
-#endif
-
 void GL_SetAllTexturesMinFilter(int /*minFilter*/)
 {
-#if 0
-    int localMinFilter = minFilter;
     /// @todo This is no longer correct logic. Changing the global minification
     ///        filter should not modify the uploaded texture content.
-    Textures::iterate(TS_ANY, setVariantMinFilterWorker, (void*)&localMinFilter);
-#endif
 }
 
 static void performImageAnalyses(de::Texture &tex, image_t const *image,
@@ -3337,7 +3314,7 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     if(!*variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
-        *variant = new de::TextureVariant(*reinterpret_cast<texture_s *>(&tex), *spec, source);
+        *variant = new de::TextureVariant(tex, *spec, source);
         (*variant)->setGLName(newGLName);
         tex.addVariant(**variant);
     }
@@ -3472,7 +3449,7 @@ void GL_BindTexture(texturevariant_s *tex)
         if(!variant->isPrepared())
         {
             de::TextureVariant **hndl = &variant;
-            if(!tryLoadImageAndPrepareVariant(reinterpret_cast<de::Texture &>(*variant->generalCase()), spec, hndl))
+            if(!tryLoadImageAndPrepareVariant(variant->generalCase(), spec, hndl))
             {
                 tex = 0;
             }

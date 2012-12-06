@@ -24,9 +24,11 @@
 #include "resource/texturevariant.h"
 #include <de/LegacyCore>
 
-de::TextureVariant::TextureVariant(struct texture_s& generalCase,
-    texturevariantspecification_t& spec, TexSource source)
-    : texture(&generalCase),
+namespace de {
+
+TextureVariant::TextureVariant(Texture &generalCase,
+    texturevariantspecification_t &spec, TexSource source)
+    : texture(generalCase),
       texSource(source),
       flags(0),
       glTexName(0),
@@ -35,72 +37,73 @@ de::TextureVariant::TextureVariant(struct texture_s& generalCase,
       varSpec(&spec)
 {}
 
-void de::TextureVariant::setSource(TexSource newSource)
+void TextureVariant::setSource(TexSource newSource)
 {
     texSource = newSource;
 }
 
-void de::TextureVariant::flagMasked(bool yes)
+void TextureVariant::flagMasked(bool yes)
 {
     if(yes) flags |= Masked; else flags &= ~Masked;
 }
 
-void de::TextureVariant::flagUploaded(bool yes)
+void TextureVariant::flagUploaded(bool yes)
 {
     if(yes) flags |= Uploaded; else flags &= ~Uploaded;
 }
 
-bool de::TextureVariant::isPrepared() const
+bool TextureVariant::isPrepared() const
 {
     return isUploaded() && 0 != glTexName;
 }
 
-void de::TextureVariant::coords(float* outS, float* outT) const
+void TextureVariant::coords(float *outS, float *outT) const
 {
     if(outS) *outS = s;
     if(outT) *outT = t;
 }
 
-void de::TextureVariant::setCoords(float newS, float newT)
+void TextureVariant::setCoords(float newS, float newT)
 {
     s = newS;
     t = newT;
 }
 
-void de::TextureVariant::setGLName(unsigned int newGLName)
+void TextureVariant::setGLName(uint newGLName)
 {
     glTexName = newGLName;
 }
+
+} // namespace de
 
 /**
  * C Wrapper API:
  */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::TextureVariant*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::TextureVariant *>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<const de::TextureVariant*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::TextureVariant const *>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    de::TextureVariant* self = TOINTERNAL(inst)
+    de::TextureVariant *self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    const de::TextureVariant* self = TOINTERNAL_CONST(inst)
+    de::TextureVariant const *self = TOINTERNAL_CONST(inst)
 
-TextureVariant* TextureVariant_New(Texture* generalCase,
-    texturevariantspecification_t* spec, TexSource source)
+TextureVariant *TextureVariant_New(Texture *generalCase,
+    texturevariantspecification_t *spec, TexSource source)
 {
-    if(!generalCase)
-        LegacyCore_FatalError("TextureVariant_New: Attempted with invalid generalCase argument (=NULL).");
-    if(!spec)
-        LegacyCore_FatalError("TextureVariant_New: Attempted with invalid spec argument (=NULL).");
-    return reinterpret_cast<TextureVariant*>(new de::TextureVariant(*generalCase, *spec, source));
+    if(!generalCase) LegacyCore_FatalError("TextureVariant_New: Attempted with invalid generalCase argument (=NULL).");
+    if(!spec) LegacyCore_FatalError("TextureVariant_New: Attempted with invalid spec argument (=NULL).");
+
+    return reinterpret_cast<TextureVariant*>(new de::TextureVariant(reinterpret_cast<de::Texture &>(*generalCase), *spec, source));
 }
 
-void TextureVariant_Delete(TextureVariant* tex)
+void TextureVariant_Delete(TextureVariant *tex)
 {
     if(tex)
     {
@@ -109,79 +112,79 @@ void TextureVariant_Delete(TextureVariant* tex)
     }
 }
 
-struct texture_s* TextureVariant_GeneralCase(const TextureVariant* tex)
+struct texture_s *TextureVariant_GeneralCase(TextureVariant const *tex)
 {
     SELF_CONST(tex);
-    return self->generalCase();
+    return reinterpret_cast<texture_s *>(&self->generalCase());
 }
 
-TexSource TextureVariant_Source(const TextureVariant* tex)
+TexSource TextureVariant_Source(TextureVariant const *tex)
 {
     SELF_CONST(tex);
     return self->source();
 }
 
-void TextureVariant_SetSource(TextureVariant* tex, TexSource source)
+void TextureVariant_SetSource(TextureVariant *tex, TexSource source)
 {
     SELF(tex);
     self->setSource(source);
 }
 
-boolean TextureVariant_IsMasked(const TextureVariant* tex)
+boolean TextureVariant_IsMasked(TextureVariant const *tex)
 {
     SELF_CONST(tex);
     return CPP_BOOL(self->isMasked());
 }
 
-void TextureVariant_FlagMasked(TextureVariant* tex, boolean yes)
+void TextureVariant_FlagMasked(TextureVariant *tex, boolean yes)
 {
     SELF(tex);
     self->flagMasked(bool(yes));
 }
 
-boolean TextureVariant_IsUploaded(const TextureVariant* tex)
+boolean TextureVariant_IsUploaded(TextureVariant const *tex)
 {
     SELF_CONST(tex);
     return CPP_BOOL(self->isUploaded());
 }
 
-void TextureVariant_FlagUploaded(TextureVariant* tex, boolean yes)
+void TextureVariant_FlagUploaded(TextureVariant *tex, boolean yes)
 {
     SELF(tex);
     self->flagUploaded(bool(yes));
 }
 
-boolean TextureVariant_IsPrepared(const TextureVariant* tex)
+boolean TextureVariant_IsPrepared(TextureVariant const *tex)
 {
     SELF_CONST(tex);
     return CPP_BOOL(self->isPrepared());
 }
 
-void TextureVariant_Coords(const TextureVariant* tex, float* s, float* t)
+void TextureVariant_Coords(TextureVariant const *tex, float *s, float *t)
 {
     SELF_CONST(tex);
     self->coords(s, t);
 }
 
-void TextureVariant_SetCoords(TextureVariant* tex, float s, float t)
+void TextureVariant_SetCoords(TextureVariant *tex, float s, float t)
 {
     SELF(tex);
     self->setCoords(s, t);
 }
 
-texturevariantspecification_t* TextureVariant_Spec(const TextureVariant* tex)
+texturevariantspecification_t *TextureVariant_Spec(TextureVariant const *tex)
 {
     SELF_CONST(tex);
     return self->spec();
 }
 
-unsigned int TextureVariant_GLName(const TextureVariant* tex)
+uint TextureVariant_GLName(TextureVariant const *tex)
 {
     SELF_CONST(tex);
     return self->glName();
 }
 
-void TextureVariant_SetGLName(TextureVariant* tex, DGLuint glName)
+void TextureVariant_SetGLName(TextureVariant *tex, uint glName)
 {
     SELF(tex);
     self->setGLName(glName);
