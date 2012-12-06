@@ -122,12 +122,8 @@ public:
         }
 
         /**
-         * Determines if this segment is lexically less than @a other. The test
-         * is case and separator insensitive.
-         *
-         * @param other  Segment.
-         *
-         * @return @c true, iff the segments are equal.
+         * Returns @c true if this segment is lexically less than @a other.
+         * The test is case and separator insensitive.
          */
         bool operator < (Segment const &other) const;
 
@@ -238,12 +234,8 @@ public:
     }
 
     /**
-     * Determines if this path is lexically less than @a other. The test
+     * Returns @c true if this path is lexically less than @a other. The test
      * is case and separator insensitive.
-     *
-     * @param other  Path.
-     *
-     * @return @c true, iff the paths are equal.
      */
     bool operator < (Path const &other) const;
 
