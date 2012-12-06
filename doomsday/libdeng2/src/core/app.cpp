@@ -343,10 +343,12 @@ NativePath App::executablePath()
     return DENG2_APP->d->appPath;
 }
 
+#ifdef MACOSX
 NativePath App::nativeAppContentsPath()
 {
     return DENG2_APP->d->appPath/"../..";
 }
+#endif
 
 FS &App::fileSystem()
 {
