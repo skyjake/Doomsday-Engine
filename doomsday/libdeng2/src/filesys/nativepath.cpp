@@ -24,14 +24,39 @@
 #include "de/App"
 #include <QDir>
 
+/**
+ * @def NATIVE_BASE_SYMBOLIC
+ *
+ * Symbol used in "pretty" paths to represent the base directory (the one set
+ * with -basedir). On Mac OS X, this is meaningless because of the way the
+ * application is bundled: there is only one valid base dir that can be used.
+ */
+
+/**
+ * @def NATIVE_HOME_SYMBOLIC
+ *
+ * Symbol used in "pretty" paths to represent the user's native home directory.
+ * Note that this is not the same thing as App::nativeHomePath(), which returns
+ * the native location of the Doomsday runtime "/home" path where runtime files
+ * are stored.
+ */
+
 #ifdef WIN32
-#  define DIR_SEPARATOR QChar('\\')
+#  define DIR_SEPARATOR             QChar('\\')
+#  define NATIVE_BASE_SYMBOLIC      "{basedir}"
+#  define NATIVE_HOME_SYMBOLIC      "%HOME%"
 #else
-#  define DIR_SEPARATOR QChar('/')
+#  define DIR_SEPARATOR             QChar('/')
 #  ifdef UNIX
 #    include <sys/types.h>
 #    include <pwd.h>
 #  endif
+#  ifdef MACOSX
+#    define NATIVE_BASE_SYMBOLIC    "{app}"
+#  else
+#    define NATIVE_BASE_SYMBOLIC    "{basedir}"
+#  endif
+#  define NATIVE_HOME_SYMBOLIC      "~"
 #endif
 
 namespace de {
@@ -152,13 +177,47 @@ String NativePath::pretty() const
 
     String result = *this;
 
-    // Hide relative directives like '}'
+    // Replace relative directives like '}' (used in FS1 only) with a full symbol.
+    if(result.length() > 1 && (result.first() == '}' || result.first() == '>'))
+    {
+        return String(NATIVE_BASE_SYMBOLIC) + DIR_SEPARATOR + result.mid(1);
+    }
+
+    // If within one of the known native directories, cut out the known path,
+    // replacing it with a symbolic. This retains the absolute nature of the path
+    // while omitting potentially redundant/verbose information.
+    if(QDir::isAbsolutePath(result))
+    {
+        NativePath basePath = App::app().nativeBasePath();
+        if(result.beginsWith(basePath))
+        {
+            result = NATIVE_BASE_SYMBOLIC + result.mid(basePath.length());
+        }
+        else
+        {
+            NativePath homePath = QDir::homePath(); // actual native home dir, not libdeng2 "/home"
+            if(result.beginsWith(homePath))
+            {
+                result = NATIVE_HOME_SYMBOLIC + result.mid(homePath.length());
+            }
+        }
+    }
+
+    return result;
+}
+
+String NativePath::omitBasePath() const
+{
+    if(isEmpty()) return *this;
+
+    String result = *this;
+
+    // Hide relative directives like '}'.
     if(result.length() > 1 && (result.first() == '}' || result.first() == '>'))
     {
         result = result.mid(1);
     }
 
-    // If within our the base directory cut out the base path.
     if(QDir::isAbsolutePath(result))
     {
         NativePath basePath = App::app().nativeBasePath();
@@ -167,7 +226,6 @@ String NativePath::pretty() const
             result = result.mid(basePath.length() + 1);
         }
     }
-
     return result;
 }
 
