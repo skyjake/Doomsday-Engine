@@ -622,12 +622,12 @@ const char* F_PrettyPath(const char* path)
 #undef NUM_BUFS
 }
 
-bool F_MatchFileName(QChar const *string, QChar const *pattern)
+bool F_MatchFileName(de::String const &string, de::String const &pattern)
 {
     static QChar const ASTERISK('*');
     static QChar const QUESTION_MARK('?');
 
-    QChar const *in = string, *st = pattern;
+    QChar const *in = string.constData(), *st = pattern.constData();
 
     while(!in->isNull())
     {

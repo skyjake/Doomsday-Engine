@@ -260,7 +260,7 @@ struct FS1::Scheme::Instance
         if(node.isLeaf()) return;
 
         // Compose the search pattern. We're interested in *everything*.
-        String searchPattern = node.path() / "*";
+        Path searchPattern = node.path() / "*";
 
         // Process this search.
         FS1::PathList found;
