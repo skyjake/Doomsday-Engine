@@ -47,18 +47,17 @@ public:
      * The first time a texture is derived from the manifest, said texture
      * is assigned to the manifest (ownership is assumed).
      *
+     * @param flags     Texture classification flags.
+     */
+    Texture *derive(Texture::Flags flags);
+
+    /**
+     * @copydoc
      * @param dimensions  Logical dimensions. Components can be @c 0 in which
      *                  case their value will be inherited from the actual
      *                  pixel dimensions of the image at load time.
-     * @param flags     Flags.
-     * @param userData  User data to associate with the resultant texture.
      */
     Texture *derive(Size2Raw const &dimensions, Texture::Flags flags);
-
-    /**
-     * @copydoc derive()
-     */
-    Texture *derive(Texture::Flags flags);
 
     /**
      * Returns the owning scheme of the TextureManifest.

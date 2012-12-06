@@ -640,11 +640,14 @@ static bool compareTextureManifestPathsAssending(TextureManifest const *a,
 #define DEFAULT_PRINTTEXTUREFLAGS           0
 
 /**
- * @param flags  @ref printTextureFlags
+ * @param schemeName    Texture subspace scheme being printed. Can be @c NULL in
+ *                      which case textures are printed from all schemes.
+ * @param like          Texture path search term.
+ * @param flags         @ref printTextureFlags
  */
-static int printTextures2(Textures::Scheme *scheme, Path const &path, int flags)
+static int printTextures2(Textures::Scheme *scheme, Path const &like, int flags)
 {
-    QList<TextureManifest *> found = collectTextureManifests(scheme, path);
+    QList<TextureManifest *> found = collectTextureManifests(scheme, like);
     if(found.isEmpty()) return 0;
 
     bool const printSchemeName = !(flags & PTF_TRANSFORM_PATH_NO_SCHEME);
@@ -653,8 +656,8 @@ static int printTextures2(Textures::Scheme *scheme, Path const &path, int flags)
     String heading = "Known textures";
     if(!printSchemeName && scheme)
         heading += " in scheme '" + scheme->name() + "'";
-    if(!path.isEmpty())
-        heading += " like \"" + NativePath(path).withSeparators('/') + "\"";
+    if(!like.isEmpty())
+        heading += " like \"" + NativePath(like).withSeparators('/') + "\"";
     heading += ":\n";
 
     // Print the result heading.
@@ -719,15 +722,16 @@ static void printTextures(de::Uri const &search, int flags = DEFAULT_PRINTTEXTUR
 } // namespace de
 
 /**
- * Arguments are assumed to be in a human-friendly, non-encoded representation.
+ * @param argv  The arguments to be composed. All are assumed to be in non-encoded
+ *              representation.
  *
- * Supported forms (where <> denote keyword component names):
- * <pre>
- *     [0: <scheme>:<path>]
- *     [0: <scheme>]             - if @a matchSchemeOnly
- *     [0: <path>]
- *     [0: <scheme>, 1: <path>]
- * </pre>
+ *              Supported forms (where <> denote keyword component names):
+ *               - [0: <scheme>:<path>]
+ *               - [0: <scheme>]             (if @a matchSchemeOnly)
+ *               - [0: <path>]
+ *               - [0: <scheme>, 1: <path>]
+ * @param argc  The number of elements in @a argv.
+ * @param matchSchemeOnly  @c true= check if the sole argument matches a known scheme.
  */
 static de::Uri composeSearchUri(char **argv, int argc, bool matchSchemeOnly = true)
 {

@@ -224,7 +224,7 @@ static void prepareColorTable(colorpalette_t* pal, const int compOrder[3],
     }
 }
 
-/// \note A time-consuming operation.
+/// @note A time-consuming operation.
 static void prepareNearestLUT(colorpalette_t* pal)
 {
 #define SIZEOF18TO8         (sizeof(int) * 262144)

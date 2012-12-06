@@ -68,6 +68,9 @@ class TextureManifest;
 class Texture
 {
 public:
+    /**
+     * Classification flags
+     */
     enum Flag
     {
         /// Texture is "custom" (i.e., not an original game resource).
@@ -80,6 +83,7 @@ public:
 public:
     /**
      * @param manifest  Manifest derived to yield the texture.
+     * @param flags     Texture classification flags.
      * @param userData  User data to associate with the resultant texture.
      */
     Texture(TextureManifest &manifest, Flags flags = 0, void *userData = 0);
@@ -90,6 +94,7 @@ public:
      *                   coordinates. If width=0 and height=0, their value
      *                  will be inferred from the actual pixel dimensions
      *                  of the image resource at load time.
+     * @param flags     Texture classification flags.
      * @param userData  User data to associate with the resultant texture.
      */
     Texture(TextureManifest &manifest, Size2Raw const &dimensions,
@@ -185,7 +190,7 @@ public:
 
     /**
      * Change logical pixel dimensions.
-     * @param size  New size.
+     * @param dimensions  New dimensions.
      */
     void setDimensions(Size2Raw const &dimensions);
 
@@ -253,7 +258,7 @@ void Texture_SetDimensions(Texture* tex, const Size2Raw* size);
  * a callback returning non-zero.
  *
  * @param callback  Callback to make for each processed variant.
- * @param paramaters  Passed to the callback.
+ * @param parameters  Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */

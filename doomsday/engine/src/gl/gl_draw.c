@@ -361,7 +361,7 @@ void GL_DrawFilter(void)
     glEnd();
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
     int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
     float stretchEpsilon)
@@ -384,7 +384,7 @@ void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
     bp->scissorRegion.size.width = bp->scissorRegion.size.height = 0;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags,
     int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
 {
@@ -392,7 +392,7 @@ void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags,
         availHeight, overrideMode, DEFAULT_SCALEMODE_STRETCH_EPSILON);
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
 {
     if(!bp)
@@ -457,7 +457,7 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
     }
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
 {
     if(!bp)

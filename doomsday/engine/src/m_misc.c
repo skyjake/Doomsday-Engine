@@ -235,7 +235,7 @@ boolean M_IsComment(const char* buffer)
     return false;
 }
 
-/// \note Part of the Doomsday public API
+/// @note Part of the Doomsday public API
 boolean M_IsStringValidInt(const char* str)
 {
     size_t i, len;
@@ -260,7 +260,7 @@ boolean M_IsStringValidInt(const char* str)
     return !isBad;
 }
 
-/// \note Part of the Doomsday public API
+/// @note Part of the Doomsday public API
 boolean M_IsStringValidByte(const char* str)
 {
     if(M_IsStringValidInt(str))
@@ -272,7 +272,7 @@ boolean M_IsStringValidByte(const char* str)
     return false;
 }
 
-/// \note Part of the Doomsday public API
+/// @note Part of the Doomsday public API
 boolean M_IsStringValidFloat(const char* str)
 {
     size_t i, len;

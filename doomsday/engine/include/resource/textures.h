@@ -68,20 +68,20 @@ public:
          * Interpret a manifest producing a new logical Texture instance..
          *
          * @param manifest  The manifest to be interpreted.
-         * @param dimensions  Logical dimensions. Components can be @c 0 in
-         *                  which case their value will be inherited from the
-         *                  actual pixel dimensions of the image at load time.
          * @param flags     Texture Flags.
          * @param userData  User data to associate with the resultant texture.
          */
-        static Texture *interpret(Manifest &manifest, Size2Raw const &dimensions,
-                                  Texture::Flags flags, void *userData = 0);
+        static Texture *interpret(Manifest &manifest, Texture::Flags flags,
+                                  void *userData = 0);
 
         /**
          * @copydoc interpret()
+         * @param dimensions  Logical dimensions. Components can be @c 0 in
+         *                  which case their value will be inherited from the
+         *                  actual pixel dimensions of the image at load time.
          */
-        static Texture *interpret(Manifest &manifest, Texture::Flags flags,
-                                  void *userData = 0);
+        static Texture *interpret(Manifest &manifest, Size2Raw const &dimensions,
+                                  Texture::Flags flags, void *userData = 0);
     };
 
     /// Texture system subspace schemes.
@@ -187,19 +187,10 @@ public:
      * each visited. Iteration ends when all textures have been visited or a
      * callback returns non-zero.
      *
-     * @param nameOfScheme  If a known symbolic scheme name, only consider
-     *                      textures within this scheme. Can be @ zero-length
-     *                      string, in which case visit all textures.
      * @param callback      Callback function ptr.
      * @param parameters    Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
-     */
-    int iterate(String nameOfScheme, int (*callback)(Texture &texture, void *parameters),
-                void *parameters = 0) const;
-
-    /**
-     * @copydoc iterate()
      */
     inline int iterate(int (*callback)(Texture &texture, void *parameters),
                        void *parameters = 0) const {
@@ -207,28 +198,37 @@ public:
     }
 
     /**
+     * @copydoc iterate()
+     * @param nameOfScheme  If a known symbolic scheme name, only consider
+     *                      textures within this scheme. Can be @ zero-length
+     *                      string, in which case visit all textures.
+     */
+    int iterate(String nameOfScheme, int (*callback)(Texture &texture, void *parameters),
+                void *parameters = 0) const;
+
+    /**
      * Iterate over declared textures in the collection making a callback for
      * each visited. Iteration ends when all textures have been visited or a
      * callback returns non-zero.
      *
-     * @param nameOfScheme  If a known symbolic scheme name, only consider
-     *                      textures within this scheme. Can be @ zero-length
-     *                      string, in which case visit all textures.
      * @param callback      Callback function ptr.
      * @param parameters    Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int iterateDeclared(String nameOfScheme, int (*callback)(Manifest &manifest, void *parameters),
-                        void* parameters = 0) const;
-
-    /**
-     * @copydoc iterate()
-     */
     inline int iterateDeclared(int (*callback)(Manifest &manifest, void *parameters),
                                void* parameters = 0) const {
         return iterateDeclared("", callback, parameters);
     }
+
+    /**
+     * @copydoc iterate()
+     * @param nameOfScheme  If a known symbolic scheme name, only consider
+     *                      textures within this scheme. Can be @ zero-length
+     *                      string, in which case visit all textures.
+     */
+    int iterateDeclared(String nameOfScheme, int (*callback)(Manifest &manifest, void *parameters),
+                        void* parameters = 0) const;
 
 private:
     struct Instance;

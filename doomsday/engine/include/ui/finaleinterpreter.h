@@ -60,8 +60,8 @@ typedef struct fi_namespace_s {
 
 /// UIPage indices.
 enum {
-    PAGE_PICS = 0, /// \note also used for its background.
-    PAGE_TEXT = 1 /// \note also used for its filter.
+    PAGE_PICS = 0, /// @note also used for its background.
+    PAGE_TEXT = 1 /// @note also used for its filter.
 };
 
 #define FINALEINTERPRETER_MAX_TOKEN_LENGTH (8192)
