@@ -28,9 +28,9 @@
  * @def NATIVE_BASE_SYMBOLIC
  *
  * Symbol used in "pretty" paths to represent the base directory (the one set
- * with -basedir). On Mac OS X, this is meaningless because of the way the
- * application is bundled: there is only one valid base dir that can be used.
+ * with -basedir).
  */
+#define NATIVE_BASE_SYMBOLIC    "(basedir)"
 
 /**
  * @def NATIVE_HOME_SYMBOLIC
@@ -42,21 +42,15 @@
  */
 
 #ifdef WIN32
-#  define DIR_SEPARATOR             QChar('\\')
-#  define NATIVE_BASE_SYMBOLIC      "{basedir}"
-#  define NATIVE_HOME_SYMBOLIC      "%HOME%"
+#  define NATIVE_HOME_SYMBOLIC  "%HOME%"
+#  define DIR_SEPARATOR         QChar('\\')
 #else
-#  define DIR_SEPARATOR             QChar('/')
+#  define NATIVE_HOME_SYMBOLIC  "~"
+#  define DIR_SEPARATOR         QChar('/')
 #  ifdef UNIX
 #    include <sys/types.h>
 #    include <pwd.h>
 #  endif
-#  ifdef MACOSX
-#    define NATIVE_BASE_SYMBOLIC    "{app}"
-#  else
-#    define NATIVE_BASE_SYMBOLIC    "{basedir}"
-#  endif
-#  define NATIVE_HOME_SYMBOLIC      "~"
 #endif
 
 namespace de {
@@ -195,6 +189,13 @@ String NativePath::pretty() const
         }
         else
         {
+#ifdef MACOSX
+            NativePath contentsPath = App::app().nativeAppContentsPath();
+            if(result.beginsWith(contentsPath))
+            {
+                return "(app)" + result.mid(contentsPath.length());
+            }
+#endif
             NativePath homePath = QDir::homePath(); // actual native home dir, not libdeng2 "/home"
             if(result.beginsWith(homePath))
             {

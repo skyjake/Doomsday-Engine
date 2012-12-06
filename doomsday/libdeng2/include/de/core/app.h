@@ -101,6 +101,13 @@ public:
      */
     static NativePath executablePath();
 
+#ifdef MACOSX
+    /**
+     * Returns the native path of the application bundle contents.
+     */
+    NativePath nativeAppContentsPath();
+#endif
+
     /**
      * Returns the native path of the data base folder.
      *

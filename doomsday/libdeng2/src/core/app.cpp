@@ -89,8 +89,8 @@ struct App::Instance
         {
             binFolder.attach(new DirectoryFeed(app.nativePluginBinaryPath()));
         }
-        fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "../Resources/modules"));
+        fs.makeFolder("/data").attach(new DirectoryFeed(app.nativeBasePath()));
+        fs.makeFolder("/modules").attach(new DirectoryFeed(app.nativeBasePath() / "modules"));
 
 #elif WIN32
         if(allowPlugins)
@@ -250,7 +250,7 @@ NativePath App::nativeBasePath()
     path = d->appPath.fileNamePath() / "..";
 #else
 # ifdef MACOSX
-    path = d->appPath.fileNamePath() / "../..";
+    path = d->appPath.fileNamePath() / "../Resources";
 # else
     path = DENG_BASE_DIR;
 # endif
@@ -341,6 +341,11 @@ CommandLine &App::commandLine()
 NativePath App::executablePath()
 {
     return DENG2_APP->d->appPath;
+}
+
+NativePath App::nativeAppContentsPath()
+{
+    return DENG2_APP->d->appPath/"../..";
 }
 
 FS &App::fileSystem()
