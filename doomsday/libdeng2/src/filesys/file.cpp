@@ -21,6 +21,7 @@
 #include "de/App"
 #include "de/FS"
 #include "de/Folder"
+#include "de/Feed"
 #include "de/Date"
 #include "de/NumberValue"
 #include "de/Guard"
@@ -75,6 +76,33 @@ void File::clear()
 FS &File::fileSystem()
 {
     return DENG2_APP->fileSystem();
+}
+
+String File::description() const
+{
+    String desc = describe();
+    if(parent())
+    {
+        desc += " at path '" + path() + "'";
+    }
+    if(!mode().testFlag(Write))
+    {
+        desc = "read-only " + desc;
+    }
+    if(source() != this)
+    {
+        desc += " (sourced from " + source()->description() + ")";
+    }
+    if(originFeed())
+    {
+        desc += " (out of " + originFeed()->description() + ")";
+    }
+    return desc;
+}
+
+String File::describe() const
+{
+    return "abstract File";
 }
 
 void File::setOriginFeed(Feed *feed)

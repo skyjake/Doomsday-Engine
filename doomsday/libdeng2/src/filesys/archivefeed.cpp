@@ -60,13 +60,13 @@ struct ArchiveFeed::Instance
         // Open the archive.
         if(bytes)
         {
-            LOG_TRACE("Source %s is a byte array") << f.name();
+            LOG_TRACE("Source %s is a byte array") << f.description();
 
             arch = new ZipArchive(*bytes);
         }
         else
         {
-            LOG_TRACE("Source %s is a stream") << f.name();
+            LOG_TRACE("Source %s is a stream") << f.description();
 
             // The file is just a stream, so we can't rely on the file
             // acting as the physical storage location for Archive.
@@ -86,7 +86,7 @@ struct ArchiveFeed::Instance
             // If modified, the archive is written back to the file.
             if(arch->modified())
             {
-                LOG_MSG("Updating archive in ") << file.name();
+                LOG_MSG("Updating archive in ") << file.description();
 
                 // Make sure we have either a compressed or uncompressed version of
                 // each entry in memory before destroying the source file.
@@ -97,7 +97,7 @@ struct ArchiveFeed::Instance
             }
             else
             {
-                LOG_VERBOSE("Not updating archive in %s (not changed)") << file.name();
+                LOG_VERBOSE("Not updating archive in %s (not changed)") << file.description();
             }
             delete arch;
         }
@@ -183,6 +183,11 @@ ArchiveFeed::~ArchiveFeed()
     LOG_AS("~ArchiveFeed");
 
     delete d;
+}
+
+String ArchiveFeed::description() const
+{
+    return "archive in " + d->file.description();
 }
 
 void ArchiveFeed::populate(Folder &folder)

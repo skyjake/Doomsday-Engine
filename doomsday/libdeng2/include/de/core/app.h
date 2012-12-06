@@ -113,7 +113,7 @@ public:
      * Returns the native path of where to load binaries (plugins). This
      * is where "/bin" points to.
      */
-    NativePath nativeBinaryPath();
+    NativePath nativePluginBinaryPath();
 
     /**
      * Returns the native path where user-specific runtime files should be

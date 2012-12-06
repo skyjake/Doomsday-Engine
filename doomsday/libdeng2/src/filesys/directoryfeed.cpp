@@ -37,6 +37,11 @@ DirectoryFeed::DirectoryFeed(NativePath const &nativePath, Flags const &mode)
 DirectoryFeed::~DirectoryFeed()
 {}
 
+String DirectoryFeed::description() const
+{
+    return "native directory '" + _nativePath.pretty() + "'";
+}
+
 void DirectoryFeed::populate(Folder &folder)
 {
     if(_mode & AllowWrite)

@@ -41,6 +41,13 @@ LibraryFile::~LibraryFile()
     delete _library;
 }
 
+String LibraryFile::describe() const
+{
+    String desc = "shared library";
+    if(loaded()) desc += " [" + library().type() + "]";
+    return desc;
+}
+
 Library &LibraryFile::library()
 {
     if(_library)
@@ -54,12 +61,20 @@ Library &LibraryFile::library()
     {
         /// @throw UnsupportedSourceError Currently shared libraries are only loaded directly
         /// from native files. Other kinds of files would require a temporary native file.
-        throw UnsupportedSourceError("LibraryFile::library", source()->path() + 
+        throw UnsupportedSourceError("LibraryFile::library", source()->description() +
             ": can only load from NativeFile");
     }
     
     _library = new Library(native->nativePath());
     return *_library;
+}
+
+Library const &LibraryFile::library() const
+{
+    if(_library) return *_library;
+
+    /// @throw NotLoadedError Library is presently not loaded.
+    throw NotLoadedError("LibraryFile::library", "Library is not loaded: " + description());
 }
 
 void LibraryFile::clear()
