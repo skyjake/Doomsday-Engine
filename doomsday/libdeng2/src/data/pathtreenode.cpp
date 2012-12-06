@@ -234,10 +234,14 @@ static size_t maxStackDepth;
 #endif
 
 namespace internal {
-    struct PathConstructorParams {
-        size_t length;
-        String composedPath;
+    struct PathConstructorArgs
+    {
+        int length;
         QChar separator;
+        String composedPath;
+
+        PathConstructorArgs(QChar sep = '/') : length(0), separator(sep)
+        {}
     };
 }
 
@@ -246,43 +250,48 @@ namespace internal {
  * path (when descending), then allocates memory for the string, and finally
  * copies each segment with the separators (on the way out).
  */
-static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Node const &trav)
+static void pathConstructor(internal::PathConstructorArgs &args, PathTree::Node const &trav)
 {
-    String const &fragment = trav.name();
+    String const &segment = trav.name();
 
 #ifdef LIBDENG_STACK_MONITOR
     maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void *)&fragment);
 #endif
 
-    parm.length += fragment.length();
+    args.length += segment.length();
 
     if(!trav.isAtRootLevel())
     {
-        if(!parm.separator.isNull())
+        if(!args.separator.isNull())
         {
             // There also needs to be a separator (a single character).
-            parm.length += 1;
+            args.length += 1;
         }
 
         // Descend to parent level.
-        pathConstructor(parm, trav.parent());
+        pathConstructor(args, trav.parent());
 
         // Append the separator.
-        if(!parm.separator.isNull())
-            parm.composedPath.append(parm.separator);
+        if(!args.separator.isNull())
+            args.composedPath.append(args.separator);
     }
     // We've arrived at the deepest level. The full length is now known.
     // Ensure there's enough memory for the string.
-    else if(parm.composedPath)
+    else if(args.composedPath)
     {
-        parm.composedPath.reserve(parm.length);
+        args.composedPath.reserve(args.length);
     }
 
-    // Assemble the path by appending the fragment.
-    parm.composedPath.append(fragment);
+    // Assemble the path by appending the segment.
+    args.composedPath.append(segment);
 }
 
 /**
+ * @todo Paths within the tree store Path-compatible segment hashes. It would
+ * be better to compose the full path in such a way that applies the already
+ * calculated hashes. This would avoid the re-hash when the resultant path is
+ * next compared (which is likely the reason the user is calling) -ds
+ *
  * @todo This is a good candidate for result caching: the constructed path
  * could be saved and returned on subsequent calls. Are there any circumstances
  * in which the cached result becomes obsolete? -jk
@@ -298,34 +307,34 @@ static void pathConstructor(internal::PathConstructorParams &parm, PathTree::Nod
  */
 Path PathTree::Node::path(QChar sep) const
 {
-    internal::PathConstructorParams parm = { 0, String(), sep };
+    internal::PathConstructorArgs args(sep);
 #ifdef LIBDENG_STACK_MONITOR
     stackStart = &parm;
 #endif
 
-    // Include a terminating path delimiter for branches.
+    // Include a terminating path separator for branches.
     if(!sep.isNull() && isBranch())
     {
-        parm.length++; // A single character.
+        args.length++; // A single character.
     }
 
-    // Recursively construct the path from fragments and delimiters.
-    pathConstructor(parm, *this);
+    // Recursively construct the path from segments and separators.
+    pathConstructor(args, *this);
 
-    // Terminating delimiter for branches.
+    // Add a closing separator for branches.
     if(!sep.isNull() && isBranch())
     {
-        parm.composedPath += sep;
+        args.composedPath += sep;
     }
 
-    DENG2_ASSERT(parm.composedPath.length() == (int)parm.length);
+    DENG2_ASSERT(args.composedPath.length() == (int)args.length);
 
 #ifdef LIBDENG_STACK_MONITOR
     LOG_AS("pathConstructor");
     LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
 #endif
 
-    return Path(parm.composedPath, sep);
+    return Path(args.composedPath, sep);
 }
 
 UserDataNode::UserDataNode(PathTree::NodeArgs const &args, void *userPointer, int userValue)
