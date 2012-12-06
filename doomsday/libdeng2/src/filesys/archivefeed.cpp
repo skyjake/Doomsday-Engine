@@ -1,20 +1,22 @@
-/*
- * The Doomsday Engine Project -- libdeng2
+/** @file archivefeed.cpp Archive Feed.
+ * @ingroup fs
  *
- * Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de/ArchiveFeed"
@@ -25,6 +27,7 @@
 #include "de/Folder"
 #include "de/FS"
 #include "de/Log"
+#include "de/NativePath"
 
 namespace de {
 
@@ -58,13 +61,13 @@ struct ArchiveFeed::Instance
         // Open the archive.
         if(bytes)
         {
-            LOG_TRACE("Source %s is a byte array") << f.name();
+            LOG_TRACE("Source %s is a byte array") << NativePath(f.path()).pretty();
 
             arch = new ZipArchive(*bytes);
         }
         else
         {
-            LOG_TRACE("Source %s is a stream") << f.name();
+            LOG_TRACE("Source %s is a stream") << NativePath(f.path()).pretty();
 
             // The file is just a stream, so we can't rely on the file
             // acting as the physical storage location for Archive.
@@ -84,7 +87,7 @@ struct ArchiveFeed::Instance
             // If modified, the archive is written back to the file.
             if(arch->modified())
             {
-                LOG_MSG("Updating archive in ") << file.name();
+                LOG_MSG("Updating archive in ") << NativePath(file.path()).pretty();
 
                 // Make sure we have either a compressed or uncompressed version of
                 // each entry in memory before destroying the source file.
@@ -95,7 +98,8 @@ struct ArchiveFeed::Instance
             }
             else
             {
-                LOG_VERBOSE("Not updating archive in %s (not changed)") << file.name();
+                LOG_VERBOSE("Not updating archive in %s (not changed)")
+                    << NativePath(file.path()).pretty();
             }
             delete arch;
         }
@@ -157,7 +161,7 @@ struct ArchiveFeed::Instance
                 if(archFeed && &archFeed->archive() == &archive() && archFeed->basePath() == subBasePath)
                 {
                     // It's got it.
-                    LOG_DEBUG("Feed for ") << archFeed->basePath() << " already there.";
+                    LOG_DEBUG("Feed for ") << NativePath(archFeed->basePath()).pretty() << " already there.";
                     return;
                 }
             }
