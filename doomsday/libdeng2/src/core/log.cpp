@@ -28,7 +28,6 @@
 #include <QTextStream>
 #include <QThread>
 #include <QStringList>
-#include <QDebug>
 
 namespace de {
 
@@ -353,10 +352,16 @@ LogEntry &Log::enter(LogEntry::Level level, String const &format, LogEntry::Args
     return *entry;
 }
 
-Log &Log::threadLog()
+static internal::Logs &theLogs()
 {
     if(!logsPtr.get()) logsPtr.reset(new internal::Logs);
-    internal::Logs& logs = *logsPtr;
+    return *logsPtr;
+}
+
+Log &Log::threadLog()
+{
+    internal::Logs &logs = theLogs();
+
     DENG2_GUARD(logs);
 
     // Each thread has its own log.
@@ -366,7 +371,6 @@ Log &Log::threadLog()
     {
         // Create a new log.
         Log* theLog = new Log;
-        qDebug() << "Log" << theLog << "created for thread" << thread;
         logs.insert(thread, theLog);
         return *theLog;
     }
@@ -378,8 +382,8 @@ Log &Log::threadLog()
 
 void Log::disposeThreadLog()
 {
-    if(!logsPtr.get()) logsPtr.reset(new internal::Logs);
-    internal::Logs& logs = *logsPtr;
+    internal::Logs &logs = theLogs();
+
     DENG2_GUARD(logs);
 
     QThread *thread = QThread::currentThread();
