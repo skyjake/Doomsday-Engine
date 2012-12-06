@@ -92,7 +92,7 @@ File *FS::interpret(File *sourceData)
     {
         if(LibraryFile::recognize(*sourceData))
         {
-            LOG_VERBOSE("Interpreted ") << NativePath(sourceData->path()).pretty() << " as a shared library";
+            LOG_VERBOSE("Interpreted ") << sourceData->name() << " as a shared library";
         
             // It is a shared library intended for Doomsday.
             return new LibraryFile(sourceData);
@@ -101,7 +101,7 @@ File *FS::interpret(File *sourceData)
         {
             try
             {
-                LOG_VERBOSE("Interpreted %s as a ZIP format archive") << NativePath(sourceData->path()).pretty();
+                LOG_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->name();
 
                 // It is a ZIP archive: we will represent it as a folder.
                 std::auto_ptr<PackageFolder> package(new PackageFolder(*sourceData, sourceData->name()));
@@ -114,15 +114,15 @@ File *FS::interpret(File *sourceData)
             {
                 // Even though it was recognized as an archive, the file
                 // contents may still prove to be corrupted.
-                LOG_WARNING("Archive in %s is invalid") << NativePath(sourceData->path()).pretty();
+                LOG_WARNING("Archive in %s is invalid") << sourceData->name();
             }
             catch(IByteArray::OffsetError const &)
             {
-                LOG_WARNING("Archive in %s is truncated") << NativePath(sourceData->path()).pretty();
+                LOG_WARNING("Archive in %s is truncated") << sourceData->name();
             }
             catch(IIStream::InputError const &)
             {
-                LOG_WARNING("%s cannot be read") << NativePath(sourceData->path()).pretty();
+                LOG_WARNING("%s cannot be read") << sourceData->name();
             }
         }
     }

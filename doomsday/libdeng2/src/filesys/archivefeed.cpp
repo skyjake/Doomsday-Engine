@@ -27,7 +27,6 @@
 #include "de/Folder"
 #include "de/FS"
 #include "de/Log"
-#include "de/NativePath"
 
 namespace de {
 
@@ -61,13 +60,13 @@ struct ArchiveFeed::Instance
         // Open the archive.
         if(bytes)
         {
-            LOG_TRACE("Source %s is a byte array") << NativePath(f.path()).pretty();
+            LOG_TRACE("Source %s is a byte array") << f.name();
 
             arch = new ZipArchive(*bytes);
         }
         else
         {
-            LOG_TRACE("Source %s is a stream") << NativePath(f.path()).pretty();
+            LOG_TRACE("Source %s is a stream") << f.name();
 
             // The file is just a stream, so we can't rely on the file
             // acting as the physical storage location for Archive.
@@ -87,7 +86,7 @@ struct ArchiveFeed::Instance
             // If modified, the archive is written back to the file.
             if(arch->modified())
             {
-                LOG_MSG("Updating archive in ") << NativePath(file.path()).pretty();
+                LOG_MSG("Updating archive in ") << file.name();
 
                 // Make sure we have either a compressed or uncompressed version of
                 // each entry in memory before destroying the source file.
@@ -98,8 +97,7 @@ struct ArchiveFeed::Instance
             }
             else
             {
-                LOG_VERBOSE("Not updating archive in %s (not changed)")
-                    << NativePath(file.path()).pretty();
+                LOG_VERBOSE("Not updating archive in %s (not changed)") << file.name();
             }
             delete arch;
         }
@@ -161,7 +159,7 @@ struct ArchiveFeed::Instance
                 if(archFeed && &archFeed->archive() == &archive() && archFeed->basePath() == subBasePath)
                 {
                     // It's got it.
-                    LOG_DEBUG("Feed for ") << NativePath(archFeed->basePath()).pretty() << " already there.";
+                    LOG_DEBUG("Feed for ") << archFeed->basePath() << " already there.";
                     return;
                 }
             }
