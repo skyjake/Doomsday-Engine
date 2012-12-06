@@ -62,6 +62,13 @@ namespace de
         virtual ~Feed();
 
         /**
+         * Returns a textual description of the feed, intended only for humans.
+         *
+         * @return Human-friendly description of the feed.
+         */
+        virtual String description() const = 0;
+
+        /**
          * Populates a folder with File instances. Subclasses implement this to 
          * produce the appropriate instances for the data they handle.
          *

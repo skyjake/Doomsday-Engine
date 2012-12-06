@@ -47,8 +47,9 @@ struct App::Instance
     /// Path of the application executable.
     NativePath appPath;
 
-    /// Path of the FS1 main data folder (the "base dir") in the native file system.
     NativePath cachedBasePath;
+    NativePath cachedPluginBinaryPath;
+    NativePath cachedHomePath;
 
     /// The file system.
     FS fs;
@@ -86,15 +87,15 @@ struct App::Instance
         binFolder.attach(new DirectoryFeed(appDir));
         if(allowPlugins)
         {
-            binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
+            binFolder.attach(new DirectoryFeed(app.nativePluginBinaryPath()));
         }
-        fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "../Resources/modules"));
+        fs.makeFolder("/data").attach(new DirectoryFeed(app.nativeBasePath()));
+        fs.makeFolder("/modules").attach(new DirectoryFeed(app.nativeBasePath() / "modules"));
 
 #elif WIN32
         if(allowPlugins)
         {
-            binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
+            binFolder.attach(new DirectoryFeed(app.nativePluginBinaryPath()));
         }
         NativePath appDir = appPath.fileNamePath();
         fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
@@ -103,7 +104,7 @@ struct App::Instance
 #else // UNIX
         if(allowPlugins)
         {
-            binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
+            binFolder.attach(new DirectoryFeed(app.nativePluginBinaryPath()));
         }
         fs.makeFolder("/data").attach(new DirectoryFeed(app.nativeBasePath() / "data"));
         fs.makeFolder("/modules").attach(new DirectoryFeed(app.nativeBasePath() / "modules"));
@@ -173,8 +174,10 @@ App::~App()
     delete d;
 }
 
-NativePath App::nativeBinaryPath()
+NativePath App::nativePluginBinaryPath()
 {
+    if(!d->cachedPluginBinaryPath.isEmpty()) return d->cachedPluginBinaryPath;
+
     NativePath path;
 #ifdef WIN32
     path = d->appPath.fileNamePath() / "plugins";
@@ -187,16 +190,18 @@ NativePath App::nativeBinaryPath()
     // Also check the system config files.
     d->unixInfo.path("libdir", path);
 #endif
-    return path;
+    return (d->cachedPluginBinaryPath = path);
 }
 
 NativePath App::nativeHomePath()
 {
+    if(!d->cachedHomePath.isEmpty()) return d->cachedHomePath;
+
     int i;
     if((i = d->cmdLine.check("-userdir", 1)))
     {
         d->cmdLine.makeAbsolutePath(i + 1);
-        return d->cmdLine.at(i + 1);
+        return (d->cachedHomePath = d->cmdLine.at(i + 1));
     }
 
 #ifdef MACOSX
@@ -209,7 +214,7 @@ NativePath App::nativeHomePath()
     NativePath nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
     nativeHome = nativeHome / ".doomsday/runtime";
 #endif
-    return nativeHome;
+    return (d->cachedHomePath = nativeHome);
 }
 
 Archive &App::persistentData()
@@ -245,7 +250,7 @@ NativePath App::nativeBasePath()
     path = d->appPath.fileNamePath() / "..";
 #else
 # ifdef MACOSX
-    path = ".";
+    path = d->appPath.fileNamePath() / "../Resources";
 # else
     path = DENG_BASE_DIR;
 # endif
@@ -337,6 +342,13 @@ NativePath App::executablePath()
 {
     return DENG2_APP->d->appPath;
 }
+
+#ifdef MACOSX
+NativePath App::nativeAppContentsPath()
+{
+    return DENG2_APP->d->appPath/"../..";
+}
+#endif
 
 FS &App::fileSystem()
 {

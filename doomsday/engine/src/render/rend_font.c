@@ -495,11 +495,16 @@ static int textFragmentWidth(const char* fragment)
     const char* ch;
     unsigned char c;
 
+    // Cannot determine height without a current font.
+    if(!fr.fontNum) return 0;
+
+    /*
     if(fr.fontNum == 0)
     {
         Con_Error("textFragmentHeight: Cannot determine height without a current font.");
         exit(1);
     }
+    */
 
     // Just add them together.
     len = strlen(fragment);
@@ -522,11 +527,14 @@ static int textFragmentHeight(const char* fragment)
     size_t len;
     uint i;
 
+    if(!fr.fontNum) return 0;
+
+    /*
     if(fr.fontNum == 0)
     {
         Con_Error("textFragmentHeight: Cannot determine height without a current font.");
         exit(1);
-    }
+    }*/
 
     // Find the greatest height.
     i = 0;

@@ -189,6 +189,24 @@ namespace de
         String const &name() const { return _name; }
 
         /**
+         * Returns a textual description of the file, intended only for humans.
+         * This attempts to fully describe the file, taking into consideration
+         * the file's type and possible source.
+         *
+         * @return Full human-friendly description of the file.
+         */
+        String description() const;
+
+        /**
+         * Returns a textual description of this file only. Subclasses must
+         * override this method to provide a description relevant to the
+         * subclass.
+         *
+         * @return Human-friendly description of this file only.
+         */
+        virtual String describe() const;
+
+        /**
          * Sets the parent folder of this file.
          */
         void setParent(Folder *parent) { _parent = parent; }

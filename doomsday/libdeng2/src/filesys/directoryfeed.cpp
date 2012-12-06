@@ -37,6 +37,11 @@ DirectoryFeed::DirectoryFeed(NativePath const &nativePath, Flags const &mode)
 DirectoryFeed::~DirectoryFeed()
 {}
 
+String DirectoryFeed::description() const
+{
+    return "native directory '" + _nativePath.pretty() + "'";
+}
+
 void DirectoryFeed::populate(Folder &folder)
 {
     if(_mode & AllowWrite)
@@ -92,7 +97,7 @@ void DirectoryFeed::populateSubFolder(Folder &folder, String const &entryName)
             if(dirFeed && dirFeed->_nativePath == subFeedPath)
             {
                 // Already got this fed. Nothing else needs done.
-                LOG_DEBUG("Feed for ") << subFeedPath.pretty() << " already there.";
+                LOG_DEBUG("Feed for ") << subFeedPath << " already there.";
                 return;
             }
         }
@@ -145,7 +150,7 @@ bool DirectoryFeed::prune(File &file) const
             if(fileStatus(nativeFile->nativePath()) != nativeFile->status())
             {
                 // It's not up to date.
-                LOG_VERBOSE("%s: status has changed, pruning!") << nativeFile->nativePath().pretty();
+                LOG_VERBOSE("%s: status has changed, pruning!") << nativeFile->nativePath();
                 return true;
             }
         }
@@ -166,7 +171,7 @@ bool DirectoryFeed::prune(File &file) const
             DirectoryFeed *dirFeed = dynamic_cast<DirectoryFeed *>(subFolder->feeds().front());
             if(dirFeed && !exists(dirFeed->_nativePath))
             {
-                LOG_VERBOSE("%s: no longer exists, pruning!") << _nativePath.pretty();
+                LOG_VERBOSE("%s: no longer exists, pruning!") << _nativePath;
                 return true;
             }
         }

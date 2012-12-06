@@ -49,6 +49,8 @@ namespace de
         
         virtual ~NativeFile();
 
+        String describe() const;
+
         void clear();
         void flush();
 

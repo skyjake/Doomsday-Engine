@@ -119,15 +119,26 @@ public:
     NativePath expand(bool *didExpand = 0) const;
 
     /**
-     * Returns a prettier version of the path, where the base path is omitted
-     * from the path if it is present in the beginning. Also omits the legacy
-     * native path directives '>' and '}', which expand to the base path.
+     * Forms a prettier version of the path, where commonly known paths are
+     * omitted from the path if one is present in the beginning. The omitted
+     * part is replaced with a symbol so information is not lost.
      *
-     * @return Simplified version of the path, for humans. As the path may turn
-     * from absolute to relative, the result should only be used for paths
-     * appearing in messages intended for the user.
+     * Also replaces the legacy native path directives '>' and '}', which
+     * expand to the base path.
+     *
+     * @return Simplified version of the path. The result should only be used
+     * for paths appearing in messages intended for the user.
      */
     String pretty() const;
+
+    /**
+     * If the path begins with App::nativeBasePath(), omits that from the
+     * beginning. Also omits the legacy native path directives '>' and '}',
+     * which mean the base path.
+     *
+     * @return Path with base omitted.
+     */
+    String omitBasePath() const;
 
     /**
      * Converts all separator characters in the path to @a sep and returns the

@@ -65,8 +65,8 @@ Library::Library(NativePath const &nativePath) : d(0)
 {
     d = new Instance;
 
-    LOG_AS("Library::Library");
-    LOG_TRACE("Loading ") << nativePath;
+    LOG_AS("Library");
+    LOG_TRACE("Loading ") << nativePath.pretty();
 
 #ifndef DENG2_USE_DLOPEN
     d->library = new QLibrary(nativePath);
@@ -109,7 +109,7 @@ Library::~Library()
     if(d->library)
     {
         LOG_AS("~Library");
-        LOG_TRACE("Unloading ") << d->nativePath();
+        LOG_TRACE("Unloading ") << d->nativePath().pretty();
 
         // Automatically call the shutdown function, if one exists.
         if(d->type.beginsWith("deng-plugin/") && hasSymbol("deng_ShutdownPlugin"))

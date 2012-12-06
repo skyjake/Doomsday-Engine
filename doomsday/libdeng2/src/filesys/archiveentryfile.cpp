@@ -38,6 +38,13 @@ ArchiveEntryFile::~ArchiveEntryFile()
     deindex();
 }
 
+String ArchiveEntryFile::describe() const
+{
+    DENG2_GUARD(this);
+
+    return String("archive entry '%1'").arg(_entryPath);
+}
+
 void ArchiveEntryFile::clear()
 {
     DENG2_GUARD(this);

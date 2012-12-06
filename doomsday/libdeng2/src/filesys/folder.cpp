@@ -51,6 +51,22 @@ Folder::~Folder()
     }
 }
 
+String Folder::describe() const
+{
+    String desc = String("folder '%1' (with %2 items from %3 feeds")
+            .arg(name()).arg(_contents.size()).arg(_feeds.size());
+
+    if(!_feeds.empty())
+    {
+        int n = 0;
+        DENG2_FOR_EACH_CONST(Feeds, i, _feeds)
+        {
+            desc += String("; feed #%1 is %2").arg(++n).arg((*i)->description());
+        }
+    }
+    return desc + ")";
+}
+
 void Folder::clear()
 {
     if(_contents.empty()) return;

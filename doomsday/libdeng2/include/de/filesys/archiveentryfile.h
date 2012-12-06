@@ -45,6 +45,8 @@ namespace de
         
         ~ArchiveEntryFile();
 
+        String describe() const;
+
         void clear();
 
         /// Returns the archive of the file.

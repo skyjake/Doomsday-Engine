@@ -42,6 +42,10 @@ namespace de
         /// Attempted to load a shared library from a source file with unsupported type.
         /// @ingroup errors
         DENG2_ERROR(UnsupportedSourceError);
+
+        /// Attempted an operation that requires the library to be loaded (and it
+        /// couldn't be loaded automatically). @ingroup errors
+        DENG2_ERROR(NotLoadedError);
         
     public:
         /**
@@ -56,6 +60,8 @@ namespace de
          */
         virtual ~LibraryFile();
         
+        String describe() const;
+
         /**
          * Determines whether the library is loaded and ready for use.
          *
@@ -64,12 +70,20 @@ namespace de
         bool loaded() const { return _library != 0; }
         
         /**
-         * Provides access to the loaded library. Automatically attempts to load 
-         * the library if it hasn't been loaded yet.
+         * Provides access to the library. Automatically attempts to load the
+         * library if it hasn't been loaded yet.
          *
          * @return  The library.
          */
         Library &library();
+
+        /**
+         * Provides access to the library without trying to load it. Throws
+         * an exception if the library is not loaded.
+         *
+         * @return  The library.
+         */
+        Library const &library() const;
         
         /**
          * Unloads the library.
