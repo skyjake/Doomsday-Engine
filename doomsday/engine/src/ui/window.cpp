@@ -1550,6 +1550,8 @@ void Window_RestoreState(Window* wnd)
 
     de::Config &config = de::App::config();
 
+    /// @todo Defaults should be defined in Config.de.
+
     // Default parameters for the main window.
     if(!config.names().has("window.main"))
     {
@@ -1585,15 +1587,22 @@ void Window_RestoreState(Window* wnd)
         wnd->geometry.size.width = geom.width();
         wnd->geometry.size.height = geom.height();
     }
-    de::ArrayValue &normalRect = config.getAs<de::ArrayValue>("window.main.normalRect");
-    if(normalRect.size() >= 4)
+    try /// @todo This is temporary: the normalRect is now always defined in the defaults.
     {
-        QRect geom(normalRect.at(0).asNumber(), normalRect.at(1).asNumber(),
-                   normalRect.at(2).asNumber(), normalRect.at(3).asNumber());
-        wnd->normalGeometry.origin.x = geom.x();
-        wnd->normalGeometry.origin.y = geom.y();
-        wnd->normalGeometry.size.width = geom.width();
-        wnd->normalGeometry.size.height = geom.height();
+        de::ArrayValue &normalRect = config.getAs<de::ArrayValue>("window.main.normalRect");
+        if(normalRect.size() >= 4)
+        {
+            QRect geom(normalRect.at(0).asNumber(), normalRect.at(1).asNumber(),
+                       normalRect.at(2).asNumber(), normalRect.at(3).asNumber());
+            wnd->normalGeometry.origin.x = geom.x();
+            wnd->normalGeometry.origin.y = geom.y();
+            wnd->normalGeometry.size.width = geom.width();
+            wnd->normalGeometry.size.height = geom.height();
+        }
+    }
+    catch(de::Record::NotFoundError const &)
+    {
+        wnd->normalGeometry = wnd->geometry;
     }
     wnd->colorDepthBits = config.geti("window.main.colorDepth");
     wnd->setFlag(DDWF_CENTER, config.getb("window.main.center"));
