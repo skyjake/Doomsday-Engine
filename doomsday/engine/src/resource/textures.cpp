@@ -1,8 +1,6 @@
-/**
- * @file textures.cpp
- * Textures collection. @ingroup resource
+/** @file textures.cpp Texture Resource Collection.
  *
- * @authors Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -78,9 +76,6 @@ struct Textures::Instance
 {
     Textures& self;
 
-    // LUT which translates textureid_t => TextureManifest*. Index with textureid_t-1
-    QList<TextureManifest *> textureIdLut;
-
     /// System subspace schemes containing the textures.
     Textures::Schemes schemes;
 
@@ -94,25 +89,6 @@ struct Textures::Instance
             delete *i;
         }
         schemes.clear();
-    }
-
-    inline bool validTextureId(textureid_t id) const
-    {
-        return (id != NOTEXTUREID && id <= textureIdLut.size());
-    }
-
-    /// @pre textureIdLut has been initialized and is large enough!
-    void unlinkFromTextureIdLut(TextureManifest &manifest)
-    {
-        textureid_t texId = self.idForManifest(manifest);
-        if(!validTextureId(texId)) return; // Not linked.
-        textureIdLut[texId - 1/*1-based index*/] = 0;
-    }
-
-    TextureManifest *manifestByTextureId(textureid_t id)
-    {
-        if(!validTextureId(id)) return 0;
-        return textureIdLut[id - 1/*1-based index*/];
     }
 
     TextureManifest *manifestByUri(Uri const &validatedUri)
@@ -275,11 +251,6 @@ Textures::Scheme& Textures::createScheme(String name)
     return *newScheme;
 }
 
-int Textures::size() const
-{
-    return d->textureIdLut.size();
-}
-
 static void release(Texture *tex)
 {
     /// Stub.
@@ -287,26 +258,9 @@ static void release(Texture *tex)
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
-Texture *Textures::toTexture(textureid_t id) const
-{
-    LOG_AS("Textures::toTexture");
-    if(TextureManifest *manifest = d->manifestByTextureId(id))
-    {
-        return manifest->texture();
-    }
-
-#if _DEBUG
-    if(id != NOTEXTUREID)
-        LOG_WARNING("Failed to locate texture for id #%i, returning 0.") << id;
-#endif
-    return 0;
-}
-
 TextureManifest *Textures::find(Uri const &uri) const
 {
     LOG_AS("Textures::find");
-
-    if(!Textures::size()) return 0;
 
     if(!d->validateUri(uri, AnyScheme, true /*quiet please*/))
     {
@@ -333,22 +287,16 @@ TextureManifest *Textures::declare(Uri const &uri, int uniqueId, Uri const *reso
         return 0;
     }
 
-    // Have we already created a binding for this?
+    // Have we already created a manifest for this?
     TextureManifest *manifest = d->manifestByUri(uri);
     if(!manifest)
     {
-        /*
-         * A new binding.
-         */
         manifest = &scheme(uri.scheme()).insertManifest(uri.path());
         manifest->setUniqueId(uniqueId);
-
-        // Link it into the id LUT.
-        d->textureIdLut.push_back(manifest);
     }
 
-    /**
-     * (Re)configure this binding.
+    /*
+     * (Re)configure the manifest.
      */
 
     // We don't care whether these identfiers are truely unique. Our only
@@ -373,18 +321,6 @@ TextureManifest *Textures::declare(Uri const &uri, int uniqueId, Uri const *reso
     }
 
     return manifest;
-}
-
-textureid_t Textures::idForManifest(Textures::Manifest const &manifest) const
-{
-    LOG_AS("Textures::idForManifest");
-    /// @todo Optimize: (Low priority) do not use a linear search.
-    int index = d->textureIdLut.indexOf(const_cast<Textures::Manifest *>(&manifest));
-    if(index >= 0)
-    {
-        return textureid_t(index + 1); // 1-based index.
-    }
-    return NOTEXTUREID; // Not linked.
 }
 
 bool Textures::knownScheme(String name) const
@@ -484,11 +420,6 @@ int Textures::iterateDeclared(String nameOfScheme,
     }
 
     return 0;
-}
-
-void Textures::deindex(TextureManifest &manifest)
-{
-    d->unlinkFromTextureIdLut(manifest);
 }
 
 static void printVariantInfo(TextureVariant &variant)
@@ -665,11 +596,9 @@ static int printTextures2(Textures::Scheme *scheme, Path const &like, int flags)
 
     // Print the result index key.
     int numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits(found.count()));
-    int numUidDigits   = MAX_OF(3/*uid*/, M_NumDigits(App_Textures()->count()));
 
-    Con_Printf(" %*s: %-*s %*s origin n# uri\n", numFoundDigits, "idx",
-               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path",
-               numUidDigits, "uid");
+    Con_Printf(" %*s: %-*s origin n# uri\n", numFoundDigits, "idx",
+               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
     Con_PrintRuler();
 
     // Sort and print the index.
@@ -820,13 +749,6 @@ D_CMD(ListTextures)
     DENG2_UNUSED(src);
 
     de::Textures &textures = *App_Textures();
-
-    if(!textures.count())
-    {
-        Con_Message("There are currently no textures defined/loaded.\n");
-        return true;
-    }
-
     de::Uri search = composeSearchUri(&argv[1], argc - 1);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
@@ -843,13 +765,6 @@ D_CMD(InspectTexture)
     DENG2_UNUSED(src);
 
     de::Textures &textures = *App_Textures();
-
-    if(!textures.count())
-    {
-        Con_Message("There are currently no textures defined/loaded.\n");
-        return true;
-    }
-
     de::Uri search = composeSearchUri(&argv[1], argc - 1, false /*don't match schemes*/);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
@@ -874,12 +789,6 @@ D_CMD(PrintTextureStats)
     DENG2_UNUSED(src); DENG2_UNUSED(argc); DENG2_UNUSED(argv);
 
     de::Textures &textures = *App_Textures();
-
-    if(!textures.count())
-    {
-        Con_Message("There are currently no textures defined/loaded.\n");
-        return true;
-    }
 
     Con_FPrintf(CPF_YELLOW, "Texture Statistics:\n");
     de::Textures::Schemes const &schemes = textures.allSchemes();

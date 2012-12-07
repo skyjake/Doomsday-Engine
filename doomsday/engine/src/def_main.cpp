@@ -922,8 +922,6 @@ void Def_GenerateGroupsFromAnims(void)
     int groupCount = R_AnimGroupCount(), i;
     if(!groupCount) return;
 
-    de::Textures &textures = *App_Textures();
-
     // Group ids are 1-based.
     for(i = 1; i < groupCount+1; ++i)
     {
@@ -945,7 +943,9 @@ void Def_GenerateGroupsFromAnims(void)
             gmbr = &grp->members[idx];
             gmbr->tics = frame->tics;
             gmbr->randomTics = frame->randomTics;
-            if(de::Texture *tex = textures.toTexture(frame->texture))
+            if(!frame->textureManifest) continue;
+
+            if(de::Texture *tex = reinterpret_cast<de::TextureManifest *>(frame->textureManifest)->texture())
             {
                 de::Uri textureUri = tex->manifest().composeUri();
                 gmbr->material = reinterpret_cast<uri_s *>(new de::Uri(Str_Text(DD_MaterialSchemeNameForTextureScheme(textureUri.scheme())), textureUri.path()));

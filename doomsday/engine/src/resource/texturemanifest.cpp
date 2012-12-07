@@ -1,6 +1,4 @@
-/**
- * @file texturemanifest.cpp Manifest for a logical Texture.
- * @ingroup resource
+/** @file texturemanifest.cpp Texture Manifest.
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  *
@@ -39,8 +37,6 @@ TextureManifest::~TextureManifest()
 #endif
         delete texture_;
     }
-
-    textures().deindex(*this);
 }
 
 Textures &TextureManifest::textures()
@@ -118,11 +114,6 @@ bool TextureManifest::setResourceUri(Uri const &newUri)
         return true;
     }
     return false;
-}
-
-textureid_t TextureManifest::lookupTextureId() const
-{
-    return textures().idForManifest(*this);
 }
 
 Texture *TextureManifest::texture() const

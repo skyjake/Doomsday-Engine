@@ -498,7 +498,7 @@ void Fonts_ClearRuntime(void)
 
 void Fonts_ClearSystem(void)
 {
-    if(!App_Textures()->count()) return;
+    if(!Fonts_Size()) return;
 
     Fonts_ClearScheme(FS_SYSTEM);
     GL_PruneTextureVariantSpecifications();

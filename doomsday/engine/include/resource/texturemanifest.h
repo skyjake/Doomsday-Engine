@@ -1,6 +1,4 @@
-/**
- * @file texturemanifest.h
- * @ingroup resource
+/** @file texturemanifest.h Texture Manifest.
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  *
@@ -33,8 +31,11 @@ class Textures;
 class TextureScheme;
 
 /**
- * Models a reference to and the associated metadata for a would-be logical
- * Texture resource in the Textures collection.
+ * Metadata for a would-be logical Texture resource.
+ * @ingroup resource
+ *
+ * Models a reference to and the associated metadata for a logical texture
+ * in the texture resource collection.
  */
 class TextureManifest : public PathTree::Node
 {
@@ -133,9 +134,6 @@ public:
 
     /// Returns a reference to the application's texture system.
     static Textures &textures();
-
-    /// @todo Refactor away -ds
-    textureid_t lookupTextureId() const;
 
 private:
     /// Scheme-unique identifier determined by the owner of the subspace.

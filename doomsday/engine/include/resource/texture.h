@@ -25,9 +25,6 @@
 #include <de/size.h>
 #include "texturevariant.h"
 
-/// Unique identifier associated with each texture name in a texture collection.
-typedef int textureid_t;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -243,7 +240,6 @@ void Texture_SetAnalysisDataPointer(Texture* tex, texture_analysisid_t analysis,
 boolean Texture_IsCustom(const Texture* tex);
 void Texture_FlagCustom(Texture* tex, boolean yes);
 
-textureid_t Texture_PrimaryBind(const Texture* tex);
 int Texture_Width(const Texture* tex);
 int Texture_Height(const Texture* tex);
 const Size2Raw* Texture_Dimensions(const Texture* tex);

@@ -537,7 +537,6 @@ void DD_CreateTextureSchemes()
 void DD_ClearRuntimeTextureSchemes()
 {
     Textures &textures = *App_Textures();
-    if(!textures.count()) return;
 
     textures.scheme("Flats").clear();
     textures.scheme("Textures").clear();
@@ -557,7 +556,6 @@ void DD_ClearRuntimeTextureSchemes()
 void DD_ClearSystemTextureSchemes()
 {
     Textures &textures = *App_Textures();
-    if(!textures.count()) return;
 
     textures.scheme("System").clear();
     GL_PruneTextureVariantSpecifications();

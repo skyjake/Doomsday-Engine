@@ -23,9 +23,6 @@
 
 #include "uri.h"
 
-/// Special value used to signify an invalid texture id.
-#define NOTEXTUREID             0
-
 #ifdef __cplusplus
 
 #include <QList>
@@ -141,21 +138,6 @@ public:
         DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->clear(); }
     }
 
-    /// @return  Total number of unique Textures in the collection.
-    int size() const;
-
-    /// @return  Total number of unique Textures in the collection. Same as @ref size()
-    inline int count() const {
-        return size();
-    }
-
-    /**
-     * Removes the manifest from any indexes.
-     *
-     * @param manifest      Manifest to remove from the index.
-     */
-    void deindex(Manifest &manifest);
-
     /**
      * Find a single declared texture.
      *
@@ -234,19 +216,6 @@ public:
 private:
     struct Instance;
     Instance *d;
-
-public:
-    /*
-     * Here follows legacy interface methods awaiting removal -ds
-     */
-
-    /// @return  Unique identifier of the primary name for @a manifest else @c NOTEXTUREID.
-    /// @deprecated Texture ids are now obsolete. Reference/point-to the manifest instead.
-    textureid_t idForManifest(Manifest const &manifest) const;
-
-    /// @return  Texture associated with unique identifier @a textureId else @c 0.
-    /// @deprecated Texture ids are now obsolete. Reference/point-to the manifest instead.
-    Texture *toTexture(textureid_t textureId) const;
 };
 
 } // namespace de

@@ -34,7 +34,7 @@ extern "C" {
  */
 typedef struct animframe_s
 {
-    textureid_t texture;
+    void *textureManifest;
     ushort tics;
     ushort randomTics;
 } animframe_t;
