@@ -132,15 +132,6 @@ public:
     String pretty() const;
 
     /**
-     * If the path begins with App::nativeBasePath(), omits that from the
-     * beginning. Also omits the legacy native path directives '>' and '}',
-     * which mean the base path.
-     *
-     * @return Path with base omitted.
-     */
-    String omitBasePath() const;
-
-    /**
      * Converts all separator characters in the path to @a sep and returns the
      * updated path.
      *

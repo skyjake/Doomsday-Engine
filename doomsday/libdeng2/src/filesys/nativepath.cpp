@@ -207,29 +207,6 @@ String NativePath::pretty() const
     return result;
 }
 
-String NativePath::omitBasePath() const
-{
-    if(isEmpty()) return *this;
-
-    String result = *this;
-
-    // Hide relative directives like '}'.
-    if(result.length() > 1 && (result.first() == '}' || result.first() == '>'))
-    {
-        result = result.mid(1);
-    }
-
-    if(QDir::isAbsolutePath(result))
-    {
-        NativePath basePath = App::app().nativeBasePath();
-        if(result.beginsWith(basePath))
-        {
-            result = result.mid(basePath.length() + 1);
-        }
-    }
-    return result;
-}
-
 String NativePath::withSeparators(QChar sep) const
 {
     return Path::withSeparators(sep);
