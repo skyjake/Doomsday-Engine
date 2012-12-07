@@ -145,7 +145,8 @@ Record::Record() : d(new Instance(*this))
 {}
 
 Record::Record(Record const &other)
-    : ISerializable(), LogEntry::Arg::Base(), d(new Instance(*this))
+    : ISerializable(), LogEntry::Arg::Base(), Variable::IDeletionObserver(),
+      d(new Instance(*this))
 {
     DENG2_FOR_EACH_CONST(Members, i, other.d->members)
     {
