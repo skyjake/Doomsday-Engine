@@ -781,7 +781,7 @@ D_CMD(InspectTexture)
     catch(de::Textures::NotFoundError const &er)
     {
         QString msg = er.asText() + ".";
-        Con_Printf(msg.toUtf8().constData());
+        Con_Printf("%s\n", msg.toUtf8().constData());
     }
     return false;
 }
