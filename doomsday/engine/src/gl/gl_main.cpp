@@ -1143,17 +1143,11 @@ D_CMD(ToggleFullscreen)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    /// @todo Currently not supported: the window should be recreated when
-    /// switching at runtime so that its frameless flag has the appropriate
-    /// effect.
-#if 1
     int attribs[] = {
         DDWA_FULLSCREEN, !Window_IsFullscreen(Window_Main()),
         DDWA_END
     };
     return Window_ChangeAttributes(Window_Main(), attribs);
-#endif
-    return false;
 }
 
 D_CMD(SetBPP)
