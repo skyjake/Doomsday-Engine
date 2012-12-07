@@ -175,8 +175,8 @@ struct FS1::Instance
 
     void clearOpenFiles()
     {
-        while(!openFiles.empty())
-        { delete openFiles.back(); }
+        while(!openFiles.isEmpty())
+        { delete openFiles.takeLast(); }
     }
 
     void clearIndexes()
