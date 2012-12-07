@@ -139,7 +139,9 @@ struct TextureScheme::Instance
         }
 
         // Fill the LUT with initial values.
+#ifdef DENG2_QT_4_7_OR_NEWER
         uniqueIdLut.reserve(lutSize);
+#endif
         int i = 0;
         for(; i < uniqueIdLut.size(); ++i)
         {
