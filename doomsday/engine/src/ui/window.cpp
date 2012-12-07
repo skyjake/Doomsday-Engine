@@ -1561,6 +1561,27 @@ void Window_RestoreState(Window* wnd)
 
     de::Config &config = de::App::config();
 
+    // Default parameters for the main window.
+    if(!config.names().has("window.main"))
+    {
+        de::Record &main = config.names().subrecord("window").addRecord("main");
+        const DisplayMode *mode = DisplayMode_OriginalMode();
+
+        // The default normal window geometry depends on the display mode.
+        main.addArray("rect").value<de::ArrayValue>()
+                << de::NumberValue(0) << de::NumberValue(0)
+                << de::NumberValue(mode->width) << de::NumberValue(mode->height);
+        main.addNumber("colorDepth", mode->depth);
+        main.addBoolean("center", true);
+#if defined(WIN32) || defined(MACOSX)
+        main.addBoolean("maximize", false);
+        main.addBoolean("fullscreen", true);
+#else
+        main.addBoolean("maximize", true);
+        main.addBoolean("fullscreen", false);
+#endif
+    }
+
     // The default state of the window is determined by these values.
     de::ArrayValue &rect = config.getAs<de::ArrayValue>("window.main.rect");
     if(rect.size() >= 4)

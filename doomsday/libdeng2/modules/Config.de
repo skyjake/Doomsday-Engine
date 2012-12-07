@@ -47,15 +47,10 @@ def setDefaults(d = None)
 
     # Window manager defaults.
     record d.window
-    record d.window.main
-
     d.window.fsaa = True
 
-    d.window.main.rect       = [50, 50, 640, 480]
-    d.window.main.colorDepth = 32
-    d.window.main.center     = True
-    d.window.main.maximize   = False
-    d.window.main.fullscreen = True
+    # The main window defaults are set by the Window Manager (because libdeng2
+    # has no access to DisplayMode yet).
 
     # Log parameters.
     record d.log
