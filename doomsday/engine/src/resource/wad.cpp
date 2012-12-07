@@ -27,6 +27,7 @@
 #include "resource/wad.h"
 
 #include <vector>
+#include <cstring> // memcpy
 #include <de/ByteOrder>
 #include <de/Error>
 #include <de/NativePath>
