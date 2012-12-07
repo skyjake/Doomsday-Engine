@@ -83,12 +83,8 @@ struct Record::Instance
         {
             String subName = name.substr(0, pos);
             String remaining = name.substr(pos + 1);
-            if(members.find(subName) != members.end())
-            {
-                // If it has a RecordValue then we can descend into it.
-                return &self.value<RecordValue>(subName).dereference()[remaining];
-            }
-            return &self.subrecord(subName)[remaining];
+            // If it is a subrecord we can descend into it.
+            return self[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
         }
 
         Members::const_iterator found = members.find(name);
