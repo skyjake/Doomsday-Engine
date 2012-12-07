@@ -83,7 +83,7 @@ String File::description() const
     String desc = describe();
     if(parent())
     {
-        desc += " at path '" + path() + "'";
+        desc += " at path \"" + path() + "\"";
     }
     if(!mode().testFlag(Write))
     {

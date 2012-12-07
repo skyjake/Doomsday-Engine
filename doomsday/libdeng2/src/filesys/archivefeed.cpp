@@ -159,7 +159,7 @@ struct ArchiveFeed::Instance
                 if(archFeed && &archFeed->archive() == &archive() && archFeed->basePath() == subBasePath)
                 {
                     // It's got it.
-                    LOG_DEBUG("Feed for ") << archFeed->basePath() << " already there.";
+                    LOG_DEBUG("Feed for \"%s\" already there.") << archFeed->basePath();
                     return;
                 }
             }

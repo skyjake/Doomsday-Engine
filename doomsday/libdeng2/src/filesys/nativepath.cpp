@@ -42,7 +42,7 @@
  */
 
 #ifdef WIN32
-#  define NATIVE_HOME_SYMBOLIC  "%HOME%"
+#  define NATIVE_HOME_SYMBOLIC  "%HOMEPATH%"
 #  define DIR_SEPARATOR         QChar('\\')
 #else
 #  define NATIVE_HOME_SYMBOLIC  "~"

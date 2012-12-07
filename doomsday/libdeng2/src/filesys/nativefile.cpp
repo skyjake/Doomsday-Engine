@@ -40,7 +40,7 @@ NativeFile::~NativeFile()
 
 String NativeFile::describe() const
 {
-    return String("native file '%1'").arg(_nativePath.pretty());
+    return String("native file \"%1\"").arg(_nativePath.pretty());
 }
 
 void NativeFile::close()

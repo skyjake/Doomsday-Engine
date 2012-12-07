@@ -53,7 +53,7 @@ Folder::~Folder()
 
 String Folder::describe() const
 {
-    String desc = String("folder '%1' (with %2 items from %3 feeds")
+    String desc = String("folder \"%1\" (with %2 items from %3 feeds")
             .arg(name()).arg(_contents.size()).arg(_feeds.size());
 
     if(!_feeds.empty())

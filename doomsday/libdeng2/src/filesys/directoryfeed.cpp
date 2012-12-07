@@ -39,7 +39,7 @@ DirectoryFeed::~DirectoryFeed()
 
 String DirectoryFeed::description() const
 {
-    return "native directory '" + _nativePath.pretty() + "'";
+    return "native directory \"" + _nativePath.pretty() + "\"";
 }
 
 void DirectoryFeed::populate(Folder &folder)
