@@ -586,7 +586,7 @@ File1& Zip::lump(int lumpIdx)
     return *reinterpret_cast<ZipFile*>((*d->lumpNodeLut)[lumpIdx]->userPointer());
 }
 
-Zip& Zip::clearCachedLump(int lumpIdx, bool* retCleared)
+void Zip::clearCachedLump(int lumpIdx, bool* retCleared)
 {
     LOG_AS("Zip::clearCachedLump");
 
@@ -608,14 +608,12 @@ Zip& Zip::clearCachedLump(int lumpIdx, bool* retCleared)
         QString msg = invalidIndexMessage(lumpIdx, lastIndex());
         LOG_DEBUG(msg + ", ignoring.");
     }
-    return *this;
 }
 
-Zip& Zip::clearLumpCache()
+void Zip::clearLumpCache()
 {
     LOG_AS("Zip::clearLumpCache");
     if(d->lumpCache) d->lumpCache->clear();
-    return *this;
 }
 
 uint8_t const* Zip::cacheLump(int lumpIdx)
@@ -649,7 +647,7 @@ uint8_t const* Zip::cacheLump(int lumpIdx)
     return region;
 }
 
-Zip& Zip::unlockLump(int lumpIdx)
+void Zip::unlockLump(int lumpIdx)
 {
     LOG_AS("Zip::unlockLump");
     LOG_TRACE("\"%s:%s\"") << de::NativePath(composePath()).pretty() << lump(lumpIdx).composePath();
@@ -670,7 +668,6 @@ Zip& Zip::unlockLump(int lumpIdx)
         QString msg = invalidIndexMessage(lumpIdx, lastIndex());
         LOG_DEBUG(msg + ", ignoring.");
     }
-    return *this;
 }
 
 size_t Zip::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)

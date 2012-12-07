@@ -21,8 +21,8 @@
 #ifndef LIBDENG_RESOURCE_WAD_H
 #define LIBDENG_RESOURCE_WAD_H
 
-#include "filesys/fileinfo.h"
 #include "filesys/file.h"
+#include "filesys/fileinfo.h"
 #include <de/PathTree>
 
 namespace de {
@@ -127,10 +127,8 @@ public:
      * Remove a lock on a cached data lump.
      *
      * @param lumpIdx   Lump index associated with the cached data to be changed.
-     *
-     * @return This instance.
      */
-    Wad &unlockLump(int lumpIdx);
+    void unlockLump(int lumpIdx);
 
     /**
      * Clear any cached data for lump @a lumpIdx from the lump cache.
@@ -138,17 +136,15 @@ public:
      * @param lumpIdx       Lump index associated with the cached data to be cleared.
      * @param retCleared    If not @c NULL write @c true to this address if data was
      *                      present and subsequently cleared from the cache.
-     *
-     * @return This instance.
      */
-    Wad &clearCachedLump(int lumpIdx, bool *retCleared = 0);
+    void clearCachedLump(int lumpIdx, bool *retCleared = 0);
 
     /**
      * Purge the lump cache, clearing all cached data lumps.
      *
      * @return This instance.
      */
-    Wad &clearLumpCache();
+    void clearLumpCache();
 
     /**
      * @attention Uses an extremely simple formula which does not conform to any CRC

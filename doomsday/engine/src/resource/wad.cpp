@@ -413,7 +413,7 @@ File1 &Wad::lump(int lumpIdx)
     return *reinterpret_cast<WadFile *>((*d->lumpNodeLut)[lumpIdx]->userPointer());
 }
 
-Wad &Wad::clearCachedLump(int lumpIdx, bool *retCleared)
+void Wad::clearCachedLump(int lumpIdx, bool *retCleared)
 {
     LOG_AS("Wad::clearCachedLump");
 
@@ -435,14 +435,12 @@ Wad &Wad::clearCachedLump(int lumpIdx, bool *retCleared)
         QString msg = invalidIndexMessage(lumpIdx, lastIndex());
         LOG_DEBUG(msg + ", ignoring.");
     }
-    return *this;
 }
 
-Wad &Wad::clearLumpCache()
+void Wad::clearLumpCache()
 {
     LOG_AS("Wad::clearLumpCache");
     if(d->lumpCache) d->lumpCache->clear();
-    return *this;
 }
 
 uint8_t const *Wad::cacheLump(int lumpIdx)
@@ -476,7 +474,7 @@ uint8_t const *Wad::cacheLump(int lumpIdx)
     return region;
 }
 
-Wad &Wad::unlockLump(int lumpIdx)
+void Wad::unlockLump(int lumpIdx)
 {
     LOG_AS("Wad::unlockLump");
     LOG_TRACE("\"%s:%s\"") << NativePath(composePath()).pretty() << NativePath(lump(lumpIdx).composePath()).pretty();
@@ -497,7 +495,6 @@ Wad &Wad::unlockLump(int lumpIdx)
         QString msg = invalidIndexMessage(lumpIdx, lastIndex());
         LOG_DEBUG(msg + ", ignoring.");
     }
-    return *this;
 }
 
 size_t Wad::readLump(int lumpIdx, uint8_t *buffer, bool tryCache)

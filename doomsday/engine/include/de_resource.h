@@ -33,13 +33,11 @@
 #include "resource/compositetexture.h"
 #include "resource/rawtexture.h"
 #include "resource/textures.h"
-#ifdef __cplusplus
-#  include "resource/wad.h"
-#endif
-#include "resource/zip.h"
 
 #ifdef __cplusplus
 #  include "resource/texturemanifest.h"
+#  include "resource/wad.h"
+#  include "resource/zip.h"
 #endif
 
 #endif /* LIBDENG_RESOURCE_SUBSYSTEM_H */

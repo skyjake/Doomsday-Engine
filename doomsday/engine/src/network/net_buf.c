@@ -36,8 +36,6 @@
 
 #include <de/c_wrapper.h>
 
-#include "resource/zip.h" // uses compression for packet contents
-
 #define MSG_MUTEX_NAME  "MsgQueueMutex"
 
 boolean allowSending;
