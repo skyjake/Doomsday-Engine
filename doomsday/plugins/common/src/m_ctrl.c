@@ -95,8 +95,8 @@ static mndata_bindings_t controlConfig[] =
     { "Fist/Chainsaw", 0, 0, "impulse weapon1" },
     { "Chainsaw/Fist", 0, 0, "impulse weapon8" },
     { "Pistol", 0, 0, "impulse weapon2" },
-    { "Shotgun/Super SG", 0, 0, "impulse weapon3" },
-    { "Super SG/Shotgun", 0, 0, "impulse weapon9" },
+    { "Super SG/Shotgun", 0, 0, "impulse weapon3" },
+    { "Shotgun/Super SG", 0, 0, "impulse weapon9" },
     { "Chaingun", 0, 0, "impulse weapon4" },
     { "Rocket Launcher", 0, 0, "impulse weapon5" },
     { "Plasma Rifle", 0, 0, "impulse weapon6" },
@@ -107,7 +107,7 @@ static mndata_bindings_t controlConfig[] =
 #endif
 
 #if __JHERETIC__
-    { "Staff/Gauntlets", 0, 0, "impulse weapon1" },
+    { "Gauntlets/Staff", 0, 0, "impulse weapon1" },
     { "Elvenwand", 0, 0, "impulse weapon2" },
     { "Crossbow", 0, 0, "impulse weapon3" },
     { "Dragon Claw", 0, 0, "impulse weapon4" },
