@@ -705,17 +705,26 @@ void DS_SFX_Listenerv(int prop, float* values)
  * @param prop    Property (SFXP_*).
  * @param values  Pointer to return value(s).
  */
-int DS_SFX_Getv(int prop, void* values)
+int DS_SFX_Getv(int prop, void *values)
 {
     switch(prop)
     {
     case SFXIP_DISABLE_CHANNEL_REFRESH: {
         /// The return value is a single 32-bit int.
-        int* wantDisable = reinterpret_cast<int*>(values);
+        int *wantDisable = reinterpret_cast<int *>(values);
         if(wantDisable)
         {
             // Channel refresh is handled by FMOD, so we don't need to do anything.
             *wantDisable = true;
+        }
+        break; }
+
+    case SFXIP_ANY_SAMPLE_RATE_ACCEPTED: {
+        int *anySampleRate = reinterpret_cast<int *>(values);
+        if(anySampleRate)
+        {
+            // FMOD can resample on the fly as needed.
+            *anySampleRate = true;
         }
         break; }
 
