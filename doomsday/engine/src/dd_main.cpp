@@ -2603,21 +2603,19 @@ materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
 {
     if(!_textureUri) return NOMATERIALID;
 
-    de::Uri const &textureUri = reinterpret_cast<de::Uri const &>(*_textureUri);
     try
     {
-        if(TextureManifest *manifest = App_Textures()->find(textureUri))
-        {
-            de::Uri uri = manifest->composeUri();
-            uri.setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(uri.scheme())));
-            return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
-        }
+        de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*_textureUri)).composeUri();
+        uri.setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(uri.scheme())));
+        return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
     }
     catch(Textures::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
     }
+    catch(Textures::NotFoundError const &)
+    {} // Ignore this error.
 
     return NOMATERIALID;
 }

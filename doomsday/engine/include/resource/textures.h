@@ -60,6 +60,12 @@ public:
     typedef class TextureManifest Manifest;
     typedef class TextureScheme Scheme;
 
+    /**
+     * ResourceClass encapsulates the properties and logics belonging to a logical
+     * class of resource.
+     *
+     * @todo Derive from de::ResourceClass -ds
+     */
     struct ResourceClass
     {
         /**
@@ -82,10 +88,25 @@ public:
                                   Texture::Flags flags, void *userData = 0);
     };
 
+    /**
+     * Flags determining URI validation logic.
+     *
+     * @see validateUri()
+     */
+    enum UriValidationFlag
+    {
+        AnyScheme  = 0x1, ///< The scheme of the URI may be of zero-length; signifying "any scheme".
+        NotUrn     = 0x2  ///< Do not accept a URN.
+    };
+    Q_DECLARE_FLAGS(UriValidationFlags, UriValidationFlag)
+
     /// Texture system subspace schemes.
     typedef QList<Scheme*> Schemes;
 
 public:
+    /// The referenced texture was not found. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
     /// An unknown scheme was referenced. @ingroup errors
     DENG2_ERROR(UnknownSchemeError);
 
@@ -139,12 +160,33 @@ public:
     }
 
     /**
-     * Find a single declared texture.
+     * Validate @a uri to determine if it is well-formed and is usable as a
+     * search argument.
+     *
+     * @param uri       Uri to be validated.
+     * @param flags     Validation flags.
+     * @param quiet     @c true= Do not output validation remarks to the log.
+     *
+     * @return  @c true if @a Uri passes validation.
+     *
+     * @todo Should throw de::Error exceptions -ds
+     */
+    bool validateUri(Uri const &uri, UriValidationFlags flags = 0,
+                     bool quiet = false) const;
+
+    /**
+     * Determines if a manifest exists for a declared texture on @a path.
+     * @return @c true, if a manifest exists; otherwise @a false.
+     */
+    bool has(Uri const &path) const;
+
+    /**
+     * Find the manifest for a declared texture.
      *
      * @param search  The search term.
-     * @return Found unique identifier; otherwise @c NOTEXTUREID.
+     * @return Found unique identifier.
      */
-    Manifest *find(Uri const &search) const;
+    Manifest &find(Uri const &search) const;
 
     /**
      * Declare a texture in the collection, producing a manifest for a logical
@@ -217,6 +259,8 @@ private:
     struct Instance;
     Instance *d;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Textures::UriValidationFlags)
 
 } // namespace de
 
