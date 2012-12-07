@@ -1364,8 +1364,8 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
                 radioParams.backSec = NULL;
             }
 
-            /// @kludge Revert the vertex coords as they may have been changed
-            ///         due to height divisions.
+            /// @todo kludge: Revert the vertex coords as they may have been changed
+            ///               due to height divisions.
 
             // Bottom Left.
             V2f_Copyd(rvertices[0].pos, hedge->HE_v1origin);
@@ -1816,6 +1816,7 @@ static void reportLineDefDrawn(LineDef* line)
 
 /**
  * @param hedge  HEdge to draw wall surfaces for.
+ * @param sections  @ref sideSectionFlags
  */
 static boolean Rend_RenderHEdge(HEdge* hedge, byte sections)
 {
@@ -2379,7 +2380,10 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
     R_FreeRendTexCoords(coords);
 }
 
-/// @param skyFix  @ref skyCapFlags
+/**
+ * @param leaf      BspLeaf to write geometry for.
+ * @param skyFix    @ref skyCapFlags
+ */
 static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
 {
     const boolean antiClockwise = false;
@@ -2570,7 +2574,7 @@ uint Rend_NumFanVerticesForBspLeaf(BspLeaf* leaf)
  * BSP leaf. If a fan base HEdge has been chosen it will be used as the center of
  * the trifan, else the mid point of this leaf will be used instead.
  *
- * @param bspLeaf  BspLeaf instance.
+ * @param leaf  BspLeaf instance.
  * @param antiClockwise  @c true= wind vertices in anticlockwise order (else clockwise).
  * @param height  Z map space height coordinate to be set for each vertex.
  * @param verts  Built vertices are written here.
@@ -3820,6 +3824,7 @@ static DGLuint constructBBox(DGLuint name, float br)
  * @param w             Width of the box.
  * @param l             Length of the box.
  * @param h             Height of the box.
+ * @param a             Angle of the box.
  * @param color         Color to make the box (uniform vertex color).
  * @param alpha         Alpha to make the box (uniform vertex color).
  * @param br            Border amount to overlap box faces.
@@ -3855,7 +3860,7 @@ void Rend_DrawBBox(coord_t const pos[3], coord_t w, coord_t l, coord_t h,
  * Draws a textured triangle using the currently bound gl texture.
  * Used to draw mobj angle direction arrow.
  *
- * @param pos3f         Coordinates of the center of the base of the
+ * @param pos           Coordinates of the center of the base of the
  *                      triangle (in "world" coordinates [VX, VY, VZ]).
  * @param a             Angle to point the triangle in.
  * @param s             Scale of the triangle.

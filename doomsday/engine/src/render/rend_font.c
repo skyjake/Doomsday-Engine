@@ -912,7 +912,7 @@ static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright)
 /**
  * Expected:
  * <pre>
- *     <whitespace> = <whitespace> <float>
+ *     "<whitespace> = <whitespace> <float>"
  * </pre>
  */
 static float parseFloat(char** str)
@@ -932,7 +932,7 @@ static float parseFloat(char** str)
 /**
  * Expected:
  * <pre>
- *      <whitespace> = <whitespace> [|"]<string>[|"]
+ *      "<whitespace> = <whitespace> [|"]<string>[|"]"
  * </pre>
  */
  static boolean parseString(char** str, char* buf, size_t bufLen)
