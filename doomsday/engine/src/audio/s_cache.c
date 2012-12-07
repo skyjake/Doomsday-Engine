@@ -331,10 +331,6 @@ sfxcache_t* Sfx_CacheInsert(int id, const void* data, unsigned int size,
     if(sfxMustUpsampleToSfxRate())
     {
         rsfactor = MAX_OF(1, sfxRate / rate);
-        if(!rsfactor)
-        {
-            rsfactor = 1;
-        }
     }
 
     /**
