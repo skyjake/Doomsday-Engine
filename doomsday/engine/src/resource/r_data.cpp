@@ -128,11 +128,14 @@ patchid_t R_DeclarePatch(char const *name)
     de::Uri uri("Patches", Path(QString(QByteArray(name, qstrlen(name)).toPercentEncoding())));
 
     // Already defined as a patch?
-    if(TextureManifest *manifest = textures.find(uri))
+    try
     {
+        TextureManifest &manifest = textures.find(uri);
         /// @todo We should instead define Materials from patches and return the material id.
-        return patchid_t( manifest->uniqueId() );
+        return patchid_t( manifest.uniqueId() );
     }
+    catch(Textures::NotFoundError const &)
+    {} // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
     lumpnum_t lumpNum = App_FileSystem()->nameIndex().lastIndexForPath(lumpPath);
@@ -717,7 +720,8 @@ void R_InitFlatTextures()
                !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
             de::Uri uri = composeFlatUri(percentEncodedName);
-            if(!textures.find(uri)) // A new flat?
+
+            if(!textures.has(uri)) // A new flat?
             {
                 /**
                  * Kludge Assume 64x64 else when the flat is loaded it will inherit the
