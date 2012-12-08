@@ -49,8 +49,34 @@ def setDefaults(d = None)
     record d.window
     d.window.fsaa = True
 
-    # The main window defaults are set by the Window Manager (because libdeng2
-    # has no access to DisplayMode yet).
+    record d.window.main
+    d.window.main.center = True
+
+    try
+        # The default window parameters depend on the original display mode.
+        import DisplayMode
+        mode = DisplayMode.originalMode()
+
+        d.window.main.rect = [0, 0, mode['width'], mode['height']]
+        # The normal-mode window leaves some space on the sides so that
+        # the first switch to windowed mode does not place the window in an
+        # inconvenient location. The reduction is done proportionally.
+        offx = mode['width'] * 0.15
+        offy = mode['height'] * 0.15
+        d.window.main.normalRect = [offx, offy, mode['width'] - 2*offx, mode['height'] - 2*offy]
+        d.window.main.colorDepth = mode['depth']
+    catch NotFoundError
+        # DisplayMode isn't available when running in non-GUI mode.
+    end
+
+    import Version
+    if Version.os == 'windows' or Version.os == 'macx'
+        d.window.main.fullscreen = True
+        d.window.main.maximize   = False
+    else
+        d.window.main.fullscreen = False
+        d.window.main.maximize   = True
+    end
 
     # Log parameters.
     record d.log

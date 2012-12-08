@@ -1550,32 +1550,6 @@ void Window_RestoreState(Window* wnd)
 
     de::Config &config = de::App::config();
 
-    /// @todo Defaults should be defined in Config.de.
-
-    // Default parameters for the main window.
-    if(!config.names().has("window.main"))
-    {
-        de::Record &main = config.names().subrecord("window").addRecord("main");
-        const DisplayMode *mode = DisplayMode_OriginalMode();
-
-        // The default normal window geometry depends on the display mode.
-        main.addArray("rect").value<de::ArrayValue>()
-                << de::NumberValue(0) << de::NumberValue(0)
-                << de::NumberValue(mode->width) << de::NumberValue(mode->height);
-        main.addArray("normalRect").value<de::ArrayValue>()
-                << de::NumberValue(100) << de::NumberValue(100)
-                << de::NumberValue(mode->width - 200) << de::NumberValue(mode->height - 200);
-        main.addNumber("colorDepth", mode->depth);
-        main.addBoolean("center", true);
-#if defined(WIN32) || defined(MACOSX)
-        main.addBoolean("fullscreen", true);
-        main.addBoolean("maximize", false);
-#else
-        main.addBoolean("fullscreen", false);
-        main.addBoolean("maximize", true);
-#endif
-    }
-
     // The default state of the window is determined by these values.
     de::ArrayValue &rect = config.getAs<de::ArrayValue>("window.main.rect");
     if(rect.size() >= 4)
@@ -1587,23 +1561,18 @@ void Window_RestoreState(Window* wnd)
         wnd->geometry.size.width = geom.width();
         wnd->geometry.size.height = geom.height();
     }
-    try /// @todo This is temporary: the normalRect is now always defined in the defaults.
+
+    de::ArrayValue &normalRect = config.getAs<de::ArrayValue>("window.main.normalRect");
+    if(normalRect.size() >= 4)
     {
-        de::ArrayValue &normalRect = config.getAs<de::ArrayValue>("window.main.normalRect");
-        if(normalRect.size() >= 4)
-        {
-            QRect geom(normalRect.at(0).asNumber(), normalRect.at(1).asNumber(),
-                       normalRect.at(2).asNumber(), normalRect.at(3).asNumber());
-            wnd->normalGeometry.origin.x = geom.x();
-            wnd->normalGeometry.origin.y = geom.y();
-            wnd->normalGeometry.size.width = geom.width();
-            wnd->normalGeometry.size.height = geom.height();
-        }
+        QRect geom(normalRect.at(0).asNumber(), normalRect.at(1).asNumber(),
+                   normalRect.at(2).asNumber(), normalRect.at(3).asNumber());
+        wnd->normalGeometry.origin.x = geom.x();
+        wnd->normalGeometry.origin.y = geom.y();
+        wnd->normalGeometry.size.width = geom.width();
+        wnd->normalGeometry.size.height = geom.height();
     }
-    catch(de::Record::NotFoundError const &)
-    {
-        wnd->normalGeometry = wnd->geometry;
-    }
+
     wnd->colorDepthBits = config.geti("window.main.colorDepth");
     wnd->setFlag(DDWF_CENTER, config.getb("window.main.center"));
     wnd->setFlag(DDWF_MAXIMIZE, config.getb("window.main.maximize"));
