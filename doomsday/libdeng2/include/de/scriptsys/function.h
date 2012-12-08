@@ -190,6 +190,16 @@ namespace de
         static void registerNativeEntryPoint(String const &name, NativeEntryPoint entryPoint);
 
         /**
+         * Unregisters a native entry point. This is required for instance when
+         * the entry point is located in a plugin and it is being unloaded.
+         * Whoever registered the entry point is responsible for making sure
+         * the supplied function pointer remains valid.
+         *
+         * @param name  Name of a previously registered native entry point.
+         */
+        static void unregisterNativeEntryPoint(String const &name);
+
+        /**
          * Finds a native entry point. The entry point needs to be either one
          * of the built-in entry points or previously registered with
          * registerNativeEntryPoint().

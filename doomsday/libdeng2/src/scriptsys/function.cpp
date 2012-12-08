@@ -27,8 +27,12 @@
 #include "de/Log"
 
 #include <QTextStream>
+#include <QMap>
 
 namespace de {
+
+typedef QMap<String, Function::NativeEntryPoint> RegisteredEntryPoints;
+static RegisteredEntryPoints entryPoints;
 
 struct Function::Instance
 {
@@ -317,7 +321,18 @@ void Function::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
 {
     // The namespace of the record is being deleted.
     DENG2_ASSERT(d->globals == &record);
+
     d->globals = 0;
+}
+
+void Function::registerNativeEntryPoint(const String &name, Function::NativeEntryPoint entryPoint)
+{
+    entryPoints.insert(name, entryPoint);
+}
+
+void Function::unregisterNativeEntryPoint(String const &name)
+{
+    entryPoints.remove(name);
 }
 
 Function::NativeEntryPoint Function::nativeEntryPoint(String const &name)
