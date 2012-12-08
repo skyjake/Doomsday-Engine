@@ -105,6 +105,17 @@ Writer::~Writer()
     delete d;
 }
 
+Writer &Writer::withHeader()
+{
+    // Currently the header is very simple.
+    return *this << duint32(version());
+}
+
+duint Writer::version() const
+{
+    return DENG2_PROTOCOL_LATEST;
+}
+
 Writer &Writer::operator << (char const &byte)
 {
     d->write(reinterpret_cast<IByteArray::Byte const *>(&byte), 1);

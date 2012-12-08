@@ -34,6 +34,7 @@ namespace de {
 struct Reader::Instance
 {
     ByteOrder const &convert;
+    duint version;
 
     // Random access source:
     IByteArray const *source;
@@ -49,19 +50,22 @@ struct Reader::Instance
     Block markedData;   ///< All read data since the mark was set.
 
     Instance(ByteOrder const &order, IByteArray const *src, IByteArray::Offset off)
-        : convert(order), source(src), offset(off), markOffset(off),
+        : convert(order), version(DENG2_PROTOCOL_LATEST),
+          source(src), offset(off), markOffset(off),
           stream(0), constStream(0), numReceivedBytes(0), marking(false)
     {}
 
     Instance(ByteOrder const &order, IIStream *str)
-        : convert(order), source(0), offset(0), markOffset(0),
+        : convert(order), version(DENG2_PROTOCOL_LATEST),
+          source(0), offset(0), markOffset(0),
           stream(str), constStream(0), numReceivedBytes(0), marking(false)
     {
         upgradeToByteArray();
     }
 
     Instance(ByteOrder const &order, IIStream const *str)
-        : convert(order), source(0), offset(0), markOffset(0),
+        : convert(order), version(DENG2_PROTOCOL_LATEST),
+          source(0), offset(0), markOffset(0),
           stream(0), constStream(str), numReceivedBytes(0), marking(false)
     {
         upgradeToByteArray();
@@ -196,6 +200,33 @@ Reader::Reader(IIStream const &stream, ByteOrder const &byteOrder)
 Reader::~Reader()
 {
     delete d;
+}
+
+Reader &Reader::withHeader()
+{
+    duint32 header = 0;
+    *this >> header;
+
+    d->version = header;
+
+    // We can't read future (or invalid) versions.
+    if(d->version > DENG2_PROTOCOL_LATEST)
+    {
+        throw VersionError("Reader::withHeader",
+                           QString("Version %1 is unknown").arg(d->version));
+    }
+
+    return *this;
+}
+
+duint Reader::version() const
+{
+    return d->version;
+}
+
+void Reader::setVersion(duint version)
+{
+    d->version = version;
 }
 
 Reader &Reader::operator >> (char &byte)

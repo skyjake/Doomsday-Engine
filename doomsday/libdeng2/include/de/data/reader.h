@@ -39,6 +39,10 @@ class IIStream;
  * a IByteArray interface). Byte order defaults to little-endian but can be
  * changed to big-endian.
  *
+ * Note about versioning: readers must be prepared to support old versions of
+ * the serialization protocol in addition to the latest one for backwards
+ * compatibility.
+ *
  * @ingroup data
  */
 class DENG2_PUBLIC Reader
@@ -46,6 +50,9 @@ class DENG2_PUBLIC Reader
 public:
     /// Seeking is not possible, e.g., when reading from a stream. @ingroup errors
     DENG2_ERROR(SeekError);
+
+    /// The serialization protocol version specified is unknown. @ingroup errors
+    DENG2_ERROR(VersionError);
 
 public:
     /**
@@ -84,6 +91,31 @@ public:
     Reader(IIStream const &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
 
     virtual ~Reader();
+
+    /**
+     * Reads the serialization protocol header from the source. The header is
+     * read at the current read offset. The version can be then queried with
+     * version().
+     *
+     * @return Reference to this Reader.
+     */
+    Reader &withHeader();
+
+    /**
+     * Returns the serialization protocol used by the reader. If no header has been
+     * included, defaults to the latest version.
+     *
+     * @return de::ProtocolVersion.
+     */
+    duint version() const;
+
+    /**
+     * Changes the serialization protocol version used by the reader. Usually calling
+     * this manually is not necessary.
+     *
+     * @param version  Serialization protocol version number.
+     */
+    void setVersion(duint version);
 
     //@{ Read a number from the source buffer, in network byte order.
     Reader &operator >> (char &byte);

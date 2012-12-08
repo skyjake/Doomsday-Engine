@@ -40,6 +40,9 @@ class IOStream;
  * array object (anything with a IByteArray interface). Defaults to
  * little-endian byte order.
  *
+ * Note about versioning: when instructed to include a header, Writer always
+ * uses the latest version of serialization.
+ *
  * @ingroup data
  */
 class DENG2_PUBLIC Writer
@@ -102,6 +105,22 @@ public:
     Writer(Writer const &other, ByteOrder const &byteOrder);
 
     virtual ~Writer();
+
+    /**
+     * Writes the serialization protocol header to the destination. This should
+     * be used when the Writer is responsible for the containment stream
+     * itself; a Reader can then reader the header and use the correct protocol
+     * version.
+     *
+     * @return Reference to this Writer.
+     */
+    Writer &withHeader();
+
+    /**
+     * Returns the protocol version used by the Writer.
+     * @see de::ProtocolVersion
+     */
+    duint version() const;
 
     //@{ Write a number to the destination buffer, in the chosen byte order.
     Writer &operator << (char const &byte);
