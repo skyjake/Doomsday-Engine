@@ -70,7 +70,7 @@ def setDefaults(d = None)
     end
 
     import Version
-    if Version.os == 'windows' or Version.os == 'macx'
+    if Version.OS == 'windows' or Version.OS == 'macx'
         d.window.main.fullscreen = True
         d.window.main.maximize   = False
     else
