@@ -1,9 +1,7 @@
-/**
- * @file texture.cpp
- * Logical texture. @ingroup resource
+/** @file texture.cpp Logical Texture.
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -37,16 +35,44 @@
 
 namespace de {
 
-Texture::Texture(TextureManifest &_manifest, Flags _flags, void *_userData)
-    : flags(_flags), manifest_(_manifest), variants(), userData(_userData), dimensions_()
+struct Texture::Instance
 {
-    memset(analyses, 0, sizeof(analyses));
+    Texture::Flags flags;
+
+    /// Unique identifier of the primary binding in the owning collection.
+    TextureManifest &manifest;
+
+    /// List of variants (e.g., color translations).
+    Texture::Variants variants;
+
+    /// User data associated with this texture.
+    void *userData;
+
+    /// World dimensions in map coordinate space units.
+    QSize dimensions;
+
+    /// World origin offset in map coordinate space units.
+    QPoint origin;
+
+    /// Table of analyses object ptrs, used for various purposes depending
+    /// on the variant specification.
+    void *analyses[TEXTURE_ANALYSIS_COUNT];
+
+    Instance(TextureManifest &_manifest, Texture::Flags _flags, void *_userData)
+        : flags(_flags), manifest(_manifest), variants(), userData(_userData), origin(), dimensions()
+    {
+        std::memset(analyses, 0, sizeof(analyses));
+    }
+};
+
+Texture::Texture(TextureManifest &_manifest, Flags _flags, void *_userData)
+{
+    d = new Instance(_manifest, _flags, _userData);
 }
 
-Texture::Texture(TextureManifest &_manifest, Size2Raw const &size, Flags _flags, void *_userData)
-    : flags(_flags), manifest_(_manifest), variants(), userData(_userData), dimensions_()
+Texture::Texture(TextureManifest &_manifest, QSize const &size, Flags _flags, void *_userData)
 {
-    std::memset(analyses, 0, sizeof(analyses));
+    d = new Instance(_manifest, _flags, _userData);
     setDimensions(size);
 }
 
@@ -55,21 +81,11 @@ Texture::~Texture()
     GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(this));
 
     /// @todo Texture should employ polymorphism.
-    TextureScheme const &scheme = manifest_.scheme();
+    TextureScheme const &scheme = d->manifest.scheme();
     if(!scheme.name().compareWithoutCase("Textures"))
     {
-        CompositeTexture* pcTex = reinterpret_cast<CompositeTexture *>(userDataPointer());
+        CompositeTexture *pcTex = reinterpret_cast<CompositeTexture *>(userDataPointer());
         if(pcTex) delete pcTex;
-    }
-    else if(!scheme.name().compareWithoutCase("Sprites"))
-    {
-        patchtex_t* pTex = reinterpret_cast<patchtex_t *>(userDataPointer());
-        if(pTex) M_Free(pTex);
-    }
-    else if(!scheme.name().compareWithoutCase("Patches"))
-    {
-        patchtex_t* pTex = reinterpret_cast<patchtex_t *>(userDataPointer());
-        if(pTex) M_Free(pTex);
     }
 
     clearAnalyses();
@@ -78,7 +94,7 @@ Texture::~Texture()
 
 TextureManifest &Texture::manifest() const
 {
-    return manifest_;
+    return d->manifest;
 }
 
 void Texture::clearAnalyses()
@@ -94,7 +110,7 @@ void Texture::clearAnalyses()
 
 void Texture::clearVariants()
 {
-    DENG2_FOR_EACH(Variants, i, variants)
+    DENG2_FOR_EACH(Variants, i, d->variants)
     {
 #if _DEBUG
         uint glName = (*i)->glName();
@@ -102,95 +118,118 @@ void Texture::clearVariants()
         {
             LOG_AS("Texture::clearVariants")
             LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
-                << glName << manifest_.composeUri() << (void *)this;
+                << glName << d->manifest.composeUri() << (void *)this;
             GL_PrintTextureVariantSpecification((*i)->spec());
         }
 #endif
         delete *i;
     }
-    variants.clear();
+    d->variants.clear();
 }
 
 void Texture::setUserDataPointer(void *newUserData)
 {
-    if(userData && newUserData)
+    if(d->userData && newUserData)
     {
         LOG_AS("Texture::setUserDataPointer");
         LOG_DEBUG("User data already present for \"%s\" [%p], will be replaced.")
-            << manifest_.composeUri() << de::dintptr(this);
+            << d->manifest.composeUri() << de::dintptr(this);
     }
-    userData = newUserData;
+    d->userData = newUserData;
 }
 
 void *Texture::userDataPointer() const
 {
-    return userData;
+    return d->userData;
 }
 
 uint Texture::variantCount() const
 {
-    return uint(variants.size());
+    return uint(d->variants.size());
 }
 
 TextureVariant &Texture::addVariant(TextureVariant &variant)
 {
-    variants.push_back(&variant);
-    return *variants.back();
-}
-
-void Texture::flagCustom(bool yes)
-{
-    if(yes) flags |= Custom; else flags &= ~Custom;
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
+    d->variants.push_back(&variant);
+    return *d->variants.back();
 }
 
 int Texture::width() const
 {
-    return dimensions_.width;
+    return d->dimensions.width();
 }
 
 void Texture::setWidth(int newWidth)
 {
-    dimensions_.width = newWidth;
+    d->dimensions.setWidth(newWidth);
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
 int Texture::height() const
 {
-    return dimensions_.height;
+    return d->dimensions.height();
+}
+
+QSize const &Texture::dimensions() const
+{
+    return d->dimensions;
 }
 
 void Texture::setHeight(int newHeight)
 {
-    dimensions_.height = newHeight;
+    d->dimensions.setHeight(newHeight);
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
-void Texture::setDimensions(Size2Raw const &newSize)
+void Texture::setDimensions(QSize const &newDimensions)
 {
-    dimensions_.width  = newSize.width;
-    dimensions_.height = newSize.height;
+    d->dimensions = newDimensions;
     /// @todo Update any Materials (and thus Surfaces) which reference this.
+}
+
+QPoint const &Texture::origin() const
+{
+    return d->origin;
+}
+
+void Texture::setOrigin(QPoint const &newOrigin)
+{
+    d->origin = newOrigin;
+}
+
+Texture::Variants const &Texture::variantList() const
+{
+    return d->variants;
 }
 
 void *Texture::analysisDataPointer(texture_analysisid_t analysisId) const
 {
     DENG2_ASSERT(VALID_TEXTURE_ANALYSISID(analysisId));
-    return analyses[analysisId];
+    return d->analyses[analysisId];
 }
 
 void Texture::setAnalysisDataPointer(texture_analysisid_t analysisId, void *data)
 {
     DENG2_ASSERT(VALID_TEXTURE_ANALYSISID(analysisId));
-    if(analyses[analysisId] && data)
+    if(d->analyses[analysisId] && data)
     {
 #if _DEBUG
         LOG_AS("Texture::attachAnalysis");
         LOG_DEBUG("Image analysis (id:%i) already present for \"%s\" (replaced).")
-            << int(analysisId) << manifest_.composeUri();
+            << int(analysisId) << d->manifest.composeUri();
 #endif
     }
-    analyses[analysisId] = data;
+    d->analyses[analysisId] = data;
+}
+
+Texture::Flags const &Texture::flags() const
+{
+    return d->flags;
+}
+
+Texture::Flags &Texture::flags()
+{
+    return d->flags;
 }
 
 } // namespace de
@@ -262,26 +301,6 @@ void Texture_SetAnalysisDataPointer(Texture *tex, texture_analysisid_t analysis,
     self->setAnalysisDataPointer(analysis, data);
 }
 
-boolean Texture_IsCustom(Texture const *tex)
-{
-    SELF_CONST(tex);
-    return CPP_BOOL(self->isCustom());
-}
-
-void Texture_FlagCustom(Texture *tex, boolean yes)
-{
-    SELF(tex);
-    self->flagCustom(bool(yes));
-}
-
-void Texture_SetDimensions(Texture *tex, Size2Raw const *newSize)
-{
-    SELF(tex);
-    if(!newSize)
-        LegacyCore_FatalError("Texture_SetDimensions: Attempted with invalid newSize argument (=NULL).");
-    self->setDimensions(*newSize);
-}
-
 int Texture_Width(Texture const *tex)
 {
     SELF_CONST(tex);
@@ -298,12 +317,6 @@ int Texture_Height(Texture const *tex)
 {
     SELF_CONST(tex);
     return self->height();
-}
-
-Size2Raw const *Texture_Dimensions(Texture const *tex)
-{
-    SELF_CONST(tex);
-    return &self->dimensions();
 }
 
 void Texture_SetHeight(Texture *tex, int newHeight)

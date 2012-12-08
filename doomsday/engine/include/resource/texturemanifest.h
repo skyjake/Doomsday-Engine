@@ -20,8 +20,8 @@
 #ifndef LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 #define LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 
+#include <QSize>
 #include <de/PathTree>
-#include <de/size.h>
 #include "uri.hh"
 #include "resource/texture.h"
 
@@ -58,7 +58,7 @@ public:
      *                  case their value will be inherited from the actual
      *                  pixel dimensions of the image at load time.
      */
-    Texture *derive(Size2Raw const &dimensions, Texture::Flags flags);
+    Texture *derive(QSize const &dimensions, Texture::Flags flags);
 
     /**
      * Returns the owning scheme of the TextureManifest.
@@ -136,14 +136,8 @@ public:
     static Textures &textures();
 
 private:
-    /// Scheme-unique identifier determined by the owner of the subspace.
-    int uniqueId_;
-
-    /// Path to the resource containing the loadable data.
-    Uri resourceUri_;
-
-    /// The associated logical Texture instance (if any).
-    Texture *texture_;
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace de

@@ -51,7 +51,7 @@ namespace de {
 
 static Uri emptyUri;
 
-Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Size2Raw const &dimensions,
+Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, QSize const &dimensions,
     Texture::Flags flags, void *userData)
 {
     LOG_AS("Textures::ResourceClass::interpret");
@@ -61,7 +61,7 @@ Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Size2Raw 
 Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Texture::Flags flags,
     void *userData)
 {
-    return interpret(manifest, Size2Raw(0, 0), flags, userData);
+    return interpret(manifest, QSize(0, 0), flags, userData);
 }
 
 struct Textures::Instance
@@ -433,10 +433,9 @@ static void printTextureInfo(Texture &tex)
 
     Con_Printf("Texture \"%s\" [%p] x%u origin:%s\n",
                path.constData(), (void *)&tex, tex.variantCount(),
-               tex.isCustom()? "addon" : "game");
+               tex.flags().testFlag(Texture::Custom)? "addon" : "game");
 
-    bool willAssumeImageDimensions = (tex.width() == 0 && tex.height() == 0);
-    if(willAssumeImageDimensions)
+    if(tex.dimensions().isEmpty())
         Con_Printf("Dimensions: unknown (not yet loaded)\n");
     else
         Con_Printf("Dimensions: %d x %d\n", tex.width(), tex.height());
@@ -455,16 +454,17 @@ static void printTextureInfo(Texture &tex)
 
 static void printTextureSummary(TextureManifest &manifest, bool printSchemeName = true)
 {
+    Texture *texture = manifest.texture();
     Uri uri = manifest.composeUri();
     QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
 
     QByteArray resourceUri = manifest.resourceUri().asText().toUtf8();
     if(resourceUri.isEmpty()) resourceUri = "N/A";
 
-    Con_FPrintf(!manifest.texture()? CPF_LIGHT : CPF_WHITE,
+    Con_FPrintf(!texture? CPF_LIGHT : CPF_WHITE,
                 "%-*s %-6s x%u %s\n", printSchemeName? 22 : 14, path.constData(),
-                !manifest.texture()? "unknown" : manifest.texture()->isCustom()? "addon" : "game",
-                manifest.texture()->variantCount(), resourceUri.constData());
+                !texture? "unknown" : texture->flags().testFlag(de::Texture::Custom)? "addon" : "game",
+                !texture? 0 : texture->variantCount(), resourceUri.constData());
 }
 
 /**

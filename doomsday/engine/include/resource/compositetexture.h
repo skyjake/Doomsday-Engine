@@ -26,10 +26,10 @@
 
 #include "dd_types.h" // For lumpnum_t
 #include <QList>
+#include <QPoint>
+#include <QSize>
 #include <de/String>
 #include <de/Reader>
-#include <de/point.h>
-#include <de/size.h>
 #include "patchname.h"
 
 namespace de
@@ -78,16 +78,16 @@ namespace de
 
         public:
             /// Origin of the top left corner of the component (in texture space units).
-            Point2Raw const &origin() const;
+            QPoint const &origin() const;
 
             /// X-axis origin of the top left corner of the component (in texture space units).
             inline int xOrigin() const {
-                return origin().x;
+                return origin().x();
             }
 
             /// Y-axis origin of the top left corner of the component (in texture space units).
             inline int yOrigin() const {
-                return origin().y;
+                return origin().y();
             }
 
             /// Returns the number of the lump (file) containing the associated
@@ -98,7 +98,7 @@ namespace de
 
         private:
             /// Origin of the top left corner in the texture coordinate space.
-            Point2Raw origin_;
+            QPoint origin_;
 
             /// Index of the lump containing the associated image.
             lumpnum_t lumpNum_;
@@ -134,16 +134,16 @@ namespace de
         String const &percentEncodedNameRef() const;
 
         /// Returns the logical dimensions of the texture (in map space units).
-        Size2Raw const &dimensions() const;
+        QSize const &dimensions() const;
 
         /// Returns the logical width of the texture (in map space units).
         inline int width() const {
-            return dimensions().width;
+            return dimensions().width();
         }
 
         /// Returns the logical width of the texture (in map space units).
         inline int height() const {
-            return dimensions().height;
+            return dimensions().height();
         }
 
         /// Returns the associated "original index" for the texture.
@@ -175,7 +175,7 @@ namespace de
         Flags flags_;
 
         /// Logical dimensions of the texture in map coordinate space units.
-        Size2Raw dimensions_;
+        QSize dimensions_;
 
         /// Index of this resource determined by the logic of the indexing algorithm
         /// used by the original game.
