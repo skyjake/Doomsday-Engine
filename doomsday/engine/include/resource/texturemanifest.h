@@ -50,7 +50,7 @@ public:
      *
      * @param flags     Texture classification flags.
      */
-    Texture *derive(Texture::Flags flags);
+    Texture *derive(Texture::Flags flags = 0);
 
     /**
      * @copydoc derive()
@@ -58,7 +58,7 @@ public:
      *                  case their value will be inherited from the actual
      *                  pixel dimensions of the image at load time.
      */
-    Texture *derive(QSize const &dimensions, Texture::Flags flags);
+    Texture *derive(QSize const &dimensions, Texture::Flags flags = 0);
 
     /**
      * Returns the owning scheme of the TextureManifest.

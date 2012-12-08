@@ -199,8 +199,8 @@ TexSource GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t m
 
 TexSource GL_LoadFlatLump(struct image_s* image, FileHandle* file);
 
-TexSource GL_LoadPatchLumpAsPatch(struct image_s* image, FileHandle* file, int tclass,
-    int tmap, int border, Texture* tex);
+TexSource GL_LoadPatchLump(struct image_s* image, FileHandle* file, int tclass,
+    int tmap, int border);
 
 TexSource GL_LoadDetailTextureLump(struct image_s* image, FileHandle* file);
 

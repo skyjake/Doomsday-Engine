@@ -161,10 +161,7 @@ patchid_t R_DeclarePatch(char const *name)
     if(monochrome)               flags |= de::Texture::Monochrome;
     if(upscaleAndSharpenPatches) flags |= de::Texture::UpscaleAndSharpen;
 
-    /**
-     * @todo: Cannot be sure this is in Patch format until a load attempt
-     *        is made. We should not read this info here!
-     */
+    /// @todo fixme: Ensure this is in Patch format.
     ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
     de::Reader from = de::Reader(fileData);
     PatchHeader patchHdr;
@@ -187,8 +184,8 @@ patchid_t R_DeclarePatch(char const *name)
     else
     {
         tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
-        tex->flags() = flags;
         tex->setDimensions(patchHdr.dimensions);
+        tex->flags() = flags;
     }
 
     return uniqueId;
@@ -742,7 +739,7 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
     if(manifest.texture()) return;
 
     // A new sprite texture.
-    de::Texture *tex = manifest.derive(0);
+    de::Texture *tex = manifest.derive();
     if(!tex)
     {
         LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.")
@@ -755,15 +752,16 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
 
     try
     {
-        String const &resourcePath = resourceUri.resolvedRef();
-        lumpnum_t lumpNum = App_FileSystem()->nameIndex().lastIndexForPath(resourcePath);
+        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
         de::File1& file = App_FileSystem()->nameIndex().lump(lumpNum);
 
+        /// @todo fixme: Ensure this is in Patch format.
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
         de::Reader from = de::Reader(fileData);
         PatchHeader patchHdr;
         from >> patchHdr;
 
+        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
         tex->setDimensions(patchHdr.dimensions);
         if(file.hasCustom())
             tex->flags() |= de::Texture::Custom;
@@ -811,12 +809,10 @@ static bool validateSpriteName(String name)
  * in the global LumpIndex. This is necessary because of the way id tech 1
  * manages patch references.
  */
-#if 0
 static inline de::Uri composeSpriteResourceUrn(lumpnum_t lumpNum)
 {
     return de::Uri("LumpDir", Path(String("%1").arg(lumpNum)));
 }
-#endif
 
 void R_InitSpriteTextures()
 {
@@ -862,8 +858,7 @@ void R_InitSpriteTextures()
         }
 
         // Compose the data resource path.
-        //de::Uri resourceUri = composeSpriteResourceUrn(i);
-        de::Uri resourceUri("Lumps", Path(fileName));
+        de::Uri resourceUri = composeSpriteResourceUrn(i);
 
         if(!App_Textures()->declare(de::Uri("Sprites", Path(fileName)), uniqueId, &resourceUri))
         {

@@ -758,9 +758,8 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                     de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
                     de::FileHandle &hndl = App_FileSystem()->openLump(lump);
 
-                    source = GL_LoadPatchLumpAsPatch(&image, reinterpret_cast<filehandle_s *>(&hndl),
-                                                     tclass, tmap, spec->border,
-                                                     reinterpret_cast<texture_s *>(&tex));
+                    source = GL_LoadPatchLump(&image, reinterpret_cast<filehandle_s *>(&hndl),
+                                              tclass, tmap, spec->border);
 
                     App_FileSystem()->releaseFile(hndl.file());
                     delete &hndl;
@@ -804,24 +803,30 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         if(source == TEXS_NONE)
         {
             de::Uri const &resourceUri = tex.manifest().resourceUri();
+            lumpnum_t lumpNum = -1;
+
             if(!resourceUri.scheme().compareWithoutCase("Lumps"))
             {
-                lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(resourceUri.path());
-                try
-                {
-                    de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
-                    de::FileHandle &hndl = App_FileSystem()->openLump(lump);
-
-                    source = GL_LoadPatchLumpAsPatch(&image, reinterpret_cast<filehandle_s *>(&hndl),
-                                                     tclass, tmap, spec->border,
-                                                     reinterpret_cast<texture_s *>(&tex));
-
-                    App_FileSystem()->releaseFile(hndl.file());
-                    delete &hndl;
-                }
-                catch(LumpIndex::NotFoundError const&)
-                {} // Ignore this error.
+                lumpNum = App_FileSystem()->lumpNumForName(resourceUri.path());
             }
+            else if(!resourceUri.scheme().compareWithoutCase("LumpDir"))
+            {
+                lumpNum = resourceUri.path().toString().toInt();
+            }
+
+            try
+            {
+                de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
+                de::FileHandle &hndl = App_FileSystem()->openLump(lump);
+
+                source = GL_LoadPatchLump(&image, reinterpret_cast<filehandle_s *>(&hndl),
+                                          tclass, tmap, spec->border);
+
+                App_FileSystem()->releaseFile(hndl.file());
+                delete &hndl;
+            }
+            catch(LumpIndex::NotFoundError const&)
+            {} // Ignore this error.
         }
     }
     else if(!tex.manifest().schemeName().compareWithoutCase("Details"))
@@ -2408,10 +2413,10 @@ TexSource GL_LoadFlatLump(image_t* image, filehandle_s* file)
     return source;
 }
 
-static TexSource loadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int tmap, int border)
+TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int tmap, int border)
 {
     DENG_ASSERT(image && hndl);
-    LOG_AS("loadPatchLump");
+    LOG_AS("GL_LoadPatchLump");
 
     TexSource source = TEXS_NONE;
 
@@ -2461,27 +2466,6 @@ static TexSource loadPatchLump(image_t *image, filehandle_s *hndl, int tclass, i
                 << NativePath(file.composePath()).pretty();
             return source;
         }
-    }
-    return source;
-}
-
-TexSource GL_LoadPatchLumpAsPatch(image_t *image, filehandle_s *hndl, int tclass, int tmap, int border,
-    texture_s *_tex)
-{
-    TexSource source = loadPatchLump(image, hndl, tclass, tmap, border);
-    if(source == TEXS_ORIGINAL && _tex)
-    {
-        // Loaded from a lump assumed to be in DOOM's Patch format.
-        de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
-
-        // Read the world origin offset from the lump.
-        de::File1 &file = reinterpret_cast<de::File1 &>(*FileHandle_File(hndl));
-        uint8_t const *dataBuffer = file.cache();
-
-        doompatch_header_t const &hdr = reinterpret_cast<doompatch_header_t const &>(*dataBuffer);
-        tex.setOrigin(QPoint(-SHORT(hdr.leftOffset), -SHORT(hdr.topOffset)));
-
-        file.unlock();
     }
     return source;
 }
@@ -3290,7 +3274,7 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     if(tex.dimensions().isEmpty())
     {
 #if _DEBUG
-        LOG_VERBOSE("Logical dimensions for \"%s\" taken from image pixels (%ix%i).")
+        LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels (%ix%i).")
             << tex.manifest().composeUri() << image.size.width << image.size.height;
 #endif
         tex.setDimensions(QSize(image.size.width, image.size.height));
