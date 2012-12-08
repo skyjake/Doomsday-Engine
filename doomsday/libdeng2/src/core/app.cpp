@@ -70,7 +70,7 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
     NativeModules nativeModules;
 
     /// Resident modules.
-    typedef std::map<String, Module *> Modules;
+    typedef QMap<String, Module *> Modules;
     Modules modules;
 
     Instance(App &a, QStringList args) : app(a), cmdLine(args), persistentData(0), config(0)
@@ -429,7 +429,7 @@ Record &App::importModule(String const &name, String const &fromPath)
     Instance::Modules::iterator found = self.d->modules.find(name);
     if(found != self.d->modules.end())
     {
-        return found->second->names();
+        return found.value()->names();
     }
 
     /// @todo  Move this path searching logic to FS.
@@ -487,7 +487,7 @@ Record &App::importModule(String const &name, String const &fromPath)
         if(found)
         {
             Module *module = new Module(*found);
-            self.d->modules[name] = module;
+            self.d->modules.insert(name, module);
             return module->names();
         }
     }
