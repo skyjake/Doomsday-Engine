@@ -172,6 +172,14 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             result = newBooleanValue(rightValue->isFalse());
             break;
 
+        case AND:
+            result = newBooleanValue(leftValue->isTrue() && rightValue->isTrue());
+            break;
+
+        case OR:
+            result = newBooleanValue(leftValue->isTrue() || rightValue->isTrue());
+            break;
+
         case EQUAL:
             result = newBooleanValue(!leftValue->compare(*rightValue));
             break;
@@ -238,7 +246,8 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             if(!recValue)
             {
                 throw ScopeError("OperatorExpression::evaluate",
-                    "Left side of " + operatorToText(_op) + " must evaluate to a record");
+                    "Left side of " + operatorToText(_op) + " must evaluate to a record [" +
+                                 DENG2_TYPE_NAME(*leftValue) + "]");
             }
             
             // Now that we know what the scope is, push the rest of the expression
