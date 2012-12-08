@@ -59,7 +59,7 @@ struct Texture::Instance
     void *analyses[TEXTURE_ANALYSIS_COUNT];
 
     Instance(TextureManifest &_manifest, Texture::Flags _flags, void *_userData)
-        : flags(_flags), manifest(_manifest), variants(), userData(_userData), origin(), dimensions()
+        : flags(_flags), manifest(_manifest), userData(_userData)
     {
         std::memset(analyses, 0, sizeof(analyses));
     }
