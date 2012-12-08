@@ -49,6 +49,18 @@ using namespace de;
 
 static QList<PatchName> patchNames;
 
+/**
+ * Compose the path to the data resource.
+ * @note We do not use the lump name, instead we use the logical lump index
+ * in the global LumpIndex. This is necessary because of the way id tech 1
+ * manages graphic references in animations (intermediate frames are chosen
+ * by their 'original indices' rather than by name).
+ */
+static inline de::Uri composeLumpIndexResourceUrn(lumpnum_t lumpNum)
+{
+    return de::Uri("LumpDir", Path(String("%1").arg(lumpNum)));
+}
+
 void R_InitSystemTextures()
 {
     LOG_AS("R_InitSystemTextures");
@@ -147,7 +159,7 @@ patchid_t R_DeclarePatch(char const *name)
 
     // Compose the path to the data resource.
     de::File1 &file = App_FileSystem()->nameIndex().lump(lumpNum);
-    de::Uri resourceUri("Lumps", Path(file.name()));
+    de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
     int uniqueId = textures.scheme("Patches").count() + 1; // 1-based index.
     TextureManifest *manifest = textures.declare(uri, uniqueId, &resourceUri);
@@ -646,18 +658,6 @@ static inline de::Uri composeFlatUri(String percentEncodedPath)
     return de::Uri("Flats", Path(percentEncodedPath.fileNameWithoutExtension()));
 }
 
-/**
- * Compose the path to the data resource.
- * @note We do not use the lump name, instead we use the logical lump index
- * in the global LumpIndex. This is necessary because of the way id tech 1
- * manages flat references in animations (intermediate frames are chosen by their
- * 'original indices' rather than by name).
- */
-static inline de::Uri composeFlatResourceUrn(lumpnum_t lumpNum)
-{
-    return de::Uri("LumpDir", Path(String("%1").arg(lumpNum)));
-}
-
 void R_InitFlatTextures()
 {
     de::Time begunAt;
@@ -714,7 +714,7 @@ void R_InitFlatTextures()
                  * @todo Always determine size from the lowres original.
                  */
                 int const uniqueId = lumpNum - (firstFlatMarkerLumpNum + 1);
-                de::Uri resourcePath = composeFlatResourceUrn(lumpNum);
+                de::Uri resourcePath = composeLumpIndexResourceUrn(lumpNum);
                 TextureManifest *manifest = textures.declare(uri, uniqueId, &resourcePath);
 
                 de::Texture::Flags flags;
@@ -803,17 +803,6 @@ static bool validateSpriteName(String name)
     return true;
 }
 
-/**
- * Compose the path to the data resource.
- * @note We do not use the lump name, instead we use the logical lump index
- * in the global LumpIndex. This is necessary because of the way id tech 1
- * manages patch references.
- */
-static inline de::Uri composeSpriteResourceUrn(lumpnum_t lumpNum)
-{
-    return de::Uri("LumpDir", Path(String("%1").arg(lumpNum)));
-}
-
 void R_InitSpriteTextures()
 {
     de::Time begunAt;
@@ -858,7 +847,7 @@ void R_InitSpriteTextures()
         }
 
         // Compose the data resource path.
-        de::Uri resourceUri = composeSpriteResourceUrn(i);
+        de::Uri resourceUri = composeLumpIndexResourceUrn(i);
 
         if(!App_Textures()->declare(de::Uri("Sprites", Path(fileName)), uniqueId, &resourceUri))
         {

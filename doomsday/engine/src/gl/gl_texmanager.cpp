@@ -705,29 +705,22 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         if(source == TEXS_NONE)
         {
             de::Uri const &resourceUri = tex.manifest().resourceUri();
-            lumpnum_t lumpNum = -1;
-
-            if(!resourceUri.scheme().compareWithoutCase("Lumps"))
+            if(!resourceUri.scheme().compareWithoutCase("LumpDir"))
             {
-                lumpNum = App_FileSystem()->lumpNumForName(resourceUri.path());
-            }
-            else if(!resourceUri.scheme().compareWithoutCase("LumpDir"))
-            {
-                lumpNum = resourceUri.path().toString().toInt();
-            }
+                try
+                {
+                    lumpnum_t lumpNum = resourceUri.path().toString().toInt();
+                    de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
+                    de::FileHandle &hndl = App_FileSystem()->openLump(lump);
 
-            try
-            {
-                de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
-                de::FileHandle &hndl = App_FileSystem()->openLump(lump);
+                    source = GL_LoadFlatLump(&image, reinterpret_cast<filehandle_s *>(&hndl));
 
-                source = GL_LoadFlatLump(&image, reinterpret_cast<filehandle_s *>(&hndl));
-
-                App_FileSystem()->releaseFile(hndl.file());
-                delete &hndl;
+                    App_FileSystem()->releaseFile(hndl.file());
+                    delete &hndl;
+                }
+                catch(LumpIndex::NotFoundError const&)
+                {} // Ignore this error.
             }
-            catch(LumpIndex::NotFoundError const&)
-            {} // Ignore this error.
         }
     }
     else if(!tex.manifest().schemeName().compareWithoutCase("Patches"))
@@ -750,11 +743,11 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         if(source == TEXS_NONE)
         {
             de::Uri const &resourceUri = tex.manifest().resourceUri();
-            if(!resourceUri.scheme().compareWithoutCase("Lumps"))
+            if(!resourceUri.scheme().compareWithoutCase("LumpDir"))
             {
-                lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(resourceUri.path());
                 try
                 {
+                    lumpnum_t lumpNum = resourceUri.path().toString().toInt();
                     de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
                     de::FileHandle &hndl = App_FileSystem()->openLump(lump);
 
@@ -803,30 +796,23 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         if(source == TEXS_NONE)
         {
             de::Uri const &resourceUri = tex.manifest().resourceUri();
-            lumpnum_t lumpNum = -1;
-
-            if(!resourceUri.scheme().compareWithoutCase("Lumps"))
+            if(!resourceUri.scheme().compareWithoutCase("LumpDir"))
             {
-                lumpNum = App_FileSystem()->lumpNumForName(resourceUri.path());
-            }
-            else if(!resourceUri.scheme().compareWithoutCase("LumpDir"))
-            {
-                lumpNum = resourceUri.path().toString().toInt();
-            }
+                try
+                {
+                    lumpnum_t lumpNum = resourceUri.path().toString().toInt();
+                    de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
+                    de::FileHandle &hndl = App_FileSystem()->openLump(lump);
 
-            try
-            {
-                de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
-                de::FileHandle &hndl = App_FileSystem()->openLump(lump);
+                    source = GL_LoadPatchLump(&image, reinterpret_cast<filehandle_s *>(&hndl),
+                                              tclass, tmap, spec->border);
 
-                source = GL_LoadPatchLump(&image, reinterpret_cast<filehandle_s *>(&hndl),
-                                          tclass, tmap, spec->border);
-
-                App_FileSystem()->releaseFile(hndl.file());
-                delete &hndl;
+                    App_FileSystem()->releaseFile(hndl.file());
+                    delete &hndl;
+                }
+                catch(LumpIndex::NotFoundError const&)
+                {} // Ignore this error.
             }
-            catch(LumpIndex::NotFoundError const&)
-            {} // Ignore this error.
         }
     }
     else if(!tex.manifest().schemeName().compareWithoutCase("Details"))
