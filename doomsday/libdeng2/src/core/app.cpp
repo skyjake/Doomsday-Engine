@@ -18,18 +18,20 @@
  */
 
 #include "de/App"
+#include "de/ArchiveFeed"
 #include "de/ArrayValue"
+#include "de/Block"
 #include "de/DirectoryFeed"
-#include "de/PackageFolder"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/Module"
+#include "de/NumberValue"
+#include "de/PackageFolder"
 #include "de/Record"
 #include "de/Version"
-#include "de/Block"
-#include "de/ZipArchive"
-#include "de/ArchiveFeed"
+#include "de/Version"
 #include "de/Writer"
+#include "de/ZipArchive"
 #include "de/math.h"
 
 #include <QDesktopServices>
@@ -68,6 +70,7 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
     /// parsed from any script.
     typedef QMap<String, Record *> NativeModules;
     NativeModules nativeModules;
+    Record versionModule; // Version: information about the platform and build
 
     /// Resident modules.
     typedef QMap<String, Module *> Modules;
@@ -188,6 +191,20 @@ App::App(int &argc, char **argv, GUIMode guiMode)
         DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
     }
 #endif
+
+    // Setup the Version module.
+    Version ver;
+    Record &mod = d->versionModule;
+    ArrayValue *num = new ArrayValue;
+    *num << NumberValue(ver.major) << NumberValue(ver.minor)
+         << NumberValue(ver.patch) << NumberValue(ver.build);
+    mod.addArray("number") = num;
+    mod.addText("text", ver.asText());
+    mod.addNumber("build", ver.build);
+    mod.addText("os", Version::operatingSystem());
+    mod.addNumber("cpuBits", Version::cpuBits());
+    mod.addBoolean("debug", Version::isDebugBuild());
+    addNativeModule("Version", mod);
 }
 
 App::~App()
