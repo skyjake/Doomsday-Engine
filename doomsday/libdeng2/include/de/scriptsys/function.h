@@ -86,9 +86,9 @@ namespace de
          *
          * @see nativeEntryPoint()
          */
-        Function(String const &nativeName, Arguments const &args, Defaults const &defaults);
-
-        ~Function();
+        Function(String const    &nativeName,
+                 Arguments const &args = Arguments(),
+                 Defaults const  &defaults = Defaults());
 
         /// Returns a human-readable representation of the function.
         String asText() const;
@@ -209,7 +209,10 @@ namespace de
          * @return Native entry point.
          */
         static NativeEntryPoint nativeEntryPoint(String const &name);
-        
+
+    protected:
+        ~Function(); // Counted
+
     private:
         struct Instance;
         Instance *d;

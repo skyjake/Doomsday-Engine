@@ -74,8 +74,16 @@ Function::Function(Arguments const &args, Defaults const &defaults)
 Function::Function(String const &nativeName, Arguments const &args, Defaults const &defaults)
     : d(new Instance(args, defaults))
 {
-    d->nativeName       = nativeName;
-    d->nativeEntryPoint = nativeEntryPoint(nativeName);
+    try
+    {
+        d->nativeName       = nativeName;
+        d->nativeEntryPoint = nativeEntryPoint(nativeName);
+    }
+    catch(Error const &)
+    {
+        addRef(-1); // Cancelled construction of the instance; no one has a reference.
+        throw;
+    }
 }
 
 Function::~Function()
@@ -325,7 +333,7 @@ void Function::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
     d->globals = 0;
 }
 
-void Function::registerNativeEntryPoint(const String &name, Function::NativeEntryPoint entryPoint)
+void Function::registerNativeEntryPoint(String const &name, Function::NativeEntryPoint entryPoint)
 {
     entryPoints.insert(name, entryPoint);
 }
@@ -337,8 +345,13 @@ void Function::unregisterNativeEntryPoint(String const &name)
 
 Function::NativeEntryPoint Function::nativeEntryPoint(String const &name)
 {
-    throw UnknownEntryPointError("Function::nativeEntryPoint",
-                                 QString("Native entry point '%1' is not available").arg(name));
+    RegisteredEntryPoints::const_iterator found = entryPoints.constFind(name);
+    if(found == entryPoints.constEnd())
+    {
+        throw UnknownEntryPointError("Function::nativeEntryPoint",
+                                     QString("Native entry point '%1' is not available").arg(name));
+    }
+    return found.value();
 }
 
 } // namespace de
