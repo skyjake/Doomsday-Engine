@@ -273,7 +273,7 @@ struct FS1::Instance
         DENG_ASSERT(!path.isEmpty());
 
         // We must have an absolute path - prepend the CWD if necessary.
-        path = NativePath::workPath() / path;
+        path = NativePath::workPath().withSeparators('/') / path;
 
         // Translate mymode to the C-lib's fopen() mode specifiers.
         char mode[8] = "";
