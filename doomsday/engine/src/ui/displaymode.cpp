@@ -22,6 +22,14 @@
 #include "ui/displaymode.h"
 #include "ui/displaymode_native.h"
 
+#include <de/App>
+#include <de/Record>
+#include <de/FunctionValue>
+#include <de/DictionaryValue>
+#include <de/ArrayValue>
+#include <de/TextValue>
+#include <de/NumberValue>
+
 #include <vector>
 #include <set>
 #include <algorithm>
@@ -29,6 +37,7 @@
 
 static bool inited = false;
 static displaycolortransfer_t originalColorTransfer;
+static de::Record *bindings;
 
 static float differenceToOriginalHz(float hz);
 
@@ -135,6 +144,7 @@ struct Mode : public DisplayMode
 };
 
 typedef std::set<Mode> Modes; // note: no duplicates
+
 static Modes modes;
 static Mode originalMode;
 static bool captured;
@@ -142,6 +152,47 @@ static bool captured;
 static float differenceToOriginalHz(float hz)
 {
     return qAbs(hz - originalMode.refreshRate);
+}
+
+static de::Value *Binding_DisplayMode_OriginalMode(de::Context &, de::Function::ArgumentValues const &)
+{
+    using de::NumberValue;
+    using de::TextValue;
+
+    DisplayMode const *mode = DisplayMode_OriginalMode();
+
+    de::DictionaryValue *dict = new de::DictionaryValue;
+    dict->add(new TextValue("width"), new NumberValue(mode->width));
+    dict->add(new TextValue("height"), new NumberValue(mode->height));
+    dict->add(new TextValue("depth"), new NumberValue(mode->depth));
+    dict->add(new TextValue("refreshRate"), new NumberValue(mode->refreshRate));
+
+    de::ArrayValue *ratio = new de::ArrayValue;
+    *ratio << NumberValue(mode->ratioX) << NumberValue(mode->ratioY);
+    dict->add(new TextValue("ratio"),  ratio);
+
+    return dict;
+}
+
+static void setupBindings()
+{
+    de::Function::registerNativeEntryPoint("DisplayMode_OriginalMode", Binding_DisplayMode_OriginalMode);
+
+    bindings = new de::Record;
+
+    de::Function *func = new de::Function("DisplayMode_OriginalMode");
+    bindings->addFunction("originalMode", func);
+    func->release(); // we don't keep a ref
+
+    de::App::app().addNativeModule("DisplayMode", *bindings);
+}
+
+static void tearDownBindings()
+{
+    delete bindings; // App observes
+    bindings = 0;
+
+    de::Function::unregisterNativeEntryPoint("DisplayMode_OriginalMode");
 }
 
 int DisplayMode_Init(void)
@@ -174,6 +225,8 @@ int DisplayMode_Init(void)
         i->debugPrint();
     }
 
+    setupBindings();
+
     inited = true;
     return true;
 }
@@ -181,6 +234,8 @@ int DisplayMode_Init(void)
 void DisplayMode_Shutdown(void)
 {
     if(!inited) return;
+
+    tearDownBindings();
 
     LOG_INFO("Restoring original display mode due to shutdown.");
 
@@ -202,7 +257,7 @@ void DisplayMode_SaveOriginalColorTransfer(void)
     DisplayMode_Native_GetColorTransfer(&originalColorTransfer);
 }
 
-const DisplayMode* DisplayMode_OriginalMode(void)
+DisplayMode const *DisplayMode_OriginalMode(void)
 {
     return &originalMode;
 }
