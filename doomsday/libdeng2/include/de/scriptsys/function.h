@@ -53,7 +53,7 @@ namespace de
      *
      * @ingroup script
      */
-    class Function : public Counted, public ISerializable, DENG2_OBSERVES(Record, Deletion)
+    class DENG2_PUBLIC Function : public Counted, public ISerializable, DENG2_OBSERVES(Record, Deletion)
     {
     public:
         /// An incorrect number of arguments is given in a function call. @ingroup errors
