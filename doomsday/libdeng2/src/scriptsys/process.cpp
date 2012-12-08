@@ -259,7 +259,7 @@ void Process::finish(Value *returnValue)
         if(topmost->type() == Context::FUNCTION_CALL)
         {
             // Return value to the new topmost level.
-            context().evaluator().pushResult(returnValue? returnValue : new NoneValue());
+            context().evaluator().pushResult(returnValue? returnValue : new NoneValue);
         }
         delete topmost.release();
     }
@@ -288,14 +288,19 @@ void Process::call(Function const &function, ArrayValue const &arguments)
     Function::ArgumentValues argValues;
     function.mapArgumentValues(arguments, argValues);
     
-    if(!function.callNative(context(), argValues))
+    if(function.isNative())
+    {
+        // Do a native function call.
+        context().evaluator().pushResult(function.callNative(context(), argValues));
+    }
+    else
     {
         // If the function resides in another process's namespace, push
         // that namespace on the stack first.
         if(function.globals() && function.globals() != &globals())
         {
             _stack.push_back(new Context(Context::GLOBAL_NAMESPACE, this, 
-                function.globals()));
+                                         function.globals()));
         }
         
         // Create a new context.

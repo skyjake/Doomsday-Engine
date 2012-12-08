@@ -21,33 +21,73 @@
 #include "de/TextValue"
 #include "de/ArrayValue"
 #include "de/DictionaryValue"
+#include "de/NoneValue"
 #include "de/Writer"
 #include "de/Reader"
 #include "de/Log"
 
 #include <QTextStream>
 
-using namespace de;
+namespace de {
 
-Function::Function() : _globals(0)
+struct Function::Instance
+{
+    /// Argument names.
+    Function::Arguments arguments;
+
+    /// The function owns the default values stored in the arguments list.
+    Function::Defaults defaults;
+
+    /// The statements of this function.
+    Compound compound;
+
+    /// Namespace where the function was created. This global namespace is
+    /// used always when executing the function, regardless of where the
+    /// function is called.
+    Record *globals;
+
+    /// Name of the native function (empty, if this is not a native function).
+    String nativeName;
+
+    /// The native entry point.
+    Function::NativeEntryPoint nativeEntryPoint;
+
+    Instance() : globals(0), nativeEntryPoint(0)
+    {}
+
+    Instance(Function::Arguments const &args, Function::Defaults const &defaults)
+        : arguments(args), defaults(defaults), globals(0), nativeEntryPoint(0)
+    {}
+};
+
+Function::Function() : d(new Instance)
 {}
 
 Function::Function(Arguments const &args, Defaults const &defaults) 
-    : _arguments(args), _defaults(defaults), _globals(0)
+    : d(new Instance(args, defaults))
 {}
+
+Function::Function(String const &nativeName, Arguments const &args, Defaults const &defaults)
+    : d(new Instance(args, defaults))
+{
+    d->nativeName       = nativeName;
+    d->nativeEntryPoint = nativeEntryPoint(nativeName);
+}
 
 Function::~Function()
 {
     // Delete the default argument values.
-    DENG2_FOR_EACH(Defaults, i, _defaults)
+    DENG2_FOR_EACH(Defaults, i, d->defaults)
     {
         delete i->second;
     }
-    if(_globals)
+    if(d->globals)
     {
         // Stop observing the namespace.
-        _globals->audienceForDeletion.remove(this);
+        d->globals->audienceForDeletion.remove(this);
     }
+
+    delete d;
 }
 
 String Function::asText() const
@@ -55,15 +95,15 @@ String Function::asText() const
     String result;
     QTextStream os(&result);
     os << "(Function " << this << " (";
-    DENG2_FOR_EACH_CONST(Arguments, i, _arguments)
+    DENG2_FOR_EACH_CONST(Arguments, i, d->arguments)
     {
-        if(i != _arguments.begin())
+        if(i != d->arguments.begin())
         {
             os << ", ";
         }
         os << *i;
-        Defaults::const_iterator def = _defaults.find(*i);
-        if(def != _defaults.end())
+        Defaults::const_iterator def = d->defaults.find(*i);
+        if(def != d->defaults.end())
         {
             os << "=" << def->second->asText();
         }
@@ -72,20 +112,51 @@ String Function::asText() const
     return result;
 }
 
+Compound &Function::compound()
+{
+    return d->compound;
+}
+
+Compound const &Function::compound() const
+{
+    return d->compound;
+}
+
+Function::Arguments &Function::arguments()
+{
+    return d->arguments;
+}
+
+Function::Arguments const &Function::arguments() const
+{
+    return d->arguments;
+}
+
+Function::Defaults &Function::defaults()
+{
+    return d->defaults;
+}
+
+Function::Defaults const &Function::defaults() const
+{
+    return d->defaults;
+}
+
 void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values) const
 {
     DictionaryValue const *labeledArgs = dynamic_cast<DictionaryValue const *>(
         args.elements().front());
+
     DENG2_ASSERT(labeledArgs != NULL);
 
     // First use all the unlabeled arguments.
-    Arguments::const_iterator k = _arguments.begin();
+    Arguments::const_iterator k = d->arguments.begin();
     for(ArrayValue::Elements::const_iterator i = args.elements().begin() + 1;
         i != args.elements().end(); ++i)
     {
         values.push_back(*i);
         
-        if(k != _arguments.end())
+        if(k != d->arguments.end())
         {
             if(labeledArgs->contains(TextValue(*k)))
             {
@@ -98,13 +169,13 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
         }
     }
     
-    if(values.size() < _arguments.size())
+    if(values.size() < d->arguments.size())
     {
         // Then apply the labeled arguments, falling back to default values.
-        Arguments::const_iterator i = _arguments.begin();
+        Arguments::const_iterator i = d->arguments.begin();
         // Skip past arguments we already have a value for.
         for(duint count = values.size(); count > 0; --count, ++i) {}
-        for(; i != _arguments.end(); ++i)
+        for(; i != d->arguments.end(); ++i)
         {
             try 
             {
@@ -113,8 +184,8 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
             catch(DictionaryValue::KeyError const &)
             {
                 // Check the defaults.
-                Defaults::const_iterator k = _defaults.find(*i);
-                if(k != _defaults.end())
+                Defaults::const_iterator k = d->defaults.find(*i);
+                if(k != d->defaults.end())
                 {
                     values.push_back(k->second);
                 }
@@ -129,11 +200,11 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
     }
     
     // Check that the number of arguments matches what we expect.
-    if(values.size() != _arguments.size())
+    if(values.size() != d->arguments.size())
     {
         /// @throw WrongArgumentsError  Wrong number of argument specified.
         throw WrongArgumentsError("Function::mapArgumentValues",
-                                  "Expected " + QString::number(_arguments.size()) +
+                                  "Expected " + QString::number(d->arguments.size()) +
                                   " arguments, but got " + QString::number(values.size()) +
                                   " arguments in function call");
     }    
@@ -143,12 +214,12 @@ void Function::setGlobals(Record *globals)
 {
     LOG_AS("Function::setGlobals");
     
-    if(!_globals)
+    if(!d->globals)
     {
-        _globals = globals;
-        _globals->audienceForDeletion.add(this);
+        d->globals = globals;
+        d->globals->audienceForDeletion.add(this);
     }
-    else if(_globals != globals)
+    else if(d->globals != globals)
     {
         LOG_WARNING("Function was offered a different namespace.");
     }
@@ -156,39 +227,54 @@ void Function::setGlobals(Record *globals)
 
 Record *Function::globals() const
 {
-    return _globals;
+    return d->globals;
 }
 
-bool Function::callNative(Context &/*context*/, ArgumentValues const &DENG2_DEBUG_ONLY(args)) const
+bool Function::isNative() const
 {
-    DENG2_ASSERT(args.size() == _arguments.size());
-    
-    // Do non-native function call.
-    return false;
+    return d->nativeEntryPoint != NULL;
+}
+
+Value *Function::callNative(Context &context, ArgumentValues const &args) const
+{
+    DENG2_ASSERT(isNative());
+    DENG2_ASSERT(args.size() == d->arguments.size()); // all arguments provided
+
+    Value *result = (d->nativeEntryPoint)(context, args);
+
+    if(!result)
+    {
+        // Must always return something.
+        result = new NoneValue;
+    }
+    return result;
 }
 
 void Function::operator >> (Writer &to) const
 {
     // Number of arguments.
-    to << duint16(_arguments.size());
+    to << duint16(d->arguments.size());
 
     // Argument names.
-    DENG2_FOR_EACH_CONST(Arguments, i, _arguments)
+    DENG2_FOR_EACH_CONST(Arguments, i, d->arguments)
     {
         to << *i;
     }
     
     // Number of default values.
-    to << duint16(_defaults.size());
+    to << duint16(d->defaults.size());
     
     // Default values.
-    DENG2_FOR_EACH_CONST(Defaults, i, _defaults)
+    DENG2_FOR_EACH_CONST(Defaults, i, d->defaults)
     {
         to << i->first << *i->second;
     }
     
     // The statements of the function.
-    to << _compound;        
+    to << d->compound;
+
+    // The possible native entry point.
+    to << d->nativeName;
 }
 
 void Function::operator << (Reader &from)
@@ -197,31 +283,47 @@ void Function::operator << (Reader &from)
     
     // Argument names.
     from >> count;
-    _arguments.clear();
+    d->arguments.clear();
     while(count--)
     {
         String argName;
         from >> argName;
-        _arguments.push_back(argName);
+        d->arguments.push_back(argName);
     }
     
     // Default values.
     from >> count;
-    _defaults.clear();
+    d->defaults.clear();
     while(count--)
     {
         String name;
         from >> name;
-        _defaults[name] = Value::constructFrom(from);
+        d->defaults[name] = Value::constructFrom(from);
     }
     
     // The statements.
-    from >> _compound;
+    from >> d->compound;
+
+    from >> d->nativeName;
+
+    // Restore the entry point.
+    if(!d->nativeName.isEmpty())
+    {
+        d->nativeEntryPoint = nativeEntryPoint(d->nativeName);
+    }
 }
 
 void Function::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
 {
     // The namespace of the record is being deleted.
-    DENG2_ASSERT(_globals == &record);
-    _globals = 0;
+    DENG2_ASSERT(d->globals == &record);
+    d->globals = 0;
 }
+
+Function::NativeEntryPoint Function::nativeEntryPoint(String const &name)
+{
+    throw UnknownEntryPointError("Function::nativeEntryPoint",
+                                 QString("Native entry point '%1' is not available").arg(name));
+}
+
+} // namespace de
