@@ -1,5 +1,4 @@
-/** @file texture.h Logical Texture
- * @ingroup resource
+/** @file texture.h Logical Texture.
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -28,6 +27,8 @@
 extern "C" {
 #endif
 
+/// @addtogroup resource
+///@{
 typedef enum {
     TEXTURE_ANALYSIS_FIRST = 0,
     TA_COLORPALETTE = TEXTURE_ANALYSIS_FIRST,
@@ -42,6 +43,7 @@ typedef enum {
 
 #define VALID_TEXTURE_ANALYSISID(id) (\
     (id) >= TEXTURE_ANALYSIS_FIRST && (id) < TEXTURE_ANALYSIS_COUNT)
+///@}
 
 #ifdef __cplusplus
 } // extern "C"
@@ -58,8 +60,8 @@ namespace de {
 class TextureManifest;
 
 /**
- * Presents an abstract interface to all supported texture types so that
- * they may be managed transparently.
+ * Logical texture object.
+ * @ingroup resource
  */
 class Texture
 {
@@ -99,7 +101,7 @@ public:
     ~Texture();
 
     /// @return  @c true iff this texture instance is flagged as "custom".
-    bool isCustom() const { return !!(flags & Custom); }
+    bool isCustom() const;
 
     /// Change the "custom" status of this texture instance.
     void flagCustom(bool yes);
@@ -170,7 +172,7 @@ public:
     int height() const;
 
     /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
-    QSize const &dimensions() const { return dimensions_; }
+    QSize const &dimensions() const;
 
     /**
      * Change logical width.
@@ -193,26 +195,11 @@ public:
     /**
      * Provides access to the list of variant textures for efficent traversals.
      */
-    Variants const &variantList() const { return variants; }
+    Variants const &variantList() const;
 
 private:
-    Flags flags;
-
-    /// Unique identifier of the primary binding in the owning collection.
-    TextureManifest &manifest_;
-
-    /// List of variants (e.g., color translations).
-    Variants variants;
-
-    /// User data associated with this texture.
-    void *userData;
-
-    /// "Logical" dimensions in map coordinate space units.
-    QSize dimensions_;
-
-    /// Table of analyses object ptrs, used for various purposes depending
-    /// on the variant specification.
-    void *analyses[TEXTURE_ANALYSIS_COUNT];
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace de

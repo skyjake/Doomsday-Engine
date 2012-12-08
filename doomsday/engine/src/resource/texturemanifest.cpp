@@ -22,21 +22,41 @@
 
 namespace de {
 
-TextureManifest::TextureManifest(PathTree::NodeArgs const &args) : Node(args),
-    uniqueId_(0), resourceUri_(), texture_(0)
-{}
+struct TextureManifest::Instance
+{
+    /// Scheme-unique identifier determined by the owner of the subspace.
+    int uniqueId;
+
+    /// Path to the resource containing the loadable data.
+    Uri resourceUri;
+
+    /// The associated logical Texture instance (if any).
+    Texture *texture;
+
+    Instance() : uniqueId(0), resourceUri(), texture(0)
+    {}
+
+    ~Instance()
+    {
+        delete texture;
+    }
+};
+
+TextureManifest::TextureManifest(PathTree::NodeArgs const &args) : Node(args)
+{
+    d = new Instance();
+}
 
 TextureManifest::~TextureManifest()
 {
     LOG_AS("~TextureManifest");
-    if(texture_)
+    if(d->texture)
     {
 #if _DEBUG
-        LOG_WARNING("\"%s\" still has an associated texture!")
-            << composeUri();
+        LOG_WARNING("\"%s\" still has an associated texture!") << composeUri();
 #endif
-        delete texture_;
     }
+    delete d;
 }
 
 Textures &TextureManifest::textures()
@@ -46,11 +66,11 @@ Textures &TextureManifest::textures()
 
 Texture *TextureManifest::derive(QSize const &dimensions, Texture::Flags flags)
 {
+    LOG_AS("TextureManifest::derive");
     if(Texture *tex = texture())
     {
 #if _DEBUG
-        LOG_WARNING("A Texture with uri \"%s\" already exists, returning existing.")
-            << composeUri();
+        LOG_INFO("\"%s\" already has an existing texture, reconfiguring.") << composeUri();
 #endif
         tex->setDimensions(dimensions);
         tex->flagCustom(!!(flags & Texture::Custom));
@@ -97,20 +117,20 @@ Uri TextureManifest::composeUri(QChar sep) const
 
 Uri TextureManifest::composeUrn() const
 {
-    return Uri("urn", String("%1:%2").arg(scheme().name()).arg(uniqueId_, 0, 10));
+    return Uri("urn", String("%1:%2").arg(scheme().name()).arg(d->uniqueId, 0, 10));
 }
 
 Uri const &TextureManifest::resourceUri() const
 {
-    return resourceUri_;
+    return d->resourceUri;
 }
 
 bool TextureManifest::setResourceUri(Uri const &newUri)
 {
     // Avoid resolving; compare as text.
-    if(resourceUri_.asText() != newUri.asText())
+    if(d->resourceUri.asText() != newUri.asText())
     {
-        resourceUri_ = newUri;
+        d->resourceUri = newUri;
         return true;
     }
     return false;
@@ -118,24 +138,24 @@ bool TextureManifest::setResourceUri(Uri const &newUri)
 
 Texture *TextureManifest::texture() const
 {
-    return texture_;
+    return d->texture;
 }
 
 void TextureManifest::setTexture(Texture *newTexture)
 {
-    texture_ = newTexture;
+    d->texture = newTexture;
 }
 
 int TextureManifest::uniqueId() const
 {
-    return uniqueId_;
+    return d->uniqueId;
 }
 
 bool TextureManifest::setUniqueId(int newUniqueId)
 {
-    if(uniqueId_ == newUniqueId) return false;
+    if(d->uniqueId == newUniqueId) return false;
 
-    uniqueId_ = newUniqueId;
+    d->uniqueId = newUniqueId;
     // We'll need to rebuild the id map too.
     scheme().markUniqueIdLutDirty();
     return true;

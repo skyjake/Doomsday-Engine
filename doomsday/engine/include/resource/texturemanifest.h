@@ -136,14 +136,8 @@ public:
     static Textures &textures();
 
 private:
-    /// Scheme-unique identifier determined by the owner of the subspace.
-    int uniqueId_;
-
-    /// Path to the resource containing the loadable data.
-    Uri resourceUri_;
-
-    /// The associated logical Texture instance (if any).
-    Texture *texture_;
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace de
