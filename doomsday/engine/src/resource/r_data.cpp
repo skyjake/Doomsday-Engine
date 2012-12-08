@@ -174,8 +174,8 @@ patchid_t R_DeclarePatch(char const *name)
 
     file.unlock();
 
-    p->offX = -patchHdr.origin.x;
-    p->offY = -patchHdr.origin.y;
+    p->offX = -patchHdr.origin.x();
+    p->offY = -patchHdr.origin.y();
 
     de::Texture *tex = manifest->texture();
     de::Texture::Flags flags;
@@ -730,7 +730,6 @@ void R_InitFlatTextures()
                  *
                  * @todo Always determine size from the lowres original.
                  */
-                Size2Raw const dimensions(64, 64);
                 int const uniqueId = lumpNum - (firstFlatMarkerLumpNum + 1);
                 de::Uri resourcePath = composeFlatResourceUrn(lumpNum);
                 TextureManifest *manifest = textures.declare(uri, uniqueId, &resourcePath);
@@ -738,7 +737,7 @@ void R_InitFlatTextures()
                 de::Texture::Flags flags;
                 if(file.container().hasCustom()) flags |= de::Texture::Custom;
 
-                if(manifest && !manifest->derive(dimensions, flags))
+                if(manifest && !manifest->derive(QSize(64, 64), flags))
                 {
                     LOG_WARNING("Failed defining Texture for new flat \"%s\", ignoring.") << uri;
                 }
@@ -1187,12 +1186,12 @@ texture_s *R_CreateMaskTexture(uri_s const *_resourceUri, Size2Raw const *dimens
     de::Texture *tex = manifest->texture();
     if(tex)
     {
-        tex->setDimensions(*dimensions);
+        tex->setDimensions(QSize(dimensions->width, dimensions->height));
     }
     else
     {
         // Create a texture for it.
-        tex = manifest->derive(*dimensions, de::Texture::Custom);
+        tex = manifest->derive(QSize(dimensions->width, dimensions->height), de::Texture::Custom);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;

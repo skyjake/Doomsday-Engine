@@ -35,7 +35,7 @@ CompositeTexture::Component::Component(int xOrigin, int yOrigin)
     : origin_(xOrigin, yOrigin), lumpNum_(-1)
 {}
 
-Point2Raw const &CompositeTexture::Component::origin() const {
+QPoint const &CompositeTexture::Component::origin() const {
     return origin_;
 }
 
@@ -59,7 +59,7 @@ String const &CompositeTexture::percentEncodedNameRef() const {
     return name;
 }
 
-Size2Raw const &CompositeTexture::dimensions() const {
+QSize const &CompositeTexture::dimensions() const {
     return dimensions_;
 }
 
@@ -110,8 +110,8 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
 
     reader >> scale[0] >> scale[1] >> dimensions[0] >> dimensions[1];
 
-    pctex->dimensions_.width  = dimensions[0];
-    pctex->dimensions_.height = dimensions[1];
+    pctex->dimensions_.setWidth(dimensions[0]);
+    pctex->dimensions_.setHeight(dimensions[1]);
 
     if(format == DoomFormat)
     {
@@ -131,8 +131,8 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
 
         dint16 origin16[2];
         reader >> origin16[0] >> origin16[1];
-        patch.origin_.x = origin16[0];
-        patch.origin_.y = origin16[1];
+        patch.origin_.setX(origin16[0]);
+        patch.origin_.setY(origin16[1]);
 
         dint16 pnamesIndex;
         reader >> pnamesIndex;

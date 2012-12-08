@@ -44,6 +44,7 @@
 #include "m_misc.h" // For M_Ceil/Floor/WeightPow2()
 #include "def_main.h"
 
+#include <QSize>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
@@ -3299,7 +3300,7 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
         LOG_VERBOSE("Logical dimensions for \"%s\" taken from image pixels (%ix%i).")
             << tex.manifest().composeUri() << image.size.width << image.size.height;
 #endif
-        tex.setDimensions(image.size);
+        tex.setDimensions(QSize(image.size.width, image.size.height));
     }
 
     performImageAnalyses(tex, &image, spec, true /*Always update*/);

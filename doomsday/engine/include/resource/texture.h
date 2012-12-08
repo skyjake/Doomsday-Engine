@@ -22,7 +22,6 @@
 #ifndef LIBDENG_RESOURCE_TEXTURE_H
 #define LIBDENG_RESOURCE_TEXTURE_H
 
-#include <de/size.h>
 #include "texturevariant.h"
 
 #ifdef __cplusplus
@@ -52,6 +51,7 @@ typedef enum {
 
 #include <list>
 #include <QFlag>
+#include <QSize>
 
 namespace de {
 
@@ -74,7 +74,7 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-    typedef std::list<de::TextureVariant*> Variants;
+    typedef std::list<TextureVariant *> Variants;
 
 public:
     /**
@@ -93,7 +93,7 @@ public:
      * @param flags     Texture classification flags.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture(TextureManifest &manifest, Size2Raw const &dimensions,
+    Texture(TextureManifest &manifest, QSize const &dimensions,
             Flags flags = 0, void *userData = 0);
 
     ~Texture();
@@ -170,7 +170,7 @@ public:
     int height() const;
 
     /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
-    Size2Raw const &dimensions() const { return dimensions_; }
+    QSize const &dimensions() const { return dimensions_; }
 
     /**
      * Change logical width.
@@ -188,7 +188,7 @@ public:
      * Change logical pixel dimensions.
      * @param dimensions  New dimensions.
      */
-    void setDimensions(Size2Raw const &dimensions);
+    void setDimensions(QSize const &dimensions);
 
     /**
      * Provides access to the list of variant textures for efficent traversals.
@@ -208,7 +208,7 @@ private:
     void *userData;
 
     /// "Logical" dimensions in map coordinate space units.
-    Size2Raw dimensions_;
+    QSize dimensions_;
 
     /// Table of analyses object ptrs, used for various purposes depending
     /// on the variant specification.
@@ -227,25 +227,23 @@ extern "C" {
 struct texture_s; // The texture instance (opaque).
 typedef struct texture_s Texture;
 
-void* Texture_UserDataPointer(const Texture* tex);
-void Texture_SetUserDataPointer(Texture* tex, void* userData);
+void* Texture_UserDataPointer(Texture const *tex);
+void Texture_SetUserDataPointer(Texture *tex, void *userData);
 
-void Texture_ClearVariants(Texture* tex);
-uint Texture_VariantCount(const Texture* tex);
-struct texturevariant_s* Texture_AddVariant(Texture* tex, struct texturevariant_s* variant);
+void Texture_ClearVariants(Texture *tex);
+uint Texture_VariantCount(Texture const *tex);
+struct texturevariant_s *Texture_AddVariant(Texture *tex, struct texturevariant_s *variant);
 
-void* Texture_AnalysisDataPointer(const Texture* tex, texture_analysisid_t analysis);
-void Texture_SetAnalysisDataPointer(Texture* tex, texture_analysisid_t analysis, void* data);
+void* Texture_AnalysisDataPointer(Texture const *tex, texture_analysisid_t analysis);
+void Texture_SetAnalysisDataPointer(Texture *tex, texture_analysisid_t analysis, void *data);
 
-boolean Texture_IsCustom(const Texture* tex);
-void Texture_FlagCustom(Texture* tex, boolean yes);
+boolean Texture_IsCustom(Texture const *tex);
+void Texture_FlagCustom(Texture *tex, boolean yes);
 
-int Texture_Width(const Texture* tex);
-int Texture_Height(const Texture* tex);
-const Size2Raw* Texture_Dimensions(const Texture* tex);
-void Texture_SetWidth(Texture* tex, int width);
-void Texture_SetHeight(Texture* tex, int height);
-void Texture_SetDimensions(Texture* tex, const Size2Raw* size);
+int Texture_Width(Texture const *tex);
+int Texture_Height(Texture const *tex);
+void Texture_SetWidth(Texture *tex, int width);
+void Texture_SetHeight(Texture *tex, int height);
 
 /**
  * Iterate over all derived TextureVariants, making a callback for each.
@@ -258,8 +256,8 @@ void Texture_SetDimensions(Texture* tex, const Size2Raw* size);
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Texture_IterateVariants(Texture* tex,
-    int (*callback)(struct texturevariant_s* instance, void* parameters), void* parameters);
+int Texture_IterateVariants(Texture *tex,
+    int (*callback)(struct texturevariant_s *instance, void *parameters), void *parameters);
 
 #ifdef __cplusplus
 } // extern "C"

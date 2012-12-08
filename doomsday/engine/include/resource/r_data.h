@@ -77,29 +77,32 @@ typedef struct post_s {
 typedef post_t column_t;
 
 #ifdef __cplusplus
+
+#include <QSize>
+#include <QPoint>
 #include <de/IReadable>
 #include <de/Reader>
 
 struct PatchHeader : public de::IReadable
 {
     /// Dimensions of the patch in texels.
-    Size2Raw dimensions;
+    QSize dimensions;
 
     /// Origin offset for the patch in texels.
-    Point2Raw origin;
+    QPoint origin;
 
     /// Implements IReadable.
     void operator << (de::Reader &from)
     {
         dint16 width, height;
         from >> width >> height;
-        dimensions.width  = width;
-        dimensions.height = height;
+        dimensions.setWidth(width);
+        dimensions.setHeight(height);
 
         dint16 xOrigin, yOrigin;
         from >> xOrigin >> yOrigin;
-        origin.x = xOrigin;
-        origin.y = yOrigin;
+        origin.setX(xOrigin);
+        origin.setY(yOrigin);
     }
 };
 

@@ -40,10 +40,10 @@ namespace de {
 Texture::Texture(TextureManifest &_manifest, Flags _flags, void *_userData)
     : flags(_flags), manifest_(_manifest), variants(), userData(_userData), dimensions_()
 {
-    memset(analyses, 0, sizeof(analyses));
+    std::memset(analyses, 0, sizeof(analyses));
 }
 
-Texture::Texture(TextureManifest &_manifest, Size2Raw const &size, Flags _flags, void *_userData)
+Texture::Texture(TextureManifest &_manifest, QSize const &size, Flags _flags, void *_userData)
     : flags(_flags), manifest_(_manifest), variants(), userData(_userData), dimensions_()
 {
     std::memset(analyses, 0, sizeof(analyses));
@@ -146,30 +146,29 @@ void Texture::flagCustom(bool yes)
 
 int Texture::width() const
 {
-    return dimensions_.width;
+    return dimensions_.width();
 }
 
 void Texture::setWidth(int newWidth)
 {
-    dimensions_.width = newWidth;
+    dimensions_.setWidth(newWidth);
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
 int Texture::height() const
 {
-    return dimensions_.height;
+    return dimensions_.height();
 }
 
 void Texture::setHeight(int newHeight)
 {
-    dimensions_.height = newHeight;
+    dimensions_.setHeight(newHeight);
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
-void Texture::setDimensions(Size2Raw const &newSize)
+void Texture::setDimensions(QSize const &newDimensions)
 {
-    dimensions_.width  = newSize.width;
-    dimensions_.height = newSize.height;
+    dimensions_ = newDimensions;
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
@@ -274,14 +273,6 @@ void Texture_FlagCustom(Texture *tex, boolean yes)
     self->flagCustom(bool(yes));
 }
 
-void Texture_SetDimensions(Texture *tex, Size2Raw const *newSize)
-{
-    SELF(tex);
-    if(!newSize)
-        LegacyCore_FatalError("Texture_SetDimensions: Attempted with invalid newSize argument (=NULL).");
-    self->setDimensions(*newSize);
-}
-
 int Texture_Width(Texture const *tex)
 {
     SELF_CONST(tex);
@@ -298,12 +289,6 @@ int Texture_Height(Texture const *tex)
 {
     SELF_CONST(tex);
     return self->height();
-}
-
-Size2Raw const *Texture_Dimensions(Texture const *tex)
-{
-    SELF_CONST(tex);
-    return &self->dimensions();
 }
 
 void Texture_SetHeight(Texture *tex, int newHeight)

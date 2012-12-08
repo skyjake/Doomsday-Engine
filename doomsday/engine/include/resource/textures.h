@@ -26,11 +26,11 @@
 #ifdef __cplusplus
 
 #include <QList>
+#include <QSize>
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
 #include <de/PathTree>
-#include <de/size.h>
 #include "resource/texture.h"
 #include "resource/texturemanifest.h"
 #include "resource/texturescheme.h"
@@ -84,7 +84,7 @@ public:
          *                  which case their value will be inherited from the
          *                  actual pixel dimensions of the image at load time.
          */
-        static Texture *interpret(Manifest &manifest, Size2Raw const &dimensions,
+        static Texture *interpret(Manifest &manifest, QSize const &dimensions,
                                   Texture::Flags flags, void *userData = 0);
     };
 

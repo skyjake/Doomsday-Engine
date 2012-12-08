@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/texturemanifest.h"
 #include "resource/textures.h"
+#include "resource/texturemanifest.h"
 
 namespace de {
 
@@ -44,7 +44,7 @@ Textures &TextureManifest::textures()
     return *App_Textures();
 }
 
-Texture *TextureManifest::derive(Size2Raw const &dimensions, Texture::Flags flags)
+Texture *TextureManifest::derive(QSize const &dimensions, Texture::Flags flags)
 {
     if(Texture *tex = texture())
     {
@@ -66,7 +66,7 @@ Texture *TextureManifest::derive(Size2Raw const &dimensions, Texture::Flags flag
 
 Texture *TextureManifest::derive(Texture::Flags flags)
 {
-    return derive(Size2Raw(0, 0), flags);
+    return derive(QSize(), flags);
 }
 
 Textures::Scheme &TextureManifest::scheme() const

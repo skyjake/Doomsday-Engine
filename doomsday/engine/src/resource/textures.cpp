@@ -51,7 +51,7 @@ namespace de {
 
 static Uri emptyUri;
 
-Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Size2Raw const &dimensions,
+Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, QSize const &dimensions,
     Texture::Flags flags, void *userData)
 {
     LOG_AS("Textures::ResourceClass::interpret");
@@ -61,7 +61,7 @@ Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Size2Raw 
 Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Texture::Flags flags,
     void *userData)
 {
-    return interpret(manifest, Size2Raw(0, 0), flags, userData);
+    return interpret(manifest, QSize(0, 0), flags, userData);
 }
 
 struct Textures::Instance
