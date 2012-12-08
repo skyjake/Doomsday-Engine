@@ -73,7 +73,7 @@ Texture *TextureManifest::derive(QSize const &dimensions, Texture::Flags flags)
         LOG_INFO("\"%s\" already has an existing texture, reconfiguring.") << composeUri();
 #endif
         tex->setDimensions(dimensions);
-        tex->flagCustom(!!(flags & Texture::Custom));
+        tex->flags() = flags;
 
         /// @todo Materials and Surfaces should be notified of this!
         return tex;

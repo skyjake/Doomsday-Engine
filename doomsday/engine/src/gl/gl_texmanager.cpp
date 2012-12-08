@@ -689,7 +689,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     if(!tex.manifest().schemeName().compareWithoutCase("Flats"))
     {
         // Attempt to load an external replacement for this flat?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isCustom()))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.flags().testFlag(de::Texture::Custom)))
         {
             // First try the flats scheme.
             de::Uri uri = tex.manifest().composeUri();
@@ -741,7 +741,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         }
 
         // Attempt to load an external replacement for this patch?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isCustom()))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.flags().testFlag(de::Texture::Custom)))
         {
             de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
@@ -2471,21 +2471,17 @@ TexSource GL_LoadPatchLumpAsPatch(image_t *image, filehandle_s *hndl, int tclass
     TexSource source = loadPatchLump(image, hndl, tclass, tmap, border);
     if(source == TEXS_ORIGINAL && _tex)
     {
-        de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
         // Loaded from a lump assumed to be in DOOM's Patch format.
-        patchtex_t* pTex = reinterpret_cast<patchtex_t *>(tex.userDataPointer());
-        if(pTex)
-        {
-            // Load the extended metadata from the lump.
-            de::File1 &file = reinterpret_cast<de::File1 &>(*FileHandle_File(hndl));
-            uint8_t const *dataBuffer = file.cache();
+        de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
 
-            doompatch_header_t const &hdr = reinterpret_cast<doompatch_header_t const &>(*dataBuffer);
-            pTex->offX = -SHORT(hdr.leftOffset);
-            pTex->offY = -SHORT(hdr.topOffset);
+        // Read the world origin offset from the lump.
+        de::File1 &file = reinterpret_cast<de::File1 &>(*FileHandle_File(hndl));
+        uint8_t const *dataBuffer = file.cache();
 
-            file.unlock();
-        }
+        doompatch_header_t const &hdr = reinterpret_cast<doompatch_header_t const &>(*dataBuffer);
+        tex.setOrigin(QPoint(-SHORT(hdr.leftOffset), -SHORT(hdr.topOffset)));
+
+        file.unlock();
     }
     return source;
 }
@@ -2527,7 +2523,7 @@ TexSource GL_LoadPatchComposite(image_t *image, de::Texture &tex)
                                                .arg(tex.manifest().composeUri().asText())
                                                .arg(de::dintptr(&tex)));
 
-    CompositeTexture *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
+    CompositeTexture const *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG_ASSERT(texDef);
 
     Image_Init(image);
@@ -2588,7 +2584,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
                                                .arg(tex.manifest().composeUri().asText())
                                                .arg(de::dintptr(&tex)));
 
-    CompositeTexture *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
+    CompositeTexture const *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG_ASSERT(texDef);
 
     /**
@@ -2845,13 +2841,10 @@ texturevariant_s* GL_PreparePatchTexture2(texture_s* _tex, int wrapS, int wrapT)
         return 0;
     }
 
-    patchtex_t* pTex = reinterpret_cast<patchtex_t *>(tex.userDataPointer());
-    DENG_ASSERT(pTex);
-
     texturevariantspecification_t* texSpec
             = GL_TextureVariantSpecificationForContext(TC_UI,
-            0 | ((pTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
-              | ((pTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
+            0 | (tex.flags().testFlag(de::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+              | (tex.flags().testFlag(de::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
             0, 0, 0, wrapS, wrapT, 0, -3, 0, false, false, false, false);
     return GL_PrepareTextureVariant(reinterpret_cast<texture_s *>(&tex), texSpec);
 }
@@ -3260,9 +3253,9 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Try to load a replacement version of this texture?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isCustom()))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.flags().testFlag(de::Texture::Custom)))
         {
-            CompositeTexture *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
+            CompositeTexture const *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
             DENG_ASSERT(texDef);
 
             source = loadExternalTexture(image, "Textures:" + texDef->percentEncodedNameRef(), "-ck");
@@ -3294,7 +3287,7 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     }
 
     // Are we setting the logical dimensions to the actual pixel dimensions?
-    if(0 == tex.width() || 0 == tex.height())
+    if(tex.dimensions().isEmpty())
     {
 #if _DEBUG
         LOG_VERBOSE("Logical dimensions for \"%s\" taken from image pixels (%ix%i).")

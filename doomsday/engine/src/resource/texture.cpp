@@ -48,15 +48,18 @@ struct Texture::Instance
     /// User data associated with this texture.
     void *userData;
 
-    /// "Logical" dimensions in map coordinate space units.
+    /// World dimensions in map coordinate space units.
     QSize dimensions;
+
+    /// World origin offset in map coordinate space units.
+    QPoint origin;
 
     /// Table of analyses object ptrs, used for various purposes depending
     /// on the variant specification.
     void *analyses[TEXTURE_ANALYSIS_COUNT];
 
     Instance(TextureManifest &_manifest, Texture::Flags _flags, void *_userData)
-        : flags(_flags), manifest(_manifest), variants(), userData(_userData), dimensions()
+        : flags(_flags), manifest(_manifest), variants(), userData(_userData), origin(), dimensions()
     {
         std::memset(analyses, 0, sizeof(analyses));
     }
@@ -81,18 +84,8 @@ Texture::~Texture()
     TextureScheme const &scheme = d->manifest.scheme();
     if(!scheme.name().compareWithoutCase("Textures"))
     {
-        CompositeTexture* pcTex = reinterpret_cast<CompositeTexture *>(userDataPointer());
+        CompositeTexture *pcTex = reinterpret_cast<CompositeTexture *>(userDataPointer());
         if(pcTex) delete pcTex;
-    }
-    else if(!scheme.name().compareWithoutCase("Sprites"))
-    {
-        patchtex_t* pTex = reinterpret_cast<patchtex_t *>(userDataPointer());
-        if(pTex) M_Free(pTex);
-    }
-    else if(!scheme.name().compareWithoutCase("Patches"))
-    {
-        patchtex_t* pTex = reinterpret_cast<patchtex_t *>(userDataPointer());
-        if(pTex) M_Free(pTex);
     }
 
     clearAnalyses();
@@ -161,12 +154,6 @@ TextureVariant &Texture::addVariant(TextureVariant &variant)
     return *d->variants.back();
 }
 
-void Texture::flagCustom(bool yes)
-{
-    if(yes) d->flags |= Custom; else d->flags &= ~Custom;
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
-}
-
 int Texture::width() const
 {
     return d->dimensions.width();
@@ -200,6 +187,16 @@ void Texture::setDimensions(QSize const &newDimensions)
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
+QPoint const &Texture::origin() const
+{
+    return d->origin;
+}
+
+void Texture::setOrigin(QPoint const &newOrigin)
+{
+    d->origin = newOrigin;
+}
+
 Texture::Variants const &Texture::variantList() const
 {
     return d->variants;
@@ -225,9 +222,14 @@ void Texture::setAnalysisDataPointer(texture_analysisid_t analysisId, void *data
     d->analyses[analysisId] = data;
 }
 
-bool Texture::isCustom() const
+Texture::Flags const &Texture::flags() const
 {
-    return d->flags.testFlag(Custom);
+    return d->flags;
+}
+
+Texture::Flags &Texture::flags()
+{
+    return d->flags;
 }
 
 } // namespace de
@@ -297,18 +299,6 @@ void Texture_SetAnalysisDataPointer(Texture *tex, texture_analysisid_t analysis,
 {
     SELF(tex);
     self->setAnalysisDataPointer(analysis, data);
-}
-
-boolean Texture_IsCustom(Texture const *tex)
-{
-    SELF_CONST(tex);
-    return CPP_BOOL(self->isCustom());
-}
-
-void Texture_FlagCustom(Texture *tex, boolean yes)
-{
-    SELF(tex);
-    self->flagCustom(bool(yes));
 }
 
 int Texture_Width(Texture const *tex)

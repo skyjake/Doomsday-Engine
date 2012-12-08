@@ -977,7 +977,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     // A new Material.
     material_t* mat = linkMaterialToGlobalList(allocMaterial());
     mat->_flags = def->flags;
-    mat->_isCustom = tex->isCustom();
+    mat->_isCustom = tex->flags().testFlag(de::Texture::Custom);
     mat->_def = def;
     Size2_SetWidthHeight(mat->_size, MAX_OF(0, def->width), MAX_OF(0, def->height));
     mat->_envClass = S_MaterialEnvClassForUri(reinterpret_cast<Uri const*>(&uri));

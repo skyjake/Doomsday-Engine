@@ -1021,18 +1021,11 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                         ms->size.height + TS_GENERAL(texSpec)->border*2, 0);
                 TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
 
-                de::Uri uri = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri();
+                de::Texture const &texture = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+                de::Uri uri = texture.manifest().composeUri();
                 if(!uri.scheme().compareWithoutCase("Sprites"))
                 {
-                    patchtex_t *sTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
-                    if(sTex)
-                    {
-                        V3f_Set(offset, sTex->offX, sTex->offY, 0);
-                    }
-                    else
-                    {
-                        V3f_Set(offset, 0, 0, 0);
-                    }
+                    V3f_Set(offset, texture.origin().x(), texture.origin().y(), 0);
                 }
                 else
                 {
@@ -1050,9 +1043,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
-                patchtex_t* pTex = reinterpret_cast<patchtex_t *>(texture->userDataPointer());
-                DENG_ASSERT(pTex);
-                V3f_Set(offset, pTex->offX, pTex->offY, 0);
+                V3f_Set(offset, texture->origin().x(), texture->origin().y(), 0);
                 V3f_Set(dimensions, texture->width(), texture->height(), 0);
             }
             break; }

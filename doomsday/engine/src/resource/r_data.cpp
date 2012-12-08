@@ -153,15 +153,13 @@ patchid_t R_DeclarePatch(char const *name)
     TextureManifest *manifest = textures.declare(uri, uniqueId, &resourceUri);
     if(!manifest) return 0; // Invalid uri?
 
-    // Generate a new patch.
-    patchtex_t *p = (patchtex_t *) M_Malloc(sizeof(*p));
-    if(!p) Con_Error("R_DeclarePatch: Failed on allocation of %u bytes for new PatchTex.", (unsigned long) sizeof(*p));
+    de::Texture::Flags flags;
+    if(file.container().hasCustom()) flags |= de::Texture::Custom;
 
     // Take a copy of the current patch loading state so that future texture
     // loads will produce the same results.
-    p->flags = 0;
-    if(monochrome)               p->flags |= PF_MONOCHROME;
-    if(upscaleAndSharpenPatches) p->flags |= PF_UPSCALE_AND_SHARPEN;
+    if(monochrome)               flags |= de::Texture::Monochrome;
+    if(upscaleAndSharpenPatches) flags |= de::Texture::UpscaleAndSharpen;
 
     /**
      * @todo: Cannot be sure this is in Patch format until a load attempt
@@ -174,34 +172,23 @@ patchid_t R_DeclarePatch(char const *name)
 
     file.unlock();
 
-    p->offX = -patchHdr.origin.x();
-    p->offY = -patchHdr.origin.y();
-
     de::Texture *tex = manifest->texture();
-    de::Texture::Flags flags;
-    if(file.container().hasCustom()) flags |= de::Texture::Custom;
-
     if(!tex)
     {
         tex = manifest->derive(patchHdr.dimensions, flags);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for Patch texture \"%s\".") << uri;
-            M_Free(p);
             return 0;
         }
 
-        tex->setUserDataPointer((void *)p);
+        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
     }
     else
     {
-        patchtex_t *oldPatch = reinterpret_cast<patchtex_t *>(tex->userDataPointer());
-
-        tex->flagCustom(!!(flags & de::Texture::Custom));
+        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
+        tex->flags() = flags;
         tex->setDimensions(patchHdr.dimensions);
-        tex->setUserDataPointer((void *)p);
-
-        M_Free(oldPatch);
     }
 
     return uniqueId;
@@ -221,24 +208,23 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         de::Texture *tex = App_Textures()->scheme("Patches").findByUniqueId(id).texture();
         if(!tex) return false;
 
-        patchtex_t const *pTex = reinterpret_cast<patchtex_t *>(tex->userDataPointer());
-        DENG_ASSERT(pTex);
-
         // Ensure we have up to date information about this patch.
         GL_PreparePatchTexture(reinterpret_cast<texture_s*>(tex));
 
         info->id = id;
-        info->flags.isCustom = tex->isCustom();
+        info->flags.isCustom = tex->flags().testFlag(de::Texture::Custom);
 
         averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex->analysisDataPointer(TA_ALPHA));
         info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
 
         info->geometry.size.width  = tex->width();
         info->geometry.size.height = tex->height();
-        info->geometry.origin.x = pTex->offX;
-        info->geometry.origin.y = pTex->offY;
+
+        info->geometry.origin.x = tex->origin().x();
+        info->geometry.origin.y = tex->origin().y();
+
         /// @todo fixme: kludge:
-        info->extraOffset[0] = info->extraOffset[1] = (pTex->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
+        info->extraOffset[0] = info->extraOffset[1] = (tex->flags().testFlag(de::Texture::UpscaleAndSharpen)? -1 : 0);
         // Kludge end.
         return true;
     }
@@ -624,7 +610,7 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
                 }
 
                 // Reconfigure and attach the new definition.
-                tex->flagCustom(!!(flags & de::Texture::Custom));
+                tex->flags() = flags;
                 tex->setDimensions(def.dimensions());
                 tex->setUserDataPointer((void *)&def);
 
@@ -753,24 +739,17 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
     LOG_AS("R_DefineSpriteTexture");
 
     // Have we already defined this texture?
-    de::Texture *tex = manifest.texture();
+    if(manifest.texture()) return;
+
+    // A new sprite texture.
+    de::Texture *tex = manifest.derive(0);
     if(!tex)
     {
-        // A new sprite texture.
-        tex = manifest.derive(0);
-        if(!tex)
-        {
-            LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.")
-                << manifest.composeUri();
-        }
-
-        patchtex_t *pTex = (patchtex_t *) M_Malloc(sizeof(*pTex));
-        if(!pTex) Con_Error("R_InitSpriteTextures: Failed on allocation of %lu bytes for new PatchTex.", (unsigned long) sizeof(*pTex));
-        pTex->offX = pTex->offY = 0; // Deferred until texture load time.
-        tex->setUserDataPointer((void *)pTex);
+        LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.")
+            << manifest.composeUri();
+        return;
     }
 
-    if(!tex) return;
     de::Uri const &resourceUri = manifest.resourceUri();
     if(resourceUri.isEmpty()) return;
 
@@ -786,7 +765,8 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
         from >> patchHdr;
 
         tex->setDimensions(patchHdr.dimensions);
-        tex->flagCustom(file.hasCustom());
+        if(file.hasCustom())
+            tex->flags() |= de::Texture::Custom;
 
         file.unlock();
     }

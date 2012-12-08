@@ -713,7 +713,6 @@ static void addLuminous(mobj_t *mo)
     ded_light_t *def;
     spritedef_t *sprDef;
     spriteframe_t *sprFrame;
-    patchtex_t *pTex;
     material_t *mat;
     pointlight_analysis_t const *pl;
 
@@ -764,16 +763,11 @@ static void addLuminous(mobj_t *mo)
             yOffset = def->offset[VY];
     }
 
-    if(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().schemeName().compareWithoutCase("Sprites"))
-        throw de::Error("LO_AddLuminous", "Material snapshot's primary texture is not a patchtex_t");
-
-    pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
-    DENG_ASSERT(pTex);
-
-    center = -pTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
+    de::Texture &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+    center = -tex.origin().y() - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
-    mul = mo->origin[VZ] + -pTex->offY - (float) ms->size.height - mo->bspLeaf->sector->SP_floorheight;
+    mul = mo->origin[VZ] + -tex.origin().y() - (float) ms->size.height - mo->bspLeaf->sector->SP_floorheight;
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
     {
         // Must adjust.

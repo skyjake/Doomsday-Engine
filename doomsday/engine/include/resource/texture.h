@@ -53,6 +53,7 @@ typedef enum {
 
 #include <list>
 #include <QFlag>
+#include <QPoint>
 #include <QSize>
 
 namespace de {
@@ -67,12 +68,18 @@ class Texture
 {
 public:
     /**
-     * Classification flags
+     * Classification/processing flags
      */
     enum Flag
     {
         /// Texture is "custom" (i.e., not an original game resource).
-        Custom = 0x1
+        Custom              = 0x1,
+
+        /// Apply the monochrome filter to the processed image.
+        Monochrome          = 0x2,
+
+        /// Apply the upscaleAndSharpen filter to the processed image.
+        UpscaleAndSharpen   = 0x4
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -88,8 +95,8 @@ public:
 
     /**
      * @param manifest  Manifest derived to yield the Texture.
-     * @param dimensions Logical dimensions of the texture in map space
-     *                   coordinates. If width=0 and height=0, their value
+     * @param dimensions World dimensions of the texture in map space
+     *                  coordinates. If width=0 and height=0, their value
      *                  will be inferred from the actual pixel dimensions
      *                  of the image resource at load time.
      * @param flags     Texture classification flags.
@@ -100,11 +107,11 @@ public:
 
     ~Texture();
 
-    /// @return  @c true iff this texture instance is flagged as "custom".
-    bool isCustom() const;
+    /// @return  Provides access to the classification/processing flags.
+    Flags const &flags() const;
 
-    /// Change the "custom" status of this texture instance.
-    void flagCustom(bool yes);
+    /// @return  Provides access to the classification/processing flags.
+    Flags &flags();
 
     /**
      * Returns the TextureManifest derived to yield the texture.
@@ -165,32 +172,50 @@ public:
      */
     void setAnalysisDataPointer(texture_analysisid_t analysis, void *data);
 
-    /// @return  Logical width (not necessarily the same as pixel width).
+    /**
+     * Returns the world width of the texture in map coordinate space units.
+     */
     int width() const;
 
-    /// @return  Logical height (not necessarily the same as pixel height).
+    /**
+     * Returns the world height of the texture in map coordinate space units.
+     */
     int height() const;
 
-    /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
+    /**
+     * Returns the world dimensions [width, height] of the texture in map
+     * coordinate space units.
+     */
     QSize const &dimensions() const;
 
     /**
-     * Change logical width.
-     * @param width  Width in logical pixels.
+     * Change the world width of the texture.
+     * @param newWidth  New width in map coordinate space units.
      */
-    void setWidth(int width);
+    void setWidth(int newWidth);
 
     /**
-     * Change logical height.
-     * @param height  Height in logical pixels.
+     * Change the world height of the texture.
+     * @param newHeight  New height in map coordinate space units.
      */
-    void setHeight(int height);
+    void setHeight(int newHeight);
 
     /**
-     * Change logical pixel dimensions.
-     * @param dimensions  New dimensions.
+     * Change the world dimensions of the texture.
+     * @param newDimensions  New dimensions [width, height] in map coordinate space units.
      */
-    void setDimensions(QSize const &dimensions);
+    void setDimensions(QSize const &newDimensions);
+
+    /**
+     * Returns the world origin offset of texture in map coordinate space units.
+     */
+    QPoint const &origin() const;
+
+    /**
+     * Change the world origin offset of the texture.
+     * @param newOrigin  New origin in map coordinate space units.
+     */
+    void setOrigin(QPoint const &newOrigin);
 
     /**
      * Provides access to the list of variant textures for efficent traversals.
@@ -223,9 +248,6 @@ struct texturevariant_s *Texture_AddVariant(Texture *tex, struct texturevariant_
 
 void* Texture_AnalysisDataPointer(Texture const *tex, texture_analysisid_t analysis);
 void Texture_SetAnalysisDataPointer(Texture *tex, texture_analysisid_t analysis, void *data);
-
-boolean Texture_IsCustom(Texture const *tex);
-void Texture_FlagCustom(Texture *tex, boolean yes);
 
 int Texture_Width(Texture const *tex);
 int Texture_Height(Texture const *tex);
