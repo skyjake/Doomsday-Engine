@@ -30,7 +30,7 @@ namespace de
      *
      * @ingroup data
      */
-    class Counted
+    class DENG2_PUBLIC Counted
     {
     public:
         /**
