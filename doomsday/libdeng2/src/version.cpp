@@ -98,4 +98,33 @@ bool Version::operator > (Version const &other) const
     return !(*this < other || *this == other);
 }
 
+String Version::operatingSystem()
+{
+#ifdef WIN32
+    return "windows";
+#elif MACOSX
+    return "macx";
+#else
+    return "unix";
+#endif
+}
+
+duint Version::cpuBits()
+{
+#ifdef DENG2_64BIT
+    return 64;
+#else
+    return 32;
+#endif
+}
+
+bool Version::isDebugBuild()
+{
+#ifdef DENG2_DEBUG
+    return true;
+#else
+    return false;
+#endif
+}
+
 } // namespace de

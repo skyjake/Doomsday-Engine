@@ -197,6 +197,13 @@ namespace de
         void setMode(Flags const &flags);
 
         /**
+         * Makes the variable read-only.
+         *
+         * @return Reference to this variable.
+         */
+        Variable &setReadOnly();
+
+        /**
          * Checks that a value is valid, checking what is allowed in the mode
          * flags.
          *

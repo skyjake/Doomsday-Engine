@@ -140,7 +140,7 @@
 /**
  * Macro for determining the name of a type (using RTTI).
  */
-#define DENG2_TYPE_NAME(x) (typeid(x).name())
+#define DENG2_TYPE_NAME(x)  (typeid(x).name())
     
 /**
  * Macro for hiding the warning about an unused parameter.
@@ -190,6 +190,20 @@
 
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
+
+/**
+ * All serialization in all contexts use a common protocol version number.
+ * Whenever anything changes in serialization, the protocol version needs to be
+ * incremented. Therefore, deserialization routines shouldn't check for
+ * specific versions, but instead always use < and >.
+ *
+ * Do not reserve version numbers in advance; any build may need to increment
+ * the version, necessitating changing the subsequent numbers.
+ */
+enum ProtocolVersion {
+    DENG2_PROTOCOL_1_9_10 = 0,
+    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_9_10
+};
 
 //@{
 /// @ingroup types

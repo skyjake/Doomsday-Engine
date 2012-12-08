@@ -18,17 +18,20 @@
  */
 
 #include "de/App"
+#include "de/ArchiveFeed"
 #include "de/ArrayValue"
+#include "de/Block"
 #include "de/DirectoryFeed"
-#include "de/PackageFolder"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/Module"
+#include "de/NumberValue"
+#include "de/PackageFolder"
+#include "de/Record"
 #include "de/Version"
-#include "de/Block"
-#include "de/ZipArchive"
-#include "de/ArchiveFeed"
+#include "de/Version"
 #include "de/Writer"
+#include "de/ZipArchive"
 #include "de/math.h"
 
 #include <QDesktopServices>
@@ -36,7 +39,7 @@
 
 namespace de {
 
-struct App::Instance
+struct App::Instance : DENG2_OBSERVES(Record, Deletion)
 {
     App &app;
 
@@ -63,8 +66,14 @@ struct App::Instance
     /// The configuration.
     Config *config;
 
+    /// Built-in special modules. These are constructed by native code and thus not
+    /// parsed from any script.
+    typedef QMap<String, Record *> NativeModules;
+    NativeModules nativeModules;
+    Record versionModule; // Version: information about the platform and build
+
     /// Resident modules.
-    typedef std::map<String, Module *> Modules;
+    typedef QMap<String, Module *> Modules;
     Modules modules;
 
     Instance(App &a, QStringList args) : app(a), cmdLine(args), persistentData(0), config(0)
@@ -72,7 +81,24 @@ struct App::Instance
 
     ~Instance()
     {
+        DENG2_FOR_EACH(NativeModules, i, nativeModules)
+        {
+            i.value()->audienceForDeletion -= this;
+        }
         delete config;
+    }
+
+    void recordBeingDeleted(Record &record)
+    {
+        QMutableMapIterator<String, Record *> iter(nativeModules);
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.value() == &record)
+            {
+                iter.remove();
+            }
+        }
     }
 
     void initFileSystem(bool allowPlugins)
@@ -165,6 +191,20 @@ App::App(int &argc, char **argv, GUIMode guiMode)
         DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
     }
 #endif
+
+    // Setup the Version module.
+    Version ver;
+    Record &mod = d->versionModule;
+    ArrayValue *num = new ArrayValue;
+    *num << NumberValue(ver.major) << NumberValue(ver.minor)
+         << NumberValue(ver.patch) << NumberValue(ver.build);
+    (mod.addArray("number") = num).setReadOnly();
+    mod.addText("text", ver.asText()).setReadOnly();
+    mod.addNumber("build", ver.build).setReadOnly();
+    mod.addText("os", Version::operatingSystem()).setReadOnly();
+    mod.addNumber("cpuBits", Version::cpuBits()).setReadOnly();
+    mod.addBoolean("debug", Version::isDebugBuild()).setReadOnly();
+    addNativeModule("Version", mod);
 }
 
 App::~App()
@@ -280,6 +320,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     // The configuration.
     d->config = new Config("/modules/Config.de");
+    addNativeModule("Config", d->config->names());
+
     d->config->read();
 
     LogBuffer &logBuf = LogBuffer::appBuffer();
@@ -309,6 +351,12 @@ void App::initSubsystems(SubsystemInitFlags flags)
     }
 
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
+}
+
+void App::addNativeModule(String const &name, Record &module)
+{
+    d->nativeModules.insert(name, &module);
+    module.audienceForDeletion += d;
 }
 
 bool App::notify(QObject *receiver, QEvent *event)
@@ -387,17 +435,18 @@ Record &App::importModule(String const &name, String const &fromPath)
 
     App &self = app();
 
-    // There are some special modules.
-    if(name == "Config")
+    // There are some special native modules.
+    Instance::NativeModules::const_iterator foundNative = self.d->nativeModules.constFind(name);
+    if(foundNative != self.d->nativeModules.constEnd())
     {
-        return self.config().names();
+        return *foundNative.value();
     }
 
     // Maybe we already have this module?
     Instance::Modules::iterator found = self.d->modules.find(name);
     if(found != self.d->modules.end())
     {
-        return found->second->names();
+        return found.value()->names();
     }
 
     /// @todo  Move this path searching logic to FS.
@@ -455,7 +504,7 @@ Record &App::importModule(String const &name, String const &fromPath)
         if(found)
         {
             Module *module = new Module(*found);
-            self.d->modules[name] = module;
+            self.d->modules.insert(name, module);
             return module->names();
         }
     }

@@ -58,7 +58,9 @@ namespace de
         DICTIONARY,
         INDEX,
         SLICE,
-        PARENTHESIS
+        PARENTHESIS,
+        AND,
+        OR
     };
     
     String operatorToText(Operator op);

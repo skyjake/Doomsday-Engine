@@ -556,6 +556,9 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
     auto_ptr<Expression> condition;
     if(flags.testFlag(HasCondition))
     {
+        LOG_AS("parseConditionalCompound");
+        LOG_DEV_TRACE("colon at %i", colon);
+
         TokenRange conditionRange = range.between(1, colon);
         if(conditionRange.empty())
         {
@@ -614,6 +617,9 @@ ArrayExpression *Parser::parseList(TokenRange const &range, QChar const *separat
 Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Flags const &flags)
 {
     TokenRange range = fullRange;
+
+    LOG_AS("parseExpression");
+    LOG_DEV_TRACE("", range.asText());
     
     if(!range.size())
     {
@@ -953,6 +959,8 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
                 { "*=",     MULTIPLY_ASSIGN,    0,          RIGHT_TO_LEFT },
                 { "/=",     DIVIDE_ASSIGN,      0,          RIGHT_TO_LEFT },
                 { "%=",     MODULO_ASSIGN,      0,          RIGHT_TO_LEFT },
+                { "or",     OR,                 1,          LEFT_TO_RIGHT },
+                { "and",    AND,                2,          LEFT_TO_RIGHT },
                 { "not",    NOT,                3,          RIGHT_TO_LEFT },
                 { "in",     IN,                 4,          LEFT_TO_RIGHT },
                 { "==",     EQUAL,              5,          LEFT_TO_RIGHT },
