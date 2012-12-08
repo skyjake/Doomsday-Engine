@@ -705,7 +705,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         if(source == TEXS_NONE)
         {
             de::Uri const &resourceUri = tex.manifest().resourceUri();
-            if(!resourceUri.scheme().compareWithoutCase("LumpDir"))
+            if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
             {
                 try
                 {
@@ -743,7 +743,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         if(source == TEXS_NONE)
         {
             de::Uri const &resourceUri = tex.manifest().resourceUri();
-            if(!resourceUri.scheme().compareWithoutCase("LumpDir"))
+            if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
             {
                 try
                 {
@@ -796,7 +796,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         if(source == TEXS_NONE)
         {
             de::Uri const &resourceUri = tex.manifest().resourceUri();
-            if(!resourceUri.scheme().compareWithoutCase("LumpDir"))
+            if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
             {
                 try
                 {

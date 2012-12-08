@@ -58,7 +58,7 @@ static QList<PatchName> patchNames;
  */
 static inline de::Uri composeLumpIndexResourceUrn(lumpnum_t lumpNum)
 {
-    return de::Uri("LumpDir", Path(String("%1").arg(lumpNum)));
+    return de::Uri("LumpIndex", Path(String("%1").arg(lumpNum)));
 }
 
 void R_InitSystemTextures()
