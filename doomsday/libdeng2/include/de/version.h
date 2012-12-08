@@ -88,6 +88,15 @@ public:
     bool operator == (Version const &other) const;
 
     bool operator > (Version const &other) const;
+
+    /**
+     * Determines the operating system.
+     */
+    static String operatingSystem();
+
+    static duint cpuBits();
+
+    static bool isDebugBuild();
 };
 
 } // namespace de
