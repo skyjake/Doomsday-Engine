@@ -94,7 +94,7 @@ public:
      * scripts.
      *
      * @param name    Name of the module.
-     * @param module  Module namespace.
+     * @param module  Module namespace. App will observe this for deletion.
      */
     void addNativeModule(String const &name, Record &module);
 

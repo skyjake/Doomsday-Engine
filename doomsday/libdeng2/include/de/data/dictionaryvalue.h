@@ -68,8 +68,8 @@ public:
      * Adds a key-value pair to the dictionary. If the key already exists, its
      * old value will be replaced by the new one.
      *
-     * @param key  Key.
-     * @param value  Value.
+     * @param key    Key. Ownership given to DictionaryValue.
+     * @param value  Value. Ownership given to DictionaryValue.
      */
     void add(Value *key, Value *value);
 
