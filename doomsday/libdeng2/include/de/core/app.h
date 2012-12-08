@@ -77,6 +77,8 @@ public:
 
     ~App();
 
+    bool notify(QObject *receiver, QEvent *event);
+
     /**
      * Finishes App construction by initializing all the application's
      * subsystems. This includes Config and FS. Has to be called manually in
@@ -87,7 +89,14 @@ public:
      */
     void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
 
-    bool notify(QObject *receiver, QEvent *event);
+    /**
+     * Adds a native module to the set of modules that can be imported in
+     * scripts.
+     *
+     * @param name    Name of the module.
+     * @param module  Module namespace.
+     */
+    void addNativeModule(String const &name, Record &module);
 
     static App &app();
 

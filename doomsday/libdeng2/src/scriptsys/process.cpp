@@ -299,8 +299,7 @@ void Process::call(Function const &function, ArrayValue const &arguments)
         // that namespace on the stack first.
         if(function.globals() && function.globals() != &globals())
         {
-            _stack.push_back(new Context(Context::GLOBAL_NAMESPACE, this, 
-                                         function.globals()));
+            _stack.push_back(new Context(Context::GLOBAL_NAMESPACE, this, function.globals()));
         }
         
         // Create a new context.

@@ -24,6 +24,7 @@
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/Module"
+#include "de/Record"
 #include "de/Version"
 #include "de/Block"
 #include "de/ZipArchive"
@@ -36,7 +37,7 @@
 
 namespace de {
 
-struct App::Instance
+struct App::Instance : DENG2_OBSERVES(Record, Deletion)
 {
     App &app;
 
@@ -63,6 +64,11 @@ struct App::Instance
     /// The configuration.
     Config *config;
 
+    /// Built-in special modules. These are constructed by native code and thus not
+    /// parsed from any script.
+    typedef QMap<String, Record *> NativeModules;
+    NativeModules nativeModules;
+
     /// Resident modules.
     typedef std::map<String, Module *> Modules;
     Modules modules;
@@ -72,7 +78,24 @@ struct App::Instance
 
     ~Instance()
     {
+        DENG2_FOR_EACH(NativeModules, i, nativeModules)
+        {
+            i.value()->audienceForDeletion -= this;
+        }
         delete config;
+    }
+
+    void recordBeingDeleted(Record &record)
+    {
+        QMutableMapIterator<String, Record *> iter(nativeModules);
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.value() == &record)
+            {
+                iter.remove();
+            }
+        }
     }
 
     void initFileSystem(bool allowPlugins)
@@ -280,6 +303,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     // The configuration.
     d->config = new Config("/modules/Config.de");
+    addNativeModule("Config", d->config->names());
+
     d->config->read();
 
     LogBuffer &logBuf = LogBuffer::appBuffer();
@@ -309,6 +334,12 @@ void App::initSubsystems(SubsystemInitFlags flags)
     }
 
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
+}
+
+void App::addNativeModule(String const &name, Record &module)
+{
+    d->nativeModules.insert(name, &module);
+    module.audienceForDeletion += d;
 }
 
 bool App::notify(QObject *receiver, QEvent *event)
@@ -387,10 +418,11 @@ Record &App::importModule(String const &name, String const &fromPath)
 
     App &self = app();
 
-    // There are some special modules.
-    if(name == "Config")
+    // There are some special native modules.
+    Instance::NativeModules::const_iterator foundNative = self.d->nativeModules.constFind(name);
+    if(foundNative != self.d->nativeModules.constEnd())
     {
-        return self.config().names();
+        return *foundNative.value();
     }
 
     // Maybe we already have this module?
