@@ -84,7 +84,7 @@ rawtex_t* R_FindRawTex(lumpnum_t lumpNum)
     return 0;
 }
 
-rawtex_t* R_GetRawTex(lumpnum_t lumpNum)
+rawtex_t *R_GetRawTex(lumpnum_t lumpNum)
 {
     LOG_AS("R_GetRawTex");
     if(-1 == lumpNum || lumpNum >= F_LumpCount())
@@ -94,16 +94,16 @@ rawtex_t* R_GetRawTex(lumpnum_t lumpNum)
     }
 
     // Check if this lumpNum has already been loaded as a rawtex.
-    rawtex_t* r = R_FindRawTex(lumpNum);
+    rawtex_t *r = R_FindRawTex(lumpNum);
     if(r) return r;
 
     // Hmm, this is an entirely new rawtex.
-    r = (rawtex_t*) Z_Calloc(sizeof(*r), PU_REFRESHRAW, 0);
-    Str_Copy(Str_Init(&r->name), F_LumpName(lumpNum));
+    r = (rawtex_t *) Z_Calloc(sizeof(*r), PU_REFRESHRAW, 0);
+    F_FileName(Str_Init(&r->name), Str_Text(F_LumpName(lumpNum)));
     r->lumpNum = lumpNum;
 
     // Link to the hash.
-    RawTexHash* hash = RAWTEX_HASH(lumpNum);
+    RawTexHash *hash = RAWTEX_HASH(lumpNum);
     r->next = hash->first;
     hash->first = r;
 
@@ -119,7 +119,7 @@ void R_UpdateRawTexs()
 {
     for(int i = 0; i < RAWTEX_HASH_SIZE; ++i)
     {
-        for(rawtex_t* rawTex = rawtexhash[i].first; rawTex; rawTex = rawTex->next)
+        for(rawtex_t *rawTex = rawtexhash[i].first; rawTex; rawTex = rawTex->next)
         {
             Str_Free(&rawTex->name);
         }
