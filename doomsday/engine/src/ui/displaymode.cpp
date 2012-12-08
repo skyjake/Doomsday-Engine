@@ -181,7 +181,7 @@ static void setupBindings()
     bindings = new de::Record;
 
     de::Function *func = new de::Function("DisplayMode_OriginalMode");
-    bindings->addFunction("originalMode", func);
+    bindings->addFunction("originalMode", func).setReadOnly();
     func->release(); // we don't keep a ref
 
     de::App::app().addNativeModule("DisplayMode", *bindings);

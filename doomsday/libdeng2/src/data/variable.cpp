@@ -105,6 +105,12 @@ void Variable::setMode(Flags const &flags)
     _mode = flags;
 }
 
+Variable &Variable::setReadOnly()
+{
+    _mode |= ReadOnly;
+    return *this;
+}
+
 bool Variable::isValid(Value const &v) const
 {
     /// @todo  Make sure this actually works and add func, record, ref.

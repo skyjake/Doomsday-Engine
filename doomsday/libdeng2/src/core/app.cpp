@@ -198,12 +198,12 @@ App::App(int &argc, char **argv, GUIMode guiMode)
     ArrayValue *num = new ArrayValue;
     *num << NumberValue(ver.major) << NumberValue(ver.minor)
          << NumberValue(ver.patch) << NumberValue(ver.build);
-    mod.addArray("number") = num;
-    mod.addText("text", ver.asText());
-    mod.addNumber("build", ver.build);
-    mod.addText("os", Version::operatingSystem());
-    mod.addNumber("cpuBits", Version::cpuBits());
-    mod.addBoolean("debug", Version::isDebugBuild());
+    (mod.addArray("number") = num).setReadOnly();
+    mod.addText("text", ver.asText()).setReadOnly();
+    mod.addNumber("build", ver.build).setReadOnly();
+    mod.addText("os", Version::operatingSystem()).setReadOnly();
+    mod.addNumber("cpuBits", Version::cpuBits()).setReadOnly();
+    mod.addBoolean("debug", Version::isDebugBuild()).setReadOnly();
     addNativeModule("Version", mod);
 }
 
