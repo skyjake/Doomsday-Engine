@@ -208,9 +208,11 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 
         case INDEX:
         {
+            /*
             LOG_DEV_TRACE("INDEX: types %s [ %s ] byref:%b",
                           DENG2_TYPE_NAME(*leftValue) << DENG2_TYPE_NAME(*rightValue)
                           << flags().testFlag(ByReference));
+                          */
 
             // As a special case, records can be indexed also by reference.
             RecordValue *recValue = dynamic_cast<RecordValue *>(leftValue);

@@ -267,6 +267,13 @@ Variable &Record::addBlock(String const &name)
     Variable::verifyName(name);
     return add(new Variable(name, new BlockValue(), Variable::AllowBlock));
 }
+
+Variable &Record::addFunction(const String &name, Function *func)
+{
+    /// @throw Variable::NameError @a name is not a valid variable name.
+    Variable::verifyName(name);
+    return add(new Variable(name, new FunctionValue(func), Variable::AllowFunction));
+}
     
 Record &Record::add(String const &name, Record *subrecord)
 {

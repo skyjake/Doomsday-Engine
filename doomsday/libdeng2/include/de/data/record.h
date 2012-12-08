@@ -178,6 +178,19 @@ namespace de
          * @return  The block variable.
          */
         Variable &addBlock(String const &variableName);
+
+        /**
+         * Adds a function variable to the record. The variable is set up to only
+         * accept function values.
+         *
+         * @param variableName  Name of the variable.
+         * @param func          Function. The variable's value will hold a
+         *                      reference to the Function; the caller may release
+         *                      its reference afterwards.
+         *
+         * @return The function variable.
+         */
+        Variable &addFunction(String const &variableName, Function *func);
         
         /**
          * Adds a new subrecord to the record. Adds a variable named @a name
