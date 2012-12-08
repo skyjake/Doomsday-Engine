@@ -83,7 +83,7 @@ Function::~Function()
     // Delete the default argument values.
     DENG2_FOR_EACH(Defaults, i, d->defaults)
     {
-        delete i->second;
+        delete i.value();
     }
     if(d->globals)
     {
@@ -109,7 +109,7 @@ String Function::asText() const
         Defaults::const_iterator def = d->defaults.find(*i);
         if(def != d->defaults.end())
         {
-            os << "=" << def->second->asText();
+            os << "=" << def.value()->asText();
         }
     }
     os << "))";
@@ -191,7 +191,7 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
                 Defaults::const_iterator k = d->defaults.find(*i);
                 if(k != d->defaults.end())
                 {
-                    values.push_back(k->second);
+                    values.append(k.value());
                 }
                 else
                 {
@@ -271,7 +271,7 @@ void Function::operator >> (Writer &to) const
     // Default values.
     DENG2_FOR_EACH_CONST(Defaults, i, d->defaults)
     {
-        to << i->first << *i->second;
+        to << i.key() << *i.value();
     }
     
     // The statements of the function.

@@ -26,8 +26,8 @@
 #include "../Compound"
 #include "../Record"
 
-#include <list>
-#include <map>
+#include <QList>
+#include <QMap>
 
 namespace de
 {
@@ -62,9 +62,9 @@ namespace de
         /// An unknown native entry point was specified. @ingroup errors
         DENG2_ERROR(UnknownEntryPointError);
 
-        typedef std::list<String> Arguments;
-        typedef std::map<String, Value *> Defaults;
-        typedef std::list<Value const *> ArgumentValues;
+        typedef QList<String> Arguments;
+        typedef QMap<String, Value *> Defaults;
+        typedef QList<Value const *> ArgumentValues;
         
     public:
         Function();
