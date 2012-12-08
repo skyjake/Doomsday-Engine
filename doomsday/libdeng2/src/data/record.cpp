@@ -247,11 +247,11 @@ Variable &Record::addTime(String const &name, Time const &time)
     return add(new Variable(name, new TimeValue(time), Variable::AllowTime));
 }
 
-Variable &Record::addArray(String const &name)
+Variable &Record::addArray(String const &name, ArrayValue *array)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
-    return add(new Variable(name, new ArrayValue(), Variable::AllowArray));
+    return add(new Variable(name, array? array : new ArrayValue, Variable::AllowArray));
 }
 
 Variable &Record::addDictionary(String const &name)

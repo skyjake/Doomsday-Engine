@@ -198,7 +198,7 @@ App::App(int &argc, char **argv, GUIMode guiMode)
     ArrayValue *num = new ArrayValue;
     *num << NumberValue(ver.major) << NumberValue(ver.minor)
          << NumberValue(ver.patch) << NumberValue(ver.build);
-    (mod.addArray("VERSION") = num).setReadOnly();
+    mod.addArray("VERSION", num).setReadOnly();
     mod.addText("TEXT", ver.asText()).setReadOnly();
     mod.addNumber("BUILD", ver.build).setReadOnly();
     mod.addText("OS", Version::operatingSystem()).setReadOnly();
