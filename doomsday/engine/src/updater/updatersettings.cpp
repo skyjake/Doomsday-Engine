@@ -52,6 +52,11 @@ void UpdaterSettings::initialize()
 
     if(!config.names().has(SUBREC_NAME))
     {
+        /**
+         * @todo These defaults can be moved to Config.de when libdeng2 has
+         * knowledge of the release type.
+         */
+
         // Looks like we don't have existing values stored. Let's set up a
         // Record with the defaults.
         Record *s = new Record;
