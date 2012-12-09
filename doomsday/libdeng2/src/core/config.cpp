@@ -24,6 +24,7 @@
 #include "de/Folder"
 #include "de/ArrayValue"
 #include "de/NumberValue"
+#include "de/ArrayValue"
 #include "de/Reader"
 #include "de/Writer"
 #include "de/Version"
@@ -176,6 +177,11 @@ ddouble Config::getd(String const &name)
 String Config::gets(String const &name)
 {
     return get(name).asText();
+}
+
+ArrayValue &Config::geta(const String &name)
+{
+    return getAs<ArrayValue>(name);
 }
 
 } // namespace de
