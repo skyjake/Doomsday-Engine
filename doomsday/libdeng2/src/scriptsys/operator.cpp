@@ -28,6 +28,10 @@ String de::operatorToText(Operator op)
     {
     case NOT:
         return "NOT";
+    case AND:
+        return "AND";
+    case OR:
+        return "OR";
     case IN:
         return "IN";
     case EQUAL:

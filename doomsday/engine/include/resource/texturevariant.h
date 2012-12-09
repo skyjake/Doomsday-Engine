@@ -25,17 +25,12 @@
 #include "texturevariantspecification.h"
 
 #ifdef __cplusplus
-extern "C" {
-#endif
 
-struct texture_s;
+#include <QFlag>
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#ifdef __cplusplus
 namespace de {
+
+class Texture;
 
 class TextureVariant
 {
@@ -57,11 +52,11 @@ public:
      *                      Ownership is NOT given to the resultant TextureVariant
      * @param source        Source of this variant.
      */
-    TextureVariant(struct texture_s& generalCase, texturevariantspecification_t& spec,
-                   TexSource source=TEXS_NONE);
+    TextureVariant(Texture &generalCase, texturevariantspecification_t &spec,
+                   TexSource source = TEXS_NONE);
 
     /// @return  Superior Texture of which this is a derivative.
-    struct texture_s* generalCase() const { return texture; }
+    Texture &generalCase() const { return texture; }
 
     /// @return  Source of this variant.
     TexSource source() const { return texSource; }
@@ -73,7 +68,7 @@ public:
     void setSource(TexSource newSource);
 
     /// @return  TextureVariantSpecification used to derive this variant.
-    texturevariantspecification_t* spec() const { return varSpec; }
+    texturevariantspecification_t *spec() const { return varSpec; }
 
     bool isMasked() const { return !!(flags & Masked); }
 
@@ -85,16 +80,16 @@ public:
 
     bool isPrepared() const;
 
-    void coords(float* s, float* t) const;
+    void coords(float *s, float *t) const;
     void setCoords(float s, float t);
 
-    unsigned int glName() const { return glTexName; }
+    uint glName() const { return glTexName; }
 
-    void setGLName(unsigned int glName);
+    void setGLName(uint glName);
 
 private:
     /// Superior Texture of which this is a derivative.
-    struct texture_s* texture;
+    Texture &texture;
 
     /// Source of this texture.
     TexSource texSource;
@@ -102,13 +97,13 @@ private:
     Flags flags;
 
     /// Name of the associated GL texture object.
-    unsigned int glTexName;
+    uint glTexName;
 
     /// Prepared coordinates for the bottom right of the texture minus border.
     float s, t;
 
     /// Specification used to derive this variant.
-    texturevariantspecification_t* varSpec;
+    texturevariantspecification_t *varSpec;
 };
 
 } // namespace de
@@ -119,34 +114,34 @@ extern "C" {
 /**
  * C wrapper API:
  */
+struct texture_s;
 
 struct texturevariant_s; // The texturevariant instance (opaque).
 typedef struct texturevariant_s TextureVariant;
 
-TextureVariant* TextureVariant_New(struct texture_s* generalCase,
-    texturevariantspecification_t* spec, TexSource source);
-void TextureVariant_Delete(TextureVariant* tex);
+TextureVariant *TextureVariant_New(struct texture_s *generalCase, texturevariantspecification_t *spec, TexSource source);
+void TextureVariant_Delete(TextureVariant *tex);
 
-struct texture_s* TextureVariant_GeneralCase(const TextureVariant* tex);
+struct texture_s *TextureVariant_GeneralCase(TextureVariant const *tex);
 
-TexSource TextureVariant_Source(const TextureVariant* tex);
-void TextureVariant_SetSource(TextureVariant* tex, TexSource source);
+TexSource TextureVariant_Source(TextureVariant const *tex);
+void TextureVariant_SetSource(TextureVariant *tex, TexSource source);
 
-texturevariantspecification_t* TextureVariant_Spec(const TextureVariant* tex);
+texturevariantspecification_t *TextureVariant_Spec(TextureVariant const *tex);
 
-boolean TextureVariant_IsMasked(const TextureVariant* tex);
-void TextureVariant_FlagMasked(TextureVariant* tex, boolean yes);
+boolean TextureVariant_IsMasked(TextureVariant const *tex);
+void TextureVariant_FlagMasked(TextureVariant *tex, boolean yes);
 
-boolean TextureVariant_IsUploaded(const TextureVariant* tex);
-void TextureVariant_FlagUploaded(TextureVariant* tex, boolean yes);
+boolean TextureVariant_IsUploaded(TextureVariant const *tex);
+void TextureVariant_FlagUploaded(TextureVariant *tex, boolean yes);
 
-boolean TextureVariant_IsPrepared(const TextureVariant* tex);
+boolean TextureVariant_IsPrepared(TextureVariant const *tex);
 
-void TextureVariant_Coords(const TextureVariant* tex, float* s, float* t);
-void TextureVariant_SetCoords(TextureVariant* tex, float s, float t);
+void TextureVariant_Coords(TextureVariant const *tex, float *s, float *t);
+void TextureVariant_SetCoords(TextureVariant *tex, float s, float t);
 
-unsigned int TextureVariant_GLName(const TextureVariant* tex);
-void TextureVariant_SetGLName(TextureVariant* tex, unsigned int glName);
+uint TextureVariant_GLName(TextureVariant const *tex);
+void TextureVariant_SetGLName(TextureVariant *tex, uint glName);
 
 #ifdef __cplusplus
 } // extern "C"

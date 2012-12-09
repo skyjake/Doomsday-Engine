@@ -30,7 +30,7 @@ namespace de
      *
      * @ingroup data
      */
-    class Counted
+    class DENG2_PUBLIC Counted
     {
     public:
         /**
@@ -38,34 +38,47 @@ namespace de
          * that whoever constructs the object holds on to one reference.
          */
         Counted();
-
-        /**
-         * When a counted object is destroyed, its reference counter must be zero.
-         */
-        virtual ~Counted();
         
         /**
-         * Acquires a reference to the reference-counted object.
-         * Use the template to get the correct type of pointer from
-         * a derived class.
+         * Acquires a reference to the reference-counted object. Use the
+         * template to get the correct type of pointer from a derived class.
          */
         template <typename Type>
         Type *ref() {
-            ++_refCount;
+            addRef();
             return static_cast<Type *>(this);
         }
         
         /**
-         * Releases a reference that was acquired earlier with ref().
-         * The object destroys itself when the reference counter hits
-         * zero.
+         * Releases a reference that was acquired earlier with ref(). The
+         * object destroys itself when the reference counter hits zero.
          */
         void release();
-        
+
+    protected:
+        /**
+         * Modifies the reference counter. If the reference count is reduced to
+         * zero, the caller is responsible for making sure the object gets
+         * deleted.
+         *
+         * @param count  Added to the reference counter.
+         */
+        void addRef(dint count = 1) {
+            _refCount += count;
+            DENG2_ASSERT(_refCount >= 0);
+        }
+
+        /**
+         * When a counted object is destroyed, its reference counter must be
+         * zero. Note that this is only called from release() when all
+         * references have been released.
+         */
+        virtual ~Counted();
+
     private:
         /// Number of other things that refer to this object, i.e. have
         /// a pointer to it.
-        duint _refCount;
+        dint _refCount;
     };
 }
 

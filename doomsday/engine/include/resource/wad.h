@@ -1,10 +1,4 @@
-/**
- * @file wad.h
- * Specialization of File for working with Wad archives.
- *
- * @ingroup resource
- *
- * @see file.h, File
+/** @file wad.h WAD Archive (File).
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -27,19 +21,17 @@
 #ifndef LIBDENG_RESOURCE_WAD_H
 #define LIBDENG_RESOURCE_WAD_H
 
-#ifdef __cplusplus
-
-#include "filesys/fileinfo.h"
 #include "filesys/file.h"
+#include "filesys/fileinfo.h"
 #include <de/PathTree>
 
 namespace de {
 
-class FileHandle;
-class LumpIndex;
-
 /**
- * Runtime representation of an opened WAD file.
+ * WAD archive file format.
+ * @ingroup resource
+ *
+ * @see file.h, File1
  */
 class Wad : public File1
 {
@@ -51,7 +43,7 @@ public:
     DENG2_ERROR(NotFoundError);
 
 public:
-    Wad(FileHandle& hndl, String path, FileInfo const& info, File1* container = 0);
+    Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container = 0);
     ~Wad();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
@@ -75,7 +67,7 @@ public:
      *
      * @throws NotFoundError  If @a lumpIdx is not valid.
      */
-    PathTree::Node& lumpDirectoryNode(int lumpIdx) const;
+    PathTree::Node &lumpDirectoryNode(int lumpIdx) const;
 
     /**
      * Retrieve a lump contained by this file.
@@ -86,7 +78,7 @@ public:
      *
      * @throws NotFoundError  If @a lumpIdx is not valid.
      */
-    File1& lump(int lumpIdx);
+    File1 &lump(int lumpIdx);
 
     /**
      * Read the data associated with lump @a lumpIdx into @a buffer.
@@ -102,7 +94,7 @@ public:
      *
      * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
      */
-    size_t readLump(int lumpIdx, uint8_t* buffer, bool tryCache = true);
+    size_t readLump(int lumpIdx, uint8_t *buffer, bool tryCache = true);
 
     /**
      * Read a subsection of the data associated with lump @a lumpIdx into @a buffer.
@@ -117,7 +109,7 @@ public:
      *
      * @throws NotFoundError  If @a lumpIdx is not valid.
      */
-    size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
+    size_t readLump(int lumpIdx, uint8_t *buffer, size_t startOffset, size_t length,
                     bool tryCache = true);
 
     /**
@@ -129,16 +121,14 @@ public:
      *
      * @throws NotFoundError  If @a lumpIdx is not valid.
      */
-    uint8_t const* cacheLump(int lumpIdx);
+    uint8_t const *cacheLump(int lumpIdx);
 
     /**
      * Remove a lock on a cached data lump.
      *
      * @param lumpIdx   Lump index associated with the cached data to be changed.
-     *
-     * @return This instance.
      */
-    Wad& unlockLump(int lumpIdx);
+    void unlockLump(int lumpIdx);
 
     /**
      * Clear any cached data for lump @a lumpIdx from the lump cache.
@@ -146,17 +136,15 @@ public:
      * @param lumpIdx       Lump index associated with the cached data to be cleared.
      * @param retCleared    If not @c NULL write @c true to this address if data was
      *                      present and subsequently cleared from the cache.
-     *
-     * @return This instance.
      */
-    Wad& clearCachedLump(int lumpIdx, bool* retCleared = 0);
+    void clearCachedLump(int lumpIdx, bool *retCleared = 0);
 
     /**
      * Purge the lump cache, clearing all cached data lumps.
      *
      * @return This instance.
      */
-    Wad& clearLumpCache();
+    void clearLumpCache();
 
     /**
      * @attention Uses an extremely simple formula which does not conform to any CRC
@@ -164,32 +152,21 @@ public:
      */
     uint calculateCRC();
 
-// Static members ------------------------------------------------------------------
-
+public:
     /**
-     * Does @a file appear to be in a format which can be represented with Wad?
+     * Determines whether a File looks like it could be accessed using Wad.
      *
-     * @param file      Stream file handle/wrapper to be recognised.
+     * @param file  File to check.
      *
-     * @return @c true= @a file can be represented with Wad.
+     * @return @c true, if the file looks like a WAD.
      */
-    static bool recognise(FileHandle& file);
+    static bool recognise(FileHandle &file);
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 };
 
 } // namespace de
-
-extern "C" {
-#endif // __cplusplus
-
-struct wad_s; // The wad instance (opaque)
-//typedef struct wad_s Wad;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_RESOURCE_WAD_H */

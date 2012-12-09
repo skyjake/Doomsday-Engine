@@ -49,19 +49,18 @@ class Logs : public QMap<QThread *, Log *>, public Lockable
 public:
     Logs() {}
     ~Logs() {
-        lock();
+        DENG2_GUARD(this);
         // The logs are owned by the logs table.
         foreach(Log *log, values()) {
             delete log;
         }
-        unlock();
     }
 };
 
 } // namespace internal
 
 /// The logs table contains the log of each thread that uses logging.
-static internal::Logs logs;
+static std::auto_ptr<internal::Logs> logsPtr;
 
 LogEntry::LogEntry() : _level(TRACE), _sectionDepth(0), _disabled(true)
 {}
@@ -353,38 +352,47 @@ LogEntry &Log::enter(LogEntry::Level level, String const &format, LogEntry::Args
     return *entry;
 }
 
+static internal::Logs &theLogs()
+{
+    if(!logsPtr.get()) logsPtr.reset(new internal::Logs);
+    return *logsPtr;
+}
+
 Log &Log::threadLog()
 {
+    internal::Logs &logs = theLogs();
+
+    DENG2_GUARD(logs);
+
     // Each thread has its own log.
     QThread *thread = QThread::currentThread();
-    Log *theLog = 0;
-    logs.lock();
-    internal::Logs::iterator found = logs.find(thread);
-    if(found == logs.end())
+    internal::Logs::const_iterator found = logs.constFind(thread);
+    if(found == logs.constEnd())
     {
         // Create a new log.
-        theLog = new Log();
-        logs[thread] = theLog;
+        Log* theLog = new Log;
+        logs.insert(thread, theLog);
+        return *theLog;
     }
     else
     {
-        theLog = found.value();
+        return *found.value();
     }
-    logs.unlock();
-    return *theLog;
 }
 
 void Log::disposeThreadLog()
 {
+    internal::Logs &logs = theLogs();
+
+    DENG2_GUARD(logs);
+
     QThread *thread = QThread::currentThread();
-    logs.lock();
     internal::Logs::iterator found = logs.find(thread);
     if(found != logs.end())
     {
         delete found.value();
         logs.remove(found.key());
     }
-    logs.unlock();
 }
 
 LogEntryStager::LogEntryStager(LogEntry::Level level, String const &format) : _level(level)

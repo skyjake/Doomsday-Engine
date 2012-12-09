@@ -92,6 +92,17 @@ void R_UpdateTranslationTables()
     R_InitTranslationTables();
 }
 
+byte const *R_TranslationTable(int tclass, int tmap)
+{
+    // Is translation unnecessary?
+    if(!tclass && !tmap) return 0;
+
+    int trans = MAX_OF(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
+    LOG_DEBUG("tclass=%i tmap=%i => TransPal# %i") << tclass << tmap << trans;
+
+    return translationTables + trans * 256;
+}
+
 void R_InitColorPalettes()
 {
     if(initedColorPalettes)

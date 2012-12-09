@@ -139,6 +139,14 @@ print not True
 print not False
 print not 'Is this true?'
 
+sections.subsection('Operators: and/or.')
+print True and True
+print True and False
+print True or True
+print True or False
+print False or False
+print "'and' has higher preference than 'or':", True and False or True
+
 sections.subsection('Operators: comparisons.')
 print 'Numbers:', 1 > 3, 1 < 3, 2 >= 2, 4 >= 2, 2 <= 2, 4 <= 2
 print 'Text:', "hello" > "world", "hello" < "world", 'hello' == 'hello'

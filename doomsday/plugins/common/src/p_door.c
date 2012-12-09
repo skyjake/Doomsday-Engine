@@ -238,7 +238,7 @@ void T_Door(door_t* door)
         else if(res == crushed)
         {
             // DOOMII BUG:
-            // The switch bellow SHOULD(?) play the blazing open sound if
+            // The switch below SHOULD(?) play the blazing open sound if
             // the door type is blazing and not SFX_DOROPN.
             switch(door->type)
             {

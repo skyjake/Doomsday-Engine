@@ -1,8 +1,6 @@
-/**
- * @file textures.cpp
- * Textures collection. @ingroup resource
+/** @file textures.cpp Texture Resource Collection.
  *
- * @authors Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -53,7 +51,7 @@ namespace de {
 
 static Uri emptyUri;
 
-Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Size2Raw const &dimensions,
+Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, QSize const &dimensions,
     Texture::Flags flags, void *userData)
 {
     LOG_AS("Textures::ResourceClass::interpret");
@@ -63,29 +61,13 @@ Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Size2Raw 
 Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Texture::Flags flags,
     void *userData)
 {
-    return interpret(manifest, Size2Raw(0, 0), flags, userData);
+    return interpret(manifest, QSize(0, 0), flags, userData);
 }
-
-enum ValidateUriFlag
-{
-    AnyScheme  = 0x1, ///< The scheme of the URI may be of zero-length; signifying "any scheme".
-    NotUrn     = 0x2  ///< Do not accept a URN.
-};
-Q_DECLARE_FLAGS(ValidateUriFlags, ValidateUriFlag)
-Q_DECLARE_OPERATORS_FOR_FLAGS(ValidateUriFlags)
 
 struct Textures::Instance
 {
-    Textures& self;
-
-    // LUT which translates textureid_t => TextureManifest*. Index with textureid_t-1
-    QList<TextureManifest *> textureIdLut;
-
     /// System subspace schemes containing the textures.
     Textures::Schemes schemes;
-
-    Instance(Textures *d) : self(*d)
-    {}
 
     ~Instance()
     {
@@ -94,148 +76,6 @@ struct Textures::Instance
             delete *i;
         }
         schemes.clear();
-    }
-
-    inline bool validTextureId(textureid_t id) const
-    {
-        return (id != NOTEXTUREID && id <= textureIdLut.size());
-    }
-
-    /// @pre textureIdLut has been initialized and is large enough!
-    void unlinkFromTextureIdLut(TextureManifest &manifest)
-    {
-        textureid_t texId = self.idForManifest(manifest);
-        if(!validTextureId(texId)) return; // Not linked.
-        textureIdLut[texId - 1/*1-based index*/] = 0;
-    }
-
-    TextureManifest *manifestByTextureId(textureid_t id)
-    {
-        if(!validTextureId(id)) return 0;
-        return textureIdLut[id - 1/*1-based index*/];
-    }
-
-    TextureManifest *manifestByUri(Uri const &validatedUri)
-    {
-        // Is this a URN? (of the form "urn:schemename:uniqueid")
-        if(!validatedUri.scheme().compareWithoutCase("urn"))
-        {
-            String const &pathStr = validatedUri.path().toStringRef();
-            int uIdPos = pathStr.indexOf(':');
-            if(uIdPos > 0)
-            {
-                String schemeName = pathStr.left(uIdPos);
-                int uniqueId      = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
-
-                try
-                {
-                    return &self.scheme(schemeName).findByUniqueId(uniqueId);
-                }
-                catch(Textures::Scheme::NotFoundError const &)
-                {} // Ignore this error.
-            }
-            return 0; // Not found.
-        }
-
-        // No, this is a URI.
-        String const &path = validatedUri.path();
-
-        // Does the user want a manifest in a specific scheme?
-        if(!validatedUri.scheme().isEmpty())
-        {
-            try
-            {
-                return &self.scheme(validatedUri.scheme()).find(path);
-            }
-            catch(Textures::Scheme::NotFoundError const &)
-            {} // Ignore this error.
-            return 0;
-        }
-
-        // No, check in each of these schemes (in priority order).
-        /// @todo This priorty order should be defined by the user.
-        static String const order[] = {
-            "Sprites",
-            "Textures",
-            "Flats",
-            "Patches",
-            "System",
-            "Details",
-            "Reflections",
-            "Masks",
-            "ModelSkins",
-            "ModelReflectionSkins",
-            "Lightmaps",
-            "Flaremaps",
-            ""
-        };
-        for(int i = 0; !order[i].isEmpty(); ++i)
-        {
-            try
-            {
-                return &self.scheme(order[i]).find(path);
-            }
-            catch(Textures::Scheme::NotFoundError const &)
-            {} // Ignore this error.
-        }
-        return 0; // Not found.
-    }
-
-    /**
-     * @param uri       Uri to be validated.
-     * @param flags     Validation flags.
-     * @param quiet     @c true= Do not output validation remarks to the log.
-     *
-     * @return  @c true if @a Uri passes validation.
-     */
-    bool validateUri(Uri const &uri, ValidateUriFlags flags, bool quiet = false)
-    {
-        LOG_AS("validateUri");
-        bool const isUrn = !uri.scheme().compareWithoutCase("urn");
-
-        if(uri.isEmpty())
-        {
-            if(!quiet) LOG_MSG("Empty path in texture %s \"%s\".") << uri << (isUrn? "URN" : "URI");
-            return false;
-        }
-
-        // If this is a URN we extract the scheme from the path.
-        String schemeString;
-        if(isUrn)
-        {
-            if(flags.testFlag(NotUrn))
-            {
-                if(!quiet) LOG_MSG("Texture URN \"%s\" supplied, URI required.") << uri;
-                return false;
-            }
-
-            String const &pathStr = uri.path().toStringRef();
-            int const uIdPos      = pathStr.indexOf(':');
-            if(uIdPos > 0)
-            {
-                schemeString = pathStr.left(uIdPos);
-            }
-        }
-        else
-        {
-            schemeString = uri.scheme();
-        }
-
-        if(schemeString.isEmpty())
-        {
-            if(!flags.testFlag(AnyScheme))
-            {
-                if(!quiet) LOG_MSG("Missing scheme in texture %s \"%s\".") << uri << (isUrn? "URN" : "URI");
-                return false;
-            }
-        }
-        else if(!self.knownScheme(schemeString))
-        {
-            if(!quiet) LOG_MSG("Unknown scheme in texture %s \"%s\".") << uri << (isUrn? "URN" : "URI");
-            return false;
-        }
-
-        return true;
     }
 };
 
@@ -253,7 +93,7 @@ void Textures::consoleRegister()
 
 Textures::Textures()
 {
-    d = new Instance(this);
+    d = new Instance();
 }
 
 Textures::~Textures()
@@ -275,49 +115,149 @@ Textures::Scheme& Textures::createScheme(String name)
     return *newScheme;
 }
 
-int Textures::size() const
-{
-    return d->textureIdLut.size();
-}
-
-static void release(Texture *tex)
+static inline void releaseTexture(Texture *tex)
 {
     /// Stub.
     GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(tex));
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
-Texture *Textures::toTexture(textureid_t id) const
+bool Textures::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet) const
 {
-    LOG_AS("Textures::toTexture");
-    if(TextureManifest *manifest = d->manifestByTextureId(id))
+    LOG_AS("Textures::validateUri");
+    bool const isUrn = !uri.scheme().compareWithoutCase("urn");
+
+    if(uri.isEmpty())
     {
-        return manifest->texture();
+        if(!quiet) LOG_MSG("Empty path in texture %s \"%s\".") << uri << (isUrn? "URN" : "URI");
+        return false;
     }
 
-#if _DEBUG
-    if(id != NOTEXTUREID)
-        LOG_WARNING("Failed to locate texture for id #%i, returning 0.") << id;
-#endif
-    return 0;
+    // If this is a URN we extract the scheme from the path.
+    String schemeString;
+    if(isUrn)
+    {
+        if(flags.testFlag(NotUrn))
+        {
+            if(!quiet) LOG_MSG("Texture URN \"%s\" supplied, URI required.") << uri;
+            return false;
+        }
+
+        String const &pathStr = uri.path().toStringRef();
+        int const uIdPos      = pathStr.indexOf(':');
+        if(uIdPos > 0)
+        {
+            schemeString = pathStr.left(uIdPos);
+        }
+    }
+    else
+    {
+        schemeString = uri.scheme();
+    }
+
+    if(schemeString.isEmpty())
+    {
+        if(!flags.testFlag(AnyScheme))
+        {
+            if(!quiet) LOG_MSG("Missing scheme in texture %s \"%s\".") << uri << (isUrn? "URN" : "URI");
+            return false;
+        }
+    }
+    else if(!knownScheme(schemeString))
+    {
+        if(!quiet) LOG_MSG("Unknown scheme in texture %s \"%s\".") << uri << (isUrn? "URN" : "URI");
+        return false;
+    }
+
+    return true;
 }
 
-TextureManifest *Textures::find(Uri const &uri) const
+TextureManifest &Textures::find(Uri const &uri) const
 {
     LOG_AS("Textures::find");
 
-    if(!Textures::size()) return 0;
-
-    if(!d->validateUri(uri, AnyScheme, true /*quiet please*/))
-    {
-#if _DEBUG
-        LOG_WARNING("URI \"%s\" failed validation, returning NULL.") << uri;
-#endif
-        return 0;
-    }
+    if(!validateUri(uri, AnyScheme, true /*quiet please*/))
+        throw NotFoundError("Textures::find", "URI \"" + uri.asText() + "\" failed validation");
 
     // Perform the search.
-    return d->manifestByUri(uri);
+    // Is this a URN? (of the form "urn:schemename:uniqueid")
+    if(!uri.scheme().compareWithoutCase("urn"))
+    {
+        String const &pathStr = uri.path().toStringRef();
+        int uIdPos = pathStr.indexOf(':');
+        if(uIdPos > 0)
+        {
+            String schemeName = pathStr.left(uIdPos);
+            int uniqueId      = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
+
+            try
+            {
+                return scheme(schemeName).findByUniqueId(uniqueId);
+            }
+            catch(Scheme::NotFoundError const &)
+            {} // Ignore, we'll throw our own...
+        }
+    }
+    else
+    {
+        // No, this is a URI.
+        String const &path = uri.path();
+
+        // Does the user want a manifest in a specific scheme?
+        if(!uri.scheme().isEmpty())
+        {
+            try
+            {
+                return scheme(uri.scheme()).find(path);
+            }
+            catch(Scheme::NotFoundError const &)
+            {} // Ignore, we'll throw our own...
+        }
+        else
+        {
+            // No, check in each of these schemes (in priority order).
+            /// @todo This priorty order should be defined by the user.
+            static String const order[] = {
+                "Sprites",
+                "Textures",
+                "Flats",
+                "Patches",
+                "System",
+                "Details",
+                "Reflections",
+                "Masks",
+                "ModelSkins",
+                "ModelReflectionSkins",
+                "Lightmaps",
+                "Flaremaps",
+                ""
+            };
+            for(int i = 0; !order[i].isEmpty(); ++i)
+            {
+                try
+                {
+                    return scheme(order[i]).find(path);
+                }
+                catch(Scheme::NotFoundError const &)
+                {} // Ignore this error.
+            }
+        }
+    }
+
+    /// @throw NotFoundError Failed to locate a matching manifest.
+    throw NotFoundError("Textures::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+}
+
+bool Textures::has(Uri const &path) const
+{
+    try
+    {
+        find(path);
+        return true;
+    }
+    catch(NotFoundError const &)
+    {} // Ignore this error.
+    return false;
 }
 
 TextureManifest *Textures::declare(Uri const &uri, int uniqueId, Uri const *resourceUri)
@@ -327,64 +267,50 @@ TextureManifest *Textures::declare(Uri const &uri, int uniqueId, Uri const *reso
     if(uri.isEmpty()) return 0;
 
     // We require a properly formed uri (but not a urn - this is a path).
-    if(!d->validateUri(uri, NotUrn, (verbose >= 1)))
+    if(!validateUri(uri, NotUrn, (verbose >= 1)))
     {
         LOG_WARNING("Failed declaring texture \"%s\" (invalid URI), ignoring.") << uri;
         return 0;
     }
 
-    // Have we already created a binding for this?
-    TextureManifest *manifest = d->manifestByUri(uri);
-    if(!manifest)
+    // Have we already created a manifest for this?
+    TextureManifest *manifest = 0;
+    try
     {
-        /*
-         * A new binding.
-         */
+        manifest = &find(uri);
+    }
+    catch(NotFoundError const &)
+    {
         manifest = &scheme(uri.scheme()).insertManifest(uri.path());
         manifest->setUniqueId(uniqueId);
-
-        // Link it into the id LUT.
-        d->textureIdLut.push_back(manifest);
     }
 
-    /**
-     * (Re)configure this binding.
+    /*
+     * (Re)configure the manifest.
      */
 
     // We don't care whether these identfiers are truely unique. Our only
     // responsibility is to release textures when they change.
-    bool releaseTexture = false;
+    bool release = false;
 
     if(resourceUri && manifest->setResourceUri(*resourceUri))
     {
-        releaseTexture = true;
+        release = true;
     }
 
     if(manifest->setUniqueId(uniqueId))
     {
-        releaseTexture = true;
+        release = true;
     }
 
-    if(releaseTexture && manifest->texture())
+    if(release && manifest->texture())
     {
         // The mapped resource is being replaced, so release any existing Texture.
         /// @todo Only release if this Texture is bound to only this binding.
-        release(manifest->texture());
+        releaseTexture(manifest->texture());
     }
 
     return manifest;
-}
-
-textureid_t Textures::idForManifest(Textures::Manifest const &manifest) const
-{
-    LOG_AS("Textures::idForManifest");
-    /// @todo Optimize: (Low priority) do not use a linear search.
-    int index = d->textureIdLut.indexOf(const_cast<Textures::Manifest *>(&manifest));
-    if(index >= 0)
-    {
-        return textureid_t(index + 1); // 1-based index.
-    }
-    return NOTEXTUREID; // Not linked.
 }
 
 bool Textures::knownScheme(String name) const
@@ -486,11 +412,6 @@ int Textures::iterateDeclared(String nameOfScheme,
     return 0;
 }
 
-void Textures::deindex(TextureManifest &manifest)
-{
-    d->unlinkFromTextureIdLut(manifest);
-}
-
 static void printVariantInfo(TextureVariant &variant)
 {
     float s, t;
@@ -512,10 +433,9 @@ static void printTextureInfo(Texture &tex)
 
     Con_Printf("Texture \"%s\" [%p] x%u origin:%s\n",
                path.constData(), (void *)&tex, tex.variantCount(),
-               tex.isCustom()? "addon" : "game");
+               tex.flags().testFlag(Texture::Custom)? "addon" : "game");
 
-    bool willAssumeImageDimensions = (tex.width() == 0 && tex.height() == 0);
-    if(willAssumeImageDimensions)
+    if(tex.dimensions().isEmpty())
         Con_Printf("Dimensions: unknown (not yet loaded)\n");
     else
         Con_Printf("Dimensions: %d x %d\n", tex.width(), tex.height());
@@ -532,18 +452,19 @@ static void printTextureInfo(Texture &tex)
     }
 }
 
-static void printTextureSummary(TextureManifest &manifest, bool printSchemeName)
+static void printTextureSummary(TextureManifest &manifest, bool printSchemeName = true)
 {
+    Texture *texture = manifest.texture();
     Uri uri = manifest.composeUri();
     QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
 
     QByteArray resourceUri = manifest.resourceUri().asText().toUtf8();
     if(resourceUri.isEmpty()) resourceUri = "N/A";
 
-    Con_FPrintf(!manifest.texture()? CPF_LIGHT : CPF_WHITE,
+    Con_FPrintf(!texture? CPF_LIGHT : CPF_WHITE,
                 "%-*s %-6s x%u %s\n", printSchemeName? 22 : 14, path.constData(),
-                !manifest.texture()? "unknown" : manifest.texture()->isCustom()? "addon" : "game",
-                manifest.texture()->variantCount(), resourceUri.constData());
+                !texture? "unknown" : texture->flags().testFlag(de::Texture::Custom)? "addon" : "game",
+                !texture? 0 : texture->variantCount(), resourceUri.constData());
 }
 
 /**
@@ -613,7 +534,9 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
     QList<TextureManifest*> result;
     if(count == 0) return result;
 
+#ifdef DENG2_QT_4_7_OR_NEWER
     result.reserve(count);
+#endif
     return collectTextureManifests(scheme, path, &result);
 }
 
@@ -622,7 +545,7 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
  * paths, returning @c true if @a is less than @a b.
  */
 static bool compareTextureManifestPathsAssending(TextureManifest const *a,
-                                          TextureManifest const *b)
+                                                 TextureManifest const *b)
 {
     String pathA = QString(QByteArray::fromPercentEncoding(a->path().toUtf8()));
     String pathB = QString(QByteArray::fromPercentEncoding(b->path().toUtf8()));
@@ -640,11 +563,14 @@ static bool compareTextureManifestPathsAssending(TextureManifest const *a,
 #define DEFAULT_PRINTTEXTUREFLAGS           0
 
 /**
- * @param flags  @ref printTextureFlags
+ * @param scheme    Texture subspace scheme being printed. Can be @c NULL in
+ *                  which case textures are printed from all schemes.
+ * @param like      Texture path search term.
+ * @param flags     @ref printTextureFlags
  */
-static int printTextures2(Textures::Scheme *scheme, Path const &path, int flags)
+static int printTextures2(Textures::Scheme *scheme, Path const &like, int flags)
 {
-    QList<TextureManifest *> found = collectTextureManifests(scheme, path);
+    QList<TextureManifest *> found = collectTextureManifests(scheme, like);
     if(found.isEmpty()) return 0;
 
     bool const printSchemeName = !(flags & PTF_TRANSFORM_PATH_NO_SCHEME);
@@ -653,8 +579,8 @@ static int printTextures2(Textures::Scheme *scheme, Path const &path, int flags)
     String heading = "Known textures";
     if(!printSchemeName && scheme)
         heading += " in scheme '" + scheme->name() + "'";
-    if(!path.isEmpty())
-        heading += " like \"" + NativePath(path).withSeparators('/') + "\"";
+    if(!like.isEmpty())
+        heading += " like \"" + NativePath(like).withSeparators('/') + "\"";
     heading += ":\n";
 
     // Print the result heading.
@@ -662,11 +588,9 @@ static int printTextures2(Textures::Scheme *scheme, Path const &path, int flags)
 
     // Print the result index key.
     int numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits(found.count()));
-    int numUidDigits   = MAX_OF(3/*uid*/, M_NumDigits(App_Textures()->count()));
 
-    Con_Printf(" %*s: %-*s %*s origin n# uri\n", numFoundDigits, "idx",
-               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path",
-               numUidDigits, "uid");
+    Con_Printf(" %*s: %-*s origin n# uri\n", numFoundDigits, "idx",
+               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
     Con_PrintRuler();
 
     // Sort and print the index.
@@ -719,15 +643,16 @@ static void printTextures(de::Uri const &search, int flags = DEFAULT_PRINTTEXTUR
 } // namespace de
 
 /**
- * Arguments are assumed to be in a human-friendly, non-encoded representation.
+ * @param argv  The arguments to be composed. All are assumed to be in non-encoded
+ *              representation.
  *
- * Supported forms (where <> denote keyword component names):
- * <pre>
- *     [0: <scheme>:<path>]
- *     [0: <scheme>]             - if @a matchSchemeOnly
- *     [0: <path>]
- *     [0: <scheme>, 1: <path>]
- * </pre>
+ *              Supported forms (where <> denote keyword component names):
+ *               - [0: "<scheme>:<path>"]
+ *               - [0: "<scheme>"]              (if @a matchSchemeOnly)
+ *               - [0: "<path>"]
+ *               - [0: "<scheme>", 1: "<path>"]
+ * @param argc  The number of elements in @a argv.
+ * @param matchSchemeOnly  @c true= check if the sole argument matches a known scheme.
  */
 static de::Uri composeSearchUri(char **argv, int argc, bool matchSchemeOnly = true)
 {
@@ -793,14 +718,17 @@ int Textures_UniqueId2(Uri const *_uri, boolean quiet)
     de::Uri const &uri = reinterpret_cast<de::Uri const &>(*_uri);
 
     de::Textures &textures = *App_Textures();
-    if(de::TextureManifest *manifest = textures.find(uri))
+    try
     {
-        return manifest->uniqueId();
+        return textures.find(uri).uniqueId();
     }
-
-    if(!quiet)
+    catch(de::Textures::NotFoundError const &)
     {
-        LOG_WARNING("Unknown texture %s.") << uri;
+        // Log but otherwise ignore this error.
+        if(!quiet)
+        {
+            LOG_WARNING("Unknown texture %s.") << uri;
+        }
     }
     return -1;
 }
@@ -816,13 +744,6 @@ D_CMD(ListTextures)
     DENG2_UNUSED(src);
 
     de::Textures &textures = *App_Textures();
-
-    if(!textures.count())
-    {
-        Con_Message("There are currently no textures defined/loaded.\n");
-        return true;
-    }
-
     de::Uri search = composeSearchUri(&argv[1], argc - 1);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
@@ -839,13 +760,6 @@ D_CMD(InspectTexture)
     DENG2_UNUSED(src);
 
     de::Textures &textures = *App_Textures();
-
-    if(!textures.count())
-    {
-        Con_Message("There are currently no textures defined/loaded.\n");
-        return true;
-    }
-
     de::Uri search = composeSearchUri(&argv[1], argc - 1, false /*don't match schemes*/);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
@@ -853,14 +767,24 @@ D_CMD(InspectTexture)
         return false;
     }
 
-    if(de::TextureManifest *manifest = textures.find(search))
-    if(de::Texture* tex = manifest->texture())
+    try
     {
-        de::printTextureInfo(*tex);
+        de::TextureManifest &manifest = textures.find(search);
+        if(de::Texture* tex = manifest.texture())
+        {
+            de::printTextureInfo(*tex);
+        }
+        else
+        {
+            de::printTextureSummary(manifest);
+        }
         return true;
     }
-
-    Con_Printf("Unknown texture \"%s\".\n", search.asText().toUtf8().constData());
+    catch(de::Textures::NotFoundError const &er)
+    {
+        QString msg = er.asText() + ".";
+        Con_Printf("%s\n", msg.toUtf8().constData());
+    }
     return false;
 }
 
@@ -870,12 +794,6 @@ D_CMD(PrintTextureStats)
     DENG2_UNUSED(src); DENG2_UNUSED(argc); DENG2_UNUSED(argv);
 
     de::Textures &textures = *App_Textures();
-
-    if(!textures.count())
-    {
-        Con_Message("There are currently no textures defined/loaded.\n");
-        return true;
-    }
 
     Con_FPrintf(CPF_YELLOW, "Texture Statistics:\n");
     de::Textures::Schemes const &schemes = textures.allSchemes();

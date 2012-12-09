@@ -268,12 +268,15 @@ struct ddwindow_s
 
     QRect centeredGeometry() const
     {
+        QSize winSize = normalRect().size();
+
         // Center the window.
         QSize screenSize = desktopRect().size();
         LOG_DEBUG("centeredGeometry: Current desktop rect %ix%i") << screenSize.width() << screenSize.height();
         return QRect(desktopRect().topLeft() +
-                     QPoint((screenSize.width() - width())/2, (screenSize.height() - height())/2),
-                     QSize(width(), height()));
+                     QPoint((screenSize.width()  - winSize.width())  / 2,
+                            (screenSize.height() - winSize.height()) / 2),
+                     winSize);
     }
 
     /**
@@ -464,21 +467,10 @@ struct ddwindow_s
         }
     }
 
-    /*
-    bool isGeometryValid() const
-    {
-        if(width() < WINDOW_MIN_WIDTH) return false;
-        if(height() < WINDOW_MIN_HEIGHT) return false;
-        qDebug() << desktopValidRect() << rect() << desktopValidRect().contains(rect());
-        return desktopValidRect().contains(rect());
-    }
-    */
-
     bool applyAttributes(int* attribs)
     {
         LOG_AS("applyAttributes");
 
-        //bool wasFullscreen = (flags & DDWF_FULLSCREEN) != 0;
         bool changed = false;
 
         // Parse the attributes array and check the values.
@@ -573,17 +565,6 @@ struct ddwindow_s
             VERBOSE(Con_Message("New window attributes same as before.\n"));
             return true;
         }
-
-        /*
-        // Check geometry for validity (window must be on the desktop
-        // at least partially).
-        if(!wasFullscreen && !(flags & DDWF_FULLSCREEN) && !isGeometryValid())
-        {
-            // We can't place the window completely outside the desktop.
-            Con_Message("Window geometry is unacceptable.\n");
-            return false;
-        }
-        */
 
         // Seems ok, apply them.
         applyWindowGeometry();
@@ -1533,13 +1514,21 @@ void Window_SaveState(Window* wnd)
 
     de::Config &config = de::App::config();
 
+    QRect rect = wnd->rect();
+    de::ArrayValue *array = new de::ArrayValue;
+    *array << de::NumberValue(rect.left())
+           << de::NumberValue(rect.top())
+           << de::NumberValue(rect.width())
+           << de::NumberValue(rect.height());
+    config.names()["window.main.rect"] = array;
+
     QRect normRect = wnd->normalRect();
-    de::ArrayValue *rect = new de::ArrayValue;
-    *rect << de::NumberValue(normRect.left())
-          << de::NumberValue(normRect.top())
-          << de::NumberValue(normRect.width())
-          << de::NumberValue(normRect.height());
-    config.names()["window.main.rect"] = rect;
+    array = new de::ArrayValue;
+    *array << de::NumberValue(normRect.left())
+           << de::NumberValue(normRect.top())
+           << de::NumberValue(normRect.width())
+           << de::NumberValue(normRect.height());
+    config.names()["window.main.normalRect"] = array;
 
     config.names()["window.main.center"] = new de::NumberValue((wnd->flags & DDWF_CENTER) != 0);
     config.names()["window.main.maximize"] = new de::NumberValue((wnd->flags & DDWF_MAXIMIZE) != 0);
@@ -1562,16 +1551,28 @@ void Window_RestoreState(Window* wnd)
     de::Config &config = de::App::config();
 
     // The default state of the window is determined by these values.
-    de::ArrayValue &rect = config.getAs<de::ArrayValue>("window.main.rect");
+    de::ArrayValue &rect = config.geta("window.main.rect");
     if(rect.size() >= 4)
     {
         QRect geom(rect.at(0).asNumber(), rect.at(1).asNumber(),
                    rect.at(2).asNumber(), rect.at(3).asNumber());
-        wnd->normalGeometry.origin.x = wnd->geometry.origin.x = geom.x();
-        wnd->normalGeometry.origin.y = wnd->geometry.origin.y = geom.y();
-        wnd->normalGeometry.size.width = wnd->geometry.size.width = geom.width();
-        wnd->normalGeometry.size.height = wnd->geometry.size.height = geom.height();
+        wnd->geometry.origin.x = geom.x();
+        wnd->geometry.origin.y = geom.y();
+        wnd->geometry.size.width = geom.width();
+        wnd->geometry.size.height = geom.height();
     }
+
+    de::ArrayValue &normalRect = config.geta("window.main.normalRect");
+    if(normalRect.size() >= 4)
+    {
+        QRect geom(normalRect.at(0).asNumber(), normalRect.at(1).asNumber(),
+                   normalRect.at(2).asNumber(), normalRect.at(3).asNumber());
+        wnd->normalGeometry.origin.x = geom.x();
+        wnd->normalGeometry.origin.y = geom.y();
+        wnd->normalGeometry.size.width = geom.width();
+        wnd->normalGeometry.size.height = geom.height();
+    }
+
     wnd->colorDepthBits = config.geti("window.main.colorDepth");
     wnd->setFlag(DDWF_CENTER, config.getb("window.main.center"));
     wnd->setFlag(DDWF_MAXIMIZE, config.getb("window.main.maximize"));

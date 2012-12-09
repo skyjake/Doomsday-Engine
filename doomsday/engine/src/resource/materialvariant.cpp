@@ -49,10 +49,12 @@ MaterialVariant::MaterialVariant(material_t &generalCase,
         de::Uri *texUri = reinterpret_cast<de::Uri *>(def.layers[i].stages[0].texture);
         if(texUri)
         {
-            if(TextureManifest *manifest = App_Textures()->find(*texUri))
+            try
             {
-                layers[i].texture = reinterpret_cast<texture_s *>(manifest->texture());
+                layers[i].texture = reinterpret_cast<texture_s *>(App_Textures()->find(*texUri).texture());
             }
+            catch(Textures::NotFoundError const &)
+            {} // Ignore this error.
         }
 
         layers[i].texOrigin[0] = def.layers[i].stages[0].texOrigin[0];

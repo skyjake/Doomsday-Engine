@@ -283,6 +283,23 @@ static void resample(void* dst, int dstBytesPer, int dstRate,
 }
 
 /**
+ * Determines whether the audio SFX driver wants all samples to use the same
+ * sampler rate.
+ *
+ * @return @c true, if resampling is required; otherwise @c false.
+ */
+static boolean sfxMustUpsampleToSfxRate(void)
+{
+    int anySampleRateAccepted = 0;
+
+    if(AudioDriver_SFX()->Getv)
+    {
+        AudioDriver_SFX()->Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anySampleRateAccepted);
+    }
+    return (anySampleRateAccepted? false : true);
+}
+
+/**
  * Caches a copy of the given sample. If it's already in the cache and has
  * the same format, nothing is done.
  *
@@ -297,13 +314,12 @@ static void resample(void* dst, int dstBytesPer, int dstRate,
  * @returns             Ptr to the cached sample. Always valid.
  */
 sfxcache_t* Sfx_CacheInsert(int id, const void* data, unsigned int size,
-                            int numSamples, int bytesPer, int rate,
-                            int group)
+                            int numSamples, int bytesPer, int rate, int group)
 {
     sfxcache_t*         node;
     sfxsample_t         cached;
     cachehash_t*        hash;
-    int                 rsfactor;
+    int                 rsfactor = 1;
     void*               buf;
 
     /**
@@ -311,10 +327,11 @@ sfxcache_t* Sfx_CacheInsert(int id, const void* data, unsigned int size,
      * by sfxRate and sfxBits.
      */
 
-    // The resampling factor.
-    rsfactor = sfxRate / rate;
-    if(!rsfactor)
-        rsfactor = 1;
+    // The (up)resampling factor.
+    if(sfxMustUpsampleToSfxRate())
+    {
+        rsfactor = MAX_OF(1, sfxRate / rate);
+    }
 
     /**
      * If the sample is already in the right format, just make a copy of it.

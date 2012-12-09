@@ -61,6 +61,11 @@ bool Path::Segment::operator == (Path::Segment const &other) const
     return !range.compare(other.range, Qt::CaseInsensitive);
 }
 
+bool Path::Segment::operator < (Path::Segment const &other) const
+{
+    return range.compare(other.range, Qt::CaseInsensitive) < 0;
+}
+
 int Path::Segment::length() const
 {
     return range.size();
@@ -335,8 +340,26 @@ bool Path::operator == (Path const &other) const
         {
             if(segment(i) != other.segment(i)) return false;
         }
+        return true;
     }
-    return true;
+}
+
+bool Path::operator < (Path const &other) const
+{
+    if(d->separator == other.d->separator)
+    {
+        // The same separators, do one string-based test.
+        return d->path.compareWithoutCase(other.d->path) < 0;
+    }
+    else
+    {
+        // Do a string-based test for each segment separately.
+        for(int i = 0; i < d->segmentCount; ++i)
+        {
+            if(!(segment(i) < other.segment(i))) return false;
+        }
+        return true;
+    }
 }
 
 Path Path::operator / (Path const &other) const

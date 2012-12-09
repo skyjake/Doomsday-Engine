@@ -131,7 +131,7 @@ static int DH_ReadStrings(const char* fileName)
 
     if(!file)
     {
-        Con_Message("DH_ReadStrings: Warning, %s not found.\n", fileName);
+        Con_Message("DH_ReadStrings: Warning, \"%s\" not found.\n", fileName);
         return false;
     }
 

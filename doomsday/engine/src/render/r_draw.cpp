@@ -126,27 +126,25 @@ void R_ShutdownViewWindow(void)
     inited = false;
 }
 
-void R_DrawPatch3(Texture *tex, int x, int y, int w, int h, boolean useOffsets)
+void R_DrawPatch3(Texture *_tex, int x, int y, int w, int h, boolean useOffsets)
 {
-    if(!tex) return;
+    if(!_tex) return;
+    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
 
-    if(reinterpret_cast<de::Texture &>(*tex).manifest().schemeName().compareWithoutCase("Patches"))
+    if(tex.manifest().schemeName().compareWithoutCase("Patches"))
     {
 #if _DEBUG
         LOG_AS("R_DrawPatch3");
-        LOG_WARNING("Attempted to draw a non-patch [%p].") << de::dintptr(tex);
+        LOG_WARNING("Attempted to draw a non-patch [%p].") << de::dintptr(&tex);
 #endif
         return;
     }
 
-    GL_BindTexture(GL_PreparePatchTexture(tex));
+    GL_BindTexture(GL_PreparePatchTexture(_tex));
     if(useOffsets)
     {
-        patchtex_t *pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(tex));
-        DENG_ASSERT(pTex);
-
-        x += pTex->offX;
-        y += pTex->offY;
+        x += tex.origin().x();
+        y += tex.origin().y();
     }
 
     GL_DrawRectf2Color(x, y, w, h, 1, 1, 1, 1);

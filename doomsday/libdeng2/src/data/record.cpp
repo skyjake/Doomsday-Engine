@@ -83,12 +83,8 @@ struct Record::Instance
         {
             String subName = name.substr(0, pos);
             String remaining = name.substr(pos + 1);
-            if(members.find(subName) != members.end())
-            {
-                // If it has a RecordValue then we can descend into it.
-                return &self.value<RecordValue>(subName).dereference()[remaining];
-            }
-            return &self.subrecord(subName)[remaining];
+            // If it is a subrecord we can descend into it.
+            return self[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
         }
 
         Members::const_iterator found = members.find(name);
@@ -145,7 +141,8 @@ Record::Record() : d(new Instance(*this))
 {}
 
 Record::Record(Record const &other)
-    : ISerializable(), LogEntry::Arg::Base(), d(new Instance(*this))
+    : ISerializable(), LogEntry::Arg::Base(), Variable::IDeletionObserver(),
+      d(new Instance(*this))
 {
     DENG2_FOR_EACH_CONST(Members, i, other.d->members)
     {
@@ -250,11 +247,16 @@ Variable &Record::addTime(String const &name, Time const &time)
     return add(new Variable(name, new TimeValue(time), Variable::AllowTime));
 }
 
-Variable &Record::addArray(String const &name)
+Variable &Record::addArray(String const &name, ArrayValue *array)
 {
+    // Ownership of the array was given to us.
+    std::auto_ptr<ArrayValue> val(array);
+    if(!array) val.reset(new ArrayValue);
+
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
-    return add(new Variable(name, new ArrayValue(), Variable::AllowArray));
+
+    return add(new Variable(name, val.release(), Variable::AllowArray));
 }
 
 Variable &Record::addDictionary(String const &name)
@@ -269,6 +271,13 @@ Variable &Record::addBlock(String const &name)
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new BlockValue(), Variable::AllowBlock));
+}
+
+Variable &Record::addFunction(const String &name, Function *func)
+{
+    /// @throw Variable::NameError @a name is not a valid variable name.
+    Variable::verifyName(name);
+    return add(new Variable(name, new FunctionValue(func), Variable::AllowFunction));
 }
     
 Record &Record::add(String const &name, Record *subrecord)

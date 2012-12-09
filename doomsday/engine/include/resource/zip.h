@@ -1,12 +1,4 @@
-/**
- * @file zip.h
- * Specialization of File for working with Zip archives.
- *
- * @note Presently only the zlib method (Deflate) of compression is supported.
- *
- * @ingroup resource
- *
- * @see file.h, File
+/** @file zip.h ZIP Archive (file)
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -29,8 +21,6 @@
 #ifndef LIBDENG_RESOURCE_ZIP_H
 #define LIBDENG_RESOURCE_ZIP_H
 
-#ifdef __cplusplus
-
 #include "filesys/file.h"
 #include "filesys/fileinfo.h"
 #include <de/PathTree>
@@ -38,10 +28,14 @@
 namespace de {
 
 class FileHandle;
-class LumpIndex;
 
 /**
- * Runtime representation of an opened ZIP file.
+ * ZIP archive file format.
+ * @ingroup resource
+ *
+ * @note Presently only the zlib method (Deflate) of compression is supported.
+ *
+ * @see file.h, File1
  */
 class Zip : public File1
 {
@@ -53,8 +47,8 @@ public:
     DENG2_ERROR(NotFoundError);
 
 public:
-    Zip(FileHandle& hndl, String path, FileInfo const& info,
-        File1* container = 0);
+    Zip(FileHandle &hndl, String path, FileInfo const &info,
+        File1 *container = 0);
     ~Zip();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
@@ -78,7 +72,7 @@ public:
      *
      * @throws NotFoundError  If @a lumpIdx is not valid.
      */
-    PathTree::Node& lumpDirectoryNode(int lumpIdx) const;
+    PathTree::Node &lumpDirectoryNode(int lumpIdx) const;
 
     /**
      * Retrieve a lump contained by this file.
@@ -89,7 +83,7 @@ public:
      *
      * @throws NotFoundError  If @a lumpIdx is not valid.
      */
-    File1& lump(int lumpIdx);
+    File1 &lump(int lumpIdx);
 
     /**
      * Read the data associated with lump @a lumpIdx into @a buffer.
@@ -105,7 +99,7 @@ public:
      *
      * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
      */
-    size_t readLump(int lumpIdx, uint8_t* buffer, bool tryCache = true);
+    size_t readLump(int lumpIdx, uint8_t *buffer, bool tryCache = true);
 
     /**
      * Read a subsection of the data associated with lump @a lumpIdx into @a buffer.
@@ -120,7 +114,7 @@ public:
      *
      * @throws NotFoundError  If @a lumpIdx is not valid.
      */
-    size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
+    size_t readLump(int lumpIdx, uint8_t *buffer, size_t startOffset, size_t length,
                     bool tryCache = true);
 
     /**
@@ -130,16 +124,14 @@ public:
      *
      * @return Pointer to the cached copy of the associated data.
      */
-    uint8_t const* cacheLump(int lumpIdx);
+    uint8_t const *cacheLump(int lumpIdx);
 
     /**
      * Remove a lock on a cached data lump.
      *
      * @param lumpIdx   Lump index associated with the cached data to be changed.
-     *
-     * @return This instance.
      */
-    Zip& unlockLump(int lumpIdx);
+    void unlockLump(int lumpIdx);
 
     /**
      * Clear any cached data for lump @a lumpIdx from the lump cache.
@@ -147,19 +139,15 @@ public:
      * @param lumpIdx       Lump index associated with the cached data to be cleared.
      * @param retCleared    If not @c NULL write @c true to this address if data was
      *                      present and subsequently cleared from the cache.
-     *
-     * @return This instance.
      */
-    Zip& clearCachedLump(int lumpIdx, bool* retCleared = 0);
+    void clearCachedLump(int lumpIdx, bool *retCleared = 0);
 
     /**
      * Purge the lump cache, clearing all cached data lumps.
-     *
-     * @return This instance.
      */
-    Zip& clearLumpCache();
+    void clearLumpCache();
 
-// Static members ------------------------------------------------------------------
+public:
 
     /**
      * Determines whether the specified file appears to be in a format recognised by
@@ -169,7 +157,7 @@ public:
      *
      * @return  @c true= this is a file that can be represented using Zip.
      */
-    static bool recognise(FileHandle& file);
+    static bool recognise(FileHandle &file);
 
     /**
      * Inflates a block of data compressed using ZipFile_Compress() (i.e., zlib
@@ -184,7 +172,7 @@ public:
      *
      * @see compress()
      */
-    static uint8_t* uncompress(uint8_t* in, size_t inSize, size_t* outSize);
+    static uint8_t *uncompress(uint8_t *in, size_t inSize, size_t *outSize);
 
     /**
      * Inflates a compressed block of data using zlib. The caller must figure out
@@ -202,7 +190,7 @@ public:
      *
      * @return  @c true if successful.
      */
-    static bool uncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize);
+    static bool uncompressRaw(uint8_t *in, size_t inSize, uint8_t *out, size_t outSize);
 
     /**
      * Compresses a block of data using zlib with the default/balanced compression level.
@@ -216,7 +204,7 @@ public:
      *          free it with M_Free(). If an error occurs, returns @c NULL and
      *          @a outSize is set to zero.
      */
-    static uint8_t* compress(uint8_t* in, size_t inSize, size_t* outSize);
+    static uint8_t *compress(uint8_t *in, size_t inSize, size_t *outSize);
 
     /**
      * Compresses a block of data using zlib.
@@ -231,7 +219,7 @@ public:
      *          free it with M_Free(). If an error occurs, returns @c NULL and
      *          @a outSize is set to zero.
      */
-    static uint8_t* compressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, int level);
+    static uint8_t *compressAtLevel(uint8_t *in, size_t inSize, size_t *outSize, int level);
 
 private:
     struct Instance;
@@ -239,15 +227,5 @@ private:
 };
 
 } // namespace de
-
-extern "C" {
-#endif // __cplusplus
-
-struct zip_s; // The  zip instance (opaque)
-//typedef struct zip_s Zip;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_RESOURCE_ZIP_H */

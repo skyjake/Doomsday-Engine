@@ -26,6 +26,7 @@
 #include "../Record"
 #include "../AccessorValue"
 #include "../Audience"
+#include "../Lockable"
 
 #include <QFlags>
 
@@ -38,6 +39,12 @@ namespace de
     /**
      * Base class for all files stored in the file system.
      *
+     * All files are Lockable so that multiple threads can use them
+     * simultaneously. As a general rule, the user of a file does not need to
+     * lock the file manually; files will lock themselves as appropriate. A
+     * user may lock the file manually if long-term exclusive access is
+     * required.
+     *
      * Implements the IIOStream interface to allow files to receive and send
      * out a stream of bytes. The default implementation only throws an
      * exception -- it is up to subclasses to implement the stream in the
@@ -47,15 +54,17 @@ namespace de
      * instantiated.
      *
      * Subclasses have some special requirements for their destructors:
-     * - deindex() must be called in all subclass destructors so that the instances 
-     *   indexed under the subclasses' type are removed from the file system's index also.
-     * - The file must be automatically flushed before it gets destroyed (see flush()).
-     * - The deletion audience must be notified and @c audienceForDeletion must be cleared
-     *   afterwards.
+     * - deindex() must be called in all subclass destructors so that the
+     *   instances indexed under the subclasses' type are removed from the
+     *   file system's index also.
+     * - The file must be automatically flushed before it gets destroyed
+     *   (see flush()).
+     * - The deletion audience must be notified and @c audienceForDeletion
+     *   must be cleared afterwards.
      *
      * @ingroup fs
      */
-    class DENG2_PUBLIC File : public IIOStream
+    class DENG2_PUBLIC File : public Lockable, public IIOStream
     {
     public:       
         // Mode flags.
@@ -178,6 +187,24 @@ namespace de
         
         /// Returns the name of the file.
         String const &name() const { return _name; }
+
+        /**
+         * Returns a textual description of the file, intended only for humans.
+         * This attempts to fully describe the file, taking into consideration
+         * the file's type and possible source.
+         *
+         * @return Full human-friendly description of the file.
+         */
+        String description() const;
+
+        /**
+         * Returns a textual description of this file only. Subclasses must
+         * override this method to provide a description relevant to the
+         * subclass.
+         *
+         * @return Human-friendly description of this file only.
+         */
+        virtual String describe() const;
 
         /**
          * Sets the parent folder of this file.

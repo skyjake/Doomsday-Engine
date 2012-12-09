@@ -77,6 +77,8 @@ public:
 
     ~App();
 
+    bool notify(QObject *receiver, QEvent *event);
+
     /**
      * Finishes App construction by initializing all the application's
      * subsystems. This includes Config and FS. Has to be called manually in
@@ -87,7 +89,14 @@ public:
      */
     void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
 
-    bool notify(QObject *receiver, QEvent *event);
+    /**
+     * Adds a native module to the set of modules that can be imported in
+     * scripts.
+     *
+     * @param name    Name of the module.
+     * @param module  Module namespace. App will observe this for deletion.
+     */
+    void addNativeModule(String const &name, Record &module);
 
     static App &app();
 
@@ -101,6 +110,13 @@ public:
      */
     static NativePath executablePath();
 
+#ifdef MACOSX
+    /**
+     * Returns the native path of the application bundle contents.
+     */
+    NativePath nativeAppContentsPath();
+#endif
+
     /**
      * Returns the native path of the data base folder.
      *
@@ -113,7 +129,7 @@ public:
      * Returns the native path of where to load binaries (plugins). This
      * is where "/bin" points to.
      */
-    NativePath nativeBinaryPath();
+    NativePath nativePluginBinaryPath();
 
     /**
      * Returns the native path where user-specific runtime files should be

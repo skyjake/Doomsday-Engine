@@ -200,6 +200,12 @@ FileHandle::~FileHandle()
 {
     close();
 
+    // Free any cached data.
+    if(d->data)
+    {
+        M_Free(d->data); d->data = 0;
+    }
+
 #if 0
     // Copy this file to the used object pool for recycling.
     Sys_Lock(mutex);
@@ -217,17 +223,14 @@ FileHandle& FileHandle::close()
     if(!d->flags.open) return *this;
     if(d->hndl)
     {
-        fclose(d->hndl); d->hndl = NULL;
+        fclose(d->hndl); d->hndl = 0;
     }
-    else
+    // Free any cached data.
+    if(d->data)
     {
-        // Free the stored data.
-        if(d->data)
-        {
-            M_Free(d->data); d->data = NULL;
-        }
+        M_Free(d->data); d->data = 0;
     }
-    d->pos = NULL;
+    d->pos = 0;
     d->flags.open = false;
     return *this;
 }

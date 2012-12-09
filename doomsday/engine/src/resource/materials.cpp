@@ -949,8 +949,6 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
         return bind->material();
     }
 
-    de::Textures &textures = *App_Textures();
-
     // Ensure the primary layer has a valid texture reference.
     de::Texture *tex = 0;
     if(def->layers[0].stageCount.num > 0)
@@ -959,16 +957,17 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
         de::Uri *texUri = reinterpret_cast<de::Uri *>(layer.stages[0].texture);
         if(texUri) // Not unused.
         {
-            if(de::TextureManifest *manifest = textures.find(*texUri))
+            try
             {
-                tex = manifest->texture();
-                if(!tex)
-                {
-                    LOG_WARNING("Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i).")
-                        << reinterpret_cast<de::Uri*>(layer.stages[0].texture)
-                        << reinterpret_cast<de::Uri*>(def->uri)
-                        << 0 << 0;
-                }
+                tex = App_Textures()->find(*texUri).texture();
+            }
+            catch(de::Textures::NotFoundError const &er)
+            {
+                // Log but otherwise ignore this error.
+                LOG_WARNING(er.asText() + ". Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i), ignoring.")
+                    << reinterpret_cast<de::Uri*>(layer.stages[0].texture)
+                    << reinterpret_cast<de::Uri*>(def->uri)
+                    << 0 << 0;
             }
         }
     }
@@ -978,7 +977,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     // A new Material.
     material_t* mat = linkMaterialToGlobalList(allocMaterial());
     mat->_flags = def->flags;
-    mat->_isCustom = tex->isCustom();
+    mat->_isCustom = tex->flags().testFlag(de::Texture::Custom);
     mat->_def = def;
     Size2_SetWidthHeight(mat->_size, MAX_OF(0, def->width), MAX_OF(0, def->height));
     mat->_envClass = S_MaterialEnvClassForUri(reinterpret_cast<Uri const*>(&uri));

@@ -66,7 +66,6 @@ extern int netSvAllowSendMsg;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char msgBuff[NETBUFFER_MAXMESSAGE];
 float netJumpPower = 9;
 
 // Net code related console commands
@@ -305,20 +304,22 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         if(showmsg)
         {
             // Print a notification.
-            dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s joined the game",
-                    Net_GetPlayerName(plrNumber));
-            D_NetMessage(CONSOLEPLAYER, msgBuff);
+            AutoStr *str = AutoStr_New();
+            Str_Appendf(str, "%s joined the game", Net_GetPlayerName(plrNumber));
+            D_NetMessage(CONSOLEPLAYER, Str_Text(str));
         }
     }
     else if(peType == DDPE_EXIT)
     {
+        AutoStr *str = AutoStr_New();
+
         Con_Message("PE: player %i has left.\n", plrNumber);
 
         players[plrNumber].playerState = PST_GONE;
 
         // Print a notification.
-        dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s left the game", Net_GetPlayerName(plrNumber));
-        D_NetMessage(CONSOLEPLAYER, msgBuff);
+        Str_Appendf(str, "%s left the game", Net_GetPlayerName(plrNumber));
+        D_NetMessage(CONSOLEPLAYER, Str_Text(str));
 
         if(IS_SERVER)
             P_DealPlayerStarts(0);
@@ -328,19 +329,21 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     else if(peType == DDPE_CHAT_MESSAGE)
     {
         int oldecho = cfg.echoMsg;
+        AutoStr *msg = AutoStr_New();
 
         if(plrNumber > 0)
         {
-            dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber), (const char *) data);
+            Str_Appendf(msg, "%s: %s", Net_GetPlayerName(plrNumber), (char const *) data);
         }
         else
         {
-            dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "[sysop] %s", (const char *) data);
+            Str_Appendf(msg, "[sysop] %s", (char const *) data);
         }
+        Str_Truncate(msg, NETBUFFER_MAXMESSAGE); // not overly long, please
 
         // The chat message is already echoed by the console.
         cfg.echoMsg = false;
-        D_NetMessageEx(CONSOLEPLAYER, msgBuff, (cfg.chatBeep? true : false));
+        D_NetMessageEx(CONSOLEPLAYER, Str_Text(msg), (cfg.chatBeep? true : false));
         cfg.echoMsg = oldecho;
     }
 
@@ -639,7 +642,7 @@ void D_ChatSound(void)
  */
 static void D_NetMessageEx(int player, const char* msg, boolean playSound)
 {
-    player_t*           plr;
+    player_t *plr;
 
     if(player < 0 || player > MAXPLAYERS)
         return;
@@ -648,12 +651,10 @@ static void D_NetMessageEx(int player, const char* msg, boolean playSound)
     if(!plr->plr->inGame)
         return;
 
-    dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", msg);
-
     // This is intended to be a local message.
     // Let's make sure P_SetMessage doesn't forward it anywhere.
     netSvAllowSendMsg = false;
-    P_SetMessage(plr, 0, msgBuff);
+    P_SetMessage(plr, 0, msg);
 
     if(playSound)
         D_ChatSound();

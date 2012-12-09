@@ -24,10 +24,29 @@
 #include "de/App"
 #include <QDir>
 
+/**
+ * @def NATIVE_BASE_SYMBOLIC
+ *
+ * Symbol used in "pretty" paths to represent the base directory (the one set
+ * with -basedir).
+ */
+#define NATIVE_BASE_SYMBOLIC    "(basedir)"
+
+/**
+ * @def NATIVE_HOME_SYMBOLIC
+ *
+ * Symbol used in "pretty" paths to represent the user's native home directory.
+ * Note that this is not the same thing as App::nativeHomePath(), which returns
+ * the native location of the Doomsday runtime "/home" path where runtime files
+ * are stored.
+ */
+
 #ifdef WIN32
-#  define DIR_SEPARATOR QChar('\\')
+#  define NATIVE_HOME_SYMBOLIC  "%HOMEPATH%"
+#  define DIR_SEPARATOR         QChar('\\')
 #else
-#  define DIR_SEPARATOR QChar('/')
+#  define NATIVE_HOME_SYMBOLIC  "~"
+#  define DIR_SEPARATOR         QChar('/')
 #  ifdef UNIX
 #    include <sys/types.h>
 #    include <pwd.h>
@@ -152,19 +171,36 @@ String NativePath::pretty() const
 
     String result = *this;
 
-    // Hide relative directives like '}'
+    // Replace relative directives like '}' (used in FS1 only) with a full symbol.
     if(result.length() > 1 && (result.first() == '}' || result.first() == '>'))
     {
-        result = result.mid(1);
+        return String(NATIVE_BASE_SYMBOLIC) + DIR_SEPARATOR + result.mid(1);
     }
 
-    // If within our the base directory cut out the base path.
+    // If within one of the known native directories, cut out the known path,
+    // replacing it with a symbolic. This retains the absolute nature of the path
+    // while omitting potentially redundant/verbose information.
     if(QDir::isAbsolutePath(result))
     {
         NativePath basePath = App::app().nativeBasePath();
         if(result.beginsWith(basePath))
         {
-            result = result.mid(basePath.length() + 1);
+            result = NATIVE_BASE_SYMBOLIC + result.mid(basePath.length());
+        }
+        else
+        {
+#ifdef MACOSX
+            NativePath contentsPath = App::app().nativeAppContentsPath();
+            if(result.beginsWith(contentsPath))
+            {
+                return "(app)" + result.mid(contentsPath.length());
+            }
+#endif
+            NativePath homePath = QDir::homePath(); // actual native home dir, not libdeng2 "/home"
+            if(result.beginsWith(homePath))
+            {
+                result = NATIVE_HOME_SYMBOLIC + result.mid(homePath.length());
+            }
         }
     }
 

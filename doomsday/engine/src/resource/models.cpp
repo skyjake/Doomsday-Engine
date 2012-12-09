@@ -755,6 +755,9 @@ modeldef_t* Models_Definition(char const* id)
 
 float Models_ModelForMobj(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef)
 {
+    // On the client it is possible that we don't know the mobj's state.
+    if(!mo->state) return -1;
+
     state_t& st = *mo->state;
 
     // By default there are no models.
@@ -958,14 +961,8 @@ static void scaleModelToSprite(modeldef_t& mf, int sprite, int frame)
 
     materialvariantspecification_t const* spec = Sprite_MaterialSpec(0, 0);
     materialsnapshot_t const* ms = Materials_Prepare(spr.spriteFrames[frame].mats[0], spec, true);
-
-    if(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().schemeName().compareWithoutCase("Sprites"))
-        throw Error("scaleModelToSprite", "Material snapshot primary texture is not a SpriteTex");
-
-    patchtex_t* pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
-    DENG_ASSERT(pTex);
-
-    int off = MAX_OF(0, -pTex->offY - ms->size.height);
+    de::Texture const &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+    int off = MAX_OF(0, -tex.origin().y() - ms->size.height);
     scaleModel(mf, ms->size.height, off);
 }
 

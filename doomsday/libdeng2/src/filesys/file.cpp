@@ -21,8 +21,10 @@
 #include "de/App"
 #include "de/FS"
 #include "de/Folder"
+#include "de/Feed"
 #include "de/Date"
 #include "de/NumberValue"
+#include "de/Guard"
 
 using namespace de;
 
@@ -74,6 +76,33 @@ void File::clear()
 FS &File::fileSystem()
 {
     return DENG2_APP->fileSystem();
+}
+
+String File::description() const
+{
+    String desc = describe();
+    if(parent())
+    {
+        desc += " at path \"" + path() + "\"";
+    }
+    if(!mode().testFlag(Write))
+    {
+        desc = "read-only " + desc;
+    }
+    if(source() != this)
+    {
+        desc += " (sourced from " + source()->description() + ")";
+    }
+    if(originFeed())
+    {
+        desc += " (out of " + originFeed()->description() + ")";
+    }
+    return desc;
+}
+
+String File::describe() const
+{
+    return "abstract File";
 }
 
 void File::setOriginFeed(Feed *feed)
@@ -201,6 +230,8 @@ File::Accessor::Accessor(File &owner, Property prop) : _owner(owner), _prop(prop
 
 void File::Accessor::update() const
 {
+    DENG2_GUARD(_owner);
+
     // We need to alter the value content.
     Accessor *nonConst = const_cast<Accessor *>(this);
     

@@ -108,13 +108,16 @@ void Material_SetDefinition(material_t* mat, struct ded_material_s* def)
     if(def->layers[0].stageCount.num > 0 && def->layers[0].stages[0].texture)
     {
         de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture);
-        if(de::TextureManifest *manifest = App_Textures()->find(*texUri))
+        try
         {
-            if(de::Texture *tex = manifest->texture())
+            de::TextureManifest &manifest = App_Textures()->find(*texUri);
+            if(de::Texture *tex = manifest.texture())
             {
-                mat->_isCustom = tex->isCustom();
+                mat->_isCustom = tex->flags().testFlag(de::Texture::Custom);
             }
         }
+        catch(de::Textures::NotFoundError const &)
+        {} // Ignore this error.
     }
 }
 

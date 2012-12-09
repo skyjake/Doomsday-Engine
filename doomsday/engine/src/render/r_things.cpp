@@ -460,19 +460,15 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
                                                      false, true, true, false);
     materialsnapshot_t const *ms = Materials_Prepare(mat, spec, false);
 
-    if(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().schemeName().compareWithoutCase("Sprites"))
-        Con_Error("R_GetSpriteInfo: Material snapshot's primary texture is not a patchtex_t");
-
-    patchtex_t *pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
-    DENG_ASSERT(pTex);
+    de::Texture &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
     variantspecification_t const *texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     DENG_ASSERT(texSpec);
 
     info->numFrames = sprDef->numFrames;
     info->material = mat;
     info->flip = sprFrame->flip[0];
-    info->geometry.origin.x = -pTex->offX + -texSpec->border;
-    info->geometry.origin.y = -pTex->offY + texSpec->border;
+    info->geometry.origin.x = -tex.origin().x() + -texSpec->border;
+    info->geometry.origin.y = -tex.origin().y() +  texSpec->border;
     info->geometry.size.width  = ms->size.width  + texSpec->border*2;
     info->geometry.size.height = ms->size.height + texSpec->border*2;
     TextureVariant_Coords(MST(ms, MTU_PRIMARY), &info->texCoord[0], &info->texCoord[1]);
@@ -485,7 +481,7 @@ static modeldef_t *currentModelDefForMobj(mobj_t *mo)
     // If models are being used, use the model's radius.
     if(useModels)
     {
-        modeldef_t *mf, *nextmf;
+        modeldef_t *mf = 0, *nextmf = 0;
         Models_ModelForMobj(mo, &mf, &nextmf);
         return mf;
     }
@@ -956,7 +952,6 @@ void R_ProjectSprite(mobj_t *mo)
     boolean align, fullBright, viewAlign, floorAdjust;
     modeldef_t *mf = 0, *nextmf = 0;
     float interp = 0;
-    patchtex_t *pTex;
     vismobjzparams_t params;
     visspritetype_t visType = VSPR_SPRITE;
     float ambientColor[3];
@@ -1047,20 +1042,16 @@ void R_ProjectSprite(mobj_t *mo)
     ms   = Materials_Prepare(mat, spec, true);
 
     // An invalid sprite texture?
-    if(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY))
-       .manifest().schemeName().compareWithoutCase("Sprites")) return;
-
-    pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
-    DENG_ASSERT(pTex);
+    de::Texture &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+    if(tex.manifest().schemeName().compareWithoutCase("Sprites")) return;
 
     // Align to the view plane?
     align = (mo->ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1;
     if(mf)
     {
         // Transform the origin point.
-        coord_t delta[2];
-        delta[0] = moPos[VY] - viewData->current.origin[VY];
-        delta[1] = moPos[VX] - viewData->current.origin[VX];
+        coord_t delta[2] = { moPos[VY] - viewData->current.origin[VY],
+                             moPos[VX] - viewData->current.origin[VX] };
 
         thangle = BANG2RAD(bamsAtan2(delta[0] * 10, delta[1] * 10)) - PI / 2;
         // View-aligning means scaling down Z with models.
@@ -1069,9 +1060,8 @@ void R_ProjectSprite(mobj_t *mo)
 
     // Perform visibility checking.
     /// @todo R_VisualRadius() does not consider sprite rotation.
-    {
-    const coord_t width = R_VisualRadius(mo) * 2;
-    const coord_t offset = (mf? 0 : (coord_t)(-pTex->offX) - (width / 2.0f));
+    coord_t const width = R_VisualRadius(mo) * 2;
+    coord_t const offset = (mf? 0 : coord_t(-tex.origin().x()) - (width / 2.0f));
     coord_t v1[2], v2[2];
 
     // Project a line segment relative to the view in 2D, then check if not
@@ -1093,7 +1083,6 @@ void R_ProjectSprite(mobj_t *mo)
         delta[1] = moPos[VZ] + (mo->height / 2) - viewData->current.origin[VZ];
         if(M_ApproxDistance(delta[0], delta[1]) > MAX_OBJECT_RADIUS) return;
     }
-    }
 
     // Store information in a vissprite.
     vis = R_NewVisSprite();
@@ -1114,7 +1103,7 @@ void R_ProjectSprite(mobj_t *mo)
     params.floorAdjust = floorAdjust;
     P_MobjSectorsIterator(mo, RIT_VisMobjZ, &params);
 
-    gzt = vis->origin[VZ] + -pTex->offY;
+    gzt = vis->origin[VZ] + -tex.origin().y();
 
     viewAlign  = (align || alwaysAlign == 3)? true : false;
     fullBright = ((mo->state->flags & STF_FULLBRIGHT) || levelFullBright)? true : false;
@@ -1325,7 +1314,7 @@ void R_ProjectSprite(mobj_t *mo)
 
         flareSize = pl->brightMul;
         // X offset to the flare position.
-        xOffset = ms->size.width * pl->originX - -pTex->offX;
+        xOffset = ms->size.width * pl->originX - -tex.origin().x();
 
         // Does the mobj have an active light definition?
         if(def)

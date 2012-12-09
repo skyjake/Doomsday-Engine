@@ -18,17 +18,20 @@
  */
 
 #include "de/App"
+#include "de/ArchiveFeed"
 #include "de/ArrayValue"
+#include "de/Block"
 #include "de/DirectoryFeed"
-#include "de/PackageFolder"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/Module"
+#include "de/NumberValue"
+#include "de/PackageFolder"
+#include "de/Record"
 #include "de/Version"
-#include "de/Block"
-#include "de/ZipArchive"
-#include "de/ArchiveFeed"
+#include "de/Version"
 #include "de/Writer"
+#include "de/ZipArchive"
 #include "de/math.h"
 
 #include <QDesktopServices>
@@ -36,7 +39,7 @@
 
 namespace de {
 
-struct App::Instance
+struct App::Instance : DENG2_OBSERVES(Record, Deletion)
 {
     App &app;
 
@@ -47,8 +50,9 @@ struct App::Instance
     /// Path of the application executable.
     NativePath appPath;
 
-    /// Path of the FS1 main data folder (the "base dir") in the native file system.
     NativePath cachedBasePath;
+    NativePath cachedPluginBinaryPath;
+    NativePath cachedHomePath;
 
     /// The file system.
     FS fs;
@@ -62,8 +66,14 @@ struct App::Instance
     /// The configuration.
     Config *config;
 
+    /// Built-in special modules. These are constructed by native code and thus not
+    /// parsed from any script.
+    typedef QMap<String, Record *> NativeModules;
+    NativeModules nativeModules;
+    Record versionModule; // Version: information about the platform and build
+
     /// Resident modules.
-    typedef std::map<String, Module *> Modules;
+    typedef QMap<String, Module *> Modules;
     Modules modules;
 
     Instance(App &a, QStringList args) : app(a), cmdLine(args), persistentData(0), config(0)
@@ -71,7 +81,24 @@ struct App::Instance
 
     ~Instance()
     {
+        DENG2_FOR_EACH(NativeModules, i, nativeModules)
+        {
+            i.value()->audienceForDeletion -= this;
+        }
         delete config;
+    }
+
+    void recordBeingDeleted(Record &record)
+    {
+        QMutableMapIterator<String, Record *> iter(nativeModules);
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.value() == &record)
+            {
+                iter.remove();
+            }
+        }
     }
 
     void initFileSystem(bool allowPlugins)
@@ -86,15 +113,15 @@ struct App::Instance
         binFolder.attach(new DirectoryFeed(appDir));
         if(allowPlugins)
         {
-            binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
+            binFolder.attach(new DirectoryFeed(app.nativePluginBinaryPath()));
         }
-        fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "../Resources/modules"));
+        fs.makeFolder("/data").attach(new DirectoryFeed(app.nativeBasePath()));
+        fs.makeFolder("/modules").attach(new DirectoryFeed(app.nativeBasePath() / "modules"));
 
 #elif WIN32
         if(allowPlugins)
         {
-            binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
+            binFolder.attach(new DirectoryFeed(app.nativePluginBinaryPath()));
         }
         NativePath appDir = appPath.fileNamePath();
         fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
@@ -103,7 +130,7 @@ struct App::Instance
 #else // UNIX
         if(allowPlugins)
         {
-            binFolder.attach(new DirectoryFeed(app.nativeBinaryPath()));
+            binFolder.attach(new DirectoryFeed(app.nativePluginBinaryPath()));
         }
         fs.makeFolder("/data").attach(new DirectoryFeed(app.nativeBasePath() / "data"));
         fs.makeFolder("/modules").attach(new DirectoryFeed(app.nativeBasePath() / "modules"));
@@ -164,6 +191,20 @@ App::App(int &argc, char **argv, GUIMode guiMode)
         DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
     }
 #endif
+
+    // Setup the Version module.
+    Version ver;
+    Record &mod = d->versionModule;
+    ArrayValue *num = new ArrayValue;
+    *num << NumberValue(ver.major) << NumberValue(ver.minor)
+         << NumberValue(ver.patch) << NumberValue(ver.build);
+    mod.addArray("VERSION", num).setReadOnly();
+    mod.addText("TEXT", ver.asText()).setReadOnly();
+    mod.addNumber("BUILD", ver.build).setReadOnly();
+    mod.addText("OS", Version::operatingSystem()).setReadOnly();
+    mod.addNumber("CPU_BITS", Version::cpuBits()).setReadOnly();
+    mod.addBoolean("DEBUG", Version::isDebugBuild()).setReadOnly();
+    addNativeModule("Version", mod);
 }
 
 App::~App()
@@ -173,8 +214,10 @@ App::~App()
     delete d;
 }
 
-NativePath App::nativeBinaryPath()
+NativePath App::nativePluginBinaryPath()
 {
+    if(!d->cachedPluginBinaryPath.isEmpty()) return d->cachedPluginBinaryPath;
+
     NativePath path;
 #ifdef WIN32
     path = d->appPath.fileNamePath() / "plugins";
@@ -187,16 +230,18 @@ NativePath App::nativeBinaryPath()
     // Also check the system config files.
     d->unixInfo.path("libdir", path);
 #endif
-    return path;
+    return (d->cachedPluginBinaryPath = path);
 }
 
 NativePath App::nativeHomePath()
 {
+    if(!d->cachedHomePath.isEmpty()) return d->cachedHomePath;
+
     int i;
     if((i = d->cmdLine.check("-userdir", 1)))
     {
         d->cmdLine.makeAbsolutePath(i + 1);
-        return d->cmdLine.at(i + 1);
+        return (d->cachedHomePath = d->cmdLine.at(i + 1));
     }
 
 #ifdef MACOSX
@@ -209,7 +254,7 @@ NativePath App::nativeHomePath()
     NativePath nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
     nativeHome = nativeHome / ".doomsday/runtime";
 #endif
-    return nativeHome;
+    return (d->cachedHomePath = nativeHome);
 }
 
 Archive &App::persistentData()
@@ -245,7 +290,7 @@ NativePath App::nativeBasePath()
     path = d->appPath.fileNamePath() / "..";
 #else
 # ifdef MACOSX
-    path = ".";
+    path = d->appPath.fileNamePath() / "../Resources";
 # else
     path = DENG_BASE_DIR;
 # endif
@@ -275,6 +320,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     // The configuration.
     d->config = new Config("/modules/Config.de");
+    addNativeModule("Config", d->config->names());
+
     d->config->read();
 
     LogBuffer &logBuf = LogBuffer::appBuffer();
@@ -304,6 +351,12 @@ void App::initSubsystems(SubsystemInitFlags flags)
     }
 
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
+}
+
+void App::addNativeModule(String const &name, Record &module)
+{
+    d->nativeModules.insert(name, &module);
+    module.audienceForDeletion += d;
 }
 
 bool App::notify(QObject *receiver, QEvent *event)
@@ -337,6 +390,13 @@ NativePath App::executablePath()
 {
     return DENG2_APP->d->appPath;
 }
+
+#ifdef MACOSX
+NativePath App::nativeAppContentsPath()
+{
+    return DENG2_APP->d->appPath/"../..";
+}
+#endif
 
 FS &App::fileSystem()
 {
@@ -375,17 +435,18 @@ Record &App::importModule(String const &name, String const &fromPath)
 
     App &self = app();
 
-    // There are some special modules.
-    if(name == "Config")
+    // There are some special native modules.
+    Instance::NativeModules::const_iterator foundNative = self.d->nativeModules.constFind(name);
+    if(foundNative != self.d->nativeModules.constEnd())
     {
-        return self.config().names();
+        return *foundNative.value();
     }
 
     // Maybe we already have this module?
     Instance::Modules::iterator found = self.d->modules.find(name);
     if(found != self.d->modules.end())
     {
-        return found->second->names();
+        return found.value()->names();
     }
 
     /// @todo  Move this path searching logic to FS.
@@ -443,7 +504,7 @@ Record &App::importModule(String const &name, String const &fromPath)
         if(found)
         {
             Module *module = new Module(*found);
-            self.d->modules[name] = module;
+            self.d->modules.insert(name, module);
             return module->names();
         }
     }

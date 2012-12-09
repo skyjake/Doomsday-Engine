@@ -634,7 +634,7 @@ int R_ViewPortSize(int player, Size2Raw* size);
  * @param player  Console player number of whose viewport to change.
  * @param viewPlayer  Player that will be viewed by @a player.
  */
-void R_SetViewPortPlayer(int player, int viewPlayer);
+void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 
 boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
 scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);

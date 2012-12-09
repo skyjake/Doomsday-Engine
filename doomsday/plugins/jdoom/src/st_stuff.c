@@ -3332,7 +3332,7 @@ int ST_AutomapCheatLevel(int player)
     return 0;
 }
 
-/// \note Called when the statusbar scale cvar changes.
+/// @note Called when the statusbar scale cvar changes.
 void updateViewWindow(void)
 {
     int i;

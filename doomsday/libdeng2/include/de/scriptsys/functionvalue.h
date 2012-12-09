@@ -49,7 +49,7 @@ namespace de
 
         // Implements ISerializable.
         void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
+        void operator << (Reader &from);
         
     private:
         Function *_func;

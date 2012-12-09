@@ -18,6 +18,7 @@
  */
 
 #include "de/NativeFile"
+#include "de/Guard"
 #include "de/math.h"
 
 using namespace de;
@@ -28,6 +29,8 @@ NativeFile::NativeFile(String const &name, NativePath const &nativePath)
 
 NativeFile::~NativeFile()
 {
+    DENG2_GUARD(this);
+
     DENG2_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion.clear();
     
@@ -35,8 +38,15 @@ NativeFile::~NativeFile()
     deindex();
 }
 
+String NativeFile::describe() const
+{
+    return String("native file \"%1\"").arg(_nativePath.pretty());
+}
+
 void NativeFile::close()
 {
+    DENG2_GUARD(this);
+
     flush();
     if(_in)
     {
@@ -52,6 +62,8 @@ void NativeFile::close()
 
 void NativeFile::flush()
 {
+    DENG2_GUARD(this);
+
     if(_out)
     {
         _out->flush();
@@ -60,6 +72,8 @@ void NativeFile::flush()
 
 void NativeFile::clear()
 {
+    DENG2_GUARD(this);
+
     File::clear();
     
     Flags oldMode = mode();
@@ -70,11 +84,15 @@ void NativeFile::clear()
 
 NativeFile::Size NativeFile::size() const
 {
+    DENG2_GUARD(this);
+
     return status().size;
 }
 
 void NativeFile::get(Offset at, Byte *values, Size count) const
 {
+    DENG2_GUARD(this);
+
     QFile &in = input();
     if(at + count > size())
     {
@@ -88,6 +106,8 @@ void NativeFile::get(Offset at, Byte *values, Size count) const
 
 void NativeFile::set(Offset at, Byte const *values, Size count)
 {
+    DENG2_GUARD(this);
+
     QFile &out = output();
     if(at > size())
     {
@@ -112,12 +132,16 @@ void NativeFile::set(Offset at, Byte const *values, Size count)
 
 void NativeFile::setMode(Flags const &newMode)
 {
+    DENG2_GUARD(this);
+
     close();
     File::setMode(newMode);
 }
 
 QFile &NativeFile::input() const
 {
+    DENG2_GUARD(this);
+
     if(!_in)
     {
         // Reading is allowed always.
@@ -135,6 +159,8 @@ QFile &NativeFile::input() const
 
 QFile &NativeFile::output()
 {
+    DENG2_GUARD(this);
+
     if(!_out)
     {
         // Are we allowed to output?

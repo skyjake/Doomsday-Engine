@@ -121,6 +121,12 @@ public:
             return !(*this == other);
         }
 
+        /**
+         * Returns @c true if this segment is lexically less than @a other.
+         * The test is case and separator insensitive.
+         */
+        bool operator < (Segment const &other) const;
+
         friend class Path;
         friend struct Path::Instance;
 
@@ -206,7 +212,7 @@ public:
     }
 
     /**
-     * Determines if @a other is equal to this path. The test is case
+     * Determines if this path is equal to @a other. The test is case
      * and separator insensitive.
      *
      * @param other  Path.
@@ -216,7 +222,7 @@ public:
     bool operator == (Path const &other) const;
 
     /**
-     * Determines if @a other is not equal to this path. The test is case
+     * Determines if this path is not equal to @a other. The test is case
      * and separator insensitive.
      *
      * @param other  Path.
@@ -226,6 +232,12 @@ public:
     bool operator != (Path const &other) const {
         return !(*this == other);
     }
+
+    /**
+     * Returns @c true if this path is lexically less than @a other. The test
+     * is case and separator insensitive.
+     */
+    bool operator < (Path const &other) const;
 
     /**
      * Concatenate paths together. This path's separator will be used for

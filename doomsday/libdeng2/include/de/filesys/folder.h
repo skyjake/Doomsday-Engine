@@ -87,6 +87,8 @@ namespace de
         Folder(String const &name = "");
         
         virtual ~Folder();
+
+        String describe() const;
     
         /**
          * Populates the folder with a set of File instances. Each feed

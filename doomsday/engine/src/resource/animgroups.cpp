@@ -19,10 +19,14 @@
  * 02110-1301 USA</small>
  */
 
+#include <cstring>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_resource.h"
 #include <de/memoryzone.h>
+
+using namespace de;
 
 static int numgroups;
 static animgroup_t *groups;
@@ -33,16 +37,12 @@ static animgroup_t *getAnimGroup(int number)
     return &groups[number];
 }
 
-static boolean isInAnimGroup(animgroup_t const *group, textureid_t texId)
+static bool isInAnimGroup(animgroup_t const &group, TextureManifest &manifest)
 {
-    DENG_ASSERT(group);
-    if(texId != NOTEXTUREID)
+    for(int i = 0; i < group.count; ++i)
     {
-        for(int i = 0; i < group->count; ++i)
-        {
-            if(group->frames[i].texture == texId)
-                return true;
-        }
+        if(group.frames[i].textureManifest == &manifest)
+            return true;
     }
     return false;
 }
@@ -53,8 +53,8 @@ void R_ClearAnimGroups()
 
     for(int i = 0; i < numgroups; ++i)
     {
-        animgroup_t *grp = &groups[i];
-        if(grp->frames) Z_Free(grp->frames);
+        animgroup_t &grp = groups[i];
+        if(grp.frames) Z_Free(grp.frames);
     }
     Z_Free(groups); groups = 0;
     numgroups = 0;
@@ -83,7 +83,7 @@ int R_CreateAnimGroup(int flags)
     animgroup_t *group = &groups[numgroups-1];
 
     // Init the new group.
-    memset(group, 0, sizeof *group);
+    std::memset(group, 0, sizeof *group);
     group->id = numgroups; // 1-based index.
     group->flags = flags;
 
@@ -91,7 +91,7 @@ int R_CreateAnimGroup(int flags)
 }
 
 /// @note Part of the Doomsday public API.
-void R_AddAnimGroupFrame(int groupNum, Uri const *textureUri, int tics, int randomTics)
+void R_AddAnimGroupFrame(int groupNum, uri_s const *textureUri, int tics, int randomTics)
 {
     LOG_AS("R_AddAnimGroupFrame");
 
@@ -104,29 +104,42 @@ void R_AddAnimGroupFrame(int groupNum, Uri const *textureUri, int tics, int rand
         return;
     }
 
-    de::TextureManifest *manifest = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri));
-    if(!manifest)
+    try
     {
-        LOG_DEBUG("Invalid texture uri \"%s\", ignoring.") << reinterpret_cast<de::Uri const &>(*textureUri);
-        return;
+        TextureManifest &manifest = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri));
+
+        // Allocate a new animframe.
+        group->frames = (animframe_t *) Z_Realloc(group->frames, sizeof(*group->frames) * ++group->count, PU_APPSTATIC);
+        if(!group->frames) Con_Error("R_AddAnimGroupFrame: Failed on (re)allocation of %lu bytes enlarging AnimFrame list for group #%i.", (unsigned long) sizeof(*group->frames) * group->count, groupNum);
+
+        animframe_t *frame = &group->frames[group->count - 1];
+        frame->textureManifest = &manifest;
+        frame->tics = tics;
+        frame->randomTics = randomTics;
     }
-
-    // Allocate a new animframe.
-    group->frames = (animframe_t *) Z_Realloc(group->frames, sizeof(*group->frames) * ++group->count, PU_APPSTATIC);
-    if(!group->frames) Con_Error("R_AddAnimGroupFrame: Failed on (re)allocation of %lu bytes enlarging AnimFrame list for group #%i.", (unsigned long) sizeof(*group->frames) * group->count, groupNum);
-
-    animframe_t *frame = &group->frames[group->count - 1];
-    frame->texture = manifest->lookupTextureId();
-    frame->tics = tics;
-    frame->randomTics = randomTics;
+    catch(Textures::NotFoundError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ". Failed adding texture \"%s\" to group #%i, ignoring.")
+            << reinterpret_cast<de::Uri const &>(*textureUri) << groupNum;
+    }
 }
 
-boolean R_IsTextureInAnimGroup(Uri const *texture, int groupNum)
+boolean R_IsTextureInAnimGroup(uri_s const *textureUri, int groupNum)
 {
-    if(!texture) return false;
+    if(!textureUri) return false;
     animgroup_t *group = getAnimGroup(groupNum);
     if(!group) return false;
-    de::TextureManifest *manifest = App_Textures()->find(reinterpret_cast<de::Uri const &>(*texture));
-    if(!manifest) return false;
-    return isInAnimGroup(group, manifest->lookupTextureId());
+
+    try
+    {
+        TextureManifest &manifest = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri));
+        return isInAnimGroup(*group, manifest);
+    }
+    catch(Textures::NotFoundError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+    return false;
 }

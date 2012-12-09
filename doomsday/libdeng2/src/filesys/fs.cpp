@@ -1,26 +1,29 @@
-/*
- * The Doomsday Engine Project -- libdeng2
+/**
+ * @file fs.cpp File System
  *
- * Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de/FS"
 #include "de/LibraryFile"
 #include "de/DirectoryFeed"
 #include "de/ArchiveFeed"
+#include "de/NativePath"
 #include "de/PackageFolder"
 #include "de/ZipArchive"
 #include "de/Log"
@@ -89,7 +92,7 @@ File *FS::interpret(File *sourceData)
     {
         if(LibraryFile::recognize(*sourceData))
         {
-            LOG_VERBOSE("Interpreted ") << sourceData->name() << " as a shared library";
+            LOG_VERBOSE("Interpreted ") << sourceData->description() << " as a shared library";
         
             // It is a shared library intended for Doomsday.
             return new LibraryFile(sourceData);
@@ -98,7 +101,7 @@ File *FS::interpret(File *sourceData)
         {
             try
             {
-                LOG_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->name();
+                LOG_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
 
                 // It is a ZIP archive: we will represent it as a folder.
                 std::auto_ptr<PackageFolder> package(new PackageFolder(*sourceData, sourceData->name()));
@@ -111,15 +114,15 @@ File *FS::interpret(File *sourceData)
             {
                 // Even though it was recognized as an archive, the file
                 // contents may still prove to be corrupted.
-                LOG_WARNING("Archive in %s is invalid") << sourceData->name();
+                LOG_WARNING("Archive in %s is invalid") << sourceData->description();
             }
             catch(IByteArray::OffsetError const &)
             {
-                LOG_WARNING("Archive in %s is truncated") << sourceData->name();
+                LOG_WARNING("Archive in %s is truncated") << sourceData->description();
             }
             catch(IIStream::InputError const &)
             {
-                LOG_WARNING("%s cannot be read") << sourceData->name();
+                LOG_WARNING("%s cannot be read") << sourceData->description();
             }
         }
     }
@@ -229,7 +232,7 @@ void FS::printIndex()
 
     for(Index::iterator i = d->index.begin(); i != d->index.end(); ++i)
     {
-        LOG_TRACE("\"%s\": ") << i->first << i->second->path();
+        LOG_TRACE("\"%s\": ") << i->first << i->second->description();
     }
     
     for(Instance::TypeIndex::iterator k = d->typeIndex.begin(); k != d->typeIndex.end(); ++k)
@@ -239,7 +242,7 @@ void FS::printIndex()
         LOG_AS_STRING(k->first);
         for(Index::iterator i = k->second.begin(); i != k->second.end(); ++i)
         {
-            LOG_TRACE("\"%s\": ") << i->first << i->second->path();
+            LOG_TRACE("\"%s\": ") << i->first << i->second->description();
         }
     }
 }

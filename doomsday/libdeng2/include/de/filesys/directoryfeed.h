@@ -69,6 +69,8 @@ namespace de
         
         virtual ~DirectoryFeed();
         
+        String description() const;
+
         void populate(Folder &folder);
         bool prune(File &file) const;
         File *newFile(String const &name);

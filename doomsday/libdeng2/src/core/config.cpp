@@ -24,6 +24,7 @@
 #include "de/Folder"
 #include "de/ArrayValue"
 #include "de/NumberValue"
+#include "de/ArrayValue"
 #include "de/Reader"
 #include "de/Writer"
 #include "de/Version"
@@ -71,7 +72,7 @@ void Config::read()
     
     // Current version.
     Version verInfo;
-    QScopedPointer<ArrayValue> version(new ArrayValue());
+    QScopedPointer<ArrayValue> version(new ArrayValue);
     *version << NumberValue(verInfo.major)
              << NumberValue(verInfo.minor)
              << NumberValue(verInfo.patch)
@@ -84,7 +85,7 @@ void Config::read()
     {
         // If we already have a saved copy of the config, read it.
         Archive const &persist = App::persistentData();
-        Reader(persist.entryBlock(d->persistentPath)) >> names();
+        Reader(persist.entryBlock(d->persistentPath)).withHeader() >> names();
 
         LOG_DEBUG("Found serialized Config:\n") << names();
         
@@ -114,7 +115,7 @@ void Config::read()
     }
     catch(Archive::NotFoundError const &)
     {
-        // It is missing if the config hasn't been written yet.
+        // It is missing from persist.pack if the config hasn't been written yet.
         shouldRunScript = true;
     }
     catch(Error const &error)
@@ -140,7 +141,7 @@ void Config::read()
 
 void Config::write()
 {
-    Writer(App::persistentData().entryBlock(d->persistentPath)) << names();
+    Writer(App::persistentData().entryBlock(d->persistentPath)).withHeader() << names();
 }
 
 Record &Config::names()
@@ -176,6 +177,11 @@ ddouble Config::getd(String const &name)
 String Config::gets(String const &name)
 {
     return get(name).asText();
+}
+
+ArrayValue &Config::geta(String const &name)
+{
+    return getAs<ArrayValue>(name);
 }
 
 } // namespace de

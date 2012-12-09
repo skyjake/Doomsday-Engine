@@ -49,6 +49,18 @@ using namespace de;
 
 static QList<PatchName> patchNames;
 
+/**
+ * Compose the path to the data resource.
+ * @note We do not use the lump name, instead we use the logical lump index
+ * in the global LumpIndex. This is necessary because of the way id tech 1
+ * manages graphic references in animations (intermediate frames are chosen
+ * by their 'original indices' rather than by name).
+ */
+static inline de::Uri composeLumpIndexResourceUrn(lumpnum_t lumpNum)
+{
+    return de::Uri("LumpIndex", Path(String("%1").arg(lumpNum)));
+}
+
 void R_InitSystemTextures()
 {
     LOG_AS("R_InitSystemTextures");
@@ -128,11 +140,14 @@ patchid_t R_DeclarePatch(char const *name)
     de::Uri uri("Patches", Path(QString(QByteArray(name, qstrlen(name)).toPercentEncoding())));
 
     // Already defined as a patch?
-    if(TextureManifest *manifest = textures.find(uri))
+    try
     {
+        TextureManifest &manifest = textures.find(uri);
         /// @todo We should instead define Materials from patches and return the material id.
-        return patchid_t( manifest->uniqueId() );
+        return patchid_t( manifest.uniqueId() );
     }
+    catch(Textures::NotFoundError const &)
+    {} // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
     lumpnum_t lumpNum = App_FileSystem()->nameIndex().lastIndexForPath(lumpPath);
@@ -144,61 +159,45 @@ patchid_t R_DeclarePatch(char const *name)
 
     // Compose the path to the data resource.
     de::File1 &file = App_FileSystem()->nameIndex().lump(lumpNum);
-    de::Uri resourceUri("Lumps", Path(file.name()));
+    de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
     int uniqueId = textures.scheme("Patches").count() + 1; // 1-based index.
     TextureManifest *manifest = textures.declare(uri, uniqueId, &resourceUri);
     if(!manifest) return 0; // Invalid uri?
 
-    // Generate a new patch.
-    patchtex_t *p = (patchtex_t *) M_Malloc(sizeof(*p));
-    if(!p) Con_Error("R_DeclarePatch: Failed on allocation of %u bytes for new PatchTex.", (unsigned long) sizeof(*p));
+    de::Texture::Flags flags;
+    if(file.container().hasCustom()) flags |= de::Texture::Custom;
 
     // Take a copy of the current patch loading state so that future texture
     // loads will produce the same results.
-    p->flags = 0;
-    if(monochrome)               p->flags |= PF_MONOCHROME;
-    if(upscaleAndSharpenPatches) p->flags |= PF_UPSCALE_AND_SHARPEN;
+    if(monochrome)               flags |= de::Texture::Monochrome;
+    if(upscaleAndSharpenPatches) flags |= de::Texture::UpscaleAndSharpen;
 
-    /**
-     * @todo: Cannot be sure this is in Patch format until a load attempt
-     *        is made. We should not read this info here!
-     */
+    /// @todo fixme: Ensure this is in Patch format.
     ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
     de::Reader from = de::Reader(fileData);
-    PatchHeader patchHdr;
+    Patch::Header patchHdr;
     from >> patchHdr;
 
     file.unlock();
 
-    p->offX = -patchHdr.origin.x;
-    p->offY = -patchHdr.origin.y;
-
     de::Texture *tex = manifest->texture();
-    de::Texture::Flags flags;
-    if(file.container().hasCustom()) flags |= de::Texture::Custom;
-
     if(!tex)
     {
         tex = manifest->derive(patchHdr.dimensions, flags);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for Patch texture \"%s\".") << uri;
-            M_Free(p);
             return 0;
         }
 
-        tex->setUserDataPointer((void *)p);
+        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
     }
     else
     {
-        patchtex_t *oldPatch = reinterpret_cast<patchtex_t *>(tex->userDataPointer());
-
-        tex->flagCustom(!!(flags & de::Texture::Custom));
+        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
         tex->setDimensions(patchHdr.dimensions);
-        tex->setUserDataPointer((void *)p);
-
-        M_Free(oldPatch);
+        tex->flags() = flags;
     }
 
     return uniqueId;
@@ -218,24 +217,23 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         de::Texture *tex = App_Textures()->scheme("Patches").findByUniqueId(id).texture();
         if(!tex) return false;
 
-        patchtex_t const *pTex = reinterpret_cast<patchtex_t *>(tex->userDataPointer());
-        DENG_ASSERT(pTex);
-
         // Ensure we have up to date information about this patch.
         GL_PreparePatchTexture(reinterpret_cast<texture_s*>(tex));
 
         info->id = id;
-        info->flags.isCustom = tex->isCustom();
+        info->flags.isCustom = tex->flags().testFlag(de::Texture::Custom);
 
         averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex->analysisDataPointer(TA_ALPHA));
         info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
 
         info->geometry.size.width  = tex->width();
         info->geometry.size.height = tex->height();
-        info->geometry.origin.x = pTex->offX;
-        info->geometry.origin.y = pTex->offY;
+
+        info->geometry.origin.x = tex->origin().x();
+        info->geometry.origin.y = tex->origin().y();
+
         /// @todo fixme: kludge:
-        info->extraOffset[0] = info->extraOffset[1] = (pTex->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
+        info->extraOffset[0] = info->extraOffset[1] = (tex->flags().testFlag(de::Texture::UpscaleAndSharpen)? -1 : 0);
         // Kludge end.
         return true;
     }
@@ -621,7 +619,7 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
                 }
 
                 // Reconfigure and attach the new definition.
-                tex->flagCustom(!!(flags & de::Texture::Custom));
+                tex->flags() = flags;
                 tex->setDimensions(def.dimensions());
                 tex->setUserDataPointer((void *)&def);
 
@@ -658,18 +656,6 @@ void R_InitCompositeTextures()
 static inline de::Uri composeFlatUri(String percentEncodedPath)
 {
     return de::Uri("Flats", Path(percentEncodedPath.fileNameWithoutExtension()));
-}
-
-/**
- * Compose the path to the data resource.
- * @note We do not use the lump name, instead we use the logical lump index
- * in the global LumpIndex. This is necessary because of the way id tech 1
- * manages flat references in animations (intermediate frames are chosen by their
- * 'original indices' rather than by name).
- */
-static inline de::Uri composeFlatResourceUrn(lumpnum_t lumpNum)
-{
-    return de::Uri("LumpDir", Path(String("%1").arg(lumpNum)));
 }
 
 void R_InitFlatTextures()
@@ -717,7 +703,8 @@ void R_InitFlatTextures()
                !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
             de::Uri uri = composeFlatUri(percentEncodedName);
-            if(!textures.find(uri)) // A new flat?
+
+            if(!textures.has(uri)) // A new flat?
             {
                 /**
                  * Kludge Assume 64x64 else when the flat is loaded it will inherit the
@@ -726,15 +713,14 @@ void R_InitFlatTextures()
                  *
                  * @todo Always determine size from the lowres original.
                  */
-                Size2Raw const dimensions(64, 64);
                 int const uniqueId = lumpNum - (firstFlatMarkerLumpNum + 1);
-                de::Uri resourcePath = composeFlatResourceUrn(lumpNum);
+                de::Uri resourcePath = composeLumpIndexResourceUrn(lumpNum);
                 TextureManifest *manifest = textures.declare(uri, uniqueId, &resourcePath);
 
                 de::Texture::Flags flags;
                 if(file.container().hasCustom()) flags |= de::Texture::Custom;
 
-                if(manifest && !manifest->derive(dimensions, flags))
+                if(manifest && !manifest->derive(QSize(64, 64), flags))
                 {
                     LOG_WARNING("Failed defining Texture for new flat \"%s\", ignoring.") << uri;
                 }
@@ -750,40 +736,35 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
     LOG_AS("R_DefineSpriteTexture");
 
     // Have we already defined this texture?
-    de::Texture *tex = manifest.texture();
+    if(manifest.texture()) return;
+
+    // A new sprite texture.
+    de::Texture *tex = manifest.derive();
     if(!tex)
     {
-        // A new sprite texture.
-        tex = manifest.derive(0);
-        if(!tex)
-        {
-            LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.")
-                << manifest.composeUri();
-        }
-
-        patchtex_t *pTex = (patchtex_t *) M_Malloc(sizeof(*pTex));
-        if(!pTex) Con_Error("R_InitSpriteTextures: Failed on allocation of %lu bytes for new PatchTex.", (unsigned long) sizeof(*pTex));
-        pTex->offX = pTex->offY = 0; // Deferred until texture load time.
-        tex->setUserDataPointer((void *)pTex);
+        LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.")
+            << manifest.composeUri();
+        return;
     }
 
-    if(!tex) return;
     de::Uri const &resourceUri = manifest.resourceUri();
     if(resourceUri.isEmpty()) return;
 
     try
     {
-        String const &resourcePath = resourceUri.resolvedRef();
-        lumpnum_t lumpNum = App_FileSystem()->nameIndex().lastIndexForPath(resourcePath);
+        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
         de::File1& file = App_FileSystem()->nameIndex().lump(lumpNum);
 
+        /// @todo fixme: Ensure this is in Patch format.
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
         de::Reader from = de::Reader(fileData);
-        PatchHeader patchHdr;
+        Patch::Header patchHdr;
         from >> patchHdr;
 
+        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
         tex->setDimensions(patchHdr.dimensions);
-        tex->flagCustom(file.hasCustom());
+        if(file.hasCustom())
+            tex->flags() |= de::Texture::Custom;
 
         file.unlock();
     }
@@ -821,19 +802,6 @@ static bool validateSpriteName(String name)
 
     return true;
 }
-
-/**
- * Compose the path to the data resource.
- * @note We do not use the lump name, instead we use the logical lump index
- * in the global LumpIndex. This is necessary because of the way id tech 1
- * manages patch references.
- */
-#if 0
-static inline de::Uri composeSpriteResourceUrn(lumpnum_t lumpNum)
-{
-    return de::Uri("LumpDir", Path(String("%1").arg(lumpNum)));
-}
-#endif
 
 void R_InitSpriteTextures()
 {
@@ -879,8 +847,7 @@ void R_InitSpriteTextures()
         }
 
         // Compose the data resource path.
-        //de::Uri resourceUri = composeSpriteResourceUrn(i);
-        de::Uri resourceUri("Lumps", Path(fileName));
+        de::Uri resourceUri = composeLumpIndexResourceUrn(i);
 
         if(!App_Textures()->declare(de::Uri("Sprites", Path(fileName)), uniqueId, &resourceUri))
         {
@@ -1183,12 +1150,12 @@ texture_s *R_CreateMaskTexture(uri_s const *_resourceUri, Size2Raw const *dimens
     de::Texture *tex = manifest->texture();
     if(tex)
     {
-        tex->setDimensions(*dimensions);
+        tex->setDimensions(QSize(dimensions->width, dimensions->height));
     }
     else
     {
         // Create a texture for it.
-        tex = manifest->derive(*dimensions, de::Texture::Custom);
+        tex = manifest->derive(QSize(dimensions->width, dimensions->height), de::Texture::Custom);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;

@@ -53,8 +53,8 @@ namespace de
 {
     namespace internal {
         template <typename Type>
-        inline bool cannotCastFileTo(File1* file) {
-            return dynamic_cast<Type*>(file) == NULL;
+        inline bool cannotCastFileTo(File1 *file) {
+            return dynamic_cast<Type *>(file) == NULL;
         }
     }
 
@@ -131,14 +131,14 @@ namespace de
             typedef QMultiMap<PathGroup, SearchPath> SearchPaths;
 
             /// List of found file nodes.
-            typedef QList<PathTree::Node*> FoundNodes;
+            typedef QList<PathTree::Node *> FoundNodes;
 
         public:
             explicit Scheme(String symbolicName, Flags flags = 0);
             ~Scheme();
 
             /// @return  Symbolic name of this scheme (e.g., "Models").
-            String const& name() const;
+            String const &name() const;
 
             /**
              * Clear this scheme back to it's "empty" state (i.e., no resources).
@@ -171,7 +171,7 @@ namespace de
              *
              * @return  @c true iff this scheme did not already contain the resource.
              */
-            bool add(PathTree::Node& resourceNode);
+            bool add(PathTree::Node &resourceNode);
 
             /**
              * Finds all resources in this scheme.
@@ -182,7 +182,7 @@ namespace de
              *
              * @return  Number of found resources.
              */
-            int findAll(String name, FoundNodes& found);
+            int findAll(String name, FoundNodes &found);
 
             /**
              * Add a new search path to this scheme. Newer paths have priority over
@@ -193,7 +193,7 @@ namespace de
              *
              * @return  @c true if @a path was well-formed and subsequently added.
              */
-            bool addSearchPath(SearchPath const& path, PathGroup group = DefaultPaths);
+            bool addSearchPath(SearchPath const &path, PathGroup group = DefaultPaths);
 
             /**
              * Clear search paths in @a group from the scheme.
@@ -205,7 +205,7 @@ namespace de
             /**
              * Provides access to the search paths for efficient traversals.
              */
-            SearchPaths const& allSearchPaths() const;
+            SearchPaths const &allSearchPaths() const;
 
             /**
              * Clear all search paths in all groups in the scheme.
@@ -226,7 +226,7 @@ namespace de
              *
              * @return  @c true iff mapping was applied to the path.
              */
-            bool mapPath(String& path) const;
+            bool mapPath(String &path) const;
 
 #if _DEBUG
             void debugPrint() const;
@@ -234,27 +234,27 @@ namespace de
 
         private:
             struct Instance;
-            Instance* d;
+            Instance *d;
         };
 
         /// File system subspace schemes.
-        typedef QMap<String, Scheme*> Schemes;
+        typedef QMap<String, Scheme *> Schemes;
 
         /**
          * PathListItem represents a found path for find file search results.
          */
         struct PathListItem
         {
-            String path;
+            Path path;
             int attrib;
 
-            PathListItem(String const& _path, int _attrib = 0)
+            PathListItem(Path const &_path, int _attrib = 0)
                 : path(_path), attrib(_attrib)
             {}
 
-            bool operator < (PathListItem const& other) const
+            bool operator < (PathListItem const &other) const
             {
-                return path.compareWithoutCase(other.path) < 0;
+                return path < other.path;
             }
         };
 
@@ -262,7 +262,7 @@ namespace de
         typedef QList<PathListItem> PathList;
 
         /// List of file search results.
-        typedef QList<FileHandle*> FileList;
+        typedef QList<FileHandle *> FileList;
 
     public:
         /**
@@ -286,14 +286,14 @@ namespace de
          * @param name  Symbolic name of the scheme.
          * @return  Scheme associated with @a name.
          */
-        Scheme& scheme(String name);
+        Scheme &scheme(String name);
 
         /**
          * @param name      Unique symbolic name of the new scheme. Must be at least
          *                  @c Scheme::min_name_length characters long.
          * @param flags     @ref Scheme::Flag
          */
-        Scheme& createScheme(String name, Scheme::Flags flags = 0);
+        Scheme &createScheme(String name, Scheme::Flags flags = 0);
 
         /**
          * Returns @c true iff a Scheme exists with the symbolic @a name.
@@ -303,7 +303,7 @@ namespace de
         /**
          * Returns the schemes for efficient traversal.
          */
-        Schemes const& allSchemes();
+        Schemes const &allSchemes();
 
         /**
          * Reset all the schemes, returning their indexes to an empty state and clearing
@@ -341,7 +341,7 @@ namespace de
         /**
          * @return  @c true if a file exists at @a path which can be opened for reading.
          */
-        bool accessFile(Uri const& path);
+        bool accessFile(Uri const &path);
 
         /**
          * Maintains a list of identifiers already seen.
@@ -349,7 +349,7 @@ namespace de
          * @return  @c true if the given file can be opened, or
          *          @c false if it has already been opened.
          */
-        bool checkFileId(Uri const& path);
+        bool checkFileId(Uri const &path);
 
         /**
          * Reset known fileId records so that the next time checkFileId() is called for
@@ -365,7 +365,7 @@ namespace de
          *
          * @return  The interpreted File file instance.
          */
-        File1& interpret(FileHandle& hndl, String path, FileInfo const& info);
+        File1 &interpret(FileHandle &hndl, String path, FileInfo const &info);
 
         /**
          * Indexes @a file (which must have been opened with this file system) into
@@ -373,17 +373,17 @@ namespace de
          *
          * @param file  The file to index. Assumed to have not yet been indexed!
          */
-        void index(File1& file);
+        void index(File1 &file);
 
         /**
          * Removes a file from any indexes.
          *
          * @param file  File to remove from the index.
          */
-        void deindex(File1& file);
+        void deindex(File1 &file);
 
         /// Clear all references to this file.
-        void releaseFile(File1& file);
+        void releaseFile(File1 &file);
 
         /**
          * Lookup a lump by name.
@@ -399,7 +399,7 @@ namespace de
          * Provides access to the main index of the file system. This can be
          * used for efficiently looking up files based on name.
          */
-        LumpIndex const& nameIndex() const;
+        LumpIndex const &nameIndex() const;
 
         /**
          * Opens the given file (will be translated) for reading.
@@ -420,7 +420,7 @@ namespace de
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        FileHandle& openFile(String const& path, String const& mode, size_t baseOffset = 0,
+        FileHandle &openFile(String const &path, String const &mode, size_t baseOffset = 0,
                              bool allowDuplicate = true);
 
         /**
@@ -434,17 +434,15 @@ namespace de
          * is already present in the file system should not require calling back to a
          * method of the file system itself (bad OO design).
          */
-        FileHandle& openLump(File1& lump);
+        FileHandle &openLump(File1 &lump);
 
         /**
          * Find a single file.
          *
          * @param search  The search term.
          * @return Found file.
-         *
-         * @throws NotFoundError If the requested file could not be found.
          */
-        File1& find(Uri const& search);
+        File1 &find(Uri const &search);
 
         /**
          * Finds all files.
@@ -453,7 +451,7 @@ namespace de
          *
          * @return  Number of files found.
          */
-        int findAll(FileList& found) const;
+        int findAll(FileList &found) const;
 
         /**
          * Finds all files which meet the supplied @a predicate.
@@ -466,8 +464,8 @@ namespace de
          *
          * @return  Number of files found.
          */
-        int findAll(bool (*predicate)(File1& file, void* parameters), void* parameters,
-                    FileList& found) const;
+        int findAll(bool (*predicate)(File1 &file, void *parameters), void *parameters,
+                    FileList &found) const;
 
         /**
          * Finds all files of a specific type which meet the supplied @a predicate.
@@ -482,12 +480,12 @@ namespace de
          * @return  Number of files found.
          */
         template <typename Type>
-        int findAll(bool (*predicate)(File1& file, void* parameters), void* parameters,
-                    FileList& found) const
+        int findAll(bool (*predicate)(File1 &file, void *parameters), void *parameters,
+                    FileList &found) const
         {
             findAll(predicate, parameters, found);
             // Filter out the wrong types.
-            QMutableListIterator<FileHandle*> i(found);
+            QMutableListIterator<FileHandle *> i(found);
             while(i.hasNext())
             {
                 i.next();
@@ -517,8 +515,8 @@ namespace de
          *
          * @todo Fold into @ref find() -ds
          */
-        String findPath(Uri const& search, int flags, ResourceClass& rclass);
-        String findPath(Uri const& search, int flags);
+        String findPath(Uri const &search, int flags, ResourceClass &rclass);
+        String findPath(Uri const &search, int flags);
 
         /**
          * Finds all paths which match the search criteria. Will search the Zip
@@ -530,12 +528,12 @@ namespace de
          *
          * @return  Number of paths found.
          */
-        int findAllPaths(String searchPattern, int flags, PathList& found);
+        int findAllPaths(Path searchPattern, int flags, PathList &found);
 
         /**
          * Print contents of the specified directory of the virtual file system.
          */
-        void printDirectory(String path);
+        void printDirectory(Path path);
 
         /**
          * Calculate a CRC for the loaded file list.
@@ -550,14 +548,14 @@ namespace de
 
     private:
         struct Instance;
-        Instance* d;
+        Instance *d;
     };
 
     Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Scheme::Flags)
 
 } // namespace de
 
-de::FS1* App_FileSystem();
+de::FS1 *App_FileSystem();
 
 /**
  * Returns the application's data base path in the format expected by FS1.
@@ -587,67 +585,67 @@ void F_EndStartup(void);
 
 int F_UnloadAllNonStartupFiles();
 
-void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nativeDestinationPath);
+void F_AddVirtualDirectoryMapping(char const *nativeSourcePath, char const *nativeDestinationPath);
 
-void F_AddLumpDirectoryMapping(char const* lumpName, char const* nativeDestinationPath);
+void F_AddLumpDirectoryMapping(char const *lumpName, char const *nativeDestinationPath);
 
 void F_ResetFileIds(void);
 
-boolean F_CheckFileId(char const* nativePath);
+boolean F_CheckFileId(char const *nativePath);
 
 int F_LumpCount(void);
 
-int F_Access(char const* nativePath);
+int F_Access(char const *nativePath);
 
-void F_Index(struct file1_s* file);
+void F_Index(struct file1_s *file);
 
-void F_Deindex(struct file1_s* file);
+void F_Deindex(struct file1_s *file);
 
-FileHandle* F_Open3(char const* nativePath, char const* mode, size_t baseOffset, boolean allowDuplicate);
-FileHandle* F_Open2(char const* nativePath, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
-FileHandle* F_Open(char const* nativePath, char const* mode/*, baseOffset = 0 */);
+FileHandle *F_Open3(char const *nativePath, char const *mode, size_t baseOffset, boolean allowDuplicate);
+FileHandle *F_Open2(char const *nativePath, char const *mode, size_t baseOffset/*, allowDuplicate = true */);
+FileHandle *F_Open(char const *nativePath, char const *mode/*, baseOffset = 0 */);
 
-FileHandle* F_OpenLump(lumpnum_t lumpNum);
+FileHandle *F_OpenLump(lumpnum_t lumpNum);
 
 boolean F_IsValidLumpNum(lumpnum_t lumpNum);
 
-lumpnum_t F_LumpNumForName(char const* name);
+lumpnum_t F_LumpNumForName(char const *name);
 
-AutoStr* F_ComposeLumpFilePath(lumpnum_t lumpNum);
+AutoStr *F_ComposeLumpFilePath(lumpnum_t lumpNum);
 
 boolean F_LumpIsCustom(lumpnum_t lumpNum);
 
-AutoStr* F_LumpName(lumpnum_t lumpNum);
+AutoStr *F_LumpName(lumpnum_t lumpNum);
 
 size_t F_LumpLength(lumpnum_t lumpNum);
 
 uint F_LumpLastModified(lumpnum_t lumpNum);
 
-struct file1_s* F_FindFileForLumpNum2(lumpnum_t lumpNum, int* lumpIdx);
-struct file1_s* F_FindFileForLumpNum(lumpnum_t lumpNum/*, lumpIdx = 0 */);
+struct file1_s *F_FindFileForLumpNum2(lumpnum_t lumpNum, int *lumpIdx);
+struct file1_s *F_FindFileForLumpNum(lumpnum_t lumpNum/*, lumpIdx = 0 */);
 
-void F_Delete(struct filehandle_s* file);
+void F_Delete(struct filehandle_s *file);
 
-AutoStr* F_ComposePath(struct file1_s const* file);
+AutoStr *F_ComposePath(struct file1_s const *file);
 
-void F_SetCustom(struct file1_s* file, boolean yes);
+void F_SetCustom(struct file1_s *file, boolean yes);
 
-AutoStr* F_ComposeLumpPath2(struct file1_s* file, int lumpIdx, char delimiter);
-AutoStr* F_ComposeLumpPath(struct file1_s* file, int lumpIdx/*, delimiter ='/' */);
+AutoStr *F_ComposeLumpPath2(struct file1_s *file, int lumpIdx, char delimiter);
+AutoStr *F_ComposeLumpPath(struct file1_s *file, int lumpIdx/*, delimiter ='/' */);
 
-size_t F_ReadLump(struct file1_s* file, int lumpIdx, uint8_t* buffer);
+size_t F_ReadLump(struct file1_s *file, int lumpIdx, uint8_t *buffer);
 
-size_t F_ReadLumpSection(struct file1_s* file, int lumpIdx, uint8_t* buffer,
+size_t F_ReadLumpSection(struct file1_s *file, int lumpIdx, uint8_t *buffer,
                          size_t startOffset, size_t length);
 
-uint8_t const* F_CacheLump(struct file1_s* file, int lumpIdx);
+uint8_t const *F_CacheLump(struct file1_s *file, int lumpIdx);
 
-void F_UnlockLump(struct file1_s* file, int lumpIdx);
+void F_UnlockLump(struct file1_s *file, int lumpIdx);
 
 /**
  * Compiles a list of file names, separated by @a delimiter.
  */
-void F_ComposePWADFileList(char* outBuf, size_t outBufSize, const char* delimiter);
+void F_ComposePWADFileList(char *outBuf, size_t outBufSize, char const *delimiter);
 
 uint F_LoadedFilesCRC(void);
 
@@ -682,15 +680,15 @@ uint F_LoadedFilesCRC(void);
  *
  * @return  @c true iff a resource was found.
  */
-boolean F_FindPath2(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags);
-boolean F_FindPath(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+boolean F_FindPath2(resourceclassid_t classId, struct uri_s const *searchPath, ddstring_t *foundPath, int flags);
+boolean F_FindPath(resourceclassid_t classId, struct uri_s const *searchPath, ddstring_t *foundPath/*, flags = RLF_DEFAULT*/);
 
 /**
  * @return  If a resource is found, the index + 1 of the path from @a searchPaths
  *          that was used to find it; otherwise @c 0.
  */
-uint F_FindPathInList(resourceclassid_t classId, char const* searchPaths,
-    ddstring_t* foundPath, int flags);
+uint F_FindPathInList(resourceclassid_t classId, char const *searchPaths,
+    ddstring_t *foundPath, int flags);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -20,6 +20,7 @@
 #include "de/ArchiveEntryFile"
 #include "de/Archive"
 #include "de/Block"
+#include "de/Guard"
 
 namespace de {
 
@@ -29,14 +30,25 @@ ArchiveEntryFile::ArchiveEntryFile(String const &name, Archive &archive, String 
 
 ArchiveEntryFile::~ArchiveEntryFile()
 {
+    DENG2_GUARD(this);
+
     DENG2_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion.clear();
     
     deindex();
 }
 
+String ArchiveEntryFile::describe() const
+{
+    DENG2_GUARD(this);
+
+    return String("archive entry \"%1\"").arg(_entryPath);
+}
+
 void ArchiveEntryFile::clear()
 {
+    DENG2_GUARD(this);
+
     File::clear();
     
     archive().entryBlock(_entryPath).clear();
@@ -50,16 +62,22 @@ void ArchiveEntryFile::clear()
 
 IByteArray::Size ArchiveEntryFile::size() const
 {
+    DENG2_GUARD(this);
+
     return archive().entryBlock(_entryPath).size();
 }
 
 void ArchiveEntryFile::get(Offset at, Byte *values, Size count) const
 {
+    DENG2_GUARD(this);
+
     archive().entryBlock(_entryPath).get(at, values, count);
 }
 
 void ArchiveEntryFile::set(Offset at, Byte const *values, Size count)
 {
+    DENG2_GUARD(this);
+
     verifyWriteAccess();
     
     // The entry will be marked for recompression (due to non-const access).

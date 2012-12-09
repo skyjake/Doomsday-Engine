@@ -155,14 +155,23 @@ int main(int argc, char** argv)
         de2LegacyCore = LegacyCore_New(&dengApp);
         LegacyCore_SetTerminateFunc(handleLegacyCoreTerminate);
 
+        if(useGUI)
+        {
+            // Config needs DisplayMode, so let's initialize it before the configuration.
+            DisplayMode_Init();
+
+            /**
+             * @todo DisplayMode should be moved under de::App's ownership, so
+             * this is handled automatically.
+             */
+        }
+
         dengApp.initSubsystems();
 
         Libdeng_Init();
 
         if(useGUI)
         {
-            DisplayMode_Init();
-
             // Check for updates automatically.
             Updater_Init();
 

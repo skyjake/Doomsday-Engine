@@ -175,8 +175,8 @@ struct FS1::Instance
 
     void clearOpenFiles()
     {
-        while(!openFiles.empty())
-        { delete openFiles.back(); }
+        while(!openFiles.isEmpty())
+        { delete openFiles.takeLast(); }
     }
 
     void clearIndexes()
@@ -273,7 +273,7 @@ struct FS1::Instance
         DENG_ASSERT(!path.isEmpty());
 
         // We must have an absolute path - prepend the CWD if necessary.
-        path = NativePath::workPath() / path;
+        path = NativePath::workPath().withSeparators('/') / path;
 
         // Translate mymode to the C-lib's fopen() mode specifiers.
         char mode[8] = "";
@@ -793,7 +793,7 @@ int FS1::findAll(bool (*predicate)(de::File1& file, void* parameters), void* par
     return numFound;
 }
 
-int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
+int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
 {
     int const numFoundSoFar = found.count();
 
@@ -803,39 +803,35 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
         searchPattern = App_BasePath() / searchPattern;
     }
 
-    de::Uri patternMap = de::Uri(searchPattern, RC_NULL);
-
     /*
      * Check the Zip directory.
      */
     DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, d->zipFileIndex.lumps())
     {
-        File1 const& lump = **i;
-        PathTree::Node const& node = lump.directoryNode();
+        File1 const &lump = **i;
+        PathTree::Node const &node = lump.directoryNode();
 
-        String* filePath = 0;
+        String filePath;
         bool patternMatched;
         if(!(flags & SearchPath::NoDescend))
         {
-            filePath = new String(lump.composePath());
-            patternMatched = F_MatchFileName(filePath->constData(), searchPattern.constData());
+            filePath = lump.composePath();
+            patternMatched = F_MatchFileName(filePath, searchPattern);
         }
         else
         {
-            patternMatched = !node.comparePath(patternMap.path(), PathTree::MatchFull);
+            patternMatched = !node.comparePath(searchPattern, PathTree::MatchFull);
         }
 
         if(!patternMatched) continue;
 
         // Not yet composed the path?
-        if(!filePath)
+        if(filePath.isEmpty())
         {
-            filePath = new String(lump.composePath());
+            filePath = lump.composePath();
         }
 
-        found.push_back(PathListItem(*filePath, !node.isLeaf()? A_SUBDIR : 0));
-
-        delete filePath;
+        found.push_back(PathListItem(filePath, !node.isLeaf()? A_SUBDIR : 0));
     }
 
     /*
@@ -845,7 +841,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     {
         DENG2_FOR_EACH_CONST(LumpMappings, i, d->lumpMappings)
         {
-            if(!F_MatchFileName(i->first.constData(), searchPattern.constData())) continue;
+            if(!F_MatchFileName(i->first, searchPattern)) continue;
 
             found.push_back(PathListItem(i->first, 0 /*only filepaths (i.e., leaves) can be mapped to lumps*/));
         }
@@ -856,7 +852,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     /*
      * Check native paths.
      */
-    String searchDirectory = searchPattern.fileNamePath();
+    String searchDirectory = searchPattern.toString().fileNamePath();
     if(!searchDirectory.isEmpty())
     {
         QByteArray searchDirectoryUtf8 = searchDirectory.toUtf8();
@@ -886,7 +882,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
                     if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
                     {
                         String foundPath = searchDirectory / NativePath(Str_Text(&fd.name)).withSeparators('/');
-                        if(!F_MatchFileName(foundPath.constData(), searchPattern.constData())) continue;
+                        if(!F_MatchFileName(foundPath, searchPattern)) continue;
 
                         nativeFilePaths.push_back(PathListItem(foundPath, fd.attrib));
                     }
@@ -905,15 +901,15 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     return found.count() - numFoundSoFar;
 }
 
-de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const& info)
+de::File1 &FS1::interpret(de::FileHandle &hndl, String filePath, FileInfo const &info)
 {
     DENG_ASSERT(!filePath.isEmpty());
 
-    de::File1* interpretedFile = 0;
+    de::File1 *interpretedFile = 0;
 
     // Firstly try the interpreter for the guessed resource types.
-    FileType const& ftypeGuess = DD_GuessFileTypeFromFileName(filePath);
-    if(NativeFileType const* fileType = dynamic_cast<NativeFileType const*>(&ftypeGuess))
+    FileType const &ftypeGuess = DD_GuessFileTypeFromFileName(filePath);
+    if(NativeFileType const* fileType = dynamic_cast<NativeFileType const *>(&ftypeGuess))
     {
         interpretedFile = fileType->interpret(hndl, filePath, info);
     }
@@ -921,10 +917,10 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const&
     // If not yet interpreted - try each recognisable format in order.
     if(!interpretedFile)
     {
-        FileTypes const& fileTypes = DD_FileTypes();
+        FileTypes const &fileTypes = DD_FileTypes();
         DENG2_FOR_EACH_CONST(FileTypes, i, fileTypes)
         {
-            if(NativeFileType const* fileType = dynamic_cast<NativeFileType const*>(*i))
+            if(NativeFileType const *fileType = dynamic_cast<NativeFileType const *>(*i))
             {
                 // Already tried this?
                 if(fileType == &ftypeGuess) continue;
@@ -939,7 +935,7 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const&
     if(!interpretedFile)
     {
         // Use a generic file.
-        File1* container = (hndl.hasFile() && hndl.file().isContained())? &hndl.file().container() : 0;
+        File1 *container = (hndl.hasFile() && hndl.file().isContained())? &hndl.file().container() : 0;
         interpretedFile = new File1(hndl, filePath, info, container);
     }
 
@@ -1088,7 +1084,7 @@ void FS1::clearPathMappings()
     d->pathMappings.clear();
 }
 
-void FS1::printDirectory(String path)
+void FS1::printDirectory(Path path)
 {
     QByteArray pathUtf8 = NativePath(path).pretty().toUtf8();
     Con_Message("Directory: %s\n", pathUtf8.constData());

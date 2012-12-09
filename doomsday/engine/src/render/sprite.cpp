@@ -1,29 +1,22 @@
-/**\file rend_sprite.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file sprite.cpp Sprite Renderer.
+ * @ingroup render
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Rendering Map Objects as 2D Sprites.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include <cmath>
@@ -293,11 +286,9 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     int frame = psp->statePtr->frame;
     float offScaleY = weaponOffsetScaleY / 1000.0f;
     spritedef_t const *sprDef;
-    patchtex_t const *pTex;
     spriteframe_t const *sprFrame;
     materialsnapshot_t const *ms;
     materialvariantspecification_t const *spec;
-    variantspecification_t const *texSpec;
     boolean flip;
 
 #ifdef RANGECHECK
@@ -317,16 +308,12 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -2, 0, false, true, true, false);
     ms = Materials_Prepare(sprFrame->mats[0], spec, true);
 
-    if(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().schemeName().compareWithoutCase("Sprites"))
-        throw de::Error("setupPSpriteParams", "Material snapshot's primary texture is not a patchtex_t");
-
-    pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
-    DENG_ASSERT(pTex);
-    texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
+    de::Texture const &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+    variantspecification_t const *texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     DENG_ASSERT(spec);
 
-    params->pos[VX] = psp->pos[VX] - -pTex->offX + pspOffset[VX] + -texSpec->border;
-    params->pos[VY] = offScaleY * (psp->pos[VY] - -pTex->offY) + pspOffset[VY] + -texSpec->border;
+    params->pos[VX] = psp->pos[VX] - -tex.origin().x() + pspOffset[VX] + -texSpec->border;
+    params->pos[VY] = offScaleY * (psp->pos[VY] - -tex.origin().y()) + pspOffset[VY] + -texSpec->border;
     params->width  = ms->size.width  + texSpec->border*2;
     params->height = ms->size.height + texSpec->border*2;
 
@@ -917,25 +904,20 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     if(params->material)
     {
         variantspecification_t const *texSpec;
-        patchtex_t *pTex;
 
         // Ensure this variant has been prepared.
         ms = Materials_PrepareVariant(params->material);
 
         texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
-        assert(texSpec);
+        DENG_ASSERT(texSpec);
         size.width  = ms->size.width  + texSpec->border*2;
         size.height = ms->size.height + texSpec->border*2;
         viewOffset.x = -size.width/2;
 
         TextureVariant_Coords(MST(ms, MTU_PRIMARY), &s, &t);
 
-        if(!reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().schemeName().compareWithoutCase("Sprites"))
-        {
-            pTex = reinterpret_cast<patchtex_t *>(Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY)));
-            DENG_ASSERT(pTex);
-            viewOffset.x += (float) -pTex->offX;
-        }
+        de::Texture &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+        viewOffset.x += float(-tex.origin().x());
     }
 
     // We may want to draw using another material instead.

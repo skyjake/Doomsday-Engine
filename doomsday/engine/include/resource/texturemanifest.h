@@ -1,6 +1,4 @@
-/**
- * @file texturemanifest.h
- * @ingroup resource
+/** @file texturemanifest.h Texture Manifest.
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  *
@@ -22,8 +20,8 @@
 #ifndef LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 #define LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 
+#include <QSize>
 #include <de/PathTree>
-#include <de/size.h>
 #include "uri.hh"
 #include "resource/texture.h"
 
@@ -33,8 +31,11 @@ class Textures;
 class TextureScheme;
 
 /**
- * Models a reference to and the associated metadata for a would-be logical
- * Texture resource in the Textures collection.
+ * Metadata for a would-be logical Texture resource.
+ * @ingroup resource
+ *
+ * Models a reference to and the associated metadata for a logical texture
+ * in the texture resource collection.
  */
 class TextureManifest : public PathTree::Node
 {
@@ -47,18 +48,17 @@ public:
      * The first time a texture is derived from the manifest, said texture
      * is assigned to the manifest (ownership is assumed).
      *
-     * @param dimensions  Logical dimensions. Components can be @c 0 in which
-     *                  case their value will be inherited from the actual
-     *                  pixel dimensions of the image at load time.
-     * @param flags     Flags.
-     * @param userData  User data to associate with the resultant texture.
+     * @param flags     Texture classification flags.
      */
-    Texture *derive(Size2Raw const &dimensions, Texture::Flags flags);
+    Texture *derive(Texture::Flags flags = 0);
 
     /**
      * @copydoc derive()
+     * @param dimensions  Logical dimensions. Components can be @c 0 in which
+     *                  case their value will be inherited from the actual
+     *                  pixel dimensions of the image at load time.
      */
-    Texture *derive(Texture::Flags flags);
+    Texture *derive(QSize const &dimensions, Texture::Flags flags = 0);
 
     /**
      * Returns the owning scheme of the TextureManifest.
@@ -135,18 +135,9 @@ public:
     /// Returns a reference to the application's texture system.
     static Textures &textures();
 
-    /// @todo Refactor away -ds
-    textureid_t lookupTextureId() const;
-
 private:
-    /// Scheme-unique identifier determined by the owner of the subspace.
-    int uniqueId_;
-
-    /// Path to the resource containing the loadable data.
-    Uri resourceUri_;
-
-    /// The associated logical Texture instance (if any).
-    Texture *texture_;
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace de

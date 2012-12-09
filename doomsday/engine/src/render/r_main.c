@@ -275,7 +275,7 @@ void R_ViewWindowTicker(int consoleNum, timespan_t ticLength)
 #undef LERP
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 int R_ViewWindowGeometry(int player, RectRaw* geometry)
 {
     const viewdata_t* vd;
@@ -287,7 +287,7 @@ int R_ViewWindowGeometry(int player, RectRaw* geometry)
     return true;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 int R_ViewWindowOrigin(int player, Point2Raw* origin)
 {
     const viewdata_t* vd;
@@ -299,7 +299,7 @@ int R_ViewWindowOrigin(int player, Point2Raw* origin)
     return true;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 int R_ViewWindowSize(int player, Size2Raw* size)
 {
     const viewdata_t* vd;
@@ -363,7 +363,7 @@ void R_SetViewWindowGeometry(int player, const RectRaw* geometry, boolean interp
     }
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 int R_ViewPortGeometry(int player, RectRaw* geometry)
 {
     viewport_t* vp;
@@ -377,7 +377,7 @@ int R_ViewPortGeometry(int player, RectRaw* geometry)
     return true;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 int R_ViewPortOrigin(int player, Point2Raw* origin)
 {
     viewport_t* vp;
@@ -391,7 +391,7 @@ int R_ViewPortOrigin(int player, Point2Raw* origin)
     return true;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 int R_ViewPortSize(int player, Size2Raw* size)
 {
     viewport_t* vp;
@@ -405,7 +405,7 @@ int R_ViewPortSize(int player, Size2Raw* size)
     return true;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
 {
     int p = P_ConsoleToLocal(consoleNum);

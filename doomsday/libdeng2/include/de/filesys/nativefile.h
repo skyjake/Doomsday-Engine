@@ -42,12 +42,14 @@ namespace de
          * in read-only mode.
          * 
          * @param name        Name of the file object.
-         * @param nativePath  Path in the native file system to access. Relative to the
-         *                    current working directory.
+         * @param nativePath  Path in the native file system to access. Relative
+         *                    to the current working directory.
          */
         NativeFile(String const &name, NativePath const &nativePath);
         
         virtual ~NativeFile();
+
+        String describe() const;
 
         void clear();
         void flush();

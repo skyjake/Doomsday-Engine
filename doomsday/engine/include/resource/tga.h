@@ -41,7 +41,7 @@ extern "C" {
  *
  * @return  Non-zero iff successful.
  */
-int TGA_Save24_rgb565(FILE *file, int w, int h, uint16_t const *buffer);
+int TGA_Save24_rgb565(FILE *file, int w, int h, uint16_t const *buf);
 
 /**
  * Save the rgb888 buffer as Targa 24.

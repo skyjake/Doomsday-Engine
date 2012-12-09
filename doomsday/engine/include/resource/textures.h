@@ -1,6 +1,4 @@
-/**
- * @file textures.h Texture Resource Collection.
- * @ingroup resource
+/** @file textures.h Texture Resource Collection.
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -25,17 +23,14 @@
 
 #include "uri.h"
 
-/// Special value used to signify an invalid texture id.
-#define NOTEXTUREID             0
-
 #ifdef __cplusplus
 
 #include <QList>
+#include <QSize>
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
 #include <de/PathTree>
-#include <de/size.h>
 #include "resource/texture.h"
 #include "resource/texturemanifest.h"
 #include "resource/texturescheme.h"
@@ -43,6 +38,9 @@
 namespace de {
 
 /**
+ * Specialized resource collection for a set of logical textures.
+ * @ingroup resource
+ *
  * @em Clearing a texture is to 'undefine' it - any names bound to it will be
  * deleted and any GL textures acquired for it are 'released'. The logical
  * Texture instance used to represent it is also deleted.
@@ -62,32 +60,53 @@ public:
     typedef class TextureManifest Manifest;
     typedef class TextureScheme Scheme;
 
+    /**
+     * ResourceClass encapsulates the properties and logics belonging to a logical
+     * class of resource.
+     *
+     * @todo Derive from de::ResourceClass -ds
+     */
     struct ResourceClass
     {
         /**
          * Interpret a manifest producing a new logical Texture instance..
          *
          * @param manifest  The manifest to be interpreted.
-         * @param dimensions  Logical dimensions. Components can be @c 0 in
-         *                  which case their value will be inherited from the
-         *                  actual pixel dimensions of the image at load time.
          * @param flags     Texture Flags.
          * @param userData  User data to associate with the resultant texture.
          */
-        static Texture *interpret(Manifest &manifest, Size2Raw const &dimensions,
-                                  Texture::Flags flags, void *userData = 0);
+        static Texture *interpret(Manifest &manifest, Texture::Flags flags,
+                                  void *userData = 0);
 
         /**
          * @copydoc interpret()
+         * @param dimensions  Logical dimensions. Components can be @c 0 in
+         *                  which case their value will be inherited from the
+         *                  actual pixel dimensions of the image at load time.
          */
-        static Texture *interpret(Manifest &manifest, Texture::Flags flags,
-                                  void *userData = 0);
+        static Texture *interpret(Manifest &manifest, QSize const &dimensions,
+                                  Texture::Flags flags, void *userData = 0);
     };
+
+    /**
+     * Flags determining URI validation logic.
+     *
+     * @see validateUri()
+     */
+    enum UriValidationFlag
+    {
+        AnyScheme  = 0x1, ///< The scheme of the URI may be of zero-length; signifying "any scheme".
+        NotUrn     = 0x2  ///< Do not accept a URN.
+    };
+    Q_DECLARE_FLAGS(UriValidationFlags, UriValidationFlag)
 
     /// Texture system subspace schemes.
     typedef QList<Scheme*> Schemes;
 
 public:
+    /// The referenced texture was not found. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
     /// An unknown scheme was referenced. @ingroup errors
     DENG2_ERROR(UnknownSchemeError);
 
@@ -140,28 +159,34 @@ public:
         DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->clear(); }
     }
 
-    /// @return  Total number of unique Textures in the collection.
-    int size() const;
-
-    /// @return  Total number of unique Textures in the collection. Same as @ref size()
-    inline int count() const {
-        return size();
-    }
-
     /**
-     * Removes the manifest from any indexes.
+     * Validate @a uri to determine if it is well-formed and is usable as a
+     * search argument.
      *
-     * @param manifest      Manifest to remove from the index.
+     * @param uri       Uri to be validated.
+     * @param flags     Validation flags.
+     * @param quiet     @c true= Do not output validation remarks to the log.
+     *
+     * @return  @c true if @a Uri passes validation.
+     *
+     * @todo Should throw de::Error exceptions -ds
      */
-    void deindex(Manifest &manifest);
+    bool validateUri(Uri const &uri, UriValidationFlags flags = 0,
+                     bool quiet = false) const;
 
     /**
-     * Find a single declared texture.
+     * Determines if a manifest exists for a declared texture on @a path.
+     * @return @c true, if a manifest exists; otherwise @a false.
+     */
+    bool has(Uri const &path) const;
+
+    /**
+     * Find the manifest for a declared texture.
      *
      * @param search  The search term.
-     * @return Found unique identifier; otherwise @c NOTEXTUREID.
+     * @return Found unique identifier.
      */
-    Manifest *find(Uri const &search) const;
+    Manifest &find(Uri const &search) const;
 
     /**
      * Declare a texture in the collection, producing a manifest for a logical
@@ -187,19 +212,10 @@ public:
      * each visited. Iteration ends when all textures have been visited or a
      * callback returns non-zero.
      *
-     * @param nameOfScheme  If a known symbolic scheme name, only consider
-     *                      textures within this scheme. Can be @ zero-length
-     *                      string, in which case visit all textures.
      * @param callback      Callback function ptr.
      * @param parameters    Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
-     */
-    int iterate(String nameOfScheme, int (*callback)(Texture &texture, void *parameters),
-                void *parameters = 0) const;
-
-    /**
-     * @copydoc iterate()
      */
     inline int iterate(int (*callback)(Texture &texture, void *parameters),
                        void *parameters = 0) const {
@@ -207,46 +223,44 @@ public:
     }
 
     /**
+     * @copydoc iterate()
+     * @param nameOfScheme  If a known symbolic scheme name, only consider
+     *                      textures within this scheme. Can be @ zero-length
+     *                      string, in which case visit all textures.
+     */
+    int iterate(String nameOfScheme, int (*callback)(Texture &texture, void *parameters),
+                void *parameters = 0) const;
+
+    /**
      * Iterate over declared textures in the collection making a callback for
      * each visited. Iteration ends when all textures have been visited or a
      * callback returns non-zero.
      *
-     * @param nameOfScheme  If a known symbolic scheme name, only consider
-     *                      textures within this scheme. Can be @ zero-length
-     *                      string, in which case visit all textures.
      * @param callback      Callback function ptr.
      * @param parameters    Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
-     */
-    int iterateDeclared(String nameOfScheme, int (*callback)(Manifest &manifest, void *parameters),
-                        void* parameters = 0) const;
-
-    /**
-     * @copydoc iterate()
      */
     inline int iterateDeclared(int (*callback)(Manifest &manifest, void *parameters),
                                void* parameters = 0) const {
         return iterateDeclared("", callback, parameters);
     }
 
+    /**
+     * @copydoc iterate()
+     * @param nameOfScheme  If a known symbolic scheme name, only consider
+     *                      textures within this scheme. Can be @ zero-length
+     *                      string, in which case visit all textures.
+     */
+    int iterateDeclared(String nameOfScheme, int (*callback)(Manifest &manifest, void *parameters),
+                        void* parameters = 0) const;
+
 private:
     struct Instance;
     Instance *d;
-
-public:
-    /*
-     * Here follows legacy interface methods awaiting removal -ds
-     */
-
-    /// @return  Unique identifier of the primary name for @a manifest else @c NOTEXTUREID.
-    /// @deprecated Texture ids are now obsolete. Reference/point-to the manifest instead.
-    textureid_t idForManifest(Manifest const &manifest) const;
-
-    /// @return  Texture associated with unique identifier @a textureId else @c 0.
-    /// @deprecated Texture ids are now obsolete. Reference/point-to the manifest instead.
-    Texture *toTexture(textureid_t textureId) const;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Textures::UriValidationFlags)
 
 } // namespace de
 

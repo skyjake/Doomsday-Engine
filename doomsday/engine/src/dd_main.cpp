@@ -537,7 +537,6 @@ void DD_CreateTextureSchemes()
 void DD_ClearRuntimeTextureSchemes()
 {
     Textures &textures = *App_Textures();
-    if(!textures.count()) return;
 
     textures.scheme("Flats").clear();
     textures.scheme("Textures").clear();
@@ -557,7 +556,6 @@ void DD_ClearRuntimeTextureSchemes()
 void DD_ClearSystemTextureSchemes()
 {
     Textures &textures = *App_Textures();
-    if(!textures.count()) return;
 
     textures.scheme("System").clear();
     GL_PruneTextureVariantSpecifications();
@@ -664,27 +662,26 @@ void DD_DestroyGames(void)
  */
 void DD_StartTitle(void)
 {
-    ddstring_t setupCmds;
-    const char* fontName;
+    if(isDedicated) return;
+
     ddfinale_t fin;
-    int i;
+    if(!Def_Get(DD_DEF_FINALE, "background", &fin)) return;
 
-    if(isDedicated || !Def_Get(DD_DEF_FINALE, "background", &fin)) return;
-
-    Str_Init(&setupCmds);
+    ddstring_t setupCmds; Str_Init(&setupCmds);
 
     // Configure the predefined fonts (all normal, variable width).
-    fontName = R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow),
-                                               Window_Height(theWindow));
-    for(i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
+    char const *fontName = R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow),
+                                                           Window_Height(theWindow));
+
+    for(int i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
         Str_Appendf(&setupCmds, "prefont %i System:%s\n", i, fontName);
     }
 
     // Configure the predefined colors.
-    for(i = 1; i <= MIN_OF(NUM_UI_COLORS, FIPAGE_NUM_PREDEFINED_FONTS); ++i)
+    for(int i = 1; i <= MIN_OF(NUM_UI_COLORS, FIPAGE_NUM_PREDEFINED_FONTS); ++i)
     {
-        ui_color_t* color = UI_Color(i-1);
+        ui_color_t* color = UI_Color(i - 1);
         Str_Appendf(&setupCmds, "precolor %i %f %f %f\n", i, color->red, color->green, color->blue);
     }
 
@@ -700,20 +697,20 @@ void DD_StartTitle(void)
  *
  * @return  Number of paths added to @a found.
  */
-static int findAllGameDataPaths(FS1::PathList& found)
+static int findAllGameDataPaths(FS1::PathList &found)
 {
-    static char const* extensions[] = {
+    static String const extensions[] = {
         "wad", "lmp", "pk3", "zip", "deh",
 #ifdef UNIX
         "WAD", "LMP", "PK3", "ZIP", "DEH", // upper case alternatives
 #endif
-        0
+        ""
     };
     int const numFoundSoFar = found.count();
-    for(uint extIdx = 0; extensions[extIdx]; ++extIdx)
+    for(uint extIdx = 0; !extensions[extIdx].isEmpty(); ++extIdx)
     {
-        String pattern = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.") + extensions[extIdx];
-        App_FileSystem()->findAllPaths(de::Uri(pattern, RC_NULL).resolved(), 0, found);
+        Path pattern = Path("$(App.DataPath)/$(GamePlugin.Name)/auto/*." + extensions[extIdx]);
+        App_FileSystem()->findAllPaths(de::Uri(pattern).resolved(), 0, found);
     }
     return found.count() - numFoundSoFar;
 }
@@ -2606,21 +2603,19 @@ materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
 {
     if(!_textureUri) return NOMATERIALID;
 
-    de::Uri const &textureUri = reinterpret_cast<de::Uri const &>(*_textureUri);
     try
     {
-        if(TextureManifest *manifest = App_Textures()->find(textureUri))
-        {
-            de::Uri uri = manifest->composeUri();
-            uri.setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(uri.scheme())));
-            return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
-        }
+        de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*_textureUri)).composeUri();
+        uri.setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(uri.scheme())));
+        return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
     }
     catch(Textures::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
     }
+    catch(Textures::NotFoundError const &)
+    {} // Ignore this error.
 
     return NOMATERIALID;
 }

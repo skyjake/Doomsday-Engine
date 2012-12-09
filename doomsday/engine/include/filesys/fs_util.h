@@ -200,7 +200,7 @@ boolean F_Dump(void const* data, size_t size, char const* path);
 #ifdef __cplusplus
 } // extern "C"
 
-#include <QChar>
+#include <de/String>
 
 /**
  * Performs a case-insensitive pattern match. The pattern can contain
@@ -211,7 +211,7 @@ boolean F_Dump(void const* data, size_t size, char const* path);
  *
  * @return  @c true, if @a filePath matches the pattern.
  */
-bool F_MatchFileName(QChar const *filePath, QChar const *pattern);
+bool F_MatchFileName(de::String const &filePath, de::String const &pattern);
 
 #endif
 

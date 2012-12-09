@@ -301,6 +301,7 @@ DENG_HEADERS += \
     include/resource/materials.h \
     include/resource/materialvariant.h \
     include/resource/models.h \
+    include/resource/patch.h \
     include/resource/patchname.h \
     include/resource/pcx.h \
     include/resource/r_data.h \
@@ -564,7 +565,7 @@ SOURCES += \
     src/render/rend_halo.c \
     src/render/rend_list.c \
     src/render/rend_main.c \
-    src/render/rend_model.c \
+    src/render/rend_model.cpp \
     src/render/rend_particle.c \
     src/render/rend_shadow.c \
     src/render/rendpoly.cpp \
@@ -585,6 +586,7 @@ SOURCES += \
     src/resource/materials.cpp \
     src/resource/materialvariant.cpp \
     src/resource/models.cpp \
+    src/resource/patch.cpp \
     src/resource/patchname.cpp \
     src/resource/pcx.c \
     src/resource/r_data.cpp \

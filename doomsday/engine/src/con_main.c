@@ -1196,7 +1196,7 @@ static int completeWord(int mode)
         // Completion Mode 1: Cycle through the possible completions.
         uint idx;
 
-        /// \note lastCompletion uses a 1-based index.
+        /// @note lastCompletion uses a 1-based index.
         if(lastCompletion == 0 /* first completion attempt? */||
            lastCompletion >= numMatches /* reached the end? */)
             idx = 1;

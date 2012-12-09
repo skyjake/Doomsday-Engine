@@ -1,6 +1,5 @@
-/**
- * @file de_resource.h
- * Resource subsystem. @ingroup resource
+/** @file de_resource.h Resource Subsystem.
+ * @ingroup resource
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -34,11 +33,12 @@
 #include "resource/compositetexture.h"
 #include "resource/rawtexture.h"
 #include "resource/textures.h"
-#include "resource/wad.h"
-#include "resource/zip.h"
 
 #ifdef __cplusplus
+#  include "resource/patch.h"
 #  include "resource/texturemanifest.h"
+#  include "resource/wad.h"
+#  include "resource/zip.h"
 #endif
 
 #endif /* LIBDENG_RESOURCE_SUBSYSTEM_H */

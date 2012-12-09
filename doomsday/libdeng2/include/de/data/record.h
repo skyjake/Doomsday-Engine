@@ -32,6 +32,7 @@
 
 namespace de
 {
+    class ArrayValue;
     class Function;
     
     /**
@@ -154,10 +155,12 @@ namespace de
          * array values.
          *
          * @param variableName  Name of the variable.
+         * @param array         Value for the new variable (ownership taken). If not
+         *                      provided, an empty array will be created for the variable.
          *
          * @return  The array variable.
          */
-        Variable &addArray(String const &variableName);
+        Variable &addArray(String const &variableName, ArrayValue *array = 0);
 
         /**
          * Adds a dictionary variable to the record. The variable is set up to only accept
@@ -178,6 +181,19 @@ namespace de
          * @return  The block variable.
          */
         Variable &addBlock(String const &variableName);
+
+        /**
+         * Adds a function variable to the record. The variable is set up to only
+         * accept function values.
+         *
+         * @param variableName  Name of the variable.
+         * @param func          Function. The variable's value will hold a
+         *                      reference to the Function; the caller may release
+         *                      its reference afterwards.
+         *
+         * @return The function variable.
+         */
+        Variable &addFunction(String const &variableName, Function *func);
         
         /**
          * Adds a new subrecord to the record. Adds a variable named @a name
