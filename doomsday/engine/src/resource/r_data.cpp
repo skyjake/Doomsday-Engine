@@ -742,8 +742,7 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
     de::Texture *tex = manifest.derive();
     if(!tex)
     {
-        LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.")
-            << manifest.composeUri();
+        LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.") << manifest.composeUri();
         return;
     }
 
@@ -755,16 +754,34 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
         lumpnum_t lumpNum = resourceUri.path().toString().toInt();
         de::File1& file = App_FileSystem()->nameIndex().lump(lumpNum);
 
-        /// @todo fixme: Ensure this is in Patch format.
-        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-        de::Reader from = de::Reader(fileData);
-        Patch::Header patchHdr;
-        from >> patchHdr;
-
-        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
-        tex->setDimensions(patchHdr.dimensions);
-        if(file.hasCustom())
+        // If this is from an add-on flag it as "custom".
+        if(file.container().hasCustom())
+        {
             tex->flags() |= de::Texture::Custom;
+        }
+
+        // If this is a Patch read the world dimension and origin offset values.
+        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+        if(Patch::recognize(fileData))
+        {
+            try
+            {
+                de::Reader from = de::Reader(fileData);
+                Patch::Header hdr;
+                from >> hdr;
+
+                tex->setDimensions(hdr.dimensions);
+                tex->setOrigin(QPoint(-hdr.origin.x(), -hdr.origin.y()));
+            }
+            catch(IByteArray::OffsetError const &)
+            {
+                LOG_WARNING("File \"%s:%s\" does not appear to be a valid Patch.\n"
+                            "World dimension and origin offset not set for sprite \"%s\".")
+                    << NativePath(file.container().composePath()).pretty()
+                    << NativePath(file.composePath()).pretty()
+                    << manifest.composeUri();
+            }
+        }
 
         file.unlock();
     }
