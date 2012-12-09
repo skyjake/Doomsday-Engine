@@ -534,7 +534,9 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
     QList<TextureManifest*> result;
     if(count == 0) return result;
 
+#ifdef DENG2_QT_4_7_OR_NEWER
     result.reserve(count);
+#endif
     return collectTextureManifests(scheme, path, &result);
 }
 
