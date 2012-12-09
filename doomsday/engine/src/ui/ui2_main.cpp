@@ -951,6 +951,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
 {
     vec3f_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
     vec2f_t texScale = { 1, 1 };
+    vec2f_t rotateCenter = { .5f, .5f };
     boolean showEdges = true, flipTextureS = false;
     boolean mustPopTextureMatrix = false;
     boolean textureEnabled = false;
@@ -978,6 +979,8 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 // Raw images are always considered to have a logical size of 320x200
                 // even though the actual texture resolution may be different.
                 V3f_Set(dimensions, 320 /*rawTex->width*/, 200 /*rawTex->height*/, 0);
+                // Rotation occurs around the center of the screen.
+                V2f_Set(rotateCenter, 160, 100);
                 GL_BindTextureUnmanaged(glName, (filterUI ? GL_LINEAR : GL_NEAREST));
                 if(glName)
                 {
@@ -992,6 +995,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
         case PFT_XIMAGE:
             V3f_Set(offset, 0, 0, 0);
             V3f_Set(dimensions, 1, 1, 0);
+            V2f_Set(rotateCenter, .5f, .5f);
             GL_BindTextureUnmanaged(f->texRef.tex, (filterUI ? GL_LINEAR : GL_NEAREST));
             if(f->texRef.tex)
             {
@@ -1017,15 +1021,17 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 texturevariantspecification_t const *texSpec = MSU_texturespec(ms, MTU_PRIMARY);
 
                 /// @todo Utilize *all* properties of the Material.
-                V3f_Set(dimensions, ms->size.width  + TS_GENERAL(texSpec)->border*2,
+                V3f_Set(dimensions,
+                        ms->size.width  + TS_GENERAL(texSpec)->border*2,
                         ms->size.height + TS_GENERAL(texSpec)->border*2, 0);
+                V2f_Set(rotateCenter, dimensions[VX]/2, dimensions[VY]/2);
                 TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
 
                 de::Texture const &texture = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
                 de::Uri uri = texture.manifest().composeUri();
                 if(!uri.scheme().compareWithoutCase("Sprites"))
                 {
-                    V3f_Set(offset, texture.origin().x(), texture.origin().y(), 0);
+                    V3f_Set(offset, texture.origin().x(), texture.origin().y(), 0);                    
                 }
                 else
                 {
@@ -1045,6 +1051,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
 
                 V3f_Set(offset, texture->origin().x(), texture->origin().y(), 0);
                 V3f_Set(dimensions, texture->width(), texture->height(), 0);
+                V2f_Set(rotateCenter, dimensions[VX]/2, dimensions[VY]/2);
             }
             break; }
 
@@ -1059,6 +1066,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     {
         V3f_Copy(dimensions, scale);
         V3f_Set(scale, 1, 1, 1);
+        V2f_Set(rotateCenter, dimensions[VX] / 2, dimensions[VY] / 2);
     }
 
     V3f_Set(center, dimensions[VX] / 2, dimensions[VY] / 2, dimensions[VZ] / 2);
@@ -1081,17 +1089,24 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     // Move to the object origin.
     glTranslatef(origin[VX], origin[VY], origin[VZ]);
 
+    // Translate to the object center.
+    /// @todo Remove this; just go to origin directly. Rotation origin is
+    /// now separately in 'rotateCenter'. -jk
+    glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
+
+    glScalef(scale[VX], scale[VY], scale[VZ]);
+
     if(angle != 0)
     {
+        glTranslatef(rotateCenter[VX], rotateCenter[VY], 0);
+
         // With rotation we must counter the VGA aspect ratio.
         glScalef(1, 200.0f / 240.0f, 1);
         glRotatef(angle, 0, 0, 1);
         glScalef(1, 240.0f / 200.0f, 1);
-    }
 
-    // Translate to the object center.
-    glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
-    glScalef(scale[VX], scale[VY], scale[VZ]);
+        glTranslatef(-rotateCenter[VX], -rotateCenter[VY], 0);
+    }
 
     glMatrixMode(GL_MODELVIEW);
     // Scale up our unit-geometry to the desired dimensions.

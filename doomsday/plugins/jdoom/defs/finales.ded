@@ -118,3 +118,32 @@ InFine {
     CanSkip    
   };
 }
+
+InFine {
+  ID = "gyrations";
+  Script {
+    NoSkip
+    
+    # Rotates around its center.
+    Patch imp 100 100 "TROOA1"
+
+    # Rotates around its center.
+    Rect box 160 50 50 50
+    FillColor box BOTH 0 .4 0 1
+    EdgeColor box BOTH 1 1 1 1  
+    
+    # Rotates around the top left corner of the text box.
+    Text txt 130 130 "Gyrations"
+
+    Wait 1
+    
+    In 5 
+    Angle imp 360
+    Angle box 360
+    Angle txt 360
+    
+    Wait 7
+
+    CanSkip    
+  };
+}
