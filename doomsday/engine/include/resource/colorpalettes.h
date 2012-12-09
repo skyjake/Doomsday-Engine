@@ -39,6 +39,8 @@ extern "C" {
 void R_InitTranslationTables(void);
 void R_UpdateTranslationTables(void);
 
+byte const *R_TranslationTable(int tclass, int tmap);
+
 /// Prepare for color palette creation.
 void R_InitColorPalettes(void);
 

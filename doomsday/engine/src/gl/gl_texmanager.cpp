@@ -2304,8 +2304,16 @@ TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int t
             image->pixels = (uint8_t*) M_Calloc(2 * image->size.width * image->size.height);
             if(!image->pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image->size.width * image->size.height));
 
-            Patch::composite(*image->pixels, image->size.width, image->size.height,
-                             fileData, border, border, tclass, tmap, false);
+            if(dbyte const *xlatTable = R_TranslationTable(tclass, tmap))
+            {
+                Patch::composite(*image->pixels, image->size.width, image->size.height,
+                                 fileData, ByteRefArray(xlatTable, 256), border, border);
+            }
+            else
+            {
+                Patch::composite(*image->pixels, image->size.width, image->size.height,
+                                 fileData, border, border);
+            }
 
             if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
             {
@@ -2387,7 +2395,7 @@ TexSource GL_LoadPatchComposite(image_t *image, de::Texture &tex)
             {
                 // Draw the patch in the buffer.
                 Patch::composite(*image->pixels, image->size.width, image->size.height,
-                                 fileData, i->xOrigin(), i->yOrigin(), 0, 0, false);
+                                 fileData, i->xOrigin(), i->yOrigin());
             }
             catch(IByteArray::OffsetError const &)
             {
@@ -2481,7 +2489,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
                 int const offY = texDef->componentCount() == 1? 0 : i->yOrigin();
 
                 Patch::composite(*image->pixels, image->size.width, image->size.height,
-                                 fileData, offX, offY, 0, 0, zeroMask);
+                                 fileData, offX, offY, zeroMask);
             }
             catch(IByteArray::OffsetError const &)
             {
