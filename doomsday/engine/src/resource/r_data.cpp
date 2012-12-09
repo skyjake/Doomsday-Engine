@@ -176,7 +176,7 @@ patchid_t R_DeclarePatch(char const *name)
     /// @todo fixme: Ensure this is in Patch format.
     ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
     de::Reader from = de::Reader(fileData);
-    PatchHeader patchHdr;
+    Patch::Header patchHdr;
     from >> patchHdr;
 
     file.unlock();
@@ -758,7 +758,7 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
         /// @todo fixme: Ensure this is in Patch format.
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
         de::Reader from = de::Reader(fileData);
-        PatchHeader patchHdr;
+        Patch::Header patchHdr;
         from >> patchHdr;
 
         tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));

@@ -35,6 +35,7 @@
 #include "resource/textures.h"
 
 #ifdef __cplusplus
+#  include "resource/patch.h"
 #  include "resource/texturemanifest.h"
 #  include "resource/wad.h"
 #  include "resource/zip.h"

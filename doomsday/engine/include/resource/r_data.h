@@ -31,57 +31,6 @@
 struct texture_s;
 struct font_s;
 
-#pragma pack(1)
-typedef struct doompatch_header_s {
-    int16_t width; /// Bounding box size.
-    int16_t height;
-    int16_t leftOffset; /// Pixels to the left of origin.
-    int16_t topOffset; /// Pixels below the origin.
-} doompatch_header_t;
-
-// Posts are runs of non masked source pixels.
-typedef struct post_s {
-    byte topOffset; // @c 0xff is the last post in a column.
-    byte length;
-    // Length palette indices follow.
-} post_t;
-#pragma pack()
-
-// column_t is a list of 0 or more post_t, (uint8_t)-1 terminated
-typedef post_t column_t;
-
-#ifdef __cplusplus
-
-#include <QSize>
-#include <QPoint>
-#include <de/IReadable>
-#include <de/Reader>
-
-struct PatchHeader : public de::IReadable
-{
-    /// Dimensions of the patch in texels.
-    QSize dimensions;
-
-    /// Origin offset for the patch in texels.
-    QPoint origin;
-
-    /// Implements IReadable.
-    void operator << (de::Reader &from)
-    {
-        dint16 width, height;
-        from >> width >> height;
-        dimensions.setWidth(width);
-        dimensions.setHeight(height);
-
-        dint16 xOrigin, yOrigin;
-        from >> xOrigin >> yOrigin;
-        origin.setX(xOrigin);
-        origin.setY(yOrigin);
-    }
-};
-
-#endif
-
 /**
  * Textures used in the lighting system.
  */

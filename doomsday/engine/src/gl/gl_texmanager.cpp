@@ -45,6 +45,7 @@
 #include "def_main.h"
 
 #include <QSize>
+#include <de/ByteRefArray>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
@@ -2170,133 +2171,6 @@ TexSource GL_LoadExtTexture(image_t *image, char const *_searchPath, gfxmode_t m
     return source;
 }
 
-static bool validatePatch(uint8_t const &data, size_t len)
-{
-    doompatch_header_t const &hdr = reinterpret_cast<doompatch_header_t const &>(data);
-
-    if(len <= sizeof(doompatch_header_t)) return false;
-
-    int width  = SHORT(hdr.width);
-    int height = SHORT(hdr.height);
-    if(width <= 0 || height <= 0 || len <= sizeof(doompatch_header_t) + width * sizeof(dint32)) return false;
-
-    // Validate column map.
-    // Column offsets begin immediately following the header.
-    dint32 const *colOffsets = reinterpret_cast<dint32 const *>(&data + sizeof(doompatch_header_t));
-
-    for(int col = 0; col < width; ++col)
-    {
-        dint32 offset = LONG(colOffsets[col]);
-        if(offset < 0 || (unsigned)offset >= len) return false;
-    }
-    return true;
-}
-
-/**
- * @note The buffer must have room for the new alpha data!
- *
- * @param dstBuf  The destination buffer the patch will be drawn to.
- * @param texwidth  Width of the dst buffer in pixels.
- * @param texheight  Height of the dst buffer in pixels.
- * @param data  Ptr to the data buffer to draw to the dst buffer.
- * @param origx  X coordinate in the dst buffer to draw the patch too.
- * @param origy  Y coordinate in the dst buffer to draw the patch too.
- * @param tclass  Translation class to use.
- * @param tmap  Translation map to use.
- * @param maskZero  Used with sky textures.
- */
-static void compositePatch(uint8_t &buffer, int texwidth, int texheight,
-    uint8_t const &data, int origx, int origy, int tclass,
-    int tmap, boolean maskZero)
-{
-    DENG_ASSERT(texwidth > 0 && texheight > 0);
-    LOG_AS("compositePatch");
-
-    size_t const bufsize = texwidth * texheight;
-
-    doompatch_header_t const &hdr = reinterpret_cast<doompatch_header_t const &>(data);
-    // Column offsets begin immediately following the header.
-    /// @todo Validate column offset is within range of data!
-    int32_t const *columnOfs = reinterpret_cast<int32_t const *>(&data + sizeof(doompatch_header_t));
-
-    int trans = -1;
-    if(tmap || tclass)
-    {
-        // We need to translate the patch.
-        trans = MAX_OF(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
-        LOG_DEBUG("tclass=%i tmap=%i => TransPal# %i") << tclass << tmap << trans;
-
-        trans *= 256;
-    }
-
-    uint8_t* destTop      = &buffer + origx;
-    uint8_t* destAlphaTop = &buffer + origx + bufsize;
-
-    int const w = SHORT(hdr.width);
-
-    int x = origx;
-    for(int col = 0; col < w; ++col, destTop++, destAlphaTop++, ++x)
-    {
-        column_t const *column = reinterpret_cast<column_t const *>(&data + LONG(columnOfs[col]));
-        int top = -1; // Keep track of pos (clipping).
-
-        // Step through the posts in a column
-        while(column->topOffset != 0xff)
-        {
-            uint8_t const *source = (uint8_t *) column + 3;
-
-            // Within bounds?
-            if(x < 0 || x >= texwidth) break;
-
-            if(column->topOffset <= top)
-                top += column->topOffset;
-            else
-                top = column->topOffset;
-
-            if(column->length > 0)
-            {
-                int y = origy + top;
-
-                uint8_t *dest1 = destTop + y * texwidth;
-                uint8_t *dest2 = destAlphaTop + y * texwidth;
-
-                int count = column->length;
-                while(count--)
-                {
-                    uint8_t palidx = *source++;
-
-                    if(trans >= 0)
-                    {
-                        // Check bounds.
-                        DENG_ASSERT(trans + palidx < 256 * NUM_TRANSLATION_TABLES);
-
-                        palidx = translationTables[trans + palidx];
-                    }
-
-                    // Is the destination within bounds?
-                    if(y >= 0 && y < texheight)
-                    {
-                        if(!maskZero || palidx)
-                            *dest1 = palidx;
-
-                        if(maskZero)
-                            *dest2 = (palidx ? 0xff : 0);
-                        else
-                            *dest2 = 0xff;
-                    }
-
-                    // One row down.
-                    dest1 += texwidth;
-                    dest2 += texwidth;
-                    ++y;
-                }
-            }
-
-            column = reinterpret_cast<column_t const *>(reinterpret_cast<uint8_t const*>(column) + column->length + 4);
-        }
-    }
-}
-
 static boolean palettedIsMasked(const uint8_t* pixels, int width, int height)
 {
     int i;
@@ -2404,59 +2278,55 @@ TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int t
     DENG_ASSERT(image && hndl);
     LOG_AS("GL_LoadPatchLump");
 
-    TexSource source = TEXS_NONE;
-
     if(Image_LoadFromFile(image, hndl))
     {
-        source = TEXS_EXTERNAL;
+        return TEXS_EXTERNAL;
     }
-    else
+
+    de::File1 &file = reinterpret_cast<de::File1 &>(*FileHandle_File(hndl));
+    ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+
+    // A DOOM patch?
+    if(Patch::recognize(fileData))
     {
-        // A DOOM patch.
-        de::File1 &file = reinterpret_cast<de::File1 &>(*FileHandle_File(hndl));
-        if(file.size() > sizeof(doompatch_header_t))
+        try
         {
-            uint8_t const *dataBuffer = file.cache();
+            de::Reader from = de::Reader(fileData);
+            Patch::Header hdr;
+            from >> hdr;
 
-            if(validatePatch(*dataBuffer, file.size()))
+            Image_Init(image);
+            image->size.width  = hdr.dimensions.width()  + border*2;
+            image->size.height = hdr.dimensions.height() + border*2;
+            image->pixelSize   = 1;
+            image->paletteId   = defaultColorPalette;
+
+            image->pixels = (uint8_t*) M_Calloc(2 * image->size.width * image->size.height);
+            if(!image->pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image->size.width * image->size.height));
+
+            Patch::composite(*image->pixels, image->size.width, image->size.height,
+                             fileData, border, border, tclass, tmap, false);
+
+            if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
             {
-                doompatch_header_t const &hdr = reinterpret_cast<doompatch_header_t const &>(*dataBuffer);
-
-                Image_Init(image);
-                image->size.width  = SHORT(hdr.width)  + border*2;
-                image->size.height = SHORT(hdr.height) + border*2;
-                image->pixelSize   = 1;
-                image->paletteId   = defaultColorPalette;
-
-                image->pixels = (uint8_t*) M_Calloc(2 * image->size.width * image->size.height);
-                if(!image->pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image->size.width * image->size.height));
-
-                compositePatch(*image->pixels, image->size.width, image->size.height,
-                               *dataBuffer, border, border, tclass, tmap, false);
-
-                if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
-                {
-                    image->flags |= IMGF_IS_MASKED;
-                }
-
-                source = TEXS_ORIGINAL;
+                image->flags |= IMGF_IS_MASKED;
             }
 
-            file.unlock();
+            return TEXS_ORIGINAL;
         }
-
-        if(source == TEXS_NONE)
+        catch(IByteArray::OffsetError const &)
         {
             LOG_WARNING("File \"%s:%s\" does not appear to be a valid Patch.")
                 << NativePath(file.container().composePath()).pretty()
                 << NativePath(file.composePath()).pretty();
-            return source;
         }
     }
-    return source;
+
+    file.unlock();
+    return TEXS_NONE;
 }
 
-DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
+DGLuint GL_PrepareExtTexture(char const *name, gfxmode_t mode, int useMipmap,
     int /*minFilter*/, int magFilter, int /*anisoFilter*/, int wrapS, int wrapT, int otherFlags)
 {
     image_t image;
@@ -2508,21 +2378,25 @@ TexSource GL_LoadPatchComposite(image_t *image, de::Texture &tex)
     DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef->components())
     {
         de::File1 &file = App_FileSystem()->nameIndex().lump(i->lumpNum());
-        uint8_t const *dataBuffer = file.cache();
+        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
-        if(validatePatch(*dataBuffer, file.size()))
+        // A DOOM patch?
+        if(Patch::recognize(fileData))
         {
-            // Draw the patch in the buffer.
-            compositePatch(*image->pixels, image->size.width, image->size.height,
-                           *dataBuffer, i->xOrigin(), i->yOrigin(), 0, 0, false);
-        }
-        else
-        {
-            de::Uri uri = tex.manifest().composeUri();
-            LOG_WARNING("File \"%s:%s\" (#%u) does not appear to be a valid Patch. It will be missing from texture \"%s\".")
-                << NativePath(file.container().composePath()).pretty()
-                << NativePath(file.composePath()).pretty()
-                << i->lumpNum() << uri;
+            try
+            {
+                // Draw the patch in the buffer.
+                Patch::composite(*image->pixels, image->size.width, image->size.height,
+                                 fileData, i->xOrigin(), i->yOrigin(), 0, 0, false);
+            }
+            catch(IByteArray::OffsetError const &)
+            {
+                de::Uri uri = tex.manifest().composeUri();
+                LOG_WARNING("File \"%s:%s\" (#%u) does not appear to be a valid Patch. It will be missing from texture \"%s\".")
+                    << NativePath(file.container().composePath()).pretty()
+                    << NativePath(file.composePath()).pretty()
+                    << i->lumpNum() << uri;
+            }
         }
 
         file.unlock();
@@ -2568,10 +2442,12 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
     if(texDef->componentCount() == 1)
     {
         de::File1 &file = App_FileSystem()->nameIndex().lump(texDef->components()[0].lumpNum());
-        uint8_t const *dataBuffer = file.cache();
+        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+        de::Reader from = de::Reader(fileData);
+        Patch::Header hdr;
+        from >> hdr;
 
-        doompatch_header_t const &hdr = reinterpret_cast<doompatch_header_t const &>(*dataBuffer);
-        int bufHeight = SHORT(hdr.height) > height ? SHORT(hdr.height) : height;
+        int bufHeight = hdr.dimensions.height() > height ? hdr.dimensions.height() : height;
         if(bufHeight > height)
         {
             height = bufHeight;
@@ -2594,23 +2470,27 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
     DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef->components())
     {
         de::File1 &file = App_FileSystem()->nameIndex().lump(i->lumpNum());
-        uint8_t const *dataBuffer = file.cache();
+        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
-        if(validatePatch(*dataBuffer, file.size()))
+        // A DOOM patch?
+        if(Patch::recognize(fileData))
         {
-            int const offX = texDef->componentCount() == 1? 0 : i->xOrigin();
-            int const offY = texDef->componentCount() == 1? 0 : i->yOrigin();
+            try
+            {
+                int const offX = texDef->componentCount() == 1? 0 : i->xOrigin();
+                int const offY = texDef->componentCount() == 1? 0 : i->yOrigin();
 
-            compositePatch(*image->pixels, image->size.width, image->size.height,
-                           *dataBuffer, offX, offY, 0, 0, zeroMask);
-        }
-        else
-        {
-            de::Uri uri = tex.manifest().composeUri();
-            LOG_WARNING("File \"%s:%s\" (#%u) does not appear to be a valid Patch. It will be missing from texture \"%s\".")
-                << NativePath(file.container().composePath()).pretty()
-                << NativePath(file.composePath()).pretty()
-                << i->lumpNum() << uri;
+                Patch::composite(*image->pixels, image->size.width, image->size.height,
+                                 fileData, offX, offY, 0, 0, zeroMask);
+            }
+            catch(IByteArray::OffsetError const &)
+            {
+                de::Uri uri = tex.manifest().composeUri();
+                LOG_WARNING("File \"%s:%s\" (#%u) does not appear to be a valid Patch. It will be missing from texture \"%s\".")
+                    << NativePath(file.container().composePath()).pretty()
+                    << NativePath(file.composePath()).pretty()
+                    << i->lumpNum() << uri;
+            }
         }
 
         file.unlock();
