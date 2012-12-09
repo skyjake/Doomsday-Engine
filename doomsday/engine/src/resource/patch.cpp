@@ -137,37 +137,34 @@ static Columns readColumns(IByteArray const &data, Patch::Header &hdr)
     return readPosts(readColumnOffsets(hdr.dimensions.width(), from), from);
 }
 
-static void composite(dbyte &buffer, int texWidth, int texHeight,
-    IByteArray const &data, IByteArray const *xlatTable, int origX, int origY,
-    bool maskZero)
+static Block load(IByteArray const &data, IByteArray const *xlatTable, bool maskZero)
 {
-    DENG_ASSERT(texWidth > 0 && texHeight > 0);
-
     // Prepare the column => post map.
     Patch::Header hdr;
-    internal::Columns columns = internal::readColumns(data, hdr);
+    Columns columns = readColumns(data, hdr);
+
+    int const       w = hdr.dimensions.width();
+    int const       h = hdr.dimensions.height();
+    size_t const pels = w * h;
+
+    Block result = QByteArray(2 * pels, 0);
 
     // Map the destination pixel color channels in the output buffer.
-    size_t const pels   = texWidth * texHeight;
-    dbyte *destTop      = &buffer + origX;
-    dbyte *destAlphaTop = &buffer + origX + pels;
+    dbyte *destTop      = result.data();
+    dbyte *destAlphaTop = result.data() + pels;
 
     // Composite the patch into the output buffer.
     Reader reader = Reader(data);
-    int const w = hdr.dimensions.width();
 
-    int x = origX;
+    int x = 0;
     for(int col = 0; col < w; ++x, ++col, destTop++, destAlphaTop++)
     {
-        // Within bounds?
-        if(x < 0 || x >= texWidth) continue;
-
         int tallTop = -1; // Keep track of pos (clipping).
 
         // Step through the posts in a column.
-        DENG2_FOR_EACH_CONST(internal::Posts, i, columns[col])
+        DENG2_FOR_EACH_CONST(Posts, i, columns[col])
         {
-            internal::Post const &post = *i;
+            Post const &post = *i;
 
             // Does this post extend the previous one (a so-called "tall-patch").
             if(post.topOffset <= tallTop)
@@ -178,32 +175,15 @@ static void composite(dbyte &buffer, int texWidth, int texHeight,
             // Skip invalid posts.
             if(post.length <= 0) continue;
 
-            // Determine the destination height range.
-            int y = origY + tallTop;
-            int length = post.length;
-
-            // Clamp height range within bounds.
-            if(y + length > texHeight)
-                length = texHeight - y;
-
-            int offset = 0;
-            if(y < 0)
-            {
-                offset = MIN_OF(-y, length);
-                y = 0;
-            }
-            length = MAX_OF(0, length - offset);
-
-            // Skip empty ranges.
-            if(!length) continue;
-
             // Find the start of the pixel data for the post.
-            reader.setOffset(post.firstPixel + offset);
+            reader.setOffset(post.firstPixel);
 
-            dbyte *dest      = destTop      + y * texWidth;
-            dbyte *destAlpha = destAlphaTop + y * texWidth;
+            int y            = tallTop;
+            dbyte *dest      = destTop      + y * w;
+            dbyte *destAlpha = destAlphaTop + y * w;
 
             // Composite pixels from the post to the output buffer.
+            int length = post.length;
             while(length--)
             {
                 // Read the next palette index.
@@ -225,30 +205,27 @@ static void composite(dbyte &buffer, int texWidth, int texHeight,
                     *destAlpha = 0xff;
 
                 // One row down.
-                dest      += texWidth;
-                destAlpha += texWidth;
+                dest      += w;
+                destAlpha += w;
             }
         }
     }
+
+    return result;
 }
 
-} // namespace internal
+} // internal
 
-void Patch::composite(dbyte &buffer, int texWidth, int texHeight,
-    IByteArray const &data, IByteArray const &xlatTable, int origX, int origY,
-    bool maskZero)
+Block Patch::load(IByteArray const &data, IByteArray const &xlatTable, bool maskZero)
 {
-    LOG_AS("Patch::composite");
-    internal::composite(buffer, texWidth, texHeight,
-                        data, &xlatTable, origX, origY, maskZero);
+    LOG_AS("Patch::load");
+    return internal::load(data, &xlatTable, maskZero);
 }
 
-void Patch::composite(dbyte &buffer, int texWidth, int texHeight,
-    IByteArray const &data, int origX, int origY, bool maskZero)
+Block Patch::load(IByteArray const &data, bool maskZero)
 {
-    LOG_AS("Patch::composite");
-    internal::composite(buffer, texWidth, texHeight,
-                        data, 0/* no translation */, origX, origY, maskZero);
+    LOG_AS("Patch::load");
+    return internal::load(data, 0/* no translation */, maskZero);
 }
 
 bool Patch::recognize(IByteArray const &data)

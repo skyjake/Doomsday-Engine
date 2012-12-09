@@ -23,6 +23,7 @@
 
 #include <QSize>
 #include <QPoint>
+#include <de/Block>
 #include <de/IByteArray>
 #include <de/IReadable>
 #include <de/Reader>
@@ -56,24 +57,15 @@ namespace de {
 
     public:
         /**
-         * @note The buffer must have room for the new alpha data!
-         *
-         * @param dstBuf  The destination buffer the patch will be drawn to.
-         * @param texwidth  Width of the dst buffer in pixels.
-         * @param texheight  Height of the dst buffer in pixels.
          * @param data  Ptr to the data buffer to draw to the dst buffer.
-         * @param origx  X coordinate in the dst buffer to draw the patch too.
-         * @param origy  Y coordinate in the dst buffer to draw the patch too.
          * @param xlatTable  If not @c NULL, use this translation table when
          *                   compositing final color palette indices.
          * @param maskZero  Used with sky textures.
          */
-        static void composite(dbyte &buffer, int texWidth, int texHeight,
-            IByteArray const &data, int origX = 0, int origY = 0, bool maskZero = false);
+        static Block load(IByteArray const &data, bool maskZero = false);
 
-        static void composite(dbyte &buffer, int texWidth, int texHeight,
-            IByteArray const &data, IByteArray const &xlatTable,
-            int origX = 0, int origY = 0, bool maskZero = false);
+        static Block load(IByteArray const &data, IByteArray const &xlatTable,
+                          bool maskZero = false);
 
         /**
          * Determines whether @a data looks like it can be interpreted as a Patch.
