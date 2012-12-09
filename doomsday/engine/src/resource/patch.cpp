@@ -19,6 +19,7 @@
  */
 
 #include <QList>
+#include <QRect>
 #include <de/libdeng2.h>
 #include <de/Log>
 
@@ -137,12 +138,65 @@ static Columns readColumns(IByteArray const &data, Patch::Header &hdr)
     return readPosts(readColumnOffsets(hdr.dimensions.width(), from), from);
 }
 
+/**
+ * Process @a columns to calculate the "real" pixel height of the image.
+ */
+#ifdef DENG_DEBUG
+static int calcRealHeight(Columns const &columns)
+{
+    QRect geom(QPoint(0, 0), QSize(1, 0));
+
+    DENG2_FOR_EACH_CONST(Columns, colIt, columns)
+    {
+        int tallTop = -1; // Keep track of pos (clipping).
+
+        DENG2_FOR_EACH_CONST(Posts, postIt, *colIt)
+        {
+            Post const &post = *postIt;
+
+            // Does this post extend the previous one (a so-called "tall-patch").
+            if(post.topOffset <= tallTop)
+                tallTop += post.topOffset;
+            else
+                tallTop = post.topOffset;
+
+            // Skip invalid posts.
+            if(post.length <= 0) continue;
+
+            // Unite the geometry of the post.
+            geom |= QRect(QPoint(0, tallTop), QSize(1, post.length));
+        }
+    }
+
+    return geom.height();
+}
+#endif
+
 static Block load(IByteArray const &data, IByteArray const *xlatTable, bool maskZero)
 {
     // Prepare the column => post map.
     Patch::Header hdr;
     Columns columns = readColumns(data, hdr);
 
+#ifdef DENG_DEBUG
+    // Is the declared height of the image equal to the "real" height of the
+    // composited pixel posts?
+    int const realHeight = calcRealHeight(columns);
+    if(realHeight != hdr.dimensions.height())
+    {
+        int postCount = 0;
+        DENG2_FOR_EACH_CONST(Columns, i, columns)
+        {
+            postCount += i->count();
+        }
+
+        LOG_INFO("Inequal heights, declared: %i != real: %i (%i %s).")
+            << hdr.dimensions.height() << realHeight
+            << postCount << (postCount == 1? "post" : "posts");
+    }
+#endif
+
+    // Determine the dimensions of the output buffer.
     int const       w = hdr.dimensions.width();
     int const       h = hdr.dimensions.height();
     size_t const pels = w * h;
