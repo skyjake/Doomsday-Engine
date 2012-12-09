@@ -1551,7 +1551,7 @@ void Window_RestoreState(Window* wnd)
     de::Config &config = de::App::config();
 
     // The default state of the window is determined by these values.
-    de::ArrayValue &rect = config.getAs<de::ArrayValue>("window.main.rect");
+    de::ArrayValue &rect = config.geta("window.main.rect");
     if(rect.size() >= 4)
     {
         QRect geom(rect.at(0).asNumber(), rect.at(1).asNumber(),
@@ -1562,7 +1562,7 @@ void Window_RestoreState(Window* wnd)
         wnd->geometry.size.height = geom.height();
     }
 
-    de::ArrayValue &normalRect = config.getAs<de::ArrayValue>("window.main.normalRect");
+    de::ArrayValue &normalRect = config.geta("window.main.normalRect");
     if(normalRect.size() >= 4)
     {
         QRect geom(normalRect.at(0).asNumber(), normalRect.at(1).asNumber(),

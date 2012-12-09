@@ -26,6 +26,8 @@
 
 namespace de
 {
+    class ArrayValue;
+
     /**
      * Stores the configuration of everything. The application owns a Config.
      * The default configuration is produced by executing the .de scripts
@@ -79,6 +81,10 @@ namespace de
 
         /// Returns the value of @a name as a string.
         String gets(String const &name);
+
+        /// Returns the value of @a name as an array value. An exception is thrown
+        /// if the variable does not have an array value.
+        ArrayValue &geta(String const &name);
 
         template <typename ValueType>
         ValueType &getAs(String const &name) {
