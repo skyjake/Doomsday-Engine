@@ -182,25 +182,42 @@ void Patch::composite(dbyte &buffer, int texWidth, int texHeight,
         {
             internal::Post const &post = *i;
 
-            // Skip invalid posts.
-            if(post.length <= 0) continue;
-
             // Does this post extend the previous one (a so-called "tall-patch").
             if(post.topOffset <= tallTop)
                 tallTop += post.topOffset;
             else
                 tallTop = post.topOffset;
 
-            // Find the start of the pixel data for the post.
-            reader.setOffset(post.firstPixel);
+            // Skip invalid posts.
+            if(post.length <= 0) continue;
 
+            // Determine the destination height range.
             int y = origY + tallTop;
-            dbyte *dest1 = destTop + y * texWidth;
-            dbyte *dest2 = destAlphaTop + y * texWidth;
+            int length = post.length;
+
+            // Clamp height range within bounds.
+            if(y + length > texHeight)
+                length = texHeight - y;
+
+            int offset = 0;
+            if(y < 0)
+            {
+                offset = MIN_OF(-y, length);
+                y = 0;
+            }
+            length = MAX_OF(0, length - offset);
+
+            // Skip empty ranges.
+            if(!length) continue;
+
+            // Find the start of the pixel data for the post.
+            reader.setOffset(post.firstPixel + offset);
+
+            dbyte *dest      = destTop      + y * texWidth;
+            dbyte *destAlpha = destAlphaTop + y * texWidth;
 
             // Composite pixels from the post to the output buffer.
-            int count = post.length;
-            while(count--)
+            while(length--)
             {
                 // Read the next palette index.
                 dbyte palIdx;
@@ -213,22 +230,17 @@ void Patch::composite(dbyte &buffer, int texWidth, int texHeight,
                     palIdx = translationTables[trans + palIdx];
                 }
 
-                // Is the destination within bounds?
-                if(y >= 0 && y < texHeight)
-                {
-                    if(!maskZero || palIdx)
-                        *dest1 = palIdx;
+                if(!maskZero || palIdx)
+                    *dest = palIdx;
 
-                    if(maskZero)
-                        *dest2 = (palIdx ? 0xff : 0);
-                    else
-                        *dest2 = 0xff;
-                }
+                if(maskZero)
+                    *destAlpha = (palIdx? 0xff : 0);
+                else
+                    *destAlpha = 0xff;
 
                 // One row down.
-                dest1 += texWidth;
-                dest2 += texWidth;
-                ++y;
+                dest      += texWidth;
+                destAlpha += texWidth;
             }
         }
     }
