@@ -179,7 +179,7 @@ String Config::gets(String const &name)
     return get(name).asText();
 }
 
-ArrayValue &Config::geta(const String &name)
+ArrayValue &Config::geta(String const &name)
 {
     return getAs<ArrayValue>(name);
 }
