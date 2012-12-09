@@ -64,13 +64,16 @@ namespace de {
          * @param data  Ptr to the data buffer to draw to the dst buffer.
          * @param origx  X coordinate in the dst buffer to draw the patch too.
          * @param origy  Y coordinate in the dst buffer to draw the patch too.
-         * @param tclass    If not @c zero apply this translation class to color palette indices.
-         * @param tmap      If not @c zero apply this translation mapping to color palette indices.
+         * @param xlatTable  If not @c NULL, use this translation table when
+         *                   compositing final color palette indices.
          * @param maskZero  Used with sky textures.
          */
         static void composite(dbyte &buffer, int texWidth, int texHeight,
-            IByteArray const &data, int origX, int origY, int tclass, int tmap,
-            bool maskZero);
+            IByteArray const &data, int origX = 0, int origY = 0, bool maskZero = false);
+
+        static void composite(dbyte &buffer, int texWidth, int texHeight,
+            IByteArray const &data, IByteArray const &xlatTable,
+            int origX = 0, int origY = 0, bool maskZero = false);
 
         /**
          * Determines whether @a data looks like it can be interpreted as a Patch.

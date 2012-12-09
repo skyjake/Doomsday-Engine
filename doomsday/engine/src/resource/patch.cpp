@@ -137,24 +137,11 @@ static Columns readColumns(IByteArray const &data, Patch::Header &hdr)
     return readPosts(readColumnOffsets(hdr.dimensions.width(), from), from);
 }
 
-} // namespace internal
-
-void Patch::composite(dbyte &buffer, int texWidth, int texHeight,
-    IByteArray const &data, int origX, int origY, int tclass,
-    int tmap, bool maskZero)
+static void composite(dbyte &buffer, int texWidth, int texHeight,
+    IByteArray const &data, IByteArray const *xlatTable, int origX, int origY,
+    bool maskZero)
 {
     DENG_ASSERT(texWidth > 0 && texHeight > 0);
-    LOG_AS("Patch::composite");
-
-    // Is palette index translation in effect?
-    int trans = -1;
-    if(tmap || tclass)
-    {
-        trans = MAX_OF(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
-        LOG_DEBUG("tclass=%i tmap=%i => TransPal# %i") << tclass << tmap << trans;
-
-        trans *= 256;
-    }
 
     // Prepare the column => post map.
     Patch::Header hdr;
@@ -224,10 +211,9 @@ void Patch::composite(dbyte &buffer, int texWidth, int texHeight,
                 reader >> palIdx;
 
                 // Is palette index translation in effect?
-                if(trans >= 0)
+                if(xlatTable)
                 {
-                    DENG_ASSERT(trans + palIdx < 256 * NUM_TRANSLATION_TABLES); // Check bounds.
-                    palIdx = translationTables[trans + palIdx];
+                    xlatTable->get(palIdx, &palIdx, 1);
                 }
 
                 if(!maskZero || palIdx)
@@ -244,6 +230,25 @@ void Patch::composite(dbyte &buffer, int texWidth, int texHeight,
             }
         }
     }
+}
+
+} // namespace internal
+
+void Patch::composite(dbyte &buffer, int texWidth, int texHeight,
+    IByteArray const &data, IByteArray const &xlatTable, int origX, int origY,
+    bool maskZero)
+{
+    LOG_AS("Patch::composite");
+    internal::composite(buffer, texWidth, texHeight,
+                        data, &xlatTable, origX, origY, maskZero);
+}
+
+void Patch::composite(dbyte &buffer, int texWidth, int texHeight,
+    IByteArray const &data, int origX, int origY, bool maskZero)
+{
+    LOG_AS("Patch::composite");
+    internal::composite(buffer, texWidth, texHeight,
+                        data, 0/* no translation */, origX, origY, maskZero);
 }
 
 bool Patch::recognize(IByteArray const &data)
