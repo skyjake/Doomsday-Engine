@@ -139,7 +139,7 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
 
         if(pnamesIndex < 0 || pnamesIndex >= patchNames.count())
         {
-            LOG_WARNING("Invalid PNAMES index %i in composite texture %s, ignoring.")
+            LOG_WARNING("Invalid PNAMES index %i in composite texture \"%s\", ignoring.")
                 << pnamesIndex << pctex->name;
         }
         else
@@ -163,7 +163,7 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
             }
             else
             {
-                LOG_WARNING("Missing component image %s (#%i) in composite texture %s, ignoring.")
+                LOG_WARNING("Missing component image \"%s\" (#%i) in composite texture \"%s\", ignoring.")
                     << patchNames[pnamesIndex].percentEncodedNameRef() << i
                     << pctex->name;
             }

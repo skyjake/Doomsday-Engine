@@ -2286,28 +2286,28 @@ static Block loadAndTranslatePatch(IByteArray const &data, int tclass = 0, int t
 }
 
 /**
- * Composite the paletted @a img into a buffer.
+ * Draw the component image @a src into the composite @a dst.
  *
- * @param buffer        The composite buffer (drawn to).
- * @param texWidth      Width of the dst buffer in pixels.
- * @param texHeight     Height of the dst buffer in pixels.
- * @param img           Paletted image data to composite.
- * @param origX         X coordinate in the dst buffer to draw the patch to.
- * @param origY         Y coordinate in the dst buffer to draw the patch to.
+ * @param dst               The composite buffer (drawn to).
+ * @param dstDimensions     Pixel dimensions of @a dst.
+ * @param src               The component image to be composited (read from).
+ * @param srcDimensions     Pixel dimensions of @a src.
+ * @param origin            Coordinates (topleft) in @a dst to draw @a src.
  *
  * @todo Optimize: Should be redesigned to composite whole rows -ds
  */
-static void compositePaletted(dbyte *buffer, int texWidth, int texHeight,
-    Block const &img, QSize const &dimensions, int origX = 0, int origY = 0)
+static void compositePaletted(dbyte *dst, QSize const &dstDimensions,
+    IByteArray const &src, QSize const &srcDimensions, QPoint const &origin)
 {
-    DENG_ASSERT(texWidth > 0 && texHeight > 0);
+    if(dstDimensions.isEmpty()) return;
+    if(srcDimensions.isEmpty()) return;
 
-    int const    srcW = dimensions.width();
-    int const    srcH = dimensions.height();
+    int const    srcW = srcDimensions.width();
+    int const    srcH = srcDimensions.height();
     size_t const srcPels = srcW * srcH;
 
-    int const    dstW = texWidth;
-    int const    dstH = texHeight;
+    int const    dstW = dstDimensions.width();
+    int const    dstH = dstDimensions.height();
     size_t const dstPels = dstW * dstH;
 
     int dstX, dstY;
@@ -2315,13 +2315,13 @@ static void compositePaletted(dbyte *buffer, int texWidth, int texHeight,
     for(int srcY = 0; srcY < srcH; ++srcY)
     for(int srcX = 0; srcX < srcW; ++srcX)
     {
-        dstX = origX + srcX;
-        dstY = origY + srcY;
-        if(dstX < 0 || dstX >= texWidth)  continue;
-        if(dstY < 0 || dstY >= texHeight) continue;
+        dstX = origin.x() + srcX;
+        dstY = origin.y() + srcY;
+        if(dstX < 0 || dstX >= dstW) continue;
+        if(dstY < 0 || dstY >= dstH) continue;
 
-        img.get(srcY * srcW + srcX,           &buffer[dstY * dstW + dstX], 1);
-        img.get(srcY * srcW + srcX + srcPels, &buffer[dstY * dstW + dstX + dstPels], 1);
+        src.get(srcY * srcW + srcX,           &dst[dstY * dstW + dstX], 1);
+        src.get(srcY * srcW + srcX + srcPels, &dst[dstY * dstW + dstX + dstPels], 1);
     }
 }
 
@@ -2357,8 +2357,8 @@ TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int t
             image->pixels = (uint8_t*) M_Calloc(2 * image->size.width * image->size.height);
             if(!image->pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image->size.width * image->size.height));
 
-            compositePaletted(image->pixels, image->size.width, image->size.height,
-                              patchImg, hdr.dimensions, border, border);
+            compositePaletted(image->pixels, QSize(image->size.width, image->size.height),
+                              patchImg, hdr.dimensions, QPoint(border, border));
 
             if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
             {
@@ -2444,8 +2444,8 @@ TexSource GL_LoadPatchComposite(image_t *image, de::Texture &tex)
                 from >> hdr;
 
                 // Draw the patch in the buffer.
-                compositePaletted(image->pixels, image->size.width, image->size.height,
-                                  patchImg, hdr.dimensions, i->xOrigin(), i->yOrigin());
+                compositePaletted(image->pixels, QSize(image->size.width, image->size.height),
+                                  patchImg, hdr.dimensions, i->origin());
             }
             catch(IByteArray::OffsetError const &)
             {
@@ -2540,11 +2540,10 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
                 Patch::Header hdr;
                 from >> hdr;
 
-                int const offX = texDef->componentCount() == 1? 0 : i->xOrigin();
-                int const offY = texDef->componentCount() == 1? 0 : i->yOrigin();
+                QPoint origin = (texDef->componentCount() == 1? QPoint(0, 0) : i->origin());
 
-                compositePaletted(image->pixels, image->size.width, image->size.height,
-                                  patchImg, hdr.dimensions, offX, offY);
+                compositePaletted(image->pixels, QSize(image->size.width, image->size.height),
+                                  patchImg, hdr.dimensions, origin);
             }
             catch(IByteArray::OffsetError const &)
             {
