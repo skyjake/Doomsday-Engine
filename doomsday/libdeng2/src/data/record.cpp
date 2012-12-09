@@ -249,9 +249,14 @@ Variable &Record::addTime(String const &name, Time const &time)
 
 Variable &Record::addArray(String const &name, ArrayValue *array)
 {
+    // Ownership of the array was given to us.
+    std::auto_ptr<ArrayValue> val(array);
+    if(!array) val.reset(new ArrayValue);
+
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
-    return add(new Variable(name, array? array : new ArrayValue, Variable::AllowArray));
+
+    return add(new Variable(name, val.release(), Variable::AllowArray));
 }
 
 Variable &Record::addDictionary(String const &name)
