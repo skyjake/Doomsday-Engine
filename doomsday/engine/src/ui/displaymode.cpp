@@ -33,6 +33,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <de/math.h>
 #include <de/Log>
 
 static bool inited = false;
@@ -354,7 +355,8 @@ void DisplayMode_GetColorTransfer(displaycolortransfer_t *colors)
     // specifically by the user.
     for(int i = 0; i < 256; ++i)
     {
-#define LINEAR_UNMAP(i, c) ( (unsigned short) (float(mapped.table[i]) / float(originalColorTransfer.table[i]) * intensity8To16(c) ) )
+#define LINEAR_UNMAP(i, c) ( (unsigned short) \
+    de::clamp(0.f, float(mapped.table[i]) / float(originalColorTransfer.table[i]) * intensity8To16(c), 65535.f) )
         colors->table[i]       = LINEAR_UNMAP(i,       i);
         colors->table[i + 256] = LINEAR_UNMAP(i + 256, i);
         colors->table[i + 512] = LINEAR_UNMAP(i + 512, i);
@@ -369,7 +371,8 @@ void DisplayMode_SetColorTransfer(displaycolortransfer_t const *colors)
     // specifically by the user.
     for(int i = 0; i < 256; ++i)
     {
-#define LINEAR_MAP(i, c) ( (unsigned short) (float(colors->table[i]) / float(intensity8To16(c)) * originalColorTransfer.table[i]) )
+#define LINEAR_MAP(i, c) ( (unsigned short) \
+    de::clamp(0.f, float(colors->table[i]) / float(intensity8To16(c)) * originalColorTransfer.table[i], 65535.f) )
         mapped.table[i]       = LINEAR_MAP(i,       i);
         mapped.table[i + 256] = LINEAR_MAP(i + 256, i);
         mapped.table[i + 512] = LINEAR_MAP(i + 512, i);
