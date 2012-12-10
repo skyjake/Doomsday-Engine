@@ -373,7 +373,8 @@ void Sv_HandlePacket(void)
         // Check for duplicate IDs.
         if(!ddpl->inGame && !sender->handshake)
         {
-            for(i = 0; i < DDMAXPLAYERS; ++i)
+            // Console 0 is always reserved for the server itself (not a player).
+            for(i = 1; i < DDMAXPLAYERS; ++i)
             {
                 if(clients[i].connected && clients[i].id == id)
                 {
