@@ -1502,9 +1502,10 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
         else
         {
             Surface* suf = &bspLeaf->sector->planes[elmIdx]->surface;
-            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-                MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-            const materialsnapshot_t* ms = Materials_Prepare(suf->material, spec, true);
+            material_t *mat = suf->material? suf->material : Materials_ToMaterial(Materials_ResolveUriCString("System:missing"));
+
+            materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
+            materialsnapshot_t const *ms = Materials_Prepare(mat, spec, true);
             params.glowing = ms->glowing;
         }
 

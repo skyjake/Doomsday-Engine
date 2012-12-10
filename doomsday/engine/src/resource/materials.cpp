@@ -1401,17 +1401,17 @@ const struct materialvariantspecification_s* Materials_VariantSpecificationForCo
                                              mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-MaterialVariant* Materials_ChooseVariant(material_t* mat,
-    const materialvariantspecification_t* spec, boolean smoothed, boolean canCreate)
+MaterialVariant *Materials_ChooseVariant(material_t *mat,
+    materialvariantspecification_t const *spec, boolean smoothed, boolean canCreate)
 {
-    MaterialVariant* variant;
+    if(!mat) return 0;
 
-    errorIfNotInited("Materials::ChooseVariant");
+    DENG_ASSERT(initedOk);
 
-    variant = chooseVariant(mat, spec);
+    MaterialVariant* variant = chooseVariant(mat, spec);
     if(!variant)
     {
-        if(!canCreate) return NULL;
+        if(!canCreate) return 0;
         variant = Material_AddVariant(mat, MaterialVariant_New(mat, spec));
     }
 
