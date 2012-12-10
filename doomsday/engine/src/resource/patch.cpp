@@ -31,6 +31,33 @@ namespace de {
 namespace internal {
 
 /**
+ * Serialized format header.
+ */
+struct Header : public IReadable
+{
+    /// Logical dimensions of the patch in pixels.
+    QSize dimensions;
+
+    /// Origin offset (top left) in world coordinate space units.
+    /// Used for various purposes depending on context.
+    QPoint origin;
+
+    /// Implements IReadable.
+    void operator << (Reader &from)
+    {
+        dint16 width, height;
+        from >> width >> height;
+        dimensions.setWidth(width);
+        dimensions.setHeight(height);
+
+        dint16 xOrigin, yOrigin;
+        from >> xOrigin >> yOrigin;
+        origin.setX(xOrigin);
+        origin.setY(yOrigin);
+    }
+};
+
+/**
  * A @em Post is a run of one or more non-masked pixels.
  */
 struct Post : public IReadable
@@ -173,7 +200,7 @@ static Block load(IByteArray const &data, IByteArray const *xlatTable, bool mask
     Reader reader = Reader(data);
 
     // Read the header.
-    Patch::Header hdr; reader >> hdr;
+    Header hdr; reader >> hdr;
 
     // Read and prepare the column => post map.
     Columns columns = readColumns(hdr.dimensions.width(), reader);
@@ -307,7 +334,7 @@ bool Patch::recognize(IByteArray const &data)
         // The format has no identification markings.
         // Instead we must rely on heuristic analyses of the column => post map.
         Reader from = Reader(data);
-        Header hdr; from >> hdr;
+        internal::Header hdr; from >> hdr;
 
         if(hdr.dimensions.isEmpty()) return false;
 
@@ -326,17 +353,16 @@ bool Patch::recognize(IByteArray const &data)
     return false;
 }
 
-void Patch::Header::operator << (Reader &from)
+Patch::Metadata Patch::loadMetadata(IByteArray const &data)
 {
-    dint16 width, height;
-    from >> width >> height;
-    dimensions.setWidth(width);
-    dimensions.setHeight(height);
+    Reader from = Reader(data);
+    internal::Header hdr;
+    from >> hdr;
 
-    dint16 xOrigin, yOrigin;
-    from >> xOrigin >> yOrigin;
-    origin.setX(xOrigin);
-    origin.setY(yOrigin);
+    Metadata meta;
+    meta.dimensions = hdr.dimensions;
+    meta.origin     = hdr.origin;
+    return meta;
 }
 
 } // namespace de

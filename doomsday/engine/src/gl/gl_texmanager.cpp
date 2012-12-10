@@ -2344,13 +2344,11 @@ TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int t
         try
         {
             Block patchImg = loadAndTranslatePatch(fileData, tclass, tmap);
-            de::Reader from = de::Reader(fileData);
-            Patch::Header hdr;
-            from >> hdr;
+            Patch::Metadata info = Patch::loadMetadata(fileData);
 
             Image_Init(image);
-            image->size.width  = hdr.dimensions.width()  + border*2;
-            image->size.height = hdr.dimensions.height() + border*2;
+            image->size.width  = info.dimensions.width()  + border*2;
+            image->size.height = info.dimensions.height() + border*2;
             image->pixelSize   = 1;
             image->paletteId   = defaultColorPalette;
 
@@ -2358,7 +2356,7 @@ TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int t
             if(!image->pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image->size.width * image->size.height));
 
             compositePaletted(image->pixels, QSize(image->size.width, image->size.height),
-                              patchImg, hdr.dimensions, QPoint(border, border));
+                              patchImg, info.dimensions, QPoint(border, border));
 
             if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
             {
@@ -2439,13 +2437,11 @@ TexSource GL_LoadPatchComposite(image_t *image, de::Texture &tex)
             try
             {
                 Block patchImg = Patch::load(fileData);
-                de::Reader from = de::Reader(fileData);
-                Patch::Header hdr;
-                from >> hdr;
+                Patch::Metadata info = Patch::loadMetadata(fileData);
 
                 // Draw the patch in the buffer.
                 compositePaletted(image->pixels, QSize(image->size.width, image->size.height),
-                                  patchImg, hdr.dimensions, i->origin());
+                                  patchImg, info.dimensions, i->origin());
             }
             catch(IByteArray::OffsetError const &)
             {
@@ -2501,11 +2497,9 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
     {
         de::File1 &file = App_FileSystem()->nameIndex().lump(texDef->components()[0].lumpNum());
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-        de::Reader from = de::Reader(fileData);
-        Patch::Header hdr;
-        from >> hdr;
+        Patch::Metadata info = Patch::loadMetadata(fileData);
 
-        int bufHeight = hdr.dimensions.height() > height ? hdr.dimensions.height() : height;
+        int bufHeight = info.dimensions.height() > height ? info.dimensions.height() : height;
         if(bufHeight > height)
         {
             height = bufHeight;
@@ -2536,14 +2530,12 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
             try
             {
                 Block patchImg = Patch::load(fileData, zeroMask);
-                de::Reader from = de::Reader(fileData);
-                Patch::Header hdr;
-                from >> hdr;
+                Patch::Metadata info = Patch::loadMetadata(fileData);
 
                 QPoint origin = (texDef->componentCount() == 1? QPoint(0, 0) : i->origin());
 
                 compositePaletted(image->pixels, QSize(image->size.width, image->size.height),
-                                  patchImg, hdr.dimensions, origin);
+                                  patchImg, info.dimensions, origin);
             }
             catch(IByteArray::OffsetError const &)
             {

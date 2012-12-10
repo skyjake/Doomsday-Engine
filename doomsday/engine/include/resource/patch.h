@@ -46,9 +46,9 @@ namespace de {
     {
     public:
         /**
-         * Serialized format header.
+         * Metadata which describes the patch.
          */
-        struct Header : public IReadable
+        struct Metadata
         {
             /// Logical dimensions of the patch in pixels.
             QSize dimensions;
@@ -56,12 +56,11 @@ namespace de {
             /// Origin offset (top left) in world coordinate space units.
             /// Used for various purposes depending on context.
             QPoint origin;
-
-            /// Implements IReadable.
-            void operator << (Reader &from);
         };
 
     public:
+        static Metadata loadMetadata(IByteArray const &data);
+
         /**
          * @param data      Data to interpret as a Patch.
          * @param maskZero  Used with sky textures.

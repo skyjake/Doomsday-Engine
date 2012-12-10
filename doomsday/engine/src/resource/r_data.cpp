@@ -181,12 +181,10 @@ patchid_t R_DeclarePatch(char const *name)
     {
         try
         {
-            de::Reader from = de::Reader(fileData);
-            Patch::Header hdr;
-            from >> hdr;
+            Patch::Metadata info = Patch::loadMetadata(fileData);
 
-            dimensions = hdr.dimensions;
-            origin     = QPoint(-hdr.origin.x(), -hdr.origin.y());
+            dimensions = info.dimensions;
+            origin     = QPoint(-info.origin.x(), -info.origin.y());
         }
         catch(IByteArray::OffsetError const &)
         {
@@ -785,12 +783,10 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
         {
             try
             {
-                de::Reader from = de::Reader(fileData);
-                Patch::Header hdr;
-                from >> hdr;
+                Patch::Metadata info = Patch::loadMetadata(fileData);
 
-                tex->setDimensions(hdr.dimensions);
-                tex->setOrigin(QPoint(-hdr.origin.x(), -hdr.origin.y()));
+                tex->setDimensions(info.dimensions);
+                tex->setOrigin(QPoint(-info.origin.x(), -info.origin.y()));
             }
             catch(IByteArray::OffsetError const &)
             {
