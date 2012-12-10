@@ -36,12 +36,23 @@ class IIStream;
 
 /**
  * Provides a protocol for reading data from a byte array object (anything with
- * a IByteArray interface). Byte order defaults to little-endian but can be
- * changed to big-endian.
+ * a IByteArray or IIStream interface). Byte order defaults to little-endian
+ * but can be changed to big-endian.
  *
  * Note about versioning: readers must be prepared to support old versions of
  * the serialization protocol in addition to the latest one for backwards
  * compatibility.
+ *
+ * When there is need to deserialize data, generally it is preferable to use
+ * Reader (or IReadable) for this purpose in public interfaces:
+ *
+ * 1. Reader maintains the position in a longer data stream and can be rewound
+ *    when needed,
+ * 2. the source can be an input stream in addition to a IByteArray,
+ * 3. Reader knows the serialization version number,
+ * 4. Reader knows the byte order, which can be verified using appropriate
+ *    means (assertion/exception), and
+ * 5. Reader is the standard way to read all data in libdeng2.
  *
  * @ingroup data
  */
