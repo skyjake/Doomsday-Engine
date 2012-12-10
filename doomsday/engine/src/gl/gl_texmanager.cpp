@@ -2444,13 +2444,7 @@ TexSource GL_LoadPatchComposite(image_t *image, de::Texture &tex)
                                   patchImg, info.dimensions, i->origin());
             }
             catch(IByteArray::OffsetError const &)
-            {
-                de::Uri uri = tex.manifest().composeUri();
-                LOG_WARNING("File \"%s:%s\" (#%u) does not appear to be a valid Patch. It will be missing from texture \"%s\".")
-                    << NativePath(file.container().composePath()).pretty()
-                    << NativePath(file.composePath()).pretty()
-                    << i->lumpNum() << uri;
-            }
+            {} // Ignore this error.
         }
 
         file.unlock();
@@ -2485,35 +2479,10 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
     CompositeTexture const *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG_ASSERT(texDef);
 
-    /**
-     * Heretic sky textures are reported to be 128 tall, despite the patch
-     * data is 200. We'll adjust the real height of the texture up to
-     * 200 pixels (remember Caldera?).
-     */
-    int width  = texDef->width();
-    int height = texDef->height();
-
-    if(texDef->componentCount() == 1)
-    {
-        de::File1 &file = App_FileSystem()->nameIndex().lump(texDef->components()[0].lumpNum());
-        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-        Patch::Metadata info = Patch::loadMetadata(fileData);
-
-        int bufHeight = info.dimensions.height() > height ? info.dimensions.height() : height;
-        if(bufHeight > height)
-        {
-            height = bufHeight;
-            if(height > 200)
-                height = 200;
-        }
-
-        file.unlock();
-    }
-
     Image_Init(image);
     image->pixelSize = 1;
-    image->size.width  = width;
-    image->size.height = height;
+    image->size.width  = texDef->width();
+    image->size.height = texDef->height();
     image->paletteId = defaultColorPalette;
 
     image->pixels = (uint8_t *) M_Calloc(2 * image->size.width * image->size.height);
@@ -2538,13 +2507,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
                                   patchImg, info.dimensions, origin);
             }
             catch(IByteArray::OffsetError const &)
-            {
-                de::Uri uri = tex.manifest().composeUri();
-                LOG_WARNING("File \"%s:%s\" (#%u) does not appear to be a valid Patch. It will be missing from texture \"%s\".")
-                    << NativePath(file.container().composePath()).pretty()
-                    << NativePath(file.composePath()).pretty()
-                    << i->lumpNum() << uri;
-            }
+            {} // Ignore this error.
         }
 
         file.unlock();

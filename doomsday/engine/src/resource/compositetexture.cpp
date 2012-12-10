@@ -20,12 +20,15 @@
  */
 
 #include <QList>
+#include <QRect>
+#include <de/ByteRefArray>
 #include <de/String>
 #include <de/Reader>
 
 #include "de_platform.h"
 #include "de_filesys.h"
 
+#include "resource/patch.h"
 #include "resource/patchname.h"
 #include "resource/compositetexture.h"
 
@@ -110,6 +113,8 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
 
     reader >> scale[0] >> scale[1] >> dimensions[0] >> dimensions[1];
 
+    // We'll initially accept these values as logical dimensions. However
+    // we may need to adjust once we've checked the patch dimensions.
     pctex->dimensions_.setWidth(dimensions[0]);
     pctex->dimensions_.setHeight(dimensions[1]);
 
@@ -120,9 +125,15 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
         reader >> unused32;
     }
 
-    // Finally, read the component images.
+    /*
+     * Finally, read the component images.
+     * In the process we'll determine the final logical dimensions of the
+     * texture by compositing the geometry of the component images.
+     */
     dint16 componentCount;
     reader >> componentCount;
+
+    QRect geom(QPoint(0, 0), pctex->dimensions_);
 
     int foundComponentCount = 0;
     for(dint16 i = 0; i < componentCount; ++i)
@@ -151,15 +162,32 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
                 /// There is now one more found component.
                 foundComponentCount += 1;
 
+                de::File1 &file = App_FileSystem()->nameIndex().lump(patch.lumpNum_);
+
                 // If this a "custom" component - the whole texture is.
-                if(!pctex->flags_.testFlag(Custom))
+                if(file.container().hasCustom())
                 {
-                    de::File1 &file = App_FileSystem()->nameIndex().lump(patch.lumpNum_);
-                    if(file.container().hasCustom())
+                    pctex->flags_ |= Custom;
+                }
+
+                // If this is a Patch - unite the geometry of the component.
+                ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+                if(Patch::recognize(fileData))
+                {
+                    try
                     {
-                        pctex->flags_ |= Custom;
+                        Patch::Metadata info = Patch::loadMetadata(fileData);
+                        geom |= QRect(patch.origin_, info.dimensions);
+                    }
+                    catch(IByteArray::OffsetError const &)
+                    {
+                        LOG_WARNING("Component image \"%s\" (#%i) does not appear to be a valid Patch. "
+                                    "It may be missing from composite texture \"%s\".")
+                            << patchNames[pnamesIndex].percentEncodedNameRef() << i
+                            << pctex->name;
                     }
                 }
+                file.unlock();
             }
             else
             {
@@ -175,6 +203,11 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
         // Add this component.
         pctex->components_.push_back(patch);
     }
+
+    // Clip and apply the final height.
+    if(geom.top()  < 0) geom.setTop(0);
+    if(geom.height() > pctex->dimensions_.height())
+        pctex->dimensions_.setHeight(geom.height());
 
     if(!foundComponentCount)
     {
