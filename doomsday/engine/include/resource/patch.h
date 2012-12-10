@@ -31,10 +31,16 @@
 namespace de {
 
     /**
-     * @em Patch is a raster graphic image in the id Tech 1 picture format (Doom).
+     * @em Patch is a raster image in the id Tech 1 picture format (Doom).
      * @ingroup resource
      *
      * @see http://doomwiki.org/wiki/Picture_format
+     *
+     * @note The height dimension value as declared in the patch header may
+     * well differ to the "real" height of the composited image. This is the
+     * reason why map drawing in the id tech 1 software renderer can be seen
+     * to "overdraw" posts - the wall column drawer is working with post pixel
+     * ranges rather than the "logical" height declared in the header.
      */
     class Patch
     {
@@ -44,11 +50,11 @@ namespace de {
          */
         struct Header : public IReadable
         {
-            /// Dimensions of the patch in pixels.
+            /// Logical dimensions of the patch in pixels.
             QSize dimensions;
 
-            /// World origin offset (top left) in map coordinate space units.
-            /// Used with sprite frames to orient the patch relatively to a Mobj.
+            /// Origin offset (top left) in world coordinate space units.
+            /// Used for various purposes depending on context.
             QPoint origin;
 
             /// Implements IReadable.
@@ -57,13 +63,16 @@ namespace de {
 
     public:
         /**
-         * @param data  Ptr to the data buffer to draw to the dst buffer.
-         * @param xlatTable  If not @c NULL, use this translation table when
-         *                   compositing final color palette indices.
+         * @param data      Data to interpret as a Patch.
          * @param maskZero  Used with sky textures.
          */
         static Block load(IByteArray const &data, bool maskZero = false);
 
+        /**
+         * @copydoc load()
+         * @param xlatTable  If not @c NULL, use this translation table when
+         *                   compositing final color palette indices.
+         */
         static Block load(IByteArray const &data, IByteArray const &xlatTable,
                           bool maskZero = false);
 
