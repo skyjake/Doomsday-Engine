@@ -100,7 +100,7 @@ static animdef_t animsShared[] = {
     {0, "NUKAGE3",  "NUKAGE1",  MACRO_LONG(8)},
     {1, "BLODRIP4", "BLODRIP1", MACRO_LONG(8)},
     {1, "FIREBLU2", "FIREBLU1", MACRO_LONG(8)},
-    {1, "FIRELAVA", "FIRELAV2", MACRO_LONG(8)},
+    {1, "FIRELAVA", "FIRELAV3", MACRO_LONG(8)},
     {1, "FIREMAG3", "FIREMAG1", MACRO_LONG(8)},
     {1, "FIREWALL", "FIREWALA", MACRO_LONG(8)},
     {1, "GSTFONT3", "GSTFONT1", MACRO_LONG(8)},
