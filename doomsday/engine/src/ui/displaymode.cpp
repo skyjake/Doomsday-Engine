@@ -340,18 +340,40 @@ int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture)
     return DisplayMode_Native_Change(mode, shouldCapture || (originalMode != *mode));
 }
 
-void DisplayMode_GetColorTransfer(displaycolortransfer_t* colors)
+static inline de::duint16 intensity8To16(de::duint8 b)
 {
-    /// @todo  Factor in the original color transfer function, which may be
-    /// set up specifically by the user.
-
-    DisplayMode_Native_GetColorTransfer(colors);
+    return (b << 8) | b; // 0xFF => 0xFFFF
 }
 
-void DisplayMode_SetColorTransfer(const displaycolortransfer_t* colors)
+void DisplayMode_GetColorTransfer(displaycolortransfer_t *colors)
 {
-    /// @todo  Factor in the original color transfer function, which may be
-    /// set up specifically by the user.
+    displaycolortransfer_t mapped;
+    DisplayMode_Native_GetColorTransfer(&mapped);
 
-    DisplayMode_Native_SetColorTransfer(colors);
+    // Factor out the original color transfer function, which may be set up
+    // specifically by the user.
+    for(int i = 0; i < 256; ++i)
+    {
+#define LINEAR_UNMAP(i, c) ( (unsigned short) (float(mapped.table[i]) / float(originalColorTransfer.table[i]) * intensity8To16(c) ) )
+        colors->table[i]       = LINEAR_UNMAP(i,       i);
+        colors->table[i + 256] = LINEAR_UNMAP(i + 256, i);
+        colors->table[i + 512] = LINEAR_UNMAP(i + 512, i);
+    }
+}
+
+void DisplayMode_SetColorTransfer(displaycolortransfer_t const *colors)
+{
+    displaycolortransfer_t mapped;
+
+    // Factor in the original color transfer function, which may be set up
+    // specifically by the user.
+    for(int i = 0; i < 256; ++i)
+    {
+#define LINEAR_MAP(i, c) ( (unsigned short) (float(colors->table[i]) / float(intensity8To16(c)) * originalColorTransfer.table[i]) )
+        mapped.table[i]       = LINEAR_MAP(i,       i);
+        mapped.table[i + 256] = LINEAR_MAP(i + 256, i);
+        mapped.table[i + 512] = LINEAR_MAP(i + 512, i);
+    }
+
+    DisplayMode_Native_SetColorTransfer(&mapped);
 }
