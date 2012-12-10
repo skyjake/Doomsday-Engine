@@ -128,14 +128,9 @@ static ColumnOffsets readColumnOffsets(int width, Reader &reader)
     return offsets;
 }
 
-static Columns readColumns(IByteArray const &data, Patch::Header &hdr)
+static inline Columns readColumns(int width, Reader &reader)
 {
-    // Read the header.
-    Reader from = Reader(data);
-    from >> hdr;
-
-    // Column offsets begin immediately following the header.
-    return readPosts(readColumnOffsets(hdr.dimensions.width(), from), from);
+    return readPosts(readColumnOffsets(width, reader), reader);
 }
 
 /**
@@ -154,7 +149,7 @@ static int calcRealHeight(Columns const &columns)
         {
             Post const &post = *postIt;
 
-            // Does this post extend the previous one (a so-called "tall-patch").
+            // Does this post extend the previous one? (a so-called "tall-patch").
             if(post.topOffset <= tallTop)
                 tallTop += post.topOffset;
             else
@@ -174,15 +169,19 @@ static int calcRealHeight(Columns const &columns)
 
 static Block load(IByteArray const &data, IByteArray const *xlatTable, bool maskZero)
 {
-    // Prepare the column => post map.
-    Patch::Header hdr;
-    Columns columns = readColumns(data, hdr);
+    Reader reader = Reader(data);
+
+    // Read the header.
+    Patch::Header hdr; reader >> hdr;
+
+    // Read and prepare the column => post map.
+    Columns columns = readColumns(hdr.dimensions.width(), reader);
 
 #ifdef DENG_DEBUG
     // Is the declared height of the image equal to the "real" height of the
     // composited pixel posts?
     int const realHeight = calcRealHeight(columns);
-    if(realHeight != hdr.dimensions.height())
+    if(hdr.dimensions.height() != realHeight)
     {
         int postCount = 0;
         DENG2_FOR_EACH_CONST(Columns, i, columns)
@@ -201,26 +200,22 @@ static Block load(IByteArray const &data, IByteArray const *xlatTable, bool mask
     int const       h = hdr.dimensions.height();
     size_t const pels = w * h;
 
-    Block result = QByteArray(2 * pels, 0);
+    Block output = QByteArray(2 * pels, 0);
 
-    // Map the destination pixel color channels in the output buffer.
-    dbyte *destTop      = result.data();
-    dbyte *destAlphaTop = result.data() + pels;
+    // Map the pixel color channels in the output buffer.
+    dbyte *top      = output.data();
+    dbyte *topAlpha = output.data() + pels;
 
     // Composite the patch into the output buffer.
-    Reader reader = Reader(data);
-
-    int x = 0;
-    for(int col = 0; col < w; ++x, ++col, destTop++, destAlphaTop++)
+    DENG2_FOR_EACH_CONST(Columns, colIt, columns)
     {
         int tallTop = -1; // Keep track of pos (clipping).
 
-        // Step through the posts in a column.
-        DENG2_FOR_EACH_CONST(Posts, i, columns[col])
+        DENG2_FOR_EACH_CONST(Posts, postIt, *colIt)
         {
-            Post const &post = *i;
+            Post const &post = *postIt;
 
-            // Does this post extend the previous one (a so-called "tall-patch").
+            // Does this post extend the previous one? (a so-called "tall-patch").
             if(post.topOffset <= tallTop)
                 tallTop += post.topOffset;
             else
@@ -232,9 +227,8 @@ static Block load(IByteArray const &data, IByteArray const *xlatTable, bool mask
             // Find the start of the pixel data for the post.
             reader.setOffset(post.firstPixel);
 
-            int y            = tallTop;
-            dbyte *dest      = destTop      + y * w;
-            dbyte *destAlpha = destAlphaTop + y * w;
+            dbyte *out      = top      + tallTop * w;
+            dbyte *outAlpha = topAlpha + tallTop * w;
 
             // Composite pixels from the post to the output buffer.
             int length = post.length;
@@ -251,21 +245,25 @@ static Block load(IByteArray const &data, IByteArray const *xlatTable, bool mask
                 }
 
                 if(!maskZero || palIdx)
-                    *dest = palIdx;
+                    *out = palIdx;
 
                 if(maskZero)
-                    *destAlpha = (palIdx? 0xff : 0);
+                    *outAlpha = (palIdx? 0xff : 0);
                 else
-                    *destAlpha = 0xff;
+                    *outAlpha = 0xff;
 
-                // One row down.
-                dest      += w;
-                destAlpha += w;
+                // Move one row down.
+                out      += w;
+                outAlpha += w;
             }
         }
+
+        // Move one column right.
+        top++;
+        topAlpha++;
     }
 
-    return result;
+    return output;
 }
 
 } // internal
@@ -293,14 +291,11 @@ bool Patch::recognize(IByteArray const &data)
 
         if(hdr.dimensions.isEmpty()) return false;
 
-        // Check the column offset map.
         for(int col = 0; col < hdr.dimensions.width(); ++col)
         {
             dint32 offset;
             from >> offset;
             if(offset < 0 || (unsigned) offset >= from.source()->size()) return false;
-
-            /// @todo Check post run lengths too?
         }
 
         // Validated.
