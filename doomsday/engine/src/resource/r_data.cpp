@@ -183,7 +183,7 @@ patchid_t R_DeclarePatch(char const *name)
         {
             Patch::Metadata info = Patch::loadMetadata(fileData);
 
-            dimensions = info.dimensions;
+            dimensions = info.logicalDimensions;
             origin     = QPoint(-info.origin.x(), -info.origin.y());
         }
         catch(IByteArray::OffsetError const &)
@@ -785,7 +785,7 @@ void R_DefineSpriteTexture(TextureManifest &manifest)
             {
                 Patch::Metadata info = Patch::loadMetadata(fileData);
 
-                tex->setDimensions(info.dimensions);
+                tex->setDimensions(info.logicalDimensions);
                 tex->setOrigin(QPoint(-info.origin.x(), -info.origin.y()));
             }
             catch(IByteArray::OffsetError const &)

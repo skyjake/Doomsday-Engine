@@ -37,7 +37,7 @@ namespace de {
      * @see http://doomwiki.org/wiki/Picture_format
      *
      * @note The height dimension value as declared in the patch header may
-     * well differ to the "real" height of the composited image. This is the
+     * well differ to the actual height of the composited image. This is the
      * reason why map drawing in the id tech 1 software renderer can be seen
      * to "overdraw" posts - the wall column drawer is working with post pixel
      * ranges rather than the "logical" height declared in the header.
@@ -50,8 +50,11 @@ namespace de {
          */
         struct Metadata
         {
-            /// Logical dimensions of the patch in pixels.
+            /// Dimensions of the patch in pixels.
             QSize dimensions;
+
+            /// Logical dimensions of the patch in pixels (@see Patch notes).
+            QSize logicalDimensions;
 
             /// Origin offset (top left) in world coordinate space units.
             /// Used for various purposes depending on context.
@@ -65,7 +68,8 @@ namespace de {
          * @param data      Data to interpret as a Patch.
          * @param maskZero  Used with sky textures.
          */
-        static Block load(IByteArray const &data, bool maskZero = false);
+        static Block load(IByteArray const &data,
+                          bool maskZero = false, bool clipToLogicalDimensions = false);
 
         /**
          * @copydoc load()
@@ -73,7 +77,7 @@ namespace de {
          *                   compositing final color palette indices.
          */
         static Block load(IByteArray const &data, IByteArray const &xlatTable,
-                          bool maskZero = false);
+                          bool maskZero = false, bool clipToLogicalDimensions = false);
 
         /**
          * Determines whether @a data looks like it can be interpreted as a Patch.

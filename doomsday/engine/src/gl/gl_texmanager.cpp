@@ -2273,18 +2273,6 @@ TexSource GL_LoadFlatLump(image_t* image, filehandle_s* file)
     return source;
 }
 
-static Block loadAndTranslatePatch(IByteArray const &data, int tclass = 0, int tmap = 0)
-{
-    if(dbyte const *xlatTable = R_TranslationTable(tclass, tmap))
-    {
-        return Patch::load(data, ByteRefArray(xlatTable, 256));
-    }
-    else
-    {
-        return Patch::load(data);
-    }
-}
-
 /**
  * Draw the component image @a src into the composite @a dst.
  *
@@ -2325,6 +2313,18 @@ static void compositePaletted(dbyte *dst, QSize const &dstDimensions,
     }
 }
 
+static Block loadAndTranslatePatch(IByteArray const &data, int tclass = 0, int tmap = 0)
+{
+    if(dbyte const *xlatTable = R_TranslationTable(tclass, tmap))
+    {
+        return Patch::load(data, ByteRefArray(xlatTable, 256), false/*don't mask*/, true/*clip to logical dimensions*/);
+    }
+    else
+    {
+        return Patch::load(data, false/*don't mask*/, true/*clip to logical dimensions*/);
+    }
+}
+
 TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int tmap, int border)
 {
     DENG_ASSERT(image && hndl);
@@ -2347,8 +2347,8 @@ TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int t
             Patch::Metadata info = Patch::loadMetadata(fileData);
 
             Image_Init(image);
-            image->size.width  = info.dimensions.width()  + border*2;
-            image->size.height = info.dimensions.height() + border*2;
+            image->size.width  = info.logicalDimensions.width()  + border*2;
+            image->size.height = info.logicalDimensions.height() + border*2;
             image->pixelSize   = 1;
             image->paletteId   = defaultColorPalette;
 
@@ -2356,7 +2356,7 @@ TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int t
             if(!image->pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image->size.width * image->size.height));
 
             compositePaletted(image->pixels, QSize(image->size.width, image->size.height),
-                              patchImg, info.dimensions, QPoint(border, border));
+                              patchImg, info.logicalDimensions, QPoint(border, border));
 
             if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
             {

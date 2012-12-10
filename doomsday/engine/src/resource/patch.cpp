@@ -36,24 +36,15 @@ namespace internal {
 struct Header : public IReadable
 {
     /// Logical dimensions of the patch in pixels.
-    QSize dimensions;
+    dint16 dimensions[2];
 
     /// Origin offset (top left) in world coordinate space units.
-    /// Used for various purposes depending on context.
-    QPoint origin;
+    dint16 origin[2];
 
     /// Implements IReadable.
-    void operator << (Reader &from)
-    {
-        dint16 width, height;
-        from >> width >> height;
-        dimensions.setWidth(width);
-        dimensions.setHeight(height);
-
-        dint16 xOrigin, yOrigin;
-        from >> xOrigin >> yOrigin;
-        origin.setX(xOrigin);
-        origin.setY(yOrigin);
+    void operator << (Reader &from) {
+        from >> dimensions[0] >> dimensions[1]
+             >> origin[0] >> origin[1];
     }
 };
 
@@ -164,7 +155,6 @@ static inline Columns readColumns(int width, Reader &reader)
 /**
  * Process @a columns to calculate the "real" pixel height of the image.
  */
-#ifdef DENG_DEBUG
 static int calcRealHeight(Columns const &columns)
 {
     QRect geom(QPoint(0, 0), QSize(1, 0));
@@ -193,9 +183,18 @@ static int calcRealHeight(Columns const &columns)
 
     return geom.height();
 }
-#endif
 
-static Block load(IByteArray const &data, IByteArray const *xlatTable, bool maskZero)
+static Patch::Metadata prepareMetadata(Header const &hdr, int realHeight)
+{
+    Patch::Metadata meta;
+    meta.dimensions         = QSize(hdr.dimensions[0], realHeight);
+    meta.logicalDimensions  = QSize(hdr.dimensions[0], hdr.dimensions[1]);
+    meta.origin             = QPoint(hdr.origin[0], hdr.origin[1]);
+    return meta;
+}
+
+static Block load(IByteArray const &data, IByteArray const *xlatTable,
+                  bool maskZero, bool clipToLogicalDimensions)
 {
     Reader reader = Reader(data);
 
@@ -203,13 +202,15 @@ static Block load(IByteArray const &data, IByteArray const *xlatTable, bool mask
     Header hdr; reader >> hdr;
 
     // Read and prepare the column => post map.
-    Columns columns = readColumns(hdr.dimensions.width(), reader);
+    Columns columns = readColumns(hdr.dimensions[0], reader);
+
+    // Prepare metadata.
+    Patch::Metadata meta = prepareMetadata(hdr, calcRealHeight(columns));
 
 #ifdef DENG_DEBUG
-    // Is the declared height of the image equal to the "real" height of the
+    // Is the "logical" height of the image equal to the actual height of the
     // composited pixel posts?
-    int const realHeight = calcRealHeight(columns);
-    if(hdr.dimensions.height() != realHeight)
+    if(meta.logicalDimensions.height() != meta.dimensions.height())
     {
         int postCount = 0;
         DENG2_FOR_EACH_CONST(Columns, i, columns)
@@ -217,15 +218,17 @@ static Block load(IByteArray const &data, IByteArray const *xlatTable, bool mask
             postCount += i->count();
         }
 
-        LOG_INFO("Inequal heights, declared: %i != real: %i (%i %s).")
-            << hdr.dimensions.height() << realHeight
+        LOG_INFO("Inequal heights, logical: %i != actual: %i (%i %s).")
+            << meta.logicalDimensions.height() << meta.dimensions.height()
             << postCount << (postCount == 1? "post" : "posts");
     }
 #endif
 
     // Determine the dimensions of the output buffer.
-    int const       w = hdr.dimensions.width();
-    int const       h = hdr.dimensions.height();
+    QSize const &dimensions = clipToLogicalDimensions? meta.logicalDimensions : meta.dimensions;
+
+    int const       w = dimensions.width();
+    int const       h = dimensions.height();
     size_t const pels = w * h;
 
     Block output = QByteArray(2 * pels, 0);
@@ -315,16 +318,27 @@ static Block load(IByteArray const &data, IByteArray const *xlatTable, bool mask
 
 } // internal
 
-Block Patch::load(IByteArray const &data, IByteArray const &xlatTable, bool maskZero)
+Patch::Metadata Patch::loadMetadata(IByteArray const &data)
 {
-    LOG_AS("Patch::load");
-    return internal::load(data, &xlatTable, maskZero);
+    LOG_AS("Patch::loadMetadata");
+    Reader reader = Reader(data);
+
+    internal::Header hdr; reader >> hdr;
+    internal::Columns columns = internal::readColumns(hdr.dimensions[0], reader);
+    return internal::prepareMetadata(hdr, calcRealHeight(columns));
 }
 
-Block Patch::load(IByteArray const &data, bool maskZero)
+Block Patch::load(IByteArray const &data, IByteArray const &xlatTable,
+    bool maskZero, bool clipToLogicalDimensions)
 {
     LOG_AS("Patch::load");
-    return internal::load(data, 0/* no translation */, maskZero);
+    return internal::load(data, &xlatTable, maskZero, clipToLogicalDimensions);
+}
+
+Block Patch::load(IByteArray const &data, bool maskZero, bool clipToLogicalDimensions)
+{
+    LOG_AS("Patch::load");
+    return internal::load(data, 0/* no translation */, maskZero, clipToLogicalDimensions);
 }
 
 bool Patch::recognize(IByteArray const &data)
@@ -336,9 +350,9 @@ bool Patch::recognize(IByteArray const &data)
         Reader from = Reader(data);
         internal::Header hdr; from >> hdr;
 
-        if(hdr.dimensions.isEmpty()) return false;
+        if(!hdr.dimensions[0] || !hdr.dimensions[1]) return false;
 
-        for(int col = 0; col < hdr.dimensions.width(); ++col)
+        for(int col = 0; col < hdr.dimensions[0]; ++col)
         {
             dint32 offset;
             from >> offset;
@@ -351,18 +365,6 @@ bool Patch::recognize(IByteArray const &data)
     catch(IByteArray::OffsetError const &)
     {} // Ignore this error.
     return false;
-}
-
-Patch::Metadata Patch::loadMetadata(IByteArray const &data)
-{
-    Reader from = Reader(data);
-    internal::Header hdr;
-    from >> hdr;
-
-    Metadata meta;
-    meta.dimensions = hdr.dimensions;
-    meta.origin     = hdr.origin;
-    return meta;
 }
 
 } // namespace de
