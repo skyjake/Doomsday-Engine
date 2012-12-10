@@ -102,14 +102,14 @@ namespace internal {
 /**
  * Network message header.
  */
-struct Header : public ISerializable
+struct MessageHeader : public ISerializable
 {
     int size;
     bool isHuffmanCoded;
     bool isDeflated;
     duint channel; /// @todo include in the written header
 
-    Header() : size(0), isHuffmanCoded(false), isDeflated(false), channel(0)
+    MessageHeader() : size(0), isHuffmanCoded(false), isDeflated(false), channel(0)
     {}
 
     void operator >> (Writer &writer) const
@@ -193,7 +193,7 @@ struct Socket::Instance
     };
     ReceptionState receptionState;
     Block receivedBytes;
-    Header incomingHeader;
+    MessageHeader incomingHeader;
 
     /// Number of the active channel.
     /// @todo Channel is not used at the moment.
@@ -228,7 +228,7 @@ struct Socket::Instance
     {
         Block payload(packet);
         Block huffData;
-        Header header;
+        MessageHeader header;
 
         // Let's find the appropriate compression method of the payload. First see
         // if the encoded contents are under 128 bytes as Huffman codes.
@@ -357,7 +357,7 @@ struct Socket::Instance
 
                     // We can proceed to the next message.
                     receptionState = ReceivingHeader;
-                    incomingHeader = Header();
+                    incomingHeader = MessageHeader();
                 }
                 else
                 {
