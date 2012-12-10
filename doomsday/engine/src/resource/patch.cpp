@@ -54,7 +54,8 @@ struct Post : public IReadable
 
 /// A @em Column is a list of 0 or more posts.
 typedef QList<Post> Posts;
-typedef QList<Posts> Columns;
+typedef Posts Column;
+typedef QList<Column> Columns;
 
 /// Offsets to columns from the start of the source data.
 typedef QList<dint32> ColumnOffsets;
@@ -94,13 +95,13 @@ static Columns readPosts(ColumnOffsets const &offsets, Reader &reader)
         reader.setOffset(*i);
 
         // A new column begins.
-        columns.push_back(Posts());
-        Posts &posts = columns.back();
+        columns.push_back(Column());
+        Column &column = columns.back();
 
         // Read all posts.
         while(readNextPost(post, reader))
         {
-            posts.push_back(post);
+            column.push_back(post);
 
             // Skip to the next post.
             reader.seek(1 + post.length + 1); // A byte of unsed junk either side of the pixel palette indices.
@@ -224,14 +225,33 @@ static Block load(IByteArray const &data, IByteArray const *xlatTable, bool mask
             // Skip invalid posts.
             if(post.length <= 0) continue;
 
+            // Determine the destination height range.
+            int y = tallTop;
+            int length = post.length;
+
+            // Clamp height range within bounds.
+            if(y + length > h)
+                length = h - y;
+
+            int offset = 0;
+            if(y < 0)
+            {
+                offset = MIN_OF(-y, length);
+                y = 0;
+            }
+
+            length = MAX_OF(0, length - offset);
+
+            // Skip empty ranges.
+            if(!length) continue;
+
             // Find the start of the pixel data for the post.
-            reader.setOffset(post.firstPixel);
+            reader.setOffset(post.firstPixel + offset);
 
             dbyte *out      = top      + tallTop * w;
             dbyte *outAlpha = topAlpha + tallTop * w;
 
             // Composite pixels from the post to the output buffer.
-            int length = post.length;
             while(length--)
             {
                 // Read the next palette index.
