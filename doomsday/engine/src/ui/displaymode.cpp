@@ -184,7 +184,7 @@ static void setupBindings()
     bindings->addFunction("originalMode", func).setReadOnly();
     func->release(); // we don't keep a ref
 
-    de::App::app().addNativeModule("DisplayMode", *bindings);
+    DENG2_APP->addNativeModule("DisplayMode", *bindings);
 }
 
 static void tearDownBindings()
