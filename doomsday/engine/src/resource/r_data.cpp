@@ -168,36 +168,55 @@ patchid_t R_DeclarePatch(char const *name)
     de::Texture::Flags flags;
     if(file.container().hasCustom()) flags |= de::Texture::Custom;
 
-    // Take a copy of the current patch loading state so that future texture
-    // loads will produce the same results.
+    // Take a copy of the current texture filter state.
     if(monochrome)               flags |= de::Texture::Monochrome;
     if(upscaleAndSharpenPatches) flags |= de::Texture::UpscaleAndSharpen;
 
-    /// @todo fixme: Ensure this is in Patch format.
+    QSize dimensions(0, 0);
+    QPoint origin(0, 0);
+
+    // If this is a Patch (the format) read the world dimension and origin offset values.
     ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-    de::Reader from = de::Reader(fileData);
-    Patch::Header patchHdr;
-    from >> patchHdr;
+    if(Patch::recognize(fileData))
+    {
+        try
+        {
+            de::Reader from = de::Reader(fileData);
+            Patch::Header hdr;
+            from >> hdr;
+
+            dimensions = hdr.dimensions;
+            origin     = QPoint(-hdr.origin.x(), -hdr.origin.y());
+        }
+        catch(IByteArray::OffsetError const &)
+        {
+            LOG_WARNING("File \"%s:%s\" does not appear to be a valid Patch.\n"
+                        "World dimension and origin offset not set for patch \"%s\".")
+                << NativePath(file.container().composePath()).pretty()
+                << NativePath(file.composePath()).pretty()
+                << manifest->composeUri();
+        }
+    }
 
     file.unlock();
 
     de::Texture *tex = manifest->texture();
     if(!tex)
     {
-        tex = manifest->derive(patchHdr.dimensions, flags);
+        tex = manifest->derive(dimensions, flags);
         if(!tex)
         {
             LOG_WARNING("Failed defining Texture for Patch texture \"%s\".") << uri;
             return 0;
         }
 
-        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
+        tex->setOrigin(origin);
     }
     else
     {
-        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
-        tex->setDimensions(patchHdr.dimensions);
+        tex->setDimensions(dimensions);
         tex->flags() = flags;
+        tex->setOrigin(origin);
     }
 
     return uniqueId;
