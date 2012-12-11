@@ -79,6 +79,7 @@ struct DownloadDialog::Instance
         mainLayout->addWidget(bar);
 
         progText = new QLabel;
+        progText->setWordWrap(true);
         setProgressText(tr("Connecting..."));
         mainLayout->addWidget(progText);
 
@@ -116,6 +117,7 @@ struct DownloadDialog::Instance
     void setProgressText(de::String text)
     {
         progText->setText("<small>" + text + "</small>");
+        self->resize(self->sizeHint());
     }
 };
 
