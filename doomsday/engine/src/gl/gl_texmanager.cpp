@@ -3203,7 +3203,7 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     VERBOSE2(
         Con_Printf("  Content: ");
         Image_PrintMetadata(&image);
-        Con_Printf("  Specification [%p]: ", de::dintptr(spec));
+        Con_Printf("  Specification [%p]: ", spec);
         GL_PrintTextureVariantSpecification(spec);
         )
 #endif
