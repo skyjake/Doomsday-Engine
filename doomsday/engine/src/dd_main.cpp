@@ -1793,6 +1793,8 @@ boolean DD_Init(void)
             directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
             de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
 
+            LOG_DEBUG("User supplied IWAD path: \"%s\"") << Dir_Path(dir);
+
             scheme.addSearchPath(SearchPath(uri, SearchPath::NoDescend));
 
             Dir_Delete(dir);
