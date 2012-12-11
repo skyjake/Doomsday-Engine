@@ -74,9 +74,6 @@
 
 namespace de {
 
-/// Version of the block transfer protocol.
-static duint const PROTOCOL_VERSION = 0;
-
 /// Maximum number of channels.
 static duint const MAX_CHANNELS = 2;
 
