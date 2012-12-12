@@ -532,8 +532,8 @@ static CompositeTextures loadCompositeTextureDefs()
                         hasReplacement = true; // Uses a custom patch.
                     }
                     // Do the definitions differ?
-                    else if(custom->height()          != orig->height() ||
-                            custom->width()           != orig->width()  ||
+                    else if(custom->logicalHeight()          != orig->logicalHeight() ||
+                            custom->logicalWidth()           != orig->logicalWidth()  ||
                             custom->componentCount()  != orig->componentCount())
                     {
                         custom->flags() |= CompositeTexture::Custom;
@@ -637,13 +637,13 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
 
                 // Reconfigure and attach the new definition.
                 tex->flags() = flags;
-                tex->setDimensions(def.dimensions());
+                tex->setDimensions(def.logicalDimensions());
                 tex->setUserDataPointer((void *)&def);
 
                 continue;
             }
             // A new texture.
-            else if(de::Texture *tex = manifest->derive(def.dimensions(), flags))
+            else if(de::Texture *tex = manifest->derive(def.logicalDimensions(), flags))
             {
                 tex->setUserDataPointer((void *)&def);
                 continue;

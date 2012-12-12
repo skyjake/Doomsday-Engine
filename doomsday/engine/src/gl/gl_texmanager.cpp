@@ -2419,8 +2419,8 @@ TexSource GL_LoadPatchComposite(image_t *image, de::Texture &tex)
 
     Image_Init(image);
     image->pixelSize = 1;
-    image->size.width  = texDef->width();
-    image->size.height = texDef->height();
+    image->size.width  = texDef->logicalWidth();
+    image->size.height = texDef->logicalHeight();
     image->paletteId = defaultColorPalette;
 
     image->pixels = (uint8_t*) M_Calloc(2 * image->size.width * image->size.height);
@@ -2481,8 +2481,8 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
 
     Image_Init(image);
     image->pixelSize = 1;
-    image->size.width  = texDef->width();
-    image->size.height = texDef->height();
+    image->size.width  = texDef->logicalWidth();
+    image->size.height = texDef->logicalHeight();
     image->paletteId = defaultColorPalette;
 
     image->pixels = (uint8_t *) M_Calloc(2 * image->size.width * image->size.height);
