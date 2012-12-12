@@ -53,18 +53,18 @@
 
 // Presented to the user in dialogs, messages etc.
 #define PLUGIN_NICENAME     "libdoom"
-#define PLUGIN_NICEAUTHOR   "Deng Team"
+#define PLUGIN_NICEAUTHOR   DENGPROJECT_NICEAUTHOR
 #define PLUGIN_DETAILS      "libdoom is based on linuxdoom-1.10."
 
 #define PLUGIN_HOMEURL      DOOMSDAY_HOMEURL
 #define PLUGIN_DOCSURL      DOOMSDAY_DOCSURL
 
-#define PLUGIN_VERSION_TEXT "1.16.2"
+#define PLUGIN_VERSION_TEXT DOOMSDAY_VERSION_BASE
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" JDOOM_VER_ID ")"
-#define PLUGIN_VERSION_NUMBER 1,16,2,0 // For WIN32 version info.
+#define PLUGIN_VERSION_NUMBER DOOMSDAY_VERSION_NUMBER // For WIN32 version info.
 
 // For WIN32 version info:
 #define PLUGIN_DESC         PLUGIN_NICENAME " " LIBDENG_PLUGINDESC
-#define PLUGIN_COPYRIGHT    "2003-2012, " DENGPROJECT_NICEAUTHOR
+#define PLUGIN_COPYRIGHT    "2000-2012, " DENGPROJECT_NICEAUTHOR
 
 #endif /* JDOOM_VERSION_H */
