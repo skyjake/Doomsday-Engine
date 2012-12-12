@@ -50,7 +50,8 @@ CompositeTexture::CompositeTexture(String percentEncodedName,
     int width, int height, Flags _flags)
     : name(percentEncodedName),
       flags_(_flags),
-      dimensions_(width, height),
+      logicalDimensions_(width, height),
+      dimensions_(0, 0),
       origIndex_(-1)
 {}
 
@@ -60,6 +61,10 @@ String CompositeTexture::percentEncodedName() const {
 
 String const &CompositeTexture::percentEncodedNameRef() const {
     return name;
+}
+
+QSize const &CompositeTexture::logicalDimensions() const {
+    return logicalDimensions_;
 }
 
 QSize const &CompositeTexture::dimensions() const {
@@ -115,8 +120,10 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
 
     // We'll initially accept these values as logical dimensions. However
     // we may need to adjust once we've checked the patch dimensions.
-    pctex->dimensions_.setWidth(dimensions[0]);
-    pctex->dimensions_.setHeight(dimensions[1]);
+    pctex->logicalDimensions_.setWidth(dimensions[0]);
+    pctex->logicalDimensions_.setHeight(dimensions[1]);
+
+    pctex->dimensions_ = pctex->logicalDimensions_;
 
     if(format == DoomFormat)
     {
@@ -133,7 +140,7 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
     dint16 componentCount;
     reader >> componentCount;
 
-    QRect geom(QPoint(0, 0), pctex->dimensions_);
+    QRect geom(QPoint(0, 0), pctex->logicalDimensions_);
 
     int foundComponentCount = 0;
     for(dint16 i = 0; i < componentCount; ++i)
@@ -206,7 +213,7 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
 
     // Clip and apply the final height.
     if(geom.top()  < 0) geom.setTop(0);
-    if(geom.height() > pctex->dimensions_.height())
+    if(geom.height() > pctex->logicalDimensions_.height())
         pctex->dimensions_.setHeight(geom.height());
 
     if(!foundComponentCount)
