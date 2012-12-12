@@ -141,7 +141,7 @@ namespace de
             return logicalDimensions().width();
         }
 
-        /// Returns the logical width of the texture (in map space units).
+        /// Returns the logical height of the texture (in map space units).
         inline int logicalHeight() const {
             return logicalDimensions().height();
         }
@@ -149,12 +149,12 @@ namespace de
         /// Returns the pixel dimensions of the texture.
         QSize const &dimensions() const;
 
-        /// Returns the pixel width of the texture (in map space units).
+        /// Returns the pixel width of the texture.
         inline int width() const {
             return dimensions().width();
         }
 
-        /// Returns the pixel width of the texture (in map space units).
+        /// Returns the pixel height of the texture.
         inline int height() const {
             return dimensions().height();
         }
