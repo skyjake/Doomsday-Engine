@@ -166,9 +166,10 @@ public:
     Reader &operator >> (IReadable &readable);
 
     /**
-     * Reads bytes from the source buffer until a specified delimiter
-     * value is encountered. The delimiter is included as part of
-     * the read data.
+     * Reads bytes from the source buffer until a specified delimiter value is
+     * encountered. The delimiter is included as part of the read data. The end
+     * of the source data is also considered a valid delimiter; no exception
+     * will be thrown if the source data ends.
      *
      * @param byteArray  Destination buffer.
      * @param delimiter  Delimiter value.
@@ -176,9 +177,33 @@ public:
     Reader &readUntil(IByteArray &byteArray, IByteArray::Byte delimiter = 0);
 
     /**
+     * Reads a line of text ending in a '\n' character. The source data is
+     * expected to be UTF-8 encoded text. All carriage returns ('\r') are
+     * removed from the string.
+     *
+     * @param string  The read line is returned here. It includes the
+     *                terminating newline character.
+     */
+    Reader &readLine(String &string);
+
+    /**
+     * Equivalent to readLine(String), but returns the read string.
+     */
+    String readLine();
+
+    /**
      * Returns the source byte array of the reader.
      */
     IByteArray const *source() const;
+
+    /**
+     * Determines if the reader's position is at the end of the source data;
+     * i.e., there is nothing more to read, and attempting to do so would
+     * produce an exception.
+     *
+     * @return @c true, iff at end of source.
+     */
+    bool atEnd() const;
 
     /**
      * Returns the offset used by the reader.
