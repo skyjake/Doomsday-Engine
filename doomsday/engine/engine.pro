@@ -457,7 +457,7 @@ SOURCES += \
     src/con_data.cpp \
     src/con_main.c \
     src/dd_games.cpp \
-    src/dd_help.c \
+    src/dd_help.cpp \
     src/dd_init.cpp \
     src/dd_loop.c \
     src/dd_main.cpp \
@@ -658,9 +658,6 @@ mod.files = \
     $$DENG_MODULES_DIR/Config.de \
     $$DENG_MODULES_DIR/recutil.de
 
-startupdata.files = \
-    data/cphelp.txt
-
 # These fonts may be needed during the initial startup busy mode.
 startupfonts.files = \
     data/fonts/console11.dfn \
@@ -690,11 +687,10 @@ macx {
 
     data.path         = $${res.path}
     mod.path          = $${res.path}/modules
-    startupdata.path  = $${res.path}/data
     startupfonts.path = $${res.path}/data/fonts
     startupgfx.path   = $${res.path}/data/graphics
 
-    QMAKE_BUNDLE_DATA += mod res data startupfonts startupdata startupgfx
+    QMAKE_BUNDLE_DATA += mod res data startupfonts startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
@@ -732,11 +728,10 @@ macx {
 
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data startupdata startupgfx startupfonts mod
+    INSTALLS += target data startupgfx startupfonts mod
 
     target.path       = $$DENG_BIN_DIR
     data.path         = $$DENG_DATA_DIR
-    startupdata.path  = $$DENG_DATA_DIR
     startupgfx.path   = $$DENG_DATA_DIR/graphics
     startupfonts.path = $$DENG_DATA_DIR/fonts
     mod.path          = $$DENG_BASE_DIR/modules

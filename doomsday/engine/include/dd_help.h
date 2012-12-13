@@ -33,6 +33,8 @@
 extern "C" {
 #endif
 
+typedef void const *HelpNode;
+
 // Help string types.
 enum {
     HST_DESCRIPTION,
@@ -44,12 +46,45 @@ enum {
 
 void DH_Register(void);
 
+/**
+ * Initializes the help string database. After which, attempts to read the
+ * engine's own help string file.
+ */
 void DD_InitHelp(void);
+
+/**
+ * Attempts to read help strings from the game-specific help file.
+ */
 void DD_ReadGameHelp(void);
+
+/**
+ * Shuts down the help string database. Frees all storage and destroys
+ * database itself.
+ */
 void DD_ShutdownHelp(void);
 
-void* DH_Find(const char* id);
-char* DH_GetString(void* found, int type);
+/**
+ * Finds a node matching the ID. Use DH_GetString to read strings from it.
+ *
+ * @param id  Help node ID to be searched for.
+ *
+ * @return Pointer to help data, if matched; otherwise @c NULL.
+ */
+HelpNode DH_Find(char const *id);
+
+/**
+ * Return a string from within the helpnode. Strings are stored internally
+ * and indexed by their type (e.g. HST_DESCRIPTION).
+ *
+ * @param foundNode  The helpnode to return the string from.
+ * @param type       The string type (index) to look for within the node.
+ *
+ * @return Pointer to the found string; otherwise @c NULL. Note, may also
+ * return @c NULL, if passed an invalid helpnode ptr OR the help string
+ * database has not beeen initialized yet. The returned string is actually from
+ * an AutoStr; it will only be valid until the next garbage recycling.
+ */
+char const *DH_GetString(HelpNode found, int type);
 
 #ifdef __cplusplus
 } // extern "C"
