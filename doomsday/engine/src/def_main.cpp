@@ -1280,7 +1280,7 @@ void Def_Read()
         for(int k = i + 1; k < countTexts.num; ++k)
         {
             if(!texts[k].text) continue; // Already done.
-            if(stricmp(defs.text[i].id, defs.text[k].id) && texts[k].text) continue;
+            if(stricmp(defs.text[i].id, defs.text[k].id)) continue; // ID mismatch.
 
             // Update the earlier string.
             texts[i].text = (char *) M_Realloc(texts[i].text, strlen(texts[k].text) + 1);
