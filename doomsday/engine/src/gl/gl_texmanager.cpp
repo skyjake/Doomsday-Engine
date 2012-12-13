@@ -2446,7 +2446,8 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZ
         {
             try
             {
-                Patch::Flags loadFlags = maskZero? Patch::MaskZero : 0;
+                Patch::Flags loadFlags;
+                if(maskZero) loadFlags |= Patch::MaskZero;
                 Block patchImg = Patch::load(fileData, loadFlags);
                 Patch::Metadata info = Patch::loadMetadata(fileData);
 
