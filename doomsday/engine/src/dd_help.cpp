@@ -137,7 +137,7 @@ static void readStrings(File const &file)
     }
 }
 
-HelpNode DH_Find(char const *id)
+HelpId DH_Find(char const *id)
 {
     // The identifiers are case insensitive.
     HelpStrings::const_iterator found = helps.constFind(String(id).lower());
@@ -148,7 +148,7 @@ HelpNode DH_Find(char const *id)
     return NULL;
 }
 
-char const *DH_GetString(HelpNode found, int type)
+char const *DH_GetString(HelpId found, int type)
 {
     if(!found || type < 0 || type > NUM_HELPSTRING_TYPES)
         return NULL;

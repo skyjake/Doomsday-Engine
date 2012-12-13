@@ -100,7 +100,7 @@ int     panel_help_offset = 0;  // Zero means the help is completely hidden.
 byte    panel_show_help = true; // cvar
 byte    panel_show_tips = true; // cvar
 ui_object_t *panel_help_source;
-HelpNode panel_help;
+HelpId panel_help;
 
 cvarbutton_t cvarbuttons[] = {
     {0, "con-var-silent"},
@@ -678,7 +678,7 @@ void CP_DrawBorder(ui_object_t* ob)
 {
     int b = UI_BORDER;
     ui_object_t* it;
-    HelpNode help_ptr;
+    HelpId help_ptr;
     Point2Raw origin;
     Size2Raw size;
     boolean shown;
@@ -1002,7 +1002,7 @@ ui_object_t* CP_FindHover(void)
 void CP_Ticker(ui_page_t* page)
 {
     ui_object_t* ob;
-    HelpNode help;
+    HelpId help;
     int off;
 
     // Normal ticker actions first.

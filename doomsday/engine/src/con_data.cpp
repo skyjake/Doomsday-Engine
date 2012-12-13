@@ -1487,7 +1487,7 @@ static void printHelpAbout(char const* query)
     // Try the console commands first.
     if(ccmd_t* ccmd = Con_FindCommand(query))
     {
-        HelpNode help = DH_Find(ccmd->name);
+        HelpId help = DH_Find(ccmd->name);
         char const* description = DH_GetString(help, HST_DESCRIPTION);
         char const* info = DH_GetString(help, HST_INFO);
 
