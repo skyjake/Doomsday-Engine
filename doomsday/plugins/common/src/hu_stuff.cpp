@@ -1517,7 +1517,8 @@ void Hu_DrawMapTitle(const Point2Raw* offset)
 
 void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 {
-    Point2Raw origin(SCREENWIDTH/2, 6);
+    Point2Raw origin(portGeometry->size.width / 2,
+                     6 * portGeometry->size.height / SCREENHEIGHT);
     float scale;
 
     if(!portGeometry) return;
@@ -1525,14 +1526,17 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
     // Level information is shown for a few seconds in the beginning of a level.
     if(!cfg.mapTitle || (actualMapTime > 6 * TICSPERSEC)) return;
 
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+
+    // After scaling, the title is centered horizontally on the screen.
+    DGL_Translatef(origin.x, origin.y, 0);
+
+    // Scale according to the viewport size.
     R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
                                     portGeometry->size.width, portGeometry->size.height,
                                     scalemode_t(cfg.menuScaleMode));
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
     DGL_Scalef(scale, scale * 1.2f/*aspect correct*/, 1);
-    DGL_Translatef(origin.x, origin.y, 0);
 
     // Make the title 3/4 smaller.
     DGL_Scalef(.75f, .75f, 1);
