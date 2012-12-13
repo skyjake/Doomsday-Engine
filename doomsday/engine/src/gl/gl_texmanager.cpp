@@ -2349,11 +2349,11 @@ static Block loadAndTranslatePatch(IByteArray const &data, int tclass = 0, int t
 {
     if(dbyte const *xlatTable = R_TranslationTable(tclass, tmap))
     {
-        return Patch::load(data, ByteRefArray(xlatTable, 256), false/*don't mask*/, true/*clip to logical dimensions*/);
+        return Patch::load(data, ByteRefArray(xlatTable, 256), Patch::ClipToLogicalDimensions);
     }
     else
     {
-        return Patch::load(data, false/*don't mask*/, true/*clip to logical dimensions*/);
+        return Patch::load(data, Patch::ClipToLogicalDimensions);
     }
 }
 
@@ -2436,7 +2436,7 @@ DGLuint GL_PrepareExtTexture(char const *name, gfxmode_t mode, int useMipmap,
     return texture;
 }
 
-static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool zeroMask,
+static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZero,
     bool useZeroOriginIfOneComponent)
 {
     LOG_AS("GL_LoadPatchComposite");
@@ -2461,7 +2461,8 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool zeroM
         {
             try
             {
-                Block patchImg = Patch::load(fileData, zeroMask);
+                Patch::Flags loadFlags = maskZero? Patch::MaskZero : 0;
+                Block patchImg = Patch::load(fileData, loadFlags);
                 Patch::Metadata info = Patch::loadMetadata(fileData);
 
                 QPoint origin = i->origin();
@@ -2479,7 +2480,7 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool zeroM
         file.unlock();
     }
 
-    if(zeroMask || palettedIsMasked(image.pixels, image.size.width, image.size.height))
+    if(maskZero || palettedIsMasked(image.pixels, image.size.width, image.size.height))
         image.flags |= IMGF_IS_MASKED;
 
     // For debug:

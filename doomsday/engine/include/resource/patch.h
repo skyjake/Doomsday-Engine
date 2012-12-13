@@ -61,23 +61,41 @@ namespace de {
             QPoint origin;
         };
 
+        /**
+         * Flags for @ref load()
+         */
+        enum Flag
+        {
+            /// If the color of a pixel uses index #0 write the default color
+            /// (black) as the color value and set the alpha to zero.
+            MaskZero                = 0x1,
+
+            /// Clip the composited image to the logical dimensions of the patch
+            /// ; otherwise perform no clipping (use the pixel dimensions).
+            ClipToLogicalDimensions = 0x2
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
     public:
+        /**
+         * Attempt to read metadata from @a data.
+         * @param data      Data to read metadata from.
+         */
         static Metadata loadMetadata(IByteArray const &data);
 
         /**
+         * Attempt to interpret @a data as a Patch.
          * @param data      Data to interpret as a Patch.
-         * @param maskZero  Used with sky textures.
+         * @param flags     Flags determining how the data should be interpreted.
          */
-        static Block load(IByteArray const &data,
-                          bool maskZero = false, bool clipToLogicalDimensions = false);
+        static Block load(IByteArray const &data, Flags = 0);
 
         /**
          * @copydoc load()
          * @param xlatTable  If not @c NULL, use this translation table when
          *                   compositing final color palette indices.
          */
-        static Block load(IByteArray const &data, IByteArray const &xlatTable,
-                          bool maskZero = false, bool clipToLogicalDimensions = false);
+        static Block load(IByteArray const &data, IByteArray const &xlatTable, Flags = 0);
 
         /**
          * Determines whether @a data looks like it can be interpreted as a Patch.
@@ -88,6 +106,8 @@ namespace de {
          */
         static bool recognize(IByteArray const &data);
     };
+
+    Q_DECLARE_OPERATORS_FOR_FLAGS(Patch::Flags)
 
 } // namespace de
 
