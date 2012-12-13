@@ -319,7 +319,7 @@ Patch::Metadata Patch::loadMetadata(IByteArray const &data)
     internal::Header hdr; reader >> hdr;
     internal::Columns columns = internal::readColumns(hdr.dimensions[0], reader);
 
-    return prepareMetadata(hdr, calcRealHeight(columns));
+    return prepareMetadata(hdr, internal::calcRealHeight(columns));
 }
 
 Block Patch::load(IByteArray const &data, IByteArray const &xlatTable, Patch::Flags flags)
@@ -330,7 +330,7 @@ Block Patch::load(IByteArray const &data, IByteArray const &xlatTable, Patch::Fl
     internal::Header hdr; reader >> hdr;
     internal::Columns columns = internal::readColumns(hdr.dimensions[0], reader);
 
-    Metadata meta = prepareMetadata(hdr, calcRealHeight(columns));
+    Metadata meta = prepareMetadata(hdr, internal::calcRealHeight(columns));
     return internal::compositeImage(reader, &xlatTable, columns, meta, flags);
 }
 
@@ -342,7 +342,7 @@ Block Patch::load(IByteArray const &data, Patch::Flags flags)
     internal::Header hdr; reader >> hdr;
     internal::Columns columns = internal::readColumns(hdr.dimensions[0], reader);
 
-    Metadata meta = prepareMetadata(hdr, calcRealHeight(columns));
+    Metadata meta = prepareMetadata(hdr, internal::calcRealHeight(columns));
     return internal::compositeImage(reader, 0/* no translation */, columns, meta, flags);
 }
 
