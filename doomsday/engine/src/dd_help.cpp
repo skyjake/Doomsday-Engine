@@ -69,7 +69,7 @@ static void readStrings(File const &file)
         if(line.startsWith("["))
         {
             int end = line.indexOf(']');
-            String id = line.mid(1, end > 0? end - 1 : -1).trimmed();
+            String id = line.mid(1, end > 0? end - 1 : -1).trimmed().toLower();
             node = &helps.insert(id, StringsByType()).value();
 
             LOG_DEV_TRACE("Help node '%s'", id);
