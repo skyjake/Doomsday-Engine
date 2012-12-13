@@ -85,7 +85,6 @@ void R_InitSystemTextures()
     for(uint i = 0; !names[i].isEmpty(); ++i)
     {
         de::Uri uri("System", Path(names[i]));
-
         de::Texture::Flags flags = de::Texture::Custom;
         QSize dimensions;
         QPoint origin;
@@ -717,9 +716,9 @@ void R_InitFlatTextures()
              *
              * @todo Always determine size from the lowres original.
              */
-            QSize dimensions = QSize(64, 64);
-            QPoint origin;
-            int const uniqueId = lumpNum - (firstFlatMarkerLumpNum + 1);
+            QSize dimensions(64, 64);
+            QPoint origin(0, 0);
+            int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
             de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
             TextureManifest *manifest = App_Textures()->declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
@@ -881,7 +880,7 @@ texture_s *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
 
     de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
     TextureManifest *manifest = App_Textures()->declare(uri, de::Texture::Custom, dimensions,
-                                                        QPoint(), uniqueId, &resourceUri);
+                                                        QPoint(0, 0), uniqueId, &resourceUri);
     if(!manifest) return 0; // Invalid URI?
 
     /// @todo Defer until necessary (manifest is first de-referenced).
