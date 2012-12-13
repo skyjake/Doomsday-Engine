@@ -82,20 +82,13 @@ Uri *R_ComposePatchUri(patchid_t id);
 /// @return  Path for the patch associated with @a id. A zero-length string is
 ///          returned if the id is invalid/unknown.
 AutoStr *R_ComposePatchPath(patchid_t id);
-
-/*
- * TODO: Merge/generalize these very similar routines.
- */
-
-struct texture_s *R_CreateSkinTex(Uri const *resourceUri, boolean isShinySkin);
-struct texture_s *R_CreateLightmap(Uri const *resourceUri);
-struct texture_s *R_CreateFlaremap(Uri const *resourceUri);
-struct texture_s *R_CreateReflectionTexture(Uri const *resourceUri);
-struct texture_s *R_CreateMaskTexture(Uri const *resourceUri, Size2Raw const *dimensions);
-struct texture_s *R_CreateDetailTexture(Uri const *resourceUri);
-
 #ifdef __cplusplus
 } // extern "C"
+#endif
+
+#ifdef __cplusplus
+struct texture_s *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri, QSize const &dimensions);
+struct texture_s *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri);
 #endif
 
 #endif /// LIBDENG_REFRESH_DATA_H

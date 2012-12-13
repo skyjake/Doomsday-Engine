@@ -96,8 +96,15 @@ static bool interpretPng(de::FileHandle &hndl, String filePath, image_t &img);
 static bool interpretJpg(de::FileHandle &hndl, String filePath, image_t &img);
 static bool interpretTga(de::FileHandle &hndl, String filePath, image_t &img);
 
-static TexSource loadExternalTexture(image_t &image, String searchPath,
-                                     String optionalSuffix = "");
+static TexSource loadExternalTexture(image_t &image, String searchPath, String optionalSuffix = "");
+
+static TexSource loadFlat(image_t &image, de::FileHandle &file);
+static TexSource loadPatch(image_t &image, de::FileHandle &file, int tclass = 0, int tmap = 0, int border = 0);
+static TexSource loadDetail(image_t &image, de::FileHandle &file);
+
+static TexSource loadRaw(image_t &image, rawtex_t const &raw);
+static TexSource loadPatchComposite(image_t &image, de::Texture &tex,
+    bool zeroMask = false, bool useZeroOriginIfOneComponent = false);
 
 int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
@@ -687,7 +694,31 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     TexSource source = TEXS_NONE;
 
     spec = TS_GENERAL(&baseSpec);
-    if(!tex.manifest().schemeName().compareWithoutCase("Flats"))
+    if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
+    {
+        // Attempt to load an external replacement for this composite texture?
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.flags().testFlag(de::Texture::Custom)))
+        {
+            // First try the textures scheme.
+            de::Uri uri = tex.manifest().composeUri();
+            source = loadExternalTexture(image, uri.compose(), "-ck");
+        }
+
+        if(source == TEXS_NONE)
+        {
+            if(TC_SKYSPHERE_DIFFUSE != spec->context)
+            {
+                source = loadPatchComposite(image, tex);
+            }
+            else
+            {
+                bool const zeroMask = !!(spec->flags & TSF_ZEROMASK);
+                bool const useZeroOriginIfOneComponent = true;
+                source = loadPatchComposite(image, tex, zeroMask, useZeroOriginIfOneComponent);
+            }
+        }
+    }
+    else if(!tex.manifest().schemeName().compareWithoutCase("Flats"))
     {
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.flags().testFlag(de::Texture::Custom)))
@@ -696,7 +727,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
             de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
 
-            if(!source)
+            if(source == TEXS_NONE)
             {
                 // How about the old-fashioned "flat-name" in the textures scheme?
                 source = loadExternalTexture(image, "Textures:flat-" + uri.path().toStringRef(), "-ck");
@@ -714,7 +745,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                     de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
                     de::FileHandle &hndl = App_FileSystem()->openLump(lump);
 
-                    source = GL_LoadFlatLump(&image, reinterpret_cast<filehandle_s *>(&hndl));
+                    source = loadFlat(image, hndl);
 
                     App_FileSystem()->releaseFile(hndl.file());
                     delete &hndl;
@@ -752,8 +783,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                     de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
                     de::FileHandle &hndl = App_FileSystem()->openLump(lump);
 
-                    source = GL_LoadPatchLump(&image, reinterpret_cast<filehandle_s *>(&hndl),
-                                              tclass, tmap, spec->border);
+                    source = loadPatch(image, hndl, tclass, tmap, spec->border);
 
                     App_FileSystem()->releaseFile(hndl.file());
                     delete &hndl;
@@ -805,8 +835,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                     de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
                     de::FileHandle &hndl = App_FileSystem()->openLump(lump);
 
-                    source = GL_LoadPatchLump(&image, reinterpret_cast<filehandle_s *>(&hndl),
-                                              tclass, tmap, spec->border);
+                    source = loadPatch(image, hndl, tclass, tmap, spec->border);
 
                     App_FileSystem()->releaseFile(hndl.file());
                     delete &hndl;
@@ -831,7 +860,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                 de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
                 de::FileHandle &hndl = App_FileSystem()->openLump(lump);
 
-                source = GL_LoadDetailTextureLump(&image, reinterpret_cast<filehandle_s *>(&hndl));
+                source = loadDetail(image, hndl);
 
                 App_FileSystem()->releaseFile(hndl.file());
                 delete &hndl;
@@ -2184,93 +2213,77 @@ static boolean palettedIsMasked(const uint8_t* pixels, int width, int height)
     return false;
 }
 
-TexSource GL_LoadDetailTextureLump(image_t* image, filehandle_s* file)
+static TexSource loadDetail(image_t& image, de::FileHandle &hndl)
 {
-    TexSource source = TEXS_NONE;
-    DENG_ASSERT(image && file);
-
-    if(Image_LoadFromFile(image, file))
+    if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
     {
-        source = TEXS_ORIGINAL;
+        return TEXS_ORIGINAL;
     }
-    else
-    {   // It must be an old-fashioned "raw" image.
-        size_t bufSize, fileLength = FileHandle_Length(file);
 
-        Image_Init(image);
+    // It must be an old-fashioned "raw" image.
+    Image_Init(&image);
 
-        /**
-         * @todo Do not fatal error here if the not a known format!
-         * Perform this check much earlier, when the definitions are
-         * read and mark which are valid.
-         */
-
-        // How big is it?
-        switch(fileLength)
-        {
-        case 256 * 256: image->size.width = image->size.height = 256; break;
-        case 128 * 128: image->size.width = image->size.height = 128; break;
-        case  64 *  64: image->size.width = image->size.height =  64; break;
-        default:
-            Con_Error("GL_LoadDetailTextureLump: Must be 256x256, 128x128 or 64x64.\n");
-            exit(1); // Unreachable.
-        }
-
-        image->pixelSize = 1;
-        bufSize = (size_t)image->size.width * image->size.height;
-        image->pixels = (uint8_t*) M_Malloc(bufSize);
-        if(!image->pixels)
-            Con_Error("GL_LoadDetailTextureLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) bufSize);
-        if(fileLength < bufSize)
-            memset(image->pixels, 0, bufSize);
-
-        // Load the raw image data.
-        FileHandle_Read(file, image->pixels, fileLength);
-        source = TEXS_ORIGINAL;
+    // How big is it?
+    de::File1 &file = hndl.file();
+    size_t fileLength = hndl.length();
+    switch(fileLength)
+    {
+    case 256 * 256: image.size.width = image.size.height = 256; break;
+    case 128 * 128: image.size.width = image.size.height = 128; break;
+    case  64 *  64: image.size.width = image.size.height =  64; break;
+    default:
+        Con_Error("GL_LoadDetailTextureLump: Must be 256x256, 128x128 or 64x64.\n");
+        exit(1); // Unreachable.
     }
-    return source;
+
+    image.pixelSize = 1;
+    size_t bufSize = (size_t) image.size.width * image.size.height;
+    image.pixels = (uint8_t *) M_Malloc(bufSize);
+    if(!image.pixels) Con_Error("GL_LoadDetailTextureLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) bufSize);
+
+    if(fileLength < bufSize)
+        std::memset(image.pixels, 0, bufSize);
+
+    // Load the raw image data.
+    file.read(image.pixels, fileLength);
+    return TEXS_ORIGINAL;
 }
 
-TexSource GL_LoadFlatLump(image_t* image, filehandle_s* file)
+static TexSource loadFlat(image_t &image, de::FileHandle &hndl)
 {
-    TexSource source = TEXS_NONE;
-    DENG_ASSERT(image && file);
-
-    if(Image_LoadFromFile(image, file))
+    if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
     {
-        source = TEXS_EXTERNAL;
+        return TEXS_EXTERNAL;
     }
-    else
-    {
-        // A DOOM flat.
+
+    // A DOOM flat.
 #define FLAT_WIDTH          64
 #define FLAT_HEIGHT         64
 
-        size_t bufSize, fileLength = FileHandle_Length(file);
+    Image_Init(&image);
 
-        Image_Init(image);
+    /// @todo not all flats are 64x64!
+    image.size.width  = FLAT_WIDTH;
+    image.size.height = FLAT_HEIGHT;
+    image.pixelSize = 1;
+    image.paletteId = defaultColorPalette;
 
-        /// @todo not all flats are 64x64!
-        image->size.width  = FLAT_WIDTH;
-        image->size.height = FLAT_HEIGHT;
-        image->pixelSize = 1;
-        image->paletteId = defaultColorPalette;
+    de::File1 &file   = hndl.file();
+    size_t fileLength = hndl.length();
 
-        bufSize = MAX_OF(fileLength, (size_t)image->size.width * image->size.height);
-        image->pixels = (uint8_t*) M_Malloc(bufSize);
-        if(!image->pixels)
-            Con_Error("GL_LoadFlatLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) bufSize);
-        if(fileLength < bufSize)
-            memset(image->pixels, 0, bufSize);
+    size_t bufSize = MAX_OF(fileLength, (size_t) image.size.width * image.size.height);
+    image.pixels = (uint8_t *) M_Malloc(bufSize);
+    if(!image.pixels) Con_Error("GL_LoadFlatLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) bufSize);
 
-        // Load the raw image data.
-        FileHandle_Read(file, image->pixels, fileLength);
-        source = TEXS_ORIGINAL;
+    if(fileLength < bufSize)
+        std::memset(image.pixels, 0, bufSize);
+
+    // Load the raw image data.
+    file.read(image.pixels, 0, fileLength);
+    return TEXS_ORIGINAL;
 
 #undef FLAT_HEIGHT
 #undef FLAT_WIDTH
-    }
-    return source;
 }
 
 /**
@@ -2308,8 +2321,13 @@ static void compositePaletted(dbyte *dst, QSize const &dstDimensions,
         if(dstX < 0 || dstX >= dstW) continue;
         if(dstY < 0 || dstY >= dstH) continue;
 
-        src.get(srcY * srcW + srcX,           &dst[dstY * dstW + dstX], 1);
-        src.get(srcY * srcW + srcX + srcPels, &dst[dstY * dstW + dstX + dstPels], 1);
+        dbyte srcAlpha;
+        src.get(srcY * srcW + srcX + srcPels, &srcAlpha, 1);
+        if(srcAlpha)
+        {
+            src.get(srcY * srcW + srcX, &dst[dstY * dstW + dstX], 1);
+            dst[dstY * dstW + dstX + dstPels] = srcAlpha;
+        }
     }
 }
 
@@ -2317,25 +2335,24 @@ static Block loadAndTranslatePatch(IByteArray const &data, int tclass = 0, int t
 {
     if(dbyte const *xlatTable = R_TranslationTable(tclass, tmap))
     {
-        return Patch::load(data, ByteRefArray(xlatTable, 256), false/*don't mask*/, true/*clip to logical dimensions*/);
+        return Patch::load(data, ByteRefArray(xlatTable, 256), Patch::ClipToLogicalDimensions);
     }
     else
     {
-        return Patch::load(data, false/*don't mask*/, true/*clip to logical dimensions*/);
+        return Patch::load(data, Patch::ClipToLogicalDimensions);
     }
 }
 
-TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int tmap, int border)
+static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass, int tmap, int border)
 {
-    DENG_ASSERT(image && hndl);
     LOG_AS("GL_LoadPatchLump");
 
-    if(Image_LoadFromFile(image, hndl))
+    if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
     {
         return TEXS_EXTERNAL;
     }
 
-    de::File1 &file = reinterpret_cast<de::File1 &>(*FileHandle_File(hndl));
+    de::File1 &file = hndl.file();
     ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
     // A DOOM patch?
@@ -2346,21 +2363,21 @@ TexSource GL_LoadPatchLump(image_t *image, filehandle_s *hndl, int tclass, int t
             Block patchImg = loadAndTranslatePatch(fileData, tclass, tmap);
             Patch::Metadata info = Patch::loadMetadata(fileData);
 
-            Image_Init(image);
-            image->size.width  = info.logicalDimensions.width()  + border*2;
-            image->size.height = info.logicalDimensions.height() + border*2;
-            image->pixelSize   = 1;
-            image->paletteId   = defaultColorPalette;
+            Image_Init(&image);
+            image.size.width  = info.logicalDimensions.width()  + border*2;
+            image.size.height = info.logicalDimensions.height() + border*2;
+            image.pixelSize   = 1;
+            image.paletteId   = defaultColorPalette;
 
-            image->pixels = (uint8_t*) M_Calloc(2 * image->size.width * image->size.height);
-            if(!image->pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image->size.width * image->size.height));
+            image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
+            if(!image.pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image.size.width * image.size.height));
 
-            compositePaletted(image->pixels, QSize(image->size.width, image->size.height),
+            compositePaletted(image.pixels, QSize(image.size.width, image.size.height),
                               patchImg, info.logicalDimensions, QPoint(border, border));
 
-            if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
+            if(palettedIsMasked(image.pixels, image.size.width, image.size.height))
             {
-                image->flags |= IMGF_IS_MASKED;
+                image.flags |= IMGF_IS_MASKED;
             }
 
             return TEXS_ORIGINAL;
@@ -2404,29 +2421,22 @@ DGLuint GL_PrepareExtTexture(char const *name, gfxmode_t mode, int useMipmap,
     return texture;
 }
 
-TexSource GL_LoadPatchComposite(image_t *image, de::Texture &tex)
+static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZero,
+    bool useZeroOriginIfOneComponent)
 {
-    DENG_ASSERT(image);
     LOG_AS("GL_LoadPatchComposite");
 
-    if(tex.manifest().schemeName().compareWithoutCase("Textures"))
-        throw Error("GL_LoadPatchComposite", String("Texture \"%1\" [%2] is not a CompositeTexture!")
-                                               .arg(tex.manifest().composeUri().asText())
-                                               .arg(de::dintptr(&tex)));
+    Image_Init(&image);
+    image.pixelSize = 1;
+    image.size.width  = tex.width();
+    image.size.height = tex.height();
+    image.paletteId = defaultColorPalette;
 
-    CompositeTexture const *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
-    DENG_ASSERT(texDef);
+    image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
+    if(!image.pixels) Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for new Image pixel data.", (unsigned long) (2 * image.size.width * image.size.height));
 
-    Image_Init(image);
-    image->pixelSize = 1;
-    image->size.width  = texDef->logicalWidth();
-    image->size.height = texDef->logicalHeight();
-    image->paletteId = defaultColorPalette;
-
-    image->pixels = (uint8_t*) M_Calloc(2 * image->size.width * image->size.height);
-    if(!image->pixels) Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for new Image pixel data.", (unsigned long) (2 * image->size.width * image->size.height));
-
-    DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef->components())
+    CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
+    DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
     {
         de::File1 &file = App_FileSystem()->nameIndex().lump(i->lumpNum());
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
@@ -2436,74 +2446,16 @@ TexSource GL_LoadPatchComposite(image_t *image, de::Texture &tex)
         {
             try
             {
-                Block patchImg = Patch::load(fileData);
+                Patch::Flags loadFlags = maskZero? Patch::MaskZero : 0;
+                Block patchImg = Patch::load(fileData, loadFlags);
                 Patch::Metadata info = Patch::loadMetadata(fileData);
+
+                QPoint origin = i->origin();
+                if(useZeroOriginIfOneComponent && texDef.componentCount() == 1)
+                    origin = QPoint(0, 0);
 
                 // Draw the patch in the buffer.
-                compositePaletted(image->pixels, QSize(image->size.width, image->size.height),
-                                  patchImg, info.dimensions, i->origin());
-            }
-            catch(IByteArray::OffsetError const &)
-            {} // Ignore this error.
-        }
-
-        file.unlock();
-    }
-
-    if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
-        image->flags |= IMGF_IS_MASKED;
-
-    // For debug:
-    // GL_DumpImage(image, Str_Text(GL_ComposeCacheNameForTexture(tex)));
-
-    return TEXS_ORIGINAL;
-}
-
-TexSource GL_LoadPatchComposite(image_t *image, texture_s *_tex)
-{
-    DENG_ASSERT(image && _tex);
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
-    return GL_LoadPatchComposite(image, tex);
-}
-
-TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean zeroMask)
-{
-    DENG_ASSERT(image);
-    LOG_AS("GL_LoadPatchCompositeAsSky");
-
-    if(tex.manifest().schemeName().compareWithoutCase("Textures"))
-        throw Error("GL_LoadPatchComposite", String("Texture \"%1\" [%2] is not a CompositeTexture!")
-                                               .arg(tex.manifest().composeUri().asText())
-                                               .arg(de::dintptr(&tex)));
-
-    CompositeTexture const *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
-    DENG_ASSERT(texDef);
-
-    Image_Init(image);
-    image->pixelSize = 1;
-    image->size.width  = texDef->logicalWidth();
-    image->size.height = texDef->logicalHeight();
-    image->paletteId = defaultColorPalette;
-
-    image->pixels = (uint8_t *) M_Calloc(2 * image->size.width * image->size.height);
-    if(!image->pixels) Con_Error("GL_LoadPatchCompositeAsSky: Failed on allocation of %lu bytes for new Image pixel data.", (unsigned long) (2 * image->size.width * image->size.height));
-
-    DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef->components())
-    {
-        de::File1 &file = App_FileSystem()->nameIndex().lump(i->lumpNum());
-        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-
-        // A DOOM patch?
-        if(Patch::recognize(fileData))
-        {
-            try
-            {
-                Block patchImg = Patch::load(fileData, zeroMask);
-                Patch::Metadata info = Patch::loadMetadata(fileData);
-
-                QPoint origin = (texDef->componentCount() == 1? QPoint(0, 0) : i->origin());
-
-                compositePaletted(image->pixels, QSize(image->size.width, image->size.height),
+                compositePaletted(image.pixels, QSize(image.size.width, image.size.height),
                                   patchImg, info.dimensions, origin);
             }
             catch(IByteArray::OffsetError const &)
@@ -2513,69 +2465,65 @@ TexSource GL_LoadPatchCompositeAsSky(image_t *image, de::Texture &tex, boolean z
         file.unlock();
     }
 
-    if(zeroMask)
-    {
-        image->flags |= IMGF_IS_MASKED;
-    }
+    if(maskZero || palettedIsMasked(image.pixels, image.size.width, image.size.height))
+        image.flags |= IMGF_IS_MASKED;
+
+    // For debug:
+    // GL_DumpImage(&image, Str_Text(GL_ComposeCacheNameForTexture(tex)));
 
     return TEXS_ORIGINAL;
 }
 
-TexSource GL_LoadPatchCompositeAsSky(image_t *image, texture_s *_tex, boolean zeroMask)
+static TexSource loadRaw(image_t &image, rawtex_t const &raw)
 {
-    DENG_ASSERT(image && _tex);
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
-    return GL_LoadPatchCompositeAsSky(image, tex, zeroMask);
-}
-
-TexSource GL_LoadRawTex(image_t *image, rawtex_t const *r)
-{
-    DENG_ASSERT(image);
-
     AutoStr *foundPath = AutoStr_NewStd();
     TexSource source = TEXS_NONE;
 
     // First try to find an external resource.
-    de::Uri searchPath("Patches", Path(Str_Text(&r->name)));
+    de::Uri searchPath("Patches", Path(Str_Text(&raw.name)));
 
     if(F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s *>(&searchPath), foundPath) &&
-       GL_LoadImage(image, Str_Text(foundPath)))
+       GL_LoadImage(&image, Str_Text(foundPath)))
     {
         // "External" image loaded.
         source = TEXS_EXTERNAL;
     }
-    else if(r->lumpNum >= 0)
+    else if(raw.lumpNum >= 0)
     {
-        filehandle_s *file = F_OpenLump(r->lumpNum);
+        filehandle_s *file = F_OpenLump(raw.lumpNum);
         if(file)
         {
-            if(Image_LoadFromFile(image, file))
+            if(Image_LoadFromFile(&image, file))
             {
                 source = TEXS_ORIGINAL;
             }
             else
-            {   // It must be an old-fashioned "raw" image.
+            {
+                // It must be an old-fashioned "raw" image.
 #define RAW_WIDTH           320
 #define RAW_HEIGHT          200
+
+                Image_Init(&image);
 
                 size_t fileLength = FileHandle_Length(file);
                 size_t bufSize = 3 * RAW_WIDTH * RAW_HEIGHT;
 
-                Image_Init(image);
-                image->pixels = (uint8_t *) M_Malloc(bufSize);
+                image.pixels = (uint8_t *) M_Malloc(bufSize);
                 if(fileLength < bufSize)
-                    std::memset(image->pixels, 0, bufSize);
+                    std::memset(image.pixels, 0, bufSize);
 
                 // Load the raw image data.
-                FileHandle_Read(file, image->pixels, fileLength);
-                image->size.width = RAW_WIDTH;
-                image->size.height = int(fileLength / image->size.width);
-                image->pixelSize = 1;
+                FileHandle_Read(file, image.pixels, fileLength);
+                image.size.width = RAW_WIDTH;
+                image.size.height = int(fileLength / image.size.width);
+                image.pixelSize = 1;
+
                 source = TEXS_ORIGINAL;
 
 #undef RAW_HEIGHT
 #undef RAW_WIDTH
             }
+
             F_Delete(file);
         }
     }
@@ -2593,7 +2541,7 @@ DGLuint GL_PrepareRawTexture(rawtex_t *raw)
         image_t image;
         Image_Init(&image);
 
-        if(GL_LoadRawTex(&image, raw) == TEXS_EXTERNAL)
+        if(loadRaw(image, *raw) == TEXS_EXTERNAL)
         {
             // Loaded an external raw texture.
             raw->tex = GL_NewTextureWithParams2(image.pixelSize == 4? DGL_RGBA : DGL_RGB,
@@ -3115,36 +3063,8 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     LOG_AS("tryLoadImageAndPrepareVariant");
 
     // Load the source image data.
-    TexSource source = TEXS_NONE;
     image_t image;
-    if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
-    {
-        // Try to load a replacement version of this texture?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.flags().testFlag(de::Texture::Custom)))
-        {
-            CompositeTexture const *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
-            DENG_ASSERT(texDef);
-
-            source = loadExternalTexture(image, "Textures:" + texDef->percentEncodedNameRef(), "-ck");
-        }
-
-        if(source == TEXS_NONE)
-        {
-            if(TC_SKYSPHERE_DIFFUSE != TS_GENERAL(spec)->context)
-            {
-                source = GL_LoadPatchComposite(&image, reinterpret_cast<texture_s *>(&tex));
-            }
-            else
-            {
-                bool const zeroMask = !!(TS_GENERAL(spec)->flags & TSF_ZEROMASK);
-                source = GL_LoadPatchCompositeAsSky(&image, reinterpret_cast<texture_s *>(&tex), zeroMask);
-            }
-        }
-    }
-    else
-    {
-        source = loadSourceImage(tex, *spec, image);
-    }
+    TexSource source = loadSourceImage(tex, *spec, image);
 
     if(source == TEXS_NONE)
     {

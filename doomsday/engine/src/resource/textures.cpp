@@ -51,17 +51,14 @@ namespace de {
 
 static Uri emptyUri;
 
-Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, QSize const &dimensions,
-    Texture::Flags flags, void *userData)
+Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, void *userData)
 {
     LOG_AS("Textures::ResourceClass::interpret");
-    return new Texture(manifest, dimensions, flags, userData);
-}
-
-Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Texture::Flags flags,
-    void *userData)
-{
-    return interpret(manifest, QSize(0, 0), flags, userData);
+    Texture *tex = new Texture(manifest, userData);
+    tex->flags() = manifest.flags();
+    tex->setDimensions(manifest.logicalDimensions());
+    tex->setOrigin(manifest.origin());
+    return tex;
 }
 
 struct Textures::Instance
@@ -115,12 +112,7 @@ Textures::Scheme& Textures::createScheme(String name)
     return *newScheme;
 }
 
-static inline void releaseTexture(Texture *tex)
-{
-    /// Stub.
-    GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(tex));
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
-}
+
 
 bool Textures::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet) const
 {
@@ -260,7 +252,8 @@ bool Textures::has(Uri const &path) const
     return false;
 }
 
-TextureManifest *Textures::declare(Uri const &uri, int uniqueId, Uri const *resourceUri)
+TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
+    QSize const &dimensions, QPoint const &origin, int uniqueId, de::Uri const *resourceUri)
 {
     LOG_AS("Textures::declare");
 
@@ -282,32 +275,44 @@ TextureManifest *Textures::declare(Uri const &uri, int uniqueId, Uri const *reso
     catch(NotFoundError const &)
     {
         manifest = &scheme(uri.scheme()).insertManifest(uri.path());
-        manifest->setUniqueId(uniqueId);
     }
+    if(!manifest)
+        throw Error("Textures::declare", "Unexpected error declaring texture \"" + uri + "\"");
 
     /*
      * (Re)configure the manifest.
      */
+    bool mustRelease = false;
+
+    manifest->flags() = flags;
+    manifest->setOrigin(origin);
+
+    if(manifest->setLogicalDimensions(dimensions))
+    {
+        mustRelease = true;
+    }
 
     // We don't care whether these identfiers are truely unique. Our only
     // responsibility is to release textures when they change.
-    bool release = false;
+    if(manifest->setUniqueId(uniqueId))
+    {
+        mustRelease = true;
+    }
 
     if(resourceUri && manifest->setResourceUri(*resourceUri))
     {
-        release = true;
-    }
-
-    if(manifest->setUniqueId(uniqueId))
-    {
-        release = true;
-    }
-
-    if(release && manifest->texture())
-    {
         // The mapped resource is being replaced, so release any existing Texture.
         /// @todo Only release if this Texture is bound to only this binding.
-        releaseTexture(manifest->texture());
+        mustRelease = true;
+    }
+
+    if(mustRelease)
+    {
+        if(de::Texture *tex = manifest->texture())
+        {
+            /// @todo Update any Materials (and thus Surfaces) which reference this.
+            GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(tex));
+        }
     }
 
     return manifest;

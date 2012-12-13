@@ -30,6 +30,15 @@ struct TextureManifest::Instance
     /// Path to the resource containing the loadable data.
     Uri resourceUri;
 
+    /// World dimensions in map coordinate space units.
+    QSize logicalDimensions;
+
+    /// World origin offset in map coordinate space units.
+    QPoint origin;
+
+    /// Texture classification flags.
+    Texture::Flags flags;
+
     /// The associated logical Texture instance (if any).
     Texture *texture;
 
@@ -64,7 +73,7 @@ Textures &TextureManifest::textures()
     return *App_Textures();
 }
 
-Texture *TextureManifest::derive(QSize const &dimensions, Texture::Flags flags)
+Texture *TextureManifest::derive()
 {
     LOG_AS("TextureManifest::derive");
     if(Texture *tex = texture())
@@ -72,21 +81,17 @@ Texture *TextureManifest::derive(QSize const &dimensions, Texture::Flags flags)
 #if _DEBUG
         LOG_INFO("\"%s\" already has an existing texture, reconfiguring.") << composeUri();
 #endif
-        tex->setDimensions(dimensions);
-        tex->flags() = flags;
+        tex->flags() = d->flags;
+        tex->setDimensions(d->logicalDimensions);
+        tex->setOrigin(d->origin);
 
         /// @todo Materials and Surfaces should be notified of this!
         return tex;
     }
 
-    Texture *tex = Textures::ResourceClass::interpret(*this, dimensions, flags);
+    Texture *tex = Textures::ResourceClass::interpret(*this);
     if(!texture()) setTexture(tex);
     return tex;
-}
-
-Texture *TextureManifest::derive(Texture::Flags flags)
-{
-    return derive(QSize(), flags);
 }
 
 Textures::Scheme &TextureManifest::scheme() const
@@ -136,16 +141,6 @@ bool TextureManifest::setResourceUri(Uri const &newUri)
     return false;
 }
 
-Texture *TextureManifest::texture() const
-{
-    return d->texture;
-}
-
-void TextureManifest::setTexture(Texture *newTexture)
-{
-    d->texture = newTexture;
-}
-
 int TextureManifest::uniqueId() const
 {
     return d->uniqueId;
@@ -159,6 +154,43 @@ bool TextureManifest::setUniqueId(int newUniqueId)
     // We'll need to rebuild the id map too.
     scheme().markUniqueIdLutDirty();
     return true;
+}
+
+Texture::Flags &TextureManifest::flags()
+{
+    return d->flags;
+}
+
+QSize const &TextureManifest::logicalDimensions() const
+{
+    return d->logicalDimensions;
+}
+
+bool TextureManifest::setLogicalDimensions(QSize const &newDimensions)
+{
+    if(d->logicalDimensions == newDimensions) return false;
+    d->logicalDimensions = newDimensions;
+    return true;
+}
+
+QPoint const &TextureManifest::origin() const
+{
+    return d->origin;
+}
+
+void TextureManifest::setOrigin(QPoint const &newOrigin)
+{
+    d->origin = newOrigin;
+}
+
+Texture *TextureManifest::texture() const
+{
+    return d->texture;
+}
+
+void TextureManifest::setTexture(Texture *newTexture)
+{
+    d->texture = newTexture;
 }
 
 } // namespace de

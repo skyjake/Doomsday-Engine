@@ -88,22 +88,9 @@ public:
 public:
     /**
      * @param manifest  Manifest derived to yield the texture.
-     * @param flags     Texture classification flags.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture(TextureManifest &manifest, Flags flags = 0, void *userData = 0);
-
-    /**
-     * @param manifest  Manifest derived to yield the Texture.
-     * @param dimensions World dimensions of the texture in map space
-     *                  coordinates. If width=0 and height=0, their value
-     *                  will be inferred from the actual pixel dimensions
-     *                  of the image resource at load time.
-     * @param flags     Texture classification flags.
-     * @param userData  User data to associate with the resultant texture.
-     */
-    Texture(TextureManifest &manifest, QSize const &dimensions,
-            Flags flags = 0, void *userData = 0);
+    Texture(TextureManifest &manifest, void *userData = 0);
 
     ~Texture();
 

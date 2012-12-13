@@ -184,28 +184,12 @@ static int calcRealHeight(Columns const &columns)
     return geom.height();
 }
 
-static Patch::Metadata prepareMetadata(Header const &hdr, int realHeight)
+static Block compositeImage(Reader &reader, IByteArray const *xlatTable,
+                            Columns const &columns, Patch::Metadata const &meta,
+                            Patch::Flags flags)
 {
-    Patch::Metadata meta;
-    meta.dimensions         = QSize(hdr.dimensions[0], realHeight);
-    meta.logicalDimensions  = QSize(hdr.dimensions[0], hdr.dimensions[1]);
-    meta.origin             = QPoint(hdr.origin[0], hdr.origin[1]);
-    return meta;
-}
-
-static Block load(IByteArray const &data, IByteArray const *xlatTable,
-                  bool maskZero, bool clipToLogicalDimensions)
-{
-    Reader reader = Reader(data);
-
-    // Read the header.
-    Header hdr; reader >> hdr;
-
-    // Read and prepare the column => post map.
-    Columns columns = readColumns(hdr.dimensions[0], reader);
-
-    // Prepare metadata.
-    Patch::Metadata meta = prepareMetadata(hdr, calcRealHeight(columns));
+    bool const maskZero                = flags.testFlag(Patch::MaskZero);
+    bool const clipToLogicalDimensions = flags.testFlag(Patch::ClipToLogicalDimensions);
 
 #ifdef DENG_DEBUG
     // Is the "logical" height of the image equal to the actual height of the
@@ -226,12 +210,12 @@ static Block load(IByteArray const &data, IByteArray const *xlatTable,
 
     // Determine the dimensions of the output buffer.
     QSize const &dimensions = clipToLogicalDimensions? meta.logicalDimensions : meta.dimensions;
+    int const             w = dimensions.width();
+    int const             h = dimensions.height();
+    size_t const       pels = w * h;
 
-    int const       w = dimensions.width();
-    int const       h = dimensions.height();
-    size_t const pels = w * h;
-
-    Block output = QByteArray(2 * pels, 0);
+    // Create the output buffer and fill with default color (black) and alpha (transparent).
+    Block output    = QByteArray(2 * pels, 0);
 
     // Map the pixel color channels in the output buffer.
     dbyte *top      = output.data();
@@ -318,6 +302,15 @@ static Block load(IByteArray const &data, IByteArray const *xlatTable,
 
 } // internal
 
+static Patch::Metadata prepareMetadata(internal::Header const &hdr, int realHeight)
+{
+    Patch::Metadata meta;
+    meta.dimensions         = QSize(hdr.dimensions[0], realHeight);
+    meta.logicalDimensions  = QSize(hdr.dimensions[0], hdr.dimensions[1]);
+    meta.origin             = QPoint(hdr.origin[0], hdr.origin[1]);
+    return meta;
+}
+
 Patch::Metadata Patch::loadMetadata(IByteArray const &data)
 {
     LOG_AS("Patch::loadMetadata");
@@ -325,20 +318,32 @@ Patch::Metadata Patch::loadMetadata(IByteArray const &data)
 
     internal::Header hdr; reader >> hdr;
     internal::Columns columns = internal::readColumns(hdr.dimensions[0], reader);
-    return internal::prepareMetadata(hdr, calcRealHeight(columns));
+
+    return prepareMetadata(hdr, internal::calcRealHeight(columns));
 }
 
-Block Patch::load(IByteArray const &data, IByteArray const &xlatTable,
-    bool maskZero, bool clipToLogicalDimensions)
+Block Patch::load(IByteArray const &data, IByteArray const &xlatTable, Patch::Flags flags)
 {
     LOG_AS("Patch::load");
-    return internal::load(data, &xlatTable, maskZero, clipToLogicalDimensions);
+    Reader reader = Reader(data);
+
+    internal::Header hdr; reader >> hdr;
+    internal::Columns columns = internal::readColumns(hdr.dimensions[0], reader);
+
+    Metadata meta = prepareMetadata(hdr, internal::calcRealHeight(columns));
+    return internal::compositeImage(reader, &xlatTable, columns, meta, flags);
 }
 
-Block Patch::load(IByteArray const &data, bool maskZero, bool clipToLogicalDimensions)
+Block Patch::load(IByteArray const &data, Patch::Flags flags)
 {
     LOG_AS("Patch::load");
-    return internal::load(data, 0/* no translation */, maskZero, clipToLogicalDimensions);
+    Reader reader = Reader(data);
+
+    internal::Header hdr; reader >> hdr;
+    internal::Columns columns = internal::readColumns(hdr.dimensions[0], reader);
+
+    Metadata meta = prepareMetadata(hdr, internal::calcRealHeight(columns));
+    return internal::compositeImage(reader, 0/* no translation */, columns, meta, flags);
 }
 
 bool Patch::recognize(IByteArray const &data)
