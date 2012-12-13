@@ -161,7 +161,7 @@ int FS::findAll(String const &path, FoundFiles &found) const
     for(Index::const_iterator i = range.first; i != range.second; ++i)    
     {       
         File *file = i->second;
-        if(file->path().endsWith(dir))
+        if(file->path().fileNamePath().endsWith(dir))
         {
             found.push_back(file);
         }
