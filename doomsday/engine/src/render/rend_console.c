@@ -281,7 +281,7 @@ void Rend_ConsoleUpdateTitle(void)
     // Update the secondary title and the game status.
     if(DD_GameLoaded())
     {
-        dd_snprintf(secondaryTitleText, sizeof(secondaryTitleText)-1, "%s %s", (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
+        dd_snprintf(secondaryTitleText, sizeof(secondaryTitleText)-1, "%s", (char*) gx.GetVariable(DD_PLUGIN_NICENAME));
         strncpy(statusText, Str_Text(Game_Title(App_CurrentGame())), sizeof(statusText) - 1);
         return;
     }
@@ -508,7 +508,7 @@ static void drawConsoleTitleBar(float alpha)
     origin.y = 0;
     size.width  = Window_Width(theWindow);
     size.height = barHeight;
-    UI_Gradient(&origin, &size, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .8f * alpha, alpha);
+    UI_Gradient(&origin, &size, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .95f * alpha, alpha);
 
     origin.x = 0;
     origin.y = barHeight;
