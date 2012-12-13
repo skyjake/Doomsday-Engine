@@ -1210,6 +1210,7 @@ void Window_Delete(Window* wnd)
     {
         wnd->assertWindow();
         wnd->widget->canvas().setFocusFunc(0);
+        wnd->widget->canvas().setResizedFunc(0);
 
         // Make sure we'll remember the config.
         Window_SaveState(wnd);
