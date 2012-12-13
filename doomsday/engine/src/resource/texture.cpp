@@ -58,22 +58,16 @@ struct Texture::Instance
     /// on the variant specification.
     void *analyses[TEXTURE_ANALYSIS_COUNT];
 
-    Instance(TextureManifest &_manifest, Texture::Flags _flags, void *_userData)
-        : flags(_flags), manifest(_manifest), userData(_userData)
+    Instance(TextureManifest &_manifest, void *_userData)
+        : manifest(_manifest), userData(_userData)
     {
         std::memset(analyses, 0, sizeof(analyses));
     }
 };
 
-Texture::Texture(TextureManifest &_manifest, Flags _flags, void *_userData)
+Texture::Texture(TextureManifest &_manifest, void *_userData)
 {
-    d = new Instance(_manifest, _flags, _userData);
-}
-
-Texture::Texture(TextureManifest &_manifest, QSize const &size, Flags _flags, void *_userData)
-{
-    d = new Instance(_manifest, _flags, _userData);
-    setDimensions(size);
+    d = new Instance(_manifest, _userData);
 }
 
 Texture::~Texture()

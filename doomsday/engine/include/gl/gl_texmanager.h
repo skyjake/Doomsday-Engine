@@ -181,40 +181,36 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
  *
  * @return  @c true iff successful.
  */
-boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
+boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, uint8_t const *pixels,
     int width, int height, float grayFactor);
 
 /**
  * @note Can be rather time-consuming due to forced scaling operations and
  * the generation of mipmaps.
  */
-void GL_UploadTextureContent(const struct texturecontent_s* content);
+void GL_UploadTextureContent(struct texturecontent_s const *content);
 
-uint8_t* GL_LoadImage(struct image_s* img, const char* filePath);
-uint8_t* GL_LoadImageStr(struct image_s* img, const ddstring_t* filePath);
+uint8_t *GL_LoadImage(struct image_s *img, char const *filePath);
+uint8_t *GL_LoadImageStr(struct image_s *img, ddstring_t const *filePath);
 
-TexSource GL_LoadRawTex(struct image_s* image, const rawtex_t* r);
+TexSource GL_LoadRawTex(struct image_s *image, rawtex_t const *r);
 
-TexSource GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
+TexSource GL_LoadExtTexture(struct image_s *image, char const *name, gfxmode_t mode);
 
-TexSource GL_LoadFlatLump(struct image_s* image, FileHandle* file);
+TexSource GL_LoadFlatLump(struct image_s *image, FileHandle *file);
 
-TexSource GL_LoadPatchLump(struct image_s* image, FileHandle* file, int tclass,
+TexSource GL_LoadPatchLump(struct image_s *image, FileHandle *file, int tclass,
     int tmap, int border);
 
-TexSource GL_LoadDetailTextureLump(struct image_s* image, FileHandle* file);
-
-TexSource GL_LoadPatchComposite(struct image_s* image, Texture* tex);
-
-TexSource GL_LoadPatchCompositeAsSky(struct image_s* image, Texture* tex, boolean zeroMask);
+TexSource GL_LoadDetailTextureLump(struct image_s *image, FileHandle *file);
 
 /**
  * Compare the given TextureVariantSpecifications and determine whether they can
  * be considered equal (dependent on current engine state and the available features
  * of the GL implementation).
  */
-int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* a,
-    const texturevariantspecification_t* b);
+int GL_CompareTextureVariantSpecifications(texturevariantspecification_t const *a,
+    texturevariantspecification_t const *b);
 
 /**
  * Prepare a TextureVariantSpecification according to usage context. If incomplete

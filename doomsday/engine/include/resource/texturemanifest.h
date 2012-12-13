@@ -47,18 +47,8 @@ public:
      * Derive a new logical Texture instance by interpreting the manifest.
      * The first time a texture is derived from the manifest, said texture
      * is assigned to the manifest (ownership is assumed).
-     *
-     * @param flags     Texture classification flags.
      */
-    Texture *derive(Texture::Flags flags = 0);
-
-    /**
-     * @copydoc derive()
-     * @param dimensions  Logical dimensions. Components can be @c 0 in which
-     *                  case their value will be inherited from the actual
-     *                  pixel dimensions of the image at load time.
-     */
-    Texture *derive(QSize const &dimensions, Texture::Flags flags = 0);
+    Texture *derive();
 
     /**
      * Returns the owning scheme of the TextureManifest.
@@ -107,6 +97,50 @@ public:
     bool setResourceUri(Uri const &newUri);
 
     /**
+     * Returns the scheme-unique identifier for the manifest.
+     */
+    int uniqueId() const;
+
+    /**
+     * Change the unique identifier property of the manifest.
+     *
+     * @return  @c true iff @a newUniqueId differed to the existing unique
+     *          identifier, which was subsequently changed.
+     */
+    bool setUniqueId(int newUniqueId);
+
+    /**
+     * Returns the logical dimensions property of the manifest.
+     */
+    QSize const &logicalDimensions() const;
+
+    /**
+     * Change the logical dimensions property of the manifest.
+     *
+     * @param newDimensions  New logical dimensions. Components can be @c 0 in
+     * which case their value will be inherited from the pixel dimensions of
+     * the image at load time.
+     */
+    bool setLogicalDimensions(QSize const &newDimensions);
+
+    /**
+     * Returns the world origin offset property of the manifest.
+     */
+    QPoint const &origin() const;
+
+    /**
+     * Change the world origin offest property of the manifest.
+     *
+     * @param newOrigin  New origin offset.
+     */
+    void setOrigin(QPoint const &newOrigin);
+
+    /**
+     * Returns the texture flags property of the manifest.
+     */
+    Texture::Flags &flags();
+
+    /**
      * Returns the logical Texture instance associated with the manifest;
      * otherwise @c 0.
      */
@@ -118,19 +152,6 @@ public:
      * @param newTexture  New logical Texture to associate.
      */
     void setTexture(Texture *newTexture);
-
-    /**
-     * Returns the scheme-unique identifier for the manifest.
-     */
-    int uniqueId() const;
-
-    /**
-     * Change the unique identifier associated with the manifest.
-     *
-     * @return  @c true iff @a newUniqueId differed to the existing unique
-     *          identifier, which was subsequently changed.
-     */
-    bool setUniqueId(int newUniqueId);
 
     /// Returns a reference to the application's texture system.
     static Textures &textures();

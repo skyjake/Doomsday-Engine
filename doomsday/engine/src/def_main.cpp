@@ -967,10 +967,10 @@ static int generateMaterialDefForCompositeTexture(de::TextureManifest &manifest,
 
     if(de::Texture *tex = manifest.texture())
     {
-        de::CompositeTexture* pcTex = reinterpret_cast<de::CompositeTexture *>(tex->userDataPointer());
-        DENG_ASSERT(pcTex);
         mat->width  = tex->width();
         mat->height = tex->height();
+        de::CompositeTexture* pcTex = reinterpret_cast<de::CompositeTexture *>(tex->userDataPointer());
+        DENG_ASSERT(pcTex);
         mat->flags = (pcTex->flags().testFlag(de::CompositeTexture::NoDraw)? MATF_NO_DRAW : 0);
     }
 #if _DEBUG
@@ -1418,6 +1418,36 @@ static void initAnimGroup(ded_group_t* def)
     }
 }
 
+static void defineFlaremap(uri_s const *_resourceUri)
+{
+    if(!_resourceUri) return;
+    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
+    if(resourceUri.isEmpty()) return;
+
+    // Reference to none?
+    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
+
+    // Reference to a "built-in" flaremap?
+    de::String const &resourcePathStr = resourceUri.path().toStringRef();
+    if(resourcePathStr.length() == 1 &&
+       resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
+        return;
+
+    R_DefineTexture("Flaremaps", resourceUri);
+}
+
+static void defineLightmap(uri_s const *_resourceUri)
+{
+    if(!_resourceUri) return;
+    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
+    if(resourceUri.isEmpty()) return;
+
+    // Reference to none?
+    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
+
+    R_DefineTexture("Lightmaps", resourceUri);
+}
+
 void Def_PostInit(void)
 {
     char name[40];
@@ -1462,8 +1492,7 @@ void Def_PostInit(void)
     {
         ded_detailtexture_t *dtl = &defs.details[i];
         if(!dtl->detailTex) continue;
-
-        R_CreateDetailTexture(dtl->detailTex);
+        R_DefineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->detailTex));
     }
 
     // Lights.
@@ -1473,11 +1502,22 @@ void Def_PostInit(void)
     {
         ded_light_t* lig = &defs.lights[i];
 
-        R_CreateLightmap(lig->up);
-        R_CreateLightmap(lig->down);
-        R_CreateLightmap(lig->sides);
-
-        R_CreateFlaremap(lig->flare);
+        if(lig->up)
+        {
+            defineLightmap(lig->up);
+        }
+        if(lig->down)
+        {
+            defineLightmap(lig->down);
+        }
+        if(lig->sides)
+        {
+            defineLightmap(lig->sides);
+        }
+        if(lig->flare)
+        {
+            defineFlaremap(lig->flare);
+        }
     }
 
     for(int i = 0; i < defs.count.decorations.num; ++i)
@@ -1490,11 +1530,22 @@ void Def_PostInit(void)
 
             if(!R_IsValidLightDecoration(lig)) break;
 
-            R_CreateLightmap(lig->up);
-            R_CreateLightmap(lig->down);
-            R_CreateLightmap(lig->sides);
-
-            R_CreateFlaremap(lig->flare);
+            if(lig->up)
+            {
+                defineLightmap(lig->up);
+            }
+            if(lig->down)
+            {
+                defineLightmap(lig->down);
+            }
+            if(lig->sides)
+            {
+                defineLightmap(lig->sides);
+            }
+            if(lig->flare)
+            {
+                defineFlaremap(lig->flare);
+            }
         }
     }
 
@@ -1504,13 +1555,15 @@ void Def_PostInit(void)
     for(int i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t* ref = &defs.reflections[i];
-        Size2Raw size;
 
-        R_CreateReflectionTexture(ref->shinyMap);
-
-        size.width  = ref->maskWidth;
-        size.height = ref->maskHeight;
-        R_CreateMaskTexture(ref->maskMap, &size);
+        if(ref->shinyMap)
+        {
+            R_DefineTexture("Reflections", reinterpret_cast<de::Uri &>(*ref->shinyMap));
+        }
+        if(ref->maskMap)
+        {
+            R_DefineTexture("Masks", reinterpret_cast<de::Uri &>(*ref->maskMap), QSize(ref->maskWidth, ref->maskHeight));
+        }
     }
 
     // Animation groups.
