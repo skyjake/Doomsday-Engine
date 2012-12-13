@@ -2335,8 +2335,13 @@ static void compositePaletted(dbyte *dst, QSize const &dstDimensions,
         if(dstX < 0 || dstX >= dstW) continue;
         if(dstY < 0 || dstY >= dstH) continue;
 
-        src.get(srcY * srcW + srcX,           &dst[dstY * dstW + dstX], 1);
-        src.get(srcY * srcW + srcX + srcPels, &dst[dstY * dstW + dstX + dstPels], 1);
+        dbyte srcAlpha;
+        src.get(srcY * srcW + srcX + srcPels, &srcAlpha, 1);
+        if(srcAlpha)
+        {
+            src.get(srcY * srcW + srcX, &dst[dstY * dstW + dstX], 1);
+            dst[dstY * dstW + dstX + dstPels] = srcAlpha;
+        }
     }
 }
 
@@ -2436,11 +2441,6 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool zeroM
 {
     LOG_AS("GL_LoadPatchComposite");
 
-    if(tex.manifest().schemeName().compareWithoutCase("Textures"))
-        throw Error("GL_LoadPatchComposite", String("Texture \"%1\" [%2] is not a CompositeTexture!")
-                                               .arg(tex.manifest().composeUri().asText())
-                                               .arg(de::dintptr(&tex)));
-
     Image_Init(&image);
     image.pixelSize = 1;
     image.size.width  = tex.width();
@@ -2450,9 +2450,8 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool zeroM
     image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
     if(!image.pixels) Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for new Image pixel data.", (unsigned long) (2 * image.size.width * image.size.height));
 
-    CompositeTexture const *texDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
-    DENG_ASSERT(texDef);
-    DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef->components())
+    CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
+    DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
     {
         de::File1 &file = App_FileSystem()->nameIndex().lump(i->lumpNum());
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
@@ -2466,7 +2465,7 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool zeroM
                 Patch::Metadata info = Patch::loadMetadata(fileData);
 
                 QPoint origin = i->origin();
-                if(useZeroOriginIfOneComponent && texDef->componentCount() == 1)
+                if(useZeroOriginIfOneComponent && texDef.componentCount() == 1)
                     origin = QPoint(0, 0);
 
                 // Draw the patch in the buffer.
