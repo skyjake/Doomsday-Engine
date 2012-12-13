@@ -1279,6 +1279,7 @@ void Def_Read()
 
         for(int k = i + 1; k < countTexts.num; ++k)
         {
+            if(!texts[k].text) continue; // Already done.
             if(stricmp(defs.text[i].id, defs.text[k].id) && texts[k].text) continue;
 
             // Update the earlier string.
