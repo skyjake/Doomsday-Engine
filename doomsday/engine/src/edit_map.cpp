@@ -1800,12 +1800,12 @@ static void clearMaterialDict(void)
     delete materialDict; materialDict = 0;
 }
 
-static void assignSurfaceMaterial(Surface* suf, ddstring_t const* materialUri)
+static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr)
 {
     DENG_ASSERT(suf);
 
-    material_t* material = 0;
-    if(materialUri && !Str_IsEmpty(materialUri))
+    material_t *material = 0;
+    if(materialUriStr && !Str_IsEmpty(materialUriStr))
     {
         // Are we yet to instantiate the dictionary?
         if(!materialDict)
@@ -1813,25 +1813,27 @@ static void assignSurfaceMaterial(Surface* suf, ddstring_t const* materialUri)
             materialDict = new de::StringPool;
         }
 
+        de::Uri materialUri(Str_Text(materialUriStr), RC_NULL);
+
         // Intern this reference.
-        de::StringPool::Id internId = materialDict->intern(de::String(Str_Text(materialUri)));
+        de::StringPool::Id internId = materialDict->intern(materialUri.compose());
 
         // Have we previously encountered this?.
         uint refCount = materialDict->userValue(internId);
         if(refCount)
         {
             // Yes, if resolved the user pointer holds the found material.
-            material = (material_t*) materialDict->userPointer(internId);
+            material = (material_t *) materialDict->userPointer(internId);
         }
         else
         {
             // No, attempt to resolve this URI and update the dictionary.
             // First try the preferred scheme, then any.
-            materialid_t materialId = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
+            materialid_t materialId = Materials_ResolveUri(reinterpret_cast<uri_s *>(&materialUri));
             if(materialId == NOMATERIALID)
             {
-                de::Uri tmp(de::Path(Str_Text(materialUri)));
-                materialId = Materials_ResolveUri(reinterpret_cast<uri_s*>(&tmp));
+                materialUri.setScheme("");
+                materialId = Materials_ResolveUri(reinterpret_cast<uri_s *>(&materialUri));
             }
             material = Materials_ToMaterial(materialId);
 
