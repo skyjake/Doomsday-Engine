@@ -177,8 +177,8 @@ public:
     Reader &readUntil(IByteArray &byteArray, IByteArray::Byte delimiter = 0);
 
     /**
-     * Reads a line of text ending in a '\n' character. The source data is
-     * expected to be UTF-8 encoded text. All carriage returns ('\r') are
+     * Reads a line of text ending in a @c \\n character. The source data is
+     * expected to be UTF-8 encoded text. All carriage returns (@c \\r) are
      * removed from the string.
      *
      * @param string  The read line is returned here. It includes the
