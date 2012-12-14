@@ -71,6 +71,9 @@ extern int shadowMaxDistance;
 
 extern int useShinySurfaces;
 
+extern byte devRendSkyAlways;
+extern byte freezeRLs;
+
 void Rend_Register(void);
 
 void Rend_Init(void);

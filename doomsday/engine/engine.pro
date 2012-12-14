@@ -563,7 +563,7 @@ SOURCES += \
     src/render/rend_fakeradio.c \
     src/render/rend_font.c \
     src/render/rend_halo.c \
-    src/render/rend_list.c \
+    src/render/rend_list.cpp \
     src/render/rend_main.c \
     src/render/rend_model.cpp \
     src/render/rend_particle.c \

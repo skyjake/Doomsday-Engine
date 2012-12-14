@@ -1,53 +1,45 @@
-/**\file rend_list.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Doomsday Rendering Lists v3.3
+/** @file rend_list.cpp Rendering Lists v3.3
  *
  * 3.3 -- Texture unit write state and revised primitive write interface.
  * 3.2 -- Shiny walls and floors
  * 3.1 -- Support for multiple shadow textures
  * 3.0 -- Multitexturing
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
-
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
 #include "de_graphics.h"
-#include "de_misc.h"
+//#include "de_misc.h"
+
+#include <de/memory.h>
+#include <de/memoryzone.h>
 
 #include "def_main.h"
 #include "resource/texturevariant.h"
 #include "m_profiler.h"
-
-// MACROS ------------------------------------------------------------------
 
 BEGIN_PROF_TIMERS()
   PROF_RL_ADD_POLY,
@@ -92,8 +84,6 @@ END_PROF_TIMERS()
 #define DCF_SET_MATRIX_TEXTURE      (DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1)
 #define DCF_NO_COLOR                0x00000800
 #define DCF_SKIP                    0x80000000
-
-// TYPES -------------------------------------------------------------------
 
 // List Modes.
 typedef enum listmode_e {
@@ -173,7 +163,7 @@ typedef struct primhdr_s {
     // All indices in the range indices[0]...indices[n] are used by this
     // primitive (some are shared).
     ushort          numIndices;
-    uint*           indices;
+    uint           *indices;
 
     byte            flags; // PF_* primitive flags.
 
@@ -192,7 +182,7 @@ typedef struct primhdr_s {
 // Helper macro for accessing rendlist texmap units.
 #define TU(x, n)            (&((x)->texmapunits[(n)]))
 
-// \note: Slighty different representation than that passed to RL_AddPoly.
+/// @note Slighty different representation than that passed to RL_AddPoly.
 typedef struct rendlist_texmapunit_s {
     rtexmapunit_texture_t texture;
     float opacity; // Blend amount.
@@ -204,32 +194,19 @@ typedef struct rendlist_texmapunit_s {
  * need to be restored so that they point to the new list.
  */
 typedef struct rendlist_s {
-    struct rendlist_s* next;
+    struct rendlist_s *next;
     rendlist_texmapunit_t texmapunits[NUM_TEXTURE_UNITS];
     size_t          size; // Number of bytes allocated for the data.
-    byte*           data; // Data for a number of polygons (The List).
-    byte*           cursor; // A pointer to data, for reading/writing.
-    primhdr_t*      last; // Pointer to the last primitive (or NULL).
+    byte           *data; // Data for a number of polygons (The List).
+    byte           *cursor; // A pointer to data, for reading/writing.
+    primhdr_t      *last; // Pointer to the last primitive (or NULL).
 } rendlist_t;
 
 typedef struct listhash_s {
-    rendlist_t*     first, *last;
+    rendlist_t     *first, *last;
 } listhash_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern byte devRendSkyAlways;
 extern boolean usingFog;
-
-extern byte freezeRLs;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int renderTextures = true;
 int renderWireframe = false;
@@ -246,24 +223,22 @@ float detailScale = 4;
 float torchColor[3] = {1, 1, 1};
 int torchAdditive = true;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean initedOk = false;
 
 // Logical texture unit state. Used with RL_LoadDefaultRtus and RL_CopyRtu
 static rtexmapunit_t rtuDefault;
 static rtexmapunit_t rtuState[NUM_TEXMAP_UNITS];
-static rtexmapunit_t const* rtuMap[NUM_TEXMAP_UNITS];
+static rtexmapunit_t const *rtuMap[NUM_TEXMAP_UNITS];
 
 // GL texture unit state used during write. Global for performance reasons.
-static rtexmapunit_t const* texunits[NUM_TEXTURE_UNITS];
+static rtexmapunit_t const *texunits[NUM_TEXTURE_UNITS];
 
 /**
  * The vertex arrays.
  */
-static dgl_vertex_t* vertices;
-static dgl_texcoord_t* texCoords[NUM_TEXCOORD_ARRAYS];
-static dgl_color_t* colors;
+static dgl_vertex_t *vertices;
+static dgl_texcoord_t *texCoords[NUM_TEXCOORD_ARRAYS];
+static dgl_color_t *colors;
 
 static uint numVertices, maxVertices;
 static boolean rDrawSky;
@@ -288,23 +263,21 @@ static rendlist_t skyMaskList;
 
 static float blackColor[4] = { 0, 0, 0, 0 };
 
-// CODE --------------------------------------------------------------------
-
-void RL_Register(void)
+void RL_Register()
 {
-    // \todo Move cvars here.
+    /// @todo Move cvars here.
     C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
     C_VAR_INT("rend-light-blend", &dynlightBlend, 0, 0, 2);
 }
 
-static __inline boolean unitHasTexture(const rtexmapunit_texture_t* tu)
+static inline boolean unitHasTexture(rtexmapunit_texture_t const *tu)
 {
     if(tu->flags & TUF_TEXTURE_IS_MANAGED)
         return TextureVariant_GLName(tu->variant) != 0;
     return tu->gl.name != 0;
 }
 
-static __inline ushort unitHashForTexture(const rtexmapunit_texture_t* tu)
+static inline ushort unitHashForTexture(rtexmapunit_texture_t const *tu)
 {
     DGLuint glName;
     if(tu->flags & TUF_TEXTURE_IS_MANAGED)
@@ -318,8 +291,8 @@ static __inline ushort unitHashForTexture(const rtexmapunit_texture_t* tu)
     return glName % RL_HASH_SIZE;
 }
 
-static boolean compareUnitTexture(const rtexmapunit_texture_t* ltu,
-    const rtexmapunit_texture_t* rtu)
+static boolean compareUnitTexture(rtexmapunit_texture_t const *ltu,
+    rtexmapunit_texture_t const *rtu)
 {
     if(unitHasTexture(ltu) != unitHasTexture(rtu)) return false;
     if((ltu->flags & TUF_TEXTURE_IS_MANAGED) != (rtu->flags & TUF_TEXTURE_IS_MANAGED)) return false;
@@ -335,41 +308,33 @@ static boolean compareUnitTexture(const rtexmapunit_texture_t* ltu,
     return true;
 }
 
-static __inline boolean compareUnit(const rendlist_texmapunit_t* ltu, const rtexmapunit_t* rtu)
+static inline boolean compareUnit(rendlist_texmapunit_t const *ltu, rtexmapunit_t const *rtu)
 {
     if(!compareUnitTexture(&ltu->texture, &rtu->texture)) return false;
     if(ltu->opacity != rtu->opacity) return false;
     return true;
 }
 
-static __inline void copyUnit(rendlist_texmapunit_t* ltu, const rtexmapunit_t* rtu)
+static inline void copyUnit(rendlist_texmapunit_t *ltu, rtexmapunit_t const *rtu)
 {
-    memcpy(&ltu->texture, &rtu->texture, sizeof(ltu->texture));
+    std::memcpy(&ltu->texture, &rtu->texture, sizeof(ltu->texture));
     ltu->blendMode = rtu->blendMode;
     ltu->opacity = MINMAX_OF(0, rtu->opacity, 1);
 }
 
 static void rlBindUnmanaged(DGLuint glName, int magMode)
 {
-#ifdef _DEBUG
-    GLenum error;
-#endif
-
     GL_BindTextureUnmanaged(!renderTextures? 0 : glName, magMode);
 
-#if _DEBUG
-    error = glGetError();
+#ifdef DENG_DEBUG
+    GLenum error = glGetError();
     if(error != GL_NO_ERROR)
         Con_Error("OpenGL error: %i\n", error);
 #endif
 }
 
-static void rlBind(const rendlist_texmapunit_t* tmu)
+static void rlBind(rendlist_texmapunit_t const *tmu)
 {
-#ifdef _DEBUG
-    GLenum error;
-#endif
-
     if(!unitHasTexture(&tmu->texture)) return;
     if(!renderTextures)
     {
@@ -384,30 +349,32 @@ static void rlBind(const rendlist_texmapunit_t* tmu)
 
     GL_BindTexture(tmu->texture.variant);
 
-#if _DEBUG
-    error = glGetError();
+#ifdef DENG_DEBUG
+    GLenum error = glGetError();
     if(error != GL_NO_ERROR)
         Con_Error("OpenGL error: %i\n", error);
 #endif
 }
 
-static void rlBindTo(int unit, const rendlist_texmapunit_t* tmu)
+static void rlBindTo(int unit, rendlist_texmapunit_t const *tmu)
 {
+    DENG_ASSERT(tmu);
     if(!unitHasTexture(&tmu->texture)) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glActiveTexture(GL_TEXTURE0 + (byte)unit);
+    glActiveTexture(GL_TEXTURE0 + byte(unit));
     rlBind(tmu);
 }
 
-static void clearHash(listhash_t* hash)
+static void clearHash(listhash_t *hash)
 {
-    memset(hash, 0, sizeof(listhash_t) * RL_HASH_SIZE);
+    DENG_ASSERT(hash);
+    std::memset(hash, 0, sizeof(listhash_t) * RL_HASH_SIZE);
 }
 
-void RL_Init(void)
+void RL_Init()
 {
     if(initedOk) return; // Already been here.
 
@@ -417,54 +384,55 @@ void RL_Init(void)
     clearHash(shadowHash);
     clearHash(shinyHash);
 
-    memset(&skyMaskList, 0, sizeof(skyMaskList));
+    std::memset(&skyMaskList, 0, sizeof(skyMaskList));
     Rtu_Init(&rtuDefault);
     RL_LoadDefaultRtus();
     initedOk = true;
 }
 
-void RL_Shutdown(void)
+void RL_Shutdown()
 {
     // Stub.
-    /// \todo Rework list memory management so we explicitly free it, rather
+    /// @todo Rework list memory management so we explicitly free it, rather
     /// than depend on it being free'd by the Zone when it is shutdown.
     initedOk = false;
 }
 
-boolean RL_IsMTexLights(void)
+boolean RL_IsMTexLights()
 {
     return IS_MTEX_LIGHTS;
 }
 
-boolean RL_IsMTexDetails(void)
+boolean RL_IsMTexDetails()
 {
     return IS_MTEX_DETAILS;
 }
 
-static void clearVertices(void)
+static void clearVertices()
 {
     numVertices = 0;
 }
 
-static void destroyVertices(void)
+static void destroyVertices()
 {
-    uint                i;
-
     numVertices = maxVertices = 0;
 
     if(vertices)
-        M_Free(vertices);
-    vertices = NULL;
+    {
+        M_Free(vertices); vertices = 0;
+    }
 
     if(colors)
-        M_Free(colors);
-    colors = NULL;
+    {
+        M_Free(colors); colors = 0;
+    }
 
-    for(i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
+    for(uint i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
     {
         if(texCoords[i])
-            M_Free(texCoords[i]);
-        texCoords[i] = NULL;
+        {
+            M_Free(texCoords[i]); texCoords[i] = 0;
+        }
     }
 }
 
@@ -473,7 +441,7 @@ static void destroyVertices(void)
  */
 static uint allocateVertices(uint count)
 {
-    uint                i, base = numVertices;
+    uint base = numVertices;
 
     // Do we need to allocate more memory?
     numVertices += count;
@@ -488,43 +456,44 @@ static uint allocateVertices(uint count)
             maxVertices *= 2;
         }
 
-        vertices = M_Realloc(vertices, sizeof(dgl_vertex_t) * maxVertices);
-        colors = M_Realloc(colors, sizeof(dgl_color_t) * maxVertices);
-        for(i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
+        vertices = (dgl_vertex_t *) M_Realloc(vertices, sizeof(dgl_vertex_t) * maxVertices);
+        colors   = (dgl_color_t *) M_Realloc(colors,   sizeof(dgl_color_t)  * maxVertices);
+        for(uint i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
         {
-            texCoords[i] =
-                M_Realloc(texCoords[i], sizeof(dgl_texcoord_t) * maxVertices);
+            texCoords[i] = (dgl_texcoord_t *) M_Realloc(texCoords[i], sizeof(dgl_texcoord_t) * maxVertices);
         }
     }
     return base;
 }
 
-static void destroyList(rendlist_t* rl)
+static void destroyList(rendlist_t *rl)
 {
+    DENG_ASSERT(rl);
+
     // All the list data will be destroyed.
     if(rl->data)
-        Z_Free(rl->data);
-    rl->data = NULL;
+    {
+        Z_Free(rl->data); rl->data = 0;
+    }
 
-#if _DEBUG
+#ifdef DENG_DEBUG
     Z_CheckHeap();
 #endif
 
     rl->cursor = NULL;
     TU(rl, TU_INTER_DETAIL)->texture.gl.name = 0;
-    TU(rl, TU_INTER_DETAIL)->texture.flags = 0;
-    rl->last = NULL;
+    TU(rl, TU_INTER_DETAIL)->texture.flags   = 0;
+    rl->last = 0;
     rl->size = 0;
 }
 
 static void deleteHash(listhash_t* hash)
 {
-    rendlist_t* list, *next;
-    uint i;
+    rendlist_t *next;
 
-    for(i = 0; i < RL_HASH_SIZE; ++i)
+    for(uint i = 0; i < RL_HASH_SIZE; ++i)
     {
-        for(list = hash[i].first; list; list = next)
+        for(rendlist_t *list = hash[i].first; list; list = next)
         {
             next = list->next;
             destroyList(list);
@@ -537,7 +506,7 @@ static void deleteHash(listhash_t* hash)
 /**
  * All lists will be destroyed.
  */
-void RL_DeleteLists(void)
+void RL_DeleteLists()
 {
     // Delete all lists.
     deleteHash(plainHash);
@@ -550,7 +519,7 @@ void RL_DeleteLists(void)
 
     destroyVertices();
 
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
     Z_CheckHeap();
 #endif
 
@@ -568,37 +537,39 @@ PRINT_PROF( PROF_RL_RENDER_SKYMASK );
 /**
  * Set the R/W cursor to the beginning.
  */
-static void rewindList(rendlist_t* rl)
+static void rewindList(rendlist_t *rl)
 {
+    DENG_ASSERT(rl);
+
     rl->cursor = rl->data;
     rl->last = NULL;
 
     // The interpolation target must be explicitly set (in RL_AddPoly).
     TU(rl, TU_INTER)->texture.gl.name = 0;
-    TU(rl, TU_INTER)->texture.flags = 0;
-    TU(rl, TU_INTER)->opacity = 0;
+    TU(rl, TU_INTER)->texture.flags   = 0;
+    TU(rl, TU_INTER)->opacity         = 0;
 
     TU(rl, TU_INTER_DETAIL)->texture.gl.name = 0;
-    TU(rl, TU_INTER_DETAIL)->texture.flags = 0;
-    TU(rl, TU_INTER_DETAIL)->opacity = 0;
+    TU(rl, TU_INTER_DETAIL)->texture.flags   = 0;
+    TU(rl, TU_INTER_DETAIL)->opacity         = 0;
 }
 
-static void rewindHash(listhash_t* hash)
+static void rewindHash(listhash_t *hash)
 {
-    uint i;
-    rendlist_t* list;
-
-    for(i = 0; i < RL_HASH_SIZE; ++i)
+    DENG_ASSERT(hash);
+    for(uint i = 0; i < RL_HASH_SIZE; ++i)
     {
-        for(list = hash[i].first; list; list = list->next)
+        for(rendlist_t *list = hash[i].first; list; list = list->next)
+        {
             rewindList(list);
+        }
     }
 }
 
 /**
  * Called before rendering a frame.
  */
-void RL_ClearLists(void)
+void RL_ClearLists()
 {
     rewindHash(plainHash);
     rewindHash(litHash);
@@ -615,9 +586,9 @@ void RL_ClearLists(void)
     rDrawSky = false;
 }
 
-static rendlist_t* createList(listhash_t* hash)
+static rendlist_t *createList(listhash_t *hash)
 {
-    rendlist_t* list = Z_Calloc(sizeof(rendlist_t), PU_APPSTATIC, 0);
+    rendlist_t* list = (rendlist_t *) Z_Calloc(sizeof(rendlist_t), PU_APPSTATIC, 0);
 
     if(hash->last)
         hash->last->next = list;
@@ -627,10 +598,10 @@ static rendlist_t* createList(listhash_t* hash)
     return list;
 }
 
-static rendlist_t* getListFor(rendpolytype_t polyType, boolean isLit)
+static rendlist_t *getListFor(rendpolytype_t polyType, boolean isLit)
 {
-    listhash_t* list, *table;
-    rendlist_t* dest, *convertable = NULL;
+    listhash_t *list, *table;
+    rendlist_t *dest, *convertable = 0;
 
     // Check for specialized rendering lists first.
     if(polyType == PT_SKY_MASK)
@@ -687,7 +658,8 @@ static rendlist_t* getListFor(rendpolytype_t polyType, boolean isLit)
 
     // Did we find a convertable list?
     if(convertable)
-    {   // This list is currently empty.
+    {
+        // This list is currently empty.
         if(polyType == PT_SHINY)
         {
             copyUnit(TU(convertable, TU_INTER), texunits[TU_INTER]);
@@ -727,29 +699,26 @@ static rendlist_t* getListFor(rendpolytype_t polyType, boolean isLit)
 }
 
 /**
- * @return              Pointer to the start of the allocated data.
+ * @return  Start of the allocated data.
  */
-static void* allocateData(rendlist_t* list, int bytes)
+static void* allocateData(rendlist_t *list, int bytes)
 {
-    size_t              required;
-    int                 startOffset = list->cursor - list->data;
-    primhdr_t*          hdr;
-
     if(bytes <= 0)
-        return NULL;
+        return 0;
 
     // We require the extra bytes because we want that the end of the
     // list data is always safe for writing-in-advance. This is needed
     // when the 'end of data' marker is written in RL_AddPoly.
-    required = startOffset + bytes + LIST_DATA_PADDING;
+    int startOffset = list->cursor - list->data;
+    size_t required = startOffset + bytes + LIST_DATA_PADDING;
 
     // First check that the data buffer of the list is large enough.
     if(required > list->size)
     {
         // Offsets must be preserved.
-        byte*               oldData = list->data;
-        int                 cursorOffset = -1;
-        int                 lastOffset = -1;
+        byte *oldData = list->data;
+        int cursorOffset = -1;
+        int lastOffset = -1;
 
         if(list->cursor)
             cursorOffset = list->cursor - oldData;
@@ -762,32 +731,28 @@ static void* allocateData(rendlist_t* list, int bytes)
         while(list->size < required)
             list->size *= 2;
 
-        list->data = Z_Realloc(list->data, list->size, PU_APPSTATIC);
+        list->data = (byte *) Z_Realloc(list->data, list->size, PU_APPSTATIC);
 
         // Restore main pointers.
-        list->cursor =
-            (cursorOffset >= 0 ? list->data + cursorOffset : list->data);
-        list->last =
-            (lastOffset >= 0 ? (primhdr_t *) (list->data + lastOffset) : NULL);
+        list->cursor = (cursorOffset >= 0 ? list->data + cursorOffset : list->data);
+        list->last   = (lastOffset >= 0 ? (primhdr_t *) (list->data + lastOffset) : NULL);
 
         // Restore in-list pointers.
         if(oldData)
         {
-            hdr = (primhdr_t *) list->data;
+            primhdr_t *hdr = (primhdr_t *) list->data;
             while(hdr <= list->last)
             {
                 if(hdr->indices != NULL)
                 {
-                    hdr->indices =
-                        (uint *) (list->data +
-                                  ((byte *) hdr->indices - oldData));
+                    hdr->indices = (uint *) (list->data + ((byte *) hdr->indices - oldData));
                 }
 
                 // Check here in the end; primitive composition may be
                 // in progress.
-                if(hdr->size == 0)
-                    break;
-                hdr = (primhdr_t*) ((byte*) hdr + hdr->size);
+                if(hdr->size == 0) break;
+
+                hdr = (primhdr_t *) ((byte *) hdr + hdr->size);
             }
         }
     }
@@ -798,40 +763,38 @@ static void* allocateData(rendlist_t* list, int bytes)
     return list->data + startOffset;
 }
 
-static void allocateIndices(rendlist_t* list, uint numIndices)
+static void allocateIndices(rendlist_t *list, uint numIndices)
 {
-    void* indices;
+    void *indices;
 
     list->last->numIndices = numIndices;
     indices = allocateData(list, sizeof(uint) * numIndices);
 
     // list->last may change during allocateData.
-    list->last->indices = indices;
+    list->last->indices = (uint *) indices;
 }
 
-static void endWrite(rendlist_t* list)
+static void endWrite(rendlist_t *list)
 {
     // The primitive has been written, update the size in the header.
-    list->last->size = list->cursor - (byte*) list->last;
+    list->last->size = list->cursor - (byte *) list->last;
 
     // Write the end marker (which will be overwritten by the next
     // primitive). The idea is that this zero is interpreted as the
     // size of the following primhdr.
-    *(int*) list->cursor = 0;
+    *(int *) list->cursor = 0;
 }
 
-static void writePrimitive(const rendlist_t* list, uint base,
-    const rvertex_t* rvertices, const rtexcoord_t* coords,
-    const rtexcoord_t* coords1, const rtexcoord_t* coords2,
-    const ColorRawf* rcolors, uint numElements, rendpolytype_t type)
+static void writePrimitive(rendlist_t const *list, uint base,
+    rvertex_t const *rvertices, rtexcoord_t const *coords,
+    rtexcoord_t const *coords1, rtexcoord_t const *coords2,
+    ColorRawf const *rcolors, uint numElements, rendpolytype_t type)
 {
-    uint i;
-
-    for(i = 0; i < numElements; ++i)
+    for(uint i = 0; i < numElements; ++i)
     {
         // Vertex.
-        const rvertex_t* rvtx = &rvertices[i];
-        dgl_vertex_t* vtx = &vertices[base + i];
+        rvertex_t const *rvtx = &rvertices[i];
+        dgl_vertex_t *vtx = &vertices[base + i];
 
         vtx->xyz[0] = rvtx->pos[VX];
         vtx->xyz[1] = rvtx->pos[VZ];
@@ -843,8 +806,8 @@ static void writePrimitive(const rendlist_t* list, uint base,
         // Primary texture coordinates.
         if(unitHasTexture(&TU(list, TU_PRIMARY)->texture))
         {
-            const rtexcoord_t* rtc = &coords[i];
-            dgl_texcoord_t* tc = &texCoords[TCA_MAIN][base + i];
+            rtexcoord_t const *rtc = &coords[i];
+            dgl_texcoord_t *tc = &texCoords[TCA_MAIN][base + i];
 
             tc->st[0] = rtc->st[0];
             tc->st[1] = rtc->st[1];
@@ -853,8 +816,8 @@ static void writePrimitive(const rendlist_t* list, uint base,
         // Secondary texture coordinates.
         if(unitHasTexture(&TU(list, TU_INTER)->texture))
         {
-            const rtexcoord_t* rtc = &coords1[i];
-            dgl_texcoord_t* tc = &texCoords[TCA_BLEND][base + i];
+            rtexcoord_t const *rtc = &coords1[i];
+            dgl_texcoord_t *tc = &texCoords[TCA_BLEND][base + i];
 
             tc->st[0] = rtc->st[0];
             tc->st[1] = rtc->st[1];
@@ -863,17 +826,16 @@ static void writePrimitive(const rendlist_t* list, uint base,
         // First light texture coordinates.
         if((list->last->flags & PF_IS_LIT) && IS_MTEX_LIGHTS)
         {
-            const rtexcoord_t* rtc = &coords2[i];
-            dgl_texcoord_t* tc = &texCoords[TCA_LIGHT][base + i];
+            rtexcoord_t const *rtc = &coords2[i];
+            dgl_texcoord_t *tc = &texCoords[TCA_LIGHT][base + i];
 
             tc->st[0] = rtc->st[0];
             tc->st[1] = rtc->st[1];
         }
 
         // Color.
-        {
-        const ColorRawf* rcolor = &rcolors[i];
-        dgl_color_t* color = &colors[base + i];
+        ColorRawf const *rcolor = &rcolors[i];
+        dgl_color_t *color = &colors[base + i];
 
         if(rcolors)
         {
@@ -886,7 +848,6 @@ static void writePrimitive(const rendlist_t* list, uint base,
         {
             color->rgba[CR] = color->rgba[CG] = color->rgba[CB] = color->rgba[CA] = 255;
         }
-        }
     }
 }
 
@@ -895,14 +856,14 @@ static void writePrimitive(const rendlist_t* list, uint base,
  * @pre Caller knows what they are doing. Arguments are not validity checked.
  */
 static void writePoly2(primtype_t type, rendpolytype_t polyType, int flags,
-    uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
-    const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
-    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords)
+    uint numElements, rvertex_t const *vertices, ColorRawf const *colors,
+    rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords,
+    DGLuint modTex, ColorRawf const *modColor, rtexcoord_t const *modCoords)
 {
-    const boolean isLit = (polyType != PT_LIGHT && (modTex || !!(flags & RPF_HAS_DYNLIGHTS)));
+    boolean const isLit = (polyType != PT_LIGHT && (modTex || !!(flags & RPF_HAS_DYNLIGHTS)));
     uint i, base, primSize, numIndices;
-    rendlist_t* li;
-    primhdr_t* hdr;
+    rendlist_t *li;
+    primhdr_t *hdr;
 
     if(polyType == PT_SKY_MASK)
         rDrawSky = true;
@@ -920,8 +881,8 @@ END_PROF( PROF_RL_GET_LIST );
     numIndices = numElements;
     base = allocateVertices(primSize);
 
-    hdr = allocateData(li, sizeof(primhdr_t));
-    assert(hdr);
+    hdr = (primhdr_t *) allocateData(li, sizeof(primhdr_t));
+    DENG_ASSERT(hdr);
     li->last = hdr; // This becomes the new last primitive.
 
     // Primitive-specific blending mode.
@@ -991,61 +952,61 @@ END_PROF( PROF_RL_ADD_POLY );
  * interface with this.
  */
 static void writePoly(primtype_t type, rendpolytype_t polyType, int flags,
-    uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
-    const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
-    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords)
+    uint numElements, rvertex_t const *vertices, ColorRawf const *colors,
+    rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords,
+    DGLuint modTex, ColorRawf const *modColor, rtexcoord_t const *modCoords)
 {
     if(numElements < 3) return; // huh?
 
-    /// \todo Logical disconnect: modulation VS dynlight multitexture state.
+    /// @todo Logical disconnect: modulation VS dynlight multitexture state.
     if(modTex && !RL_IsMTexLights())
         Con_Error("RL_AddPoly: Attempt to write modulated primitive with multitexture disabled.");
 
     if(flags & RPF_SKYMASK)
     {
-        flags &= ~(RPF_LIGHT|RPF_SHADOW|RPF_HAS_DYNLIGHTS);
-        colors = NULL;
+        flags      &= ~(RPF_LIGHT|RPF_SHADOW|RPF_HAS_DYNLIGHTS);
+        colors      = NULL;
         primaryCoords = NULL;
         interCoords = NULL;
-        modTex = 0;
-        modColor = NULL;
-        modCoords = NULL;
+        modTex      = 0;
+        modColor    = NULL;
+        modCoords   = NULL;
     }
     else if(flags & RPF_LIGHT)
     {
-        flags &= ~(RPF_SHADOW|RPF_HAS_DYNLIGHTS);
+        flags      &= ~(RPF_SHADOW|RPF_HAS_DYNLIGHTS);
         interCoords = NULL;
-        modTex = 0;
-        modColor = NULL;
-        modCoords = NULL;
+        modTex      = 0;
+        modColor    = NULL;
+        modCoords   = NULL;
     }
     else if(flags & RPF_SHADOW)
     {
-        flags &= ~RPF_HAS_DYNLIGHTS;
+        flags      &= ~RPF_HAS_DYNLIGHTS;
         interCoords = NULL;
-        modTex = 0;
-        modColor = NULL;
-        modCoords = NULL;
+        modTex      = 0;
+        modColor    = NULL;
+        modCoords   = NULL;
     }
 
     // Flush the write.
     writePoly2(type, polyType, flags, numElements, vertices,
-        colors, primaryCoords, interCoords, modTex, modColor, modCoords);
+               colors, primaryCoords, interCoords, modTex, modColor, modCoords);
 }
 
-static __inline boolean validRTUIndex(uint idx)
+static inline boolean validRTUIndex(uint idx)
 {
     return idx < NUM_TEXMAP_UNITS;
 }
 
-static __inline void errorIfNotValidRTUIndex(uint idx, const char* callerName)
+static inline void errorIfNotValidRTUIndex(uint idx, char const *callerName)
 {
     if(validRTUIndex(idx)) return;
     Con_Error("%s: Invalid texture unit index %u.", callerName, idx);
     exit(1); // Unreachable.
 }
 
-static __inline boolean isWriteStateRTU(const rtexmapunit_t* ptr)
+static inline boolean isWriteStateRTU(rtexmapunit_t const *ptr)
 {
     // Note that the default texture unit is not considered as being
     // part of the write state.
@@ -1062,27 +1023,26 @@ static __inline boolean isWriteStateRTU(const rtexmapunit_t* ptr)
  */
 static void copyMappedRtuToState(uint idx)
 {
-    assert(validRTUIndex(idx));
+    DENG_ASSERT(validRTUIndex(idx));
     if(isWriteStateRTU(rtuMap[idx])) return;
     RL_CopyRtu(idx, rtuMap[idx]);
 }
 
-void RL_LoadDefaultRtus(void)
+void RL_LoadDefaultRtus()
 {
-    int i;
-    for(i = 0; i < NUM_TEXMAP_UNITS; ++i)
+    for(int i = 0; i < NUM_TEXMAP_UNITS; ++i)
     {
         rtuMap[i] = &rtuDefault;
     }
 }
 
-void RL_MapRtu(uint idx, const rtexmapunit_t* rtu)
+void RL_MapRtu(uint idx, rtexmapunit_t const *rtu)
 {
     errorIfNotValidRTUIndex(idx, "RL_MapRtu");
     rtuMap[idx] = (rtu? rtu : &rtuDefault);
 }
 
-void RL_CopyRtu(uint idx, const rtexmapunit_t* rtu)
+void RL_CopyRtu(uint idx, rtexmapunit_t const *rtu)
 {
     errorIfNotValidRTUIndex(idx, "RL_CopyRtu");
     if(!rtu)
@@ -1091,8 +1051,9 @@ void RL_CopyRtu(uint idx, const rtexmapunit_t* rtu)
         rtuMap[idx] = &rtuDefault;
         return;
     }
-    // Some _DEBUG error checking here wouldn't go amiss!
-    memcpy(rtuState + idx, rtu, sizeof rtuState[0]);
+
+    // Some debug error checking here wouldn't go amiss!
+    std::memcpy(rtuState + idx, rtu, sizeof rtuState[0]);
     // Map this unit to that owned by the write state.
     rtuMap[idx] = rtuState + idx;
 }
@@ -1165,7 +1126,7 @@ void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName)
  * Choose a specialised polytype from the specified primitive configuration.
  * @param flags  @ref rendpolyFlags
  */
-static __inline rendpolytype_t choosePolyType(int flags)
+static inline rendpolytype_t choosePolyType(int flags)
 {
     return ((flags & RPF_SKYMASK)? PT_SKY_MASK :
             (flags & RPF_LIGHT)  ? PT_LIGHT :
@@ -1174,7 +1135,7 @@ static __inline rendpolytype_t choosePolyType(int flags)
 
 // Prepare the final texture unit map for writing "normal" polygons, filling
 // any gaps using a default configured texture unit.
-static void prepareTextureUnitMap(void)
+static void prepareTextureUnitMap()
 {
     // Map logical texture units to "real" ones known to the GL renderer.
     texunits[TU_PRIMARY]        = rtuMap[RTU_PRIMARY];
@@ -1185,7 +1146,7 @@ static void prepareTextureUnitMap(void)
 
 // Prepare the final texture unit map for writing "shiny" polygons, filling
 // any gaps using a default configured texture unit.
-static void prepareTextureUnitMapForShinyPoly(void)
+static void prepareTextureUnitMapForShinyPoly()
 {
     // Map logical texture units to "real" ones known to the GL renderer.
     texunits[TU_PRIMARY]        = rtuMap[RTU_REFLECTION];
@@ -1195,15 +1156,15 @@ static void prepareTextureUnitMapForShinyPoly(void)
 }
 
 void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
-    uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
-    const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
-    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords,
-    const ColorRawf* reflectionColors, const rtexcoord_t* reflectionCoords,
-    const rtexcoord_t* reflectionMaskCoords)
+    uint numElements, rvertex_t const *vertices, ColorRawf const *colors,
+    rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords,
+    DGLuint modTex, ColorRawf const *modColor, rtexcoord_t const *modCoords,
+    ColorRawf const *reflectionColors, rtexcoord_t const *reflectionCoords,
+    rtexcoord_t const *reflectionMaskCoords)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
-        vertices, colors, primaryCoords, interCoords, modTex, modColor, modCoords);
+              vertices, colors, primaryCoords, interCoords, modTex, modColor, modCoords);
 
     // We are currently limited to two texture units, therefore shiny effects
     // must be drawn in a separate pass using a new primitive.
@@ -1211,43 +1172,43 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
 
     prepareTextureUnitMapForShinyPoly();
     writePoly(primType, PT_SHINY, flags & ~RPF_HAS_DYNLIGHTS, numElements,
-        vertices, reflectionColors, reflectionCoords, reflectionMaskCoords, 0, NULL, NULL);
+              vertices, reflectionColors, reflectionCoords, reflectionMaskCoords, 0, NULL, NULL);
 }
 
 void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const ColorRawf* colors, const rtexcoord_t* primaryCoords,
-    const rtexcoord_t* interCoords,
-    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords)
+    rvertex_t const *vertices, ColorRawf const *colors, rtexcoord_t const *primaryCoords,
+    rtexcoord_t const *interCoords,
+    DGLuint modTex, ColorRawf const *modColor, rtexcoord_t const *modCoords)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
-        vertices, colors, primaryCoords, interCoords, modTex, modColor, modCoords);
+              vertices, colors, primaryCoords, interCoords, modTex, modColor, modCoords);
 }
 
 void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const ColorRawf* colors,
-    const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords)
+    rvertex_t const *vertices, ColorRawf const *colors,
+    rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
-        vertices, colors, primaryCoords, interCoords, 0, NULL, NULL);
+              vertices, colors, primaryCoords, interCoords, 0, NULL, NULL);
 }
 
 void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const ColorRawf* colors,
-    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords)
+    rvertex_t const *vertices, ColorRawf const *colors,
+    DGLuint modTex, ColorRawf const *modColor, rtexcoord_t const *modCoords)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
-        vertices, colors, NULL, NULL, modTex, modColor, modCoords);
+              vertices, colors, NULL, NULL, modTex, modColor, modCoords);
 }
 
-void RL_AddPoly(primtype_t primType, int flags, uint numElements, const rvertex_t* vertices,
-    const ColorRawf* colors)
+void RL_AddPoly(primtype_t primType, int flags, uint numElements, rvertex_t const *vertices,
+    ColorRawf const *colors)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
-        vertices, colors, NULL, NULL, 0, NULL, NULL);
+              vertices, colors, NULL, NULL, 0, NULL, NULL);
 }
 
 /**
@@ -1255,20 +1216,15 @@ void RL_AddPoly(primtype_t primType, int flags, uint numElements, const rvertex_
  * are given, all primitives are considered eligible.
  */
 static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
-    const rendlist_t* list)
+    rendlist_t const *list)
 {
-    primhdr_t* hdr;
-    boolean skip, bypass = false;
-    ushort i;
-    int j;
-
     // Should we just skip all this?
-    if(conditions & DCF_SKIP)
-        return;
+    if(conditions & DCF_SKIP) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    boolean bypass = false;
     if(unitHasTexture(&TU(list, TU_INTER)->texture))
     {
         // Is blending allowed?
@@ -1293,8 +1249,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
     }
 
     // Compile our list of indices.
-    hdr = (primhdr_t *) list->data;
-    skip = false;
+    primhdr_t *hdr = (primhdr_t *) list->data;
+    boolean skip = false;
     while(hdr->size != 0)
     {
         // Check for skip conditions.
@@ -1373,10 +1329,10 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
             }
 
             glBegin(hdr->type);
-            for(i = 0; i < hdr->numIndices; ++i)
+            for(short i = 0; i < hdr->numIndices; ++i)
             {
-                const uint index = hdr->indices[i];
-                for(j = 0; j < numTexUnits; ++j)
+                uint const index = hdr->indices[i];
+                for(short j = 0; j < numTexUnits; ++j)
                 {
                     if(coords[j])
                         glMultiTexCoord2fv(GL_TEXTURE0 + j, texCoords[coords[j] - 1][index].st);
@@ -1419,10 +1375,10 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                 }
             }
 
-            assert(!Sys_GLCheckError());
+            DENG_ASSERT(!Sys_GLCheckError());
         }
 
-        hdr = (primhdr_t*) ((byte*) hdr + hdr->size);
+        hdr = (primhdr_t *) ((byte *) hdr + hdr->size);
     }
 }
 
@@ -1431,19 +1387,17 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
  */
 static void selectTexUnits(int count)
 {
-    int i;
-
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    for(i = numTexUnits - 1; i >= count; i--)
+    for(int i = numTexUnits - 1; i >= count; i--)
     {
         glActiveTexture(GL_TEXTURE0 + i);
         glDisable(GL_TEXTURE_2D);
     }
 
     // Enable the selected units.
-    for(i = count - 1; i >= 0; i--)
+    for(int i = count - 1; i >= 0; i--)
     {
         if(i >= numTexUnits) continue;
 
@@ -1457,7 +1411,7 @@ static void selectTexUnits(int count)
  *
  * @return  The conditions to select primitives.
  */
-static int setupListState(listmode_t mode, rendlist_t* list)
+static int setupListState(listmode_t mode, rendlist_t *list)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -1472,12 +1426,10 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         // Should we do blending?
         if(unitHasTexture(&TU(list, TU_INTER)->texture))
         {
-            float color[4];
-
             // Blend between two textures, modulate with primary color.
-#ifdef _DEBUG
-if(numTexUnits < 2)
-    Con_Error("setupListState: Not enough texture units.\n");
+#ifdef DENG_DEBUG
+            if(numTexUnits < 2)
+                Con_Error("setupListState: Not enough texture units.\n");
 #endif
             selectTexUnits(2);
 
@@ -1485,6 +1437,7 @@ if(numTexUnits < 2)
             rlBindTo(1, TU(list, TU_INTER));
             GL_ModulateTexture(2);
 
+            float color[4];
             color[0] = color[1] = color[2] = 0;
             color[3] = TU(list, TU_INTER)->opacity;
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
@@ -1517,15 +1470,12 @@ if(numTexUnits < 2)
         // and all primitives which will have a blended texture.
         return DCF_SET_LIGHT_ENV0 | DCF_MANY_LIGHTS | DCF_BLEND;
 
-    case LM_BLENDED:
-        {
-        float color[4];
-
+    case LM_BLENDED: {
         // Only render the blended surfaces.
         if(!unitHasTexture(&TU(list, TU_INTER)->texture))
             return DCF_SKIP;
 
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
         if(numTexUnits < 2)
             Con_Error("setupListState: Not enough texture units.\n");
 #endif
@@ -1537,10 +1487,11 @@ if(numTexUnits < 2)
 
         GL_ModulateTexture(2);
 
+        float color[4];
         color[0] = color[1] = color[2] = 0; color[3] = TU(list, TU_INTER)->opacity;
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
-        return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1;
-        }
+        return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1; }
+
     case LM_BLENDED_FIRST_LIGHT:
         // Only blended surfaces.
         if(!unitHasTexture(&TU(list, TU_INTER)->texture))
@@ -1566,11 +1517,9 @@ if(numTexUnits < 2)
         // Should we do blending?
         if(unitHasTexture(&TU(list, TU_INTER)->texture))
         {
-            float color[4];
-
             // Mode 3 actually just disables the second texture stage,
             // which would modulate with primary color.
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
             if(numTexUnits < 2)
                 Con_Error("setupListState: Not enough texture units.\n");
 #endif
@@ -1581,6 +1530,7 @@ if(numTexUnits < 2)
 
             GL_ModulateTexture(3);
 
+            float color[4];
             color[0] = color[1] = color[2] = 0; color[3] = TU(list, TU_INTER)->opacity;
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
             // Render all primitives.
@@ -1644,10 +1594,7 @@ if(numTexUnits < 2)
         }
         break;
 
-    case LM_BLENDED_DETAILS:
-        {
-        float           color[4];
-
+    case LM_BLENDED_DETAILS: {
         // We'll only render blended primitives.
         if(!unitHasTexture(&TU(list, TU_INTER)->texture)) break;
         if(!unitHasTexture(&TU(list, TU_PRIMARY_DETAIL)->texture) ||
@@ -1657,10 +1604,11 @@ if(numTexUnits < 2)
         rlBindTo(0, TU(list, TU_PRIMARY_DETAIL));
         rlBindTo(1, TU(list, TU_INTER_DETAIL));
 
+        float color[4];
         color[0] = color[1] = color[2] = 0; color[3] = TU(list, TU_INTER_DETAIL)->opacity;
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
-        return DCF_SET_MATRIX_DTEXTURE0 | DCF_SET_MATRIX_DTEXTURE1;
-        }
+        return DCF_SET_MATRIX_DTEXTURE0 | DCF_SET_MATRIX_DTEXTURE1; }
+
     case LM_SHADOW:
         // Render all primitives.
         if(unitHasTexture(&TU(list, TU_PRIMARY)->texture))
@@ -1691,6 +1639,9 @@ if(numTexUnits < 2)
             color[0] = color[1] = color[2] = 0; color[3] = 1.0f;
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color); }
         }
+
+        // Intentional fall-through.
+
     case LM_ALL_SHINY:
     case LM_SHINY:
         rlBindTo(0, TU(list, TU_PRIMARY));
@@ -1712,7 +1663,7 @@ if(numTexUnits < 2)
     return DCF_SKIP;
 }
 
-static void finishListState(listmode_t mode, rendlist_t* list)
+static void finishListState(listmode_t mode, rendlist_t *list)
 {
     switch(mode)
     {
@@ -1766,7 +1717,7 @@ static void finishPassState(listmode_t mode)
  */
 static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 {
-    memset(coords, 0, sizeof(*coords) * MAX_TEX_UNITS);
+    std::memset(coords, 0, sizeof(*coords) * MAX_TEX_UNITS);
 
     switch(mode)
     {
@@ -1942,9 +1893,8 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         // Use fog to fade the details, if fog is enabled.
         if(usingFog)
         {
-            float               midGray[4];
-
             glEnable(GL_FOG);
+            float midGray[4];
             midGray[0] = midGray[1] = midGray[2] = .5f;
             midGray[3] = fogColor[3]; // The alpha is probably meaningless?
             glFogfv(GL_FOG_COLOR, midGray);
@@ -1967,9 +1917,8 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         // Use fog to fade the details, if fog is enabled.
         if(usingFog)
         {
-            float               midGray[4];
-
             glEnable(GL_FOG);
+            float midGray[4];
             midGray[0] = midGray[1] = midGray[2] = .5f;
             midGray[3] = fogColor[3]; // The alpha is probably meaningless?
             glFogfv(GL_FOG_COLOR, midGray);
@@ -2042,24 +1991,20 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 /**
  * Renders the given lists. They must not be empty.
  */
-static void renderLists(listmode_t mode, rendlist_t** lists, uint num)
+static void renderLists(listmode_t mode, rendlist_t **lists, uint num)
 {
-    uint                i;
-    rendlist_t*         list;
-    uint                coords[MAX_TEX_UNITS];
-
     // If the first list is empty, we do nothing. Normally we expect
     // all lists to contain something.
-    if(num == 0 || lists[0]->last == NULL)
-        return;
+    if(!num || !lists[0]->last) return;
 
     // Setup GL state that's common to all the lists in this mode.
+    uint coords[MAX_TEX_UNITS];
     setupPassState(mode, coords);
 
     // Draw each given list.
-    for(i = 0; i < num; ++i)
+    for(uint i = 0; i < num; ++i)
     {
-        list = lists[i];
+        rendlist_t *list = lists[i];
 
         // Setup GL state for this list, and draw the necessary subset of
         // primitives on the list.
@@ -2075,24 +2020,21 @@ static void renderLists(listmode_t mode, rendlist_t** lists, uint num)
 /**
  * Extracts a selection of lists from the hash.
  */
-static uint collectLists(listhash_t* table, rendlist_t** lists)
+static uint collectLists(listhash_t *table, rendlist_t **lists)
 {
-    uint                i, count;
-    rendlist_t*         it;
-
     // Collect a list of rendering lists.
-    count = 0;
-    for(i = 0; i < RL_HASH_SIZE; ++i)
+    uint count = 0;
+    for(uint i = 0; i < RL_HASH_SIZE; ++i)
     {
-        for(it = table[i].first; it; it = it->next)
+        for(rendlist_t *it = table[i].first; it; it = it->next)
         {
             // Only non-empty lists are collected.
             if(it->last != NULL)
             {
                 if(count == MAX_RLISTS)
                 {
-#ifdef _DEBUG
-Con_Error("collectLists: Ran out of MAX_RLISTS.\n");
+#ifdef DENG_DEBUG
+                    Con_Error("collectLists: Exhausted MAX_RLISTS.\n");
 #endif
                     return count;
                 }
@@ -2108,13 +2050,13 @@ Con_Error("collectLists: Ran out of MAX_RLISTS.\n");
  * details and dynamic lights. Details take precedence (they always cover
  * entire primitives, and usually *all* of the surfaces in a scene).
  */
-void RL_RenderAllLists(void)
+void RL_RenderAllLists()
 {
     // Pointers to all the rendering lists.
-    rendlist_t* lists[MAX_RLISTS];
+    rendlist_t *lists[MAX_RLISTS];
     uint count;
 
-    assert(!Sys_GLCheckError());
+    DENG_ASSERT(!Sys_GLCheckError());
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -2352,7 +2294,6 @@ END_PROF( PROF_RL_RENDER_SHINY );
     /**
      * Shadow Pass: Objects and FakeRadio
      */
-    {
     int oldr = renderTextures;
 
     renderTextures = true;
@@ -2365,7 +2306,6 @@ BEGIN_PROF( PROF_RL_RENDER_SHADOW );
 END_PROF( PROF_RL_RENDER_SHADOW );
 
     renderTextures = oldr;
-    }
 
     // Return to the normal GL state.
     selectTexUnits(1);
@@ -2398,5 +2338,5 @@ BEGIN_PROF( PROF_RL_RENDER_MASKED );
 END_PROF( PROF_RL_RENDER_MASKED );
 END_PROF( PROF_RL_RENDER_ALL );
 
-    assert(!Sys_GLCheckError());
+    DENG_ASSERT(!Sys_GLCheckError());
 }
