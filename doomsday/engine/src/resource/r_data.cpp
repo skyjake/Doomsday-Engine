@@ -1,7 +1,4 @@
-/**
- * @file r_data.cpp
- *
- * @ingroup resource
+/** @file r_data.cpp Texture Resource Registration.
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -22,19 +19,19 @@
  * 02110-1301 USA</small>
  */
 
-#include <QDir>
+#include <cstring>
+
 #include <QList>
 #include <QMap>
 #include <de/App>
 #include <de/ByteRefArray>
+#include <de/LegacyCore>
 #include <de/Log>
 #include <de/Reader>
 #include <de/String>
 #include <de/Time>
-#include <de/memory.h>
 
 #include "de_base.h"
-#include "de_console.h"
 #include "de_filesys.h"
 #include "de_resource.h"
 
@@ -221,9 +218,9 @@ patchid_t R_DeclarePatch(char const *name)
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 {
     LOG_AS("R_GetPatchInfo");
-    if(!info) Con_Error("R_GetPatchInfo: Argument 'info' cannot be NULL.");
+    if(!info) LegacyCore_FatalError("R_GetPatchInfo: Argument 'info' cannot be NULL.");
 
-    memset(info, 0, sizeof(patchinfo_t));
+    std::memset(info, 0, sizeof(patchinfo_t));
 
     if(!id) return false;
 
