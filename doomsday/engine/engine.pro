@@ -557,7 +557,7 @@ SOURCES += \
     src/render/r_things.cpp \
     src/render/rend_bias.c \
     src/render/rend_clip.cpp \
-    src/render/rend_console.c \
+    src/render/rend_console.cpp \
     src/render/rend_decor.c \
     src/render/rend_dynlight.c \
     src/render/rend_fakeradio.c \
