@@ -51,6 +51,7 @@ extern byte rendSkyLightAuto; // cvar
 extern float rendLightWallAngle;
 extern byte rendLightWallAngleSmooth;
 extern boolean ddMapSetup;
+extern boolean firstFrameAfterLoad;
 
 // Sky flags.
 #define SIF_DRAW_SPHERE     0x1 // Always draw the sky sphere.

@@ -531,7 +531,7 @@ SOURCES += \
     src/map/plane.c \
     src/map/polyobj.c \
     src/map/propertyvalue.cpp \
-    src/map/r_world.c \
+    src/map/r_world.cpp \
     src/map/sector.c \
     src/map/sidedef.c \
     src/map/surface.c \
