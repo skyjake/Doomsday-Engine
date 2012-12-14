@@ -560,7 +560,7 @@ SOURCES += \
     src/render/rend_console.cpp \
     src/render/rend_decor.c \
     src/render/rend_dynlight.c \
-    src/render/rend_fakeradio.c \
+    src/render/rend_fakeradio.cpp \
     src/render/rend_font.c \
     src/render/rend_halo.c \
     src/render/rend_list.cpp \
