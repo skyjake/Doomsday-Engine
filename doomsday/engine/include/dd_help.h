@@ -68,8 +68,8 @@ HelpId DH_Find(char const *id);
  * Return a string from within the helpnode. Strings are stored internally
  * and indexed by their type (e.g. HST_DESCRIPTION).
  *
- * @param foundNode  The helpnode to return the string from.
- * @param type       The string type (index) to look for within the node.
+ * @param found  The helpnode to return the string from.
+ * @param type   The string type (index) to look for within the node.
  *
  * @return Pointer to the found string; otherwise @c NULL. Note, may also
  * return @c NULL, if passed an invalid helpnode ptr OR the help string

@@ -50,8 +50,8 @@ void LG_SectorChanged(Sector* sector);
 /**
  * Calculate the light color for a 3D point in the world.
  *
- * @param point  3D point.
- * @param color  Evaluated color of the point (return value).
+ * @param point      3D point.
+ * @param destColor  Evaluated color of the point (return value).
  */
 void LG_Evaluate(coord_t const point[3], float destColor[3]);
 

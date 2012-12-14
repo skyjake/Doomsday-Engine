@@ -765,7 +765,7 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
 
 static boolean generateHaloForVisSprite(vissprite_t const *spr, boolean primary)
 {
-    float occlussionFactor;
+    float occlusionFactor;
 
     if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY)) return false;
 
@@ -776,11 +776,11 @@ static boolean generateHaloForVisSprite(vissprite_t const *spr, boolean primary)
          * not smoothly occlude their flares. Instead, we will have to
          * put up with them instantly appearing/disappearing.
          */
-        occlussionFactor = (LO_IsClipped(spr->data.flare.lumIdx, viewPlayer - ddPlayers)? 0 : 1);
+        occlusionFactor = (LO_IsClipped(spr->data.flare.lumIdx, viewPlayer - ddPlayers)? 0 : 1);
     }
     else
     {
-        occlussionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
+        occlusionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
     }
 
     return H_RenderHalo(spr->origin[VX], spr->origin[VY], spr->origin[VZ],
@@ -788,7 +788,7 @@ static boolean generateHaloForVisSprite(vissprite_t const *spr, boolean primary)
                         spr->data.flare.tex,
                         spr->data.flare.color,
                         spr->distance,
-                        occlussionFactor, spr->data.flare.mul,
+                        occlusionFactor, spr->data.flare.mul,
                         spr->data.flare.xOff, primary,
                         (spr->data.flare.flags & RFF_NO_TURN));
 }

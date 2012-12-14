@@ -51,15 +51,16 @@ Polyobj* P_PolyobjByID(uint id);
  * Lookup a Polyobj on the current map by tag.
  *
  * @param tag  Tag associated with the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
+ * @return  Found Polyobj instance, or @c NULL.
  */
 Polyobj* P_PolyobjByTag(int tag);
 
 /**
- * Lookup a Polyobj on the current map by origin.
+ * Lookup a Polyobj on the current map by the base mobj.
  *
- * @param tag  Tag associated with the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
+ * @param ddMobjBase  Base mobj to look for.
+ *
+ * @return  Found Polyobj instance, or @c NULL.
  */
 Polyobj* P_PolyobjByBase(void* ddMobjBase);
 
