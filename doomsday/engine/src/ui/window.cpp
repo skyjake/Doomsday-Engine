@@ -1,5 +1,6 @@
-/** @file window.cpp
- * Qt-based window management implementation. @ingroup base
+/** @file window.cpp Window manager.
+ *
+ * Window manager that manages a QWidget-based window. @ingroup base
  *
  * The Doomsday window management is responsible for the positioning, sizing,
  * and state of the game's native windows. In practice, the code operates on Qt
@@ -7,6 +8,11 @@
  *
  * At the moment, the quality of the code is adequate at best. See the todo
  * notes below for ideas for future improvements.
+ *
+ * @todo Instead of 'rect' and 'normalRect', the window should have a
+ * 'fullscreenSize' and a 'normalRect'. It isn't ideal that when toggling
+ * between fullscreen and windowed mode, the fullscreen resolution is chosen
+ * based on the size of the normal-mode window.
  *
  * @todo It is not a good idea to duplicate window state locally (position,
  * size, flags). Much of the complexity here is due to this duplication, trying
