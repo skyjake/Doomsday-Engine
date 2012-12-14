@@ -206,7 +206,8 @@ void DirectoryFeed::removeFile(String const &name)
     if(!QDir::current().remove(path))
     {
         /// @throw RemoveError  The file @a name exists but could not be removed.
-        throw RemoveError("DirectoryFeed::removeFile", name + ": cannot remove");
+        throw RemoveError("DirectoryFeed::removeFile", "Cannot remove \"" + name +
+                          "\" in " + description());
     }
 }
 
