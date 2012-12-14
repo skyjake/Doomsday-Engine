@@ -1,31 +1,27 @@
-/**\file rend_main.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file rend_main.cpp Map Renderer.
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -63,10 +59,10 @@ void Rend_DrawBBox(coord_t const pos[3], coord_t w, coord_t l, coord_t h, float 
 
 void Rend_DrawArrow(coord_t const pos[3], float a, float s, float const color3f[3], float alpha);
 
-static void Rend_RenderBoundingBoxes(void);
+static void Rend_RenderBoundingBoxes();
 static DGLuint constructBBox(DGLuint name, float br);
-static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf* leaf, boolean antiClockwise,
-    coord_t height, rvertex_t** verts, uint* vertsSize);
+static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf *leaf, boolean antiClockwise,
+    coord_t height, rvertex_t **verts, uint *vertsSize);
 
 boolean usingFog = false; // Is the fog in use?
 float fogColor[4];
@@ -134,54 +130,54 @@ byte devSoundOrigins = 0; ///< cvar @c 1= Draw sound origin debug display.
 byte devSurfaceVectors = 0;
 byte devNoTexFix = 0;
 
-static BspLeaf* currentBspLeaf; // BSP leaf currently being drawn.
+static BspLeaf *currentBspLeaf; // BSP leaf currently being drawn.
 static boolean firstBspLeaf; // No range checking for the first one.
 
-void Rend_Register(void)
+void Rend_Register()
 {
-    C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
+    C_VAR_FLOAT ("rend-camera-fov", &fieldOfView, 0, 1, 179);
 
-    C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 2);
-    C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
-    C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
-    C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
+    C_VAR_FLOAT ("rend-glow",                       &glowFactor,                    0, 0, 2);
+    C_VAR_INT   ("rend-glow-height",                &glowHeightMax,                 0, 0, 1024);
+    C_VAR_FLOAT ("rend-glow-scale",                 &glowHeightFactor,              0, 0.1f, 10);
+    C_VAR_INT   ("rend-glow-wall",                  &useWallGlow,                   0, 0, 1);
 
-    C_VAR_INT2("rend-light", &useDynLights, 0, 0, 1, LO_UnlinkMobjLumobjs);
-    C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255, Rend_CalcLightModRange);
-    C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-light-bright", &dynlightFactor, 0, 0, 1);
-    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_CalcLightModRange);
-    C_VAR_FLOAT("rend-light-fog-bright", &dynlightFogBright, 0, 0, 1);
-    C_VAR_FLOAT2("rend-light-sky", &rendSkyLight, 0, 0, 1, LG_MarkAllForUpdate);
-    C_VAR_BYTE2("rend-light-sky-auto", &rendSkyLightAuto, 0, 0, 1, LG_MarkAllForUpdate);
-    C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE("rend-light-wall-angle-smooth", &rendLightWallAngleSmooth, 0, 0, 1);
+    C_VAR_INT2  ("rend-light",                      &useDynLights,                  0, 0, 1, LO_UnlinkMobjLumobjs);
+    C_VAR_INT2  ("rend-light-ambient",              &ambientLight,                  0, 0, 255, Rend_CalcLightModRange);
+    C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT ("rend-light-bright",               &dynlightFactor,                0, 0, 1);
+    C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_CalcLightModRange);
+    C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
+    C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, LG_MarkAllForUpdate);
+    C_VAR_BYTE2 ("rend-light-sky-auto",             &rendSkyLightAuto,              0, 0, 1, LG_MarkAllForUpdate);
+    C_VAR_FLOAT ("rend-light-wall-angle",           &rendLightWallAngle,            CVF_NO_MAX, 0, 0);
+    C_VAR_BYTE  ("rend-light-wall-angle-smooth",    &rendLightWallAngleSmooth,      0, 0, 1);
 
-    C_VAR_BYTE("rend-map-material-precache", &precacheMapMaterials, 0, 0, 1);
+    C_VAR_BYTE  ("rend-map-material-precache",      &precacheMapMaterials,          0, 0, 1);
 
-    C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1);
-    C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 2);
-    C_VAR_INT("rend-shadow-far", &shadowMaxDistance, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-shadow-radius-max", &shadowMaxRadius, CVF_NO_MAX, 0, 0);
+    C_VAR_INT   ("rend-shadow",                     &useShadows,                    0, 0, 1);
+    C_VAR_FLOAT ("rend-shadow-darkness",            &shadowFactor,                  0, 0, 2);
+    C_VAR_INT   ("rend-shadow-far",                 &shadowMaxDistance,             CVF_NO_MAX, 0, 0);
+    C_VAR_INT   ("rend-shadow-radius-max",          &shadowMaxRadius,               CVF_NO_MAX, 0, 0);
 
-    C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
-    C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
+    C_VAR_BYTE  ("rend-tex-anim-smooth",            &smoothTexAnim,                 0, 0, 1);
+    C_VAR_INT   ("rend-tex-shiny",                  &useShinySurfaces,              0, 0, 1);
 
-    C_VAR_INT("rend-dev-sky", &devRendSkyMode, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-sky-always", &devRendSkyAlways, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_INT("rend-dev-cull-leafs", &devNoCulling, CVF_NO_ARCHIVE,0,1);
-    C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-mobj-show-vlights", &devMobjVLights, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_INT("rend-dev-polyobj-bbox", &devPolyobjBBox, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 4);
-    C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
-    C_VAR_BYTE("rend-dev-vertex-show-indices", &devVertexIndices, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-vertex-show-bars", &devVertexBars, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-surface-show-vectors", &devSurfaceVectors, CVF_NO_ARCHIVE, 0, 7);
-    C_VAR_BYTE("rend-dev-soundorigins", &devSoundOrigins, CVF_NO_ARCHIVE, 0, 7);
+    C_VAR_INT   ("rend-dev-sky",                    &devRendSkyMode,                CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-sky-always",             &devRendSkyAlways,              CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-freeze",                 &freezeRLs,                     CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT   ("rend-dev-cull-leafs",             &devNoCulling,                  CVF_NO_ARCHIVE,0,1);
+    C_VAR_INT   ("rend-dev-mobj-bbox",              &devMobjBBox,                   CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-mobj-show-vlights",      &devMobjVLights,                CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT   ("rend-dev-polyobj-bbox",           &devPolyobjBBox,                CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-light-mod",              &devLightModRange,              CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-tex-showfix",            &devNoTexFix,                   CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-blockmap-debug",         &bmapShowDebug,                 CVF_NO_ARCHIVE, 0, 4);
+    C_VAR_FLOAT ("rend-dev-blockmap-debug-size",    &bmapDebugSize,                 CVF_NO_ARCHIVE, .1f, 100);
+    C_VAR_BYTE  ("rend-dev-vertex-show-indices",    &devVertexIndices,              CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-vertex-show-bars",       &devVertexBars,                 CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-surface-show-vectors",   &devSurfaceVectors,             CVF_NO_ARCHIVE, 0, 7);
+    C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundOrigins,               CVF_NO_ARCHIVE, 0, 7);
 
     RL_Register();
     LO_Register();
@@ -202,23 +198,25 @@ void Rend_Register(void)
  */
 coord_t Rend_PointDist3D(coord_t const point[3])
 {
-    return M_ApproxDistance3(vOrigin[VX] - point[VX], vOrigin[VZ] - point[VY], 1.2 * (vOrigin[VY] - point[VZ]));
+    return M_ApproxDistance3(vOrigin[VX] - point[VX],
+                             vOrigin[VZ] - point[VY],
+                             1.2 * (vOrigin[VY] - point[VZ]));
 }
 
-void Rend_Init(void)
+void Rend_Init()
 {
     C_Init();
     RL_Init();
     Sky_Init();
 }
 
-void Rend_Shutdown(void)
+void Rend_Shutdown()
 {
     RL_Shutdown();
 }
 
 /// World/map renderer reset.
-void Rend_Reset(void)
+void Rend_Reset()
 {
     LO_Clear(); // Free lumobj stuff.
     if(dlBBox)
@@ -230,7 +228,7 @@ void Rend_Reset(void)
 
 void Rend_ModelViewMatrix(boolean useAngles)
 {
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
     vOrigin[VX] = viewData->current.origin[VX];
     vOrigin[VY] = viewData->current.origin[VZ];
@@ -252,40 +250,38 @@ void Rend_ModelViewMatrix(boolean useAngles)
     glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
 }
 
-static __inline double viewFacingDot(coord_t v1[2], coord_t v2[2])
+static inline double viewFacingDot(coord_t v1[2], coord_t v2[2])
 {
     // The dot product.
     return (v1[VY] - v2[VY]) * (v1[VX] - vOrigin[VX]) + (v2[VX] - v1[VX]) * (v1[VY] - vOrigin[VZ]);
 }
 
-const materialvariantspecification_t* Rend_MapSurfaceDiffuseMaterialSpec(void)
+materialvariantspecification_t const *Rend_MapSurfaceDiffuseMaterialSpec()
 {
     return Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                                     -1, -1, -1, true, true, false, false);
 }
 
-void Rend_VertexColorsGlow(ColorRawf* colors, size_t num, float glow)
+void Rend_VertexColorsGlow(ColorRawf *colors, size_t num, float glow)
 {
-    size_t i;
-    for(i = 0; i < num; ++i)
+    for(size_t i = 0; i < num; ++i)
     {
-        ColorRawf* c = &colors[i];
+        ColorRawf *c = &colors[i];
         c->rgba[CR] = c->rgba[CG] = c->rgba[CB] = glow;
     }
 }
 
-void Rend_VertexColorsAlpha(ColorRawf* colors, size_t num, float alpha)
+void Rend_VertexColorsAlpha(ColorRawf *colors, size_t num, float alpha)
 {
-    size_t i;
-    for(i = 0; i < num; ++i)
+    for(size_t i = 0; i < num; ++i)
     {
         colors[i].rgba[CA] = alpha;
     }
 }
 
-void Rend_ApplyTorchLight(float* color, float distance)
+void Rend_ApplyTorchLight(float *color, float distance)
 {
-    ddplayer_t* ddpl = &viewPlayer->shared;
+    ddplayer_t *ddpl = &viewPlayer->shared;
 
     // Disabled?
     if(!ddpl->fixedColorMap) return;
@@ -313,10 +309,10 @@ void Rend_ApplyTorchLight(float* color, float distance)
     }
 }
 
-static void lightVertex(ColorRawf* color, const rvertex_t* vtx, float lightLevel,
-    const float* ambientColor)
+static void lightVertex(ColorRawf *color, rvertex_t const *vtx, float lightLevel,
+    float const *ambientColor)
 {
-    float dist = Rend_PointDist2D(vtx->pos);
+    float dist     = Rend_PointDist2D(vtx->pos);
     float lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
 
     // Add extra light.
@@ -330,29 +326,26 @@ static void lightVertex(ColorRawf* color, const rvertex_t* vtx, float lightLevel
     color->rgba[CB] = lightVal * ambientColor[CB];
 }
 
-static void lightVertices(size_t num, ColorRawf* colors, const rvertex_t* verts,
-    float lightLevel, const float* ambientColor)
+static void lightVertices(size_t num, ColorRawf *colors, rvertex_t const *verts,
+    float lightLevel, float const *ambientColor)
 {
-    size_t i;
-    for(i = 0; i < num; ++i)
+    for(size_t i = 0; i < num; ++i)
     {
         lightVertex(colors+i, verts+i, lightLevel, ambientColor);
     }
 }
 
-void Rend_VertexColorsApplyTorchLight(ColorRawf* colors, const rvertex_t* vertices,
+void Rend_VertexColorsApplyTorchLight(ColorRawf *colors, rvertex_t const *vertices,
     size_t numVertices)
 {
-    ddplayer_t* ddpl = &viewPlayer->shared;
-    size_t i;
-
     // Disabled?
+    ddplayer_t* ddpl = &viewPlayer->shared;
     if(!ddpl->fixedColorMap) return;
 
-    for(i = 0; i < numVertices; ++i)
+    for(size_t i = 0; i < numVertices; ++i)
     {
-        const rvertex_t* vtx = &vertices[i];
-        ColorRawf* c = &colors[i];
+        rvertex_t const *vtx = &vertices[i];
+        ColorRawf *c = &colors[i];
         Rend_ApplyTorchLight(c->rgba, Rend_PointDist2D(vtx->pos));
     }
 }
@@ -366,7 +359,7 @@ void Rend_VertexColorsApplyTorchLight(ColorRawf* colors, const rvertex_t* vertic
  *
  * @return @ref sideSectionFlags denoting which sections are potentially visible.
  */
-static byte pvisibleLineSections(LineDef* line, int backSide)
+static byte pvisibleLineSections(LineDef *line, int backSide)
 {
     byte sections = 0;
 
@@ -379,13 +372,13 @@ static byte pvisibleLineSections(LineDef* line, int backSide)
     }
     else
     {
-        const SideDef* sideDef = line->L_sidedef(backSide);
-        const Sector* fsec  = line->L_sector(backSide);
-        const Sector* bsec  = line->L_sector(backSide^1);
-        const Plane* fceil  = fsec->SP_plane(PLN_CEILING);
-        const Plane* ffloor = fsec->SP_plane(PLN_FLOOR);
-        const Plane* bceil  = bsec->SP_plane(PLN_CEILING);
-        const Plane* bfloor = bsec->SP_plane(PLN_FLOOR);
+        SideDef const *sideDef = line->L_sidedef(backSide);
+        Sector const *fsec  = line->L_sector(backSide);
+        Sector const *bsec  = line->L_sector(backSide^1);
+        Plane const *fceil  = fsec->SP_plane(PLN_CEILING);
+        Plane const *ffloor = fsec->SP_plane(PLN_FLOOR);
+        Plane const *bceil  = bsec->SP_plane(PLN_CEILING);
+        Plane const *bfloor = bsec->SP_plane(PLN_FLOOR);
 
         sections |= SSF_MIDDLE | SSF_BOTTOM | SSF_TOP;
 
@@ -409,69 +402,67 @@ static byte pvisibleLineSections(LineDef* line, int backSide)
     return sections;
 }
 
-static void selectSurfaceColors(const float** topColor,
-    const float** bottomColor, SideDef* side, SideDefSection section)
+static void selectSurfaceColors(float const **topColor,
+    float const **bottomColor, SideDef *side, SideDefSection section)
 {
     switch(section)
     {
     case SS_MIDDLE:
         if(side->flags & SDF_BLENDMIDTOTOP)
         {
-            *topColor = side->SW_toprgba;
+            *topColor    = side->SW_toprgba;
             *bottomColor = side->SW_middlergba;
         }
         else if(side->flags & SDF_BLENDMIDTOBOTTOM)
         {
-            *topColor = side->SW_middlergba;
+            *topColor    = side->SW_middlergba;
             *bottomColor = side->SW_bottomrgba;
         }
         else
         {
-            *topColor = side->SW_middlergba;
-            *bottomColor = NULL;
+            *topColor    = side->SW_middlergba;
+            *bottomColor = 0;
         }
         break;
 
     case SS_TOP:
         if(side->flags & SDF_BLENDTOPTOMID)
         {
-            *topColor = side->SW_toprgba;
+            *topColor    = side->SW_toprgba;
             *bottomColor = side->SW_middlergba;
         }
         else
         {
-            *topColor = side->SW_toprgba;
-            *bottomColor = NULL;
+            *topColor    = side->SW_toprgba;
+            *bottomColor = 0;
         }
         break;
 
     case SS_BOTTOM:
         if(side->flags & SDF_BLENDBOTTOMTOMID)
         {
-            *topColor = side->SW_middlergba;
+            *topColor    = side->SW_middlergba;
             *bottomColor = side->SW_bottomrgba;
         }
         else
         {
-            *topColor = side->SW_bottomrgba;
-            *bottomColor = NULL;
+            *topColor    = side->SW_bottomrgba;
+            *bottomColor = 0;
         }
         break;
 
-    default:
-        break;
+    default: break;
     }
 }
 
-int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
+int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *paramaters)
 {
-    const dynlight_t** ptr = (const dynlight_t**)paramaters;
+    dynlight_t const **ptr = (dynlight_t const **)paramaters;
     *ptr = dyn;
     return 1; // Stop iteration.
 }
 
-static __inline const materialvariantspecification_t*
-mapSurfaceMaterialSpec(int wrapS, int wrapT)
+static inline materialvariantspecification_t const *mapSurfaceMaterialSpec(int wrapS, int wrapT)
 {
     return Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
                                                     wrapS, wrapT, -1, -1, -1,
@@ -484,11 +475,11 @@ mapSurfaceMaterialSpec(int wrapS, int wrapT)
  * of sprites. This is necessary because all masked polygons must be
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
-void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
-    coord_t wallLength, MaterialVariant* material, float const texOffset[2],
+void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
+    coord_t wallLength, MaterialVariant *material, float const texOffset[2],
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
-    vissprite_t* vis = R_NewVisSprite();
+    vissprite_t *vis = R_NewVisSprite();
     int i, c;
 
     vis->type = VSPR_MASKED_WALL;
@@ -511,7 +502,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
     // wrapping.
     if(renderTextures)
     {
-        const materialsnapshot_t* ms = Materials_PrepareVariant(material);
+        materialsnapshot_t const *ms = Materials_PrepareVariant(material);
         int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
 
         VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms->size.width;
@@ -564,7 +555,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
     if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
        !(rcolors[0].rgba[CA] < 1))
     {
-        const dynlight_t* dyn = NULL;
+        dynlight_t const *dyn = NULL;
 
         /**
          * The dynlights will have already been sorted so that the brightest
@@ -578,7 +569,9 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
         VS_WALL(vis)->modTexCoord[1][0] = dyn->t[0];
         VS_WALL(vis)->modTexCoord[1][1] = dyn->t[1];
         for(c = 0; c < 4; ++c)
+        {
             VS_WALL(vis)->modColor[c] = dyn->color.rgba[c];
+        }
     }
     else
     {
@@ -586,19 +579,17 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
     }
 }
 
-static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
+static void quadTexCoords(rtexcoord_t *tc, rvertex_t const *rverts,
     coord_t wallLength, coord_t const topLeft[3])
 {
-    tc[0].st[0] = tc[1].st[0] =
-        rverts[0].pos[VX] - topLeft[VX];
-    tc[3].st[1] = tc[1].st[1] =
-        rverts[0].pos[VY] - topLeft[VY];
+    tc[0].st[0] = tc[1].st[0] = rverts[0].pos[VX] - topLeft[VX];
+    tc[3].st[1] = tc[1].st[1] = rverts[0].pos[VY] - topLeft[VY];
     tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + wallLength;
     tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]);
     tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]);
 }
 
-static void quadLightCoords(rtexcoord_t* tc, float const s[2], float const t[2])
+static void quadLightCoords(rtexcoord_t *tc, float const s[2], float const t[2])
 {
     tc[1].st[0] = tc[0].st[0] = s[0];
     tc[1].st[1] = tc[3].st[1] = t[0];
@@ -611,8 +602,8 @@ static float shinyVertical(float dy, float dx)
     return ((atan(dy/dx) / (PI/2)) + 1) / 2;
 }
 
-static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
-    const rvertex_t* bottomRight, coord_t wallLength)
+static void quadShinyTexCoords(rtexcoord_t *tc, rvertex_t const *topLeft,
+    rvertex_t const *bottomRight, coord_t wallLength)
 {
     vec2f_t surface, normal, projected, s, reflected, view;
     float distance, angle, prevAngle = 0;
@@ -667,7 +658,7 @@ static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
     }
 }
 
-static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
+static void flatShinyTexCoords(rtexcoord_t *tc, float const xyz[3])
 {
     float distance, offset;
     vec2f_t view, start;
@@ -693,22 +684,22 @@ static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
     tc->st[1] = shinyVertical(vOrigin[VY] - xyz[VZ], distance);
 }
 
-static float getSnapshots(const materialsnapshot_t** msA,
-    const materialsnapshot_t** msB, material_t* mat)
+static float getSnapshots(materialsnapshot_t const **msA,
+    materialsnapshot_t const **msB, material_t *mat)
 {
-    const materialvariantspecification_t* spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
+    materialvariantspecification_t const *spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
     float interPos = 0;
-    assert(msA);
+    DENG_ASSERT(msA);
 
     *msA = Materials_Prepare(mat, spec, true);
 
     // Smooth Texture Animation?
     if(msB)
     {
-        MaterialVariant* variant = Materials_ChooseVariant(mat, spec, false, false);
+        MaterialVariant *variant = Materials_ChooseVariant(mat, spec, false, false);
         if(MaterialVariant_TranslationCurrent(variant) != MaterialVariant_TranslationNext(variant))
         {
-            MaterialVariant* matB = MaterialVariant_TranslationNext(variant);
+            MaterialVariant *matB = MaterialVariant_TranslationNext(variant);
 
             // Prepare the inter texture.
             *msB = Materials_PrepareVariant(matB);
@@ -735,15 +726,15 @@ typedef struct {
     int             flags; /// @see rendpolyFlags
     blendmode_t     blendMode;
     pvec3d_t        texTL, texBR;
-    const float*    texOffset;
-    const float*    texScale;
-    const float*    normal; // Surface normal.
+    float const    *texOffset;
+    float const    *texScale;
+    float const    *normal; // Surface normal.
     float           alpha;
     float           sectorLightLevel;
     float           surfaceLightLevelDL;
     float           surfaceLightLevelDR;
-    const float*    sectorLightColor;
-    const float*    surfaceColor;
+    float const    *sectorLightColor;
+    float const    *surfaceColor;
 
     uint            lightListIdx; // List of lights that affect this poly.
     uint            shadowListIdx; // List of shadows that affect this poly.
@@ -751,28 +742,28 @@ typedef struct {
     boolean         forceOpaque;
 
 // For bias:
-    void*           mapObject;
+    void           *mapObject;
     uint            elmIdx;
-    biassurface_t*  bsuf;
+    biassurface_t  *bsuf;
 
 // Wall only:
     struct {
-        const coord_t*  segLength;
-        const float*    surfaceColor2; // Secondary color.
+        coord_t const *segLength;
+        float const *surfaceColor2; // Secondary color.
         struct {
-            walldivnode_t* firstDiv;
+            walldivnode_t *firstDiv;
             uint divCount;
         } left;
         struct {
-            walldivnode_t* firstDiv;
+            walldivnode_t *firstDiv;
             uint divCount;
         } right;
     } wall;
 } rendworldpoly_params_t;
 
-static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
-    const rendworldpoly_params_t* p, const materialsnapshot_t* msA, float inter,
-    const materialsnapshot_t* msB)
+static boolean renderWorldPoly(rvertex_t *rvertices, uint numVertices,
+    rendworldpoly_params_t const *p, materialsnapshot_t const *msA, float inter,
+    materialsnapshot_t const *msB)
 {
     boolean useLights = false, useShadows = false, hasDynlights = false;
     rtexcoord_t* primaryCoords = NULL, *interCoords = NULL, *modCoords = NULL;
@@ -781,7 +772,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     ColorRawf* shinyColors = NULL;
     rtexcoord_t* shinyTexCoords = NULL;
     float modTexTC[2][2] = {{ 0, 0 }, { 0, 0 }};
-    ColorRawf modColor = { 0, 0, 0, 0 };
+    ColorRawf modColor;
     DGLuint modTex = 0;
     float glowing = p->glowing;
     boolean drawAsVisSprite = false;
@@ -1049,7 +1040,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
     if(drawAsVisSprite)
     {
-        assert(p->isWall);
+        DENG_ASSERT(p->isWall);
 
         /**
          * Masked polys (walls) get a special treatment (=> vissprite).
@@ -2230,19 +2221,19 @@ static int chooseHEdgeSkyFixes(HEdge* hedge, int skyCap)
     return fixes;
 }
 
-static __inline void Rend_BuildBspLeafSkyFixStripEdge(coord_t const vXY[2],
+static inline void Rend_BuildBspLeafSkyFixStripEdge(coord_t const vXY[2],
     coord_t v1Z, coord_t v2Z, float texS,
     rvertex_t* v1, rvertex_t* v2, rtexcoord_t* t1, rtexcoord_t* t2)
 {
     if(v1)
     {
-        assert(vXY);
+        DENG_ASSERT(vXY);
         V2f_Copyd(v1->pos, vXY);
         v1->pos[VZ] = v1Z;
     }
     if(v2)
     {
-        assert(vXY);
+        DENG_ASSERT(vXY);
         V2f_Copyd(v2->pos, vXY);
         v2->pos[VZ] = v2Z;
     }
@@ -2309,7 +2300,7 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
         coord_t zBottom, zTop;
 
         skyFixZCoords(hedge, skyCap, &zBottom, &zTop);
-        assert(zBottom < zTop);
+        DENG_ASSERT(zBottom < zTop);
 
         if(n == 0)
         {
@@ -2694,7 +2685,7 @@ static void Rend_RenderSkySurfaces(int skyCap)
     }
 }
 
-static void Rend_RenderWalls(void)
+static void Rend_RenderWalls()
 {
     BspLeaf* leaf = currentBspLeaf;
     HEdge* hedge;
@@ -2731,7 +2722,7 @@ static void Rend_RenderWalls(void)
     } while((hedge = hedge->next) != leaf->hedge);
 }
 
-static void Rend_RenderPolyobjs(void)
+static void Rend_RenderPolyobjs()
 {
     BspLeaf* leaf = currentBspLeaf;
     LineDef* line;
@@ -2760,7 +2751,7 @@ static void Rend_RenderPolyobjs(void)
     }
 }
 
-static void Rend_RenderPlanes(void)
+static void Rend_RenderPlanes()
 {
     BspLeaf* leaf = currentBspLeaf;
     Sector* sect;
@@ -2833,31 +2824,27 @@ static void Rend_RenderPlanes(void)
  * the remaining faces, i.e. the forward facing edges. This is done before
  * rendering edges, so solid segments cut out all unnecessary oranges.
  */
-static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
+static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
 {
-    coord_t fFloor, fCeil, bFloor, bCeil;
-    const coord_t* startv, *endv;
-    Sector* front, *back;
-    HEdge* hedge;
-
     if(devNoCulling || !bspLeaf || !bspLeaf->hedge || P_IsInVoid(viewPlayer)) return;
 
-    front = bspLeaf->sector;
-    fFloor = front->SP_floorheight;
-    fCeil = front->SP_ceilheight;
+    Sector *front        = bspLeaf->sector;
+    coord_t const fFloor = front->SP_floorheight;
+    coord_t const fCeil  = front->SP_ceilheight;
 
-    hedge = bspLeaf->hedge;
+    HEdge *hedge = bspLeaf->hedge;
     do
     {
         // Occlusions can only happen where two sectors contact.
         if(hedge->lineDef && HEDGE_BACK_SECTOR(hedge) &&
            (forwardFacing == ((hedge->frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
         {
-            back = HEDGE_BACK_SECTOR(hedge);
-            bFloor = back->SP_floorheight;
-            bCeil = back->SP_ceilheight;
+            Sector *back         = HEDGE_BACK_SECTOR(hedge);
+            coord_t const bFloor = back->SP_floorheight;
+            coord_t const bCeil  = back->SP_ceilheight;
 
             // Choose start and end vertices so that it's facing forward.
+            coord_t const *startv, *endv;
             if(forwardFacing)
             {
                 startv = hedge->HE_v1origin;
@@ -2898,7 +2885,7 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
     } while((hedge = hedge->next) != bspLeaf->hedge);
 }
 
-static __inline boolean isNullLeaf(BspLeaf* leaf)
+static inline boolean isNullLeaf(BspLeaf* leaf)
 {
     Sector* sec = leaf? leaf->sector : NULL;
     if(!sec) return true; // An orphan leaf?
@@ -3008,7 +2995,7 @@ static void Rend_RenderNode(runtime_mapdata_header_t* bspPtr)
     }
 }
 
-static void drawVector(const_pvec3f_t origin, const_pvec3f_t normal, float scalar, const float color[3])
+static void drawVector(const_pvec3f_t normal, float scalar, const float color[3])
 {
     static const float black[4] = { 0, 0, 0, 0 };
 
@@ -3020,34 +3007,32 @@ static void drawVector(const_pvec3f_t origin, const_pvec3f_t normal, float scala
     glEnd();
 }
 
-static void drawSurfaceTangentSpaceVectors(Surface* suf, const_pvec3f_t origin)
+static void drawSurfaceTangentSpaceVectors(Surface *suf, const_pvec3f_t origin)
 {
-#define VISUAL_LENGTH       (20)
+    int const VISUAL_LENGTH = 20;
 
-    static const float red[3]   = { 1, 0, 0 };
-    static const float green[3] = { 0, 1, 0 };
-    static const float blue[3]  = { 0, 0, 1 };
+    static float const red[3]   = { 1, 0, 0 };
+    static float const green[3] = { 0, 1, 0 };
+    static float const blue[3]  = { 0, 0, 1 };
 
-    assert(origin && suf);
+    DENG_ASSERT(origin && suf);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(origin[VX], origin[VZ], origin[VY]);
 
-    if(devSurfaceVectors & SVF_TANGENT)   drawVector(origin, suf->tangent,   VISUAL_LENGTH, red);
-    if(devSurfaceVectors & SVF_BITANGENT) drawVector(origin, suf->bitangent, VISUAL_LENGTH, green);
-    if(devSurfaceVectors & SVF_NORMAL)    drawVector(origin, suf->normal,    VISUAL_LENGTH, blue);
+    if(devSurfaceVectors & SVF_TANGENT)   drawVector(suf->tangent,   VISUAL_LENGTH, red);
+    if(devSurfaceVectors & SVF_BITANGENT) drawVector(suf->bitangent, VISUAL_LENGTH, green);
+    if(devSurfaceVectors & SVF_NORMAL)    drawVector(suf->normal,    VISUAL_LENGTH, blue);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-
-#undef VISUAL_LENGTH
 }
 
 /**
  * Draw the surface normals, primarily for debug.
  */
-void Rend_RenderSurfaceVectors(void)
+void Rend_RenderSurfaceVectors()
 {
     uint i;
 
@@ -3166,16 +3151,12 @@ void Rend_RenderSurfaceVectors(void)
 
 static void drawSoundOrigin(coord_t const origin[3], const char* label, coord_t const eye[3])
 {
-#define MAX_SOUNDORIGIN_DIST    384 ///< Maximum distance from origin to eye in map coordinates.
-
-    const Point2Raw labelOrigin = { 2, 2 };
-    coord_t dist;
-    float alpha;
+    int const MAX_SOUNDORIGIN_DIST = 384; ///< Maximum distance from origin to eye in map coordinates.
 
     if(!origin || !label || !eye) return;
 
-    dist = V3d_Distance(origin, eye);
-    alpha = 1.f - MIN_OF(dist, MAX_SOUNDORIGIN_DIST) / MAX_SOUNDORIGIN_DIST;
+    coord_t dist = V3d_Distance(origin, eye);
+    float alpha = 1.f - MIN_OF(dist, MAX_SOUNDORIGIN_DIST) / MAX_SOUNDORIGIN_DIST;
 
     if(alpha > 0)
     {
@@ -3189,13 +3170,12 @@ static void drawSoundOrigin(coord_t const origin[3], const char* label, coord_t 
         glRotatef(vpitch, 1, 0, 0);
         glScalef(-scale, -scale, 1);
 
+        Point2Raw const labelOrigin(2, 2);
         UI_TextOutEx(label, &labelOrigin, UI_Color(UIC_TITLE), alpha);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
     }
-
-#undef MAX_SOUNDORIGIN_DIST
 }
 
 static int drawSideDefSoundOrigins(SideDef* side, void* parameters)
@@ -3204,17 +3184,17 @@ static int drawSideDefSoundOrigins(SideDef* side, void* parameters)
     char buf[80];
 
     dd_snprintf(buf, 80, "Side #%i (middle)", idx);
-    drawSoundOrigin(side->SW_middlesurface.base.origin, buf, parameters);
+    drawSoundOrigin(side->SW_middlesurface.base.origin, buf, (coord_t const*) parameters);
 
     dd_snprintf(buf, 80, "Side #%i (bottom)", idx);
-    drawSoundOrigin(side->SW_bottomsurface.base.origin, buf, parameters);
+    drawSoundOrigin(side->SW_bottomsurface.base.origin, buf, (coord_t const*) parameters);
 
     dd_snprintf(buf, 80, "Side #%i (top)", idx);
-    drawSoundOrigin(side->SW_topsurface.base.origin, buf, parameters);
+    drawSoundOrigin(side->SW_topsurface.base.origin, buf, (coord_t const*) parameters);
     return false; // Continue iteration.
 }
 
-static int drawSectorSoundOrigins(Sector* sec, void* parameters)
+static int drawSectorSoundOrigins(Sector *sec, void *parameters)
 {
     uint idx = GameMap_SectorIndex(theMap, sec); /// @todo Do not assume current map.
     char buf[80];
@@ -3226,14 +3206,14 @@ static int drawSectorSoundOrigins(Sector* sec, void* parameters)
         {
             Plane* pln = sec->SP_plane(i);
             dd_snprintf(buf, 80, "Sector #%i (pln:%i)", idx, i);
-            drawSoundOrigin(pln->PS_base.origin, buf, parameters);
+            drawSoundOrigin(pln->PS_base.origin, buf, (coord_t const*) parameters);
         }
     }
 
     if(devSoundOrigins & SOF_SECTOR)
     {
         dd_snprintf(buf, 80, "Sector #%i", idx);
-        drawSoundOrigin(sec->base.origin, buf, parameters);
+        drawSoundOrigin(sec->base.origin, buf, (coord_t const*) parameters);
     }
 
     return false; // Continue iteration.
@@ -3242,7 +3222,7 @@ static int drawSectorSoundOrigins(Sector* sec, void* parameters)
 /**
  * Debugging aid for visualizing sound origins.
  */
-void Rend_RenderSoundOrigins(void)
+void Rend_RenderSoundOrigins()
 {
     coord_t eye[3];
 
@@ -3309,9 +3289,9 @@ static void drawVertexPoint(const Vertex* vtx, coord_t z, float alpha)
     glEnd();
 }
 
-static void drawVertexBar(const Vertex* vtx, coord_t bottom, coord_t top, float alpha)
+static void drawVertexBar(Vertex const *vtx, coord_t bottom, coord_t top, float alpha)
 {
-#define EXTEND_DIST     64
+    int const EXTEND_DIST = 64;
 
     static const float black[4] = { 0, 0, 0, 0 };
 
@@ -3326,13 +3306,11 @@ static void drawVertexBar(const Vertex* vtx, coord_t bottom, coord_t top, float 
         glColor4fv(black);
         glVertex3f(vtx->origin[VX], top + EXTEND_DIST, vtx->origin[VY]);
     glEnd();
-
-#undef EXTEND_DIST
 }
 
-static void drawVertexIndex(const Vertex* vtx, coord_t z, float scale, float alpha)
+static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alpha)
 {
-    const Point2Raw origin = { 2, 2 };
+    Point2Raw const origin(2, 2);
     char buf[80];
 
     FR_SetFont(fontFixed);
@@ -3361,10 +3339,10 @@ static void drawVertexIndex(const Vertex* vtx, coord_t z, float scale, float alp
 
 #define MAX_VERTEX_POINT_DIST 1280
 
-static int drawVertex1(LineDef* li, void* context)
+static int drawVertex1(LineDef *li, void *context)
 {
-    Vertex* vtx = li->L_v1;
-    Polyobj* po = context;
+    Vertex *vtx = li->L_v1;
+    Polyobj *po = (Polyobj *) context;
     coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx->origin[VX], vOrigin[VZ] - vtx->origin[VY]);
 
     if(dist2D < MAX_VERTEX_POINT_DIST)
@@ -3374,7 +3352,7 @@ static int drawVertex1(LineDef* li, void* context)
         if(alpha > 0)
         {
             coord_t bottom = po->bspLeaf->sector->SP_floorvisheight;
-            coord_t top = po->bspLeaf->sector->SP_ceilvisheight;
+            coord_t top    = po->bspLeaf->sector->SP_ceilvisheight;
 
             if(devVertexBars)
                 drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
@@ -3407,7 +3385,7 @@ static int drawVertex1(LineDef* li, void* context)
     return false; // Continue iteration.
 }
 
-int drawPolyObjVertexes(Polyobj* po, void* context)
+static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
 {
     return Polyobj_LineIterator(po, drawVertex1, po);
 }
@@ -3415,7 +3393,7 @@ int drawPolyObjVertexes(Polyobj* po, void* context)
 /**
  * Draw the various vertex debug aids.
  */
-void Rend_Vertexes(void)
+void Rend_Vertexes()
 {
     float oldPointSize, oldLineWidth = 1;
     uint i;
@@ -3539,7 +3517,7 @@ void Rend_Vertexes(void)
     glEnable(GL_DEPTH_TEST);
 }
 
-void Rend_RenderMap(void)
+void Rend_RenderMap()
 {
     binangle_t viewside;
 
@@ -3637,7 +3615,7 @@ void Rend_RenderMap(void)
  * The offsets in the lightRangeModTables are added to the sector->lightLevel
  * during rendering (both positive and negative).
  */
-void Rend_CalcLightModRange(void)
+void Rend_CalcLightModRange()
 {
     GameMap* map = theMap;
     int j, mapAmbient;
@@ -3714,7 +3692,7 @@ void Rend_ApplyLightAdaptation(float* val)
 /**
  * Draws the lightModRange (for debug)
  */
-void R_DrawLightRange(void)
+void R_DrawLightRange()
 {
 #define BLOCK_WIDTH             (1.0f)
 #define BLOCK_HEIGHT            (BLOCK_WIDTH * 255.0f)
@@ -3902,13 +3880,13 @@ void Rend_DrawArrow(coord_t const pos[3], float a, float s, float const color[3]
     glPopMatrix();
 }
 
-static int drawMobjBBox(thinker_t* th, void* context)
+static int drawMobjBBox(thinker_t *th, void * /*context*/)
 {
-    static const float  red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
-    static const float  green[3] = { 0.2f, 1, 0.2f}; // solid objects
-    static const float  yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
+    static float const red[3]    = { 1, 0.2f, 0.2f}; // non-solid objects
+    static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
+    static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
 
-    mobj_t* mo = (mobj_t*) th;
+    mobj_t* mo = (mobj_t *) th;
     coord_t eye[3], size;
     float alpha;
 
@@ -3945,10 +3923,10 @@ static int drawMobjBBox(thinker_t* th, void* context)
  * Depth test is disabled to show all mobjs that are being rendered, regardless
  * if they are actually vissible (hidden by previously drawn map geometry).
  */
-static void Rend_RenderBoundingBoxes(void)
+static void Rend_RenderBoundingBoxes()
 {
-    //static const float red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
-    static const float green[3] = { 0.2f, 1, 0.2f}; // solid objects
+    //static const float red[3]   = { 1, 0.2f, 0.2f}; // non-solid objects
+    static const float green[3]  = { 0.2f, 1, 0.2f}; // solid objects
     static const float yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
 
     const materialvariantspecification_t* spec;

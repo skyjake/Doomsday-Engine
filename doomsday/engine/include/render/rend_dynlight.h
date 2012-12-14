@@ -28,30 +28,38 @@
 /// Paramaters for Rend_RenderLightProjections (POD).
 typedef struct {
     uint lastIdx;
-    const rvertex_t* rvertices;
+    rvertex_t const *rvertices;
     uint numVertices, realNumVertices;
-    const coord_t* texTL, *texBR;
+    coord_t const *texTL, *texBR;
     boolean isWall;
     struct {
         struct {
-            walldivnode_t* firstDiv;
+            walldivnode_t *firstDiv;
             uint divCount;
         } left;
         struct {
-            walldivnode_t* firstDiv;
+            walldivnode_t *firstDiv;
             uint divCount;
         } right;
     } wall;
 } renderlightprojectionparams_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Render all dynlights in projection list @a listIdx according to @a paramaters
  * writing them to the renderering lists for the current frame.
  *
- * \note If multi-texturing is being used for the first light; it is skipped.
+ * @note If multi-texturing is being used for the first light; it is skipped.
  *
  * @return  Number of lights rendered.
  */
-uint Rend_RenderLightProjections(uint listIdx, renderlightprojectionparams_t* paramaters);
+uint Rend_RenderLightProjections(uint listIdx, renderlightprojectionparams_t *paramaters);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_RENDER_DYNLIGHT_H */

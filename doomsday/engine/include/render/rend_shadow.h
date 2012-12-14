@@ -25,6 +25,10 @@
 #ifndef LIBDENG_RENDER_MOBJ_SHADOW_H
 #define LIBDENG_RENDER_MOBJ_SHADOW_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * This value defines the offset from the shadowed surface applied to
  * shadows rendered with the simple drop-to-highest-floor method.
@@ -66,5 +70,9 @@ typedef struct {
  * writing them to the renderering lists for the current frame.
  */
 void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t* paramaters);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_RENDER_MOBJ_SHADOW_H */

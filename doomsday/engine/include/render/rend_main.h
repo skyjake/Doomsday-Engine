@@ -106,6 +106,8 @@ void            Rend_CalcLightModRange(void);
  */
 uint Rend_NumFanVerticesForBspLeaf(BspLeaf* bspLeaf);
 
+void    R_DrawLightRange(void);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
