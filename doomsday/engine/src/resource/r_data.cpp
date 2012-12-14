@@ -61,6 +61,12 @@ static de::Texture *deriveTexture(TextureManifest &manifest)
     return tex;
 }
 
+static int defineTextureWorker(TextureManifest &manifest, void * /*parameters*/)
+{
+    deriveTexture(manifest);
+    return 0; // Continue iteration.
+}
+
 /**
  * Compose the path to the data resource.
  * @note We do not use the lump name, instead we use the logical lump index
@@ -91,12 +97,12 @@ void R_InitSystemTextures()
         int uniqueId = i + 1/*1-based index*/;
         de::Uri resourceUri("Graphics", Path(names[i]));
 
-        TextureManifest *manifest = App_Textures()->declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
-        if(!manifest) continue; // Invalid URI?
-
-        /// @todo Defer until necessary (manifest is first de-referenced).
-        deriveTexture(*manifest);
+        App_Textures()->declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
     }
+
+    // Define any as yet undefined system textures.
+    /// @todo Defer until necessary (manifest texture is first referenced).
+    App_Textures()->iterateDeclared("System", defineTextureWorker);
 }
 
 /// @note Part of the Doomsday public API.
@@ -206,7 +212,7 @@ patchid_t R_DeclarePatch(char const *name)
     TextureManifest *manifest = textures.declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
     if(!manifest) return 0; // Invalid uri?
 
-    /// @todo Defer until necessary (manifest is first de-referenced).
+    /// @todo Defer until necessary (manifest texture is first referenced).
     deriveTexture(*manifest);
 
     return uniqueId;
@@ -639,7 +645,7 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
             }
         }
 
-        /// @todo Defer until necessary (manifest is first de-referenced).
+        /// @todo Defer until necessary (manifest texture is first referenced).
         LOG_WARNING("Failed defining Texture for patch composite \"%s\", ignoring.") << uri;
 
         delete &def;
@@ -666,6 +672,8 @@ void R_InitFlatTextures()
     de::Time begunAt;
 
     LOG_VERBOSE("Initializing Flat textures...");
+
+    de::Textures &textures = *App_Textures();
 
     LumpIndex const &index = App_FileSystem()->nameIndex();
     lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
@@ -705,6 +713,7 @@ void R_InitFlatTextures()
                !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
             de::Uri uri("Flats", Path(percentEncodedName));
+            if(textures.has(uri)) continue;
 
             de::Texture::Flags flags;
             if(file.container().hasCustom()) flags |= de::Texture::Custom;
@@ -721,21 +730,15 @@ void R_InitFlatTextures()
             int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
             de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
-            TextureManifest *manifest = App_Textures()->declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
-            if(!manifest) continue; // Invalid URI?
-
-            /// @todo Defer until necessary (manifest is first de-referenced).
-            deriveTexture(*manifest);
+            textures.declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
         }
     }
 
-    LOG_INFO(String("R_InitFlatTetxures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
-}
+    // Define any as yet undefined flat textures.
+    /// @todo Defer until necessary (manifest texture is first referenced).
+    textures.iterateDeclared("Flats", defineTextureWorker);
 
-static int defineTextureWorker(TextureManifest &manifest, void * /*parameters*/)
-{
-    deriveTexture(manifest);
-    return 0; // Continue iteration.
+    LOG_INFO(String("R_InitFlatTetxures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 /// Returns @c true iff @a name is a well-formed sprite name.
@@ -847,7 +850,7 @@ void R_InitSpriteTextures()
     Stack_Delete(stack);
 
     // Define any as yet undefined sprite textures.
-    /// @todo Defer until necessary (manifest is first de-referenced).
+    /// @todo Defer until necessary (manifest texture is first referenced).
     App_Textures()->iterateDeclared("Sprites", defineTextureWorker);
 
     LOG_INFO(String("R_InitSpriteTextures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
@@ -883,7 +886,7 @@ texture_s *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
                                                         QPoint(0, 0), uniqueId, &resourceUri);
     if(!manifest) return 0; // Invalid URI?
 
-    /// @todo Defer until necessary (manifest is first de-referenced).
+    /// @todo Defer until necessary (manifest texture is first referenced).
     return reinterpret_cast<texture_s *>( deriveTexture(*manifest) );
 }
 
