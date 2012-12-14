@@ -609,6 +609,11 @@ public:
             {
                 patchVersion = expr.toInt(0, 10, String::AllowSuffix);
             }
+            else if(!var.compareWithoutCase("Engine config") ||
+                    !var.compareWithoutCase("IWAD"))
+            {
+                // Ignore these WhackEd2 specific values.
+            }
             else
             {
                 LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
