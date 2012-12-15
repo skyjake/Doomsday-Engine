@@ -52,6 +52,8 @@ struct Garbage
 
     void recycle()
     {
+        DENG_ASSERT(!beingRecycled);
+
         if(allocs.empty()) return;
 
         beingRecycled = true;
