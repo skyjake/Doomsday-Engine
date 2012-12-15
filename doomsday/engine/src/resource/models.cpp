@@ -31,6 +31,7 @@
 #include "de_platform.h"
 
 #include <cmath>
+#include <cstring> // memset
 
 #include "de_base.h"
 #include "de_console.h"
