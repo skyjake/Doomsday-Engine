@@ -1322,6 +1322,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                         if(mdl->sub[i].skinFilename)
                             mdl->sub[i].skinFilename = Uri_Dup(mdl->sub[i].skinFilename);
+
+                        if(mdl->sub[i].shinySkin)
+                            mdl->sub[i].shinySkin = Uri_Dup(mdl->sub[i].shinySkin);
                     }
                 }
             }
@@ -1378,7 +1381,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         RV_BYTE("Selskin mask", mdl->sub[sub].selSkinBits[0])
                         RV_BYTE("Selskin shift", mdl->sub[sub].selSkinBits[1])
                         RV_NBVEC("Selskins", mdl->sub[sub].selSkins, 8)
-                        RV_STR("Shiny skin", mdl->sub[sub].shinySkin)
+                        RV_URI("Shiny skin", &mdl->sub[sub].shinySkin, "Models")
                         RV_FLT("Shiny", mdl->sub[sub].shiny)
                         RV_VEC("Shiny color", mdl->sub[sub].shinyColor, 3)
                         RV_FLT("Shiny reaction", mdl->sub[sub].shinyReact)
@@ -1416,6 +1419,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     {
                         Uri_Delete(mdl->sub[i].skinFilename);
                         mdl->sub[i].skinFilename = NULL;
+                    }
+
+                    if(mdl->sub[i].shinySkin && !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].shinySkin), "-"))
+                    {
+                        Uri_Delete(mdl->sub[i].shinySkin);
+                        mdl->sub[i].shinySkin = NULL;
                     }
 
                     if(!strcmp(mdl->sub[i].frame, "-"))

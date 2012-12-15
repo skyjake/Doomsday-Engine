@@ -170,7 +170,7 @@ typedef struct {
     float           parm; // Custom parameter.
     unsigned char   selSkinBits[2]; // Mask and offset.
     unsigned char   selSkins[8];
-    ded_string_t    shinySkin;
+    Uri*            shinySkin;
     float           shiny;
     float           shinyColor[3];
     float           shinyReact;

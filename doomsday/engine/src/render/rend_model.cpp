@@ -140,7 +140,7 @@ void Rend_ModelSetFrame(modeldef_t *modef, int frame)
     {
         submodeldef_t *subdef = &modef->sub[i];
         model_t *mdl;
-        if(!subdef->modelId) continue;
+        if(subdef->modelId == NOMODELID) continue;
 
         // Modify the modeldef itself: set the current frame.
         mdl = Models_ToModel(subdef->modelId);

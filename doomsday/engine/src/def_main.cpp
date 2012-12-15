@@ -1454,24 +1454,25 @@ void Def_PostInit(void)
     char name[40];
 
     // Particle generators: model setup.
-    ded_ptcgen_t* gen = defs.ptcGens;
+    ded_ptcgen_t *gen = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, gen++)
     {
-        ded_ptcstage_t* st = gen->stages;
+        ded_ptcstage_t *st = gen->stages;
         for(int k = 0; k < gen->stageCount.num; ++k, st++)
         {
             if(st->type < PTC_MODEL || st->type >= PTC_MODEL + MAX_PTC_MODELS)
                 continue;
 
             sprintf(name, "Particle%02i", st->type - PTC_MODEL);
-            modeldef_t* modef;
-            if(!(modef = Models_Definition(name)) || modef->sub[0].modelId <= 0)
+
+            modeldef_t *modef = Models_Definition(name);
+            if(!modef || modef->sub[0].modelId == NOMODELID)
             {
                 st->model = -1;
                 continue;
             }
 
-            model_t* mdl = Models_ToModel(modef->sub[0].modelId);
+            model_t *mdl = Models_ToModel(modef->sub[0].modelId);
             DENG_ASSERT(mdl);
 
             st->model = modef - modefs;
