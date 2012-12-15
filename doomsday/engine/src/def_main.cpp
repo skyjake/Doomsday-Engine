@@ -627,27 +627,24 @@ int Def_EvalFlags(char *ptr)
 {
     LOG_AS("Def_EvalFlags");
 
-    ded_flag_t* flag;
-    int value = 0, len;
-    char buf[64];
+    int value = 0;
 
     while(*ptr)
     {
         ptr = M_SkipWhite(ptr);
-        len = M_FindWhite(ptr) - ptr;
-        qstrncpy(buf, ptr, len);
-        buf[len] = 0;
 
-        flag = Def_GetFlag(buf);
-        if(flag)
+        int flagNameLength = M_FindWhite(ptr) - ptr;
+        de::String flagName(ptr, flagNameLength);
+        ptr += flagNameLength;
+
+        if(ded_flag_t *flag = Def_GetFlag(flagName.toUtf8().constData()))
         {
             value |= flag->value;
         }
         else
         {
-            LOG_WARNING("Flag '%s' is not defined (or used out of context).") << buf;
+            LOG_WARNING("Flag '%s' is not defined (or used out of context).") << flagName;
         }
-        ptr += len;
     }
     return value;
 }
