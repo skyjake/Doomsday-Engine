@@ -1495,7 +1495,13 @@ void Def_PostInit(void)
     for(int i = 0; i < defs.count.details.num; ++i)
     {
         ded_detailtexture_t *dtl = &defs.details[i];
+
+        // Ignore definitions which do not specify a material.
+        if((!dtl->material1 || Uri_IsEmpty(dtl->material1)) &&
+           (!dtl->material2 || Uri_IsEmpty(dtl->material2))) continue;
+
         if(!dtl->detailTex) continue;
+
         R_DefineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->detailTex));
     }
 
@@ -1528,6 +1534,9 @@ void Def_PostInit(void)
     {
         ded_decor_t* decor = &defs.decorations[i];
 
+        // Ignore definitions which do not specify a material.
+        if(!decor->material || Uri_IsEmpty(decor->material)) continue;
+
         for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
             ded_decorlight_t* lig = &decor->lights[k];
@@ -1559,6 +1568,9 @@ void Def_PostInit(void)
     for(int i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t* ref = &defs.reflections[i];
+
+        // Ignore definitions which do not specify a material.
+        if(!ref->material || Uri_IsEmpty(ref->material)) continue;
 
         if(ref->shinyMap)
         {
