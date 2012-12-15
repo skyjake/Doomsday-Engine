@@ -469,7 +469,7 @@ ded_decor_t* Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean 
     {
         materialid_t defMatId;
 
-        if(!def->material) continue;
+        if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
         defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
@@ -487,7 +487,7 @@ ded_reflection_t* Def_GetReflection(materialid_t matId, boolean hasExternal, boo
     {
         materialid_t defMatId;
 
-        if(!def->material) continue;
+        if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
         defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
@@ -503,7 +503,7 @@ ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
     int i;
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
-        if(def->material1)
+        if(def->material1 && !Uri_IsEmpty(def->material1))
         {
             materialid_t defMatId = Materials_ResolveUri2(def->material1, true/*quiet please*/);
             // Is this suitable?
@@ -511,7 +511,7 @@ ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
                 return def;
         }
 
-        if(def->material2)
+        if(def->material2 && !Uri_IsEmpty(def->material2))
         {
             materialid_t defMatId = Materials_ResolveUri2(def->material2, true/*quiet please*/);
             // Is this suitable?
@@ -531,7 +531,8 @@ ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean 
     {
         materialid_t defMatId;
 
-        if(!def->material) continue;
+        if(!def->material || Uri_IsEmpty(def->material)) continue;
+
         defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
         if(defMatId == NOMATERIALID) continue;
 
