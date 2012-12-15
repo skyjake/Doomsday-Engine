@@ -90,8 +90,10 @@ void CallbackThread::run()
         _terminationFunc(_exitStatus);
     }
 
-    de::Log::disposeThreadLog();
     Garbage_ClearForThread();
+
+    // No more log output from this thread.
+    de::Log::disposeThreadLog();
 }
 
 int CallbackThread::exitValue() const
