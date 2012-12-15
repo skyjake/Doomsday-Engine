@@ -623,8 +623,10 @@ const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
     return NULL;
 }
 
-int Def_EvalFlags(char* ptr)
+int Def_EvalFlags(char *ptr)
 {
+    LOG_AS("Def_EvalFlags");
+
     ded_flag_t* flag;
     int value = 0, len;
     char buf[64];
@@ -633,7 +635,7 @@ int Def_EvalFlags(char* ptr)
     {
         ptr = M_SkipWhite(ptr);
         len = M_FindWhite(ptr) - ptr;
-        strncpy(buf, ptr, len);
+        qstrncpy(buf, ptr, len);
         buf[len] = 0;
 
         flag = Def_GetFlag(buf);
@@ -643,7 +645,7 @@ int Def_EvalFlags(char* ptr)
         }
         else
         {
-            Con_Message("Warning: Def_EvalFlags: Undefined flag '%s'.\n", buf);
+            LOG_WARNING("Flag '%s' is not defined (or used out of context).") << buf;
         }
         ptr += len;
     }
