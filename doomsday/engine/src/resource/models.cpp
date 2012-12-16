@@ -284,9 +284,9 @@ static void loadMd2(de::FileHandle& file, model_t& mdl)
     mdl.lods[0].glCommands = (int*) allocAndLoad(file, mdl.lodInfo[0].offsetGlCommands,
                                                  sizeof(int) * mdl.lodInfo[0].numGlCommands);
 
-    // Load skins.
-    mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(*mdl.skins) * inf.numSkins);
-    if(!mdl.skins) throw Error("loadMd2:", String("Failed on allocation of %1 bytes for skin list").arg(sizeof(*mdl.skins) * inf.numSkins));
+    // Load skins. Note: memory is allocated for at least one skin (fallback might be found).
+    mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(*mdl.skins) * MAX_OF(1, inf.numSkins));
+    if(!mdl.skins) throw std::bad_alloc();
 
     file.seek(inf.offsetSkins, SeekSet);
     for(int i = 0; i < inf.numSkins; ++i)
@@ -364,7 +364,8 @@ static void loadDmd(de::FileHandle& file, model_t& mdl)
     }
 
     // Allocate and load in the data.
-    mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(dmd_skin_t) * inf.numSkins);
+    // Note: memory is allocated for at least one skin (fallback might be found).
+    mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(dmd_skin_t) * MAX_OF(1, inf.numSkins));
     file.seek(inf.offsetSkins, SeekSet);
     for(int i = 0; i < inf.numSkins; ++i)
     {
