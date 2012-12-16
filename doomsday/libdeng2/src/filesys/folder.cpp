@@ -224,8 +224,7 @@ void Folder::removeFile(String const &removePath)
     if(originFeed)
     {
         originFeed->removeFile(removePath);
-    }
-    
+    }    
 }
 
 bool Folder::has(String const &name) const
