@@ -1,5 +1,4 @@
 /** @file timevalue.cpp Value that holds a Time.
- * @ingroup data
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
