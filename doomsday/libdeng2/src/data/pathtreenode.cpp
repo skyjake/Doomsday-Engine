@@ -61,54 +61,69 @@ PathTree::Node::Node(PathTree::NodeArgs const &args)
 
 PathTree::Node::~Node()
 {
+    DENG2_ARMED(this);
+
     delete d;
 }
 
 bool PathTree::Node::isLeaf() const
 {
+    DENG2_ARMED(this);
+
     return d->children == 0;
 }
 
 PathTree &PathTree::Node::tree() const
 {
+    DENG2_ARMED(this);
+
     return d->tree;
 }
 
 PathTree::Node &PathTree::Node::parent() const
 {
+    DENG2_ARMED(this);
+
     return *d->parent;
 }
 
 const PathTree::Node::Children &PathTree::Node::children() const
 {
+    DENG2_ARMED(this);
     DENG2_ASSERT(d->children != 0);
+
     return *d->children;
 }
 
 PathTree::Nodes const &PathTree::Node::childNodes(PathTree::NodeType type) const
 {
+    DENG2_ARMED(this);
     DENG2_ASSERT(d->children != 0);
     return (type == PathTree::Leaf? d->children->leaves : d->children->branches);
 }
 
 PathTree::Nodes &PathTree::Node::childNodes(PathTree::NodeType type)
 {
+    DENG2_ARMED(this);
     DENG2_ASSERT(d->children != 0);
     return (type == PathTree::Leaf? d->children->leaves : d->children->branches);
 }
 
 bool PathTree::Node::isAtRootLevel() const
 {
+    DENG2_ARMED(this);
     return d->parent == &d->tree.rootBranch();
 }
 
 PathTree::SegmentId PathTree::Node::segmentId() const
 {
+    DENG2_ARMED(this);
     return d->segmentId;
 }
 
 void PathTree::Node::addChild(PathTree::Node &node)
 {
+    DENG2_ARMED(this);
     DENG2_ASSERT(d->children != 0);
 
     childNodes(node.type()).insert(node.hash(), &node);
@@ -116,6 +131,7 @@ void PathTree::Node::addChild(PathTree::Node &node)
 
 void PathTree::Node::removeChild(PathTree::Node &node)
 {
+    DENG2_ARMED(this);
     DENG2_ASSERT(d->children != 0);
 
     childNodes(node.type()).remove(node.hash(), &node);
@@ -123,11 +139,15 @@ void PathTree::Node::removeChild(PathTree::Node &node)
 
 String const &PathTree::Node::name() const
 {
+    DENG2_ARMED(this);
+
     return tree().segmentName(d->segmentId);
 }
 
 Path::hash_type PathTree::Node::hash() const
 {
+    DENG2_ARMED(this);
+
     return tree().segmentHash(d->segmentId);
 }
 
@@ -307,6 +327,9 @@ static void pathConstructor(internal::PathConstructorArgs &args, PathTree::Node 
  */
 Path PathTree::Node::path(QChar sep) const
 {
+    DENG2_ARMED(this);
+    de::TripwireArmer trip(d->tree); DENG2_UNUSED(trip);
+
     internal::PathConstructorArgs args(sep);
 #ifdef LIBDENG_STACK_MONITOR
     stackStart = &parm;
@@ -345,22 +368,26 @@ UserDataNode::UserDataNode(PathTree::NodeArgs const &args, void *userPointer, in
 
 void *UserDataNode::userPointer() const
 {
+    DENG2_ARMED(this);
     return _pointer;
 }
 
 int UserDataNode::userValue() const
 {
+    DENG2_ARMED(this);
     return _value;
 }
 
 UserDataNode &UserDataNode::setUserPointer(void *ptr)
 {
+    DENG2_ARMED(this);
     _pointer = ptr;
     return *this;
 }
 
 UserDataNode &UserDataNode::setUserValue(int value)
 {
+    DENG2_ARMED(this);
     _value = value;
     return *this;
 }

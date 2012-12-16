@@ -581,6 +581,7 @@ static void destroyBindings(void)
     {
         if(!schemes[i]) continue;
 
+        {
         de::PathTreeIterator<MaterialRepository> iter(schemes[i]->leafNodes());
         while(iter.hasNext())
         {
@@ -592,6 +593,8 @@ static void destroyBindings(void)
                 delete mb;
             }
         }
+        }
+
         delete schemes[i]; schemes[i] = NULL;
     }
 

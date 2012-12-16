@@ -24,6 +24,7 @@
 #include <de/Error>
 #include <de/String>
 #include <de/Path>
+#include <de/Tripwired>
 
 #include <QList>
 #include <QMultiHash>
@@ -56,7 +57,7 @@ namespace de
  * backward slashes, irrespective of the separator used at path insertion
  * time.
  */
-class DENG2_PUBLIC PathTree
+class DENG2_PUBLIC PathTree : public Tripwired
 {
     struct Instance; // needs to be friended by Node
 
@@ -147,7 +148,7 @@ public:
     /**
      * Base class for all nodes of a PathTree. @ingroup data
      */
-    class DENG2_PUBLIC Node
+    class DENG2_PUBLIC Node : public Tripwired
     {
     public:
         typedef PathTree::NodeHash Children;
@@ -474,10 +475,20 @@ template <typename TreeType>
 class PathTreeIterator
 {
 public:
-    PathTreeIterator(PathTree::Nodes const &nodes) : _nodes(nodes) {
+    PathTreeIterator(PathTree::Nodes const &nodes) : _tree(0), _nodes(nodes) {
         _next = _iter = _nodes.begin();
         if(_next != _nodes.end()) ++_next;
         _current = _nodes.end();
+
+        if(_iter != _nodes.end())
+        {
+            _tree = &_iter.value()->tree();
+            _tree->arm();
+        }
+    }
+
+    ~PathTreeIterator() {
+        if(_tree) _tree->disarm();
     }
 
     inline bool hasNext() const {
@@ -499,15 +510,18 @@ public:
 
     Path::hash_type key() const {
         DENG2_ASSERT(_current != _nodes.end());
+        DENG2_ARMED_VALUE(_current);
         return _current.key();
     }
 
     typename TreeType::Node &value() const {
         DENG2_ASSERT(_current != _nodes.end());
+        DENG2_ARMED_VALUE(_current);
         return *static_cast<typename TreeType::Node *>(_current.value());
     }
 
 private:
+    PathTree const *_tree;
     PathTree::Nodes const &_nodes;
     PathTree::Nodes::const_iterator _iter, _next, _current;
 };

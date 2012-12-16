@@ -226,8 +226,21 @@ struct PathTree::Instance
     }
 };
 
+PathTree::PathTree(Flags flags)
+{
+    d = new Instance(*this, flags);
+}
+
+PathTree::~PathTree()
+{
+    DENG2_ARMED(this);
+    delete d;
+}
+
 PathTree::Node &PathTree::insert(Path const &path)
 {
+    DENG2_ARMED(this);
+
     PathTree::Node *node = d->buildNodesForPath(path);
     DENG2_ASSERT(node != 0);
 
@@ -239,6 +252,8 @@ PathTree::Node &PathTree::insert(Path const &path)
 
 bool PathTree::remove(Path const &path, ComparisonFlags flags)
 {
+    DENG2_ARMED(this);
+
     PathTree::Node *node = d->find(path, flags | RelinquishMatching);
     if(node)
     {
@@ -249,16 +264,6 @@ bool PathTree::remove(Path const &path, ComparisonFlags flags)
         return true;
     }
     return false;
-}
-
-PathTree::PathTree(Flags flags)
-{
-    d = new Instance(*this, flags);
-}
-
-PathTree::~PathTree()
-{
-    delete d;
 }
 
 String const &PathTree::nodeTypeName(NodeType type)
@@ -272,6 +277,7 @@ String const &PathTree::nodeTypeName(NodeType type)
 
 int PathTree::size() const
 {
+    DENG2_ARMED(this);
     return d->size;
 }
 
@@ -282,22 +288,26 @@ bool PathTree::empty() const
 
 PathTree::Flags PathTree::flags() const
 {
+    DENG2_ARMED(this);
     return d->flags;
 }
 
 void PathTree::clear()
 {
+    DENG2_ARMED(this);
     d->clear();
 }
 
 bool PathTree::has(Path const &path, ComparisonFlags flags) const
 {    
+    DENG2_ARMED(this);
     flags &= ~RelinquishMatching; // never relinquish
     return d->find(path, flags) != 0;
 }
 
 PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags flags) const
 {
+    DENG2_ARMED(this);
     Node const *found = d->find(searchPath, flags);
     if(!found)
     {
@@ -309,22 +319,26 @@ PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags fla
 
 PathTree::Node &PathTree::find(Path const &path, ComparisonFlags flags)
 {
+    DENG2_ARMED(this);
     Node const &node = const_cast<PathTree const *>(this)->find(path, flags);
     return const_cast<Node &>(node);
 }
 
 String const &PathTree::segmentName(SegmentId segmentId) const
 {
+    DENG2_ARMED(this);
     return d->segments.stringRef(segmentId);
 }
 
 Path::hash_type PathTree::segmentHash(SegmentId segmentId) const
 {
+    DENG2_ARMED(this);
     return d->segments.userValue(segmentId);
 }
 
 PathTree::Node const &PathTree::rootBranch() const
 {
+    DENG2_ARMED(this);
     return d->rootNode;
 }
 
@@ -335,6 +349,7 @@ PathTree::Node *PathTree::newNode(NodeArgs const &args)
 
 PathTree::Nodes const &PathTree::nodes(NodeType type) const
 {
+    DENG2_ARMED(this);
     return (type == Leaf? d->hash.leaves : d->hash.branches);
 }
 
@@ -351,6 +366,7 @@ static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes cons
 
 int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar separator) const
 {
+    DENG2_ARMED(this);
     int numFoundSoFar = found.count();
     if(!(flags & NoBranch))
     {
@@ -416,6 +432,7 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
 int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path::hash_type hashKey,
                        int (*callback) (PathTree::Node &, void *), void *parameters) const
 {
+    DENG2_ARMED(this);
     int result = 0;
     if(callback)
     {
