@@ -39,6 +39,7 @@ HEADERS += \
     include/de/TextValue \
     include/de/Time \
     include/de/TimeValue \
+    include/de/Tripwired \
     include/de/Value \
     include/de/Variable \
     include/de/Waitable \
@@ -86,6 +87,7 @@ HEADERS += \
     include/de/data/textvalue.h \
     include/de/data/time.h \
     include/de/data/timevalue.h \
+    include/de/data/tripwired.h \
     include/de/data/value.h \
     include/de/data/variable.h \
     include/de/data/waitable.h \
@@ -127,6 +129,7 @@ SOURCES += \
     src/data/textvalue.cpp \
     src/data/time.cpp \
     src/data/timevalue.cpp \
+    src/data/tripwired.cpp \
     src/data/value.cpp \
     src/data/variable.cpp \
     src/data/waitable.cpp \

@@ -72,8 +72,7 @@ HEADERS += \
     include/de/LogBuffer \
     include/de/UnixInfo \
     include/de/Vector \
-    include/de/Version \
-    include/de/data/tripwired.h
+    include/de/Version
 
 HEADERS += \
     include/de/c_wrapper.h \
@@ -106,8 +105,7 @@ SOURCES += \
     src/core/library.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp \
-    src/core/unixinfo.cpp \
-    src/data/tripwired.cpp
+    src/core/unixinfo.cpp
 
 OTHER_FILES += \
     modules/Config.de \
