@@ -294,11 +294,15 @@ StringPool::StringPool(String *strings, uint count)
 
 StringPool::~StringPool()
 {
+    DENG2_ARMED(this);
+
     delete d;
 }
 
 void StringPool::clear()
 {
+    DENG2_ARMED(this);
+
     d->clear();
 }
 
@@ -310,12 +314,16 @@ bool StringPool::empty() const
 
 dsize StringPool::size() const
 {
+    DENG2_ARMED(this);
+
     d->assertCount();
     return d->count;
 }
 
 StringPool::Id StringPool::intern(String str)
 {
+    DENG2_ARMED(this);
+
     Interns::iterator found = d->findIntern(str); // O(log n)
     if(found != d->interns.end())
     {
@@ -327,12 +335,16 @@ StringPool::Id StringPool::intern(String str)
 
 String StringPool::internAndRetrieve(String str)
 {
+    DENG2_ARMED(this);
+
     InternalId id = IMPORT_ID(intern(str));
     return *d->idMap[id];
 }
 
 void StringPool::setUserValue(Id id, uint value)
 {
+    DENG2_ARMED(this);
+
     if(id == 0) return;
 
     InternalId const internalId = IMPORT_ID(id);
@@ -345,6 +357,8 @@ void StringPool::setUserValue(Id id, uint value)
 
 uint StringPool::userValue(Id id) const
 {
+    DENG2_ARMED(this);
+
     if(id == 0) return 0;
 
     InternalId const internalId = IMPORT_ID(id);
@@ -357,6 +371,8 @@ uint StringPool::userValue(Id id) const
 
 void StringPool::setUserPointer(Id id, void *ptr)
 {
+    DENG2_ARMED(this);
+
     if(id == 0) return;
 
     InternalId const internalId = IMPORT_ID(id);
@@ -369,6 +385,8 @@ void StringPool::setUserPointer(Id id, void *ptr)
 
 void *StringPool::userPointer(Id id) const
 {
+    DENG2_ARMED(this);
+
     if(id == 0) return NULL;
 
     InternalId const internalId = IMPORT_ID(id);
@@ -381,6 +399,8 @@ void *StringPool::userPointer(Id id) const
 
 StringPool::Id StringPool::isInterned(String str) const
 {
+    DENG2_ARMED(this);
+
     Interns::const_iterator found = d->findIntern(str); // O(log n)
     if(found != d->interns.end())
     {
@@ -392,12 +412,16 @@ StringPool::Id StringPool::isInterned(String str) const
 
 String StringPool::string(Id id) const
 {
+    DENG2_ARMED(this);
+
     /// @throws InvalidIdError Provided identifier is not in use.
     return stringRef(id);
 }
 
 String const &StringPool::stringRef(StringPool::Id id) const
 {
+    DENG2_ARMED(this);
+
     if(id == 0)
     {
         /// @throws InvalidIdError Provided identifier is not in use.
@@ -413,6 +437,8 @@ String const &StringPool::stringRef(StringPool::Id id) const
 
 bool StringPool::remove(String str)
 {
+    DENG2_ARMED(this);
+
     Interns::iterator found = d->findIntern(str); // O(log n)
     if(found != d->interns.end())
     {
@@ -424,6 +450,8 @@ bool StringPool::remove(String str)
 
 bool StringPool::removeById(Id id)
 {
+    DENG2_ARMED(this);
+
     if(id == 0) return false;
 
     InternalId const internalId = IMPORT_ID(id);
@@ -439,6 +467,8 @@ bool StringPool::removeById(Id id)
 
 int StringPool::iterate(int (*callback)(Id, void *), void *data) const
 {
+    DENG2_ARMED(this);
+
     if(!callback) return 0;
     for(uint i = 0; i < d->idMap.size(); ++i)
     {

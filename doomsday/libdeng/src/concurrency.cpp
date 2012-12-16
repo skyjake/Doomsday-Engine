@@ -30,6 +30,8 @@
 #include <de/Log>
 #include <assert.h>
 
+#include <QDebug>
+
 static uint mainThreadId = 0; ///< ID of the main thread.
 
 CallbackThread::CallbackThread(systhreadfunc_t func, void *param)
@@ -80,6 +82,7 @@ void CallbackThread::run()
     catch(std::exception const &error)
     {
         LOG_AS("CallbackThread");
+        qDebug() << "Worker exception:" << error.what();
         LOG_ERROR(QString("Uncaught exception: ") + error.what());
         _returnValue = -1;
         _exitStatus = DENG_THREAD_STOPPED_WITH_EXCEPTION;
@@ -92,7 +95,7 @@ void CallbackThread::run()
 
     Garbage_ClearForThread();
 
-    // No more log output from this thread.
+    // No more log printing from this thread.
     de::Log::disposeThreadLog();
 }
 
