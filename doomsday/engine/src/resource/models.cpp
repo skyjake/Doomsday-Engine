@@ -498,7 +498,7 @@ static String findSkinPath(Path const &skinPath, Path const &modelFilePath)
 /**
  * Allocate room for a new skin file name.
  */
-static short defineSkinAndToModelIndex(model_t &mdl, de::Uri const &skinUri)
+static short defineSkinAndAddToModelIndex(model_t &mdl, de::Uri const &skinUri)
 {
     String const &modelFilePath = findModelPath(mdl.modelId);
     int const newSkin = mdl.info.numSkins;
@@ -569,7 +569,7 @@ static void defineAllSkins(model_t &mdl)
             // Huzzah! we found a skin.
             de::Uri foundResourceUri(Path(Str_Text(foundSkinPath)));
 
-            defineSkinAndToModelIndex(mdl, foundResourceUri);
+            defineSkinAndAddToModelIndex(mdl, foundResourceUri);
 
             // We have found one more skin for this model.
             numFoundSkins = 1;
@@ -1130,7 +1130,7 @@ static void setupModel(ded_model_t& def)
         if(subdef->skinFilename && !Uri_IsEmpty(subdef->skinFilename))
         {
             // A specific file name has been given for the skin.
-            sub->skin = defineSkinAndToModelIndex(*mdl, reinterpret_cast<de::Uri &>(*subdef->skinFilename));
+            sub->skin = defineSkinAndAddToModelIndex(*mdl, reinterpret_cast<de::Uri &>(*subdef->skinFilename));
         }
         else
         {
