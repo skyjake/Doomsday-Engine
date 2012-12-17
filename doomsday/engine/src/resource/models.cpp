@@ -285,7 +285,7 @@ static void loadMd2(de::FileHandle& file, model_t& mdl)
                                                  sizeof(int) * mdl.lodInfo[0].numGlCommands);
 
     // Load skins. Note: memory is allocated for at least one skin (fallback might be found).
-    mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(*mdl.skins) * MAX_OF(1, inf.numSkins));
+    mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(*mdl.skins) * inf.numSkins);
     if(!mdl.skins) throw std::bad_alloc();
 
     file.seek(inf.offsetSkins, SeekSet);
@@ -365,7 +365,7 @@ static void loadDmd(de::FileHandle& file, model_t& mdl)
 
     // Allocate and load in the data.
     // Note: memory is allocated for at least one skin (fallback might be found).
-    mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(dmd_skin_t) * MAX_OF(1, inf.numSkins));
+    mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(dmd_skin_t) * inf.numSkins);
     file.seek(inf.offsetSkins, SeekSet);
     for(int i = 0; i < inf.numSkins; ++i)
     {
@@ -495,59 +495,6 @@ static String findSkinPath(Path const &skinPath, Path const &modelFilePath)
     return App_FileSystem()->findPath(searchPath, RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
 }
 
-static void defineAllSkins(model_t &mdl)
-{
-    String const &modelFilePath = findModelPath(mdl.modelId);
-
-    int numFoundSkins = 0;
-    for(int i = 0; i < mdl.info.numSkins; ++i)
-    {
-        if(!mdl.skins[i].name[0]) continue;
-
-        try
-        {
-            de::Uri foundResourceUri(Path(findSkinPath(mdl.skins[i].name, modelFilePath)));
-
-            mdl.skins[i].texture = R_DefineTexture("ModelSkins", foundResourceUri);
-
-            // We have found one more skin for this model.
-            numFoundSkins += 1;
-        }
-        catch(FS1::NotFoundError const&)
-        {
-            LOG_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\", ignoring.")
-                << mdl.skins[i].name << i << NativePath(modelFilePath).pretty();
-        }
-    }
-
-    if(!numFoundSkins)
-    {
-        // Lastly try a skin named similarly to the model in the same directory.
-        de::Uri skinSearchPath = de::Uri(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
-
-        AutoStr *foundSkinPath = AutoStr_NewStd();
-        if(F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s *>(&skinSearchPath), foundSkinPath))
-        {
-            // Huzzah! we found a skin.
-            de::Uri resourceUri = de::Uri(Path(Str_Text(foundSkinPath)));
-            mdl.skins[0].texture = R_DefineTexture("ModelSkins", resourceUri);
-
-            // We have found one more skin for this model.
-            numFoundSkins = 1;
-
-            LOG_INFO("Assigned fallback skin \"%s\" to index #0 for model \"%s\".")
-                << NativePath(Str_Text(foundSkinPath)).pretty()
-                << NativePath(modelFilePath).pretty();
-        }
-    }
-
-    if(!numFoundSkins)
-    {
-        LOG_WARNING("Failed to locate a skin for model \"%s\". This model will be rendered without a skin.")
-            << NativePath(modelFilePath).pretty();
-    }
-}
-
 /**
  * Allocate room for a new skin file name.
  */
@@ -584,6 +531,60 @@ static short defineSkinAndToModelIndex(model_t &mdl, de::Uri const &skinUri)
     }
 
     return newSkin;
+}
+
+static void defineAllSkins(model_t &mdl)
+{
+    String const &modelFilePath = findModelPath(mdl.modelId);
+
+    int numFoundSkins = 0;
+    for(int i = 0; i < mdl.info.numSkins; ++i)
+    {
+        if(!mdl.skins[i].name[0]) continue;
+
+        try
+        {
+            de::Uri foundResourceUri(Path(findSkinPath(mdl.skins[i].name, modelFilePath)));
+
+            mdl.skins[i].texture = R_DefineTexture("ModelSkins", foundResourceUri);
+
+            // We have found one more skin for this model.
+            numFoundSkins += 1;
+        }
+        catch(FS1::NotFoundError const&)
+        {
+            LOG_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\", ignoring.")
+                << mdl.skins[i].name << i << NativePath(modelFilePath).pretty();
+        }
+    }
+
+    if(!numFoundSkins)
+    {
+        // Lastly try a skin named similarly to the model in the same directory.
+        de::Uri skinSearchPath = de::Uri(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
+
+        AutoStr *foundSkinPath = AutoStr_NewStd();
+        if(F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s *>(&skinSearchPath), foundSkinPath))
+        {
+            // Huzzah! we found a skin.
+            de::Uri foundResourceUri(Path(Str_Text(foundSkinPath)));
+
+            defineSkinAndToModelIndex(mdl, foundResourceUri);
+
+            // We have found one more skin for this model.
+            numFoundSkins = 1;
+
+            LOG_INFO("Assigned fallback skin \"%s\" to index #0 for model \"%s\".")
+                << NativePath(Str_Text(foundSkinPath)).pretty()
+                << NativePath(modelFilePath).pretty();
+        }
+    }
+
+    if(!numFoundSkins)
+    {
+        LOG_WARNING("Failed to locate a skin for model \"%s\". This model will be rendered without a skin.")
+            << NativePath(modelFilePath).pretty();
+    }
 }
 
 static model_t *interpretDmd(de::FileHandle &hndl, String path, modelid_t modelId)
