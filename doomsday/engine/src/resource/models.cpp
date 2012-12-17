@@ -1118,7 +1118,7 @@ static void setupModel(ded_model_t& def)
         if(subdef->skinFilename && !Uri_IsEmpty(subdef->skinFilename))
         {
             // A specific file name has been given for the skin.
-            String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->shinySkin).path();
+            String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->skinFilename).path();
             String const &modelFilePath = findModelPath(sub->modelId);
 
             try
