@@ -498,36 +498,26 @@ static String findSkinPath(Path const &skinPath, Path const &modelFilePath)
 /**
  * Allocate room for a new skin file name.
  */
-static short defineSkinAndAddToModelIndex(model_t &mdl, de::Uri const &skinUri)
+static short defineSkinAndAddToModelIndex(model_t &mdl, Path const &skinPath)
 {
-    String const &modelFilePath = findModelPath(mdl.modelId);
     int const newSkin = mdl.info.numSkins;
 
-    try
+    if(texture_s *tex = R_DefineTexture("ModelSkins", de::Uri(skinPath)))
     {
-        de::Uri foundResourceUri(Path(findSkinPath(skinUri.path(), modelFilePath)));
-
-        if(texture_s *tex = R_DefineTexture("ModelSkins", foundResourceUri))
+        // A duplicate? (return existing skin number)
+        for(int i = 0; i < mdl.info.numSkins; ++i)
         {
-            // A duplicate? (return existing skin number)
-            for(int i = 0; i < mdl.info.numSkins; ++i)
-            {
-                if(mdl.skins[i].texture == tex) return i;
-            }
-
-            // Add this new skin.
-            mdl.skins = (dmd_skin_t *) M_Realloc(mdl.skins, sizeof(*mdl.skins) * ++mdl.info.numSkins);
-            if(!mdl.skins) throw Error("newModelSkin", String("Failed on (re)allocation of %1 bytes enlarging DmdSkin list").arg(sizeof(*mdl.skins) * mdl.info.numSkins));
-            std::memset(mdl.skins + newSkin, 0, sizeof(dmd_skin_t));
-
-            qstrncpy(mdl.skins[newSkin].name, skinUri.pathCStr(), 256);
-            mdl.skins[newSkin].texture = tex;
+            if(mdl.skins[i].texture == tex) return i;
         }
-    }
-    catch(FS1::NotFoundError const&)
-    {
-        LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
-            << skinUri << NativePath(modelFilePath).pretty();
+
+        // Add this new skin.
+        mdl.skins = (dmd_skin_t *) M_Realloc(mdl.skins, sizeof(*mdl.skins) * ++mdl.info.numSkins);
+        if(!mdl.skins) throw Error("newModelSkin", String("Failed on (re)allocation of %1 bytes enlarging DmdSkin list").arg(sizeof(*mdl.skins) * mdl.info.numSkins));
+        std::memset(mdl.skins + newSkin, 0, sizeof(dmd_skin_t));
+
+        QByteArray pathUtf8 = skinPath.toString().toUtf8();
+        qstrncpy(mdl.skins[newSkin].name, pathUtf8.constData(), 256);
+        mdl.skins[newSkin].texture = tex;
     }
 
     return newSkin;
@@ -567,9 +557,7 @@ static void defineAllSkins(model_t &mdl)
         if(F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s *>(&skinSearchPath), foundSkinPath))
         {
             // Huzzah! we found a skin.
-            de::Uri foundResourceUri(Path(Str_Text(foundSkinPath)));
-
-            defineSkinAndAddToModelIndex(mdl, foundResourceUri);
+            defineSkinAndAddToModelIndex(mdl, Path(Str_Text(foundSkinPath)));
 
             // We have found one more skin for this model.
             numFoundSkins = 1;
@@ -1130,7 +1118,20 @@ static void setupModel(ded_model_t& def)
         if(subdef->skinFilename && !Uri_IsEmpty(subdef->skinFilename))
         {
             // A specific file name has been given for the skin.
-            sub->skin = defineSkinAndAddToModelIndex(*mdl, reinterpret_cast<de::Uri &>(*subdef->skinFilename));
+            String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->shinySkin).path();
+            String const &modelFilePath = findModelPath(sub->modelId);
+
+            try
+            {
+                Path foundResourcePath(findSkinPath(skinFilePath, modelFilePath));
+
+                sub->skin = defineSkinAndAddToModelIndex(*mdl, foundResourcePath);
+            }
+            catch(FS1::NotFoundError const&)
+            {
+                LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
+                    << reinterpret_cast<de::Uri &>(*subdef->skinFilename) << NativePath(modelFilePath).pretty();
+            }
         }
         else
         {
