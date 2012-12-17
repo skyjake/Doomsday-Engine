@@ -284,7 +284,7 @@ static void loadMd2(de::FileHandle& file, model_t& mdl)
     mdl.lods[0].glCommands = (int*) allocAndLoad(file, mdl.lodInfo[0].offsetGlCommands,
                                                  sizeof(int) * mdl.lodInfo[0].numGlCommands);
 
-    // Load skins. Note: memory is allocated for at least one skin (fallback might be found).
+    // Load skins. (Note: numSkins may be zero.)
     mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(*mdl.skins) * inf.numSkins);
     if(!mdl.skins) throw std::bad_alloc();
 
@@ -363,8 +363,7 @@ static void loadDmd(de::FileHandle& file, model_t& mdl)
         file.read((uint8_t*)&chunk, sizeof(chunk));
     }
 
-    // Allocate and load in the data.
-    // Note: memory is allocated for at least one skin (fallback might be found).
+    // Allocate and load in the data. (Note: numSkins may be zero.)
     mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(dmd_skin_t) * inf.numSkins);
     file.seek(inf.offsetSkins, SeekSet);
     for(int i = 0; i < inf.numSkins; ++i)
