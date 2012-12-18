@@ -73,6 +73,10 @@ public:
      */
     void add(LogEntry *entry);
 
+    /**
+     * Clears the buffer by deleting all entries from memory. However, they are
+     * first flushed, so the no entries are lost.
+     */
     void clear();
 
     /**
