@@ -1,4 +1,4 @@
-# jHexen: Objects
+# libhexen: Objects
 #
 # Order of definitions is very important here!
 # Only add new States and Things *after* the existing definitions.

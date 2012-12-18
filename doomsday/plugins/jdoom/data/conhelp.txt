@@ -1,5 +1,5 @@
 #
-# CONSOLE COMMANDS - JDOOM SPECFIC
+# CONSOLE COMMANDS - LIBDOOM SPECFIC
 #
 
 [beginchat]
@@ -181,7 +181,7 @@ desc = Zoom out to the max in the automap.
 
 
 #
-# CONSOLE VARIABLES - JDOOM SPECIFIC
+# CONSOLE VARIABLES - LIBDOOM SPECIFIC
 #
 [server-game-mapcycle]
 desc = Map rotation sequence.

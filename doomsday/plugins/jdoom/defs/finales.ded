@@ -1,5 +1,5 @@
-# jDoom: Default intermissions and Finales
-# (see Doc\InFine.txt)
+# libdoom: Default intermissions and Finales
+# (see: http://dengine.net/dew/index.php?title=InFine_script_reference)
 
 Header { Version = 5; }
 

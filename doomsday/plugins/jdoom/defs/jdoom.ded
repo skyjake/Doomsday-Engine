@@ -1,6 +1,6 @@
-# jDoom - Doomsday Engine Definitions
+# libdoom - Doomsday Engine Definitions
 #
-# Default set of definitions common to all games playable with jDoom.
+# Default set of definitions common to all games playable with libdoom.
 # For information about DED syntax and semantics, see
 #
 #  http://dengine.net/dew/?title=DED
