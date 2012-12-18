@@ -98,7 +98,12 @@ boolean Surface_SetMaterialOriginY(Surface* surface, float y);
 
 /**
  * Change surface color tint and alpha.
+ *
  * @param surface  Surface instance.
+ * @param red      Red color component (0...1).
+ * @param green    Green color component (0...1).
+ * @param blue     Blue color component (0...1).
+ * @param alpha    Alpha component (0...1).
  */
 boolean Surface_SetColorAndAlpha(Surface* surface, float red, float green, float blue, float alpha);
 
@@ -106,16 +111,31 @@ boolean Surface_SetColorAndAlpha(Surface* surface, float red, float green, float
  * Change surfacecolor tint.
  *
  * @param surface  Surface instance.
+ * @param red      Red color component (0...1).
  */
 boolean Surface_SetColorRed(Surface* surface, float red);
+
+/**
+ * Change surfacecolor tint.
+ *
+ * @param surface  Surface instance.
+ * @param green    Green color component (0...1).
+ */
 boolean Surface_SetColorGreen(Surface* surface, float green);
+
+/**
+ * Change surfacecolor tint.
+ *
+ * @param surface  Surface instance.
+ * @param blue     Blue color component (0...1).
+ */
 boolean Surface_SetColorBlue(Surface* surface, float blue);
 
 /**
  * Change surface alpha.
  *
  * @param surface  Surface instance.
- * @param alpha  New alpha value.
+ * @param alpha    New alpha value (0...1).
  */
 boolean Surface_SetAlpha(Surface* surface, float alpha);
 
