@@ -371,8 +371,8 @@ static boolean patchFits(patchid_t patchId, int x, int y)
     patchinfo_t info;
     if(!R_GetPatchInfo(patchId, &info)) return false;
 
-    left = x - info.geometry.origin.x;
-    top  = y - info.geometry.origin.y;
+    left = x + info.geometry.origin.x;
+    top  = y + info.geometry.origin.y;
     right = left + info.geometry.size.width;
     bottom = top + info.geometry.size.height;
     return (left >= 0 && right < SCREENWIDTH && top >= 0 && bottom < SCREENHEIGHT);
