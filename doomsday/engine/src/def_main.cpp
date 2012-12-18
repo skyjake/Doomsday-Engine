@@ -969,9 +969,7 @@ static int generateMaterialDefForCompositeTexture(de::TextureManifest &manifest,
     {
         mat->width  = tex->width();
         mat->height = tex->height();
-        de::CompositeTexture* pcTex = reinterpret_cast<de::CompositeTexture *>(tex->userDataPointer());
-        DENG_ASSERT(pcTex);
-        mat->flags = (pcTex->flags().testFlag(de::CompositeTexture::NoDraw)? MATF_NO_DRAW : 0);
+        mat->flags = (tex->flags().testFlag(de::Texture::NoDraw)? MATF_NO_DRAW : 0);
     }
 #if _DEBUG
     else

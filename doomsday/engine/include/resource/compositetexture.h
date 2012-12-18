@@ -50,8 +50,7 @@ namespace de
          */
         enum Flag
         {
-            NoDraw = 0x1, ///< Texture is not to be drawn.
-            Custom = 0x2  /**< The texture does not originate from a definition
+            Custom = 0x1  /**< The texture does not originate from a definition
                                of the current game. */
         };
         Q_DECLARE_FLAGS(Flags, Flag)
