@@ -266,15 +266,15 @@ static void drawFinishedTitle(void)
     int x = SCREENWIDTH/2, y = WI_TITLEY;
     patchid_t patchId;
     patchinfo_t info;
-    char* mapName;
+    char *mapName;
     uint mapNum;
 
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         mapNum = wbs->currentMap;
     else
-        mapNum = (wbs->episode * 8) + wbs->currentMap;
+        mapNum = (wbs->episode * 9) + wbs->currentMap;
 
-    mapName = (char*) DD_GetVariable(DD_MAP_NAME);
+    mapName = (char *) DD_GetVariable(DD_MAP_NAME);
     // Skip the E#M# or Map #.
     if(mapName)
     {
@@ -357,7 +357,7 @@ static void drawEnteringTitle(void)
         y += (5 * info.geometry.size.height) / 4;
 
     // Draw map.
-    mapNum = (wbs->episode * 8) + wbs->nextMap;
+    mapNum = (wbs->episode * 9) + wbs->nextMap;
     patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
