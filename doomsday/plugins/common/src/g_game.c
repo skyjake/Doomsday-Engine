@@ -3220,19 +3220,13 @@ Uri* G_ComposeMapUri(uint episode, uint map)
     return Uri_NewWithPath2(mapId, RC_NULL);
 }
 
-boolean G_ValidateMap(uint* episode, uint* map)
+boolean G_ValidateMap(uint *episode, uint *map)
 {
     boolean ok = true;
-    AutoStr* path;
-    Uri* uri;
+    AutoStr *path;
+    Uri *uri;
 
-#if __JDOOM64__
-    if(*map > 98)
-    {
-        *map = 98;
-        ok = false;
-    }
-#elif __JDOOM__
+#if __JDOOM__
     if(gameModeBits & (GM_DOOM_SHAREWARE|GM_DOOM_CHEX))
     {
         if(*episode != 0)
@@ -3266,22 +3260,8 @@ boolean G_ValidateMap(uint* episode, uint* map)
             ok = false;
         }
     }
-
 #elif __JHERETIC__
-    //  Allow episodes 0-8.
-    if(*episode > 8)
-    {
-        *episode = 8;
-        ok = false;
-    }
-
-    if(*map > 8)
-    {
-        *map = 8;
-        ok = false;
-    }
-
-    if(gameMode == heretic_shareware)
+    if(gameModeBits & GM_HERETIC_SHAREWARE)
     {
         if(*episode != 0)
         {
@@ -3289,39 +3269,21 @@ boolean G_ValidateMap(uint* episode, uint* map)
             ok = false;
         }
     }
-    else if(gameMode == heretic_extended)
+    else
     {
-        if(*episode == 5)
+        if(*episode > 8)
         {
-            if(*map > 2)
-            {
-                *map = 2;
-                ok = false;
-            }
-        }
-        else if(*episode > 4)
-        {
-            *episode = 4;
+            *episode = 8;
             ok = false;
         }
     }
-    else // Registered version checks
+
+    if(*map > 8)
     {
-        if(*episode == 3)
-        {
-            if(*map != 0)
-            {
-                *map = 0;
-                ok = false;
-            }
-        }
-        else if(*episode > 2)
-        {
-            *episode = 2;
-            ok = false;
-        }
+        *map = 8;
+        ok = false;
     }
-#elif __JHEXEN__
+#else
     if(*map > 98)
     {
         *map = 98;
