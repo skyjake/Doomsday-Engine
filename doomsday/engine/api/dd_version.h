@@ -58,8 +58,8 @@ extern "C" {
  * Possible values are "Unstable", "Candidate" and "Stable".
  */
 //#define DOOMSDAY_RELEASE_TYPE   "Unstable"
-#define DOOMSDAY_RELEASE_TYPE   "Candidate"
-//#define DOOMSDAY_RELEASE_TYPE   "Stable"
+//#define DOOMSDAY_RELEASE_TYPE   "Candidate"
+#define DOOMSDAY_RELEASE_TYPE   "Stable"
 
 /**
  * Copyright string is used in WIN32 binary metadata markup.
