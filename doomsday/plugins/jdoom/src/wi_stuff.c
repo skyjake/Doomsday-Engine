@@ -51,21 +51,21 @@ typedef struct wianim_s {
     int numFrames;
 
     /// Names of the patches for each frame of the animation.
-    char* patchNames[MAX_ANIM_FRAMES];
+    char *patchNames[MAX_ANIM_FRAMES];
+
+    /// State at which this animation begins/becomes visible.
+    interludestate_t beginState;
 } wianimdef_t;
 
 typedef struct wianimstate_s {
-    /// Actual graphics for frames of animations.
-    patchid_t patches[MAX_ANIM_FRAMES];
-
-    /// Next value of backgroundAnimCounter.
+    /// Next tic on which to progress the animation.
     int nextTic;
 
-    /// Last drawn animation frame.
-    int lastDrawn;
+    /// Current frame number (index to patches); otherwise @c -1 (not yet begun).
+    int frame;
 
-    /// Next frame number to animate.
-    int ctr;
+    /// Graphics for each frame of the animation.
+    patchid_t patches[MAX_ANIM_FRAMES];
 } wianimstate_t;
 
 typedef struct teaminfo_s {
@@ -134,7 +134,7 @@ static wianimdef_t episode1AnimDefs[] = {
     { 5,  0, { 128, 136 }, 1, { "wia10400" } },
     { 6,  0, { 128, 136 }, 1, { "wia10500" } },
     { 7,  0, { 128, 136 }, 1, { "wia10600" } },
-    { 8,  0, { 192, 144 }, 3, { "wia10700", "wia10701", "wia10702" } },
+    { 8, 11, { 192, 144 }, 3, { "wia10700", "wia10701", "wia10702" }, ILS_SHOW_NEXTMAP },
     { 8,  0, { 128, 136 }, 1, { "wia10400" } }
 };
 
@@ -240,8 +240,7 @@ static void drawBackground(void)
 
     if(!(gameModeBits & GM_ANY_DOOM2) && wbs->episode < 3)
     {
-        const wianimdef_t* def;
-        wianimstate_t* state;
+        patchid_t patchId;
         int i;
 
         FR_SetFont(FID(GF_FONTB));
@@ -249,12 +248,13 @@ static void drawBackground(void)
 
         for(i = 0; i < animCounts[wbs->episode]; ++i)
         {
-            patchid_t patchId;
-            state = &animStates[i];
-            if(0 > state->ctr) continue;
+            wianimdef_t const *def = &animDefs[wbs->episode][i];
+            wianimstate_t *state = &animStates[i];
 
-            def = &animDefs[wbs->episode][i];
-            patchId = state->patches[state->ctr];
+            // Has the animation begun yet?
+            if(state->frame < 0) continue;
+
+            patchId = state->patches[state->frame];
             WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, patchId), &def->origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
     }
@@ -397,67 +397,84 @@ static void drawPatchIfFits(patchid_t patchId, const Point2Raw* origin)
     }
 }
 
-static void initAnimation(void)
+/**
+ * Begin any animations that were previously waiting on a state.
+ * To be called upon changing the value of @var inState.
+ */
+static void beginAnimations(void)
 {
-    wianimstate_t* state;
-    const wianimdef_t* def;
     int i;
 
-    if(gameModeBits & GM_ANY_DOOM2)
-        return;
-    if(wbs->episode > 2)
-        return;
+    if(gameModeBits & GM_ANY_DOOM2) return;
+    if(wbs->episode > 2) return;
 
     for(i = 0; i < animCounts[wbs->episode]; ++i)
     {
-        def = &animDefs[wbs->episode][i];
-        state = &animStates[i];
+        wianimdef_t const *def = &animDefs[wbs->episode][i];
+        wianimstate_t *state = &animStates[i];
 
-        // Specify the next time to draw it.
-        if(0 != def->mapNum)
+        // Is the animation active for the current map?
+        if(def->mapNum && wbs->nextMap != def->mapNum) continue;
+
+        // Already begun?
+        if(state->frame >= 0) continue;
+
+        // Is it time to begin the animation?
+        if(def->beginState != inState) continue;
+
+        state->frame = 0;
+
+        // Determine when to animate the first frame.
+        if(def->mapNum)
         {
-            state->nextTic = backgroundAnimCounter + 1;
-            state->ctr = (def->mapNum == wbs->nextMap? 0 : -1); // Init to zero so we draw on the first frame.
+            state->nextTic = backgroundAnimCounter + 1 + def->tics;
         }
         else
         {
             state->nextTic = backgroundAnimCounter + 1 + (M_Random() % def->tics);
-            state->ctr = -1; // Do not draw on the first frame.
         }
     }
 }
 
 static void animateBackground(void)
 {
-    const wianimdef_t* def;
-    wianimstate_t* state;
+    wianimdef_t const *def;
+    wianimstate_t *state;
     int i;
 
-    if(gameModeBits & GM_ANY_DOOM2)
-        return;
-    if(wbs->episode > 2)
-        return;
+    if(gameModeBits & GM_ANY_DOOM2) return;
+    if(wbs->episode > 2) return;
 
     for(i = 0; i < animCounts[wbs->episode]; ++i)
     {
         def = &animDefs[wbs->episode][i];
         state = &animStates[i];
 
-        if(0 != def->mapNum)
+        // Is the animation active for the current map?
+        if(def->mapNum && wbs->nextMap != def->mapNum) continue;
+
+        // Has the animation begun yet
+        if(state->frame < 0) continue;
+
+        // Time to progress the animation?
+        if(backgroundAnimCounter != state->nextTic) continue;
+
+        ++state->frame;
+        if(state->frame >= def->numFrames)
         {
-            if(wbs->nextMap != def->mapNum)
-                continue;
-            // Gawd-awful hack for map animDefs.
-            if(inState == ILS_SHOW_STATS && i == 7)
-                continue;
+            if(def->mapNum)
+            {
+                // Loop.
+                state->frame = def->numFrames - 1;
+            }
+            else
+            {
+                // Restart.
+                state->frame = 0;
+            }
         }
 
-        if(backgroundAnimCounter != state->nextTic)
-            continue;
-
-        if(++state->ctr >= def->numFrames)
-            state->ctr = 0;
-        state->nextTic = backgroundAnimCounter + (def->tics > 0? def->tics : 1);
+        state->nextTic = backgroundAnimCounter + MAX_OF(def->tics, 1);
     }
 }
 
@@ -525,8 +542,8 @@ static void tickNoState(void)
     --stateCounter;
     if(0 == stateCounter)
     {
-        if(IS_CLIENT)
-            return;
+        if(IS_CLIENT) return;
+
         WI_End();
         G_WorldDone();
     }
@@ -537,6 +554,8 @@ static void initShowNextMap(void)
     inState = ILS_SHOW_NEXTMAP;
     advanceState = false;
     stateCounter = SHOWNEXTLOCDELAY * TICRATE;
+
+    beginAnimations();
 
     NetSv_Intermission(IMF_STATE, inState, 0);
 }
@@ -602,7 +621,11 @@ static void initDeathmatchStats(void)
     // Clear the on-screen counters.
     memset(dmTotals, 0, sizeof(dmTotals));
     for(i = 0; i < NUMTEAMS; ++i)
+    {
         memset(dmFrags[i], 0, sizeof(dmFrags[i]));
+    }
+
+    beginAnimations();
 }
 
 static void updateDeathmatchStats(void)
@@ -812,6 +835,8 @@ static void initNetgameStats(void)
         doFrags += teamInfo[i].totalFrags;
     }
     doFrags = !doFrags;
+
+    beginAnimations();
 }
 
 static void updateNetgameStats(void)
@@ -1080,7 +1105,7 @@ static void initShowStats(void)
     cntTime = cntPar = -1;
     cntPause = TICRATE;
 
-    initAnimation();
+    beginAnimations();
 }
 
 static void tickShowStats(void)
@@ -1297,25 +1322,22 @@ static void loadData(void)
 
     if((gameModeBits & GM_ANY_DOOM) && wbs->episode < 3)
     {
-        const wianimdef_t* def;
-        wianimstate_t* state;
-        int j;
-
         pYouAreHereRight = R_DeclarePatch("WIURH0");
         pYouAreHereLeft  = R_DeclarePatch("WIURH1");
         pSplat = R_DeclarePatch("WISPLAT");
 
-        animStates = (wianimstate_t*)Z_Realloc(animStates,
-            sizeof(*animStates) * animCounts[wbs->episode], PU_GAMESTATIC);
-        if(NULL == animStates)
-            Con_Error("WI_Stuff::loadData: Failed on (re)allocation of %lu bytes for animStates.",
-                (unsigned long) (sizeof(*animStates) * animCounts[wbs->episode]));
+        animStates = (wianimstate_t *)Z_Realloc(animStates, sizeof(*animStates) * animCounts[wbs->episode], PU_GAMESTATIC);
+        if(!animStates) Con_Error("WI_Stuff::loadData: Failed on (re)allocation of %lu bytes for animStates.", (unsigned long) (sizeof(*animStates) * animCounts[wbs->episode]));
         memset(animStates, 0, sizeof(*animStates) * animCounts[wbs->episode]);
 
         for(i = 0; i < animCounts[wbs->episode]; ++i)
         {
-            def = &animDefs[wbs->episode][i];
-            state = &animStates[i];
+            wianimdef_t const *def = &animDefs[wbs->episode][i];
+            wianimstate_t *state = &animStates[i];
+            int j;
+
+            state->frame = -1; // Not yet begun.
+
             for(j = 0; j < def->numFrames; ++j)
             {
                 state->patches[j] = R_DeclarePatch(def->patchNames[j]);
@@ -1444,12 +1466,12 @@ void WI_Init(wbstartstruct_t* wbstartstruct)
     if(deathmatch)
     {
         initDeathmatchStats();
-        initAnimation();
+        beginAnimations();
     }
     else if(IS_NETGAME)
     {
         initNetgameStats();
-        initAnimation();
+        beginAnimations();
     }
     else
     {
