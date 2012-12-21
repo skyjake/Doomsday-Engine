@@ -13,6 +13,8 @@ VERSION = $$DENG_VERSION
 
 echo(Doomsday Server $${DENG_VERSION}.)
 
+CONFIG -= app_bundle
+
 # External Dependencies ------------------------------------------------------
 
 CONFIG += deng_nogui
@@ -94,7 +96,7 @@ DENG_API_HEADERS = \
     $$SRC/api/resourceclass.h \
     $$SRC/api/sys_audiod.h \
     $$SRC/api/sys_audiod_mus.h \
-    $$SRC/api/sys_audiod_sfx.h \"
+    $$SRC/api/sys_audiod_sfx.h \
     $$SRC/api/thinker.h \
     $$SRC/api/uri.h
 
@@ -509,8 +511,8 @@ mod.files = \
 macx {
     res.path = Contents/Resources
     res.files = \
-        res/macx/English.lproj \
-        res/macx/deng.icns
+        $$SRC/res/macx/English.lproj \
+        $$SRC/res/macx/deng.icns
 
     data.path = $${res.path}
     mod.path  = $${res.path}/modules
@@ -519,25 +521,7 @@ macx {
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
-    # Since qmake is unable to copy directories as bundle data, let's copy
-    # the frameworks manually.
-    FW_DIR = \"$${OUT_PWD}/Doomsday.app/Contents/Frameworks/\"
-    doPostLink("rm -rf $$FW_DIR")
-    doPostLink("mkdir $$FW_DIR")
-
-    # libdeng1 and 2 dynamic libraries.
-    doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
-    doPostLink("cp -fRp $$OUT_PWD/../libdeng/libdeng1*dylib $$FW_DIR")
-
-    # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
-    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng2.2.dylib, ..)
-    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng1.1.dylib, ..)
-
-    # Clean up previous deployment.
-    doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")
-    doPostLink("rm -f Doomsday.app/Contents/Resources/qt.conf")
-
-    doPostLink("macdeployqt Doomsday.app")
+    linkBinaryToBundledLibdeng2($$TARGET)
 }
 
 # Installation ---------------------------------------------------------------
