@@ -172,10 +172,6 @@ boolean DD_Unix_Init(void)
 
     DD_InitCommandLine();
 
-    // First order of business: are we running in dedicated mode?
-    isDedicated = CommandLine_Check("-dedicated");
-    novideo = CommandLine_Check("-novideo") || isDedicated;
-
     Library_Init();
 
     // Determine our basedir and other global paths.

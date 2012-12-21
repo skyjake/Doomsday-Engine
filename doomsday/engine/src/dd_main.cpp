@@ -1634,6 +1634,12 @@ int DD_EarlyInit(void)
     // Determine the requested degree of verbosity.
     verbose = CommandLine_Exists("-verbose");
 
+#ifdef __SERVER__
+    isDedicated = true;
+#else
+    isDedicated = false;
+#endif
+
     // Bring the console online as soon as we can.
     DD_ConsoleInit();
 
