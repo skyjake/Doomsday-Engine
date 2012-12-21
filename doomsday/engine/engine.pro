@@ -29,7 +29,7 @@ include(../dep_deng.pri)
 
 # Definitions ----------------------------------------------------------------
 
-DEFINES += __DOOMSDAY__
+DEFINES += __DOOMSDAY__ __CLIENT__
 
 !isEmpty(DENG_BUILD) {
     !win32: echo(Build number: $$DENG_BUILD)
@@ -43,8 +43,6 @@ win32 {
     OTHER_FILES += api/doomsday.def $$RC_FILE
 }
 else:macx {
-    useFramework(Cocoa)
-    useFramework(QTKit)
 }
 else {
     # Generic Unix.
