@@ -30,7 +30,9 @@
 #define LIBDENG_REND_MAIN_H
 
 #include <math.h>
-#include "rend_list.h"
+#ifdef __CLIENT__
+#  include "rend_list.h"
+#endif
 #include "r_things.h"
 
 struct materialvariantspecification_s;

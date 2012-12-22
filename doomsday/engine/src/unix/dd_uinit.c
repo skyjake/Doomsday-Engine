@@ -75,10 +75,12 @@ application_t app;
 
 // CODE --------------------------------------------------------------------
 
+#ifdef __CLIENT__
 static int initDGL(void)
 {
     return (int) Sys_GLPreInit();
 }
+#endif
 
 static void determineGlobalPaths(application_t* app)
 {
@@ -181,10 +183,12 @@ boolean DD_Unix_Init(void)
     {
         Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
     }
+#ifdef __CLIENT__
     else if(!initDGL())
     {
         Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing DGL.", 0);
     }
+#endif
     else
     {
         // Everything okay so far.

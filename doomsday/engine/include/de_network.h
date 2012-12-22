@@ -33,8 +33,10 @@
 #include "network/net_event.h"
 #include "network/net_msg.h"
 #include "network/net_buf.h"
-#include "network/net_demo.h"
 #include "network/protocol.h"
+#ifdef __CLIENT__
+#  include "network/net_demo.h"
+#endif
 
 #include "server/sv_def.h"
 #include "server/sv_pool.h"
@@ -43,12 +45,14 @@
 #include "server/sv_missile.h"
 #include "server/sv_infine.h"
 
-#include "client/cl_def.h"
-#include "client/cl_player.h"
-#include "client/cl_mobj.h"
-#include "client/cl_frame.h"
-#include "client/cl_sound.h"
-#include "client/cl_world.h"
-#include "client/cl_infine.h"
+#ifdef __CLIENT__
+#  include "client/cl_def.h"
+#  include "client/cl_player.h"
+#  include "client/cl_mobj.h"
+#  include "client/cl_frame.h"
+#  include "client/cl_sound.h"
+#  include "client/cl_world.h"
+#  include "client/cl_infine.h"
+#endif
 
 #endif /* LIBDENG_NETWORK */

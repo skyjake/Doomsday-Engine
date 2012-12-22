@@ -42,6 +42,7 @@
 #include "de_audio.h"
 
 #include "def_main.h"
+#include "render/r_main.h" // validCount, viewport
 #include "render/r_things.h" // useSRVO
 
 // MACROS ------------------------------------------------------------------
@@ -266,11 +267,13 @@ angle_t Mobj_AngleSmoothed(mobj_t* mo)
         }
     }
 
+#ifdef __CLIENT__
     // Apply a Short Range Visual Offset?
     if(useSRVOAngle && !netGame && !playback)
     {
         return mo->visAngle << 16;
     }
+#endif
 
     return mo->angle;
 }
@@ -287,7 +290,10 @@ D_CMD(InspectMobj)
 {
     mobj_t* mo = 0;
     thid_t id = 0;
+    char const *moType = "Mobj";
+#ifdef __CLIENT
     clmoinfo_t* info = 0;
+#endif
 
     if(argc != 2)
     {
@@ -306,9 +312,12 @@ D_CMD(InspectMobj)
         return false;
     }
 
+#ifdef __CLIENT
     info = ClMobj_GetInfo(mo);
+    if(info) moType = "CLMOBJ";
+#endif
 
-    Con_Printf("%s %i [%p] State:%s (%i)\n", info? "CLMOBJ" : "Mobj", id, mo, Def_GetStateName(mo->state), (int)(mo->state - states));
+    Con_Printf("%s %i [%p] State:%s (%i)\n", moType, id, mo, Def_GetStateName(mo->state), (int)(mo->state - states));
     Con_Printf("Type:%s (%i) Info:[%p]", Def_GetMobjName(mo->type), mo->type, mo->info);
     if(mo->info)
     {
@@ -319,10 +328,12 @@ D_CMD(InspectMobj)
         Con_Printf("\n");
     }
     Con_Printf("Tics:%i ddFlags:%08x\n", mo->tics, mo->ddFlags);
+#ifdef __CLIENT
     if(info)
     {
         Con_Printf("Cltime:%i (now:%i) Flags:%04x\n", info->time, Timer_RealMilliseconds(), info->flags);
     }
+#endif
     Con_Printf("Flags:%08x Flags2:%08x Flags3:%08x\n", mo->flags, mo->flags2, mo->flags3);
     Con_Printf("Height:%f Radius:%f\n", mo->height, mo->radius);
     Con_Printf("Angle:%x Pos:(%f,%f,%f) Mom:(%f,%f,%f)\n",

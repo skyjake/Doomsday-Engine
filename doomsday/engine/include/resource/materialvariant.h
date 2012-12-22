@@ -22,7 +22,6 @@
 #ifndef LIBDENG_RESOURCE_MATERIALVARIANT_H
 #define LIBDENG_RESOURCE_MATERIALVARIANT_H
 
-//#include "r_data.h"
 #include "render/rendpoly.h"
 #include "materials.h"
 

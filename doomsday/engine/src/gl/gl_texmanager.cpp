@@ -51,6 +51,15 @@
 
 using namespace de;
 
+int monochrome = 0; // desaturate a patch (average colours)
+int mipmapping = 5;
+int filterUI   = 1;
+int texQuality = TEXQ_BEST;
+int upscaleAndSharpenPatches = 0;
+byte gammaTable[256];
+
+#ifdef __CLIENT__
+
 enum uploadcontentmethod_t
 {
     METHOD_IMMEDIATE = 0,
@@ -108,10 +117,7 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex,
 
 int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
-int monochrome = 0; // desaturate a patch (average colours)
-int upscaleAndSharpenPatches = 0;
 int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
-int mipmapping = 5, filterUI = 1, texQuality = TEXQ_BEST;
 int filterSprites = true;
 int texMagMode = 1; // Linear.
 int texAniso = -1; // Use best.
@@ -122,7 +128,6 @@ boolean highResWithPWAD = false;
 byte loadExtAlways = false; // Always check for extres (cvar)
 
 float texGamma = 0;
-byte gammaTable[256];
 
 int glmode[6] = // Indexed by 'mipmapping'.
 {
@@ -160,6 +165,8 @@ static variantspecificationlist_t *detailVariantSpecs[DETAILVARIANT_CONTRAST_HAS
 
 void GL_TexRegister()
 {
+#ifdef __CLIENT__
+
     C_VAR_INT   ("rend-tex",                    &renderTextures,     CVF_NO_ARCHIVE, 0, 2);
     C_VAR_INT   ("rend-tex-detail",             &r_detail,           0, 0, 1);
     C_VAR_INT   ("rend-tex-detail-multitex",    &useMultiTexDetails, 0, 0, 1);
@@ -178,6 +185,8 @@ void GL_TexRegister()
     C_CMD_FLAGS ("lowres",      "",     LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS ("mipmap",      "i",    MipMap, CMDF_NO_DEDICATED);
     C_CMD_FLAGS ("texreset",    "",     TexReset, CMDF_NO_DEDICATED);
+
+#endif
 
     Textures::consoleRegister();
 }
@@ -1511,6 +1520,8 @@ static inline bool isColorKeyed(String path)
 
 uint8_t *Image_LoadFromFile(image_t *img, filehandle_s *_file)
 {
+#ifdef __CLIENT__
+
     DENG_ASSERT(img && _file);
     de::FileHandle &file = reinterpret_cast<de::FileHandle &>(*_file);
     LOG_AS("Image_LoadFromFile");
@@ -1553,6 +1564,12 @@ uint8_t *Image_LoadFromFile(image_t *img, filehandle_s *_file)
         << NativePath(filePath).pretty() << img->size.width << img->size.height;
 
     return img->pixels;
+
+#else
+    DENG_UNUSED(img);
+    DENG_UNUSED(_file);
+    return NULL;
+#endif
 }
 
 uint8_t *GL_LoadImage(image_t *img, char const *filePath)
@@ -1574,6 +1591,8 @@ uint8_t *GL_LoadImageStr(image_t *img, ddstring_t const *filePath)
     if(!filePath) return 0;
     return GL_LoadImage(img, Str_Text(filePath));
 }
+
+#ifdef __CLIENT__
 
 static int BytesPerPixelFmt(dgltexformat_t format)
 {
@@ -2199,6 +2218,8 @@ TexSource GL_LoadExtTexture(image_t *image, char const *_searchPath, gfxmode_t m
     Uri_Delete(searchPath);
     return source;
 }
+
+#endif // __CLIENT__
 
 static boolean palettedIsMasked(const uint8_t* pixels, int width, int height)
 {
@@ -3476,3 +3497,5 @@ D_CMD(MipMap)
     GL_SetTextureParams(glmode[mipmapping], true, false);
     return true;
 }
+
+#endif // __CLIENT__

@@ -50,6 +50,8 @@ extern "C" {
 
 void Rend_SpriteRegister(void);
 
+#ifdef __CLIENT__
+
 /**
  * Render sprites, 3D models, masked wall segments and halos, ordered
  * back to front. Halos are rendered with Z-buffer tests and writes
@@ -72,6 +74,8 @@ void Rend_Draw3DPlayerSprites(void);
 materialvariantspecification_t const* Sprite_MaterialSpec(int tclass, int tmap);
 
 void Rend_RenderSprite(rendspriteparams_t const* params);
+
+#endif // __CLIENT__
 
 ///@}
 

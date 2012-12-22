@@ -36,6 +36,8 @@
 #include "de_misc.h"
 #include "de_resource.h"
 
+#include "gl/sys_opengl.h" // TODO: get rid of this
+
 #include "def_main.h"
 #include "m_stack.h"
 
@@ -476,6 +478,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     return true;
 }
 
+#ifdef __CLIENT__
 static modeldef_t *currentModelDefForMobj(mobj_t *mo)
 {
     // If models are being used, use the model's radius.
@@ -570,14 +573,15 @@ float R_ShadowStrength(mobj_t *mo)
     /// @note This equation is the same as that used for fakeradio.
     return (0.6f - ambientLightLevel * 0.4f) * strength;
 }
+#endif // __CLIENT__
 
 float R_Alpha(mobj_t *mo)
 {
     DENG_ASSERT(mo);
 
     float alpha = (mo->ddFlags & DDMF_BRIGHTSHADOW)? .80f :
-                        (mo->ddFlags & DDMF_SHADOW)? .33f :
-                     (mo->ddFlags & DDMF_ALTSHADOW)? .66f : 1;
+                  (mo->ddFlags & DDMF_SHADOW      )? .33f :
+                  (mo->ddFlags & DDMF_ALTSHADOW   )? .66f : 1;
     /**
      * The three highest bits of the selector are used for alpha.
      * 0 = opaque (alpha -1)
@@ -620,6 +624,8 @@ vissprite_t *R_NewVisSprite()
 
     return spr;
 }
+
+#ifdef __CLIENT__
 
 void R_ProjectPlayerSprites()
 {
@@ -733,6 +739,8 @@ void R_ProjectPlayerSprites()
     }
 }
 
+#endif // __CLIENT__
+
 float R_MovementYaw(float const mom[])
 {
     // Multiply by 100 to get some artificial accuracy in bamsAtan2.
@@ -785,6 +793,8 @@ int RIT_VisMobjZ(Sector *sector, void *parameters)
 
     return false; // Continue iteration.
 }
+
+#ifdef __CLIENT__
 
 static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     float x, float y, float z, float distance, float visOffX, float visOffY, float visOffZ,
@@ -1353,6 +1363,8 @@ void R_ProjectSprite(mobj_t *mo)
         }
     }
 }
+
+#endif // __CLIENT__
 
 typedef struct {
     BspLeaf* bspLeaf;

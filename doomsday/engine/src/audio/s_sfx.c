@@ -1242,6 +1242,7 @@ void Sfx_MapChange(void)
 
 void Sfx_DebugInfo(void)
 {
+#ifdef __CLIENT__
     int i, lh;
     sfxchannel_t* ch;
     char buf[200];
@@ -1310,4 +1311,5 @@ void Sfx_DebugInfo(void)
     }
 
     glDisable(GL_TEXTURE_2D);
+#endif
 }

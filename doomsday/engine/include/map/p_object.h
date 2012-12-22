@@ -33,7 +33,7 @@
 #include "p_mapdata.h"
 
 #if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
-#  error "Attempted to include internal Doomsday p_object.h from a game"
+#  error Attempted to include internal Doomsday p_object.h from a game
 #endif
 
 #ifdef __cplusplus

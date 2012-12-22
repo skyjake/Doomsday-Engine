@@ -32,6 +32,8 @@
 
 #include "map/linedef.h"
 
+#include <math.h>
+
 static void calcNormal(const LineDef* l, byte side, pvec2f_t normal)
 {
     V2f_Set(normal, (l->L_vorigin(side^1)[VY] - l->L_vorigin(side)  [VY]) / l->length,

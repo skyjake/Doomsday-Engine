@@ -48,7 +48,9 @@ static int evHead, evTail;
 
 void I_Register(void)
 {
+#ifdef __CLIENT__
     Joystick_Register();
+#endif
 }
 
 static keyevent_t *newKeyEvent(void)
@@ -143,6 +145,8 @@ boolean I_Init(void)
     if(initOk)
         return true; // Already initialized.
 
+#ifdef __CLIENT__
+
     // Select drivers.
     iMouse = &qtMouse;
 #ifdef WIN32
@@ -153,6 +157,8 @@ boolean I_Init(void)
     Mouse_Init();
     Joystick_Init();
 
+#endif // __CLIENT__
+
     initOk = true;
     return true;
 }
@@ -162,15 +168,17 @@ void I_Shutdown(void)
     if(!initOk)
         return; // Not initialized.
 
+#ifdef __CLIENT__
     if(useMouse) iMouse->shutdown();
     useMouse = false;
 
-    Joystick_Shutdown();
-    initOk = false;
-
-#ifdef WIN32
+    Joystick_Shutdown();    
+# ifdef WIN32
     DirectInput_Shutdown();
+# endif
 #endif
+
+    initOk = false;
 }
 
 void Keyboard_Submit(int type, int ddKey, int native, const char* text)

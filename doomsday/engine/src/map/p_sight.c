@@ -32,6 +32,8 @@
 #include "de_console.h"
 #include "de_play.h"
 
+#include "render/r_main.h" // validCount
+
 typedef struct losdata_s {
     int flags; // LS_* flags @ref lineSightFlags
     divline_t trace;

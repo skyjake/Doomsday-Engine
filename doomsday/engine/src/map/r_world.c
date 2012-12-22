@@ -593,12 +593,12 @@ Plane* R_NewPlaneForSector(Sector* sec)
     Surface_SetBlendMode(suf, BM_NORMAL);
     Surface_UpdateBaseOrigin(suf);
 
+#ifdef __CLIENT__
     /**
      * Resize the biassurface lists for the BSP leaf planes.
      * If we are in map setup mode, don't create the biassurfaces now,
      * as planes are created before the bias system is available.
      */
-
     if(sec->bspLeafs && *sec->bspLeafs)
     {
         BspLeaf** ssecIter = sec->bspLeafs;
@@ -609,6 +609,7 @@ Plane* R_NewPlaneForSector(Sector* sec)
             uint n = 0;
 
             newList = Z_Calloc(sec->planeCount * sizeof(biassurface_t*), PU_MAP, NULL);
+
             // Copy the existing list?
             if(bspLeaf->bsuf)
             {
@@ -639,6 +640,7 @@ Plane* R_NewPlaneForSector(Sector* sec)
             ssecIter++;
         } while(*ssecIter);
     }
+#endif
 
     return plane;
 }
@@ -1586,6 +1588,7 @@ void R_ClearSectorFlags(void)
 
 boolean R_IsGlowingPlane(const Plane* pln)
 {
+#ifdef __CLIENT__
     /// @todo We should not need to prepare to determine this.
     material_t* mat = pln->surface.material;
     if(mat)
@@ -1597,10 +1600,14 @@ boolean R_IsGlowingPlane(const Plane* pln)
         if(!Material_IsDrawable(mat) || ms->glowing > 0) return true;
     }
     return Surface_IsSkyMasked(&pln->surface);
+#else
+    return false;
+#endif
 }
 
 float R_GlowStrength(const Plane* pln)
 {
+#ifdef __CLIENT__
     material_t* mat = pln->surface.material;
     if(mat)
     {
@@ -1614,6 +1621,7 @@ float R_GlowStrength(const Plane* pln)
             return ms->glowing;
         }
     }
+#endif
     return 0;
 }
 
@@ -2023,6 +2031,8 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
     return MINMAX_OF(0, (lightlevel - min) / (float) (max - min), 1);
 }
 
+#ifdef __CLIENT__
+
 const float* R_GetSectorLightColor(const Sector* sector)
 {
     static vec3f_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
@@ -2052,6 +2062,8 @@ const float* R_GetSectorLightColor(const Sector* sector)
     // A non-skylight sector (i.e., everything else!)
     return sector->rgb; // The sector's ambient light color.
 }
+
+#endif // __CLIENT__
 
 coord_t R_SkyCapZ(BspLeaf* bspLeaf, int skyCap)
 {

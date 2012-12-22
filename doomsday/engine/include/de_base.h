@@ -56,4 +56,10 @@
 #include "ui/zonedebug.h"
 #include "uri.hh"
 
+#ifdef __SERVER__
+// Many subsystems do not exist on the server. This is a temporary measure
+// to allow compilation without pulling everything apart just yet.
+#  include "server_dummies.h"
+#endif
+
 #endif /* LIBDENG_BASE_H */

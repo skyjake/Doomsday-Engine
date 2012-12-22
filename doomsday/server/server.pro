@@ -107,6 +107,7 @@ DENG_HEADERS += \
 
 # Private headers.
 DENG_HEADERS += \
+    include/server_dummies.h \
     $$SRC/include/audio/s_environ.h \
     $$SRC/include/audio/s_logic.h \
     $$SRC/include/audio/s_main.h \
@@ -147,7 +148,6 @@ DENG_HEADERS += \
     $$SRC/include/def_data.h \
     $$SRC/include/def_main.h \
     $$SRC/include/dualstring.h \
-    $$SRC/include/edit_bias.h \
     $$SRC/include/edit_bsp.h \
     $$SRC/include/edit_map.h \
     $$SRC/include/filesys/file.h \
@@ -161,6 +161,7 @@ DENG_HEADERS += \
     $$SRC/include/filesys/sys_direc.h \
     $$SRC/include/filesys/sys_findfile.h \
     $$SRC/include/game.h \
+    $$SRC/include/gl/gl_texmanager.h \
     $$SRC/include/gridmap.h \
     $$SRC/include/kdtree.h \
     $$SRC/include/library.h \
@@ -171,7 +172,6 @@ DENG_HEADERS += \
     $$SRC/include/m_profiler.h \
     $$SRC/include/m_stack.h \
     $$SRC/include/map/blockmap.h \
-    $$SRC/include/map/blockmapvisual.h \
     $$SRC/include/map/bsp/bsptreenode.h \
     $$SRC/include/map/bsp/hedgeinfo.h \
     $$SRC/include/map/bsp/hedgeintercept.h \
@@ -214,28 +214,26 @@ DENG_HEADERS += \
     $$SRC/include/network/masterserver.h \
     $$SRC/include/network/monitor.h \
     $$SRC/include/network/net_buf.h \
-    $$SRC/include/network/net_demo.h \
     $$SRC/include/network/net_event.h \
     $$SRC/include/network/net_main.h \
     $$SRC/include/network/net_msg.h \
     $$SRC/include/network/protocol.h \
     $$SRC/include/network/sys_network.h \
-    $$SRC/include/network/ui_mpi.h \
     $$SRC/include/r_util.h \
+    $$SRC/include/render/r_main.h \
+    $$SRC/include/render/r_things.h \
+    $$SRC/include/render/rend_main.h \
     $$SRC/include/resource/animgroups.h \
-    $$SRC/include/resource/bitmapfont.h \
     $$SRC/include/resource/colorpalette.h \
     $$SRC/include/resource/colorpalettes.h \
     $$SRC/include/resource/compositetexture.h \
     $$SRC/include/resource/font.h \
-    $$SRC/include/resource/fonts.h \
     $$SRC/include/resource/hq2x.h \
     $$SRC/include/resource/image.h \
     $$SRC/include/resource/lumpcache.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materials.h \
     $$SRC/include/resource/materialvariant.h \
-    $$SRC/include/resource/models.h \
     $$SRC/include/resource/patch.h \
     $$SRC/include/resource/patchname.h \
     $$SRC/include/resource/pcx.h \
@@ -272,13 +270,9 @@ DENG_HEADERS += \
     $$SRC/include/ui/displaymode.h \
     $$SRC/include/ui/displaymode_native.h \
     $$SRC/include/ui/fi_main.h \
-    $$SRC/include/ui/finaleinterpreter.h \
     $$SRC/include/ui/keycode.h \
     $$SRC/include/ui/p_control.h \
     $$SRC/include/ui/sys_input.h \
-    $$SRC/include/ui/ui2_main.h \
-    $$SRC/include/ui/ui_main.h \
-    $$SRC/include/ui/ui_panel.h \
     $$SRC/include/ui/window.h \
     $$SRC/include/updater.h \
     $$SRC/include/uri.hh \
@@ -291,6 +285,7 @@ DENG_HEADERS += \
     $$SRC/src/updater/versioninfo.h
 
 INCLUDEPATH += \
+    include \
     $$DENG_INCLUDE_DIR \
     $$DENG_API_DIR
 
@@ -340,6 +335,7 @@ SOURCES += $$SRC/src/ui/displaymode_dummy.c
 
 # Platform-independent sources.
 SOURCES += \
+    src/server_dummies.c \
     $$SRC/src/audio/s_environ.cpp \
     $$SRC/src/audio/s_logic.c \
     $$SRC/src/audio/s_main.c \
@@ -365,7 +361,6 @@ SOURCES += \
     $$SRC/src/def_main.cpp \
     $$SRC/src/def_read.cpp \
     $$SRC/src/dualstring.cpp \
-    $$SRC/src/edit_bias.c \
     $$SRC/src/edit_bsp.cpp \
     $$SRC/src/edit_map.cpp \
     $$SRC/src/filesys/file.cpp \
@@ -379,6 +374,7 @@ SOURCES += \
     $$SRC/src/filesys/searchpath.cpp \
     $$SRC/src/filesys/sys_direc.c \
     $$SRC/src/game.cpp \
+    $$SRC/src/gl/gl_texmanager.cpp \
     $$SRC/src/gridmap.c \
     $$SRC/src/kdtree.c \
     $$SRC/src/library.cpp \
@@ -388,7 +384,6 @@ SOURCES += \
     $$SRC/src/m_nodepile.c \
     $$SRC/src/m_stack.c \
     $$SRC/src/map/blockmap.c \
-    $$SRC/src/map/blockmapvisual.c \
     $$SRC/src/map/bsp/hplane.cpp \
     $$SRC/src/map/bsp/partitioner.cpp \
     $$SRC/src/map/bsp/superblockmap.cpp \
@@ -425,28 +420,26 @@ SOURCES += \
     $$SRC/src/network/masterserver.cpp \
     $$SRC/src/network/monitor.c \
     $$SRC/src/network/net_buf.c \
-    $$SRC/src/network/net_demo.c \
     $$SRC/src/network/net_event.c \
     $$SRC/src/network/net_main.c \
     $$SRC/src/network/net_msg.c \
     $$SRC/src/network/net_ping.c \
     $$SRC/src/network/protocol.c \
     $$SRC/src/network/sys_network.c \
-    $$SRC/src/network/ui_mpi.c \
     $$SRC/src/r_util.c \
+    $$SRC/src/render/r_main.c \
+    $$SRC/src/render/r_things.cpp \
+    $$SRC/src/render/rend_main.c \
     $$SRC/src/resource/animgroups.cpp \
-    $$SRC/src/resource/bitmapfont.cpp \
     $$SRC/src/resource/colorpalette.c \
     $$SRC/src/resource/colorpalettes.cpp \
     $$SRC/src/resource/compositetexture.cpp \
-    $$SRC/src/resource/fonts.cpp \
     $$SRC/src/resource/hq2x.c \
     $$SRC/src/resource/image.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.c \
     $$SRC/src/resource/materials.cpp \
     $$SRC/src/resource/materialvariant.cpp \
-    $$SRC/src/resource/models.cpp \
     $$SRC/src/resource/patch.cpp \
     $$SRC/src/resource/patchname.cpp \
     $$SRC/src/resource/pcx.c \
@@ -473,16 +466,14 @@ SOURCES += \
     $$SRC/src/ui/b_device.c \
     $$SRC/src/ui/b_main.c \
     $$SRC/src/ui/b_util.c \
+    $$SRC/src/ui/canvas.cpp \
+    $$SRC/src/ui/canvaswindow.cpp \
     $$SRC/src/ui/dd_input.c \
     $$SRC/src/ui/displaymode.cpp \
     $$SRC/src/ui/fi_main.c \
-    $$SRC/src/ui/finaleinterpreter.c \
     $$SRC/src/ui/keycode.cpp \
     $$SRC/src/ui/p_control.c \
     $$SRC/src/ui/sys_input.c \
-    $$SRC/src/ui/ui2_main.cpp \
-    $$SRC/src/ui/ui_main.c \
-    $$SRC/src/ui/ui_panel.c \
     $$SRC/src/ui/window.cpp \
     $$SRC/src/updater/downloaddialog.cpp \
     $$SRC/src/updater/processcheckdialog.cpp \

@@ -187,11 +187,13 @@ boolean P_LoadMap(char const* uriCString)
 
         GameMap_ClMobjReset(map);
 
+#ifdef __CLIENT__
         // Clear player data, too, since we just lost all clmobjs.
         Cl_InitPlayers();
 
         RL_DeleteLists();
         Rend_CalcLightModRange();
+#endif
 
         // Invalidate old cmds and init player values.
         for(uint i = 0; i < DDMAXPLAYERS; ++i)
@@ -213,18 +215,19 @@ boolean P_LoadMap(char const* uriCString)
         Materials_ResetAnimGroups();
 
         R_InitObjlinkBlockmapForMap();
+
+#ifdef __CLIENT__
         LO_InitForMap(); // Lumobj management.
         R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.
 
-        // Init Particle Generator links.
-        P_PtcInitForMap();
-
         // Initialize the lighting grid.
         LG_InitForMap();
 
-        if(!isDedicated)
-            R_InitRendPolyPools();
+        R_InitRendPolyPools();
+#endif
+        // Init Particle Generator links.
+        P_PtcInitForMap();
 
         return true;
     }

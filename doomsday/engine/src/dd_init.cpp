@@ -137,6 +137,8 @@ int main(int argc, char** argv)
         }
     }
 
+    novideo = !useGUI;
+
     QMenuBar* menuBar = 0;
 
     // Application core.

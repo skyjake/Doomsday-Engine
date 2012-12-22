@@ -139,6 +139,8 @@ static boolean firstBspLeaf; // No range checking for the first one.
 
 void Rend_Register(void)
 {
+#ifdef __CLIENT
+
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
 
     C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 2);
@@ -195,6 +197,8 @@ void Rend_Register(void)
     Rend_SpriteRegister();
     Rend_ConsoleRegister();
     Vignette_Register();
+
+#endif
 }
 
 /**
@@ -204,6 +208,8 @@ coord_t Rend_PointDist3D(coord_t const point[3])
 {
     return M_ApproxDistance3(vOrigin[VX] - point[VX], vOrigin[VZ] - point[VY], 1.2 * (vOrigin[VY] - point[VZ]));
 }
+
+#ifdef __CLIENT__
 
 void Rend_Init(void)
 {
@@ -463,19 +469,21 @@ static void selectSurfaceColors(const float** topColor,
     }
 }
 
-int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
-{
-    const dynlight_t** ptr = (const dynlight_t**)paramaters;
-    *ptr = dyn;
-    return 1; // Stop iteration.
-}
-
 static __inline const materialvariantspecification_t*
 mapSurfaceMaterialSpec(int wrapS, int wrapT)
 {
     return Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
                                                     wrapS, wrapT, -1, -1, -1,
                                                     true, true, false, false);
+}
+
+#ifdef __CLIENT__
+
+int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
+{
+    const dynlight_t** ptr = (const dynlight_t**)paramaters;
+    *ptr = dyn;
+    return 1; // Stop iteration.
 }
 
 /**
@@ -585,6 +593,8 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
         VS_WALL(vis)->modTex = 0;
     }
 }
+
+#endif // __CLIENT__
 
 static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
     coord_t wallLength, coord_t const topLeft[3])
@@ -729,6 +739,8 @@ static float getSnapshots(const materialsnapshot_t** msA,
 
     return interPos;
 }
+
+#ifdef __CLIENT__
 
 typedef struct {
     boolean         isWall;
@@ -2091,6 +2103,8 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
         }
     }
 }
+
+#endif // __CLIENT__
 
 static coord_t skyFixFloorZ(const Plane* frontFloor, const Plane* backFloor)
 {
@@ -4039,3 +4053,5 @@ static void Rend_RenderBoundingBoxes(void)
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 }
+
+#endif // __CLIENT__

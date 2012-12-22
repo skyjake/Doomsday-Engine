@@ -56,6 +56,7 @@
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
+#include "m_bams.h"
 
 extern int renderTextures;
 extern int monochrome;
@@ -579,16 +580,18 @@ void DD_Register(void)
     DH_Register();
     R_Register();
     S_Register();
+#ifdef __CLIENT__
     SBE_Register(); // for bias editor
     Rend_Register();
     GL_Register();
-    Net_Register();
-    I_Register();
     H_Register();
-    DAM_Register();
-    BspBuilder_Register();
     UI_Register();
     Demo_Register();
+#endif
+    Net_Register();
+    I_Register();
+    DAM_Register();
+    BspBuilder_Register();
     P_ControlRegister();
     FI_Register();
 }
@@ -662,8 +665,7 @@ void DD_DestroyGames(void)
  */
 void DD_StartTitle(void)
 {
-    if(isDedicated) return;
-
+#ifdef __CLIENT
     ddfinale_t fin;
     if(!Def_Get(DD_DEF_FINALE, "background", &fin)) return;
 
@@ -687,6 +689,7 @@ void DD_StartTitle(void)
 
     titleFinale = FI_Execute2(fin.script, FF_LOCAL, Str_Text(&setupCmds));
     Str_Free(&setupCmds);
+#endif
 }
 
 /**
@@ -1357,11 +1360,14 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
 
     S_Reset();
+
+#ifdef __CLIENT__
     Demo_StopPlayback();
 
     GL_PurgeDeferredTasks();
     GL_ResetTextureManager();
     GL_SetFilter(false);
+#endif
 
     // If a game is presently loaded; unload it.
     if(DD_GameLoaded())
@@ -1370,7 +1376,9 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
             gx.Shutdown();
         Con_SaveDefaults();
 
+#ifdef __CLIENT__
         LO_Clear();
+#endif
         R_DestroyObjlinkBlockmap();
         R_ClearAnimGroups();
 
@@ -1551,8 +1559,10 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
         BusyMode_RunTasks(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
 
+#ifdef __CLIENT__
         // Process any GL-related tasks we couldn't while Busy.
         Rend_ParticleLoadExtraTextures();
+#endif
 
         if(DD_GameLoaded())
         {
@@ -1668,11 +1678,13 @@ void DD_FinishInitializationAfterWindowReady(void)
     DisplayMode_SaveOriginalColorTransfer();
 #endif
 
+#ifdef __CLIENT__
     if(!Sys_GLInitialize())
     {
         Con_Error("Error initializing OpenGL.\n");
     }
     else
+#endif
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
@@ -1732,28 +1744,13 @@ boolean DD_Init(void)
     }
 #endif
 
+#ifdef __CLIENT__
     if(!GL_EarlyInit())
     {
         Sys_CriticalMessage("GL_EarlyInit() failed.");
         return false;
     }
-
-    /*
-    DENG_ASSERT(!Sys_GLCheckError());
-    if(!novideo)
-    {
-        // Render a few black frames before we continue. This will help to
-        // stabilize things before we begin drawing for real and to avoid any
-        // unwanted video artefacts.
-        i = 0;
-        while(i++ < 3)
-        {
-            glClear(GL_COLOR_BUFFER_BIT);
-            GL_DoUpdate();
-        }
-    }
-    DENG_ASSERT(!Sys_GLCheckError());
-*/
+#endif
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
@@ -1772,8 +1769,10 @@ boolean DD_Init(void)
                                 DD_StartupWorker, 0, "Starting up...");
 
     // Engine initialization is complete. Now finish up with the GL.
+#ifdef __CLIENT__
     GL_Init();
     GL_InitRefresh();
+#endif
 
     // Do deferred uploads.
     Con_InitProgress2(200, .25f, .25f); // Stop here for a while.
@@ -2075,7 +2074,9 @@ static int DD_StartupWorker(void* parm)
 
     Con_SetProgress(165);
     Net_InitGame();
+#ifdef __CLIENT__
     Demo_Init();
+#endif
 
     Con_Message("Initializing InFine subsystem...\n");
     FI_Init();
@@ -2150,10 +2151,12 @@ static int DD_UpdateEngineStateWorker(void* parameters)
     DENG_ASSERT(parameters);
     ddupdateenginestateworker_paramaters_t* p = (ddupdateenginestateworker_paramaters_t*) parameters;
 
+#ifdef __CLIENT__
     if(!novideo)
     {
         GL_InitRefresh();
     }
+#endif
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -2176,7 +2179,9 @@ void DD_UpdateEngineState(void)
 
     // Stop playing sounds and music.
     GL_SetFilter(false);
+#ifdef __CLIENT__
     Demo_StopPlayback();
+#endif
     S_Reset();
 
     //App_FileSystem()->resetFileIds();
@@ -2196,12 +2201,15 @@ void DD_UpdateEngineState(void)
         gx.UpdateState(DD_PRE);
 
     hadFog = usingFog;
+
+#ifdef __CLIENT__
     GL_TotalReset();
     GL_TotalRestore(); // Bring GL back online.
 
     // Make sure the fog is enabled, if necessary.
     if(hadFog)
         GL_UseFog(true);
+#endif
 
     /**
      * The bulk of this we can do in busy mode unless we are already busy
@@ -2239,29 +2247,54 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&displayPlayer, 0 /*&displayPlayer*/}, // use R_SetViewPortPlayer() instead
     {&mipmapping, 0},
     {&filterUI, 0},
+#ifdef __CLIENT__
     {&defResX, &defResX},
     {&defResY, &defResY},
+#else
+    {0, 0},
+    {0, 0},
+#endif
     {0, 0},
     {0, 0}, //{&mouseInverseY, &mouseInverseY},
     {&levelFullBright, &levelFullBright},
     {&CmdReturnValue, 0},
+#ifdef __CLIENT__
     {&gameReady, &gameReady},
+#else
+    {0, 0},
+#endif
     {&isDedicated, 0},
     {&novideo, 0},
     {&defs.count.mobjs.num, 0},
     {&gotFrame, 0},
+#ifdef __CLIENT__
     {&playback, 0},
+#else
+    {0, 0},
+#endif
     {&defs.count.sounds.num, 0},
     {&defs.count.music.num, 0},
     {0, 0},
+#ifdef __CLIENT__
     {&clientPaused, &clientPaused},
+#else
+    {0, 0},
+#endif
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
     {&monochrome, &monochrome},
     {&gameDataFormat, &gameDataFormat},
+#ifdef __CLIENT__
     {&gameDrawHUD, 0},
+#else
+    {0, 0},
+#endif
     {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches},
     {&symbolicEchoMode, &symbolicEchoMode},
+#ifdef __CLIENT__
     {&numTexUnits, 0}
+#else
+    {0, 0},
+#endif
 };
 /* *INDENT-ON* */
 
@@ -2287,8 +2320,10 @@ int DD_GetInteger(int ddvalue)
     case DD_NUMLUMPS:
         return F_LumpCount();
 
+#ifdef __CLIENT__
     case DD_CURRENT_CLIENT_FINALE_ID:
         return Cl_CurrentFinale();
+#endif
 
     case DD_MAP_MUSIC: {
         GameMap* map = theMap;
@@ -2448,6 +2483,7 @@ void* DD_GetVariable(int ddvalue)
         valueD = theMap? GameMap_Gravity(theMap) : 0;
         return &valueD;
 
+#ifdef __CLIENT__
     case DD_TORCH_RED:
         return &torchColor[CR];
 
@@ -2459,6 +2495,7 @@ void* DD_GetVariable(int ddvalue)
 
     case DD_TORCH_ADDITIVE:
         return &torchAdditive;
+#endif
 
 #ifdef WIN32
     case DD_WINDOW_HANDLE:
@@ -2536,6 +2573,7 @@ void DD_SetVariable(int ddvalue, void *parm)
             pspLightLevelMultiplier = *(float*) parm;
             return;
 
+#ifdef __CLIENT__
         case DD_TORCH_RED:
             torchColor[CR] = MINMAX_OF(0, *((float*) parm), 1);
             return;
@@ -2551,6 +2589,7 @@ void DD_SetVariable(int ddvalue, void *parm)
         case DD_TORCH_ADDITIVE:
             torchAdditive = (*(int*) parm)? true : false;
             break;
+#endif
 
         default:
             break;

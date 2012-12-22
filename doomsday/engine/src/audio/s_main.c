@@ -606,6 +606,7 @@ void S_PauseMusic(boolean paused)
  */
 void S_Drawer(void)
 {
+#ifdef __CLIENT__
     if(!showSoundInfo) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -622,6 +623,7 @@ void S_Drawer(void)
     // Back to the original.
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
+#endif // __CLIENT__
 }
 
 /**

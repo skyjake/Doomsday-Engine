@@ -32,6 +32,7 @@
 #include "de_resource.h"
 
 #include "resource/materials.h"
+#include "gl/sys_opengl.h" // TODO: get rid of this
 
 #include <de/Error>
 #include <de/Log>
@@ -1011,6 +1012,10 @@ static void pushVariantCacheQueue(material_t* mat, materialvariantspecification_
 void Materials_Precache2(material_t* mat, materialvariantspecification_t const* spec,
     boolean smooth, boolean cacheGroup)
 {
+#ifdef __SERVER__
+    return;
+#endif
+
     errorIfNotInited("Materials_Precache2");
 
     if(!mat || ! spec)
@@ -1019,8 +1024,10 @@ void Materials_Precache2(material_t* mat, materialvariantspecification_t const* 
         return;
     }
 
+#ifdef __CLIENT__
     // Don't precache when playing demo.
     if(isDedicated || playback) return;
+#endif
 
     // Already in the queue?
     for(VariantCacheQueueNode* node = variantCacheQueue; node; node = node->next)
@@ -1050,8 +1057,11 @@ void Materials_Precache(material_t* mat, materialvariantspecification_t const* s
 
 void Materials_Ticker(timespan_t time)
 {
+#ifdef __CLIENT__
     // The animation will only progress when the game is not paused.
-    if(clientPaused || novideo) return;
+    if(clientPaused) return;
+#endif
+    if(novideo) return;
 
     for(MaterialListNode* node = materials; node; node = node->next)
     {
@@ -1138,11 +1148,15 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
 {
     DENG2_ASSERT(ms);
 
+#ifdef __CLIENT__
     for(int i = 0; i < NUM_MATERIAL_TEXTURE_UNITS; ++i)
     {
         Rtu_Init(&ms->units[i]);
         ms->textures[i] = NULL;
     }
+#else
+    DENG_UNUSED(ms);
+#endif
 
     ms->material = NULL;
     ms->size.width = ms->size.height = 0;
@@ -1196,6 +1210,7 @@ materialsnapshot_t const* updateMaterialSnapshot(MaterialVariant* variant,
         }
     }
 
+#ifdef __CLIENT__
     // Do we need to prepare a DetailTexture?
     Texture* tex = Material_DetailTexture(mat);
     if(tex)
@@ -1226,6 +1241,7 @@ materialsnapshot_t const* updateMaterialSnapshot(MaterialVariant* variant,
             texUnits[MTU_REFLECTION_MASK].tex = GL_PrepareTextureVariant(tex, texSpec);
         }
     }
+#endif
 
     MaterialVariant_SetSnapshotPrepareFrame(variant, frameCount);
 
@@ -1251,6 +1267,7 @@ materialsnapshot_t const* updateMaterialSnapshot(MaterialVariant* variant,
             MaterialVariant_Layer(variant, 0)->texOrigin[1], 1);
     }
 
+#ifdef __CLIENT__
     /**
      * If skymasked, we need only need to update the primary tex unit
      * (this is due to it being visible when skymask debug drawing is
@@ -1302,6 +1319,7 @@ materialsnapshot_t const* updateMaterialSnapshot(MaterialVariant* variant,
         snapshot->shinyMinColor[CG] = minColor[CG];
         snapshot->shinyMinColor[CB] = minColor[CB];
     }
+#endif
 
     return snapshot;
 }

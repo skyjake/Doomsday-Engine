@@ -22,7 +22,9 @@
 #define LIBDENG_REFRESH_DATA_H
 
 #include "dd_types.h"
-#include "gl/gl_main.h"
+#ifdef __CLIENT__
+#  include "gl/gl_main.h"
+#endif
 #include "dd_def.h"
 #include "thinker.h"
 #include "def_data.h"
