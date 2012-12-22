@@ -31,7 +31,7 @@ namespace de {
  *                 identifier with no operators or anything else.
  */
 #define DENG2_GUARD(varName) \
-    Guard _guarding_##varName(varName); \
+    de::Guard _guarding_##varName(varName); \
     DENG2_UNUSED(_guarding_##varName);
 
 class Lockable;

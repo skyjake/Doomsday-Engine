@@ -22,7 +22,7 @@
 
 using namespace de;
 
-#define LOCK_TIMEOUT_MS     10000
+#define LOCK_TIMEOUT_MS     60000
 
 Lockable::Lockable() : _mutex(QMutex::Recursive), _lockCount(0)
 {}

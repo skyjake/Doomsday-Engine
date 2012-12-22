@@ -357,10 +357,10 @@ int Textures::iterate(String nameOfScheme,
 
     if(!nameOfScheme.isEmpty())
     {
-        PathTreeIterator<PathTree> iter(scheme(nameOfScheme).index().leafNodes());
+        PathTreeIterator<TextureScheme::Index> iter(scheme(nameOfScheme).index().leafNodes());
         while(iter.hasNext())
         {
-            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+            TextureManifest &manifest = iter.next();
             if(!manifest.texture()) continue;
 
             int result = callback(*manifest.texture(), parameters);
@@ -371,10 +371,10 @@ int Textures::iterate(String nameOfScheme,
     {
         DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
         {
-            PathTreeIterator<PathTree> iter((*i)->index().leafNodes());
+            PathTreeIterator<TextureScheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+                TextureManifest &manifest = iter.next();
                 if(!manifest.texture()) continue;
 
                 int result = callback(*manifest.texture(), parameters);
@@ -392,10 +392,10 @@ int Textures::iterateDeclared(String nameOfScheme,
 
     if(!nameOfScheme.isEmpty())
     {
-        PathTreeIterator<PathTree> iter(scheme(nameOfScheme).index().leafNodes());
+        PathTreeIterator<TextureScheme::Index> iter(scheme(nameOfScheme).index().leafNodes());
         while(iter.hasNext())
         {
-            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+            TextureManifest &manifest = iter.next();
             int result = callback(manifest, parameters);
             if(result) return result;
         }
@@ -404,10 +404,10 @@ int Textures::iterateDeclared(String nameOfScheme,
     {
         DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
         {
-            PathTreeIterator<PathTree> iter((*i)->index().leafNodes());
+            PathTreeIterator<TextureScheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+                TextureManifest &manifest = iter.next();
                 int result = callback(manifest, parameters);
                 if(result) return result;
             }
@@ -486,7 +486,7 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
         PathTreeIterator<Textures::Scheme::Index> iter(scheme->index().leafNodes());
         while(iter.hasNext())
         {
-            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+            TextureManifest &manifest = iter.next();
             if(!path.isEmpty())
             {
                 /// @todo Use PathTree::Node::compare()
@@ -512,7 +512,7 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
             PathTreeIterator<Textures::Scheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+                TextureManifest &manifest = iter.next();
                 if(!path.isEmpty())
                 {
                     /// @todo Use PathTree::Node::compare()

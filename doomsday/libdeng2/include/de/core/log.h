@@ -22,6 +22,8 @@
 
 #include "../Time"
 #include "../String"
+#include "../Lockable"
+#include "../Guard"
 
 #include <QList>
 #include <vector>
@@ -94,7 +96,7 @@ class LogBuffer;
  *
  * @ingroup core
  */
-class DENG2_PUBLIC LogEntry
+class DENG2_PUBLIC LogEntry : public Lockable
 {
 public:
     /// Level of the log entry.

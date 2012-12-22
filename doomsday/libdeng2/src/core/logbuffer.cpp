@@ -151,6 +151,8 @@ LogBuffer::LogBuffer(duint maxEntryCount)
 
 LogBuffer::~LogBuffer()
 {
+    DENG2_GUARD(this);
+
     setOutputFile("");
     clear();
 

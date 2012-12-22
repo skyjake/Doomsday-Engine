@@ -1,4 +1,4 @@
-# jHexen: Sprites
+# libhexen: Sprites
 #
 # Order of definitions is very important here!
 # Only add new Sprites *after* the existing definitions.

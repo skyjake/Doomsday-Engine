@@ -3220,19 +3220,13 @@ Uri* G_ComposeMapUri(uint episode, uint map)
     return Uri_NewWithPath2(mapId, RC_NULL);
 }
 
-boolean G_ValidateMap(uint* episode, uint* map)
+boolean G_ValidateMap(uint *episode, uint *map)
 {
     boolean ok = true;
-    AutoStr* path;
-    Uri* uri;
+    AutoStr *path;
+    Uri *uri;
 
-#if __JDOOM64__
-    if(*map > 98)
-    {
-        *map = 98;
-        ok = false;
-    }
-#elif __JDOOM__
+#if __JDOOM__
     if(gameModeBits & (GM_DOOM_SHAREWARE|GM_DOOM_CHEX))
     {
         if(*episode != 0)
@@ -3266,22 +3260,8 @@ boolean G_ValidateMap(uint* episode, uint* map)
             ok = false;
         }
     }
-
 #elif __JHERETIC__
-    //  Allow episodes 0-8.
-    if(*episode > 8)
-    {
-        *episode = 8;
-        ok = false;
-    }
-
-    if(*map > 8)
-    {
-        *map = 8;
-        ok = false;
-    }
-
-    if(gameMode == heretic_shareware)
+    if(gameModeBits & GM_HERETIC_SHAREWARE)
     {
         if(*episode != 0)
         {
@@ -3289,39 +3269,21 @@ boolean G_ValidateMap(uint* episode, uint* map)
             ok = false;
         }
     }
-    else if(gameMode == heretic_extended)
+    else
     {
-        if(*episode == 5)
+        if(*episode > 8)
         {
-            if(*map > 2)
-            {
-                *map = 2;
-                ok = false;
-            }
-        }
-        else if(*episode > 4)
-        {
-            *episode = 4;
+            *episode = 8;
             ok = false;
         }
     }
-    else // Registered version checks
+
+    if(*map > 8)
     {
-        if(*episode == 3)
-        {
-            if(*map != 0)
-            {
-                *map = 0;
-                ok = false;
-            }
-        }
-        else if(*episode > 2)
-        {
-            *episode = 2;
-            ok = false;
-        }
+        *map = 8;
+        ok = false;
     }
-#elif __JHEXEN__
+#else
     if(*map > 98)
     {
         *map = 98;
@@ -3544,52 +3506,34 @@ void G_PrintFormattedMapList(uint episode, char const** files, uint count)
 }
 
 /**
- * Print a list of loaded maps and which WAD files are they located in.
- * The maps are identified using the "ExMy" and "MAPnn" markers.
+ * Print a list of all currently available maps and the location of the
+ * source file/directory which contains them.
  */
 void G_PrintMapList(void)
 {
-    uint episode, map, numEpisodes, maxMapsPerEpisode;
-    const char* sourceList[100];
-
 #if __JDOOM__
-    if(gameMode == doom_ultimate)
-    {
-        numEpisodes = 4;
-        maxMapsPerEpisode = 9;
-    }
-    else if(gameMode == doom)
-    {
-        numEpisodes = 3;
-        maxMapsPerEpisode = 9;
-    }
-    else
-    {
-        numEpisodes = 1;
-        maxMapsPerEpisode = gameMode == doom_chex? 5 : 99;
-    }
+    uint maxEpisodes       = (gameModeBits & GM_ANY_DOOM)? 9 : 1;
+    uint maxMapsPerEpisode = (gameModeBits & GM_ANY_DOOM)? 9 : 99;
 #elif __JHERETIC__
-    if(gameMode == heretic_extended)
-        numEpisodes = 6;
-    else if(gameMode == heretic)
-        numEpisodes = 3;
-    else
-        numEpisodes = 1;
-    maxMapsPerEpisode = 9;
+    uint maxEpisodes       = 9;
+    uint maxMapsPerEpisode = 9;
 #else
-    numEpisodes = 1;
-    maxMapsPerEpisode = 99;
+    uint maxEpisodes       = 1;
+    uint maxMapsPerEpisode = 99;
 #endif
 
-    for(episode = 0; episode < numEpisodes; ++episode)
+    uint episode, map;
+    char const *sourceList[100];
+
+    for(episode = 0; episode < maxEpisodes; ++episode)
     {
-        memset((void*) sourceList, 0, sizeof(sourceList));
+        memset((void *) sourceList, 0, sizeof(sourceList));
 
         // Find the name of each map (not all may exist).
         for(map = 0; map < maxMapsPerEpisode; ++map)
         {
-            Uri* uri = G_ComposeMapUri(episode, map);
-            AutoStr* path = P_MapSourceFile(Str_Text(Uri_Compose(uri)));
+            Uri *uri = G_ComposeMapUri(episode, map);
+            AutoStr *path = P_MapSourceFile(Str_Text(Uri_Compose(uri)));
             if(!Str_IsEmpty(path))
             {
                 sourceList[map] = Str_Text(path);

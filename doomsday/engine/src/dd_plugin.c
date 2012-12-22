@@ -146,9 +146,6 @@ void Plug_UnloadAll(void)
 {
     int i;
 
-    // Remove all entries; some may have been created by the plugins.
-    LogBuffer_Clear();
-
     for(i = 0; i < MAX_PLUGS && hInstPlug[i]; ++i)
     {
         unloadPlugin(&hInstPlug[i]);

@@ -155,13 +155,13 @@ static void drawFinishedTitle(void)
 static void drawEnteringTitle(void)
 {
     int x = SCREENWIDTH/2, y = WI_TITLEY;
-    char* mapName = NULL;
+    char *mapName = NULL;
     uint mapNum;
     ddmapinfo_t minfo;
     patchid_t patchId;
     patchinfo_t info;
-    AutoStr* mapPath;
-    Uri* mapUri;
+    AutoStr *mapPath;
+    Uri *mapUri;
 
     // See if there is a map name.
     mapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
@@ -194,7 +194,7 @@ static void drawEnteringTitle(void)
         y += (5 * info.geometry.size.height) / 4;
 
     // Draw map.
-    mapNum = (wbs->episode * 8) + wbs->nextMap;
+    mapNum = (wbs->episode * 9) + wbs->nextMap;
     patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     WI_DrawPatchXY2(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP);
 

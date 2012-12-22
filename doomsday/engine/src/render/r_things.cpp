@@ -244,10 +244,10 @@ static void buildSprites()
     spriteRecordBlockSet = BlockSet_New(sizeof(spriterecord_t), 64),
     spriteRecordFrameBlockSet = BlockSet_New(sizeof(spriterecord_frame_t), 256);
 
-    de::PathTreeIterator<de::PathTree> iter(App_Textures()->scheme("Sprites").index().leafNodes());
+    de::PathTreeIterator<de::TextureScheme::Index> iter(App_Textures()->scheme("Sprites").index().leafNodes());
     while(iter.hasNext())
     {
-        buildSprite(static_cast<de::TextureManifest &>(iter.next()));
+        buildSprite(iter.next());
     }
 
     LOG_INFO(de::String("buildSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));

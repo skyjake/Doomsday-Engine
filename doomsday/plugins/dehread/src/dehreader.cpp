@@ -419,7 +419,6 @@ public:
                         }
 
                         parseText(oldSize, newSize);
-                        skipToNextSection();
                     }
                     else if(line.beginsWith("Misc", Qt::CaseInsensitive))
                     {
@@ -1602,9 +1601,6 @@ public:
         String oldStr = readTextBlob(oldSize);
         String newStr = readTextBlob(newSize);
 
-        // Skip anything else on the line.
-        skipToEOL();
-
         if(!(flags & NoText)) // Disabled?
         {
             // Try each type of "text" replacement in turn...
@@ -1626,6 +1622,8 @@ public:
         {
             LOG_DEBUG("Skipping disabled Text patch.");
         }
+
+        skipToNextLine();
     }
 
     void parseStringsBex()

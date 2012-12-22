@@ -631,7 +631,7 @@ int R_ViewPortSize(int player, Size2Raw* size);
 /**
  * Change the view player for the specified viewport by console player num.
  *
- * @param player  Console player number of whose viewport to change.
+ * @param consoleNum  Console player number of whose viewport to change.
  * @param viewPlayer  Player that will be viewed by @a player.
  */
 void R_SetViewPortPlayer(int consoleNum, int viewPlayer);

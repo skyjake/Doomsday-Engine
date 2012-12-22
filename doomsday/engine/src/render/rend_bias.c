@@ -909,9 +909,9 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
 /**
  * Surface can be a either a wall or a plane (ceiling or a floor).
  *
- * @param colors        Array of colors to be written to.
+ * @param rcolors       Array of colors to be written to.
  * @param bsuf          Bias data for this surface.
- * @param vertices      Array of vertices to be lit.
+ * @param rvertices     Array of vertices to be lit.
  * @param numVertices   Number of vertices (in the array) to be lit.
  * @param normal        Surface normal.
  * @param sectorLightLevel Sector light level.

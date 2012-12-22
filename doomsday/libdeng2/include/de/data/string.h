@@ -264,7 +264,7 @@ public:
      * @param i  Iterator to advance.
      * @param end  End of the string. Will not advance past this.
      */
-    static void skipSpace(String::const_iterator &i, const String::const_iterator &end);
+    static void skipSpace(String::const_iterator &i, String::const_iterator const &end);
 
     /**
      * Formats data according to formatting instructions. Outputs a
@@ -279,11 +279,11 @@ public:
      * @return  Formatted argument as a string.
      */
     static String patternFormat(String::const_iterator &formatIter,
-        const String::const_iterator &formatEnd,
-        IPatternArg const &arg);
+                                String::const_iterator const &formatEnd,
+                                IPatternArg const &arg);
 
     static void advanceFormat(String::const_iterator &i,
-        const String::const_iterator &end);
+                              String::const_iterator const &end);
 };
 
 /**

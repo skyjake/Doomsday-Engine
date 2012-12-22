@@ -39,7 +39,7 @@ extern "C" {
 /**
  * Translate the origin in the map coordinate space.
  *
- * @param polyobj  Polyobj instance.
+ * @param po     Polyobj instance.
  * @param delta  Movement delta on the X|Y plane of the map coordinate space.
  */
 boolean Polyobj_Move(Polyobj* po, coord_t delta[2]);
@@ -48,7 +48,7 @@ boolean Polyobj_MoveXY(Polyobj* po, coord_t x, coord_t y);
 /**
  * Rotate in the map coordinate space.
  *
- * @param polyobj  Polyobj instance.
+ * @param po     Polyobj instance.
  * @param angle  World angle delta.
  */
 boolean Polyobj_Rotate(Polyobj* po, angle_t angle);

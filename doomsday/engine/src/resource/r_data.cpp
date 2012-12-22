@@ -556,12 +556,6 @@ static CompositeTextures loadCompositeTextureDefs()
                             }
                         }
                     }
-
-                    // The non-drawable flag must pass to the replacement.
-                    if(hasReplacement && orig->flags().testFlag(CompositeTexture::NoDraw))
-                    {
-                        custom->flags() |= CompositeTexture::NoDraw;
-                    }
                     break;
                 }
             }
@@ -595,7 +589,6 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
 {
     LOG_AS("processCompositeTextureDefs");
 
-    bool isFirst = true;
     while(!defs.isEmpty())
     {
         CompositeTexture &def = *defs.takeFirst();
@@ -605,15 +598,12 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
         if(def.flags().testFlag(CompositeTexture::Custom)) flags |= de::Texture::Custom;
 
         /*
-         * Vanilla DOOM's implementation of the texture collection has a flaw
+         * The id Tech 1 implementation of the texture collection has a flaw
          * which results in the first texture being used dually as a "NULL"
          * texture.
          */
-        if(isFirst)
-        {
-            def.flags() |= CompositeTexture::NoDraw;
-            isFirst = false;
-        }
+        if(def.origIndex() == 0) flags |= de::Texture::NoDraw;
+
 
         TextureManifest *manifest = App_Textures()->declare(uri, flags, def.logicalDimensions(), QPoint(), def.origIndex());
         if(manifest)

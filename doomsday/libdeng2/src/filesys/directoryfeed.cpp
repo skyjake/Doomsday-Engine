@@ -197,16 +197,18 @@ File *DirectoryFeed::newFile(String const &name)
 void DirectoryFeed::removeFile(String const &name)
 {
     NativePath path = _nativePath / name;
+
     if(!exists(path))
     {
-        /// @throw NotFoundError  The file @a name does not exist in the native directory.
-        throw NotFoundError("DirectoryFeed::removeFile", name + ": not found");
+        // The file doesn't exist in the native file system, we can ignore this.
+        return;
     }
 
     if(!QDir::current().remove(path))
     {
         /// @throw RemoveError  The file @a name exists but could not be removed.
-        throw RemoveError("DirectoryFeed::removeFile", name + ": cannot remove");
+        throw RemoveError("DirectoryFeed::removeFile", "Cannot remove \"" + name +
+                          "\" in " + description());
     }
 }
 

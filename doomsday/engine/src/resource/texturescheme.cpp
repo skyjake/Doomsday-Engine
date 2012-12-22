@@ -46,10 +46,10 @@ struct TextureScheme::Instance
     {
         if(index_)
         {
-            PathTreeIterator<PathTree> iter(index_->leafNodes());
+            PathTreeIterator<Index> iter(index_->leafNodes());
             while(iter.hasNext())
             {
-                TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+                TextureManifest &manifest = iter.next();
                 deindex(manifest);
             }
             delete index_;
@@ -75,10 +75,10 @@ struct TextureScheme::Instance
         if(minId) *minId = DDMAXINT;
         if(maxId) *maxId = DDMININT;
 
-        PathTreeIterator<PathTree> iter(index_->leafNodes());
+        PathTreeIterator<Index> iter(index_->leafNodes());
         while(iter.hasNext())
         {
-            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+            TextureManifest &manifest = iter.next();
             int const uniqueId = manifest.uniqueId();
             if(minId && uniqueId < *minId) *minId = uniqueId;
             if(maxId && uniqueId > *maxId) *maxId = uniqueId;
@@ -155,10 +155,10 @@ struct TextureScheme::Instance
         if(lutSize)
         {
             // Populate the LUT.
-            PathTreeIterator<PathTree> iter(index_->leafNodes());
+            PathTreeIterator<Index> iter(index_->leafNodes());
             while(iter.hasNext())
             {
-                linkInUniqueIdLut(static_cast<TextureManifest &>(iter.next()));
+                linkInUniqueIdLut(iter.next());
             }
         }
 
@@ -180,11 +180,10 @@ void TextureScheme::clear()
 {
     if(d->index_)
     {
-        PathTreeIterator<PathTree> iter(d->index_->leafNodes());
+        PathTreeIterator<Index> iter(d->index_->leafNodes());
         while(iter.hasNext())
         {
-            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
-            d->deindex(manifest);
+            d->deindex(iter.next());
         }
         d->index_->clear();
         d->uniqueIdLutDirty = true;
@@ -235,10 +234,10 @@ TextureManifest const &TextureScheme::findByResourceUri(Uri const &uri) const
 {
     if(!uri.isEmpty())
     {
-        PathTreeIterator<PathTree> iter(d->index_->leafNodes());
+        PathTreeIterator<Index> iter(d->index_->leafNodes());
         while(iter.hasNext())
         {
-            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+            TextureManifest &manifest = iter.next();
             if(manifest.resourceUri() == uri)
             {
                 return manifest;

@@ -3276,7 +3276,7 @@ void GL_ReleaseTexturesByScheme(char const *schemeName)
     PathTreeIterator<Textures::Scheme::Index> iter(App_Textures()->scheme(schemeName).index().leafNodes());
     while(iter.hasNext())
     {
-        TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+        TextureManifest &manifest = iter.next();
         GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(manifest.texture()));
     }
 }

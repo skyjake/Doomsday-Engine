@@ -1,5 +1,4 @@
 /** @file timevalue.h Value that holds a Time.
- * @ingroup data
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -27,6 +26,7 @@ namespace de {
 
 /**
  * Value that holds a Time.
+ * @ingroup data
  */
 class DENG2_PUBLIC TimeValue : public Value
 {

@@ -123,21 +123,6 @@ void H_SetupState(boolean dosetup)
     }
 }
 
-/**
- * The caller must check that @c sourcevis, really has a ->light!
- *
- * @param x         X coordinate of the center of the halo.
- * @param y         Y coordinate of the center of the halo.
- * @param z         Z coordinate of the center of the halo.
- * @param size      The precalculated radius of the primary halo.
- * @param primary   @c true = we'll draw the primary halo, otherwise the
- *                  secondary ones (which won't be clipped or occluded
- *                  by anything; they're drawn after everything else,
- *                  during a separate pass).
- *                  @c false = the caller must setup the rendering state.
- *
- * @return          @c true, if a halo was rendered.
- */
 boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
                      const float color[3], coord_t distanceToViewer,
                      float occlusionFactor, float brightnessFactor,

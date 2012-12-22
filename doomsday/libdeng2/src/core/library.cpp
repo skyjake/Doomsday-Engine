@@ -20,6 +20,7 @@
 #include "de/libdeng2.h"
 #include "de/Library"
 #include "de/Log"
+#include "de/LogBuffer"
 
 #if defined(UNIX) && defined(DENG2_QT_4_7_OR_NEWER) && !defined(DENG2_QT_4_8_OR_NEWER)
 #  define DENG2_USE_DLOPEN
@@ -116,6 +117,10 @@ Library::~Library()
         {
             DENG2_SYMBOL(deng_ShutdownPlugin)();
         }
+
+        // The log buffer may contain log entries built by the library; those
+        // entries contain pointers to functions that are about to disappear.
+        LogBuffer::appBuffer().clear();
 
 #ifndef DENG2_USE_DLOPEN
         d->library->unload();

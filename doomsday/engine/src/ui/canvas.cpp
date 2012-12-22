@@ -67,6 +67,7 @@ struct Canvas::Instance
 {
     Canvas* self;
     bool initNotified;
+    QSize currentSize;
     void (*initCallback)(Canvas&);
     void (*drawCallback)(Canvas&);
     void (*resizedCallback)(Canvas&);
@@ -284,13 +285,19 @@ void Canvas::initializeGL()
     Sys_GLConfigureDefaultState();
 }
 
-void Canvas::resizeGL(int /*w*/, int /*h*/)
+void Canvas::resizeGL(int w, int h)
 {
-    //qDebug() << "Canvas: resized" << w << "x" << h;
+    QSize newSize(w, h);
 
-    if(d->resizedCallback)
+    // Only react if this is actually a resize.
+    if(d->currentSize != newSize)
     {
-        d->resizedCallback(*this);
+        d->currentSize = newSize;
+
+        if(d->resizedCallback)
+        {
+            d->resizedCallback(*this);
+        }
     }
 }
 

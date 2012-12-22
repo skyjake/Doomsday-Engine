@@ -102,6 +102,8 @@ ptcgen_t* Generators_Unlink(Generators* generators, ptcgen_t* generator);
  *
  * @param generators  Generators instance.
  * @param slot        Logical slot into which the generator will be linked.
+ * @param generator   Generator to link.
+ *
  * @return  Same as @a generator for caller convenience.
  */
 ptcgen_t* Generators_Link(Generators* generators, ptcgenid_t slot, ptcgen_t* generator);

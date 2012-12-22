@@ -469,7 +469,7 @@ ded_decor_t* Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean 
     {
         materialid_t defMatId;
 
-        if(!def->material) continue;
+        if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
         defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
@@ -487,7 +487,7 @@ ded_reflection_t* Def_GetReflection(materialid_t matId, boolean hasExternal, boo
     {
         materialid_t defMatId;
 
-        if(!def->material) continue;
+        if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
         defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
@@ -503,7 +503,7 @@ ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
     int i;
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
-        if(def->material1)
+        if(def->material1 && !Uri_IsEmpty(def->material1))
         {
             materialid_t defMatId = Materials_ResolveUri2(def->material1, true/*quiet please*/);
             // Is this suitable?
@@ -511,7 +511,7 @@ ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
                 return def;
         }
 
-        if(def->material2)
+        if(def->material2 && !Uri_IsEmpty(def->material2))
         {
             materialid_t defMatId = Materials_ResolveUri2(def->material2, true/*quiet please*/);
             // Is this suitable?
@@ -531,7 +531,8 @@ ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean 
     {
         materialid_t defMatId;
 
-        if(!def->material) continue;
+        if(!def->material || Uri_IsEmpty(def->material)) continue;
+
         defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
         if(defMatId == NOMATERIALID) continue;
 
@@ -622,29 +623,28 @@ const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
     return NULL;
 }
 
-int Def_EvalFlags(char* ptr)
+int Def_EvalFlags(char *ptr)
 {
-    ded_flag_t* flag;
-    int value = 0, len;
-    char buf[64];
+    LOG_AS("Def_EvalFlags");
+
+    int value = 0;
 
     while(*ptr)
     {
         ptr = M_SkipWhite(ptr);
-        len = M_FindWhite(ptr) - ptr;
-        strncpy(buf, ptr, len);
-        buf[len] = 0;
 
-        flag = Def_GetFlag(buf);
-        if(flag)
+        int flagNameLength = M_FindWhite(ptr) - ptr;
+        de::String flagName(ptr, flagNameLength);
+        ptr += flagNameLength;
+
+        if(ded_flag_t *flag = Def_GetFlag(flagName.toUtf8().constData()))
         {
             value |= flag->value;
         }
         else
         {
-            Con_Message("Warning: Def_EvalFlags: Undefined flag '%s'.\n", buf);
+            LOG_WARNING("Flag '%s' is not defined (or used out of context).") << flagName;
         }
-        ptr += len;
     }
     return value;
 }
@@ -969,9 +969,7 @@ static int generateMaterialDefForCompositeTexture(de::TextureManifest &manifest,
     {
         mat->width  = tex->width();
         mat->height = tex->height();
-        de::CompositeTexture* pcTex = reinterpret_cast<de::CompositeTexture *>(tex->userDataPointer());
-        DENG_ASSERT(pcTex);
-        mat->flags = (pcTex->flags().testFlag(de::CompositeTexture::NoDraw)? MATF_NO_DRAW : 0);
+        mat->flags = (tex->flags().testFlag(de::Texture::NoDraw)? MATF_NO_DRAW : 0);
     }
 #if _DEBUG
     else
@@ -1454,24 +1452,25 @@ void Def_PostInit(void)
     char name[40];
 
     // Particle generators: model setup.
-    ded_ptcgen_t* gen = defs.ptcGens;
+    ded_ptcgen_t *gen = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, gen++)
     {
-        ded_ptcstage_t* st = gen->stages;
+        ded_ptcstage_t *st = gen->stages;
         for(int k = 0; k < gen->stageCount.num; ++k, st++)
         {
             if(st->type < PTC_MODEL || st->type >= PTC_MODEL + MAX_PTC_MODELS)
                 continue;
 
             sprintf(name, "Particle%02i", st->type - PTC_MODEL);
-            modeldef_t* modef;
-            if(!(modef = Models_Definition(name)) || modef->sub[0].modelId <= 0)
+
+            modeldef_t *modef = Models_Definition(name);
+            if(!modef || modef->sub[0].modelId == NOMODELID)
             {
                 st->model = -1;
                 continue;
             }
 
-            model_t* mdl = Models_ToModel(modef->sub[0].modelId);
+            model_t *mdl = Models_ToModel(modef->sub[0].modelId);
             DENG_ASSERT(mdl);
 
             st->model = modef - modefs;
@@ -1492,7 +1491,13 @@ void Def_PostInit(void)
     for(int i = 0; i < defs.count.details.num; ++i)
     {
         ded_detailtexture_t *dtl = &defs.details[i];
+
+        // Ignore definitions which do not specify a material.
+        if((!dtl->material1 || Uri_IsEmpty(dtl->material1)) &&
+           (!dtl->material2 || Uri_IsEmpty(dtl->material2))) continue;
+
         if(!dtl->detailTex) continue;
+
         R_DefineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->detailTex));
     }
 
@@ -1525,6 +1530,9 @@ void Def_PostInit(void)
     {
         ded_decor_t* decor = &defs.decorations[i];
 
+        // Ignore definitions which do not specify a material.
+        if(!decor->material || Uri_IsEmpty(decor->material)) continue;
+
         for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
             ded_decorlight_t* lig = &decor->lights[k];
@@ -1556,6 +1564,9 @@ void Def_PostInit(void)
     for(int i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t* ref = &defs.reflections[i];
+
+        // Ignore definitions which do not specify a material.
+        if(!ref->material || Uri_IsEmpty(ref->material)) continue;
 
         if(ref->shinyMap)
         {

@@ -75,7 +75,7 @@ typedef uint modelid_t;
 
 typedef struct
 {
-    uint modelId;
+    modelid_t modelId;
     short frame;
     char frameRange;
     int flags;
@@ -144,8 +144,6 @@ void Models_Init(void);
 void Models_Shutdown(void);
 
 model_t* Models_ToModel(modelid_t id);
-
-AutoStr* Models_ComposePath(modelid_t id);
 
 /**
  * Is there a model for this mobj? The decision is made based on the state and tics

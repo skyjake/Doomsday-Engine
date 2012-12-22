@@ -1475,9 +1475,6 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         }
     )
 
-    // Remove all entries; some may have been created by the game plugin (if it used libdeng2 C++ API).
-    LogBuffer_Clear();
-
     Library_ReleaseGames();
 
     char buf[256];

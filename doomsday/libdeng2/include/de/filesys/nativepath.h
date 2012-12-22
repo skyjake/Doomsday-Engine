@@ -103,11 +103,11 @@ public:
     bool isAbsolute() const;
 
     /**
+     * Replaces symbols and shorthand in the path with the actual paths.
      * Expands the legacy native path directives '>' and '}' at the start of
-     * the path, replacing them with the native base path.
-     *
-     * Handles '~' and '~username' on UNIX-based platforms so that a user
-     * specific home path (taken from passwd) may also be used.
+     * the path, replacing them with the native base path. Handles '~' and
+     * '~username' on UNIX-based platforms so that a user specific home path
+     * (taken from passwd) may also be used.
      *
      * @param didExpand  If specified, this value will be set to true if
      *                   path expansion was done.
@@ -119,15 +119,15 @@ public:
     NativePath expand(bool *didExpand = 0) const;
 
     /**
-     * Forms a prettier version of the path, where commonly known paths are
-     * omitted from the path if one is present in the beginning. The omitted
-     * part is replaced with a symbol so information is not lost.
+     * Forms a prettier version of the path, where commonly known paths in the
+     * beginning of the NativePath are replaced with a symbol. No information
+     * is lost in the transformation.
      *
-     * Also replaces the legacy native path directives '>' and '}', which
-     * expand to the base path.
+     * Also handles the legacy native path directives '>' and '}', which expand
+     * to the base path.
      *
-     * @return Simplified version of the path. The result should only be used
-     * for paths appearing in messages intended for the user.
+     * @return Simplified version of the path. The result should be used for
+     * paths appearing in messages intended for the user.
      */
     String pretty() const;
 

@@ -129,8 +129,8 @@ float M_ApproxDistance3f(float dx, float dy, float dz);
  *
  * @return  Angle between the test point and [0, 0].
  */
-angle_t M_PointToAngle(double const point[2]);
 angle_t M_PointXYToAngle(double x, double y);
+angle_t M_PointToAngle(double const point[2]);
 
 /**
  * Translate a direction into an angle value (degrees).

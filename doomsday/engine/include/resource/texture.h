@@ -72,14 +72,17 @@ public:
      */
     enum Flag
     {
+        /// Texture is not to be drawn.
+        NoDraw              = 0x1,
+
         /// Texture is "custom" (i.e., not an original game resource).
-        Custom              = 0x1,
+        Custom              = 0x2,
 
         /// Apply the monochrome filter to the processed image.
-        Monochrome          = 0x2,
+        Monochrome          = 0x4,
 
         /// Apply the upscaleAndSharpen filter to the processed image.
-        UpscaleAndSharpen   = 0x4
+        UpscaleAndSharpen   = 0x8
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 

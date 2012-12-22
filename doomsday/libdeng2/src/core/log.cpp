@@ -76,6 +76,8 @@ LogEntry::LogEntry(Level level, String const &section, int sectionDepth, String 
 
 LogEntry::~LogEntry()
 {
+    DENG2_GUARD(this);
+
     // The entry has ownership of its args.
     for(Args::iterator i = _args.begin(); i != _args.end(); ++i) 
     {
@@ -85,6 +87,8 @@ LogEntry::~LogEntry()
 
 String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
 {
+    DENG2_GUARD(this);
+
     /// @todo This functionality belongs in an entry formatter class.
 
     Flags flags = formattingFlags;

@@ -1,5 +1,5 @@
 #
-# CONSOLE COMMANDS - JHERETIC SPECFIC
+# CONSOLE COMMANDS - LIBHERETIC SPECFIC
 #
 
 [deletegamesave]
@@ -186,7 +186,7 @@ desc = Show a local game message.
 inf = Params: message (msg)\nFor example, 'message "this is a message"'.
 
 #
-# CONSOLE VARIABLES - JHERETIC SPECIFIC
+# CONSOLE VARIABLES - LIBHERETIC SPECIFIC
 #
 
 [server-game-mapcycle]

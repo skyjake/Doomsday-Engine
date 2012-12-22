@@ -74,8 +74,8 @@ void P_SetTraceOpening(LineDef* linedef);
  * @param y  Y coordinate of the point to test.
  * @return  BspLeaf instance for that BSP node's leaf.
  */
-BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
 BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
+BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
 
 /**
  * Is the point inside the sector, according to the edge lines of the BspLeaf?

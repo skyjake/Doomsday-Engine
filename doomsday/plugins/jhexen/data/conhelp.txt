@@ -1,5 +1,5 @@
 #
-# CONSOLE COMMANDS - JHEXEN SPECFIC
+# CONSOLE COMMANDS - LIBHEXEN SPECFIC
 #
 
 [deletegamesave]
@@ -198,7 +198,7 @@ desc = Show a local game message.
 inf = Params: message (msg)\nFor example, 'message "this is a message"'.
 
 #
-# CONSOLE VARIABLES - JHEXEN SPECIFIC
+# CONSOLE VARIABLES - LIBHEXEN SPECIFIC
 #
 
 [server-game-mapcycle]

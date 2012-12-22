@@ -1,4 +1,4 @@
-# jHexen: Flags
+# libhexen: Flags
 
 # Mobj flags:
 Flag { ID = "mf_special"; Value = 0x1; }

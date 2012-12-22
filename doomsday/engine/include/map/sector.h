@@ -36,7 +36,7 @@ extern "C" {
  *
  * @pre LineDef list must have been initialized.
  *
- * @param Sector  Sector instance.
+ * @param sector  Sector instance.
  */
 void Sector_UpdateAABox(Sector* sector);
 
@@ -45,7 +45,7 @@ void Sector_UpdateAABox(Sector* sector);
  *
  * @pre Axis-aligned bounding box must have been initialized.
  *
- * @param Sector  Sector instance.
+ * @param sector  Sector instance.
  */
 void Sector_UpdateArea(Sector* sector);
 

@@ -556,6 +556,86 @@ Text {
 }
 
 Text {
+  ID = "WEAPON1";
+  Text = "Bootspoon";
+}
+
+Text {
+  ID = "WEAPON2";
+  Text = "Mini Zorcher";
+}
+
+Text {
+  ID = "WEAPON3";
+  Text = "Large Zorcher";
+}
+
+Text {
+  ID = "WEAPON4";
+  Text = "Rapid Zorcher";
+}
+
+Text {
+  ID = "WEAPON5";
+  Text = "Zorch Propulsor";
+}
+
+Text {
+  ID = "WEAPON6";
+  Text = "Phasing Zorcher";
+}
+
+Text {
+  ID = "WEAPON7";
+  Text = "Large Area Zorching Device";
+}
+
+Text {
+  ID = "WEAPON8";
+  Text = "Super Bootspork";
+}
+
+Text {
+  ID = "KILLMSG_WEAPON0";
+  Text = "%1 spoon fed %2 with a Bootspoon!";
+}
+
+Text {
+  ID = "KILLMSG_PISTOL";
+  Text = "%2 was zorched by %1 with a Mini Zorcher";
+}
+
+Text {
+  ID = "KILLMSG_SHOTGUN";
+  Text = "%1 zorched %2 with a Large Zorcher";
+}
+
+Text {
+  ID = "KILLMSG_CHAINGUN";
+  Text = "%2 was zorched by %1's Rapid Zorcher.";
+}
+
+Text {
+  ID = "KILLMSG_MISSILE";
+  Text = "%2 was zorched by %1's Zorch Propulsor";
+}
+
+Text {
+  ID = "KILLMSG_PLASMA";
+  Text = "%2 got zorched by %1's Phasing Zorcher.";
+}
+
+Text {
+  ID = "KILLMSG_BFG";
+  Text = "%1 zorched %2 with the Large Area Zorching Device!";
+}
+
+Text {
+  ID = "KILLMSG_CHAINSAW";
+  Text = "%1 spoon fed %2 with a Bootspork!";
+}
+
+Text {
   ID = "SKILL1";
   Text = "Easy does it.";
 }

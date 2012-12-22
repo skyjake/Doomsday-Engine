@@ -1,5 +1,5 @@
-# jDoom: Values
-# (mind yur speling; jDoom uses only the identifiers it knows about)
+# libdoom: Values
+# (mind yur speling; libdoom uses only the identifiers it knows about)
 # 
 # The strings from all Values definition blocks are merged together.
 # This means you don't have to add all your values here; they can be

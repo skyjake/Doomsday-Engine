@@ -17,6 +17,7 @@ Include "hacx/materialenvironments.ded";
 Include "doom2/music.ded";
 Include "hacx/fonts.ded";
 Include "hacx/menu.ded";
+Include "hacx/text.ded";
 Include "hacx/hud.ded";
 Include "hacx/inlude.ded";
 Include "hacx/lights.ded";
@@ -137,76 +138,4 @@ Thing {
   Damage = 100;
   Flags = noblockmap | missile | dropoff | nogravity;
   Flags2 = noteleport;
-}
-
-# HacX uses different weapon names.
-Text {
-  ID = "WEAPON1";
-  Text = "Kick";
-}
-
-Text {
-  ID = "WEAPON2";
-  Text = "Pistol";
-}
-
-Text {
-  ID = "WEAPON3";
-  Text = "Tazer";
-}
-
-Text {
-  ID = "WEAPON4";
-  Text = "UZI";
-}
-
-Text {
-  ID = "WEAPON5";
-  Text = "Photon 'Zooka";
-}
-
-Text {
-  ID = "WEAPON6";
-  Text = "Big Stick";
-}
-
-Text {
-  ID = "WEAPON7";
-  Text = "Nuker";
-}
-
-Text {
-  ID = "WEAPON8";
-  Text = "HOIG Reznator";
-}
-
-Text {
-  ID = "WEAPON9";
-  Text = "Cryogun";
-}
-
-# HacX uses different skill level names.
-Text {
-  ID = "SKILL1";
-  Text = "Please don't shoot!";
-}
-
-Text {
-  ID = "SKILL2";
-  Text = "Arrgh, I need health!";
-}
-
-Text {
-  ID = "SKILL3";
-  Text = "Let's rip them apart!";
-}
-
-Text {
-  ID = "SKILL4";
-  Text = "I am immortal";
-}
-
-Text {
-  ID = "SKILL5";
-  Text = "Insanity!";
 }
