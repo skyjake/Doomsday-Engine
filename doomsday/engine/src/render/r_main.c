@@ -40,6 +40,7 @@
 #include "de_ui.h"
 
 #include "gl/svg.h"
+#include "map/p_players.h"
 #include "render/vignette.h"
 
 // MACROS ------------------------------------------------------------------
@@ -526,6 +527,7 @@ static void R_UpdateMap(void)
 
     if(!theMap) return;
 
+#ifdef __CLIENT__
     // Update all world surfaces.
     for(i = 0; i < NUM_SECTORS; ++i)
     {
@@ -556,6 +558,7 @@ static void R_UpdateMap(void)
             Surface_Update(&side->SW_middlesurface);
         }
     }
+#endif
 
     R_MapInitSurfaceLists();
 
@@ -820,6 +823,8 @@ void R_NewSharpWorld(void)
 
 void R_CreateMobjLinks(void)
 {
+#ifdef __CLIENT__
+
     uint                i;
     Sector*             seciter;
 #ifdef DD_PROFILE
@@ -845,6 +850,8 @@ BEGIN_PROF( PROF_MOBJ_INIT_ADD );
     }
 
 END_PROF( PROF_MOBJ_INIT_ADD );
+
+#endif
 }
 
 /**

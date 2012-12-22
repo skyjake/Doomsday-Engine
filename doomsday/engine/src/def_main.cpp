@@ -38,6 +38,8 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#include "map/r_world.h"
+
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 

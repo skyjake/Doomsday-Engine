@@ -53,6 +53,8 @@
 #include "de_resource.h"
 
 #include "gl/svg.h"
+#include "map/p_players.h"
+#include "map/p_maputil.h"
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
@@ -587,12 +589,12 @@ void DD_Register(void)
     H_Register();
     UI_Register();
     Demo_Register();
+    P_ControlRegister();
 #endif
     Net_Register();
     I_Register();
     DAM_Register();
     BspBuilder_Register();
-    P_ControlRegister();
     FI_Register();
 }
 
@@ -1378,11 +1380,11 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
 #ifdef __CLIENT__
         LO_Clear();
-#endif
         R_DestroyObjlinkBlockmap();
+        P_ControlShutdown();
+#endif
         R_ClearAnimGroups();
 
-        P_ControlShutdown();
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
         B_BindDefaults();
         B_InitialContextActivations();

@@ -108,11 +108,10 @@ DENG_HEADERS += \
 # Private headers.
 DENG_HEADERS += \
     include/server_dummies.h \
+    $$SRC/include/audio/s_cache.h \
     $$SRC/include/audio/s_environ.h \
     $$SRC/include/audio/s_logic.h \
     $$SRC/include/audio/s_main.h \
-    $$SRC/include/audio/s_mus.h \
-    $$SRC/include/audio/s_sfx.h \
     $$SRC/include/audio/s_wav.h \
     $$SRC/include/busymode.h \
     $$SRC/include/cbuffer.h \
@@ -336,11 +335,10 @@ SOURCES += $$SRC/src/ui/displaymode_dummy.c
 # Platform-independent sources.
 SOURCES += \
     src/server_dummies.c \
+    $$SRC/src/audio/s_cache.c \
     $$SRC/src/audio/s_environ.cpp \
     $$SRC/src/audio/s_logic.c \
     $$SRC/src/audio/s_main.c \
-    $$SRC/src/audio/s_mus.c \
-    $$SRC/src/audio/s_sfx.c \
     $$SRC/src/audio/s_wav.c \
     $$SRC/src/busymode.cpp \
     $$SRC/src/cbuffer.c \

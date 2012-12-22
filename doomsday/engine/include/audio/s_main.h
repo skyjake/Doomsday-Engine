@@ -53,6 +53,8 @@ extern "C" {
 extern int showSoundInfo;
 extern int soundMinDist, soundMaxDist;
 extern int sfxVolume, musVolume;
+extern int sfxBits, sfxRate;
+extern byte sfxOneSoundPerEmitter;
 
 void S_Register(void);
 boolean S_Init(void);
