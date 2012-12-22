@@ -40,9 +40,10 @@
 #include <de/memory.h>
 
 #include "network/net_main.h" // for gametic
+#include "resource/materialsnapshot.h"
+#include "resource/materialvariant.h"
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
-#include "resource/materialvariant.h"
 
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)         qatan2(y,x)
@@ -1141,9 +1142,9 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         {
             materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
                 MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
-            materialsnapshot_t const *ms = Materials_Prepare(mat, spec, true);
+            de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
 
-            skinTexture = MST(ms, MTU_PRIMARY);
+            skinTexture = reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY));
         }
         else
         {

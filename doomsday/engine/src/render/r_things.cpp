@@ -38,6 +38,7 @@
 
 #include "def_main.h"
 #include "m_stack.h"
+#include "resource/materialsnapshot.h"
 
 #include <de/memoryblockset.h>
 
@@ -458,10 +459,10 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
             Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
                                                      GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
                                                      false, true, true, false);
-    materialsnapshot_t const *ms = Materials_Prepare(mat, spec, false);
+    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, false));
 
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
-    variantspecification_t const *texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
+    de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+    variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
     DENG_ASSERT(texSpec);
 
     info->numFrames = sprDef->numFrames;
@@ -469,9 +470,9 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     info->flip = sprFrame->flip[0];
     info->geometry.origin.x = -tex.origin().x() + -texSpec->border;
     info->geometry.origin.y = -tex.origin().y() +  texSpec->border;
-    info->geometry.size.width  = ms->size.width  + texSpec->border*2;
-    info->geometry.size.height = ms->size.height + texSpec->border*2;
-    TextureVariant_Coords(MST(ms, MTU_PRIMARY), &info->texCoord[0], &info->texCoord[1]);
+    info->geometry.size.width  = ms.dimensions().width()  + texSpec->border*2;
+    info->geometry.size.height = ms.dimensions().height() + texSpec->border*2;
+    ms.texture(MTU_PRIMARY).coords(&info->texCoord[0], &info->texCoord[1]);
 
     return true;
 }
@@ -499,8 +500,8 @@ coord_t R_VisualRadius(mobj_t *mo)
     // Use the sprite frame's width?
     if(material_t *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
     {
-        materialsnapshot_t const *ms = Materials_Prepare(material, Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
-        return ms->size.width / 2;
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(material, Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true));
+        return ms.dimensions().width() / 2;
     }
 
     // Use the physical radius.
@@ -542,12 +543,12 @@ float R_ShadowStrength(mobj_t *mo)
         if(mat)
         {
             // Ensure we've prepared this.
-            materialsnapshot_t const *ms = Materials_Prepare(mat, Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
-            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
+            de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true));
+            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_ALPHA);
             float weightedSpriteAlpha;
             if(!aa)
             {
-                QByteArray uri = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText().toUtf8();
+                QByteArray uri = ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri().asText().toUtf8();
                 Con_Error("R_ShadowStrength: Texture \"%s\" has no TA_ALPHA analysis", uri.constData());
             }
 
@@ -958,7 +959,6 @@ void R_ProjectSprite(mobj_t *mo)
     uint vLightListIdx = 0;
     material_t *mat;
     materialvariantspecification_t const *spec;
-    materialsnapshot_t const *ms;
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     coord_t moPos[3];
 
@@ -1039,10 +1039,10 @@ void R_ProjectSprite(mobj_t *mo)
     matFlipT = false;
 
     spec = Sprite_MaterialSpec(mo->tclass, mo->tmap);
-    ms   = Materials_Prepare(mat, spec, true);
+    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
 
     // An invalid sprite texture?
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+    de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
     if(tex.manifest().schemeName().compareWithoutCase("Sprites")) return;
 
     // Align to the view plane?
@@ -1209,27 +1209,27 @@ void R_ProjectSprite(mobj_t *mo)
 
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
-        if(ms->size.height < secCeil - secFloor)
+        if(ms.dimensions().height() < secCeil - secFloor)
         {
             // Sprite fits in, adjustment possible?
             // Check top.
             if(fitTop && gzt > secCeil)
                 gzt = secCeil;
             // Check bottom.
-            if(floorAdjust && fitBottom && gzt - ms->size.height < secFloor)
-                gzt = secFloor + ms->size.height;
+            if(floorAdjust && fitBottom && gzt - ms.dimensions().height() < secFloor)
+                gzt = secFloor + ms.dimensions().height();
         }
         // Adjust by the floor clip.
         gzt -= floorClip;
 
         getLightingParams(vis->origin[VX], vis->origin[VY],
-                          gzt - ms->size.height / 2.0f,
+                          gzt - ms.dimensions().height() / 2.0f,
                           mo->bspLeaf, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupSpriteParamsForVisSprite(&vis->data.sprite,
                                       vis->origin[VX], vis->origin[VY],
-                                      gzt - ms->size.height / 2.0f,
+                                      gzt - ms.dimensions().height() / 2.0f,
                                       vis->distance,
                                       visOff[VX], visOff[VY], visOff[VZ],
                                       secFloor, secCeil,
@@ -1269,7 +1269,6 @@ void R_ProjectSprite(mobj_t *mo)
         spriteframe_t* sprFrame;
         material_t* mat;
         const materialvariantspecification_t* spec;
-        const materialsnapshot_t* ms;
         const pointlight_analysis_t* pl;
 
         // Determine the sprite frame lump of the source.
@@ -1292,12 +1291,12 @@ void R_ProjectSprite(mobj_t *mo)
         // Ensure we have up-to-date information about the material.
         spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1,-2, -1, true, true, true, false);
-        ms = Materials_Prepare(mat, spec, true);
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
 
-        pl = (pointlight_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
+        pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_SPRITE_AUTOLIGHT);
         if(!pl)
         {
-            QByteArray uri = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText().toUtf8();
+            QByteArray uri = ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri().asText().toUtf8();
             Con_Error("R_ProjectSprite: Texture \"%s\" has no TA_SPRITE_AUTOLIGHT analysis", uri.constData());
         }
 
@@ -1314,7 +1313,7 @@ void R_ProjectSprite(mobj_t *mo)
 
         flareSize = pl->brightMul;
         // X offset to the flare position.
-        xOffset = ms->size.width * pl->originX - -tex.origin().x();
+        xOffset = ms.dimensions().width() * pl->originX - -tex.origin().x();
 
         // Does the mobj have an active light definition?
         if(def)

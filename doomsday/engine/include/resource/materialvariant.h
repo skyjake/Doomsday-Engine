@@ -1,8 +1,6 @@
-/**
- * @file materialvariant.h
- * Logical material variant. @ingroup resource
+/** @file materialvariant.h Logical Material Variant.
  *
- * @authors Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2011-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,7 +20,6 @@
 #ifndef LIBDENG_RESOURCE_MATERIALVARIANT_H
 #define LIBDENG_RESOURCE_MATERIALVARIANT_H
 
-//#include "r_data.h"
 #include "render/rendpoly.h"
 #include "materials.h"
 
@@ -36,54 +33,14 @@ struct materialvariant_s;
 
 typedef struct materialvariantspecification_s {
     materialcontext_t context;
-    struct texturevariantspecification_s* primarySpec;
+    struct texturevariantspecification_s *primarySpec;
 } materialvariantspecification_t;
 
 #define MATERIALVARIANT_MAXLAYERS       DDMAX_MATERIAL_LAYERS
 
-// Material texture unit idents:
-enum {
-    MTU_PRIMARY,
-    MTU_DETAIL,
-    MTU_REFLECTION,
-    MTU_REFLECTION_MASK,
-    NUM_MATERIAL_TEXTURE_UNITS
-};
-
-typedef struct materialsnapshot_s {
-    /// Variant Material used to derive this snapshot.
-    struct materialvariant_s* material;
-
-    /// @c true= this material is entirely opaque.
-    boolean isOpaque;
-
-    /// Size in world units.
-    Size2Raw size;
-
-    /// Glow strength multiplier.
-    float glowing;
-
-    /// Minimum sector light color for shiny texturing.
-    vec3f_t shinyMinColor;
-
-    /// Textures used on each texture unit.
-    struct texturevariant_s* textures[NUM_MATERIAL_TEXTURE_UNITS];
-
-    /// Texture unit configuration.
-    rtexmapunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
-} materialsnapshot_t;
-
-// Helper macros for accessing MaterialSnapshot data elements.
-#define MST(ms, u)             ((ms)->textures[u])
-#define MSU(ms, u)             ((ms)->units[u])
-
-#define MSU_texture(ms, u)     (MST(ms, u)? TextureVariant_GeneralCase(MST(ms, u)) : NULL)
-#define MSU_gltexture(ms, u)   (MST(ms, u)? TextureVariant_GLName(MST(ms, u)) : 0)
-#define MSU_texturespec(ms, u) (MST(ms, u)? TextureVariant_Spec(MST(ms, u)) : NULL)
-
 typedef struct materialvariant_layer_s {
     int stage; // -1 => layer not in use.
-    struct texture_s* texture;
+    struct texture_s *texture;
     float texOrigin[2]; /// Origin of the texture in material-space.
     float glow;
     short tics;
@@ -94,13 +51,19 @@ typedef struct materialvariant_layer_s {
 #endif
 
 #ifdef __cplusplus
+
 namespace de {
 
+class MaterialSnapshot;
+
+/**
+ * @ingroup resource
+ */
 class MaterialVariant
 {
 public:
-    MaterialVariant(material_t& generalCase, const materialvariantspecification_t& spec,
-                    const ded_material_t& def);
+    MaterialVariant(material_t &generalCase, materialvariantspecification_t const &spec,
+                    ded_material_t const &def);
     ~MaterialVariant();
 
     /**
@@ -115,31 +78,31 @@ public:
     void resetAnim();
 
     /// @return  Material from which this variant is derived.
-    material_t* generalCase() const { return material; }
+    material_t *generalCase() const { return material; }
 
     /// @return  MaterialVariantSpecification from which this variant is derived.
-    const materialvariantspecification_t* spec() const { return varSpec; }
+    materialvariantspecification_t const *spec() const { return varSpec; }
 
     /**
      * Retrieve a handle for a staged animation layer form this variant.
      * @param layer  Index of the layer to retrieve.
      * @return  MaterialVariantLayer for the specified layer index.
      */
-    const materialvariant_layer_t* layer(int layer);
+    materialvariant_layer_t const *layer(int layer);
 
     /**
      * Attach MaterialSnapshot data to this. MaterialVariant is given ownership of @a materialSnapshot.
      * @return  Same as @a materialSnapshot for caller convenience.
      */
-    materialsnapshot_t& attachSnapshot(materialsnapshot_t& materialSnapshot);
+    MaterialSnapshot &attachSnapshot(MaterialSnapshot &snapshot);
 
     /**
      * Detach MaterialSnapshot data from this. Ownership of the data is relinquished to the caller.
      */
-    materialsnapshot_t* detachSnapshot();
+    MaterialSnapshot *detachSnapshot();
 
     /// @return  MaterialSnapshot data associated with this.
-    materialsnapshot_t* snapshot() const { return snapshot_; }
+    MaterialSnapshot *snapshot() const { return snapshot_; }
 
     /// @return  Frame count when the snapshot was last prepared/updated.
     int snapshotPrepareFrame() const { return snapshotPrepareFrame_; }
@@ -151,10 +114,10 @@ public:
     void setSnapshotPrepareFrame(int frame);
 
     /// @return  Translated 'next' (or target) MaterialVariant if set, else this.
-    MaterialVariant* translationNext();
+    MaterialVariant *translationNext();
 
     /// @return  Translated 'current' MaterialVariant if set, else this.
-    MaterialVariant* translationCurrent();
+    MaterialVariant *translationCurrent();
 
     /// @return  Translation position [0..1]
     float translationPoint();
@@ -165,7 +128,7 @@ public:
      * @param current  Translated 'current' MaterialVariant.
      * @param next  Translated 'next' (or target) MaterialVariant.
      */
-    void setTranslation(MaterialVariant* current, MaterialVariant* next);
+    void setTranslation(MaterialVariant *current, MaterialVariant *next);
 
     /**
      * Change the translation point for this variant.
@@ -175,19 +138,19 @@ public:
 
 private:
     /// Superior Material of which this is a derivative.
-    material_t* material;
+    material_t *material;
 
     /// For "smoothed" Material animation:
     bool hasTranslation;
-    MaterialVariant* current;
-    MaterialVariant* next;
+    MaterialVariant *current;
+    MaterialVariant *next;
     float inter;
 
     /// Specification used to derive this variant.
-    const materialvariantspecification_t* varSpec;
+    materialvariantspecification_t const *varSpec;
 
     /// Cached copy of current state if any.
-    materialsnapshot_t* snapshot_;
+    MaterialSnapshot *snapshot_;
 
     /// Frame count when the snapshot was last prepared/updated.
     int snapshotPrepareFrame_;
@@ -219,9 +182,9 @@ material_t* MaterialVariant_GeneralCase(MaterialVariant* mat);
 const materialvariantspecification_t* MaterialVariant_Spec(const MaterialVariant* mat);
 const materialvariant_layer_t* MaterialVariant_Layer(MaterialVariant* mat, int layer);
 
-materialsnapshot_t* MaterialVariant_AttachSnapshot(MaterialVariant* mat, materialsnapshot_t* materialSnapshot);
-materialsnapshot_t* MaterialVariant_DetachSnapshot(MaterialVariant* mat);
-materialsnapshot_t* MaterialVariant_Snapshot(const MaterialVariant* mat);
+struct materialsnapshot_s *MaterialVariant_AttachSnapshot(MaterialVariant* mat, struct materialsnapshot_s *materialSnapshot);
+struct materialsnapshot_s *MaterialVariant_DetachSnapshot(MaterialVariant* mat);
+struct materialsnapshot_s *MaterialVariant_Snapshot(const MaterialVariant* mat);
 
 int MaterialVariant_SnapshotPrepareFrame(const MaterialVariant* mat);
 void MaterialVariant_SetSnapshotPrepareFrame(MaterialVariant* mat, int frame);

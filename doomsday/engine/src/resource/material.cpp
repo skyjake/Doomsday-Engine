@@ -26,6 +26,7 @@
 #include "m_misc.h"
 
 #include "audio/s_environ.h"
+#include "resource/materialsnapshot.h"
 
 #include <de/memory.h>
 
@@ -210,11 +211,11 @@ boolean Material_HasGlow(material_t* mat)
     if(novideo) return false;
 
     /// @todo We should not need to prepare to determine this.
-    const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+    materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
         MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-    const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
+    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
 
-    return (ms->glowing > .0001f);
+    return (ms.glowStrength() > .0001f);
 }
 
 boolean Material_HasTranslation(const material_t* mat)

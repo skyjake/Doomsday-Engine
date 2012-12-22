@@ -29,9 +29,10 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "resource/materialsnapshot.h"
+#include "resource/materialvariant.h"
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
-#include "resource/materialvariant.h"
 
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 
@@ -287,7 +288,6 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     float offScaleY = weaponOffsetScaleY / 1000.0f;
     spritedef_t const *sprDef;
     spriteframe_t const *sprFrame;
-    materialsnapshot_t const *ms;
     materialvariantspecification_t const *spec;
     boolean flip;
 
@@ -306,18 +306,18 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -2, 0, false, true, true, false);
-    ms = Materials_Prepare(sprFrame->mats[0], spec, true);
+    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(sprFrame->mats[0], spec, true));
 
-    de::Texture const &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
-    variantspecification_t const *texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
+    de::Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
+    variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
     DENG_ASSERT(spec);
 
     params->pos[VX] = psp->pos[VX] - -tex.origin().x() + pspOffset[VX] + -texSpec->border;
     params->pos[VY] = offScaleY * (psp->pos[VY] - -tex.origin().y()) + pspOffset[VY] + -texSpec->border;
-    params->width  = ms->size.width  + texSpec->border*2;
-    params->height = ms->size.height + texSpec->border*2;
+    params->width  = ms.dimensions().width()  + texSpec->border*2;
+    params->height = ms.dimensions().height() + texSpec->border*2;
 
-    TextureVariant_Coords(MST(ms, MTU_PRIMARY), &params->texOffset[0], &params->texOffset[1]);
+    ms.texture(MTU_PRIMARY).coords(&params->texOffset[0], &params->texOffset[1]);
 
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
@@ -392,9 +392,9 @@ void Rend_DrawPSprite(rendpspriteparams_t const *params)
         // For lighting debug, render all solid surfaces using the gray texture.
         material_t *mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
         materialvariantspecification_t const *spec = PSprite_MaterialSpec();
-        materialsnapshot_t const *ms = Materials_Prepare(mat, spec, true);
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
 
-        GL_BindTexture(MST(ms, MTU_PRIMARY));
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -547,8 +547,8 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 
     if(renderTextures)
     {
-        materialsnapshot_t const *ms = Materials_PrepareVariant(p->material);
-        tex = MST(ms, MTU_PRIMARY);
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_PrepareVariant(p->material));
+        tex = reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY));
     }
 
     // Do we have a dynamic light to blend with?
@@ -896,7 +896,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     coord_t spriteCenter[3];
     coord_t surfaceNormal[3];
     MaterialVariant *mat = 0;
-    materialsnapshot_t const *ms = 0;
+    de::MaterialSnapshot const *ms = 0;
     float s = 1, t = 1; ///< Bottom right coords.
     int i;
 
@@ -906,17 +906,17 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
         variantspecification_t const *texSpec;
 
         // Ensure this variant has been prepared.
-        ms = Materials_PrepareVariant(params->material);
+        ms = reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(params->material));
 
-        texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
+        texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
         DENG_ASSERT(texSpec);
-        size.width  = ms->size.width  + texSpec->border*2;
-        size.height = ms->size.height + texSpec->border*2;
+        size.width  = ms->dimensions().width()  + texSpec->border*2;
+        size.height = ms->dimensions().height() + texSpec->border*2;
         viewOffset.x = -size.width/2;
 
-        TextureVariant_Coords(MST(ms, MTU_PRIMARY), &s, &t);
+        ms->texture(MTU_PRIMARY).coords(&s, &t);
 
-        de::Texture &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+        de::Texture &tex = ms->texture(MTU_PRIMARY).generalCase();
         viewOffset.x += float(-tex.origin().x());
     }
 
@@ -924,12 +924,12 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     mat = chooseSpriteMaterial(params);
     if(mat != params->material)
     {
-        ms = mat? Materials_PrepareVariant(mat) : NULL;
+        ms = mat? reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(mat)) : NULL;
     }
 
     if(ms)
     {
-        GL_BindTexture(MST(ms, MTU_PRIMARY));
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms->texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
     }
     else

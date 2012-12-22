@@ -43,6 +43,8 @@
 #include "def_main.h"
 #include "m_misc.h" // for M_CycleIntoRange()
 
+#include "resource/materialsnapshot.h"
+
 #include "render/r_things.h"
 #include "render/rend_model.h"
 #include "render/sprite.h"
@@ -924,10 +926,10 @@ static void scaleModelToSprite(modeldef_t &mf, int sprite, int frame)
     if(!spr.numFrames || spr.spriteFrames == NULL) return;
 
     materialvariantspecification_t const* spec = Sprite_MaterialSpec(0, 0);
-    materialsnapshot_t const* ms = Materials_Prepare(spr.spriteFrames[frame].mats[0], spec, true);
-    de::Texture const &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
-    int off = MAX_OF(0, -tex.origin().y() - ms->size.height);
-    scaleModel(mf, ms->size.height, off);
+    MaterialSnapshot const &ms = reinterpret_cast<MaterialSnapshot const &>(*Materials_Prepare(spr.spriteFrames[frame].mats[0], spec, true));
+    de::Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
+    int off = MAX_OF(0, -tex.origin().y() - ms.dimensions().height());
+    scaleModel(mf, ms.dimensions().height(), off);
 }
 
 static float calcModelVisualRadius(modeldef_t* def)

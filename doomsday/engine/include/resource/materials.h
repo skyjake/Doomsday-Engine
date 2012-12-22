@@ -110,6 +110,8 @@ AutoStr* Materials_ComposePath(materialid_t materialId);
 /// @return  Unique name/path-to this material. Must be destroyed with Uri_Delete().
 Uri* Materials_ComposeUri(materialid_t materialId);
 
+void Materials_UpdateTextureLinks(materialid_t materialId);
+
 /**
  * Update @a material according to the supplied definition @a def.
  * To be called after an engine update/reset.

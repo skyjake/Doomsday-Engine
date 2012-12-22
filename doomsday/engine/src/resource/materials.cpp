@@ -32,6 +32,7 @@
 #include "de_resource.h"
 
 #include "resource/materials.h"
+#include "resource/materialsnapshot.h"
 
 #include <de/Error>
 #include <de/Log>
@@ -1117,208 +1118,23 @@ static void updateMaterialTextureLinks(MaterialBind &mb)
     Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
 }
 
-static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* texture,
-    blendmode_t blendMode, float sScale, float tScale, float sOffset,
-    float tOffset, float opacity)
+void Materials_UpdateTextureLinks(materialid_t materialId)
 {
-    rtexmapunit_t* tu;
-    DENG2_ASSERT(ms && unit < NUM_MATERIAL_TEXTURE_UNITS);
-
-    ms->textures[unit] = texture;
-    tu = &ms->units[unit];
-    tu->texture.variant = texture;
-    tu->texture.flags = TUF_TEXTURE_IS_MANAGED;
-    tu->blendMode = blendMode;
-    V2f_Set(tu->scale, sScale, tScale);
-    V2f_Set(tu->offset, sOffset, tOffset);
-    tu->opacity = MINMAX_OF(0, opacity, 1);
+    MaterialBind *bind = getMaterialBindForId(materialId);
+    if(!bind) return;
+    updateMaterialTextureLinks(*bind);
 }
 
-void Materials_InitSnapshot(materialsnapshot_t* ms)
-{
-    DENG2_ASSERT(ms);
-
-    for(int i = 0; i < NUM_MATERIAL_TEXTURE_UNITS; ++i)
-    {
-        Rtu_Init(&ms->units[i]);
-        ms->textures[i] = NULL;
-    }
-
-    ms->material = NULL;
-    ms->size.width = ms->size.height = 0;
-    ms->glowing = 0;
-    ms->isOpaque = true;
-    V3f_Set(ms->shinyMinColor, 0, 0, 0);
-}
-
-/// @return  Same as @a snapshot for caller convenience.
-materialsnapshot_t const* updateMaterialSnapshot(MaterialVariant* variant,
-    materialsnapshot_t* snapshot)
-{
-    static struct materialtextureunit_s {
-        TextureVariant* tex;
-    } texUnits[NUM_MATERIAL_TEXTURE_UNITS];
-    material_t* mat = MaterialVariant_GeneralCase(variant);
-    materialvariantspecification_t const* spec = MaterialVariant_Spec(variant);
-    DENG2_ASSERT(snapshot);
-
-    memset(texUnits, 0, sizeof texUnits);
-
-    // Ensure all resources needed to visualize this Material's layers have been prepared.
-    int layerCount = Material_LayerCount(mat);
-    for(int i = 0; i < layerCount; ++i)
-    {
-        materialvariant_layer_t const* ml = MaterialVariant_Layer(variant, i);
-        preparetextureresult_t result;
-
-        if(!ml->texture) continue;
-
-        // Pick the instance matching the specified context.
-        texUnits[i].tex = GL_PrepareTextureVariant2(ml->texture, spec->primarySpec, &result);
-
-        if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
-        {
-            // Primary texture was (re)prepared.
-            Material_SetPrepared(mat, result == PTR_UPLOADED_ORIGINAL? 1 : 2);
-
-            if(MaterialBind* bind = getMaterialBindForId(Material_PrimaryBind(mat)))
-            {
-                updateMaterialTextureLinks(*bind);
-            }
-
-            // Are we inheriting the logical dimensions from the texture?
-            if(0 == Material_Width(mat) && 0 == Material_Height(mat))
-            {
-                Size2Raw texSize(Texture_Width(ml->texture),
-                                 Texture_Height(ml->texture));
-                Material_SetSize(mat, &texSize);
-            }
-        }
-    }
-
-    // Do we need to prepare a DetailTexture?
-    Texture* tex = Material_DetailTexture(mat);
-    if(tex)
-    {
-        float const contrast = Material_DetailStrength(mat) * detailFactor;
-        texturevariantspecification_t* texSpec = GL_DetailTextureVariantSpecificationForContext(contrast);
-
-        texUnits[MTU_DETAIL].tex = GL_PrepareTextureVariant(tex, texSpec);
-    }
-
-    // Do we need to prepare a shiny texture (and possibly a mask)?
-    tex = Material_ShinyTexture(mat);
-    if(tex)
-    {
-        texturevariantspecification_t* texSpec =
-            GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
-                TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
-                false, false, false, false);
-
-        texUnits[MTU_REFLECTION].tex = GL_PrepareTextureVariant(tex, texSpec);
-
-        // We are only interested in a mask if we have a shiny texture.
-        if(texUnits[MTU_REFLECTION].tex && (tex = Material_ShinyMaskTexture(mat)))
-        {
-            texSpec = GL_TextureVariantSpecificationForContext(
-                TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                -1, -1, -1, true, false, false, false);
-            texUnits[MTU_REFLECTION_MASK].tex = GL_PrepareTextureVariant(tex, texSpec);
-        }
-    }
-
-    MaterialVariant_SetSnapshotPrepareFrame(variant, frameCount);
-
-    Materials_InitSnapshot(snapshot);
-    snapshot->material = variant;
-    memcpy(&snapshot->size, Material_Size(mat), sizeof snapshot->size);
-
-    if(0 == snapshot->size.width && 0 == snapshot->size.height) return snapshot;
-
-    snapshot->glowing = MaterialVariant_Layer(variant, 0)->glow * glowFactor;
-    snapshot->isOpaque = NULL != texUnits[MTU_PRIMARY].tex &&
-        !TextureVariant_IsMasked(texUnits[MTU_PRIMARY].tex);
-
-    // Setup the primary texture unit.
-    if(texUnits[MTU_PRIMARY].tex)
-    {
-        TextureVariant* tex = texUnits[MTU_PRIMARY].tex;
-        const float sScale = 1.f / snapshot->size.width;
-        const float tScale = 1.f / snapshot->size.height;
-
-        setTexUnit(snapshot, MTU_PRIMARY, tex, BM_NORMAL,
-            sScale, tScale, MaterialVariant_Layer(variant, 0)->texOrigin[0],
-            MaterialVariant_Layer(variant, 0)->texOrigin[1], 1);
-    }
-
-    /**
-     * If skymasked, we need only need to update the primary tex unit
-     * (this is due to it being visible when skymask debug drawing is
-     * enabled).
-     */
-    if(!Material_IsSkyMasked(mat))
-    {
-        // Setup the detail texture unit?
-        if(texUnits[MTU_DETAIL].tex && snapshot->isOpaque)
-        {
-            TextureVariant* tex = texUnits[MTU_DETAIL].tex;
-            const float width  = Texture_Width(TextureVariant_GeneralCase(tex));
-            const float height = Texture_Height(TextureVariant_GeneralCase(tex));
-            float scale = Material_DetailScale(mat);
-
-            // Apply the global scaling factor.
-            if(detailScale > .0001f)
-                scale *= detailScale;
-
-            setTexUnit(snapshot, MTU_DETAIL, tex, BM_NORMAL,
-                       1.f / width * scale, 1.f / height * scale, 0, 0, 1);
-        }
-
-        // Setup the shiny texture units?
-        if(texUnits[MTU_REFLECTION].tex)
-        {
-            TextureVariant* tex = texUnits[MTU_REFLECTION].tex;
-            const blendmode_t blendmode = Material_ShinyBlendmode(mat);
-            const float strength = Material_ShinyStrength(mat);
-
-            setTexUnit(snapshot, MTU_REFLECTION, tex, blendmode, 1, 1, 0, 0, strength);
-        }
-
-        if(texUnits[MTU_REFLECTION_MASK].tex)
-        {
-            TextureVariant* tex = texUnits[MTU_REFLECTION_MASK].tex;
-
-            setTexUnit(snapshot, MTU_REFLECTION_MASK, tex, BM_NORMAL,
-                1.f / (snapshot->size.width * Texture_Width(TextureVariant_GeneralCase(tex))),
-                1.f / (snapshot->size.height * Texture_Height(TextureVariant_GeneralCase(tex))),
-                snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
-        }
-    }
-
-    if(MC_MAPSURFACE == spec->context && texUnits[MTU_REFLECTION].tex)
-    {
-        const float* minColor = Material_ShinyMinColor(mat);
-        snapshot->shinyMinColor[CR] = minColor[CR];
-        snapshot->shinyMinColor[CG] = minColor[CG];
-        snapshot->shinyMinColor[CB] = minColor[CB];
-    }
-
-    return snapshot;
-}
-
-const materialsnapshot_t* Materials_PrepareVariant2(MaterialVariant* variant, boolean updateSnapshot)
+materialsnapshot_s const *Materials_PrepareVariant2(MaterialVariant *variant, boolean updateSnapshot)
 {
     // Acquire the snapshot we are interested in.
-    materialsnapshot_t* snapshot = MaterialVariant_Snapshot(variant);
+    de::MaterialSnapshot *snapshot = reinterpret_cast<de::MaterialSnapshot *>(MaterialVariant_Snapshot(variant));
     if(!snapshot)
     {
         // Time to allocate the snapshot.
-        snapshot = (materialsnapshot_t*)M_Malloc(sizeof *snapshot);
-        if(!snapshot)
-            Con_Error("Materials::Prepare: Failed on allocation of %lu bytes for new MaterialSnapshot.", (unsigned long) sizeof *snapshot);
-        snapshot = MaterialVariant_AttachSnapshot(variant, snapshot);
-        Materials_InitSnapshot(snapshot);
-        snapshot->material = variant;
+        snapshot = new de::MaterialSnapshot(reinterpret_cast<de::MaterialVariant &>(*variant));
+
+        MaterialVariant_AttachSnapshot(variant, reinterpret_cast<materialsnapshot_s *>(snapshot));
 
         // Update the snapshot right away.
         updateSnapshot = true;
@@ -1329,25 +1145,28 @@ const materialsnapshot_t* Materials_PrepareVariant2(MaterialVariant* variant, bo
         updateSnapshot = true;
     }
 
-    // If we aren't updating a snapshot; get out of here.
-    if(!updateSnapshot) return snapshot;
+    // We have work to do?
+    if(updateSnapshot)
+    {
+        MaterialVariant_SetSnapshotPrepareFrame(variant, frameCount);
+        snapshot->update();
+    }
 
-    // We have work to do...
-    return updateMaterialSnapshot(variant, snapshot);
+    return reinterpret_cast<materialsnapshot_s *>(snapshot);
 }
 
-const materialsnapshot_t* Materials_PrepareVariant(MaterialVariant* variant)
+const materialsnapshot_s* Materials_PrepareVariant(MaterialVariant* variant)
 {
     return Materials_PrepareVariant2(variant, false/*do not force a snapshot update*/);
 }
 
-const materialsnapshot_t* Materials_Prepare2(material_t* mat, const materialvariantspecification_t* spec,
+const materialsnapshot_s* Materials_Prepare2(material_t* mat, const materialvariantspecification_t* spec,
     boolean smooth, boolean updateSnapshot)
 {
     return Materials_PrepareVariant2(Materials_ChooseVariant(mat, spec, smooth, true), updateSnapshot);
 }
 
-const materialsnapshot_t* Materials_Prepare(material_t* mat, const materialvariantspecification_t* spec,
+const materialsnapshot_s* Materials_Prepare(material_t* mat, const materialvariantspecification_t* spec,
     boolean smooth)
 {
     return Materials_Prepare2(mat, spec, smooth, false/*do not force a snapshot update*/);

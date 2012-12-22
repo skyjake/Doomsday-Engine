@@ -32,6 +32,7 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "resource/materialsnapshot.h"
 #include "resource/materialvariant.h"
 
 // $smoothplane: Maximum speed for a smoothed plane.
@@ -1053,9 +1054,9 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
     if(!material) return false;
 
     // Ensure we have up to date info about the material.
-    materialsnapshot_t const *ms = Materials_Prepare(material, Rend_MapSurfaceDiffuseMaterialSpec(), true);
+    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(material, Rend_MapSurfaceDiffuseMaterialSpec(), true));
 
-    if(ignoreOpacity || (ms->isOpaque && !frontDef->SW_middleblendmode && frontDef->SW_middlergba[3] >= 1))
+    if(ignoreOpacity || (ms.isOpaque() && !frontDef->SW_middleblendmode && frontDef->SW_middlergba[3] >= 1))
     {
         coord_t openRange, openBottom, openTop;
 
@@ -1064,7 +1065,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
 
         // Might the material cover the opening?
         openRange = R_VisOpenRange(frontSec, backSec, &openBottom, &openTop);
-        if(ms->size.height >= openRange)
+        if(ms.dimensions().height() >= openRange)
         {
             // Possibly; check the placement.
             coord_t bottom, top;
@@ -1453,9 +1454,9 @@ boolean R_IsGlowingPlane(Plane const *pln)
     if(mat)
     {
         materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-        materialsnapshot_t const *ms = Materials_Prepare(mat, spec, true);
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
 
-        if(!Material_IsDrawable(mat) || ms->glowing > 0) return true;
+        if(!Material_IsDrawable(mat) || ms.glowStrength() > 0) return true;
     }
     return Surface_IsSkyMasked(&pln->surface);
 }
@@ -1469,9 +1470,9 @@ float R_GlowStrength(Plane const *pln)
         {
             /// @todo We should not need to prepare to determine this.
             materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-            materialsnapshot_t const *ms = Materials_Prepare(mat, spec, true);
+            de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
 
-            return ms->glowing;
+            return ms.glowStrength();
         }
     }
     return 0;

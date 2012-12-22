@@ -28,6 +28,7 @@
 #include "de_resource.h"
 #include "de_ui.h"
 
+#include "resource/materialsnapshot.h"
 #include "cbuffer.h"
 
 // Console (display) Modes:
@@ -546,12 +547,12 @@ static void drawConsoleBackground(Point2Raw const *origin, Size2Raw const *size,
     {
         materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        materialsnapshot_t const *ms = Materials_Prepare(consoleBackgroundMaterial, spec, Con_IsActive());
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(consoleBackgroundMaterial, spec, Con_IsActive()));
 
-        GL_BindTexture(MST(ms, MTU_PRIMARY));
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 
-        bgX = int(ms->size.width  * consoleBackgroundZoom);
-        bgY = int(ms->size.height * consoleBackgroundZoom);
+        bgX = int(ms.dimensions().width()  * consoleBackgroundZoom);
+        bgY = int(ms.dimensions().height() * consoleBackgroundZoom);
 
         glEnable(GL_TEXTURE_2D);
         if(consoleBackgroundTurn != 0)
