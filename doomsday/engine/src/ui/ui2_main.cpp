@@ -1046,8 +1046,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             de::Texture *texture = App_Textures()->scheme("Patches").findByUniqueId(f->texRef.patch).texture();
             if(texture)
             {
-                TextureVariant *tex = GL_PreparePatchTexture(reinterpret_cast<texture_s *>(texture));
-                GL_BindTexture(tex);
+                GL_BindTexture(GL_PreparePatchTexture(reinterpret_cast<texture_s *>(texture)));
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 

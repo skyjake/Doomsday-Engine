@@ -541,14 +541,14 @@ static void selectTexUnits(int count)
 void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 {
     GLenum normalTarget, dynTarget;
-    TextureVariant *tex = 0;
+    de::TextureVariant *tex = 0;
     boolean withDyn = false;
     int normal = 0, dyn = 1;
 
     if(renderTextures)
     {
         de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_PrepareVariant(p->material));
-        tex = reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY));
+        tex = &ms.texture(MTU_PRIMARY);
     }
 
     // Do we have a dynamic light to blend with?
@@ -578,7 +578,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 
         // The actual texture.
         glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
-        GL_BindTexture(tex);
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(tex));
 
         withDyn = true;
     }
@@ -586,7 +586,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
     {
         GL_ModulateTexture(1);
         glEnable(GL_TEXTURE_2D);
-        GL_BindTexture(tex);
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(tex));
         normal = 0;
     }
 

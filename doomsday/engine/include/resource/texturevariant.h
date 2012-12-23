@@ -1,8 +1,6 @@
-/**
- * @file texture.h
- * Logical texture variant. @ingroup resource
+/** @file texturevariant.h Logical Texture Variant.
  *
- * @authors Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2011-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,121 +28,89 @@
 
 namespace de {
 
-class Texture;
+    class Texture;
 
-class TextureVariant
-{
-private:
-    enum Flag
+    /**
+     * @ingroup resource
+     */
+    class TextureVariant
     {
-        /// Texture contains alpha.
-        Masked = 0x1,
+    private:
+        enum Flag
+        {
+            /// Texture contains alpha.
+            Masked = 0x1,
 
-        /// Texture has been uploaded to GL.
-        Uploaded = 0x2
+            /// Texture has been uploaded to GL.
+            Uploaded = 0x2
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
+    public:
+        /**
+         * @param generalCase   Texture from which this variant is derived.
+         * @param spec          Specification used to derive this variant.
+         *                      Ownership is NOT given to the resultant TextureVariant
+         * @param source        Source of this variant.
+         */
+        TextureVariant(Texture &generalCase, texturevariantspecification_t &spec,
+                       TexSource source = TEXS_NONE);
+
+        /// @return  Superior Texture of which this is a derivative.
+        Texture &generalCase() const { return texture; }
+
+        /// @return  Source of this variant.
+        TexSource source() const { return texSource; }
+
+        /**
+         * Change the source of this variant.
+         * @param newSource  New TextureSource.
+         */
+        void setSource(TexSource newSource);
+
+        /// @return  TextureVariantSpecification used to derive this variant.
+        texturevariantspecification_t *spec() const { return varSpec; }
+
+        bool isMasked() const { return !!(flags & Masked); }
+
+        void flagMasked(bool yes);
+
+        bool isUploaded() const { return !!(flags & Uploaded); }
+
+        void flagUploaded(bool yes);
+
+        bool isPrepared() const;
+
+        void coords(float *s, float *t) const;
+        void setCoords(float s, float t);
+
+        uint glName() const { return glTexName; }
+
+        void setGLName(uint glName);
+
+    private:
+        /// Superior Texture of which this is a derivative.
+        Texture &texture;
+
+        /// Source of this texture.
+        TexSource texSource;
+
+        Flags flags;
+
+        /// Name of the associated GL texture object.
+        uint glTexName;
+
+        /// Prepared coordinates for the bottom right of the texture minus border.
+        float s, t;
+
+        /// Specification used to derive this variant.
+        texturevariantspecification_t *varSpec;
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
-
-public:
-    /**
-     * @param generalCase   Texture from which this variant is derived.
-     * @param spec          Specification used to derive this variant.
-     *                      Ownership is NOT given to the resultant TextureVariant
-     * @param source        Source of this variant.
-     */
-    TextureVariant(Texture &generalCase, texturevariantspecification_t &spec,
-                   TexSource source = TEXS_NONE);
-
-    /// @return  Superior Texture of which this is a derivative.
-    Texture &generalCase() const { return texture; }
-
-    /// @return  Source of this variant.
-    TexSource source() const { return texSource; }
-
-    /**
-     * Change the source of this variant.
-     * @param newSource  New TextureSource.
-     */
-    void setSource(TexSource newSource);
-
-    /// @return  TextureVariantSpecification used to derive this variant.
-    texturevariantspecification_t *spec() const { return varSpec; }
-
-    bool isMasked() const { return !!(flags & Masked); }
-
-    void flagMasked(bool yes);
-
-    bool isUploaded() const { return !!(flags & Uploaded); }
-
-    void flagUploaded(bool yes);
-
-    bool isPrepared() const;
-
-    void coords(float *s, float *t) const;
-    void setCoords(float s, float t);
-
-    uint glName() const { return glTexName; }
-
-    void setGLName(uint glName);
-
-private:
-    /// Superior Texture of which this is a derivative.
-    Texture &texture;
-
-    /// Source of this texture.
-    TexSource texSource;
-
-    Flags flags;
-
-    /// Name of the associated GL texture object.
-    uint glTexName;
-
-    /// Prepared coordinates for the bottom right of the texture minus border.
-    float s, t;
-
-    /// Specification used to derive this variant.
-    texturevariantspecification_t *varSpec;
-};
 
 } // namespace de
 
-extern "C" {
-#endif
+#endif // __cplusplus
 
-/**
- * C wrapper API:
- */
-struct texture_s;
-
-struct texturevariant_s; // The texturevariant instance (opaque).
-typedef struct texturevariant_s TextureVariant;
-
-TextureVariant *TextureVariant_New(struct texture_s *generalCase, texturevariantspecification_t *spec, TexSource source);
-void TextureVariant_Delete(TextureVariant *tex);
-
-struct texture_s *TextureVariant_GeneralCase(TextureVariant const *tex);
-
-TexSource TextureVariant_Source(TextureVariant const *tex);
-void TextureVariant_SetSource(TextureVariant *tex, TexSource source);
-
-texturevariantspecification_t *TextureVariant_Spec(TextureVariant const *tex);
-
-boolean TextureVariant_IsMasked(TextureVariant const *tex);
-void TextureVariant_FlagMasked(TextureVariant *tex, boolean yes);
-
-boolean TextureVariant_IsUploaded(TextureVariant const *tex);
-void TextureVariant_FlagUploaded(TextureVariant *tex, boolean yes);
-
-boolean TextureVariant_IsPrepared(TextureVariant const *tex);
-
-void TextureVariant_Coords(TextureVariant const *tex, float *s, float *t);
-void TextureVariant_SetCoords(TextureVariant *tex, float s, float t);
-
-uint TextureVariant_GLName(TextureVariant const *tex);
-void TextureVariant_SetGLName(TextureVariant *tex, uint glName);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+struct texturevariant_s; // The texture variant instance (opaque).
 
 #endif /* LIBDENG_RESOURCE_TEXTUREVARIANT_H */

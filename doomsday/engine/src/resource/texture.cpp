@@ -270,7 +270,7 @@ uint Texture_VariantCount(Texture const *tex)
     return self->variantCount();
 }
 
-TextureVariant *Texture_AddVariant(Texture *tex, TextureVariant *variant)
+struct texturevariant_s *Texture_AddVariant(Texture *tex, struct texturevariant_s *variant)
 {
     SELF(tex);
     if(!variant)
@@ -320,7 +320,7 @@ void Texture_SetHeight(Texture *tex, int newHeight)
 }
 
 int Texture_IterateVariants(Texture *tex,
-    int (*callback)(TextureVariant *variant, void *parameters), void *parameters)
+    int (*callback)(struct texturevariant_s *variant, void *parameters), void *parameters)
 {
     SELF(tex);
     int result = 0;
@@ -329,7 +329,7 @@ int Texture_IterateVariants(Texture *tex,
         DENG2_FOR_EACH_CONST(de::Texture::Variants, i, self->variantList())
         {
             de::TextureVariant *variant = const_cast<de::TextureVariant *>(*i);
-            result = callback(reinterpret_cast<TextureVariant *>(variant), parameters);
+            result = callback(reinterpret_cast<texturevariant_s *>(variant), parameters);
             if(result) break;
         }
     }

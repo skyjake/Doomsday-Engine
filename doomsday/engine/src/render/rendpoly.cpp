@@ -329,10 +329,10 @@ void Rtu_Init(rtexmapunit_t* rtu)
     rtu->offset[0] = rtu->offset[1] = 0;
 }
 
-boolean Rtu_HasTexture(rtexmapunit_t const* rtu)
+boolean Rtu_HasTexture(rtexmapunit_t const *rtu)
 {
     if(rtu->texture.flags & TUF_TEXTURE_IS_MANAGED)
-        return TextureVariant_GLName(rtu->texture.variant) != 0;
+        return reinterpret_cast<de::TextureVariant *>(rtu->texture.variant)->glName() != 0;
     return rtu->texture.gl.name != 0;
 }
 
