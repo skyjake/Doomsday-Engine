@@ -816,11 +816,6 @@ void R_SetupFogDefaults()
     Con_Execute(CMDS_DDAY,"fog off", true, false);
 }
 
-/**
- * Returns pointers to the line's vertices in such a fashion that verts[0]
- * is the leftmost vertex and verts[1] is the rightmost vertex, when the
- * line lies at the edge of `sector.'
- */
 void R_OrderVertices(LineDef const *line, Sector const *sector, Vertex *verts[2])
 {
     byte edge = (sector == line->L_frontsector? 0:1);

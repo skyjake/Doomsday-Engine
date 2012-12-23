@@ -90,7 +90,12 @@ void R_UpdatePlanes(void);
 void R_ClearSectorFlags(void);
 void R_MapInitSurfaceLists(void);
 
-void R_OrderVertices(const LineDef* line, const Sector* sector, Vertex* verts[2]);
+/**
+ * Returns pointers to the line's vertices in such a fashion that @c verts[0]
+ * is the leftmost vertex and @c verts[1] is the rightmost vertex, when the
+ * @a line lies at the edge of @a sector.
+ */
+void R_OrderVertices(LineDef const *line, Sector const *sector, Vertex *verts[2]);
 
 /**
  * Determine the map space Z coordinates of a wall section.
