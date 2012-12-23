@@ -965,7 +965,9 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
             break;
 
         case SS_BOTTOM: {
-            const boolean raiseToBackFloor = (Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) && fceil->visHeight < bceil->visHeight);
+            const boolean raiseToBackFloor = (Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) &&
+                                              fceil->visHeight < bceil->visHeight &&
+                                              bfloor->visHeight > fceil->visHeight);
             coord_t t = bfloor->visHeight;
 
             *low = ffloor->visHeight;
