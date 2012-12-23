@@ -207,6 +207,8 @@ static void loadFontIfNeeded(const char* uri, fontid_t* fid)
 
 void R_LoadSystemFonts(void)
 {
+#ifdef __CLIENT__
+
     if(!Fonts_IsInitialized() || isDedicated) return;
 
     loadFontIfNeeded(R_ChooseFixedFont(), &fontFixed);
@@ -215,6 +217,8 @@ void R_LoadSystemFonts(void)
     loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT,  Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_LIGHT]);
 
     Con_SetFont(fontFixed);
+
+#endif
 }
 
 /// @note Part of the Doomsday public API.

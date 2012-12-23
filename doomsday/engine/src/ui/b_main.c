@@ -190,7 +190,9 @@ void B_Register(void)
  */
 static int globalContextFallback(const ddevent_t* ddev)
 {
+#ifdef __CLIENT__
     if(UI_Responder(ddev)) return true;     // Eaten.
+#endif
     if(Con_Responder(ddev)) return true;    // Eaten.
 
     if(DD_GameLoaded())

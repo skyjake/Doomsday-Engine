@@ -410,7 +410,7 @@ SOURCES += \
     $$SRC/src/map/plane.c \
     $$SRC/src/map/polyobj.c \
     $$SRC/src/map/propertyvalue.cpp \
-    $$SRC/src/map/r_world.c \
+    $$SRC/src/map/r_world.cpp \
     $$SRC/src/map/sector.c \
     $$SRC/src/map/sidedef.c \
     $$SRC/src/map/surface.c \
@@ -427,7 +427,7 @@ SOURCES += \
     $$SRC/src/r_util.c \
     $$SRC/src/render/r_main.c \
     $$SRC/src/render/r_things.cpp \
-    $$SRC/src/render/rend_main.c \
+    $$SRC/src/render/rend_main.cpp \
     $$SRC/src/resource/animgroups.cpp \
     $$SRC/src/resource/colorpalette.c \
     $$SRC/src/resource/colorpalettes.cpp \

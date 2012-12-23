@@ -60,11 +60,6 @@ void Rend_DrawBBox(coord_t const pos[3], coord_t w, coord_t l, coord_t h, float 
 
 void Rend_DrawArrow(coord_t const pos[3], float a, float s, float const color3f[3], float alpha);
 
-static void Rend_RenderBoundingBoxes();
-static DGLuint constructBBox(DGLuint name, float br);
-static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf *leaf, boolean antiClockwise,
-    coord_t height, rvertex_t **verts, uint *vertsSize);
-
 boolean usingFog = false; // Is the fog in use?
 float fogColor[4];
 float fieldOfView = 95.0f;
@@ -131,8 +126,15 @@ byte devSoundOrigins = 0; ///< cvar @c 1= Draw sound origin debug display.
 byte devSurfaceVectors = 0;
 byte devNoTexFix = 0;
 
+#ifdef __CLIENT__
+static void Rend_RenderBoundingBoxes();
+static DGLuint constructBBox(DGLuint name, float br);
+static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf *leaf, boolean antiClockwise,
+                                           coord_t height, rvertex_t **verts, uint *vertsSize);
+
 static BspLeaf *currentBspLeaf; // BSP leaf currently being drawn.
 static boolean firstBspLeaf; // No range checking for the first one.
+#endif // __CLIENT__
 
 void Rend_Register()
 {
@@ -477,13 +479,6 @@ static inline materialvariantspecification_t const *mapSurfaceMaterialSpec(int w
 }
 
 #ifdef __CLIENT__
-
-int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
-{
-    const dynlight_t** ptr = (const dynlight_t**)paramaters;
-    *ptr = dyn;
-    return 1; // Stop iteration.
-}
 
 /**
  * This doesn't create a rendering primitive but a vissprite! The vissprite

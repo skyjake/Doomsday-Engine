@@ -1459,6 +1459,7 @@ boolean R_IsGlowingPlane(Plane const *pln)
     }
     return Surface_IsSkyMasked(&pln->surface);
 #else
+    DENG_UNUSED(pln);
     return false;
 #endif
 }
@@ -1478,6 +1479,8 @@ float R_GlowStrength(Plane const *pln)
             return ms.glowStrength();
         }
     }
+#else
+    DENG_UNUSED(pln);
 #endif
     return 0;
 }

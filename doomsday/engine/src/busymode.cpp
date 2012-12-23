@@ -241,9 +241,6 @@ static void preBusySetup(int initialMode)
     {
         Con_TransitionConfigure();
     }
-#else
-    DENG_UNUSED(initialMode);
-#endif
 
     busyWasIgnoringInput = DD_IgnoreInput(true);
 
@@ -258,10 +255,15 @@ static void preBusySetup(int initialMode)
     BusyVisual_LoadTextures();
 
     Window_SetDrawFunc(Window_Main(), 0);
+
+#else
+    DENG_UNUSED(initialMode);
+#endif
 }
 
 static void postBusyCleanup(void)
 {
+#ifdef __CLIENT__
     // Discard input events so that any and all accumulated input events are ignored.
     DD_IgnoreInput(busyWasIgnoringInput);
     DD_ResetTimer();
@@ -273,6 +275,7 @@ static void postBusyCleanup(void)
 
     // Resume drawing with the game loop drawer.
     Window_SetDrawFunc(Window_Main(), !Sys_IsShuttingDown()? DD_GameLoopDrawer : 0);
+#endif
 }
 
 /**

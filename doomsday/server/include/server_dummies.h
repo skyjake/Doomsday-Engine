@@ -1,6 +1,11 @@
 /** @file server_dummies.h Dummy functions for the server.
  * @ingroup server
  *
+ * Empty dummy functions that replace certain client-only functionality on
+ * engine-side. Ideally none of these would be needed; each one represents a
+ * client-only function call that should not be done in common/shared code.
+ * (There should be no shared code outside libdeng1/2.)
+ *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -22,10 +27,17 @@
 
 #include <de/libdeng.h>
 #include "map/sector.h"
+#include "dd_gl.h"
 
 #ifndef __SERVER__
 #  error Attempted to include server's header in a non-server build
 #endif
+
+DENG_EXTERN_C void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable);
+DENG_EXTERN_C boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo);
+DENG_EXTERN_C struct mobj_s* ClMobj_Find(thid_t id);
+DENG_EXTERN_C boolean ClMobj_IsValid(struct mobj_s* mo);
+DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum);
 
 DENG_EXTERN_C void Con_TransitionRegister();
 DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);
@@ -36,9 +48,13 @@ DENG_EXTERN_C void GL_PruneTextureVariantSpecifications();
 DENG_EXTERN_C void GL_SetFilter(int f);
 
 DENG_EXTERN_C void R_InitViewWindow(void);
+DENG_EXTERN_C void R_InitSvgs(void);
+DENG_EXTERN_C void R_ShutdownSvgs(void);
 
 DENG_EXTERN_C void FR_Init(void);
+DENG_EXTERN_C void Fonts_Init(void);
 
+DENG_EXTERN_C void Rend_Init(void);
 DENG_EXTERN_C void Rend_DecorInit();
 DENG_EXTERN_C void Rend_ConsoleInit();
 DENG_EXTERN_C void Rend_ConsoleResize(int force);
