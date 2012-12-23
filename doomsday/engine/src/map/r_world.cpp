@@ -832,8 +832,8 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
     Sector *frontSec, Sector *backSec, SideDef *frontDef, SideDef *backDef,
     coord_t *low, coord_t *hi, float matOffset[2])
 {
-    boolean const unpegBottom = !!(lineFlags & DDLF_DONTPEGBOTTOM);
-    boolean const unpegTop    = !!(lineFlags & DDLF_DONTPEGTOP);
+    bool const unpegBottom = !!(lineFlags & DDLF_DONTPEGBOTTOM);
+    bool const unpegTop    = !!(lineFlags & DDLF_DONTPEGTOP);
 
     // Single sided?
     if(!frontSec || !backSec || !backDef/*front side of a "window"*/)
@@ -843,7 +843,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
 
         if(matOffset)
         {
-            Surface* suf = &frontDef->SW_middlesurface;
+            Surface *suf = &frontDef->SW_middlesurface;
             matOffset[0] = suf->visOffset[0];
             matOffset[1] = suf->visOffset[1];
             if(unpegBottom)
@@ -884,7 +884,9 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
             break;
 
         case SS_BOTTOM: {
-            boolean const raiseToBackFloor = (Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) && fceil->visHeight < bceil->visHeight);
+            bool const raiseToBackFloor = (Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) &&
+                                           fceil->visHeight < bceil->visHeight &&
+                                           bfloor->visHeight > fceil->visHeight);
             coord_t t = bfloor->visHeight;
 
             *low = ffloor->visHeight;
