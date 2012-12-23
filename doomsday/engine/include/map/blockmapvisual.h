@@ -23,12 +23,14 @@
 #ifndef LIBDENG_MAP_BLOCKMAP_VISUAL_H
 #define LIBDENG_MAP_BLOCKMAP_VISUAL_H
 
-byte bmapShowDebug; ///< cvar
-float bmapDebugSize; ///< cvar
+#include <de/libdeng.h>
+
+DENG_EXTERN_C byte bmapShowDebug; ///< cvar
+DENG_EXTERN_C float bmapDebugSize; ///< cvar
 
 /**
  * Render the Blockmap debugging visual.
  */
-void Rend_BlockmapDebug(void);
+DENG_EXTERN_C void Rend_BlockmapDebug(void);
 
 #endif /// LIBDENG_MAP_BLOCKMAP_VISUAL_H
