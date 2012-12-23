@@ -32,9 +32,10 @@
 
 #include <de/vector1.h>
 
+#include "resource/materialsnapshot.h"
+#include "resource/materialvariant.h"
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
-#include "resource/materialvariant.h"
 
 #include "render/sky.h"
 
@@ -201,30 +202,26 @@ static void calculateSkyAmbientColor()
     avgCount = 0;
     for(i = 0, slayer = &skyLayers[firstSkyLayer]; i < MAX_SKY_LAYERS; ++i, slayer++)
     {
-        materialvariantspecification_t const *spec;
-        materialsnapshot_t const *ms;
-
         if(!(slayer->flags & SLF_ACTIVE) || !slayer->material) continue;
 
-        spec = Sky_SphereMaterialSpec(!!(slayer->flags & SLF_MASKED));
-        ms = Materials_Prepare(slayer->material, spec, false);
+        materialvariantspecification_t const *spec = Sky_SphereMaterialSpec(!!(slayer->flags & SLF_MASKED));
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(slayer->material, spec, false));
 
-        if(MSU_texture(ms, MTU_PRIMARY))
+        if(ms.hasTexture(MTU_PRIMARY))
         {
-            averagecolor_analysis_t const *avgColor = (averagecolor_analysis_t const *)
-                Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_COLOR);
-            if(!avgColor) throw de::Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no TA_COLOR analysis").arg(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText()));
+            de::Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
+            averagecolor_analysis_t const *avgColor = (averagecolor_analysis_t const *) tex.analysisDataPointer(TA_COLOR);
+            if(!avgColor) throw de::Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no TA_COLOR analysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
             if(i == firstSkyLayer)
             {
-                Texture const *tex = MSU_texture(ms, MTU_PRIMARY);
-                averagecolor_analysis_t const *avgLineColor = (averagecolor_analysis_t const *) Texture_AnalysisDataPointer(tex, TA_LINE_TOP_COLOR);
-                if(!avgLineColor) throw de::Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no TA_LINE_TOP_COLOR analysis").arg(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText()));
+                averagecolor_analysis_t const *avgLineColor = (averagecolor_analysis_t const *) tex.analysisDataPointer(TA_LINE_TOP_COLOR);
+                if(!avgLineColor) throw de::Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no TA_LINE_TOP_COLOR analysis").arg(tex.manifest().composeUri()));
 
                 V3f_Copy(topCapColor.rgb, avgLineColor->color.rgb);
 
-                avgLineColor = (averagecolor_analysis_t const *) Texture_AnalysisDataPointer(tex, TA_LINE_BOTTOM_COLOR);
-                if(!avgLineColor) throw de::Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no TA_LINE_BOTTOM_COLOR analysis").arg(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText()));
+                avgLineColor = (averagecolor_analysis_t const *) tex.analysisDataPointer(TA_LINE_BOTTOM_COLOR);
+                if(!avgLineColor) throw de::Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no TA_LINE_BOTTOM_COLOR analysis").arg(tex.manifest().composeUri()));
 
                 V3f_Copy(bottomCapColor.rgb, avgLineColor->color.rgb);
             }
@@ -801,14 +798,14 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         DENG_ASSERT(mat);
 
         materialvariantspecification_t const *spec = Sky_SphereMaterialSpec(Sky_LayerMasked(layer));
-        materialsnapshot_t const *ms = Materials_Prepare(mat, spec, true);
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
 
-        rs.texSize.width  = Texture_Width(MSU_texture(ms, MTU_PRIMARY));
-        rs.texSize.height = Texture_Height(MSU_texture(ms, MTU_PRIMARY));
+        rs.texSize.width  = ms.texture(MTU_PRIMARY).generalCase().width();
+        rs.texSize.height = ms.texture(MTU_PRIMARY).generalCase().height();
         if(rs.texSize.width && rs.texSize.height)
         {
             rs.texOffset = Sky_LayerOffset(layer);
-            GL_BindTexture(MST(ms, MTU_PRIMARY));
+            GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         }
         else
         {
@@ -820,10 +817,9 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         if(setupCap != HC_NONE)
         {
             averagecolor_analysis_t const *avgLineColor = (averagecolor_analysis_t const *)
-                    Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY),
-                                                (setupCap == HC_TOP? TA_LINE_TOP_COLOR : TA_LINE_BOTTOM_COLOR));
+                    ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer((setupCap == HC_TOP? TA_LINE_TOP_COLOR : TA_LINE_BOTTOM_COLOR));
             float const fadeoutLimit = Sky_LayerFadeoutLimit(layer);
-            if(!avgLineColor) throw de::Error("configureRenderHemisphereStateForLayer", QString("Texture \"%1\" has no %2 analysis").arg(reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText()).arg(setupCap == HC_TOP? "TA_LINE_TOP_COLOR" : "TA_LINE_BOTTOM_COLOR"));
+            if(!avgLineColor) throw de::Error("configureRenderHemisphereStateForLayer", QString("Texture \"%1\" has no %2 analysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()).arg(setupCap == HC_TOP? "TA_LINE_TOP_COLOR" : "TA_LINE_BOTTOM_COLOR"));
 
             V3f_Copy(rs.capColor.rgb, avgLineColor->color.rgb);
             // Is the colored fadeout in use?

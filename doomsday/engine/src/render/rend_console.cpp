@@ -1,32 +1,25 @@
-/**\file rend_console.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file rend_console.cpp Console Rendering.
  *
- *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * Console rendering.
- */
-
-#include <math.h>
+#include <cmath>
+#include <cstring>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -35,6 +28,7 @@
 #include "de_resource.h"
 #include "de_ui.h"
 
+#include "resource/materialsnapshot.h"
 #include "cbuffer.h"
 
 // Console (display) Modes:
@@ -45,14 +39,14 @@ typedef enum {
     CM_CUSTOM      // Some other offset positioned by the user.
 } consolemode_t;
 
-void Rend_ConsoleUpdateBackground(void);
+void Rend_ConsoleUpdateBackground();
 
 float ConsoleOpenY; // Where the console bottom is when open.
 float consoleMoveSpeed = .5f; // Speed of console opening/closing.
 
 float consoleBackgroundAlpha = .75f;
 float consoleBackgroundLight = .14f;
-Uri* consoleBackgroundMaterialUri = NULL;
+Uri *consoleBackgroundMaterialUri;
 int consoleBackgroundTurn = 0; // The rotation variable.
 float consoleBackgroundZoom = 1.0f;
 
@@ -68,34 +62,33 @@ static float ConsoleDestY; // Where the console bottom should be?
 static float ConsoleBlink; // Cursor blink timer (35 Hz tics).
 static boolean openingOrClosing;
 static float consoleAlpha, consoleAlphaTarget;
-static material_t* consoleBackgroundMaterial;
+static material_t *consoleBackgroundMaterial;
 
 static float fontSy; // Font size Y.
 static float funnyAng;
 
-static const float CcolYellow[3] = { 1, .85f, .3f };
-static const char* consoleTitle = DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT;
+static float const CcolYellow[3] = { 1, .85f, .3f };
+static char const *consoleTitle = DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT;
 
 static char secondaryTitleText[256];
 static char statusText[256];
 
-void Rend_ConsoleRegister(void)
+void Rend_ConsoleRegister()
 {
-    C_VAR_FLOAT("con-background-alpha", &consoleBackgroundAlpha, 0, 0, 1);
-    C_VAR_FLOAT("con-background-light", &consoleBackgroundLight, 0, 0, 1);
-    C_VAR_URIPTR2("con-background-material", &consoleBackgroundMaterialUri,
-        0, 0, 0, Rend_ConsoleUpdateBackground);
-    C_VAR_INT("con-background-turn", &consoleBackgroundTurn, CVF_NO_MIN|CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("con-background-zoom", &consoleBackgroundZoom, 0, 0.1f, 100.0f);
-    C_VAR_BYTE("con-fps", &consoleShowFPS, 0, 0, 1);
-    C_VAR_FLOAT("con-move-speed", &consoleMoveSpeed, 0, 0, 1);
-    C_VAR_BYTE("con-text-shadow", &consoleTextShadow, 0, 0, 1);
+    C_VAR_FLOAT  ("con-background-alpha",       &consoleBackgroundAlpha,    0, 0, 1);
+    C_VAR_FLOAT  ("con-background-light",       &consoleBackgroundLight,    0, 0, 1);
+    C_VAR_URIPTR2("con-background-material",    &consoleBackgroundMaterialUri, 0, 0, 0, Rend_ConsoleUpdateBackground);
+    C_VAR_INT    ("con-background-turn",        &consoleBackgroundTurn,     CVF_NO_MIN|CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT  ("con-background-zoom",        &consoleBackgroundZoom,     0, 0.1f, 100.0f);
+    C_VAR_BYTE   ("con-fps",                    &consoleShowFPS,            0, 0, 1);
+    C_VAR_FLOAT  ("con-move-speed",             &consoleMoveSpeed,          0, 0, 1);
+    C_VAR_BYTE   ("con-text-shadow",            &consoleTextShadow,         0, 0, 1);
 }
 
-static float calcConsoleTitleBarHeight(void)
+static float calcConsoleTitleBarHeight()
 {
     int oldFont, border = Window_Width(theWindow) / 120, height;
-    assert(inited);
+    DENG_ASSERT(inited);
 
     oldFont = FR_Font();
     FR_SetFont(fontVariable[FS_BOLD]);
@@ -104,16 +97,17 @@ static float calcConsoleTitleBarHeight(void)
     return height;
 }
 
-static __inline int calcConsoleMinHeight(void)
+static inline int calcConsoleMinHeight()
 {
-    assert(inited);
+    DENG_ASSERT(inited);
     return fontSy * 1.5f + calcConsoleTitleBarHeight() / Window_Height(theWindow) * SCREENHEIGHT;
 }
 
-void Rend_ConsoleInit(void)
+void Rend_ConsoleInit()
 {
     if(!inited)
-    {   // First init.
+    {
+        // First init.
         consoleMode = CM_HALFSCREEN;
         ConsoleY = 0;
         ConsoleOpenY = SCREENHEIGHT/2;
@@ -124,8 +118,8 @@ void Rend_ConsoleInit(void)
         consoleAlphaTarget = 0;
         funnyAng = 0;
         ConsoleBlink = 0;
-        memset(secondaryTitleText, 0, sizeof(secondaryTitleText));
-        memset(statusText, 0, sizeof(statusText));
+        std::memset(secondaryTitleText, 0, sizeof(secondaryTitleText));
+        std::memset(statusText, 0, sizeof(statusText));
     }
 
     consoleBackgroundMaterial = 0;
@@ -180,7 +174,7 @@ boolean Rend_ConsoleResize(boolean force)
     return needResize;
 }
 
-void Rend_ConsoleCursorResetBlink(void)
+void Rend_ConsoleCursorResetBlink()
 {
     if(!inited) return;
     ConsoleBlink = 0;
@@ -189,11 +183,11 @@ void Rend_ConsoleCursorResetBlink(void)
 // Calculate the average of the given color flags.
 static void calcAvgColor(int fl, float rgb[3])
 {
-    int count = 0;
-    assert(inited && rgb);
+    DENG_ASSERT(inited && rgb);
 
     rgb[CR] = rgb[CG] = rgb[CB] = 0;
 
+    int count = 0;
     if(fl & CBLF_BLACK)
     {
         ++count;
@@ -256,15 +250,13 @@ static void calcAvgColor(int fl, float rgb[3])
 
 static void drawRuler(int x, int y, int lineWidth, int lineHeight, float alpha)
 {
-    int xoff = 3, yoff = lineHeight / 4, rh = MIN_OF(5, lineHeight / 2);
-    Point2Raw origin;
-    Size2Raw size;
-    assert(inited);
+    DENG_ASSERT(inited);
 
-    origin.x = x + xoff;
-    origin.y = y + yoff + (lineHeight - rh) / 2;
-    size.width  = lineWidth - 2 * xoff;
-    size.height = rh;
+    int xoff = 3;
+    int yoff = lineHeight / 4;
+    int rh = MIN_OF(5, lineHeight / 2);
+    Point2Raw origin(x + xoff, y + yoff + (lineHeight - rh) / 2);
+    Size2Raw size(lineWidth - 2 * xoff, rh);
 
     UI_GradientEx(&origin, &size,  rh / 3, UI_Color(UIC_SHADOW), UI_Color(UIC_BG_DARK), alpha / 2, alpha);
     UI_DrawRectEx(&origin, &size, -rh / 3, false, UI_Color(UIC_BRD_HI), 0, 0, alpha / 3);
@@ -274,42 +266,44 @@ static void drawRuler(int x, int y, int lineWidth, int lineHeight, float alpha)
  * Initializes the Doomsday console user interface. This is called when
  * engine startup is complete.
  */
-void Rend_ConsoleUpdateTitle(void)
+void Rend_ConsoleUpdateTitle()
 {
     if(isDedicated || !inited) return;
 
     // Update the secondary title and the game status.
     if(DD_GameLoaded())
     {
-        dd_snprintf(secondaryTitleText, sizeof(secondaryTitleText)-1, "%s", (char*) gx.GetVariable(DD_PLUGIN_NICENAME));
+        dd_snprintf(secondaryTitleText, sizeof(secondaryTitleText)-1, "%s", (char *) gx.GetVariable(DD_PLUGIN_NICENAME));
         strncpy(statusText, Str_Text(Game_Title(App_CurrentGame())), sizeof(statusText) - 1);
         return;
     }
 
     // No game currently loaded.
-    memset(secondaryTitleText, 0, sizeof(secondaryTitleText));
-    memset(statusText, 0, sizeof(statusText));
+    std::memset(secondaryTitleText, 0, sizeof(secondaryTitleText));
+    std::memset(statusText, 0, sizeof(statusText));
 }
 
-void Rend_ConsoleUpdateBackground(void)
+void Rend_ConsoleUpdateBackground()
 {
-    assert(inited);
+    DENG_ASSERT(inited);
     if(!consoleBackgroundMaterialUri || Str_IsEmpty(Uri_Path(consoleBackgroundMaterialUri))) return;
     consoleBackgroundMaterial = Materials_ToMaterial(Materials_ResolveUri(consoleBackgroundMaterialUri));
 }
 
-void Rend_ConsoleToggleFullscreen(void)
+void Rend_ConsoleToggleFullscreen()
 {
-    float y;
-
     if(isDedicated || !inited) return;
     if(needResize)
     {
-        /// \todo enqueue toggle (don't resize here, do it in the ticker).
+        /// @todo enqueue toggle (don't resize here, do it in the ticker).
         return;
     }
 
-    if(++consoleMode > CM_SINGLELINE) consoleMode = CM_HALFSCREEN;
+    // Cycle to the next mode.
+    consoleMode = consolemode_t(int(consoleMode) + 1);
+    if(consoleMode > CM_SINGLELINE) consoleMode = CM_HALFSCREEN;
+
+    float y;
     switch(consoleMode)
     {
     case CM_HALFSCREEN: default: y = SCREENHEIGHT/2; break;
@@ -381,11 +375,9 @@ void Rend_ConsoleMove(int numLines)
 
 void Rend_ConsoleTicker(timespan_t time)
 {
-    float step;
-
     if(isDedicated || !inited) return;
 
-    step = time * 35;
+    float step = time * 35;
 
     // Move the console alpha to the target.
     if(consoleAlphaTarget > consoleAlpha)
@@ -443,12 +435,9 @@ void Rend_ConsoleTicker(timespan_t time)
     ConsoleBlink += step; // Cursor blink timer (0 = visible).
 }
 
-void Rend_ConsoleFPS(const Point2Raw* origin)
+void Rend_ConsoleFPS(Point2Raw const *origin)
 {
-    Point2Raw topLeft, labelOrigin;
-    char buf[160];
-    Size2Raw size;
-    assert(origin);
+    DENG_ASSERT(origin);
 
     if(isDedicated || !inited) return;
     if(!consoleShowFPS) return;
@@ -456,27 +445,26 @@ void Rend_ConsoleFPS(const Point2Raw* origin)
     // Try to fulfill any pending resize.
     if(Rend_ConsoleResize(false/*no force*/)) return; // No FPS counter for you...
 
-    sprintf(buf, "%.1f FPS", DD_GetFrameRate());
+    char buf[160];
+    dd_snprintf(buf, 160, "%.1f FPS", DD_GetFrameRate());
     FR_SetFont(fontFixed);
     FR_PushAttrib();
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    size.width  = FR_TextWidth(buf) + 16;
-    size.height = FR_SingleLineHeight(buf)  + 16;
+
+    Size2Raw size(FR_TextWidth(buf) + 16, FR_SingleLineHeight(buf)  + 16);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glEnable(GL_TEXTURE_2D);
 
-    topLeft.x = origin->x - size.width;
-    topLeft.y = origin->y;
+    Point2Raw topLeft(origin->x - size.width, origin->y);
     UI_GradientEx(&topLeft, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .8f);
     UI_DrawRectEx(&topLeft, &size, 6, false, UI_Color(UIC_BRD_HI), UI_Color(UIC_BG_MEDIUM), .2f, -1);
 
-    labelOrigin.x = origin->x - 8;
-    labelOrigin.y = origin->y + size.height / 2;
+    Point2Raw labelOrigin(origin->x - 8, origin->y + size.height / 2);
     UI_SetColor(UI_Color(UIC_TEXT));
     UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TITLE), 1, ALIGN_RIGHT, DTF_ONLY_SHADOW);
 
@@ -487,15 +475,12 @@ void Rend_ConsoleFPS(const Point2Raw* origin)
 
 static void drawConsoleTitleBar(float alpha)
 {
-    int border, barHeight;
-    Point2Raw origin;
-    Size2Raw size;
-    assert(inited);
+    DENG_ASSERT(inited);
 
     if(alpha < .0001f) return;
 
-    border = Window_Width(theWindow) / 120;
-    barHeight = calcConsoleTitleBarHeight();
+    int border = Window_Width(theWindow) / 120;
+    int barHeight = calcConsoleTitleBarHeight();
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -504,10 +489,8 @@ static void drawConsoleTitleBar(float alpha)
     glPushMatrix();
     glEnable(GL_TEXTURE_2D);
 
-    origin.x = 0;
-    origin.y = 0;
-    size.width  = Window_Width(theWindow);
-    size.height = barHeight;
+    Point2Raw origin(0, 0);
+    Size2Raw size(Window_Width(theWindow), barHeight);
     UI_Gradient(&origin, &size, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .95f * alpha, alpha);
 
     origin.x = 0;
@@ -554,21 +537,22 @@ static void drawConsoleTitleBar(float alpha)
     glPopMatrix();
 }
 
-static void drawConsoleBackground(const Point2Raw* origin, const Size2Raw* size, float closeFade)
+static void drawConsoleBackground(Point2Raw const *origin, Size2Raw const *size, float closeFade)
 {
+    DENG_ASSERT(inited);
+
     int bgX = 0, bgY = 0;
-    assert(inited);
 
     if(consoleBackgroundMaterial)
     {
-        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        const materialsnapshot_t* ms = Materials_Prepare(consoleBackgroundMaterial, spec, Con_IsActive());
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(consoleBackgroundMaterial, spec, Con_IsActive()));
 
-        GL_BindTexture(MST(ms, MTU_PRIMARY));
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 
-        bgX = (int) (ms->size.width  * consoleBackgroundZoom);
-        bgY = (int) (ms->size.height * consoleBackgroundZoom);
+        bgX = int(ms.dimensions().width()  * consoleBackgroundZoom);
+        bgY = int(ms.dimensions().height() * consoleBackgroundZoom);
 
         glEnable(GL_TEXTURE_2D);
         if(consoleBackgroundTurn != 0)
@@ -598,30 +582,32 @@ static void drawConsoleBackground(const Point2Raw* origin, const Size2Raw* size,
 /**
  * Draw a 'side' text in the console. This is intended for extra
  * information about the current game mode.
- *
- * \note Currently unused.
  */
-static void drawSideText(const char* text, int line, float alpha)
+#if 0
+static void drawSideText(char const *text, int line, float alpha)
 {
-    float gtosMulY = Window_Height(theWindow) / 200.0f, fontScaledY, y, scale[2];
-    char buf[300];
-    int ssw;
-    assert(inited);
+    DENG_ASSERT(inited);
+
+    float const gtosMulY = Window_Height(theWindow) / 200.0f;
 
     FR_SetFont(Con_Font());
     FR_PushAttrib();
     FR_LoadDefaultAttrib();
+
+    float scale[2];
     Con_FontScale(&scale[0], &scale[1]);
-    fontScaledY = FR_SingleLineHeight("Con") * scale[1];
-    y = ConsoleY * gtosMulY - fontScaledY * (1 + line);
+
+    float fontScaledY = FR_SingleLineHeight("Con") * scale[1];
+    float y = ConsoleY * gtosMulY - fontScaledY * (1 + line);
 
     if(y > -fontScaledY)
     {
         con_textfilter_t printFilter = Con_PrintFilter();
 
         // Scaled screen width.
-        ssw = (int) (Window_Width(theWindow) / scale[0]);
+        int ssw = int(Window_Width(theWindow) / scale[0]);
 
+        char buf[300];
         if(printFilter)
         {
             strncpy(buf, text, sizeof(buf));
@@ -635,14 +621,14 @@ static void drawSideText(const char* text, int line, float alpha)
 
     FR_PopAttrib();
 }
+#endif
 
-static void escapeFormatting(ddstring_t* dest, const char* src, int maxSourceLen)
+static void escapeFormatting(ddstring_t *dest, char const *src, int maxSourceLen)
 {
-    int i = 0;
-
     if(!src) return;
+
     Str_Clear(dest);
-    for(; *src; ++src, ++i)
+    for(int i = 0; *src; ++src, ++i)
     {
         if(maxSourceLen && i == maxSourceLen) break;
         if(*src == '{')
@@ -653,10 +639,10 @@ static void escapeFormatting(ddstring_t* dest, const char* src, int maxSourceLen
     }
 }
 
-static void applyFilter(char* buff)
+static void applyFilter(char *buff)
 {
     con_textfilter_t printFilter = Con_PrintFilter();
-    ddstring_t* escaped = Str_New();
+    ddstring_t *escaped = Str_New();
 
     escapeFormatting(escaped, buff, 0);
     strcpy(buff, Str_Text(escaped));
@@ -669,29 +655,30 @@ static void applyFilter(char* buff)
 }
 
 /**
- * \note Slightly messy...
+ * @note Slightly messy...
  */
 static void drawConsole(float consoleAlpha)
 {
-#define XORIGIN             (0)
-#define YORIGIN             (0)
-#define PADDING             (2)
-#define LOCALBUFFSIZE       (CMDLINE_SIZE +1/*prompt length*/ +1/*terminator*/)
+    DENG_ASSERT(inited);
 
-    static const cbline_t** lines = 0;
+    int const XORIGIN = 0;
+    int const YORIGIN = 0;
+    int const PADDING = 2;
+    int const LOCALBUFFSIZE = (CMDLINE_SIZE +1/*prompt length*/ +1/*terminator*/);
+
+    static cbline_t const **lines = 0;
     static int bufferSize = 0;
 
-    CBuffer* buffer = Con_HistoryBuffer();
+    CBuffer *buffer = Con_HistoryBuffer();
     uint cmdCursor = Con_CommandLineCursorPosition();
-    char* cmdLine = Con_CommandLine();
+    char *cmdLine = Con_CommandLine();
     float scale[2], y, fontScaledY, gtosMulY = Window_Height(theWindow) / 200.0f;
     char buff[LOCALBUFFSIZE];
-    font_t* cfont;
+    font_t *cfont;
     int lineHeight, textOffsetY;
     uint reqLines, maxLineLength;
     Point2Raw origin;
     Size2Raw size;
-    assert(inited);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -756,7 +743,7 @@ static void drawConsole(float consoleAlpha)
         // Need to enlarge the buffer?
         if(reqLines > (uint) bufferSize)
         {
-            lines = Z_Realloc((void*) lines, sizeof(cbline_t *) * (reqLines + 1), PU_APPSTATIC);
+            lines = (cbline_t const **) Z_Realloc((void *) lines, sizeof(cbline_t *) * (reqLines + 1), PU_APPSTATIC);
             bufferSize = reqLines;
         }
 
@@ -765,10 +752,9 @@ static void drawConsole(float consoleAlpha)
         {
             glEnable(GL_TEXTURE_2D);
 
-            { uint i;
-            for(i = count; i-- > 0;)
+            for(uint i = count; i-- > 0;)
             {
-                const cbline_t* line = lines[i];
+                cbline_t const *line = lines[i];
 
                 if(line->flags & CBLF_RULER)
                 {
@@ -783,7 +769,7 @@ static void drawConsole(float consoleAlpha)
                     short textFlags = DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0);
                     float xOffset;
 
-                    memset(buff, 0, sizeof(buff));
+                    std::memset(buff, 0, sizeof(buff));
                     strncpy(buff, line->text, LOCALBUFFSIZE-1);
 
                     if(line->flags & CBLF_CENTER)
@@ -812,14 +798,14 @@ static void drawConsole(float consoleAlpha)
 
                 // Move up.
                 y -= fontScaledY;
-            }}
+            }
 
             glDisable(GL_TEXTURE_2D);
         }
     }
 
     // The command line.
-    { boolean abbrevLeft = 0, abbrevRight = 0;
+    boolean abbrevLeft = 0, abbrevRight = 0;
     int offset = 0;
     uint cmdLineLength;
 
@@ -849,18 +835,16 @@ static void drawConsole(float consoleAlpha)
 
     // Apply filtering.
     /// @todo Clean this up; use a common applyFilter() function.
-    {
-        ddstring_t* escaped = Str_New();
-        escapeFormatting(escaped, cmdLine + offset, maxLineLength);
+    ddstring_t *escaped = Str_New();
+    escapeFormatting(escaped, cmdLine + offset, maxLineLength);
 
-        dd_snprintf(buff, LOCALBUFFSIZE - 1/*terminator*/, ">%s%s%s",
-                    abbrevLeft?  "{alpha=.5}[...]{alpha=1}" : "",
-                    Str_Text(escaped),
-                    abbrevRight? "{alpha=.5}[...]" : "");
+    dd_snprintf(buff, LOCALBUFFSIZE - 1/*terminator*/, ">%s%s%s",
+                abbrevLeft?  "{alpha=.5}[...]{alpha=1}" : "",
+                Str_Text(escaped),
+                abbrevRight? "{alpha=.5}[...]" : "");
 
-        Str_Delete(escaped);
-        if(Con_PrintFilter()) (Con_PrintFilter())(buff);
-    }
+    Str_Delete(escaped);
+    if(Con_PrintFilter()) (Con_PrintFilter())(buff);
 
     glEnable(GL_TEXTURE_2D);
     if(Font_Flags(cfont) & FF_COLORIZE)
@@ -883,7 +867,7 @@ static void drawConsole(float consoleAlpha)
         char temp[LOCALBUFFSIZE];
 
         // Where is the cursor?
-        memset(temp, 0, sizeof(temp));
+        std::memset(temp, 0, sizeof(temp));
         //strncpy(temp, cmdLine + offset, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ /*-1*//*vis clamp*/, cmdCursor-offset + (abbrevLeft? 24/*abbrev length*/:0) + 1));
         strcpy(temp, ">");
         if(abbrevLeft) strcat(temp, "[...]");
@@ -915,14 +899,9 @@ static void drawConsole(float consoleAlpha)
     // Restore the original matrices.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-    }
-#undef LOCALBUFFSIZE
-#undef PADDING
-#undef YORIGIN
-#undef XORIGIN
 }
 
-void Rend_Console(void)
+void Rend_Console()
 {
     boolean consoleShow;
 
@@ -948,9 +927,8 @@ void Rend_Console(void)
 
     if(consoleShowFPS && !UI_IsActive())
     {
-        Point2Raw origin;
-        origin.x = Window_Width(theWindow) - 10;
-        origin.y = 10 + (ConsoleY > 0? ROUND(consoleAlpha * calcConsoleTitleBarHeight()) : 0);
+        Point2Raw origin(Window_Width(theWindow) - 10,
+                         10 + (ConsoleY > 0? ROUND(consoleAlpha * calcConsoleTitleBarHeight()) : 0));
         Rend_ConsoleFPS(&origin);
     }
 

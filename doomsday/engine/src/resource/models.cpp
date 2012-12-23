@@ -43,6 +43,8 @@
 #include "def_main.h"
 #include "m_misc.h" // for M_CycleIntoRange()
 
+#include "resource/materialsnapshot.h"
+
 #include "render/r_things.h"
 #include "render/rend_model.h"
 #include "render/sprite.h"
@@ -501,12 +503,12 @@ static short defineSkinAndAddToModelIndex(model_t &mdl, Path const &skinPath)
 {
     int const newSkin = mdl.info.numSkins;
 
-    if(texture_s *tex = R_DefineTexture("ModelSkins", de::Uri(skinPath)))
+    if(Texture *tex = R_DefineTexture("ModelSkins", de::Uri(skinPath)))
     {
         // A duplicate? (return existing skin number)
         for(int i = 0; i < mdl.info.numSkins; ++i)
         {
-            if(mdl.skins[i].texture == tex) return i;
+            if(mdl.skins[i].texture == reinterpret_cast<texture_s *>(tex)) return i;
         }
 
         // Add this new skin.
@@ -516,7 +518,7 @@ static short defineSkinAndAddToModelIndex(model_t &mdl, Path const &skinPath)
 
         QByteArray pathUtf8 = skinPath.toString().toUtf8();
         qstrncpy(mdl.skins[newSkin].name, pathUtf8.constData(), 256);
-        mdl.skins[newSkin].texture = tex;
+        mdl.skins[newSkin].texture = reinterpret_cast<texture_s *>(tex);
     }
 
     return newSkin;
@@ -535,7 +537,7 @@ static void defineAllSkins(model_t &mdl)
         {
             de::Uri foundResourceUri(Path(findSkinPath(mdl.skins[i].name, modelFilePath)));
 
-            mdl.skins[i].texture = R_DefineTexture("ModelSkins", foundResourceUri);
+            mdl.skins[i].texture = reinterpret_cast<texture_s *>(R_DefineTexture("ModelSkins", foundResourceUri));
 
             // We have found one more skin for this model.
             numFoundSkins += 1;
@@ -924,10 +926,10 @@ static void scaleModelToSprite(modeldef_t &mf, int sprite, int frame)
     if(!spr.numFrames || spr.spriteFrames == NULL) return;
 
     materialvariantspecification_t const* spec = Sprite_MaterialSpec(0, 0);
-    materialsnapshot_t const* ms = Materials_Prepare(spr.spriteFrames[frame].mats[0], spec, true);
-    de::Texture const &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
-    int off = MAX_OF(0, -tex.origin().y() - ms->size.height);
-    scaleModel(mf, ms->size.height, off);
+    MaterialSnapshot const &ms = reinterpret_cast<MaterialSnapshot const &>(*Materials_Prepare(spr.spriteFrames[frame].mats[0], spec, true));
+    de::Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
+    int off = MAX_OF(0, -tex.origin().y() - ms.dimensions().height());
+    scaleModel(mf, ms.dimensions().height(), off);
 }
 
 static float calcModelVisualRadius(modeldef_t* def)
@@ -1157,7 +1159,7 @@ static void setupModel(ded_model_t& def)
             {
                 de::Uri foundResourceUri(Path(findSkinPath(skinFilePath, modelFilePath)));
 
-                sub->shinySkin = R_DefineTexture("ModelReflectionSkins", foundResourceUri);
+                sub->shinySkin = reinterpret_cast<texture_s *>(R_DefineTexture("ModelReflectionSkins", foundResourceUri));
             }
             catch(FS1::NotFoundError const &)
             {

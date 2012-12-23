@@ -73,6 +73,9 @@ extern int shadowMaxDistance;
 
 extern int useShinySurfaces;
 
+extern byte devRendSkyAlways;
+extern byte freezeRLs;
+
 void Rend_Register(void);
 
 void Rend_Init(void);
@@ -104,6 +107,8 @@ void            Rend_CalcLightModRange(void);
  * Number of vertices needed for this leaf's trifan.
  */
 uint Rend_NumFanVerticesForBspLeaf(BspLeaf* bspLeaf);
+
+void    R_DrawLightRange(void);
 
 #ifdef __cplusplus
 } // extern "C"

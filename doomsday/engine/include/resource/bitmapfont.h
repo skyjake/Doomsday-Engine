@@ -111,7 +111,7 @@ void BitmapCompositeFont_SetDefinition(font_t* font, struct ded_compositefont_s*
 patchid_t BitmapCompositeFont_CharPatch(font_t* font, unsigned char ch);
 void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char* patchName);
 
-struct texturevariant_s* BitmapCompositeFont_CharTexture(font_t* font, unsigned char ch);
+struct texturevariant_s *BitmapCompositeFont_CharTexture(font_t* font, unsigned char ch);
 void BitmapCompositeFont_ReleaseTextures(font_t* font);
 
 uint8_t BitmapCompositeFont_CharBorder(font_t* font, unsigned char chr);

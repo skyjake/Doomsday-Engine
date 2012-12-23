@@ -67,7 +67,6 @@ D_CMD(ViewGrid);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern byte freezeRLs;
-extern boolean firstFrameAfterLoad;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1140,8 +1139,6 @@ void R_RenderBlankView(void)
  */
 void R_RenderPlayerView(int num)
 {
-    extern boolean firstFrameAfterLoad;
-
     int oldFlags = 0;
     player_t* player;
     viewdata_t* vd;

@@ -723,7 +723,7 @@ void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 {
     try
     {
-        Texture *tex = reinterpret_cast<texture_s *>(App_Textures()->scheme("Patches").findByUniqueId(id).texture());
+        struct texture_s *tex = reinterpret_cast<texture_s *>(App_Textures()->scheme("Patches").findByUniqueId(id).texture());
         if(!tex) return;
 
         GL_BindTexture(GL_PreparePatchTexture2(tex, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT)));

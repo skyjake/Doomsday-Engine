@@ -297,6 +297,7 @@ DENG_HEADERS += \
     include/resource/lumpcache.h \
     include/resource/material.h \
     include/resource/materials.h \
+    include/resource/materialsnapshot.h \
     include/resource/materialvariant.h \
     include/resource/models.h \
     include/resource/patch.h \
@@ -530,7 +531,7 @@ SOURCES += \
     src/map/plane.c \
     src/map/polyobj.c \
     src/map/propertyvalue.cpp \
-    src/map/r_world.c \
+    src/map/r_world.cpp \
     src/map/sector.c \
     src/map/sidedef.c \
     src/map/surface.c \
@@ -556,14 +557,14 @@ SOURCES += \
     src/render/r_things.cpp \
     src/render/rend_bias.c \
     src/render/rend_clip.cpp \
-    src/render/rend_console.c \
+    src/render/rend_console.cpp \
     src/render/rend_decor.c \
     src/render/rend_dynlight.c \
-    src/render/rend_fakeradio.c \
+    src/render/rend_fakeradio.cpp \
     src/render/rend_font.c \
     src/render/rend_halo.c \
-    src/render/rend_list.c \
-    src/render/rend_main.c \
+    src/render/rend_list.cpp \
+    src/render/rend_main.cpp \
     src/render/rend_model.cpp \
     src/render/rend_particle.c \
     src/render/rend_shadow.c \
@@ -582,6 +583,7 @@ SOURCES += \
     src/resource/image.cpp \
     src/resource/material.cpp \
     src/resource/materialarchive.c \
+    src/resource/materialsnapshot.cpp \
     src/resource/materials.cpp \
     src/resource/materialvariant.cpp \
     src/resource/models.cpp \

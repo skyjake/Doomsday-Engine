@@ -32,6 +32,10 @@ DD_BASE_POLYOBJ_ELEMENTS()
 
 #define POLYOBJ_SIZE        gx.polyobjSize
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Translate the origin in the map coordinate space.
  *
@@ -85,6 +89,10 @@ int Polyobj_LineIterator(Polyobj* polyobj,
 #if 0
 boolean Polyobj_GetProperty(const Polyobj* po, setargs_t* args);
 boolean Polyobj_SetProperty(Polyobj* po, const setargs_t* args);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_MAP_POLYOB_H

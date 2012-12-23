@@ -558,7 +558,7 @@ void BitmapCompositeFont_Prepare(font_t *font)
 
         de::Texture *tex = App_Textures()->scheme("Patches").findByUniqueId(patch).texture();
         ch->tex = GL_PrepareTextureVariant(reinterpret_cast<texture_s *>(tex), BitmapCompositeFont_CharSpec());
-        if(ch->tex && TextureVariant_Source(ch->tex) == TEXS_ORIGINAL)
+        if(ch->tex && reinterpret_cast<de::TextureVariant *>(ch->tex)->source() == TEXS_ORIGINAL)
         {
             // Upscale & Sharpen will have been applied.
             ch->border = 1;
@@ -615,7 +615,7 @@ void BitmapCompositeFont_SetDefinition(font_t *font, struct ded_compositefont_s 
     cf->_def = def;
 }
 
-TextureVariant *BitmapCompositeFont_CharTexture(font_t *font, unsigned char ch)
+struct texturevariant_s *BitmapCompositeFont_CharTexture(font_t *font, unsigned char ch)
 {
     DENG_ASSERT(font->_type == FT_BITMAPCOMPOSITE);
     bitmapcompositefont_t *cf = (bitmapcompositefont_t *)font;

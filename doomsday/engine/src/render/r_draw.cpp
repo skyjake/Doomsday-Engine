@@ -26,6 +26,7 @@
 #include "de_play.h"
 #include "de_resource.h"
 
+#include "resource/materialsnapshot.h"
 #include "render/r_draw.h"
 #include "gl/sys_opengl.h"
 
@@ -126,7 +127,7 @@ void R_ShutdownViewWindow(void)
     inited = false;
 }
 
-void R_DrawPatch3(Texture *_tex, int x, int y, int w, int h, boolean useOffsets)
+void R_DrawPatch3(struct texture_s *_tex, int x, int y, int w, int h, boolean useOffsets)
 {
     if(!_tex) return;
     de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
@@ -150,22 +151,26 @@ void R_DrawPatch3(Texture *_tex, int x, int y, int w, int h, boolean useOffsets)
     GL_DrawRectf2Color(x, y, w, h, 1, 1, 1, 1);
 }
 
-void R_DrawPatch2(Texture *tex, int x, int y, int w, int h)
+void R_DrawPatch2(struct texture_s *tex, int x, int y, int w, int h)
 {
     R_DrawPatch3(tex, x, y, w, h, true);
 }
 
-void R_DrawPatch(Texture *tex, int x, int y)
+void R_DrawPatch(struct texture_s *_tex, int x, int y)
 {
-    R_DrawPatch2(tex, x, y, Texture_Width(tex), Texture_Height(tex));
+    if(!_tex) return;
+    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
+
+    R_DrawPatch2(_tex, x, y, tex.width(), tex.height());
 }
 
-void R_DrawPatchTiled(Texture *tex, int x, int y, int w, int h, int wrapS, int wrapT)
+void R_DrawPatchTiled(struct texture_s *_tex, int x, int y, int w, int h, int wrapS, int wrapT)
 {
-    if(!tex) return;
+    if(!_tex) return;
+    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
 
-    GL_BindTexture(GL_PreparePatchTexture2(tex, wrapS, wrapT));
-    GL_DrawRectf2Tiled(x, y, w, h, Texture_Width(tex), Texture_Height(tex));
+    GL_BindTexture(GL_PreparePatchTexture2(_tex, wrapS, wrapT));
+    GL_DrawRectf2Tiled(x, y, w, h, tex.width(), tex.height());
 }
 
 materialvariantspecification_t const *Ui_MaterialSpec()
@@ -212,10 +217,10 @@ void R_DrawViewBorder(void)
     material_t *mat = Materials_ToMaterial(Materials_ResolveUri2(borderGraphicsNames[BG_BACKGROUND], true/*quiet please*/));
     if(mat)
     {
-        materialsnapshot_t const *ms = Materials_Prepare(mat, Ui_MaterialSpec(), true);
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, Ui_MaterialSpec(), true));
 
-        GL_BindTexture(MST(ms, MTU_PRIMARY));
-        GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms->size.width, ms->size.height, 0, 0,
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
+        GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.dimensions().width(), ms.dimensions().height(), 0, 0,
                             vd->window.origin.x - border, vd->window.origin.y - border,
                             vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
     }

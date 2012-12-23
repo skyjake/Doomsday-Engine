@@ -46,6 +46,7 @@
 #ifdef __CLIENT__
 #  include "render/rend_bias.h"
 #  include "render/rend_console.h"
+#  include "render/rend_main.h"
 #  include "render/r_lgrid.h"
 #  include "map/blockmapvisual.h"
 #endif
@@ -70,7 +71,6 @@ D_CMD(Login); // in cl_main.c
 D_CMD(Logout); // in sv_main.c
 D_CMD(Ping); // in net_ping.c
 
-void    R_DrawLightRange(void);
 int     Sv_GetRegisteredMobj(pool_t *, thid_t, mobjdelta_t *);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------

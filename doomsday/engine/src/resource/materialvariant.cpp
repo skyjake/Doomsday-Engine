@@ -1,8 +1,6 @@
-/**
- * @file materialvariant.cpp
- * Logical material variant. @ingroup resource
+/** @file materialvariant.cpp Logical Material Variant.
  *
- * @authors Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2011-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,15 +17,18 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_resource.h"
-#include "m_misc.h"
-#include "render/r_main.h"
 #include <de/Error>
 #include <de/LegacyCore>
 #include <de/Log>
 #include <de/memory.h>
+
+#include "de_base.h"
+#include "de_console.h"
+#include "de_resource.h"
+
+#include "m_misc.h"
+#include "resource/materialsnapshot.h"
+#include "render/r_main.h"
 
 namespace de {
 
@@ -112,11 +113,11 @@ void MaterialVariant::ticker(timespan_t /*time*/)
             inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
         }
 
-        /* Texture const *glTex;
+        /* Texture const *tex;
         de::Uri *texUri = reinterpret_cast<de::Uri *>(lsDef->texture);
-        if(texUri && (glTex = Textures::resolveUri(*texUri)))
+        if(texUri && (tex = Textures::resolveUri(*texUri)))
         {
-            layer->tex = Texture_Id(glTex);
+            layer->tex = tex->id();
             setTranslationPoint(inter);
         }
         else
@@ -161,7 +162,7 @@ materialvariant_layer_t const *MaterialVariant::layer(int layer)
     return 0;
 }
 
-materialsnapshot_t &MaterialVariant::attachSnapshot(materialsnapshot_t &newSnapshot)
+MaterialSnapshot &MaterialVariant::attachSnapshot(MaterialSnapshot &newSnapshot)
 {
     if(snapshot_)
     {
@@ -173,9 +174,9 @@ materialsnapshot_t &MaterialVariant::attachSnapshot(materialsnapshot_t &newSnaps
     return newSnapshot;
 }
 
-materialsnapshot_t *MaterialVariant::detachSnapshot()
+MaterialSnapshot *MaterialVariant::detachSnapshot()
 {
-    materialsnapshot_t *detachedSnapshot = snapshot_;
+    MaterialSnapshot *detachedSnapshot = snapshot_;
     snapshot_ = 0;
     return detachedSnapshot;
 }
@@ -301,24 +302,24 @@ const materialvariant_layer_t* MaterialVariant_Layer(MaterialVariant* mat, int l
     return self->layer(layer);
 }
 
-materialsnapshot_t* MaterialVariant_AttachSnapshot(MaterialVariant* mat, materialsnapshot_t* snapshot)
+struct materialsnapshot_s *MaterialVariant_AttachSnapshot(MaterialVariant *mat, struct materialsnapshot_s *snapshot)
 {
     if(!snapshot)
         LegacyCore_FatalError("MaterialVariant_AttachSnapshot: Attempted with invalid snapshot argument (=NULL).");
     SELF(mat);
-    return &self->attachSnapshot(*snapshot);
+    return reinterpret_cast<materialsnapshot_s *>(&self->attachSnapshot(reinterpret_cast<de::MaterialSnapshot &>(*snapshot)));
 }
 
-materialsnapshot_t* MaterialVariant_DetachSnapshot(MaterialVariant* mat)
+struct materialsnapshot_s *MaterialVariant_DetachSnapshot(MaterialVariant *mat)
 {
     SELF(mat);
-    return self->detachSnapshot();
+    return reinterpret_cast<materialsnapshot_s *>(self->detachSnapshot());
 }
 
-materialsnapshot_t* MaterialVariant_Snapshot(const MaterialVariant* mat)
+struct materialsnapshot_s *MaterialVariant_Snapshot(MaterialVariant const *mat)
 {
     SELF_CONST(mat);
-    return self->snapshot();
+    return reinterpret_cast<materialsnapshot_s *>(self->snapshot());
 }
 
 int MaterialVariant_SnapshotPrepareFrame(const MaterialVariant* mat)

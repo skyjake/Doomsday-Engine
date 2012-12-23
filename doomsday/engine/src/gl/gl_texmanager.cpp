@@ -3222,7 +3222,7 @@ texturevariant_s *GL_PrepareTextureVariant(texture_s *tex, texturevariantspecifi
 DGLuint GL_PrepareTexture2(struct texture_s *tex, texturevariantspecification_t *spec,
     preparetextureresult_t *returnOutcome)
 {
-    de::TextureVariant const *variant = reinterpret_cast<de::TextureVariant const *>(GL_PrepareTextureVariant2(tex, spec, returnOutcome));
+    de::TextureVariant const *variant = reinterpret_cast<TextureVariant const *>(GL_PrepareTextureVariant2(tex, spec, returnOutcome));
     if(!variant) return 0;
     return variant->glName();
 }
@@ -3232,21 +3232,21 @@ DGLuint GL_PrepareTexture(struct texture_s *tex, texturevariantspecification_t *
     return GL_PrepareTexture2(tex, spec, 0);
 }
 
-void GL_BindTexture(texturevariant_s *tex)
+void GL_BindTexture(texturevariant_s *_tex)
 {
     texturevariantspecification_t *spec = 0;
 
     if(BusyMode_InWorkerThread()) return;
 
+    de::TextureVariant *tex = reinterpret_cast<de::TextureVariant *>(_tex);
     if(tex)
     {
-        de::TextureVariant *variant = reinterpret_cast<de::TextureVariant *>(tex);
-        spec = variant->spec();
+        spec = tex->spec();
         // Ensure we've prepared this.
-        if(!variant->isPrepared())
+        if(!tex->isPrepared())
         {
-            de::TextureVariant **hndl = &variant;
-            if(!tryLoadImageAndPrepareVariant(variant->generalCase(), spec, hndl))
+            de::TextureVariant **hndl = &tex;
+            if(!tryLoadImageAndPrepareVariant(tex->generalCase(), spec, hndl))
             {
                 tex = 0;
             }
@@ -3263,7 +3263,7 @@ void GL_BindTexture(texturevariant_s *tex)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBindTexture(GL_TEXTURE_2D, TextureVariant_GLName(tex));
+    glBindTexture(GL_TEXTURE_2D, tex->glName());
     Sys_GLCheckError();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.

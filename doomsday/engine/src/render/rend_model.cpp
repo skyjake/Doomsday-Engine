@@ -40,9 +40,10 @@
 #include <de/memory.h>
 
 #include "network/net_main.h" // for gametic
+#include "resource/materialsnapshot.h"
+#include "resource/materialvariant.h"
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
-#include "resource/materialvariant.h"
 
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)         qatan2(y,x)
@@ -864,7 +865,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     float normYaw, normPitch, shinyAng, shinyPnt;
     float inter = parm->inter;
     blendmode_t blending;
-    TextureVariant *skinTexture = NULL, *shinyTexture = NULL;
+    de::TextureVariant *skinTexture = NULL, *shinyTexture = NULL;
     int zSign = (parm->mirror? -1 : 1);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -1063,10 +1064,10 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     // Ensure we've prepared the shiny skin.
     if(shininess > 0)
     {
-        Texture *tex = mf->sub[number].shinySkin;
+        struct texture_s *tex = mf->sub[number].shinySkin;
         if(tex)
         {
-            shinyTexture = GL_PrepareTextureVariant(tex, Rend_ModelShinyTextureSpec());
+            shinyTexture = reinterpret_cast<de::TextureVariant *>(GL_PrepareTextureVariant(tex, Rend_ModelShinyTextureSpec()));
         }
         else
         {
@@ -1141,9 +1142,9 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         {
             materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
                 MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
-            materialsnapshot_t const *ms = Materials_Prepare(mat, spec, true);
+            de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
 
-            skinTexture = MST(ms, MTU_PRIMARY);
+            skinTexture = &ms.texture(MTU_PRIMARY);
         }
         else
         {
@@ -1152,12 +1153,12 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     }
     else
     {
-        Texture *tex = mdl->skins[useSkin].texture;
+        struct texture_s *tex = mdl->skins[useSkin].texture;
 
         skinTexture = 0;
         if(tex)
         {
-            skinTexture = GL_PrepareTextureVariant(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
+            skinTexture = reinterpret_cast<de::TextureVariant *>(GL_PrepareTextureVariant(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp)));
         }
     }
 
@@ -1183,7 +1184,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         {
             Mod_SelectTexUnits(1);
             GL_BlendMode(blending);
-            GL_BindTexture(renderTextures? skinTexture : 0);
+            GL_BindTexture(renderTextures? reinterpret_cast<texturevariant_s *>(skinTexture) : 0);
 
             Mod_RenderCommands(RC_COMMAND_COORDS,
                                mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -1211,10 +1212,10 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                 GL_ModulateTexture(11);
 
                 glActiveTexture(GL_TEXTURE1);
-                GL_BindTexture(renderTextures ? shinyTexture : 0);
+                GL_BindTexture(renderTextures ? reinterpret_cast<texturevariant_s *>(shinyTexture) : 0);
 
                 glActiveTexture(GL_TEXTURE0);
-                GL_BindTexture(renderTextures ? skinTexture : 0);
+                GL_BindTexture(renderTextures ? reinterpret_cast<texturevariant_s *>(skinTexture) : 0);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -1227,7 +1228,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
             {
                 // Empty spots will get shine, too.
                 Mod_SelectTexUnits(1);
-                GL_BindTexture(renderTextures ? shinyTexture : 0);
+                GL_BindTexture(renderTextures ? reinterpret_cast<texturevariant_s *>(shinyTexture) : 0);
                 Mod_RenderCommands(RC_OTHER_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
@@ -1245,7 +1246,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         GL_ModulateTexture(10);
 
         glActiveTexture(GL_TEXTURE1);
-        GL_BindTexture(renderTextures ? shinyTexture : 0);
+        GL_BindTexture(renderTextures ? reinterpret_cast<texturevariant_s *>(shinyTexture) : 0);
 
         // Multiply by shininess.
         for(c = 0; c < 3; ++c)
@@ -1253,7 +1254,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
         glActiveTexture(GL_TEXTURE0);
-        GL_BindTexture(renderTextures ? skinTexture : 0);
+        GL_BindTexture(renderTextures ? reinterpret_cast<texturevariant_s *>(skinTexture) : 0);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
                            /*numVerts,*/ modelVertices, modelColors,
