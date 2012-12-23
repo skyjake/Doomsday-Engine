@@ -179,8 +179,8 @@ void MaterialSnapshot::update()
             // Are we inheriting the logical dimensions from the texture?
             if(0 == Material_Width(mat) && 0 == Material_Height(mat))
             {
-                Size2Raw texSize(Texture_Width(ml->texture),
-                                 Texture_Height(ml->texture));
+                Texture &tex = reinterpret_cast<Texture &>(*ml->texture);
+                Size2Raw texSize(tex.width(), tex.height());
                 Material_SetSize(mat, &texSize);
             }
         }

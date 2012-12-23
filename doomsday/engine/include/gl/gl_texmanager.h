@@ -129,7 +129,7 @@ void GL_ReleaseTexturesByScheme(char const *schemeName);
  * Release all textures associated with the specified @a texture.
  * @param texture  Logical Texture. Can be @c NULL, in which case this is a null-op.
  */
-void GL_ReleaseGLTexturesByTexture(Texture *texture);
+void GL_ReleaseGLTexturesByTexture(struct texture_s *texture);
 
 /**
  * Release all textures associated with the specified variant @a texture.
@@ -142,7 +142,7 @@ void GL_ReleaseVariantTexture(struct texturevariant_s *texture);
  * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
  * @param spec  Specification to match. Comparision mode is exact and not fuzzy.
  */
-void GL_ReleaseVariantTexturesBySpec(Texture *tex, texturevariantspecification_t *spec);
+void GL_ReleaseVariantTexturesBySpec(struct texture_s *tex, texturevariantspecification_t *spec);
 
 /// Release all textures associated with the identified colorpalette @a paletteId.
 void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId);
@@ -262,14 +262,14 @@ typedef enum {
  *
  * @return  GL-name of the prepared texture if successful else @c 0
  */
-DGLuint GL_PrepareTexture2(Texture *tex, texturevariantspecification_t *spec, preparetextureresult_t *returnOutcome);
-DGLuint GL_PrepareTexture(Texture *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
+DGLuint GL_PrepareTexture2(struct texture_s *tex, texturevariantspecification_t *spec, preparetextureresult_t *returnOutcome);
+DGLuint GL_PrepareTexture(struct texture_s *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
 
 /**
  * Same as GL_PrepareTexture(2) except for visibility of TextureVariant.
  */
-struct texturevariant_s *GL_PrepareTextureVariant2(Texture *tex, texturevariantspecification_t *spec, preparetextureresult_t *returnOutcome);
-struct texturevariant_s *GL_PrepareTextureVariant(Texture *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
+struct texturevariant_s *GL_PrepareTextureVariant2(struct texture_s *tex, texturevariantspecification_t *spec, preparetextureresult_t *returnOutcome);
+struct texturevariant_s *GL_PrepareTextureVariant(struct texture_s *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
 
 /**
  * Bind this texture to the currently active texture unit.
@@ -310,8 +310,8 @@ DGLuint GL_PrepareLightmap(Uri const *path);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
 DGLuint GL_PrepareRawTexture(rawtex_t *rawTex);
 
-struct texturevariant_s *GL_PreparePatchTexture2(Texture *tex, int wrapS, int wrapT);
-struct texturevariant_s *GL_PreparePatchTexture(Texture *tex);
+struct texturevariant_s *GL_PreparePatchTexture2(struct texture_s *tex, int wrapS, int wrapT);
+struct texturevariant_s *GL_PreparePatchTexture(struct texture_s *tex);
 
 /**
  * Attempt to locate and prepare a flare texture.

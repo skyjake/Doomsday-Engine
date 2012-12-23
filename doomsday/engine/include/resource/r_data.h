@@ -26,9 +26,8 @@
 #include "dd_def.h"
 #include "thinker.h"
 #include "def_data.h"
-#include "textures.h"
+#include "resource/textures.h"
 
-struct texture_s;
 struct font_s;
 
 /**
@@ -87,8 +86,8 @@ AutoStr *R_ComposePatchPath(patchid_t id);
 #endif
 
 #ifdef __cplusplus
-struct texture_s *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri, QSize const &dimensions);
-struct texture_s *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri);
+de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri, QSize const &dimensions);
+de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri);
 #endif
 
 #endif /// LIBDENG_REFRESH_DATA_H

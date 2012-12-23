@@ -843,8 +843,8 @@ void R_InitSpriteTextures()
     LOG_INFO(String("R_InitSpriteTextures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-texture_s *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
-                           QSize const &dimensions)
+Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
+                         QSize const &dimensions)
 {
     LOG_AS("R_DefineTexture");
 
@@ -855,7 +855,7 @@ texture_s *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
     try
     {
         de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
-        if(tex) return reinterpret_cast<texture_s *>(tex);
+        if(tex) return tex;
     }
     catch(Textures::Scheme::NotFoundError const &)
     {} // Ignore this error.
@@ -874,10 +874,10 @@ texture_s *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
     if(!manifest) return 0; // Invalid URI?
 
     /// @todo Defer until necessary (manifest texture is first referenced).
-    return reinterpret_cast<texture_s *>( deriveTexture(*manifest) );
+    return deriveTexture(*manifest);
 }
 
-texture_s *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri)
+de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri)
 {
     return R_DefineTexture(schemeName, resourceUri, QSize());
 }

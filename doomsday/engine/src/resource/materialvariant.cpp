@@ -113,11 +113,11 @@ void MaterialVariant::ticker(timespan_t /*time*/)
             inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
         }
 
-        /* Texture const *glTex;
+        /* Texture const *tex;
         de::Uri *texUri = reinterpret_cast<de::Uri *>(lsDef->texture);
-        if(texUri && (glTex = Textures::resolveUri(*texUri)))
+        if(texUri && (tex = Textures::resolveUri(*texUri)))
         {
-            layer->tex = Texture_Id(glTex);
+            layer->tex = tex->id();
             setTranslationPoint(inter);
         }
         else

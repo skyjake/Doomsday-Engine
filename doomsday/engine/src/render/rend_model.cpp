@@ -1064,7 +1064,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     // Ensure we've prepared the shiny skin.
     if(shininess > 0)
     {
-        Texture *tex = mf->sub[number].shinySkin;
+        struct texture_s *tex = mf->sub[number].shinySkin;
         if(tex)
         {
             shinyTexture = reinterpret_cast<de::TextureVariant *>(GL_PrepareTextureVariant(tex, Rend_ModelShinyTextureSpec()));
@@ -1153,7 +1153,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     }
     else
     {
-        Texture *tex = mdl->skins[useSkin].texture;
+        struct texture_s *tex = mdl->skins[useSkin].texture;
 
         skinTexture = 0;
         if(tex)

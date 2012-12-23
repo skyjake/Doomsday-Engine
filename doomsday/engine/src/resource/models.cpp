@@ -503,12 +503,12 @@ static short defineSkinAndAddToModelIndex(model_t &mdl, Path const &skinPath)
 {
     int const newSkin = mdl.info.numSkins;
 
-    if(texture_s *tex = R_DefineTexture("ModelSkins", de::Uri(skinPath)))
+    if(Texture *tex = R_DefineTexture("ModelSkins", de::Uri(skinPath)))
     {
         // A duplicate? (return existing skin number)
         for(int i = 0; i < mdl.info.numSkins; ++i)
         {
-            if(mdl.skins[i].texture == tex) return i;
+            if(mdl.skins[i].texture == reinterpret_cast<texture_s *>(tex)) return i;
         }
 
         // Add this new skin.
@@ -518,7 +518,7 @@ static short defineSkinAndAddToModelIndex(model_t &mdl, Path const &skinPath)
 
         QByteArray pathUtf8 = skinPath.toString().toUtf8();
         qstrncpy(mdl.skins[newSkin].name, pathUtf8.constData(), 256);
-        mdl.skins[newSkin].texture = tex;
+        mdl.skins[newSkin].texture = reinterpret_cast<texture_s *>(tex);
     }
 
     return newSkin;
@@ -537,7 +537,7 @@ static void defineAllSkins(model_t &mdl)
         {
             de::Uri foundResourceUri(Path(findSkinPath(mdl.skins[i].name, modelFilePath)));
 
-            mdl.skins[i].texture = R_DefineTexture("ModelSkins", foundResourceUri);
+            mdl.skins[i].texture = reinterpret_cast<texture_s *>(R_DefineTexture("ModelSkins", foundResourceUri));
 
             // We have found one more skin for this model.
             numFoundSkins += 1;
@@ -1159,7 +1159,7 @@ static void setupModel(ded_model_t& def)
             {
                 de::Uri foundResourceUri(Path(findSkinPath(skinFilePath, modelFilePath)));
 
-                sub->shinySkin = R_DefineTexture("ModelReflectionSkins", foundResourceUri);
+                sub->shinySkin = reinterpret_cast<texture_s *>(R_DefineTexture("ModelReflectionSkins", foundResourceUri));
             }
             catch(FS1::NotFoundError const &)
             {
