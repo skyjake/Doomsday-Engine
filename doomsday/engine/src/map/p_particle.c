@@ -1380,10 +1380,12 @@ void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
     }
 }
 
-static int findDefForGenerator(ptcgen_t* gen, void* parameters)
+static int findDefForGenerator(ptcgen_t *gen, void *parameters)
 {
-    ded_ptcgen_t* def;
+    ded_ptcgen_t *def;
     int i;
+
+    DENG_UNUSED(parameters);
 
     // Search for a suitable definition.
     def = defs.ptcGens;
@@ -1409,8 +1411,8 @@ static int findDefForGenerator(ptcgen_t* gen, void* parameters)
         // A flat generator?
         if(gen->plane && def->material)
         {
-            material_t* mat = gen->plane->PS_material;
-            material_t* defMat = Materials_ToMaterial(Materials_ResolveUri2(def->material, true/*quiet please*/));
+            material_t *mat = gen->plane->PS_material;
+            material_t *defMat = Materials_ToMaterial(Materials_ResolveUri2(def->material, true/*quiet please*/));
 
             if(def->flags & PGF_FLOOR_SPAWN)
                 mat = gen->plane->sector->SP_plane(PLN_FLOOR)->PS_material;
@@ -1420,12 +1422,13 @@ static int findDefForGenerator(ptcgen_t* gen, void* parameters)
             // Is this suitable?
             if(mat == defMat)
             {
-                return i+1;
+                return i + 1; // 1-based index.
             }
 
             if(def->flags & PGF_GROUP)
             {
                 // Generator triggered by all materials in the (animation) group.
+
                 /**
                  * A search is necessary only if we know both the used material and
                  * the specified material in this definition are in *a* group.
@@ -1435,14 +1438,14 @@ static int findDefForGenerator(ptcgen_t* gen, void* parameters)
                     int g, numGroups = Materials_AnimGroupCount();
                     for(g = 0; g < numGroups; ++g)
                     {
-                        if(Materials_IsPrecacheAnimGroup(g))
-                            continue; // Precache groups don't apply.
+                        // Precache groups don't apply.
+                        if(Materials_IsPrecacheAnimGroup(g)) continue;
 
                         if(Materials_IsMaterialInAnimGroup(defMat, g) &&
                            Materials_IsMaterialInAnimGroup(mat, g))
                         {
                             // Both are in this group! This def will do.
-                            return i+1;
+                            return i + 1; // 1-based index.
                         }
                     }
                 }
@@ -1453,14 +1456,14 @@ static int findDefForGenerator(ptcgen_t* gen, void* parameters)
         if(gen->source && def->state[0] &&
            gen->source->state - states == Def_GetStateNum(def->state))
         {
-            return i+1;
+            return i + 1; // 1-based index.
         }
     }
 
     return 0; // Not found.
 }
 
-static int updateGenerator(ptcgen_t* gen, void* parameters)
+static int updateGenerator(ptcgen_t *gen, void *parameters)
 {
     int defIndex;
 

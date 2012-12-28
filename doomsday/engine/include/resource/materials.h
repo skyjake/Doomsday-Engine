@@ -25,12 +25,8 @@
 
 #include "def_data.h"
 #include "material.h"
-
 #ifdef __cplusplus
-
-#include "resource/materialvariant.h"
-
-extern "C" {
+#  include "resource/materialvariant.h"
 #endif
 
 struct texturevariantspecification_s;
@@ -62,6 +58,10 @@ typedef struct materialvariantspecification_s {
     materialcontext_t context;
     struct texturevariantspecification_s *primarySpec;
 } materialvariantspecification_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /// To be called during init to register the cvars and ccmds for this module.
 void Materials_Register(void);
@@ -201,6 +201,8 @@ struct materialvariantspecification_s const *Materials_VariantSpecificationForCo
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
 
+#ifdef __cplusplus
+
 /**
  * Add a variant of @a material to the cache queue for deferred preparation.
  *
@@ -210,10 +212,8 @@ struct materialvariantspecification_s const *Materials_VariantSpecificationForCo
  * @param cacheGroups  @c true= variants for all Materials in any applicable
  *      animation groups are desired, else just this specific Material.
  */
-void Materials_Precache2(material_t *material, struct materialvariantspecification_s const *spec, boolean smooth, boolean cacheGroups);
-void Materials_Precache(material_t *material, struct materialvariantspecification_s const *spec, boolean smooth/*, cacheGroups = true*/);
-
-#ifdef __cplusplus
+void Materials_Precache2(material_t &material, struct materialvariantspecification_s const &spec, bool smooth, bool cacheGroups);
+void Materials_Precache(material_t &material, struct materialvariantspecification_s const &spec, bool smooth/*, cacheGroups = true*/);
 
 /**
  * Choose/create a variant of @a material which fulfills @a spec and then
@@ -261,8 +261,6 @@ struct materialsnapshot_s const *Materials_PrepareVariant(de::MaterialVariant &m
 de::MaterialVariant *Materials_ChooseVariant(material_t &material,
     struct materialvariantspecification_s const &spec, bool smoothed, bool canCreate);
 
-#endif
-
 /**
  * Create a new animation group.
  * @return  Logical (unique) identifier reference associated with the new group.
@@ -278,6 +276,8 @@ int Materials_CreateAnimGroup(int flags);
  * @param randomTics  Extra frame duration in tics (randomized on each cycle).
  */
 void Materials_AddAnimGroupFrame(int animGroupNum, material_t *material, int tics, int randomTics);
+
+#endif // __cplusplus
 
 /// @todo Refactor; does not fit the current design.
 boolean Materials_IsPrecacheAnimGroup(int animGroupNum);

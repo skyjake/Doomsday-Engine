@@ -553,7 +553,7 @@ SOURCES += \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.c \
-    src/render/r_main.c \
+    src/render/r_main.cpp \
     src/render/r_lgrid.c \
     src/render/r_shadow.c \
     src/render/r_things.cpp \

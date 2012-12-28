@@ -37,7 +37,7 @@ using namespace de;
 
 typedef struct material_variantlist_node_s {
     struct material_variantlist_node_s *next;
-    de::MaterialVariant *variant;
+    MaterialVariant *variant;
 } material_variantlist_node_t;
 
 static void destroyVariants(material_t *mat)
@@ -392,7 +392,7 @@ struct materialvariant_s *Material_AddVariant(material_t *mat, struct materialva
     material_variantlist_node_t *node = static_cast<material_variantlist_node_t *>(M_Malloc(sizeof *node));
     if(!node) Con_Error("Material_AddVariant: Failed on allocation of %lu bytes for new node.", (unsigned long) sizeof *node);
 
-    node->variant = reinterpret_cast<de::MaterialVariant *>(variant);
+    node->variant = reinterpret_cast<MaterialVariant *>(variant);
     node->next = mat->_variants;
     mat->_variants = node;
     return variant;
