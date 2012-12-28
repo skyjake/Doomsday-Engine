@@ -163,7 +163,7 @@ void MaterialSnapshot::update()
         if(!ml.texture) continue;
 
         // Pick the instance matching the specified context.
-        prepTextures[i] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant2(ml.texture, spec.primarySpec, &result));
+        prepTextures[i] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(ml.texture), spec.primarySpec, &result));
 
         if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
         {

@@ -30,7 +30,6 @@
 #endif
 
 struct texturevariantspecification_s;
-struct materialsnapshot_s;
 
 enum materialschemeid_e; // Defined in dd_share.h
 
@@ -231,8 +230,8 @@ void Materials_Precache(material_t &material, struct materialvariantspecificatio
  *
  * @return  Snapshot for the chosen and prepared variant of Material.
  */
-struct materialsnapshot_s const *Materials_Prepare2(material_t &material, struct materialvariantspecification_s const &spec, bool smooth, bool forceSnapshotUpdate);
-struct materialsnapshot_s const *Materials_Prepare(material_t &material, struct materialvariantspecification_s const &spec, bool smooth/*, forceSnapshotUpdate = false*/);
+de::MaterialSnapshot const *Materials_Prepare2(material_t &material, struct materialvariantspecification_s const &spec, bool smooth, bool forceSnapshotUpdate);
+de::MaterialSnapshot const *Materials_Prepare(material_t &material, struct materialvariantspecification_s const &spec, bool smooth/*, forceSnapshotUpdate = false*/);
 
 /**
  * Prepare variant @a material for render (e.g., upload textures if necessary).
@@ -245,8 +244,8 @@ struct materialsnapshot_s const *Materials_Prepare(material_t &material, struct 
  *
  * @return  Snapshot for the chosen and prepared variant of Material.
  */
-struct materialsnapshot_s const *Materials_PrepareVariant2(de::MaterialVariant &material, bool forceSnapshotUpdate);
-struct materialsnapshot_s const *Materials_PrepareVariant(de::MaterialVariant &material/*, forceSnapshotUpdate = false*/);
+de::MaterialSnapshot const *Materials_PrepareVariant2(de::MaterialVariant &material, bool forceSnapshotUpdate);
+de::MaterialSnapshot const *Materials_PrepareVariant(de::MaterialVariant &material/*, forceSnapshotUpdate = false*/);
 
 /**
  * Choose/create a variant of @a material which fulfills @a spec.

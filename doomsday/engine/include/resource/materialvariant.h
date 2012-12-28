@@ -22,13 +22,14 @@
 
 #ifdef __cplusplus
 
+#include "def_data.h"
+#include "resource/materialsnapshot.h"
+#include "resource/texture.h"
+
 struct material_s;
 struct materialvariantspecification_s;
-struct texture_s;
 
 namespace de {
-
-class MaterialSnapshot;
 
 /**
  * @ingroup resource
@@ -45,7 +46,7 @@ public:
         int stage;
 
         /// Texture of the layer.
-        struct texture_s *texture;
+        Texture *texture;
 
         /// Origin of the layer in material-space.
         float texOrigin[2];

@@ -73,7 +73,7 @@ struct MaterialVariant::Instance
             {
                 try
                 {
-                    layers[i].texture = reinterpret_cast<texture_s *>(App_Textures()->find(*texUri).texture());
+                    layers[i].texture = App_Textures()->find(*texUri).texture();
                 }
                 catch(Textures::NotFoundError const &)
                 {} // Ignore this error.

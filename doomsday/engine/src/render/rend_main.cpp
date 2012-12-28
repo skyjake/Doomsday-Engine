@@ -504,7 +504,7 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
     // wrapping.
     if(renderTextures)
     {
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_PrepareVariant(*material));
+        de::MaterialSnapshot const &ms = *Materials_PrepareVariant(*material);
         int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
 
         VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms.dimensions().width();
@@ -692,7 +692,7 @@ static float getSnapshots(de::MaterialSnapshot const **msA,
     float interPos = 0;
     DENG_ASSERT(msA);
 
-    *msA = reinterpret_cast<de::MaterialSnapshot const *>(Materials_Prepare(mat, spec, true));
+    *msA = Materials_Prepare(mat, spec, true);
 
     // Smooth Texture Animation?
     if(msB)
@@ -703,7 +703,7 @@ static float getSnapshots(de::MaterialSnapshot const **msA,
             de::MaterialVariant *matB = variant->translationNext();
 
             // Prepare the inter texture.
-            *msB = reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(*matB));
+            *msB = Materials_PrepareVariant(*matB);
 
             // If fog is active, inter=0 is accepted as well. Otherwise
             // flickering may occur if the rendering passes don't match for
@@ -1496,7 +1496,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
             material_t *mat = suf->material? suf->material : Materials_ToMaterial(Materials_ResolveUriCString("System:missing"));
 
             materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-            de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*mat, *spec, true));
+            de::MaterialSnapshot const &ms = *Materials_Prepare(*mat, *spec, true);
             params.glowing = ms.glowStrength();
         }
 
@@ -2361,7 +2361,7 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
     {
         // Map RTU configuration from prepared MaterialSnapshot(s).
         materialvariantspecification_t const &spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*material, spec, true));
+        de::MaterialSnapshot const &ms = *Materials_Prepare(*material, spec, true);
 
         RL_LoadDefaultRtus();
         RL_MapRtu(RTU_PRIMARY, &ms.unit(MTU_PRIMARY));
@@ -3948,10 +3948,8 @@ static void Rend_RenderBoundingBoxes()
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(
-        *Materials_Prepare(*Materials_ToMaterial(Materials_ResolveUriCString("System:bbox")),
-                           *Sprite_MaterialSpec(0, 0),
-                           true));
+    de::MaterialSnapshot const &ms = *Materials_Prepare(*Materials_ToMaterial(Materials_ResolveUriCString("System:bbox")),
+                                                        *Sprite_MaterialSpec(0, 0), true);
 
     GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
     GL_BlendMode(BM_ADD);

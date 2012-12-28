@@ -1115,14 +1115,14 @@ void Materials_UpdateTextureLinks(materialid_t materialId)
     updateMaterialTextureLinks(*bind);
 }
 
-materialsnapshot_s const *Materials_PrepareVariant2(MaterialVariant &variant, bool updateSnapshot)
+MaterialSnapshot const *Materials_PrepareVariant2(MaterialVariant &variant, bool updateSnapshot)
 {
     // Acquire the snapshot we are interested in.
-    de::MaterialSnapshot *snapshot = variant.snapshot();
+    MaterialSnapshot *snapshot = variant.snapshot();
     if(!snapshot)
     {
         // Time to allocate the snapshot.
-        snapshot = new de::MaterialSnapshot(variant);
+        snapshot = new MaterialSnapshot(variant);
         variant.attachSnapshot(*snapshot);
 
         // Update the snapshot right away.
@@ -1141,21 +1141,21 @@ materialsnapshot_s const *Materials_PrepareVariant2(MaterialVariant &variant, bo
         snapshot->update();
     }
 
-    return reinterpret_cast<materialsnapshot_s *>(snapshot);
+    return snapshot;
 }
 
-materialsnapshot_s const *Materials_PrepareVariant(MaterialVariant &variant)
+MaterialSnapshot const *Materials_PrepareVariant(MaterialVariant &variant)
 {
     return Materials_PrepareVariant2(variant, false/*do not force a snapshot update*/);
 }
 
-materialsnapshot_s const *Materials_Prepare2(material_t &mat, materialvariantspecification_t const &spec,
+MaterialSnapshot const *Materials_Prepare2(material_t &mat, materialvariantspecification_t const &spec,
     bool smooth, bool updateSnapshot)
 {
     return Materials_PrepareVariant2(*Materials_ChooseVariant(mat, spec, smooth, true), updateSnapshot);
 }
 
-materialsnapshot_s const *Materials_Prepare(material_t &mat, materialvariantspecification_t const &spec,
+MaterialSnapshot const *Materials_Prepare(material_t &mat, materialvariantspecification_t const &spec,
     bool smooth)
 {
     return Materials_Prepare2(mat, spec, smooth, false/*do not force a snapshot update*/);

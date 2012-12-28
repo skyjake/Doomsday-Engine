@@ -34,11 +34,12 @@ enum {
 #include <QSize>
 #include <de/Error>
 #include "de/vector1.h"
-#include "resource/materialvariant.h"
-#include "resource/texturevariant.h"
 #include "render/rendpoly.h"
 
 namespace de {
+
+    class MaterialVariant;
+    class TextureVariant;
 
     /**
      * @ingroup resource
@@ -115,8 +116,6 @@ namespace de {
     };
 
 } // namespace de
-
-struct materialsnapshot_s; // The material snapshot instance (opaque).
 
 #endif
 

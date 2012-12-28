@@ -523,8 +523,7 @@ static void drawPageBackground(fi_page_t *p, float x, float y, float width, floa
     {
         materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(
-            *Materials_Prepare(*p->_bg.material, *spec, true));
+        de::MaterialSnapshot const &ms = *Materials_Prepare(*p->_bg.material, *spec, true);
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
@@ -1015,8 +1014,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             {
                 materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
                     MC_UI, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -3, 0, false, false, false, false);
-                de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(
-                    *Materials_Prepare(*mat, *spec, true));
+                de::MaterialSnapshot const &ms = *Materials_Prepare(*mat, *spec, true);
 
                 GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
                 glEnable(GL_TEXTURE_2D);

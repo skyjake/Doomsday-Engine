@@ -305,7 +305,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
     materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -2, 0, false, true, true, false);
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*sprFrame->mats[0], *spec, true));
+    de::MaterialSnapshot const &ms = *Materials_Prepare(*sprFrame->mats[0], *spec, true);
 
     de::Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
@@ -389,10 +389,9 @@ void Rend_DrawPSprite(rendpspriteparams_t const *params)
     else if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(
+        de::MaterialSnapshot const &ms =
             *Materials_Prepare(*Materials_ToMaterial(Materials_ResolveUriCString("System:gray")),
-                               *PSprite_MaterialSpec(),
-                               true));
+                               *PSprite_MaterialSpec(), true);
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
@@ -547,7 +546,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 
     if(renderTextures)
     {
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_PrepareVariant(*reinterpret_cast<de::MaterialVariant *>(p->material)));
+        de::MaterialSnapshot const &ms = *Materials_PrepareVariant(*reinterpret_cast<de::MaterialVariant *>(p->material));
         tex = &ms.texture(MTU_PRIMARY);
     }
 
@@ -904,7 +903,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
         variantspecification_t const *texSpec;
 
         // Ensure this variant has been prepared.
-        ms = reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(*reinterpret_cast<de::MaterialVariant *>(params->material)));
+        ms = Materials_PrepareVariant(*reinterpret_cast<de::MaterialVariant *>(params->material));
 
         texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
         DENG_ASSERT(texSpec);
@@ -922,7 +921,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     mat = chooseSpriteMaterial(*params);
     if(mat != reinterpret_cast<de::MaterialVariant *>(params->material))
     {
-        ms = mat? reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(*mat)) : NULL;
+        ms = mat? Materials_PrepareVariant(*mat) : 0;
     }
 
     if(ms)

@@ -217,7 +217,7 @@ void R_DrawViewBorder(void)
     material_t *mat = Materials_ToMaterial(Materials_ResolveUri2(borderGraphicsNames[BG_BACKGROUND], true/*quiet please*/));
     if(mat)
     {
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*mat, *Ui_MaterialSpec(), true));
+        de::MaterialSnapshot const &ms = *Materials_Prepare(*mat, *Ui_MaterialSpec(), true);
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.dimensions().width(), ms.dimensions().height(), 0, 0,

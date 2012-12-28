@@ -459,7 +459,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
             Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
                                                      GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
                                                      false, true, true, false);
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*mat, *spec, false));
+    de::MaterialSnapshot const &ms = *Materials_Prepare(*mat, *spec, false);
 
     de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
@@ -500,7 +500,7 @@ coord_t R_VisualRadius(mobj_t *mo)
     // Use the sprite frame's width?
     if(material_t *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
     {
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*material, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true));
+        de::MaterialSnapshot const &ms = *Materials_Prepare(*material, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
         return ms.dimensions().width() / 2;
     }
 
@@ -543,7 +543,7 @@ float R_ShadowStrength(mobj_t *mo)
         if(mat)
         {
             // Ensure we've prepared this.
-            de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*mat, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true));
+            de::MaterialSnapshot const &ms = *Materials_Prepare(*mat, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
             averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_ALPHA);
             float weightedSpriteAlpha;
             if(!aa)
@@ -1035,7 +1035,7 @@ void R_ProjectSprite(mobj_t *mo)
     matFlipT = false;
 
     spec = Sprite_MaterialSpec(mo->tclass, mo->tmap);
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*mat, *spec, true));
+    de::MaterialSnapshot const &ms = *Materials_Prepare(*mat, *spec, true);
 
     // An invalid sprite texture?
     de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
@@ -1278,7 +1278,7 @@ void R_ProjectSprite(mobj_t *mo)
 
         // Ensure we have up-to-date information about the material.
         materialvariantspecification_t const *spec = Sprite_MaterialSpec(0, 0);
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*mat, *spec, true));
+        de::MaterialSnapshot const &ms = *Materials_Prepare(*mat, *spec, true);
 
         pointlight_analysis_t const *pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_SPRITE_AUTOLIGHT);
         if(!pl)
