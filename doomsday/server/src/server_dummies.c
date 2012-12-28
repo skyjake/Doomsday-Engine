@@ -73,14 +73,306 @@ void GL_SetFilter(int f)
     DENG_UNUSED(f);
 }
 
+void GL_SetFilterColor(float r, float g, float b, float a)
+{
+    DENG_UNUSED(r);
+    DENG_UNUSED(g);
+    DENG_UNUSED(b);
+    DENG_UNUSED(a);
+}
+
+void GL_UseFog(int yes)
+{
+    DENG_UNUSED(yes);
+}
+
+void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
+{
+    DENG_UNUSED(bp);
+    DENG_UNUSED(flags);
+    DENG_UNUSED(width);
+    DENG_UNUSED(height);
+    DENG_UNUSED(bp);
+    DENG_UNUSED(availWidth);
+    DENG_UNUSED(availHeight);
+    DENG_UNUSED(overrideMode);
+}
+
+void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
+{
+    DENG_UNUSED(bp);
+}
+
+void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
+{
+    DENG_UNUSED(bp);
+}
+
+void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle)
+{
+    DENG_UNUSED(svgId);
+    DENG_UNUSED(origin);
+    DENG_UNUSED(scale);
+    DENG_UNUSED(angle);
+}
+
 void FR_Init(void)
 {}
+
+void FR_SetFont(fontid_t font)
+{
+    DENG_UNUSED(font);
+}
+
+void FR_PushAttrib(void)
+{}
+
+void FR_PopAttrib(void)
+{}
+
+void FR_LoadDefaultAttrib(void)
+{}
+
+float FR_Leading(void)
+{
+    return 0;
+}
+
+void FR_SetLeading(float value)
+{
+    DENG_UNUSED(value);
+}
+
+int FR_Tracking(void)
+{
+    return 0;
+}
+
+void FR_SetTracking(int value)
+{
+    DENG_UNUSED(value);
+}
+
+void FR_SetColor(float red, float green, float blue)
+{
+    DENG_UNUSED(red);
+    DENG_UNUSED(green);
+    DENG_UNUSED(blue);
+}
+
+void FR_SetColorv(const float rgb[3])
+{
+    DENG_UNUSED(rgb);
+}
+
+void FR_SetColorAndAlpha(float red, float green, float blue, float alpha)
+{
+    DENG_UNUSED(red);
+    DENG_UNUSED(green);
+    DENG_UNUSED(blue);
+    DENG_UNUSED(alpha);
+}
+
+void FR_SetColorAndAlphav(const float rgba[4])
+{
+    DENG_UNUSED(rgba);
+}
+
+void FR_SetColorRed(float value)
+{
+    DENG_UNUSED(value);
+}
+
+void FR_SetColorGreen(float value)
+{
+    DENG_UNUSED(value);
+}
+
+void FR_SetColorBlue(float value)
+{
+    DENG_UNUSED(value);
+}
+
+void FR_SetAlpha(float value)
+{
+    DENG_UNUSED(value);
+}
+
+void FR_SetShadowOffset(int offsetX, int offsetY)
+{
+    DENG_UNUSED(offsetX);
+    DENG_UNUSED(offsetY);
+}
+
+void FR_SetShadowStrength(float value)
+{
+    DENG_UNUSED(value);
+}
+
+void FR_SetGlitterStrength(float value)
+{
+    DENG_UNUSED(value);
+}
+
+void FR_SetCaseScale(boolean value)
+{
+    DENG_UNUSED(value);
+}
+
+void FR_DrawText(const char* text, const Point2Raw* origin)
+{
+    DENG_UNUSED(text);
+    DENG_UNUSED(origin);
+}
+
+void FR_DrawText2(const char* text, const Point2Raw* origin, int alignFlags)
+{
+    DENG_UNUSED(text);
+    DENG_UNUSED(origin);
+    DENG_UNUSED(alignFlags);
+}
+
+void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, short _textFlags)
+{
+    DENG_UNUSED(text);
+    DENG_UNUSED(_origin);
+    DENG_UNUSED(alignFlags);
+    DENG_UNUSED(_textFlags);
+}
+
+void FR_DrawTextXY3(const char* text, int x, int y, int alignFlags, short flags)
+{
+    DENG_UNUSED(text);
+    DENG_UNUSED(x);
+    DENG_UNUSED(y);
+    DENG_UNUSED(alignFlags);
+    DENG_UNUSED(flags);
+}
+
+void FR_DrawTextXY2(const char* text, int x, int y, int alignFlags)
+{
+    DENG_UNUSED(text);
+    DENG_UNUSED(x);
+    DENG_UNUSED(y);
+    DENG_UNUSED(alignFlags);
+}
+
+void FR_DrawTextXY(const char* text, int x, int y)
+{
+    DENG_UNUSED(text);
+    DENG_UNUSED(x);
+    DENG_UNUSED(y);
+}
+
+int FR_CharWidth(unsigned char ch)
+{
+    DENG_UNUSED(ch);
+    return 0;
+}
+
+int FR_CharHeight(unsigned char ch)
+{
+    DENG_UNUSED(ch);
+    return 0;
+}
+
+void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short textFlags)
+{
+    DENG_UNUSED(ch);
+    DENG_UNUSED(origin);
+    DENG_UNUSED(alignFlags);
+    DENG_UNUSED(textFlags);
+}
+
+void FR_DrawChar2(unsigned char ch, const Point2Raw* origin, int alignFlags)
+{
+    DENG_UNUSED(ch);
+    DENG_UNUSED(origin);
+    DENG_UNUSED(alignFlags);
+}
+
+void FR_DrawChar(unsigned char ch, const Point2Raw* origin)
+{
+    DENG_UNUSED(ch);
+    DENG_UNUSED(origin);
+}
+
+void FR_DrawCharXY3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
+{
+    DENG_UNUSED(ch);
+    DENG_UNUSED(x);
+    DENG_UNUSED(y);
+    DENG_UNUSED(alignFlags);
+    DENG_UNUSED(textFlags);
+}
+
+void FR_DrawCharXY2(unsigned char ch, int x, int y, int alignFlags)
+{
+    DENG_UNUSED(ch);
+    DENG_UNUSED(x);
+    DENG_UNUSED(y);
+    DENG_UNUSED(alignFlags);
+}
+
+void FR_DrawCharXY(unsigned char ch, int x, int y)
+{
+    DENG_UNUSED(ch);
+    DENG_UNUSED(x);
+    DENG_UNUSED(y);
+}
+
+void FR_ResetTypeinTimer(void)
+{}
+
+void FR_TextSize(Size2Raw* size, const char* text)
+{
+    DENG_UNUSED(size);
+    DENG_UNUSED(text);
+}
+
+int FR_TextWidth(const char* text)
+{
+    DENG_UNUSED(text);
+    return 0;
+}
+
+int FR_TextHeight(const char* text)
+{
+    DENG_UNUSED(text);
+    return 0;
+}
 
 void Fonts_Init(void)
 {}
 
+fontid_t Fonts_ResolveUri(Uri const *uri)
+{
+    DENG_UNUSED(uri);
+    return 0;
+}
+
+void Fonts_ClearDefinitionLinks(void)
+{}
+
 void R_InitViewWindow(void)
 {}
+
+void R_RenderPlayerView(int num)
+{
+    DENG_UNUSED(num);
+}
+
+void R_SetBorderGfx(Uri const *const *paths)
+{
+    DENG_UNUSED(paths);
+}
+
+void R_SkyParams(int layer, int param, void *data)
+{
+    DENG_UNUSED(layer);
+    DENG_UNUSED(param);
+    DENG_UNUSED(data);
+}
 
 void R_InitSvgs(void)
 {}
@@ -88,11 +380,29 @@ void R_InitSvgs(void)
 void R_ShutdownSvgs(void)
 {}
 
+void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines)
+{
+    DENG_UNUSED(id);
+    DENG_UNUSED(lines);
+    DENG_UNUSED(numLines);
+}
+
+struct font_s* R_CreateFontFromDef(ded_compositefont_t* def)
+{
+    DENG_UNUSED(def);
+    return 0;
+}
+
 void Rend_Init(void)
 {}
 
 void Rend_DecorInit()
 {}
+
+void Rend_CacheForMobjType(int num)
+{
+    DENG_UNUSED(num);
+}
 
 void Rend_ConsoleInit()
 {}
@@ -123,6 +433,11 @@ void Models_Init()
 
 void Models_Shutdown()
 {}
+
+void Models_CacheForState(int stateIndex)
+{
+    DENG_UNUSED(stateIndex);
+}
 
 void LG_SectorChanged(Sector* sector)
 {

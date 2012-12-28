@@ -6,6 +6,10 @@
  * client-only function call that should not be done in common/shared code.
  * (There should be no shared code outside libdeng1/2.)
  *
+ * @todo Add a @c libdeng_gui for UI/graphics code. Many of these belong there
+ * instead of being exported out of the client executable for game plugins'
+ * needs.
+ *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -46,16 +50,68 @@ DENG_EXTERN_C void GL_Shutdown();
 DENG_EXTERN_C void GL_EarlyInitTextureManager();
 DENG_EXTERN_C void GL_PruneTextureVariantSpecifications();
 DENG_EXTERN_C void GL_SetFilter(int f);
+DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
+DENG_EXTERN_C void GL_UseFog(int yes);
+DENG_EXTERN_C void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+DENG_EXTERN_C void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
+DENG_EXTERN_C void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
+DENG_EXTERN_C void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
 
 DENG_EXTERN_C void R_InitViewWindow(void);
+DENG_EXTERN_C void R_RenderPlayerView(int num);
+DENG_EXTERN_C void R_SetBorderGfx(Uri const *const *paths);
+DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data);
 DENG_EXTERN_C void R_InitSvgs(void);
 DENG_EXTERN_C void R_ShutdownSvgs(void);
+DENG_EXTERN_C void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines);
+DENG_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
 DENG_EXTERN_C void FR_Init(void);
+DENG_EXTERN_C void FR_SetFont(fontid_t font);
+DENG_EXTERN_C void FR_PushAttrib(void);
+DENG_EXTERN_C void FR_PopAttrib(void);
+DENG_EXTERN_C void FR_LoadDefaultAttrib(void);
+DENG_EXTERN_C float FR_Leading(void);
+DENG_EXTERN_C void FR_SetLeading(float value);
+DENG_EXTERN_C int FR_Tracking(void);
+DENG_EXTERN_C void FR_SetTracking(int value);
+DENG_EXTERN_C void FR_SetColor(float red, float green, float blue);
+DENG_EXTERN_C void FR_SetColorv(const float rgb[3]);
+DENG_EXTERN_C void FR_SetColorAndAlpha(float red, float green, float blue, float alpha);
+DENG_EXTERN_C void FR_SetColorAndAlphav(const float rgba[4]);
+DENG_EXTERN_C void FR_SetColorRed(float value);
+DENG_EXTERN_C void FR_SetColorGreen(float value);
+DENG_EXTERN_C void FR_SetColorBlue(float value);
+DENG_EXTERN_C void FR_SetAlpha(float value);
+DENG_EXTERN_C void FR_SetShadowOffset(int offsetX, int offsetY);
+DENG_EXTERN_C void FR_SetShadowStrength(float value);
+DENG_EXTERN_C void FR_SetGlitterStrength(float value);
+DENG_EXTERN_C void FR_SetCaseScale(boolean value);
+DENG_EXTERN_C void FR_DrawText(const char* text, const Point2Raw* origin);
+DENG_EXTERN_C void FR_DrawText2(const char* text, const Point2Raw* origin, int alignFlags);
+DENG_EXTERN_C void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, short _textFlags);
+DENG_EXTERN_C void FR_DrawTextXY3(const char* text, int x, int y, int alignFlags, short flags);
+DENG_EXTERN_C void FR_DrawTextXY2(const char* text, int x, int y, int alignFlags);
+DENG_EXTERN_C void FR_DrawTextXY(const char* text, int x, int y);DENG_EXTERN_C int FR_CharWidth(unsigned char ch);
+DENG_EXTERN_C int FR_CharHeight(unsigned char ch);
+DENG_EXTERN_C void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short textFlags);
+DENG_EXTERN_C void FR_DrawChar2(unsigned char ch, const Point2Raw* origin, int alignFlags);
+DENG_EXTERN_C void FR_DrawChar(unsigned char ch, const Point2Raw* origin);
+DENG_EXTERN_C void FR_DrawCharXY3(unsigned char ch, int x, int y, int alignFlags, short textFlags);
+DENG_EXTERN_C void FR_DrawCharXY2(unsigned char ch, int x, int y, int alignFlags);
+DENG_EXTERN_C void FR_DrawCharXY(unsigned char ch, int x, int y);
+DENG_EXTERN_C void FR_ResetTypeinTimer(void);
+DENG_EXTERN_C void FR_TextSize(Size2Raw* size, const char* text);
+DENG_EXTERN_C int FR_TextWidth(const char* text);
+DENG_EXTERN_C int FR_TextHeight(const char* text);
+
 DENG_EXTERN_C void Fonts_Init(void);
+DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri);
+DENG_EXTERN_C void Fonts_ClearDefinitionLinks(void);
 
 DENG_EXTERN_C void Rend_Init(void);
 DENG_EXTERN_C void Rend_DecorInit();
+DENG_EXTERN_C void Rend_CacheForMobjType(int num);
 DENG_EXTERN_C void Rend_ConsoleInit();
 DENG_EXTERN_C void Rend_ConsoleResize(int force);
 DENG_EXTERN_C void Rend_ConsoleOpen(int yes);
@@ -65,6 +121,7 @@ DENG_EXTERN_C void Rend_ConsoleCursorResetBlink();
 
 DENG_EXTERN_C void Models_Init();
 DENG_EXTERN_C void Models_Shutdown();
+DENG_EXTERN_C void Models_CacheForState(int stateIndex);
 
 DENG_EXTERN_C void LG_SectorChanged(Sector* sector);
 
