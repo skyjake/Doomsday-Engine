@@ -55,22 +55,22 @@ typedef de::UserDataPathTree MaterialRepository;
  */
 struct MaterialBindInfo
 {
-    ded_decor_t* decorationDefs[2];
-    ded_detailtexture_t* detailtextureDefs[2];
-    ded_ptcgen_t* ptcgenDefs[2];
-    ded_reflection_t* reflectionDefs[2];
+    ded_decor_t *decorationDefs[2];
+    ded_detailtexture_t *detailtextureDefs[2];
+    ded_ptcgen_t *ptcgenDefs[2];
+    ded_reflection_t *reflectionDefs[2];
 };
 
 class MaterialBind
 {
 public:
-    MaterialBind(MaterialRepository::Node& _direcNode, materialid_t id)
+    MaterialBind(MaterialRepository::Node &_direcNode, materialid_t id)
         : direcNode(&_direcNode), asocMaterial(0), guid(id), extInfo(0)
     {}
 
     ~MaterialBind()
     {
-        MaterialBindInfo* detachedInfo = detachInfo();
+        MaterialBindInfo *detachedInfo = detachInfo();
         if(detachedInfo) M_Free(detachedInfo);
     }
 
@@ -78,26 +78,26 @@ public:
     materialid_t id() const { return guid; }
 
     /// @return  MaterialRepository node associated with this.
-    MaterialRepository::Node& directoryNode() const { return *direcNode; }
+    MaterialRepository::Node &directoryNode() const { return *direcNode; }
 
     /// @return  Material associated with this else @c NULL.
-    material_t* material() const { return asocMaterial; }
+    material_t *material() const { return asocMaterial; }
 
     /// @return  Extended info owned by this else @c NULL.
-    MaterialBindInfo* info() const { return extInfo; }
+    MaterialBindInfo *info() const { return extInfo; }
 
     /**
      * Attach extended info data to this. If existing info is present it is replaced.
      * MaterialBind is given ownership of the info.
      * @param info  Extended info data to attach.
      */
-    MaterialBind& attachInfo(MaterialBindInfo& info);
+    MaterialBind &attachInfo(MaterialBindInfo &info);
 
     /**
      * Detach any extended info owned by this and relinquish ownership to the caller.
      * @return  Extended info or else @c NULL if not present.
      */
-    MaterialBindInfo* detachInfo();
+    MaterialBindInfo *detachInfo();
 
     /**
      * Change the Material associated with this binding.
@@ -110,52 +110,52 @@ public:
      * @param  material  New Material to associate with this.
      * @return  This instance.
      */
-    MaterialBind& setMaterial(material_t* material);
+    MaterialBind &setMaterial(material_t *material);
 
     /// @return  Detail texture definition associated with this else @c NULL
-    ded_detailtexture_t* detailTextureDef() const;
+    ded_detailtexture_t *detailTextureDef() const;
 
     /// @return  Decoration definition associated with this else @c NULL
-    ded_decor_t* decorationDef() const;
+    ded_decor_t *decorationDef() const;
 
     /// @return  Particle generator definition associated with this else @c NULL
-    ded_ptcgen_t* ptcGenDef() const;
+    ded_ptcgen_t *ptcGenDef() const;
 
     /// @return  Reflection definition associated with this else @c NULL
-    ded_reflection_t* reflectionDef() const;
+    ded_reflection_t *reflectionDef() const;
 
 private:
     /// This binding's node in the directory.
-    MaterialRepository::Node* direcNode;
+    MaterialRepository::Node *direcNode;
 
     /// Material associated with this.
-    material_t* asocMaterial;
+    material_t *asocMaterial;
 
     /// Unique identifier.
     materialid_t guid;
 
     /// Extended info about this binding. Will be attached upon successfull preparation
     /// of the first derived variant of the associated Material.
-    MaterialBindInfo* extInfo;
+    MaterialBindInfo *extInfo;
 };
 
 typedef struct materialvariantspecificationlistnode_s {
-    struct materialvariantspecificationlistnode_s* next;
-    materialvariantspecification_t* spec;
+    struct materialvariantspecificationlistnode_s *next;
+    materialvariantspecification_t *spec;
 } MaterialVariantSpecificationListNode;
 
 typedef MaterialVariantSpecificationListNode VariantSpecificationList;
 
 typedef struct materiallistnode_s {
-    struct materiallistnode_s* next;
-    material_t* mat;
+    struct materiallistnode_s *next;
+    material_t *mat;
 } MaterialListNode;
 typedef MaterialListNode MaterialList;
 
 typedef struct variantcachequeuenode_s {
-    struct variantcachequeuenode_s* next;
-    material_t* mat;
-    materialvariantspecification_t const* spec;
+    struct variantcachequeuenode_s *next;
+    material_t *mat;
+    materialvariantspecification_t const *spec;
     bool smooth;
 } VariantCacheQueueNode;
 
@@ -285,70 +285,64 @@ static bool isInAnimGroup(MaterialAnim const& group, material_t const* mat)
     return false;
 }
 
-static materialvariantspecification_t* copyVariantSpecification(
-    const materialvariantspecification_t* tpl)
+static materialvariantspecification_t *dupVariantSpecification(
+    materialvariantspecification_t const &tpl)
 {
-    materialvariantspecification_t* spec = (materialvariantspecification_t*) M_Malloc(sizeof *spec);
-    if(!spec)
-        Con_Error("Materials::copyVariantSpecification: Failed on allocation of %lu bytes for new MaterialVariantSpecification.", (unsigned long) sizeof *spec);
-    memcpy(spec, tpl, sizeof *spec);
+    materialvariantspecification_t *spec = (materialvariantspecification_t *) M_Malloc(sizeof *spec);
+    if(!spec) Con_Error("Materials::copyVariantSpecification: Failed on allocation of %lu bytes for new MaterialVariantSpecification.", (unsigned long) sizeof *spec);
+    std::memcpy(spec, &tpl, sizeof *spec);
     return spec;
 }
 
-static int compareVariantSpecifications(const materialvariantspecification_t* a,
-    const materialvariantspecification_t* b)
+static int compareVariantSpecifications(materialvariantspecification_t const &a,
+    materialvariantspecification_t const &b)
 {
-    DENG2_ASSERT(a && b);
-    if(a == b) return 1;
-    if(a->context != b->context) return 0;
-    return GL_CompareTextureVariantSpecifications(a->primarySpec, b->primarySpec);
+    if(&a == &b) return 1;
+    if(a.context != b.context) return 0;
+    return GL_CompareTextureVariantSpecifications(a.primarySpec, b.primarySpec);
 }
 
-static materialvariantspecification_t* applyVariantSpecification(
-    materialvariantspecification_t* spec, materialcontext_t mc,
-    texturevariantspecification_t* primarySpec)
+static void applyVariantSpecification(materialvariantspecification_t &spec, materialcontext_t mc,
+    texturevariantspecification_t *primarySpec)
 {
-    DENG2_ASSERT(spec && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)) && primarySpec);
-    spec->context = mc;
-    spec->primarySpec = primarySpec;
-    return spec;
+    DENG2_ASSERT(mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc) && primarySpec);
+    spec.context     = mc;
+    spec.primarySpec = primarySpec;
 }
 
-static materialvariantspecification_t* linkVariantSpecification(
-    materialvariantspecification_t* spec)
+static materialvariantspecification_t *linkVariantSpecification(
+    materialvariantspecification_t &spec)
 {
-    DENG2_ASSERT(initedOk && spec);
-    {
-    MaterialVariantSpecificationListNode* node;
-    if(NULL == (node = (MaterialVariantSpecificationListNode*) M_Malloc(sizeof(*node))))
-        Con_Error("Materials::linkVariantSpecification: Failed on allocation of %lu bytes for "
-            "new MaterialVariantSpecificationListNode.", (unsigned long) sizeof(*node));
-    node->spec = spec;
+    DENG2_ASSERT(initedOk);
+    MaterialVariantSpecificationListNode * node = (MaterialVariantSpecificationListNode *) M_Malloc(sizeof(*node));
+    if(!node) Con_Error("Materials::linkVariantSpecification: Failed on allocation of %lu bytes for new MaterialVariantSpecificationListNode.", (unsigned long) sizeof(*node));
+    node->spec = &spec;
     node->next = variantSpecs;
-    variantSpecs = (VariantSpecificationList*)node;
-    return spec;
-    }
+    variantSpecs = (VariantSpecificationList *)node;
+    return &spec;
 }
 
-static materialvariantspecification_t* findVariantSpecification(
-    const materialvariantspecification_t* tpl, boolean canCreate)
+static materialvariantspecification_t *findVariantSpecification(
+    materialvariantspecification_t const &tpl, bool canCreate)
 {
-    DENG2_ASSERT(initedOk && tpl);
-    MaterialVariantSpecificationListNode* node;
-    for(node = variantSpecs; node; node = node->next)
+    DENG2_ASSERT(initedOk);
+    for(MaterialVariantSpecificationListNode* node = variantSpecs; node; node = node->next)
     {
-        if(compareVariantSpecifications(node->spec, tpl))
+        if(compareVariantSpecifications(*node->spec, tpl))
+        {
             return node->spec;
+        }
     }
-    if(!canCreate)
-        return NULL;
-    return linkVariantSpecification(copyVariantSpecification(tpl));
+
+    if(!canCreate) return 0;
+
+    return linkVariantSpecification(*dupVariantSpecification(tpl));
 }
 
-static materialvariantspecification_t* getVariantSpecificationForContext(
+static materialvariantspecification_t *getVariantSpecificationForContext(
     materialcontext_t mc, int flags, byte border, int tClass,
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
-    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
+    bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
 {
     static materialvariantspecification_t tpl;
 
@@ -370,8 +364,8 @@ static materialvariantspecification_t* getVariantSpecificationForContext(
             GL_TextureVariantSpecificationForContext(primaryContext, flags,
                 border, tClass, tMap, wrapS, wrapT, minFilter, magFilter, anisoFilter, mipmapped,
                 gammaCorrection, noStretch, toAlpha);
-    applyVariantSpecification(&tpl, mc, primarySpec);
-    return findVariantSpecification(&tpl, true);
+    applyVariantSpecification(tpl, mc, primarySpec);
+    return findVariantSpecification(tpl, true);
 }
 
 static void destroyVariantSpecifications(void)
@@ -387,17 +381,18 @@ static void destroyVariantSpecifications(void)
 }
 
 typedef struct {
-    const materialvariantspecification_t* spec;
-    MaterialVariant* chosen;
+    materialvariantspecification_t const *spec;
+    de::MaterialVariant* chosen;
 } choosevariantworker_parameters_t;
 
-static int chooseVariantWorker(MaterialVariant* variant, void* parameters)
+static int chooseVariantWorker(struct materialvariant_s *_variant, void *parameters)
 {
-    choosevariantworker_parameters_t* p = (choosevariantworker_parameters_t*) parameters;
-    const materialvariantspecification_t* cand = MaterialVariant_Spec(variant);
+    de::MaterialVariant *variant = reinterpret_cast<de::MaterialVariant *>(_variant);
+    choosevariantworker_parameters_t *p = (choosevariantworker_parameters_t *) parameters;
+    materialvariantspecification_t const &cand = variant->spec();
     DENG2_ASSERT(p);
 
-    if(compareVariantSpecifications(cand, p->spec))
+    if(compareVariantSpecifications(cand, *p->spec))
     {
         // This will do fine.
         p->chosen = variant;
@@ -406,14 +401,12 @@ static int chooseVariantWorker(MaterialVariant* variant, void* parameters)
     return false; // Continue iteration.
 }
 
-static MaterialVariant* chooseVariant(material_t* mat, const materialvariantspecification_t* spec)
+static de::MaterialVariant *chooseVariant(material_t &mat, materialvariantspecification_t const &spec)
 {
     choosevariantworker_parameters_t params;
-    DENG2_ASSERT(mat && spec);
-
-    params.spec = spec;
+    params.spec   = &spec;
     params.chosen = NULL;
-    Material_IterateVariants(mat, chooseVariantWorker, &params);
+    Material_IterateVariants(&mat, chooseVariantWorker, &params);
     return params.chosen;
 }
 
@@ -729,7 +722,7 @@ void Materials_ProcessCacheQueue(void)
     while(variantCacheQueue)
     {
         VariantCacheQueueNode* node = variantCacheQueue, *next = node->next;
-        Materials_Prepare(node->mat, node->spec, node->smooth);
+        Materials_Prepare(*node->mat, *node->spec, node->smooth);
         M_Free(node);
         variantCacheQueue = next;
     }
@@ -1125,21 +1118,20 @@ void Materials_UpdateTextureLinks(materialid_t materialId)
     updateMaterialTextureLinks(*bind);
 }
 
-materialsnapshot_s const *Materials_PrepareVariant2(MaterialVariant *variant, boolean updateSnapshot)
+materialsnapshot_s const *Materials_PrepareVariant2(de::MaterialVariant &variant, bool updateSnapshot)
 {
     // Acquire the snapshot we are interested in.
-    de::MaterialSnapshot *snapshot = reinterpret_cast<de::MaterialSnapshot *>(MaterialVariant_Snapshot(variant));
+    de::MaterialSnapshot *snapshot = variant.snapshot();
     if(!snapshot)
     {
         // Time to allocate the snapshot.
-        snapshot = new de::MaterialSnapshot(reinterpret_cast<de::MaterialVariant &>(*variant));
-
-        MaterialVariant_AttachSnapshot(variant, reinterpret_cast<materialsnapshot_s *>(snapshot));
+        snapshot = new de::MaterialSnapshot(variant);
+        variant.attachSnapshot(*snapshot);
 
         // Update the snapshot right away.
         updateSnapshot = true;
     }
-    else if(MaterialVariant_SnapshotPrepareFrame(variant) != frameCount)
+    else if(variant.snapshotPrepareFrame() != frameCount)
     {
         // Time to update the snapshot.
         updateSnapshot = true;
@@ -1148,53 +1140,49 @@ materialsnapshot_s const *Materials_PrepareVariant2(MaterialVariant *variant, bo
     // We have work to do?
     if(updateSnapshot)
     {
-        MaterialVariant_SetSnapshotPrepareFrame(variant, frameCount);
+        variant.setSnapshotPrepareFrame(frameCount);
         snapshot->update();
     }
 
     return reinterpret_cast<materialsnapshot_s *>(snapshot);
 }
 
-const materialsnapshot_s* Materials_PrepareVariant(MaterialVariant* variant)
+materialsnapshot_s const *Materials_PrepareVariant(de::MaterialVariant &variant)
 {
     return Materials_PrepareVariant2(variant, false/*do not force a snapshot update*/);
 }
 
-const materialsnapshot_s* Materials_Prepare2(material_t* mat, const materialvariantspecification_t* spec,
-    boolean smooth, boolean updateSnapshot)
+materialsnapshot_s const *Materials_Prepare2(material_t &mat, materialvariantspecification_t const &spec,
+    bool smooth, bool updateSnapshot)
 {
-    return Materials_PrepareVariant2(Materials_ChooseVariant(mat, spec, smooth, true), updateSnapshot);
+    return Materials_PrepareVariant2(*Materials_ChooseVariant(mat, spec, smooth, true), updateSnapshot);
 }
 
-const materialsnapshot_s* Materials_Prepare(material_t* mat, const materialvariantspecification_t* spec,
-    boolean smooth)
+materialsnapshot_s const *Materials_Prepare(material_t &mat, materialvariantspecification_t const &spec,
+    bool smooth)
 {
     return Materials_Prepare2(mat, spec, smooth, false/*do not force a snapshot update*/);
 }
 
-const ded_decor_t* Materials_DecorationDef(material_t* mat)
+ded_decor_t const *Materials_DecorationDef(material_t *mat)
 {
-    if(!mat) return NULL;
+    if(!mat) return 0;
     if(!Material_Prepared(mat))
     {
-        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-            MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-        Materials_Prepare(mat, spec, false);
+        Materials_Prepare(*mat, *Rend_MapSurfaceDiffuseMaterialSpec(), false);
     }
-    MaterialBind* mb = getMaterialBindForId(Material_PrimaryBind(mat));
+    MaterialBind *mb = getMaterialBindForId(Material_PrimaryBind(mat));
     return mb->decorationDef();
 }
 
-const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
+ded_ptcgen_t const *Materials_PtcGenDef(material_t *mat)
 {
-    if(!mat || isDedicated) return NULL;
+    if(!mat || isDedicated) return 0;
     if(!Material_Prepared(mat))
     {
-        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-            MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-        Materials_Prepare(mat, spec, false);
+        Materials_Prepare(*mat, *Rend_MapSurfaceDiffuseMaterialSpec(), false);
     }
-    MaterialBind* mb = getMaterialBindForId(Material_PrimaryBind(mat));
+    MaterialBind *mb = getMaterialBindForId(Material_PrimaryBind(mat));
     return mb->ptcGenDef();
 }
 
@@ -1220,46 +1208,47 @@ const struct materialvariantspecification_s* Materials_VariantSpecificationForCo
                                              mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-MaterialVariant *Materials_ChooseVariant(material_t *mat,
-    materialvariantspecification_t const *spec, boolean smoothed, boolean canCreate)
+de::MaterialVariant *Materials_ChooseVariant(material_t &mat,
+    materialvariantspecification_t const &spec, bool smoothed, bool canCreate)
 {
-    if(!mat) return 0;
-
     DENG_ASSERT(initedOk);
 
-    MaterialVariant* variant = chooseVariant(mat, spec);
+    de::MaterialVariant* variant = chooseVariant(mat, spec);
     if(!variant)
     {
         if(!canCreate) return 0;
-        variant = Material_AddVariant(mat, MaterialVariant_New(mat, spec));
+
+        de::MaterialVariant *variant = new de::MaterialVariant(mat, spec, *Material_Definition(&mat));
+        Material_AddVariant(&mat, reinterpret_cast<materialvariant_s *>(variant));
     }
 
     if(smoothed)
     {
-        variant = MaterialVariant_TranslationCurrent(variant);
+        variant = variant->translationCurrent();
     }
 
     return variant;
 }
 
-static int printVariantInfo(MaterialVariant* variant, void* parameters)
+static int printVariantInfoWorker(struct materialvariant_s *_variant, void* parameters)
 {
-    int* variantIdx = (int*)parameters;
-    MaterialVariant* next = MaterialVariant_TranslationNext(variant);
-    int i, layers = Material_LayerCount(MaterialVariant_GeneralCase(variant));
+    de::MaterialVariant *variant = reinterpret_cast<de::MaterialVariant *>(_variant);
+    int* variantIdx = (int *)parameters;
+    de::MaterialVariant *next = variant->translationNext();
+    int i, layers = Material_LayerCount(&variant->generalCase());
     DENG2_ASSERT(variantIdx);
 
-    Con_Printf("Variant #%i: Spec:%p\n", *variantIdx, (void*)MaterialVariant_Spec(variant));
+    Con_Printf("Variant #%i: Spec:%p\n", *variantIdx, (void *) &variant->spec());
 
     // Print translation info:
-    if(Material_HasTranslation(MaterialVariant_GeneralCase(variant)))
+    if(Material_HasTranslation(&variant->generalCase()))
     {
-        MaterialVariant* cur = MaterialVariant_TranslationCurrent(variant);
-        float inter = MaterialVariant_TranslationPoint(variant);
-        Uri* curUri = Materials_ComposeUri(Materials_Id(MaterialVariant_GeneralCase(cur)));
-        AutoStr* curPath = Uri_ToString(curUri);
-        Uri* nextUri = Materials_ComposeUri(Materials_Id(MaterialVariant_GeneralCase(next)));
-        AutoStr* nextPath = Uri_ToString(nextUri);
+        de::MaterialVariant *cur = variant->translationCurrent();
+        float inter = variant->translationPoint();
+        Uri *curUri = Materials_ComposeUri(Materials_Id(&cur->generalCase()));
+        AutoStr *curPath = Uri_ToString(curUri);
+        Uri *nextUri = Materials_ComposeUri(Materials_Id(&next->generalCase()));
+        AutoStr *nextPath = Uri_ToString(nextUri);
 
         Con_Printf("  Translation: Current:\"%s\" Next:\"%s\" Inter:%f\n",
                    F_PrettyPath(Str_Text(curPath)), F_PrettyPath(Str_Text(nextPath)), inter);
@@ -1271,7 +1260,7 @@ static int printVariantInfo(MaterialVariant* variant, void* parameters)
     // Print layer info:
     for(i = 0; i < layers; ++i)
     {
-        materialvariant_layer_t const *l = MaterialVariant_Layer(variant, i);
+        materialvariant_layer_t const *l = variant->layer(i);
         de::Uri uri = reinterpret_cast<de::Texture &>(*l->texture).manifest().composeUri();
         QByteArray path = de::NativePath(uri.asText()).pretty().toUtf8();
 
@@ -1308,7 +1297,7 @@ static void printMaterialInfo(material_t* mat)
                Material_ShinyMaskTexture(mat)? "(masked)" : "",
                Material_IsSkyMasked(mat)    ? "yes" : "no");
 
-    Material_IterateVariants(mat, printVariantInfo, (void*)&variantIdx);
+    Material_IterateVariants(mat, printVariantInfoWorker, (void*)&variantIdx);
 
     Uri_Delete(uri);
 }
@@ -1591,43 +1580,30 @@ boolean Materials_IsPrecacheAnimGroup(int groupNum)
     return ((group->flags & AGF_PRECACHE) != 0);
 }
 
-#if 0
-static int clearVariantTranslationWorker(MaterialVariant* variant, void* /*parameters*/)
-{
-    MaterialVariant_SetTranslation(variant, variant, variant);
-    return 0; // Continue iteration.
-}
-
-static void Materials_ClearTranslation(material_t* mat)
-{
-    DENG2_ASSERT(initedOk);
-    Material_IterateVariants(mat, clearVariantTranslationWorker, NULL);
-}
-#endif
-
 typedef struct {
-    material_t* current, *next;
+    material_t *current, *next;
 } setmaterialtranslationworker_parameters_t;
 
-static int setVariantTranslationWorker(MaterialVariant* variant, void* parameters)
+static int setVariantTranslationWorker(struct materialvariant_s *_variant, void *parameters)
 {
-    setmaterialtranslationworker_parameters_t* p = (setmaterialtranslationworker_parameters_t*) parameters;
-    const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
-    MaterialVariant* current, *next;
+    de::MaterialVariant *variant = reinterpret_cast<de::MaterialVariant *>(_variant);
+    setmaterialtranslationworker_parameters_t *p = (setmaterialtranslationworker_parameters_t *) parameters;
+    materialvariantspecification_t const &spec = variant->spec();
+    de::MaterialVariant *current, *next;
     DENG2_ASSERT(p);
 
-    current = Materials_ChooseVariant(p->current, spec, false, true/*create if necessary*/);
-    next    = Materials_ChooseVariant(p->next,    spec, false, true/*create if necessary*/);
-    MaterialVariant_SetTranslation(variant, current, next);
+    current = Materials_ChooseVariant(*p->current, spec, false, true/*create if necessary*/);
+    next    = Materials_ChooseVariant(*p->next,    spec, false, true/*create if necessary*/);
+    variant->setTranslation(current, next);
     return 0; // Continue iteration.
 }
 
-static int setVariantTranslationPointWorker(MaterialVariant* variant, void* parameters)
+static int setVariantTranslationPointWorker(struct materialvariant_s *variant, void* parameters)
 {
     float* interPtr = (float*)parameters;
     DENG2_ASSERT(interPtr);
 
-    MaterialVariant_SetTranslationPoint(variant, *interPtr);
+    reinterpret_cast<de::MaterialVariant *>(variant)->setTranslationPoint(*interPtr);
     return 0; // Continue iteration.
 }
 
@@ -1710,9 +1686,9 @@ static void animateAnimGroups(void)
     }
 }
 
-static int resetVariantGroupAnimWorker(MaterialVariant* mat, void* /*parameters*/)
+static int resetVariantGroupAnimWorker(struct materialvariant_s *mat, void* /*parameters*/)
 {
-    MaterialVariant_ResetAnim(mat);
+    reinterpret_cast<de::MaterialVariant *>(mat)->resetAnim();
     return 0; // Continue iteration.
 }
 

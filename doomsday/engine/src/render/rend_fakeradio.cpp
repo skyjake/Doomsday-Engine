@@ -1316,7 +1316,7 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
     if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || Surface_IsSkyMasked(suf)) return;
 
     materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(pln->PS_material, spec, true));
+    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*pln->PS_material, *spec, true));
     if(ms.glowStrength() > 0) return;
 
     // Determine the openness of the lineDef. If this edge is edgeOpen,

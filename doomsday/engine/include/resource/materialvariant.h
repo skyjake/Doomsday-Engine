@@ -23,18 +23,8 @@
 #include "render/rendpoly.h"
 #include "materials.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct texturevariant_s;
-struct texturevariantspecification_s;
-struct materialvariant_s;
-
-typedef struct materialvariantspecification_s {
-    materialcontext_t context;
-    struct texturevariantspecification_s *primarySpec;
-} materialvariantspecification_t;
+struct materialvariantspecification_s;
 
 #define MATERIALVARIANT_MAXLAYERS       DDMAX_MATERIAL_LAYERS
 
@@ -45,10 +35,6 @@ typedef struct materialvariant_layer_s {
     float glow;
     short tics;
 } materialvariant_layer_t;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #ifdef __cplusplus
 
@@ -62,7 +48,7 @@ class MaterialSnapshot;
 class MaterialVariant
 {
 public:
-    MaterialVariant(material_t &generalCase, materialvariantspecification_t const &spec,
+    MaterialVariant(material_t &generalCase, materialvariantspecification_s const &spec,
                     ded_material_t const &def);
     ~MaterialVariant();
 
@@ -78,10 +64,10 @@ public:
     void resetAnim();
 
     /// @return  Material from which this variant is derived.
-    material_t *generalCase() const { return material; }
+    material_t &generalCase() const { return *material; }
 
     /// @return  MaterialVariantSpecification from which this variant is derived.
-    materialvariantspecification_t const *spec() const { return varSpec; }
+    materialvariantspecification_s const &spec() const { return *varSpec; }
 
     /**
      * Retrieve a handle for a staged animation layer form this variant.
@@ -147,7 +133,7 @@ private:
     float inter;
 
     /// Specification used to derive this variant.
-    materialvariantspecification_t const *varSpec;
+    materialvariantspecification_s const *varSpec;
 
     /// Cached copy of current state if any.
     MaterialSnapshot *snapshot_;
@@ -160,47 +146,8 @@ private:
 
 } // namespace de
 
-extern "C" {
-#endif
-
-/**
- * C wrapper API:
- */
+#endif // __cplusplus
 
 struct materialvariant_s; // The materialvariant instance (opaque).
-typedef struct materialvariant_s MaterialVariant;
-
-MaterialVariant* MaterialVariant_New(struct material_s* generalCase,
-    const materialvariantspecification_t* spec);
-void MaterialVariant_Delete(MaterialVariant* mat);
-
-void MaterialVariant_Ticker(MaterialVariant* mat, timespan_t time);
-
-void MaterialVariant_ResetAnim(MaterialVariant* mat);
-
-material_t* MaterialVariant_GeneralCase(MaterialVariant* mat);
-const materialvariantspecification_t* MaterialVariant_Spec(const MaterialVariant* mat);
-const materialvariant_layer_t* MaterialVariant_Layer(MaterialVariant* mat, int layer);
-
-struct materialsnapshot_s *MaterialVariant_AttachSnapshot(MaterialVariant* mat, struct materialsnapshot_s *materialSnapshot);
-struct materialsnapshot_s *MaterialVariant_DetachSnapshot(MaterialVariant* mat);
-struct materialsnapshot_s *MaterialVariant_Snapshot(const MaterialVariant* mat);
-
-int MaterialVariant_SnapshotPrepareFrame(const MaterialVariant* mat);
-void MaterialVariant_SetSnapshotPrepareFrame(MaterialVariant* mat, int frame);
-
-MaterialVariant* MaterialVariant_TranslationNext(MaterialVariant* mat);
-MaterialVariant* MaterialVariant_TranslationCurrent(MaterialVariant* mat);
-
-float MaterialVariant_TranslationPoint(MaterialVariant* mat);
-
-void MaterialVariant_SetTranslation(MaterialVariant* mat,
-    MaterialVariant* current, MaterialVariant* next);
-
-void MaterialVariant_SetTranslationPoint(MaterialVariant* mat, float inter);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_RESOURCE_MATERIALVARIANT_H */

@@ -38,6 +38,7 @@
 #include "resource/materialvariant.h"
 #include "resource/texturevariant.h"
 #include "map/blockmapvisual.h"
+#include "render/sprite.h"
 
 // Surface (tangent-space) Vector Flags.
 #define SVF_TANGENT             0x01
@@ -463,11 +464,11 @@ int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *paramaters)
     return 1; // Stop iteration.
 }
 
-static inline materialvariantspecification_t const *mapSurfaceMaterialSpec(int wrapS, int wrapT)
+static inline materialvariantspecification_t const &mapSurfaceMaterialSpec(int wrapS, int wrapT)
 {
-    return Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-                                                    wrapS, wrapT, -1, -1, -1,
-                                                    true, true, false, false);
+    return *Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+                                                     wrapS, wrapT, -1, -1, -1,
+                                                     true, true, false, false);
 }
 
 /**
@@ -477,7 +478,7 @@ static inline materialvariantspecification_t const *mapSurfaceMaterialSpec(int w
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
 void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
-    coord_t wallLength, MaterialVariant *material, float const texOffset[2],
+    coord_t wallLength, de::MaterialVariant *material, float const texOffset[2],
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
     vissprite_t *vis = R_NewVisSprite();
@@ -503,7 +504,7 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
     // wrapping.
     if(renderTextures)
     {
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_PrepareVariant(material));
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_PrepareVariant(*material));
         int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
 
         VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms.dimensions().width();
@@ -530,13 +531,12 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
         }
 
         // Choose an appropriate variant.
-        /// @todo Can result in multiple variants being prepared.
-        ///        This decision should be made earlier (in rendHEdgeSection()).
-        material = Materials_ChooseVariant(MaterialVariant_GeneralCase(material),
+        /// @todo Why do this again here? (we've already choosen) -ds
+        material = Materials_ChooseVariant(material->generalCase(),
                                            mapSurfaceMaterialSpec(wrapS, wrapT), true, true);
     }
 
-    VS_WALL(vis)->material = material;
+    VS_WALL(vis)->material = reinterpret_cast<materialvariant_s *>(material);
     VS_WALL(vis)->blendMode = blendMode;
 
     for(i = 0; i < 4; ++i)
@@ -686,9 +686,9 @@ static void flatShinyTexCoords(rtexcoord_t *tc, float const xyz[3])
 }
 
 static float getSnapshots(de::MaterialSnapshot const **msA,
-    de::MaterialSnapshot const **msB, material_t *mat)
+    de::MaterialSnapshot const **msB, material_t &mat)
 {
-    materialvariantspecification_t const *spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
+    materialvariantspecification_t const &spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
     float interPos = 0;
     DENG_ASSERT(msA);
 
@@ -697,20 +697,20 @@ static float getSnapshots(de::MaterialSnapshot const **msA,
     // Smooth Texture Animation?
     if(msB)
     {
-        MaterialVariant *variant = Materials_ChooseVariant(mat, spec, false, false);
-        if(MaterialVariant_TranslationCurrent(variant) != MaterialVariant_TranslationNext(variant))
+        de::MaterialVariant *variant = Materials_ChooseVariant(mat, spec, false, false);
+        if(variant->translationCurrent() != variant->translationNext())
         {
-            MaterialVariant *matB = MaterialVariant_TranslationNext(variant);
+            de::MaterialVariant *matB = variant->translationNext();
 
             // Prepare the inter texture.
-            *msB = reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(matB));
+            *msB = reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(*matB));
 
             // If fog is active, inter=0 is accepted as well. Otherwise
             // flickering may occur if the rendering passes don't match for
             // blended and unblended surfaces.
-            if(!(!usingFog && MaterialVariant_TranslationPoint(matB) < 0))
+            if(!(!usingFog && matB->translationPoint() < 0))
             {
-                interPos = MaterialVariant_TranslationPoint(matB);
+                interPos = matB->translationPoint();
             }
         }
         else
@@ -777,7 +777,7 @@ static boolean renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     DGLuint modTex = 0;
     float glowing = p->glowing;
     boolean drawAsVisSprite = false;
-    boolean skyMaskedMaterial = ((p->flags & RPF_SKYMASK) || (msA && Material_IsSkyMasked(msA->material().generalCase())));
+    boolean skyMaskedMaterial = ((p->flags & RPF_SKYMASK) || (msA && Material_IsSkyMasked(&msA->material().generalCase())));
 
     // Map RTU configuration from prepared MaterialSnapshot(s).
     const rtexmapunit_t* primaryRTU       = (!(p->flags & RPF_SKYMASK))? &msA->unit(MTU_PRIMARY) : NULL;
@@ -1047,7 +1047,7 @@ static boolean renderWorldPoly(rvertex_t *rvertices, uint numVertices,
          * This is needed because all masked polys must be sorted (sprites
          * are masked polys). Otherwise there will be artifacts.
          */
-        Rend_AddMaskedPoly(rvertices, rcolors, *p->wall.segLength, reinterpret_cast<materialvariant_s *>(&msA->material()),
+        Rend_AddMaskedPoly(rvertices, rcolors, *p->wall.segLength, &msA->material(),
                            p->texOffset, p->blendMode, p->lightListIdx, glowing);
 
         R_FreeRendTexCoords(primaryCoords);
@@ -1484,7 +1484,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
         if(smoothTexAnim)
             blended = true;
 
-        inter = getSnapshots(&msA, blended? &msB : NULL, mat);
+        inter = getSnapshots(&msA, blended? &msB : NULL, *mat);
 
         if(texMode != 2)
         {
@@ -1496,7 +1496,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
             material_t *mat = suf->material? suf->material : Materials_ToMaterial(Materials_ResolveUriCString("System:missing"));
 
             materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-            de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
+            de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*mat, *spec, true));
             params.glowing = ms.glowStrength();
         }
 
@@ -1721,7 +1721,7 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
             if(mat)
             {
                 // Smooth Texture Animation?
-                inter = getSnapshots(&msA, smoothTexAnim? &msB : NULL, mat);
+                inter = getSnapshots(&msA, smoothTexAnim? &msB : NULL, *mat);
 
                 // Dynamic Lights?
                 if((flags & RHF_ADD_DYNLIGHTS) &&
@@ -2342,12 +2342,12 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
     } while((node = antiClockwise? node->prev : node->next) != endNode);
 }
 
-static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode,
-    HEdge* endNode, boolean antiClockwise, int skyFix, material_t* material)
+static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode,
+    HEdge *endNode, boolean antiClockwise, int skyFix, material_t *material)
 {
-    const int rendPolyFlags = RPF_DEFAULT | (!devRendSkyMode? RPF_SKYMASK : 0);
-    rtexcoord_t* coords = 0;
-    rvertex_t* verts;
+    int const rendPolyFlags = RPF_DEFAULT | (!devRendSkyMode? RPF_SKYMASK : 0);
+    rtexcoord_t *coords = 0;
+    rvertex_t *verts;
     uint vertsSize;
 
     Rend_BuildBspLeafSkyFixStripGeometry(leaf, startNode, endNode, antiClockwise, skyFix,
@@ -2360,8 +2360,8 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
     else
     {
         // Map RTU configuration from prepared MaterialSnapshot(s).
-        materialvariantspecification_t const *spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(material, spec, true));
+        materialvariantspecification_t const &spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*material, spec, true));
 
         RL_LoadDefaultRtus();
         RL_MapRtu(RTU_PRIMARY, &ms.unit(MTU_PRIMARY));
@@ -3929,11 +3929,6 @@ static void Rend_RenderBoundingBoxes()
     static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
     static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
 
-    materialvariantspecification_t const *spec;
-    material_t *mat;
-    coord_t eye[3];
-    uint i;
-
     if(!devMobjBBox && !devPolyobjBBox) return;
 
 #ifndef _DEBUG
@@ -3944,6 +3939,7 @@ static void Rend_RenderBoundingBoxes()
     if(!dlBBox)
         dlBBox = constructBBox(0, .08f);
 
+    coord_t eye[3];
     eye[VX] = vOrigin[VX];
     eye[VY] = vOrigin[VZ];
     eye[VZ] = vOrigin[VY];
@@ -3952,58 +3948,62 @@ static void Rend_RenderBoundingBoxes()
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    mat = Materials_ToMaterial(Materials_ResolveUriCString("System:bbox"));
-    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
+    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(
+        *Materials_Prepare(*Materials_ToMaterial(Materials_ResolveUriCString("System:bbox")),
+                           *Sprite_MaterialSpec(0, 0),
+                           true));
 
     GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)
+    {
         GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, drawMobjBBox, NULL);
+    }
 
     if(devPolyobjBBox)
-    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
-        Polyobj const *po = polyObjs[i];
-        Sector const *sec = po->bspLeaf->sector;
-        coord_t width  = (po->aaBox.maxX - po->aaBox.minX)/2;
-        coord_t length = (po->aaBox.maxY - po->aaBox.minY)/2;
-        coord_t height = (sec->SP_ceilheight - sec->SP_floorheight)/2;
-
-        coord_t pos[3];
-        pos[VX] = po->aaBox.minX + width;
-        pos[VY] = po->aaBox.minY + length;
-        pos[VZ] = sec->SP_floorheight;
-
-        float alpha = 1 - ((V3d_Distance(pos, eye) / (Window_Width(theWindow)/2)) / 4);
-        if(alpha < .25f)
-            alpha = .25f; // Don't make them totally invisible.
-
-        Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f, true);
-
-        for(uint j = 0; j < po->lineCount; ++j)
+        for(uint i = 0; i < NUM_POLYOBJS; ++i)
         {
-            LineDef* line = po->lines[j];
-            coord_t width  = (line->aaBox.maxX - line->aaBox.minX)/2;
-            coord_t length = (line->aaBox.maxY - line->aaBox.minY)/2;
+            Polyobj const *po = polyObjs[i];
+            Sector const *sec = po->bspLeaf->sector;
+            coord_t width  = (po->aaBox.maxX - po->aaBox.minX)/2;
+            coord_t length = (po->aaBox.maxY - po->aaBox.minY)/2;
+            coord_t height = (sec->SP_ceilheight - sec->SP_floorheight)/2;
+
             coord_t pos[3];
-
-            /** Draw a bounding box for the lineDef.
-            pos[VX] = line->aaBox.minX + width;
-            pos[VY] = line->aaBox.minY + length;
+            pos[VX] = po->aaBox.minX + width;
+            pos[VY] = po->aaBox.minY + length;
             pos[VZ] = sec->SP_floorheight;
-            Rend_DrawBBox(pos, width, length, height, 0, red, alpha, .08f, true);
-            */
 
-            pos[VX] = (line->L_v2origin[VX] + line->L_v1origin[VX])/2;
-            pos[VY] = (line->L_v2origin[VY] + line->L_v1origin[VY])/2;
-            pos[VZ] = sec->SP_floorheight;
-            width = 0;
-            length = line->length / 2;
+            float alpha = 1 - ((V3d_Distance(pos, eye) / (Window_Width(theWindow)/2)) / 4);
+            if(alpha < .25f)
+                alpha = .25f; // Don't make them totally invisible.
 
-            Rend_DrawBBox(pos, width, length, height, BANG2DEG(BANG_90 - line->angle), green, alpha, 0, true);
+            Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f, true);
+
+            for(uint j = 0; j < po->lineCount; ++j)
+            {
+                LineDef* line = po->lines[j];
+                coord_t width  = (line->aaBox.maxX - line->aaBox.minX)/2;
+                coord_t length = (line->aaBox.maxY - line->aaBox.minY)/2;
+                coord_t pos[3];
+
+                /** Draw a bounding box for the lineDef.
+                pos[VX] = line->aaBox.minX + width;
+                pos[VY] = line->aaBox.minY + length;
+                pos[VZ] = sec->SP_floorheight;
+                Rend_DrawBBox(pos, width, length, height, 0, red, alpha, .08f, true);
+                */
+
+                pos[VX] = (line->L_v2origin[VX] + line->L_v1origin[VX])/2;
+                pos[VY] = (line->L_v2origin[VY] + line->L_v1origin[VY])/2;
+                pos[VZ] = sec->SP_floorheight;
+                width = 0;
+                length = line->length / 2;
+
+                Rend_DrawBBox(pos, width, length, height, BANG2DEG(BANG_90 - line->angle), green, alpha, 0, true);
+            }
         }
     }
 

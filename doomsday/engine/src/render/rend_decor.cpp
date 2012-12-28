@@ -469,16 +469,13 @@ static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT
         delta[VX] * delta[VZ] != 0 ||
         delta[VY] * delta[VZ] != 0))
     {
-        materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
-            MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-        material_t *mat = MaterialVariant_GeneralCase(Materials_ChooseVariant(suf->material, spec, true, true));
+        materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
+        material_t *mat = &Materials_ChooseVariant(*suf->material, *spec, true, true)->generalCase();
         ded_decor_t const *def = Materials_DecorationDef(mat);
         if(def)
         {
-            int axis = V3f_MajorAxis(suf->normal);
+            int const axis = V3f_MajorAxis(suf->normal);
             coord_t width, height;
-            uint i;
-
             if(axis == VX || axis == VY)
             {
                 width = sqrt(delta[VX] * delta[VX] + delta[VY] * delta[VY]);
@@ -494,7 +491,7 @@ static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT
             if(height < 0) height = -height;
 
             // Generate a number of lights.
-            for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+            for(uint i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
             {
                 generateDecorLights(&def->lights[i], suf, mat, v1, v2, width, height,
                                     delta, axis, offsetS, offsetT, sec);

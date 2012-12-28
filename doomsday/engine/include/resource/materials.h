@@ -1,9 +1,9 @@
-/**
- * @file materials.h
- * Materials collection, schemes, bindings and other management. @ingroup resource
+/** @file materials.h Material Collection.
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * Schemes, bindings and other management.
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,11 +27,13 @@
 #include "material.h"
 
 #ifdef __cplusplus
+
+#include "resource/materialvariant.h"
+
 extern "C" {
 #endif
 
 struct texturevariantspecification_s;
-struct materialvariant_s;
 struct materialsnapshot_s;
 
 enum materialschemeid_e; // Defined in dd_share.h
@@ -53,6 +55,13 @@ typedef enum {
 
 /// @c true= val can be interpreted as a valid material context identifier.
 #define VALID_MATERIALCONTEXT(val) ((val) >= MATERIALCONTEXT_FIRST && (val) <= MATERIALCONTEXT_LAST)
+
+struct texturevariantspecification_s;
+
+typedef struct materialvariantspecification_s {
+    materialcontext_t context;
+    struct texturevariantspecification_s *primarySpec;
+} materialvariantspecification_t;
 
 /// To be called during init to register the cvars and ccmds for this module.
 void Materials_Register(void);
@@ -84,10 +93,10 @@ void Materials_ClearDefinitionLinks(void);
  * not valid (i.e., equal to NULL or is a zero-length string) then the special identifier
  * @c MS_ANY is returned. Otherwise @c MS_INVALID.
  */
-enum materialschemeid_e Materials_ParseSchemeName(const char* str);
+enum materialschemeid_e Materials_ParseSchemeName(char const *str);
 
 /// @return  Name associated with the identified @a schemeId else a zero-length string.
-const Str* Materials_SchemeName(enum materialschemeid_e schemeId);
+Str const *Materials_SchemeName(enum materialschemeid_e schemeId);
 
 /// @return  Total number of unique Materials in the collection.
 uint Materials_Size(void);
@@ -96,19 +105,19 @@ uint Materials_Size(void);
 uint Materials_Count(enum materialschemeid_e schemeId);
 
 /// @return  Unique identifier associated with @a material else @c 0.
-materialid_t Materials_Id(material_t* material);
+materialid_t Materials_Id(material_t *material);
 
 /// @return  Material associated with unique identifier @a materialId else @c NULL.
-material_t* Materials_ToMaterial(materialid_t materialId);
+material_t *Materials_ToMaterial(materialid_t materialId);
 
 /// @return  Unique identifier of the scheme this material is in.
 enum materialschemeid_e Materials_Scheme(materialid_t materialId);
 
 /// @return  Symbolic name/path-to this material. Must be destroyed with Str_Delete().
-AutoStr* Materials_ComposePath(materialid_t materialId);
+AutoStr *Materials_ComposePath(materialid_t materialId);
 
 /// @return  Unique name/path-to this material. Must be destroyed with Uri_Delete().
-Uri* Materials_ComposeUri(materialid_t materialId);
+Uri *Materials_ComposeUri(materialid_t materialId);
 
 void Materials_UpdateTextureLinks(materialid_t materialId);
 
@@ -119,30 +128,30 @@ void Materials_UpdateTextureLinks(materialid_t materialId);
  * @param material  Material to be updated.
  * @param def  Material definition to update using.
  */
-void Materials_Rebuild(material_t* material, ded_material_t* def);
+void Materials_Rebuild(material_t *material, ded_material_t *def);
 
 /// @return  @c true if one or more light decorations are defined for this material.
-boolean Materials_HasDecorations(material_t* material);
+boolean Materials_HasDecorations(material_t *material);
 
 /// @return  Decoration defintion associated with @a material else @c NULL.
-const ded_decor_t*  Materials_DecorationDef(material_t* material);
+ded_decor_t const *Materials_DecorationDef(material_t *material);
 
 /// @return  (Particle) Generator definition associated with @a material else @c NULL.
-const ded_ptcgen_t* Materials_PtcGenDef(material_t* material);
+ded_ptcgen_t const *Materials_PtcGenDef(material_t *material);
 
 /// @return  @c true iff @a material is linked to the identified @a animGroupNum.
-boolean Materials_IsMaterialInAnimGroup(material_t* material, int animGroupNum);
+boolean Materials_IsMaterialInAnimGroup(material_t *material, int animGroupNum);
 
 /**
  * Search the Materials collection for a material associated with @a uri.
  * @return  Found material else @c NOMATERIALID.
  */
-materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet);
-materialid_t Materials_ResolveUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
+materialid_t Materials_ResolveUri2(Uri const *uri, boolean quiet);
+materialid_t Materials_ResolveUri(Uri const *uri/*, quiet=!(verbose >= 1)*/);
 
 /// Same as Materials::ResolveUri except @a uri is a C-string.
-materialid_t Materials_ResolveUriCString2(const char* uri, boolean quiet);
-materialid_t Materials_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
+materialid_t Materials_ResolveUriCString2(char const *uri, boolean quiet);
+materialid_t Materials_ResolveUriCString(char const *uri/*, quiet=!(verbose >= 1)*/);
 
 /**
  * Create a new Material unless an existing Material is found at the path
@@ -154,7 +163,7 @@ materialid_t Materials_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 
  * @param def  Material definition to construct from.
  * @return  The newly-created/existing Material else @c NULL.
  */
-material_t* Materials_CreateFromDef(ded_material_t* def);
+material_t *Materials_CreateFromDef(ded_material_t *def);
 
 /// @return  Number of animation/precache groups in the collection.
 int Materials_AnimGroupCount(void);
@@ -187,7 +196,7 @@ void Materials_ClearAnimGroups(void);
  *
  * @return  Rationalized (and interned) copy of the final specification.
  */
-const struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
+struct materialvariantspecification_s const *Materials_VariantSpecificationForContext(
     materialcontext_t materialContext, int flags, byte border, int tClass,
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
@@ -201,8 +210,10 @@ const struct materialvariantspecification_s* Materials_VariantSpecificationForCo
  * @param cacheGroups  @c true= variants for all Materials in any applicable
  *      animation groups are desired, else just this specific Material.
  */
-void Materials_Precache2(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth, boolean cacheGroups);
-void Materials_Precache(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth); /*cacheGroups=true*/
+void Materials_Precache2(material_t *material, struct materialvariantspecification_s const *spec, boolean smooth, boolean cacheGroups);
+void Materials_Precache(material_t *material, struct materialvariantspecification_s const *spec, boolean smooth/*, cacheGroups = true*/);
+
+#ifdef __cplusplus
 
 /**
  * Choose/create a variant of @a material which fulfills @a spec and then
@@ -220,8 +231,8 @@ void Materials_Precache(material_t* material, const struct materialvariantspecif
  *
  * @return  Snapshot for the chosen and prepared variant of Material.
  */
-const struct materialsnapshot_s* Materials_Prepare2(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth, boolean forceSnapshotUpdate);
-const struct materialsnapshot_s* Materials_Prepare(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth); /*forceSnapshotUpdate=false*/
+struct materialsnapshot_s const *Materials_Prepare2(material_t &material, struct materialvariantspecification_s const &spec, bool smooth, bool forceSnapshotUpdate);
+struct materialsnapshot_s const *Materials_Prepare(material_t &material, struct materialvariantspecification_s const &spec, bool smooth/*, forceSnapshotUpdate = false*/);
 
 /**
  * Prepare variant @a material for render (e.g., upload textures if necessary).
@@ -234,8 +245,8 @@ const struct materialsnapshot_s* Materials_Prepare(material_t* material, const s
  *
  * @return  Snapshot for the chosen and prepared variant of Material.
  */
-const struct materialsnapshot_s* Materials_PrepareVariant2(struct materialvariant_s* material, boolean forceSnapshotUpdate);
-const struct materialsnapshot_s* Materials_PrepareVariant(struct materialvariant_s* material); /*forceSnapshotUpdate=false*/
+struct materialsnapshot_s const *Materials_PrepareVariant2(de::MaterialVariant &material, bool forceSnapshotUpdate);
+struct materialsnapshot_s const *Materials_PrepareVariant(de::MaterialVariant &material/*, forceSnapshotUpdate = false*/);
 
 /**
  * Choose/create a variant of @a material which fulfills @a spec.
@@ -247,8 +258,10 @@ const struct materialsnapshot_s* Materials_PrepareVariant(struct materialvariant
  *
  * @return  Chosen variant else @c NULL if none suitable and not creating.
  */
-struct materialvariant_s* Materials_ChooseVariant(material_t* material,
-    const struct materialvariantspecification_s* spec, boolean smoothed, boolean canCreate);
+de::MaterialVariant *Materials_ChooseVariant(material_t &material,
+    struct materialvariantspecification_s const &spec, bool smoothed, bool canCreate);
+
+#endif
 
 /**
  * Create a new animation group.
@@ -264,7 +277,7 @@ int Materials_CreateAnimGroup(int flags);
  * @param tics  Base duration of the new frame in tics.
  * @param randomTics  Extra frame duration in tics (randomized on each cycle).
  */
-void Materials_AddAnimGroupFrame(int animGroupNum, material_t* material, int tics, int randomTics);
+void Materials_AddAnimGroupFrame(int animGroupNum, material_t *material, int tics, int randomTics);
 
 /// @todo Refactor; does not fit the current design.
 boolean Materials_IsPrecacheAnimGroup(int animGroupNum);

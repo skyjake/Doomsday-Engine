@@ -288,7 +288,6 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     float offScaleY = weaponOffsetScaleY / 1000.0f;
     spritedef_t const *sprDef;
     spriteframe_t const *sprFrame;
-    materialvariantspecification_t const *spec;
     boolean flip;
 
 #ifdef RANGECHECK
@@ -304,9 +303,9 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     sprFrame = &sprDef->spriteFrames[frame];
     flip = sprFrame->flip[0];
 
-    spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
+    materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -2, 0, false, true, true, false);
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(sprFrame->mats[0], spec, true));
+    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*sprFrame->mats[0], *spec, true));
 
     de::Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
@@ -390,9 +389,10 @@ void Rend_DrawPSprite(rendpspriteparams_t const *params)
     else if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        material_t *mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
-        materialvariantspecification_t const *spec = PSprite_MaterialSpec();
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(
+            *Materials_Prepare(*Materials_ToMaterial(Materials_ResolveUriCString("System:gray")),
+                               *PSprite_MaterialSpec(),
+                               true));
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
@@ -547,7 +547,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 
     if(renderTextures)
     {
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_PrepareVariant(p->material));
+        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_PrepareVariant(*reinterpret_cast<de::MaterialVariant *>(p->material)));
         tex = &ms.texture(MTU_PRIMARY);
     }
 
@@ -867,21 +867,19 @@ materialvariantspecification_t const *Sprite_MaterialSpec(int tclass, int tmap)
                                                     true, true, true, false);
 }
 
-static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const *p)
+static de::MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)
 {
-    assert(p);
-
     if(!renderTextures) return 0;
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        material_t *mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
-        materialvariantspecification_t const *spec = Sprite_MaterialSpec(0 /*tclass*/, 0/*tmap*/);
-        return Materials_ChooseVariant(mat, spec, true, true);
+        return Materials_ChooseVariant(*Materials_ToMaterial(Materials_ResolveUriCString("System:gray")),
+                                       *Sprite_MaterialSpec(0 /*tclass*/, 0/*tmap*/),
+                                       true, true);
     }
 
     // Use the pre-chosen sprite.
-    return p->material;
+    return reinterpret_cast<de::MaterialVariant *>(p.material);
 }
 
 void Rend_RenderSprite(rendspriteparams_t const *params)
@@ -895,7 +893,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     boolean restoreZ = false;
     coord_t spriteCenter[3];
     coord_t surfaceNormal[3];
-    MaterialVariant *mat = 0;
+    de::MaterialVariant *mat = 0;
     de::MaterialSnapshot const *ms = 0;
     float s = 1, t = 1; ///< Bottom right coords.
     int i;
@@ -906,7 +904,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
         variantspecification_t const *texSpec;
 
         // Ensure this variant has been prepared.
-        ms = reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(params->material));
+        ms = reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(*reinterpret_cast<de::MaterialVariant *>(params->material)));
 
         texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
         DENG_ASSERT(texSpec);
@@ -921,10 +919,10 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     }
 
     // We may want to draw using another material instead.
-    mat = chooseSpriteMaterial(params);
-    if(mat != params->material)
+    mat = chooseSpriteMaterial(*params);
+    if(mat != reinterpret_cast<de::MaterialVariant *>(params->material))
     {
-        ms = mat? reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(mat)) : NULL;
+        ms = mat? reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(*mat)) : NULL;
     }
 
     if(ms)

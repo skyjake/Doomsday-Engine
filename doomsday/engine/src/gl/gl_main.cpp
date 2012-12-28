@@ -735,14 +735,14 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
-void GL_SetMaterialUI2(material_t* mat, int wrapS, int wrapT)
+void GL_SetMaterialUI2(material_t *mat, int wrapS, int wrapT)
 {
     if(!mat) return; // @todo we need a "NULL material".
 
     materialvariantspecification_t const *spec =
             Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0, wrapS, wrapT,
                                                      0, 1, 0, false, false, false, false);
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
+    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*mat, *spec, true));
     GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 }
 
@@ -751,14 +751,14 @@ void GL_SetMaterialUI(material_t* mat)
     GL_SetMaterialUI2(mat, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 }
 
-void GL_SetPSprite(material_t* mat, int tClass, int tMap)
+void GL_SetPSprite(material_t *mat, int tClass, int tMap)
 {
     if(!mat) return; // @todo we need a "NULL material".
 
     materialvariantspecification_t const *spec =
             Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass, tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                                      0, 1, 0, false, true, true, false);
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
+    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(*mat, *spec, true));
     GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 }
 
