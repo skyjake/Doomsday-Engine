@@ -1257,14 +1257,14 @@ static int printVariantInfoWorker(struct materialvariant_s *_variant, void* para
     // Print layer info:
     for(i = 0; i < layers; ++i)
     {
-        materialvariant_layer_t const *l = variant->layer(i);
-        de::Uri uri = reinterpret_cast<de::Texture &>(*l->texture).manifest().composeUri();
+        MaterialVariant::Layer const &l = variant->layer(i);
+        de::Uri uri = reinterpret_cast<de::Texture &>(*l.texture).manifest().composeUri();
         QByteArray path = de::NativePath(uri.asText()).pretty().toUtf8();
 
         Con_Printf("  #%i: Stage:%i Tics:%i Texture:\"%s\""
                    "\n      Offset: %.2f x %.2f Glow:%.2f\n",
-                   i, l->stage, (int)l->tics, path.constData(),
-                   l->texOrigin[0], l->texOrigin[1], l->glow);
+                   i, l.stage, int(l.tics), path.constData(),
+                   l.texOrigin[0], l.texOrigin[1], l.glow);
     }
 
     ++(*variantIdx);

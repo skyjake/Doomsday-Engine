@@ -157,13 +157,13 @@ void MaterialSnapshot::update()
     int layerCount = Material_LayerCount(&mat);
     for(int i = 0; i < layerCount; ++i)
     {
-        materialvariant_layer_t const *ml = d->material->layer(i);
+        MaterialVariant::Layer const &ml = d->material->layer(i);
         preparetextureresult_t result;
 
-        if(!ml->texture) continue;
+        if(!ml.texture) continue;
 
         // Pick the instance matching the specified context.
-        prepTextures[i] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant2(ml->texture, spec.primarySpec, &result));
+        prepTextures[i] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant2(ml.texture, spec.primarySpec, &result));
 
         if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
         {
@@ -179,7 +179,7 @@ void MaterialSnapshot::update()
             // Are we inheriting the logical dimensions from the texture?
             if(0 == Material_Width(&mat) && 0 == Material_Height(&mat))
             {
-                Texture &tex = reinterpret_cast<Texture &>(*ml->texture);
+                Texture &tex = reinterpret_cast<Texture &>(*ml.texture);
                 Size2Raw texSize(tex.width(), tex.height());
                 Material_SetSize(&mat, &texSize);
             }
@@ -233,7 +233,7 @@ void MaterialSnapshot::update()
 
     if(d->dimensions.isEmpty()) return;
 
-    d->glowStrength = d->material->layer(0)->glow * glowFactor;
+    d->glowStrength = d->material->layer(0).glow * glowFactor;
     d->isOpaque = NULL != prepTextures[MTU_PRIMARY] && !prepTextures[MTU_PRIMARY]->isMasked();
 
     // Setup the primary texture unit.
@@ -244,8 +244,8 @@ void MaterialSnapshot::update()
         float const tScale = 1.f / d->dimensions.height();
 
         d->setupTexUnit(MTU_PRIMARY, tex, BM_NORMAL,
-                        sScale, tScale, d->material->layer(0)->texOrigin[0],
-                        d->material->layer(0)->texOrigin[1], 1);
+                        sScale, tScale, d->material->layer(0).texOrigin[0],
+                        d->material->layer(0).texOrigin[1], 1);
     }
 
     /**

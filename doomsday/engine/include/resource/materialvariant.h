@@ -20,23 +20,11 @@
 #ifndef LIBDENG_RESOURCE_MATERIALVARIANT_H
 #define LIBDENG_RESOURCE_MATERIALVARIANT_H
 
-#include "render/rendpoly.h"
-#include "materials.h"
-
-struct texturevariant_s;
-struct materialvariantspecification_s;
-
-#define MATERIALVARIANT_MAXLAYERS       DDMAX_MATERIAL_LAYERS
-
-typedef struct materialvariant_layer_s {
-    int stage; // -1 => layer not in use.
-    struct texture_s *texture;
-    float texOrigin[2]; /// Origin of the texture in material-space.
-    float glow;
-    short tics;
-} materialvariant_layer_t;
-
 #ifdef __cplusplus
+
+struct material_s;
+struct materialvariantspecification_s;
+struct texture_s;
 
 namespace de {
 
@@ -48,7 +36,33 @@ class MaterialSnapshot;
 class MaterialVariant
 {
 public:
-    MaterialVariant(material_t &generalCase, materialvariantspecification_s const &spec,
+    /// Maximum number of layers a material supports.
+    static int const max_layers = DDMAX_MATERIAL_LAYERS;
+
+    struct Layer
+    {
+        /// @c -1 => layer not in use.
+        int stage;
+
+        /// Texture of the layer.
+        struct texture_s *texture;
+
+        /// Origin of the layer in material-space.
+        float texOrigin[2];
+
+        /// Glow strength for the layer.
+        float glow;
+
+        /// Current frame?
+        short tics;
+    };
+
+public:
+    /// The requested layer does not exist. @ingroup errors
+    DENG2_ERROR(InvalidLayerError);
+
+public:
+    MaterialVariant(struct material_s &generalCase, struct materialvariantspecification_s const &spec,
                     ded_material_t const &def);
     ~MaterialVariant();
 
@@ -64,17 +78,17 @@ public:
     void resetAnim();
 
     /// @return  Material from which this variant is derived.
-    material_t &generalCase() const { return *material; }
+    struct material_s &generalCase() const;
 
     /// @return  MaterialVariantSpecification from which this variant is derived.
-    materialvariantspecification_s const &spec() const { return *varSpec; }
+    struct materialvariantspecification_s const &spec() const;
 
     /**
      * Retrieve a handle for a staged animation layer form this variant.
      * @param layer  Index of the layer to retrieve.
      * @return  MaterialVariantLayer for the specified layer index.
      */
-    materialvariant_layer_t const *layer(int layer);
+    Layer const &layer(int layer);
 
     /**
      * Attach MaterialSnapshot data to this. MaterialVariant is given ownership of @a materialSnapshot.
@@ -88,10 +102,10 @@ public:
     MaterialSnapshot *detachSnapshot();
 
     /// @return  MaterialSnapshot data associated with this.
-    MaterialSnapshot *snapshot() const { return snapshot_; }
+    MaterialSnapshot *snapshot() const;
 
     /// @return  Frame count when the snapshot was last prepared/updated.
-    int snapshotPrepareFrame() const { return snapshotPrepareFrame_; }
+    int snapshotPrepareFrame() const;
 
     /**
      * Change the frame when the snapshot was last prepared/updated.
@@ -123,25 +137,8 @@ public:
     void setTranslationPoint(float inter);
 
 private:
-    /// Superior Material of which this is a derivative.
-    material_t *material;
-
-    /// For "smoothed" Material animation:
-    bool hasTranslation;
-    MaterialVariant *current;
-    MaterialVariant *next;
-    float inter;
-
-    /// Specification used to derive this variant.
-    materialvariantspecification_s const *varSpec;
-
-    /// Cached copy of current state if any.
-    MaterialSnapshot *snapshot_;
-
-    /// Frame count when the snapshot was last prepared/updated.
-    int snapshotPrepareFrame_;
-
-    materialvariant_layer_t layers[MATERIALVARIANT_MAXLAYERS];
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace de
