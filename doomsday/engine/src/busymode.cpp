@@ -43,6 +43,7 @@ static QEventLoop* eventLoop;
 static volatile boolean busyDoneCopy;
 static timespan_t busyTime;
 static boolean busyWillAnimateTransition;
+static boolean busyWasIgnoringInput;
 
 #endif // __CLIENT__
 
@@ -55,7 +56,6 @@ static BusyTask* busyTask; // Current task.
 static thread_t busyThread;
 static timespan_t accumulatedBusyTime; // Never cleared.
 static boolean busyTaskEndedWithError;
-static boolean busyWasIgnoringInput;
 static char busyError[256];
 
 #ifdef __CLIENT__
