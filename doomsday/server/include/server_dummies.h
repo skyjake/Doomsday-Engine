@@ -43,10 +43,13 @@ DENG_EXTERN_C struct mobj_s* ClMobj_Find(thid_t id);
 DENG_EXTERN_C boolean ClMobj_IsValid(struct mobj_s* mo);
 DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum);
 
+DENG_EXTERN_C void GameMap_ClMobjReset(GameMap* map);
+
 DENG_EXTERN_C void Con_TransitionRegister();
 DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);
 
 DENG_EXTERN_C void GL_Shutdown();
+DENG_EXTERN_C void GL_ReleaseGLTexturesByTexture(struct texture_s *tex);
 DENG_EXTERN_C void GL_EarlyInitTextureManager();
 DENG_EXTERN_C void GL_PruneTextureVariantSpecifications();
 DENG_EXTERN_C void GL_SetFilter(int f);
@@ -108,10 +111,13 @@ DENG_EXTERN_C int FR_TextHeight(const char* text);
 DENG_EXTERN_C void Fonts_Init(void);
 DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri);
 DENG_EXTERN_C void Fonts_ClearDefinitionLinks(void);
+DENG_EXTERN_C void Fonts_ClearRuntime(void);
 
 DENG_EXTERN_C void Rend_Init(void);
 DENG_EXTERN_C void Rend_DecorInit();
+DENG_EXTERN_C void Rend_CacheForMap();
 DENG_EXTERN_C void Rend_CacheForMobjType(int num);
+DENG_EXTERN_C void Rend_CalcLightModRange();
 DENG_EXTERN_C void Rend_ConsoleInit();
 DENG_EXTERN_C void Rend_ConsoleResize(int force);
 DENG_EXTERN_C void Rend_ConsoleOpen(int yes);
@@ -119,9 +125,14 @@ DENG_EXTERN_C void Rend_ConsoleToggleFullscreen();
 DENG_EXTERN_C void Rend_ConsoleMove(int y);
 DENG_EXTERN_C void Rend_ConsoleCursorResetBlink();
 
+DENG_EXTERN_C void Sky_Ticker();
+
 DENG_EXTERN_C void Models_Init();
 DENG_EXTERN_C void Models_Shutdown();
 DENG_EXTERN_C void Models_CacheForState(int stateIndex);
+
+DENG_EXTERN_C void SB_InitForMap(const char* uniqueID);
+DENG_EXTERN_C void SB_SurfaceMoved(biassurface_t* bsuf);
 
 DENG_EXTERN_C void LG_SectorChanged(Sector* sector);
 

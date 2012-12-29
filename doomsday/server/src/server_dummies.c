@@ -51,6 +51,11 @@ struct mobj_s* ClPlayer_ClMobj(int plrNum)
     return 0;
 }
 
+void GameMap_ClMobjReset(GameMap* map)
+{
+    DENG_UNUSED(map);
+}
+
 void Con_TransitionRegister()
 {}
 
@@ -61,6 +66,11 @@ void Con_TransitionTicker(timespan_t t)
 
 void GL_Shutdown()
 {}
+
+void GL_ReleaseGLTexturesByTexture(struct texture_s *tex)
+{
+    DENG_UNUSED(tex);
+}
 
 void GL_EarlyInitTextureManager()
 {}
@@ -354,6 +364,9 @@ fontid_t Fonts_ResolveUri(Uri const *uri)
 void Fonts_ClearDefinitionLinks(void)
 {}
 
+void Fonts_ClearRuntime(void)
+{}
+
 void R_InitViewWindow(void)
 {}
 
@@ -399,10 +412,16 @@ void Rend_Init(void)
 void Rend_DecorInit()
 {}
 
+void Rend_CacheForMap()
+{}
+
 void Rend_CacheForMobjType(int num)
 {
     DENG_UNUSED(num);
 }
+
+void Rend_CalcLightModRange()
+{}
 
 void Rend_ConsoleInit()
 {}
@@ -428,6 +447,9 @@ void Rend_ConsoleToggleFullscreen()
 void Rend_ConsoleCursorResetBlink()
 {}
 
+void Sky_Ticker()
+{}
+
 void Models_Init()
 {}
 
@@ -437,6 +459,16 @@ void Models_Shutdown()
 void Models_CacheForState(int stateIndex)
 {
     DENG_UNUSED(stateIndex);
+}
+
+void SB_InitForMap(const char* uniqueID)
+{
+    DENG_UNUSED(uniqueID);
+}
+
+void SB_SurfaceMoved(biassurface_t* bsuf)
+{
+    DENG_UNUSED(bsuf);
 }
 
 void LG_SectorChanged(Sector* sector)
