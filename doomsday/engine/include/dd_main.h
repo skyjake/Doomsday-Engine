@@ -206,9 +206,7 @@ de::String const &DD_MaterialSchemeNameForTextureScheme(de::String textureScheme
 extern "C" {
 #endif // __cplusplus
 
-materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
-
-fontschemeid_t DD_ParseFontSchemeName(const char* str);
+fontschemeid_t DD_ParseFontSchemeName(char const *str);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 AutoStr *DD_MaterialSchemeNameForTextureScheme(Str const *textureSchemeName);

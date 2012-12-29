@@ -749,7 +749,7 @@ static void addLuminous(mobj_t *mo)
 
     // Ensure we have up-to-date information about the material.
     materialvariantspecification_t const *spec = Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
-    MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
+    MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
     if(!ms.hasTexture(MTU_PRIMARY)) return; // An invalid sprite texture.
 
     pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_SPRITE_AUTOLIGHT);
@@ -964,7 +964,7 @@ static boolean createGlowLightForSurface(Surface *suf, void * /*paramaters*/)
 
         // Are we glowing at this moment in time?
         materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-        MaterialSnapshot const &ms = *Materials::prepare(*suf->material, *spec, true);
+        MaterialSnapshot const &ms = *App_Materials()->prepare(*suf->material, *spec, true);
         if(!(ms.glowStrength() > .001f)) return true; // Continue iteration.
 
         averagecolor_analysis_t const *avgColorAmplified = (averagecolor_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_COLOR_AMPLIFIED);

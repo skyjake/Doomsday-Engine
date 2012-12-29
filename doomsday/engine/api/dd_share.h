@@ -1229,26 +1229,6 @@ typedef struct {
 /**@}*/
 
 /*
- * Material Schemes
- */
-
-typedef enum materialschemeid_e {
-    MS_ANY = -1,
-    MATERIALSCHEME_FIRST = 1000,
-    MS_SYSTEM = MATERIALSCHEME_FIRST,
-    MS_FLATS,
-    MS_TEXTURES,
-    MS_SPRITES,
-    MATERIALSCHEME_LAST = MS_SPRITES,
-    MS_INVALID /// Special value used to signify an invalid scheme identifier.
-} materialschemeid_t;
-
-#define MATERIALSCHEME_COUNT  (MATERIALSCHEME_LAST - MATERIALSCHEME_FIRST + 1)
-
-/// @c true= val can be interpreted as a valid material scheme identifier.
-#define VALID_MATERIALSCHEMEID(val) ((val) >= MATERIALSCHEME_FIRST && (val) <= MATERIALSCHEME_LAST)
-
-/*
  * Font Schemes
  */
 

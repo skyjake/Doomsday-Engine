@@ -112,8 +112,6 @@ Textures::Scheme& Textures::createScheme(String name)
     return *newScheme;
 }
 
-
-
 bool Textures::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet) const
 {
     LOG_AS("Textures::validateUri");
@@ -434,7 +432,7 @@ static void printVariantInfo(TextureVariant &variant)
 static void printTextureInfo(Texture &tex)
 {
     Uri uri = tex.manifest().composeUri();
-    QByteArray path = NativePath(uri.asText()).pretty().toUtf8();
+    QByteArray path = uri.asText().toUtf8();
 
     Con_Printf("Texture \"%s\" [%p] x%u origin:%s\n",
                path.constData(), (void *)&tex, tex.variantCount(),

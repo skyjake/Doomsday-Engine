@@ -1831,13 +1831,13 @@ static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr
         {
             // No, attempt to resolve this URI and update the dictionary.
             // First try the preferred scheme, then any.
-            materialid_t materialId = Materials::resolveUri(materialUri);
+            materialid_t materialId = App_Materials()->resolveUri(materialUri);
             if(materialId == NOMATERIALID)
             {
                 materialUri.setScheme("");
-                materialId = Materials::resolveUri(materialUri);
+                materialId = App_Materials()->resolveUri(materialUri);
             }
-            material = Materials::toMaterial(materialId);
+            material = App_Materials()->toMaterial(materialId);
 
             // Insert the possibly resolved material into the dictionary.
             materialDict->setUserPointer(internId, material);

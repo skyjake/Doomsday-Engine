@@ -173,7 +173,7 @@ void MaterialSnapshot::update()
             materialid_t matId = Material_PrimaryBind(&mat);
             if(matId != NOMATERIALID)
             {
-                Materials::updateTextureLinks(matId);
+                App_Materials()->updateTextureLinks(matId);
             }
 
             // Are we inheriting the logical dimensions from the texture?

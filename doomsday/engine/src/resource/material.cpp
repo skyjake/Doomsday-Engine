@@ -217,7 +217,7 @@ boolean Material_HasGlow(material_t *mat)
 
     /// @todo We should not need to prepare to determine this.
     MaterialSnapshot const &ms = reinterpret_cast<MaterialSnapshot const &>(
-        *Materials::prepare(*mat, *Rend_MapSurfaceDiffuseMaterialSpec(), true));
+        *App_Materials()->prepare(*mat, *Rend_MapSurfaceDiffuseMaterialSpec(), true));
 
     return (ms.glowStrength() > .0001f);
 }
@@ -415,6 +415,17 @@ int Material_IterateVariants(material_t *mat,
         }
     }
     return result;
+}
+
+int Material_VariantCount(material_t const *mat)
+{
+    DENG_ASSERT(mat);
+    int count = 0;
+    for(material_variantlist_node_t *node = mat->_variants; node; node = node->next)
+    {
+        ++count;
+    }
+    return count;
 }
 
 void Material_DestroyVariants(material_t *mat)

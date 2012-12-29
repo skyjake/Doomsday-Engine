@@ -474,7 +474,7 @@ ded_decor_t* Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean 
         if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
-        defMatId = Materials::resolveUri2(*reinterpret_cast<de::Uri *>(def->material), true/*quiet please*/);
+        defMatId = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->material), true/*quiet please*/);
         if(matId == defMatId && R_IsAllowedDecoration(def, hasExternal, isCustom))
             return def;
     }
@@ -492,7 +492,7 @@ ded_reflection_t* Def_GetReflection(materialid_t matId, boolean hasExternal, boo
         if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
-        defMatId = Materials::resolveUri2(*reinterpret_cast<de::Uri *>(def->material), true/*quiet please*/);
+        defMatId = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->material), true/*quiet please*/);
         if(matId == defMatId && R_IsAllowedReflection(def, hasExternal, isCustom))
             return def;
     }
@@ -507,7 +507,7 @@ ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
     {
         if(def->material1 && !Uri_IsEmpty(def->material1))
         {
-            materialid_t defMatId = Materials::resolveUri2(*reinterpret_cast<de::Uri *>(def->material1), true/*quiet please*/);
+            materialid_t defMatId = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->material1), true/*quiet please*/);
             // Is this suitable?
             if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
                 return def;
@@ -515,7 +515,7 @@ ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
 
         if(def->material2 && !Uri_IsEmpty(def->material2))
         {
-            materialid_t defMatId = Materials::resolveUri2(*reinterpret_cast<de::Uri *>(def->material2), true/*quiet please*/);
+            materialid_t defMatId = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->material2), true/*quiet please*/);
             // Is this suitable?
             if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
                 return def;
@@ -535,7 +535,7 @@ ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean 
 
         if(!def->material || Uri_IsEmpty(def->material)) continue;
 
-        defMatId = Materials::resolveUri2(*reinterpret_cast<de::Uri *>(def->material), true/*quiet please*/);
+        defMatId = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->material), true/*quiet please*/);
         if(defMatId == NOMATERIALID) continue;
 
         // Is this suitable?
@@ -546,19 +546,19 @@ ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean 
              * A search is necessary only if we know both the used material and
              * the specified material in this definition are in *a* group.
              */
-            material_t* mat = Materials::toMaterial(matId);
-            material_t* defMat = Materials::toMaterial(defMatId);
+            material_t* mat = App_Materials()->toMaterial(matId);
+            material_t* defMat = App_Materials()->toMaterial(defMatId);
             if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
             {
-                int g, numGroups = Materials::animGroupCount();
+                int g, numGroups = App_Materials()->animGroupCount();
 
                 for(g = 0; g < numGroups; ++g)
                 {
-                    if(Materials::isPrecacheAnimGroup(g))
+                    if(App_Materials()->isPrecacheAnimGroup(g))
                         continue; // Precache groups don't apply.
 
-                    if(Materials::isMaterialInAnimGroup(defMat, g) &&
-                       Materials::isMaterialInAnimGroup(mat, g))
+                    if(App_Materials()->isMaterialInAnimGroup(defMat, g) &&
+                       App_Materials()->isMaterialInAnimGroup(mat, g))
                     {
                         // Both are in this group! This def will do.
                         return def;
@@ -1058,7 +1058,7 @@ void Def_Read()
         FS1::Scheme &scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
         scheme.reset();
 
-        Materials::clearDefinitionLinks();
+        App_Materials()->clearDefinitionLinks();
         Fonts_ClearDefinitionLinks();
 
         Def_Destroy();
@@ -1173,18 +1173,18 @@ void Def_Read()
     for(int i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t *def = &defs.materials[i];
-        material_t *mat = Materials::toMaterial(de::Materials::resolveUri2(*reinterpret_cast<de::Uri *>(def->uri), true/*quiet please*/));
+        material_t *mat = App_Materials()->toMaterial(App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->uri), true/*quiet please*/));
         if(!mat)
         {
             // A new Material.
-            Materials::newFromDef(def);
+            App_Materials()->newFromDef(def);
             continue;
         }
         // Update existing.
-        Materials::rebuild(mat, def);
+        App_Materials()->rebuild(mat, def);
     }
 
-    DED_NewEntries((void**) &stateLights, &countStateLights, sizeof(*stateLights), defs.count.states.num);
+    DED_NewEntries((void **) &stateLights, &countStateLights, sizeof(*stateLights), defs.count.states.num);
 
     // Dynamic lights. Update the sprite numbers.
     for(int i = 0; i < defs.count.lights.num; ++i)
@@ -1400,16 +1400,16 @@ static void initAnimGroup(ded_group_t *def)
 
         if(!gm->material) continue;
 
-        material_t *mat = Materials::toMaterial(Materials::resolveUri2(*reinterpret_cast<de::Uri *>(gm->material), true/*quiet please*/));
+        material_t *mat = App_Materials()->toMaterial(App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(gm->material), true/*quiet please*/));
         if(!mat) continue;
 
         // Only create a group when the first texture is found.
         if(groupNumber == -1)
         {
-            groupNumber = Materials::newAnimGroup(def->flags);
+            groupNumber = App_Materials()->newAnimGroup(def->flags);
         }
 
-        Materials::addAnimGroupFrame(groupNumber, mat, gm->tics, gm->randomTics);
+        App_Materials()->addAnimGroupFrame(groupNumber, mat, gm->tics, gm->randomTics);
     }
 }
 
@@ -1575,7 +1575,7 @@ void Def_PostInit(void)
     }
 
     // Animation groups.
-    Materials::clearAnimGroups();
+    App_Materials()->clearAnimGroups();
     for(int i = 0; i < defs.count.groups.num; ++i)
     {
         initAnimGroup(&defs.groups[i]);
@@ -1663,8 +1663,8 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
 
-    l->actMaterial = Materials::resolveUri2(*reinterpret_cast<de::Uri *>(def->actMaterial), true/*quiet please*/);
-    l->deactMaterial = Materials::resolveUri2(*reinterpret_cast<de::Uri *>(def->deactMaterial), true/*quiet please*/);
+    l->actMaterial = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->actMaterial), true/*quiet please*/);
+    l->deactMaterial = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->deactMaterial), true/*quiet please*/);
 
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
@@ -1694,7 +1694,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 if(!stricmp(def->iparmStr[k], "-1"))
                     l->iparm[k] = -1;
                 else
-                    l->iparm[k] = Materials::resolveUri2(de::Uri(Path(def->iparmStr[k])), true/*quiet please*/);
+                    l->iparm[k] = App_Materials()->resolveUri2(de::Uri(Path(def->iparmStr[k])), true/*quiet please*/);
             }
         }
         else if(a & MAP_MUS)

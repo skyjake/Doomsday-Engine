@@ -1462,7 +1462,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
     /// @todo Materials database should not be shutdown during a reload.
-    Materials::shutdown();
+    Materials_Shutdown();
 
     VERBOSE(
         if(!isNullGame(game))
@@ -1490,7 +1490,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
             return false;
         }
 
-        Materials::init();
+        Materials_Init();
         FI_Init();
     }
 
@@ -2057,8 +2057,8 @@ static int DD_StartupWorker(void* parm)
     Textures_Init();
     DD_CreateTextureSchemes();
 
-    // Get the material manager up and running.
-    Materials::init();
+    // Get the material collection up and running.
+    Materials_Init();
 
     Con_SetProgress(140);
     Con_Message("Initializing Binding subsystem...\n");
@@ -2220,7 +2220,7 @@ void DD_UpdateEngineState(void)
         gx.UpdateState(DD_POST);
 
     // Reset the anim groups (if in-game)
-    Materials::resetAnimGroups();
+    App_Materials()->resetAnimGroups();
 }
 
 /* *INDENT-OFF* */
@@ -2553,12 +2553,6 @@ void DD_SetVariable(int ddvalue, void *parm)
 }
 
 /// @note Part of the Doomsday public API.
-materialschemeid_t DD_ParseMaterialSchemeName(char const *str)
-{
-    return Materials::parseSchemeName(str);
-}
-
-/// @note Part of the Doomsday public API.
 fontschemeid_t DD_ParseFontSchemeName(const char* str)
 {
     return Fonts_ParseScheme(str);
@@ -2589,14 +2583,14 @@ String const &DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
         schemeId = MS_SYSTEM;
     }
 
-    return Materials::schemeName(schemeId);
+    return App_Materials()->schemeName(schemeId);
 }
 
 AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
 {
     if(!textureSchemeName)
     {
-        QByteArray schemeNameUtf8 = Materials::schemeName(MS_INVALID).toUtf8();
+        QByteArray schemeNameUtf8 = App_Materials()->schemeName(MS_INVALID).toUtf8();
         return AutoStr_FromTextStd(schemeNameUtf8.constData());
     }
     else
@@ -2614,7 +2608,7 @@ materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
     {
         de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*_textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
-        return Materials::resolveUri2(uri, true/*quiet please*/);
+        return App_Materials()->resolveUri2(uri, true/*quiet please*/);
     }
     catch(Textures::UnknownSchemeError const &er)
     {

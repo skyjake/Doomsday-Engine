@@ -166,23 +166,22 @@ void P_PtcInitForMap(void)
 
 void P_MapSpawnPlaneParticleGens(void)
 {
-    GameMap* map = theMap;
+    GameMap *map = theMap;
     uint i, j;
 
     if(isDedicated || !useParticles || !map) return;
 
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        Sector* sector = SECTOR_PTR(i);
+        Sector *sector = SECTOR_PTR(i);
 
         // Only planes in sectors with volume on the world X/Y axis can support generators.
-        if(0 == sector->lineDefCount)
-            continue;
+        if(!sector->lineDefCount) continue;
 
         for(j = 0; j < 2; ++j)
         {
-            Plane* plane = sector->SP_plane(j);
-            const ded_ptcgen_t* def = Materials_PtcGenDef(plane->PS_material);
+            Plane *plane = sector->SP_plane(j);
+            ded_ptcgen_t const *def = Materials_PtcGenDef(plane->PS_material);
             P_SpawnPlaneParticleGen(def, plane);
         }
     }

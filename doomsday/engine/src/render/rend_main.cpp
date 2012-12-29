@@ -262,7 +262,7 @@ static inline double viewFacingDot(coord_t v1[2], coord_t v2[2])
 
 materialvariantspecification_t const *Rend_MapSurfaceDiffuseMaterialSpec()
 {
-    return Materials::variantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+    return App_Materials()->variantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                                          -1, -1, -1, true, true, false, false);
 }
 
@@ -468,7 +468,7 @@ int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *paramaters)
 
 static inline materialvariantspecification_t const &mapSurfaceMaterialSpec(int wrapS, int wrapT)
 {
-    return *Materials::variantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+    return *App_Materials()->variantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
                                                      wrapS, wrapT, -1, -1, -1,
                                                      true, true, false, false);
 }
@@ -506,7 +506,7 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
     // wrapping.
     if(renderTextures)
     {
-        MaterialSnapshot const &ms = *Materials::prepareVariant(*material);
+        MaterialSnapshot const &ms = *App_Materials()->prepareVariant(*material);
         int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
 
         VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms.dimensions().width();
@@ -534,7 +534,7 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
 
         // Choose an appropriate variant.
         /// @todo Why do this again here? (we've already choosen) -ds
-        material = Materials::chooseVariant(material->generalCase(),
+        material = App_Materials()->chooseVariant(material->generalCase(),
                                            mapSurfaceMaterialSpec(wrapS, wrapT), true, true);
     }
 
@@ -694,18 +694,18 @@ static float getSnapshots(MaterialSnapshot const **msA,
     float interPos = 0;
     DENG_ASSERT(msA);
 
-    *msA = Materials::prepare(mat, spec, true);
+    *msA = App_Materials()->prepare(mat, spec, true);
 
     // Smooth Texture Animation?
     if(msB)
     {
-        MaterialVariant *variant = Materials::chooseVariant(mat, spec, false, false);
+        MaterialVariant *variant = App_Materials()->chooseVariant(mat, spec, false, false);
         if(variant->translationCurrent() != variant->translationNext())
         {
             MaterialVariant *matB = variant->translationNext();
 
             // Prepare the inter texture.
-            *msB = Materials::prepareVariant(*matB);
+            *msB = App_Materials()->prepareVariant(*matB);
 
             // If fog is active, inter=0 is accepted as well. Otherwise
             // flickering may occur if the rendering passes don't match for
@@ -1495,10 +1495,10 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
         else
         {
             Surface *suf = &bspLeaf->sector->planes[elmIdx]->surface;
-            material_t *mat = suf->material? suf->material : Materials::toMaterial(Materials::resolveUri(de::Uri(Path("System:missing"))));
+            material_t *mat = suf->material? suf->material : App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:missing"))));
 
             materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-            MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
+            MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
             params.glowing = ms.glowStrength();
         }
 
@@ -1669,13 +1669,13 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
             if(renderTextures == 2)
             {
                 // Lighting debug mode; render using System:gray.
-                mat = Materials::toMaterial(Materials::resolveUri(de::Uri(Path("System:gray"))));
+                mat = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:gray"))));
             }
             else if(!surface->material ||
                     ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))
             {
                 // Missing material debug mode; render using System:missing.
-                mat = Materials::toMaterial(Materials::resolveUri(de::Uri(Path("System:missing"))));
+                mat = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:missing"))));
             }
             else
             {
@@ -2363,7 +2363,7 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
     {
         // Map RTU configuration from prepared MaterialSnapshot(s).
         materialvariantspecification_t const &spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
-        MaterialSnapshot const &ms = *Materials::prepare(*material, spec, true);
+        MaterialSnapshot const &ms = *App_Materials()->prepare(*material, spec, true);
 
         RL_LoadDefaultRtus();
         RL_MapRtu(RTU_PRIMARY, &ms.unit(MTU_PRIMARY));
@@ -2794,10 +2794,10 @@ static void Rend_RenderPlanes()
         else if(texMode == 1)
             // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
-            mat = Materials::toMaterial(Materials::resolveUri(de::Uri(Path("System:missing"))));
+            mat = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:missing"))));
         else
             // For lighting debug, render all solid surfaces using the gray texture.
-            mat = Materials::toMaterial(Materials::resolveUri(de::Uri(Path("System:gray"))));
+            mat = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:gray"))));
 
         V2f_Copy(texOffset, suf->visOffset);
         // Add the Y offset to orient the Y flipped texture.
@@ -3950,7 +3950,7 @@ static void Rend_RenderBoundingBoxes()
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    MaterialSnapshot const &ms = *Materials::prepare(*Materials::toMaterial(Materials::resolveUri(de::Uri(Path("System:bbox")))),
+    MaterialSnapshot const &ms = *App_Materials()->prepare(*App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:bbox")))),
                                                          *Sprite_MaterialSpec(0, 0), true);
 
     GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));

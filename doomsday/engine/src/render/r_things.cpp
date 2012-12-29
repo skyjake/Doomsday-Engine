@@ -211,7 +211,7 @@ static void buildSprite(TextureManifest &manifest)
         link = true;
     }
 
-    frame->mat         = Materials::toMaterial(Materials::resolveUri(de::Uri("Sprites", manifest.path())));
+    frame->mat         = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri("Sprites", manifest.path())));
     frame->frame[0]    = frameNumber;
     frame->rotation[0] = rotationNumber;
 
@@ -454,10 +454,10 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
 
     /// @todo fixme: We should not be using the PSprite spec here. -ds
     materialvariantspecification_t const *spec =
-            Materials::variantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
+            App_Materials()->variantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
                                                      GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
                                                      false, true, true, false);
-    MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, false);
+    MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, false);
 
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
@@ -498,7 +498,7 @@ coord_t R_VisualRadius(mobj_t *mo)
     // Use the sprite frame's width?
     if(material_t *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
     {
-        MaterialSnapshot const &ms = *Materials::prepare(*material, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
+        MaterialSnapshot const &ms = *App_Materials()->prepare(*material, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
         return ms.dimensions().width() / 2;
     }
 
@@ -541,7 +541,7 @@ float R_ShadowStrength(mobj_t *mo)
         if(mat)
         {
             // Ensure we've prepared this.
-            MaterialSnapshot const &ms = *Materials::prepare(*mat, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
+            MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
             averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_ALPHA);
             float weightedSpriteAlpha;
             if(!aa)
@@ -796,7 +796,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     if(!params) return; // Wha?
 
     materialvariantspecification_t const *spec = Sprite_MaterialSpec(tClass, tMap);
-    MaterialVariant *variant = Materials::chooseVariant(mat, *spec, true, true);
+    MaterialVariant *variant = App_Materials()->chooseVariant(mat, *spec, true, true);
 
 #ifdef _DEBUG
     if(tClass || tMap) DENG_ASSERT(spec->primarySpec->data.variant.translated);
@@ -1033,7 +1033,7 @@ void R_ProjectSprite(mobj_t *mo)
     matFlipT = false;
 
     spec = Sprite_MaterialSpec(mo->tclass, mo->tmap);
-    MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
+    MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
 
     // An invalid sprite texture?
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
@@ -1276,7 +1276,7 @@ void R_ProjectSprite(mobj_t *mo)
 
         // Ensure we have up-to-date information about the material.
         materialvariantspecification_t const *spec = Sprite_MaterialSpec(0, 0);
-        MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
+        MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
 
         pointlight_analysis_t const *pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_SPRITE_AUTOLIGHT);
         if(!pl)

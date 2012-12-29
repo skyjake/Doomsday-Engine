@@ -194,11 +194,6 @@ boolean DD_GameInfo(GameInfo* info);
     ddplayer_t*     DD_GetPlayer(int number);
 ///@}
 
-/// @addtogroup scheme
-///@{
-materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
-///@}
-
 /**
  * @defgroup material Materials
  * @ingroup resource
