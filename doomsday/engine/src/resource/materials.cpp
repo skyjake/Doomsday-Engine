@@ -42,6 +42,7 @@
 #include <de/memoryblockset.h>
 #include <de/memoryzone.h>
 
+#include "resource/materialbind.h"
 #include "resource/materials.h"
 #include "resource/materialsnapshot.h"
 
@@ -58,96 +59,6 @@ D_CMD(PrintMaterialStats);
 #endif
 
 namespace de {
-
-/**
- * Contains extended info about a material binding (see MaterialBind).
- * @note POD object.
- */
-struct MaterialBindInfo
-{
-    ded_decor_t *decorationDefs[2];
-    ded_detailtexture_t *detailtextureDefs[2];
-    ded_ptcgen_t *ptcgenDefs[2];
-    ded_reflection_t *reflectionDefs[2];
-};
-
-class MaterialBind
-{
-public:
-    MaterialBind(MaterialScheme::Index::Node &_direcNode, materialid_t id)
-        : direcNode(&_direcNode), asocMaterial(0), guid(id), extInfo(0)
-    {}
-
-    ~MaterialBind()
-    {
-        MaterialBindInfo *detachedInfo = detachInfo();
-        if(detachedInfo) M_Free(detachedInfo);
-    }
-
-    /// @return  Unique identifier associated with this.
-    materialid_t id() const { return guid; }
-
-    /// @return  Index node associated with this.
-    MaterialScheme::Index::Node &directoryNode() const { return *direcNode; }
-
-    /// @return  Material associated with this else @c NULL.
-    material_t *material() const { return asocMaterial; }
-
-    /// @return  Extended info owned by this else @c NULL.
-    MaterialBindInfo *info() const { return extInfo; }
-
-    /**
-     * Attach extended info data to this. If existing info is present it is replaced.
-     * MaterialBind is given ownership of the info.
-     * @param info  Extended info data to attach.
-     */
-    MaterialBind &attachInfo(MaterialBindInfo &info);
-
-    /**
-     * Detach any extended info owned by this and relinquish ownership to the caller.
-     * @return  Extended info or else @c NULL if not present.
-     */
-    MaterialBindInfo *detachInfo();
-
-    /**
-     * Change the Material associated with this binding.
-     *
-     * @note Only the relationship from MaterialBind to @a material changes!
-     *
-     * @post If @a material differs from that currently associated with this, any
-     *       MaterialBindInfo presently owned by this will destroyed (its invalid).
-     *
-     * @param  material  New Material to associate with this.
-     * @return  This instance.
-     */
-    MaterialBind &setMaterial(material_t *material);
-
-    /// @return  Detail texture definition associated with this else @c NULL
-    ded_detailtexture_t *detailTextureDef() const;
-
-    /// @return  Decoration definition associated with this else @c NULL
-    ded_decor_t *decorationDef() const;
-
-    /// @return  Particle generator definition associated with this else @c NULL
-    ded_ptcgen_t *ptcGenDef() const;
-
-    /// @return  Reflection definition associated with this else @c NULL
-    ded_reflection_t *reflectionDef() const;
-
-private:
-    /// This binding's node in the directory.
-    MaterialScheme::Index::Node *direcNode;
-
-    /// Material associated with this.
-    material_t *asocMaterial;
-
-    /// Unique identifier.
-    materialid_t guid;
-
-    /// Extended info about this binding. Will be attached upon successfull preparation
-    /// of the first derived variant of the associated Material.
-    MaterialBindInfo *extInfo;
-};
 
 MaterialScheme::MaterialScheme()
     : index_(new Index())
@@ -202,7 +113,7 @@ static void updateMaterialBindInfo(MaterialBind &mb, bool canCreateInfo)
 
         // Create new info and attach to this binding.
         info = (MaterialBindInfo *) M_Malloc(sizeof *info);
-        if(!info) Con_Error("MaterialBind::LinkDefinitions: Failed on allocation of %lu bytes for new MaterialBindInfo.", (unsigned long) sizeof *info);
+        if(!info) Con_Error("Materials::updateMaterialBindInfo: Failed on allocation of %lu bytes for new MaterialBindInfo.", (unsigned long) sizeof *info);
 
         mb.attachInfo(*info);
     }
@@ -1891,70 +1802,3 @@ boolean Materials_IsPrecacheAnimGroup(int animGroupNum)
 {
     return App_Materials()->isPrecacheAnimGroup(animGroupNum);
 }
-
-/// @todo Move to another source file -ds
-
-namespace de {
-
-MaterialBind &MaterialBind::setMaterial(material_t *newMaterial)
-{
-    if(asocMaterial != newMaterial)
-    {
-        // Any extended info will be invalid after this op, so destroy it
-        // (it will automatically be rebuilt later, if subsequently needed).
-        MaterialBindInfo *detachedInfo = detachInfo();
-        if(detachedInfo) M_Free(detachedInfo);
-
-        // Associate with the new Material.
-        asocMaterial = newMaterial;
-    }
-    return *this;
-}
-
-MaterialBind &MaterialBind::attachInfo(MaterialBindInfo &info)
-{
-    LOG_AS("MaterialBind::attachInfo");
-    if(extInfo)
-    {
-#if _DEBUG
-        de::Uri uri = App_Materials()->composeUri(guid);
-        LOG_DEBUG("Info already present for \"%s\", will replace.") << uri;
-#endif
-        M_Free(extInfo);
-    }
-    extInfo = &info;
-    return *this;
-}
-
-MaterialBindInfo *MaterialBind::detachInfo()
-{
-    MaterialBindInfo *retInfo = extInfo;
-    extInfo = 0;
-    return retInfo;
-}
-
-ded_detailtexture_t *MaterialBind::detailTextureDef() const
-{
-    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return 0;
-    return extInfo->detailtextureDefs[Material_Prepared(asocMaterial)-1];
-}
-
-ded_decor_t *MaterialBind::decorationDef() const
-{
-    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return 0;
-    return extInfo->decorationDefs[Material_Prepared(asocMaterial)-1];
-}
-
-ded_ptcgen_t *MaterialBind::ptcGenDef() const
-{
-    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return 0;
-    return extInfo->ptcgenDefs[Material_Prepared(asocMaterial)-1];
-}
-
-ded_reflection_t *MaterialBind::reflectionDef() const
-{
-    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return 0;
-    return extInfo->reflectionDefs[Material_Prepared(asocMaterial)-1];
-}
-
-} // namespace de
