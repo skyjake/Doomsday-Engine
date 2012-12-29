@@ -36,6 +36,8 @@
 #include "gl/svg.h"
 #include "render/vignette.h"
 
+using namespace de;
+
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
 float devCameraMovementStartTime = 0; // sysTime
 float devCameraMovementStartTimeRealSecs = 0;
@@ -135,11 +137,11 @@ static fontid_t loadSystemFont(char const *name)
     DENG_ASSERT(name && name[0]);
 
     // Compose the resource name.
-    Uri *uri = Uri_NewWithPath2("System:", RC_NULL);
+    struct uri_s *uri = Uri_NewWithPath2("System:", RC_NULL);
     Uri_SetPath(uri, name);
 
     // Compose the resource data path.
-    Str resourcePath; Str_InitStd(&resourcePath);
+    ddstring_t resourcePath; Str_InitStd(&resourcePath);
     Str_Appendf(&resourcePath, "}data/Fonts/%s.dfn", name);
 #if defined(UNIX) && !defined(MACOSX)
     // Case-sensitive file system.
@@ -507,7 +509,7 @@ static void R_UpdateMap()
     ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
     if(!mapInfo)
     {
-        Uri *mapUri = Uri_NewWithPath2("*", RC_NULL);
+        struct uri_s *mapUri = Uri_NewWithPath2("*", RC_NULL);
         mapInfo = Def_GetMapInfo(mapUri);
         Uri_Delete(mapUri);
     }

@@ -31,6 +31,8 @@
 #include "resource/materialsnapshot.h"
 #include "cbuffer.h"
 
+using namespace de;
+
 // Console (display) Modes:
 typedef enum {
     CM_HALFSCREEN, // Half vertical window height.
@@ -46,7 +48,7 @@ float consoleMoveSpeed = .5f; // Speed of console opening/closing.
 
 float consoleBackgroundAlpha = .75f;
 float consoleBackgroundLight = .14f;
-Uri *consoleBackgroundMaterialUri;
+struct uri_s *consoleBackgroundMaterialUri;
 int consoleBackgroundTurn = 0; // The rotation variable.
 float consoleBackgroundZoom = 1.0f;
 
@@ -547,7 +549,7 @@ static void drawConsoleBackground(Point2Raw const *origin, Size2Raw const *size,
     {
         materialvariantspecification_t const *spec = Materials::variantSpecificationForContext(
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        de::MaterialSnapshot const &ms = *Materials::prepare(*consoleBackgroundMaterial, *spec, Con_IsActive());
+        MaterialSnapshot const &ms = *Materials::prepare(*consoleBackgroundMaterial, *spec, Con_IsActive());
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 

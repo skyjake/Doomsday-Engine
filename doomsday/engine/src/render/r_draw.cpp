@@ -1,6 +1,4 @@
-/**
- * @file r_draw.cpp Misc Drawing Routines
- * @ingroup render
+/** @file r_draw.cpp Misc Drawing Routines.
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -30,6 +28,8 @@
 #include "render/r_draw.h"
 #include "gl/sys_opengl.h"
 
+using namespace de;
+
 // A logical ordering (twice around).
 enum {
     BG_BACKGROUND,
@@ -45,7 +45,7 @@ enum {
 
 static bool inited = false;
 static int borderSize;
-static Uri *borderGraphicsNames[9];
+static struct uri_s *borderGraphicsNames[9];
 
 /// @todo Declare the patches with URNs to avoid unnecessary duplication here -ds
 static patchid_t borderPatches[9];
@@ -65,7 +65,7 @@ static void loadViewBorderPatches()
     borderSize = info.geometry.size.height;
 }
 
-void R_SetBorderGfx(Uri const *const *paths)
+void R_SetBorderGfx(struct uri_s const *const *paths)
 {
     DENG_ASSERT(inited);
     if(!paths) Con_Error("R_SetBorderGfx: Missing argument.");
@@ -130,13 +130,13 @@ void R_ShutdownViewWindow(void)
 void R_DrawPatch3(struct texture_s *_tex, int x, int y, int w, int h, boolean useOffsets)
 {
     if(!_tex) return;
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
+    Texture &tex = reinterpret_cast<Texture &>(*_tex);
 
     if(tex.manifest().schemeName().compareWithoutCase("Patches"))
     {
 #if _DEBUG
         LOG_AS("R_DrawPatch3");
-        LOG_WARNING("Attempted to draw a non-patch [%p].") << de::dintptr(&tex);
+        LOG_WARNING("Attempted to draw a non-patch [%p].") << dintptr(&tex);
 #endif
         return;
     }
@@ -159,7 +159,7 @@ void R_DrawPatch2(struct texture_s *tex, int x, int y, int w, int h)
 void R_DrawPatch(struct texture_s *_tex, int x, int y)
 {
     if(!_tex) return;
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
+    Texture &tex = reinterpret_cast<Texture &>(*_tex);
 
     R_DrawPatch2(_tex, x, y, tex.width(), tex.height());
 }
@@ -167,7 +167,7 @@ void R_DrawPatch(struct texture_s *_tex, int x, int y)
 void R_DrawPatchTiled(struct texture_s *_tex, int x, int y, int w, int h, int wrapS, int wrapT)
 {
     if(!_tex) return;
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
+    Texture &tex = reinterpret_cast<Texture &>(*_tex);
 
     GL_BindTexture(GL_PreparePatchTexture2(_tex, wrapS, wrapT));
     GL_DrawRectf2Tiled(x, y, w, h, tex.width(), tex.height());
@@ -176,7 +176,7 @@ void R_DrawPatchTiled(struct texture_s *_tex, int x, int y, int w, int h, int wr
 materialvariantspecification_t const *Ui_MaterialSpec()
 {
     return Materials::variantSpecificationForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                                    0, -3, 0, false, false, false, false);
+                                                         0, -3, 0, false, false, false, false);
 }
 
 void R_DrawViewBorder(void)
@@ -217,7 +217,7 @@ void R_DrawViewBorder(void)
     material_t *mat = Materials::toMaterial(Materials::resolveUri2(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]), true/*quiet please*/));
     if(mat)
     {
-        de::MaterialSnapshot const &ms = *Materials::prepare(*mat, *Ui_MaterialSpec(), true);
+        MaterialSnapshot const &ms = *Materials::prepare(*mat, *Ui_MaterialSpec(), true);
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.dimensions().width(), ms.dimensions().height(), 0, 0,
@@ -227,7 +227,7 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        de::Textures &textures = *App_Textures();
+        Textures &textures = *App_Textures();
         R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOP]).texture()),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
         R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOM]).texture()), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
         R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_LEFT]).texture()),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
@@ -239,7 +239,7 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        de::Textures &textures = *App_Textures();
+        Textures &textures = *App_Textures();
         R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPLEFT]).texture()),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
         R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPRIGHT]).texture()),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
         R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMRIGHT]).texture()), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);

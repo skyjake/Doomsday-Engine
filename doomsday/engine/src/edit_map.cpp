@@ -38,6 +38,8 @@
 
 #include "audio/s_environ.h"
 
+using namespace de;
+
 typedef struct {
     ddstring_t uri;
     uint count; ///< Number of times this has been found missing.
@@ -56,7 +58,7 @@ static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri);
  * The pointer user value holds a pointer to the resolved Material (if found).
  * The integer user value tracks the number of times a reference occurs.
  */
-static de::StringPool* materialDict;
+static StringPool* materialDict;
 
 editmap_t editMap;
 static boolean editMapInited = false;
@@ -1669,7 +1671,7 @@ boolean MPE_End(void)
         char const* markerLumpName = Str_Text(Uri_Path(gamemap->uri));
         lumpnum_t markerLumpNum = F_LumpNumForName(markerLumpName);
         AutoStr* cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
-        Str cachedMapPath;
+        ddstring_t cachedMapPath;
 
         Str_InitStd(&cachedMapPath);
         F_FileName(&cachedMapPath, markerLumpName);
@@ -1747,7 +1749,7 @@ boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
  *                    Else operate in "print" mode.
  * @return Always @c 0 (for use as an iterator).
  */
-static int printMissingMaterialWorker(de::StringPool::Id internId, void* parameters)
+static int printMissingMaterialWorker(StringPool::Id internId, void* parameters)
 {
     uint* count = (uint*)parameters;
 
@@ -1767,7 +1769,7 @@ static int printMissingMaterialWorker(de::StringPool::Id internId, void* paramet
             {
                 // Print mode.
                 int const refCount = materialDict->userValue(internId);
-                de::String const& materialUri = materialDict->string(internId);
+                String const& materialUri = materialDict->string(internId);
                 QByteArray materialUriUtf8 = materialUri.toUtf8();
                 Con_Message(" %4u x \"%s\"\n", refCount, materialUriUtf8.constData());
             }
@@ -1810,13 +1812,13 @@ static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr
         // Are we yet to instantiate the dictionary?
         if(!materialDict)
         {
-            materialDict = new de::StringPool;
+            materialDict = new StringPool;
         }
 
         de::Uri materialUri(Str_Text(materialUriStr), RC_NULL);
 
         // Intern this reference.
-        de::StringPool::Id internId = materialDict->intern(materialUri.compose());
+        StringPool::Id internId = materialDict->intern(materialUri.compose());
 
         // Have we previously encountered this?.
         uint refCount = materialDict->userValue(internId);

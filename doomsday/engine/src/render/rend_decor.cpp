@@ -33,6 +33,8 @@
 #include "def_main.h"
 #include "resource/materialvariant.h"
 
+using namespace de;
+
 // Quite a bit of decorations, there!
 #define MAX_DECOR_LIGHTS    (16384)
 

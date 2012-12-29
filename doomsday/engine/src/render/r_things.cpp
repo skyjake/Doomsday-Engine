@@ -1,6 +1,4 @@
-/**
- * @file r_things.cpp Map Object Management and Refresh
- * @ingroup render
+/** @file r_things.cpp Map Object Management.
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -41,6 +39,8 @@
 #include "resource/materialsnapshot.h"
 
 #include <de/memoryblockset.h>
+
+using namespace de;
 
 #define MAX_FRAMES              (128)
 #define MAX_OBJECT_RADIUS       (128)
@@ -170,10 +170,10 @@ static spriterecord_t* findSpriteRecordForName(char const *name)
  * turn CLOCKWISE around the axis. This is not the same as the angle,
  * which increases counter clockwise (protractor).
  */
-static void buildSprite(de::TextureManifest &manifest)
+static void buildSprite(TextureManifest &manifest)
 {
     // Have we already encountered this name?
-    de::String decodedPath = QString(QByteArray::fromPercentEncoding(manifest.path().toUtf8()));
+    String decodedPath = QString(QByteArray::fromPercentEncoding(manifest.path().toUtf8()));
     QByteArray decodedPathUtf8 = decodedPath.toUtf8();
 
     spriterecord_t *rec = findSpriteRecordForName(decodedPathUtf8.constData());
@@ -236,20 +236,20 @@ static void buildSprite(de::TextureManifest &manifest)
 
 static void buildSprites()
 {
-    de::Time begunAt;
+    Time begunAt;
 
     numSpriteRecords = 0;
     spriteRecords = 0;
     spriteRecordBlockSet = BlockSet_New(sizeof(spriterecord_t), 64),
     spriteRecordFrameBlockSet = BlockSet_New(sizeof(spriterecord_frame_t), 256);
 
-    de::PathTreeIterator<de::TextureScheme::Index> iter(App_Textures()->scheme("Sprites").index().leafNodes());
+    PathTreeIterator<TextureScheme::Index> iter(App_Textures()->scheme("Sprites").index().leafNodes());
     while(iter.hasNext())
     {
         buildSprite(iter.next());
     }
 
-    LOG_INFO(de::String("buildSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("buildSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 /**
@@ -354,7 +354,7 @@ static void initSpriteDefs(spriterecord_t *const *sprRecords, int num)
 
 void R_InitSprites()
 {
-    de::Time begunAt;
+    Time begunAt;
 
     LOG_VERBOSE("Building Sprites...");
     buildSprites();
@@ -401,7 +401,7 @@ void R_InitSprites()
     BlockSet_Delete(spriteRecordFrameBlockSet); spriteRecordFrameBlockSet = 0;
     numSpriteRecords = 0;
 
-    LOG_INFO(de::String("R_InitSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("R_InitSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void R_ShutdownSprites()
@@ -457,9 +457,9 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
             Materials::variantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
                                                      GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
                                                      false, true, true, false);
-    de::MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, false);
+    MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, false);
 
-    de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
     DENG_ASSERT(texSpec);
 
@@ -498,7 +498,7 @@ coord_t R_VisualRadius(mobj_t *mo)
     // Use the sprite frame's width?
     if(material_t *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
     {
-        de::MaterialSnapshot const &ms = *Materials::prepare(*material, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
+        MaterialSnapshot const &ms = *Materials::prepare(*material, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
         return ms.dimensions().width() / 2;
     }
 
@@ -541,7 +541,7 @@ float R_ShadowStrength(mobj_t *mo)
         if(mat)
         {
             // Ensure we've prepared this.
-            de::MaterialSnapshot const &ms = *Materials::prepare(*mat, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
+            MaterialSnapshot const &ms = *Materials::prepare(*mat, *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
             averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_ALPHA);
             float weightedSpriteAlpha;
             if(!aa)
@@ -796,7 +796,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     if(!params) return; // Wha?
 
     materialvariantspecification_t const *spec = Sprite_MaterialSpec(tClass, tMap);
-    de::MaterialVariant *variant = Materials::chooseVariant(mat, *spec, true, true);
+    MaterialVariant *variant = Materials::chooseVariant(mat, *spec, true, true);
 
 #ifdef _DEBUG
     if(tClass || tMap) DENG_ASSERT(spec->primarySpec->data.variant.translated);
@@ -1033,10 +1033,10 @@ void R_ProjectSprite(mobj_t *mo)
     matFlipT = false;
 
     spec = Sprite_MaterialSpec(mo->tclass, mo->tmap);
-    de::MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
+    MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
 
     // An invalid sprite texture?
-    de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
     if(tex.manifest().schemeName().compareWithoutCase("Sprites")) return;
 
     // Align to the view plane?
@@ -1276,7 +1276,7 @@ void R_ProjectSprite(mobj_t *mo)
 
         // Ensure we have up-to-date information about the material.
         materialvariantspecification_t const *spec = Sprite_MaterialSpec(0, 0);
-        de::MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
+        MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
 
         pointlight_analysis_t const *pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_SPRITE_AUTOLIGHT);
         if(!pl)

@@ -41,6 +41,8 @@
 // $smoothmatoffset: Maximum speed for a smoothed material offset.
 #define MAX_SMOOTH_MATERIAL_MOVE (8)
 
+using namespace de;
+
 float rendLightWallAngle      = 1.2f; // Intensity of angle-based wall lighting.
 byte rendLightWallAngleSmooth = true;
 
@@ -1051,7 +1053,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
     if(!material) return false;
 
     // Ensure we have up to date info about the material.
-    de::MaterialSnapshot const &ms = *Materials::prepare(*material, *Rend_MapSurfaceDiffuseMaterialSpec(), true);
+    MaterialSnapshot const &ms = *Materials::prepare(*material, *Rend_MapSurfaceDiffuseMaterialSpec(), true);
 
     if(ignoreOpacity || (ms.isOpaque() && !frontDef->SW_middleblendmode && frontDef->SW_middlergba[3] >= 1))
     {
@@ -1451,7 +1453,7 @@ boolean R_IsGlowingPlane(Plane const *pln)
     if(mat)
     {
         materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-        de::MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
+        MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
 
         if(!Material_IsDrawable(mat) || ms.glowStrength() > 0) return true;
     }
@@ -1467,7 +1469,7 @@ float R_GlowStrength(Plane const *pln)
         {
             /// @todo We should not need to prepare to determine this.
             materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-            de::MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
+            MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
 
             return ms.glowStrength();
         }
@@ -1593,7 +1595,7 @@ static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
     if(choice2) return choice2;
 
     // We'll assign the special "missing" material...
-    return Materials::toMaterial(Materials::resolveUri(de::Uri(de::Path("System:missing"))));
+    return Materials::toMaterial(Materials::resolveUri(de::Uri(Path("System:missing"))));
 }
 
 static void addMissingMaterial(SideDef *s, SideDefSection section)
@@ -1609,7 +1611,7 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
     // During map load we log missing materials.
     if(ddMapSetup && verbose)
     {
-        de::String path = suf->material? Materials::composeUri(Materials::id(suf->material)).asText() : "<null>";
+        String path = suf->material? Materials::composeUri(Materials::id(suf->material)).asText() : "<null>";
         LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
             << s->buildData.index - 1

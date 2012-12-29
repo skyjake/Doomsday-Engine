@@ -44,6 +44,8 @@
 #define LOOPi(n)    for(i = 0; i < (n); ++i)
 #define LOOPk(n)    for(k = 0; k < (n); ++k)
 
+using namespace de;
+
 typedef struct {
     char* name; // Name of the routine.
     void (*func)(); // Pointer to the function.
@@ -342,7 +344,7 @@ ded_value_t* Def_GetValueById(char const* id)
     return 0;
 }
 
-ded_value_t* Def_GetValueByUri(Uri const* _uri)
+ded_value_t* Def_GetValueByUri(struct uri_s const *_uri)
 {
     if(!_uri) return 0;
     de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
@@ -351,7 +353,7 @@ ded_value_t* Def_GetValueByUri(Uri const* _uri)
     return Def_GetValueById(uri.pathCStr());
 }
 
-ded_mapinfo_t* Def_GetMapInfo(Uri const* _uri)
+ded_mapinfo_t* Def_GetMapInfo(struct uri_s const *_uri)
 {
     if(!_uri) return 0;
     de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
@@ -629,7 +631,7 @@ int Def_EvalFlags(char *ptr)
         ptr = M_SkipWhite(ptr);
 
         int flagNameLength = M_FindWhite(ptr) - ptr;
-        de::String flagName(ptr, flagNameLength);
+        String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
         if(ded_flag_t *flag = Def_GetFlag(flagName.toUtf8().constData()))
@@ -713,7 +715,7 @@ void Def_ReadProcessDED(char const* path)
     de::Uri path_ = de::Uri(path, RC_NULL);
     if(!App_FileSystem()->accessFile(path_))
     {
-        LOG_WARNING("\"%s\" not found!") << de::NativePath(path_.asText()).pretty();
+        LOG_WARNING("\"%s\" not found!") << NativePath(path_.asText()).pretty();
         return;
     }
 
@@ -721,7 +723,7 @@ void Def_ReadProcessDED(char const* path)
     if(!App_FileSystem()->checkFileId(path_))
     {
         // Already handled.
-        LOG_DEBUG("\"%s\" has already been read.") << de::NativePath(path_.asText()).pretty();
+        LOG_DEBUG("\"%s\" has already been read.") << NativePath(path_.asText()).pretty();
         return;
     }
 
@@ -748,7 +750,7 @@ void Def_CountMsg(int count, const char* label)
 void Def_ReadLumpDefs(void)
 {
     int numProcessedLumps = 0;
-    DENG2_FOR_EACH_CONST(de::LumpIndex::Lumps, i, App_FileSystem()->nameIndex().lumps())
+    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem()->nameIndex().lumps())
     {
         de::File1 const& lump = **i;
         if(!lump.name().beginsWith("DD_DEFNS", Qt::CaseInsensitive)) continue;
@@ -757,7 +759,7 @@ void Def_ReadLumpDefs(void)
 
         if(!DED_ReadLump(&defs, lump.info().lumpIdx))
         {
-            QByteArray path = de::NativePath(lump.container().composePath()).pretty().toUtf8();
+            QByteArray path = NativePath(lump.container().composePath()).pretty().toUtf8();
             Con_Error("DD_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", path.constData());
         }
     }
@@ -840,14 +842,14 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        de::Game::Manifests const& gameResources = reinterpret_cast<de::Game*>(App_CurrentGame())->manifests();
+        de::Game::Manifests const& gameResources = reinterpret_cast<de::Game *>(App_CurrentGame())->manifests();
         int packageIdx = 0;
         for(de::Game::Manifests::const_iterator i = gameResources.find(RC_DEFINITION);
             i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
         {
-            de::Manifest& record = **i;
+            Manifest &record = **i;
             /// Try to locate this resource now.
-            QString const& path = record.resolvedPath(true/*try to locate*/);
+            QString const &path = record.resolvedPath(true/*try to locate*/);
 
             if(path.isEmpty())
             {
@@ -865,10 +867,10 @@ static void readAllDefinitions(void)
     // Next up are definition files in the Games' /auto directory.
     if(!CommandLine_Exists("-noauto") && DD_GameLoaded())
     {
-        de::FS1::PathList found;
+        FS1::PathList found;
         if(App_FileSystem()->findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, found))
         {
-            DENG2_FOR_EACH_CONST(de::FS1::PathList, i, found)
+            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
             {
                 // Ignore directories.
                 if(i->attrib & A_SUBDIR) continue;
@@ -940,7 +942,7 @@ void Def_GenerateGroupsFromAnims(void)
             gmbr->randomTics = frame->randomTics;
             if(!frame->textureManifest) continue;
 
-            if(de::Texture *tex = reinterpret_cast<de::TextureManifest *>(frame->textureManifest)->texture())
+            if(Texture *tex = reinterpret_cast<TextureManifest *>(frame->textureManifest)->texture())
             {
                 de::Uri textureUri = tex->manifest().composeUri();
                 gmbr->material = reinterpret_cast<uri_s *>(new de::Uri(DD_MaterialSchemeNameForTextureScheme(textureUri.scheme()), textureUri.path()));
@@ -949,7 +951,7 @@ void Def_GenerateGroupsFromAnims(void)
     }
 }
 
-static int generateMaterialDefForCompositeTexture(de::TextureManifest &manifest, void * /*parameters*/)
+static int generateMaterialDefForCompositeTexture(TextureManifest &manifest, void * /*parameters*/)
 {
     LOG_AS("generateMaterialDefForCompositeTexture");
 
@@ -960,11 +962,11 @@ static int generateMaterialDefForCompositeTexture(de::TextureManifest &manifest,
     mat->autoGenerated = true;
     mat->uri = reinterpret_cast<uri_s *>(new de::Uri("Textures", texUri.path()));
 
-    if(de::Texture *tex = manifest.texture())
+    if(Texture *tex = manifest.texture())
     {
         mat->width  = tex->width();
         mat->height = tex->height();
-        mat->flags = (tex->flags().testFlag(de::Texture::NoDraw)? MATF_NO_DRAW : 0);
+        mat->flags = (tex->flags().testFlag(Texture::NoDraw)? MATF_NO_DRAW : 0);
     }
 #if _DEBUG
     else
@@ -979,7 +981,7 @@ static int generateMaterialDefForCompositeTexture(de::TextureManifest &manifest,
     return 0; // Continue iteration.
 }
 
-static int generateMaterialDefForFlatTexture(de::TextureManifest &manifest, void * /*parameters*/)
+static int generateMaterialDefForFlatTexture(TextureManifest &manifest, void * /*parameters*/)
 {
     LOG_AS("generateMaterialDefForFlatTexture");
 
@@ -994,7 +996,7 @@ static int generateMaterialDefForFlatTexture(de::TextureManifest &manifest, void
     ded_material_layer_stage_t *st = &mat->layers[0].stages[stage];
     st->texture = reinterpret_cast<uri_s *>(new de::Uri(texUri));
 
-    if(de::Texture *tex = manifest.texture())
+    if(Texture *tex = manifest.texture())
     {
         mat->width  = tex->width();
         mat->height = tex->height();
@@ -1009,7 +1011,7 @@ static int generateMaterialDefForFlatTexture(de::TextureManifest &manifest, void
     return 0; // Continue iteration.
 }
 
-static int generateMaterialDefForSpriteTexture(de::TextureManifest &manifest, void * /*parameters*/)
+static int generateMaterialDefForSpriteTexture(TextureManifest &manifest, void * /*parameters*/)
 {
     LOG_AS("generateMaterialDefForSpriteTexture");
 
@@ -1024,7 +1026,7 @@ static int generateMaterialDefForSpriteTexture(de::TextureManifest &manifest, vo
     ded_material_layer_stage_t *st = &mat->layers[0].stages[stage];
     st->texture = reinterpret_cast<uri_s *>(new de::Uri(texUri));
 
-    if(de::Texture *tex = manifest.texture())
+    if(Texture *tex = manifest.texture())
     {
         mat->width  = tex->width();
         mat->height = tex->height();
@@ -1041,7 +1043,7 @@ static int generateMaterialDefForSpriteTexture(de::TextureManifest &manifest, vo
 
 void Def_GenerateAutoMaterials(void)
 {
-    de::Textures &textures = *App_Textures();
+    Textures &textures = *App_Textures();
     textures.iterateDeclared("Textures", generateMaterialDefForCompositeTexture);
     textures.iterateDeclared("Flats",    generateMaterialDefForFlatTexture);
     textures.iterateDeclared("Sprites",  generateMaterialDefForSpriteTexture);
@@ -1053,7 +1055,7 @@ void Def_Read()
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        de::FS1::Scheme &scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
+        FS1::Scheme &scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
         scheme.reset();
 
         Materials::clearDefinitionLinks();
@@ -1171,7 +1173,7 @@ void Def_Read()
     for(int i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t *def = &defs.materials[i];
-        material_t *mat = Materials::toMaterial(Materials::resolveUri2(*reinterpret_cast<de::Uri *>(def->uri), true/*quiet please*/));
+        material_t *mat = Materials::toMaterial(de::Materials::resolveUri2(*reinterpret_cast<de::Uri *>(def->uri), true/*quiet please*/));
         if(!mat)
         {
             // A new Material.
@@ -1421,7 +1423,7 @@ static void defineFlaremap(uri_s const *_resourceUri)
     if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
 
     // Reference to a "built-in" flaremap?
-    de::String const &resourcePathStr = resourceUri.path().toStringRef();
+    String const &resourcePathStr = resourceUri.path().toStringRef();
     if(resourcePathStr.length() == 1 &&
        resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
         return;
@@ -1692,7 +1694,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 if(!stricmp(def->iparmStr[k], "-1"))
                     l->iparm[k] = -1;
                 else
-                    l->iparm[k] = Materials::resolveUri2(de::Uri(de::Path(def->iparmStr[k])), true/*quiet please*/);
+                    l->iparm[k] = Materials::resolveUri2(de::Uri(Path(def->iparmStr[k])), true/*quiet please*/);
             }
         }
         else if(a & MAP_MUS)
@@ -1806,21 +1808,21 @@ int Def_Get(int type, const char* id, void* out)
         return Def_GetMusicNum(id);
 
     case DD_DEF_MAP_INFO: {
-        ddmapinfo_t* mout;
-        Uri* mapUri = Uri_NewWithPath2(id, RC_NULL);
-        ded_mapinfo_t* map = Def_GetMapInfo(mapUri);
+        ddmapinfo_t *mout;
+        struct uri_s *mapUri = Uri_NewWithPath2(id, RC_NULL);
+        ded_mapinfo_t *map   = Def_GetMapInfo(mapUri);
 
         Uri_Delete(mapUri);
         if(!map) return false;
 
-        mout = (ddmapinfo_t*) out;
-        mout->name = map->name;
-        mout->author = map->author;
-        mout->music = Def_GetMusicNum(map->music);
-        mout->flags = map->flags;
-        mout->ambient = map->ambient;
-        mout->gravity = map->gravity;
-        mout->parTime = map->parTime;
+        mout = (ddmapinfo_t *) out;
+        mout->name       = map->name;
+        mout->author     = map->author;
+        mout->music      = Def_GetMusicNum(map->music);
+        mout->flags      = map->flags;
+        mout->ambient    = map->ambient;
+        mout->gravity    = map->gravity;
+        mout->parTime    = map->parTime;
         mout->fogStart   = map->fogStart;
         mout->fogEnd     = map->fogEnd;
         mout->fogDensity = map->fogDensity;
@@ -1881,8 +1883,8 @@ int Def_Get(int type, const char* id, void* out)
         return false; }
 
     case DD_DEF_FINALE_BEFORE: {
-        finalescript_t* fin = (finalescript_t*) out;
-        Uri* uri = Uri_NewWithPath2(id, RC_NULL);
+        finalescript_t *fin = (finalescript_t *) out;
+        struct uri_s *uri = Uri_NewWithPath2(id, RC_NULL);
         for(i = defs.count.finales.num - 1; i >= 0; i--)
         {
             if(!defs.finales[i].before || !Uri_Equality(defs.finales[i].before, uri)) continue;
@@ -1900,8 +1902,8 @@ int Def_Get(int type, const char* id, void* out)
         return false; }
 
     case DD_DEF_FINALE_AFTER: {
-        finalescript_t* fin = (finalescript_t*) out;
-        Uri* uri = Uri_NewWithPath2(id, RC_NULL);
+        finalescript_t *fin = (finalescript_t *) out;
+        struct uri_s *uri = Uri_NewWithPath2(id, RC_NULL);
         for(i = defs.count.finales.num - 1; i >= 0; i--)
         {
             if(!defs.finales[i].after || !Uri_Equality(defs.finales[i].after, uri)) continue;
