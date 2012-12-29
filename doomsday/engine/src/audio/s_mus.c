@@ -35,6 +35,10 @@
 #include "audio/sys_audio.h"
 #include "audio/m_mus2midi.h"
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 D_CMD(PlayMusic);
 D_CMD(PauseMusic);
 D_CMD(StopMusic);

@@ -32,7 +32,9 @@
 
 #include "de_platform.h"
 #include "con_main.h"
-#include "gl/gl_main.h"
+#ifdef __CLIENT__
+#  include "gl/gl_main.h"
+#endif
 #include "ui/canvaswindow.h"
 
 #include <assert.h>
@@ -83,7 +85,9 @@ void CanvasWindow::initCanvasAfterRecreation(Canvas& canvas)
 
     // Set up the basic GL state for the new canvas.
     self->d->canvas->makeCurrent();
+#ifdef __CLIENT__
     GL_Init2DState();
+#endif
     self->d->canvas->doneCurrent();
     self->d->canvas->updateGL();
 

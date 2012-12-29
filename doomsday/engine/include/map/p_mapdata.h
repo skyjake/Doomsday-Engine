@@ -26,7 +26,7 @@
 #define LIBDENG_PLAY_MAPDATA_H
 
 #if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
-#  error "Attempted to include internal Doomsday p_mapdata.h from a game"
+#  error Attempted to include internal Doomsday p_mapdata.h from a game
 #endif
 
 #include "dd_share.h"

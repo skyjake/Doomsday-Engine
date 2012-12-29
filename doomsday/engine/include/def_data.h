@@ -249,6 +249,14 @@ typedef struct ded_sky_s {
     ded_skymodel_t  models[NUM_SKY_MODELS];
 } ded_sky_t;
 
+/// @todo These values should be tweaked a bit.
+#define DEFAULT_FOG_START       0
+#define DEFAULT_FOG_END         2100
+#define DEFAULT_FOG_DENSITY     0.0001f
+#define DEFAULT_FOG_COLOR_RED   138.0f/255
+#define DEFAULT_FOG_COLOR_GREEN 138.0f/255
+#define DEFAULT_FOG_COLOR_BLUE  138.0f/255
+
 typedef struct ded_mapinfo_s {
     Uri*            uri; // ID of the map (e.g. E2M3 or MAP21).
     ded_string_t    name; // Name of the map.

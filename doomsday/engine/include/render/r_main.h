@@ -26,6 +26,7 @@
 #define LIBDENG_REFRESH_MAIN_H
 
 #include <de/rect.h>
+#include "dd_share.h"
 
 #ifdef __cplusplus
 extern "C" {

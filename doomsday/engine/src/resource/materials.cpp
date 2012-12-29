@@ -31,6 +31,7 @@
 #include "de_audio.h" // For texture, environmental audio properties.
 #include "de_resource.h"
 
+#include "gl/sys_opengl.h" // TODO: get rid of this
 #include "resource/materials.h"
 #include "resource/materialsnapshot.h"
 
@@ -1012,6 +1013,10 @@ static void pushVariantCacheQueue(material_t* mat, materialvariantspecification_
 void Materials_Precache2(material_t* mat, materialvariantspecification_t const* spec,
     boolean smooth, boolean cacheGroup)
 {
+#ifdef __SERVER__
+    return;
+#endif
+
     errorIfNotInited("Materials_Precache2");
 
     if(!mat || ! spec)
@@ -1020,8 +1025,10 @@ void Materials_Precache2(material_t* mat, materialvariantspecification_t const* 
         return;
     }
 
+#ifdef __CLIENT__
     // Don't precache when playing demo.
     if(isDedicated || playback) return;
+#endif
 
     // Already in the queue?
     for(VariantCacheQueueNode* node = variantCacheQueue; node; node = node->next)
@@ -1051,8 +1058,11 @@ void Materials_Precache(material_t* mat, materialvariantspecification_t const* s
 
 void Materials_Ticker(timespan_t time)
 {
+#ifdef __CLIENT__
     // The animation will only progress when the game is not paused.
-    if(clientPaused || novideo) return;
+    if(clientPaused) return;
+#endif
+    if(novideo) return;
 
     for(MaterialListNode* node = materials; node; node = node->next)
     {

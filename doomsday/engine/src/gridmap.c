@@ -480,8 +480,10 @@ void GridmapBlock_SetCoordsXY(GridmapCellBlock* block, GridmapCoord minX, Gridma
     GridmapBlock_SetCoords(block, min, max);
 }
 
-#define UNIT_WIDTH                     1
-#define UNIT_HEIGHT                    1
+#ifdef __CLIENT__
+
+#define UNIT_WIDTH      1
+#define UNIT_HEIGHT     1
 
 static int drawCell(TreeCell* tree, void* parameters)
 {
@@ -542,3 +544,5 @@ void Gridmap_DebugDrawer(const Gridmap* gm)
 
 #undef UNIT_HEIGHT
 #undef UNIT_WIDTH
+
+#endif // __CLIENT__

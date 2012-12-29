@@ -122,15 +122,22 @@ int main(int argc, char** argv)
     bool useGUI = true;
 #endif
 
+#ifdef __SERVER__
+    // The server is always running in the background without a UI.
+    useGUI = false;
+#endif
+
     // Are we running in novideo mode?
     for(int i = 1; i < argc; ++i)
     {
-        if(!stricmp(argv[i], "-novideo") || !stricmp(argv[i], "-dedicated"))
+        if(!stricmp(argv[i], "-novideo"))
         {
             // Console mode.
             useGUI = false;
         }
     }
+
+    novideo = !useGUI;
 
     QMenuBar* menuBar = 0;
 
@@ -155,6 +162,7 @@ int main(int argc, char** argv)
         de2LegacyCore = LegacyCore_New(&dengApp);
         LegacyCore_SetTerminateFunc(handleLegacyCoreTerminate);
 
+#ifdef __CLIENT__
         if(useGUI)
         {
             // Config needs DisplayMode, so let's initialize it before the configuration.
@@ -165,11 +173,13 @@ int main(int argc, char** argv)
              * this is handled automatically.
              */
         }
+#endif
 
         dengApp.initSubsystems();
 
         Libdeng_Init();
 
+#ifdef __CLIENT__
         if(useGUI)
         {
             // Check for updates automatically.
@@ -184,6 +194,7 @@ int main(int argc, char** argv)
             checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 #endif
         }
+#endif
 
         // Initialize.
 #if WIN32

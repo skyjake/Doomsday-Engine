@@ -29,6 +29,10 @@
 #ifndef LIBDENG_DEMO_H
 #define LIBDENG_DEMO_H
 
+#ifdef __SERVER__
+#  error Demos are not available in a SERVER build
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

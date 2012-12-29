@@ -110,7 +110,9 @@ D_CMD(IncDec);
 D_CMD(Alias);
 D_CMD(Clear);
 D_CMD(Echo);
+#ifdef __CLIENT__
 D_CMD(Font);
+#endif
 D_CMD(Help);
 D_CMD(If);
 D_CMD(OpenClose);
@@ -198,7 +200,9 @@ void Con_Register(void)
     C_CMD("echo",           "s*",   Echo);
     C_CMD("print",          "s*",   Echo);
     C_CMD("exec",           "s*",   Parse);
+#ifdef __CLIENT__
     C_CMD("font",           NULL,   Font);
+#endif
     C_CMD("help",           "",     Help);
     C_CMD("if",             NULL,   If);
     C_CMD("inc",            NULL,   IncDec);
@@ -686,8 +690,12 @@ void Con_Ticker(timespan_t time)
 {
     Con_CheckExecBuffer();
     if(tickFrame)
+    {
         Con_TransitionTicker(time);
+    }
+#ifdef __CLIENT__
     Rend_ConsoleTicker(time);
+#endif
 
     if(!ConsoleActive)
         return;                 // We have nothing further to do here.
@@ -774,6 +782,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     }
      */
 
+#ifdef __CLIENT__
     // If logged in, send command to server at this point.
     if(!isServer && netLoggedIn)
     {
@@ -781,6 +790,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         Con_Send(subCmd, src, ConsoleSilent);
         return true;
     }
+#endif
 
     // Try to find a matching console command.
     ccmd = Con_FindCommandMatchArgs(&args);
@@ -2528,6 +2538,8 @@ D_CMD(OpenClose)
     return true;
 }
 
+#ifdef __CLIENT__
+
 D_CMD(Font)
 {
     if(argc == 1 || argc > 3)
@@ -2635,6 +2647,8 @@ D_CMD(Font)
 
     return false;
 }
+
+#endif // __CLIENT__
 
 D_CMD(DebugCrash)
 {

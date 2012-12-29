@@ -1293,18 +1293,22 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
     if(!IS_TOGGLE_DOWN(ev))
         return false;
 
+#ifdef __CLIENT__
     if(isClient)
     {
         // Request skip from the server.
         Cl_RequestFinaleSkip();
         return true;
     }
-    else
+#endif
+#ifdef __SERVER__
     {
         // Tell clients to skip.
         Sv_Finale(fi->_id, FINF_SKIP, 0);
         return FinaleInterpreter_Skip(fi);
     }
+#endif
+    return false;
 }
 
 DEFFC(Do)

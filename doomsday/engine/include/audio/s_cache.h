@@ -29,12 +29,26 @@
 #ifndef LIBDENG_SOUND_CACHE_H
 #define LIBDENG_SOUND_CACHE_H
 
+#include "sys_audiod_sfx.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void Sfx_InitCache(void);
+
 void Sfx_ShutdownCache(void);
 
 sfxsample_t* Sfx_Cache(int id);
+
 void Sfx_CacheHit(int id);
+
 uint Sfx_GetSoundLength(int id);
+
 void Sfx_GetCacheInfo(uint* cacheBytes, uint* sampleCount);
+
+#ifdef __cplusplus
+} // __cplusplus
+#endif
 
 #endif /* LIBDENG_SOUND_CACHE_H */

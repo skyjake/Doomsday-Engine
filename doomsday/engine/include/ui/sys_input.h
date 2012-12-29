@@ -26,7 +26,9 @@
 #ifndef LIBDENG_SYSTEM_INPUT_H
 #define LIBDENG_SYSTEM_INPUT_H
 
-#include "joystick.h"
+#ifdef __CLIENT__
+#  include "joystick.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

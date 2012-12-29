@@ -33,6 +33,8 @@
 #include "de_play.h"
 #include "de_misc.h"
 
+#include "render/r_main.h"
+
 int Partition_PointXYOnSide(const partition_t* par, coord_t x, coord_t y)
 {
     coord_t delta[2];

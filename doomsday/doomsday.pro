@@ -3,10 +3,15 @@
 
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = \
-    build \
-    libdeng2 libdeng \
-    engine plugins host tests
+SUBDIRS =    \
+    build    \
+    libdeng2 \
+    libdeng  \
+    engine   \
+    server   \
+    plugins  \
+    host     \
+    tests
 
 !deng_notools {
     SUBDIRS += \

@@ -249,8 +249,10 @@ void SBE_EndFrame(void)
 
 static void SBE_Begin(void)
 {
+#ifdef __CLIENT__
     // Advise the game not to draw any HUD displays
     gameDrawHUD = false;
+#endif
     editActive = true;
     editGrabbed = -1;
 
@@ -259,8 +261,10 @@ static void SBE_Begin(void)
 
 static void SBE_End(void)
 {
+#ifdef __CLIENT__
     // Advise the game it can safely draw any HUD displays again
     gameDrawHUD = true;
+#endif
     editActive = false;
 
     Con_Printf("Bias light editor: OFF\n");

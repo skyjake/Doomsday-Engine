@@ -44,6 +44,11 @@
 
 // MACROS ------------------------------------------------------------------
 
+#ifdef __SERVER__
+#  define BEGIN_COP
+#  define END_COP
+#endif
+
 // The cached samples are stored in a hash. When a sample is purged, its
 // data will stay in the hash (sample lengths needed by the Logical Sound
 // Manager).
@@ -290,6 +295,7 @@ static void resample(void* dst, int dstBytesPer, int dstRate,
  */
 static boolean sfxMustUpsampleToSfxRate(void)
 {
+#ifdef __CLIENT__
     int anySampleRateAccepted = 0;
 
     if(AudioDriver_SFX()->Getv)
@@ -297,6 +303,9 @@ static boolean sfxMustUpsampleToSfxRate(void)
         AudioDriver_SFX()->Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anySampleRateAccepted);
     }
     return (anySampleRateAccepted? false : true);
+#else
+    return false;
+#endif
 }
 
 /**
@@ -327,11 +336,13 @@ sfxcache_t* Sfx_CacheInsert(int id, const void* data, unsigned int size,
      * by sfxRate and sfxBits.
      */
 
+#ifdef __CLIENT__
     // The (up)resampling factor.
     if(sfxMustUpsampleToSfxRate())
     {
         rsfactor = MAX_OF(1, sfxRate / rate);
     }
+#endif
 
     /**
      * If the sample is already in the right format, just make a copy of it.
@@ -365,9 +376,11 @@ sfxcache_t* Sfx_CacheInsert(int id, const void* data, unsigned int size,
         if(cached.bytesPer * 8 == sfxBits && cached.rate == sfxRate)
             return node; // This will do.
 
+#ifdef __CLIENT__
         // Stop all sounds using this sample (we are going to destroy the
         // existing sample data).
         Sfx_UnloadSoundID(node->sample.id);
+#endif
 
         // It's in the wrong format! We'll reuse this node.
         M_Free(node->sample.data);
@@ -411,8 +424,10 @@ void Sfx_Uncache(sfxcache_t* node)
 
     BEGIN_COP;
 
+#ifdef __CLIENT__
     // Reset all channels loaded with this sample.
     Sfx_UnloadSoundID(node->sample.id);
+#endif
 
     hash = Sfx_CacheHash(node->sample.id);
 
@@ -459,8 +474,9 @@ void Sfx_PurgeCache(void)
     sfxcache_t*         it, *next, *lowest;
     int                 i, lowHits = 0, nowTime = Timer_Ticks();
 
-    if(!sfxAvail)
-        return;
+#ifdef __CLIENT__
+    if(!sfxAvail) return;
+#endif
 
     // Is it time for a purge?
     if(nowTime - lastPurge < PURGE_TIME)
@@ -497,9 +513,11 @@ void Sfx_PurgeCache(void)
         {
             for(it = scHash[i].first; it; it = it->next)
             {
+#ifdef __CLIENT__
                 // If the sample is playing we won't remove it now.
                 if(Sfx_CountPlaying(it->sample.id))
                     continue;
+#endif
 
                 // This sample could be removed, let's check the hits.
                 if(!lowest || it->hits < lowHits)
@@ -702,8 +720,10 @@ sfxsample_t* Sfx_Cache(int id)
     sfxcache_t*         node;
     sfxinfo_t*          info;
 
+#ifdef __CLIENT__
     if(!id || !sfxAvail)
         return NULL;
+#endif
 
     // Are we so lucky that the sound is already cached?
     if((node = Sfx_GetCached(id)) != NULL)

@@ -30,6 +30,7 @@
 #include "map/blockmap.h"
 #include "map/generators.h"
 #include "map/gamemap.h"
+#include "render/r_main.h" // validCount
 #include "r_util.h"
 
 /// Size of Blockmap blocks in map units. Must be an integer power of two.

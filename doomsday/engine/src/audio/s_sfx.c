@@ -66,14 +66,11 @@ boolean sfxAvail = false;
 int sfxMaxChannels = 16;
 int sfxDedicated2D = 4;
 float sfxReverbStrength = .5f;
-int sfxBits = 8;
-int sfxRate = 11025;
 
 // Console variables:
 int sfx3D = false;
 int sfx16Bit = false;
 int sfxSampleRate = 11025;
-byte sfxOneSoundPerEmitter = false; // Traditional Doomsday behavior: allows sounds to overlap.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -96,6 +93,8 @@ void Sfx_UpdateReverb(void)
 {
     listenerSector = NULL;
 }
+
+#ifdef __CLIENT__
 
 /**
  * This is a high-priority thread that periodically checks if the channels
@@ -144,6 +143,8 @@ int C_DECL Sfx_ChannelRefreshThread(void* parm)
     // Time to end this thread.
     return 0;
 }
+
+#endif // __CLIENT__
 
 /**
  * Enabling refresh is simple: the refresh thread is resumed. When
@@ -1242,6 +1243,7 @@ void Sfx_MapChange(void)
 
 void Sfx_DebugInfo(void)
 {
+#ifdef __CLIENT__
     int i, lh;
     sfxchannel_t* ch;
     char buf[200];
@@ -1310,4 +1312,5 @@ void Sfx_DebugInfo(void)
     }
 
     glDisable(GL_TEXTURE_2D);
+#endif
 }
