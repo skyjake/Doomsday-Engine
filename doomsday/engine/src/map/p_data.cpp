@@ -210,7 +210,7 @@ boolean P_LoadMap(char const* uriCString)
         R_ResetViewer();
 
         // Texture animations should begin from their first step.
-        Materials_ResetAnimGroups();
+        Materials::resetAnimGroups();
 
         R_InitObjlinkBlockmapForMap();
         LO_InitForMap(); // Lumobj management.

@@ -165,7 +165,7 @@ static void configureDefaultSky()
     {
         skylayer_t *layer = &skyLayers[i];
         layer->flags = (i == 0? SLF_ACTIVE : 0);
-        layer->material = Materials_ToMaterial(Materials_ResolveUriCString(DEFAULT_SKY_SPHERE_MATERIAL));
+        layer->material = Materials::toMaterial(Materials::resolveUri(de::Uri(de::Path(DEFAULT_SKY_SPHERE_MATERIAL))));
         layer->offset = DEFAULT_SKY_SPHERE_XOFFSET;
         layer->fadeoutLimit = DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
     }
@@ -176,7 +176,7 @@ static void configureDefaultSky()
 
 materialvariantspecification_t const *Sky_SphereMaterialSpec(bool masked)
 {
-    return Materials_VariantSpecificationForContext(MC_SKYSPHERE,
+    return Materials::variantSpecificationForContext(MC_SKYSPHERE,
         TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
         0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1, false, true, false, false);
 }
@@ -205,7 +205,7 @@ static void calculateSkyAmbientColor()
         if(!(slayer->flags & SLF_ACTIVE) || !slayer->material) continue;
 
         de::MaterialSnapshot const &ms =
-            *Materials_Prepare(*slayer->material, *Sky_SphereMaterialSpec(!!(slayer->flags & SLF_MASKED)), false);
+            *Materials::prepare(*slayer->material, *Sky_SphereMaterialSpec(!!(slayer->flags & SLF_MASKED)), false);
 
         if(ms.hasTexture(MTU_PRIMARY))
         {
@@ -283,7 +283,7 @@ void Sky_Configure(ded_sky_t *def)
         Sky_LayerSetMasked(i, (sl->flags & SLF_MASKED) != 0);
         if(sl->material)
         {
-            material_t *mat = Materials_ToMaterial(Materials_ResolveUri2(sl->material, true/*quiet please*/));
+            material_t *mat = Materials::toMaterial(Materials::resolveUri2(*reinterpret_cast<de::Uri *>(sl->material), true/*quiet please*/));
             if(mat)
             {
                 Sky_LayerSetMaterial(i, mat);
@@ -593,7 +593,7 @@ static void internalSkyParams(int layer, int param, void *data)
 
     case DD_MATERIAL: {
         materialid_t materialId = *((materialid_t *)data);
-        Sky_LayerSetMaterial(layer, Materials_ToMaterial(materialId));
+        Sky_LayerSetMaterial(layer, Materials::toMaterial(materialId));
         break; }
 
     case DD_OFFSET:
@@ -784,21 +784,21 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         if(renderTextures == 2)
         {
-            mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
+            mat = Materials::toMaterial(Materials::resolveUri(de::Uri(de::Path("System:gray"))));
         }
         else
         {
             mat = Sky_LayerMaterial(layer);
             if(!mat)
             {
-                mat = Materials_ToMaterial(Materials_ResolveUriCString("System:missing"));
+                mat = Materials::toMaterial(Materials::resolveUri(de::Uri(de::Path("System:missing"))));
                 rs.texXFlip = false;
             }
         }
         DENG_ASSERT(mat);
 
         de::MaterialSnapshot const &ms =
-            *Materials_Prepare(*mat, *Sky_SphereMaterialSpec(Sky_LayerMasked(layer)), true);
+            *Materials::prepare(*mat, *Sky_SphereMaterialSpec(Sky_LayerMasked(layer)), true);
 
         rs.texSize.width  = ms.texture(MTU_PRIMARY).generalCase().width();
         rs.texSize.height = ms.texture(MTU_PRIMARY).generalCase().height();

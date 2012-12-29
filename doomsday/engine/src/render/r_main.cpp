@@ -94,7 +94,7 @@ void R_Register()
 
     C_CMD("viewgrid", "ii", ViewGrid);
 
-    Materials_Register();
+    Materials::consoleRegister();
 }
 
 char const *R_ChooseFixedFont()
@@ -1276,7 +1276,7 @@ static void cacheSpritesForState(int stateIndex, materialvariantspecification_t 
         spriteframe_t *sprFrame = &sprDef->spriteFrames[i];
         for(int k = 0; k < 8; ++k)
         {
-            Materials_Precache(*sprFrame->mats[k], spec, true);
+            Materials::precache(*sprFrame->mats[k], spec, true);
         }
     }
 }
@@ -1321,13 +1321,13 @@ void Rend_CacheForMap()
             SideDef *side = SIDE_PTR(i);
 
             if(side->SW_middlematerial)
-                Materials_Precache(*side->SW_middlematerial, spec, true);
+                Materials::precache(*side->SW_middlematerial, spec, true);
 
             if(side->SW_topmaterial)
-                Materials_Precache(*side->SW_topmaterial, spec, true);
+                Materials::precache(*side->SW_topmaterial, spec, true);
 
             if(side->SW_bottommaterial)
-                Materials_Precache(*side->SW_bottommaterial, spec, true);
+                Materials::precache(*side->SW_bottommaterial, spec, true);
         }
 
         for(uint i = 0; i < NUM_SECTORS; ++i)
@@ -1338,7 +1338,7 @@ void Rend_CacheForMap()
             for(uint k = 0; k < sec->planeCount; ++k)
             {
                 if(sec->SP_planematerial(k))
-                    Materials_Precache(*sec->SP_planematerial(k), spec, true);
+                    Materials::precache(*sec->SP_planematerial(k), spec, true);
             }
         }
     }
@@ -1362,7 +1362,7 @@ void Rend_CacheForMap()
                     spriteframe_t *sprFrame = &sprDef->spriteFrames[k];
                     for(int m = 0; m < 8; ++m)
                     {
-                        Materials_Precache(*sprFrame->mats[m], spec, true);
+                        Materials::precache(*sprFrame->mats[m], spec, true);
                     }
                 }
             }

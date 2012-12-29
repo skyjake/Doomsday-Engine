@@ -20,6 +20,31 @@
 #ifndef LIBDENG_RESOURCE_MATERIALVARIANT_H
 #define LIBDENG_RESOURCE_MATERIALVARIANT_H
 
+/// Material (Usage) Context identifiers.
+typedef enum materialcontext_e {
+    MC_UNKNOWN = -1,
+    MATERIALCONTEXT_FIRST = 0,
+    MC_UI = MATERIALCONTEXT_FIRST,
+    MC_MAPSURFACE,
+    MC_SPRITE,
+    MC_MODELSKIN,
+    MC_PSPRITE,
+    MC_SKYSPHERE,
+    MATERIALCONTEXT_LAST = MC_SKYSPHERE
+} materialcontext_t;
+
+#define MATERIALCONTEXT_COUNT (MATERIALCONTEXT_LAST + 1 - MATERIALCONTEXT_FIRST )
+
+/// @c true= val can be interpreted as a valid material context identifier.
+#define VALID_MATERIALCONTEXT(val) ((val) >= MATERIALCONTEXT_FIRST && (val) <= MATERIALCONTEXT_LAST)
+
+struct texturevariantspecification_s;
+
+typedef struct materialvariantspecification_s {
+    enum materialcontext_e context;
+    struct texturevariantspecification_s *primarySpec;
+} materialvariantspecification_t;
+
 #ifdef __cplusplus
 
 #include "def_data.h"
@@ -27,7 +52,6 @@
 #include "resource/texture.h"
 
 struct material_s;
-struct materialvariantspecification_s;
 
 namespace de {
 
@@ -63,7 +87,7 @@ public:
     DENG2_ERROR(InvalidLayerError);
 
 public:
-    MaterialVariant(struct material_s &generalCase, struct materialvariantspecification_s const &spec,
+    MaterialVariant(struct material_s &generalCase, materialvariantspecification_t const &spec,
                     ded_material_t const &def);
     ~MaterialVariant();
 
@@ -82,7 +106,7 @@ public:
     struct material_s &generalCase() const;
 
     /// @return  MaterialVariantSpecification from which this variant is derived.
-    struct materialvariantspecification_s const &spec() const;
+    materialvariantspecification_t const &spec() const;
 
     /**
      * Retrieve a handle for a staged animation layer form this variant.

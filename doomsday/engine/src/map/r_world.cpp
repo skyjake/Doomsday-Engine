@@ -1051,7 +1051,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
     if(!material) return false;
 
     // Ensure we have up to date info about the material.
-    de::MaterialSnapshot const &ms = *Materials_Prepare(*material, *Rend_MapSurfaceDiffuseMaterialSpec(), true);
+    de::MaterialSnapshot const &ms = *Materials::prepare(*material, *Rend_MapSurfaceDiffuseMaterialSpec(), true);
 
     if(ignoreOpacity || (ms.isOpaque() && !frontDef->SW_middleblendmode && frontDef->SW_middlergba[3] >= 1))
     {
@@ -1277,7 +1277,7 @@ static void addToSurfaceLists(Surface *suf, material_t *mat)
     if(!suf || !mat) return;
 
     if(Material_HasGlow(mat))         R_SurfaceListAdd(GameMap_GlowingSurfaces(theMap),   suf);
-    if(Materials_HasDecorations(mat)) R_SurfaceListAdd(GameMap_DecoratedSurfaces(theMap), suf);
+    if(Materials::hasDecorations(mat)) R_SurfaceListAdd(GameMap_DecoratedSurfaces(theMap), suf);
 }
 
 void R_MapInitSurfaceLists()
@@ -1318,7 +1318,7 @@ void R_SetupMap(int mode, int flags)
         // A new map is about to be setup.
         ddMapSetup = true;
 
-        Materials_PurgeCacheQueue();
+        Materials::purgeCacheQueue();
         return;
 
     case DDSMM_AFTER_LOADING:
@@ -1360,7 +1360,7 @@ void R_SetupMap(int mode, int flags)
 
         float startTime = Timer_Seconds();
         Rend_CacheForMap();
-        Materials_ProcessCacheQueue();
+        Materials::processCacheQueue();
         VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Timer_Seconds() - startTime) )
 
         S_SetupForChangedMap();
@@ -1451,7 +1451,7 @@ boolean R_IsGlowingPlane(Plane const *pln)
     if(mat)
     {
         materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-        de::MaterialSnapshot const &ms = *Materials_Prepare(*mat, *spec, true);
+        de::MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
 
         if(!Material_IsDrawable(mat) || ms.glowStrength() > 0) return true;
     }
@@ -1467,7 +1467,7 @@ float R_GlowStrength(Plane const *pln)
         {
             /// @todo We should not need to prepare to determine this.
             materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-            de::MaterialSnapshot const &ms = *Materials_Prepare(*mat, *spec, true);
+            de::MaterialSnapshot const &ms = *Materials::prepare(*mat, *spec, true);
 
             return ms.glowStrength();
         }
@@ -1593,7 +1593,7 @@ static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
     if(choice2) return choice2;
 
     // We'll assign the special "missing" material...
-    return Materials_ToMaterial(Materials_ResolveUriCString("System:missing"));
+    return Materials::toMaterial(Materials::resolveUri(de::Uri(de::Path("System:missing"))));
 }
 
 static void addMissingMaterial(SideDef *s, SideDefSection section)
@@ -1607,17 +1607,14 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
     suf->inFlags |= SUIF_FIX_MISSING_MATERIAL;
 
     // During map load we log missing materials.
-    if(ddMapSetup)
+    if(ddMapSetup && verbose)
     {
-        VERBOSE(
-            Uri *uri = suf->material? Materials_ComposeUri(Materials_Id(suf->material)) : 0;
-            AutoStr *path = uri? Uri_ToString(uri) : 0;
-            Con_Message("Warning: SideDef #%u is missing a material for the %s section.\n"
-                        "  %s was chosen to complete the definition.\n", s->buildData.index-1,
-                        (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom"),
-                        path? Str_Text(path) : "<null>");
-            if(uri) Uri_Delete(uri);
-        )
+        de::String path = suf->material? Materials::composeUri(Materials::id(suf->material)).asText() : "<null>";
+        LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
+                    "  %s was chosen to complete the definition.")
+            << s->buildData.index - 1
+            << (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom")
+            << path;
     }
 }
 
