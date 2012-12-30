@@ -1,5 +1,4 @@
 /** @file rend_model.cpp 3D Model Rendering.
- * @ingroup render
  *
  * @note Light vectors and triangle normals are in an entirely independent,
  *       right-handed coordinate system.
@@ -44,6 +43,8 @@
 #include "resource/materialvariant.h"
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
+
+using namespace de;
 
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)         qatan2(y,x)
@@ -491,7 +492,7 @@ static model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mob
     DENG_ASSERT(mdl);
     if(index >= mdl->info.numFrames)
     {
-        throw de::Error("Mod_GetVisibleFrame", "Frame index out of bounds.");
+        throw Error("Mod_GetVisibleFrame", "Frame index out of bounds.");
     }
     return mdl->frames + index;
 }
@@ -865,7 +866,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     float normYaw, normPitch, shinyAng, shinyPnt;
     float inter = parm->inter;
     blendmode_t blending;
-    de::TextureVariant *skinTexture = NULL, *shinyTexture = NULL;
+    TextureVariant *skinTexture = NULL, *shinyTexture = NULL;
     int zSign = (parm->mirror? -1 : 1);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -1067,7 +1068,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         struct texture_s *tex = mf->sub[number].shinySkin;
         if(tex)
         {
-            shinyTexture = reinterpret_cast<de::TextureVariant *>(GL_PrepareTextureVariant(tex, Rend_ModelShinyTextureSpec()));
+            shinyTexture = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, Rend_ModelShinyTextureSpec()));
         }
         else
         {
@@ -1137,12 +1138,12 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        material_t *mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
+        material_t *mat = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:gray"))));
         if(mat)
         {
-            materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
+            materialvariantspecification_t const *spec = App_Materials()->variantSpecificationForContext(
                 MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
-            de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
+            MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
 
             skinTexture = &ms.texture(MTU_PRIMARY);
         }
@@ -1158,7 +1159,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         skinTexture = 0;
         if(tex)
         {
-            skinTexture = reinterpret_cast<de::TextureVariant *>(GL_PrepareTextureVariant(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp)));
+            skinTexture = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp)));
         }
     }
 

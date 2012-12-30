@@ -432,7 +432,7 @@ SOURCES += \
     $$SRC/src/network/protocol.c \
     $$SRC/src/network/sys_network.c \
     $$SRC/src/r_util.c \
-    $$SRC/src/render/r_main.c \
+    $$SRC/src/render/r_main.cpp \
     $$SRC/src/render/r_things.cpp \
     $$SRC/src/render/rend_main.cpp \
     $$SRC/src/resource/animgroups.cpp \
@@ -443,6 +443,7 @@ SOURCES += \
     $$SRC/src/resource/image.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.c \
+    $$SRC/src/resource/materialbind.cpp \
     $$SRC/src/resource/materials.cpp \
     $$SRC/src/resource/materialsnapshot.cpp \
     $$SRC/src/resource/materialvariant.cpp \

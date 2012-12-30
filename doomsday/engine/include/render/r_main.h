@@ -1,36 +1,28 @@
-/**\file r_main.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file r_main.h
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_REFRESH_MAIN_H
-#define LIBDENG_REFRESH_MAIN_H
+#ifndef LIBDENG_RENDER_R_MAIN_H
+#define LIBDENG_RENDER_R_MAIN_H
 
 #include <de/rect.h>
 #include "dd_share.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef struct viewport_s {
     int console;
@@ -69,49 +61,100 @@ typedef enum fontstyle_e {
     FONTSTYLE_COUNT
 } fontstyle_t;
 
-extern float    frameTimePos;      // 0...1: fractional part for sharp game tics
-extern int      loadInStartupMode;
-extern int      validCount;
-extern int      frameCount;
-extern int      extraLight;
-extern float    extraLightDelta;
-extern int      rendInfoTris;
+DENG_EXTERN_C float    frameTimePos;      // 0...1: fractional part for sharp game tics
+DENG_EXTERN_C int      loadInStartupMode;
+DENG_EXTERN_C int      validCount;
+DENG_EXTERN_C int      frameCount;
+DENG_EXTERN_C int      extraLight;
+DENG_EXTERN_C float    extraLightDelta;
+DENG_EXTERN_C int      rendInfoTris;
 
-extern byte precacheMapMaterials, precacheSprites, precacheSkins;
+DENG_EXTERN_C byte     precacheMapMaterials, precacheSprites, precacheSkins;
 
-extern fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
+DENG_EXTERN_C fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
-extern fixed_t  fineTangent[FINEANGLES / 2];
+DENG_EXTERN_C fixed_t  fineTangent[FINEANGLES / 2];
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * Register console variables.
+ */
 void R_Register(void);
+
+/**
+ * One-time initialization of the refresh daemon. Called by DD_Main.
+ */
 void R_Init(void);
+
+/**
+ * Re-initialize almost everything.
+ */
 void R_Update(void);
+
+/**
+ * Shutdown the refresh daemon.
+ */
 void R_Shutdown(void);
 
 void R_Ticker(timespan_t time);
 
+/**
+ * Prepare for rendering view(s) of the world.
+ */
 void R_BeginWorldFrame(void);
+
+/**
+ * Wrap up after drawing view(s) of the world.
+ */
 void R_EndWorldFrame(void);
 
+/**
+ * Render all view ports in the viewport grid.
+ */
 void R_RenderViewPorts(void);
 
+/**
+ * Render a blank view for the specified player.
+ */
 void R_RenderBlankView(void);
+
+/**
+ * Draw the view of the player inside the view window.
+ */
 void R_RenderPlayerView(int num);
+
+/**
+ * Draw the border around the view window.
+ */
 void R_RenderPlayerViewBorder(void);
 
-/// @return  Current viewport else @c NULL.
-const viewport_t* R_CurrentViewPort(void);
+/// @return  Current viewport; otherwise @c NULL.
+viewport_t const *R_CurrentViewPort(void);
 
-void R_UseViewPort(viewport_t* vp);
+/**
+ * Set the current GL viewport.
+ */
+void R_UseViewPort(viewport_t *vp);
 
-const viewdata_t* R_ViewData(int consoleNum);
+viewdata_t const *R_ViewData(int consoleNum);
 
 void R_UpdateViewer(int consoleNum);
 
 void R_ResetViewer(void);
 
+/**
+ * Update the sharp world data by rotating the stored values of plane
+ * heights and sharp camera positions.
+ */
 void R_NewSharpWorld(void);
 
+/**
+ * Attempt to set up a view grid and calculate the viewports. Set 'numCols' and
+ * 'numRows' to zero to just update the viewport coordinates.
+ */
 boolean R_SetViewGrid(int numCols, int numRows);
 
 void R_SetupDefaultViewWindow(int consoleNum);
@@ -143,27 +186,27 @@ void R_SetViewAngle(int consoleNum, angle_t angle);
  */
 void R_SetViewPitch(int consoleNum, float pitch);
 
-int R_ViewWindowGeometry(int consoleNum, RectRaw* geometry);
-int R_ViewWindowOrigin(int consoleNum, Point2Raw* origin);
-int R_ViewWindowSize(int consoleNum, Size2Raw* size);
+int R_ViewWindowGeometry(int consoleNum, RectRaw *geometry);
+int R_ViewWindowOrigin(int consoleNum, Point2Raw *origin);
+int R_ViewWindowSize(int consoleNum, Size2Raw *size);
 
-void R_SetViewWindowGeometry(int consoleNum, const RectRaw* geometry, boolean interpolate);
+void R_SetViewWindowGeometry(int consoleNum, RectRaw const *geometry, boolean interpolate);
 
 /**
  * Animates the view window towards the target values.
  */
 void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
 
-int R_ViewPortGeometry(int consoleNum, RectRaw* geometry);
-int R_ViewPortOrigin(int consoleNum, Point2Raw* origin);
-int R_ViewPortSize(int consoleNum, Size2Raw* size);
+int R_ViewPortGeometry(int consoleNum, RectRaw *geometry);
+int R_ViewPortOrigin(int consoleNum, Point2Raw *origin);
+int R_ViewPortSize(int consoleNum, Size2Raw *size);
 
 void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 
 void R_LoadSystemFonts(void);
 
-const char* R_ChooseFixedFont(void);
-const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
+char const *R_ChooseFixedFont(void);
+char const *R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
 
 /**
  * Prepare resources for the current Map.

@@ -25,6 +25,7 @@
 #include "de_play.h"
 
 #include "resource/materialvariant.h"
+#include "resource/materials.h"
 
 boolean Surface_IsDrawable(Surface* suf)
 {

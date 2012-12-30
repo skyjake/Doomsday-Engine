@@ -38,6 +38,8 @@
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
 
+using namespace de;
+
 BEGIN_PROF_TIMERS()
   PROF_LUMOBJ_INIT_ADD,
   PROF_LUMOBJ_FRAME_SORT
@@ -747,11 +749,11 @@ static void addLuminous(mobj_t *mo)
 
     // Ensure we have up-to-date information about the material.
     materialvariantspecification_t const *spec = Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
+    MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
     if(!ms.hasTexture(MTU_PRIMARY)) return; // An invalid sprite texture.
 
     pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_SPRITE_AUTOLIGHT);
-    if(!pl) throw de::Error("addLuminous", QString("Texture \"%1\" has no TA_SPRITE_AUTOLIGHT analysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+    if(!pl) throw Error("addLuminous", QString("Texture \"%1\" has no TA_SPRITE_AUTOLIGHT analysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
     size = pl->brightMul;
     yOffset = ms.dimensions().height() * pl->originY;
@@ -764,7 +766,7 @@ static void addLuminous(mobj_t *mo)
             yOffset = def->offset[VY];
     }
 
-    de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
     center = -tex.origin().y() - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
@@ -962,11 +964,11 @@ static boolean createGlowLightForSurface(Surface *suf, void * /*paramaters*/)
 
         // Are we glowing at this moment in time?
         materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(suf->material, spec, true));
+        MaterialSnapshot const &ms = *App_Materials()->prepare(*suf->material, *spec, true);
         if(!(ms.glowStrength() > .001f)) return true; // Continue iteration.
 
         averagecolor_analysis_t const *avgColorAmplified = (averagecolor_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_COLOR_AMPLIFIED);
-        if(!avgColorAmplified) throw de::Error("createGlowLightForSurface", QString("Texture \"%1\" has no TA_COLOR_AMPLIFIED analysis)").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+        if(!avgColorAmplified) throw Error("createGlowLightForSurface", QString("Texture \"%1\" has no TA_COLOR_AMPLIFIED analysis)").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
         lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);

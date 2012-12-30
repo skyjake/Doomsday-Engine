@@ -2064,7 +2064,7 @@ static int DD_StartupWorker(void* parm)
     Textures_Init();
     DD_CreateTextureSchemes();
 
-    // Get the material manager up and running.
+    // Get the material collection up and running.
     Materials_Init();
 
     Con_SetProgress(140);
@@ -2236,7 +2236,7 @@ void DD_UpdateEngineState(void)
         gx.UpdateState(DD_POST);
 
     // Reset the anim groups (if in-game)
-    Materials_ResetAnimGroups();
+    App_Materials()->resetAnimGroups();
 }
 
 /* *INDENT-OFF* */
@@ -2600,18 +2600,12 @@ void DD_SetVariable(int ddvalue, void *parm)
 }
 
 /// @note Part of the Doomsday public API.
-materialschemeid_t DD_ParseMaterialSchemeName(char const *str)
-{
-    return Materials_ParseSchemeName(str);
-}
-
-/// @note Part of the Doomsday public API.
 fontschemeid_t DD_ParseFontSchemeName(const char* str)
 {
     return Fonts_ParseScheme(str);
 }
 
-ddstring_t const *DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
+String const &DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
 {
     materialschemeid_t schemeId = MS_INVALID; // Unknown.
 
@@ -2636,13 +2630,21 @@ ddstring_t const *DD_MaterialSchemeNameForTextureScheme(String textureSchemeName
         schemeId = MS_SYSTEM;
     }
 
-    return Materials_SchemeName(schemeId);
+    return App_Materials()->schemeName(schemeId);
 }
 
-ddstring_t const *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
+AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
 {
-    if(!textureSchemeName) return Materials_SchemeName(MS_INVALID);
-    return DD_MaterialSchemeNameForTextureScheme(Str_Text(textureSchemeName));
+    if(!textureSchemeName)
+    {
+        QByteArray schemeNameUtf8 = App_Materials()->schemeName(MS_INVALID).toUtf8();
+        return AutoStr_FromTextStd(schemeNameUtf8.constData());
+    }
+    else
+    {
+        QByteArray schemeNameUtf8 = DD_MaterialSchemeNameForTextureScheme(String(Str_Text(textureSchemeName))).toUtf8();
+        return AutoStr_FromTextStd(schemeNameUtf8.constData());
+    }
 }
 
 materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
@@ -2652,8 +2654,8 @@ materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
     try
     {
         de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*_textureUri)).composeUri();
-        uri.setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(uri.scheme())));
-        return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
+        uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
+        return App_Materials()->resolveUri2(uri, true/*quiet please*/);
     }
     catch(Textures::UnknownSchemeError const &er)
     {

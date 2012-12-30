@@ -45,16 +45,16 @@
 #include <de/StringPool>
 #include <de/memory.h>
 
-using de::FS1;
+using namespace de;
 
 // Map entity definitions.
-static de::StringPool* entityDefs;
-typedef std::map<int, de::StringPool::Id> EntityDefIdMap;
+static StringPool* entityDefs;
+typedef std::map<int, StringPool::Id> EntityDefIdMap;
 static EntityDefIdMap entityDefIdMap;
 
 extern "C" boolean mapSetup; // We are currently setting up a map.
 
-Uri* mapUri; // Name by which the game referred to the current map.
+struct uri_s* mapUri; // Name by which the game referred to the current map.
 
 /**
  * These map data arrays are internal to the engine.
@@ -212,7 +212,7 @@ boolean P_LoadMap(char const* uriCString)
         R_ResetViewer();
 
         // Texture animations should begin from their first step.
-        Materials_ResetAnimGroups();
+        App_Materials()->resetAnimGroups();
 
         R_InitObjlinkBlockmapForMap();
 
@@ -235,7 +235,7 @@ boolean P_LoadMap(char const* uriCString)
     return false;
 }
 
-static int clearEntityDefsWorker(de::StringPool::Id id, void* /*parameters*/)
+static int clearEntityDefsWorker(StringPool::Id id, void* /*parameters*/)
 {
     MapEntityDef* def = static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
     DENG2_ASSERT(def);
@@ -263,7 +263,7 @@ MapEntityDef* P_MapEntityDef(int id)
     EntityDefIdMap::iterator i = entityDefIdMap.find(id);
     if(i != entityDefIdMap.end())
     {
-        de::StringPool::Id id = i->second;
+        StringPool::Id id = i->second;
         return static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
     }
     return 0; // Not found.
@@ -273,13 +273,13 @@ MapEntityDef* P_MapEntityDefByName(char const* name)
 {
     if(name && entityDefs)
     {
-        de::StringPool::Id id = entityDefs->isInterned(de::String(name));
+        StringPool::Id id = entityDefs->isInterned(String(name));
         return static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
     }
     return 0; // Not found.
 }
 
-static int P_NameForMapEntityDefWorker(de::StringPool::Id id, void* parameters)
+static int P_NameForMapEntityDefWorker(StringPool::Id id, void* parameters)
 {
     MapEntityDef* def = static_cast<MapEntityDef*>( parameters );
     if(entityDefs->userPointer(id) == def) return id;
@@ -290,8 +290,8 @@ AutoStr* P_NameForMapEntityDef(MapEntityDef* def)
 {
     if(def)
     {
-        de::StringPool::Id id = entityDefs->iterate(P_NameForMapEntityDefWorker, def);
-        de::String const& name = entityDefs->string(id);
+        StringPool::Id id = entityDefs->iterate(P_NameForMapEntityDefWorker, def);
+        String const& name = entityDefs->string(id);
         QByteArray nameUtf8 = name.toUtf8();
         return AutoStr_FromText(nameUtf8.constData());
     }
@@ -351,10 +351,10 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
     DENG2_ASSERT(def);
 
     if(propertyId == 0) // Not a valid identifier.
-        throw de::Error("MapEntityDef_AddProperty", "0 is not a valid propertyId");
+        throw Error("MapEntityDef_AddProperty", "0 is not a valid propertyId");
 
     if(!propertyName || !propertyName[0]) // Must have a name.
-        throw de::Error("MapEntityDef_AddProperty", "Invalid propertyName (zero-length string)");
+        throw Error("MapEntityDef_AddProperty", "Invalid propertyName (zero-length string)");
 
     // A supported value type?
     switch(type)
@@ -368,21 +368,21 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
         break;
 
     default:
-        throw de::Error("MapEntityDef_AddProperty", QString("Unknown/not supported value type %1").arg(type));
+        throw Error("MapEntityDef_AddProperty", QString("Unknown/not supported value type %1").arg(type));
     }
 
     // Ensure both the identifer and the name for the new property are unique.
     if(MapEntityDef_Property(def, propertyId) >= 0)
-        throw de::Error("MapEntityDef_AddProperty", QString("propertyId %1 not unique for %2")
+        throw Error("MapEntityDef_AddProperty", QString("propertyId %1 not unique for %2")
                                                     .arg(propertyId).arg(Str_Text(P_NameForMapEntityDef(def))));
     if(MapEntityDef_PropertyByName(def, propertyName) >= 0)
-        throw de::Error("MapEntityDef_AddProperty", QString("propertyName \"%1\" not unique for %2")
+        throw Error("MapEntityDef_AddProperty", QString("propertyName \"%1\" not unique for %2")
                                                     .arg(propertyName).arg(Str_Text(P_NameForMapEntityDef(def))));
 
     // Looks good! Add it to the list of properties.
     def->props = (MapEntityPropertyDef*) M_Realloc(def->props, ++def->numProps * sizeof(*def->props));
     if(!def->props)
-        throw de::Error("MapEntityDef_AddProperty",
+        throw Error("MapEntityDef_AddProperty",
                         QString("Failed on (re)allocation of %1 bytes for new MapEntityPropertyDef array")
                             .arg((unsigned long) sizeof(*def->props)));
 
@@ -392,7 +392,7 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
     int len = (int)strlen(propertyName);
     prop->name = (char*) M_Malloc(sizeof(*prop->name) * (len + 1));
     if(!prop->name)
-        throw de::Error("MapEntityDef_AddProperty",
+        throw Error("MapEntityDef_AddProperty",
                         QString("Failed on allocation of %1 bytes for property name")
                             .arg((unsigned long) (sizeof(*prop->name) * (len + 1))));
 
@@ -436,14 +436,14 @@ static MapEntityDef* findMapEntityDef(int identifier, const char* entityName, bo
     // Have we yet to initialize the map entity definition dataset?
     if(!entityDefs)
     {
-        entityDefs = new de::StringPool;
+        entityDefs = new StringPool;
     }
 
-    de::StringPool::Id id = entityDefs->intern(de::String(entityName));
+    StringPool::Id id = entityDefs->intern(String(entityName));
     MapEntityDef* def = new MapEntityDef(identifier);
     entityDefs->setUserPointer(id, def);
 
-    entityDefIdMap.insert(std::pair<int, de::StringPool::Id>(identifier, id));
+    entityDefIdMap.insert(std::pair<int, StringPool::Id>(identifier, id));
 
     return def;
 }
@@ -461,12 +461,12 @@ boolean P_RegisterMapObjProperty(int entityId, int propertyId,
     try
     {
         MapEntityDef* def = findMapEntityDef(entityId, 0, false /*do not create*/);
-        if(!def) throw de::Error("P_RegisterMapObjProperty", QString("Unknown entityId %1").arg(entityId));
+        if(!def) throw Error("P_RegisterMapObjProperty", QString("Unknown entityId %1").arg(entityId));
 
         MapEntityDef_AddProperty(def, propertyId, propertyName, type);
         return true; // Success!
     }
-    catch(de::Error const& er)
+    catch(Error const& er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
@@ -499,7 +499,7 @@ boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propert
     {
         return EntityDatabase_SetProperty(db, propertyDef, elementIndex, valueType, valueAdr);
     }
-    catch(de::Error const& er)
+    catch(Error const& er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
@@ -510,12 +510,12 @@ static MapEntityPropertyDef* entityPropertyDef(int entityId, int propertyId)
 {
     // Is this a known entity?
     MapEntityDef* entity = P_MapEntityDef(entityId);
-    if(!entity) throw de::Error("entityPropertyDef", QString("Unknown entity definition id %1").arg(entityId));
+    if(!entity) throw Error("entityPropertyDef", QString("Unknown entity definition id %1").arg(entityId));
 
     // Is this a known property?
     MapEntityPropertyDef* property;
     if(MapEntityDef_Property2(entity, propertyId, &property) < 0)
-        throw de::Error("entityPropertyDef", QString("Entity definition %1 has no property with id %2")
+        throw Error("entityPropertyDef", QString("Entity definition %1 has no property with id %2")
                                                  .arg(Str_Text(P_NameForMapEntityDef(entity)))
                                                  .arg(propertyId));
 
@@ -533,7 +533,7 @@ static void setValue(void* dst, valuetype_t dstType, PropertyValue const* pvalue
     case DDVT_SHORT: *(  (short*) dst) = pvalue->asInt16(); break;
     case DDVT_ANGLE: *((angle_t*) dst) = pvalue->asAngle(); break;
     default:
-        throw de::Error("setValue", QString("Unknown value type %d").arg(dstType));
+        throw Error("setValue", QString("Unknown value type %d").arg(dstType));
     }
 }
 
@@ -550,7 +550,7 @@ byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_BYTE, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -571,7 +571,7 @@ short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_SHORT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -592,7 +592,7 @@ int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_INT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -613,7 +613,7 @@ fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_FIXED, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -634,7 +634,7 @@ angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_ANGLE, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -655,7 +655,7 @@ float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_FLOAT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }

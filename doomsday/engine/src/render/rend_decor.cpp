@@ -1,35 +1,25 @@
-/**\file rend_decor.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file rend_decor.cpp Surface Decorations.
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * Surface Decorations.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -43,7 +33,7 @@
 #include "def_main.h"
 #include "resource/materialvariant.h"
 
-// MACROS ------------------------------------------------------------------
+using namespace de;
 
 // Quite a bit of decorations, there!
 #define MAX_DECOR_LIGHTS    (16384)
@@ -54,48 +44,32 @@ BEGIN_PROF_TIMERS()
   PROF_DECOR_ADD_LUMINOUS
 END_PROF_TIMERS()
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct decorsource_s {
-    coord_t         origin[3];
-    coord_t         maxDistance;
-    const Surface*  surface;
-    BspLeaf*        bspLeaf;
-    unsigned int    lumIdx; // index+1 of linked lumobj, or 0.
-    float           fadeMul;
-    const ded_decorlight_t* def;
+    coord_t origin[3];
+    coord_t maxDistance;
+    Surface const *surface;
+    BspLeaf *bspLeaf;
+    unsigned int lumIdx; // Index+1 of linked lumobj, or 0.
+    float fadeMul;
+    ded_decorlight_t const *def;
     DGLuint flareTex;
-    struct decorsource_s* next;
+    struct decorsource_s *next;
 } decorsource_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void updateSideSectionDecorations(LineDef* lineDef, byte side, SideDefSection section);
-static void updatePlaneDecorations(Plane* pln);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+static void updateSideSectionDecorations(LineDef *lineDef, byte side, SideDefSection section);
+static void updatePlaneDecorations(Plane *pln);
 
 byte useLightDecorations = true;
 float decorMaxDist = 2048; // No decorations are visible beyond this.
 float decorLightBrightFactor = 1;
 float decorLightFadeAngle = .1f;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static uint numDecorations = 0;
 
-static decorsource_t* sourceFirst = 0;
-static decorsource_t* sourceCursor = 0;
+static decorsource_t *sourceFirst = 0;
+static decorsource_t *sourceCursor = 0;
 
-// CODE --------------------------------------------------------------------
-
-void Rend_DecorRegister(void)
+void Rend_DecorRegister()
 {
     C_VAR_BYTE("rend-light-decor", &useLightDecorations, 0, 0, 1);
     C_VAR_FLOAT("rend-light-decor-angle", &decorLightFadeAngle, 0, 0, 1);
@@ -105,7 +79,7 @@ void Rend_DecorRegister(void)
 /**
  * Clears the list of decoration dummies.
  */
-static void clearDecorations(void)
+static void clearDecorations()
 {
     numDecorations = 0;
     sourceCursor = sourceFirst;
@@ -115,11 +89,11 @@ extern void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
                               coord_t distance, boolean fullBright,
                               float ambientColor[3], uint* lightListIdx);
 
-static void projectDecoration(decorsource_t* src)
+static void projectDecoration(decorsource_t *src)
 {
     float brightness, min, max;
-    const lumobj_t* lum;
-    vissprite_t* vis;
+    lumobj_t const *lum;
+    vissprite_t *vis;
     coord_t distance;
 
     // Does it pass the sector light limitation?
@@ -197,7 +171,7 @@ static void projectDecoration(decorsource_t* src)
  * Re-initialize the decoration source tracking (might be called during a map
  * load or othersuch situation).
  */
-void Rend_DecorInit(void)
+void Rend_DecorInit()
 {
     clearDecorations();
 }
@@ -205,24 +179,22 @@ void Rend_DecorInit(void)
 /**
  * Project all the non-clipped decorations. They become regular vissprites.
  */
-void Rend_ProjectDecorations(void)
+void Rend_ProjectDecorations()
 {
-    if(sourceFirst == sourceCursor)
-        return;
-    if(!useLightDecorations)
-        return;
+    if(!useLightDecorations) return;
 
-    { decorsource_t* src = sourceFirst;
+    if(sourceFirst == sourceCursor) return;
+
+    decorsource_t *src = sourceFirst;
     do
     {
         projectDecoration(src);
     } while((src = src->next) != sourceCursor);
-    }
 }
 
-static void addLuminousDecoration(decorsource_t* src)
+static void addLuminousDecoration(decorsource_t *src)
 {
-    const ded_decorlight_t* def = src->def;
+    ded_decorlight_t const *def = src->def;
     float brightness;
     uint i, lumIdx;
     float min, max;
@@ -275,13 +247,13 @@ static void addLuminousDecoration(decorsource_t* src)
 /**
  * Create lumobjs for all decorations who want them.
  */
-void Rend_AddLuminousDecorations(void)
+void Rend_AddLuminousDecorations()
 {
 BEGIN_PROF( PROF_DECOR_ADD_LUMINOUS );
 
     if(useLightDecorations && sourceFirst != sourceCursor)
     {
-        decorsource_t* src = sourceFirst;
+        decorsource_t *src = sourceFirst;
         do
         {
             addLuminousDecoration(src);
@@ -294,15 +266,15 @@ END_PROF( PROF_DECOR_ADD_LUMINOUS );
 /**
  * Create a new decoration source.
  */
-static decorsource_t* addDecoration(void)
+static decorsource_t *addDecoration()
 {
-    decorsource_t*      src;
+    decorsource_t *src;
 
     // If the cursor is NULL, new sources must be allocated.
     if(!sourceCursor)
     {
         // Allocate a new entry.
-        src = Z_Calloc(sizeof(decorsource_t), PU_APPSTATIC, NULL);
+        src = (decorsource_t *) Z_Calloc(sizeof(decorsource_t), PU_APPSTATIC, NULL);
 
         if(!sourceFirst)
         {
@@ -338,16 +310,15 @@ static decorsource_t* addDecoration(void)
 /**
  * A decorsource is created from the specified surface decoration.
  */
-static void createDecorSource(const Surface* suf, const surfacedecor_t* dec, const float maxDistance)
+static void createDecorSource(Surface const *suf, surfacedecor_t const *dec, float maxDistance)
 {
-    decorsource_t* src;
+    // Out of sources?
+    if(numDecorations >= MAX_DECOR_LIGHTS) return;
 
-    if(numDecorations >= MAX_DECOR_LIGHTS)
-        return; // Out of sources!
     ++numDecorations;
 
     // Fill in the data for a new surface decoration.
-    src = addDecoration();
+    decorsource_t *src = addDecoration();
     V3d_Copy(src->origin, dec->origin);
     src->maxDistance = maxDistance;
     src->bspLeaf = dec->bspLeaf;
@@ -356,7 +327,7 @@ static void createDecorSource(const Surface* suf, const surfacedecor_t* dec, con
     src->def = dec->def;
     if(src->def)
     {
-        const ded_decorlight_t* def = src->def;
+        ded_decorlight_t const *def = src->def;
         if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
         {
             src->flareTex = GL_PrepareFlareTexture(def->flare, def->flareTexture);
@@ -365,12 +336,11 @@ static void createDecorSource(const Surface* suf, const surfacedecor_t* dec, con
 }
 
 /**
- * @return              As this can also be used with iterators, will always
- *                      return @c true.
+ * @return  As this can also be used with iterators, will always return @c true.
  */
-boolean R_ProjectSurfaceDecorations(Surface* suf, void* context)
+boolean R_ProjectSurfaceDecorations(Surface *suf, void *context)
 {
-    float maxDist = *((float*) context);
+    float maxDist = *((float *) context);
     uint i;
 
     if(suf->inFlags & SUIF_UPDATE_DECORATIONS)
@@ -380,14 +350,14 @@ boolean R_ProjectSurfaceDecorations(Surface* suf, void* context)
         switch(DMU_GetType(suf->owner))
         {
         case DMU_SIDEDEF: {
-            SideDef* sideDef = (SideDef*)suf->owner;
-            LineDef* line = sideDef->line;
+            SideDef *sideDef = (SideDef *)suf->owner;
+            LineDef *line = sideDef->line;
             updateSideSectionDecorations(line, sideDef == line->L_frontsidedef? FRONT : BACK,
                                          &sideDef->SW_middlesurface == suf? SS_MIDDLE :
                                          &sideDef->SW_bottomsurface == suf? SS_BOTTOM : SS_TOP);
             break; }
         case DMU_PLANE:
-            updatePlaneDecorations((Plane*)suf->owner);
+            updatePlaneDecorations((Plane *)suf->owner);
             break;
         default:
             Con_Error("R_ProjectSurfaceDecorations: Internal Error, unknown type %s.", DMU_Str(DMU_GetType(suf->owner)));
@@ -399,7 +369,7 @@ boolean R_ProjectSurfaceDecorations(Surface* suf, void* context)
     if(useLightDecorations)
     for(i = 0; i < suf->numDecorations; ++i)
     {
-        const surfacedecor_t* d = &suf->decorations[i];
+        surfacedecor_t const *d = &suf->decorations[i];
         createDecorSource(suf, d, maxDist);
     }
 
@@ -409,10 +379,9 @@ boolean R_ProjectSurfaceDecorations(Surface* suf, void* context)
 /**
  * Determine proper skip values.
  */
-static void getDecorationSkipPattern(const int patternSkip[2], int* skip)
+static void getDecorationSkipPattern(int const patternSkip[2], int *skip)
 {
-    uint i;
-    for(i = 0; i < 2; ++i)
+    for(uint i = 0; i < 2; ++i)
     {
         // Skip must be at least one.
         skip[i] = patternSkip[i] + 1;
@@ -420,9 +389,9 @@ static void getDecorationSkipPattern(const int patternSkip[2], int* skip)
     }
 }
 
-static uint generateDecorLights(const ded_decorlight_t* def, Surface* suf,
-    material_t* mat, const pvec3d_t v1, const pvec3d_t v2, coord_t width, coord_t height,
-    const pvec3d_t delta, int axis, float offsetS, float offsetT, Sector* sec)
+static uint generateDecorLights(ded_decorlight_t const *def, Surface *suf,
+    material_t *mat, pvec3d_t const v1, pvec3d_t const /*v2*/, coord_t width, coord_t height,
+    pvec3d_t const delta, int axis, float offsetS, float offsetT, Sector* sec)
 {
     vec3d_t originBase, origin;
     coord_t patternW, patternH;
@@ -458,7 +427,7 @@ static uint generateDecorLights(const ded_decorlight_t* def, Surface* suf,
 
         for(; t < height; t += patternH)
         {
-            surfacedecor_t* d;
+            surfacedecor_t *d;
             float offS = s / width, offT = t / height;
 
             V3d_Set(origin, delta[VX] * offS,
@@ -490,8 +459,8 @@ static uint generateDecorLights(const ded_decorlight_t* def, Surface* suf,
 /**
  * Generate decorations for the specified surface.
  */
-static void updateSurfaceDecorations2(Surface* suf, float offsetS, float offsetT,
-    vec3d_t v1, vec3d_t v2, Sector* sec, boolean visible)
+static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT,
+    vec3d_t v1, vec3d_t v2, Sector *sec, boolean visible)
 {
     vec3d_t delta;
 
@@ -502,16 +471,13 @@ static void updateSurfaceDecorations2(Surface* suf, float offsetS, float offsetT
         delta[VX] * delta[VZ] != 0 ||
         delta[VY] * delta[VZ] != 0))
     {
-        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-            MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-        material_t* mat = MaterialVariant_GeneralCase(Materials_ChooseVariant(suf->material, spec, true, true));
-        const ded_decor_t* def = Materials_DecorationDef(mat);
+        materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
+        material_t *mat = &App_Materials()->chooseVariant(*suf->material, *spec, true, true)->generalCase();
+        ded_decor_t const *def = App_Materials()->decorationDef(mat);
         if(def)
         {
-            int axis = V3f_MajorAxis(suf->normal);
+            int const axis = V3f_MajorAxis(suf->normal);
             coord_t width, height;
-            uint i;
-
             if(axis == VX || axis == VY)
             {
                 width = sqrt(delta[VX] * delta[VX] + delta[VY] * delta[VY]);
@@ -527,7 +493,7 @@ static void updateSurfaceDecorations2(Surface* suf, float offsetS, float offsetT
             if(height < 0) height = -height;
 
             // Generate a number of lights.
-            for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+            for(uint i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
             {
                 generateDecorLights(&def->lights[i], suf, mat, v1, v2, width, height,
                                     delta, axis, offsetS, offsetT, sec);
@@ -539,10 +505,10 @@ static void updateSurfaceDecorations2(Surface* suf, float offsetS, float offsetT
 /**
  * Generate decorations for a plane.
  */
-static void updatePlaneDecorations(Plane* pln)
+static void updatePlaneDecorations(Plane *pln)
 {
-    Sector*  sec = pln->sector;
-    Surface* suf = &pln->surface;
+    Sector *sec = pln->sector;
+    Surface *suf = &pln->surface;
     vec3d_t v1, v2;
     float offsetS, offsetT;
 
@@ -563,10 +529,10 @@ static void updatePlaneDecorations(Plane* pln)
     updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
 }
 
-static void updateSideSectionDecorations(LineDef* line, byte side, SideDefSection section)
+static void updateSideSectionDecorations(LineDef *line, byte side, SideDefSection section)
 {
     float matOffset[2];
-    Surface* surface;
+    Surface *surface;
     vec3d_t v1, v2;
     boolean visible = false;
 
@@ -575,10 +541,10 @@ static void updateSideSectionDecorations(LineDef* line, byte side, SideDefSectio
     surface = &line->L_sidedef(side)->SW_surface(section);
     if(surface->material)
     {
-        Sector* frontSec  = line->L_sector(side);
-        Sector* backSec   = line->L_sector(side^1);
-        SideDef* frontDef = line->L_sidedef(side);
-        SideDef* backDef  = line->L_sidedef(side^1);
+        Sector *frontSec  = line->L_sector(side);
+        Sector *backSec   = line->L_sector(side^1);
+        SideDef *frontDef = line->L_sidedef(side);
+        SideDef *backDef  = line->L_sidedef(side^1);
         coord_t low, hi;
         visible = R_FindBottomTop2(section, line->flags, frontSec, backSec, frontDef, backDef,
                                    &low, &hi, matOffset);
@@ -595,11 +561,11 @@ static void updateSideSectionDecorations(LineDef* line, byte side, SideDefSectio
 /**
  * Decorations are generated for each frame.
  */
-void Rend_InitDecorationsForFrame(void)
+void Rend_InitDecorationsForFrame()
 {
-    surfacelist_t* slist;
+    surfacelist_t *slist;
 #ifdef DD_PROFILE
-    static int          i;
+    static int i;
 
     if(++i > 40)
     {

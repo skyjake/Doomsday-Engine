@@ -201,17 +201,15 @@ de::ResourceClass& DD_ResourceClassById(resourceclassid_t classId);
 de::ResourceClass& DD_ResourceClassByName(de::String name);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
-ddstring_t const *DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
+de::String const &DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 
 extern "C" {
 #endif // __cplusplus
 
-materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
-
-fontschemeid_t DD_ParseFontSchemeName(const char* str);
+fontschemeid_t DD_ParseFontSchemeName(char const *str);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
-ddstring_t const *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName);
+AutoStr *DD_MaterialSchemeNameForTextureScheme(Str const *textureSchemeName);
 
 /// @return  Unique identifier of the material associated with specified @a textureUri.
 materialid_t DD_MaterialForTextureUri(Uri const *uri);

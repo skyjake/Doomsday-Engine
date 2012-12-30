@@ -36,6 +36,8 @@
 
 #include "resource/materialsnapshot.h"
 
+using namespace de;
+
 fidata_text_t *P_CreateText(fi_objectid_t id, char const *name, fontid_t fontNum);
 void P_DestroyText(fidata_text_t *text);
 
@@ -526,9 +528,9 @@ static void drawPageBackground(fi_page_t *p, float x, float y, float width, floa
 
     if(p->_bg.material)
     {
-        materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
+        materialvariantspecification_t const *spec = App_Materials()->variantSpecificationForContext(
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(p->_bg.material, spec, true));
+        MaterialSnapshot const &ms = *App_Materials()->prepare(*p->_bg.material, *spec, true);
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
@@ -1021,9 +1023,9 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             material_t *mat = f->texRef.material;
             if(mat)
             {
-                materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
+                materialvariantspecification_t const *spec = App_Materials()->variantSpecificationForContext(
                     MC_UI, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -3, 0, false, false, false, false);
-                de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
+                MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
 
                 GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
                 glEnable(GL_TEXTURE_2D);
@@ -1038,7 +1040,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 V2f_Set(rotateCenter, dimensions[VX]/2, dimensions[VY]/2);
                 ms.texture(MTU_PRIMARY).coords(&texScale[VX], &texScale[VY]);
 
-                de::Texture const &texture = ms.texture(MTU_PRIMARY).generalCase();
+                Texture const &texture = ms.texture(MTU_PRIMARY).generalCase();
                 de::Uri uri = texture.manifest().composeUri();
                 if(!uri.scheme().compareWithoutCase("Sprites"))
                 {
@@ -1052,7 +1054,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             break; }
 
         case PFT_PATCH: {
-            de::Texture *texture = App_Textures()->scheme("Patches").findByUniqueId(f->texRef.patch).texture();
+            Texture *texture = App_Textures()->scheme("Patches").findByUniqueId(f->texRef.patch).texture();
             if(texture)
             {
                 GL_BindTexture(GL_PreparePatchTexture(reinterpret_cast<texture_s *>(texture)));

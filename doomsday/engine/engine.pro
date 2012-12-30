@@ -296,6 +296,7 @@ DENG_HEADERS += \
     include/resource/image.h \
     include/resource/lumpcache.h \
     include/resource/material.h \
+    include/resource/materialbind.h \
     include/resource/materials.h \
     include/resource/materialsnapshot.h \
     include/resource/materialvariant.h \
@@ -551,14 +552,14 @@ SOURCES += \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.c \
-    src/render/r_main.c \
+    src/render/r_main.cpp \
     src/render/r_lgrid.c \
     src/render/r_shadow.c \
     src/render/r_things.cpp \
     src/render/rend_bias.c \
     src/render/rend_clip.cpp \
     src/render/rend_console.cpp \
-    src/render/rend_decor.c \
+    src/render/rend_decor.cpp \
     src/render/rend_dynlight.c \
     src/render/rend_fakeradio.cpp \
     src/render/rend_font.c \
@@ -583,8 +584,9 @@ SOURCES += \
     src/resource/image.cpp \
     src/resource/material.cpp \
     src/resource/materialarchive.c \
-    src/resource/materialsnapshot.cpp \
+    src/resource/materialbind.cpp \
     src/resource/materials.cpp \
+    src/resource/materialsnapshot.cpp \
     src/resource/materialvariant.cpp \
     src/resource/models.cpp \
     src/resource/patch.cpp \

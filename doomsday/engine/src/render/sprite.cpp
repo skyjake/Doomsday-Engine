@@ -1,5 +1,4 @@
 /** @file sprite.cpp Sprite Renderer.
- * @ingroup render
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -34,6 +33,8 @@
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
 
+using namespace de;
+
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 
 static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr);
@@ -50,19 +51,18 @@ int useSpriteBlend = 1;
 byte devNoSprites = false;
 byte devThinkerIds = false;
 
-void Rend_SpriteRegister(void)
+void Rend_SpriteRegister()
 {
-    // Cvars
-    C_VAR_INT("rend-sprite-align", &alwaysAlign, 0, 0, 3);
-    C_VAR_FLOAT("rend-sprite-align-angle", &maxSpriteAngle, 0, 0, 90);
-    C_VAR_INT("rend-sprite-alpha", &useSpriteAlpha, 0, 0, 1);
-    C_VAR_INT("rend-sprite-blend", &useSpriteBlend, 0, 0, 1);
-    C_VAR_INT("rend-sprite-lights", &spriteLight, 0, 0, 10);
-    C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1);
-    C_VAR_INT("rend-sprite-noz", &noSpriteZWrite, 0, 0, 1);
-    C_VAR_BYTE("rend-sprite-precache", &precacheSprites, 0, 0, 1);
-    C_VAR_BYTE("rend-dev-nosprite", &devNoSprites, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-thinker-ids", &devThinkerIds, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT   ("rend-sprite-align",       &alwaysAlign,       0, 0, 3);
+    C_VAR_FLOAT ("rend-sprite-align-angle", &maxSpriteAngle,    0, 0, 90);
+    C_VAR_INT   ("rend-sprite-alpha",       &useSpriteAlpha,    0, 0, 1);
+    C_VAR_INT   ("rend-sprite-blend",       &useSpriteBlend,    0, 0, 1);
+    C_VAR_INT   ("rend-sprite-lights",      &spriteLight,       0, 0, 10);
+    C_VAR_BYTE  ("rend-sprite-mode",        &noSpriteTrans,     0, 0, 1);
+    C_VAR_INT   ("rend-sprite-noz",         &noSpriteZWrite,    0, 0, 1);
+    C_VAR_BYTE  ("rend-sprite-precache",    &precacheSprites,   0, 0, 1);
+    C_VAR_BYTE  ("rend-dev-nosprite",       &devNoSprites,      CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-thinker-ids",    &devThinkerIds,     CVF_NO_ARCHIVE, 0, 1);
 }
 
 static inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
@@ -288,7 +288,6 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     float offScaleY = weaponOffsetScaleY / 1000.0f;
     spritedef_t const *sprDef;
     spriteframe_t const *sprFrame;
-    materialvariantspecification_t const *spec;
     boolean flip;
 
 #ifdef RANGECHECK
@@ -304,11 +303,11 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     sprFrame = &sprDef->spriteFrames[frame];
     flip = sprFrame->flip[0];
 
-    spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
+    materialvariantspecification_t const *spec = App_Materials()->variantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -2, 0, false, true, true, false);
-    de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(sprFrame->mats[0], spec, true));
+    MaterialSnapshot const &ms = *App_Materials()->prepare(*sprFrame->mats[0], *spec, true);
 
-    de::Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
+    Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
     DENG_ASSERT(spec);
 
@@ -375,7 +374,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
 materialvariantspecification_t const *PSprite_MaterialSpec()
 {
-    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
+    return App_Materials()->variantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
                                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0,
                                                     false, true, true, false);
 }
@@ -390,9 +389,9 @@ void Rend_DrawPSprite(rendpspriteparams_t const *params)
     else if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        material_t *mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
-        materialvariantspecification_t const *spec = PSprite_MaterialSpec();
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(mat, spec, true));
+        MaterialSnapshot const &ms =
+            *App_Materials()->prepare(*App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:gray")))),
+                                *PSprite_MaterialSpec(), true);
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
@@ -541,13 +540,13 @@ static void selectTexUnits(int count)
 void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 {
     GLenum normalTarget, dynTarget;
-    de::TextureVariant *tex = 0;
+    TextureVariant *tex = 0;
     boolean withDyn = false;
     int normal = 0, dyn = 1;
 
     if(renderTextures)
     {
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_PrepareVariant(p->material));
+        MaterialSnapshot const &ms = *App_Materials()->prepareVariant(*reinterpret_cast<MaterialVariant *>(p->material));
         tex = &ms.texture(MTU_PRIMARY);
     }
 
@@ -862,26 +861,24 @@ void Rend_DrawMasked(void)
 
 materialvariantspecification_t const *Sprite_MaterialSpec(int tclass, int tmap)
 {
-    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tclass, tmap,
+    return App_Materials()->variantSpecificationForContext(MC_SPRITE, 0, 1, tclass, tmap,
                                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1,
                                                     true, true, true, false);
 }
 
-static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const *p)
+static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)
 {
-    assert(p);
-
     if(!renderTextures) return 0;
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        material_t *mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
-        materialvariantspecification_t const *spec = Sprite_MaterialSpec(0 /*tclass*/, 0/*tmap*/);
-        return Materials_ChooseVariant(mat, spec, true, true);
+        return App_Materials()->chooseVariant(*App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:gray")))),
+                                        *Sprite_MaterialSpec(0 /*tclass*/, 0/*tmap*/),
+                                        true, true);
     }
 
     // Use the pre-chosen sprite.
-    return p->material;
+    return reinterpret_cast<MaterialVariant *>(p.material);
 }
 
 void Rend_RenderSprite(rendspriteparams_t const *params)
@@ -896,7 +893,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     coord_t spriteCenter[3];
     coord_t surfaceNormal[3];
     MaterialVariant *mat = 0;
-    de::MaterialSnapshot const *ms = 0;
+    MaterialSnapshot const *ms = 0;
     float s = 1, t = 1; ///< Bottom right coords.
     int i;
 
@@ -906,7 +903,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
         variantspecification_t const *texSpec;
 
         // Ensure this variant has been prepared.
-        ms = reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(params->material));
+        ms = App_Materials()->prepareVariant(*reinterpret_cast<MaterialVariant *>(params->material));
 
         texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
         DENG_ASSERT(texSpec);
@@ -916,15 +913,15 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
 
         ms->texture(MTU_PRIMARY).coords(&s, &t);
 
-        de::Texture &tex = ms->texture(MTU_PRIMARY).generalCase();
+        Texture &tex = ms->texture(MTU_PRIMARY).generalCase();
         viewOffset.x += float(-tex.origin().x());
     }
 
     // We may want to draw using another material instead.
-    mat = chooseSpriteMaterial(params);
-    if(mat != params->material)
+    mat = chooseSpriteMaterial(*params);
+    if(mat != reinterpret_cast<MaterialVariant *>(params->material))
     {
-        ms = mat? reinterpret_cast<de::MaterialSnapshot const *>(Materials_PrepareVariant(mat)) : NULL;
+        ms = mat? App_Materials()->prepareVariant(*mat) : 0;
     }
 
     if(ms)

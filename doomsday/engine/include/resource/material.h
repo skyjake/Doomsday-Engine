@@ -73,6 +73,8 @@ int Material_IterateVariants(material_t* mat,
     int (*callback)(struct materialvariant_s* variant, void* paramaters),
     void* paramaters);
 
+int Material_VariantCount(material_t const *mat);
+
 /// @return  Definition associated with this.
 struct ded_material_s* Material_Definition(const material_t* mat);
 

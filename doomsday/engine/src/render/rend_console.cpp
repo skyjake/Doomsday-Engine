@@ -31,6 +31,8 @@
 #include "resource/materialsnapshot.h"
 #include "cbuffer.h"
 
+using namespace de;
+
 // Console (display) Modes:
 typedef enum {
     CM_HALFSCREEN, // Half vertical window height.
@@ -46,7 +48,7 @@ float consoleMoveSpeed = .5f; // Speed of console opening/closing.
 
 float consoleBackgroundAlpha = .75f;
 float consoleBackgroundLight = .14f;
-Uri *consoleBackgroundMaterialUri;
+struct uri_s *consoleBackgroundMaterialUri;
 int consoleBackgroundTurn = 0; // The rotation variable.
 float consoleBackgroundZoom = 1.0f;
 
@@ -287,7 +289,7 @@ void Rend_ConsoleUpdateBackground()
 {
     DENG_ASSERT(inited);
     if(!consoleBackgroundMaterialUri || Str_IsEmpty(Uri_Path(consoleBackgroundMaterialUri))) return;
-    consoleBackgroundMaterial = Materials_ToMaterial(Materials_ResolveUri(consoleBackgroundMaterialUri));
+    consoleBackgroundMaterial = App_Materials()->toMaterial(App_Materials()->resolveUri(*reinterpret_cast<de::Uri *>(consoleBackgroundMaterialUri)));
 }
 
 void Rend_ConsoleToggleFullscreen()
@@ -545,9 +547,9 @@ static void drawConsoleBackground(Point2Raw const *origin, Size2Raw const *size,
 
     if(consoleBackgroundMaterial)
     {
-        materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
+        materialvariantspecification_t const *spec = App_Materials()->variantSpecificationForContext(
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        de::MaterialSnapshot const &ms = reinterpret_cast<de::MaterialSnapshot const &>(*Materials_Prepare(consoleBackgroundMaterial, spec, Con_IsActive()));
+        MaterialSnapshot const &ms = *App_Materials()->prepare(*consoleBackgroundMaterial, *spec, Con_IsActive());
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 

@@ -1,6 +1,6 @@
 /** @file materialvariant.h Logical Material Variant.
  *
- * @authors Copyright &copy; 2011-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2011-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,41 +20,40 @@
 #ifndef LIBDENG_RESOURCE_MATERIALVARIANT_H
 #define LIBDENG_RESOURCE_MATERIALVARIANT_H
 
-#include "render/rendpoly.h"
-#include "materials.h"
+/// Material (Usage) Context identifiers.
+typedef enum materialcontext_e {
+    MC_UNKNOWN = -1,
+    MATERIALCONTEXT_FIRST = 0,
+    MC_UI = MATERIALCONTEXT_FIRST,
+    MC_MAPSURFACE,
+    MC_SPRITE,
+    MC_MODELSKIN,
+    MC_PSPRITE,
+    MC_SKYSPHERE,
+    MATERIALCONTEXT_LAST = MC_SKYSPHERE
+} materialcontext_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define MATERIALCONTEXT_COUNT (MATERIALCONTEXT_LAST + 1 - MATERIALCONTEXT_FIRST )
 
-struct texturevariant_s;
+/// @c true= val can be interpreted as a valid material context identifier.
+#define VALID_MATERIALCONTEXT(val) ((val) >= MATERIALCONTEXT_FIRST && (val) <= MATERIALCONTEXT_LAST)
+
 struct texturevariantspecification_s;
-struct materialvariant_s;
 
 typedef struct materialvariantspecification_s {
-    materialcontext_t context;
+    enum materialcontext_e context;
     struct texturevariantspecification_s *primarySpec;
 } materialvariantspecification_t;
 
-#define MATERIALVARIANT_MAXLAYERS       DDMAX_MATERIAL_LAYERS
-
-typedef struct materialvariant_layer_s {
-    int stage; // -1 => layer not in use.
-    struct texture_s *texture;
-    float texOrigin[2]; /// Origin of the texture in material-space.
-    float glow;
-    short tics;
-} materialvariant_layer_t;
-
 #ifdef __cplusplus
-} // extern "C"
-#endif
 
-#ifdef __cplusplus
+#include "def_data.h"
+#include "resource/materialsnapshot.h"
+#include "resource/texture.h"
+
+struct material_s;
 
 namespace de {
-
-class MaterialSnapshot;
 
 /**
  * @ingroup resource
@@ -62,7 +61,33 @@ class MaterialSnapshot;
 class MaterialVariant
 {
 public:
-    MaterialVariant(material_t &generalCase, materialvariantspecification_t const &spec,
+    /// Maximum number of layers a material supports.
+    static int const max_layers = DDMAX_MATERIAL_LAYERS;
+
+    struct Layer
+    {
+        /// @c -1 => layer not in use.
+        int stage;
+
+        /// Texture of the layer.
+        Texture *texture;
+
+        /// Origin of the layer in material-space.
+        float texOrigin[2];
+
+        /// Glow strength for the layer.
+        float glow;
+
+        /// Current frame?
+        short tics;
+    };
+
+public:
+    /// The requested layer does not exist. @ingroup errors
+    DENG2_ERROR(InvalidLayerError);
+
+public:
+    MaterialVariant(struct material_s &generalCase, materialvariantspecification_t const &spec,
                     ded_material_t const &def);
     ~MaterialVariant();
 
@@ -78,17 +103,17 @@ public:
     void resetAnim();
 
     /// @return  Material from which this variant is derived.
-    material_t *generalCase() const { return material; }
+    struct material_s &generalCase() const;
 
     /// @return  MaterialVariantSpecification from which this variant is derived.
-    materialvariantspecification_t const *spec() const { return varSpec; }
+    materialvariantspecification_t const &spec() const;
 
     /**
      * Retrieve a handle for a staged animation layer form this variant.
      * @param layer  Index of the layer to retrieve.
      * @return  MaterialVariantLayer for the specified layer index.
      */
-    materialvariant_layer_t const *layer(int layer);
+    Layer const &layer(int layer);
 
     /**
      * Attach MaterialSnapshot data to this. MaterialVariant is given ownership of @a materialSnapshot.
@@ -102,10 +127,10 @@ public:
     MaterialSnapshot *detachSnapshot();
 
     /// @return  MaterialSnapshot data associated with this.
-    MaterialSnapshot *snapshot() const { return snapshot_; }
+    MaterialSnapshot *snapshot() const;
 
     /// @return  Frame count when the snapshot was last prepared/updated.
-    int snapshotPrepareFrame() const { return snapshotPrepareFrame_; }
+    int snapshotPrepareFrame() const;
 
     /**
      * Change the frame when the snapshot was last prepared/updated.
@@ -137,70 +162,14 @@ public:
     void setTranslationPoint(float inter);
 
 private:
-    /// Superior Material of which this is a derivative.
-    material_t *material;
-
-    /// For "smoothed" Material animation:
-    bool hasTranslation;
-    MaterialVariant *current;
-    MaterialVariant *next;
-    float inter;
-
-    /// Specification used to derive this variant.
-    materialvariantspecification_t const *varSpec;
-
-    /// Cached copy of current state if any.
-    MaterialSnapshot *snapshot_;
-
-    /// Frame count when the snapshot was last prepared/updated.
-    int snapshotPrepareFrame_;
-
-    materialvariant_layer_t layers[MATERIALVARIANT_MAXLAYERS];
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace de
 
-extern "C" {
-#endif
-
-/**
- * C wrapper API:
- */
+#endif // __cplusplus
 
 struct materialvariant_s; // The materialvariant instance (opaque).
-typedef struct materialvariant_s MaterialVariant;
-
-MaterialVariant* MaterialVariant_New(struct material_s* generalCase,
-    const materialvariantspecification_t* spec);
-void MaterialVariant_Delete(MaterialVariant* mat);
-
-void MaterialVariant_Ticker(MaterialVariant* mat, timespan_t time);
-
-void MaterialVariant_ResetAnim(MaterialVariant* mat);
-
-material_t* MaterialVariant_GeneralCase(MaterialVariant* mat);
-const materialvariantspecification_t* MaterialVariant_Spec(const MaterialVariant* mat);
-const materialvariant_layer_t* MaterialVariant_Layer(MaterialVariant* mat, int layer);
-
-struct materialsnapshot_s *MaterialVariant_AttachSnapshot(MaterialVariant* mat, struct materialsnapshot_s *materialSnapshot);
-struct materialsnapshot_s *MaterialVariant_DetachSnapshot(MaterialVariant* mat);
-struct materialsnapshot_s *MaterialVariant_Snapshot(const MaterialVariant* mat);
-
-int MaterialVariant_SnapshotPrepareFrame(const MaterialVariant* mat);
-void MaterialVariant_SetSnapshotPrepareFrame(MaterialVariant* mat, int frame);
-
-MaterialVariant* MaterialVariant_TranslationNext(MaterialVariant* mat);
-MaterialVariant* MaterialVariant_TranslationCurrent(MaterialVariant* mat);
-
-float MaterialVariant_TranslationPoint(MaterialVariant* mat);
-
-void MaterialVariant_SetTranslation(MaterialVariant* mat,
-    MaterialVariant* current, MaterialVariant* next);
-
-void MaterialVariant_SetTranslationPoint(MaterialVariant* mat, float inter);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_RESOURCE_MATERIALVARIANT_H */
