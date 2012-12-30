@@ -56,9 +56,14 @@ DENG_EXTERN_C void GL_SetFilter(int f);
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
 DENG_EXTERN_C void GL_UseFog(int yes);
 DENG_EXTERN_C void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+DENG_EXTERN_C void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+                                                   int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
+                                                   float stretchEpsilon);
 DENG_EXTERN_C void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
 DENG_EXTERN_C void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
 DENG_EXTERN_C void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
+DENG_EXTERN_C void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale);
+DENG_EXTERN_C void GL_DrawSvg(svgid_t id, const Point2Rawf* origin);
 
 DENG_EXTERN_C void R_InitViewWindow(void);
 DENG_EXTERN_C void R_RenderPlayerView(int num);
@@ -74,9 +79,20 @@ DENG_EXTERN_C void FR_SetFont(fontid_t font);
 DENG_EXTERN_C void FR_PushAttrib(void);
 DENG_EXTERN_C void FR_PopAttrib(void);
 DENG_EXTERN_C void FR_LoadDefaultAttrib(void);
+DENG_EXTERN_C float FR_Alpha();
+DENG_EXTERN_C float FR_ColorRed(void);
+DENG_EXTERN_C float FR_ColorGreen(void);
+DENG_EXTERN_C float FR_ColorBlue(void);
 DENG_EXTERN_C float FR_Leading(void);
-DENG_EXTERN_C void FR_SetLeading(float value);
 DENG_EXTERN_C int FR_Tracking(void);
+DENG_EXTERN_C void FR_ShadowOffset(int* offsetX, int* offsetY);
+DENG_EXTERN_C float FR_ShadowStrength(void);
+DENG_EXTERN_C float FR_GlitterStrength(void);
+DENG_EXTERN_C boolean FR_CaseScale(void);
+DENG_EXTERN_C void FR_CharSize(Size2Raw* size, unsigned char ch);
+DENG_EXTERN_C fontid_t FR_Font(void);
+DENG_EXTERN_C void FR_ColorAndAlpha(float rgba[4]);
+DENG_EXTERN_C void FR_SetLeading(float value);
 DENG_EXTERN_C void FR_SetTracking(int value);
 DENG_EXTERN_C void FR_SetColor(float red, float green, float blue);
 DENG_EXTERN_C void FR_SetColorv(const float rgb[3]);

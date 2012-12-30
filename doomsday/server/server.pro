@@ -25,6 +25,9 @@ include(../dep_lzss.pri)
 include(../dep_deng2.pri)
 include(../dep_deng.pri)
 
+# TODO: Get rid of this. The dedicated server should need no GL code.
+win32: include(../dep_opengl.pri)
+
 # Definitions ----------------------------------------------------------------
 
 DEFINES += __DOOMSDAY__ __SERVER__
@@ -59,7 +62,7 @@ win32 {
     QMAKE_LFLAGS += \
         /NODEFAULTLIB:libcmt \
         /DEF:\"$$DENG_API_DIR/doomsday.def\" \
-        /IMPLIB:\"$$DENG_EXPORT_LIB\"
+        /IMPLIB:\"$$OUT_PWD/../server/doomsday-server.lib\"
 
     LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
         -lopengl32 -lglu32

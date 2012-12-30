@@ -119,6 +119,21 @@ void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, in
     DENG_UNUSED(overrideMode);
 }
 
+void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+                                     int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
+                                     float stretchEpsilon)
+{
+    DENG_UNUSED(bp);
+    DENG_UNUSED(flags);
+    DENG_UNUSED(width);
+    DENG_UNUSED(height);
+    DENG_UNUSED(bp);
+    DENG_UNUSED(availWidth);
+    DENG_UNUSED(availHeight);
+    DENG_UNUSED(overrideMode);
+    DENG_UNUSED(stretchEpsilon);
+}
+
 void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
 {
     DENG_UNUSED(bp);
@@ -136,6 +151,12 @@ void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float ang
     DENG_UNUSED(scale);
     DENG_UNUSED(angle);
 }
+
+void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale)
+{}
+
+void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
+{}
 
 void GL_PrepareLSTexture(void)
 {}
@@ -236,6 +257,63 @@ void FR_SetColorGreen(float value)
 void FR_SetColorBlue(float value)
 {
     DENG_UNUSED(value);
+}
+
+float FR_Alpha(void)
+{
+    return 0;
+}
+
+float FR_ColorRed(void)
+{
+    return 0;
+}
+
+float FR_ColorGreen(void)
+{
+    return 0;
+}
+
+float FR_ColorBlue(void)
+{
+    return 0;
+}
+
+void FR_ShadowOffset(int* offsetX, int* offsetY)
+{
+    DENG_UNUSED(offsetX);
+    DENG_UNUSED(offsetY);
+}
+
+float FR_ShadowStrength(void)
+{
+    return 0;
+}
+
+float FR_GlitterStrength(void)
+{
+    return 0;
+}
+
+boolean FR_CaseScale(void)
+{
+    return false;
+}
+
+void FR_CharSize(Size2Raw* size, unsigned char ch)
+{
+    DENG_UNUSED(size);
+    DENG_UNUSED(ch);
+}
+
+fontid_t FR_Font(void)
+{
+    return 0;
+}
+
+void FR_ColorAndAlpha(float rgba[4])
+{
+    DENG_UNUSED(rgba);
 }
 
 void FR_SetAlpha(float value)
