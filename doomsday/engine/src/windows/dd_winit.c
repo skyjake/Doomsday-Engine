@@ -255,10 +255,6 @@ boolean DD_Win32_Init(void)
     // Prepare the command line arguments.
     DD_InitCommandLine();
 
-    // First order of business: are we running in dedicated mode?
-    isDedicated = CommandLine_Check("-dedicated");
-    novideo = CommandLine_Check("-novideo") || isDedicated;
-
     Library_Init();
 
     // Determine our basedir and other global paths.
@@ -279,6 +275,7 @@ boolean DD_Win32_Init(void)
 
     Plug_LoadAll();
 
+#ifdef __CLIENT__
     // No Windows system keys?
     if(CommandLine_Check("-nowsk"))
     {
@@ -286,6 +283,7 @@ boolean DD_Win32_Init(void)
         SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
         Con_Message("Windows system keys disabled.\n");
     }
+#endif
 
     return !failed;
 }

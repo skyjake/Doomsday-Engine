@@ -163,6 +163,7 @@ static int runThinker(thinker_t* th, void* context)
             if(th->id)
             {
                 mobj_t* mo = (mobj_t*) th;
+#ifdef __CLIENT__
                 if(!Cl_IsClientMobj(mo))
                 {
                     // It's a regular mobj: recycle for reduced allocation overhead.
@@ -173,6 +174,9 @@ static int runThinker(thinker_t* th, void* context)
                     // Delete the client mobj.
                     ClMobj_Destroy(mo);
                 }
+#else
+                P_MobjRecycle(mo);
+#endif
             }
             else
             {
@@ -231,7 +235,9 @@ void GameMap_ThinkerAdd(GameMap* map, thinker_t* th, boolean makePublic)
     {
         // It is a mobj, give it an ID (not for client mobjs, though, they
         // already have an id).
+#ifdef __CLIENT__
         if(!Cl_IsClientMobj((mobj_t*)th))
+#endif
         {
             th->id = newMobjID(map);
         }

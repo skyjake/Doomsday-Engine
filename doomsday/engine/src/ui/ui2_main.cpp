@@ -320,8 +320,10 @@ void UI_Shutdown(void)
 
 void UI2_Ticker(timespan_t ticLength)
 {
+#ifdef __CLIENT__
     // Always tic.
     FR_Ticker(ticLength);
+#endif
 
     if(!inited) return;
 

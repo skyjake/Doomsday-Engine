@@ -37,8 +37,8 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "de_platform.h"
 #include "de_base.h"
+#include "de_platform.h"
 #include "de_system.h"
 #include "m_misc.h"
 
@@ -206,7 +206,7 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
     }
     else
     {
-        char userName[PATH_MAX], *end = NULL;
+        char userName[4096], *end = NULL;
         struct passwd *pw;
 
         end = strchr(path + 1, '/');

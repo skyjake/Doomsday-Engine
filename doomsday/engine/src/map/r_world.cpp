@@ -529,12 +529,12 @@ Plane *R_NewPlaneForSector(Sector *sec)
     Surface_SetBlendMode(suf, BM_NORMAL);
     Surface_UpdateBaseOrigin(suf);
 
+#ifdef __CLIENT__
     /**
      * Resize the biassurface lists for the BSP leaf planes.
      * If we are in map setup mode, don't create the biassurfaces now,
      * as planes are created before the bias system is available.
      */
-
     if(sec->bspLeafs && *sec->bspLeafs)
     {
         BspLeaf **ssecIter = sec->bspLeafs;
@@ -574,6 +574,7 @@ Plane *R_NewPlaneForSector(Sector *sec)
             ssecIter++;
         } while(*ssecIter);
     }
+#endif
 
     return plane;
 }
@@ -1448,6 +1449,7 @@ void R_ClearSectorFlags()
 
 boolean R_IsGlowingPlane(Plane const *pln)
 {
+#ifdef __CLIENT__
     /// @todo We should not need to prepare to determine this.
     material_t *mat = pln->surface.material;
     if(mat)
@@ -1458,10 +1460,15 @@ boolean R_IsGlowingPlane(Plane const *pln)
         if(!Material_IsDrawable(mat) || ms.glowStrength() > 0) return true;
     }
     return Surface_IsSkyMasked(&pln->surface);
+#else
+    DENG_UNUSED(pln);
+    return false;
+#endif
 }
 
 float R_GlowStrength(Plane const *pln)
 {
+#ifdef __CLIENT__
     material_t *mat = pln->surface.material;
     if(mat)
     {
@@ -1474,6 +1481,9 @@ float R_GlowStrength(Plane const *pln)
             return ms.glowStrength();
         }
     }
+#else
+    DENG_UNUSED(pln);
+#endif
     return 0;
 }
 
@@ -1854,6 +1864,8 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
     return MINMAX_OF(0, (lightlevel - min) / (float) (max - min), 1);
 }
 
+#ifdef __CLIENT__
+
 float const *R_GetSectorLightColor(Sector const *sector)
 {
     static vec3f_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
@@ -1883,6 +1895,8 @@ float const *R_GetSectorLightColor(Sector const *sector)
     // A non-skylight sector (i.e., everything else!)
     return sector->rgb; // The sector's ambient light color.
 }
+
+#endif // __CLIENT__
 
 coord_t R_SkyCapZ(BspLeaf *bspLeaf, int skyCap)
 {

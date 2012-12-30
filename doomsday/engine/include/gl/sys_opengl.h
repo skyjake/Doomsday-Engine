@@ -56,7 +56,9 @@
 #    include <GL/glu.h>
 #    include <OpenGL/OpenGL.h>
 #  else
-#    include <SDL.h>
+#    ifdef __CLIENT__
+#      include <SDL.h>
+#    endif
 #    include <GL/gl.h>
 #    include <GL/glext.h>
 #    include <GL/glu.h>
@@ -149,6 +151,8 @@ typedef enum arraytype_e {
 extern "C" {
 #endif
 
+#ifdef __CLIENT__
+
 extern gl_state_t GL_state;
 
 #ifdef WIN32
@@ -202,6 +206,8 @@ void Sys_GLPrintExtensions(void);
 boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions);
 
 boolean Sys_GLCheckError(void);
+
+#endif // __CLIENT__
 
 #ifdef __cplusplus
 } // extern "C"

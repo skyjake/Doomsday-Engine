@@ -35,11 +35,19 @@ typedef struct def_svgline_s {
     const Point2Rawf* points;
 } def_svgline_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void R_NewSvg(svgid_t svgId, const def_svgline_t* lines, uint numLines);
 
 void GL_DrawSvg(svgid_t svgId, const Point2Rawf* origin);
 void GL_DrawSvg2(svgid_t svgId, const Point2Rawf* origin, float scale);
 void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 ///@}
 

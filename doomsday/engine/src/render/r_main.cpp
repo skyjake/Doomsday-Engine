@@ -34,6 +34,7 @@
 #include "de_ui.h"
 
 #include "gl/svg.h"
+#include "map/p_players.h"
 #include "render/vignette.h"
 
 using namespace de;
@@ -84,6 +85,7 @@ static viewport_t viewportOfLocalPlayer[DDMAXPLAYERS], *currentViewport;
 
 void R_Register()
 {
+#ifdef __CLIENT__
     C_VAR_INT ("con-show-during-setup",     &loadInStartupMode,     0, 0, 1);
 
     C_VAR_INT ("rend-camera-smooth",        &rendCameraSmooth,      CVF_HIDE, 0, 1);
@@ -95,6 +97,7 @@ void R_Register()
     C_VAR_INT ("rend-info-tris",            &rendInfoTris,          0, 0, 1);
 
     C_CMD("viewgrid", "ii", ViewGrid);
+#endif
 
     Materials::consoleRegister();
 }
@@ -174,6 +177,8 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
 
 void R_LoadSystemFonts()
 {
+#ifdef __CLIENT__
+
     if(!Fonts_IsInitialized() || isDedicated) return;
 
     loadFontIfNeeded(R_ChooseFixedFont(), &fontFixed);
@@ -182,6 +187,8 @@ void R_LoadSystemFonts()
     loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT,  Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_LIGHT]);
 
     Con_SetFont(fontFixed);
+
+#endif
 }
 
 /// @note Part of the Doomsday public API.
@@ -474,6 +481,7 @@ static void R_UpdateMap()
 {
     if(!theMap) return;
 
+#ifdef __CLIENT__
     // Update all world surfaces.
     for(uint i = 0; i < NUM_SECTORS; ++i)
     {
@@ -502,6 +510,7 @@ static void R_UpdateMap()
             Surface_Update(&side->SW_middlesurface);
         }
     }
+#endif
 
     R_MapInitSurfaceLists();
 
@@ -521,7 +530,9 @@ static void R_UpdateMap()
         skyDef = Def_GetSky(mapInfo->skyID);
         if(!skyDef) skyDef = &mapInfo->sky;
     }
+#ifdef __CLIENT__
     Sky_Configure(skyDef);
+#endif
 
     if(mapInfo)
     {
@@ -570,12 +581,14 @@ void R_Update()
 
     R_UpdateMap();
 
+#ifdef __CLIENT__
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();
 
     // Update the secondary title and the game status.
     Rend_ConsoleUpdateTitle();
+#endif
 
 #if _DEBUG
     Z_CheckHeap();
@@ -588,9 +601,11 @@ void R_Shutdown()
     R_ShutdownSprites();
     Models_Shutdown();
     R_ShutdownSvgs();
+#ifdef __CLIENT__
     R_ShutdownViewWindow();
     Fonts_Shutdown();
     Rend_Shutdown();
+#endif
 }
 
 void R_Ticker(timespan_t time)
@@ -743,8 +758,8 @@ void R_NewSharpWorld()
 
 void R_CreateMobjLinks()
 {
-#ifdef DD_PROFILE
-    static int p;
+#ifdef __CLIENT__
+#ifdef DD_PROFILE    static int p;
 
     if(++p > 40)
     {
@@ -765,10 +780,14 @@ BEGIN_PROF( PROF_MOBJ_INIT_ADD );
     }
 
 END_PROF( PROF_MOBJ_INIT_ADD );
+
+#endif
 }
 
 void R_BeginWorldFrame()
 {
+#ifdef __CLIENT__
+
     R_ClearSectorFlags();
 
     R_InterpolateTrackedPlanes(resetNextViewer);
@@ -802,6 +821,8 @@ void R_BeginWorldFrame()
         // Link objs to all contacted surfaces.
         R_LinkObjs();
     }
+
+#endif
 }
 
 void R_EndWorldFrame()
@@ -988,9 +1009,9 @@ void R_SetupFrame(player_t *player)
 #undef MINEXTRALIGHTFRAMES
 }
 
+#ifdef __CLIENT__
 void R_RenderPlayerViewBorder()
-{
-    R_DrawViewBorder();
+{    R_DrawViewBorder();
 }
 
 void R_UseViewPort(viewport_t *vp)
@@ -1246,9 +1267,10 @@ void R_RenderViewPorts()
     R_UseViewPort(NULL);
 }
 
+#endif // __CLIENT__
+
 static int findSpriteOwner(thinker_t *th, void *context)
-{
-    mobj_t *mo = (mobj_t *) th;
+{    mobj_t *mo = (mobj_t *) th;
     spritedef_t *sprDef = (spritedef_t *) context;
 
     if(mo->type >= 0 && mo->type < defs.count.mobjs.num)
@@ -1282,6 +1304,8 @@ static void cacheSpritesForState(int stateIndex, materialvariantspecification_t 
         }
     }
 }
+
+#ifdef __CLIENT__
 
 /// @note Part of the Doomsday public API.
 void Rend_CacheForMobjType(int num)
@@ -1381,6 +1405,8 @@ void Rend_CacheForMap()
         GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, Models_CacheForMobj, NULL);
     }
 }
+
+#endif // __CLIENT__
 
 D_CMD(ViewGrid)
 {

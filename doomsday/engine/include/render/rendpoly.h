@@ -23,6 +23,7 @@
 #define LIBDENG_RENDER_RENDPOLY_H
 
 #include "color.h"
+#include <de/vector1.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,6 +94,8 @@ typedef struct rtexmapuint_s {
     /// Texture-space origin translation (unscaled).
     vec2f_t offset;
 } rtexmapunit_t;
+
+#ifdef __CLIENT__
 
 extern byte rendInfoRPolys;
 
@@ -196,6 +199,8 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
     struct walldivnode_s *leftDivFirst, uint leftDivCount,
     struct walldivnode_s *rightDivFirst, uint rightDivCount,
     float bL, float tL, float bR, float tR);
+
+#endif // __CLIENT__
 
 #ifdef __cplusplus
 } // extern "C"

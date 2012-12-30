@@ -168,8 +168,10 @@ Canvas::Canvas(QWidget* parent, QGLWidget* shared) : QGLWidget(parent, shared)
     LOG_DEBUG("swap interval: ") << format().swapInterval();
     LOG_DEBUG("multisample: %b") << format().sampleBuffers();
 
+#ifdef __CLIENT__
     // Update the capability flags.
     GL_state.features.multisample = format().sampleBuffers();
+#endif
 
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
@@ -282,7 +284,9 @@ void Canvas::forceImmediateRepaint()
 
 void Canvas::initializeGL()
 {
+#ifdef __CLIENT__
     Sys_GLConfigureDefaultState();
+#endif
 }
 
 void Canvas::resizeGL(int w, int h)

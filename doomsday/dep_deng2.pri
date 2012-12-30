@@ -20,18 +20,17 @@ win32 {
 }
 
 macx {
+    defineTest(linkBinaryToBundledLibdeng2) {
+        fixInstallName($$1, libdeng2.2.dylib, ..)
+        fixInstallName($$1, QtCore.framework/Versions/4/QtCore, ..)
+        fixInstallName($$1, QtNetwork.framework/Versions/4/QtNetwork, ..)
+        fixInstallName($$1, QtGui.framework/Versions/4/QtGui, ..)
+        fixInstallName($$1, QtOpenGL.framework/Versions/4/QtOpenGL, ..)
+    }
     defineTest(linkToBundledLibdeng2) {
-        fixInstallName($${1}.bundle/$$1, libdeng2.2.dylib, ..)
-        fixInstallName($${1}.bundle/$$1, QtCore.framework/Versions/4/QtCore, ..)
-        fixInstallName($${1}.bundle/$$1, QtNetwork.framework/Versions/4/QtNetwork, ..)
-        fixInstallName($${1}.bundle/$$1, QtGui.framework/Versions/4/QtGui, ..)
-        fixInstallName($${1}.bundle/$$1, QtOpenGL.framework/Versions/4/QtOpenGL, ..)
+        linkBinaryToBundledLibdeng2($${1}.bundle/$$1)
     }
     defineTest(linkDylibToBundledLibdeng2) {
-        fixInstallName($${1}.dylib, libdeng2.2.dylib, ..)
-        fixInstallName($${1}.dylib, QtCore.framework/Versions/4/QtCore, ..)
-        fixInstallName($${1}.dylib, QtNetwork.framework/Versions/4/QtNetwork, ..)
-        fixInstallName($${1}.dylib, QtGui.framework/Versions/4/QtGui, ..)
-        fixInstallName($${1}.dylib, QtOpenGL.framework/Versions/4/QtOpenGL, ..)
+        linkBinaryToBundledLibdeng2($${1}.dylib)
     }
 }

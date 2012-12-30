@@ -28,6 +28,7 @@
 #include "m_misc.h"
 
 #include "audio/s_environ.h"
+#include "gl/sys_opengl.h" // TODO: get rid of this
 #include "resource/materialsnapshot.h"
 #include "render/rend_main.h"
 

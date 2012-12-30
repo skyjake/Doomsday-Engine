@@ -31,6 +31,7 @@
 #include "de_misc.h"
 
 #include "map/generators.h"
+#include "render/r_main.h" // validCount
 #include "resource/models.h"
 
 #define ORDER(x,y,a,b)      ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
@@ -466,6 +467,9 @@ static void P_ParticleSound(fixed_t pos[3], ded_embsound_t* sound)
  */
 static void P_NewParticle(ptcgen_t* gen)
 {
+#ifdef __SERVER__
+    DENG_UNUSED(gen);
+#else
     const ded_ptcgen_t* def = gen->def;
     particle_t* pt;
     int i;
@@ -703,7 +707,11 @@ static void P_NewParticle(ptcgen_t* gen)
 
     // Play a stage sound?
     P_ParticleSound(pt->origin, &def->stages[pt->stage].sound);
+
+#endif // !__SERVER__
 }
+
+#ifdef __CLIENT__
 
 /**
  * Callback for the client mobj iterator, called from P_PtcGenThinker.
@@ -729,6 +737,8 @@ boolean PIT_ClientMobjParticles(mobj_t* cmo, void* context)
     P_NewParticle(gen);
     return true;
 }
+
+#endif
 
 /**
  * Spawn multiple new particles using all applicable sources.
@@ -1221,12 +1231,13 @@ void P_PtcGenThinker(ptcgen_t* gen)
             // Spawn a new particle.
             if(gen->type == DED_PTCGEN_ANY_MOBJ_TYPE || gen->type >= 0) // Type-triggered?
             {
+#ifdef __CLIENT__
                 // Client's should also check the client mobjs.
                 if(isClient)
                 {
                     GameMap_ClMobjIterator(theMap, PIT_ClientMobjParticles, gen);
                 }
-
+#endif
                 GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1 /*mobjs are public*/,
                                         manyNewParticles, gen);
 

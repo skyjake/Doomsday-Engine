@@ -332,7 +332,9 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
                     skyDef = &mapInfo->sky;
             }
 
+#ifdef __CLIENT__
             Sky_Configure(skyDef);
+#endif
 
             // Setup accordingly.
             if(mapInfo)
@@ -353,7 +355,9 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
             //       theMap to be set first.
             P_SetCurrentMap(map);
 
+#ifdef __CLIENT__
             Rend_RadioInitForMap();
+#endif
 
             { uint startTime = Timer_RealMilliseconds();
             GameMap_InitSkyFix(map);

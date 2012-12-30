@@ -420,6 +420,7 @@ static void findContacts(objlink_t* link)
 
     switch(link->type)
     {
+#ifdef __CLIENT__
     case OT_LUMOBJ: {
         lumobj_t* lum = (lumobj_t*) link->obj;
         // Only omni lights spread.
@@ -430,6 +431,7 @@ static void findContacts(objlink_t* link)
         ssecAdr = &lum->bspLeaf;
         break;
       }
+#endif
     case OT_MOBJ: {
         mobj_t* mo = (mobj_t*) link->obj;
 
@@ -505,10 +507,14 @@ void R_ObjlinkBlockmapSpreadInBspLeaf(objlinkblockmap_t* obm, const BspLeaf* bsp
 
 static __inline const float maxRadius(objtype_t type)
 {
+#ifdef __CLIENT__
     assert(VALID_OBJTYPE(type));
     if(type == OT_MOBJ) return DDMOBJ_RADIUS_MAX;
     // Must be OT_LUMOBJ
     return loMaxRadius;
+#else
+    return DDMOBJ_RADIUS_MAX;
+#endif
 }
 
 void R_InitForBspLeaf(BspLeaf* bspLeaf)
@@ -550,7 +556,9 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
     {
         switch(link->type)
         {
+#ifdef __CLIENT__
         case OT_LUMOBJ:     origin = ((lumobj_t*)link->obj)->origin; break;
+#endif
         case OT_MOBJ:       origin = ((mobj_t*)link->obj)->origin; break;
         default:
             Con_Error("R_LinkObjs: Invalid objtype %i.", (int) link->type);

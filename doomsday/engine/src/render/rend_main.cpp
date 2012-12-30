@@ -63,11 +63,6 @@ void Rend_DrawBBox(coord_t const pos[3], coord_t w, coord_t l, coord_t h, float 
 
 void Rend_DrawArrow(coord_t const pos[3], float a, float s, float const color3f[3], float alpha);
 
-static void Rend_RenderBoundingBoxes();
-static DGLuint constructBBox(DGLuint name, float br);
-static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf *leaf, boolean antiClockwise,
-    coord_t height, rvertex_t **verts, uint *vertsSize);
-
 boolean usingFog = false; // Is the fog in use?
 float fogColor[4];
 float fieldOfView = 95.0f;
@@ -134,12 +129,21 @@ byte devSoundOrigins = 0; ///< cvar @c 1= Draw sound origin debug display.
 byte devSurfaceVectors = 0;
 byte devNoTexFix = 0;
 
+#ifdef __CLIENT__
+static void Rend_RenderBoundingBoxes();
+static DGLuint constructBBox(DGLuint name, float br);
+static uint Rend_BuildBspLeafPlaneGeometry(BspLeaf *leaf, boolean antiClockwise,
+                                           coord_t height, rvertex_t **verts, uint *vertsSize);
+
 static BspLeaf *currentBspLeaf; // BSP leaf currently being drawn.
 static boolean firstBspLeaf; // No range checking for the first one.
+#endif // __CLIENT__
 
 void Rend_Register()
 {
-    C_VAR_FLOAT ("rend-camera-fov", &fieldOfView, 0, 1, 179);
+#ifdef __CLIENT
+
+    C_VAR_FLOAT ("rend-camera-fov",                 &fieldOfView,                   0, 1, 179);
 
     C_VAR_FLOAT ("rend-glow",                       &glowFactor,                    0, 0, 2);
     C_VAR_INT   ("rend-glow-height",                &glowHeightMax,                 0, 0, 1024);
@@ -195,6 +199,8 @@ void Rend_Register()
     Rend_SpriteRegister();
     Rend_ConsoleRegister();
     Vignette_Register();
+
+#endif
 }
 
 /**
@@ -206,6 +212,8 @@ coord_t Rend_PointDist3D(coord_t const point[3])
                              vOrigin[VZ] - point[VY],
                              1.2 * (vOrigin[VY] - point[VZ]));
 }
+
+#ifdef __CLIENT__
 
 void Rend_Init()
 {
@@ -473,6 +481,8 @@ static inline materialvariantspecification_t const &mapSurfaceMaterialSpec(int w
                                                      true, true, false, false);
 }
 
+#ifdef __CLIENT__
+
 /**
  * This doesn't create a rendering primitive but a vissprite! The vissprite
  * represents the masked poly and will be rendered during the rendering
@@ -581,6 +591,8 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
         VS_WALL(vis)->modTex = 0;
     }
 }
+
+#endif // __CLIENT__
 
 static void quadTexCoords(rtexcoord_t *tc, rvertex_t const *rverts,
     coord_t wallLength, coord_t const topLeft[3])
@@ -723,6 +735,8 @@ static float getSnapshots(MaterialSnapshot const **msA,
 
     return interPos;
 }
+
+#ifdef __CLIENT__
 
 typedef struct {
     boolean         isWall;
@@ -2084,6 +2098,8 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
         }
     }
 }
+
+#endif // __CLIENT__
 
 static coord_t skyFixFloorZ(const Plane* frontFloor, const Plane* backFloor)
 {
@@ -4013,3 +4029,5 @@ static void Rend_RenderBoundingBoxes()
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 }
+
+#endif // __CLIENT__

@@ -33,6 +33,8 @@
 #include "de_play.h"
 #include "de_misc.h"
 
+#include "render/r_main.h" // validCount
+
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 
 // Linkstore is list of pointers gathered when iterating stuff.

@@ -38,6 +38,7 @@
 #include "de_filesys.h"
 
 #include "def_main.h"
+#include "render/r_main.h"
 #include "updater.h"
 
 /*
@@ -179,9 +180,11 @@ void DD_ShutdownAll(void)
     SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, FALSE, 0, 0);
 #endif
 
+#ifdef __CLIENT__
     // Stop all demo recording.
     for(i = 0; i < DDMAXPLAYERS; ++i)
         Demo_StopRecording(i);
+#endif
 
     P_ControlShutdown();
     Sv_Shutdown();

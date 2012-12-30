@@ -29,14 +29,16 @@
 #ifndef __DOOMSDAY_AUDIO__
 #define __DOOMSDAY_AUDIO__
 
-#include "audio/audiodriver.h"
-#include "audio/audiodriver_music.h"
+#ifdef __CLIENT__
+#  include "audio/audiodriver.h"
+#  include "audio/audiodriver_music.h"
+#  include "audio/s_sfx.h"
+#  include "audio/s_mus.h"
+#endif
 #include "audio/s_main.h"
-#include "audio/s_environ.h"
-#include "audio/s_sfx.h"
-#include "audio/s_mus.h"
-#include "audio/s_wav.h"
 #include "audio/s_cache.h"
+#include "audio/s_environ.h"
+#include "audio/s_wav.h"
 #include "audio/s_logic.h"
 
 #endif

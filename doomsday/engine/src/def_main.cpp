@@ -38,6 +38,8 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#include "map/r_world.h"
+
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 
@@ -1445,12 +1447,13 @@ static void defineLightmap(uri_s const *_resourceUri)
 
 void Def_PostInit(void)
 {
-    char name[40];
+#ifdef __CLIENT__
 
     // Particle generators: model setup.
     ded_ptcgen_t *gen = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, gen++)
     {
+        char name[40];
         ded_ptcstage_t *st = gen->stages;
         for(int k = 0; k < gen->stageCount.num; ++k, st++)
         {
@@ -1481,6 +1484,8 @@ void Def_PostInit(void)
             }
         }
     }
+
+#endif // __CLIENT__
 
     // Detail textures.
     App_Textures()->scheme("Details").clear();

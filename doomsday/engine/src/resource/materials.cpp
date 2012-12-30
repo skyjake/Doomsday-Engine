@@ -33,8 +33,11 @@
 #include "de_audio.h" // For texture, environmental audio properties.
 #include "de_resource.h"
 
+#include "gl/sys_opengl.h" /// @todo: get rid of this -jk
+
 #include <QtAlgorithms>
 #include <QList>
+
 #include <de/Error>
 #include <de/Log>
 #include <de/PathTree>
@@ -843,8 +846,14 @@ material_t *Materials::newFromDef(ded_material_t *def)
 void Materials::precache(material_t &mat, materialvariantspecification_t const &spec,
     bool smooth, bool cacheGroup)
 {
+#ifdef __SERVER__
+    return;
+#endif
+
+#ifdef __CLIENT__
     // Don't precache when playing demo.
     if(isDedicated || playback) return;
+#endif
 
     // Already in the queue?
     for(VariantCacheQueueNode* node = d->variantCacheQueue; node; node = node->next)
@@ -871,8 +880,11 @@ void Materials::precache(material_t &mat, materialvariantspecification_t const &
 
 void Materials::ticker(timespan_t time)
 {
+#ifdef __CLIENT__
     // The animation will only progress when the game is not paused.
-    if(clientPaused || novideo) return;
+    if(clientPaused) return;
+#endif
+    if(novideo) return;
 
     for(MaterialListNode *node = d->materials; node; node = node->next)
     {

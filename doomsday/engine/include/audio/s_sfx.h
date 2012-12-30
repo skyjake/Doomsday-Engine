@@ -30,6 +30,10 @@
 #ifndef __DOOMSDAY_SOUND_SFX_H__
 #define __DOOMSDAY_SOUND_SFX_H__
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 #include "sys_audiod.h"
 #include "sys_audiod_sfx.h"
 #include "de_play.h"
@@ -62,9 +66,7 @@ typedef struct sfxchannel_s {
 extern boolean sfxAvail;
 extern float sfxReverbStrength;
 extern int sfxMaxCacheKB, sfxMaxCacheTics;
-extern int sfxBits, sfxRate;
 extern int sfx3D, sfx16Bit, sfxSampleRate;
-extern byte sfxOneSoundPerEmitter;
 
 boolean         Sfx_Init(void);
 void            Sfx_Shutdown(void);

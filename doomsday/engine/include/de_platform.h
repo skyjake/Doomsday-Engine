@@ -85,6 +85,7 @@ const char* strcasestr(const char* text, const char* sub);
  */
 #if defined(UNIX)
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
 
 #ifdef __GNUC__

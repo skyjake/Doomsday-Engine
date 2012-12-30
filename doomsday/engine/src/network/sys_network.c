@@ -485,6 +485,8 @@ boolean N_LookForHosts(const char *address, int port, expectedresponder_t respon
     return true;
 }
 
+#ifdef __CLIENT__
+
 /**
  * Handles the server's response to a client's join request.
  */
@@ -510,8 +512,8 @@ void N_ClientHandleResponseToJoin(int nodeId, const byte* data, int size)
     // Clients are allowed to send packets to the server.
     svNode->hasJoined = true;
 
-    allowSending = true;
     handshakeReceived = false;
+    allowSending = true;
     netGame = true;             // Allow sending/receiving of packets.
     isServer = false;
     isClient = true;
@@ -599,6 +601,8 @@ boolean N_Disconnect(void)
     return true;
 }
 
+#endif // __CLIENT__
+
 boolean N_ServerOpen(void)
 {
     if(!isDedicated)
@@ -607,7 +611,9 @@ boolean N_ServerOpen(void)
         return false;
     }
 
+#ifdef __CLIENT__
     Demo_StopPlayback();
+#endif
 
     // Let's make sure the correct service provider is initialized
     // in server mode.

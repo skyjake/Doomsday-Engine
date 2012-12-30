@@ -79,7 +79,9 @@
 #include "busymode.h"
 #include "dd_main.h"
 #include "con_main.h"
-#include "gl/gl_main.h"
+#ifdef __CLIENT__
+#  include "gl/gl_main.h"
+#endif
 #include "ui/ui_main.h"
 #include "filesys/fs_util.h"
 
@@ -605,6 +607,7 @@ struct ddwindow_s
             DEBUG_Message(("Updating view geometry for fullscreen (%i x %i).\n", width(), height()));
         }
 
+#ifdef __CLIENT__
         // Update viewports.
         R_SetViewGrid(0, 0);
         if(BusyMode_Active() || UI_IsActive() || !DD_GameLoaded())
@@ -617,6 +620,7 @@ struct ddwindow_s
         {
             UI_UpdatePageLayout();
         }
+#endif
     }
 };
 
@@ -1360,6 +1364,8 @@ void Window_Draw(Window* win)
 {
     if(win->type == WT_CONSOLE) return;
 
+#ifdef __CLIENT__
+
     assert(win);
     assert(win->widget);
 
@@ -1387,6 +1393,8 @@ void Window_Draw(Window* win)
         // Request update at the earliest convenience.
         win->widget->canvas().update();
     }
+
+#endif // __CLIENT__
 }
 
 void Window_Show(Window *wnd, boolean show)
@@ -1629,18 +1637,30 @@ void GL_AssertContextActive(void)
 
 void Window_GLActivate(Window* wnd)
 {
+#ifdef __CLIENT__
+
     if(wnd->type == WT_CONSOLE) return;
     wnd->assertWindow();
     wnd->widget->canvas().makeCurrent();
 
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+#else
+    DENG_UNUSED(wnd);
+#endif
 }
 
 void Window_GLDone(Window* wnd)
 {
+#ifdef __CLIENT__
+
     if(wnd->type == WT_CONSOLE) return;
     wnd->assertWindow();
     wnd->widget->canvas().doneCurrent();
+
+#else
+    DENG_UNUSED(wnd);
+#endif
 }
 
 QWidget* Window_Widget(Window* wnd)

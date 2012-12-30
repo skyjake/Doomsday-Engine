@@ -22,6 +22,7 @@
 #define LIBDENG_RENDER_R_MAIN_H
 
 #include <de/rect.h>
+#include "dd_share.h"
 
 typedef struct viewport_s {
     int console;

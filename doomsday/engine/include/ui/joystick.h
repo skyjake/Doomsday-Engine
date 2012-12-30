@@ -26,6 +26,10 @@
 #ifndef LIBDENG_SYSTEM_JOYSTICK_H
 #define LIBDENG_SYSTEM_JOYSTICK_H
 
+#ifdef __SERVER__
+#  error Joystick is not available in a SERVER build
+#endif
+
 #include "dd_types.h"
 
 #ifdef __cplusplus

@@ -93,7 +93,7 @@ static bool announcedVertexBufferMaxBreach; ///< @c true if an attempt has been 
 #endif
 
 void Rend_ModelRegister()
-{
+{    
     C_VAR_BYTE ("rend-model",                &useModels,            0, 0, 1);
     C_VAR_INT  ("rend-model-lights",         &modelLight,           0, 0, 10);
     C_VAR_INT  ("rend-model-inter",          &frameInter,           0, 0, 1);
