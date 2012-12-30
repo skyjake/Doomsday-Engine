@@ -759,7 +759,8 @@ void R_NewSharpWorld()
 void R_CreateMobjLinks()
 {
 #ifdef __CLIENT__
-#ifdef DD_PROFILE    static int p;
+#ifdef DD_PROFILE
+    static int p;
 
     if(++p > 40)
     {
