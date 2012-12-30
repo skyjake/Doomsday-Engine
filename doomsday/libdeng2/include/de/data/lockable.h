@@ -56,9 +56,8 @@ public:
 
 private:
     /// Pointer to the internal mutex data.
-    mutable QMutex _mutex;
-
-    mutable int _lockCount;
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace de
