@@ -1605,7 +1605,7 @@ static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
     if(choice2) return choice2;
 
     // We'll assign the special "missing" material...
-    return App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:missing"))));
+    return App_Materials()->find(de::Uri(Path("System:missing"))).material();
 }
 
 static void addMissingMaterial(SideDef *s, SideDefSection section)
@@ -1621,7 +1621,7 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
     // During map load we log missing materials.
     if(ddMapSetup && verbose)
     {
-        String path = suf->material? App_Materials()->composeUri(App_Materials()->id(suf->material)).asText() : "<null>";
+        String path = suf->material? App_Materials()->toMaterialBind(Material_PrimaryBind(suf->material))->composeUri().asText() : "<null>";
         LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
             << s->buildData.index - 1

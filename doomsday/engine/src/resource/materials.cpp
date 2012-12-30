@@ -21,6 +21,7 @@
  */
 
 #include <cstdlib>
+#include <cstring>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -64,33 +65,6 @@ D_CMD(PrintMaterialStats);
 #endif
 
 namespace de {
-
-MaterialScheme::MaterialScheme()
-    : index_(new Index())
-{}
-
-MaterialScheme::~MaterialScheme()
-{
-    if(index_)
-    {
-        PathTreeIterator<Index> iter(index_->leafNodes());
-        while(iter.hasNext())
-        {
-            MaterialBind *mb = reinterpret_cast<MaterialBind *>(iter.next().userPointer());
-            if(mb)
-            {
-                // Detach our user data from this node.
-                iter.value().setUserPointer(0);
-                delete mb;
-            }
-        }
-    }
-}
-
-MaterialScheme::Index *MaterialScheme::index() const
-{
-    return index_;
-}
 
 static void clearBindingDefinitionLinks(MaterialBind *mb)
 {
@@ -218,31 +192,15 @@ struct Materials::Instance
     uint bindingIdMapSize;
     MaterialBind **bindingIdMap;
 
-    // Material schemes contain mappings between names and MaterialBind instances.
-    MaterialScheme *schemes[MATERIALSCHEME_COUNT];
+    /// System subspace schemes containing the materials.
+    Materials::Schemes schemes;
 
     Instance()
-    {
-        numgroups = 0;
-        groups = 0;
-
-        variantSpecs = 0;
-        variantCacheQueue = 0;
-
-        materialsBlockSet = BlockSet_New(sizeof(material_t), MATERIALS_BLOCK_ALLOC);
-        materials = 0;
-        materialCount = 0;
-
-        bindingCount = 0;
-
-        bindingIdMapSize = 0;
-        bindingIdMap = 0;
-
-        for(int i = 0; i < MATERIALSCHEME_COUNT; ++i)
-        {
-            schemes[i] = new MaterialScheme();
-        }
-    }
+        :  numgroups(0), groups(0), variantSpecs(0), variantCacheQueue(0),
+           materialsBlockSet(BlockSet_New(sizeof(material_t), MATERIALS_BLOCK_ALLOC)),
+           materials(0), materialCount(0),
+           bindingCount(0), bindingIdMapSize(0), bindingIdMap(0)
+    {}
 
     ~Instance()
     {
@@ -282,11 +240,11 @@ struct Materials::Instance
 
     void clearBindings()
     {
-        for(int i = 0; i < MATERIALSCHEME_COUNT; ++i)
+        DENG2_FOR_EACH(Materials::Schemes, i, schemes)
         {
-            if(!schemes[i]) continue;
-            delete schemes[i]; schemes[i] = 0;
+            delete *i;
         }
+        schemes.clear();
 
         // Clear the binding index/map.
         if(bindingIdMap)
@@ -295,36 +253,6 @@ struct Materials::Instance
             bindingIdMapSize = 0;
         }
         bindingCount = 0;
-    }
-
-    /**
-     * Try to interpret a known material scheme identifier from @a str. If found to match
-     * a known scheme name, return the associated identifier. If the reference @a str is
-     * not valid (i.e., equal to NULL or is a zero-length string) then the special identifier
-     * @c MS_ANY is returned. Otherwise @c MS_INVALID.
-     */
-    materialschemeid_t parseSchemeName(String str) const
-    {
-        if(str.isEmpty()) return MS_ANY;
-
-        if(!str.compareWithoutCase("Textures")) return MS_TEXTURES;
-        if(!str.compareWithoutCase("Flats"))    return MS_FLATS;
-        if(!str.compareWithoutCase("Sprites"))  return MS_SPRITES;
-        if(!str.compareWithoutCase("System"))   return MS_SYSTEM;
-
-        return MS_INVALID; // Unknown.
-    }
-
-    materialschemeid_t schemeIdForDirectory(PathTree const &directory)
-    {
-        for(uint i = uint(MATERIALSCHEME_FIRST); i <= uint(MATERIALSCHEME_LAST); ++i)
-        {
-            uint idx = i - MATERIALSCHEME_FIRST;
-            if(schemes[idx]->index() == &directory) return materialschemeid_t(i);
-        }
-
-        // Should never happen...
-        throw Error("Materials::schemeIdForDirectory", QString("Failed to determine id for directory %p.").arg(dintptr(&directory)));
     }
 
     MaterialAnim* getAnimGroup(int number)
@@ -433,7 +361,7 @@ struct Materials::Instance
 
     bool newMaterialBind(MaterialScheme &scheme, Path const &path, material_t *material)
     {
-        MaterialScheme::Index::Node *node = &scheme.index()->insert(path);
+        MaterialScheme::Index::Node *node = &scheme.insertNode(path);
 
         // Is this a new binding?
         MaterialBind *mb = reinterpret_cast<MaterialBind *>(node->userPointer());
@@ -521,6 +449,11 @@ Materials::Materials()
 {
     LOG_VERBOSE("Initializing Materials collection...");
     d = new Instance();
+
+    createScheme("System");
+    createScheme("Flats");
+    createScheme("Textures");
+    createScheme("Sprites");
 }
 
 Materials::~Materials()
@@ -529,48 +462,36 @@ Materials::~Materials()
     delete d;
 }
 
-String const &Materials::schemeName(materialschemeid_t id)
-{
-    static String const names[1 + MATERIALSCHEME_COUNT] = {
-        /* No scheme name */    "",
-        /* MS_SYSTEM */         "System",
-        /* MS_FLATS */          "Flats",
-        /* MS_TEXTURES */       "Textures",
-        /* MS_SPRITES */        "Sprites"
-    };
-    if(VALID_MATERIALSCHEMEID(id))
-        return names[1 + (id - MATERIALSCHEME_FIRST)];
-    return names[0];
-}
-
-materialschemeid_t Materials::parseSchemeName(String str) const
-{
-    return d->parseSchemeName(str);
-}
-
-materialschemeid_t Materials::schemeId(materialid_t id)
-{
-    LOG_AS("Materials::Scheme");
-
-    MaterialBind* bind = d->getMaterialBindForId(id);
-    if(!bind)
-    {
-        LOG_WARNING("Attempted with unbound materialId #%u, returning 'any' scheme.") << id;
-        return MS_ANY;
-    }
-    return d->schemeIdForDirectory(bind->directoryNode().tree());
-}
-
-MaterialScheme &Materials::schemeById(materialschemeid_t id) const
-{
-    DENG2_ASSERT(VALID_MATERIALSCHEMEID(id));
-    DENG2_ASSERT(d->schemes[id - MATERIALSCHEME_FIRST]);
-    return *d->schemes[id - MATERIALSCHEME_FIRST];
-}
-
 bool Materials::knownScheme(String name) const
 {
-    return VALID_MATERIALSCHEMEID(d->parseSchemeName(name));
+    if(!name.isEmpty())
+    {
+        DENG2_FOR_EACH(Schemes, i, d->schemes)
+        {
+            if(!(*i)->name().compareWithoutCase(name))
+                return true;
+        }
+        //Schemes::iterator found = d->schemes.find(name.toLower());
+        //if(found != d->schemes.end()) return true;
+    }
+    return false;
+}
+
+Materials::Scheme &Materials::scheme(String name) const
+{
+    LOG_AS("Materials::scheme");
+    DENG2_FOR_EACH(Schemes, i, d->schemes)
+    {
+        if(!(*i)->name().compareWithoutCase(name))
+            return **i;
+    }
+    /// @throw UnknownSchemeError An unknown scheme was referenced.
+    throw Materials::UnknownSchemeError("Materials::scheme", "No scheme found matching '" + name + "'");
+}
+
+Materials::Schemes const& Materials::allSchemes() const
+{
+    return d->schemes;
 }
 
 void Materials::clearDefinitionLinks()
@@ -581,9 +502,9 @@ void Materials::clearDefinitionLinks()
         Material_SetDefinition(mat, NULL);
     }
 
-    for(uint i = uint(MATERIALSCHEME_FIRST); i <= uint(MATERIALSCHEME_LAST); ++i)
+    DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
     {
-        PathTreeIterator<MaterialScheme::Index> iter(schemeById(materialschemeid_t(i)).index()->leafNodes());
+        PathTreeIterator<MaterialScheme::Index> iter((*i)->index().leafNodes());
         while(iter.hasNext())
         {
             MaterialBind* mb = reinterpret_cast<MaterialBind *>(iter.next().userPointer());
@@ -636,20 +557,24 @@ void Materials::processCacheQueue()
     }
 }
 
-material_t *Materials::toMaterial(materialid_t id)
+MaterialBind *Materials::toMaterialBind(materialid_t id)
 {
     MaterialBind *mb = d->getMaterialBindForId(id);
     if(!mb) return 0;
-    return mb->material();
+    return mb;
 }
 
-materialid_t Materials::id(material_t *mat)
+Materials::Scheme& Materials::createScheme(String name)
 {
-    if(!mat) return NOMATERIALID;
+    DENG_ASSERT(name.length() >= Scheme::min_name_length);
 
-    MaterialBind *bind = d->getMaterialBindForId(Material_PrimaryBind(mat));
-    if(!bind) return NOMATERIALID;
-    return bind->id();
+    // Ensure this is a unique name.
+    if(knownScheme(name)) return scheme(name);
+
+    // Create a new scheme.
+    Scheme* newScheme = new Scheme(name);
+    d->schemes.push_back(newScheme);
+    return *newScheme;
 }
 
 bool Materials::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet) const
@@ -658,13 +583,19 @@ bool Materials::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet
 
     if(uri.isEmpty())
     {
-        if(!quiet) LOG_MSG("Invalid path in material URI \"%s\".") << uri;
+        if(!quiet) LOG_MSG("Empty path in material URI \"%s\".") << uri;
         return false;
     }
 
-    materialschemeid_t schemeId = d->parseSchemeName(uri.schemeCStr());
-    if(!(flags.testFlag(AnyScheme) && schemeId == MS_ANY) &&
-       !VALID_MATERIALSCHEMEID(schemeId))
+    if(uri.scheme().isEmpty())
+    {
+        if(!flags.testFlag(AnyScheme))
+        {
+            if(!quiet) LOG_MSG("Missing scheme in material URI \"%s\".") << uri;
+            return false;
+        }
+    }
+    else if(!knownScheme(uri.scheme()))
     {
         if(!quiet) LOG_MSG("Unknown scheme in material URI \"%s\".") << uri;
         return false;
@@ -673,19 +604,26 @@ bool Materials::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet
     return true;
 }
 
-MaterialBind *Materials::find(Uri const &uri) const
+MaterialBind &Materials::find(Uri const &uri) const
 {
-    materialschemeid_t schemeId = d->parseSchemeName(uri.schemeCStr());
+    LOG_AS("Materials::find");
+
+    if(!validateUri(uri, AnyScheme, true /*quiet please*/))
+        /// @throw NotFoundError Failed to locate a matching bind.
+        throw NotFoundError("Materials::find", "URI \"" + uri.asText() + "\" failed validation");
+
+    // Perform the search.
     String const &path = uri.path();
 
-    // Does the user want a binding in a specific scheme?
-    if(schemeId != MS_ANY)
+    // Does the user want a bind in a specific scheme?
+    if(!uri.scheme().isEmpty())
     {
         try
         {
-            return reinterpret_cast<MaterialBind *>(schemeById(schemeId).index()->find(path, PathTree::NoBranch | PathTree::MatchFull).userPointer());
+            MaterialBind *bind = reinterpret_cast<MaterialBind *>(scheme(uri.scheme()).find(path).userPointer());
+            return *bind;
         }
-        catch(MaterialScheme::Index::NotFoundError const &)
+        catch(MaterialScheme::NotFoundError const &)
         {} // Ignore, we'll throw our own...
     }
     else
@@ -702,78 +640,28 @@ MaterialBind *Materials::find(Uri const &uri) const
         {
             try
             {
-                return reinterpret_cast<MaterialBind *>(schemeById(d->parseSchemeName(order[i])).index()->find(path, PathTree::NoBranch | PathTree::MatchFull).userPointer());
+                MaterialBind *bind = reinterpret_cast<MaterialBind *>(scheme(order[i]).find(path).userPointer());
+                return *bind;
             }
-            catch(MaterialScheme::Index::NotFoundError const &)
+            catch(MaterialScheme::NotFoundError const &)
             {} // Ignore this error.
         }
     }
 
-    return 0; // Not found.
+    /// @throw NotFoundError Failed to locate a matching bind.
+    throw NotFoundError("Materials::find", "Failed to locate a bind matching \"" + uri.asText() + "\"");
 }
 
-materialid_t Materials::resolveUri2(de::Uri const &uri, bool quiet)
+bool Materials::has(Uri const &path) const
 {
-    LOG_AS("Materials::resolveUri");
-
-    if(!validateUri(uri, AnyScheme, true /*quiet please*/))
+    try
     {
-#if _DEBUG
-        LOG_WARNING("\"%s\" failed validation, returning NOMATERIALID.") << uri;
-#endif
-        return NOMATERIALID;
+        find(path);
+        return true;
     }
-
-    // Perform the search.
-    MaterialBind *bind = find(uri);
-    if(bind) return bind->id();
-
-    // Not found.
-    if(!quiet && !ddMapSetup) // Do not announce during map setup.
-    {
-        LOG_DEBUG("\"%s\" not found, returning NOMATERIALID.") << uri;
-    }
-    return NOMATERIALID;
-}
-
-materialid_t Materials::resolveUri(de::Uri const &uri)
-{
-    return resolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
-}
-
-String Materials::composePath(materialid_t id)
-{
-    LOG_AS("Materials::composePath");
-
-    MaterialBind *bind = d->getMaterialBindForId(id);
-    if(bind)
-    {
-        MaterialScheme::Index::Node &node = bind->directoryNode();
-        return node.path().toString();
-    }
-
-    LOG_WARNING("Attempted with unbound materialId #%u, returning null-object.") << id;
-    return "";
-}
-
-de::Uri Materials::composeUri(materialid_t id)
-{
-    LOG_AS("Materials::composeuri");
-
-    MaterialBind *bind = d->getMaterialBindForId(id);
-    if(bind)
-    {
-        MaterialScheme::Index::Node &node = bind->directoryNode();
-        return de::Uri(schemeName(d->schemeIdForDirectory(node.tree())), node.path());
-    }
-
-#if _DEBUG
-    if(id != NOMATERIALID)
-    {
-        LOG_WARNING("Attempted with unbound materialId #%u, returning null-object.") << id;
-    }
-#endif
-    return de::Uri();
+    catch(NotFoundError const &)
+    {} // Ignore this error.
+    return false;
 }
 
 material_t *Materials::newFromDef(ded_material_t *def)
@@ -784,8 +672,9 @@ material_t *Materials::newFromDef(ded_material_t *def)
 
     if(!def->uri) return 0;
     de::Uri &uri = reinterpret_cast<de::Uri &>(*def->uri);
+    if(uri.isEmpty()) return 0;
 
-    // We require a properly formed uri.
+    // We require a properly formed uri (but not a urn - this is a path).
     if(!validateUri(uri, 0, (verbose >= 1)))
     {
         LOG_WARNING("Failed creating Material \"%s\" from definition %p, ignoring.") << uri << dintptr(def);
@@ -793,12 +682,18 @@ material_t *Materials::newFromDef(ded_material_t *def)
     }
 
     // Have we already created a material for this?
-    MaterialBind *bind = find(uri);
-    if(bind && bind->material())
+    MaterialBind *bind = 0;
+    try
     {
-        LOG_DEBUG("A Material with uri \"%s\" already exists, returning existing.") << uri;
-        return bind->material();
+        bind = &find(uri);
+        if(bind->material())
+        {
+            LOG_DEBUG("A Material with uri \"%s\" already exists, returning existing.") << uri;
+            return bind->material();
+        }
     }
+    catch(NotFoundError const &)
+    {} // Ignore for now.
 
     // Ensure the primary layer has a valid texture reference.
     Texture *tex = 0;
@@ -835,7 +730,8 @@ material_t *Materials::newFromDef(ded_material_t *def)
 
     if(!bind)
     {
-        d->newMaterialBind(schemeById(d->parseSchemeName(uri.schemeCStr())), uri.path(), mat);
+        if(!d->newMaterialBind(scheme(uri.scheme()), uri.path(), mat))
+            throw Error("Materials::newFromDef", "Unexpected error inserting manifest for \"" + uri + "\"");
     }
     else
     {
@@ -845,7 +741,7 @@ material_t *Materials::newFromDef(ded_material_t *def)
     return mat;
 }
 
-void Materials::precache(material_t &mat, materialvariantspecification_t const &spec,
+void Materials::cache(material_t &mat, materialvariantspecification_t const &spec,
     bool smooth, bool cacheGroup)
 {
 #ifdef __SERVER__
@@ -874,7 +770,7 @@ void Materials::precache(material_t &mat, materialvariantspecification_t const &
 
             for(int k = 0; k < d->groups[i].count; ++k)
             {
-                precache(*d->groups[i].frames[k].material, spec, smooth, false /* do not cache groups */);
+                cache(*d->groups[i].frames[k].material, spec, smooth, false /* do not cache groups */);
             }
         }
     }
@@ -1019,12 +915,6 @@ ded_ptcgen_t const *Materials::ptcGenDef(material_t *mat)
 uint Materials::size()
 {
     return d->materialCount;
-}
-
-uint Materials::count(materialschemeid_t schemeId)
-{
-    if(!VALID_MATERIALSCHEMEID(schemeId) || !size()) return 0;
-    return schemeById(schemeId).index()->size();
 }
 
 struct materialvariantspecification_s const *Materials::variantSpecificationForContext(
@@ -1347,8 +1237,8 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
         float inter = variant.translationPoint();
 
         /// @todo kludge: Should not use App_Materials() here.
-        QByteArray curPath  = App_Materials()->composeUri(Material_PrimaryBind(&cur->generalCase())).asText().toUtf8();
-        QByteArray nextPath = App_Materials()->composeUri(Material_PrimaryBind(&next->generalCase())).asText().toUtf8();
+        QByteArray curPath  = App_Materials()->toMaterialBind(Material_PrimaryBind(&cur->generalCase()))->composeUri().asText().toUtf8();
+        QByteArray nextPath = App_Materials()->toMaterialBind(Material_PrimaryBind(&next->generalCase()))->composeUri().asText().toUtf8();
 
         Con_Printf("  Translation: Current:\"%s\" Next:\"%s\" Inter:%f\n",
                    curPath.constData(), nextPath.constData(), inter);
@@ -1379,7 +1269,7 @@ static int printVariantInfoWorker(struct materialvariant_s *variant, void* param
 static void printMaterialInfo(material_t &mat)
 {
     /// @todo kludge: Should not use App_Materials() here.
-    Uri uri = App_Materials()->composeUri(Material_PrimaryBind(&mat));
+    Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(&mat))->composeUri();
     QByteArray path = uri.asText().toUtf8();
 
     Con_Printf("Material \"%s\" [%p] x%u origin:%s\n",
@@ -1411,8 +1301,7 @@ static void printMaterialInfo(material_t &mat)
 static void printMaterialSummary(MaterialBind &bind, bool printSchemeName = true)
 {
     material_t *material = bind.material();
-    /// @todo kludge: Should not use App_Materials() here.
-    Uri uri = App_Materials()->composeUri(bind.id());
+    Uri uri = bind.composeUri();
     QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
 
     Con_FPrintf(!material? CPF_LIGHT : CPF_WHITE,
@@ -1431,8 +1320,8 @@ static QList<MaterialBind *> collectMaterialBinds(MaterialScheme *scheme,
 
     if(scheme)
     {
-        // Only consider textures in this scheme.
-        PathTreeIterator<MaterialScheme::Index> iter(scheme->index()->leafNodes());
+        // Only consider materials in this scheme.
+        PathTreeIterator<MaterialScheme::Index> iter(scheme->index().leafNodes());
         while(iter.hasNext())
         {
             MaterialScheme::Index::Node &node = iter.next();
@@ -1454,12 +1343,11 @@ static QList<MaterialBind *> collectMaterialBinds(MaterialScheme *scheme,
     }
     else
     {
-        // Consider textures in any scheme.
-        for(uint i = uint(MATERIALSCHEME_FIRST); i <= uint(MATERIALSCHEME_LAST); ++i)
+        // Consider materials in any scheme.
+        Materials::Schemes const &schemes = App_Materials()->allSchemes();
+        DENG2_FOR_EACH_CONST(Materials::Schemes, i, schemes)
         {
-            MaterialScheme::Index &index = *App_Materials()->schemeById(materialschemeid_t(i)).index();
-
-            PathTreeIterator<MaterialScheme::Index> iter(index.leafNodes());
+            PathTreeIterator<MaterialScheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
                 MaterialScheme::Index::Node &node = iter.next();
@@ -1522,9 +1410,8 @@ static bool compareMaterialBindPathsAssending(MaterialBind const *a, MaterialBin
  * @param like      Material path search term.
  * @param flags     @ref printTextureFlags
  */
-static int printMaterials2(materialschemeid_t schemeId, Path const &like, int flags)
+static int printMaterials2(MaterialScheme *scheme, Path const &like, int flags)
 {
-    MaterialScheme *scheme = (VALID_MATERIALSCHEMEID(schemeId)? &App_Materials()->schemeById(schemeId) : NULL);
     QList<MaterialBind *> found = collectMaterialBinds(scheme, like);
     if(found.isEmpty()) return 0;
 
@@ -1532,8 +1419,8 @@ static int printMaterials2(materialschemeid_t schemeId, Path const &like, int fl
 
     // Compose a heading.
     String heading = "Known materials";
-    if(!printSchemeName && VALID_MATERIALSCHEMEID(schemeId))
-        heading += " in scheme '" + App_Materials()->schemeName(schemeId) + "'";
+    if(!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
     if(!like.isEmpty())
         heading += " like \"" + like + "\"";
     heading += ":\n";
@@ -1569,21 +1456,22 @@ static void printMaterials(de::Uri const &search, int flags = DEFAULT_PRINTMATER
     // Collate and print results from all schemes?
     if(search.scheme().isEmpty() && !search.path().isEmpty())
     {
-        printTotal = printMaterials2(MS_ANY, search.path(), flags & ~PTF_TRANSFORM_PATH_NO_SCHEME);
+        printTotal = printMaterials2(0/*any scheme*/, search.path(), flags & ~PTF_TRANSFORM_PATH_NO_SCHEME);
         Con_PrintRuler();
     }
     // Print results within only the one scheme?
     else if(materials.knownScheme(search.scheme()))
     {
-        printTotal = printMaterials2(materials.parseSchemeName(search.scheme()), search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
+        printTotal = printMaterials2(&materials.scheme(search.scheme()), search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
         Con_PrintRuler();
     }
     else
     {
         // Collect and sort results in each scheme separately.
-        for(uint i = uint(MATERIALSCHEME_FIRST); i <= uint(MATERIALSCHEME_LAST); ++i)
+        Materials::Schemes const &schemes = materials.allSchemes();
+        DENG2_FOR_EACH_CONST(Materials::Schemes, i, schemes)
         {
-            int numPrinted = printMaterials2(materialschemeid_t(i), search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
+            int numPrinted = printMaterials2(*i, search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
             if(numPrinted)
             {
                 Con_PrintRuler();
@@ -1672,22 +1560,24 @@ D_CMD(InspectMaterial)
         return false;
     }
 
-    de::MaterialBind *bind = materials.find(search);
-    if(bind)
+    try
     {
-        if(material_t *mat = bind->material())
+        de::MaterialBind &manifest = materials.find(search);
+        if(material_t *mat = manifest.material())
         {
             de::printMaterialInfo(*mat);
         }
         else
         {
-            de::printMaterialSummary(*bind);
+            de::printMaterialSummary(manifest);
         }
         return true;
     }
-
-    AutoStr *path = Uri_ToString(reinterpret_cast<struct uri_s *>(&search));
-    Con_Printf("Unknown material \"%s\".\n", Str_Text(path));
+    catch(de::Materials::NotFoundError const &er)
+    {
+        QString msg = er.asText() + ".";
+        Con_Printf("%s\n", msg.toUtf8().constData());
+    }
     return false;
 }
 
@@ -1699,15 +1589,14 @@ D_CMD(PrintMaterialStats)
     de::Materials &materials = *App_Materials();
 
     Con_FPrintf(CPF_YELLOW, "Material Statistics:\n");
-    for(uint i = uint(MATERIALSCHEME_FIRST); i <= uint(MATERIALSCHEME_LAST); ++i)
+    de::Materials::Schemes const &schemes = materials.allSchemes();
+    DENG2_FOR_EACH_CONST(de::Materials::Schemes, i, schemes)
     {
-        materialschemeid_t schemeId = materialschemeid_t(i);
-        de::MaterialScheme &scheme = materials.schemeById(schemeId);
-        de::MaterialScheme::Index const &index = *scheme.index();
+        de::Materials::Scheme &scheme = **i;
+        de::MaterialScheme::Index const &index = scheme.index();
 
         uint count = index.count();
-        QByteArray schemeName = materials.schemeName(schemeId).toUtf8();
-        Con_Printf("Scheme: %s (%u %s)\n", schemeName.constData(), count, count == 1? "material":"materials");
+        Con_Printf("Scheme: %s (%u %s)\n", scheme.name().toUtf8().constData(), count, count == 1? "material":"materials");
         index.debugPrintHashDistribution();
         index.debugPrint();
     }
@@ -1751,19 +1640,26 @@ uint Materials_Size()
 
 materialid_t Materials_Id(material_t *material)
 {
-    return App_Materials()->id(material);
+    return Material_PrimaryBind(material);
 }
 
 material_t *Materials_ToMaterial(materialid_t materialId)
 {
-    return App_Materials()->toMaterial(materialId);
+    de::MaterialBind *bind = App_Materials()->toMaterialBind(materialId);
+    if(bind) return bind->material();
+    return 0;
 }
 
 /// @note Part of the Doomsday public API.
 struct uri_s *Materials_ComposeUri(materialid_t materialId)
 {
-    de::Uri uri = App_Materials()->composeUri(materialId);
-    return Uri_Dup(reinterpret_cast<uri_s *>(&uri));
+    de::MaterialBind *bind = App_Materials()->toMaterialBind(materialId);
+    if(bind)
+    {
+        de::Uri uri = bind->composeUri();
+        return Uri_Dup(reinterpret_cast<uri_s *>(&uri));
+    }
+    return Uri_New();
 }
 
 boolean Materials_HasDecorations(material_t *material)
@@ -1781,30 +1677,31 @@ boolean Materials_IsMaterialInAnimGroup(material_t *material, int animGroupNum)
     return App_Materials()->isMaterialInAnimGroup(material, animGroupNum);
 }
 
-materialid_t Materials_ResolveUri2(struct uri_s const *uri, boolean quiet)
-{
-    return App_Materials()->resolveUri2(*reinterpret_cast<de::Uri const *>(uri), CPP_BOOL(quiet));
-}
-
 /// @note Part of the Doomsday public API.
 materialid_t Materials_ResolveUri(struct uri_s const *uri)
 {
-    return Materials_ResolveUri2(uri, !(verbose >= 1));
-}
-
-materialid_t Materials_ResolveUriCString2(char const *uriCString, boolean quiet)
-{
-    if(uriCString && uriCString[0])
+    try
     {
-        return App_Materials()->resolveUri2(de::Uri(uriCString, RC_NULL), CPP_BOOL(quiet));
+        return App_Materials()->find(*reinterpret_cast<de::Uri const *>(uri)).id();
     }
+    catch(de::Materials::NotFoundError const &)
+    {} // Ignore this error.
     return NOMATERIALID;
 }
 
 /// @note Part of the Doomsday public API.
-materialid_t Materials_ResolveUriCString(char const *path)
+materialid_t Materials_ResolveUriCString(char const *uriCString)
 {
-    return Materials_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
+    if(uriCString && uriCString[0])
+    {
+        try
+        {
+            return App_Materials()->find(de::Uri(uriCString, RC_NULL)).id();
+        }
+        catch(de::Materials::NotFoundError const &)
+        {} // Ignore this error.
+    }
+    return NOMATERIALID;
 }
 
 int Materials_AnimGroupCount()

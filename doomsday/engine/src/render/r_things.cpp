@@ -213,7 +213,7 @@ static void buildSprite(TextureManifest &manifest)
         link = true;
     }
 
-    frame->mat         = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri("Sprites", manifest.path())));
+    frame->mat         = App_Materials()->find(de::Uri("Sprites", manifest.path())).material();
     frame->frame[0]    = frameNumber;
     frame->rotation[0] = rotationNumber;
 

@@ -298,6 +298,7 @@ DENG_HEADERS += \
     include/resource/material.h \
     include/resource/materialbind.h \
     include/resource/materials.h \
+    include/resource/materialscheme.h \
     include/resource/materialsnapshot.h \
     include/resource/materialvariant.h \
     include/resource/models.h \
@@ -586,6 +587,7 @@ SOURCES += \
     src/resource/materialarchive.c \
     src/resource/materialbind.cpp \
     src/resource/materials.cpp \
+    src/resource/materialscheme.cpp \
     src/resource/materialsnapshot.cpp \
     src/resource/materialvariant.cpp \
     src/resource/models.cpp \

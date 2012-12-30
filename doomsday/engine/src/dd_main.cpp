@@ -2605,40 +2605,32 @@ fontschemeid_t DD_ParseFontSchemeName(const char* str)
     return Fonts_ParseScheme(str);
 }
 
-String const &DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
+String DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
 {
-    materialschemeid_t schemeId = MS_INVALID; // Unknown.
-
     if(!textureSchemeName.compareWithoutCase("Textures"))
     {
-        schemeId = MS_TEXTURES;
+        return "Textures";
     }
     else if(!textureSchemeName.compareWithoutCase("Flats"))
     {
-        schemeId = MS_FLATS;
+        return "Flats";
     }
     else if(!textureSchemeName.compareWithoutCase("Sprites"))
     {
-        schemeId = MS_SPRITES;
-    }
-    else if(!textureSchemeName.compareWithoutCase("Patches"))
-    {
-        schemeId = MS_ANY; // No materials for these yet.
+        return "Sprites";
     }
     else if(!textureSchemeName.compareWithoutCase("System"))
     {
-        schemeId = MS_SYSTEM;
+        return "System";
     }
-
-    return App_Materials()->schemeName(schemeId);
+    return "";
 }
 
 AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
 {
     if(!textureSchemeName)
     {
-        QByteArray schemeNameUtf8 = App_Materials()->schemeName(MS_INVALID).toUtf8();
-        return AutoStr_FromTextStd(schemeNameUtf8.constData());
+        return AutoStr_FromTextStd("");
     }
     else
     {
@@ -2655,8 +2647,15 @@ materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
     {
         de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*_textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
-        return App_Materials()->resolveUri2(uri, true/*quiet please*/);
+        return App_Materials()->find(uri).id();
     }
+    catch(Materials::UnknownSchemeError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+    catch(Materials::NotFoundError const &)
+    {} // Ignore this error.
     catch(Textures::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.

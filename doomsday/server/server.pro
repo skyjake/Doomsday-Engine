@@ -236,6 +236,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/lumpcache.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materials.h \
+    $$SRC/include/resource/materialscheme.h \
     $$SRC/include/resource/materialsnapshot.h \
     $$SRC/include/resource/materialvariant.h \
     $$SRC/include/resource/patch.h \
@@ -445,6 +446,7 @@ SOURCES += \
     $$SRC/src/resource/materialarchive.c \
     $$SRC/src/resource/materialbind.cpp \
     $$SRC/src/resource/materials.cpp \
+    $$SRC/src/resource/materialscheme.cpp \
     $$SRC/src/resource/materialsnapshot.cpp \
     $$SRC/src/resource/materialvariant.cpp \
     $$SRC/src/resource/patch.cpp \

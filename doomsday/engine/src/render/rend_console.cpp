@@ -289,7 +289,14 @@ void Rend_ConsoleUpdateBackground()
 {
     DENG_ASSERT(inited);
     if(!consoleBackgroundMaterialUri || Str_IsEmpty(Uri_Path(consoleBackgroundMaterialUri))) return;
-    consoleBackgroundMaterial = App_Materials()->toMaterial(App_Materials()->resolveUri(*reinterpret_cast<de::Uri *>(consoleBackgroundMaterialUri)));
+    try
+    {
+        consoleBackgroundMaterial = App_Materials()->find(*reinterpret_cast<de::Uri *>(consoleBackgroundMaterialUri)).material();
+    }
+    catch(Materials::NotFoundError const &)
+    {
+        consoleBackgroundMaterial = 0;
+    }
 }
 
 void Rend_ConsoleToggleFullscreen()
