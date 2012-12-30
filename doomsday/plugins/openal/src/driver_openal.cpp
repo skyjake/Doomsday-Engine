@@ -56,8 +56,8 @@
 
 #define PI 3.141592654
 
-#define SRC(buf) ((ALuint)buf->ptr3D)
-#define BUF(buf) ((ALuint)buf->ptr)
+#define SRC(buf) ( (ALuint) PTR2INT(buf->ptr3D) )
+#define BUF(buf) ( (ALuint) PTR2INT(buf->ptr) )
 
 //enum { VX, VY, VZ };
 
@@ -233,8 +233,8 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     // Create the buffer object.
     buf = static_cast<sfxbuffer_t*>(Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0));
 
-    buf->ptr = (void*) bufName;
-    buf->ptr3D = (void*) srcName;
+    buf->ptr = INT2PTR(void, bufName);
+    buf->ptr3D = INT2PTR(void, srcName);
     buf->bytes = bits / 8;
     buf->rate = rate;
     buf->flags = flags;
