@@ -461,7 +461,9 @@ void Canvas::mousePressEvent(QMouseEvent* ev)
 
     ev->accept();
 
+#ifdef __CLIENT__
     Mouse_Qt_SubmitButton(translateButton(ev->button()), true);
+#endif
 
     //qDebug() << "Canvas: mouse press at" << ev->pos();
 }
@@ -477,7 +479,9 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
         return;
     }
 
+#ifdef __CLIENT__
     Mouse_Qt_SubmitButton(translateButton(ev->button()), false);
+#endif
 
     //qDebug() << "Canvas: mouse release at" << ev->pos();
 }
@@ -498,7 +502,9 @@ void Canvas::mouseMoveEvent(QMouseEvent* ev)
     QPoint delta = ev->pos() - d->prevMousePos;
     if(!delta.isNull())
     {
+#ifdef __CLIENT__
         Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
+#endif
 
         d->prevMousePos = ev->pos();
 	
@@ -538,7 +544,9 @@ void Canvas::wheelEvent(QWheelEvent *ev)
         d->wheelDir[axis] = dir;
         //qDebug() << "Canvas: signal wheel axis" << axis << "dir" << dir;
 
+#ifdef __CLIENT__
         Mouse_Qt_SubmitMotion(IMA_WHEEL, axis == 0? dir : 0, axis == 1? dir : 0);
+#endif
     }
 
     d->prevWheelAt.start();

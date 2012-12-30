@@ -28,6 +28,8 @@
 #include "de_audio.h"
 #include "de_resource.h"
 
+#include "gl/sys_opengl.h" // TODO: get rid of this
+
 #include <de/memory.h>
 #include <de/memoryzone.h>
 #include <cstring> // memcpy, memmove
@@ -510,6 +512,7 @@ static void useColor(animator_t const *color, int components)
 static void drawPageBackground(fi_page_t *p, float x, float y, float width, float height,
     float light, float alpha)
 {
+#ifdef __CLIENT__
     vec3f_t topColor, bottomColor;
     float topAlpha, bottomAlpha;
 
@@ -544,10 +547,12 @@ static void drawPageBackground(fi_page_t *p, float x, float y, float width, floa
 
     GL_SetNoTexture();
     glEnable(GL_BLEND);
+#endif
 }
 
 void FIPage_Drawer(fi_page_t *p)
 {
+#ifdef __CLIENT__
     if(!p) Con_Error("FIPage_Drawer: Invalid page.");
 
     if(p->flags.hidden) return;
@@ -623,6 +628,7 @@ void FIPage_Drawer(fi_page_t *p)
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+#endif
 }
 
 void FIPage_MakeVisible(fi_page_t *p, boolean yes)
@@ -953,6 +959,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     float /*const*/ scale[3], float const rgba[4], float const rgba2[4], float angle,
     float const worldOffset[3])
 {
+#ifdef __CLIENT__
     vec3f_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
     vec2f_t texScale = { 1, 1 };
     vec2f_t rotateCenter = { .5f, .5f };
@@ -1155,6 +1162,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+#endif
 }
 
 void FIData_PicDraw(fi_object_t *obj, const float offset[3])
@@ -1282,6 +1290,7 @@ static int textLineWidth(char const *text)
 
 void FIData_TextDraw(fi_object_t *obj, const float offset[3])
 {
+#ifdef __CLIENT__
     fidata_text_t *t = (fidata_text_t *)obj;
     if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextDraw: Not a FI_TEXT.");
 
@@ -1387,6 +1396,7 @@ void FIData_TextDraw(fi_object_t *obj, const float offset[3])
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+#endif
 }
 
 size_t FIData_TextLength(fi_object_t *obj)

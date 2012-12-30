@@ -290,11 +290,13 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
             // Must be called before any mobjs are spawned.
             GameMap_InitNodePiles(map);
 
+#ifdef __CLIENT__
             // Prepare the client-side data.
             if(isClient)
             {
                 GameMap_InitClMobjs(map);
             }
+#endif
 
             Rend_DecorInit();
 

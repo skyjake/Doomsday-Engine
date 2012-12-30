@@ -39,6 +39,8 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#include "gl/sys_opengl.h" // TODO: get rid of this
+
 #define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))
 
 // Helper macro for defining infine command functions.
@@ -1559,11 +1561,13 @@ DEFFC(ImageAt)
 
 static DGLuint loadGraphics(const char* name, gfxmode_t mode, int useMipmap, boolean clamped, int otherFlags)
 {
+#ifdef __CLIENT__
     return GL_PrepareExtTexture(name, mode, useMipmap,
                                 GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
                                 clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
                                 clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
                                 otherFlags);
+#endif
 }
 
 DEFFC(XImage)

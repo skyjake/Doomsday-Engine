@@ -113,10 +113,12 @@ void N_SystemShutdown(void)
 {
     if(netGame)
     {
-        if(isClient)
-            N_Disconnect();
-        else
-            N_ServerClose();
+#ifdef __CLIENT__
+        if(isClient) N_Disconnect();
+#endif
+#ifdef __SERVER__
+        N_ServerClose();
+#endif
     }
 
     N_ShutdownService();
@@ -790,6 +792,8 @@ void N_ServerListenUnjoinedNodes(void)
     }
 }
 
+#ifdef __CLIENT__
+
 /**
  * Handles messages from the server when the client is connected but has not
  * yet joined to game.
@@ -835,6 +839,10 @@ void N_ClientListenUnjoined(void)
     }
 }
 
+#endif // __CLIENT__
+
+#ifdef __SERVER__
+
 void N_ServerListenJoinedNodes(void)
 {
     if(!joinedSockSet) return;
@@ -866,6 +874,10 @@ void N_ServerListenJoinedNodes(void)
     }
 }
 
+#endif // __SERVER__
+
+#ifdef __CLIENT__
+
 void N_ClientListen(void)
 {
     if(!joinedSockSet) return;
@@ -887,18 +899,24 @@ void N_ClientListen(void)
     }
 }
 
+#endif
+
 void N_ListenNodes(void)
 {
     if(netServerMode)
     {
+#ifdef __SERVER__
         // This is only for the server.
         N_ServerListenUnjoinedNodes();
         N_ServerListenJoinedNodes();
+#endif
     }
     else
     {
+#ifdef __CLIENT__
         N_ClientListenUnjoined();
         N_ClientListen();
+#endif
     }
 }
 

@@ -18,6 +18,17 @@
  */
 
 #include "server_dummies.h"
+#include "ui/nativeui.h"
+#include "ui/finaleinterpreter.h"
+#include "resource/texturevariantspecification.h"
+#include "resource/texturevariant.h"
+#include "resource/texture.h"
+
+void DD_ReadMouse(void)
+{}
+
+void DD_ReadJoystick(void)
+{}
 
 void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
 {
@@ -124,6 +135,30 @@ void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float ang
     DENG_UNUSED(origin);
     DENG_UNUSED(scale);
     DENG_UNUSED(angle);
+}
+
+void GL_PrepareLSTexture(void)
+{}
+
+void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *baseSpec)
+{}
+
+void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
+{
+    DENG_UNUSED(paletteId);
+}
+
+struct texturevariant_s* GL_PreparePatchTexture(struct texture_s* tex)
+{
+    return 0;
+}
+
+texturevariantspecification_t *GL_TextureVariantSpecificationForContext(
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
+    int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
+    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
+{
+    return 0;
 }
 
 void FR_Init(void)
@@ -355,7 +390,19 @@ int FR_TextHeight(const char* text)
 void Fonts_Init(void)
 {}
 
+fontschemeid_t Fonts_ParseScheme(const char* str)
+{
+    DENG_UNUSED(str);
+    return 0;
+}
+
 fontid_t Fonts_ResolveUri(Uri const *uri)
+{
+    DENG_UNUSED(uri);
+    return 0;
+}
+
+fontid_t Fonts_ResolveUriCString(const char* uri)
 {
     DENG_UNUSED(uri);
     return 0;
@@ -471,6 +518,11 @@ void SB_SurfaceMoved(biassurface_t* bsuf)
     DENG_UNUSED(bsuf);
 }
 
+void SB_DestroySurface(struct biassurface_s* bsuf)
+{
+    DENG_UNUSED(bsuf);
+};
+
 void LG_SectorChanged(Sector* sector)
 {
     DENG_UNUSED(sector);
@@ -483,17 +535,6 @@ void UI_Ticker(timespan_t t)
 {
     DENG_UNUSED(t);
 }
-
-void UI2_Ticker(timespan_t t)
-{
-    DENG_UNUSED(t);
-}
-
-void UI_Init()
-{}
-
-void UI_Shutdown()
-{}
 
 int DGL_Enable(int cap)
 {
@@ -660,4 +701,47 @@ void DGL_DeleteTextures(int num, const DGLuint* names)
 {
     DENG_UNUSED(num);
     DENG_UNUSED(names);
+}
+
+void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, const char* detailedMsg)
+{
+    DENG_UNUSED(type);
+    DENG_UNUSED(title);
+    DENG_UNUSED(msg);
+    DENG_UNUSED(detailedMsg);
+}
+
+void Sys_MessageBox2(messageboxtype_t type, const char *title, const char *msg, const char *informativeMsg, const char *detailedMsg)
+{
+}
+
+void Sys_MessageBoxf(messageboxtype_t type, const char* title, const char* format, ...)
+{
+}
+
+int Sys_MessageBoxWithButtons(messageboxtype_t type, const char* title, const char* msg,
+                              const char* informativeMsg, const char** buttons)
+{
+    return 0;
+}
+
+void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t type, const char* title, const char* msg,
+                                       const char* informativeMsg, const char* detailsFileName)
+{
+}
+
+coord_t R_VisualRadius(struct mobj_s *mo)
+{
+    DENG_UNUSED(mo);
+    return 0;
+}
+
+void R_ProjectSprite(struct mobj_s *mo)
+{
+    DENG_UNUSED(mo);
+}
+
+void Rend_ApplyLightAdaptation(float* val)
+{
+    DENG_UNUSED(val);
 }

@@ -39,6 +39,8 @@
 #include "resource/texturevariant.h"
 #include "map/blockmapvisual.h"
 
+#include "gl/sys_opengl.h"
+
 // Surface (tangent-space) Vector Flags.
 #define SVF_TANGENT             0x01
 #define SVF_BITANGENT           0x02
@@ -263,12 +265,6 @@ static inline double viewFacingDot(coord_t v1[2], coord_t v2[2])
 {
     // The dot product.
     return (v1[VY] - v2[VY]) * (v1[VX] - vOrigin[VX]) + (v2[VX] - v1[VX]) * (v1[VY] - vOrigin[VZ]);
-}
-
-materialvariantspecification_t const *Rend_MapSurfaceDiffuseMaterialSpec()
-{
-    return Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                                    -1, -1, -1, true, true, false, false);
 }
 
 void Rend_VertexColorsGlow(ColorRawf *colors, size_t num, float glow)
@@ -4031,3 +4027,9 @@ static void Rend_RenderBoundingBoxes()
 }
 
 #endif // __CLIENT__
+
+materialvariantspecification_t const *Rend_MapSurfaceDiffuseMaterialSpec()
+{
+    return Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                                    -1, -1, -1, true, true, false, false);
+}

@@ -27,8 +27,9 @@
 
 #include "resource/material.h"
 #include "resource/texture.h"
-
 #include "resource/materialsnapshot.h"
+
+#include "gl/sys_opengl.h" // TODO: get rid of this
 
 namespace de {
 
@@ -60,11 +61,13 @@ struct MaterialSnapshot::Instance
     {
         V3f_Set(reflectionMinColor, 0, 0, 0);
 
+#ifdef __CLIENT__
         for(int i = 0; i < NUM_MATERIAL_TEXTURE_UNITS; ++i)
         {
             Rtu_Init(&units[i]);
             textures[i] = NULL;
         }
+#endif
     }
 
     void setupTexUnit(byte unit, TextureVariant *texture,
@@ -153,6 +156,7 @@ void MaterialSnapshot::update()
 
     std::memset(prepTextures, 0, sizeof prepTextures);
 
+#ifdef __CLIENT__
     // Ensure all resources needed to visualize this Material's layers have been prepared.
     int layerCount = Material_LayerCount(mat);
     for(int i = 0; i < layerCount; ++i)
@@ -222,6 +226,7 @@ void MaterialSnapshot::update()
         Rtu_Init(&d->units[i]);
         d->textures[i] = NULL;
     }
+#endif // __CLIENT__
 
     Size2 const *materialDimensions = Material_Size(d->material->generalCase());
     d->dimensions.setWidth(Size2_Width(materialDimensions));
@@ -248,6 +253,7 @@ void MaterialSnapshot::update()
                         d->material->layer(0)->texOrigin[1], 1);
     }
 
+#ifdef __CLIENT__
     /**
      * If skymasked, we need only need to update the primary tex unit
      * (this is due to it being visible when skymask debug drawing is
@@ -291,6 +297,7 @@ void MaterialSnapshot::update()
                             d->units[MTU_PRIMARY].offset[0], d->units[MTU_PRIMARY].offset[1], 1);
         }
     }
+#endif // __CLIENT__
 
     if(MC_MAPSURFACE == spec->context && prepTextures[MTU_REFLECTION])
     {

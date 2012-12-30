@@ -236,6 +236,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/lumpcache.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materials.h \
+    $$SRC/include/resource/materialsnapshot.h \
     $$SRC/include/resource/materialvariant.h \
     $$SRC/include/resource/patch.h \
     $$SRC/include/resource/patchname.h \
@@ -273,9 +274,11 @@ DENG_HEADERS += \
     $$SRC/include/ui/displaymode.h \
     $$SRC/include/ui/displaymode_native.h \
     $$SRC/include/ui/fi_main.h \
+    $$SRC/include/ui/finaleinterpreter.h \
     $$SRC/include/ui/keycode.h \
     $$SRC/include/ui/p_control.h \
     $$SRC/include/ui/sys_input.h \
+    $$SRC/include/ui/ui2_main.h \
     $$SRC/include/ui/window.h \
     $$SRC/include/updater.h \
     $$SRC/include/uri.hh \
@@ -441,6 +444,7 @@ SOURCES += \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.c \
     $$SRC/src/resource/materials.cpp \
+    $$SRC/src/resource/materialsnapshot.cpp \
     $$SRC/src/resource/materialvariant.cpp \
     $$SRC/src/resource/patch.cpp \
     $$SRC/src/resource/patchname.cpp \
@@ -473,9 +477,11 @@ SOURCES += \
     $$SRC/src/ui/dd_input.c \
     $$SRC/src/ui/displaymode.cpp \
     $$SRC/src/ui/fi_main.c \
+    $$SRC/src/ui/finaleinterpreter.c \
     $$SRC/src/ui/keycode.cpp \
     $$SRC/src/ui/p_control.c \
     $$SRC/src/ui/sys_input.c \
+    $$SRC/src/ui/ui2_main.cpp \
     $$SRC/src/ui/window.cpp \
     $$SRC/src/updater/downloaddialog.cpp \
     $$SRC/src/updater/processcheckdialog.cpp \

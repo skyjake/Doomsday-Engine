@@ -162,6 +162,7 @@ const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
     }
 }
 
+#ifdef __CLIENT__
 static fontid_t loadSystemFont(const char* name)
 {
     Str resourcePath;
@@ -204,6 +205,7 @@ static void loadFontIfNeeded(const char* uri, fontid_t* fid)
         *fid = loadSystemFont(uri);
     }
 }
+#endif // __CLIENT__
 
 void R_LoadSystemFonts(void)
 {
@@ -906,11 +908,13 @@ void R_BeginWorldFrame(void)
  */
 void R_EndWorldFrame(void)
 {
+#ifdef __CLIENT__
     if(!freezeRLs)
     {
         // Wrap up with Source, Bias lights.
         SB_EndFrame();
     }
+#endif
 }
 
 void R_UpdateViewer(int consoleNum)

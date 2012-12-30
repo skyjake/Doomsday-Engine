@@ -1353,6 +1353,7 @@ D_CMD(Net)
             Con_Message("Network game: %s\n", netGame ? "yes" : "no");
             Con_Message("This is console %i (local player %i).\n", consolePlayer, P_ConsoleToLocal(consolePlayer));
         }
+#ifdef __CLIENT__
         else if(!stricmp(argv[1], "disconnect"))
         {
             if(!netGame)
@@ -1372,6 +1373,7 @@ D_CMD(Net)
                 Con_Message("Disconnected.\n");
             }
         }
+#endif
         else
         {
             Con_Printf("Bad arguments.\n");
@@ -1422,6 +1424,7 @@ D_CMD(Net)
         {
             success = N_LookForHosts(argv[2], 0, 0);
         }
+#ifdef __CLIENT__
         else if(!stricmp(argv[1], "connect"))
         {
             int             idx;
@@ -1453,7 +1456,6 @@ D_CMD(Net)
             else
                 return false;
         }
-#ifdef __CLIENT__
         else if(!stricmp(argv[1], "setup"))
         {
             // Start network setup.

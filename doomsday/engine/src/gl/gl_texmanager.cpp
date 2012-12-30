@@ -312,6 +312,8 @@ static texturevariantspecification_t *copyDetailVariantSpecification(
     return spec;
 }
 
+#endif // __CLIENT__
+
 /**
  * @todo Magnification, Anisotropic filter level and GL texture wrap modes
  * will be handled through dynamic changes to GL's texture environment state.
@@ -348,6 +350,8 @@ static int compareDetailVariantSpecifications(detailvariantspecification_t const
     if(a->contrast != b->contrast) return 0;
     return 1; // Equal.
 }
+
+#ifdef __CLIENT__
 
 static colorpalettetranslationspecification_t *applyColorPaletteTranslationSpecification(
     colorpalettetranslationspecification_t *spec, int tClass, int tMap)
@@ -1165,13 +1169,7 @@ void GL_InitTextureManager()
     initedOk = true;
 }
 
-void GL_ResetTextureManager()
-{
-    if(!initedOk) return;
-    GL_ReleaseTextures();
-    GL_PruneTextureVariantSpecifications();
-    GL_LoadSystemTextures();
-}
+#endif // __CLIENT__
 
 int GL_CompareTextureVariantSpecifications(texturevariantspecification_t const *a,
     texturevariantspecification_t const *b)
@@ -1186,6 +1184,16 @@ int GL_CompareTextureVariantSpecifications(texturevariantspecification_t const *
     }
     Con_Error("GL_CompareTextureVariantSpecifications: Invalid type %i.", (int) a->type);
     exit(1); // Unreachable.
+}
+
+#ifdef __CLIENT__
+
+void GL_ResetTextureManager()
+{
+    if(!initedOk) return;
+    GL_ReleaseTextures();
+    GL_PruneTextureVariantSpecifications();
+    GL_LoadSystemTextures();
 }
 
 void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *baseSpec)

@@ -25,6 +25,8 @@
 #ifndef LIBDENG_FINALEINTERPRETER_H
 #define LIBDENG_FINALEINTERPRETER_H
 
+#include "dd_input.h"
+
 #define FINF_BEGIN          0x01
 #define FINF_END            0x02
 #define FINF_SCRIPT         0x04 // Script included.
