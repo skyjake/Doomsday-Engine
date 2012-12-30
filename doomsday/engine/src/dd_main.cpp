@@ -667,7 +667,7 @@ void DD_DestroyGames(void)
  */
 void DD_StartTitle(void)
 {
-#ifdef __CLIENT
+#ifdef __CLIENT__
     ddfinale_t fin;
     if(!Def_Get(DD_DEF_FINALE, "background", &fin)) return;
 

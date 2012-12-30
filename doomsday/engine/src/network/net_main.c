@@ -537,7 +537,7 @@ void Net_InitGame(void)
     ddPlayers[0].shared.inGame = true;
     ddPlayers[0].shared.flags |= DDPF_LOCAL;
 
-#ifdef __CLIENT
+#ifdef __CLIENT__
     clients[0].id = clientID;
 #endif
     clients[0].ready = true;

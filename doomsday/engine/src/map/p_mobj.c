@@ -291,7 +291,7 @@ D_CMD(InspectMobj)
     mobj_t* mo = 0;
     thid_t id = 0;
     char const *moType = "Mobj";
-#ifdef __CLIENT
+#ifdef __CLIENT__
     clmoinfo_t* info = 0;
 #endif
 
@@ -312,7 +312,7 @@ D_CMD(InspectMobj)
         return false;
     }
 
-#ifdef __CLIENT
+#ifdef __CLIENT__
     info = ClMobj_GetInfo(mo);
     if(info) moType = "CLMOBJ";
 #endif
@@ -328,7 +328,7 @@ D_CMD(InspectMobj)
         Con_Printf("\n");
     }
     Con_Printf("Tics:%i ddFlags:%08x\n", mo->tics, mo->ddFlags);
-#ifdef __CLIENT
+#ifdef __CLIENT__
     if(info)
     {
         Con_Printf("Cltime:%i (now:%i) Flags:%04x\n", info->time, Timer_RealMilliseconds(), info->flags);
