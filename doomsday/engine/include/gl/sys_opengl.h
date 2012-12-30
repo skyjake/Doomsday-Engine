@@ -56,7 +56,9 @@
 #    include <GL/glu.h>
 #    include <OpenGL/OpenGL.h>
 #  else
-#    include <SDL.h>
+#    ifdef __CLIENT__
+#      include <SDL.h>
+#    endif
 #    include <GL/gl.h>
 #    include <GL/glext.h>
 #    include <GL/glu.h>

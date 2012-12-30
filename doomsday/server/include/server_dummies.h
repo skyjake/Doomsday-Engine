@@ -34,7 +34,7 @@
 #include "dd_gl.h"
 
 #ifndef __SERVER__
-#  error Attempted to include server's header in a non-server build
+#  error "Attempted to include server's header in a non-server build"
 #endif
 
 DENG_EXTERN_C void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable);

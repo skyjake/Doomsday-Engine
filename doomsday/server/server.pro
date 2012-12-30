@@ -43,8 +43,12 @@ win32 {
 else:macx {
 }
 else {
+    DEFINES += __USE_BSD _GNU_SOURCE=1
+
     # Generic Unix.
     QMAKE_LFLAGS += -rdynamic
+
+    LIBS += -lX11 # TODO: Get rid of this! -jk
 
     !freebsd-*: LIBS += -ldl
 }
