@@ -143,7 +143,7 @@ static boolean firstBspLeaf; // No range checking for the first one.
 
 void Rend_Register()
 {
-#ifdef __CLIENT
+#ifdef __CLIENT__
 
     C_VAR_FLOAT ("rend-camera-fov",                 &fieldOfView,                   0, 1, 179);
 
