@@ -1,99 +1,70 @@
-/**\file p_dmu.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_dmu.cpp Doomsday Map Update API
  *
- *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * Doomsday Map Update API
- *
- * The Map Update API is used for accessing and making changes to map data
- * during gameplay. From here, the relevant engine's subsystems will be
- * notified of changes in the map data they use, thus allowing them to
- * update their status whenever needed.
- */
-
-// HEADER FILES ------------------------------------------------------------
+#include <cstring>
 
 #include "de_base.h"
-#include "de_console.h"
 #include "de_play.h"
 #include "de_audio.h"
 
+#include <de/LegacyCore>
+#include <de/memoryzone.h>
+
+#include "api/dd_world.h"
 #include "resource/materials.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
+using namespace de;
 
 typedef struct dummysidedef_s {
-    SideDef sideDef; // Side data.
-    void* extraData; // Pointer to user data.
-    boolean inUse; // true, if the dummy is being used.
+    SideDef sideDef; /// Side data.
+    void *extraData; /// Pointer to user data.
+    boolean inUse; /// true, if the dummy is being used.
 } dummysidedef_t;
 
 typedef struct dummyline_s {
-    LineDef line; // Line data.
-    void* extraData; // Pointer to user data.
-    boolean inUse; // true, if the dummy is being used.
+    LineDef line; /// Line data.
+    void *extraData; /// Pointer to user data.
+    boolean inUse; /// true, if the dummy is being used.
 } dummyline_t;
 
 typedef struct dummysector_s {
-    Sector sector; // Sector data.
-    void* extraData; // Pointer to user data.
-    boolean inUse; // true, if the dummy is being used.
+    Sector sector; /// Sector data.
+    void *extraData; /// Pointer to user data.
+    boolean inUse; /// true, if the dummy is being used.
 } dummysector_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+static uint dummyCount = 8; // Number of dummies to allocate (per type).
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-uint dummyCount = 8; // Number of dummies to allocate (per type).
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static dummysidedef_t* dummySideDefs;
-static dummyline_t* dummyLines;
-static dummysector_t* dummySectors;
+static dummysidedef_t *dummySideDefs;
+static dummyline_t *dummyLines;
+static dummysector_t *dummySectors;
 
 static int usingDMUAPIver; // Version of the DMU API the game expects.
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Convert DMU enum constant into a string for error/debug messages.
- */
-const char* DMU_Str(uint prop)
+char const *DMU_Str(uint prop)
 {
-    static char         propStr[40];
+    static char propStr[40];
 
     struct prop_s {
         uint prop;
-        const char* str;
+        char const *str;
     } props[] =
     {
         { DMU_NONE, "(invalid)" },
@@ -163,27 +134,26 @@ const char* DMU_Str(uint prop)
         { DMU_CEILING_PLANE, "DMU_CEILING_PLANE" },
         { 0, NULL }
     };
-    uint                i;
 
-    for(i = 0; props[i].str; ++i)
+    for(uint i = 0; props[i].str; ++i)
+    {
         if(props[i].prop == prop)
             return props[i].str;
+    }
 
-    sprintf(propStr, "(unnamed %i)", prop);
+    dd_snprintf(propStr, 40, "(unnamed %i)", prop);
     return propStr;
 }
 
 /// @note Part of the Doomsday public API.
-int DMU_GetType(const void* ptr)
+int DMU_GetType(void const *ptr)
 {
-    int type;
-
     if(!ptr) return DMU_NONE;
 
-    type = P_DummyType((void*)ptr);
+    int type = P_DummyType((void *)ptr);
     if(type != DMU_NONE) return type;
 
-    type = ((const runtime_mapdata_header_t*)ptr)->type;
+    type = ((runtime_mapdata_header_t const *)ptr)->type;
 
     // Make sure it's valid.
     switch(type)
@@ -211,34 +181,40 @@ int DMU_GetType(const void* ptr)
  * @param args          Ptr to setargs struct to be initialized.
  * @param prop          Property of the map data object.
  */
-static void initArgs(setargs_t* args, int type, uint prop)
+static void initArgs(setargs_t *args, int type, uint prop)
 {
-    memset(args, 0, sizeof(*args));
+    std::memset(args, 0, sizeof(*args));
     args->type = type;
     args->prop = prop & ~DMU_FLAG_MASK;
     args->modifiers = prop & DMU_FLAG_MASK;
 }
 
-/**
- * Initializes the dummy arrays with a fixed number of dummies.
- */
-void P_InitMapUpdate(void)
+void P_InitMapUpdate()
 {
     if(DD_GameLoaded())
     {
         // Request the DMU API version the game is expecting.
         usingDMUAPIver = gx.GetInteger(DD_DMU_VERSION);
         if(!usingDMUAPIver)
-            Con_Error("P_InitMapUpdate: Game library is not compatible with "
-                      DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".");
+        {
+            QByteArray msg = String("P_InitMapUpdate: Game library is not compatible with %1 %2.")
+                                .arg(DOOMSDAY_NICENAME).arg(DOOMSDAY_VERSION_TEXT).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+        }
 
         if(usingDMUAPIver > DMUAPI_VER)
-            Con_Error("P_InitMapUpdate: Game library expects a later version of the\n"
-                      "DMU API then that defined by " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".\n"
-                      "This game is for a newer version of " DOOMSDAY_NICENAME ".");
+        {
+            QByteArray msg = String("P_InitMapUpdate: Game library expects a later version of the\n"
+                                "DMU API then that defined by %1 %2 \n"
+                                "This game is for a newer version of %1.")
+                                .arg(DOOMSDAY_NICENAME).arg(DOOMSDAY_VERSION_TEXT).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+        }
     }
     else
+    {
         usingDMUAPIver = DMUAPI_VER;
+    }
 
     // A fixed number of dummies is allocated because:
     // - The number of dummies is mostly dependent on recursive depth of
@@ -246,27 +222,17 @@ void P_InitMapUpdate(void)
     // - To test whether a pointer refers to a dummy is based on pointer
     //   comparisons; if the array is reallocated, its address may change
     //   and all existing dummies are invalidated.
-    dummyLines = Z_Calloc(dummyCount * sizeof(dummyline_t), PU_APPSTATIC, NULL);
-    dummySideDefs = Z_Calloc(dummyCount * sizeof(dummysidedef_t), PU_APPSTATIC, NULL);
-    dummySectors = Z_Calloc(dummyCount * sizeof(dummysector_t), PU_APPSTATIC, NULL);
+    dummyLines    = (dummyline_t *)    Z_Calloc(dummyCount * sizeof(dummyline_t),    PU_APPSTATIC, NULL);
+    dummySideDefs = (dummysidedef_t *) Z_Calloc(dummyCount * sizeof(dummysidedef_t), PU_APPSTATIC, NULL);
+    dummySectors  = (dummysector_t *)  Z_Calloc(dummyCount * sizeof(dummysector_t),  PU_APPSTATIC, NULL);
 }
 
-/**
- * Allocates a new dummy object.
- *
- * @param type          DMU type of the dummy object.
- * @param extraData     Extra data pointer of the dummy. Points to
- *                      caller-allocated memory area of extra data for the
- *                      dummy.
- */
-void* P_AllocDummy(int type, void* extraData)
+void *P_AllocDummy(int type, void *extraData)
 {
-    uint                i;
-
     switch(type)
     {
     case DMU_SIDEDEF:
-        for(i = 0; i < dummyCount; ++i)
+        for(uint i = 0; i < dummyCount; ++i)
         {
             if(!dummySideDefs[i].inUse)
             {
@@ -280,7 +246,7 @@ void* P_AllocDummy(int type, void* extraData)
         break;
 
     case DMU_LINEDEF:
-        for(i = 0; i < dummyCount; ++i)
+        for(uint i = 0; i < dummyCount; ++i)
         {
             if(!dummyLines[i].inUse)
             {
@@ -301,7 +267,7 @@ void* P_AllocDummy(int type, void* extraData)
         break;
 
     case DMU_SECTOR:
-        for(i = 0; i < dummyCount; ++i)
+        for(uint i = 0; i < dummyCount; ++i)
         {
             if(!dummySectors[i].inUse)
             {
@@ -313,39 +279,34 @@ void* P_AllocDummy(int type, void* extraData)
         }
         break;
 
-    default:
-        Con_Error("P_AllocDummy: Dummies of type %s not supported.\n",
-                  DMU_Str(type));
+    default: {
+        QByteArray msg = String("P_AllocDummy: Dummies of type %1 not supported.").arg(DMU_Str(type)).toUtf8();
+        LegacyCore_FatalError(msg.constData()); }
     }
 
-    Con_Error("P_AllocDummy: Out of dummies of type %s.\n", DMU_Str(type));
-    return 0;
+    QByteArray msg = String("P_AllocDummy: Out of dummies of type %1.").arg(DMU_Str(type)).toUtf8();
+    LegacyCore_FatalError(msg.constData());
+    return 0; // Unreachable.
 }
 
-/**
- * Frees a dummy object.
- */
-void P_FreeDummy(void* dummy)
+void P_FreeDummy(void *dummy)
 {
-    int                 type = P_DummyType(dummy);
-
-    switch(type)
+    switch(P_DummyType(dummy))
     {
     case DMU_SIDEDEF:
-        ((dummysidedef_t*)dummy)->inUse = false;
+        ((dummysidedef_t *)dummy)->inUse = false;
         break;
 
     case DMU_LINEDEF:
-        ((dummyline_t*)dummy)->inUse = false;
+        ((dummyline_t *)dummy)->inUse = false;
         break;
 
     case DMU_SECTOR:
-        ((dummysector_t*)dummy)->inUse = false;
+        ((dummysector_t *)dummy)->inUse = false;
         break;
 
     default:
-        Con_Error("P_FreeDummy: Dummy is of unknown type.\n");
-        break;
+        LegacyCore_FatalError("P_FreeDummy: Dummy is of unknown type.");
     }
 }
 
@@ -354,25 +315,25 @@ void P_FreeDummy(void* dummy)
  * it would be possible to look through the dummy arrays and make sure the
  * pointer refers to a real dummy.
  */
-int P_DummyType(void* dummy)
+int P_DummyType(void *dummy)
 {
     // Is it a SideDef?
-    if(dummy >= (void*) &dummySideDefs[0] &&
-       dummy <= (void*) &dummySideDefs[dummyCount - 1])
+    if(dummy >= (void *) &dummySideDefs[0] &&
+       dummy <= (void *) &dummySideDefs[dummyCount - 1])
     {
         return DMU_SIDEDEF;
     }
 
     // Is it a line?
-    if(dummy >= (void*) &dummyLines[0] &&
-       dummy <= (void*) &dummyLines[dummyCount - 1])
+    if(dummy >= (void *) &dummyLines[0] &&
+       dummy <= (void *) &dummyLines[dummyCount - 1])
     {
         return DMU_LINEDEF;
     }
 
     // A sector?
-    if(dummy >= (void*) &dummySectors[0] &&
-       dummy <= (void*) &dummySectors[dummyCount - 1])
+    if(dummy >= (void *) &dummySectors[0] &&
+       dummy <= (void *) &dummySectors[dummyCount - 1])
     {
         return DMU_SECTOR;
     }
@@ -381,86 +342,73 @@ int P_DummyType(void* dummy)
     return DMU_NONE;
 }
 
-/**
- * Determines if a map data object is a dummy.
- */
-boolean P_IsDummy(void* dummy)
+boolean P_IsDummy(void *dummy)
 {
     return P_DummyType(dummy) != DMU_NONE;
 }
 
-/**
- * Returns the extra data pointer of the dummy, or NULL if the object is not
- * a dummy object.
- */
-void* P_DummyExtraData(void* dummy)
+void *P_DummyExtraData(void *dummy)
 {
     switch(P_DummyType(dummy))
     {
     case DMU_SIDEDEF:
-        return ((dummysidedef_t*)dummy)->extraData;
+        return ((dummysidedef_t *)dummy)->extraData;
 
     case DMU_LINEDEF:
-        return ((dummyline_t*)dummy)->extraData;
+        return ((dummyline_t *)dummy)->extraData;
 
     case DMU_SECTOR:
-        return ((dummysector_t*)dummy)->extraData;
+        return ((dummysector_t *)dummy)->extraData;
 
     default:
-        break;
-    }
-    return NULL;
-}
-
-/**
- * Convert pointer to index.
- */
-uint P_ToIndex(const void* ptr)
-{
-    if(!ptr)
-    {
         return 0;
     }
+}
+
+uint P_ToIndex(void const *ptr)
+{
+    if(!ptr) return 0;
 
     switch(DMU_GetType(ptr))
     {
     case DMU_VERTEX:
-        return GET_VERTEX_IDX((Vertex*) ptr);
+        return GET_VERTEX_IDX((Vertex *) ptr);
 
     case DMU_HEDGE:
-        return GET_HEDGE_IDX((HEdge*) ptr);
+        return GET_HEDGE_IDX((HEdge *) ptr);
 
     case DMU_LINEDEF:
-        return GET_LINE_IDX((LineDef*) ptr);
+        return GET_LINE_IDX((LineDef *) ptr);
 
     case DMU_SIDEDEF:
-        return GET_SIDE_IDX((SideDef*) ptr);
+        return GET_SIDE_IDX((SideDef *) ptr);
 
     case DMU_BSPLEAF:
-        return GET_BSPLEAF_IDX((BspLeaf*) ptr);
+        return GET_BSPLEAF_IDX((BspLeaf *) ptr);
 
     case DMU_SECTOR:
-        return GET_SECTOR_IDX((Sector*) ptr);
+        return GET_SECTOR_IDX((Sector *) ptr);
 
     case DMU_BSPNODE:
-        return GET_BSPNODE_IDX((BspNode*) ptr);
+        return GET_BSPNODE_IDX((BspNode *) ptr);
 
     case DMU_PLANE:
-        return GET_PLANE_IDX((Plane*) ptr);
+        return GET_PLANE_IDX((Plane *) ptr);
 
     case DMU_MATERIAL:
-        return Materials_Id((material_t*) ptr);
+        return Materials_Id((material_t *) ptr);
 
     default:
-        Con_Error("P_ToIndex: Unknown type %s.\n", DMU_Str(DMU_GetType(ptr)));
+        QByteArray msg = QString("P_ToIndex: Unknown type %1.").arg(DMU_Str(DMU_GetType(ptr))).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; // Unreachable.
     }
-    return 0;
 }
 
 /**
  * Convert index to pointer.
  */
-void* P_ToPtr(int type, uint index)
+void *P_ToPtr(int type, uint index)
 {
     switch(type)
     {
@@ -485,21 +433,22 @@ void* P_ToPtr(int type, uint index)
     case DMU_BSPNODE:
         return BSPNODE_PTR(index);
 
-    case DMU_PLANE:
-        Con_Error("P_ToPtr: Cannot convert %s to a ptr (sector is unknown).\n",
-                  DMU_Str(type));
-        break;
+    case DMU_PLANE: {
+        QByteArray msg = String("P_ToPtr: Cannot convert %1 to a ptr (sector is unknown).").arg(DMU_Str(type)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable. */ }
 
     case DMU_MATERIAL:
         return Materials_ToMaterial(index);
 
-    default:
-        Con_Error("P_ToPtr: unknown type %s.\n", DMU_Str(type));
+    default: {
+        QByteArray msg = String("P_ToPtr: unknown type %1.").arg(DMU_Str(type)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable. */ }
     }
-    return NULL;
 }
 
-int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, void* ctx))
+int P_Iteratep(void *ptr, uint prop, void *context, int (*callback) (void *p, void *ctx))
 {
     int type = DMU_GetType(ptr);
 
@@ -508,58 +457,63 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
     case DMU_SECTOR:
         switch(prop)
         {
-        case DMU_LINEDEF:
-            {
-            Sector*             sec = (Sector*) ptr;
-            int                 result = false; // Continue iteration.
+        case DMU_LINEDEF: {
+            Sector *sec = (Sector *) ptr;
+            int result = false; // Continue iteration.
 
             if(sec->lineDefs)
             {
-                LineDef** linePtr = sec->lineDefs;
+                LineDef **linePtr = sec->lineDefs;
                 while(*linePtr && !(result = callback(*linePtr, context)))
+                {
                     linePtr++;
+                }
             }
-            return result;
-          }
-        case DMU_PLANE:
-            {
-            Sector*             sec = (Sector*) ptr;
-            int                 result = false; // Continue iteration.
+            return result; }
+
+        case DMU_PLANE: {
+            Sector *sec = (Sector *) ptr;
+            int result = false; // Continue iteration.
 
             if(sec->planes)
             {
-                Plane** planePtr = sec->planes;
+                Plane **planePtr = sec->planes;
                 while(*planePtr && !(result = callback(*planePtr, context)))
+                {
                     planePtr++;
+                }
             }
-            return result;
-          }
-        case DMU_BSPLEAF:
-            {
-            Sector*             sec = (Sector*) ptr;
-            int                 result = false; // Continue iteration.
+            return result; }
+
+        case DMU_BSPLEAF: {
+            Sector *sec = (Sector *) ptr;
+            int result = false; // Continue iteration.
 
             if(sec->bspLeafs)
             {
-                BspLeaf** ssecIter = sec->bspLeafs;
+                BspLeaf **ssecIter = sec->bspLeafs;
                 while(*ssecIter && !(result = callback(*ssecIter, context)))
+                {
                     ssecIter++;
+                }
             }
-            return result;
-          }
-        default:
-            Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
+            return result; }
+
+        default: {
+            QByteArray msg = String("P_Iteratep: Property %1 unknown/not vector.").arg(DMU_Str(prop)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            return 0; /* Unreachable */ }
         }
-        break;
+
     case DMU_BSPLEAF:
         switch(prop)
         {
         case DMU_HEDGE: {
-            BspLeaf* bspLeaf = (BspLeaf*) ptr;
+            BspLeaf *bspLeaf = (BspLeaf *) ptr;
             int result = false; // Continue iteration.
             if(bspLeaf->hedge)
             {
-                HEdge* hedge = bspLeaf->hedge;
+                HEdge *hedge = bspLeaf->hedge;
                 do
                 {
                     result = callback(hedge, context);
@@ -568,14 +522,16 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
             }
             return result; }
 
-        default:
-            Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
+        default: {
+            QByteArray msg = String("P_Iteratep: Property %1 unknown/not vector.").arg(DMU_Str(prop)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            return 0; /* Unreachable */ }
         }
-        break;
 
-    default:
-        Con_Error("P_Iteratep: Type %s unknown.\n", DMU_Str(type));
-        break;
+    default: {
+        QByteArray msg = String("P_Iteratep: Type %1 unknown.").arg(DMU_Str(type)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable */ }
     }
 
     return false;
@@ -594,8 +550,7 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
  *                      aborted immediately when the callback function
  *                      returns @c false.
  */
-int P_Callback(int type, uint index, void* context,
-               int (*callback)(void* p, void* ctx))
+int P_Callback(int type, uint index, void *context, int (*callback)(void *p, void *ctx))
 {
     switch(type)
     {
@@ -634,10 +589,10 @@ int P_Callback(int type, uint index, void* context,
             return callback(SECTOR_PTR(index), context);
         break;
 
-    case DMU_PLANE:
-        Con_Error("P_Callback: %s cannot be referenced by id alone (sector is unknown).\n",
-                  DMU_Str(type));
-        break;
+    case DMU_PLANE: {
+        QByteArray msg = String("P_Callback: %1 cannot be referenced by id alone (sector is unknown).").arg(DMU_Str(type)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable */ }
 
     case DMU_MATERIAL:
         if(index < Materials_Size())
@@ -647,18 +602,15 @@ int P_Callback(int type, uint index, void* context,
     case DMU_LINEDEF_BY_TAG:
     case DMU_SECTOR_BY_TAG:
     case DMU_LINEDEF_BY_ACT_TAG:
-    case DMU_SECTOR_BY_ACT_TAG:
-        Con_Error("P_Callback: Type %s not implemented yet.\n", DMU_Str(type));
-        /*
-        for(i = 0; i < NUM_LINEDEFS; ++i)
-        {
-            if(!callback(LINE_PTR(i), context)) return false;
-        }
-        */
-        break;
+    case DMU_SECTOR_BY_ACT_TAG: {
+        QByteArray msg = String("P_Callback: Type %1 not implemented yet.").arg(DMU_Str(type)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable */ }
 
-    default:
-        Con_Error("P_Callback: Type %s unknown (index %i).\n", DMU_Str(type), index);
+    default: {
+        QByteArray msg = String("P_Callback: Type %1 unknown (index %2).").arg(DMU_Str(type)).arg(index).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable */ }
     }
 
     // Successfully completed.
@@ -669,9 +621,10 @@ int P_Callback(int type, uint index, void* context,
  * Another version of callback iteration. The set of selected objects is
  * determined by 'type' and 'ptr'. Otherwise works like P_Callback.
  */
-int P_Callbackp(int type, void* ptr, void* context,
-                int (*callback)(void* p, void* ctx))
+int P_Callbackp(int type, void *ptr, void *context, int (*callback)(void *p, void *ctx))
 {
+    LOG_AS("P_Callbackp");
+
     switch(type)
     {
     case DMU_VERTEX:
@@ -691,36 +644,34 @@ int P_Callbackp(int type, void* ptr, void* context,
 #if _DEBUG
         else
         {
-            Con_Message("P_Callbackp: Type mismatch %s != %s\n",
-                        DMU_Str(type), DMU_Str(DMU_GetType(ptr)));
+            LOG_DEBUG("Type mismatch %s != %s\n")
+                << DMU_Str(type) << DMU_Str(DMU_GetType(ptr));
         }
 #endif
         break;
 
-    // \todo If necessary, add special types for accessing multiple objects.
-
-    default:
-        Con_Error("P_Callbackp: Type %s unknown.\n", DMU_Str(type));
+    default: {
+        QByteArray msg = String("P_Callbackp: Type %1 unknown.").arg(DMU_Str(type)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable */ }
     }
     return true;
 }
 
-int DMU_SetMaterialProperty(material_t* mat, const setargs_t* args)
+int DMU_SetMaterialProperty(material_t *mat, setargs_t const *args)
 {
-    Con_Error("DMU::SetMaterialProperty: Property %s is not writable.\n", DMU_Str(args->prop));
-    exit(1); // Unreachable.
+    DENG_UNUSED(mat);
+    QByteArray msg = String("DMU::SetMaterialProperty: Property '%1' is not writable.").arg(DMU_Str(args->prop)).toUtf8();
+    LegacyCore_FatalError(msg.constData());
+    return 0; // Unreachable.
 }
 
-/**
- * Sets a value. Does some basic type checking so that incompatible types are
- * not assigned. Simple conversions are also done, e.g., float to fixed.
- */
-void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
+void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
                   uint index)
 {
     if(valueType == DDVT_FIXED)
     {
-        fixed_t* d = dst;
+        fixed_t *d = (fixed_t *)dst;
 
         switch(args->valueType)
         {
@@ -739,14 +690,15 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_DOUBLE:
             *d = FLT2FIX(args->doubleValues[index]);
             break;
-        default:
-            Con_Error("SetValue: DDVT_FIXED incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("SetValue: DDVT_FIXED incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_FLOAT)
     {
-        float* d = dst;
+        float *d = (float *)dst;
 
         switch(args->valueType)
         {
@@ -765,14 +717,15 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_DOUBLE:
             *d = (float)args->doubleValues[index];
             break;
-        default:
-            Con_Error("SetValue: DDVT_FLOAT incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("SetValue: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_DOUBLE)
     {
-        double* d = dst;
+        double *d = (double *)dst;
 
         switch(args->valueType)
         {
@@ -791,28 +744,30 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_DOUBLE:
             *d = args->doubleValues[index];
             break;
-        default:
-            Con_Error("SetValue: DDVT_DOUBLE incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("SetValue: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_BOOL)
     {
-        boolean* d = dst;
+        boolean *d = (boolean *)dst;
 
         switch(args->valueType)
         {
         case DDVT_BOOL:
             *d = args->booleanValues[index];
             break;
-        default:
-            Con_Error("SetValue: DDVT_BOOL incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("SetValue: DDVT_BOOL incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_BYTE)
     {
-        byte* d = dst;
+        byte *d = (byte *)dst;
 
         switch(args->valueType)
         {
@@ -831,14 +786,15 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_DOUBLE:
             *d = (byte) args->doubleValues[index];
             break;
-        default:
-            Con_Error("SetValue: DDVT_BYTE incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("SetValue: DDVT_BYTE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_INT)
     {
-        int* d = dst;
+        int *d = (int *)dst;
 
         switch(args->valueType)
         {
@@ -860,14 +816,15 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_FIXED:
             *d = (args->fixedValues[index] >> FRACBITS);
             break;
-        default:
-            Con_Error("SetValue: DDVT_INT incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("SetValue: DDVT_INT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_SHORT)
     {
-        short* d = dst;
+        short *d = (short *)dst;
 
         switch(args->valueType)
         {
@@ -889,60 +846,67 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_FIXED:
             *d = (args->fixedValues[index] >> FRACBITS);
             break;
-        default:
-            Con_Error("SetValue: DDVT_SHORT incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("SetValue: DDVT_SHORT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_ANGLE)
     {
-        angle_t* d = dst;
+        angle_t *d = (angle_t *)dst;
 
         switch(args->valueType)
         {
         case DDVT_ANGLE:
             *d = args->angleValues[index];
             break;
-        default:
-            Con_Error("SetValue: DDVT_ANGLE incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("SetValue: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_BLENDMODE)
     {
-        blendmode_t* d = dst;
+        blendmode_t *d = (blendmode_t *)dst;
 
         switch(args->valueType)
         {
         case DDVT_INT:
             if(args->intValues[index] > DDNUM_BLENDMODES || args->intValues[index] < 0)
-                Con_Error("SetValue: %d is not a valid value for DDVT_BLENDMODE.\n",
-                          args->intValues[index]);
+            {
+                QByteArray msg = String("SetValue: %1 is not a valid value for DDVT_BLENDMODE.").arg(args->intValues[index]).toUtf8();
+                LegacyCore_FatalError(msg.constData());
+            }
 
-            *d = args->intValues[index];
+            *d = blendmode_t(args->intValues[index]);
             break;
-        default:
-            Con_Error("SetValue: DDVT_BLENDMODE incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("SetValue: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_PTR)
     {
-        void** d = dst;
+        void **d = (void **)dst;
 
         switch(args->valueType)
         {
         case DDVT_PTR:
             *d = args->ptrValues[index];
             break;
-        default:
-            Con_Error("SetValue: DDVT_PTR incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("SetValue: DDVT_PTR incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else
     {
-        Con_Error("SetValue: unknown value type %d.\n", valueType);
+        QByteArray msg = String("SetValue: unknown value type %1.").arg(valueType).toUtf8();
+        LegacyCore_FatalError(msg.constData());
     }
 }
 
@@ -954,15 +918,15 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
  * When a property changes, the relevant subsystems are notified of the change
  * so that they can update their state accordingly.
  */
-static int setProperty(void* obj, void* context)
+static int setProperty(void *obj, void *context)
 {
-    setargs_t*          args = (setargs_t*) context;
-    Sector*             updateSector1 = NULL, *updateSector2 = NULL;
-    Plane*              updatePlane = NULL;
-    LineDef*            updateLinedef = NULL;
-    SideDef*            updateSidedef = NULL;
-    Surface*            updateSurface = NULL;
-    // BspLeaf*           updateBspLeaf = NULL;
+    setargs_t *args = (setargs_t *) context;
+    Sector *updateSector1 = NULL, *updateSector2 = NULL;
+    Plane *updatePlane = NULL;
+    LineDef *updateLinedef = NULL;
+    SideDef *updateSidedef = NULL;
+    Surface *updateSurface = NULL;
+    // BspLeaf *updateBspLeaf = NULL;
 
     /**
      * @par Algorithm
@@ -981,33 +945,33 @@ static int setProperty(void* obj, void* context)
     // Dereference where necessary. Note the order, these cascade.
     if(args->type == DMU_BSPLEAF)
     {
-        // updateBspLeaf = (BspLeaf*) obj;
+        // updateBspLeaf = (BspLeaf *) obj;
 
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            obj = ((BspLeaf*) obj)->sector;
+            obj = ((BspLeaf *) obj)->sector;
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            obj = ((BspLeaf*) obj)->sector;
+            obj = ((BspLeaf *) obj)->sector;
             args->type = DMU_SECTOR;
         }
     }
 
     if(args->type == DMU_SECTOR)
     {
-        updateSector1 = (Sector*) obj;
+        updateSector1 = (Sector *) obj;
 
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            Sector             *sec = (Sector*) obj;
+            Sector* sec = (Sector *) obj;
             obj = sec->SP_plane(PLN_FLOOR);
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            Sector             *sec = (Sector*) obj;
+            Sector* sec = (Sector *) obj;
             obj = sec->SP_plane(PLN_CEILING);
             args->type = DMU_PLANE;
         }
@@ -1015,19 +979,21 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_LINEDEF)
     {
-        updateLinedef = (LineDef*) obj;
+        updateLinedef = (LineDef *) obj;
 
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            obj = ((LineDef*) obj)->L_frontsidedef;
+            obj = ((LineDef *) obj)->L_frontsidedef;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            LineDef* li = ((LineDef*) obj);
+            LineDef *li = ((LineDef *) obj);
             if(!li->L_backsidedef)
-                Con_Error("DMU_setProperty: Linedef %i has no back side.\n",
-                          P_ToIndex(li));
+            {
+                QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
+                LegacyCore_FatalError(msg.constData());
+            }
 
             obj = li->L_backsidedef;
             args->type = DMU_SIDEDEF;
@@ -1036,28 +1002,28 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_SIDEDEF)
     {
-        updateSidedef = (SideDef*) obj;
+        updateSidedef = (SideDef *) obj;
 
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            obj = &((SideDef*) obj)->SW_topsurface;
+            obj = &((SideDef *) obj)->SW_topsurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            obj = &((SideDef*) obj)->SW_middlesurface;
+            obj = &((SideDef *) obj)->SW_middlesurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            obj = &((SideDef*) obj)->SW_bottomsurface;
+            obj = &((SideDef *) obj)->SW_bottomsurface;
             args->type = DMU_SURFACE;
         }
     }
 
     if(args->type == DMU_PLANE)
     {
-        updatePlane = (Plane*) obj;
+        updatePlane = (Plane *) obj;
 
         switch(args->prop)
         {
@@ -1084,7 +1050,7 @@ static int setProperty(void* obj, void* context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            obj = &((Plane*) obj)->surface;
+            obj = &((Plane *) obj)->surface;
             args->type = DMU_SURFACE;
             break;
 
@@ -1095,7 +1061,7 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_SURFACE)
     {
-        updateSurface = (Surface*) obj;
+        updateSurface = (Surface *) obj;
 /*
         // Resolve implicit references to properties of the surface's material.
         switch(args->prop)
@@ -1113,48 +1079,50 @@ static int setProperty(void* obj, void* context)
     switch(args->type)
     {
     case DMU_SURFACE:
-        Surface_SetProperty(obj, args);
+        Surface_SetProperty((Surface *)obj, args);
         break;
 
     case DMU_PLANE:
-        Plane_SetProperty(obj, args);
+        Plane_SetProperty((Plane *)obj, args);
         break;
 
     case DMU_VERTEX:
-        Vertex_SetProperty(obj, args);
+        Vertex_SetProperty((Vertex *)obj, args);
         break;
 
     case DMU_HEDGE:
-        HEdge_SetProperty(obj, args);
+        HEdge_SetProperty((HEdge *)obj, args);
         break;
 
     case DMU_LINEDEF:
-        LineDef_SetProperty(obj, args);
+        LineDef_SetProperty((LineDef *)obj, args);
         break;
 
     case DMU_SIDEDEF:
-        SideDef_SetProperty(obj, args);
+        SideDef_SetProperty((SideDef *)obj, args);
         break;
 
     case DMU_BSPLEAF:
-        BspLeaf_SetProperty(obj, args);
+        BspLeaf_SetProperty((BspLeaf *)obj, args);
         break;
 
     case DMU_SECTOR:
-        Sector_SetProperty(obj, args);
+        Sector_SetProperty((Sector *)obj, args);
         break;
 
     case DMU_MATERIAL:
-        DMU_SetMaterialProperty(obj, args);
+        DMU_SetMaterialProperty((material_t *)obj, args);
         break;
 
-    case DMU_BSPNODE:
-        Con_Error("SetProperty: Property %s is not writable in DMU_BSPNODE.\n",
-                  DMU_Str(args->prop));
-        break;
+    case DMU_BSPNODE: {
+        QByteArray msg = String("SetProperty: Property %1 is not writable in DMU_BSPNODE.").arg(DMU_Str(args->prop)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        break; }
 
-    default:
-        Con_Error("SetProperty: Type %s not writable.\n", DMU_Str(args->type));
+    default: {
+        QByteArray msg = String("SetProperty: Type %1 not writable.").arg(DMU_Str(args->type)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable */ }
     }
 
     if(updateSurface)
@@ -1164,15 +1132,15 @@ static int setProperty(void* obj, void* context)
             switch(DMU_GetType(updateSurface->owner))
             {
             case DMU_SIDEDEF:
-                updateSidedef = updateSurface->owner;
+                updateSidedef = (SideDef *)updateSurface->owner;
                 break;
 
             case DMU_PLANE:
-                updatePlane = updateSurface->owner;
+                updatePlane = (Plane *)updateSurface->owner;
                 break;
 
             default:
-                Con_Error("SetPropert: Internal error, surface owner unknown.\n");
+                LegacyCore_FatalError("SetPropert: Internal error, surface owner unknown.");
             }
         }
     }
@@ -1216,42 +1184,39 @@ static int setProperty(void* obj, void* context)
     return true; // Continue iteration.
 }
 
-int DMU_GetMaterialProperty(material_t* mat, setargs_t* args)
+int DMU_GetMaterialProperty(material_t *mat, setargs_t *args)
 {
     switch(args->prop)
     {
     case DMU_FLAGS: {
         short flags = Material_Flags(mat);
         DMU_GetValue(DMT_MATERIAL_FLAGS, &flags, args, 0);
-        break;
-      }
+        break; }
+
     case DMU_WIDTH: {
         int width = Material_Width(mat);
         DMU_GetValue(DMT_MATERIAL_WIDTH, &width, args, 0);
-        break;
-      }
+        break; }
+
     case DMU_HEIGHT: {
         int height = Material_Height(mat);
         DMU_GetValue(DMT_MATERIAL_HEIGHT, &height, args, 0);
-        break;
-      }
-    default:
-        Con_Error("DMU::GetMaterialProperty: No property %s.\n", DMU_Str(args->prop));
+        break; }
+
+    default: {
+        QByteArray msg = String("DMU::GetMaterialProperty: No property %1.").arg(DMU_Str(args->prop)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable */ }
     }
     return false; // Continue iteration.
 }
 
-/**
- * Gets a value. Does some basic type checking so that incompatible types
- * are not assigned. Simple conversions are also done, e.g., float to
- * fixed.
- */
-void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
+void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args,
                   uint index)
 {
     if(valueType == DDVT_FIXED)
     {
-        const fixed_t* s = src;
+        fixed_t const *s = (fixed_t const *)src;
 
         switch(args->valueType)
         {
@@ -1270,14 +1235,15 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_DOUBLE:
             args->doubleValues[index] = FIX2FLT(*s);
             break;
-        default:
-            Con_Error("GetValue: DDVT_FIXED incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("GetValue: DDVT_FIXED incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_FLOAT)
     {
-        const float* s = src;
+        float const *s = (float const *)src;
 
         switch(args->valueType)
         {
@@ -1296,14 +1262,15 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_DOUBLE:
             args->doubleValues[index] = (double)*s;
             break;
-        default:
-            Con_Error("GetValue: DDVT_FLOAT incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("GetValue: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_DOUBLE)
     {
-        const double* s = src;
+        double const *s = (double const *)src;
 
         switch(args->valueType)
         {
@@ -1322,28 +1289,30 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_DOUBLE:
             args->doubleValues[index] = *s;
             break;
-        default:
-            Con_Error("GetValue: DDVT_DOUBLE incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("GetValue: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_BOOL)
     {
-        const boolean* s = src;
+        boolean const *s = (boolean const *)src;
 
         switch(args->valueType)
         {
         case DDVT_BOOL:
             args->booleanValues[index] = *s;
             break;
-        default:
-            Con_Error("GetValue: DDVT_BOOL incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("GetValue: DDVT_BOOL incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_BYTE)
     {
-        const byte* s = src;
+        byte const *s = (byte const *)src;
 
         switch(args->valueType)
         {
@@ -1362,14 +1331,15 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_DOUBLE:
             args->doubleValues[index] = *s;
             break;
-        default:
-            Con_Error("GetValue: DDVT_BYTE incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("GetValue: DDVT_BYTE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_INT)
     {
-        const int* s = src;
+        int const *s = (int const *)src;
 
         switch(args->valueType)
         {
@@ -1391,14 +1361,15 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_FIXED:
             args->fixedValues[index] = (*s << FRACBITS);
             break;
-        default:
-            Con_Error("GetValue: DDVT_INT incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("GetValue: DDVT_INT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_SHORT)
     {
-        const short* s = src;
+        short const *s = (short const *)src;
 
         switch(args->valueType)
         {
@@ -1420,42 +1391,45 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_FIXED:
             args->fixedValues[index] = (*s << FRACBITS);
             break;
-        default:
-            Con_Error("GetValue: DDVT_SHORT incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("GetValue: DDVT_SHORT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_ANGLE)
     {
-        const angle_t* s = src;
+        angle_t const *s = (angle_t const *)src;
 
         switch(args->valueType)
         {
         case DDVT_ANGLE:
             args->angleValues[index] = *s;
             break;
-        default:
-            Con_Error("GetValue: DDVT_ANGLE incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("GetValue: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_BLENDMODE)
     {
-        const blendmode_t* s = src;
+        blendmode_t const *s = (blendmode_t const *)src;
 
         switch(args->valueType)
         {
         case DDVT_INT:
             args->intValues[index] = *s;
             break;
-        default:
-            Con_Error("GetValue: DDVT_BLENDMODE incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("GetValue: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else if(valueType == DDVT_PTR)
     {
-        const void* const* s = src;
+        void const *const *s = (void const *const *)src;
 
         switch(args->valueType)
         {
@@ -1465,34 +1439,36 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
             args->intValues[index] = P_ToIndex(*s);
             break;
         case DDVT_PTR:
-            args->ptrValues[index] = (void*) *s;
+            args->ptrValues[index] = (void *) *s;
             break;
-        default:
-            Con_Error("GetValue: DDVT_PTR incompatible with value type %s.\n",
-                      value_Str(args->valueType));
+        default: {
+            QByteArray msg = String("GetValue: DDVT_PTR incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
+            LegacyCore_FatalError(msg.constData());
+            }
         }
     }
     else
     {
-        Con_Error("GetValue: unknown value type %d.\n", valueType);
+        QByteArray msg = String("GetValue: unknown value type %1.").arg(valueType).toUtf8();
+        LegacyCore_FatalError(msg.constData());
     }
 }
 
-static int getProperty(void* ob, void* context)
+static int getProperty(void *ob, void *context)
 {
-    setargs_t* args = (setargs_t*) context;
+    setargs_t *args = (setargs_t *) context;
 
     // Dereference where necessary. Note the order, these cascade.
     if(args->type == DMU_BSPLEAF)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            ob = ((BspLeaf*)ob)->sector;
+            ob = ((BspLeaf *)ob)->sector;
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            ob = ((BspLeaf*)ob)->sector;
+            ob = ((BspLeaf *)ob)->sector;
             args->type = DMU_SECTOR;
         }
         else
@@ -1501,7 +1477,7 @@ static int getProperty(void* ob, void* context)
             {
             case DMU_LIGHT_LEVEL:
             case DMT_MOBJS:
-                ob = ((BspLeaf*)ob)->sector;
+                ob = ((BspLeaf *)ob)->sector;
                 args->type = DMU_SECTOR;
                 break;
             default: break;
@@ -1513,13 +1489,13 @@ static int getProperty(void* ob, void* context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            Sector* sec = (Sector*)ob;
+            Sector *sec = (Sector *)ob;
             ob = sec->SP_plane(PLN_FLOOR);
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            Sector* sec = (Sector*)ob;
+            Sector *sec = (Sector *)ob;
             ob = sec->SP_plane(PLN_CEILING);
             args->type = DMU_PLANE;
         }
@@ -1529,18 +1505,24 @@ static int getProperty(void* ob, void* context)
     {
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            LineDef* li = ((LineDef*)ob);
+            LineDef *li = ((LineDef *)ob);
             if(!li->L_frontsidedef) // $degenleaf
-                Con_Error("DMU_setProperty: Linedef %i has no front side.\n", P_ToIndex(li));
+            {
+                QByteArray msg = String("DMU_setProperty: Linedef %1 has no front side.").arg(P_ToIndex(li)).toUtf8();
+                LegacyCore_FatalError(msg.constData());
+            }
 
             ob = li->L_frontsidedef;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            LineDef* li = ((LineDef*)ob);
+            LineDef *li = ((LineDef *)ob);
             if(!li->L_backsidedef)
-                Con_Error("DMU_setProperty: Linedef %i has no back side.\n", P_ToIndex(li));
+            {
+                QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
+                LegacyCore_FatalError(msg.constData());
+            }
 
             ob = li->L_backsidedef;
             args->type = DMU_SIDEDEF;
@@ -1551,17 +1533,17 @@ static int getProperty(void* ob, void* context)
     {
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            ob = &((SideDef*)ob)->SW_topsurface;
+            ob = &((SideDef *)ob)->SW_topsurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            ob = &((SideDef*)ob)->SW_middlesurface;
+            ob = &((SideDef *)ob)->SW_middlesurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            ob = &((SideDef*)ob)->SW_bottomsurface;
+            ob = &((SideDef *)ob)->SW_bottomsurface;
             args->type = DMU_SURFACE;
         }
     }
@@ -1594,7 +1576,7 @@ static int getProperty(void* ob, void* context)
         case DMU_BLENDMODE:
         case DMU_FLAGS:
         case DMU_BASE:
-            ob = &((Plane*)ob)->surface;
+            ob = &((Plane *)ob)->surface;
             args->type = DMU_SURFACE;
             break;
 
@@ -1603,63 +1585,48 @@ static int getProperty(void* ob, void* context)
         }
     }
 
-/*
-    if(args->type == DMU_SURFACE)
-    {
-        // Resolve implicit references to properties of the surface's material.
-        switch(args->prop)
-        {
-        case UNKNOWN1:
-            ob = &((Surface*)ob)->material;
-            args->type = DMU_MATERIAL;
-            break;
-
-        default:
-            break;
-        }
-    }
-*/
-
     switch(args->type)
     {
     case DMU_VERTEX:
-        Vertex_GetProperty(ob, args);
+        Vertex_GetProperty((Vertex *)ob, args);
         break;
 
     case DMU_HEDGE:
-        HEdge_GetProperty(ob, args);
+        HEdge_GetProperty((HEdge *)ob, args);
         break;
 
     case DMU_LINEDEF:
-        LineDef_GetProperty(ob, args);
+        LineDef_GetProperty((LineDef *)ob, args);
         break;
 
     case DMU_SURFACE:
-        Surface_GetProperty(ob, args);
+        Surface_GetProperty((Surface *)ob, args);
         break;
 
     case DMU_PLANE:
-        Plane_GetProperty(ob, args);
+        Plane_GetProperty((Plane *)ob, args);
         break;
 
     case DMU_SECTOR:
-        Sector_GetProperty(ob, args);
+        Sector_GetProperty((Sector *)ob, args);
         break;
 
     case DMU_SIDEDEF:
-        SideDef_GetProperty(ob, args);
+        SideDef_GetProperty((SideDef *)ob, args);
         break;
 
     case DMU_BSPLEAF:
-        BspLeaf_GetProperty(ob, args);
+        BspLeaf_GetProperty((BspLeaf *)ob, args);
         break;
 
     case DMU_MATERIAL:
-        DMU_GetMaterialProperty(ob, args);
+        DMU_GetMaterialProperty((material_t *)ob, args);
         break;
 
-    default:
-        Con_Error("GetProperty: Type %s not readable.\n", DMU_Str(args->type));
+    default: {
+        QByteArray msg = String("GetProperty: Type %1 not readable.").arg(DMU_Str(args->type)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable */ }
     }
 
     // Currently no aggregate values are collected.
@@ -1668,7 +1635,7 @@ static int getProperty(void* ob, void* context)
 
 void P_SetBool(int type, uint index, uint prop, boolean param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
@@ -1680,7 +1647,7 @@ void P_SetBool(int type, uint index, uint prop, boolean param)
 
 void P_SetByte(int type, uint index, uint prop, byte param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
@@ -1690,7 +1657,7 @@ void P_SetByte(int type, uint index, uint prop, byte param)
 
 void P_SetInt(int type, uint index, uint prop, int param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
@@ -1700,7 +1667,7 @@ void P_SetInt(int type, uint index, uint prop, int param)
 
 void P_SetFixed(int type, uint index, uint prop, fixed_t param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
@@ -1710,7 +1677,7 @@ void P_SetFixed(int type, uint index, uint prop, fixed_t param)
 
 void P_SetAngle(int type, uint index, uint prop, angle_t param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
@@ -1720,7 +1687,7 @@ void P_SetAngle(int type, uint index, uint prop, angle_t param)
 
 void P_SetFloat(int type, uint index, uint prop, float param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
@@ -1730,7 +1697,7 @@ void P_SetFloat(int type, uint index, uint prop, float param)
 
 void P_SetDouble(int type, uint index, uint prop, double param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_DOUBLE;
@@ -1738,9 +1705,9 @@ void P_SetDouble(int type, uint index, uint prop, double param)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetPtr(int type, uint index, uint prop, void* param)
+void P_SetPtr(int type, uint index, uint prop, void *param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
@@ -1748,9 +1715,9 @@ void P_SetPtr(int type, uint index, uint prop, void* param)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetBoolv(int type, uint index, uint prop, boolean* params)
+void P_SetBoolv(int type, uint index, uint prop, boolean *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
@@ -1758,9 +1725,9 @@ void P_SetBoolv(int type, uint index, uint prop, boolean* params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetBytev(int type, uint index, uint prop, byte* params)
+void P_SetBytev(int type, uint index, uint prop, byte *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
@@ -1768,9 +1735,9 @@ void P_SetBytev(int type, uint index, uint prop, byte* params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetIntv(int type, uint index, uint prop, int* params)
+void P_SetIntv(int type, uint index, uint prop, int *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
@@ -1778,9 +1745,9 @@ void P_SetIntv(int type, uint index, uint prop, int* params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetFixedv(int type, uint index, uint prop, fixed_t* params)
+void P_SetFixedv(int type, uint index, uint prop, fixed_t *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
@@ -1788,9 +1755,9 @@ void P_SetFixedv(int type, uint index, uint prop, fixed_t* params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetAnglev(int type, uint index, uint prop, angle_t* params)
+void P_SetAnglev(int type, uint index, uint prop, angle_t *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
@@ -1798,9 +1765,9 @@ void P_SetAnglev(int type, uint index, uint prop, angle_t* params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetFloatv(int type, uint index, uint prop, float* params)
+void P_SetFloatv(int type, uint index, uint prop, float *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
@@ -1808,9 +1775,9 @@ void P_SetFloatv(int type, uint index, uint prop, float* params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetDoublev(int type, uint index, uint prop, double* params)
+void P_SetDoublev(int type, uint index, uint prop, double *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_DOUBLE;
@@ -1818,21 +1785,21 @@ void P_SetDoublev(int type, uint index, uint prop, double* params)
     P_Callback(type, index, &args, setProperty);
 }
 
-void P_SetPtrv(int type, uint index, uint prop, void* params)
+void P_SetPtrv(int type, uint index, uint prop, void *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
-    args.ptrValues = params;
+    args.ptrValues = (void **)params;
     P_Callback(type, index, &args, setProperty);
 }
 
 /* pointer-based write functions */
 
-void P_SetBoolp(void* ptr, uint prop, boolean param)
+void P_SetBoolp(void *ptr, uint prop, boolean param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
@@ -1842,9 +1809,9 @@ void P_SetBoolp(void* ptr, uint prop, boolean param)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetBytep(void* ptr, uint prop, byte param)
+void P_SetBytep(void *ptr, uint prop, byte param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BYTE;
@@ -1852,9 +1819,9 @@ void P_SetBytep(void* ptr, uint prop, byte param)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetIntp(void* ptr, uint prop, int param)
+void P_SetIntp(void *ptr, uint prop, int param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_INT;
@@ -1862,9 +1829,9 @@ void P_SetIntp(void* ptr, uint prop, int param)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetFixedp(void* ptr, uint prop, fixed_t param)
+void P_SetFixedp(void *ptr, uint prop, fixed_t param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FIXED;
@@ -1872,9 +1839,9 @@ void P_SetFixedp(void* ptr, uint prop, fixed_t param)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetAnglep(void* ptr, uint prop, angle_t param)
+void P_SetAnglep(void *ptr, uint prop, angle_t param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_ANGLE;
@@ -1882,9 +1849,9 @@ void P_SetAnglep(void* ptr, uint prop, angle_t param)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetFloatp(void* ptr, uint prop, float param)
+void P_SetFloatp(void *ptr, uint prop, float param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
@@ -1892,9 +1859,9 @@ void P_SetFloatp(void* ptr, uint prop, float param)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetDoublep(void* ptr, uint prop, double param)
+void P_SetDoublep(void *ptr, uint prop, double param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_DOUBLE;
@@ -1902,9 +1869,9 @@ void P_SetDoublep(void* ptr, uint prop, double param)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetPtrp(void* ptr, uint prop, void* param)
+void P_SetPtrp(void *ptr, uint prop, void *param)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_PTR;
@@ -1912,9 +1879,9 @@ void P_SetPtrp(void* ptr, uint prop, void* param)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetBoolpv(void* ptr, uint prop, boolean* params)
+void P_SetBoolpv(void *ptr, uint prop, boolean *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
@@ -1922,9 +1889,9 @@ void P_SetBoolpv(void* ptr, uint prop, boolean* params)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetBytepv(void* ptr, uint prop, byte* params)
+void P_SetBytepv(void *ptr, uint prop, byte *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_BYTE;
@@ -1932,9 +1899,9 @@ void P_SetBytepv(void* ptr, uint prop, byte* params)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetIntpv(void* ptr, uint prop, int* params)
+void P_SetIntpv(void *ptr, uint prop, int *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_INT;
@@ -1942,9 +1909,9 @@ void P_SetIntpv(void* ptr, uint prop, int* params)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetFixedpv(void* ptr, uint prop, fixed_t* params)
+void P_SetFixedpv(void *ptr, uint prop, fixed_t *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FIXED;
@@ -1952,9 +1919,9 @@ void P_SetFixedpv(void* ptr, uint prop, fixed_t* params)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetAnglepv(void* ptr, uint prop, angle_t* params)
+void P_SetAnglepv(void *ptr, uint prop, angle_t *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_ANGLE;
@@ -1962,9 +1929,9 @@ void P_SetAnglepv(void* ptr, uint prop, angle_t* params)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetFloatpv(void* ptr, uint prop, float* params)
+void P_SetFloatpv(void *ptr, uint prop, float *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
@@ -1972,9 +1939,9 @@ void P_SetFloatpv(void* ptr, uint prop, float* params)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetDoublepv(void* ptr, uint prop, double* params)
+void P_SetDoublepv(void *ptr, uint prop, double *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_DOUBLE;
@@ -1982,13 +1949,13 @@ void P_SetDoublepv(void* ptr, uint prop, double* params)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
-void P_SetPtrpv(void* ptr, uint prop, void* params)
+void P_SetPtrpv(void *ptr, uint prop, void *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_PTR;
-    args.ptrValues = params;
+    args.ptrValues = (void **)params;
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
@@ -1996,8 +1963,8 @@ void P_SetPtrpv(void* ptr, uint prop, void* params)
 
 boolean P_GetBool(int type, uint index, uint prop)
 {
-    setargs_t           args;
-    boolean             returnValue = false;
+    setargs_t args;
+    boolean returnValue = false;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
@@ -2008,8 +1975,8 @@ boolean P_GetBool(int type, uint index, uint prop)
 
 byte P_GetByte(int type, uint index, uint prop)
 {
-    setargs_t           args;
-    byte                returnValue = 0;
+    setargs_t args;
+    byte returnValue = 0;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
@@ -2020,8 +1987,8 @@ byte P_GetByte(int type, uint index, uint prop)
 
 int P_GetInt(int type, uint index, uint prop)
 {
-    setargs_t           args;
-    int                 returnValue = 0;
+    setargs_t args;
+    int returnValue = 0;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
@@ -2032,8 +1999,8 @@ int P_GetInt(int type, uint index, uint prop)
 
 fixed_t P_GetFixed(int type, uint index, uint prop)
 {
-    setargs_t           args;
-    fixed_t             returnValue = 0;
+    setargs_t args;
+    fixed_t returnValue = 0;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
@@ -2044,8 +2011,8 @@ fixed_t P_GetFixed(int type, uint index, uint prop)
 
 angle_t P_GetAngle(int type, uint index, uint prop)
 {
-    setargs_t           args;
-    angle_t             returnValue = 0;
+    setargs_t args;
+    angle_t returnValue = 0;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
@@ -2056,8 +2023,8 @@ angle_t P_GetAngle(int type, uint index, uint prop)
 
 float P_GetFloat(int type, uint index, uint prop)
 {
-    setargs_t           args;
-    float               returnValue = 0;
+    setargs_t args;
+    float returnValue = 0;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
@@ -2068,8 +2035,8 @@ float P_GetFloat(int type, uint index, uint prop)
 
 double P_GetDouble(int type, uint index, uint prop)
 {
-    setargs_t           args;
-    double              returnValue = 0;
+    setargs_t args;
+    double returnValue = 0;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_DOUBLE;
@@ -2078,10 +2045,10 @@ double P_GetDouble(int type, uint index, uint prop)
     return returnValue;
 }
 
-void* P_GetPtr(int type, uint index, uint prop)
+void *P_GetPtr(int type, uint index, uint prop)
 {
-    setargs_t           args;
-    void               *returnValue = NULL;
+    setargs_t args;
+    void *returnValue = 0;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
@@ -2090,9 +2057,9 @@ void* P_GetPtr(int type, uint index, uint prop)
     return returnValue;
 }
 
-void P_GetBoolv(int type, uint index, uint prop, boolean* params)
+void P_GetBoolv(int type, uint index, uint prop, boolean *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BOOL;
@@ -2100,9 +2067,9 @@ void P_GetBoolv(int type, uint index, uint prop, boolean* params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetBytev(int type, uint index, uint prop, byte* params)
+void P_GetBytev(int type, uint index, uint prop, byte *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_BYTE;
@@ -2110,9 +2077,9 @@ void P_GetBytev(int type, uint index, uint prop, byte* params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetIntv(int type, uint index, uint prop, int* params)
+void P_GetIntv(int type, uint index, uint prop, int *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_INT;
@@ -2120,9 +2087,9 @@ void P_GetIntv(int type, uint index, uint prop, int* params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetFixedv(int type, uint index, uint prop, fixed_t* params)
+void P_GetFixedv(int type, uint index, uint prop, fixed_t *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FIXED;
@@ -2130,9 +2097,9 @@ void P_GetFixedv(int type, uint index, uint prop, fixed_t* params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetAnglev(int type, uint index, uint prop, angle_t* params)
+void P_GetAnglev(int type, uint index, uint prop, angle_t *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_ANGLE;
@@ -2140,9 +2107,9 @@ void P_GetAnglev(int type, uint index, uint prop, angle_t* params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetFloatv(int type, uint index, uint prop, float* params)
+void P_GetFloatv(int type, uint index, uint prop, float *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
@@ -2150,9 +2117,9 @@ void P_GetFloatv(int type, uint index, uint prop, float* params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetDoublev(int type, uint index, uint prop, double* params)
+void P_GetDoublev(int type, uint index, uint prop, double *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_DOUBLE;
@@ -2160,22 +2127,22 @@ void P_GetDoublev(int type, uint index, uint prop, double* params)
     P_Callback(type, index, &args, getProperty);
 }
 
-void P_GetPtrv(int type, uint index, uint prop, void* params)
+void P_GetPtrv(int type, uint index, uint prop, void *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     initArgs(&args, type, prop);
     args.valueType = DDVT_PTR;
-    args.ptrValues = params;
+    args.ptrValues = (void **)params;
     P_Callback(type, index, &args, getProperty);
 }
 
 /* pointer-based read functions */
 
-boolean P_GetBoolp(void* ptr, uint prop)
+boolean P_GetBoolp(void *ptr, uint prop)
 {
-    setargs_t           args;
-    boolean             returnValue = false;
+    setargs_t args;
+    boolean returnValue = false;
 
     if(ptr)
     {
@@ -2188,10 +2155,10 @@ boolean P_GetBoolp(void* ptr, uint prop)
     return returnValue;
 }
 
-byte P_GetBytep(void* ptr, uint prop)
+byte P_GetBytep(void *ptr, uint prop)
 {
-    setargs_t           args;
-    byte                returnValue = 0;
+    setargs_t args;
+    byte returnValue = 0;
 
     if(ptr)
     {
@@ -2204,10 +2171,10 @@ byte P_GetBytep(void* ptr, uint prop)
     return returnValue;
 }
 
-int P_GetIntp(void* ptr, uint prop)
+int P_GetIntp(void *ptr, uint prop)
 {
-    setargs_t           args;
-    int                 returnValue = 0;
+    setargs_t args;
+    int returnValue = 0;
 
     if(ptr)
     {
@@ -2220,10 +2187,10 @@ int P_GetIntp(void* ptr, uint prop)
     return returnValue;
 }
 
-fixed_t P_GetFixedp(void* ptr, uint prop)
+fixed_t P_GetFixedp(void *ptr, uint prop)
 {
-    setargs_t           args;
-    fixed_t             returnValue = 0;
+    setargs_t args;
+    fixed_t returnValue = 0;
 
     if(ptr)
     {
@@ -2236,10 +2203,10 @@ fixed_t P_GetFixedp(void* ptr, uint prop)
     return returnValue;
 }
 
-angle_t P_GetAnglep(void* ptr, uint prop)
+angle_t P_GetAnglep(void *ptr, uint prop)
 {
-    setargs_t           args;
-    angle_t             returnValue = 0;
+    setargs_t args;
+    angle_t returnValue = 0;
 
     if(ptr)
     {
@@ -2252,10 +2219,10 @@ angle_t P_GetAnglep(void* ptr, uint prop)
     return returnValue;
 }
 
-float P_GetFloatp(void* ptr, uint prop)
+float P_GetFloatp(void *ptr, uint prop)
 {
-    setargs_t           args;
-    float               returnValue = 0;
+    setargs_t args;
+    float returnValue = 0;
 
     if(ptr)
     {
@@ -2268,10 +2235,10 @@ float P_GetFloatp(void* ptr, uint prop)
     return returnValue;
 }
 
-double P_GetDoublep(void* ptr, uint prop)
+double P_GetDoublep(void *ptr, uint prop)
 {
-    setargs_t           args;
-    double              returnValue = 0;
+    setargs_t args;
+    double returnValue = 0;
 
     if(ptr)
     {
@@ -2284,10 +2251,10 @@ double P_GetDoublep(void* ptr, uint prop)
     return returnValue;
 }
 
-void* P_GetPtrp(void* ptr, uint prop)
+void *P_GetPtrp(void *ptr, uint prop)
 {
-    setargs_t           args;
-    void               *returnValue = NULL;
+    setargs_t args;
+    void *returnValue = 0;
 
     if(ptr)
     {
@@ -2300,9 +2267,9 @@ void* P_GetPtrp(void* ptr, uint prop)
     return returnValue;
 }
 
-void P_GetBoolpv(void* ptr, uint prop, boolean* params)
+void P_GetBoolpv(void *ptr, uint prop, boolean *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     if(ptr)
     {
@@ -2313,9 +2280,9 @@ void P_GetBoolpv(void* ptr, uint prop, boolean* params)
     }
 }
 
-void P_GetBytepv(void* ptr, uint prop, byte* params)
+void P_GetBytepv(void *ptr, uint prop, byte *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     if(ptr)
     {
@@ -2326,9 +2293,9 @@ void P_GetBytepv(void* ptr, uint prop, byte* params)
     }
 }
 
-void P_GetIntpv(void* ptr, uint prop, int* params)
+void P_GetIntpv(void *ptr, uint prop, int *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     if(ptr)
     {
@@ -2339,9 +2306,9 @@ void P_GetIntpv(void* ptr, uint prop, int* params)
     }
 }
 
-void P_GetFixedpv(void* ptr, uint prop, fixed_t* params)
+void P_GetFixedpv(void *ptr, uint prop, fixed_t *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     if(ptr)
     {
@@ -2352,9 +2319,9 @@ void P_GetFixedpv(void* ptr, uint prop, fixed_t* params)
     }
 }
 
-void P_GetAnglepv(void* ptr, uint prop, angle_t* params)
+void P_GetAnglepv(void *ptr, uint prop, angle_t *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     if(ptr)
     {
@@ -2365,9 +2332,9 @@ void P_GetAnglepv(void* ptr, uint prop, angle_t* params)
     }
 }
 
-void P_GetFloatpv(void* ptr, uint prop, float* params)
+void P_GetFloatpv(void *ptr, uint prop, float *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     if(ptr)
     {
@@ -2378,9 +2345,9 @@ void P_GetFloatpv(void* ptr, uint prop, float* params)
     }
 }
 
-void P_GetDoublepv(void* ptr, uint prop, double* params)
+void P_GetDoublepv(void *ptr, uint prop, double *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     if(ptr)
     {
@@ -2391,15 +2358,15 @@ void P_GetDoublepv(void* ptr, uint prop, double* params)
     }
 }
 
-void P_GetPtrpv(void* ptr, uint prop, void* params)
+void P_GetPtrpv(void *ptr, uint prop, void *params)
 {
-    setargs_t           args;
+    setargs_t args;
 
     if(ptr)
     {
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_PTR;
-        args.ptrValues = params;
+        args.ptrValues = (void **)params;
         P_Callbackp(args.type, ptr, &args, getProperty);
     }
 }
