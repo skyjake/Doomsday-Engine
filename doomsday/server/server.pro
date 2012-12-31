@@ -398,7 +398,7 @@ SOURCES += \
     $$SRC/src/map/hedge.cpp \
     $$SRC/src/map/linedef.c \
     $$SRC/src/map/p_data.cpp \
-    $$SRC/src/map/p_dmu.c \
+    $$SRC/src/map/p_dmu.cpp \
     $$SRC/src/map/p_intercept.c \
     $$SRC/src/map/p_maputil.c \
     $$SRC/src/map/p_mobj.c \

@@ -515,7 +515,7 @@ SOURCES += \
     src/map/hedge.cpp \
     src/map/linedef.c \
     src/map/p_data.cpp \
-    src/map/p_dmu.c \
+    src/map/p_dmu.cpp \
     src/map/p_intercept.c \
     src/map/p_maputil.c \
     src/map/p_mobj.c \
