@@ -32,13 +32,11 @@ extern "C" {
 struct materialvariant_s;
 
 /**
- * Initialize. Note that Material expects that initialization is done
- * but once during construction and that the owner will not attempt to
- * re-initialize later on.
+ * Construct a new material.
  */
-void Material_Initialize(material_t* mat);
+material_t* Material_New();
 
-void Material_Destroy(material_t* mat);
+void Material_Delete(material_t* mat);
 
 /**
  * Process a system tick event.

@@ -54,21 +54,22 @@ static void destroyVariants(material_t *mat)
     mat->_prepared = 0;
 }
 
-void Material_Initialize(material_t *mat)
+material_t *Material_New()
 {
-    DENG2_ASSERT(mat);
-    std::memset(mat, 0, sizeof *mat);
+    material_t *mat = (material_t *) M_Calloc(sizeof(*mat));
     mat->header.type = DMU_MATERIAL;
     mat->_envClass = MEC_UNKNOWN;
     mat->_size = Size2_New();
+    return mat;
 }
 
-void Material_Destroy(material_t *mat)
+void Material_Delete(material_t *mat)
 {
     DENG2_ASSERT(mat);
     Material_DestroyVariants(mat);
     Size2_Delete(mat->_size);
     mat->_size = 0;
+    M_Free(mat);
 }
 
 void Material_Ticker(material_t *mat, timespan_t time)
