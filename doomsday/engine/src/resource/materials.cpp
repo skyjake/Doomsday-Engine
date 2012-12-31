@@ -43,7 +43,6 @@
 #include <de/Log>
 #include <de/PathTree>
 #include <de/memory.h>
-#include <de/memoryblockset.h>
 #include <de/memoryzone.h>
 
 #include <cstring>
@@ -51,9 +50,6 @@
 #include "resource/materialbind.h"
 #include "resource/materials.h"
 #include "resource/materialsnapshot.h"
-
-/// Number of materials to block-allocate.
-#define MATERIALS_BLOCK_ALLOC (32)
 
 /// Number of elements to block-allocate in the material index to materialbind map.
 #define MATERIALS_BINDINGMAP_BLOCK_ALLOC (32)
@@ -180,7 +176,6 @@ struct Materials::Instance
      * 5) Super-fast look up by public material identifier.
      * 6) Fast look up by material name (hashing is used).
      */
-    blockset_t *materialsBlockSet;
     MaterialList *materials;
     uint materialCount;
 
@@ -195,7 +190,6 @@ struct Materials::Instance
 
     Instance()
         :  numgroups(0), groups(0), variantSpecs(0), variantCacheQueue(0),
-           materialsBlockSet(BlockSet_New(sizeof(material_t), MATERIALS_BLOCK_ALLOC)),
            materials(0), materialCount(0),
            bindingCount(0), bindingIdMapSize(0), bindingIdMap(0)
     {}
@@ -223,14 +217,9 @@ struct Materials::Instance
         while(materials)
         {
             MaterialListNode *next = materials->next;
-            Material_Destroy(materials->mat);
+            Material_Delete(materials->mat);
             M_Free(materials);
             materials = next;
-        }
-
-        if(materialsBlockSet)
-        {
-            BlockSet_Delete(materialsBlockSet); materialsBlockSet = 0;
         }
 
         materialCount = 0;
@@ -355,14 +344,6 @@ struct Materials::Instance
     {
         if(0 == id || id > bindingCount) return NULL;
         return bindingIdMap[id-1];
-    }
-
-    material_t *allocMaterial()
-    {
-        material_t *mat = (material_t *)BlockSet_Allocate(materialsBlockSet);
-        Material_Initialize(mat);
-        materialCount++;
-        return mat;
     }
 
     /**
@@ -718,12 +699,16 @@ material_t *Materials::newFromDef(ded_material_t *def)
     if(!tex) return 0;
 
     // A new Material.
-    material_t *mat = d->linkMaterialToGlobalList(d->allocMaterial());
-    mat->_flags = def->flags;
-    mat->_isCustom = tex->flags().testFlag(Texture::Custom);
-    mat->_def = def;
+    d->materialCount++;
+    material_t *mat = Material_New();
+
+    d->linkMaterialToGlobalList(mat);
+
+    mat->_flags     = def->flags;
+    mat->_isCustom  = tex->flags().testFlag(Texture::Custom);
+    mat->_def       = def;
     Size2_SetWidthHeight(mat->_size, MAX_OF(0, def->width), MAX_OF(0, def->height));
-    mat->_envClass = S_MaterialEnvClassForUri(reinterpret_cast<struct uri_s const *>(&uri));
+    mat->_envClass  = S_MaterialEnvClassForUri(reinterpret_cast<struct uri_s const *>(&uri));
 
     if(!bind)
     {
