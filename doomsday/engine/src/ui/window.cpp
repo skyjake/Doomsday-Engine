@@ -258,7 +258,7 @@ struct ddwindow_s
             {
                 geometry.size.width = DisplayMode_Current()->width;
                 geometry.size.height = DisplayMode_Current()->height;
-#ifdef MACOSX
+#if defined MACOSX && defined __CLIENT__
                 // Pull the window again over the shield after the mode change.
                 DisplayMode_Native_Raise(Window_NativeHandle(this));
 #endif
@@ -477,6 +477,7 @@ struct ddwindow_s
 
     bool applyAttributes(int* attribs)
     {
+#ifdef __CLIENT__
         LOG_AS("applyAttributes");
 
         bool changed = false;
@@ -576,6 +577,7 @@ struct ddwindow_s
 
         // Seems ok, apply them.
         applyWindowGeometry();
+#endif // __CLIENT__
         return true;
     }
 
@@ -653,7 +655,7 @@ static void updateMainWindowLayout(void)
 
     if(win->flags & DDWF_FULLSCREEN)
     {
-#ifdef MACOSX
+#if defined MACOSX && defined __CLIENT__
         // For some interesting reason, we have to scale the window twice in fullscreen mode
         // or the resulting layout won't be correct.
         win->widget->setGeometry(QRect(0, 0, 320, 240));
@@ -1066,7 +1068,7 @@ static void finishMainWindowInit(Canvas& canvas)
     Window* win = canvasToWindow(canvas);
     assert(win == &mainWindow);
 
-#ifdef MACOSX
+#if defined MACOSX && defined __CLIENT__
     if(Window_IsFullscreen(win))
     {
         // The window must be manually raised above the shielding window put up by

@@ -273,15 +273,7 @@ DENG_HEADERS += \
     $$SRC/include/ui/sys_input.h \
     $$SRC/include/ui/ui2_main.h \
     $$SRC/include/ui/window.h \
-    $$SRC/include/updater.h \
-    $$SRC/include/uri.hh \
-    $$SRC/src/updater/downloaddialog.h \
-    $$SRC/src/updater/processcheckdialog.h \
-    $$SRC/src/updater/updateavailabledialog.h \
-    $$SRC/src/updater/updaterdialog.h \
-    $$SRC/src/updater/updatersettings.h \
-    $$SRC/src/updater/updatersettingsdialog.h \
-    $$SRC/src/updater/versioninfo.h
+    $$SRC/include/uri.hh
 
 INCLUDEPATH += \
     include \
@@ -477,13 +469,6 @@ SOURCES += \
     $$SRC/src/ui/sys_input.c \
     $$SRC/src/ui/ui2_main.cpp \
     $$SRC/src/ui/window.cpp \
-    $$SRC/src/updater/downloaddialog.cpp \
-    $$SRC/src/updater/processcheckdialog.cpp \
-    $$SRC/src/updater/updateavailabledialog.cpp \
-    $$SRC/src/updater/updater.cpp \
-    $$SRC/src/updater/updaterdialog.cpp \
-    $$SRC/src/updater/updatersettings.cpp \
-    $$SRC/src/updater/updatersettingsdialog.cpp \
     $$SRC/src/uri.cpp \
     $$SRC/src/uri_wrapper.cpp
 

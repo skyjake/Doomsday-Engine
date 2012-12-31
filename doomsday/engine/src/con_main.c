@@ -2216,11 +2216,13 @@ D_CMD(Version)
 
 D_CMD(Quit)
 {
+#ifdef __CLIENT__
     if(Updater_IsDownloadInProgress())
     {
         Con_Message("Cannot quit while downloading update.\n");
         return false;
     }
+#endif
 
     if(argv[0][4] == '!' || isDedicated || !DD_GameLoaded() ||
        gx.TryShutdown == 0)

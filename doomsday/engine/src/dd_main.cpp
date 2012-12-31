@@ -156,6 +156,8 @@ extern GETGAMEAPI GetGameAPI;
 // The Game collection.
 static de::GameCollection* games;
 
+#ifdef __CLIENT__
+
 D_CMD(CheckForUpdates)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
@@ -190,6 +192,8 @@ D_CMD(ShowUpdateSettings)
     Updater_ShowSettings();
     return true;
 }
+
+#endif // __CLIENT__
 
 void DD_CreateResourceClasses()
 {
@@ -569,10 +573,12 @@ void DD_ClearSystemTextureSchemes()
  */
 void DD_Register(void)
 {
+#ifdef __CLIENT__
     C_CMD("update",          "", CheckForUpdates);
     C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
     C_CMD("updatesettings",  "", ShowUpdateSettings);
     C_CMD("lastupdated",     "", LastUpdated);
+#endif
 
     DD_RegisterLoop();
     DD_RegisterInput();

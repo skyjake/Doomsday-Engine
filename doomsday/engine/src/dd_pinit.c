@@ -169,7 +169,9 @@ void DD_ShutdownAll(void)
 {
     int i;
 
+#ifdef __CLIENT__
     Updater_Shutdown();
+#endif
     FI_Shutdown();
     UI_Shutdown();
     Con_Shutdown();

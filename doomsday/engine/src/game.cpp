@@ -409,11 +409,11 @@ void Game_Print(Game const* game, int flags)
     de::Game::print(*reinterpret_cast<de::Game const*>(game), flags);
 }
 
-/// @todo Do this really belong here? Semantically, this appears misplaced. -ds
 void Game_Notify(int notification, void* param)
 {
     DENG_UNUSED(param);
 
+#ifdef __CLIENT__
     switch(notification)
     {
     case DD_NOTIFY_GAME_SAVED:
@@ -424,4 +424,7 @@ void Game_Notify(int notification, void* param)
         Updater_RaiseCompletedDownloadDialog();
         break;
     }
+#else
+    DENG_UNUSED(notification);
+#endif
 }

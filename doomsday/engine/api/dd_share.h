@@ -358,6 +358,8 @@ typedef struct gameinfo_s {
  * @param notification  One of the DD_NOTIFY_* enums.
  * @param param         Additional arguments about the notification, dependin
  *                      on the notification type.
+ *
+ * @todo Move this to the generic plugin API (as Plug_Notify).
  */
 void Game_Notify(int notification, void* param);
 
