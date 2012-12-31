@@ -59,17 +59,6 @@ void MaterialScheme::clear()
 {
     if(d->index)
     {
-        PathTreeIterator<Index> iter(d->index->leafNodes());
-        while(iter.hasNext())
-        {
-            MaterialBind *mb = reinterpret_cast<MaterialBind *>(iter.next().userPointer());
-            if(mb)
-            {
-                // Detach our user data from this node.
-                iter.value().setUserPointer(0);
-                delete mb;
-            }
-        }
         d->index->clear();
     }
 }
@@ -84,12 +73,14 @@ int MaterialScheme::size() const
     return d->index->size();
 }
 
-MaterialScheme::Index::Node &MaterialScheme::insertNode(Path const &path)
+MaterialBind &MaterialScheme::insertBind(Path const &path, materialid_t id)
 {
-    return d->index->insert(path);
+    MaterialBind &bind = d->index->insert(path);
+    bind.setId(id);
+    return bind;
 }
 
-MaterialScheme::Index::Node const &MaterialScheme::find(Path const &path) const
+MaterialBind const &MaterialScheme::find(Path const &path) const
 {
     try
     {
@@ -101,7 +92,7 @@ MaterialScheme::Index::Node const &MaterialScheme::find(Path const &path) const
     }
 }
 
-MaterialScheme::Index::Node &MaterialScheme::find(Path const &path)
+MaterialBind &MaterialScheme::find(Path const &path)
 {
     Index::Node const &found = const_cast<MaterialScheme const *>(this)->find(path);
     return const_cast<Index::Node &>(found);
