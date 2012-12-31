@@ -1,7 +1,7 @@
 # Build configuration for using libdeng.
 INCLUDEPATH += $$PWD/libdeng/include
 
-# Use the appropriate library path.
+# Use the appropriate library path (trying some alternatives).
 !useLibDir($$OUT_PWD/../libdeng) {
     !useLibDir($$OUT_PWD/../../libdeng) {
         useLibDir($$OUT_PWD/../../builddir/libdeng)

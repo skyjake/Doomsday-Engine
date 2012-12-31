@@ -39,44 +39,34 @@ DEFINES += __DOOMSDAY__ __SERVER__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
-win32 {
-    RC_FILE = res/windows/doomsday.rc
-    OTHER_FILES += ../engine/api/doomsday.def $$RC_FILE
-}
-else:macx {
-}
-else {
-    DEFINES += __USE_BSD _GNU_SOURCE=1
-
+!win32:!macx {
     # Generic Unix.
-    QMAKE_LFLAGS += -rdynamic
-
-    LIBS += -lX11 # TODO: Get rid of this! -jk
-
-    !freebsd-*: LIBS += -ldl
+    DEFINES += __USE_BSD _GNU_SOURCE=1
 }
 
 # Linking --------------------------------------------------------------------
 
 win32 {
-    QMAKE_LFLAGS += \
-        /NODEFAULTLIB:libcmt \
-        /DEF:\"$$DENG_API_DIR/doomsday.def\" \
-        /IMPLIB:\"$$OUT_PWD/../server/doomsday-server.lib\"
+    RC_FILE = res/windows/doomsday.rc
+    OTHER_FILES += $$RC_FILE
+
+    QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
 
     LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
         -lopengl32 -lglu32
 }
 else:macx {
-    #useFramework(Cocoa)
 }
 else {
-    # Allow exporting symbols out of the main executable.
-    QMAKE_LFLAGS += -rdynamic
+    # Generic Unix.
+    LIBS += -lX11 # TODO: Get rid of this! -jk
+
+    !freebsd-*: LIBS += -ldl
 }
 
 # Source Files ---------------------------------------------------------------
 
+# Prefix for source files (shared for now):
 SRC = ../engine
 
 DENG_API_HEADERS = \

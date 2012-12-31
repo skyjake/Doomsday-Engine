@@ -38,16 +38,23 @@ DEFINES += __DOOMSDAY__ __CLIENT__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
+# Linking --------------------------------------------------------------------
+
 win32 {
     RC_FILE = res/windows/doomsday.rc
-    OTHER_FILES += api/doomsday.def $$RC_FILE
+    OTHER_FILES += $$RC_FILE
+
+    QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
+
+    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
+        -lopengl32 -lglu32
 }
 else:macx {
+    useFramework(Cocoa)
+    useFramework(QTKit)
 }
 else {
     # Generic Unix.
-    QMAKE_LFLAGS += -rdynamic
-
     !freebsd-*: LIBS += -ldl
     LIBS += -lX11
 
@@ -64,26 +71,6 @@ else {
         QMAKE_CXXFLAGS += $$system(pkg-config xrandr xxf86vm --cflags)
                   LIBS += $$system(pkg-config xrandr xxf86vm --libs)
     }
-}
-
-# Linking --------------------------------------------------------------------
-
-win32 {
-    QMAKE_LFLAGS += \
-        /NODEFAULTLIB:libcmt \
-        /DEF:\"$$DENG_API_DIR/doomsday.def\" \
-        /IMPLIB:\"$$DENG_EXPORT_LIB\"
-
-    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
-        -lopengl32 -lglu32
-}
-else:macx {
-    useFramework(Cocoa)
-    useFramework(QTKit)
-}
-else {
-    # Allow exporting symbols out of the main executable.
-    QMAKE_LFLAGS += -rdynamic
 }
 
 # Source Files ---------------------------------------------------------------
