@@ -38,7 +38,7 @@ DENG_API_TYPEDEF(Material)
 {
     de_api_t api;
 
-    materialid_t (*IdForTextureUri)(Uri const *textureUri);
+    struct material_s *(*ForTextureUri)(Uri const *textureUri);
     Uri *(*ComposeUri)(materialid_t materialId);
     materialid_t (*ResolveUri)(const Uri* uri);
     materialid_t (*ResolveUriCString)(const char* path);
@@ -47,7 +47,7 @@ DENG_API_TYPEDEF(Material)
 DENG_API_T(Material);
 
 #ifndef DENG_NO_API_MACROS_MATERIALS
-#define DD_MaterialForTextureUri    _api_Material.IdForTextureUri
+#define DD_MaterialForTextureUri    _api_Material.ForTextureUri
 #define Materials_ComposeUri        _api_Material.ComposeUri
 #define Materials_ResolveUri        _api_Material.ResolveUri
 #define Materials_ResolveUriCString _api_Material.ResolveUriCString

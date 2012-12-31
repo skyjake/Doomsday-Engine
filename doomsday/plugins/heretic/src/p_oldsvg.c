@@ -401,11 +401,11 @@ static void P_v13_UnArchiveWorld(void)
         P_SetDoublep(sec, DMU_CEILING_HEIGHT,   (coord_t)Reader_ReadInt16(svReader));
 
         floorTextureUrn = readTextureUrn(svReader, "Flats");
-        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUri(floorTextureUrn)));
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   DD_MaterialForTextureUri(floorTextureUrn));
         Uri_Delete(floorTextureUrn);
 
         ceilingTextureUrn = readTextureUrn(svReader, "Flats");
-        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUri(ceilingTextureUrn)));
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL, DD_MaterialForTextureUri(ceilingTextureUrn));
         Uri_Delete(ceilingTextureUrn);
 
         P_SetFloatp(sec, DMU_LIGHT_LEVEL,      (float) (Reader_ReadInt16(svReader)) / 255.0f);
@@ -443,15 +443,15 @@ static void P_v13_UnArchiveWorld(void)
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
 
             topTextureUrn = readTextureUrn(svReader, "Textures");
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL,             P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUri(topTextureUrn)));
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    DD_MaterialForTextureUri(topTextureUrn));
             Uri_Delete(topTextureUrn);
 
             bottomTextureUrn = readTextureUrn(svReader, "Textures");
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL,          P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUri(bottomTextureUrn)));
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, DD_MaterialForTextureUri(bottomTextureUrn));
             Uri_Delete(bottomTextureUrn);
 
             middleTextureUrn = readTextureUrn(svReader, "Textures");
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL,          P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUri(middleTextureUrn)));
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, DD_MaterialForTextureUri(middleTextureUrn));
             Uri_Delete(middleTextureUrn);
         }
     }
@@ -614,7 +614,7 @@ typedef struct {
     floor->newSpecial = Reader_ReadInt32(svReader);
 
     newTextureUrn = readTextureUrn(svReader, "Flats");
-    floor->material = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUri(newTextureUrn));
+    floor->material = DD_MaterialForTextureUri(newTextureUrn);
     Uri_Delete(newTextureUrn);
 
     floor->floorDestHeight = FIX2FLT(Reader_ReadInt32(svReader));

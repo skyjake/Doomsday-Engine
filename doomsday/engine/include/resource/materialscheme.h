@@ -21,7 +21,7 @@
 #define LIBDENG_RESOURCE_MATERIALSCHEME_H
 
 #include <de/PathTree>
-#include "uri.h"
+#include "api_uri.h"
 #include "resource/materialbind.h"
 
 namespace de {

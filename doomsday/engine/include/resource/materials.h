@@ -173,7 +173,7 @@ namespace de {
          */
         void rebuild(material_t *material, ded_material_t *def);
 
-        void updateTextureLinks(materialid_t materialId);
+        void updateTextureLinks(MaterialBind &bind);
 
         /// @return  (Particle) Generator definition associated with @a material else @c NULL.
         ded_ptcgen_t const *ptcGenDef(material_t *material);

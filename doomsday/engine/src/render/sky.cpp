@@ -604,10 +604,9 @@ static void internalSkyParams(int layer, int param, void *data)
         Sky_LayerSetMasked(layer, *((int *)data) == DD_YES);
         break;
 
-    case DD_MATERIAL: {
-        MaterialBind *bind = App_Materials()->toMaterialBind(*((materialid_t *)data));
-        Sky_LayerSetMaterial(layer, bind? bind->material() : 0);
-        break; }
+    case DD_MATERIAL:
+        Sky_LayerSetMaterial(layer, (material_t *)data);
+        break;
 
     case DD_OFFSET:
         Sky_LayerSetOffset(layer, *((float *)data));

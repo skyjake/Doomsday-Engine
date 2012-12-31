@@ -468,8 +468,9 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
     return def;
 }
 
-ded_decor_t *Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_decor_t *Def_GetDecoration(material_t *mat, boolean hasExternal, boolean isCustom)
 {
+    DENG_ASSERT(mat);
     ded_decor_t *def;
     int i;
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
@@ -479,8 +480,8 @@ ded_decor_t *Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean 
         // Is this suitable?
         try
         {
-            materialid_t defMatId = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).id();
-            if(matId == defMatId && R_IsAllowedDecoration(def, hasExternal, isCustom))
+            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
+            if(mat == defMat && R_IsAllowedDecoration(def, hasExternal, isCustom))
                 return def;
         }
         catch(Materials::NotFoundError const &)
@@ -489,8 +490,9 @@ ded_decor_t *Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean 
     return NULL;
 }
 
-ded_reflection_t *Def_GetReflection(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_reflection_t *Def_GetReflection(material_t *mat, boolean hasExternal, boolean isCustom)
 {
+    DENG_ASSERT(mat);
     ded_reflection_t *def;
     int i;
     for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
@@ -500,8 +502,8 @@ ded_reflection_t *Def_GetReflection(materialid_t matId, boolean hasExternal, boo
         // Is this suitable?
         try
         {
-            materialid_t defMatId = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).id();
-            if(matId == defMatId && R_IsAllowedReflection(def, hasExternal, isCustom))
+            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
+            if(mat == defMat && R_IsAllowedReflection(def, hasExternal, isCustom))
                 return def;
         }
         catch(Materials::NotFoundError const &)
@@ -510,8 +512,9 @@ ded_reflection_t *Def_GetReflection(materialid_t matId, boolean hasExternal, boo
     return NULL;
 }
 
-ded_detailtexture_t *Def_GetDetailTex(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_detailtexture_t *Def_GetDetailTex(material_t *mat, boolean hasExternal, boolean isCustom)
 {
+    DENG_ASSERT(mat);
     ded_detailtexture_t *def;
     int i;
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
@@ -521,8 +524,8 @@ ded_detailtexture_t *Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
             // Is this suitable?
             try
             {
-                materialid_t defMatId = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material1)).id();
-                if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
+                material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material1)).material();
+                if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
                     return def;
             }
             catch(Materials::NotFoundError const &)
@@ -534,8 +537,8 @@ ded_detailtexture_t *Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
             // Is this suitable?
             try
             {
-                materialid_t defMatId = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material2)).id();
-                if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
+                material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material2)).material();
+                if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
                     return def;
             }
             catch(Materials::NotFoundError const &)
@@ -545,11 +548,12 @@ ded_detailtexture_t *Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
     return NULL;
 }
 
-ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isCustom)
 {
+    DENG_ASSERT(mat);
     DENG_UNUSED(hasExternal); DENG_UNUSED(isCustom);
 
-    ded_ptcgen_t* def = defs.ptcGens;
+    ded_ptcgen_t *def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
         if(!def->material || Uri_IsEmpty(def->material)) continue;
@@ -557,8 +561,7 @@ ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean 
         // Is this suitable?
         try
         {
-            MaterialBind &bind = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material));
-            materialid_t defMatId = bind.id();
+            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
 
             if(def->flags & PGF_GROUP)
             {
@@ -567,8 +570,6 @@ ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean 
                  * A search is necessary only if we know both the used material and
                  * the specified material in this definition are in *a* group.
                  */
-                material_t* mat = App_Materials()->toMaterialBind(matId)->material();
-                material_t* defMat = bind.material();
                 if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
                 {
                     int g, numGroups = App_Materials()->animGroupCount();
@@ -588,7 +589,7 @@ ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean 
                 }
             }
 
-            if(matId == defMatId)
+            if(mat == defMat)
                 return def;
         }
         catch(Materials::NotFoundError const &)
