@@ -460,7 +460,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
         if(!mat)
         {
             Uri *textureUrn = Uri_NewWithPath2("urn:Textures:0", RC_NULL);
-            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUri(textureUrn));
+            mat = DD_MaterialForTextureUri(textureUrn);
             Uri_Delete(textureUrn);
         }
 
@@ -480,7 +480,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
         if(!mat)
         {
             Uri *textureUrn = Uri_NewWithPath2("urn:Textures:0", RC_NULL);
-            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUri(textureUrn));
+            mat = DD_MaterialForTextureUri(textureUrn);
             Uri_Delete(textureUrn);
         }
 

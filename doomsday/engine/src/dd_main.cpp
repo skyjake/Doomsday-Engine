@@ -2639,15 +2639,15 @@ AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeNa
     }
 }
 
-materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
+material_t *DD_MaterialForTextureUri(uri_s const *textureUri)
 {
-    if(!_textureUri) return NOMATERIALID;
+    if(!textureUri) return 0; // Not found.
 
     try
     {
-        de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*_textureUri)).composeUri();
+        de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
-        return App_Materials()->find(uri).id();
+        return App_Materials()->find(uri).material();
     }
     catch(Materials::UnknownSchemeError const &er)
     {
@@ -2664,7 +2664,7 @@ materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
     catch(Textures::NotFoundError const &)
     {} // Ignore this error.
 
-    return NOMATERIALID;
+    return 0; // Not found.
 }
 
 /**

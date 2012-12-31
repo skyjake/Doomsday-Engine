@@ -199,7 +199,7 @@ boolean DD_GameInfo(GameInfo* info);
  * @ingroup resource
  */
 ///@{
-materialid_t DD_MaterialForTextureUri(Uri const *textureUri);
+material_t *DD_MaterialForTextureUri(Uri const *textureUri);
 ///@}
 
 /// @addtogroup defs

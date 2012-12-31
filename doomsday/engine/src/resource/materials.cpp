@@ -82,7 +82,6 @@ static void updateMaterialBindInfo(MaterialBind &mb, bool canCreateInfo)
 {
     MaterialBind::Info *info = mb.info();
     material_t *mat = mb.material();
-    materialid_t matId = Material_PrimaryBind(mat);
     bool isCustom = (mat? Material_IsCustom(mat) : false);
 
     if(!info)
@@ -97,20 +96,20 @@ static void updateMaterialBindInfo(MaterialBind &mb, bool canCreateInfo)
     }
 
     // Surface decorations (lights and models).
-    info->decorationDefs[0]    = Def_GetDecoration(matId, 0, isCustom);
-    info->decorationDefs[1]    = Def_GetDecoration(matId, 1, isCustom);
+    info->decorationDefs[0]    = Def_GetDecoration(mat, 0, isCustom);
+    info->decorationDefs[1]    = Def_GetDecoration(mat, 1, isCustom);
 
     // Reflection (aka shiny surface).
-    info->reflectionDefs[0]    = Def_GetReflection(matId, 0, isCustom);
-    info->reflectionDefs[1]    = Def_GetReflection(matId, 1, isCustom);
+    info->reflectionDefs[0]    = Def_GetReflection(mat, 0, isCustom);
+    info->reflectionDefs[1]    = Def_GetReflection(mat, 1, isCustom);
 
     // Generator (particles).
-    info->ptcgenDefs[0]        = Def_GetGenerator(matId, 0, isCustom);
-    info->ptcgenDefs[1]        = Def_GetGenerator(matId, 1, isCustom);
+    info->ptcgenDefs[0]        = Def_GetGenerator(mat, 0, isCustom);
+    info->ptcgenDefs[1]        = Def_GetGenerator(mat, 1, isCustom);
 
     // Detail texture.
-    info->detailtextureDefs[0] = Def_GetDetailTex(matId, 0, isCustom);
-    info->detailtextureDefs[1] = Def_GetDetailTex(matId, 1, isCustom);
+    info->detailtextureDefs[0] = Def_GetDetailTex(mat, 0, isCustom);
+    info->detailtextureDefs[1] = Def_GetDetailTex(mat, 1, isCustom);
 }
 
 typedef struct materialvariantspecificationlistnode_s {
@@ -845,11 +844,9 @@ static void updateMaterialTextureLinks(MaterialBind &mb)
     Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
 }
 
-void Materials::updateTextureLinks(materialid_t materialId)
+void Materials::updateTextureLinks(MaterialBind &bind)
 {
-    MaterialBind *bind = d->getMaterialBindForId(materialId);
-    if(!bind) return;
-    updateMaterialTextureLinks(*bind);
+    updateMaterialTextureLinks(bind);
 }
 
 MaterialSnapshot const *Materials::prepareVariant(MaterialVariant &variant, bool updateSnapshot)
@@ -1637,6 +1634,7 @@ uint Materials_Size()
 
 materialid_t Materials_Id(material_t *material)
 {
+    if(!material) return NOMATERIALID;
     return Material_PrimaryBind(material);
 }
 

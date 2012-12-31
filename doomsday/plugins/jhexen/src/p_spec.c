@@ -98,24 +98,24 @@ void P_InitSky(uint map)
         R_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
         R_SkyParams(0, DD_MASK, &ival);
-        R_SkyParams(0, DD_MATERIAL, &sky2Material);
+        R_SkyParams(0, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky2Material));
 
         R_SkyParams(1, DD_ENABLE, NULL);
         ival = DD_YES;
         R_SkyParams(1, DD_MASK, &ival);
-        R_SkyParams(1, DD_MATERIAL, &sky1Material);
+        R_SkyParams(1, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky1Material));
     }
     else
     {
         R_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
         R_SkyParams(0, DD_MASK, &ival);
-        R_SkyParams(0, DD_MATERIAL, &sky1Material);
+        R_SkyParams(0, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky1Material));
 
         R_SkyParams(1, DD_DISABLE, NULL);
         ival = DD_NO;
         R_SkyParams(1, DD_MASK, &ival);
-        R_SkyParams(1, DD_MATERIAL, &sky2Material);
+        R_SkyParams(1, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky2Material));
     }
 }
 
