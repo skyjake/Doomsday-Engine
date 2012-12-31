@@ -25,12 +25,12 @@
  * doomsday.rc: Doomsday-Server.exe resource script.
  */
 
-#include "../../include/windows/resource.h"
+#include "../../../engine/include/windows/resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 
 #include "windows.h"
-#include "../../api/dd_version.h"
+#include "../../../engine/api/dd_version.h"
 
 #undef APSTUDIO_READONLY_SYMBOLS
 

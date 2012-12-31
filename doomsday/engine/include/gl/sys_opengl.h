@@ -37,9 +37,11 @@
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  include <GL/gl.h>
-#  include <GL/wglext.h>
-#  include <GL/glext.h>
 #  include <GL/glu.h>
+#  include <GL/glext.h>
+#  ifdef __CLIENT__
+#    include <GL/wglext.h>
+#  endif
 #  define GL_CALL   __stdcall
 #endif
 

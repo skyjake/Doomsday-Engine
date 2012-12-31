@@ -152,7 +152,11 @@ const char* DD_Win32_GetLastErrorMessage(void)
 
 static BOOL initDGL(void)
 {
+#ifdef __CLIENT__
     return (BOOL) Sys_GLPreInit();
+#else
+    return TRUE;
+#endif
 }
 
 static BOOL initApplication(application_t* app)

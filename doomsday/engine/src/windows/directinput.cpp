@@ -39,6 +39,7 @@ const char* DirectInput_ErrorMsg(HRESULT hr)
 
 int DirectInput_Init(void)
 {
+#ifdef __CLIENT__
     HRESULT hr;
 
     if(dInput || dInput3) return true;
@@ -68,12 +69,14 @@ int DirectInput_Init(void)
         Con_Message(" DirectInput init failed.\n");
         return false;
     }
+#endif
 
     return true;
 }
 
 void DirectInput_Shutdown(void)
 {
+#ifdef __CLIENT__
     if(dInput)
     {
         IDirectInput_Release(dInput);
@@ -84,6 +87,7 @@ void DirectInput_Shutdown(void)
         IDirectInput_Release(dInput3);
         dInput3 = 0;
     }
+#endif
 }
 
 LPDIRECTINPUT8 DirectInput_IVersion8()
