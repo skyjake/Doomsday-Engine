@@ -532,7 +532,7 @@ SOURCES += \
     src/map/r_world.cpp \
     src/map/sector.c \
     src/map/sidedef.c \
-    src/map/surface.c \
+    src/map/surface.cpp \
     src/map/vertex.cpp \
     src/network/masterserver.cpp \
     src/network/monitor.c \
