@@ -22,31 +22,37 @@
 
 #ifdef __cplusplus
 
+#include <de/PathTree>
 #include "def_data.h"
-#include "resource/materialscheme.h"
+#include "uri.hh"
+#include "resource/material.h"
 
 namespace de {
 
     class Materials;
+    class MaterialScheme;
 
-    /**
-     * Contains extended info about a material binding (see MaterialBind).
-     * @note POD object.
-     */
-    struct MaterialBindInfo
-    {
-        ded_decor_t *decorationDefs[2];
-        ded_detailtexture_t *detailtextureDefs[2];
-        ded_ptcgen_t *ptcgenDefs[2];
-        ded_reflection_t *reflectionDefs[2];
-    };
-
-    class MaterialBind
+    class MaterialBind : public PathTree::Node
     {
     public:
-        MaterialBind(MaterialScheme::Index::Node &_direcNode, materialid_t id);
+        /**
+         * Contains extended info about a material binding.
+         * @note POD object.
+         */
+        struct Info
+        {
+            ded_decor_t *decorationDefs[2];
+            ded_detailtexture_t *detailtextureDefs[2];
+            ded_ptcgen_t *ptcgenDefs[2];
+            ded_reflection_t *reflectionDefs[2];
+        };
+
+    public:
+        MaterialBind(PathTree::NodeArgs const &args);
 
         virtual ~MaterialBind();
+
+        void setId(materialid_t newId);
 
         /**
          * Returns the owning scheme of the material bind.
@@ -70,27 +76,24 @@ namespace de {
         /// @return  Unique identifier associated with this.
         materialid_t id() const;
 
-        /// @return  Index node associated with this.
-        MaterialScheme::Index::Node &directoryNode() const;
-
-        /// @return  Material associated with this else @c NULL.
+        /// @return  Material associated with this; otherwise @c NULL.
         material_t *material() const;
 
-        /// @return  Extended info owned by this else @c NULL.
-        MaterialBindInfo *info() const;
+        /// @return  Extended info owned by this; otherwise @c NULL.
+        Info *info() const;
 
         /**
          * Attach extended info data to this. If existing info is present it is replaced.
          * MaterialBind is given ownership of the info.
          * @param info  Extended info data to attach.
          */
-        void attachInfo(MaterialBindInfo &info);
+        void attachInfo(Info &info);
 
         /**
          * Detach any extended info owned by this and relinquish ownership to the caller.
          * @return  Extended info or else @c NULL if not present.
          */
-        MaterialBindInfo *detachInfo();
+        Info *detachInfo();
 
         /**
          * Change the Material associated with this binding.

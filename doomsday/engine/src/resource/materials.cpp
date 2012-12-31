@@ -66,10 +66,9 @@ D_CMD(PrintMaterialStats);
 
 namespace de {
 
-static void clearBindingDefinitionLinks(MaterialBind *mb)
+static void clearBindingDefinitionLinks(MaterialBind &mb)
 {
-    DENG2_ASSERT(mb);
-    MaterialBindInfo *info = mb->info();
+    MaterialBind::Info *info = mb.info();
     if(info)
     {
         info->decorationDefs[0]    = info->decorationDefs[1]    = NULL;
@@ -81,7 +80,7 @@ static void clearBindingDefinitionLinks(MaterialBind *mb)
 
 static void updateMaterialBindInfo(MaterialBind &mb, bool canCreateInfo)
 {
-    MaterialBindInfo *info = mb.info();
+    MaterialBind::Info *info = mb.info();
     material_t *mat = mb.material();
     materialid_t matId = Material_PrimaryBind(mat);
     bool isCustom = (mat? Material_IsCustom(mat) : false);
@@ -91,7 +90,7 @@ static void updateMaterialBindInfo(MaterialBind &mb, bool canCreateInfo)
         if(!canCreateInfo) return;
 
         // Create new info and attach to this binding.
-        info = (MaterialBindInfo *) M_Malloc(sizeof *info);
+        info = (MaterialBind::Info *) M_Malloc(sizeof *info);
         if(!info) Con_Error("Materials::updateMaterialBindInfo: Failed on allocation of %lu bytes for new MaterialBindInfo.", (unsigned long) sizeof *info);
 
         mb.attachInfo(*info);
@@ -359,43 +358,6 @@ struct Materials::Instance
         return bindingIdMap[id-1];
     }
 
-    bool newMaterialBind(MaterialScheme &scheme, Path const &path, material_t *material)
-    {
-        MaterialScheme::Index::Node *node = &scheme.insertNode(path);
-
-        // Is this a new binding?
-        MaterialBind *mb = reinterpret_cast<MaterialBind *>(node->userPointer());
-        if(!mb)
-        {
-            // Acquire a new unique identifier for this binding.
-            materialid_t const bindId = ++bindingCount;
-
-            mb = new MaterialBind(*node, bindId);
-            node->setUserPointer(mb);
-
-            if(material)
-            {
-                Material_SetPrimaryBind(material, bindId);
-            }
-
-            // Add the new binding to the bindings index/map.
-            if(bindingCount > bindingIdMapSize)
-            {
-                // Allocate more memory.
-                bindingIdMapSize += MATERIALS_BINDINGMAP_BLOCK_ALLOC;
-                bindingIdMap = (MaterialBind **) M_Realloc(bindingIdMap, sizeof *bindingIdMap * bindingIdMapSize);
-                if(!bindingIdMap) Con_Error("Materials::newMaterialBind: Failed on (re)allocation of %lu bytes enlarging MaterialBind map.", (unsigned long) sizeof *bindingIdMap * bindingIdMapSize);
-            }
-            bindingIdMap[bindingCount-1] = mb; /* 1-based index */
-        }
-
-        // (Re)configure the binding.
-        mb->setMaterial(material);
-        updateMaterialBindInfo(*mb, false/*do not create, only update if present*/);
-
-        return true;
-    }
-
     material_t *allocMaterial()
     {
         material_t *mat = (material_t *)BlockSet_Allocate(materialsBlockSet);
@@ -507,11 +469,7 @@ void Materials::clearDefinitionLinks()
         PathTreeIterator<MaterialScheme::Index> iter((*i)->index().leafNodes());
         while(iter.hasNext())
         {
-            MaterialBind* mb = reinterpret_cast<MaterialBind *>(iter.next().userPointer());
-            if(mb)
-            {
-                clearBindingDefinitionLinks(mb);
-            }
+            clearBindingDefinitionLinks(iter.next());
         }
     }
 }
@@ -620,8 +578,7 @@ MaterialBind &Materials::find(Uri const &uri) const
     {
         try
         {
-            MaterialBind *bind = reinterpret_cast<MaterialBind *>(scheme(uri.scheme()).find(path).userPointer());
-            return *bind;
+            return scheme(uri.scheme()).find(path);
         }
         catch(MaterialScheme::NotFoundError const &)
         {} // Ignore, we'll throw our own...
@@ -640,8 +597,7 @@ MaterialBind &Materials::find(Uri const &uri) const
         {
             try
             {
-                MaterialBind *bind = reinterpret_cast<MaterialBind *>(scheme(order[i]).find(path).userPointer());
-                return *bind;
+                return scheme(order[i]).find(path);
             }
             catch(MaterialScheme::NotFoundError const &)
             {} // Ignore this error.
@@ -662,6 +618,48 @@ bool Materials::has(Uri const &path) const
     catch(NotFoundError const &)
     {} // Ignore this error.
     return false;
+}
+
+MaterialBind &Materials::newBind(MaterialScheme &scheme, Path const &path, material_t *material)
+{
+    LOG_AS("Materials::newBind");
+
+    // Have we already created a bind for this?
+    MaterialBind *bind = 0;
+    try
+    {
+        bind = &find(de::Uri(scheme.name(), path));
+    }
+    catch(NotFoundError const &)
+    {
+        // Acquire a new unique identifier for this binding.
+        materialid_t const bindId = ++d->bindingCount;
+
+        bind = &scheme.insertBind(path, bindId);
+
+        if(material)
+        {
+            Material_SetPrimaryBind(material, bindId);
+        }
+
+        // Add the new binding to the bindings index/map.
+        if(d->bindingCount > d->bindingIdMapSize)
+        {
+            // Allocate more memory.
+            d->bindingIdMapSize += MATERIALS_BINDINGMAP_BLOCK_ALLOC;
+            d->bindingIdMap = (MaterialBind **) M_Realloc(d->bindingIdMap, sizeof *d->bindingIdMap * d->bindingIdMapSize);
+            if(!d->bindingIdMap) Con_Error("Materials::newBind: Failed on (re)allocation of %lu bytes enlarging MaterialBind map.", (unsigned long) sizeof *d->bindingIdMap * d->bindingIdMapSize);
+        }
+        d->bindingIdMap[d->bindingCount - 1] = bind; /* 1-based index */
+    }
+    if(!bind)
+        throw Error("Materials::newBind", "Unexpected error creating bind \"" + de::Uri(scheme.name(), path) + "\"");
+
+    // (Re)configure the binding.
+    bind->setMaterial(material);
+    updateMaterialBindInfo(*bind, false/*do not create, only update if present*/);
+
+    return *bind;
 }
 
 material_t *Materials::newFromDef(ded_material_t *def)
@@ -730,8 +728,7 @@ material_t *Materials::newFromDef(ded_material_t *def)
 
     if(!bind)
     {
-        if(!d->newMaterialBind(scheme(uri.scheme()), uri.path(), mat))
-            throw Error("Materials::newFromDef", "Unexpected error inserting manifest for \"" + uri + "\"");
+        newBind(scheme(uri.scheme()), uri.path(), mat);
     }
     else
     {
@@ -1324,16 +1321,16 @@ static QList<MaterialBind *> collectMaterialBinds(MaterialScheme *scheme,
         PathTreeIterator<MaterialScheme::Index> iter(scheme->index().leafNodes());
         while(iter.hasNext())
         {
-            MaterialScheme::Index::Node &node = iter.next();
+            MaterialBind &bind = iter.next();
             if(!path.isEmpty())
             {
                 /// @todo Use PathTree::Node::compare()
-                if(!node.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
+                if(!bind.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
             }
 
             if(storage) // Store mode.
             {
-                storage->push_back(reinterpret_cast<MaterialBind *>(node.userPointer()));
+                storage->push_back(&bind);
             }
             else // Count mode.
             {
@@ -1350,16 +1347,16 @@ static QList<MaterialBind *> collectMaterialBinds(MaterialScheme *scheme,
             PathTreeIterator<MaterialScheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                MaterialScheme::Index::Node &node = iter.next();
+                MaterialBind &bind = iter.next();
                 if(!path.isEmpty())
                 {
                     /// @todo Use PathTree::Node::compare()
-                    if(!node.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
+                    if(!bind.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
                 }
 
                 if(storage) // Store mode.
                 {
-                    storage->push_back(reinterpret_cast<MaterialBind *>(node.userPointer()));
+                    storage->push_back(&bind);
                 }
                 else // Count mode.
                 {
@@ -1389,8 +1386,8 @@ static QList<MaterialBind *> collectMaterialBinds(MaterialScheme *scheme,
  */
 static bool compareMaterialBindPathsAssending(MaterialBind const *a, MaterialBind const *b)
 {
-    String pathA = QString(QByteArray::fromPercentEncoding(a->directoryNode().path().toUtf8()));
-    String pathB = QString(QByteArray::fromPercentEncoding(b->directoryNode().path().toUtf8()));
+    String pathA = QString(QByteArray::fromPercentEncoding(a->path().toUtf8()));
+    String pathB = QString(QByteArray::fromPercentEncoding(b->path().toUtf8()));
     return pathA.compareWithoutCase(pathB) < 0;
 }
 

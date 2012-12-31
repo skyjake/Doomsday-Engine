@@ -196,6 +196,9 @@ namespace de {
          */
         material_t *newFromDef(ded_material_t *def);
 
+        MaterialBind &newBind(MaterialScheme &scheme, Path const &path,
+                              material_t *material);
+
         /**
          * Prepare a MaterialVariantSpecification according to a usage context. If
          * incomplete context information is supplied, suitable default values will

@@ -21,10 +21,10 @@
 #define LIBDENG_RESOURCE_MATERIALSCHEME_H
 
 #include <de/PathTree>
+#include "uri.h"
+#include "resource/materialbind.h"
 
 namespace de {
-
-    class MaterialBind;
 
     /**
      * A material system subspace.
@@ -37,7 +37,7 @@ namespace de {
         static int const min_name_length = URI_MINSCHEMELENGTH;
 
         /// Binds within the scheme are placed into a tree.
-        typedef UserDataPathTree Index;
+        typedef PathTreeT<MaterialBind> Index;
 
     public:
         /// The requested bind could not be found in the index.
@@ -71,24 +71,24 @@ namespace de {
         void clear();
 
         /**
-         * Insert a new node at the given @a path into the scheme.
-         * If a bind already exists at this path, the existing node is
+         * Insert a new material bind at the given @a path into the scheme.
+         * If a bind already exists at this path, the existing bind is
          * returned and this is a no-op.
          *
-         * @param path  Virtual path for the resultant node.
-         * @return  The (possibly newly created) node at @a path.
+         * @param path  Virtual path for the resultant bind.
+         * @return  The (possibly newly created) bind at @a path.
          */
-        Index::Node &insertNode(Path const &path);
+        MaterialBind &insertBind(Path const &path, materialid_t id);
 
         /**
          * Search the scheme for a bind matching @a path.
          *
          * @return  Found bind.
          */
-        Index::Node const &find(Path const &path) const;
+        MaterialBind const &find(Path const &path) const;
 
         /// @copydoc find()
-        Index::Node &find(Path const &path);
+        MaterialBind &find(Path const &path);
 
         /**
          * Provides access to the bind index for efficient traversal.
