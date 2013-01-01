@@ -434,3 +434,39 @@ void Material_DestroyVariants(material_t *mat)
 {
     destroyVariants(mat);
 }
+
+int Material_GetProperty(material_t const *mat, setargs_t *args)
+{
+    DENG_ASSERT(mat && args);
+    switch(args->prop)
+    {
+    case DMU_FLAGS: {
+        short flags = Material_Flags(mat);
+        DMU_GetValue(DMT_MATERIAL_FLAGS, &flags, args, 0);
+        break; }
+
+    case DMU_WIDTH: {
+        int width = Material_Width(mat);
+        DMU_GetValue(DMT_MATERIAL_WIDTH, &width, args, 0);
+        break; }
+
+    case DMU_HEIGHT: {
+        int height = Material_Height(mat);
+        DMU_GetValue(DMT_MATERIAL_HEIGHT, &height, args, 0);
+        break; }
+
+    default: {
+        QByteArray msg = String("Material_GetProperty: No property %1.").arg(DMU_Str(args->prop)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable */ }
+    }
+    return false; // Continue iteration.
+}
+
+int Material_SetProperty(material_t *mat, setargs_t const *args)
+{
+    DENG_UNUSED(mat);
+    QByteArray msg = String("Material_SetProperty: Property '%1' is not writable.").arg(DMU_Str(args->prop)).toUtf8();
+    LegacyCore_FatalError(msg.constData());
+    return 0; // Unreachable.
+}

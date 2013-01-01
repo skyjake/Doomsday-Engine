@@ -108,12 +108,6 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args, uint 
  */
 void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint index);
 
-/// To be called to update in response to a DMU property change event.
-int DMU_SetMaterialProperty(struct material_s *material, setargs_t const *args);
-
-/// Get the current value of a Material property.
-int DMU_GetMaterialProperty(struct material_s *material, setargs_t *args);
-
 #ifndef NDEBUG
 # define ASSERT_DMU_TYPE(ptr, dmuType) \
     if(!ptr || ((runtime_mapdata_header_t *)ptr)->type != dmuType) \
