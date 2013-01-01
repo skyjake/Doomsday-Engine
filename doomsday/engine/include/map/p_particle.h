@@ -1,9 +1,8 @@
-/**
- * @file p_particle.h
- * Generator (particles) management. @ingroup map
+/** @file p_particle.h Generator Management (Particles).
+ * @ingroup map
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -90,44 +89,48 @@ typedef enum {
 ///@}
 
 typedef struct {
-    int             stage; // -1 => particle doesn't exist
-    short           tics;
-    fixed_t         origin[3]; // Coordinates.
-    fixed_t         mov[3]; // Momentum.
-    Sector*         sector; // Updated when needed.
-    LineDef*        contact; // Updated when lines hit/avoided.
-    ushort          yaw, pitch; // Rotation angles (0-65536 => 0-360).
+    int stage; // -1 => particle doesn't exist
+    short tics;
+    fixed_t origin[3]; // Coordinates.
+    fixed_t mov[3]; // Momentum.
+    Sector *sector; // Updated when needed.
+    LineDef *contact; // Updated when lines hit/avoided.
+    ushort yaw, pitch; // Rotation angles (0-65536 => 0-360).
 } particle_t;
 
 typedef struct {
-    short           type;
-    short           flags;
-    fixed_t         resistance;
-    fixed_t         bounce;
-    fixed_t         radius;
-    fixed_t         gravity;
+    short type;
+    short flags;
+    fixed_t resistance;
+    fixed_t bounce;
+    fixed_t radius;
+    fixed_t gravity;
 } ptcstage_t;
 
 // Particle Generator
 typedef struct ptcgen_s {
-    thinker_t       thinker; // Func = P_PtcGenThinker
-    Plane*          plane; // Flat-triggered.
-    const struct ded_ptcgen_s* def; // The definition of this generator.
-    struct mobj_s*  source; // If mobj-triggered.
-    int             srcid; // Source mobj ID.
-    int             type; // Type-triggered; mobj type number (-1=none).
-    int             type2; // Type-triggered; alternate type.
-    fixed_t         center[3]; // Used by untriggered/damage gens.
-    fixed_t         vector[3]; // Converted from the definition.
-    int             flags; // PGF_* flags.
-    float           spawnCount;
-    float           spawnRateMultiplier;
-    int             spawnCP; // Spawn cursor.
-    int             age;
-    int             count; // Number of particles.
-    particle_t*     ptcs; // List of particles.
-    ptcstage_t*     stages;
+    thinker_t thinker; // Func = P_PtcGenThinker
+    Plane *plane; // Flat-triggered.
+    struct ded_ptcgen_s const *def; // The definition of this generator.
+    struct mobj_s *source; // If mobj-triggered.
+    int srcid; // Source mobj ID.
+    int type; // Type-triggered; mobj type number (-1=none).
+    int type2; // Type-triggered; alternate type.
+    fixed_t center[3]; // Used by untriggered/damage gens.
+    fixed_t vector[3]; // Converted from the definition.
+    int flags; // PGF_* flags.
+    float spawnCount;
+    float spawnRateMultiplier;
+    int spawnCP; // Spawn cursor.
+    int age;
+    int count; // Number of particles.
+    particle_t *ptcs; // List of particles.
+    ptcstage_t *stages;
 } ptcgen_t;
+
+DENG_EXTERN_C byte useParticles;
+DENG_EXTERN_C int maxParticles;
+DENG_EXTERN_C float particleSpawnRate;
 
 #ifdef __cplusplus
 extern "C" {
@@ -153,7 +156,7 @@ void P_CreatePtcGenLinks(void);
  * Creates a new mobj-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
  */
-void P_SpawnMobjParticleGen(const struct ded_ptcgen_s* def, struct mobj_s* source);
+void P_SpawnMobjParticleGen(struct ded_ptcgen_s const *def, struct mobj_s *source);
 
 /**
  * Spawns all type-triggered particle generators, regardless of whether
@@ -168,7 +171,7 @@ void P_SpawnMapParticleGens(void);
  * Creates a new flat-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
  */
-void P_SpawnPlaneParticleGen(const struct ded_ptcgen_s* def, Plane* plane);
+void P_SpawnPlaneParticleGen(struct ded_ptcgen_s const *def, Plane *plane);
 
 /**
  * Called after a reset once the definitions have been re-read.
@@ -180,12 +183,12 @@ void P_UpdateParticleGens(void);
  * Currently only used visually, collisions use the constant radius.
  * The variance can be negative (results will be larger).
  */
-float P_GetParticleRadius(const ded_ptcstage_t* stageDef, int ptcIndex);
+float P_GetParticleRadius(ded_ptcstage_t const *stageDef, int ptcIndex);
 
 /**
  * A particle may be attached to the floor or ceiling of the sector.
  */
-float P_GetParticleZ(const particle_t* pt);
+float P_GetParticleZ(particle_t const *pt);
 
 #ifdef __cplusplus
 } // extern "C"

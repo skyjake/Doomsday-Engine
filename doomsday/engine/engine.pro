@@ -520,7 +520,7 @@ SOURCES += \
     src/map/p_maputil.c \
     src/map/p_mobj.c \
     src/map/p_objlink.c \
-    src/map/p_particle.c \
+    src/map/p_particle.cpp \
     src/map/p_players.c \
     src/map/p_polyobjs.c \
     src/map/p_sight.c \
