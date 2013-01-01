@@ -1,9 +1,8 @@
-/**
- * @file cl_mobj.h
- * Clientside map objects. @ingroup client
+/** @file cl_mobj.h Clientside map objects.
+ * @ingroup client
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -65,6 +64,10 @@ typedef struct clmoinfo_s {
     uint            endMagic;       // The client mobj magic number (CLM_MAGIC2).
 } clmoinfo_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor);
 
 mobj_t         *ClMobj_Create(thid_t id);
@@ -92,5 +95,9 @@ void            ClMobj_ReadNullDelta2(boolean skip);
 
 boolean         Cl_IsClientMobj(mobj_t* mo); // public
 boolean         ClMobj_IsValid(mobj_t* mo); // public
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

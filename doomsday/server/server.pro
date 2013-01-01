@@ -412,7 +412,7 @@ SOURCES += \
     $$SRC/src/map/p_maputil.c \
     $$SRC/src/map/p_mobj.c \
     $$SRC/src/map/p_objlink.c \
-    $$SRC/src/map/p_particle.c \
+    $$SRC/src/map/p_particle.cpp \
     $$SRC/src/map/p_players.c \
     $$SRC/src/map/p_polyobjs.c \
     $$SRC/src/map/p_sight.c \

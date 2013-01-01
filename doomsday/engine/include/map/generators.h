@@ -39,6 +39,10 @@ typedef short ptcgenid_t;
  */
 typedef struct generators_s Generators;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Constructs a new generators collection. Must be deleted with Generators_Delete().
  *
@@ -153,5 +157,9 @@ int Generators_Iterate(Generators* generators, int (*callback) (ptcgen_t*, void*
  */
 int Generators_IterateList(Generators* generators, uint listIndex,
     int (*callback) (ptcgen_t*, void*), void* parameters);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_GENERATORS
