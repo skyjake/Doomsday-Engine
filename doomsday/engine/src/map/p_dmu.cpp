@@ -658,14 +658,6 @@ int P_Callbackp(int type, void *ptr, void *context, int (*callback)(void *p, voi
     return true;
 }
 
-int DMU_SetMaterialProperty(material_t *mat, setargs_t const *args)
-{
-    DENG_UNUSED(mat);
-    QByteArray msg = String("DMU::SetMaterialProperty: Property '%1' is not writable.").arg(DMU_Str(args->prop)).toUtf8();
-    LegacyCore_FatalError(msg.constData());
-    return 0; // Unreachable.
-}
-
 void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
                   uint index)
 {
@@ -1111,7 +1103,7 @@ static int setProperty(void *obj, void *context)
         break;
 
     case DMU_MATERIAL:
-        DMU_SetMaterialProperty((material_t *)obj, args);
+        Material_SetProperty((material_t *)obj, args);
         break;
 
     case DMU_BSPNODE: {
@@ -1182,33 +1174,6 @@ static int setProperty(void *obj, void *context)
     } */
 
     return true; // Continue iteration.
-}
-
-int DMU_GetMaterialProperty(material_t *mat, setargs_t *args)
-{
-    switch(args->prop)
-    {
-    case DMU_FLAGS: {
-        short flags = Material_Flags(mat);
-        DMU_GetValue(DMT_MATERIAL_FLAGS, &flags, args, 0);
-        break; }
-
-    case DMU_WIDTH: {
-        int width = Material_Width(mat);
-        DMU_GetValue(DMT_MATERIAL_WIDTH, &width, args, 0);
-        break; }
-
-    case DMU_HEIGHT: {
-        int height = Material_Height(mat);
-        DMU_GetValue(DMT_MATERIAL_HEIGHT, &height, args, 0);
-        break; }
-
-    default: {
-        QByteArray msg = String("DMU::GetMaterialProperty: No property %1.").arg(DMU_Str(args->prop)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
-    }
-    return false; // Continue iteration.
 }
 
 void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args,
@@ -1620,7 +1585,7 @@ static int getProperty(void *ob, void *context)
         break;
 
     case DMU_MATERIAL:
-        DMU_GetMaterialProperty((material_t *)ob, args);
+        Material_GetProperty((material_t *)ob, args);
         break;
 
     default: {

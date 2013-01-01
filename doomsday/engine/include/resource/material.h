@@ -236,6 +236,24 @@ struct texture_s* Material_ShinyMaskTexture(material_t* mat);
  */
 void Material_SetShinyMaskTexture(material_t* mat, struct texture_s* tex);
 
+/**
+ * Get a property value, selected by DMU_* name.
+ *
+ * @param material  Material instance.
+ * @param args  Property arguments.
+ * @return  Always @c 0 (can be used as an iterator).
+ */
+int Material_GetProperty(material_t const *material, setargs_t *args);
+
+/**
+ * Update a property value, selected by DMU_* name.
+ *
+ * @param material  Material instance.
+ * @param args  Property arguments.
+ * @return  Always @c 0 (can be used as an iterator).
+ */
+int Material_SetProperty(material_t *material, setargs_t const *args);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
