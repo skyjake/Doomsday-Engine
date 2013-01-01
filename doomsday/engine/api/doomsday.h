@@ -199,7 +199,7 @@ boolean DD_GameInfo(GameInfo* info);
  * @ingroup resource
  */
 ///@{
-material_t *DD_MaterialForTextureUri(Uri const *textureUri);
+struct material_s *DD_MaterialForTextureUri(Uri const *textureUri);
 ///@}
 
 /// @addtogroup defs
@@ -421,10 +421,10 @@ int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
 coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
 coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
 
-coord_t LineDef_PointOnSide(LineDef* lineDef, coord_t const point[2]);
-coord_t LineDef_PointXYOnSide(LineDef* lineDef, coord_t x, coord_t y);
+coord_t LineDef_PointOnSide(LineDef const *lineDef, coord_t const point[2]);
+coord_t LineDef_PointXYOnSide(LineDef const *lineDef, coord_t x, coord_t y);
 
-void LineDef_SetDivline(LineDef* lineDef, divline_t* dl);
+void LineDef_SetDivline(LineDef const *lineDef, divline_t* dl);
 
 int Divline_PointOnSide(const divline_t* line, coord_t const point[2]);
 int Divline_PointXYOnSide(const divline_t* line, coord_t x, coord_t y);

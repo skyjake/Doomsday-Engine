@@ -26,6 +26,75 @@
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
 
+// Helper macros for accessing linedef data elements.
+#define L_v(n)                  v[(n)? 1:0]
+#define L_vorigin(n)            v[(n)? 1:0]->origin
+
+#define L_v1                    L_v(0)
+#define L_v1origin              L_v(0)->origin
+
+#define L_v2                    L_v(1)
+#define L_v2origin              L_v(1)->origin
+
+#define L_vo(n)                 vo[(n)? 1:0]
+#define L_vo1                   L_vo(0)
+#define L_vo2                   L_vo(1)
+
+#define L_frontside             sides[0]
+#define L_backside              sides[1]
+#define L_side(n)               sides[(n)? 1:0]
+
+#define L_sidedef(n)            L_side(n).sideDef
+#define L_frontsidedef          L_sidedef(FRONT)
+#define L_backsidedef           L_sidedef(BACK)
+
+#define L_sector(n)             L_side(n).sector
+#define L_frontsector           L_sector(FRONT)
+#define L_backsector            L_sector(BACK)
+
+// Is this line self-referencing (front sec == back sec)?
+#define LINE_SELFREF(l)         ((l)->L_frontsidedef && (l)->L_backsidedef && \
+                                 (l)->L_frontsector == (l)->L_backsector)
+
+// Internal flags:
+#define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
+#define LF_BSPWINDOW            0x2 ///< Line produced a BSP window. @todo Refactor away.
+
+/**
+ * @defgroup sideSectionFlags  Side Section Flags
+ * @ingroup map
+ */
+///@{
+#define SSF_MIDDLE              0x1
+#define SSF_BOTTOM              0x2
+#define SSF_TOP                 0x4
+///@}
+
+typedef struct lineside_s {
+    struct sector_s *sector; /// Sector on this side.
+    struct sidedef_s *sideDef; /// SideDef on this side.
+    struct hedge_s *hedgeLeft;  /// Left-most HEdge on this side.
+    struct hedge_s *hedgeRight; /// Right-most HEdge on this side.
+    unsigned short shadowVisFrame; /// Framecount of last time shadows were drawn on this side.
+} lineside_t;
+
+typedef struct linedef_s {
+    runtime_mapdata_header_t header;
+    struct vertex_s *v[2];
+    struct lineowner_s *vo[2]; /// Links to vertex line owner nodes [left, right].
+    lineside_t sides[2];
+    int flags; /// Public DDLF_* flags.
+    byte inFlags; /// Internal LF_* flags.
+    slopetype_t slopeType;
+    int validCount;
+    binangle_t angle; /// Calculated from front side's normal.
+    coord_t direction[2];
+    coord_t length; /// Accurate length.
+    AABoxd aaBox;
+    boolean mapped[DDMAXPLAYERS]; /// Whether the line has been mapped by each player yet.
+    int origIndex; /// Original index in the archived map.
+} LineDef;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

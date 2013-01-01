@@ -84,8 +84,7 @@ typedef unsigned char binangle_t;
 
 #define ANGLE_TO_BANG(angle)      ((binangle_t)((angle_t)angle >> BAMS_BITS))
 
-// Forward declarations for map data types. The contents of these structs is
-// declared in p_maptypes.h.
+// Forward declarations for map data types.
 struct bspnode_s;
 struct vertex_s;
 struct linedef_s;

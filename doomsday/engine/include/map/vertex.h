@@ -26,6 +26,43 @@
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
 
+#define LO_prev     link[0]
+#define LO_next     link[1]
+
+typedef struct shadowvert_s {
+    coord_t inner[2];
+    coord_t extended[2];
+} shadowvert_t;
+
+typedef struct lineowner_s {
+    struct linedef_s *lineDef;
+    struct lineowner_s *link[2]; /// {prev, next} (i.e. {anticlk, clk}).
+    binangle_t angle; /// Between this and next clockwise.
+    shadowvert_t shadowOffsets;
+} lineowner_t;
+
+typedef struct mvertex_s {
+    // Vertex index. Always valid after loading and pruning of unused
+    // vertices has occurred.
+    int index;
+
+    // Reference count. When building normal node info, unused vertices
+    // will be pruned.
+    int refCount;
+
+    // Usually NULL, unless this vertex occupies the same location as a
+    // previous vertex. Only used during the pruning phase.
+    struct vertex_s *equiv;
+} mvertex_t;
+
+typedef struct vertex_s {
+    runtime_mapdata_header_t header;
+    coord_t origin[2];
+    unsigned int numLineOwners; /// Number of line owners.
+    lineowner_t *lineOwners; /// Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
+    mvertex_t buildData;
+} Vertex;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

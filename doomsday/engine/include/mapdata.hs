@@ -442,7 +442,7 @@ internal
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 
-// Is this line self-referencing (front sec == back sec)? 
+// Is this line self-referencing (front sec == back sec)?
 #define LINE_SELFREF(l)         ((l)->L_frontsidedef && (l)->L_backsidedef && \
                                  (l)->L_frontsector == (l)->L_backsector)
 
@@ -499,7 +499,7 @@ internal
 #define LEFT                    1
 
 /**
- * An infinite line of the form point + direction vectors. 
+ * An infinite line of the form point + direction vectors.
  */
 typedef struct partition_s {
     coord_t origin[2];

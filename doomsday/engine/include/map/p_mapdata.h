@@ -117,8 +117,17 @@ typedef struct biassurface_s {
 } // extern "C"
 #endif
 
+#include "p_mapdata.h"
+#include "map/vertex.h"
+#include "map/hedge.h"
+#include "map/bspleaf.h"
+#include "map/surface.h"
+#include "map/plane.h"
+#include "map/sector.h"
+#include "map/sidedef.h"
+#include "map/linedef.h"
+#include "map/bspnode.h"
 #include "map/polyobj.h"
-#include "p_maptypes.h"
 
 #ifdef __cplusplus
 extern "C" {

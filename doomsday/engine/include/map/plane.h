@@ -26,6 +26,38 @@
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
 
+typedef enum {
+    PLN_FLOOR,
+    PLN_CEILING,
+    PLN_MID,
+    NUM_PLANE_TYPES
+} planetype_t;
+
+#define PS_base                 surface.base
+#define PS_tangent              surface.tangent
+#define PS_bitangent            surface.bitangent
+#define PS_normal               surface.normal
+#define PS_material             surface.material
+#define PS_offset               surface.offset
+#define PS_visoffset            surface.visOffset
+#define PS_rgba                 surface.rgba
+#define PS_flags                surface.flags
+#define PS_inflags              surface.inFlags
+
+typedef struct plane_s {
+    runtime_mapdata_header_t header;
+    struct sector_s *sector; /// Owner of the plane.
+    Surface surface;
+    coord_t height; /// Current height.
+    coord_t oldHeight[2];
+    coord_t target; /// Target height.
+    coord_t speed; /// Move speed.
+    coord_t visHeight; /// Visible plane height (smoothed).
+    coord_t visHeightDelta;
+    planetype_t type; /// PLN_* type.
+    int planeID;
+} Plane;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

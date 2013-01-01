@@ -26,6 +26,33 @@
 #include "resource/r_data.h"
 #include "p_dmu.h"
 
+/**
+ * @defgroup bspLeafFlags  Bsp Leaf Flags
+ * @ingroup flags
+ */
+///@{
+#define BLF_UPDATE_FANBASE      0x1 ///< The tri-fan base requires an update.
+///@}
+
+typedef struct bspleaf_s {
+    runtime_mapdata_header_t header;
+    struct hedge_s *hedge; /// First HEdge in this leaf.
+    int flags; /// @ref bspLeafFlags.
+    uint index; /// Unique. Set when saving the BSP.
+    int addSpriteCount; /// Frame number of last R_AddSprites.
+    int validCount;
+    uint hedgeCount; /// Number of HEdge's in this leaf.
+    struct sector_s *sector;
+    struct polyobj_s *polyObj; /// First polyobj in this leaf. Can be @c NULL.
+    struct hedge_s *fanBase; /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
+    struct shadowlink_s *shadows;
+    AABoxd aaBox; /// HEdge Vertex bounding box in the map coordinate space.
+    coord_t midPoint[2]; /// Center of vertices.
+    coord_t worldGridOffset[2]; /// Offset to align the top left of materials in the built geometry to the map coordinate space grid.
+    struct biassurface_s **bsuf; /// [sector->planeCount] size.
+    unsigned int reverb[NUM_REVERB_DATA];
+} BspLeaf;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

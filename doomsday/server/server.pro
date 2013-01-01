@@ -200,7 +200,6 @@ DENG_HEADERS += \
     $$SRC/include/map/p_dmu.h \
     $$SRC/include/map/p_intercept.h \
     $$SRC/include/map/p_mapdata.h \
-    $$SRC/include/map/p_maptypes.h \
     $$SRC/include/map/p_maputil.h \
     $$SRC/include/map/p_object.h \
     $$SRC/include/map/p_objlink.h \

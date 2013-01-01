@@ -21,8 +21,44 @@
 #ifndef LIBDENG_MAP_SURFACE
 #define LIBDENG_MAP_SURFACE
 
+#include "resource/material.h"
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
+
+// Internal surface flags:
+#define SUIF_FIX_MISSING_MATERIAL   0x0001 ///< Current material is a fix replacement
+                                           /// (not sent to clients, returned via DMU etc).
+#define SUIF_NO_RADIO               0x0002 ///< No fakeradio for this surface.
+
+#define SUIF_UPDATE_FLAG_MASK       0xff00
+#define SUIF_UPDATE_DECORATIONS     0x8000
+
+typedef struct surfacedecor_s {
+    coord_t origin[3]; /// World coordinates of the decoration.
+    BspLeaf *bspLeaf;
+    struct ded_decorlight_s const *def;
+} surfacedecor_t;
+
+typedef struct surface_s {
+    runtime_mapdata_header_t header;
+    ddmobj_base_t base;
+    void *owner; /// Either @c DMU_SIDEDEF, or @c DMU_PLANE
+    int flags; /// SUF_ flags
+    int oldFlags;
+    struct material_s *material;
+    blendmode_t blendMode;
+    float tangent[3];
+    float bitangent[3];
+    float normal[3];
+    float offset[2]; /// [X, Y] Planar offset to surface material origin.
+    float oldOffset[2][2];
+    float visOffset[2];
+    float visOffsetDelta[2];
+    float rgba[4]; /// Surface color tint
+    short inFlags; /// SUIF_* flags
+    unsigned int numDecorations;
+    surfacedecor_t *decorations;
+} Surface;
 
 #ifdef __cplusplus
 extern "C" {

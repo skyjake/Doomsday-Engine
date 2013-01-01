@@ -23,8 +23,76 @@
 #ifndef LIBDENG_MAP_HEDGE
 #define LIBDENG_MAP_HEDGE
 
+#include "map/sector.h"
 #include "resource/r_data.h"
 #include "p_dmu.h"
+
+struct walldivs_s;
+
+typedef struct walldivnode_s {
+    struct walldivs_s* divs;
+    coord_t height;
+} walldivnode_t;
+
+coord_t WallDivNode_Height(walldivnode_t* node);
+walldivnode_t* WallDivNode_Next(walldivnode_t* node);
+walldivnode_t* WallDivNode_Prev(walldivnode_t* node);
+
+/// Maximum number of walldivnode_ts in a walldivs_t dataset.
+#define WALLDIVS_MAX_NODES          64
+
+typedef struct walldivs_s {
+    uint num;
+    struct walldivnode_s nodes[WALLDIVS_MAX_NODES];
+} walldivs_t;
+
+uint WallDivs_Size(const walldivs_t* wallDivs);
+walldivnode_t* WallDivs_First(walldivs_t* wallDivs);
+walldivnode_t* WallDivs_Last(walldivs_t* wallDivs);
+
+// Helper macros for accessing hedge data elements.
+#define FRONT 0
+#define BACK  1
+
+#define HE_v(n)                   v[(n)? 1:0]
+#define HE_vorigin(n)             HE_v(n)->origin
+
+#define HE_v1                     HE_v(0)
+#define HE_v1origin               HE_v(0)->origin
+
+#define HE_v2                     HE_v(1)
+#define HE_v2origin               HE_v(1)->origin
+
+#define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
+
+#define HEDGE_SIDE(h)             ((h)->lineDef ? &(h)->lineDef->L_side((h)->side) : NULL)
+#define HEDGE_SIDEDEF(h)          ((h)->lineDef ? (h)->lineDef->L_sidedef((h)->side) : NULL)
+
+// HEdge frame flags
+#define HEDGEINF_FACINGFRONT      0x0001
+
+typedef struct hedge_s {
+    runtime_mapdata_header_t header;
+    struct vertex_s *v[2]; /// [Start, End] of the segment.
+    struct hedge_s *next;
+    struct hedge_s *prev;
+
+    // Half-edge on the other side, or NULL if one-sided. This relationship
+    // is always one-to-one -- if one of the half-edges is split, the twin
+    // must also be split.
+    struct hedge_s *twin;
+    struct bspleaf_s *bspLeaf;
+
+    struct linedef_s *lineDef;
+    struct sector_s *sector;
+    angle_t angle;
+    byte side; /// On which side of the LineDef (0=front, 1=back)?
+    coord_t length; /// Accurate length of the segment (v1 -> v2).
+    coord_t offset;
+    biassurface_t *bsuf[3]; /// For each @ref SideDefSection.
+    short frameFlags;
+    uint index; /// Unique. Set when saving the BSP.
+} HEdge;
 
 #ifdef __cplusplus
 extern "C" {
