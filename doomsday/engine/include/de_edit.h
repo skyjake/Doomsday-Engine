@@ -34,5 +34,6 @@
 #endif
 
 #include "edit_map.h"
+#include "api_mpe.h"
 
 #endif

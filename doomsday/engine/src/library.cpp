@@ -29,7 +29,9 @@
 #include "m_misc.h"
 
 #include "api_def.h"
+#include "api_console.h"
 #include "api_filesys.h"
+#include "api_mpe.h"
 
 struct library_s { // typedef Library
     Str* path;              ///< de::FS path of the library (e.g., "/bin/doom.dll").
@@ -168,8 +170,11 @@ void Library_PublishAPIs(Library *lib)
     {
         de::Library::deng_API setAPI = library.DENG2_SYMBOL(deng_API);
 
+        setAPI(DE_API_BASE_v1,        &_api_Base);
+        setAPI(DE_API_CONSOLE_v1,     &_api_Con);
         setAPI(DE_API_DEFINITIONS_v1, &_api_Def);
         setAPI(DE_API_FILE_SYSTEM_v1, &_api_F);
+        setAPI(DE_API_MAP_EDIT_v1,    &_api_MPE);
         setAPI(DE_API_PLUGIN_v1,      &_api_Plug);
         setAPI(DE_API_URI_v1,         &_api_Uri);
         setAPI(DE_API_WAD_v1,         &_api_W);

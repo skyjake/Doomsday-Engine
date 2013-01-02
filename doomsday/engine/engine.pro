@@ -80,6 +80,7 @@ DENG_API_HEADERS = \
     api/api_console.h \
     api/api_def.h \
     api/api_filesys.h \
+    api/api_mpe.h \
     api/api_plugin.h \
     api/api_uri.h \
     api/api_wad.h \

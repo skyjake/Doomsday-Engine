@@ -74,6 +74,7 @@ DENG_API_HEADERS = \
     $$SRC/api/api_console.h \
     $$SRC/api/api_def.h \
     $$SRC/api/api_filesys.h \
+    $$SRC/api/api_mpe.h \
     $$SRC/api/api_plugin.h \
     $$SRC/api/api_uri.h \
     $$SRC/api/api_wad.h \
