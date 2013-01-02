@@ -533,7 +533,7 @@ SOURCES += \
     src/map/polyobj.c \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \
-    src/map/sector.c \
+    src/map/sector.cpp \
     src/map/sidedef.cpp \
     src/map/surface.cpp \
     src/map/vertex.cpp \

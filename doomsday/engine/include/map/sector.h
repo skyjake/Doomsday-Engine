@@ -89,6 +89,9 @@ typedef struct msector_s {
     int	refCount;
 } msector_t;
 
+/**
+ * @ingroup map
+ */
 typedef struct sector_s {
     runtime_mapdata_header_t header;
     int frameFlags;
