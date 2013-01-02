@@ -68,6 +68,12 @@ MaterialAnim::Frame &MaterialAnim::frame(int number)
 
 void MaterialAnim::addFrame(material_t &mat, int tics, int randomTics)
 {
+    LOG_AS("MaterialAnim::addFrame");
+
+    // Mark the material as being part of an animation group.
+    Material_SetGroupAnimated(&mat, true);
+
+    // Allocate a new frame.
     frames.push_back(Frame(mat, tics, randomTics));
 }
 
