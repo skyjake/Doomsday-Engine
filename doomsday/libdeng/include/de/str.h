@@ -284,11 +284,33 @@ DENG_PUBLIC Str *Str_StripRight(Str *ds);
  *
  * @param ds  String instance.
  * @param count  If not @c NULL the number of characters stripped is written here.
- * @return  Same as @a str for caller convenience.
+ * @return  Same as @a ds for caller convenience.
  */
 DENG_PUBLIC Str *Str_Strip2(Str *ds, int *count);
 
 DENG_PUBLIC Str *Str_Strip(Str *ds);
+
+/**
+ * Replaces all characters @a from to @a to in the string.
+ *
+ * @param ds    String instance.
+ * @param from  Characters to replace.
+ * @param to    @a from will be replaced with this.
+ *
+ * @return Str @a ds.
+ */
+DENG_PUBLIC Str *Str_ReplaceAll(Str *ds, char from, char to);
+
+/**
+ * Determines if the string ends with a specific suffic. The comparison is done
+ * case sensitively.
+ *
+ * @param ds    String instance.
+ * @param text  Text to look for in the end of @a ds.
+ *
+ * @return  @c true, if the string is found.
+ */
+DENG_PUBLIC boolean Str_EndsWith(Str *ds, char const *text);
 
 /**
  * Extract a line of text from the source.

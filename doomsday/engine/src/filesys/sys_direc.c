@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <de/findfile.h>
 
 #include "de_base.h"
 #include "de_platform.h"

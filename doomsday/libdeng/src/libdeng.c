@@ -25,6 +25,8 @@
 #include "de/timer.h"
 #include "memoryzone_private.h"
 
+#include <stdlib.h>
+
 void Libdeng_Init(void)
 {
     Timer_Init();
@@ -38,4 +40,9 @@ void Libdeng_Shutdown(void)
     Garbage_Shutdown();
     Z_Shutdown();
     Timer_Shutdown();
+}
+
+void Libdeng_BadAlloc(void)
+{
+    exit(-1);
 }

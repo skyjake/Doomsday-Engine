@@ -165,7 +165,6 @@ DENG_HEADERS += \
     $$SRC/include/filesys/manifest.h \
     $$SRC/include/filesys/searchpath.h \
     $$SRC/include/filesys/sys_direc.h \
-    $$SRC/include/filesys/sys_findfile.h \
     $$SRC/include/game.h \
     $$SRC/include/gl/gl_texmanager.h \
     $$SRC/include/gridmap.h \
@@ -315,22 +314,18 @@ win32 {
     SOURCES += \
         $$SRC/src/windows/dd_winit.c \
         $$SRC/src/windows/directinput.cpp \
-        $$SRC/src/windows/sys_console.c \
-        $$SRC/src/windows/sys_findfile.c 
+        $$SRC/src/windows/sys_console.c
 }
 else:unix {
     # Common Unix (including Mac OS X).
     HEADERS += \
-        $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h \
-        $$DENG_UNIX_INCLUDE_DIR/sys_path.h
+        $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h
 
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
 
     SOURCES += \
         $$SRC/src/unix/dd_uinit.c \
-        $$SRC/src/unix/sys_console.c \
-        $$SRC/src/unix/sys_findfile.c \
-        $$SRC/src/unix/sys_path.c
+        $$SRC/src/unix/sys_console.c
 }
 
 macx {

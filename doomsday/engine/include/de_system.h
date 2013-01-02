@@ -37,12 +37,6 @@
 #  include "gl/sys_opengl.h"
 #endif
 
-// Use SDL for window management under *nix
-#ifdef UNIX
-#  define USING_SDL_WINDOW
-#  include "unix/sys_path.h"
-#endif
-
 #include "ui/window.h"
 
 #endif /* LIBDENG_SYSTEM_H */
