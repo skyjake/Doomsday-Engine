@@ -1272,8 +1272,6 @@ void R_RenderViewPorts()
     R_UseViewPort(NULL);
 }
 
-#endif // __CLIENT__
-
 static int findSpriteOwner(thinker_t *th, void *context)
 {    mobj_t *mo = (mobj_t *) th;
     spritedef_t *sprDef = (spritedef_t *) context;
@@ -1309,8 +1307,6 @@ static void cacheSpritesForState(int stateIndex, materialvariantspecification_t 
         }
     }
 }
-
-#ifdef __CLIENT__
 
 /// @note Part of the Doomsday public API.
 void Rend_CacheForMobjType(int num)

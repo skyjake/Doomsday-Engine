@@ -167,8 +167,6 @@ void DD_ConsoleInit(void)
 
 void DD_ShutdownAll(void)
 {
-    int i;
-
     Updater_Shutdown();
     FI_Shutdown();
     UI_Shutdown();
@@ -182,8 +180,10 @@ void DD_ShutdownAll(void)
 
 #ifdef __CLIENT__
     // Stop all demo recording.
+    { int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
         Demo_StopRecording(i);
+    }
 #endif
 
     P_ControlShutdown();
