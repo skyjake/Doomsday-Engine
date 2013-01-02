@@ -36,6 +36,162 @@
 
 using namespace de;
 
+MaterialAnim::MaterialAnim(int _id, int _flags)
+    : id_(_id), flags_(_flags),
+      index(0), maxTimer(0), timer(0)
+{}
+
+int MaterialAnim::id() const
+{
+    return id_;
+}
+
+int MaterialAnim::flags() const
+{
+    return flags_;
+}
+
+int MaterialAnim::frameCount() const
+{
+    return frames.count();
+}
+
+MaterialAnim::Frame &MaterialAnim::frame(int number)
+{
+    if(number < 0 || number >= frameCount())
+    {
+        /// @throw InvalidFrameError Attempt to access an invalid frame.
+        throw InvalidFrameError("MaterialAnim::frame", QString("Invalid frame #%1, valid range [0..%2)").arg(number).arg(frameCount()));
+    }
+    return frames[number];
+}
+
+void MaterialAnim::addFrame(material_t &mat, int tics, int randomTics)
+{
+    frames.push_back(Frame(mat, tics, randomTics));
+}
+
+bool MaterialAnim::hasFrameForMaterial(material_t const &mat) const
+{
+    DENG2_FOR_EACH_CONST(Frames, i, frames)
+    {
+        if(&i->material() == &mat)
+            return true;
+    }
+    return false;
+}
+
+MaterialAnim::Frames const &MaterialAnim::allFrames() const
+{
+    return frames;
+}
+
+static void setVariantTranslation(MaterialVariant &variant, material_t *current, material_t *next)
+{
+    materialvariantspecification_t const &spec = variant.spec();
+    MaterialVariant *currentV, *nextV;
+
+    /// @todo kludge: Should not use App_Materials() here.
+    currentV = App_Materials()->chooseVariant(*current, spec, false, true/*create if necessary*/);
+    nextV    = App_Materials()->chooseVariant(*next,    spec, false, true/*create if necessary*/);
+    variant.setTranslation(currentV, nextV);
+}
+
+typedef struct {
+    material_t *current, *next;
+} setmaterialtranslationworker_parameters_t;
+
+static int setVariantTranslationWorker(struct materialvariant_s *variant, void *parameters)
+{
+    setmaterialtranslationworker_parameters_t *p = (setmaterialtranslationworker_parameters_t *) parameters;
+    setVariantTranslation(reinterpret_cast<MaterialVariant &>(*variant), p->current, p->next);
+    return 0; // Continue iteration.
+}
+
+static int setVariantTranslationPointWorker(struct materialvariant_s *variant, void *parameters)
+{
+    DENG2_ASSERT(parameters);
+    reinterpret_cast<MaterialVariant *>(variant)->setTranslationPoint(*(float *)parameters);
+    return 0; // Continue iteration.
+}
+
+void MaterialAnim::animate()
+{
+    // The Precache groups are not intended for animation.
+    if((flags_ & AGF_PRECACHE) || frames.isEmpty()) return;
+
+    if(--timer <= 0)
+    {
+        // Advance to next frame.
+        index = (index + 1) % frames.count();
+        Frame const &nextFrame = frames[index];
+        int newTimer = nextFrame.tics();
+
+        if(nextFrame.randomTics())
+        {
+            newTimer += int(RNG_RandByte()) % (nextFrame.randomTics() + 1);
+        }
+        timer = maxTimer = newTimer;
+
+        // Update translations.
+        for(int i = 0; i < frames.count(); ++i)
+        {
+            setmaterialtranslationworker_parameters_t params;
+
+            params.current = &frames[(index + i    ) % frames.count()].material();
+            params.next    = &frames[(index + i + 1) % frames.count()].material();
+            Material_IterateVariants(&frames[i].material(), setVariantTranslationWorker, &params);
+
+            // Surfaces using this material may need to be updated.
+            R_UpdateMapSurfacesOnMaterialChange(&frames[i].material());
+
+            // Just animate the first in the sequence?
+            if(flags_ & AGF_FIRST_ONLY) break;
+        }
+        return;
+    }
+
+    // Update the interpolation point of animated group members.
+    DENG2_FOR_EACH_CONST(Frames, i, frames)
+    {
+        /*ded_material_t *def = Material_Definition(mat);
+        if(def && def->layers[0].stageCount.num > 1)
+        {
+            de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture)
+            if(texUri && Textures::resolveUri(*texUri))
+                continue; // Animated elsewhere.
+        }*/
+
+        float interp;
+        if(flags_ & AGF_SMOOTH)
+        {
+            interp = 1 - timer / float( maxTimer );
+        }
+        else
+        {
+            interp = 0;
+        }
+
+        Material_IterateVariants(&i->material(), setVariantTranslationPointWorker, &interp);
+
+        // Just animate the first in the sequence?
+        if(flags_ & AGF_FIRST_ONLY) break;
+    }
+}
+
+void MaterialAnim::reset()
+{
+    // The Precache groups are not intended for animation.
+    if((flags_ & AGF_PRECACHE) || frames.isEmpty()) return;
+
+    timer = 0;
+    maxTimer = 1;
+
+    // The anim group should start from the first step using the
+    // correct timings.
+    index = frames.count() - 1;
+}
+
 typedef struct material_variantlist_node_s {
     struct material_variantlist_node_s *next;
     MaterialVariant *variant;
