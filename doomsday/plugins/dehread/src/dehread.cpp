@@ -180,3 +180,11 @@ extern "C" const char* deng_LibraryType(void)
 {
     return "deng-plugin/generic";
 }
+
+DENG_DECLARE_API(wad, W);
+DENG_DECLARE_API(uri, Uri);
+
+DENG_API_EXCHANGE(
+    DENG_GET_API(DE_API_URI_v1, Uri);
+    DENG_GET_API(DE_API_WAD_v1, W);
+)

@@ -33,4 +33,7 @@
 
 extern Id1Map* DENG_PLUGIN_GLOBAL(map);
 
+DENG_USING_API(uri, Uri);
+DENG_USING_API(wad, W);
+
 #endif /* end of include guard: __WADMAPCONVERTER_H__ */

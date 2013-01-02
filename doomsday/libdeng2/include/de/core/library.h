@@ -73,11 +73,18 @@ namespace de
          * @return  Type identifier string.
          */
         typedef char const *(*deng_LibraryType)(void);
+
+        /**
+         * Passes Doomsda'ys public APIs to the library. Called automatically by
+         * the engine when loading libraries.
+         */
+        typedef void (*deng_API)(int, void *);
         
         /**
          * Performs any one-time initialization necessary for the usage of the plugin.
          * If this symbol is exported from a shared library, it gets called automatically
-         * when the library is loaded. 
+         * when the library is loaded. Note that this is called before deng_API(), so it
+         * should be used exclusively for setting up the plugin's internal state.
          */
         typedef void (*deng_InitializePlugin)(void);
         

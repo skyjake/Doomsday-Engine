@@ -90,6 +90,7 @@ DENG_API_HEADERS = \
     api/dd_version.h \
     api/dd_wad.h \
     api/dd_world.h \
+    api/de_api.h \
     api/def_share.h \
     api/dengproject.h \
     api/doomsday.h \

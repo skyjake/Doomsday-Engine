@@ -86,6 +86,8 @@ static void reopenLibraryIfNeeded(Library* lib)
         lib->file->library();
 
         DENG_ASSERT(lib->file->loaded());
+
+        Library_PublishAPIs(lib);
     }
 }
 #endif
@@ -120,6 +122,8 @@ Library* Library_New(const char* filePath)
             lib->isGamePlugin = true;
         }
 
+        Library_PublishAPIs(lib);
+
         return lib;
     }
     catch(const de::Error& er)
@@ -152,6 +156,18 @@ de::LibraryFile& Library_File(Library* lib)
 {
     DENG_ASSERT(lib);
     return *lib->file;
+}
+
+void Library_PublishAPIs(Library *lib)
+{
+    de::Library &library = lib->file->library();
+    if(library.hasSymbol("deng_API"))
+    {
+        de::Library::deng_API setAPI = library.DENG2_SYMBOL(deng_API);
+
+        setAPI(DE_API_URI_v1, &_api_Uri);
+        setAPI(DE_API_WAD_v1, &_api_W);
+    }
 }
 
 void* Library_Symbol(Library* lib, const char* symbolName)

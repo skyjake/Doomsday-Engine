@@ -36,30 +36,6 @@
 #  endif
 #endif
 
-/// All APIs exported from the executable.
-enum {
-    DE_API_DIRECT_DATA_ACCESS_v1 = 1000,
-    DE_API_WAD_v1                = 2000
-};
-
-/**
- * Base structure for API structs.
- */
-typedef struct de_api_s {
-    int id; ///< API identification (including version) number.
-} de_api_t;
-
-#define DENG_DECLARE_API(Name, Prefix) de_api_##Name##_t _api_##Prefix
-#define DENG_USING_API(Name, Prefix) DENG_EXTERN_C DENG_DECLARE_API(Name, Prefix)
-#define DENG_API_EXCHANGE(APIs) \
-    extern "C" void deng_API(int id, void *api) { \
-        switch(id) { APIs \
-        default: break; } }
-#define DENG_GET_API(Ident, Prefix) \
-    case Ident: \
-        memcpy(&_api_##Prefix, api, sizeof(_api_##Prefix)); \
-        break;
-
 #include <stdlib.h>
 #include <stdarg.h>
 #include "dengproject.h"

@@ -20,6 +20,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_URI // functions defined here
+
 #include "uri.h"
 #include "uri.hh"
 #include "dualstring.h"
@@ -52,6 +54,24 @@ static void writeUri(const Uri* uri, Writer* writer, int omitComponents = 0)
         Str_Write(de::DualString(self->scheme()).toStrUtf8(), writer);
     }
     Str_Write(de::DualString(self->path()).toStrUtf8(), writer);
+}
+
+Uri* Uri_Clear(Uri* uri)
+{
+    SELF(uri);
+    return reinterpret_cast<Uri*>(&self->clear());
+}
+
+Uri* Uri_SetScheme(Uri* uri, char const* scheme)
+{
+    SELF(uri);
+    return reinterpret_cast<Uri*>(&self->setScheme(scheme));
+}
+
+Uri* Uri_SetPath(Uri* uri, char const* path)
+{
+    SELF(uri);
+    return reinterpret_cast<Uri*>(&self->setPath(path));
 }
 
 static void readUri(Uri* uri, Reader* reader, de::String defaultScheme = "")
@@ -138,12 +158,6 @@ boolean Uri_IsEmpty(Uri const* uri)
     return self->isEmpty();
 }
 
-Uri* Uri_Clear(Uri* uri)
-{
-    SELF(uri);
-    return reinterpret_cast<Uri*>(&self->clear());
-}
-
 AutoStr* Uri_Resolved(Uri const* uri)
 {
     SELF_CONST(uri);
@@ -168,18 +182,6 @@ const Str* Uri_Path(Uri const* uri)
 {
     SELF_CONST(uri);
     return self->pathStr();
-}
-
-Uri* Uri_SetScheme(Uri* uri, char const* scheme)
-{
-    SELF(uri);
-    return reinterpret_cast<Uri*>(&self->setScheme(scheme));
-}
-
-Uri* Uri_SetPath(Uri* uri, char const* path)
-{
-    SELF(uri);
-    return reinterpret_cast<Uri*>(&self->setPath(path));
 }
 
 Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclassid_t defaultResourceClass)
@@ -266,3 +268,35 @@ void Uri_DebugPrint(Uri const* uri, int indent)
     SELF_CONST(uri);
     self->debugPrint(indent);
 }
+
+DENG_DECLARE_API(uri, Uri) =
+{
+    { DE_API_URI_v1 },
+    Uri_New,
+    Uri_NewWithPath2,
+    Uri_NewWithPath,
+    Uri_Dup,
+    Uri_FromReader,
+    Uri_Delete,
+    Uri_IsEmpty,
+    Uri_Clear,
+    Uri_Copy,
+    Uri_Resolved,
+    Uri_Scheme,
+    Uri_Path,
+    Uri_SetScheme,
+    Uri_SetPath,
+    Uri_SetUri2,
+    Uri_SetUri,
+    Uri_SetUriStr,
+    Uri_Compose,
+    Uri_ToString,
+    Uri_Equality,
+    Uri_Write2,
+    Uri_Write,
+    Uri_Read,
+    Uri_ReadWithDefaultScheme,
+    Uri_DebugPrint3,
+    Uri_DebugPrint2,
+    Uri_DebugPrint
+};
