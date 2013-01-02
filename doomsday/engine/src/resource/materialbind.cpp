@@ -18,6 +18,7 @@
  */
 
 #include "de_base.h"
+#include "de_defs.h"
 #include <de/memory.h>
 
 #include "uri.hh"
@@ -25,6 +26,40 @@
 #include "resource/materialbind.h"
 
 namespace de {
+
+MaterialBind::Info::Info()
+{
+    clearDefinitionLinks();
+}
+
+void MaterialBind::Info::linkDefinitions(material_t *mat)
+{
+    bool isCustom = (mat? Material_IsCustom(mat) : false);
+
+    // Surface decorations (lights and models).
+    decorationDefs[0]    = Def_GetDecoration(mat, 0, isCustom);
+    decorationDefs[1]    = Def_GetDecoration(mat, 1, isCustom);
+
+    // Reflection (aka shiny surface).
+    reflectionDefs[0]    = Def_GetReflection(mat, 0, isCustom);
+    reflectionDefs[1]    = Def_GetReflection(mat, 1, isCustom);
+
+    // Generator (particles).
+    ptcgenDefs[0]        = Def_GetGenerator(mat, 0, isCustom);
+    ptcgenDefs[1]        = Def_GetGenerator(mat, 1, isCustom);
+
+    // Detail texture.
+    detailtextureDefs[0] = Def_GetDetailTex(mat, 0, isCustom);
+    detailtextureDefs[1] = Def_GetDetailTex(mat, 1, isCustom);
+}
+
+void MaterialBind::Info::clearDefinitionLinks()
+{
+    decorationDefs[0]    = decorationDefs[1]    = 0;
+    detailtextureDefs[0] = detailtextureDefs[1] = 0;
+    ptcgenDefs[0]        = ptcgenDefs[1]        = 0;
+    reflectionDefs[0]    = reflectionDefs[1]    = 0;
+}
 
 struct MaterialBind::Instance
 {
@@ -51,7 +86,7 @@ MaterialBind::MaterialBind(PathTree::NodeArgs const &args)
 MaterialBind::~MaterialBind()
 {
     Info *detachedInfo = detachInfo();
-    if(detachedInfo) M_Free(detachedInfo);
+    if(detachedInfo) delete detachedInfo;
     delete d;
 }
 
@@ -113,7 +148,7 @@ void MaterialBind::setMaterial(material_t *newMaterial)
         // Any extended info will be invalid after this op, so destroy it
         // (it will automatically be rebuilt later, if subsequently needed).
         MaterialBind::Info *detachedInfo = detachInfo();
-        if(detachedInfo) M_Free(detachedInfo);
+        if(detachedInfo) delete detachedInfo;
 
         // Associate with the new Material.
         d->material = newMaterial;

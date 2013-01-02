@@ -37,7 +37,8 @@ namespace de {
     public:
         /**
          * Contains extended info about a material binding.
-         * @note POD object.
+         * There are two links for each definition type, the first (index @c 0)
+         * for original game data and the second for external data.
          */
         struct Info
         {
@@ -45,6 +46,24 @@ namespace de {
             ded_detailtexture_t *detailtextureDefs[2];
             ded_ptcgen_t *ptcgenDefs[2];
             ded_reflection_t *reflectionDefs[2];
+
+            Info();
+
+            /**
+             * Update the info with new linked definitions. Should be called:
+             *
+             * - When the bound material is changed/first-configured.
+             * - When said material's "custom" state changes.
+             *
+             * @param mat  Material to link the definitions of.
+             */
+            void linkDefinitions(material_t *mat);
+
+            /**
+             * Zeroes all links to definitions. Should be called when the
+             * definition database is reset.
+             */
+            void clearDefinitionLinks();
         };
 
     public:
