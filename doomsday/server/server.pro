@@ -71,6 +71,7 @@ SRC = ../engine
 
 DENG_API_HEADERS = \
     $$SRC/api/api_base.h \
+    $$SRC/api/api_busy.h \
     $$SRC/api/api_console.h \
     $$SRC/api/api_def.h \
     $$SRC/api/api_filesys.h \
@@ -79,7 +80,6 @@ DENG_API_HEADERS = \
     $$SRC/api/api_plugin.h \
     $$SRC/api/api_uri.h \
     $$SRC/api/api_wad.h \
-    $$SRC/api/busytask.h \
     $$SRC/api/dd_api.h \
     $$SRC/api/dd_fontrenderer.h \
     $$SRC/api/dd_gl.h \

@@ -174,6 +174,7 @@ void Library_PublishAPIs(Library *lib)
 #define PUBLISH(X) setAPI(X.api.id, &X)
 
         PUBLISH(_api_Base);
+        PUBLISH(_api_Busy);
         PUBLISH(_api_Con);
         PUBLISH(_api_Def);
         PUBLISH(_api_F);

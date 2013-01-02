@@ -84,6 +84,7 @@ struct font_s;
 
 #include "dd_share.h"
 #include "api_base.h"
+#include "api_busy.h"
 #include "api_plugin.h"
 #include "api_def.h"
 #include "api_filesys.h"
@@ -127,19 +128,6 @@ extern "C" {
  * @defgroup fs File System
  * @ingroup base
  */
-
-/// @addtogroup base
-///@{
-    boolean         BusyMode_Active(void);
-    timespan_t      BusyMode_ElapsedTime(void);
-    int             BusyMode_RunTask(BusyTask* task);
-    int             BusyMode_RunTasks(BusyTask* tasks, int numTasks);
-    int             BusyMode_RunNewTask(int flags, busyworkerfunc_t worker, void* workerData);
-    int             BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void* workerData, const char* taskName);
-
-    void            BusyMode_WorkerEnd(void);
-    void            BusyMode_WorkerError(const char* message);
-///@}
 
 /// @addtogroup game
 ///@{

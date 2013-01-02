@@ -77,6 +77,7 @@ else {
 
 DENG_API_HEADERS = \
     api/api_base.h \
+    api/api_busy.h \
     api/api_console.h \
     api/api_def.h \
     api/api_filesys.h \
@@ -85,7 +86,6 @@ DENG_API_HEADERS = \
     api/api_plugin.h \
     api/api_uri.h \
     api/api_wad.h \
-    api/busytask.h \
     api/dd_api.h \
     api/dd_fontrenderer.h \
     api/dd_gl.h \
