@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 
 #if WIN32
 # define strcasecmp _stricmp
@@ -885,3 +886,21 @@ int dd_vsnprintf(char *str, size_t size, char const *format, va_list ap)
     return result >= (int)size? -1 : (int)size;
 #endif
 }
+
+#ifdef UNIX
+
+char* strupr(char* string)
+{
+    char* ch = string;
+    for(; *ch; ch++) *ch = toupper(*ch);
+    return string;
+}
+
+char* strlwr(char* string)
+{
+    char* ch = string;
+    for(; *ch; ch++) *ch = tolower(*ch);
+    return string;
+}
+
+#endif

@@ -477,6 +477,12 @@ DENG_PUBLIC Str *Str_FromAutoStr(AutoStr *as);
  */
 DENG_PUBLIC int dd_vsnprintf(char *str, size_t size, char const *format, va_list ap);
 
+#ifdef UNIX
+// Some routines not available on the *nix platform.
+DENG_PUBLIC char *strupr(char *string);
+DENG_PUBLIC char *strlwr(char *string);
+#endif // UNIX
+
 #ifdef __cplusplus
 } // extern "C"
 #  include "str.hh" // C++ wrapper for ddstring_t

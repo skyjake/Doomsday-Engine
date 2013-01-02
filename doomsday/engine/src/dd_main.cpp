@@ -2934,27 +2934,6 @@ D_CMD(ReloadGame)
     return true;
 }
 
-#ifdef UNIX
-/**
- * Some routines not available on the *nix platform.
- */
-char* strupr(char* string)
-{
-    char* ch = string;
-    for(; *ch; ch++)
-        *ch = toupper(*ch);
-    return string;
-}
-
-char* strlwr(char* string)
-{
-    char* ch = string;
-    for(; *ch; ch++)
-        *ch = tolower(*ch);
-    return string;
-}
-#endif
-
 /**
  * Prints a formatted string into a fixed-size buffer. At most @c size
  * characters will be written to the output buffer @c str. The output will

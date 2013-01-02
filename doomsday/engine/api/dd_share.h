@@ -76,12 +76,6 @@ extern "C" {
 #if UNIX
 # define stricmp strcasecmp
 # define strnicmp strncasecmp
-
-/**
- * There are manual implementations for these string handling routines:
- */
-char*           strupr(char *string);
-char*           strlwr(char *string);
 #endif
 
 int             dd_snprintf(char* str, size_t size, const char* format, ...);
