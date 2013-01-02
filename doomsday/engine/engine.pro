@@ -509,7 +509,7 @@ SOURCES += \
     src/map/bsp/superblockmap.cpp \
     src/map/bspbuilder.cpp \
     src/map/bspleaf.cpp \
-    src/map/bspnode.c \
+    src/map/bspnode.cpp \
     src/map/dam_file.c \
     src/map/dam_main.cpp \
     src/map/entitydatabase.cpp \

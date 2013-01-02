@@ -1,9 +1,7 @@
-/**
- * @file bspnode.c
- * BspNode implementation. @ingroup map
+/** @file bspnode.c Map BspNode.
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,9 +23,9 @@
 #include "de_play.h"
 #include "de_misc.h"
 
-BspNode* BspNode_New(coord_t const partitionOrigin[], coord_t const partitionDirection[])
+BspNode *BspNode_New(coord_t const partitionOrigin[], coord_t const partitionDirection[])
 {
-    BspNode* node = (BspNode*)Z_Malloc(sizeof *node, PU_MAP, 0);
+    BspNode* node = (BspNode *)Z_Malloc(sizeof *node, PU_MAP, 0);
     if(!node) Con_Error("BspNode_New: Failed on allocation of %lu bytes for new BspNode.", (unsigned long) sizeof *node);
 
     node->header.type = DMU_BSPNODE;
@@ -43,31 +41,31 @@ BspNode* BspNode_New(coord_t const partitionOrigin[], coord_t const partitionDir
     return node;
 }
 
-void BspNode_Delete(BspNode* node)
+void BspNode_Delete(BspNode *node)
 {
-    assert(node);
+    DENG_ASSERT(node);
     Z_Free(node);
 }
 
-BspNode* BspNode_SetChild(BspNode* node, int left, runtime_mapdata_header_t* child)
+BspNode *BspNode_SetChild(BspNode *node, int left, runtime_mapdata_header_t *child)
 {
-    assert(node && child != (runtime_mapdata_header_t*)node);
+    DENG_ASSERT(node && child != (runtime_mapdata_header_t *)node);
     node->children[left? LEFT:RIGHT] = child;
     return node;
 }
 
-BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxd* bounds)
+BspNode *BspNode_SetChildBounds(BspNode *node, int left, AABoxd *bounds)
 {
-    assert(node);
+    DENG_ASSERT(node);
     if(bounds)
     {
-        AABoxd* dst = &node->aaBox[left? LEFT:RIGHT];
+        AABoxd *dst = &node->aaBox[left? LEFT:RIGHT];
         V2d_CopyBox(dst->arvec2, bounds->arvec2);
     }
     else
     {
         // Clear.
-        AABoxd* dst = &node->aaBox[left? LEFT:RIGHT];
+        AABoxd *dst = &node->aaBox[left? LEFT:RIGHT];
         V2d_Set(dst->min, DDMAXFLOAT, DDMAXFLOAT);
         V2d_Set(dst->max, DDMINFLOAT, DDMINFLOAT);
     }

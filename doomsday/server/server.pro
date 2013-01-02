@@ -397,7 +397,7 @@ SOURCES += \
     $$SRC/src/map/bsp/superblockmap.cpp \
     $$SRC/src/map/bspbuilder.cpp \
     $$SRC/src/map/bspleaf.cpp \
-    $$SRC/src/map/bspnode.c \
+    $$SRC/src/map/bspnode.cpp \
     $$SRC/src/map/dam_file.c \
     $$SRC/src/map/dam_main.cpp \
     $$SRC/src/map/entitydatabase.cpp \

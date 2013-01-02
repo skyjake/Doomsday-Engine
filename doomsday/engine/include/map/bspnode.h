@@ -31,12 +31,16 @@
 
 /**
  * An infinite line of the form point + direction vectors.
+ * @ingroup map
  */
 typedef struct partition_s {
     coord_t origin[2];
     coord_t direction[2];
 } partition_t;
 
+/**
+ * @ingroup map
+ */
 typedef struct bspnode_s {
     runtime_mapdata_header_t header;
     partition_t partition;
