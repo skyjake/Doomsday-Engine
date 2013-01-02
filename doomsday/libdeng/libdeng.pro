@@ -63,6 +63,7 @@ HEADERS += \
     include/de/animator.h \
     include/de/concurrency.h \
     include/de/ddstring.h \
+    include/de/findfile.h \
     include/de/fixedpoint.h \
     include/de/garbage.h \
     include/de/libdeng.h \
@@ -104,6 +105,13 @@ SOURCES += \
     src/timer.cpp \
     src/vector1.c \
     src/writer.c
+
+win32 {
+    SOURCES += src/findfile_windows.c
+}
+else:unix {
+    SOURCES += src/findfile_unix.c
+}
 
 # Installation ---------------------------------------------------------------
 

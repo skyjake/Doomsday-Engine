@@ -175,7 +175,6 @@ DENG_HEADERS += \
     include/filesys/manifest.h \
     include/filesys/searchpath.h \
     include/filesys/sys_direc.h \
-    include/filesys/sys_findfile.h \
     include/game.h \
     include/gl/gl_defer.h \
     include/gl/gl_deferredapi.h \
@@ -369,7 +368,6 @@ win32 {
         src/windows/dd_winit.c \
         src/windows/directinput.cpp \
         src/windows/sys_console.c \
-        src/windows/sys_findfile.c \
         src/windows/joystick_win32.cpp \
         src/windows/mouse_win32.cpp
 
@@ -378,17 +376,14 @@ win32 {
 else:unix {
     # Common Unix (including Mac OS X).
     HEADERS += \
-        $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h \
-        $$DENG_UNIX_INCLUDE_DIR/sys_path.h
+        $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h
 
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
 
     SOURCES += \
         src/unix/dd_uinit.c \
         src/unix/joystick.c \
-        src/unix/sys_console.c \
-        src/unix/sys_findfile.c \
-        src/unix/sys_path.c
+        src/unix/sys_console.c
 }
 
 macx {

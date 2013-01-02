@@ -26,17 +26,23 @@
 
 void *M_Malloc(size_t size)
 {
-    return malloc(size);
+    void *p = malloc(size);
+    if(!p) Libdeng_BadAlloc();
+    return p;
 }
 
 void *M_Calloc(size_t size)
 {
-    return calloc(size, 1);
+    void *p = calloc(size, 1);
+    if(!p) Libdeng_BadAlloc();
+    return p;
 }
 
 void *M_Realloc(void *ptr, size_t size)
 {
-    return realloc(ptr, size);
+    void *p = realloc(ptr, size);
+    if(!p) Libdeng_BadAlloc();
+    return p;
 }
 
 void *M_MemDup(void const *ptr, size_t size)

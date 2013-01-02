@@ -59,7 +59,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-#include "../../../engine/include/filesys/sys_findfile.h"
+#include <de/findfile.h>
 #include "lzss.h"
 
 // MACROS ------------------------------------------------------------------
@@ -74,10 +74,10 @@
 #define FILE_CLOSE(handle)                      close(handle)
 #define FILE_READ(handle, buf, size, sz)        sz = read(handle, buf, size)
 #define FILE_WRITE(handle, buf, size, sz)       sz = write(handle, buf, size)
-#define FILE_SEARCH_STRUCT                      finddata_t
-#define FILE_FINDFIRST(filename, attrib, dta)   myfindfirst(filename, dta)
-#define FILE_FINDNEXT(dta)                      myfindnext(dta)
-#define FILE_FINDCLOSE(dta)                     myfindend(dta)
+#define FILE_SEARCH_STRUCT                      FindData
+#define FILE_FINDFIRST(filename, attrib, dta)   FindFile_FindFirst(dta, filename)
+#define FILE_FINDNEXT(dta)                      FindFile_FindNext(dta)
+#define FILE_FINDCLOSE(dta)                     FindFile_Finish(dta)
 #define FILE_ATTRIB                             attrib
 #define FILE_SIZE                               size
 #define FILE_NAME                               name

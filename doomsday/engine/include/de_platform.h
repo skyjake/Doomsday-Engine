@@ -113,8 +113,6 @@ typedef unsigned int DWORD;
 #define DIR_SEP_STR         "/"
 #define DIR_WRONG_SEP_CHAR  '\\'
 
-#include "unix/sys_path.h"
-
 #endif                          // UNIX
 
 // Initialization code.
