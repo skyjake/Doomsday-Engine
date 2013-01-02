@@ -65,7 +65,7 @@ typedef struct materialvariantspecification_s {
     {}
 
     /**
-     * Determines whether specification @a other is equal to this specifcation.
+     * Determines whether specification @a other is equal to this specification.
      *
      * @param other  The other specification.
      * @return  @c true if specifications are equal; otherwise @c false.
@@ -75,7 +75,7 @@ typedef struct materialvariantspecification_s {
     bool compare(struct materialvariantspecification_s const &other) const;
 
     /**
-     * Determines whether specification @a other is equal to this specifcation.
+     * Determines whether specification @a other is equal to this specification.
      * @see compare()
      */
     bool operator == (struct materialvariantspecification_s const &other) const {
@@ -83,7 +83,7 @@ typedef struct materialvariantspecification_s {
     }
 
     /**
-     * Determines whether specification @a other is NOT equal to this specifcation.
+     * Determines whether specification @a other is NOT equal to this specification.
      * @see compare()
      */
     bool operator != (struct materialvariantspecification_s const &other) const {

@@ -117,7 +117,7 @@ struct Materials::Instance
     /// Material variant specifications.
     VariantSpecs variantSpecs;
 
-    /// Queue of material variants caching tasks.
+    /// Queue of variant cache tasks.
     VariantCacheQueue variantCacheQueue;
 
     /// All materials in the system.
@@ -378,7 +378,7 @@ Materials::Scheme& Materials::createScheme(String name)
     if(knownScheme(name)) return scheme(name);
 
     // Create a new scheme.
-    Scheme* newScheme = new Scheme(name);
+    Scheme *newScheme = new Scheme(name);
     d->schemes.push_back(newScheme);
     return *newScheme;
 }
