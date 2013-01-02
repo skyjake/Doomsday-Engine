@@ -23,9 +23,9 @@
 
 /// All APIs exported from the executable.
 enum {
-    DE_API_DIRECT_DATA_ACCESS_v1 = 100,
-    DE_API_URI_v1                = 200,
-    DE_API_WAD_v1                = 300
+    DE_API_DIRECT_DATA_ACCESS_v1 = 100,     // 1.10
+    DE_API_URI_v1                = 200,     // 1.10
+    DE_API_WAD_v1                = 300      // 1.10
 };
 
 /**
