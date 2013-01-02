@@ -21,7 +21,7 @@
 #ifndef DOOMSDAY_DEF_H
 #define DOOMSDAY_DEF_H
 
-#include "de_api.h"
+#include "api_base.h"
 
 /// @addtogroup defs
 ///@{
@@ -29,9 +29,14 @@
 DENG_API_TYPEDEF(Def) // v1
 {
     de_api_t api;
+
     int (*Get)(int type, const char* id, void* out);
     int (*Set)(int type, int index, int value, const void* ptr);
     int (*EvalFlags)(char* flags);
+
+    // Functions related to DED database manipulation (deprecated):
+    int (*DED_AddValue)(void *ded, char const* id);
+    void (*DED_NewEntries)(void** ptr, void* dedCount, size_t elemSize, int count);
 }
 DENG_API_T(Def);
 

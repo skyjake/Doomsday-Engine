@@ -42,7 +42,7 @@
 #include "dd_version.h"
 #include "dd_types.h"
 #include "dd_maptypes.h"
-#include "dd_wad.h"
+#include "api_wad.h"
 #include "dd_gl.h"
 #include "dd_ui.h"
 #include "dd_infine.h"

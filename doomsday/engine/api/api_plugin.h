@@ -31,7 +31,7 @@
 ///@{
 
 #include "dd_version.h"
-#include "de_api.h"
+#include "api_base.h"
 
 #ifdef __cplusplus
 extern "C" {

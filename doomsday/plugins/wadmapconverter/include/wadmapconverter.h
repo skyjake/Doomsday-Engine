@@ -27,13 +27,12 @@
 #define __WADMAPCONVERTER_H__
 
 #include "doomsday.h"
-#include "dd_plugin.h"
-
 #include "id1map.h"
 
 extern Id1Map* DENG_PLUGIN_GLOBAL(map);
 
-DENG_USING_API(uri, Uri);
-DENG_USING_API(wad, W);
+DENG_USING_API(Plug);
+DENG_USING_API(Uri);
+DENG_USING_API(W);
 
 #endif /* end of include guard: __WADMAPCONVERTER_H__ */

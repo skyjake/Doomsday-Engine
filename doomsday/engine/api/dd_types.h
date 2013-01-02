@@ -103,6 +103,6 @@ struct material_s;
 #include <de/fixedpoint.h>
 #include "resourceclass.h"
 #include "filetype.h"
-#include "uri.h" // C wrapper for de::Uri
+#include "api_uri.h"
 
 #endif /* ENGINE_TYPES_H */

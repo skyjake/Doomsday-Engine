@@ -21,7 +21,7 @@
 #ifndef LIBDENG_RESOURCE_MATERIALS_H
 #define LIBDENG_RESOURCE_MATERIALS_H
 
-#include "uri.h"
+#include "api_uri.h"
 #include "def_data.h"
 #include "material.h"
 

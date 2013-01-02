@@ -30,7 +30,7 @@
 #define LIBDENG_MAIN_H
 
 #include "dd_types.h"
-#include "dd_plugin.h"
+#include "api_plugin.h"
 #ifndef __cplusplus // Kludge: this isn't yet C++ compatible
 #  include "resource/textures.h"
 #endif

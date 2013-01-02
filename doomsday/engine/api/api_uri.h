@@ -23,7 +23,7 @@
 #ifndef LIBDENG_API_URI_H
 #define LIBDENG_API_URI_H
 
-#include "de_api.h"
+#include "api_base.h"
 #include "resourceclass.h"
 #include <de/str.h>
 #include <de/reader.h>

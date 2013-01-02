@@ -83,8 +83,9 @@ struct font_s;
 #endif
 
 #include "dd_share.h"
-#include "dd_plugin.h"
-#include "de_def.h"
+#include "api_plugin.h"
+#include "api_def.h"
+#include "api_filesys.h"
 
 #include "filehandle.h"
 #include <de/memoryzone.h>
@@ -208,26 +209,6 @@ materialid_t DD_MaterialForTextureUri(Uri const *textureUri);
     // Base: Input.
     void            DD_ClearKeyRepeaters(void);
     int             DD_GetKeyCode(const char* name);
-///@}
-
-/// @addtogroup fs
-///@{
-    // Base: File system.
-    int             F_Access(const char* path);
-    int             F_FileExists(const char* path);
-    unsigned int    F_GetLastModified(const char* path);
-    boolean         F_MakePath(const char* path);
-
-    size_t          M_ReadFile(const char* path, char** buffer);
-    boolean         M_WriteFile(const char* path, const char* source, size_t length);
-
-    // Base: File system path/name utilities.
-    void            F_FileName(ddstring_t* dst, const char* src);
-    void            F_ExtractFileBase(char* dst, const char* path, size_t len);
-    const char*     F_FindFileExtension(const char* path);
-
-    boolean         F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
-    const char*     F_PrettyPath(const char* path);
 ///@}
 
 //------------------------------------------------------------------------

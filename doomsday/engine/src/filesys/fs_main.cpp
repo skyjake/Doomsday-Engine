@@ -23,6 +23,10 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_FILESYS
+#include "api_filesys.h"
+#include "m_misc.h"
+
 #include <ctime>
 
 #include <QDir>
@@ -1717,3 +1721,20 @@ uint F_FindPathInList(resourceclassid_t classId, char const* searchPaths,
 
     return 0; // Not found.
 }
+
+DENG_DECLARE_API(F) =
+{
+    { DE_API_FILE_SYSTEM_v1 },
+
+    F_Access,
+    F_FileExists,
+    F_GetLastModified,
+    F_MakePath,
+    F_FileName,
+    F_ExtractFileBase,
+    F_FindFileExtension,
+    F_TranslatePath,
+    F_PrettyPath,
+    M_ReadFile,
+    M_WriteFile
+};

@@ -39,7 +39,7 @@
 #include "de_resource.h"
 
 #define DENG_NO_API_MACROS_DEFINITIONS
-#include "de_def.h"
+#include "api_def.h"
 
 #include "map/r_world.h"
 
@@ -2151,7 +2151,13 @@ D_CMD(ListMobjs)
 DENG_DECLARE_API(Def) =
 {
     { DE_API_DEFINITIONS_v1 },
+
     Def_Get,
     Def_Set,
-    Def_EvalFlags
+    Def_EvalFlags,
+
+    // TODO: These should not be part of the public API
+    // (they manipulate internal data structures; hence the casting)
+    reinterpret_cast<int (*)(void *, char const *)>(DED_AddValue),
+    reinterpret_cast<void (*)(void **, void *, size_t, int)>(DED_NewEntries)
 };

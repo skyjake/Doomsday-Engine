@@ -76,22 +76,24 @@ else {
 # Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
+    api/api_base.h \
+    api/api_def.h \
+    api/api_filesys.h \
+    api/api_plugin.h \
+    api/api_uri.h \
+    api/api_wad.h \
     api/busytask.h \
     api/dd_api.h \
     api/dd_fontrenderer.h \
     api/dd_gl.h \
     api/dd_infine.h \
     api/dd_maptypes.h \
-    api/dd_plugin.h \
     api/dd_share.h \
     api/dd_types.h \
     api/dd_ui.h \
     api/dd_vectorgraphic.h \
     api/dd_version.h \
-    api/dd_wad.h \
     api/dd_world.h \
-    api/de_api.h \
-    api/de_def.h \
     api/def_share.h \
     api/dengproject.h \
     api/doomsday.h \
@@ -102,8 +104,7 @@ DENG_API_HEADERS = \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
-    api/thinker.h \
-    api/uri.h
+    api/thinker.h
 
 # Convenience headers.
 DENG_HEADERS += \

@@ -21,8 +21,8 @@
  */
 
 #define DENG_NO_API_MACROS_URI // functions defined here
+#include "api_uri.h"
 
-#include "uri.h"
 #include "uri.hh"
 #include "dualstring.h"
 #include <de/writer.h>

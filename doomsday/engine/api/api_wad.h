@@ -28,7 +28,7 @@
 #ifndef LIBDENG_API_WAD_H
 #define LIBDENG_API_WAD_H
 
-#include "de_api.h"
+#include "api_base.h"
 #include "dd_share.h"
 
 DENG_API_TYPEDEF(W) // v1

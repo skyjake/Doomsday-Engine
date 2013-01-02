@@ -28,7 +28,7 @@
 
 #include <ctime>
 
-#include "dd_wad.h"
+#include "api_wad.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"

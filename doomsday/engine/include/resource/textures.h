@@ -21,7 +21,7 @@
 #ifndef LIBDENG_RESOURCE_TEXTURES_H
 #define LIBDENG_RESOURCE_TEXTURES_H
 
-#include "uri.h"
+#include "api_uri.h"
 
 #ifdef __cplusplus
 

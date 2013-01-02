@@ -70,19 +70,23 @@ else {
 SRC = ../engine
 
 DENG_API_HEADERS = \
+    $$SRC/api/api_base.h \
+    $$SRC/api/api_def.h \
+    $$SRC/api/api_filesys.h \
+    $$SRC/api/api_plugin.h \
+    $$SRC/api/api_uri.h \
+    $$SRC/api/api_wad.h \
     $$SRC/api/busytask.h \
     $$SRC/api/dd_api.h \
     $$SRC/api/dd_fontrenderer.h \
     $$SRC/api/dd_gl.h \
     $$SRC/api/dd_infine.h \
     $$SRC/api/dd_maptypes.h \
-    $$SRC/api/dd_plugin.h \
     $$SRC/api/dd_share.h \
     $$SRC/api/dd_types.h \
     $$SRC/api/dd_ui.h \
     $$SRC/api/dd_vectorgraphic.h \
     $$SRC/api/dd_version.h \
-    $$SRC/api/dd_wad.h \
     $$SRC/api/dd_world.h \
     $$SRC/api/def_share.h \
     $$SRC/api/dengproject.h \
@@ -94,8 +98,7 @@ DENG_API_HEADERS = \
     $$SRC/api/sys_audiod.h \
     $$SRC/api/sys_audiod_mus.h \
     $$SRC/api/sys_audiod_sfx.h \
-    $$SRC/api/thinker.h \
-    $$SRC/api/uri.h
+    $$SRC/api/thinker.h
 
 # Convenience headers.
 DENG_HEADERS += \
