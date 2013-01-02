@@ -24,6 +24,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_BASE // functions defined here
+
 #ifdef WIN32
 #  define _WIN32_DCOM
 #  include <objbase.h>
@@ -2939,3 +2941,13 @@ D_CMD(ReloadGame)
     DD_ChangeGame(games->currentGame(), true/* allow reload */);
     return true;
 }
+
+DENG_DECLARE_API(Base) =
+{
+    { DE_API_BASE_v1 },
+
+    DD_GetInteger,
+    DD_SetInteger,
+    DD_GetVariable,
+    DD_SetVariable
+};

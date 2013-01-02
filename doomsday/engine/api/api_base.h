@@ -21,8 +21,11 @@
 #ifndef DOOMSDAY_API_BASE_H
 #define DOOMSDAY_API_BASE_H
 
+#include <de/libdeng.h>
+
 /// All APIs exported from the executable.
 enum {
+    DE_API_BASE_v1               = 0,       // 1.10
     DE_API_DEFINITIONS_v1        = 100,     // 1.10
     DE_API_DIRECT_DATA_ACCESS_v1 = 200,     // 1.10
     DE_API_FILE_SYSTEM_v1        = 300,     // 1.10
@@ -50,5 +53,28 @@ typedef struct de_api_s {
     case Ident: \
         memcpy(&_api_##Name, api, sizeof(_api_##Name)); \
         break;
+
+// The Base API.
+DENG_API_TYPEDEF(Base) // v1
+{
+    de_api_t api;
+
+    int (*GetInteger)(int ddvalue);
+    void (*SetInteger)(int ddvalue, int parm);
+    void* (*GetVariable)(int ddvalue);
+    void (*SetVariable)(int ddvalue, void* ptr);
+}
+DENG_API_T(Base);
+
+#ifndef DENG_NO_API_MACROS_BASE
+#define DD_GetInteger   _api_Base.GetInteger
+#define DD_SetInteger   _api_Base.SetInteger
+#define DD_GetVariable  _api_Base.GetVariable
+#define DD_SetVariable  _api_Base.SetVariable
+#endif
+
+#ifdef __DOOMSDAY__
+DENG_USING_API(Base);
+#endif
 
 #endif // DOOMSDAY_API_BASE_H

@@ -141,11 +141,6 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
  */
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn);
 
-int DD_GetInteger(int ddvalue);
-void DD_SetInteger(int ddvalue, int parm);
-void DD_SetVariable(int ddvalue, void* ptr);
-void* DD_GetVariable(int ddvalue);
-
 ddplayer_t* DD_GetPlayer(int number);
 
 void DD_CreateResourceClasses();

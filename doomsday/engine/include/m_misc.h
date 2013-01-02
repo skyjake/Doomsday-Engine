@@ -43,10 +43,6 @@ struct aaboxd_s;
 
 #define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 
-// File system utility routines.
-size_t M_ReadFile(char const* path, char** buffer);
-boolean M_WriteFile(char const* path, const char* source, size_t length);
-
 /**
  * Reads x bits from the source stream and writes them to out.
  *

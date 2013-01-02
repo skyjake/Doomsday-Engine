@@ -34,39 +34,9 @@ extern "C" {
 
 void F_FileDir(ddstring_t* dst, const ddstring_t* str);
 
-void F_FileName(ddstring_t* dst, const char* src);
-
 void F_FileNameAndExtension(ddstring_t* dst, const char* src);
 
-const char* F_FindFileExtension(const char* path);
-
 void F_ExtractFileBase2(char* dest, const char* path, size_t len, int ignore);
-void F_ExtractFileBase(char* dest, const char* path, size_t len);
-
-/**
- * Checks if a file exists in the native file system.
- *
- * @param file  File to check existence of. Relative path directives are expanded
- *              automatically: '>' '}' (plus '~' on Unix-based platforms).
- *
- * @return @c 0 if the path points to a readable file on the local file system.
- */
-int F_FileExists(const char* path);
-
-/**
- * @return  The time when the file/directory was last modified, as seconds since
- *          the Epoch else zero if @a path is not found.
- *
- * @attention This only works on native paths.
- */
-uint F_GetLastModified(const char* path);
-
-/**
- * Check that the given directory exists. If it doesn't, create it.
- *
- * @return  @c true if successful.
- */
-boolean F_MakePath(const char* path);
 
 /**
  * Converts directory slashes to our internal '/'.
@@ -160,15 +130,6 @@ boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src);
 boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src);
 
 boolean F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src);
-
-/// @todo Refactor me away (duplication).
-boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
-
-/**
- * @warning Not thread-safe!
- * @return  A prettier copy of the original path.
- */
-const char* F_PrettyPath(const char* path);
 
 /**
  * Write the data associated with the specified lump index to @a fileName.

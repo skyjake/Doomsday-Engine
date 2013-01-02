@@ -58,6 +58,9 @@
 
 #include "lzss.h"
 
+#undef M_WriteFile
+#undef M_ReadFile
+
 // MACROS ------------------------------------------------------------------
 
 #define SLOPERANGE      2048
@@ -1075,7 +1078,7 @@ int M_ScreenShot(const char* name, int bits)
 
     Str_Init(&fullName);
     Str_Set(&fullName, name);
-    if(!F_FindFileExtension(name))
+    if(!_api_F.FindFileExtension(name))
     {
         Str_Append(&fullName, ".png"); // Default format.
     }

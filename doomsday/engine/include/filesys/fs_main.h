@@ -595,8 +595,6 @@ boolean F_CheckFileId(char const *nativePath);
 
 int F_LumpCount(void);
 
-int F_Access(char const *nativePath);
-
 void F_Index(struct file1_s *file);
 
 void F_Deindex(struct file1_s *file);

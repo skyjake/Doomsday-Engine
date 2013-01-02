@@ -83,6 +83,7 @@ struct font_s;
 #endif
 
 #include "dd_share.h"
+#include "api_base.h"
 #include "api_plugin.h"
 #include "api_def.h"
 #include "api_filesys.h"
@@ -189,10 +190,6 @@ void DD_AddGameResource(gameid_t game, resourceclassid_t classId, int fFlags,
  */
 boolean DD_GameInfo(GameInfo* info);
 
-    int _DECALL     DD_GetInteger(int ddvalue);
-    void            DD_SetInteger(int ddvalue, int parm);
-    void            DD_SetVariable(int ddvalue, void* ptr);
-    void*           DD_GetVariable(int ddvalue);
     ddplayer_t*     DD_GetPlayer(int number);
 ///@}
 

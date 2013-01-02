@@ -1,4 +1,4 @@
-/** @file api_filesys.h
+/** @file api_filesys.h Public API of the file system.
  * Primary header file for the Doomsday Engine Public API
  *
  * @todo Break this header file up into group-specific ones.
@@ -34,14 +34,41 @@ DENG_API_TYPEDEF(F)
     de_api_t api;
 
     int             (*Access)(const char* path);
+
+    /**
+     * Checks if a file exists in the native file system.
+     *
+     * @param file  File to check existence of. Relative path directives are expanded
+     *              automatically: '>' '}' (plus '~' on Unix-based platforms).
+     *
+     * @return @c 0 if the path points to a readable file on the local file system.
+     */
     int             (*FileExists)(const char* path);
+
+    /**
+     * @return  The time when the file/directory was last modified, as seconds since
+     *          the Epoch else zero if @a path is not found.
+     *
+     * @attention This only works on native paths.
+     */
     unsigned int    (*GetLastModified)(const char* path);
+
+    /**
+     * Check that the given directory exists. If it doesn't, create it.
+     *
+     * @return  @c true if successful.
+     */
     boolean         (*MakePath)(const char* path);
 
     void            (*FileName)(Str* dst, const char* src);
     void            (*ExtractFileBase)(char* dst, const char* path, size_t len);
     const char*     (*FindFileExtension)(const char* path);
     boolean         (*TranslatePath)(ddstring_t* dst, const Str* src);
+
+    /**
+     * @warning Not thread-safe!
+     * @return  A prettier copy of the original path.
+     */
     const char*     (*PrettyPath)(const char* path);
 
     size_t          (*ReadFile)(const char* path, char** buffer);
