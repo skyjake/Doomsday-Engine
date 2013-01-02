@@ -130,30 +130,134 @@ typedef struct variantcachequeuenode_s {
 
 typedef VariantCacheQueueNode VariantCacheQueue;
 
-typedef struct materialanim_frame_s {
-    material_t* material;
-    ushort tics;
-    ushort random;
-} MaterialAnimFrame;
+class MaterialAnim
+{
+public:
+    /**
+     * One frame in the animation.
+     */
+    class Frame
+    {
+    public:
+        Frame(material_t &mat, ushort _tics, ushort _randomTics)
+            : material_(&mat), tics_(_tics), randomTics_(_randomTics)
+        {}
 
-typedef struct materialanim_s {
-    int id;
-    int flags;
+        /**
+         * Returns the material of the frame.
+         */
+        material_t &material() const {
+            return *material_;
+        }
+
+        /**
+         * Returns the duration of the frame in (sharp) tics.
+         */
+        ushort tics() const {
+            return tics_;
+        }
+
+        /**
+         * Returns the random part of the frame duration in (sharp) tics.
+         */
+        ushort randomTics() const {
+            return randomTics_;
+        }
+
+    private:
+        material_t *material_;
+        ushort tics_;
+        ushort randomTics_;
+    };
+
+    /// All frames in the animation.
+    typedef QList<Frame> Frames;
+
+public:
+    /// An invalid frame reference was specified. @ingroup errors
+    DENG2_ERROR(InvalidFrameError);
+
+public:
+    MaterialAnim(int id, int flags);
+
+    /**
+     * Progress the animation one frame forward.
+     */
+    void animate();
+
+    /**
+     * Restart the animation over from the first frame.
+     */
+    void reset();
+
+    /**
+     * Returns the animation's unique identifier.
+     */
+    int id() const;
+
+    /**
+     * Returns the animation's @ref animationGroupFlags.
+     */
+    int flags() const;
+
+    /**
+     * Returns the total number of frames in the animation.
+     */
+    int frameCount() const;
+
+    /**
+     * Lookup a frame in the animation by number.
+     *
+     * @param number  Frame number to lookup.
+     * @return  Found animation frame.
+     */
+    Frame &frame(int number);
+
+    /**
+     * Extend the animation by adding a new frame to the end of the sequence.
+     *
+     * @param mat  Material for the frame.
+     * @param tics  Duration of the frame in (sharp) tics.
+     * @param randomTics  Random part of the frame duration in (sharp) tics.
+     */
+    void addFrame(material_t &mat, int tics, int randomTics);
+
+    /**
+     * Returns @c true iff @a mat is used by one or more frames in the animation.
+     *
+     * @param mat  Material to search for.
+     */
+    bool hasFrameForMaterial(material_t const &mat) const;
+
+    /**
+     * Provides access to the frame list for efficient traversal.
+     */
+    Frames const &allFrames() const;
+
+private:
+    /// Unique identifier.
+    int id_;
+
+    /// @ref animationGroupFlags.
+    int flags_;
+
+    /// Current frame index.
     int index;
+
     int maxTimer;
     int timer;
-    int count;
-    MaterialAnimFrame* frames;
-} MaterialAnim;
 
-static void animateGroup(MaterialAnim *group);
+    /// All animation frames.
+    Frames frames;
+};
+
 static int compareVariantSpecifications(materialvariantspecification_t const &a,
                                         materialvariantspecification_t const &b);
 
 struct Materials::Instance
 {
     int numgroups;
-    MaterialAnim* groups;
+    MaterialAnim *groups;
 
     VariantSpecificationList *variantSpecs;
 
@@ -248,21 +352,11 @@ struct Materials::Instance
         return &groups[number];
     }
 
-    bool isInAnimGroup(MaterialAnim const &group, material_t const &mat)
-    {
-        for(int i = 0; i < group.count; ++i)
-        {
-            if(group.frames[i].material == &mat)
-                return true;
-        }
-        return false;
-    }
-
     void animateAllGroups()
     {
         for(int i = 0; i < numgroups; ++i)
         {
-            animateGroup(&groups[i]);
+            groups[i].animate();
         }
     }
 
@@ -744,14 +838,15 @@ void Materials::cache(material_t &mat, materialvariantspecification_t const &spe
 
     if(cacheGroup && Material_IsGroupAnimated(&mat))
     {
-        // Material belongs in one or more animgroups; precache the group.
+        // Material belongs in one or more animgroups; cache the group.
         for(int i = 0; i < d->numgroups; ++i)
         {
-            if(!d->isInAnimGroup(d->groups[i], mat)) continue;
+            MaterialAnim &group = d->groups[i];
+            if(!group.hasFrameForMaterial(mat)) continue;
 
-            for(int k = 0; k < d->groups[i].count; ++k)
+            DENG2_FOR_EACH_CONST(MaterialAnim::Frames, k, group.allFrames())
             {
-                cache(*d->groups[i].frames[k].material, spec, smooth, false /* do not cache groups */);
+                cache(k->material(), spec, smooth, false /* do not cache groups */);
             }
         }
     }
@@ -968,7 +1063,7 @@ bool Materials::isMaterialInAnimGroup(material_t *mat, int groupNum)
 {
     MaterialAnim *group = d->getAnimGroup(groupNum);
     if(!group) return false;
-    return d->isInAnimGroup(*group, *mat);
+    return group->hasFrameForMaterial(*mat);
 }
 
 bool Materials::hasDecorations(material_t *mat)
@@ -983,22 +1078,21 @@ bool Materials::hasDecorations(material_t *mat)
 
     if(Material_IsGroupAnimated(mat))
     {
-        int g, i, numGroups = animGroupCount();
-        for(g = 0; g < numGroups; ++g)
+        for(int i = 0; i < d->numgroups; ++i)
         {
-            MaterialAnim *group = &d->groups[g];
+            MaterialAnim &group = d->groups[i];
 
             // Precache groups don't apply.
-            if(isPrecacheAnimGroup(g)) continue;
+            if(group.flags() & AGF_PRECACHE) continue;
 
             // Is this material in this group?
-            if(!isMaterialInAnimGroup(mat, g)) continue;
+            if(!group.hasFrameForMaterial(*mat)) continue;
 
             // If any material in this group has decorations then this
             // material is considered to be decorated also.
-            for(i = 0; i < group->count; ++i)
+            DENG2_FOR_EACH_CONST(MaterialAnim::Frames, k, group.allFrames())
             {
-                if(Materials::decorationDef(group->frames[i].material)) return true;
+                if(decorationDef(&k->material())) return true;
             }
         }
     }
@@ -1015,15 +1109,11 @@ int Materials::newAnimGroup(int flags)
     // Allocating one by one is inefficient, but it doesn't really matter.
     d->groups = (MaterialAnim *) Z_Realloc(d->groups, sizeof(*d->groups) * (d->numgroups + 1), PU_APPSTATIC);
 
-    // Init the new group.
-    MaterialAnim *group = &d->groups[d->numgroups];
-    std::memset(group, 0, sizeof(*group));
-
-    // The group number is (index + 1).
-    group->id = ++d->numgroups;
-    group->flags = flags;
-
-    return group->id;
+    // Init the new group; the group id is (index + 1)
+    void *region = (void *) &d->groups[d->numgroups];
+    int groupId = ++d->numgroups;
+    new (region) MaterialAnim(groupId, flags);
+    return groupId;
 }
 
 void Materials::clearAnimGroups()
@@ -1033,7 +1123,7 @@ void Materials::clearAnimGroups()
     for(int i = 0; i < d->numgroups; ++i)
     {
         MaterialAnim *group = &d->groups[i];
-        Z_Free(group->frames);
+        group->~MaterialAnim();
     }
 
     Z_Free(d->groups); d->groups = 0;
@@ -1061,19 +1151,64 @@ void Materials::addAnimGroupFrame(int groupNum, struct material_s *mat, int tics
     Material_SetGroupAnimated(mat, true);
 
     // Allocate a new animframe.
-    group->frames = (MaterialAnimFrame *)Z_Realloc(group->frames, sizeof(*group->frames) * ++group->count, PU_APPSTATIC);
-
-    MaterialAnimFrame *frame = &group->frames[group->count - 1];
-    frame->material = mat;
-    frame->tics     = tics;
-    frame->random   = randomTics;
+    group->addFrame(*mat, tics, randomTics);
 }
 
 bool Materials::isPrecacheAnimGroup(int groupNum)
 {
     MaterialAnim *group = d->getAnimGroup(groupNum);
     if(!group) return false;
-    return ((group->flags & AGF_PRECACHE) != 0);
+    return ((group->flags() & AGF_PRECACHE) != 0);
+}
+
+MaterialAnim::MaterialAnim(int _id, int _flags)
+    : id_(_id), flags_(_flags),
+      index(0), maxTimer(0), timer(0)
+{}
+
+int MaterialAnim::id() const
+{
+    return id_;
+}
+
+int MaterialAnim::flags() const
+{
+    return flags_;
+}
+
+int MaterialAnim::frameCount() const
+{
+    return frames.count();
+}
+
+MaterialAnim::Frame &MaterialAnim::frame(int number)
+{
+    if(number < 0 || number >= frameCount())
+    {
+        /// @throw InvalidFrameError Attempt to access an invalid frame.
+        throw InvalidFrameError("MaterialAnim::frame", QString("Invalid frame #%1, valid range [0..%2)").arg(number).arg(frameCount()));
+    }
+    return frames[number];
+}
+
+void MaterialAnim::addFrame(material_t &mat, int tics, int randomTics)
+{
+    frames.push_back(Frame(mat, tics, randomTics));
+}
+
+bool MaterialAnim::hasFrameForMaterial(material_t const &mat) const
+{
+    DENG2_FOR_EACH_CONST(Frames, i, frames)
+    {
+        if(&i->material() == &mat)
+            return true;
+    }
+    return false;
+}
+
+MaterialAnim::Frames const &MaterialAnim::allFrames() const
+{
+    return frames;
 }
 
 static void setVariantTranslation(MaterialVariant &variant, material_t *current, material_t *next)
@@ -1091,62 +1226,59 @@ typedef struct {
     material_t *current, *next;
 } setmaterialtranslationworker_parameters_t;
 
-static int setVariantTranslationWorker(struct materialvariant_s *_variant, void *parameters)
+static int setVariantTranslationWorker(struct materialvariant_s *variant, void *parameters)
 {
     setmaterialtranslationworker_parameters_t *p = (setmaterialtranslationworker_parameters_t *) parameters;
-    setVariantTranslation(reinterpret_cast<MaterialVariant &>(*_variant), p->current, p->next);
+    setVariantTranslation(reinterpret_cast<MaterialVariant &>(*variant), p->current, p->next);
     return 0; // Continue iteration.
 }
 
-static int setVariantTranslationPointWorker(struct materialvariant_s *variant, void* parameters)
+static int setVariantTranslationPointWorker(struct materialvariant_s *variant, void *parameters)
 {
     DENG2_ASSERT(parameters);
     reinterpret_cast<MaterialVariant *>(variant)->setTranslationPoint(*(float *)parameters);
     return 0; // Continue iteration.
 }
 
-static void animateGroup(MaterialAnim *group)
+void MaterialAnim::animate()
 {
     // The Precache groups are not intended for animation.
-    if((group->flags & AGF_PRECACHE) || !group->count) return;
+    if((flags_ & AGF_PRECACHE) || frames.isEmpty()) return;
 
-    if(--group->timer <= 0)
+    if(--timer <= 0)
     {
         // Advance to next frame.
-        group->index = (group->index + 1) % group->count;
-        int timer = group->frames[group->index].tics;
+        index = (index + 1) % frames.count();
+        Frame const &nextFrame = frames[index];
+        int newTimer = nextFrame.tics();
 
-        if(group->frames[group->index].random)
+        if(nextFrame.randomTics())
         {
-            timer += int(RNG_RandByte()) % (group->frames[group->index].random + 1);
+            newTimer += int(RNG_RandByte()) % (nextFrame.randomTics() + 1);
         }
-        group->timer = group->maxTimer = timer;
+        timer = maxTimer = newTimer;
 
         // Update translations.
-        for(int i = 0; i < group->count; ++i)
+        for(int i = 0; i < frames.count(); ++i)
         {
-            material_t *real = group->frames[i].material;
             setmaterialtranslationworker_parameters_t params;
 
-            params.current = group->frames[(group->index + i    ) % group->count].material;
-            params.next    = group->frames[(group->index + i + 1) % group->count].material;
-            Material_IterateVariants(real, setVariantTranslationWorker, &params);
+            params.current = &frames[(index + i    ) % frames.count()].material();
+            params.next    = &frames[(index + i + 1) % frames.count()].material();
+            Material_IterateVariants(&frames[i].material(), setVariantTranslationWorker, &params);
 
             // Surfaces using this material may need to be updated.
-            R_UpdateMapSurfacesOnMaterialChange(real);
+            R_UpdateMapSurfacesOnMaterialChange(&frames[i].material());
 
             // Just animate the first in the sequence?
-            if(group->flags & AGF_FIRST_ONLY) break;
+            if(flags_ & AGF_FIRST_ONLY) break;
         }
         return;
     }
 
     // Update the interpolation point of animated group members.
-    for(int i = 0; i < group->count; ++i)
+    DENG2_FOR_EACH_CONST(Frames, i, frames)
     {
-        material_t *mat = group->frames[i].material;
-        float interp;
-
         /*ded_material_t *def = Material_Definition(mat);
         if(def && def->layers[0].stageCount.num > 1)
         {
@@ -1155,20 +1287,34 @@ static void animateGroup(MaterialAnim *group)
                 continue; // Animated elsewhere.
         }*/
 
-        if(group->flags & AGF_SMOOTH)
+        float interp;
+        if(flags_ & AGF_SMOOTH)
         {
-            interp = 1 - group->timer / (float) group->maxTimer;
+            interp = 1 - timer / float( maxTimer );
         }
         else
         {
             interp = 0;
         }
 
-        Material_IterateVariants(mat, setVariantTranslationPointWorker, &interp);
+        Material_IterateVariants(&i->material(), setVariantTranslationPointWorker, &interp);
 
         // Just animate the first in the sequence?
-        if(group->flags & AGF_FIRST_ONLY) break;
+        if(flags_ & AGF_FIRST_ONLY) break;
     }
+}
+
+void MaterialAnim::reset()
+{
+    // The Precache groups are not intended for animation.
+    if((flags_ & AGF_PRECACHE) || frames.isEmpty()) return;
+
+    timer = 0;
+    maxTimer = 1;
+
+    // The anim group should start from the first step using the
+    // correct timings.
+    index = frames.count() - 1;
 }
 
 static int resetVariantGroupAnimWorker(struct materialvariant_s *mat, void* /*parameters*/)
@@ -1184,18 +1330,10 @@ void Materials::resetAnimGroups()
         Material_IterateVariants(node->mat, resetVariantGroupAnimWorker, NULL);
     }
 
-    MaterialAnim* group = d->groups;
+    MaterialAnim *group = d->groups;
     for(int i = 0; i < d->numgroups; ++i, group++)
     {
-        // The Precache groups are not intended for animation.
-        if((group->flags & AGF_PRECACHE) || !group->count) continue;
-
-        group->timer = 0;
-        group->maxTimer = 1;
-
-        // The anim group should start from the first step using the
-        // correct timings.
-        group->index = group->count - 1;
+        group->reset();
     }
 
     // This'll get every group started on the first step.
