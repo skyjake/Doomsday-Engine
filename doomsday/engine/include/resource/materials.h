@@ -72,12 +72,18 @@ namespace de {
         /// Material system subspace schemes.
         typedef QList<Scheme*> Schemes;
 
+        /// Material animation groups.
+        typedef QList<MaterialAnim> AnimGroups;
+
     public:
         /// The referenced texture was not found. @ingroup errors
         DENG2_ERROR(NotFoundError);
 
         /// An unknown scheme was referenced. @ingroup errors
         DENG2_ERROR(UnknownSchemeError);
+
+        /// An unknown animation group was referenced. @ingroup errors
+        DENG2_ERROR(UnknownAnimGroupError);
 
     public:
         /**
@@ -310,42 +316,37 @@ namespace de {
         MaterialBind *toMaterialBind(materialid_t materialId);
 
         /**
-         * Returns the total number of animation/precache groups in the collection.
+         * Lookup an animation group by unique @a number.
          */
-        int animGroupCount();
-
-        /**
-         * To be called to reset all animation groups back to their initial state.
-         */
-        void resetAnimGroups();
-
-        /**
-         * To be called to destroy all animation groups when they are no longer needed.
-         */
-        void clearAnimGroups();
+        MaterialAnim &animGroup(int number) const;
 
         /**
          * Create a new animation group.
-         * @return  Logical (unique) identifier reference associated with the new group.
+         * @return  Unique identifier associated with the new group.
          */
         int newAnimGroup(int flags);
 
         /**
-         * Append a new @a material frame to the identified @a animGroupNum.
-         *
-         * @param animGroupNum  Logical identifier reference to the group being modified.
-         * @param material      Material frame to be inserted into the group.
-         * @param tics          Base duration of the new frame in tics.
-         * @param randomTics    Extra frame duration in tics (randomized on each cycle).
+         * To be called to reset all animation groups back to their initial state.
          */
-        void addAnimGroupFrame(int animGroupNum, material_t &material, int tics, int randomTics);
+        void resetAllAnimGroups();
 
-        /// @return  @c true iff @a material is linked to the identified @a animGroupNum.
-        bool isMaterialInAnimGroup(material_t &material, int animGroupNum);
+        /**
+         * To be called to destroy all animation groups when they are no longer needed.
+         */
+        void clearAllAnimGroups();
 
-        /// @todo Refactor; does not fit the current design.
-        /// @return  @c true iff @a animGroupNum is a special precache group.
-        bool isPrecacheAnimGroup(int animGroupNum);
+        /**
+         * Provides access to the list of animation groups for efficient traversal.
+         */
+        AnimGroups const &allAnimGroups() const;
+
+        /**
+         * Returns the total number of animation/precache groups in the collection.
+         */
+        inline int animGroupCount() const {
+            return allAnimGroups().count();
+        }
 
     private:
         struct Instance;

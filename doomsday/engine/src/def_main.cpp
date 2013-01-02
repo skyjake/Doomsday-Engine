@@ -569,15 +569,16 @@ ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isC
                  */
                 if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
                 {
-                    int g, numGroups = App_Materials()->animGroupCount();
-
-                    for(g = 0; g < numGroups; ++g)
+                    Materials::AnimGroups const &groups = App_Materials()->allAnimGroups();
+                    DENG2_FOR_EACH_CONST(Materials::AnimGroups, k, groups)
                     {
-                        if(App_Materials()->isPrecacheAnimGroup(g))
-                            continue; // Precache groups don't apply.
+                        MaterialAnim const &group = *k;
 
-                        if(App_Materials()->isMaterialInAnimGroup(*defMat, g) &&
-                           App_Materials()->isMaterialInAnimGroup(*mat, g))
+                        // Precache groups do not apply.
+                        if(group.flags() & AGF_PRECACHE) continue;
+
+                        if(group.hasFrameForMaterial(*defMat) &&
+                           group.hasFrameForMaterial(*mat))
                         {
                             // Both are in this group! This def will do.
                             return def;
@@ -1432,13 +1433,13 @@ static void initAnimGroup(ded_group_t *def)
         {
             material_t *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(gm->material)).material();
 
-            // Only create a group when the first texture is found.
+            // Only create the group once the first texture has been found.
             if(groupNumber == -1)
             {
                 groupNumber = App_Materials()->newAnimGroup(def->flags);
             }
 
-            App_Materials()->addAnimGroupFrame(groupNumber, *mat, gm->tics, gm->randomTics);
+            App_Materials()->animGroup(groupNumber).addFrame(*mat, gm->tics, gm->randomTics);
         }
         catch(Materials::NotFoundError const &er)
         {
@@ -1615,7 +1616,7 @@ void Def_PostInit(void)
     }
 
     // Animation groups.
-    App_Materials()->clearAnimGroups();
+    App_Materials()->clearAllAnimGroups();
     for(int i = 0; i < defs.count.groups.num; ++i)
     {
         initAnimGroup(&defs.groups[i]);

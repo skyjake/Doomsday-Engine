@@ -212,7 +212,7 @@ boolean P_LoadMap(char const* uriCString)
         R_ResetViewer();
 
         // Texture animations should begin from their first step.
-        App_Materials()->resetAnimGroups();
+        App_Materials()->resetAllAnimGroups();
 
         R_InitObjlinkBlockmapForMap();
 

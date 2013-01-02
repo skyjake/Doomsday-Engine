@@ -79,9 +79,6 @@ static void updateMaterialBindInfo(MaterialBind &mb, bool canCreateInfo)
 /// A list of materials.
 typedef QList<material_t *> MaterialList;
 
-/// A list of material animation groups.
-typedef QList<MaterialAnim> MaterialAnims;
-
 /// A list of specifications for material variants.
 typedef QList<materialvariantspecification_t *> VariantSpecs;
 
@@ -124,7 +121,7 @@ struct Materials::Instance
     MaterialList materials;
 
     /// Animation groups.
-    MaterialAnims groups;
+    AnimGroups groups;
 
     /// Total number of URI material bindings (in all schemes).
     uint bindingCount;
@@ -178,16 +175,9 @@ struct Materials::Instance
         bindingCount = 0;
     }
 
-    MaterialAnim *getAnimGroup(int number)
-    {
-        number -= 1; // 1-based index.
-        if(number < 0 || number >= groups.count()) return 0;
-        return &groups[number];
-    }
-
     void animateAllGroups()
     {
-        DENG2_FOR_EACH(MaterialAnims, i, groups)
+        DENG2_FOR_EACH(AnimGroups, i, groups)
         {
             i->animate();
         }
@@ -273,7 +263,7 @@ Materials::Materials()
 
 Materials::~Materials()
 {
-    clearAnimGroups();
+    clearAllAnimGroups();
     purgeCacheQueue();
     delete d;
 }
@@ -607,7 +597,7 @@ void Materials::cache(material_t &mat, materialvariantspecification_t const &spe
     if(cacheGroup && Material_IsGroupAnimated(&mat))
     {
         // Material belongs in one or more animgroups; cache the group.
-        DENG2_FOR_EACH(MaterialAnims, i, d->groups)
+        DENG2_FOR_EACH(AnimGroups, i, d->groups)
         {
             MaterialAnim &group = *i;
             if(!group.hasFrameForMaterial(mat)) continue;
@@ -820,13 +810,6 @@ MaterialVariant *Materials::chooseVariant(material_t &mat,
     return variant;
 }
 
-bool Materials::isMaterialInAnimGroup(material_t &mat, int groupNum)
-{
-    MaterialAnim *group = d->getAnimGroup(groupNum);
-    if(!group) return false;
-    return group->hasFrameForMaterial(mat);
-}
-
 bool Materials::hasDecorations(material_t &mat)
 {
     if(novideo) return false;
@@ -837,7 +820,7 @@ bool Materials::hasDecorations(material_t &mat)
 
     if(Material_IsGroupAnimated(&mat))
     {
-        DENG2_FOR_EACH_CONST(MaterialAnims, i, d->groups)
+        DENG2_FOR_EACH_CONST(AnimGroups, i, d->groups)
         {
             MaterialAnim const &group = *i;
 
@@ -858,11 +841,6 @@ bool Materials::hasDecorations(material_t &mat)
     return false;
 }
 
-int Materials::animGroupCount()
-{
-    return d->groups.count();
-}
-
 int Materials::newAnimGroup(int flags)
 {
     // Allocating one by one is inefficient, but it doesn't really matter.
@@ -872,34 +850,27 @@ int Materials::newAnimGroup(int flags)
     return groupId;
 }
 
-void Materials::clearAnimGroups()
+void Materials::clearAllAnimGroups()
 {
     d->groups.clear();
 }
 
-void Materials::addAnimGroupFrame(int groupNum, material_t &mat, int tics, int randomTics)
+Materials::AnimGroups const &Materials::allAnimGroups() const
 {
-    LOG_AS("Materials::addAnimGroupFrame");
-
-    MaterialAnim *group = d->getAnimGroup(groupNum);
-    if(!group)
-    {
-        LOG_WARNING("Unknown anim group '%i', ignoring.") << groupNum;
-        return;
-    }
-
-    // Mark the material as being in an animgroup.
-    Material_SetGroupAnimated(&mat, true);
-
-    // Allocate a new animframe.
-    group->addFrame(mat, tics, randomTics);
+    return d->groups;
 }
 
-bool Materials::isPrecacheAnimGroup(int groupNum)
+MaterialAnim &Materials::animGroup(int number) const
 {
-    MaterialAnim *group = d->getAnimGroup(groupNum);
-    if(!group) return false;
-    return ((group->flags() & AGF_PRECACHE) != 0);
+    number -= 1; // 1-based index.
+    if(number >= 0 && number < d->groups.count())
+    {
+        return d->groups[number];
+    }
+
+    /// @throw UnknownAnimGroupError An unknown scheme was referenced.
+    throw UnknownAnimGroupError("Materials::animGroup", QString("Invalid anim group number #%1, valid range [0..%2)")
+                                                            .arg(number).arg(d->groups.count()));
 }
 
 static int resetVariantGroupAnimWorker(struct materialvariant_s *mat, void* /*parameters*/)
@@ -908,14 +879,14 @@ static int resetVariantGroupAnimWorker(struct materialvariant_s *mat, void* /*pa
     return 0; // Continue iteration.
 }
 
-void Materials::resetAnimGroups()
+void Materials::resetAllAnimGroups()
 {
     DENG2_FOR_EACH(MaterialList, i, d->materials)
     {
         Material_IterateVariants(*i, resetVariantGroupAnimWorker, 0);
     }
 
-    DENG2_FOR_EACH(MaterialAnims, i, d->groups)
+    DENG2_FOR_EACH(AnimGroups, i, d->groups)
     {
         i->reset();
     }
@@ -1379,7 +1350,16 @@ ded_ptcgen_t const *Materials_PtcGenDef(material_t *material)
 boolean Materials_IsMaterialInAnimGroup(material_t *material, int animGroupNum)
 {
     if(!material) return false;
-    return App_Materials()->isMaterialInAnimGroup(*material, animGroupNum);
+    try
+    {
+        return App_Materials()->animGroup(animGroupNum).hasFrameForMaterial(*material);
+    }
+    catch(de::Materials::UnknownAnimGroupError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+    return false;
 }
 
 /// @note Part of the Doomsday public API.
@@ -1416,5 +1396,14 @@ int Materials_AnimGroupCount()
 
 boolean Materials_IsPrecacheAnimGroup(int animGroupNum)
 {
-    return App_Materials()->isPrecacheAnimGroup(animGroupNum);
+    try
+    {
+        return !!(App_Materials()->animGroup(animGroupNum).flags() & AGF_PRECACHE);
+    }
+    catch(de::Materials::UnknownAnimGroupError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+    return false;
 }
