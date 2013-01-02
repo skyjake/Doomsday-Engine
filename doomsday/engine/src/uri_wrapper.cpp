@@ -269,7 +269,7 @@ void Uri_DebugPrint(Uri const* uri, int indent)
     self->debugPrint(indent);
 }
 
-DENG_DECLARE_API(uri, Uri) =
+DENG_DECLARE_API(Uri) =
 {
     { DE_API_URI_v1 },
     Uri_New,

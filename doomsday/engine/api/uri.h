@@ -68,7 +68,7 @@ struct uri_s; // The uri instance (opaque).
  */
 typedef struct uri_s Uri;
 
-typedef struct de_api_uri_s // v1
+DENG_API_TYPEDEF(Uri) // v1
 {
     de_api_t api;
 
@@ -258,7 +258,7 @@ typedef struct de_api_uri_s // v1
 
     void (*DebugPrint)(Uri const* uri, int indent/*, flags = DEFAULT_PRINTURIFLAGS */);
 
-} de_api_uri_t;
+} DENG_API_T(Uri);
 
 // Macros for accessing exported functions.
 #ifndef DENG_NO_API_MACROS_URI
@@ -293,7 +293,7 @@ typedef struct de_api_uri_s // v1
 
 // Internal access.
 #ifdef __DOOMSDAY__
-DENG_USING_API(uri, Uri);
+DENG_USING_API(Uri);
 #endif
 
 #endif /* LIBDENG_API_URI_H */

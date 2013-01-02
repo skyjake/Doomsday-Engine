@@ -196,7 +196,7 @@ void W_UnlockLump(lumpnum_t lumpNum)
 }
 
 // Public API:
-DENG_DECLARE_API(wad, W) =
+DENG_DECLARE_API(W) =
 {
     { DE_API_WAD_v1 },
     W_LumpLength,

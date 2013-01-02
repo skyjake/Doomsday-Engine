@@ -38,6 +38,9 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#define DENG_NO_API_MACROS_DEFINITIONS
+#include "de_def.h"
+
 #include "map/r_world.h"
 
 // XGClass.h is actually a part of the engine.
@@ -2144,3 +2147,11 @@ D_CMD(ListMobjs)
 
     return true;
 }
+
+DENG_DECLARE_API(Def) =
+{
+    { DE_API_DEFINITIONS_v1 },
+    Def_Get,
+    Def_Set,
+    Def_EvalFlags
+};

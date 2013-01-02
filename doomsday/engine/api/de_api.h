@@ -23,9 +23,11 @@
 
 /// All APIs exported from the executable.
 enum {
-    DE_API_DIRECT_DATA_ACCESS_v1 = 100,     // 1.10
-    DE_API_URI_v1                = 200,     // 1.10
-    DE_API_WAD_v1                = 300      // 1.10
+    DE_API_DEFINITIONS_v1        = 100,     // 1.10
+    DE_API_DIRECT_DATA_ACCESS_v1 = 200,     // 1.10
+    DE_API_PLUGIN_v1             = 300,     // 1.10
+    DE_API_URI_v1                = 400,     // 1.10
+    DE_API_WAD_v1                = 500      // 1.10
 };
 
 /**
@@ -35,15 +37,17 @@ typedef struct de_api_s {
     int id; ///< API identification (including version) number.
 } de_api_t;
 
-#define DENG_DECLARE_API(Name, Prefix) de_api_##Name##_t _api_##Prefix
-#define DENG_USING_API(Name, Prefix) DENG_EXTERN_C DENG_DECLARE_API(Name, Prefix)
+#define DENG_API_TYPEDEF(Name) typedef struct de_api_##Name##_s
+#define DENG_API_T(Name) de_api_##Name##_t
+#define DENG_DECLARE_API(Name) DENG_API_T(Name) _api_##Name
+#define DENG_USING_API(Name) DENG_EXTERN_C DENG_DECLARE_API(Name)
 #define DENG_API_EXCHANGE(APIs) \
     extern "C" void deng_API(int id, void *api) { \
         switch(id) { APIs \
         default: break; } }
-#define DENG_GET_API(Ident, Prefix) \
+#define DENG_GET_API(Ident, Name) \
     case Ident: \
-        memcpy(&_api_##Prefix, api, sizeof(_api_##Prefix)); \
+        memcpy(&_api_##Name, api, sizeof(_api_##Name)); \
         break;
 
 #endif // DOOMSDAY_API_BASE_H

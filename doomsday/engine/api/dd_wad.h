@@ -31,7 +31,7 @@
 #include "de_api.h"
 #include "dd_share.h"
 
-typedef struct de_api_wad_s // v1
+DENG_API_TYPEDEF(W) // v1
 {
     de_api_t api;
 
@@ -101,7 +101,7 @@ typedef struct de_api_wad_s // v1
      */
     void (*UnlockLump)(lumpnum_t lumpNum);
 
-} de_api_wad_t;
+} DENG_API_T(W);
 
 // Macros for accessing exported functions.
 #ifndef DENG_NO_API_MACROS_WAD
@@ -121,7 +121,7 @@ typedef struct de_api_wad_s // v1
 
 // Internal access.
 #ifdef __DOOMSDAY__
-DENG_USING_API(wad, W);
+DENG_USING_API(W);
 #endif
 
 #endif /* LIBDENG_API_WAD_H */

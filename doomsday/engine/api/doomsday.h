@@ -84,6 +84,7 @@ struct font_s;
 
 #include "dd_share.h"
 #include "dd_plugin.h"
+#include "de_def.h"
 
 #include "filehandle.h"
 #include <de/memoryzone.h>
@@ -200,14 +201,6 @@ boolean DD_GameInfo(GameInfo* info);
  */
 ///@{
 materialid_t DD_MaterialForTextureUri(Uri const *textureUri);
-///@}
-
-/// @addtogroup defs
-///@{
-    // Base: Definitions.
-    int             Def_Get(int type, const char* id, void* out);
-    int             Def_Set(int type, int index, int value, const void* ptr);
-    int             Def_EvalFlags(char* flags);
 ///@}
 
 /// @addtogroup input
