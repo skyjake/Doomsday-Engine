@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_API_H
-#define LIBDENG_API_H
+#ifndef DOOMSDAY_API_H
+#define DOOMSDAY_API_H
 
 #include "dd_share.h"
 
@@ -187,4 +187,4 @@ typedef game_export_t* (*GETGAMEAPI) (game_import_t *);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_API_H */
+#endif /* DOOMSDAY_API_H */
