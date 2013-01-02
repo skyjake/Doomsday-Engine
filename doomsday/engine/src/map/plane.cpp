@@ -1,9 +1,7 @@
-/**
- * @file plane.h
- * Map Plane implementation. @ingroup map
+/** @file plane.h Map Plane.
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +22,7 @@
 #include "de_console.h"
 #include "de_play.h"
 
-int Plane_SetProperty(Plane* pln, const setargs_t* args)
+int Plane_SetProperty(Plane *pln, setargs_t const *args)
 {
     switch(args->prop)
     {
@@ -49,7 +47,7 @@ int Plane_SetProperty(Plane* pln, const setargs_t* args)
     return false; // Continue iteration.
 }
 
-int Plane_GetProperty(const Plane* pln, setargs_t* args)
+int Plane_GetProperty(Plane const *pln, setargs_t *args)
 {
     switch(args->prop)
     {

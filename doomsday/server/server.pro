@@ -417,7 +417,7 @@ SOURCES += \
     $$SRC/src/map/p_sight.c \
     $$SRC/src/map/p_think.c \
     $$SRC/src/map/p_ticker.c \
-    $$SRC/src/map/plane.c \
+    $$SRC/src/map/plane.cpp \
     $$SRC/src/map/polyobj.c \
     $$SRC/src/map/propertyvalue.cpp \
     $$SRC/src/map/r_world.cpp \

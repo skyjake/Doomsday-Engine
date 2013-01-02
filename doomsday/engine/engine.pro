@@ -529,7 +529,7 @@ SOURCES += \
     src/map/p_sight.c \
     src/map/p_think.c \
     src/map/p_ticker.c \
-    src/map/plane.c \
+    src/map/plane.cpp \
     src/map/polyobj.c \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \

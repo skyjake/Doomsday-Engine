@@ -44,6 +44,9 @@ typedef enum {
 #define PS_flags                surface.flags
 #define PS_inflags              surface.inFlags
 
+/**
+ * @ingroup map
+ */
 typedef struct plane_s {
     runtime_mapdata_header_t header;
     struct sector_s *sector; /// Owner of the plane.
