@@ -28,6 +28,14 @@
 #include "m_misc.h"
 #include "resource/materialsnapshot.h"
 #include "render/r_main.h"
+#include "gl/gl_texmanager.h"
+
+bool materialvariantspecification_t::compare(materialvariantspecification_t const &other) const
+{
+    if(this == &other) return 1;
+    if(context != other.context) return 0;
+    return 1 == GL_CompareTextureVariantSpecifications(primarySpec, other.primarySpec);
+}
 
 namespace de {
 

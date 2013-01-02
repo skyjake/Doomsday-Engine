@@ -40,9 +40,56 @@ typedef enum materialcontext_e {
 
 struct texturevariantspecification_s;
 
+/**
+ * @ingroup resource
+ */
 typedef struct materialvariantspecification_s {
+    /// Usage context identifier.
     enum materialcontext_e context;
+
+    /// Specification for the primary texture.
     struct texturevariantspecification_s *primarySpec;
+
+#ifdef __cplusplus
+    /**
+     * Construct a default MaterialVariantSpecification instance.
+     */
+    materialvariantspecification_s() : context(MC_UNKNOWN), primarySpec(0)
+    {}
+
+    /**
+     * Construct a MaterialVariantSpecification instance by duplicating @a other.
+     */
+    materialvariantspecification_s(materialvariantspecification_s const &other)
+        : context(other.context), primarySpec(other.primarySpec)
+    {}
+
+    /**
+     * Determines whether specification @a other is equal to this specifcation.
+     *
+     * @param other  The other specification.
+     * @return  @c true if specifications are equal; otherwise @c false.
+     *
+     * Same as operator ==
+     */
+    bool compare(struct materialvariantspecification_s const &other) const;
+
+    /**
+     * Determines whether specification @a other is equal to this specifcation.
+     * @see compare()
+     */
+    bool operator == (struct materialvariantspecification_s const &other) const {
+        return compare(other);
+    }
+
+    /**
+     * Determines whether specification @a other is NOT equal to this specifcation.
+     * @see compare()
+     */
+    bool operator != (struct materialvariantspecification_s const &other) const {
+        return !(*this == other);
+    }
+#endif
 } materialvariantspecification_t;
 
 #ifdef __cplusplus
@@ -109,7 +156,7 @@ public:
     materialvariantspecification_t const &spec() const;
 
     /**
-     * Retrieve a handle for a staged animation layer form this variant.
+     * Retrieve a handle for a staged animation layer for this variant.
      * @param layer  Index of the layer to retrieve.
      * @return  MaterialVariantLayer for the specified layer index.
      */
@@ -126,7 +173,7 @@ public:
      */
     MaterialSnapshot *detachSnapshot();
 
-    /// @return  MaterialSnapshot data associated with this.
+    /// @return  MaterialSnapshot data associated with this; otherwise @c 0.
     MaterialSnapshot *snapshot() const;
 
     /// @return  Frame count when the snapshot was last prepared/updated.

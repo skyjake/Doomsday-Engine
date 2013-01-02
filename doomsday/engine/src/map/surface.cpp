@@ -82,14 +82,14 @@ boolean Surface_SetMaterial(Surface *suf, material_t *mat)
                         R_SurfaceListAdd(GameMap_GlowingSurfaces(map), suf);
                     }
 
-                    if(App_Materials()->hasDecorations(mat))
+                    if(App_Materials()->hasDecorations(*mat))
                     {
                         R_SurfaceListAdd(GameMap_DecoratedSurfaces(map), suf);
                     }
 
                     if(DMU_GetType(suf->owner) == DMU_PLANE)
                     {
-                        ded_ptcgen_t const *def = App_Materials()->ptcGenDef(mat);
+                        ded_ptcgen_t const *def = App_Materials()->ptcGenDef(*mat);
                         P_SpawnPlaneParticleGen(def, (Plane *)suf->owner);
                     }
                 }

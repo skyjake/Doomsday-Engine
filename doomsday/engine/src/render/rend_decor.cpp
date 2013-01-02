@@ -473,7 +473,7 @@ static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT
     {
         materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
         material_t *mat = &App_Materials()->chooseVariant(*suf->material, *spec, true, true)->generalCase();
-        ded_decor_t const *def = App_Materials()->decorationDef(mat);
+        ded_decor_t const *def = App_Materials()->decorationDef(*mat);
         if(def)
         {
             int const axis = V3f_MajorAxis(suf->normal);

@@ -576,8 +576,8 @@ ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isC
                         if(App_Materials()->isPrecacheAnimGroup(g))
                             continue; // Precache groups don't apply.
 
-                        if(App_Materials()->isMaterialInAnimGroup(defMat, g) &&
-                           App_Materials()->isMaterialInAnimGroup(mat, g))
+                        if(App_Materials()->isMaterialInAnimGroup(*defMat, g) &&
+                           App_Materials()->isMaterialInAnimGroup(*mat, g))
                         {
                             // Both are in this group! This def will do.
                             return def;
@@ -1201,13 +1201,13 @@ void Def_Read()
             if(material_t *mat = bind.material())
             {
                 // Update existing.
-                App_Materials()->rebuild(mat, def);
+                App_Materials()->rebuild(*mat, def);
             }
         }
         catch(Materials::NotFoundError const &)
         {
             // A new Material.
-            App_Materials()->newFromDef(def);
+            App_Materials()->newFromDef(*def);
         }
     }
 
@@ -1438,7 +1438,7 @@ static void initAnimGroup(ded_group_t *def)
                 groupNumber = App_Materials()->newAnimGroup(def->flags);
             }
 
-            App_Materials()->addAnimGroupFrame(groupNumber, mat, gm->tics, gm->randomTics);
+            App_Materials()->addAnimGroupFrame(groupNumber, *mat, gm->tics, gm->randomTics);
         }
         catch(Materials::NotFoundError const &er)
         {
