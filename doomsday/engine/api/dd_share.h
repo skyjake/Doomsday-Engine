@@ -78,8 +78,6 @@ extern "C" {
 # define strnicmp strncasecmp
 #endif
 
-int             dd_snprintf(char* str, size_t size, const char* format, ...);
-
     // Format checking for printf-like functions in GCC2
 #if defined(__GNUC__) && __GNUC__ >= 2
 #   define PRINTF_F(f,v) __attribute__ ((format (printf, f, v)))
