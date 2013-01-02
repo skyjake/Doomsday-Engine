@@ -534,7 +534,7 @@ SOURCES += \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \
     src/map/sector.c \
-    src/map/sidedef.c \
+    src/map/sidedef.cpp \
     src/map/surface.cpp \
     src/map/vertex.cpp \
     src/network/masterserver.cpp \

@@ -85,6 +85,9 @@ typedef struct msidedef_s {
     int refCount;
 } msidedef_t;
 
+/**
+ * @ingroup map
+ */
 typedef struct sidedef_s {
     runtime_mapdata_header_t header;
     Surface sections[3];

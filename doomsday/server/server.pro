@@ -422,7 +422,7 @@ SOURCES += \
     $$SRC/src/map/propertyvalue.cpp \
     $$SRC/src/map/r_world.cpp \
     $$SRC/src/map/sector.c \
-    $$SRC/src/map/sidedef.c \
+    $$SRC/src/map/sidedef.cpp \
     $$SRC/src/map/surface.cpp \
     $$SRC/src/map/vertex.cpp \
     $$SRC/src/network/masterserver.cpp \
