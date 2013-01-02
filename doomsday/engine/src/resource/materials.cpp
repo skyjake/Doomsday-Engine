@@ -43,7 +43,6 @@
 #include <de/Log>
 #include <de/PathTree>
 #include <de/memory.h>
-#include <de/memoryzone.h>
 
 #include <cstring>
 
@@ -1107,7 +1106,7 @@ int Materials::animGroupCount()
 int Materials::newAnimGroup(int flags)
 {
     // Allocating one by one is inefficient, but it doesn't really matter.
-    d->groups = (MaterialAnim *) Z_Realloc(d->groups, sizeof(*d->groups) * (d->numgroups + 1), PU_APPSTATIC);
+    d->groups = (MaterialAnim *) M_Realloc(d->groups, sizeof(*d->groups) * (d->numgroups + 1));
 
     // Init the new group; the group id is (index + 1)
     void *region = (void *) &d->groups[d->numgroups];
@@ -1126,7 +1125,7 @@ void Materials::clearAnimGroups()
         group->~MaterialAnim();
     }
 
-    Z_Free(d->groups); d->groups = 0;
+    M_Free(d->groups); d->groups = 0;
     d->numgroups = 0;
 }
 
