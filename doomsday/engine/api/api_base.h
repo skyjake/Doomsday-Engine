@@ -55,6 +55,7 @@ typedef struct de_api_s {
 #define DENG_GET_API(Ident, Name) \
     case Ident: \
         memcpy(&_api_##Name, api, sizeof(_api_##Name)); \
+        DENG_ASSERT(_api_##Name.api.id == Ident); \
         break;
 
 // The Base API.

@@ -26,6 +26,7 @@
 #include "de_console.h"
 #include "resource/materials.h"
 #include "materialarchive.h"
+#include "api_material.h"
 
 /// For identifying the archived format version. Written to disk.
 #define MATERIALARCHIVE_VERSION (4)
