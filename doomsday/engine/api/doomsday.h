@@ -418,8 +418,8 @@ int LineDef_BoxOnSide(LineDef* line, const AABoxd* box);
 
 int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
 
-coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
-coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
+coord_t LineDef_PointDistance(LineDef const *lineDef, coord_t const point[2], coord_t *offset);
+coord_t LineDef_PointXYDistance(LineDef const *lineDef, coord_t x, coord_t y, coord_t *offset);
 
 coord_t LineDef_PointOnSide(LineDef const *lineDef, coord_t const point[2]);
 coord_t LineDef_PointXYOnSide(LineDef const *lineDef, coord_t x, coord_t y);
