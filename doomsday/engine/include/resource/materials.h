@@ -40,6 +40,17 @@ namespace de {
 
     /**
      * Specialized resource collection for a set of materials.
+     *
+     * - Pointers to Material are @em eternal, they are always valid and continue
+     *   to reference the same logical material data even after engine reset.
+     *
+     * - Public material identifiers (materialid_t) are similarly eternal.
+     *
+     * - Material name bindings are semi-independant from the materials. There
+     *   may be multiple name bindings for a given material (aliases). The only
+     *   requirement is that their symbolic names must be unique among those in
+     *   the same scheme.
+     *
      * @ingroup resource
      */
     class Materials
@@ -79,8 +90,19 @@ namespace de {
         /// Register the console commands, variables, etc..., of this module.
         static void consoleRegister();
 
-        /// @return  Total number of unique materials in the collection.
-        uint size();
+        /**
+         * Returns the total number of unique materials in the collection.
+         */
+        uint size() const;
+
+        /**
+         * Returns the total number of unique materials in the collection.
+         *
+         * Same as size()
+         */
+        inline uint count() const {
+            return size();
+        }
 
         /// Process all outstanding tasks in the cache queue.
         void processCacheQueue();
@@ -171,18 +193,18 @@ namespace de {
          * @param material  Material to be updated.
          * @param def  Material definition to update using.
          */
-        void rebuild(material_t *material, ded_material_t *def);
+        void rebuild(material_t &material, ded_material_t *def = 0);
 
         void updateTextureLinks(MaterialBind &bind);
 
         /// @return  (Particle) Generator definition associated with @a material else @c NULL.
-        ded_ptcgen_t const *ptcGenDef(material_t *material);
+        ded_ptcgen_t const *ptcGenDef(material_t &material);
 
         /// @return  Decoration defintion associated with @a material else @c NULL.
-        ded_decor_t const *decorationDef(material_t *material);
+        ded_decor_t const *decorationDef(material_t &material);
 
         /// @return  @c true if one or more light decorations are defined for this material.
-        bool hasDecorations(material_t *material);
+        bool hasDecorations(material_t &material);
 
         /**
          * Create a new Material unless an existing Material is found at the path
@@ -194,10 +216,10 @@ namespace de {
          * @param def  Material definition to construct from.
          * @return  The newly-created/existing material; otherwise @c NULL.
          */
-        material_t *newFromDef(ded_material_t *def);
+        material_t *newFromDef(ded_material_t &def);
 
         MaterialBind &newBind(MaterialScheme &scheme, Path const &path,
-                              material_t *material);
+                              material_t *material = 0);
 
         /**
          * Prepare a MaterialVariantSpecification according to a usage context. If
@@ -316,10 +338,10 @@ namespace de {
          * @param tics          Base duration of the new frame in tics.
          * @param randomTics    Extra frame duration in tics (randomized on each cycle).
          */
-        void addAnimGroupFrame(int animGroupNum, material_t *material, int tics, int randomTics);
+        void addAnimGroupFrame(int animGroupNum, material_t &material, int tics, int randomTics);
 
         /// @return  @c true iff @a material is linked to the identified @a animGroupNum.
-        bool isMaterialInAnimGroup(material_t *material, int animGroupNum);
+        bool isMaterialInAnimGroup(material_t &material, int animGroupNum);
 
         /// @todo Refactor; does not fit the current design.
         /// @return  @c true iff @a animGroupNum is a special precache group.

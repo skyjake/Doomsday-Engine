@@ -31,8 +31,6 @@
 #include "de_misc.h" // M_NumDigits()
 #include "de_audio.h" // For environmental audio properties.
 
-#include "gl/sys_opengl.h" /// @todo: get rid of this -jk
-
 #include <QtAlgorithms>
 #include <QList>
 
@@ -55,6 +53,14 @@ D_CMD(PrintMaterialStats);
 
 namespace de {
 
+static void applyVariantSpecification(materialvariantspecification_t &spec, materialcontext_t mc,
+    texturevariantspecification_t *primarySpec)
+{
+    DENG2_ASSERT(mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc) && primarySpec);
+    spec.context     = mc;
+    spec.primarySpec = primarySpec;
+}
+
 static void updateMaterialBindInfo(MaterialBind &mb, bool canCreateInfo)
 {
     MaterialBind::Info *info = mb.info();
@@ -70,104 +76,89 @@ static void updateMaterialBindInfo(MaterialBind &mb, bool canCreateInfo)
     info->linkDefinitions(mb.material());
 }
 
-typedef struct materialvariantspecificationlistnode_s {
-    struct materialvariantspecificationlistnode_s *next;
-    materialvariantspecification_t *spec;
-} MaterialVariantSpecificationListNode;
+/// A list of materials.
+typedef QList<material_t *> MaterialList;
 
-typedef MaterialVariantSpecificationListNode VariantSpecificationList;
+/// A list of material animation groups.
+typedef QList<MaterialAnim> MaterialAnims;
 
-typedef struct materiallistnode_s {
-    struct materiallistnode_s *next;
+/// A list of specifications for material variants.
+typedef QList<materialvariantspecification_t *> VariantSpecs;
+
+/**
+ * Stores the arguments for a material variant cache work item.
+ */
+struct VariantCacheTask
+{
+    /// The material from which to cache a variant.
     material_t *mat;
-} MaterialListNode;
-typedef MaterialListNode MaterialList;
 
-typedef struct variantcachequeuenode_s {
-    struct variantcachequeuenode_s *next;
-    material_t *mat;
+    /// Specification of the variant to be cached.
     materialvariantspecification_t const *spec;
+
+    /// @c true= Select the current frame if the material is group-animated.
     bool smooth;
-} VariantCacheQueueNode;
 
-typedef VariantCacheQueueNode VariantCacheQueue;
+    VariantCacheTask(material_t &_mat, materialvariantspecification_t const &_spec, bool _smooth)
+        : mat(&_mat), spec(&_spec), smooth(_smooth)
+    {}
+};
 
-static int compareVariantSpecifications(materialvariantspecification_t const &a,
-                                        materialvariantspecification_t const &b);
+/// A FIFO queue of material variant caching tasks.
+/// Implemented as a list because we may need to remove tasks from the queue if
+/// the material is destroyed in the mean time.
+typedef QList<VariantCacheTask *> VariantCacheQueue;
 
 struct Materials::Instance
 {
-    int numgroups;
-    MaterialAnim *groups;
-
-    VariantSpecificationList *variantSpecs;
-
-    VariantCacheQueue *variantCacheQueue;
-
-    /**
-     * The following data structures and variables are intrinsically linked and
-     * are inter-dependant. The model used is somewhat complicated due to the
-     * required traits of the materials themselves and in of the system itself:
-     *
-     * 1) Pointers to Material are eternal, they are always valid and continue
-     *    to reference the same logical material data even after engine reset.
-     * 2) Public material identifiers (materialid_t) are similarly eternal.
-     *    Note that they are used to index the material name bindings map.
-     * 3) Dynamic creation/update of materials.
-     * 4) Material name bindings are semi-independant from the materials. There
-     *    may be multiple name bindings for a given material (aliases).
-     *    The only requirement is that their symbolic names must be unique among
-     *    those in the same scheme.
-     * 5) Super-fast look up by public material identifier.
-     * 6) Fast look up by material name (hashing is used).
-     */
-    MaterialList *materials;
-    uint materialCount;
-
-    uint bindingCount;
-
-    /// LUT which translates materialid_t to MaterialBind*. Index with materialid_t-1
-    uint bindingIdMapSize;
-    MaterialBind **bindingIdMap;
-
     /// System subspace schemes containing the materials.
     Materials::Schemes schemes;
 
+    /// Material variant specifications.
+    VariantSpecs variantSpecs;
+
+    /// Queue of material variants caching tasks.
+    VariantCacheQueue variantCacheQueue;
+
+    /// All materials in the system.
+    MaterialList materials;
+
+    /// Animation groups.
+    MaterialAnims groups;
+
+    /// Total number of URI material bindings (in all schemes).
+    uint bindingCount;
+
+    /// LUT which translates materialid_t => MaterialBind*.
+    /// Index with materialid_t-1
+    uint bindingIdMapSize;
+    MaterialBind **bindingIdMap;
+
     Instance()
-        :  numgroups(0), groups(0), variantSpecs(0), variantCacheQueue(0),
-           materials(0), materialCount(0),
-           bindingCount(0), bindingIdMapSize(0), bindingIdMap(0)
+        :  bindingCount(0), bindingIdMapSize(0), bindingIdMap(0)
     {}
 
     ~Instance()
     {
         clearBindings();
         clearMaterials();
-        clearVariantSpecifications();
+        clearVariantSpecs();
     }
 
-    void clearVariantSpecifications()
+    void clearVariantSpecs()
     {
-        while(variantSpecs)
+        while(!variantSpecs.isEmpty())
         {
-            MaterialVariantSpecificationListNode *next = variantSpecs->next;
-            M_Free(variantSpecs->spec);
-            M_Free(variantSpecs);
-            variantSpecs = next;
+            delete variantSpecs.takeLast();
         }
     }
 
     void clearMaterials()
     {
-        while(materials)
+        while(!materials.isEmpty())
         {
-            MaterialListNode *next = materials->next;
-            Material_Delete(materials->mat);
-            M_Free(materials);
-            materials = next;
+            Material_Delete(materials.takeLast());
         }
-
-        materialCount = 0;
     }
 
     void clearBindings()
@@ -187,62 +178,34 @@ struct Materials::Instance
         bindingCount = 0;
     }
 
-    MaterialAnim* getAnimGroup(int number)
+    MaterialAnim *getAnimGroup(int number)
     {
-        if(--number < 0 || number >= numgroups) return NULL;
+        number -= 1; // 1-based index.
+        if(number < 0 || number >= groups.count()) return 0;
         return &groups[number];
     }
 
     void animateAllGroups()
     {
-        for(int i = 0; i < numgroups; ++i)
+        DENG2_FOR_EACH(MaterialAnims, i, groups)
         {
-            groups[i].animate();
+            i->animate();
         }
-    }
-
-    materialvariantspecification_t *dupVariantSpecification(
-        materialvariantspecification_t const &tpl)
-    {
-        materialvariantspecification_t *spec = (materialvariantspecification_t *) M_Malloc(sizeof *spec);
-        if(!spec) Con_Error("Materials::copyVariantSpecification: Failed on allocation of %lu bytes for new MaterialVariantSpecification.", (unsigned long) sizeof *spec);
-        std::memcpy(spec, &tpl, sizeof *spec);
-        return spec;
-    }
-
-    void applyVariantSpecification(materialvariantspecification_t &spec, materialcontext_t mc,
-        texturevariantspecification_t *primarySpec)
-    {
-        DENG2_ASSERT(mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc) && primarySpec);
-        spec.context     = mc;
-        spec.primarySpec = primarySpec;
-    }
-
-    materialvariantspecification_t *linkVariantSpecification(
-        materialvariantspecification_t &spec)
-    {
-        MaterialVariantSpecificationListNode * node = (MaterialVariantSpecificationListNode *) M_Malloc(sizeof(*node));
-        if(!node) Con_Error("Materials::linkVariantSpecification: Failed on allocation of %lu bytes for new MaterialVariantSpecificationListNode.", (unsigned long) sizeof(*node));
-        node->spec = &spec;
-        node->next = variantSpecs;
-        variantSpecs = (VariantSpecificationList *)node;
-        return &spec;
     }
 
     materialvariantspecification_t *findVariantSpecification(
         materialvariantspecification_t const &tpl, bool canCreate)
     {
-        for(MaterialVariantSpecificationListNode* node = variantSpecs; node; node = node->next)
+        DENG2_FOR_EACH(VariantSpecs, i, variantSpecs)
         {
-            if(compareVariantSpecifications(*node->spec, tpl))
-            {
-                return node->spec;
-            }
+            if((*i)->compare(tpl)) return *i;
         }
 
         if(!canCreate) return 0;
 
-        return linkVariantSpecification(*dupVariantSpecification(tpl));
+        materialvariantspecification_t *spec = new materialvariantspecification_t(tpl);
+        variantSpecs.push_back(spec);
+        return spec;
     }
 
     materialvariantspecification_t *getVariantSpecificationForContext(
@@ -267,9 +230,11 @@ struct Materials::Instance
         }
 
         texturevariantspecification_t* primarySpec =
-            GL_TextureVariantSpecificationForContext(primaryContext, flags, border, tClass, tMap, wrapS, wrapT,
-                                                     minFilter, magFilter, anisoFilter, mipmapped,
-                                                     gammaCorrection, noStretch, toAlpha);
+            GL_TextureVariantSpecificationForContext(primaryContext, flags, border,
+                                                     tClass, tMap, wrapS, wrapT,
+                                                     minFilter, magFilter, anisoFilter,
+                                                     mipmapped, gammaCorrection, noStretch,
+                                                     toAlpha);
 
         applyVariantSpecification(tpl, mc, primarySpec);
         return findVariantSpecification(tpl, true);
@@ -277,35 +242,8 @@ struct Materials::Instance
 
     MaterialBind *getMaterialBindForId(materialid_t id)
     {
-        if(0 == id || id > bindingCount) return NULL;
-        return bindingIdMap[id-1];
-    }
-
-    /**
-     * Link the material into the global list of materials.
-     * @pre material is NOT already present in the global list.
-     */
-    material_t *linkMaterialToGlobalList(material_t *mat)
-    {
-        MaterialListNode *node = (MaterialListNode *)M_Malloc(sizeof *node);
-        if(!node) Con_Error("linkMaterialToGlobalList: Failed on allocation of %lu bytes for new MaterialList::Node.", (unsigned long) sizeof *node);
-
-        node->mat = mat;
-        node->next = materials;
-        materials = node;
-        return mat;
-    }
-
-    void pushVariantCacheQueue(material_t &mat, materialvariantspecification_t const &spec, bool smooth)
-    {
-        VariantCacheQueueNode *node = (VariantCacheQueueNode *) M_Malloc(sizeof *node);
-        if(!node) Con_Error("Materials::pushVariantCacheQueue: Failed on allocation of %lu bytes for new VariantCacheQueueNode.", (unsigned long) sizeof *node);
-
-        node->mat    = &mat;
-        node->spec   = &spec;
-        node->smooth = smooth;
-        node->next   = variantCacheQueue;
-        variantCacheQueue = node;
+        if(0 == id || id > bindingCount) return 0;
+        return bindingIdMap[id - 1];
     }
 };
 
@@ -335,6 +273,7 @@ Materials::Materials()
 
 Materials::~Materials()
 {
+    clearAnimGroups();
     purgeCacheQueue();
     delete d;
 }
@@ -373,10 +312,9 @@ Materials::Schemes const& Materials::allSchemes() const
 
 void Materials::clearDefinitionLinks()
 {
-    for(MaterialListNode *node = d->materials; node; node = node->next)
+    DENG2_FOR_EACH(MaterialList, i, d->materials)
     {
-        material_t *mat = node->mat;
-        Material_SetDefinition(mat, NULL);
+        Material_SetDefinition(*i, 0);
     }
 
     DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
@@ -392,19 +330,19 @@ void Materials::clearDefinitionLinks()
     }
 }
 
-void Materials::rebuild(material_t *mat, ded_material_t *def)
+void Materials::rebuild(material_t &mat, ded_material_t *def)
 {
-    if(!mat || !def) return;
+    if(!def) return;
 
     /// @todo We should be able to rebuild the variants.
-    Material_DestroyVariants(mat);
-    Material_SetDefinition(mat, def);
+    Material_DestroyVariants(&mat);
+    Material_SetDefinition(&mat, def);
 
     // Update bindings.
     for(uint i = 0; i < d->bindingCount; ++i)
     {
         MaterialBind *mb = d->bindingIdMap[i];
-        if(!mb || mb->material() != mat) continue;
+        if(!mb || mb->material() != &mat) continue;
 
         updateMaterialBindInfo(*mb, false /*do not create, only update if present*/);
     }
@@ -412,24 +350,16 @@ void Materials::rebuild(material_t *mat, ded_material_t *def)
 
 void Materials::purgeCacheQueue()
 {
-    while(d->variantCacheQueue)
-    {
-        VariantCacheQueueNode *node = d->variantCacheQueue, *next = node->next;
-
-        M_Free(node);
-        d->variantCacheQueue = next;
-    }
+    d->variantCacheQueue.clear();
 }
 
 void Materials::processCacheQueue()
 {
-    while(d->variantCacheQueue)
+    while(!d->variantCacheQueue.isEmpty())
     {
-        VariantCacheQueueNode *node = d->variantCacheQueue, *next = node->next;
-        prepare(*node->mat, *node->spec, node->smooth);
-
-        M_Free(node);
-        d->variantCacheQueue = next;
+         VariantCacheTask *cacheTask = d->variantCacheQueue.takeFirst();
+         prepare(*cacheTask->mat, *cacheTask->spec, cacheTask->smooth);
+         delete cacheTask;
     }
 }
 
@@ -554,7 +484,6 @@ MaterialBind &Materials::newBind(MaterialScheme &scheme, Path const &path, mater
         materialid_t const bindId = ++d->bindingCount;
 
         bind = &scheme.insertBind(path, bindId);
-
         if(material)
         {
             Material_SetPrimaryBind(material, bindId);
@@ -570,8 +499,6 @@ MaterialBind &Materials::newBind(MaterialScheme &scheme, Path const &path, mater
         }
         d->bindingIdMap[d->bindingCount - 1] = bind; /* 1-based index */
     }
-    if(!bind)
-        throw Error("Materials::newBind", "Unexpected error creating bind \"" + de::Uri(scheme.name(), path) + "\"");
 
     // (Re)configure the binding.
     bind->setMaterial(material);
@@ -580,20 +507,18 @@ MaterialBind &Materials::newBind(MaterialScheme &scheme, Path const &path, mater
     return *bind;
 }
 
-material_t *Materials::newFromDef(ded_material_t *def)
+material_t *Materials::newFromDef(ded_material_t &def)
 {
-    DENG2_ASSERT(def);
-
     LOG_AS("Materials::newFromDef");
 
-    if(!def->uri) return 0;
-    de::Uri &uri = reinterpret_cast<de::Uri &>(*def->uri);
+    if(!def.uri) return 0;
+    de::Uri &uri = reinterpret_cast<de::Uri &>(*def.uri);
     if(uri.isEmpty()) return 0;
 
     // We require a properly formed uri (but not a urn - this is a path).
     if(!validateUri(uri, 0, (verbose >= 1)))
     {
-        LOG_WARNING("Failed creating Material \"%s\" from definition %p, ignoring.") << uri << dintptr(def);
+        LOG_WARNING("Failed creating Material \"%s\" from definition %p, ignoring.") << uri << dintptr(&def);
         return 0;
     }
 
@@ -613,9 +538,9 @@ material_t *Materials::newFromDef(ded_material_t *def)
 
     // Ensure the primary layer has a valid texture reference.
     Texture *tex = 0;
-    if(def->layers[0].stageCount.num > 0)
+    if(def.layers[0].stageCount.num > 0)
     {
-        ded_material_layer_t const &layer = def->layers[0];
+        ded_material_layer_t const &layer = def.layers[0];
         de::Uri *texUri = reinterpret_cast<de::Uri *>(layer.stages[0].texture);
         if(texUri) // Not unused.
         {
@@ -627,8 +552,8 @@ material_t *Materials::newFromDef(ded_material_t *def)
             {
                 // Log but otherwise ignore this error.
                 LOG_WARNING(er.asText() + ". Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i), ignoring.")
-                    << reinterpret_cast<de::Uri*>(layer.stages[0].texture)
-                    << reinterpret_cast<de::Uri*>(def->uri)
+                    << reinterpret_cast<de::Uri *>(layer.stages[0].texture)
+                    << reinterpret_cast<de::Uri *>(def.uri)
                     << 0 << 0;
             }
         }
@@ -637,15 +562,13 @@ material_t *Materials::newFromDef(ded_material_t *def)
     if(!tex) return 0;
 
     // A new Material.
-    d->materialCount++;
     material_t *mat = Material_New();
+    d->materials.push_back(mat);
 
-    d->linkMaterialToGlobalList(mat);
-
-    mat->_flags     = def->flags;
+    mat->_flags     = def.flags;
     mat->_isCustom  = tex->flags().testFlag(Texture::Custom);
-    mat->_def       = def;
-    Size2_SetWidthHeight(mat->_size, MAX_OF(0, def->width), MAX_OF(0, def->height));
+    mat->_def       = &def;
+    Size2_SetWidthHeight(mat->_size, MAX_OF(0, def.width), MAX_OF(0, def.height));
     mat->_envClass  = S_MaterialEnvClassForUri(reinterpret_cast<struct uri_s const *>(&uri));
 
     if(!bind)
@@ -668,28 +591,31 @@ void Materials::cache(material_t &mat, materialvariantspecification_t const &spe
 #endif
 
 #ifdef __CLIENT__
-    // Don't precache when playing demo.
+    // Don't cache when playing a demo. (at all???)
     if(isDedicated || playback) return;
 #endif
 
     // Already in the queue?
-    for(VariantCacheQueueNode* node = d->variantCacheQueue; node; node = node->next)
+    DENG2_FOR_EACH_CONST(VariantCacheQueue, i, d->variantCacheQueue)
     {
-        if(&mat == node->mat && &spec == node->spec) return;
+        if(&mat == (*i)->mat && &spec == (*i)->spec) return;
     }
 
-    d->pushVariantCacheQueue(mat, spec, smooth);
+    VariantCacheTask *newTask = new VariantCacheTask(mat, spec, smooth);
+    d->variantCacheQueue.push_back(newTask);
 
     if(cacheGroup && Material_IsGroupAnimated(&mat))
     {
         // Material belongs in one or more animgroups; cache the group.
-        for(int i = 0; i < d->numgroups; ++i)
+        DENG2_FOR_EACH(MaterialAnims, i, d->groups)
         {
-            MaterialAnim &group = d->groups[i];
+            MaterialAnim &group = *i;
             if(!group.hasFrameForMaterial(mat)) continue;
 
             DENG2_FOR_EACH_CONST(MaterialAnim::Frames, k, group.allFrames())
             {
+                if(&k->material() == &mat) continue;
+
                 cache(k->material(), spec, smooth, false /* do not cache groups */);
             }
         }
@@ -704,9 +630,9 @@ void Materials::ticker(timespan_t time)
 #endif
     if(novideo) return;
 
-    for(MaterialListNode *node = d->materials; node; node = node->next)
+    DENG2_FOR_EACH(MaterialList, i, d->materials)
     {
-        Material_Ticker(node->mat, time);
+        Material_Ticker(*i, time);
     }
 
     if(DD_IsSharpTick())
@@ -808,31 +734,30 @@ MaterialSnapshot const *Materials::prepare(material_t &mat, materialvariantspeci
     return prepareVariant(*chooseVariant(mat, spec, smooth, true), updateSnapshot);
 }
 
-ded_decor_t const *Materials::decorationDef(material_t *mat)
+ded_decor_t const *Materials::decorationDef(material_t &mat)
 {
-    if(!mat) return 0;
-    if(!Material_Prepared(mat))
+    if(!Material_Prepared(&mat))
     {
-        prepare(*mat, *Rend_MapSurfaceDiffuseMaterialSpec(), false);
+        prepare(mat, *Rend_MapSurfaceDiffuseMaterialSpec(), false);
     }
-    MaterialBind *mb = d->getMaterialBindForId(Material_PrimaryBind(mat));
+    MaterialBind *mb = d->getMaterialBindForId(Material_PrimaryBind(&mat));
     return mb->decorationDef();
 }
 
-ded_ptcgen_t const *Materials::ptcGenDef(material_t *mat)
+ded_ptcgen_t const *Materials::ptcGenDef(material_t &mat)
 {
-    if(!mat || isDedicated) return 0;
-    if(!Material_Prepared(mat))
+    if(isDedicated) return 0;
+    if(!Material_Prepared(&mat))
     {
-        prepare(*mat, *Rend_MapSurfaceDiffuseMaterialSpec(), false);
+        prepare(mat, *Rend_MapSurfaceDiffuseMaterialSpec(), false);
     }
-    MaterialBind *mb = d->getMaterialBindForId(Material_PrimaryBind(mat));
+    MaterialBind *mb = d->getMaterialBindForId(Material_PrimaryBind(&mat));
     return mb->ptcGenDef();
 }
 
-uint Materials::size()
+uint Materials::size() const
 {
-    return d->materialCount;
+    return d->materials.size();
 }
 
 struct materialvariantspecification_s const *Materials::variantSpecificationForContext(
@@ -843,14 +768,6 @@ struct materialvariantspecification_s const *Materials::variantSpecificationForC
     return d->getVariantSpecificationForContext(mc, flags, border, tClass, tMap, wrapS, wrapT,
                                                 minFilter, magFilter, anisoFilter,
                                                 mipmapped, gammaCorrection, noStretch, toAlpha);
-}
-
-static int compareVariantSpecifications(materialvariantspecification_t const &a,
-    materialvariantspecification_t const &b)
-{
-    if(&a == &b) return 1;
-    if(a.context != b.context) return 0;
-    return GL_CompareTextureVariantSpecifications(a.primarySpec, b.primarySpec);
 }
 
 typedef struct {
@@ -865,7 +782,7 @@ static int chooseVariantWorker(struct materialvariant_s *_variant, void *paramet
     materialvariantspecification_t const &cand = variant->spec();
     DENG2_ASSERT(p);
 
-    if(compareVariantSpecifications(cand, *p->spec))
+    if(cand.compare(*p->spec))
     {
         // This will do fine.
         p->chosen = variant;
@@ -903,40 +820,38 @@ MaterialVariant *Materials::chooseVariant(material_t &mat,
     return variant;
 }
 
-bool Materials::isMaterialInAnimGroup(material_t *mat, int groupNum)
+bool Materials::isMaterialInAnimGroup(material_t &mat, int groupNum)
 {
     MaterialAnim *group = d->getAnimGroup(groupNum);
     if(!group) return false;
-    return group->hasFrameForMaterial(*mat);
+    return group->hasFrameForMaterial(mat);
 }
 
-bool Materials::hasDecorations(material_t *mat)
+bool Materials::hasDecorations(material_t &mat)
 {
-    DENG2_ASSERT(mat);
-
     if(novideo) return false;
 
     /// @todo We should not need to prepare to determine this.
     /// Nor should we need to process the group each time. Cache this decision.
     if(decorationDef(mat)) return true;
 
-    if(Material_IsGroupAnimated(mat))
+    if(Material_IsGroupAnimated(&mat))
     {
-        for(int i = 0; i < d->numgroups; ++i)
+        DENG2_FOR_EACH_CONST(MaterialAnims, i, d->groups)
         {
-            MaterialAnim &group = d->groups[i];
+            MaterialAnim const &group = *i;
 
             // Precache groups don't apply.
             if(group.flags() & AGF_PRECACHE) continue;
 
             // Is this material in this group?
-            if(!group.hasFrameForMaterial(*mat)) continue;
+            if(!group.hasFrameForMaterial(mat)) continue;
 
             // If any material in this group has decorations then this
             // material is considered to be decorated also.
             DENG2_FOR_EACH_CONST(MaterialAnim::Frames, k, group.allFrames())
             {
-                if(decorationDef(&k->material())) return true;
+                if(decorationDef(k->material())) return true;
             }
         }
     }
@@ -945,36 +860,24 @@ bool Materials::hasDecorations(material_t *mat)
 
 int Materials::animGroupCount()
 {
-    return d->numgroups;
+    return d->groups.count();
 }
 
 int Materials::newAnimGroup(int flags)
 {
     // Allocating one by one is inefficient, but it doesn't really matter.
-    d->groups = (MaterialAnim *) M_Realloc(d->groups, sizeof(*d->groups) * (d->numgroups + 1));
-
-    // Init the new group; the group id is (index + 1)
-    void *region = (void *) &d->groups[d->numgroups];
-    int groupId = ++d->numgroups;
-    new (region) MaterialAnim(groupId, flags);
+    // The group id is (index + 1)
+    int groupId = d->groups.count() + 1;
+    d->groups.push_back(MaterialAnim(groupId, flags));
     return groupId;
 }
 
 void Materials::clearAnimGroups()
 {
-    if(d->numgroups <= 0) return;
-
-    for(int i = 0; i < d->numgroups; ++i)
-    {
-        MaterialAnim *group = &d->groups[i];
-        group->~MaterialAnim();
-    }
-
-    M_Free(d->groups); d->groups = 0;
-    d->numgroups = 0;
+    d->groups.clear();
 }
 
-void Materials::addAnimGroupFrame(int groupNum, struct material_s *mat, int tics, int randomTics)
+void Materials::addAnimGroupFrame(int groupNum, material_t &mat, int tics, int randomTics)
 {
     LOG_AS("Materials::addAnimGroupFrame");
 
@@ -985,17 +888,11 @@ void Materials::addAnimGroupFrame(int groupNum, struct material_s *mat, int tics
         return;
     }
 
-    if(!mat)
-    {
-        LOG_WARNING("Invalid material (ref=0), ignoring.");
-        return;
-    }
-
     // Mark the material as being in an animgroup.
-    Material_SetGroupAnimated(mat, true);
+    Material_SetGroupAnimated(&mat, true);
 
     // Allocate a new animframe.
-    group->addFrame(*mat, tics, randomTics);
+    group->addFrame(mat, tics, randomTics);
 }
 
 bool Materials::isPrecacheAnimGroup(int groupNum)
@@ -1013,15 +910,14 @@ static int resetVariantGroupAnimWorker(struct materialvariant_s *mat, void* /*pa
 
 void Materials::resetAnimGroups()
 {
-    for(MaterialListNode *node = d->materials; node; node = node->next)
+    DENG2_FOR_EACH(MaterialList, i, d->materials)
     {
-        Material_IterateVariants(node->mat, resetVariantGroupAnimWorker, NULL);
+        Material_IterateVariants(*i, resetVariantGroupAnimWorker, 0);
     }
 
-    MaterialAnim *group = d->groups;
-    for(int i = 0; i < d->numgroups; ++i, group++)
+    DENG2_FOR_EACH(MaterialAnims, i, d->groups)
     {
-        group->reset();
+        i->reset();
     }
 
     // This'll get every group started on the first step.
@@ -1092,7 +988,7 @@ static void printMaterialInfo(material_t &mat)
                Material_IsGroupAnimated(&mat)? "yes" : "no",
                Material_IsDrawable(&mat)     ? "yes" : "no",
                Material_EnvironmentClass(&mat) == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(Material_EnvironmentClass(&mat)),
-               App_Materials()->hasDecorations(&mat) ? "yes" : "no",
+               App_Materials()->hasDecorations(mat) ? "yes" : "no",
                Material_DetailTexture(&mat)  ? "yes" : "no",
                Material_HasGlow(&mat)        ? "yes" : "no",
                Material_ShinyTexture(&mat)   ? "yes" : "no",
@@ -1470,17 +1366,20 @@ DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 
 boolean Materials_HasDecorations(material_t *material)
 {
-    return App_Materials()->hasDecorations(material);
+    if(!material) return false;
+    return App_Materials()->hasDecorations(*material);
 }
 
 ded_ptcgen_t const *Materials_PtcGenDef(material_t *material)
 {
-    return App_Materials()->ptcGenDef(material);
+    if(!material) return 0;
+    return App_Materials()->ptcGenDef(*material);
 }
 
 boolean Materials_IsMaterialInAnimGroup(material_t *material, int animGroupNum)
 {
-    return App_Materials()->isMaterialInAnimGroup(material, animGroupNum);
+    if(!material) return false;
+    return App_Materials()->isMaterialInAnimGroup(*material, animGroupNum);
 }
 
 #undef Materials_ResolveUri
