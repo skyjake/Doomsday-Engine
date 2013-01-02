@@ -78,6 +78,9 @@ typedef struct lineside_s {
     unsigned short shadowVisFrame; /// Framecount of last time shadows were drawn on this side.
 } lineside_t;
 
+/**
+ * @ingroup map
+ */
 typedef struct linedef_s {
     runtime_mapdata_header_t header;
     struct vertex_s *v[2];
@@ -131,8 +134,8 @@ int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
 /**
  * @param offset  Returns the position of the nearest point along the line [0..1].
  */
-coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
-coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
+coord_t LineDef_PointDistance(LineDef const *lineDef, coord_t const point[2], coord_t* offset);
+coord_t LineDef_PointXYDistance(LineDef const *lineDef, coord_t x, coord_t y, coord_t* offset);
 
 /**
  * On which side of this LineDef does the specified point lie?

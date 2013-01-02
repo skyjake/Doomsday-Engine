@@ -404,7 +404,7 @@ SOURCES += \
     $$SRC/src/map/gamemap.c \
     $$SRC/src/map/generators.c \
     $$SRC/src/map/hedge.cpp \
-    $$SRC/src/map/linedef.c \
+    $$SRC/src/map/linedef.cpp \
     $$SRC/src/map/p_data.cpp \
     $$SRC/src/map/p_dmu.cpp \
     $$SRC/src/map/p_intercept.c \

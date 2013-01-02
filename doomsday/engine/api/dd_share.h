@@ -784,6 +784,7 @@ typedef int (*traverser_t) (const intercept_t* intercept, void* paramaters);
 
 /**
  * A simple POD data structure for representing line trace openings.
+ * @todo Should use coord_t
  */
 typedef struct {
     /// Top and bottom z of the opening.

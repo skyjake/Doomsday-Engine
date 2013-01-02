@@ -516,7 +516,7 @@ SOURCES += \
     src/map/gamemap.c \
     src/map/generators.c \
     src/map/hedge.cpp \
-    src/map/linedef.c \
+    src/map/linedef.cpp \
     src/map/p_data.cpp \
     src/map/p_dmu.cpp \
     src/map/p_intercept.c \
