@@ -87,6 +87,7 @@ struct font_s;
 #include "api_plugin.h"
 #include "api_def.h"
 #include "api_filesys.h"
+#include "api_console.h"
 
 #include "filehandle.h"
 #include <de/memoryzone.h>
@@ -245,7 +246,6 @@ void Con_SetUri(char const* name, Uri const* uri);
 void Con_Printf(char const* format, ...) PRINTF_F(1,2);
 void Con_FPrintf(int flags, char const* format, ...) PRINTF_F(2,3);
 void Con_PrintRuler(void);
-void Con_Message(char const* message, ...) PRINTF_F(1,2);
 void Con_Error(char const* error, ...) PRINTF_F(1,2);
 
 void Con_SetPrintFilter(con_textfilter_t filter);

@@ -71,6 +71,7 @@ SRC = ../engine
 
 DENG_API_HEADERS = \
     $$SRC/api/api_base.h \
+    $$SRC/api/api_console.h \
     $$SRC/api/api_def.h \
     $$SRC/api/api_filesys.h \
     $$SRC/api/api_plugin.h \

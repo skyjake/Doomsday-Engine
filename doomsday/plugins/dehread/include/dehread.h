@@ -56,6 +56,8 @@ const int NUMSTATES  = 968;
 extern ded_sprid_t  origSpriteNames[NUMSPRITES];
 extern ded_funcid_t origActionNames[NUMSTATES];
 
+DENG_USING_API(Base);
+DENG_USING_API(Con);
 DENG_USING_API(Def);
 DENG_USING_API(F);
 DENG_USING_API(Plug);

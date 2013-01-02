@@ -2002,6 +2002,8 @@ void Con_PrintPathList(const char* pathList)
     Con_PrintPathList2(pathList, ';');
 }
 
+#undef Con_Message
+
 void Con_Message(const char *message, ...)
 {
     va_list argptr;
@@ -2666,3 +2668,10 @@ D_CMD(DebugError)
     Con_Error("Fatal error.\n");
     return true;
 }
+
+DENG_DECLARE_API(Con) =
+{
+    { DE_API_CONSOLE_v1 },
+
+    Con_Message
+};

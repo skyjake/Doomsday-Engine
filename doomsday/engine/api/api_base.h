@@ -26,12 +26,13 @@
 /// All APIs exported from the executable.
 enum {
     DE_API_BASE_v1               = 0,       // 1.10
-    DE_API_DEFINITIONS_v1        = 100,     // 1.10
-    DE_API_DIRECT_DATA_ACCESS_v1 = 200,     // 1.10
-    DE_API_FILE_SYSTEM_v1        = 300,     // 1.10
-    DE_API_PLUGIN_v1             = 400,     // 1.10
-    DE_API_URI_v1                = 500,     // 1.10
-    DE_API_WAD_v1                = 600      // 1.10
+    DE_API_CONSOLE_v1            = 100,     // 1.10
+    DE_API_DEFINITIONS_v1        = 200,     // 1.10
+    DE_API_DIRECT_DATA_ACCESS_v1 = 300,     // 1.10
+    DE_API_FILE_SYSTEM_v1        = 400,     // 1.10
+    DE_API_PLUGIN_v1             = 500,     // 1.10
+    DE_API_URI_v1                = 600,     // 1.10
+    DE_API_WAD_v1                = 700      // 1.10
 };
 
 /**
