@@ -34,6 +34,7 @@
 #endif
 
 #include "dd_api.h"
+#include "doomsday.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +42,15 @@ extern "C" {
 
 extern game_import_t gi;
 extern game_export_t gx;
+
+DENG_USING_API(Base);
+DENG_USING_API(Con);
+DENG_USING_API(Def);
+DENG_USING_API(F);
+DENG_USING_API(Material);
+DENG_USING_API(Plug);
+DENG_USING_API(Uri);
+DENG_USING_API(W);
 
 #ifdef __cplusplus
 } // extern "C"
