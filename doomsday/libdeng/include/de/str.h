@@ -477,6 +477,20 @@ DENG_PUBLIC Str *Str_FromAutoStr(AutoStr *as);
  */
 DENG_PUBLIC int dd_vsnprintf(char *str, size_t size, char const *format, va_list ap);
 
+/**
+ * Prints a formatted string into a fixed-size buffer. At most @c size
+ * characters will be written to the output buffer @c str. The output will
+ * always contain a terminating null character.
+ *
+ * @param str     Output buffer.
+ * @param size    Size of the output buffer.
+ * @param format  Format of the output.
+ *
+ * @return        Number of characters written to the output buffer
+ *                if lower than or equal to @c size, else @c -1.
+ */
+DENG_PUBLIC int dd_snprintf(char *str, size_t size, char const *format, ...);
+
 #ifdef UNIX
 // Some routines not available on the *nix platform.
 DENG_PUBLIC char *strupr(char *string);

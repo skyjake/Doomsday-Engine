@@ -2939,27 +2939,3 @@ D_CMD(ReloadGame)
     DD_ChangeGame(games->currentGame(), true/* allow reload */);
     return true;
 }
-
-/**
- * Prints a formatted string into a fixed-size buffer. At most @c size
- * characters will be written to the output buffer @c str. The output will
- * always contain a terminating null character.
- *
- * @param str           Output buffer.
- * @param size          Size of the output buffer.
- * @param format        Format of the output.
- *
- * @return              Number of characters written to the output buffer
- *                      if lower than or equal to @c size, else @c -1.
- */
-int dd_snprintf(char* str, size_t size, const char* format, ...)
-{
-    int result = 0;
-
-    va_list args;
-    va_start(args, format);
-    result = dd_vsnprintf(str, size, format, args);
-    va_end(args);
-
-    return result;
-}

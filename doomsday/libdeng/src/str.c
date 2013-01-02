@@ -887,6 +887,18 @@ int dd_vsnprintf(char *str, size_t size, char const *format, va_list ap)
 #endif
 }
 
+int dd_snprintf(char *str, size_t size, char const *format, ...)
+{
+    int result = 0;
+
+    va_list args;
+    va_start(args, format);
+    result = dd_vsnprintf(str, size, format, args);
+    va_end(args);
+
+    return result;
+}
+
 #ifdef UNIX
 
 char* strupr(char* string)
