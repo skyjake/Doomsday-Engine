@@ -88,6 +88,7 @@ struct font_s;
 #include "api_def.h"
 #include "api_filesys.h"
 #include "api_console.h"
+#include "api_material.h"
 #include "api_mpe.h"
 
 #include "filehandle.h"
@@ -193,14 +194,6 @@ void DD_AddGameResource(gameid_t game, resourceclassid_t classId, int fFlags,
 boolean DD_GameInfo(GameInfo* info);
 
     ddplayer_t*     DD_GetPlayer(int number);
-///@}
-
-/**
- * @defgroup material Materials
- * @ingroup resource
- */
-///@{
-materialid_t DD_MaterialForTextureUri(Uri const *textureUri);
 ///@}
 
 /// @addtogroup input
@@ -505,7 +498,6 @@ void P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
 // Play: Materials.
 materialid_t Materials_ResolveUri(const Uri* uri);
 materialid_t Materials_ResolveUriCString(const char* path);
-Uri* Materials_ComposeUri(materialid_t materialId);
 
 ///@}
 

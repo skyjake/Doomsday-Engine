@@ -1759,8 +1759,8 @@ material_t *Materials_ToMaterial(materialid_t materialId)
     return App_Materials()->toMaterial(materialId);
 }
 
-/// @note Part of the Doomsday public API.
-struct uri_s *Materials_ComposeUri(materialid_t materialId)
+#undef Materials_ComposeUri
+DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 {
     de::Uri uri = App_Materials()->composeUri(materialId);
     return Uri_Dup(reinterpret_cast<uri_s *>(&uri));

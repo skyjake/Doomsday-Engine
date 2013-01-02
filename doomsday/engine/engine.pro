@@ -80,6 +80,7 @@ DENG_API_HEADERS = \
     api/api_console.h \
     api/api_def.h \
     api/api_filesys.h \
+    api/api_material.h \
     api/api_mpe.h \
     api/api_plugin.h \
     api/api_uri.h \
@@ -418,6 +419,7 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
+    src/api_material.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
     src/audio/m_mus2midi.c \

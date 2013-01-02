@@ -74,6 +74,7 @@ DENG_API_HEADERS = \
     $$SRC/api/api_console.h \
     $$SRC/api/api_def.h \
     $$SRC/api/api_filesys.h \
+    $$SRC/api/api_material.h \
     $$SRC/api/api_mpe.h \
     $$SRC/api/api_plugin.h \
     $$SRC/api/api_uri.h \
@@ -327,6 +328,7 @@ SOURCES += $$SRC/src/ui/displaymode_dummy.c
 # Platform-independent sources.
 SOURCES += \
     src/server_dummies.c \
+    $$SRC/src/api_material.cpp \
     $$SRC/src/audio/s_cache.c \
     $$SRC/src/audio/s_environ.cpp \
     $$SRC/src/audio/s_logic.c \
