@@ -25,14 +25,11 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_system.h"
-#include "de_filesys.h"
-#include "de_network.h"
+#include "de_network.h" // playback / clientPaused
 #include "de_render.h"
 #include "de_graphics.h"
-#include "de_misc.h"
-#include "de_audio.h" // For texture, environmental audio properties.
-#include "de_resource.h"
+#include "de_misc.h" // M_NumDigits()
+#include "de_audio.h" // For environmental audio properties.
 
 #include "gl/sys_opengl.h" /// @todo: get rid of this -jk
 
@@ -44,9 +41,6 @@
 #include <de/PathTree>
 #include <de/memory.h>
 
-#include <cstring>
-
-#include "resource/materialbind.h"
 #include "resource/materials.h"
 #include "resource/materialsnapshot.h"
 
@@ -61,50 +55,19 @@ D_CMD(PrintMaterialStats);
 
 namespace de {
 
-static void clearBindingDefinitionLinks(MaterialBind &mb)
-{
-    MaterialBind::Info *info = mb.info();
-    if(info)
-    {
-        info->decorationDefs[0]    = info->decorationDefs[1]    = NULL;
-        info->detailtextureDefs[0] = info->detailtextureDefs[1] = NULL;
-        info->ptcgenDefs[0]        = info->ptcgenDefs[1]        = NULL;
-        info->reflectionDefs[0]    = info->reflectionDefs[1]    = NULL;
-    }
-}
-
 static void updateMaterialBindInfo(MaterialBind &mb, bool canCreateInfo)
 {
     MaterialBind::Info *info = mb.info();
-    material_t *mat = mb.material();
-    bool isCustom = (mat? Material_IsCustom(mat) : false);
-
     if(!info)
     {
         if(!canCreateInfo) return;
 
         // Create new info and attach to this binding.
-        info = (MaterialBind::Info *) M_Malloc(sizeof *info);
-        if(!info) Con_Error("Materials::updateMaterialBindInfo: Failed on allocation of %lu bytes for new MaterialBindInfo.", (unsigned long) sizeof *info);
-
+        info = new MaterialBind::Info();
         mb.attachInfo(*info);
     }
 
-    // Surface decorations (lights and models).
-    info->decorationDefs[0]    = Def_GetDecoration(mat, 0, isCustom);
-    info->decorationDefs[1]    = Def_GetDecoration(mat, 1, isCustom);
-
-    // Reflection (aka shiny surface).
-    info->reflectionDefs[0]    = Def_GetReflection(mat, 0, isCustom);
-    info->reflectionDefs[1]    = Def_GetReflection(mat, 1, isCustom);
-
-    // Generator (particles).
-    info->ptcgenDefs[0]        = Def_GetGenerator(mat, 0, isCustom);
-    info->ptcgenDefs[1]        = Def_GetGenerator(mat, 1, isCustom);
-
-    // Detail texture.
-    info->detailtextureDefs[0] = Def_GetDetailTex(mat, 0, isCustom);
-    info->detailtextureDefs[1] = Def_GetDetailTex(mat, 1, isCustom);
+    info->linkDefinitions(mb.material());
 }
 
 typedef struct materialvariantspecificationlistnode_s {
@@ -421,7 +384,10 @@ void Materials::clearDefinitionLinks()
         PathTreeIterator<MaterialScheme::Index> iter((*i)->index().leafNodes());
         while(iter.hasNext())
         {
-            clearBindingDefinitionLinks(iter.next());
+            if(MaterialBind::Info *info = iter.next().info())
+            {
+                info->clearDefinitionLinks();
+            }
         }
     }
 }
