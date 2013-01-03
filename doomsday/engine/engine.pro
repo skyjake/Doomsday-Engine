@@ -80,6 +80,7 @@ DENG_API_HEADERS = \
     api/api_busy.h \
     api/api_console.h \
     api/api_def.h \
+    api/api_event.h \
     api/api_filesys.h \
     api/api_fontrender.h \
     api/api_material.h \

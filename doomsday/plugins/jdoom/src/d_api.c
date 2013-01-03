@@ -280,6 +280,7 @@ const char* deng_LibraryType(void)
 }
 
 DENG_DECLARE_API(Base);
+DENG_DECLARE_API(B);
 DENG_DECLARE_API(Busy);
 DENG_DECLARE_API(Con);
 DENG_DECLARE_API(Def);
@@ -293,6 +294,7 @@ DENG_DECLARE_API(W);
 
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_BASE_latest, Base);
+    DENG_GET_API(DE_API_BINDING_latest, B);
     DENG_GET_API(DE_API_BUSY_latest, Busy);
     DENG_GET_API(DE_API_CONSOLE_latest, Con);
     DENG_GET_API(DE_API_DEFINITIONS_latest, Def);

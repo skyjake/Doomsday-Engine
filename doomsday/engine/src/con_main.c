@@ -30,6 +30,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_CONSOLE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -2675,5 +2677,41 @@ DENG_DECLARE_API(Con) =
 {
     { DE_API_CONSOLE_latest },
 
-    Con_Message
+    Con_Open,
+    Con_AddCommand,
+    Con_AddVariable,
+    Con_AddCommandList,
+    Con_AddVariableList,
+
+    Con_GetVariableType,
+
+    Con_GetByte,
+    Con_GetInteger,
+    Con_GetFloat,
+    Con_GetString,
+    Con_GetUri,
+
+    Con_SetInteger2,
+    Con_SetInteger,
+
+    Con_SetFloat2,
+    Con_SetFloat,
+
+    Con_SetString2,
+    Con_SetString,
+
+    Con_SetUri2,
+    Con_SetUri,
+
+    Con_Message,
+
+    Con_Printf,
+    Con_FPrintf,
+    Con_PrintRuler,
+    Con_Error,
+
+    Con_SetPrintFilter,
+
+    DD_Execute,
+    DD_Executef,
 };

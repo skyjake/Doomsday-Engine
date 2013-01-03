@@ -87,6 +87,7 @@ struct font_s;
 #include "api_busy.h"
 #include "api_plugin.h"
 #include "api_def.h"
+#include "api_event.h"
 #include "api_filesys.h"
 #include "api_console.h"
 #include "api_material.h"
@@ -192,58 +193,6 @@ boolean DD_GameInfo(GameInfo* info);
     int             DD_GetKeyCode(const char* name);
 ///@}
 
-//------------------------------------------------------------------------
-//
-// Console.
-//
-//------------------------------------------------------------------------
-
-/// @addtogroup console
-///@{
-void Con_Open(int yes);
-void Con_AddCommand(ccmdtemplate_t const* cmd);
-void Con_AddVariable(cvartemplate_t const* var);
-void Con_AddCommandList(ccmdtemplate_t const* cmdList);
-void Con_AddVariableList(cvartemplate_t const* varList);
-
-cvartype_t Con_GetVariableType(char const* name);
-
-byte Con_GetByte(char const* name);
-int Con_GetInteger(char const* name);
-float Con_GetFloat(char const* name);
-char const* Con_GetString(char const* name);
-Uri const* Con_GetUri(char const* name);
-
-void Con_SetInteger2(char const* name, int value, int svflags);
-void Con_SetInteger(char const* name, int value);
-
-void Con_SetFloat2(char const* name, float value, int svflags);
-void Con_SetFloat(char const* name, float value);
-
-void Con_SetString2(char const* name, char const* text, int svflags);
-void Con_SetString(char const* name, char const* text);
-
-void Con_SetUri2(char const* name, Uri const* uri, int svflags);
-void Con_SetUri(char const* name, Uri const* uri);
-
-void Con_Printf(char const* format, ...) PRINTF_F(1,2);
-void Con_FPrintf(int flags, char const* format, ...) PRINTF_F(2,3);
-void Con_PrintRuler(void);
-void Con_Error(char const* error, ...) PRINTF_F(1,2);
-
-void Con_SetPrintFilter(con_textfilter_t filter);
-
-int DD_Execute(int silent, char const* command);
-int DD_Executef(int silent, char const* command, ...);
-///@}
-
-/// @addtogroup bindings
-///@{
-    // Console: Bindings.
-    void            B_SetContextFallback(const char* name, int (*responderFunc)(event_t*));
-    int             B_BindingsForCommand(const char* cmd, char* buf, size_t bufSize);
-    int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse, char* buf, size_t bufSize);
-///@}
 //------------------------------------------------------------------------
 //
 // System.

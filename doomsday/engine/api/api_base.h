@@ -26,43 +26,46 @@
 /// All APIs exported from the executable.
 enum {
     DE_API_BASE_v1               = 0,       // 1.10
-    DE_API_BASE_latest,
+    DE_API_BASE_latest           = DE_API_BASE_v1,
 
-    DE_API_BUSY_v1               = 100,     // 1.10
-    DE_API_BUSY_latest,
+    DE_API_BINDING_v1            = 100,     // 1.10
+    DE_API_BINDING_latest        = DE_API_BINDING_v1,
 
-    DE_API_CONSOLE_v1            = 200,     // 1.10
-    DE_API_CONSOLE_latest,
+    DE_API_BUSY_v1               = 200,     // 1.10
+    DE_API_BUSY_latest           = DE_API_BUSY_v1,
 
-    DE_API_DEFINITIONS_v1        = 300,     // 1.10
-    DE_API_DEFINITIONS_latest,
+    DE_API_CONSOLE_v1            = 300,     // 1.10
+    DE_API_CONSOLE_latest        = DE_API_CONSOLE_v1,
 
-    DE_API_DIRECT_DATA_ACCESS_v1 = 400,     // 1.10
-    DE_API_DIRECT_DATA_ACCESS_latest,
+    DE_API_DEFINITIONS_v1        = 400,     // 1.10
+    DE_API_DEFINITIONS_latest    = DE_API_DEFINITIONS_v1,
 
-    DE_API_FILE_SYSTEM_v1        = 500,     // 1.10
-    DE_API_FILE_SYSTEM_latest,
+    DE_API_DIRECT_DATA_ACCESS_v1 = 500,     // 1.10
+    DE_API_DIRECT_DATA_ACCESS_latest = DE_API_DIRECT_DATA_ACCESS_v1,
 
-    DE_API_FONT_RENDER_v1        = 600,     // 1.10
-    DE_API_FONT_RENDER_latest,
+    DE_API_FILE_SYSTEM_v1        = 600,     // 1.10
+    DE_API_FILE_SYSTEM_latest    = DE_API_FILE_SYSTEM_v1,
 
-    DE_API_MAP_EDIT_v1           = 700,     // 1.10
-    DE_API_MAP_EDIT_latest,
+    DE_API_FONT_RENDER_v1        = 700,     // 1.10
+    DE_API_FONT_RENDER_latest    = DE_API_FONT_RENDER_v1,
 
-    DE_API_MATERIALS_v1          = 800,     // 1.10
-    DE_API_MATERIALS_latest,
+    DE_API_MAP_EDIT_v1           = 800,     // 1.10
+    DE_API_MAP_EDIT_latest       = DE_API_MAP_EDIT_v1,
 
-    DE_API_PLUGIN_v1             = 900,     // 1.10
-    DE_API_PLUGIN_latest,
+    DE_API_MATERIALS_v1          = 900,     // 1.10
+    DE_API_MATERIALS_latest      = DE_API_MATERIALS_v1,
 
-    DE_API_THINKER_v1            = 1000,    // 1.10
-    DE_API_THINKER_latest,
+    DE_API_PLUGIN_v1             = 1000,    // 1.10
+    DE_API_PLUGIN_latest         = DE_API_PLUGIN_v1,
 
-    DE_API_URI_v1                = 1100,    // 1.10
-    DE_API_URI_latest,
+    DE_API_THINKER_v1            = 1100,    // 1.10
+    DE_API_THINKER_latest        = DE_API_THINKER_v1,
 
-    DE_API_WAD_v1                = 1200,    // 1.10
-    DE_API_WAD_latest
+    DE_API_URI_v1                = 1200,    // 1.10
+    DE_API_URI_latest            = DE_API_URI_v1,
+
+    DE_API_WAD_v1                = 1300,    // 1.10
+    DE_API_WAD_latest            = DE_API_WAD_v1
 };
 
 /**
