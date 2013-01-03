@@ -1055,7 +1055,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
 
     // Ensure we have up to date info about the material.
     MaterialSnapshot const &ms =
-        App_Materials()->prepare(*material, Rend_MapSurfaceDiffuseMaterialSpec(), true);
+        App_Materials()->prepare(*material, Rend_MapSurfaceMaterialSpec(), true);
 
     if(ignoreOpacity || (ms.isOpaque() && !frontDef->SW_middleblendmode && frontDef->SW_middlergba[3] >= 1))
     {
@@ -1464,7 +1464,7 @@ boolean R_IsGlowingPlane(Plane const *pln)
     if(mat)
     {
         MaterialSnapshot const &ms =
-            App_Materials()->prepare(*mat, Rend_MapSurfaceDiffuseMaterialSpec(), true);
+            App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), true);
 
         if(!Material_IsDrawable(mat) || ms.glowStrength() > 0) return true;
     }
@@ -1485,7 +1485,7 @@ float R_GlowStrength(Plane const *pln)
         {
             /// @todo We should not need to prepare to determine this.
             MaterialSnapshot const &ms =
-                App_Materials()->prepare(*mat, Rend_MapSurfaceDiffuseMaterialSpec(), true);
+                App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), true);
 
             return ms.glowStrength();
         }

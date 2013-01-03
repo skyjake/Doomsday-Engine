@@ -254,11 +254,6 @@ Materials::Materials()
 {
     LOG_VERBOSE("Initializing Materials collection...");
     d = new Instance();
-
-    createScheme("System");
-    createScheme("Flats");
-    createScheme("Textures");
-    createScheme("Sprites");
 }
 
 Materials::~Materials()
@@ -729,7 +724,7 @@ ded_decor_t const *Materials::decorationDef(material_t &mat)
 {
     if(!Material_Prepared(&mat))
     {
-        prepare(mat, Rend_MapSurfaceDiffuseMaterialSpec(), false);
+        prepare(mat, Rend_MapSurfaceMaterialSpec(), false);
     }
     return d->materialBindForId(Material_PrimaryBind(&mat))->decorationDef();
 }
@@ -739,7 +734,7 @@ ded_ptcgen_t const *Materials::ptcGenDef(material_t &mat)
     if(isDedicated) return 0;
     if(!Material_Prepared(&mat))
     {
-        prepare(mat, Rend_MapSurfaceDiffuseMaterialSpec(), false);
+        prepare(mat, Rend_MapSurfaceMaterialSpec(), false);
     }
     return d->materialBindForId(Material_PrimaryBind(&mat))->ptcGenDef();
 }
@@ -1291,6 +1286,11 @@ void Materials_Init()
 {
     DENG_ASSERT(!materials);
     materials = new de::Materials();
+
+    materials->createScheme("System");
+    materials->createScheme("Flats");
+    materials->createScheme("Textures");
+    materials->createScheme("Sprites");
 }
 
 void Materials_Shutdown()

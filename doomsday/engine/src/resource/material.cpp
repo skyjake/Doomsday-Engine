@@ -381,7 +381,7 @@ boolean Material_HasGlow(material_t *mat)
 
     /// @todo We should not need to prepare to determine this.
     MaterialSnapshot const &ms =
-        App_Materials()->prepare(*mat, Rend_MapSurfaceDiffuseMaterialSpec(), true);
+        App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), true);
 
     return (ms.glowStrength() > .0001f);
 }

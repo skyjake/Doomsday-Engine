@@ -472,7 +472,7 @@ static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT
         delta[VY] * delta[VZ] != 0))
     {
         // Ensure we've prepared a variant of this material.
-        App_Materials()->prepare(*suf->material, Rend_MapSurfaceDiffuseMaterialSpec(),
+        App_Materials()->prepare(*suf->material, Rend_MapSurfaceMaterialSpec(),
                                  true /*smooth*/, true /*do-create*/);
 
         ded_decor_t const *def = App_Materials()->decorationDef(*suf->material);
