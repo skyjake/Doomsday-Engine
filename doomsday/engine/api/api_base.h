@@ -69,6 +69,8 @@ DENG_API_TYPEDEF(Base) // v1
 {
     de_api_t api;
 
+    void (*Quit)(void);
+
     int (*GetInteger)(int ddvalue);
     void (*SetInteger)(int ddvalue, int parm);
     void* (*GetVariable)(int ddvalue);
@@ -143,6 +145,7 @@ DENG_API_TYPEDEF(Base) // v1
 DENG_API_T(Base);
 
 #ifndef DENG_NO_API_MACROS_BASE
+#define Sys_Quit            _api_Base.Quit
 #define DD_GetInteger       _api_Base.GetInteger
 #define DD_SetInteger       _api_Base.SetInteger
 #define DD_GetVariable      _api_Base.GetVariable

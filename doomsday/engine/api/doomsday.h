@@ -142,11 +142,6 @@ extern "C" {
  * @ingroup base
  * Functionality provided by or related to the operating system.
  */
-///@{
-    void            Sys_Sleep(int millisecs);
-    int             Sys_CriticalMessage(char* msg);
-    void            Sys_Quit(void);
-///@}
 
 //------------------------------------------------------------------------
 //

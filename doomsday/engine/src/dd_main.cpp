@@ -2916,10 +2916,14 @@ D_CMD(ReloadGame)
 // dd_loop.c
 DENG_EXTERN_C boolean DD_IsSharpTick(void);
 
+// sys_system.c
+DENG_EXTERN_C void Sys_Quit(void);
+
 DENG_DECLARE_API(Base) =
 {
     { DE_API_BASE_latest },
 
+    Sys_Quit,
     DD_GetInteger,
     DD_SetInteger,
     DD_GetVariable,

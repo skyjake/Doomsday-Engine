@@ -53,7 +53,7 @@ struct mobj_s* ClMobj_Find(thid_t id)
 boolean ClMobj_IsValid(struct mobj_s* mo)
 {
     DENG_UNUSED(mo);
-    return false;
+    return true;
 }
 
 struct mobj_s* ClPlayer_ClMobj(int plrNum)
