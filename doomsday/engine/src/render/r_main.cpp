@@ -1295,7 +1295,7 @@ static int findSpriteOwner(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-static void cacheSpritesForState(int stateIndex, materialvariantspecification_t const &spec)
+static void cacheSpritesForState(int stateIndex, MaterialVariantSpec const &spec)
 {
     if(stateIndex < 0 || stateIndex >= defs.count.states.num) return;
 
@@ -1320,7 +1320,7 @@ DENG_EXTERN_C void Rend_CacheForMobjType(int num)
     if(novideo || !((useModels && precacheSkins) || precacheSprites)) return;
     if(num < 0 || num >= defs.count.mobjs.num) return;
 
-    materialvariantspecification_t const &spec = *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
+    MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
     /// @todo Optimize: Traverses the entire state list!
     for(int i = 0; i < defs.count.states.num; ++i)
@@ -1347,7 +1347,7 @@ void Rend_CacheForMap()
 
     if(precacheMapMaterials)
     {
-        materialvariantspecification_t const &spec = *Rend_MapSurfaceDiffuseMaterialSpec();
+        MaterialVariantSpec const &spec = Rend_MapSurfaceDiffuseMaterialSpec();
 
         for(uint i = 0; i < NUM_SIDEDEFS; ++i)
         {
@@ -1378,7 +1378,7 @@ void Rend_CacheForMap()
 
     if(precacheSprites)
     {
-        materialvariantspecification_t const &spec = *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
+        MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
         for(int i = 0; i < numSprites; ++i)
         {

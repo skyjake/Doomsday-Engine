@@ -152,7 +152,7 @@ void MaterialSnapshot::update()
 {
     TextureVariant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS];
     material_t &mat = d->material->generalCase();
-    materialvariantspecification_t const &spec = d->material->spec();
+    MaterialVariantSpec const &spec = d->material->spec();
 
     std::memset(prepTextures, 0, sizeof prepTextures);
 

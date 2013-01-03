@@ -183,11 +183,12 @@ static void configureDefaultSky()
     horizonOffset = DEFAULT_SKY_HORIZON_OFFSET;
 }
 
-materialvariantspecification_t const *Sky_SphereMaterialSpec(bool masked)
+MaterialVariantSpec const &Sky_SphereMaterialSpec(bool masked)
 {
-    return App_Materials()->variantSpecificationForContext(MC_SKYSPHERE,
-        TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
-        0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1, false, true, false, false);
+    return App_Materials()->variantSpecForContext(MC_SKYSPHERE,
+                                                  TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
+                                                  0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1,
+                                                  false, true, false, false);
 }
 
 static void calculateSkyAmbientColor()
@@ -214,7 +215,7 @@ static void calculateSkyAmbientColor()
         if(!(slayer->flags & SLF_ACTIVE) || !slayer->material) continue;
 
         MaterialSnapshot const &ms =
-            App_Materials()->prepare(*slayer->material, *Sky_SphereMaterialSpec(!!(slayer->flags & SLF_MASKED)), false);
+            App_Materials()->prepare(*slayer->material, Sky_SphereMaterialSpec(!!(slayer->flags & SLF_MASKED)), false);
 
         if(ms.hasTexture(MTU_PRIMARY))
         {
@@ -811,7 +812,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         DENG_ASSERT(mat);
 
         MaterialSnapshot const &ms =
-            App_Materials()->prepare(*mat, *Sky_SphereMaterialSpec(Sky_LayerMasked(layer)), true);
+            App_Materials()->prepare(*mat, Sky_SphereMaterialSpec(Sky_LayerMasked(layer)), true);
 
         rs.texSize.width  = ms.texture(MTU_PRIMARY).generalCase().width();
         rs.texSize.height = ms.texture(MTU_PRIMARY).generalCase().height();

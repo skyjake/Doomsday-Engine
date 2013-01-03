@@ -249,9 +249,9 @@ namespace de {
          *
          * @return  Rationalized (and interned) copy of the final specification.
          */
-        materialvariantspecification_t const *variantSpecificationForContext(
-            materialcontext_t materialContext, int flags, byte border, int tClass,
-            int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
+        MaterialVariantSpec const &variantSpecForContext(materialcontext_t materialContext,
+            int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
+            int minFilter, int magFilter, int anisoFilter,
             bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha);
 
         /**
@@ -263,7 +263,7 @@ namespace de {
          * @param cacheGroups   @c true= variants for all Materials in any applicable animation
          *                      groups are desired, else just this specific Material.
          */
-        void cache(material_t &material, materialvariantspecification_t const &spec,
+        void cache(material_t &material, MaterialVariantSpec const &spec,
                    bool smooth, bool cacheGroups = true);
 
         /**
@@ -282,7 +282,7 @@ namespace de {
          *
          * @return  Snapshot for the chosen and prepared variant of Material.
          */
-        MaterialSnapshot const &prepare(material_t &material, materialvariantspecification_t const &spec,
+        MaterialSnapshot const &prepare(material_t &material, MaterialVariantSpec const &spec,
                                         bool smooth, bool forceSnapshotUpdate = false);
 
         /**
@@ -308,7 +308,7 @@ namespace de {
          *
          * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
          */
-        MaterialVariant *chooseVariant(material_t &material, materialvariantspecification_t const &spec,
+        MaterialVariant *chooseVariant(material_t &material, MaterialVariantSpec const &spec,
                                        bool smoothed, bool canCreate);
 
         /// @todo Refactor away -ds
