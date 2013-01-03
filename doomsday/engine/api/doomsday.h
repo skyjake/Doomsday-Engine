@@ -91,10 +91,11 @@ struct font_s;
 #include "api_filesys.h"
 #include "api_console.h"
 #include "api_material.h"
-#include "api_mpe.h"
 #include "api_fontrender.h"
 #include "api_svg.h"
 #include "api_sound.h"
+#include "api_map.h"
+#include "api_mapedit.h"
 
 #include "filehandle.h"
 #include <de/memoryzone.h>
@@ -105,9 +106,6 @@ struct font_s;
 #include <de/smoother.h>
 #include <de/vector1.h>
 #include <de/writer.h>
-
-// Play: World data access (Map Data Updates and access to other information).
-#include "dd_world.h"
 
 #ifdef __cplusplus
 extern "C" {

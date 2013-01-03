@@ -32,8 +32,11 @@
 #include "api_console.h"
 #include "api_filesys.h"
 #include "api_material.h"
-#include "api_mpe.h"
+#include "api_map.h"
+#include "api_mapedit.h"
 #include "api_sound.h"
+#include "api_fontrender.h"
+#include "api_svg.h"
 
 struct library_s { // typedef Library
     Str* path;              ///< de::FS path of the library (e.g., "/bin/doom.dll").
@@ -181,6 +184,7 @@ void Library_PublishAPIs(Library *lib)
         PUBLISH(_api_Def);
         PUBLISH(_api_F);
         PUBLISH(_api_Infine);
+        PUBLISH(_api_Map);
         PUBLISH(_api_MPE);
         PUBLISH(_api_Material);
         PUBLISH(_api_Player);

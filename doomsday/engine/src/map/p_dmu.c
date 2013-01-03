@@ -33,6 +33,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_MAP
+#include "api_map.h"
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
@@ -173,7 +176,6 @@ const char* DMU_Str(uint prop)
     return propStr;
 }
 
-/// @note Part of the Doomsday public API.
 int DMU_GetType(const void* ptr)
 {
     int type;
@@ -2403,3 +2405,92 @@ void P_GetPtrpv(void* ptr, uint prop, void* params)
         P_Callbackp(args.type, ptr, &args, getProperty);
     }
 }
+
+// p_data.cpp
+DENG_EXTERN_C uint P_CountGameMapObjs(int entityId);
+
+DENG_DECLARE_API(Map) =
+{
+    { DE_API_MAP_latest },
+    DMU_GetType,
+    P_ToIndex,
+    P_ToPtr,
+    P_Callback,
+    P_Callbackp,
+    P_Iteratep,
+    P_AllocDummy,
+    P_FreeDummy,
+    P_IsDummy,
+    P_DummyExtraData,
+    P_CountGameMapObjs,
+    P_GetGMOByte,
+    P_GetGMOShort,
+    P_GetGMOInt,
+    P_GetGMOFixed,
+    P_GetGMOAngle,
+    P_GetGMOFloat,
+    P_SetBool,
+    P_SetByte,
+    P_SetInt,
+    P_SetFixed,
+    P_SetAngle,
+    P_SetFloat,
+    P_SetDouble,
+    P_SetPtr,
+    P_SetBoolv,
+    P_SetBytev,
+    P_SetIntv,
+    P_SetFixedv,
+    P_SetAnglev,
+    P_SetFloatv,
+    P_SetDoublev,
+    P_SetPtrv,
+    P_SetBoolp,
+    P_SetBytep,
+    P_SetIntp,
+    P_SetFixedp,
+    P_SetAnglep,
+    P_SetFloatp,
+    P_SetDoublep,
+    P_SetPtrp,
+    P_SetBoolpv,
+    P_SetBytepv,
+    P_SetIntpv,
+    P_SetFixedpv,
+    P_SetAnglepv,
+    P_SetFloatpv,
+    P_SetDoublepv,
+    P_SetPtrpv,
+    P_GetBool,
+    P_GetByte,
+    P_GetInt,
+    P_GetFixed,
+    P_GetAngle,
+    P_GetFloat,
+    P_GetDouble,
+    P_GetPtr,
+    P_GetBoolv,
+    P_GetBytev,
+    P_GetIntv,
+    P_GetFixedv,
+    P_GetAnglev,
+    P_GetFloatv,
+    P_GetDoublev,
+    P_GetPtrv,
+    P_GetBoolp,
+    P_GetBytep,
+    P_GetIntp,
+    P_GetFixedp,
+    P_GetAnglep,
+    P_GetFloatp,
+    P_GetDoublep,
+    P_GetPtrp,
+    P_GetBoolpv,
+    P_GetBytepv,
+    P_GetIntpv,
+    P_GetFixedpv,
+    P_GetAnglepv,
+    P_GetFloatpv,
+    P_GetDoublepv,
+    P_GetPtrpv
+};

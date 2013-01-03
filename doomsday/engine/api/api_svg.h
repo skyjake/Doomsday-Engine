@@ -50,7 +50,7 @@ DENG_API_T(Svg);
 #define GL_DrawSvg3     _api_Svg.DrawSvg3
 #endif
 
-#ifdef __DOOMSDAY__
+#if defined __DOOMSDAY__ && defined __CLIENT__
 DENG_USING_API(Svg);
 #endif
 

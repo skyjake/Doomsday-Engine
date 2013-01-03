@@ -83,7 +83,8 @@ DENG_API_HEADERS = \
     $$SRC/api/api_filesys.h \
     $$SRC/api/api_fontrender.h \
     $$SRC/api/api_material.h \
-    $$SRC/api/api_mpe.h \
+    $$SRC/api/api_map.h \
+    $$SRC/api/api_mapedit.h \
     $$SRC/api/api_player.h \
     $$SRC/api/api_plugin.h \
     $$SRC/api/api_sound.h \
@@ -97,7 +98,6 @@ DENG_API_HEADERS = \
     $$SRC/api/dd_share.h \
     $$SRC/api/dd_types.h \
     $$SRC/api/dd_version.h \
-    $$SRC/api/dd_world.h \
     $$SRC/api/def_share.h \
     $$SRC/api/dengproject.h \
     $$SRC/api/doomsday.h \

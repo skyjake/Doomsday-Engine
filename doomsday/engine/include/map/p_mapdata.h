@@ -30,7 +30,7 @@
 #endif
 
 #include "dd_share.h"
-#include "api_mpe.h"
+#include "api_mapedit.h"
 #include "map/dam_main.h"
 #include "render/rend_bias.h"
 #include "m_nodepile.h"

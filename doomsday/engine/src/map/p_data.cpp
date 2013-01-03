@@ -484,8 +484,7 @@ void P_ShutdownMapEntityDefs(void)
     clearEntityDefs();
 }
 
-/// @note Part of the Doomsday public API.
-extern "C" uint P_CountGameMapObjs(int entityId)
+DENG_EXTERN_C uint P_CountGameMapObjs(int entityId)
 {
     if(!theMap || !theMap->entityDatabase) return 0;
     EntityDatabase* db = theMap->entityDatabase;

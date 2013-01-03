@@ -29,7 +29,7 @@
 #include "de_filesys.h"
 #include "de_defs.h"
 #include "de_misc.h"
-#include "dd_world.h"
+#include "api_map.h"
 
 #include "r_util.h"
 #include "materialarchive.h"

@@ -51,31 +51,34 @@ enum {
     DE_API_INFINE_v1             = 800,     // 1.10
     DE_API_INFINE_latest         = DE_API_INFINE_v1,
 
-    DE_API_MAP_EDIT_v1           = 900,     // 1.10
+    DE_API_MAP_v1                = 900,     // 1.10
+    DE_API_MAP_latest            = DE_API_MAP_v1,
+
+    DE_API_MAP_EDIT_v1           = 1000,    // 1.10
     DE_API_MAP_EDIT_latest       = DE_API_MAP_EDIT_v1,
 
-    DE_API_MATERIALS_v1          = 1000,    // 1.10
+    DE_API_MATERIALS_v1          = 1100,    // 1.10
     DE_API_MATERIALS_latest      = DE_API_MATERIALS_v1,
 
-    DE_API_PLAYER_v1             = 1100,    // 1.10
+    DE_API_PLAYER_v1             = 1200,    // 1.10
     DE_API_PLAYER_latest         = DE_API_PLAYER_v1,
 
-    DE_API_PLUGIN_v1             = 1200,    // 1.10
+    DE_API_PLUGIN_v1             = 1300,    // 1.10
     DE_API_PLUGIN_latest         = DE_API_PLUGIN_v1,
 
-    DE_API_SOUND_v1              = 1300,    // 1.10
+    DE_API_SOUND_v1              = 1400,    // 1.10
     DE_API_SOUND_latest          = DE_API_SOUND_v1,
 
-    DE_API_SVG_v1                = 1400,    // 1.10
+    DE_API_SVG_v1                = 1500,    // 1.10
     DE_API_SVG_latest            = DE_API_SVG_v1,
 
-    DE_API_THINKER_v1            = 1500,    // 1.10
+    DE_API_THINKER_v1            = 1600,    // 1.10
     DE_API_THINKER_latest        = DE_API_THINKER_v1,
 
-    DE_API_URI_v1                = 1600,    // 1.10
+    DE_API_URI_v1                = 1700,    // 1.10
     DE_API_URI_latest            = DE_API_URI_v1,
 
-    DE_API_WAD_v1                = 1700,    // 1.10
+    DE_API_WAD_v1                = 1800,    // 1.10
     DE_API_WAD_latest            = DE_API_WAD_v1
 };
 
