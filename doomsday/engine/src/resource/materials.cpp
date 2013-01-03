@@ -1334,33 +1334,6 @@ struct uri_s *Materials_ComposeUri(materialid_t materialId)
     return Uri_New();
 }
 
-boolean Materials_HasDecorations(material_t *material)
-{
-    if(!material) return false;
-    return App_Materials()->hasDecorations(*material);
-}
-
-ded_ptcgen_t const *Materials_PtcGenDef(material_t *material)
-{
-    if(!material) return 0;
-    return App_Materials()->ptcGenDef(*material);
-}
-
-boolean Materials_IsMaterialInAnimGroup(material_t *material, int animGroupNum)
-{
-    if(!material) return false;
-    try
-    {
-        return App_Materials()->animGroup(animGroupNum).hasFrameForMaterial(*material);
-    }
-    catch(de::Materials::UnknownAnimGroupError const &er)
-    {
-        // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
-    }
-    return false;
-}
-
 /// @note Part of the Doomsday public API.
 materialid_t Materials_ResolveUri(struct uri_s const *uri)
 {
@@ -1386,23 +1359,4 @@ materialid_t Materials_ResolveUriCString(char const *uriCString)
         {} // Ignore this error.
     }
     return NOMATERIALID;
-}
-
-int Materials_AnimGroupCount()
-{
-    return App_Materials()->animGroupCount();
-}
-
-boolean Materials_IsPrecacheAnimGroup(int animGroupNum)
-{
-    try
-    {
-        return !!(App_Materials()->animGroup(animGroupNum).flags() & AGF_PRECACHE);
-    }
-    catch(de::Materials::UnknownAnimGroupError const &er)
-    {
-        // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
-    }
-    return false;
 }
