@@ -185,6 +185,7 @@ void Library_PublishAPIs(Library *lib)
         PUBLISH(_api_Player);
         PUBLISH(_api_Plug);
         PUBLISH(_api_S);
+        PUBLISH(_api_Svg);
         PUBLISH(_api_Thinker);
         PUBLISH(_api_Uri);
         PUBLISH(_api_W);

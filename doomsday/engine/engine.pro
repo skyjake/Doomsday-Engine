@@ -92,6 +92,7 @@ DENG_API_HEADERS = \
     api/api_player.h \
     api/api_plugin.h \
     api/api_sound.h \
+    api/api_svg.h \
     api/api_thinker.h \
     api/api_uri.h \
     api/api_wad.h \
@@ -102,7 +103,6 @@ DENG_API_HEADERS = \
     api/dd_share.h \
     api/dd_types.h \
     api/dd_ui.h \
-    api/dd_vectorgraphic.h \
     api/dd_version.h \
     api/dd_world.h \
     api/def_share.h \

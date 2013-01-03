@@ -28,7 +28,7 @@
 
 #include <de/animator.h>
 #include "api_fontrender.h"
-#include "dd_vectorgraphic.h"
+#include "api_svg.h"
 
 /**
  * @defgroup gui GUI

@@ -86,6 +86,7 @@ DENG_API_HEADERS = \
     $$SRC/api/api_player.h \
     $$SRC/api/api_plugin.h \
     $$SRC/api/api_sound.h \
+    $$SRC/api/api_svg.h \
     $$SRC/api/api_thinker.h \
     $$SRC/api/api_uri.h \
     $$SRC/api/api_wad.h \
@@ -96,7 +97,6 @@ DENG_API_HEADERS = \
     $$SRC/api/dd_share.h \
     $$SRC/api/dd_types.h \
     $$SRC/api/dd_ui.h \
-    $$SRC/api/dd_vectorgraphic.h \
     $$SRC/api/dd_version.h \
     $$SRC/api/dd_world.h \
     $$SRC/api/def_share.h \

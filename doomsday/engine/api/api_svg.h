@@ -20,35 +20,38 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_API_VECTORGRAPHIC_H
-#define LIBDENG_API_VECTORGRAPHIC_H
-
-/// @addtogroup gl
-///@{
-
-typedef uint32_t svgid_t;
+#ifndef DOOMSDAY_API_VECTORGRAPHIC_H
+#define DOOMSDAY_API_VECTORGRAPHIC_H
 
 #include <de/point.h>
+#include "apis.h"
+
+typedef uint32_t svgid_t;
 
 typedef struct def_svgline_s {
     uint numPoints;
     const Point2Rawf* points;
 } def_svgline_t;
 
-#ifdef __cplusplus
-extern "C" {
+DENG_API_TYPEDEF(Svg)
+{
+    de_api_t api;
+    void (*NewSvg)(svgid_t svgId, const def_svgline_t* lines, uint numLines);
+    void (*DrawSvg)(svgid_t svgId, const Point2Rawf* origin);
+    void (*DrawSvg2)(svgid_t svgId, const Point2Rawf* origin, float scale);
+    void (*DrawSvg3)(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
+}
+DENG_API_T(Svg);
+
+#ifndef DENG_NO_API_MACROS_SVG
+#define R_NewSvg        _api_Svg.NewSvg
+#define GL_DrawSvg      _api_Svg.DrawSvg
+#define GL_DrawSvg2     _api_Svg.DrawSvg2
+#define GL_DrawSvg3     _api_Svg.DrawSvg3
 #endif
 
-void R_NewSvg(svgid_t svgId, const def_svgline_t* lines, uint numLines);
-
-void GL_DrawSvg(svgid_t svgId, const Point2Rawf* origin);
-void GL_DrawSvg2(svgid_t svgId, const Point2Rawf* origin, float scale);
-void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
-
-#ifdef __cplusplus
-} // extern "C"
+#ifdef __DOOMSDAY__
+DENG_USING_API(Svg);
 #endif
 
-///@}
-
-#endif /* LIBDENG_API_VECTORGRAPHIC_H */
+#endif /* DOOMSDAY_API_VECTORGRAPHIC_H */
