@@ -24,6 +24,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_INFINE
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
@@ -428,3 +430,20 @@ int FI_ScriptResponder(finaleid_t id, const void* ev)
         return FinaleInterpreter_Responder(f->_interpreter, (const ddevent_t*)ev);
     return false;
 }
+
+DENG_DECLARE_API(Infine) =
+{
+    { DE_API_INFINE_latest },
+    FI_Execute2,
+    FI_Execute,
+    FI_ScriptActive,
+    FI_ScriptFlags,
+    FI_ScriptTerminate,
+    FI_ScriptSuspend,
+    FI_ScriptResume,
+    FI_ScriptSuspended,
+    FI_ScriptRequestSkip,
+    FI_ScriptCmdExecuted,
+    FI_ScriptIsMenuTrigger,
+    FI_ScriptResponder
+};

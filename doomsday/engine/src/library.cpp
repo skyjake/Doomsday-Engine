@@ -180,12 +180,12 @@ void Library_PublishAPIs(Library *lib)
         PUBLISH(_api_Con);
         PUBLISH(_api_Def);
         PUBLISH(_api_F);
+        PUBLISH(_api_Infine);
         PUBLISH(_api_MPE);
         PUBLISH(_api_Material);
         PUBLISH(_api_Player);
         PUBLISH(_api_Plug);
         PUBLISH(_api_S);
-        PUBLISH(_api_Svg);
         PUBLISH(_api_Thinker);
         PUBLISH(_api_Uri);
         PUBLISH(_api_W);
@@ -193,6 +193,7 @@ void Library_PublishAPIs(Library *lib)
 #ifdef __CLIENT__
         // Client-only APIs.
         PUBLISH(_api_FR);
+        PUBLISH(_api_Svg);
 #endif
     }
 }

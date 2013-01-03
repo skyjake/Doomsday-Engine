@@ -144,6 +144,7 @@ void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
     DENG_UNUSED(bp);
 }
 
+/*
 void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle)
 {
     DENG_UNUSED(svgId);
@@ -157,6 +158,7 @@ void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale)
 
 void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
 {}
+*/
 
 void GL_PrepareLSTexture(void)
 {}
@@ -520,12 +522,14 @@ void R_InitSvgs(void)
 void R_ShutdownSvgs(void)
 {}
 
+/*
 void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines)
 {
     DENG_UNUSED(id);
     DENG_UNUSED(lines);
     DENG_UNUSED(numLines);
 }
+*/
 
 struct font_s* R_CreateFontFromDef(ded_compositefont_t* def)
 {

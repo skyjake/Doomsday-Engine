@@ -45,12 +45,12 @@
 #include "api_wad.h"
 #include "dd_gl.h"
 #include "dd_ui.h"
-#include "dd_infine.h"
 #include "def_share.h"
 #include "api_busy.h"
 #include "api_thinker.h"
 #include "api_event.h"
 #include "api_player.h"
+#include "api_infine.h"
 
 #ifdef __cplusplus
 extern "C" {

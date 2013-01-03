@@ -61,9 +61,6 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp
                                                    float stretchEpsilon);
 DENG_EXTERN_C void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
 DENG_EXTERN_C void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
-DENG_EXTERN_C void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
-DENG_EXTERN_C void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale);
-DENG_EXTERN_C void GL_DrawSvg(svgid_t id, const Point2Rawf* origin);
 
 DENG_EXTERN_C void R_InitViewWindow(void);
 DENG_EXTERN_C void R_RenderPlayerView(int num);
@@ -71,7 +68,6 @@ DENG_EXTERN_C void R_SetBorderGfx(Uri const *const *paths);
 DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data);
 DENG_EXTERN_C void R_InitSvgs(void);
 DENG_EXTERN_C void R_ShutdownSvgs(void);
-DENG_EXTERN_C void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines);
 DENG_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
 DENG_EXTERN_C void FR_Init(void);
