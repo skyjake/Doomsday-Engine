@@ -2923,7 +2923,7 @@ D_CMD(ReloadGame)
 
 DENG_DECLARE_API(Base) =
 {
-    { DE_API_BASE_v1 },
+    { DE_API_BASE_latest },
 
     DD_GetInteger,
     DD_SetInteger,

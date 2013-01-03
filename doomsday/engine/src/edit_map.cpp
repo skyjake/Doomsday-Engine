@@ -2087,7 +2087,7 @@ boolean MPE_GameObjProperty(const char* entityName, uint elementIndex,
 
 DENG_DECLARE_API(MPE) =
 {
-    { DE_API_MAP_EDIT_v1 },
+    { DE_API_MAP_EDIT_latest },
 
     MPE_Begin,
     MPE_End,

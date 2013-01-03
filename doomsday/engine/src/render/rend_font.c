@@ -1514,7 +1514,7 @@ void FR_Init(void)
 
 DENG_DECLARE_API(FR) =
 {
-    { DE_API_FONT_RENDER_v1 },
+    { DE_API_FONT_RENDER_latest },
     FR_Font,
     FR_SetFont,
     FR_PushAttrib,

@@ -291,7 +291,7 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
 
 DENG_DECLARE_API(Plug) =
 {
-    { DE_API_PLUGIN_v1 },
+    { DE_API_PLUGIN_latest },
     Plug_AddHook,
     Plug_RemoveHook,
     Plug_CheckForHook

@@ -401,7 +401,7 @@ int Thinker_Iterate(thinkfunc_t func, int (*callback) (thinker_t*, void*), void*
 
 DENG_DECLARE_API(Thinker) =
 {
-    { DE_API_THINKER_v1 },
+    { DE_API_THINKER_latest },
     Thinker_Init,
     Thinker_Run,
     Thinker_Add,

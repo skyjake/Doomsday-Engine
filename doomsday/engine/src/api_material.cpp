@@ -30,7 +30,7 @@ DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId);
 
 DENG_DECLARE_API(Material) =
 {
-    { DE_API_MATERIALS_v1 },
+    { DE_API_MATERIALS_latest },
     DD_MaterialForTextureUri,
     Materials_ComposeUri
 };

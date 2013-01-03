@@ -2673,7 +2673,7 @@ D_CMD(DebugError)
 
 DENG_DECLARE_API(Con) =
 {
-    { DE_API_CONSOLE_v1 },
+    { DE_API_CONSOLE_latest },
 
     Con_Message
 };

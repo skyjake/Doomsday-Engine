@@ -2150,7 +2150,7 @@ D_CMD(ListMobjs)
 
 DENG_DECLARE_API(Def) =
 {
-    { DE_API_DEFINITIONS_v1 },
+    { DE_API_DEFINITIONS_latest },
 
     Def_Get,
     Def_Set,

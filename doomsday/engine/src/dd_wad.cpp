@@ -198,7 +198,7 @@ void W_UnlockLump(lumpnum_t lumpNum)
 // Public API:
 DENG_DECLARE_API(W) =
 {
-    { DE_API_WAD_v1 },
+    { DE_API_WAD_latest },
     W_LumpLength,
     W_LumpName,
     W_LumpLastModified,

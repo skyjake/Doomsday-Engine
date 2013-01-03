@@ -1740,7 +1740,7 @@ DENG_EXTERN_C boolean M_WriteFile(const char* name, const char* source, size_t l
 
 DENG_DECLARE_API(F) =
 {
-    { DE_API_FILE_SYSTEM_v1 },
+    { DE_API_FILE_SYSTEM_latest },
 
     F_Access,
     F_FileExists,

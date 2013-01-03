@@ -271,7 +271,7 @@ void Uri_DebugPrint(Uri const* uri, int indent)
 
 DENG_DECLARE_API(Uri) =
 {
-    { DE_API_URI_v1 },
+    { DE_API_URI_latest },
     Uri_New,
     Uri_NewWithPath2,
     Uri_NewWithPath,
