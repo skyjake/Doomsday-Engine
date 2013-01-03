@@ -26,9 +26,9 @@
 #  include "gl/gl_main.h"
 #endif
 #include "dd_def.h"
-#include "thinker.h"
 #include "def_data.h"
 #include "resource/textures.h"
+#include "api_thinker.h"
 
 struct font_s;
 

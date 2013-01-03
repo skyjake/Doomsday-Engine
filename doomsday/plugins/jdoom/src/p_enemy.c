@@ -472,7 +472,7 @@ int P_Massacre(void)
     // Only massacre when actually in a map.
     if(G_GameState() == GS_MAP)
     {
-        DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
+        Thinker_Iterate(P_MobjThinker, massacreMobj, &count);
     }
 
     return count;
@@ -506,7 +506,7 @@ void C_DECL A_KeenDie(mobj_t* mo)
     // Check if there are no more Keens left in the map.
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {   // No Keens left alive.
@@ -1340,7 +1340,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         // Count total number currently on the map.
         params.type = MT_SKULL;
         params.count = 0;
-        DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+        Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
         if(params.count > 20)
             return; // Too many, don't spit another.
@@ -1579,7 +1579,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     // Scan the remaining thinkers to see if all bosses are dead.
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.

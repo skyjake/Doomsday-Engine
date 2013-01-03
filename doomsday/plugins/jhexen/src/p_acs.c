@@ -324,7 +324,7 @@ static void StartOpenACS(int number, int infoIndex, const int* address)
     script->infoIndex = infoIndex;
     script->ip = address;
     script->thinker.function = T_InterpretACS;
-    DD_ThinkerAdd(&script->thinker);
+    Thinker_Add(&script->thinker);
 }
 
 /**
@@ -430,7 +430,7 @@ boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
     }
 
     *statePtr = ASTE_RUNNING;
-    DD_ThinkerAdd(&script->thinker);
+    Thinker_Add(&script->thinker);
     NewScript = script;
     return true;
 }
@@ -562,7 +562,7 @@ void T_InterpretACS(acs_t* script)
     {
         ACSInfo[script->infoIndex].state = ASTE_INACTIVE;
         ScriptFinished(ACScript->number);
-        DD_ThinkerRemove(&ACScript->thinker);
+        Thinker_Remove(&ACScript->thinker);
         return;
     }
 
@@ -590,7 +590,7 @@ void T_InterpretACS(acs_t* script)
     {
         ACSInfo[script->infoIndex].state = ASTE_INACTIVE;
         ScriptFinished(ACScript->number);
-        DD_ThinkerRemove(&ACScript->thinker);
+        Thinker_Remove(&ACScript->thinker);
     }
 }
 
@@ -1257,7 +1257,7 @@ static void ThingCount(int type, int tid)
 
         params.type = moType;
         params.count = 0;
-        DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+        Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
         count = params.count;
     }

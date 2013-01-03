@@ -1345,7 +1345,7 @@ void P_CreateTIDList(void)
 {
     size_t              count = 0;
 
-    DD_IterateThinkers(P_MobjThinker, addToTIDList, &count);
+    Thinker_Iterate(P_MobjThinker, addToTIDList, &count);
 
     // Add termination marker
     TIDList[count] = 0;
@@ -1797,7 +1797,7 @@ void P_BlastRadius(player_t* pl)
 
     params.source = pmo;
     params.maxDistance = BLAST_RADIUS_DIST;
-    DD_IterateThinkers(P_MobjThinker, radiusBlast, &params);
+    Thinker_Iterate(P_MobjThinker, radiusBlast, &params);
 }
 
 typedef struct {
@@ -1902,15 +1902,15 @@ boolean P_HealRadius(player_t* player)
     switch(player->class_)
     {
     case PCLASS_FIGHTER:
-        DD_IterateThinkers(P_MobjThinker, radiusGiveArmor, &params);
+        Thinker_Iterate(P_MobjThinker, radiusGiveArmor, &params);
         break;
 
     case PCLASS_CLERIC:
-        DD_IterateThinkers(P_MobjThinker, radiusGiveBody, &params);
+        Thinker_Iterate(P_MobjThinker, radiusGiveBody, &params);
         break;
 
     case PCLASS_MAGE:
-        DD_IterateThinkers(P_MobjThinker, radiusGiveMana, &params);
+        Thinker_Iterate(P_MobjThinker, radiusGiveMana, &params);
         break;
 
     default:

@@ -35,8 +35,9 @@ enum {
     DE_API_MAP_EDIT_v1           = 700,     // 1.10
     DE_API_MATERIALS_v1          = 800,     // 1.10
     DE_API_PLUGIN_v1             = 900,     // 1.10
-    DE_API_URI_v1                = 1000,    // 1.10
-    DE_API_WAD_v1                = 1100     // 1.10
+    DE_API_THINKER_v1            = 1000,    // 1.10
+    DE_API_URI_v1                = 1100,    // 1.10
+    DE_API_WAD_v1                = 1200     // 1.10
 };
 
 /**

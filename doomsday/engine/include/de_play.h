@@ -29,7 +29,7 @@
 #ifndef __DOOMSDAY_PLAYSIM__
 #define __DOOMSDAY_PLAYSIM__
 
-#include "thinker.h"
+#include "api_thinker.h"
 #include "map/vertex.h"
 #include "map/surface.h"
 #include "map/sidedef.h"

@@ -57,9 +57,9 @@ DD_BASE_MOBJ_ELEMENTS()} mobj_t;
 
 void P_InitUnusedMobjList(void);
 
-mobj_t* P_MobjCreate(think_t function, coord_t const post[3], angle_t angle,
+mobj_t* P_MobjCreate(thinkfunc_t function, coord_t const post[3], angle_t angle,
     coord_t radius, coord_t height, int ddflags);
-mobj_t* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z, angle_t angle,
+mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle,
     coord_t radius, coord_t height, int ddflags);
 
 void P_MobjDestroy(mobj_t* mobj);

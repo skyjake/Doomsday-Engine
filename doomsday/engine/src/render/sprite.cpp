@@ -100,7 +100,7 @@ static int drawThinkerId(thinker_t *thinker, void *context)
     mobj_t *mo;
 
     // Skip non-mobjs.
-    if(!P_IsMobjThinker(thinker->function)) return false;
+    if(!Thinker_IsMobjFunc(thinker->function)) return false;
 
     mo = (mobj_t *)thinker;
     pos[VX] = mo->origin[VX];

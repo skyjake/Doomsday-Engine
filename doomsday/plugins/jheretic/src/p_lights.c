@@ -92,7 +92,7 @@ void P_SpawnLightFlash(Sector *sector)
 
     flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
     flash->thinker.function = T_LightFlash;
-    DD_ThinkerAdd(&flash->thinker);
+    Thinker_Add(&flash->thinker);
 
     flash->sector = sector;
     flash->maxLight = lightLevel;
@@ -142,7 +142,7 @@ void P_SpawnStrobeFlash(Sector* sector, int fastOrSlow, int inSync)
 
     flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
     flash->thinker.function = T_StrobeFlash;
-    DD_ThinkerAdd(&flash->thinker);
+    Thinker_Add(&flash->thinker);
 
     flash->sector = sector;
     flash->darkTime = fastOrSlow;
@@ -287,7 +287,7 @@ void P_SpawnGlowingLight(Sector *sector)
 
     g = Z_Calloc(sizeof(*g), PU_MAP, 0);
     g->thinker.function = T_Glow;
-    DD_ThinkerAdd(&g->thinker);
+    Thinker_Add(&g->thinker);
 
     g->sector = sector;
     P_FindSectorSurroundingLowestLight(sector, &otherLevel);

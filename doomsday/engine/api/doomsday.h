@@ -436,7 +436,7 @@ void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int a
 /// @addtogroup mobj
 ///@{
 // Play: Mobjs.
-struct mobj_s* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
+struct mobj_s* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
 
 void P_MobjDestroy(struct mobj_s* mo);
 

@@ -685,7 +685,7 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
         exit(1); // Unreachable.
     }
 
-    DD_InitThinkers();
+    Thinker_Init();
 #if __JHERETIC__
     P_InitAmbientSound();
 #endif

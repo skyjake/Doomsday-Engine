@@ -77,7 +77,7 @@ void P_InitUnusedMobjList(void)
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
-mobj_t* P_MobjCreate(think_t function, coord_t const pos[3], angle_t angle,
+mobj_t* P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
     coord_t radius, coord_t height, int ddflags)
 {
     mobj_t* mo;
@@ -120,7 +120,7 @@ mobj_t* P_MobjCreate(think_t function, coord_t const pos[3], angle_t angle,
     return mo;
 }
 
-mobj_t* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z,
+mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z,
     angle_t angle, coord_t radius, coord_t height, int ddflags)
 {
     coord_t pos[3];

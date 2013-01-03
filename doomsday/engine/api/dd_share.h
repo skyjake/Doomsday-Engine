@@ -48,7 +48,7 @@
 #include "dd_infine.h"
 #include "def_share.h"
 #include "api_busy.h"
-#include "thinker.h"
+#include "api_thinker.h"
 
 #ifdef __cplusplus
 extern "C" {

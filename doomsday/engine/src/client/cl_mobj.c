@@ -413,7 +413,7 @@ void GameMap_ExpireClMobjs(GameMap* map)
             mo = ClMobj_MobjForInfo(info);
 
             // Already deleted?
-            if(mo->thinker.function == (think_t)-1) continue;
+            if(mo->thinker.function == (thinkfunc_t)-1) continue;
 
             // Don't expire player mobjs.
             if(mo->dPlayer) continue;

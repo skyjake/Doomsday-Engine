@@ -473,7 +473,7 @@ int P_Massacre(void)
     // Only massacre when actually in a level.
     if(G_GameState() == GS_MAP)
     {
-        DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
+        Thinker_Iterate(P_MobjThinker, massacreMobj, &count);
     }
 
     return count;
@@ -567,7 +567,7 @@ void C_DECL A_RectSpecial(mobj_t* actor)
     // Check if there are no more Bitches left in the map.
     params.type = actor->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {   // No Bitches left alive.
@@ -590,7 +590,7 @@ void C_DECL A_PossSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -613,7 +613,7 @@ void C_DECL A_SposSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -636,7 +636,7 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -659,7 +659,7 @@ void C_DECL A_SargSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -682,7 +682,7 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -705,7 +705,7 @@ void C_DECL A_SkulSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -728,7 +728,7 @@ void C_DECL A_Bos2Special(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -751,7 +751,7 @@ void C_DECL A_BossSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -774,7 +774,7 @@ void C_DECL A_PainSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -797,7 +797,7 @@ void C_DECL A_FattSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -820,7 +820,7 @@ void C_DECL A_BabySpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -843,7 +843,7 @@ void C_DECL A_CybrSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -1692,7 +1692,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         // Count total number currently on the map.
         params.type = MT_SKULL;
         params.count = 0;
-        DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+        Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
         if(params.count > 20)
             return; // Too many, don't spit another.
@@ -1919,7 +1919,7 @@ void C_DECL A_CyberDeath(mobj_t* actor)
     // Scan the remaining thinkers to see if all bosses are dead.
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.
@@ -2015,7 +2015,7 @@ void C_DECL A_BarrelExplode(mobj_t* actor)
     // Scan the remaining thinkers to see if all bosses are dead.
     params.type = actor->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.
@@ -2061,7 +2061,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     // Scan the remaining thinkers to see if all bosses are dead.
     params.type = mo->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.

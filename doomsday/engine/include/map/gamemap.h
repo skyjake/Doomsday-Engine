@@ -491,7 +491,7 @@ void GameMap_InitThinkerLists(GameMap* map, byte flags);
  *                  until a callback returns a non-zero value.
  * @param context  Passed to the callback function.
  */
-int GameMap_IterateThinkers(GameMap* map, think_t thinkFunc, byte flags,
+int GameMap_IterateThinkers(GameMap* map, thinkfunc_t thinkFunc, byte flags,
     int (*callback) (thinker_t* th, void*), void* context);
 
 /**

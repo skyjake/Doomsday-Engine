@@ -23,6 +23,8 @@
 #ifndef LIBDENG_THINKER_H
 #define LIBDENG_THINKER_H
 
+#include "api_base.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,31 +36,45 @@ extern "C" {
 ///@{
 
 /// Function pointer to a function to handle an actor's thinking.
-typedef void    (*think_t) ();
+typedef void (*thinkfunc_t) ();
 
 /**
  * Base for all thinker objects.
  */
 typedef struct thinker_s {
     struct thinker_s *prev, *next;
-    think_t         function;
+    thinkfunc_t     function;
     boolean         inStasis;
     thid_t          id; ///< Only used for mobjs (zero is not an ID).
 } thinker_t;
 
-void DD_InitThinkers(void);
-void DD_RunThinkers(void);
-void DD_ThinkerAdd(thinker_t* th);
-void DD_ThinkerRemove(thinker_t* th);
-void DD_ThinkerSetStasis(thinker_t* th, boolean on);
-int DD_IterateThinkers(think_t func, int (*callback) (thinker_t*, void*), void* context);
+DENG_API_TYPEDEF(Thinker)
+{
+    de_api_t api;
 
-///@}
+    void (*Init)(void);
+    void (*Run)(void);
+    void (*Add)(thinker_t* th);
+    void (*Remove)(thinker_t* th);
+    void (*SetStasis)(thinker_t* th, boolean on);
+    int (*Iterate)(thinkfunc_t func, int (*callback) (thinker_t*, void*), void* context);
+}
+DENG_API_T(Thinker);
 
-/// Not part of the public API.
-///@{
-boolean P_IsMobjThinker(think_t thinker);
-///@}
+#ifndef DENG_NO_API_MACROS_THINKER
+#define Thinker_Init        _api_Thinker.Init
+#define Thinker_Run         _api_Thinker.Run
+#define Thinker_Add         _api_Thinker.Add
+#define Thinker_Remove      _api_Thinker.Remove
+#define Thinker_SetStasis   _api_Thinker.SetStasis
+#define Thinker_Iterate     _api_Thinker.Iterate
+#endif
+
+#ifdef __DOOMSDAY__
+DENG_USING_API(Thinker);
+// Not part of the public API.
+boolean Thinker_IsMobjFunc(thinkfunc_t func);
+#endif
 
 #ifdef __cplusplus
 } // extern "C"
