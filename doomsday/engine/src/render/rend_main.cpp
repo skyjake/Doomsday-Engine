@@ -1506,7 +1506,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
             material_t *mat = suf->material? suf->material : App_Materials()->find(de::Uri(Path("System:missing"))).material();
 
             MaterialSnapshot const &ms =
-                    App_Materials()->prepare(*mat, Rend_MapSurfaceDiffuseMaterialSpec(), true);
+                    App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), true);
             params.glowing = ms.glowStrength();
         }
 
@@ -4027,7 +4027,7 @@ static void Rend_RenderBoundingBoxes()
 
 #endif // __CLIENT__
 
-MaterialVariantSpec const &Rend_MapSurfaceDiffuseMaterialSpec()
+MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 {
     return App_Materials()->variantSpecForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                                   -1, -1, -1, true, true, false, false);

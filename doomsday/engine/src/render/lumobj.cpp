@@ -964,7 +964,7 @@ static boolean createGlowLightForSurface(Surface *suf, void * /*parameters*/)
 
         // Are we glowing at this moment in time?
         MaterialSnapshot const &ms =
-            App_Materials()->prepare(*suf->material, Rend_MapSurfaceDiffuseMaterialSpec(), true);
+            App_Materials()->prepare(*suf->material, Rend_MapSurfaceMaterialSpec(), true);
         if(!(ms.glowStrength() > .001f)) return true; // Continue iteration.
 
         averagecolor_analysis_t const *avgColorAmplified = (averagecolor_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_COLOR_AMPLIFIED);

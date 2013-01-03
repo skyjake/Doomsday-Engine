@@ -1341,7 +1341,7 @@ void Rend_CacheForMap()
 
     if(precacheMapMaterials)
     {
-        MaterialVariantSpec const &spec = Rend_MapSurfaceDiffuseMaterialSpec();
+        MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
         for(uint i = 0; i < NUM_SIDEDEFS; ++i)
         {

@@ -109,7 +109,7 @@ uint Rend_NumFanVerticesForBspLeaf(BspLeaf *bspLeaf);
 void R_DrawLightRange(void);
 
 #ifdef __cplusplus
-de::MaterialVariantSpec const &Rend_MapSurfaceDiffuseMaterialSpec();
+de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
 
 } // extern "C"
 #endif
