@@ -1,6 +1,6 @@
 /** @file materials.h Material Collection.
  *
- * @author Copyright &copy; 2003-2012 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2003-2012 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -272,7 +272,7 @@ namespace de {
          *
          * @note A convenient shorthand of the call tree:
          * <pre>
-         *    Materials::prepareVariant( chooseVariant( @a material, @a spec, @a smooth, @c true ), @a forceSnapshotUpdate )
+         *    prepare( chooseVariant( @a material, @a spec, @a smooth, @c true ), @a forceSnapshotUpdate )
          * </pre>
          *
          * @param material  Base Material from which to derive a variant.
@@ -375,17 +375,11 @@ void Materials_Ticker(timespan_t elapsed);
 uint Materials_Size(void);
 materialid_t Materials_Id(material_t *material);
 material_t *Materials_ToMaterial(materialid_t materialId);
-boolean Materials_HasDecorations(material_t *material);
-ded_ptcgen_t const *Materials_PtcGenDef(material_t *material);
-boolean Materials_IsMaterialInAnimGroup(material_t *material, int animGroupNum);
 struct uri_s *Materials_ComposeUri(materialid_t materialId);
 materialid_t Materials_ResolveUri(struct uri_s const *uri);
 
 /// Same as Materials::resolveUri except @a uri is a C-string.
 materialid_t Materials_ResolveUriCString(char const *uri);
-
-int Materials_AnimGroupCount(void);
-boolean Materials_IsPrecacheAnimGroup(int animGroupNum);
 
 #ifdef __cplusplus
 } // extern "C"

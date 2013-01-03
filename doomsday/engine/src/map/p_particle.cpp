@@ -188,7 +188,9 @@ void P_MapSpawnPlaneParticleGens()
         for(uint j = 0; j < 2; ++j)
         {
             Plane *plane = sector->SP_plane(j);
-            ded_ptcgen_t const *def = Materials_PtcGenDef(plane->PS_material);
+            if(!plane->PS_material) continue;
+
+            ded_ptcgen_t const *def = App_Materials()->ptcGenDef(*plane->PS_material);
             P_SpawnPlaneParticleGen(def, plane);
         }
     }
@@ -1392,9 +1394,9 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
         // A flat generator?
         if(gen->plane && def->material)
         {
-            material_t *mat = gen->plane->PS_material;
             material_t *defMat = Materials_ToMaterial(Materials_ResolveUri(def->material));
 
+            material_t *mat = gen->plane->PS_material;
             if(def->flags & PGF_FLOOR_SPAWN)
                 mat = gen->plane->sector->SP_plane(PLN_FLOOR)->PS_material;
             if(def->flags & PGF_CEILING_SPAWN)
@@ -1416,14 +1418,16 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
                  */
                 if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
                 {
-                    int g, numGroups = Materials_AnimGroupCount();
-                    for(g = 0; g < numGroups; ++g)
+                    Materials::AnimGroups const &groups = App_Materials()->allAnimGroups();
+                    DENG2_FOR_EACH_CONST(Materials::AnimGroups, k, groups)
                     {
-                        // Precache groups don't apply.
-                        if(Materials_IsPrecacheAnimGroup(g)) continue;
+                        MaterialAnim const &group = *k;
 
-                        if(Materials_IsMaterialInAnimGroup(defMat, g) &&
-                           Materials_IsMaterialInAnimGroup(mat, g))
+                        // Precache groups don't apply.
+                        if(group.flags() & AGF_PRECACHE) continue;
+
+                        if(group.hasFrameForMaterial(*defMat) &&
+                           group.hasFrameForMaterial(*mat))
                         {
                             // Both are in this group! This def will do.
                             return i + 1; // 1-based index.

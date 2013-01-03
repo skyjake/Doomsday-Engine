@@ -2,7 +2,7 @@
  * @file materials.cpp
  * Materials collection, schemes, bindings and other management. @ingroup resource
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2003-2012 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -1334,33 +1334,6 @@ DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
     return Uri_New();
 }
 
-boolean Materials_HasDecorations(material_t *material)
-{
-    if(!material) return false;
-    return App_Materials()->hasDecorations(*material);
-}
-
-ded_ptcgen_t const *Materials_PtcGenDef(material_t *material)
-{
-    if(!material) return 0;
-    return App_Materials()->ptcGenDef(*material);
-}
-
-boolean Materials_IsMaterialInAnimGroup(material_t *material, int animGroupNum)
-{
-    if(!material) return false;
-    try
-    {
-        return App_Materials()->animGroup(animGroupNum).hasFrameForMaterial(*material);
-    }
-    catch(de::Materials::UnknownAnimGroupError const &er)
-    {
-        // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
-    }
-    return false;
-}
-
 #undef Materials_ResolveUri
 DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
 {
@@ -1386,23 +1359,4 @@ DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
         {} // Ignore this error.
     }
     return NOMATERIALID;
-}
-
-int Materials_AnimGroupCount()
-{
-    return App_Materials()->animGroupCount();
-}
-
-boolean Materials_IsPrecacheAnimGroup(int animGroupNum)
-{
-    try
-    {
-        return !!(App_Materials()->animGroup(animGroupNum).flags() & AGF_PRECACHE);
-    }
-    catch(de::Materials::UnknownAnimGroupError const &er)
-    {
-        // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
-    }
-    return false;
 }
