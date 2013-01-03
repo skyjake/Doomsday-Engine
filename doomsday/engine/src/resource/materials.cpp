@@ -121,7 +121,7 @@ struct Materials::Instance
     MaterialList materials;
 
     /// Animation groups.
-    AnimGroups groups;
+    Materials::AnimGroups groups;
 
     /// Total number of URI material bindings (in all schemes).
     uint bindingCount;
