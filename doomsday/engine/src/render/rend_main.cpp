@@ -470,11 +470,11 @@ int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *paramaters)
     return 1; // Stop iteration.
 }
 
-static inline materialvariantspecification_t const &mapSurfaceMaterialSpec(int wrapS, int wrapT)
+static inline MaterialVariantSpec const &mapSurfaceMaterialSpec(int wrapS, int wrapT)
 {
-    return *App_Materials()->variantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-                                                     wrapS, wrapT, -1, -1, -1,
-                                                     true, true, false, false);
+    return App_Materials()->variantSpecForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+                                                  wrapS, wrapT, -1, -1, -1,
+                                                  true, true, false, false);
 }
 
 #ifdef __CLIENT__
@@ -698,7 +698,7 @@ static void flatShinyTexCoords(rtexcoord_t *tc, float const xyz[3])
 static float getSnapshots(MaterialSnapshot const **msA,
     MaterialSnapshot const **msB, material_t &mat)
 {
-    materialvariantspecification_t const &spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
+    MaterialVariantSpec const &spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
     float interPos = 0;
     DENG_ASSERT(msA);
 
@@ -1507,8 +1507,8 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
             Surface *suf = &bspLeaf->sector->planes[elmIdx]->surface;
             material_t *mat = suf->material? suf->material : App_Materials()->find(de::Uri(Path("System:missing"))).material();
 
-            materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-            MaterialSnapshot const &ms = App_Materials()->prepare(*mat, *spec, true);
+            MaterialSnapshot const &ms =
+                    App_Materials()->prepare(*mat, Rend_MapSurfaceDiffuseMaterialSpec(), true);
             params.glowing = ms.glowStrength();
         }
 
@@ -2374,7 +2374,7 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
     else
     {
         // Map RTU configuration from prepared MaterialSnapshot(s).
-        materialvariantspecification_t const &spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
+        MaterialVariantSpec const &spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
         MaterialSnapshot const &ms = App_Materials()->prepare(*material, spec, true);
 
         RL_LoadDefaultRtus();
@@ -3962,8 +3962,9 @@ static void Rend_RenderBoundingBoxes()
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    MaterialSnapshot const &ms = App_Materials()->prepare(*App_Materials()->find(de::Uri(Path("System:bbox"))).material(),
-                                                          *Sprite_MaterialSpec(0, 0), true);
+    MaterialSnapshot const &ms =
+        App_Materials()->prepare(*App_Materials()->find(de::Uri(Path("System:bbox"))).material(),
+                                 Rend_SpriteMaterialSpec(), true);
 
     GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
     GL_BlendMode(BM_ADD);
@@ -4028,8 +4029,8 @@ static void Rend_RenderBoundingBoxes()
 
 #endif // __CLIENT__
 
-materialvariantspecification_t const *Rend_MapSurfaceDiffuseMaterialSpec()
+MaterialVariantSpec const &Rend_MapSurfaceDiffuseMaterialSpec()
 {
-    return App_Materials()->variantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                                           -1, -1, -1, true, true, false, false);
+    return App_Materials()->variantSpecForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                                  -1, -1, -1, true, true, false, false);
 }

@@ -471,8 +471,10 @@ static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT
         delta[VX] * delta[VZ] != 0 ||
         delta[VY] * delta[VZ] != 0))
     {
-        materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-        material_t *mat = &App_Materials()->chooseVariant(*suf->material, *spec, true, true)->generalCase();
+        material_t *mat =
+            &App_Materials()->chooseVariant(*suf->material, Rend_MapSurfaceDiffuseMaterialSpec(),
+                                            true, true)->generalCase();
+
         ded_decor_t const *def = App_Materials()->decorationDef(*mat);
         if(def)
         {

@@ -94,7 +94,7 @@ MaterialAnim::Frames const &MaterialAnim::allFrames() const
 
 static void setVariantTranslation(MaterialVariant &variant, material_t *current, material_t *next)
 {
-    materialvariantspecification_t const &spec = variant.spec();
+    MaterialVariantSpec const &spec = variant.spec();
     MaterialVariant *currentV, *nextV;
 
     /// @todo kludge: Should not use App_Materials() here.
@@ -380,8 +380,8 @@ boolean Material_HasGlow(material_t *mat)
     if(novideo) return false;
 
     /// @todo We should not need to prepare to determine this.
-    MaterialSnapshot const &ms = reinterpret_cast<MaterialSnapshot const &>(
-        App_Materials()->prepare(*mat, *Rend_MapSurfaceDiffuseMaterialSpec(), true));
+    MaterialSnapshot const &ms =
+        App_Materials()->prepare(*mat, Rend_MapSurfaceDiffuseMaterialSpec(), true);
 
     return (ms.glowStrength() > .0001f);
 }
