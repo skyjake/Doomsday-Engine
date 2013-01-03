@@ -127,7 +127,7 @@ DENG_API_TYPEDEF(Base) // v1
      *
      * @return          @c true if successful else @c false (i.e., no game loaded).
      */
-    boolean (*_GameInfo)(GameInfo* info);
+    boolean (*gameInfo)(GameInfo* info);
 
     /**
      * Determines whether the current run of the thinkers should be considered a
@@ -141,6 +141,17 @@ DENG_API_TYPEDEF(Base) // v1
      * @ingroup playsim
      */
     boolean (*IsSharpTick)(void);
+
+    /**
+     * Send a packet over the network.
+     *
+     * @param to_player  Player number to send to. The server is number zero.
+     *                   May include @ref netSendFlags.
+     * @param type       Type of the packet.
+     * @param data       Data of the packet.
+     * @param length     Length of the data.
+     */
+    void (*SendPacket)(int to_player, int type, const void* data, size_t length);
 }
 DENG_API_T(Base);
 
@@ -153,8 +164,9 @@ DENG_API_T(Base);
 #define DD_DefineGame       _api_Base.DefineGame
 #define DD_GameIdForKey     _api_Base.GameIdForKey
 #define DD_AddGameResource  _api_Base.AddGameResource
-#define DD_GameInfo         _api_Base._GameInfo
+#define DD_GameInfo         _api_Base.gameInfo
 #define DD_IsSharpTick      _api_Base.IsSharpTick
+#define Net_SendPacket      _api_Base.SendPacket
 #endif
 
 #ifdef __DOOMSDAY__

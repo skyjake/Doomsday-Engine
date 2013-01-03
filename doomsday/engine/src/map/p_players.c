@@ -211,6 +211,11 @@ ddplayer_t* DD_GetPlayer(int number)
     return (ddplayer_t *) &ddPlayers[number].shared;
 }
 
+// net_main.c
+const char* Net_GetPlayerName(int player);
+ident_t Net_GetPlayerID(int player);
+Smoother* Net_PlayerSmoother(int player);
+
 // p_control.c
 DENG_EXTERN_C void P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext);
 DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
@@ -220,6 +225,9 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int control);
 DENG_DECLARE_API(Player) =
 {
     { DE_API_PLAYER_latest },
+    Net_GetPlayerName,
+    Net_GetPlayerID,
+    Net_PlayerSmoother,
     DD_GetPlayer,
     P_NewPlayerControl,
     P_GetControlState,

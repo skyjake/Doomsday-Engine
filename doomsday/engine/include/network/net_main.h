@@ -271,7 +271,6 @@ void            Net_Init(void);
 void            Net_Shutdown(void);
 void            Net_DestroyArrays(void);
 void            Net_AllocClientBuffers(int clientId);
-void            Net_SendPacket(int to_player, int type, const void *data, size_t length);
 boolean         Net_GetPacket(void);
 void            Net_SendBuffer(int to_player, int sp_flags);
 void            Net_SendPlayerInfo(int srcPlrNum, int destPlrNum);
@@ -294,9 +293,6 @@ void            Net_SetInitialAckTime(int clientNumber, uint period);
 void            Net_SetAckTime(int clientNumber, uint period);
 uint            Net_GetAckTime(int clientNumber);
 uint            Net_GetAckThreshold(int clientNumber);
-
-const char*     Net_GetPlayerName(int player);
-ident_t         Net_GetPlayerID(int player);
 
 void            Net_PrintServerInfo(int index, serverinfo_t *info);
 

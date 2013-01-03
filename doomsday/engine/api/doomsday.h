@@ -153,32 +153,6 @@ extern "C" {
 ///@{
 
 /**
- * Send a packet over the network.
- *
- * @param to_player  Player number to send to. The server is number zero.
- *                   May include @ref netSendFlags.
- * @param type       Type of the packet.
- * @param data       Data of the packet.
- * @param length     Length of the data.
- */
-void Net_SendPacket(int to_player, int type, const void* data, size_t length);
-
-/**
- * @return The name of player @a player.
- */
-const char* Net_GetPlayerName(int player);
-
-/**
- * @return Client identifier for player @a player.
- */
-ident_t Net_GetPlayerID(int player);
-
-/**
- * Provides access to the player's movement smoother.
- */
-Smoother* Net_PlayerSmoother(int player);
-
-/**
  * Determines whether the coordinates sent by a player are valid at the moment.
  */
 boolean Sv_CanTrustClientPos(int player);

@@ -2,6 +2,7 @@
 #define DOOMSDAY_API_PLAYER_H
 
 #include "apis.h"
+#include <de/smoother.h>
 
 /**
  * @defgroup player Player
@@ -125,6 +126,21 @@ DENG_API_TYPEDEF(Player)
     de_api_t api;
 
     /**
+     * @return The name of player @a player.
+     */
+    const char* (*GetPlayerName)(int player);
+
+    /**
+     * @return Client identifier for player @a player.
+     */
+    ident_t (*GetPlayerID)(int player);
+
+    /**
+     * Provides access to the player's movement smoother.
+     */
+    Smoother* (*GetSmoother)(int player);
+
+    /**
      * Gets the data of a player.
      *
      * @param number  Console/player number.
@@ -144,6 +160,9 @@ DENG_API_TYPEDEF(Player)
 DENG_API_T(Player);
 
 #ifndef DENG_NO_API_MACROS_PLAYER
+#define Net_GetPlayerName           _api_Player.GetPlayerName
+#define Net_GetPlayerID             _api_Player.GetPlayerID
+#define Net_PlayerSmoother          _api_Player.GetSmoother
 #define DD_GetPlayer                _api_Player.GetPlayer
 #define P_NewPlayerControl          _api_Player.NewControl
 #define P_GetControlState           _api_Player.GetControlState
