@@ -123,6 +123,16 @@ DENG_API_TYPEDEF(Plug) // v1
      */
     int (*CheckForHook)(int hookType);
 
+    /**
+     * Provides a way for plugins (e.g., games ) to notify the engine of
+     * important events.
+     *
+     * @param notification  One of the DD_NOTIFY_* enums.
+     * @param param         Additional arguments about the notification,
+     *                      depending on the notification type.
+     */
+    void (*Notify)(int notification, void* param);
+
 } DENG_API_T(Plug);
 
 // Macros for accessing exported functions.
@@ -130,6 +140,7 @@ DENG_API_TYPEDEF(Plug) // v1
 #define Plug_AddHook        _api_Plug.AddHook
 #define Plug_RemoveHook     _api_Plug.RemoveHook
 #define Plug_CheckForHook   _api_Plug.CheckForHook
+#define Plug_Notify         _api_Plug.Notify
 #endif
 
 #ifdef __DOOMSDAY__

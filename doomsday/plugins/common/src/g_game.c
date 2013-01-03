@@ -3019,7 +3019,7 @@ void G_DoSaveGame(void)
         // Notify the engine that the game was saved.
         /// @todo After the engine has the primary responsibility of
         /// saving the game, this notification is unnecessary.
-        Game_Notify(DD_NOTIFY_GAME_SAVED, NULL);
+        Plug_Notify(DD_NOTIFY_GAME_SAVED, NULL);
     }
     G_SetGameAction(GA_NONE);
 }

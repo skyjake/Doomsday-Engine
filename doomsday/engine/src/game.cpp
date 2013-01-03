@@ -25,7 +25,6 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "updater/downloaddialog.h"
 #include "filesys/manifest.h"
 
 #include <de/Error>
@@ -407,24 +406,4 @@ void Game_Print(Game const* game, int flags)
 {
     if(!game) return;
     de::Game::print(*reinterpret_cast<de::Game const*>(game), flags);
-}
-
-void Game_Notify(int notification, void* param)
-{
-    DENG_UNUSED(param);
-
-#ifdef __CLIENT__
-    switch(notification)
-    {
-    case DD_NOTIFY_GAME_SAVED:
-        // If an update has been downloaded and is ready to go, we should
-        // re-show the dialog now that the user has saved the game as
-        // prompted.
-        DEBUG_Message(("Game_Notify: Game saved.\n"));
-        Updater_RaiseCompletedDownloadDialog();
-        break;
-    }
-#else
-    DENG_UNUSED(notification);
-#endif
 }

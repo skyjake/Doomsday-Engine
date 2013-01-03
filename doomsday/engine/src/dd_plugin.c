@@ -33,6 +33,8 @@
 #include "de_defs.h"
 #include "dd_pinit.h"
 
+#include "updater/downloaddialog.h"
+
 #include <de/findfile.h>
 
 #define HOOKMASK(x)         ((x) & 0xffffff)
@@ -289,10 +291,31 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
     return addr;
 }
 
+void Plug_Notify(int notification, void* param)
+{
+    DENG_UNUSED(param);
+
+#ifdef __CLIENT__
+    switch(notification)
+    {
+    case DD_NOTIFY_GAME_SAVED:
+        // If an update has been downloaded and is ready to go, we should
+        // re-show the dialog now that the user has saved the game as
+        // prompted.
+        DEBUG_Message(("Plug_Notify: Game saved.\n"));
+        Updater_RaiseCompletedDownloadDialog();
+        break;
+    }
+#else
+    DENG_UNUSED(notification);
+#endif
+}
+
 DENG_DECLARE_API(Plug) =
 {
     { DE_API_PLUGIN_latest },
     Plug_AddHook,
     Plug_RemoveHook,
-    Plug_CheckForHook
+    Plug_CheckForHook,
+    Plug_Notify
 };
