@@ -278,26 +278,25 @@ namespace de {
          * @param material  Base Material from which to derive a variant.
          * @param spec      Specification for the derivation of @a material.
          * @param smooth    @c true= Select the current frame if the material is group-animated.
-         * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
+         * @param forceSnapshotUpdate  @c true= Ensure to update the state snapshot.
          *
          * @return  Snapshot for the chosen and prepared variant of Material.
          */
-        MaterialSnapshot const *prepare(material_t &material, materialvariantspecification_t const &spec,
+        MaterialSnapshot const &prepare(material_t &material, materialvariantspecification_t const &spec,
                                         bool smooth, bool forceSnapshotUpdate = false);
 
         /**
          * Prepare variant @a material for render (e.g., upload textures if necessary).
          *
-         * @note Same as Materials::Prepare except the caller specifies the variant.
-         * @see Materials::ChooseVariant
+         * @see chooseVariant()
          *
          * @param material  MaterialVariant to be prepared.
          * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
          *
          * @return  Snapshot for the chosen and prepared variant of Material.
          */
-        MaterialSnapshot const *prepareVariant(MaterialVariant &material,
-                                               bool forceSnapshotUpdate = false);
+        MaterialSnapshot const &prepare(MaterialVariant &material,
+                                        bool forceSnapshotUpdate = false);
 
         /**
          * Choose/create a variant of @a material which fulfills @a spec.
@@ -305,9 +304,9 @@ namespace de {
          * @param material      Material to derive the variant from.
          * @param spec          Specification for the derivation of @a material.
          * @param smooth        @c true= Select the current frame if the material is group-animated.
-         * @param canCreate     @c true= Create a new variant if a suitable one does exist.
+         * @param canCreate     @c true= Create a new variant if no suitable one exists.
          *
-         * @return  Chosen variant else @c NULL if none suitable and not creating.
+         * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
          */
         MaterialVariant *chooseVariant(material_t &material, materialvariantspecification_t const &spec,
                                        bool smoothed, bool canCreate);
