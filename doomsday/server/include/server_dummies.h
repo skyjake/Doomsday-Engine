@@ -37,11 +37,13 @@
 #  error "Attempted to include server's header in a non-server build"
 #endif
 
+/*
 DENG_EXTERN_C void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable);
 DENG_EXTERN_C boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo);
 DENG_EXTERN_C struct mobj_s* ClMobj_Find(thid_t id);
 DENG_EXTERN_C boolean ClMobj_IsValid(struct mobj_s* mo);
 DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum);
+*/
 
 DENG_EXTERN_C void GameMap_ClMobjReset(GameMap* map);
 

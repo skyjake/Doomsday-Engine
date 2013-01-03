@@ -30,6 +30,7 @@ void DD_ReadMouse(void)
 void DD_ReadJoystick(void)
 {}
 
+/*
 void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
 {
     // No clmobjs on server.
@@ -61,6 +62,7 @@ struct mobj_s* ClPlayer_ClMobj(int plrNum)
     DENG_UNUSED(plrNum);
     return 0;
 }
+*/
 
 void GameMap_ClMobjReset(GameMap* map)
 {

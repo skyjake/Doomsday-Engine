@@ -148,48 +148,14 @@ typedef struct {
     // ID number. Each client has a unique ID number.
     ident_t         id;
 
-    // Ticcmd buffer. The server uses this when clients send it ticcmds.
-    //byte           *ticCmds;
-
-    // Number of tics in the buffer.
-    //int             numTics;
-
-    // Index of the first tic in the buffer.
-    //int             firstTic;
-
-    /*
-    // Last command executed, reused if a new one isn't found.
-    ticcmd_t       *lastCmd;
-
-    // Clients merge several ticcmds into this one, which is them sent
-    // periodically to the server.
-    ticcmd_t       *aggregateCmd;
-    */
-
     int             lastTransmit;
-
-    // If >0, the server will send the next world frame to the client.
-    // This is set when input is received from the client.
-    //int             updateCount;
 
     // Seconds when the client entered the game (Sys_GetRealSeconds()).
     double          enterTime;
 
-    // Client-reported time of the last processed ticcmd.
-    // Older or as old tics than this are discarded.
-    //int             runTime;
-
     // Bandwidth rating for connection. Determines how much information
     // can be sent to the client. Determined dynamically.
     int             bandwidthRating;
-
-    // During the adjust period, raising the BWR is allowed (hitting max
-    // frame size).
-    //int             bwrAdjustTime;
-
-    // A record of the past few acknowledgement times.
-    //uint            ackTimes[NUM_ACK_TIMES];
-    //int             ackIdx;
 
     // Clients use this to determine how long ago they received the
     // last update of this client.
@@ -234,22 +200,6 @@ typedef struct {
     // View console. Which player this client is viewing?
     int             viewConsole;
 } client_t;
-
-/*
-// Packets.
-typedef struct {
-    byte            version;
-    unsigned short  playerMask;    // 16 players.
-    byte            yourConsole;   // Which one's you?
-    int             gameTime;
-} handshake_packet_t;
-*/
-/*
-typedef struct {
-    byte            console;
-    char            name[PLAYERNAMELEN];
-} playerinfo_packet_t;
-*/
 
 extern boolean  firstNetUpdate;
 extern int      resendStart;      // set when server needs our tics

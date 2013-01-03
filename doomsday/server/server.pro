@@ -87,6 +87,7 @@ DENG_API_HEADERS = \
     $$SRC/api/api_mapedit.h \
     $$SRC/api/api_player.h \
     $$SRC/api/api_plugin.h \
+    $$SRC/api/api_server.h \
     $$SRC/api/api_sound.h \
     $$SRC/api/api_svg.h \
     $$SRC/api/api_thinker.h \

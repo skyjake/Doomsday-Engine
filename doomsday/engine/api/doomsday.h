@@ -96,6 +96,8 @@ struct font_s;
 #include "api_sound.h"
 #include "api_map.h"
 #include "api_mapedit.h"
+#include "api_client.h"
+#include "api_server.h"
 
 #include "filehandle.h"
 #include <de/memoryzone.h>
@@ -142,46 +144,6 @@ extern "C" {
  * @ingroup base
  * Functionality provided by or related to the operating system.
  */
-
-//------------------------------------------------------------------------
-//
-// Networking.
-//
-//------------------------------------------------------------------------
-
-/// @addtogroup network
-///@{
-
-/**
- * Determines whether the coordinates sent by a player are valid at the moment.
- */
-boolean Sv_CanTrustClientPos(int player);
-
-/**
- * Searches through the client mobj hash table for the CURRENT map and
- * returns the clmobj with the specified ID, if that exists. Note that
- * client mobjs are also linked to the thinkers list.
- *
- * @param id  Mobj identifier.
- *
- * @return  Pointer to the mobj.
- */
-struct mobj_s* ClMobj_Find(thid_t id);
-
-/**
- * Enables or disables local action function execution on the client.
- *
- * @param mo  Client mobj.
- * @param enable  @c true to enable local actions, @c false to disable.
- */
-void ClMobj_EnableLocalActions(struct mobj_s* mo, boolean enable);
-
-/**
- * Determines if local action functions are enabled for client mobj @a mo.
- */
-boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
-
-///@}
 
 //------------------------------------------------------------------------
 //
@@ -282,10 +244,6 @@ struct mobj_s* P_MobjForID(int id);
 void Mobj_OriginSmoothed(struct mobj_s* mobj, coord_t origin[3]);
 
 angle_t Mobj_AngleSmoothed(struct mobj_s* mobj);
-
-boolean ClMobj_IsValid(struct mobj_s* mo);
-
-struct mobj_s* ClPlayer_ClMobj(int plrNum);
 
 // Mobj linked object iterators.
 int P_MobjLinesIterator(struct mobj_s* mo, int (*callback) (struct linedef_s*, void*), void* parameters);

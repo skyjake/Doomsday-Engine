@@ -70,7 +70,6 @@ void            Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientM
 mobj_t         *ClMobj_Create(thid_t id);
 void            ClMobj_Destroy(mobj_t *mo);
 clmoinfo_t     *ClMobj_GetInfo(mobj_t* mo);
-struct mobj_s  *ClMobj_Find(thid_t id);
 mobj_t         *ClMobj_MobjForInfo(clmoinfo_t* info);
 void            ClMobj_Unlink(mobj_t *cmo); // needed?
 void            ClMobj_Link(mobj_t *cmo); // needed?
@@ -91,6 +90,5 @@ void            ClMobj_ReadDelta2(boolean skip);
 void            ClMobj_ReadNullDelta2(boolean skip);
 
 boolean         Cl_IsClientMobj(mobj_t* mo); // public
-boolean         ClMobj_IsValid(mobj_t* mo); // public
 
 #endif

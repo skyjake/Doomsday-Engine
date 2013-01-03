@@ -82,6 +82,7 @@ DENG_API_HEADERS = \
     api/api_audiod_sfx.h \
     api/api_base.h \
     api/api_busy.h \
+    api/api_client.h \
     api/api_console.h \
     api/api_def.h \
     api/api_event.h \

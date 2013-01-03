@@ -36,6 +36,7 @@
 #include "network/protocol.h"
 #ifdef __CLIENT__
 #  include "network/net_demo.h"
+#  include "api_client.h"
 #endif
 
 #include "server/sv_def.h"

@@ -212,9 +212,9 @@ ddplayer_t* DD_GetPlayer(int number)
 }
 
 // net_main.c
-const char* Net_GetPlayerName(int player);
-ident_t Net_GetPlayerID(int player);
-Smoother* Net_PlayerSmoother(int player);
+DENG_EXTERN_C const char* Net_GetPlayerName(int player);
+DENG_EXTERN_C ident_t Net_GetPlayerID(int player);
+DENG_EXTERN_C Smoother* Net_PlayerSmoother(int player);
 
 // p_control.c
 DENG_EXTERN_C void P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext);

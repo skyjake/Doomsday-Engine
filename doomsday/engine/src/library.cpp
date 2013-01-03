@@ -37,6 +37,12 @@
 #include "api_sound.h"
 #include "api_fontrender.h"
 #include "api_svg.h"
+#ifdef __CLIENT__
+#  include "api_client.h"
+#endif
+#ifdef __SERVER__
+#  include "api_server.h"
+#endif
 
 struct library_s { // typedef Library
     Str* path;              ///< de::FS path of the library (e.g., "/bin/doom.dll").
@@ -196,8 +202,14 @@ void Library_PublishAPIs(Library *lib)
 
 #ifdef __CLIENT__
         // Client-only APIs.
+        PUBLISH(_api_Client);
         PUBLISH(_api_FR);
         PUBLISH(_api_Svg);
+#endif
+
+#ifdef __SERVER__
+        // Server-only APIs.
+        PUBLISH(_api_Server);
 #endif
     }
 }
