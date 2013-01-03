@@ -34,6 +34,12 @@
  */
 ///@{
 
+#define FIPAGE_NUM_PREDEFINED_COLORS        (10)
+#define VALID_FIPAGE_PREDEFINED_COLOR(v)    ((v) < FIPAGE_NUM_PREDEFINED_COLORS)
+
+#define FIPAGE_NUM_PREDEFINED_FONTS         (10)
+#define VALID_FIPAGE_PREDEFINED_FONT(v)     ((v) < FIPAGE_NUM_PREDEFINED_FONTS)
+
 /// Finale identifier. Used throughout the public API when referencing active Finales.
 typedef ident_t finaleid_t;
 

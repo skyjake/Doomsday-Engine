@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_API_GUI_H
-#define LIBDENG_API_GUI_H
+#ifndef DOOMSDAY_GUI_H
+#define DOOMSDAY_GUI_H
 
 #include <de/animator.h>
 #include "api_fontrender.h"
@@ -119,12 +119,6 @@ typedef struct {
     struct fi_object_s **vector;
     uint size;
 } fi_object_collection_t;
-
-#define FIPAGE_NUM_PREDEFINED_COLORS        (10)
-#define VALID_FIPAGE_PREDEFINED_COLOR(v)    ((v) < FIPAGE_NUM_PREDEFINED_COLORS)
-
-#define FIPAGE_NUM_PREDEFINED_FONTS         (10)
-#define VALID_FIPAGE_PREDEFINED_FONT(v)     ((v) < FIPAGE_NUM_PREDEFINED_FONTS)
 
 typedef struct fi_page_s {
     struct fi_page_flags_s {
@@ -312,4 +306,4 @@ size_t FIData_TextLength(struct fi_object_s *text);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_API_GUI_H */
+#endif /* DOOMSDAY_GUI_H */

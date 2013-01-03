@@ -40,6 +40,7 @@
 #include "de_render.h"
 
 #include "audio/sys_audio.h"
+#include "api_fontrender.h"
 
 // MACROS ------------------------------------------------------------------
 

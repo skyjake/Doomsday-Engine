@@ -102,7 +102,6 @@ DENG_API_HEADERS = \
     api/dd_maptypes.h \
     api/dd_share.h \
     api/dd_types.h \
-    api/dd_ui.h \
     api/dd_version.h \
     api/dd_world.h \
     api/def_share.h \
@@ -330,6 +329,7 @@ DENG_HEADERS += \
     include/ui/canvaswindow.h \
     include/ui/consolewindow.h \
     include/ui/dd_input.h \
+    include/ui/dd_ui.h \
     include/ui/displaymode.h \
     include/ui/displaymode_native.h \
     include/ui/fi_main.h \

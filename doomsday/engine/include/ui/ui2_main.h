@@ -23,6 +23,8 @@
 #ifndef LIBDENG_UI2_MAIN_H
 #define LIBDENG_UI2_MAIN_H
 
+#include "dd_ui.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

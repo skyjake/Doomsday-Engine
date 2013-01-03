@@ -93,6 +93,7 @@ struct font_s;
 #include "api_material.h"
 #include "api_mpe.h"
 #include "api_fontrender.h"
+#include "api_svg.h"
 #include "api_sound.h"
 
 #include "filehandle.h"

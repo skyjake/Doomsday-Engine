@@ -44,7 +44,6 @@
 #include "dd_maptypes.h"
 #include "api_wad.h"
 #include "dd_gl.h"
-#include "dd_ui.h"
 #include "def_share.h"
 #include "api_busy.h"
 #include "api_thinker.h"

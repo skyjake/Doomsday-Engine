@@ -96,7 +96,6 @@ DENG_API_HEADERS = \
     $$SRC/api/dd_maptypes.h \
     $$SRC/api/dd_share.h \
     $$SRC/api/dd_types.h \
-    $$SRC/api/dd_ui.h \
     $$SRC/api/dd_version.h \
     $$SRC/api/dd_world.h \
     $$SRC/api/def_share.h \
@@ -273,6 +272,7 @@ DENG_HEADERS += \
     $$SRC/include/ui/canvaswindow.h \
     $$SRC/include/ui/consolewindow.h \
     $$SRC/include/ui/dd_input.h \
+    $$SRC/include/ui/dd_ui.h \
     $$SRC/include/ui/displaymode.h \
     $$SRC/include/ui/displaymode_native.h \
     $$SRC/include/ui/fi_main.h \
