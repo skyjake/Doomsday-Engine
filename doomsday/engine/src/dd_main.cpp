@@ -2656,14 +2656,6 @@ AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeNa
 }
 
 /**
- * Gets the data of a player.
- */
-ddplayer_t* DD_GetPlayer(int number)
-{
-    return (ddplayer_t *) &ddPlayers[number].shared;
-}
-
-/**
  * Convert propertyType enum constant into a string for error/debug messages.
  */
 const char* value_Str(int val)
@@ -2921,6 +2913,9 @@ D_CMD(ReloadGame)
     return true;
 }
 
+// dd_loop.c
+DENG_EXTERN_C boolean DD_IsSharpTick(void);
+
 DENG_DECLARE_API(Base) =
 {
     { DE_API_BASE_latest },
@@ -2928,5 +2923,10 @@ DENG_DECLARE_API(Base) =
     DD_GetInteger,
     DD_SetInteger,
     DD_GetVariable,
-    DD_SetVariable
+    DD_SetVariable,
+    DD_DefineGame,
+    DD_GameIdForKey,
+    DD_AddGameResource,
+    DD_GameInfo,
+    DD_IsSharpTick
 };

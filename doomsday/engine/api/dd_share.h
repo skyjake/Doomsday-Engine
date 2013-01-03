@@ -50,6 +50,7 @@
 #include "api_busy.h"
 #include "api_thinker.h"
 #include "api_event.h"
+#include "api_player.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -308,40 +309,6 @@ enum {
 /**
  * @defgroup game Game
  */
-
-/**
- * Defines the numerous high-level properties of a logical game component.
- * Note that this is POD; no construction or destruction is needed.
- * @see DD_DefineGame() @ingroup game
- */
-typedef struct gamedef_s {
-   /**
-    * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
-    * - Used during resource location for mode-specific assets.
-    * - Sent out in netgames (a client can't connect unless mode strings match).
-    */
-    const char* identityKey;
-
-    /// Name of the config directory.
-    const char* configDir;
-
-    /// Default title. May be overridden later.
-    const char* defaultTitle;
-
-    /// Default author. May be overridden later.
-    /// Used for (e.g.) the map author name if not specified in a Map Info definition.
-    const char* defaultAuthor;
-} GameDef;
-
-/**
- * Extended info about a registered game component.
- * @see DD_GameInfo() @ingroup game
- */
-typedef struct gameinfo_s {
-    const char* title;
-    const char* author;
-    const char* identityKey;
-} GameInfo;
 
 /**
  * Provides a way for games (or other plugins) to notify the engine of game-related
@@ -1565,128 +1532,6 @@ typedef struct serverinfo_s {
  */
 #define DDSP_ALL_PLAYERS    0x80000000 ///< Broadcast (for server).
 ///@}
-
-//------------------------------------------------------------------------
-//
-// Player Data
-//
-//------------------------------------------------------------------------
-
-/**
- * @defgroup player Player
- * @ingroup playsim
- */
-
-/// Built-in control identifiers. @ingroup player
-enum {
-    CTL_WALK = 1,           ///< Forward/backwards.
-    CTL_SIDESTEP = 2,       ///< Left/right sideways movement.
-    CTL_ZFLY = 3,           ///< Up/down movement.
-    CTL_TURN = 4,           ///< Turning horizontally.
-    CTL_LOOK = 5,           ///< Turning up and down.
-    CTL_MODIFIER_1 = 6,
-    CTL_MODIFIER_2 = 7,
-    CTL_MODIFIER_3 = 8,
-    CTL_MODIFIER_4 = 9,
-    CTL_FIRST_GAME_CONTROL = 1000
-};
-
-/// Control type.
-typedef enum controltype_e {
-    CTLT_NUMERIC,               ///< Control with a numeric value determined by current device state.
-    CTLT_NUMERIC_TRIGGERED,     ///< Numeric, but accepts triggered states as well.
-    CTLT_IMPULSE                ///< Always accepts triggered states.
-} controltype_t;
-
-/**
- * @defgroup playerFlags Player Flags
- * @ingroup player apiFlags
- * @{
- */
-#define DDPF_FIXANGLES          0x0001 ///< Server: send angle/pitch to client.
-//#define DDPF_FILTER             0x0002 // Server: send filter to client.
-#define DDPF_FIXORIGIN          0x0004 ///< Server: send coords to client.
-#define DDPF_DEAD               0x0008 ///< Cl & Sv: player is dead.
-#define DDPF_CAMERA             0x0010 ///< Player is a cameraman.
-#define DDPF_LOCAL              0x0020 ///< Player is local (e.g. player zero).
-#define DDPF_FIXMOM             0x0040 ///< Server: send momentum to client.
-#define DDPF_NOCLIP             0x0080 ///< Client: don't clip movement.
-#define DDPF_CHASECAM           0x0100 ///< Chase camera mode (third person view).
-#define DDPF_INTERYAW           0x0200 ///< Interpolate view yaw angles (used with locking).
-#define DDPF_INTERPITCH         0x0400 ///< Interpolate view pitch angles (used with locking).
-#define DDPF_VIEW_FILTER        0x0800 ///< Cl & Sv: Draw the current view filter.
-#define DDPF_REMOTE_VIEW_FILTER 0x1000 ///< Client: Draw the view filter (has been set remotely).
-#define DDPF_USE_VIEW_FILTER    (DDPF_VIEW_FILTER | DDPF_REMOTE_VIEW_FILTER)
-#define DDPF_UNDEFINED_ORIGIN   0x2000 ///< Origin of the player is undefined (view not drawn).
-#define DDPF_UNDEFINED_WEAPON   0x4000 ///< Weapon of the player is undefined (not sent yet).
-///@}
-
-/// Maximum length of a player name.
-#define PLAYERNAMELEN       81
-
-/// Normally one for the weapon and one for the muzzle flash.
-#define DDMAXPSPRITES       2
-
-/// Psprite states. @ingroup player
-enum {
-    DDPSP_BOBBING,
-    DDPSP_FIRE,
-    DDPSP_DOWN,
-    DDPSP_UP
-};
-
-/**
- * @defgroup pspriteFlags PSprite Flags
- * @ingroup player apiFlags
- */
-///@{
-#define DDPSPF_FULLBRIGHT 0x1
-///@}
-
-/// Player sprite. @ingroup player
-typedef struct {
-    state_t*        statePtr;
-    int             tics;
-    float           alpha;
-    float           pos[2];
-    byte            flags; /// @ref pspriteFlags
-    int             state;
-    float           offset[2];
-} ddpsprite_t;
-
-/// Player lookdir (view pitch) conversion to degrees. @ingroup player
-#define LOOKDIR2DEG(x)  ((x) * 85.0/110.0)
-/// Player lookdir (view pitch) conversion to radians. @ingroup player
-#define LOOKDIR2RAD(x)  (LOOKDIR2DEG(x)/180*PI)
-
-struct mobj_s;
-struct polyobj_s;
-
-    typedef struct fixcounters_s {
-        int             angles;
-        int             origin;
-        int             mom;
-    } fixcounters_t;
-
-    typedef struct ddplayer_s {
-        float           forwardMove; // Copied from player brain (read only).
-        float           sideMove; // Copied from player brain (read only).
-        struct mobj_s*  mo; // Pointer to a (game specific) mobj.
-        float           lookDir; // For mouse look.
-        int             fixedColorMap; // Can be set to REDCOLORMAP, etc.
-        int             extraLight; // So gun flashes light up areas.
-        int             inGame; // Is this player in game?
-        int             inVoid; // True if player is in the void
-                                // (not entirely accurate so it shouldn't
-                                // be used for anything critical).
-        int             flags;
-        float           filterColor[4]; // RGBA filter for the camera.
-        fixcounters_t   fixCounter;
-        fixcounters_t   fixAcked;
-        angle_t         lastAngle; // For calculating turndeltas.
-        ddpsprite_t     pSprites[DDMAXPSPRITES]; // Player sprites.
-        void*           extraData; // Pointer to any game-specific data.
-    } ddplayer_t;
 
 #ifdef __cplusplus
 } // extern "C"

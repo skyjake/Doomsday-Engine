@@ -1824,10 +1824,10 @@ void B_WriteToFile(FILE* file)
  * Return the key code that corresponds the given key identifier name.
  * Part of the Doomsday public API.
  */
+#undef DD_GetKeyCode
 int DD_GetKeyCode(const char* key)
 {
-    int                 code = B_KeyForShortName(key);
-
+    int code = B_KeyForShortName(key);
     return (code ? code : key[0]);
 }
 

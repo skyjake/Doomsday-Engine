@@ -927,10 +927,18 @@ void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
     }
 }
 
+// b_main.c
+DENG_EXTERN_C int DD_GetKeyCode(const char* key);
+
+// dd_input.c
+DENG_EXTERN_C void DD_ClearKeyRepeaters(void);
+
 DENG_DECLARE_API(B) =
 {
     { DE_API_BINDING_latest },
     B_SetContextFallback,
     B_BindingsForCommand,
-    B_BindingsForControl
+    B_BindingsForControl,
+    DD_ClearKeyRepeaters,
+    DD_GetKeyCode
 };

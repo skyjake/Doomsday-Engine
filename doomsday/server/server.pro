@@ -70,6 +70,7 @@ else {
 SRC = ../engine
 
 DENG_API_HEADERS = \
+    $$SRC/api/apis.h \
     $$SRC/api/api_base.h \
     $$SRC/api/api_busy.h \
     $$SRC/api/api_console.h \
@@ -79,6 +80,7 @@ DENG_API_HEADERS = \
     $$SRC/api/api_fontrender.h \
     $$SRC/api/api_material.h \
     $$SRC/api/api_mpe.h \
+    $$SRC/api/api_player.h \
     $$SRC/api/api_plugin.h \
     $$SRC/api/api_thinker.h \
     $$SRC/api/api_uri.h \

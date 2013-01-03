@@ -131,68 +131,6 @@ extern "C" {
  * @ingroup base
  */
 
-/// @addtogroup game
-///@{
-/**
- * Register a new game.
- *
- * @param definition  GameDef structure defining the new game.
- * @return  Unique identifier/name assigned to resultant game.
- *
- * @note Game registration order defines the order of the automatic game
- * identification/selection logic.
- */
-gameid_t DD_DefineGame(GameDef const* definition);
-
-/**
- * Retrieves the game identifier for a previously defined game.
- * @see DD_DefineGame().
- *
- * @param identityKey  Identity key of the game.
- * @return Game identifier.
- */
-gameid_t DD_GameIdForKey(char const* identityKey);
-
-/**
- * Adds a new resource to the list for the identified @a game.
- *
- * @note Resource order defines the load order of resources (among those of
- * the same type). Resources are loaded from most recently added to least
- * recent.
- *
- * @param game      Unique identifier/name of the game.
- * @param classId   Class of resource being defined.
- * @param fFlags    File flags (see @ref fileFlags).
- * @param names     One or more known potential names, seperated by semicolon
- *                  (e.g., <pre> "name1;name2" </pre>). Valid names include
- *                  absolute or relative file paths, possibly with encoded
- *                  symbolic tokens, or predefined symbols into the virtual
- *                  file system.
- * @param params    Additional parameters. Usage depends on resource type.
- *                  For package resources this may be C-String containing a
- *                  semicolon delimited list of identity keys.
- */
-void DD_AddGameResource(gameid_t game, resourceclassid_t classId, int fFlags,
-                        const char* names, void* params);
-
-/**
- * Retrieve extended info about the current game.
- *
- * @param info      Info structure to be populated.
- * @return          @c true if successful else @c false (i.e., no game loaded).
- */
-boolean DD_GameInfo(GameInfo* info);
-
-    ddplayer_t*     DD_GetPlayer(int number);
-///@}
-
-/// @addtogroup input
-///@{
-    // Base: Input.
-    void            DD_ClearKeyRepeaters(void);
-    int             DD_GetKeyCode(const char* name);
-///@}
-
 //------------------------------------------------------------------------
 //
 // System.
@@ -354,18 +292,6 @@ int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int
 boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
 ///@}
 
-/**
- * @defgroup controls Controls
- * @ingroup input
- */
-///@{
-// Play: Controls.
-void P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
-void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
-int P_GetImpulseControlState(int playerNum, int control);
-void P_Impulse(int playerNum, int control);
-///@}
-
 /// @addtogroup map
 ///@{
 // Play: Setup.
@@ -457,19 +383,6 @@ fontid_t Fonts_ResolveUri(const Uri* uri);
 // Refresh.
 //
 //------------------------------------------------------------------------
-
-/**
- * Determines whether the current run of the thinkers should be considered a
- * "sharp" tick. Sharp ticks occur exactly 35 times per second. Thinkers may be
- * called at any rate faster than this; in order to retain compatibility with
- * the original Doom engine game logic that ran at 35 Hz, such logic should
- * only be executed on sharp ticks.
- *
- * @return @c true, if a sharp tick is currently in effect.
- *
- * @ingroup playsim
- */
-boolean DD_IsSharpTick(void);
 
 /**
  * @defgroup render Renderer

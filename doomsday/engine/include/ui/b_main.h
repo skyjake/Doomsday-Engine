@@ -68,8 +68,6 @@ const char* B_ShortNameForKey(int ddkey);
 
 int B_KeyForShortName(const char* key);
 
-int DD_GetKeyCode(const char* key);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

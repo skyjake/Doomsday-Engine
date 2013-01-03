@@ -76,6 +76,7 @@ else {
 # Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
+    api/apis.h \
     api/api_base.h \
     api/api_busy.h \
     api/api_console.h \
@@ -85,6 +86,7 @@ DENG_API_HEADERS = \
     api/api_fontrender.h \
     api/api_material.h \
     api/api_mpe.h \
+    api/api_player.h \
     api/api_plugin.h \
     api/api_thinker.h \
     api/api_uri.h \

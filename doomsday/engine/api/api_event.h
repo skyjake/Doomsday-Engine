@@ -52,13 +52,18 @@ DENG_API_TYPEDEF(B)
     void (*SetContextFallback)(const char* name, int (*responderFunc)(event_t*));
     int  (*BindingsForCommand)(const char* cmd, char* buf, size_t bufSize);
     int  (*BindingsForControl)(int localPlayer, const char* controlName, int inverse, char* buf, size_t bufSize);
+
+    void (*ClearKeyRepeaters)(void);
+    int  (*GetKeyCode)(const char* name);
 }
 DENG_API_T(B);
 
 #ifndef DENG_NO_API_MACROS_BINDING
-#define B_SetContextFallback _api_B.SetContextFallback
-#define B_BindingsForCommand _api_B.BindingsForCommand
-#define B_BindingsForControl _api_B.BindingsForControl
+#define B_SetContextFallback    _api_B.SetContextFallback
+#define B_BindingsForCommand    _api_B.BindingsForCommand
+#define B_BindingsForControl    _api_B.BindingsForControl
+#define DD_ClearKeyRepeaters    _api_B.ClearKeyRepeaters
+#define DD_GetKeyCode           _api_B.GetKeyCode
 #endif
 
 #ifdef __DOOMSDAY__

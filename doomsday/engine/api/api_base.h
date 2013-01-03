@@ -1,4 +1,4 @@
-/** @file de_api.h Doomsday's public API mechanism.
+/** @file de_api.h Public Base API.
  * @ingroup base
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -21,73 +21,48 @@
 #ifndef DOOMSDAY_API_BASE_H
 #define DOOMSDAY_API_BASE_H
 
-#include <de/libdeng.h>
+#include "apis.h"
+#include "api_uri.h"
+#include "resourceclass.h"
 
-/// All APIs exported from the executable.
-enum {
-    DE_API_BASE_v1               = 0,       // 1.10
-    DE_API_BASE_latest           = DE_API_BASE_v1,
-
-    DE_API_BINDING_v1            = 100,     // 1.10
-    DE_API_BINDING_latest        = DE_API_BINDING_v1,
-
-    DE_API_BUSY_v1               = 200,     // 1.10
-    DE_API_BUSY_latest           = DE_API_BUSY_v1,
-
-    DE_API_CONSOLE_v1            = 300,     // 1.10
-    DE_API_CONSOLE_latest        = DE_API_CONSOLE_v1,
-
-    DE_API_DEFINITIONS_v1        = 400,     // 1.10
-    DE_API_DEFINITIONS_latest    = DE_API_DEFINITIONS_v1,
-
-    DE_API_DIRECT_DATA_ACCESS_v1 = 500,     // 1.10
-    DE_API_DIRECT_DATA_ACCESS_latest = DE_API_DIRECT_DATA_ACCESS_v1,
-
-    DE_API_FILE_SYSTEM_v1        = 600,     // 1.10
-    DE_API_FILE_SYSTEM_latest    = DE_API_FILE_SYSTEM_v1,
-
-    DE_API_FONT_RENDER_v1        = 700,     // 1.10
-    DE_API_FONT_RENDER_latest    = DE_API_FONT_RENDER_v1,
-
-    DE_API_MAP_EDIT_v1           = 800,     // 1.10
-    DE_API_MAP_EDIT_latest       = DE_API_MAP_EDIT_v1,
-
-    DE_API_MATERIALS_v1          = 900,     // 1.10
-    DE_API_MATERIALS_latest      = DE_API_MATERIALS_v1,
-
-    DE_API_PLUGIN_v1             = 1000,    // 1.10
-    DE_API_PLUGIN_latest         = DE_API_PLUGIN_v1,
-
-    DE_API_THINKER_v1            = 1100,    // 1.10
-    DE_API_THINKER_latest        = DE_API_THINKER_v1,
-
-    DE_API_URI_v1                = 1200,    // 1.10
-    DE_API_URI_latest            = DE_API_URI_v1,
-
-    DE_API_WAD_v1                = 1300,    // 1.10
-    DE_API_WAD_latest            = DE_API_WAD_v1
-};
+/// @addtogroup game
+/// @{
 
 /**
- * Base structure for API structs.
+ * Defines the numerous high-level properties of a logical game component.
+ * Note that this is POD; no construction or destruction is needed.
+ * @see DD_DefineGame() @ingroup game
  */
-typedef struct de_api_s {
-    int id; ///< API identification (including version) number.
-} de_api_t;
+typedef struct gamedef_s {
+   /**
+    * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
+    * - Used during resource location for mode-specific assets.
+    * - Sent out in netgames (a client can't connect unless mode strings match).
+    */
+    const char* identityKey;
 
-#define DENG_API_TYPEDEF(Name) typedef struct de_api_##Name##_s
-#define DENG_API_T(Name) de_api_##Name##_t
-#define DENG_DECLARE_API(Name) DENG_API_T(Name) _api_##Name
-#define DENG_USING_API(Name) DENG_EXTERN_C DENG_DECLARE_API(Name)
-#define DENG_API_EXCHANGE(APIs) \
-    DENG_EXTERN_C void deng_API(int id, void *api) { \
-        switch(id) { APIs \
-        default: break; } }
-#define DENG_GET_API(Ident, Name) \
-    case Ident: \
-        memcpy(&_api_##Name, api, sizeof(_api_##Name)); \
-        DENG_ASSERT(_api_##Name.api.id == Ident); \
-        break;
+    /// Name of the config directory.
+    const char* configDir;
+
+    /// Default title. May be overridden later.
+    const char* defaultTitle;
+
+    /// Default author. May be overridden later.
+    /// Used for (e.g.) the map author name if not specified in a Map Info definition.
+    const char* defaultAuthor;
+} GameDef;
+
+/**
+ * Extended info about a registered game component.
+ * @see DD_GameInfo() @ingroup game
+ */
+typedef struct gameinfo_s {
+    const char* title;
+    const char* author;
+    const char* identityKey;
+} GameInfo;
+
+/// @}
 
 // The Base API.
 DENG_API_TYPEDEF(Base) // v1
@@ -98,14 +73,85 @@ DENG_API_TYPEDEF(Base) // v1
     void (*SetInteger)(int ddvalue, int parm);
     void* (*GetVariable)(int ddvalue);
     void (*SetVariable)(int ddvalue, void* ptr);
+
+    /**
+     * Register a new game.
+     *
+     * @param definition  GameDef structure defining the new game.
+     *
+     * @return  Unique identifier/name assigned to resultant game.
+     *
+     * @note Game registration order defines the order of the automatic game
+     * identification/selection logic.
+     */
+    gameid_t (*DefineGame)(GameDef const* definition);
+
+    /**
+     * Retrieves the game identifier for a previously defined game.
+     * @see DD_DefineGame().
+     *
+     * @param identityKey  Identity key of the game.
+     *
+     * @return Game identifier.
+     */
+    gameid_t (*GameIdForKey)(char const* identityKey);
+
+    /**
+     * Adds a new resource to the list for the identified @a game.
+     *
+     * @note Resource order defines the load order of resources (among those of
+     * the same type). Resources are loaded from most recently added to least
+     * recent.
+     *
+     * @param game      Unique identifier/name of the game.
+     * @param classId   Class of resource being defined.
+     * @param fFlags    File flags (see @ref fileFlags).
+     * @param names     One or more known potential names, seperated by semicolon
+     *                  (e.g., <pre> "name1;name2" </pre>). Valid names include
+     *                  absolute or relative file paths, possibly with encoded
+     *                  symbolic tokens, or predefined symbols into the virtual
+     *                  file system.
+     * @param params    Additional parameters. Usage depends on resource type.
+     *                  For package resources this may be C-String containing a
+     *                  semicolon delimited list of identity keys.
+     */
+    void (*AddGameResource)(gameid_t game, resourceclassid_t classId, int fFlags,
+                            const char* names, void* params);
+
+    /**
+     * Retrieve extended info about the current game.
+     *
+     * @param info      Info structure to be populated.
+     *
+     * @return          @c true if successful else @c false (i.e., no game loaded).
+     */
+    boolean (*_GameInfo)(GameInfo* info);
+
+    /**
+     * Determines whether the current run of the thinkers should be considered a
+     * "sharp" tick. Sharp ticks occur exactly 35 times per second. Thinkers may be
+     * called at any rate faster than this; in order to retain compatibility with
+     * the original Doom engine game logic that ran at 35 Hz, such logic should
+     * only be executed on sharp ticks.
+     *
+     * @return @c true, if a sharp tick is currently in effect.
+     *
+     * @ingroup playsim
+     */
+    boolean (*IsSharpTick)(void);
 }
 DENG_API_T(Base);
 
 #ifndef DENG_NO_API_MACROS_BASE
-#define DD_GetInteger   _api_Base.GetInteger
-#define DD_SetInteger   _api_Base.SetInteger
-#define DD_GetVariable  _api_Base.GetVariable
-#define DD_SetVariable  _api_Base.SetVariable
+#define DD_GetInteger       _api_Base.GetInteger
+#define DD_SetInteger       _api_Base.SetInteger
+#define DD_GetVariable      _api_Base.GetVariable
+#define DD_SetVariable      _api_Base.SetVariable
+#define DD_DefineGame       _api_Base.DefineGame
+#define DD_GameIdForKey     _api_Base.GameIdForKey
+#define DD_AddGameResource  _api_Base.AddGameResource
+#define DD_GameInfo         _api_Base._GameInfo
+#define DD_IsSharpTick      _api_Base.IsSharpTick
 #endif
 
 #ifdef __DOOMSDAY__
