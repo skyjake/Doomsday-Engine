@@ -35,7 +35,7 @@
 #include <mmsystem.h>
 
 #include "doomsday.h"
-#include "sys_audiod_mus.h"
+#include "api_audiod_mus.h"
 
 // Mixer return values.
 enum {

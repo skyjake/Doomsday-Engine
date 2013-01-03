@@ -110,8 +110,8 @@ static MusicPlayer* musicPlayer;
 
 // --------------------------------------------------------------------------
 
-#include "sys_audiod.h"
-#include "sys_audiod_mus.h"
+#include "api_audiod.h"
+#include "api_audiod_mus.h"
 
 static int DM_Ext_Init(void)
 {

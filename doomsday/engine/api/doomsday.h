@@ -93,6 +93,7 @@ struct font_s;
 #include "api_material.h"
 #include "api_mpe.h"
 #include "api_fontrender.h"
+#include "api_sound.h"
 
 #include "filehandle.h"
 #include <de/memoryzone.h>
@@ -142,19 +143,6 @@ extern "C" {
  * @ingroup base
  * Functionality provided by or related to the operating system.
  */
-
-//------------------------------------------------------------------------
-//
-// Map Edit.
-//
-//------------------------------------------------------------------------
-
-/// @addtogroup mobj
-///@{
-    // Custom map object data types.
-    boolean         P_RegisterMapObj(int identifier, const char* name);
-    boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier, const char* propName, valuetype_t type);
-///@}
 
 //------------------------------------------------------------------------
 //
@@ -483,36 +471,6 @@ void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags, i
 void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
 void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
-
-///@}
-
-//------------------------------------------------------------------------
-//
-// Audio.
-//
-//------------------------------------------------------------------------
-
-/// @addtogroup audio
-///@{
-
-void S_MapChange(void);
-int S_LocalSoundAtVolumeFrom(int sound_id, struct mobj_s* origin, coord_t* pos, float volume);
-int S_LocalSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
-int S_LocalSound(int soundID, struct mobj_s* origin);
-int S_LocalSoundFrom(int soundID, coord_t* fixedpos);
-int S_StartSound(int soundId, struct mobj_s* origin);
-int S_StartSoundEx(int soundId, struct mobj_s* origin);
-int S_StartSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
-int S_ConsoleSound(int soundID, struct mobj_s* origin, int targetConsole);
-
-void S_StopSound2(int soundID, struct mobj_s* origin, int flags);
-void S_StopSound(int soundID, struct mobj_s* origin/*,flags=0*/);
-
-int S_IsPlaying(int soundID, struct mobj_s* origin);
-int S_StartMusic(const char* musicID, boolean looped);
-int S_StartMusicNum(int id, boolean looped);
-void S_StopMusic(void);
-void S_PauseMusic(boolean doPause);
 
 ///@}
 

@@ -60,13 +60,16 @@ enum {
     DE_API_PLUGIN_v1             = 1100,    // 1.10
     DE_API_PLUGIN_latest         = DE_API_PLUGIN_v1,
 
-    DE_API_THINKER_v1            = 1200,    // 1.10
+    DE_API_SOUND_v1              = 1200,    // 1.10
+    DE_API_SOUND_latest          = DE_API_SOUND_v1,
+
+    DE_API_THINKER_v1            = 1300,    // 1.10
     DE_API_THINKER_latest        = DE_API_THINKER_v1,
 
-    DE_API_URI_v1                = 1300,    // 1.10
+    DE_API_URI_v1                = 1400,    // 1.10
     DE_API_URI_latest            = DE_API_URI_v1,
 
-    DE_API_WAD_v1                = 1400,    // 1.10
+    DE_API_WAD_v1                = 1500,    // 1.10
     DE_API_WAD_latest            = DE_API_WAD_v1
 };
 

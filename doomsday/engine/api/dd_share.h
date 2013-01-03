@@ -131,24 +131,6 @@ float           FloatSwap(float);
 #define ULONG(x)            ((uint32_t) LONG(x))
 ///@}
 
-/// Value types.
-typedef enum {
-    DDVT_NONE = -1, ///< Not a read/writeable value type.
-    DDVT_BOOL,
-    DDVT_BYTE,
-    DDVT_SHORT,
-    DDVT_INT,       ///< 32 or 64 bit
-    DDVT_UINT,
-    DDVT_FIXED,
-    DDVT_ANGLE,
-    DDVT_FLOAT,
-    DDVT_DOUBLE,
-    DDVT_LONG,
-    DDVT_ULONG,
-    DDVT_PTR,
-    DDVT_BLENDMODE
-} valuetype_t;
-
 /// Integer values for Set/Get
 enum {
     DD_FIRST_VALUE = -1,

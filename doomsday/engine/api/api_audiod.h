@@ -1,5 +1,5 @@
 /**
- * @file sys_audiod.h
+ * @file api_audiod.h
  * Audio driver interface. @ingroup audio
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

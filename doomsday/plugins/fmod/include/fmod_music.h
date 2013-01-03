@@ -44,7 +44,7 @@
 
 #include <fmod.h>
 #include <fmod.hpp>
-#include "sys_audiod_mus.h"
+#include "api_audiod_mus.h"
 
 #ifdef __cplusplus
 extern "C" {

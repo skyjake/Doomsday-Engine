@@ -75,7 +75,6 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground);
 
 void ClPlayer_UpdateOrigin(int plrnum);
 
-//void            ClPlayer_CoordsReceived(void);
 void            ClPlayer_HandleFix(void);
 void            ClPlayer_ApplyPendingFixes(int plrNum);
 void            ClPlayer_ReadDelta2(boolean skip);

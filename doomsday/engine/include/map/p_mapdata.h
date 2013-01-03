@@ -30,6 +30,7 @@
 #endif
 
 #include "dd_share.h"
+#include "api_mpe.h"
 #include "map/dam_main.h"
 #include "render/rend_bias.h"
 #include "m_nodepile.h"
@@ -293,19 +294,6 @@ void P_InitMapEntityDefs(void);
  * To be called to free all memory allocated for the map obj defs.
  */
 void P_ShutdownMapEntityDefs(void);
-
-/**
- * Called by the game to register the map object types it wishes us to make
- * public via the MPE interface.
- */
-boolean P_RegisterMapObj(int identifier, const char* name);
-
-/**
- * Called by the game to add a new property to a previously registered
- * map object type definition.
- */
-boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
-    const char* propName, valuetype_t type);
 
 #ifdef __cplusplus
 } // extern "C"

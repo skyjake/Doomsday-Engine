@@ -36,8 +36,8 @@
 #include "de_system.h"
 #include "de_misc.h"
 
-#include "sys_audiod.h"
-#include "sys_audiod_sfx.h"
+#include "api_audiod.h"
+#include "api_audiod_sfx.h"
 
 // MACROS ------------------------------------------------------------------
 

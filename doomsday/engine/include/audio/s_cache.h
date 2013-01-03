@@ -29,7 +29,7 @@
 #ifndef LIBDENG_SOUND_CACHE_H
 #define LIBDENG_SOUND_CACHE_H
 
-#include "sys_audiod_sfx.h"
+#include "api_audiod_sfx.h"
 
 #ifdef __cplusplus
 extern "C" {

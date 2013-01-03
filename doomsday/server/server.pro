@@ -71,6 +71,9 @@ SRC = ../engine
 
 DENG_API_HEADERS = \
     $$SRC/api/apis.h \
+    $$SRC/api/api_audiod.h \
+    $$SRC/api/api_audiod_mus.h \
+    $$SRC/api/api_audiod_sfx.h \
     $$SRC/api/api_base.h \
     $$SRC/api/api_busy.h \
     $$SRC/api/api_console.h \
@@ -82,6 +85,7 @@ DENG_API_HEADERS = \
     $$SRC/api/api_mpe.h \
     $$SRC/api/api_player.h \
     $$SRC/api/api_plugin.h \
+    $$SRC/api/api_sound.h \
     $$SRC/api/api_thinker.h \
     $$SRC/api/api_uri.h \
     $$SRC/api/api_wad.h \
@@ -101,10 +105,7 @@ DENG_API_HEADERS = \
     $$SRC/api/filehandle.h \
     $$SRC/api/filetype.h \
     $$SRC/api/materialarchive.h \
-    $$SRC/api/resourceclass.h \
-    $$SRC/api/sys_audiod.h \
-    $$SRC/api/sys_audiod_mus.h \
-    $$SRC/api/sys_audiod_sfx.h
+    $$SRC/api/resourceclass.h
 
 # Convenience headers.
 DENG_HEADERS += \

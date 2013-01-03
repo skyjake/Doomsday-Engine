@@ -20,7 +20,7 @@
  */
 
 #include "driver_fluidsynth.h"
-#include "sys_audiod.h"
+#include "api_audiod.h"
 #include <stdio.h>
 #include <string.h>
 #include <de/c_wrapper.h>

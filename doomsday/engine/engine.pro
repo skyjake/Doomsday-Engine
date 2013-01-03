@@ -77,6 +77,9 @@ else {
 
 DENG_API_HEADERS = \
     api/apis.h \
+    api/api_audiod.h \
+    api/api_audiod_mus.h \
+    api/api_audiod_sfx.h \
     api/api_base.h \
     api/api_busy.h \
     api/api_console.h \
@@ -88,6 +91,7 @@ DENG_API_HEADERS = \
     api/api_mpe.h \
     api/api_player.h \
     api/api_plugin.h \
+    api/api_sound.h \
     api/api_thinker.h \
     api/api_uri.h \
     api/api_wad.h \
@@ -107,10 +111,7 @@ DENG_API_HEADERS = \
     api/filehandle.h \
     api/filetype.h \
     api/materialarchive.h \
-    api/resourceclass.h \
-    api/sys_audiod.h \
-    api/sys_audiod_mus.h \
-    api/sys_audiod_sfx.h
+    api/resourceclass.h
 
 # Convenience headers.
 DENG_HEADERS += \

@@ -42,7 +42,7 @@
 #ifndef __FMOD_CD_H__
 #define __FMOD_CD_H__
 
-#include "sys_audiod_mus.h"
+#include "api_audiod_mus.h"
 
 #ifdef __cplusplus
 extern "C" {

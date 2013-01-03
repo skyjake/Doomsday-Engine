@@ -31,7 +31,7 @@
 #include <cassert>
 #include <iostream>
 #include <fluidsynth.h>
-#include "sys_audiod_sfx.h"
+#include "api_audiod_sfx.h"
 
 extern "C" {
     

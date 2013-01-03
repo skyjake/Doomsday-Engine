@@ -1,5 +1,5 @@
 /**
- * @file sys_audiod_mus.h
+ * @file api_audiod_mus.h
  * Music interface for an audio driver. @ingroup audio
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

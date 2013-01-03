@@ -40,8 +40,8 @@
  */
 
 #include "driver_fmod.h"
-#include "sys_audiod.h"
-#include "sys_audiod_sfx.h"
+#include "api_audiod.h"
+#include "api_audiod_sfx.h"
 #include <stdio.h>
 #include <fmod.h>
 #include <fmod_errors.h>

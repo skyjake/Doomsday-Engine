@@ -24,6 +24,7 @@
 #define DOOMSDAY_API_H
 
 #include "dd_share.h"
+#include "api_mpe.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -448,15 +448,15 @@ static MapEntityDef* findMapEntityDef(int identifier, const char* entityName, bo
     return def;
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_RegisterMapObj(int identifier, const char* name)
+#undef P_RegisterMapObj
+DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, const char* name)
 {
     return !!findMapEntityDef(identifier, name, true /*do create*/);
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_RegisterMapObjProperty(int entityId, int propertyId,
-    const char* propertyName, valuetype_t type)
+#undef P_RegisterMapObjProperty
+DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId,
+                                               const char* propertyName, valuetype_t type)
 {
     try
     {

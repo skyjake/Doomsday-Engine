@@ -50,8 +50,8 @@
 #include <cstring>
 #include <cmath>
 
-#include "sys_audiod.h"
-#include "sys_audiod_sfx.h"
+#include "api_audiod.h"
+#include "api_audiod_sfx.h"
 #include "doomsday.h"
 
 #define PI 3.141592654
