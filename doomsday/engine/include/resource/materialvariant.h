@@ -137,6 +137,16 @@ namespace de {
         ~MaterialVariant();
 
         /**
+         * Retrieve the general case for this variant. Allows for a variant
+         * reference to be used in place of a material (implicit indirection).
+         *
+         * @see generalCase()
+         */
+        inline operator material_t &() const {
+            return generalCase();
+        }
+
+        /**
          * Process a system tick event.
          * @param time  Length of the tick in seconds.
          */
