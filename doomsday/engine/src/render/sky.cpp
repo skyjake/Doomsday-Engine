@@ -214,7 +214,7 @@ static void calculateSkyAmbientColor()
         if(!(slayer->flags & SLF_ACTIVE) || !slayer->material) continue;
 
         MaterialSnapshot const &ms =
-            *App_Materials()->prepare(*slayer->material, *Sky_SphereMaterialSpec(!!(slayer->flags & SLF_MASKED)), false);
+            App_Materials()->prepare(*slayer->material, *Sky_SphereMaterialSpec(!!(slayer->flags & SLF_MASKED)), false);
 
         if(ms.hasTexture(MTU_PRIMARY))
         {
@@ -810,7 +810,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         DENG_ASSERT(mat);
 
         MaterialSnapshot const &ms =
-            *App_Materials()->prepare(*mat, *Sky_SphereMaterialSpec(Sky_LayerMasked(layer)), true);
+            App_Materials()->prepare(*mat, *Sky_SphereMaterialSpec(Sky_LayerMasked(layer)), true);
 
         rs.texSize.width  = ms.texture(MTU_PRIMARY).generalCase().width();
         rs.texSize.height = ms.texture(MTU_PRIMARY).generalCase().height();

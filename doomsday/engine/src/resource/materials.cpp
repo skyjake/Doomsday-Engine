@@ -689,7 +689,8 @@ void Materials::updateTextureLinks(MaterialBind &bind)
     updateMaterialTextureLinks(bind);
 }
 
-MaterialSnapshot const *Materials::prepareVariant(MaterialVariant &variant, bool updateSnapshot)
+MaterialSnapshot const &Materials::prepare(MaterialVariant &variant,
+    bool updateSnapshot)
 {
     // Acquire the snapshot we are interested in.
     MaterialSnapshot *snapshot = variant.snapshot();
@@ -715,13 +716,13 @@ MaterialSnapshot const *Materials::prepareVariant(MaterialVariant &variant, bool
         snapshot->update();
     }
 
-    return snapshot;
+    return *snapshot;
 }
 
-MaterialSnapshot const *Materials::prepare(material_t &mat, materialvariantspecification_t const &spec,
-    bool smooth, bool updateSnapshot)
+MaterialSnapshot const &Materials::prepare(material_t &mat,
+    materialvariantspecification_t const &spec, bool smooth, bool updateSnapshot)
 {
-    return prepareVariant(*chooseVariant(mat, spec, smooth, true), updateSnapshot);
+    return prepare(*chooseVariant(mat, spec, smooth, true), updateSnapshot);
 }
 
 ded_decor_t const *Materials::decorationDef(material_t &mat)
