@@ -228,9 +228,9 @@ namespace de {
                               material_t *material = 0);
 
         /**
-         * Prepare a MaterialVariantSpecification according to a usage context. If
-         * incomplete context information is supplied, suitable default values will
-         * be chosen in their place.
+         * Prepare a material variant specification in accordance to the specified
+         * usage context. If incomplete context information is supplied, suitable
+         * default values will be chosen in their place.
          *
          * @param materialContext   Material (usage) context identifier.
          * @param flags             @ref textureVariantSpecificationFlags

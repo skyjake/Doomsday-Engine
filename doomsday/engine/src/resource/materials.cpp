@@ -177,7 +177,7 @@ struct Materials::Instance
 
     void animateAllGroups()
     {
-        DENG2_FOR_EACH(AnimGroups, i, groups)
+        DENG2_FOR_EACH(Materials::AnimGroups, i, groups)
         {
             i->animate();
         }

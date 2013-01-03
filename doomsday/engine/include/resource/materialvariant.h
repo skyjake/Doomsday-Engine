@@ -61,13 +61,13 @@ namespace de {
         struct texturevariantspecification_s *primarySpec;
 
         /**
-         * Construct a default MaterialVariantSpecification instance.
+         * Construct a default MaterialVariantSpec instance.
          */
         MaterialVariantSpec() : context(MC_UNKNOWN), primarySpec(0)
         {}
 
         /**
-         * Construct a MaterialVariantSpecification instance by duplicating @a other.
+         * Construct a MaterialVariantSpec instance by duplicating @a other.
          */
         MaterialVariantSpec(MaterialVariantSpec const &other)
             : context(other.context), primarySpec(other.primarySpec)
@@ -160,7 +160,7 @@ namespace de {
         /// @return  Material from which this variant is derived.
         struct material_s &generalCase() const;
 
-        /// @return  MaterialVariantSpecification from which this variant is derived.
+        /// @return  MaterialVariantSpec from which this variant is derived.
         MaterialVariantSpec const &spec() const;
 
         /**
