@@ -31,11 +31,12 @@ enum {
     DE_API_DEFINITIONS_v1        = 300,     // 1.10
     DE_API_DIRECT_DATA_ACCESS_v1 = 400,     // 1.10
     DE_API_FILE_SYSTEM_v1        = 500,     // 1.10
-    DE_API_MAP_EDIT_v1           = 600,     // 1.10
-    DE_API_MATERIALS_v1          = 700,     // 1.10
-    DE_API_PLUGIN_v1             = 800,     // 1.10
-    DE_API_URI_v1                = 900,     // 1.10
-    DE_API_WAD_v1                = 1000     // 1.10
+    DE_API_FONT_RENDER_v1        = 600,     // 1.10
+    DE_API_MAP_EDIT_v1           = 700,     // 1.10
+    DE_API_MATERIALS_v1          = 800,     // 1.10
+    DE_API_PLUGIN_v1             = 900,     // 1.10
+    DE_API_URI_v1                = 1000,    // 1.10
+    DE_API_WAD_v1                = 1100     // 1.10
 };
 
 /**

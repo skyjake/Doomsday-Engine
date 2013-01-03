@@ -75,6 +75,7 @@ DENG_EXTERN_C void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLine
 DENG_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
 DENG_EXTERN_C void FR_Init(void);
+/*
 DENG_EXTERN_C void FR_SetFont(fontid_t font);
 DENG_EXTERN_C void FR_PushAttrib(void);
 DENG_EXTERN_C void FR_PopAttrib(void);
@@ -123,6 +124,7 @@ DENG_EXTERN_C void FR_ResetTypeinTimer(void);
 DENG_EXTERN_C void FR_TextSize(Size2Raw* size, const char* text);
 DENG_EXTERN_C int FR_TextWidth(const char* text);
 DENG_EXTERN_C int FR_TextHeight(const char* text);
+*/
 
 DENG_EXTERN_C void Fonts_Init(void);
 DENG_EXTERN_C fontschemeid_t Fonts_ParseScheme(const char* str);

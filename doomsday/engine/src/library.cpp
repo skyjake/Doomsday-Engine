@@ -183,6 +183,11 @@ void Library_PublishAPIs(Library *lib)
         PUBLISH(_api_Plug);
         PUBLISH(_api_Uri);
         PUBLISH(_api_W);
+
+#ifdef __CLIENT__
+        // Client-only APIs.
+        PUBLISH(_api_FR);
+#endif
     }
 }
 

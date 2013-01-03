@@ -75,13 +75,13 @@ DENG_API_HEADERS = \
     $$SRC/api/api_console.h \
     $$SRC/api/api_def.h \
     $$SRC/api/api_filesys.h \
+    $$SRC/api/api_fontrender.h \
     $$SRC/api/api_material.h \
     $$SRC/api/api_mpe.h \
     $$SRC/api/api_plugin.h \
     $$SRC/api/api_uri.h \
     $$SRC/api/api_wad.h \
     $$SRC/api/dd_api.h \
-    $$SRC/api/dd_fontrenderer.h \
     $$SRC/api/dd_gl.h \
     $$SRC/api/dd_infine.h \
     $$SRC/api/dd_maptypes.h \

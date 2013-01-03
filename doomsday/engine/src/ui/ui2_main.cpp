@@ -1271,6 +1271,7 @@ static int textLineWidth(char const *text)
 {
     int width = 0;
 
+#ifdef __CLIENT__
     for(; *text; text++)
     {
         if(*text == '\\')
@@ -1286,6 +1287,7 @@ static int textLineWidth(char const *text)
         }
         width += FR_CharWidth(*text);
     }
+#endif
 
     return width;
 }

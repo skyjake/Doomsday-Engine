@@ -81,13 +81,13 @@ DENG_API_HEADERS = \
     api/api_console.h \
     api/api_def.h \
     api/api_filesys.h \
+    api/api_fontrender.h \
     api/api_material.h \
     api/api_mpe.h \
     api/api_plugin.h \
     api/api_uri.h \
     api/api_wad.h \
     api/dd_api.h \
-    api/dd_fontrenderer.h \
     api/dd_gl.h \
     api/dd_infine.h \
     api/dd_maptypes.h \

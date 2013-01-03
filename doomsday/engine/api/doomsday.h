@@ -91,6 +91,7 @@ struct font_s;
 #include "api_console.h"
 #include "api_material.h"
 #include "api_mpe.h"
+#include "api_fontrender.h"
 
 #include "filehandle.h"
 #include <de/memoryzone.h>

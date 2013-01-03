@@ -185,6 +185,7 @@ texturevariantspecification_t *GL_TextureVariantSpecificationForContext(
 void FR_Init(void)
 {}
 
+/*
 void FR_SetFont(fontid_t font)
 {
     DENG_UNUSED(font);
@@ -464,6 +465,7 @@ int FR_TextHeight(const char* text)
     DENG_UNUSED(text);
     return 0;
 }
+*/
 
 void Fonts_Init(void)
 {}

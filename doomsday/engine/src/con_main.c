@@ -252,6 +252,7 @@ void Con_ResizeHistoryBuffer(void)
         exit(1); // Unreachable.
     }
 
+#ifdef __CLIENT__
     if(!novideo && !isDedicated)
     {
         float cw;
@@ -267,6 +268,7 @@ void Con_ResizeHistoryBuffer(void)
             maxLength = MIN_OF(Window_Width(theWindow) / cw - 2, 250);
         }
     }
+#endif
 
     CBuffer_SetMaxLineLength(Con_HistoryBuffer(), maxLength);
 }
