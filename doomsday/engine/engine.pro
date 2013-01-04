@@ -91,6 +91,7 @@ DENG_API_HEADERS = \
     api/api_fontrender.h \
     api/api_gl.h \
     api/api_material.h \
+    api/api_materialarchive.h \
     api/api_map.h \
     api/api_mapedit.h \
     api/api_player.h \
@@ -110,7 +111,6 @@ DENG_API_HEADERS = \
     api/doomsday.h \
     api/filehandle.h \
     api/filetype.h \
-    api/materialarchive.h \
     api/resourceclass.h
 
 # Convenience headers.

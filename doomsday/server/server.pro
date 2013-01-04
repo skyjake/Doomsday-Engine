@@ -84,6 +84,7 @@ DENG_API_HEADERS = \
     $$SRC/api/api_filesys.h \
     $$SRC/api/api_fontrender.h \
     $$SRC/api/api_material.h \
+    $$SRC/api/api_materialarchive.h \
     $$SRC/api/api_map.h \
     $$SRC/api/api_mapedit.h \
     $$SRC/api/api_player.h \
@@ -104,7 +105,6 @@ DENG_API_HEADERS = \
     $$SRC/api/doomsday.h \
     $$SRC/api/filehandle.h \
     $$SRC/api/filetype.h \
-    $$SRC/api/materialarchive.h \
     $$SRC/api/resourceclass.h
 
 # Convenience headers.

@@ -42,7 +42,7 @@
 #include "de_misc.h"
 #include "de_defs.h"
 
-#include "materialarchive.h"
+#include "api_materialarchive.h"
 #include "map/r_world.h"
 
 // This is absolute maximum bandwidth rating. Frame size is practically

@@ -49,7 +49,7 @@
 #include "hu_inventory.h"
 #endif
 #include "r_common.h"
-#include "materialarchive.h"
+#include "api_materialarchive.h"
 #include "p_savedef.h"
 
 #define MAX_HUB_MAPS        99

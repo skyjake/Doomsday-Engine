@@ -30,9 +30,9 @@
 #include "de_defs.h"
 #include "de_misc.h"
 #include "api_map.h"
+#include "api_materialarchive.h"
 
 #include "r_util.h"
-#include "materialarchive.h"
 
 #define MAX_TRANSLATIONS    16384
 

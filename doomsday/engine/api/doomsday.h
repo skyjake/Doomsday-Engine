@@ -70,6 +70,7 @@ struct font_s;
 #include "api_filesys.h"
 #include "api_console.h"
 #include "api_material.h"
+#include "api_materialarchive.h"
 #include "api_fontrender.h"
 #include "api_svg.h"
 #include "api_sound.h"
