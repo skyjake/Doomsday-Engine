@@ -109,7 +109,7 @@ void GL_UseFog(int yes)
     DENG_UNUSED(yes);
 }
 
-void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
+void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
 {
     DENG_UNUSED(bp);
     DENG_UNUSED(flags);
@@ -121,7 +121,7 @@ void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, in
     DENG_UNUSED(overrideMode);
 }
 
-void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags,
                                      int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
                                      float stretchEpsilon)
 {
@@ -136,12 +136,12 @@ void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
     DENG_UNUSED(stretchEpsilon);
 }
 
-void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
+void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
     DENG_UNUSED(bp);
 }
 
-void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
+void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
     DENG_UNUSED(bp);
 }

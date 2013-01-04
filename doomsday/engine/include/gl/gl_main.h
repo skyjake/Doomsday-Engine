@@ -136,8 +136,6 @@ void GL_InitRefresh(void);
  */
 void GL_ShutdownRefresh(void);
 
-void GL_UseFog(int yes);
-
 void GL_LowRes(void);
 
 /**

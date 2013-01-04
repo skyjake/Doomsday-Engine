@@ -1005,39 +1005,10 @@ typedef enum {
     ORDER_RIGHTTOLEFT
 } order_t;
 
-typedef enum {
-    SCALEMODE_FIRST = 0,
-    SCALEMODE_SMART_STRETCH = SCALEMODE_FIRST,
-    SCALEMODE_NO_STRETCH, // Never.
-    SCALEMODE_STRETCH, // Always.
-    SCALEMODE_LAST = SCALEMODE_STRETCH,
-    SCALEMODE_COUNT
-} scalemode_t;
-
 /// Can the value be interpreted as a valid scale mode identifier?
 #define VALID_SCALEMODE(val)    ((val) >= SCALEMODE_FIRST && (val) <= SCALEMODE_LAST)
 
 #define DEFAULT_SCALEMODE_STRETCH_EPSILON   (.38f)
-
-/**
- * @defgroup borderedProjectionFlags  Bordered Projection Flags
- * @ingroup apiFlags
- * @{
- */
-#define BPF_OVERDRAW_MASK   0x1
-#define BPF_OVERDRAW_CLIP   0x2
-/**@}*/
-
-typedef struct {
-    int flags;
-    scalemode_t scaleMode;
-    int width, height;
-    int availWidth, availHeight;
-    boolean alignHorizontal; /// @c false= align vertically instead.
-    float scaleFactor;
-    int scissorState;
-    RectRaw scissorRegion;
-} borderedprojectionstate_t;
 
 //------------------------------------------------------------------------
 //

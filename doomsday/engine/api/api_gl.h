@@ -24,8 +24,7 @@
 #define DOOMSDAY_GL_H
 
 #include <de/rect.h>
-#include "dd_types.h"
-#include "apis.h"
+#include "dd_share.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -190,6 +189,35 @@ typedef struct {
     float           color[4];
 } dgl_fc3vertex_t;
 
+typedef enum {
+    SCALEMODE_FIRST = 0,
+    SCALEMODE_SMART_STRETCH = SCALEMODE_FIRST,
+    SCALEMODE_NO_STRETCH, // Never.
+    SCALEMODE_STRETCH, // Always.
+    SCALEMODE_LAST = SCALEMODE_STRETCH,
+    SCALEMODE_COUNT
+} scalemode_t;
+
+/**
+ * @defgroup borderedProjectionFlags  Bordered Projection Flags
+ * @ingroup apiFlags
+ * @{
+ */
+#define BPF_OVERDRAW_MASK   0x1
+#define BPF_OVERDRAW_CLIP   0x2
+///@}
+
+typedef struct {
+    int flags;
+    scalemode_t scaleMode;
+    int width, height;
+    int availWidth, availHeight;
+    boolean alignHorizontal; /// @c false: align vertically instead.
+    float scaleFactor;
+    int scissorState;
+    RectRaw scissorRegion;
+} dgl_borderedprojectionstate_t;
+
 DENG_API_TYPEDEF(GL)
 {
     de_api_t api;
@@ -299,6 +327,14 @@ DENG_API_TYPEDEF(GL)
      */
     int (*Bind)(DGLuint texture);
     void (*DeleteTextures)(int num, const DGLuint* names);
+
+    void (*UseFog)(int yes);
+    void (*SetFilter)(boolean enable);
+    void (*SetFilterColor)(float r, float g, float b, float a);
+    void (*ConfigureBorderedProjection2)(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
+    void (*ConfigureBorderedProjection)(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+    void (*BeginBorderedProjection)(dgl_borderedprojectionstate_t* bp);
+    void (*EndBorderedProjection)(dgl_borderedprojectionstate_t* bp);
 }
 DENG_API_T(GL);
 
@@ -368,6 +404,13 @@ DENG_API_T(GL);
 #define DGL_NewTextureWithParams	_api_GL.NewTextureWithParams
 #define DGL_Bind                    _api_GL.Bind
 #define DGL_DeleteTextures          _api_GL.DeleteTextures
+#define GL_UseFog                   _api_GL.UseFog
+#define GL_SetFilter                _api_GL.SetFilter
+#define GL_SetFilterColor           _api_GL.SetFilterColor
+#define GL_ConfigureBorderedProjection2 _api_GL.ConfigureBorderedProjection2
+#define GL_ConfigureBorderedProjection  _api_GL.ConfigureBorderedProjection
+#define GL_BeginBorderedProjection  _api_GL.BeginBorderedProjection
+#define GL_EndBorderedProjection    _api_GL.EndBorderedProjection
 #endif
 
 #if defined __DOOMSDAY__ && defined __CLIENT__

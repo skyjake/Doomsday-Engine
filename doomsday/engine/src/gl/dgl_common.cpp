@@ -875,6 +875,15 @@ DENG_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h
 DENG_EXTERN_C void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2Raw* br, const Point2Raw* bl, const float color[4]);
 DENG_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int brX, int brY, int blX, int blY, const float color[4]);
 
+// gl_draw.c
+DENG_EXTERN_C void GL_UseFog(int yes);
+DENG_EXTERN_C void GL_SetFilter(boolean enable);
+DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
+DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
+DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp);
+DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp);
+
 DENG_DECLARE_API(GL) =
 {
     { DE_API_GL },
@@ -942,5 +951,12 @@ DENG_DECLARE_API(GL) =
     DGL_DrawQuad2Outline,
     DGL_NewTextureWithParams,
     DGL_Bind,
-    DGL_DeleteTextures
+    DGL_DeleteTextures,
+    GL_UseFog,
+    GL_SetFilter,
+    GL_SetFilterColor,
+    GL_ConfigureBorderedProjection2,
+    GL_ConfigureBorderedProjection,
+    GL_BeginBorderedProjection,
+    GL_EndBorderedProjection
 };

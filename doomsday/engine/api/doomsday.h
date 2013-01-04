@@ -375,26 +375,6 @@ void R_SkyParams(int layer, int param, void* data);
 
 //------------------------------------------------------------------------
 //
-// Graphics.
-//
-//------------------------------------------------------------------------
-
-/// @addtogroup gl
-///@{
-
-void GL_UseFog(int yes);
-void GL_SetFilter(boolean enable);
-void GL_SetFilterColor(float r, float g, float b, float a);
-
-void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
-void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
-void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
-void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
-
-///@}
-
-//------------------------------------------------------------------------
-//
 // Miscellaneous.
 //
 //------------------------------------------------------------------------

@@ -328,12 +328,14 @@ boolean GL_FilterIsVisible(void)
     return (0 != drawFilter && filterColor[CA] > 0);
 }
 
-void GL_SetFilter(boolean enabled)
+#undef GL_SetFilter
+DENG_EXTERN_C void GL_SetFilter(boolean enabled)
 {
     drawFilter = enabled;
 }
 
-void GL_SetFilterColor(float r, float g, float b, float a)
+#undef GL_SetFilterColor
+DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
 {
     filterColor[CR] = MINMAX_OF(0, r, 1);
     filterColor[CG] = MINMAX_OF(0, g, 1);
@@ -361,8 +363,8 @@ void GL_DrawFilter(void)
     glEnd();
 }
 
-/// @note Part of the Doomsday public API.
-void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+#undef GL_ConfigureBorderedProjection2
+DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags,
     int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
     float stretchEpsilon)
 {
@@ -384,16 +386,16 @@ void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
     bp->scissorRegion.size.width = bp->scissorRegion.size.height = 0;
 }
 
-/// @note Part of the Doomsday public API.
-void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags,
+#undef GL_ConfigureBorderedProjection
+DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags,
     int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
 {
     GL_ConfigureBorderedProjection2(bp, flags, width, height, availWidth,
         availHeight, overrideMode, DEFAULT_SCALEMODE_STRETCH_EPSILON);
 }
 
-/// @note Part of the Doomsday public API.
-void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
+#undef GL_BeginBorderedProjection
+DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
     if(!bp)
     {
@@ -457,8 +459,8 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
     }
 }
 
-/// @note Part of the Doomsday public API.
-void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
+#undef GL_EndBorderedProjection
+DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
     if(!bp)
     {

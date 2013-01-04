@@ -56,12 +56,12 @@ DENG_EXTERN_C void GL_PruneTextureVariantSpecifications();
 DENG_EXTERN_C void GL_SetFilter(int f);
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
 DENG_EXTERN_C void GL_UseFog(int yes);
-DENG_EXTERN_C void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
-DENG_EXTERN_C void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags,
                                                    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
                                                    float stretchEpsilon);
-DENG_EXTERN_C void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
-DENG_EXTERN_C void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
+DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp);
+DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp);
 
 DENG_EXTERN_C void R_InitViewWindow(void);
 DENG_EXTERN_C void R_RenderPlayerView(int num);
