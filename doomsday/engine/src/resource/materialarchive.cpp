@@ -18,6 +18,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <cstring>
+
 #include "de_base.h"
 #include "de_console.h"
 
@@ -34,343 +36,381 @@
 // Used to denote unknown Material references in records. Written to disk.
 #define UNKNOWN_MATERIALNAME    "DD_BADTX"
 
-struct materialarchive_record_t
+namespace de {
+
+struct ArchiveRecord
 {
-    Uri *uri; ///< Percent encoded.
+    uri_s *uri; ///< Percent encoded.
     material_t *material;
 };
 
-struct materialarchive_s
+struct MaterialArchive::Instance
 {
     int version;
     uint count;
-    materialarchive_record_t *table;
+    ArchiveRecord *table;
     uint numFlats; /// Used with older versions.
-    bool useSegments; /// Segment id DENG_ASSERTion (Hexen saves).
-};
+    int useSegments; /// Segment id assertion (Hexen saves).
 
-static MaterialArchive *create()
-{
-    return (MaterialArchive *) M_Malloc(sizeof(MaterialArchive));
-}
+    Instance(int _useSegments)
+        : version(MATERIALARCHIVE_VERSION),
+          count(0), table(0), numFlats(0), useSegments(_useSegments)
+    {}
 
-static void clearTable(MaterialArchive *mArc)
-{
-    if(mArc->table)
+    ~Instance()
     {
-        for(uint i = 0; i < mArc->count; ++i)
-        {
-            Uri_Delete(mArc->table[i].uri);
-        }
-        M_Free(mArc->table);
-        mArc->table = 0;
+        clearTable();
     }
-    mArc->count = 0;
-}
 
-static void destroy(MaterialArchive *mArc)
-{
-    clearTable(mArc);
-    M_Free(mArc);
-}
-
-static void init(MaterialArchive *mArc, int useSegments)
-{
-    mArc->version = MATERIALARCHIVE_VERSION;
-    mArc->numFlats = 0;
-    mArc->count = 0;
-    mArc->table = 0;
-    mArc->useSegments = useSegments;
-}
-
-static void insertSerialId(MaterialArchive *mArc, materialarchive_serialid_t /*serialId*/,
-    Uri const *uri, material_t *material)
-{
-    mArc->table = (materialarchive_record_t *) M_Realloc(mArc->table, ++mArc->count * sizeof(materialarchive_record_t));
-    materialarchive_record_t *rec = &mArc->table[mArc->count - 1];
-
-    rec->uri = Uri_Dup(uri);
-    rec->material = material;
-}
-
-static materialarchive_serialid_t insertSerialIdForMaterial(MaterialArchive *mArc,
-    material_t *mat)
-{
-    Uri *uri = Materials_ComposeUri(Materials_Id(mat));
-    // Insert a new element in the index.
-    insertSerialId(mArc, mArc->count+1, uri, mat);
-    Uri_Delete(uri);
-    return mArc->count; // 1-based index.
-}
-
-static materialarchive_serialid_t getSerialIdForMaterial(MaterialArchive *mArc, material_t *mat)
-{
-    materialarchive_serialid_t id = 0;
-    for(uint i = 0; i < mArc->count; ++i)
+    void clearTable()
     {
-        materialarchive_record_t const *rec = &mArc->table[i];
-        if(rec->material == mat)
+        if(table)
         {
-            id = i + 1; // Yes. Return existing serial.
-            break;
+            for(uint i = 0; i < count; ++i)
+            {
+                Uri_Delete(table[i].uri);
+            }
+            M_Free(table); table = 0;
         }
+        count = 0;
     }
-    return id;
-}
 
-static materialarchive_record_t *getRecord(MaterialArchive const *mArc,
-    materialarchive_serialid_t serialId, int group)
-{
-    if(mArc->version < 1 && group == 1) // Group 1 = Flats:
-        serialId += mArc->numFlats;
+    void insertSerialId(materialarchive_serialid_t /*serialId*/, de::Uri const &uri,
+                        material_t *material)
+    {
+        table = (ArchiveRecord *) M_Realloc(table, ++count * sizeof(ArchiveRecord));
+        ArchiveRecord *rec = &table[count - 1];
 
-    materialarchive_record_t *rec = &mArc->table[serialId];
-    if(!Str_CompareIgnoreCase(Uri_Path(rec->uri), UNKNOWN_MATERIALNAME))
+        rec->uri = Uri_Dup(reinterpret_cast<uri_s const *>(&uri));
+        rec->material = material;
+    }
+
+    materialarchive_serialid_t insertSerialIdForMaterial(material_t *mat)
+    {
+        de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
+        // Insert a new element in the index.
+        insertSerialId(count + 1, uri, mat);
+        return count; // 1-based index.
+    }
+
+    materialarchive_serialid_t getSerialIdForMaterial(material_t &mat)
+    {
+        materialarchive_serialid_t id = 0;
+        for(uint i = 0; i < count; ++i)
+        {
+            ArchiveRecord const *rec = &table[i];
+            if(rec->material == &mat)
+            {
+                id = i + 1; // Yes. Return existing serial.
+                break;
+            }
+        }
+        return id;
+    }
+
+    ArchiveRecord *getRecord(materialarchive_serialid_t serialId, int group)
+    {
+        if(version < 1 && group == 1) // Group 1 = Flats:
+            serialId += numFlats;
+
+        ArchiveRecord *rec = &table[serialId];
+        if(!Str_CompareIgnoreCase(Uri_Path(rec->uri), UNKNOWN_MATERIALNAME))
+            return 0;
+        return rec;
+    }
+
+    material_t *materialForSerialId(materialarchive_serialid_t serialId, int group)
+    {
+        DENG_ASSERT(serialId <= count + 1);
+
+        ArchiveRecord *rec;
+        if(serialId != 0 && (rec = getRecord(serialId - 1, group)))
+        {
+            if(!rec->material)
+                rec->material = App_Materials()->find(*reinterpret_cast<de::Uri const *>(rec->uri)).material();
+            return rec->material;
+        }
         return 0;
-    return rec;
-}
-
-static material_t *materialForSerialId(MaterialArchive const *mArc,
-    materialarchive_serialid_t serialId, int group)
-{
-    DENG_ASSERT(serialId <= mArc->count+1);
-
-    materialarchive_record_t *rec;
-    if(serialId != 0 && (rec = getRecord(mArc, serialId-1, group)))
-    {
-        if(!rec->material)
-            rec->material = Materials_ToMaterial(Materials_ResolveUri(rec->uri));
-        return rec->material;
-    }
-    return NULL;
-}
-
-/**
- * Populate the archive using the global Materials list.
- */
-static void populate(MaterialArchive *mArc)
-{
-    Uri *unknownMaterial = Uri_NewWithPath2(UNKNOWN_MATERIALNAME, RC_NULL);
-    insertSerialId(mArc, 1, unknownMaterial, 0);
-    Uri_Delete(unknownMaterial);
-
-    uint num = Materials_Size();
-    for(uint i = 1; i < num + 1; ++i)
-    {
-        /// @todo Assumes knowledge of how material ids are generated.
-        /// Should be iterated by Materials using a callback function.
-        insertSerialIdForMaterial(mArc, Materials_ToMaterial(i));
-    }
-}
-
-static int writeRecord(MaterialArchive const * /*mArc*/, materialarchive_record_t *rec, Writer *writer)
-{
-    Uri_Write(rec->uri, writer);
-    return true; // Continue iteration.
-}
-
-static int readRecord(MaterialArchive *mArc, materialarchive_record_t *rec, Reader *reader)
-{
-    if(!rec->uri)
-    {
-        rec->uri = Uri_New();
     }
 
-    if(mArc->version >= 4)
+    /**
+     * Populate the archive using the global Materials list.
+     */
+    void populate()
     {
-        Uri_Read(rec->uri, reader);
-    }
-    else if(mArc->version >= 2)
-    {
-        ddstring_t *path = Str_NewFromReader(reader);
-        Uri_SetUri2(rec->uri, Str_Text(path), RC_NULL);
-        if(mArc->version == 2)
+        uri_s *unknownMaterial = Uri_NewWithPath2(UNKNOWN_MATERIALNAME, RC_NULL);
+        insertSerialId(1, *reinterpret_cast<de::Uri const *>(unknownMaterial), 0);
+        Uri_Delete(unknownMaterial);
+
+        uint num = App_Materials()->count();
+        for(uint i = 1; i < num + 1; ++i)
         {
-            // We must encode the path.
-            Str_PercentEncode(Str_Set(path, Str_Text(Uri_Path(rec->uri))));
-            Uri_SetPath(rec->uri, Str_Text(path));
+            /// @todo Assumes knowledge of how material ids are generated.
+            /// Should be iterated by Materials using a callback function.
+            insertSerialIdForMaterial(App_Materials()->toMaterialBind(i)->material());
         }
-        Str_Delete(path);
     }
-    else
+
+    int writeRecord(ArchiveRecord &rec, writer_s &writer)
     {
-        char name[9];
-        Reader_Read(reader, name, 8);
-        name[8] = 0;
+        Uri_Write(rec.uri, &writer);
+        return true; // Continue iteration.
+    }
+
+    int readRecord(ArchiveRecord &rec, reader_s &reader)
+    {
+        if(!rec.uri)
+        {
+            rec.uri = Uri_New();
+        }
+
+        if(version >= 4)
+        {
+            Uri_Read(rec.uri, &reader);
+        }
+        else if(version >= 2)
+        {
+            ddstring_t *path = Str_NewFromReader(&reader);
+            Uri_SetUri2(rec.uri, Str_Text(path), RC_NULL);
+            if(version == 2)
+            {
+                // We must encode the path.
+                Str_PercentEncode(Str_Set(path, Str_Text(Uri_Path(rec.uri))));
+                Uri_SetPath(rec.uri, Str_Text(path));
+            }
+            Str_Delete(path);
+        }
+        else
+        {
+            char name[9];
+            Reader_Read(&reader, name, 8);
+            name[8] = 0;
+
+            ddstring_t path; Str_Init(&path);
+            Str_PercentEncode(Str_StripRight(Str_Set(&path, name)));
+
+            byte oldMNI = Reader_ReadByte(&reader);
+            switch(oldMNI % 4)
+            {
+            case 0: Uri_SetScheme(rec.uri, "Textures"); break;
+            case 1: Uri_SetScheme(rec.uri, "Flats");    break;
+            case 2: Uri_SetScheme(rec.uri, "Sprites");  break;
+            case 3: Uri_SetScheme(rec.uri, "System");   break;
+            }
+            Uri_SetPath(rec.uri, Str_Text(&path));
+            Str_Free(&path);
+        }
+        return true; // Continue iteration.
+    }
+
+    /**
+     * Same as readRecord except we are reading the old record format used
+     * by Doomsday 1.8.6 and earlier.
+     */
+    int readRecord_v186(ArchiveRecord &rec, char const *scheme, reader_s &reader)
+    {
+        char buf[9];
+        Reader_Read(&reader, buf, 8);
+        buf[8] = 0;
+
+        if(!rec.uri)
+            rec.uri = Uri_New();
 
         ddstring_t path; Str_Init(&path);
-        Str_PercentEncode(Str_StripRight(Str_Set(&path, name)));
+        Str_PercentEncode(Str_StripRight(Str_Appendf(&path, "%s", buf)));
+        Uri_SetPath(rec.uri, Str_Text(&path));
+        Uri_SetScheme(rec.uri, scheme);
 
-        byte oldMNI = Reader_ReadByte(reader);
-        switch(oldMNI % 4)
-        {
-        case 0: Uri_SetScheme(rec->uri, "Textures"); break;
-        case 1: Uri_SetScheme(rec->uri, "Flats");    break;
-        case 2: Uri_SetScheme(rec->uri, "Sprites");  break;
-        case 3: Uri_SetScheme(rec->uri, "System");   break;
-        }
-        Uri_SetPath(rec->uri, Str_Text(&path));
         Str_Free(&path);
+        return true; // Continue iteration.
     }
-    return true; // Continue iteration.
-}
 
-/**
- * Same as readRecord except we are reading the old record format used
- * by Doomsday 1.8.6 and earlier.
- */
-static int readRecord_v186(materialarchive_record_t *rec, char const *scheme, Reader *reader)
-{
-    char buf[9];
-    Reader_Read(reader, buf, 8);
-    buf[8] = 0;
-
-    if(!rec->uri)
-        rec->uri = Uri_New();
-
-    ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_StripRight(Str_Appendf(&path, "%s", buf)));
-    Uri_SetPath(rec->uri, Str_Text(&path));
-    Uri_SetScheme(rec->uri, scheme);
-
-    Str_Free(&path);
-    return true; // Continue iteration.
-}
-
-static void readMaterialGroup(MaterialArchive* mArc, const char* defaultScheme, Reader *reader)
-{
-    // Read the group header.
-    uint num = Reader_ReadUInt16(reader);
-    for(uint i = 0; i < num; ++i)
+    void readMaterialGroup(char const *defaultScheme, reader_s &reader)
     {
-        materialarchive_record_t temp;
-        std::memset(&temp, 0, sizeof(temp));
-
-        if(mArc->version >= 1)
-            readRecord(mArc, &temp, reader);
-        else
-            readRecord_v186(&temp, mArc->version <= 1? defaultScheme : 0, reader);
-
-        insertSerialId(mArc, mArc->count+1, temp.uri, 0);
-        if(temp.uri)
-            Uri_Delete(temp.uri);
-    }
-}
-
-static void writeMaterialGroup(MaterialArchive const *mArc, Writer *writer)
-{
-    // Write the group header.
-    Writer_WriteUInt16(writer, mArc->count);
-
-    for(uint i = 0; i < mArc->count; ++i)
-    {
-        writeRecord(mArc, &mArc->table[i], writer);
-    }
-}
-
-static void beginSegment(MaterialArchive const *mArc, int seg, Writer *writer)
-{
-    if(mArc->useSegments)
-    {
-        Writer_WriteUInt32(writer, seg);
-    }
-}
-
-static void assertSegment(MaterialArchive *mArc, int seg, Reader *reader)
-{
-    if(mArc->useSegments)
-    {
-        int i = Reader_ReadUInt32(reader);
-        if(i != seg)
+        // Read the group header.
+        uint num = Reader_ReadUInt16(&reader);
+        for(uint i = 0; i < num; ++i)
         {
-            Con_Error("MaterialArchive: Expected ASEG_MATERIAL_ARCHIVE (%i), but got %i.\n",
-                      ASEG_MATERIAL_ARCHIVE, i);
+            ArchiveRecord temp;
+            std::memset(&temp, 0, sizeof(temp));
+
+            if(version >= 1)
+                readRecord(temp, reader);
+            else
+                readRecord_v186(temp, version <= 1? defaultScheme : 0, reader);
+
+            insertSerialId(count + 1, reinterpret_cast<de::Uri &>(temp.uri), 0);
+            if(temp.uri)
+                Uri_Delete(temp.uri);
         }
     }
+
+    void writeMaterialGroup(writer_s &writer)
+    {
+        // Write the group header.
+        Writer_WriteUInt16(&writer, count);
+
+        for(uint i = 0; i < count; ++i)
+        {
+            writeRecord(table[i], writer);
+        }
+    }
+
+    void beginSegment(int seg, writer_s &writer)
+    {
+        if(useSegments)
+        {
+            Writer_WriteUInt32(&writer, seg);
+        }
+    }
+
+    void assertSegment(int seg, reader_s &reader)
+    {
+        if(useSegments)
+        {
+            int i = Reader_ReadUInt32(&reader);
+            if(i != seg)
+            {
+                Con_Error("MaterialArchive: Expected ASEG_MATERIAL_ARCHIVE (%i), but got %i.\n",
+                          ASEG_MATERIAL_ARCHIVE, i);
+            }
+        }
+    }
+
+    void writeHeader(writer_s &writer)
+    {
+        beginSegment(ASEG_MATERIAL_ARCHIVE, writer);
+        Writer_WriteByte(&writer, version);
+    }
+
+    void readHeader(reader_s &reader)
+    {
+        assertSegment(ASEG_MATERIAL_ARCHIVE, reader);
+        version = Reader_ReadByte(&reader);
+    }
+};
+
+MaterialArchive::MaterialArchive(int useSegments, bool populate)
+{
+    d = new Instance(useSegments);
+    if(populate)
+    {
+        d->populate();
+    }
 }
 
-static void writeHeader(MaterialArchive const *mArc, Writer *writer)
+MaterialArchive::~MaterialArchive()
 {
-    beginSegment(mArc, ASEG_MATERIAL_ARCHIVE, writer);
-    Writer_WriteByte(writer, mArc->version);
+    delete d;
 }
 
-static void readHeader(MaterialArchive *mArc, Reader *reader)
+materialarchive_serialid_t MaterialArchive::findUniqueSerialId(material_t *material)
 {
-    assertSegment(mArc, ASEG_MATERIAL_ARCHIVE, reader);
-    mArc->version = Reader_ReadByte(reader);
+    if(material)
+        return d->getSerialIdForMaterial(*material);
+    return 0; // Invalid.
 }
+
+material_t *MaterialArchive::find(materialarchive_serialid_t serialId, int group)
+{
+    return d->materialForSerialId(serialId, group);
+}
+
+size_t MaterialArchive::count()
+{
+    return d->count;
+}
+
+void MaterialArchive::write(writer_s &writer)
+{
+    d->writeHeader(writer);
+    d->writeMaterialGroup(writer);
+}
+
+void MaterialArchive::read(int forcedVersion, reader_s &reader)
+{
+    d->clearTable();
+
+    d->readHeader(reader);
+
+    // Are we interpreting a specific version?
+    if(forcedVersion >= 0)
+    {
+        d->version = forcedVersion;
+    }
+
+    d->count = 0;
+    d->readMaterialGroup((forcedVersion >= 1? "" : "Flats:"), reader);
+
+    if(d->version == 0)
+    {
+        // The old format saved flats and textures in seperate groups.
+        d->numFlats = d->count;
+        d->readMaterialGroup((forcedVersion >= 1? "" : "Textures:"), reader);
+    }
+}
+
+} // namespace de
+
+#define TOINTERNAL(inst) \
+    reinterpret_cast<de::MaterialArchive *>(inst)
+
+#define TOINTERNAL_CONST(inst) \
+    reinterpret_cast<de::MaterialArchive const*>(inst)
+
+#define SELF(inst) \
+    DENG2_ASSERT(inst); \
+    de::MaterialArchive *self = TOINTERNAL(inst)
+
+#define SELF_CONST(inst) \
+    DENG2_ASSERT(inst); \
+    de::MaterialArchive const *self = TOINTERNAL_CONST(inst)
 
 MaterialArchive *MaterialArchive_New(int useSegments)
 {
-    MaterialArchive* mArc = create();
-    init(mArc, useSegments);
-    populate(mArc);
-    return mArc;
+    return reinterpret_cast<MaterialArchive *>(new de::MaterialArchive(useSegments));
 }
 
 MaterialArchive *MaterialArchive_NewEmpty(int useSegments)
 {
-    MaterialArchive *mArc = create();
-    init(mArc, useSegments);
-    return mArc;
+    return reinterpret_cast<MaterialArchive *>(new de::MaterialArchive(useSegments, false /*don't populate*/));
 }
 
 void MaterialArchive_Delete(MaterialArchive *arc)
 {
     if(arc)
     {
-        destroy(arc);
+        SELF(arc);
+        delete self;
     }
 }
 
-materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive *arc, material_t *material)
+materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive *arc, struct material_s *mat)
 {
-    DENG_ASSERT(arc);
-    if(material)
-        return getSerialIdForMaterial(arc, material);
-    return 0; // Invalid.
+    SELF(arc);
+    return self->findUniqueSerialId(mat);
 }
 
-material_t *MaterialArchive_Find(MaterialArchive *arc, materialarchive_serialid_t serialId, int group)
+struct material_s *MaterialArchive_Find(MaterialArchive *arc, materialarchive_serialid_t serialId, int group)
 {
-    DENG_ASSERT(arc);
-    return materialForSerialId(arc, serialId, group);
+    SELF(arc);
+    return self->find(serialId, group);
 }
 
 size_t MaterialArchive_Count(MaterialArchive *arc)
 {
-    DENG_ASSERT(arc);
-    return arc->count;
+    SELF(arc);
+    return self->count();
 }
 
 void MaterialArchive_Write(MaterialArchive *arc, Writer *writer)
 {
-    DENG_ASSERT(arc);
-    writeHeader(arc, writer);
-    writeMaterialGroup(arc, writer);
+    SELF(arc);
+    self->write(*writer);
 }
 
 void MaterialArchive_Read(MaterialArchive *arc, int forcedVersion, Reader *reader)
 {
-    DENG_ASSERT(arc);
-    clearTable(arc);
-
-    readHeader(arc, reader);
-
-    // Are we interpreting a specific version?
-    if(forcedVersion >= 0)
-    {
-        arc->version = forcedVersion;
-    }
-
-    arc->count = 0;
-    readMaterialGroup(arc, (forcedVersion >= 1? "" : "Flats:"), reader);
-
-    if(arc->version == 0)
-    {
-        // The old format saved flats and textures in seperate groups.
-        arc->numFlats = arc->count;
-        readMaterialGroup(arc, (forcedVersion >= 1? "" : "Textures:"), reader);
-    }
+    SELF(arc);
+    self->read(forcedVersion, *reader);
 }

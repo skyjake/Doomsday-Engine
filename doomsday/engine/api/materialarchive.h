@@ -29,70 +29,84 @@
 #include <de/reader.h>
 
 struct material_s;
-struct materialarchive_s;
-
-/**
- * MaterialArchive instance.
- */
-typedef struct materialarchive_s MaterialArchive;
 
 typedef unsigned short materialarchive_serialid_t;
 
 #ifdef __cplusplus
+namespace de {
+
+    class MaterialArchive
+    {
+    public:
+        /**
+         * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
+         */
+        MaterialArchive(int useSegments, bool populate = true);
+
+        ~MaterialArchive();
+
+        /**
+         * @return A new (unused) SerialId for the specified material.
+         */
+        materialarchive_serialid_t findUniqueSerialId(struct material_s *mat);
+
+        /**
+         * Finds and returns a material with the identifier @a serialId.
+         *
+         * @param serialId  SerialId of a material.
+         * @param group  Set to zero. Only used with the version 0 of MaterialArchive (now obsolete).
+         *
+         * @return  Pointer to a material instance. Ownership not given.
+         */
+        struct material_s *find(materialarchive_serialid_t serialId, int group);
+
+        /**
+         * Returns the number of materials in the archive.
+         *
+         * @param arc  MaterialArchive instance.
+         */
+        size_t count();
+
+        /**
+         * Serializes the state of the archive using @a writer.
+         *
+         * @param writer  Writer instance.
+         */
+        void write(writer_s &writer);
+
+        /**
+         * Deserializes the state of the archive from @a reader.
+         *
+         * @param forcedVersion  Version to interpret as, not actual format version. Use -1 to use whatever
+         *                       version is encountered.
+         * @param reader  Reader instance.
+         */
+        void read(int forcedVersion, reader_s &reader);
+
+    private:
+        struct Instance;
+        Instance *d;
+    };
+
+} // namespace de
 extern "C" {
 #endif
 
-/**
- * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
+/*
+ * C Wrapper API:
  */
-MaterialArchive *MaterialArchive_New(int useSegments);
 
-/**
- * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
- */
+struct materialarchive_s;
+typedef struct materialarchive_s MaterialArchive; // MaterialArchive instance
+
+MaterialArchive *MaterialArchive_New(int useSegments);
 MaterialArchive *MaterialArchive_NewEmpty(int useSegments);
 
 void MaterialArchive_Delete(MaterialArchive *arc);
-
-/**
- * @return A new (unused) SerialId for the specified material.
- */
 materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive *arc, struct material_s *mat);
-
-/**
- * Finds and returns a material with the identifier @a serialId.
- *
- * @param arc  MaterialArchive instance.
- * @param serialId  SerialId of a material.
- * @param group  Set to zero. Only used with the version 0 of MaterialArchive (now obsolete).
- *
- * @return  Pointer to a material instance. Ownership not given.
- */
 struct material_s *MaterialArchive_Find(MaterialArchive *arc, materialarchive_serialid_t serialId, int group);
-
-/**
- * Returns the number of materials in the archive.
- *
- * @param arc  MaterialArchive instance.
- */
 size_t MaterialArchive_Count(MaterialArchive *arc);
-
-/**
- * Serializes the state of the archive using @a writer.
- *
- * @param arc  MaterialArchive instance.
- * @param writer  Writer instance.
- */
 void MaterialArchive_Write(MaterialArchive *arc, Writer *writer);
-
-/**
- * Deserializes the state of the archive from @a reader.
- *
- * @param arc  MaterialArchive instance.
- * @param forcedVersion  Version to interpret as, not actual format version. Use -1 to use whatever
- *                       version is encountered.
- * @param reader  Reader instance.
- */
 void MaterialArchive_Read(MaterialArchive *arc, int forcedVersion, Reader *reader);
 
 ///@}
