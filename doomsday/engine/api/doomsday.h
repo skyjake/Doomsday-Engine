@@ -1,12 +1,9 @@
-/**
- * @file doomsday.h
- * Primary header file for the Doomsday Engine Public API
+/** @file doomsday.h Primary header file for the Doomsday Engine Public API
  *
- * @todo Break this header file up into group-specific ones.
- * Including doomsday.h should include all of the public API headers.
+ * This header includes all of the public API headers of Doomsday.
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -102,10 +99,6 @@ typedef struct plane_s    { int type; } Plane;
 typedef struct material_s { int type; } material_t;
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * @defgroup base Base
  */
@@ -139,9 +132,5 @@ extern "C" {
 /**
  * @defgroup render Renderer
  */
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* DOOMSDAY_PUBLIC_API_H */
