@@ -35,10 +35,6 @@
 
 #include "doomsday.h"
 
-#define PI                      3.141592657
-
-//#include "m_fixed.h"
-
 #define FINEANGLES              8192
 #define FINEMASK                (FINEANGLES-1)
 
