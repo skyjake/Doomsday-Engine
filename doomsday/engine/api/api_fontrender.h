@@ -69,6 +69,8 @@ DENG_API_TYPEDEF(FR)
 {
     de_api_t api;
 
+    fontid_t (*ResolveUri)(Uri const* uri);
+
     /// @return  Unique identifier associated with the current font.
     fontid_t (*Font)(void);
 
@@ -250,6 +252,7 @@ DENG_API_TYPEDEF(FR)
 DENG_API_T(FR);
 
 #ifndef DENG_NO_API_MACROS_FONT_RENDER
+#define Fonts_ResolveUri        _api_FR.ResolveUri
 #define FR_Font                 _api_FR.Font
 #define FR_SetFont              _api_FR.SetFont
 #define FR_PushAttrib           _api_FR.PushAttrib

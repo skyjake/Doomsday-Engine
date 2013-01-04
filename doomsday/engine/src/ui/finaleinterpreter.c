@@ -1567,6 +1567,8 @@ static DGLuint loadGraphics(const char* name, gfxmode_t mode, int useMipmap, boo
                                 clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
                                 clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
                                 otherFlags);
+#else
+    return 0;
 #endif
 }
 
@@ -2090,6 +2092,7 @@ DEFFC(PredefinedColor)
 
 DEFFC(PredefinedFont)
 {
+#ifdef __CLIENT__
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
     {
@@ -2102,6 +2105,7 @@ DEFFC(PredefinedFont)
     { AutoStr* fontPath = Uri_ToString(OP_URI(1));
     Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.\n", Str_Text(fontPath));
     }
+#endif
 }
 
 DEFFC(TextRGB)
@@ -2167,6 +2171,7 @@ DEFFC(TextLineHeight)
 
 DEFFC(Font)
 {
+#ifdef __CLIENT__
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
@@ -2178,6 +2183,7 @@ DEFFC(Font)
     { AutoStr* fontPath = Uri_ToString(OP_URI(1));
     Con_Message("FIC_Font: Warning, unknown font '%s'.\n", Str_Text(fontPath));
     }
+#endif
 }
 
 DEFFC(FontA)

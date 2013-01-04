@@ -751,7 +751,8 @@ fontid_t Fonts_ResolveUri2(Uri const* _uri, boolean quiet)
     return NOFONTID;
 }
 
-fontid_t Fonts_ResolveUri(Uri const* uri)
+#undef Fonts_ResolveUri
+DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri)
 {
     return Fonts_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
 }

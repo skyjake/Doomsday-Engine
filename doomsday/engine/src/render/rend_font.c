@@ -1512,9 +1512,13 @@ void FR_Init(void)
     typeInTime = 0;
 }
 
+// fonts.cpp
+DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri); /*quiet=!(verbose >= 1)*/
+
 DENG_DECLARE_API(FR) =
 {
     { DE_API_FONT_RENDER },
+    Fonts_ResolveUri,
     FR_Font,
     FR_SetFont,
     FR_PushAttrib,

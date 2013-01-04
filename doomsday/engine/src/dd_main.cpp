@@ -2188,11 +2188,11 @@ void DD_UpdateEngineState(void)
     Con_Message("Updating engine state...\n");
 
     // Stop playing sounds and music.
-    GL_SetFilter(false);
+    S_Reset();
 #ifdef __CLIENT__
+    GL_SetFilter(false);
     Demo_StopPlayback();
 #endif
-    S_Reset();
 
     //App_FileSystem()->resetFileIds();
 

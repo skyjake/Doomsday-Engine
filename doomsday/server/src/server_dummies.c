@@ -91,6 +91,7 @@ void GL_EarlyInitTextureManager()
 void GL_PruneTextureVariantSpecifications()
 {}
 
+/*
 void GL_SetFilter(int f)
 {
     DENG_UNUSED(f);
@@ -146,7 +147,6 @@ void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
     DENG_UNUSED(bp);
 }
 
-/*
 void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle)
 {
     DENG_UNUSED(svgId);
@@ -480,11 +480,13 @@ fontschemeid_t Fonts_ParseScheme(const char* str)
     return 0;
 }
 
+/*
 fontid_t Fonts_ResolveUri(Uri const *uri)
 {
     DENG_UNUSED(uri);
     return 0;
 }
+*/
 
 fontid_t Fonts_ResolveUriCString(const char* uri)
 {
