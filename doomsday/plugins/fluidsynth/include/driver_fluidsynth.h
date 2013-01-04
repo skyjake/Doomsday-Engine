@@ -31,6 +31,7 @@
 #include <cassert>
 #include <iostream>
 #include <fluidsynth.h>
+#include "api_console.h"
 #include "api_audiod_sfx.h"
 
 extern "C" {
@@ -55,5 +56,7 @@ audiointerface_sfx_generic_t* DMFluid_Sfx();
 #endif
 
 #include "fluidsynth_music.h"
+
+DENG_USING_API(Con);
 
 #endif /* end of include guard: __DSFLUIDSYNTH_DRIVER_H__ */

@@ -53,6 +53,7 @@
 #include <stdio.h>
 #include <cassert>
 #include <iostream>
+#include "api_console.h"
 
 extern "C" {
     
@@ -80,5 +81,7 @@ extern FMOD::System* fmodSystem;
 #include "fmod_music.h"
 #include "fmod_cd.h"
 #include "fmod_util.h"
+
+DENG_USING_API(Con);
 
 #endif /* end of include guard: __DSFMOD_DRIVER_H__ */
