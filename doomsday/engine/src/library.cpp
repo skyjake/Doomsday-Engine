@@ -35,6 +35,7 @@
 #include "api_materialarchive.h"
 #include "api_map.h"
 #include "api_mapedit.h"
+#include "api_resource.h"
 #include "api_sound.h"
 #include "api_fontrender.h"
 #include "api_svg.h"
@@ -198,6 +199,7 @@ void Library_PublishAPIs(Library *lib)
         PUBLISH(_api_MaterialArchive);
         PUBLISH(_api_Player);
         PUBLISH(_api_Plug);
+        PUBLISH(_api_R);
         PUBLISH(_api_S);
         PUBLISH(_api_Thinker);
         PUBLISH(_api_Uri);

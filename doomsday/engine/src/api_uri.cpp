@@ -1,6 +1,6 @@
 /**
- * @file uri_wrapper.cpp
- * Universal Resource Identifier (C wrapper). @ingroup base
+ * @file api_uri.cpp
+ * Universal Resource Identifier (public C wrapper). @ingroup base
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

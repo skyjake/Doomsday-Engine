@@ -46,4 +46,6 @@
 #  include "resource/zip.h"
 #endif
 
+#include "api_resource.h"
+
 #endif /* LIBDENG_RESOURCE_SUBSYSTEM_H */

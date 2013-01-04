@@ -75,6 +75,7 @@ struct font_s;
 #include "api_svg.h"
 #include "api_sound.h"
 #include "api_render.h"
+#include "api_resource.h"
 #include "api_map.h"
 #include "api_mapedit.h"
 #include "api_client.h"
@@ -148,27 +149,6 @@ extern "C" {
 /**
  * @defgroup render Renderer
  */
-
-// R (Resource)
-
-patchid_t R_DeclarePatch(const char* name);
-boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
-Uri* R_ComposePatchUri(patchid_t id);
-AutoStr* R_ComposePatchPath(patchid_t id);
-
-int Textures_UniqueId2(const Uri* uri, boolean quiet);
-int Textures_UniqueId(const Uri* uri); /*quiet=false*/
-
-int R_CreateAnimGroup(int flags);
-void R_AddAnimGroupFrame(int groupNum, const Uri* texture, int tics, int randomTics);
-
-colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name, const uint8_t* colorData, int colorCount);
-colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
-const char* R_GetColorPaletteNameForNum(colorpaletteid_t id);
-
-void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3], boolean applyTexGamma);
-void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], boolean applyTexGamma);
-
 
 #ifdef __cplusplus
 } // extern "C"

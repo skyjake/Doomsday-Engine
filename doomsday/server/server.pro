@@ -90,6 +90,7 @@ DENG_API_HEADERS = \
     $$SRC/api/api_player.h \
     $$SRC/api/api_plugin.h \
     $$SRC/api/api_render.h \
+    $$SRC/api/api_resource.h \
     $$SRC/api/api_resourceclass.h \
     $$SRC/api/api_server.h \
     $$SRC/api/api_sound.h \
@@ -335,6 +336,7 @@ SOURCES += $$SRC/src/ui/displaymode_dummy.c
 SOURCES += \
     src/server_dummies.c \
     $$SRC/src/api_material.cpp \
+    $$SRC/src/api_uri.cpp \
     $$SRC/src/audio/s_cache.c \
     $$SRC/src/audio/s_environ.cpp \
     $$SRC/src/audio/s_logic.c \
@@ -428,6 +430,7 @@ SOURCES += \
     $$SRC/src/render/r_things.cpp \
     $$SRC/src/render/rend_main.cpp \
     $$SRC/src/resource/animgroups.cpp \
+    $$SRC/src/resource/api_resource.c \
     $$SRC/src/resource/colorpalette.c \
     $$SRC/src/resource/colorpalettes.cpp \
     $$SRC/src/resource/compositetexture.cpp \
@@ -476,8 +479,7 @@ SOURCES += \
     $$SRC/src/ui/sys_input.c \
     $$SRC/src/ui/ui2_main.cpp \
     $$SRC/src/ui/window.cpp \
-    $$SRC/src/uri.cpp \
-    $$SRC/src/uri_wrapper.cpp
+    $$SRC/src/uri.cpp
 
 OTHER_FILES += \
     data/cphelp.txt \

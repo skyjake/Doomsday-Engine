@@ -67,22 +67,6 @@ void R_InitCompositeTextures(void);
 void R_InitFlatTextures(void);
 void R_InitSpriteTextures(void);
 
-patchid_t R_DeclarePatch(char const *name);
-
-/**
- * Retrieve extended info for the patch associated with @a id.
- * @param id  Unique identifier of the patch to lookup.
- * @param info  Extend info will be written here if found.
- * @return  @c true= Extended info for this patch was found.
- */
-boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info);
-
-/// @return  Uri for the patch associated with @a id. Should be released with Uri_Delete()
-Uri *R_ComposePatchUri(patchid_t id);
-
-/// @return  Path for the patch associated with @a id. A zero-length string is
-///          returned if the id is invalid/unknown.
-AutoStr *R_ComposePatchPath(patchid_t id);
 #ifdef __cplusplus
 } // extern "C"
 #endif

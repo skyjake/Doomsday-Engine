@@ -97,6 +97,7 @@ DENG_API_HEADERS = \
     api/api_player.h \
     api/api_plugin.h \
     api/api_render.h \
+    api/api_resource.h \
     api/api_resourceclass.h \
     api/api_sound.h \
     api/api_svg.h \
@@ -426,7 +427,7 @@ deng_nodisplaymode {
 # Platform-independent sources.
 SOURCES += \
     src/api_material.cpp \
-    src/render/api_render.c \
+    src/api_uri.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
     src/audio/m_mus2midi.c \
@@ -544,6 +545,7 @@ SOURCES += \
     src/network/sys_network.c \
     src/network/ui_mpi.c \
     src/r_util.c \
+    src/render/api_render.c \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.c \
@@ -570,6 +572,7 @@ SOURCES += \
     src/render/vignette.c \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \
+    src/resource/api_resource.c \
     src/resource/bitmapfont.cpp \
     src/resource/colorpalette.c \
     src/resource/colorpalettes.cpp \
@@ -634,8 +637,7 @@ SOURCES += \
     src/updater/updaterdialog.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
-    src/uri.cpp \
-    src/uri_wrapper.cpp
+    src/uri.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

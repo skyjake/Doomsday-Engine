@@ -277,9 +277,6 @@ void Textures_Init(void);
 /// Shutdown this module.
 void Textures_Shutdown(void);
 
-int Textures_UniqueId2(Uri const *uri, boolean quiet);
-int Textures_UniqueId(Uri const *uri/*, quiet = false */);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif
