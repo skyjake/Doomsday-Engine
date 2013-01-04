@@ -23,6 +23,13 @@
 
 #include "libdeng.h"
 
+typedef struct divline_s {
+    fixed_t origin[2];
+    fixed_t direction[2];
+} Divline;
+
+typedef Divline divline_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -131,6 +138,18 @@ DENG_PUBLIC int M_NumDigits(int num);
 
 /// @param angle  Normalised angle in the range [0..360].
 DENG_PUBLIC double M_InverseAngle(double angle);
+
+/**
+ * @return @c 0 if point is in front of the line, else @c 1.
+ */
+DENG_PUBLIC int Divline_PointOnSide(Divline const *line, coord_t const point[2]);
+
+DENG_PUBLIC int Divline_PointXYOnSide(Divline const *line, coord_t x, coord_t y);
+
+/**
+ * @return Fractional intercept point along the first divline.
+ */
+DENG_PUBLIC fixed_t Divline_Intersection(Divline const *v1, Divline const *v2);
 
 // Bounding boxes:
 DENG_PUBLIC void M_ClearBox(fixed_t* box);

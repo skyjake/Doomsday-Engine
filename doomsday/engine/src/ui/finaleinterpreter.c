@@ -39,6 +39,8 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#include "api_material.h"
+
 #include "gl/sys_opengl.h" // TODO: get rid of this
 
 #define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))

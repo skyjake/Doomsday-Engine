@@ -27,10 +27,14 @@ materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
 
 // materials.cpp
 DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId);
+DENG_EXTERN_C materialid_t Materials_ResolveUri(Uri const *uri/*, quiet=!(verbose >= 1)*/);
+DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uri/*, quiet=!(verbose >= 1)*/);
 
 DENG_DECLARE_API(Material) =
 {
     { DE_API_MATERIALS },
     DD_MaterialForTextureUri,
-    Materials_ComposeUri
+    Materials_ComposeUri,
+    Materials_ResolveUri,
+    Materials_ResolveUriCString
 };

@@ -85,6 +85,7 @@ struct font_s;
 #include <de/rect.h>
 #include <de/size.h>
 #include <de/smoother.h>
+#include <de/mathutil.h>
 #include <de/vector1.h>
 #include <de/writer.h>
 
@@ -157,11 +158,6 @@ extern "C" {
  */
 ///@{
 
-int Divline_PointOnSide(const divline_t* line, coord_t const point[2]);
-int Divline_PointXYOnSide(const divline_t* line, coord_t x, coord_t y);
-
-fixed_t Divline_Intersection(divline_t* v1, divline_t* v2);
-
 const divline_t* P_TraceLOS(void);
 
 TraceOpening* P_TraceOpening(void);
@@ -202,15 +198,6 @@ boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bot
  * @defgroup polyobj Polygon Objects
  * @ingroup map
  */
-
-/// @addtogroup material
-///@{
-
-// Play: Materials.
-materialid_t Materials_ResolveUri(const Uri* uri);
-materialid_t Materials_ResolveUriCString(const char* path);
-
-///@}
 
 //------------------------------------------------------------------------
 //

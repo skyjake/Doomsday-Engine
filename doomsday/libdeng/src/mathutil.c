@@ -2106,3 +2106,19 @@ double M_InverseAngle(double angle)
     }
     return angle - 180.0;
 }
+
+int Divline_PointXYOnSide(Divline const *line, coord_t fx, coord_t fy)
+{
+    fixed_t point[2] = { FLT2FIX((float)fx), FLT2FIX((float)fy) };
+    return V2x_PointOnLineSide(point, line->origin, line->direction);
+}
+
+int Divline_PointOnSide(Divline const *line, coord_t const point[])
+{
+    return Divline_PointXYOnSide(line, point[VX], point[VY]);
+}
+
+fixed_t Divline_Intersection(Divline const *v1, Divline const *v2)
+{
+    return V2x_Intersection(v1->origin, v1->direction, v2->origin, v2->direction);
+}

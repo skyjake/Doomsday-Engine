@@ -25,23 +25,13 @@
 #ifndef LIBDENG_MAP_UTILITIES_H
 #define LIBDENG_MAP_UTILITIES_H
 
+#include <de/mathutil.h>
 #include <de/vector1.h>
 #include "p_object.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @return  @c 0 if point is in front of the line, else @c 1.
- */
-int Divline_PointOnSide(const divline_t* line, coord_t const point[2]);
-int Divline_PointXYOnSide(const divline_t* line, coord_t x, coord_t y);
-
-/**
- * @return  Fractional intercept point along the first divline.
- */
-fixed_t Divline_Intersection(const divline_t* v1, const divline_t* v2);
 
 /**
  * Retrieve an immutable copy of the LOS trace line for the CURRENT map.

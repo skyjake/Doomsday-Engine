@@ -591,11 +591,6 @@ typedef enum sidedefsection_e {
     (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDEDEF : DMU_TOP_OF_SIDEDEF)
 
 typedef struct {
-    fixed_t origin[2];
-    fixed_t direction[2];
-} divline_t;
-
-typedef struct {
     float origin[2];
     float direction[2];
 } fdivline_t;

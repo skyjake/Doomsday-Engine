@@ -25,6 +25,7 @@
 
 #include "p_particle.h"
 #include <EntityDatabase>
+#include <de/mathutil.h>
 
 #ifdef __cplusplus
 extern "C" {

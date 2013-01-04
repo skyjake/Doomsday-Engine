@@ -361,11 +361,9 @@ boolean Materials_HasDecorations(material_t *material);
 ded_ptcgen_t const *Materials_PtcGenDef(material_t *material);
 boolean Materials_IsMaterialInAnimGroup(material_t *material, int animGroupNum);
 materialid_t Materials_ResolveUri2(Uri const *uri, boolean quiet);
-materialid_t Materials_ResolveUri(Uri const *uri/*, quiet=!(verbose >= 1)*/);
 
 /// Same as Materials::resolveUri except @a uri is a C-string.
 materialid_t Materials_ResolveUriCString2(char const *uri, boolean quiet);
-materialid_t Materials_ResolveUriCString(char const *uri/*, quiet=!(verbose >= 1)*/);
 
 int Materials_AnimGroupCount(void);
 boolean Materials_IsPrecacheAnimGroup(int animGroupNum);

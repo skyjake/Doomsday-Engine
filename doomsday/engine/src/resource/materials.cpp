@@ -1786,8 +1786,8 @@ materialid_t Materials_ResolveUri2(struct uri_s const *uri, boolean quiet)
     return App_Materials()->resolveUri2(*reinterpret_cast<de::Uri const *>(uri), CPP_BOOL(quiet));
 }
 
-/// @note Part of the Doomsday public API.
-materialid_t Materials_ResolveUri(struct uri_s const *uri)
+#undef Materials_ResolveUri
+DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
 {
     return Materials_ResolveUri2(uri, !(verbose >= 1));
 }
@@ -1801,8 +1801,8 @@ materialid_t Materials_ResolveUriCString2(char const *uriCString, boolean quiet)
     return NOMATERIALID;
 }
 
-/// @note Part of the Doomsday public API.
-materialid_t Materials_ResolveUriCString(char const *path)
+#undef Materials_ResolveUriCString
+DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *path)
 {
     return Materials_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
