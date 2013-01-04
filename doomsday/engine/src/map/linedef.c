@@ -25,7 +25,6 @@
 #include "de_play.h"
 #include "de_render.h"
 
-#include "m_bams.h"
 #include "m_misc.h"
 #include "resource/materialvariant.h"
 #include "resource/materials.h"
@@ -33,6 +32,7 @@
 
 #include <math.h>
 #include <de/mathutil.h>
+#include <de/binangle.h>
 
 static void calcNormal(const LineDef* l, byte side, pvec2f_t normal)
 {

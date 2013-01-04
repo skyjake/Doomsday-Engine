@@ -61,6 +61,7 @@ deng_writertypecheck {
 # Public headers
 HEADERS += \
     include/de/animator.h \
+    include/de/binangle.h \
     include/de/concurrency.h \
     include/de/ddstring.h \
     include/de/findfile.h \
@@ -88,6 +89,7 @@ HEADERS += \
 # Sources and private headers
 SOURCES += \
     src/animator.c \
+    src/binangle.c \
     src/concurrency.cpp \
     src/fixedpoint.c \
     src/garbage.cpp \

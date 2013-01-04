@@ -34,6 +34,7 @@
 #include "map/dam_main.h"
 #include "render/rend_bias.h"
 #include "m_nodepile.h"
+#include <de/binangle.h>
 #include <de/vector1.h>
 
 #ifdef __cplusplus

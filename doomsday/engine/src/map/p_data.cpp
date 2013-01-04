@@ -33,7 +33,6 @@
 #include "map/propertyvalue.h"
 #include "render/rend_bias.h"
 #include "render/vlight.h"
-#include "m_bams.h"
 
 #include <map>
 #include <EntityDatabase>
@@ -43,6 +42,7 @@
 #include <de/Log>
 #include <de/String>
 #include <de/StringPool>
+#include <de/binangle.h>
 #include <de/memory.h>
 
 using namespace de;

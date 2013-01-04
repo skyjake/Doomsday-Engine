@@ -1,6 +1,5 @@
-/**
- * @file m_bams.c
- * Binary Angle Mathematics. @ingroup math
+/** @file binangle.c Binary angle mathematics.
+ * @ingroup math
  *
  * Trigonometric functions.
  *
@@ -22,10 +21,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "binangle.h"
 #include <math.h>
-#include "m_bams.h"
 
+// Define this to use the lookup table implementation
+// (can be slower than atan2f).
 #ifdef DENG_BAMS_TABLE_ATAN2
 
 #define BAMS_TABLE_ACCURACY_SHIFT   13

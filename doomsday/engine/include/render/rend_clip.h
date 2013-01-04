@@ -32,7 +32,7 @@
 #define LIBDENG_RENDER_CLIP_H
 
 #include "map/p_mapdata.h"
-#include "m_bams.h"
+#include <de/binangle.h>
 
 #ifdef __cplusplus
 extern "C" {

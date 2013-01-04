@@ -20,6 +20,7 @@
  */
 
 #include "de/libdeng.h"
+#include "de/binangle.h"
 #include "de/garbage.h"
 #include "de/concurrency.h"
 #include "de/timer.h"
@@ -29,6 +30,7 @@
 
 void Libdeng_Init(void)
 {
+    bamsInit();
     Timer_Init();
     Z_Init();
     Garbage_Init();

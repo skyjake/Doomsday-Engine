@@ -34,6 +34,7 @@
 #include <QStringList>
 #include <de/App>
 #include <de/NativePath>
+#include <de/binangle.h>
 
 #include "de_platform.h"
 
@@ -60,7 +61,6 @@
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
-#include "m_bams.h"
 
 extern int renderTextures;
 extern int monochrome;

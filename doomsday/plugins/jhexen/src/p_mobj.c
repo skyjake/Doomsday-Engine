@@ -35,11 +35,9 @@
 
 #include <math.h>
 #include <string.h>
+#include <de/binangle.h>
 
 #include "jhexen.h"
-
-#include "../../../engine/include/m_bams.h" // for BANG2RAD
-
 #include "dmu_lib.h"
 #include "p_map.h"
 #include "p_player.h"

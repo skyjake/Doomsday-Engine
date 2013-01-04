@@ -371,13 +371,6 @@ void R_SkyParams(int layer, int param, void* data);
  */
 int M_ScreenShot(const char* filename, int bits);
 
-/// @addtogroup math
-///@{
-
-binangle_t bamsAtan2(int y, int x);
-
-///@}
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

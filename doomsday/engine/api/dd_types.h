@@ -62,21 +62,6 @@ typedef char            filename_t[FILENAME_T_MAXLEN];
 
 typedef void (*con_textfilter_t) (char* text);
 
-#define BAMS_BITS   16
-
-#if BAMS_BITS == 32
-typedef uint32_t binangle_t;
-#  define BANG_TO_ANGLE(bang)     ((angle_t)bang)
-#elif BAMS_BITS == 16
-typedef uint16_t binangle_t;
-#  define BANG_TO_ANGLE(bang)     ((angle_t)bang << 16)
-#else
-typedef unsigned char binangle_t;
-#  define BANG_TO_ANGLE(bang)     ((angle_t)bang << 24)
-#endif
-
-#define ANGLE_TO_BANG(angle)      ((binangle_t)((angle_t)angle >> BAMS_BITS))
-
 // Forward declarations for map data types. The contents of these structs is
 // declared in p_maptypes.h.
 struct bspnode_s;

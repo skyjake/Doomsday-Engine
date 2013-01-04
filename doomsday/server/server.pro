@@ -170,7 +170,6 @@ DENG_HEADERS += \
     $$SRC/include/gridmap.h \
     $$SRC/include/kdtree.h \
     $$SRC/include/library.h \
-    $$SRC/include/m_bams.h \
     $$SRC/include/m_decomp64.h \
     $$SRC/include/m_misc.h \
     $$SRC/include/m_nodepile.h \
@@ -375,7 +374,6 @@ SOURCES += \
     $$SRC/src/gridmap.c \
     $$SRC/src/kdtree.c \
     $$SRC/src/library.cpp \
-    $$SRC/src/m_bams.c \
     $$SRC/src/m_decomp64.c \
     $$SRC/src/m_misc.c \
     $$SRC/src/m_nodepile.c \
