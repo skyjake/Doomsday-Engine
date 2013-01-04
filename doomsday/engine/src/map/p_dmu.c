@@ -2418,6 +2418,24 @@ DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags);
 DENG_EXTERN_C int P_MobjUnlink(mobj_t* mo);
 DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters);
 DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters);
+DENG_EXTERN_C int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void* parameters);
+DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void *parameters);
+DENG_EXTERN_C BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
+DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
+DENG_EXTERN_C int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (mobj_t*, void*), void* parameters);
+DENG_EXTERN_C int P_LinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (Polyobj*, void*), void* parameters);
+DENG_EXTERN_C int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
+DENG_EXTERN_C int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
+DENG_EXTERN_C int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
+DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* paramaters);
+DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
+DENG_EXTERN_C boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
+DENG_EXTERN_C const divline_t* P_TraceLOS(void);
+DENG_EXTERN_C TraceOpening const *P_TraceOpening(void);
+DENG_EXTERN_C void P_SetTraceOpening(LineDef* linedef);
 
 // p_mobj.c
 DENG_EXTERN_C mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
@@ -2456,6 +2474,9 @@ DENG_DECLARE_API(Map) =
     LineDef_PointXYDistance,
     LineDef_PointOnSide,
     LineDef_PointXYOnSide,
+    P_LineMobjsIterator,
+
+    P_SectorTouchingMobjsIterator,
 
     P_MobjCreateXYZ,
     P_MobjDestroy,
@@ -2476,6 +2497,24 @@ DENG_DECLARE_API(Map) =
     P_PolyobjByID,
     P_PolyobjByTag,
     P_SetPolyobjCallback,
+
+    P_BspLeafAtPoint,
+    P_BspLeafAtPointXY,
+
+    P_MobjsBoxIterator,
+    P_LinesBoxIterator,
+    P_AllLinesBoxIterator,
+    P_PolyobjLinesBoxIterator,
+    P_BspLeafsBoxIterator,
+    P_PolyobjsBoxIterator,
+    P_PathTraverse2,
+    P_PathTraverse,
+    P_PathXYTraverse2,
+    P_PathXYTraverse,
+    P_CheckLineSight,
+    P_TraceLOS,
+    P_TraceOpening,
+    P_SetTraceOpening,
 
     DMU_GetType,
     P_ToIndex,

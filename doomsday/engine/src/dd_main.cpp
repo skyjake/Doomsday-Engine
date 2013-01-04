@@ -61,6 +61,7 @@
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
+#include "api_map.h"
 
 extern int renderTextures;
 extern int monochrome;

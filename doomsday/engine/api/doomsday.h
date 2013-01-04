@@ -156,43 +156,6 @@ extern "C" {
  * @defgroup playsim Playsim
  * @ingroup game
  */
-///@{
-
-const divline_t* P_TraceLOS(void);
-
-TraceOpening* P_TraceOpening(void);
-
-void P_SetTraceOpening(struct linedef_s* linedef);
-
-BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
-BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
-
-// Object in bounding box iterators.
-int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (struct mobj_s*, void*), void* parameters);
-
-int P_LinesBoxIterator(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
-
-int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
-
-int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
-
-int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector, int (*callback) (struct bspleaf_s*, void*), void* parameters);
-
-int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
-
-// Object type touching mobjs iterators.
-int P_LineMobjsIterator(struct linedef_s* line, int (*callback) (struct mobj_s*, void *), void* parameters);
-
-int P_SectorTouchingMobjsIterator(struct sector_s* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
-
-int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
-int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
-
-int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* parameters);
-int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
-
-boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
-///@}
 
 /**
  * @defgroup polyobj Polygon Objects

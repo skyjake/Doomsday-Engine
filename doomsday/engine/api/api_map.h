@@ -27,10 +27,12 @@
 #define __DOOMSDAY_MAP_H__
 
 #include "dd_share.h"
+#include <de/mathutil.h>
 
 struct mobj_s;
 struct linedef_s;
 struct sector_s;
+struct bspleaf_s;
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,6 +81,11 @@ DENG_API_TYPEDEF(Map)
     coord_t         (*LD_PointXYDistance)(struct linedef_s* lineDef, coord_t x, coord_t y, coord_t* offset);
     coord_t         (*LD_PointOnSide)(struct linedef_s const *lineDef, coord_t const point[2]);
     coord_t         (*LD_PointXYOnSide)(struct linedef_s const *lineDef, coord_t x, coord_t y);
+    int             (*LD_MobjsIterator)(struct linedef_s* line, int (*callback) (struct mobj_s*, void *), void* parameters);
+
+    // Sectors
+
+    int             (*S_TouchingMobjsIterator)(struct sector_s* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
 
     // Map Objects
 
@@ -152,6 +159,79 @@ DENG_API_TYPEDEF(Map)
      * The po_callback is called when a (any) polyobj hits a mobj.
      */
     void            (*PO_SetCallback)(void (*func)(struct mobj_s*, void*, void*));
+
+    // BSP Leaves
+
+    struct bspleaf_s* (*BL_AtPoint)(coord_t const point[2]);
+
+    /**
+     * Determine the BSP leaf on the back side of the BS partition that lies in
+     * front of the specified point within the CURRENT map's coordinate space.
+     *
+     * Always returns a valid BspLeaf although the point may not actually lay
+     * within it (however it is on the same side of the space partition!).
+     *
+     * @param x  X coordinate of the point to test.
+     * @param y  Y coordinate of the point to test.
+     *
+     * @return  BspLeaf instance for that BSP node's leaf.
+     */
+    struct bspleaf_s* (*BL_AtPointXY)(coord_t x, coord_t y);
+
+    // Iterators
+
+    int             (*Box_MobjsIterator)(const AABoxd* box, int (*callback) (struct mobj_s*, void*), void* parameters);
+    int             (*Box_LinesIterator)(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+    /**
+     * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
+     *
+     * The validCount flags are used to avoid checking lines that are marked
+     * in multiple mapblocks, so increment validCount before the first call
+     * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
+     */
+    int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+    /**
+     * The validCount flags are used to avoid checking polys that are marked in
+     * multiple mapblocks, so increment validCount before the first call, then
+     * make one or more calls to it.
+     */
+    int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+    int             (*Box_BspLeafsIterator)(const AABoxd* box, struct sector_s* sector, int (*callback) (struct bspleaf_s*, void*), void* parameters);
+    int             (*Box_PolyobjsIterator)(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
+    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
+    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
+
+    /**
+     * Same as P_PathTraverse except 'from' and 'to' arguments are specified
+     * as two sets of separate X and Y map space coordinates.
+     */
+    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* parameters);
+    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
+
+    boolean         (*CheckLineSight)(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
+
+    /**
+     * Retrieve an immutable copy of the LOS trace line for the CURRENT map.
+     *
+     * @note Always returns a valid divline_t even if there is no current map.
+     */
+    Divline const * (*TraceLOS)(void);
+
+    /**
+     * Retrieve an immutable copy of the TraceOpening state for the CURRENT map.
+     *
+     * @note Always returns a valid TraceOpening even if there is no current map.
+     */
+    TraceOpening const *(*traceOpening)(void);
+
+    /**
+     * Update the TraceOpening state for the CURRENT map according to the opening
+     * defined by the inner-minimal planes heights which intercept @a linedef
+     */
+    void            (*SetTraceOpening)(struct linedef_s* linedef);
 
     // Map Updates (DMU)
 
@@ -271,12 +351,17 @@ DENG_API_T(Map);
 #define P_MapIsCustom                       _api_Map.IsCustom
 #define P_MapSourceFile                     _api_Map.SourceFile
 #define P_LoadMap                           _api_Map.Load
+
 #define LineDef_BoxOnSide                   _api_Map.LD_BoxOnSide
 #define LineDef_BoxOnSide_FixedPrecision    _api_Map.LD_BoxOnSide_FixedPrecision
 #define LineDef_PointDistance               _api_Map.LD_PointDistance
 #define LineDef_PointXYDistance             _api_Map.LD_PointXYDistance
 #define LineDef_PointOnSide                 _api_Map.LD_PointOnSide
 #define LineDef_PointXYOnSide               _api_Map.LD_PointXYOnSide
+#define P_LineMobjsIterator                 _api_Map.LD_MobjsIterator
+
+#define P_SectorTouchingMobjsIterator       _api_Map.S_TouchingMobjsIterator
+
 #define P_MobjCreateXYZ                     _api_Map.MO_CreateXYZ
 #define P_MobjDestroy                       _api_Map.MO_Destroy
 #define P_MobjForID                         _api_Map.MO_MobjForID
@@ -288,6 +373,7 @@ DENG_API_T(Map);
 #define P_MobjSectorsIterator               _api_Map.MO_SectorsIterator
 #define Mobj_AngleSmoothed                  _api_Map.MO_AngleSmoothed
 #define Mobj_OriginSmoothed                 _api_Map.MO_OriginSmoothed
+
 #define P_PolyobjMoveXY                     _api_Map.PO_MoveXY
 #define P_PolyobjRotate                     _api_Map.PO_Rotate
 #define P_PolyobjLink                       _api_Map.PO_Link
@@ -295,6 +381,25 @@ DENG_API_T(Map);
 #define P_PolyobjByID                       _api_Map.PO_PolyobjByID
 #define P_PolyobjByTag                      _api_Map.PO_PolyobjByTag
 #define P_SetPolyobjCallback                _api_Map.PO_SetCallback
+
+#define P_BspLeafAtPoint                    _api_Map.BL_AtPoint
+#define P_BspLeafAtPointXY                  _api_Map.BL_AtPointXY
+
+#define P_MobjsBoxIterator                  _api_Map.Box_MobjsIterator
+#define P_LinesBoxIterator                  _api_Map.Box_LinesIterator
+#define P_AllLinesBoxIterator               _api_Map.Box_AllLinesIterator
+#define P_PolyobjLinesBoxIterator			_api_Map.Box_PolyobjLinesIterator
+#define P_BspLeafsBoxIterator               _api_Map.Box_BspLeafsIterator
+#define P_PolyobjsBoxIterator               _api_Map.Box_PolyobjsIterator
+#define P_PathTraverse2                     _api_Map.PathTraverse2
+#define P_PathTraverse                      _api_Map.PathTraverse
+#define P_PathXYTraverse2                   _api_Map.PathXYTraverse2
+#define P_PathXYTraverse                    _api_Map.PathXYTraverse
+#define P_CheckLineSight                    _api_Map.CheckLineSight
+#define P_TraceLOS                          _api_Map.TraceLOS
+#define P_TraceOpening                      _api_Map.traceOpening
+#define P_SetTraceOpening                   _api_Map.SetTraceOpening
+
 #define DMU_GetType                         _api_Map.GetType
 #define P_ToIndex                           _api_Map.ToIndex
 #define P_ToPtr                             _api_Map.ToPtr
