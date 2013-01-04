@@ -41,24 +41,14 @@
  * - @ref render
  */
 
-#ifndef LIBDENG_EXPORTS_H
-#define LIBDENG_EXPORTS_H
+#ifndef DOOMSDAY_PUBLIC_API_H
+#define DOOMSDAY_PUBLIC_API_H
 
 // The calling convention.
 #if defined(WIN32)
 #   define _DECALL  __cdecl
 #elif defined(UNIX)
 #   define _DECALL
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct font_s;
-
-#ifdef __cplusplus
-} // extern "C"
 #endif
 
 #include "dd_share.h"
@@ -154,4 +144,4 @@ extern "C" {
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_EXPORTS_H */
+#endif /* DOOMSDAY_PUBLIC_API_H */
