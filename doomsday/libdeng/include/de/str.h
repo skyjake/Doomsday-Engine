@@ -284,11 +284,33 @@ DENG_PUBLIC Str *Str_StripRight(Str *ds);
  *
  * @param ds  String instance.
  * @param count  If not @c NULL the number of characters stripped is written here.
- * @return  Same as @a str for caller convenience.
+ * @return  Same as @a ds for caller convenience.
  */
 DENG_PUBLIC Str *Str_Strip2(Str *ds, int *count);
 
 DENG_PUBLIC Str *Str_Strip(Str *ds);
+
+/**
+ * Replaces all characters @a from to @a to in the string.
+ *
+ * @param ds    String instance.
+ * @param from  Characters to replace.
+ * @param to    @a from will be replaced with this.
+ *
+ * @return Str @a ds.
+ */
+DENG_PUBLIC Str *Str_ReplaceAll(Str *ds, char from, char to);
+
+/**
+ * Determines if the string ends with a specific suffic. The comparison is done
+ * case sensitively.
+ *
+ * @param ds    String instance.
+ * @param text  Text to look for in the end of @a ds.
+ *
+ * @return  @c true, if the string is found.
+ */
+DENG_PUBLIC boolean Str_EndsWith(Str *ds, char const *text);
 
 /**
  * Extract a line of text from the source.
@@ -454,6 +476,26 @@ DENG_PUBLIC Str *Str_FromAutoStr(AutoStr *as);
  * equal to @c size, else @c -1.
  */
 DENG_PUBLIC int dd_vsnprintf(char *str, size_t size, char const *format, va_list ap);
+
+/**
+ * Prints a formatted string into a fixed-size buffer. At most @c size
+ * characters will be written to the output buffer @c str. The output will
+ * always contain a terminating null character.
+ *
+ * @param str     Output buffer.
+ * @param size    Size of the output buffer.
+ * @param format  Format of the output.
+ *
+ * @return        Number of characters written to the output buffer
+ *                if lower than or equal to @c size, else @c -1.
+ */
+DENG_PUBLIC int dd_snprintf(char *str, size_t size, char const *format, ...);
+
+#ifdef UNIX
+// Some routines not available on the *nix platform.
+DENG_PUBLIC char *strupr(char *string);
+DENG_PUBLIC char *strlwr(char *string);
+#endif // UNIX
 
 #ifdef __cplusplus
 } // extern "C"

@@ -872,8 +872,8 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
             }
             Str_AppendChar(wildPath, '*');
 
-            finddata_t fd;
-            if(!myfindfirst(Str_Text(wildPath), &fd))
+            FindData fd;
+            if(!FindFile_FindFirst(&fd, Str_Text(wildPath)))
             {
                 // First path found.
                 do
@@ -886,9 +886,9 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
 
                         nativeFilePaths.push_back(PathListItem(foundPath, fd.attrib));
                     }
-                } while(!myfindnext(&fd));
+                } while(!FindFile_FindNext(&fd));
             }
-            myfindend(&fd);
+            FindFile_Finish(&fd);
         }
 
         // Sort the native file paths.

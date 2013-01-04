@@ -34,10 +34,7 @@
 #include "filesys/lumpindex.h"
 #include "filesys/manifest.h"
 #include "filesys/sys_direc.h"
-#include "filesys/sys_findfile.h"
 
-#ifdef UNIX
-#  include "unix/sys_path.h"
-#endif
+#include <de/findfile.h>
 
 #endif /* LIBDENG_FILESYS_H */

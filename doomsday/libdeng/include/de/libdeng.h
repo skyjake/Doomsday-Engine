@@ -136,6 +136,12 @@ DENG_PUBLIC void Libdeng_Init(void);
  */
 DENG_PUBLIC void Libdeng_Shutdown(void);
 
+/**
+ * Terminates the process immediately. Call this when a malloc fails to handle
+ * terminating gracefully instead of crashing with null pointer access.
+ */
+DENG_PUBLIC void Libdeng_BadAlloc(void);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

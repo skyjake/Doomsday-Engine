@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 
 #if WIN32
 # define strcasecmp _stricmp
@@ -556,6 +557,29 @@ ddstring_t *Str_Strip(ddstring_t *str)
     return Str_Strip2(str, NULL/*not interested in the stripped character count*/);
 }
 
+boolean Str_EndsWith(Str *ds, char const *text)
+{
+    size_t len = strlen(text);
+    if(Str_Size(ds) < len) return false;
+    return !strcmp(ds->str + Str_Size(ds) - len, text);
+}
+
+Str *Str_ReplaceAll(Str *ds, char from, char to)
+{
+    size_t i;
+    size_t len = Str_Length(ds);
+
+    if(!ds || !ds->str) return ds;
+
+    for(i = 0; i < len; ++i)
+    {
+        if(ds->str[i] == from)
+            ds->str[i] = to;
+    }
+
+    return ds;
+}
+
 char const *Str_GetLine(ddstring_t *str, char const *src)
 {
     DENG_ASSERT(str);
@@ -862,3 +886,33 @@ int dd_vsnprintf(char *str, size_t size, char const *format, va_list ap)
     return result >= (int)size? -1 : (int)size;
 #endif
 }
+
+int dd_snprintf(char *str, size_t size, char const *format, ...)
+{
+    int result = 0;
+
+    va_list args;
+    va_start(args, format);
+    result = dd_vsnprintf(str, size, format, args);
+    va_end(args);
+
+    return result;
+}
+
+#ifdef UNIX
+
+char* strupr(char* string)
+{
+    char* ch = string;
+    for(; *ch; ch++) *ch = toupper(*ch);
+    return string;
+}
+
+char* strlwr(char* string)
+{
+    char* ch = string;
+    for(; *ch; ch++) *ch = tolower(*ch);
+    return string;
+}
+
+#endif

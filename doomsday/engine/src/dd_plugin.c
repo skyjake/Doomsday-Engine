@@ -31,6 +31,8 @@
 #include "de_defs.h"
 #include "dd_pinit.h"
 
+#include <de/findfile.h>
+
 #define HOOKMASK(x)         ((x) & 0xffffff)
 
 typedef struct {
