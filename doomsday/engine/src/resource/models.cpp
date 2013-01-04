@@ -1428,7 +1428,8 @@ void Models_Cache(modeldef_t* modef)
     }
 }
 
-void Models_CacheForState(int stateIndex)
+#undef Models_CacheForState
+DENG_EXTERN_C void Models_CacheForState(int stateIndex)
 {
     if(!useModels) return;
     if(stateIndex <= 0 || stateIndex >= defs.count.states.num) return;

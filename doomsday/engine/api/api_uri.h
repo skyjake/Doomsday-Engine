@@ -24,7 +24,7 @@
 #define LIBDENG_API_URI_H
 
 #include "api_base.h"
-#include "resourceclass.h"
+#include "api_resourceclass.h"
 #include <de/str.h>
 #include <de/reader.h>
 #include <de/writer.h>

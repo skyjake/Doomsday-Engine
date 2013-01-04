@@ -76,8 +76,6 @@ void R_AmplifyColor(float color[3]);
 
 void R_ScaleAmbientRGB(float* out, const float* in, float mul);
 
-void R_HSVToRGB(float* rgb, float h, float s, float v);
-
 /**
  * Generate texcoords on the surface centered on point.
  *
@@ -95,43 +93,6 @@ void R_HSVToRGB(float* rgb, float h, float s, float v);
  */
 boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float xScale, float yScale,
     const_pvec3d_t v1, const_pvec3d_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent);
-
-/**
- * Choose an alignment mode and/or calculate the appropriate scaling factor
- * for fitting an element within the bounds of the "available" region.
- * The aspect ratio of the element is respected.
- *
- * @param scale  If not @c NULL the calculated scale factor is written here.
- * @param width  Width of the element to fit into the available region.
- * @param height  Height of the element to fit into the available region.
- * @param availWidth  Width of the available region.
- * @param availHeight  Height of the available region.
- * @param scaleMode  @ref scaleModes
- *
- * @return  @c true if aligning to the horizontal axis else the vertical.
- */
-boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
-    int availWidth, int availHeight, scalemode_t scaleMode);
-
-/**
- * Choose a scale mode by comparing the dimensions of the two, two-dimensional
- * regions. The aspect ratio is respected when fitting to the bounds of the
- * "available" region.
- *
- * @param width  Width of the element to fit into the available region.
- * @param height  Height of the element to fit into the available region.
- * @param availWidth  Width of the available region.
- * @param availHeight  Height of the available region.
- * @param overrideMode  Scale mode override, for caller-convenience. @ref scaleModes
- * @param stretchEpsilon  Range within which aspect ratios are considered
- *      identical for "smart stretching".
- *
- * @return  Chosen scale mode @ref scaleModes.
- */
-scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
-    scalemode_t overrideMode, float stretchEpsilon);
-scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
-    scalemode_t overrideMode);
 
 #ifdef __cplusplus
 } // extern "C"

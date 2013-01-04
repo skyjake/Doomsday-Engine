@@ -75,22 +75,28 @@ enum {
     DE_API_PLUGIN_v1             = 1600,    // 1.10
     DE_API_PLUGIN                = DE_API_PLUGIN_v1,
 
-    DE_API_SERVER_v1             = 1700,    // 1.10
+    DE_API_RENDER_v1             = 1700,    // 1.10
+    DE_API_RENDER                = DE_API_RENDER_v1,
+
+    DE_API_RESOURCE_v1           = 1800,    // 1.10
+    DE_API_RESOURCE              = DE_API_RESOURCE_v1,
+
+    DE_API_SERVER_v1             = 1900,    // 1.10
     DE_API_SERVER                = DE_API_SERVER_v1,
 
-    DE_API_SOUND_v1              = 1800,    // 1.10
+    DE_API_SOUND_v1              = 2000,    // 1.10
     DE_API_SOUND                 = DE_API_SOUND_v1,
 
-    DE_API_SVG_v1                = 1900,    // 1.10
+    DE_API_SVG_v1                = 2100,    // 1.10
     DE_API_SVG                   = DE_API_SVG_v1,
 
-    DE_API_THINKER_v1            = 2000,    // 1.10
+    DE_API_THINKER_v1            = 2200,    // 1.10
     DE_API_THINKER               = DE_API_THINKER_v1,
 
-    DE_API_URI_v1                = 2100,    // 1.10
+    DE_API_URI_v1                = 2300,    // 1.10
     DE_API_URI                   = DE_API_URI_v1,
 
-    DE_API_WAD_v1                = 2200,    // 1.10
+    DE_API_WAD_v1                = 2400,    // 1.10
     DE_API_WAD                   = DE_API_WAD_v1
 };
 

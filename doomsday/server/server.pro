@@ -89,6 +89,8 @@ DENG_API_HEADERS = \
     $$SRC/api/api_mapedit.h \
     $$SRC/api/api_player.h \
     $$SRC/api/api_plugin.h \
+    $$SRC/api/api_render.h \
+    $$SRC/api/api_resourceclass.h \
     $$SRC/api/api_server.h \
     $$SRC/api/api_sound.h \
     $$SRC/api/api_svg.h \
@@ -102,10 +104,7 @@ DENG_API_HEADERS = \
     $$SRC/api/dd_version.h \
     $$SRC/api/def_share.h \
     $$SRC/api/dengproject.h \
-    $$SRC/api/doomsday.h \
-    $$SRC/api/filehandle.h \
-    $$SRC/api/filetype.h \
-    $$SRC/api/resourceclass.h
+    $$SRC/api/doomsday.h
 
 # Convenience headers.
 DENG_HEADERS += \
@@ -156,6 +155,7 @@ DENG_HEADERS += \
     $$SRC/include/dualstring.h \
     $$SRC/include/edit_bsp.h \
     $$SRC/include/edit_map.h \
+    $$SRC/include/filehandle.h \
     $$SRC/include/filesys/file.h \
     $$SRC/include/filesys/filehandlebuilder.h \
     $$SRC/include/filesys/fileinfo.h \
@@ -165,6 +165,7 @@ DENG_HEADERS += \
     $$SRC/include/filesys/manifest.h \
     $$SRC/include/filesys/searchpath.h \
     $$SRC/include/filesys/sys_direc.h \
+    $$SRC/include/filetype.h \
     $$SRC/include/game.h \
     $$SRC/include/gl/gl_texmanager.h \
     $$SRC/include/gridmap.h \
@@ -253,6 +254,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/tga.h \
     $$SRC/include/resource/wad.h \
     $$SRC/include/resource/zip.h \
+    $$SRC/include/resourceclass.h \
     $$SRC/include/server/sv_def.h \
     $$SRC/include/server/sv_frame.h \
     $$SRC/include/server/sv_infine.h \

@@ -74,12 +74,12 @@ struct font_s;
 #include "api_fontrender.h"
 #include "api_svg.h"
 #include "api_sound.h"
+#include "api_render.h"
 #include "api_map.h"
 #include "api_mapedit.h"
 #include "api_client.h"
 #include "api_server.h"
 
-#include "filehandle.h"
 #include <de/memoryzone.h>
 #include <de/point.h>
 #include <de/reader.h>
@@ -115,12 +115,6 @@ typedef struct material_s { int type; } material_t;
 extern "C" {
 #endif
 
-//------------------------------------------------------------------------
-//
-// Base.
-//
-//------------------------------------------------------------------------
-
 /**
  * @defgroup base Base
  */
@@ -135,23 +129,11 @@ extern "C" {
  * @ingroup base
  */
 
-//------------------------------------------------------------------------
-//
-// System.
-//
-//------------------------------------------------------------------------
-
 /**
  * @defgroup system System Routines
  * @ingroup base
  * Functionality provided by or related to the operating system.
  */
-
-//------------------------------------------------------------------------
-//
-// Playsim.
-//
-//------------------------------------------------------------------------
 
 /**
  * @defgroup playsim Playsim
@@ -163,61 +145,11 @@ extern "C" {
  * @ingroup map
  */
 
-//------------------------------------------------------------------------
-//
-// Refresh.
-//
-//------------------------------------------------------------------------
-
 /**
  * @defgroup render Renderer
  */
-///@{
 
-void R_SetupMap(int mode, int flags);
-void R_SetupFogDefaults(void);
-void R_SetupFog(float start, float end, float density, float* rgb);
-
-void Rend_CacheForMobjType(int mobjtypeNum);
-void Models_CacheForState(int stateIndex);
-
-void R_RenderPlayerView(int num);
-
-void R_SetViewOrigin(int player, coord_t const origin[3]);
-void R_SetViewAngle(int player, angle_t angle);
-void R_SetViewPitch(int player, float pitch);
-
-/**
- * Retrieve the geometry of the specified viewwindow by console player num.
- */
-int R_ViewWindowGeometry(int player, RectRaw* geometry);
-int R_ViewWindowOrigin(int player, Point2Raw* origin);
-int R_ViewWindowSize(int player, Size2Raw* size);
-
-void R_SetViewWindowGeometry(int player, const RectRaw* geometry, boolean interpolate);
-
-void R_SetBorderGfx(const Uri* const* paths);
-
-/**
- * Retrieve the geometry of the specified viewport by console player num.
- */
-int R_ViewPortGeometry(int player, RectRaw* geometry);
-int R_ViewPortOrigin(int player, Point2Raw* origin);
-int R_ViewPortSize(int player, Size2Raw* size);
-
-/**
- * Change the view player for the specified viewport by console player num.
- *
- * @param consoleNum  Console player number of whose viewport to change.
- * @param viewPlayer  Player that will be viewed by @a player.
- */
-void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
-
-boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
-scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
-scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
-
-boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
+// R (Resource)
 
 patchid_t R_DeclarePatch(const char* name);
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
@@ -237,33 +169,6 @@ const char* R_GetColorPaletteNameForNum(colorpaletteid_t id);
 void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3], boolean applyTexGamma);
 void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], boolean applyTexGamma);
 
-void R_HSVToRGB(float* rgb, float h, float s, float v);
-
-///@}
-
-//------------------------------------------------------------------------
-//
-// Renderer.
-//
-//------------------------------------------------------------------------
-
-/// @addtogroup render
-///@{
-
-void R_SkyParams(int layer, int param, void* data);
-
-///@}
-
-//------------------------------------------------------------------------
-//
-// Miscellaneous.
-//
-//------------------------------------------------------------------------
-
-/**
- * @ingroup render
- */
-int M_ScreenShot(const char* filename, int bits);
 
 #ifdef __cplusplus
 } // extern "C"

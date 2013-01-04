@@ -121,16 +121,6 @@ boolean M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
  */
 boolean M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 
-// Other utilities:
-
-/**
- * Grabs the current contents of the frame buffer and outputs a Targa file.
- * Will create/overwrite as necessary.
- *
- * @param filePath      Local file path to write to.
- */
-int M_ScreenShot(const char* filePath, int bits);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

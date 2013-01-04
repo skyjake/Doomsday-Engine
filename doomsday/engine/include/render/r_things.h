@@ -210,8 +210,6 @@ extern "C" {
 
 material_t *R_GetMaterialForSprite(int sprite, int frame);
 
-boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
-
 /// @return  Radius of the mobj as it would visually appear to be.
 coord_t R_VisualRadius(struct mobj_s *mo);
 

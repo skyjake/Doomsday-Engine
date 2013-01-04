@@ -801,8 +801,8 @@ lineowner_t *R_GetVtxLineOwner(Vertex const *v, LineDef const *line)
     return 0;
 }
 
-/// @note Part of the Doomsday public API.
-void R_SetupFog(float start, float end, float density, float *rgb)
+#undef R_SetupFog
+DENG_EXTERN_C void R_SetupFog(float start, float end, float density, float *rgb)
 {
     Con_Execute(CMDS_DDAY, "fog on", true, false);
     Con_Executef(CMDS_DDAY, true, "fog start %f", start);
@@ -812,8 +812,8 @@ void R_SetupFog(float start, float end, float density, float *rgb)
                  rgb[0] * 255, rgb[1] * 255, rgb[2] * 255);
 }
 
-/// @note Part of the Doomsday public API.
-void R_SetupFogDefaults()
+#undef R_SetupFogDefaults
+DENG_EXTERN_C void R_SetupFogDefaults()
 {
     // Go with the defaults.
     Con_Execute(CMDS_DDAY,"fog off", true, false);
@@ -1311,7 +1311,8 @@ void R_MapInitSurfaceLists()
     }
 }
 
-void R_SetupMap(int mode, int flags)
+#undef R_SetupMap
+DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 {
     DENG_UNUSED(flags);
 

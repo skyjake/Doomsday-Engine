@@ -96,6 +96,8 @@ DENG_API_HEADERS = \
     api/api_mapedit.h \
     api/api_player.h \
     api/api_plugin.h \
+    api/api_render.h \
+    api/api_resourceclass.h \
     api/api_sound.h \
     api/api_svg.h \
     api/api_thinker.h \
@@ -108,10 +110,7 @@ DENG_API_HEADERS = \
     api/dd_version.h \
     api/def_share.h \
     api/dengproject.h \
-    api/doomsday.h \
-    api/filehandle.h \
-    api/filetype.h \
-    api/resourceclass.h
+    api/doomsday.h
 
 # Convenience headers.
 DENG_HEADERS += \
@@ -176,6 +175,7 @@ DENG_HEADERS += \
     include/edit_bias.h \
     include/edit_bsp.h \
     include/edit_map.h \
+    include/filehandle.h \
     include/filesys/file.h \
     include/filesys/filehandlebuilder.h \
     include/filesys/fileinfo.h \
@@ -185,6 +185,7 @@ DENG_HEADERS += \
     include/filesys/manifest.h \
     include/filesys/searchpath.h \
     include/filesys/sys_direc.h \
+    include/filetype.h \
     include/game.h \
     include/gl/gl_defer.h \
     include/gl/gl_deferredapi.h \
@@ -310,6 +311,7 @@ DENG_HEADERS += \
     include/resource/tga.h \
     include/resource/wad.h \
     include/resource/zip.h \
+    include/resourceclass.h \
     include/server/sv_def.h \
     include/server/sv_frame.h \
     include/server/sv_infine.h \
@@ -424,6 +426,7 @@ deng_nodisplaymode {
 # Platform-independent sources.
 SOURCES += \
     src/api_material.cpp \
+    src/render/api_render.c \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
     src/audio/m_mus2midi.c \

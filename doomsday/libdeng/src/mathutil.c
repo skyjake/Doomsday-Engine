@@ -2122,3 +2122,68 @@ fixed_t Divline_Intersection(Divline const *v1, Divline const *v2)
 {
     return V2x_Intersection(v1->origin, v1->direction, v2->origin, v2->direction);
 }
+
+void M_HSVToRGB(float* rgb, float h, float s, float v)
+{
+    int                 i;
+    float               f, p, q, t;
+
+    if(!rgb)
+        return;
+
+    if(s == 0)
+    {
+        // achromatic (grey)
+        rgb[0] = rgb[1] = rgb[2] = v;
+        return;
+    }
+
+    if(h >= 1)
+        h -= 1;
+
+    h *= 6; // sector 0 to 5
+    i = floor(h);
+    f = h - i; // factorial part of h
+    p = v * (1 - s);
+    q = v * (1 - s * f);
+    t = v * (1 - s * (1 - f));
+
+    switch(i)
+    {
+    case 0:
+        rgb[0] = v;
+        rgb[1] = t;
+        rgb[2] = p;
+        break;
+
+    case 1:
+        rgb[0] = q;
+        rgb[1] = v;
+        rgb[2] = p;
+        break;
+
+    case 2:
+        rgb[0] = p;
+        rgb[1] = v;
+        rgb[2] = t;
+        break;
+
+    case 3:
+        rgb[0] = p;
+        rgb[1] = q;
+        rgb[2] = v;
+        break;
+
+    case 4:
+        rgb[0] = t;
+        rgb[1] = p;
+        rgb[2] = v;
+        break;
+
+    default:
+        rgb[0] = v;
+        rgb[1] = p;
+        rgb[2] = q;
+        break;
+    }
+}

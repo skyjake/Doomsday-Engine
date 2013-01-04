@@ -21,6 +21,8 @@
 #ifndef LIBDENG_RESOURCE_SUBSYSTEM_H
 #define LIBDENG_RESOURCE_SUBSYSTEM_H
 
+#include "resourceclass.h"
+
 #include "resource/animgroups.h"
 #include "resource/colorpalettes.h"
 #include "resource/font.h"

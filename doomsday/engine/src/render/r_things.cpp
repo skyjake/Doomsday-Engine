@@ -423,7 +423,8 @@ material_t *R_GetMaterialForSprite(int sprite, int frame)
     return NULL;
 }
 
-boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
+#undef R_GetSpriteInfo
+DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
 {
     LOG_AS("R_GetSpriteInfo");
 

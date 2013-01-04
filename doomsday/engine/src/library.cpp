@@ -40,6 +40,7 @@
 #include "api_svg.h"
 #ifdef __CLIENT__
 #  include "api_client.h"
+#  include "api_render.h"
 #endif
 #ifdef __SERVER__
 #  include "api_server.h"
@@ -207,6 +208,7 @@ void Library_PublishAPIs(Library *lib)
         PUBLISH(_api_Client);
         PUBLISH(_api_FR);
         PUBLISH(_api_GL);
+        PUBLISH(_api_Rend);
         PUBLISH(_api_Svg);
 #endif
 

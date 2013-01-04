@@ -40,6 +40,7 @@
 #include "de_resource.h"
 
 #include "api_material.h"
+#include "api_render.h"
 
 #include "gl/sys_opengl.h" // TODO: get rid of this
 
@@ -1698,10 +1699,11 @@ DEFFC(StateAnim)
     for(; count > 0 && stateId > 0; count--)
     {
         state_t* st = &states[stateId];
+#ifdef __CLIENT__
         spriteinfo_t sinf;
-
         R_GetSpriteInfo(st->sprite, st->frame & 0x7fff, &sinf);
         FIData_PicAppendFrame(obj, PFT_MATERIAL, (st->tics <= 0? 1 : st->tics), sinf.material, 0, sinf.flip);
+#endif
 
         // Go to the next state.
         stateId = st->nextState;

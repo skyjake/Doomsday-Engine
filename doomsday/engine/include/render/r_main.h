@@ -122,11 +122,6 @@ void R_RenderViewPorts(void);
 void R_RenderBlankView(void);
 
 /**
- * Draw the view of the player inside the view window.
- */
-void R_RenderPlayerView(int num);
-
-/**
  * Draw the border around the view window.
  */
 void R_RenderPlayerViewBorder(void);
@@ -160,46 +155,9 @@ boolean R_SetViewGrid(int numCols, int numRows);
 void R_SetupDefaultViewWindow(int consoleNum);
 
 /**
- * Update the view origin position for player @a consoleNum.
- *
- * @param consoleNum  Console number.
- *
- * @note Part of the Doomsday public API.
- */
-void R_SetViewOrigin(int consoleNum, coord_t const origin[3]);
-
-/**
- * Update the view yaw angle for player @a consoleNum.
- *
- * @param consoleNum  Console number.
- *
- * @note Part of the Doomsday public API.
- */
-void R_SetViewAngle(int consoleNum, angle_t angle);
-
-/**
- * Update the view pitch angle for player @a consoleNum.
- *
- * @param consoleNum  Console number.
- *
- * @note Part of the Doomsday public API.
- */
-void R_SetViewPitch(int consoleNum, float pitch);
-
-int R_ViewWindowGeometry(int consoleNum, RectRaw *geometry);
-int R_ViewWindowOrigin(int consoleNum, Point2Raw *origin);
-int R_ViewWindowSize(int consoleNum, Size2Raw *size);
-
-void R_SetViewWindowGeometry(int consoleNum, RectRaw const *geometry, boolean interpolate);
-
-/**
  * Animates the view window towards the target values.
  */
 void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
-
-int R_ViewPortGeometry(int consoleNum, RectRaw *geometry);
-int R_ViewPortOrigin(int consoleNum, Point2Raw *origin);
-int R_ViewPortSize(int consoleNum, Size2Raw *size);
 
 void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 
@@ -212,13 +170,6 @@ char const *R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
  * Prepare resources for the current Map.
  */
 void Rend_CacheForMap(void);
-
-/**
- * Prepare all texture resources for the specified mobjtype.
- *
- * @note Part of the Doomsday public API.
- */
-void Rend_CacheForMobjType(int mobjtypeNum);
 
 #ifdef __cplusplus
 } // extern "C"

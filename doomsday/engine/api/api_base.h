@@ -23,7 +23,7 @@
 
 #include "apis.h"
 #include "api_uri.h"
-#include "resourceclass.h"
+#include "api_resourceclass.h"
 
 /// @addtogroup game
 /// @{

@@ -151,6 +151,11 @@ DENG_PUBLIC int Divline_PointXYOnSide(Divline const *line, coord_t x, coord_t y)
  */
 DENG_PUBLIC fixed_t Divline_Intersection(Divline const *v1, Divline const *v2);
 
+/**
+ * Conversion from HSV to RGB.  All components are [0,1].
+ */
+DENG_PUBLIC void M_HSVToRGB(float* rgb, float h, float s, float v);
+
 // Bounding boxes:
 DENG_PUBLIC void M_ClearBox(fixed_t* box);
 DENG_PUBLIC void M_CopyBox(fixed_t dest[4], const fixed_t src[4]);

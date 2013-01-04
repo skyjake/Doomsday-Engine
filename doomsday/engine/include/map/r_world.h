@@ -57,14 +57,6 @@ extern boolean firstFrameAfterLoad;
 #define SIF_DRAW_SPHERE     0x1 // Always draw the sky sphere.
 
 /**
- * Called by the game at various points in the map setup process.
- */
-void R_SetupMap(int mode, int flags);
-
-void R_SetupFogDefaults(void);
-void R_SetupFog(float start, float end, float density, float* rgb);
-
-/**
  * Sector light color may be affected by the sky light color.
  */
 const float* R_GetSectorLightColor(const Sector* sector);

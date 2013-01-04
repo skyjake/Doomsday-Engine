@@ -32,8 +32,6 @@ extern "C" {
 void R_InitViewWindow(void);
 void R_ShutdownViewWindow(void);
 
-void R_SetBorderGfx(Uri const *const *paths);
-
 /**
  * Draws the border around the view for different size windows.
  */

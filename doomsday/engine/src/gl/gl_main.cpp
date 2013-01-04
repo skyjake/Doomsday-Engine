@@ -41,6 +41,7 @@
 #include "resource/materialvariant.h"
 #include "resource/texturevariant.h"
 #include "ui/displaymode.h"
+#include "api_render.h"
 
 D_CMD(Fog);
 D_CMD(SetBPP);

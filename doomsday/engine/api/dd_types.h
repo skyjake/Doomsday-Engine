@@ -79,8 +79,6 @@ struct material_s;
 
 #include <de/str.h>
 #include <de/fixedpoint.h>
-#include "resourceclass.h"
-#include "filetype.h"
 #include "api_uri.h"
 
 #endif /* ENGINE_TYPES_H */

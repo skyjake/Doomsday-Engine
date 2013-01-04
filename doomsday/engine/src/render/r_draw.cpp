@@ -65,7 +65,8 @@ static void loadViewBorderPatches()
     borderSize = info.geometry.size.height;
 }
 
-void R_SetBorderGfx(struct uri_s const *const *paths)
+#undef R_SetBorderGfx
+DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
 {
     DENG_ASSERT(inited);
     if(!paths) Con_Error("R_SetBorderGfx: Missing argument.");

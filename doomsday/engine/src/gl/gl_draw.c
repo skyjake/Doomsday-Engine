@@ -40,6 +40,7 @@
 #include "de_play.h"
 
 #include "gl/sys_opengl.h"
+#include "api_render.h"
 
 // MACROS ------------------------------------------------------------------
 

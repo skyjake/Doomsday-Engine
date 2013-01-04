@@ -211,74 +211,6 @@ void R_ScaleAmbientRGB(float *out, const float *in, float mul)
     }
 }
 
-/**
- * Conversion from HSV to RGB.  Everything is [0,1].
- */
-void R_HSVToRGB(float* rgb, float h, float s, float v)
-{
-    int                 i;
-    float               f, p, q, t;
-
-    if(!rgb)
-        return;
-
-    if(s == 0)
-    {
-        // achromatic (grey)
-        rgb[0] = rgb[1] = rgb[2] = v;
-        return;
-    }
-
-    if(h >= 1)
-        h -= 1;
-
-    h *= 6; // sector 0 to 5
-    i = floor(h);
-    f = h - i; // factorial part of h
-    p = v * (1 - s);
-    q = v * (1 - s * f);
-    t = v * (1 - s * (1 - f));
-
-    switch(i)
-    {
-    case 0:
-        rgb[0] = v;
-        rgb[1] = t;
-        rgb[2] = p;
-        break;
-
-    case 1:
-        rgb[0] = q;
-        rgb[1] = v;
-        rgb[2] = p;
-        break;
-
-    case 2:
-        rgb[0] = p;
-        rgb[1] = v;
-        rgb[2] = t;
-        break;
-
-    case 3:
-        rgb[0] = p;
-        rgb[1] = q;
-        rgb[2] = v;
-        break;
-
-    case 4:
-        rgb[0] = t;
-        rgb[1] = p;
-        rgb[2] = v;
-        break;
-
-    default:
-        rgb[0] = v;
-        rgb[1] = p;
-        rgb[2] = q;
-        break;
-    }
-}
-
 boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float xScale, float yScale,
     const_pvec3d_t v1, const_pvec3d_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
 {
@@ -303,8 +235,8 @@ boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float 
     return true;
 }
 
-/// @note Part of the Doomsday public API.
-boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
+#undef R_ChooseAlignModeAndScaleFactor
+DENG_EXTERN_C boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
     int availWidth, int availHeight, scalemode_t scaleMode)
 {
     if(SCALEMODE_STRETCH == scaleMode)
@@ -345,8 +277,8 @@ boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
     }
 }
 
-/// @note Part of the Doomsday public API.
-scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
+#undef R_ChooseScaleMode2
+DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode, float stretchEpsilon)
 {
     const float availRatio = (float)availWidth / availHeight;
@@ -363,8 +295,8 @@ scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availH
     return INRANGE_OF(availRatio, origRatio, stretchEpsilon)? SCALEMODE_STRETCH : SCALEMODE_NO_STRETCH;
 }
 
-/// @note Part of the Doomsday public API.
-scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
+#undef R_ChooseScaleMode
+DENG_EXTERN_C scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode)
 {
     return R_ChooseScaleMode2(availWidth, availHeight, width, height, overrideMode,
