@@ -1567,8 +1567,6 @@ static DGLuint loadGraphics(const char* name, gfxmode_t mode, int useMipmap, boo
                                 clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
                                 clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
                                 otherFlags);
-#else
-    return 0;
 #endif
 }
 

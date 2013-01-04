@@ -195,10 +195,8 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
 void I_InitVirtualInputDevices(void)
 {
     inputdev_t* dev;
-#ifdef __CLIENT__
     inputdevaxis_t* axis;
     int i;
-#endif
 
     // Allow re-init.
     I_ShutdownInputDevices();

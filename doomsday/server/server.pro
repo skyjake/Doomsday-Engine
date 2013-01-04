@@ -22,9 +22,6 @@ CONFIG += deng_nogui
 include(../dep_zlib.pri)
 include(../dep_curses.pri)
 include(../dep_lzss.pri)
-win32 {
-    include(../dep_directx.pri)
-}
 include(../dep_deng2.pri)
 include(../dep_deng.pri)
 

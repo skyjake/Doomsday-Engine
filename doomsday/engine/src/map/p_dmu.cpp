@@ -27,7 +27,7 @@
 #include <de/LegacyCore>
 #include <de/memoryzone.h>
 
-#include "dd_world.h"
+#include "api/dd_world.h"
 #include "resource/materials.h"
 
 using namespace de;

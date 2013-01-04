@@ -438,7 +438,6 @@ void Canvas::keyReleaseEvent(QKeyEvent* ev)
     Keyboard_SubmitQtEvent(IKE_UP, ev);
 }
 
-#ifdef __CLIENT__
 static int translateButton(Qt::MouseButton btn)
 {
     if(btn == Qt::LeftButton) return IMB_LEFT;
@@ -450,7 +449,6 @@ static int translateButton(Qt::MouseButton btn)
     if(btn == Qt::RightButton) return IMB_RIGHT;
     return -1;
 }
-#endif
 
 void Canvas::mousePressEvent(QMouseEvent* ev)
 {
