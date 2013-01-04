@@ -224,7 +224,7 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int control);
 
 DENG_DECLARE_API(Player) =
 {
-    { DE_API_PLAYER_latest },
+    { DE_API_PLAYER },
     Net_GetPlayerName,
     Net_GetPlayerID,
     Net_PlayerSmoother,

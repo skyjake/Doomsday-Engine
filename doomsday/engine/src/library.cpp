@@ -204,6 +204,7 @@ void Library_PublishAPIs(Library *lib)
         // Client-only APIs.
         PUBLISH(_api_Client);
         PUBLISH(_api_FR);
+        PUBLISH(_api_GL);
         PUBLISH(_api_Svg);
 #endif
 

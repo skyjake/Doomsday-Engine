@@ -935,7 +935,7 @@ DENG_EXTERN_C void DD_ClearKeyRepeaters(void);
 
 DENG_DECLARE_API(B) =
 {
-    { DE_API_BINDING_latest },
+    { DE_API_BINDING },
     B_SetContextFallback,
     B_BindingsForCommand,
     B_BindingsForControl,

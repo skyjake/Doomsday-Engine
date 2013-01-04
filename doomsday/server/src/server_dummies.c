@@ -622,6 +622,7 @@ void UI_Ticker(timespan_t t)
     DENG_UNUSED(t);
 }
 
+/*
 int DGL_Enable(int cap)
 {
     return 0;
@@ -788,6 +789,7 @@ void DGL_DeleteTextures(int num, const DGLuint* names)
     DENG_UNUSED(num);
     DENG_UNUSED(names);
 }
+*/
 
 void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, const char* detailedMsg)
 {

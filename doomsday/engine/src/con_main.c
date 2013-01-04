@@ -2675,7 +2675,7 @@ D_CMD(DebugError)
 
 DENG_DECLARE_API(Con) =
 {
-    { DE_API_CONSOLE_latest },
+    { DE_API_CONSOLE },
 
     Con_Open,
     Con_AddCommand,

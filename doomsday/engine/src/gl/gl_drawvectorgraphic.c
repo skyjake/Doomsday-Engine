@@ -240,7 +240,7 @@ void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines)
 
 DENG_DECLARE_API(Svg) =
 {
-    { DE_API_SVG_latest },
+    { DE_API_SVG },
     R_NewSvg,
     GL_DrawSvg,
     GL_DrawSvg2,

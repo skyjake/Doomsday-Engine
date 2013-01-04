@@ -433,7 +433,7 @@ int FI_ScriptResponder(finaleid_t id, const void* ev)
 
 DENG_DECLARE_API(Infine) =
 {
-    { DE_API_INFINE_latest },
+    { DE_API_INFINE },
     FI_Execute2,
     FI_Execute,
     FI_ScriptActive,

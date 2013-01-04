@@ -727,7 +727,7 @@ D_CMD(PlaySound)
 
 DENG_DECLARE_API(S) =
 {
-    { DE_API_SOUND_latest },
+    { DE_API_SOUND },
     S_MapChange,
     S_LocalSoundAtVolumeFrom,
     S_LocalSoundAtVolume,

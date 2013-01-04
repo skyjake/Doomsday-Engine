@@ -31,7 +31,6 @@
 
 #include <de/libdeng.h>
 #include "map/sector.h"
-#include "dd_gl.h"
 
 #ifndef __SERVER__
 #  error "Attempted to include server's header in a non-server build"

@@ -1294,6 +1294,6 @@ D_CMD(Logout)
 
 DENG_DECLARE_API(Server) =
 {
-    { DE_API_SERVER_latest },
+    { DE_API_SERVER },
     Sv_CanTrustClientPos
 };

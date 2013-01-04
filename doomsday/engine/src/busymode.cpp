@@ -508,7 +508,7 @@ void BusyMode_WorkerEnd(void)
 
 DENG_DECLARE_API(Busy) =
 {
-    { DE_API_BUSY_latest },
+    { DE_API_BUSY },
     BusyMode_Active,
     BusyMode_ElapsedTime,
     BusyMode_RunTask,

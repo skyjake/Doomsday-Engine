@@ -2411,7 +2411,7 @@ DENG_EXTERN_C uint P_CountGameMapObjs(int entityId);
 
 DENG_DECLARE_API(Map) =
 {
-    { DE_API_MAP_latest },
+    { DE_API_MAP },
     LineDef_BoxOnSide,
     LineDef_BoxOnSide_FixedPrecision,
     LineDef_PointDistance,

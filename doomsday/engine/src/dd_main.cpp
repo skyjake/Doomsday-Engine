@@ -2924,7 +2924,7 @@ DENG_EXTERN_C void Sys_Quit(void);
 
 DENG_DECLARE_API(Base) =
 {
-    { DE_API_BASE_latest },
+    { DE_API_BASE },
 
     Sys_Quit,
     DD_GetInteger,

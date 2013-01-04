@@ -2091,7 +2091,7 @@ DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId, con
 
 DENG_DECLARE_API(MPE) =
 {
-    { DE_API_MAP_EDIT_latest },
+    { DE_API_MAP_EDIT },
 
     P_RegisterMapObj,
     P_RegisterMapObjProperty,

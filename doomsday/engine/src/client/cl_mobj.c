@@ -1079,7 +1079,7 @@ DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum);
 
 DENG_DECLARE_API(Client) =
 {
-    { DE_API_CLIENT_latest },
+    { DE_API_CLIENT },
     ClMobj_Find,
     ClMobj_EnableLocalActions,
     ClMobj_LocalActionsEnabled,

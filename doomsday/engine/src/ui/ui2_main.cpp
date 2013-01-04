@@ -246,7 +246,9 @@ static fi_objectid_t objectsUniqueId(fi_object_collection_t *c)
 
 static void picFrameDeleteXImage(fidata_pic_frame_t *f)
 {
+#ifdef __CLIENT__
     DGL_DeleteTextures(1, (DGLuint *)&f->texRef.tex);
+#endif
     f->texRef.tex = 0;
 }
 

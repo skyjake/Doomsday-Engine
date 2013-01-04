@@ -313,7 +313,7 @@ void Plug_Notify(int notification, void* param)
 
 DENG_DECLARE_API(Plug) =
 {
-    { DE_API_PLUGIN_latest },
+    { DE_API_PLUGIN },
     Plug_AddHook,
     Plug_RemoveHook,
     Plug_CheckForHook,
