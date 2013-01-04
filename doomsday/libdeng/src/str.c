@@ -916,3 +916,215 @@ char* strlwr(char* string)
 }
 
 #endif
+
+char* M_SkipWhite(char* str)
+{
+    while(*str && DENG_ISSPACE(*str))
+        str++;
+    return str;
+}
+
+char* M_FindWhite(char* str)
+{
+    while(*str && !DENG_ISSPACE(*str))
+        str++;
+    return str;
+}
+
+void M_StripLeft(char* str)
+{
+    size_t len, num;
+    if(NULL == str || !str[0]) return;
+
+    len = strlen(str);
+    // Count leading whitespace characters.
+    num = 0;
+    while(num < len && isspace(str[num]))
+        ++num;
+    if(0 == num) return;
+
+    // Remove 'num' characters.
+    memmove(str, str + num, len - num);
+    str[len] = 0;
+}
+
+void M_StripRight(char* str, size_t len)
+{
+    char* end;
+    int numZeroed = 0;
+    if(NULL == str || 0 == len) return;
+
+    end = str + strlen(str) - 1;
+    while(end >= str && isspace(*end))
+    {
+        end--;
+        numZeroed++;
+    }
+    memset(end + 1, 0, numZeroed);
+}
+
+void M_Strip(char* str, size_t len)
+{
+    M_StripLeft(str);
+    M_StripRight(str, len);
+}
+
+char* M_SkipLine(char* str)
+{
+    while(*str && *str != '\n')
+        str++;
+    // If the newline was found, skip it, too.
+    if(*str == '\n')
+        str++;
+    return str;
+}
+
+char* M_StrCatQuoted(char* dest, const char* src, size_t len)
+{
+    size_t k = strlen(dest) + 1, i;
+
+    strncat(dest, "\"", len);
+    for(i = 0; src[i]; i++)
+    {
+        if(src[i] == '"')
+        {
+            strncat(dest, "\\\"", len);
+            k += 2;
+        }
+        else
+        {
+            dest[k++] = src[i];
+            dest[k] = 0;
+        }
+    }
+    strncat(dest, "\"", len);
+
+    return dest;
+}
+
+boolean M_IsStringValidInt(const char* str)
+{
+    size_t i, len;
+    const char* c;
+    boolean isBad;
+
+    if(!str)
+        return false;
+
+    len = strlen(str);
+    if(len == 0)
+        return false;
+
+    for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
+    {
+        if(i != 0 && *c == '-')
+            isBad = true; // sign is in the wrong place.
+        else if(*c < '0' || *c > '9')
+            isBad = true; // non-numeric character.
+    }
+
+    return !isBad;
+}
+
+boolean M_IsStringValidByte(const char* str)
+{
+    if(M_IsStringValidInt(str))
+    {
+        int val = atoi(str);
+        if(!(val < 0 || val > 255))
+            return true;
+    }
+    return false;
+}
+
+boolean M_IsStringValidFloat(const char* str)
+{
+    size_t i, len;
+    const char* c;
+    boolean isBad, foundDP = false;
+
+    if(!str)
+        return false;
+
+    len = strlen(str);
+    if(len == 0)
+        return false;
+
+    for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
+    {
+        if(i != 0 && *c == '-')
+            isBad = true; // sign is in the wrong place.
+        else if(*c == '.')
+        {
+            if(foundDP)
+                isBad = true; // multiple decimal places??
+            else
+                foundDP = true;
+        }
+        else if(*c < '0' || *c > '9')
+            isBad = true; // other non-numeric character.
+    }
+
+    return !isBad;
+}
+
+boolean M_IsComment(const char* buffer)
+{
+    int i = 0;
+
+    while(isspace((unsigned char) buffer[i]) && buffer[i])
+        i++;
+    if(buffer[i] == '#')
+        return true;
+    return false;
+}
+
+char* M_StrCat(char* buf, const char* str, size_t bufSize)
+{
+    return M_StrnCat(buf, str, strlen(str), bufSize);
+}
+
+char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize)
+{
+    int n = nChars;
+    int destLen = strlen(buf);
+    if((int)bufSize - destLen - 1 < n)
+    {
+        // Cannot copy more than fits in the buffer.
+        // The 1 is for the null character.
+        n = bufSize - destLen - 1;
+    }
+    if(n <= 0) return buf; // No space left.
+    return strncat(buf, str, n);
+}
+
+char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
+                      char separator, size_t bufLength)
+{
+    boolean         isEmpty = !buf[0];
+    size_t          length;
+
+    // How long is this name?
+    length = MIN_OF(maxWidth, strlen(str));
+
+    // A separator is included if this is not the first name.
+    if(separator && !isEmpty)
+        ++length;
+
+    // Does it fit?
+    if(strlen(buf) + length < bufLength)
+    {
+        if(separator && !isEmpty)
+        {
+            char            sepBuf[2];
+
+            sepBuf[0] = separator;
+            sepBuf[1] = 0;
+
+            strcat(buf, sepBuf);
+        }
+        strncat(buf, str, length);
+    }
+
+    return buf;
+}

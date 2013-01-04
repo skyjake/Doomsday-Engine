@@ -112,6 +112,8 @@
 /// Ceiling of integer quotient of @a a divided by @a b.
 #define CEILING(a, b)       ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
 
+#define DENG_ISSPACE(c)     ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
+
 // Automatically define the basic types for convenience.
 #include <de/types.h>
 

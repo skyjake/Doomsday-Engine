@@ -371,18 +371,6 @@ void R_SkyParams(int layer, int param, void* data);
  */
 int M_ScreenShot(const char* filename, int bits);
 
-/// @addtogroup base
-///@{
-
-char* M_SkipWhite(char* str);
-char* M_FindWhite(char* str);
-char* M_StrCatQuoted(char* dest, const char* src, size_t len);
-boolean M_IsStringValidInt(const char* str);
-boolean M_IsStringValidByte(const char* str);
-boolean M_IsStringValidFloat(const char* str);
-
-///@}
-
 /// @addtogroup math
 ///@{
 

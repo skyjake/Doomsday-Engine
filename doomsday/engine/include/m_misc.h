@@ -41,8 +41,6 @@ extern "C" {
 
 struct aaboxd_s;
 
-#define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
-
 /**
  * Reads x bits from the source stream and writes them to out.
  *
@@ -63,34 +61,9 @@ float           M_BoundingBoxDiff(const float in[4], const float out[4]);
 void            M_JoinBoxes(float box[4], const float other[4]);
 
 // Text utilities.
-char*           M_SkipWhite(char* str);
-char*           M_FindWhite(char* str);
-void            M_StripLeft(char* str);
-void            M_StripRight(char* str, size_t len);
-void            M_Strip(char* str, size_t len);
-char*           M_SkipLine(char* str);
 void            M_WriteCommented(FILE* file, const char* text);
 void            M_WriteTextEsc(FILE* file, const char* text);
 void            M_ReadLine(char* buffer, size_t len, FileHandle* file);
-
-boolean         M_IsComment(const char* text);
-
-/// @return  @c true if @a string can be interpreted as a valid integer.
-boolean M_IsStringValidInt(const char* string);
-
-/// @return  @c true if @a string can be interpreted as a valid byte.
-boolean M_IsStringValidByte(const char* string);
-
-/// @return  @c true if @a string can be interpreted as a valid floating-point value.
-boolean M_IsStringValidFloat(const char* string);
-
-char*           M_StrCat(char* buf, const char* str, size_t bufSize);
-char*           M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize);
-char*           M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
-                                char separator, size_t bufLength);
-char*           M_StrCatQuoted(char* dest, const char* src, size_t len);
-char*           M_StrTok(char** cursor, const char *delimiters);
-char*           M_TrimmedFloat(float val);
 
 // Random numbers.
 byte            RNG_RandByte(void);

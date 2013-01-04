@@ -289,7 +289,7 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
     for(i = 0; i < len; ++i)
     {
         // Whitespaces are separators.
-        if(ISSPACE(cargs->cmdLine[i]))
+        if(DENG_ISSPACE(cargs->cmdLine[i]))
             cargs->cmdLine[i] = 0;
 
         if(cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1]))
