@@ -1,6 +1,8 @@
 #ifndef LIBDENG_DIRECTINPUT_H
 #define LIBDENG_DIRECTINPUT_H
 
+#ifdef __CLIENT__
+
 #define WIN32_LEAN_AND_MEAN
 #define DIRECTINPUT_VERSION 0x0800
 #define _WIN32_WINNT 0x0501
@@ -122,5 +124,7 @@ private:
     }
 };
 #endif // __cplusplus
+
+#endif // __CLIENT__
 
 #endif // LIBDENG_DIRECTINPUT_H
