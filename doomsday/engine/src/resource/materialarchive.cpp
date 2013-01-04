@@ -304,24 +304,24 @@ MaterialArchive::~MaterialArchive()
     delete d;
 }
 
-materialarchive_serialid_t MaterialArchive::findUniqueSerialId(material_t *material)
+materialarchive_serialid_t MaterialArchive::findUniqueSerialId(material_t *material) const
 {
     if(material)
         return d->getSerialIdForMaterial(*material);
     return 0; // Invalid.
 }
 
-material_t *MaterialArchive::find(materialarchive_serialid_t serialId, int group)
+material_t *MaterialArchive::find(materialarchive_serialid_t serialId, int group) const
 {
     return d->materialForSerialId(serialId, group);
 }
 
-size_t MaterialArchive::count()
+size_t MaterialArchive::count() const
 {
     return d->count;
 }
 
-void MaterialArchive::write(writer_s &writer)
+void MaterialArchive::write(writer_s &writer) const
 {
     d->writeHeader(writer);
     d->writeMaterialGroup(writer);
@@ -351,6 +351,10 @@ void MaterialArchive::read(int forcedVersion, reader_s &reader)
 }
 
 } // namespace de
+
+/*
+ * C Wrapper API:
+ */
 
 #define TOINTERNAL(inst) \
     reinterpret_cast<de::MaterialArchive *>(inst)
@@ -385,27 +389,27 @@ void MaterialArchive_Delete(MaterialArchive *arc)
     }
 }
 
-materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive *arc, struct material_s *mat)
+materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive const *arc, struct material_s *mat)
 {
-    SELF(arc);
+    SELF_CONST(arc);
     return self->findUniqueSerialId(mat);
 }
 
-struct material_s *MaterialArchive_Find(MaterialArchive *arc, materialarchive_serialid_t serialId, int group)
+struct material_s *MaterialArchive_Find(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group)
 {
-    SELF(arc);
+    SELF_CONST(arc);
     return self->find(serialId, group);
 }
 
-size_t MaterialArchive_Count(MaterialArchive *arc)
+size_t MaterialArchive_Count(MaterialArchive const *arc)
 {
-    SELF(arc);
+    SELF_CONST(arc);
     return self->count();
 }
 
-void MaterialArchive_Write(MaterialArchive *arc, Writer *writer)
+void MaterialArchive_Write(MaterialArchive const *arc, Writer *writer)
 {
-    SELF(arc);
+    SELF_CONST(arc);
     self->write(*writer);
 }
 

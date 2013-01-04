@@ -48,7 +48,7 @@ namespace de {
         /**
          * @return A new (unused) SerialId for the specified material.
          */
-        materialarchive_serialid_t findUniqueSerialId(struct material_s *mat);
+        materialarchive_serialid_t findUniqueSerialId(struct material_s *mat) const;
 
         /**
          * Finds and returns a material with the identifier @a serialId.
@@ -58,21 +58,21 @@ namespace de {
          *
          * @return  Pointer to a material instance. Ownership not given.
          */
-        struct material_s *find(materialarchive_serialid_t serialId, int group);
+        struct material_s *find(materialarchive_serialid_t serialId, int group) const;
 
         /**
          * Returns the number of materials in the archive.
          *
          * @param arc  MaterialArchive instance.
          */
-        size_t count();
+        size_t count() const;
 
         /**
          * Serializes the state of the archive using @a writer.
          *
          * @param writer  Writer instance.
          */
-        void write(writer_s &writer);
+        void write(writer_s &writer) const;
 
         /**
          * Deserializes the state of the archive from @a reader.
@@ -103,10 +103,10 @@ MaterialArchive *MaterialArchive_New(int useSegments);
 MaterialArchive *MaterialArchive_NewEmpty(int useSegments);
 
 void MaterialArchive_Delete(MaterialArchive *arc);
-materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive *arc, struct material_s *mat);
-struct material_s *MaterialArchive_Find(MaterialArchive *arc, materialarchive_serialid_t serialId, int group);
-size_t MaterialArchive_Count(MaterialArchive *arc);
-void MaterialArchive_Write(MaterialArchive *arc, Writer *writer);
+materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive const *arc, struct material_s *mat);
+struct material_s *MaterialArchive_Find(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group);
+size_t MaterialArchive_Count(MaterialArchive const *arc);
+void MaterialArchive_Write(MaterialArchive const *arc, Writer *writer);
 void MaterialArchive_Read(MaterialArchive *arc, int forcedVersion, Reader *reader);
 
 ///@}
