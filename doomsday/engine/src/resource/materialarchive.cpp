@@ -23,8 +23,6 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include <de/memory.h>
-
 #include "resource/materials.h"
 #include "materialarchive.h"
 
@@ -42,63 +40,65 @@ struct ArchiveRecord
 {
     uri_s *uri; ///< Percent encoded.
     material_t *material;
+
+    ArchiveRecord()
+        : uri(Uri_New()), material(0)
+    {}
+
+    ArchiveRecord(uri_s const &_uri, material_t &_material)
+        : uri(Uri_Dup(&_uri)), material(&_material)
+    {}
+
+    ~ArchiveRecord()
+    {
+        Uri_Delete(uri);
+    }
 };
+
+/// A list of archive records.
+typedef QList<ArchiveRecord *> Records;
 
 struct MaterialArchive::Instance
 {
     int version;
-    uint count;
-    ArchiveRecord *table;
+    Records table;
     uint numFlats; /// Used with older versions.
     int useSegments; /// Segment id assertion (Hexen saves).
 
     Instance(int _useSegments)
         : version(MATERIALARCHIVE_VERSION),
-          count(0), table(0), numFlats(0), useSegments(_useSegments)
+          numFlats(0), useSegments(_useSegments)
     {}
-
-    ~Instance()
-    {
-        clearTable();
-    }
 
     void clearTable()
     {
-        if(table)
+        DENG2_FOR_EACH(Records, i, table)
         {
-            for(uint i = 0; i < count; ++i)
-            {
-                Uri_Delete(table[i].uri);
-            }
-            M_Free(table); table = 0;
+            delete *i;
         }
-        count = 0;
     }
 
     void insertSerialId(materialarchive_serialid_t /*serialId*/, de::Uri const &uri,
                         material_t *material)
     {
-        table = (ArchiveRecord *) M_Realloc(table, ++count * sizeof(ArchiveRecord));
-        ArchiveRecord *rec = &table[count - 1];
-
-        rec->uri = Uri_Dup(reinterpret_cast<uri_s const *>(&uri));
-        rec->material = material;
+        ArchiveRecord *rec = new ArchiveRecord(reinterpret_cast<uri_s const &>(uri), *material);
+        table.push_back(rec);
     }
 
     materialarchive_serialid_t insertSerialIdForMaterial(material_t *mat)
     {
         de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
         // Insert a new element in the index.
-        insertSerialId(count + 1, uri, mat);
-        return count; // 1-based index.
+        insertSerialId(table.count() + 1, uri, mat);
+        return table.count(); // 1-based index.
     }
 
     materialarchive_serialid_t getSerialIdForMaterial(material_t &mat)
     {
         materialarchive_serialid_t id = 0;
-        for(uint i = 0; i < count; ++i)
+        for(int i = 0; i < table.count(); ++i)
         {
-            ArchiveRecord const *rec = &table[i];
+            ArchiveRecord const *rec = table[i];
             if(rec->material == &mat)
             {
                 id = i + 1; // Yes. Return existing serial.
@@ -113,7 +113,7 @@ struct MaterialArchive::Instance
         if(version < 1 && group == 1) // Group 1 = Flats:
             serialId += numFlats;
 
-        ArchiveRecord *rec = &table[serialId];
+        ArchiveRecord *rec = table[serialId];
         if(!Str_CompareIgnoreCase(Uri_Path(rec->uri), UNKNOWN_MATERIALNAME))
             return 0;
         return rec;
@@ -121,7 +121,7 @@ struct MaterialArchive::Instance
 
     material_t *materialForSerialId(materialarchive_serialid_t serialId, int group)
     {
-        DENG_ASSERT(serialId <= count + 1);
+        DENG_ASSERT(serialId <= table.count() + 1);
 
         ArchiveRecord *rec;
         if(serialId != 0 && (rec = getRecord(serialId - 1, group)))
@@ -232,27 +232,24 @@ struct MaterialArchive::Instance
         for(uint i = 0; i < num; ++i)
         {
             ArchiveRecord temp;
-            std::memset(&temp, 0, sizeof(temp));
 
             if(version >= 1)
                 readRecord(temp, reader);
             else
                 readRecord_v186(temp, version <= 1? defaultScheme : 0, reader);
 
-            insertSerialId(count + 1, reinterpret_cast<de::Uri &>(temp.uri), 0);
-            if(temp.uri)
-                Uri_Delete(temp.uri);
+            insertSerialId(table.count() + 1, reinterpret_cast<de::Uri &>(temp.uri), 0);
         }
     }
 
     void writeMaterialGroup(writer_s &writer)
     {
         // Write the group header.
-        Writer_WriteUInt16(&writer, count);
+        Writer_WriteUInt16(&writer, table.count());
 
-        for(uint i = 0; i < count; ++i)
+        DENG2_FOR_EACH_CONST(Records, i, table)
         {
-            writeRecord(table[i], writer);
+            writeRecord(**i, writer);
         }
     }
 
@@ -301,6 +298,7 @@ MaterialArchive::MaterialArchive(int useSegments, bool populate)
 
 MaterialArchive::~MaterialArchive()
 {
+    d->clearTable();
     delete d;
 }
 
@@ -318,7 +316,7 @@ material_t *MaterialArchive::find(materialarchive_serialid_t serialId, int group
 
 size_t MaterialArchive::count() const
 {
-    return d->count;
+    return d->table.count();
 }
 
 void MaterialArchive::write(writer_s &writer) const
@@ -339,13 +337,12 @@ void MaterialArchive::read(int forcedVersion, reader_s &reader)
         d->version = forcedVersion;
     }
 
-    d->count = 0;
     d->readMaterialGroup((forcedVersion >= 1? "" : "Flats:"), reader);
 
     if(d->version == 0)
     {
         // The old format saved flats and textures in seperate groups.
-        d->numFlats = d->count;
+        d->numFlats = d->table.count();
         d->readMaterialGroup((forcedVersion >= 1? "" : "Textures:"), reader);
     }
 }
