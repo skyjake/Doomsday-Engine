@@ -67,6 +67,7 @@ HEADERS += \
     include/de/fixedpoint.h \
     include/de/garbage.h \
     include/de/libdeng.h \
+    include/de/mathutil.h \
     include/de/memory.h \
     include/de/memoryblockset.h \
     include/de/memoryzone.h \
@@ -91,6 +92,7 @@ SOURCES += \
     src/fixedpoint.c \
     src/garbage.cpp \
     src/libdeng.c \
+    src/mathutil.c \
     src/memory.c \
     src/memoryblockset.c \
     src/memoryzone.c \

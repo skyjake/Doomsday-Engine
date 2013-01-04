@@ -900,22 +900,19 @@ int dd_snprintf(char *str, size_t size, char const *format, ...)
 }
 
 #ifdef UNIX
-
 char* strupr(char* string)
 {
     char* ch = string;
     for(; *ch; ch++) *ch = toupper(*ch);
     return string;
 }
-
 char* strlwr(char* string)
 {
     char* ch = string;
     for(; *ch; ch++) *ch = tolower(*ch);
     return string;
 }
-
-#endif
+#endif // UNIX
 
 char* M_SkipWhite(char* str)
 {
@@ -1127,4 +1124,63 @@ char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
     }
 
     return buf;
+}
+
+void M_ForceUppercase(char *text)
+{
+    char c;
+
+    while((c = *text) != 0)
+    {
+        if(c >= 'a' && c <= 'z')
+        {
+            *text++ = c - ('a' - 'A');
+        }
+        else
+        {
+            text++;
+        }
+    }
+}
+
+char* M_StrTok(char** cursor, const char* delimiters)
+{
+    char* begin = *cursor;
+
+    while(**cursor && !strchr(delimiters, **cursor))
+        (*cursor)++;
+
+    if(**cursor)
+    {
+        // Stop here.
+        **cursor = 0;
+
+        // Advance one more so we'll start from the right character on
+        // the next call.
+        (*cursor)++;
+    }
+
+    return begin;
+}
+
+char* M_TrimmedFloat(float val)
+{
+    static char trimmedFloatBuffer[32];
+    char* ptr = trimmedFloatBuffer;
+
+    sprintf(ptr, "%f", val);
+    // Get rid of the extra zeros.
+    for(ptr += strlen(ptr) - 1; ptr >= trimmedFloatBuffer; ptr--)
+    {
+        if(*ptr == '0')
+            *ptr = 0;
+        else if(*ptr == '.')
+        {
+            *ptr = 0;
+            break;
+        }
+        else
+            break;
+    }
+    return trimmedFloatBuffer;
 }

@@ -29,13 +29,13 @@
 
 #include <de/NativePath>
 #include <de/PathTree>
+#include <de/mathutil.h>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
 
-#include "m_misc.h"
 #include "gl/gl_texmanager.h"
 #include "resource/font.h"
 #include "resource/fonts.h"

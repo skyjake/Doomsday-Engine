@@ -36,6 +36,7 @@
 #include "m_stack.h"
 #include "gridmap.h"
 #include "m_decomp64.h"
+#include <de/mathutil.h>
 #include <de/stringarray.h>
 #include <de/smoother.h>
 #include <de/vector1.h>

@@ -26,6 +26,7 @@
 #include <de/ByteOrder>
 #include <de/NativePath>
 #include <de/StringPool>
+#include <de/mathutil.h> // for M_CycleIntoRange()
 #include <de/memory.h>
 
 #include "de_platform.h"
@@ -41,7 +42,6 @@
 #include "de_resource.h"
 
 #include "def_main.h"
-#include "m_misc.h" // for M_CycleIntoRange()
 
 #include "resource/materialsnapshot.h"
 

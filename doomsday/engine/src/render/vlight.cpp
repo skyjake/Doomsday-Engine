@@ -25,8 +25,8 @@
 #include "de_render.h"
 
 #include "gl/gl_main.h"
-#include "m_misc.h" // for M_ApproxDistance
 
+#include <de/mathutil.h> // for M_ApproxDistance
 #include <de/memoryzone.h>
 
 struct vlightnode_t

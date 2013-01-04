@@ -41,11 +41,11 @@
 #include "de_play.h"
 #include "de_ui.h"
 
-#include "m_misc.h" // For M_Ceil/Floor/WeightPow2()
 #include "def_main.h"
 
 #include <QSize>
 #include <de/ByteRefArray>
+#include <de/mathutil.h>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 

@@ -31,6 +31,7 @@
 
 #include <math.h>
 #include <assert.h>
+#include <de/mathutil.h>
 
 #include "mobj.h"
 #include "p_actor.h"

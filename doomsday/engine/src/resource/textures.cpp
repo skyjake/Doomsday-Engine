@@ -22,13 +22,13 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "gl/gl_texmanager.h"
-#include "m_misc.h" // for M_NumDigits
 
 #include <QtAlgorithms>
 #include <QList>
 #include <de/Error>
 #include <de/Log>
 #include <de/PathTree>
+#include <de/mathutil.h> // for M_NumDigits
 
 #include "resource/compositetexture.h"
 #include "resource/texturemanifest.h"

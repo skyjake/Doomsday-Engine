@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <de/mathutil.h>
 
 #include "common.h"
 #include "d_net.h"

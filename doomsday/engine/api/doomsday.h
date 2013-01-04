@@ -374,28 +374,7 @@ int M_ScreenShot(const char* filename, int bits);
 /// @addtogroup math
 ///@{
 
-double M_ApproxDistance(double dx, double dy);
-double M_ApproxDistance3(double dx, double dy, double dz);
-
-angle_t M_PointXYToAngle(double x, double y);
-
-angle_t M_PointToAngle2(double const a[2], double const b[2]);
-angle_t M_PointXYToAngle2(double x1, double y1, double x2, double y2);
-
-int M_RatioReduce(int* numerator, int* denominator);
-int M_CeilPow2(int num);
-int M_NumDigits(int value);
-
 binangle_t bamsAtan2(int y, int x);
-
-///@}
-
-/// @addtogroup base
-///@{
-
-    // Miscellaneous: Random Number Generator facilities.
-    byte            RNG_RandByte(void);
-    float           RNG_RandFloat(void);
 
 ///@}
 

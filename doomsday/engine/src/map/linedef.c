@@ -29,10 +29,10 @@
 #include "m_misc.h"
 #include "resource/materialvariant.h"
 #include "resource/materials.h"
-
 #include "map/linedef.h"
 
 #include <math.h>
+#include <de/mathutil.h>
 
 static void calcNormal(const LineDef* l, byte side, pvec2f_t normal)
 {

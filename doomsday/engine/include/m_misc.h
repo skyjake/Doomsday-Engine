@@ -53,68 +53,10 @@ struct aaboxd_s;
  */
 void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out);
 
-// Bounding boxes.
-void            M_ClearBox(fixed_t* box);
-void            M_CopyBox(fixed_t dest[4], const fixed_t src[4]);
-void            M_AddToBox(fixed_t* box, fixed_t x, fixed_t y);
-float           M_BoundingBoxDiff(const float in[4], const float out[4]);
-void            M_JoinBoxes(float box[4], const float other[4]);
-
 // Text utilities.
-void            M_WriteCommented(FILE* file, const char* text);
-void            M_WriteTextEsc(FILE* file, const char* text);
-void            M_ReadLine(char* buffer, size_t len, FileHandle* file);
-
-// Random numbers.
-byte            RNG_RandByte(void);
-float           RNG_RandFloat(void);
-void            RNG_Reset(void);
-
-/**
- * Math routines.
- */
-
-/**
- * Gives an estimation of distance (not exact).
- */
-double M_ApproxDistance(double dx, double dy);
-float M_ApproxDistancef(float dx, float dy);
-
-/**
- * Gives an estimation of 3D distance (not exact).
- */
-double M_ApproxDistance3(double dx, double dy, double dz);
-float M_ApproxDistance3f(float dx, float dy, float dz);
-
-/**
- * To get a global angle from Cartesian coordinates, the coordinates are
- * flipped until they are in the first octant of the coordinate system, then
- * the y (<=x) is scaled and divided by x to get a tangent (slope) value
- * which is looked up in the tantoangle[] table.  The +1 size is to handle
- * the case when x==y without additional checking.
- *
- * @param x   X coordinate to test.
- * @param y   Y coordinate to test.
- *
- * @return  Angle between the test point and [0, 0].
- */
-angle_t M_PointXYToAngle(double x, double y);
-angle_t M_PointToAngle(double const point[2]);
-
-/**
- * Translate a direction into an angle value (degrees).
- */
-double M_DirectionToAngle(double const direction[2]);
-double M_DirectionToAngleXY(double directionX, double directionY);
-
-/// @param angle  Normalised angle in the range [0..360].
-double M_InverseAngle(double angle);
-
-angle_t M_PointToAngle2(double const a[], double const b[]);
-angle_t M_PointXYToAngle2(double aX, double aY, double bX, double bY);
-
-double M_PointDistance(double const a[2], double const b[2]);
-double M_PointXYDistance(double aX, double aY, double bX, double bY);
+void M_WriteCommented(FILE* file, const char* text);
+void M_WriteTextEsc(FILE* file, const char* text);
+void M_ReadLine(char* buffer, size_t len, FileHandle* file);
 
 /**
  * Check the spatial relationship between the given box and a partitioning line.
@@ -151,34 +93,6 @@ int M_BoxOnLineSide_FixedPrecision(const fixed_t box[], const fixed_t linePoint[
 int M_BoxOnLineSide2(const struct aaboxd_s* box, double const linePoint[2],
     double const lineDirection[2], double linePerp, double lineLength, double epsilon);
 
-/**
- * Area of a triangle.
- */
-double M_TriangleArea(double const v1[2], double const v2[2], double const v3[2]);
-
-void M_RotateVector(float vec[3], float degYaw, float degPitch);
-
-int M_CeilPow2(int num);
-int M_FloorPow2(int num);
-int M_RoundPow2(int num);
-int M_WeightPow2(int num, float weight);
-float M_CycleIntoRange(float value, float length);
-
-/**
- * Using Euclid's Algorithm reduce the given numerator and denominator by
- * their greatest common integer divisor. @ingroup math
- * @param numerator  Input and output numerator.
- * @param denominator  Input and output denominator.
- * @return  Greatest common divisor.
- */
-int M_RatioReduce(int* numerator, int* denominator);
-
-slopetype_t M_SlopeType(double const direction[2]);
-slopetype_t M_SlopeTypeXY(double directionX, double directionY);
-slopetype_t M_SlopeTypeXY_FixedPrecision(fixed_t dx, fixed_t dy);
-
-int M_NumDigits(int num);
-
 typedef struct trigger_s {
     timespan_t duration;
     timespan_t accum;
@@ -206,11 +120,6 @@ boolean M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
  *         to fill the trigger's time threshold.
  */
 boolean M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
-
-/**
- * Calculate CRC-32 for an arbitrary data buffer. @ingroup math
- */
-uint M_CRC32(byte* data, uint length);
 
 // Other utilities:
 

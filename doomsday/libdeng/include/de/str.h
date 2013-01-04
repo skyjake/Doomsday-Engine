@@ -1,8 +1,6 @@
-/**
- * @file str.h
- * Dynamic text string.
+/** @file str.h Dynamic text string.
  *
- * Simple dynamic string management. @ingroup base
+ * Dynamic string management and other text utilities. @ingroup base
  *
  * Uses @ref memzone or standard malloc for memory allocation, chosen during
  * initialization of a string. The string instance itself is always allocated
@@ -23,8 +21,8 @@
  *       with static C strings, though (which is probably for the better anyway).
  * @todo Derive from Qt::QString
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2008-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2008-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -523,11 +521,16 @@ DENG_PUBLIC char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bu
 
 DENG_PUBLIC char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth, char separator, size_t bufLength);
 
+/**
+ * Somewhat similar to strtok().
+ */
 DENG_PUBLIC char* M_StrTok(char** cursor, const char *delimiters);
 
 DENG_PUBLIC char* M_TrimmedFloat(float val);
 
 DENG_PUBLIC boolean M_IsComment(const char* text);
+
+DENG_PUBLIC void M_ForceUppercase(char *text);
 
 /// @return  @c true if @a string can be interpreted as a valid integer.
 DENG_PUBLIC boolean M_IsStringValidInt(const char* str);

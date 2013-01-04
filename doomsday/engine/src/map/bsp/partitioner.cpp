@@ -55,7 +55,8 @@
 #include "map/bsp/vertexinfo.h"
 #include "map/bsp/partitioner.h"
 
-#include "render/r_main.h" // validCount
+#include "render/r_main.h"  // validCount
+#include "m_misc.h"         // M_BoxOnLineSide2
 
 using namespace de::bsp;
 
