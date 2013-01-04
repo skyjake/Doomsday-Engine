@@ -28,7 +28,9 @@
 
 #include "dd_share.h"
 
+struct mobj_s;
 struct linedef_s;
+struct sector_s;
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,12 +43,117 @@ DENG_API_TYPEDEF(Map)
 {
     de_api_t api;
 
+    /**
+     * Is there a known map referenced by @a uri and if so, is it available for
+     * loading?
+     *
+     * @param uri  Uri identifying the map to be searched for.
+     * @return  @c true: a known and loadable map.
+     */
+    boolean         (*Exists)(char const* uri);
+
+    boolean         (*IsCustom)(char const* uri);
+
+    /**
+     * Retrieve the name of the source file containing the map referenced by @a
+     * uri if known and available for loading.
+     *
+     * @param uri  Uri identifying the map to be searched for.
+     * @return  Fully qualified (i.e., absolute) path to the source file.
+     */
+    AutoStr*        (*SourceFile)(char const* uri);
+
+    /**
+     * Begin the process of loading a new map.
+     *
+     * @param uri  Uri identifying the map to be loaded.
+     * @return @c true, if the map was loaded successfully.
+     */
+    boolean         (*Load)(const char* uri);
+
+    // Lines
+
     int             (*LD_BoxOnSide)(struct linedef_s* line, const AABoxd* box);
     int             (*LD_BoxOnSide_FixedPrecision)(struct linedef_s* line, const AABoxd* box);
     coord_t         (*LD_PointDistance)(struct linedef_s* lineDef, coord_t const point[2], coord_t* offset);
     coord_t         (*LD_PointXYDistance)(struct linedef_s* lineDef, coord_t x, coord_t y, coord_t* offset);
     coord_t         (*LD_PointOnSide)(struct linedef_s const *lineDef, coord_t const point[2]);
     coord_t         (*LD_PointXYOnSide)(struct linedef_s const *lineDef, coord_t x, coord_t y);
+
+    // Map Objects
+
+    struct mobj_s*  (*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
+    void            (*MO_Destroy)(struct mobj_s* mo);
+    struct mobj_s*  (*MO_MobjForID)(int id);
+    void            (*MO_SetState)(struct mobj_s* mo, int statenum);
+    void            (*MO_Link)(struct mobj_s* mo, byte flags);
+    int             (*MO_Unlink)(struct mobj_s* mo);
+    void            (*MO_SpawnDamageParticleGen)(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
+
+    /**
+     * The callback function will be called once for each line that crosses
+     * trough the object. This means all the lines will be two-sided.
+     */
+    int             (*MO_LinesIterator)(struct mobj_s* mo, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+    /**
+     * Increment validCount before calling this routine. The callback function
+     * will be called once for each sector the mobj is touching (totally or
+     * partly inside). This is not a 3D check; the mobj may actually reside
+     * above or under the sector.
+     */
+    int             (*MO_SectorsIterator)(struct mobj_s* mo, int (*callback) (struct sector_s*, void*), void* parameters);
+
+    /**
+     * Calculate the visible @a origin of @a mobj in world space, including
+     * any short range offset.
+     */
+    void            (*MO_OriginSmoothed)(struct mobj_s* mobj, coord_t origin[3]);
+    angle_t         (*MO_AngleSmoothed)(struct mobj_s* mobj);
+
+    // Polyobjs
+
+    boolean         (*PO_MoveXY)(struct polyobj_s* po, coord_t x, coord_t y);
+
+    /**
+     * Rotate @a polyobj in the map coordinate space.
+     */
+    boolean         (*PO_Rotate)(struct polyobj_s* po, angle_t angle);
+
+    /**
+     * Link @a polyobj to the current map. To be called after moving, rotating
+     * or any other translation of the Polyobj within the map.
+     */
+    void            (*PO_Link)(struct polyobj_s* po);
+
+    /**
+     * Unlink @a polyobj from the current map. To be called prior to moving,
+     * rotating or any other translation of the Polyobj within the map.
+     */
+    void            (*PO_Unlink)(struct polyobj_s* po);
+
+    /**
+     * Lookup a Polyobj on the current map by unique ID.
+     *
+     * @param id  Unique identifier of the Polyobj to be found.
+     * @return  Found Polyobj instance else @c NULL.
+     */
+    struct polyobj_s* (*PO_PolyobjByID)(uint id);
+
+    /**
+     * Lookup a Polyobj on the current map by tag.
+     *
+     * @param tag  Tag associated with the Polyobj to be found.
+     * @return  Found Polyobj instance, or @c NULL.
+     */
+    struct polyobj_s* (*PO_PolyobjByTag)(int tag);
+
+    /**
+     * The po_callback is called when a (any) polyobj hits a mobj.
+     */
+    void            (*PO_SetCallback)(void (*func)(struct mobj_s*, void*, void*));
+
+    // Map Updates (DMU)
 
     /**
      * Determines the type of the map data object.
@@ -61,12 +168,13 @@ DENG_API_TYPEDEF(Map)
     int             (*Callbackp)(int type, void* ptr, void* context, int (*callback)(void* p, void* ctx));
     int             (*Iteratep)(void *ptr, uint prop, void* context, int (*callback) (void* p, void* ctx));
 
-    /* dummy objects */
+    // Dummy Objects
     void*           (*AllocDummy)(int type, void* extraData);
     void            (*FreeDummy)(void* dummy);
     boolean         (*IsDummy)(void* dummy);
     void*           (*DummyExtraData)(void* dummy);
 
+    // Map Entities
     uint            (*CountGameMapObjs)(int entityId);
     byte            (*GetGMOByte)(int entityId, uint elementIndex, int propertyId);
     short           (*GetGMOShort)(int entityId, uint elementIndex, int propertyId);
@@ -159,12 +267,34 @@ DENG_API_TYPEDEF(Map)
 DENG_API_T(Map);
 
 #ifndef DENG_NO_API_MACROS_MAP
+#define P_MapExists                         _api_Map.Exists
+#define P_MapIsCustom                       _api_Map.IsCustom
+#define P_MapSourceFile                     _api_Map.SourceFile
+#define P_LoadMap                           _api_Map.Load
 #define LineDef_BoxOnSide                   _api_Map.LD_BoxOnSide
 #define LineDef_BoxOnSide_FixedPrecision    _api_Map.LD_BoxOnSide_FixedPrecision
 #define LineDef_PointDistance               _api_Map.LD_PointDistance
 #define LineDef_PointXYDistance             _api_Map.LD_PointXYDistance
 #define LineDef_PointOnSide                 _api_Map.LD_PointOnSide
 #define LineDef_PointXYOnSide               _api_Map.LD_PointXYOnSide
+#define P_MobjCreateXYZ                     _api_Map.MO_CreateXYZ
+#define P_MobjDestroy                       _api_Map.MO_Destroy
+#define P_MobjForID                         _api_Map.MO_MobjForID
+#define P_MobjSetState                      _api_Map.MO_SetState
+#define P_MobjLink                          _api_Map.MO_Link
+#define P_MobjUnlink                        _api_Map.MO_Unlink
+#define P_SpawnDamageParticleGen            _api_Map.MO_SpawnDamageParticleGen
+#define P_MobjLinesIterator                 _api_Map.MO_LinesIterator
+#define P_MobjSectorsIterator               _api_Map.MO_SectorsIterator
+#define Mobj_AngleSmoothed                  _api_Map.MO_AngleSmoothed
+#define Mobj_OriginSmoothed                 _api_Map.MO_OriginSmoothed
+#define P_PolyobjMoveXY                     _api_Map.PO_MoveXY
+#define P_PolyobjRotate                     _api_Map.PO_Rotate
+#define P_PolyobjLink                       _api_Map.PO_Link
+#define P_PolyobjUnlink                     _api_Map.PO_Unlink
+#define P_PolyobjByID                       _api_Map.PO_PolyobjByID
+#define P_PolyobjByTag                      _api_Map.PO_PolyobjByTag
+#define P_SetPolyobjCallback                _api_Map.PO_SetCallback
 #define DMU_GetType                         _api_Map.GetType
 #define P_ToIndex                           _api_Map.ToIndex
 #define P_ToPtr                             _api_Map.ToPtr

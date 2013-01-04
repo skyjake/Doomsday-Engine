@@ -96,6 +96,7 @@ struct mobj_s* GameMap_MobjByID(GameMap* map, int id)
 /**
  * Locates a mobj by it's unique identifier in the CURRENT map.
  */
+#undef P_MobjForID
 struct mobj_s* P_MobjForID(int id)
 {
     if(!theMap) return NULL;

@@ -198,65 +198,10 @@ int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int
 boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
 ///@}
 
-/// @addtogroup map
-///@{
-// Play: Setup.
-boolean P_MapExists(char const* uri);
-boolean P_MapIsCustom(char const* uri);
-AutoStr* P_MapSourceFile(char const* uri);
-
-boolean P_LoadMap(const char* uri);
-///@}
-
-/// @addtogroup playsim
-///@{
-// Play: Misc.
-void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
-///@}
-
-/// @addtogroup mobj
-///@{
-// Play: Mobjs.
-struct mobj_s* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
-
-void P_MobjDestroy(struct mobj_s* mo);
-
-void P_MobjSetState(struct mobj_s* mo, int statenum);
-
-void P_MobjLink(struct mobj_s* mo, byte flags);
-
-int P_MobjUnlink(struct mobj_s* mo);
-
-struct mobj_s* P_MobjForID(int id);
-
-void Mobj_OriginSmoothed(struct mobj_s* mobj, coord_t origin[3]);
-
-angle_t Mobj_AngleSmoothed(struct mobj_s* mobj);
-
-// Mobj linked object iterators.
-int P_MobjLinesIterator(struct mobj_s* mo, int (*callback) (struct linedef_s*, void*), void* parameters);
-
-int P_MobjSectorsIterator(struct mobj_s* mo, int (*callback) (Sector*, void*), void* parameters);
-
-///@}
-
 /**
  * @defgroup polyobj Polygon Objects
  * @ingroup map
  */
-///@{
-
-// Play: Polyobjs.
-boolean P_PolyobjMoveXY(struct polyobj_s* po, coord_t x, coord_t y);
-boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
-void P_PolyobjLink(struct polyobj_s* po);
-void P_PolyobjUnlink(struct polyobj_s* po);
-
-struct polyobj_s* P_PolyobjByID(uint id);
-struct polyobj_s* P_PolyobjByTag(int tag);
-void P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
-
-///@}
 
 /// @addtogroup material
 ///@{
@@ -277,8 +222,6 @@ materialid_t Materials_ResolveUriCString(const char* path);
  * @defgroup render Renderer
  */
 ///@{
-
-int DD_GetFrameRate(void);
 
 void R_SetupMap(int mode, int flags);
 void R_SetupFogDefaults(void);

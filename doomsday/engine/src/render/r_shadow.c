@@ -30,6 +30,7 @@
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
+#include "api_map.h"
 
 typedef struct listnode_s {
     struct listnode_s* next, *nextUsed;

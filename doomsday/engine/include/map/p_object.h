@@ -59,12 +59,8 @@ void P_InitUnusedMobjList(void);
 
 mobj_t* P_MobjCreate(thinkfunc_t function, coord_t const post[3], angle_t angle,
     coord_t radius, coord_t height, int ddflags);
-mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle,
-    coord_t radius, coord_t height, int ddflags);
 
-void P_MobjDestroy(mobj_t* mobj);
 void P_MobjRecycle(mobj_t* mobj);
-void P_MobjSetState(mobj_t* mobj, int statenum);
 
 /**
  * Sets a mobj's position.
@@ -75,14 +71,6 @@ void P_MobjSetState(mobj_t* mobj, int statenum);
  * @note Internal to the engine.
  */
 boolean Mobj_SetOrigin(mobj_t* mobj, coord_t x, coord_t y, coord_t z);
-
-/**
- * Calculate the visible @a origin of @a mobj in world space, including
- * any short range offset.
- */
-void Mobj_OriginSmoothed(mobj_t* mobj, coord_t origin[3]);
-
-angle_t Mobj_AngleSmoothed(mobj_t* mobj);
 
 coord_t Mobj_ApproxPointDistance(mobj_t* start, coord_t const* point);
 

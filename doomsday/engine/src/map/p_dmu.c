@@ -2407,17 +2407,76 @@ void P_GetPtrpv(void* ptr, uint prop, void* params)
 }
 
 // p_data.cpp
+DENG_EXTERN_C boolean P_MapExists(char const* uriCString);
+DENG_EXTERN_C boolean P_MapIsCustom(char const* uriCString);
+DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString);
+DENG_EXTERN_C boolean P_LoadMap(char const* uriCString);
 DENG_EXTERN_C uint P_CountGameMapObjs(int entityId);
+
+// p_maputil.c
+DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags);
+DENG_EXTERN_C int P_MobjUnlink(mobj_t* mo);
+DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters);
+
+// p_mobj.c
+DENG_EXTERN_C mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
+DENG_EXTERN_C void P_MobjDestroy(mobj_t* mo);
+DENG_EXTERN_C void P_MobjDestroy(mobj_t* mobj);
+DENG_EXTERN_C void P_MobjSetState(mobj_t* mobj, int statenum);
+DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t* mo);
+DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3]);
+
+// p_particle.c
+DENG_EXTERN_C void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
+
+// p_think.c
+DENG_EXTERN_C struct mobj_s* P_MobjForID(int id);
+
+// polyobjs.c
+DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj* polyobj, coord_t x, coord_t y);
+DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj* polyobj, angle_t angle);
+DENG_EXTERN_C void P_PolyobjLink(Polyobj* polyobj);
+DENG_EXTERN_C void P_PolyobjUnlink(Polyobj* polyobj);
+DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id);
+DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag);
+DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
 
 DENG_DECLARE_API(Map) =
 {
     { DE_API_MAP },
+    P_MapExists,
+    P_MapIsCustom,
+    P_MapSourceFile,
+    P_LoadMap,
+
     LineDef_BoxOnSide,
     LineDef_BoxOnSide_FixedPrecision,
     LineDef_PointDistance,
     LineDef_PointXYDistance,
     LineDef_PointOnSide,
     LineDef_PointXYOnSide,
+
+    P_MobjCreateXYZ,
+    P_MobjDestroy,
+    P_MobjForID,
+    P_MobjSetState,
+    P_MobjLink,
+    P_MobjUnlink,
+    P_SpawnDamageParticleGen,
+    P_MobjLinesIterator,
+    P_MobjSectorsIterator,
+    Mobj_OriginSmoothed,
+    Mobj_AngleSmoothed,
+
+    P_PolyobjMoveXY,
+    P_PolyobjRotate,
+    P_PolyobjLink,
+    P_PolyobjUnlink,
+    P_PolyobjByID,
+    P_PolyobjByTag,
+    P_SetPolyobjCallback,
+
     DMU_GetType,
     P_ToIndex,
     P_ToPtr,

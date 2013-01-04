@@ -194,6 +194,7 @@ boolean P_UnlinkMobjFromSector(mobj_t* mo)
  * @return              DDLINK_* flags denoting what the mobj was unlinked
  *                      from (in case we need to re-link).
  */
+#undef P_MobjUnlink
 int P_MobjUnlink(mobj_t* mo)
 {
     int links = 0;
@@ -330,6 +331,7 @@ void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
  * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
  * the BspLeaf pointer. Can be called without unlinking first.
  */
+#undef P_MobjLink
 void P_MobjLink(mobj_t* mo, byte flags)
 {
     Sector* sec;
@@ -668,10 +670,7 @@ boolean P_UnlinkMobjFromLineDefs(mobj_t* mo)
     return GameMap_UnlinkMobjFromLineDefs(theMap, mo);
 }
 
-/**
- * The callback function will be called once for each line that crosses
- * trough the object. This means all the lines will be two-sided.
- */
+#undef P_MobjLinesIterator
 int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters)
 {
     /// @todo Do not assume mobj is in the current map.
@@ -679,12 +678,7 @@ int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* par
     return GameMap_MobjLinesIterator(theMap, mo, callback, parameters);
 }
 
-/**
- * Increment validCount before calling this routine. The callback function
- * will be called once for each sector the mobj is touching (totally or
- * partly inside). This is not a 3D check; the mobj may actually reside
- * above or under the sector.
- */
+#undef P_MobjSectorsIterator
 int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters)
 {
     /// @todo Do not assume mobj is in the current map.
