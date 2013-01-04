@@ -36,7 +36,7 @@
 #include "../../../engine/include/def_data.h"
 struct font_s;
 
-#define __INTERNAL_MAP_DATA_ACCESS__
+#define DENG_INTERNAL_MAP_DATA_ACCESS
 #include <doomsday.h>
 
 #include <de/libdeng2.h>

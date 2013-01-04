@@ -28,6 +28,8 @@
 
 #include "dd_share.h"
 
+struct linedef_s;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -38,6 +40,13 @@ extern "C" {
 DENG_API_TYPEDEF(Map)
 {
     de_api_t api;
+
+    int             (*LD_BoxOnSide)(struct linedef_s* line, const AABoxd* box);
+    int             (*LD_BoxOnSide_FixedPrecision)(struct linedef_s* line, const AABoxd* box);
+    coord_t         (*LD_PointDistance)(struct linedef_s* lineDef, coord_t const point[2], coord_t* offset);
+    coord_t         (*LD_PointXYDistance)(struct linedef_s* lineDef, coord_t x, coord_t y, coord_t* offset);
+    coord_t         (*LD_PointOnSide)(struct linedef_s const *lineDef, coord_t const point[2]);
+    coord_t         (*LD_PointXYOnSide)(struct linedef_s const *lineDef, coord_t x, coord_t y);
 
     /**
      * Determines the type of the map data object.
@@ -150,87 +159,93 @@ DENG_API_TYPEDEF(Map)
 DENG_API_T(Map);
 
 #ifndef DENG_NO_API_MACROS_MAP
-#define DMU_GetType     _api_Map.GetType
-#define P_ToIndex     _api_Map.ToIndex
-#define P_ToPtr     _api_Map.ToPtr
-#define P_Callback     _api_Map.Callback
-#define P_Callbackp     _api_Map.Callbackp
-#define P_Iteratep     _api_Map.Iteratep
-#define P_AllocDummy     _api_Map.AllocDummy
-#define P_FreeDummy     _api_Map.FreeDummy
-#define P_IsDummy     _api_Map.IsDummy
-#define P_DummyExtraData     _api_Map.DummyExtraData
-#define P_CountGameMapObjs     _api_Map.CountGameMapObjs
-#define P_GetGMOByte     _api_Map.GetGMOByte
-#define P_GetGMOShort     _api_Map.GetGMOShort
-#define P_GetGMOInt     _api_Map.GetGMOInt
-#define P_GetGMOFixed     _api_Map.GetGMOFixed
-#define P_GetGMOAngle     _api_Map.GetGMOAngle
-#define P_GetGMOFloat     _api_Map.GetGMOFloat
-#define P_SetBool     _api_Map.SetBool
-#define P_SetByte     _api_Map.SetByte
-#define P_SetInt     _api_Map.SetInt
-#define P_SetFixed     _api_Map.SetFixed
-#define P_SetAngle     _api_Map.SetAngle
-#define P_SetFloat     _api_Map.SetFloat
-#define P_SetDouble     _api_Map.SetDouble
-#define P_SetPtr     _api_Map.SetPtr
-#define P_SetBoolv     _api_Map.SetBoolv
-#define P_SetBytev     _api_Map.SetBytev
-#define P_SetIntv     _api_Map.SetIntv
-#define P_SetFixedv     _api_Map.SetFixedv
-#define P_SetAnglev     _api_Map.SetAnglev
-#define P_SetFloatv     _api_Map.SetFloatv
-#define P_SetDoublev     _api_Map.SetDoublev
-#define P_SetPtrv     _api_Map.SetPtrv
-#define P_SetBoolp     _api_Map.SetBoolp
-#define P_SetBytep     _api_Map.SetBytep
-#define P_SetIntp     _api_Map.SetIntp
-#define P_SetFixedp     _api_Map.SetFixedp
-#define P_SetAnglep     _api_Map.SetAnglep
-#define P_SetFloatp     _api_Map.SetFloatp
-#define P_SetDoublep     _api_Map.SetDoublep
-#define P_SetPtrp     _api_Map.SetPtrp
-#define P_SetBoolpv     _api_Map.SetBoolpv
-#define P_SetBytepv     _api_Map.SetBytepv
-#define P_SetIntpv     _api_Map.SetIntpv
-#define P_SetFixedpv     _api_Map.SetFixedpv
-#define P_SetAnglepv     _api_Map.SetAnglepv
-#define P_SetFloatpv     _api_Map.SetFloatpv
-#define P_SetDoublepv     _api_Map.SetDoublepv
-#define P_SetPtrpv     _api_Map.SetPtrpv
-#define P_GetBool     _api_Map.GetBool
-#define P_GetByte     _api_Map.GetByte
-#define P_GetInt     _api_Map.GetInt
-#define P_GetFixed     _api_Map.GetFixed
-#define P_GetAngle     _api_Map.GetAngle
-#define P_GetFloat     _api_Map.GetFloat
-#define P_GetDouble     _api_Map.GetDouble
-#define P_GetPtr     _api_Map.GetPtr
-#define P_GetBoolv     _api_Map.GetBoolv
-#define P_GetBytev     _api_Map.GetBytev
-#define P_GetIntv     _api_Map.GetIntv
-#define P_GetFixedv     _api_Map.GetFixedv
-#define P_GetAnglev     _api_Map.GetAnglev
-#define P_GetFloatv     _api_Map.GetFloatv
-#define P_GetDoublev     _api_Map.GetDoublev
-#define P_GetPtrv     _api_Map.GetPtrv
-#define P_GetBoolp     _api_Map.GetBoolp
-#define P_GetBytep     _api_Map.GetBytep
-#define P_GetIntp     _api_Map.GetIntp
-#define P_GetFixedp     _api_Map.GetFixedp
-#define P_GetAnglep     _api_Map.GetAnglep
-#define P_GetFloatp     _api_Map.GetFloatp
-#define P_GetDoublep     _api_Map.GetDoublep
-#define P_GetPtrp     _api_Map.GetPtrp
-#define P_GetBoolpv     _api_Map.GetBoolpv
-#define P_GetBytepv     _api_Map.GetBytepv
-#define P_GetIntpv     _api_Map.GetIntpv
-#define P_GetFixedpv     _api_Map.GetFixedpv
-#define P_GetAnglepv     _api_Map.GetAnglepv
-#define P_GetFloatpv     _api_Map.GetFloatpv
-#define P_GetDoublepv     _api_Map.GetDoublepv
-#define P_GetPtrpv     _api_Map.GetPtrpv
+#define LineDef_BoxOnSide                   _api_Map.LD_BoxOnSide
+#define LineDef_BoxOnSide_FixedPrecision    _api_Map.LD_BoxOnSide_FixedPrecision
+#define LineDef_PointDistance               _api_Map.LD_PointDistance
+#define LineDef_PointXYDistance             _api_Map.LD_PointXYDistance
+#define LineDef_PointOnSide                 _api_Map.LD_PointOnSide
+#define LineDef_PointXYOnSide               _api_Map.LD_PointXYOnSide
+#define DMU_GetType                         _api_Map.GetType
+#define P_ToIndex                           _api_Map.ToIndex
+#define P_ToPtr                             _api_Map.ToPtr
+#define P_Callback                          _api_Map.Callback
+#define P_Callbackp                         _api_Map.Callbackp
+#define P_Iteratep                          _api_Map.Iteratep
+#define P_AllocDummy                        _api_Map.AllocDummy
+#define P_FreeDummy                         _api_Map.FreeDummy
+#define P_IsDummy                           _api_Map.IsDummy
+#define P_DummyExtraData                    _api_Map.DummyExtraData
+#define P_CountGameMapObjs                  _api_Map.CountGameMapObjs
+#define P_GetGMOByte                        _api_Map.GetGMOByte
+#define P_GetGMOShort                       _api_Map.GetGMOShort
+#define P_GetGMOInt                         _api_Map.GetGMOInt
+#define P_GetGMOFixed                       _api_Map.GetGMOFixed
+#define P_GetGMOAngle                       _api_Map.GetGMOAngle
+#define P_GetGMOFloat                       _api_Map.GetGMOFloat
+#define P_SetBool                           _api_Map.SetBool
+#define P_SetByte                           _api_Map.SetByte
+#define P_SetInt                            _api_Map.SetInt
+#define P_SetFixed                          _api_Map.SetFixed
+#define P_SetAngle                          _api_Map.SetAngle
+#define P_SetFloat                          _api_Map.SetFloat
+#define P_SetDouble                         _api_Map.SetDouble
+#define P_SetPtr                            _api_Map.SetPtr
+#define P_SetBoolv                          _api_Map.SetBoolv
+#define P_SetBytev                          _api_Map.SetBytev
+#define P_SetIntv                           _api_Map.SetIntv
+#define P_SetFixedv                         _api_Map.SetFixedv
+#define P_SetAnglev                         _api_Map.SetAnglev
+#define P_SetFloatv                         _api_Map.SetFloatv
+#define P_SetDoublev                        _api_Map.SetDoublev
+#define P_SetPtrv                           _api_Map.SetPtrv
+#define P_SetBoolp                          _api_Map.SetBoolp
+#define P_SetBytep                          _api_Map.SetBytep
+#define P_SetIntp                           _api_Map.SetIntp
+#define P_SetFixedp                         _api_Map.SetFixedp
+#define P_SetAnglep                         _api_Map.SetAnglep
+#define P_SetFloatp                         _api_Map.SetFloatp
+#define P_SetDoublep                        _api_Map.SetDoublep
+#define P_SetPtrp                           _api_Map.SetPtrp
+#define P_SetBoolpv                         _api_Map.SetBoolpv
+#define P_SetBytepv                         _api_Map.SetBytepv
+#define P_SetIntpv                          _api_Map.SetIntpv
+#define P_SetFixedpv                        _api_Map.SetFixedpv
+#define P_SetAnglepv                        _api_Map.SetAnglepv
+#define P_SetFloatpv                        _api_Map.SetFloatpv
+#define P_SetDoublepv                       _api_Map.SetDoublepv
+#define P_SetPtrpv                          _api_Map.SetPtrpv
+#define P_GetBool                           _api_Map.GetBool
+#define P_GetByte                           _api_Map.GetByte
+#define P_GetInt                            _api_Map.GetInt
+#define P_GetFixed                          _api_Map.GetFixed
+#define P_GetAngle                          _api_Map.GetAngle
+#define P_GetFloat                          _api_Map.GetFloat
+#define P_GetDouble                         _api_Map.GetDouble
+#define P_GetPtr                            _api_Map.GetPtr
+#define P_GetBoolv                          _api_Map.GetBoolv
+#define P_GetBytev                          _api_Map.GetBytev
+#define P_GetIntv                           _api_Map.GetIntv
+#define P_GetFixedv                         _api_Map.GetFixedv
+#define P_GetAnglev                         _api_Map.GetAnglev
+#define P_GetFloatv                         _api_Map.GetFloatv
+#define P_GetDoublev                        _api_Map.GetDoublev
+#define P_GetPtrv                           _api_Map.GetPtrv
+#define P_GetBoolp                          _api_Map.GetBoolp
+#define P_GetBytep                          _api_Map.GetBytep
+#define P_GetIntp                           _api_Map.GetIntp
+#define P_GetFixedp                         _api_Map.GetFixedp
+#define P_GetAnglep                         _api_Map.GetAnglep
+#define P_GetFloatp                         _api_Map.GetFloatp
+#define P_GetDoublep                        _api_Map.GetDoublep
+#define P_GetPtrp                           _api_Map.GetPtrp
+#define P_GetBoolpv                         _api_Map.GetBoolpv
+#define P_GetBytepv                         _api_Map.GetBytepv
+#define P_GetIntpv                          _api_Map.GetIntpv
+#define P_GetFixedpv                        _api_Map.GetFixedpv
+#define P_GetAnglepv                        _api_Map.GetAnglepv
+#define P_GetFloatpv                        _api_Map.GetFloatpv
+#define P_GetDoublepv                       _api_Map.GetDoublepv
+#define P_GetPtrpv                          _api_Map.GetPtrpv
 #endif
 
 #ifdef __DOOMSDAY__

@@ -55,27 +55,6 @@
 extern "C" {
 #endif
 
-/**
- * Public definitions of the internal map data pointers.  These can be
- * accessed externally, but only as identifiers to data instances.
- * For example, a game could use Sector to identify to sector to
- * change with the Map Update API.
- *
- * Define @c __INTERNAL_MAP_DATA_ACCESS__ if access to the internal map data
- * structures is needed.
- */
-#ifndef __INTERNAL_MAP_DATA_ACCESS__
-    typedef struct bspnode_s  { int type; } BspNode;
-    typedef struct vertex_s   { int type; } Vertex;
-    typedef struct linedef_s  { int type; } LineDef;
-    typedef struct sidedef_s  { int type; } SideDef;
-    typedef struct hedge_s    { int type; } HEdge;
-    typedef struct bspleaf_s  { int type; } BspLeaf;
-    typedef struct sector_s   { int type; } Sector;
-    typedef struct plane_s    { int type; } Plane;
-    typedef struct material_s { int type; } material_t;
-#endif
-
 struct font_s;
 
 #ifdef __cplusplus
@@ -108,6 +87,27 @@ struct font_s;
 #include <de/smoother.h>
 #include <de/vector1.h>
 #include <de/writer.h>
+
+/**
+ * Public definitions of the internal map data pointers.  These can be
+ * accessed externally, but only as identifiers to data instances.
+ * For example, a game could use Sector to identify to sector to
+ * change with the Map Update API.
+ *
+ * Define @c DENG_INTERNAL_MAP_DATA_ACCESS if access to the internal map data
+ * structures is needed.
+ */
+#ifndef DENG_INTERNAL_MAP_DATA_ACCESS
+typedef struct bspnode_s  { int type; } BspNode;
+typedef struct vertex_s   { int type; } Vertex;
+typedef struct linedef_s  { int type; } LineDef;
+typedef struct sidedef_s  { int type; } SideDef;
+typedef struct hedge_s    { int type; } HEdge;
+typedef struct bspleaf_s  { int type; } BspLeaf;
+typedef struct sector_s   { int type; } Sector;
+typedef struct plane_s    { int type; } Plane;
+typedef struct material_s { int type; } material_t;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -156,18 +156,6 @@ extern "C" {
  * @ingroup game
  */
 ///@{
-
-int LineDef_BoxOnSide(LineDef* line, const AABoxd* box);
-
-int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
-
-coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
-coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
-
-coord_t LineDef_PointOnSide(LineDef* lineDef, coord_t const point[2]);
-coord_t LineDef_PointXYOnSide(LineDef* lineDef, coord_t x, coord_t y);
-
-void LineDef_SetDivline(LineDef* lineDef, divline_t* dl);
 
 int Divline_PointOnSide(const divline_t* line, coord_t const point[2]);
 int Divline_PointXYOnSide(const divline_t* line, coord_t x, coord_t y);

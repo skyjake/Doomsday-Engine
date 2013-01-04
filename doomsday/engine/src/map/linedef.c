@@ -87,18 +87,21 @@ static LineDef* findBlendNeighbor(LineDef* l, byte side, byte right,
     return R_FindLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);
 }
 
+#undef LineDef_PointDistance
 coord_t LineDef_PointDistance(LineDef* line, coord_t const point[2], coord_t* offset)
 {
     DENG_ASSERT(line);
     return V2d_PointLineDistance(point, line->L_v1origin, line->direction, offset);
 }
 
+#undef LineDef_PointXYDistance
 coord_t LineDef_PointXYDistance(LineDef* line, coord_t x, coord_t y, coord_t* offset)
 {
     coord_t point[2] = { x, y };
     return LineDef_PointDistance(line, point, offset);
 }
 
+#undef LineDef_PointOnSide
 coord_t LineDef_PointOnSide(const LineDef* line, coord_t const point[2])
 {
     DENG_ASSERT(line);
@@ -110,18 +113,21 @@ coord_t LineDef_PointOnSide(const LineDef* line, coord_t const point[2])
     return V2d_PointOnLineSide(point, line->L_v1origin, line->direction);
 }
 
+#undef LineDef_PointXYOnSide
 coord_t LineDef_PointXYOnSide(const LineDef* line, coord_t x, coord_t y)
 {
     coord_t point[2] = { x, y };
     return LineDef_PointOnSide(line, point);
 }
 
+#undef LineDef_BoxOnSide
 int LineDef_BoxOnSide(LineDef* line, const AABoxd* box)
 {
     DENG_ASSERT(line);
     return M_BoxOnLineSide(box, line->L_v1origin, line->direction);
 }
 
+#undef LineDef_BoxOnSide_FixedPrecision
 int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box)
 {
     fixed_t xbox[4];
