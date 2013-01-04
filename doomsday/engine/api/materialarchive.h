@@ -28,12 +28,7 @@
 #include <de/writer.h>
 #include <de/reader.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct material_s;
-
 struct materialarchive_s;
 
 /**
@@ -43,22 +38,26 @@ typedef struct materialarchive_s MaterialArchive;
 
 typedef unsigned short materialarchive_serialid_t;
 
-/**
- * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
- */
-MaterialArchive* MaterialArchive_New(int useSegments);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
  */
-MaterialArchive* MaterialArchive_NewEmpty(int useSegments);
+MaterialArchive *MaterialArchive_New(int useSegments);
 
-void MaterialArchive_Delete(MaterialArchive* arc);
+/**
+ * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
+ */
+MaterialArchive *MaterialArchive_NewEmpty(int useSegments);
+
+void MaterialArchive_Delete(MaterialArchive *arc);
 
 /**
  * @return A new (unused) SerialId for the specified material.
  */
-materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive* arc, struct material_s* mat);
+materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive *arc, struct material_s *mat);
 
 /**
  * Finds and returns a material with the identifier @a serialId.
@@ -69,14 +68,14 @@ materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive* a
  *
  * @return  Pointer to a material instance. Ownership not given.
  */
-struct material_s* MaterialArchive_Find(MaterialArchive* arc, materialarchive_serialid_t serialId, int group);
+struct material_s *MaterialArchive_Find(MaterialArchive *arc, materialarchive_serialid_t serialId, int group);
 
 /**
  * Returns the number of materials in the archive.
  *
  * @param arc  MaterialArchive instance.
  */
-size_t MaterialArchive_Count(MaterialArchive* arc);
+size_t MaterialArchive_Count(MaterialArchive *arc);
 
 /**
  * Serializes the state of the archive using @a writer.
@@ -84,7 +83,7 @@ size_t MaterialArchive_Count(MaterialArchive* arc);
  * @param arc  MaterialArchive instance.
  * @param writer  Writer instance.
  */
-void MaterialArchive_Write(MaterialArchive* arc, Writer* writer);
+void MaterialArchive_Write(MaterialArchive *arc, Writer *writer);
 
 /**
  * Deserializes the state of the archive from @a reader.
@@ -94,7 +93,7 @@ void MaterialArchive_Write(MaterialArchive* arc, Writer* writer);
  *                       version is encountered.
  * @param reader  Reader instance.
  */
-void MaterialArchive_Read(MaterialArchive* arc, int forcedVersion, Reader* reader);
+void MaterialArchive_Read(MaterialArchive *arc, int forcedVersion, Reader *reader);
 
 ///@}
 

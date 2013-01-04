@@ -579,7 +579,7 @@ SOURCES += \
     src/resource/hq2x.c \
     src/resource/image.cpp \
     src/resource/material.cpp \
-    src/resource/materialarchive.c \
+    src/resource/materialarchive.cpp \
     src/resource/materialbind.cpp \
     src/resource/materials.cpp \
     src/resource/materialscheme.cpp \
