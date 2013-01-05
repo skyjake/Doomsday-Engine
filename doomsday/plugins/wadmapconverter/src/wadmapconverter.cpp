@@ -25,7 +25,6 @@
 #include <de/Error>
 #include <de/Log>
 
-#define map                     DENG_PLUGIN_GLOBAL(map)
 Id1Map* map;
 
 /**

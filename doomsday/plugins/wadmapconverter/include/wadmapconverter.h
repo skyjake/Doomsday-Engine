@@ -29,7 +29,7 @@
 #include "doomsday.h"
 #include "id1map.h"
 
-extern Id1Map* DENG_PLUGIN_GLOBAL(map);
+extern Id1Map* map;
 
 DENG_USING_API(Base);
 DENG_USING_API(Material);
