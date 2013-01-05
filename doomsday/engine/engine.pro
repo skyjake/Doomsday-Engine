@@ -427,7 +427,6 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
-    src/api_material.cpp \
     src/api_uri.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
@@ -573,6 +572,7 @@ SOURCES += \
     src/render/vignette.c \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \
+    src/resource/api_material.cpp \
     src/resource/api_resource.c \
     src/resource/bitmapfont.cpp \
     src/resource/colorpalette.c \

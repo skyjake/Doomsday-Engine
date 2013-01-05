@@ -336,7 +336,6 @@ SOURCES += $$SRC/src/ui/displaymode_dummy.c
 # Platform-independent sources.
 SOURCES += \
     src/server_dummies.c \
-    $$SRC/src/api_material.cpp \
     $$SRC/src/api_uri.cpp \
     $$SRC/src/audio/s_cache.c \
     $$SRC/src/audio/s_environ.cpp \
@@ -431,6 +430,7 @@ SOURCES += \
     $$SRC/src/render/r_things.cpp \
     $$SRC/src/render/rend_main.cpp \
     $$SRC/src/resource/animgroups.cpp \
+    $$SRC/src/resource/api_material.cpp \
     $$SRC/src/resource/api_resource.c \
     $$SRC/src/resource/colorpalette.c \
     $$SRC/src/resource/colorpalettes.cpp \
