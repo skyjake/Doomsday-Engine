@@ -43,8 +43,8 @@
 
 #include "dd_def.h"
 #include "dd_share.h"
-#include "dd_api.h"
 #include "dd_games.h"
+#include "api_gameexport.h"
 #include "api_plugin.h"
 #include "dd_main.h"
 #include "dd_loop.h"

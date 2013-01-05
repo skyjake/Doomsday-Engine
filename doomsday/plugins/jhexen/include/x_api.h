@@ -33,13 +33,12 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "dd_api.h"
+#include "doomsday.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern game_import_t gi;
 extern game_export_t gx;
 
 DENG_USING_API(Base);
@@ -52,6 +51,7 @@ DENG_USING_API(F);
 DENG_USING_API(FR);
 DENG_USING_API(GL);
 DENG_USING_API(Infine);
+DENG_USING_API(InternalData);
 DENG_USING_API(Map);
 DENG_USING_API(Material);
 DENG_USING_API(MaterialArchive);

@@ -21,8 +21,6 @@
 #ifndef LIBCOMMON_ITERLIST_H
 #define LIBCOMMON_ITERLIST_H
 
-#include "dd_api.h"
-
 typedef enum {
     ITERLIST_BACKWARD = 0, /// Top to bottom.
     ITERLIST_FORWARD       /// Bottom to top.

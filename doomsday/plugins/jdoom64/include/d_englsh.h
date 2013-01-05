@@ -35,7 +35,7 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-#define GET_TXT(x)          ((*gi.text)? (*gi.text)[x].text : "")
+#define GET_TXT(x)          ((*_api_InternalData.text)? (*_api_InternalData.text)[x].text : "")
 
 #define D_DEVSTR            GET_TXT(TXT_D_DEVSTR)
 #define PRESSKEY            GET_TXT(TXT_PRESSKEY)

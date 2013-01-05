@@ -34,7 +34,7 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#define GET_TXT(x)          ((*gi.text)? (*gi.text)[x].text : "")
+#define GET_TXT(x)          ((*_api_InternalData.text)? (*_api_InternalData.text)[x].text : "")
 
 #define D_DEVSTR            GET_TXT(TXT_D_DEVSTR)
 #define D_CDROM             GET_TXT(TXT_D_CDROM)
@@ -58,7 +58,7 @@
 #define ENDGAME             GET_TXT(TXT_ENDGAME)
 #define ENDNOGAME           GET_TXT(TXT_ENDNOGAME)
 
-#define SUICIDEOUTMAP        GET_TXT(TXT_SUICIDEOUTMAP)
+#define SUICIDEOUTMAP       GET_TXT(TXT_SUICIDEOUTMAP)
 #define SUICIDEASK          GET_TXT(TXT_SUICIDEASK)
 
 #define DOSY                GET_TXT(TXT_DOSY)

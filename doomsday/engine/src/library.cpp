@@ -31,6 +31,7 @@
 #include "api_def.h"
 #include "api_console.h"
 #include "api_filesys.h"
+#include "api_internaldata.h"
 #include "api_material.h"
 #include "api_materialarchive.h"
 #include "api_map.h"
@@ -193,6 +194,7 @@ void Library_PublishAPIs(Library *lib)
         PUBLISH(_api_Def);
         PUBLISH(_api_F);
         PUBLISH(_api_Infine);
+        PUBLISH(_api_InternalData);
         PUBLISH(_api_Map);
         PUBLISH(_api_MPE);
         PUBLISH(_api_Material);

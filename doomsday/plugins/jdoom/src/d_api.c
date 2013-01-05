@@ -30,7 +30,6 @@
 #include <string.h>
 
 #include "doomsday.h"
-#include "dd_api.h"
 
 #include "jdoom.h"
 
@@ -49,7 +48,6 @@
 #define GID(v)          (toGameId(v))
 
 // The interface to the Doomsday engine.
-game_import_t gi;
 game_export_t gx;
 
 // Identifiers given to the games we register during startup.
@@ -204,17 +202,8 @@ boolean G_TryShutdown(void)
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-game_export_t* GetGameAPI(game_import_t* imports)
+game_export_t* GetGameAPI(void)
 {
-    // Make sure this plugin isn't newer than Doomsday...
-    if(imports->version < DOOMSDAY_VERSION)
-        Con_Error(PLUGIN_NICENAME " requires at least " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "!\n");
-
-    // Take a copy of the imports, but only copy as much data as is
-    // allowed and legal.
-    memset(&gi, 0, sizeof(gi));
-    memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
-
     // Clear all of our exports.
     memset(&gx, 0, sizeof(gx));
 
@@ -289,6 +278,7 @@ DENG_DECLARE_API(F);
 DENG_DECLARE_API(FR);
 DENG_DECLARE_API(GL);
 DENG_DECLARE_API(Infine);
+DENG_DECLARE_API(InternalData);
 DENG_DECLARE_API(Material);
 DENG_DECLARE_API(MaterialArchive);
 DENG_DECLARE_API(Map);
@@ -315,6 +305,7 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_FONT_RENDER, FR);
     DENG_GET_API(DE_API_GL, GL);
     DENG_GET_API(DE_API_INFINE, Infine);
+    DENG_GET_API(DE_API_INTERNAL_DATA, InternalData);
     DENG_GET_API(DE_API_MATERIALS, Material);
     DENG_GET_API(DE_API_MATERIAL_ARCHIVE, MaterialArchive);
     DENG_GET_API(DE_API_MAP, Map);

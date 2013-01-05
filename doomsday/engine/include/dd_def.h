@@ -31,7 +31,8 @@
 #include <string.h>
 
 #include "dd_types.h"
-#include "dd_api.h"
+#include "api_gameexport.h"
+#include "api_internaldata.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -109,10 +110,7 @@ enum { CR, CG, CB, CA };           // Color indices.
 
 // dd_pinit.c
 extern game_export_t __gx;
-extern game_import_t __gi;
-
 #define gx __gx
-#define gi __gi
 
 extern byte     gammaTable[256];
 extern float    texGamma;

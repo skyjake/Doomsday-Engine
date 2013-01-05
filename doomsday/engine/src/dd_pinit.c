@@ -41,10 +41,20 @@
 #include "render/r_main.h"
 #include "updater.h"
 
+#include "api_internaldata.h"
+
 /*
  * The game imports and exports.
  */
-game_import_t __gi;
+DENG_DECLARE_API(InternalData) =
+{
+    { DE_API_INTERNAL_DATA },
+    &mobjInfo,
+    &states,
+    &sprNames,
+    &texts,
+    &validCount
+};
 game_export_t __gx;
 
 int DD_CheckArg(char* tag, const char** value)
@@ -75,32 +85,13 @@ void DD_ComposeMainWindowTitle(char* title)
     }
 }
 
-void SetGameImports(game_import_t* imp)
-{
-    memset(imp, 0, sizeof(*imp));
-    imp->apiSize = sizeof(*imp);
-    imp->version = DOOMSDAY_VERSION;
-
-    // Data.
-    imp->mobjInfo = &mobjInfo;
-    imp->states = &states;
-    imp->sprNames = &sprNames;
-    imp->text = &texts;
-
-    imp->validCount = &validCount;
-}
-
 void DD_InitAPI(void)
 {
     GETGAMEAPI GetGameAPI = app.GetGameAPI;
-
-    // Put the imported stuff into the imports.
-    SetGameImports(&__gi);
-
     memset(&__gx, 0, sizeof(__gx));
     if(GetGameAPI)
     {
-        game_export_t* gameExPtr = GetGameAPI(&__gi);
+        game_export_t* gameExPtr = GetGameAPI();
         memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
     }
 }

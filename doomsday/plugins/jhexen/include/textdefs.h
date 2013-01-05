@@ -33,7 +33,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#define GET_TXT(x)          ((*gi.text)? (*gi.text)[x].text : "")
+#define GET_TXT(x)          ((*_api_InternalData.text)? (*_api_InternalData.text)[x].text : "")
 
 #define NUM_QUITMESSAGES    0
 

@@ -87,8 +87,10 @@ DENG_API_HEADERS = \
     api/api_def.h \
     api/api_event.h \
     api/api_infine.h \
+    api/api_internaldata.h \
     api/api_filesys.h \
     api/api_fontrender.h \
+    api/api_gameexport.h \
     api/api_gl.h \
     api/api_material.h \
     api/api_materialarchive.h \
@@ -104,7 +106,6 @@ DENG_API_HEADERS = \
     api/api_thinker.h \
     api/api_uri.h \
     api/api_wad.h \
-    api/dd_api.h \
     api/dd_maptypes.h \
     api/dd_share.h \
     api/dd_types.h \

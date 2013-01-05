@@ -42,9 +42,6 @@ enum {
     DE_API_DEFINITIONS_v1        = 500,     // 1.10
     DE_API_DEFINITIONS           = DE_API_DEFINITIONS_v1,
 
-    DE_API_DIRECT_DATA_ACCESS_v1 = 600,     // 1.10
-    DE_API_DIRECT_DATA_ACCESS    = DE_API_DIRECT_DATA_ACCESS_v1,
-
     DE_API_FILE_SYSTEM_v1        = 700,     // 1.10
     DE_API_FILE_SYSTEM           = DE_API_FILE_SYSTEM_v1,
 
@@ -56,6 +53,9 @@ enum {
 
     DE_API_INFINE_v1             = 1000,    // 1.10
     DE_API_INFINE                = DE_API_INFINE_v1,
+
+    DE_API_INTERNAL_DATA_v1      = 600,     // 1.10
+    DE_API_INTERNAL_DATA         = DE_API_INTERNAL_DATA_v1,
 
     DE_API_MAP_v1                = 1100,    // 1.10
     DE_API_MAP                   = DE_API_MAP_v1,
