@@ -180,7 +180,7 @@ materialvariantspecification_t const *Ui_MaterialSpec()
                                                            0, -3, 0, false, false, false, false);
 }
 
-void R_DrawViewBorder(void)
+void R_DrawViewBorder()
 {
     DENG_ASSERT(inited);
 
@@ -216,7 +216,7 @@ void R_DrawViewBorder(void)
 
     // View background.
     Materials &materials = *App_Materials();
-    material_t *mat = materials.toMaterial(materials.resolveUri2(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]), true/*quiet please*/));
+    material_t *mat = materials.find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND])).material();
     if(mat)
     {
         MaterialSnapshot const &ms = *materials.prepare(*mat, *Ui_MaterialSpec(), true);

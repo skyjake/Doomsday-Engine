@@ -21,13 +21,97 @@
 #include <de/memory.h>
 
 #include "uri.hh"
+#include "resource/materials.h"
 #include "resource/materialbind.h"
 
 namespace de {
 
-MaterialBind &MaterialBind::setMaterial(material_t *newMaterial)
+struct MaterialBind::Instance
 {
-    if(asocMaterial != newMaterial)
+    /// This binding's node in the directory.
+    MaterialScheme::Index::Node *direcNode;
+
+    /// Material associated with this.
+    material_t *asocMaterial;
+
+    /// Unique identifier.
+    materialid_t guid;
+
+    /// Extended info about this binding. Will be attached upon successfull preparation
+    /// of the first derived variant of the associated Material.
+    MaterialBindInfo *extInfo;
+
+    Instance(MaterialScheme::Index::Node &_direcNode, materialid_t id)
+        : direcNode(&_direcNode), asocMaterial(0), guid(id), extInfo(0)
+    {}
+};
+
+MaterialBind::MaterialBind(MaterialScheme::Index::Node &_direcNode, materialid_t id)
+{
+    d = new Instance(_direcNode, id);
+}
+
+MaterialBind::~MaterialBind()
+{
+    MaterialBindInfo *detachedInfo = detachInfo();
+    if(detachedInfo) M_Free(detachedInfo);
+    delete d;
+}
+
+Materials &MaterialBind::materials()
+{
+    return *App_Materials();
+}
+
+MaterialScheme &MaterialBind::scheme() const
+{
+    LOG_AS("MaterialBind::scheme");
+    /// @todo Optimize: MaterialBind should contain a link to the owning MaterialScheme.
+    Materials::Schemes const &schemes = materials().allSchemes();
+    DENG2_FOR_EACH_CONST(Materials::Schemes, i, schemes)
+    {
+        MaterialScheme &scheme = **i;
+        if(&scheme.index() == &d->direcNode->tree()) return scheme;
+    }
+
+    // This should never happen...
+    /// @throw Error Failed to determine the scheme of the manifest.
+    throw Error("MaterialBind::scheme", String("Failed to determine scheme for bind [%p].").arg(de::dintptr(this)));
+}
+
+String const &MaterialBind::schemeName() const
+{
+    return scheme().name();
+}
+
+Uri MaterialBind::composeUri(QChar sep) const
+{
+    return Uri(schemeName(), d->direcNode->path(sep));
+}
+
+materialid_t MaterialBind::id() const
+{
+    return d->guid;
+}
+
+MaterialScheme::Index::Node &MaterialBind::directoryNode() const
+{
+    return *d->direcNode;
+}
+
+material_t *MaterialBind::material() const
+{
+    return d->asocMaterial;
+}
+
+MaterialBindInfo *MaterialBind::info() const
+{
+    return d->extInfo;
+}
+
+void MaterialBind::setMaterial(material_t *newMaterial)
+{
+    if(d->asocMaterial != newMaterial)
     {
         // Any extended info will be invalid after this op, so destroy it
         // (it will automatically be rebuilt later, if subsequently needed).
@@ -35,55 +119,53 @@ MaterialBind &MaterialBind::setMaterial(material_t *newMaterial)
         if(detachedInfo) M_Free(detachedInfo);
 
         // Associate with the new Material.
-        asocMaterial = newMaterial;
+        d->asocMaterial = newMaterial;
     }
-    return *this;
 }
 
-MaterialBind &MaterialBind::attachInfo(MaterialBindInfo &info)
+void MaterialBind::attachInfo(MaterialBindInfo &info)
 {
     LOG_AS("MaterialBind::attachInfo");
-    if(extInfo)
+    if(d->extInfo)
     {
 #if _DEBUG
-        Uri uri = App_Materials()->composeUri(guid);
+        Uri uri = composeUri(d->guid);
         LOG_DEBUG("Info already present for \"%s\", will replace.") << uri;
 #endif
-        M_Free(extInfo);
+        M_Free(d->extInfo);
     }
-    extInfo = &info;
-    return *this;
+    d->extInfo = &info;
 }
 
 MaterialBindInfo *MaterialBind::detachInfo()
 {
-    MaterialBindInfo *retInfo = extInfo;
-    extInfo = 0;
+    MaterialBindInfo *retInfo = d->extInfo;
+    d->extInfo = 0;
     return retInfo;
 }
 
 ded_detailtexture_t *MaterialBind::detailTextureDef() const
 {
-    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return 0;
-    return extInfo->detailtextureDefs[Material_Prepared(asocMaterial)-1];
+    if(!d->extInfo || !d->asocMaterial || !Material_Prepared(d->asocMaterial)) return 0;
+    return d->extInfo->detailtextureDefs[Material_Prepared(d->asocMaterial) - 1];
 }
 
 ded_decor_t *MaterialBind::decorationDef() const
 {
-    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return 0;
-    return extInfo->decorationDefs[Material_Prepared(asocMaterial)-1];
+    if(!d->extInfo || !d->asocMaterial || !Material_Prepared(d->asocMaterial)) return 0;
+    return d->extInfo->decorationDefs[Material_Prepared(d->asocMaterial) - 1];
 }
 
 ded_ptcgen_t *MaterialBind::ptcGenDef() const
 {
-    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return 0;
-    return extInfo->ptcgenDefs[Material_Prepared(asocMaterial)-1];
+    if(!d->extInfo || !d->asocMaterial || !Material_Prepared(d->asocMaterial)) return 0;
+    return d->extInfo->ptcgenDefs[Material_Prepared(d->asocMaterial) - 1];
 }
 
 ded_reflection_t *MaterialBind::reflectionDef() const
 {
-    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return 0;
-    return extInfo->reflectionDefs[Material_Prepared(asocMaterial)-1];
+    if(!d->extInfo || !d->asocMaterial || !Material_Prepared(d->asocMaterial)) return 0;
+    return d->extInfo->reflectionDefs[Material_Prepared(d->asocMaterial)-1];
 }
 
 } // namespace de

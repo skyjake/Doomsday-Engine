@@ -12,8 +12,15 @@ materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
     {
         de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*_textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
-        return App_Materials()->resolveUri2(uri, true/*quiet please*/);
+        return App_Materials()->find(uri).id();
     }
+    catch(de::Materials::UnknownSchemeError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+    catch(de::Materials::NotFoundError const &)
+    {} // Ignore this error.
     catch(de::Textures::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.

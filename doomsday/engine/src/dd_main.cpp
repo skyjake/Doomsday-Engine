@@ -2612,40 +2612,33 @@ fontschemeid_t DD_ParseFontSchemeName(const char* str)
     return Fonts_ParseScheme(str);
 }
 
-String const &DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
+String DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
 {
-    materialschemeid_t schemeId = MS_INVALID; // Unknown.
-
     if(!textureSchemeName.compareWithoutCase("Textures"))
     {
-        schemeId = MS_TEXTURES;
+        return "Textures";
     }
-    else if(!textureSchemeName.compareWithoutCase("Flats"))
+    if(!textureSchemeName.compareWithoutCase("Flats"))
     {
-        schemeId = MS_FLATS;
+        return "Flats";
     }
-    else if(!textureSchemeName.compareWithoutCase("Sprites"))
+    if(!textureSchemeName.compareWithoutCase("Sprites"))
     {
-        schemeId = MS_SPRITES;
+        return "Sprites";
     }
-    else if(!textureSchemeName.compareWithoutCase("Patches"))
+    if(!textureSchemeName.compareWithoutCase("System"))
     {
-        schemeId = MS_ANY; // No materials for these yet.
-    }
-    else if(!textureSchemeName.compareWithoutCase("System"))
-    {
-        schemeId = MS_SYSTEM;
+        return "System";
     }
 
-    return App_Materials()->schemeName(schemeId);
+    return "";
 }
 
 AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
 {
     if(!textureSchemeName)
     {
-        QByteArray schemeNameUtf8 = App_Materials()->schemeName(MS_INVALID).toUtf8();
-        return AutoStr_FromTextStd(schemeNameUtf8.constData());
+        return AutoStr_FromTextStd("");
     }
     else
     {

@@ -1,6 +1,4 @@
-/**
- * @file texturescheme.cpp Texture system subspace scheme.
- * @ingroup resource
+/** @file texturescheme.cpp Texture system subspace scheme.
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  *
@@ -19,6 +17,7 @@
  * 02110-1301 USA</small>
  */
 
+#include "resource/texturemanifest.h"
 #include "resource/texturescheme.h"
 
 namespace de {
@@ -29,7 +28,7 @@ struct TextureScheme::Instance
     String name;
 
     /// Mappings from paths to manifests.
-    TextureScheme::Index *index_;
+    TextureScheme::Index *index;
 
     /// LUT which translates scheme-unique-ids to their associated manifest (if any).
     /// Index with uniqueId - uniqueIdBase.
@@ -38,21 +37,16 @@ struct TextureScheme::Instance
     int uniqueIdBase;
 
     Instance(String symbolicName)
-        : name(symbolicName), index_(new TextureScheme::Index()),
+        : name(symbolicName), index(new TextureScheme::Index()),
           uniqueIdLut(), uniqueIdLutDirty(false), uniqueIdBase(0)
     {}
 
     ~Instance()
     {
-        if(index_)
+        if(index)
         {
-            PathTreeIterator<Index> iter(index_->leafNodes());
-            while(iter.hasNext())
-            {
-                TextureManifest &manifest = iter.next();
-                deindex(manifest);
-            }
-            delete index_;
+            DENG_ASSERT(index->isEmpty());
+            delete index;
         }
     }
 
@@ -65,7 +59,7 @@ struct TextureScheme::Instance
     {
         if(!minId && !maxId) return;
 
-        if(!index_)
+        if(!index)
         {
             if(minId) *minId = 0;
             if(maxId) *maxId = 0;
@@ -75,7 +69,7 @@ struct TextureScheme::Instance
         if(minId) *minId = DDMAXINT;
         if(maxId) *maxId = DDMININT;
 
-        PathTreeIterator<Index> iter(index_->leafNodes());
+        PathTreeIterator<Index> iter(index->leafNodes());
         while(iter.hasNext())
         {
             TextureManifest &manifest = iter.next();
@@ -155,7 +149,7 @@ struct TextureScheme::Instance
         if(lutSize)
         {
             // Populate the LUT.
-            PathTreeIterator<Index> iter(index_->leafNodes());
+            PathTreeIterator<Index> iter(index->leafNodes());
             while(iter.hasNext())
             {
                 linkInUniqueIdLut(iter.next());
@@ -173,19 +167,20 @@ TextureScheme::TextureScheme(String symbolicName)
 
 TextureScheme::~TextureScheme()
 {
+    clear();
     delete d;
 }
 
 void TextureScheme::clear()
 {
-    if(d->index_)
+    if(d->index)
     {
-        PathTreeIterator<Index> iter(d->index_->leafNodes());
+        PathTreeIterator<Index> iter(d->index->leafNodes());
         while(iter.hasNext())
         {
             d->deindex(iter.next());
         }
-        d->index_->clear();
+        d->index->clear();
         d->uniqueIdLutDirty = true;
     }
 }
@@ -197,14 +192,14 @@ String const &TextureScheme::name() const
 
 int TextureScheme::size() const
 {
-    return d->index_->size();
+    return d->index->size();
 }
 
 TextureManifest &TextureScheme::insertManifest(Path const &path)
 {
-    int sizeBefore = d->index_->size();
-    TextureManifest &manifest = d->index_->insert(path);
-    if(d->index_->size() != sizeBefore)
+    int sizeBefore = d->index->size();
+    TextureManifest &manifest = d->index->insert(path);
+    if(d->index->size() != sizeBefore)
     {
         // We'll need to rebuild the unique id LUT after this.
         d->uniqueIdLutDirty = true;
@@ -216,11 +211,11 @@ TextureManifest const &TextureScheme::find(Path const &path) const
 {
     try
     {
-        return d->index_->find(path, PathTree::NoBranch | PathTree::MatchFull);
+        return d->index->find(path, Index::NoBranch | Index::MatchFull);
     }
     catch(Index::NotFoundError const &er)
     {
-        throw NotFoundError("Textures::Scheme::find", er.asText());
+        throw NotFoundError("TextureScheme::find", er.asText());
     }
 }
 
@@ -234,7 +229,7 @@ TextureManifest const &TextureScheme::findByResourceUri(Uri const &uri) const
 {
     if(!uri.isEmpty())
     {
-        PathTreeIterator<Index> iter(d->index_->leafNodes());
+        PathTreeIterator<Index> iter(d->index->leafNodes());
         while(iter.hasNext())
         {
             TextureManifest &manifest = iter.next();
@@ -275,7 +270,7 @@ TextureManifest &TextureScheme::findByUniqueId(int uniqueId)
 
 TextureScheme::Index const &TextureScheme::index() const
 {
-    return *d->index_;
+    return *d->index;
 }
 
 void TextureScheme::markUniqueIdLutDirty()
