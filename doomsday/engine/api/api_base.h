@@ -152,6 +152,11 @@ DENG_API_TYPEDEF(Base) // v1
      * @param length     Length of the data.
      */
     void (*SendPacket)(int to_player, int type, const void* data, size_t length);
+
+    /**
+     * Called by the game at various points in the map setup process.
+     */
+    void (*SetupMap)(int mode, int flags);
 }
 DENG_API_T(Base);
 
@@ -167,6 +172,7 @@ DENG_API_T(Base);
 #define DD_GameInfo         _api_Base.gameInfo
 #define DD_IsSharpTick      _api_Base.IsSharpTick
 #define Net_SendPacket      _api_Base.SendPacket
+#define R_SetupMap          _api_Base.SetupMap
 #endif
 
 #ifdef __DOOMSDAY__

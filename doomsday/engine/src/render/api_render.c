@@ -37,14 +37,12 @@ DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWid
 DENG_EXTERN_C scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 
 // r_world.cpp
-DENG_EXTERN_C void R_SetupMap(int mode, int flags);
 DENG_EXTERN_C void R_SetupFogDefaults(void);
 DENG_EXTERN_C void R_SetupFog(float start, float end, float density, float* rgb);
 
 DENG_DECLARE_API(Rend) =
 {
     { DE_API_RENDER },
-    R_SetupMap,
     R_SetupFogDefaults,
     R_SetupFog,
     Rend_CacheForMobjType,

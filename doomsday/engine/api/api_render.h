@@ -28,10 +28,6 @@ DENG_API_TYPEDEF(Rend)
 {
     de_api_t api;
 
-    /**
-     * Called by the game at various points in the map setup process.
-     */
-    void (*SetupMap)(int mode, int flags);
     void (*SetupFogDefaults)(void);
     void (*SetupFog)(float start, float end, float density, float* rgb);
 
@@ -147,7 +143,6 @@ DENG_API_TYPEDEF(Rend)
 DENG_API_T(Rend);
 
 #ifndef DENG_NO_API_MACROS_RENDER
-#define R_SetupMap                  _api_Rend.SetupMap
 #define R_SetupFogDefaults          _api_Rend.SetupFogDefaults
 #define R_SetupFog                  _api_Rend.SetupFog
 #define Rend_CacheForMobjType		_api_Rend.CacheForMobjType

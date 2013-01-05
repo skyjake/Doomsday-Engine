@@ -855,6 +855,8 @@ void R_LoadVectorGraphics(void)
         { 3, anglePoints }
     };
 
+    if(IS_DEDICATED) return;
+
     R_NewSvg(VG_KEY, key, NUMITEMS(key));
     R_NewSvg(VG_TRIANGLE, thintriangle, NUMITEMS(thintriangle));
     R_NewSvg(VG_ARROW, arrow, NUMITEMS(arrow));
@@ -1211,8 +1213,11 @@ void G_BeginMap(void)
 {
     G_ChangeGameState(GS_MAP);
 
-    R_SetViewPortPlayer(CONSOLEPLAYER, CONSOLEPLAYER); // View the guy you are playing.
-    R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
+    if(!IS_DEDICATED)
+    {
+        R_SetViewPortPlayer(CONSOLEPLAYER, CONSOLEPLAYER); // View the guy you are playing.
+        R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
+    }
 
     G_ControlReset(-1); // Clear all controls for all local players.
     G_UpdateGSVarsForMap();
@@ -1270,6 +1275,8 @@ static void initFogForMap(ddmapinfo_t* mapInfo)
 #if __JHEXEN__
     int fadeTable;
 #endif
+
+    if(IS_DEDICATED) return;
 
     if(!mapInfo || !(mapInfo->flags & MIF_FOG))
     {

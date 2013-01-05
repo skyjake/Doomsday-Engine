@@ -2920,6 +2920,9 @@ DENG_EXTERN_C boolean DD_IsSharpTick(void);
 // net_main.c
 DENG_EXTERN_C void Net_SendPacket(int to_player, int type, const void* data, size_t length);
 
+// r_world.cpp
+DENG_EXTERN_C void R_SetupMap(int mode, int flags);
+
 // sys_system.c
 DENG_EXTERN_C void Sys_Quit(void);
 
@@ -2937,5 +2940,6 @@ DENG_DECLARE_API(Base) =
     DD_AddGameResource,
     DD_GameInfo,
     DD_IsSharpTick,
-    Net_SendPacket
+    Net_SendPacket,
+    R_SetupMap
 };

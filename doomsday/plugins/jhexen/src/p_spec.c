@@ -86,36 +86,39 @@ void P_InitSky(uint map)
     sky2ColumnOffset = 0;
     doubleSky = P_GetMapDoubleSky(map);
 
-    // First disable all sky layers.
-    R_SkyParams(DD_SKY, DD_DISABLE, NULL);
-
-    // Sky2 is layer zero and Sky1 is layer one.
-    fval = 0;
-    R_SkyParams(0, DD_OFFSET, &fval);
-    R_SkyParams(1, DD_OFFSET, &fval);
-    if(doubleSky && sky2Material)
+    if(!IS_DEDICATED)
     {
-        R_SkyParams(0, DD_ENABLE, NULL);
-        ival = DD_NO;
-        R_SkyParams(0, DD_MASK, &ival);
-        R_SkyParams(0, DD_MATERIAL, &sky2Material);
+        // First disable all sky layers.
+        R_SkyParams(DD_SKY, DD_DISABLE, NULL);
 
-        R_SkyParams(1, DD_ENABLE, NULL);
-        ival = DD_YES;
-        R_SkyParams(1, DD_MASK, &ival);
-        R_SkyParams(1, DD_MATERIAL, &sky1Material);
-    }
-    else
-    {
-        R_SkyParams(0, DD_ENABLE, NULL);
-        ival = DD_NO;
-        R_SkyParams(0, DD_MASK, &ival);
-        R_SkyParams(0, DD_MATERIAL, &sky1Material);
+        // Sky2 is layer zero and Sky1 is layer one.
+        fval = 0;
+        R_SkyParams(0, DD_OFFSET, &fval);
+        R_SkyParams(1, DD_OFFSET, &fval);
+        if(doubleSky && sky2Material)
+        {
+            R_SkyParams(0, DD_ENABLE, NULL);
+            ival = DD_NO;
+            R_SkyParams(0, DD_MASK, &ival);
+            R_SkyParams(0, DD_MATERIAL, &sky2Material);
 
-        R_SkyParams(1, DD_DISABLE, NULL);
-        ival = DD_NO;
-        R_SkyParams(1, DD_MASK, &ival);
-        R_SkyParams(1, DD_MATERIAL, &sky2Material);
+            R_SkyParams(1, DD_ENABLE, NULL);
+            ival = DD_YES;
+            R_SkyParams(1, DD_MASK, &ival);
+            R_SkyParams(1, DD_MATERIAL, &sky1Material);
+        }
+        else
+        {
+            R_SkyParams(0, DD_ENABLE, NULL);
+            ival = DD_NO;
+            R_SkyParams(0, DD_MASK, &ival);
+            R_SkyParams(0, DD_MATERIAL, &sky1Material);
+
+            R_SkyParams(1, DD_DISABLE, NULL);
+            ival = DD_NO;
+            R_SkyParams(1, DD_MASK, &ival);
+            R_SkyParams(1, DD_MATERIAL, &sky2Material);
+        }
     }
 }
 
@@ -124,8 +127,12 @@ void P_AnimateSky(void)
     // Update sky column offsets
     sky1ColumnOffset += sky1ScrollDelta;
     sky2ColumnOffset += sky2ScrollDelta;
-    R_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
-    R_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
+
+    if(!IS_DEDICATED)
+    {
+        R_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
+        R_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
+    }
 }
 
 boolean EV_SectorSoundChange(byte* args)
@@ -874,8 +881,11 @@ static void P_LightningFlash(void)
                 }
             }
 
-            R_SkyParams(1, DD_DISABLE, NULL);
-            R_SkyParams(0, DD_ENABLE, NULL);
+            if(!IS_DEDICATED)
+            {
+                R_SkyParams(1, DD_DISABLE, NULL);
+                R_SkyParams(0, DD_ENABLE, NULL);
+            }
         }
 
         return;
@@ -927,9 +937,12 @@ static void P_LightningFlash(void)
         mobj_t*             plrmo = players[DISPLAYPLAYER].plr->mo;
         mobj_t*             crashOrigin = NULL;
 
-        // Set the alternate (lightning) sky.
-        R_SkyParams(0, DD_DISABLE, NULL);
-        R_SkyParams(1, DD_ENABLE, NULL);
+        if(!IS_DEDICATED)
+        {
+            // Set the alternate (lightning) sky.
+            R_SkyParams(0, DD_DISABLE, NULL);
+            R_SkyParams(1, DD_ENABLE, NULL);
+        }
 
         // If 3D sounds are active, position the clap somewhere above
         // the player.
