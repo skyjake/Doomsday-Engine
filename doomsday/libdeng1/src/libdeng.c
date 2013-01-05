@@ -1,9 +1,8 @@
 /**
- * @file blockmapvisual.h
- * Graphical Blockmap Visual. @ingroup map
+ * @file libdeng.c
+ * Main interface.
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,17 +19,32 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_BLOCKMAP_VISUAL_H
-#define LIBDENG_MAP_BLOCKMAP_VISUAL_H
+#include "de/libdeng1.h"
+#include "de/binangle.h"
+#include "de/garbage.h"
+#include "de/concurrency.h"
+#include "de/timer.h"
+#include "memoryzone_private.h"
 
-#include <de/libdeng1.h>
+#include <stdlib.h>
 
-DENG_EXTERN_C byte bmapShowDebug; ///< cvar
-DENG_EXTERN_C float bmapDebugSize; ///< cvar
+void Libdeng_Init(void)
+{
+    bamsInit();
+    Timer_Init();
+    Z_Init();
+    Garbage_Init();
+    Sys_MarkAsMainThread();
+}
 
-/**
- * Render the Blockmap debugging visual.
- */
-DENG_EXTERN_C void Rend_BlockmapDebug(void);
+void Libdeng_Shutdown(void)
+{
+    Garbage_Shutdown();
+    Z_Shutdown();
+    Timer_Shutdown();
+}
 
-#endif /// LIBDENG_MAP_BLOCKMAP_VISUAL_H
+void Libdeng_BadAlloc(void)
+{
+    exit(-1);
+}

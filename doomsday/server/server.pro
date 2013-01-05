@@ -23,7 +23,7 @@ include(../dep_zlib.pri)
 include(../dep_curses.pri)
 include(../dep_lzss.pri)
 include(../dep_deng2.pri)
-include(../dep_deng.pri)
+include(../dep_deng1.pri)
 
 # TODO: Get rid of this. The dedicated server should need no GL code.
 win32: include(../dep_opengl.pri)

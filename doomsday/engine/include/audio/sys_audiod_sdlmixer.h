@@ -32,7 +32,7 @@
 #ifndef __DOOMSDAY_SYSTEM_AUDIO_SDLMIXER_H__
 #define __DOOMSDAY_SYSTEM_AUDIO_SDLMIXER_H__
 
-#include <de/libdeng.h>
+#include <de/libdeng1.h>
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 #include "api_audiod_mus.h"

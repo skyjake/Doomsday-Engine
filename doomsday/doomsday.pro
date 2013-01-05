@@ -6,7 +6,7 @@ CONFIG += ordered
 SUBDIRS =    \
     build    \
     libdeng2 \
-    libdeng  \
+    libdeng1 \
     engine   \
     server   \
     plugins  \

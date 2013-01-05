@@ -1,5 +1,4 @@
-/**
- * @file g_eventsequence.c
+/** @file g_eventsequence.cpp
  * Input (keyboard) event sequences. @ingroup libcommon
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

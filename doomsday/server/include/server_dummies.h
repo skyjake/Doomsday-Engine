@@ -29,7 +29,7 @@
 #ifndef SERVER_DUMMIES_H
 #define SERVER_DUMMIES_H
 
-#include <de/libdeng.h>
+#include <de/libdeng1.h>
 #include "map/sector.h"
 
 #ifndef __SERVER__

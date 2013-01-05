@@ -33,7 +33,7 @@
 
 /// @todo Find a better way to access the private data of the zone
 /// (e.g., move this into the library and use an abstract graphics interface).
-#include "../../libdeng/src/memoryzone_private.h"
+#include "../../libdeng1/src/memoryzone_private.h"
 
 void Z_DrawRegion(memvolume_t* volume, RectRaw* rect, size_t start, size_t size, const float* color)
 {

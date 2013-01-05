@@ -25,7 +25,7 @@ win32 {
     include(../dep_directx.pri)
 }
 include(../dep_deng2.pri)
-include(../dep_deng.pri)
+include(../dep_deng1.pri)
 
 # Definitions ----------------------------------------------------------------
 

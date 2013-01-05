@@ -1,6 +1,6 @@
 /**
- * @file blockmapvisual.h
- * Graphical Blockmap Visual. @ingroup map
+ * @file memory.h
+ * Memory allocations. @ingroup system
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -20,17 +20,28 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_BLOCKMAP_VISUAL_H
-#define LIBDENG_MAP_BLOCKMAP_VISUAL_H
+#ifndef LIBDENG_SYSTEM_MEMORY_H
+#define LIBDENG_SYSTEM_MEMORY_H
 
 #include <de/libdeng1.h>
+#include <string.h> // memcpy
 
-DENG_EXTERN_C byte bmapShowDebug; ///< cvar
-DENG_EXTERN_C float bmapDebugSize; ///< cvar
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/**
- * Render the Blockmap debugging visual.
- */
-DENG_EXTERN_C void Rend_BlockmapDebug(void);
+DENG_PUBLIC void *M_Malloc(size_t size);
 
-#endif /// LIBDENG_MAP_BLOCKMAP_VISUAL_H
+DENG_PUBLIC void *M_Calloc(size_t size);
+
+DENG_PUBLIC void *M_Realloc(void *ptr, size_t size);
+
+DENG_PUBLIC void *M_MemDup(void const *ptr, size_t size);
+
+DENG_PUBLIC void M_Free(void *ptr);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBDENG_SYSTEM_MEMORY_H
