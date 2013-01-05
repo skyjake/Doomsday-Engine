@@ -976,29 +976,6 @@ char* M_SkipLine(char* str)
     return str;
 }
 
-char* M_StrCatQuoted(char* dest, const char* src, size_t len)
-{
-    size_t k = strlen(dest) + 1, i;
-
-    strncat(dest, "\"", len);
-    for(i = 0; src[i]; i++)
-    {
-        if(src[i] == '"')
-        {
-            strncat(dest, "\\\"", len);
-            k += 2;
-        }
-        else
-        {
-            dest[k++] = src[i];
-            dest[k] = 0;
-        }
-    }
-    strncat(dest, "\"", len);
-
-    return dest;
-}
-
 boolean M_IsStringValidInt(const char* str)
 {
     size_t i, len;
@@ -1093,6 +1070,29 @@ char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize)
     }
     if(n <= 0) return buf; // No space left.
     return strncat(buf, str, n);
+}
+
+char* M_StrCatQuoted(char* dest, const char* src, size_t len)
+{
+    size_t k = strlen(dest) + 1, i;
+
+    strncat(dest, "\"", len);
+    for(i = 0; src[i]; i++)
+    {
+        if(src[i] == '"')
+        {
+            strncat(dest, "\\\"", len);
+            k += 2;
+        }
+        else
+        {
+            dest[k++] = src[i];
+            dest[k] = 0;
+        }
+    }
+    strncat(dest, "\"", len);
+
+    return dest;
 }
 
 char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,

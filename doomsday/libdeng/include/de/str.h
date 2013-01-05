@@ -509,15 +509,15 @@ DENG_PUBLIC void M_Strip(char* str, size_t len);
 
 DENG_PUBLIC char* M_SkipLine(char* str);
 
+DENG_PUBLIC char* M_StrCat(char* buf, const char* str, size_t bufSize);
+
+DENG_PUBLIC char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize);
+
 /**
  * Concatenates src to dest as a quoted string. " is escaped to \".
  * Returns dest.
  */
 DENG_PUBLIC char* M_StrCatQuoted(char* dest, const char* src, size_t len);
-
-DENG_PUBLIC char* M_StrCat(char* buf, const char* str, size_t bufSize);
-
-DENG_PUBLIC char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize);
 
 DENG_PUBLIC char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth, char separator, size_t bufLength);
 
