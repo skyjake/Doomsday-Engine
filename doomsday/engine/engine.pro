@@ -712,7 +712,7 @@ macx {
 
     # libdeng1 and 2 dynamic libraries.
     doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
-    doPostLink("cp -fRp $$OUT_PWD/../libdeng/libdeng1*dylib $$FW_DIR")
+    doPostLink("cp -fRp $$OUT_PWD/../libdeng1/libdeng1*dylib $$FW_DIR")
 
     # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng2.2.dylib, ..)
