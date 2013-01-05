@@ -189,6 +189,9 @@ typedef struct {
     float           color[4];
 } dgl_fc3vertex_t;
 
+/// @defgroup scaleModes  Scale Modes
+/// @ingroup gl
+/// @{
 typedef enum {
     SCALEMODE_FIRST = 0,
     SCALEMODE_SMART_STRETCH = SCALEMODE_FIRST,
@@ -197,6 +200,7 @@ typedef enum {
     SCALEMODE_LAST = SCALEMODE_STRETCH,
     SCALEMODE_COUNT
 } scalemode_t;
+/// @}
 
 /**
  * @defgroup borderedProjectionFlags  Bordered Projection Flags

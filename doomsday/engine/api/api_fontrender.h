@@ -1,6 +1,4 @@
-/**
- * @file dd_fontrenderer.h
- * Font renderer.
+/** @file api_fontrender.h Font renderer.
  *
  * @ingroup gl
  *

@@ -1,6 +1,4 @@
-/**
- * @file dd_plugin.h
- * Plugin subsystem.
+/** @file api_plugin.h Plugin subsystem.
  * @ingroup base
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

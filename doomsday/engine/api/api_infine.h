@@ -1,6 +1,4 @@
-/**
- * @file api_infine.h
- * Interactive animation sequence system.
+/** @file api_infine.h Interactive animation sequence system.
  *
  * @ingroup infine
  *

@@ -34,6 +34,26 @@ struct linedef_s;
 struct sector_s;
 struct bspleaf_s;
 
+/**
+ * Public definitions of the internal map data pointers.  These can be
+ * accessed externally, but only as identifiers to data instances.
+ * For example, a game could use Sector to identify to sector to
+ * change with the Map Update API.
+ *
+ * Define @c DENG_INTERNAL_DATA_ACCESS if access to the internal map data
+ * structures is needed.
+ */
+#if !defined __DOOMSDAY__ && !defined DENG_INTERNAL_DATA_ACCESS
+typedef struct bspnode_s  { int type; } BspNode;
+typedef struct vertex_s   { int type; } Vertex;
+typedef struct linedef_s  { int type; } LineDef;
+typedef struct sidedef_s  { int type; } SideDef;
+typedef struct hedge_s    { int type; } HEdge;
+typedef struct bspleaf_s  { int type; } BspLeaf;
+typedef struct sector_s   { int type; } Sector;
+typedef struct plane_s    { int type; } Plane;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

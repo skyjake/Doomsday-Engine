@@ -81,27 +81,6 @@
 #include <de/writer.h>
 
 /**
- * Public definitions of the internal map data pointers.  These can be
- * accessed externally, but only as identifiers to data instances.
- * For example, a game could use Sector to identify to sector to
- * change with the Map Update API.
- *
- * Define @c DENG_INTERNAL_MAP_DATA_ACCESS if access to the internal map data
- * structures is needed.
- */
-#ifndef DENG_INTERNAL_MAP_DATA_ACCESS
-typedef struct bspnode_s  { int type; } BspNode;
-typedef struct vertex_s   { int type; } Vertex;
-typedef struct linedef_s  { int type; } LineDef;
-typedef struct sidedef_s  { int type; } SideDef;
-typedef struct hedge_s    { int type; } HEdge;
-typedef struct bspleaf_s  { int type; } BspLeaf;
-typedef struct sector_s   { int type; } Sector;
-typedef struct plane_s    { int type; } Plane;
-typedef struct material_s { int type; } material_t;
-#endif
-
-/**
  * @defgroup base Base
  */
 

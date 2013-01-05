@@ -1,7 +1,7 @@
 /** @file api/apis.h Doomsday's public API mechanism.
  * @ingroup base
  *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,7 +22,17 @@
 
 #include <de/libdeng.h>
 
-/// All APIs exported from the executable.
+/**
+ * All APIs exported from the executable.
+ *
+ * @par Freezing Policy
+ *
+ * If changes are made to an API after it has been included in a stable
+ * release, a new version of the API must be added. If feasible, the old
+ * version of the API should be published in addition to the new version. Note
+ * that it is possible to add completely new APIs without affecting the
+ * existing ones.
+ */
 enum {
     DE_API_BASE_v1              = 0,       // 1.10
     DE_API_BASE                 = DE_API_BASE_v1,
@@ -107,10 +117,11 @@ typedef struct de_api_s {
     int id; ///< API identification (including version) number.
 } de_api_t;
 
-#define DENG_API_TYPEDEF(Name) typedef struct de_api_##Name##_s
-#define DENG_API_T(Name) de_api_##Name##_t
-#define DENG_DECLARE_API(Name) DENG_API_T(Name) _api_##Name
-#define DENG_USING_API(Name) DENG_EXTERN_C DENG_DECLARE_API(Name)
+#define DENG_API_TYPEDEF(Name)  typedef struct de_api_##Name##_s
+#define DENG_API_T(Name)        de_api_##Name##_t
+#define DENG_DECLARE_API(Name)  DENG_API_T(Name) _api_##Name
+#define DENG_USING_API(Name)    DENG_EXTERN_C DENG_DECLARE_API(Name)
+
 #define DENG_API_EXCHANGE(APIs) \
     DENG_EXTERN_C void deng_API(int id, void *api) { \
         switch(id) { APIs \

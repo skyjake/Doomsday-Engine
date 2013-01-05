@@ -1,6 +1,5 @@
-/**
- * @file materialarchive.h
- * Collection of identifier-material pairs. @ingroup resource
+/** @file api_materialarchive.h Collection of identifier-material pairs.
+ * @ingroup resource
  *
  * Used when saving map state (savegames) or sharing world changes with clients.
  *

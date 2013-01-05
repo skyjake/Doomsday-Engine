@@ -1,4 +1,5 @@
-/** @file de_def.h Public API for definitions.
+/** @file api_def.h Public API for definitions.
+ * @ingroup defs
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>

@@ -1,5 +1,4 @@
-/**
- * @file uri.h
+/** @file api_uri.h
  * Universal Resource Identifier (C wrapper). @ingroup base
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>

@@ -1,5 +1,4 @@
-/**
- * @file dd_api.h
+/** @file api_gameexport.h
  * Data structures for the engine/plugin interfaces.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

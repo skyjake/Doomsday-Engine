@@ -1,6 +1,5 @@
-/**
- * @file thinker.h
- * Thinkers. @ingroup thinker
+/** @file api_thinker.h Thinkers.
+ * @ingroup thinker
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -75,6 +74,8 @@ DENG_USING_API(Thinker);
 // Not part of the public API.
 boolean Thinker_IsMobjFunc(thinkfunc_t func);
 #endif
+
+///@}
 
 #ifdef __cplusplus
 } // extern "C"

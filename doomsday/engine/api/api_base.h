@@ -1,4 +1,4 @@
-/** @file de_api.h Public Base API.
+/** @file api_base.h Public Base API.
  * @ingroup base
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>

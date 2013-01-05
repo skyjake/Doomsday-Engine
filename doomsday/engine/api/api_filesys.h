@@ -1,12 +1,8 @@
 /** @file api_filesys.h Public API of the file system.
  * Primary header file for the Doomsday Engine Public API
  *
- * @todo Break this header file up into group-specific ones.
- * Including doomsday.h should include all of the public API headers.
- *
- * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

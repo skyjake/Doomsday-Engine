@@ -1,6 +1,4 @@
-/**
- * @file dd_wad.h
- * Wrapper API for accessing data stored in DOOM WAD files.
+/** @file api_wad.h Wrapper API for accessing data stored in WAD files.
  *
  * All data is read through Doomsday's virtual file system (see @ref fs).
  *
