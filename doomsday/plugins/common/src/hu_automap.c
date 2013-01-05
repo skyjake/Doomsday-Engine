@@ -1,4 +1,4 @@
-/**\file rend_automap.c
+/**\file hu_automap.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html

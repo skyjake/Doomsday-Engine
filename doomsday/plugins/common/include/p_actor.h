@@ -94,7 +94,7 @@ void P_ProcessDeferredSpawns(void);
 void P_PurgeDeferredSpawns(void);
 
 /**
- * Deferred mobj spawning until at least @minTics have passed.
+ * Deferred mobj spawning until at least @a minTics have passed.
  * Spawn behavior is otherwise exactly the same as an immediate spawn.
  */
 void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle,

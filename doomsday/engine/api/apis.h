@@ -20,7 +20,7 @@
 #ifndef DOOMSDAY_APIS_H
 #define DOOMSDAY_APIS_H
 
-#include <de/libdeng.h>
+#include <de/libdeng1.h>
 
 /**
  * All APIs exported from the executable.

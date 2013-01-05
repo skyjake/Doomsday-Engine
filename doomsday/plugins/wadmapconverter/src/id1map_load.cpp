@@ -24,8 +24,6 @@
 #include "wadmapconverter.h"
 #include <de/libdeng2.h>
 
-#define map                     DENG_PLUGIN_GLOBAL(map)
-
 size_t ElementSizeForMapLumpType(MapFormatId mapFormat, MapLumpType type)
 {
     switch(type)

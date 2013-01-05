@@ -330,18 +330,18 @@ def generate_apidoc():
     system_command('wc -l ../doxyissues-mac.txt')
 
     print >> sys.stderr, "\nDoom plugin docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jdoom'))
-    system_command('doxygen jdoom.doxy >/dev/null 2>../../doxyissues-doom.txt')
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/doom'))
+    system_command('doxygen doom.doxy >/dev/null 2>../../doxyissues-doom.txt')
     system_command('wc -l ../../doxyissues-doom.txt')
 
     print >> sys.stderr, "\nHeretic plugin docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jheretic'))
-    system_command('doxygen jheretic.doxy >/dev/null 2>../../doxyissues-heretic.txt')
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/heretic'))
+    system_command('doxygen heretic.doxy >/dev/null 2>../../doxyissues-heretic.txt')
     system_command('wc -l ../../doxyissues-heretic.txt')
 
     print >> sys.stderr, "\nHexen plugin docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
-    system_command('doxygen jhexen.doxy >/dev/null 2>../../doxyissues-hexen.txt')
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/hexen'))
+    system_command('doxygen hexen.doxy >/dev/null 2>../../doxyissues-hexen.txt')
     system_command('wc -l ../../doxyissues-hexen.txt')
 
 

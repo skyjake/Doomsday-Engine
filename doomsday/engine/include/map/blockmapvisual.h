@@ -23,7 +23,7 @@
 #ifndef LIBDENG_MAP_BLOCKMAP_VISUAL_H
 #define LIBDENG_MAP_BLOCKMAP_VISUAL_H
 
-#include <de/libdeng.h>
+#include <de/libdeng1.h>
 
 DENG_EXTERN_C byte bmapShowDebug; ///< cvar
 DENG_EXTERN_C float bmapDebugSize; ///< cvar

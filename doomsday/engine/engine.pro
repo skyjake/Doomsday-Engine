@@ -25,7 +25,7 @@ win32 {
     include(../dep_directx.pri)
 }
 include(../dep_deng2.pri)
-include(../dep_deng.pri)
+include(../dep_deng1.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -428,7 +428,6 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
-    src/api_material.cpp \
     src/api_uri.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
@@ -574,6 +573,7 @@ SOURCES += \
     src/render/vignette.c \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \
+    src/resource/api_material.cpp \
     src/resource/api_resource.c \
     src/resource/bitmapfont.cpp \
     src/resource/colorpalette.c \
@@ -714,7 +714,7 @@ macx {
 
     # libdeng1 and 2 dynamic libraries.
     doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
-    doPostLink("cp -fRp $$OUT_PWD/../libdeng/libdeng1*dylib $$FW_DIR")
+    doPostLink("cp -fRp $$OUT_PWD/../libdeng1/libdeng1*dylib $$FW_DIR")
 
     # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng2.2.dylib, ..)

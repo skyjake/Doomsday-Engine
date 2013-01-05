@@ -1,0 +1,9 @@
+# API documentation for the libdoom
+@INCLUDE = ../../doomsday.doxy
+
+PROJECT_NAME        = libdoom
+OUTPUT_DIRECTORY    = ../../apidoc/jdoom/
+
+INPUT               = src include res ../common/src ../common/include
+
+PREDEFINED          = __JDOOM__

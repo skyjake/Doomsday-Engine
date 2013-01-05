@@ -32,10 +32,10 @@ rm -rf $PLUGDIR
 mkdir -p $PLUGDIR
 $CP plugins/dehread/dehread.bundle                 $PLUGDIR/
 $CP plugins/wadmapconverter/wadmapconverter.bundle $PLUGDIR/
-$CP plugins/jdoom/doom.bundle                      $PLUGDIR/
-$CP plugins/jheretic/heretic.bundle                $PLUGDIR/
-$CP plugins/jhexen/hexen.bundle                    $PLUGDIR/
-$CP plugins/jdoom64/doom64.bundle                  $PLUGDIR/
+$CP plugins/doom/doom.bundle                       $PLUGDIR/
+$CP plugins/heretic/heretic.bundle                 $PLUGDIR/
+$CP plugins/hexen/hexen.bundle                     $PLUGDIR/
+$CP plugins/doom64/doom64.bundle                   $PLUGDIR/
 $CP plugins/fmod/audio_fmod.bundle                 $PLUGDIR/
 
 # Tools

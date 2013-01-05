@@ -37,14 +37,8 @@ extern "C" {
 
 #define LIBDENG_PLUGINDESC      "(" DOOMSDAY_NICENAME " Plugin)"
 
-/**
- * Use this for all global variables in plugins so that they will not be
- * confused with engine's exported symbols.
- */
-#define DENG_PLUGIN_GLOBAL(name)    __DengPlugin_##name
-
-#define MAX_HOOKS           16
-#define HOOKF_EXCLUSIVE     0x01000000
+#define MAX_HOOKS               16
+#define HOOKF_EXCLUSIVE         0x01000000
 
 typedef int     (*pluginfunc_t) (void);
 typedef int     (*hookfunc_t) (int type, int parm, void *data);
