@@ -54,7 +54,7 @@
 #include "api_audiod_sfx.h"
 #include "doomsday.h"
 
-#define PI 3.141592654
+DENG_DECLARE_API(Con);
 
 #define SRC(buf) ( (ALuint) PTR2INT(buf->ptr3D) )
 #define BUF(buf) ( (ALuint) PTR2INT(buf->ptr) )
@@ -506,7 +506,11 @@ int DS_SFX_Getv(int /*prop*/, void* /*values*/)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-extern "C" const char* deng_LibraryType(void)
+DENG_EXTERN_C const char* deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
+
+DENG_API_EXCHANGE(
+        DENG_GET_API(DE_API_CONSOLE, Con);
+)

@@ -122,7 +122,9 @@ void S_Register(void)
  */
 boolean S_Init(void)
 {
-    boolean ok = false, sfxOK, musOK;
+#ifdef __CLIENT__
+    boolean sfxOK, musOK;
+#endif
 
     if(CommandLine_Exists("-nosound") || CommandLine_Exists("-noaudio"))
         return true;

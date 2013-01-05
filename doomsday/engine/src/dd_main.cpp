@@ -2020,8 +2020,6 @@ static int DD_StartupWorker(void* parm)
     if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
         Con_Message("--(!)-- User directory not found (check -userdir).\n");
 
-    bamsInit(); // Binary angle calculations.
-
     DD_InitResourceSystem();
 
     Con_SetProgress(40);

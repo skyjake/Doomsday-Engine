@@ -37,6 +37,8 @@
 #include "doomsday.h"
 #include "api_audiod_mus.h"
 
+DENG_USING_API(Con);
+
 // Mixer return values.
 enum {
     MIX_ERROR = -1,

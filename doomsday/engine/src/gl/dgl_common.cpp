@@ -21,7 +21,6 @@
  */
 
 #define DENG_NO_API_MACROS_GL
-#include "api_gl.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -34,6 +33,7 @@
 #include "de_resource.h"
 
 #include "gl/sys_opengl.h"
+#include "api_gl.h"
 
 /**
  * Requires a texture environment mode that can add and multiply.

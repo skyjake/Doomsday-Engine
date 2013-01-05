@@ -1766,7 +1766,7 @@ uint M_CRC32(byte *data, uint length)
 
 int M_NumDigits(int value)
 {
-    return floor(log10(ABS(value))) + 1;
+    return (int) (floor(log10(ABS(value))) + 1);
 }
 
 static int slopeDiv(unsigned num, unsigned den)
@@ -1906,8 +1906,8 @@ double M_ApproxDistance(double dx, double dy)
 
 float M_ApproxDistancef(float dx, float dy)
 {
-    dx = fabs(dx);
-    dy = fabs(dy);
+    dx = (float) fabs(dx);
+    dy = (float) fabs(dy);
     if(dx < dy)
         return dx + dy - dx / 2;
     return dx + dy - dy / 2;
@@ -1949,8 +1949,8 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
     // Yaw.
     if(radYaw != 0)
     {
-        Cos = cos(radYaw);
-        Sin = sin(radYaw);
+        Cos = (float) cos(radYaw);
+        Sin = (float) sin(radYaw);
         res[VX] = vec[VX] * Cos + vec[VY] * Sin;
         res[VY] = vec[VX] * -Sin + vec[VY] * Cos;
         vec[VX] = res[VX];
@@ -1960,8 +1960,8 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
     // Pitch.
     if(radPitch != 0)
     {
-        Cos = cos(radPitch);
-        Sin = sin(radPitch);
+        Cos = (float) cos(radPitch);
+        Sin = (float) sin(radPitch);
         res[VZ] = vec[VZ] * Cos + vec[VX] * Sin;
         res[VX] = vec[VZ] * -Sin + vec[VX] * Cos;
         vec[VZ] = res[VZ];
@@ -2142,7 +2142,7 @@ void M_HSVToRGB(float* rgb, float h, float s, float v)
         h -= 1;
 
     h *= 6; // sector 0 to 5
-    i = floor(h);
+    i = (int) floor(h);
     f = h - i; // factorial part of h
     p = v * (1 - s);
     q = v * (1 - s * f);

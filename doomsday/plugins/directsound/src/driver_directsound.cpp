@@ -51,13 +51,14 @@
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 
+DENG_DECLARE_API(Base);
+DENG_DECLARE_API(Con);
+
 // MACROS ------------------------------------------------------------------
 
 // DirectSound(3D)Buffer Pointer
 #define DSBUF(buf)          ((LPDIRECTSOUNDBUFFER) buf->ptr)
 #define DSBUF3D(buf)        ((LPDIRECTSOUND3DBUFFER8) buf->ptr3D)
-
-#define PI                  (3.14159265)
 
 #define MAX_FAILED_PROPS    (10)
 
@@ -1292,7 +1293,12 @@ void DS_SFX_Listenerv(int prop, float* values)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-extern "C" const char* deng_LibraryType(void)
+DENG_EXTERN_C const char* deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
+
+DENG_API_EXCHANGE(
+    DENG_GET_API(DE_API_BASE, Base);
+    DENG_GET_API(DE_API_CONSOLE, Con);
+)

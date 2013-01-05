@@ -3,3 +3,4 @@ LIBRARY			DEHREAD
 EXPORTS
     DP_Initialize       @1
     deng_LibraryType    @2
+    deng_API            @3
