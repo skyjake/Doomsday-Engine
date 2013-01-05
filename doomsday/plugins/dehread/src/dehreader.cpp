@@ -1641,7 +1641,7 @@ public:
         {
             // Not found - create a new Value.
             Block pathUtf8 = path.toUtf8();
-            idx = DED_AddValue(ded, pathUtf8.constData());
+            idx = _api_Def.DED_AddValue(ded, pathUtf8.constData());
             def = &ded->values[idx];
             def->text = 0;
         }

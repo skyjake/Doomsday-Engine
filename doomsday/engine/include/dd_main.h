@@ -30,7 +30,7 @@
 #define LIBDENG_MAIN_H
 
 #include "dd_types.h"
-#include "dd_plugin.h"
+#include "api_plugin.h"
 #ifndef __cplusplus // Kludge: this isn't yet C++ compatible
 #  include "resource/textures.h"
 #endif
@@ -141,14 +141,8 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
  */
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn);
 
-int DD_GetInteger(int ddvalue);
-void DD_SetInteger(int ddvalue, int parm);
-void DD_SetVariable(int ddvalue, void* ptr);
-void* DD_GetVariable(int ddvalue);
-
-ddplayer_t* DD_GetPlayer(int number);
-
 void DD_CreateResourceClasses();
+
 void DD_ClearResourceClasses();
 
 #ifdef __cplusplus
@@ -220,14 +214,6 @@ const char* value_Str(int val);
  * Frees the info structures for all registered games.
  */
 void DD_DestroyGames(void);
-
-boolean DD_GameInfo(struct gameinfo_s* info);
-
-void DD_AddGameResource(gameid_t game, resourceclassid_t classId, int rflags, char const* names, void* params);
-
-gameid_t DD_DefineGame(struct gamedef_s const* def);
-
-gameid_t DD_GameIdForKey(char const* identityKey);
 
 D_CMD(Load);
 D_CMD(Unload);

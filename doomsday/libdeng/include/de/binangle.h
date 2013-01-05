@@ -1,6 +1,5 @@
-/**
- * @file m_bams.h
- * Binary Angle Mathematics. @ingroup math
+/** @file de/binangle.h Binary angle nathematics.
+ * @ingroup math
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -23,11 +22,27 @@
 #ifndef LIBDENG_BAMS_MATH_H
 #define LIBDENG_BAMS_MATH_H
 
-#include "dd_types.h"
+#include <de/libdeng.h>
+#include <de/types.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define BAMS_BITS   16
+
+#if BAMS_BITS == 32
+typedef uint32_t binangle_t;
+#  define BANG_TO_ANGLE(bang)     ((angle_t)bang)
+#elif BAMS_BITS == 16
+typedef uint16_t binangle_t;
+#  define BANG_TO_ANGLE(bang)     ((angle_t)bang << 16)
+#else
+typedef unsigned char binangle_t;
+#  define BANG_TO_ANGLE(bang)     ((angle_t)bang << 24)
+#endif
+
+#define ANGLE_TO_BANG(angle)      ((binangle_t)((angle_t)angle >> BAMS_BITS))
 
 #if BAMS_BITS == 32
 
@@ -88,8 +103,9 @@ extern "C" {
 #define BANG_SOUTH      BANG_270
 #define BANG_SOUTHEAST  BANG_315
 
-void            bamsInit(void);        // Fill in the tables.
-binangle_t      bamsAtan2(int y, int x);
+void bamsInit(void);
+
+DENG_PUBLIC binangle_t bamsAtan2(int y, int x);
 
 #ifdef __cplusplus
 } // extern "C"

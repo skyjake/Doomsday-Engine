@@ -24,6 +24,7 @@
 
 #include <math.h>
 #include "doomsday.h"
+#include "common.h"
 #include "gl_drawpatch.h"
 
 void GL_DrawPatch3(patchid_t id, const Point2Raw* origin, int alignFlags, int patchFlags)

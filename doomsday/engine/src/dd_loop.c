@@ -304,6 +304,7 @@ float DD_GetFrameRate(void)
     return fps;
 }
 
+#undef DD_IsSharpTick
 boolean DD_IsSharpTick(void)
 {
     return tickIsSharp;

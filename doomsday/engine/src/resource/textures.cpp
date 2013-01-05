@@ -22,13 +22,13 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "gl/gl_texmanager.h"
-#include "m_misc.h" // for M_NumDigits
 
 #include <QtAlgorithms>
 #include <QList>
 #include <de/Error>
 #include <de/Log>
 #include <de/PathTree>
+#include <de/mathutil.h> // for M_NumDigits
 
 #include "resource/compositetexture.h"
 #include "resource/texturemanifest.h"
@@ -713,8 +713,8 @@ void Textures_Shutdown(void)
     delete textures; textures = 0;
 }
 
-/// @note Part of the Doomsday public API.
-int Textures_UniqueId2(Uri const *_uri, boolean quiet)
+#undef Textures_UniqueId2
+DENG_EXTERN_C int Textures_UniqueId2(Uri const *_uri, boolean quiet)
 {
     LOG_AS("Textures_UniqueId");
     if(!_uri) return -1;
@@ -736,8 +736,8 @@ int Textures_UniqueId2(Uri const *_uri, boolean quiet)
     return -1;
 }
 
-/// @note Part of the Doomsday public API.
-int Textures_UniqueId(Uri const *uri)
+#undef Textures_UniqueId
+DENG_EXTERN_C int Textures_UniqueId(Uri const *uri)
 {
     return Textures_UniqueId2(uri, false);
 }

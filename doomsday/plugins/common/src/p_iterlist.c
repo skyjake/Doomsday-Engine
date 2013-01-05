@@ -21,6 +21,7 @@
 #include <stdlib.h>
 
 #include "doomsday.h"
+#include "common.h"
 
 #include "p_iterlist.h"
 

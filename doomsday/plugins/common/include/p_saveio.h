@@ -24,7 +24,7 @@
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
 #include "saveinfo.h"
-#include "materialarchive.h"
+#include "api_materialarchive.h"
 #include "lzss.h"
 #include "p_savedef.h"
 

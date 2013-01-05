@@ -30,6 +30,7 @@ void DD_ReadMouse(void)
 void DD_ReadJoystick(void)
 {}
 
+/*
 void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
 {
     // No clmobjs on server.
@@ -53,7 +54,7 @@ struct mobj_s* ClMobj_Find(thid_t id)
 boolean ClMobj_IsValid(struct mobj_s* mo)
 {
     DENG_UNUSED(mo);
-    return false;
+    return true;
 }
 
 struct mobj_s* ClPlayer_ClMobj(int plrNum)
@@ -61,6 +62,7 @@ struct mobj_s* ClPlayer_ClMobj(int plrNum)
     DENG_UNUSED(plrNum);
     return 0;
 }
+*/
 
 void GameMap_ClMobjReset(GameMap* map)
 {
@@ -89,6 +91,7 @@ void GL_EarlyInitTextureManager()
 void GL_PruneTextureVariantSpecifications()
 {}
 
+/*
 void GL_SetFilter(int f)
 {
     DENG_UNUSED(f);
@@ -107,7 +110,7 @@ void GL_UseFog(int yes)
     DENG_UNUSED(yes);
 }
 
-void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
+void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
 {
     DENG_UNUSED(bp);
     DENG_UNUSED(flags);
@@ -119,7 +122,7 @@ void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, in
     DENG_UNUSED(overrideMode);
 }
 
-void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags,
                                      int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
                                      float stretchEpsilon)
 {
@@ -134,12 +137,12 @@ void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
     DENG_UNUSED(stretchEpsilon);
 }
 
-void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
+void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
     DENG_UNUSED(bp);
 }
 
-void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
+void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
     DENG_UNUSED(bp);
 }
@@ -157,6 +160,7 @@ void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale)
 
 void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
 {}
+*/
 
 void GL_PrepareLSTexture(void)
 {}
@@ -185,6 +189,7 @@ texturevariantspecification_t *GL_TextureVariantSpecificationForContext(
 void FR_Init(void)
 {}
 
+/*
 void FR_SetFont(fontid_t font)
 {
     DENG_UNUSED(font);
@@ -464,6 +469,7 @@ int FR_TextHeight(const char* text)
     DENG_UNUSED(text);
     return 0;
 }
+*/
 
 void Fonts_Init(void)
 {}
@@ -474,11 +480,13 @@ fontschemeid_t Fonts_ParseScheme(const char* str)
     return 0;
 }
 
+/*
 fontid_t Fonts_ResolveUri(Uri const *uri)
 {
     DENG_UNUSED(uri);
     return 0;
 }
+*/
 
 fontid_t Fonts_ResolveUriCString(const char* uri)
 {
@@ -518,12 +526,14 @@ void R_InitSvgs(void)
 void R_ShutdownSvgs(void)
 {}
 
+/*
 void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines)
 {
     DENG_UNUSED(id);
     DENG_UNUSED(lines);
     DENG_UNUSED(numLines);
 }
+*/
 
 struct font_s* R_CreateFontFromDef(ded_compositefont_t* def)
 {
@@ -614,6 +624,7 @@ void UI_Ticker(timespan_t t)
     DENG_UNUSED(t);
 }
 
+/*
 int DGL_Enable(int cap)
 {
     return 0;
@@ -780,6 +791,7 @@ void DGL_DeleteTextures(int num, const DGLuint* names)
     DENG_UNUSED(num);
     DENG_UNUSED(names);
 }
+*/
 
 void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, const char* detailedMsg)
 {

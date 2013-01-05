@@ -176,7 +176,7 @@ static void drawMessage(void)
 
 void Hu_MsgDrawer(void)
 {
-    borderedprojectionstate_t bp;
+    dgl_borderedprojectionstate_t bp;
 
     if(!messageToPrint) return;
 

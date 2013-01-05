@@ -528,7 +528,7 @@ boolean P_LookForMonsters(mobj_t* mo)
     params.compFlags = MF_COUNTKILL;
     params.checkLOS = true;
     params.randomSkip = 16;
-    DD_IterateThinkers(P_MobjThinker, findMobj, &params);
+    Thinker_Iterate(P_MobjThinker, findMobj, &params);
 
     if(params.foundMobj)
     {
@@ -2040,7 +2040,7 @@ int P_Massacre(void)
     // Only massacre when actually in a level.
     if(G_GameState() == GS_MAP)
     {
-        DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
+        Thinker_Iterate(P_MobjThinker, massacreMobj, &count);
     }
 
     return count;
@@ -2090,7 +2090,7 @@ void C_DECL A_BossDeath(mobj_t* actor)
     // Scan the remaining thinkers to see if all bosses are dead.
     params.type = actor->type;
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.

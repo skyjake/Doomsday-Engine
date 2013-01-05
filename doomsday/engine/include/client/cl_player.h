@@ -75,13 +75,11 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground);
 
 void ClPlayer_UpdateOrigin(int plrnum);
 
-//void            ClPlayer_CoordsReceived(void);
 void            ClPlayer_HandleFix(void);
 void            ClPlayer_ApplyPendingFixes(int plrNum);
 void            ClPlayer_ReadDelta2(boolean skip);
 clplayerstate_t *ClPlayer_State(int plrNum);
 mobj_t         *ClPlayer_LocalGameMobj(int plrNum);
-struct mobj_s  *ClPlayer_ClMobj(int plrNum);
 boolean         ClPlayer_IsFreeToMove(int plrnum);
 
 #ifdef __cplusplus

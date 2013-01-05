@@ -6,3 +6,4 @@ EXPORTS
     DP_Load             @3
     DP_Unload           @4
     deng_LibraryType    @5
+    deng_API            @6

@@ -477,7 +477,7 @@ boolean P_LookForMonsters(mobj_t* mo)
     params.randomSkip = 16;
     params.checkMinotaurTracer = (mo->type == MT_MINOTAUR)?
         ((player_t *) mo->tracer)->plr->mo : NULL;
-    DD_IterateThinkers(P_MobjThinker, findMobj, &params);
+    Thinker_Iterate(P_MobjThinker, findMobj, &params);
 
     if(params.foundMobj)
     {
@@ -1042,7 +1042,7 @@ void C_DECL A_MinotaurLook(mobj_t* actor)
         params.foundMobj = NULL;
         params.minHealth = 1;
         params.checkMinotaurTracer = actor->tracer;
-        if(DD_IterateThinkers(P_MobjThinker, findMonster, &params))
+        if(Thinker_Iterate(P_MobjThinker, findMonster, &params))
             actor->target = params.foundMobj;
     }
 
@@ -1531,7 +1531,7 @@ int P_Massacre(void)
     // Only massacre when actually in a map.
     if(G_GameState() == GS_MAP)
     {
-        DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
+        Thinker_Iterate(P_MobjThinker, massacreMobj, &count);
     }
 
     return count;

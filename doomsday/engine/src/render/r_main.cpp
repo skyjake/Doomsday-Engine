@@ -36,6 +36,7 @@
 #include "gl/svg.h"
 #include "map/p_players.h"
 #include "render/vignette.h"
+#include "api_render.h"
 
 using namespace de;
 
@@ -193,22 +194,22 @@ void R_LoadSystemFonts()
 #endif
 }
 
-/// @note Part of the Doomsday public API.
-void R_SetViewOrigin(int consoleNum, coord_t const origin[3])
+#undef R_SetViewOrigin
+DENG_EXTERN_C void R_SetViewOrigin(int consoleNum, coord_t const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
     V3d_Copy(viewDataOfConsole[consoleNum].latest.origin, origin);
 }
 
-/// @note Part of the Doomsday public API.
-void R_SetViewAngle(int consoleNum, angle_t angle)
+#undef R_SetViewAngle
+DENG_EXTERN_C void R_SetViewAngle(int consoleNum, angle_t angle)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
     viewDataOfConsole[consoleNum].latest.angle = angle;
 }
 
-/// @note Part of the Doomsday public API.
-void R_SetViewPitch(int consoleNum, float pitch)
+#undef R_SetViewPitch
+DENG_EXTERN_C void R_SetViewPitch(int consoleNum, float pitch)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
     viewDataOfConsole[consoleNum].latest.pitch = pitch;
@@ -253,8 +254,8 @@ void R_ViewWindowTicker(int consoleNum, timespan_t ticLength)
 #undef LERP
 }
 
-/// @note Part of the Doomsday public API.
-int R_ViewWindowGeometry(int player, RectRaw *geometry)
+#undef R_ViewWindowGeometry
+DENG_EXTERN_C int R_ViewWindowGeometry(int player, RectRaw *geometry)
 {
     if(!geometry) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
@@ -264,8 +265,8 @@ int R_ViewWindowGeometry(int player, RectRaw *geometry)
     return true;
 }
 
-/// @note Part of the Doomsday public API.
-int R_ViewWindowOrigin(int player, Point2Raw *origin)
+#undef R_ViewWindowOrigin
+DENG_EXTERN_C int R_ViewWindowOrigin(int player, Point2Raw *origin)
 {
     if(!origin) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
@@ -275,8 +276,8 @@ int R_ViewWindowOrigin(int player, Point2Raw *origin)
     return true;
 }
 
-/// @note Part of the Doomsday public API.
-int R_ViewWindowSize(int player, Size2Raw* size)
+#undef R_ViewWindowSize
+DENG_EXTERN_C int R_ViewWindowSize(int player, Size2Raw* size)
 {
     if(!size) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
@@ -290,10 +291,9 @@ int R_ViewWindowSize(int player, Size2Raw* size)
  * @note Do not change values used during refresh here because we might be
  * partway through rendering a frame. Changes should take effect on next
  * refresh only.
- *
- * @note Part of the Doomsday public API.
  */
-void R_SetViewWindowGeometry(int player, RectRaw const *geometry, boolean interpolate)
+#undef R_SetViewWindowGeometry
+DENG_EXTERN_C void R_SetViewWindowGeometry(int player, RectRaw const *geometry, boolean interpolate)
 {
     int p = P_ConsoleToLocal(player);
     if(p < 0) return;
@@ -336,8 +336,8 @@ void R_SetViewWindowGeometry(int player, RectRaw const *geometry, boolean interp
     }
 }
 
-/// @note Part of the Doomsday public API.
-int R_ViewPortGeometry(int player, RectRaw *geometry)
+#undef R_ViewPortGeometry
+DENG_EXTERN_C int R_ViewPortGeometry(int player, RectRaw *geometry)
 {
     if(!geometry) return false;
 
@@ -349,8 +349,8 @@ int R_ViewPortGeometry(int player, RectRaw *geometry)
     return true;
 }
 
-/// @note Part of the Doomsday public API.
-int R_ViewPortOrigin(int player, Point2Raw *origin)
+#undef R_ViewPortOrigin
+DENG_EXTERN_C int R_ViewPortOrigin(int player, Point2Raw *origin)
 {
     if(!origin) return false;
 
@@ -362,8 +362,8 @@ int R_ViewPortOrigin(int player, Point2Raw *origin)
     return true;
 }
 
-/// @note Part of the Doomsday public API.
-int R_ViewPortSize(int player, Size2Raw *size)
+#undef R_ViewPortSize
+DENG_EXTERN_C int R_ViewPortSize(int player, Size2Raw *size)
 {
     if(!size) return false;
 
@@ -375,8 +375,8 @@ int R_ViewPortSize(int player, Size2Raw *size)
     return true;
 }
 
-/// @note Part of the Doomsday public API.
-void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
+#undef R_SetViewPortPlayer
+DENG_EXTERN_C void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
 {
     int p = P_ConsoleToLocal(consoleNum);
     if(p != -1)
@@ -1016,7 +1016,8 @@ void R_SetupFrame(player_t *player)
 
 #ifdef __CLIENT__
 void R_RenderPlayerViewBorder()
-{    R_DrawViewBorder();
+{
+    R_DrawViewBorder();
 }
 
 void R_UseViewPort(viewport_t *vp)
@@ -1051,7 +1052,8 @@ void R_RenderBlankView()
     UI_DrawDDBackground(&origin, &size, 1);
 }
 
-void R_RenderPlayerView(int num)
+#undef R_RenderPlayerView
+DENG_EXTERN_C void R_RenderPlayerView(int num)
 {
     if(num < 0 || num >= DDMAXPLAYERS) return; // Huh?
     player_t *player = &ddPlayers[num];
@@ -1312,8 +1314,8 @@ static void cacheSpritesForState(int stateIndex, materialvariantspecification_t 
 
 #ifdef __CLIENT__
 
-/// @note Part of the Doomsday public API.
-void Rend_CacheForMobjType(int num)
+#undef Rend_CacheForMobjType
+DENG_EXTERN_C void Rend_CacheForMobjType(int num)
 {
     if(novideo || !((useModels && precacheSkins) || precacheSprites)) return;
     if(num < 0 || num >= defs.count.mobjs.num) return;

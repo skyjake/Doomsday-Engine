@@ -77,7 +77,7 @@ void P_InitUnusedMobjList(void)
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
-mobj_t* P_MobjCreate(think_t function, coord_t const pos[3], angle_t angle,
+mobj_t* P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
     coord_t radius, coord_t height, int ddflags)
 {
     mobj_t* mo;
@@ -120,7 +120,8 @@ mobj_t* P_MobjCreate(think_t function, coord_t const pos[3], angle_t angle,
     return mo;
 }
 
-mobj_t* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z,
+#undef P_MobjCreateXYZ
+mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z,
     angle_t angle, coord_t radius, coord_t height, int ddflags)
 {
     coord_t pos[3];
@@ -134,6 +135,7 @@ mobj_t* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z,
  * @note Does not actually destroy the mobj. Instead, mobj is marked as
  * awaiting removal (which occurs when its turn for thinking comes around).
  */
+#undef P_MobjDestroy
 void P_MobjDestroy(mobj_t* mo)
 {
 #ifdef _DEBUG
@@ -165,6 +167,7 @@ void P_MobjRecycle(mobj_t* mo)
 /**
  * 'statenum' must be a valid state (not null!).
  */
+#undef P_MobjSetState
 void P_MobjSetState(mobj_t* mobj, int statenum)
 {
     state_t*            st = states + statenum;
@@ -213,6 +216,7 @@ boolean Mobj_SetOrigin(struct mobj_s* mo, coord_t x, coord_t y, coord_t z)
     return gx.MobjTryMoveXYZ(mo, x, y, z);
 }
 
+#undef Mobj_OriginSmoothed
 void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
 {
     if(!origin) return;
@@ -251,6 +255,7 @@ void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
     }
 }
 
+#undef Mobj_AngleSmoothed
 angle_t Mobj_AngleSmoothed(mobj_t* mo)
 {
     if(!mo) return 0;

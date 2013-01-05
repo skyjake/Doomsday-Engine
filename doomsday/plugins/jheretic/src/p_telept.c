@@ -187,7 +187,7 @@ static mobj_t* getTeleportDestination(short tag)
         {
             params.sec = sec;
 
-            if(DD_IterateThinkers(P_MobjThinker, findMobj, &params))
+            if(Thinker_Iterate(P_MobjThinker, findMobj, &params))
             {   // Found one!
                 return params.foundMobj;
             }

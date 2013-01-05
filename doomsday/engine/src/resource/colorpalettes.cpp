@@ -184,7 +184,8 @@ boolean R_SetDefaultColorPalette(colorpaletteid_t id)
     return false;
 }
 
-colorpaletteid_t R_CreateColorPalette(char const* fmt, char const* name,
+#undef R_CreateColorPalette
+DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const* fmt, char const* name,
     uint8_t const* colorData, int colorCount)
 {
     static char const* compNames[] = { "red", "green", "blue" };
@@ -306,7 +307,8 @@ colorpaletteid_t R_CreateColorPalette(char const* fmt, char const* name,
     return id; // 1-based index.
 }
 
-colorpaletteid_t R_GetColorPaletteNumForName(char const* name)
+#undef R_GetColorPaletteNumForName
+DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const* name)
 {
     if(!initedColorPalettes)
         Con_Error("R_GetColorPaletteNumForName: Color palettes not yet initialized.");
@@ -317,7 +319,8 @@ colorpaletteid_t R_GetColorPaletteNumForName(char const* name)
     return 0;
 }
 
-char const* R_GetColorPaletteNameForNum(colorpaletteid_t id)
+#undef R_GetColorPaletteNameForNum
+DENG_EXTERN_C char const* R_GetColorPaletteNameForNum(colorpaletteid_t id)
 {
     if(!initedColorPalettes)
         Con_Error("R_GetColorPaletteNameForNum: Color palettes not yet initialized.");
@@ -328,7 +331,8 @@ char const* R_GetColorPaletteNameForNum(colorpaletteid_t id)
     return NULL;
 }
 
-void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int colorIdx, uint8_t rgb[3],
+#undef R_GetColorPaletteRGBubv
+DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int colorIdx, uint8_t rgb[3],
     boolean applyTexGamma)
 {
     if(!initedColorPalettes)
@@ -358,7 +362,8 @@ void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int colorIdx, uint8_t r
     Con_Message("Warning:R_GetColorPaletteRGBubv: Failed to locate ColorPalette for id %i.\n", paletteId);
 }
 
-void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorIdx, float rgb[3],
+#undef R_GetColorPaletteRGBf
+DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorIdx, float rgb[3],
     boolean applyTexGamma)
 {
     if(!initedColorPalettes)

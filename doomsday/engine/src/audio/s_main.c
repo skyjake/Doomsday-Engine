@@ -32,6 +32,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_SOUND
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_network.h"
@@ -120,7 +122,9 @@ void S_Register(void)
  */
 boolean S_Init(void)
 {
-    boolean ok = false, sfxOK, musOK;
+#ifdef __CLIENT__
+    boolean sfxOK, musOK;
+#endif
 
     if(CommandLine_Exists("-nosound") || CommandLine_Exists("-noaudio"))
         return true;
@@ -194,7 +198,7 @@ void S_Reset(void)
 #ifdef __CLIENT__
     Sfx_Reset();
 #endif
-    S_StopMusic();
+    _api_S.StopMusic();
     S_ResetReverb();
 }
 
@@ -508,7 +512,7 @@ static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flag
     // Are we stopping with this sector's emitter?
     if(flags & SSF_SECTOR)
     {
-        S_StopSound(soundID, (mobj_t*)sectorEmitter);
+        _api_S.StopSound(soundID, (mobj_t*)sectorEmitter);
     }
 
     // Are we stopping with linked emitters?
@@ -519,7 +523,7 @@ static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flag
     while((base = (ddmobj_base_t*)base->thinker.next))
     {
         // Stop sounds from this emitter.
-        S_StopSound(soundID, (mobj_t*)base);
+        _api_S.StopSound(soundID, (mobj_t*)base);
     }
 }
 
@@ -722,3 +726,24 @@ D_CMD(PlaySound)
 
     return true;
 }
+
+DENG_DECLARE_API(S) =
+{
+    { DE_API_SOUND },
+    S_MapChange,
+    S_LocalSoundAtVolumeFrom,
+    S_LocalSoundAtVolume,
+    S_LocalSound,
+    S_LocalSoundFrom,
+    S_StartSound,
+    S_StartSoundEx,
+    S_StartSoundAtVolume,
+    S_ConsoleSound,
+    S_StopSound2,
+    S_StopSound,
+    S_IsPlaying,
+    S_StartMusic,
+    S_StartMusicNum,
+    S_StopMusic,
+    S_PauseMusic
+};

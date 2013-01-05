@@ -21,6 +21,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_BUSY
+
 #include "de_base.h"
 #include "de_platform.h"
 #include "de_console.h"
@@ -112,7 +114,7 @@ static void busyWorkerTerminated(systhreadexitstatus_t status)
 
     if(status == DENG_THREAD_STOPPED_WITH_EXCEPTION)
     {
-        BusyMode_WorkerError("Uncaught exception from busy thread.");
+        _api_Busy.WorkerError("Uncaught exception from busy thread.");
     }
 }
 
@@ -492,7 +494,7 @@ void BusyMode_WorkerError(const char* message)
 {
     busyTaskEndedWithError = true;
     strncpy(busyError, message, sizeof(busyError) - 1);
-    BusyMode_WorkerEnd();
+    _api_Busy.WorkerEnd();
 }
 
 void BusyMode_WorkerEnd(void)
@@ -503,3 +505,16 @@ void BusyMode_WorkerEnd(void)
     busyDone = true;
     Sys_Unlock(busy_Mutex);
 }
+
+DENG_DECLARE_API(Busy) =
+{
+    { DE_API_BUSY },
+    BusyMode_Active,
+    BusyMode_ElapsedTime,
+    BusyMode_RunTask,
+    BusyMode_RunTasks,
+    BusyMode_RunNewTask,
+    BusyMode_RunNewTaskWithName,
+    BusyMode_WorkerEnd,
+    BusyMode_WorkerError
+};

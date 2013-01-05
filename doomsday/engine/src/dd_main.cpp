@@ -24,6 +24,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_BASE // functions defined here
+
 #ifdef WIN32
 #  define _WIN32_DCOM
 #  include <objbase.h>
@@ -32,6 +34,7 @@
 #include <QStringList>
 #include <de/App>
 #include <de/NativePath>
+#include <de/binangle.h>
 
 #include "de_platform.h"
 
@@ -58,7 +61,7 @@
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
-#include "m_bams.h"
+#include "api_map.h"
 
 extern int renderTextures;
 extern int monochrome;
@@ -156,6 +159,8 @@ extern GETGAMEAPI GetGameAPI;
 // The Game collection.
 static de::GameCollection* games;
 
+#ifdef __CLIENT__
+
 D_CMD(CheckForUpdates)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
@@ -190,6 +195,8 @@ D_CMD(ShowUpdateSettings)
     Updater_ShowSettings();
     return true;
 }
+
+#endif // __CLIENT__
 
 void DD_CreateResourceClasses()
 {
@@ -569,10 +576,12 @@ void DD_ClearSystemTextureSchemes()
  */
 void DD_Register(void)
 {
+#ifdef __CLIENT__
     C_CMD("update",          "", CheckForUpdates);
     C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
     C_CMD("updatesettings",  "", ShowUpdateSettings);
     C_CMD("lastupdated",     "", LastUpdated);
+#endif
 
     DD_RegisterLoop();
     DD_RegisterInput();
@@ -2011,8 +2020,6 @@ static int DD_StartupWorker(void* parm)
     if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
         Con_Message("--(!)-- User directory not found (check -userdir).\n");
 
-    bamsInit(); // Binary angle calculations.
-
     DD_InitResourceSystem();
 
     Con_SetProgress(40);
@@ -2180,11 +2187,11 @@ void DD_UpdateEngineState(void)
     Con_Message("Updating engine state...\n");
 
     // Stop playing sounds and music.
-    GL_SetFilter(false);
+    S_Reset();
 #ifdef __CLIENT__
+    GL_SetFilter(false);
     Demo_StopPlayback();
 #endif
-    S_Reset();
 
     //App_FileSystem()->resetFileIds();
 
@@ -2647,35 +2654,6 @@ AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeNa
     }
 }
 
-materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
-{
-    if(!_textureUri) return NOMATERIALID;
-
-    try
-    {
-        de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*_textureUri)).composeUri();
-        uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
-        return App_Materials()->resolveUri2(uri, true/*quiet please*/);
-    }
-    catch(Textures::UnknownSchemeError const &er)
-    {
-        // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
-    }
-    catch(Textures::NotFoundError const &)
-    {} // Ignore this error.
-
-    return NOMATERIALID;
-}
-
-/**
- * Gets the data of a player.
- */
-ddplayer_t* DD_GetPlayer(int number)
-{
-    return (ddplayer_t *) &ddPlayers[number].shared;
-}
-
 /**
  * Convert propertyType enum constant into a string for error/debug messages.
  */
@@ -2933,3 +2911,33 @@ D_CMD(ReloadGame)
     DD_ChangeGame(games->currentGame(), true/* allow reload */);
     return true;
 }
+
+// dd_loop.c
+DENG_EXTERN_C boolean DD_IsSharpTick(void);
+
+// net_main.c
+DENG_EXTERN_C void Net_SendPacket(int to_player, int type, const void* data, size_t length);
+
+// r_world.cpp
+DENG_EXTERN_C void R_SetupMap(int mode, int flags);
+
+// sys_system.c
+DENG_EXTERN_C void Sys_Quit(void);
+
+DENG_DECLARE_API(Base) =
+{
+    { DE_API_BASE },
+
+    Sys_Quit,
+    DD_GetInteger,
+    DD_SetInteger,
+    DD_GetVariable,
+    DD_SetVariable,
+    DD_DefineGame,
+    DD_GameIdForKey,
+    DD_AddGameResource,
+    DD_GameInfo,
+    DD_IsSharpTick,
+    Net_SendPacket,
+    R_SetupMap
+};

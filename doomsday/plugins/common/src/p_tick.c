@@ -119,7 +119,7 @@ void P_DoTick(void)
        !Get(DD_PLAYBACK) && mapTime > 1)
         return;
 
-    DD_RunThinkers();
+    Thinker_Run();
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     // Extended lines and sectors.
     XG_Ticker();

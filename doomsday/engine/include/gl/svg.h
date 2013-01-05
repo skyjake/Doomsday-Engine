@@ -23,7 +23,7 @@
 #ifndef LIBDENG_REFRESH_SVG_H
 #define LIBDENG_REFRESH_SVG_H
 
-#include "dd_vectorgraphic.h"
+#include "api_svg.h"
 
 struct svgline_s;
 typedef struct svgline_s SvgLine;

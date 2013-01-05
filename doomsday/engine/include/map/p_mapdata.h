@@ -30,9 +30,11 @@
 #endif
 
 #include "dd_share.h"
+#include "api_mapedit.h"
 #include "map/dam_main.h"
 #include "render/rend_bias.h"
 #include "m_nodepile.h"
+#include <de/binangle.h>
 #include <de/vector1.h>
 
 #ifdef __cplusplus
@@ -258,33 +260,6 @@ extern GameMap* theMap;
 void P_SetCurrentMap(GameMap* map);
 
 /**
- * Is there a known map referenced by @a uri and if so, is it available for loading?
- *
- * @param  Uri identifying the map to be searched for.
- * @return  @c true= A known and loadable map.
- */
-boolean P_MapExists(const char* uri);
-
-boolean P_MapIsCustom(const char* uri);
-
-/**
- * Retrieve the name of the source file containing the map referenced by @a uri
- * if known and available for loading.
- *
- * @param  Uri identifying the map to be searched for.
- * @return  Fully qualified (i.e., absolute) path to the source file.
- */
-AutoStr* P_MapSourceFile(char const* uri);
-
-/**
- * Begin the process of loading a new map.
- *
- * @param uri  Uri identifying the map to be loaded.
- * @return @c true, if the map was loaded successfully.
- */
-boolean P_LoadMap(const char* uri);
-
-/**
  * To be called to initialize the game map object defs.
  */
 void P_InitMapEntityDefs(void);
@@ -293,19 +268,6 @@ void P_InitMapEntityDefs(void);
  * To be called to free all memory allocated for the map obj defs.
  */
 void P_ShutdownMapEntityDefs(void);
-
-/**
- * Called by the game to register the map object types it wishes us to make
- * public via the MPE interface.
- */
-boolean P_RegisterMapObj(int identifier, const char* name);
-
-/**
- * Called by the game to add a new property to a previously registered
- * map object type definition.
- */
-boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
-    const char* propName, valuetype_t type);
 
 #ifdef __cplusplus
 } // extern "C"

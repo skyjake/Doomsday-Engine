@@ -28,8 +28,7 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
-#include "m_misc.h" // For M_CeilPow2()
-
+#include <de/mathutil.h> // M_CeilPow2()
 #include <de/memory.h>
 
 void Font_Init(font_t *font, fonttype_t type, fontid_t bindId)

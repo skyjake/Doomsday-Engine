@@ -38,16 +38,23 @@ DEFINES += __DOOMSDAY__ __CLIENT__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
+# Linking --------------------------------------------------------------------
+
 win32 {
     RC_FILE = res/windows/doomsday.rc
-    OTHER_FILES += api/doomsday.def $$RC_FILE
+    OTHER_FILES += $$RC_FILE
+
+    QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
+
+    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
+        -lopengl32 -lglu32
 }
 else:macx {
+    useFramework(Cocoa)
+    useFramework(QTKit)
 }
 else {
     # Generic Unix.
-    QMAKE_LFLAGS += -rdynamic
-
     !freebsd-*: LIBS += -ldl
     LIBS += -lX11
 
@@ -66,55 +73,46 @@ else {
     }
 }
 
-# Linking --------------------------------------------------------------------
-
-win32 {
-    QMAKE_LFLAGS += \
-        /NODEFAULTLIB:libcmt \
-        /DEF:\"$$DENG_API_DIR/doomsday.def\" \
-        /IMPLIB:\"$$DENG_EXPORT_LIB\"
-
-    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
-        -lopengl32 -lglu32
-}
-else:macx {
-    useFramework(Cocoa)
-    useFramework(QTKit)
-}
-else {
-    # Allow exporting symbols out of the main executable.
-    QMAKE_LFLAGS += -rdynamic
-}
-
 # Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
-    api/busytask.h \
-    api/dd_api.h \
-    api/dd_fontrenderer.h \
-    api/dd_gl.h \
-    api/dd_infine.h \
+    api/apis.h \
+    api/api_audiod.h \
+    api/api_audiod_mus.h \
+    api/api_audiod_sfx.h \
+    api/api_base.h \
+    api/api_busy.h \
+    api/api_client.h \
+    api/api_console.h \
+    api/api_def.h \
+    api/api_event.h \
+    api/api_infine.h \
+    api/api_internaldata.h \
+    api/api_filesys.h \
+    api/api_fontrender.h \
+    api/api_gameexport.h \
+    api/api_gl.h \
+    api/api_material.h \
+    api/api_materialarchive.h \
+    api/api_map.h \
+    api/api_mapedit.h \
+    api/api_player.h \
+    api/api_plugin.h \
+    api/api_render.h \
+    api/api_resource.h \
+    api/api_resourceclass.h \
+    api/api_sound.h \
+    api/api_svg.h \
+    api/api_thinker.h \
+    api/api_uri.h \
+    api/api_wad.h \
     api/dd_maptypes.h \
-    api/dd_plugin.h \
     api/dd_share.h \
     api/dd_types.h \
-    api/dd_ui.h \
-    api/dd_vectorgraphic.h \
     api/dd_version.h \
-    api/dd_wad.h \
-    api/dd_world.h \
     api/def_share.h \
     api/dengproject.h \
-    api/doomsday.h \
-    api/filehandle.h \
-    api/filetype.h \
-    api/materialarchive.h \
-    api/resourceclass.h \
-    api/sys_audiod.h \
-    api/sys_audiod_mus.h \
-    api/sys_audiod_sfx.h \
-    api/thinker.h \
-    api/uri.h
+    api/doomsday.h
 
 # Convenience headers.
 DENG_HEADERS += \
@@ -179,6 +177,7 @@ DENG_HEADERS += \
     include/edit_bias.h \
     include/edit_bsp.h \
     include/edit_map.h \
+    include/filehandle.h \
     include/filesys/file.h \
     include/filesys/filehandlebuilder.h \
     include/filesys/fileinfo.h \
@@ -188,6 +187,7 @@ DENG_HEADERS += \
     include/filesys/manifest.h \
     include/filesys/searchpath.h \
     include/filesys/sys_direc.h \
+    include/filetype.h \
     include/game.h \
     include/gl/gl_defer.h \
     include/gl/gl_deferredapi.h \
@@ -202,7 +202,6 @@ DENG_HEADERS += \
     include/gridmap.h \
     include/kdtree.h \
     include/library.h \
-    include/m_bams.h \
     include/m_decomp64.h \
     include/m_misc.h \
     include/m_nodepile.h \
@@ -314,6 +313,7 @@ DENG_HEADERS += \
     include/resource/tga.h \
     include/resource/wad.h \
     include/resource/zip.h \
+    include/resourceclass.h \
     include/server/sv_def.h \
     include/server/sv_frame.h \
     include/server/sv_infine.h \
@@ -333,6 +333,7 @@ DENG_HEADERS += \
     include/ui/canvaswindow.h \
     include/ui/consolewindow.h \
     include/ui/dd_input.h \
+    include/ui/dd_ui.h \
     include/ui/displaymode.h \
     include/ui/displaymode_native.h \
     include/ui/fi_main.h \
@@ -426,6 +427,8 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
+    src/api_material.cpp \
+    src/api_uri.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
     src/audio/m_mus2midi.c \
@@ -492,7 +495,6 @@ SOURCES += \
     src/gridmap.c \
     src/kdtree.c \
     src/library.cpp \
-    src/m_bams.c \
     src/m_decomp64.c \
     src/m_misc.c \
     src/m_nodepile.c \
@@ -544,6 +546,7 @@ SOURCES += \
     src/network/sys_network.c \
     src/network/ui_mpi.c \
     src/r_util.c \
+    src/render/api_render.c \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.c \
@@ -570,6 +573,7 @@ SOURCES += \
     src/render/vignette.c \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \
+    src/resource/api_resource.c \
     src/resource/bitmapfont.cpp \
     src/resource/colorpalette.c \
     src/resource/colorpalettes.cpp \
@@ -634,8 +638,7 @@ SOURCES += \
     src/updater/updaterdialog.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
-    src/uri.cpp \
-    src/uri_wrapper.cpp
+    src/uri.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

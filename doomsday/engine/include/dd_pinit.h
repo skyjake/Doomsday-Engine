@@ -24,7 +24,8 @@
 #define LIBDENG_PORTABLE_INIT_H
 
 #include "dd_share.h"
-#include "dd_api.h"
+#include "api_gameexport.h"
+#include "api_internaldata.h"
 #include <de/c_wrapper.h>
 
 #ifdef __cplusplus
@@ -62,7 +63,6 @@ void DD_InitAPI(void);
  */
 void DD_InitCommandLine(void);
 
-extern game_import_t gi;
 extern game_export_t gx;
 
 #ifdef __cplusplus

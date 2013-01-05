@@ -108,6 +108,7 @@ void Cl_Thrust(mobj_t *mo, angle_t angle, float move)
  *
  * @return  The engineside client mobj of a player, representing a remote mobj on the server.
  */
+#undef ClPlayer_ClMobj
 struct mobj_s* ClPlayer_ClMobj(int plrNum)
 {
     assert(plrNum >= 0 && plrNum < DDMAXPLAYERS);

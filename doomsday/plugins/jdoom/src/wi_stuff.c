@@ -1373,7 +1373,7 @@ static void loadData(void)
 
 void WI_Drawer(void)
 {
-    borderedprojectionstate_t bp;
+    dgl_borderedprojectionstate_t bp;
 
     /// @todo Kludge: dj: Clearly a kludge but why?
     if(ILS_NONE == inState)

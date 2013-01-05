@@ -303,7 +303,7 @@ void T_MaterialChanger(materialchanger_t* mchanger)
         S_SectorSound(P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWITCH);
 #endif
 
-        DD_ThinkerRemove(&mchanger->thinker);
+        Thinker_Remove(&mchanger->thinker);
     }
 }
 
@@ -314,7 +314,7 @@ static void spawnMaterialChanger(SideDef* side, SideDefSection section,
 
     mchanger = Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
     mchanger->thinker.function = T_MaterialChanger;
-    DD_ThinkerAdd(&mchanger->thinker);
+    Thinker_Add(&mchanger->thinker);
 
     mchanger->side = side;
     mchanger->section = section;
@@ -348,7 +348,7 @@ static void startButton(SideDef* side, SideDefSection section,
     params.section = section;
 
     // See if a material change has already been queued.
-    if(DD_IterateThinkers(T_MaterialChanger, findMaterialChanger, &params))
+    if(Thinker_Iterate(T_MaterialChanger, findMaterialChanger, &params))
         return;
 
     spawnMaterialChanger(side, section, mat, tics);

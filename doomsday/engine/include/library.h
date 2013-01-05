@@ -59,6 +59,13 @@ void Library_Shutdown(void);
 const char* Library_LastError(void);
 
 /**
+ * Provides the library with the engine's public APIs.
+ *
+ * @param lib  Library instance.
+ */
+void Library_PublishAPIs(Library *lib);
+
+/**
  * Closes the library handles of all game plugins. The library will be
  * reopened automatically when needed.
  */

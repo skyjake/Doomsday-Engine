@@ -59,18 +59,7 @@ void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int t
 
 // Filters:
 boolean GL_FilterIsVisible(void);
-void GL_SetFilter(boolean enable);
-void GL_SetFilterColor(float r, float g, float b, float a);
 void GL_DrawFilter(void);
-
-void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
-    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
-    float stretchEpsilon);
-void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags,
-    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
-
-void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
-void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
 
 #ifdef __cplusplus
 } // extern "C"

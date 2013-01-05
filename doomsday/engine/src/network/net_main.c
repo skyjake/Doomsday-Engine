@@ -201,11 +201,13 @@ void Net_Shutdown(void)
     Net_DestroyArrays();
 }
 
+#undef Net_GetPlayerName
 const char* Net_GetPlayerName(int player)
 {
     return clients[player].name;
 }
 
+#undef Net_GetPlayerID
 ident_t Net_GetPlayerID(int player)
 {
     if(!clients[player].connected)
@@ -289,6 +291,7 @@ boolean Net_GetPacket(void)
     return true;
 }
 
+#undef Net_PlayerSmoother
 Smoother* Net_PlayerSmoother(int player)
 {
     if(player < 0 || player >= DDMAXPLAYERS)
@@ -320,6 +323,7 @@ void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
 /**
  * This is the public interface of the message sender.
  */
+#undef Net_SendPacket
 void Net_SendPacket(int to_player, int type, const void* data, size_t length)
 {
     unsigned int flags = 0;

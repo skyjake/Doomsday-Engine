@@ -33,8 +33,6 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#define PI                  3.141592657
-
 //
 // lighting constants
 //

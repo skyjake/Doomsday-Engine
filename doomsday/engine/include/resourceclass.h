@@ -24,36 +24,7 @@
 #ifndef LIBDENG_RESOURCECLASS_H
 #define LIBDENG_RESOURCECLASS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * Resource Class Identifier.
- *
- * @ingroup base
- *
- * @todo Refactor away. These identifiers are no longer needed.
- */
-typedef enum resourceclassid_e {
-    RC_NULL = -2,           ///< Not a real class.
-    RC_UNKNOWN = -1,        ///< Attempt to guess the class through evaluation of the path.
-    RESOURCECLASS_FIRST = 0,
-    RC_PACKAGE = RESOURCECLASS_FIRST,
-    RC_DEFINITION,
-    RC_GRAPHIC,
-    RC_MODEL,
-    RC_SOUND,
-    RC_MUSIC,
-    RC_FONT,
-    RESOURCECLASS_COUNT
-} resourceclassid_t;
-
-#define VALID_RESOURCECLASSID(n)   ((n) >= RESOURCECLASS_FIRST && (n) < RESOURCECLASS_COUNT)
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+#include "api_resourceclass.h"
 
 #ifdef __cplusplus
 #ifndef DENG2_C_API_ONLY

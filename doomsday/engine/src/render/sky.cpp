@@ -611,7 +611,8 @@ static void internalSkyParams(int layer, int param, void *data)
     }
 }
 
-void R_SkyParams(int layer, int param, void *data)
+#undef R_SkyParams
+DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data)
 {
     if(layer == DD_SKY) // The whole sky?
     {

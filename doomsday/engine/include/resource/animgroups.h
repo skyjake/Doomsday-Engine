@@ -60,22 +60,6 @@ void R_ClearAnimGroups(void);
 /// @return  AnimGroup associated with @a animGroupNum else @c NULL
 animgroup_t const *R_ToAnimGroup(int animGroupNum);
 
-/**
- * Create a new animation group.
- * @return  Logical (unique) identifier reference associated with the new group.
- */
-int R_CreateAnimGroup(int flags);
-
-/**
- * Append a new @a texture frame to the identified @a animGroupNum.
- *
- * @param animGroupNum  Logical identifier reference to the group being modified.
- * @param texture  Texture frame to be inserted into the group.
- * @param tics  Base duration of the new frame in tics.
- * @param randomTics  Extra frame duration in tics (randomized on each cycle).
- */
-void R_AddAnimGroupFrame(int animGroupNum, Uri const *texture, int tics, int randomTics);
-
 /// @return  @c true iff @a texture is linked to the identified @a animGroupNum.
 boolean R_IsTextureInAnimGroup(Uri const *texture, int animGroupNum);
 

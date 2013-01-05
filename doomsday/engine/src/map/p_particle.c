@@ -33,6 +33,7 @@
 #include "map/generators.h"
 #include "render/r_main.h" // validCount
 #include "resource/models.h"
+#include "api_map.h"
 
 #define ORDER(x,y,a,b)      ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 #define DOT2F(a,b)          ( FIX2FLT(a[VX])*FIX2FLT(b[VX]) + FIX2FLT(a[VY])*FIX2FLT(b[VY]) )
@@ -1344,6 +1345,7 @@ void P_SpawnMapParticleGens(void)
     }
 }
 
+#undef P_SpawnDamageParticleGen
 void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
 {
     const ded_ptcgen_t* def;

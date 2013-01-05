@@ -31,7 +31,8 @@
 #include <string.h>
 
 #include "dd_types.h"
-#include "dd_api.h"
+#include "api_gameexport.h"
+#include "api_internaldata.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,10 +97,6 @@ extern "C" {
 
 #define MAXEVENTS       256
 #define SBARHEIGHT      39         // status bar height at bottom of screen
-#define PI              3.14159265359
-#define PI_D            3.14159265358979323846
-#define DEG2RAD(a)      (a * PI_D) / 180.0
-#define RAD2DEG(a)      (a / PI_D) * 180.0
 
 #define SECONDS_TO_TICKS(sec) ((int)((sec)*35))
 
@@ -113,10 +110,7 @@ enum { CR, CG, CB, CA };           // Color indices.
 
 // dd_pinit.c
 extern game_export_t __gx;
-extern game_import_t __gi;
-
 #define gx __gx
-#define gi __gi
 
 extern byte     gammaTable[256];
 extern float    texGamma;

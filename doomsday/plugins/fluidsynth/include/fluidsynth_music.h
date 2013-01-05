@@ -22,7 +22,7 @@
 #ifndef __DSFLUIDSYNTH_MUS_H__
 #define __DSFLUIDSYNTH_MUS_H__
 
-#include "sys_audiod_mus.h"
+#include "api_audiod_mus.h"
 
 #ifdef __cplusplus
 extern "C" {

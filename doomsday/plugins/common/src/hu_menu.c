@@ -4703,7 +4703,7 @@ void Hu_MenuDrawer(void)
 {
 #define OVERLAY_DARKEN          .7f
 
-    borderedprojectionstate_t bp;
+    dgl_borderedprojectionstate_t bp;
     boolean showFocusCursor = true;
     mn_object_t* focusObj;
 

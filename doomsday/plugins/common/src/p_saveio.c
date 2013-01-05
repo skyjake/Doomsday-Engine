@@ -33,7 +33,7 @@
 #include "p_saveio.h"
 #include "p_savedef.h"
 #include "saveinfo.h"
-#include "materialarchive.h"
+#include "api_materialarchive.h"
 
 static boolean inited;
 static LZFILE* savefile;

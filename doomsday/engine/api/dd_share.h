@@ -38,18 +38,18 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
-
 #include "dengproject.h"
 #include "dd_version.h"
 #include "dd_types.h"
 #include "dd_maptypes.h"
-#include "dd_wad.h"
-#include "dd_gl.h"
-#include "dd_ui.h"
-#include "dd_infine.h"
 #include "def_share.h"
-#include "busytask.h"
-#include "thinker.h"
+#include "api_wad.h"
+#include "api_gl.h"
+#include "api_busy.h"
+#include "api_thinker.h"
+#include "api_event.h"
+#include "api_player.h"
+#include "api_infine.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -129,24 +129,6 @@ float           FloatSwap(float);
 #define USHORT(x)           ((uint16_t) SHORT(x))
 #define ULONG(x)            ((uint32_t) LONG(x))
 ///@}
-
-/// Value types.
-typedef enum {
-    DDVT_NONE = -1, ///< Not a read/writeable value type.
-    DDVT_BOOL,
-    DDVT_BYTE,
-    DDVT_SHORT,
-    DDVT_INT,       ///< 32 or 64 bit
-    DDVT_UINT,
-    DDVT_FIXED,
-    DDVT_ANGLE,
-    DDVT_FLOAT,
-    DDVT_DOUBLE,
-    DDVT_LONG,
-    DDVT_ULONG,
-    DDVT_PTR,
-    DDVT_BLENDMODE
-} valuetype_t;
 
 /// Integer values for Set/Get
 enum {
@@ -289,16 +271,6 @@ enum {
     DD_NOTIFY_GAME_SAVED        ///< savegame was written
 };
 
-/// Bounding box coordinates.
-enum {
-    BOXTOP      = 0,
-    BOXBOTTOM   = 1,
-    BOXLEFT     = 2,
-    BOXRIGHT    = 3,
-    BOXFLOOR    = 4,
-    BOXCEILING  = 5
-};
-
 //------------------------------------------------------------------------
 //
 // Games
@@ -308,50 +280,6 @@ enum {
 /**
  * @defgroup game Game
  */
-
-/**
- * Defines the numerous high-level properties of a logical game component.
- * Note that this is POD; no construction or destruction is needed.
- * @see DD_DefineGame() @ingroup game
- */
-typedef struct gamedef_s {
-   /**
-    * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
-    * - Used during resource location for mode-specific assets.
-    * - Sent out in netgames (a client can't connect unless mode strings match).
-    */
-    const char* identityKey;
-
-    /// Name of the config directory.
-    const char* configDir;
-
-    /// Default title. May be overridden later.
-    const char* defaultTitle;
-
-    /// Default author. May be overridden later.
-    /// Used for (e.g.) the map author name if not specified in a Map Info definition.
-    const char* defaultAuthor;
-} GameDef;
-
-/**
- * Extended info about a registered game component.
- * @see DD_GameInfo() @ingroup game
- */
-typedef struct gameinfo_s {
-    const char* title;
-    const char* author;
-    const char* identityKey;
-} GameInfo;
-
-/**
- * Provides a way for games (or other plugins) to notify the engine of game-related
- * important events.
- *
- * @param notification  One of the DD_NOTIFY_* enums.
- * @param param         Additional arguments about the notification, dependin
- *                      on the notification type.
- */
-void Game_Notify(int notification, void* param);
 
 /**
  * @defgroup fileFlags File Flags
@@ -367,7 +295,6 @@ void Game_Notify(int notification, void* param);
  * @ingroup base
  */
 ///@{
-#define FLOATEPSILON        .000001f
 
 /**
  * Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
@@ -375,22 +302,6 @@ void Game_Notify(int notification, void* param);
  * exceeding 255 (e.g. 255 * reciprocal255).
  */
 #define reciprocal255   0.003921568627f
-
-#define FINEANGLES          8192
-#define FINEMASK            (FINEANGLES-1)
-#define ANGLETOFINESHIFT    19 ///< Shifts 0x100000000 to 0x2000.
-
-#define ANGLE_45            0x20000000
-#define ANGLE_90            0x40000000
-#define ANGLE_180           0x80000000
-#define ANGLE_MAX           0xffffffff
-#define ANGLE_1             (ANGLE_45/45)
-#define ANGLE_60            (ANGLE_180/3)
-
-#define ANG45               0x20000000
-#define ANG90               0x40000000
-#define ANG180              0x80000000
-#define ANG270              0xc0000000
 
 ///@}
 
@@ -472,50 +383,6 @@ enum {
 };
 ///@}
 
-//------------------------------------------------------------------------
-//
-// Events
-//
-//------------------------------------------------------------------------
-
-/// Event types. @ingroup input
-typedef enum {
-    EV_KEY,
-    EV_MOUSE_AXIS,
-    EV_MOUSE_BUTTON,
-    EV_JOY_AXIS,    ///< Joystick main axes (xyz + Rxyz).
-    EV_JOY_SLIDER,  ///< Joystick sliders.
-    EV_JOY_BUTTON,
-    EV_POV,
-    EV_SYMBOLIC,    ///< Symbol text pointed to by data1+data2.
-    EV_FOCUS,       ///< Change in game window focus (data1=gained, data2=windowID).
-    NUM_EVENT_TYPES
-} evtype_t;
-
-/// Event states. @ingroup input
-typedef enum {
-    EVS_DOWN,
-    EVS_UP,
-    EVS_REPEAT,
-    NUM_EVENT_STATES
-} evstate_t;
-
-/// Input event. @ingroup input
-typedef struct event_s {
-    evtype_t        type;
-    evstate_t       state; ///< Only used with digital controls.
-    int             data1; ///< Keys/mouse/joystick buttons.
-    int             data2; ///< Mouse/joystick x move.
-    int             data3; ///< Mouse/joystick y move.
-    int             data4;
-    int             data5;
-    int             data6;
-} event_t;
-
-/// The mouse wheel is considered two extra mouse buttons.
-#define DD_MWHEEL_UP        3
-#define DD_MWHEEL_DOWN      4
-#define DD_MICKEY_ACCURACY  1000
 
 //------------------------------------------------------------------------
 //
@@ -722,11 +589,6 @@ typedef enum sidedefsection_e {
 #define DMU_FLAG_FOR_SIDEDEFSECTION(s) (\
     (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDEDEF : \
     (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDEDEF : DMU_TOP_OF_SIDEDEF)
-
-typedef struct {
-    fixed_t origin[2];
-    fixed_t direction[2];
-} divline_t;
 
 typedef struct {
     float origin[2];
@@ -1111,39 +973,10 @@ typedef enum {
     ORDER_RIGHTTOLEFT
 } order_t;
 
-typedef enum {
-    SCALEMODE_FIRST = 0,
-    SCALEMODE_SMART_STRETCH = SCALEMODE_FIRST,
-    SCALEMODE_NO_STRETCH, // Never.
-    SCALEMODE_STRETCH, // Always.
-    SCALEMODE_LAST = SCALEMODE_STRETCH,
-    SCALEMODE_COUNT
-} scalemode_t;
-
 /// Can the value be interpreted as a valid scale mode identifier?
 #define VALID_SCALEMODE(val)    ((val) >= SCALEMODE_FIRST && (val) <= SCALEMODE_LAST)
 
 #define DEFAULT_SCALEMODE_STRETCH_EPSILON   (.38f)
-
-/**
- * @defgroup borderedProjectionFlags  Bordered Projection Flags
- * @ingroup apiFlags
- * @{
- */
-#define BPF_OVERDRAW_MASK   0x1
-#define BPF_OVERDRAW_CLIP   0x2
-/**@}*/
-
-typedef struct {
-    int flags;
-    scalemode_t scaleMode;
-    int width, height;
-    int availWidth, availHeight;
-    boolean alignHorizontal; /// @c false= align vertically instead.
-    float scaleFactor;
-    int scissorState;
-    RectRaw scissorRegion;
-} borderedprojectionstate_t;
 
 //------------------------------------------------------------------------
 //
@@ -1607,128 +1440,6 @@ typedef struct serverinfo_s {
  */
 #define DDSP_ALL_PLAYERS    0x80000000 ///< Broadcast (for server).
 ///@}
-
-//------------------------------------------------------------------------
-//
-// Player Data
-//
-//------------------------------------------------------------------------
-
-/**
- * @defgroup player Player
- * @ingroup playsim
- */
-
-/// Built-in control identifiers. @ingroup player
-enum {
-    CTL_WALK = 1,           ///< Forward/backwards.
-    CTL_SIDESTEP = 2,       ///< Left/right sideways movement.
-    CTL_ZFLY = 3,           ///< Up/down movement.
-    CTL_TURN = 4,           ///< Turning horizontally.
-    CTL_LOOK = 5,           ///< Turning up and down.
-    CTL_MODIFIER_1 = 6,
-    CTL_MODIFIER_2 = 7,
-    CTL_MODIFIER_3 = 8,
-    CTL_MODIFIER_4 = 9,
-    CTL_FIRST_GAME_CONTROL = 1000
-};
-
-/// Control type.
-typedef enum controltype_e {
-    CTLT_NUMERIC,               ///< Control with a numeric value determined by current device state.
-    CTLT_NUMERIC_TRIGGERED,     ///< Numeric, but accepts triggered states as well.
-    CTLT_IMPULSE                ///< Always accepts triggered states.
-} controltype_t;
-
-/**
- * @defgroup playerFlags Player Flags
- * @ingroup player apiFlags
- * @{
- */
-#define DDPF_FIXANGLES          0x0001 ///< Server: send angle/pitch to client.
-//#define DDPF_FILTER             0x0002 // Server: send filter to client.
-#define DDPF_FIXORIGIN          0x0004 ///< Server: send coords to client.
-#define DDPF_DEAD               0x0008 ///< Cl & Sv: player is dead.
-#define DDPF_CAMERA             0x0010 ///< Player is a cameraman.
-#define DDPF_LOCAL              0x0020 ///< Player is local (e.g. player zero).
-#define DDPF_FIXMOM             0x0040 ///< Server: send momentum to client.
-#define DDPF_NOCLIP             0x0080 ///< Client: don't clip movement.
-#define DDPF_CHASECAM           0x0100 ///< Chase camera mode (third person view).
-#define DDPF_INTERYAW           0x0200 ///< Interpolate view yaw angles (used with locking).
-#define DDPF_INTERPITCH         0x0400 ///< Interpolate view pitch angles (used with locking).
-#define DDPF_VIEW_FILTER        0x0800 ///< Cl & Sv: Draw the current view filter.
-#define DDPF_REMOTE_VIEW_FILTER 0x1000 ///< Client: Draw the view filter (has been set remotely).
-#define DDPF_USE_VIEW_FILTER    (DDPF_VIEW_FILTER | DDPF_REMOTE_VIEW_FILTER)
-#define DDPF_UNDEFINED_ORIGIN   0x2000 ///< Origin of the player is undefined (view not drawn).
-#define DDPF_UNDEFINED_WEAPON   0x4000 ///< Weapon of the player is undefined (not sent yet).
-///@}
-
-/// Maximum length of a player name.
-#define PLAYERNAMELEN       81
-
-/// Normally one for the weapon and one for the muzzle flash.
-#define DDMAXPSPRITES       2
-
-/// Psprite states. @ingroup player
-enum {
-    DDPSP_BOBBING,
-    DDPSP_FIRE,
-    DDPSP_DOWN,
-    DDPSP_UP
-};
-
-/**
- * @defgroup pspriteFlags PSprite Flags
- * @ingroup player apiFlags
- */
-///@{
-#define DDPSPF_FULLBRIGHT 0x1
-///@}
-
-/// Player sprite. @ingroup player
-typedef struct {
-    state_t*        statePtr;
-    int             tics;
-    float           alpha;
-    float           pos[2];
-    byte            flags; /// @ref pspriteFlags
-    int             state;
-    float           offset[2];
-} ddpsprite_t;
-
-/// Player lookdir (view pitch) conversion to degrees. @ingroup player
-#define LOOKDIR2DEG(x)  ((x) * 85.0/110.0)
-/// Player lookdir (view pitch) conversion to radians. @ingroup player
-#define LOOKDIR2RAD(x)  (LOOKDIR2DEG(x)/180*PI)
-
-struct mobj_s;
-struct polyobj_s;
-
-    typedef struct fixcounters_s {
-        int             angles;
-        int             origin;
-        int             mom;
-    } fixcounters_t;
-
-    typedef struct ddplayer_s {
-        float           forwardMove; // Copied from player brain (read only).
-        float           sideMove; // Copied from player brain (read only).
-        struct mobj_s*  mo; // Pointer to a (game specific) mobj.
-        float           lookDir; // For mouse look.
-        int             fixedColorMap; // Can be set to REDCOLORMAP, etc.
-        int             extraLight; // So gun flashes light up areas.
-        int             inGame; // Is this player in game?
-        int             inVoid; // True if player is in the void
-                                // (not entirely accurate so it shouldn't
-                                // be used for anything critical).
-        int             flags;
-        float           filterColor[4]; // RGBA filter for the camera.
-        fixcounters_t   fixCounter;
-        fixcounters_t   fixAcked;
-        angle_t         lastAngle; // For calculating turndeltas.
-        ddpsprite_t     pSprites[DDMAXPSPRITES]; // Player sprites.
-        void*           extraData; // Pointer to any game-specific data.
-    } ddplayer_t;
 
 #ifdef __cplusplus
 } // extern "C"

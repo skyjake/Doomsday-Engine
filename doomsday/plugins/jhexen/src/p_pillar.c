@@ -67,7 +67,7 @@ void T_BuildPillar(pillar_t *pillar)
         P_ToXSector(pillar->sector)->specialData = NULL;
         SN_StopSequenceInSec(pillar->sector);
         P_TagFinished(P_ToXSector(pillar->sector)->tag);
-        DD_ThinkerRemove(&pillar->thinker);
+        Thinker_Remove(&pillar->thinker);
     }
 }
 
@@ -107,7 +107,7 @@ int EV_BuildPillar(LineDef* line, byte* args, boolean crush)
 
         pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
         pillar->thinker.function = T_BuildPillar;
-        DD_ThinkerAdd(&pillar->thinker);
+        Thinker_Add(&pillar->thinker);
 
         P_ToXSector(sec)->specialData = pillar;
         pillar->sector = sec;
@@ -168,7 +168,7 @@ int EV_OpenPillar(LineDef* line, byte* args)
 
         pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
         pillar->thinker.function = T_BuildPillar;
-        DD_ThinkerAdd(&pillar->thinker);
+        Thinker_Add(&pillar->thinker);
 
         P_ToXSector(sec)->specialData = pillar;
         pillar->sector = sec;

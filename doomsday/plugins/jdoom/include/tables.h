@@ -32,8 +32,6 @@
 
 #include "doomsday.h"
 
-#define PI                  3.141592657
-
 #define FINEANGLES          8192
 #define FINEMASK            (FINEANGLES-1)
 
@@ -44,10 +42,6 @@
 #define ANG90               0x40000000
 #define ANG180              0x80000000
 #define ANG270              0xc0000000
-
-#define SLOPERANGE          2048
-#define SLOPEBITS           11
-#define DBITS               (FRACBITS-SLOPEBITS)
 
 // Effective size is 10240.
 extern fixed_t finesine[5 * FINEANGLES / 4];

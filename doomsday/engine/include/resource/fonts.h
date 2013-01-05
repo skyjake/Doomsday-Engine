@@ -43,7 +43,7 @@
 #ifndef LIBDENG_RESOURCE_FONTS_H
 #define LIBDENG_RESOURCE_FONTS_H
 
-#include "uri.h"
+#include "api_uri.h"
 #include "def_data.h"
 
 #ifdef __cplusplus
@@ -144,17 +144,10 @@ void Fonts_RebuildFromFile(struct font_s* font, const char* resourcePath);
 /**
  * Search the Fonts collection for a font associated with @a uri.
  *
- * @param uri    Either a path or a URN.
+ * @param uri    Either a path or URN to the font.
+ * @param quiet  @c true: suppress the console message that is printed if the Uri cannot be found.
  *
  * @return  Unique identifier of the found texture else @c NOFONTID.
- */
-fontid_t Fonts_ResolveUri(Uri const * uri); /*quiet=!(verbose >= 1)*/
-
-/**
- * @copydoc Fonts_ResolveUri()
- *
- * @param uri       Either a path or URN to the font.
- * @param quiet     @c true = suppress the console message that is printed if the Uri cannot be found.
  */
 fontid_t Fonts_ResolveUri2(Uri const* uri, boolean quiet);
 

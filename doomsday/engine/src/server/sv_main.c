@@ -30,6 +30,9 @@
 
 #include <math.h>
 
+#define DENG_NO_API_MACROS_SERVER
+#include "api_server.h"
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -39,7 +42,7 @@
 #include "de_misc.h"
 #include "de_defs.h"
 
-#include "materialarchive.h"
+#include "api_materialarchive.h"
 #include "map/r_world.h"
 
 // This is absolute maximum bandwidth rating. Frame size is practically
@@ -1288,3 +1291,9 @@ D_CMD(Logout)
     netRemoteUser = 0;
     return true;
 }
+
+DENG_DECLARE_API(Server) =
+{
+    { DE_API_SERVER },
+    Sv_CanTrustClientPos
+};

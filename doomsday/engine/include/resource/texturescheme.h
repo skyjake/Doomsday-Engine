@@ -24,7 +24,7 @@
 
 #include <QList>
 #include <de/PathTree>
-#include "uri.h"
+#include "api_uri.h"
 #include "resource/texturemanifest.h"
 
 namespace de {

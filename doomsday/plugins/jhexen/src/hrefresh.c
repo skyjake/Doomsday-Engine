@@ -111,6 +111,8 @@ void R_UpdateViewFilter(int player)
     player_t* plr = players + player;
     int palette = 0;
 
+    if(IS_DEDICATED && !player) return;
+
     if(player < 0 || player >= MAXPLAYERS)
     {
 #if _DEBUG

@@ -30,6 +30,7 @@
 #include <de/Reader>
 #include <de/String>
 #include <de/Time>
+#include <de/mathutil.h> // M_NumDigits()
 
 #include "de_base.h"
 #include "de_filesys.h"
@@ -39,7 +40,6 @@
 #include "gl/gl_tex.h"
 #include "gl/gl_texmanager.h"
 #include "m_stack.h"
-#include "m_misc.h" // For M_NumDigits()
 #include "uri.hh"
 
 using namespace de;
@@ -102,8 +102,8 @@ void R_InitSystemTextures()
     App_Textures()->iterateDeclared("System", defineTextureWorker);
 }
 
-/// @note Part of the Doomsday public API.
-AutoStr *R_ComposePatchPath(patchid_t id)
+#undef R_ComposePatchPath
+DENG_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
 {
     try
     {
@@ -118,8 +118,8 @@ AutoStr *R_ComposePatchPath(patchid_t id)
     return AutoStr_NewStd();
 }
 
-/// @note Part of the Doomsday public API.
-uri_s *R_ComposePatchUri(patchid_t id)
+#undef R_ComposePatchUri
+DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
 {
     try
     {
@@ -134,8 +134,8 @@ uri_s *R_ComposePatchUri(patchid_t id)
     return reinterpret_cast<uri_s *>(new de::Uri());
 }
 
-/// @note Part of the Doomsday public API.
-patchid_t R_DeclarePatch(char const *name)
+#undef R_DeclarePatch
+DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
 {
     LOG_AS("R_DeclarePatch");
 
@@ -215,7 +215,8 @@ patchid_t R_DeclarePatch(char const *name)
     return uniqueId;
 }
 
-boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
+#undef R_GetPatchInfo
+DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 {
     LOG_AS("R_GetPatchInfo");
     if(!info) LegacyCore_FatalError("R_GetPatchInfo: Argument 'info' cannot be NULL.");

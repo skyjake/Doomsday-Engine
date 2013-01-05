@@ -1,8 +1,6 @@
-/**
- * @file str.h
- * Dynamic text string.
+/** @file str.h Dynamic text string.
  *
- * Simple dynamic string management. @ingroup base
+ * Dynamic string management and other text utilities. @ingroup base
  *
  * Uses @ref memzone or standard malloc for memory allocation, chosen during
  * initialization of a string. The string instance itself is always allocated
@@ -23,8 +21,8 @@
  *       with static C strings, though (which is probably for the better anyway).
  * @todo Derive from Qt::QString
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2008-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2008-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -496,6 +494,52 @@ DENG_PUBLIC int dd_snprintf(char *str, size_t size, char const *format, ...);
 DENG_PUBLIC char *strupr(char *string);
 DENG_PUBLIC char *strlwr(char *string);
 #endif // UNIX
+
+// String Utilities
+
+DENG_PUBLIC char* M_SkipWhite(char* str);
+
+DENG_PUBLIC char* M_FindWhite(char* str);
+
+DENG_PUBLIC void M_StripLeft(char* str);
+
+DENG_PUBLIC void M_StripRight(char* str, size_t len);
+
+DENG_PUBLIC void M_Strip(char* str, size_t len);
+
+DENG_PUBLIC char* M_SkipLine(char* str);
+
+/**
+ * Concatenates src to dest as a quoted string. " is escaped to \".
+ * Returns dest.
+ */
+DENG_PUBLIC char* M_StrCatQuoted(char* dest, const char* src, size_t len);
+
+DENG_PUBLIC char* M_StrCat(char* buf, const char* str, size_t bufSize);
+
+DENG_PUBLIC char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize);
+
+DENG_PUBLIC char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth, char separator, size_t bufLength);
+
+/**
+ * Somewhat similar to strtok().
+ */
+DENG_PUBLIC char* M_StrTok(char** cursor, const char *delimiters);
+
+DENG_PUBLIC char* M_TrimmedFloat(float val);
+
+DENG_PUBLIC boolean M_IsComment(const char* text);
+
+DENG_PUBLIC void M_ForceUppercase(char *text);
+
+/// @return  @c true if @a string can be interpreted as a valid integer.
+DENG_PUBLIC boolean M_IsStringValidInt(const char* str);
+
+/// @return  @c true if @a string can be interpreted as a valid byte.
+DENG_PUBLIC boolean M_IsStringValidByte(const char* str);
+
+/// @return  @c true if @a string can be interpreted as a valid floating-point value.
+DENG_PUBLIC boolean M_IsStringValidFloat(const char* str);
 
 #ifdef __cplusplus
 } // extern "C"

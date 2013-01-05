@@ -174,8 +174,6 @@ void Models_Cache(modeldef_t* modef);
  */
 int Models_CacheForMobj(thinker_t* th, void* context);
 
-void Models_CacheForState(int stateIndex);
-
 #endif // __CLIENT__
 
 #ifdef __cplusplus

@@ -22,6 +22,8 @@
 
 #include <cmath>
 
+#define DENG_NO_API_MACROS_MAP
+
 #include "de_base.h"
 #include "de_network.h"
 #include "de_play.h"
@@ -33,7 +35,6 @@
 #include "map/propertyvalue.h"
 #include "render/rend_bias.h"
 #include "render/vlight.h"
-#include "m_bams.h"
 
 #include <map>
 #include <EntityDatabase>
@@ -43,6 +44,7 @@
 #include <de/Log>
 #include <de/String>
 #include <de/StringPool>
+#include <de/binangle.h>
 #include <de/memory.h>
 
 using namespace de;
@@ -114,24 +116,21 @@ void P_SetCurrentMap(GameMap* map)
     theMap = map;
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_MapExists(char const* uriCString)
+DENG_EXTERN_C boolean P_MapExists(char const* uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
     return (lumpNum >= 0);
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_MapIsCustom(char const* uriCString)
+DENG_EXTERN_C boolean P_MapIsCustom(char const* uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
     return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
 
-/// @note Part of the Doomsday public API.
-AutoStr* P_MapSourceFile(char const* uriCString)
+DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
@@ -139,8 +138,7 @@ AutoStr* P_MapSourceFile(char const* uriCString)
     return W_LumpSourceFile(lumpNum);
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_LoadMap(char const* uriCString)
+DENG_EXTERN_C boolean P_LoadMap(char const* uriCString)
 {
     if(!uriCString || !uriCString[0])
     {
@@ -448,15 +446,15 @@ static MapEntityDef* findMapEntityDef(int identifier, const char* entityName, bo
     return def;
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_RegisterMapObj(int identifier, const char* name)
+#undef P_RegisterMapObj
+DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, const char* name)
 {
     return !!findMapEntityDef(identifier, name, true /*do create*/);
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_RegisterMapObjProperty(int entityId, int propertyId,
-    const char* propertyName, valuetype_t type)
+#undef P_RegisterMapObjProperty
+DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId,
+                                               const char* propertyName, valuetype_t type)
 {
     try
     {
@@ -484,8 +482,7 @@ void P_ShutdownMapEntityDefs(void)
     clearEntityDefs();
 }
 
-/// @note Part of the Doomsday public API.
-extern "C" uint P_CountGameMapObjs(int entityId)
+DENG_EXTERN_C uint P_CountGameMapObjs(int entityId)
 {
     if(!theMap || !theMap->entityDatabase) return 0;
     EntityDatabase* db = theMap->entityDatabase;
@@ -537,8 +534,7 @@ static void setValue(void* dst, valuetype_t dstType, PropertyValue const* pvalue
     }
 }
 
-/// @note Part of the Doomsday public API.
-byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
 {
     byte returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -558,8 +554,7 @@ byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-/// @note Part of the Doomsday public API.
-short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
 {
     short returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -579,8 +574,7 @@ short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-/// @note Part of the Doomsday public API.
-int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
 {
     int returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -600,8 +594,7 @@ int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-/// @note Part of the Doomsday public API.
-fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
 {
     fixed_t returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -621,8 +614,7 @@ fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-/// @note Part of the Doomsday public API.
-angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
 {
     angle_t returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -642,8 +634,7 @@ angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-/// @note Part of the Doomsday public API.
-float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId)
 {
     float returnVal = 0;
     if(theMap && theMap->entityDatabase)

@@ -35,7 +35,7 @@
 #endif
 
 #include "dengproject.h"
-#include "dd_plugin.h"
+#include "api_plugin.h"
 
 #ifndef JDOOM_VER_ID
 #  ifdef _DEBUG

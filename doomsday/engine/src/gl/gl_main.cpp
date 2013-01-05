@@ -41,6 +41,7 @@
 #include "resource/materialvariant.h"
 #include "resource/texturevariant.h"
 #include "ui/displaymode.h"
+#include "api_render.h"
 
 D_CMD(Fog);
 D_CMD(SetBPP);
@@ -565,7 +566,8 @@ void GL_ProjectionMatrix()
     glScalef(1, 1, -1);
 }
 
-void GL_UseFog(int yes)
+#undef GL_UseFog
+DENG_EXTERN_C void GL_UseFog(int yes)
 {
     usingFog = yes;
 }

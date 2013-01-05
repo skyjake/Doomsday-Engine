@@ -556,7 +556,7 @@ void IN_CheckForSkip(void)
 void IN_Drawer(void)
 {
     static int oldInterState;
-    borderedprojectionstate_t bp;
+    dgl_borderedprojectionstate_t bp;
 
     if(!intermission || interState > 3)
     {

@@ -30,7 +30,6 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "m_misc.h" // for M_NumDigits()
 #include "filesys/lumpindex.h"
 
 #include <QBitArray>
@@ -39,6 +38,7 @@
 
 #include <de/Log>
 #include <de/NativePath>
+#include <de/mathutil.h>
 
 namespace de {
 

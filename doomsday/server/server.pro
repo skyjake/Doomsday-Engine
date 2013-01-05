@@ -39,73 +39,74 @@ DEFINES += __DOOMSDAY__ __SERVER__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
-win32 {
-    RC_FILE = res/windows/doomsday.rc
-    OTHER_FILES += ../engine/api/doomsday.def $$RC_FILE
-}
-else:macx {
-}
-else {
-    DEFINES += __USE_BSD _GNU_SOURCE=1
-
+!win32:!macx {
     # Generic Unix.
-    QMAKE_LFLAGS += -rdynamic
-
-    LIBS += -lX11 # TODO: Get rid of this! -jk
-
-    !freebsd-*: LIBS += -ldl
+    DEFINES += __USE_BSD _GNU_SOURCE=1
 }
 
 # Linking --------------------------------------------------------------------
 
 win32 {
-    QMAKE_LFLAGS += \
-        /NODEFAULTLIB:libcmt \
-        /DEF:\"$$DENG_API_DIR/doomsday.def\" \
-        /IMPLIB:\"$$OUT_PWD/../server/doomsday-server.lib\"
+    RC_FILE = res/windows/doomsday.rc
+    OTHER_FILES += $$RC_FILE
+
+    QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
 
     LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
         -lopengl32 -lglu32
 }
 else:macx {
-    #useFramework(Cocoa)
 }
 else {
-    # Allow exporting symbols out of the main executable.
-    QMAKE_LFLAGS += -rdynamic
+    # Generic Unix.
+    LIBS += -lX11 # TODO: Get rid of this! -jk
+
+    !freebsd-*: LIBS += -ldl
 }
 
 # Source Files ---------------------------------------------------------------
 
+# Prefix for source files (shared for now):
 SRC = ../engine
 
 DENG_API_HEADERS = \
-    $$SRC/api/busytask.h \
-    $$SRC/api/dd_api.h \
-    $$SRC/api/dd_fontrenderer.h \
-    $$SRC/api/dd_gl.h \
-    $$SRC/api/dd_infine.h \
+    $$SRC/api/apis.h \
+    $$SRC/api/api_audiod.h \
+    $$SRC/api/api_audiod_mus.h \
+    $$SRC/api/api_audiod_sfx.h \
+    $$SRC/api/api_base.h \
+    $$SRC/api/api_busy.h \
+    $$SRC/api/api_console.h \
+    $$SRC/api/api_def.h \
+    $$SRC/api/api_event.h \
+    $$SRC/api/api_gl.h \
+    $$SRC/api/api_infine.h \
+    $$SRC/api/api_internaldata.h \
+    $$SRC/api/api_filesys.h \
+    $$SRC/api/api_fontrender.h \
+    $$SRC/api/api_gameexport.h \
+    $$SRC/api/api_material.h \
+    $$SRC/api/api_materialarchive.h \
+    $$SRC/api/api_map.h \
+    $$SRC/api/api_mapedit.h \
+    $$SRC/api/api_player.h \
+    $$SRC/api/api_plugin.h \
+    $$SRC/api/api_render.h \
+    $$SRC/api/api_resource.h \
+    $$SRC/api/api_resourceclass.h \
+    $$SRC/api/api_server.h \
+    $$SRC/api/api_sound.h \
+    $$SRC/api/api_svg.h \
+    $$SRC/api/api_thinker.h \
+    $$SRC/api/api_uri.h \
+    $$SRC/api/api_wad.h \
     $$SRC/api/dd_maptypes.h \
-    $$SRC/api/dd_plugin.h \
     $$SRC/api/dd_share.h \
     $$SRC/api/dd_types.h \
-    $$SRC/api/dd_ui.h \
-    $$SRC/api/dd_vectorgraphic.h \
     $$SRC/api/dd_version.h \
-    $$SRC/api/dd_wad.h \
-    $$SRC/api/dd_world.h \
     $$SRC/api/def_share.h \
     $$SRC/api/dengproject.h \
-    $$SRC/api/doomsday.h \
-    $$SRC/api/filehandle.h \
-    $$SRC/api/filetype.h \
-    $$SRC/api/materialarchive.h \
-    $$SRC/api/resourceclass.h \
-    $$SRC/api/sys_audiod.h \
-    $$SRC/api/sys_audiod_mus.h \
-    $$SRC/api/sys_audiod_sfx.h \
-    $$SRC/api/thinker.h \
-    $$SRC/api/uri.h
+    $$SRC/api/doomsday.h
 
 # Convenience headers.
 DENG_HEADERS += \
@@ -156,6 +157,7 @@ DENG_HEADERS += \
     $$SRC/include/dualstring.h \
     $$SRC/include/edit_bsp.h \
     $$SRC/include/edit_map.h \
+    $$SRC/include/filehandle.h \
     $$SRC/include/filesys/file.h \
     $$SRC/include/filesys/filehandlebuilder.h \
     $$SRC/include/filesys/fileinfo.h \
@@ -165,12 +167,12 @@ DENG_HEADERS += \
     $$SRC/include/filesys/manifest.h \
     $$SRC/include/filesys/searchpath.h \
     $$SRC/include/filesys/sys_direc.h \
+    $$SRC/include/filetype.h \
     $$SRC/include/game.h \
     $$SRC/include/gl/gl_texmanager.h \
     $$SRC/include/gridmap.h \
     $$SRC/include/kdtree.h \
     $$SRC/include/library.h \
-    $$SRC/include/m_bams.h \
     $$SRC/include/m_decomp64.h \
     $$SRC/include/m_misc.h \
     $$SRC/include/m_nodepile.h \
@@ -254,6 +256,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/tga.h \
     $$SRC/include/resource/wad.h \
     $$SRC/include/resource/zip.h \
+    $$SRC/include/resourceclass.h \
     $$SRC/include/server/sv_def.h \
     $$SRC/include/server/sv_frame.h \
     $$SRC/include/server/sv_infine.h \
@@ -273,6 +276,7 @@ DENG_HEADERS += \
     $$SRC/include/ui/canvaswindow.h \
     $$SRC/include/ui/consolewindow.h \
     $$SRC/include/ui/dd_input.h \
+    $$SRC/include/ui/dd_ui.h \
     $$SRC/include/ui/displaymode.h \
     $$SRC/include/ui/displaymode_native.h \
     $$SRC/include/ui/fi_main.h \
@@ -282,15 +286,7 @@ DENG_HEADERS += \
     $$SRC/include/ui/sys_input.h \
     $$SRC/include/ui/ui2_main.h \
     $$SRC/include/ui/window.h \
-    $$SRC/include/updater.h \
-    $$SRC/include/uri.hh \
-    $$SRC/src/updater/downloaddialog.h \
-    $$SRC/src/updater/processcheckdialog.h \
-    $$SRC/src/updater/updateavailabledialog.h \
-    $$SRC/src/updater/updaterdialog.h \
-    $$SRC/src/updater/updatersettings.h \
-    $$SRC/src/updater/updatersettingsdialog.h \
-    $$SRC/src/updater/versioninfo.h
+    $$SRC/include/uri.hh
 
 INCLUDEPATH += \
     include \
@@ -340,6 +336,8 @@ SOURCES += $$SRC/src/ui/displaymode_dummy.c
 # Platform-independent sources.
 SOURCES += \
     src/server_dummies.c \
+    $$SRC/src/api_material.cpp \
+    $$SRC/src/api_uri.cpp \
     $$SRC/src/audio/s_cache.c \
     $$SRC/src/audio/s_environ.cpp \
     $$SRC/src/audio/s_logic.c \
@@ -381,7 +379,6 @@ SOURCES += \
     $$SRC/src/gridmap.c \
     $$SRC/src/kdtree.c \
     $$SRC/src/library.cpp \
-    $$SRC/src/m_bams.c \
     $$SRC/src/m_decomp64.c \
     $$SRC/src/m_misc.c \
     $$SRC/src/m_nodepile.c \
@@ -434,6 +431,7 @@ SOURCES += \
     $$SRC/src/render/r_things.cpp \
     $$SRC/src/render/rend_main.cpp \
     $$SRC/src/resource/animgroups.cpp \
+    $$SRC/src/resource/api_resource.c \
     $$SRC/src/resource/colorpalette.c \
     $$SRC/src/resource/colorpalettes.cpp \
     $$SRC/src/resource/compositetexture.cpp \
@@ -482,15 +480,7 @@ SOURCES += \
     $$SRC/src/ui/sys_input.c \
     $$SRC/src/ui/ui2_main.cpp \
     $$SRC/src/ui/window.cpp \
-    $$SRC/src/updater/downloaddialog.cpp \
-    $$SRC/src/updater/processcheckdialog.cpp \
-    $$SRC/src/updater/updateavailabledialog.cpp \
-    $$SRC/src/updater/updater.cpp \
-    $$SRC/src/updater/updaterdialog.cpp \
-    $$SRC/src/updater/updatersettings.cpp \
-    $$SRC/src/updater/updatersettingsdialog.cpp \
-    $$SRC/src/uri.cpp \
-    $$SRC/src/uri_wrapper.cpp
+    $$SRC/src/uri.cpp
 
 OTHER_FILES += \
     data/cphelp.txt \

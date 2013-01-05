@@ -23,7 +23,7 @@
 #ifndef LIBDENG_RENDER_BUSYVISUAL_H
 #define LIBDENG_RENDER_BUSYVISUAL_H
 
-#include "busytask.h"
+#include "api_busy.h"
 
 #ifdef __cplusplus
 extern "C" {

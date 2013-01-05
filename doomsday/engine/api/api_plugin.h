@@ -1,6 +1,4 @@
-/**
- * @file dd_plugin.h
- * Plugin subsystem.
+/** @file api_plugin.h Plugin subsystem.
  * @ingroup base
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -31,6 +29,7 @@
 ///@{
 
 #include "dd_version.h"
+#include "api_base.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,40 +87,68 @@ typedef struct {
     RectRaw oldGeometry; // Previous.
 } ddhook_viewport_reshape_t;
 
-/**
- * Registers a new hook function. A plugin can call this to add a hook
- * function to be executed at the time specified by @a hook_type.
- *
- * @param hook_type  Hook type.
- * @param hook       Pointer to hook function.
- *
- * @return  @c true, iff the hook was successfully registered.
- */
-int Plug_AddHook(int hook_type, hookfunc_t hook);
+DENG_API_TYPEDEF(Plug) // v1
+{
+    de_api_t api;
 
-/**
- * Removes @a hook from the registered hook functions.
- *
- * @param hook_type  Hook type.
- * @param hook       Pointer to hook function.
- *
- * @return  @c true iff it was found.
- */
-int Plug_RemoveHook(int hook_type, hookfunc_t hook);
+    /**
+     * Registers a new hook function. A plugin can call this to add a hook
+     * function to be executed at the time specified by @a hook_type.
+     *
+     * @param hook_type  Hook type.
+     * @param hook       Pointer to hook function.
+     *
+     * @return  @c true, iff the hook was successfully registered.
+     */
+    int (*AddHook)(int hook_type, hookfunc_t hook);
 
-/**
- * Check if there are any hooks of type @a hookType registered.
- *
- * @param hookType      Type of hook to check for.
- *
- * @return  @c true, if one or more hooks are available for type @a hookType.
- */
-int Plug_CheckForHook(int hookType);
+    /**
+     * Removes @a hook from the registered hook functions.
+     *
+     * @param hook_type  Hook type.
+     * @param hook       Pointer to hook function.
+     *
+     * @return  @c true iff it was found.
+     */
+    int (*RemoveHook)(int hook_type, hookfunc_t hook);
 
-///@}
+    /**
+     * Check if there are any hooks of type @a hookType registered.
+     *
+     * @param hookType      Type of hook to check for.
+     *
+     * @return  @c true, if one or more hooks are available for type @a hookType.
+     */
+    int (*CheckForHook)(int hookType);
+
+    /**
+     * Provides a way for plugins (e.g., games ) to notify the engine of
+     * important events.
+     *
+     * @param notification  One of the DD_NOTIFY_* enums.
+     * @param param         Additional arguments about the notification,
+     *                      depending on the notification type.
+     */
+    void (*Notify)(int notification, void* param);
+
+} DENG_API_T(Plug);
+
+// Macros for accessing exported functions.
+#ifndef DENG_NO_API_MACROS_PLUGIN
+#define Plug_AddHook        _api_Plug.AddHook
+#define Plug_RemoveHook     _api_Plug.RemoveHook
+#define Plug_CheckForHook   _api_Plug.CheckForHook
+#define Plug_Notify         _api_Plug.Notify
+#endif
+
+#ifdef __DOOMSDAY__
+DENG_USING_API(Plug);
+#endif
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+///@}
 
 #endif /* LIBDENG_PLUGIN_H */

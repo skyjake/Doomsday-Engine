@@ -19,13 +19,13 @@
 
 #include <de/Error>
 #include <de/Log>
+#include <de/mathutil.h>
 #include <de/memory.h>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_resource.h"
 
-#include "m_misc.h"
 #include "resource/materialsnapshot.h"
 #include "render/r_main.h"
 

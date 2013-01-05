@@ -124,11 +124,6 @@ void Sky_LayerSetOffset(int layerId, float offset);
 /// Render the current sky.
 void Sky_Render(void);
 
-/**
- * Alternative interface for manipulating Sky (layer) properties by name/id.
- */
-void R_SkyParams(int layer, int param, void *data);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

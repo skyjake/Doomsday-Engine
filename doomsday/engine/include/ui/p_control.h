@@ -29,16 +29,12 @@
 #ifndef __DOOMSDAY_PLAYER_CONTROL_H__
 #define __DOOMSDAY_PLAYER_CONTROL_H__
 
+#include "api_player.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// Public:
-void        P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext);
-void        P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
-int         P_GetImpulseControlState(int playerNum, int control);
-
-// Internal:
 typedef struct playercontrol_s {
     int     id;
     controltype_t type;
@@ -53,7 +49,6 @@ void        P_ControlTicker(timespan_t time);
 
 playercontrol_t* P_PlayerControlById(int id);
 playercontrol_t* P_PlayerControlByName(const char* name);
-void        P_Impulse(int playerNum, int control);
 void        P_ImpulseByName(int playerNum, const char* control);
 
 #ifdef __cplusplus

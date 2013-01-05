@@ -35,4 +35,6 @@
 #include "ui/b_main.h"
 #include "ui/b_context.h"
 
+#include "api_console.h"
+
 #endif /* LIBDENG_CONSOLE */

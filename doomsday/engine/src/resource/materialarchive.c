@@ -22,10 +22,14 @@
  * Boston, MA  02110-1301  USA
  */
 
+#define DENG_NO_API_MACROS_MATERIAL_ARCHIVE
+
 #include "de_base.h"
 #include "de_console.h"
 #include "resource/materials.h"
-#include "materialarchive.h"
+
+#include "api_materialarchive.h"
+#include "api_material.h"
 
 /// For identifying the archived format version. Written to disk.
 #define MATERIALARCHIVE_VERSION (4)
@@ -380,3 +384,16 @@ void MaterialArchive_Read(MaterialArchive* arc, int forcedVersion, Reader* reade
         readMaterialGroup(arc, (forcedVersion >= 1? "" : "Textures:"), reader);
     }
 }
+
+DENG_DECLARE_API(MaterialArchive) =
+{
+    { DE_API_MATERIAL_ARCHIVE },
+    MaterialArchive_New,
+    MaterialArchive_NewEmpty,
+    MaterialArchive_Delete,
+    MaterialArchive_FindUniqueSerialId,
+    MaterialArchive_Find,
+    MaterialArchive_Count,
+    MaterialArchive_Write,
+    MaterialArchive_Read
+};

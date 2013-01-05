@@ -32,6 +32,7 @@
 
 namespace de
 {
+#undef PI
     ddouble const PI = 3.14159265358979323846;
     ddouble const EPSILON = 1.0e-7;
 

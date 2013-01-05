@@ -61,12 +61,14 @@ deng_writertypecheck {
 # Public headers
 HEADERS += \
     include/de/animator.h \
+    include/de/binangle.h \
     include/de/concurrency.h \
     include/de/ddstring.h \
     include/de/findfile.h \
     include/de/fixedpoint.h \
     include/de/garbage.h \
     include/de/libdeng.h \
+    include/de/mathutil.h \
     include/de/memory.h \
     include/de/memoryblockset.h \
     include/de/memoryzone.h \
@@ -87,10 +89,12 @@ HEADERS += \
 # Sources and private headers
 SOURCES += \
     src/animator.c \
+    src/binangle.c \
     src/concurrency.cpp \
     src/fixedpoint.c \
     src/garbage.cpp \
     src/libdeng.c \
+    src/mathutil.c \
     src/memory.c \
     src/memoryblockset.c \
     src/memoryzone.c \

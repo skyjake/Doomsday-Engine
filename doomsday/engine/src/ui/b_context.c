@@ -28,6 +28,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_BINDING
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_misc.h"
@@ -924,3 +926,19 @@ void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
         }
     }
 }
+
+// b_main.c
+DENG_EXTERN_C int DD_GetKeyCode(const char* key);
+
+// dd_input.c
+DENG_EXTERN_C void DD_ClearKeyRepeaters(void);
+
+DENG_DECLARE_API(B) =
+{
+    { DE_API_BINDING },
+    B_SetContextFallback,
+    B_BindingsForCommand,
+    B_BindingsForControl,
+    DD_ClearKeyRepeaters,
+    DD_GetKeyCode
+};

@@ -1,7 +1,13 @@
 # Build configuration for using libdeng.
-INCLUDEPATH += $$PWD/libdeng/include
+LIBDENG_INCLUDE_DIR = $$PWD/libdeng/include
+INCLUDEPATH += $$LIBDENG_INCLUDE_DIR
 
-# Use the appropriate library path.
+win32 {
+    # Tell rc where to get the API headers.
+    QMAKE_RC = $$QMAKE_RC /I \"$$LIBDENG_INCLUDE_DIR\"
+}
+
+# Use the appropriate library path (trying some alternatives).
 !useLibDir($$OUT_PWD/../libdeng) {
     !useLibDir($$OUT_PWD/../../libdeng) {
         useLibDir($$OUT_PWD/../../builddir/libdeng)

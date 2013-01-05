@@ -30,6 +30,10 @@
 #define FRACUNIT        (1 << FRACBITS)
 #define FRACEPSILON     (1.0f / 65535.f) // ~ 1.5e-5
 
+#define SLOPERANGE      2048
+#define SLOPEBITS       11
+#define DBITS           (FRACBITS-SLOPEBITS)
+
 #define FIX2FLT(x)      ( (x) / (float) FRACUNIT )
 #define Q_FIX2FLT(x)    ( (float) ((x) >> FRACBITS) )
 #define FLT2FIX(x)      ( (fixed_t) ((x) * FRACUNIT) )

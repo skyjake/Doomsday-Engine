@@ -29,7 +29,7 @@
 #include <QStringList>
 
 #include <de/String>
-#include "uri.h"
+#include "api_uri.h"
 
 namespace de
 {

@@ -21,7 +21,7 @@
 #ifndef LIBDENG_RESOURCE_TEXTURES_H
 #define LIBDENG_RESOURCE_TEXTURES_H
 
-#include "uri.h"
+#include "api_uri.h"
 
 #ifdef __cplusplus
 
@@ -276,9 +276,6 @@ void Textures_Init(void);
 
 /// Shutdown this module.
 void Textures_Shutdown(void);
-
-int Textures_UniqueId2(Uri const *uri, boolean quiet);
-int Textures_UniqueId(Uri const *uri/*, quiet = false */);
 
 #ifdef __cplusplus
 } // extern "C"

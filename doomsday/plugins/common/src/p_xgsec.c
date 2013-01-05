@@ -57,8 +57,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define PI              3.141592657
-
 #define MAX_VALS        128
 
 #define SIGN(x)         ((x)>0? 1 : (x)<0? -1 : 0)
@@ -289,7 +287,7 @@ int destroyXSThinker(thinker_t* th, void* context)
 
     if(xs->sector == (Sector*) context)
     {
-        DD_ThinkerRemove(&xs->thinker);
+        Thinker_Remove(&xs->thinker);
         return true; // Stop iteration, we're done.
     }
 
@@ -372,12 +370,12 @@ void XS_SetSectorType(struct sector_s* sec, int special)
         }
 
         // If there is not already an xsthinker for this sector, create one.
-        if(!DD_IterateThinkers(XS_Thinker, findXSThinker, sec))
+        if(!Thinker_Iterate(XS_Thinker, findXSThinker, sec))
         {   // Not created one yet.
             xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_MAP, 0);
 
             xs->thinker.function = XS_Thinker;
-            DD_ThinkerAdd(&xs->thinker);
+            Thinker_Add(&xs->thinker);
 
             xs->sector = sec;
         }
@@ -388,7 +386,7 @@ void XS_SetSectorType(struct sector_s* sec, int special)
                special);
 
         // If there is an xsthinker for this, destroy it.
-        DD_IterateThinkers(XS_Thinker, destroyXSThinker, sec);
+        Thinker_Iterate(XS_Thinker, destroyXSThinker, sec);
 
         // Free previously allocated XG data.
         if(xsec->xg)
@@ -468,7 +466,7 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
         }
 
         // Remove this thinker.
-        DD_ThinkerRemove((thinker_t *) mover);
+        Thinker_Remove((thinker_t *) mover);
     }
     else
     {
@@ -488,7 +486,7 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
         if(mover->flags & (PMF_ACTIVATE_ON_ABORT | PMF_DEACTIVATE_ON_ABORT))
         {
             // Destroy this mover.
-            DD_ThinkerRemove((thinker_t *) mover);
+            Thinker_Remove((thinker_t *) mover);
         }
     }
 }
@@ -626,7 +624,7 @@ static int stopPlaneMover(thinker_t* th, void* context)
        mover->ceiling == params->ceiling)
     {
         XS_MoverStopped(mover, false);
-        DD_ThinkerRemove(th); // Remove it.
+        Thinker_Remove(th); // Remove it.
     }
 
     return false; // Continue iteration.
@@ -643,12 +641,12 @@ xgplanemover_t *XS_GetPlaneMover(Sector *sec, boolean ceiling)
 
     params.sec = sec;
     params.ceiling = ceiling;
-    DD_IterateThinkers(XS_PlaneMover, stopPlaneMover, &params);
+    Thinker_Iterate(XS_PlaneMover, stopPlaneMover, &params);
 
     // Allocate a new thinker.
     mover = Z_Calloc(sizeof(*mover), PU_MAP, 0);
     mover->thinker.function = XS_PlaneMover;
-    DD_ThinkerAdd(&mover->thinker);
+    Thinker_Add(&mover->thinker);
 
     mover->sector = sec;
     mover->ceiling = ceiling;
@@ -2920,7 +2918,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_FLOOR;
-            DD_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
+            Thinker_Iterate(P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Ceiling chain. Check any mobjs that are touching the ceiling.
@@ -2930,7 +2928,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_CEILING;
-            DD_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
+            Thinker_Iterate(P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Inside chain. Check any sectorlinked mobjs.
@@ -2940,7 +2938,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_INSIDE;
-            DD_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
+            Thinker_Iterate(P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Ticker chain. Send an activate event if TICKER_D flag is not set.
@@ -2997,7 +2995,7 @@ void XS_Thinker(xsthinker_t* xs)
         xstrav_windparams_t params;
 
         params.sec = sector;
-        DD_IterateThinkers(P_MobjThinker, XSTrav_Wind, &params);
+        Thinker_Iterate(P_MobjThinker, XSTrav_Wind, &params);
     }
 }
 

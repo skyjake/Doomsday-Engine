@@ -21,7 +21,7 @@
 #ifndef LIBDENG_RESOURCE_MATERIALS_H
 #define LIBDENG_RESOURCE_MATERIALS_H
 
-#include "uri.h"
+#include "api_uri.h"
 #include "def_data.h"
 #include "material.h"
 
@@ -357,16 +357,13 @@ void Materials_Ticker(timespan_t elapsed);
 uint Materials_Size(void);
 materialid_t Materials_Id(material_t *material);
 material_t *Materials_ToMaterial(materialid_t materialId);
-Uri *Materials_ComposeUri(materialid_t materialId);
 boolean Materials_HasDecorations(material_t *material);
 ded_ptcgen_t const *Materials_PtcGenDef(material_t *material);
 boolean Materials_IsMaterialInAnimGroup(material_t *material, int animGroupNum);
 materialid_t Materials_ResolveUri2(Uri const *uri, boolean quiet);
-materialid_t Materials_ResolveUri(Uri const *uri/*, quiet=!(verbose >= 1)*/);
 
 /// Same as Materials::resolveUri except @a uri is a C-string.
 materialid_t Materials_ResolveUriCString2(char const *uri, boolean quiet);
-materialid_t Materials_ResolveUriCString(char const *uri/*, quiet=!(verbose >= 1)*/);
 
 int Materials_AnimGroupCount(void);
 boolean Materials_IsPrecacheAnimGroup(int animGroupNum);

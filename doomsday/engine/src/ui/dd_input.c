@@ -1209,6 +1209,7 @@ byte DD_ModKey(byte key)
 /**
  * Clears the repeaters array.
  */
+#undef DD_ClearKeyRepeaters
 void DD_ClearKeyRepeaters(void)
 {
     memset(keyReps, 0, sizeof(keyReps));

@@ -117,6 +117,40 @@ typedef double  coord_t;
 typedef int     ddboolean_t;
 #define boolean ddboolean_t
 
+// Angles.
+#define ANGLE_45            0x20000000
+#define ANGLE_90            0x40000000
+#define ANGLE_180           0x80000000
+#define ANGLE_MAX           0xffffffff
+#define ANGLE_1             (ANGLE_45/45)
+#define ANGLE_60            (ANGLE_180/3)
+
+#define ANG45               0x20000000
+#define ANG90               0x40000000
+#define ANG180              0x80000000
+#define ANG270              0xc0000000
+
+#define FINEANGLES          8192
+#define FINEMASK            (FINEANGLES-1)
+#define ANGLETOFINESHIFT    19 ///< Shifts 0x100000000 to 0x2000.
+
+typedef enum slopetype_e {
+    ST_HORIZONTAL,
+    ST_VERTICAL,
+    ST_POSITIVE,
+    ST_NEGATIVE
+} slopetype_t;
+
+/// Bounding box coordinates.
+enum {
+    BOXTOP      = 0,
+    BOXBOTTOM   = 1,
+    BOXLEFT     = 2,
+    BOXRIGHT    = 3,
+    BOXFLOOR    = 4,
+    BOXCEILING  = 5
+};
+
 // Pointer-integer conversion (used for legacy code).
 #ifdef __64BIT__
 typedef int64_t         int_from_pointer_t;

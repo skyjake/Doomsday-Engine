@@ -30,7 +30,6 @@
 #include <string.h>
 
 #include "doomsday.h"
-#include "dd_api.h"
 
 #include "jheretic.h"
 
@@ -47,7 +46,6 @@
 #define GID(v)          (toGameId(v))
 
 // The interface to the Doomsday engine.
-game_import_t gi;
 game_export_t gx;
 
 // Identifiers given to the games we register during startup.
@@ -157,17 +155,8 @@ boolean G_TryShutdown(void)
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-game_export_t* GetGameAPI(game_import_t* imports)
+game_export_t* GetGameAPI(void)
 {
-    // Make sure this plugin isn't newer than Doomsday...
-    if(imports->version < DOOMSDAY_VERSION)
-        Con_Error(PLUGIN_NICENAME " requires at least " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "!\n");
-
-    // Take a copy of the imports, but only copy as much data as is
-    // allowed and legal.
-    memset(&gi, 0, sizeof(gi));
-    memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
-
     // Clear all of our exports.
     memset(&gx, 0, sizeof(gx));
 
@@ -232,3 +221,57 @@ const char* deng_LibraryType(void)
 {
     return "deng-plugin/game";
 }
+
+DENG_DECLARE_API(Base);
+DENG_DECLARE_API(B);
+DENG_DECLARE_API(Busy);
+DENG_DECLARE_API(Client);
+DENG_DECLARE_API(Con);
+DENG_DECLARE_API(Def);
+DENG_DECLARE_API(F);
+DENG_DECLARE_API(FR);
+DENG_DECLARE_API(GL);
+DENG_DECLARE_API(Infine);
+DENG_DECLARE_API(InternalData);
+DENG_DECLARE_API(Material);
+DENG_DECLARE_API(MaterialArchive);
+DENG_DECLARE_API(Map);
+DENG_DECLARE_API(MPE);
+DENG_DECLARE_API(Player);
+DENG_DECLARE_API(Plug);
+DENG_DECLARE_API(R);
+DENG_DECLARE_API(Rend);
+DENG_DECLARE_API(S);
+DENG_DECLARE_API(Server);
+DENG_DECLARE_API(Svg);
+DENG_DECLARE_API(Thinker);
+DENG_DECLARE_API(Uri);
+DENG_DECLARE_API(W);
+
+DENG_API_EXCHANGE(
+    DENG_GET_API(DE_API_BASE, Base);
+    DENG_GET_API(DE_API_BINDING, B);
+    DENG_GET_API(DE_API_BUSY, Busy);
+    DENG_GET_API(DE_API_CLIENT, Client);
+    DENG_GET_API(DE_API_CONSOLE, Con);
+    DENG_GET_API(DE_API_DEFINITIONS, Def);
+    DENG_GET_API(DE_API_FILE_SYSTEM, F);
+    DENG_GET_API(DE_API_FONT_RENDER, FR);
+    DENG_GET_API(DE_API_GL, GL);
+    DENG_GET_API(DE_API_INFINE, Infine);
+    DENG_GET_API(DE_API_INTERNAL_DATA, InternalData);
+    DENG_GET_API(DE_API_MATERIALS, Material);
+    DENG_GET_API(DE_API_MATERIAL_ARCHIVE, MaterialArchive);
+    DENG_GET_API(DE_API_MAP, Map);
+    DENG_GET_API(DE_API_MAP_EDIT, MPE);
+    DENG_GET_API(DE_API_PLAYER, Player);
+    DENG_GET_API(DE_API_PLUGIN, Plug);
+    DENG_GET_API(DE_API_RESOURCE, R);
+    DENG_GET_API(DE_API_RENDER, Rend);
+    DENG_GET_API(DE_API_SOUND, S);
+    DENG_GET_API(DE_API_SERVER, Server);
+    DENG_GET_API(DE_API_SVG, Svg);
+    DENG_GET_API(DE_API_THINKER, Thinker);
+    DENG_GET_API(DE_API_URI, Uri);
+    DENG_GET_API(DE_API_WAD, W);
+)

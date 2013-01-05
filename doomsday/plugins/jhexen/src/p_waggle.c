@@ -87,7 +87,7 @@ void T_FloorWaggle(waggle_t* waggle)
             P_ChangeSector(waggle->sector, true);
             P_ToXSector(waggle->sector)->specialData = NULL;
             P_TagFinished(P_ToXSector(waggle->sector)->tag);
-            DD_ThinkerRemove(&waggle->thinker);
+            Thinker_Remove(&waggle->thinker);
             return;
         }
         break;
@@ -123,7 +123,7 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset, int time
 
         waggle = Z_Calloc(sizeof(*waggle), PU_MAP, 0);
         waggle->thinker.function = T_FloorWaggle;
-        DD_ThinkerAdd(&waggle->thinker);
+        Thinker_Add(&waggle->thinker);
 
         P_ToXSector(sec)->specialData = waggle;
         waggle->sector = sec;

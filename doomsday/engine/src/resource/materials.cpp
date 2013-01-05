@@ -1759,8 +1759,8 @@ material_t *Materials_ToMaterial(materialid_t materialId)
     return App_Materials()->toMaterial(materialId);
 }
 
-/// @note Part of the Doomsday public API.
-struct uri_s *Materials_ComposeUri(materialid_t materialId)
+#undef Materials_ComposeUri
+DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 {
     de::Uri uri = App_Materials()->composeUri(materialId);
     return Uri_Dup(reinterpret_cast<uri_s *>(&uri));
@@ -1786,8 +1786,8 @@ materialid_t Materials_ResolveUri2(struct uri_s const *uri, boolean quiet)
     return App_Materials()->resolveUri2(*reinterpret_cast<de::Uri const *>(uri), CPP_BOOL(quiet));
 }
 
-/// @note Part of the Doomsday public API.
-materialid_t Materials_ResolveUri(struct uri_s const *uri)
+#undef Materials_ResolveUri
+DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
 {
     return Materials_ResolveUri2(uri, !(verbose >= 1));
 }
@@ -1801,8 +1801,8 @@ materialid_t Materials_ResolveUriCString2(char const *uriCString, boolean quiet)
     return NOMATERIALID;
 }
 
-/// @note Part of the Doomsday public API.
-materialid_t Materials_ResolveUriCString(char const *path)
+#undef Materials_ResolveUriCString
+DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *path)
 {
     return Materials_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }

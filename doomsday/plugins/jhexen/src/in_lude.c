@@ -353,7 +353,7 @@ static void CheckForSkip(void)
 
 void IN_Drawer(void)
 {
-    borderedprojectionstate_t bp;
+    dgl_borderedprojectionstate_t bp;
     lumpnum_t lumpNum;
 
     if(!intermission || interState)

@@ -31,7 +31,8 @@
 
 #include "map/p_object.h"
 #include "def_main.h"
-#include "sys_audiod.h"
+#include "api_sound.h"
+#include "api_audiod.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,7 +60,6 @@ extern byte sfxOneSoundPerEmitter;
 void S_Register(void);
 boolean S_Init(void);
 void S_Shutdown(void);
-void S_MapChange(void);
 
 /**
  * Must be called after the map has been changed.
@@ -82,30 +82,7 @@ void S_EndFrame(void);
 sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume);
 
 mobj_t* S_GetListenerMobj(void);
-int S_LocalSoundAtVolumeFrom(int soundId, mobj_t* origin, coord_t* fixedpos, float volume);
-int S_LocalSoundAtVolume(int soundId, mobj_t* origin, float volume);
-int S_LocalSound(int soundId, mobj_t* origin);
-int S_LocalSoundFrom(int soundId, coord_t* fixedpos);
-int S_StartSound(int soundId, mobj_t* origin);
-int S_StartSoundEx(int soundId, mobj_t* origin);
-int S_StartSoundAtVolume(int soundId, mobj_t* origin, float volume);
-int S_ConsoleSound(int soundId, mobj_t* origin, int targetConsole);
 
-/**
- * Stop playing sound(s), either by their unique identifier or by their emitter(s).
- *
- * @param soundId       @c 0= stops all sounds emitted from the targeted origin(s).
- * @param origin        @c NULL= stops all sounds with the ID.
- *                      Otherwise both ID and origin must match.
- * @param flags         @ref soundStopFlags
- */
-void S_StopSound2(int soundId, mobj_t* origin, int flags);
-void S_StopSound(int soundId, mobj_t* origin/*flags=0*/);
-
-int S_IsPlaying(int soundId, mobj_t* emitter);
-int S_StartMusic(const char* musicid, boolean looped);
-void S_StopMusic(void);
-void S_PauseMusic(boolean paused);
 void S_Drawer(void);
 
 #ifdef __cplusplus

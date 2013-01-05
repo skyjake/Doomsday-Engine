@@ -5,6 +5,7 @@ LIBRARY			AUDIO_FLUIDSYNTH
 EXPORTS
 
 deng_LibraryType
+deng_API
 
 DS_Init
 DS_Shutdown

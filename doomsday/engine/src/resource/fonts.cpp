@@ -29,13 +29,13 @@
 
 #include <de/NativePath>
 #include <de/PathTree>
+#include <de/mathutil.h>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
 
-#include "m_misc.h"
 #include "gl/gl_texmanager.h"
 #include "resource/font.h"
 #include "resource/fonts.h"
@@ -751,7 +751,8 @@ fontid_t Fonts_ResolveUri2(Uri const* _uri, boolean quiet)
     return NOFONTID;
 }
 
-fontid_t Fonts_ResolveUri(Uri const* uri)
+#undef Fonts_ResolveUri
+DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri)
 {
     return Fonts_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
 }

@@ -38,6 +38,9 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#define DENG_NO_API_MACROS_DEFINITIONS
+#include "api_def.h"
+
 #include "map/r_world.h"
 
 // XGClass.h is actually a part of the engine.
@@ -2144,3 +2147,17 @@ D_CMD(ListMobjs)
 
     return true;
 }
+
+DENG_DECLARE_API(Def) =
+{
+    { DE_API_DEFINITIONS },
+
+    Def_Get,
+    Def_Set,
+    Def_EvalFlags,
+
+    // TODO: These should not be part of the public API
+    // (they manipulate internal data structures; hence the casting)
+    reinterpret_cast<int (*)(void *, char const *)>(DED_AddValue),
+    reinterpret_cast<void (*)(void **, void *, size_t, int)>(DED_NewEntries)
+};

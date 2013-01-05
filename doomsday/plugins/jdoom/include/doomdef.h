@@ -44,7 +44,6 @@
 #include <de/c_wrapper.h>
 #include <de/fixedpoint.h>
 #include "doomsday.h"
-#include "dd_api.h"
 #include "version.h"
 #include "info.h"
 
@@ -55,16 +54,15 @@
 #define VERBOSE(code)       { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
-extern game_import_t gi;
 extern game_export_t gx;
 
 //
 // Global parameters/defines.
 //
 
-#define MOBJINFO            (*gi.mobjInfo)
-#define STATES              (*gi.states)
-#define VALIDCOUNT          (*gi.validCount)
+#define MOBJINFO            (*_api_InternalData.mobjInfo)
+#define STATES              (*_api_InternalData.states)
+#define VALIDCOUNT          (*_api_InternalData.validCount)
 
 typedef enum {
     doom_shareware,

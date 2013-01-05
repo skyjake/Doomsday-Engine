@@ -25,8 +25,6 @@ CONFIG += deng_nofixedasm deng_embedfluidsynth
     else:error(Unsupported Qt version: $$QT_VERSION)
 }
 
-QMAKE_LFLAGS += -flat_namespace -undefined suppress
-
 # Apply deng_* Configuration -------------------------------------------------
 
 # Three options:

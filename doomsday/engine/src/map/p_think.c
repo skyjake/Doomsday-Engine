@@ -22,6 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
+#define DENG_NO_API_MACROS_THINKER
+
 #include "de_base.h"
 #include "de_defs.h"
 #include "de_console.h"
@@ -94,6 +96,7 @@ struct mobj_s* GameMap_MobjByID(GameMap* map, int id)
 /**
  * Locates a mobj by it's unique identifier in the CURRENT map.
  */
+#undef P_MobjForID
 struct mobj_s* P_MobjForID(int id)
 {
     if(!theMap) return NULL;
@@ -120,7 +123,7 @@ static void initThinkerList(thinkerlist_t* list)
     list->thinkerCap.prev = list->thinkerCap.next = &list->thinkerCap;
 }
 
-static thinkerlist_t* listForThinkFunc(GameMap* map, think_t func, boolean isPublic,
+static thinkerlist_t* listForThinkFunc(GameMap* map, thinkfunc_t func, boolean isPublic,
     boolean canCreate)
 {
     thinkerlist_t* list;
@@ -156,7 +159,7 @@ static int runThinker(thinker_t* th, void* context)
     if(!th->inStasis)
     {
         // Time to remove it?
-        if(th->function == (think_t) -1)
+        if(th->function == (thinkfunc_t) -1)
         {
             unlinkThinkerFromList(th);
 
@@ -231,7 +234,7 @@ void GameMap_ThinkerAdd(GameMap* map, thinker_t* th, boolean makePublic)
     }
 
     // Will it need an ID?
-    if(P_IsMobjThinker(th->function))
+    if(Thinker_IsMobjFunc(th->function))
     {
         // It is a mobj, give it an ID (not for client mobjs, though, they
         // already have an id).
@@ -277,10 +280,10 @@ void GameMap_ThinkerRemove(GameMap* map, thinker_t* th)
         }
     }
 
-    th->function = (think_t) -1;
+    th->function = (thinkfunc_t) -1;
 }
 
-boolean P_IsMobjThinker(think_t func)
+boolean Thinker_IsMobjFunc(thinkfunc_t func)
 {
     return (func && func == gx.MobjThinker);
 }
@@ -318,7 +321,7 @@ boolean GameMap_ThinkerListInited(GameMap* map)
     return map->thinkers.inited;
 }
 
-int GameMap_IterateThinkers(GameMap* map, think_t func, byte flags,
+int GameMap_IterateThinkers(GameMap* map, thinkfunc_t func, byte flags,
     int (*callback) (thinker_t*, void*), void* context)
 {
     int result = false;
@@ -352,29 +355,26 @@ int GameMap_IterateThinkers(GameMap* map, think_t func, byte flags,
     return result;
 }
 
-/// @note Part of the Doomsday public API.
-void DD_InitThinkers(void)
+void Thinker_Init(void)
 {
     if(!theMap) return;
     GameMap_InitThinkerLists(theMap, 0x1); // Init the public thinker lists.
 }
 
 /// @note Part of the Doomsday public API.
-void DD_RunThinkers(void)
+void Thinker_Run(void)
 {
     if(!theMap) return;
     GameMap_IterateThinkers(theMap, NULL, 0x1 | 0x2, runThinker, NULL);
 }
 
-/// @note Part of the Doomsday public API.
-void DD_ThinkerAdd(thinker_t* th)
+void Thinker_Add(thinker_t* th)
 {
     if(!theMap) return;
     GameMap_ThinkerAdd(theMap, th, true); // This is a public thinker.
 }
 
-/// @note Part of the Doomsday public API.
-void DD_ThinkerRemove(thinker_t* th)
+void Thinker_Remove(thinker_t* th)
 {
     if(!theMap) return;
     GameMap_ThinkerRemove(theMap, th);
@@ -386,7 +386,7 @@ void DD_ThinkerRemove(thinker_t* th)
  * @param th            The thinker to change.
  * @param on            @c true, put into stasis.
  */
-void DD_ThinkerSetStasis(thinker_t* th, boolean on)
+void Thinker_SetStasis(thinker_t* th, boolean on)
 {
     if(th)
     {
@@ -394,9 +394,19 @@ void DD_ThinkerSetStasis(thinker_t* th, boolean on)
     }
 }
 
-/// @note Part of the Doomsday public API.
-int DD_IterateThinkers(think_t func, int (*callback) (thinker_t*, void*), void* context)
+int Thinker_Iterate(thinkfunc_t func, int (*callback) (thinker_t*, void*), void* context)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_IterateThinkers(theMap, func, 0x1, callback, context);
 }
+
+DENG_DECLARE_API(Thinker) =
+{
+    { DE_API_THINKER },
+    Thinker_Init,
+    Thinker_Run,
+    Thinker_Add,
+    Thinker_Remove,
+    Thinker_SetStasis,
+    Thinker_Iterate
+};

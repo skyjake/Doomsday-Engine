@@ -23,6 +23,8 @@
 #ifndef LIBDENG_RESOURCE_TEXTUREVARIANTSPECIFICATION_H
 #define LIBDENG_RESOURCE_TEXTUREVARIANTSPECIFICATION_H
 
+#include "dd_types.h"
+
 /**
  * Texture (content) Source.
  */

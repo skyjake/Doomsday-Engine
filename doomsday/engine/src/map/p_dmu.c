@@ -33,6 +33,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_MAP
+#include "api_map.h"
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
@@ -173,7 +176,6 @@ const char* DMU_Str(uint prop)
     return propStr;
 }
 
-/// @note Part of the Doomsday public API.
 int DMU_GetType(const void* ptr)
 {
     int type;
@@ -2403,3 +2405,196 @@ void P_GetPtrpv(void* ptr, uint prop, void* params)
         P_Callbackp(args.type, ptr, &args, getProperty);
     }
 }
+
+// p_data.cpp
+DENG_EXTERN_C boolean P_MapExists(char const* uriCString);
+DENG_EXTERN_C boolean P_MapIsCustom(char const* uriCString);
+DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString);
+DENG_EXTERN_C boolean P_LoadMap(char const* uriCString);
+DENG_EXTERN_C uint P_CountGameMapObjs(int entityId);
+
+// p_maputil.c
+DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags);
+DENG_EXTERN_C int P_MobjUnlink(mobj_t* mo);
+DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters);
+DENG_EXTERN_C int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void* parameters);
+DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void *parameters);
+DENG_EXTERN_C BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
+DENG_EXTERN_C BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
+DENG_EXTERN_C int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (mobj_t*, void*), void* parameters);
+DENG_EXTERN_C int P_LinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (Polyobj*, void*), void* parameters);
+DENG_EXTERN_C int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+DENG_EXTERN_C int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
+DENG_EXTERN_C int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
+DENG_EXTERN_C int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
+DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* paramaters);
+DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
+DENG_EXTERN_C boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
+DENG_EXTERN_C const divline_t* P_TraceLOS(void);
+DENG_EXTERN_C TraceOpening const *P_TraceOpening(void);
+DENG_EXTERN_C void P_SetTraceOpening(LineDef* linedef);
+
+// p_mobj.c
+DENG_EXTERN_C mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
+DENG_EXTERN_C void P_MobjDestroy(mobj_t* mo);
+DENG_EXTERN_C void P_MobjDestroy(mobj_t* mobj);
+DENG_EXTERN_C void P_MobjSetState(mobj_t* mobj, int statenum);
+DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t* mo);
+DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3]);
+
+// p_particle.c
+DENG_EXTERN_C void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
+
+// p_think.c
+DENG_EXTERN_C struct mobj_s* P_MobjForID(int id);
+
+// polyobjs.c
+DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj* polyobj, coord_t x, coord_t y);
+DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj* polyobj, angle_t angle);
+DENG_EXTERN_C void P_PolyobjLink(Polyobj* polyobj);
+DENG_EXTERN_C void P_PolyobjUnlink(Polyobj* polyobj);
+DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id);
+DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag);
+DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
+
+DENG_DECLARE_API(Map) =
+{
+    { DE_API_MAP },
+    P_MapExists,
+    P_MapIsCustom,
+    P_MapSourceFile,
+    P_LoadMap,
+
+    LineDef_BoxOnSide,
+    LineDef_BoxOnSide_FixedPrecision,
+    LineDef_PointDistance,
+    LineDef_PointXYDistance,
+    LineDef_PointOnSide,
+    LineDef_PointXYOnSide,
+    P_LineMobjsIterator,
+
+    P_SectorTouchingMobjsIterator,
+
+    P_MobjCreateXYZ,
+    P_MobjDestroy,
+    P_MobjForID,
+    P_MobjSetState,
+    P_MobjLink,
+    P_MobjUnlink,
+    P_SpawnDamageParticleGen,
+    P_MobjLinesIterator,
+    P_MobjSectorsIterator,
+    Mobj_OriginSmoothed,
+    Mobj_AngleSmoothed,
+
+    P_PolyobjMoveXY,
+    P_PolyobjRotate,
+    P_PolyobjLink,
+    P_PolyobjUnlink,
+    P_PolyobjByID,
+    P_PolyobjByTag,
+    P_SetPolyobjCallback,
+
+    P_BspLeafAtPoint,
+    P_BspLeafAtPointXY,
+
+    P_MobjsBoxIterator,
+    P_LinesBoxIterator,
+    P_AllLinesBoxIterator,
+    P_PolyobjLinesBoxIterator,
+    P_BspLeafsBoxIterator,
+    P_PolyobjsBoxIterator,
+    P_PathTraverse2,
+    P_PathTraverse,
+    P_PathXYTraverse2,
+    P_PathXYTraverse,
+    P_CheckLineSight,
+    P_TraceLOS,
+    P_TraceOpening,
+    P_SetTraceOpening,
+
+    DMU_GetType,
+    P_ToIndex,
+    P_ToPtr,
+    P_Callback,
+    P_Callbackp,
+    P_Iteratep,
+    P_AllocDummy,
+    P_FreeDummy,
+    P_IsDummy,
+    P_DummyExtraData,
+    P_CountGameMapObjs,
+    P_GetGMOByte,
+    P_GetGMOShort,
+    P_GetGMOInt,
+    P_GetGMOFixed,
+    P_GetGMOAngle,
+    P_GetGMOFloat,
+    P_SetBool,
+    P_SetByte,
+    P_SetInt,
+    P_SetFixed,
+    P_SetAngle,
+    P_SetFloat,
+    P_SetDouble,
+    P_SetPtr,
+    P_SetBoolv,
+    P_SetBytev,
+    P_SetIntv,
+    P_SetFixedv,
+    P_SetAnglev,
+    P_SetFloatv,
+    P_SetDoublev,
+    P_SetPtrv,
+    P_SetBoolp,
+    P_SetBytep,
+    P_SetIntp,
+    P_SetFixedp,
+    P_SetAnglep,
+    P_SetFloatp,
+    P_SetDoublep,
+    P_SetPtrp,
+    P_SetBoolpv,
+    P_SetBytepv,
+    P_SetIntpv,
+    P_SetFixedpv,
+    P_SetAnglepv,
+    P_SetFloatpv,
+    P_SetDoublepv,
+    P_SetPtrpv,
+    P_GetBool,
+    P_GetByte,
+    P_GetInt,
+    P_GetFixed,
+    P_GetAngle,
+    P_GetFloat,
+    P_GetDouble,
+    P_GetPtr,
+    P_GetBoolv,
+    P_GetBytev,
+    P_GetIntv,
+    P_GetFixedv,
+    P_GetAnglev,
+    P_GetFloatv,
+    P_GetDoublev,
+    P_GetPtrv,
+    P_GetBoolp,
+    P_GetBytep,
+    P_GetIntp,
+    P_GetFixedp,
+    P_GetAnglep,
+    P_GetFloatp,
+    P_GetDoublep,
+    P_GetPtrp,
+    P_GetBoolpv,
+    P_GetBytepv,
+    P_GetIntpv,
+    P_GetFixedpv,
+    P_GetAnglepv,
+    P_GetFloatpv,
+    P_GetDoublepv,
+    P_GetPtrpv
+};

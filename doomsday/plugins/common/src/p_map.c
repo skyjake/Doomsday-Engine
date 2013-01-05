@@ -221,6 +221,8 @@ boolean P_CheckSight(const mobj_t* from, const mobj_t* to)
 {
     coord_t fPos[3];
 
+    if(!from || !to) return false;
+
     // If either is unlinked, they can't see each other.
     if(!from->bspLeaf || !to->bspLeaf)
         return false;

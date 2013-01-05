@@ -24,7 +24,7 @@
 #ifndef LIBDENG_GAME_H
 #define LIBDENG_GAME_H
 
-#include "dd_plugin.h"
+#include "api_plugin.h"
 #include <de/ddstring.h>
 
 #ifdef __cplusplus

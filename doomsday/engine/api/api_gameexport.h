@@ -1,5 +1,4 @@
-/**
- * @file dd_api.h
+/** @file api_gameexport.h
  * Data structures for the engine/plugin interfaces.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -20,41 +19,21 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_API_H
-#define LIBDENG_API_H
+#ifndef DOOMSDAY_GAME_EXPORT_API_H
+#define DOOMSDAY_GAME_EXPORT_API_H
 
 #include "dd_share.h"
+#include "api_mapedit.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * The data exported out of the Doomsday engine. @ingroup game
- * @todo Refactor away - there should be no need for an ABI in this direction.
- */
-typedef struct game_import_s {
-    size_t          apiSize; ///< sizeof(game_import_t)
-    int             version; ///< Doomsday Engine version.
-
-    //
-    // DATA
-    //
-    // Data arrays.
-    mobjinfo_t**    mobjInfo;
-    state_t**       states;
-    sprname_t**     sprNames;
-    ddtext_t**      text;
-
-    // General information.
-    int*            validCount;
-} game_import_t;
-
-/**
  * The routines/data exported from the game plugin. @ingroup game
  */
 typedef struct {
-    size_t          apiSize; ///< sizeof(game_export_t)
+    size_t apiSize; ///< sizeof(game_export_t)
 
     // Base-level.
     void          (*PreInit) (gameid_t gameId);
@@ -181,10 +160,10 @@ typedef struct {
 } game_export_t;
 
 /// Function pointer for @c GetGameAPI() (exported by game plugin). @ingroup game
-typedef game_export_t* (*GETGAMEAPI) (game_import_t *);
+typedef game_export_t* (*GETGAMEAPI) (void);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_API_H */
+#endif /* DOOMSDAY_GAME_EXPORT_API_H */

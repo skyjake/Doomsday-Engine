@@ -31,17 +31,18 @@
 
 #include <de/libdeng.h>
 #include "map/sector.h"
-#include "dd_gl.h"
 
 #ifndef __SERVER__
 #  error "Attempted to include server's header in a non-server build"
 #endif
 
+/*
 DENG_EXTERN_C void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable);
 DENG_EXTERN_C boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo);
 DENG_EXTERN_C struct mobj_s* ClMobj_Find(thid_t id);
 DENG_EXTERN_C boolean ClMobj_IsValid(struct mobj_s* mo);
 DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum);
+*/
 
 DENG_EXTERN_C void GameMap_ClMobjReset(GameMap* map);
 
@@ -52,18 +53,17 @@ DENG_EXTERN_C void GL_Shutdown();
 DENG_EXTERN_C void GL_ReleaseGLTexturesByTexture(struct texture_s *tex);
 DENG_EXTERN_C void GL_EarlyInitTextureManager();
 DENG_EXTERN_C void GL_PruneTextureVariantSpecifications();
+/*
 DENG_EXTERN_C void GL_SetFilter(int f);
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
 DENG_EXTERN_C void GL_UseFog(int yes);
-DENG_EXTERN_C void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
-DENG_EXTERN_C void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags,
                                                    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
                                                    float stretchEpsilon);
-DENG_EXTERN_C void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
-DENG_EXTERN_C void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
-DENG_EXTERN_C void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
-DENG_EXTERN_C void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale);
-DENG_EXTERN_C void GL_DrawSvg(svgid_t id, const Point2Rawf* origin);
+DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp);
+DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp);
+*/
 
 DENG_EXTERN_C void R_InitViewWindow(void);
 DENG_EXTERN_C void R_RenderPlayerView(int num);
@@ -71,10 +71,10 @@ DENG_EXTERN_C void R_SetBorderGfx(Uri const *const *paths);
 DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data);
 DENG_EXTERN_C void R_InitSvgs(void);
 DENG_EXTERN_C void R_ShutdownSvgs(void);
-DENG_EXTERN_C void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines);
 DENG_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
 DENG_EXTERN_C void FR_Init(void);
+/*
 DENG_EXTERN_C void FR_SetFont(fontid_t font);
 DENG_EXTERN_C void FR_PushAttrib(void);
 DENG_EXTERN_C void FR_PopAttrib(void);
@@ -123,6 +123,7 @@ DENG_EXTERN_C void FR_ResetTypeinTimer(void);
 DENG_EXTERN_C void FR_TextSize(Size2Raw* size, const char* text);
 DENG_EXTERN_C int FR_TextWidth(const char* text);
 DENG_EXTERN_C int FR_TextHeight(const char* text);
+*/
 
 DENG_EXTERN_C void Fonts_Init(void);
 DENG_EXTERN_C fontschemeid_t Fonts_ParseScheme(const char* str);

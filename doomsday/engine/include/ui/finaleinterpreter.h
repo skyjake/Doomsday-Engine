@@ -26,6 +26,7 @@
 #define LIBDENG_FINALEINTERPRETER_H
 
 #include "dd_input.h"
+#include "dd_ui.h"
 
 #define FINF_BEGIN          0x01
 #define FINF_END            0x02

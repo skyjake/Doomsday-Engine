@@ -28,6 +28,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_PLAYER
+
 #include <ctype.h>
 
 #include "de_base.h"
@@ -328,6 +330,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     db->lastState = newState;
 }
 
+#undef P_GetControlState
 void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
 {
     float tmp;
@@ -358,6 +361,7 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
 /**
  * @return  Number of times the impulse has been triggered since the last call.
  */
+#undef P_GetImpulseControlState
 int P_GetImpulseControlState(int playerNum, int control)
 {
     playercontrol_t* pc = P_PlayerControlById(control);
@@ -400,6 +404,7 @@ int P_GetControlDoubleClick(int playerNum, int control)
     return triggered;
 }
 
+#undef P_Impulse
 void P_Impulse(int playerNum, int control)
 {
     playercontrol_t* pc = P_PlayerControlById(control);

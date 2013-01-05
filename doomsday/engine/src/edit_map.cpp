@@ -23,6 +23,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_MAP_EDIT
+
 #include <math.h>
 
 #include "de_base.h"
@@ -2082,3 +2084,25 @@ boolean MPE_GameObjProperty(const char* entityName, uint elementIndex,
 
     return P_SetMapEntityProperty(map->entityDatabase, propertyDef, elementIndex, type, valueAdr);
 }
+
+// p_data.cpp
+DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, const char* name);
+DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId, const char* propertyName, valuetype_t type);
+
+DENG_DECLARE_API(MPE) =
+{
+    { DE_API_MAP_EDIT },
+
+    P_RegisterMapObj,
+    P_RegisterMapObjProperty,
+    MPE_Begin,
+    MPE_End,
+    MPE_VertexCreate,
+    MPE_VertexCreatev,
+    MPE_SidedefCreate,
+    MPE_LinedefCreate,
+    MPE_SectorCreate,
+    MPE_PlaneCreate,
+    MPE_PolyobjCreate,
+    MPE_GameObjProperty
+};
