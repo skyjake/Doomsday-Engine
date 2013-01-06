@@ -294,6 +294,7 @@ DENG_HEADERS += \
     include/resource/image.h \
     include/resource/lumpcache.h \
     include/resource/material.h \
+    include/resource/materialarchive.h \
     include/resource/materialbind.h \
     include/resource/materials.h \
     include/resource/materialscheme.h \

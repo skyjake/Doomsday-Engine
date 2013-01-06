@@ -239,6 +239,8 @@ DENG_HEADERS += \
     $$SRC/include/resource/image.h \
     $$SRC/include/resource/lumpcache.h \
     $$SRC/include/resource/material.h \
+    $$SRC/include/resource/materialarchive.h \
+    $$SRC/include/resource/materialbind.h \
     $$SRC/include/resource/materials.h \
     $$SRC/include/resource/materialscheme.h \
     $$SRC/include/resource/materialsnapshot.h \
