@@ -18,17 +18,13 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_MATERIAL_ARCHIVE
-
 #include "de_base.h"
 #include "de_console.h"
 
 #include <de/memory.h>
 
 #include "resource/materials.h"
-
-#include "api_materialarchive.h"
-#include "api_material.h"
+#include "resource/materialarchive.h"
 
 /// For identifying the archived format version. Written to disk.
 #define MATERIALARCHIVE_VERSION (4)
@@ -357,6 +353,10 @@ void MaterialArchive::read(int forcedVersion, reader_s &reader)
 /*
  * C Wrapper API:
  */
+
+#define DENG_NO_API_MACROS_MATERIAL_ARCHIVE
+
+#include "api_materialarchive.h"
 
 #define TOINTERNAL(inst) \
     reinterpret_cast<de::MaterialArchive *>(inst)

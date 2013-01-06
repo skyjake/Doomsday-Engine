@@ -87,5 +87,6 @@ namespace de {
     };
 
 } // namespace de
+#endif __cplusplus
 
 #endif /* LIBDENG_RESOURCE_MATERIALARCHIVE_H */

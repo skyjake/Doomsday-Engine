@@ -40,8 +40,6 @@ struct materialarchive_s;
  */
 typedef struct materialarchive_s MaterialArchive;
 
-typedef unsigned short materialarchive_serialid_t;
-
 DENG_API_TYPEDEF(MaterialArchive)
 {
     de_api_t api;
