@@ -40,8 +40,14 @@ void *M_Calloc(size_t size)
 
 void *M_Realloc(void *ptr, size_t size)
 {
-    void *p = realloc(ptr, size);
-    if(!p) Libdeng_BadAlloc();
+    void *p = 0;
+    if(!size)
+    {
+        if(ptr) M_Free(ptr);
+        return 0;
+    }
+    p = realloc(ptr, size);
+    if(!p) Libdeng_BadAlloc(); // was supposed to be non-null
     return p;
 }
 

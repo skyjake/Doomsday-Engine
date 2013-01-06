@@ -34,6 +34,24 @@ DENG_PUBLIC void *M_Malloc(size_t size);
 
 DENG_PUBLIC void *M_Calloc(size_t size);
 
+/**
+ * Changes the size of a previously allocated memory block, allocates new
+ * memory, or frees previously allocated memory.
+ *
+ * - If @a ptr is NULL and @a size is zero, nothing happens and NULL is returned.
+ * - If @a ptr is NULL and @a size is not zero, new memory is allocated
+ *   and a pointer to it is returned.
+ * - If @a ptr is not NULL and @a size is not zero, the memory pointed to
+ *   by @a ptr is resized, and the allocated memory's (possible) new address
+ *   is returned.
+ * - If @a ptr is not NULL and @a size is zero, the memory pointed to by
+ *   @a ptr is freed (using M_Free()) and NULL is returned.
+ *
+ * @param ptr   Previously allocated memory, or NULL.
+ * @param size  New size for the allocated memory.
+ *
+ * @return Allocated memory, or NULL.
+ */
 DENG_PUBLIC void *M_Realloc(void *ptr, size_t size);
 
 DENG_PUBLIC void *M_MemDup(void const *ptr, size_t size);
