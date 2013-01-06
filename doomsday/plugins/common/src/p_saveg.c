@@ -2949,7 +2949,7 @@ static void P_UnArchiveWorld(void)
 #endif
     {
         Reader* svReader = SV_NewReader();
-        MaterialArchive_Read(materialArchive, matArchiveVer, svReader);
+        MaterialArchive_Read(materialArchive, svReader, matArchiveVer);
         Reader_Delete(svReader);
     }
 
