@@ -49,19 +49,19 @@ DENG_API_TYPEDEF(MaterialArchive)
     /**
      * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
      */
-    MaterialArchive* (*New)(int useSegments);
+    MaterialArchive *(*New)(int useSegments);
 
     /**
      * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
      */
-    MaterialArchive* (*NewEmpty)(int useSegments);
+    MaterialArchive *(*NewEmpty)(int useSegments);
 
-    void (*Delete)(MaterialArchive* arc);
+    void (*Delete)(MaterialArchive *arc);
 
     /**
      * @return A new (unused) SerialId for the specified material.
      */
-    materialarchive_serialid_t (*FindUniqueSerialId)(MaterialArchive* arc, struct material_s* mat);
+    materialarchive_serialid_t (*FindUniqueSerialId)(MaterialArchive *arc, struct material_s *mat);
 
     /**
      * Finds and returns a material with the identifier @a serialId.
@@ -72,14 +72,14 @@ DENG_API_TYPEDEF(MaterialArchive)
      *
      * @return  Pointer to a material instance. Ownership not given.
      */
-    struct material_s* (*Find)(MaterialArchive* arc, materialarchive_serialid_t serialId, int group);
+    struct material_s *(*Find)(MaterialArchive *arc, materialarchive_serialid_t serialId, int group);
 
     /**
      * Returns the number of materials in the archive.
      *
      * @param arc  MaterialArchive instance.
      */
-    size_t (*Count)(MaterialArchive* arc);
+    size_t (*Count)(MaterialArchive *arc);
 
     /**
      * Serializes the state of the archive using @a writer.
@@ -87,7 +87,7 @@ DENG_API_TYPEDEF(MaterialArchive)
      * @param arc  MaterialArchive instance.
      * @param writer  Writer instance.
      */
-    void (*Write)(MaterialArchive* arc, Writer* writer);
+    void (*Write)(MaterialArchive *arc, Writer *writer);
 
     /**
      * Deserializes the state of the archive from @a reader.
@@ -97,7 +97,7 @@ DENG_API_TYPEDEF(MaterialArchive)
      *                       version is encountered.
      * @param reader  Reader instance.
      */
-    void (*Read)(MaterialArchive* arc, int forcedVersion, Reader* reader);
+    void (*Read)(MaterialArchive *arc, int forcedVersion, Reader *reader);
 }
 DENG_API_T(MaterialArchive);
 
