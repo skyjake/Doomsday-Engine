@@ -108,7 +108,7 @@ int LegacyCore_SetLogFile(char const *filePath)
         DENG2_LEGACYCORE().setLogFileName(filePath);
         return true;
     }
-    catch(de::LogBuffer::FileError const &er)
+    catch(de::Error const &er)
     {
         LOG_AS("LegacyCore_SetLogFile");
         LOG_WARNING(er.asText());
