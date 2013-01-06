@@ -159,6 +159,7 @@ void DED_Clear(ded_t* ded)
                 ded_submodel_t* sub = &mdl->sub[j];
                 if(sub->filename) Uri_Delete(sub->filename);
                 if(sub->skinFilename) Uri_Delete(sub->skinFilename);
+                if(sub->shinySkin) Uri_Delete(sub->shinySkin);
             }
         }
         M_Free(ded->models);

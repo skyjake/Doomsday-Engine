@@ -20,6 +20,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_GL
+
 #include <stdlib.h>
 #include <math.h>
 
@@ -31,6 +33,7 @@
 #include "de_resource.h"
 
 #include "gl/sys_opengl.h"
+#include "api_gl.h"
 
 /**
  * Requires a texture environment mode that can add and multiply.
@@ -723,7 +726,7 @@ void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 {
     try
     {
-        Texture *tex = reinterpret_cast<texture_s *>(App_Textures()->scheme("Patches").findByUniqueId(id).texture());
+        struct texture_s *tex = reinterpret_cast<texture_s *>(App_Textures()->scheme("Patches").findByUniqueId(id).texture());
         if(!tex) return;
 
         GL_BindTexture(GL_PreparePatchTexture2(tex, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT)));
@@ -835,3 +838,125 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
                                     (wrapT == DGL_CLAMP         ? GL_CLAMP :
                                      wrapT == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT));
 }
+
+// dgl_draw.c
+DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode);
+DENG_EXTERN_C void DGL_End(void);
+DENG_EXTERN_C boolean DGL_NewList(DGLuint list, int mode);
+DENG_EXTERN_C DGLuint DGL_EndList(void);
+DENG_EXTERN_C void DGL_CallList(DGLuint list);
+DENG_EXTERN_C void DGL_DeleteLists(DGLuint list, int range);
+DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
+DENG_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec);
+DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
+DENG_EXTERN_C void DGL_Color4ubv(const DGLubyte* vec);
+DENG_EXTERN_C void DGL_Color3f(float r, float g, float b);
+DENG_EXTERN_C void DGL_Color3fv(const float* vec);
+DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a);
+DENG_EXTERN_C void DGL_Color4fv(const float* vec);
+DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t);
+DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float* vec);
+DENG_EXTERN_C void DGL_Vertex2f(float x, float y);
+DENG_EXTERN_C void DGL_Vertex2fv(const float* vec);
+DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z);
+DENG_EXTERN_C void DGL_Vertex3fv(const float* vec);
+DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec);
+DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec);
+DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec);
+DENG_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
+DENG_EXTERN_C void DGL_DrawRect(const RectRaw* rect);
+DENG_EXTERN_C void DGL_DrawRect2(int x, int y, int w, int h);
+DENG_EXTERN_C void DGL_DrawRectf(const RectRawf* rect);
+DENG_EXTERN_C void DGL_DrawRectf2(double x, double y, double w, double h);
+DENG_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a);
+DENG_EXTERN_C void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th);
+DENG_EXTERN_C void DGL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff, const RectRawf* cutRect);
+DENG_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th, int txoff, int tyoff, double cx, double cy, double cw, double ch);
+DENG_EXTERN_C void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2Raw* br, const Point2Raw* bl, const float color[4]);
+DENG_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int brX, int brY, int blX, int blY, const float color[4]);
+
+// gl_draw.c
+DENG_EXTERN_C void GL_UseFog(int yes);
+DENG_EXTERN_C void GL_SetFilter(boolean enable);
+DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
+DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
+DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp);
+DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp);
+
+DENG_DECLARE_API(GL) =
+{
+    { DE_API_GL },
+    DGL_Enable,
+    DGL_Disable,
+    DGL_GetIntegerv,
+    DGL_GetInteger,
+    DGL_SetInteger,
+    DGL_GetFloatv,
+    DGL_GetFloat,
+    DGL_SetFloat,
+    DGL_Ortho,
+    DGL_Scissor,
+    DGL_SetScissor,
+    DGL_SetScissor2,
+    DGL_MatrixMode,
+    DGL_PushMatrix,
+    DGL_PopMatrix,
+    DGL_LoadIdentity,
+    DGL_Translatef,
+    DGL_Rotatef,
+    DGL_Scalef,
+    DGL_Begin,
+    DGL_End,
+    DGL_NewList,
+    DGL_EndList,
+    DGL_CallList,
+    DGL_DeleteLists,
+    DGL_SetNoMaterial,
+    DGL_SetMaterialUI,
+    DGL_SetPatch,
+    DGL_SetPSprite,
+    DGL_SetPSprite2,
+    DGL_SetRawImage,
+    DGL_BlendOp,
+    DGL_BlendFunc,
+    DGL_BlendMode,
+    DGL_Color3ub,
+    DGL_Color3ubv,
+    DGL_Color4ub,
+    DGL_Color4ubv,
+    DGL_Color3f,
+    DGL_Color3fv,
+    DGL_Color4f,
+    DGL_Color4fv,
+    DGL_TexCoord2f,
+    DGL_TexCoord2fv,
+    DGL_Vertex2f,
+    DGL_Vertex2fv,
+    DGL_Vertex3f,
+    DGL_Vertex3fv,
+    DGL_Vertices2ftv,
+    DGL_Vertices3ftv,
+    DGL_Vertices3fctv,
+    DGL_DrawLine,
+    DGL_DrawRect,
+    DGL_DrawRect2,
+    DGL_DrawRectf,
+    DGL_DrawRectf2,
+    DGL_DrawRectf2Color,
+    DGL_DrawRectf2Tiled,
+    DGL_DrawCutRectfTiled,
+    DGL_DrawCutRectf2Tiled,
+    DGL_DrawQuadOutline,
+    DGL_DrawQuad2Outline,
+    DGL_NewTextureWithParams,
+    DGL_Bind,
+    DGL_DeleteTextures,
+    GL_UseFog,
+    GL_SetFilter,
+    GL_SetFilterColor,
+    GL_ConfigureBorderedProjection2,
+    GL_ConfigureBorderedProjection,
+    GL_BeginBorderedProjection,
+    GL_EndBorderedProjection
+};

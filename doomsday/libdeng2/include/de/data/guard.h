@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ namespace de {
  *                 identifier with no operators or anything else.
  */
 #define DENG2_GUARD(varName) \
-    Guard _guarding_##varName(varName); \
+    de::Guard _guarding_##varName(varName); \
     DENG2_UNUSED(_guarding_##varName);
 
 class Lockable;

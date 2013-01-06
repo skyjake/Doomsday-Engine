@@ -33,6 +33,7 @@
 #include "de_filesys.h"
 
 #include <math.h>
+#include <de/mathutil.h>
 
 D_CMD(BLEditor);
 
@@ -182,7 +183,7 @@ static void SBE_GetHueColor(float* color, float* angle, float* sat)
         if(angle) *angle = 0;
         if(sat) *sat = 0;
 
-        R_HSVToRGB(color, 0, 0, 1);
+        M_HSVToRGB(color, 0, 0, 1);
         return;
     }
 
@@ -211,7 +212,7 @@ static void SBE_GetHueColor(float* color, float* angle, float* sat)
 
     if(angle) *angle = hue;
 
-    R_HSVToRGB(color, hue, saturation, 1);
+    M_HSVToRGB(color, hue, saturation, 1);
 }
 
 void SBE_EndFrame(void)
@@ -249,8 +250,10 @@ void SBE_EndFrame(void)
 
 static void SBE_Begin(void)
 {
+#ifdef __CLIENT__
     // Advise the game not to draw any HUD displays
     gameDrawHUD = false;
+#endif
     editActive = true;
     editGrabbed = -1;
 
@@ -259,8 +262,10 @@ static void SBE_Begin(void)
 
 static void SBE_End(void)
 {
+#ifdef __CLIENT__
     // Advise the game it can safely draw any HUD displays again
     gameDrawHUD = true;
+#endif
     editActive = false;
 
     Con_Printf("Bias light editor: OFF\n");
@@ -981,7 +986,7 @@ static void SBE_DrawHue(void)
         angle = 2*PI * i/steps;
 
         // Calculate the hue color for this angle.
-        R_HSVToRGB(color, i/steps, 1, 1);
+        M_HSVToRGB(color, i/steps, 1, 1);
         color[3] = .5f;
 
         SBE_HueOffset(angle, off);
@@ -1023,7 +1028,7 @@ static void SBE_DrawHue(void)
         SBE_HueOffset(2*PI * (i + 1)/steps, off2);
 
         // Calculate the hue color for this angle.
-        R_HSVToRGB(color, i/steps, 1, 1);
+        M_HSVToRGB(color, i/steps, 1, 1);
         color[3] = 1;
 
         glColor4fv(color);

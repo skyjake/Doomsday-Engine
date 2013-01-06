@@ -23,6 +23,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_MAP_EDIT
+
 #include <math.h>
 
 #include "de_base.h"
@@ -37,6 +39,8 @@
 #include <de/StringPool>
 
 #include "audio/s_environ.h"
+
+using namespace de;
 
 typedef struct {
     ddstring_t uri;
@@ -56,7 +60,7 @@ static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri);
  * The pointer user value holds a pointer to the resolved Material (if found).
  * The integer user value tracks the number of times a reference occurs.
  */
-static de::StringPool* materialDict;
+static StringPool* materialDict;
 
 editmap_t editMap;
 static boolean editMapInited = false;
@@ -1669,7 +1673,7 @@ boolean MPE_End(void)
         char const* markerLumpName = Str_Text(Uri_Path(gamemap->uri));
         lumpnum_t markerLumpNum = F_LumpNumForName(markerLumpName);
         AutoStr* cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
-        Str cachedMapPath;
+        ddstring_t cachedMapPath;
 
         Str_InitStd(&cachedMapPath);
         F_FileName(&cachedMapPath, markerLumpName);
@@ -1747,7 +1751,7 @@ boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
  *                    Else operate in "print" mode.
  * @return Always @c 0 (for use as an iterator).
  */
-static int printMissingMaterialWorker(de::StringPool::Id internId, void* parameters)
+static int printMissingMaterialWorker(StringPool::Id internId, void* parameters)
 {
     uint* count = (uint*)parameters;
 
@@ -1767,7 +1771,7 @@ static int printMissingMaterialWorker(de::StringPool::Id internId, void* paramet
             {
                 // Print mode.
                 int const refCount = materialDict->userValue(internId);
-                de::String const& materialUri = materialDict->string(internId);
+                String const& materialUri = materialDict->string(internId);
                 QByteArray materialUriUtf8 = materialUri.toUtf8();
                 Con_Message(" %4u x \"%s\"\n", refCount, materialUriUtf8.constData());
             }
@@ -1800,40 +1804,50 @@ static void clearMaterialDict(void)
     delete materialDict; materialDict = 0;
 }
 
-static void assignSurfaceMaterial(Surface* suf, ddstring_t const* materialUri)
+static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr)
 {
     DENG_ASSERT(suf);
 
-    material_t* material = 0;
-    if(materialUri && !Str_IsEmpty(materialUri))
+    material_t *material = 0;
+    if(materialUriStr && !Str_IsEmpty(materialUriStr))
     {
         // Are we yet to instantiate the dictionary?
         if(!materialDict)
         {
-            materialDict = new de::StringPool;
+            materialDict = new StringPool;
         }
 
+        de::Uri materialUri(Str_Text(materialUriStr), RC_NULL);
+
         // Intern this reference.
-        de::StringPool::Id internId = materialDict->intern(de::String(Str_Text(materialUri)));
+        StringPool::Id internId = materialDict->intern(materialUri.compose());
 
         // Have we previously encountered this?.
         uint refCount = materialDict->userValue(internId);
         if(refCount)
         {
             // Yes, if resolved the user pointer holds the found material.
-            material = (material_t*) materialDict->userPointer(internId);
+            material = (material_t *) materialDict->userPointer(internId);
         }
         else
         {
             // No, attempt to resolve this URI and update the dictionary.
             // First try the preferred scheme, then any.
-            materialid_t materialId = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
-            if(materialId == NOMATERIALID)
+            try
             {
-                de::Uri tmp(de::Path(Str_Text(materialUri)));
-                materialId = Materials_ResolveUri(reinterpret_cast<uri_s*>(&tmp));
+                material = App_Materials()->find(materialUri).material();
             }
-            material = Materials_ToMaterial(materialId);
+            catch(Materials::NotFoundError const &)
+            {
+                // Try any scheme.
+                try
+                {
+                    materialUri.setScheme("");
+                    material = App_Materials()->find(materialUri).material();
+                }
+                catch(Materials::NotFoundError const &)
+                {}
+            }
 
             // Insert the possibly resolved material into the dictionary.
             materialDict->setUserPointer(internId, material);
@@ -2078,3 +2092,25 @@ boolean MPE_GameObjProperty(const char* entityName, uint elementIndex,
 
     return P_SetMapEntityProperty(map->entityDatabase, propertyDef, elementIndex, type, valueAdr);
 }
+
+// p_data.cpp
+DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, const char* name);
+DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId, const char* propertyName, valuetype_t type);
+
+DENG_DECLARE_API(MPE) =
+{
+    { DE_API_MAP_EDIT },
+
+    P_RegisterMapObj,
+    P_RegisterMapObjProperty,
+    MPE_Begin,
+    MPE_End,
+    MPE_VertexCreate,
+    MPE_VertexCreatev,
+    MPE_SidedefCreate,
+    MPE_LinedefCreate,
+    MPE_SectorCreate,
+    MPE_PlaneCreate,
+    MPE_PolyobjCreate,
+    MPE_GameObjProperty
+};

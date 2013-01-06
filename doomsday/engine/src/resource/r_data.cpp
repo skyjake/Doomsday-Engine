@@ -1,7 +1,4 @@
-/**
- * @file r_data.cpp
- *
- * @ingroup resource
+/** @file r_data.cpp Texture Resource Registration.
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -22,19 +19,20 @@
  * 02110-1301 USA</small>
  */
 
-#include <QDir>
+#include <cstring>
+
 #include <QList>
 #include <QMap>
 #include <de/App>
 #include <de/ByteRefArray>
+#include <de/LegacyCore>
 #include <de/Log>
 #include <de/Reader>
 #include <de/String>
 #include <de/Time>
-#include <de/memory.h>
+#include <de/mathutil.h> // M_NumDigits()
 
 #include "de_base.h"
-#include "de_console.h"
 #include "de_filesys.h"
 #include "de_resource.h"
 
@@ -42,12 +40,29 @@
 #include "gl/gl_tex.h"
 #include "gl/gl_texmanager.h"
 #include "m_stack.h"
-#include "m_misc.h" // For M_NumDigits()
 #include "uri.hh"
 
 using namespace de;
 
 static QList<PatchName> patchNames;
+
+/// Ensure a texture has been derived for @a manifest.
+static de::Texture *deriveTexture(TextureManifest &manifest)
+{
+    LOG_AS("deriveTexture");
+    de::Texture *tex = manifest.derive();
+    if(!tex)
+    {
+        LOG_WARNING("Failed to derive a Texture for \"%s\", ignoring.") << manifest.composeUri();
+    }
+    return tex;
+}
+
+static int defineTextureWorker(TextureManifest &manifest, void * /*parameters*/)
+{
+    deriveTexture(manifest);
+    return 0; // Continue iteration.
+}
 
 /**
  * Compose the path to the data resource.
@@ -69,29 +84,26 @@ void R_InitSystemTextures()
     {   "unknown", "missing", "bbox", "gray", "" };
 
     LOG_VERBOSE("Initializing System textures...");
-    Textures &textures = *App_Textures();
 
     for(uint i = 0; !names[i].isEmpty(); ++i)
     {
-        Path path = names[i];
-        de::Uri uri("System", path);
-        de::Uri resourcePath("Graphics", path);
+        de::Uri uri("System", Path(names[i]));
+        de::Texture::Flags flags = de::Texture::Custom;
+        QSize dimensions;
+        QPoint origin;
+        int uniqueId = i + 1/*1-based index*/;
+        de::Uri resourceUri("Graphics", Path(names[i]));
 
-        TextureManifest *manifest = textures.declare(uri, i + 1/*1-based index*/, &resourcePath);
-        if(!manifest) continue; // Invalid uri?
-
-        // Have we defined this yet?
-        if(manifest->texture()) continue;
-
-        if(!manifest->derive(de::Texture::Custom))
-        {
-            LOG_WARNING("Failed to define Texture for system texture \"%s\".") << uri;
-        }
+        App_Textures()->declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
     }
+
+    // Define any as yet undefined system textures.
+    /// @todo Defer until necessary (manifest texture is first referenced).
+    App_Textures()->iterateDeclared("System", defineTextureWorker);
 }
 
-/// @note Part of the Doomsday public API.
-AutoStr *R_ComposePatchPath(patchid_t id)
+#undef R_ComposePatchPath
+DENG_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
 {
     try
     {
@@ -106,8 +118,8 @@ AutoStr *R_ComposePatchPath(patchid_t id)
     return AutoStr_NewStd();
 }
 
-/// @note Part of the Doomsday public API.
-uri_s *R_ComposePatchUri(patchid_t id)
+#undef R_ComposePatchUri
+DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
 {
     try
     {
@@ -122,8 +134,8 @@ uri_s *R_ComposePatchUri(patchid_t id)
     return reinterpret_cast<uri_s *>(new de::Uri());
 }
 
-/// @note Part of the Doomsday public API.
-patchid_t R_DeclarePatch(char const *name)
+#undef R_DeclarePatch
+DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
 {
     LOG_AS("R_DeclarePatch");
 
@@ -157,58 +169,59 @@ patchid_t R_DeclarePatch(char const *name)
         return 0;
     }
 
-    // Compose the path to the data resource.
     de::File1 &file = App_FileSystem()->nameIndex().lump(lumpNum);
-    de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
-
-    int uniqueId = textures.scheme("Patches").count() + 1; // 1-based index.
-    TextureManifest *manifest = textures.declare(uri, uniqueId, &resourceUri);
-    if(!manifest) return 0; // Invalid uri?
 
     de::Texture::Flags flags;
     if(file.container().hasCustom()) flags |= de::Texture::Custom;
 
-    // Take a copy of the current patch loading state so that future texture
-    // loads will produce the same results.
+    // Take a copy of the current texture filter state.
     if(monochrome)               flags |= de::Texture::Monochrome;
     if(upscaleAndSharpenPatches) flags |= de::Texture::UpscaleAndSharpen;
 
-    /// @todo fixme: Ensure this is in Patch format.
-    ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-    de::Reader from = de::Reader(fileData);
-    Patch::Header patchHdr;
-    from >> patchHdr;
+    QSize dimensions(0, 0);
+    QPoint origin(0, 0);
 
+    // If this is a Patch (the format) read the world dimension and origin offset values.
+    ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+    if(Patch::recognize(fileData))
+    {
+        try
+        {
+            Patch::Metadata info = Patch::loadMetadata(fileData);
+
+            dimensions = info.logicalDimensions;
+            origin     = QPoint(-info.origin.x(), -info.origin.y());
+        }
+        catch(IByteArray::OffsetError const &)
+        {
+            LOG_WARNING("File \"%s:%s\" does not appear to be a valid Patch.\n"
+                        "World dimension and origin offset not set for patch \"%s\".")
+                << NativePath(file.container().composePath()).pretty()
+                << NativePath(file.composePath()).pretty()
+                << uri;
+        }
+    }
     file.unlock();
 
-    de::Texture *tex = manifest->texture();
-    if(!tex)
-    {
-        tex = manifest->derive(patchHdr.dimensions, flags);
-        if(!tex)
-        {
-            LOG_WARNING("Failed defining Texture for Patch texture \"%s\".") << uri;
-            return 0;
-        }
+    int uniqueId        = textures.scheme("Patches").count() + 1; // 1-based index.
+    de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
-        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
-    }
-    else
-    {
-        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
-        tex->setDimensions(patchHdr.dimensions);
-        tex->flags() = flags;
-    }
+    TextureManifest *manifest = textures.declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+    if(!manifest) return 0; // Invalid uri?
+
+    /// @todo Defer until necessary (manifest texture is first referenced).
+    deriveTexture(*manifest);
 
     return uniqueId;
 }
 
-boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
+#undef R_GetPatchInfo
+DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 {
     LOG_AS("R_GetPatchInfo");
-    if(!info) Con_Error("R_GetPatchInfo: Argument 'info' cannot be NULL.");
+    if(!info) LegacyCore_FatalError("R_GetPatchInfo: Argument 'info' cannot be NULL.");
 
-    memset(info, 0, sizeof(patchinfo_t));
+    std::memset(info, 0, sizeof(patchinfo_t));
 
     if(!id) return false;
 
@@ -515,9 +528,9 @@ static CompositeTextures loadCompositeTextureDefs()
                         hasReplacement = true; // Uses a custom patch.
                     }
                     // Do the definitions differ?
-                    else if(custom->height()          != orig->height() ||
-                            custom->width()           != orig->width()  ||
-                            custom->componentCount()  != orig->componentCount())
+                    else if(custom->dimensions()        != orig->dimensions()  ||
+                            custom->logicalDimensions() != orig->logicalDimensions() ||
+                            custom->componentCount()    != orig->componentCount())
                     {
                         custom->flags() |= CompositeTexture::Custom;
                         hasReplacement = true;
@@ -543,12 +556,6 @@ static CompositeTextures loadCompositeTextureDefs()
                                 k++;
                             }
                         }
-                    }
-
-                    // The non-drawable flag must pass to the replacement.
-                    if(hasReplacement && orig->flags().testFlag(CompositeTexture::NoDraw))
-                    {
-                        custom->flags() |= CompositeTexture::NoDraw;
                     }
                     break;
                 }
@@ -582,31 +589,26 @@ static CompositeTextures loadCompositeTextureDefs()
 static void processCompositeTextureDefs(CompositeTextures &defs)
 {
     LOG_AS("processCompositeTextureDefs");
-    Textures &textures = *App_Textures();
 
-    bool isFirst = true;
     while(!defs.isEmpty())
     {
         CompositeTexture &def = *defs.takeFirst();
         de::Uri uri("Textures", Path(def.percentEncodedName()));
 
-        TextureManifest *manifest = textures.declare(uri, def.origIndex(), 0);
+        de::Texture::Flags flags;
+        if(def.flags().testFlag(CompositeTexture::Custom)) flags |= de::Texture::Custom;
+
+        /*
+         * The id Tech 1 implementation of the texture collection has a flaw
+         * which results in the first texture being used dually as a "NULL"
+         * texture.
+         */
+        if(def.origIndex() == 0) flags |= de::Texture::NoDraw;
+
+
+        TextureManifest *manifest = App_Textures()->declare(uri, flags, def.logicalDimensions(), QPoint(), def.origIndex());
         if(manifest)
         {
-            /*
-             * Vanilla DOOM's implementation of the texture collection has a flaw
-             * which results in the first texture being used dually as a "NULL"
-             * texture.
-             */
-            if(isFirst)
-            {
-                def.flags() |= CompositeTexture::NoDraw;
-                isFirst = false;
-            }
-
-            de::Texture::Flags flags;
-            if(def.flags().testFlag(CompositeTexture::Custom)) flags |= de::Texture::Custom;
-
             // Are we redefining an existing texture?
             if(de::Texture *tex = manifest->texture())
             {
@@ -618,22 +620,22 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
                     delete oldDef;
                 }
 
-                // Reconfigure and attach the new definition.
-                tex->flags() = flags;
-                tex->setDimensions(def.dimensions());
+                // Attach the new definition.
                 tex->setUserDataPointer((void *)&def);
 
                 continue;
             }
             // A new texture.
-            else if(de::Texture *tex = manifest->derive(def.dimensions(), flags))
+            else if(de::Texture *tex = manifest->derive())
             {
                 tex->setUserDataPointer((void *)&def);
                 continue;
             }
         }
 
+        /// @todo Defer until necessary (manifest texture is first referenced).
         LOG_WARNING("Failed defining Texture for patch composite \"%s\", ignoring.") << uri;
+
         delete &def;
     }
 }
@@ -653,17 +655,13 @@ void R_InitCompositeTextures()
     LOG_INFO(String("R_InitCompositeTextures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-static inline de::Uri composeFlatUri(String percentEncodedPath)
-{
-    return de::Uri("Flats", Path(percentEncodedPath.fileNameWithoutExtension()));
-}
-
 void R_InitFlatTextures()
 {
     de::Time begunAt;
 
     LOG_VERBOSE("Initializing Flat textures...");
-    Textures &textures = *App_Textures();
+
+    de::Textures &textures = *App_Textures();
 
     LumpIndex const &index = App_FileSystem()->nameIndex();
     lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
@@ -702,86 +700,33 @@ void R_InitFlatTextures()
                !percentEncodedName.compareWithoutCase("F_END")    ||
                !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
-            de::Uri uri = composeFlatUri(percentEncodedName);
+            de::Uri uri("Flats", Path(percentEncodedName));
+            if(textures.has(uri)) continue;
 
-            if(!textures.has(uri)) // A new flat?
-            {
-                /**
-                 * Kludge Assume 64x64 else when the flat is loaded it will inherit the
-                 * dimensions of the texture, which, if it has been replaced with a hires
-                 * version - will be much larger than it should be.
-                 *
-                 * @todo Always determine size from the lowres original.
-                 */
-                int const uniqueId = lumpNum - (firstFlatMarkerLumpNum + 1);
-                de::Uri resourcePath = composeLumpIndexResourceUrn(lumpNum);
-                TextureManifest *manifest = textures.declare(uri, uniqueId, &resourcePath);
+            de::Texture::Flags flags;
+            if(file.container().hasCustom()) flags |= de::Texture::Custom;
 
-                de::Texture::Flags flags;
-                if(file.container().hasCustom()) flags |= de::Texture::Custom;
+            /*
+             * Kludge Assume 64x64 else when the flat is loaded it will inherit the
+             * pixel dimensions of the graphic, which, if it has been replaced with
+             * a hires version - will be much larger than it should be.
+             *
+             * @todo Always determine size from the lowres original.
+             */
+            QSize dimensions(64, 64);
+            QPoint origin(0, 0);
+            int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
+            de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
-                if(manifest && !manifest->derive(QSize(64, 64), flags))
-                {
-                    LOG_WARNING("Failed defining Texture for new flat \"%s\", ignoring.") << uri;
-                }
-            }
+            textures.declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
         }
     }
 
+    // Define any as yet undefined flat textures.
+    /// @todo Defer until necessary (manifest texture is first referenced).
+    textures.iterateDeclared("Flats", defineTextureWorker);
+
     LOG_INFO(String("R_InitFlatTetxures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
-}
-
-void R_DefineSpriteTexture(TextureManifest &manifest)
-{
-    LOG_AS("R_DefineSpriteTexture");
-
-    // Have we already defined this texture?
-    if(manifest.texture()) return;
-
-    // A new sprite texture.
-    de::Texture *tex = manifest.derive();
-    if(!tex)
-    {
-        LOG_WARNING("Failed to define Texture for sprite \"%s\", ignoring.")
-            << manifest.composeUri();
-        return;
-    }
-
-    de::Uri const &resourceUri = manifest.resourceUri();
-    if(resourceUri.isEmpty()) return;
-
-    try
-    {
-        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-        de::File1& file = App_FileSystem()->nameIndex().lump(lumpNum);
-
-        /// @todo fixme: Ensure this is in Patch format.
-        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-        de::Reader from = de::Reader(fileData);
-        Patch::Header patchHdr;
-        from >> patchHdr;
-
-        tex->setOrigin(QPoint(-patchHdr.origin.x(), -patchHdr.origin.y()));
-        tex->setDimensions(patchHdr.dimensions);
-        if(file.hasCustom())
-            tex->flags() |= de::Texture::Custom;
-
-        file.unlock();
-    }
-    catch(LumpIndex::NotFoundError const &)
-    {} // Ignore this error.
-}
-
-static int defineSpriteTextureWorker(TextureManifest &manifest, void * /*parameters*/)
-{
-    R_DefineSpriteTexture(manifest);
-    return 0; // Continue iteration.
-}
-
-/// @todo Defer until necessary (sprite is first de-referenced).
-static void defineAllSpriteTextures()
-{
-    App_Textures()->iterateDeclared("Sprites", defineSpriteTextureWorker);
 }
 
 /// Returns @c true iff @a name is a well-formed sprite name.
@@ -846,13 +791,43 @@ void R_InitSpriteTextures()
             continue;
         }
 
-        // Compose the data resource path.
-        de::Uri resourceUri = composeLumpIndexResourceUrn(i);
+        de::Uri uri = de::Uri("Sprites", Path(fileName));
 
-        if(!App_Textures()->declare(de::Uri("Sprites", Path(fileName)), uniqueId, &resourceUri))
+        de::Texture::Flags flags = 0;
+        // If this is from an add-on flag it as "custom".
+        if(file.container().hasCustom())
         {
-            continue; // Invalid uri?
+            flags |= de::Texture::Custom;
         }
+
+        QSize dimensions(0, 0);
+        QPoint origin(0, 0);
+
+        // If this is a Patch read the world dimension and origin offset values.
+        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+        if(Patch::recognize(fileData))
+        {
+            try
+            {
+                Patch::Metadata info = Patch::loadMetadata(fileData);
+
+                dimensions = info.logicalDimensions;
+                origin     = QPoint(-info.origin.x(), -info.origin.y());
+            }
+            catch(IByteArray::OffsetError const &)
+            {
+                LOG_WARNING("File \"%s:%s\" does not appear to be a valid Patch.\n"
+                            "World dimension and origin offset not set for sprite \"%s\".")
+                    << NativePath(file.container().composePath()).pretty()
+                    << NativePath(file.composePath()).pretty()
+                    << uri;
+            }
+        }
+        file.unlock();
+
+        de::Uri resourceUri = composeLumpIndexResourceUrn(i);
+        TextureManifest *manifest = App_Textures()->declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+        if(!manifest) continue; // Invalid uri?
 
         uniqueId++;
     }
@@ -863,75 +838,25 @@ void R_InitSpriteTextures()
     Stack_Delete(stack);
 
     // Define any as yet undefined sprite textures.
-    defineAllSpriteTextures();
+    /// @todo Defer until necessary (manifest texture is first referenced).
+    App_Textures()->iterateDeclared("Sprites", defineTextureWorker);
 
     LOG_INFO(String("R_InitSpriteTextures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-texture_s *R_CreateSkinTex(uri_s const *_resourceUri, boolean isShinySkin)
+Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
+                         QSize const &dimensions)
 {
-    LOG_AS("R_CreateSkinTex");
-
-    if(!_resourceUri) return 0;
-    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
+    LOG_AS("R_DefineTexture");
 
     if(resourceUri.isEmpty()) return 0;
 
-    Textures &textures = *App_Textures();
-    Textures::Scheme &scheme = textures.scheme(isShinySkin? "ModelReflectionSkins" : "ModelSkins");
-
     // Have we already created one for this?
+    Textures::Scheme &scheme = App_Textures()->scheme(schemeName);
     try
     {
         de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
-        if(tex) return reinterpret_cast<texture_s *>(tex);
-    }
-    catch(Textures::Scheme::NotFoundError const &)
-    {} // Ignore this error.
-
-    int uniqueId = scheme.count() + 1; // 1-based index
-    if(M_NumDigits(uniqueId) > 8)
-    {
-        LOG_WARNING("Failed declaring new model skin (max:%i), ignoring.") << DDMAXINT;
-        return 0;
-    }
-
-    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-
-    TextureManifest *manifest = textures.declare(uri, uniqueId, &resourceUri);
-    if(!manifest) return 0; // Invalid uri?
-
-    de::Texture *tex = manifest->texture();
-    if(!tex)
-    {
-        // Create a texture for it.
-        tex = manifest->derive(de::Texture::Custom);
-        if(!tex)
-        {
-            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
-        }
-    }
-
-    return reinterpret_cast<texture_s *>(tex);
-}
-
-texture_s *R_CreateDetailTexture(uri_s const *_resourceUri)
-{
-    LOG_AS("R_CreateDetailTexture");
-
-    if(!_resourceUri) return 0;
-    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
-
-    if(resourceUri.isEmpty()) return 0;
-
-    Textures &textures = *App_Textures();
-    Textures::Scheme &scheme = textures.scheme("Details");
-
-    // Have we already created one for this?
-    try
-    {
-        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
-        if(tex) return reinterpret_cast<texture_s *>(tex);
+        if(tex) return tex;
     }
     catch(Textures::Scheme::NotFoundError const &)
     {} // Ignore this error.
@@ -939,228 +864,21 @@ texture_s *R_CreateDetailTexture(uri_s const *_resourceUri)
     int uniqueId = scheme.count() + 1; // 1-based index.
     if(M_NumDigits(uniqueId) > 8)
     {
-        LOG_WARNING("Failed declaring new detail texture (max:%i).") << DDMAXINT;
+        LOG_WARNING("Failed declaring texture manifest in scheme %s (max:%i), ignoring.")
+            << schemeName << DDMAXINT;
         return 0;
     }
 
     de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-    TextureManifest *manifest = textures.declare(uri, uniqueId, &resourceUri);
+    TextureManifest *manifest = App_Textures()->declare(uri, de::Texture::Custom, dimensions,
+                                                        QPoint(0, 0), uniqueId, &resourceUri);
     if(!manifest) return 0; // Invalid URI?
 
-    de::Texture *tex = manifest->texture();
-    if(!tex)
-    {
-        // Create a texture for it.
-        tex = manifest->derive(de::Texture::Custom);
-        if(!tex)
-        {
-            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
-        }
-    }
-
-    return reinterpret_cast<texture_s *>(tex);
+    /// @todo Defer until necessary (manifest texture is first referenced).
+    return deriveTexture(*manifest);
 }
 
-texture_s *R_CreateLightmap(uri_s const *_resourceUri)
+de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri)
 {
-    LOG_AS("R_CreateLightmap");
-
-    if(!_resourceUri) return 0;
-    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
-
-    if(resourceUri.isEmpty()) return 0;
-    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return 0;
-
-    Textures &textures = *App_Textures();
-    Textures::Scheme &scheme = textures.scheme("Lightmaps");
-
-    // Have we already created one for this?
-    try
-    {
-        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
-        if(tex) return reinterpret_cast<texture_s *>(tex);
-    }
-    catch(Textures::Scheme::NotFoundError const &)
-    {} // Ignore this error.
-
-
-    int uniqueId = scheme.count() + 1; // 1-based index.
-    if(M_NumDigits(uniqueId) > 8)
-    {
-        LOG_WARNING("Failed declaring new lightmap (max:%i), ignoring.") << DDMAXINT;
-        return 0;
-    }
-
-    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-
-    TextureManifest *manifest = textures.declare(uri, uniqueId, &resourceUri);
-    if(!manifest) return 0; // Invalid URI?
-
-    de::Texture *tex = manifest->texture();
-    if(!tex)
-    {
-        // Create a texture for it.
-        tex = manifest->derive(de::Texture::Custom);
-        if(!tex)
-        {
-            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
-        }
-    }
-
-    return reinterpret_cast<texture_s *>(tex);
-}
-
-texture_s *R_CreateFlaremap(uri_s const *_resourceUri)
-{
-    LOG_AS("R_CreateFlaremap");
-
-    if(!_resourceUri) return 0;
-    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
-
-    if(resourceUri.isEmpty()) return 0;
-    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return 0;
-
-    // Perhaps a "built-in" flare texture id?
-    // Try to convert the id to a system flare tex constant idx
-    String const &resourcePathStr = resourceUri.path().toStringRef();
-    if(resourcePathStr.length() == 1 &&
-       resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
-        return 0;
-
-    Textures &textures = *App_Textures();
-    Textures::Scheme &scheme = textures.scheme("Flaremaps");
-
-    // Have we already created one for this?
-    try
-    {
-        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
-        if(tex) return reinterpret_cast<texture_s *>(tex);
-    }
-    catch(Textures::Scheme::NotFoundError const &)
-    {} // Ignore this error.
-
-    int uniqueId = scheme.count() + 1; // 1-based index.
-    if(M_NumDigits(uniqueId) > 8)
-    {
-        LOG_WARNING("Failed declaring new flare texture (max:%i), ignoring.") << DDMAXINT;
-        return 0;
-    }
-
-    // Create a texture for it.
-    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-
-    TextureManifest *manifest = textures.declare(uri, uniqueId, &resourceUri);
-    if(!manifest) return 0; // Invalid URI?
-
-    de::Texture *tex = manifest->texture();
-    if(!tex)
-    {
-        tex = manifest->derive(de::Texture::Custom);
-        if(!tex)
-        {
-            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
-        }
-    }
-
-    return reinterpret_cast<texture_s *>(tex);
-}
-
-texture_s *R_CreateReflectionTexture(uri_s const *_resourceUri)
-{
-    LOG_AS("R_CreateReflectionTexture");
-
-    if(!_resourceUri) return 0;
-    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
-
-    if(resourceUri.isEmpty()) return 0;
-
-    Textures &textures = *App_Textures();
-    Textures::Scheme &scheme = textures.scheme("Reflections");
-
-    // Have we already created one for this?
-    try
-    {
-        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
-        if(tex) return reinterpret_cast<texture_s *>(tex);
-    }
-    catch(Textures::Scheme::NotFoundError const &)
-    {} // Ignore this error.
-
-    int uniqueId = scheme.count() + 1; // 1-based index.
-    if(M_NumDigits(uniqueId) > 8)
-    {
-        LOG_WARNING("Failed declaring new shiny texture (max:%i), ignoring.") << DDMAXINT;
-        return 0;
-    }
-
-    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-
-    TextureManifest *manifest = textures.declare(uri, uniqueId, &resourceUri);
-    if(!manifest) return 0; // Invalid URI?
-
-    de::Texture *tex = manifest->texture();
-    if(!tex)
-    {
-        // Create a texture for it.
-        tex = manifest->derive(de::Texture::Custom);
-        if(!tex)
-        {
-            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
-        }
-    }
-
-    return reinterpret_cast<texture_s *>(tex);
-}
-
-texture_s *R_CreateMaskTexture(uri_s const *_resourceUri, Size2Raw const *dimensions)
-{
-    DENG_ASSERT(dimensions);
-    LOG_AS("R_CreateMaskTexture");
-
-    if(!_resourceUri) return 0;
-    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
-
-    if(resourceUri.isEmpty()) return 0;
-
-    Textures &textures = *App_Textures();
-    Textures::Scheme &scheme = textures.scheme("Masks");
-
-    // Have we already created one for this?
-    if(resourceUri.isEmpty()) return 0;
-    try
-    {
-        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
-        if(tex) return reinterpret_cast<texture_s *>(tex);
-    }
-    catch(Textures::Scheme::NotFoundError const &)
-    {} // Ignore this error.
-
-    int uniqueId = scheme.count() + 1; // 1-based index.
-    if(M_NumDigits(uniqueId) > 8)
-    {
-        LOG_WARNING("Failed declaring mask texture (max:%i), ignoring.") << DDMAXINT;
-        return 0;
-    }
-
-    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-
-    TextureManifest *manifest = textures.declare(uri, uniqueId, &resourceUri);
-    if(!manifest) return 0; // Invalid URI?
-
-    de::Texture *tex = manifest->texture();
-    if(tex)
-    {
-        tex->setDimensions(QSize(dimensions->width, dimensions->height));
-    }
-    else
-    {
-        // Create a texture for it.
-        tex = manifest->derive(QSize(dimensions->width, dimensions->height), de::Texture::Custom);
-        if(!tex)
-        {
-            LOG_WARNING("Failed defining Texture for URI \"%s\", ignoring.") << uri;
-        }
-    }
-
-    return reinterpret_cast<texture_s *>(tex);
+    return R_DefineTexture(schemeName, resourceUri, QSize());
 }

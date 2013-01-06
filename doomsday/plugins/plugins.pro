@@ -7,10 +7,10 @@ TEMPLATE = subdirs
 SUBDIRS = dehread wadmapconverter
 
 # Games.
-SUBDIRS += jdoom jheretic jhexen
+SUBDIRS += doom heretic hexen
 
 # Experimental games.
-SUBDIRS += jdoom64
+SUBDIRS += doom64
 
 # Optional plugins.
 deng_openal:!deng_noopenal {

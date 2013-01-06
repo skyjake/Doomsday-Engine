@@ -697,7 +697,7 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
     }
 #endif
 
-    DD_InitThinkers();
+    Thinker_Init();
 
 #if __JHERETIC__
     P_InitAmbientSound();
@@ -773,18 +773,21 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
         uint i;
 #endif
 
-        R_PrecachePSprites();
+        if(!IS_DEDICATED)
+        {
+            R_PrecachePSprites();
 
 #if __JDOOM__
-        for(i = 0; types[i].type != 0; ++i)
-        {
-            if(types[i].gameModeBits & gameModeBits)
-                Rend_CacheForMobjType(types[i].type);
-        }
+            for(i = 0; types[i].type != 0; ++i)
+            {
+                if(types[i].gameModeBits & gameModeBits)
+                    Rend_CacheForMobjType(types[i].type);
+            }
 
-        if(IS_NETGAME)
-            Rend_CacheForMobjType(MT_IFOG);
+            if(IS_NETGAME)
+                Rend_CacheForMobjType(MT_IFOG);
 #endif
+        }
     }
 
     if(IS_SERVER)

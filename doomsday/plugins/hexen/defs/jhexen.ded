@@ -1,0 +1,35 @@
+# libhexen - Doomsday Engine Definitions
+#
+# Default set of definitions common to all games playable with jHexen.
+# For information about DED syntax and semantics, see
+#
+#  http://dengine.net/dew/?title=DED
+#
+
+Header {
+  Version = 5;
+  Default model scale = 1.2;
+}
+
+Material Mods "flats:F_SKY" {
+  Flags = skymask;
+}
+
+Sound {
+  ID = "NONE";
+  Link pitch = -1;
+  Link volume = -1;
+  Max channels = -1;
+}
+
+# The contents of the 'currentmap' definition change at runtime.
+Music {
+  ID = "currentmap";
+}
+
+Include "flags.ded";
+Include "fonts.ded";
+Include "objects.ded";
+Include "sprites.ded";
+Include "text.ded";
+Include "sounds.ded";

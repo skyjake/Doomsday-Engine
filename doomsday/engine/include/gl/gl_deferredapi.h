@@ -29,6 +29,8 @@
 #ifndef LIBDENG_DEFERRED_GL_API_H
 #define LIBDENG_DEFERRED_GL_API_H
 
+#ifdef __CLIENT__
+
 /**
  * @def LIBDENG_DISABLE_DEFERRED_GL_API
  * Disables the automatic rerouting of GL API calls to the deferring queue.
@@ -59,6 +61,8 @@ void Deferred_glFogfv(GLenum p, const GLfloat* v);
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+#endif // __CLIENT__
 
 #endif // LIBDENG_DISABLE_DEFERRED_GL_API
 #endif // LIBDENG_DEFERRED_GL_API_H

@@ -25,6 +25,8 @@
 #include "de_play.h"
 #include "de_misc.h"
 
+#include "render/r_main.h" // validCount
+
 static void rotatePoint(int an, coord_t* x, coord_t* y, coord_t startSpotX, coord_t startSpotY);
 static boolean checkMobjBlocking(LineDef* line, Polyobj* po);
 

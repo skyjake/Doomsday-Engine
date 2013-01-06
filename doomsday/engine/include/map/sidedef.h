@@ -35,7 +35,7 @@ extern "C" {
  * defined by the associated LineDef's vertices and the plane heights of the
  * Sector on this side. If no LineDef is presently associated this is a no-op.
  *
- * @param sideDef  SideDef instance.
+ * @param side  SideDef instance.
  */
 void SideDef_UpdateBaseOrigins(SideDef* side);
 
@@ -51,7 +51,7 @@ void SideDef_UpdateSurfaceTangents(SideDef* sideDef);
 /**
  * Get a property value, selected by DMU_* name.
  *
- * @param sidedef  SideDef instance.
+ * @param sideDef  SideDef instance.
  * @param args  Property arguments.
  * @return  Always @c 0 (can be used as an iterator).
  */
@@ -60,7 +60,7 @@ int SideDef_GetProperty(const SideDef* sideDef, setargs_t* args);
 /**
  * Update a property value, selected by DMU_* name.
  *
- * @param sidedef  SideDef instance.
+ * @param sideDef  SideDef instance.
  * @param args  Property arguments.
  * @return  Always @c 0 (can be used as an iterator).
  */

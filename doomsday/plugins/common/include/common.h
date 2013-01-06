@@ -22,6 +22,7 @@
 #ifndef LIBCOMMON_GAME_INCLUDES
 #define LIBCOMMON_GAME_INCLUDES
 
+#include <de/mathutil.h>
 #include <de/timer.h>
 
 #define WEAPONBOTTOM            (128)   // from p_pspr.c

@@ -103,7 +103,9 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 };
 
 static repeater_t keyReps[MAX_DOWNKEYS];
+#ifdef __CLIENT__
 static float oldPOV = IJOY_POV_CENTER;
+#endif
 static char* eventStrings[MAXEVENTS];
 static boolean uiMouseMode = false; // Can mouse data be modified?
 
@@ -209,6 +211,8 @@ void I_InitVirtualInputDevices(void)
     strcpy(dev->name, "key");
     I_DeviceAllocKeys(dev, 256);
 
+#ifdef __CLIENT__
+
     // The mouse may not be active.
     dev = &inputDevices[IDEV_MOUSE];
     strcpy(dev->niceName, "Mouse");
@@ -292,6 +296,8 @@ void I_InitVirtualInputDevices(void)
     // The joystick may not be active.
     if(Joystick_IsPresent())
         dev->flags = ID_ACTIVE;
+
+#endif // __CLIENT__
 }
 
 /**
@@ -1203,6 +1209,7 @@ byte DD_ModKey(byte key)
 /**
  * Clears the repeaters array.
  */
+#undef DD_ClearKeyRepeaters
 void DD_ClearKeyRepeaters(void)
 {
     memset(keyReps, 0, sizeof(keyReps));
@@ -1358,6 +1365,8 @@ void I_SetUIMouseMode(boolean on)
 #endif
 #endif
 }
+
+#ifdef __CLIENT__
 
 /**
  * Checks the current mouse state (axis, buttons and wheel).
@@ -1542,7 +1551,8 @@ void DD_ReadJoystick(void)
     }
 }
 
-#if _DEBUG
+#ifdef _DEBUG
+
 static void initDrawStateForVisual(const Point2Raw* origin)
 {
     FR_PushAttrib();
@@ -2217,7 +2227,8 @@ void Rend_AllInputDeviceStateVisuals(void)
 #undef NUMITEMS
 #undef SPACING
 }
-#endif
+#endif // _DEBUG
+#endif // __CLIENT__
 
 static void I_PrintAxisConfig(inputdev_t* device, inputdevaxis_t* axis)
 {

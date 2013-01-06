@@ -13,9 +13,6 @@ DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES
 QMAKE_CFLAGS += -w14505
 QMAKE_CXXFLAGS += -w14505
 
-# Library location.
-DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
-
 # Install locations:
 DENG_BASE_DIR       = $$DENG_WIN_PRODUCTS_DIR
 DENG_BIN_DIR        = $$DENG_BASE_DIR/bin

@@ -30,6 +30,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_CONSOLE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -110,7 +112,9 @@ D_CMD(IncDec);
 D_CMD(Alias);
 D_CMD(Clear);
 D_CMD(Echo);
+#ifdef __CLIENT__
 D_CMD(Font);
+#endif
 D_CMD(Help);
 D_CMD(If);
 D_CMD(OpenClose);
@@ -198,7 +202,9 @@ void Con_Register(void)
     C_CMD("echo",           "s*",   Echo);
     C_CMD("print",          "s*",   Echo);
     C_CMD("exec",           "s*",   Parse);
+#ifdef __CLIENT__
     C_CMD("font",           NULL,   Font);
+#endif
     C_CMD("help",           "",     Help);
     C_CMD("if",             NULL,   If);
     C_CMD("inc",            NULL,   IncDec);
@@ -248,6 +254,7 @@ void Con_ResizeHistoryBuffer(void)
         exit(1); // Unreachable.
     }
 
+#ifdef __CLIENT__
     if(!novideo && !isDedicated)
     {
         float cw;
@@ -263,6 +270,7 @@ void Con_ResizeHistoryBuffer(void)
             maxLength = MIN_OF(Window_Width(theWindow) / cw - 2, 250);
         }
     }
+#endif
 
     CBuffer_SetMaxLineLength(Con_HistoryBuffer(), maxLength);
 }
@@ -281,7 +289,7 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
     for(i = 0; i < len; ++i)
     {
         // Whitespaces are separators.
-        if(ISSPACE(cargs->cmdLine[i]))
+        if(DENG_ISSPACE(cargs->cmdLine[i]))
             cargs->cmdLine[i] = 0;
 
         if(cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1]))
@@ -686,8 +694,12 @@ void Con_Ticker(timespan_t time)
 {
     Con_CheckExecBuffer();
     if(tickFrame)
+    {
         Con_TransitionTicker(time);
+    }
+#ifdef __CLIENT__
     Rend_ConsoleTicker(time);
+#endif
 
     if(!ConsoleActive)
         return;                 // We have nothing further to do here.
@@ -774,6 +786,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     }
      */
 
+#ifdef __CLIENT__
     // If logged in, send command to server at this point.
     if(!isServer && netLoggedIn)
     {
@@ -781,6 +794,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         Con_Send(subCmd, src, ConsoleSilent);
         return true;
     }
+#endif
 
     // Try to find a matching console command.
     ccmd = Con_FindCommandMatchArgs(&args);
@@ -1992,6 +2006,8 @@ void Con_PrintPathList(const char* pathList)
     Con_PrintPathList2(pathList, ';');
 }
 
+#undef Con_Message
+
 void Con_Message(const char *message, ...)
 {
     va_list argptr;
@@ -2206,11 +2222,13 @@ D_CMD(Version)
 
 D_CMD(Quit)
 {
+#ifdef __CLIENT__
     if(Updater_IsDownloadInProgress())
     {
         Con_Message("Cannot quit while downloading update.\n");
         return false;
     }
+#endif
 
     if(argv[0][4] == '!' || isDedicated || !DD_GameLoaded() ||
        gx.TryShutdown == 0)
@@ -2528,6 +2546,8 @@ D_CMD(OpenClose)
     return true;
 }
 
+#ifdef __CLIENT__
+
 D_CMD(Font)
 {
     if(argc == 1 || argc > 3)
@@ -2636,6 +2656,8 @@ D_CMD(Font)
     return false;
 }
 
+#endif // __CLIENT__
+
 D_CMD(DebugCrash)
 {
     int* ptr = (int*) 0x123;
@@ -2650,3 +2672,46 @@ D_CMD(DebugError)
     Con_Error("Fatal error.\n");
     return true;
 }
+
+DENG_DECLARE_API(Con) =
+{
+    { DE_API_CONSOLE },
+
+    Con_Open,
+    Con_AddCommand,
+    Con_AddVariable,
+    Con_AddCommandList,
+    Con_AddVariableList,
+
+    Con_GetVariableType,
+
+    Con_GetByte,
+    Con_GetInteger,
+    Con_GetFloat,
+    Con_GetString,
+    Con_GetUri,
+
+    Con_SetInteger2,
+    Con_SetInteger,
+
+    Con_SetFloat2,
+    Con_SetFloat,
+
+    Con_SetString2,
+    Con_SetString,
+
+    Con_SetUri2,
+    Con_SetUri,
+
+    Con_Message,
+
+    Con_Printf,
+    Con_FPrintf,
+    Con_PrintRuler,
+    Con_Error,
+
+    Con_SetPrintFilter,
+
+    DD_Execute,
+    DD_Executef,
+};

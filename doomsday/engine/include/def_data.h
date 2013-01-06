@@ -32,7 +32,7 @@
 #define LIBDENG_DEFINITION_FILE_H
 
 #include "def_share.h"
-#include "uri.h"
+#include "api_uri.h"
 
 // Version 6 does not require semicolons.
 #define DED_VERSION                 6
@@ -170,7 +170,7 @@ typedef struct {
     float           parm; // Custom parameter.
     unsigned char   selSkinBits[2]; // Mask and offset.
     unsigned char   selSkins[8];
-    ded_string_t    shinySkin;
+    Uri*            shinySkin;
     float           shiny;
     float           shinyColor[3];
     float           shinyReact;
@@ -248,6 +248,14 @@ typedef struct ded_sky_s {
     ded_skylayer_t  layers[NUM_SKY_LAYERS];
     ded_skymodel_t  models[NUM_SKY_MODELS];
 } ded_sky_t;
+
+/// @todo These values should be tweaked a bit.
+#define DEFAULT_FOG_START       0
+#define DEFAULT_FOG_END         2100
+#define DEFAULT_FOG_DENSITY     0.0001f
+#define DEFAULT_FOG_COLOR_RED   138.0f/255
+#define DEFAULT_FOG_COLOR_GREEN 138.0f/255
+#define DEFAULT_FOG_COLOR_BLUE  138.0f/255
 
 typedef struct ded_mapinfo_s {
     Uri*            uri; // ID of the map (e.g. E2M3 or MAP21).

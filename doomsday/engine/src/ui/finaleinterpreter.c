@@ -39,6 +39,11 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#include "api_material.h"
+#include "api_render.h"
+
+#include "gl/sys_opengl.h" // TODO: get rid of this
+
 #define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))
 
 // Helper macro for defining infine command functions.
@@ -1293,18 +1298,22 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
     if(!IS_TOGGLE_DOWN(ev))
         return false;
 
+#ifdef __CLIENT__
     if(isClient)
     {
         // Request skip from the server.
         Cl_RequestFinaleSkip();
         return true;
     }
-    else
+#endif
+#ifdef __SERVER__
     {
         // Tell clients to skip.
         Sv_Finale(fi->_id, FINF_SKIP, 0);
         return FinaleInterpreter_Skip(fi);
     }
+#endif
+    return false;
 }
 
 DEFFC(Do)
@@ -1555,11 +1564,15 @@ DEFFC(ImageAt)
 
 static DGLuint loadGraphics(const char* name, gfxmode_t mode, int useMipmap, boolean clamped, int otherFlags)
 {
+#ifdef __CLIENT__
     return GL_PrepareExtTexture(name, mode, useMipmap,
                                 GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
                                 clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
                                 clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
                                 otherFlags);
+#else
+    return 0;
+#endif
 }
 
 DEFFC(XImage)
@@ -1686,10 +1699,11 @@ DEFFC(StateAnim)
     for(; count > 0 && stateId > 0; count--)
     {
         state_t* st = &states[stateId];
+#ifdef __CLIENT__
         spriteinfo_t sinf;
-
         R_GetSpriteInfo(st->sprite, st->frame & 0x7fff, &sinf);
         FIData_PicAppendFrame(obj, PFT_MATERIAL, (st->tics <= 0? 1 : st->tics), sinf.material, 0, sinf.flip);
+#endif
 
         // Go to the next state.
         stateId = st->nextState;
@@ -2082,6 +2096,7 @@ DEFFC(PredefinedColor)
 
 DEFFC(PredefinedFont)
 {
+#ifdef __CLIENT__
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
     {
@@ -2094,6 +2109,7 @@ DEFFC(PredefinedFont)
     { AutoStr* fontPath = Uri_ToString(OP_URI(1));
     Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.\n", Str_Text(fontPath));
     }
+#endif
 }
 
 DEFFC(TextRGB)
@@ -2159,6 +2175,7 @@ DEFFC(TextLineHeight)
 
 DEFFC(Font)
 {
+#ifdef __CLIENT__
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
@@ -2170,6 +2187,7 @@ DEFFC(Font)
     { AutoStr* fontPath = Uri_ToString(OP_URI(1));
     Con_Message("FIC_Font: Warning, unknown font '%s'.\n", Str_Text(fontPath));
     }
+#endif
 }
 
 DEFFC(FontA)

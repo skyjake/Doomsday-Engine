@@ -32,10 +32,14 @@ DD_BASE_POLYOBJ_ELEMENTS()
 
 #define POLYOBJ_SIZE        gx.polyobjSize
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Translate the origin in the map coordinate space.
  *
- * @param polyobj  Polyobj instance.
+ * @param po     Polyobj instance.
  * @param delta  Movement delta on the X|Y plane of the map coordinate space.
  */
 boolean Polyobj_Move(Polyobj* po, coord_t delta[2]);
@@ -44,7 +48,7 @@ boolean Polyobj_MoveXY(Polyobj* po, coord_t x, coord_t y);
 /**
  * Rotate in the map coordinate space.
  *
- * @param polyobj  Polyobj instance.
+ * @param po     Polyobj instance.
  * @param angle  World angle delta.
  */
 boolean Polyobj_Rotate(Polyobj* po, angle_t angle);
@@ -85,6 +89,10 @@ int Polyobj_LineIterator(Polyobj* polyobj,
 #if 0
 boolean Polyobj_GetProperty(const Polyobj* po, setargs_t* args);
 boolean Polyobj_SetProperty(Polyobj* po, const setargs_t* args);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_MAP_POLYOB_H

@@ -38,12 +38,13 @@
 #include <de/memory.h>
 
 #include "de_base.h"
-#include "map/p_mapdata.h"
 
+#include "map/p_mapdata.h"
 #include "map/bspleaf.h"
 #include "map/bspnode.h"
 #include "map/hedge.h"
 #include "map/vertex.h"
+
 #include "map/bsp/hedgeinfo.h"
 #include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hedgetip.h"
@@ -52,8 +53,10 @@
 #include "map/bsp/partitioncost.h"
 #include "map/bsp/superblockmap.h"
 #include "map/bsp/vertexinfo.h"
-
 #include "map/bsp/partitioner.h"
+
+#include "render/r_main.h"  // validCount
+#include "m_misc.h"         // M_BoxOnLineSide2
 
 using namespace de::bsp;
 

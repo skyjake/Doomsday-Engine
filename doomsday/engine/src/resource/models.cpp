@@ -1,7 +1,4 @@
-/**
- * @file models.cpp
- *
- * 3D Model Resources. @ingroup resource
+/** @file models.cpp 3D Model Resources.
  *
  * MD2/DMD2 loading and setup.
  *
@@ -29,11 +26,13 @@
 #include <de/ByteOrder>
 #include <de/NativePath>
 #include <de/StringPool>
+#include <de/mathutil.h> // for M_CycleIntoRange()
 #include <de/memory.h>
 
 #include "de_platform.h"
 
 #include <cmath>
+#include <cstring> // memset
 
 #include "de_base.h"
 #include "de_console.h"
@@ -43,7 +42,8 @@
 #include "de_resource.h"
 
 #include "def_main.h"
-#include "m_misc.h" // for M_CycleIntoRange()
+
+#include "resource/materialsnapshot.h"
 
 #include "render/r_things.h"
 #include "render/rend_model.h"
@@ -85,7 +85,7 @@ static void unpackVector(ushort packed, float vec[3])
  * Calculate vertex normals. Only with -renorm.
  */
 #if 0 // unused atm.
-static void calcVertexNormals(model_t& mdl)
+static void rebuildNormals(model_t &mdl)
 {
     // Renormalizing?
     if(!CommandLine_Check("-renorm")) return;
@@ -286,9 +286,9 @@ static void loadMd2(de::FileHandle& file, model_t& mdl)
     mdl.lods[0].glCommands = (int*) allocAndLoad(file, mdl.lodInfo[0].offsetGlCommands,
                                                  sizeof(int) * mdl.lodInfo[0].numGlCommands);
 
-    // Load skins.
+    // Load skins. (Note: numSkins may be zero.)
     mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(*mdl.skins) * inf.numSkins);
-    if(!mdl.skins) throw Error("loadMd2:", String("Failed on allocation of %1 bytes for skin list").arg(sizeof(*mdl.skins) * inf.numSkins));
+    if(!mdl.skins) throw std::bad_alloc();
 
     file.seek(inf.offsetSkins, SeekSet);
     for(int i = 0; i < inf.numSkins; ++i)
@@ -365,7 +365,7 @@ static void loadDmd(de::FileHandle& file, model_t& mdl)
         file.read((uint8_t*)&chunk, sizeof(chunk));
     }
 
-    // Allocate and load in the data.
+    // Allocate and load in the data. (Note: numSkins may be zero.)
     mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(dmd_skin_t) * inf.numSkins);
     file.seek(inf.offsetSkins, SeekSet);
     for(int i = 0; i < inf.numSkins; ++i)
@@ -469,101 +469,98 @@ model_t* Models_ToModel(modelid_t id)
     return modelForId(id);
 }
 
-AutoStr* Models_ComposePath(modelid_t id)
-{
-    DENG_ASSERT(modelRepository);
-    String const& filePath = modelRepository->string(id);
-    QByteArray filePathUtf8 = filePath.toUtf8();
-    return AutoStr_FromTextStd(filePathUtf8.constData());
-}
-
-static inline String const& findModelPath(modelid_t id)
+static inline String const &findModelPath(modelid_t id)
 {
     return modelRepository->stringRef(id);
 }
 
-static String findSkinPath(String skinFileName, String modelFilePath)
+static String findSkinPath(Path const &skinPath, Path const &modelFilePath)
 {
+    DENG_ASSERT(!skinPath.isEmpty());
+
     // Try the "first choice" directory first.
     if(!modelFilePath.isEmpty())
     {
         // The "first choice" directory is that in which the model file resides.
         try
         {
-            de::Uri searchPath = de::Uri(Path(modelFilePath.fileNamePath() / skinFileName));
+            de::Uri searchPath("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName());
             return App_FileSystem()->findPath(searchPath, RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
         }
-        catch(FS1::NotFoundError const&)
+        catch(FS1::NotFoundError const &)
         {} // Ignore this error.
     }
 
-    de::Uri searchPath = de::Uri("Models", Path(skinFileName));
+    /// @throws FS1::NotFoundError if no resource was found.
+    de::Uri searchPath("Models", skinPath);
     return App_FileSystem()->findPath(searchPath, RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
 }
 
-static texture_s *registerSkin(char const *skinFileName, char const *modelFilePath,
-    bool isShinySkin)
+/**
+ * Allocate room for a new skin file name.
+ */
+static short defineSkinAndAddToModelIndex(model_t &mdl, Path const &skinPath)
 {
-    if(!skinFileName || !skinFileName[0]) return 0;
+    int const newSkin = mdl.info.numSkins;
 
-    try
+    if(Texture *tex = R_DefineTexture("ModelSkins", de::Uri(skinPath)))
     {
-        String found = findSkinPath(String(skinFileName), String(modelFilePath? modelFilePath : ""));
-        if(!QDir::isAbsolutePath(found))
+        // A duplicate? (return existing skin number)
+        for(int i = 0; i < mdl.info.numSkins; ++i)
         {
-            String basePath = App::app().nativeBasePath().withSeparators('/');
-            found = basePath / found;
+            if(mdl.skins[i].texture == reinterpret_cast<texture_s *>(tex)) return i;
         }
 
-        de::Uri uri = de::Uri(Path(found));
-        return R_CreateSkinTex(reinterpret_cast<uri_s *>(&uri), isShinySkin);
+        // Add this new skin.
+        mdl.skins = (dmd_skin_t *) M_Realloc(mdl.skins, sizeof(*mdl.skins) * ++mdl.info.numSkins);
+        if(!mdl.skins) throw Error("newModelSkin", String("Failed on (re)allocation of %1 bytes enlarging DmdSkin list").arg(sizeof(*mdl.skins) * mdl.info.numSkins));
+        std::memset(mdl.skins + newSkin, 0, sizeof(dmd_skin_t));
+
+        QByteArray pathUtf8 = skinPath.toString().toUtf8();
+        qstrncpy(mdl.skins[newSkin].name, pathUtf8.constData(), 256);
+        mdl.skins[newSkin].texture = reinterpret_cast<texture_s *>(tex);
     }
-    catch(FS1::NotFoundError const&)
-    {} // Ignore this error.
-    return 0;
+
+    return newSkin;
 }
 
-static bool registerModelIndexedSkin(model_t& mdl, int skinIndex)
+static void defineAllSkins(model_t &mdl)
 {
-    LOG_AS("registerModelIndexedSkin");
+    String const &modelFilePath = findModelPath(mdl.modelId);
 
-    String const& modelFilePath = findModelPath(mdl.modelId);
-    dmd_skin_t& skin = mdl.skins[skinIndex];
-
-    QByteArray modelFilePathUtf8 = modelFilePath.toUtf8();
-    skin.texture = registerSkin(skin.name, modelFilePathUtf8.constData(), false);
-    if(skin.texture) return true;
-
-    LOG_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\", ignoring.")
-        << skin.name << skinIndex << NativePath(modelFilePath).pretty();
-    return false;
-}
-
-static void registerAllSkins(model_t& mdl)
-{
     int numFoundSkins = 0;
     for(int i = 0; i < mdl.info.numSkins; ++i)
     {
-        if(registerModelIndexedSkin(mdl, i))
+        if(!mdl.skins[i].name[0]) continue;
+
+        try
         {
+            de::Uri foundResourceUri(Path(findSkinPath(mdl.skins[i].name, modelFilePath)));
+
+            mdl.skins[i].texture = reinterpret_cast<texture_s *>(R_DefineTexture("ModelSkins", foundResourceUri));
+
             // We have found one more skin for this model.
             numFoundSkins += 1;
+        }
+        catch(FS1::NotFoundError const&)
+        {
+            LOG_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\", ignoring.")
+                << mdl.skins[i].name << i << NativePath(modelFilePath).pretty();
         }
     }
 
     if(!numFoundSkins)
     {
         // Lastly try a skin named similarly to the model in the same directory.
-        String const& modelFilePath = findModelPath(mdl.modelId);
         de::Uri skinSearchPath = de::Uri(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
 
-        AutoStr* foundSkinPath = AutoStr_NewStd();
-        if(F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundSkinPath))
+        AutoStr *foundSkinPath = AutoStr_NewStd();
+        if(F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s *>(&skinSearchPath), foundSkinPath))
         {
             // Huzzah! we found a skin.
-            de::Uri uri = de::Uri(Str_Text(foundSkinPath), RC_NULL);
-            mdl.skins[0].texture = R_CreateSkinTex(reinterpret_cast<uri_s const*>(&uri), false/*not a shiny skin*/);
+            defineSkinAndAddToModelIndex(mdl, Path(Str_Text(foundSkinPath)));
 
+            // We have found one more skin for this model.
             numFoundSkins = 1;
 
             LOG_INFO("Assigned fallback skin \"%s\" to index #0 for model \"%s\".")
@@ -575,30 +572,30 @@ static void registerAllSkins(model_t& mdl)
     if(!numFoundSkins)
     {
         LOG_WARNING("Failed to locate a skin for model \"%s\". This model will be rendered without a skin.")
-            << NativePath(findModelPath(mdl.modelId)).pretty();
+            << NativePath(modelFilePath).pretty();
     }
 }
 
-static model_t* interpretDmd(de::FileHandle& hndl, String path, modelid_t modelId)
+static model_t *interpretDmd(de::FileHandle &hndl, String path, modelid_t modelId)
 {
     if(recogniseDmd(hndl))
     {
         LOG_AS("DmdFileType");
         LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
-        model_t* mdl = modelForId(modelId, true/*create*/);
+        model_t *mdl = modelForId(modelId, true/*create*/);
         loadDmd(hndl, *mdl);
         return mdl;
     }
     return 0;
 }
 
-static model_t* interpretMd2(de::FileHandle& hndl, String path, modelid_t modelId)
+static model_t *interpretMd2(de::FileHandle &hndl, String path, modelid_t modelId)
 {
     if(recogniseMd2(hndl))
     {
         LOG_AS("Md2FileType");
         LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
-        model_t* mdl = modelForId(modelId, true/*create*/);
+        model_t *mdl = modelForId(modelId, true/*create*/);
         loadMd2(hndl, *mdl);
         return mdl;
     }
@@ -613,7 +610,7 @@ struct ModelFileType
     /// Known file extension.
     String const ext;
 
-    model_t* (*interpretFunc)(de::FileHandle& hndl, String path, modelid_t modelId);
+    model_t *(*interpretFunc)(de::FileHandle &hndl, String path, modelid_t modelId);
 };
 
 // Model resource types.
@@ -623,7 +620,7 @@ static ModelFileType const modelTypes[] = {
     { "",       "",         0 } // Terminate.
 };
 
-static ModelFileType const* guessModelFileTypeFromFileName(String filePath)
+static ModelFileType const *guessModelFileTypeFromFileName(String filePath)
 {
     // An extension is required for this.
     String ext = filePath.fileNameExtension();
@@ -631,7 +628,7 @@ static ModelFileType const* guessModelFileTypeFromFileName(String filePath)
     {
         for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
         {
-            ModelFileType const& type = modelTypes[i];
+            ModelFileType const &type = modelTypes[i];
             if(!type.ext.compareWithoutCase(ext))
             {
                 return &type;
@@ -641,12 +638,12 @@ static ModelFileType const* guessModelFileTypeFromFileName(String filePath)
     return 0; // Unknown.
 }
 
-static model_t* interpretModel(de::FileHandle& hndl, String path, modelid_t modelId)
+static model_t *interpretModel(de::FileHandle &hndl, String path, modelid_t modelId)
 {
-    model_t* mdl = 0;
+    model_t *mdl = 0;
 
     // Firstly try the interpreter for the guessed resource types.
-    ModelFileType const* rtypeGuess = guessModelFileTypeFromFileName(path);
+    ModelFileType const *rtypeGuess = guessModelFileTypeFromFileName(path);
     if(rtypeGuess)
     {
         mdl = rtypeGuess->interpretFunc(hndl, path, modelId);
@@ -658,7 +655,7 @@ static model_t* interpretModel(de::FileHandle& hndl, String path, modelid_t mode
         // Try each recognisable format instead.
         for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
         {
-            ModelFileType const& modelType = modelTypes[i];
+            ModelFileType const &modelType = modelTypes[i];
 
             // Already tried this?
             if(&modelType == rtypeGuess) continue;
@@ -674,17 +671,17 @@ static model_t* interpretModel(de::FileHandle& hndl, String path, modelid_t mode
 /**
  * Finds the existing model or loads in a new one.
  */
-static model_t* loadModel(String path)
+static model_t *loadModel(String path)
 {
     // Have we already loaded this?
     modelid_t modelId = modelRepository->intern(path);
-    model_t* mdl = Models_ToModel(modelId);
+    model_t *mdl = Models_ToModel(modelId);
     if(mdl) return mdl; // Yes.
 
     try
     {
         // Attempt to interpret and load this model file.
-        de::FileHandle& hndl = App_FileSystem()->openFile(path, "rb");
+        de::FileHandle &hndl = App_FileSystem()->openFile(path, "rb");
 
         mdl = interpretModel(hndl, path, modelId);
 
@@ -695,7 +692,7 @@ static model_t* loadModel(String path)
         // Loaded?
         if(mdl)
         {
-            registerAllSkins(*mdl);
+            defineAllSkins(*mdl);
 
             // Enlarge the vertex buffers in preparation for drawing of this model.
             if(!Rend_ModelExpandVertexBuffers(mdl->info.numVertices))
@@ -708,7 +705,7 @@ static model_t* loadModel(String path)
             return mdl;
         }
     }
-    catch(FS1::NotFoundError const& er)
+    catch(FS1::NotFoundError const &er)
     {
         // Huh?? Should never happen.
         LOG_WARNING(er.asText() + ", ignoring.");
@@ -720,16 +717,16 @@ static model_t* loadModel(String path)
 /**
  * Returns the appropriate modeldef for the given state.
  */
-static modeldef_t* getStateModel(state_t& st, int select)
+static modeldef_t *getStateModel(state_t &st, int select)
 {
-    modeldef_t* modef = stateModefs[&st - states];
+    modeldef_t *modef = stateModefs[&st - states];
     if(!modef) return 0;
 
     if(select)
     {
         // Choose the correct selector, or selector zero if the given one not available.
         int const mosel = select & DDMOBJ_SELECTOR_MASK;
-        for(modeldef_t* it = modef; it; it = it->selectNext)
+        for(modeldef_t *it = modef; it; it = it->selectNext)
         {
             if(it->select == mosel)
             {
@@ -897,51 +894,20 @@ float Models_ModelForMobj(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef
     return interp;
 }
 
-static model_frame_t* getModelFrame(modelid_t modelId, int frame)
-{
-    model_t* mdl = Models_ToModel(modelId);
-    DENG_ASSERT(mdl);
-    return mdl->frames + frame;
-}
-
-static void calcModelBounds(int model, int frame, float min[3], float max[3])
-{
-    model_frame_t* mframe = getModelFrame(model, frame);
-
-    if(!mframe) throw Error("calcModelBounds", "Bad model/frame");
-
-    memcpy(min, mframe->min, sizeof(float)*3);
-    memcpy(max, mframe->max, sizeof(float)*3);
-}
-
-/**
- * Height range, really ("horizontal range" comes to mind...).
- */
-static float calcModelHRange(int model, int frame, float* top, float* bottom)
-{
-    float min[3], max[3];
-
-    calcModelBounds(model, frame, min, max);
-    *top    = max[VY];
-    *bottom = min[VY];
-
-    return max[VY] - min[VY];
-}
-
 /**
  * Scales the given model so that it'll be 'destHeight' units tall. Measurements
  * are based on submodel zero. Scale is applied uniformly.
  */
-static void scaleModel(modeldef_t& mf, float destHeight, float offset)
+static void scaleModel(modeldef_t &mf, float destHeight, float offset)
 {
-    submodeldef_t& smf = mf.sub[0];
+    submodeldef_t &smf = mf.sub[0];
 
     // No model to scale?
     if(!smf.modelId) return;
 
     // Find the top and bottom heights.
     float top, bottom;
-    float height = calcModelHRange(smf.modelId, smf.frame, &top, &bottom);
+    float height = Models_ToModel(smf.modelId)->frame(smf.frame).horizontalRange(&top, &bottom);
     if(!height) height = 1;
 
     float scale = destHeight / height;
@@ -953,69 +919,40 @@ static void scaleModel(modeldef_t& mf, float destHeight, float offset)
     mf.offset[VY] = -bottom * scale + offset;
 }
 
-static void scaleModelToSprite(modeldef_t& mf, int sprite, int frame)
+static void scaleModelToSprite(modeldef_t &mf, int sprite, int frame)
 {
-    spritedef_t& spr = sprites[sprite];
+    spritedef_t &spr = sprites[sprite];
 
     if(!spr.numFrames || spr.spriteFrames == NULL) return;
 
-    materialvariantspecification_t const* spec = Sprite_MaterialSpec(0, 0);
-    materialsnapshot_t const* ms = Materials_Prepare(spr.spriteFrames[frame].mats[0], spec, true);
-    de::Texture const &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
-    int off = MAX_OF(0, -tex.origin().y() - ms->size.height);
-    scaleModel(mf, ms->size.height, off);
+    MaterialSnapshot const &ms =
+        App_Materials()->prepare(*spr.spriteFrames[frame].mats[0], Rend_SpriteMaterialSpec(), true);
+    Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
+    int off = MAX_OF(0, -tex.origin().y() - ms.dimensions().height());
+    scaleModel(mf, ms.dimensions().height(), off);
 }
 
-static float calcModelVisualRadius(modeldef_t* mf)
+static float calcModelVisualRadius(modeldef_t *def)
 {
-    if(!mf || !mf->sub[0].modelId) return 0;
+    if(!def || !def->sub[0].modelId) return 0;
 
     // Use the first frame bounds.
     float min[3], max[3];
     float maxRadius = 0;
     for(int i = 0; i < MAX_FRAME_MODELS; ++i)
     {
-        if(!mf->sub[i].modelId) break;
+        if(!def->sub[i].modelId) break;
 
-        calcModelBounds(mf->sub[i].modelId, mf->sub[i].frame, min, max);
+        Models_ToModel(def->sub[i].modelId)->frame(def->sub[i].frame).getBounds(min, max);
 
         // Half the distance from bottom left to top right.
-        float radius = (mf->scale[VX] * (max[VX] - min[VX]) +
-                        mf->scale[VZ] * (max[VZ] - min[VZ])) / 3.5f;
+        float radius = (def->scale[VX] * (max[VX] - min[VX]) +
+                        def->scale[VZ] * (max[VZ] - min[VZ])) / 3.5f;
         if(radius > maxRadius)
             maxRadius = radius;
     }
 
     return maxRadius;
-}
-
-/**
- * Allocate room for a new skin file name.
- */
-static short newModelSkin(model_t& mdl, de::Uri const& skinUri)
-{
-    int added = mdl.info.numSkins;
-    char const* fileName = skinUri.pathCStr();
-
-    mdl.skins = (dmd_skin_t*) M_Realloc(mdl.skins, sizeof(*mdl.skins) * ++mdl.info.numSkins);
-    if(!mdl.skins) throw Error("newModelSkin", String("Failed on (re)allocation of %1 bytes enlarging DmdSkin list").arg(sizeof(*mdl.skins) * mdl.info.numSkins));
-    memset(mdl.skins + added, 0, sizeof(dmd_skin_t));
-
-    strncpy(mdl.skins[added].name, fileName, 64);
-    registerModelIndexedSkin(mdl, added);
-
-    // Did we get a dupe?
-    for(int i = 0; i < mdl.info.numSkins - 1; ++i)
-    {
-        if(mdl.skins[i].texture != mdl.skins[added].texture) continue;
-
-        // This is the same skin file. We did a lot of unnecessary work...
-        mdl.skins = (dmd_skin_t*) M_Realloc(mdl.skins, sizeof(*mdl.skins) * --mdl.info.numSkins);
-        if(!mdl.skins) throw Error("newModelSkin", String("Failed on (re)allocation of %1 bytes shrinking DmdSkin list").arg(sizeof(*mdl.skins) * mdl.info.numSkins));
-        return i;
-    }
-
-    return added;
 }
 
 /**
@@ -1128,7 +1065,8 @@ static void setupModel(ded_model_t& def)
         AutoStr* foundPath = AutoStr_NewStd();
         if(!F_FindPath(RC_MODEL, subdef->filename, foundPath))
         {
-            LOG_WARNING("Failed to locate \"%s\", ignoring.") << reinterpret_cast<de::Uri&>(*subdef->filename);
+            de::Uri const &searchPath = reinterpret_cast<de::Uri &>(*subdef->filename);
+            LOG_WARNING("Failed to locate \"%s\", ignoring.") << searchPath;
             continue;
         }
 
@@ -1178,10 +1116,23 @@ static void setupModel(ded_model_t& def)
             sub->blendMode = BM_SUBTRACT;
         }
 
-        if(subdef->skinFilename && !Str_IsEmpty(Uri_Path(subdef->skinFilename)))
+        if(subdef->skinFilename && !Uri_IsEmpty(subdef->skinFilename))
         {
             // A specific file name has been given for the skin.
-            sub->skin = newModelSkin(*mdl, reinterpret_cast<de::Uri&>(*subdef->skinFilename));
+            String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->skinFilename).path();
+            String const &modelFilePath = findModelPath(sub->modelId);
+
+            try
+            {
+                Path foundResourcePath(findSkinPath(skinFilePath, modelFilePath));
+
+                sub->skin = defineSkinAndAddToModelIndex(*mdl, foundResourcePath);
+            }
+            catch(FS1::NotFoundError const&)
+            {
+                LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
+                    << reinterpret_cast<de::Uri &>(*subdef->skinFilename) << NativePath(modelFilePath).pretty();
+            }
         }
         else
         {
@@ -1199,8 +1150,27 @@ static void setupModel(ded_model_t& def)
             sub->offset[k] = subdef->offset[k];
         }
 
-        QByteArray modelFilePath = modelRepository->string(sub->modelId).toUtf8();
-        sub->shinySkin = registerSkin(subdef->shinySkin, modelFilePath.constData(), true);
+        if(subdef->shinySkin && !Uri_IsEmpty(subdef->shinySkin))
+        {
+            String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->shinySkin).path();
+            String const &modelFilePath = findModelPath(sub->modelId);
+
+            try
+            {
+                de::Uri foundResourceUri(Path(findSkinPath(skinFilePath, modelFilePath)));
+
+                sub->shinySkin = reinterpret_cast<texture_s *>(R_DefineTexture("ModelReflectionSkins", foundResourceUri));
+            }
+            catch(FS1::NotFoundError const &)
+            {
+                LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
+                    << skinFilePath << NativePath(modelFilePath).pretty();
+            }
+        }
+        else
+        {
+            sub->shinySkin = 0;
+        }
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
@@ -1258,7 +1228,7 @@ static void setupModel(ded_model_t& def)
     {
         if(sub->modelId)
         {
-            calcModelBounds(sub->modelId, sub->frame, min, max);
+            Models_ToModel(sub->modelId)->frame(sub->frame).getBounds(min, max);
 
             // Apply the various scalings and offsets.
             for(int k = 0; k < 3; ++k)
@@ -1458,7 +1428,8 @@ void Models_Cache(modeldef_t* modef)
     }
 }
 
-void Models_CacheForState(int stateIndex)
+#undef Models_CacheForState
+DENG_EXTERN_C void Models_CacheForState(int stateIndex)
 {
     if(!useModels) return;
     if(stateIndex <= 0 || stateIndex >= defs.count.states.num) return;

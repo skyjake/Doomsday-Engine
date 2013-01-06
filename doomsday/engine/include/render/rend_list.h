@@ -29,7 +29,10 @@
 #ifndef LIBDENG_REND_LIST_H
 #define LIBDENG_REND_LIST_H
 
-//#include "resource/r_data.h"
+#ifdef __SERVER__
+#  error "render" not available in a SERVER build
+#endif
+
 #include "render/rendpoly.h"
 
 #ifdef __cplusplus

@@ -1,0 +1,9 @@
+# API documentation for the libheretic
+@INCLUDE = ../../doomsday.doxy
+
+PROJECT_NAME        = libheretic
+OUTPUT_DIRECTORY    = ../../apidoc/jheretic/
+
+INPUT               = src include res ../common/src ../common/include
+
+PREDEFINED          = __JHERETIC__

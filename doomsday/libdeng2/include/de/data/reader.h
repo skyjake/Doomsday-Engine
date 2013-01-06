@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,12 +36,23 @@ class IIStream;
 
 /**
  * Provides a protocol for reading data from a byte array object (anything with
- * a IByteArray interface). Byte order defaults to little-endian but can be
- * changed to big-endian.
+ * a IByteArray or IIStream interface). Byte order defaults to little-endian
+ * but can be changed to big-endian.
  *
  * Note about versioning: readers must be prepared to support old versions of
  * the serialization protocol in addition to the latest one for backwards
  * compatibility.
+ *
+ * When there is need to deserialize data, generally it is preferable to use
+ * Reader (or IReadable) for this purpose in public interfaces:
+ *
+ * 1. Reader maintains the position in a longer data stream and can be rewound
+ *    when needed,
+ * 2. the source can be an input stream in addition to a IByteArray,
+ * 3. Reader knows the serialization version number,
+ * 4. Reader knows the byte order, which can be verified using appropriate
+ *    means (assertion/exception), and
+ * 5. Reader is the standard way to read all data in libdeng2.
  *
  * @ingroup data
  */
@@ -155,9 +166,10 @@ public:
     Reader &operator >> (IReadable &readable);
 
     /**
-     * Reads bytes from the source buffer until a specified delimiter
-     * value is encountered. The delimiter is included as part of
-     * the read data.
+     * Reads bytes from the source buffer until a specified delimiter value is
+     * encountered. The delimiter is included as part of the read data. The end
+     * of the source data is also considered a valid delimiter; no exception
+     * will be thrown if the source data ends.
      *
      * @param byteArray  Destination buffer.
      * @param delimiter  Delimiter value.
@@ -165,9 +177,33 @@ public:
     Reader &readUntil(IByteArray &byteArray, IByteArray::Byte delimiter = 0);
 
     /**
+     * Reads a line of text ending in a @c \\n character. The source data is
+     * expected to be UTF-8 encoded text. All carriage returns (@c \\r) are
+     * removed from the string.
+     *
+     * @param string  The read line is returned here. It includes the
+     *                terminating newline character.
+     */
+    Reader &readLine(String &string);
+
+    /**
+     * Equivalent to readLine(String), but returns the read string.
+     */
+    String readLine();
+
+    /**
      * Returns the source byte array of the reader.
      */
     IByteArray const *source() const;
+
+    /**
+     * Determines if the reader's position is at the end of the source data;
+     * i.e., there is nothing more to read, and attempting to do so would
+     * produce an exception.
+     *
+     * @return @c true, iff at end of source.
+     */
+    bool atEnd() const;
 
     /**
      * Returns the offset used by the reader.

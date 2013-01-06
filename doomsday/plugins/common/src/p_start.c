@@ -1249,7 +1249,7 @@ static int moveMobjOutOfNearbyLines(thinker_t* th, void* paramaters)
     AABoxd aaBox;
 
     // @todo Why not type-prune at an earlier point? We could specify a
-    //       custom comparison func for DD_IterateThinkers...
+    //       custom comparison func for Thinker_Iterate...
     if(mo->type != type)
         return false; // Continue iteration.
 
@@ -1298,8 +1298,8 @@ void P_MoveThingsOutOfWalls(void)
     for(i = 0; types[i] != NUMMOBJTYPES; ++i)
     {
         mobjtype_t type = types[i];
-        DD_IterateThinkers(P_MobjThinker, moveMobjOutOfNearbyLines, &type);
-        DD_IterateThinkers(P_MobjThinker, turnMobjToNearestLine, &type);
+        Thinker_Iterate(P_MobjThinker, moveMobjOutOfNearbyLines, &type);
+        Thinker_Iterate(P_MobjThinker, turnMobjToNearestLine, &type);
     }
 }
 

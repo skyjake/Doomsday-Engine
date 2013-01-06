@@ -28,9 +28,15 @@
 #include "de_audio.h"
 #include "de_resource.h"
 
+#include "gl/sys_opengl.h" // TODO: get rid of this
+
 #include <de/memory.h>
 #include <de/memoryzone.h>
 #include <cstring> // memcpy, memmove
+
+#include "resource/materialsnapshot.h"
+
+using namespace de;
 
 fidata_text_t *P_CreateText(fi_objectid_t id, char const *name, fontid_t fontNum);
 void P_DestroyText(fidata_text_t *text);
@@ -240,7 +246,9 @@ static fi_objectid_t objectsUniqueId(fi_object_collection_t *c)
 
 static void picFrameDeleteXImage(fidata_pic_frame_t *f)
 {
+#ifdef __CLIENT__
     DGL_DeleteTextures(1, (DGLuint *)&f->texRef.tex);
+#endif
     f->texRef.tex = 0;
 }
 
@@ -316,8 +324,10 @@ void UI_Shutdown(void)
 
 void UI2_Ticker(timespan_t ticLength)
 {
+#ifdef __CLIENT__
     // Always tic.
     FR_Ticker(ticLength);
+#endif
 
     if(!inited) return;
 
@@ -506,6 +516,7 @@ static void useColor(animator_t const *color, int components)
 static void drawPageBackground(fi_page_t *p, float x, float y, float width, float height,
     float light, float alpha)
 {
+#ifdef __CLIENT__
     vec3f_t topColor, bottomColor;
     float topAlpha, bottomAlpha;
 
@@ -519,11 +530,12 @@ static void drawPageBackground(fi_page_t *p, float x, float y, float width, floa
 
     if(p->_bg.material)
     {
-        materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
-            MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        materialsnapshot_t const *ms = Materials_Prepare(p->_bg.material, spec, true);
+        MaterialVariantSpec const &spec =
+            App_Materials()->variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                                   0, 1, 0, false, false, false, false);
+        MaterialSnapshot const &ms = App_Materials()->prepare(*p->_bg.material, spec, true);
 
-        GL_BindTexture(MST(ms, MTU_PRIMARY));
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -540,10 +552,12 @@ static void drawPageBackground(fi_page_t *p, float x, float y, float width, floa
 
     GL_SetNoTexture();
     glEnable(GL_BLEND);
+#endif
 }
 
 void FIPage_Drawer(fi_page_t *p)
 {
+#ifdef __CLIENT__
     if(!p) Con_Error("FIPage_Drawer: Invalid page.");
 
     if(p->flags.hidden) return;
@@ -619,6 +633,7 @@ void FIPage_Drawer(fi_page_t *p)
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+#endif
 }
 
 void FIPage_MakeVisible(fi_page_t *p, boolean yes)
@@ -949,8 +964,10 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     float /*const*/ scale[3], float const rgba[4], float const rgba2[4], float angle,
     float const worldOffset[3])
 {
+#ifdef __CLIENT__
     vec3f_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
     vec2f_t texScale = { 1, 1 };
+    vec2f_t rotateCenter = { .5f, .5f };
     boolean showEdges = true, flipTextureS = false;
     boolean mustPopTextureMatrix = false;
     boolean textureEnabled = false;
@@ -978,6 +995,8 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 // Raw images are always considered to have a logical size of 320x200
                 // even though the actual texture resolution may be different.
                 V3f_Set(dimensions, 320 /*rawTex->width*/, 200 /*rawTex->height*/, 0);
+                // Rotation occurs around the center of the screen.
+                V2f_Set(rotateCenter, 160, 100);
                 GL_BindTextureUnmanaged(glName, (filterUI ? GL_LINEAR : GL_NEAREST));
                 if(glName)
                 {
@@ -992,6 +1011,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
         case PFT_XIMAGE:
             V3f_Set(offset, 0, 0, 0);
             V3f_Set(dimensions, 1, 1, 0);
+            V2f_Set(rotateCenter, .5f, .5f);
             GL_BindTextureUnmanaged(f->texRef.tex, (filterUI ? GL_LINEAR : GL_NEAREST));
             if(f->texRef.tex)
             {
@@ -1006,26 +1026,29 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             material_t *mat = f->texRef.material;
             if(mat)
             {
-                materialvariantspecification_t const *spec = Materials_VariantSpecificationForContext(
-                    MC_UI, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -3, 0, false, false, false, false);
-                materialsnapshot_t const *ms = Materials_Prepare(mat, spec, true);
+                MaterialVariantSpec const &spec =
+                    App_Materials()->variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                           0, -3, 0, false, false, false, false);
+                MaterialSnapshot const &ms = App_Materials()->prepare(*mat, spec, true);
 
-                GL_BindTexture(MST(ms, MTU_PRIMARY));
+                GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
-                texturevariantspecification_t const *texSpec = MSU_texturespec(ms, MTU_PRIMARY);
+                texturevariantspecification_t const *texSpec = ms.texture(MTU_PRIMARY).spec();
 
                 /// @todo Utilize *all* properties of the Material.
-                V3f_Set(dimensions, ms->size.width  + TS_GENERAL(texSpec)->border*2,
-                        ms->size.height + TS_GENERAL(texSpec)->border*2, 0);
-                TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
+                V3f_Set(dimensions,
+                        ms.dimensions().width()  + TS_GENERAL(texSpec)->border*2,
+                        ms.dimensions().height() + TS_GENERAL(texSpec)->border*2, 0);
+                V2f_Set(rotateCenter, dimensions[VX]/2, dimensions[VY]/2);
+                ms.texture(MTU_PRIMARY).coords(&texScale[VX], &texScale[VY]);
 
-                de::Texture const &texture = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+                Texture const &texture = ms.texture(MTU_PRIMARY).generalCase();
                 de::Uri uri = texture.manifest().composeUri();
                 if(!uri.scheme().compareWithoutCase("Sprites"))
                 {
-                    V3f_Set(offset, texture.origin().x(), texture.origin().y(), 0);
+                    V3f_Set(offset, texture.origin().x(), texture.origin().y(), 0);                    
                 }
                 else
                 {
@@ -1035,16 +1058,16 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             break; }
 
         case PFT_PATCH: {
-            de::Texture *texture = App_Textures()->scheme("Patches").findByUniqueId(f->texRef.patch).texture();
+            Texture *texture = App_Textures()->scheme("Patches").findByUniqueId(f->texRef.patch).texture();
             if(texture)
             {
-                TextureVariant *tex = GL_PreparePatchTexture(reinterpret_cast<texture_s *>(texture));
-                GL_BindTexture(tex);
+                GL_BindTexture(GL_PreparePatchTexture(reinterpret_cast<texture_s *>(texture)));
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
                 V3f_Set(offset, texture->origin().x(), texture->origin().y(), 0);
                 V3f_Set(dimensions, texture->width(), texture->height(), 0);
+                V2f_Set(rotateCenter, dimensions[VX]/2, dimensions[VY]/2);
             }
             break; }
 
@@ -1059,6 +1082,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     {
         V3f_Copy(dimensions, scale);
         V3f_Set(scale, 1, 1, 1);
+        V2f_Set(rotateCenter, dimensions[VX] / 2, dimensions[VY] / 2);
     }
 
     V3f_Set(center, dimensions[VX] / 2, dimensions[VY] / 2, dimensions[VZ] / 2);
@@ -1081,17 +1105,24 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     // Move to the object origin.
     glTranslatef(origin[VX], origin[VY], origin[VZ]);
 
+    // Translate to the object center.
+    /// @todo Remove this; just go to origin directly. Rotation origin is
+    /// now separately in 'rotateCenter'. -jk
+    glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
+
+    glScalef(scale[VX], scale[VY], scale[VZ]);
+
     if(angle != 0)
     {
+        glTranslatef(rotateCenter[VX], rotateCenter[VY], 0);
+
         // With rotation we must counter the VGA aspect ratio.
         glScalef(1, 200.0f / 240.0f, 1);
         glRotatef(angle, 0, 0, 1);
         glScalef(1, 240.0f / 200.0f, 1);
-    }
 
-    // Translate to the object center.
-    glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
-    glScalef(scale[VX], scale[VY], scale[VZ]);
+        glTranslatef(-rotateCenter[VX], -rotateCenter[VY], 0);
+    }
 
     glMatrixMode(GL_MODELVIEW);
     // Scale up our unit-geometry to the desired dimensions.
@@ -1137,6 +1168,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+#endif
 }
 
 void FIData_PicDraw(fi_object_t *obj, const float offset[3])
@@ -1243,6 +1275,7 @@ static int textLineWidth(char const *text)
 {
     int width = 0;
 
+#ifdef __CLIENT__
     for(; *text; text++)
     {
         if(*text == '\\')
@@ -1258,12 +1291,14 @@ static int textLineWidth(char const *text)
         }
         width += FR_CharWidth(*text);
     }
+#endif
 
     return width;
 }
 
 void FIData_TextDraw(fi_object_t *obj, const float offset[3])
 {
+#ifdef __CLIENT__
     fidata_text_t *t = (fidata_text_t *)obj;
     if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextDraw: Not a FI_TEXT.");
 
@@ -1369,6 +1404,7 @@ void FIData_TextDraw(fi_object_t *obj, const float offset[3])
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+#endif
 }
 
 size_t FIData_TextLength(fi_object_t *obj)

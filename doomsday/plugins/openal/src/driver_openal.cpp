@@ -50,14 +50,14 @@
 #include <cstring>
 #include <cmath>
 
-#include "sys_audiod.h"
-#include "sys_audiod_sfx.h"
+#include "api_audiod.h"
+#include "api_audiod_sfx.h"
 #include "doomsday.h"
 
-#define PI 3.141592654
+DENG_DECLARE_API(Con);
 
-#define SRC(buf) ((ALuint)buf->ptr3D)
-#define BUF(buf) ((ALuint)buf->ptr)
+#define SRC(buf) ( (ALuint) PTR2INT(buf->ptr3D) )
+#define BUF(buf) ( (ALuint) PTR2INT(buf->ptr) )
 
 //enum { VX, VY, VZ };
 
@@ -233,8 +233,8 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     // Create the buffer object.
     buf = static_cast<sfxbuffer_t*>(Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0));
 
-    buf->ptr = (void*) bufName;
-    buf->ptr3D = (void*) srcName;
+    buf->ptr = INT2PTR(void, bufName);
+    buf->ptr3D = INT2PTR(void, srcName);
     buf->bytes = bits / 8;
     buf->rate = rate;
     buf->flags = flags;
@@ -506,7 +506,11 @@ int DS_SFX_Getv(int /*prop*/, void* /*values*/)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-extern "C" const char* deng_LibraryType(void)
+DENG_EXTERN_C const char* deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
+
+DENG_API_EXCHANGE(
+        DENG_GET_API(DE_API_CONSOLE, Con);
+)

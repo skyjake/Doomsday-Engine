@@ -22,13 +22,14 @@
 #define LIBDENG_REFRESH_DATA_H
 
 #include "dd_types.h"
-#include "gl/gl_main.h"
+#ifdef __CLIENT__
+#  include "gl/gl_main.h"
+#endif
 #include "dd_def.h"
-#include "thinker.h"
 #include "def_data.h"
-#include "textures.h"
+#include "resource/textures.h"
+#include "api_thinker.h"
 
-struct texture_s;
 struct font_s;
 
 /**
@@ -66,36 +67,13 @@ void R_InitCompositeTextures(void);
 void R_InitFlatTextures(void);
 void R_InitSpriteTextures(void);
 
-patchid_t R_DeclarePatch(char const *name);
-
-/**
- * Retrieve extended info for the patch associated with @a id.
- * @param id  Unique identifier of the patch to lookup.
- * @param info  Extend info will be written here if found.
- * @return  @c true= Extended info for this patch was found.
- */
-boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info);
-
-/// @return  Uri for the patch associated with @a id. Should be released with Uri_Delete()
-Uri *R_ComposePatchUri(patchid_t id);
-
-/// @return  Path for the patch associated with @a id. A zero-length string is
-///          returned if the id is invalid/unknown.
-AutoStr *R_ComposePatchPath(patchid_t id);
-
-/*
- * TODO: Merge/generalize these very similar routines.
- */
-
-struct texture_s *R_CreateSkinTex(Uri const *resourceUri, boolean isShinySkin);
-struct texture_s *R_CreateLightmap(Uri const *resourceUri);
-struct texture_s *R_CreateFlaremap(Uri const *resourceUri);
-struct texture_s *R_CreateReflectionTexture(Uri const *resourceUri);
-struct texture_s *R_CreateMaskTexture(Uri const *resourceUri, Size2Raw const *dimensions);
-struct texture_s *R_CreateDetailTexture(Uri const *resourceUri);
-
 #ifdef __cplusplus
 } // extern "C"
+#endif
+
+#ifdef __cplusplus
+de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri, QSize const &dimensions);
+de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri);
 #endif
 
 #endif /// LIBDENG_REFRESH_DATA_H

@@ -1,0 +1,2034 @@
+# libdoom: Text Strings
+#
+# Do not change the order of these definitions!
+#
+
+Header { Version = 5; }
+
+Text {
+  ID = "D_DEVSTR";
+  Text = "Development mode ON.\n";
+}
+
+Text {
+  ID = "D_CDROM";
+  Text = "CD-ROM Version: default.cfg from c:\\doomdata\n";
+}
+
+Text {
+  ID = "PRESSKEY";
+  Text = "Press a key.";
+}
+
+Text {
+  ID = "PRESSYN";
+  Text = "Press %1 or %2.";
+}
+
+Text {
+  ID = "QUITMSG";
+  Text = "Are you sure you want to\nquit this great game?";
+}
+
+Text {
+  ID = "LOADNET";
+  Text = "You can't load while in a net game!";
+}
+
+Text {
+  ID = "QLOADNET";
+  Text = "You can't load during a netgame!";
+}
+
+Text {
+  ID = "QSAVESPOT";
+  Text = "You haven't picked a quicksave slot yet!";
+}
+
+Text {
+  ID = "SAVEDEAD";
+  Text = "You can't save if you aren't playing!";
+}
+
+Text {
+  ID = "QSPROMPT";
+  Text = "Save over your game named\n\n'%s'?";
+}
+
+Text {
+  ID = "QLPROMPT";
+  Text = "Are you sure you want to load the game named\n\n'%s'?";
+}
+
+Text {
+  ID = "NEWGAME";
+  Text = "You can't start a new game\nwhile in a network game.";
+}
+
+Text {
+  ID = "NIGHTMARE";
+  Text = "Are you sure? This skill level\nisn't even remotely fair.";
+}
+
+Text {
+  ID = "SWSTRING";
+  Text = "This is the shareware version of doom.\n\nYou need to order the entire trilogy.";
+}
+
+Text {
+  ID = "MSGOFF";
+  Text = "Messages OFF";
+}
+
+Text {
+  ID = "MSGON";
+  Text = "Messages ON";
+}
+
+Text {
+  ID = "NETEND";
+  Text = "You can't end a netgame!";
+}
+
+Text {
+  ID = "ENDGAME";
+  Text = "Are you sure you want to end the game?";
+}
+
+Text {
+  ID = "DOSY";
+  Text = "(Press %1 to quit)";
+}
+
+Text {
+  ID = "DETAILHI";
+  Text = "High detail";
+}
+
+Text {
+  ID = "DETAILLO";
+  Text = "Low detail";
+}
+
+Text {
+  ID = "GAMMALVL0";
+  Text = "Gamma correction OFF";
+}
+
+Text {
+  ID = "GAMMALVL1";
+  Text = "Gamma correction level 1";
+}
+
+Text {
+  ID = "GAMMALVL2";
+  Text = "Gamma correction level 2";
+}
+
+Text {
+  ID = "GAMMALVL3";
+  Text = "Gamma correction level 3";
+}
+
+Text {
+  ID = "GAMMALVL4";
+  Text = "Gamma correction level 4";
+}
+
+Text {
+  ID = "EMPTYSTRING";
+  Text = "Empty slot";
+}
+
+Text {
+  ID = "GOTARMOR";
+  Text = "Picked up the armor.";
+}
+
+Text {
+  ID = "GOTMEGA";
+  Text = "Picked up the MegaArmor!";
+}
+
+Text {
+  ID = "GOTHTHBONUS";
+  Text = "Picked up a health bonus.";
+}
+
+Text {
+  ID = "GOTARMBONUS";
+  Text = "Picked up an armor bonus.";
+}
+
+Text {
+  ID = "GOTSTIM";
+  Text = "Picked up a stimpack.";
+}
+
+Text {
+  ID = "GOTMEDINEED";
+  Text = "Picked up a medikit that you REALLY need!";
+}
+
+Text {
+  ID = "GOTMEDIKIT";
+  Text = "Picked up a medikit.";
+}
+
+Text {
+  ID = "GOTSUPER";
+  Text = "Supercharge!";
+}
+
+Text {
+  ID = "GOTBLUECARD";
+  Text = "Picked up a blue keycard.";
+}
+
+Text {
+  ID = "GOTYELWCARD";
+  Text = "Picked up a yellow keycard.";
+}
+
+Text {
+  ID = "GOTREDCARD";
+  Text = "Picked up a red keycard.";
+}
+
+Text {
+  ID = "GOTBLUESKUL";
+  Text = "Picked up a blue skull key.";
+}
+
+Text {
+  ID = "GOTYELWSKUL";
+  Text = "Picked up a yellow skull key.";
+}
+
+Text {
+  ID = "GOTREDSKULL";
+  Text = "Picked up a red skull key.";
+}
+
+Text {
+  ID = "GOTINVUL";
+  Text = "Invulnerability!";
+}
+
+Text {
+  ID = "GOTBERSERK";
+  Text = "Berserk!";
+}
+
+Text {
+  ID = "GOTINVIS";
+  Text = "Partial Invisibility";
+}
+
+Text {
+  ID = "GOTSUIT";
+  Text = "Radiation Shielding Suit";
+}
+
+Text {
+  ID = "GOTMAP";
+  Text = "Computer Area Map";
+}
+
+Text {
+  ID = "GOTVISOR";
+  Text = "Light Amplification Visor";
+}
+
+Text {
+  ID = "GOTMSPHERE";
+  Text = "MegaSphere!";
+}
+
+Text {
+  ID = "GOTCLIP";
+  Text = "Picked up a clip.";
+}
+
+Text {
+  ID = "GOTCLIPBOX";
+  Text = "Picked up a box of bullets.";
+}
+
+Text {
+  ID = "GOTROCKET";
+  Text = "Picked up a rocket.";
+}
+
+Text {
+  ID = "GOTROCKBOX";
+  Text = "Picked up a box of rockets.";
+}
+
+Text {
+  ID = "GOTCELL";
+  Text = "Picked up an energy cell.";
+}
+
+Text {
+  ID = "GOTCELLBOX";
+  Text = "Picked up an energy cell pack.";
+}
+
+Text {
+  ID = "GOTSHELLS";
+  Text = "Picked up 4 shotgun shells.";
+}
+
+Text {
+  ID = "GOTSHELLBOX";
+  Text = "Picked up a box of shotgun shells.";
+}
+
+Text {
+  ID = "GOTBACKPACK";
+  Text = "Picked up a backpack full of ammo!";
+}
+
+Text {
+  ID = "GOTBFG9000";
+  Text = "You got the BFG9000! Oh, yes.";
+}
+
+Text {
+  ID = "GOTCHAINGUN";
+  Text = "You got the chaingun!";
+}
+
+Text {
+  ID = "GOTCHAINSAW";
+  Text = "A chainsaw! Find some meat!";
+}
+
+Text {
+  ID = "GOTLAUNCHER";
+  Text = "You got the rocket launcher!";
+}
+
+Text {
+  ID = "GOTPLASMA";
+  Text = "You got the plasma gun!";
+}
+
+Text {
+  ID = "GOTSHOTGUN";
+  Text = "You got the shotgun!";
+}
+
+Text {
+  ID = "GOTSHOTGUN2";
+  Text = "You got the super shotgun!";
+}
+
+Text {
+  ID = "PD_BLUEO";
+  Text = "You need a %1 to activate this object";
+}
+
+Text {
+  ID = "PD_REDO";
+  Text = "You need a %1 to activate this object";
+}
+
+Text {
+  ID = "PD_YELLOWO";
+  Text = "You need a %1 to activate this object";
+}
+
+Text {
+  ID = "PD_BLUEK";
+  Text = "You need a %1 to open this door";
+}
+
+Text {
+  ID = "PD_REDK";
+  Text = "You need a %1 to open this door";
+}
+
+Text {
+  ID = "PD_YELLOWK";
+  Text = "You need a %1 to open this door";
+}
+
+Text {
+  ID = "GGSAVED";
+  Text = "Game saved.";
+}
+
+Text {
+  ID = "HUSTR_MSGU";
+  Text = "[Message unsent]";
+}
+
+Text {
+  ID = "HUSTR_E1M1";
+  Text = "E1M1: Hangar";
+}
+
+Text {
+  ID = "HUSTR_E1M2";
+  Text = "E1M2: Nuclear Plant";
+}
+
+Text {
+  ID = "HUSTR_E1M3";
+  Text = "E1M3: Toxin Refinery";
+}
+
+Text {
+  ID = "HUSTR_E1M4";
+  Text = "E1M4: Command Control";
+}
+
+Text {
+  ID = "HUSTR_E1M5";
+  Text = "E1M5: Phobos Lab";
+}
+
+Text {
+  ID = "HUSTR_E1M6";
+  Text = "E1M6: Central Processing";
+}
+
+Text {
+  ID = "HUSTR_E1M7";
+  Text = "E1M7: Computer Station";
+}
+
+Text {
+  ID = "HUSTR_E1M8";
+  Text = "E1M8: Phobos Anomaly";
+}
+
+Text {
+  ID = "HUSTR_E1M9";
+  Text = "E1M9: Military Base";
+}
+
+Text {
+  ID = "HUSTR_E2M1";
+  Text = "E2M1: Deimos Anomaly";
+}
+
+Text {
+  ID = "HUSTR_E2M2";
+  Text = "E2M2: Containment Area";
+}
+
+Text {
+  ID = "HUSTR_E2M3";
+  Text = "E2M3: Refinery";
+}
+
+Text {
+  ID = "HUSTR_E2M4";
+  Text = "E2M4: Deimos Lab";
+}
+
+Text {
+  ID = "HUSTR_E2M5";
+  Text = "E2M5: Command Center";
+}
+
+Text {
+  ID = "HUSTR_E2M6";
+  Text = "E2M6: Halls of the Damned";
+}
+
+Text {
+  ID = "HUSTR_E2M7";
+  Text = "E2M7: Spawning Vats";
+}
+
+Text {
+  ID = "HUSTR_E2M8";
+  Text = "E2M8: Tower of Babel";
+}
+
+Text {
+  ID = "HUSTR_E2M9";
+  Text = "E2M9: Fortress of Mystery";
+}
+
+Text {
+  ID = "HUSTR_E3M1";
+  Text = "E3M1: Hell Keep";
+}
+
+Text {
+  ID = "HUSTR_E3M2";
+  Text = "E3M2: Slough of Despair";
+}
+
+Text {
+  ID = "HUSTR_E3M3";
+  Text = "E3M3: Pandemonium";
+}
+
+Text {
+  ID = "HUSTR_E3M4";
+  Text = "E3M4: House of Pain";
+}
+
+Text {
+  ID = "HUSTR_E3M5";
+  Text = "E3M5: Unholy Cathedral";
+}
+
+Text {
+  ID = "HUSTR_E3M6";
+  Text = "E3M6: Mt. Erebus";
+}
+
+Text {
+  ID = "HUSTR_E3M7";
+  Text = "E3M7: Limbo";
+}
+
+Text {
+  ID = "HUSTR_E3M8";
+  Text = "E3M8: Dis";
+}
+
+Text {
+  ID = "HUSTR_E3M9";
+  Text = "E3M9: Warrens";
+}
+
+Text {
+  ID = "HUSTR_E4M1";
+  Text = "E4M1: Hell Beneath";
+}
+
+Text {
+  ID = "HUSTR_E4M2";
+  Text = "E4M2: Perfect Hatred";
+}
+
+Text {
+  ID = "HUSTR_E4M3";
+  Text = "E4M3: Sever The Wicked";
+}
+
+Text {
+  ID = "HUSTR_E4M4";
+  Text = "E4M4: Unruly Evil";
+}
+
+Text {
+  ID = "HUSTR_E4M5";
+  Text = "E4M5: They Will Repent";
+}
+
+Text {
+  ID = "HUSTR_E4M6";
+  Text = "E4M6: Against Thee Wickedly";
+}
+
+Text {
+  ID = "HUSTR_E4M7";
+  Text = "E4M7: And Hell Followed";
+}
+
+Text {
+  ID = "HUSTR_E4M8";
+  Text = "E4M8: Unto The Cruel";
+}
+
+Text {
+  ID = "HUSTR_E4M9";
+  Text = "E4M9: Fear";
+}
+
+Text {
+  ID = "HUSTR_1";
+  Text = "Map 1: Entryway";
+}
+
+Text {
+  ID = "HUSTR_2";
+  Text = "Map 2: Underhalls";
+}
+
+Text {
+  ID = "HUSTR_3";
+  Text = "Map 3: The gantlet";
+}
+
+Text {
+  ID = "HUSTR_4";
+  Text = "Map 4: The focus";
+}
+
+Text {
+  ID = "HUSTR_5";
+  Text = "Map 5: The Waste Tunnels";
+}
+
+Text {
+  ID = "HUSTR_6";
+  Text = "Map 6: The Crusher";
+}
+
+Text {
+  ID = "HUSTR_7";
+  Text = "Map 7: Dead Simple";
+}
+
+Text {
+  ID = "HUSTR_8";
+  Text = "Map 8: Tricks and Traps";
+}
+
+Text {
+  ID = "HUSTR_9";
+  Text = "Map 9: The Pit";
+}
+
+Text {
+  ID = "HUSTR_10";
+  Text = "Map 10: Refueling Base";
+}
+
+Text {
+  ID = "HUSTR_11";
+  Text = "Map 11: 'O' of Destruction!";
+}
+
+Text {
+  ID = "HUSTR_12";
+  Text = "Map 12: The Factory";
+}
+
+Text {
+  ID = "HUSTR_13";
+  Text = "Map 13: Downtown";
+}
+
+Text {
+  ID = "HUSTR_14";
+  Text = "Map 14: The Inmost Dens";
+}
+
+Text {
+  ID = "HUSTR_15";
+  Text = "Map 15: Industrial Zone";
+}
+
+Text {
+  ID = "HUSTR_16";
+  Text = "Map 16: Suburbs";
+}
+
+Text {
+  ID = "HUSTR_17";
+  Text = "Map 17: Tenements";
+}
+
+Text {
+  ID = "HUSTR_18";
+  Text = "Map 18: The Courtyard";
+}
+
+Text {
+  ID = "HUSTR_19";
+  Text = "Map 19: The citadel";
+}
+
+Text {
+  ID = "HUSTR_20";
+  Text = "Map 20: Gotcha!";
+}
+
+Text {
+  ID = "HUSTR_21";
+  Text = "Map 21: Nirvana";
+}
+
+Text {
+  ID = "HUSTR_22";
+  Text = "Map 22: The Catacombs";
+}
+
+Text {
+  ID = "HUSTR_23";
+  Text = "Map 23: Barrels o' Fun";
+}
+
+Text {
+  ID = "HUSTR_24";
+  Text = "Map 24: The Chasm";
+}
+
+Text {
+  ID = "HUSTR_25";
+  Text = "Map 25: Bloodfalls";
+}
+
+Text {
+  ID = "HUSTR_26";
+  Text = "Map 26: The Abandoned Mines";
+}
+
+Text {
+  ID = "HUSTR_27";
+  Text = "Map 27: Monster Condo";
+}
+
+Text {
+  ID = "HUSTR_28";
+  Text = "Map 28: The Spirit World";
+}
+
+Text {
+  ID = "HUSTR_29";
+  Text = "Map 29: The Living End";
+}
+
+Text {
+  ID = "HUSTR_30";
+  Text = "Map 30: Icon of Sin";
+}
+
+Text {
+  ID = "HUSTR_31";
+  Text = "Map 31: Wolfenstein";
+}
+
+Text {
+  ID = "HUSTR_32";
+  Text = "Map 32: Grosse";
+}
+
+Text {
+  ID = "PHUSTR_1";
+  Text = "Map 1: Congo";
+}
+
+Text {
+  ID = "PHUSTR_2";
+  Text = "Map 2: Well of Souls";
+}
+
+Text {
+  ID = "PHUSTR_3";
+  Text = "Map 3: Aztec";
+}
+
+Text {
+  ID = "PHUSTR_4";
+  Text = "Map 4: Caged";
+}
+
+Text {
+  ID = "PHUSTR_5";
+  Text = "Map 5: Ghost Town";
+}
+
+Text {
+  ID = "PHUSTR_6";
+  Text = "Map 6: Baron's Lair";
+}
+
+Text {
+  ID = "PHUSTR_7";
+  Text = "Map 7: Caughtyard";
+}
+
+Text {
+  ID = "PHUSTR_8";
+  Text = "Map 8: Realm";
+}
+
+Text {
+  ID = "PHUSTR_9";
+  Text = "Map 9: Abattoire";
+}
+
+Text {
+  ID = "PHUSTR_10";
+  Text = "Map 10: Onslaught";
+}
+
+Text {
+  ID = "PHUSTR_11";
+  Text = "Map 11: Hunted";
+}
+
+Text {
+  ID = "PHUSTR_12";
+  Text = "Map 12: Speed";
+}
+
+Text {
+  ID = "PHUSTR_13";
+  Text = "Map 13: The Crypt";
+}
+
+Text {
+  ID = "PHUSTR_14";
+  Text = "Map 14: Genesis";
+}
+
+Text {
+  ID = "PHUSTR_15";
+  Text = "Map 15: The Twilight";
+}
+
+Text {
+  ID = "PHUSTR_16";
+  Text = "Map 16: The Omen";
+}
+
+Text {
+  ID = "PHUSTR_17";
+  Text = "Map 17: Compound";
+}
+
+Text {
+  ID = "PHUSTR_18";
+  Text = "Map 18: Neurosphere";
+}
+
+Text {
+  ID = "PHUSTR_19";
+  Text = "Map 19: Nme";
+}
+
+Text {
+  ID = "PHUSTR_20";
+  Text = "Map 20: The Death Domain";
+}
+
+Text {
+  ID = "PHUSTR_21";
+  Text = "Map 21: Slayer";
+}
+
+Text {
+  ID = "PHUSTR_22";
+  Text = "Map 22: Impossible Mission";
+}
+
+Text {
+  ID = "PHUSTR_23";
+  Text = "Map 23: Tombstone";
+}
+
+Text {
+  ID = "PHUSTR_24";
+  Text = "Map 24: The Final Frontier";
+}
+
+Text {
+  ID = "PHUSTR_25";
+  Text = "Map 25: The Temple of Darkness";
+}
+
+Text {
+  ID = "PHUSTR_26";
+  Text = "Map 26: Bunker";
+}
+
+Text {
+  ID = "PHUSTR_27";
+  Text = "Map 27: Anti-Christ";
+}
+
+Text {
+  ID = "PHUSTR_28";
+  Text = "Map 28: The Sewers";
+}
+
+Text {
+  ID = "PHUSTR_29";
+  Text = "Map 29: Odyssey of Noises";
+}
+
+Text {
+  ID = "PHUSTR_30";
+  Text = "Map 30: The Gateway of Hell";
+}
+
+Text {
+  ID = "PHUSTR_31";
+  Text = "Map 31: Cyberden";
+}
+
+Text {
+  ID = "PHUSTR_32";
+  Text = "Map 32: Go 2 It";
+}
+
+Text {
+  ID = "THUSTR_1";
+  Text = "Map 1: System Control";
+}
+
+Text {
+  ID = "THUSTR_2";
+  Text = "Map 2: Human BBQ";
+}
+
+Text {
+  ID = "THUSTR_3";
+  Text = "Map 3: Power Control";
+}
+
+Text {
+  ID = "THUSTR_4";
+  Text = "Map 4: Wormhole";
+}
+
+Text {
+  ID = "THUSTR_5";
+  Text = "Map 5: Hanger";
+}
+
+Text {
+  ID = "THUSTR_6";
+  Text = "Map 6: Open Season";
+}
+
+Text {
+  ID = "THUSTR_7";
+  Text = "Map 7: Prison";
+}
+
+Text {
+  ID = "THUSTR_8";
+  Text = "Map 8: Metal";
+}
+
+Text {
+  ID = "THUSTR_9";
+  Text = "Map 9: Stronghold";
+}
+
+Text {
+  ID = "THUSTR_10";
+  Text = "Map 10: Redemption";
+}
+
+Text {
+  ID = "THUSTR_11";
+  Text = "Map 11: Storage Facility";
+}
+
+Text {
+  ID = "THUSTR_12";
+  Text = "Map 12: Crater";
+}
+
+Text {
+  ID = "THUSTR_13";
+  Text = "Map 13: Nukage Processing";
+}
+
+Text {
+  ID = "THUSTR_14";
+  Text = "Map 14: Steel Works";
+}
+
+Text {
+  ID = "THUSTR_15";
+  Text = "Map 15: Dead Zone";
+}
+
+Text {
+  ID = "THUSTR_16";
+  Text = "Map 16: Deepest Reaches";
+}
+
+Text {
+  ID = "THUSTR_17";
+  Text = "Map 17: Processing Area";
+}
+
+Text {
+  ID = "THUSTR_18";
+  Text = "Map 18: Mill";
+}
+
+Text {
+  ID = "THUSTR_19";
+  Text = "Map 19: Shipping/Respawning";
+}
+
+Text {
+  ID = "THUSTR_20";
+  Text = "Map 20: Central Processing";
+}
+
+Text {
+  ID = "THUSTR_21";
+  Text = "Map 21: Administration Center";
+}
+
+Text {
+  ID = "THUSTR_22";
+  Text = "Map 22: Habitat";
+}
+
+Text {
+  ID = "THUSTR_23";
+  Text = "Map 23: Lunar Mining Project";
+}
+
+Text {
+  ID = "THUSTR_24";
+  Text = "Map 24: Quarry";
+}
+
+Text {
+  ID = "THUSTR_25";
+  Text = "Map 25: Baron's Den";
+}
+
+Text {
+  ID = "THUSTR_26";
+  Text = "Map 26: Ballistyx";
+}
+
+Text {
+  ID = "THUSTR_27";
+  Text = "Map 27: Mount Pain";
+}
+
+Text {
+  ID = "THUSTR_28";
+  Text = "Map 28: Heck";
+}
+
+Text {
+  ID = "THUSTR_29";
+  Text = "Map 29: River Styx";
+}
+
+Text {
+  ID = "THUSTR_30";
+  Text = "Map 30: Last Call";
+}
+
+Text {
+  ID = "THUSTR_31";
+  Text = "Map 31: Pharaoh";
+}
+
+Text {
+  ID = "THUSTR_32";
+  Text = "Map 32: Caribbean";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO0";
+  Text = "No";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO1";
+  Text = "I'm ready to kick butt!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO2";
+  Text = "I'm OK.";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO3";
+  Text = "I'm not looking too good!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO4";
+  Text = "Help!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO5";
+  Text = "You suck!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO6";
+  Text = "Next time, scumbag...";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO7";
+  Text = "Come here!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO8";
+  Text = "I'll take care of it.";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO9";
+  Text = "Yes";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF1";
+  Text = "You mumble to yourself";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF2";
+  Text = "Who's there?";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF3";
+  Text = "You scare yourself";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF4";
+  Text = "You start to rave";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF5";
+  Text = "You've lost it...";
+}
+
+Text {
+  ID = "HUSTR_MESSAGESENT";
+  Text = "[Message Sent]";
+}
+
+Text {
+  ID = "HUSTR_PLRGREEN";
+  Text = "Green: ";
+}
+
+Text {
+  ID = "HUSTR_PLRINDIGO";
+  Text = "Indigo: ";
+}
+
+Text {
+  ID = "HUSTR_PLRBROWN";
+  Text = "Brown: ";
+}
+
+Text {
+  ID = "HUSTR_PLRRED";
+  Text = "Red: ";
+}
+
+Text {
+  ID = "AMSTR_FOLLOWON";
+  Text = "Follow Mode ON";
+}
+
+Text {
+  ID = "AMSTR_FOLLOWOFF";
+  Text = "Follow Mode OFF";
+}
+
+Text {
+  ID = "AMSTR_GRIDON";
+  Text = "Grid ON";
+}
+
+Text {
+  ID = "AMSTR_GRIDOFF";
+  Text = "Grid OFF";
+}
+
+Text {
+  ID = "AMSTR_MARKEDSPOT";
+  Text = "Marked Spot";
+}
+
+Text {
+  ID = "AMSTR_MARKSCLEARED";
+  Text = "All Marks Cleared";
+}
+
+Text {
+  ID = "STSTR_MUS";
+  Text = "Music Change";
+}
+
+Text {
+  ID = "STSTR_NOMUS";
+  Text = "Impossible selection";
+}
+
+Text {
+  ID = "STSTR_DQDON";
+  Text = "Degreelessness Mode On";
+}
+
+Text {
+  ID = "STSTR_DQDOFF";
+  Text = "Degreelessness Mode Off";
+}
+
+Text {
+  ID = "STSTR_KFAADDED";
+  Text = "Very Happy Ammo added";
+}
+
+Text {
+  ID = "STSTR_FAADDED";
+  Text = "Ammo (no keys) added";
+}
+
+Text {
+  ID = "STSTR_NCON";
+  Text = "No clipping mode ON";
+}
+
+Text {
+  ID = "STSTR_NCOFF";
+  Text = "No clipping mode OFF";
+}
+
+Text {
+  ID = "STSTR_BEHOLD";
+  Text = "inVuln, Str, Inviso, Rad, Allmap, or Lite-amp";
+}
+
+Text {
+  ID = "STSTR_BEHOLDX";
+  Text = "Power-up toggled";
+}
+
+Text {
+  ID = "STSTR_CHOPPERS";
+  Text = "... doesn't suck - GM";
+}
+
+Text {
+  ID = "STSTR_CLEV";
+  Text = "Changing map...";
+}
+
+Text {
+  ID = "E1TEXT";
+  Text = "Once you beat the big badasses and\n
+    clean out the moon base you're supposed\n
+    to win, aren't you? Aren't you? Where's\n
+    your fat reward and ticket home? What\n
+    the hell is this? It's not supposed to\n
+    end this way!\n\n
+    It stinks like rotten meat, but looks\n
+    like the lost Deimos base.  Looks like\n
+    you're stuck on The Shores of Hell.\n
+    The only way out is through.\n\n
+    To continue the DOOM experience, play\n
+    The Shores of Hell and its amazing\n
+    sequel, Inferno!\n";
+}
+
+Text {
+  ID = "E2TEXT";
+  Text = "You've done it! The hideous cyber-\n
+    demon lord that ruled the lost Deimos\n
+    moon base has been slain and you\n
+    are triumphant! But ... where are\n
+    you? You clamber to the edge of the\n
+    moon and look down to see the awful\n
+    truth.\n\n
+    Deimos floats above Hell itself!\n
+    You've never heard of anyone escaping\n
+    from Hell, but you'll make the bastards\n
+    sorry they ever heard of you! Quickly,\n
+    you rappel down to  the surface of\n
+    Hell.\n\n
+    Now, it's on to the final chapter of\n
+    DOOM! -- Inferno.";
+}
+
+Text {
+  ID = "E3TEXT";
+  Text = "The loathsome spiderdemon that\n
+    masterminded the invasion of the moon\n
+    bases and caused so much death has had\n
+    its ass kicked for all time.\n\n
+    A hidden doorway opens and you enter.\n
+    You've proven too tough for Hell to\n
+    contain, and now Hell at last plays\n
+    fair -- for you emerge from the door\n
+    to see the green fields of Earth!\n
+    Home at last.\n\n
+    You wonder what's been happening on\n
+    Earth while you were battling evil\n
+    unleashed. It's good that no Hell-\n
+    spawn could have come through that\n
+    door with you ...";
+}
+
+Text {
+  ID = "E4TEXT";
+  Text = "The spider mastermind must have sent forth\n
+    its legions of hellspawn before your\n
+    final confrontation with that terrible\n
+    beast from hell.  But you stepped forward\n
+    and brought forth eternal damnation and\n
+    suffering upon the horde as a true hero\n
+    would in the face of something so evil.\n\n
+    Besides, someone was gonna pay for what\n
+    happened to daisy, your pet rabbit.\n\n
+    But now, you see spread before you more\n
+    potential pain and gibbitude as a nation\n
+    of demons run amok among our cities.\n\n
+    next stop, hell on earth!";
+}
+
+Text {
+  ID = "C1TEXT";
+  Text = "You have entered deeply into the infested\n
+    starport. But something is wrong. The\n
+    monsters have brought their own reality\n
+    with them, and the starport's technology\n
+    is being subverted by their presence.\n\n
+    Ahead, you see an outpost of Hell, a\n
+    fortified zone. If you can get past it,\n
+    you can penetrate into the haunted heart\n
+    of the starbase and find the controlling\n
+    switch which holds Earth's population\n
+    hostage.";
+}
+
+Text {
+  ID = "C2TEXT";
+  Text = "You have won! Your victory has enabled\n
+    humankind to evacuate Earth and escape\n
+    the nightmare. Now you are the only\n
+    human left on the face of the planet.\n
+    Cannibal mutations, carnivorous aliens,\n
+    and evil spirits are your only neighbors.\n
+    You sit back and wait for death, content\n
+    that you have saved your species.\n\n
+    But then, Earth Control beams down a\n
+    message from space: \"Sensors have located\n
+    the source of the alien invasion. If you\n
+    go there, you may be able to block their\n
+    entry. The alien base is in the heart of\n
+    your own home city, not far from the\n
+    starport.\" Slowly and painfully you get\n
+    up and return to the fray.";
+}
+
+Text {
+  ID = "C3TEXT";
+  Text = "You are at the corrupt heart of the city,\n
+    surrounded by the corpses of your enemies.\n
+    You see no way to destroy the creatures'\n
+    entryway on this side, so you clench your\n
+    teeth and plunge through it.\n\n
+    There must be a way to close it on the\n
+    other side. What do you care if you've\n
+    got to go through Hell to get to it?";
+}
+
+Text {
+  ID = "C4TEXT";
+  Text = "The horrendous visage of the biggest\n
+    demon you've ever seen crumbles before\n
+    you, after you pump your rockets into\n
+    his exposed brain. The monster shrivels\n
+    up and dies, its thrashing limbs\n
+    devastating untold miles of Hell's\n
+    surface.\n\n
+    You've done it. The invasion is over.\n
+    Earth is saved. Hell is a wreck. You\n
+    wonder where bad folks will go when they\n
+    die, now. Wiping the sweat from your\n
+    forehead you begin the long trek back\n
+    home. Rebuilding Earth ought to be a\n
+    lot more fun than ruining it was.";
+}
+
+Text {
+  ID = "C5TEXT";
+  Text = "Congratulations, you've found the secret\n
+    level! Looks like it's been built by\n
+    humans, rather than demons. You wonder\n
+    who the inmates of this corner of Hell\n
+    will be.";
+}
+
+Text {
+  ID = "C6TEXT";
+  Text = "Congratulations, you've found the\n
+    super secret level! You'd better\n
+    blaze through this one!\n";
+}
+
+Text {
+  ID = "P1TEXT";
+  Text = "You gloat over the steaming carcass of the\n
+    Guardian. With its death, you've wrested\n
+    the Accelerator from the stinking claws\n
+    of Hell. You relax and glance around the\n
+    room. Damn! There was supposed to be at\n
+    least one working prototype, but you can't\n
+    see it. The demons must have taken it.\n\n
+    You must find the prototype, or all your\n
+    struggles will have been wasted. Keep\n
+    moving, keep fighting, keep killing.\n
+    Oh yes, keep living, too.";
+}
+
+Text {
+  ID = "P2TEXT";
+  Text = "Even the deadly Arch-Vile labyrinth could\n
+    not stop you, and you've gotten to the\n
+    prototype Accelerator which is soon\n
+    efficiently and permanently deactivated.\n\n
+    You're good at that kind of thing.";
+}
+
+Text {
+  ID = "P3TEXT";
+  Text = "You've bashed and battered your way into\n
+    the heart of the devil-hive. Time for a\n
+    Search-and-Destroy mission, aimed at the\n
+    Gatekeeper, whose foul offspring is\n
+    cascading to Earth. Yeah, he's bad. But\n
+    you know who's worse!\n\n
+    Grinning evilly, you check your gear, and\n
+    get ready to give the bastard a little Hell\n
+    of your own making!";
+}
+
+Text {
+  ID = "P4TEXT";
+  Text = "The Gatekeeper's evil face is splattered\n
+    all over the place. As its tattered corpse\n
+    collapses, an inverted Gate forms and\n
+    sucks down the shards of the last\n
+    prototype Accelerator, not to mention the\n
+    few remaining demons. You're done. Hell\n
+    has gone back to pounding bad dead folks\n
+    instead of good live ones. Remember to\n
+    tell your grandkids to put a rocket\n
+    launcher in your coffin. If you go to Hell\n
+    when you die, you'll need it for some\n
+    final cleaning-up...";
+}
+
+Text {
+  ID = "P5TEXT";
+  Text = "You've found the second-hardest level we\n
+    got. Hope you have a saved game a level or\n
+    two previous. If not, be prepared to die\n
+    aplenty. For master marines only.";
+}
+
+Text {
+  ID = "P6TEXT";
+  Text = "Betcha wondered just what WAS the hardest\n
+    level we had ready for ya? Now you know.\n
+    No one gets out alive.";
+}
+
+Text {
+  ID = "T1TEXT";
+  Text = "You've fought your way out of the infested\n
+    experimental labs. It seems that UAC has\n
+    once again gulped it down. With their\n
+    high turnover, it must be hard for poor\n
+    old UAC to buy corporate health insurance\n
+    nowadays...\n\n
+    Ahead lies the military complex, now\n
+    swarming with diseased horrors hot to get\n
+    their teeth into you. With luck, the\n
+    complex still has some warlike ordnance\n
+    laying around.";
+}
+
+Text {
+  ID = "T2TEXT";
+  Text = "You hear the grinding of heavy machinery\n
+    ahead. You sure hope they're not stamping\n
+    out new hellspawn but you're ready to\n
+    ream out a whole herd if you have to.\n
+    They might be planning a blood feast but\n
+    you feel about as mean as two thousand\n
+    maniacs packed into one mad killer.\n\n
+    You don't plan to go down easy.";
+}
+
+Text {
+  ID = "T3TEXT";
+  Text = "The vista opening ahead looks real damn\n
+    familiar. Smells familiar, too -- like\n
+    fried excrement. You didn't like this\n
+    place before, and you sure as hell ain't\n
+    planning to like it now. The more you\n
+    brood on it, the madder you get.\n
+    Hefting your gun, an evil grin trickles\n
+    onto your face. Time to take some names.";
+}
+
+Text {
+  ID = "T4TEXT";
+  Text = "Suddenly, all is silent, from one horizon\n
+    to the other. The agonizing echo of Hell\n
+    fades away, the nightmare sky turns to\n
+    blue, the heaps of monster corpses start\n
+    to evaporate along with the evil stench\n
+    that filled the air. Jeeze, maybe you've\n
+    done it. Have you really won?\n\n
+    Something rumbles in the distance.\n
+    A blue light begins to glow inside the\n
+    ruined skull of the demon-spitter.";
+}
+
+Text {
+  ID = "T5TEXT";
+  Text = "What now? Looks totally different. Kind\n
+    of like King Tut's condo. Well,\n
+    whatever's here can't be any worse\n
+    than usual. Can it? Or maybe it's best\n
+    to let sleeping gods lie...";
+}
+
+Text {
+  ID = "T6TEXT";
+  Text = "Time for a vacation. You've burst the\n
+    bowels of hell and by golly you're ready\n
+    for a break. You mutter to yourself,\n
+    \"Maybe someone else can kick Hell's ass\n
+    next time around\". Ahead lies a quiet town,\n
+    with peaceful flowing water, quaint\n
+    buildings, and presumably no Hellspawn.\n\n
+    As you step off the transport, you hear\n
+    the stomp of a cyberdemon's iron shoe.";
+}
+
+Text {
+  ID = "CC_ZOMBIE";
+  Text = "Zombieman";
+}
+
+Text {
+  ID = "CC_SHOTGUN";
+  Text = "Shotgun Guy";
+}
+
+Text {
+  ID = "CC_HEAVY";
+  Text = "Heavy Weapon Dude";
+}
+
+Text {
+  ID = "CC_IMP";
+  Text = "Imp";
+}
+
+Text {
+  ID = "CC_DEMON";
+  Text = "Demon";
+}
+
+Text {
+  ID = "CC_LOST";
+  Text = "Lost Soul";
+}
+
+Text {
+  ID = "CC_CACO";
+  Text = "Cacodemon";
+}
+
+Text {
+  ID = "CC_HELL";
+  Text = "Hell Knight";
+}
+
+Text {
+  ID = "CC_BARON";
+  Text = "Baron of Hell";
+}
+
+Text {
+  ID = "CC_ARACH";
+  Text = "Arachnotron";
+}
+
+Text {
+  ID = "CC_PAIN";
+  Text = "Pain Elemental";
+}
+
+Text {
+  ID = "CC_REVEN";
+  Text = "Revenant";
+}
+
+Text {
+  ID = "CC_MANCU";
+  Text = "Mancubus";
+}
+
+Text {
+  ID = "CC_ARCH";
+  Text = "Arch-Vile";
+}
+
+Text {
+  ID = "CC_SPIDER";
+  Text = "The Spider Mastermind";
+}
+
+Text {
+  ID = "CC_CYBER";
+  Text = "The Cyberdemon";
+}
+
+Text {
+  ID = "CC_HERO";
+  Text = "Our hero";
+}
+
+Text {
+  ID = "QUITMESSAGE1";
+  Text = "Please don't leave, there's more\ndemons to toast!";
+}
+
+Text {
+  ID = "QUITMESSAGE2";
+  Text = "Let's beat it -- this is turning\ninto a bloodbath!";
+}
+
+Text {
+  ID = "QUITMESSAGE3";
+  Text = "I wouldn't leave if I were you.\nWindows is much worse.";
+}
+
+Text {
+  ID = "QUITMESSAGE4";
+  Text = "You're trying to say you like Windows\nbetter than me, right?";
+}
+
+Text {
+  ID = "QUITMESSAGE5";
+  Text = "Don't leave yet -- there's a\ndemon around that corner!";
+}
+
+Text {
+  ID = "QUITMESSAGE6";
+  Text = "Ya know, next time you come in here\nI'm gonna toast ya.";
+}
+
+Text {
+  ID = "QUITMESSAGE7";
+  Text = "Go ahead and leave. See if I care.";
+}
+
+Text {
+  ID = "QUITMESSAGE8";
+  Text = "You want to quit?\nThen, thou hast lost an eighth!";
+}
+
+Text {
+  ID = "QUITMESSAGE9";
+  Text = "Don't go now, there's a \nDimensional Shambler waiting\n
+    at the Windows desktop!";
+}
+
+Text {
+  ID = "QUITMESSAGE10";
+  Text = "Get outta here and go back\nto your boring programs.";
+}
+
+Text {
+  ID = "QUITMESSAGE11";
+  Text = "If i were your boss, I'd \n deathmatch ya in a minute!";
+}
+
+Text {
+  ID = "QUITMESSAGE12";
+  Text = "Look, bud. you leave now\nand you forfeit your body count!";
+}
+
+Text {
+  ID = "QUITMESSAGE13";
+  Text = "Just leave. when you come\nback, I'll be waiting with a bat.";
+}
+
+Text {
+  ID = "QUITMESSAGE14";
+  Text = "You're lucky I don't smack\nyou for thinking about leaving.";
+}
+
+Text {
+  ID = "QUITMESSAGE15";
+  Text = "Prescience of mind is\nno substitute for courage.";
+}
+
+Text {
+  ID = "QUITMESSAGE16";
+  Text = "Tired you may be...\nbut the only tired spawn\nis dead spawn.";
+}
+
+Text {
+  ID = "QUITMESSAGE17";
+  Text = "Return as an apostate to be\neternally welcomed.";
+}
+
+Text {
+  ID = "QUITMESSAGE18";
+  Text = "To abandon the cause\ncan only presage disaster.";
+}
+
+Text {
+  ID = "QUITMESSAGE19";
+  Text = "Death becomes you:\nplease return....";
+}
+
+Text {
+  ID = "QUITMESSAGE20";
+  Text = "Dost the demesne win?\nDost its inhabitants prevail?\n
+    Is this the end?";
+}
+
+Text {
+  ID = "QUITMESSAGE21";
+  Text = "To quit is to lose.";
+}
+
+Text {
+  ID = "QUITMESSAGE22";
+  Text = "Escape if you will, but these\ndark corridors haunt you forever...";
+}
+
+Text {
+  ID = "JOINNET";
+  Text = "You're already in a network game!";
+}
+
+Text {
+  ID = "SAVENET";
+  Text = "You can't save while in a net game!";
+}
+
+Text {
+  ID = "CLNETLOAD";
+  Text = "Server loading saved game...";
+}
+
+Text {
+  ID = "LOADMISSING";
+  Text = "You weren't in the server's savegame.";
+}
+
+Text {
+  ID = "FINALEFLAT_E1";
+  Text = "FLOOR4_8";
+}
+
+Text {
+  ID = "FINALEFLAT_E2";
+  Text = "SFLR6_1";
+}
+
+Text {
+  ID = "FINALEFLAT_E3";
+  Text = "MFLR8_4";
+}
+
+Text {
+  ID = "FINALEFLAT_E4";
+  Text = "MFLR8_3";
+}
+
+Text {
+  ID = "FINALEFLAT_C2";
+  Text = "RROCK14";
+}
+
+Text {
+  ID = "FINALEFLAT_C1";
+  Text = "SLIME16";
+}
+
+Text {
+  ID = "FINALEFLAT_C3";
+  Text = "RROCK07";
+}
+
+Text {
+  ID = "FINALEFLAT_C4";
+  Text = "RROCK17";
+}
+
+Text {
+  ID = "FINALEFLAT_C5";
+  Text = "RROCK13";
+}
+
+Text {
+  ID = "FINALEFLAT_C6";
+  Text = "RROCK19";
+}
+
+Text {
+  ID = "ASK_EPISODE";
+  Text = "Choose Episode:";
+}
+
+Text {
+  ID = "EPISODE1";
+  Text = "Knee-Deep In The Dead";
+}
+
+Text {
+  ID = "EPISODE2";
+  Text = "The Shores Of Hell";
+}
+
+Text {
+  ID = "EPISODE3";
+  Text = "Inferno";
+}
+
+Text {
+  ID = "EPISODE4";
+  Text = "Thy Flesh Consumed";
+}
+
+Text {
+  ID = "KILLMSG_SUICIDE";
+  Text = "%1 commits suicide!";
+}
+
+Text {
+  ID = "KILLMSG_WEAPON0";
+  Text = "%1 beat %2 with bare hands!";
+}
+
+Text {
+  ID = "KILLMSG_PISTOL";
+  Text = "%2 was gunned down by %1.";
+}
+
+Text {
+  ID = "KILLMSG_SHOTGUN";
+  Text = "%1 shot %2 to bloody bits.";
+}
+
+Text {
+  ID = "KILLMSG_CHAINGUN";
+  Text = "%2 was poisoned by %1's lead.";
+}
+
+Text {
+  ID = "KILLMSG_MISSILE";
+  Text = "%2 rode %1's rocket. Splat!";
+}
+
+Text {
+  ID = "KILLMSG_PLASMA";
+  Text = "%2 got burnt in %1's plasma.";
+}
+
+Text {
+  ID = "KILLMSG_BFG";
+  Text = "%2 was scorched by %1's BFG!";
+}
+
+Text {
+  ID = "KILLMSG_CHAINSAW";
+  Text = "%1 slaughtered %2 with a buzz!";
+}
+
+Text {
+  ID = "KILLMSG_SUPERSHOTGUN";
+  Text = "%1 blasted %2 to tiny bits.";
+}
+
+Text {
+  ID = "KILLMSG_STOMP";
+  Text = "%1 stomped %2!!";
+}
+
+Text {
+  ID = "AMSTR_ROTATEON";
+  Text = "Rotate mode ON";
+}
+
+Text {
+  ID = "AMSTR_ROTATEOFF";
+  Text = "Rotate mode OFF";
+}
+
+Text {
+  ID = "WEAPON1";
+  Text = "Fist";
+}
+
+Text {
+  ID = "WEAPON2";
+  Text = "Pistol";
+}
+
+Text {
+  ID = "WEAPON3";
+  Text = "Shotgun";
+}
+
+Text {
+  ID = "WEAPON4";
+  Text = "Chaingun";
+}
+
+Text {
+  ID = "WEAPON5";
+  Text = "Rocket Launcher";
+}
+
+Text {
+  ID = "WEAPON6";
+  Text = "Plasma Rifle";
+}
+
+Text {
+  ID = "WEAPON7";
+  Text = "BFG 9000";
+}
+
+Text {
+  ID = "WEAPON8";
+  Text = "Chainsaw";
+}
+
+Text {
+  ID = "WEAPON9";
+  Text = "Super Shotgun";
+}
+
+Text {
+  ID = "SKILL1";
+  Text = "I'm too young to die.";
+}
+
+Text {
+  ID = "SKILL2";
+  Text = "Hey, not too rough.";
+}
+
+Text {
+  ID = "SKILL3";
+  Text = "Hurt me plenty.";
+}
+
+Text {
+  ID = "SKILL4";
+  Text = "Ultra-Violence.";
+}
+
+Text {
+  ID = "SKILL5";
+  Text = "Nightmare!";
+}
+
+Text {
+  ID = "KEY1";
+  Text = "Blue Keycard";
+}
+
+Text {
+  ID = "KEY2";
+  Text = "Yellow Keycard";
+}
+
+Text {
+  ID = "KEY3";
+  Text = "Red Keycard";
+}
+
+Text {
+  ID = "KEY4";
+  Text = "Blue Skull Key";
+}
+
+Text {
+  ID = "KEY5";
+  Text = "Yellow Skull Key";
+}
+
+Text {
+  ID = "KEY6";
+  Text = "Red Skull Key";
+}
+
+Text {
+  ID = "SAVEOUTMAP";
+  Text = "You can't save if you aren't in a map!";
+}
+
+Text {
+  ID = "ENDNOGAME";
+  Text = "You can't end a game that hasn't even begun!";
+}
+
+Text {
+  ID = "SUICIDEOUTMAP";
+  Text = "You can't suicide if you aren't in a map!";
+}
+
+Text {
+  ID = "SUICIDEASK";
+  Text = "Are you sure you want to suicide?";
+}
+
+Text {
+  ID = "PICKGAMETYPE";
+  Text = "Choose game type";
+}
+
+Text {
+  ID = "SINGLEPLAYER";
+  Text = "Singleplayer";
+}
+
+Text {
+  ID = "MULTIPLAYER";
+  Text = "Multiplayer";
+}
+
+Text {
+  ID = "NOTDESIGNEDFOR";
+  Text = "Not designed for %1.";
+}
+
+Text {
+  ID = "GAMESETUP";
+  Text = "Game Setup";
+}
+
+Text {
+  ID = "PLAYERSETUP";
+  Text = "Player Setup";
+}
+
+Text {
+  ID = "DISCONNECT";
+  Text = "Really disconnect?";
+}
+
+Text {
+  ID = "DELETESAVEGAME_CONFIRM";
+  Text = "Really delete save game\n\n'%s'?";
+}
+
+Text {
+  ID = "REBORNLOAD_CONFIRM";
+  Text = "Load save game\n\n'%s'?\n\n(No to restart map)";
+}

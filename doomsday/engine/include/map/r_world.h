@@ -51,17 +51,10 @@ extern byte rendSkyLightAuto; // cvar
 extern float rendLightWallAngle;
 extern byte rendLightWallAngleSmooth;
 extern boolean ddMapSetup;
+extern boolean firstFrameAfterLoad;
 
 // Sky flags.
 #define SIF_DRAW_SPHERE     0x1 // Always draw the sky sphere.
-
-/**
- * Called by the game at various points in the map setup process.
- */
-void R_SetupMap(int mode, int flags);
-
-void R_SetupFogDefaults(void);
-void R_SetupFog(float start, float end, float density, float* rgb);
 
 /**
  * Sector light color may be affected by the sky light color.
@@ -89,7 +82,12 @@ void R_UpdatePlanes(void);
 void R_ClearSectorFlags(void);
 void R_MapInitSurfaceLists(void);
 
-void R_OrderVertices(const LineDef* line, const Sector* sector, Vertex* verts[2]);
+/**
+ * Returns pointers to the line's vertices in such a fashion that @c verts[0]
+ * is the leftmost vertex and @c verts[1] is the rightmost vertex, when the
+ * @a line lies at the edge of @a sector.
+ */
+void R_OrderVertices(LineDef const *line, Sector const *sector, Vertex *verts[2]);
 
 /**
  * Determine the map space Z coordinates of a wall section.

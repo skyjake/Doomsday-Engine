@@ -29,13 +29,16 @@
 #ifndef LIBDENG_GRAPHICS
 #define LIBDENG_GRAPHICS
 
-#include "gl/gl_main.h"
-#include "gl/gl_draw.h"
+#ifdef __CLIENT__
+#  include "gl/gl_main.h"
+#  include "gl/gl_draw.h"
+#  include "gl/texturecontent.h"
+#  include "gl/gl_tex.h"
+#  include "gl/gl_model.h"
+#  include "gl/gl_defer.h"
+#endif
+
 #include "gl/gl_texmanager.h"
-#include "gl/texturecontent.h"
-#include "gl/gl_tex.h"
-#include "gl/gl_model.h"
-#include "gl/gl_defer.h"
 
 #include "resource/pcx.h"
 #include "resource/tga.h"

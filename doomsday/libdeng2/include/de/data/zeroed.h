@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,35 +22,36 @@
 
 #include "../libdeng2.h"
 
-namespace de
-{
-    /**
-     * Template for primitive types that are automatically initialized to zero.
-     */
-    template <typename Type>
-    class Zeroed
-    {
-    public:
-        Zeroed(Type const &v = 0) : value(v) {}
-        operator Type const &() const { return value; }
-        operator Type &() { return value; }
-        Zeroed<Type> &operator = (Type const &v) { 
-            value = v; 
-            return *this; 
-        }
+namespace de {
 
-    public:
-        Type value;
-    };
-    
-    typedef Zeroed<dint8> Int8;
-    typedef Zeroed<dint16> Int16;
-    typedef Zeroed<dint32> Int32;
-    typedef Zeroed<dint64> Int64;
-    typedef Zeroed<duint8> Uint8;
-    typedef Zeroed<duint16> Uint16;
-    typedef Zeroed<duint32> Uint32;
-    typedef Zeroed<duint64> Uint64;
-}
+/**
+ * Template for primitive types that are automatically initialized to zero.
+ */
+template <typename Type>
+class Zeroed
+{
+public:
+    Zeroed(Type const &v = 0) : value(v) {}
+    operator Type const &() const { return value; }
+    operator Type &() { return value; }
+    Zeroed<Type> &operator = (Type const &v) {
+        value = v;
+        return *this;
+    }
+
+public:
+    Type value;
+};
+
+typedef Zeroed<dint8> Int8;
+typedef Zeroed<dint16> Int16;
+typedef Zeroed<dint32> Int32;
+typedef Zeroed<dint64> Int64;
+typedef Zeroed<duint8> Uint8;
+typedef Zeroed<duint16> Uint16;
+typedef Zeroed<duint32> Uint32;
+typedef Zeroed<duint64> Uint64;
+
+} // namespace de
 
 #endif /* LIBDENG2_ZEROED_H */

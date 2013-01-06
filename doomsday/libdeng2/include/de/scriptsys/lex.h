@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,141 +25,142 @@
 
 #include <QFlags>
 
-namespace de
+namespace de {
+
+/**
+ * Base class for lexical analyzers. It provides the basic service of reading
+ * characters one by one from an input text. It also classifies characters.
+ *
+ * @ingroup script
+ */
+class Lex
 {
+public:
+    /// Attempt to read characters when there are non left. @ingroup errors
+    DENG2_ERROR(OutOfInputError);
+
+    enum ModeFlag
+    {
+        SkipComments = 0x1
+    };
+    Q_DECLARE_FLAGS(ModeFlags, ModeFlag)
+
     /**
-     * Base class for lexical analyzers. It provides the basic service of reading 
-     * characters one by one from an input text. It also classifies characters.
-     *
-     * @ingroup script
+     * Utility for setting flags in a Lex instance. The flags specified
+     * in the mode span are in effect during the lifetime of the ModeSpan instance.
+     * When the ModeSpan goes out of scope, the original flags are restored
+     * (the ones that were in use when the ModeSpan was constructed).
      */
-    class Lex
+    class ModeSpan
     {
     public:
-        /// Attempt to read characters when there are non left. @ingroup errors
-        DENG2_ERROR(OutOfInputError);
-
-        enum ModeFlag
-        {
-            SkipComments = 0x1
-        };
-        Q_DECLARE_FLAGS(ModeFlags, ModeFlag)
-        
-        /**
-         * Utility for setting flags in a Lex instance. The flags specified
-         * in the mode span are in effect during the lifetime of the ModeSpan instance.
-         * When the ModeSpan goes out of scope, the original flags are restored
-         * (the ones that were in use when the ModeSpan was constructed).
-         */
-        class ModeSpan
-        {
-        public:
-            ModeSpan(Lex &lex, ModeFlags const &m) : _lex(lex), _originalMode(lex._mode) {
-                lex._mode = m;
-            }
-            
-            ~ModeSpan() {
-                _lex._mode = _originalMode;
-            }
-            
-        private:
-            Lex &_lex;
-            ModeFlags _originalMode;
-        };
-        
-        // Constants.
-        static String const T_PARENTHESIS_OPEN;
-        static String const T_PARENTHESIS_CLOSE;
-        static String const T_BRACKET_OPEN;
-        static String const T_BRACKET_CLOSE;
-        static String const T_CURLY_OPEN;
-        static String const T_CURLY_CLOSE;
-
-    public:
-        Lex(String const &input = "");
-        
-        /// Returns the input string in its entirety.
-        String const &input() const;
-        
-        /// Returns the current position of the analyzer.
-        duint pos() const;
-        
-        /// Returns the next character, according to the position.
-        /// Characters past the end of the input string are returned 
-        /// as zero.
-        QChar peek() const;
-        
-        /// Returns the next character and increments the position.
-        /// Returns zero if the end of the input is reached.
-        QChar get();
-        
-        /// Skips until a non-whitespace character is found.
-        void skipWhite();
-        
-        /// Skips until a non-whitespace character, or newline, is found.
-        void skipWhiteExceptNewline();
-        
-        /// Skips until a new line begins.
-        void skipToNextLine();
-        
-        /// Returns the current line of the reading position. The character
-        /// returned from get() will be on this line.
-        duint lineNumber() const { 
-            return _state.lineNumber; 
+        ModeSpan(Lex &lex, ModeFlags const &m) : _lex(lex), _originalMode(lex._mode) {
+            lex._mode = m;
         }
 
-        /// Determines whether there is only whitespace (or nothing) 
-        /// remaining on the current line.
-        bool onlyWhiteOnLine();
-        
-        /// Counts the number of whitespace characters in the beginning of
-        /// the current line.
-        duint countLineStartSpace() const;
-
-    public:
-        /// Determines whether a character is whitespace.
-        /// @param c Character to check.
-        static bool isWhite(QChar c);
-        
-        /// Determine whether a character is alphabetic.
-        /// @param c Character to check.
-        static bool isAlpha(QChar c);
-        
-        /// Determine whether a character is numeric.
-        /// @param c Character to check.
-        static bool isNumeric(QChar c);
-        
-        /// Determine whether a character is hexadecimal numeric.
-        /// @param c Character to check.
-        static bool isHexNumeric(QChar c);
-        
-        /// Determine whether a character is alphanumeric.
-        /// @param c Character to check.
-        static bool isAlphaNumeric(QChar c);
+        ~ModeSpan() {
+            _lex._mode = _originalMode;
+        }
 
     private:
-        /// Input text being analyzed.
-        String const *_input;
-
-        mutable duint _nextPos;
-
-        struct State {
-            duint pos;          ///< Current reading position.
-            duint lineNumber;   ///< Keeps track of the line number on which the current position is.
-            duint lineStartPos; ///< Position which begins the current line.
-            
-            State() : pos(0), lineNumber(1), lineStartPos(0) {}
-        };
-        
-        State _state;
-        
-        /// Character that begins a line comment.
-        duchar _lineCommentChar;
-        
-        ModeFlags _mode;
+        Lex &_lex;
+        ModeFlags _originalMode;
     };
 
-    Q_DECLARE_OPERATORS_FOR_FLAGS(Lex::ModeFlags)
-}
+    // Constants.
+    static String const T_PARENTHESIS_OPEN;
+    static String const T_PARENTHESIS_CLOSE;
+    static String const T_BRACKET_OPEN;
+    static String const T_BRACKET_CLOSE;
+    static String const T_CURLY_OPEN;
+    static String const T_CURLY_CLOSE;
+
+public:
+    Lex(String const &input = "");
+
+    /// Returns the input string in its entirety.
+    String const &input() const;
+
+    /// Returns the current position of the analyzer.
+    duint pos() const;
+
+    /// Returns the next character, according to the position.
+    /// Characters past the end of the input string are returned
+    /// as zero.
+    QChar peek() const;
+
+    /// Returns the next character and increments the position.
+    /// Returns zero if the end of the input is reached.
+    QChar get();
+
+    /// Skips until a non-whitespace character is found.
+    void skipWhite();
+
+    /// Skips until a non-whitespace character, or newline, is found.
+    void skipWhiteExceptNewline();
+
+    /// Skips until a new line begins.
+    void skipToNextLine();
+
+    /// Returns the current line of the reading position. The character
+    /// returned from get() will be on this line.
+    duint lineNumber() const {
+        return _state.lineNumber;
+    }
+
+    /// Determines whether there is only whitespace (or nothing)
+    /// remaining on the current line.
+    bool onlyWhiteOnLine();
+
+    /// Counts the number of whitespace characters in the beginning of
+    /// the current line.
+    duint countLineStartSpace() const;
+
+public:
+    /// Determines whether a character is whitespace.
+    /// @param c Character to check.
+    static bool isWhite(QChar c);
+
+    /// Determine whether a character is alphabetic.
+    /// @param c Character to check.
+    static bool isAlpha(QChar c);
+
+    /// Determine whether a character is numeric.
+    /// @param c Character to check.
+    static bool isNumeric(QChar c);
+
+    /// Determine whether a character is hexadecimal numeric.
+    /// @param c Character to check.
+    static bool isHexNumeric(QChar c);
+
+    /// Determine whether a character is alphanumeric.
+    /// @param c Character to check.
+    static bool isAlphaNumeric(QChar c);
+
+private:
+    /// Input text being analyzed.
+    String const *_input;
+
+    mutable duint _nextPos;
+
+    struct State {
+        duint pos;          ///< Current reading position.
+        duint lineNumber;   ///< Keeps track of the line number on which the current position is.
+        duint lineStartPos; ///< Position which begins the current line.
+
+        State() : pos(0), lineNumber(1), lineStartPos(0) {}
+    };
+
+    State _state;
+
+    /// Character that begins a line comment.
+    duchar _lineCommentChar;
+
+    ModeFlags _mode;
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Lex::ModeFlags)
+
+} // namespace de
 
 #endif /* LIBDENG2_LEX_H */

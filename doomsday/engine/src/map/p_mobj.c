@@ -42,6 +42,7 @@
 #include "de_audio.h"
 
 #include "def_main.h"
+#include "render/r_main.h" // validCount, viewport
 #include "render/r_things.h" // useSRVO
 
 // MACROS ------------------------------------------------------------------
@@ -76,7 +77,7 @@ void P_InitUnusedMobjList(void)
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
-mobj_t* P_MobjCreate(think_t function, coord_t const pos[3], angle_t angle,
+mobj_t* P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
     coord_t radius, coord_t height, int ddflags)
 {
     mobj_t* mo;
@@ -119,7 +120,8 @@ mobj_t* P_MobjCreate(think_t function, coord_t const pos[3], angle_t angle,
     return mo;
 }
 
-mobj_t* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z,
+#undef P_MobjCreateXYZ
+mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z,
     angle_t angle, coord_t radius, coord_t height, int ddflags)
 {
     coord_t pos[3];
@@ -133,6 +135,7 @@ mobj_t* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z,
  * @note Does not actually destroy the mobj. Instead, mobj is marked as
  * awaiting removal (which occurs when its turn for thinking comes around).
  */
+#undef P_MobjDestroy
 void P_MobjDestroy(mobj_t* mo)
 {
 #ifdef _DEBUG
@@ -164,6 +167,7 @@ void P_MobjRecycle(mobj_t* mo)
 /**
  * 'statenum' must be a valid state (not null!).
  */
+#undef P_MobjSetState
 void P_MobjSetState(mobj_t* mobj, int statenum)
 {
     state_t*            st = states + statenum;
@@ -212,6 +216,7 @@ boolean Mobj_SetOrigin(struct mobj_s* mo, coord_t x, coord_t y, coord_t z)
     return gx.MobjTryMoveXYZ(mo, x, y, z);
 }
 
+#undef Mobj_OriginSmoothed
 void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
 {
     if(!origin) return;
@@ -250,6 +255,7 @@ void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
     }
 }
 
+#undef Mobj_AngleSmoothed
 angle_t Mobj_AngleSmoothed(mobj_t* mo)
 {
     if(!mo) return 0;
@@ -266,11 +272,13 @@ angle_t Mobj_AngleSmoothed(mobj_t* mo)
         }
     }
 
+#ifdef __CLIENT__
     // Apply a Short Range Visual Offset?
     if(useSRVOAngle && !netGame && !playback)
     {
         return mo->visAngle << 16;
     }
+#endif
 
     return mo->angle;
 }
@@ -287,7 +295,10 @@ D_CMD(InspectMobj)
 {
     mobj_t* mo = 0;
     thid_t id = 0;
+    char const *moType = "Mobj";
+#ifdef __CLIENT__
     clmoinfo_t* info = 0;
+#endif
 
     if(argc != 2)
     {
@@ -306,9 +317,12 @@ D_CMD(InspectMobj)
         return false;
     }
 
+#ifdef __CLIENT__
     info = ClMobj_GetInfo(mo);
+    if(info) moType = "CLMOBJ";
+#endif
 
-    Con_Printf("%s %i [%p] State:%s (%i)\n", info? "CLMOBJ" : "Mobj", id, mo, Def_GetStateName(mo->state), (int)(mo->state - states));
+    Con_Printf("%s %i [%p] State:%s (%i)\n", moType, id, mo, Def_GetStateName(mo->state), (int)(mo->state - states));
     Con_Printf("Type:%s (%i) Info:[%p]", Def_GetMobjName(mo->type), mo->type, mo->info);
     if(mo->info)
     {
@@ -319,10 +333,12 @@ D_CMD(InspectMobj)
         Con_Printf("\n");
     }
     Con_Printf("Tics:%i ddFlags:%08x\n", mo->tics, mo->ddFlags);
+#ifdef __CLIENT__
     if(info)
     {
         Con_Printf("Cltime:%i (now:%i) Flags:%04x\n", info->time, Timer_RealMilliseconds(), info->flags);
     }
+#endif
     Con_Printf("Flags:%08x Flags2:%08x Flags3:%08x\n", mo->flags, mo->flags2, mo->flags3);
     Con_Printf("Height:%f Radius:%f\n", mo->height, mo->radius);
     Con_Printf("Angle:%x Pos:(%f,%f,%f) Mom:(%f,%f,%f)\n",

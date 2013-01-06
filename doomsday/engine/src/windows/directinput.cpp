@@ -20,6 +20,8 @@
  * 02110-1301 USA</small>
  */
 
+#ifdef __CLIENT__
+
 #include "directinput.h"
 #include "dd_winit.h"
 #include "con_main.h"
@@ -101,3 +103,5 @@ void DirectInput_KillDevice(LPDIRECTINPUTDEVICE8* dev)
     if(*dev) (*dev)->Unacquire();
     I_SAFE_RELEASE(*dev);
 }
+
+#endif // __CLIENT__

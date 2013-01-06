@@ -28,7 +28,7 @@
 #ifndef LIBDENG_BSP_HEDGEINFO
 #define LIBDENG_BSP_HEDGEINFO
 
-#include "m_misc.h"
+#include <de/mathutil.h>
 #include <de/vector1.h>
 #include "map/p_mapdata.h"
 

@@ -1,9 +1,7 @@
-/**
- * @file materials.h
- * Materials collection, schemes, bindings and other management. @ingroup resource
+/** @file materials.h Material Collection.
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,245 +25,361 @@
 #include "material.h"
 
 #ifdef __cplusplus
+
+#include <de/Error>
+#include <de/Path>
+#include <de/String>
+#include "uri.hh"
+#include "resource/materialbind.h"
+#include "resource/materialscheme.h"
+#include "resource/materialvariant.h"
+
+namespace de {
+
+    class MaterialBind;
+
+    /**
+     * Specialized resource collection for a set of materials.
+     *
+     * - Pointers to Material are @em eternal, they are always valid and continue
+     *   to reference the same logical material data even after engine reset.
+     *
+     * - Public material identifiers (materialid_t) are similarly eternal.
+     *
+     * - Material name bindings are semi-independant from the materials. There
+     *   may be multiple name bindings for a given material (aliases). The only
+     *   requirement is that their symbolic names must be unique among those in
+     *   the same scheme.
+     *
+     * @ingroup resource
+     */
+    class Materials
+    {
+    public:
+        typedef class MaterialScheme Scheme;
+
+        /**
+         * Flags determining URI validation logic.
+         *
+         * @see validateUri()
+         */
+        enum UriValidationFlag
+        {
+            AnyScheme  = 0x1 ///< The scheme of the URI may be of zero-length; signifying "any scheme".
+        };
+        Q_DECLARE_FLAGS(UriValidationFlags, UriValidationFlag)
+
+        /// Material system subspace schemes.
+        typedef QList<Scheme*> Schemes;
+
+        /// Material animation groups.
+        typedef QList<MaterialAnim> AnimGroups;
+
+    public:
+        /// The referenced texture was not found. @ingroup errors
+        DENG2_ERROR(NotFoundError);
+
+        /// An unknown scheme was referenced. @ingroup errors
+        DENG2_ERROR(UnknownSchemeError);
+
+        /// An unknown animation group was referenced. @ingroup errors
+        DENG2_ERROR(UnknownAnimGroupError);
+
+    public:
+        /**
+         * Constructs a new material collection.
+         */
+        Materials();
+
+        virtual ~Materials();
+
+        /// Register the console commands, variables, etc..., of this module.
+        static void consoleRegister();
+
+        /**
+         * Returns the total number of unique materials in the collection.
+         */
+        uint size() const;
+
+        /**
+         * Returns the total number of unique materials in the collection.
+         *
+         * Same as size()
+         */
+        inline uint count() const {
+            return size();
+        }
+
+        /// Process all outstanding tasks in the cache queue.
+        void processCacheQueue();
+
+        /// Empty the Material cache queue, cancelling all outstanding tasks.
+        void purgeCacheQueue();
+
+        /// To be called during a definition database reset to clear all links to defs.
+        void clearDefinitionLinks();
+
+        /**
+         * Process a tic of @a elapsed length, animating materials and anim-groups.
+         * @param elapsed  Length of tic to be processed.
+         */
+        void ticker(timespan_t elapsed);
+
+        /**
+         * Lookup a subspace scheme by symbolic name.
+         *
+         * @param name  Symbolic name of the scheme.
+         * @return  Scheme associated with @a name.
+         *
+         * @throws UnknownSchemeError If @a name is unknown.
+         */
+        Scheme &scheme(String name) const;
+
+        /**
+         * Create a new subspace scheme.
+         *
+         * @param name      Unique symbolic name of the new scheme. Must be at
+         *                  least @c Scheme::min_name_length characters long.
+         */
+        Scheme &createScheme(String name);
+
+        /**
+         * Returns @c true iff a Scheme exists with the symbolic @a name.
+         */
+        bool knownScheme(String name) const;
+
+        /**
+         * Returns a list of all the schemes for efficient traversal.
+         */
+        Schemes const &allSchemes() const;
+
+        /**
+         * Clear all materials in all schemes.
+         * @see Scheme::clear().
+         */
+        inline void clearAllSchemes()
+        {
+            Schemes schemes = allSchemes();
+            DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->clear(); }
+        }
+
+        /**
+         * Validate @a uri to determine if it is well-formed and is usable as a
+         * search argument.
+         *
+         * @param uri       Uri to be validated.
+         * @param flags     Validation flags.
+         * @param quiet     @c true= Do not output validation remarks to the log.
+         *
+         * @return  @c true if @a Uri passes validation.
+         *
+         * @todo Should throw de::Error exceptions -ds
+         */
+        bool validateUri(Uri const &uri, UriValidationFlags flags = 0,
+                         bool quiet = false) const;
+
+        /**
+         * Determines if a bind exists for a material on @a path.
+         * @return @c true, if a bind exists; otherwise @a false.
+         */
+        bool has(Uri const &path) const;
+
+        /**
+         * Find the material bind on @a path.
+         *
+         * @param search  The search term.
+         * @return Found material bind.
+         */
+        MaterialBind &find(Uri const &search) const;
+
+        /**
+         * Update @a material according to the supplied definition @a def.
+         * To be called after an engine update/reset.
+         *
+         * @param material  Material to be updated.
+         * @param def  Material definition to update using.
+         */
+        void rebuild(material_t &material, ded_material_t *def = 0);
+
+        void updateTextureLinks(MaterialBind &bind);
+
+        /// @return  (Particle) Generator definition associated with @a material else @c NULL.
+        ded_ptcgen_t const *ptcGenDef(material_t &material);
+
+        /// @return  Decoration defintion associated with @a material else @c NULL.
+        ded_decor_t const *decorationDef(material_t &material);
+
+        /// @return  @c true if one or more light decorations are defined for this material.
+        bool hasDecorations(material_t &material);
+
+        /**
+         * Create a new Material unless an existing Material is found at the path
+         * (and within the same scheme) as that specified in @a def, in which case
+         * it is returned instead.
+         *
+         * @note: May fail on invalid definitions (return= @c NULL).
+         *
+         * @param def  Material definition to construct from.
+         * @return  The newly-created/existing material; otherwise @c NULL.
+         */
+        material_t *newFromDef(ded_material_t &def);
+
+        MaterialBind &newBind(MaterialScheme &scheme, Path const &path,
+                              material_t *material = 0);
+
+        /**
+         * Prepare a material variant specification in accordance to the specified
+         * usage context. If incomplete context information is supplied, suitable
+         * default values will be chosen in their place.
+         *
+         * @param materialContext   Material (usage) context identifier.
+         * @param flags             @ref textureVariantSpecificationFlags
+         * @param border            Border size in pixels (all edges).
+         * @param tClass            Color palette translation class.
+         * @param tMap              Color palette translation map.
+         * @param wrapS             GL texture wrap/clamp mode on the horizontal axis (texture-space).
+         * @param wrapT             GL texture wrap/clamp mode on the vertical axis (texture-space).
+         * @param minFilter         Logical DGL texture minification level.
+         * @param magFilter         Logical DGL texture magnification level.
+         * @param anisoFilter       @c -1= User preference else a logical DGL anisotropic filter level.
+         * @param mipmapped         @c true= use mipmapping.
+         * @param gammaCorrection   @c true= apply gamma correction to textures.
+         * @param noStretch         @c true= disallow stretching of textures.
+         * @param toAlpha           @c true= convert textures to alpha data.
+         *
+         * @return  Rationalized (and interned) copy of the final specification.
+         */
+        MaterialVariantSpec const &variantSpecForContext(materialcontext_t materialContext,
+            int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
+            int minFilter, int magFilter, int anisoFilter,
+            bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha);
+
+        /**
+         * Add a variant of @a material to the cache queue for deferred preparation.
+         *
+         * @param material      Base Material from which to derive a variant.
+         * @param spec          Specification for the desired derivation of @a material.
+         * @param smooth        @c true= Select the current frame if the material is group-animated.
+         * @param cacheGroups   @c true= variants for all Materials in any applicable animation
+         *                      groups are desired, else just this specific Material.
+         */
+        void cache(material_t &material, MaterialVariantSpec const &spec,
+                   bool smooth, bool cacheGroups = true);
+
+        /**
+         * Choose/create a variant of @a material which fulfills @a spec and then
+         * immediately prepare it for render (e.g., upload textures if necessary).
+         *
+         * @note A convenient shorthand of the call tree:
+         * <pre>
+         *    prepare( chooseVariant( @a material, @a spec, @a smooth, @c true ), @a forceSnapshotUpdate )
+         * </pre>
+         *
+         * @param material  Base Material from which to derive a variant.
+         * @param spec      Specification for the derivation of @a material.
+         * @param smooth    @c true= Select the current frame if the material is group-animated.
+         * @param forceSnapshotUpdate  @c true= Ensure to update the state snapshot.
+         *
+         * @return  Snapshot for the chosen and prepared variant of Material.
+         */
+        MaterialSnapshot const &prepare(material_t &material, MaterialVariantSpec const &spec,
+                                        bool smooth, bool forceSnapshotUpdate = false);
+
+        /**
+         * Prepare variant @a material for render (e.g., upload textures if necessary).
+         *
+         * @see chooseVariant()
+         *
+         * @param material  MaterialVariant to be prepared.
+         * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
+         *
+         * @return  Snapshot for the chosen and prepared variant of Material.
+         */
+        MaterialSnapshot const &prepare(MaterialVariant &material,
+                                        bool forceSnapshotUpdate = false);
+
+        /**
+         * Choose/create a variant of @a material which fulfills @a spec.
+         *
+         * @param material      Material to derive the variant from.
+         * @param spec          Specification for the derivation of @a material.
+         * @param smooth        @c true= Select the current frame if the material is group-animated.
+         * @param canCreate     @c true= Create a new variant if no suitable one exists.
+         *
+         * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
+         */
+        MaterialVariant *chooseVariant(material_t &material, MaterialVariantSpec const &spec,
+                                       bool smoothed, bool canCreate);
+
+        /// @todo Refactor away -ds
+        MaterialBind *toMaterialBind(materialid_t materialId);
+
+        /**
+         * Lookup an animation group by unique @a number.
+         */
+        MaterialAnim &animGroup(int number) const;
+
+        /**
+         * Create a new animation group.
+         * @return  Unique identifier associated with the new group.
+         */
+        int newAnimGroup(int flags);
+
+        /**
+         * To be called to reset all animation groups back to their initial state.
+         */
+        void resetAllAnimGroups();
+
+        /**
+         * To be called to destroy all animation groups when they are no longer needed.
+         */
+        void clearAllAnimGroups();
+
+        /**
+         * Provides access to the list of animation groups for efficient traversal.
+         */
+        AnimGroups const &allAnimGroups() const;
+
+        /**
+         * Returns the total number of animation/precache groups in the collection.
+         */
+        inline int animGroupCount() const {
+            return allAnimGroups().count();
+        }
+
+    private:
+        struct Instance;
+        Instance *d;
+    };
+
+    Q_DECLARE_OPERATORS_FOR_FLAGS(Materials::UriValidationFlags)
+
+} // namespace de
+
+de::Materials *App_Materials();
+
 extern "C" {
-#endif
+#endif // __cplusplus
 
-struct texturevariantspecification_s;
-struct materialvariant_s;
-struct materialsnapshot_s;
+/*
+ * C wrapper API:
+ */
 
-enum materialschemeid_e; // Defined in dd_share.h
-
-/// Material (Usage) Context identifiers.
-typedef enum {
-    MC_UNKNOWN = -1,
-    MATERIALCONTEXT_FIRST = 0,
-    MC_UI = MATERIALCONTEXT_FIRST,
-    MC_MAPSURFACE,
-    MC_SPRITE,
-    MC_MODELSKIN,
-    MC_PSPRITE,
-    MC_SKYSPHERE,
-    MATERIALCONTEXT_LAST = MC_SKYSPHERE
-} materialcontext_t;
-
-#define MATERIALCONTEXT_COUNT (MATERIALCONTEXT_LAST + 1 - MATERIALCONTEXT_FIRST )
-
-/// @c true= val can be interpreted as a valid material context identifier.
-#define VALID_MATERIALCONTEXT(val) ((val) >= MATERIALCONTEXT_FIRST && (val) <= MATERIALCONTEXT_LAST)
-
-/// To be called during init to register the cvars and ccmds for this module.
-void Materials_Register(void);
-
-/// Initialize this module.
+/// Initialize this module. Cannot be re-initialized, must shutdown first.
 void Materials_Init(void);
 
 /// Shutdown this module.
 void Materials_Shutdown(void);
 
-/**
- * Process a tic of length @a elapsed, animating materials and anim-groups.
- * @param elapsed  Length of tic to be processed.
- */
 void Materials_Ticker(timespan_t elapsed);
-
-/// Process all outstanding tasks in the Material cache queue.
-void Materials_ProcessCacheQueue(void);
-
-/// Empty the Material cache queue, cancelling all outstanding tasks.
-void Materials_PurgeCacheQueue(void);
-
-/// To be called during a definition database reset to clear all links to defs.
-void Materials_ClearDefinitionLinks(void);
-
-/**
- * Try to interpret a known material scheme identifier from @a str. If found to match
- * a known scheme name, return the associated identifier. If the reference @a str is
- * not valid (i.e., equal to NULL or is a zero-length string) then the special identifier
- * @c MS_ANY is returned. Otherwise @c MS_INVALID.
- */
-enum materialschemeid_e Materials_ParseSchemeName(const char* str);
-
-/// @return  Name associated with the identified @a schemeId else a zero-length string.
-const Str* Materials_SchemeName(enum materialschemeid_e schemeId);
-
-/// @return  Total number of unique Materials in the collection.
 uint Materials_Size(void);
+materialid_t Materials_Id(material_t *material);
+material_t *Materials_ToMaterial(materialid_t materialId);
+struct uri_s *Materials_ComposeUri(materialid_t materialId);
+materialid_t Materials_ResolveUri(struct uri_s const *uri);
 
-/// @return  Number of unique Materials in the identified @a schemeId.
-uint Materials_Count(enum materialschemeid_e schemeId);
-
-/// @return  Unique identifier associated with @a material else @c 0.
-materialid_t Materials_Id(material_t* material);
-
-/// @return  Material associated with unique identifier @a materialId else @c NULL.
-material_t* Materials_ToMaterial(materialid_t materialId);
-
-/// @return  Unique identifier of the scheme this material is in.
-enum materialschemeid_e Materials_Scheme(materialid_t materialId);
-
-/// @return  Symbolic name/path-to this material. Must be destroyed with Str_Delete().
-AutoStr* Materials_ComposePath(materialid_t materialId);
-
-/// @return  Unique name/path-to this material. Must be destroyed with Uri_Delete().
-Uri* Materials_ComposeUri(materialid_t materialId);
-
-/**
- * Update @a material according to the supplied definition @a def.
- * To be called after an engine update/reset.
- *
- * @param material  Material to be updated.
- * @param def  Material definition to update using.
- */
-void Materials_Rebuild(material_t* material, ded_material_t* def);
-
-/// @return  @c true if one or more light decorations are defined for this material.
-boolean Materials_HasDecorations(material_t* material);
-
-/// @return  Decoration defintion associated with @a material else @c NULL.
-const ded_decor_t*  Materials_DecorationDef(material_t* material);
-
-/// @return  (Particle) Generator definition associated with @a material else @c NULL.
-const ded_ptcgen_t* Materials_PtcGenDef(material_t* material);
-
-/// @return  @c true iff @a material is linked to the identified @a animGroupNum.
-boolean Materials_IsMaterialInAnimGroup(material_t* material, int animGroupNum);
-
-/**
- * Search the Materials collection for a material associated with @a uri.
- * @return  Found material else @c NOMATERIALID.
- */
-materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet);
-materialid_t Materials_ResolveUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
-
-/// Same as Materials::ResolveUri except @a uri is a C-string.
-materialid_t Materials_ResolveUriCString2(const char* uri, boolean quiet);
-materialid_t Materials_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
-
-/**
- * Create a new Material unless an existing Material is found at the path
- * (and within the same scheme) as that specified in @a def, in which case
- * it is returned instead.
- *
- * @note: May fail on invalid definitions (return= @c NULL).
- *
- * @param def  Material definition to construct from.
- * @return  The newly-created/existing Material else @c NULL.
- */
-material_t* Materials_CreateFromDef(ded_material_t* def);
-
-/// @return  Number of animation/precache groups in the collection.
-int Materials_AnimGroupCount(void);
-
-/// To be called to reset all animation groups back to their initial state.
-void Materials_ResetAnimGroups(void);
-
-/// To be called to destroy all animation groups when they are no longer needed.
-void Materials_ClearAnimGroups(void);
-
-/**
- * Prepare a MaterialVariantSpecification according to a usage context. If
- * incomplete context information is supplied, suitable default values will
- * be chosen in their place.
- *
- * @param materialContext Material (usage) context identifier.
- * @param flags  @ref textureVariantSpecificationFlags
- * @param border  Border size in pixels (all edges).
- * @param tClass  Color palette translation class.
- * @param tMap  Color palette translation map.
- * @param wrapS  GL texture wrap/clamp mode on the horizontal axis (texture-space).
- * @param wrapT  GL texture wrap/clamp mode on the vertical axis (texture-space).
- * @param minFilter  Logical DGL texture minification level.
- * @param magFilter  Logical DGL texture magnification level.
- * @param anisoFilter  @c -1= User preference else a logical DGL anisotropic filter level.
- * @param mipmapped  @c true= use mipmapping.
- * @param gammaCorrection  @c true= apply gamma correction to textures.
- * @param noStretch  @c true= disallow stretching of textures.
- * @param toAlpha  @c true= convert textures to alpha data.
- *
- * @return  Rationalized (and interned) copy of the final specification.
- */
-const struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
-    materialcontext_t materialContext, int flags, byte border, int tClass,
-    int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
-    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
-
-/**
- * Add a variant of @a material to the cache queue for deferred preparation.
- *
- * @param material  Base Material from which to derive a variant.
- * @param spec  Specification for the desired derivation of @a material.
- * @param smooth  @c true= Select the current frame if the material is group-animated.
- * @param cacheGroups  @c true= variants for all Materials in any applicable
- *      animation groups are desired, else just this specific Material.
- */
-void Materials_Precache2(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth, boolean cacheGroups);
-void Materials_Precache(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth); /*cacheGroups=true*/
-
-/**
- * Choose/create a variant of @a material which fulfills @a spec and then
- * immediately prepare it for render (e.g., upload textures if necessary).
- *
- * @note A convenient shorthand of the call tree:
- * <pre>
- *    Materials_PrepareVariant( Materials_ChooseVariant( @a material, @a spec, @a smooth, @c true ), @a forceSnapshotUpdate )
- * </pre>
- *
- * @param material  Base Material from which to derive a variant.
- * @param spec  Specification for the derivation of @a material.
- * @param smooth  @c true= Select the current frame if the material is group-animated.
- * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
- *
- * @return  Snapshot for the chosen and prepared variant of Material.
- */
-const struct materialsnapshot_s* Materials_Prepare2(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth, boolean forceSnapshotUpdate);
-const struct materialsnapshot_s* Materials_Prepare(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth); /*forceSnapshotUpdate=false*/
-
-/**
- * Prepare variant @a material for render (e.g., upload textures if necessary).
- *
- * @note Same as Materials::Prepare except the caller specifies the variant.
- * @see Materials::ChooseVariant
- *
- * @param material  MaterialVariant to be prepared.
- * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
- *
- * @return  Snapshot for the chosen and prepared variant of Material.
- */
-const struct materialsnapshot_s* Materials_PrepareVariant2(struct materialvariant_s* material, boolean forceSnapshotUpdate);
-const struct materialsnapshot_s* Materials_PrepareVariant(struct materialvariant_s* material); /*forceSnapshotUpdate=false*/
-
-/**
- * Choose/create a variant of @a material which fulfills @a spec.
- *
- * @param material  Material to derive the variant from.
- * @param spec  Specification for the derivation of @a material.
- * @param smooth  @c true= Select the current frame if the material is group-animated.
- * @param canCreate  @c true= Create a new variant if a suitable one does exist.
- *
- * @return  Chosen variant else @c NULL if none suitable and not creating.
- */
-struct materialvariant_s* Materials_ChooseVariant(material_t* material,
-    const struct materialvariantspecification_s* spec, boolean smoothed, boolean canCreate);
-
-/**
- * Create a new animation group.
- * @return  Logical (unique) identifier reference associated with the new group.
- */
-int Materials_CreateAnimGroup(int flags);
-
-/**
- * Append a new @a material frame to the identified @a animGroupNum.
- *
- * @param animGroupNum  Logical identifier reference to the group being modified.
- * @param material  Material frame to be inserted into the group.
- * @param tics  Base duration of the new frame in tics.
- * @param randomTics  Extra frame duration in tics (randomized on each cycle).
- */
-void Materials_AddAnimGroupFrame(int animGroupNum, material_t* material, int tics, int randomTics);
-
-/// @todo Refactor; does not fit the current design.
-boolean Materials_IsPrecacheAnimGroup(int animGroupNum);
+/// Same as Materials::resolveUri except @a uri is a C-string.
+materialid_t Materials_ResolveUriCString(char const *uri);
 
 #ifdef __cplusplus
 } // extern "C"

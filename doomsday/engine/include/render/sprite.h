@@ -44,11 +44,15 @@ DENG_EXTERN_C int spriteLight, useSpriteAlpha, useSpriteBlend;
 DENG_EXTERN_C byte noSpriteTrans;
 DENG_EXTERN_C byte devNoSprites;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+DENG_EXTERN_C void Rend_SpriteRegister(void);
 
-void Rend_SpriteRegister(void);
+#ifdef __CLIENT__
+#ifdef __cplusplus
+
+de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
+
+extern "C" {
+#endif // __cplusplus
 
 /**
  * Render sprites, 3D models, masked wall segments and halos, ordered
@@ -69,14 +73,14 @@ void Rend_Draw2DPlayerSprites(void);
 
 void Rend_Draw3DPlayerSprites(void);
 
-materialvariantspecification_t const* Sprite_MaterialSpec(int tclass, int tmap);
-
 void Rend_RenderSprite(rendspriteparams_t const* params);
-
-///@}
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+#endif // __CLIENT__
+
+///@}
 
 #endif /* LIBDENG_RENDER_SPRITE_H */

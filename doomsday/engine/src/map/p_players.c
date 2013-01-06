@@ -28,6 +28,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_PLAYER
+
 #include "de_base.h"
 #include "de_play.h"
 #include "de_network.h"
@@ -202,3 +204,33 @@ float P_ShortToLookDir(short s)
 {
     return s / (float)DDMAXSHORT * 110.f;
 }
+
+#undef DD_GetPlayer
+ddplayer_t* DD_GetPlayer(int number)
+{
+    return (ddplayer_t *) &ddPlayers[number].shared;
+}
+
+// net_main.c
+DENG_EXTERN_C const char* Net_GetPlayerName(int player);
+DENG_EXTERN_C ident_t Net_GetPlayerID(int player);
+DENG_EXTERN_C Smoother* Net_PlayerSmoother(int player);
+
+// p_control.c
+DENG_EXTERN_C void P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext);
+DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
+DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int control);
+DENG_EXTERN_C void P_Impulse(int playerNum, int control);
+
+DENG_DECLARE_API(Player) =
+{
+    { DE_API_PLAYER },
+    Net_GetPlayerName,
+    Net_GetPlayerID,
+    Net_PlayerSmoother,
+    DD_GetPlayer,
+    P_NewPlayerControl,
+    P_GetControlState,
+    P_GetImpulseControlState,
+    P_Impulse
+};

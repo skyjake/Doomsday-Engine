@@ -1,0 +1,1160 @@
+# libheretic: Text Strings
+
+Header { Version = 5; }
+
+Text {
+  ID = "PRESSKEY";
+  Text = "Press a key.";
+}
+
+Text {
+  ID = "PRESSYN";
+  Text = "Press %1 or %2.";
+}
+
+Text {
+  ID = "TXT_PAUSED";
+  Text = "Paused";
+}
+
+Text {
+  ID = "QUITMSG";
+  Text = "Are you sure you want to quit?";
+}
+
+Text {
+  ID = "LOADNET";
+  Text = "You can't do load while in a net game!";
+}
+
+Text {
+  ID = "QLOADNET";
+  Text = "You can't load during a netgame!";
+}
+
+Text {
+  ID = "QSAVESPOT";
+  Text = "You haven't picked a quicksave slot yet!";
+}
+
+Text {
+  ID = "SAVEDEAD";
+  Text = "You can't save if you aren't playing!";
+}
+
+Text {
+  ID = "QSPROMPT";
+  Text = "Save over your game named\n\n'%s'?";
+}
+
+Text {
+  ID = "QLPROMPT";
+  Text = "Are you sure you want to load the game named\n\n'%s'?";
+}
+
+Text {
+  ID = "NEWGAME";
+  Text = "You can't start a new game\nwhile in a network game.";
+}
+
+Text {
+  ID = "NIGHTMARE";
+  Text = "Are you sure? This skill level\nisn't even remotely fair.";
+}
+
+Text {
+  ID = "SWSTRING";
+  Text = "This is the shareware version of Heretic.\n\nYou need to order the entire trilogy.";
+}
+
+Text {
+  ID = "MSGOFF";
+  Text = "Messages OFF";
+}
+
+Text {
+  ID = "MSGON";
+  Text = "Messages ON";
+}
+
+Text {
+  ID = "NETEND";
+  Text = "You can't end a netgame!";
+}
+
+Text {
+  ID = "ENDGAME";
+  Text = "Are you sure you want to end the game?";
+}
+
+Text {
+  ID = "DOSY";
+  Text = "(Press %1 to quit to dos.)";
+}
+
+Text {
+  ID = "DETAILHI";
+  Text = "High detail";
+}
+
+Text {
+  ID = "DETAILLO";
+  Text = "Low detail";
+}
+
+Text {
+  ID = "GAMMALVL0";
+  Text = "Gamma correction OFF";
+}
+
+Text {
+  ID = "GAMMALVL1";
+  Text = "Gamma correction level 1";
+}
+
+Text {
+  ID = "GAMMALVL2";
+  Text = "Gamma correction level 2";
+}
+
+Text {
+  ID = "GAMMALVL3";
+  Text = "Gamma correction level 3";
+}
+
+Text {
+  ID = "GAMMALVL4";
+  Text = "Gamma correction level 4";
+}
+
+Text {
+  ID = "EMPTYSTRING";
+  Text = "Empty slot";
+}
+
+Text {
+  ID = "TXT_GOTBLUEKEY";
+  Text = "Blue Key";
+}
+
+Text {
+  ID = "TXT_GOTYELLOWKEY";
+  Text = "Yellow Key";
+}
+
+Text {
+  ID = "TXT_GOTGREENKEY";
+  Text = "Green Key";
+}
+
+Text {
+  ID = "TXT_ARTIHEALTH";
+  Text = "Quartz Flask";
+}
+
+Text {
+  ID = "TXT_ARTIFLY";
+  Text = "Wings of Wrath";
+}
+
+Text {
+  ID = "TXT_ARTIINVULNERABILITY";
+  Text = "Ring of Invincibility";
+}
+
+Text {
+  ID = "TXT_ARTITOMEOFPOWER";
+  Text = "Tome of Power";
+}
+
+Text {
+  ID = "TXT_ARTIINVISIBILITY";
+  Text = "Shadowsphere";
+}
+
+Text {
+  ID = "TXT_ARTIEGG";
+  Text = "Morph Ovum";
+}
+
+Text {
+  ID = "TXT_ARTISUPERHEALTH";
+  Text = "Mystic Urn";
+}
+
+Text {
+  ID = "TXT_ARTITORCH";
+  Text = "Torch";
+}
+
+Text {
+  ID = "TXT_ARTIFIREBOMB";
+  Text = "Time Bomb of the Ancients";
+}
+
+Text {
+  ID = "TXT_ARTITELEPORT";
+  Text = "Chaos Device";
+}
+
+Text {
+  ID = "TXT_ITEMHEALTH";
+  Text = "Crystal Vial";
+}
+
+Text {
+  ID = "TXT_ITEMBAGOFHOLDING";
+  Text = "Bag of Holding";
+}
+
+Text {
+  ID = "TXT_ITEMSHIELD1";
+  Text = "Silver Shield";
+}
+
+Text {
+  ID = "TXT_ITEMSHIELD2";
+  Text = "Enchanted Shield";
+}
+
+Text {
+  ID = "TXT_ITEMSUPERMAP";
+  Text = "Map Scroll";
+}
+
+Text {
+  ID = "TXT_AMMOGOLDWAND1";
+  Text = "Wand Crystal";
+}
+
+Text {
+  ID = "TXT_AMMOGOLDWAND2";
+  Text = "Crystal Geode";
+}
+
+Text {
+  ID = "TXT_AMMOMACE1";
+  Text = "Mace Spheres";
+}
+
+Text {
+  ID = "TXT_AMMOMACE2";
+  Text = "Pile of Mace Spheres";
+}
+
+Text {
+  ID = "TXT_AMMOCROSSBOW1";
+  Text = "Ethereal Arrows";
+}
+
+Text {
+  ID = "TXT_AMMOCROSSBOW2";
+  Text = "Quiver of Ethereal Arrows";
+}
+
+Text {
+  ID = "TXT_AMMOBLASTER1";
+  Text = "Claw Orb";
+}
+
+Text {
+  ID = "TXT_AMMOBLASTER2";
+  Text = "Energy Orb";
+}
+
+Text {
+  ID = "TXT_AMMOSKULLROD1";
+  Text = "Lesser Runes";
+}
+
+Text {
+  ID = "TXT_AMMOSKULLROD2";
+  Text = "Greater Runes";
+}
+
+Text {
+  ID = "TXT_AMMOPHOENIXROD1";
+  Text = "Flame Orb";
+}
+
+Text {
+  ID = "TXT_AMMOPHOENIXROD2";
+  Text = "Inferno Orb";
+}
+
+Text {
+  ID = "TXT_WPNSTAFF";
+  Text = "Staff";
+}
+
+Text {
+  ID = "TXT_WPNWAND";
+  Text = "Crystal Wand";
+}
+
+Text {
+  ID = "TXT_WPNCROSSBOW";
+  Text = "Ethereal Crossbow";
+}
+
+Text {
+  ID = "TXT_WPNBLASTER";
+  Text = "Dragon Claw";
+}
+
+Text {
+  ID = "TXT_WPNSKULLROD";
+  Text = "Hellstaff";
+}
+
+Text {
+  ID = "TXT_WPNPHOENIXROD";
+  Text = "Phoenix Rod";
+}
+
+Text {
+  ID = "TXT_WPNMACE";
+  Text = "Firemace";
+}
+
+Text {
+  ID = "TXT_WPNGAUNTLETS";
+  Text = "Gauntlets of the Necromancer";
+}
+
+Text {
+  ID = "TXT_WPNBEAK";
+  Text = "Beak";
+}
+
+Text {
+  ID = "TXT_CHEATGODON";
+  Text = "God mode ON";
+}
+
+Text {
+  ID = "TXT_CHEATGODOFF";
+  Text = "God mode OFF";
+}
+
+Text {
+  ID = "TXT_CHEATNOCLIPON";
+  Text = "No clipping ON";
+}
+
+Text {
+  ID = "TXT_CHEATNOCLIPOFF";
+  Text = "No clipping OFF";
+}
+
+Text {
+  ID = "TXT_CHEATWEAPONS";
+  Text = "All weapons";
+}
+
+Text {
+  ID = "TXT_CHEATFLIGHTON";
+  Text = "Flight ON";
+}
+
+Text {
+  ID = "TXT_CHEATFLIGHTOFF";
+  Text = "Flight OFF";
+}
+
+Text {
+  ID = "TXT_CHEATPOWERON";
+  Text = "Power ON";
+}
+
+Text {
+  ID = "TXT_CHEATPOWEROFF";
+  Text = "Power OFF";
+}
+
+Text {
+  ID = "TXT_CHEATHEALTH";
+  Text = "Full Health";
+}
+
+Text {
+  ID = "TXT_CHEATKEYS";
+  Text = "All keys";
+}
+
+Text {
+  ID = "TXT_CHEATSOUNDON";
+  Text = "Sound debug ON";
+}
+
+Text {
+  ID = "TXT_CHEATSOUNDOFF";
+  Text = "Sound debug OFF";
+}
+
+Text {
+  ID = "TXT_CHEATTICKERON";
+  Text = "Ticker ON";
+}
+
+Text {
+  ID = "TXT_CHEATTICKEROFF";
+  Text = "Ticker OFF";
+}
+
+Text {
+  ID = "TXT_CHEATARTIFACTS1";
+  Text = "Choose an Artifact ( A - J )";
+}
+
+Text {
+  ID = "TXT_CHEATARTIFACTS2";
+  Text = "How many ( 1 - 9 )";
+}
+
+Text {
+  ID = "TXT_CHEATARTIFACTS3";
+  Text = "You got it";
+}
+
+Text {
+  ID = "TXT_CHEATARTIFACTSFAIL";
+  Text = "Bad input";
+}
+
+Text {
+  ID = "TXT_CHEATWARP";
+  Text = "Map warp";
+}
+
+Text {
+  ID = "TXT_CHEATSCREENSHOT";
+  Text = "Screenshot";
+}
+
+Text {
+  ID = "TXT_CHEATCHICKENON";
+  Text = "Chicken ON";
+}
+
+Text {
+  ID = "TXT_CHEATCHICKENOFF";
+  Text = "Chicken OFF";
+}
+
+Text {
+  ID = "TXT_CHEATMASSACRE";
+  Text = "Massacre";
+}
+
+Text {
+  ID = "TXT_CHEATIDDQD";
+  Text = "Trying to cheat, eh? Now you die!";
+}
+
+Text {
+  ID = "TXT_CHEATIDKFA";
+  Text = "Cheater - You don't deserve weapons";
+}
+
+Text {
+  ID = "TXT_NEEDBLUEKEY";
+  Text = "You need a %1 to open this door";
+}
+
+Text {
+  ID = "TXT_NEEDGREENKEY";
+  Text = "You need a %1 to open this door";
+}
+
+Text {
+  ID = "TXT_NEEDYELLOWKEY";
+  Text = "You need a %1 to open this door";
+}
+
+Text {
+  ID = "TXT_GAMESAVED";
+  Text = "Game saved";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO0";
+  Text = "No";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO1";
+  Text = "I'm ready to kick butt!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO2";
+  Text = "I'm OK.";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO3";
+  Text = "I'm not looking too good!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO4";
+  Text = "Help!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO5";
+  Text = "You suck!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO6";
+  Text = "Next time, scumbag...";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO7";
+  Text = "Come here!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO8";
+  Text = "I'll take care of it.";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO9";
+  Text = "Yes";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF1";
+  Text = "You mumble to yourself";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF2";
+  Text = "Who's there?";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF3";
+  Text = "You scare yourself";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF4";
+  Text = "You start to rave";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF5";
+  Text = "You've lost it...";
+}
+
+Text {
+  ID = "HUSTR_MESSAGESENT";
+  Text = "[Message Sent]";
+}
+
+Text {
+  ID = "HUSTR_PLRGREEN";
+  Text = "Green: ";
+}
+
+Text {
+  ID = "HUSTR_PLRINDIGO";
+  Text = "Indigo: ";
+}
+
+Text {
+  ID = "HUSTR_PLRBROWN";
+  Text = "Brown: ";
+}
+
+Text {
+  ID = "HUSTR_PLRRED";
+  Text = "Red: ";
+}
+
+Text {
+  ID = "AMSTR_FOLLOWON";
+  Text = "Follow mode ON";
+}
+
+Text {
+  ID = "AMSTR_FOLLOWOFF";
+  Text = "Follow mode OFF";
+}
+
+Text {
+  ID = "AMSTR_GRIDON";
+  Text = "Grid ON";
+}
+
+Text {
+  ID = "AMSTR_GRIDOFF";
+  Text = "Grid OFF";
+}
+
+Text {
+  ID = "AMSTR_MARKEDSPOT";
+  Text = "Marked spot";
+}
+
+Text {
+  ID = "AMSTR_MARKSCLEARED";
+  Text = "All marks cleared";
+}
+
+Text {
+  ID = "STSTR_DQDON";
+  Text = "Degreelessness mode On";
+}
+
+Text {
+  ID = "STSTR_DQDOFF";
+  Text = "Degreelessness mode Off";
+}
+
+Text {
+  ID = "STSTR_KFAADDED";
+  Text = "Very Happy Ammo added";
+}
+
+Text {
+  ID = "STSTR_NCON";
+  Text = "No clipping mode ON";
+}
+
+Text {
+  ID = "STSTR_NCOFF";
+  Text = "No clipping mode OFF";
+}
+
+Text {
+  ID = "STSTR_BEHOLD";
+  Text = "inVuln, Str, Inviso, Rad, Allmap, or Lite-amp";
+}
+
+Text {
+  ID = "STSTR_BEHOLDX";
+  Text = "Power-up toggled";
+}
+
+Text {
+  ID = "STSTR_CHOPPERS";
+  Text = "... doesn't suck - GM";
+}
+
+Text {
+  ID = "STSTR_CLEV";
+  Text = "Changing map...";
+}
+
+# These episode end messages are obsolete, see Finales.ded.
+Text {
+  ID = "E1TEXT";
+  Text = "With the destruction of the Iron\n
+    Liches and their minions, the last\n
+    of the undead are cleared from this\n
+    plane of existence.\n\n
+    Those creatures had to come from\n
+    somewhere, though, and you have the\n
+    sneaky suspicion that the fiery\n
+    portal of Hell's maw opens onto\n
+    their home dimension.\n\n
+    To make sure that more undead\n
+    (or even worse things) don't come\n
+    through, you'll have to seal Hell's\n
+    maw from the other side. Of course\n
+    this means you may get stuck in a\n
+    very unfriendly world, but no one\n
+    ever said being a Heretic was easy!";
+}
+
+# These episode end messages are obsolete, see Finales.ded.
+Text {
+  ID = "E2TEXT";
+  Text = "The mighty Maulotaurs have proved\n
+    to be no match for you, and as\n
+    their steaming corpses slide to the\n
+    ground you feel a sense of grim\n
+    satisfaction that they have been\n
+    destroyed.\n\n
+    The gateways which they guarded\n
+    have opened, revealing what you\n
+    hope is the way home. but as you\n
+    step through, mocking laughter\n
+    rings in your ears.\n\n
+    Was some other force controlling\n
+    the Maulotaurs? Could there be even\n
+    more horrific beings through this\n
+    gate? The sweep of a crystal dome\n
+    overhead where the sky should be is\n
+    certainly not a good sign...";
+}
+
+# These episode end messages are obsolete, see Finales.ded.
+Text {
+  ID = "E3TEXT";
+  Text = "The death of D'Sparil has loosed\n
+    the magical bonds holding his\n
+    creatures on this plane, their\n
+    dying screams overwhelming his own\n
+    cries of agony.\n\n
+    Your oath of vengeance fulfilled,\n
+    you enter the portal to your own\n
+    world, mere moments before the dome\n
+    shatters into a million pieces.\n\n
+    But if D'Sparil's power is broken\n
+    forever, why don't you feel safe?\n
+    Was it that last shout just before\n
+    his death, the one that sounded\n
+    like a curse? Or a summoning? You\n
+    can't really be sure, but it might\n
+    just have been a scream.\n\n
+    Then again, what about the other\n
+    Serpent Riders?";
+}
+
+# These episode end messages are obsolete, see Finales.ded.
+Text {
+  ID = "E4TEXT";
+  Text = "You thought you would return to your\n
+    own world after D'Sparil died but\n
+    his final act banished you to his\n
+    own plane. Here you entered the\n
+    shattered remnants of lands\n
+    conquered by D'Sparil. You defeated\n
+    the last guardians of these lands,\n
+    but now you stand before the gates\n
+    to D'Sparil's stronghold. Until this\n
+    moment you had no doubts about your\n
+    ability to face anything you might\n
+    encounter but beyond this portal\n
+    lies the very heart of the evil\n
+    which invaded your world. D'Sparil\n
+    might be dead, but the pit where he\n
+    was spawned remains. Now you must\n
+    enter that pit in the hopes of\n
+    finding a way out and somewhere,\n
+    in the darkest corner of D'Sparil's\n
+    demesne, his personal bodyguards\n
+    await your arrival...";
+}
+
+# These episode end messages are obsolete, see Finales.ded.
+Text {
+  ID = "E5TEXT";
+  Text = "As the final Maulotaur bellows his\n
+    death-agony, you realize that you\n
+    have never come so close to your own\n
+    destruction. Not even the fight with\n
+    D'Sparil and his Disciples had been\n
+    this desperate. Grimly you stare at\n
+    the gates which open before you,\n
+    wondering if they lead home, or if\n
+    they open onto some undreamed-of\n
+    horror. You find yourself wondering\n
+    if you have the strength to go on,\n
+    if nothing but death and pain await\n
+    you. But what else can you do, if\n
+    the will to fight is gone? Can you\n
+    force yourself to continue in the\n
+    face of such despair? Do you have\n
+    the courage? You find, in the end,\n
+    that it is not within you to\n
+    surrender without a fight. Eyes\n
+    wide, you go to meet your fate.";
+}
+
+Text {
+  ID = "LOADMISSING";
+  Text = "You weren't in the server's savegame.";
+}
+
+Text {
+  ID = "EPISODE1";
+  Text = "City Of The Damned";
+}
+
+Text {
+  ID = "EPISODE2";
+  Text = "Hell's Maw";
+}
+
+Text {
+  ID = "EPISODE3";
+  Text = "The Dome Of D'Sparil";
+}
+
+Text {
+  ID = "EPISODE4";
+  Text = "The Ossuary";
+}
+
+Text {
+  ID = "EPISODE5";
+  Text = "The Stagnant Demesne";
+}
+
+Text {
+  ID = "EPISODE6";
+  Text = "Fate's Path";
+}
+
+Text {
+  ID = "AMSTR_ROTATEON";
+  Text = "Rotate mode ON";
+}
+
+Text {
+  ID = "AMSTR_ROTATEOFF";
+  Text = "Rotate mode OFF";
+}
+
+Text {
+  ID = "SKILL1";
+  Text = "Thou needeth a wet-nurse";
+}
+
+Text {
+  ID = "SKILL2";
+  Text = "Yellowbellies-r-us";
+}
+
+Text {
+  ID = "SKILL3";
+  Text = "Bringest them oneth";
+}
+
+Text {
+  ID = "SKILL4";
+  Text = "Thou art a smite-meister";
+}
+
+Text {
+  ID = "SKILL5";
+  Text = "Black Plague possesses thee";
+}
+
+Text {
+  ID = "KEY1";
+  Text = "Yellow Key";
+}
+
+Text {
+  ID = "KEY2";
+  Text = "Green Key";
+}
+
+Text {
+  ID = "KEY3";
+  Text = "Blue Key";
+}
+
+Text {
+  ID = "SAVEOUTMAP";
+  Text = "You can't save if you aren't in a map!";
+}
+
+Text {
+  ID = "ENDNOGAME";
+  Text = "You can't end a game that hasn't even begun!";
+}
+
+Text {
+  ID = "SUICIDEOUTMAP";
+  Text = "You can't suicide if you aren't in a map!";
+}
+
+Text {
+  ID = "SUICIDEASK";
+  Text = "Are you sure you want to suicide?";
+}
+
+Text {
+  ID = "PICKGAMETYPE";
+  Text = "Choose game type";
+}
+
+Text {
+  ID = "SINGLEPLAYER";
+  Text = "Singleplayer";
+}
+
+Text {
+  ID = "MULTIPLAYER";
+  Text = "Multiplayer";
+}
+
+Text {
+  ID = "NOTDESIGNEDFOR";
+  Text = "Not designed for %1.";
+}
+
+Text {
+  ID = "GAMESETUP";
+  Text = "Game Setup";
+}
+
+Text {
+  ID = "PLAYERSETUP";
+  Text = "Player Setup";
+}
+
+Text {
+  ID = "DISCONNECT";
+  Text = "Really disconnect?";
+}
+
+Text {
+  ID = "HUSTR_E1M1";
+  Text = "E1M1: The Docks";
+}
+
+Text {
+  ID = "HUSTR_E1M2";
+  Text = "E1M2: The Dungeons";
+}
+
+Text {
+  ID = "HUSTR_E1M3";
+  Text = "E1M3: The Gatehouse";
+}
+
+Text {
+  ID = "HUSTR_E1M4";
+  Text = "E1M4: The Guard Tower";
+}
+
+Text {
+  ID = "HUSTR_E1M5";
+  Text = "E1M5: The Citadel";
+}
+
+Text {
+  ID = "HUSTR_E1M6";
+  Text = "E1M6: The Cathedral";
+}
+
+Text {
+  ID = "HUSTR_E1M7";
+  Text = "E1M7: The Crypts";
+}
+
+Text {
+  ID = "HUSTR_E1M8";
+  Text = "E1M8: Hell's Maw";
+}
+
+Text {
+  ID = "HUSTR_E1M9";
+  Text = "E1M9: The Graveyard";
+}
+
+Text {
+  ID = "HUSTR_E2M1";
+  Text = "E2M1: The Crater";
+}
+
+Text {
+  ID = "HUSTR_E2M2";
+  Text = "E2M2: The Lava Pits";
+}
+
+Text {
+  ID = "HUSTR_E2M3";
+  Text = "E2M3: The River of Fire";
+}
+
+Text {
+  ID = "HUSTR_E2M4";
+  Text = "E2M4: The Ice Grotto";
+}
+
+Text {
+  ID = "HUSTR_E2M5";
+  Text = "E2M5: The Catacombs";
+}
+
+Text {
+  ID = "HUSTR_E2M6";
+  Text = "E2M6: The Labyrinth";
+}
+
+Text {
+  ID = "HUSTR_E2M7";
+  Text = "E2M7: The Great Hall";
+}
+
+Text {
+  ID = "HUSTR_E2M8";
+  Text = "E2M8: The Portals of Chaos";
+}
+
+Text {
+  ID = "HUSTR_E2M9";
+  Text = "E2M9: The Glacier";
+}
+
+Text {
+  ID = "HUSTR_E3M1";
+  Text = "E3M1: The Storehouse";
+}
+
+Text {
+  ID = "HUSTR_E3M2";
+  Text = "E3M2: The Cesspool";
+}
+
+Text {
+  ID = "HUSTR_E3M3";
+  Text = "E3M3: The Confluence";
+}
+
+Text {
+  ID = "HUSTR_E3M4";
+  Text = "E3M4: The Azure Fortress";
+}
+
+Text {
+  ID = "HUSTR_E3M5";
+  Text = "E3M5: The Ophidian Lair";
+}
+
+Text {
+  ID = "HUSTR_E3M6";
+  Text = "E3M6: The Halls of Fear";
+}
+
+Text {
+  ID = "HUSTR_E3M7";
+  Text = "E3M7: The Chasm";
+}
+
+Text {
+  ID = "HUSTR_E3M8";
+  Text = "E3M8: D'Sparil's Keep";
+}
+
+Text {
+  ID = "HUSTR_E3M9";
+  Text = "E3M9: The Aquifer";
+}
+
+Text {
+  ID = "HUSTR_E4M1";
+  Text = "E4M1: Catafalque";
+}
+
+Text {
+  ID = "HUSTR_E4M2";
+  Text = "E4M2: Blockhouse";
+}
+
+Text {
+  ID = "HUSTR_E4M3";
+  Text = "E4M3: Ambulatory";
+}
+
+Text {
+  ID = "HUSTR_E4M4";
+  Text = "E4M4: Sepulcher";
+}
+
+Text {
+  ID = "HUSTR_E4M5";
+  Text = "E4M5: Great Stair";
+}
+
+Text {
+  ID = "HUSTR_E4M6";
+  Text = "E4M6: Halls of the Apostate";
+}
+
+Text {
+  ID = "HUSTR_E4M7";
+  Text = "E4M7: Ramparts of Perdition";
+}
+
+Text {
+  ID = "HUSTR_E4M8";
+  Text = "E4M8: Shattered Bridge";
+}
+
+Text {
+  ID = "HUSTR_E4M9";
+  Text = "E4M9: Mausoleum";
+}
+
+Text {
+  ID = "HUSTR_E5M1";
+  Text = "E5M1: Ochre Cliffs";
+}
+
+Text {
+  ID = "HUSTR_E5M2";
+  Text = "E5M2: Rapids";
+}
+
+Text {
+  ID = "HUSTR_E5M3";
+  Text = "E5M3: Quay";
+}
+
+Text {
+  ID = "HUSTR_E5M4";
+  Text = "E5M4: Courtyard";
+}
+
+Text {
+  ID = "HUSTR_E5M5";
+  Text = "E5M5: Hydratyr";
+}
+
+Text {
+  ID = "HUSTR_E5M6";
+  Text = "E5M6: Colonnade";
+}
+
+Text {
+  ID = "HUSTR_E5M7";
+  Text = "E5M7: Foetid Manse";
+}
+
+Text {
+  ID = "HUSTR_E5M8";
+  Text = "E5M8: Field of Judgement";
+}
+
+Text {
+  ID = "HUSTR_E5M9";
+  Text = "E5M9: Skein of D'Sparil";
+}
+
+Text {
+  ID = "HUSTR_E6M1";
+  Text = "E6M1: Raven's Lair";
+}
+
+Text {
+  ID = "HUSTR_E6M2";
+  Text = "E6M2: Water Shrine";
+}
+
+Text {
+  ID = "HUSTR_E6M3";
+  Text = "E6M3: American's Legacy";
+}
+
+Text {
+  ID = "DELETESAVEGAME_CONFIRM";
+  Text = "Really delete save game\n\n'%s'?";
+}
+
+Text {
+  ID = "REBORNLOAD_CONFIRM";
+  Text = "Load save game\n\n'%s'?\n\n(No to restart map)";
+}

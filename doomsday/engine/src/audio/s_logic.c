@@ -145,7 +145,7 @@ void Sfx_DestroyLogical(logicsound_t * node)
 void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
 {
     logicsound_t *node;
-    uint    length = (isRepeating ? 1 : Sfx_GetSoundLength(id));
+    uint length = (isRepeating ? 1 : Sfx_GetSoundLength(id));
 
     if(!length)
     {

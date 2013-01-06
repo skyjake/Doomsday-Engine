@@ -103,7 +103,7 @@ void G_MangleState(void)
 {
     int                 i;
 
-    DD_IterateThinkers(P_MobjThinker, mangleMobj, NULL);
+    Thinker_Iterate(P_MobjThinker, mangleMobj, NULL);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -120,7 +120,7 @@ void G_RestoreState(void)
 {
     int                 i;
 
-    DD_IterateThinkers(P_MobjThinker, restoreMobj, NULL);
+    Thinker_Iterate(P_MobjThinker, restoreMobj, NULL);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {

@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -179,6 +179,20 @@ struct Reader::Instance
             markedData.clear();
             marking = false;
         }
+    }
+
+    bool atEnd()
+    {
+        if(source)
+        {
+            return offset == source->size();
+        }
+        if(stream || constStream)
+        {
+            update();
+            return incoming.size() > 0;
+        }
+        return true;
     }
 };
 
@@ -360,15 +374,41 @@ Reader &Reader::readUntil(IByteArray &byteArray, IByteArray::Byte delimiter)
     int pos = 0;
     IByteArray::Byte b = 0;
     do {
+        if(atEnd()) break;
         *this >> b;
         byteArray.set(pos++, &b, 1);
     } while(b != delimiter);
     return *this;
 }
 
+Reader &Reader::readLine(String &string)
+{
+    string.clear();
+
+    Block utf;
+    readUntil(utf, '\n');
+
+    string = String::fromUtf8(utf);
+    string.replace("\r", ""); // strip carriage returns
+
+    return *this;
+}
+
+String Reader::readLine()
+{
+    String s;
+    readLine(s);
+    return s;
+}
+
 IByteArray const *Reader::source() const
 {
     return d->source;
+}
+
+bool Reader::atEnd() const
+{
+    return d->atEnd();
 }
 
 IByteArray::Offset Reader::offset() const

@@ -49,7 +49,7 @@
 #include "hu_inventory.h"
 #endif
 #include "r_common.h"
-#include "materialarchive.h"
+#include "api_materialarchive.h"
 #include "p_savedef.h"
 
 #define MAX_HUB_MAPS        99
@@ -77,7 +77,7 @@ typedef struct playerheader_s {
 
 typedef struct thinkerinfo_s {
     thinkerclass_t  thinkclass;
-    think_t         function;
+    thinkfunc_t         function;
     int             flags;
     void          (*Write) ();
     int           (*Read) ();
@@ -958,7 +958,7 @@ static uint SV_InitThingArchive(boolean load, boolean savePlayers)
     else
     {
         // Count the number of mobjs we'll be writing.
-        DD_IterateThinkers(P_MobjThinker, countMobjs, &params);
+        Thinker_Iterate(P_MobjThinker, countMobjs, &params);
     }
 
     thingArchive = calloc(params.count, sizeof(mobj_t*));
@@ -2949,7 +2949,7 @@ static void P_UnArchiveWorld(void)
 #endif
     {
         Reader* svReader = SV_NewReader();
-        MaterialArchive_Read(materialArchive, matArchiveVer, svReader);
+        MaterialArchive_Read(materialArchive, svReader, matArchiveVer);
         Reader_Delete(svReader);
     }
 
@@ -3010,7 +3010,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
         if(hdr->version == 5)
         {
             if(!SV_ReadByte())
-                DD_ThinkerSetStasis(&ceiling->thinker, true);
+                Thinker_SetStasis(&ceiling->thinker, true);
         }
 #endif
 
@@ -3077,7 +3077,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
         ceiling->thinker.function = T_MoveCeiling;
 #if !__JHEXEN__
         if(!junk.function)
-            DD_ThinkerSetStasis(&ceiling->thinker, true);
+            Thinker_SetStasis(&ceiling->thinker, true);
 #endif
     }
 
@@ -3360,7 +3360,7 @@ static int SV_ReadPlat(plat_t *plat)
         if(hdr->version == 5)
         {
         if(!SV_ReadByte())
-            DD_ThinkerSetStasis(&plat->thinker, true);
+            Thinker_SetStasis(&plat->thinker, true);
         }
 #endif
 
@@ -3415,7 +3415,7 @@ static int SV_ReadPlat(plat_t *plat)
         plat->thinker.function = T_PlatRaise;
 #if !__JHEXEN__
         if(!junk.function)
-            DD_ThinkerSetStasis(&plat->thinker, true);
+            Thinker_SetStasis(&plat->thinker, true);
 #endif
     }
 
@@ -4325,7 +4325,7 @@ static void P_ArchiveThinkers(boolean savePlayers)
 #endif
 
     // Save off the current thinkers.
-    DD_IterateThinkers(NULL, archiveThinker, &localSavePlayers);
+    Thinker_Iterate(NULL, archiveThinker, &localSavePlayers);
 
     // Add a terminating marker.
     SV_WriteByte(TC_END);
@@ -4454,7 +4454,7 @@ static void rebuildCorpseQueue(void)
 {
     P_InitCorpseQueue();
     // Search the thinker list for corpses and place them in the queue.
-    DD_IterateThinkers(P_MobjThinker, rebuildCorpseQueueWorker, NULL/*no params*/);
+    Thinker_Iterate(P_MobjThinker, rebuildCorpseQueueWorker, NULL/*no params*/);
 }
 #endif
 
@@ -4479,8 +4479,8 @@ static void P_UnArchiveThinkers(void)
     if(IS_SERVER)
 #endif
     {
-        DD_IterateThinkers(NULL, removeThinker, NULL);
-        DD_InitThinkers();
+        Thinker_Iterate(NULL, removeThinker, NULL);
+        Thinker_Init();
     }
 
 #if __JHEXEN__
@@ -4601,18 +4601,18 @@ static void P_UnArchiveThinkers(void)
                       tClass);
 
         if(knownThinker)
-            DD_ThinkerAdd(th);
+            Thinker_Add(th);
         if(inStasis)
-            DD_ThinkerSetStasis(th, true);
+            Thinker_SetStasis(th, true);
     }
 
     // Update references to things.
 #if __JHEXEN__
-    DD_IterateThinkers(P_MobjThinker, restoreMobjLinks, NULL);
+    Thinker_Iterate(P_MobjThinker, restoreMobjLinks, NULL);
 #else
     if(IS_SERVER)
     {
-        DD_IterateThinkers(P_MobjThinker, restoreMobjLinks, NULL);
+        Thinker_Iterate(P_MobjThinker, restoreMobjLinks, NULL);
 
         for(i = 0; i < numlines; ++i)
         {

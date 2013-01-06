@@ -31,41 +31,71 @@
 namespace de {
 
     /**
-     * @em Patch is a raster graphic image in the id Tech 1 picture format (Doom).
+     * @em Patch is a raster image in the id Tech 1 picture format (Doom).
      * @ingroup resource
      *
      * @see http://doomwiki.org/wiki/Picture_format
+     *
+     * @note The height dimension value as declared in the patch header may
+     * well differ to the actual height of the composited image. This is the
+     * reason why map drawing in the id tech 1 software renderer can be seen
+     * to "overdraw" posts - the wall column drawer is working with post pixel
+     * ranges rather than the "logical" height declared in the header.
      */
     class Patch
     {
     public:
         /**
-         * Serialized format header.
+         * Metadata which describes the patch.
          */
-        struct Header : public IReadable
+        struct Metadata
         {
             /// Dimensions of the patch in pixels.
             QSize dimensions;
 
-            /// World origin offset (top left) in map coordinate space units.
-            /// Used with sprite frames to orient the patch relatively to a Mobj.
-            QPoint origin;
+            /// Logical dimensions of the patch in pixels (@see Patch notes).
+            QSize logicalDimensions;
 
-            /// Implements IReadable.
-            void operator << (Reader &from);
+            /// Origin offset (top left) in world coordinate space units.
+            /// Used for various purposes depending on context.
+            QPoint origin;
         };
+
+        /**
+         * Flags for @ref load()
+         */
+        enum Flag
+        {
+            /// If the color of a pixel uses index #0 write the default color
+            /// (black) as the color value and set the alpha to zero.
+            MaskZero                = 0x1,
+
+            /// Clip the composited image to the logical dimensions of the patch
+            /// ; otherwise perform no clipping (use the pixel dimensions).
+            ClipToLogicalDimensions = 0x2
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
 
     public:
         /**
-         * @param data  Ptr to the data buffer to draw to the dst buffer.
+         * Attempt to read metadata from @a data.
+         * @param data      Data to read metadata from.
+         */
+        static Metadata loadMetadata(IByteArray const &data);
+
+        /**
+         * Attempt to interpret @a data as a Patch.
+         * @param data      Data to interpret as a Patch.
+         * @param flags     Flags determining how the data should be interpreted.
+         */
+        static Block load(IByteArray const &data, Flags = 0);
+
+        /**
+         * @copydoc load()
          * @param xlatTable  If not @c NULL, use this translation table when
          *                   compositing final color palette indices.
-         * @param maskZero  Used with sky textures.
          */
-        static Block load(IByteArray const &data, bool maskZero = false);
-
-        static Block load(IByteArray const &data, IByteArray const &xlatTable,
-                          bool maskZero = false);
+        static Block load(IByteArray const &data, IByteArray const &xlatTable, Flags = 0);
 
         /**
          * Determines whether @a data looks like it can be interpreted as a Patch.
@@ -76,6 +106,8 @@ namespace de {
          */
         static bool recognize(IByteArray const &data);
     };
+
+    Q_DECLARE_OPERATORS_FOR_FLAGS(Patch::Flags)
 
 } // namespace de
 

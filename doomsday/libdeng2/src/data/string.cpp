@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -365,7 +365,7 @@ dint String::compareWithCase(QChar const *a, QChar const *b, dsize count)
     return QString(a, count).compare(QString(b, count), Qt::CaseSensitive);
 }
 
-void String::skipSpace(String::const_iterator &i, const String::const_iterator &end)
+void String::skipSpace(String::const_iterator &i, String::const_iterator const &end)
 {
     while(i != end && (*i).isSpace()) ++i;
 }
@@ -397,7 +397,7 @@ dint String::toInt(bool *ok, int base, IntConversionFlags flags) const
     return token.QString::toInt(ok, base);
 }
 
-void String::advanceFormat(String::const_iterator &i, const String::const_iterator &end)
+void String::advanceFormat(String::const_iterator &i, String::const_iterator const &end)
 {
     ++i;
     if(i == end)
@@ -408,7 +408,8 @@ void String::advanceFormat(String::const_iterator &i, const String::const_iterat
 }
 
 String String::patternFormat(String::const_iterator &formatIter, 
-    const String::const_iterator &formatEnd, IPatternArg const &arg)
+                             String::const_iterator const &formatEnd,
+                             IPatternArg const &arg)
 {
     advanceFormat(formatIter, formatEnd);
 

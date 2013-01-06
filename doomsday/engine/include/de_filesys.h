@@ -24,8 +24,8 @@
 #define LIBDENG_FILESYS_H
 
 #include "dd_types.h"
-
 #include "resourceclass.h"
+#include "filehandle.h"
 #include "filetype.h"
 
 #include "filesys/filehandlebuilder.h"
@@ -34,10 +34,9 @@
 #include "filesys/lumpindex.h"
 #include "filesys/manifest.h"
 #include "filesys/sys_direc.h"
-#include "filesys/sys_findfile.h"
 
-#ifdef UNIX
-#  include "unix/sys_path.h"
-#endif
+#include "api_filesys.h"
+
+#include <de/findfile.h>
 
 #endif /* LIBDENG_FILESYS_H */

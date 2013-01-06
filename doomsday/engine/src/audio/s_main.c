@@ -32,6 +32,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_SOUND
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_network.h"
@@ -42,6 +44,7 @@
 #include "de_defs.h"
 
 #include "audio/sys_audio.h"
+#include "map/p_players.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -74,6 +77,11 @@ int soundMaxDist = 2025;
 // when there are changes.
 int sfxVolume = 255, musVolume = 255;
 
+int sfxBits = 8;
+int sfxRate = 11025;
+
+byte sfxOneSoundPerEmitter = false; // Traditional Doomsday behavior: allows sounds to overlap.
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean noRndPitch;
@@ -82,24 +90,29 @@ static boolean noRndPitch;
 
 static void S_ReverbVolumeChanged(void)
 {
+#ifdef __CLIENT__
     Sfx_UpdateReverb();
+#endif
 }
 
 void S_Register(void)
 {
+    C_VAR_BYTE("sound-overlap-stop", &sfxOneSoundPerEmitter, 0, 0, 1);
+
+#ifdef __CLIENT__
     // Cvars
     C_VAR_INT("sound-volume", &sfxVolume, 0, 0, 255);
     C_VAR_INT("sound-info", &showSoundInfo, 0, 0, 1);
     C_VAR_INT("sound-rate", &sfxSampleRate, 0, 11025, 44100);
     C_VAR_INT("sound-16bit", &sfx16Bit, 0, 0, 1);
     C_VAR_INT("sound-3d", &sfx3D, 0, 0, 1);
-    C_VAR_BYTE("sound-overlap-stop", &sfxOneSoundPerEmitter, 0, 0, 1);
     C_VAR_FLOAT2("sound-reverb-volume", &sfxReverbStrength, 0, 0, 10, S_ReverbVolumeChanged);
 
     // Ccmds
     C_CMD_FLAGS("playsound", NULL, PlaySound, CMDF_NO_DEDICATED);
 
     Mus_Register();
+#endif
 }
 
 /**
@@ -109,20 +122,23 @@ void S_Register(void)
  */
 boolean S_Init(void)
 {
-    boolean ok = false, sfxOK, musOK;
+#ifdef __CLIENT__
+    boolean sfxOK, musOK;
+#endif
 
     if(CommandLine_Exists("-nosound") || CommandLine_Exists("-noaudio"))
         return true;
 
+    // Disable random pitch changes?
+    noRndPitch = CommandLine_Exists("-norndpitch");
+
+#ifdef __CLIENT__
     // Try to load the audio driver plugin(s).
     if(!AudioDriver_Init())
     {
         Con_Message("Music and Sound Effects disabled.\n");
         return false;
     }
-
-    // Disable random pitch changes?
-    noRndPitch = CommandLine_Exists("-norndpitch");
 
     sfxOK = Sfx_Init();
     musOK = Mus_Init();
@@ -132,6 +148,8 @@ boolean S_Init(void)
         Con_Message("Errors during audio subsystem initialization.\n");
         return false;
     }
+#endif
+
     return true;
 }
 
@@ -140,11 +158,13 @@ boolean S_Init(void)
  */
 void S_Shutdown(void)
 {
+#ifdef __CLIENT__
     Sfx_Shutdown();
     Mus_Shutdown();
 
     // Finally, close the audio driver.
     AudioDriver_Shutdown();
+#endif
 }
 
 /**
@@ -155,14 +175,19 @@ void S_MapChange(void)
     // Stop everything in the LSM.
     Sfx_InitLogical();
 
+#ifdef __CLIENT__
     Sfx_MapChange();
+#endif
+
     S_ResetReverb();
 }
 
 void S_SetupForChangedMap(void)
 {
+#ifdef __CLIENT__
     // Update who is listening now.
     Sfx_SetListener(S_GetListenerMobj());
+#endif
 }
 
 /**
@@ -170,8 +195,10 @@ void S_SetupForChangedMap(void)
  */
 void S_Reset(void)
 {
+#ifdef __CLIENT__
     Sfx_Reset();
-    S_StopMusic();
+#endif
+    _api_S.StopMusic();
     S_ResetReverb();
 }
 
@@ -189,6 +216,7 @@ void S_StartFrame(void)
 
 BEGIN_PROF( PROF_SOUND_STARTFRAME );
 
+#ifdef __CLIENT__
     if(musVolume != oldMusVolume)
     {
         oldMusVolume = musVolume;
@@ -196,9 +224,9 @@ BEGIN_PROF( PROF_SOUND_STARTFRAME );
     }
 
     // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
-
     Sfx_StartFrame();
     Mus_StartFrame();
+#endif
 
     // Remove stopped sounds from the LSM.
     Sfx_PurgeLogical();
@@ -208,7 +236,9 @@ END_PROF( PROF_SOUND_STARTFRAME );
 
 void S_EndFrame(void)
 {
+#ifdef __CLIENT__
     Sfx_EndFrame();
+#endif
 }
 
 /**
@@ -282,6 +312,8 @@ boolean S_IsRepeating(int idFlags)
 int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
                              coord_t* point, float volume)
 {
+#ifdef __CLIENT__
+
     int                 soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
     sfxsample_t*        sample;
     sfxinfo_t*          info;
@@ -333,7 +365,6 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
                     ("S_LocalSoundAtVolumeFrom: Sound %i " "caching failed.\n",
                      soundId));
         }
-
         return false;
     }
 
@@ -364,6 +395,9 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
                        | ((info->flags & SF_DONT_STOP) ? SF_DONT_STOP : 0));
 
     return result;
+#else
+    return false;
+#endif
 }
 
 /**
@@ -478,7 +512,7 @@ static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flag
     // Are we stopping with this sector's emitter?
     if(flags & SSF_SECTOR)
     {
-        S_StopSound(soundID, (mobj_t*)sectorEmitter);
+        _api_S.StopSound(soundID, (mobj_t*)sectorEmitter);
     }
 
     // Are we stopping with linked emitters?
@@ -489,15 +523,17 @@ static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flag
     while((base = (ddmobj_base_t*)base->thinker.next))
     {
         // Stop sounds from this emitter.
-        S_StopSound(soundID, (mobj_t*)base);
+        _api_S.StopSound(soundID, (mobj_t*)base);
     }
 }
 
 void S_StopSound(int soundID, mobj_t* emitter)
 {
+#ifdef __CLIENT__
     // No special stop behavior.
     // Sfx provides a routine for this.
     Sfx_StopSound(soundID, emitter);
+#endif
 
     // Notify the LSM.
     if(Sfx_StopLogical(soundID, emitter))
@@ -555,6 +591,8 @@ int S_IsPlaying(int soundID, mobj_t* emitter)
  */
 int S_StartMusicNum(int id, boolean looped)
 {
+#ifdef __CLIENT__
+
     ded_music_t*        def;
 
     if(id < 0 || id >= defs.count.music.num)
@@ -569,6 +607,10 @@ int S_StartMusicNum(int id, boolean looped)
     VERBOSE( Con_Message("Starting music '%s'...\n", def->id) )
 
     return Mus_Start(def, looped);
+
+#else
+    return false;
+#endif
 }
 
 /**
@@ -590,7 +632,9 @@ int S_StartMusic(const char* musicID, boolean looped)
  */
 void S_StopMusic(void)
 {
+#ifdef __CLIENT__
     Mus_Stop();
+#endif
 }
 
 /**
@@ -598,7 +642,9 @@ void S_StopMusic(void)
  */
 void S_PauseMusic(boolean paused)
 {
+#ifdef __CLIENT__
     Mus_Pause(paused);
+#endif
 }
 
 /**
@@ -606,6 +652,7 @@ void S_PauseMusic(boolean paused)
  */
 void S_Drawer(void)
 {
+#ifdef __CLIENT__
     if(!showSoundInfo) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -622,6 +669,7 @@ void S_Drawer(void)
     // Back to the original.
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
+#endif // __CLIENT__
 }
 
 /**
@@ -678,3 +726,24 @@ D_CMD(PlaySound)
 
     return true;
 }
+
+DENG_DECLARE_API(S) =
+{
+    { DE_API_SOUND },
+    S_MapChange,
+    S_LocalSoundAtVolumeFrom,
+    S_LocalSoundAtVolume,
+    S_LocalSound,
+    S_LocalSoundFrom,
+    S_StartSound,
+    S_StartSoundEx,
+    S_StartSoundAtVolume,
+    S_ConsoleSound,
+    S_StopSound2,
+    S_StopSound,
+    S_IsPlaying,
+    S_StartMusic,
+    S_StartMusicNum,
+    S_StopMusic,
+    S_PauseMusic
+};

@@ -32,34 +32,14 @@
  */
 void P_PolyobjCallback(struct mobj_s* mobj, LineDef* lineDef, Polyobj* polyobj);
 
-/**
- * The po_callback is called when a polyobj hits a mobj.
- */
-void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
-
 void P_PolyobjChanged(Polyobj* po);
 
 /**
- * Lookup a Polyobj on the current map by unique ID.
+ * Lookup a Polyobj on the current map by the base mobj.
  *
- * @param id  Unique identifier of the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
- */
-Polyobj* P_PolyobjByID(uint id);
-
-/**
- * Lookup a Polyobj on the current map by tag.
+ * @param ddMobjBase  Base mobj to look for.
  *
- * @param tag  Tag associated with the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
- */
-Polyobj* P_PolyobjByTag(int tag);
-
-/**
- * Lookup a Polyobj on the current map by origin.
- *
- * @param tag  Tag associated with the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
+ * @return  Found Polyobj instance, or @c NULL.
  */
 Polyobj* P_PolyobjByBase(void* ddMobjBase);
 
@@ -67,23 +47,5 @@ Polyobj* P_PolyobjByBase(void* ddMobjBase);
  * Translate the origin of @a polyobj in the map coordinate space.
  */
 boolean P_PolyobjMove(Polyobj* polyobj, coord_t xy[]);
-boolean P_PolyobjMoveXY(Polyobj* polyobj, coord_t x, coord_t y);
-
-/**
- * Rotate @a polyobj in the map coordinate space.
- */
-boolean P_PolyobjRotate(Polyobj* polyobj, angle_t angle);
-
-/**
- * Link @a polyobj to the current map. To be called after moving, rotating
- * or any other translation of the Polyobj within the map.
- */
-void P_PolyobjLink(Polyobj* polyobj);
-
-/**
- * Unlink @a polyobj from the current map. To be called prior to moving,
- * rotating or any other translation of the Polyobj within the map.
- */
-void P_PolyobjUnlink(Polyobj* polyobj);
 
 #endif /// LIBDENG_P_POLYOBJS_H

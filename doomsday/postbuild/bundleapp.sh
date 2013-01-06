@@ -23,22 +23,25 @@ echo "Bundle directory: $APPDIR"
 echo "Clearing existing bundles..."
 rm -rf $BUILDDIR/*.bundle
 
+echo "Copying server..."
+$CP server/doomsday-server $APPDIR/Resources
+
 echo "Copying bundles from plugins..."
 PLUGDIR=$APPDIR/DengPlugins
 rm -rf $PLUGDIR
 mkdir -p $PLUGDIR
 $CP plugins/dehread/dehread.bundle                 $PLUGDIR/
 $CP plugins/wadmapconverter/wadmapconverter.bundle $PLUGDIR/
-$CP plugins/jdoom/doom.bundle                      $PLUGDIR/
-$CP plugins/jheretic/heretic.bundle                $PLUGDIR/
-$CP plugins/jhexen/hexen.bundle                    $PLUGDIR/
-$CP plugins/jdoom64/doom64.bundle                  $PLUGDIR/
+$CP plugins/doom/doom.bundle                       $PLUGDIR/
+$CP plugins/heretic/heretic.bundle                 $PLUGDIR/
+$CP plugins/hexen/hexen.bundle                     $PLUGDIR/
+$CP plugins/doom64/doom64.bundle                   $PLUGDIR/
 $CP plugins/fmod/audio_fmod.bundle                 $PLUGDIR/
 
 # Tools
-#$CP $SRCDIR/../tools/wadtool/wadtool $APPDIR/Resources
-$CP $SRCDIR/../tools/texc/texc $APPDIR/Resources
-$CP $SRCDIR/../tools/md2tool/md2tool $APPDIR/Resources
+#$CP tools/wadtool/wadtool $APPDIR/Resources
+$CP tools/texc/texc $APPDIR/Resources
+$CP tools/md2tool/md2tool $APPDIR/Resources
 
 if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     $CP plugins/fluidsynth/audio_fluidsynth.bundle $PLUGDIR/

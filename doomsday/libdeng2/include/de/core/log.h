@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 
 #include "../Time"
 #include "../String"
+#include "../Lockable"
+#include "../Guard"
 
 #include <QList>
 #include <vector>
@@ -94,7 +96,7 @@ class LogBuffer;
  *
  * @ingroup core
  */
-class DENG2_PUBLIC LogEntry
+class DENG2_PUBLIC LogEntry : public Lockable
 {
 public:
     /// Level of the log entry.

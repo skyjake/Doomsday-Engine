@@ -1,0 +1,9 @@
+# API documentation for the libhexen
+@INCLUDE = ../../doomsday.doxy
+
+PROJECT_NAME        = libhexen
+OUTPUT_DIRECTORY    = ../../apidoc/jhexen/
+
+INPUT               = src include res ../common/src ../common/include
+
+PREDEFINED          = __JHEXEN__

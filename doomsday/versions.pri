@@ -25,9 +25,9 @@ defineTest(isStableRelease) {
 
 DENG_VERSION            = $$findVersion(engine/api/dd_version.h)
 
-JDOOM_VERSION           = $$findVersion(plugins/jdoom/include/version.h)
-JHERETIC_VERSION        = $$findVersion(plugins/jheretic/include/version.h)
-JHEXEN_VERSION          = $$findVersion(plugins/jhexen/include/version.h)
+JDOOM_VERSION           = $$findVersion(engine/api/dd_version.h)
+JHERETIC_VERSION        = $$findVersion(engine/api/dd_version.h)
+JHEXEN_VERSION          = $$findVersion(engine/api/dd_version.h)
 
 DEHREAD_VERSION         = $$findVersion(plugins/dehread/include/version.h)
 WADMAPCONVERTER_VERSION = $$findVersion(plugins/wadmapconverter/include/version.h)
@@ -36,4 +36,4 @@ OPENAL_VERSION          = $$findVersion(plugins/openal/include/version.h)
 FMOD_VERSION            = $$findVersion(plugins/fmod/include/version.h)
 WINMM_VERSION           = $$findVersion(plugins/winmm/include/version.h)
 
-JDOOM64_VERSION         = $$findVersion(plugins/jdoom64/include/version.h)
+JDOOM64_VERSION         = $$findVersion(engine/api/dd_version.h)

@@ -75,7 +75,7 @@ typedef uint modelid_t;
 
 typedef struct
 {
-    uint modelId;
+    modelid_t modelId;
     short frame;
     char frameRange;
     int flags;
@@ -124,14 +124,20 @@ typedef struct modeldef_s
     submodeldef_t sub[MAX_FRAME_MODELS];
 } modeldef_t;
 
+#ifdef __CLIENT__
+
 DENG_EXTERN_C modeldef_t* modefs;
 DENG_EXTERN_C int numModelDefs;
 DENG_EXTERN_C byte useModels;
 DENG_EXTERN_C float rModelAspectMod;
 
+#endif // __CLIENT__
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifdef __CLIENT__
 
 /**
  * @pre States must be initialized before this.
@@ -144,8 +150,6 @@ void Models_Init(void);
 void Models_Shutdown(void);
 
 model_t* Models_ToModel(modelid_t id);
-
-AutoStr* Models_ComposePath(modelid_t id);
 
 /**
  * Is there a model for this mobj? The decision is made based on the state and tics
@@ -170,7 +174,7 @@ void Models_Cache(modeldef_t* modef);
  */
 int Models_CacheForMobj(thinker_t* th, void* context);
 
-void Models_CacheForState(int stateIndex);
+#endif // __CLIENT__
 
 #ifdef __cplusplus
 } // extern "C"

@@ -27,7 +27,7 @@
 #include "de_console.h"
 #include "de_render.h"
 
-#include "m_bams.h"
+#include <de/binangle.h>
 #include <de/vector1.h>
 
 #include <de/Log>

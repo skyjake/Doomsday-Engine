@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,44 +23,45 @@
 #include "../Expression"
 #include "../Value"
 
-namespace de
+namespace de {
+
+/**
+ * An expression that always evaluates to a constant value. It is used for
+ * storing constants in scripts.
+ *
+ * @ingroup script
+ */
+class ConstantExpression : public Expression
 {
+public:
+    ConstantExpression();
+
     /**
-     * An expression that always evaluates to a constant value. It is used for
-     * storing constants in scripts. 
+     * Constructor.
      *
-     * @ingroup script
+     * @param value  Value of the expression. The expression takes
+     *               ownership of the value object.
      */
-    class ConstantExpression : public Expression
-    {
-    public:
-        ConstantExpression();
-        
-        /**
-         * Constructor. 
-         *
-         * @param value  Value of the expression. The expression takes 
-         *               ownership of the value object.
-         */ 
-        ConstantExpression(Value *value);
-        
-        ~ConstantExpression();
-        
-        Value *evaluate(Evaluator &evaluator) const;
+    ConstantExpression(Value *value);
 
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
-        
-    public:
-        static ConstantExpression *None();        
-        static ConstantExpression *True();
-        static ConstantExpression *False();
-        static ConstantExpression *Pi();
+    ~ConstantExpression();
 
-    private:
-        Value *_value;
-    };
-}
+    Value *evaluate(Evaluator &evaluator) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+public:
+    static ConstantExpression *None();
+    static ConstantExpression *True();
+    static ConstantExpression *False();
+    static ConstantExpression *Pi();
+
+private:
+    Value *_value;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_CONSTANTEXPRESSION_H */

@@ -42,7 +42,7 @@
 #ifndef __DSFMOD_SFX_H__
 #define __DSFMOD_SFX_H__
 
-#include "sys_audiod_sfx.h"
+#include "api_audiod_sfx.h"
 
 #ifdef __cplusplus
 extern "C" {

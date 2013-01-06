@@ -24,11 +24,15 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_WAD
+
 #include <ctime>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
+
+#include "api_wad.h"
 
 using namespace de;
 
@@ -191,3 +195,21 @@ void W_UnlockLump(lumpnum_t lumpNum)
     }
     return;
 }
+
+// Public API:
+DENG_DECLARE_API(W) =
+{
+    { DE_API_WAD },
+    W_LumpLength,
+    W_LumpName,
+    W_LumpLastModified,
+    W_LumpSourceFile,
+    W_LumpIsCustom,
+    W_CheckLumpNumForName2,
+    W_CheckLumpNumForName,
+    W_GetLumpNumForName,
+    W_ReadLump,
+    W_ReadLumpSection,
+    W_CacheLump,
+    W_UnlockLump
+};

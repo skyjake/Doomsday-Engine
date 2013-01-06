@@ -21,7 +21,7 @@
 #ifndef LIBDENG_RESOURCE_TEXTURES_H
 #define LIBDENG_RESOURCE_TEXTURES_H
 
-#include "uri.h"
+#include "api_uri.h"
 
 #ifdef __cplusplus
 
@@ -72,20 +72,9 @@ public:
          * Interpret a manifest producing a new logical Texture instance..
          *
          * @param manifest  The manifest to be interpreted.
-         * @param flags     Texture Flags.
          * @param userData  User data to associate with the resultant texture.
          */
-        static Texture *interpret(Manifest &manifest, Texture::Flags flags,
-                                  void *userData = 0);
-
-        /**
-         * @copydoc interpret()
-         * @param dimensions  Logical dimensions. Components can be @c 0 in
-         *                  which case their value will be inherited from the
-         *                  actual pixel dimensions of the image at load time.
-         */
-        static Texture *interpret(Manifest &manifest, QSize const &dimensions,
-                                  Texture::Flags flags, void *userData = 0);
+        static Texture *interpret(Manifest &manifest, void *userData = 0);
     };
 
     /**
@@ -193,19 +182,25 @@ public:
      * Texture which will be defined later. If a manifest with the specified
      * @a uri already exists the existing manifest will be returned.
      *
-     * If either the unique id or the @a resourceUri differs from that which
-     * is already defined in pre-existing manifest, any associated logical
-     * Texture instance is released (any GL-textures acquired for it).
+     * If any of the property values (flags, dimensions, etc...) differ from
+     * that which is already defined in the pre-existing manifest, any texture
+     * which is currently associated is released (any GL-textures acquired for
+     * it are deleted).
      *
      * @param uri           Uri representing a path to the texture in the
      *                      virtual hierarchy.
-     * @param uniqueId      Scheme-unique identifier to associate with the
-     *                      texture.
-     * @param resourceUri   Uri to the associated data resource.
+     *
+     * @param flags         Texture flags property.
+     * @param dimensions    Logical dimensions property.
+     * @param origin        World origin offset property.
+     * @param uniqueId      Unique identifier property.
+     * @param resourceUri   Resource URI property.
      *
      * @return  Manifest for this URI; otherwise @c 0 if @a uri is invalid.
      */
-    Manifest *declare(Uri const &uri, int uniqueId, Uri const *resourceUri);
+    Manifest *declare(Uri const &uri, de::Texture::Flags flags,
+                      QSize const &dimensions, QPoint const &origin, int uniqueId,
+                      de::Uri const *resourceUri = 0);
 
     /**
      * Iterate over defined Textures in the collection making a callback for
@@ -281,9 +276,6 @@ void Textures_Init(void);
 
 /// Shutdown this module.
 void Textures_Shutdown(void);
-
-int Textures_UniqueId2(Uri const *uri, boolean quiet);
-int Textures_UniqueId(Uri const *uri/*, quiet = false */);
 
 #ifdef __cplusplus
 } // extern "C"

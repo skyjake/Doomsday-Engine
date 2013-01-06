@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,9 +46,6 @@ class DENG2_PUBLIC LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(F
     Q_OBJECT
 
 public:
-    /// There was a problem opening the output file. @ingroup errors
-    DENG2_ERROR(FileError);
-
     typedef QList<LogEntry const *> Entries;
 
 public:
@@ -73,6 +70,10 @@ public:
      */
     void add(LogEntry *entry);
 
+    /**
+     * Clears the buffer by deleting all entries from memory. However, they are
+     * first flushed, so the no entries are lost.
+     */
     void clear();
 
     /**

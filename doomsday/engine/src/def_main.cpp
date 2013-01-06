@@ -3,7 +3,7 @@
  *
  * Definitions Subsystem.
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2003-2012 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -38,11 +38,18 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#define DENG_NO_API_MACROS_DEFINITIONS
+#include "api_def.h"
+
+#include "map/r_world.h"
+
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 
 #define LOOPi(n)    for(i = 0; i < (n); ++i)
 #define LOOPk(n)    for(k = 0; k < (n); ++k)
+
+using namespace de;
 
 typedef struct {
     char* name; // Name of the routine.
@@ -342,7 +349,7 @@ ded_value_t* Def_GetValueById(char const* id)
     return 0;
 }
 
-ded_value_t* Def_GetValueByUri(Uri const* _uri)
+ded_value_t* Def_GetValueByUri(struct uri_s const *_uri)
 {
     if(!_uri) return 0;
     de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
@@ -351,7 +358,7 @@ ded_value_t* Def_GetValueByUri(Uri const* _uri)
     return Def_GetValueById(uri.pathCStr());
 }
 
-ded_mapinfo_t* Def_GetMapInfo(Uri const* _uri)
+ded_mapinfo_t* Def_GetMapInfo(struct uri_s const *_uri)
 {
     if(!_uri) return 0;
     de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
@@ -461,135 +468,152 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
     return def;
 }
 
-ded_decor_t* Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_decor_t *Def_GetDecoration(material_t *mat, boolean hasExternal, boolean isCustom)
 {
-    ded_decor_t* def;
+    DENG_ASSERT(mat);
+    ded_decor_t *def;
     int i;
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        materialid_t defMatId;
-
-        if(!def->material) continue;
+        if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
-        defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
-        if(matId == defMatId && R_IsAllowedDecoration(def, hasExternal, isCustom))
-            return def;
+        try
+        {
+            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
+            if(mat == defMat && R_IsAllowedDecoration(def, hasExternal, isCustom))
+                return def;
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
     }
     return NULL;
 }
 
-ded_reflection_t* Def_GetReflection(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_reflection_t *Def_GetReflection(material_t *mat, boolean hasExternal, boolean isCustom)
 {
-    ded_reflection_t* def;
+    DENG_ASSERT(mat);
+    ded_reflection_t *def;
     int i;
     for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
     {
-        materialid_t defMatId;
-
-        if(!def->material) continue;
+        if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
-        defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
-        if(matId == defMatId && R_IsAllowedReflection(def, hasExternal, isCustom))
-            return def;
+        try
+        {
+            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
+            if(mat == defMat && R_IsAllowedReflection(def, hasExternal, isCustom))
+                return def;
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
     }
     return NULL;
 }
 
-ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_detailtexture_t *Def_GetDetailTex(material_t *mat, boolean hasExternal, boolean isCustom)
 {
-    ded_detailtexture_t* def;
+    DENG_ASSERT(mat);
+    ded_detailtexture_t *def;
     int i;
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
-        if(def->material1)
+        if(def->material1 && !Uri_IsEmpty(def->material1))
         {
-            materialid_t defMatId = Materials_ResolveUri2(def->material1, true/*quiet please*/);
             // Is this suitable?
-            if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
-                return def;
+            try
+            {
+                material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material1)).material();
+                if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
+                    return def;
+            }
+            catch(Materials::NotFoundError const &)
+            {} // Ignore this error.
         }
 
-        if(def->material2)
+        if(def->material2 && !Uri_IsEmpty(def->material2))
         {
-            materialid_t defMatId = Materials_ResolveUri2(def->material2, true/*quiet please*/);
             // Is this suitable?
-            if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
-                return def;
+            try
+            {
+                material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material2)).material();
+                if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
+                    return def;
+            }
+            catch(Materials::NotFoundError const &)
+            {} // Ignore this error.
         }
     }
     return NULL;
 }
 
-ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isCustom)
 {
+    DENG_ASSERT(mat);
     DENG_UNUSED(hasExternal); DENG_UNUSED(isCustom);
 
-    ded_ptcgen_t* def = defs.ptcGens;
+    ded_ptcgen_t *def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
-        materialid_t defMatId;
-
-        if(!def->material) continue;
-        defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
-        if(defMatId == NOMATERIALID) continue;
+        if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
-        if(def->flags & PGF_GROUP)
+        try
         {
-            /**
-             * Generator triggered by all materials in the (animation) group.
-             * A search is necessary only if we know both the used material and
-             * the specified material in this definition are in *a* group.
-             */
-            material_t* mat = Materials_ToMaterial(matId);
-            material_t* defMat = Materials_ToMaterial(defMatId);
-            if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
+            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
+
+            if(def->flags & PGF_GROUP)
             {
-                int g, numGroups = Materials_AnimGroupCount();
-
-                for(g = 0; g < numGroups; ++g)
+                /**
+                 * Generator triggered by all materials in the (animation) group.
+                 * A search is necessary only if we know both the used material and
+                 * the specified material in this definition are in *a* group.
+                 */
+                if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
                 {
-                    if(Materials_IsPrecacheAnimGroup(g))
-                        continue; // Precache groups don't apply.
-
-                    if(Materials_IsMaterialInAnimGroup(defMat, g) &&
-                       Materials_IsMaterialInAnimGroup(mat, g))
+                    Materials::AnimGroups const &groups = App_Materials()->allAnimGroups();
+                    DENG2_FOR_EACH_CONST(Materials::AnimGroups, k, groups)
                     {
-                        // Both are in this group! This def will do.
-                        return def;
+                        MaterialAnim const &group = *k;
+
+                        // Precache groups do not apply.
+                        if(group.flags() & AGF_PRECACHE) continue;
+
+                        if(group.hasFrameForMaterial(*defMat) &&
+                           group.hasFrameForMaterial(*mat))
+                        {
+                            // Both are in this group! This def will do.
+                            return def;
+                        }
                     }
                 }
             }
-        }
 
-        if(matId == defMatId)
-            return def;
+            if(mat == defMat)
+                return def;
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
     }
     return NULL; // Not found.
 }
 
 ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
 {
-    int                 i;
-    ded_ptcgen_t*       def;
-
     // Search for a suitable definition.
-    for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+    ded_ptcgen_t *def = defs.ptcGens;
+    for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
         // It must be for this type of mobj.
         if(def->damageNum == mobjType)
             return def;
     }
-
-    return NULL;
+    return 0;
 }
 
-ded_flag_t* Def_GetFlag(const char* flag)
+ded_flag_t *Def_GetFlag(char const *flag)
 {
-    int i;
-
     if(!flag || !flag[0])
     {
         DEBUG_Message(("Attempted Def_GetFlagValue with %s flag argument.\n",
@@ -597,7 +621,7 @@ ded_flag_t* Def_GetFlag(const char* flag)
         return 0;
     }
 
-    for(i = defs.count.flags.num - 1; i >= 0; i--)
+    for(int i = defs.count.flags.num - 1; i >= 0; i--)
     {
         if(!stricmp(defs.flags[i].id, flag))
             return defs.flags + i;
@@ -622,29 +646,28 @@ const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
     return NULL;
 }
 
-int Def_EvalFlags(char* ptr)
+int Def_EvalFlags(char *ptr)
 {
-    ded_flag_t* flag;
-    int value = 0, len;
-    char buf[64];
+    LOG_AS("Def_EvalFlags");
+
+    int value = 0;
 
     while(*ptr)
     {
         ptr = M_SkipWhite(ptr);
-        len = M_FindWhite(ptr) - ptr;
-        strncpy(buf, ptr, len);
-        buf[len] = 0;
 
-        flag = Def_GetFlag(buf);
-        if(flag)
+        int flagNameLength = M_FindWhite(ptr) - ptr;
+        String flagName(ptr, flagNameLength);
+        ptr += flagNameLength;
+
+        if(ded_flag_t *flag = Def_GetFlag(flagName.toUtf8().constData()))
         {
             value |= flag->value;
         }
         else
         {
-            Con_Message("Warning: Def_EvalFlags: Undefined flag '%s'.\n", buf);
+            LOG_WARNING("Flag '%s' is not defined (or used out of context).") << flagName;
         }
-        ptr += len;
     }
     return value;
 }
@@ -718,7 +741,7 @@ void Def_ReadProcessDED(char const* path)
     de::Uri path_ = de::Uri(path, RC_NULL);
     if(!App_FileSystem()->accessFile(path_))
     {
-        LOG_WARNING("\"%s\" not found!") << de::NativePath(path_.asText()).pretty();
+        LOG_WARNING("\"%s\" not found!") << NativePath(path_.asText()).pretty();
         return;
     }
 
@@ -726,7 +749,7 @@ void Def_ReadProcessDED(char const* path)
     if(!App_FileSystem()->checkFileId(path_))
     {
         // Already handled.
-        LOG_DEBUG("\"%s\" has already been read.") << de::NativePath(path_.asText()).pretty();
+        LOG_DEBUG("\"%s\" has already been read.") << NativePath(path_.asText()).pretty();
         return;
     }
 
@@ -753,7 +776,7 @@ void Def_CountMsg(int count, const char* label)
 void Def_ReadLumpDefs(void)
 {
     int numProcessedLumps = 0;
-    DENG2_FOR_EACH_CONST(de::LumpIndex::Lumps, i, App_FileSystem()->nameIndex().lumps())
+    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem()->nameIndex().lumps())
     {
         de::File1 const& lump = **i;
         if(!lump.name().beginsWith("DD_DEFNS", Qt::CaseInsensitive)) continue;
@@ -762,7 +785,7 @@ void Def_ReadLumpDefs(void)
 
         if(!DED_ReadLump(&defs, lump.info().lumpIdx))
         {
-            QByteArray path = de::NativePath(lump.container().composePath()).pretty().toUtf8();
+            QByteArray path = NativePath(lump.container().composePath()).pretty().toUtf8();
             Con_Error("DD_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", path.constData());
         }
     }
@@ -845,14 +868,14 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        de::Game::Manifests const& gameResources = reinterpret_cast<de::Game*>(App_CurrentGame())->manifests();
+        de::Game::Manifests const& gameResources = reinterpret_cast<de::Game *>(App_CurrentGame())->manifests();
         int packageIdx = 0;
         for(de::Game::Manifests::const_iterator i = gameResources.find(RC_DEFINITION);
             i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
         {
-            de::Manifest& record = **i;
+            Manifest &record = **i;
             /// Try to locate this resource now.
-            QString const& path = record.resolvedPath(true/*try to locate*/);
+            QString const &path = record.resolvedPath(true/*try to locate*/);
 
             if(path.isEmpty())
             {
@@ -870,10 +893,10 @@ static void readAllDefinitions(void)
     // Next up are definition files in the Games' /auto directory.
     if(!CommandLine_Exists("-noauto") && DD_GameLoaded())
     {
-        de::FS1::PathList found;
+        FS1::PathList found;
         if(App_FileSystem()->findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, found))
         {
-            DENG2_FOR_EACH_CONST(de::FS1::PathList, i, found)
+            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
             {
                 // Ignore directories.
                 if(i->attrib & A_SUBDIR) continue;
@@ -945,16 +968,16 @@ void Def_GenerateGroupsFromAnims(void)
             gmbr->randomTics = frame->randomTics;
             if(!frame->textureManifest) continue;
 
-            if(de::Texture *tex = reinterpret_cast<de::TextureManifest *>(frame->textureManifest)->texture())
+            if(Texture *tex = reinterpret_cast<TextureManifest *>(frame->textureManifest)->texture())
             {
                 de::Uri textureUri = tex->manifest().composeUri();
-                gmbr->material = reinterpret_cast<uri_s *>(new de::Uri(Str_Text(DD_MaterialSchemeNameForTextureScheme(textureUri.scheme())), textureUri.path()));
+                gmbr->material = reinterpret_cast<uri_s *>(new de::Uri(DD_MaterialSchemeNameForTextureScheme(textureUri.scheme()), textureUri.path()));
             }
         }
     }
 }
 
-static int generateMaterialDefForCompositeTexture(de::TextureManifest &manifest, void * /*parameters*/)
+static int generateMaterialDefForCompositeTexture(TextureManifest &manifest, void * /*parameters*/)
 {
     LOG_AS("generateMaterialDefForCompositeTexture");
 
@@ -965,13 +988,11 @@ static int generateMaterialDefForCompositeTexture(de::TextureManifest &manifest,
     mat->autoGenerated = true;
     mat->uri = reinterpret_cast<uri_s *>(new de::Uri("Textures", texUri.path()));
 
-    if(de::Texture *tex = manifest.texture())
+    if(Texture *tex = manifest.texture())
     {
-        de::CompositeTexture* pcTex = reinterpret_cast<de::CompositeTexture *>(tex->userDataPointer());
-        DENG_ASSERT(pcTex);
         mat->width  = tex->width();
         mat->height = tex->height();
-        mat->flags = (pcTex->flags().testFlag(de::CompositeTexture::NoDraw)? MATF_NO_DRAW : 0);
+        mat->flags = (tex->flags().testFlag(Texture::NoDraw)? MATF_NO_DRAW : 0);
     }
 #if _DEBUG
     else
@@ -986,7 +1007,7 @@ static int generateMaterialDefForCompositeTexture(de::TextureManifest &manifest,
     return 0; // Continue iteration.
 }
 
-static int generateMaterialDefForFlatTexture(de::TextureManifest &manifest, void * /*parameters*/)
+static int generateMaterialDefForFlatTexture(TextureManifest &manifest, void * /*parameters*/)
 {
     LOG_AS("generateMaterialDefForFlatTexture");
 
@@ -1001,7 +1022,7 @@ static int generateMaterialDefForFlatTexture(de::TextureManifest &manifest, void
     ded_material_layer_stage_t *st = &mat->layers[0].stages[stage];
     st->texture = reinterpret_cast<uri_s *>(new de::Uri(texUri));
 
-    if(de::Texture *tex = manifest.texture())
+    if(Texture *tex = manifest.texture())
     {
         mat->width  = tex->width();
         mat->height = tex->height();
@@ -1016,7 +1037,7 @@ static int generateMaterialDefForFlatTexture(de::TextureManifest &manifest, void
     return 0; // Continue iteration.
 }
 
-static int generateMaterialDefForSpriteTexture(de::TextureManifest &manifest, void * /*parameters*/)
+static int generateMaterialDefForSpriteTexture(TextureManifest &manifest, void * /*parameters*/)
 {
     LOG_AS("generateMaterialDefForSpriteTexture");
 
@@ -1031,7 +1052,7 @@ static int generateMaterialDefForSpriteTexture(de::TextureManifest &manifest, vo
     ded_material_layer_stage_t *st = &mat->layers[0].stages[stage];
     st->texture = reinterpret_cast<uri_s *>(new de::Uri(texUri));
 
-    if(de::Texture *tex = manifest.texture())
+    if(Texture *tex = manifest.texture())
     {
         mat->width  = tex->width();
         mat->height = tex->height();
@@ -1048,7 +1069,7 @@ static int generateMaterialDefForSpriteTexture(de::TextureManifest &manifest, vo
 
 void Def_GenerateAutoMaterials(void)
 {
-    de::Textures &textures = *App_Textures();
+    Textures &textures = *App_Textures();
     textures.iterateDeclared("Textures", generateMaterialDefForCompositeTexture);
     textures.iterateDeclared("Flats",    generateMaterialDefForFlatTexture);
     textures.iterateDeclared("Sprites",  generateMaterialDefForSpriteTexture);
@@ -1060,10 +1081,10 @@ void Def_Read()
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        de::FS1::Scheme &scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
+        FS1::Scheme &scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
         scheme.reset();
 
-        Materials_ClearDefinitionLinks();
+        App_Materials()->clearDefinitionLinks();
         Fonts_ClearDefinitionLinks();
 
         Def_Destroy();
@@ -1178,18 +1199,23 @@ void Def_Read()
     for(int i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t *def = &defs.materials[i];
-        material_t *mat = Materials_ToMaterial(Materials_ResolveUri2(def->uri, true/*quiet please*/));
-        if(!mat)
+        try
+        {
+            MaterialBind &bind = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->uri));
+            if(material_t *mat = bind.material())
+            {
+                // Update existing.
+                App_Materials()->rebuild(*mat, def);
+            }
+        }
+        catch(Materials::NotFoundError const &)
         {
             // A new Material.
-            Materials_CreateFromDef(def);
-            continue;
+            App_Materials()->newFromDef(*def);
         }
-        // Update existing.
-        Materials_Rebuild(mat, def);
     }
 
-    DED_NewEntries((void**) &stateLights, &countStateLights, sizeof(*stateLights), defs.count.states.num);
+    DED_NewEntries((void **) &stateLights, &countStateLights, sizeof(*stateLights), defs.count.states.num);
 
     // Dynamic lights. Update the sprite numbers.
     for(int i = 0; i < defs.count.lights.num; ++i)
@@ -1279,7 +1305,8 @@ void Def_Read()
 
         for(int k = i + 1; k < countTexts.num; ++k)
         {
-            if(stricmp(defs.text[i].id, defs.text[k].id) && texts[k].text) continue;
+            if(!texts[k].text) continue; // Already done.
+            if(stricmp(defs.text[i].id, defs.text[k].id)) continue; // ID mismatch.
 
             // Update the earlier string.
             texts[i].text = (char *) M_Realloc(texts[i].text, strlen(texts[k].text) + 1);
@@ -1395,52 +1422,93 @@ void Def_Read()
     defsInited = true;
 }
 
-static void initAnimGroup(ded_group_t* def)
+static void initAnimGroup(ded_group_t *def)
 {
-    int i, groupNumber = -1;
-    for(i = 0; i < def->count.num; ++i)
-    {
-        ded_group_member_t* gm = &def->members[i];
-        material_t* mat;
+    DENG_ASSERT(def);
 
+    int groupNumber = -1;
+    for(int i = 0; i < def->count.num; ++i)
+    {
+        ded_group_member_t *gm = &def->members[i];
         if(!gm->material) continue;
 
-        mat = Materials_ToMaterial(Materials_ResolveUri2(gm->material, true/*quiet please*/));
-        if(!mat) continue;
-
-        // Only create a group when the first texture is found.
-        if(groupNumber == -1)
+        try
         {
-            groupNumber = Materials_CreateAnimGroup(def->flags);
-        }
+            material_t *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(gm->material)).material();
 
-        Materials_AddAnimGroupFrame(groupNumber, mat, gm->tics, gm->randomTics);
+            // Only create the group once the first texture has been found.
+            if(groupNumber == -1)
+            {
+                groupNumber = App_Materials()->newAnimGroup(def->flags);
+            }
+
+            App_Materials()->animGroup(groupNumber).addFrame(*mat, gm->tics, gm->randomTics);
+        }
+        catch(Materials::NotFoundError const &er)
+        {
+            // Log but otherwise ignore this error.
+            LOG_WARNING(er.asText() + ". Unknown material \"%s\" in group def %i, ignoring.")
+                << *reinterpret_cast<de::Uri *>(gm->material)
+                << i;
+        }
     }
+}
+
+static void defineFlaremap(uri_s const *_resourceUri)
+{
+    if(!_resourceUri) return;
+    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
+    if(resourceUri.isEmpty()) return;
+
+    // Reference to none?
+    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
+
+    // Reference to a "built-in" flaremap?
+    String const &resourcePathStr = resourceUri.path().toStringRef();
+    if(resourcePathStr.length() == 1 &&
+       resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
+        return;
+
+    R_DefineTexture("Flaremaps", resourceUri);
+}
+
+static void defineLightmap(uri_s const *_resourceUri)
+{
+    if(!_resourceUri) return;
+    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
+    if(resourceUri.isEmpty()) return;
+
+    // Reference to none?
+    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
+
+    R_DefineTexture("Lightmaps", resourceUri);
 }
 
 void Def_PostInit(void)
 {
-    char name[40];
+#ifdef __CLIENT__
 
     // Particle generators: model setup.
-    ded_ptcgen_t* gen = defs.ptcGens;
+    ded_ptcgen_t *gen = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, gen++)
     {
-        ded_ptcstage_t* st = gen->stages;
+        char name[40];
+        ded_ptcstage_t *st = gen->stages;
         for(int k = 0; k < gen->stageCount.num; ++k, st++)
         {
             if(st->type < PTC_MODEL || st->type >= PTC_MODEL + MAX_PTC_MODELS)
                 continue;
 
             sprintf(name, "Particle%02i", st->type - PTC_MODEL);
-            modeldef_t* modef;
-            if(!(modef = Models_Definition(name)) || modef->sub[0].modelId <= 0)
+
+            modeldef_t *modef = Models_Definition(name);
+            if(!modef || modef->sub[0].modelId == NOMODELID)
             {
                 st->model = -1;
                 continue;
             }
 
-            model_t* mdl = Models_ToModel(modef->sub[0].modelId);
+            model_t *mdl = Models_ToModel(modef->sub[0].modelId);
             DENG_ASSERT(mdl);
 
             st->model = modef - modefs;
@@ -1456,14 +1524,21 @@ void Def_PostInit(void)
         }
     }
 
+#endif // __CLIENT__
+
     // Detail textures.
     App_Textures()->scheme("Details").clear();
     for(int i = 0; i < defs.count.details.num; ++i)
     {
         ded_detailtexture_t *dtl = &defs.details[i];
+
+        // Ignore definitions which do not specify a material.
+        if((!dtl->material1 || Uri_IsEmpty(dtl->material1)) &&
+           (!dtl->material2 || Uri_IsEmpty(dtl->material2))) continue;
+
         if(!dtl->detailTex) continue;
 
-        R_CreateDetailTexture(dtl->detailTex);
+        R_DefineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->detailTex));
     }
 
     // Lights.
@@ -1473,16 +1548,30 @@ void Def_PostInit(void)
     {
         ded_light_t* lig = &defs.lights[i];
 
-        R_CreateLightmap(lig->up);
-        R_CreateLightmap(lig->down);
-        R_CreateLightmap(lig->sides);
-
-        R_CreateFlaremap(lig->flare);
+        if(lig->up)
+        {
+            defineLightmap(lig->up);
+        }
+        if(lig->down)
+        {
+            defineLightmap(lig->down);
+        }
+        if(lig->sides)
+        {
+            defineLightmap(lig->sides);
+        }
+        if(lig->flare)
+        {
+            defineFlaremap(lig->flare);
+        }
     }
 
     for(int i = 0; i < defs.count.decorations.num; ++i)
     {
         ded_decor_t* decor = &defs.decorations[i];
+
+        // Ignore definitions which do not specify a material.
+        if(!decor->material || Uri_IsEmpty(decor->material)) continue;
 
         for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
@@ -1490,11 +1579,22 @@ void Def_PostInit(void)
 
             if(!R_IsValidLightDecoration(lig)) break;
 
-            R_CreateLightmap(lig->up);
-            R_CreateLightmap(lig->down);
-            R_CreateLightmap(lig->sides);
-
-            R_CreateFlaremap(lig->flare);
+            if(lig->up)
+            {
+                defineLightmap(lig->up);
+            }
+            if(lig->down)
+            {
+                defineLightmap(lig->down);
+            }
+            if(lig->sides)
+            {
+                defineLightmap(lig->sides);
+            }
+            if(lig->flare)
+            {
+                defineFlaremap(lig->flare);
+            }
         }
     }
 
@@ -1504,17 +1604,22 @@ void Def_PostInit(void)
     for(int i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t* ref = &defs.reflections[i];
-        Size2Raw size;
 
-        R_CreateReflectionTexture(ref->shinyMap);
+        // Ignore definitions which do not specify a material.
+        if(!ref->material || Uri_IsEmpty(ref->material)) continue;
 
-        size.width  = ref->maskWidth;
-        size.height = ref->maskHeight;
-        R_CreateMaskTexture(ref->maskMap, &size);
+        if(ref->shinyMap)
+        {
+            R_DefineTexture("Reflections", reinterpret_cast<de::Uri &>(*ref->shinyMap));
+        }
+        if(ref->maskMap)
+        {
+            R_DefineTexture("Masks", reinterpret_cast<de::Uri &>(*ref->maskMap), QSize(ref->maskWidth, ref->maskHeight));
+        }
     }
 
     // Animation groups.
-    Materials_ClearAnimGroups();
+    App_Materials()->clearAllAnimGroups();
     for(int i = 0; i < defs.count.groups.num; ++i)
     {
         initAnimGroup(&defs.groups[i]);
@@ -1602,8 +1707,19 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
 
-    l->actMaterial = Materials_ResolveUri2(def->actMaterial, true/*quiet please*/);
-    l->deactMaterial = Materials_ResolveUri2(def->deactMaterial, true/*quiet please*/);
+    try
+    {
+        l->actMaterial = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->actMaterial)).id();
+    }
+    catch(Materials::NotFoundError const &)
+    {} // Ignore this error.
+
+    try
+    {
+        l->deactMaterial = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->deactMaterial)).id();
+    }
+    catch(Materials::NotFoundError const &)
+    {} // Ignore this error.
 
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
@@ -1631,9 +1747,18 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
             if(def->iparmStr[k][0])
             {
                 if(!stricmp(def->iparmStr[k], "-1"))
+                {
                     l->iparm[k] = -1;
+                }
                 else
-                    l->iparm[k] = Materials_ResolveUriCString2(def->iparmStr[k], true/*quiet please*/);
+                {
+                    try
+                    {
+                        l->iparm[k] = App_Materials()->find(de::Uri(Path(def->iparmStr[k]))).id();
+                    }
+                    catch(Materials::NotFoundError const &)
+                    {} // Ignore this error.
+                }
             }
         }
         else if(a & MAP_MUS)
@@ -1747,21 +1872,21 @@ int Def_Get(int type, const char* id, void* out)
         return Def_GetMusicNum(id);
 
     case DD_DEF_MAP_INFO: {
-        ddmapinfo_t* mout;
-        Uri* mapUri = Uri_NewWithPath2(id, RC_NULL);
-        ded_mapinfo_t* map = Def_GetMapInfo(mapUri);
+        ddmapinfo_t *mout;
+        struct uri_s *mapUri = Uri_NewWithPath2(id, RC_NULL);
+        ded_mapinfo_t *map   = Def_GetMapInfo(mapUri);
 
         Uri_Delete(mapUri);
         if(!map) return false;
 
-        mout = (ddmapinfo_t*) out;
-        mout->name = map->name;
-        mout->author = map->author;
-        mout->music = Def_GetMusicNum(map->music);
-        mout->flags = map->flags;
-        mout->ambient = map->ambient;
-        mout->gravity = map->gravity;
-        mout->parTime = map->parTime;
+        mout = (ddmapinfo_t *) out;
+        mout->name       = map->name;
+        mout->author     = map->author;
+        mout->music      = Def_GetMusicNum(map->music);
+        mout->flags      = map->flags;
+        mout->ambient    = map->ambient;
+        mout->gravity    = map->gravity;
+        mout->parTime    = map->parTime;
         mout->fogStart   = map->fogStart;
         mout->fogEnd     = map->fogEnd;
         mout->fogDensity = map->fogDensity;
@@ -1822,8 +1947,8 @@ int Def_Get(int type, const char* id, void* out)
         return false; }
 
     case DD_DEF_FINALE_BEFORE: {
-        finalescript_t* fin = (finalescript_t*) out;
-        Uri* uri = Uri_NewWithPath2(id, RC_NULL);
+        finalescript_t *fin = (finalescript_t *) out;
+        struct uri_s *uri = Uri_NewWithPath2(id, RC_NULL);
         for(i = defs.count.finales.num - 1; i >= 0; i--)
         {
             if(!defs.finales[i].before || !Uri_Equality(defs.finales[i].before, uri)) continue;
@@ -1841,8 +1966,8 @@ int Def_Get(int type, const char* id, void* out)
         return false; }
 
     case DD_DEF_FINALE_AFTER: {
-        finalescript_t* fin = (finalescript_t*) out;
-        Uri* uri = Uri_NewWithPath2(id, RC_NULL);
+        finalescript_t *fin = (finalescript_t *) out;
+        struct uri_s *uri = Uri_NewWithPath2(id, RC_NULL);
         for(i = defs.count.finales.num - 1; i >= 0; i--)
         {
             if(!defs.finales[i].after || !Uri_Equality(defs.finales[i].after, uri)) continue;
@@ -2078,3 +2203,17 @@ D_CMD(ListMobjs)
 
     return true;
 }
+
+DENG_DECLARE_API(Def) =
+{
+    { DE_API_DEFINITIONS },
+
+    Def_Get,
+    Def_Set,
+    Def_EvalFlags,
+
+    // TODO: These should not be part of the public API
+    // (they manipulate internal data structures; hence the casting)
+    reinterpret_cast<int (*)(void *, char const *)>(DED_AddValue),
+    reinterpret_cast<void (*)(void **, void *, size_t, int)>(DED_NewEntries)
+};

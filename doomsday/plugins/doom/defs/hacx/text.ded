@@ -1,0 +1,121 @@
+# HacX - Text Strings
+#
+
+Header { Version = 5; }
+
+# HacX uses different weapon names.
+Text {
+  ID = "WEAPON1";
+  Text = "Kick";
+}
+
+Text {
+  ID = "WEAPON2";
+  Text = "Pistol";
+}
+
+Text {
+  ID = "WEAPON3";
+  Text = "Tazer";
+}
+
+Text {
+  ID = "WEAPON4";
+  Text = "UZI";
+}
+
+Text {
+  ID = "WEAPON5";
+  Text = "Photon 'Zooka";
+}
+
+Text {
+  ID = "WEAPON6";
+  Text = "Big Stick";
+}
+
+Text {
+  ID = "WEAPON7";
+  Text = "Nuker";
+}
+
+Text {
+  ID = "WEAPON8";
+  Text = "HOIG Reznator";
+}
+
+Text {
+  ID = "WEAPON9";
+  Text = "Cryogun";
+}
+
+Text {
+  ID = "KILLMSG_WEAPON0";
+  Text = "%1 kicked %2 to death";
+}
+
+Text {
+  ID = "KILLMSG_PISTOL";
+  Text = "%2 was gunned down by %1.";
+}
+
+Text {
+  ID = "KILLMSG_SHOTGUN";
+  Text = "%1 shot %2 to bloody bits.";
+}
+
+Text {
+  ID = "KILLMSG_CHAINGUN";
+  Text = "%2 was poisoned by %1's lead.";
+}
+
+Text {
+  ID = "KILLMSG_MISSILE";
+  Text = "%2 rode %1's torpedo. Splat!";
+}
+
+Text {
+  ID = "KILLMSG_PLASMA";
+  Text = "%2 was deionised by %1's stick.";
+}
+
+Text {
+  ID = "KILLMSG_BFG";
+  Text = "%2 was nuked by %1's Nuker!";
+}
+
+Text {
+  ID = "KILLMSG_CHAINSAW";
+  Text = "%1 slaughtered %2 with a buzz!";
+}
+
+Text {
+  ID = "KILLMSG_SUPERSHOTGUN";
+  Text = "%1 shattered %2 into tiny bits.";
+}
+
+# HacX uses different skill level names.
+Text {
+  ID = "SKILL1";
+  Text = "Please don't shoot!";
+}
+
+Text {
+  ID = "SKILL2";
+  Text = "Arrgh, I need health!";
+}
+
+Text {
+  ID = "SKILL3";
+  Text = "Let's rip them apart!";
+}
+
+Text {
+  ID = "SKILL4";
+  Text = "I am immortal";
+}
+
+Text {
+  ID = "SKILL5";
+  Text = "Insanity!";
+}

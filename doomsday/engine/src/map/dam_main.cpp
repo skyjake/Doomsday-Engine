@@ -290,11 +290,13 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
             // Must be called before any mobjs are spawned.
             GameMap_InitNodePiles(map);
 
+#ifdef __CLIENT__
             // Prepare the client-side data.
             if(isClient)
             {
                 GameMap_InitClMobjs(map);
             }
+#endif
 
             Rend_DecorInit();
 
@@ -332,7 +334,9 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
                     skyDef = &mapInfo->sky;
             }
 
+#ifdef __CLIENT__
             Sky_Configure(skyDef);
+#endif
 
             // Setup accordingly.
             if(mapInfo)
@@ -353,7 +357,9 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
             //       theMap to be set first.
             P_SetCurrentMap(map);
 
+#ifdef __CLIENT__
             Rend_RadioInitForMap();
+#endif
 
             { uint startTime = Timer_RealMilliseconds();
             GameMap_InitSkyFix(map);

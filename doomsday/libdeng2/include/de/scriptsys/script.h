@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,61 +31,62 @@
 
 #include <vector>
 
-namespace de
+namespace de {
+
+class File;
+
+/**
+ * Contains statements and expressions which are ready to be executed.
+ * A Script instance is built from source code text, which is parsed and
+ * converted to statements and expressions.
+ *
+ * @see Process (used to execute scripts)
+ *
+ * @ingroup script
+ */
+class DENG2_PUBLIC Script
 {
-    class File;
-    
+public:
+    /// Constructs an empty script with no statements.
+    Script();
+
     /**
-     * Contains statements and expressions which are ready to be executed.
-     * A Script instance is built from source code text, which is parsed and
-     * converted to statements and expressions. 
+     * Parses the source into statements.
      *
-     * @see Process (used to execute scripts)
-     *
-     * @ingroup script
+     * @param source  Script source.
      */
-    class DENG2_PUBLIC Script
-    {
-    public:
-        /// Constructs an empty script with no statements.
-        Script();
-        
-        /**
-         * Parses the source into statements.
-         *
-         * @param source  Script source.
-         */
-        Script(String const &source);
-        
-        /**
-         * Parses the source file info statements. The path of the source file
-         * is saved and used when importing modules.
-         *
-         * @param file  Source file.
-         */
-        Script(File const &file);
-        
-        virtual ~Script();
+    Script(String const &source);
 
-        String const &path() const { return _path; }
+    /**
+     * Parses the source file info statements. The path of the source file
+     * is saved and used when importing modules.
+     *
+     * @param file  Source file.
+     */
+    Script(File const &file);
 
-        /// Returns the statement that begins the script. This is where
-        /// a process begins the execution of a script.
-        Statement const *firstStatement() const;
+    virtual ~Script();
 
-        /// Returns a modifiable reference to the main statement compound
-        /// of the script.
-        Compound &compound() {
-            return _compound;
-        }
-        
-    private:
-        Compound _compound;
-        
-        /// File path where the script was loaded. Will be visible in the namespace
-        /// of the process executing the script.
-        String _path;
-    };
-}
+    String const &path() const { return _path; }
+
+    /// Returns the statement that begins the script. This is where
+    /// a process begins the execution of a script.
+    Statement const *firstStatement() const;
+
+    /// Returns a modifiable reference to the main statement compound
+    /// of the script.
+    Compound &compound() {
+        return _compound;
+    }
+
+private:
+    Compound _compound;
+
+    /// File path where the script was loaded. Will be visible in the namespace
+    /// of the process executing the script.
+    String _path;
+};
+
+} // namespace de
 
 #endif

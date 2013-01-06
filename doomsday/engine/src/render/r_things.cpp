@@ -1,6 +1,4 @@
-/**
- * @file r_things.cpp Map Object Management and Refresh
- * @ingroup render
+/** @file r_things.cpp Map Object Management.
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -36,10 +34,15 @@
 #include "de_misc.h"
 #include "de_resource.h"
 
+#include "gl/sys_opengl.h" // TODO: get rid of this
+
 #include "def_main.h"
 #include "m_stack.h"
+#include "resource/materialsnapshot.h"
 
 #include <de/memoryblockset.h>
+
+using namespace de;
 
 #define MAX_FRAMES              (128)
 #define MAX_OBJECT_RADIUS       (128)
@@ -169,10 +172,10 @@ static spriterecord_t* findSpriteRecordForName(char const *name)
  * turn CLOCKWISE around the axis. This is not the same as the angle,
  * which increases counter clockwise (protractor).
  */
-static void buildSprite(de::TextureManifest &manifest)
+static void buildSprite(TextureManifest &manifest)
 {
     // Have we already encountered this name?
-    de::String decodedPath = QString(QByteArray::fromPercentEncoding(manifest.path().toUtf8()));
+    String decodedPath = QString(QByteArray::fromPercentEncoding(manifest.path().toUtf8()));
     QByteArray decodedPathUtf8 = decodedPath.toUtf8();
 
     spriterecord_t *rec = findSpriteRecordForName(decodedPathUtf8.constData());
@@ -210,9 +213,7 @@ static void buildSprite(de::TextureManifest &manifest)
         link = true;
     }
 
-    de::Uri uri = de::Uri("Sprites", manifest.path());
-    frame->mat = Materials_ToMaterial(Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
-
+    frame->mat         = App_Materials()->find(de::Uri("Sprites", manifest.path())).material();
     frame->frame[0]    = frameNumber;
     frame->rotation[0] = rotationNumber;
 
@@ -237,20 +238,20 @@ static void buildSprite(de::TextureManifest &manifest)
 
 static void buildSprites()
 {
-    de::Time begunAt;
+    Time begunAt;
 
     numSpriteRecords = 0;
     spriteRecords = 0;
     spriteRecordBlockSet = BlockSet_New(sizeof(spriterecord_t), 64),
     spriteRecordFrameBlockSet = BlockSet_New(sizeof(spriterecord_frame_t), 256);
 
-    de::PathTreeIterator<de::PathTree> iter(App_Textures()->scheme("Sprites").index().leafNodes());
+    PathTreeIterator<TextureScheme::Index> iter(App_Textures()->scheme("Sprites").index().leafNodes());
     while(iter.hasNext())
     {
-        buildSprite(static_cast<de::TextureManifest &>(iter.next()));
+        buildSprite(iter.next());
     }
 
-    LOG_INFO(de::String("buildSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("buildSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 /**
@@ -355,7 +356,7 @@ static void initSpriteDefs(spriterecord_t *const *sprRecords, int num)
 
 void R_InitSprites()
 {
-    de::Time begunAt;
+    Time begunAt;
 
     LOG_VERBOSE("Building Sprites...");
     buildSprites();
@@ -402,7 +403,7 @@ void R_InitSprites()
     BlockSet_Delete(spriteRecordFrameBlockSet); spriteRecordFrameBlockSet = 0;
     numSpriteRecords = 0;
 
-    LOG_INFO(de::String("R_InitSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("R_InitSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void R_ShutdownSprites()
@@ -422,7 +423,8 @@ material_t *R_GetMaterialForSprite(int sprite, int frame)
     return NULL;
 }
 
-boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
+#undef R_GetSpriteInfo
+DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
 {
     LOG_AS("R_GetSpriteInfo");
 
@@ -454,14 +456,14 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     material_t *mat = sprFrame->mats[0];
 
     /// @todo fixme: We should not be using the PSprite spec here. -ds
-    materialvariantspecification_t const *spec =
-            Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
-                                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
-                                                     false, true, true, false);
-    materialsnapshot_t const *ms = Materials_Prepare(mat, spec, false);
+    MaterialVariantSpec const &spec =
+            App_Materials()->variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0,
+                                                   GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
+                                                   false, true, true, false);
+    MaterialSnapshot const &ms = App_Materials()->prepare(*mat, spec, false);
 
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
-    variantspecification_t const *texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
+    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+    variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
     DENG_ASSERT(texSpec);
 
     info->numFrames = sprDef->numFrames;
@@ -469,13 +471,14 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     info->flip = sprFrame->flip[0];
     info->geometry.origin.x = -tex.origin().x() + -texSpec->border;
     info->geometry.origin.y = -tex.origin().y() +  texSpec->border;
-    info->geometry.size.width  = ms->size.width  + texSpec->border*2;
-    info->geometry.size.height = ms->size.height + texSpec->border*2;
-    TextureVariant_Coords(MST(ms, MTU_PRIMARY), &info->texCoord[0], &info->texCoord[1]);
+    info->geometry.size.width  = ms.dimensions().width()  + texSpec->border*2;
+    info->geometry.size.height = ms.dimensions().height() + texSpec->border*2;
+    ms.texture(MTU_PRIMARY).coords(&info->texCoord[0], &info->texCoord[1]);
 
     return true;
 }
 
+#ifdef __CLIENT__
 static modeldef_t *currentModelDefForMobj(mobj_t *mo)
 {
     // If models are being used, use the model's radius.
@@ -499,8 +502,9 @@ coord_t R_VisualRadius(mobj_t *mo)
     // Use the sprite frame's width?
     if(material_t *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
     {
-        materialsnapshot_t const *ms = Materials_Prepare(material, Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
-        return ms->size.width / 2;
+        MaterialSnapshot const &ms =
+            App_Materials()->prepare(*material, Rend_SpriteMaterialSpec(), true);
+        return ms.dimensions().width() / 2;
     }
 
     // Use the physical radius.
@@ -542,12 +546,14 @@ float R_ShadowStrength(mobj_t *mo)
         if(mat)
         {
             // Ensure we've prepared this.
-            materialsnapshot_t const *ms = Materials_Prepare(mat, Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/), true);
-            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
+            MaterialSnapshot const &ms =
+                App_Materials()->prepare(*mat, Rend_SpriteMaterialSpec(), true);
+
+            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_ALPHA);
             float weightedSpriteAlpha;
             if(!aa)
             {
-                QByteArray uri = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText().toUtf8();
+                QByteArray uri = ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri().asText().toUtf8();
                 Con_Error("R_ShadowStrength: Texture \"%s\" has no TA_ALPHA analysis", uri.constData());
             }
 
@@ -570,14 +576,15 @@ float R_ShadowStrength(mobj_t *mo)
     /// @note This equation is the same as that used for fakeradio.
     return (0.6f - ambientLightLevel * 0.4f) * strength;
 }
+#endif // __CLIENT__
 
 float R_Alpha(mobj_t *mo)
 {
     DENG_ASSERT(mo);
 
     float alpha = (mo->ddFlags & DDMF_BRIGHTSHADOW)? .80f :
-                        (mo->ddFlags & DDMF_SHADOW)? .33f :
-                     (mo->ddFlags & DDMF_ALTSHADOW)? .66f : 1;
+                  (mo->ddFlags & DDMF_SHADOW      )? .33f :
+                  (mo->ddFlags & DDMF_ALTSHADOW   )? .66f : 1;
     /**
      * The three highest bits of the selector are used for alpha.
      * 0 = opaque (alpha -1)
@@ -620,6 +627,8 @@ vissprite_t *R_NewVisSprite()
 
     return spr;
 }
+
+#ifdef __CLIENT__
 
 void R_ProjectPlayerSprites()
 {
@@ -733,6 +742,8 @@ void R_ProjectPlayerSprites()
     }
 }
 
+#endif // __CLIENT__
+
 float R_MovementYaw(float const mom[])
 {
     // Multiply by 100 to get some artificial accuracy in bamsAtan2.
@@ -786,25 +797,26 @@ int RIT_VisMobjZ(Sector *sector, void *parameters)
     return false; // Continue iteration.
 }
 
+#ifdef __CLIENT__
+
 static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     float x, float y, float z, float distance, float visOffX, float visOffY, float visOffZ,
     float /*secFloor*/, float /*secCeil*/, float /*floorClip*/, float /*top*/,
-    material_t *mat, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
+    material_t &mat, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
     float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
     uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeaf,
     boolean /*floorAdjust*/, boolean /*fitTop*/, boolean /*fitBottom*/, boolean viewAligned)
 {
-    materialvariantspecification_t const *spec;
-    MaterialVariant* variant;
-
     if(!params) return; // Wha?
 
-    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-    variant = Materials_ChooseVariant(mat, spec, true, true);
+    MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
+    MaterialVariant *variant = App_Materials()->chooseVariant(mat, spec, true, true);
 
-#ifdef _DEBUG
-    if(tClass || tMap) DENG_ASSERT(spec->primarySpec->data.variant.translated);
+#ifdef DENG_DEBUG
+    if(tClass || tMap)
+    {
+        DENG_ASSERT(spec.primarySpec->data.variant.translated);
+    }
 #endif
 
     params->center[VX] = x;
@@ -818,7 +830,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->viewAligned = viewAligned;
     params->noZWrite = noSpriteZWrite;
 
-    params->material = variant;
+    params->material = reinterpret_cast<materialvariant_s *>(variant);
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = (useSpriteBlend? blendMode : BM_NORMAL);
@@ -957,8 +969,6 @@ void R_ProjectSprite(mobj_t *mo)
     float ambientColor[3];
     uint vLightListIdx = 0;
     material_t *mat;
-    materialvariantspecification_t const *spec;
-    materialsnapshot_t const *ms;
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     coord_t moPos[3];
 
@@ -1038,11 +1048,11 @@ void R_ProjectSprite(mobj_t *mo)
     }
     matFlipT = false;
 
-    spec = Sprite_MaterialSpec(mo->tclass, mo->tmap);
-    ms   = Materials_Prepare(mat, spec, true);
+    MaterialSnapshot const &ms =
+        App_Materials()->prepare(*mat, Rend_SpriteMaterialSpec(mo->tclass, mo->tmap), true);
 
     // An invalid sprite texture?
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
     if(tex.manifest().schemeName().compareWithoutCase("Sprites")) return;
 
     // Align to the view plane?
@@ -1209,31 +1219,31 @@ void R_ProjectSprite(mobj_t *mo)
 
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
-        if(ms->size.height < secCeil - secFloor)
+        if(ms.dimensions().height() < secCeil - secFloor)
         {
             // Sprite fits in, adjustment possible?
             // Check top.
             if(fitTop && gzt > secCeil)
                 gzt = secCeil;
             // Check bottom.
-            if(floorAdjust && fitBottom && gzt - ms->size.height < secFloor)
-                gzt = secFloor + ms->size.height;
+            if(floorAdjust && fitBottom && gzt - ms.dimensions().height() < secFloor)
+                gzt = secFloor + ms.dimensions().height();
         }
         // Adjust by the floor clip.
         gzt -= floorClip;
 
         getLightingParams(vis->origin[VX], vis->origin[VY],
-                          gzt - ms->size.height / 2.0f,
+                          gzt - ms.dimensions().height() / 2.0f,
                           mo->bspLeaf, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupSpriteParamsForVisSprite(&vis->data.sprite,
                                       vis->origin[VX], vis->origin[VY],
-                                      gzt - ms->size.height / 2.0f,
+                                      gzt - ms.dimensions().height() / 2.0f,
                                       vis->distance,
                                       visOff[VX], visOff[VY], visOff[VZ],
                                       secFloor, secCeil,
-                                      floorClip, gzt, mat, matFlipS, matFlipT, blendMode,
+                                      floorClip, gzt, *mat, matFlipS, matFlipT, blendMode,
                                       ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
                                       vLightListIdx,
                                       mo->tclass, mo->tmap,
@@ -1262,19 +1272,11 @@ void R_ProjectSprite(mobj_t *mo)
     // Do we need to project a flare source too?
     if(mo->lumIdx)
     {
-        const lumobj_t* lum;
-        const ded_light_t* def;
-        float flareSize, xOffset;
-        spritedef_t* sprDef;
-        spriteframe_t* sprFrame;
-        material_t* mat;
-        const materialvariantspecification_t* spec;
-        const materialsnapshot_t* ms;
-        const pointlight_analysis_t* pl;
-
         // Determine the sprite frame lump of the source.
-        sprDef = &sprites[mo->sprite];
-        sprFrame = &sprDef->spriteFrames[mo->frame];
+        spritedef_t *sprDef     = &sprites[mo->sprite];
+        spriteframe_t *sprFrame = &sprDef->spriteFrames[mo->frame];
+
+        material_t *mat;
         if(sprFrame->rotate)
         {
             mat = sprFrame->mats[(R_ViewPointXYToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
@@ -1285,24 +1287,22 @@ void R_ProjectSprite(mobj_t *mo)
         }
 
 #if _DEBUG
-        if(!mat)
-            Con_Error("R_ProjectSprite: Sprite '%i' frame '%i' missing material.", (int) mo->sprite, mo->frame);
+        if(!mat) Con_Error("R_ProjectSprite: Sprite '%i' frame '%i' missing material.", (int) mo->sprite, mo->frame);
 #endif
 
         // Ensure we have up-to-date information about the material.
-        spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1,-2, -1, true, true, true, false);
-        ms = Materials_Prepare(mat, spec, true);
+        MaterialSnapshot const &ms =
+            App_Materials()->prepare(*mat, Rend_SpriteMaterialSpec(), true);
 
-        pl = (pointlight_analysis_t const *) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
+        pointlight_analysis_t const *pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_SPRITE_AUTOLIGHT);
         if(!pl)
         {
-            QByteArray uri = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY)).manifest().composeUri().asText().toUtf8();
+            QByteArray uri = ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri().asText().toUtf8();
             Con_Error("R_ProjectSprite: Texture \"%s\" has no TA_SPRITE_AUTOLIGHT analysis", uri.constData());
         }
 
-        lum = LO_GetLuminous(mo->lumIdx);
-        def = (mo->state? stateLights[mo->state - states] : 0);
+        lumobj_t const *lum = LO_GetLuminous(mo->lumIdx);
+        ded_light_t const *def = (mo->state? stateLights[mo->state - states] : 0);
 
         vis = R_NewVisSprite();
         vis->type = VSPR_FLARE;
@@ -1312,9 +1312,9 @@ void R_ProjectSprite(mobj_t *mo)
         V3d_Sum(vis->origin, moPos, visOff);
         vis->origin[VZ] += LUM_OMNI(lum)->zOff;
 
-        flareSize = pl->brightMul;
+        float flareSize = pl->brightMul;
         // X offset to the flare position.
-        xOffset = ms->size.width * pl->originX - -tex.origin().x();
+        float xOffset = ms.dimensions().width() * pl->originX - -tex.origin().x();
 
         // Does the mobj have an active light definition?
         if(def)
@@ -1353,6 +1353,8 @@ void R_ProjectSprite(mobj_t *mo)
         }
     }
 }
+
+#endif // __CLIENT__
 
 typedef struct {
     BspLeaf* bspLeaf;

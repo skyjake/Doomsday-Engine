@@ -29,6 +29,8 @@
 #ifndef __DOOMSDAY_PLAYERS_H__
 #define __DOOMSDAY_PLAYERS_H__
 
+#include "api_player.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

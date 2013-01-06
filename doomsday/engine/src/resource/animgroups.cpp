@@ -73,8 +73,8 @@ int R_AnimGroupCount()
     return numgroups;
 }
 
-/// @note Part of the Doomsday public API.
-int R_CreateAnimGroup(int flags)
+#undef R_CreateAnimGroup
+DENG_EXTERN_C int R_CreateAnimGroup(int flags)
 {
     // Allocating one by one is inefficient but it doesn't really matter.
     groups = (animgroup_t *) Z_Realloc(groups, sizeof(*groups) * ++numgroups, PU_APPSTATIC);
@@ -90,8 +90,8 @@ int R_CreateAnimGroup(int flags)
     return group->id;
 }
 
-/// @note Part of the Doomsday public API.
-void R_AddAnimGroupFrame(int groupNum, uri_s const *textureUri, int tics, int randomTics)
+#undef R_AddAnimGroupFrame
+DENG_EXTERN_C void R_AddAnimGroupFrame(int groupNum, uri_s const *textureUri, int tics, int randomTics)
 {
     LOG_AS("R_AddAnimGroupFrame");
 

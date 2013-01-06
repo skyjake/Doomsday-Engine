@@ -23,10 +23,14 @@
 #ifndef LIBDENG_AUDIO_DRIVER_H
 #define LIBDENG_AUDIO_DRIVER_H
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 #include <de/str.h>
-#include "sys_audiod.h"
-#include "sys_audiod_sfx.h"
-#include "sys_audiod_mus.h"
+#include "api_audiod.h"
+#include "api_audiod_sfx.h"
+#include "api_audiod_mus.h"
 
 #ifdef __cplusplus
 extern "C" {

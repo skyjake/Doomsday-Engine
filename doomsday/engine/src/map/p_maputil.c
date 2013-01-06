@@ -33,6 +33,8 @@
 #include "de_play.h"
 #include "de_misc.h"
 
+#include "render/r_main.h" // validCount
+
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 
 // Linkstore is list of pointers gathered when iterating stuff.
@@ -51,23 +53,7 @@
     } \
 }
 
-int Divline_PointXYOnSide(const divline_t* line, coord_t fx, coord_t fy)
-{
-    fixed_t point[2] = { FLT2FIX((float)fx), FLT2FIX((float)fy) };
-    return V2x_PointOnLineSide(point, line->origin, line->direction);
-}
-
-int Divline_PointOnSide(const divline_t* line, coord_t const point[])
-{
-    return Divline_PointXYOnSide(line, point[VX], point[VY]);
-}
-
-fixed_t Divline_Intersection(const divline_t* v1, const divline_t* v2)
-{
-    return V2x_Intersection(v1->origin, v1->direction, v2->origin, v2->direction);
-}
-
-/// @note Part of the Doomsday public API
+#undef P_TraceLOS
 const divline_t* P_TraceLOS(void)
 {
     static divline_t emptyLOS;
@@ -78,8 +64,8 @@ const divline_t* P_TraceLOS(void)
     return &emptyLOS;
 }
 
-/// @note Part of the Doomsday public API
-const TraceOpening* P_TraceOpening(void)
+#undef P_TraceOpening
+TraceOpening const *P_TraceOpening(void)
 {
     static TraceOpening zeroOpening;
     if(theMap)
@@ -89,7 +75,7 @@ const TraceOpening* P_TraceOpening(void)
     return &zeroOpening;
 }
 
-/// @note Part of the Doomsday public API
+#undef P_SetTraceOpening
 void P_SetTraceOpening(LineDef* lineDef)
 {
     if(!theMap)
@@ -101,14 +87,14 @@ void P_SetTraceOpening(LineDef* lineDef)
     GameMap_SetTraceOpening(theMap, lineDef);
 }
 
-/// @note Part of the Doomsday public API
+#undef P_BspLeafAtPoint
 BspLeaf* P_BspLeafAtPoint(coord_t const point[])
 {
     if(!theMap) return NULL;
     return GameMap_BspLeafAtPoint(theMap, point);
 }
 
-/// @note Part of the Doomsday public API
+#undef P_BspLeafAtPointXY
 BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y)
 {
     if(!theMap) return NULL;
@@ -192,6 +178,7 @@ boolean P_UnlinkMobjFromSector(mobj_t* mo)
  * @return              DDLINK_* flags denoting what the mobj was unlinked
  *                      from (in case we need to re-link).
  */
+#undef P_MobjUnlink
 int P_MobjUnlink(mobj_t* mo)
 {
     int links = 0;
@@ -328,6 +315,7 @@ void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
  * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
  * the BspLeaf pointer. Can be called without unlinking first.
  */
+#undef P_MobjLink
 void P_MobjLink(mobj_t* mo, byte flags)
 {
     Sector* sec;
@@ -666,10 +654,7 @@ boolean P_UnlinkMobjFromLineDefs(mobj_t* mo)
     return GameMap_UnlinkMobjFromLineDefs(theMap, mo);
 }
 
-/**
- * The callback function will be called once for each line that crosses
- * trough the object. This means all the lines will be two-sided.
- */
+#undef P_MobjLinesIterator
 int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters)
 {
     /// @todo Do not assume mobj is in the current map.
@@ -677,12 +662,7 @@ int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* par
     return GameMap_MobjLinesIterator(theMap, mo, callback, parameters);
 }
 
-/**
- * Increment validCount before calling this routine. The callback function
- * will be called once for each sector the mobj is touching (totally or
- * partly inside). This is not a 3D check; the mobj may actually reside
- * above or under the sector.
- */
+#undef P_MobjSectorsIterator
 int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters)
 {
     /// @todo Do not assume mobj is in the current map.
@@ -690,6 +670,7 @@ int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* pa
     return GameMap_MobjSectorsIterator(theMap, mo, callback, parameters);
 }
 
+#undef P_LineMobjsIterator
 int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void* parameters)
 {
     /// @todo Do not assume lineDef is in the current map.
@@ -705,6 +686,7 @@ int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void
  * (Lovely name; actually this is a combination of SectorMobjs and
  * a bunch of LineMobjs iterations.)
  */
+#undef P_SectorTouchingMobjsIterator
 int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void* parameters)
 {
     /// @todo Do not assume sector is in the current map.
@@ -712,35 +694,35 @@ int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void
     return GameMap_SectorTouchingMobjsIterator(theMap, sector, callback, parameters);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_MobjsBoxIterator
 int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (mobj_t*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_MobjsBoxIterator(theMap, box, callback, parameters);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_PolyobjsBoxIterator
 int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_PolyobjsBoxIterator(theMap, box, callback, parameters);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_LinesBoxIterator
 int P_LinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_LineDefsBoxIterator(theMap, box, callback, parameters);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_PolyobjLinesBoxIterator
 int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_PolyobjLinesBoxIterator(theMap, box, callback, parameters);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_BspLeafsBoxIterator
 int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector,
     int (*callback) (BspLeaf*, void*), void* parameters)
 {
@@ -748,14 +730,14 @@ int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector,
     return GameMap_BspLeafsBoxIterator(theMap, box, sector, callback, parameters);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_AllLinesBoxIterator
 int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_AllLineDefsBoxIterator(theMap, box, callback, parameters);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_PathTraverse2
 int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback,
     void* paramaters)
 {
@@ -763,14 +745,14 @@ int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, trave
     return GameMap_PathTraverse2(theMap, from, to, flags, callback, paramaters);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_PathTraverse
 int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_PathTraverse(theMap, from, to, flags, callback);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_PathXYTraverse2
 int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags,
     traverser_t callback, void* paramaters)
 {
@@ -778,7 +760,7 @@ int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, in
     return GameMap_PathXYTraverse2(theMap, fromX, fromY, toX, toY, flags, callback, paramaters);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_PathXYTraverse
 int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags,
     traverser_t callback)
 {
@@ -786,7 +768,7 @@ int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int
     return GameMap_PathXYTraverse(theMap, fromX, fromY, toX, toY, flags, callback);
 }
 
-/// @note Part of the Doomsday public API.
+#undef P_CheckLineSight
 boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope,
     coord_t topSlope, int flags)
 {

@@ -85,6 +85,7 @@ const char* strcasestr(const char* text, const char* sub);
  */
 #if defined(UNIX)
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
 
 #ifdef __GNUC__
@@ -111,8 +112,6 @@ typedef unsigned int DWORD;
 #define DIR_SEP_CHAR        '/'
 #define DIR_SEP_STR         "/"
 #define DIR_WRONG_SEP_CHAR  '\\'
-
-#include "unix/sys_path.h"
 
 #endif                          // UNIX
 

@@ -34,6 +34,10 @@
 #include <de/NativePath>
 #include <de/memory.h>
 
+#define DENG_NO_API_MACROS_FILESYS
+#include "api_filesys.h"
+#include "m_misc.h"
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
@@ -367,7 +371,7 @@ struct FS1::Instance
                 hndl = FileHandleBuilder::fromNativeFile(*found, baseOffset);
 
                 // Prepare the temporary info descriptor.
-                info = FileInfo(F_GetLastModified(foundPath.toUtf8().constData()));
+                info = FileInfo(_api_F.GetLastModified(foundPath.toUtf8().constData()));
             }
         }
 
@@ -872,8 +876,8 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
             }
             Str_AppendChar(wildPath, '*');
 
-            finddata_t fd;
-            if(!myfindfirst(Str_Text(wildPath), &fd))
+            FindData fd;
+            if(!FindFile_FindFirst(&fd, Str_Text(wildPath)))
             {
                 // First path found.
                 do
@@ -886,9 +890,9 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList& found)
 
                         nativeFilePaths.push_back(PathListItem(foundPath, fd.attrib));
                     }
-                } while(!myfindnext(&fd));
+                } while(!FindFile_FindNext(&fd));
             }
-            myfindend(&fd);
+            FindFile_Finish(&fd);
         }
 
         // Sort the native file paths.
@@ -1717,3 +1721,36 @@ uint F_FindPathInList(resourceclassid_t classId, char const* searchPaths,
 
     return 0; // Not found.
 }
+
+// TODO: consolidate public API into a single file
+
+// fs_util.cpp
+extern int F_FileExists(const char* path);
+extern uint F_GetLastModified(const char* path);
+extern boolean F_MakePath(const char* path);
+extern void F_FileName(ddstring_t* dst, const char* src);
+extern void F_ExtractFileBase(char* dest, const char* path, size_t len);
+extern const char* F_FindFileExtension(const char* path);
+extern boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
+extern const char* F_PrettyPath(const char* path);
+
+// m_misc.c
+DENG_EXTERN_C size_t M_ReadFile(const char* name, char** buffer);
+DENG_EXTERN_C boolean M_WriteFile(const char* name, const char* source, size_t length);
+
+DENG_DECLARE_API(F) =
+{
+    { DE_API_FILE_SYSTEM },
+
+    F_Access,
+    F_FileExists,
+    F_GetLastModified,
+    F_MakePath,
+    F_FileName,
+    F_ExtractFileBase,
+    F_FindFileExtension,
+    F_TranslatePath,
+    F_PrettyPath,
+    M_ReadFile,
+    M_WriteFile
+};

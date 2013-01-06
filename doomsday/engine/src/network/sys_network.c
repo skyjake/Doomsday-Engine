@@ -113,10 +113,12 @@ void N_SystemShutdown(void)
 {
     if(netGame)
     {
-        if(isClient)
-            N_Disconnect();
-        else
-            N_ServerClose();
+#ifdef __CLIENT__
+        if(isClient) N_Disconnect();
+#endif
+#ifdef __SERVER__
+        N_ServerClose();
+#endif
     }
 
     N_ShutdownService();
@@ -485,6 +487,8 @@ boolean N_LookForHosts(const char *address, int port, expectedresponder_t respon
     return true;
 }
 
+#ifdef __CLIENT__
+
 /**
  * Handles the server's response to a client's join request.
  */
@@ -510,8 +514,8 @@ void N_ClientHandleResponseToJoin(int nodeId, const byte* data, int size)
     // Clients are allowed to send packets to the server.
     svNode->hasJoined = true;
 
-    allowSending = true;
     handshakeReceived = false;
+    allowSending = true;
     netGame = true;             // Allow sending/receiving of packets.
     isServer = false;
     isClient = true;
@@ -599,6 +603,8 @@ boolean N_Disconnect(void)
     return true;
 }
 
+#endif // __CLIENT__
+
 boolean N_ServerOpen(void)
 {
     if(!isDedicated)
@@ -607,7 +613,9 @@ boolean N_ServerOpen(void)
         return false;
     }
 
+#ifdef __CLIENT__
     Demo_StopPlayback();
+#endif
 
     // Let's make sure the correct service provider is initialized
     // in server mode.
@@ -784,6 +792,8 @@ void N_ServerListenUnjoinedNodes(void)
     }
 }
 
+#ifdef __CLIENT__
+
 /**
  * Handles messages from the server when the client is connected but has not
  * yet joined to game.
@@ -829,6 +839,10 @@ void N_ClientListenUnjoined(void)
     }
 }
 
+#endif // __CLIENT__
+
+#ifdef __SERVER__
+
 void N_ServerListenJoinedNodes(void)
 {
     if(!joinedSockSet) return;
@@ -860,6 +874,10 @@ void N_ServerListenJoinedNodes(void)
     }
 }
 
+#endif // __SERVER__
+
+#ifdef __CLIENT__
+
 void N_ClientListen(void)
 {
     if(!joinedSockSet) return;
@@ -881,18 +899,24 @@ void N_ClientListen(void)
     }
 }
 
+#endif
+
 void N_ListenNodes(void)
 {
     if(netServerMode)
     {
+#ifdef __SERVER__
         // This is only for the server.
         N_ServerListenUnjoinedNodes();
         N_ServerListenJoinedNodes();
+#endif
     }
     else
     {
+#ifdef __CLIENT__
         N_ClientListenUnjoined();
         N_ClientListen();
+#endif
     }
 }
 

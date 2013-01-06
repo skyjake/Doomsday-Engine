@@ -30,10 +30,9 @@
 #define LIBDENG_MAIN_H
 
 #include "dd_types.h"
-#include "dd_plugin.h"
-#ifndef __cplusplus // Kludge: this isn't yet C++ compatible
-#  include "resource/textures.h"
-#endif
+#include "api_plugin.h"
+#include "resource/materials.h"
+#include "resource/textures.h"
 #include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>
 
@@ -141,14 +140,8 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
  */
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn);
 
-int DD_GetInteger(int ddvalue);
-void DD_SetInteger(int ddvalue, int parm);
-void DD_SetVariable(int ddvalue, void* ptr);
-void* DD_GetVariable(int ddvalue);
-
-ddplayer_t* DD_GetPlayer(int number);
-
 void DD_CreateResourceClasses();
+
 void DD_ClearResourceClasses();
 
 #ifdef __cplusplus
@@ -201,20 +194,18 @@ de::ResourceClass& DD_ResourceClassById(resourceclassid_t classId);
 de::ResourceClass& DD_ResourceClassByName(de::String name);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
-ddstring_t const *DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
+de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 
 extern "C" {
 #endif // __cplusplus
 
-materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
-
-fontschemeid_t DD_ParseFontSchemeName(const char* str);
+fontschemeid_t DD_ParseFontSchemeName(char const *str);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
-ddstring_t const *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName);
+AutoStr *DD_MaterialSchemeNameForTextureScheme(Str const *textureSchemeName);
 
-/// @return  Unique identifier of the material associated with specified @a textureUri.
-materialid_t DD_MaterialForTextureUri(Uri const *uri);
+/// @return  Material associated with specified @a textureUri; otherwise @c NULL.
+material_t *DD_MaterialForTextureUri(Uri const *textureUri);
 
 const char* value_Str(int val);
 
@@ -222,14 +213,6 @@ const char* value_Str(int val);
  * Frees the info structures for all registered games.
  */
 void DD_DestroyGames(void);
-
-boolean DD_GameInfo(struct gameinfo_s* info);
-
-void DD_AddGameResource(gameid_t game, resourceclassid_t classId, int rflags, char const* names, void* params);
-
-gameid_t DD_DefineGame(struct gamedef_s const* def);
-
-gameid_t DD_GameIdForKey(char const* identityKey);
 
 D_CMD(Load);
 D_CMD(Unload);

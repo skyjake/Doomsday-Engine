@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 #include "de/libdeng2.h"
 #include "de/Library"
 #include "de/Log"
+#include "de/LogBuffer"
 
 #if defined(UNIX) && defined(DENG2_QT_4_7_OR_NEWER) && !defined(DENG2_QT_4_8_OR_NEWER)
 #  define DENG2_USE_DLOPEN
@@ -66,7 +67,7 @@ Library::Library(NativePath const &nativePath) : d(0)
     d = new Instance;
 
     LOG_AS("Library");
-    LOG_TRACE("Loading ") << nativePath.pretty();
+    LOG_TRACE("Loading \"%s\"") << nativePath.pretty();
 
 #ifndef DENG2_USE_DLOPEN
     d->library = new QLibrary(nativePath);
@@ -109,13 +110,17 @@ Library::~Library()
     if(d->library)
     {
         LOG_AS("~Library");
-        LOG_TRACE("Unloading ") << d->nativePath().pretty();
+        LOG_TRACE("Unloading \"%s\"") << d->nativePath().pretty();
 
         // Automatically call the shutdown function, if one exists.
         if(d->type.beginsWith("deng-plugin/") && hasSymbol("deng_ShutdownPlugin"))
         {
             DENG2_SYMBOL(deng_ShutdownPlugin)();
         }
+
+        // The log buffer may contain log entries built by the library; those
+        // entries contain pointers to functions that are about to disappear.
+        LogBuffer::appBuffer().clear();
 
 #ifndef DENG2_USE_DLOPEN
         d->library->unload();

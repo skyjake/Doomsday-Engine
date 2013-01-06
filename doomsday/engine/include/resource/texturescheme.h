@@ -22,9 +22,8 @@
 #ifndef LIBDENG_RESOURCE_TEXTURESCHEME_H
 #define LIBDENG_RESOURCE_TEXTURESCHEME_H
 
-#include <QList>
 #include <de/PathTree>
-#include "uri.h"
+#include "api_uri.h"
 #include "resource/texturemanifest.h"
 
 namespace de {

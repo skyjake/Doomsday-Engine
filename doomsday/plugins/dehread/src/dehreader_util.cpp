@@ -30,7 +30,7 @@ void* DD_Realloc(void* ptr, int newSize)
     ded_count_t cnt;
     cnt.max = 0;
     cnt.num = newSize;
-    DED_NewEntries(&ptr, &cnt, 1, 0);
+    _api_Def.DED_NewEntries(&ptr, &cnt, 1, 0);
     return ptr;
 }
 

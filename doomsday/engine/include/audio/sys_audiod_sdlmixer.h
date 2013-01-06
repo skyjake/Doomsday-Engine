@@ -32,10 +32,10 @@
 #ifndef __DOOMSDAY_SYSTEM_AUDIO_SDLMIXER_H__
 #define __DOOMSDAY_SYSTEM_AUDIO_SDLMIXER_H__
 
-#include <de/libdeng.h>
-#include "sys_audiod.h"
-#include "sys_audiod_sfx.h"
-#include "sys_audiod_mus.h"
+#include <de/libdeng1.h>
+#include "api_audiod.h"
+#include "api_audiod_sfx.h"
+#include "api_audiod_mus.h"
 
 DENG_EXTERN_C audiodriver_t audiod_sdlmixer;
 DENG_EXTERN_C audiointerface_sfx_t audiod_sdlmixer_sfx;

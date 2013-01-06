@@ -29,7 +29,7 @@
 #ifndef LIBDENG_SOUND_MUSIC_H
 #define LIBDENG_SOUND_MUSIC_H
 
-#include "sys_audiod_mus.h"
+#include "api_audiod_mus.h"
 
 #ifdef __cplusplus
 extern "C" {

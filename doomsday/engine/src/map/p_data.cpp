@@ -22,6 +22,8 @@
 
 #include <cmath>
 
+#define DENG_NO_API_MACROS_MAP
+
 #include "de_base.h"
 #include "de_network.h"
 #include "de_play.h"
@@ -33,7 +35,6 @@
 #include "map/propertyvalue.h"
 #include "render/rend_bias.h"
 #include "render/vlight.h"
-#include "m_bams.h"
 
 #include <map>
 #include <EntityDatabase>
@@ -43,18 +44,19 @@
 #include <de/Log>
 #include <de/String>
 #include <de/StringPool>
+#include <de/binangle.h>
 #include <de/memory.h>
 
-using de::FS1;
+using namespace de;
 
 // Map entity definitions.
-static de::StringPool* entityDefs;
-typedef std::map<int, de::StringPool::Id> EntityDefIdMap;
+static StringPool* entityDefs;
+typedef std::map<int, StringPool::Id> EntityDefIdMap;
 static EntityDefIdMap entityDefIdMap;
 
 extern "C" boolean mapSetup; // We are currently setting up a map.
 
-Uri* mapUri; // Name by which the game referred to the current map.
+struct uri_s* mapUri; // Name by which the game referred to the current map.
 
 /**
  * These map data arrays are internal to the engine.
@@ -114,24 +116,21 @@ void P_SetCurrentMap(GameMap* map)
     theMap = map;
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_MapExists(char const* uriCString)
+DENG_EXTERN_C boolean P_MapExists(char const* uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
     return (lumpNum >= 0);
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_MapIsCustom(char const* uriCString)
+DENG_EXTERN_C boolean P_MapIsCustom(char const* uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
     return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
 
-/// @note Part of the Doomsday public API.
-AutoStr* P_MapSourceFile(char const* uriCString)
+DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
@@ -139,8 +138,7 @@ AutoStr* P_MapSourceFile(char const* uriCString)
     return W_LumpSourceFile(lumpNum);
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_LoadMap(char const* uriCString)
+DENG_EXTERN_C boolean P_LoadMap(char const* uriCString)
 {
     if(!uriCString || !uriCString[0])
     {
@@ -187,11 +185,13 @@ boolean P_LoadMap(char const* uriCString)
 
         GameMap_ClMobjReset(map);
 
+#ifdef __CLIENT__
         // Clear player data, too, since we just lost all clmobjs.
         Cl_InitPlayers();
 
         RL_DeleteLists();
         Rend_CalcLightModRange();
+#endif
 
         // Invalidate old cmds and init player values.
         for(uint i = 0; i < DDMAXPLAYERS; ++i)
@@ -210,21 +210,22 @@ boolean P_LoadMap(char const* uriCString)
         R_ResetViewer();
 
         // Texture animations should begin from their first step.
-        Materials_ResetAnimGroups();
+        App_Materials()->resetAllAnimGroups();
 
         R_InitObjlinkBlockmapForMap();
+
+#ifdef __CLIENT__
         LO_InitForMap(); // Lumobj management.
         R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.
 
-        // Init Particle Generator links.
-        P_PtcInitForMap();
-
         // Initialize the lighting grid.
         LG_InitForMap();
 
-        if(!isDedicated)
-            R_InitRendPolyPools();
+        R_InitRendPolyPools();
+#endif
+        // Init Particle Generator links.
+        P_PtcInitForMap();
 
         return true;
     }
@@ -232,7 +233,7 @@ boolean P_LoadMap(char const* uriCString)
     return false;
 }
 
-static int clearEntityDefsWorker(de::StringPool::Id id, void* /*parameters*/)
+static int clearEntityDefsWorker(StringPool::Id id, void* /*parameters*/)
 {
     MapEntityDef* def = static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
     DENG2_ASSERT(def);
@@ -260,7 +261,7 @@ MapEntityDef* P_MapEntityDef(int id)
     EntityDefIdMap::iterator i = entityDefIdMap.find(id);
     if(i != entityDefIdMap.end())
     {
-        de::StringPool::Id id = i->second;
+        StringPool::Id id = i->second;
         return static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
     }
     return 0; // Not found.
@@ -270,13 +271,13 @@ MapEntityDef* P_MapEntityDefByName(char const* name)
 {
     if(name && entityDefs)
     {
-        de::StringPool::Id id = entityDefs->isInterned(de::String(name));
+        StringPool::Id id = entityDefs->isInterned(String(name));
         return static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
     }
     return 0; // Not found.
 }
 
-static int P_NameForMapEntityDefWorker(de::StringPool::Id id, void* parameters)
+static int P_NameForMapEntityDefWorker(StringPool::Id id, void* parameters)
 {
     MapEntityDef* def = static_cast<MapEntityDef*>( parameters );
     if(entityDefs->userPointer(id) == def) return id;
@@ -287,8 +288,8 @@ AutoStr* P_NameForMapEntityDef(MapEntityDef* def)
 {
     if(def)
     {
-        de::StringPool::Id id = entityDefs->iterate(P_NameForMapEntityDefWorker, def);
-        de::String const& name = entityDefs->string(id);
+        StringPool::Id id = entityDefs->iterate(P_NameForMapEntityDefWorker, def);
+        String const& name = entityDefs->string(id);
         QByteArray nameUtf8 = name.toUtf8();
         return AutoStr_FromText(nameUtf8.constData());
     }
@@ -348,10 +349,10 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
     DENG2_ASSERT(def);
 
     if(propertyId == 0) // Not a valid identifier.
-        throw de::Error("MapEntityDef_AddProperty", "0 is not a valid propertyId");
+        throw Error("MapEntityDef_AddProperty", "0 is not a valid propertyId");
 
     if(!propertyName || !propertyName[0]) // Must have a name.
-        throw de::Error("MapEntityDef_AddProperty", "Invalid propertyName (zero-length string)");
+        throw Error("MapEntityDef_AddProperty", "Invalid propertyName (zero-length string)");
 
     // A supported value type?
     switch(type)
@@ -365,21 +366,21 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
         break;
 
     default:
-        throw de::Error("MapEntityDef_AddProperty", QString("Unknown/not supported value type %1").arg(type));
+        throw Error("MapEntityDef_AddProperty", QString("Unknown/not supported value type %1").arg(type));
     }
 
     // Ensure both the identifer and the name for the new property are unique.
     if(MapEntityDef_Property(def, propertyId) >= 0)
-        throw de::Error("MapEntityDef_AddProperty", QString("propertyId %1 not unique for %2")
+        throw Error("MapEntityDef_AddProperty", QString("propertyId %1 not unique for %2")
                                                     .arg(propertyId).arg(Str_Text(P_NameForMapEntityDef(def))));
     if(MapEntityDef_PropertyByName(def, propertyName) >= 0)
-        throw de::Error("MapEntityDef_AddProperty", QString("propertyName \"%1\" not unique for %2")
+        throw Error("MapEntityDef_AddProperty", QString("propertyName \"%1\" not unique for %2")
                                                     .arg(propertyName).arg(Str_Text(P_NameForMapEntityDef(def))));
 
     // Looks good! Add it to the list of properties.
     def->props = (MapEntityPropertyDef*) M_Realloc(def->props, ++def->numProps * sizeof(*def->props));
     if(!def->props)
-        throw de::Error("MapEntityDef_AddProperty",
+        throw Error("MapEntityDef_AddProperty",
                         QString("Failed on (re)allocation of %1 bytes for new MapEntityPropertyDef array")
                             .arg((unsigned long) sizeof(*def->props)));
 
@@ -389,7 +390,7 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
     int len = (int)strlen(propertyName);
     prop->name = (char*) M_Malloc(sizeof(*prop->name) * (len + 1));
     if(!prop->name)
-        throw de::Error("MapEntityDef_AddProperty",
+        throw Error("MapEntityDef_AddProperty",
                         QString("Failed on allocation of %1 bytes for property name")
                             .arg((unsigned long) (sizeof(*prop->name) * (len + 1))));
 
@@ -433,37 +434,37 @@ static MapEntityDef* findMapEntityDef(int identifier, const char* entityName, bo
     // Have we yet to initialize the map entity definition dataset?
     if(!entityDefs)
     {
-        entityDefs = new de::StringPool;
+        entityDefs = new StringPool;
     }
 
-    de::StringPool::Id id = entityDefs->intern(de::String(entityName));
+    StringPool::Id id = entityDefs->intern(String(entityName));
     MapEntityDef* def = new MapEntityDef(identifier);
     entityDefs->setUserPointer(id, def);
 
-    entityDefIdMap.insert(std::pair<int, de::StringPool::Id>(identifier, id));
+    entityDefIdMap.insert(std::pair<int, StringPool::Id>(identifier, id));
 
     return def;
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_RegisterMapObj(int identifier, const char* name)
+#undef P_RegisterMapObj
+DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, const char* name)
 {
     return !!findMapEntityDef(identifier, name, true /*do create*/);
 }
 
-/// @note Part of the Doomsday public API.
-boolean P_RegisterMapObjProperty(int entityId, int propertyId,
-    const char* propertyName, valuetype_t type)
+#undef P_RegisterMapObjProperty
+DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId,
+                                               const char* propertyName, valuetype_t type)
 {
     try
     {
         MapEntityDef* def = findMapEntityDef(entityId, 0, false /*do not create*/);
-        if(!def) throw de::Error("P_RegisterMapObjProperty", QString("Unknown entityId %1").arg(entityId));
+        if(!def) throw Error("P_RegisterMapObjProperty", QString("Unknown entityId %1").arg(entityId));
 
         MapEntityDef_AddProperty(def, propertyId, propertyName, type);
         return true; // Success!
     }
-    catch(de::Error const& er)
+    catch(Error const& er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
@@ -481,8 +482,7 @@ void P_ShutdownMapEntityDefs(void)
     clearEntityDefs();
 }
 
-/// @note Part of the Doomsday public API.
-extern "C" uint P_CountGameMapObjs(int entityId)
+DENG_EXTERN_C uint P_CountGameMapObjs(int entityId)
 {
     if(!theMap || !theMap->entityDatabase) return 0;
     EntityDatabase* db = theMap->entityDatabase;
@@ -496,7 +496,7 @@ boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propert
     {
         return EntityDatabase_SetProperty(db, propertyDef, elementIndex, valueType, valueAdr);
     }
-    catch(de::Error const& er)
+    catch(Error const& er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
@@ -507,12 +507,12 @@ static MapEntityPropertyDef* entityPropertyDef(int entityId, int propertyId)
 {
     // Is this a known entity?
     MapEntityDef* entity = P_MapEntityDef(entityId);
-    if(!entity) throw de::Error("entityPropertyDef", QString("Unknown entity definition id %1").arg(entityId));
+    if(!entity) throw Error("entityPropertyDef", QString("Unknown entity definition id %1").arg(entityId));
 
     // Is this a known property?
     MapEntityPropertyDef* property;
     if(MapEntityDef_Property2(entity, propertyId, &property) < 0)
-        throw de::Error("entityPropertyDef", QString("Entity definition %1 has no property with id %2")
+        throw Error("entityPropertyDef", QString("Entity definition %1 has no property with id %2")
                                                  .arg(Str_Text(P_NameForMapEntityDef(entity)))
                                                  .arg(propertyId));
 
@@ -530,12 +530,11 @@ static void setValue(void* dst, valuetype_t dstType, PropertyValue const* pvalue
     case DDVT_SHORT: *(  (short*) dst) = pvalue->asInt16(); break;
     case DDVT_ANGLE: *((angle_t*) dst) = pvalue->asAngle(); break;
     default:
-        throw de::Error("setValue", QString("Unknown value type %d").arg(dstType));
+        throw Error("setValue", QString("Unknown value type %d").arg(dstType));
     }
 }
 
-/// @note Part of the Doomsday public API.
-byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
 {
     byte returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -547,7 +546,7 @@ byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_BYTE, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -555,8 +554,7 @@ byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-/// @note Part of the Doomsday public API.
-short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
 {
     short returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -568,7 +566,7 @@ short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_SHORT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -576,8 +574,7 @@ short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-/// @note Part of the Doomsday public API.
-int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
 {
     int returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -589,7 +586,7 @@ int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_INT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -597,8 +594,7 @@ int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-/// @note Part of the Doomsday public API.
-fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
 {
     fixed_t returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -610,7 +606,7 @@ fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_FIXED, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -618,8 +614,7 @@ fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-/// @note Part of the Doomsday public API.
-angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
 {
     angle_t returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -631,7 +626,7 @@ angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_ANGLE, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -639,8 +634,7 @@ angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
     return returnVal;
 }
 
-/// @note Part of the Doomsday public API.
-float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId)
+DENG_EXTERN_C float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId)
 {
     float returnVal = 0;
     if(theMap && theMap->entityDatabase)
@@ -652,7 +646,7 @@ float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_FLOAT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error const& er)
+        catch(Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }

@@ -254,6 +254,7 @@ void N_Update(void)
             N_TerminateNode(nevent.id);
             break;
 
+#ifdef __CLIENT__
         case NE_END_CONNECTION:
             // A client receives this event when the connection is
             // terminated.
@@ -265,6 +266,7 @@ void N_Update(void)
                 N_Disconnect();
             }
             break;
+#endif
 
         default:
             Con_Error("N_Update: Invalid value, nevent.type = %i.", (int) nevent.type);

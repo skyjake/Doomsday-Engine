@@ -1,5 +1,4 @@
 /** @file sprite.cpp Sprite Renderer.
- * @ingroup render
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -29,9 +28,12 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "resource/materialsnapshot.h"
+#include "resource/materialvariant.h"
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
-#include "resource/materialvariant.h"
+
+using namespace de;
 
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 
@@ -49,19 +51,18 @@ int useSpriteBlend = 1;
 byte devNoSprites = false;
 byte devThinkerIds = false;
 
-void Rend_SpriteRegister(void)
+void Rend_SpriteRegister()
 {
-    // Cvars
-    C_VAR_INT("rend-sprite-align", &alwaysAlign, 0, 0, 3);
-    C_VAR_FLOAT("rend-sprite-align-angle", &maxSpriteAngle, 0, 0, 90);
-    C_VAR_INT("rend-sprite-alpha", &useSpriteAlpha, 0, 0, 1);
-    C_VAR_INT("rend-sprite-blend", &useSpriteBlend, 0, 0, 1);
-    C_VAR_INT("rend-sprite-lights", &spriteLight, 0, 0, 10);
-    C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1);
-    C_VAR_INT("rend-sprite-noz", &noSpriteZWrite, 0, 0, 1);
-    C_VAR_BYTE("rend-sprite-precache", &precacheSprites, 0, 0, 1);
-    C_VAR_BYTE("rend-dev-nosprite", &devNoSprites, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-thinker-ids", &devThinkerIds, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT   ("rend-sprite-align",       &alwaysAlign,       0, 0, 3);
+    C_VAR_FLOAT ("rend-sprite-align-angle", &maxSpriteAngle,    0, 0, 90);
+    C_VAR_INT   ("rend-sprite-alpha",       &useSpriteAlpha,    0, 0, 1);
+    C_VAR_INT   ("rend-sprite-blend",       &useSpriteBlend,    0, 0, 1);
+    C_VAR_INT   ("rend-sprite-lights",      &spriteLight,       0, 0, 10);
+    C_VAR_BYTE  ("rend-sprite-mode",        &noSpriteTrans,     0, 0, 1);
+    C_VAR_INT   ("rend-sprite-noz",         &noSpriteZWrite,    0, 0, 1);
+    C_VAR_BYTE  ("rend-sprite-precache",    &precacheSprites,   0, 0, 1);
+    C_VAR_BYTE  ("rend-dev-nosprite",       &devNoSprites,      CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-thinker-ids",    &devThinkerIds,     CVF_NO_ARCHIVE, 0, 1);
 }
 
 static inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
@@ -99,7 +100,7 @@ static int drawThinkerId(thinker_t *thinker, void *context)
     mobj_t *mo;
 
     // Skip non-mobjs.
-    if(!P_IsMobjThinker(thinker->function)) return false;
+    if(!Thinker_IsMobjFunc(thinker->function)) return false;
 
     mo = (mobj_t *)thinker;
     pos[VX] = mo->origin[VX];
@@ -287,8 +288,6 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     float offScaleY = weaponOffsetScaleY / 1000.0f;
     spritedef_t const *sprDef;
     spriteframe_t const *sprFrame;
-    materialsnapshot_t const *ms;
-    materialvariantspecification_t const *spec;
     boolean flip;
 
 #ifdef RANGECHECK
@@ -304,20 +303,21 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     sprFrame = &sprDef->spriteFrames[frame];
     flip = sprFrame->flip[0];
 
-    spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -2, 0, false, true, true, false);
-    ms = Materials_Prepare(sprFrame->mats[0], spec, true);
+    MaterialVariantSpec const &spec =
+        App_Materials()->variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                               0, -2, 0, false, true, true, false);
+    MaterialSnapshot const &ms = App_Materials()->prepare(*sprFrame->mats[0], spec, true);
 
-    de::Texture const &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
-    variantspecification_t const *texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
-    DENG_ASSERT(spec);
+    Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
+    variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
+    DENG_ASSERT(texSpec);
 
     params->pos[VX] = psp->pos[VX] - -tex.origin().x() + pspOffset[VX] + -texSpec->border;
     params->pos[VY] = offScaleY * (psp->pos[VY] - -tex.origin().y()) + pspOffset[VY] + -texSpec->border;
-    params->width  = ms->size.width  + texSpec->border*2;
-    params->height = ms->size.height + texSpec->border*2;
+    params->width  = ms.dimensions().width()  + texSpec->border*2;
+    params->height = ms.dimensions().height() + texSpec->border*2;
 
-    TextureVariant_Coords(MST(ms, MTU_PRIMARY), &params->texOffset[0], &params->texOffset[1]);
+    ms.texture(MTU_PRIMARY).coords(&params->texOffset[0], &params->texOffset[1]);
 
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
@@ -373,11 +373,11 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     }
 }
 
-materialvariantspecification_t const *PSprite_MaterialSpec()
+MaterialVariantSpec const &PSprite_MaterialSpec()
 {
-    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
-                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0,
-                                                    false, true, true, false);
+    return App_Materials()->variantSpecForContext(MC_SPRITE, 0, 0, 0, 0,
+                                                  GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0,
+                                                  false, true, true, false);
 }
 
 void Rend_DrawPSprite(rendpspriteparams_t const *params)
@@ -390,11 +390,11 @@ void Rend_DrawPSprite(rendpspriteparams_t const *params)
     else if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        material_t *mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
-        materialvariantspecification_t const *spec = PSprite_MaterialSpec();
-        materialsnapshot_t const *ms = Materials_Prepare(mat, spec, true);
+        MaterialSnapshot const &ms =
+            App_Materials()->prepare(*App_Materials()->find(de::Uri(Path("System:gray"))).material(),
+                                     PSprite_MaterialSpec(), true);
 
-        GL_BindTexture(MST(ms, MTU_PRIMARY));
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -547,8 +547,9 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 
     if(renderTextures)
     {
-        materialsnapshot_t const *ms = Materials_PrepareVariant(p->material);
-        tex = MST(ms, MTU_PRIMARY);
+        MaterialSnapshot const &ms =
+                App_Materials()->prepare(*reinterpret_cast<MaterialVariant *>(p->material));
+        tex = &ms.texture(MTU_PRIMARY);
     }
 
     // Do we have a dynamic light to blend with?
@@ -578,7 +579,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 
         // The actual texture.
         glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
-        GL_BindTexture(tex);
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(tex));
 
         withDyn = true;
     }
@@ -586,7 +587,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
     {
         GL_ModulateTexture(1);
         glEnable(GL_TEXTURE_2D);
-        GL_BindTexture(tex);
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(tex));
         normal = 0;
     }
 
@@ -765,7 +766,7 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
 
 static boolean generateHaloForVisSprite(vissprite_t const *spr, boolean primary)
 {
-    float occlussionFactor;
+    float occlusionFactor;
 
     if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY)) return false;
 
@@ -776,11 +777,11 @@ static boolean generateHaloForVisSprite(vissprite_t const *spr, boolean primary)
          * not smoothly occlude their flares. Instead, we will have to
          * put up with them instantly appearing/disappearing.
          */
-        occlussionFactor = (LO_IsClipped(spr->data.flare.lumIdx, viewPlayer - ddPlayers)? 0 : 1);
+        occlusionFactor = (LO_IsClipped(spr->data.flare.lumIdx, viewPlayer - ddPlayers)? 0 : 1);
     }
     else
     {
-        occlussionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
+        occlusionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
     }
 
     return H_RenderHalo(spr->origin[VX], spr->origin[VY], spr->origin[VZ],
@@ -788,7 +789,7 @@ static boolean generateHaloForVisSprite(vissprite_t const *spr, boolean primary)
                         spr->data.flare.tex,
                         spr->data.flare.color,
                         spr->distance,
-                        occlussionFactor, spr->data.flare.mul,
+                        occlusionFactor, spr->data.flare.mul,
                         spr->data.flare.xOff, primary,
                         (spr->data.flare.flags & RFF_NO_TURN));
 }
@@ -860,28 +861,26 @@ void Rend_DrawMasked(void)
     }
 }
 
-materialvariantspecification_t const *Sprite_MaterialSpec(int tclass, int tmap)
+MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass, int tmap)
 {
-    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tclass, tmap,
-                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1,
-                                                    true, true, true, false);
+    return App_Materials()->variantSpecForContext(MC_SPRITE, 0, 1, tclass, tmap,
+                                                  GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1,
+                                                  true, true, true, false);
 }
 
-static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const *p)
+static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)
 {
-    assert(p);
-
     if(!renderTextures) return 0;
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        material_t *mat = Materials_ToMaterial(Materials_ResolveUriCString("System:gray"));
-        materialvariantspecification_t const *spec = Sprite_MaterialSpec(0 /*tclass*/, 0/*tmap*/);
-        return Materials_ChooseVariant(mat, spec, true, true);
+        return App_Materials()->chooseVariant(*App_Materials()->find(de::Uri(Path("System:gray"))).material(),
+                                              Rend_SpriteMaterialSpec(),
+                                              true, true);
     }
 
     // Use the pre-chosen sprite.
-    return p->material;
+    return reinterpret_cast<MaterialVariant *>(p.material);
 }
 
 void Rend_RenderSprite(rendspriteparams_t const *params)
@@ -896,7 +895,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     coord_t spriteCenter[3];
     coord_t surfaceNormal[3];
     MaterialVariant *mat = 0;
-    materialsnapshot_t const *ms = 0;
+    MaterialSnapshot const *ms = 0;
     float s = 1, t = 1; ///< Bottom right coords.
     int i;
 
@@ -906,30 +905,30 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
         variantspecification_t const *texSpec;
 
         // Ensure this variant has been prepared.
-        ms = Materials_PrepareVariant(params->material);
+        ms = &App_Materials()->prepare(*reinterpret_cast<MaterialVariant *>(params->material));
 
-        texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
+        texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
         DENG_ASSERT(texSpec);
-        size.width  = ms->size.width  + texSpec->border*2;
-        size.height = ms->size.height + texSpec->border*2;
+        size.width  = ms->dimensions().width()  + texSpec->border*2;
+        size.height = ms->dimensions().height() + texSpec->border*2;
         viewOffset.x = -size.width/2;
 
-        TextureVariant_Coords(MST(ms, MTU_PRIMARY), &s, &t);
+        ms->texture(MTU_PRIMARY).coords(&s, &t);
 
-        de::Texture &tex = reinterpret_cast<de::Texture &>(*MSU_texture(ms, MTU_PRIMARY));
+        Texture &tex = ms->texture(MTU_PRIMARY).generalCase();
         viewOffset.x += float(-tex.origin().x());
     }
 
     // We may want to draw using another material instead.
-    mat = chooseSpriteMaterial(params);
-    if(mat != params->material)
+    mat = chooseSpriteMaterial(*params);
+    if(mat != reinterpret_cast<MaterialVariant *>(params->material))
     {
-        ms = mat? Materials_PrepareVariant(mat) : NULL;
+        ms = mat? &App_Materials()->prepare(*mat) : 0;
     }
 
     if(ms)
     {
-        GL_BindTexture(MST(ms, MTU_PRIMARY));
+        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms->texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
     }
     else

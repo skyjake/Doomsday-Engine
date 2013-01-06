@@ -392,13 +392,13 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
 
             {
                 Uri* textureUrn = readTextureUrn();
-                li->actMaterial   = DD_MaterialForTextureUri(textureUrn);
+                li->actMaterial   = P_ToIndex(DD_MaterialForTextureUri(textureUrn));
                 Uri_Delete(textureUrn);
             }
 
             {
                 Uri* textureUrn = readTextureUrn();
-                li->deactMaterial = DD_MaterialForTextureUri(textureUrn);
+                li->deactMaterial = P_ToIndex(DD_MaterialForTextureUri(textureUrn));
                 Uri_Delete(textureUrn);
             }
 

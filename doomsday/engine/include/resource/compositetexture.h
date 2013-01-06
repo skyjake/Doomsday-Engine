@@ -50,8 +50,7 @@ namespace de
          */
         enum Flag
         {
-            NoDraw = 0x1, ///< Texture is not to be drawn.
-            Custom = 0x2  /**< The texture does not originate from a definition
+            Custom = 0x1  /**< The texture does not originate from a definition
                                of the current game. */
         };
         Q_DECLARE_FLAGS(Flags, Flag)
@@ -109,8 +108,8 @@ namespace de
         /**
          * Construct a default composite texture.
          */
-        explicit CompositeTexture(String percentEncodedName = "", int width = 0,
-            int height = 0, Flags _flags = 0);
+        explicit CompositeTexture(String percentEncodedName = "", int logicalWidth = 0,
+            int logicalHeight = 0, Flags _flags = 0);
 
         /**
          * Construct a composite texture by deserializing an archived id-tech 1
@@ -134,14 +133,27 @@ namespace de
         String const &percentEncodedNameRef() const;
 
         /// Returns the logical dimensions of the texture (in map space units).
-        QSize const &dimensions() const;
+        QSize const &logicalDimensions() const;
 
         /// Returns the logical width of the texture (in map space units).
+        inline int logicalWidth() const {
+            return logicalDimensions().width();
+        }
+
+        /// Returns the logical height of the texture (in map space units).
+        inline int logicalHeight() const {
+            return logicalDimensions().height();
+        }
+
+        /// Returns the pixel dimensions of the texture.
+        QSize const &dimensions() const;
+
+        /// Returns the pixel width of the texture.
         inline int width() const {
             return dimensions().width();
         }
 
-        /// Returns the logical width of the texture (in map space units).
+        /// Returns the pixel height of the texture.
         inline int height() const {
             return dimensions().height();
         }
@@ -175,6 +187,9 @@ namespace de
         Flags flags_;
 
         /// Logical dimensions of the texture in map coordinate space units.
+        QSize logicalDimensions_;
+
+        /// Dimensions of the texture in pixels.
         QSize dimensions_;
 
         /// Index of this resource determined by the logic of the indexing algorithm

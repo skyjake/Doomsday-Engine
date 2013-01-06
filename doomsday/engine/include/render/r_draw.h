@@ -32,18 +32,16 @@ extern "C" {
 void R_InitViewWindow(void);
 void R_ShutdownViewWindow(void);
 
-void R_SetBorderGfx(Uri const *const *paths);
-
 /**
  * Draws the border around the view for different size windows.
  */
 void R_DrawViewBorder(void);
 
-void R_DrawPatch(Texture *texture, int x, int y);
-void R_DrawPatch2(Texture *texture, int x, int y, int w, int h);
-void R_DrawPatch3(Texture *texture, int x, int y, int w, int h, boolean useOffsets);
+void R_DrawPatch(struct texture_s *texture, int x, int y);
+void R_DrawPatch2(struct texture_s *texture, int x, int y, int w, int h);
+void R_DrawPatch3(struct texture_s *texture, int x, int y, int w, int h, boolean useOffsets);
 
-void R_DrawPatchTiled(Texture *texture, int x, int y, int w, int h, int wrapS, int wrapT);
+void R_DrawPatchTiled(struct texture_s *texture, int x, int y, int w, int h, int wrapS, int wrapT);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -53,7 +53,7 @@ static boolean currentColor(player_t* player, float color[3])
 #define HUE_DEAD            0.f
 #define HUE_LIVE            .3f
 
-        R_HSVToRGB(color, HUE_DEAD +
+        M_HSVToRGB(color, HUE_DEAD +
             (HUE_LIVE - HUE_DEAD) * MINMAX_OF(0,
                 (float) player->plr->mo->health / maxHealth, 1), 1, 1);
 

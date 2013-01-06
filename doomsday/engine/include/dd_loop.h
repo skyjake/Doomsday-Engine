@@ -79,12 +79,6 @@ float DD_GetFrameRate(void);
 void DD_ResetTimer(void);
 
 /**
- * Determines whether it is time for tickers to run their 35 Hz actions.
- * Set at the beginning of a tick by DD_Ticker.
- */
-boolean DD_IsSharpTick(void);
-
-/**
  * Determines whether frame time is advancing.
  */
 boolean DD_IsFrameTimeAdvancing(void);

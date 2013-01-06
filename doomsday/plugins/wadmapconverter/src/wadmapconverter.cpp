@@ -25,7 +25,6 @@
 #include <de/Error>
 #include <de/Log>
 
-#define map                     DENG_PLUGIN_GLOBAL(map)
 Id1Map* map;
 
 /**
@@ -283,3 +282,21 @@ extern "C" const char* deng_LibraryType(void)
 {
     return "deng-plugin/generic";
 }
+
+DENG_DECLARE_API(Base);
+DENG_DECLARE_API(Material);
+DENG_DECLARE_API(Map);
+DENG_DECLARE_API(MPE);
+DENG_DECLARE_API(Plug);
+DENG_DECLARE_API(Uri);
+DENG_DECLARE_API(W);
+
+DENG_API_EXCHANGE(
+    DENG_GET_API(DE_API_BASE, Base);
+    DENG_GET_API(DE_API_MATERIALS, Material);
+    DENG_GET_API(DE_API_MAP, Map);
+    DENG_GET_API(DE_API_MAP_EDIT, MPE);
+    DENG_GET_API(DE_API_PLUGIN, Plug);
+    DENG_GET_API(DE_API_URI, Uri);
+    DENG_GET_API(DE_API_WAD, W);
+)

@@ -72,6 +72,4 @@ boolean B_Responder(ddevent_t *ev);
 void    B_WriteToFile(FILE *file);
 void    B_Shutdown(void);
 
-int     DD_GetKeyCode(const char *key);
-
 #endif

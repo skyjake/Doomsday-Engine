@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,9 +74,6 @@
 
 namespace de {
 
-/// Version of the block transfer protocol.
-static duint const PROTOCOL_VERSION = 0;
-
 /// Maximum number of channels.
 static duint const MAX_CHANNELS = 2;
 
@@ -102,14 +99,14 @@ namespace internal {
 /**
  * Network message header.
  */
-struct Header : public ISerializable
+struct MessageHeader : public ISerializable
 {
     int size;
     bool isHuffmanCoded;
     bool isDeflated;
     duint channel; /// @todo include in the written header
 
-    Header() : size(0), isHuffmanCoded(false), isDeflated(false), channel(0)
+    MessageHeader() : size(0), isHuffmanCoded(false), isDeflated(false), channel(0)
     {}
 
     void operator >> (Writer &writer) const
@@ -193,7 +190,7 @@ struct Socket::Instance
     };
     ReceptionState receptionState;
     Block receivedBytes;
-    Header incomingHeader;
+    MessageHeader incomingHeader;
 
     /// Number of the active channel.
     /// @todo Channel is not used at the moment.
@@ -228,7 +225,7 @@ struct Socket::Instance
     {
         Block payload(packet);
         Block huffData;
-        Header header;
+        MessageHeader header;
 
         // Let's find the appropriate compression method of the payload. First see
         // if the encoded contents are under 128 bytes as Huffman codes.
@@ -357,7 +354,7 @@ struct Socket::Instance
 
                     // We can proceed to the next message.
                     receptionState = ReceivingHeader;
-                    incomingHeader = Header();
+                    incomingHeader = MessageHeader();
                 }
                 else
                 {

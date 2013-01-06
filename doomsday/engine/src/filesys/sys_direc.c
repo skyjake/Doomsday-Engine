@@ -1,25 +1,23 @@
-/**\file sys_direc.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file sys_direc.c Native file system directories.
+ * @ingroup system
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @todo Rewrite using libdeng2's NativePath (and Qt).
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 #if defined(WIN32)
@@ -38,9 +36,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <de/findfile.h>
 
-#include "de_platform.h"
 #include "de_base.h"
+#include "de_platform.h"
 #include "de_system.h"
 #include "m_misc.h"
 
@@ -74,7 +73,9 @@ directory_t* Dir_NewFromCWD(void)
     lastIndex = strlen(cwd);
     lastIndex = MIN_OF(lastIndex, FILENAME_T_LASTINDEX);
 
+#if defined(WIN32)
     dir->drive = _getdrive();
+#endif
     memcpy(dir->path, cwd, lastIndex);
     dir->path[lastIndex] = '\0';
     free(cwd);
@@ -103,8 +104,10 @@ void Dir_Delete(directory_t* dir)
 boolean Dir_IsEqual(directory_t* a, directory_t* b)
 {
     if(a == b) return true;
+#if defined(WIN32)
     if(a->drive != b->drive)
         return false;
+#endif
     return !stricmp(a->path, b->path);
 }
 
@@ -204,7 +207,7 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
     }
     else
     {
-        char userName[PATH_MAX], *end = NULL;
+        char userName[4096], *end = NULL;
         struct passwd *pw;
 
         end = strchr(path + 1, '/');

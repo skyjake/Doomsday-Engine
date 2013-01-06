@@ -58,218 +58,169 @@ typedef enum {
 
 namespace de {
 
-class TextureManifest;
+    class TextureManifest;
 
-/**
- * Logical texture object.
- * @ingroup resource
- */
-class Texture
-{
-public:
     /**
-     * Classification/processing flags
+     * Logical texture object.
+     * @ingroup resource
      */
-    enum Flag
+    class Texture
     {
-        /// Texture is "custom" (i.e., not an original game resource).
-        Custom              = 0x1,
+    public:
+        /**
+         * Classification/processing flags
+         */
+        enum Flag
+        {
+            /// Texture is not to be drawn.
+            NoDraw              = 0x1,
 
-        /// Apply the monochrome filter to the processed image.
-        Monochrome          = 0x2,
+            /// Texture is "custom" (i.e., not an original game resource).
+            Custom              = 0x2,
 
-        /// Apply the upscaleAndSharpen filter to the processed image.
-        UpscaleAndSharpen   = 0x4
+            /// Apply the monochrome filter to the processed image.
+            Monochrome          = 0x4,
+
+            /// Apply the upscaleAndSharpen filter to the processed image.
+            UpscaleAndSharpen   = 0x8
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
+        typedef std::list<TextureVariant *> Variants;
+
+    public:
+        /**
+         * @param manifest  Manifest derived to yield the texture.
+         * @param userData  User data to associate with the resultant texture.
+         */
+        Texture(TextureManifest &manifest, void *userData = 0);
+
+        ~Texture();
+
+        /// @return  Provides access to the classification/processing flags.
+        Flags const &flags() const;
+
+        /// @return  Provides access to the classification/processing flags.
+        Flags &flags();
+
+        /**
+         * Returns the TextureManifest derived to yield the texture.
+         */
+        TextureManifest &manifest() const;
+
+        /**
+         * Retrieve the value of the associated user data pointer.
+         * @return  Associated data pointer value.
+         */
+        void *userDataPointer() const;
+
+        /**
+         * Set the user data pointer value. Ownership of the data is not given to
+         * this instance.
+         *
+         * @note If already set the old value will be replaced (so if it points
+         *       to some dynamically constructed data/resource it is the caller's
+         *       responsibility to release it beforehand).
+         *
+         * @param userData  User data pointer value.
+         */
+        void setUserDataPointer(void *userData);
+
+        /**
+         * Add a new prepared variant to the list of resources for this Texture.
+         * Texture takes ownership of the variant.
+         *
+         * @param variant  Variant instance to add to the resource list.
+         */
+        TextureVariant &addVariant(TextureVariant &variant);
+
+        /// @return  Number of variants for the texture.
+        uint variantCount() const;
+
+        /// Destroy all analyses for the texture.
+        void clearAnalyses();
+
+        /// Destroy all prepared variants for the texture.
+        void clearVariants();
+
+        /**
+         * Retrieve the value of an identified @a analysis data pointer.
+         * @return  Associated data pointer value.
+         **/
+        void *analysisDataPointer(texture_analysisid_t analysis) const;
+
+        /**
+         * Set the value of an identified @a analysis data pointer. Ownership of
+         * the data is not given to this instance.
+         *
+         * @note If already set the old value will be replaced (so if it points
+         *       to some dynamically constructed data/resource it is the caller's
+         *       responsibility to release it beforehand).
+         *
+         * @param analysis  Identifier of the data being attached.
+         * @param data  Data to be attached.
+         */
+        void setAnalysisDataPointer(texture_analysisid_t analysis, void *data);
+
+        /**
+         * Returns the world width of the texture in map coordinate space units.
+         */
+        int width() const;
+
+        /**
+         * Returns the world height of the texture in map coordinate space units.
+         */
+        int height() const;
+
+        /**
+         * Returns the world dimensions [width, height] of the texture in map
+         * coordinate space units.
+         */
+        QSize const &dimensions() const;
+
+        /**
+         * Change the world width of the texture.
+         * @param newWidth  New width in map coordinate space units.
+         */
+        void setWidth(int newWidth);
+
+        /**
+         * Change the world height of the texture.
+         * @param newHeight  New height in map coordinate space units.
+         */
+        void setHeight(int newHeight);
+
+        /**
+         * Change the world dimensions of the texture.
+         * @param newDimensions  New dimensions [width, height] in map coordinate space units.
+         */
+        void setDimensions(QSize const &newDimensions);
+
+        /**
+         * Returns the world origin offset of texture in map coordinate space units.
+         */
+        QPoint const &origin() const;
+
+        /**
+         * Change the world origin offset of the texture.
+         * @param newOrigin  New origin in map coordinate space units.
+         */
+        void setOrigin(QPoint const &newOrigin);
+
+        /**
+         * Provides access to the list of variant textures for efficent traversals.
+         */
+        Variants const &variantList() const;
+
+    private:
+        struct Instance;
+        Instance *d;
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
-
-    typedef std::list<TextureVariant *> Variants;
-
-public:
-    /**
-     * @param manifest  Manifest derived to yield the texture.
-     * @param flags     Texture classification flags.
-     * @param userData  User data to associate with the resultant texture.
-     */
-    Texture(TextureManifest &manifest, Flags flags = 0, void *userData = 0);
-
-    /**
-     * @param manifest  Manifest derived to yield the Texture.
-     * @param dimensions World dimensions of the texture in map space
-     *                  coordinates. If width=0 and height=0, their value
-     *                  will be inferred from the actual pixel dimensions
-     *                  of the image resource at load time.
-     * @param flags     Texture classification flags.
-     * @param userData  User data to associate with the resultant texture.
-     */
-    Texture(TextureManifest &manifest, QSize const &dimensions,
-            Flags flags = 0, void *userData = 0);
-
-    ~Texture();
-
-    /// @return  Provides access to the classification/processing flags.
-    Flags const &flags() const;
-
-    /// @return  Provides access to the classification/processing flags.
-    Flags &flags();
-
-    /**
-     * Returns the TextureManifest derived to yield the texture.
-     */
-    TextureManifest &manifest() const;
-
-    /**
-     * Retrieve the value of the associated user data pointer.
-     * @return  Associated data pointer value.
-     */
-    void *userDataPointer() const;
-
-    /**
-     * Set the user data pointer value. Ownership of the data is not given to
-     * this instance.
-     *
-     * @note If already set the old value will be replaced (so if it points
-     *       to some dynamically constructed data/resource it is the caller's
-     *       responsibility to release it beforehand).
-     *
-     * @param userData  User data pointer value.
-     */
-    void setUserDataPointer(void *userData);
-
-    /**
-     * Add a new prepared variant to the list of resources for this Texture.
-     * Texture takes ownership of the variant.
-     *
-     * @param variant  Variant instance to add to the resource list.
-     */
-    TextureVariant &addVariant(TextureVariant &variant);
-
-    /// @return  Number of variants for the texture.
-    uint variantCount() const;
-
-    /// Destroy all analyses for the texture.
-    void clearAnalyses();
-
-    /// Destroy all prepared variants for the texture.
-    void clearVariants();
-
-    /**
-     * Retrieve the value of an identified @a analysis data pointer.
-     * @return  Associated data pointer value.
-     **/
-    void *analysisDataPointer(texture_analysisid_t analysis) const;
-
-    /**
-     * Set the value of an identified @a analysis data pointer. Ownership of
-     * the data is not given to this instance.
-     *
-     * @note If already set the old value will be replaced (so if it points
-     *       to some dynamically constructed data/resource it is the caller's
-     *       responsibility to release it beforehand).
-     *
-     * @param analysis  Identifier of the data being attached.
-     * @param data  Data to be attached.
-     */
-    void setAnalysisDataPointer(texture_analysisid_t analysis, void *data);
-
-    /**
-     * Returns the world width of the texture in map coordinate space units.
-     */
-    int width() const;
-
-    /**
-     * Returns the world height of the texture in map coordinate space units.
-     */
-    int height() const;
-
-    /**
-     * Returns the world dimensions [width, height] of the texture in map
-     * coordinate space units.
-     */
-    QSize const &dimensions() const;
-
-    /**
-     * Change the world width of the texture.
-     * @param newWidth  New width in map coordinate space units.
-     */
-    void setWidth(int newWidth);
-
-    /**
-     * Change the world height of the texture.
-     * @param newHeight  New height in map coordinate space units.
-     */
-    void setHeight(int newHeight);
-
-    /**
-     * Change the world dimensions of the texture.
-     * @param newDimensions  New dimensions [width, height] in map coordinate space units.
-     */
-    void setDimensions(QSize const &newDimensions);
-
-    /**
-     * Returns the world origin offset of texture in map coordinate space units.
-     */
-    QPoint const &origin() const;
-
-    /**
-     * Change the world origin offset of the texture.
-     * @param newOrigin  New origin in map coordinate space units.
-     */
-    void setOrigin(QPoint const &newOrigin);
-
-    /**
-     * Provides access to the list of variant textures for efficent traversals.
-     */
-    Variants const &variantList() const;
-
-private:
-    struct Instance;
-    Instance *d;
-};
 
 } // namespace de
 
-extern "C" {
 #endif // __cplusplus
 
-/**
- * C wrapper API:
- */
-
 struct texture_s; // The texture instance (opaque).
-typedef struct texture_s Texture;
-
-void* Texture_UserDataPointer(Texture const *tex);
-void Texture_SetUserDataPointer(Texture *tex, void *userData);
-
-void Texture_ClearVariants(Texture *tex);
-uint Texture_VariantCount(Texture const *tex);
-struct texturevariant_s *Texture_AddVariant(Texture *tex, struct texturevariant_s *variant);
-
-void* Texture_AnalysisDataPointer(Texture const *tex, texture_analysisid_t analysis);
-void Texture_SetAnalysisDataPointer(Texture *tex, texture_analysisid_t analysis, void *data);
-
-int Texture_Width(Texture const *tex);
-int Texture_Height(Texture const *tex);
-void Texture_SetWidth(Texture *tex, int width);
-void Texture_SetHeight(Texture *tex, int height);
-
-/**
- * Iterate over all derived TextureVariants, making a callback for each.
- * Iteration ends once all variants have been visited, or immediately upon
- * a callback returning non-zero.
- *
- * @param tex       Texture instance.
- * @param callback  Callback to make for each processed variant.
- * @param parameters  Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int Texture_IterateVariants(Texture *tex,
-    int (*callback)(struct texturevariant_s *instance, void *parameters), void *parameters);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_RESOURCE_TEXTURE_H

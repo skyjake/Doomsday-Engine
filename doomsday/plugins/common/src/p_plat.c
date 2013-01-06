@@ -98,7 +98,7 @@ static void stopPlat(plat_t* plat)
 #if __JHEXEN__
     P_TagFinished(P_ToXSector(plat->sector)->tag);
 #endif
-    DD_ThinkerRemove(&plat->thinker);
+    Thinker_Remove(&plat->thinker);
 }
 
 /**
@@ -272,7 +272,7 @@ static int doPlat(LineDef* line, int tag, plattype_e type, int amount)
 
         plat = Z_Calloc(sizeof(*plat), PU_MAP, 0);
         plat->thinker.function = T_PlatRaise;
-        DD_ThinkerAdd(&plat->thinker);
+        Thinker_Add(&plat->thinker);
 
         plat->type = type;
         plat->sector = sec;
@@ -499,7 +499,7 @@ static int activatePlat(thinker_t* th, void* context)
     if(plat->tag == (int) params->tag && plat->thinker.inStasis)
     {
         plat->state = plat->oldState;
-        DD_ThinkerSetStasis(&plat->thinker, false);
+        Thinker_SetStasis(&plat->thinker, false);
         params->count++;
     }
 
@@ -518,7 +518,7 @@ int P_PlatActivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    DD_IterateThinkers(T_PlatRaise, activatePlat, &params);
+    Thinker_Iterate(T_PlatRaise, activatePlat, &params);
 
     return params.count;
 }
@@ -549,7 +549,7 @@ static int deactivatePlat(thinker_t* th, void* context)
     {
         // Put it in stasis.
         plat->oldState = plat->state;
-        DD_ThinkerSetStasis(&plat->thinker, true);
+        Thinker_SetStasis(&plat->thinker, true);
         params->count++;
     }
 #endif
@@ -570,7 +570,7 @@ int P_PlatDeactivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    DD_IterateThinkers(T_PlatRaise, deactivatePlat, &params);
+    Thinker_Iterate(T_PlatRaise, deactivatePlat, &params);
 
     return params.count;
 }

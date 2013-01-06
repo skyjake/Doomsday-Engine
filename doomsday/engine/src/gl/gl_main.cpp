@@ -1,5 +1,4 @@
-/**
- * @file gl_main.cpp GL-Graphics Subsystem
+/** @file gl_main.cpp GL-Graphics Subsystem
  * @ingroup gl
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -38,9 +37,11 @@
 
 #include "gl/texturecontent.h"
 #include "resource/colorpalettes.h"
-#include "resource/texturevariant.h"
+#include "resource/materialsnapshot.h"
 #include "resource/materialvariant.h"
+#include "resource/texturevariant.h"
 #include "ui/displaymode.h"
+#include "api_render.h"
 
 D_CMD(Fog);
 D_CMD(SetBPP);
@@ -50,6 +51,8 @@ D_CMD(SetWinRes);
 D_CMD(ToggleFullscreen);
 D_CMD(DisplayModeInfo);
 D_CMD(ListDisplayModes);
+
+using namespace de;
 
 void GL_SetGamma();
 
@@ -563,7 +566,8 @@ void GL_ProjectionMatrix()
     glScalef(1, 1, -1);
 }
 
-void GL_UseFog(int yes)
+#undef GL_UseFog
+DENG_EXTERN_C void GL_UseFog(int yes)
 {
     usingFog = yes;
 }
@@ -735,17 +739,15 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
-void GL_SetMaterialUI2(material_t* mat, int wrapS, int wrapT)
+void GL_SetMaterialUI2(material_t *mat, int wrapS, int wrapT)
 {
-    const materialvariantspecification_t* spec;
-    const materialsnapshot_t* ms;
-
     if(!mat) return; // @todo we need a "NULL material".
 
-    spec = Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
-        wrapS, wrapT, 0, 1, 0, false, false, false, false);
-    ms = Materials_Prepare(mat, spec, true);
-    GL_BindTexture(MST(ms, MTU_PRIMARY));
+    MaterialVariantSpec const &spec =
+            App_Materials()->variantSpecForContext(MC_UI, 0, 1, 0, 0, wrapS, wrapT,
+                                                   0, 1, 0, false, false, false, false);
+    MaterialSnapshot const &ms = App_Materials()->prepare(*mat, spec, true);
+    GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 }
 
 void GL_SetMaterialUI(material_t* mat)
@@ -753,17 +755,15 @@ void GL_SetMaterialUI(material_t* mat)
     GL_SetMaterialUI2(mat, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 }
 
-void GL_SetPSprite(material_t* mat, int tClass, int tMap)
+void GL_SetPSprite(material_t *mat, int tClass, int tMap)
 {
-    const materialvariantspecification_t* spec;
-    const materialsnapshot_t* ms;
-
     if(!mat) return; // @todo we need a "NULL material".
 
-    spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
-        tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
-    ms = Materials_Prepare(mat, spec, true);
-    GL_BindTexture(MST(ms, MTU_PRIMARY));
+    MaterialVariantSpec const &spec =
+            App_Materials()->variantSpecForContext(MC_PSPRITE, 0, 1, tClass, tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                   0, 1, 0, false, true, true, false);
+    MaterialSnapshot const &ms = App_Materials()->prepare(*mat, spec, true);
+    GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 }
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)

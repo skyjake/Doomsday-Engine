@@ -22,13 +22,13 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "gl/gl_texmanager.h"
-#include "m_misc.h" // for M_NumDigits
 
 #include <QtAlgorithms>
 #include <QList>
 #include <de/Error>
 #include <de/Log>
 #include <de/PathTree>
+#include <de/mathutil.h> // for M_NumDigits
 
 #include "resource/compositetexture.h"
 #include "resource/texturemanifest.h"
@@ -51,17 +51,14 @@ namespace de {
 
 static Uri emptyUri;
 
-Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, QSize const &dimensions,
-    Texture::Flags flags, void *userData)
+Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, void *userData)
 {
     LOG_AS("Textures::ResourceClass::interpret");
-    return new Texture(manifest, dimensions, flags, userData);
-}
-
-Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, Texture::Flags flags,
-    void *userData)
-{
-    return interpret(manifest, QSize(0, 0), flags, userData);
+    Texture *tex = new Texture(manifest, userData);
+    tex->flags() = manifest.flags();
+    tex->setDimensions(manifest.logicalDimensions());
+    tex->setOrigin(manifest.origin());
+    return tex;
 }
 
 struct Textures::Instance
@@ -113,13 +110,6 @@ Textures::Scheme& Textures::createScheme(String name)
     Scheme* newScheme = new Scheme(name);
     d->schemes.push_back(newScheme);
     return *newScheme;
-}
-
-static inline void releaseTexture(Texture *tex)
-{
-    /// Stub.
-    GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(tex));
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
 bool Textures::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet) const
@@ -260,7 +250,8 @@ bool Textures::has(Uri const &path) const
     return false;
 }
 
-TextureManifest *Textures::declare(Uri const &uri, int uniqueId, Uri const *resourceUri)
+TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
+    QSize const &dimensions, QPoint const &origin, int uniqueId, de::Uri const *resourceUri)
 {
     LOG_AS("Textures::declare");
 
@@ -282,32 +273,44 @@ TextureManifest *Textures::declare(Uri const &uri, int uniqueId, Uri const *reso
     catch(NotFoundError const &)
     {
         manifest = &scheme(uri.scheme()).insertManifest(uri.path());
-        manifest->setUniqueId(uniqueId);
     }
+    if(!manifest)
+        throw Error("Textures::declare", "Unexpected error declaring texture \"" + uri + "\"");
 
     /*
      * (Re)configure the manifest.
      */
+    bool mustRelease = false;
+
+    manifest->flags() = flags;
+    manifest->setOrigin(origin);
+
+    if(manifest->setLogicalDimensions(dimensions))
+    {
+        mustRelease = true;
+    }
 
     // We don't care whether these identfiers are truely unique. Our only
     // responsibility is to release textures when they change.
-    bool release = false;
+    if(manifest->setUniqueId(uniqueId))
+    {
+        mustRelease = true;
+    }
 
     if(resourceUri && manifest->setResourceUri(*resourceUri))
     {
-        release = true;
-    }
-
-    if(manifest->setUniqueId(uniqueId))
-    {
-        release = true;
-    }
-
-    if(release && manifest->texture())
-    {
         // The mapped resource is being replaced, so release any existing Texture.
         /// @todo Only release if this Texture is bound to only this binding.
-        releaseTexture(manifest->texture());
+        mustRelease = true;
+    }
+
+    if(mustRelease)
+    {
+        if(de::Texture *tex = manifest->texture())
+        {
+            /// @todo Update any Materials (and thus Surfaces) which reference this.
+            GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(tex));
+        }
     }
 
     return manifest;
@@ -352,10 +355,10 @@ int Textures::iterate(String nameOfScheme,
 
     if(!nameOfScheme.isEmpty())
     {
-        PathTreeIterator<PathTree> iter(scheme(nameOfScheme).index().leafNodes());
+        PathTreeIterator<TextureScheme::Index> iter(scheme(nameOfScheme).index().leafNodes());
         while(iter.hasNext())
         {
-            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+            TextureManifest &manifest = iter.next();
             if(!manifest.texture()) continue;
 
             int result = callback(*manifest.texture(), parameters);
@@ -366,10 +369,10 @@ int Textures::iterate(String nameOfScheme,
     {
         DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
         {
-            PathTreeIterator<PathTree> iter((*i)->index().leafNodes());
+            PathTreeIterator<TextureScheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+                TextureManifest &manifest = iter.next();
                 if(!manifest.texture()) continue;
 
                 int result = callback(*manifest.texture(), parameters);
@@ -387,10 +390,10 @@ int Textures::iterateDeclared(String nameOfScheme,
 
     if(!nameOfScheme.isEmpty())
     {
-        PathTreeIterator<PathTree> iter(scheme(nameOfScheme).index().leafNodes());
+        PathTreeIterator<TextureScheme::Index> iter(scheme(nameOfScheme).index().leafNodes());
         while(iter.hasNext())
         {
-            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+            TextureManifest &manifest = iter.next();
             int result = callback(manifest, parameters);
             if(result) return result;
         }
@@ -399,10 +402,10 @@ int Textures::iterateDeclared(String nameOfScheme,
     {
         DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
         {
-            PathTreeIterator<PathTree> iter((*i)->index().leafNodes());
+            PathTreeIterator<TextureScheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+                TextureManifest &manifest = iter.next();
                 int result = callback(manifest, parameters);
                 if(result) return result;
             }
@@ -429,7 +432,7 @@ static void printVariantInfo(TextureVariant &variant)
 static void printTextureInfo(Texture &tex)
 {
     Uri uri = tex.manifest().composeUri();
-    QByteArray path = NativePath(uri.asText()).pretty().toUtf8();
+    QByteArray path = uri.asText().toUtf8();
 
     Con_Printf("Texture \"%s\" [%p] x%u origin:%s\n",
                path.constData(), (void *)&tex, tex.variantCount(),
@@ -481,7 +484,7 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
         PathTreeIterator<Textures::Scheme::Index> iter(scheme->index().leafNodes());
         while(iter.hasNext())
         {
-            TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+            TextureManifest &manifest = iter.next();
             if(!path.isEmpty())
             {
                 /// @todo Use PathTree::Node::compare()
@@ -507,7 +510,7 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
             PathTreeIterator<Textures::Scheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                TextureManifest &manifest = static_cast<TextureManifest &>(iter.next());
+                TextureManifest &manifest = iter.next();
                 if(!path.isEmpty())
                 {
                     /// @todo Use PathTree::Node::compare()
@@ -710,8 +713,8 @@ void Textures_Shutdown(void)
     delete textures; textures = 0;
 }
 
-/// @note Part of the Doomsday public API.
-int Textures_UniqueId2(Uri const *_uri, boolean quiet)
+#undef Textures_UniqueId2
+DENG_EXTERN_C int Textures_UniqueId2(Uri const *_uri, boolean quiet)
 {
     LOG_AS("Textures_UniqueId");
     if(!_uri) return -1;
@@ -733,8 +736,8 @@ int Textures_UniqueId2(Uri const *_uri, boolean quiet)
     return -1;
 }
 
-/// @note Part of the Doomsday public API.
-int Textures_UniqueId(Uri const *uri)
+#undef Textures_UniqueId
+DENG_EXTERN_C int Textures_UniqueId(Uri const *uri)
 {
     return Textures_UniqueId2(uri, false);
 }

@@ -419,7 +419,6 @@ public:
                         }
 
                         parseText(oldSize, newSize);
-                        skipToNextSection();
                     }
                     else if(line.beginsWith("Misc", Qt::CaseInsensitive))
                     {
@@ -608,6 +607,11 @@ public:
             else if(!var.compareWithoutCase("Patch format"))
             {
                 patchVersion = expr.toInt(0, 10, String::AllowSuffix);
+            }
+            else if(!var.compareWithoutCase("Engine config") ||
+                    !var.compareWithoutCase("IWAD"))
+            {
+                // Ignore these WhackEd2 specific values.
             }
             else
             {
@@ -1597,9 +1601,6 @@ public:
         String oldStr = readTextBlob(oldSize);
         String newStr = readTextBlob(newSize);
 
-        // Skip anything else on the line.
-        skipToEOL();
-
         if(!(flags & NoText)) // Disabled?
         {
             // Try each type of "text" replacement in turn...
@@ -1621,6 +1622,8 @@ public:
         {
             LOG_DEBUG("Skipping disabled Text patch.");
         }
+
+        skipToNextLine();
     }
 
     void parseStringsBex()
@@ -1638,7 +1641,7 @@ public:
         {
             // Not found - create a new Value.
             Block pathUtf8 = path.toUtf8();
-            idx = DED_AddValue(ded, pathUtf8.constData());
+            idx = _api_Def.DED_AddValue(ded, pathUtf8.constData());
             def = &ded->values[idx];
             def->text = 0;
         }

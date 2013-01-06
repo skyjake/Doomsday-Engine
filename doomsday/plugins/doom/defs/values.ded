@@ -1,0 +1,220 @@
+# libdoom: Values
+# (mind yur speling; libdoom uses only the identifiers it knows about)
+# 
+# The strings from all Values definition blocks are merged together.
+# This means you don't have to add all your values here; they can be
+# in a Values block in another file.
+
+Header { Version = 5; }
+
+# The "Patch Replacement" values are used to replace patches with 
+# strings of text. The replacement overrides any checks for external
+# resources. Only patches in an IWAD can be replaced; this is required
+# because existing PWADs may replace the original text patches with
+# their own graphics.
+#
+# The replacement is done by searching a value in the "Patch 
+# Replacement" block that matches the lump name of the patch to be 
+# replaced. The text string may optionally contain parameters that 
+# control how the string is displayed. The parameters must be placed
+# inside braces. If a parameter block is present, the actual text 
+# string begins from the first character following the closing brace. 
+#
+#   "{fonta, scale=2}C{scale=1}APITAL"
+#
+# Whitespace inside a parameter block is ignored. Use a comma or a 
+# semicolon to separate parameters. The parameters and their default 
+# values are:
+#
+#   fonta       Use the small font.
+#   fontb       Use the large font (the default).
+#   r=1.0       Red color component (0..1).
+#   g=0.0       Green color component (0..1).
+#   b=0.0       Blue color component (0..1).
+#   x=0         Offset to the X coordinate.
+#   y=0         Offset to the Y coordinate.
+#   scale=1.0   Uniform scaling factor (both X and Y).
+#   scalex=1.0  X scaling factor.
+#   scaley=1.0  Y scaling factor.
+#   angle=0.0   Rotation angle (around initial origin).
+#   flash       Enable flashy type-in effect.
+#   noflash     Disable it (the default).
+#   case        Enable case-based scaling.
+#   nocase      Disable it (the default).
+#   ups=1.25    Upper case Y scale.
+#   upo=0.0     Upper case Y offset.
+#   los=1.0     Lower case Y scale.
+#   loo=3.0     Lower case Y offset.
+#   break       Start a new line.
+#
+# An example: 
+# 
+# Values {
+#   Patch Replacement {
+#     M_DOOM = "{R=.5; G=1; B=.5; scale=3}G{scale=2;y=10}ONE {
+#       scale=3;y=0}F{ scale = 2; y = 10 }I{break}SHING";
+#   };
+# }
+
+Values {
+  Player {
+    Health = "100";       # Initial health.
+    Max Health = "100";   # Maximum health.
+    Health Limit = "200"; # Absolute health limit.
+    #God Health = "100";   # Health when god mode is activated.
+    Green Armor = "100";
+    Blue Armor = "200";
+    IDFA Armor = "200";   # Armor given when the IDFA cheat is activated.
+    IDKFA Armor = "200";  # Armor given when the IDKFA cheat is activated.
+    Max Ammo {
+      Clip = "200";
+      Shell = "50";
+      Cell = "300";
+      Misl = "50";
+    };
+    Clip Ammo {
+      Clip = "10";
+      Shell = "4";
+      Cell = "20";
+      Misl = "1";
+    };
+    Init Ammo {
+      Clip = "50";
+      Shell = "0";
+      Cell = "0";
+      Misl = "0";
+    };
+  };
+
+  MegaSphere {
+    Give {
+      Health = "200";
+    };
+  };
+
+  SoulSphere {
+    Give {
+      Health = "100";
+      Health Limit = "200";
+    };
+  };
+
+  # Weapon Info|*|Static
+  #     Defaults to "0". "1" = prevent the lowering of the HUD weapon when doing a switch.
+  # Weapon Info|*|Owned
+  #     Defaults to "0". "1" = this weapon will be given to the player when spawned.
+
+  Weapon Info {
+    0 {
+      Type = "noammo";
+      Up = "PUNCHUP";
+      Down = "PUNCHDOWN";
+      Ready = "PUNCH";
+      Atk = "PUNCH1";
+      Flash = "NULL";
+      Owned = "1";
+      Static = "0";
+    };
+    1 {
+      Type = "clip";
+      Per shot = "1";
+      Up = "PISTOLUP";
+      Down = "PISTOLDOWN";
+      Ready = "PISTOL";
+      Atk = "PISTOL1";
+      Flash = "PISTOLFLASH";
+      Owned = "1";
+      Static = "0";
+    };
+    2 {
+      Type = "shell";
+      Per shot = "1";
+      Up = "SGUNUP";
+      Down = "SGUNDOWN";
+      Ready = "SGUN";
+      Atk = "SGUN1";
+      Flash = "SGUNFLASH1";
+      Owned = "0";
+      Static = "0";
+    };
+    3 {
+      Type = "clip";
+      Per shot = "1";
+      Up = "CHAINUP";
+      Down = "CHAINDOWN";
+      Ready = "CHAIN";
+      Atk = "CHAIN1";
+      Flash = "CHAINFLASH1";
+      Owned = "0";
+      Static = "0";
+    };
+    4 {
+      Type = "misl";
+      Per shot = "1";
+      Up = "MISSILEUP";
+      Down = "MISSILEDOWN";
+      Ready = "MISSILE";
+      Atk = "MISSILE1";
+      Flash = "MISSILEFLASH1";
+      Owned = "0";
+      Static = "0";
+    };
+    5 {
+      Type = "cell";
+      Per shot = "1";
+      Up = "PLASMAUP";
+      Down = "PLASMADOWN";
+      Ready = "PLASMA";
+      Atk = "PLASMA1";
+      Flash = "PLASMAFLASH1";
+      Owned = "0";
+      Static = "0";
+    };
+    6 {
+      Type = "cell";
+      Per shot = "40";
+      Up = "BFGUP";
+      Down = "BFGDOWN";
+      Ready = "BFG";
+      Atk = "BFG1";
+      Flash = "BFGFLASH1";
+      Owned = "0";
+      Static = "0";
+    };
+    7 {
+      Type = "noammo";
+      Up = "SAWUP";
+      Down = "SAWDOWN";
+      Ready = "SAW";
+      Atk = "SAW1";
+      Flash = "NULL";
+      Owned = "0";
+      Static = "0";
+    };
+    8 {
+      Type = "shell";
+      Per shot = "2";
+      Up = "DSGUNUP";
+      Down = "DSGUNDOWN";
+      Ready = "DSGUN";
+      Atk = "DSGUN1";
+      Flash = "DSGUNFLASH1";
+      Owned = "0";
+      Static = "0";
+    };
+  };
+
+  # Finale backgrounds:
+
+  BGFLATE1 = "FLOOR4_8"; # DOOM end of episode 1
+  BGFLATE2 = "SFLR6_1";  # DOOM end of episode 2
+  BGFLATE3 = "MFLR8_4";  # DOOM end of episode 3
+  BGFLATE4 = "MFLR8_3";  # DOOM end of episode 4
+  BGFLAT06 = "SLIME16";  # DOOM2 before MAP06
+  BGFLAT11 = "RROCK14";  # DOOM2 before MAP11
+  BGFLAT20 = "RROCK07";  # DOOM2 before MAP20
+  BGFLAT30 = "RROCK17";  # DOOM2 before MAP30
+  BGFLAT15 = "RROCK13";  # DOOM2 from MAP15 to MAP31
+  BGFLAT31 = "RROCK19";  # DOOM2 from MAP31 to MAP32
+  BGCASTCALL = "BOSSBACK";  # End of game cast call
+}

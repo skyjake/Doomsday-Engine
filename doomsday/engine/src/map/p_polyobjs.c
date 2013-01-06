@@ -22,6 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
+#define DENG_NO_API_MACROS_MAP
+
 #include "de_base.h"
 #include "de_play.h"
 

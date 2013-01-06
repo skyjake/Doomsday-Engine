@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,37 +22,38 @@
 
 #include "../Statement"
 
-namespace de
+namespace de {
+
+class ArrayExpression;
+
+/**
+ * Prints arguments to standard output.
+ *
+ * @ingroup script
+ */
+class PrintStatement : public Statement
 {
-    class ArrayExpression;
-
+public:
     /**
-     * Prints arguments to standard output.
+     * Constructor.
      *
-     * @ingroup script
+     * @param arguments  Array expression that contains all the arguments
+     *                   of the print statement. Ownership transferred to the statement.
      */
-    class PrintStatement : public Statement
-    {
-    public:
-        /**
-         * Constructor.
-         *
-         * @param arguments  Array expression that contains all the arguments
-         *                   of the print statement. Ownership transferred to the statement.
-         */
-        PrintStatement(ArrayExpression *arguments = 0);
+    PrintStatement(ArrayExpression *arguments = 0);
 
-        ~PrintStatement();
-        
-        void execute(Context &context) const;
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
-        
-    private:
-        ArrayExpression *_arg;
-    };
-}
+    ~PrintStatement();
+
+    void execute(Context &context) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    ArrayExpression *_arg;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_PRINTSTATEMENT_H */

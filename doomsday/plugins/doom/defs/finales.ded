@@ -1,0 +1,149 @@
+# libdoom: Default intermissions and Finales
+# (see: http://dengine.net/dew/index.php?title=InFine_script_reference)
+
+Header { Version = 5; }
+
+InFine {
+  ID = "imp";
+  Script {
+    NoSkip 
+    
+    # No background.
+    ColorAlpha 0 0 0 0
+    
+    # Init objects.
+    Rect info_box 68 28 0 0
+    FillColor info_box BOTH 0 .4 0 0
+    EdgeColor info_box BOTH 1 1 1 0   
+    
+    Rect box 98 8 0 0
+    FillColor box BOTH 0 .4 0 .25
+    EdgeColor box BOTH 0 1 0 .3
+
+    Patch imp 66 56 "TROOA1"
+    RGB imp .3 1 .3
+    Scale imp .8
+    Alpha imp 0
+    
+    # Light text for highlights.
+    PreColor 1 .6 1 .6
+    
+    # Open the boxes.
+    In 1
+    FillColor box BOTH 0 .4 0 .4
+    EdgeColor box BOTH 0 1 0 .2
+    ScaleXY box 170 145
+        
+    In .3
+    FillColor info_box TOP 0 .4 0 .3
+    FillColor info_box BOTTOM 0 .2 0 .4
+    EdgeColor info_box BOTH 0 1 0 .3
+    Scale info_box 40
+    X info_box 48
+    Y info_box 8
+    Wait .3
+    
+    In .25
+    Sy info_box 60
+    Wait .25
+  
+    In .5
+    Alpha imp 1    
+    Wait .5
+    
+    # Show info.
+    Text name 103 13 "The \1Imp\0 Monster"
+    In 0 RGB name 0 .8 0; Scale name .8
+    FontB name
+    Wait 1
+    
+    Text desc 103 32 "Beware this \1highly dangerous\0\n
+      monster! Don't be fooled by\n
+      it's friendly-looking grin.\W\n
+      It will hurl \1fireballs\0 at you,\n
+      and they burn!\W\W\n\n
+      Oh, how they \1burn\0!\W\W\n\n
+      Imp, imp, burning bright\n
+      In the forests of the night.\n
+      What immortal hand or eye\n
+      Could frame thy \1fearful\n
+      symmetry\0?"
+    In 0 RGB desc 0 .8 0; Scale desc .75
+    
+    Wait 15.5
+    In .5 Precolor 1 1 .8 .3
+    ColorAlpha 1 .8 .3 .2
+    Wait .8
+    In .5 Precolor 1 .6 1 .6
+    ColorAlpha 0 0 0 0
+    
+    WaitText desc
+    Wait 5
+
+    In .5
+    Alpha imp 0
+    Alpha name 0
+    Alpha desc 0
+    Wait .5
+    
+    In .3
+    FillColor info_box BOTH 0 .4 0 0
+    FillColor box BOTH 0 .4 0 0
+    Sy info_box 0
+    Sy box 0
+    Wait .3
+
+    # Imp scare.    
+    In 1
+    RGB imp 1 1 1
+    Alpha imp 1
+    Wait .5
+
+    Sound "firsht"
+    In 5
+    X imp 80
+    Y imp 500
+    Scale imp 10
+    Angle imp 45
+    Wait 1.5
+    
+    Sound "bgsit1"
+    Wait 3
+    
+    SoundAt "pldeth" .5
+    In .5
+    Alpha imp 0
+    Wait .5
+    
+    CanSkip    
+  };
+}
+
+InFine {
+  ID = "gyrations";
+  Script {
+    NoSkip
+    
+    # Rotates around its center.
+    Patch imp 100 100 "TROOA1"
+
+    # Rotates around its center.
+    Rect box 160 50 50 50
+    FillColor box BOTH 0 .4 0 1
+    EdgeColor box BOTH 1 1 1 1  
+    
+    # Rotates around the top left corner of the text box.
+    Text txt 130 130 "Gyrations"
+
+    Wait 1
+    
+    In 5 
+    Angle imp 360
+    Angle box 360
+    Angle txt 360
+    
+    Wait 7
+
+    CanSkip    
+  };
+}

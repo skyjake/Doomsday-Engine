@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,65 +24,66 @@
 
 #include <vector>
 
-namespace de  
+namespace de {
+
+class Evaluator;
+class Value;
+
+/**
+ * Evaluates into an ArrayValue.
+ *
+ * @ingroup script
+ */
+class ArrayExpression : public Expression
 {
-    class Evaluator;
-    class Value;
-    
+public:
+    ArrayExpression();
+    ~ArrayExpression();
+
+    void clear();
+
+    dsize size() const { return _arguments.size(); }
+
     /**
-     * Evaluates into an ArrayValue.
+     * Adds an argument expression to the array expression.
      *
-     * @ingroup script
+     * @param arg  Argument expression to add. Ownership transferred
+     *             to the array expression.
      */
-    class ArrayExpression : public Expression
-    {
-    public:
-        ArrayExpression();
-        ~ArrayExpression();
+    void add(Expression *arg);
 
-        void clear();
+    void push(Evaluator &evaluator, Record *names = 0) const;
 
-        dsize size() const { return _arguments.size(); }
+    /**
+     * Returns one of the expressions in the array.
+     *
+     * @param pos  Index.
+     *
+     * @return  Expression.
+     */
+    Expression const &at(dint pos) const;
 
-        /**
-         * Adds an argument expression to the array expression.
-         *
-         * @param arg  Argument expression to add. Ownership transferred
-         *             to the array expression.
-         */
-        void add(Expression *arg);
+    Expression const &front() const { return at(0); }
 
-        void push(Evaluator &evaluator, Record *names = 0) const;
+    Expression const &back() const { return at(size() - 1); }
 
-        /**
-         * Returns one of the expressions in the array.
-         *
-         * @param pos  Index.
-         *
-         * @return  Expression.
-         */
-        Expression const &at(dint pos) const;
+    /**
+     * Collects the result values of the arguments and puts them
+     * into an array.
+     *
+     * @return ArrayValue with the results of the argument evaluations.
+     */
+    Value *evaluate(Evaluator &evaluator) const;
 
-        Expression const &front() const { return at(0); }
-        
-        Expression const &back() const { return at(size() - 1); }
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
-        /**
-         * Collects the result values of the arguments and puts them 
-         * into an array.
-         *
-         * @return ArrayValue with the results of the argument evaluations.
-         */
-        Value *evaluate(Evaluator &evaluator) const;
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
-        
-    private:
-        typedef std::vector<Expression *> Arguments;
-        Arguments _arguments;
-    };
-}
+private:
+    typedef std::vector<Expression *> Arguments;
+    Arguments _arguments;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_ARRAYEXPRESSION_H */

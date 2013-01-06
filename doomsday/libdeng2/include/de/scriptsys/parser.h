@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,134 +30,135 @@
 
 #include <QFlags>
 
-namespace de
+namespace de {
+
+class Compound;
+class ExpressionStatement;
+class PrintStatement;
+class IfStatement;
+class WhileStatement;
+class ForStatement;
+class AssignStatement;
+class DeleteStatement;
+class FunctionStatement;
+class ArrayExpression;
+class DictionaryExpression;
+class OperatorExpression;
+class NameExpression;
+
+/**
+ * Reads Doomsday script source in text format and outputs the statements
+ * of the script into a Script object.
+ *
+ * @ingroup script
+ */
+class Parser : public IParser
 {
-    class Compound;
-    class ExpressionStatement;
-    class PrintStatement;
-    class IfStatement;
-    class WhileStatement;
-    class ForStatement;
-    class AssignStatement;
-    class DeleteStatement;
-    class FunctionStatement;
-    class ArrayExpression;
-    class DictionaryExpression;
-    class OperatorExpression;
-    class NameExpression;
-    
-    /**
-     * Reads Doomsday script source in text format and outputs the statements
-     * of the script into a Script object.
-     *
-     * @ingroup script
-     */
-    class Parser : public IParser
+public:
+    /// A syntax error is detected during the parsing. Note that the Lex classes
+    /// also define syntax errors. @ingroup errors
+    DENG2_ERROR(SyntaxError);
+
+    /// A token is encountered where we don't know what to do with it. @ingroup errors
+    DENG2_SUB_ERROR(SyntaxError, UnexpectedTokenError);
+
+    /// A token is expected, but nothing was found. @ingroup errors
+    DENG2_SUB_ERROR(SyntaxError, MissingTokenError);
+
+    /// A colon is expected but not found. @ingroup errors
+    DENG2_SUB_ERROR(SyntaxError, MissingColonError);
+
+    // Flags for parsing conditional compounds.
+    enum CompoundFlag
     {
-    public:
-        /// A syntax error is detected during the parsing. Note that the Lex classes 
-        /// also define syntax errors. @ingroup errors
-        DENG2_ERROR(SyntaxError);
-        
-        /// A token is encountered where we don't know what to do with it. @ingroup errors
-        DENG2_SUB_ERROR(SyntaxError, UnexpectedTokenError);
-        
-        /// A token is expected, but nothing was found. @ingroup errors
-        DENG2_SUB_ERROR(SyntaxError, MissingTokenError);
-        
-        /// A colon is expected but not found. @ingroup errors
-        DENG2_SUB_ERROR(SyntaxError, MissingColonError);
-        
-        // Flags for parsing conditional compounds.
-        enum CompoundFlag
-        {
-            HasCondition = 0x1,
-            StayAtClosingStatement = 0x2,
-            IgnoreExtraBeforeColon = 0x4
-        };
-        Q_DECLARE_FLAGS(CompoundFlags, CompoundFlag)
-        
-    public:
-        Parser();
-        ~Parser();
-        
-        // Implements IParser.
-        void parse(String const &input, Script &output);
+        HasCondition = 0x1,
+        StayAtClosingStatement = 0x2,
+        IgnoreExtraBeforeColon = 0x4
+    };
+    Q_DECLARE_FLAGS(CompoundFlags, CompoundFlag)
 
-        void parseCompound(Compound &compound);
+public:
+    Parser();
+    ~Parser();
 
-        void parseStatement(Compound &compound);
-        
-        Expression *parseConditionalCompound(Compound &compound, CompoundFlags const &flags = 0);
+    // Implements IParser.
+    void parse(String const &input, Script &output);
 
-        IfStatement *parseIfStatement();
+    void parseCompound(Compound &compound);
 
-        WhileStatement *parseWhileStatement();
-                
-        ForStatement *parseForStatement();
-                
-        ExpressionStatement *parseImportStatement();
+    void parseStatement(Compound &compound);
 
-        ExpressionStatement *parseExportStatement();
-                
-        ExpressionStatement *parseDeclarationStatement();
-                
-        DeleteStatement *parseDeleteStatement();
+    Expression *parseConditionalCompound(Compound &compound, CompoundFlags const &flags = 0);
 
-        FunctionStatement *parseFunctionStatement();
-        
-        void parseTryCatchSequence(Compound &compound);
-                
-        PrintStatement *parsePrintStatement();
+    IfStatement *parseIfStatement();
 
-        AssignStatement *parseAssignStatement();
+    WhileStatement *parseWhileStatement();
 
-        ExpressionStatement *parseExpressionStatement();
-        
-        /// Parse a range of tokens as a comma-separated argument list:
-        ArrayExpression *parseList(TokenRange const &range,
-                                   QChar const *separator = Token::COMMA,
-                                   Expression::Flags const &flags = Expression::ByValue);
+    ForStatement *parseForStatement();
 
-        /// Parse a range of tokens as an operator-based expression.
-        Expression *parseExpression(TokenRange const &range, 
-            Expression::Flags const &flags = Expression::ByValue);
+    ExpressionStatement *parseImportStatement();
 
-        ArrayExpression *parseArrayExpression(TokenRange const &range);
+    ExpressionStatement *parseExportStatement();
 
-        DictionaryExpression *parseDictionaryExpression(TokenRange const &range);
+    ExpressionStatement *parseDeclarationStatement();
 
-        Expression *parseCallExpression(TokenRange const &nameRange, 
-            TokenRange const &argumentRange);
+    DeleteStatement *parseDeleteStatement();
 
-        OperatorExpression *parseOperatorExpression(Operator op, 
-            TokenRange const &leftSide, TokenRange const &rightSide, 
-            Expression::Flags const &rightFlags = Expression::ByValue);
+    FunctionStatement *parseFunctionStatement();
 
-        Expression *parseTokenExpression(TokenRange const &range, 
-            Expression::Flags const &flags = Expression::ByValue);
+    void parseTryCatchSequence(Compound &compound);
 
-        Operator findLowestOperator(TokenRange const &range, 
-            TokenRange &leftSide, TokenRange &rightSide);
-                
-    protected:  
-        /// Gets the set of tokens for the next statement.
-        /// @return Number of tokens found.
-        duint nextStatement();
+    PrintStatement *parsePrintStatement();
 
-    private:
-        ScriptLex _analyzer;
-        
-        TokenBuffer _tokens;    
-        
-        // Range of the current statement. Can be a subrange of the full 
-        // set of tokens.
-        TokenRange _statementRange;
-        
-        duint _currentIndent;
-    };    
+    AssignStatement *parseAssignStatement();
 
-    Q_DECLARE_OPERATORS_FOR_FLAGS(de::Parser::CompoundFlags)
-}
+    ExpressionStatement *parseExpressionStatement();
+
+    /// Parse a range of tokens as a comma-separated argument list:
+    ArrayExpression *parseList(TokenRange const &range,
+                               QChar const *separator = Token::COMMA,
+                               Expression::Flags const &flags = Expression::ByValue);
+
+    /// Parse a range of tokens as an operator-based expression.
+    Expression *parseExpression(TokenRange const &range,
+        Expression::Flags const &flags = Expression::ByValue);
+
+    ArrayExpression *parseArrayExpression(TokenRange const &range);
+
+    DictionaryExpression *parseDictionaryExpression(TokenRange const &range);
+
+    Expression *parseCallExpression(TokenRange const &nameRange,
+        TokenRange const &argumentRange);
+
+    OperatorExpression *parseOperatorExpression(Operator op,
+        TokenRange const &leftSide, TokenRange const &rightSide,
+        Expression::Flags const &rightFlags = Expression::ByValue);
+
+    Expression *parseTokenExpression(TokenRange const &range,
+        Expression::Flags const &flags = Expression::ByValue);
+
+    Operator findLowestOperator(TokenRange const &range,
+        TokenRange &leftSide, TokenRange &rightSide);
+
+protected:
+    /// Gets the set of tokens for the next statement.
+    /// @return Number of tokens found.
+    duint nextStatement();
+
+private:
+    ScriptLex _analyzer;
+
+    TokenBuffer _tokens;
+
+    // Range of the current statement. Can be a subrange of the full
+    // set of tokens.
+    TokenRange _statementRange;
+
+    duint _currentIndent;
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::Parser::CompoundFlags)
+
+} // namespace de
 
 #endif /* LIBDENG2_PARSER_H */

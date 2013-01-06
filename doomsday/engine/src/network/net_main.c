@@ -43,10 +43,13 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
-#include "render/rend_bias.h"
-#include "render/rend_console.h"
-#include "render/r_lgrid.h"
-#include "map/blockmapvisual.h"
+#ifdef __CLIENT__
+#  include "render/rend_bias.h"
+#  include "render/rend_console.h"
+#  include "render/rend_main.h"
+#  include "render/r_lgrid.h"
+#  include "map/blockmapvisual.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -62,11 +65,12 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+#ifdef __CLIENT__
 D_CMD(Login); // in cl_main.c
+#endif
 D_CMD(Logout); // in sv_main.c
 D_CMD(Ping); // in net_ping.c
 
-void    R_DrawLightRange(void);
 int     Sv_GetRegisteredMobj(pool_t *, thid_t, mobjdelta_t *);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -157,7 +161,9 @@ void Net_Register(void)
     C_CMD_FLAGS("conlocp", "i", MakeCamera, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
     C_CMD_FLAGS("kick", "i", Kick, CMDF_NO_NULLGAME);
+#ifdef __CLIENT__
     C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
+#endif
     C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("net", NULL, Net, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("ping", NULL, Ping, CMDF_NO_NULLGAME);
@@ -195,11 +201,13 @@ void Net_Shutdown(void)
     Net_DestroyArrays();
 }
 
+#undef Net_GetPlayerName
 const char* Net_GetPlayerName(int player)
 {
     return clients[player].name;
 }
 
+#undef Net_GetPlayerID
 ident_t Net_GetPlayerID(int player)
 {
     if(!clients[player].connected)
@@ -215,9 +223,11 @@ void Net_SendBuffer(int toPlayer, int spFlags)
 {
     assert(!Msg_BeingWritten()); // Must finish writing before calling this.
 
+#ifdef __CLIENT__
     // Don't send anything during demo playback.
     if(playback)
         return;
+#endif
 
     netBuffer.player = toPlayer;
 
@@ -229,7 +239,9 @@ void Net_SendBuffer(int toPlayer, int spFlags)
         return;
     }
 
+#ifdef __CLIENT__
     Demo_WritePacket(toPlayer);
+#endif
 
     // Can we send the packet?
     if(spFlags & SPF_DONT_SEND)
@@ -253,10 +265,12 @@ boolean Net_GetPacket(void)
         return true;
     }
 
+#ifdef __CLIENT__
     if(playback)
     {   // We're playing a demo. This overrides all other packets.
         return Demo_ReadPacket();
     }
+#endif
 
     if(!netGame)
     {   // Packets cannot be received.
@@ -266,16 +280,18 @@ boolean Net_GetPacket(void)
     if(!N_GetPacket())
         return false;
 
+#ifdef __CLIENT__
     // Are we recording a demo?
     if(isClient && clients[consolePlayer].recording)
+    {
         Demo_WritePacket(consolePlayer);
-
-    // Reset the cursor for Msg_* routines.
-    //netBuffer.cursor = netBuffer.msg.data;
+    }
+#endif
 
     return true;
 }
 
+#undef Net_PlayerSmoother
 Smoother* Net_PlayerSmoother(int player)
 {
     if(player < 0 || player >= DDMAXPLAYERS)
@@ -307,6 +323,7 @@ void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
 /**
  * This is the public interface of the message sender.
  */
+#undef Net_SendPacket
 void Net_SendPacket(int to_player, int type, const void* data, size_t length)
 {
     unsigned int flags = 0;
@@ -464,10 +481,11 @@ void Net_Update(void)
     N_ListenNodes();
 
     // Check for received packets.
-    if(isClient)
-        Cl_GetPackets();
-    else
-        Sv_GetPackets();
+#ifdef __CLIENT__
+    Cl_GetPackets();
+#elif __SERVER__
+    Sv_GetPackets();
+#endif
 }
 
 /**
@@ -507,7 +525,9 @@ void Net_DestroyArrays(void)
  */
 void Net_InitGame(void)
 {
+#ifdef __CLIENT__
     Cl_InitID();
+#endif
 
     // In single-player mode there is only player number zero.
     consolePlayer = displayPlayer = 0;
@@ -520,7 +540,10 @@ void Net_InitGame(void)
 
     ddPlayers[0].shared.inGame = true;
     ddPlayers[0].shared.flags |= DDPF_LOCAL;
+
+#ifdef __CLIENT__
     clients[0].id = clientID;
+#endif
     clients[0].ready = true;
     clients[0].connected = true;
     clients[0].viewConsole = 0;
@@ -535,32 +558,33 @@ void Net_StopGame(void)
 {
     int     i;
 
+#ifdef __SERVER__
     if(isServer)
-    {   // We are an open server.
+    {
+        // We are an open server.
         // This means we should inform all the connected clients that the
         // server is about to close.
         Msg_Begin(PSV_SERVER_CLOSE);
         Msg_End();
         Net_SendBuffer(NSP_BROADCAST, 0);
-#if 0
-        N_FlushOutgoing();
-#endif
     }
-    else
-    {
-#ifdef _DEBUG
-        Con_Message("Net_StopGame: Sending PCL_GOODBYE.\n");
 #endif
-        // We are a connected client.
-        Msg_Begin(PCL_GOODBYE);
-        Msg_End();
-        Net_SendBuffer(0, 0);
 
-        // Must stop recording, we're disconnecting.
-        Demo_StopRecording(consolePlayer);
-        Cl_CleanUp();
-        isClient = false;
-    }
+#ifdef __CLIENT__
+# ifdef _DEBUG
+    Con_Message("Net_StopGame: Sending PCL_GOODBYE.\n");
+# endif
+    // We are a connected client.
+    Msg_Begin(PCL_GOODBYE);
+    Msg_End();
+    Net_SendBuffer(0, 0);
+
+    // Must stop recording, we're disconnecting.
+    Demo_StopRecording(consolePlayer);
+    Cl_CleanUp();
+    isClient = false;
+    netLoggedIn = false;
+#endif
 
     // Netgame has ended.
     netGame = false;
@@ -569,7 +593,6 @@ void Net_StopGame(void)
 
     // No more remote users.
     netRemoteUser = 0;
-    netLoggedIn = false;
 
     // All remote players are forgotten.
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -642,6 +665,8 @@ static boolean recordingDemo(void)
     return false;
 }
 
+#ifdef __CLIENT__
+
 void Net_DrawDemoOverlay(void)
 {
     char buf[160], tmp[40];
@@ -689,11 +714,14 @@ void Net_DrawDemoOverlay(void)
     glPopMatrix();
 }
 
+#endif // __CLIENT__
+
 /**
  * Does drawing for the engine's HUD, not just the net.
  */
 void Net_Drawer(void)
 {
+#ifdef __CLIENT__
     // Draw the Shadow Bias Editor HUD (if it is active).
     SBE_DrawHUD();
 
@@ -712,9 +740,10 @@ void Net_Drawer(void)
     // Draw the demo recording overlay.
     Net_DrawDemoOverlay();
 
-#ifdef _DEBUG
+# ifdef _DEBUG
     Z_DebugDrawer();
-#endif
+# endif
+#endif // __CLIENT__
 }
 
 /**
@@ -1122,18 +1151,20 @@ D_CMD(MakeCamera)
     Smoother_Clear(clients[cp].smoother);
     Sv_InitPoolForClient(cp);
 
+#ifdef __CLIENT__
     R_SetupDefaultViewWindow(cp);
+
     // Update the viewports.
     R_SetViewGrid(0, 0);
+#endif
 
     return true;
 }
 
 D_CMD(SetConsole)
 {
-    int cp;
-
-    cp = atoi(argv[1]);
+#ifdef __CLIENT__
+    int cp = atoi(argv[1]);
     if(ddPlayers[cp].shared.inGame)
     {
         consolePlayer = displayPlayer = cp;
@@ -1141,7 +1172,7 @@ D_CMD(SetConsole)
 
     // Update the viewports.
     R_SetViewGrid(0, 0);
-
+#endif
     return true;
 }
 
@@ -1326,6 +1357,7 @@ D_CMD(Net)
             Con_Message("Network game: %s\n", netGame ? "yes" : "no");
             Con_Message("This is console %i (local player %i).\n", consolePlayer, P_ConsoleToLocal(consolePlayer));
         }
+#ifdef __CLIENT__
         else if(!stricmp(argv[1], "disconnect"))
         {
             if(!netGame)
@@ -1345,6 +1377,7 @@ D_CMD(Net)
                 Con_Message("Disconnected.\n");
             }
         }
+#endif
         else
         {
             Con_Printf("Bad arguments.\n");
@@ -1395,6 +1428,7 @@ D_CMD(Net)
         {
             success = N_LookForHosts(argv[2], 0, 0);
         }
+#ifdef __CLIENT__
         else if(!stricmp(argv[1], "connect"))
         {
             int             idx;
@@ -1432,6 +1466,7 @@ D_CMD(Net)
             DD_NetSetup(!stricmp(argv[2], "server"));
             CmdReturnValue = true;
         }
+#endif
     }
 
     if(argc == 4)

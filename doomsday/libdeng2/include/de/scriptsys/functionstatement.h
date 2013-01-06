@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,42 +28,43 @@
 
 #include <list>
 
-namespace de
+namespace de {
+
+class Expression;
+
+/**
+ * Creates a new function.
+ *
+ * @ingroup script
+ */
+class FunctionStatement : public Statement
 {
-    class Expression;
-    
-    /**
-     * Creates a new function.
-     *
-     * @ingroup script
-     */
-    class FunctionStatement : public Statement
-    {
-    public:
-        FunctionStatement(Expression *identifier = 0);
-        
-        ~FunctionStatement();
+public:
+    FunctionStatement(Expression *identifier = 0);
 
-        void addArgument(String const &argName, Expression *defaultValue = 0);
+    ~FunctionStatement();
 
-        /// Returns the statement compound of the function.
-        Compound &compound();
-        
-        void execute(Context &context) const;
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
+    void addArgument(String const &argName, Expression *defaultValue = 0);
 
-    private:
-        Expression *_identifier;
-        
-        // The statement holds one reference to the function.
-        Function *_function;
-    
-        /// Expression that evaluates into the default values of the method.
-        DictionaryExpression _defaults;
-    };
-}
+    /// Returns the statement compound of the function.
+    Compound &compound();
+
+    void execute(Context &context) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    Expression *_identifier;
+
+    // The statement holds one reference to the function.
+    Function *_function;
+
+    /// Expression that evaluates into the default values of the method.
+    DictionaryExpression _defaults;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_FUNCTIONSTATEMENT_H */

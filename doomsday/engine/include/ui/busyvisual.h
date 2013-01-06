@@ -23,7 +23,7 @@
 #ifndef LIBDENG_RENDER_BUSYVISUAL_H
 #define LIBDENG_RENDER_BUSYVISUAL_H
 
-#include "busytask.h"
+#include "api_busy.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,6 +52,8 @@ typedef enum {
     LAST_TRANSITIONSTYLE = TS_DOOM
 } transitionstyle_t;
 
+#ifdef __CLIENT__
+
 extern int rTransition;
 extern int rTransitionTics;
 
@@ -65,6 +67,8 @@ boolean Con_TransitionInProgress(void);
 
 void Con_TransitionTicker(timespan_t ticLength);
 void Con_DrawTransition(void);
+
+#endif // __CLIENT__
 
 #ifdef __cplusplus
 } // extern "C"

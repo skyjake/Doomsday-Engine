@@ -49,13 +49,6 @@
 #  endif
 #endif
 
-typedef enum slopetype_e {
-    ST_HORIZONTAL,
-    ST_VERTICAL,
-    ST_POSITIVE,
-    ST_NEGATIVE
-} slopetype_t;
-
 /// @todo Should be a public typedef of a type defined by de::LumpIndex.
 typedef int32_t         lumpnum_t;
 #define LUMPNAME_T_MAXLEN 9
@@ -68,21 +61,6 @@ typedef char            lumpname_t[LUMPNAME_T_MAXLEN];
 typedef char            filename_t[FILENAME_T_MAXLEN];
 
 typedef void (*con_textfilter_t) (char* text);
-
-#define BAMS_BITS   16
-
-#if BAMS_BITS == 32
-typedef uint32_t binangle_t;
-#  define BANG_TO_ANGLE(bang)     ((angle_t)bang)
-#elif BAMS_BITS == 16
-typedef uint16_t binangle_t;
-#  define BANG_TO_ANGLE(bang)     ((angle_t)bang << 16)
-#else
-typedef unsigned char binangle_t;
-#  define BANG_TO_ANGLE(bang)     ((angle_t)bang << 24)
-#endif
-
-#define ANGLE_TO_BANG(angle)      ((binangle_t)((angle_t)angle >> BAMS_BITS))
 
 // Forward declarations for map data types. The contents of these structs is
 // declared in p_maptypes.h.
@@ -100,9 +78,8 @@ struct surface_s;
 struct material_s;
 
 #include <de/str.h>
+#include <de/strutil.h>
 #include <de/fixedpoint.h>
-#include "resourceclass.h"
-#include "filetype.h"
-#include "uri.h" // C wrapper for de::Uri
+#include "api_uri.h"
 
 #endif /* ENGINE_TYPES_H */

@@ -21,6 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
+#define DENG_NO_API_MACROS_SVG
+
 #include <string.h>
 #include <assert.h>
 
@@ -235,3 +237,12 @@ void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines)
     // Add the new SVG to the global collection.
     insertSvg(svg);
 }
+
+DENG_DECLARE_API(Svg) =
+{
+    { DE_API_SVG },
+    R_NewSvg,
+    GL_DrawSvg,
+    GL_DrawSvg2,
+    GL_DrawSvg3
+};

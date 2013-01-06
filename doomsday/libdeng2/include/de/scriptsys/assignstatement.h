@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,48 +26,49 @@
 #include <string>
 #include <vector>
 
-namespace de
+namespace de {
+
+/**
+ * Assigns a value to a variable.
+ *
+ * @ingroup script
+ */
+class AssignStatement : public Statement
 {
+public:
+    /// Trying to assign into something other than a reference (RefValue). @ingroup errors
+    DENG2_ERROR(LeftValueError);
+
+    typedef std::vector<Expression *> Indices;
+
+public:
+    AssignStatement();
+
     /**
-     * Assigns a value to a variable.
+     * Constructor. Statement takes ownership of the expressions
+     * @c target and @c value.
      *
-     * @ingroup script
+     * @param target  Expression that resolves to a reference (RefValue).
+     * @param indices Expressions that determine element indices into existing
+     *                element-based values. Empty, if there is no indices for
+     *                the assignment.
+     * @param value   Expression that determines the value of the variable.
      */
-    class AssignStatement : public Statement
-    {
-    public:
-        /// Trying to assign into something other than a reference (RefValue). @ingroup errors
-        DENG2_ERROR(LeftValueError);
-        
-        typedef std::vector<Expression *> Indices;
-        
-    public:
-        AssignStatement();
-        
-        /**
-         * Constructor. Statement takes ownership of the expressions 
-         * @c target and @c value.
-         *
-         * @param target  Expression that resolves to a reference (RefValue).
-         * @param indices Expressions that determine element indices into existing
-         *                element-based values. Empty, if there is no indices for
-         *                the assignment. 
-         * @param value   Expression that determines the value of the variable.
-         */
-        AssignStatement(Expression *target, Indices const &indices, Expression *value);
-        
-        ~AssignStatement();
-        
-        void execute(Context &context) const;
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
-        
-    private:
-        ArrayExpression _args;
-        dint _indexCount;
-    };
-}
+    AssignStatement(Expression *target, Indices const &indices, Expression *value);
+
+    ~AssignStatement();
+
+    void execute(Context &context) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    ArrayExpression _args;
+    dint _indexCount;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_ASSIGNSTATEMENT_H */

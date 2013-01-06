@@ -31,6 +31,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define DENG_NO_API_MACROS_GL
+
 #include <stdio.h>
 #include <stdlib.h>
 

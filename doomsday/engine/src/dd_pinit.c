@@ -38,12 +38,23 @@
 #include "de_filesys.h"
 
 #include "def_main.h"
+#include "render/r_main.h"
 #include "updater.h"
+
+#include "api_internaldata.h"
 
 /*
  * The game imports and exports.
  */
-game_import_t __gi;
+DENG_DECLARE_API(InternalData) =
+{
+    { DE_API_INTERNAL_DATA },
+    &mobjInfo,
+    &states,
+    &sprNames,
+    &texts,
+    &validCount
+};
 game_export_t __gx;
 
 int DD_CheckArg(char* tag, const char** value)
@@ -64,9 +75,9 @@ void DD_ComposeMainWindowTitle(char* title)
 {
     if(DD_GameLoaded() && gx.GetVariable)
     {
-        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s - %s (%s %s)",
-            (isDedicated? " (Dedicated)" : ""), Str_Text(Game_Title(App_CurrentGame())),
-            (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
+        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s - %s",
+            (isDedicated? " (Dedicated)" : ""), Str_Text(Game_Title(App_CurrentGame()))/*,
+            (char*) gx.GetVariable(DD_PLUGIN_NICENAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT)*/);
     }
     else
     {
@@ -74,32 +85,13 @@ void DD_ComposeMainWindowTitle(char* title)
     }
 }
 
-void SetGameImports(game_import_t* imp)
-{
-    memset(imp, 0, sizeof(*imp));
-    imp->apiSize = sizeof(*imp);
-    imp->version = DOOMSDAY_VERSION;
-
-    // Data.
-    imp->mobjInfo = &mobjInfo;
-    imp->states = &states;
-    imp->sprNames = &sprNames;
-    imp->text = &texts;
-
-    imp->validCount = &validCount;
-}
-
 void DD_InitAPI(void)
 {
     GETGAMEAPI GetGameAPI = app.GetGameAPI;
-
-    // Put the imported stuff into the imports.
-    SetGameImports(&__gi);
-
     memset(&__gx, 0, sizeof(__gx));
     if(GetGameAPI)
     {
-        game_export_t* gameExPtr = GetGameAPI(&__gi);
+        game_export_t* gameExPtr = GetGameAPI();
         memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
     }
 }
@@ -166,9 +158,9 @@ void DD_ConsoleInit(void)
 
 void DD_ShutdownAll(void)
 {
-    int i;
-
+#ifdef __CLIENT__
     Updater_Shutdown();
+#endif
     FI_Shutdown();
     UI_Shutdown();
     Con_Shutdown();
@@ -179,9 +171,14 @@ void DD_ShutdownAll(void)
     SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, FALSE, 0, 0);
 #endif
 
+#ifdef __CLIENT__
     // Stop all demo recording.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-        Demo_StopRecording(i);
+    {
+        int i;
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+            Demo_StopRecording(i);
+    }
+#endif
 
     P_ControlShutdown();
     Sv_Shutdown();

@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,35 +22,36 @@
 
 #include "../String"
 
-namespace de
-{
-    class Script;
-    
-    /**
-     * Interface for objects responsible for reading a script in text form and
-     * producing an executable Script object, with Statements and related
-     * atoms.
-     *
-     * This is an interface for parsers. A concrete Parser implementation 
-     * uses a specific syntax for the input text.
-     *
-     * @ingroup script
-     */
-    class IParser
-    {
-    public:
-        virtual ~IParser() {}
+namespace de {
 
-        /**
-         * Reads an input script in text format, and according to the
-         * syntax specified by the parser, creates a set of statements
-         * and related atoms in the output Script object.
-         *
-         * @param input  Input script in text format.
-         * @param output  Output Script object.
-         */
-        virtual void parse(String const &input, Script &output) = 0;
-    };
-}
+class Script;
+
+/**
+ * Interface for objects responsible for reading a script in text form and
+ * producing an executable Script object, with Statements and related
+ * atoms.
+ *
+ * This is an interface for parsers. A concrete Parser implementation
+ * uses a specific syntax for the input text.
+ *
+ * @ingroup script
+ */
+class IParser
+{
+public:
+    virtual ~IParser() {}
+
+    /**
+     * Reads an input script in text format, and according to the
+     * syntax specified by the parser, creates a set of statements
+     * and related atoms in the output Script object.
+     *
+     * @param input  Input script in text format.
+     * @param output  Output Script object.
+     */
+    virtual void parse(String const &input, Script &output) = 0;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_IPARSER_H */

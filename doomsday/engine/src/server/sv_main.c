@@ -30,6 +30,9 @@
 
 #include <math.h>
 
+#define DENG_NO_API_MACROS_SERVER
+#include "api_server.h"
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -39,7 +42,7 @@
 #include "de_misc.h"
 #include "de_defs.h"
 
-#include "materialarchive.h"
+#include "api_materialarchive.h"
 #include "map/r_world.h"
 
 // This is absolute maximum bandwidth rating. Frame size is practically
@@ -373,7 +376,8 @@ void Sv_HandlePacket(void)
         // Check for duplicate IDs.
         if(!ddpl->inGame && !sender->handshake)
         {
-            for(i = 0; i < DDMAXPLAYERS; ++i)
+            // Console 0 is always reserved for the server itself (not a player).
+            for(i = 1; i < DDMAXPLAYERS; ++i)
             {
                 if(clients[i].connected && clients[i].id == id)
                 {
@@ -910,8 +914,8 @@ void Sv_StartNetGame(void)
     // Prepare the material dictionary we'll be using with clients.
     materialDict = MaterialArchive_New(false);
 #ifdef _DEBUG
-    Con_Message("Sv_StartNetGame: Prepared material dictionary with %u materials.\n",
-                (uint) MaterialArchive_Count(materialDict));
+    Con_Message("Sv_StartNetGame: Prepared material dictionary with %i materials.\n",
+                MaterialArchive_Count(materialDict));
 #endif
 
     if(!isDedicated)
@@ -1287,3 +1291,9 @@ D_CMD(Logout)
     netRemoteUser = 0;
     return true;
 }
+
+DENG_DECLARE_API(Server) =
+{
+    { DE_API_SERVER },
+    Sv_CanTrustClientPos
+};

@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,37 +22,38 @@
 
 #include "../Statement"
 
-namespace de
+namespace de {
+
+class Expression;
+
+/**
+ * Evaluates an expression but does not store the result anywhere. An example of
+ * this would be a statement that just does a single method call.
+ *
+ * @ingroup script
+ */
+class ExpressionStatement : public Statement
 {
-    class Expression;
-    
+public:
     /**
-     * Evaluates an expression but does not store the result anywhere. An example of 
-     * this would be a statement that just does a single method call.
+     * Constructs a new expression statement.
      *
-     * @ingroup script
+     * @param expression  Statement gets ownership.
      */
-    class ExpressionStatement : public Statement
-    {
-    public:
-        /**
-         * Constructs a new expression statement.
-         *
-         * @param expression  Statement gets ownership.
-         */ 
-        ExpressionStatement(Expression *expression = 0) : _expression(expression) {}
-        
-        ~ExpressionStatement();
-        
-        void execute(Context &context) const;
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
-        
-    private:
-        Expression *_expression;
-    };
-}
+    ExpressionStatement(Expression *expression = 0) : _expression(expression) {}
+
+    ~ExpressionStatement();
+
+    void execute(Context &context) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    Expression *_expression;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_EXPRESSIONSTATEMENT_H */

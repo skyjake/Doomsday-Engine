@@ -187,38 +187,35 @@ typedef struct model_vertex_s {
 
 typedef struct model_frame_s {
     char name[16];
-    model_vertex_t* vertices;
-    model_vertex_t* normals;
+    model_vertex_t *vertices;
+    model_vertex_t *normals;
     float min[3], max[3];
+
+#ifdef __cplusplus
+    void getBounds(float min[3], float max[3]) const;
+
+    float horizontalRange(float *top, float *bottom) const;
+#endif
 } model_frame_t;
 
 typedef struct model_s {
     uint modelId; ///< Id of the model in the repository.
     dmd_header_t header;
     dmd_info_t info;
-    dmd_skin_t* skins;
-    model_frame_t* frames;
+    dmd_skin_t *skins;
+    model_frame_t *frames;
     dmd_levelOfDetail_t lodInfo[MAX_LODS];
     dmd_lod_t lods[MAX_LODS];
-    char* vertexUsage; ///< Bitfield for each vertex.
+    char *vertexUsage; ///< Bitfield for each vertex.
     boolean allowTexComp; ///< Allow texture compression with this.
 
 #ifdef __cplusplus
-    int frameNumForName(char* fname)
-    {
-        if(fname && fname[0])
-        {
-            for(int i = 0; i < info.numFrames; ++i)
-            {
-                if(!stricmp(frames[i].name, fname))
-                    return i;
-            }
-        }
-        return 0;
-    }
+    bool validFrameNumber(int value) const;
+
+    model_frame_t &frame(int number) const;
+
+    int frameNumForName(char const *name) const;
 #endif
 } model_t;
-
-//extern model_t* modellist[MAX_MODELS];
 
 #endif /* LIBDENG_MODEL_H */

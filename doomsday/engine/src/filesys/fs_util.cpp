@@ -23,6 +23,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_FILESYS
+
 #ifdef WIN32
 #  include <direct.h>
 #endif

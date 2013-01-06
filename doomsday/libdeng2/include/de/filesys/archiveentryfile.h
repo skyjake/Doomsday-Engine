@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,50 +22,51 @@
 
 #include "../ByteArrayFile"
 
-namespace de
+namespace de {
+
+class Archive;
+
+/**
+ * Accesses data of an entry within an archive.
+ *
+ * @ingroup fs
+ */
+class ArchiveEntryFile : public ByteArrayFile
 {
-    class Archive;
-    
+public:
     /**
-     * Accesses data of an entry within an archive.
+     * Constructs an archive file.
      *
-     * @ingroup fs
+     * @param name       Name of the file.
+     * @param archive    Archive where the contents of the file are located.
+     * @param entryPath  Path of the file's entry within the archive.
      */
-    class ArchiveEntryFile : public ByteArrayFile
-    {
-    public:
-        /**
-         * Constructs an archive file.
-         *
-         * @param name       Name of the file.
-         * @param archive    Archive where the contents of the file are located.
-         * @param entryPath  Path of the file's entry within the archive.
-         */
-        ArchiveEntryFile(String const &name, Archive &archive, String const &entryPath);
-        
-        ~ArchiveEntryFile();
+    ArchiveEntryFile(String const &name, Archive &archive, String const &entryPath);
 
-        String describe() const;
+    ~ArchiveEntryFile();
 
-        void clear();
+    String describe() const;
 
-        /// Returns the archive of the file.
-        Archive &archive() { return _archive; }
+    void clear();
 
-        /// Returns the archive of the file (non-modifiable).
-        Archive const &archive() const { return _archive; }
+    /// Returns the archive of the file.
+    Archive &archive() { return _archive; }
 
-        // Implements IByteArray.
-        Size size() const;
-        void get(Offset at, Byte *values, Size count) const;
-        void set(Offset at, Byte const *values, Size count);
-        
-    private:
-        Archive &_archive;
-        
-        /// Path of the entry within the archive.
-        String _entryPath;
-    };
-}
+    /// Returns the archive of the file (non-modifiable).
+    Archive const &archive() const { return _archive; }
+
+    // Implements IByteArray.
+    Size size() const;
+    void get(Offset at, Byte *values, Size count) const;
+    void set(Offset at, Byte const *values, Size count);
+
+private:
+    Archive &_archive;
+
+    /// Path of the entry within the archive.
+    String _entryPath;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_ARCHIVEENTRYFILE_H */

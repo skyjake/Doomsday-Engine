@@ -21,6 +21,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_BUSY
+
 #include "de_base.h"
 #include "de_platform.h"
 #include "de_console.h"
@@ -34,31 +36,37 @@
 #include <de/Log>
 #include <QEventLoop>
 
-static QEventLoop* eventLoop;
+#ifdef __CLIENT__
 
 static void BusyMode_Loop(void);
 static void BusyMode_Exit(void);
 
+static QEventLoop* eventLoop;
+static volatile boolean busyDoneCopy;
+static timespan_t busyTime;
+static boolean busyWillAnimateTransition;
+static boolean busyWasIgnoringInput;
+
+#endif // __CLIENT__
+
 static boolean busyInited;
 static volatile boolean busyDone;
-static volatile boolean busyDoneCopy;
 
 static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 
 static BusyTask* busyTask; // Current task.
 static thread_t busyThread;
-static timespan_t busyTime;
 static timespan_t accumulatedBusyTime; // Never cleared.
 static boolean busyTaskEndedWithError;
-static boolean busyWillAnimateTransition;
-static boolean busyWasIgnoringInput;
 static char busyError[256];
 
+#ifdef __CLIENT__
 static boolean animatedTransitionActive(int busyMode)
 {
     return (!novideo && !isDedicated && !netGame && !(busyMode & BUSYF_STARTUP) &&
             rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION));
 }
+#endif
 
 boolean BusyMode_Active(void)
 {
@@ -94,6 +102,8 @@ BusyTask* BusyMode_CurrentTask(void)
     return busyTask;
 }
 
+#ifdef __CLIENT__
+
 /**
  * Callback that is called from the busy worker thread when it exists.
  * @param status Exit status.
@@ -104,7 +114,7 @@ static void busyWorkerTerminated(systhreadexitstatus_t status)
 
     if(status == DENG_THREAD_STOPPED_WITH_EXCEPTION)
     {
-        BusyMode_WorkerError("Uncaught exception from busy thread.");
+        _api_Busy.WorkerError("Uncaught exception from busy thread.");
     }
 }
 
@@ -113,7 +123,7 @@ static void busyWorkerTerminated(systhreadexitstatus_t status)
  * loop is started. The loop will run until the worker thread exits.
  */
 static void beginTask(BusyTask* task)
-{
+{   
     DENG_ASSERT(task);
 
     if(!busyInited)
@@ -185,6 +195,8 @@ static void endTask(BusyTask* task)
     busyInited = false;
 }
 
+#endif // __CLIENT__
+
 /**
  * Runs the busy mode event loop. Execution blocks here until the worker thread exits.
  */
@@ -197,6 +209,8 @@ static int runTask(BusyTask* task)
         // Don't bother to start a thread -- non-GUI mode.
         return task->worker(task->workerData);
     }
+
+#ifdef __CLIENT__
 
     // Let's get busy!
     beginTask(task);
@@ -215,10 +229,14 @@ static int runTask(BusyTask* task)
     endTask(task);
 
     return result;
+#else
+    return 0;
+#endif
 }
 
 static void preBusySetup(int initialMode)
 {
+#ifdef __CLIENT__
     // Are we doing a transition effect?
     busyWillAnimateTransition = animatedTransitionActive(initialMode);
     if(busyWillAnimateTransition)
@@ -239,10 +257,15 @@ static void preBusySetup(int initialMode)
     BusyVisual_LoadTextures();
 
     Window_SetDrawFunc(Window_Main(), 0);
+
+#else
+    DENG_UNUSED(initialMode);
+#endif
 }
 
 static void postBusyCleanup(void)
 {
+#ifdef __CLIENT__
     // Discard input events so that any and all accumulated input events are ignored.
     DD_IgnoreInput(busyWasIgnoringInput);
     DD_ResetTimer();
@@ -254,6 +277,7 @@ static void postBusyCleanup(void)
 
     // Resume drawing with the game loop drawer.
     Window_SetDrawFunc(Window_Main(), !Sys_IsShuttingDown()? DD_GameLoopDrawer : 0);
+#endif
 }
 
 /**
@@ -374,6 +398,8 @@ int BusyMode_RunNewTask(int mode, busyworkerfunc_t worker, void* workerData)
     return BusyMode_RunNewTaskWithName(mode, worker, workerData, NULL/*no task name*/);
 }
 
+#ifdef __CLIENT__
+
 /**
  * Ends the busy event loop and sets its return value. The loop callback, which
  * during busy mode points to the busy loop callback, is reset to NULL.
@@ -462,11 +488,13 @@ static void BusyMode_Loop(void)
     BusyMode_Exit();
 }
 
+#endif // __CLIENT__
+
 void BusyMode_WorkerError(const char* message)
 {
     busyTaskEndedWithError = true;
     strncpy(busyError, message, sizeof(busyError) - 1);
-    BusyMode_WorkerEnd();
+    _api_Busy.WorkerEnd();
 }
 
 void BusyMode_WorkerEnd(void)
@@ -477,3 +505,16 @@ void BusyMode_WorkerEnd(void)
     busyDone = true;
     Sys_Unlock(busy_Mutex);
 }
+
+DENG_DECLARE_API(Busy) =
+{
+    { DE_API_BUSY },
+    BusyMode_Active,
+    BusyMode_ElapsedTime,
+    BusyMode_RunTask,
+    BusyMode_RunTasks,
+    BusyMode_RunNewTask,
+    BusyMode_RunNewTaskWithName,
+    BusyMode_WorkerEnd,
+    BusyMode_WorkerError
+};

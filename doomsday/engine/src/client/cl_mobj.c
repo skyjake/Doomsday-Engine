@@ -22,6 +22,8 @@
 
 #include <math.h>
 
+#define DENG_NO_API_MACROS_CLIENT
+
 #include "de_base.h"
 #include "de_defs.h"
 #include "de_system.h"
@@ -413,7 +415,7 @@ void GameMap_ExpireClMobjs(GameMap* map)
             mo = ClMobj_MobjForInfo(info);
 
             // Already deleted?
-            if(mo->thinker.function == (think_t)-1) continue;
+            if(mo->thinker.function == (thinkfunc_t)-1) continue;
 
             // Don't expire player mobjs.
             if(mo->dPlayer) continue;
@@ -1071,3 +1073,16 @@ void ClMobj_ReadNullDelta2(boolean skip)
     checkMobjHash();
 #endif
 }
+
+// cl_player.c
+DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum);
+
+DENG_DECLARE_API(Client) =
+{
+    { DE_API_CLIENT },
+    ClMobj_Find,
+    ClMobj_EnableLocalActions,
+    ClMobj_LocalActionsEnabled,
+    ClMobj_IsValid,
+    ClPlayer_ClMobj
+};

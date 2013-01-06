@@ -23,6 +23,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_CONSOLE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -1150,7 +1152,7 @@ void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo)
     if(printInfo)
     {
         // Check for extra info about this ccmd's usage.
-        char* info = DH_GetString(DH_Find(ccmd->name), HST_INFO);
+        char const *info = DH_GetString(DH_Find(ccmd->name), HST_INFO);
         if(info)
         {
             // Lets indent for neatness.
@@ -1487,9 +1489,9 @@ static void printHelpAbout(char const* query)
     // Try the console commands first.
     if(ccmd_t* ccmd = Con_FindCommand(query))
     {
-        void* helpRecord = DH_Find(ccmd->name);
-        char const* description = DH_GetString(helpRecord, HST_DESCRIPTION);
-        char const* info = DH_GetString(helpRecord, HST_INFO);
+        HelpId help = DH_Find(ccmd->name);
+        char const* description = DH_GetString(help, HST_DESCRIPTION);
+        char const* info = DH_GetString(help, HST_INFO);
 
         if(description)
             Con_Printf("%s\n", description);
@@ -1588,8 +1590,8 @@ static int printKnownWordWorker(knownword_t const* word, void* parameters)
     switch(word->type)
     {
     case WT_CCMD: {
-        ccmd_t* ccmd = (ccmd_t*) word->data;
-        char* str;
+        ccmd_t *ccmd = (ccmd_t *) word->data;
+        char const *str;
 
         if(ccmd->prevOverload)
             return 0; // Skip overloaded variants.

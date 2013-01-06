@@ -36,7 +36,9 @@ extern "C" {
 #endif
 
 typedef struct directory_s {
+#if defined(WIN32)
     int drive;
+#endif
     filename_t path;
 } directory_t;
 

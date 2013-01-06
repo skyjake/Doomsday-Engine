@@ -30,14 +30,12 @@
 #define LIBDENG_REND_MAIN_H
 
 #include <math.h>
-#include "rend_list.h"
+#ifdef __CLIENT__
+#  include "rend_list.h"
+#endif
 #include "r_things.h"
 
-struct materialvariantspecification_s;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct materialvariantspec_s;
 
 #define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
 
@@ -45,31 +43,38 @@ extern "C" {
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
-extern coord_t vOrigin[3];
-extern float vang, vpitch, fieldOfView, yfov;
-extern byte smoothTexAnim, devMobjVLights;
-extern float viewsidex, viewsidey;
-extern boolean usingFog;
-extern float fogColor[4];
-extern int rAmbient;
-extern float rendLightDistanceAttentuation;
-extern float lightModRange[255];
-extern int devRendSkyMode;
-extern int gameDrawHUD;
+DENG_EXTERN_C coord_t vOrigin[3];
+DENG_EXTERN_C float vang, vpitch, fieldOfView, yfov;
+DENG_EXTERN_C byte smoothTexAnim, devMobjVLights;
+DENG_EXTERN_C float viewsidex, viewsidey;
+DENG_EXTERN_C boolean usingFog;
+DENG_EXTERN_C float fogColor[4];
+DENG_EXTERN_C int rAmbient;
+DENG_EXTERN_C float rendLightDistanceAttentuation;
+DENG_EXTERN_C float lightModRange[255];
+DENG_EXTERN_C int devRendSkyMode;
+DENG_EXTERN_C int gameDrawHUD;
 
-extern int useDynLights;
-extern float dynlightFactor, dynlightFogBright;
+DENG_EXTERN_C int useDynLights;
+DENG_EXTERN_C float dynlightFactor, dynlightFogBright;
 
-extern int useWallGlow;
-extern float glowFactor, glowHeightFactor;
-extern int glowHeightMax;
+DENG_EXTERN_C int useWallGlow;
+DENG_EXTERN_C float glowFactor, glowHeightFactor;
+DENG_EXTERN_C int glowHeightMax;
 
-extern int useShadows;
-extern float shadowFactor;
-extern int shadowMaxRadius;
-extern int shadowMaxDistance;
+DENG_EXTERN_C int useShadows;
+DENG_EXTERN_C float shadowFactor;
+DENG_EXTERN_C int shadowMaxRadius;
+DENG_EXTERN_C int shadowMaxDistance;
 
-extern int useShinySurfaces;
+DENG_EXTERN_C int useShinySurfaces;
+
+DENG_EXTERN_C byte devRendSkyAlways;
+DENG_EXTERN_C byte freezeRLs;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void Rend_Register(void);
 
@@ -77,34 +82,36 @@ void Rend_Init(void);
 void Rend_Shutdown(void);
 void Rend_Reset(void);
 
-void            Rend_RenderMap(void);
-void            Rend_ModelViewMatrix(boolean use_angles);
+void Rend_RenderMap(void);
+void Rend_ModelViewMatrix(boolean use_angles);
 
 #define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-c[VY])*viewsidex - (vOrigin[VX]-c[VX])*viewsidey))
 
-const struct materialvariantspecification_s* Rend_MapSurfaceDiffuseMaterialSpec(void);
-
-coord_t         Rend_PointDist3D(coord_t const point[3]);
-void            Rend_ApplyTorchLight(float* color, float distance);
+coord_t Rend_PointDist3D(coord_t const point[3]);
+void Rend_ApplyTorchLight(float *color, float distance);
 
 /**
  * Apply range compression delta to @a lightValue.
  * @param lightValue  Address of the value for adaptation.
  */
-void Rend_ApplyLightAdaptation(float* lightValue);
+void Rend_ApplyLightAdaptation(float *lightValue);
 
 /// Same as Rend_ApplyLightAdaptation except the delta is returned.
 float Rend_LightAdaptationDelta(float lightvalue);
 
-void            Rend_CalcLightModRange(void);
+void Rend_CalcLightModRange(void);
 
 /**
  * Number of vertices needed for this leaf's trifan.
  */
-uint Rend_NumFanVerticesForBspLeaf(BspLeaf* bspLeaf);
+uint Rend_NumFanVerticesForBspLeaf(BspLeaf *bspLeaf);
+
+void R_DrawLightRange(void);
 
 #ifdef __cplusplus
 } // extern "C"
+
+de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
 #endif
 
 #endif /* LIBDENG_REND_MAIN_H */

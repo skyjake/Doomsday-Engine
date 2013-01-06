@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,50 +20,68 @@
 #include "de/Lockable"
 #include "de/error.h"
 
-using namespace de;
+namespace de {
 
-#define LOCK_TIMEOUT_MS     10000
-
-Lockable::Lockable() : _mutex(QMutex::Recursive), _lockCount(0)
-{}
-        
-Lockable::~Lockable()
+struct Lockable::Instance
 {
-    while(_lockCount > 0)
+    mutable QMutex mutex;
+
+    mutable int lockCount;
+    mutable QMutex countMutex;
+
+    Instance() : mutex(QMutex::Recursive), lockCount(0)
+    {}
+};
+
+Lockable::Lockable() : d(new Instance)
+{}
+
+Lockable::~Lockable()
+{    
+    d->countMutex.lock();
+    while(d->lockCount > 0)
     {
-        unlock();
+        d->mutex.unlock();
+        d->lockCount--;
     }
+    d->countMutex.unlock();
+
+    delete d;
 }
 
 void Lockable::lock() const
 {
-    // Acquire the lock.  Blocks until the operation succeeds.
-    if(!_mutex.tryLock(LOCK_TIMEOUT_MS))
-    {
-        /// @throw Error Acquiring the mutex failed due to an error.
-        throw Error("Lockable::lock", "Failed to lock");
-    }
+    d->countMutex.lock();
+    d->lockCount++;
+    d->countMutex.unlock();
 
-    _lockCount++;
+    d->mutex.lock();
 }
 
 void Lockable::unlock() const
 {
-    if(_lockCount > 0)
-    {
-        _lockCount--;
+    // Release the lock.
+    d->mutex.unlock();
 
-        // Release the lock.
-        _mutex.unlock();
-    }
+    d->countMutex.lock();
+    d->lockCount--;
+    d->countMutex.unlock();
+
+    DENG2_ASSERT(d->lockCount >= 0);
 }
 
 bool Lockable::isLocked() const
 {
-    return _lockCount > 0;
+    bool result;
+    d->countMutex.lock();
+    result = (d->lockCount > 0);
+    d->countMutex.unlock();
+    return result;
 }
 
 void Lockable::assertLocked() const
 {
     DENG2_ASSERT(isLocked());
 }
+
+} // namespace de

@@ -67,6 +67,7 @@ struct Canvas::Instance
 {
     Canvas* self;
     bool initNotified;
+    QSize currentSize;
     void (*initCallback)(Canvas&);
     void (*drawCallback)(Canvas&);
     void (*resizedCallback)(Canvas&);
@@ -167,8 +168,10 @@ Canvas::Canvas(QWidget* parent, QGLWidget* shared) : QGLWidget(parent, shared)
     LOG_DEBUG("swap interval: ") << format().swapInterval();
     LOG_DEBUG("multisample: %b") << format().sampleBuffers();
 
+#ifdef __CLIENT__
     // Update the capability flags.
     GL_state.features.multisample = format().sampleBuffers();
+#endif
 
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
@@ -281,16 +284,24 @@ void Canvas::forceImmediateRepaint()
 
 void Canvas::initializeGL()
 {
+#ifdef __CLIENT__
     Sys_GLConfigureDefaultState();
+#endif
 }
 
-void Canvas::resizeGL(int /*w*/, int /*h*/)
+void Canvas::resizeGL(int w, int h)
 {
-    //qDebug() << "Canvas: resized" << w << "x" << h;
+    QSize newSize(w, h);
 
-    if(d->resizedCallback)
+    // Only react if this is actually a resize.
+    if(d->currentSize != newSize)
     {
-        d->resizedCallback(*this);
+        d->currentSize = newSize;
+
+        if(d->resizedCallback)
+        {
+            d->resizedCallback(*this);
+        }
     }
 }
 
@@ -450,7 +461,9 @@ void Canvas::mousePressEvent(QMouseEvent* ev)
 
     ev->accept();
 
+#ifdef __CLIENT__
     Mouse_Qt_SubmitButton(translateButton(ev->button()), true);
+#endif
 
     //qDebug() << "Canvas: mouse press at" << ev->pos();
 }
@@ -466,7 +479,9 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
         return;
     }
 
+#ifdef __CLIENT__
     Mouse_Qt_SubmitButton(translateButton(ev->button()), false);
+#endif
 
     //qDebug() << "Canvas: mouse release at" << ev->pos();
 }
@@ -487,7 +502,9 @@ void Canvas::mouseMoveEvent(QMouseEvent* ev)
     QPoint delta = ev->pos() - d->prevMousePos;
     if(!delta.isNull())
     {
+#ifdef __CLIENT__
         Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
+#endif
 
         d->prevMousePos = ev->pos();
 	
@@ -527,7 +544,9 @@ void Canvas::wheelEvent(QWheelEvent *ev)
         d->wheelDir[axis] = dir;
         //qDebug() << "Canvas: signal wheel axis" << axis << "dir" << dir;
 
+#ifdef __CLIENT__
         Mouse_Qt_SubmitMotion(IMA_WHEEL, axis == 0? dir : 0, axis == 1? dir : 0);
+#endif
     }
 
     d->prevWheelAt.start();

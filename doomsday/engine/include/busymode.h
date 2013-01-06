@@ -41,56 +41,6 @@
 extern "C" {
 #endif
 
-/// @return  @c true if we are currently busy.
-boolean BusyMode_Active(void);
-
-/// @return  Amount of time we have been busy (if not busy, @c 0).
-timespan_t BusyMode_ElapsedTime(void);
-
-/**
- * Process a list of work tasks in Busy Mode, from left to right sequentially.
- * Tasks are worked on one at a time and execution of a task only begins once
- * all earlier tasks have completed.
- *
- * Caller relinquishes ownership of the task list until busy mode completes,
- * (therefore it should NOT be accessed in the worker).
- *
- * @param tasks  List of tasks.
- * @param numTasks  Number of tasks.
- * @return  Return value for the worker(s).
- */
-int BusyMode_RunTask(BusyTask* task);
-int BusyMode_RunTasks(BusyTask* tasks, int numTasks);
-
-/**
- * Convenient shortcut method for constructing and then running of a single work
- * task in Busy Mode.
- *
- * @param mode          Busy mode flags @ref busyModeFlags
- * @param taskName      Optional task name (drawn with the progress bar).
- * @param worker        Worker thread that does processing while in busy mode.
- * @param workerData    Data context for the worker thread.
- *
- * @return  Return value of the worker.
- */
-int BusyMode_RunNewTask(int mode, busyworkerfunc_t worker, void* workerData);
-int BusyMode_RunNewTaskWithName(int mode, busyworkerfunc_t worker, void* workerData, const char* taskName);
-
-/**
- * To be called by the busy worker when it has finished processing, to signal
- * the end of the task.
- */
-void BusyMode_WorkerEnd(void);
-
-/**
- * To be called by the busy worker to shutdown the engine immediately.
- *
- * @param message       Message, expected to exist until the engine closes.
- */
-void BusyMode_WorkerError(const char* message);
-
-/// Internal to libdeng:
-
 /// @return  @c true if specified thread is the current busy task worker.
 boolean BusyMode_IsWorkerThread(uint threadId);
 

@@ -32,6 +32,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define DENG_NO_API_MACROS_FONT_RENDER
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
@@ -143,18 +145,6 @@ static __inline fr_state_attributes_t* currentAttribs(void)
     return fr.attribStack + fr.attribStackDepth;
 }
 
-void FR_Init(void)
-{
-    // No reinitializations...
-    if(inited) return;
-    if(isDedicated) return;
-
-    inited = true;
-    fr.fontNum = 0;
-    FR_LoadDefaultAttrib();
-    typeInTime = 0;
-}
-
 void FR_Shutdown(void)
 {
     if(!inited) return;
@@ -180,14 +170,12 @@ void FR_Ticker(timespan_t ticLength)
     ++typeInTime;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_ResetTypeinTimer(void)
 {
     errorIfNotInited("FR_ResetTypeinTimer");
     typeInTime = 0;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetFont(fontid_t num)
 {
     errorIfNotInited("FR_SetFont");
@@ -205,21 +193,18 @@ void FR_SetNoFont(void)
     fr.fontNum = 0;
 }
 
-/// @note Member of the Doomsday public API.
 fontid_t FR_Font(void)
 {
     errorIfNotInited("FR_Font");
     return fr.fontNum;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_LoadDefaultAttrib(void)
 {
     errorIfNotInited("FR_LoadDefaultAttrib");
     memcpy(currentAttribs(), &defaultAttribs, sizeof(defaultAttribs));
 }
 
-/// @note Member of the Doomsday public API.
 void FR_PushAttrib(void)
 {
     errorIfNotInited("FR_PushAttrib");
@@ -232,7 +217,6 @@ void FR_PushAttrib(void)
     ++fr.attribStackDepth;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_PopAttrib(void)
 {
     errorIfNotInited("FR_PopAttrib");
@@ -244,42 +228,36 @@ void FR_PopAttrib(void)
     --fr.attribStackDepth;
 }
 
-/// @note Member of the Doomsday public API.
 float FR_Leading(void)
 {
     errorIfNotInited("FR_Leading");
     return currentAttribs()->leading;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetLeading(float value)
 {
     errorIfNotInited("FR_SetLeading");
     currentAttribs()->leading = value;
 }
 
-/// @note Member of the Doomsday public API.
 int FR_Tracking(void)
 {
     errorIfNotInited("FR_Tracking");
     return currentAttribs()->tracking;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetTracking(int value)
 {
     errorIfNotInited("FR_SetTracking");
     currentAttribs()->tracking = value;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_ColorAndAlpha(float rgba[4])
 {
     errorIfNotInited("FR_ColorAndAlpha");
     memcpy(rgba, currentAttribs()->rgba, sizeof(rgba[0]) * 4);
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetColor(float red, float green, float blue)
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -289,7 +267,6 @@ void FR_SetColor(float red, float green, float blue)
     sat->rgba[CB] = blue;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetColorv(const float rgba[3])
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -299,7 +276,6 @@ void FR_SetColorv(const float rgba[3])
     sat->rgba[CB] = rgba[CB];
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetColorAndAlpha(float red, float green, float blue, float alpha)
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -310,7 +286,6 @@ void FR_SetColorAndAlpha(float red, float green, float blue, float alpha)
     sat->rgba[CA] = alpha;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetColorAndAlphav(const float rgba[4])
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -321,63 +296,54 @@ void FR_SetColorAndAlphav(const float rgba[4])
     sat->rgba[CA] = rgba[CA];
 }
 
-/// @note Member of the Doomsday public API.
 float FR_ColorRed(void)
 {
     errorIfNotInited("FR_ColorRed");
     return currentAttribs()->rgba[CR];
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetColorRed(float value)
 {
     errorIfNotInited("FR_SetColorRed");
     currentAttribs()->rgba[CR] = value;
 }
 
-/// @note Member of the Doomsday public API.
 float FR_ColorGreen(void)
 {
     errorIfNotInited("FR_ColorGreen");
     return currentAttribs()->rgba[CG];
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetColorGreen(float value)
 {
     errorIfNotInited("FR_SetColorGreen");
     currentAttribs()->rgba[CG] = value;
 }
 
-/// @note Member of the Doomsday public API.
 float FR_ColorBlue(void)
 {
     errorIfNotInited("FR_ColorBlue");
     return currentAttribs()->rgba[CB];
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetColorBlue(float value)
 {
     errorIfNotInited("FR_SetColorBlue");
     currentAttribs()->rgba[CB] = value;
 }
 
-/// @note Member of the Doomsday public API.
 float FR_Alpha(void)
 {
     errorIfNotInited("FR_Alpha");
     return currentAttribs()->rgba[CA];
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetAlpha(float value)
 {
     errorIfNotInited("FR_SetAlpha");
     currentAttribs()->rgba[CA] = value;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_ShadowOffset(int* offsetX, int* offsetY)
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -386,7 +352,6 @@ void FR_ShadowOffset(int* offsetX, int* offsetY)
     if(NULL != offsetY) *offsetY = sat->shadowOffsetY;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetShadowOffset(int offsetX, int offsetY)
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -395,56 +360,48 @@ void FR_SetShadowOffset(int offsetX, int offsetY)
     sat->shadowOffsetY = offsetY;
 }
 
-/// @note Member of the Doomsday public API.
 float FR_ShadowStrength(void)
 {
     errorIfNotInited("FR_ShadowStrength");
     return currentAttribs()->shadowStrength;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetShadowStrength(float value)
 {
     errorIfNotInited("FR_SetShadowStrength");
     currentAttribs()->shadowStrength = MINMAX_OF(0, value, 1);
 }
 
-/// @note Member of the Doomsday public API.
 float FR_GlitterStrength(void)
 {
     errorIfNotInited("FR_GlitterStrength");
     return currentAttribs()->glitterStrength;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetGlitterStrength(float value)
 {
     errorIfNotInited("FR_SetGlitterStrength");
     currentAttribs()->glitterStrength = MINMAX_OF(0, value, 1);
 }
 
-/// @note Member of the Doomsday public API.
 boolean FR_CaseScale(void)
 {
     errorIfNotInited("FR_CaseScale");
     return currentAttribs()->caseScale;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_SetCaseScale(boolean value)
 {
     errorIfNotInited("FR_SetCaseScale");
     currentAttribs()->caseScale = value;
 }
 
-/// @note Member of the Doomsday public API.
 void FR_CharSize(Size2Raw* size, unsigned char ch)
 {
     errorIfNotInited("FR_CharSize");
     Fonts_CharSize(Fonts_ToFont(fr.fontNum), size, ch);
 }
 
-/// @note Member of the Doomsday public API.
 int FR_CharWidth(unsigned char ch)
 {
     errorIfNotInited("FR_CharWidth");
@@ -453,7 +410,6 @@ int FR_CharWidth(unsigned char ch)
     return 0;
 }
 
-/// @note Member of the Doomsday public API.
 int FR_CharHeight(unsigned char ch)
 {
     errorIfNotInited("FR_CharHeight");
@@ -756,48 +712,6 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         glPopMatrix();
     }
     }
-}
-
-/// @note Member of the Doomsday public API.
-void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short textFlags)
-{
-    char str[2];
-    str[0] = ch;
-    str[1] = '\0';
-    FR_DrawText3(str, origin, alignFlags, textFlags);
-}
-
-/// @note Member of the Doomsday public API.
-void FR_DrawChar2(unsigned char ch, const Point2Raw* origin, int alignFlags)
-{
-    FR_DrawChar3(ch, origin, alignFlags, DEFAULT_DRAWFLAGS);
-}
-
-/// @note Member of the Doomsday public API.
-void FR_DrawChar(unsigned char ch, const Point2Raw* origin)
-{
-    FR_DrawChar2(ch, origin, DEFAULT_ALIGNFLAGS);
-}
-
-/// @note Member of the Doomsday public API.
-void FR_DrawCharXY3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
-{
-    Point2Raw origin;
-    origin.x = x;
-    origin.y = y;
-    FR_DrawChar3(ch, &origin, alignFlags, textFlags);
-}
-
-/// @note Member of the Doomsday public API.
-void FR_DrawCharXY2(unsigned char ch, int x, int y, int alignFlags)
-{
-    FR_DrawCharXY3(ch, x, y, alignFlags, DEFAULT_DRAWFLAGS);
-}
-
-/// @note Member of the Doomsday public API.
-void FR_DrawCharXY(unsigned char ch, int x, int y)
-{
-    FR_DrawCharXY2(ch, x, y, DEFAULT_ALIGNFLAGS);
 }
 
 static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
@@ -1178,6 +1092,127 @@ static void freeTextBuffer(void)
     largeTextBufferSize = 0;
 }
 
+int FR_TextWidth(const char* string)
+{
+    int w, maxWidth = -1;
+    boolean skipping = false, escaped = false;
+    const char* ch;
+    size_t i, len;
+
+    errorIfNotInited("FR_TextWidth");
+
+    if(!string || !string[0])
+        return 0;
+
+    /// @todo All visual format parsing should be done in one place.
+
+    w = 0;
+    len = strlen(string);
+    ch = string;
+    for(i = 0; i < len; ++i, ch++)
+    {
+        unsigned char c = *ch;
+
+        if(c == FR_FORMAT_ESCAPE_CHAR)
+        {
+            escaped = true;
+            continue;
+        }
+        if(!escaped && c == '{')
+        {
+            skipping = true;
+        }
+        else if(skipping && c == '}')
+        {
+            skipping = false;
+            continue;
+        }
+
+        if(skipping)
+            continue;
+
+        escaped = false;
+
+        if(c == '\n')
+        {
+            if(w > maxWidth)
+                maxWidth = w;
+            w = 0;
+            continue;
+        }
+
+        w += FR_CharWidth(c);
+
+        if(i != len - 1)
+        {
+            w += FR_Tracking();
+        }
+        else if(maxWidth == -1)
+        {
+            maxWidth = w;
+        }
+    }
+
+    return maxWidth;
+}
+
+int FR_TextHeight(const char* string)
+{
+    int h, currentLineHeight;
+    boolean skip = false;
+    const char* ch;
+    size_t i, len;
+
+    if(!string || !string[0])
+        return 0;
+
+    errorIfNotInited("FR_TextHeight");
+
+    currentLineHeight = 0;
+    len = strlen(string);
+    h = 0;
+    ch = string;
+    for(i = 0; i < len; ++i, ch++)
+    {
+        unsigned char c = *ch;
+        int charHeight;
+
+        if(c == '{')
+        {
+            skip = true;
+        }
+        else if(c == '}')
+        {
+            skip = false;
+            continue;
+        }
+
+        if(skip)
+            continue;
+
+        if(c == '\n')
+        {
+            h += currentLineHeight == 0? (FR_CharHeight('A') * (1+FR_Leading())) : currentLineHeight;
+            currentLineHeight = 0;
+            continue;
+        }
+
+        charHeight = FR_CharHeight(c) * (1+FR_Leading());
+        if(charHeight > currentLineHeight)
+            currentLineHeight = charHeight;
+    }
+    h += currentLineHeight;
+
+    return h;
+}
+
+void FR_TextSize(Size2Raw* size, const char* text)
+{
+    if(!size) return;
+    size->width  = FR_TextWidth(text);
+    size->height = FR_TextHeight(text);
+}
+
 void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, short _textFlags)
 {
     fontid_t origFont = FR_Font();
@@ -1411,7 +1446,6 @@ void FR_DrawText(const char* text, const Point2Raw* origin)
     FR_DrawText2(text, origin, DEFAULT_ALIGNFLAGS);
 }
 
-/// @note Member of the Doomsday public API.
 void FR_DrawTextXY3(const char* text, int x, int y, int alignFlags, short flags)
 {
     Point2Raw origin;
@@ -1420,138 +1454,118 @@ void FR_DrawTextXY3(const char* text, int x, int y, int alignFlags, short flags)
     FR_DrawText3(text, &origin, alignFlags, flags);
 }
 
-/// @note Member of the Doomsday public API.
 void FR_DrawTextXY2(const char* text, int x, int y, int alignFlags)
 {
     FR_DrawTextXY3(text, x, y, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
-/// @note Member of the Doomsday public API.
 void FR_DrawTextXY(const char* text, int x, int y)
 {
     FR_DrawTextXY2(text, x, y, DEFAULT_ALIGNFLAGS);
 }
 
-/// @note Member of the Doomsday public API.
-void FR_TextSize(Size2Raw* size, const char* text)
+void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short textFlags)
 {
-    if(!size) return;
-    size->width  = FR_TextWidth(text);
-    size->height = FR_TextHeight(text);
+    char str[2];
+    str[0] = ch;
+    str[1] = '\0';
+    FR_DrawText3(str, origin, alignFlags, textFlags);
 }
 
-/// @note Member of the Doomsday public API.
-int FR_TextWidth(const char* string)
+void FR_DrawChar2(unsigned char ch, const Point2Raw* origin, int alignFlags)
 {
-    int w, maxWidth = -1;
-    boolean skipping = false, escaped = false;
-    const char* ch;
-    size_t i, len;
-
-    errorIfNotInited("FR_TextWidth");
-
-    if(!string || !string[0])
-        return 0;
-
-    /// @todo All visual format parsing should be done in one place.
-
-    w = 0;
-    len = strlen(string);
-    ch = string;
-    for(i = 0; i < len; ++i, ch++)
-    {
-        unsigned char c = *ch;
-
-        if(c == FR_FORMAT_ESCAPE_CHAR)
-        {
-            escaped = true;
-            continue;
-        }
-        if(!escaped && c == '{')
-        {
-            skipping = true;
-        }
-        else if(skipping && c == '}')
-        {
-            skipping = false;
-            continue;
-        }
-
-        if(skipping)
-            continue;
-
-        escaped = false;
-
-        if(c == '\n')
-        {
-            if(w > maxWidth)
-                maxWidth = w;
-            w = 0;
-            continue;
-        }
-
-        w += FR_CharWidth(c);
-
-        if(i != len - 1)
-        {
-            w += FR_Tracking();
-        }
-        else if(maxWidth == -1)
-        {
-            maxWidth = w;
-        }
-    }
-
-    return maxWidth;
+    FR_DrawChar3(ch, origin, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
-/// @note Member of the Doomsday public API.
-int FR_TextHeight(const char* string)
+void FR_DrawChar(unsigned char ch, const Point2Raw* origin)
 {
-    int h, currentLineHeight;
-    boolean skip = false;
-    const char* ch;
-    size_t i, len;
-
-    if(!string || !string[0])
-        return 0;
-
-    errorIfNotInited("FR_TextHeight");
-
-    currentLineHeight = 0;
-    len = strlen(string);
-    h = 0;
-    ch = string;
-    for(i = 0; i < len; ++i, ch++)
-    {
-        unsigned char c = *ch;
-        int charHeight;
-
-        if(c == '{')
-        {
-            skip = true;
-        }
-        else if(c == '}')
-        {
-            skip = false;
-            continue;
-        }
-
-        if(skip)
-            continue;
-
-        if(c == '\n')
-        {
-            h += currentLineHeight == 0? (FR_CharHeight('A') * (1+FR_Leading())) : currentLineHeight;
-            currentLineHeight = 0;
-            continue;
-        }
-
-        charHeight = FR_CharHeight(c) * (1+FR_Leading());
-        if(charHeight > currentLineHeight)
-            currentLineHeight = charHeight;
-    }
-    h += currentLineHeight;
-
-    return h;
+    FR_DrawChar2(ch, origin, DEFAULT_ALIGNFLAGS);
 }
+
+void FR_DrawCharXY3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
+{
+    Point2Raw origin;
+    origin.x = x;
+    origin.y = y;
+    FR_DrawChar3(ch, &origin, alignFlags, textFlags);
+}
+
+void FR_DrawCharXY2(unsigned char ch, int x, int y, int alignFlags)
+{
+    FR_DrawCharXY3(ch, x, y, alignFlags, DEFAULT_DRAWFLAGS);
+}
+
+void FR_DrawCharXY(unsigned char ch, int x, int y)
+{
+    FR_DrawCharXY2(ch, x, y, DEFAULT_ALIGNFLAGS);
+}
+
+void FR_Init(void)
+{
+    // No reinitializations...
+    if(inited) return;
+    if(isDedicated) return;
+
+    inited = true;
+    fr.fontNum = 0;
+    FR_LoadDefaultAttrib();
+    typeInTime = 0;
+}
+
+// fonts.cpp
+DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri); /*quiet=!(verbose >= 1)*/
+
+DENG_DECLARE_API(FR) =
+{
+    { DE_API_FONT_RENDER },
+    Fonts_ResolveUri,
+    FR_Font,
+    FR_SetFont,
+    FR_PushAttrib,
+    FR_PopAttrib,
+    FR_LoadDefaultAttrib,
+    FR_Leading,
+    FR_SetLeading,
+    FR_Tracking,
+    FR_SetTracking,
+    FR_ColorAndAlpha,
+    FR_SetColor,
+    FR_SetColorv,
+    FR_SetColorAndAlpha,
+    FR_SetColorAndAlphav,
+    FR_ColorRed,
+    FR_SetColorRed,
+    FR_ColorGreen,
+    FR_SetColorGreen,
+    FR_ColorBlue,
+    FR_SetColorBlue,
+    FR_Alpha,
+    FR_SetAlpha,
+    FR_ShadowOffset,
+    FR_SetShadowOffset,
+    FR_ShadowStrength,
+    FR_SetShadowStrength,
+    FR_GlitterStrength,
+    FR_SetGlitterStrength,
+    FR_CaseScale,
+    FR_SetCaseScale,
+    FR_DrawText,
+    FR_DrawText2,
+    FR_DrawText3,
+    FR_DrawTextXY3,
+    FR_DrawTextXY2,
+    FR_DrawTextXY,
+    FR_TextSize,
+    FR_TextWidth,
+    FR_TextHeight,
+    FR_DrawChar3,
+    FR_DrawChar2,
+    FR_DrawChar,
+    FR_DrawCharXY3,
+    FR_DrawCharXY2,
+    FR_DrawCharXY,
+    FR_CharSize,
+    FR_CharWidth,
+    FR_CharHeight,
+    FR_ResetTypeinTimer
+};

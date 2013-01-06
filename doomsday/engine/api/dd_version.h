@@ -32,6 +32,8 @@ extern "C" {
 
 #define DOOMSDAY_NICENAME       "Doomsday Engine"
 
+#define LIBDENG_PLUGINDESC      "(" DOOMSDAY_NICENAME " Plugin)"
+
 #define DOOMSDAY_HOMEURL        "http://dengine.net"
 #define DOOMSDAY_MASTERURL      "http://dengine.net/master.php"
 #define DOOMSDAY_DOCSURL        "http://dengine.net/dew"
@@ -49,16 +51,16 @@ extern "C" {
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_VERSION_BASE   "1.9.10"
-#define DOOMSDAY_VERSION_NUMBER 1,9,10,0 // For WIN32 version info.
+#define DOOMSDAY_VERSION_BASE   "1.10.0"
+#define DOOMSDAY_VERSION_NUMBER 1,10,0,0 // For WIN32 version info.
 //#define DOOMSDAY_RELEASE_NAME   "Example"
 
 /**
  * DOOMSDAY_RELEASE_TYPE determines the classification of the release.
  * Possible values are "Unstable", "Candidate" and "Stable".
  */
-//#define DOOMSDAY_RELEASE_TYPE   "Unstable"
-#define DOOMSDAY_RELEASE_TYPE   "Candidate"
+#define DOOMSDAY_RELEASE_TYPE   "Unstable"
+//#define DOOMSDAY_RELEASE_TYPE   "Candidate"
 //#define DOOMSDAY_RELEASE_TYPE   "Stable"
 
 /**
@@ -81,7 +83,7 @@ extern "C" {
 #  endif
 
 #elif defined(DOOMSDAY_RELEASE_NAME)
-#  define DOOMSDAY_VERSION_TEXT             (DOOMSDAY_VERSION_BASE "-" DOOMSDAY_RELEASE_NAME)
+#  define DOOMSDAY_VERSION_TEXT             DOOMSDAY_VERSION_BASE "-" DOOMSDAY_RELEASE_NAME
 #  if defined(WIN32) && defined(UNICODE)
 #    define DOOMSDAY_VERSION_TEXT_WSTR      TEXT(DOOMSDAY_VERSION_BASE) TEXT("-") TEXT(DOOMSDAY_RELEASE_NAME)
 #  endif

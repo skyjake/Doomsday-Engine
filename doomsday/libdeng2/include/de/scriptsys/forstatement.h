@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,41 +26,42 @@
 
 #include <string>
 
-namespace de
+namespace de {
+
+class Expression;
+
+/**
+ * Keeps looping until the iterable value runs out of elements.
+ *
+ * @ingroup script
+ */
+class ForStatement : public Statement
 {
-    class Expression;
-    
-    /**
-     * Keeps looping until the iterable value runs out of elements.
-     *
-     * @ingroup script
-     */
-    class ForStatement : public Statement
-    {
-    public:
-        ForStatement();
-        
-        ForStatement(Expression *iter, Expression *iteration) 
-            : _iterator(iter), _iteration(iteration) {}
-        
-        ~ForStatement();
-        
-        /// Returns the compound of the statement.
-        Compound &compound() {
-            return _compound;
-        }
-        
-        void execute(Context &context) const;
+public:
+    ForStatement();
 
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
+    ForStatement(Expression *iter, Expression *iteration)
+        : _iterator(iter), _iteration(iteration) {}
 
-    private:
-        Expression *_iterator;
-        Expression *_iteration;
-        Compound _compound;
-    };
-}
+    ~ForStatement();
+
+    /// Returns the compound of the statement.
+    Compound &compound() {
+        return _compound;
+    }
+
+    void execute(Context &context) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    Expression *_iterator;
+    Expression *_iteration;
+    Compound _compound;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_FORSTATEMENT_H */

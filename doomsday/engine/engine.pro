@@ -25,11 +25,11 @@ win32 {
     include(../dep_directx.pri)
 }
 include(../dep_deng2.pri)
-include(../dep_deng.pri)
+include(../dep_deng1.pri)
 
 # Definitions ----------------------------------------------------------------
 
-DEFINES += __DOOMSDAY__
+DEFINES += __DOOMSDAY__ __CLIENT__
 
 !isEmpty(DENG_BUILD) {
     !win32: echo(Build number: $$DENG_BUILD)
@@ -38,9 +38,16 @@ DEFINES += __DOOMSDAY__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
+# Linking --------------------------------------------------------------------
+
 win32 {
     RC_FILE = res/windows/doomsday.rc
-    OTHER_FILES += api/doomsday.def $$RC_FILE
+    OTHER_FILES += $$RC_FILE
+
+    QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
+
+    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
+        -lopengl32 -lglu32
 }
 else:macx {
     useFramework(Cocoa)
@@ -48,8 +55,6 @@ else:macx {
 }
 else {
     # Generic Unix.
-    QMAKE_LFLAGS += -rdynamic
-
     !freebsd-*: LIBS += -ldl
     LIBS += -lX11
 
@@ -68,55 +73,46 @@ else {
     }
 }
 
-# Linking --------------------------------------------------------------------
-
-win32 {
-    QMAKE_LFLAGS += \
-        /NODEFAULTLIB:libcmt \
-        /DEF:\"$$DENG_API_DIR/doomsday.def\" \
-        /IMPLIB:\"$$DENG_EXPORT_LIB\"
-
-    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
-        -lopengl32 -lglu32
-}
-else:macx {
-    useFramework(Cocoa)
-    useFramework(QTKit)
-}
-else {
-    # Allow exporting symbols out of the main executable.
-    QMAKE_LFLAGS += -rdynamic
-}
-
 # Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
-    api/busytask.h \
-    api/dd_api.h \
-    api/dd_fontrenderer.h \
-    api/dd_gl.h \
-    api/dd_infine.h \
+    api/apis.h \
+    api/api_audiod.h \
+    api/api_audiod_mus.h \
+    api/api_audiod_sfx.h \
+    api/api_base.h \
+    api/api_busy.h \
+    api/api_client.h \
+    api/api_console.h \
+    api/api_def.h \
+    api/api_event.h \
+    api/api_infine.h \
+    api/api_internaldata.h \
+    api/api_filesys.h \
+    api/api_fontrender.h \
+    api/api_gameexport.h \
+    api/api_gl.h \
+    api/api_material.h \
+    api/api_materialarchive.h \
+    api/api_map.h \
+    api/api_mapedit.h \
+    api/api_player.h \
+    api/api_plugin.h \
+    api/api_render.h \
+    api/api_resource.h \
+    api/api_resourceclass.h \
+    api/api_sound.h \
+    api/api_svg.h \
+    api/api_thinker.h \
+    api/api_uri.h \
+    api/api_wad.h \
     api/dd_maptypes.h \
-    api/dd_plugin.h \
     api/dd_share.h \
     api/dd_types.h \
-    api/dd_ui.h \
-    api/dd_vectorgraphic.h \
     api/dd_version.h \
-    api/dd_wad.h \
-    api/dd_world.h \
     api/def_share.h \
     api/dengproject.h \
-    api/doomsday.h \
-    api/filehandle.h \
-    api/filetype.h \
-    api/materialarchive.h \
-    api/resourceclass.h \
-    api/sys_audiod.h \
-    api/sys_audiod_mus.h \
-    api/sys_audiod_sfx.h \
-    api/thinker.h \
-    api/uri.h
+    api/doomsday.h
 
 # Convenience headers.
 DENG_HEADERS += \
@@ -181,6 +177,7 @@ DENG_HEADERS += \
     include/edit_bias.h \
     include/edit_bsp.h \
     include/edit_map.h \
+    include/filehandle.h \
     include/filesys/file.h \
     include/filesys/filehandlebuilder.h \
     include/filesys/fileinfo.h \
@@ -190,7 +187,7 @@ DENG_HEADERS += \
     include/filesys/manifest.h \
     include/filesys/searchpath.h \
     include/filesys/sys_direc.h \
-    include/filesys/sys_findfile.h \
+    include/filetype.h \
     include/game.h \
     include/gl/gl_defer.h \
     include/gl/gl_deferredapi.h \
@@ -205,7 +202,6 @@ DENG_HEADERS += \
     include/gridmap.h \
     include/kdtree.h \
     include/library.h \
-    include/m_bams.h \
     include/m_decomp64.h \
     include/m_misc.h \
     include/m_nodepile.h \
@@ -298,7 +294,11 @@ DENG_HEADERS += \
     include/resource/image.h \
     include/resource/lumpcache.h \
     include/resource/material.h \
+    include/resource/materialarchive.h \
+    include/resource/materialbind.h \
     include/resource/materials.h \
+    include/resource/materialscheme.h \
+    include/resource/materialsnapshot.h \
     include/resource/materialvariant.h \
     include/resource/models.h \
     include/resource/patch.h \
@@ -315,6 +315,7 @@ DENG_HEADERS += \
     include/resource/tga.h \
     include/resource/wad.h \
     include/resource/zip.h \
+    include/resourceclass.h \
     include/server/sv_def.h \
     include/server/sv_frame.h \
     include/server/sv_infine.h \
@@ -334,6 +335,7 @@ DENG_HEADERS += \
     include/ui/canvaswindow.h \
     include/ui/consolewindow.h \
     include/ui/dd_input.h \
+    include/ui/dd_ui.h \
     include/ui/displaymode.h \
     include/ui/displaymode_native.h \
     include/ui/fi_main.h \
@@ -382,7 +384,6 @@ win32 {
         src/windows/dd_winit.c \
         src/windows/directinput.cpp \
         src/windows/sys_console.c \
-        src/windows/sys_findfile.c \
         src/windows/joystick_win32.cpp \
         src/windows/mouse_win32.cpp
 
@@ -391,17 +392,14 @@ win32 {
 else:unix {
     # Common Unix (including Mac OS X).
     HEADERS += \
-        $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h \
-        $$DENG_UNIX_INCLUDE_DIR/sys_path.h
+        $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h
 
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
 
     SOURCES += \
         src/unix/dd_uinit.c \
         src/unix/joystick.c \
-        src/unix/sys_console.c \
-        src/unix/sys_findfile.c \
-        src/unix/sys_path.c
+        src/unix/sys_console.c
 }
 
 macx {
@@ -431,6 +429,7 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
+    src/api_uri.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
     src/audio/m_mus2midi.c \
@@ -457,7 +456,7 @@ SOURCES += \
     src/con_data.cpp \
     src/con_main.c \
     src/dd_games.cpp \
-    src/dd_help.c \
+    src/dd_help.cpp \
     src/dd_init.cpp \
     src/dd_loop.c \
     src/dd_main.cpp \
@@ -489,6 +488,7 @@ SOURCES += \
     src/gl/gl_draw.c \
     src/gl/gl_drawvectorgraphic.c \
     src/gl/gl_main.cpp \
+    src/gl/gl_model.cpp \
     src/gl/gl_tex.c \
     src/gl/gl_texmanager.cpp \
     src/gl/svg.c \
@@ -496,7 +496,6 @@ SOURCES += \
     src/gridmap.c \
     src/kdtree.c \
     src/library.cpp \
-    src/m_bams.c \
     src/m_decomp64.c \
     src/m_misc.c \
     src/m_nodepile.c \
@@ -517,12 +516,12 @@ SOURCES += \
     src/map/hedge.cpp \
     src/map/linedef.c \
     src/map/p_data.cpp \
-    src/map/p_dmu.c \
+    src/map/p_dmu.cpp \
     src/map/p_intercept.c \
     src/map/p_maputil.c \
     src/map/p_mobj.c \
     src/map/p_objlink.c \
-    src/map/p_particle.c \
+    src/map/p_particle.cpp \
     src/map/p_players.c \
     src/map/p_polyobjs.c \
     src/map/p_sight.c \
@@ -531,10 +530,10 @@ SOURCES += \
     src/map/plane.c \
     src/map/polyobj.c \
     src/map/propertyvalue.cpp \
-    src/map/r_world.c \
+    src/map/r_world.cpp \
     src/map/sector.c \
     src/map/sidedef.c \
-    src/map/surface.c \
+    src/map/surface.cpp \
     src/map/vertex.cpp \
     src/network/masterserver.cpp \
     src/network/monitor.c \
@@ -548,23 +547,24 @@ SOURCES += \
     src/network/sys_network.c \
     src/network/ui_mpi.c \
     src/r_util.c \
+    src/render/api_render.c \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.c \
-    src/render/r_main.c \
+    src/render/r_main.cpp \
     src/render/r_lgrid.c \
     src/render/r_shadow.c \
     src/render/r_things.cpp \
     src/render/rend_bias.c \
     src/render/rend_clip.cpp \
-    src/render/rend_console.c \
-    src/render/rend_decor.c \
+    src/render/rend_console.cpp \
+    src/render/rend_decor.cpp \
     src/render/rend_dynlight.c \
-    src/render/rend_fakeradio.c \
+    src/render/rend_fakeradio.cpp \
     src/render/rend_font.c \
     src/render/rend_halo.c \
-    src/render/rend_list.c \
-    src/render/rend_main.c \
+    src/render/rend_list.cpp \
+    src/render/rend_main.cpp \
     src/render/rend_model.cpp \
     src/render/rend_particle.c \
     src/render/rend_shadow.c \
@@ -574,6 +574,8 @@ SOURCES += \
     src/render/vignette.c \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \
+    src/resource/api_material.cpp \
+    src/resource/api_resource.c \
     src/resource/bitmapfont.cpp \
     src/resource/colorpalette.c \
     src/resource/colorpalettes.cpp \
@@ -582,8 +584,11 @@ SOURCES += \
     src/resource/hq2x.c \
     src/resource/image.cpp \
     src/resource/material.cpp \
-    src/resource/materialarchive.c \
+    src/resource/materialarchive.cpp \
+    src/resource/materialbind.cpp \
     src/resource/materials.cpp \
+    src/resource/materialscheme.cpp \
+    src/resource/materialsnapshot.cpp \
     src/resource/materialvariant.cpp \
     src/resource/models.cpp \
     src/resource/patch.cpp \
@@ -636,8 +641,7 @@ SOURCES += \
     src/updater/updaterdialog.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
-    src/uri.cpp \
-    src/uri_wrapper.cpp
+    src/uri.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h
@@ -657,9 +661,6 @@ data.files = $$OUT_PWD/../doomsday.pk3
 mod.files = \
     $$DENG_MODULES_DIR/Config.de \
     $$DENG_MODULES_DIR/recutil.de
-
-startupdata.files = \
-    data/cphelp.txt
 
 # These fonts may be needed during the initial startup busy mode.
 startupfonts.files = \
@@ -690,11 +691,10 @@ macx {
 
     data.path         = $${res.path}
     mod.path          = $${res.path}/modules
-    startupdata.path  = $${res.path}/data
     startupfonts.path = $${res.path}/data/fonts
     startupgfx.path   = $${res.path}/data/graphics
 
-    QMAKE_BUNDLE_DATA += mod res data startupfonts startupdata startupgfx
+    QMAKE_BUNDLE_DATA += mod res data startupfonts startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
@@ -715,7 +715,7 @@ macx {
 
     # libdeng1 and 2 dynamic libraries.
     doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
-    doPostLink("cp -fRp $$OUT_PWD/../libdeng/libdeng1*dylib $$FW_DIR")
+    doPostLink("cp -fRp $$OUT_PWD/../libdeng1/libdeng1*dylib $$FW_DIR")
 
     # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng2.2.dylib, ..)
@@ -732,11 +732,10 @@ macx {
 
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data startupdata startupgfx startupfonts mod
+    INSTALLS += target data startupgfx startupfonts mod
 
     target.path       = $$DENG_BIN_DIR
     data.path         = $$DENG_DATA_DIR
-    startupdata.path  = $$DENG_DATA_DIR
     startupgfx.path   = $$DENG_DATA_DIR/graphics
     startupfonts.path = $$DENG_DATA_DIR/fonts
     mod.path          = $$DENG_BASE_DIR/modules

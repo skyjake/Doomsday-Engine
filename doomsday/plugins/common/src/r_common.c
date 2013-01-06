@@ -172,6 +172,8 @@ void R_ResizeViewWindow(int flags)
     boolean maximized;
     RectRaw port;
 
+    if(IS_DEDICATED) return;
+
     // Override @c cfg.screenBlocks and force a maximized window?
     maximized = maximizedViewWindow(DISPLAYPLAYER);
     if(maximized != oldMaximized)

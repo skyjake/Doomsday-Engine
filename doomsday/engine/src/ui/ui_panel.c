@@ -100,7 +100,7 @@ int     panel_help_offset = 0;  // Zero means the help is completely hidden.
 byte    panel_show_help = true; // cvar
 byte    panel_show_tips = true; // cvar
 ui_object_t *panel_help_source;
-void   *panel_help;
+HelpId panel_help;
 
 cvarbutton_t cvarbuttons[] = {
     {0, "con-var-silent"},
@@ -678,7 +678,7 @@ void CP_DrawBorder(ui_object_t* ob)
 {
     int b = UI_BORDER;
     ui_object_t* it;
-    void* help_ptr;
+    HelpId help_ptr;
     Point2Raw origin;
     Size2Raw size;
     boolean shown;
@@ -1002,7 +1002,7 @@ ui_object_t* CP_FindHover(void)
 void CP_Ticker(ui_page_t* page)
 {
     ui_object_t* ob;
-    void* help;
+    HelpId help;
     int off;
 
     // Normal ticker actions first.
@@ -1062,13 +1062,14 @@ void CP_Ticker(ui_page_t* page)
         panel_help_offset = 0;
 }
 
-int CP_LabelText(char* label, char* text, const Point2Raw* origin_, const Size2Raw* size_, float alpha)
+int CP_LabelText(char const *label, char const *text, Point2Raw const *origin_, Size2Raw const *size_, float alpha)
 {
     ui_color_t* color = UI_Color(UIC_TEXT);
     Point2Raw origin;
     Size2Raw size;
     int ind;
-    assert(origin_ && size_);
+
+    DENG_ASSERT(origin_ && size_);
 
     origin.x = origin_->x;
     origin.y = origin_->y;
@@ -1095,7 +1096,7 @@ void CP_Drawer(ui_page_t* page)
     int bor, lineHeight, verticalSpacing;
     Point2Raw origin, end;
     Size2Raw size;
-    char* str;
+    char const *str;
 
     // First call the regular drawer.
     UIPage_Drawer(page);

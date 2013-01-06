@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,62 +26,63 @@
 
 #include <QFlags>
 
-namespace de
+namespace de {
+
+/**
+ * Catches an exception that occurs within a try compound.
+ */
+class CatchStatement : public Statement
 {
-    /**
-     * Catches an exception that occurs within a try compound.
-     */
-    class CatchStatement : public Statement
+public:
+    enum Flag
     {
-    public:
-        enum Flag
-        {
-            /// The final catch compound in a sequence of catch compounds.
-            FinalCompound = 0x1
-        };
-        Q_DECLARE_FLAGS(Flags, Flag)
-
-        /// Flags.
-        Flags flags;
-        
-    public:
-        CatchStatement(ArrayExpression *args = 0);
-        ~CatchStatement();
-        
-        Compound &compound() { return _compound; }
-        
-        /// Skips the catch compound (called only during normal execution).
-        void execute(Context &context) const;
-        
-        bool isFinal() const;
-        
-        /**
-         * Determines whether the catch statement will catch an error.
-         *
-         * @param err  Error to check.
-         *
-         * @return  @c true, if the error is caught and catch compound should be executed.
-         */
-        bool matches(Error const &err) const;
-        
-        /**
-         * Assigns the exception to the specified variable and begins the catch compound.
-         *
-         * @param context  Execution context.
-         * @param err      Error.
-         */
-        void executeCatch(Context &context, Error const &err) const;
-
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
-        
-    private:
-        ArrayExpression *_args;
-        Compound _compound;
+        /// The final catch compound in a sequence of catch compounds.
+        FinalCompound = 0x1
     };
+    Q_DECLARE_FLAGS(Flags, Flag)
 
-    Q_DECLARE_OPERATORS_FOR_FLAGS(CatchStatement::Flags)
-}
+    /// Flags.
+    Flags flags;
+
+public:
+    CatchStatement(ArrayExpression *args = 0);
+    ~CatchStatement();
+
+    Compound &compound() { return _compound; }
+
+    /// Skips the catch compound (called only during normal execution).
+    void execute(Context &context) const;
+
+    bool isFinal() const;
+
+    /**
+     * Determines whether the catch statement will catch an error.
+     *
+     * @param err  Error to check.
+     *
+     * @return  @c true, if the error is caught and catch compound should be executed.
+     */
+    bool matches(Error const &err) const;
+
+    /**
+     * Assigns the exception to the specified variable and begins the catch compound.
+     *
+     * @param context  Execution context.
+     * @param err      Error.
+     */
+    void executeCatch(Context &context, Error const &err) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    ArrayExpression *_args;
+    Compound _compound;
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(CatchStatement::Flags)
+
+} // namespace de
 
 #endif /* LIBDENG2_CATCHSTATEMENT_H */

@@ -190,7 +190,9 @@ void B_Register(void)
  */
 static int globalContextFallback(const ddevent_t* ddev)
 {
+#ifdef __CLIENT__
     if(UI_Responder(ddev)) return true;     // Eaten.
+#endif
     if(Con_Responder(ddev)) return true;    // Eaten.
 
     if(DD_GameLoaded())
@@ -1822,10 +1824,10 @@ void B_WriteToFile(FILE* file)
  * Return the key code that corresponds the given key identifier name.
  * Part of the Doomsday public API.
  */
+#undef DD_GetKeyCode
 int DD_GetKeyCode(const char* key)
 {
-    int                 code = B_KeyForShortName(key);
-
+    int code = B_KeyForShortName(key);
     return (code ? code : key[0]);
 }
 

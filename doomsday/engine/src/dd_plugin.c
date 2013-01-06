@@ -22,6 +22,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_PLUGIN
+
 #ifdef UNIX
 #  include "library.h"
 #endif
@@ -30,6 +32,10 @@
 #include "de_console.h"
 #include "de_defs.h"
 #include "dd_pinit.h"
+
+#include "updater/downloaddialog.h"
+
+#include <de/findfile.h>
 
 #define HOOKMASK(x)         ((x) & 0xffffff)
 
@@ -145,9 +151,6 @@ void Plug_LoadAll(void)
 void Plug_UnloadAll(void)
 {
     int i;
-
-    // Remove all entries; some may have been created by the plugins.
-    LogBuffer_Clear();
 
     for(i = 0; i < MAX_PLUGS && hInstPlug[i]; ++i)
     {
@@ -276,26 +279,6 @@ pluginid_t DD_ActivePluginId(void)
 
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
 {
-    /*
-#if WIN32
-    HINSTANCE* handle = &hInstPlug[pluginId-1];
-    void* adr = (void*)GetProcAddress(*handle, fn);
-    if(!adr)
-    {
-        LPVOID lpMsgBuf;
-        DWORD dw = GetLastError();
-        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                      0, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, 0);
-        if(lpMsgBuf)
-        {
-            Con_Printf("DD_FindEntryPoint: Error locating \"%s\" #%d: %s", fn, dw, (char*)lpMsgBuf);
-            LocalFree(lpMsgBuf); lpMsgBuf = 0;
-        }
-    }
-    return adr;
-
-#elif UNIX
-*/
     void* addr = 0;
     int plugIndex = pluginId - 1;
     assert(plugIndex >= 0 && plugIndex < MAX_PLUGS);
@@ -306,6 +289,33 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
                     Library_LastError());
     }
     return addr;
-
-//#endif
 }
+
+void Plug_Notify(int notification, void* param)
+{
+    DENG_UNUSED(param);
+
+#ifdef __CLIENT__
+    switch(notification)
+    {
+    case DD_NOTIFY_GAME_SAVED:
+        // If an update has been downloaded and is ready to go, we should
+        // re-show the dialog now that the user has saved the game as
+        // prompted.
+        DEBUG_Message(("Plug_Notify: Game saved.\n"));
+        Updater_RaiseCompletedDownloadDialog();
+        break;
+    }
+#else
+    DENG_UNUSED(notification);
+#endif
+}
+
+DENG_DECLARE_API(Plug) =
+{
+    { DE_API_PLUGIN },
+    Plug_AddHook,
+    Plug_RemoveHook,
+    Plug_CheckForHook,
+    Plug_Notify
+};

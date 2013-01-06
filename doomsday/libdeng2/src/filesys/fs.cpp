@@ -1,7 +1,7 @@
 /**
  * @file fs.cpp File System
  *
- * @author Copyright &copy; 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -161,7 +161,7 @@ int FS::findAll(String const &path, FoundFiles &found) const
     for(Index::const_iterator i = range.first; i != range.second; ++i)    
     {       
         File *file = i->second;
-        if(file->path().endsWith(dir))
+        if(file->path().fileNamePath().endsWith(dir))
         {
             found.push_back(file);
         }

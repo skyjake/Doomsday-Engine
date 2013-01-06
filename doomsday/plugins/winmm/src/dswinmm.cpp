@@ -445,7 +445,13 @@ void* DM_Music_SongBuffer(unsigned int length)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-extern "C" const char* deng_LibraryType(void)
+DENG_EXTERN_C const char* deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
+
+DENG_DECLARE_API(Con);
+
+DENG_API_EXCHANGE(
+    DENG_GET_API(DE_API_CONSOLE, Con);
+)

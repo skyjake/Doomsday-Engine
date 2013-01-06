@@ -94,7 +94,7 @@ void GL_TexReset(void);
  *     on the optimal size).
  */
 boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
-    int* optWidth, int* optHeight);
+    int *optWidth, int *optHeight);
 
 /**
  * Change the GL minification filter for all prepared textures.
@@ -129,12 +129,12 @@ void GL_ReleaseTexturesByScheme(char const *schemeName);
  * Release all textures associated with the specified @a texture.
  * @param texture  Logical Texture. Can be @c NULL, in which case this is a null-op.
  */
-void GL_ReleaseGLTexturesByTexture(Texture* texture);
+void GL_ReleaseGLTexturesByTexture(struct texture_s *texture);
 
 /**
  * Release all textures associated with the specified variant @a texture.
  */
-void GL_ReleaseVariantTexture(struct texturevariant_s* texture);
+void GL_ReleaseVariantTexture(struct texturevariant_s *texture);
 
 /**
  * Release all variants of @a tex which match @a spec.
@@ -142,7 +142,7 @@ void GL_ReleaseVariantTexture(struct texturevariant_s* texture);
  * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
  * @param spec  Specification to match. Comparision mode is exact and not fuzzy.
  */
-void GL_ReleaseVariantTexturesBySpec(Texture* tex, texturevariantspecification_t* spec);
+void GL_ReleaseVariantTexturesBySpec(struct texture_s *tex, texturevariantspecification_t *spec);
 
 /// Release all textures associated with the identified colorpalette @a paletteId.
 void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId);
@@ -168,7 +168,7 @@ void GL_LoadSystemTextures(void);
  *
  * @return  @c true iff successful.
  */
-boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
+boolean GL_UploadTexture(int glFormat, int loadFormat, uint8_t const *pixels,
     int width, int height, int genMipmaps);
 
 /**
@@ -181,40 +181,27 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
  *
  * @return  @c true iff successful.
  */
-boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
+boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, uint8_t const *pixels,
     int width, int height, float grayFactor);
 
 /**
  * @note Can be rather time-consuming due to forced scaling operations and
  * the generation of mipmaps.
  */
-void GL_UploadTextureContent(const struct texturecontent_s* content);
+void GL_UploadTextureContent(struct texturecontent_s const *content);
 
-uint8_t* GL_LoadImage(struct image_s* img, const char* filePath);
-uint8_t* GL_LoadImageStr(struct image_s* img, const ddstring_t* filePath);
+uint8_t *GL_LoadImage(struct image_s *img, char const *filePath);
+uint8_t *GL_LoadImageStr(struct image_s *img, ddstring_t const *filePath);
 
-TexSource GL_LoadRawTex(struct image_s* image, const rawtex_t* r);
-
-TexSource GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
-
-TexSource GL_LoadFlatLump(struct image_s* image, FileHandle* file);
-
-TexSource GL_LoadPatchLump(struct image_s* image, FileHandle* file, int tclass,
-    int tmap, int border);
-
-TexSource GL_LoadDetailTextureLump(struct image_s* image, FileHandle* file);
-
-TexSource GL_LoadPatchComposite(struct image_s* image, Texture* tex);
-
-TexSource GL_LoadPatchCompositeAsSky(struct image_s* image, Texture* tex, boolean zeroMask);
+TexSource GL_LoadExtTexture(struct image_s *image, char const *name, gfxmode_t mode);
 
 /**
  * Compare the given TextureVariantSpecifications and determine whether they can
  * be considered equal (dependent on current engine state and the available features
  * of the GL implementation).
  */
-int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* a,
-    const texturevariantspecification_t* b);
+int GL_CompareTextureVariantSpecifications(texturevariantspecification_t const *a,
+    texturevariantspecification_t const *b);
 
 /**
  * Prepare a TextureVariantSpecification according to usage context. If incomplete
@@ -228,7 +215,7 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
  *
  * @return  A rationalized and valid TextureVariantSpecification or @c NULL if out of memory.
  */
-texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
+texturevariantspecification_t *GL_TextureVariantSpecificationForContext(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass,
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
@@ -239,7 +226,7 @@ texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
  *
  * @return  A rationalized and valid TextureVariantSpecification or @c NULL if out of memory.
  */
-texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
+texturevariantspecification_t *GL_DetailTextureVariantSpecificationForContext(
     float contrast);
 
 /**
@@ -247,7 +234,7 @@ texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
  *
  * @param spec  Specification to echo.
  */
-void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* spec);
+void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *spec);
 
 /// Result of a request to prepare a TextureVariant
 typedef enum {
@@ -262,7 +249,7 @@ typedef enum {
  * defined by the usage context. If a suitable variant cannot be found a new
  * one will be constructed and prepared.
  *
- * \note If a cache miss occurs texture content data may need to be uploaded
+ * @note If a cache miss occurs texture content data may need to be uploaded
  * to GL to satisfy the variant specification. However the actual upload will
  * be deferred if possible. This has the side effect that although the variant
  * is considered "prepared", attempting to render using the associated texture
@@ -275,14 +262,14 @@ typedef enum {
  *
  * @return  GL-name of the prepared texture if successful else @c 0
  */
-DGLuint GL_PrepareTexture2(Texture* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-DGLuint GL_PrepareTexture(Texture* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL */
+DGLuint GL_PrepareTexture2(struct texture_s *tex, texturevariantspecification_t *spec, preparetextureresult_t *returnOutcome);
+DGLuint GL_PrepareTexture(struct texture_s *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
 
 /**
  * Same as GL_PrepareTexture(2) except for visibility of TextureVariant.
  */
-struct texturevariant_s* GL_PrepareTextureVariant2(Texture* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-struct texturevariant_s* GL_PrepareTextureVariant(Texture* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
+struct texturevariant_s *GL_PrepareTextureVariant2(struct texture_s *tex, texturevariantspecification_t *spec, preparetextureresult_t *returnOutcome);
+struct texturevariant_s *GL_PrepareTextureVariant(struct texture_s *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
 
 /**
  * Bind this texture to the currently active texture unit.
@@ -291,9 +278,22 @@ struct texturevariant_s* GL_PrepareTextureVariant(Texture* tex, texturevariantsp
  *
  * @param tex  TextureVariant object which represents the GL texture to be bound.
  */
-void GL_BindTexture(struct texturevariant_s* tex);
+void GL_BindTexture(struct texturevariant_s *tex);
 
 /**
+ * Dump the pixel data of @a img to an ARGB32 at @a filePath.
+ *
+ * @param img           The image to be dumped. A temporary copy will be made if
+ *                      the pixel data is not already in either ARGB32 or ABGR32
+ *                      formats.
+ * @param filePath      Location to write the new file. If an extension is not
+ *                      specified the file will be in PNG format.
+ *
+ * @return @c true= Dump was successful.
+ */
+boolean GL_DumpImage(struct image_s const *img, char const *filePath);
+
+/*
  * Here follows miscellaneous routines currently awaiting refactoring into the
  * revised texture management APIs.
  */
@@ -302,16 +302,16 @@ void GL_BindTexture(struct texturevariant_s* tex);
  * Set mode to 2 to include an alpha channel. Set to 3 to make the actual pixel
  * colors all white.
  */
-DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
+DGLuint GL_PrepareExtTexture(char const *name, gfxmode_t mode, int useMipmap,
     int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT, int flags);
 
 DGLuint GL_PrepareSysFlaremap(flaretexid_t flare);
 DGLuint GL_PrepareLightmap(Uri const *path);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
-DGLuint GL_PrepareRawTexture(rawtex_t* rawTex);
+DGLuint GL_PrepareRawTexture(rawtex_t *rawTex);
 
-struct texturevariant_s* GL_PreparePatchTexture2(Texture* tex, int wrapS, int wrapT);
-struct texturevariant_s* GL_PreparePatchTexture(Texture* tex);
+struct texturevariant_s *GL_PreparePatchTexture2(struct texture_s *tex, int wrapS, int wrapT);
+struct texturevariant_s *GL_PreparePatchTexture(struct texture_s *tex);
 
 /**
  * Attempt to locate and prepare a flare texture.
@@ -325,24 +325,9 @@ struct texturevariant_s* GL_PreparePatchTexture(Texture* tex);
  */
 DGLuint GL_PrepareFlareTexture(Uri const *path, int oldIdx);
 
-DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
-    const uint8_t* pixels, int flags);
-DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
-    const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
-    int anisoFilter, int wrapS, int wrapT);
-
-/**
- * Dump the pixel data of @a img to an ARGB32 at @a filePath.
- *
- * @param img           The image to be dumped. A temporary copy will be made if
- *                      the pixel data is not already in either ARGB32 or ABGR32
- *                      formats.
- * @param filePath      Location to write the new file. If an extension is not
- *                      specified the file will be in PNG format.
- *
- * @return @c true= Dump was successful.
- */
-boolean GL_DumpImage(const struct image_s* img, const char* filePath);
+DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
+DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
+                                 int grayMipmap, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
 
 #ifdef __cplusplus
 } // extern "C"

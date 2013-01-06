@@ -30,8 +30,6 @@
 
 #include <de/Error>
 #include <de/Log>
-#include <de/LegacyCore>
-#include <de/memory.h>
 
 namespace de {
 
@@ -58,22 +56,16 @@ struct Texture::Instance
     /// on the variant specification.
     void *analyses[TEXTURE_ANALYSIS_COUNT];
 
-    Instance(TextureManifest &_manifest, Texture::Flags _flags, void *_userData)
-        : flags(_flags), manifest(_manifest), userData(_userData)
+    Instance(TextureManifest &_manifest, void *_userData)
+        : manifest(_manifest), userData(_userData)
     {
         std::memset(analyses, 0, sizeof(analyses));
     }
 };
 
-Texture::Texture(TextureManifest &_manifest, Flags _flags, void *_userData)
+Texture::Texture(TextureManifest &_manifest, void *_userData)
 {
-    d = new Instance(_manifest, _flags, _userData);
-}
-
-Texture::Texture(TextureManifest &_manifest, QSize const &size, Flags _flags, void *_userData)
-{
-    d = new Instance(_manifest, _flags, _userData);
-    setDimensions(size);
+    d = new Instance(_manifest, _userData);
 }
 
 Texture::~Texture()
@@ -233,111 +225,3 @@ Texture::Flags &Texture::flags()
 }
 
 } // namespace de
-
-/**
- * C Wrapper API:
- */
-
-#define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::Texture *>(inst) : NULL
-
-#define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<const de::Texture *>(inst) : NULL
-
-#define SELF(inst) \
-    DENG2_ASSERT(inst); \
-    de::Texture *self = TOINTERNAL(inst)
-
-#define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
-    de::Texture const *self = TOINTERNAL_CONST(inst)
-
-void *Texture_UserDataPointer(Texture const *tex)
-{
-    SELF_CONST(tex);
-    return self->userDataPointer();
-}
-
-void Texture_SetUserDataPointer(Texture *tex, void *newUserData)
-{
-    SELF(tex);
-    self->setUserDataPointer(newUserData);
-}
-
-void Texture_ClearVariants(Texture *tex)
-{
-    SELF(tex);
-    self->clearVariants();
-}
-
-uint Texture_VariantCount(Texture const *tex)
-{
-    SELF_CONST(tex);
-    return self->variantCount();
-}
-
-TextureVariant *Texture_AddVariant(Texture *tex, TextureVariant *variant)
-{
-    SELF(tex);
-    if(!variant)
-    {
-        LOG_AS("Texture_AddVariant");
-        LOG_WARNING("Invalid variant argument, ignoring.");
-        return variant;
-    }
-    self->addVariant(*reinterpret_cast<de::TextureVariant *>(variant));
-    return variant;
-}
-
-void *Texture_AnalysisDataPointer(Texture const *tex, texture_analysisid_t analysisId)
-{
-    SELF_CONST(tex);
-    return self->analysisDataPointer(analysisId);
-}
-
-void Texture_SetAnalysisDataPointer(Texture *tex, texture_analysisid_t analysis, void *data)
-{
-    SELF(tex);
-    self->setAnalysisDataPointer(analysis, data);
-}
-
-int Texture_Width(Texture const *tex)
-{
-    SELF_CONST(tex);
-    return self->width();
-}
-
-void Texture_SetWidth(Texture *tex, int newWidth)
-{
-    SELF(tex);
-    self->setWidth(newWidth);
-}
-
-int Texture_Height(Texture const *tex)
-{
-    SELF_CONST(tex);
-    return self->height();
-}
-
-void Texture_SetHeight(Texture *tex, int newHeight)
-{
-    SELF(tex);
-    self->setHeight(newHeight);
-}
-
-int Texture_IterateVariants(Texture *tex,
-    int (*callback)(TextureVariant *variant, void *parameters), void *parameters)
-{
-    SELF(tex);
-    int result = 0;
-    if(callback)
-    {
-        DENG2_FOR_EACH_CONST(de::Texture::Variants, i, self->variantList())
-        {
-            de::TextureVariant *variant = const_cast<de::TextureVariant *>(*i);
-            result = callback(reinterpret_cast<TextureVariant *>(variant), parameters);
-            if(result) break;
-        }
-    }
-    return result;
-}

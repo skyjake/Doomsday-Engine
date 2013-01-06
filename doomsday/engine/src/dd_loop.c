@@ -121,7 +121,7 @@ void DD_GameLoopCallback(void)
 
     Garbage_Recycle();
 
-    if(isDedicated)
+#ifdef __SERVER__
     {
         // Adjust loop rate depending on whether players are in game.
         int i, count = 0;
@@ -135,7 +135,9 @@ void DD_GameLoopCallback(void)
         // Update clients at regular intervals.
         Sv_TransmitFrame();
     }
-    else
+#endif
+
+#ifdef __CLIENT__
     {
         // Normal client-side/singleplayer mode.
         //assert(!novideo);
@@ -159,11 +161,14 @@ void DD_GameLoopCallback(void)
         // After the first frame, start timedemo.
         DD_CheckTimeDemo();
     }
+#endif
 }
 
 void DD_GameLoopDrawer(void)
 {
     if(novideo || Sys_IsShuttingDown()) return;
+
+#ifdef __CLIENT__
 
     assert(!BusyMode_Active()); // Busy mode has its own drawer.
 
@@ -245,6 +250,8 @@ void DD_GameLoopDrawer(void)
 
     // Finish the refresh frame.
     endFrame();
+
+#endif // __CLIENT__
 }
 
 //static uint frameStartAt;
@@ -297,6 +304,7 @@ float DD_GetFrameRate(void)
     return fps;
 }
 
+#undef DD_IsSharpTick
 boolean DD_IsSharpTick(void)
 {
     return tickIsSharp;
@@ -305,7 +313,12 @@ boolean DD_IsSharpTick(void)
 boolean DD_IsFrameTimeAdvancing(void)
 {
     if(BusyMode_Active()) return false;
-    if(Con_TransitionInProgress()) return false;
+#ifdef __CLIENT__
+    if(Con_TransitionInProgress())
+    {
+        return false;
+    }
+#endif
     return tickFrame || netGame;
 }
 
@@ -341,8 +354,10 @@ static void baseTicker(timespan_t time)
 {
     if(DD_IsFrameTimeAdvancing())
     {
+#ifdef __CLIENT__
         // Demo ticker. Does stuff like smoothing of view angles.
         Demo_Ticker(time);
+#endif
         P_Ticker(time);
         UI2_Ticker(time);
 
@@ -355,13 +370,17 @@ static void baseTicker(timespan_t time)
             gx.Ticker(time);
         }
 
+#ifdef __CLIENT__
         // Windowing system ticks.
         R_Ticker(time);
 
         if(isClient)
+        {
             Cl_Ticker(time);
-        else
-            Sv_Ticker(time);
+        }
+#elif __SERVER__
+        Sv_Ticker(time);
+#endif
 
         if(DD_IsSharpTick())
         {
@@ -391,8 +410,10 @@ static void baseTicker(timespan_t time)
 #endif
         }
 
+#ifdef __CLIENT__
         // While paused, don't modify frametime so things keep still.
         if(!clientPaused)
+#endif
         {
             frameTimePos = realFrameTimePos;
         }
@@ -449,7 +470,9 @@ static void advanceTime(timespan_t time)
 
         // Leveltic is reset to zero at every map change.
         // The map time only advances when the game is not paused.
+#ifdef __CLIENT__
         if(!clientPaused)
+#endif
         {
             ddMapTime += time;
         }

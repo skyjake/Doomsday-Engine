@@ -7,9 +7,6 @@ macx {
 win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
-
-    # Link against the engine's export library.
-    LIBS += -l$$OUT_PWD/../../engine/doomsday
 }
 
 INCLUDEPATH += $$DENG_API_DIR
@@ -21,4 +18,4 @@ INCLUDEPATH += $$DENG_API_DIR
 }
 else: include(../dep_deng2.pri)
 
-include(../dep_deng.pri)
+include(../dep_deng1.pri)

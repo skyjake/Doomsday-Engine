@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,51 +24,52 @@
 
 #include <vector>
 
-namespace de
+namespace de {
+
+/**
+ * Evaluates arguments and forms a dictionary out of the results.
+ *
+ * @ingroup script
+ */
+class DictionaryExpression : public Expression
 {
+public:
+    DictionaryExpression();
+    ~DictionaryExpression();
+
+    void clear();
+
     /**
-     * Evaluates arguments and forms a dictionary out of the results.
+     * Adds an key/value pair to the array expression. Ownership of
+     * the expressions is transferred to the expression.
      *
-     * @ingroup script
+     * @param key  Evaluates the key.
+     * @param value  Evaluates the value.
      */
-    class DictionaryExpression : public Expression
-    {
-    public:
-        DictionaryExpression();
-        ~DictionaryExpression();
-        
-        void clear();
+    void add(Expression *key, Expression *value);
 
-        /**
-         * Adds an key/value pair to the array expression. Ownership of
-         * the expressions is transferred to the expression.
-         *
-         * @param key  Evaluates the key.
-         * @param value  Evaluates the value. 
-         */
-        void add(Expression *key, Expression *value);
+    void push(Evaluator &evaluator, Record *names = 0) const;
 
-        void push(Evaluator &evaluator, Record *names = 0) const;
+    /**
+     * Collects the result keys and values of the arguments and puts them
+     * into a dictionary.
+     *
+     * @param evaluator  Evaluator.
+     *
+     * @return DictionaryValue with the results of the argument evaluations.
+     */
+    Value *evaluate(Evaluator &evaluator) const;
 
-        /**
-         * Collects the result keys and values of the arguments and puts them 
-         * into a dictionary.
-         *
-         * @param evaluator  Evaluator.
-         *
-         * @return DictionaryValue with the results of the argument evaluations.
-         */
-        Value *evaluate(Evaluator &evaluator) const;
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
+private:
+    typedef std::pair<Expression *, Expression *> ExpressionPair;
+    typedef std::vector<ExpressionPair> Arguments;
+    Arguments _arguments;
+};
 
-    private:
-        typedef std::pair<Expression *, Expression *> ExpressionPair;
-        typedef std::vector<ExpressionPair> Arguments;
-        Arguments _arguments;
-    };
-}
+} // namespace de
 
 #endif /* LIBDENG2_DICTIONARYEXPRESSION_H */

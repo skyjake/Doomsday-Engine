@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,25 +23,26 @@
 #include "../Statement"
 #include "../Compound"
 
-namespace de
+namespace de {
+
+/**
+ * Begins a try/catch compound. Always followed by one or more catch statements.
+ */
+class TryStatement : public Statement
 {
-    /**
-     * Begins a try/catch compound. Always followed by one or more catch statements.
-     */
-    class TryStatement : public Statement
-    {
-    public:
-        void execute(Context &context) const;
-        
-        Compound &compound() { return _compound; }
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
-        
-    private:
-        Compound _compound;
-    };
-}
+public:
+    void execute(Context &context) const;
+
+    Compound &compound() { return _compound; }
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    Compound _compound;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_TRYSTATEMENT_H */

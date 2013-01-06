@@ -29,10 +29,10 @@
 #include "de_filesys.h"
 #include "de_defs.h"
 #include "de_misc.h"
-#include "dd_world.h"
+#include "api_map.h"
+#include "api_materialarchive.h"
 
 #include "r_util.h"
-#include "materialarchive.h"
 
 #define MAX_TRANSLATIONS    16384
 
@@ -75,10 +75,10 @@ void Cl_ReadServerMaterials(void)
     {
         serverMaterials = MaterialArchive_NewEmpty(false /*no segment check*/);
     }
-    MaterialArchive_Read(serverMaterials, -1, msgReader);
+    MaterialArchive_Read(serverMaterials, msgReader, -1 /*no forced version*/);
 
 #ifdef _DEBUG
-    Con_Message("Cl_ReadServerMaterials: Received %u materials.\n", (uint) MaterialArchive_Count(serverMaterials));
+    Con_Message("Cl_ReadServerMaterials: Received %i materials.\n", MaterialArchive_Count(serverMaterials));
 #endif
 }
 

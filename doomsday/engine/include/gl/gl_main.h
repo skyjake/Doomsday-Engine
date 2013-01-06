@@ -23,6 +23,10 @@
 #ifndef LIBDENG_GRAPHICS_H
 #define LIBDENG_GRAPHICS_H
 
+#ifdef __SERVER__
+#  error "gl" not available in SERVER build
+#endif
+
 #include "render/r_main.h"
 
 struct colorpalette_s;
@@ -31,14 +35,6 @@ struct colorpalette_s;
 struct ColorRawf_s;
 
 #define MAX_TEX_UNITS           2 // More aren't currently used.
-
-/// @todo These values should be tweaked a bit.
-#define DEFAULT_FOG_START       0
-#define DEFAULT_FOG_END         2100
-#define DEFAULT_FOG_DENSITY     0.0001f
-#define DEFAULT_FOG_COLOR_RED   138.0f/255
-#define DEFAULT_FOG_COLOR_GREEN 138.0f/255
-#define DEFAULT_FOG_COLOR_BLUE  138.0f/255
 
 DENG_EXTERN_C int numTexUnits;
 DENG_EXTERN_C boolean  envModAdd;
@@ -139,8 +135,6 @@ void GL_InitRefresh(void);
  * To be called once at final shutdown.
  */
 void GL_ShutdownRefresh(void);
-
-void GL_UseFog(int yes);
 
 void GL_LowRes(void);
 

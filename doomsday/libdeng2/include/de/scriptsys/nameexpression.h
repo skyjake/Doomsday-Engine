@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,43 +25,44 @@
 
 #include <QFlags>
 
-namespace de
+namespace de {
+
+/**
+ * Responsible for referencing, creating, and deleting variables and record
+ * references based an textual identifier.
+ *
+ * @ingroup script
+ */
+class NameExpression : public Expression
 {
-    /**
-     * Responsible for referencing, creating, and deleting variables and record
-     * references based an textual identifier.
-     *
-     * @ingroup script
-     */
-    class NameExpression : public Expression
-    {
-    public:
-        /// Identifier is not text. @ingroup errors
-        DENG2_ERROR(IdentifierError);
+public:
+    /// Identifier is not text. @ingroup errors
+    DENG2_ERROR(IdentifierError);
 
-        /// Variable already exists when it was required not to. @ingroup errors
-        DENG2_ERROR(AlreadyExistsError);
+    /// Variable already exists when it was required not to. @ingroup errors
+    DENG2_ERROR(AlreadyExistsError);
 
-        /// The identifier does not specify an existing variable. @ingroup errors
-        DENG2_ERROR(NotFoundError);
+    /// The identifier does not specify an existing variable. @ingroup errors
+    DENG2_ERROR(NotFoundError);
 
-    public:
-        NameExpression();
-        NameExpression(String const &identifier, Flags const &flags = ByValue);
-        ~NameExpression();
+public:
+    NameExpression();
+    NameExpression(String const &identifier, Flags const &flags = ByValue);
+    ~NameExpression();
 
-        /// Returns the identifier in the name expression.
-        String const &identifier() const { return _identifier; }
+    /// Returns the identifier in the name expression.
+    String const &identifier() const { return _identifier; }
 
-        Value *evaluate(Evaluator &evaluator) const;
+    Value *evaluate(Evaluator &evaluator) const;
 
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);                 
-        
-    private:
-        String _identifier;
-    };
-}
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    String _identifier;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_NAMEEXPRESSION_H */

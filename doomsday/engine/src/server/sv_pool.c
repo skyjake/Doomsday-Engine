@@ -33,13 +33,13 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <de/mathutil.h>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_network.h"
 #include "de_play.h"
 
-#include "m_misc.h"
 #include "audio/s_main.h"
 
 // MACROS ------------------------------------------------------------------
@@ -2774,7 +2774,8 @@ boolean Sv_RateDelta(void* deltaPtr, ownerinfo_t* info)
 
     // This is the final score. Only positive scores are accepted in
     // the frame (deltas with nonpositive scores as ignored).
-    return (delta->score = score? true : false);
+    delta->score = score;
+    return (score > 0);
 }
 
 /**

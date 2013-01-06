@@ -27,7 +27,6 @@
 #include <stdio.h>
 
 #include "doomsday.h"
-#include "dd_api.h"
 
 #if __JDOOM__
 #  include "jdoom.h"

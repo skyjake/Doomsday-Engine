@@ -24,6 +24,8 @@
  * 02110-1301 USA</small>
  */
 
+#define DENG_NO_API_MACROS_BASE // functions defined here
+
 #ifdef WIN32
 #  define _WIN32_DCOM
 #  include <objbase.h>
@@ -32,6 +34,7 @@
 #include <QStringList>
 #include <de/App>
 #include <de/NativePath>
+#include <de/binangle.h>
 
 #include "de_platform.h"
 
@@ -53,9 +56,12 @@
 #include "de_resource.h"
 
 #include "gl/svg.h"
+#include "map/p_players.h"
+#include "map/p_maputil.h"
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
+#include "api_map.h"
 
 extern int renderTextures;
 extern int monochrome;
@@ -153,6 +159,8 @@ extern GETGAMEAPI GetGameAPI;
 // The Game collection.
 static de::GameCollection* games;
 
+#ifdef __CLIENT__
+
 D_CMD(CheckForUpdates)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
@@ -187,6 +195,8 @@ D_CMD(ShowUpdateSettings)
     Updater_ShowSettings();
     return true;
 }
+
+#endif // __CLIENT__
 
 void DD_CreateResourceClasses()
 {
@@ -566,10 +576,12 @@ void DD_ClearSystemTextureSchemes()
  */
 void DD_Register(void)
 {
+#ifdef __CLIENT__
     C_CMD("update",          "", CheckForUpdates);
     C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
     C_CMD("updatesettings",  "", ShowUpdateSettings);
     C_CMD("lastupdated",     "", LastUpdated);
+#endif
 
     DD_RegisterLoop();
     DD_RegisterInput();
@@ -579,17 +591,19 @@ void DD_Register(void)
     DH_Register();
     R_Register();
     S_Register();
+#ifdef __CLIENT__
     SBE_Register(); // for bias editor
     Rend_Register();
     GL_Register();
-    Net_Register();
-    I_Register();
     H_Register();
-    DAM_Register();
-    BspBuilder_Register();
     UI_Register();
     Demo_Register();
     P_ControlRegister();
+#endif
+    Net_Register();
+    I_Register();
+    DAM_Register();
+    BspBuilder_Register();
     FI_Register();
 }
 
@@ -662,8 +676,7 @@ void DD_DestroyGames(void)
  */
 void DD_StartTitle(void)
 {
-    if(isDedicated) return;
-
+#ifdef __CLIENT__
     ddfinale_t fin;
     if(!Def_Get(DD_DEF_FINALE, "background", &fin)) return;
 
@@ -687,6 +700,7 @@ void DD_StartTitle(void)
 
     titleFinale = FI_Execute2(fin.script, FF_LOCAL, Str_Text(&setupCmds));
     Str_Free(&setupCmds);
+#endif
 }
 
 /**
@@ -1357,11 +1371,14 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
 
     S_Reset();
+
+#ifdef __CLIENT__
     Demo_StopPlayback();
 
     GL_PurgeDeferredTasks();
     GL_ResetTextureManager();
     GL_SetFilter(false);
+#endif
 
     // If a game is presently loaded; unload it.
     if(DD_GameLoaded())
@@ -1370,11 +1387,13 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
             gx.Shutdown();
         Con_SaveDefaults();
 
+#ifdef __CLIENT__
         LO_Clear();
         R_DestroyObjlinkBlockmap();
+        P_ControlShutdown();
+#endif
         R_ClearAnimGroups();
 
-        P_ControlShutdown();
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
         B_BindDefaults();
         B_InitialContextActivations();
@@ -1475,9 +1494,6 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         }
     )
 
-    // Remove all entries; some may have been created by the game plugin (if it used libdeng2 C++ API).
-    LogBuffer_Clear();
-
     Library_ReleaseGames();
 
     char buf[256];
@@ -1554,8 +1570,10 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
         BusyMode_RunTasks(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
 
+#ifdef __CLIENT__
         // Process any GL-related tasks we couldn't while Busy.
         Rend_ParticleLoadExtraTextures();
+#endif
 
         if(DD_GameLoaded())
         {
@@ -1637,6 +1655,12 @@ int DD_EarlyInit(void)
     // Determine the requested degree of verbosity.
     verbose = CommandLine_Exists("-verbose");
 
+#ifdef __SERVER__
+    isDedicated = true;
+#else
+    isDedicated = false;
+#endif
+
     // Bring the console online as soon as we can.
     DD_ConsoleInit();
 
@@ -1665,11 +1689,13 @@ void DD_FinishInitializationAfterWindowReady(void)
     DisplayMode_SaveOriginalColorTransfer();
 #endif
 
+#ifdef __CLIENT__
     if(!Sys_GLInitialize())
     {
         Con_Error("Error initializing OpenGL.\n");
     }
     else
+#endif
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
@@ -1729,28 +1755,13 @@ boolean DD_Init(void)
     }
 #endif
 
+#ifdef __CLIENT__
     if(!GL_EarlyInit())
     {
         Sys_CriticalMessage("GL_EarlyInit() failed.");
         return false;
     }
-
-    /*
-    DENG_ASSERT(!Sys_GLCheckError());
-    if(!novideo)
-    {
-        // Render a few black frames before we continue. This will help to
-        // stabilize things before we begin drawing for real and to avoid any
-        // unwanted video artefacts.
-        i = 0;
-        while(i++ < 3)
-        {
-            glClear(GL_COLOR_BUFFER_BIT);
-            GL_DoUpdate();
-        }
-    }
-    DENG_ASSERT(!Sys_GLCheckError());
-*/
+#endif
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
@@ -1769,8 +1780,10 @@ boolean DD_Init(void)
                                 DD_StartupWorker, 0, "Starting up...");
 
     // Engine initialization is complete. Now finish up with the GL.
+#ifdef __CLIENT__
     GL_Init();
     GL_InitRefresh();
+#endif
 
     // Do deferred uploads.
     Con_InitProgress2(200, .25f, .25f); // Stop here for a while.
@@ -1792,6 +1805,8 @@ boolean DD_Init(void)
             // CommandLine_PathAt() always returns an absolute path.
             directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
             de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
+
+            LOG_DEBUG("User supplied IWAD path: \"%s\"") << Dir_Path(dir);
 
             scheme.addSearchPath(SearchPath(uri, SearchPath::NoDescend));
 
@@ -2005,8 +2020,6 @@ static int DD_StartupWorker(void* parm)
     if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
         Con_Message("--(!)-- User directory not found (check -userdir).\n");
 
-    bamsInit(); // Binary angle calculations.
-
     DD_InitResourceSystem();
 
     Con_SetProgress(40);
@@ -2058,7 +2071,7 @@ static int DD_StartupWorker(void* parm)
     Textures_Init();
     DD_CreateTextureSchemes();
 
-    // Get the material manager up and running.
+    // Get the material collection up and running.
     Materials_Init();
 
     Con_SetProgress(140);
@@ -2070,7 +2083,9 @@ static int DD_StartupWorker(void* parm)
 
     Con_SetProgress(165);
     Net_InitGame();
+#ifdef __CLIENT__
     Demo_Init();
+#endif
 
     Con_Message("Initializing InFine subsystem...\n");
     FI_Init();
@@ -2145,10 +2160,12 @@ static int DD_UpdateEngineStateWorker(void* parameters)
     DENG_ASSERT(parameters);
     ddupdateenginestateworker_paramaters_t* p = (ddupdateenginestateworker_paramaters_t*) parameters;
 
+#ifdef __CLIENT__
     if(!novideo)
     {
         GL_InitRefresh();
     }
+#endif
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -2170,9 +2187,11 @@ void DD_UpdateEngineState(void)
     Con_Message("Updating engine state...\n");
 
     // Stop playing sounds and music.
+    S_Reset();
+#ifdef __CLIENT__
     GL_SetFilter(false);
     Demo_StopPlayback();
-    S_Reset();
+#endif
 
     //App_FileSystem()->resetFileIds();
 
@@ -2191,12 +2210,15 @@ void DD_UpdateEngineState(void)
         gx.UpdateState(DD_PRE);
 
     hadFog = usingFog;
+
+#ifdef __CLIENT__
     GL_TotalReset();
     GL_TotalRestore(); // Bring GL back online.
 
     // Make sure the fog is enabled, if necessary.
     if(hadFog)
         GL_UseFog(true);
+#endif
 
     /**
      * The bulk of this we can do in busy mode unless we are already busy
@@ -2221,7 +2243,7 @@ void DD_UpdateEngineState(void)
         gx.UpdateState(DD_POST);
 
     // Reset the anim groups (if in-game)
-    Materials_ResetAnimGroups();
+    App_Materials()->resetAllAnimGroups();
 }
 
 /* *INDENT-OFF* */
@@ -2234,29 +2256,54 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&displayPlayer, 0 /*&displayPlayer*/}, // use R_SetViewPortPlayer() instead
     {&mipmapping, 0},
     {&filterUI, 0},
+#ifdef __CLIENT__
     {&defResX, &defResX},
     {&defResY, &defResY},
+#else
+    {0, 0},
+    {0, 0},
+#endif
     {0, 0},
     {0, 0}, //{&mouseInverseY, &mouseInverseY},
     {&levelFullBright, &levelFullBright},
     {&CmdReturnValue, 0},
+#ifdef __CLIENT__
     {&gameReady, &gameReady},
+#else
+    {0, 0},
+#endif
     {&isDedicated, 0},
     {&novideo, 0},
     {&defs.count.mobjs.num, 0},
     {&gotFrame, 0},
+#ifdef __CLIENT__
     {&playback, 0},
+#else
+    {0, 0},
+#endif
     {&defs.count.sounds.num, 0},
     {&defs.count.music.num, 0},
     {0, 0},
+#ifdef __CLIENT__
     {&clientPaused, &clientPaused},
+#else
+    {0, 0},
+#endif
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
     {&monochrome, &monochrome},
     {&gameDataFormat, &gameDataFormat},
+#ifdef __CLIENT__
     {&gameDrawHUD, 0},
+#else
+    {0, 0},
+#endif
     {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches},
     {&symbolicEchoMode, &symbolicEchoMode},
+#ifdef __CLIENT__
     {&numTexUnits, 0}
+#else
+    {0, 0},
+#endif
 };
 /* *INDENT-ON* */
 
@@ -2282,8 +2329,10 @@ int DD_GetInteger(int ddvalue)
     case DD_NUMLUMPS:
         return F_LumpCount();
 
+#ifdef __CLIENT__
     case DD_CURRENT_CLIENT_FINALE_ID:
         return Cl_CurrentFinale();
+#endif
 
     case DD_MAP_MUSIC: {
         GameMap* map = theMap;
@@ -2443,6 +2492,7 @@ void* DD_GetVariable(int ddvalue)
         valueD = theMap? GameMap_Gravity(theMap) : 0;
         return &valueD;
 
+#ifdef __CLIENT__
     case DD_TORCH_RED:
         return &torchColor[CR];
 
@@ -2454,6 +2504,7 @@ void* DD_GetVariable(int ddvalue)
 
     case DD_TORCH_ADDITIVE:
         return &torchAdditive;
+#endif
 
 #ifdef WIN32
     case DD_WINDOW_HANDLE:
@@ -2531,6 +2582,7 @@ void DD_SetVariable(int ddvalue, void *parm)
             pspLightLevelMultiplier = *(float*) parm;
             return;
 
+#ifdef __CLIENT__
         case DD_TORCH_RED:
             torchColor[CR] = MINMAX_OF(0, *((float*) parm), 1);
             return;
@@ -2546,6 +2598,7 @@ void DD_SetVariable(int ddvalue, void *parm)
         case DD_TORCH_ADDITIVE:
             torchAdditive = (*(int*) parm)? true : false;
             break;
+#endif
 
         default:
             break;
@@ -2554,78 +2607,44 @@ void DD_SetVariable(int ddvalue, void *parm)
 }
 
 /// @note Part of the Doomsday public API.
-materialschemeid_t DD_ParseMaterialSchemeName(char const *str)
-{
-    return Materials_ParseSchemeName(str);
-}
-
-/// @note Part of the Doomsday public API.
 fontschemeid_t DD_ParseFontSchemeName(const char* str)
 {
     return Fonts_ParseScheme(str);
 }
 
-ddstring_t const *DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
+String DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
 {
-    materialschemeid_t schemeId = MS_INVALID; // Unknown.
-
     if(!textureSchemeName.compareWithoutCase("Textures"))
     {
-        schemeId = MS_TEXTURES;
+        return "Textures";
     }
-    else if(!textureSchemeName.compareWithoutCase("Flats"))
+    if(!textureSchemeName.compareWithoutCase("Flats"))
     {
-        schemeId = MS_FLATS;
+        return "Flats";
     }
-    else if(!textureSchemeName.compareWithoutCase("Sprites"))
+    if(!textureSchemeName.compareWithoutCase("Sprites"))
     {
-        schemeId = MS_SPRITES;
+        return "Sprites";
     }
-    else if(!textureSchemeName.compareWithoutCase("Patches"))
+    if(!textureSchemeName.compareWithoutCase("System"))
     {
-        schemeId = MS_ANY; // No materials for these yet.
-    }
-    else if(!textureSchemeName.compareWithoutCase("System"))
-    {
-        schemeId = MS_SYSTEM;
+        return "System";
     }
 
-    return Materials_SchemeName(schemeId);
+    return "";
 }
 
-ddstring_t const *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
+AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
 {
-    if(!textureSchemeName) return Materials_SchemeName(MS_INVALID);
-    return DD_MaterialSchemeNameForTextureScheme(Str_Text(textureSchemeName));
-}
-
-materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
-{
-    if(!_textureUri) return NOMATERIALID;
-
-    try
+    if(!textureSchemeName)
     {
-        de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*_textureUri)).composeUri();
-        uri.setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(uri.scheme())));
-        return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), true/*quiet please*/);
+        return AutoStr_FromTextStd("");
     }
-    catch(Textures::UnknownSchemeError const &er)
+    else
     {
-        // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        QByteArray schemeNameUtf8 = DD_MaterialSchemeNameForTextureScheme(String(Str_Text(textureSchemeName))).toUtf8();
+        return AutoStr_FromTextStd(schemeNameUtf8.constData());
     }
-    catch(Textures::NotFoundError const &)
-    {} // Ignore this error.
-
-    return NOMATERIALID;
-}
-
-/**
- * Gets the data of a player.
- */
-ddplayer_t* DD_GetPlayer(int number)
-{
-    return (ddplayer_t *) &ddPlayers[number].shared;
 }
 
 /**
@@ -2886,47 +2905,32 @@ D_CMD(ReloadGame)
     return true;
 }
 
-#ifdef UNIX
-/**
- * Some routines not available on the *nix platform.
- */
-char* strupr(char* string)
+// dd_loop.c
+DENG_EXTERN_C boolean DD_IsSharpTick(void);
+
+// net_main.c
+DENG_EXTERN_C void Net_SendPacket(int to_player, int type, const void* data, size_t length);
+
+// r_world.cpp
+DENG_EXTERN_C void R_SetupMap(int mode, int flags);
+
+// sys_system.c
+DENG_EXTERN_C void Sys_Quit(void);
+
+DENG_DECLARE_API(Base) =
 {
-    char* ch = string;
-    for(; *ch; ch++)
-        *ch = toupper(*ch);
-    return string;
-}
+    { DE_API_BASE },
 
-char* strlwr(char* string)
-{
-    char* ch = string;
-    for(; *ch; ch++)
-        *ch = tolower(*ch);
-    return string;
-}
-#endif
-
-/**
- * Prints a formatted string into a fixed-size buffer. At most @c size
- * characters will be written to the output buffer @c str. The output will
- * always contain a terminating null character.
- *
- * @param str           Output buffer.
- * @param size          Size of the output buffer.
- * @param format        Format of the output.
- *
- * @return              Number of characters written to the output buffer
- *                      if lower than or equal to @c size, else @c -1.
- */
-int dd_snprintf(char* str, size_t size, const char* format, ...)
-{
-    int result = 0;
-
-    va_list args;
-    va_start(args, format);
-    result = dd_vsnprintf(str, size, format, args);
-    va_end(args);
-
-    return result;
-}
+    Sys_Quit,
+    DD_GetInteger,
+    DD_SetInteger,
+    DD_GetVariable,
+    DD_SetVariable,
+    DD_DefineGame,
+    DD_GameIdForKey,
+    DD_AddGameResource,
+    DD_GameInfo,
+    DD_IsSharpTick,
+    Net_SendPacket,
+    R_SetupMap
+};

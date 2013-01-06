@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,86 +24,87 @@
 #include "../Operator"
 #include "../Expression"
 
-namespace de
+namespace de {
+
+class Evaluator;
+class Value;
+
+/**
+ * Evaluates the results of unary and binary operators.
+ * This includes, for example, arithmetic operators, text concatenation,
+ * and logical expressions.
+ *
+ * @ingroup script
+ */
+class OperatorExpression : public Expression
 {
-    class Evaluator;
-    class Value;
+public:
+    /// A unary operation is attempted even though the selected operation cannot
+    /// be unary. @ingroup errors
+    DENG2_ERROR(NonUnaryError);
+
+    /// A binary operation is attempted even though the selected operation cannot be binary.
+    /// @ingroup errors
+    DENG2_ERROR(NonBinaryError);
+
+    /// Attempt to assign to a value that cannot be assigned to. @ingroup errors
+    DENG2_ERROR(NotAssignableError);
+
+    /// The MEMBER operator receives a non-Record scope on the left side. @ingroup errors
+    DENG2_ERROR(ScopeError);
+
+    /// The SLICE operator has invalid arguments. @ingroup errors
+    DENG2_ERROR(SliceError);
+
+public:
+    OperatorExpression();
 
     /**
-     * Evaluates the results of unary and binary operators. 
-     * This includes, for example, arithmetic operators, text concatenation,
-     * and logical expressions.
+     * Constructor for unary operations (+, -).
+     * @param op Operation to perform.
+     * @param operand Expression that provides the right-hand operand.
+     */
+    OperatorExpression(Operator op, Expression *operand);
+
+    /**
+     * Constructor for binary operations.
+     * @param op Operation to perform.
+     * @param leftOperand Expression that provides the left-hand operand.
+     * @param rightOperand Expression that provides the right-hand operand.
+     */
+    OperatorExpression(Operator op, Expression *leftOperand, Expression *rightOperand);
+
+    ~OperatorExpression();
+
+    void push(Evaluator &evaluator, Record *names = 0) const;
+
+    Value *evaluate(Evaluator &evaluator) const;
+
+    /**
+     * Verifies that @a value can be used as the l-value of an operator that
+     * does assignment.
      *
-     * @ingroup script
-     */    
-    class OperatorExpression : public Expression
-    {
-    public:
-        /// A unary operation is attempted even though the selected operation cannot
-        /// be unary. @ingroup errors
-        DENG2_ERROR(NonUnaryError);
-        
-        /// A binary operation is attempted even though the selected operation cannot be binary.
-        /// @ingroup errors
-        DENG2_ERROR(NonBinaryError);
-        
-        /// Attempt to assign to a value that cannot be assigned to. @ingroup errors
-        DENG2_ERROR(NotAssignableError);
-        
-        /// The MEMBER operator receives a non-Record scope on the left side. @ingroup errors
-        DENG2_ERROR(ScopeError);
-        
-        /// The SLICE operator has invalid arguments. @ingroup errors
-        DENG2_ERROR(SliceError);
-        
-    public:
-        OperatorExpression();
-        
-        /**
-         * Constructor for unary operations (+, -).
-         * @param op Operation to perform.
-         * @param operand Expression that provides the right-hand operand.
-         */
-        OperatorExpression(Operator op, Expression *operand);
+     * @param value  Value to check.
+     */
+    static void verifyAssignable(Value *value);
 
-        /**
-         * Constructor for binary operations.
-         * @param op Operation to perform.
-         * @param leftOperand Expression that provides the left-hand operand.
-         * @param rightOperand Expression that provides the right-hand operand.
-         */
-        OperatorExpression(Operator op, Expression *leftOperand, Expression *rightOperand);
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
-        ~OperatorExpression();
+private:
+    /// Performs the slice operation (Python semantics).
+    Value *performSlice(Value *leftValue, Value *rightValue) const;
 
-        void push(Evaluator &evaluator, Record *names = 0) const;
+    /// Used to create return values of boolean operations.
+    static Value *newBooleanValue(bool isTrue);
 
-        Value *evaluate(Evaluator &evaluator) const;
+private:
+    Operator _op;
+    Expression *_leftOperand;
+    Expression *_rightOperand;
+};
 
-        /**
-         * Verifies that @a value can be used as the l-value of an operator that
-         * does assignment.
-         *
-         * @param value  Value to check.
-         */
-        static void verifyAssignable(Value *value);
-
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
-        
-    private:
-        /// Performs the slice operation (Python semantics).
-        Value *performSlice(Value *leftValue, Value *rightValue) const;
-
-        /// Used to create return values of boolean operations.
-        static Value *newBooleanValue(bool isTrue);
-                
-    private:
-        Operator _op;
-        Expression *_leftOperand;
-        Expression *_rightOperand;
-    };
-}
+} // namespace de
 
 #endif /* LIBDENG2_OPERATOREXPRESSION_H */

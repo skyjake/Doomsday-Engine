@@ -33,12 +33,8 @@
 #include "ui/sys_input.h"
 #include "network/sys_network.h"
 #include "network/masterserver.h"
-#include "gl/sys_opengl.h"
-
-// Use SDL for window management under *nix
-#ifdef UNIX
-#  define USING_SDL_WINDOW
-#  include "unix/sys_path.h"
+#ifdef __CLIENT__
+#  include "gl/sys_opengl.h"
 #endif
 
 #include "ui/window.h"

@@ -36,7 +36,7 @@
 #include "../../../engine/include/def_data.h"
 struct font_s;
 
-#define __INTERNAL_MAP_DATA_ACCESS__
+#define DENG_INTERNAL_DATA_ACCESS
 #include <doomsday.h>
 
 #include <de/libdeng2.h>
@@ -55,5 +55,13 @@ const int NUMSPRITES = 138;
 const int NUMSTATES  = 968;
 extern ded_sprid_t  origSpriteNames[NUMSPRITES];
 extern ded_funcid_t origActionNames[NUMSTATES];
+
+DENG_USING_API(Base);
+DENG_USING_API(Con);
+DENG_USING_API(Def);
+DENG_USING_API(F);
+DENG_USING_API(Plug);
+DENG_USING_API(Uri);
+DENG_USING_API(W);
 
 #endif /// LIBDEHREAD_DEHREAD_H

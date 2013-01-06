@@ -29,7 +29,11 @@
 #ifndef __DOOMSDAY_EDITOR__
 #define __DOOMSDAY_EDITOR__
 
-#include "edit_bias.h"
+#ifdef __CLIENT__
+#  include "edit_bias.h"
+#endif
+
 #include "edit_map.h"
+#include "api_mapedit.h"
 
 #endif
