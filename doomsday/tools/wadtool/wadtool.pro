@@ -2,7 +2,7 @@
 # (c) 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
 # License: GPL 2.0+
 
-include(../../doomsday/config.pri)
+include(../../config.pri)
 
 TEMPLATE = app
 TARGET = wadtool

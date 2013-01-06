@@ -1,19 +1,19 @@
-# qmake project file for building md2tool
+# qmake project file for building texc
 # (c) 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
 # License: GPL 2.0+
 
-include(../../doomsday/config.pri)
+include(../../config.pri)
 
 TEMPLATE = app
-TARGET = md2tool
+TARGET = texc
 
 CONFIG -= app_bundle
 win32: CONFIG += console
 QT -= core gui
 
-SOURCES += md2tool.c
+SOURCES += import.cpp texc.cpp
 
-HEADERS += md2tool.h anorms.h
+HEADERS += texc.h
 
 # Installation.
 !macx {

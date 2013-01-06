@@ -39,9 +39,9 @@ $CP plugins/doom64/doom64.bundle                   $PLUGDIR/
 $CP plugins/fmod/audio_fmod.bundle                 $PLUGDIR/
 
 # Tools
-#$CP $SRCDIR/../tools/wadtool/wadtool $APPDIR/Resources
-$CP $SRCDIR/../tools/texc/texc $APPDIR/Resources
-$CP $SRCDIR/../tools/md2tool/md2tool $APPDIR/Resources
+#$CP tools/wadtool/wadtool $APPDIR/Resources
+$CP tools/texc/texc $APPDIR/Resources
+$CP tools/md2tool/md2tool $APPDIR/Resources
 
 if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     $CP plugins/fluidsynth/audio_fluidsynth.bundle $PLUGDIR/
