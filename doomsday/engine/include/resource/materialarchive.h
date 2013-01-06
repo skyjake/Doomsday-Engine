@@ -65,10 +65,16 @@ namespace de {
 
         /**
          * Returns the number of materials in the archive.
-         *
-         * @param arc  MaterialArchive instance.
          */
         int count() const;
+
+        /**
+         * Returns the number of materials in the archive.
+         * Same as count()
+         */
+        inline int size() const {
+            return count();
+        }
 
         /**
          * Serializes the state of the archive using @a writer.

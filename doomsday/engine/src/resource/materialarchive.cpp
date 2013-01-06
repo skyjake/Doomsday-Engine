@@ -18,156 +18,98 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/StringPool>
+#include "uri.hh"
+
 #include "de_base.h"
 #include "de_console.h"
-#include "uri.hh"
 
 #include "resource/materials.h"
 #include "resource/materialarchive.h"
 
 /// For identifying the archived format version. Written to disk.
-#define MATERIALARCHIVE_VERSION (4)
+#define MATERIALARCHIVE_VERSION     4
 
-#define ASEG_MATERIAL_ARCHIVE   112
+#define ASEG_MATERIAL_ARCHIVE       112
 
 // Used to denote unknown Material references in records. Written to disk.
-#define UNKNOWN_MATERIALNAME    "DD_BADTX"
+#define UNKNOWN_MATERIALNAME        "DD_BADTX"
 
 namespace de {
 
-struct ArchiveRecord
+static String readArchivedPath(reader_s &reader)
 {
-    Uri uri; ///< Percent encoded.
-    material_t *material_;
-    bool foundMaterial;
+    char _path[9];
+    Reader_Read(&reader, _path, 8); _path[8] = 0;
+    return QString(QByteArray(_path, qstrlen(_path)).toPercentEncoding());
+}
 
-    ArchiveRecord() : uri(), material_(0), foundMaterial(false)
-    {}
-
-    ArchiveRecord(Uri const &_uri)
-        : uri(_uri), material_(0), foundMaterial(false)
-    {}
-
-    bool hasMaterial()
+static void readArchivedUri(Uri &uri, int version, reader_s &reader)
+{
+    if(version >= 4)
     {
-        return !!material_;
+        // A serialized, percent encoded URI.
+        Uri_Read(reinterpret_cast<uri_s *>(&uri), &reader);
     }
-
-    material_t *material()
+    else if(version == 3)
     {
-        if(!foundMaterial)
-        {
-            setMaterial(App_Materials()->find(uri).material());
-        }
-        return material_;
+        // A percent encoded textual URI.
+        ddstring_t *_uri = Str_NewFromReader(&reader);
+        uri.setUri(Str_Text(_uri), RC_NULL);
+        Str_Delete(_uri);
     }
-
-    void setMaterial(material_t *mat)
+    else if(version == 2)
     {
-        material_ = mat;
-        foundMaterial = true;
+        // An unencoded textual URI.
+        ddstring_t *_uri = Str_NewFromReader(&reader);
+        uri.setUri(QString(QByteArray(Str_Text(_uri), Str_Length(_uri)).toPercentEncoding()), RC_NULL);
+        Str_Delete(_uri);
     }
-
-    void write(writer_s &writer) const
+    else // ver 1
     {
-        Uri_Write(reinterpret_cast<uri_s const *>(&uri), &writer);
-    }
+        // A short textual path (unencoded).
+        uri.setPath(readArchivedPath(reader));
 
-    void read(int version, reader_s &reader)
-    {
-        if(version >= 4)
+        // Plus a legacy scheme id.
+        int oldSchemeId = Reader_ReadByte(&reader);
+        switch(oldSchemeId)
         {
-            // A serialized URI.
-            Uri_Read(reinterpret_cast<uri_s *>(&uri), &reader);
-        }
-        else if(version == 3)
-        {
-            // A percent encoded textual URI.
-            ddstring_t *_uri = Str_NewFromReader(&reader);
-            uri.setUri(Str_Text(_uri), RC_NULL);
-            Str_Delete(_uri);
-        }
-        else if(version == 2)
-        {
-            // An unencoded textual URI.
-            ddstring_t *_uri = Str_NewFromReader(&reader);
-            uri.setUri(QString(QByteArray(Str_Text(_uri), Str_Length(_uri)).toPercentEncoding()), RC_NULL);
-            Str_Delete(_uri);
-        }
-        else
-        {
-            // A short textual name (unencoded) plus legacy material scheme id.
-            char path[9];
-            Reader_Read(&reader, path, 8);
-            path[8] = 0;
-            uri.setPath(QByteArray(path, qstrlen(path)).toPercentEncoding());
-
-            byte oldMNI = Reader_ReadByte(&reader);
-            switch(oldMNI % 4)
-            {
-            case 0: uri.setScheme("Textures"); break;
-            case 1: uri.setScheme("Flats");    break;
-            case 2: uri.setScheme("Sprites");  break;
-            case 3: uri.setScheme("System");   break;
-            }
+        case 0: uri.setScheme("Textures"); break;
+        case 1: uri.setScheme("Flats");    break;
+        case 2: uri.setScheme("Sprites");  break;
+        case 3: uri.setScheme("System");   break;
+        default:
+            throw Error("readArchiveUri", QString("Unknown old-scheme id #%1, expected [0..3)").arg(oldSchemeId));
         }
     }
-
-    /**
-     * Same as read except we are reading the old record format used by
-     * Doomsday 1.8.6 and earlier.
-     */
-    void read_v186(String scheme, reader_s &reader)
-    {
-        char path[9];
-        Reader_Read(&reader, path, 8);
-        path[8] = 0;
-        uri.setPath(QByteArray(path, qstrlen(path)).toPercentEncoding());
-        uri.setScheme(scheme);
-    }
-};
-
-/// A list of archive records.
-typedef QList<ArchiveRecord *> Records;
+}
 
 struct MaterialArchive::Instance
 {
+    /// Logical version number of the archive.
     int version;
-    Records table;
-    int numFlats; /// Used with older versions.
-    int useSegments; /// Segment id assertion (Hexen saves).
 
-    Instance(int _useSegments)
+    /// Segment id assertion (Hexen saves).
+    bool useSegments;
+
+    /**
+     * Mappings between URI and material_t.
+     * The pointer user value holds a pointer to the resolved Material (if found).
+     * The integer user value tracks whether a material has yet been looked up.
+     */
+    StringPool records;
+
+    /// Used with older versions.
+    int numFlats;
+
+    Instance(bool _useSegments)
         : version(MATERIALARCHIVE_VERSION),
-          numFlats(0), useSegments(_useSegments)
+          useSegments(_useSegments), numFlats(0)
     {}
 
-    void clearTable()
+    inline StringPool::Id insertRecord(Uri const &uri)
     {
-        DENG2_FOR_EACH(Records, i, table)
-        {
-            delete *i;
-        }
-    }
-
-    ArchiveRecord &insertRecord(materialarchive_serialid_t /*serialId*/, Uri const &uri)
-    {
-        ArchiveRecord *rec = new ArchiveRecord(uri);
-        table.push_back(rec);
-        return *rec;
-    }
-
-    ArchiveRecord *record(materialarchive_serialid_t serialId, int group)
-    {
-        if(version < 1 && group == 1) // Group 1 = Flats:
-            serialId += numFlats;
-
-        DENG_ASSERT(serialId >= 0 && serialId < table.count());
-
-        ArchiveRecord *rec = table[serialId];
-        if(!rec->uri.path().toStringRef().compareWithoutCase(UNKNOWN_MATERIALNAME))
-            return 0;
-        return rec;
+        return records.intern(uri.compose());
     }
 
     /**
@@ -175,8 +117,7 @@ struct MaterialArchive::Instance
      */
     void populate()
     {
-        ArchiveRecord &record = insertRecord(1, Uri(Path(UNKNOWN_MATERIALNAME)));
-        record.setMaterial(0);
+        insertRecord(Uri(Path(UNKNOWN_MATERIALNAME)));
 
         /// @todo Assumes knowledge of how material ids are generated.
         /// Should be iterated by Materials using a callback function.
@@ -184,45 +125,16 @@ struct MaterialArchive::Instance
         for(uint i = 1; i < num + 1; ++i)
         {
             MaterialBind *bind = App_Materials()->toMaterialBind(i);
-            ArchiveRecord &record = insertRecord(table.count() + 1, bind->composeUri());
-            record.setMaterial(bind->material());
-        }
-    }
-
-    void readGroup(String defaultScheme, reader_s &reader)
-    {
-        // Read the group header.
-        uint num = Reader_ReadUInt16(&reader);
-        for(uint i = 0; i < num; ++i)
-        {
-            ArchiveRecord temp;
-
-            if(version >= 1)
-                temp.read(version, reader);
-            else
-                temp.read_v186(defaultScheme, reader);
-
-            insertRecord(table.count() + 1, temp.uri);
-        }
-    }
-
-    void writeGroup(writer_s &writer)
-    {
-        // Write the group header.
-        Writer_WriteUInt16(&writer, table.count());
-
-        DENG2_FOR_EACH_CONST(Records, i, table)
-        {
-            (*i)->write(writer);
+            StringPool::Id id = insertRecord(bind->composeUri());
+            records.setUserPointer(id, bind->material());
+            records.setUserValue(id, true);
         }
     }
 
     void beginSegment(int seg, writer_s &writer)
     {
-        if(useSegments)
-        {
-            Writer_WriteUInt32(&writer, seg);
-        }
+        if(!useSegments) return;
+        Writer_WriteUInt32(&writer, seg);
     }
 
     void assertSegment(int seg, reader_s &reader)
@@ -249,6 +161,36 @@ struct MaterialArchive::Instance
         assertSegment(ASEG_MATERIAL_ARCHIVE, reader);
         version = Reader_ReadByte(&reader);
     }
+
+    void readGroup(reader_s &reader)
+    {
+        DENG_ASSERT(version >= 1);
+
+        // Read the group header.
+        int num = Reader_ReadUInt16(&reader);
+
+        // Read the group records.
+        Uri uri;
+        for(int i = 0; i < num; ++i)
+        {
+            readArchivedUri(uri, version, reader);
+            insertRecord(uri);
+        }
+    }
+
+    void writeGroup(writer_s &writer)
+    {
+        // Write the group header.
+        Writer_WriteUInt16(&writer, records.size());
+
+        // Write the group records.
+        Uri uri;
+        for(int i = 1; i < int(records.size()) + 1; ++i)
+        {
+            uri.setUri(records.stringRef(i), RC_NULL);
+            Uri_Write(reinterpret_cast<uri_s const *>(&uri), &writer);
+        }
+    }
 };
 
 MaterialArchive::MaterialArchive(int useSegments, bool populate)
@@ -262,37 +204,95 @@ MaterialArchive::MaterialArchive(int useSegments, bool populate)
 
 MaterialArchive::~MaterialArchive()
 {
-    d->clearTable();
     delete d;
+}
+
+struct findUniqueSerialIdWorker_params {
+    StringPool *table;
+    material_t *material;
+};
+
+static int findUniqueSerialIdWorker(StringPool::Id id, void *parameters)
+{
+    findUniqueSerialIdWorker_params *parm = (findUniqueSerialIdWorker_params*) parameters;
+
+    // Time to lookup the material for the record's URI?
+    if(!parm->table->userValue(id))
+    {
+        material_t *material = 0;
+        try
+        {
+            material = App_Materials()->find(Uri(parm->table->stringRef(id), RC_NULL)).material();
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
+
+        parm->table->setUserPointer(id, material);
+        parm->table->setUserValue(id, true);
+    }
+
+    // Is this the material we are looking for?
+    if(parm->table->userPointer(id) == parm->material)
+        return id;
+
+    return 0; // Continue iteration.
 }
 
 materialarchive_serialid_t MaterialArchive::findUniqueSerialId(material_t *material) const
 {
     if(!material) return 0; // Invalid.
-    materialarchive_serialid_t id = 0;
-    for(int i = 0; i < d->table.count(); ++i)
-    {
-        ArchiveRecord *rec = d->table[i];
-        // Lookup the material for the record's uri.
-        if(rec->material() == material)
-        {
-            id = i + 1; // Yes. Return existing serial.
-            break;
-        }
-    }
-    return id;
+
+    findUniqueSerialIdWorker_params parm;
+    parm.table    = &d->records;
+    parm.material = material;
+
+    StringPool::Id found = d->records.iterate(findUniqueSerialIdWorker, &parm);
+    if(found) return found; // Yes. Return existing serial.
+
+    return d->records.size() + 1;
 }
 
 material_t *MaterialArchive::find(materialarchive_serialid_t serialId, int group) const
 {
-    if(serialId <= 0 || serialId > d->table.count() + 1) return 0; // Invalid.
-    // Lookup the material for the record's uri.
-    return d->record(serialId - 1, group)->material();
+    if(serialId <= 0 || serialId > d->records.size() + 1) return 0; // Invalid.
+
+    // A group offset?
+    if(d->version < 1 && group == 1)
+    {
+        // Group 1 = walls (skip over the flats).
+        serialId += d->numFlats;
+    }
+
+    if(d->version <= 1)
+    {
+        // The special case "unknown" material?
+        Uri uri(d->records.stringRef(serialId), RC_NULL);
+        if(!uri.path().toStringRef().compareWithoutCase(UNKNOWN_MATERIALNAME))
+            return 0;
+    }
+
+    // Time to lookup the material for the record's URI?
+    if(!d->records.userValue(serialId))
+    {
+        material_t *material = 0;
+        try
+        {
+            material = App_Materials()->find(Uri(d->records.stringRef(serialId), RC_NULL)).material();
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
+
+        d->records.setUserPointer(serialId, material);
+        d->records.setUserValue(serialId, true);
+        return material;
+    }
+
+    return (material_t *) d->records.userPointer(serialId);
 }
 
 int MaterialArchive::count() const
 {
-    return d->table.count();
+    return d->records.size();
 }
 
 void MaterialArchive::write(writer_s &writer) const
@@ -303,23 +303,43 @@ void MaterialArchive::write(writer_s &writer) const
 
 void MaterialArchive::read(int forcedVersion, reader_s &reader)
 {
-    d->clearTable();
+    d->records.clear();
 
     d->readHeader(reader);
-
     // Are we interpreting a specific version?
     if(forcedVersion >= 0)
     {
         d->version = forcedVersion;
     }
 
-    d->readGroup((forcedVersion >= 1? "" : "Flats:"), reader);
-
-    if(d->version == 0)
+    if(d->version >= 1)
     {
-        // The old format saved flats and textures in seperate groups.
-        d->numFlats = d->table.count();
-        d->readGroup((forcedVersion >= 1? "" : "Textures:"), reader);
+        d->readGroup(reader);
+        return;
+    }
+
+    // The old format saved materials used on floors and walls into seperate
+    // groups. At this time only Flats could be used on floors and Textures
+    // on walls.
+    {
+        // Group 0 (floors)
+        Uri uri("Flats", "");
+        d->numFlats = Reader_ReadUInt16(&reader);
+        for(int i = 0; i < d->numFlats; ++i)
+        {
+            uri.setPath(readArchivedPath(reader));
+            d->insertRecord(uri);
+        }
+    }
+    {
+        // Group 1 (walls)
+        Uri uri("Textures", "");
+        int num = Reader_ReadUInt16(&reader);
+        for(int i = 0; i < num; ++i)
+        {
+            uri.setPath(readArchivedPath(reader));
+            d->insertRecord(uri);
+        }
     }
 }
 
