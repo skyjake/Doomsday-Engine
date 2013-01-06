@@ -270,7 +270,14 @@ void B_UpdateDeviceStateAssociations(void)
 
 static void B_SetContextCount(int count)
 {
-    bindContexts = M_Realloc(bindContexts, sizeof(bcontext_t*) * count);
+    if(count)
+    {
+        bindContexts = M_Realloc(bindContexts, sizeof(bcontext_t*) * count);
+    }
+    else
+    {
+        M_Free(bindContexts); bindContexts = 0;
+    }
     bindContextCount = count;
 }
 
@@ -288,15 +295,13 @@ static void B_InsertContext(bcontext_t* bc, int contextIdx)
 
 static void B_RemoveContext(bcontext_t* bc)
 {
-    int                 contextIdx = B_GetContextPos(bc);
-
-    if(contextIdx >= 0)
+    int contextIdx = B_GetContextPos(bc);
+    if(contextIdx >= 0 && bindContextCount > 1)
     {
         memmove(&bindContexts[contextIdx], &bindContexts[contextIdx + 1],
                 sizeof(bcontext_t*) * (bindContextCount - 1 - contextIdx));
-
-        B_SetContextCount(bindContextCount - 1);
     }
+    B_SetContextCount(bindContextCount - 1);
 }
 
 /**
