@@ -50,8 +50,8 @@ extern "C" {
  */
 
 #define DOOMSDAY_VERSION_BASE   "1.9.10"
-#define DOOMSDAY_VERSION_NUMBER 1,9,10,0 // For WIN32 version info.
-//#define DOOMSDAY_RELEASE_NAME   "Example"
+#define DOOMSDAY_VERSION_NUMBER 1,9,10,1 // For WIN32 version info.
+#define DOOMSDAY_RELEASE_NAME   "1"
 
 /**
  * DOOMSDAY_RELEASE_TYPE determines the classification of the release.
@@ -64,7 +64,7 @@ extern "C" {
 /**
  * Copyright string is used in WIN32 binary metadata markup.
  */
-#define DOOMSDAY_COPYRIGHT      "2003-2012, " DENGPROJECT_NICEAUTHOR
+#define DOOMSDAY_COPYRIGHT      "2003-2013, " DENGPROJECT_NICEAUTHOR
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
