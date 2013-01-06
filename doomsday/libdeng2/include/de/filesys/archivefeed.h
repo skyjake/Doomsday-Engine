@@ -24,61 +24,62 @@
 #include "../ByteArrayFile"
 #include "../String"
 
-namespace de
+namespace de {
+
+class Archive;
+
+/**
+ * Produces files and folders that represent the contents of an Archive.
+ *
+ * @ingroup fs
+ */
+class ArchiveFeed : public Feed
 {
-    class Archive;
-    
+public:
+    /// Provided source file cannot be used as a feed source. @ingroup errors
+    DENG2_ERROR(InvalidSourceError);
+
+public:
     /**
-     * Produces files and folders that represent the contents of an Archive.
+     * Constructs a new archive feed.
      *
-     * @ingroup fs
+     * @param archiveFile  File where the data comes from.
      */
-    class ArchiveFeed : public Feed
-    {
-    public:
-        /// Provided source file cannot be used as a feed source. @ingroup errors
-        DENG2_ERROR(InvalidSourceError);
+    ArchiveFeed(File &archiveFile);
 
-    public:
-        /**
-         * Constructs a new archive feed.
-         *
-         * @param archiveFile  File where the data comes from.
-         */
-        ArchiveFeed(File &archiveFile);
-        
-        /**
-         * Constructs an archive feed that populates the contents of a folder
-         * in another feed's archive.
-         *
-         * @param parentFeed  Feed whose archive will be used.
-         * @param basePath    Path within the archive for the new feed.
-         */
-        ArchiveFeed(ArchiveFeed &parentFeed, String const &basePath);
+    /**
+     * Constructs an archive feed that populates the contents of a folder
+     * in another feed's archive.
+     *
+     * @param parentFeed  Feed whose archive will be used.
+     * @param basePath    Path within the archive for the new feed.
+     */
+    ArchiveFeed(ArchiveFeed &parentFeed, String const &basePath);
 
-        virtual ~ArchiveFeed();
+    virtual ~ArchiveFeed();
 
-        String description() const;
+    String description() const;
 
-        void populate(Folder &folder);
-        bool prune(File &file) const;
-        File *newFile(String const &name);
-        void removeFile(String const &name);
+    void populate(Folder &folder);
+    bool prune(File &file) const;
+    File *newFile(String const &name);
+    void removeFile(String const &name);
 
-        /**
-         * Returns the archive that the feed accesses.
-         */
-        Archive &archive();
-                    
-        /**
-         * Returns the base path within the archive.
-         */
-        String const &basePath() const;
-                    
-    private:
-        struct Instance;
-        Instance *d;
-    };
-}
+    /**
+     * Returns the archive that the feed accesses.
+     */
+    Archive &archive();
+
+    /**
+     * Returns the base path within the archive.
+     */
+    String const &basePath() const;
+
+private:
+    struct Instance;
+    Instance *d;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_ARCHIVEFEED_H */

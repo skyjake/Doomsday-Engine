@@ -25,61 +25,62 @@
 
 #include <list>
 
-namespace de
+namespace de {
+
+class Expression;
+
+/**
+ * Branching statement for conditionally executing one or more compounds.
+ *
+ * @ingroup script
+ */
+class IfStatement : public Statement
 {
-    class Expression;
-    
+public:
+    ~IfStatement();
+
+    void clear();
+
     /**
-     * Branching statement for conditionally executing one or more compounds.
-     *
-     * @ingroup script
+     * Add a new branch to the statement.
      */
-    class IfStatement : public Statement
-    {
-    public:
-        ~IfStatement();
-        
-        void clear();
+    void newBranch();
 
-        /** 
-         * Add a new branch to the statement.
-         */
-        void newBranch();
-        
-        /** 
-         * Sets the condition expression of the latest branch.
-         */
-        void setBranchCondition(Expression *expression);
+    /**
+     * Sets the condition expression of the latest branch.
+     */
+    void setBranchCondition(Expression *expression);
 
-        /**
-         * Returns the compound of the latest branch.
-         */
-        Compound &branchCompound();
+    /**
+     * Returns the compound of the latest branch.
+     */
+    Compound &branchCompound();
 
-        /** 
-         * Returns the else-compound of the statement.
-         */
-        Compound &elseCompound() {
-            return _elseCompound;
-        }
+    /**
+     * Returns the else-compound of the statement.
+     */
+    Compound &elseCompound() {
+        return _elseCompound;
+    }
 
-        void execute(Context &context) const;
+    void execute(Context &context) const;
 
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
-    private:
-        struct Branch {
-            Expression *condition;
-            Compound *compound;
-            Branch(Compound *c = 0) : condition(0), compound(c) {}
-        };
-        typedef std::list<Branch> Branches;
-
-        Branches _branches;
-        Compound _elseCompound;
+private:
+    struct Branch {
+        Expression *condition;
+        Compound *compound;
+        Branch(Compound *c = 0) : condition(0), compound(c) {}
     };
-}
+    typedef std::list<Branch> Branches;
+
+    Branches _branches;
+    Compound _elseCompound;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_IFSTATEMENT_H */

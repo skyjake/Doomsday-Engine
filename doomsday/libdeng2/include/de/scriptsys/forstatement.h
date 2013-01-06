@@ -26,41 +26,42 @@
 
 #include <string>
 
-namespace de
+namespace de {
+
+class Expression;
+
+/**
+ * Keeps looping until the iterable value runs out of elements.
+ *
+ * @ingroup script
+ */
+class ForStatement : public Statement
 {
-    class Expression;
-    
-    /**
-     * Keeps looping until the iterable value runs out of elements.
-     *
-     * @ingroup script
-     */
-    class ForStatement : public Statement
-    {
-    public:
-        ForStatement();
-        
-        ForStatement(Expression *iter, Expression *iteration) 
-            : _iterator(iter), _iteration(iteration) {}
-        
-        ~ForStatement();
-        
-        /// Returns the compound of the statement.
-        Compound &compound() {
-            return _compound;
-        }
-        
-        void execute(Context &context) const;
+public:
+    ForStatement();
 
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
+    ForStatement(Expression *iter, Expression *iteration)
+        : _iterator(iter), _iteration(iteration) {}
 
-    private:
-        Expression *_iterator;
-        Expression *_iteration;
-        Compound _compound;
-    };
-}
+    ~ForStatement();
+
+    /// Returns the compound of the statement.
+    Compound &compound() {
+        return _compound;
+    }
+
+    void execute(Context &context) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    Expression *_iterator;
+    Expression *_iteration;
+    Compound _compound;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_FORSTATEMENT_H */

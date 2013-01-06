@@ -23,20 +23,21 @@
 #include "../FIFO"
 #include "../Waitable"
 
-namespace de
+namespace de {
+
+/**
+ * FIFO with a semaphore that allows threads to wait until there are objects in
+ * the buffer.
+ *
+ * @ingroup data
+ */
+template <typename Type>
+class WaitableFIFO : public FIFO<Type>, public Waitable
 {
-    /**
-     * FIFO with a semaphore that allows threads to wait until there are objects in 
-     * the buffer.
-     *
-     * @ingroup data
-     */  
-    template <typename Type>
-    class WaitableFIFO : public FIFO<Type>, public Waitable
-    {
-    public:
-        WaitableFIFO() {}
-    };
-}
+public:
+    WaitableFIFO() {}
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_WAITABLEFIFO_H */

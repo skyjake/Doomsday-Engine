@@ -23,37 +23,38 @@
 #include "../Value"
 #include "../Function"
 
-namespace de
-{
-    /**
-     * Holds a reference to a function and provides a way to call the function.
-     *
-     * @ingroup script
-     */
-    class FunctionValue : public Value
-    {
-    public:
-        FunctionValue();
-        FunctionValue(Function *func);
-        ~FunctionValue();
-        
-        /// Returns the function.
-        Function const &function() const { return *_func; }
-       
-        Value *duplicate() const;
-        Text asText() const;
-        bool isTrue() const;
-        bool isFalse() const;
-        dint compare(Value const &value) const;
-        void call(Process &process, Value const &arguments) const;
+namespace de {
 
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);
-        
-    private:
-        Function *_func;
-    };
-}
+/**
+ * Holds a reference to a function and provides a way to call the function.
+ *
+ * @ingroup script
+ */
+class FunctionValue : public Value
+{
+public:
+    FunctionValue();
+    FunctionValue(Function *func);
+    ~FunctionValue();
+
+    /// Returns the function.
+    Function const &function() const { return *_func; }
+
+    Value *duplicate() const;
+    Text asText() const;
+    bool isTrue() const;
+    bool isFalse() const;
+    dint compare(Value const &value) const;
+    void call(Process &process, Value const &arguments) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    Function *_func;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_FUNCTIONVALUE_H */

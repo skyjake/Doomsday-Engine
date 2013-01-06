@@ -30,56 +30,57 @@
 #   undef max
 #endif
 
-namespace de
-{
+namespace de {
+
 #undef PI
-    ddouble const PI = 3.14159265358979323846;
-    ddouble const EPSILON = 1.0e-7;
+ddouble const PI = 3.14159265358979323846;
+ddouble const EPSILON = 1.0e-7;
 
-    /// Absolute value.
-    template <typename Type>
-    inline Type abs(Type const &a) {
-        if(a < 0.0) {
-            return -a;
-        }
-        return a;
+/// Absolute value.
+template <typename Type>
+inline Type abs(Type const &a) {
+    if(a < 0.0) {
+        return -a;
     }
-
-    // Special case, this is never negative.
-    inline duint abs(duint const &a) {
-        return a;
-    }
-
-    /// Minimum of two values.
-    template <typename Type>
-    inline Type const &min(Type const &a, Type const &b) {
-        return (a < b? a : b);
-    }
-
-    /// Maximum of two values.
-    template <typename Type>
-    inline Type const &max(Type const &a, Type const &b) {
-        return (a > b? a : b);
-    }
-    
-    /// Clamp value within range.
-    template <typename Type>
-    inline Type clamp(Type const &low, Type const &value, Type const &high) {
-        return min(max(value, low), high);
-    }
-    
-    /// Compare two floating-point values for equality, with the precision of EPSILON.
-    inline ddouble fequal(ddouble a, ddouble b) {
-        return abs(a - b) < EPSILON;
-    }    
-
-    /// General comparison function.
-    template <typename Type>
-    inline dint cmp(Type const &a, Type const &b) {
-        if(a < b) return -1;
-        if(a > b) return 1;
-        return 0;
-    }
+    return a;
 }
+
+// Special case, this is never negative.
+inline duint abs(duint const &a) {
+    return a;
+}
+
+/// Minimum of two values.
+template <typename Type>
+inline Type const &min(Type const &a, Type const &b) {
+    return (a < b? a : b);
+}
+
+/// Maximum of two values.
+template <typename Type>
+inline Type const &max(Type const &a, Type const &b) {
+    return (a > b? a : b);
+}
+
+/// Clamp value within range.
+template <typename Type>
+inline Type clamp(Type const &low, Type const &value, Type const &high) {
+    return min(max(value, low), high);
+}
+
+/// Compare two floating-point values for equality, with the precision of EPSILON.
+inline ddouble fequal(ddouble a, ddouble b) {
+    return abs(a - b) < EPSILON;
+}
+
+/// General comparison function.
+template <typename Type>
+inline dint cmp(Type const &a, Type const &b) {
+    if(a < b) return -1;
+    if(a > b) return 1;
+    return 0;
+}
+
+} // namespace de
 
 #endif /* LIBDENG2_MATH_H */

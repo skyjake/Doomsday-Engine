@@ -20,52 +20,53 @@
 #ifndef LIBDENG2_OPERATOR_H
 #define LIBDENG2_OPERATOR_H
 
-namespace de
-{
-    class String;
-    
-    /**
-     * Operators. 
-     * 
-     * @note  These are serialized as is, so don't change the existing values.
-     *
-     * @ingroup script
-     */
-    enum Operator {
-        NONE = 0,
-        NOT,
-        IN,
-        EQUAL,
-        NOT_EQUAL,
-        LESS,
-        GREATER,
-        LEQUAL,
-        GEQUAL,
-        PLUS,
-        MINUS,
-        MULTIPLY,
-        DIVIDE,
-        MODULO,
-        PLUS_ASSIGN,
-        MINUS_ASSIGN,
-        MULTIPLY_ASSIGN,
-        DIVIDE_ASSIGN,
-        MODULO_ASSIGN,
-        DOT,
-        MEMBER,
-        CALL,
-        ARRAY,
-        DICTIONARY,
-        INDEX,
-        SLICE,
-        PARENTHESIS,
-        AND,
-        OR
-    };
-    
-    String operatorToText(Operator op);
-    
-    bool leftOperandByReference(Operator op);
-}
+namespace de {
+
+class String;
+
+/**
+ * Operators.
+ *
+ * @note  These are serialized as is, so don't change the existing values.
+ *
+ * @ingroup script
+ */
+enum Operator {
+    NONE = 0,
+    NOT,
+    IN,
+    EQUAL,
+    NOT_EQUAL,
+    LESS,
+    GREATER,
+    LEQUAL,
+    GEQUAL,
+    PLUS,
+    MINUS,
+    MULTIPLY,
+    DIVIDE,
+    MODULO,
+    PLUS_ASSIGN,
+    MINUS_ASSIGN,
+    MULTIPLY_ASSIGN,
+    DIVIDE_ASSIGN,
+    MODULO_ASSIGN,
+    DOT,
+    MEMBER,
+    CALL,
+    ARRAY,
+    DICTIONARY,
+    INDEX,
+    SLICE,
+    PARENTHESIS,
+    AND,
+    OR
+};
+
+String operatorToText(Operator op);
+
+bool leftOperandByReference(Operator op);
+
+} // namespace de
 
 #endif /* LIBDENG2_OPERATOR_H */

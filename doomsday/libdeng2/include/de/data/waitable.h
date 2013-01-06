@@ -25,41 +25,42 @@
 
 #include <QSemaphore>
 
-namespace de
+namespace de {
+
+/**
+ * Semaphore that allows objects to be waited on.
+ *
+ * @ingroup data
+ */
+class DENG2_PUBLIC Waitable
 {
-    /**
-     * Semaphore that allows objects to be waited on.
-     *
-     * @ingroup data
-     */
-    class DENG2_PUBLIC Waitable
-    {
-    public:
-        /// wait() failed due to timing out before the resource is secured. @ingroup errors
-        DENG2_ERROR(TimeOutError);
-        
-        /// wait() or waitTime() failed to secure the resource. @ingroup errors
-        DENG2_ERROR(WaitError);
-    
-    public:
-        Waitable(duint initialValue = 0);
-        virtual ~Waitable();
+public:
+    /// wait() failed due to timing out before the resource is secured. @ingroup errors
+    DENG2_ERROR(TimeOutError);
 
-        /// Wait until the resource becomes available.
-        void wait();
+    /// wait() or waitTime() failed to secure the resource. @ingroup errors
+    DENG2_ERROR(WaitError);
 
-        /// Wait for the specified period of time to secure the
-        /// resource.  If timeout occurs, an exception is thrown.
-        void wait(Time::Delta const &timeOut);
-        
-        /// Mark the resource as available by incrementing the
-        /// semaphore value.
-        void post();
-        
-    private:
-        /// Pointer to the internal semaphore data.
-        QSemaphore _semaphore;
-    };
+public:
+    Waitable(duint initialValue = 0);
+    virtual ~Waitable();
+
+    /// Wait until the resource becomes available.
+    void wait();
+
+    /// Wait for the specified period of time to secure the
+    /// resource.  If timeout occurs, an exception is thrown.
+    void wait(Time::Delta const &timeOut);
+
+    /// Mark the resource as available by incrementing the
+    /// semaphore value.
+    void post();
+
+private:
+    /// Pointer to the internal semaphore data.
+    QSemaphore _semaphore;
+};
+
 }
 
 #endif /* LIBDENG2_WAITABLE_H */

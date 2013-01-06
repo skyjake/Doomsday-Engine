@@ -23,25 +23,26 @@
 #include "../Statement"
 #include "../Compound"
 
-namespace de
+namespace de {
+
+/**
+ * Begins a try/catch compound. Always followed by one or more catch statements.
+ */
+class TryStatement : public Statement
 {
-    /**
-     * Begins a try/catch compound. Always followed by one or more catch statements.
-     */
-    class TryStatement : public Statement
-    {
-    public:
-        void execute(Context &context) const;
-        
-        Compound &compound() { return _compound; }
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
-        
-    private:
-        Compound _compound;
-    };
-}
+public:
+    void execute(Context &context) const;
+
+    Compound &compound() { return _compound; }
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    Compound _compound;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_TRYSTATEMENT_H */

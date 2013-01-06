@@ -24,88 +24,89 @@
 #include "../String"
 #include "../Path"
 
-namespace de
+namespace de {
+
+class ArrayValue;
+
+/**
+ * Stores the configuration of everything. The application owns a Config.
+ * The default configuration is produced by executing the .de scripts
+ * in the config directories. The resulting namespace is serialized for
+ * storage, and is restored from the serialized version directly before the
+ * config scripts are run.
+ *
+ * The version of the engine is stored in the serialized config namespace.
+ * This is for actions needed when upgrading: the config script can check
+ * the previous version and apply changes accordingly.
+ */
+class DENG2_PUBLIC Config
 {
-    class ArrayValue;
+public:
+    /// Attempted to get the value of a variable while expecting the wrong type. @ingroup errors
+    DENG2_ERROR(ValueTypeError);
+
+public:
+    /**
+     * Constructs a new configuration.
+     *
+     * @param path  Name of the configuration file to read.
+     */
+    Config(Path const &path);
 
     /**
-     * Stores the configuration of everything. The application owns a Config.
-     * The default configuration is produced by executing the .de scripts
-     * in the config directories. The resulting namespace is serialized for 
-     * storage, and is restored from the serialized version directly before the
-     * config scripts are run.
-     *
-     * The version of the engine is stored in the serialized config namespace.
-     * This is for actions needed when upgrading: the config script can check
-     * the previous version and apply changes accordingly.
+     * Destructor. The configuration is automatically saved.
      */
-    class DENG2_PUBLIC Config
-    {
-    public:
-        /// Attempted to get the value of a variable while expecting the wrong type. @ingroup errors
-        DENG2_ERROR(ValueTypeError);
+    virtual ~Config();
 
-    public:
-        /**
-         * Constructs a new configuration.
-         *
-         * @param path  Name of the configuration file to read.
-         */
-        Config(Path const &path);
+    /// Read configuration from files.
+    void read();
 
-        /**
-         * Destructor. The configuration is automatically saved.
-         */
-        virtual ~Config();
+    /// Writes the configuration to /home.
+    void write();
 
-        /// Read configuration from files.
-        void read();
-        
-        /// Writes the configuration to /home.
-        void write();
+    /// Returns the value of @a name as a Value.
+    Value &get(String const &name);
 
-        /// Returns the value of @a name as a Value.
-        Value &get(String const &name);
+    /// Returns the value of @a name as an integer.
+    dint geti(String const &name);
 
-        /// Returns the value of @a name as an integer.
-        dint geti(String const &name);
+    /// Returns the value of @a name as a boolean.
+    bool getb(String const &name);
 
-        /// Returns the value of @a name as a boolean.
-        bool getb(String const &name);
+    /// Returns the value of @a name as an unsigned integer.
+    duint getui(String const &name);
 
-        /// Returns the value of @a name as an unsigned integer.
-        duint getui(String const &name);
+    /// Returns the value of @a name as a double-precision floating point number.
+    ddouble getd(String const &name);
 
-        /// Returns the value of @a name as a double-precision floating point number.
-        ddouble getd(String const &name);
+    /// Returns the value of @a name as a string.
+    String gets(String const &name);
 
-        /// Returns the value of @a name as a string.
-        String gets(String const &name);
+    /// Returns the value of @a name as an array value. An exception is thrown
+    /// if the variable does not have an array value.
+    ArrayValue &geta(String const &name);
 
-        /// Returns the value of @a name as an array value. An exception is thrown
-        /// if the variable does not have an array value.
-        ArrayValue &geta(String const &name);
-
-        template <typename ValueType>
-        ValueType &getAs(String const &name) {
-            ValueType *v = dynamic_cast<ValueType *>(&get(name));
-            if(!v)
-            {
-                throw ValueTypeError("Config::getAs", String("Cannot cast to expected type (") +
-                                     DENG2_TYPE_NAME(ValueType) + ")");
-            }
-            return *v;
+    template <typename ValueType>
+    ValueType &getAs(String const &name) {
+        ValueType *v = dynamic_cast<ValueType *>(&get(name));
+        if(!v)
+        {
+            throw ValueTypeError("Config::getAs", String("Cannot cast to expected type (") +
+                                 DENG2_TYPE_NAME(ValueType) + ")");
         }
-    
-        /**
-         * Returns the configuration namespace.
-         */
-        Record &names();
-        
-    private:
-        struct Instance;
-        Instance *d;
-    };
-}
+        return *v;
+    }
+
+    /**
+     * Returns the configuration namespace.
+     */
+    Record &names();
+
+private:
+    struct Instance;
+    Instance *d;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_CONFIG_H */

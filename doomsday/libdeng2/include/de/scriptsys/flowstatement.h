@@ -22,44 +22,45 @@
 
 #include "../Statement"
 
-namespace de
+namespace de {
+
+class Expression;
+
+/**
+ * Controls the script's flow of execution.
+ *
+ * @ingroup script
+ */
+class FlowStatement : public Statement
 {
-    class Expression;
-    
-    /**
-     * Controls the script's flow of execution.
-     *
-     * @ingroup script
-     */
-    class FlowStatement : public Statement
-    {
-    public:
-        /// Type of control flow operation.
-        enum Type {
-            PASS,
-            CONTINUE,
-            BREAK,
-            RETURN,
-            THROW
-        };
-        
-    public:
-        FlowStatement();
-        
-        FlowStatement(Type type, Expression *countArgument = 0);
-        
-        ~FlowStatement();
-        
-        void execute(Context &context) const;
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);         
-        
-    private:        
-        Type _type;
-        Expression *_arg;
+public:
+    /// Type of control flow operation.
+    enum Type {
+        PASS,
+        CONTINUE,
+        BREAK,
+        RETURN,
+        THROW
     };
-}
+
+public:
+    FlowStatement();
+
+    FlowStatement(Type type, Expression *countArgument = 0);
+
+    ~FlowStatement();
+
+    void execute(Context &context) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    Type _type;
+    Expression *_arg;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_FLOWSTATEMENT_H */

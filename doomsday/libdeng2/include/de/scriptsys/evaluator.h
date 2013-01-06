@@ -26,160 +26,161 @@
 #include <vector>
 #include <list>
 
-namespace de
+namespace de {
+
+class Context;
+class Process;
+class Expression;
+class Value;
+class Record;
+
+/**
+ * Stack for evaluating expressions.
+ *
+ * @ingroup script
+ */
+class DENG2_PUBLIC Evaluator
 {
-    class Context;
-    class Process;
-    class Expression;
-    class Value;
-    class Record;
-    
+public:
+    /// Result is of wrong type. @ingroup errors
+    DENG2_ERROR(ResultTypeError);
+
+    typedef std::list<Record *> Namespaces;
+
+public:
+    Evaluator(Context &owner);
+    ~Evaluator();
+
+    Context &context() { return _context; }
+
     /**
-     * Stack for evaluating expressions.
-     *
-     * @ingroup script
+     * Returns the process that owns this evaluator.
      */
-    class DENG2_PUBLIC Evaluator
-    {
-    public:
-        /// Result is of wrong type. @ingroup errors
-        DENG2_ERROR(ResultTypeError);
-        
-        typedef std::list<Record *> Namespaces;
-    
-    public:
-        Evaluator(Context &owner);
-        ~Evaluator();
+    Process &process();
 
-        Context &context() { return _context; }
+    /**
+     * Resets the evaluator so it's ready for another expression.
+     * Called when the statement changes in the context.
+     */
+    void reset();
 
-        /**
-         * Returns the process that owns this evaluator.
-         */
-        Process &process();
+    /**
+     * Fully evaluate the given expression. The result value will remain
+     * in the results stack.
+     *
+     * @return  Result of the evaluation.
+     */
+    Value &evaluate(Expression const *expression);
 
-        /**
-         * Resets the evaluator so it's ready for another expression.
-         * Called when the statement changes in the context.
-         */
-        void reset();
-        
-        /**
-         * Fully evaluate the given expression. The result value will remain 
-         * in the results stack.
-         *
-         * @return  Result of the evaluation.
-         */
-        Value &evaluate(Expression const *expression);
-
-        template <typename Type>
-        Type &evaluateTo(Expression const *expr) {
-            Type *r = dynamic_cast<Type *>(&evaluate(expr));
-            if(!r) {
-                throw ResultTypeError("Evaluator::result<Type>", "Unexpected result type");
-            }
-            return *r;
+    template <typename Type>
+    Type &evaluateTo(Expression const *expr) {
+        Type *r = dynamic_cast<Type *>(&evaluate(expr));
+        if(!r) {
+            throw ResultTypeError("Evaluator::result<Type>", "Unexpected result type");
         }
+        return *r;
+    }
 
-        /**
-         * Determines the namespace for the currently evaluated expression.
-         * Those expressions whose operation depends on the current
-         * namespace scope, should use this to look identifiers from.
-         * This changes as expressions are popped off the stack.
-         * 
-         * @return  Namespace scope of the current evaluation. If @c NULL,
-         *          expressions should assume that all namespaces are available.
-         */
-        Record *names() const;
+    /**
+     * Determines the namespace for the currently evaluated expression.
+     * Those expressions whose operation depends on the current
+     * namespace scope, should use this to look identifiers from.
+     * This changes as expressions are popped off the stack.
+     *
+     * @return  Namespace scope of the current evaluation. If @c NULL,
+     *          expressions should assume that all namespaces are available.
+     */
+    Record *names() const;
 
-        /**
-         * Collect the namespaces currently visible.
-         *
-         * @param spaces  List of namespaces. The order is important: the earlier
-         *                namespaces shadow the subsequent ones.
-         */
-        void namespaces(Namespaces &spaces);
+    /**
+     * Collect the namespaces currently visible.
+     *
+     * @param spaces  List of namespaces. The order is important: the earlier
+     *                namespaces shadow the subsequent ones.
+     */
+    void namespaces(Namespaces &spaces);
 
-        /**
-         * Insert the given expression to the top of the expression stack.
-         *
-         * @param expression  Expression to push on the stack.
-         * @param names       Namespace scope for this expression only.
-         */
-        void push(Expression const *expression, Record *names = 0);
+    /**
+     * Insert the given expression to the top of the expression stack.
+     *
+     * @param expression  Expression to push on the stack.
+     * @param names       Namespace scope for this expression only.
+     */
+    void push(Expression const *expression, Record *names = 0);
 
-        /**
-         * Push a value onto the result stack.
-         *
-         * @param value  Value to push on the result stack. The evaluator
-         *               gets ownership of the value.
-         */
-        void pushResult(Value *value);
-        
-        /**
-         * Pop a value off of the result stack. 
-         *
-         * @return  Value resulting from expression evaluation. Caller
-         *          gets ownership of the returned object.
-         */
-        Value *popResult();
-        
-        /**
-         * Pop a value off of the result stack, making sure it has a specific type.
-         *
-         * @return  Value resulting from expression evaluation. Caller
-         *          gets ownership of the returned object.
-         */
-        template <typename Type>
-        Type *popResultAs() {
-            if(!dynamic_cast<Type *>(&result())) {
-                throw ResultTypeError("Evaluator::result<Type>", 
-                    "Result type is not compatible with Type");
-            }
-            return dynamic_cast<Type *>(popResult());
+    /**
+     * Push a value onto the result stack.
+     *
+     * @param value  Value to push on the result stack. The evaluator
+     *               gets ownership of the value.
+     */
+    void pushResult(Value *value);
+
+    /**
+     * Pop a value off of the result stack.
+     *
+     * @return  Value resulting from expression evaluation. Caller
+     *          gets ownership of the returned object.
+     */
+    Value *popResult();
+
+    /**
+     * Pop a value off of the result stack, making sure it has a specific type.
+     *
+     * @return  Value resulting from expression evaluation. Caller
+     *          gets ownership of the returned object.
+     */
+    template <typename Type>
+    Type *popResultAs() {
+        if(!dynamic_cast<Type *>(&result())) {
+            throw ResultTypeError("Evaluator::result<Type>",
+                "Result type is not compatible with Type");
         }
-        
-        /**
-         * Determines whether a final result has been evaluated.
-         */
-        bool hasResult() const;
+        return dynamic_cast<Type *>(popResult());
+    }
 
-        /**
-         * Determines the result of the evaluation without relinquishing
-         * ownership of the value instances.
-         *
-         * @return  The final result of the evaluation. 
-         */
-        Value &result();
-                
-    private:
-        void clearNames();
-        void clearResults();
-        void clearStack();
-        
-        /// The context that owns this evaluator.
-        Context &_context;
-        
-        struct ScopedExpression {
-            Expression const *expression;
-            Record *names;
-            ScopedExpression(Expression const *e = 0, Record *n = 0) : expression(e), names(n) {}
-        };
-        typedef std::vector<ScopedExpression> Expressions;
-        typedef std::vector<Value *> Results;
+    /**
+     * Determines whether a final result has been evaluated.
+     */
+    bool hasResult() const;
 
-        /// The expression that is currently being evaluated.
-        Expression const *_current;
-        
-        /// Namespace for the current expression.
-        Record *_names;
-        
-        Expressions _stack;
-        Results _results;
-        
-        /// Returned when there is no result to give.
-        NoneValue _noResult;
+    /**
+     * Determines the result of the evaluation without relinquishing
+     * ownership of the value instances.
+     *
+     * @return  The final result of the evaluation.
+     */
+    Value &result();
+
+private:
+    void clearNames();
+    void clearResults();
+    void clearStack();
+
+    /// The context that owns this evaluator.
+    Context &_context;
+
+    struct ScopedExpression {
+        Expression const *expression;
+        Record *names;
+        ScopedExpression(Expression const *e = 0, Record *n = 0) : expression(e), names(n) {}
     };
-}
+    typedef std::vector<ScopedExpression> Expressions;
+    typedef std::vector<Value *> Results;
+
+    /// The expression that is currently being evaluated.
+    Expression const *_current;
+
+    /// Namespace for the current expression.
+    Record *_names;
+
+    Expressions _stack;
+    Results _results;
+
+    /// Returned when there is no result to give.
+    NoneValue _noResult;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_EVALUATOR_H */

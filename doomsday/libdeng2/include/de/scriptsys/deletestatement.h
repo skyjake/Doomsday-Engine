@@ -26,41 +26,42 @@
 #include <string>
 #include <vector>
 
-namespace de
+namespace de {
+
+/**
+ * Deletes variables.
+ *
+ * @ingroup script
+ */
+class DeleteStatement : public Statement
 {
+public:
+    /// Trying to delete something other than a reference (RefValue). @ingroup errors
+    DENG2_ERROR(LeftValueError);
+
+public:
+    DeleteStatement();
+
     /**
-     * Deletes variables.
+     * Constructor.
      *
-     * @ingroup script
+     * @param targets  Expression that resolves to a reference (array of RefValues).
+     *                 Statement gets ownership.
      */
-    class DeleteStatement : public Statement
-    {
-    public:
-        /// Trying to delete something other than a reference (RefValue). @ingroup errors
-        DENG2_ERROR(LeftValueError);
-                
-    public:
-        DeleteStatement();
-        
-        /**
-         * Constructor.
-         *
-         * @param targets  Expression that resolves to a reference (array of RefValues).
-         *                 Statement gets ownership.
-         */
-        DeleteStatement(ArrayExpression *targets);
-        
-        ~DeleteStatement();
-        
-        void execute(Context &context) const;
-        
-        // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);
-        
-    private:
-        ArrayExpression *_targets;
-    };
-}
+    DeleteStatement(ArrayExpression *targets);
+
+    ~DeleteStatement();
+
+    void execute(Context &context) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+private:
+    ArrayExpression *_targets;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_DELETESTATEMENT_H */

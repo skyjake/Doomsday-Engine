@@ -24,32 +24,33 @@
 #include "../File"
 #include "../IByteArray"
 
-namespace de
-{
-    /**
-     * Reads from and writes to files that contain a random-access byte array
-     * of data. This is an abstract base class for files that have this
-     * property.
-     *
-     * When used as an I/O stream: reading from the stream outputs the entire
-     * contents of the file, and writing to the stream appends new content to
-     * the end of the file. Byte array files must be used is immutable mode;
-     * the bytes are not removed from the stream by readers (i.e., when, say, a
-     * native file is read, the bytes aren't removed from the file).
-     *
-     * @ingroup fs
-     */
-    class DENG2_PUBLIC ByteArrayFile : public File, public IByteArray
-    {
-    protected:
-        ByteArrayFile(String const &name = "") : File(name) {}
+namespace de {
 
-    public:
-        // Implements IIOStream.
-        IOStream &operator << (IByteArray const &bytes);
-        IIStream &operator >> (IByteArray &bytes);
-        IIStream const &operator >> (IByteArray &bytes) const;
-    };
-}
+/**
+ * Reads from and writes to files that contain a random-access byte array
+ * of data. This is an abstract base class for files that have this
+ * property.
+ *
+ * When used as an I/O stream: reading from the stream outputs the entire
+ * contents of the file, and writing to the stream appends new content to
+ * the end of the file. Byte array files must be used is immutable mode;
+ * the bytes are not removed from the stream by readers (i.e., when, say, a
+ * native file is read, the bytes aren't removed from the file).
+ *
+ * @ingroup fs
+ */
+class DENG2_PUBLIC ByteArrayFile : public File, public IByteArray
+{
+protected:
+    ByteArrayFile(String const &name = "") : File(name) {}
+
+public:
+    // Implements IIOStream.
+    IOStream &operator << (IByteArray const &bytes);
+    IIStream &operator >> (IByteArray &bytes);
+    IIStream const &operator >> (IByteArray &bytes) const;
+};
+
+} // namespace de
 
 #endif // LIBDENG2_BYTEARRAYFILE_H

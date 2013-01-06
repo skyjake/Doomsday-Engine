@@ -26,66 +26,67 @@
 
 #include <QFile>
 
-namespace de
+namespace de {
+
+/**
+ * Reads from and writes to files in the native file system. The contents
+ * of the native file are available as a byte array.
+ *
+ * @ingroup fs
+ */
+class DENG2_PUBLIC NativeFile : public ByteArrayFile
 {
+public:
     /**
-     * Reads from and writes to files in the native file system. The contents
-     * of the native file are available as a byte array.
+     * Constructs a NativeFile that accesses a file in the native file system
+     * in read-only mode.
      *
-     * @ingroup fs
+     * @param name        Name of the file object.
+     * @param nativePath  Path in the native file system to access. Relative
+     *                    to the current working directory.
      */
-    class DENG2_PUBLIC NativeFile : public ByteArrayFile
-    {
-    public:
-        /**
-         * Constructs a NativeFile that accesses a file in the native file system
-         * in read-only mode.
-         * 
-         * @param name        Name of the file object.
-         * @param nativePath  Path in the native file system to access. Relative
-         *                    to the current working directory.
-         */
-        NativeFile(String const &name, NativePath const &nativePath);
-        
-        virtual ~NativeFile();
+    NativeFile(String const &name, NativePath const &nativePath);
 
-        String describe() const;
+    virtual ~NativeFile();
 
-        void clear();
-        void flush();
+    String describe() const;
 
-        /**
-         * Returns the native path of the file.
-         */
-        NativePath const &nativePath() const { return _nativePath; }
+    void clear();
+    void flush();
 
-        void setMode(Flags const &newMode);
+    /**
+     * Returns the native path of the file.
+     */
+    NativePath const &nativePath() const { return _nativePath; }
 
-        // Implements IByteArray.
-        Size size() const;
-        void get(Offset at, Byte *values, Size count) const;
-        void set(Offset at, Byte const *values, Size count);
-        
-    protected:
-        /// Returns the input stream.
-        QFile &input() const;
+    void setMode(Flags const &newMode);
 
-        /// Returns the output stream.
-        QFile &output();
+    // Implements IByteArray.
+    Size size() const;
+    void get(Offset at, Byte *values, Size count) const;
+    void set(Offset at, Byte const *values, Size count);
 
-        /// Close any open streams.
-        void close();
-        
-    private:
-        /// Path of the native file in the OS file system.
-        NativePath _nativePath;
-        
-        /// Input stream.
-        mutable QFile *_in;
-        
-        /// Output stream.
-        QFile *_out;
-    };
-}
+protected:
+    /// Returns the input stream.
+    QFile &input() const;
+
+    /// Returns the output stream.
+    QFile &output();
+
+    /// Close any open streams.
+    void close();
+
+private:
+    /// Path of the native file in the OS file system.
+    NativePath _nativePath;
+
+    /// Input stream.
+    mutable QFile *_in;
+
+    /// Output stream.
+    QFile *_out;
+};
+
+} // namespace de
 
 #endif /* LIBDENG2_NATIVEFILE_H */
