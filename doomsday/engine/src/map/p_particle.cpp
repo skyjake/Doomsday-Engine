@@ -1319,7 +1319,7 @@ void P_SpawnMapParticleGens()
 }
 
 #undef P_SpawnDamageParticleGen
-void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
+DENG_EXTERN_C void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
 {
     // Are particles allowed?
     if(isDedicated || !useParticles) return;

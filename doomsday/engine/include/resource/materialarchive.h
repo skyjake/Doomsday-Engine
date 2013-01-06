@@ -3,7 +3,7 @@
  *
  * Used when saving map state (savegames) or sharing world changes with clients.
  *
- * @author Copyright &copy; 2003-2012 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2003-2012 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -98,6 +98,7 @@ namespace de {
     };
 
 } // namespace de
-#endif __cplusplus
+
+#endif // __cplusplus
 
 #endif /* LIBDENG_RESOURCE_MATERIALARCHIVE_H */
