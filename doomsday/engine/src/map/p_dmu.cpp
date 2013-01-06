@@ -18,10 +18,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstring>
-
 #define DENG_NO_API_MACROS_MAP
-#include "api_map.h"
+
+#include <cstring>
 
 #include "de_base.h"
 #include "de_play.h"
@@ -31,6 +30,7 @@
 #include <de/memoryzone.h>
 
 #include "resource/materials.h"
+#include "api_map.h"
 
 using namespace de;
 
