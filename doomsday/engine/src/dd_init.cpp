@@ -93,7 +93,7 @@ boolean DD_Init(void);
  */
 static LegacyCore* de2LegacyCore;
 
-}
+} // extern "C"
 
 static void continueInitWithEventLoopRunning(void)
 {
