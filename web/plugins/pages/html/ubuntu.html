@@ -72,11 +72,11 @@ function genPackageBadgeHTML(json, downloadUri)
 
     if(json.platform_name == 'linux-x86')
     {
-        metaData += /*json.platform_name + */ 'Ubuntu 11.10+ (32bit)</span>';
+        metaData += /*json.platform_name + */ 'Ubuntu 12.04+ (32bit)</span>';
     }
     else
     {
-        metaData += /*json.platform_name + */ 'Ubuntu 11.10+ (64bit)</span>';
+        metaData += /*json.platform_name + */ 'Ubuntu 12.04+ (64bit)</span>';
     }
 
     return $('<div class="package_badge"><a class="package_name" href="' + downloadUri + '" title="Download ' + json.fulltitle + '">' + cleanTitle + '</a><br />' + metaData + '</div>');
