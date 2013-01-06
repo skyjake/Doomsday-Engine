@@ -1,9 +1,7 @@
-/**
- * @file rend_particle.h
- * Particle Effect Rendering. @ingroup render
+/** @file rend_particle.h Particle Effect Rendering. @ingroup render
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,18 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_REND_PARTICLE_H
-#define LIBDENG_REND_PARTICLE_H
+#ifndef LIBDENG_RENDER_PARTICLE_H
+#define LIBDENG_RENDER_PARTICLE_H
 
 #include "map/p_particle.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern byte useParticles;
-extern int maxParticles;
-extern float particleSpawnRate;
 
 void Rend_ParticleRegister(void);
 
@@ -78,4 +72,4 @@ void Rend_RenderGenerators(void);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_REND_PARTICLE_H
+#endif /// LIBDENG_RENDER_PARTICLE_H

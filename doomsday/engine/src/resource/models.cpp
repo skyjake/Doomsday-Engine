@@ -925,14 +925,14 @@ static void scaleModelToSprite(modeldef_t &mf, int sprite, int frame)
 
     if(!spr.numFrames || spr.spriteFrames == NULL) return;
 
-    MaterialSnapshot const &ms = reinterpret_cast<MaterialSnapshot const &>(
-        *App_Materials()->prepare(*spr.spriteFrames[frame].mats[0], *Sprite_MaterialSpec(0, 0), true));
-    de::Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
+    MaterialSnapshot const &ms =
+        App_Materials()->prepare(*spr.spriteFrames[frame].mats[0], Rend_SpriteMaterialSpec(), true);
+    Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     int off = MAX_OF(0, -tex.origin().y() - ms.dimensions().height());
     scaleModel(mf, ms.dimensions().height(), off);
 }
 
-static float calcModelVisualRadius(modeldef_t* def)
+static float calcModelVisualRadius(modeldef_t *def)
 {
     if(!def || !def->sub[0].modelId) return 0;
 

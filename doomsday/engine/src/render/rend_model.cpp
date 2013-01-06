@@ -1138,19 +1138,15 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        material_t *mat = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:gray"))));
-        if(mat)
-        {
-            materialvariantspecification_t const *spec = App_Materials()->variantSpecificationForContext(
-                MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
-            MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
+        material_t *mat = App_Materials()->find(de::Uri(Path("System:gray"))).material();
+        DENG_ASSERT(mat);
 
-            skinTexture = &ms.texture(MTU_PRIMARY);
-        }
-        else
-        {
-            skinTexture = 0;
-        }
+        MaterialVariantSpec const &spec =
+            App_Materials()->variantSpecForContext(MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                                   1, -2, -1, true, true, false, false);
+        MaterialSnapshot const &ms = App_Materials()->prepare(*mat, spec, true);
+
+        skinTexture = &ms.texture(MTU_PRIMARY);
     }
     else
     {

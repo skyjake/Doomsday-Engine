@@ -102,10 +102,10 @@ ded_sky_t*      Def_GetSky(const char* id);
 ded_material_t* Def_GetMaterial(const char* uri);
 ded_compositefont_t* Def_GetCompositeFont(const char* uri);
 ded_light_t*    Def_GetLightDef(int spr, int frame);
-ded_decor_t*    Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean isCustom);
-ded_reflection_t* Def_GetReflection(materialid_t matId, boolean hasExternal, boolean isCustom);
-ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, boolean isCustom);
-ded_ptcgen_t*   Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean isCustom);
+ded_decor_t*    Def_GetDecoration(material_t *mat, boolean hasExternal, boolean isCustom);
+ded_reflection_t* Def_GetReflection(material_t *mat, boolean hasExternal, boolean isCustom);
+ded_detailtexture_t* Def_GetDetailTex(material_t *mat, boolean hasExternal, boolean isCustom);
+ded_ptcgen_t*   Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isCustom);
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
 
 int             Def_EvalFlags(char* string);

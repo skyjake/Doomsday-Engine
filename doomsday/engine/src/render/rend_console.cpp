@@ -289,7 +289,15 @@ void Rend_ConsoleUpdateBackground()
 {
     DENG_ASSERT(inited);
     if(!consoleBackgroundMaterialUri || Str_IsEmpty(Uri_Path(consoleBackgroundMaterialUri))) return;
-    consoleBackgroundMaterial = App_Materials()->toMaterial(App_Materials()->resolveUri(*reinterpret_cast<de::Uri *>(consoleBackgroundMaterialUri)));
+
+    try
+    {
+        consoleBackgroundMaterial = App_Materials()->find(*reinterpret_cast<de::Uri *>(consoleBackgroundMaterialUri)).material();
+    }
+    catch(Materials::NotFoundError const &)
+    {
+        consoleBackgroundMaterial = 0;
+    }
 }
 
 void Rend_ConsoleToggleFullscreen()
@@ -547,9 +555,11 @@ static void drawConsoleBackground(Point2Raw const *origin, Size2Raw const *size,
 
     if(consoleBackgroundMaterial)
     {
-        materialvariantspecification_t const *spec = App_Materials()->variantSpecificationForContext(
-            MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        MaterialSnapshot const &ms = *App_Materials()->prepare(*consoleBackgroundMaterial, *spec, Con_IsActive());
+        MaterialVariantSpec const &spec =
+            App_Materials()->variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                                   0, 1, 0, false, false, false, false);
+        MaterialSnapshot const &ms =
+            App_Materials()->prepare(*consoleBackgroundMaterial, spec, Con_IsActive());
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 

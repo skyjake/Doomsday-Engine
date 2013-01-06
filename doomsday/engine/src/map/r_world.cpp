@@ -1054,7 +1054,8 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
     if(!material) return false;
 
     // Ensure we have up to date info about the material.
-    MaterialSnapshot const &ms = *App_Materials()->prepare(*material, *Rend_MapSurfaceDiffuseMaterialSpec(), true);
+    MaterialSnapshot const &ms =
+        App_Materials()->prepare(*material, Rend_MapSurfaceMaterialSpec(), true);
 
     if(ignoreOpacity || (ms.isOpaque() && !frontDef->SW_middleblendmode && frontDef->SW_middlergba[3] >= 1))
     {
@@ -1279,8 +1280,15 @@ static void addToSurfaceLists(Surface *suf, material_t *mat)
 {
     if(!suf || !mat) return;
 
-    if(Material_HasGlow(mat))         R_SurfaceListAdd(GameMap_GlowingSurfaces(theMap),   suf);
-    if(App_Materials()->hasDecorations(mat)) R_SurfaceListAdd(GameMap_DecoratedSurfaces(theMap), suf);
+    if(Material_HasGlow(mat))
+    {
+        R_SurfaceListAdd(GameMap_GlowingSurfaces(theMap),   suf);
+    }
+
+    if(App_Materials()->hasDecorations(*mat))
+    {
+        R_SurfaceListAdd(GameMap_DecoratedSurfaces(theMap), suf);
+    }
 }
 
 void R_MapInitSurfaceLists()
@@ -1455,8 +1463,8 @@ boolean R_IsGlowingPlane(Plane const *pln)
     material_t *mat = pln->surface.material;
     if(mat)
     {
-        materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-        MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
+        MaterialSnapshot const &ms =
+            App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), true);
 
         if(!Material_IsDrawable(mat) || ms.glowStrength() > 0) return true;
     }
@@ -1476,8 +1484,8 @@ float R_GlowStrength(Plane const *pln)
         if(Material_IsDrawable(mat) && !Surface_IsSkyMasked(&pln->surface))
         {
             /// @todo We should not need to prepare to determine this.
-            materialvariantspecification_t const *spec = Rend_MapSurfaceDiffuseMaterialSpec();
-            MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
+            MaterialSnapshot const &ms =
+                App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), true);
 
             return ms.glowStrength();
         }
@@ -1606,7 +1614,7 @@ static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
     if(choice2) return choice2;
 
     // We'll assign the special "missing" material...
-    return App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:missing"))));
+    return App_Materials()->find(de::Uri(Path("System:missing"))).material();
 }
 
 static void addMissingMaterial(SideDef *s, SideDefSection section)
@@ -1622,7 +1630,7 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
     // During map load we log missing materials.
     if(ddMapSetup && verbose)
     {
-        String path = suf->material? App_Materials()->composeUri(App_Materials()->id(suf->material)).asText() : "<null>";
+        String path = suf->material? App_Materials()->toMaterialBind(Material_PrimaryBind(suf->material))->composeUri().asText() : "<null>";
         LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
             << s->buildData.index - 1

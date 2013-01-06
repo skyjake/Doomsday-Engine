@@ -4,16 +4,23 @@
 #include "de_resource.h"
 #include "api_material.h"
 
-materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
+struct material_s *DD_MaterialForTextureUri(uri_s const *textureUri)
 {
-    if(!_textureUri) return NOMATERIALID;
+    if(!textureUri) return 0; // Not found.
 
     try
     {
-        de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*_textureUri)).composeUri();
+        de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
-        return App_Materials()->resolveUri2(uri, true/*quiet please*/);
+        return App_Materials()->find(uri).material();
     }
+    catch(de::Materials::UnknownSchemeError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+    catch(de::Materials::NotFoundError const &)
+    {} // Ignore this error.
     catch(de::Textures::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.
@@ -22,7 +29,7 @@ materialid_t DD_MaterialForTextureUri(uri_s const *_textureUri)
     catch(de::Textures::NotFoundError const &)
     {} // Ignore this error.
 
-    return NOMATERIALID;
+    return 0; // Not found.
 }
 
 // materials.cpp

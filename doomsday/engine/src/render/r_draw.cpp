@@ -174,13 +174,13 @@ void R_DrawPatchTiled(struct texture_s *_tex, int x, int y, int w, int h, int wr
     GL_DrawRectf2Tiled(x, y, w, h, tex.width(), tex.height());
 }
 
-materialvariantspecification_t const *Ui_MaterialSpec()
+MaterialVariantSpec const &Ui_MaterialSpec()
 {
-    return App_Materials()->variantSpecificationForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                                           0, -3, 0, false, false, false, false);
+    return App_Materials()->variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                                  0, -3, 0, false, false, false, false);
 }
 
-void R_DrawViewBorder(void)
+void R_DrawViewBorder()
 {
     DENG_ASSERT(inited);
 
@@ -216,10 +216,10 @@ void R_DrawViewBorder(void)
 
     // View background.
     Materials &materials = *App_Materials();
-    material_t *mat = materials.toMaterial(materials.resolveUri2(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]), true/*quiet please*/));
+    material_t *mat = materials.find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND])).material();
     if(mat)
     {
-        MaterialSnapshot const &ms = *materials.prepare(*mat, *Ui_MaterialSpec(), true);
+        MaterialSnapshot const &ms = materials.prepare(*mat, Ui_MaterialSpec(), true);
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.dimensions().width(), ms.dimensions().height(), 0, 0,

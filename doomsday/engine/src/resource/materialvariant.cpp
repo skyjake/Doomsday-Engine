@@ -28,8 +28,16 @@
 
 #include "resource/materialsnapshot.h"
 #include "render/r_main.h"
+#include "gl/gl_texmanager.h"
 
 namespace de {
+
+bool MaterialVariantSpec::compare(MaterialVariantSpec const &other) const
+{
+    if(this == &other) return 1;
+    if(context != other.context) return 0;
+    return 1 == GL_CompareTextureVariantSpecifications(primarySpec, other.primarySpec);
+}
 
 struct MaterialVariant::Instance
 {
@@ -43,7 +51,7 @@ struct MaterialVariant::Instance
     float inter;
 
     /// Specification used to derive this variant.
-    materialvariantspecification_s const *varSpec;
+    MaterialVariantSpec const *varSpec;
 
     /// Cached copy of current state if any.
     MaterialSnapshot *snapshot;
@@ -53,7 +61,7 @@ struct MaterialVariant::Instance
 
     MaterialVariant::Layer layers[MaterialVariant::max_layers];
 
-    Instance(material_t &generalCase, materialvariantspecification_t const &spec,
+    Instance(material_t &generalCase, MaterialVariantSpec const &spec,
              ded_material_t const &def)
         : material(&generalCase),
           hasTranslation(false), current(0), next(0), inter(0),
@@ -90,7 +98,7 @@ struct MaterialVariant::Instance
     }
 };
 
-MaterialVariant::MaterialVariant(material_t &generalCase, materialvariantspecification_t const &spec,
+MaterialVariant::MaterialVariant(material_t &generalCase, MaterialVariantSpec const &spec,
                                  ded_material_t const &def)
 {
     d = new Instance(generalCase, spec, def);
@@ -106,7 +114,7 @@ material_t &MaterialVariant::generalCase() const
     return *d->material;
 }
 
-materialvariantspecification_s const &MaterialVariant::spec() const
+MaterialVariantSpec const &MaterialVariant::spec() const
 {
     return *d->varSpec;
 }

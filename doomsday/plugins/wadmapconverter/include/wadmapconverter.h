@@ -32,6 +32,7 @@
 extern Id1Map* map;
 
 DENG_USING_API(Base);
+DENG_USING_API(Map);
 DENG_USING_API(Material);
 DENG_USING_API(MPE);
 DENG_USING_API(Plug);

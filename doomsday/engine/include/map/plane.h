@@ -26,6 +26,10 @@
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Return the index of plane within a sector's planes array.
 #define GET_PLANE_IDX(pln)      ( (int) ((pln) - (pln)->sector->planes[0]) )
 
@@ -46,5 +50,9 @@ int Plane_GetProperty(const Plane* plane, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Plane_SetProperty(Plane* plane, const setargs_t* args);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_PLANE

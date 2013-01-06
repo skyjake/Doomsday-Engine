@@ -294,8 +294,10 @@ DENG_HEADERS += \
     include/resource/image.h \
     include/resource/lumpcache.h \
     include/resource/material.h \
+    include/resource/materialarchive.h \
     include/resource/materialbind.h \
     include/resource/materials.h \
+    include/resource/materialscheme.h \
     include/resource/materialsnapshot.h \
     include/resource/materialvariant.h \
     include/resource/models.h \
@@ -514,12 +516,12 @@ SOURCES += \
     src/map/hedge.cpp \
     src/map/linedef.c \
     src/map/p_data.cpp \
-    src/map/p_dmu.c \
+    src/map/p_dmu.cpp \
     src/map/p_intercept.c \
     src/map/p_maputil.c \
     src/map/p_mobj.c \
     src/map/p_objlink.c \
-    src/map/p_particle.c \
+    src/map/p_particle.cpp \
     src/map/p_players.c \
     src/map/p_polyobjs.c \
     src/map/p_sight.c \
@@ -531,7 +533,7 @@ SOURCES += \
     src/map/r_world.cpp \
     src/map/sector.c \
     src/map/sidedef.c \
-    src/map/surface.c \
+    src/map/surface.cpp \
     src/map/vertex.cpp \
     src/network/masterserver.cpp \
     src/network/monitor.c \
@@ -582,9 +584,10 @@ SOURCES += \
     src/resource/hq2x.c \
     src/resource/image.cpp \
     src/resource/material.cpp \
-    src/resource/materialarchive.c \
+    src/resource/materialarchive.cpp \
     src/resource/materialbind.cpp \
     src/resource/materials.cpp \
+    src/resource/materialscheme.cpp \
     src/resource/materialsnapshot.cpp \
     src/resource/materialvariant.cpp \
     src/resource/models.cpp \

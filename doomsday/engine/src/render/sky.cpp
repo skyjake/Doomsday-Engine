@@ -167,7 +167,14 @@ static void configureDefaultSky()
     {
         skylayer_t *layer = &skyLayers[i];
         layer->flags = (i == 0? SLF_ACTIVE : 0);
-        layer->material = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path(DEFAULT_SKY_SPHERE_MATERIAL))));
+        try
+        {
+            layer->material = App_Materials()->find(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)).material();
+        }
+        catch(Materials::NotFoundError const &)
+        {
+            layer->material = 0;
+        }
         layer->offset = DEFAULT_SKY_SPHERE_XOFFSET;
         layer->fadeoutLimit = DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
     }
@@ -176,11 +183,12 @@ static void configureDefaultSky()
     horizonOffset = DEFAULT_SKY_HORIZON_OFFSET;
 }
 
-materialvariantspecification_t const *Sky_SphereMaterialSpec(bool masked)
+MaterialVariantSpec const &Sky_SphereMaterialSpec(bool masked)
 {
-    return App_Materials()->variantSpecificationForContext(MC_SKYSPHERE,
-        TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
-        0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1, false, true, false, false);
+    return App_Materials()->variantSpecForContext(MC_SKYSPHERE,
+                                                  TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
+                                                  0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1,
+                                                  false, true, false, false);
 }
 
 static void calculateSkyAmbientColor()
@@ -207,7 +215,7 @@ static void calculateSkyAmbientColor()
         if(!(slayer->flags & SLF_ACTIVE) || !slayer->material) continue;
 
         MaterialSnapshot const &ms =
-            *App_Materials()->prepare(*slayer->material, *Sky_SphereMaterialSpec(!!(slayer->flags & SLF_MASKED)), false);
+            App_Materials()->prepare(*slayer->material, Sky_SphereMaterialSpec(!!(slayer->flags & SLF_MASKED)), false);
 
         if(ms.hasTexture(MTU_PRIMARY))
         {
@@ -285,15 +293,19 @@ void Sky_Configure(ded_sky_t *def)
         Sky_LayerSetMasked(i, (sl->flags & SLF_MASKED) != 0);
         if(sl->material)
         {
-            material_t *mat = App_Materials()->toMaterial(App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(sl->material), true/*quiet please*/));
-            if(mat)
+            try
             {
-                Sky_LayerSetMaterial(i, mat);
+                material_t *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(sl->material)).material();
+                if(mat)
+                {
+                    Sky_LayerSetMaterial(i, mat);
+                }
             }
-            else
+            catch(Materials::NotFoundError const &er)
             {
-                AutoStr *path = Uri_ToString(sl->material);
-                Con_Message("Warning: Unknown material \"%s\" in sky def %i, using default.\n", Str_Text(path), i);
+                // Log but otherwise ignore this error.
+                LOG_WARNING(er.asText() + ". Unknown material \"%s\" in sky def %i, using default.")
+                    << *reinterpret_cast<de::Uri *>(sl->material) << i;
             }
         }
         Sky_LayerSetOffset(i, sl->offset);
@@ -593,10 +605,9 @@ static void internalSkyParams(int layer, int param, void *data)
         Sky_LayerSetMasked(layer, *((int *)data) == DD_YES);
         break;
 
-    case DD_MATERIAL: {
-        materialid_t materialId = *((materialid_t *)data);
-        Sky_LayerSetMaterial(layer, App_Materials()->toMaterial(materialId));
-        break; }
+    case DD_MATERIAL:
+        Sky_LayerSetMaterial(layer, (material_t *)data);
+        break;
 
     case DD_OFFSET:
         Sky_LayerSetOffset(layer, *((float *)data));
@@ -787,21 +798,21 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         if(renderTextures == 2)
         {
-            mat = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:gray"))));
+            mat = App_Materials()->find(de::Uri(Path("System:gray"))).material();
         }
         else
         {
             mat = Sky_LayerMaterial(layer);
             if(!mat)
             {
-                mat = App_Materials()->toMaterial(App_Materials()->resolveUri(de::Uri(Path("System:missing"))));
+                mat = App_Materials()->find(de::Uri(Path("System:missing"))).material();
                 rs.texXFlip = false;
             }
         }
         DENG_ASSERT(mat);
 
         MaterialSnapshot const &ms =
-            *App_Materials()->prepare(*mat, *Sky_SphereMaterialSpec(Sky_LayerMasked(layer)), true);
+            App_Materials()->prepare(*mat, Sky_SphereMaterialSpec(Sky_LayerMasked(layer)), true);
 
         rs.texSize.width  = ms.texture(MTU_PRIMARY).generalCase().width();
         rs.texSize.height = ms.texture(MTU_PRIMARY).generalCase().height();

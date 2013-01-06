@@ -36,6 +36,168 @@
 
 using namespace de;
 
+MaterialAnim::MaterialAnim(int _id, int _flags)
+    : id_(_id), flags_(_flags),
+      index(0), maxTimer(0), timer(0)
+{}
+
+int MaterialAnim::id() const
+{
+    return id_;
+}
+
+int MaterialAnim::flags() const
+{
+    return flags_;
+}
+
+int MaterialAnim::frameCount() const
+{
+    return frames.count();
+}
+
+MaterialAnim::Frame &MaterialAnim::frame(int number)
+{
+    if(number < 0 || number >= frameCount())
+    {
+        /// @throw InvalidFrameError Attempt to access an invalid frame.
+        throw InvalidFrameError("MaterialAnim::frame", QString("Invalid frame #%1, valid range [0..%2)").arg(number).arg(frameCount()));
+    }
+    return frames[number];
+}
+
+void MaterialAnim::addFrame(material_t &mat, int tics, int randomTics)
+{
+    LOG_AS("MaterialAnim::addFrame");
+
+    // Mark the material as being part of an animation group.
+    Material_SetGroupAnimated(&mat, true);
+
+    // Allocate a new frame.
+    frames.push_back(Frame(mat, tics, randomTics));
+}
+
+bool MaterialAnim::hasFrameForMaterial(material_t const &mat) const
+{
+    DENG2_FOR_EACH_CONST(Frames, i, frames)
+    {
+        if(&i->material() == &mat)
+            return true;
+    }
+    return false;
+}
+
+MaterialAnim::Frames const &MaterialAnim::allFrames() const
+{
+    return frames;
+}
+
+static void setVariantTranslation(MaterialVariant &variant, material_t *current, material_t *next)
+{
+    MaterialVariantSpec const &spec = variant.spec();
+    MaterialVariant *currentV, *nextV;
+
+    /// @todo kludge: Should not use App_Materials() here.
+    currentV = App_Materials()->chooseVariant(*current, spec, false, true/*create if necessary*/);
+    nextV    = App_Materials()->chooseVariant(*next,    spec, false, true/*create if necessary*/);
+    variant.setTranslation(currentV, nextV);
+}
+
+typedef struct {
+    material_t *current, *next;
+} setmaterialtranslationworker_parameters_t;
+
+static int setVariantTranslationWorker(struct materialvariant_s *variant, void *parameters)
+{
+    setmaterialtranslationworker_parameters_t *p = (setmaterialtranslationworker_parameters_t *) parameters;
+    setVariantTranslation(reinterpret_cast<MaterialVariant &>(*variant), p->current, p->next);
+    return 0; // Continue iteration.
+}
+
+static int setVariantTranslationPointWorker(struct materialvariant_s *variant, void *parameters)
+{
+    DENG2_ASSERT(parameters);
+    reinterpret_cast<MaterialVariant *>(variant)->setTranslationPoint(*(float *)parameters);
+    return 0; // Continue iteration.
+}
+
+void MaterialAnim::animate()
+{
+    // The Precache groups are not intended for animation.
+    if((flags_ & AGF_PRECACHE) || frames.isEmpty()) return;
+
+    if(--timer <= 0)
+    {
+        // Advance to next frame.
+        index = (index + 1) % frames.count();
+        Frame const &nextFrame = frames[index];
+        int newTimer = nextFrame.tics();
+
+        if(nextFrame.randomTics())
+        {
+            newTimer += int(RNG_RandByte()) % (nextFrame.randomTics() + 1);
+        }
+        timer = maxTimer = newTimer;
+
+        // Update translations.
+        for(int i = 0; i < frames.count(); ++i)
+        {
+            setmaterialtranslationworker_parameters_t params;
+
+            params.current = &frames[(index + i    ) % frames.count()].material();
+            params.next    = &frames[(index + i + 1) % frames.count()].material();
+            Material_IterateVariants(&frames[i].material(), setVariantTranslationWorker, &params);
+
+            // Surfaces using this material may need to be updated.
+            R_UpdateMapSurfacesOnMaterialChange(&frames[i].material());
+
+            // Just animate the first in the sequence?
+            if(flags_ & AGF_FIRST_ONLY) break;
+        }
+        return;
+    }
+
+    // Update the interpolation point of animated group members.
+    DENG2_FOR_EACH_CONST(Frames, i, frames)
+    {
+        /*ded_material_t *def = Material_Definition(mat);
+        if(def && def->layers[0].stageCount.num > 1)
+        {
+            de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture)
+            if(texUri && Textures::resolveUri(*texUri))
+                continue; // Animated elsewhere.
+        }*/
+
+        float interp;
+        if(flags_ & AGF_SMOOTH)
+        {
+            interp = 1 - timer / float( maxTimer );
+        }
+        else
+        {
+            interp = 0;
+        }
+
+        Material_IterateVariants(&i->material(), setVariantTranslationPointWorker, &interp);
+
+        // Just animate the first in the sequence?
+        if(flags_ & AGF_FIRST_ONLY) break;
+    }
+}
+
+void MaterialAnim::reset()
+{
+    // The Precache groups are not intended for animation.
+    if((flags_ & AGF_PRECACHE) || frames.isEmpty()) return;
+
+    timer = 0;
+    maxTimer = 1;
+
+    // The anim group should start from the first step using the
+    // correct timings.
+    index = frames.count() - 1;
+}
+
 typedef struct material_variantlist_node_s {
     struct material_variantlist_node_s *next;
     MaterialVariant *variant;
@@ -54,21 +216,22 @@ static void destroyVariants(material_t *mat)
     mat->_prepared = 0;
 }
 
-void Material_Initialize(material_t *mat)
+material_t *Material_New()
 {
-    DENG2_ASSERT(mat);
-    std::memset(mat, 0, sizeof *mat);
+    material_t *mat = (material_t *) M_Calloc(sizeof(*mat));
     mat->header.type = DMU_MATERIAL;
     mat->_envClass = MEC_UNKNOWN;
     mat->_size = Size2_New();
+    return mat;
 }
 
-void Material_Destroy(material_t *mat)
+void Material_Delete(material_t *mat)
 {
     DENG2_ASSERT(mat);
     Material_DestroyVariants(mat);
     Size2_Delete(mat->_size);
     mat->_size = 0;
+    M_Free(mat);
 }
 
 void Material_Ticker(material_t *mat, timespan_t time)
@@ -217,8 +380,8 @@ boolean Material_HasGlow(material_t *mat)
     if(novideo) return false;
 
     /// @todo We should not need to prepare to determine this.
-    MaterialSnapshot const &ms = reinterpret_cast<MaterialSnapshot const &>(
-        *App_Materials()->prepare(*mat, *Rend_MapSurfaceDiffuseMaterialSpec(), true));
+    MaterialSnapshot const &ms =
+        App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), true);
 
     return (ms.glowStrength() > .0001f);
 }
@@ -432,4 +595,40 @@ int Material_VariantCount(material_t const *mat)
 void Material_DestroyVariants(material_t *mat)
 {
     destroyVariants(mat);
+}
+
+int Material_GetProperty(material_t const *mat, setargs_t *args)
+{
+    DENG_ASSERT(mat && args);
+    switch(args->prop)
+    {
+    case DMU_FLAGS: {
+        short flags = Material_Flags(mat);
+        DMU_GetValue(DMT_MATERIAL_FLAGS, &flags, args, 0);
+        break; }
+
+    case DMU_WIDTH: {
+        int width = Material_Width(mat);
+        DMU_GetValue(DMT_MATERIAL_WIDTH, &width, args, 0);
+        break; }
+
+    case DMU_HEIGHT: {
+        int height = Material_Height(mat);
+        DMU_GetValue(DMT_MATERIAL_HEIGHT, &height, args, 0);
+        break; }
+
+    default: {
+        QByteArray msg = String("Material_GetProperty: No property %1.").arg(DMU_Str(args->prop)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+        return 0; /* Unreachable */ }
+    }
+    return false; // Continue iteration.
+}
+
+int Material_SetProperty(material_t *mat, setargs_t const *args)
+{
+    DENG_UNUSED(mat);
+    QByteArray msg = String("Material_SetProperty: Property '%1' is not writable.").arg(DMU_Str(args->prop)).toUtf8();
+    LegacyCore_FatalError(msg.constData());
+    return 0; // Unreachable.
 }

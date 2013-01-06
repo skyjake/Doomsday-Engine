@@ -22,60 +22,97 @@
 
 #ifdef __cplusplus
 
+#include <de/PathTree>
 #include "def_data.h"
-#include "resource/materials.h"
+#include "uri.hh"
+#include "resource/material.h"
 
 namespace de {
 
-    /**
-     * Contains extended info about a material binding (see MaterialBind).
-     * @note POD object.
-     */
-    struct MaterialBindInfo
-    {
-        ded_decor_t *decorationDefs[2];
-        ded_detailtexture_t *detailtextureDefs[2];
-        ded_ptcgen_t *ptcgenDefs[2];
-        ded_reflection_t *reflectionDefs[2];
-    };
+    class Materials;
+    class MaterialScheme;
 
-    class MaterialBind
+    class MaterialBind : public PathTree::Node
     {
     public:
-        MaterialBind(MaterialScheme::Index::Node &_direcNode, materialid_t id)
-            : direcNode(&_direcNode), asocMaterial(0), guid(id), extInfo(0)
-        {}
-
-        ~MaterialBind()
+        /**
+         * Contains extended info about a material binding.
+         * There are two links for each definition type, the first (index @c 0)
+         * for original game data and the second for external data.
+         */
+        struct Info
         {
-            MaterialBindInfo *detachedInfo = detachInfo();
-            if(detachedInfo) M_Free(detachedInfo);
-        }
+            ded_decor_t *decorationDefs[2];
+            ded_detailtexture_t *detailtextureDefs[2];
+            ded_ptcgen_t *ptcgenDefs[2];
+            ded_reflection_t *reflectionDefs[2];
+
+            Info();
+
+            /**
+             * Update the info with new linked definitions. Should be called:
+             *
+             * - When the bound material is changed/first-configured.
+             * - When said material's "custom" state changes.
+             *
+             * @param mat  Material to link the definitions of.
+             */
+            void linkDefinitions(material_t *mat);
+
+            /**
+             * Zeroes all links to definitions. Should be called when the
+             * definition database is reset.
+             */
+            void clearDefinitionLinks();
+        };
+
+    public:
+        MaterialBind(PathTree::NodeArgs const &args);
+
+        virtual ~MaterialBind();
+
+        void setId(materialid_t newId);
+
+        /**
+         * Returns the owning scheme of the material bind.
+         */
+        MaterialScheme &scheme() const;
+
+        /// Convenience method for returning the name of the owning scheme.
+        String const &schemeName() const;
+
+        /**
+         * Compose a URI of the form "scheme:path" for the material bind.
+         *
+         * The scheme component of the URI will contain the symbolic name of
+         * the scheme for the material bind.
+         *
+         * The path component of the URI will contain the percent-encoded path
+         * of the material bind.
+         */
+        Uri composeUri(QChar sep = '/') const;
 
         /// @return  Unique identifier associated with this.
-        materialid_t id() const { return guid; }
+        materialid_t id() const;
 
-        /// @return  Index node associated with this.
-        MaterialScheme::Index::Node &directoryNode() const { return *direcNode; }
+        /// @return  Material associated with this; otherwise @c NULL.
+        material_t *material() const;
 
-        /// @return  Material associated with this else @c NULL.
-        material_t *material() const { return asocMaterial; }
-
-        /// @return  Extended info owned by this else @c NULL.
-        MaterialBindInfo *info() const { return extInfo; }
+        /// @return  Extended info owned by this; otherwise @c NULL.
+        Info *info() const;
 
         /**
          * Attach extended info data to this. If existing info is present it is replaced.
          * MaterialBind is given ownership of the info.
          * @param info  Extended info data to attach.
          */
-        MaterialBind &attachInfo(MaterialBindInfo &info);
+        void attachInfo(Info &info);
 
         /**
          * Detach any extended info owned by this and relinquish ownership to the caller.
          * @return  Extended info or else @c NULL if not present.
          */
-        MaterialBindInfo *detachInfo();
+        Info *detachInfo();
 
         /**
          * Change the Material associated with this binding.
@@ -86,9 +123,8 @@ namespace de {
          *       MaterialBindInfo presently owned by this will destroyed (its invalid).
          *
          * @param  material  New Material to associate with this.
-         * @return  This instance.
          */
-        MaterialBind &setMaterial(material_t *material);
+        void setMaterial(material_t *material);
 
         /// @return  Detail texture definition associated with this else @c NULL
         ded_detailtexture_t *detailTextureDef() const;
@@ -102,19 +138,12 @@ namespace de {
         /// @return  Reflection definition associated with this else @c NULL
         ded_reflection_t *reflectionDef() const;
 
+        /// Returns a reference to the application's material system.
+        static Materials &materials();
+
     private:
-        /// This binding's node in the directory.
-        MaterialScheme::Index::Node *direcNode;
-
-        /// Material associated with this.
-        material_t *asocMaterial;
-
-        /// Unique identifier.
-        materialid_t guid;
-
-        /// Extended info about this binding. Will be attached upon successfull preparation
-        /// of the first derived variant of the associated Material.
-        MaterialBindInfo *extInfo;
+        struct Instance;
+        Instance *d;
     };
 
 } // namespace de

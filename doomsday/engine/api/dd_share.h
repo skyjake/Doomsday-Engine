@@ -1031,6 +1031,10 @@ typedef struct {
 #define DDMAX_MATERIAL_LAYERS   1
 ///@}
 
+/// Unique identifier associated with each archived material.
+/// @ingroup resource
+typedef unsigned short materialarchive_serialid_t;
+
 /**
  * @defgroup materialFlags  Material Flags
  * @ingroup apiFlags resource

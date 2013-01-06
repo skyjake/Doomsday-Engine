@@ -530,9 +530,10 @@ static void drawPageBackground(fi_page_t *p, float x, float y, float width, floa
 
     if(p->_bg.material)
     {
-        materialvariantspecification_t const *spec = App_Materials()->variantSpecificationForContext(
-            MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        MaterialSnapshot const &ms = *App_Materials()->prepare(*p->_bg.material, *spec, true);
+        MaterialVariantSpec const &spec =
+            App_Materials()->variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                                   0, 1, 0, false, false, false, false);
+        MaterialSnapshot const &ms = App_Materials()->prepare(*p->_bg.material, spec, true);
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
@@ -1025,9 +1026,10 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             material_t *mat = f->texRef.material;
             if(mat)
             {
-                materialvariantspecification_t const *spec = App_Materials()->variantSpecificationForContext(
-                    MC_UI, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -3, 0, false, false, false, false);
-                MaterialSnapshot const &ms = *App_Materials()->prepare(*mat, *spec, true);
+                MaterialVariantSpec const &spec =
+                    App_Materials()->variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                           0, -3, 0, false, false, false, false);
+                MaterialSnapshot const &ms = App_Materials()->prepare(*mat, spec, true);
 
                 GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
                 glEnable(GL_TEXTURE_2D);

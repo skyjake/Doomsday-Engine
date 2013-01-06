@@ -1295,7 +1295,7 @@ static int findSpriteOwner(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-static void cacheSpritesForState(int stateIndex, materialvariantspecification_t const &spec)
+static void cacheSpritesForState(int stateIndex, MaterialVariantSpec const &spec)
 {
     if(stateIndex < 0 || stateIndex >= defs.count.states.num) return;
 
@@ -1307,7 +1307,7 @@ static void cacheSpritesForState(int stateIndex, materialvariantspecification_t 
         spriteframe_t *sprFrame = &sprDef->spriteFrames[i];
         for(int k = 0; k < 8; ++k)
         {
-            App_Materials()->precache(*sprFrame->mats[k], spec, true);
+            App_Materials()->cache(*sprFrame->mats[k], spec, true);
         }
     }
 }
@@ -1320,7 +1320,7 @@ DENG_EXTERN_C void Rend_CacheForMobjType(int num)
     if(novideo || !((useModels && precacheSkins) || precacheSprites)) return;
     if(num < 0 || num >= defs.count.mobjs.num) return;
 
-    materialvariantspecification_t const &spec = *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
+    MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
     /// @todo Optimize: Traverses the entire state list!
     for(int i = 0; i < defs.count.states.num; ++i)
@@ -1347,20 +1347,20 @@ void Rend_CacheForMap()
 
     if(precacheMapMaterials)
     {
-        materialvariantspecification_t const &spec = *Rend_MapSurfaceDiffuseMaterialSpec();
+        MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
         for(uint i = 0; i < NUM_SIDEDEFS; ++i)
         {
             SideDef *side = SIDE_PTR(i);
 
             if(side->SW_middlematerial)
-                App_Materials()->precache(*side->SW_middlematerial, spec, true);
+                App_Materials()->cache(*side->SW_middlematerial, spec, true);
 
             if(side->SW_topmaterial)
-                App_Materials()->precache(*side->SW_topmaterial, spec, true);
+                App_Materials()->cache(*side->SW_topmaterial, spec, true);
 
             if(side->SW_bottommaterial)
-                App_Materials()->precache(*side->SW_bottommaterial, spec, true);
+                App_Materials()->cache(*side->SW_bottommaterial, spec, true);
         }
 
         for(uint i = 0; i < NUM_SECTORS; ++i)
@@ -1371,14 +1371,14 @@ void Rend_CacheForMap()
             for(uint k = 0; k < sec->planeCount; ++k)
             {
                 if(sec->SP_planematerial(k))
-                    App_Materials()->precache(*sec->SP_planematerial(k), spec, true);
+                    App_Materials()->cache(*sec->SP_planematerial(k), spec, true);
             }
         }
     }
 
     if(precacheSprites)
     {
-        materialvariantspecification_t const &spec = *Sprite_MaterialSpec(0/*tclass*/, 0/*tmap*/);
+        MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
         for(int i = 0; i < numSprites; ++i)
         {
@@ -1395,7 +1395,7 @@ void Rend_CacheForMap()
                     spriteframe_t *sprFrame = &sprDef->spriteFrames[k];
                     for(int m = 0; m < 8; ++m)
                     {
-                        App_Materials()->precache(*sprFrame->mats[m], spec, true);
+                        App_Materials()->cache(*sprFrame->mats[m], spec, true);
                     }
                 }
             }

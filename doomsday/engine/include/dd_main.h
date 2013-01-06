@@ -31,9 +31,8 @@
 
 #include "dd_types.h"
 #include "api_plugin.h"
-#ifndef __cplusplus // Kludge: this isn't yet C++ compatible
-#  include "resource/textures.h"
-#endif
+#include "resource/materials.h"
+#include "resource/textures.h"
 #include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>
 
@@ -195,7 +194,7 @@ de::ResourceClass& DD_ResourceClassById(resourceclassid_t classId);
 de::ResourceClass& DD_ResourceClassByName(de::String name);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
-de::String const &DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
+de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 
 extern "C" {
 #endif // __cplusplus
@@ -205,8 +204,8 @@ fontschemeid_t DD_ParseFontSchemeName(char const *str);
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 AutoStr *DD_MaterialSchemeNameForTextureScheme(Str const *textureSchemeName);
 
-/// @return  Unique identifier of the material associated with specified @a textureUri.
-materialid_t DD_MaterialForTextureUri(Uri const *uri);
+/// @return  Material associated with specified @a textureUri; otherwise @c NULL.
+material_t *DD_MaterialForTextureUri(Uri const *textureUri);
 
 const char* value_Str(int val);
 

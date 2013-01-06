@@ -239,7 +239,10 @@ DENG_HEADERS += \
     $$SRC/include/resource/image.h \
     $$SRC/include/resource/lumpcache.h \
     $$SRC/include/resource/material.h \
+    $$SRC/include/resource/materialarchive.h \
+    $$SRC/include/resource/materialbind.h \
     $$SRC/include/resource/materials.h \
+    $$SRC/include/resource/materialscheme.h \
     $$SRC/include/resource/materialsnapshot.h \
     $$SRC/include/resource/materialvariant.h \
     $$SRC/include/resource/patch.h \
@@ -397,12 +400,12 @@ SOURCES += \
     $$SRC/src/map/hedge.cpp \
     $$SRC/src/map/linedef.c \
     $$SRC/src/map/p_data.cpp \
-    $$SRC/src/map/p_dmu.c \
+    $$SRC/src/map/p_dmu.cpp \
     $$SRC/src/map/p_intercept.c \
     $$SRC/src/map/p_maputil.c \
     $$SRC/src/map/p_mobj.c \
     $$SRC/src/map/p_objlink.c \
-    $$SRC/src/map/p_particle.c \
+    $$SRC/src/map/p_particle.cpp \
     $$SRC/src/map/p_players.c \
     $$SRC/src/map/p_polyobjs.c \
     $$SRC/src/map/p_sight.c \
@@ -414,7 +417,7 @@ SOURCES += \
     $$SRC/src/map/r_world.cpp \
     $$SRC/src/map/sector.c \
     $$SRC/src/map/sidedef.c \
-    $$SRC/src/map/surface.c \
+    $$SRC/src/map/surface.cpp \
     $$SRC/src/map/vertex.cpp \
     $$SRC/src/network/masterserver.cpp \
     $$SRC/src/network/monitor.c \
@@ -438,9 +441,10 @@ SOURCES += \
     $$SRC/src/resource/hq2x.c \
     $$SRC/src/resource/image.cpp \
     $$SRC/src/resource/material.cpp \
-    $$SRC/src/resource/materialarchive.c \
+    $$SRC/src/resource/materialarchive.cpp \
     $$SRC/src/resource/materialbind.cpp \
     $$SRC/src/resource/materials.cpp \
+    $$SRC/src/resource/materialscheme.cpp \
     $$SRC/src/resource/materialsnapshot.cpp \
     $$SRC/src/resource/materialvariant.cpp \
     $$SRC/src/resource/patch.cpp \

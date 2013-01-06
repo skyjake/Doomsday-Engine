@@ -21,7 +21,7 @@
 #define LIBDENG_RESOURCE_MATERIALVARIANT_H
 
 /// Material (Usage) Context identifiers.
-typedef enum materialcontext_e {
+typedef enum {
     MC_UNKNOWN = -1,
     MATERIALCONTEXT_FIRST = 0,
     MC_UI = MATERIALCONTEXT_FIRST,
@@ -38,133 +38,188 @@ typedef enum materialcontext_e {
 /// @c true= val can be interpreted as a valid material context identifier.
 #define VALID_MATERIALCONTEXT(val) ((val) >= MATERIALCONTEXT_FIRST && (val) <= MATERIALCONTEXT_LAST)
 
-struct texturevariantspecification_s;
-
-typedef struct materialvariantspecification_s {
-    enum materialcontext_e context;
-    struct texturevariantspecification_s *primarySpec;
-} materialvariantspecification_t;
-
 #ifdef __cplusplus
 
 #include "def_data.h"
 #include "resource/materialsnapshot.h"
 #include "resource/texture.h"
 
+struct texturevariantspecification_s;
 struct material_s;
 
 namespace de {
 
-/**
- * @ingroup resource
- */
-class MaterialVariant
-{
-public:
-    /// Maximum number of layers a material supports.
-    static int const max_layers = DDMAX_MATERIAL_LAYERS;
-
-    struct Layer
+    /**
+     * @ingroup resource
+     */
+    struct MaterialVariantSpec
     {
-        /// @c -1 => layer not in use.
-        int stage;
+        /// Usage context identifier.
+        materialcontext_t context;
 
-        /// Texture of the layer.
-        Texture *texture;
+        /// Specification for the primary texture.
+        struct texturevariantspecification_s *primarySpec;
 
-        /// Origin of the layer in material-space.
-        float texOrigin[2];
+        /**
+         * Construct a default MaterialVariantSpec instance.
+         */
+        MaterialVariantSpec() : context(MC_UNKNOWN), primarySpec(0)
+        {}
 
-        /// Glow strength for the layer.
-        float glow;
+        /**
+         * Construct a MaterialVariantSpec instance by duplicating @a other.
+         */
+        MaterialVariantSpec(MaterialVariantSpec const &other)
+            : context(other.context), primarySpec(other.primarySpec)
+        {}
 
-        /// Current frame?
-        short tics;
+        /**
+         * Determines whether specification @a other is equal to this specification.
+         *
+         * @param other  The other specification.
+         * @return  @c true if specifications are equal; otherwise @c false.
+         *
+         * Same as operator ==
+         */
+        bool compare(MaterialVariantSpec const &other) const;
+
+        /**
+         * Determines whether specification @a other is equal to this specification.
+         * @see compare()
+         */
+        bool operator == (MaterialVariantSpec const &other) const {
+            return compare(other);
+        }
+
+        /**
+         * Determines whether specification @a other is NOT equal to this specification.
+         * @see compare()
+         */
+        bool operator != (MaterialVariantSpec const &other) const {
+            return !(*this == other);
+        }
     };
 
-public:
-    /// The requested layer does not exist. @ingroup errors
-    DENG2_ERROR(InvalidLayerError);
-
-public:
-    MaterialVariant(struct material_s &generalCase, materialvariantspecification_t const &spec,
-                    ded_material_t const &def);
-    ~MaterialVariant();
-
     /**
-     * Process a system tick event.
-     * @param time  Length of the tick in seconds.
+     * @ingroup resource
      */
-    void ticker(timespan_t time);
+    class MaterialVariant
+    {
+    public:
+        /// Maximum number of layers a material supports.
+        static int const max_layers = DDMAX_MATERIAL_LAYERS;
 
-    /**
-     * Reset the staged animation point for this Material.
-     */
-    void resetAnim();
+        struct Layer
+        {
+            /// @c -1 => layer not in use.
+            int stage;
 
-    /// @return  Material from which this variant is derived.
-    struct material_s &generalCase() const;
+            /// Texture of the layer.
+            Texture *texture;
 
-    /// @return  MaterialVariantSpecification from which this variant is derived.
-    materialvariantspecification_t const &spec() const;
+            /// Origin of the layer in material-space.
+            float texOrigin[2];
 
-    /**
-     * Retrieve a handle for a staged animation layer form this variant.
-     * @param layer  Index of the layer to retrieve.
-     * @return  MaterialVariantLayer for the specified layer index.
-     */
-    Layer const &layer(int layer);
+            /// Glow strength for the layer.
+            float glow;
 
-    /**
-     * Attach MaterialSnapshot data to this. MaterialVariant is given ownership of @a materialSnapshot.
-     * @return  Same as @a materialSnapshot for caller convenience.
-     */
-    MaterialSnapshot &attachSnapshot(MaterialSnapshot &snapshot);
+            /// Current frame?
+            short tics;
+        };
 
-    /**
-     * Detach MaterialSnapshot data from this. Ownership of the data is relinquished to the caller.
-     */
-    MaterialSnapshot *detachSnapshot();
+    public:
+        /// The requested layer does not exist. @ingroup errors
+        DENG2_ERROR(InvalidLayerError);
 
-    /// @return  MaterialSnapshot data associated with this.
-    MaterialSnapshot *snapshot() const;
+    public:
+        MaterialVariant(struct material_s &generalCase, MaterialVariantSpec const &spec,
+                        ded_material_t const &def);
+        ~MaterialVariant();
 
-    /// @return  Frame count when the snapshot was last prepared/updated.
-    int snapshotPrepareFrame() const;
+        /**
+         * Retrieve the general case for this variant. Allows for a variant
+         * reference to be used in place of a material (implicit indirection).
+         *
+         * @see generalCase()
+         */
+        inline operator material_t &() const {
+            return generalCase();
+        }
 
-    /**
-     * Change the frame when the snapshot was last prepared/updated.
-     * @param frame  Frame to mark the snapshot with.
-     */
-    void setSnapshotPrepareFrame(int frame);
+        /**
+         * Process a system tick event.
+         * @param time  Length of the tick in seconds.
+         */
+        void ticker(timespan_t time);
 
-    /// @return  Translated 'next' (or target) MaterialVariant if set, else this.
-    MaterialVariant *translationNext();
+        /**
+         * Reset the staged animation point for this Material.
+         */
+        void resetAnim();
 
-    /// @return  Translated 'current' MaterialVariant if set, else this.
-    MaterialVariant *translationCurrent();
+        /// @return  Material from which this variant is derived.
+        struct material_s &generalCase() const;
 
-    /// @return  Translation position [0..1]
-    float translationPoint();
+        /// @return  MaterialVariantSpec from which this variant is derived.
+        MaterialVariantSpec const &spec() const;
 
-    /**
-     * Change the translation target for this variant.
-     *
-     * @param current  Translated 'current' MaterialVariant.
-     * @param next  Translated 'next' (or target) MaterialVariant.
-     */
-    void setTranslation(MaterialVariant *current, MaterialVariant *next);
+        /**
+         * Retrieve a handle for a staged animation layer for this variant.
+         * @param layer  Index of the layer to retrieve.
+         * @return  MaterialVariantLayer for the specified layer index.
+         */
+        Layer const &layer(int layer);
 
-    /**
-     * Change the translation point for this variant.
-     * @param inter  Translation point.
-     */
-    void setTranslationPoint(float inter);
+        /**
+         * Attach MaterialSnapshot data to this. MaterialVariant is given ownership of @a materialSnapshot.
+         * @return  Same as @a materialSnapshot for caller convenience.
+         */
+        MaterialSnapshot &attachSnapshot(MaterialSnapshot &snapshot);
 
-private:
-    struct Instance;
-    Instance *d;
-};
+        /**
+         * Detach MaterialSnapshot data from this. Ownership of the data is relinquished to the caller.
+         */
+        MaterialSnapshot *detachSnapshot();
+
+        /// @return  MaterialSnapshot data associated with this; otherwise @c 0.
+        MaterialSnapshot *snapshot() const;
+
+        /// @return  Frame count when the snapshot was last prepared/updated.
+        int snapshotPrepareFrame() const;
+
+        /**
+         * Change the frame when the snapshot was last prepared/updated.
+         * @param frame  Frame to mark the snapshot with.
+         */
+        void setSnapshotPrepareFrame(int frame);
+
+        /// @return  Translated 'next' (or target) MaterialVariant if set, else this.
+        MaterialVariant *translationNext();
+
+        /// @return  Translated 'current' MaterialVariant if set, else this.
+        MaterialVariant *translationCurrent();
+
+        /// @return  Translation position [0..1]
+        float translationPoint();
+
+        /**
+         * Change the translation target for this variant.
+         *
+         * @param current  Translated 'current' MaterialVariant.
+         * @param next  Translated 'next' (or target) MaterialVariant.
+         */
+        void setTranslation(MaterialVariant *current, MaterialVariant *next);
+
+        /**
+         * Change the translation point for this variant.
+         * @param inter  Translation point.
+         */
+        void setTranslationPoint(float inter);
+
+    private:
+        struct Instance;
+        Instance *d;
+    };
 
 } // namespace de
 

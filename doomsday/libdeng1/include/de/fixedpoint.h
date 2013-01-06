@@ -4,8 +4,8 @@
  * @par Build Options
  * Define DENG_NO_FIXED_ASM to disable the assembler fixed-point routines.
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -37,6 +37,10 @@
 #define FIX2FLT(x)      ( (x) / (float) FRACUNIT )
 #define Q_FIX2FLT(x)    ( (float) ((x) >> FRACBITS) )
 #define FLT2FIX(x)      ( (fixed_t) ((x) * FRACUNIT) )
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if !defined( DENG_NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
 
@@ -75,5 +79,9 @@ DENG_PUBLIC fixed_t FixedDiv2(fixed_t a, fixed_t b);
 #endif // DENG_NO_FIXED_ASM
 
 DENG_PUBLIC fixed_t FixedDiv(fixed_t a, fixed_t b);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDENG_FIXED_POINT_MATH_H

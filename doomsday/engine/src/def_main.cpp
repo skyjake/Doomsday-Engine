@@ -3,7 +3,7 @@
  *
  * Definitions Subsystem.
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2003-2012 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -468,112 +468,133 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
     return def;
 }
 
-ded_decor_t* Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_decor_t *Def_GetDecoration(material_t *mat, boolean hasExternal, boolean isCustom)
 {
-    ded_decor_t* def;
+    DENG_ASSERT(mat);
+    ded_decor_t *def;
     int i;
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        materialid_t defMatId;
-
         if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
-        defMatId = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->material), true/*quiet please*/);
-        if(matId == defMatId && R_IsAllowedDecoration(def, hasExternal, isCustom))
-            return def;
+        try
+        {
+            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
+            if(mat == defMat && R_IsAllowedDecoration(def, hasExternal, isCustom))
+                return def;
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
     }
     return NULL;
 }
 
-ded_reflection_t* Def_GetReflection(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_reflection_t *Def_GetReflection(material_t *mat, boolean hasExternal, boolean isCustom)
 {
-    ded_reflection_t* def;
+    DENG_ASSERT(mat);
+    ded_reflection_t *def;
     int i;
     for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
     {
-        materialid_t defMatId;
-
         if(!def->material || Uri_IsEmpty(def->material)) continue;
 
         // Is this suitable?
-        defMatId = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->material), true/*quiet please*/);
-        if(matId == defMatId && R_IsAllowedReflection(def, hasExternal, isCustom))
-            return def;
+        try
+        {
+            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
+            if(mat == defMat && R_IsAllowedReflection(def, hasExternal, isCustom))
+                return def;
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
     }
     return NULL;
 }
 
-ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_detailtexture_t *Def_GetDetailTex(material_t *mat, boolean hasExternal, boolean isCustom)
 {
-    ded_detailtexture_t* def;
+    DENG_ASSERT(mat);
+    ded_detailtexture_t *def;
     int i;
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
         if(def->material1 && !Uri_IsEmpty(def->material1))
         {
-            materialid_t defMatId = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->material1), true/*quiet please*/);
             // Is this suitable?
-            if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
-                return def;
+            try
+            {
+                material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material1)).material();
+                if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
+                    return def;
+            }
+            catch(Materials::NotFoundError const &)
+            {} // Ignore this error.
         }
 
         if(def->material2 && !Uri_IsEmpty(def->material2))
         {
-            materialid_t defMatId = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->material2), true/*quiet please*/);
             // Is this suitable?
-            if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
-                return def;
+            try
+            {
+                material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material2)).material();
+                if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
+                    return def;
+            }
+            catch(Materials::NotFoundError const &)
+            {} // Ignore this error.
         }
     }
     return NULL;
 }
 
-ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean isCustom)
+ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isCustom)
 {
+    DENG_ASSERT(mat);
     DENG_UNUSED(hasExternal); DENG_UNUSED(isCustom);
 
-    ded_ptcgen_t* def = defs.ptcGens;
+    ded_ptcgen_t *def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
-        materialid_t defMatId;
-
         if(!def->material || Uri_IsEmpty(def->material)) continue;
 
-        defMatId = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->material), true/*quiet please*/);
-        if(defMatId == NOMATERIALID) continue;
-
         // Is this suitable?
-        if(def->flags & PGF_GROUP)
+        try
         {
-            /**
-             * Generator triggered by all materials in the (animation) group.
-             * A search is necessary only if we know both the used material and
-             * the specified material in this definition are in *a* group.
-             */
-            material_t* mat = App_Materials()->toMaterial(matId);
-            material_t* defMat = App_Materials()->toMaterial(defMatId);
-            if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
+            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
+
+            if(def->flags & PGF_GROUP)
             {
-                int g, numGroups = App_Materials()->animGroupCount();
-
-                for(g = 0; g < numGroups; ++g)
+                /**
+                 * Generator triggered by all materials in the (animation) group.
+                 * A search is necessary only if we know both the used material and
+                 * the specified material in this definition are in *a* group.
+                 */
+                if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
                 {
-                    if(App_Materials()->isPrecacheAnimGroup(g))
-                        continue; // Precache groups don't apply.
-
-                    if(App_Materials()->isMaterialInAnimGroup(defMat, g) &&
-                       App_Materials()->isMaterialInAnimGroup(mat, g))
+                    Materials::AnimGroups const &groups = App_Materials()->allAnimGroups();
+                    DENG2_FOR_EACH_CONST(Materials::AnimGroups, k, groups)
                     {
-                        // Both are in this group! This def will do.
-                        return def;
+                        MaterialAnim const &group = *k;
+
+                        // Precache groups do not apply.
+                        if(group.flags() & AGF_PRECACHE) continue;
+
+                        if(group.hasFrameForMaterial(*defMat) &&
+                           group.hasFrameForMaterial(*mat))
+                        {
+                            // Both are in this group! This def will do.
+                            return def;
+                        }
                     }
                 }
             }
-        }
 
-        if(matId == defMatId)
-            return def;
+            if(mat == defMat)
+                return def;
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
     }
     return NULL; // Not found.
 }
@@ -1178,15 +1199,20 @@ void Def_Read()
     for(int i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t *def = &defs.materials[i];
-        material_t *mat = App_Materials()->toMaterial(App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->uri), true/*quiet please*/));
-        if(!mat)
+        try
+        {
+            MaterialBind &bind = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->uri));
+            if(material_t *mat = bind.material())
+            {
+                // Update existing.
+                App_Materials()->rebuild(*mat, def);
+            }
+        }
+        catch(Materials::NotFoundError const &)
         {
             // A new Material.
-            App_Materials()->newFromDef(def);
-            continue;
+            App_Materials()->newFromDef(*def);
         }
-        // Update existing.
-        App_Materials()->rebuild(mat, def);
     }
 
     DED_NewEntries((void **) &stateLights, &countStateLights, sizeof(*stateLights), defs.count.states.num);
@@ -1398,23 +1424,33 @@ void Def_Read()
 
 static void initAnimGroup(ded_group_t *def)
 {
+    DENG_ASSERT(def);
+
     int groupNumber = -1;
     for(int i = 0; i < def->count.num; ++i)
     {
         ded_group_member_t *gm = &def->members[i];
-
         if(!gm->material) continue;
 
-        material_t *mat = App_Materials()->toMaterial(App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(gm->material), true/*quiet please*/));
-        if(!mat) continue;
-
-        // Only create a group when the first texture is found.
-        if(groupNumber == -1)
+        try
         {
-            groupNumber = App_Materials()->newAnimGroup(def->flags);
-        }
+            material_t *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(gm->material)).material();
 
-        App_Materials()->addAnimGroupFrame(groupNumber, mat, gm->tics, gm->randomTics);
+            // Only create the group once the first texture has been found.
+            if(groupNumber == -1)
+            {
+                groupNumber = App_Materials()->newAnimGroup(def->flags);
+            }
+
+            App_Materials()->animGroup(groupNumber).addFrame(*mat, gm->tics, gm->randomTics);
+        }
+        catch(Materials::NotFoundError const &er)
+        {
+            // Log but otherwise ignore this error.
+            LOG_WARNING(er.asText() + ". Unknown material \"%s\" in group def %i, ignoring.")
+                << *reinterpret_cast<de::Uri *>(gm->material)
+                << i;
+        }
     }
 }
 
@@ -1583,7 +1619,7 @@ void Def_PostInit(void)
     }
 
     // Animation groups.
-    App_Materials()->clearAnimGroups();
+    App_Materials()->clearAllAnimGroups();
     for(int i = 0; i < defs.count.groups.num; ++i)
     {
         initAnimGroup(&defs.groups[i]);
@@ -1671,8 +1707,19 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
 
-    l->actMaterial = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->actMaterial), true/*quiet please*/);
-    l->deactMaterial = App_Materials()->resolveUri2(*reinterpret_cast<de::Uri *>(def->deactMaterial), true/*quiet please*/);
+    try
+    {
+        l->actMaterial = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->actMaterial)).id();
+    }
+    catch(Materials::NotFoundError const &)
+    {} // Ignore this error.
+
+    try
+    {
+        l->deactMaterial = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->deactMaterial)).id();
+    }
+    catch(Materials::NotFoundError const &)
+    {} // Ignore this error.
 
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
@@ -1700,9 +1747,18 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
             if(def->iparmStr[k][0])
             {
                 if(!stricmp(def->iparmStr[k], "-1"))
+                {
                     l->iparm[k] = -1;
+                }
                 else
-                    l->iparm[k] = App_Materials()->resolveUri2(de::Uri(Path(def->iparmStr[k])), true/*quiet please*/);
+                {
+                    try
+                    {
+                        l->iparm[k] = App_Materials()->find(de::Uri(Path(def->iparmStr[k]))).id();
+                    }
+                    catch(Materials::NotFoundError const &)
+                    {} // Ignore this error.
+                }
             }
         }
         else if(a & MAP_MUS)
