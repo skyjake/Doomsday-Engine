@@ -300,11 +300,13 @@ def doTask(task):
 
     if task.startswith('branch_'):
         msg("SWITCH TO BRANCH: " + task[7:])
+        autobuild('pull')
         switchToBranch(task[7:])
         return autobuild('pull')
 
     elif task.startswith('buildfrom_'):
         msg("SWITCH TO BRANCH FOR BUILD: " + task[10:])
+        autobuild('pull')
         switchToBranch(task[10:])
         return autobuild('pull')
 
