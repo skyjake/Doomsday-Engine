@@ -34,8 +34,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "dengproject.h"
-#include "api_plugin.h"
+#include "dd_version.h"
 
 #ifndef JHERETIC_VER_ID
 #  ifdef _DEBUG

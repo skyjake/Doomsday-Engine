@@ -32,6 +32,8 @@ extern "C" {
 
 #define DOOMSDAY_NICENAME       "Doomsday Engine"
 
+#define LIBDENG_PLUGINDESC      "(" DOOMSDAY_NICENAME " Plugin)"
+
 #define DOOMSDAY_HOMEURL        "http://dengine.net"
 #define DOOMSDAY_MASTERURL      "http://dengine.net/master.php"
 #define DOOMSDAY_DOCSURL        "http://dengine.net/dew"

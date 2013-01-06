@@ -33,8 +33,7 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-#include "dengproject.h"
-#include "api_plugin.h"
+#include "dd_version.h"
 
 #ifndef JDOOM64_VER_ID
 #  ifdef _DEBUG

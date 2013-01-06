@@ -34,8 +34,7 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "dengproject.h"
-#include "api_plugin.h"
+#include "dd_version.h"
 
 #ifndef JDOOM_VER_ID
 #  ifdef _DEBUG

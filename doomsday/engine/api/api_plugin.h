@@ -35,8 +35,6 @@
 extern "C" {
 #endif
 
-#define LIBDENG_PLUGINDESC      "(" DOOMSDAY_NICENAME " Plugin)"
-
 #define MAX_HOOKS               16
 #define HOOKF_EXCLUSIVE         0x01000000
 

@@ -34,8 +34,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "dengproject.h"
-#include "api_plugin.h"
+#include "dd_version.h"
 
 #ifndef JHEXEN_VER_ID
 #  ifdef _DEBUG
