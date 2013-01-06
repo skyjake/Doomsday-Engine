@@ -91,11 +91,11 @@ DENG_API_TYPEDEF(MaterialArchive)
      * Deserializes the state of the archive from @a reader.
      *
      * @param arc  MaterialArchive instance.
+     * @param reader  Reader instance.
      * @param forcedVersion  Version to interpret as, not actual format version. Use -1 to use whatever
      *                       version is encountered.
-     * @param reader  Reader instance.
      */
-    void (*Read)(MaterialArchive *arc, int forcedVersion, Reader *reader);
+    void (*Read)(MaterialArchive *arc, Reader *reader, int forcedVersion);
 }
 DENG_API_T(MaterialArchive);
 

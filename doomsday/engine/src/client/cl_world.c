@@ -75,7 +75,7 @@ void Cl_ReadServerMaterials(void)
     {
         serverMaterials = MaterialArchive_NewEmpty(false /*no segment check*/);
     }
-    MaterialArchive_Read(serverMaterials, -1, msgReader);
+    MaterialArchive_Read(serverMaterials, msgReader, -1 /*no forced version*/);
 
 #ifdef _DEBUG
     Con_Message("Cl_ReadServerMaterials: Received %i materials.\n", MaterialArchive_Count(serverMaterials));

@@ -84,6 +84,35 @@ static void readArchivedUri(Uri &uri, int version, reader_s &reader)
     }
 }
 
+/**
+ * Mappings between URI and material_t.
+ * The pointer user value holds a pointer to the resolved Material (if found).
+ * The integer user value tracks whether a material has yet been looked up.
+ */
+typedef StringPool Records;
+typedef StringPool::Id SerialId;
+
+static material_t *findRecordMaterial(Records &records, SerialId id)
+{
+    // Time to lookup the material for the record's URI?
+    if(!records.userValue(id))
+    {
+        material_t *material = 0;
+        try
+        {
+            material = App_Materials()->find(Uri(records.stringRef(id), RC_NULL)).material();
+        }
+        catch(Materials::NotFoundError const &)
+        {} // Ignore this error.
+
+        records.setUserPointer(id, material);
+        records.setUserValue(id, true);
+        return material;
+    }
+
+    return (material_t *) records.userPointer(id);
+}
+
 struct MaterialArchive::Instance
 {
     /// Logical version number of the archive.
@@ -92,12 +121,8 @@ struct MaterialArchive::Instance
     /// Segment id assertion (Hexen saves).
     bool useSegments;
 
-    /**
-     * Mappings between URI and material_t.
-     * The pointer user value holds a pointer to the resolved Material (if found).
-     * The integer user value tracks whether a material has yet been looked up.
-     */
-    StringPool records;
+    /// Mappings between URI and material_t.
+    Records records;
 
     /// Used with older versions.
     int numFlats;
@@ -107,7 +132,7 @@ struct MaterialArchive::Instance
           useSegments(_useSegments), numFlats(0)
     {}
 
-    inline StringPool::Id insertRecord(Uri const &uri)
+    inline SerialId insertRecord(Uri const &uri)
     {
         return records.intern(uri.compose());
     }
@@ -125,7 +150,7 @@ struct MaterialArchive::Instance
         for(uint i = 1; i < num + 1; ++i)
         {
             MaterialBind *bind = App_Materials()->toMaterialBind(i);
-            StringPool::Id id = insertRecord(bind->composeUri());
+            SerialId id = insertRecord(bind->composeUri());
             records.setUserPointer(id, bind->material());
             records.setUserValue(id, true);
         }
@@ -208,31 +233,16 @@ MaterialArchive::~MaterialArchive()
 }
 
 struct findUniqueSerialIdWorker_params {
-    StringPool *table;
+    Records *records;
     material_t *material;
 };
 
-static int findUniqueSerialIdWorker(StringPool::Id id, void *parameters)
+static int findUniqueSerialIdWorker(SerialId id, void *parameters)
 {
     findUniqueSerialIdWorker_params *parm = (findUniqueSerialIdWorker_params*) parameters;
 
-    // Time to lookup the material for the record's URI?
-    if(!parm->table->userValue(id))
-    {
-        material_t *material = 0;
-        try
-        {
-            material = App_Materials()->find(Uri(parm->table->stringRef(id), RC_NULL)).material();
-        }
-        catch(Materials::NotFoundError const &)
-        {} // Ignore this error.
-
-        parm->table->setUserPointer(id, material);
-        parm->table->setUserValue(id, true);
-    }
-
     // Is this the material we are looking for?
-    if(parm->table->userPointer(id) == parm->material)
+    if(findRecordMaterial(*parm->records, id) == parm->material)
         return id;
 
     return 0; // Continue iteration.
@@ -243,10 +253,10 @@ materialarchive_serialid_t MaterialArchive::findUniqueSerialId(material_t *mater
     if(!material) return 0; // Invalid.
 
     findUniqueSerialIdWorker_params parm;
-    parm.table    = &d->records;
+    parm.records  = &d->records;
     parm.material = material;
 
-    StringPool::Id found = d->records.iterate(findUniqueSerialIdWorker, &parm);
+    SerialId found = d->records.iterate(findUniqueSerialIdWorker, &parm);
     if(found) return found; // Yes. Return existing serial.
 
     return d->records.size() + 1;
@@ -271,23 +281,7 @@ material_t *MaterialArchive::find(materialarchive_serialid_t serialId, int group
             return 0;
     }
 
-    // Time to lookup the material for the record's URI?
-    if(!d->records.userValue(serialId))
-    {
-        material_t *material = 0;
-        try
-        {
-            material = App_Materials()->find(Uri(d->records.stringRef(serialId), RC_NULL)).material();
-        }
-        catch(Materials::NotFoundError const &)
-        {} // Ignore this error.
-
-        d->records.setUserPointer(serialId, material);
-        d->records.setUserValue(serialId, true);
-        return material;
-    }
-
-    return (material_t *) d->records.userPointer(serialId);
+    return findRecordMaterial(d->records, serialId);
 }
 
 int MaterialArchive::count() const
@@ -301,7 +295,7 @@ void MaterialArchive::write(writer_s &writer) const
     d->writeGroup(writer);
 }
 
-void MaterialArchive::read(int forcedVersion, reader_s &reader)
+void MaterialArchive::read(reader_s &reader, int forcedVersion)
 {
     d->records.clear();
 
@@ -418,10 +412,10 @@ void MaterialArchive_Write(MaterialArchive const *arc, Writer *writer)
 }
 
 #undef MaterialArchive_Read
-void MaterialArchive_Read(MaterialArchive *arc, int forcedVersion, Reader *reader)
+void MaterialArchive_Read(MaterialArchive *arc, Reader *reader, int forcedVersion)
 {
     SELF(arc);
-    self->read(forcedVersion, *reader);
+    self->read(*reader, forcedVersion);
 }
 
 DENG_DECLARE_API(MaterialArchive) =

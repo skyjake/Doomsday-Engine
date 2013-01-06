@@ -86,11 +86,11 @@ namespace de {
         /**
          * Deserializes the state of the archive from @a reader.
          *
-         * @param forcedVersion  Version to interpret as, not actual format version. Use -1 to use whatever
-         *                       version is encountered.
          * @param reader  Reader instance.
+         * @param forcedVersion  Version to interpret as, not actual format version.
+         *                       Use -1 to use whatever version is encountered.
          */
-        void read(int forcedVersion, reader_s &reader);
+        void read(reader_s &reader, int forcedVersion = -1);
 
     private:
         struct Instance;
