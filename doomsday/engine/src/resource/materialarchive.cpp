@@ -20,6 +20,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "uri.hh"
 
 #include "resource/materials.h"
 #include "resource/materialarchive.h"
@@ -36,20 +37,93 @@ namespace de {
 
 struct ArchiveRecord
 {
-    uri_s *uri; ///< Percent encoded.
-    material_t *material;
+    Uri uri; ///< Percent encoded.
+    material_t *material_;
+    bool foundMaterial;
 
-    ArchiveRecord()
-        : uri(Uri_New()), material(0)
+    ArchiveRecord() : uri(), material_(0), foundMaterial(false)
     {}
 
-    ArchiveRecord(uri_s const &_uri, material_t &_material)
-        : uri(Uri_Dup(&_uri)), material(&_material)
+    ArchiveRecord(Uri const &_uri)
+        : uri(_uri), material_(0), foundMaterial(false)
     {}
 
-    ~ArchiveRecord()
+    bool hasMaterial()
     {
-        Uri_Delete(uri);
+        return !!material_;
+    }
+
+    material_t *material()
+    {
+        if(!foundMaterial)
+        {
+            setMaterial(App_Materials()->find(uri).material());
+        }
+        return material_;
+    }
+
+    void setMaterial(material_t *mat)
+    {
+        material_ = mat;
+        foundMaterial = true;
+    }
+
+    void write(writer_s &writer) const
+    {
+        Uri_Write(reinterpret_cast<uri_s const *>(&uri), &writer);
+    }
+
+    void read(int version, reader_s &reader)
+    {
+        if(version >= 4)
+        {
+            // A serialized URI.
+            Uri_Read(reinterpret_cast<uri_s *>(&uri), &reader);
+        }
+        else if(version == 3)
+        {
+            // A percent encoded textual URI.
+            ddstring_t *_uri = Str_NewFromReader(&reader);
+            uri.setUri(Str_Text(_uri), RC_NULL);
+            Str_Delete(_uri);
+        }
+        else if(version == 2)
+        {
+            // An unencoded textual URI.
+            ddstring_t *_uri = Str_NewFromReader(&reader);
+            uri.setUri(QString(QByteArray(Str_Text(_uri), Str_Length(_uri)).toPercentEncoding()), RC_NULL);
+            Str_Delete(_uri);
+        }
+        else
+        {
+            // A short textual name (unencoded) plus legacy material scheme id.
+            char path[9];
+            Reader_Read(&reader, path, 8);
+            path[8] = 0;
+            uri.setPath(QByteArray(path, qstrlen(path)).toPercentEncoding());
+
+            byte oldMNI = Reader_ReadByte(&reader);
+            switch(oldMNI % 4)
+            {
+            case 0: uri.setScheme("Textures"); break;
+            case 1: uri.setScheme("Flats");    break;
+            case 2: uri.setScheme("Sprites");  break;
+            case 3: uri.setScheme("System");   break;
+            }
+        }
+    }
+
+    /**
+     * Same as read except we are reading the old record format used by
+     * Doomsday 1.8.6 and earlier.
+     */
+    void read_v186(String scheme, reader_s &reader)
+    {
+        char path[9];
+        Reader_Read(&reader, path, 8);
+        path[8] = 0;
+        uri.setPath(QByteArray(path, qstrlen(path)).toPercentEncoding());
+        uri.setScheme(scheme);
     }
 };
 
@@ -60,7 +134,7 @@ struct MaterialArchive::Instance
 {
     int version;
     Records table;
-    uint numFlats; /// Used with older versions.
+    int numFlats; /// Used with older versions.
     int useSegments; /// Segment id assertion (Hexen saves).
 
     Instance(int _useSegments)
@@ -76,59 +150,24 @@ struct MaterialArchive::Instance
         }
     }
 
-    void insertSerialId(materialarchive_serialid_t /*serialId*/, de::Uri const &uri,
-                        material_t *material)
+    ArchiveRecord &insertRecord(materialarchive_serialid_t /*serialId*/, Uri const &uri)
     {
-        ArchiveRecord *rec = new ArchiveRecord(reinterpret_cast<uri_s const &>(uri), *material);
+        ArchiveRecord *rec = new ArchiveRecord(uri);
         table.push_back(rec);
+        return *rec;
     }
 
-    materialarchive_serialid_t insertSerialIdForMaterial(material_t *mat)
-    {
-        de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
-        // Insert a new element in the index.
-        insertSerialId(table.count() + 1, uri, mat);
-        return table.count(); // 1-based index.
-    }
-
-    materialarchive_serialid_t getSerialIdForMaterial(material_t &mat)
-    {
-        materialarchive_serialid_t id = 0;
-        for(int i = 0; i < table.count(); ++i)
-        {
-            ArchiveRecord const *rec = table[i];
-            if(rec->material == &mat)
-            {
-                id = i + 1; // Yes. Return existing serial.
-                break;
-            }
-        }
-        return id;
-    }
-
-    ArchiveRecord *getRecord(materialarchive_serialid_t serialId, int group)
+    ArchiveRecord *record(materialarchive_serialid_t serialId, int group)
     {
         if(version < 1 && group == 1) // Group 1 = Flats:
             serialId += numFlats;
 
+        DENG_ASSERT(serialId >= 0 && serialId < table.count());
+
         ArchiveRecord *rec = table[serialId];
-        if(!Str_CompareIgnoreCase(Uri_Path(rec->uri), UNKNOWN_MATERIALNAME))
+        if(!rec->uri.path().toStringRef().compareWithoutCase(UNKNOWN_MATERIALNAME))
             return 0;
         return rec;
-    }
-
-    material_t *materialForSerialId(materialarchive_serialid_t serialId, int group)
-    {
-        DENG_ASSERT(serialId <= table.count() + 1);
-
-        ArchiveRecord *rec;
-        if(serialId != 0 && (rec = getRecord(serialId - 1, group)))
-        {
-            if(!rec->material)
-                rec->material = App_Materials()->find(*reinterpret_cast<de::Uri const *>(rec->uri)).material();
-            return rec->material;
-        }
-        return 0;
     }
 
     /**
@@ -136,94 +175,21 @@ struct MaterialArchive::Instance
      */
     void populate()
     {
-        uri_s *unknownMaterial = Uri_NewWithPath2(UNKNOWN_MATERIALNAME, RC_NULL);
-        insertSerialId(1, *reinterpret_cast<de::Uri const *>(unknownMaterial), 0);
-        Uri_Delete(unknownMaterial);
+        ArchiveRecord &record = insertRecord(1, Uri(Path(UNKNOWN_MATERIALNAME)));
+        record.setMaterial(0);
 
+        /// @todo Assumes knowledge of how material ids are generated.
+        /// Should be iterated by Materials using a callback function.
         uint num = App_Materials()->count();
         for(uint i = 1; i < num + 1; ++i)
         {
-            /// @todo Assumes knowledge of how material ids are generated.
-            /// Should be iterated by Materials using a callback function.
-            insertSerialIdForMaterial(App_Materials()->toMaterialBind(i)->material());
+            MaterialBind *bind = App_Materials()->toMaterialBind(i);
+            ArchiveRecord &record = insertRecord(table.count() + 1, bind->composeUri());
+            record.setMaterial(bind->material());
         }
     }
 
-    int writeRecord(ArchiveRecord &rec, writer_s &writer)
-    {
-        Uri_Write(rec.uri, &writer);
-        return true; // Continue iteration.
-    }
-
-    int readRecord(ArchiveRecord &rec, reader_s &reader)
-    {
-        if(!rec.uri)
-        {
-            rec.uri = Uri_New();
-        }
-
-        if(version >= 4)
-        {
-            Uri_Read(rec.uri, &reader);
-        }
-        else if(version >= 2)
-        {
-            ddstring_t *path = Str_NewFromReader(&reader);
-            Uri_SetUri2(rec.uri, Str_Text(path), RC_NULL);
-            if(version == 2)
-            {
-                // We must encode the path.
-                Str_PercentEncode(Str_Set(path, Str_Text(Uri_Path(rec.uri))));
-                Uri_SetPath(rec.uri, Str_Text(path));
-            }
-            Str_Delete(path);
-        }
-        else
-        {
-            char name[9];
-            Reader_Read(&reader, name, 8);
-            name[8] = 0;
-
-            ddstring_t path; Str_Init(&path);
-            Str_PercentEncode(Str_StripRight(Str_Set(&path, name)));
-
-            byte oldMNI = Reader_ReadByte(&reader);
-            switch(oldMNI % 4)
-            {
-            case 0: Uri_SetScheme(rec.uri, "Textures"); break;
-            case 1: Uri_SetScheme(rec.uri, "Flats");    break;
-            case 2: Uri_SetScheme(rec.uri, "Sprites");  break;
-            case 3: Uri_SetScheme(rec.uri, "System");   break;
-            }
-            Uri_SetPath(rec.uri, Str_Text(&path));
-            Str_Free(&path);
-        }
-        return true; // Continue iteration.
-    }
-
-    /**
-     * Same as readRecord except we are reading the old record format used
-     * by Doomsday 1.8.6 and earlier.
-     */
-    int readRecord_v186(ArchiveRecord &rec, char const *scheme, reader_s &reader)
-    {
-        char buf[9];
-        Reader_Read(&reader, buf, 8);
-        buf[8] = 0;
-
-        if(!rec.uri)
-            rec.uri = Uri_New();
-
-        ddstring_t path; Str_Init(&path);
-        Str_PercentEncode(Str_StripRight(Str_Appendf(&path, "%s", buf)));
-        Uri_SetPath(rec.uri, Str_Text(&path));
-        Uri_SetScheme(rec.uri, scheme);
-
-        Str_Free(&path);
-        return true; // Continue iteration.
-    }
-
-    void readMaterialGroup(char const *defaultScheme, reader_s &reader)
+    void readGroup(String defaultScheme, reader_s &reader)
     {
         // Read the group header.
         uint num = Reader_ReadUInt16(&reader);
@@ -232,22 +198,22 @@ struct MaterialArchive::Instance
             ArchiveRecord temp;
 
             if(version >= 1)
-                readRecord(temp, reader);
+                temp.read(version, reader);
             else
-                readRecord_v186(temp, version <= 1? defaultScheme : 0, reader);
+                temp.read_v186(defaultScheme, reader);
 
-            insertSerialId(table.count() + 1, reinterpret_cast<de::Uri &>(temp.uri), 0);
+            insertRecord(table.count() + 1, temp.uri);
         }
     }
 
-    void writeMaterialGroup(writer_s &writer)
+    void writeGroup(writer_s &writer)
     {
         // Write the group header.
         Writer_WriteUInt16(&writer, table.count());
 
         DENG2_FOR_EACH_CONST(Records, i, table)
         {
-            writeRecord(**i, writer);
+            (*i)->write(writer);
         }
     }
 
@@ -261,14 +227,14 @@ struct MaterialArchive::Instance
 
     void assertSegment(int seg, reader_s &reader)
     {
-        if(useSegments)
+        if(!useSegments) return;
+
+        int i = Reader_ReadUInt32(&reader);
+        if(i != seg)
         {
-            int i = Reader_ReadUInt32(&reader);
-            if(i != seg)
-            {
-                Con_Error("MaterialArchive: Expected ASEG_MATERIAL_ARCHIVE (%i), but got %i.\n",
-                          ASEG_MATERIAL_ARCHIVE, i);
-            }
+            throw MaterialArchive::ReadError("MaterialArchive::assertSegment",
+                                             QString("Expected ASEG_MATERIAL_ARCHIVE (%1), but got %2")
+                                                 .arg(ASEG_MATERIAL_ARCHIVE).arg(i));
         }
     }
 
@@ -302,17 +268,29 @@ MaterialArchive::~MaterialArchive()
 
 materialarchive_serialid_t MaterialArchive::findUniqueSerialId(material_t *material) const
 {
-    if(material)
-        return d->getSerialIdForMaterial(*material);
-    return 0; // Invalid.
+    if(!material) return 0; // Invalid.
+    materialarchive_serialid_t id = 0;
+    for(int i = 0; i < d->table.count(); ++i)
+    {
+        ArchiveRecord *rec = d->table[i];
+        // Lookup the material for the record's uri.
+        if(rec->material() == material)
+        {
+            id = i + 1; // Yes. Return existing serial.
+            break;
+        }
+    }
+    return id;
 }
 
 material_t *MaterialArchive::find(materialarchive_serialid_t serialId, int group) const
 {
-    return d->materialForSerialId(serialId, group);
+    if(serialId <= 0 || serialId > d->table.count() + 1) return 0; // Invalid.
+    // Lookup the material for the record's uri.
+    return d->record(serialId - 1, group)->material();
 }
 
-size_t MaterialArchive::count() const
+int MaterialArchive::count() const
 {
     return d->table.count();
 }
@@ -320,7 +298,7 @@ size_t MaterialArchive::count() const
 void MaterialArchive::write(writer_s &writer) const
 {
     d->writeHeader(writer);
-    d->writeMaterialGroup(writer);
+    d->writeGroup(writer);
 }
 
 void MaterialArchive::read(int forcedVersion, reader_s &reader)
@@ -335,13 +313,13 @@ void MaterialArchive::read(int forcedVersion, reader_s &reader)
         d->version = forcedVersion;
     }
 
-    d->readMaterialGroup((forcedVersion >= 1? "" : "Flats:"), reader);
+    d->readGroup((forcedVersion >= 1? "" : "Flats:"), reader);
 
     if(d->version == 0)
     {
         // The old format saved flats and textures in seperate groups.
         d->numFlats = d->table.count();
-        d->readMaterialGroup((forcedVersion >= 1? "" : "Textures:"), reader);
+        d->readGroup((forcedVersion >= 1? "" : "Textures:"), reader);
     }
 }
 
@@ -406,7 +384,7 @@ struct material_s *MaterialArchive_Find(MaterialArchive const *arc, materialarch
 }
 
 #undef MaterialArchive_Count
-size_t MaterialArchive_Count(MaterialArchive const *arc)
+int MaterialArchive_Count(MaterialArchive const *arc)
 {
     SELF_CONST(arc);
     return self->count();

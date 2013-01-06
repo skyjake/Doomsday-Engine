@@ -914,8 +914,8 @@ void Sv_StartNetGame(void)
     // Prepare the material dictionary we'll be using with clients.
     materialDict = MaterialArchive_New(false);
 #ifdef _DEBUG
-    Con_Message("Sv_StartNetGame: Prepared material dictionary with %u materials.\n",
-                (uint) MaterialArchive_Count(materialDict));
+    Con_Message("Sv_StartNetGame: Prepared material dictionary with %i materials.\n",
+                MaterialArchive_Count(materialDict));
 #endif
 
     if(!isDedicated)

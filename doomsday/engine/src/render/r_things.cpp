@@ -812,7 +812,12 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
     MaterialVariant *variant = App_Materials()->chooseVariant(mat, spec, true, true);
 
-    DENG_ASSERT((tClass || tMap) && spec.primarySpec->data.variant.translated);
+#ifdef DENG_DEBUG
+    if(tClass || tMap)
+    {
+        DENG_ASSERT(spec.primarySpec->data.variant.translated);
+    }
+#endif
 
     params->center[VX] = x;
     params->center[VY] = y;

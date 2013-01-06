@@ -77,7 +77,7 @@ DENG_API_TYPEDEF(MaterialArchive)
      *
      * @param arc  MaterialArchive instance.
      */
-    size_t (*Count)(MaterialArchive const *arc);
+    int (*Count)(MaterialArchive const *arc);
 
     /**
      * Serializes the state of the archive using @a writer.

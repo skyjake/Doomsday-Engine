@@ -78,7 +78,7 @@ void Cl_ReadServerMaterials(void)
     MaterialArchive_Read(serverMaterials, -1, msgReader);
 
 #ifdef _DEBUG
-    Con_Message("Cl_ReadServerMaterials: Received %u materials.\n", (uint) MaterialArchive_Count(serverMaterials));
+    Con_Message("Cl_ReadServerMaterials: Received %i materials.\n", MaterialArchive_Count(serverMaterials));
 #endif
 }
 

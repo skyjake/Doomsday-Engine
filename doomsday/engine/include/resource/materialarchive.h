@@ -26,6 +26,7 @@
 
 #ifdef __cplusplus
 
+#include <de/Error>
 #include <de/writer.h>
 #include <de/reader.h>
 
@@ -35,6 +36,10 @@ namespace de {
 
     class MaterialArchive
     {
+    public:
+        /// Base class for all deserialization errors. @ingroup errors
+        DENG2_ERROR(ReadError);
+
     public:
         /**
          * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
@@ -63,7 +68,7 @@ namespace de {
          *
          * @param arc  MaterialArchive instance.
          */
-        size_t count() const;
+        int count() const;
 
         /**
          * Serializes the state of the archive using @a writer.
