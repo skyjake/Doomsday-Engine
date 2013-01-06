@@ -78,6 +78,7 @@ struct surface_s;
 struct material_s;
 
 #include <de/str.h>
+#include <de/strutil.h>
 #include <de/fixedpoint.h>
 #include "api_uri.h"
 
