@@ -329,8 +329,16 @@ void App::initSubsystems(SubsystemInitFlags flags)
     // Update the log buffer max entry count: number of items to hold in memory.
     logBuf.setMaxEntryCount(d->config->getui("log.bufferSize"));
 
-    // Set the log output file.
-    logBuf.setOutputFile(d->config->gets("log.file"));
+    try
+    {
+        // Set the log output file.
+        logBuf.setOutputFile(d->config->gets("log.file"));
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Failed to use \"" + d->config->gets("log.file") +
+                    "\" as the log output file:\n" + er.asText());
+    }
 
     // The level of enabled messages.
     /**
