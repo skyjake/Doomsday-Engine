@@ -1,4 +1,4 @@
-/** @file main.cpp Application startup and shutdown.
+/** @file deng_shell.cpp Library init.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,15 +16,3 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "mainwindow.h"
-#include <QApplication>
-
-#include <de/libdeng2.h>
-
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
-    MainWindow w;
-    w.show();
-    return a.exec();
-}

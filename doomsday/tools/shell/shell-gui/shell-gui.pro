@@ -9,7 +9,7 @@ include(../../../config.pri)
 
 TEMPLATE = app
 
-win32|macx: TARGET = "Doomsday Shell"
+win32|macx: TARGET = Doomsday-Shell
       else: TARGET = doomsday-shell
 
 VERSION = 0.1.0
@@ -18,11 +18,15 @@ VERSION = 0.1.0
 
 include(../../../dep_deng2.pri)
 
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
 INCLUDEPATH += ../libshell/include
 
 # Sources -------------------------------------------------------------------
 
-HEADERS +=
+HEADERS += \
+    src/mainwindow.h
 
 SOURCES += \
-    src/main.cpp
+    src/main.cpp \
+    src/mainwindow.cpp

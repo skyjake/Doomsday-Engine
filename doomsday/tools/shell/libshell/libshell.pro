@@ -16,4 +16,5 @@ INCLUDEPATH += include
 HEADERS +=
 
 # Sources and private headers.
-SOURCES +=
+SOURCES += \
+    src/deng_shell.cpp
