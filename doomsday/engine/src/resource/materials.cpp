@@ -752,40 +752,22 @@ MaterialVariantSpec const &Materials::variantSpecForContext(
                                        mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-typedef struct {
-    MaterialVariantSpec const *spec;
-    MaterialVariant* chosen;
-} choosevariantworker_parameters_t;
-
-static int chooseVariantWorker(struct materialvariant_s *_variant, void *parameters)
-{
-    MaterialVariant *variant = reinterpret_cast<MaterialVariant *>(_variant);
-    choosevariantworker_parameters_t *p = (choosevariantworker_parameters_t *) parameters;
-    MaterialVariantSpec const &cand = variant->spec();
-    DENG2_ASSERT(p);
-
-    if(cand.compare(*p->spec))
-    {
-        // This will do fine.
-        p->chosen = variant;
-        return true; // Stop iteration.
-    }
-    return false; // Continue iteration.
-}
-
-static MaterialVariant *chooseVariant2(material_t &mat, MaterialVariantSpec const &spec)
-{
-    choosevariantworker_parameters_t params;
-    params.spec   = &spec;
-    params.chosen = NULL;
-    Material_IterateVariants(&mat, chooseVariantWorker, &params);
-    return params.chosen;
-}
-
 MaterialVariant *Materials::chooseVariant(material_t &mat,
     MaterialVariantSpec const &spec, bool smoothed, bool canCreate)
-{
-    MaterialVariant* variant = chooseVariant2(mat, spec);
+{   
+    MaterialVariant *variant = 0;
+    Material::Variants const &variants = Material_Variants(&mat);
+    DENG2_FOR_EACH_CONST(Material::Variants, i, variants)
+    {
+        MaterialVariantSpec const &cand = (*i)->spec();
+        if(cand.compare(spec))
+        {
+            // This will do fine.
+            variant = *i;
+            break;
+        }
+    }
+
     if(!variant)
     {
         if(!canCreate) return 0;
@@ -865,17 +847,15 @@ MaterialAnim &Materials::animGroup(int number) const
                                                             .arg(number).arg(d->groups.count()));
 }
 
-static int resetVariantGroupAnimWorker(struct materialvariant_s *mat, void* /*parameters*/)
-{
-    reinterpret_cast<MaterialVariant *>(mat)->resetAnim();
-    return 0; // Continue iteration.
-}
-
 void Materials::resetAllAnimGroups()
 {
     DENG2_FOR_EACH(MaterialList, i, d->materials)
     {
-        Material_IterateVariants(*i, resetVariantGroupAnimWorker, 0);
+        Material::Variants const &variants = Material_Variants(*i);
+        DENG2_FOR_EACH_CONST(Material::Variants, k, variants)
+        {
+            (*k)->resetAnim();
+        }
     }
 
     DENG2_FOR_EACH(AnimGroups, i, d->groups)
@@ -923,13 +903,6 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
 
 }
 
-static int printVariantInfoWorker(struct materialvariant_s *variant, void* parameters)
-{
-    printVariantInfo(reinterpret_cast<MaterialVariant &>(*variant), *(int *)parameters);
-    ++(*(int *)parameters);
-    return 0; // Continue iteration.
-}
-
 static void printMaterialInfo(material_t &mat)
 {
     /// @todo kludge: Should not use App_Materials() here.
@@ -959,7 +932,12 @@ static void printMaterialInfo(material_t &mat)
                Material_IsSkyMasked(&mat)    ? "yes" : "no");
 
     int variantIdx = 0;
-    Material_IterateVariants(&mat, printVariantInfoWorker, (void *)&variantIdx);
+    Material::Variants const &variants = Material_Variants(&mat);
+    DENG2_FOR_EACH_CONST(Material::Variants, i, variants)
+    {
+        printVariantInfo(**i, variantIdx);
+        ++variantIdx;
+    }
 }
 
 static void printMaterialSummary(MaterialBind &bind, bool printSchemeName = true)

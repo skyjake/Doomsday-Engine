@@ -92,6 +92,8 @@ void Material_Delete(material_t *mat);
  */
 void Material_Ticker(material_t *mat, timespan_t time);
 
+int Material_VariantCount(material_t const *mat);
+
 /**
  * Add a new variant to the list of resources for this Material.
  * Material takes ownership of the variant.
@@ -106,21 +108,12 @@ struct materialvariant_s *Material_AddVariant(material_t *mat,
  */
 void Material_ClearVariants(material_t *mat);
 
+#ifdef __cplusplus
 /**
- * Iterate over all derived MaterialVariants, making a callback for each.
- * Iteration ends once all variants have been visited, or immediately upon
- * a callback returning non-zero.
- *
- * @param callback  Callback to make for each processed variant.
- * @param parameters  Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
+ * Provides access to the list of variant instances for efficient traversal.
  */
-int Material_IterateVariants(material_t *mat,
-    int (*callback)(struct materialvariant_s *variant, void *parameters),
-    void *parameters);
-
-int Material_VariantCount(material_t const *mat);
+de::Material::Variants const &Material_Variants(material_t const *mat);
+#endif
 
 /// @return  Definition associated with this.
 struct ded_material_s *Material_Definition(material_t const *mat);

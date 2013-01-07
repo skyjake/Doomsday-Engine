@@ -155,24 +155,6 @@ static void setVariantTranslation(MaterialVariant &variant, material_t *current,
     variant.setTranslation(currentV, nextV);
 }
 
-typedef struct {
-    material_t *current, *next;
-} setmaterialtranslationworker_parameters_t;
-
-static int setVariantTranslationWorker(struct materialvariant_s *variant, void *parameters)
-{
-    setmaterialtranslationworker_parameters_t *p = (setmaterialtranslationworker_parameters_t *) parameters;
-    setVariantTranslation(reinterpret_cast<MaterialVariant &>(*variant), p->current, p->next);
-    return 0; // Continue iteration.
-}
-
-static int setVariantTranslationPointWorker(struct materialvariant_s *variant, void *parameters)
-{
-    DENG2_ASSERT(parameters);
-    reinterpret_cast<MaterialVariant *>(variant)->setTranslationPoint(*(float *)parameters);
-    return 0; // Continue iteration.
-}
-
 void MaterialAnim::animate()
 {
     // The Precache groups are not intended for animation.
@@ -194,11 +176,14 @@ void MaterialAnim::animate()
         // Update translations.
         for(int i = 0; i < frames.count(); ++i)
         {
-            setmaterialtranslationworker_parameters_t params;
+            material_t *current = &frames[(index + i    ) % frames.count()].material();
+            material_t *next    = &frames[(index + i + 1) % frames.count()].material();
 
-            params.current = &frames[(index + i    ) % frames.count()].material();
-            params.next    = &frames[(index + i + 1) % frames.count()].material();
-            Material_IterateVariants(&frames[i].material(), setVariantTranslationWorker, &params);
+            Material::Variants const &variants = Material_Variants(&frames[i].material());
+            DENG2_FOR_EACH_CONST(Material::Variants, k, variants)
+            {
+                setVariantTranslation(**k, current, next);
+            }
 
             // Surfaces using this material may need to be updated.
             R_UpdateMapSurfacesOnMaterialChange(&frames[i].material());
@@ -230,7 +215,11 @@ void MaterialAnim::animate()
             interp = 0;
         }
 
-        Material_IterateVariants(&i->material(), setVariantTranslationPointWorker, &interp);
+        Material::Variants const &variants = Material_Variants(&i->material());
+        DENG2_FOR_EACH_CONST(Material::Variants, k, variants)
+        {
+            (*k)->setTranslationPoint(interp);
+        }
 
         // Just animate the first in the sequence?
         if(flags_ & AGF_FIRST_ONLY) break;
@@ -591,19 +580,9 @@ struct materialvariant_s *Material_AddVariant(material_t *mat, struct materialva
     return variant;
 }
 
-int Material_IterateVariants(material_t *mat,
-    int (*callback)(struct materialvariant_s *variant, void *parameters), void *parameters)
+Material::Variants const &Material_Variants(material_t const *mat)
 {
-    DENG2_ASSERT(mat);
-    if(callback)
-    {
-        DENG2_FOR_EACH_CONST(Material::Variants, i, mat->variants)
-        {
-            int result = callback(reinterpret_cast<struct materialvariant_s *>(*i), parameters);
-            if(result) return result;
-        }
-    }
-    return 0; // Continue iteration.
+    return mat->variants;
 }
 
 int Material_VariantCount(material_t const *mat)
