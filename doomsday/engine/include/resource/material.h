@@ -53,9 +53,11 @@ typedef struct material_s material_t;
 #ifdef __cplusplus
 
 #include <QList>
+#include <de/Error>
 
 namespace de {
 
+class MaterialAnim;
 class MaterialVariant;
 struct MaterialVariantSpec;
 
@@ -67,6 +69,10 @@ class Material
 public:
     /// A list of variant instances.
     typedef QList<MaterialVariant *> Variants;
+
+public:
+    /// The material is not a member of an animation group. @ingroup errors
+    DENG2_ERROR(NoAnimGroupError);
 };
 
 } // namespace de
@@ -99,26 +105,6 @@ int Material_VariantCount(material_t const *mat);
  * Destroys all derived MaterialVariants linked with this Material.
  */
 void Material_ClearVariants(material_t *mat);
-
-#ifdef __cplusplus
-/**
- * Provides access to the list of variant instances for efficient traversal.
- */
-de::Material::Variants const &Material_Variants(material_t const *mat);
-
-/**
- * Choose/create a variant of the material which fulfills @a spec.
- *
- * @param material      Material instance.
- * @param spec          Specification for the derivation of @a material.
- * @param smooth        @c true= Select the current frame if the material is group-animated.
- * @param canCreate     @c true= Create a new variant if no suitable one exists.
- *
- * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
- */
-de::MaterialVariant *Material_ChooseVariant(material_t *mat,
-    de::MaterialVariantSpec const &spec, bool smoothed = true, bool canCreate = false);
-#endif
 
 /// @return  Definition associated with this.
 struct ded_material_s *Material_Definition(material_t const *mat);
@@ -303,6 +289,30 @@ int Material_SetProperty(material_t *material, setargs_t const *args);
 
 #ifdef __cplusplus
 } // extern "C"
+
+/**
+ * Returns the animation group for the material.
+ */
+de::MaterialAnim &Material_AnimGroup(material_t *mat);
+
+/**
+ * Provides access to the list of variant instances for efficient traversal.
+ */
+de::Material::Variants const &Material_Variants(material_t const *mat);
+
+/**
+ * Choose/create a variant of the material which fulfills @a spec.
+ *
+ * @param material      Material instance.
+ * @param spec          Specification for the derivation of @a material.
+ * @param smooth        @c true= Select the current frame if the material is group-animated.
+ * @param canCreate     @c true= Create a new variant if no suitable one exists.
+ *
+ * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
+ */
+de::MaterialVariant *Material_ChooseVariant(material_t *mat,
+    de::MaterialVariantSpec const &spec, bool smoothed = true, bool canCreate = false);
+
 #endif
 
 #ifdef __cplusplus

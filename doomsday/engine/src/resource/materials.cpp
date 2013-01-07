@@ -53,6 +53,46 @@ D_CMD(PrintMaterialStats);
 
 namespace de {
 
+Materials::Group::Group(int _id) : id_(_id)
+{}
+
+int Materials::Group::id() const
+{
+    return id_;
+}
+
+int Materials::Group::materialCount() const
+{
+    return materials.count();
+}
+
+material_t &Materials::Group::material(int number)
+{
+    if(number < 0 || number >= materialCount())
+    {
+        /// @throw InvalidMaterialError Attempt to access an invalid material.
+        throw InvalidMaterialError("Materials::Group::material", QString("Invalid material #%1, valid range [0..%2)").arg(number).arg(materialCount()));
+    }
+    return *materials[number];
+}
+
+void Materials::Group::addMaterial(material_t &mat)
+{
+    LOG_AS("Materials::Group::addMaterial");
+    if(hasMaterial(mat)) return;
+    materials.push_back(&mat);
+}
+
+bool Materials::Group::hasMaterial(material_t &mat) const
+{
+    return materials.contains(&mat);
+}
+
+Materials::Group::Materials const &Materials::Group::allMaterials() const
+{
+    return materials;
+}
+
 static void applyVariantSpec(MaterialVariantSpec &spec, materialcontext_t mc,
     texturevariantspecification_t *primarySpec)
 {
@@ -121,7 +161,10 @@ struct Materials::Instance
     MaterialList materials;
 
     /// Animation groups.
-    Materials::AnimGroups groups;
+    Materials::AnimGroups animGroups;
+
+    /// Material groups.
+    Materials::Groups groups;
 
     /// Total number of URI material bindings (in all schemes).
     uint bindingCount;
@@ -177,7 +220,7 @@ struct Materials::Instance
 
     void animateAllGroups()
     {
-        DENG2_FOR_EACH(Materials::AnimGroups, i, groups)
+        DENG2_FOR_EACH(Materials::AnimGroups, i, animGroups)
         {
             i->animate();
         }
@@ -259,6 +302,7 @@ Materials::Materials()
 Materials::~Materials()
 {
     clearAllAnimGroups();
+    clearAllGroups();
     purgeCacheQueue();
     delete d;
 }
@@ -567,7 +611,7 @@ material_t *Materials::newFromDef(ded_material_t &def)
 }
 
 void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
-    bool smooth, bool cacheGroup)
+    bool smooth, bool cacheGroups)
 {
 #ifdef __SERVER__
     return;
@@ -587,10 +631,12 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
     VariantCacheTask *newTask = new VariantCacheTask(mat, spec, smooth);
     d->variantCacheQueue.push_back(newTask);
 
-    if(cacheGroup && Material_IsGroupAnimated(&mat))
+    if(!cacheGroups) return;
+
+    // If the material is part of one or more animations; cache all frames.
+    if(Material_IsGroupAnimated(&mat))
     {
-        // Material belongs in one or more animgroups; cache the group.
-        DENG2_FOR_EACH(AnimGroups, i, d->groups)
+        DENG2_FOR_EACH(AnimGroups, i, d->animGroups)
         {
             MaterialAnim &group = *i;
             if(!group.hasFrameForMaterial(mat)) continue;
@@ -603,6 +649,8 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
             }
         }
     }
+
+    // If the material is part of one or groups; cache all groups.
 }
 
 void Materials::ticker(timespan_t time)
@@ -611,7 +659,6 @@ void Materials::ticker(timespan_t time)
     // The animation will only progress when the game is not paused.
     if(clientPaused) return;
 #endif
-    if(novideo) return;
 
     DENG2_FOR_EACH(MaterialList, i, d->materials)
     {
@@ -754,49 +801,32 @@ bool Materials::hasDecorations(material_t &mat)
     /// Nor should we need to process the group each time. Cache this decision.
     if(decorationDef(mat)) return true;
 
-    if(Material_IsGroupAnimated(&mat))
+    // If any material in this group has decorations then this
+    // material is considered to be decorated also.
+    try
     {
-        DENG2_FOR_EACH_CONST(AnimGroups, i, d->groups)
+        MaterialAnim &anim = Material_AnimGroup(&mat);
+        DENG2_FOR_EACH_CONST(MaterialAnim::Frames, i, anim.allFrames())
         {
-            MaterialAnim const &group = *i;
-
-            // Precache groups don't apply.
-            if(group.flags() & AGF_PRECACHE) continue;
-
-            // Is this material in this group?
-            if(!group.hasFrameForMaterial(mat)) continue;
-
-            // If any material in this group has decorations then this
-            // material is considered to be decorated also.
-            DENG2_FOR_EACH_CONST(MaterialAnim::Frames, k, group.allFrames())
-            {
-                if(decorationDef(k->material())) return true;
-            }
+            if(decorationDef(mat)) return true;
         }
     }
+    catch(Material::NoAnimGroupError const &)
+    {} // Ignore this error.
+
     return false;
 }
 
-int Materials::newAnimGroup(int flags)
+int Materials::newGroup()
 {
     // Allocating one by one is inefficient, but it doesn't really matter.
     // The group id is (index + 1)
     int groupId = d->groups.count() + 1;
-    d->groups.push_back(MaterialAnim(groupId, flags));
+    d->groups.push_back(Group(groupId));
     return groupId;
 }
 
-void Materials::clearAllAnimGroups()
-{
-    d->groups.clear();
-}
-
-Materials::AnimGroups const &Materials::allAnimGroups() const
-{
-    return d->groups;
-}
-
-MaterialAnim &Materials::animGroup(int number) const
+Materials::Group &Materials::group(int number) const
 {
     number -= 1; // 1-based index.
     if(number >= 0 && number < d->groups.count())
@@ -804,9 +834,51 @@ MaterialAnim &Materials::animGroup(int number) const
         return d->groups[number];
     }
 
+    /// @throw UnknownGroupError An unknown scheme was referenced.
+    throw UnknownGroupError("Materials::group", QString("Invalid group number #%1, valid range [0..%2)")
+                                                    .arg(number).arg(d->groups.count()));
+}
+
+Materials::Groups const &Materials::allGroups() const
+{
+    return d->groups;
+}
+
+void Materials::clearAllGroups()
+{
+    d->groups.clear();
+}
+
+int Materials::newAnimGroup(int flags)
+{
+    // Allocating one by one is inefficient, but it doesn't really matter.
+    // The group id is (index + 1)
+    int groupId = d->animGroups.count() + 1;
+    d->animGroups.push_back(MaterialAnim(groupId, flags));
+    return groupId;
+}
+
+void Materials::clearAllAnimGroups()
+{
+    d->animGroups.clear();
+}
+
+Materials::AnimGroups const &Materials::allAnimGroups() const
+{
+    return d->animGroups;
+}
+
+MaterialAnim &Materials::animGroup(int number) const
+{
+    number -= 1; // 1-based index.
+    if(number >= 0 && number < d->animGroups.count())
+    {
+        return d->animGroups[number];
+    }
+
     /// @throw UnknownAnimGroupError An unknown scheme was referenced.
     throw UnknownAnimGroupError("Materials::animGroup", QString("Invalid anim group number #%1, valid range [0..%2)")
-                                                            .arg(number).arg(d->groups.count()));
+                                                            .arg(number).arg(d->animGroups.count()));
 }
 
 void Materials::resetAllAnimGroups()
@@ -820,7 +892,7 @@ void Materials::resetAllAnimGroups()
         }
     }
 
-    DENG2_FOR_EACH(AnimGroups, i, d->groups)
+    DENG2_FOR_EACH(AnimGroups, i, d->animGroups)
     {
         i->reset();
     }
@@ -1242,9 +1314,9 @@ void Materials_Ticker(timespan_t elapsed)
     App_Materials()->ticker(elapsed);
 }
 
-uint Materials_Size()
+uint Materials_Count()
 {
-    return App_Materials()->size();
+    return App_Materials()->count();
 }
 
 materialid_t Materials_Id(material_t *material)

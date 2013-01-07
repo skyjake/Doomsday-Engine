@@ -572,16 +572,13 @@ ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isC
                  */
                 if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
                 {
-                    Materials::AnimGroups const &groups = App_Materials()->allAnimGroups();
-                    DENG2_FOR_EACH_CONST(Materials::AnimGroups, k, groups)
+                    Materials::AnimGroups const &anims = App_Materials()->allAnimGroups();
+                    DENG2_FOR_EACH_CONST(Materials::AnimGroups, k, anims)
                     {
-                        MaterialAnim const &group = *k;
+                        MaterialAnim const &anim = *k;
 
-                        // Precache groups do not apply.
-                        if(group.flags() & AGF_PRECACHE) continue;
-
-                        if(group.hasFrameForMaterial(*defMat) &&
-                           group.hasFrameForMaterial(*mat))
+                        if(anim.hasFrameForMaterial(*defMat) &&
+                           anim.hasFrameForMaterial(*mat))
                         {
                             // Both are in this group! This def will do.
                             return def;
@@ -1422,10 +1419,11 @@ void Def_Read()
     defsInited = true;
 }
 
-static void initAnimGroup(ded_group_t *def)
+static void initMaterialGroup(ded_group_t *def)
 {
     DENG_ASSERT(def);
 
+    int animNumber  = -1;
     int groupNumber = -1;
     for(int i = 0; i < def->count.num; ++i)
     {
@@ -1436,13 +1434,26 @@ static void initAnimGroup(ded_group_t *def)
         {
             material_t *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(gm->material)).material();
 
-            // Only create the group once the first texture has been found.
-            if(groupNumber == -1)
+            if(def->flags & AGF_PRECACHE) // A precache group.
             {
-                groupNumber = App_Materials()->newAnimGroup(def->flags);
-            }
+                // Only create the group once the first material has been found.
+                if(groupNumber == -1)
+                {
+                    groupNumber = App_Materials()->newGroup();
+                }
 
-            App_Materials()->animGroup(groupNumber).addFrame(*mat, gm->tics, gm->randomTics);
+                App_Materials()->group(groupNumber).addMaterial(*mat);
+            }
+            else // An animation group.
+            {
+                // Only create the group once the first material has been found.
+                if(animNumber == -1)
+                {
+                    animNumber = App_Materials()->newAnimGroup(def->flags & ~AGF_PRECACHE);
+                }
+
+                App_Materials()->animGroup(animNumber).addFrame(*mat, gm->tics, gm->randomTics);
+            }
         }
         catch(Materials::NotFoundError const &er)
         {
@@ -1618,11 +1629,14 @@ void Def_PostInit(void)
         }
     }
 
-    // Animation groups.
+    // Material groups (e.g., for precaching).
+    App_Materials()->clearAllGroups();
+
+    // Material animation groups.
     App_Materials()->clearAllAnimGroups();
     for(int i = 0; i < defs.count.groups.num; ++i)
     {
-        initAnimGroup(&defs.groups[i]);
+        initMaterialGroup(&defs.groups[i]);
     }
 }
 

@@ -59,6 +59,67 @@ public:
     typedef class MaterialScheme Scheme;
 
     /**
+     * Defines a group of one or more materials.
+     */
+    class Group
+    {
+    public:
+        /// All materials in the group.
+        typedef QList<material_t *> Materials;
+
+    public:
+        /// An invalid group member reference was specified. @ingroup errors
+        DENG2_ERROR(InvalidMaterialError);
+
+    public:
+        Group(int id);
+
+        /**
+         * Returns the group's unique identifier.
+         */
+        int id() const;
+
+        /**
+         * Returns the total number of materials in the group.
+         */
+        int materialCount() const;
+
+        /**
+         * Lookup a material in the group by number.
+         *
+         * @param number  Material number to lookup.
+         * @return  Found material.
+         */
+        material_t &material(int number);
+
+        /**
+         * Extend the group by adding a new material to the end of the group.
+         *
+         * @param material  Material to add.
+         */
+        void addMaterial(material_t &material);
+
+        /**
+         * Returns @c true iff @a material is part of this group.
+         *
+         * @param mat  Material to search for.
+         */
+        bool hasMaterial(material_t &material) const;
+
+        /**
+         * Provides access to the material list for efficient traversal.
+         */
+        Materials const &allMaterials() const;
+
+    private:
+        /// Unique identifier.
+        int id_;
+
+        /// All materials in the group.
+        Materials materials;
+    };
+
+    /**
      * Flags determining URI validation logic.
      *
      * @see validateUri()
@@ -72,6 +133,9 @@ public:
     /// Material system subspace schemes.
     typedef QList<Scheme*> Schemes;
 
+    /// Material groups.
+    typedef QList<Group> Groups;
+
     /// Material animation groups.
     typedef QList<MaterialAnim> AnimGroups;
 
@@ -81,6 +145,9 @@ public:
 
     /// An unknown scheme was referenced. @ingroup errors
     DENG2_ERROR(UnknownSchemeError);
+
+    /// An unknown group was referenced. @ingroup errors
+    DENG2_ERROR(UnknownGroupError);
 
     /// An unknown animation group was referenced. @ingroup errors
     DENG2_ERROR(UnknownAnimGroupError);
@@ -260,8 +327,8 @@ public:
      * @param material      Base Material from which to derive a variant.
      * @param spec          Specification for the desired derivation of @a material.
      * @param smooth        @c true= Select the current frame if the material is group-animated.
-     * @param cacheGroups   @c true= variants for all Materials in any applicable animation
-     *                      groups are desired, else just this specific Material.
+     * @param cacheGroups   @c true= variants for all Materials in any applicable groups
+     *                      are desired, else just this specific Material.
      */
     void cache(material_t &material, MaterialVariantSpec const &spec,
                bool smooth, bool cacheGroups = true);
@@ -306,6 +373,34 @@ public:
     MaterialBind *toMaterialBind(materialid_t materialId);
 
     /**
+     * Lookup a material group by unique @a number.
+     */
+    Group &group(int number) const;
+
+    /**
+     * Create a new material group.
+     * @return  Unique identifier associated with the new group.
+     */
+    int newGroup();
+
+    /**
+     * To be called to destroy all materials groups when they are no longer needed.
+     */
+    void clearAllGroups();
+
+    /**
+     * Provides access to the list of material groups for efficient traversal.
+     */
+    Groups const &allGroups() const;
+
+    /**
+     * Returns the total number of material groups in the collection.
+     */
+    inline int groupCount() const {
+        return allGroups().count();
+    }
+
+    /**
      * Lookup an animation group by unique @a number.
      */
     MaterialAnim &animGroup(int number) const;
@@ -332,7 +427,7 @@ public:
     AnimGroups const &allAnimGroups() const;
 
     /**
-     * Returns the total number of animation/precache groups in the collection.
+     * Returns the total number of animation groups in the collection.
      */
     inline int animGroupCount() const {
         return allAnimGroups().count();
@@ -363,7 +458,7 @@ void Materials_Init(void);
 void Materials_Shutdown(void);
 
 void Materials_Ticker(timespan_t elapsed);
-uint Materials_Size(void);
+uint Materials_Count(void);
 materialid_t Materials_Id(material_t *material);
 material_t *Materials_ToMaterial(materialid_t materialId);
 struct uri_s *Materials_ComposeUri(materialid_t materialId);

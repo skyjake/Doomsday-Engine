@@ -1048,13 +1048,13 @@ typedef unsigned short materialarchive_serialid_t;
 ///@}
 
 /**
- * @defgroup animationGroupFlags  Animation Group Flags
+ * @defgroup animationGroupFlags  (Material) Animation Group Flags
  * @ingroup apiFlags resource
  * @{
  */
 #define AGF_SMOOTH              0x1
 #define AGF_FIRST_ONLY          0x2
-#define AGF_PRECACHE            0x4000 // Group is just for precaching.
+#define AGF_PRECACHE            0x4000 ///< Group is just for precaching.
 /**@}*/
 
 /*

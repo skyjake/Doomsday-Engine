@@ -167,8 +167,7 @@ static void setVariantTranslation(MaterialVariant &variant, material_t *current,
 
 void MaterialAnim::animate()
 {
-    // The Precache groups are not intended for animation.
-    if((flags_ & AGF_PRECACHE) || frames.isEmpty()) return;
+    if(frames.isEmpty()) return;
 
     if(--timer <= 0)
     {
@@ -238,14 +237,12 @@ void MaterialAnim::animate()
 
 void MaterialAnim::reset()
 {
-    // The Precache groups are not intended for animation.
-    if((flags_ & AGF_PRECACHE) || frames.isEmpty()) return;
+    if(frames.isEmpty()) return;
 
     timer = 0;
     maxTimer = 1;
 
-    // The anim group should start from the first step using the
-    // correct timings.
+    // The animation should restart from the first step using the correct timings.
     index = frames.count() - 1;
 }
 
@@ -439,6 +436,25 @@ int Material_LayerCount(material_t const *mat)
     DENG2_ASSERT(mat);
     DENG2_UNUSED(mat);
     return 1;
+}
+
+de::MaterialAnim &Material_AnimGroup(material_t *mat)
+{
+    if(Material_IsGroupAnimated(mat))
+    {
+        Materials::AnimGroups const &allAnims = App_Materials()->allAnimGroups();
+        DENG2_FOR_EACH_CONST(Materials::AnimGroups, i, allAnims)
+        {
+            MaterialAnim &anim = const_cast<MaterialAnim &>(*i);
+            // Is this material in this animation?
+            if(!anim.hasFrameForMaterial(*mat)) continue;
+
+            return anim;
+        }
+    }
+
+    throw Material::NoAnimGroupError("Material_AnimGroup", QString("Material [%p] is not group-animated")
+                                                               .arg(de::dintptr(mat)));
 }
 
 void Material_SetGroupAnimated(material_t *mat, boolean yes)

@@ -596,7 +596,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
         return 0; /* Unreachable */ }
 
     case DMU_MATERIAL:
-        if(index < Materials_Size())
+        if(index < Materials_Count())
             return callback(Materials_ToMaterial(index), context);
         break;
 
