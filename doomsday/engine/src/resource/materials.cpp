@@ -1,9 +1,7 @@
-/**
- * @file materials.cpp
- * Materials collection, schemes, bindings and other management. @ingroup resource
+/** @file materials.cpp Material Resource Collection.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -650,8 +648,8 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
         }
     }
 
-    // If the material is part of one or groups; cache all other materials
-    // within the same group(s).
+    // If the material is part of one or more groups; cache all other
+    // materials within the same group(s).
     DENG2_FOR_EACH_CONST(Groups, i, d->groups)
     {
         Group const &group = *i;

@@ -1,8 +1,6 @@
-/**
- * @file material.cpp
- * Logical material. @ingroup resource
+/** @file material.cpp Logical Material.
  *
- * @authors Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,18 +20,15 @@
 #include <cstring>
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
 #include "de_resource.h"
-#include "m_misc.h"
+#include "de_render.h"
 
 #include "audio/s_environ.h"
 #include "gl/sys_opengl.h" // TODO: get rid of this
-#include "resource/materialsnapshot.h"
-#include "resource/materialvariant.h"
-#include "render/rend_main.h"
+#include "map/r_world.h"
+#include "sys_system.h" // var: novideo
 
-#include <de/memory.h>
+#include "resource/material.h"
 
 struct material_s
 {
@@ -55,7 +50,8 @@ struct material_s
     /// World dimensions in map coordinate space units.
     Size2 *dimensions;
 
-    short flags; /// @see materialFlags
+    /// @see materialFlags
+    short flags;
 
     /// @c true if belongs to some animgroup.
     bool inAnimGroup;
@@ -75,6 +71,24 @@ struct material_s
 
     /// Current prepared state.
     byte prepared;
+
+    material_s(short _flags, bool _isCustom, ded_material_t *_def,
+               Size2Raw &_dimensions, material_env_class_t _envClass)
+        : def(_def), envClass(_envClass), primaryBind(0),
+          dimensions(Size2_NewFromRaw(&_dimensions)), flags(_flags),
+          inAnimGroup(false), isCustom(_isCustom),
+          detailTex(0), detailScale(0), detailStrength(0),
+          shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0)
+    {
+        header.type = DMU_MATERIAL;
+        std::memset(shinyMinColor, 0, sizeof(shinyMinColor));
+    }
+
+    ~material_s()
+    {
+        clearVariants();
+        Size2_Delete(dimensions);
+    }
 
     void clearVariants()
     {
@@ -253,23 +267,15 @@ using namespace de;
 material_t *Material_New(short flags, boolean isCustom, ded_material_t *def,
     Size2Raw *dimensions, material_env_class_t envClass)
 {
-    material_t *mat = (material_t *) M_Calloc(sizeof(*mat));
-    mat->header.type = DMU_MATERIAL;
-    mat->flags     = flags;
-    mat->isCustom  = CPP_BOOL(isCustom);
-    mat->def       = def;
-    mat->dimensions = Size2_NewFromRaw(dimensions);
-    mat->envClass  = envClass;
-    return mat;
+    return new material_s(flags, CPP_BOOL(isCustom), def, *dimensions, envClass);
 }
 
 void Material_Delete(material_t *mat)
 {
-    DENG2_ASSERT(mat);
-    mat->clearVariants();
-    Size2_Delete(mat->dimensions);
-    mat->dimensions = 0;
-    M_Free(mat);
+    if(mat)
+    {
+        delete (material_s *) mat;
+    }
 }
 
 void Material_Ticker(material_t *mat, timespan_t time)

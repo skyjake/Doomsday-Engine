@@ -40,6 +40,7 @@
 #endif
 
 #ifdef __cplusplus
+#  include "resource/materialsnapshot.h"
 #  include "resource/patch.h"
 #  include "resource/texturemanifest.h"
 #  include "resource/wad.h"
