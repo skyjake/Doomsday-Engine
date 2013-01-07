@@ -638,10 +638,10 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
     {
         DENG2_FOR_EACH(AnimGroups, i, d->animGroups)
         {
-            MaterialAnim &group = *i;
-            if(!group.hasFrameForMaterial(mat)) continue;
+            MaterialAnim &anim = *i;
+            if(!anim.hasFrameForMaterial(mat)) continue;
 
-            DENG2_FOR_EACH_CONST(MaterialAnim::Frames, k, group.allFrames())
+            DENG2_FOR_EACH_CONST(MaterialAnim::Frames, k, anim.allFrames())
             {
                 if(&k->material() == &mat) continue;
 
@@ -650,7 +650,20 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
         }
     }
 
-    // If the material is part of one or groups; cache all groups.
+    // If the material is part of one or groups; cache all other materials
+    // within the same group(s).
+    DENG2_FOR_EACH_CONST(Groups, i, d->groups)
+    {
+        Group const &group = *i;
+        if(!group.hasMaterial(mat)) continue;
+
+        DENG2_FOR_EACH_CONST(Group::Materials, k, group.allMaterials())
+        {
+            if(*k == &mat) continue;
+
+            cache(**k, spec, smooth, false /* do not cache groups */);
+        }
+    }
 }
 
 void Materials::ticker(timespan_t time)
