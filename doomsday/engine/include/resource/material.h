@@ -57,6 +57,7 @@ typedef struct material_s material_t;
 namespace de {
 
 class MaterialVariant;
+struct MaterialVariantSpec;
 
 /**
  * @ingroup resource
@@ -113,6 +114,19 @@ void Material_ClearVariants(material_t *mat);
  * Provides access to the list of variant instances for efficient traversal.
  */
 de::Material::Variants const &Material_Variants(material_t const *mat);
+
+/**
+ * Choose/create a variant of the material which fulfills @a spec.
+ *
+ * @param material      Material instance.
+ * @param spec          Specification for the derivation of @a material.
+ * @param smooth        @c true= Select the current frame if the material is group-animated.
+ * @param canCreate     @c true= Create a new variant if no suitable one exists.
+ *
+ * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
+ */
+de::MaterialVariant *Material_ChooseVariant(material_t *mat,
+    de::MaterialVariantSpec const &spec, bool smoothed = true, bool canCreate = false);
 #endif
 
 /// @return  Definition associated with this.

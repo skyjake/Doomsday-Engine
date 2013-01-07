@@ -272,7 +272,7 @@ public:
      *
      * @note A convenient shorthand of the call tree:
      * <pre>
-     *    prepare( chooseVariant( @a material, @a spec, @a smooth, @c true ), @a forceSnapshotUpdate )
+     *    prepare( Material_ChooseVariant( @a material, @a spec, @a smooth, @c true ), @a forceSnapshotUpdate )
      * </pre>
      *
      * @param material  Base Material from which to derive a variant.
@@ -297,19 +297,6 @@ public:
      */
     MaterialSnapshot const &prepare(MaterialVariant &material,
                                     bool forceSnapshotUpdate = false);
-
-    /**
-     * Choose/create a variant of @a material which fulfills @a spec.
-     *
-     * @param material      Material to derive the variant from.
-     * @param spec          Specification for the derivation of @a material.
-     * @param smooth        @c true= Select the current frame if the material is group-animated.
-     * @param canCreate     @c true= Create a new variant if no suitable one exists.
-     *
-     * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
-     */
-    MaterialVariant *chooseVariant(material_t &material, MaterialVariantSpec const &spec,
-                                   bool smoothed, bool canCreate);
 
     /// @todo Refactor away -ds
     MaterialBind *toMaterialBind(materialid_t materialId);

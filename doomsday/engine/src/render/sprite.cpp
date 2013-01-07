@@ -874,9 +874,8 @@ static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        return App_Materials()->chooseVariant(*App_Materials()->find(de::Uri(Path("System:gray"))).material(),
-                                              Rend_SpriteMaterialSpec(),
-                                              true, true);
+        return Material_ChooseVariant(App_Materials()->find(de::Uri(Path("System:gray"))).material(),
+                                      Rend_SpriteMaterialSpec(), true, true);
     }
 
     // Use the pre-chosen sprite.

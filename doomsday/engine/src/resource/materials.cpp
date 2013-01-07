@@ -715,7 +715,7 @@ MaterialSnapshot const &Materials::prepare(MaterialVariant &variant,
 MaterialSnapshot const &Materials::prepare(material_t &mat,
     MaterialVariantSpec const &spec, bool smooth, bool updateSnapshot)
 {
-    return prepare(*chooseVariant(mat, spec, smooth, true), updateSnapshot);
+    return prepare(*Material_ChooseVariant(&mat, spec, smooth, true), updateSnapshot);
 }
 
 ded_decor_t const *Materials::decorationDef(material_t &mat)
@@ -750,38 +750,6 @@ MaterialVariantSpec const &Materials::variantSpecForContext(
     return d->getVariantSpecForContext(mc, flags, border, tClass, tMap, wrapS, wrapT,
                                        minFilter, magFilter, anisoFilter,
                                        mipmapped, gammaCorrection, noStretch, toAlpha);
-}
-
-MaterialVariant *Materials::chooseVariant(material_t &mat,
-    MaterialVariantSpec const &spec, bool smoothed, bool canCreate)
-{   
-    MaterialVariant *variant = 0;
-    Material::Variants const &variants = Material_Variants(&mat);
-    DENG2_FOR_EACH_CONST(Material::Variants, i, variants)
-    {
-        MaterialVariantSpec const &cand = (*i)->spec();
-        if(cand.compare(spec))
-        {
-            // This will do fine.
-            variant = *i;
-            break;
-        }
-    }
-
-    if(!variant)
-    {
-        if(!canCreate) return 0;
-
-        variant = new MaterialVariant(mat, spec, *Material_Definition(&mat));
-        Material_AddVariant(&mat, reinterpret_cast<materialvariant_s *>(variant));
-    }
-
-    if(smoothed)
-    {
-        variant = variant->translationCurrent();
-    }
-
-    return variant;
 }
 
 bool Materials::hasDecorations(material_t &mat)

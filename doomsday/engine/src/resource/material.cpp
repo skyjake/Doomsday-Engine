@@ -149,9 +149,8 @@ static void setVariantTranslation(MaterialVariant &variant, material_t *current,
     MaterialVariantSpec const &spec = variant.spec();
     MaterialVariant *currentV, *nextV;
 
-    /// @todo kludge: Should not use App_Materials() here.
-    currentV = App_Materials()->chooseVariant(*current, spec, false, true/*create if necessary*/);
-    nextV    = App_Materials()->chooseVariant(*next,    spec, false, true/*create if necessary*/);
+    currentV = Material_ChooseVariant(current, spec, false, true/*create if necessary*/);
+    nextV    = Material_ChooseVariant(next,    spec, false, true/*create if necessary*/);
     variant.setTranslation(currentV, nextV);
 }
 
@@ -583,6 +582,39 @@ struct materialvariant_s *Material_AddVariant(material_t *mat, struct materialva
 Material::Variants const &Material_Variants(material_t const *mat)
 {
     return mat->variants;
+}
+
+MaterialVariant *Material_ChooseVariant(material_t *mat,
+    MaterialVariantSpec const &spec, bool smoothed, bool canCreate)
+{
+    DENG_ASSERT(mat);
+
+    MaterialVariant *variant = 0;
+    DENG2_FOR_EACH_CONST(Material::Variants, i, mat->variants)
+    {
+        MaterialVariantSpec const &cand = (*i)->spec();
+        if(cand.compare(spec))
+        {
+            // This will do fine.
+            variant = *i;
+            break;
+        }
+    }
+
+    if(!variant)
+    {
+        if(!canCreate) return 0;
+
+        variant = new MaterialVariant(*mat, spec, *Material_Definition(mat));
+        Material_AddVariant(mat, reinterpret_cast<materialvariant_s *>(variant));
+    }
+
+    if(smoothed)
+    {
+        variant = variant->translationCurrent();
+    }
+
+    return variant;
 }
 
 int Material_VariantCount(material_t const *mat)

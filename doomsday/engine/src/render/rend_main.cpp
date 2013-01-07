@@ -539,7 +539,8 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
         }
 
         // Choose a specific variant for use as a middle wall section.
-        material = App_Materials()->chooseVariant(*material, mapSurfaceMaterialSpec(wrapS, wrapT), true, true);
+        material = Material_ChooseVariant(&material->generalCase(),
+                                          mapSurfaceMaterialSpec(wrapS, wrapT), true, true);
     }
 
     VS_WALL(vis)->material = reinterpret_cast<materialvariant_s *>(material);
@@ -705,7 +706,7 @@ static float getSnapshots(MaterialSnapshot const **msA,
     // Smooth Texture Animation?
     if(msB)
     {
-        MaterialVariant *variant = App_Materials()->chooseVariant(mat, spec, false, false);
+        MaterialVariant *variant = Material_ChooseVariant(&mat, spec, false, false);
         if(variant->translationCurrent() != variant->translationNext())
         {
             MaterialVariant *matB = variant->translationNext();
