@@ -712,12 +712,6 @@ MaterialSnapshot const &Materials::prepare(MaterialVariant &variant,
     return *snapshot;
 }
 
-MaterialSnapshot const &Materials::prepare(material_t &mat,
-    MaterialVariantSpec const &spec, bool smooth, bool updateSnapshot)
-{
-    return prepare(*Material_ChooseVariant(&mat, spec, smooth, true), updateSnapshot);
-}
-
 ded_decor_t const *Materials::decorationDef(material_t &mat)
 {
     if(!Material_Prepared(&mat))

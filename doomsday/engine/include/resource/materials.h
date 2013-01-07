@@ -267,6 +267,19 @@ public:
                bool smooth, bool cacheGroups = true);
 
     /**
+     * Prepare variant @a material for render (e.g., upload textures if necessary).
+     *
+     * @see chooseVariant()
+     *
+     * @param material  MaterialVariant to be prepared.
+     * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
+     *
+     * @return  Snapshot for the chosen and prepared variant of Material.
+     */
+    MaterialSnapshot const &prepare(MaterialVariant &material,
+                                    bool forceSnapshotUpdate = false);
+
+    /**
      * Choose/create a variant of @a material which fulfills @a spec and then
      * immediately prepare it for render (e.g., upload textures if necessary).
      *
@@ -282,21 +295,12 @@ public:
      *
      * @return  Snapshot for the chosen and prepared variant of Material.
      */
-    MaterialSnapshot const &prepare(material_t &material, MaterialVariantSpec const &spec,
-                                    bool smooth, bool forceSnapshotUpdate = false);
-
-    /**
-     * Prepare variant @a material for render (e.g., upload textures if necessary).
-     *
-     * @see chooseVariant()
-     *
-     * @param material  MaterialVariant to be prepared.
-     * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
-     *
-     * @return  Snapshot for the chosen and prepared variant of Material.
-     */
-    MaterialSnapshot const &prepare(MaterialVariant &material,
-                                    bool forceSnapshotUpdate = false);
+    inline MaterialSnapshot const &prepare(material_t &material,
+        MaterialVariantSpec const &spec, bool smooth = true, bool forceSnapshotUpdate = false)
+    {
+        return prepare(*Material_ChooseVariant(&material, spec, smooth, true /*can-create*/),
+                       forceSnapshotUpdate);
+    }
 
     /// @todo Refactor away -ds
     MaterialBind *toMaterialBind(materialid_t materialId);
