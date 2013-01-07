@@ -39,10 +39,37 @@ typedef enum {
 
 #define VALID_MATERIAL_ENV_CLASS(v) ((v) >= MEC_FIRST && (v) < NUM_MATERIAL_ENV_CLASSES)
 
+/**
+ * Prepared states:
+ * - 0 Not yet prepared.
+ * - 1 Prepared from original game textures.
+ * - 2 Prepared from custom or replacement textures.
+ *
+ * @ingroup resource
+ */
 struct material_s;
 typedef struct material_s material_t;
 
 #ifdef __cplusplus
+
+#include <QList>
+
+namespace de {
+
+class MaterialVariant;
+
+/**
+ * @ingroup resource
+ */
+class Material
+{
+public:
+    /// A list of variant instances.
+    typedef QList<MaterialVariant *> Variants;
+};
+
+} // namespace de
+
 extern "C" {
 #endif
 
@@ -77,7 +104,7 @@ struct materialvariant_s *Material_AddVariant(material_t *mat,
 /**
  * Destroys all derived MaterialVariants linked with this Material.
  */
-void Material_DestroyVariants(material_t *mat);
+void Material_ClearVariants(material_t *mat);
 
 /**
  * Iterate over all derived MaterialVariants, making a callback for each.
@@ -104,21 +131,21 @@ struct ded_material_s *Material_Definition(material_t const *mat);
  */
 void Material_SetDefinition(material_t *mat, struct ded_material_s *def);
 
-/// Retrieve dimensions in logical world units.
-Size2 const *Material_Size(material_t const *mat);
+/// Returns the dimensions of the material in map coordinate space units.
+Size2 const *Material_Dimensions(material_t const *mat);
 
 /**
- * Change dimensions.
- * @param size  New dimensions in logical world units.
+ * Change the world dimensions of the material.
+ * @param newDimensions  New dimensions in map coordinate space units.
  */
-void Material_SetSize(material_t *mat, Size2Raw const *size);
+void Material_SetDimensions(material_t *mat, Size2Raw const *size);
 
-/// @return  Logical width.
+/// @return  Width of the material in map coordinate space units.
 int Material_Width(material_t const *mat);
 
 void Material_SetWidth(material_t *mat, int width);
 
-/// @return  Logical height.
+/// @return  Height of the material in map coordinate space units.
 int Material_Height(material_t const *mat);
 
 void Material_SetHeight(material_t *mat, int height);

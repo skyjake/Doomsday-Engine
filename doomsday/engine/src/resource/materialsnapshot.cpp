@@ -184,7 +184,7 @@ void MaterialSnapshot::update()
             {
                 Texture &tex = reinterpret_cast<Texture &>(*ml.texture);
                 Size2Raw texSize(tex.width(), tex.height());
-                Material_SetSize(&mat, &texSize);
+                Material_SetDimensions(&mat, &texSize);
             }
         }
     }
@@ -227,7 +227,7 @@ void MaterialSnapshot::update()
     }
 #endif // __CLIENT__
 
-    Size2 const *materialDimensions = Material_Size(&mat);
+    Size2 const *materialDimensions = Material_Dimensions(&mat);
     d->dimensions.setWidth(Size2_Width(materialDimensions));
     d->dimensions.setHeight(Size2_Height(materialDimensions));
 

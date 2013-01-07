@@ -320,7 +320,7 @@ void Materials::rebuild(material_t &mat, ded_material_t *def)
     if(!def) return;
 
     /// @todo We should be able to rebuild the variants.
-    Material_DestroyVariants(&mat);
+    Material_ClearVariants(&mat);
     Material_SetDefinition(&mat, def);
 
     // Update bindings.
