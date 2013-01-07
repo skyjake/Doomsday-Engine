@@ -24,6 +24,41 @@
 #include "map/p_maptypes.h"
 #include "map/p_dmu.h"
 
+typedef enum {
+    MEC_UNKNOWN = -1,
+    MEC_FIRST = 0,
+    MEC_METAL = MEC_FIRST,
+    MEC_ROCK,
+    MEC_WOOD,
+    MEC_CLOTH,
+    NUM_MATERIAL_ENV_CLASSES
+} material_env_class_t;
+
+#define VALID_MATERIAL_ENV_CLASS(v) ((v) >= MEC_FIRST && (v) < NUM_MATERIAL_ENV_CLASSES)
+
+struct material_variantlist_node_s;
+
+typedef struct material_s {
+    runtime_mapdata_header_t header;
+    struct ded_material_s *_def;
+    struct material_variantlist_node_s *_variants;
+    material_env_class_t _envClass; /// Environmental sound class.
+    materialid_t _primaryBind;  /// Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
+    Size2 *_size; /// Logical dimensions in world-space units.
+    short _flags; /// @see materialFlags
+    boolean _inAnimGroup; /// @c true if belongs to some animgroup.
+    boolean _isCustom;
+    struct texture_s *_detailTex;
+    float _detailScale;
+    float _detailStrength;
+    struct texture_s *_shinyTex;
+    blendmode_t _shinyBlendmode;
+    float _shinyMinColor[3];
+    float _shinyStrength;
+    struct texture_s *_shinyMaskTex;
+    byte _prepared;
+} material_t;
+
 #ifdef __cplusplus
 
 #include <QList>

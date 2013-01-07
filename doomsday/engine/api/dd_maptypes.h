@@ -24,6 +24,7 @@
 #define DMT_BSPLEAF_POLYOBJ DDVT_PTR // NULL, if there is no polyobj.
 #define DMT_BSPLEAF_SECTOR DDVT_PTR
 
+/// Material properties:
 #define DMT_MATERIAL_FLAGS DDVT_SHORT
 #define DMT_MATERIAL_WIDTH DDVT_INT
 #define DMT_MATERIAL_HEIGHT DDVT_INT

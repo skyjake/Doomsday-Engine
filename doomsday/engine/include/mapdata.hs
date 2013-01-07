@@ -132,46 +132,11 @@ struct BspLeaf
     -       uint[NUM_REVERB_DATA] reverb
 end
 
-internal
-typedef enum {
-    MEC_UNKNOWN = -1,
-    MEC_FIRST = 0,
-    MEC_METAL = MEC_FIRST,
-    MEC_ROCK,
-    MEC_WOOD,
-    MEC_CLOTH,
-    NUM_MATERIAL_ENV_CLASSES
-} material_env_class_t;
-
-#define VALID_MATERIAL_ENV_CLASS(v) ((v) >= MEC_FIRST && (v) < NUM_MATERIAL_ENV_CLASSES)
-
-struct material_variantlist_node_s;
-end
-
 public
+/// Material properties:
 #define DMT_MATERIAL_FLAGS      DDVT_SHORT
 #define DMT_MATERIAL_WIDTH      DDVT_INT
 #define DMT_MATERIAL_HEIGHT     DDVT_INT
-end
-
-struct material
-    -       ded_material_s* _def
-    -       material_variantlist_node_s* _variants
-    -       material_env_class_t _envClass // Environmental sound class.
-    -       materialid_t _primaryBind // Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
-    -       Size2i*     _size // Logical dimensions in world-space units.
-    -       short       _flags // @see materialFlags
-    -       boolean     _inAnimGroup // @c true if belongs to some animgroup.
-    -       boolean     _isCustom
-    -       texture_s*  _detailTex;
-    -       float       _detailScale;
-    -       float       _detailStrength;
-    -       texture_s*  _shinyTex;
-    -       blendmode_t _shinyBlendmode;
-    -       float[3]    _shinyMinColor;
-    -       float       _shinyStrength;
-    -       texture_s*  _shinyMaskTex;
-    -       byte        _prepared;
 end
 
 internal
@@ -195,7 +160,7 @@ struct Surface
     -       void*       owner // Either @c DMU_SIDEDEF, or @c DMU_PLANE
     INT     int         flags // SUF_ flags
     -       int         oldFlags
-    PTR     material_t* material
+    PTR     material_s* material
     BLENDMODE blendmode_t blendMode
     FLOAT   float[3]    tangent
     FLOAT   float[3]    bitangent
