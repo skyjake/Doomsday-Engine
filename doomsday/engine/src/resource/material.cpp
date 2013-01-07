@@ -262,7 +262,7 @@ material_t *Material_New(short flags, boolean isCustom, ded_material_t *def,
     mat->flags     = flags;
     mat->isCustom  = CPP_BOOL(isCustom);
     mat->def       = def;
-    mat->dimensions      = Size2_NewFromRaw(dimensions);
+    mat->dimensions = Size2_NewFromRaw(dimensions);
     mat->envClass  = envClass;
     return mat;
 }
@@ -270,7 +270,7 @@ material_t *Material_New(short flags, boolean isCustom, ded_material_t *def,
 void Material_Delete(material_t *mat)
 {
     DENG2_ASSERT(mat);
-    Material_ClearVariants(mat);
+    mat->clearVariants();
     Size2_Delete(mat->dimensions);
     mat->dimensions = 0;
     M_Free(mat);
@@ -600,7 +600,7 @@ int Material_IterateVariants(material_t *mat,
         DENG2_FOR_EACH_CONST(Material::Variants, i, mat->variants)
         {
             int result = callback(reinterpret_cast<struct materialvariant_s *>(*i), parameters);
-            if(result) break;
+            if(result) return result;
         }
     }
     return 0; // Continue iteration.
