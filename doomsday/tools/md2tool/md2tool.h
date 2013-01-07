@@ -1,4 +1,11 @@
-/* $Id$ */
+/*
+ * Copyright (c) 2004 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * This program is distributed under the GNU General Public License
+ * version 2 (or, at your option, any later version).  Please visit
+ * http://www.gnu.org/licenses/gpl.html for details.
+ */
+ 
 #ifndef __MD2TOOL_H__
 
 #define MD2TOOL_VERSION     "1.2.0"
