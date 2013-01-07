@@ -26,79 +26,79 @@
 
 namespace de {
 
+/**
+ * A material system subspace.
+ * @ingroup resource
+ */
+class MaterialScheme
+{
+public:
+    /// Minimum length of a symbolic name.
+    static int const min_name_length = URI_MINSCHEMELENGTH;
+
+    /// Binds within the scheme are placed into a tree.
+    typedef PathTreeT<MaterialBind> Index;
+
+public:
+    /// The requested bind could not be found in the index.
+    DENG2_ERROR(NotFoundError);
+
+public:
     /**
-     * A material system subspace.
-     * @ingroup resource
+     * Construct a new (empty) material subspace scheme.
+     *
+     * @param symbolicName  Symbolic name of the new subspace scheme. Must
+     *                      have at least @ref min_name_length characters.
      */
-    class MaterialScheme
-    {
-    public:
-        /// Minimum length of a symbolic name.
-        static int const min_name_length = URI_MINSCHEMELENGTH;
+    explicit MaterialScheme(String symbolicName);
 
-        /// Binds within the scheme are placed into a tree.
-        typedef PathTreeT<MaterialBind> Index;
+    ~MaterialScheme();
 
-    public:
-        /// The requested bind could not be found in the index.
-        DENG2_ERROR(NotFoundError);
+    /// @return  Symbolic name of this scheme (e.g., "Flats").
+    String const &name() const;
 
-    public:
-        /**
-         * Construct a new (empty) material subspace scheme.
-         *
-         * @param symbolicName  Symbolic name of the new subspace scheme. Must
-         *                      have at least @ref min_name_length characters.
-         */
-        explicit MaterialScheme(String symbolicName);
+    /// @return  Total number of binds in the scheme.
+    int size() const;
 
-        ~MaterialScheme();
+    /// @return  Total number of binds in the scheme. Same as @ref size().
+    inline int count() const {
+        return size();
+    }
 
-        /// @return  Symbolic name of this scheme (e.g., "Flats").
-        String const &name() const;
+    /**
+     * Clear all binds in the scheme.
+     */
+    void clear();
 
-        /// @return  Total number of binds in the scheme.
-        int size() const;
+    /**
+     * Insert a new material bind at the given @a path into the scheme.
+     * If a bind already exists at this path, the existing bind is
+     * returned and this is a no-op.
+     *
+     * @param path  Virtual path for the resultant bind.
+     * @return  The (possibly newly created) bind at @a path.
+     */
+    MaterialBind &insertBind(Path const &path, materialid_t id);
 
-        /// @return  Total number of binds in the scheme. Same as @ref size().
-        inline int count() const {
-            return size();
-        }
+    /**
+     * Search the scheme for a bind matching @a path.
+     *
+     * @return  Found bind.
+     */
+    MaterialBind const &find(Path const &path) const;
 
-        /**
-         * Clear all binds in the scheme.
-         */
-        void clear();
+    /// @copydoc find()
+    MaterialBind &find(Path const &path);
 
-        /**
-         * Insert a new material bind at the given @a path into the scheme.
-         * If a bind already exists at this path, the existing bind is
-         * returned and this is a no-op.
-         *
-         * @param path  Virtual path for the resultant bind.
-         * @return  The (possibly newly created) bind at @a path.
-         */
-        MaterialBind &insertBind(Path const &path, materialid_t id);
+    /**
+     * Provides access to the bind index for efficient traversal.
+     */
+    Index const &index() const;
 
-        /**
-         * Search the scheme for a bind matching @a path.
-         *
-         * @return  Found bind.
-         */
-        MaterialBind const &find(Path const &path) const;
-
-        /// @copydoc find()
-        MaterialBind &find(Path const &path);
-
-        /**
-         * Provides access to the bind index for efficient traversal.
-         */
-        Index const &index() const;
-
-    private:
-        struct Instance;
-        Instance *d;
-    };
+private:
+    struct Instance;
+    Instance *d;
+};
 
 } // namespace de
 
