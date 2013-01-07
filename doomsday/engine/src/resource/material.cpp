@@ -30,11 +30,40 @@
 #include "audio/s_environ.h"
 #include "gl/sys_opengl.h" // TODO: get rid of this
 #include "resource/materialsnapshot.h"
+#include "resource/materialvariant.h"
 #include "render/rend_main.h"
 
 #include <de/memory.h>
 
-using namespace de;
+struct material_variantlist_node_t
+{
+    material_variantlist_node_t *next;
+    de::MaterialVariant *variant;
+};
+
+struct material_s
+{
+    runtime_mapdata_header_t header;
+    ded_material_t *def;
+    material_variantlist_node_t *variants;
+    material_env_class_t envClass; /// Environmental sound class.
+    materialid_t primaryBind;  /// Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
+    Size2 *size; /// Logical dimensions in world-space units.
+    short flags; /// @see materialFlags
+    boolean inAnimGroup; /// @c true if belongs to some animgroup.
+    boolean isCustom;
+    de::Texture *detailTex;
+    float detailScale;
+    float detailStrength;
+    de::Texture *shinyTex;
+    blendmode_t shinyBlendmode;
+    float shinyMinColor[3];
+    float shinyStrength;
+    de::Texture *shinyMaskTex;
+    byte prepared;
+};
+
+namespace de {
 
 MaterialAnim::MaterialAnim(int _id, int _flags)
     : id_(_id), flags_(_flags),
@@ -198,30 +227,33 @@ void MaterialAnim::reset()
     index = frames.count() - 1;
 }
 
-typedef struct material_variantlist_node_s {
-    struct material_variantlist_node_s *next;
-    MaterialVariant *variant;
-} material_variantlist_node_t;
+} // namespace de
+
+using namespace de;
 
 static void destroyVariants(material_t *mat)
 {
     DENG2_ASSERT(mat);
-    while(mat->_variants)
+    while(mat->variants)
     {
-        material_variantlist_node_t *next = mat->_variants->next;
-        delete mat->_variants->variant;
-        M_Free(mat->_variants);
-        mat->_variants = next;
+        material_variantlist_node_t *next = mat->variants->next;
+        delete mat->variants->variant;
+        M_Free(mat->variants);
+        mat->variants = next;
     }
-    mat->_prepared = 0;
+    mat->prepared = 0;
 }
 
-material_t *Material_New()
+material_t *Material_New(short flags, boolean isCustom, ded_material_t *def,
+    Size2Raw *dimensions, material_env_class_t envClass)
 {
     material_t *mat = (material_t *) M_Calloc(sizeof(*mat));
     mat->header.type = DMU_MATERIAL;
-    mat->_envClass = MEC_UNKNOWN;
-    mat->_size = Size2_New();
+    mat->flags     = flags;
+    mat->isCustom  = isCustom;
+    mat->def       = def;
+    mat->size      = Size2_NewFromRaw(dimensions);
+    mat->envClass  = envClass;
     return mat;
 }
 
@@ -229,15 +261,15 @@ void Material_Delete(material_t *mat)
 {
     DENG2_ASSERT(mat);
     Material_DestroyVariants(mat);
-    Size2_Delete(mat->_size);
-    mat->_size = 0;
+    Size2_Delete(mat->size);
+    mat->size = 0;
     M_Free(mat);
 }
 
 void Material_Ticker(material_t *mat, timespan_t time)
 {
     DENG2_ASSERT(mat);
-    for(material_variantlist_node_t *node = mat->_variants; node; node = node->next)
+    for(material_variantlist_node_t *node = mat->variants; node; node = node->next)
     {
         node->variant->ticker(time);
     }
@@ -246,15 +278,15 @@ void Material_Ticker(material_t *mat, timespan_t time)
 ded_material_t *Material_Definition(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_def;
+    return mat->def;
 }
 
 void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
 {
     DENG2_ASSERT(mat);
-    if(mat->_def != def)
+    if(mat->def != def)
     {
-        mat->_def = def;
+        mat->def = def;
 
         // Textures are updated automatically at prepare-time, so just clear them.
         Material_SetDetailTexture(mat, NULL);
@@ -262,9 +294,9 @@ void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
         Material_SetShinyMaskTexture(mat, NULL);
     }
 
-    if(!mat->_def) return;
+    if(!mat->def) return;
 
-    mat->_flags = mat->_def->flags;
+    mat->flags = mat->def->flags;
 
     Size2Raw size(def->width, def->height);
     Material_SetSize(mat, &size);
@@ -274,7 +306,7 @@ void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
     // Update custom status.
     /// @todo This should take into account the whole definition, not just whether
     ///       the primary layer's first texture is custom or not.
-    mat->_isCustom = false;
+    mat->isCustom = false;
     if(def->layers[0].stageCount.num > 0 && def->layers[0].stages[0].texture)
     {
         de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture);
@@ -283,7 +315,7 @@ void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
             TextureManifest &manifest = App_Textures()->find(*texUri);
             if(Texture *tex = manifest.texture())
             {
-                mat->_isCustom = tex->flags().testFlag(Texture::Custom);
+                mat->isCustom = tex->flags().testFlag(Texture::Custom);
             }
         }
         catch(Textures::NotFoundError const &)
@@ -294,7 +326,7 @@ void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
 Size2 const *Material_Size(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_size;
+    return mat->size;
 }
 
 void Material_SetSize(material_t* mat, const Size2Raw* newSize)
@@ -303,9 +335,9 @@ void Material_SetSize(material_t* mat, const Size2Raw* newSize)
     if(!newSize) return;
 
     Size2 *size = Size2_NewFromRaw(newSize);
-    if(!Size2_Equality(mat->_size, size))
+    if(!Size2_Equality(mat->size, size))
     {
-        Size2_SetWidthHeight(mat->_size, newSize->width, newSize->height);
+        Size2_SetWidthHeight(mat->size, newSize->width, newSize->height);
         R_UpdateMapSurfacesOnMaterialChange(mat);
     }
     Size2_Delete(size);
@@ -314,65 +346,65 @@ void Material_SetSize(material_t* mat, const Size2Raw* newSize)
 int Material_Width(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return Size2_Width(mat->_size);
+    return Size2_Width(mat->size);
 }
 
 void Material_SetWidth(material_t *mat, int width)
 {
     DENG2_ASSERT(mat);
-    if(Size2_Width(mat->_size) == width) return;
-    Size2_SetWidth(mat->_size, width);
+    if(Size2_Width(mat->size) == width) return;
+    Size2_SetWidth(mat->size, width);
     R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 
 int Material_Height(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return Size2_Height(mat->_size);
+    return Size2_Height(mat->size);
 }
 
 void Material_SetHeight(material_t *mat, int height)
 {
     DENG2_ASSERT(mat);
-    if(Size2_Height(mat->_size) == height) return;
-    Size2_SetHeight(mat->_size, height);
+    if(Size2_Height(mat->size) == height) return;
+    Size2_SetHeight(mat->size, height);
     R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 
 short Material_Flags(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_flags;
+    return mat->flags;
 }
 
 void Material_SetFlags(material_t *mat, short flags)
 {
     DENG2_ASSERT(mat);
-    mat->_flags = flags;
+    mat->flags = flags;
 }
 
 boolean Material_IsCustom(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_isCustom;
+    return mat->isCustom;
 }
 
 boolean Material_IsGroupAnimated(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_inAnimGroup;
+    return mat->inAnimGroup;
 }
 
 boolean Material_IsSkyMasked(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return 0 != (mat->_flags & MATF_SKYMASK);
+    return 0 != (mat->flags & MATF_SKYMASK);
 }
 
 boolean Material_IsDrawable(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return 0 == (mat->_flags & MATF_NO_DRAW);
+    return 0 == (mat->flags & MATF_NO_DRAW);
 }
 
 boolean Material_HasGlow(material_t *mat)
@@ -403,31 +435,31 @@ int Material_LayerCount(material_t const *mat)
 void Material_SetGroupAnimated(material_t *mat, boolean yes)
 {
     DENG2_ASSERT(mat);
-    mat->_inAnimGroup = yes;
+    mat->inAnimGroup = yes;
 }
 
 byte Material_Prepared(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_prepared;
+    return mat->prepared;
 }
 
 void Material_SetPrepared(material_t *mat, byte state)
 {
     DENG2_ASSERT(mat && state <= 2);
-    mat->_prepared = state;
+    mat->prepared = state;
 }
 
 materialid_t Material_PrimaryBind(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_primaryBind;
+    return mat->primaryBind;
 }
 
 void Material_SetPrimaryBind(material_t *mat, materialid_t bindId)
 {
     DENG2_ASSERT(mat);
-    mat->_primaryBind = bindId;
+    mat->primaryBind = bindId;
 }
 
 material_env_class_t Material_EnvironmentClass(material_t const *mat)
@@ -435,111 +467,111 @@ material_env_class_t Material_EnvironmentClass(material_t const *mat)
     DENG2_ASSERT(mat);
     if(!Material_IsDrawable(mat))
         return MEC_UNKNOWN;
-    return mat->_envClass;
+    return mat->envClass;
 }
 
 void Material_SetEnvironmentClass(material_t *mat, material_env_class_t envClass)
 {
     DENG2_ASSERT(mat);
-    mat->_envClass = envClass;
+    mat->envClass = envClass;
 }
 
 struct texture_s *Material_DetailTexture(material_t *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_detailTex;
+    return reinterpret_cast<struct texture_s *>(mat->detailTex);
 }
 
 void Material_SetDetailTexture(material_t *mat, struct texture_s *tex)
 {
     DENG2_ASSERT(mat);
-    mat->_detailTex = tex;
+    mat->detailTex = reinterpret_cast<de::Texture *>(tex);
 }
 
 float Material_DetailStrength(material_t *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_detailStrength;
+    return mat->detailStrength;
 }
 
 void Material_SetDetailStrength(material_t *mat, float strength)
 {
     DENG2_ASSERT(mat);
-    mat->_detailStrength = MINMAX_OF(0, strength, 1);
+    mat->detailStrength = MINMAX_OF(0, strength, 1);
 }
 
 float Material_DetailScale(material_t *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_detailScale;
+    return mat->detailScale;
 }
 
 void Material_SetDetailScale(material_t *mat, float scale)
 {
     DENG2_ASSERT(mat);
-    mat->_detailScale = MINMAX_OF(0, scale, 1);
+    mat->detailScale = MINMAX_OF(0, scale, 1);
 }
 
 struct texture_s *Material_ShinyTexture(material_t *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_shinyTex;
+    return reinterpret_cast<struct texture_s *>(mat->shinyTex);
 }
 
 void Material_SetShinyTexture(material_t *mat, struct texture_s *tex)
 {
     DENG2_ASSERT(mat);
-    mat->_shinyTex = tex;
+    mat->shinyTex = reinterpret_cast<de::Texture *>(tex);
 }
 
 blendmode_t Material_ShinyBlendmode(material_t *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_shinyBlendmode;
+    return mat->shinyBlendmode;
 }
 
 void Material_SetShinyBlendmode(material_t *mat, blendmode_t blendmode)
 {
     DENG2_ASSERT(mat && VALID_BLENDMODE(blendmode));
-    mat->_shinyBlendmode = blendmode;
+    mat->shinyBlendmode = blendmode;
 }
 
 float const *Material_ShinyMinColor(material_t *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_shinyMinColor;
+    return mat->shinyMinColor;
 }
 
 void Material_SetShinyMinColor(material_t *mat, float const colorRGB[3])
 {
     DENG2_ASSERT(mat && colorRGB);
-    mat->_shinyMinColor[CR] = MINMAX_OF(0, colorRGB[CR], 1);
-    mat->_shinyMinColor[CG] = MINMAX_OF(0, colorRGB[CG], 1);
-    mat->_shinyMinColor[CB] = MINMAX_OF(0, colorRGB[CB], 1);
+    mat->shinyMinColor[CR] = MINMAX_OF(0, colorRGB[CR], 1);
+    mat->shinyMinColor[CG] = MINMAX_OF(0, colorRGB[CG], 1);
+    mat->shinyMinColor[CB] = MINMAX_OF(0, colorRGB[CB], 1);
 }
 
 float Material_ShinyStrength(material_t *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_shinyStrength;
+    return mat->shinyStrength;
 }
 
 void Material_SetShinyStrength(material_t *mat, float strength)
 {
     DENG2_ASSERT(mat);
-    mat->_shinyStrength = MINMAX_OF(0, strength, 1);
+    mat->shinyStrength = MINMAX_OF(0, strength, 1);
 }
 
 struct texture_s *Material_ShinyMaskTexture(material_t *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->_shinyMaskTex;
+    return reinterpret_cast<struct texture_s *>(mat->shinyMaskTex);
 }
 
 void Material_SetShinyMaskTexture(material_t *mat, struct texture_s *tex)
 {
     DENG2_ASSERT(mat);
-    mat->_shinyMaskTex = tex;
+    mat->shinyMaskTex = reinterpret_cast<de::Texture *>(tex);
 }
 
 struct materialvariant_s *Material_AddVariant(material_t *mat, struct materialvariant_s *variant)
@@ -557,8 +589,8 @@ struct materialvariant_s *Material_AddVariant(material_t *mat, struct materialva
     if(!node) Con_Error("Material_AddVariant: Failed on allocation of %lu bytes for new node.", (unsigned long) sizeof *node);
 
     node->variant = reinterpret_cast<MaterialVariant *>(variant);
-    node->next = mat->_variants;
-    mat->_variants = node;
+    node->next = mat->variants;
+    mat->variants = node;
     return variant;
 }
 
@@ -569,7 +601,7 @@ int Material_IterateVariants(material_t *mat,
     int result = 0;
     if(callback)
     {
-        material_variantlist_node_t *node = mat->_variants;
+        material_variantlist_node_t *node = mat->variants;
         while(node)
         {
             material_variantlist_node_t *next = node->next;
@@ -585,7 +617,7 @@ int Material_VariantCount(material_t const *mat)
 {
     DENG_ASSERT(mat);
     int count = 0;
-    for(material_variantlist_node_t *node = mat->_variants; node; node = node->next)
+    for(material_variantlist_node_t *node = mat->variants; node; node = node->next)
     {
         ++count;
     }

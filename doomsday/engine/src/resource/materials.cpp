@@ -547,14 +547,12 @@ material_t *Materials::newFromDef(ded_material_t &def)
     if(!tex) return 0;
 
     // A new Material.
-    material_t *mat = Material_New();
-    d->materials.push_back(mat);
+    Size2Raw dimensions(MAX_OF(0, def.width), MAX_OF(0, def.height));
+    material_env_class_t envClass = S_MaterialEnvClassForUri(reinterpret_cast<struct uri_s const *>(&uri));
 
-    mat->_flags     = def.flags;
-    mat->_isCustom  = tex->flags().testFlag(Texture::Custom);
-    mat->_def       = &def;
-    Size2_SetWidthHeight(mat->_size, MAX_OF(0, def.width), MAX_OF(0, def.height));
-    mat->_envClass  = S_MaterialEnvClassForUri(reinterpret_cast<struct uri_s const *>(&uri));
+    material_t *mat = Material_New(def.flags, tex->flags().testFlag(Texture::Custom), &def,
+                                   &dimensions, envClass);
+    d->materials.push_back(mat);
 
     if(!bind)
     {
