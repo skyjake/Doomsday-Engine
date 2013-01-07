@@ -1,6 +1,6 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2013 Daniel Swanson <danij@dengine.net>
 
 include(../config_plugin.pri)
 include(../../dep_openal.pri)

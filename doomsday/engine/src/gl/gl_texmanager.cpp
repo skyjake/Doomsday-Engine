@@ -4,7 +4,7 @@
  * @todo This file needs to be split into smaller portions.
  *
  * @author Copyright &copy; 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2002 Graham Jackson <no contact email published>
  *
  * @par License
@@ -2152,7 +2152,7 @@ static TexSource loadExternalTexture(image_t &image, String searchPath,
     }
 
     if(!found || !GL_LoadImage(&image, Str_Text(foundPath)))
-    {       
+    {
         return TEXS_NONE;
     }
 

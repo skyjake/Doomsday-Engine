@@ -7,7 +7,7 @@
  * vertical axis and the rendering code and model definitions use the Y axis.
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -93,7 +93,7 @@ static bool announcedVertexBufferMaxBreach; ///< @c true if an attempt has been 
 #endif
 
 void Rend_ModelRegister()
-{    
+{
     C_VAR_BYTE ("rend-model",                &useModels,            0, 0, 1);
     C_VAR_INT  ("rend-model-lights",         &modelLight,           0, 0, 10);
     C_VAR_INT  ("rend-model-inter",          &frameInter,           0, 0, 1);

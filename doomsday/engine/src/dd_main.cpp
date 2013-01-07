@@ -6,7 +6,7 @@
  * @ingroup core
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -1683,7 +1683,7 @@ int DD_EarlyInit(void)
  * event loop is already running.
  */
 void DD_FinishInitializationAfterWindowReady(void)
-{    
+{
 #ifdef WIN32
     // Now we can get the color transfer table as the window is available.
     DisplayMode_SaveOriginalColorTransfer();

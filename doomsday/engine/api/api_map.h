@@ -6,7 +6,7 @@
  * @ingroup map
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -408,7 +408,7 @@ DENG_API_T(Map);
 #define P_MobjsBoxIterator                  _api_Map.Box_MobjsIterator
 #define P_LinesBoxIterator                  _api_Map.Box_LinesIterator
 #define P_AllLinesBoxIterator               _api_Map.Box_AllLinesIterator
-#define P_PolyobjLinesBoxIterator			_api_Map.Box_PolyobjLinesIterator
+#define P_PolyobjLinesBoxIterator           _api_Map.Box_PolyobjLinesIterator
 #define P_BspLeafsBoxIterator               _api_Map.Box_BspLeafsIterator
 #define P_PolyobjsBoxIterator               _api_Map.Box_PolyobjsIterator
 #define P_PathTraverse2                     _api_Map.PathTraverse2

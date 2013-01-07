@@ -4,7 +4,7 @@
  * Used when saving map state (savegames) or sharing world changes with clients.
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -103,7 +103,7 @@ DENG_API_T(MaterialArchive);
 #define MaterialArchive_New                 _api_MaterialArchive.New
 #define MaterialArchive_NewEmpty            _api_MaterialArchive.NewEmpty
 #define MaterialArchive_Delete              _api_MaterialArchive.Delete
-#define MaterialArchive_FindUniqueSerialId	_api_MaterialArchive.FindUniqueSerialId
+#define MaterialArchive_FindUniqueSerialId  _api_MaterialArchive.FindUniqueSerialId
 #define MaterialArchive_Find                _api_MaterialArchive.Find
 #define MaterialArchive_Count               _api_MaterialArchive.Count
 #define MaterialArchive_Write               _api_MaterialArchive.Write

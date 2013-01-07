@@ -2,7 +2,7 @@
  * @ingroup fs
  *
  * @author Copyright &copy; 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -114,7 +114,7 @@ void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
         // Already has an entry for this, skip it (wasn't pruned so it's OK).
         return;
     }
-    
+
     NativePath entryPath = _nativePath / entryName;
 
     // Open the native file.
@@ -130,7 +130,7 @@ void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
 
     // We will decide on pruning this.
     file->setOriginFeed(this);
-        
+
     // Include files the main index.
     folder.fileSystem().index(*file);
 }
@@ -138,9 +138,9 @@ void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
 bool DirectoryFeed::prune(File &file) const
 {
     LOG_AS("DirectoryFeed::prune");
-    
+
     /// Rules for pruning:
-    /// - A file sourced by NativeFile will be pruned if it's out of sync with the hard 
+    /// - A file sourced by NativeFile will be pruned if it's out of sync with the hard
     ///   drive version (size, time of last modification).
     NativeFile *nativeFile = dynamic_cast<NativeFile *>(file.source());
     if(nativeFile)
@@ -160,7 +160,7 @@ bool DirectoryFeed::prune(File &file) const
             return true;
         }
     }
-    
+
     /// - A Folder will be pruned if the corresponding directory does not exist (providing
     ///   a DirectoryFeed is the sole feed in the folder).
     Folder *subFolder = dynamic_cast<Folder *>(&file);

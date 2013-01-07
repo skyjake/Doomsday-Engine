@@ -3,7 +3,7 @@
  * Version information.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License

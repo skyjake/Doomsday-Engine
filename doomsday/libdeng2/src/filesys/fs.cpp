@@ -2,7 +2,7 @@
  * @file fs.cpp File System
  *
  * @author Copyright &copy; 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -64,7 +64,7 @@ void FS::refresh()
     d->root.populate();
 
     LOG_DEBUG("Done in %.2f seconds.") << startedAt.since();
-    
+
     printIndex();
 }
 
@@ -85,15 +85,15 @@ Folder &FS::makeFolder(String const &path)
 File *FS::interpret(File *sourceData)
 {
     LOG_AS("FS::interpret");
-    
+
     /// @todo  One should be able to define new interpreters dynamically.
-    
+
     try
     {
         if(LibraryFile::recognize(*sourceData))
         {
             LOG_VERBOSE("Interpreted ") << sourceData->description() << " as a shared library";
-        
+
             // It is a shared library intended for Doomsday.
             return new LibraryFile(sourceData);
         }
@@ -158,8 +158,8 @@ int FS::findAll(String const &path, FoundFiles &found) const
     }
 
     ConstIndexRange range = d->index.equal_range(baseName);
-    for(Index::const_iterator i = range.first; i != range.second; ++i)    
-    {       
+    for(Index::const_iterator i = range.first; i != range.second; ++i)
+    {
         File *file = i->second;
         if(file->path().fileNamePath().endsWith(dir))
         {
@@ -177,9 +177,9 @@ File &FS::find(String const &path) const
 void FS::index(File &file)
 {
     String const lowercaseName = file.name().lower();
-    
+
     d->index.insert(IndexEntry(lowercaseName, &file));
-    
+
     // Also make an entry in the type index.
     Index &indexOfType = d->typeIndex[DENG2_TYPE_NAME(file)];
     indexOfType.insert(IndexEntry(lowercaseName, &file));
@@ -187,7 +187,7 @@ void FS::index(File &file)
 
 static void removeFromIndex(FS::Index &idx, File &file)
 {
-    if(idx.empty()) 
+    if(idx.empty())
     {
         return;
     }
@@ -234,7 +234,7 @@ void FS::printIndex()
     {
         LOG_TRACE("\"%s\": ") << i->first << i->second->description();
     }
-    
+
     for(Instance::TypeIndex::iterator k = d->typeIndex.begin(); k != d->typeIndex.end(); ++k)
     {
         LOG_DEBUG("Index for type '%s' has %i entries") << k->first << k->second.size();

@@ -1,7 +1,7 @@
 /** @file api_uri.h
  * Universal Resource Identifier (C wrapper). @ingroup base
  *
- * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License

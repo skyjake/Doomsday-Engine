@@ -21,7 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
  */
 
 require_once('includes/platform.inc.php');

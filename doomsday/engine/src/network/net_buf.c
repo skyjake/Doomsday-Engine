@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -298,7 +298,7 @@ void N_AddSentBytes(size_t bytes)
 int N_IdentifyPlayer(nodeid_t id)
 {
     if(netServerMode)
-    {        
+    {
         // What is the corresponding player number? Only the server keeps
         // a list of all the IDs.
         int i;

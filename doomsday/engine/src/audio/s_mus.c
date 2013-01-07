@@ -3,7 +3,7 @@
  * Music subsystem. @ingroup audio
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -287,7 +287,7 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
     if(!AudioDriver_Music_Available() || lump < 0) return 0;
 
     if(Mus_IsMUSLump(lump))
-    {    
+    {
         // Lump is in DOOM's MUS format. We must first convert it to MIDI.
         AutoStr* srcFile = 0;
         struct file1_s* file;

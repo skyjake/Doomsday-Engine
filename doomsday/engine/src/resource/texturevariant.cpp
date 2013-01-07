@@ -2,7 +2,7 @@
  * @file texturevariant.cpp
  * Logical texture variant. @ingroup resource
  *
- * @authors Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

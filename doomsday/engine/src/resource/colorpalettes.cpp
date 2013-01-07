@@ -1,7 +1,7 @@
 /**
  * @file colorpalettes.cpp ColorPalette repository and related bookkeeping.
  *
- * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

@@ -3,7 +3,7 @@
  * Automatic updater that works with dengine.net. @ingroup base
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

@@ -2,7 +2,7 @@
  * @ingroup base
  *
  * @authors Copyright Â© 2003-2012 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- * @authors Copyright Â© 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

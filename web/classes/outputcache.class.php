@@ -20,7 +20,7 @@
  * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
- * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
  */
 
 includeGuard('OutputCache');

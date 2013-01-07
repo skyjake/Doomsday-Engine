@@ -2,7 +2,7 @@
  * @file point.h
  * 2D points. @ingroup math
  *
- * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

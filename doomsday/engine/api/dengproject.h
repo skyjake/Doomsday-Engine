@@ -2,7 +2,7 @@
  * @file dengproject.h
  * General project related definitions.
  *
- * @authors Copyright © 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License

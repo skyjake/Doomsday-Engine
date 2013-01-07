@@ -3,7 +3,7 @@
  * Dialog for notifying the user about available updates. @ingroup updater
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,7 +29,7 @@
 class UpdateAvailableDialog : public UpdaterDialog
 {
     Q_OBJECT
-    
+
 public:
     /// The dialog is initialized with the "Checking" page visible.
     explicit UpdateAvailableDialog(QWidget *parent = 0);
@@ -38,7 +38,7 @@ public:
     explicit UpdateAvailableDialog(const VersionInfo& latestVersion,
                                    de::String changeLogUri, QWidget *parent = 0);
     ~UpdateAvailableDialog();
-    
+
 public slots:
     void showResult(const VersionInfo& latestVersion, de::String changeLogUri);
     void neverCheckToggled(bool);

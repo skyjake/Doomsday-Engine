@@ -1,7 +1,7 @@
 /** @file pathtree.cpp Tree of Path/data pairs.
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -291,7 +291,7 @@ void PathTree::clear()
 }
 
 bool PathTree::has(Path const &path, ComparisonFlags flags) const
-{    
+{
     flags &= ~RelinquishMatching; // never relinquish
     return d->find(path, flags) != 0;
 }

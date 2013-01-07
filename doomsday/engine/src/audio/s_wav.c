@@ -3,7 +3,7 @@
  * WAV loader. @ingroup audio
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -82,22 +82,22 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
         Con_Message("WAV_MemoryLoad: Not a WAV file.\n");
         return NULL;
     }
-    
+
     // Read the RIFF header.
     data += sizeof(riff_hdr_t);
     data += 4; // "WAVE" already verified above
 
-#ifdef _DEBUG    
+#ifdef _DEBUG
     assert(sizeof(wave_format) == 16);
     assert(sizeof(riff_chunk) == 8);
 #endif
-    
+
     // Start readin' the chunks, baby!
     while(data < end)
     {
         // Read next chunk header.
         WReadAndAdvance(data, &riff_chunk, sizeof(riff_chunk));
-        
+
         // Correct endianness.
         riff_chunk.len = ULONG(riff_chunk.len);
 
@@ -106,7 +106,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
         {
             // Read format chunk.
             WReadAndAdvance(data, &wave_format, sizeof(wave_format));
-                                                            
+
             // Correct endianness.
             wave_format.wFormatTag       = USHORT(wave_format.wFormatTag      );
             wave_format.wChannels        = USHORT(wave_format.wChannels       );
@@ -194,7 +194,7 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
 
     // Read in the whole thing.
     size = FileHandle_Length(file);
- 
+
     DEBUG_Message(("WAV_Load: Loading from \"%s\" (size %i, fpos %i)\n",
                    F_PrettyPath(Str_Text(F_ComposePath(FileHandle_File_const(file)))),
                    (int)size, (int)FileHandle_Tell(file)));

@@ -2,7 +2,7 @@
 /** @file commitutils.php
  * Utility functions for formatting commit messages
  *
- * @authors Copyright @ 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright @ 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

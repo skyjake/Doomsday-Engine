@@ -1,6 +1,6 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2013 Daniel Swanson <danij@dengine.net>
 
 # Common Unix build options for all Unix-compatible platforms (assumes gcc).
 

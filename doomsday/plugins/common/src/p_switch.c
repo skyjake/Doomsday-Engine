@@ -3,7 +3,7 @@
  * Common playsim routines relating to switches.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  * @authors Copyright &copy; 1999-2000 Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  * @authors Copyright &copy; 1993-1996 id Software, Inc.

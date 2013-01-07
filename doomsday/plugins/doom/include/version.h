@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@
 
 // Used to derive filepaths.
 #define PLUGIN_NAMETEXT     "jdoom"
-#define PLUGIN_NAMETEXT2    "libdoom" // for transitioning: for those 
+#define PLUGIN_NAMETEXT2    "libdoom" // for transitioning: for those
                                       // resources that have been renamed
                                       // to the new name
 

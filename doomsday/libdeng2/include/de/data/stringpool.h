@@ -2,7 +2,7 @@
  * @file stringpool.h
  * Pool of strings (case insensitive).
  *
- * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License

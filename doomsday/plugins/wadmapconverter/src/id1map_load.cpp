@@ -1,10 +1,10 @@
 /**
  * @file id1map_load.cpp @ingroup wadmapconverter
- * 
+ *
  * Load and translation of the id tech 1 map format data structures.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

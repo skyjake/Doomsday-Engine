@@ -3,7 +3,7 @@
  * Map half-edge implementation. @ingroup map
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -279,7 +279,7 @@ static void buildWallDiv(walldivs_t* wallDivs, HEdge* hedge,
     WallDivs_Append(wallDivs, topZ);
 
     if(!(wallDivs->num > 2)) return;
-    
+
     // Sorting is required. This shouldn't take too long...
     // There seldom are more than two or three nodes.
     qsort(wallDivs->nodes, wallDivs->num, sizeof(*wallDivs->nodes), sortWallDivNode);

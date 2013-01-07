@@ -2,7 +2,7 @@
  * @file dehread.cpp
  * DeHackEd patch reader plugin for Doomsday Engine. @ingroup dehread
  *
- * @author Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License

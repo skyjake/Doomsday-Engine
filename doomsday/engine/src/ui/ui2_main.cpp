@@ -3,7 +3,7 @@
  * @ingroup ui
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -1048,7 +1048,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 de::Uri uri = texture.manifest().composeUri();
                 if(!uri.scheme().compareWithoutCase("Sprites"))
                 {
-                    V3f_Set(offset, texture.origin().x(), texture.origin().y(), 0);                    
+                    V3f_Set(offset, texture.origin().x(), texture.origin().y(), 0);
                 }
                 else
                 {

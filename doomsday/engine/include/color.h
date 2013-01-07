@@ -1,7 +1,7 @@
 /**
  * @file color.h Color
  *
- * @author Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ typedef struct {
 } fi_state_conditions_t;
 
 typedef struct {
-    finaleid_t finaleId;   
+    finaleid_t finaleId;
     finale_mode_t mode;
     fi_state_conditions_t conditions;
 

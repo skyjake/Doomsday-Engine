@@ -3,7 +3,7 @@
  * Keyboard and mouse input pre-processing. @ingroup input
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  * @authors Copyright © 2005 Zachary Keene <zjkeene@bellsouth.net>
  *
@@ -172,7 +172,7 @@ void I_Shutdown(void)
     if(useMouse) iMouse->shutdown();
     useMouse = false;
 
-    Joystick_Shutdown();    
+    Joystick_Shutdown();
 # ifdef WIN32
     DirectInput_Shutdown();
 # endif

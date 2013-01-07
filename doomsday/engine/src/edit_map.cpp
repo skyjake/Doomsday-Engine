@@ -3,7 +3,7 @@
 
  * Map Editor interface. @ingroup map
  *
- * @author Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @author Copyright &copy; 1998-2000 Colin Reed <cph@moria.org.uk>
  * @author Copyright &copy; 1998-2000 Lee Killough <killough@rsn.hp.com>

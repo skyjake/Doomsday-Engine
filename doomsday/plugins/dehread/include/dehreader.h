@@ -4,7 +4,7 @@
  *
  * Parses DeHackEd patches and updates the engine's definition databases.
  *
- * @author Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License

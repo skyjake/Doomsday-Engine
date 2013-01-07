@@ -3,7 +3,7 @@
  * Dialog that downloads a distribution package. @ingroup updater
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -51,10 +51,10 @@ public:
     de::String downloadedFilePath() const;
 
     bool isReadyToInstall() const;
-    
+
 signals:
     void downloadFailed(QString uri);
-    
+
 public slots:
     void replyMetaDataChanged();
     void progress(qint64 received, qint64 total);

@@ -4,7 +4,7 @@
  * Originally derived from the Q2 utils source (lbmlib.c).
  *
  * @author Copyright &copy; 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 1997-2006 id Software, Inc
  *
  * @par License

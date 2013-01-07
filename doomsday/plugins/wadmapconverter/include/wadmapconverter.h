@@ -6,7 +6,7 @@
  * id tech 1 format to Doomsday's native map format, using the engine's own
  * public map editing interface.
  *
- * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

@@ -1,7 +1,7 @@
 /** @file p_particle.cpp Generator Management (Particles).
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -1269,7 +1269,7 @@ void P_SpawnTypeParticleGens()
 
     ded_ptcgen_t *def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
-    {       
+    {
         if(def->typeNum != DED_PTCGEN_ANY_MOBJ_TYPE && def->typeNum < 0) continue;
 
         ptcgen_t *gen = P_NewGenerator();

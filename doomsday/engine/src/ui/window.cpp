@@ -32,7 +32,7 @@
  * to the quirks of each platform.
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -1045,7 +1045,7 @@ static void windowFocusChanged(Canvas& canvas, bool focus)
     ddevent_t ev;
     ev.type = E_FOCUS;
     ev.focus.gained = focus;
-    ev.focus.inWindow = getWindowIdx(wnd);    
+    ev.focus.inWindow = getWindowIdx(wnd);
     DD_PostEvent(&ev);
 
 #if 0

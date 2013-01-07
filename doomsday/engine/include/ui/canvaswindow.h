@@ -3,7 +3,7 @@
  * Canvas window. @ingroup base
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -37,7 +37,7 @@ class CanvasWindow : public QMainWindow
 public:
     explicit CanvasWindow(QWidget *parent = 0);
     ~CanvasWindow();
-    
+
     /**
      * Recreates the contained Canvas with an update GL format.
      * The context is shared with the old Canvas.
@@ -75,7 +75,7 @@ public:
     static bool setDefaultGLFormat();
 
 signals:
-    
+
 public slots:
 
 protected:
