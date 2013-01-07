@@ -84,6 +84,17 @@ struct material_s
         }
         prepared = 0;
     }
+
+    /**
+     * Add a new variant to the list of resources for this Material.
+     * Material takes ownership of the variant.
+     *
+     * @param variant  Variant instance to add to the list.
+     */
+    void addVariant(de::MaterialVariant &variant)
+    {
+        variants.push_back(&variant);
+    }
 };
 
 namespace de {
@@ -572,13 +583,6 @@ void Material_SetShinyMaskTexture(material_t *mat, struct texture_s *tex)
     mat->shinyMaskTex = reinterpret_cast<de::Texture *>(tex);
 }
 
-struct materialvariant_s *Material_AddVariant(material_t *mat, struct materialvariant_s *variant)
-{
-    DENG2_ASSERT(mat && variant);
-    mat->variants.push_back(reinterpret_cast<MaterialVariant *>(variant));
-    return variant;
-}
-
 Material::Variants const &Material_Variants(material_t const *mat)
 {
     return mat->variants;
@@ -606,7 +610,7 @@ MaterialVariant *Material_ChooseVariant(material_t *mat,
         if(!canCreate) return 0;
 
         variant = new MaterialVariant(*mat, spec, *Material_Definition(mat));
-        Material_AddVariant(mat, reinterpret_cast<materialvariant_s *>(variant));
+        mat->addVariant(*variant);
     }
 
     if(smoothed)

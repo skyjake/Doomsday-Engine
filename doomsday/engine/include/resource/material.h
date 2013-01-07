@@ -96,15 +96,6 @@ void Material_Ticker(material_t *mat, timespan_t time);
 int Material_VariantCount(material_t const *mat);
 
 /**
- * Add a new variant to the list of resources for this Material.
- * Material takes ownership of the variant.
- *
- * @param variant  Variant instance to add to the resource list.
- */
-struct materialvariant_s *Material_AddVariant(material_t *mat,
-    struct materialvariant_s *variant);
-
-/**
  * Destroys all derived MaterialVariants linked with this Material.
  */
 void Material_ClearVariants(material_t *mat);
