@@ -10,7 +10,7 @@
  * Oranges (occlusion ranges) clip a half-space on an angle range.
  * These are produced by horizontal edges that have empty space behind.
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

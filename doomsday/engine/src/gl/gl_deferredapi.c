@@ -2,7 +2,7 @@
  * @file gl_deferredapi.c
  * Implementation of GL API deferring. @ingroup gl
  *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

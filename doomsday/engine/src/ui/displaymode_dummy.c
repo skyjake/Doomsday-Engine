@@ -2,7 +2,7 @@
  * @file displaymode_dummy.c
  * Dummy implementation of the DisplayMode native functionality. @ingroup gl
  *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

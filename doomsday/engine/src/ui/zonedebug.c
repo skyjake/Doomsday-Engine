@@ -6,7 +6,7 @@
  * only available in debug builds and provides a view to the layout of the
  * allocated memory inside the zone.
  *
- * @authors Copyright (c) 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

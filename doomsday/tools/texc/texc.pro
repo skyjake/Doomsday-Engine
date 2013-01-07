@@ -1,5 +1,5 @@
 # qmake project file for building texc
-# (c) 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 # License: GPL 2.0+
 
 include(../../config.pri)

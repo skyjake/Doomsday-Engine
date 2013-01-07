@@ -5,7 +5,7 @@
  *
  * @ingroup core
  *
- * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

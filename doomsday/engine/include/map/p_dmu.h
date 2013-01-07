@@ -5,7 +5,7 @@
  * notified of changes in the map data they use, thus allowing them to
  * update their status whenever needed.
  *
- * @author Copyright &copy; 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -2,7 +2,7 @@
  * @file driver_fmod.h
  * FMOD Ex audio plugin. @ingroup dsfmod
  *
- * @authors Copyright © 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html (with exception granted to allow

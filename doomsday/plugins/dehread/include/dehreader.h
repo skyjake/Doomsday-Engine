@@ -5,7 +5,7 @@
  * Parses DeHackEd patches and updates the engine's definition databases.
  *
  * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

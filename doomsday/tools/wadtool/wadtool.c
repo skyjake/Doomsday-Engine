@@ -3,7 +3,7 @@
  * WAD creation tool. This is ANSI C but unfortunately only compiles on
  * Windows (uses Win32 file finding).
  *
- * @author Copyright © 2005-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

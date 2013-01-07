@@ -2,7 +2,7 @@
  * @file fluidsynth_music.h
  * Music playback interface. @ingroup dsfluidsynth
  *
- * @authors Copyright © 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

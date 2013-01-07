@@ -3,7 +3,7 @@
  *
  * @todo This file needs to be split into smaller portions.
  *
- * @author Copyright &copy; 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2002 Graham Jackson <no contact email published>
  *

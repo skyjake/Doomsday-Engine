@@ -5,7 +5,7 @@
  * Windows cannot overwrite files that are in use. Thus the updater needs
  * to ensure that all Snowberry is shut down before starting an update.
  *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

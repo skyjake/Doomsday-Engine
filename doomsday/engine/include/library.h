@@ -14,7 +14,7 @@
  *
  * @todo Implement and use this class for Windows.
  *
- * @authors Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

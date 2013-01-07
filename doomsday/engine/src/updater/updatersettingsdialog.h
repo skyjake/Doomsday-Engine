@@ -2,7 +2,7 @@
  * @file updatersettingsdialog.h
  * Dialog for configuring automatic updates. @ingroup updater
  *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

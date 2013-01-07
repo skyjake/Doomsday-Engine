@@ -5,7 +5,7 @@
  * @todo This needs further refactoring to fit more nicely into the rest
  *       of the window management.
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

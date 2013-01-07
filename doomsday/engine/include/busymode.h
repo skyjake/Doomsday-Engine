@@ -14,7 +14,7 @@
  * regular application event loop. During busy mode, the game loop callback
  * should not be called.
  *
- * @authors Copyright &copy; 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -5,7 +5,7 @@
  * The original movement path is composed out of discrete 3D points. Smoother
  * calculates the points in between.
  *
- * @authors Copyright © 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

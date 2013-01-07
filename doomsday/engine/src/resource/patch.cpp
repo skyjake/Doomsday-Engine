@@ -1,6 +1,6 @@
 /** @file patch.cpp Patch Image Format.
  *
- * @author Copyright &copy; 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

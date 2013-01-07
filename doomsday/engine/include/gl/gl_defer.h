@@ -5,7 +5,7 @@
  * GL is only available from the main thread. When accessed from other threads,
  * the operations need to be deferred for processing later in the main thread.
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

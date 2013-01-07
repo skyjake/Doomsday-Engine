@@ -1,7 +1,7 @@
 /** @file dd_loop.c Main loop and the core timer.
  * @ingroup base
  *
- * @authors Copyright Â© 2003-2012 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright Â© 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
  * @authors Copyright Â© 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -2,7 +2,7 @@
  * @file dgl_common.cpp Misc Drawing Routines
  * @ingroup gl
  *
- * @author Copyright &copy; 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

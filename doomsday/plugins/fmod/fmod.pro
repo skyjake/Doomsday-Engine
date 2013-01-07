@@ -1,5 +1,5 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 # License: GPLv2 + exception to link against FMOD Ex
 
 include(../config_plugin.pri)

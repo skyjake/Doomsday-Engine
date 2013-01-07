@@ -1,7 +1,7 @@
 /**
  * @file texturecontent.h Texture Content
  *
- * @author Copyright &copy; 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

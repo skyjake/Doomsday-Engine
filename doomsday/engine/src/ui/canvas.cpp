@@ -5,7 +5,7 @@
  * @todo Merge mouse_qt.c with this source file since the mouse tracking
  * functionality is implemented here.
  *
- * @authors Copyright (c) 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

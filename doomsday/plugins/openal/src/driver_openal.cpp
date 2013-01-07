@@ -10,7 +10,7 @@
  * @bug Not 64bit clean: In function 'DS_SFX_Set': cast to pointer from integer of different size
  * @bug Not 64bit clean: In function 'DS_SFX_Setv': cast to pointer from integer of different size
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
  *
  * @par License

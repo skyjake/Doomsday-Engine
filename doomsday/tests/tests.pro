@@ -1,5 +1,5 @@
 # The Doomsday Engine Project
-# Copyright (c) 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 include(../config.pri)
 

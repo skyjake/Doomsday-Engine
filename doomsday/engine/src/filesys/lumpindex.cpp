@@ -3,7 +3,7 @@
  *
  * @ingroup fs
  *
- * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @author Copyright &copy; 1999-2006 by Colin Phipps, Florian Schulze, Neil Stevens, Andrey Budko (PrBoom 2.2.6)

@@ -2,7 +2,7 @@
  * @file edit_bias.h
  * Bias light source editor. @ingroup base
  *
- * @authors Copyright &copy; 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

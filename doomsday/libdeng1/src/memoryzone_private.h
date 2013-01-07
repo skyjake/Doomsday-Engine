@@ -9,7 +9,7 @@
  * debugging purposes -- however, doing so requires directly including this
  * internal header file.
  *
- * @authors Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *

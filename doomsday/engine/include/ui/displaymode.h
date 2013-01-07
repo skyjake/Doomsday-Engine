@@ -5,7 +5,7 @@
  * High-level logic for enumerating, selecting, and changing display modes. See
  * displaymode_native.h for the platform-specific low-level routines.
  *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

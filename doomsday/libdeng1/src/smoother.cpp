@@ -12,7 +12,7 @@
  * into the past or change its course once the interpolation has begun
  * between two points.
  *
- * @authors Copyright © 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -31,7 +31,7 @@
  * all of them efficiently. This is possible because no block inside the
  * sequence could be purged by Z_Malloc() anyway.
  *
- * @author Copyright &copy; 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @author Copyright &copy; 1993-1996 by id Software, Inc.
