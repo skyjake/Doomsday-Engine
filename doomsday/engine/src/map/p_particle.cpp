@@ -1411,25 +1411,11 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
             if(def->flags & PGF_GROUP)
             {
                 // Generator triggered by all materials in the animation.
-
-                /**
-                 * A search is necessary only if we know both the used material and
-                 * the specified material in this definition are in *a* animation.
-                 */
-                if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
+                if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat) &&
+                   &Material_AnimGroup(defMat) == &Material_AnimGroup(mat))
                 {
-                    Materials::AnimGroups const &anims = App_Materials()->allAnimGroups();
-                    DENG2_FOR_EACH_CONST(Materials::AnimGroups, k, anims)
-                    {
-                        MaterialAnim const &anim = *k;
-
-                        if(anim.hasFrameForMaterial(*defMat) &&
-                           anim.hasFrameForMaterial(*mat))
-                        {
-                            // Both are in this animation! This def will do.
-                            return i + 1; // 1-based index.
-                        }
-                    }
+                    // Both are in this animation! This def will do.
+                    return i + 1; // 1-based index.
                 }
             }
         }

@@ -453,6 +453,7 @@ de::MaterialAnim &Material_AnimGroup(material_t *mat)
         }
     }
 
+    /// @throw Material::NoAnimGroupError The material is not group-animated.
     throw Material::NoAnimGroupError("Material_AnimGroup", QString("Material [%p] is not group-animated")
                                                                .arg(de::dintptr(mat)));
 }
