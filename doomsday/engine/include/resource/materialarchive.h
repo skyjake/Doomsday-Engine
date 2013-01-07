@@ -34,68 +34,68 @@ struct material_s;
 
 namespace de {
 
-    class MaterialArchive
-    {
-    public:
-        /// Base class for all deserialization errors. @ingroup errors
-        DENG2_ERROR(ReadError);
+class MaterialArchive
+{
+public:
+    /// Base class for all deserialization errors. @ingroup errors
+    DENG2_ERROR(ReadError);
 
-    public:
-        /**
-         * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
-         */
-        MaterialArchive(int useSegments, bool populate = true);
+public:
+    /**
+     * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
+     */
+    MaterialArchive(int useSegments, bool populate = true);
 
-        ~MaterialArchive();
+    ~MaterialArchive();
 
-        /**
-         * @return A new (unused) SerialId for the specified material.
-         */
-        materialarchive_serialid_t findUniqueSerialId(struct material_s *mat) const;
+    /**
+     * @return A new (unused) SerialId for the specified material.
+     */
+    materialarchive_serialid_t findUniqueSerialId(struct material_s *mat) const;
 
-        /**
-         * Finds and returns a material with the identifier @a serialId.
-         *
-         * @param serialId  SerialId of a material.
-         * @param group  Set to zero. Only used with the version 0 of MaterialArchive (now obsolete).
-         *
-         * @return  Pointer to a material instance. Ownership not given.
-         */
-        struct material_s *find(materialarchive_serialid_t serialId, int group) const;
+    /**
+     * Finds and returns a material with the identifier @a serialId.
+     *
+     * @param serialId  SerialId of a material.
+     * @param group  Set to zero. Only used with the version 0 of MaterialArchive (now obsolete).
+     *
+     * @return  Pointer to a material instance. Ownership not given.
+     */
+    struct material_s *find(materialarchive_serialid_t serialId, int group) const;
 
-        /**
-         * Returns the number of materials in the archive.
-         */
-        int count() const;
+    /**
+     * Returns the number of materials in the archive.
+     */
+    int count() const;
 
-        /**
-         * Returns the number of materials in the archive.
-         * Same as count()
-         */
-        inline int size() const {
-            return count();
-        }
+    /**
+     * Returns the number of materials in the archive.
+     * Same as count()
+     */
+    inline int size() const {
+        return count();
+    }
 
-        /**
-         * Serializes the state of the archive using @a writer.
-         *
-         * @param writer  Writer instance.
-         */
-        void write(writer_s &writer) const;
+    /**
+     * Serializes the state of the archive using @a writer.
+     *
+     * @param writer  Writer instance.
+     */
+    void write(writer_s &writer) const;
 
-        /**
-         * Deserializes the state of the archive from @a reader.
-         *
-         * @param reader  Reader instance.
-         * @param forcedVersion  Version to interpret as, not actual format version.
-         *                       Use -1 to use whatever version is encountered.
-         */
-        void read(reader_s &reader, int forcedVersion = -1);
+    /**
+     * Deserializes the state of the archive from @a reader.
+     *
+     * @param reader  Reader instance.
+     * @param forcedVersion  Version to interpret as, not actual format version.
+     *                       Use -1 to use whatever version is encountered.
+     */
+    void read(reader_s &reader, int forcedVersion = -1);
 
-    private:
-        struct Instance;
-        Instance *d;
-    };
+private:
+    struct Instance;
+    Instance *d;
+};
 
 } // namespace de
 

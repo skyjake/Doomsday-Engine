@@ -38,82 +38,82 @@ enum {
 
 namespace de {
 
-    class MaterialVariant;
-    class TextureVariant;
+class MaterialVariant;
+class TextureVariant;
+
+/**
+ * @ingroup resource
+ */
+class MaterialSnapshot
+{
+public:
+    /// Invalid texture unit referenced. @ingroup errors
+    DENG2_ERROR(InvalidUnitError);
+
+public:
+    /**
+     * Construct a new material snapshot instance.
+     * @param material  Material to capture to produce the snapshot.
+     */
+    MaterialSnapshot(MaterialVariant &material);
+
+    ~MaterialSnapshot();
 
     /**
-     * @ingroup resource
+     * Returns the material variant of the material snapshot.
      */
-    class MaterialSnapshot
-    {
-    public:
-        /// Invalid texture unit referenced. @ingroup errors
-        DENG2_ERROR(InvalidUnitError);
+    MaterialVariant &material() const;
 
-    public:
-        /**
-         * Construct a new material snapshot instance.
-         * @param material  Material to capture to produce the snapshot.
-         */
-        MaterialSnapshot(MaterialVariant &material);
+    /**
+     * Returns the dimensions in the world coordinate space for the material snapshot.
+     */
+    QSize const &dimensions() const;
 
-        ~MaterialSnapshot();
+    /**
+     * Returns @c true if the material snapshot is completely opaque.
+     */
+    bool isOpaque() const;
 
-        /**
-         * Returns the material variant of the material snapshot.
-         */
-        MaterialVariant &material() const;
+    /**
+     * Returns the glow strength multiplier for the material snapshot.
+     */
+    float glowStrength() const;
 
-        /**
-         * Returns the dimensions in the world coordinate space for the material snapshot.
-         */
-        QSize const &dimensions() const;
+    /**
+     * Returns the minimum ambient light color for the material snapshot.
+     */
+    vec3f_t const &reflectionMinColor() const;
 
-        /**
-         * Returns @c true if the material snapshot is completely opaque.
-         */
-        bool isOpaque() const;
+    /**
+     * Returns @c true if a texture with @a index is set for the material snapshot.
+     */
+    bool hasTexture(int index) const;
 
-        /**
-         * Returns the glow strength multiplier for the material snapshot.
-         */
-        float glowStrength() const;
+    /**
+     * Lookup a material snapshot texture unit texture by index.
+     *
+     * @param index  Index of the texture unit to lookup.
+     * @return  The texture associated with the texture unit.
+     */
+    TextureVariant &texture(int index) const;
 
-        /**
-         * Returns the minimum ambient light color for the material snapshot.
-         */
-        vec3f_t const &reflectionMinColor() const;
+    /**
+     * Lookup a material snapshot texture unit by index.
+     *
+     * @param index  Index of the texture unit to lookup.
+     * @return  The associated texture unit.
+     */
+    rtexmapunit_t const &unit(int index) const;
 
-        /**
-         * Returns @c true if a texture with @a index is set for the material snapshot.
-         */
-        bool hasTexture(int index) const;
+    /**
+     * Prepare all textures and update property values.
+     */
+    void update();
 
-        /**
-         * Lookup a material snapshot texture unit texture by index.
-         *
-         * @param index  Index of the texture unit to lookup.
-         * @return  The texture associated with the texture unit.
-         */
-        TextureVariant &texture(int index) const;
-
-        /**
-         * Lookup a material snapshot texture unit by index.
-         *
-         * @param index  Index of the texture unit to lookup.
-         * @return  The associated texture unit.
-         */
-        rtexmapunit_t const &unit(int index) const;
-
-        /**
-         * Prepare all textures and update property values.
-         */
-        void update();
-
-    private:
-        struct Instance;
-        Instance *d;
-    };
+private:
+    struct Instance;
+    Instance *d;
+};
 
 } // namespace de
 

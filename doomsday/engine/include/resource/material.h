@@ -31,129 +31,129 @@
 
 namespace de {
 
+/**
+ * @ingroup resource
+ */
+class MaterialAnim
+{
+public:
     /**
-     * @ingroup resource
+     * One frame in the animation.
      */
-    class MaterialAnim
+    class Frame
     {
     public:
-        /**
-         * One frame in the animation.
-         */
-        class Frame
-        {
-        public:
-            Frame(material_t &mat, ushort _tics, ushort _randomTics)
-                : material_(&mat), tics_(_tics), randomTics_(_randomTics)
-            {}
-
-            /**
-             * Returns the material of the frame.
-             */
-            material_t &material() const {
-                return *material_;
-            }
-
-            /**
-             * Returns the duration of the frame in (sharp) tics.
-             */
-            ushort tics() const {
-                return tics_;
-            }
-
-            /**
-             * Returns the random part of the frame duration in (sharp) tics.
-             */
-            ushort randomTics() const {
-                return randomTics_;
-            }
-
-        private:
-            material_t *material_;
-            ushort tics_;
-            ushort randomTics_;
-        };
-
-        /// All frames in the animation.
-        typedef QList<Frame> Frames;
-
-    public:
-        /// An invalid frame reference was specified. @ingroup errors
-        DENG2_ERROR(InvalidFrameError);
-
-    public:
-        MaterialAnim(int id, int flags);
+        Frame(material_t &mat, ushort _tics, ushort _randomTics)
+            : material_(&mat), tics_(_tics), randomTics_(_randomTics)
+        {}
 
         /**
-         * Progress the animation one frame forward.
+         * Returns the material of the frame.
          */
-        void animate();
+        material_t &material() const {
+            return *material_;
+        }
 
         /**
-         * Restart the animation over from the first frame.
+         * Returns the duration of the frame in (sharp) tics.
          */
-        void reset();
+        ushort tics() const {
+            return tics_;
+        }
 
         /**
-         * Returns the animation's unique identifier.
+         * Returns the random part of the frame duration in (sharp) tics.
          */
-        int id() const;
-
-        /**
-         * Returns the animation's @ref animationGroupFlags.
-         */
-        int flags() const;
-
-        /**
-         * Returns the total number of frames in the animation.
-         */
-        int frameCount() const;
-
-        /**
-         * Lookup a frame in the animation by number.
-         *
-         * @param number  Frame number to lookup.
-         * @return  Found animation frame.
-         */
-        Frame &frame(int number);
-
-        /**
-         * Extend the animation by adding a new frame to the end of the sequence.
-         *
-         * @param mat  Material for the frame.
-         * @param tics  Duration of the frame in (sharp) tics.
-         * @param randomTics  Random part of the frame duration in (sharp) tics.
-         */
-        void addFrame(material_t &mat, int tics, int randomTics);
-
-        /**
-         * Returns @c true iff @a mat is used by one or more frames in the animation.
-         *
-         * @param mat  Material to search for.
-         */
-        bool hasFrameForMaterial(material_t const &mat) const;
-
-        /**
-         * Provides access to the frame list for efficient traversal.
-         */
-        Frames const &allFrames() const;
+        ushort randomTics() const {
+            return randomTics_;
+        }
 
     private:
-        /// Unique identifier.
-        int id_;
-
-        /// @ref animationGroupFlags.
-        int flags_;
-
-        /// Current frame index.
-        int index;
-
-        int maxTimer;
-        int timer;
-
-        /// All animation frames.
-        Frames frames;
+        material_t *material_;
+        ushort tics_;
+        ushort randomTics_;
     };
+
+    /// All frames in the animation.
+    typedef QList<Frame> Frames;
+
+public:
+    /// An invalid frame reference was specified. @ingroup errors
+    DENG2_ERROR(InvalidFrameError);
+
+public:
+    MaterialAnim(int id, int flags);
+
+    /**
+     * Progress the animation one frame forward.
+     */
+    void animate();
+
+    /**
+     * Restart the animation over from the first frame.
+     */
+    void reset();
+
+    /**
+     * Returns the animation's unique identifier.
+     */
+    int id() const;
+
+    /**
+     * Returns the animation's @ref animationGroupFlags.
+     */
+    int flags() const;
+
+    /**
+     * Returns the total number of frames in the animation.
+     */
+    int frameCount() const;
+
+    /**
+     * Lookup a frame in the animation by number.
+     *
+     * @param number  Frame number to lookup.
+     * @return  Found animation frame.
+     */
+    Frame &frame(int number);
+
+    /**
+     * Extend the animation by adding a new frame to the end of the sequence.
+     *
+     * @param mat  Material for the frame.
+     * @param tics  Duration of the frame in (sharp) tics.
+     * @param randomTics  Random part of the frame duration in (sharp) tics.
+     */
+    void addFrame(material_t &mat, int tics, int randomTics);
+
+    /**
+     * Returns @c true iff @a mat is used by one or more frames in the animation.
+     *
+     * @param mat  Material to search for.
+     */
+    bool hasFrameForMaterial(material_t const &mat) const;
+
+    /**
+     * Provides access to the frame list for efficient traversal.
+     */
+    Frames const &allFrames() const;
+
+private:
+    /// Unique identifier.
+    int id_;
+
+    /// @ref animationGroupFlags.
+    int flags_;
+
+    /// Current frame index.
+    int index;
+
+    int maxTimer;
+    int timer;
+
+    /// All animation frames.
+    Frames frames;
+};
 
 } // namespace de
 extern "C" {

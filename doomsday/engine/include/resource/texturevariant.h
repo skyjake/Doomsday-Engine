@@ -28,84 +28,84 @@
 
 namespace de {
 
-    class Texture;
+class Texture;
+
+/**
+ * @ingroup resource
+ */
+class TextureVariant
+{
+private:
+    enum Flag
+    {
+        /// Texture contains alpha.
+        Masked = 0x1,
+
+        /// Texture has been uploaded to GL.
+        Uploaded = 0x2
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+public:
+    /**
+     * @param generalCase   Texture from which this variant is derived.
+     * @param spec          Specification used to derive this variant.
+     *                      Ownership is NOT given to the resultant TextureVariant
+     * @param source        Source of this variant.
+     */
+    TextureVariant(Texture &generalCase, texturevariantspecification_t &spec,
+                   TexSource source = TEXS_NONE);
+
+    /// @return  Superior Texture of which this is a derivative.
+    Texture &generalCase() const { return texture; }
+
+    /// @return  Source of this variant.
+    TexSource source() const { return texSource; }
 
     /**
-     * @ingroup resource
+     * Change the source of this variant.
+     * @param newSource  New TextureSource.
      */
-    class TextureVariant
-    {
-    private:
-        enum Flag
-        {
-            /// Texture contains alpha.
-            Masked = 0x1,
+    void setSource(TexSource newSource);
 
-            /// Texture has been uploaded to GL.
-            Uploaded = 0x2
-        };
-        Q_DECLARE_FLAGS(Flags, Flag)
+    /// @return  TextureVariantSpecification used to derive this variant.
+    texturevariantspecification_t *spec() const { return varSpec; }
 
-    public:
-        /**
-         * @param generalCase   Texture from which this variant is derived.
-         * @param spec          Specification used to derive this variant.
-         *                      Ownership is NOT given to the resultant TextureVariant
-         * @param source        Source of this variant.
-         */
-        TextureVariant(Texture &generalCase, texturevariantspecification_t &spec,
-                       TexSource source = TEXS_NONE);
+    bool isMasked() const { return !!(flags & Masked); }
 
-        /// @return  Superior Texture of which this is a derivative.
-        Texture &generalCase() const { return texture; }
+    void flagMasked(bool yes);
 
-        /// @return  Source of this variant.
-        TexSource source() const { return texSource; }
+    bool isUploaded() const { return !!(flags & Uploaded); }
 
-        /**
-         * Change the source of this variant.
-         * @param newSource  New TextureSource.
-         */
-        void setSource(TexSource newSource);
+    void flagUploaded(bool yes);
 
-        /// @return  TextureVariantSpecification used to derive this variant.
-        texturevariantspecification_t *spec() const { return varSpec; }
+    bool isPrepared() const;
 
-        bool isMasked() const { return !!(flags & Masked); }
+    void coords(float *s, float *t) const;
+    void setCoords(float s, float t);
 
-        void flagMasked(bool yes);
+    uint glName() const { return glTexName; }
 
-        bool isUploaded() const { return !!(flags & Uploaded); }
+    void setGLName(uint glName);
 
-        void flagUploaded(bool yes);
+private:
+    /// Superior Texture of which this is a derivative.
+    Texture &texture;
 
-        bool isPrepared() const;
+    /// Source of this texture.
+    TexSource texSource;
 
-        void coords(float *s, float *t) const;
-        void setCoords(float s, float t);
+    Flags flags;
 
-        uint glName() const { return glTexName; }
+    /// Name of the associated GL texture object.
+    uint glTexName;
 
-        void setGLName(uint glName);
+    /// Prepared coordinates for the bottom right of the texture minus border.
+    float s, t;
 
-    private:
-        /// Superior Texture of which this is a derivative.
-        Texture &texture;
-
-        /// Source of this texture.
-        TexSource texSource;
-
-        Flags flags;
-
-        /// Name of the associated GL texture object.
-        uint glTexName;
-
-        /// Prepared coordinates for the bottom right of the texture minus border.
-        float s, t;
-
-        /// Specification used to derive this variant.
-        texturevariantspecification_t *varSpec;
-    };
+    /// Specification used to derive this variant.
+    texturevariantspecification_t *varSpec;
+};
 
 } // namespace de
 
