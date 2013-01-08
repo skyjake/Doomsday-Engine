@@ -2242,8 +2242,8 @@ void DD_UpdateEngineState(void)
     if(DD_GameLoaded() && gx.UpdateState)
         gx.UpdateState(DD_POST);
 
-    // Reset the anim groups (if in-game)
-    App_Materials()->resetAllAnimGroups();
+    // Reset the material animations.
+    App_Materials()->resetAllMaterialAnimations();
 }
 
 /* *INDENT-OFF* */

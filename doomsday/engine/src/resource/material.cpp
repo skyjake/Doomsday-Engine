@@ -53,8 +53,11 @@ struct material_s
     /// @see materialFlags
     short flags;
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     /// @c true if belongs to some animgroup.
     bool inAnimGroup;
+#endif
+
     bool isCustom;
 
     /// Detail texture layer & properties.
@@ -76,7 +79,10 @@ struct material_s
                Size2Raw &_dimensions, material_env_class_t _envClass)
         : def(_def), envClass(_envClass), primaryBind(0),
           dimensions(Size2_NewFromRaw(&_dimensions)), flags(_flags),
-          inAnimGroup(false), isCustom(_isCustom),
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+          inAnimGroup(false),
+#endif
+          isCustom(_isCustom),
           detailTex(0), detailScale(0), detailStrength(0),
           shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0)
     {
@@ -110,6 +116,8 @@ struct material_s
         variants.push_back(&variant);
     }
 };
+
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
 
 namespace de {
 
@@ -261,6 +269,7 @@ void MaterialAnim::reset()
 }
 
 } // namespace de
+#endif // LIBDENG_OLD_MATERIAL_ANIM_METHOD
 
 using namespace de;
 
@@ -403,7 +412,9 @@ boolean Material_IsCustom(material_t const *mat)
 
 boolean Material_IsAnimated(material_t const *mat)
 {
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     if(Material_IsGroupAnimated(mat)) return true;
+#endif
 
     // Perhaps stage animated?
     if(mat->def)
@@ -418,11 +429,13 @@ boolean Material_IsAnimated(material_t const *mat)
     return false; // Not at all.
 }
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
 boolean Material_IsGroupAnimated(material_t const *mat)
 {
     DENG2_ASSERT(mat);
     return boolean( mat->inAnimGroup );
 }
+#endif
 
 boolean Material_IsSkyMasked(material_t const *mat)
 {
@@ -447,18 +460,19 @@ boolean Material_HasGlow(material_t *mat)
     return (ms.glowStrength() > .0001f);
 }
 
-boolean Material_HasTranslation(material_t const *mat)
-{
-    DENG2_ASSERT(mat);
-    /// @todo Separate meanings.
-    return Material_IsGroupAnimated(mat);
-}
-
 int Material_LayerCount(material_t const *mat)
 {
     DENG2_ASSERT(mat);
     DENG2_UNUSED(mat);
     return 1;
+}
+
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+boolean Material_HasTranslation(material_t const *mat)
+{
+    DENG2_ASSERT(mat);
+    /// @todo Separate meanings.
+    return Material_IsGroupAnimated(mat);
 }
 
 de::MaterialAnim &Material_AnimGroup(material_t *mat)
@@ -486,6 +500,7 @@ void Material_SetGroupAnimated(material_t *mat, boolean yes)
     DENG2_ASSERT(mat);
     mat->inAnimGroup = CPP_BOOL(yes);
 }
+#endif
 
 byte Material_Prepared(material_t const *mat)
 {
@@ -632,6 +647,9 @@ MaterialVariant *Material_ChooseVariant(material_t *mat,
     MaterialVariantSpec const &spec, bool smoothed, bool canCreate)
 {
     DENG_ASSERT(mat);
+#ifndef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+    DENG_UNUSED(smoothed);
+#endif
 
     MaterialVariant *variant = 0;
     DENG2_FOR_EACH_CONST(Material::Variants, i, mat->variants)
@@ -653,10 +671,12 @@ MaterialVariant *Material_ChooseVariant(material_t *mat,
         mat->addVariant(*variant);
     }
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     if(smoothed)
     {
         variant = variant->translationCurrent();
     }
+#endif
 
     return variant;
 }
@@ -685,6 +705,7 @@ boolean Material_HasDecorations(material_t *mat)
     MaterialBind &bind = *App_Materials()->toMaterialBind(mat->primaryBind);
     if(bind.decorationDef()) return true;
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     if(Material_IsGroupAnimated(mat))
     {
         // If any material in this animation has decorations then this material
@@ -698,6 +719,7 @@ boolean Material_HasDecorations(material_t *mat)
             if(Material_HasDecorations(otherMaterial)) return true;
         }
     }
+#endif
 
     return false;
 }

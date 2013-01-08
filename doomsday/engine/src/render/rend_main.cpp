@@ -706,6 +706,7 @@ static float getSnapshots(MaterialSnapshot const **msA,
     // Smooth Texture Animation?
     if(msB)
     {
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
         MaterialVariant *variant = Material_ChooseVariant(&mat, spec, false, false);
         if(variant->translationCurrent() != variant->translationNext())
         {
@@ -723,6 +724,7 @@ static float getSnapshots(MaterialSnapshot const **msA,
             }
         }
         else
+#endif
         {
             *msB = NULL;
         }

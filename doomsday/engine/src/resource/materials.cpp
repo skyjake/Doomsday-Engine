@@ -158,8 +158,10 @@ struct Materials::Instance
     /// All materials in the system.
     MaterialList materials;
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     /// Animation groups.
     Materials::AnimGroups animGroups;
+#endif
 
     /// Material groups.
     Materials::Groups groups;
@@ -216,6 +218,7 @@ struct Materials::Instance
         bindingCount = 0;
     }
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     void animateAllGroups()
     {
         DENG2_FOR_EACH(Materials::AnimGroups, i, animGroups)
@@ -223,6 +226,7 @@ struct Materials::Instance
             i->animate();
         }
     }
+#endif
 
     MaterialVariantSpec *findVariantSpec(MaterialVariantSpec const &tpl,
                                          bool canCreate)
@@ -299,7 +303,9 @@ Materials::Materials()
 
 Materials::~Materials()
 {
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     clearAllAnimGroups();
+#endif
     clearAllGroups();
     purgeCacheQueue();
     delete d;
@@ -631,6 +637,7 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
 
     if(!cacheGroups) return;
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     // If the material is part of one or more animations; cache all frames.
     if(Material_IsGroupAnimated(&mat))
     {
@@ -647,6 +654,7 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
             }
         }
     }
+#endif
 
     // If the material is part of one or more groups; cache all other
     // materials within the same group(s).
@@ -667,7 +675,7 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
 void Materials::ticker(timespan_t time)
 {
 #ifdef __CLIENT__
-    // The animation will only progress when the game is not paused.
+    // Animations will only progress when the game is not paused.
     if(clientPaused) return;
 #endif
 
@@ -676,10 +684,12 @@ void Materials::ticker(timespan_t time)
         Material_Ticker(*i, time);
     }
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     if(DD_IsSharpTick())
     {
         d->animateAllGroups();
     }
+#endif
 }
 
 static Texture *findTextureByResourceUri(String nameOfScheme, de::Uri const &resourceUri)
@@ -836,6 +846,7 @@ void Materials::clearAllGroups()
     d->groups.clear();
 }
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
 int Materials::newAnimGroup(int flags)
 {
     // Allocating one by one is inefficient, but it doesn't really matter.
@@ -867,8 +878,9 @@ MaterialAnim &Materials::animGroup(int number) const
     throw UnknownAnimGroupError("Materials::animGroup", QString("Invalid anim group number #%1, valid range [0..%2)")
                                                             .arg(number).arg(d->animGroups.count()));
 }
+#endif
 
-void Materials::resetAllAnimGroups()
+void Materials::resetAllMaterialAnimations()
 {
     DENG2_FOR_EACH(MaterialList, i, d->materials)
     {
@@ -879,6 +891,7 @@ void Materials::resetAllAnimGroups()
         }
     }
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     DENG2_FOR_EACH(AnimGroups, i, d->animGroups)
     {
         i->reset();
@@ -886,19 +899,19 @@ void Materials::resetAllAnimGroups()
 
     // This'll get every group started on the first step.
     d->animateAllGroups();
+#endif
 }
 
 static void printVariantInfo(MaterialVariant &variant, int variantIdx)
 {
-    MaterialVariant *next = variant.translationNext();
-    int i, layers = Material_LayerCount(&variant.generalCase());
-
     Con_Printf("Variant #%i: Spec:%p\n", variantIdx, (void *) &variant.spec());
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     // Print translation info:
     if(Material_HasTranslation(&variant.generalCase()))
     {
-        MaterialVariant *cur = variant.translationCurrent();
+        MaterialVariant *cur  = variant.translationCurrent();
+        MaterialVariant *next = variant.translationNext();
         float inter = variant.translationPoint();
 
         /// @todo kludge: Should not use App_Materials() here.
@@ -908,9 +921,11 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
         Con_Printf("  Translation: Current:\"%s\" Next:\"%s\" Inter:%f\n",
                    curPath.constData(), nextPath.constData(), inter);
     }
+#endif
 
     // Print layer info:
-    for(i = 0; i < layers; ++i)
+    int const layerCount = Material_LayerCount(&variant.generalCase());
+    for(int i = 0; i < layerCount; ++i)
     {
         MaterialVariant::LayerState const &l = variant.layer(i);
         de::Uri uri = reinterpret_cast<Texture &>(*l.texture).manifest().composeUri();

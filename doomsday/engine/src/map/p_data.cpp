@@ -209,8 +209,8 @@ DENG_EXTERN_C boolean P_LoadMap(char const* uriCString)
         // Make sure that the next frame doesn't use a filtered viewer.
         R_ResetViewer();
 
-        // Texture animations should begin from their first step.
-        App_Materials()->resetAllAnimGroups();
+        // Material animations should begin from their first step.
+        App_Materials()->resetAllMaterialAnimations();
 
         R_InitObjlinkBlockmapForMap();
 

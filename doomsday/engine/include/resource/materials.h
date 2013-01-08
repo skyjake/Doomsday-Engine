@@ -136,8 +136,10 @@ public:
     /// Material groups.
     typedef QList<Group> Groups;
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     /// Material animation groups.
     typedef QList<MaterialAnim> AnimGroups;
+#endif
 
 public:
     /// The referenced texture was not found. @ingroup errors
@@ -149,8 +151,10 @@ public:
     /// An unknown group was referenced. @ingroup errors
     DENG2_ERROR(UnknownGroupError);
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     /// An unknown animation group was referenced. @ingroup errors
     DENG2_ERROR(UnknownAnimGroupError);
+#endif
 
 public:
     /**
@@ -366,6 +370,11 @@ public:
                        forceSnapshotUpdate);
     }
 
+    /**
+     * To be called to reset all animations back to their initial state.
+     */
+    void resetAllMaterialAnimations();
+
     /// @todo Refactor away -ds
     MaterialBind *toMaterialBind(materialid_t materialId);
 
@@ -397,6 +406,7 @@ public:
         return allGroups().count();
     }
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     /**
      * Lookup an animation group by unique @a number.
      */
@@ -407,11 +417,6 @@ public:
      * @return  Unique identifier associated with the new group.
      */
     int newAnimGroup(int flags);
-
-    /**
-     * To be called to reset all animation groups back to their initial state.
-     */
-    void resetAllAnimGroups();
 
     /**
      * To be called to destroy all animation groups when they are no longer needed.
@@ -429,6 +434,7 @@ public:
     inline int animGroupCount() const {
         return allAnimGroups().count();
     }
+#endif
 
 private:
     struct Instance;

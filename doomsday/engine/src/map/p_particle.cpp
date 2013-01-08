@@ -1408,6 +1408,7 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
                 return i + 1; // 1-based index.
             }
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
             if(def->flags & PGF_GROUP)
             {
                 // Generator triggered by all materials in the animation.
@@ -1418,6 +1419,7 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
                     return i + 1; // 1-based index.
                 }
             }
+#endif
         }
 
         // A state generator?

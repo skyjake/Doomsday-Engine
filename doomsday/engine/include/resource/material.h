@@ -149,8 +149,10 @@ boolean Material_IsCustom(material_t const *mat);
 /// @return  @c true= the material is animated.
 boolean Material_IsAnimated(material_t const *mat);
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
 /// @return  @c true= the material belongs to one or more anim groups.
 boolean Material_IsGroupAnimated(material_t const *mat);
+#endif
 
 /// @return  @c true if Material should be replaced with Sky.
 boolean Material_IsSkyMasked(material_t const *mat);
@@ -161,14 +163,16 @@ boolean Material_IsDrawable(material_t const *mat);
 /// @return  @c true if one or more animation stages are defined as "glowing".
 boolean Material_HasGlow(material_t *mat);
 
-/// @return  @c true if there is an active translation.
-boolean Material_HasTranslation(material_t const *mat);
-
 /// @return  Number of layers.
 int Material_LayerCount(material_t const *mat);
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+/// @return  @c true if there is an active translation.
+boolean Material_HasTranslation(material_t const *mat);
+
 /// Change the group animation status.
 void Material_SetGroupAnimated(material_t *mat, boolean yes);
+#endif
 
 /// @return  Prepared state of this material.
 byte Material_Prepared(material_t const *mat);
@@ -296,10 +300,12 @@ int Material_SetProperty(material_t *material, setargs_t const *args);
 #ifdef __cplusplus
 } // extern "C"
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
 /**
  * Returns the animation group for the material.
  */
 de::MaterialAnim &Material_AnimGroup(material_t *mat);
+#endif
 
 /**
  * Provides access to the list of variant instances for efficient traversal.

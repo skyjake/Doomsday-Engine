@@ -562,7 +562,10 @@ ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isC
         try
         {
             material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
+            if(mat == defMat)
+                return def;
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
             if(def->flags & PGF_GROUP)
             {
                 /**
@@ -577,9 +580,7 @@ ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isC
                     return def;
                 }
             }
-
-            if(mat == defMat)
-                return def;
+#endif
         }
         catch(Materials::NotFoundError const &)
         {} // Ignore this error.
@@ -1414,7 +1415,10 @@ static void initMaterialGroup(ded_group_t *def)
 {
     DENG_ASSERT(def);
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     int animNumber  = -1;
+#endif
+
     int groupNumber = -1;
     for(int i = 0; i < def->count.num; ++i)
     {
@@ -1435,6 +1439,7 @@ static void initMaterialGroup(ded_group_t *def)
 
                 App_Materials()->group(groupNumber).addMaterial(*mat);
             }
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
             else // An animation group.
             {
                 // Only create the group once the first material has been found.
@@ -1445,6 +1450,7 @@ static void initMaterialGroup(ded_group_t *def)
 
                 App_Materials()->animGroup(animNumber).addFrame(*mat, gm->tics, gm->randomTics);
             }
+#endif
         }
         catch(Materials::NotFoundError const &er)
         {
@@ -1624,7 +1630,9 @@ void Def_PostInit(void)
     App_Materials()->clearAllGroups();
 
     // Material animation groups.
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     App_Materials()->clearAllAnimGroups();
+#endif
     for(int i = 0; i < defs.count.groups.num; ++i)
     {
         initMaterialGroup(&defs.groups[i]);

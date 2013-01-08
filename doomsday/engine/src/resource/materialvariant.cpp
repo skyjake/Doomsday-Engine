@@ -44,11 +44,13 @@ struct MaterialVariant::Instance
     /// Superior Material of which this is a derivative.
     material_t *material;
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     /// For "smoothed" Material animation:
     bool hasTranslation;
     MaterialVariant *current;
     MaterialVariant *next;
     float inter;
+#endif
 
     /// Specification used to derive this variant.
     MaterialVariantSpec const *varSpec;
@@ -64,7 +66,9 @@ struct MaterialVariant::Instance
     Instance(material_t &generalCase, MaterialVariantSpec const &spec,
              ded_material_t const &def)
         : material(&generalCase),
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
           hasTranslation(false), current(0), next(0), inter(0),
+#endif
           varSpec(&spec), snapshot(0), snapshotPrepareFrame(0)
     {
         // Initialize layer states.
@@ -249,6 +253,7 @@ void MaterialVariant::setSnapshotPrepareFrame(int frame)
     d->snapshotPrepareFrame = frame;
 }
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
 MaterialVariant *MaterialVariant::translationNext()
 {
     if(!d->hasTranslation) return this;
@@ -286,5 +291,6 @@ void MaterialVariant::setTranslationPoint(float newInter)
 {
     d->inter = newInter;
 }
+#endif
 
 } // namespace de
