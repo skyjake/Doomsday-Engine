@@ -936,14 +936,14 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
     // Print layer info:
     for(i = 0; i < layers; ++i)
     {
-        MaterialVariant::Layer const &l = variant.layer(i);
+        MaterialVariant::LayerState const &l = variant.layer(i);
         de::Uri uri = reinterpret_cast<Texture &>(*l.texture).manifest().composeUri();
         QByteArray path = uri.asText().toUtf8();
 
         Con_Printf("  #%i: Stage:%i Tics:%i Texture:\"%s\""
                    "\n      Offset: %.2f x %.2f Glow:%.2f\n",
                    i, l.stage, int(l.tics), path.constData(),
-                   l.texOrigin[0], l.texOrigin[1], l.glow);
+                   l.texOrigin[0], l.texOrigin[1], l.glowStrength);
     }
 
 }

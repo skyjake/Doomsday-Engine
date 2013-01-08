@@ -161,7 +161,7 @@ void MaterialSnapshot::update()
     int layerCount = Material_LayerCount(&mat);
     for(int i = 0; i < layerCount; ++i)
     {
-        MaterialVariant::Layer const &ml = d->material->layer(i);
+        MaterialVariant::LayerState const &ml = d->material->layer(i);
         preparetextureresult_t result;
 
         if(!ml.texture) continue;
@@ -237,7 +237,7 @@ void MaterialSnapshot::update()
 
     if(d->dimensions.isEmpty()) return;
 
-    d->glowStrength = d->material->layer(0).glow * glowFactor;
+    d->glowStrength = d->material->layer(0).glowStrength * glowFactor;
     d->isOpaque = NULL != prepTextures[MTU_PRIMARY] && !prepTextures[MTU_PRIMARY]->isMasked();
 
     // Setup the primary texture unit.

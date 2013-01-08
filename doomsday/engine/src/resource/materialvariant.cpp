@@ -59,7 +59,7 @@ struct MaterialVariant::Instance
     /// Frame count when the snapshot was last prepared/updated.
     int snapshotPrepareFrame;
 
-    MaterialVariant::Layer layers[MaterialVariant::max_layers];
+    MaterialVariant::LayerState layers[MaterialVariant::max_layers];
 
     Instance(material_t &generalCase, MaterialVariantSpec const &spec,
              ded_material_t const &def)
@@ -67,13 +67,13 @@ struct MaterialVariant::Instance
           hasTranslation(false), current(0), next(0), inter(0),
           varSpec(&spec), snapshot(0), snapshotPrepareFrame(0)
     {
-        // Initialize layers.
+        // Initialize layer states.
         int const layerCount = Material_LayerCount(material);
         for(int i = 0; i < layerCount; ++i)
         {
             layers[i].stage = 0;
             layers[i].tics = def.layers[i].stages[0].tics;
-            layers[i].glow = def.layers[i].stages[0].glow;
+            layers[i].glowStrength = def.layers[i].stages[0].glowStrength;
 
             layers[i].texture = 0;
             de::Uri *texUri = reinterpret_cast<de::Uri *>(def.layers[i].stages[0].texture);
@@ -136,7 +136,7 @@ void MaterialVariant::ticker(timespan_t /*time*/)
     {
         ded_material_layer_t const *lDef = &def->layers[i];
         ded_material_layer_stage_t const *lsDef, *lsDefNext;
-        Layer &layer = d->layers[i];
+        LayerState &layer = d->layers[i];
         float inter;
 
         if(!(lDef->stageCount.num > 1)) continue;
@@ -180,14 +180,14 @@ void MaterialVariant::ticker(timespan_t /*time*/)
 
         if(inter == 0)
         {
-            layer.glow = lsDef->glow;
+            layer.glowStrength = lsDef->glowStrength;
             layer.texOrigin[0] = lsDef->texOrigin[0];
             layer.texOrigin[1] = lsDef->texOrigin[1];
             continue;
         }
         lsDefNext = &lDef->stages[(layer.stage + 1) % lDef->stageCount.num];
 
-        layer.glow = lsDefNext->glow * inter + lsDef->glow * (1 - inter);
+        layer.glowStrength = lsDefNext->glowStrength * inter + lsDef->glowStrength * (1 - inter);
 
         /// @todo Implement a more useful method of interpolation (but what? what do we want/need here?).
         layer.texOrigin[0] = lsDefNext->texOrigin[0] * inter + lsDef->texOrigin[0] * (1 - inter);
@@ -200,13 +200,13 @@ void MaterialVariant::resetAnim()
     int const layerCount = Material_LayerCount(d->material);
     for(int i = 0; i < layerCount; ++i)
     {
-        Layer &ml = d->layers[i];
+        LayerState &ml = d->layers[i];
         if(ml.stage == -1) break;
         ml.stage = 0;
     }
 }
 
-MaterialVariant::Layer const &MaterialVariant::layer(int layer)
+MaterialVariant::LayerState const &MaterialVariant::layer(int layer)
 {
     if(layer >= 0 && layer < Material_LayerCount(d->material))
         return d->layers[layer];

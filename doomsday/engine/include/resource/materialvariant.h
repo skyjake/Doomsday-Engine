@@ -109,21 +109,22 @@ public:
     /// Maximum number of layers a material supports.
     static int const max_layers = DDMAX_MATERIAL_LAYERS;
 
-    struct Layer
+    /// Current state of a material layer.
+    struct LayerState
     {
-        /// @c -1 => layer not in use.
+        /// Animation stage else @c -1 => layer not in use.
         int stage;
 
-        /// Texture of the layer.
+        /// Texture.
         Texture *texture;
 
-        /// Origin of the layer in material-space.
+        /// Origin of the texture in material-space.
         float texOrigin[2];
 
-        /// Glow strength for the layer.
-        float glow;
+        /// Glow strength factor.
+        float glowStrength;
 
-        /// Current frame?
+        /// Frame position.
         short tics;
     };
 
@@ -157,31 +158,29 @@ public:
      */
     void resetAnim();
 
-    /// @return  Material from which this variant is derived.
+    /// @return  Superior material from which the variant was derived.
     material_t &generalCase() const;
 
-    /// @return  MaterialVariantSpec from which this variant is derived.
+    /// @return  MaterialVariantSpec which the variant was specialised using.
     MaterialVariantSpec const &spec() const;
 
     /**
-     * Retrieve a handle for a staged animation layer for this variant.
-     * @param layer  Index of the layer to retrieve.
-     * @return  MaterialVariantLayer for the specified layer index.
+     * Return the current state of @a layerNum for the variant.
      */
-    Layer const &layer(int layer);
+    LayerState const &layer(int layerNum);
 
     /**
-     * Attach MaterialSnapshot data to this. MaterialVariant is given ownership of @a materialSnapshot.
+     * Attach MaterialSnapshot data. MaterialVariant is given ownership of @a materialSnapshot.
      * @return  Same as @a materialSnapshot for caller convenience.
      */
     MaterialSnapshot &attachSnapshot(MaterialSnapshot &snapshot);
 
     /**
-     * Detach MaterialSnapshot data from this. Ownership of the data is relinquished to the caller.
+     * Detach MaterialSnapshot data. Ownership is relinquished to the caller.
      */
     MaterialSnapshot *detachSnapshot();
 
-    /// @return  MaterialSnapshot data associated with this; otherwise @c 0.
+    /// @return  MaterialSnapshot data associated with the variant; otherwise @c 0.
     MaterialSnapshot *snapshot() const;
 
     /// @return  Frame count when the snapshot was last prepared/updated.
