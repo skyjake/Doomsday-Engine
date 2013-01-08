@@ -82,7 +82,7 @@ boolean Surface_SetMaterial(Surface *suf, material_t *mat)
                         R_SurfaceListAdd(GameMap_GlowingSurfaces(map), suf);
                     }
 
-                    if(App_Materials()->hasDecorations(*mat))
+                    if(Material_HasDecorations(mat))
                     {
                         R_SurfaceListAdd(GameMap_DecoratedSurfaces(map), suf);
                     }

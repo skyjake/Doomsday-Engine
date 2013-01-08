@@ -804,30 +804,6 @@ MaterialVariantSpec const &Materials::variantSpecForContext(
                                        mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-bool Materials::hasDecorations(material_t &mat)
-{
-    if(novideo) return false;
-
-    /// @todo We should not need to prepare to determine this.
-    /// Nor should we need to process the group each time. Cache this decision.
-    if(decorationDef(mat)) return true;
-
-    // If any material in this group has decorations then this
-    // material is considered to be decorated also.
-    try
-    {
-        MaterialAnim &anim = Material_AnimGroup(&mat);
-        DENG2_FOR_EACH_CONST(MaterialAnim::Frames, i, anim.allFrames())
-        {
-            if(decorationDef(mat)) return true;
-        }
-    }
-    catch(Material::NoAnimGroupError const &)
-    {} // Ignore this error.
-
-    return false;
-}
-
 int Materials::newGroup()
 {
     // Allocating one by one is inefficient, but it doesn't really matter.
@@ -968,7 +944,7 @@ static void printMaterialInfo(material_t &mat)
                Material_LayerCount(&mat),
                Material_IsDrawable(&mat)     ? "yes" : "no",
                Material_EnvironmentClass(&mat) == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(Material_EnvironmentClass(&mat)),
-               App_Materials()->hasDecorations(mat) ? "yes" : "no",
+               Material_HasDecorations(&mat) ? "yes" : "no",
                Material_DetailTexture(&mat)  ? "yes" : "no",
                Material_HasGlow(&mat)        ? "yes" : "no",
                Material_ShinyTexture(&mat)   ? "yes" : "no",

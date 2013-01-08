@@ -276,9 +276,6 @@ public:
     /// @return  Decoration defintion associated with @a material else @c NULL.
     ded_decor_t const *decorationDef(material_t &material);
 
-    /// @return  @c true if one or more light decorations are defined for this material.
-    bool hasDecorations(material_t &material);
-
     /**
      * Create a new Material unless an existing Material is found at the path
      * (and within the same scheme) as that specified in @a def, in which case

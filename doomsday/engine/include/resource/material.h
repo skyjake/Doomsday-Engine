@@ -272,6 +272,9 @@ struct texture_s *Material_ShinyMaskTexture(material_t *mat);
  */
 void Material_SetShinyMaskTexture(material_t *mat, struct texture_s *tex);
 
+/// Returns @c true if one or more light decorations are defined for the material.
+boolean Material_HasDecorations(material_t *mat);
+
 /**
  * Get a property value, selected by DMU_* name.
  *

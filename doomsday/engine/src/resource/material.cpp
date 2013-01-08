@@ -673,6 +673,35 @@ void Material_ClearVariants(material_t *mat)
     mat->clearVariants();
 }
 
+boolean Material_HasDecorations(material_t *mat)
+{
+    if(novideo) return false;
+
+    /// @todo We should not need to prepare to determine this.
+    if(!mat->prepared)
+    {
+        App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), false);
+    }
+    MaterialBind &bind = *App_Materials()->toMaterialBind(mat->primaryBind);
+    if(bind.decorationDef()) return true;
+
+    if(Material_IsGroupAnimated(mat))
+    {
+        // If any material in this animation has decorations then this material
+        // is considered to be decorated also.
+        MaterialAnim &anim = Material_AnimGroup(mat);
+        DENG2_FOR_EACH_CONST(MaterialAnim::Frames, i, anim.allFrames())
+        {
+            material_t *otherMaterial = &i->material();
+            if(otherMaterial == mat) continue; // Do not test the same material again.
+
+            if(Material_HasDecorations(otherMaterial)) return true;
+        }
+    }
+
+    return false;
+}
+
 int Material_GetProperty(material_t const *mat, setargs_t *args)
 {
     DENG_ASSERT(mat && args);
