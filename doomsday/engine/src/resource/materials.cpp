@@ -963,10 +963,9 @@ static void printMaterialInfo(material_t &mat)
     else
         Con_Printf("Dimensions: %d x %d\n", Material_Width(&mat), Material_Height(&mat));
 
-    Con_Printf("Layers:%i InGroup:%s Drawable:%s EnvClass:%s"
-               "\nDecorated:%s Detailed:%s Glowing:%s Shiny:%s%s SkyMasked:%s\n",
+    Con_Printf("Layers:%i Drawable:%s EnvClass:%s Decorated:%s"
+               "\nDetailed:%s Glowing:%s Shiny:%s%s SkyMasked:%s\n",
                Material_LayerCount(&mat),
-               Material_IsGroupAnimated(&mat)? "yes" : "no",
                Material_IsDrawable(&mat)     ? "yes" : "no",
                Material_EnvironmentClass(&mat) == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(Material_EnvironmentClass(&mat)),
                App_Materials()->hasDecorations(mat) ? "yes" : "no",

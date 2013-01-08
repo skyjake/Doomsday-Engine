@@ -1598,9 +1598,9 @@ static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
     choice2 = frontSec->SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->PS_material;
 
     // Prefer a non-animated, non-masked material.
-    if(choice1 && !Material_IsGroupAnimated(choice1) && !Material_IsSkyMasked(choice1))
+    if(choice1 && !Material_IsAnimated(choice1) && !Material_IsSkyMasked(choice1))
         return choice1;
-    if(choice2 && !Material_IsGroupAnimated(choice2) && !Material_IsSkyMasked(choice2))
+    if(choice2 && !Material_IsAnimated(choice2) && !Material_IsSkyMasked(choice2))
         return choice2;
 
     // Prefer a non-masked material.

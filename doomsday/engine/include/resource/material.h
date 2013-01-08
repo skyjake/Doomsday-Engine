@@ -146,7 +146,10 @@ void Material_SetFlags(material_t *mat, short flags);
 /// @return  @c true if Material is not derived from an original game resource.
 boolean Material_IsCustom(material_t const *mat);
 
-/// @return  @c true if Material belongs to one or more anim groups.
+/// @return  @c true= the material is animated.
+boolean Material_IsAnimated(material_t const *mat);
+
+/// @return  @c true= the material belongs to one or more anim groups.
 boolean Material_IsGroupAnimated(material_t const *mat);
 
 /// @return  @c true if Material should be replaced with Sky.

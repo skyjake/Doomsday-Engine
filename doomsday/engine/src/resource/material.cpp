@@ -401,6 +401,23 @@ boolean Material_IsCustom(material_t const *mat)
     return boolean( mat->isCustom );
 }
 
+boolean Material_IsAnimated(material_t const *mat)
+{
+    if(Material_IsGroupAnimated(mat)) return true;
+
+    // Perhaps stage animated?
+    if(mat->def)
+    {
+        int const layerCount = Material_LayerCount(mat);
+        for(int i = 0; i < layerCount; ++i)
+        {
+            ded_material_layer_t const &layer = mat->def->layers[i];
+            if(layer.stageCount.num > 1) return true;
+        }
+    }
+    return false; // Not at all.
+}
+
 boolean Material_IsGroupAnimated(material_t const *mat)
 {
     DENG2_ASSERT(mat);
