@@ -139,13 +139,13 @@ void MaterialVariant::ticker(timespan_t /*time*/)
     for(int i = 0; i < layerCount; ++i)
     {
         ded_material_layer_t const *lDef = &def->layers[i];
-        ded_material_layer_stage_t const *lsDef, *lsDefNext;
-        LayerState &layer = d->layers[i];
-        float inter;
 
         if(!(lDef->stageCount.num > 1)) continue;
 
-        if(layer.tics-- <= 0)
+        float inter = 0;
+        ded_material_layer_stage_t const *stCur = 0;
+        LayerState &layer = d->layers[i];
+        if(DD_IsSharpTick() && layer.tics-- <= 0)
         {
             // Advance to next stage.
             if(++layer.stage == lDef->stageCount.num)
@@ -154,48 +154,43 @@ void MaterialVariant::ticker(timespan_t /*time*/)
                 layer.stage = 0;
             }
 
-            lsDef = &lDef->stages[layer.stage];
-            if(lsDef->variance != 0)
-                layer.tics = lsDef->tics * (1 - lsDef->variance * RNG_RandFloat());
+            stCur = &lDef->stages[layer.stage];
+            if(stCur->variance != 0)
+                layer.tics = stCur->tics * (1 - stCur->variance * RNG_RandFloat());
             else
-                layer.tics = lsDef->tics;
+                layer.tics = stCur->tics;
+
+            if(de::Uri *texUri = reinterpret_cast<de::Uri *>(stCur->texture))
+            {
+                /// @todo Optimize: Cache this result.
+                layer.texture = App_Textures()->find(*texUri).texture();
+            }
 
             inter = 0;
         }
         else
         {
-            lsDef = &lDef->stages[layer.stage];
-            inter = 1.0f - (layer.tics - frameTimePos) / (float) lsDef->tics;
+            stCur = &lDef->stages[layer.stage];
+            inter = 1.0f - (layer.tics - frameTimePos) / float( stCur->tics );
         }
-
-        /* Texture const *tex;
-        de::Uri *texUri = reinterpret_cast<de::Uri *>(lsDef->texture);
-        if(texUri && (tex = Textures::resolveUri(*texUri)))
-        {
-            layer.tex = tex->id();
-            setTranslationPoint(inter);
-        }
-        else
-        {
-            /// @todo Should reset this to the non-stage animated texture here.
-            //layer.tex = 0;
-            //generalCase->inter = 0;
-        }*/
 
         if(inter == 0)
         {
-            layer.glowStrength = lsDef->glowStrength;
-            layer.texOrigin[0] = lsDef->texOrigin[0];
-            layer.texOrigin[1] = lsDef->texOrigin[1];
+            layer.texOrigin[0] = stCur->texOrigin[0];
+            layer.texOrigin[1] = stCur->texOrigin[1];
+            layer.glowStrength = stCur->glowStrength;
             continue;
         }
-        lsDefNext = &lDef->stages[(layer.stage + 1) % lDef->stageCount.num];
 
-        layer.glowStrength = lsDefNext->glowStrength * inter + lsDef->glowStrength * (1 - inter);
+        // Interpolate.
+        ded_material_layer_stage_t const *stNext =
+            &lDef->stages[(layer.stage + 1) % lDef->stageCount.num];
 
         /// @todo Implement a more useful method of interpolation (but what? what do we want/need here?).
-        layer.texOrigin[0] = lsDefNext->texOrigin[0] * inter + lsDef->texOrigin[0] * (1 - inter);
-        layer.texOrigin[1] = lsDefNext->texOrigin[1] * inter + lsDef->texOrigin[1] * (1 - inter);
+        layer.texOrigin[0] = stCur->texOrigin[0] * (1 - inter) + stNext->texOrigin[0] * inter;
+        layer.texOrigin[1] = stCur->texOrigin[1] * (1 - inter) + stNext->texOrigin[1] * inter;
+
+        layer.glowStrength = stCur->glowStrength * (1 - inter) + stNext->glowStrength * inter;
     }
 }
 

@@ -17,22 +17,25 @@ SkipIf -nodefaultfx;
 
 Material Mods "flats:NUKAGE1" {
   Layer {
-      Stage { Glow = .5;  Tics = 24; Rnd = .5; }
-      Stage { Glow = .44; Tics = 24; Rnd = .5; }
+      Stage { Glow = .5;  Glow Rnd = .5; }
+      Stage { Glow = .5;  Glow Rnd = .5; }
+      Stage { Glow = .5;  Glow Rnd = .5; }
   }
 }
 
 Material Mods "flats:NUKAGE2" {
   Layer {
-      Stage { Glow = .5;  Tics = 24; Rnd = .5; }
-      Stage { Glow = .44; Tics = 24; Rnd = .5; }
+      Stage { Glow = .5;  Glow Rnd = .5; }
+      Stage { Glow = .5;  Glow Rnd = .5; }
+      Stage { Glow = .5;  Glow Rnd = .5; }
   }
 }
 
 Material Mods "flats:NUKAGE3" {
   Layer {
-      Stage { Glow = .5;  Tics = 24; Rnd = .5; }
-      Stage { Glow = .44; Tics = 24; Rnd = .5; }
+      Stage { Glow = .5;  Glow Rnd = .5; }
+      Stage { Glow = .5;  Glow Rnd = .5; }
+      Stage { Glow = .5;  Glow Rnd = .5; }
   }
 }
 
@@ -41,57 +44,73 @@ SkipIf doom1-share;
 
 Material Mods "flats:LAVA1" {
   Layer {
-      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "flats:LAVA2" {
   Layer {
-      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "flats:LAVA3" {
   Layer {
-      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "flats:LAVA4" {
   Layer {
-      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "flats:FWATER1" {
   Layer {
-      Stage { Glow = .116; Tics = 24; Rnd = .5; }
-      Stage { Glow = .033; Tics = 24; Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
   }
 }
 
 Material Mods "flats:FWATER2" {
   Layer {
-      Stage { Glow = .116; Tics = 24; Rnd = .5; }
-      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
   }
 }
 
 Material Mods "flats:FWATER3" {
   Layer {
-      Stage { Glow = .116; Tics = 24; Rnd = .5; }
-      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
   }
 }
 
 Material Mods "flats:FWATER4" {
   Layer {
-      Stage { Glow = .116; Tics = 24; Rnd = .5; }
-      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
   }
 }
 
@@ -104,77 +123,66 @@ SkipIf hacx;
 
 Material Mods "textures:FIREBLU1" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "textures:FIREBLU2" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
-  }
-}
-
-Material Mods "textures:FIRELAVA" {
-  Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
-  }
-}
-
-Material Mods "textures:FIRELAV2" {
-  Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "textures:FIRELAV3" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIRELAVA" {
+  Layer {
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "textures:FIREMAG1" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "textures:FIREMAG2" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "textures:FIREMAG3" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "textures:FIREWALL" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "textures:FIREWALA" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
-  }
-}
-
-Material Mods "textures:FIREWALB" {
-  Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }

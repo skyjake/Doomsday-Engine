@@ -17,57 +17,73 @@ SkipIf -nodefaultfx;
 
 Material Mods "flats:FWATER1" {
   Layer {
-      Stage { Glow = .116; Tics = 24; Rnd = .5; }
-      Stage { Glow = .033; Tics = 24; Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
   }
 }
 
 Material Mods "flats:FWATER2" {
   Layer {
-      Stage { Glow = .116; Tics = 24; Rnd = .5; }
-      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
   }
 }
 
 Material Mods "flats:FWATER3" {
   Layer {
-      Stage { Glow = .116; Tics = 24; Rnd = .5; }
-      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
   }
 }
 
 Material Mods "flats:FWATER4" {
   Layer {
-      Stage { Glow = .116; Tics = 24; Rnd = .5; }
-      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
+      Stage { Glow = .116; Glow Rnd = .5; }
   }
 }
 
 Material Mods "flats:SLIME09" {
   Layer {
-      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "flats:SLIME10" {
   Layer {
-      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "flats:SLIME11" {
   Layer {
-      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "flats:SLIME12" {
   Layer {
-      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
@@ -91,29 +107,31 @@ Material Mods "textures:ZZZFACE1" {
 # Laser trip wire:
 Material Mods "textures:BLAKWAL1" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 # Force field?
 Material Mods "textures:SLADRIP1" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "textures:SLADRIP2" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
 Material Mods "textures:SLADRIP3" {
   Layer {
-      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
-      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }

@@ -85,7 +85,7 @@ DENG_EXTERN_C int R_CreateAnimGroup(int flags)
     // Init the new group.
     std::memset(group, 0, sizeof *group);
     group->id = numgroups; // 1-based index.
-    group->flags = flags;
+    group->flags = flags & ~AGF_PRECACHE;
 
     return group->id;
 }

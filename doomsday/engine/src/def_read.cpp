@@ -1276,6 +1276,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                                 RV_INT("Tics", st->tics)
                                 RV_FLT("Rnd", st->variance)
                                 RV_VEC("Offset", st->texOrigin, 2)
+                                RV_FLT("Glow Rnd", st->glowStrengthVariance)
                                 RV_FLT("Glow", st->glowStrength)
                                 RV_END
                                 CHECKSC;
