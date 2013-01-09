@@ -33,6 +33,11 @@ struct mobj_s;
 struct linedef_s;
 struct sector_s;
 struct bspleaf_s;
+struct bspnode_s;
+struct vertex_s;
+struct sidedef_s;
+struct hedge_s;
+struct plane_s;
 
 /**
  * Public definitions of the internal map data pointers.  These can be
@@ -44,14 +49,15 @@ struct bspleaf_s;
  * structures is needed.
  */
 #if !defined __DOOMSDAY__ && !defined DENG_INTERNAL_DATA_ACCESS
-typedef struct bspnode_s  { int type; } BspNode;
-typedef struct vertex_s   { int type; } Vertex;
-typedef struct linedef_s  { int type; } LineDef;
-typedef struct sidedef_s  { int type; } SideDef;
-typedef struct hedge_s    { int type; } HEdge;
-typedef struct bspleaf_s  { int type; } BspLeaf;
-typedef struct sector_s   { int type; } Sector;
-typedef struct plane_s    { int type; } Plane;
+// Opaque pointers:
+typedef struct bspnode_s  BspNode;
+typedef struct vertex_s   Vertex;
+typedef struct linedef_s  LineDef;
+typedef struct sidedef_s  SideDef;
+typedef struct hedge_s    HEdge;
+typedef struct bspleaf_s  BspLeaf;
+typedef struct sector_s   Sector;
+typedef struct plane_s    Plane;
 #endif
 
 #ifdef __cplusplus
