@@ -507,13 +507,14 @@ void Canvas::mouseMoveEvent(QMouseEvent* ev)
 #endif
 
         d->prevMousePos = ev->pos();
-	
-	QTimer::singleShot(1, this, SLOT(recenterMouse()));
+
+        QTimer::singleShot(1, this, SLOT(recenterMouse()));
     }
 }
 
 void Canvas::recenterMouse()
 {
+#ifdef __CLIENT__
     // Ignore the next event, which is caused by the forced cursor move.
     d->prevMousePos = QPoint();    
 
@@ -528,8 +529,10 @@ void Canvas::recenterMouse()
 #ifdef MACOS_10_4
     CGSetLocalEventsSuppressionInterval(0.25);
 #endif
+
+#endif // __CLIENT__
 }
-#endif
+#endif // LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
 
 void Canvas::wheelEvent(QWheelEvent *ev)
 {

@@ -3,7 +3,8 @@
 
 TEMPLATE = subdirs
 
-SUBDIRS += \
+SUBDIRS +=  \
+    shell   \
     md2tool \
     texc
 

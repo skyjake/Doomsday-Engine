@@ -4,7 +4,9 @@ INCLUDEPATH += $$PWD/libdeng2/include
 # Use the appropriate library path.
 !useLibDir($$OUT_PWD/../libdeng2) {
     !useLibDir($$OUT_PWD/../../libdeng2) {
-	useLibDir($$OUT_PWD/../../builddir/libdeng2)
+        !useLibDir($$OUT_PWD/../../../libdeng2) {
+            useLibDir($$OUT_PWD/../../builddir/libdeng2)
+        }
     }
 }
 

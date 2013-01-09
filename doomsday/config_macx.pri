@@ -63,12 +63,12 @@ else:deng_macx6_32bit_64bit {
 }
 else:deng_macx4u_32bit {
     echo(Using Mac OS 10.4u SDK.)
-    CONFIG += x86 ppc
+    CONFIG += x86 ppc deng_carbonqt
     QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
     QMAKE_CFLAGS += -mmacosx-version-min=10.4
     INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11R6/include $$INCLUDEPATH
-    DEFINES += MACOS_10_4
+    DEFINES += MACOS_10_4 DENG_CARBON_QT
 
     QMAKE_CFLAGS_WARN_ON -= -fdiagnostics-show-option
 }
