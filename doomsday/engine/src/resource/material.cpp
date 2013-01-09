@@ -287,6 +287,12 @@ void Material_Delete(material_t *mat)
     }
 }
 
+boolean Material_IsValid(material_t const *mat)
+{
+    DENG2_ASSERT(mat);
+    return !!Material_Definition(mat);
+}
+
 void Material_Ticker(material_t *mat, timespan_t time)
 {
     DENG2_ASSERT(mat);
@@ -667,7 +673,7 @@ MaterialVariant *Material_ChooseVariant(material_t *mat,
     {
         if(!canCreate) return 0;
 
-        variant = new MaterialVariant(*mat, spec, *Material_Definition(mat));
+        variant = new MaterialVariant(*mat, spec);
         mat->addVariant(*variant);
     }
 

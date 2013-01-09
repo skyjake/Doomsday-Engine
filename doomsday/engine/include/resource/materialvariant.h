@@ -118,7 +118,7 @@ public:
         /// Remaining (sharp) tics in the current stage.
         short tics;
 
-        /// Intermark from the current stage to the next.
+        /// Intermark from the current stage to the next [0..1].
         float inter;
 
         /// Interpolated origin of the texture in material-space.
@@ -135,8 +135,7 @@ public:
     DENG2_ERROR(InvalidLayerError);
 
 public:
-    MaterialVariant(material_t &generalCase, MaterialVariantSpec const &spec,
-                    ded_material_t const &def);
+    MaterialVariant(material_t &generalCase, MaterialVariantSpec const &spec);
     ~MaterialVariant();
 
     /**

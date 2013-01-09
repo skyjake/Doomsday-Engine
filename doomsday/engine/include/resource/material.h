@@ -143,6 +143,17 @@ short Material_Flags(material_t const *mat);
  */
 void Material_SetFlags(material_t *mat, short flags);
 
+/**
+ * Returns @c true if the material is considered to be @em valid. A material
+ * can only be invalidated when resources it depends on (such as the definition
+ * from which it was produced) are removed as result of runtime file unloading.
+ *
+ * We can't yet purge these 'orphaned' materials as the game may be holding on
+ * to pointers (which are considered eternal). Instead, an invalid material is
+ * ignored until such time as the current game is reset or is changed.
+ */
+boolean Material_IsValid(material_t const *mat);
+
 /// @return  @c true if Material is not derived from an original game resource.
 boolean Material_IsCustom(material_t const *mat);
 

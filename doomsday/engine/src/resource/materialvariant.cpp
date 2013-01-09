@@ -47,6 +47,18 @@ struct MaterialVariant::Instance
     /// Superior Material of which this is a derivative.
     material_t *material;
 
+    /// Specification used to derive this variant.
+    MaterialVariantSpec const &spec;
+
+    /// Cached animation state snapshot (if any).
+    MaterialSnapshot *snapshot;
+
+    /// Frame count when the snapshot was last prepared/updated.
+    int snapshotPrepareFrame;
+
+    /// Layer animation states.
+    MaterialVariant::LayerState layers[MaterialVariant::max_layers];
+
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     /// For "smoothed" Material animation:
     bool hasTranslation;
@@ -55,37 +67,13 @@ struct MaterialVariant::Instance
     float inter;
 #endif
 
-    /// Specification used to derive this variant.
-    MaterialVariantSpec const *varSpec;
-
-    /// Cached copy of current state if any.
-    MaterialSnapshot *snapshot;
-
-    /// Frame count when the snapshot was last prepared/updated.
-    int snapshotPrepareFrame;
-
-    MaterialVariant::LayerState layers[MaterialVariant::max_layers];
-
-    Instance(material_t &generalCase, MaterialVariantSpec const &spec,
-             ded_material_t const &def)
+    Instance(material_t &generalCase, MaterialVariantSpec const &_spec)
         : material(&generalCase),
+          spec(_spec), snapshot(0), snapshotPrepareFrame(-1)
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
           hasTranslation(false), current(0), next(0), inter(0),
 #endif
-          varSpec(&spec), snapshot(0), snapshotPrepareFrame(0)
-    {
-        // Initialize layer states.
-        int const layerCount = Material_LayerCount(material);
-        for(int i = 0; i < layerCount; ++i)
-        {
-            layers[i].stage = 0;
-            layers[i].tics = def.layers[i].stages[0].tics;
-            layers[i].inter = 0;
-            layers[i].texOrigin[0] = def.layers[i].stages[0].texOrigin[0];
-            layers[i].texOrigin[1] = def.layers[i].stages[0].texOrigin[1];
-            layers[i].glowStrength = def.layers[i].stages[0].glowStrength;
-        }
-    }
+    {}
 
     ~Instance()
     {
@@ -93,10 +81,11 @@ struct MaterialVariant::Instance
     }
 };
 
-MaterialVariant::MaterialVariant(material_t &generalCase, MaterialVariantSpec const &spec,
-                                 ded_material_t const &def)
+MaterialVariant::MaterialVariant(material_t &generalCase, MaterialVariantSpec const &spec)
 {
-    d = new Instance(generalCase, spec, def);
+    d = new Instance(generalCase, spec);
+    // Initialize layer animation states.
+    resetAnim();
 }
 
 MaterialVariant::~MaterialVariant()
@@ -111,7 +100,7 @@ material_t &MaterialVariant::generalCase() const
 
 MaterialVariantSpec const &MaterialVariant::spec() const
 {
-    return *d->varSpec;
+    return d->spec;
 }
 
 bool MaterialVariant::isPaused() const
@@ -119,11 +108,11 @@ bool MaterialVariant::isPaused() const
 #ifdef __CLIENT__
     // Depending on the usage context, the animation should only progress
     // when the game is not paused.
-    return (clientPaused && (d->varSpec->context == MC_MAPSURFACE ||
-                             d->varSpec->context == MC_SPRITE     ||
-                             d->varSpec->context == MC_MODELSKIN  ||
-                             d->varSpec->context == MC_PSPRITE    ||
-                             d->varSpec->context == MC_SKYSPHERE));
+    return (clientPaused && (d->spec.context == MC_MAPSURFACE ||
+                             d->spec.context == MC_SPRITE     ||
+                             d->spec.context == MC_MODELSKIN  ||
+                             d->spec.context == MC_PSPRITE    ||
+                             d->spec.context == MC_SKYSPHERE));
 #else
     return false;
 #endif
@@ -131,20 +120,15 @@ bool MaterialVariant::isPaused() const
 
 void MaterialVariant::ticker(timespan_t /*time*/)
 {
-    ded_material_t const *def = Material_Definition(d->material);
-    if(!def)
-    {
-        // Material is no longer valid. We can't yet purge them; we lack a
-        // reference counting mechanism (the game may be holding Material
-        // pointers and/or indices, which are considered eternal).
-        return;
-    }
+    // Animation ceases once the material is no longer valid.
+    if(!Material_IsValid(d->material)) return;
 
-    // Animations will only progress when not paused.
+    // Animation will only progress when not paused.
     if(isPaused()) return;
 
     // Animate layers:
-    int const layerCount = Material_LayerCount(d->material);
+    ded_material_t const *def = Material_Definition(d->material);
+    int const layerCount      = Material_LayerCount(d->material);
     for(int i = 0; i < layerCount; ++i)
     {
         ded_material_layer_t const *layerDef = &def->layers[i];
@@ -172,7 +156,7 @@ void MaterialVariant::ticker(timespan_t /*time*/)
                 l.tics = lsCur->tics;
 
             // Notify interested parties about this.
-            if(d->varSpec->context == MC_MAPSURFACE)
+            if(d->spec.context == MC_MAPSURFACE)
             {
                 // Surfaces using this material may need to be updated.
                 R_UpdateMapSurfacesOnMaterialChange(d->material);
@@ -206,12 +190,19 @@ void MaterialVariant::ticker(timespan_t /*time*/)
 
 void MaterialVariant::resetAnim()
 {
-    int const layerCount = Material_LayerCount(d->material);
+    if(!Material_IsValid(d->material)) return;
+
+    ded_material_t const *def = Material_Definition(d->material);
+    int const layerCount      = Material_LayerCount(d->material);
     for(int i = 0; i < layerCount; ++i)
     {
-        LayerState &ml = d->layers[i];
-        if(ml.stage == -1) break;
-        ml.stage = 0;
+        LayerState &l = d->layers[i];
+        l.stage = 0;
+        l.tics  = def->layers[i].stages[0].tics;
+        l.inter = 0;
+        l.texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
+        l.texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
+        l.glowStrength = def->layers[i].stages[0].glowStrength;
     }
 }
 
