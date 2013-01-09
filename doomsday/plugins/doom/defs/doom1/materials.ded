@@ -173,15 +173,25 @@ Material Mods "textures:FIREMAG3" {
   }
 }
 
-Material Mods "textures:FIREWALL" {
+Material Mods "textures:FIREWALA" {
   Layer {
+      Stage { Glow = 1.8; Glow Rnd = .8; }
       Stage { Glow = 1.8; Glow Rnd = .8; }
       Stage { Glow = 1.8; Glow Rnd = .8; }
   }
 }
 
-Material Mods "textures:FIREWALA" {
+Material Mods "textures:FIREWALB" {
   Layer {
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREWALL" {
+  Layer {
+      Stage { Glow = 1.8; Glow Rnd = .8; }
       Stage { Glow = 1.8; Glow Rnd = .8; }
       Stage { Glow = 1.8; Glow Rnd = .8; }
   }

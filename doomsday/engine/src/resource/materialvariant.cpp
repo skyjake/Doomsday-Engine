@@ -1,6 +1,7 @@
 /** @file materialvariant.cpp Logical Material Variant.
  *
- * @author Copyright &copy; 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,15 +21,17 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/mathutil.h>
-#include <de/memory.h>
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_resource.h"
+#ifdef __CLIENT__
+#  include "de_network.h" // playback /clientPaused
+#endif
 
-#include "resource/materialsnapshot.h"
-#include "render/r_main.h"
+#include "map/r_world.h"
 #include "gl/gl_texmanager.h"
+#include "render/r_main.h"
+
+#include "resource/materialvariant.h"
 
 namespace de {
 
@@ -77,22 +80,10 @@ struct MaterialVariant::Instance
         {
             layers[i].stage = 0;
             layers[i].tics = def.layers[i].stages[0].tics;
-            layers[i].glowStrength = def.layers[i].stages[0].glowStrength;
-
-            layers[i].texture = 0;
-            de::Uri *texUri = reinterpret_cast<de::Uri *>(def.layers[i].stages[0].texture);
-            if(texUri)
-            {
-                try
-                {
-                    layers[i].texture = App_Textures()->find(*texUri).texture();
-                }
-                catch(Textures::NotFoundError const &)
-                {} // Ignore this error.
-            }
-
+            layers[i].inter = 0;
             layers[i].texOrigin[0] = def.layers[i].stages[0].texOrigin[0];
             layers[i].texOrigin[1] = def.layers[i].stages[0].texOrigin[1];
+            layers[i].glowStrength = def.layers[i].stages[0].glowStrength;
         }
     }
 
@@ -123,74 +114,93 @@ MaterialVariantSpec const &MaterialVariant::spec() const
     return *d->varSpec;
 }
 
+bool MaterialVariant::isPaused() const
+{
+#ifdef __CLIENT__
+    // Depending on the usage context, the animation should only progress
+    // when the game is not paused.
+    return (clientPaused && (d->varSpec->context == MC_MAPSURFACE ||
+                             d->varSpec->context == MC_SPRITE     ||
+                             d->varSpec->context == MC_MODELSKIN  ||
+                             d->varSpec->context == MC_PSPRITE    ||
+                             d->varSpec->context == MC_SKYSPHERE));
+#else
+    return false;
+#endif
+}
+
 void MaterialVariant::ticker(timespan_t /*time*/)
 {
     ded_material_t const *def = Material_Definition(d->material);
     if(!def)
     {
-        // Material is no longer valid. We can't yet purge them because
-        // we lack a reference counting mechanism (the game may be holding
-        // Material pointers and/or indices, which are considered eternal).
+        // Material is no longer valid. We can't yet purge them; we lack a
+        // reference counting mechanism (the game may be holding Material
+        // pointers and/or indices, which are considered eternal).
         return;
     }
 
-    // Update layers.
+    // Animations will only progress when not paused.
+    if(isPaused()) return;
+
+    // Animate layers:
     int const layerCount = Material_LayerCount(d->material);
     for(int i = 0; i < layerCount; ++i)
     {
-        ded_material_layer_t const *lDef = &def->layers[i];
+        ded_material_layer_t const *layerDef = &def->layers[i];
 
-        if(!(lDef->stageCount.num > 1)) continue;
+        // Not animated?
+        if(layerDef->stageCount.num == 1) continue;
 
-        float inter = 0;
-        ded_material_layer_stage_t const *stCur = 0;
-        LayerState &layer = d->layers[i];
-        if(DD_IsSharpTick() && layer.tics-- <= 0)
+        ded_material_layer_stage_t const *lsCur = 0;
+        LayerState &l = d->layers[i];
+
+        if(DD_IsSharpTick() && l.tics-- <= 0)
         {
             // Advance to next stage.
-            if(++layer.stage == lDef->stageCount.num)
+            if(++l.stage == layerDef->stageCount.num)
             {
                 // Loop back to the beginning.
-                layer.stage = 0;
+                l.stage = 0;
             }
+            l.inter = 0;
 
-            stCur = &lDef->stages[layer.stage];
-            if(stCur->variance != 0)
-                layer.tics = stCur->tics * (1 - stCur->variance * RNG_RandFloat());
+            lsCur = &layerDef->stages[l.stage];
+            if(lsCur->variance != 0)
+                l.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
             else
-                layer.tics = stCur->tics;
+                l.tics = lsCur->tics;
 
-            if(de::Uri *texUri = reinterpret_cast<de::Uri *>(stCur->texture))
+            // Notify interested parties about this.
+            if(d->varSpec->context == MC_MAPSURFACE)
             {
-                /// @todo Optimize: Cache this result.
-                layer.texture = App_Textures()->find(*texUri).texture();
+                // Surfaces using this material may need to be updated.
+                R_UpdateMapSurfacesOnMaterialChange(d->material);
             }
-
-            inter = 0;
         }
         else
         {
-            stCur = &lDef->stages[layer.stage];
-            inter = 1.0f - (layer.tics - frameTimePos) / float( stCur->tics );
+            lsCur = &layerDef->stages[l.stage];
+            l.inter = 1 - (l.tics - frameTimePos) / float( lsCur->tics );
         }
 
-        if(inter == 0)
+        if(l.inter == 0)
         {
-            layer.texOrigin[0] = stCur->texOrigin[0];
-            layer.texOrigin[1] = stCur->texOrigin[1];
-            layer.glowStrength = stCur->glowStrength;
+            l.texOrigin[0] = lsCur->texOrigin[0];
+            l.texOrigin[1] = lsCur->texOrigin[1];
+            l.glowStrength = lsCur->glowStrength;
             continue;
         }
 
         // Interpolate.
-        ded_material_layer_stage_t const *stNext =
-            &lDef->stages[(layer.stage + 1) % lDef->stageCount.num];
+        ded_material_layer_stage_t const *lsNext =
+            &layerDef->stages[(l.stage + 1) % layerDef->stageCount.num];
 
         /// @todo Implement a more useful method of interpolation (but what? what do we want/need here?).
-        layer.texOrigin[0] = stCur->texOrigin[0] * (1 - inter) + stNext->texOrigin[0] * inter;
-        layer.texOrigin[1] = stCur->texOrigin[1] * (1 - inter) + stNext->texOrigin[1] * inter;
+        l.texOrigin[0] = lsCur->texOrigin[0] * (1 - l.inter) + lsNext->texOrigin[0] * l.inter;
+        l.texOrigin[1] = lsCur->texOrigin[1] * (1 - l.inter) + lsNext->texOrigin[1] * l.inter;
 
-        layer.glowStrength = stCur->glowStrength * (1 - inter) + stNext->glowStrength * inter;
+        l.glowStrength = lsCur->glowStrength * (1 - l.inter) + lsNext->glowStrength * l.inter;
     }
 }
 

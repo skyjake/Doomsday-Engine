@@ -115,17 +115,19 @@ public:
         /// Animation stage else @c -1 => layer not in use.
         int stage;
 
-        /// Texture.
-        Texture *texture;
+        /// Remaining (sharp) tics in the current stage.
+        short tics;
 
-        /// Origin of the texture in material-space.
+        /// Intermark from the current stage to the next.
+        float inter;
+
+        /// Interpolated origin of the texture in material-space.
+        /// @todo Does not belong at this level.
         float texOrigin[2];
 
-        /// Glow strength factor.
+        /// Interpolated glow strength factor.
+        /// @todo Does not belong at this level.
         float glowStrength;
-
-        /// Frame position.
-        short tics;
     };
 
 public:
@@ -147,6 +149,19 @@ public:
         return generalCase();
     }
 
+    /// @return  Superior material from which the variant was derived.
+    material_t &generalCase() const;
+
+    /// @return  MaterialVariantSpec which the variant was specialised using.
+    MaterialVariantSpec const &spec() const;
+
+    /**
+     * Returns @c true if animation of the variant is currently paused (e.g.,
+     * the variant is for use with an in-game render context and the client has
+     * paused the game).
+     */
+    bool isPaused() const;
+
     /**
      * Process a system tick event.
      * @param time  Length of the tick in seconds.
@@ -157,12 +172,6 @@ public:
      * Reset the staged animation point for this Material.
      */
     void resetAnim();
-
-    /// @return  Superior material from which the variant was derived.
-    material_t &generalCase() const;
-
-    /// @return  MaterialVariantSpec which the variant was specialised using.
-    MaterialVariantSpec const &spec() const;
 
     /**
      * Return the current state of @a layerNum for the variant.
