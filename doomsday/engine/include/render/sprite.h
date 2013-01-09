@@ -22,7 +22,7 @@
 #ifndef LIBDENG_RENDER_SPRITE_H
 #define LIBDENG_RENDER_SPRITE_H
 
-#include "resource/materialvariant.h"
+#include "dd_types.h"
 
 /// @addtogroup render
 ///@{
@@ -32,7 +32,7 @@ typedef struct rendpspriteparams_s
     float pos[2]; // {X, Y} Screen-space position.
     float width, height;
 
-    struct material_s* mat;
+    struct material_s *mat;
     float texOffset[2];
     boolean texFlip[2]; // {X, Y} Flip along the specified axis.
 
@@ -48,6 +48,8 @@ DENG_EXTERN_C void Rend_SpriteRegister(void);
 
 #ifdef __CLIENT__
 #ifdef __cplusplus
+
+#include "resource/materialvariant.h"
 
 de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
 

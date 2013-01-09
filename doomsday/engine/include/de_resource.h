@@ -29,7 +29,6 @@
 #include "resource/fonts.h"
 #include "resource/r_data.h"
 #include "resource/materials.h"
-#include "resource/materialvariant.h"
 #include "resource/models.h"
 #include "resource/compositetexture.h"
 #include "resource/rawtexture.h"
@@ -40,6 +39,7 @@
 #endif
 
 #ifdef __cplusplus
+#  include "resource/materialvariant.h"
 #  include "resource/materialsnapshot.h"
 #  include "resource/patch.h"
 #  include "resource/texturemanifest.h"

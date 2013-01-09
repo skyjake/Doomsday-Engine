@@ -26,7 +26,6 @@
 #include "de_render.h"
 
 #include "m_misc.h"
-#include "resource/materialvariant.h"
 #include "resource/materials.h"
 #include "map/linedef.h"
 

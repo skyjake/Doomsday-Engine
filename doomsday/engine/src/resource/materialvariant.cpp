@@ -24,12 +24,12 @@
 
 #include "de_base.h"
 #ifdef __CLIENT__
-#  include "de_network.h" // playback /clientPaused
+#  include "de_network.h" // playback / clientPaused
 #endif
 
-#include "map/r_world.h"
-#include "gl/gl_texmanager.h"
-#include "render/r_main.h"
+#include "map/r_world.h" // R_UpdateMapSurfacesOnMaterialChange
+#include "gl/gl_texmanager.h" // GL_CompareTextureVariantSpecifications
+#include "render/r_main.h" // frameTimePos
 
 #include "resource/materialvariant.h"
 
@@ -44,7 +44,7 @@ bool MaterialVariantSpec::compare(MaterialVariantSpec const &other) const
 
 struct MaterialVariant::Instance
 {
-    /// Superior Material of which this is a derivative.
+    /// Superior material of which this is a derivative.
     material_t *material;
 
     /// Specification used to derive this variant.
@@ -118,7 +118,7 @@ bool MaterialVariant::isPaused() const
 #endif
 }
 
-void MaterialVariant::ticker(timespan_t /*time*/)
+void MaterialVariant::ticker(timespan_t /*ticLength*/)
 {
     // Animation ceases once the material is no longer valid.
     if(!Material_IsValid(d->material)) return;
@@ -196,23 +196,25 @@ void MaterialVariant::resetAnim()
     int const layerCount      = Material_LayerCount(d->material);
     for(int i = 0; i < layerCount; ++i)
     {
+        ded_material_layer_t const *layerDef = &def->layers[i];
         LayerState &l = d->layers[i];
+
         l.stage = 0;
-        l.tics  = def->layers[i].stages[0].tics;
+        l.tics  = layerDef->stages[0].tics;
         l.inter = 0;
-        l.texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
-        l.texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
-        l.glowStrength = def->layers[i].stages[0].glowStrength;
+        l.texOrigin[0] = layerDef->stages[0].texOrigin[0];
+        l.texOrigin[1] = layerDef->stages[0].texOrigin[1];
+        l.glowStrength = layerDef->stages[0].glowStrength;
     }
 }
 
-MaterialVariant::LayerState const &MaterialVariant::layer(int layer)
+MaterialVariant::LayerState const &MaterialVariant::layer(int layerNum)
 {
-    if(layer >= 0 && layer < Material_LayerCount(d->material))
-        return d->layers[layer];
+    if(layerNum >= 0 && layerNum < Material_LayerCount(d->material))
+        return d->layers[layerNum];
 
     /// @throw InvalidLayerError Invalid layer reference.
-    throw InvalidLayerError("MaterialVariant::layer", QString("Invalid material layer #%1").arg(layer));
+    throw InvalidLayerError("MaterialVariant::layer", QString("Invalid material layer #%1").arg(layerNum));
 }
 
 MaterialSnapshot &MaterialVariant::attachSnapshot(MaterialSnapshot &newSnapshot)
@@ -241,12 +243,20 @@ MaterialSnapshot *MaterialVariant::snapshot() const
 
 int MaterialVariant::snapshotPrepareFrame() const
 {
-    return d->snapshotPrepareFrame;
+    if(d->snapshot)
+    {
+        return d->snapshotPrepareFrame;
+    }
+    /// @throw MissingSnapshotError A snapshot is needed for this.
+    throw MissingSnapshotError("MaterialVariant::snapshotPrepareFrame", "Snapshot data is required");
 }
 
-void MaterialVariant::setSnapshotPrepareFrame(int frame)
+void MaterialVariant::setSnapshotPrepareFrame(int frameNum)
 {
-    d->snapshotPrepareFrame = frame;
+    if(d->snapshot)
+    {
+        d->snapshotPrepareFrame = frameNum;
+    }
 }
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD

@@ -319,11 +319,6 @@ de::MaterialAnim &Material_AnimGroup(material_t *mat);
 #endif
 
 /**
- * Provides access to the list of variant instances for efficient traversal.
- */
-de::Material::Variants const &Material_Variants(material_t const *mat);
-
-/**
  * Choose/create a variant of the material which fulfills @a spec.
  *
  * @param material      Material instance.
@@ -335,6 +330,11 @@ de::Material::Variants const &Material_Variants(material_t const *mat);
  */
 de::MaterialVariant *Material_ChooseVariant(material_t *mat,
     de::MaterialVariantSpec const &spec, bool smoothed = true, bool canCreate = false);
+
+/**
+ * Provides access to the list of variant instances for efficient traversal.
+ */
+de::Material::Variants const &Material_Variants(material_t const *mat);
 
 #endif
 

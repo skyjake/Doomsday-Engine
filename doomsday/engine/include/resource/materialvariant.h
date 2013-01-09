@@ -20,7 +20,14 @@
 #ifndef LIBDENG_RESOURCE_MATERIALVARIANT_H
 #define LIBDENG_RESOURCE_MATERIALVARIANT_H
 
-/// Material (Usage) Context identifiers.
+#include "def_data.h"
+#include "resource/materialsnapshot.h"
+#include "resource/material.h"
+#include "resource/texture.h"
+
+struct texturevariantspecification_s;
+
+/// Identifiers for material usage contexts.
 typedef enum {
     MC_UNKNOWN = -1,
     MATERIALCONTEXT_FIRST = 0,
@@ -38,30 +45,27 @@ typedef enum {
 /// @c true= val can be interpreted as a valid material context identifier.
 #define VALID_MATERIALCONTEXT(val) ((val) >= MATERIALCONTEXT_FIRST && (val) <= MATERIALCONTEXT_LAST)
 
-#ifdef __cplusplus
-
-#include "def_data.h"
-#include "resource/materialsnapshot.h"
-#include "resource/material.h"
-#include "resource/texture.h"
-
-struct texturevariantspecification_s;
-
 namespace de {
 
 /**
+ * Specialization specification for a variant material. Property values are
+ * public for user convenience.
+ *
+ * @see MaterialVariant, material_t
  * @ingroup resource
  */
 struct MaterialVariantSpec
 {
+public:
     /// Usage context identifier.
     materialcontext_t context;
 
     /// Specification for the primary texture.
     struct texturevariantspecification_s *primarySpec;
 
+public:
     /**
-     * Construct a default MaterialVariantSpec instance.
+     * Construct a zeroed MaterialVariantSpec instance.
      */
     MaterialVariantSpec() : context(MC_UNKNOWN), primarySpec(0)
     {}
@@ -101,6 +105,14 @@ struct MaterialVariantSpec
 };
 
 /**
+ * Context-specialized material variant. Encapsulates all context variant values
+ * and logics pertaining to a specialized version of a @em superior material.
+ *
+ * MaterialVariant instances are usually only created by the superior material
+ * when asked to prepare for render (@ref Material_ChooseVariant()) using a context
+ * specialization specification which it cannot fulfill/match.
+ *
+ * @see material_t, MaterialVariantSpec
  * @ingroup resource
  */
 class MaterialVariant
@@ -134,6 +146,9 @@ public:
     /// The requested layer does not exist. @ingroup errors
     DENG2_ERROR(InvalidLayerError);
 
+    /// Required snapshot data is missing. @ingroup errors
+    DENG2_ERROR(MissingSnapshotError);
+
 public:
     MaterialVariant(material_t &generalCase, MaterialVariantSpec const &spec);
     ~MaterialVariant();
@@ -151,7 +166,7 @@ public:
     /// @return  Superior material from which the variant was derived.
     material_t &generalCase() const;
 
-    /// @return  MaterialVariantSpec which the variant was specialised using.
+    /// @return  Material variant specification for the variant.
     MaterialVariantSpec const &spec() const;
 
     /**
@@ -162,10 +177,15 @@ public:
     bool isPaused() const;
 
     /**
-     * Process a system tick event.
-     * @param time  Length of the tick in seconds.
+     * Process a system tick event. If not currently paused and the material is
+     * valid; layer stages are animated and state property values are updated
+     * accordingly.
+     *
+     * @param ticLength  Length of the tick in seconds.
+     *
+     * @see isPaused()
      */
-    void ticker(timespan_t time);
+    void ticker(timespan_t ticLength);
 
     /**
      * Reset the staged animation point for this Material.
@@ -173,32 +193,48 @@ public:
     void resetAnim();
 
     /**
-     * Return the current state of @a layerNum for the variant.
+     * Returns the current state of @a layerNum for the variant.
      */
     LayerState const &layer(int layerNum);
 
     /**
-     * Attach MaterialSnapshot data. MaterialVariant is given ownership of @a materialSnapshot.
+     * Attach new MaterialSnapshot data to the variant. If an existing snapshot
+     * is already present it will be replaced. Ownership of @a materialSnapshot
+     * is given to the variant.
+     *
      * @return  Same as @a materialSnapshot for caller convenience.
+     *
+     * @see detachSnapshot(), snapshot()
      */
     MaterialSnapshot &attachSnapshot(MaterialSnapshot &snapshot);
 
     /**
-     * Detach MaterialSnapshot data. Ownership is relinquished to the caller.
+     * Detach the MaterialSnapshot data from the variant, relinquishing ownership
+     * to the caller.
+     *
+     * @see attachSnapshot(), detachSnapshot()
      */
     MaterialSnapshot *detachSnapshot();
 
-    /// @return  MaterialSnapshot data associated with the variant; otherwise @c 0.
+    /**
+     * Returns the MaterialSnapshot data from the variant or otherwise @c 0.
+     * Ownership is unaffected.
+     *
+     * @see attachSnapshot(), detachSnapshot()
+     */
     MaterialSnapshot *snapshot() const;
 
-    /// @return  Frame count when the snapshot was last prepared/updated.
+    /**
+     * Returns the frame number when the variant's associated snapshot was last
+     * prepared/updated.
+     */
     int snapshotPrepareFrame() const;
 
     /**
-     * Change the frame when the snapshot was last prepared/updated.
-     * @param frame  Frame to mark the snapshot with.
+     * Change the frame number when the variant's snapshot was last prepared/updated.
+     * @param frameNum  Frame number to mark the snapshot with.
      */
-    void setSnapshotPrepareFrame(int frame);
+    void setSnapshotPrepareFrame(int frameNum);
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     /// @return  Translated 'next' (or target) MaterialVariant if set, else this.
@@ -231,8 +267,6 @@ private:
 };
 
 } // namespace de
-
-#endif // __cplusplus
 
 struct materialvariant_s; // The materialvariant instance (opaque).
 

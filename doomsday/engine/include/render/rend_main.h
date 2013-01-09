@@ -35,8 +35,6 @@
 #endif
 #include "r_things.h"
 
-struct materialvariantspec_s;
-
 #define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
 
 #define OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
