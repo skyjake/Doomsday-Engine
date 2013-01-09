@@ -582,12 +582,12 @@ static void drawConsoleBackground(Point2Raw const *origin, Size2Raw const *size,
 
     if(consoleBackgroundMaterial)
     {
-        glDisable(GL_TEXTURE_2D);
-        if(funnyAng != 0)
+        if(consoleBackgroundTurn != 0)
         {
             glMatrixMode(GL_TEXTURE);
             glPopMatrix();
         }
+        glDisable(GL_TEXTURE_2D);
     }
 }
 
