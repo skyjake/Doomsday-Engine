@@ -468,16 +468,15 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
     return def;
 }
 
-ded_decor_t *Def_GetDecoration(material_t *mat, boolean hasExternal, boolean isCustom)
+ded_decor_t *Def_GetDecoration(uri_s const *uri, boolean hasExternal, boolean isCustom)
 {
-    DENG_ASSERT(mat);
+    DENG_ASSERT(uri);
 
-    de::Uri uri = Material_Manifest(mat).composeUri();
     ded_decor_t *def;
     int i;
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        if(def->material && Uri_Equality(def->material, reinterpret_cast<uri_s *>(&uri)))
+        if(def->material && Uri_Equality(def->material, uri))
         {
             // Is this suitable?
             if(Def_IsAllowedDecoration(def, hasExternal, isCustom))
@@ -487,16 +486,15 @@ ded_decor_t *Def_GetDecoration(material_t *mat, boolean hasExternal, boolean isC
     return 0; // None found.
 }
 
-ded_reflection_t *Def_GetReflection(material_t *mat, boolean hasExternal, boolean isCustom)
+ded_reflection_t *Def_GetReflection(uri_s const *uri, boolean hasExternal, boolean isCustom)
 {
-    DENG_ASSERT(mat);
+    DENG_ASSERT(uri);
 
-    de::Uri uri = Material_Manifest(mat).composeUri();
     ded_reflection_t *def;
     int i;
     for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
     {
-        if(def->material && Uri_Equality(def->material, reinterpret_cast<uri_s *>(&uri)))
+        if(def->material && Uri_Equality(def->material, uri))
         {
             // Is this suitable?
             if(Def_IsAllowedReflection(def, hasExternal, isCustom))
@@ -506,23 +504,22 @@ ded_reflection_t *Def_GetReflection(material_t *mat, boolean hasExternal, boolea
     return 0; // None found.
 }
 
-ded_detailtexture_t *Def_GetDetailTex(material_t *mat, boolean hasExternal, boolean isCustom)
+ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri, boolean hasExternal, boolean isCustom)
 {
-    DENG_ASSERT(mat);
+    DENG_ASSERT(uri);
 
-    de::Uri uri = Material_Manifest(mat).composeUri();
     ded_detailtexture_t *def;
     int i;
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
-        if(def->material1 && Uri_Equality(def->material1, reinterpret_cast<uri_s *>(&uri)))
+        if(def->material1 && Uri_Equality(def->material1, uri))
         {
             // Is this suitable?
             if(Def_IsAllowedDetailTex(def, hasExternal, isCustom))
                 return def;
         }
 
-        if(def->material2 && Uri_Equality(def->material2, reinterpret_cast<uri_s *>(&uri)))
+        if(def->material2 && Uri_Equality(def->material2, uri))
         {
             // Is this suitable?
             if(Def_IsAllowedDetailTex(def, hasExternal, isCustom))
@@ -532,22 +529,19 @@ ded_detailtexture_t *Def_GetDetailTex(material_t *mat, boolean hasExternal, bool
     return 0; // None found.
 }
 
-ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isCustom)
+ded_ptcgen_t* Def_GetGenerator(uri_s const *uri, boolean hasExternal, boolean isCustom)
 {
-    DENG_ASSERT(mat);
+    DENG_ASSERT(uri);
     DENG_UNUSED(hasExternal); DENG_UNUSED(isCustom);
 
-    de::Uri uri = Material_Manifest(mat).composeUri();
     ded_ptcgen_t *def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
         if(!def->material) continue;
 
         // Is this suitable?
-        if(Uri_Equality(def->material, reinterpret_cast<uri_s *>(&uri)))
-        {
+        if(Uri_Equality(def->material, uri))
             return def;
-        }
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
         if(def->flags & PGF_GROUP)

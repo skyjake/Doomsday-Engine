@@ -292,8 +292,7 @@ public:
      */
     material_t *newFromDef(ded_material_t &def);
 
-    MaterialManifest &newManifest(MaterialScheme &scheme, Path const &path,
-                                  material_t *material = 0);
+    MaterialManifest &newManifest(MaterialScheme &scheme, Path const &path);
 
     /**
      * Prepare a material variant specification in accordance to the specified

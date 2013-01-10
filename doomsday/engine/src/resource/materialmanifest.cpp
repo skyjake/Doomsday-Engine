@@ -128,21 +128,24 @@ void MaterialManifest::setMaterial(material_t *newMaterial)
 
 void MaterialManifest::linkDefinitions()
 {
+    Uri _uri = composeUri();
+    uri_s *uri = reinterpret_cast<uri_s *>(&_uri);
+
     // Surface decorations (lights and models).
-    d->defs.decors[0]         = Def_GetDecoration(d->material, 0, d->isCustom);
-    d->defs.decors[1]         = Def_GetDecoration(d->material, 1, d->isCustom);
+    d->defs.decors[0]         = Def_GetDecoration(uri, 0, d->isCustom);
+    d->defs.decors[1]         = Def_GetDecoration(uri, 1, d->isCustom);
 
     // Reflection (aka shiny surface).
-    d->defs.reflections[0]    = Def_GetReflection(d->material, 0, d->isCustom);
-    d->defs.reflections[1]    = Def_GetReflection(d->material, 1, d->isCustom);
+    d->defs.reflections[0]    = Def_GetReflection(uri, 0, d->isCustom);
+    d->defs.reflections[1]    = Def_GetReflection(uri, 1, d->isCustom);
 
     // Generator (particles).
-    d->defs.ptcgens[0]        = Def_GetGenerator(d->material, 0, d->isCustom);
-    d->defs.ptcgens[1]        = Def_GetGenerator(d->material, 1, d->isCustom);
+    d->defs.ptcgens[0]        = Def_GetGenerator(uri, 0, d->isCustom);
+    d->defs.ptcgens[1]        = Def_GetGenerator(uri, 1, d->isCustom);
 
     // Detail texture.
-    d->defs.detailtextures[0] = Def_GetDetailTex(d->material, 0, d->isCustom);
-    d->defs.detailtextures[1] = Def_GetDetailTex(d->material, 1, d->isCustom);
+    d->defs.detailtextures[0] = Def_GetDetailTex(uri, 0, d->isCustom);
+    d->defs.detailtextures[1] = Def_GetDetailTex(uri, 1, d->isCustom);
 }
 
 void MaterialManifest::clearDefinitionLinks()
