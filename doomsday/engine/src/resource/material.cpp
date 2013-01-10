@@ -81,7 +81,8 @@ struct material_s
           inAnimGroup(false),
 #endif
           detailTex(0), detailScale(0), detailStrength(0),
-          shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0)
+          shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0),
+          prepared(0)
     {
         header.type = DMU_MATERIAL;
         std::memset(shinyMinColor, 0, sizeof(shinyMinColor));

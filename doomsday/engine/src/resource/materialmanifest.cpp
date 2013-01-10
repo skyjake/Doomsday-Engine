@@ -27,40 +27,6 @@
 
 namespace de {
 
-MaterialManifest::Info::Info()
-{
-    clearDefinitionLinks();
-}
-
-void MaterialManifest::Info::linkDefinitions(MaterialManifest const &manifest)
-{
-    material_t *mat = manifest.material();
-
-    // Surface decorations (lights and models).
-    decorationDefs[0]    = Def_GetDecoration(mat, 0, manifest.isCustom());
-    decorationDefs[1]    = Def_GetDecoration(mat, 1, manifest.isCustom());
-
-    // Reflection (aka shiny surface).
-    reflectionDefs[0]    = Def_GetReflection(mat, 0, manifest.isCustom());
-    reflectionDefs[1]    = Def_GetReflection(mat, 1, manifest.isCustom());
-
-    // Generator (particles).
-    ptcgenDefs[0]        = Def_GetGenerator(mat, 0, manifest.isCustom());
-    ptcgenDefs[1]        = Def_GetGenerator(mat, 1, manifest.isCustom());
-
-    // Detail texture.
-    detailtextureDefs[0] = Def_GetDetailTex(mat, 0, manifest.isCustom());
-    detailtextureDefs[1] = Def_GetDetailTex(mat, 1, manifest.isCustom());
-}
-
-void MaterialManifest::Info::clearDefinitionLinks()
-{
-    decorationDefs[0]    = decorationDefs[1]    = 0;
-    detailtextureDefs[0] = detailtextureDefs[1] = 0;
-    ptcgenDefs[0]        = ptcgenDefs[1]        = 0;
-    reflectionDefs[0]    = reflectionDefs[1]    = 0;
-}
-
 struct MaterialManifest::Instance
 {
     /// Material associated with this.
@@ -69,24 +35,32 @@ struct MaterialManifest::Instance
     /// Unique identifier.
     materialid_t id;
 
-    /// Extended info for the manifest. Will be attached upon successfull preparation
-    /// of the first derived variant of the associated Material.
-    MaterialManifest::Info *extInfo;
-
     /// @c true if the material is not derived from an original game resource.
     bool isCustom;
+
+    /// Linked definitions contain further property values.
+    /// There are two links for each definition type, the first (index @c 0)
+    /// for original game data and the second for external data.
+    struct {
+        ded_decor_t         *decors[2];
+        ded_detailtexture_t *detailtextures[2];
+        ded_ptcgen_t        *ptcgens[2];
+        ded_reflection_t    *reflections[2];
+    } defs;
+
+    Instance() : material(0), id(0), isCustom(false)
+    {}
 };
 
 MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
     : Node(args)
 {
     d = new Instance();
+    clearDefinitionLinks();
 }
 
 MaterialManifest::~MaterialManifest()
 {
-    Info *detachedInfo = detachInfo();
-    if(detachedInfo) delete detachedInfo;
     delete d;
 }
 
@@ -118,7 +92,7 @@ MaterialScheme &MaterialManifest::scheme() const
 
     // This should never happen...
     /// @throw Error Failed to determine the scheme of the manifest.
-    throw Error("MaterialManifest::scheme", String("Failed to determine scheme for manifest [%p].").arg(de::dintptr(this)));
+    throw Error("MaterialManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
 }
 
 String const &MaterialManifest::schemeName() const
@@ -146,67 +120,93 @@ material_t *MaterialManifest::material() const
     return d->material;
 }
 
-MaterialManifest::Info *MaterialManifest::info() const
-{
-    return d->extInfo;
-}
-
 void MaterialManifest::setMaterial(material_t *newMaterial)
 {
-    if(d->material != newMaterial)
-    {
-        // Any extended info will be invalid after this op, so destroy it
-        // (it will automatically be rebuilt later, if subsequently needed).
-        MaterialManifest::Info *detachedInfo = detachInfo();
-        if(detachedInfo) delete detachedInfo;
-
-        // Associate with the new Material.
-        d->material = newMaterial;
-    }
+    if(d->material == newMaterial) return;
+    d->material = newMaterial;
 }
 
-void MaterialManifest::attachInfo(MaterialManifest::Info &info)
+void MaterialManifest::linkDefinitions()
 {
-    LOG_AS("MaterialManifest::attachInfo");
-    if(d->extInfo)
-    {
-#if _DEBUG
-        LOG_DEBUG("Info already present for \"%s\", will replace.") << composeUri(d->id);
-#endif
-        M_Free(d->extInfo);
-    }
-    d->extInfo = &info;
+    // Surface decorations (lights and models).
+    d->defs.decors[0]         = Def_GetDecoration(d->material, 0, d->isCustom);
+    d->defs.decors[1]         = Def_GetDecoration(d->material, 1, d->isCustom);
+
+    // Reflection (aka shiny surface).
+    d->defs.reflections[0]    = Def_GetReflection(d->material, 0, d->isCustom);
+    d->defs.reflections[1]    = Def_GetReflection(d->material, 1, d->isCustom);
+
+    // Generator (particles).
+    d->defs.ptcgens[0]        = Def_GetGenerator(d->material, 0, d->isCustom);
+    d->defs.ptcgens[1]        = Def_GetGenerator(d->material, 1, d->isCustom);
+
+    // Detail texture.
+    d->defs.detailtextures[0] = Def_GetDetailTex(d->material, 0, d->isCustom);
+    d->defs.detailtextures[1] = Def_GetDetailTex(d->material, 1, d->isCustom);
 }
 
-MaterialManifest::Info *MaterialManifest::detachInfo()
+void MaterialManifest::clearDefinitionLinks()
 {
-    Info *retInfo = d->extInfo;
-    d->extInfo = 0;
-    return retInfo;
+    d->defs.decors[0]         = d->defs.decors[1]         = 0;
+    d->defs.detailtextures[0] = d->defs.detailtextures[1] = 0;
+    d->defs.ptcgens[0]        = d->defs.ptcgens[1]        = 0;
+    d->defs.reflections[0]    = d->defs.reflections[1]    = 0;
 }
 
 ded_detailtexture_t *MaterialManifest::detailTextureDef() const
 {
-    if(!d->extInfo || !d->material || !Material_Prepared(d->material)) return 0;
-    return d->extInfo->detailtextureDefs[Material_Prepared(d->material) - 1];
+    if(!d->material)
+    {
+        /// @throw MissingMaterialError A material is required for this.
+        throw MissingMaterialError("MaterialManifest::detailTextureDef", "Missing required material");
+    }
+
+    // We must prepare to determine which definition is in effect.
+    byte prepared = Material_Prepared(d->material);
+    if(prepared) return d->defs.detailtextures[prepared - 1];
+    return 0;
 }
 
 ded_decor_t *MaterialManifest::decorationDef() const
 {
-    if(!d->extInfo || !d->material || !Material_Prepared(d->material)) return 0;
-    return d->extInfo->decorationDefs[Material_Prepared(d->material) - 1];
+    if(!d->material)
+    {
+        /// @throw MissingMaterialError A material is required for this.
+        throw MissingMaterialError("MaterialManifest::decorationTextureDef", "Missing required material");
+    }
+
+    // We must prepare to determine which definition is in effect.
+    byte prepared = Material_Prepared(d->material);
+    if(prepared) return d->defs.decors[prepared - 1];
+    return 0;
 }
 
 ded_ptcgen_t *MaterialManifest::ptcGenDef() const
 {
-    if(!d->extInfo || !d->material || !Material_Prepared(d->material)) return 0;
-    return d->extInfo->ptcgenDefs[Material_Prepared(d->material) - 1];
+    if(!d->material)
+    {
+        /// @throw MissingMaterialError A material is required for this.
+        throw MissingMaterialError("MaterialManifest::ptcGenDef", "Missing required material");
+    }
+
+    // We must prepare to determine which definition is in effect.
+    byte prepared = Material_Prepared(d->material);
+    if(prepared) return d->defs.ptcgens[prepared - 1];
+    return 0;
 }
 
 ded_reflection_t *MaterialManifest::reflectionDef() const
 {
-    if(!d->extInfo || !d->material || !Material_Prepared(d->material)) return 0;
-    return d->extInfo->reflectionDefs[Material_Prepared(d->material)-1];
+    if(!d->material)
+    {
+        /// @throw MissingMaterialError A material is required for this.
+        throw MissingMaterialError("MaterialManifest::reflectionDef", "Missing required material");
+    }
+
+    // We must prepare to determine which definition is in effect.
+    byte prepared = Material_Prepared(d->material);
+    if(prepared) return d->defs.reflections[prepared - 1];
+    return 0;
 }
 
 } // namespace de

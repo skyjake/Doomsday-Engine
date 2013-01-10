@@ -22,6 +22,7 @@
 
 #ifdef __cplusplus
 
+#include <de/Error>
 #include <de/PathTree>
 #include "def_data.h"
 #include "uri.hh"
@@ -35,36 +36,8 @@ class MaterialScheme;
 class MaterialManifest : public PathTree::Node
 {
 public:
-    /**
-     * Contains extended info about a material manifest.
-     * There are two links for each definition type, the first (index @c 0)
-     * for original game data and the second for external data.
-     */
-    struct Info
-    {
-        ded_decor_t *decorationDefs[2];
-        ded_detailtexture_t *detailtextureDefs[2];
-        ded_ptcgen_t *ptcgenDefs[2];
-        ded_reflection_t *reflectionDefs[2];
-
-        Info();
-
-        /**
-         * Update the info with new linked definitions. Should be called:
-         *
-         * - When the bound material is changed/first-configured.
-         * - When said material's "custom" state changes.
-         *
-         * @param manifest  MaterialManifest to link the definitions of.
-         */
-        void linkDefinitions(MaterialManifest const &manifest);
-
-        /**
-         * Zeroes all links to definitions. Should be called when the
-         * definition database is reset.
-         */
-        void clearDefinitionLinks();
-    };
+    /// Required material instance is missing. @ingroup errors
+    DENG2_ERROR(MissingMaterialError);
 
 public:
     MaterialManifest(PathTree::NodeArgs const &args);
@@ -102,23 +75,6 @@ public:
     /// @return  Material associated with the manifest; otherwise @c NULL.
     material_t *material() const;
 
-    /// @return  Extended info owned by the manifest; otherwise @c NULL.
-    Info *info() const;
-
-    /**
-     * Attach extended Info data to the manifest. If existing info is present
-     * it will be replaced. MaterialManifest is given ownership of the info.
-     * @param info  Extended info data to attach.
-     */
-    void attachInfo(Info &info);
-
-    /**
-     * Detach any extended Info owned by the manifest, relinquishing ownership
-     * to the caller.
-     * @return  Extended info or else @c NULL if not present.
-     */
-    Info *detachInfo();
-
     /**
      * Change the material associated with this manifest.
      *
@@ -128,6 +84,20 @@ public:
      * @param  material  New material to associate with this.
      */
     void setMaterial(material_t *material);
+
+    /**
+     * Update the manifest with new linked definitions. Should be called:
+     *
+     * - When the bound material is changed/first-configured.
+     * - When said material's "custom" state changes.
+     */
+    void linkDefinitions();
+
+    /**
+     * Zeroes all links to definitions. Should be called when the
+     * definition database is reset.
+     */
+    void clearDefinitionLinks();
 
     /// @return  Detail texture definition associated with this else @c NULL
     ded_detailtexture_t *detailTextureDef() const;

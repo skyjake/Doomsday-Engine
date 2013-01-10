@@ -99,21 +99,6 @@ static void applyVariantSpec(MaterialVariantSpec &spec, materialcontext_t mc,
     spec.primarySpec = primarySpec;
 }
 
-static void updateMaterialManifestInfo(MaterialManifest &manifest, bool canCreateInfo)
-{
-    MaterialManifest::Info *info = manifest.info();
-    if(!info)
-    {
-        if(!canCreateInfo) return;
-
-        // Create new info and attach to this manifest.
-        info = new MaterialManifest::Info();
-        manifest.attachInfo(*info);
-    }
-
-    info->linkDefinitions(manifest);
-}
-
 /// A list of materials.
 typedef QList<material_t *> MaterialList;
 
@@ -275,10 +260,10 @@ struct Materials::Instance
         return *findVariantSpec(tpl, true);
     }
 
-    MaterialManifest *manifestForId(materialid_t Id)
+    MaterialManifest *manifestForId(materialid_t id)
     {
-        if(0 == Id || Id > manifestCount) return 0;
-        return manifestIdMap[Id - 1];
+        if(0 == id || id > manifestCount) return 0;
+        return manifestIdMap[id - 1];
     }
 };
 
@@ -355,10 +340,8 @@ void Materials::clearDefinitionLinks()
         PathTreeIterator<MaterialScheme::Index> iter((*i)->index().leafNodes());
         while(iter.hasNext())
         {
-            if(MaterialManifest::Info *info = iter.next().info())
-            {
-                info->clearDefinitionLinks();
-            }
+            MaterialManifest &manifest = iter.next();
+            manifest.clearDefinitionLinks();
         }
     }
 }
@@ -377,7 +360,7 @@ void Materials::rebuild(material_t &mat, ded_material_t *def)
         MaterialManifest *manifest = d->manifestIdMap[i];
         if(!manifest || manifest->material() != &mat) continue;
 
-        updateMaterialManifestInfo(*manifest, false /*do not create, only update if present*/);
+        manifest->linkDefinitions();
     }
 }
 
@@ -396,9 +379,9 @@ void Materials::processCacheQueue()
     }
 }
 
-MaterialManifest *Materials::toMaterialManifest(materialid_t Id)
+MaterialManifest *Materials::toMaterialManifest(materialid_t id)
 {
-    return d->manifestForId(Id);
+    return d->manifestForId(id);
 }
 
 Materials::Scheme& Materials::createScheme(String name)
@@ -499,7 +482,7 @@ bool Materials::has(Uri const &path) const
     return false;
 }
 
-MaterialManifest &Materials::newManifest(MaterialScheme &scheme, Path const &path, material_t *material)
+MaterialManifest &Materials::newManifest(MaterialScheme &scheme, Path const &path)
 {
     LOG_AS("Materials::newManifest");
 
@@ -511,29 +494,21 @@ MaterialManifest &Materials::newManifest(MaterialScheme &scheme, Path const &pat
     }
     catch(NotFoundError const &)
     {
-        // Acquire a new unique identifier for this manifest.
-        materialid_t const Id = ++d->manifestCount;
+        // Acquire a new unique identifier for the manifest.
+        materialid_t const id = ++d->manifestCount;
 
-        manifest = &scheme.insertManifest(path, Id);
-        if(material)
-        {
-            Material_SetManifestId(material, Id);
-        }
+        manifest = &scheme.insertManifest(path, id);
 
-        // Add the new manifest to the Id index/map.
+        // Add the new manifest to the id index/map.
         if(d->manifestCount > d->manifestIdMapSize)
         {
             // Allocate more memory.
             d->manifestIdMapSize += MATERIALS_MANIFESTMAP_BLOCK_ALLOC;
             d->manifestIdMap = (MaterialManifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
-            if(!d->manifestIdMap) Con_Error("Materials::newManifest: Failed on (re)allocation of %lu bytes enlarging manifest Id map.", (unsigned long) sizeof *d->manifestIdMap * d->manifestIdMapSize);
+            if(!d->manifestIdMap) Con_Error("Materials::newManifest: Failed on (re)allocation of %lu bytes enlarging manifest id map.", (unsigned long) sizeof *d->manifestIdMap * d->manifestIdMapSize);
         }
         d->manifestIdMap[d->manifestCount - 1] = manifest; /* 1-based index */
     }
-
-    // (Re)configure the manifest.
-    manifest->setMaterial(material);
-    updateMaterialManifestInfo(*manifest, false/*do not create, only update if present*/);
 
     return *manifest;
 }
@@ -592,22 +567,26 @@ material_t *Materials::newFromDef(ded_material_t &def)
 
     if(!tex) return 0;
 
-    // A new Material.
+    // A new manifest is needed?
+    if(!manifest)
+    {
+        manifest = &newManifest(scheme(uri.scheme()), uri.path());
+    }
+    manifest->setCustom(tex->flags().testFlag(Texture::Custom));
+    manifest->linkDefinitions();
+
+    // Create a material for this right away.
     Size2Raw dimensions(MAX_OF(0, def.width), MAX_OF(0, def.height));
     material_env_class_t envClass = S_MaterialEnvClassForUri(reinterpret_cast<struct uri_s const *>(&uri));
 
     material_t *mat = Material_New(def.flags, &def, &dimensions, envClass);
-    d->materials.push_back(mat);
+    Material_SetManifestId(mat, manifest->id());
 
-    if(!manifest)
-    {
-        manifest = &newManifest(scheme(uri.scheme()), uri.path(), mat);
-    }
-    else
-    {
-        manifest->setMaterial(mat);
-    }
-    manifest->setCustom(tex->flags().testFlag(Texture::Custom));
+    // Attach the material to the manifest.
+    manifest->setMaterial(mat);
+
+    // Add the material to the global material list.
+    d->materials.push_back(mat);
 
     return mat;
 }
@@ -720,32 +699,25 @@ static inline Texture *findShinyMaskTextureForDef(ded_reflection_t const &def)
     return findTextureByResourceUri("Masks", reinterpret_cast<de::Uri const &>(*def.maskMap));
 }
 
-static void updateMaterialTextureLinks(MaterialManifest &mb)
+void Materials::updateTextureLinks(MaterialManifest &manifest)
 {
-    material_t *mat = mb.material();
+    manifest.linkDefinitions();
 
-    // We may need to need to construct and attach the info.
-    updateMaterialManifestInfo(mb, true /* create if not present */);
-
+    material_t *mat = manifest.material();
     if(!mat) return;
 
-    ded_detailtexture_t const *dtlDef = mb.detailTextureDef();
+    ded_detailtexture_t const *dtlDef = manifest.detailTextureDef();
     Material_SetDetailTexture(mat,  reinterpret_cast<texture_s *>(dtlDef? findDetailTextureForDef(*dtlDef) : NULL));
     Material_SetDetailStrength(mat, (dtlDef? dtlDef->strength : 0));
     Material_SetDetailScale(mat,    (dtlDef? dtlDef->scale : 0));
 
-    ded_reflection_t const *refDef = mb.reflectionDef();
+    ded_reflection_t const *refDef = manifest.reflectionDef();
     Material_SetShinyTexture(mat,     reinterpret_cast<texture_s *>(refDef? findShinyTextureForDef(*refDef) : NULL));
     Material_SetShinyMaskTexture(mat, reinterpret_cast<texture_s *>(refDef? findShinyMaskTextureForDef(*refDef) : NULL));
     Material_SetShinyBlendmode(mat,   (refDef? refDef->blendMode : BM_ADD));
     float const black[3] = { 0, 0, 0 };
     Material_SetShinyMinColor(mat,    (refDef? refDef->minColor : black));
     Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
-}
-
-void Materials::updateTextureLinks(MaterialManifest &manifest)
-{
-    updateMaterialTextureLinks(manifest);
 }
 
 MaterialSnapshot const &Materials::prepare(MaterialVariant &variant,
@@ -1344,17 +1316,17 @@ uint Materials_Count()
     return App_Materials()->count();
 }
 
-material_t *Materials_ToMaterial(materialid_t Id)
+material_t *Materials_ToMaterial(materialid_t id)
 {
-    de::MaterialManifest *manifest = App_Materials()->toMaterialManifest(Id);
+    de::MaterialManifest *manifest = App_Materials()->toMaterialManifest(id);
     if(manifest) return manifest->material();
     return 0;
 }
 
 #undef Materials_ComposeUri
-DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t Id)
+DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t id)
 {
-    de::MaterialManifest *manifest = App_Materials()->toMaterialManifest(Id);
+    de::MaterialManifest *manifest = App_Materials()->toMaterialManifest(id);
     if(manifest)
     {
         de::Uri uri = manifest->composeUri();
