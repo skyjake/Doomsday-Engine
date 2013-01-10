@@ -471,81 +471,65 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
 ded_decor_t *Def_GetDecoration(material_t *mat, boolean hasExternal, boolean isCustom)
 {
     DENG_ASSERT(mat);
+
+    de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
     ded_decor_t *def;
     int i;
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        if(!def->material || Uri_IsEmpty(def->material)) continue;
-
-        // Is this suitable?
-        try
+        if(def->material && Uri_Equality(def->material, reinterpret_cast<uri_s *>(&uri)))
         {
-            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
-            if(mat == defMat && R_IsAllowedDecoration(def, hasExternal, isCustom))
+            // Is this suitable?
+            if(Def_IsAllowedDecoration(def, hasExternal, isCustom))
                 return def;
         }
-        catch(Materials::NotFoundError const &)
-        {} // Ignore this error.
     }
-    return NULL;
+    return 0; // None found.
 }
 
 ded_reflection_t *Def_GetReflection(material_t *mat, boolean hasExternal, boolean isCustom)
 {
     DENG_ASSERT(mat);
+
+    de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
     ded_reflection_t *def;
     int i;
     for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
     {
-        if(!def->material || Uri_IsEmpty(def->material)) continue;
-
-        // Is this suitable?
-        try
+        if(def->material && Uri_Equality(def->material, reinterpret_cast<uri_s *>(&uri)))
         {
-            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
-            if(mat == defMat && R_IsAllowedReflection(def, hasExternal, isCustom))
+            // Is this suitable?
+            if(Def_IsAllowedReflection(def, hasExternal, isCustom))
                 return def;
         }
-        catch(Materials::NotFoundError const &)
-        {} // Ignore this error.
     }
-    return NULL;
+    return 0; // None found.
 }
 
 ded_detailtexture_t *Def_GetDetailTex(material_t *mat, boolean hasExternal, boolean isCustom)
 {
     DENG_ASSERT(mat);
+
+    de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
     ded_detailtexture_t *def;
     int i;
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
-        if(def->material1 && !Uri_IsEmpty(def->material1))
+        if(def->material1 && Uri_Equality(def->material1, reinterpret_cast<uri_s *>(&uri)))
         {
             // Is this suitable?
-            try
-            {
-                material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material1)).material();
-                if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
-                    return def;
-            }
-            catch(Materials::NotFoundError const &)
-            {} // Ignore this error.
+            if(Def_IsAllowedDetailTex(def, hasExternal, isCustom))
+                return def;
         }
 
-        if(def->material2 && !Uri_IsEmpty(def->material2))
+        if(def->material2 && Uri_Equality(def->material2, reinterpret_cast<uri_s *>(&uri)))
         {
             // Is this suitable?
-            try
-            {
-                material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material2)).material();
-                if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
-                    return def;
-            }
-            catch(Materials::NotFoundError const &)
-            {} // Ignore this error.
+            if(Def_IsAllowedDetailTex(def, hasExternal, isCustom))
+                return def;
         }
     }
-    return NULL;
+    return 0; // None found.
 }
 
 ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isCustom)
@@ -553,39 +537,36 @@ ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isC
     DENG_ASSERT(mat);
     DENG_UNUSED(hasExternal); DENG_UNUSED(isCustom);
 
+    de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
     ded_ptcgen_t *def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
-        if(!def->material || Uri_IsEmpty(def->material)) continue;
+        if(!def->material) continue;
 
         // Is this suitable?
-        try
+        if(Uri_Equality(def->material, reinterpret_cast<uri_s *>(&uri)))
         {
-            material_t *defMat = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->material)).material();
-            if(mat == defMat)
-                return def;
+            return def;
+        }
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-            if(def->flags & PGF_GROUP)
+        if(def->flags & PGF_GROUP)
+        {
+            /**
+             * Generator triggered by all materials in the (animation) group.
+             * A search is necessary only if we know both the used material and
+             * the specified material in this definition are in *a* group.
+             */
+            if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat) &&
+               &Material_AnimGroup(defMat) == &Material_AnimGroup(mat))
             {
-                /**
-                 * Generator triggered by all materials in the (animation) group.
-                 * A search is necessary only if we know both the used material and
-                 * the specified material in this definition are in *a* group.
-                 */
-                if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat) &&
-                   &Material_AnimGroup(defMat) == &Material_AnimGroup(mat))
-                {
-                    // Both are in this group! This def will do.
-                    return def;
-                }
+                // Both are in this group! This def will do.
+                return def;
             }
-#endif
         }
-        catch(Materials::NotFoundError const &)
-        {} // Ignore this error.
+#endif
     }
-    return NULL; // Not found.
+    return 0; // None found.
 }
 
 ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
@@ -1562,7 +1543,7 @@ void Def_PostInit(void)
         {
             ded_decorlight_t* lig = &decor->lights[k];
 
-            if(!R_IsValidLightDecoration(lig)) break;
+            if(!Def_IsValidLightDecoration(lig)) break;
 
             if(lig->up)
             {
@@ -2140,28 +2121,28 @@ StringArray* Def_ListStateIDs(void)
     return array;
 }
 
-boolean R_IsValidLightDecoration(ded_decorlight_t const* lightDef)
+boolean Def_IsValidLightDecoration(ded_decorlight_t const* lightDef)
 {
     return (lightDef &&
             (lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
              lightDef->color[2] != 0));
 }
 
-boolean R_IsAllowedDecoration(ded_decor_t* def, boolean hasExternal, boolean isCustom)
+boolean Def_IsAllowedDecoration(ded_decor_t* def, boolean hasExternal, boolean isCustom)
 {
     if(hasExternal) return (def->flags & DCRF_EXTERNAL) != 0;
     if(!isCustom)   return (def->flags & DCRF_NO_IWAD ) == 0;
     return (def->flags & DCRF_PWAD) != 0;
 }
 
-boolean R_IsAllowedReflection(ded_reflection_t* def, boolean hasExternal, boolean isCustom)
+boolean Def_IsAllowedReflection(ded_reflection_t* def, boolean hasExternal, boolean isCustom)
 {
     if(hasExternal) return (def->flags & REFF_EXTERNAL) != 0;
     if(!isCustom)   return (def->flags & REFF_NO_IWAD ) == 0;
     return (def->flags & REFF_PWAD) != 0;
 }
 
-boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, boolean hasExternal, boolean isCustom)
+boolean Def_IsAllowedDetailTex(ded_detailtexture_t* def, boolean hasExternal, boolean isCustom)
 {
     if(hasExternal) return (def->flags & DTLF_EXTERNAL) != 0;
     if(!isCustom)   return (def->flags & DTLF_NO_IWAD ) == 0;

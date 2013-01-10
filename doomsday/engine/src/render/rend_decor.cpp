@@ -399,7 +399,7 @@ static uint generateDecorLights(ded_decorlight_t const *def, Surface *suf,
     int skip[2];
     uint num;
 
-    if(!mat || !R_IsValidLightDecoration(def)) return 0;
+    if(!mat || !Def_IsValidLightDecoration(def)) return 0;
 
     // Skip must be at least one.
     getDecorationSkipPattern(def->patternSkip, skip);
