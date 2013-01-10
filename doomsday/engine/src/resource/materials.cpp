@@ -23,10 +23,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_network.h" // playback / clientPaused
-#include "de_render.h"
-#include "de_graphics.h"
-#include "de_misc.h" // M_NumDigits()
+#ifdef __CLIENT__
+#  include "de_network.h" // playback
+#endif
 #include "de_audio.h" // For environmental audio properties.
 
 #include <QtAlgorithms>
@@ -37,8 +36,11 @@
 #include <de/PathTree>
 #include <de/memory.h>
 
-#include "resource/materials.h"
+#include "gl/gl_texmanager.h" // GL_TextureVariantSpecificationForContext
+#include "render/r_main.h" // frameCount
 #include "resource/materialsnapshot.h"
+
+#include "resource/materials.h"
 
 /// Number of elements to block-allocate in the material index to materialmanifest map.
 #define MATERIALS_MANIFESTMAP_BLOCK_ALLOC (32)
@@ -505,7 +507,7 @@ MaterialManifest &Materials::newManifest(MaterialScheme &scheme, Path const &pat
             // Allocate more memory.
             d->manifestIdMapSize += MATERIALS_MANIFESTMAP_BLOCK_ALLOC;
             d->manifestIdMap = (MaterialManifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
-            if(!d->manifestIdMap) Con_Error("Materials::newManifest: Failed on (re)allocation of %lu bytes enlarging manifest id map.", (unsigned long) sizeof *d->manifestIdMap * d->manifestIdMapSize);
+            if(!d->manifestIdMap) Libdeng_BadAlloc();
         }
         d->manifestIdMap[d->manifestCount - 1] = manifest; /* 1-based index */
     }
