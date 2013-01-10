@@ -171,7 +171,6 @@ ded_detailtexture_t *MaterialManifest::detailTextureDef() const
     // We must prepare a variant before we can determine which definition is in effect.
     materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
 
-    // We must prepare to determine which definition is in effect.
     byte prepared = Material_Prepared(d->material);
     if(prepared) return d->defs.detailtextures[prepared - 1];
     return 0;

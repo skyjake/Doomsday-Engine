@@ -272,8 +272,6 @@ public:
      */
     void rebuild(material_t &material, ded_material_t *def = 0);
 
-    void updateTextureLinks(MaterialManifest &manifest);
-
     /**
      * Create a new Material unless an existing Material is found at the path
      * (and within the same scheme) as that specified in @a def, in which case

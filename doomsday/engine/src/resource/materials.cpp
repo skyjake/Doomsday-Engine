@@ -669,57 +669,6 @@ void Materials::ticker(timespan_t time)
 #endif
 }
 
-static Texture *findTextureByResourceUri(String nameOfScheme, de::Uri const &resourceUri)
-{
-    if(resourceUri.isEmpty()) return 0;
-    try
-    {
-        return App_Textures()->scheme(nameOfScheme).findByResourceUri(resourceUri).texture();
-    }
-    catch(Textures::Scheme::NotFoundError const &)
-    {} // Ignore this error.
-    return 0;
-}
-
-static inline Texture *findDetailTextureForDef(ded_detailtexture_t const &def)
-{
-    if(!def.detailTex) return 0;
-    return findTextureByResourceUri("Details", reinterpret_cast<de::Uri const &>(*def.detailTex));
-}
-
-static inline Texture *findShinyTextureForDef(ded_reflection_t const &def)
-{
-    if(!def.shinyMap) return 0;
-    return findTextureByResourceUri("Reflections", reinterpret_cast<de::Uri const &>(*def.shinyMap));
-}
-
-static inline Texture *findShinyMaskTextureForDef(ded_reflection_t const &def)
-{
-    if(!def.maskMap) return 0;
-    return findTextureByResourceUri("Masks", reinterpret_cast<de::Uri const &>(*def.maskMap));
-}
-
-void Materials::updateTextureLinks(MaterialManifest &manifest)
-{
-    manifest.linkDefinitions();
-
-    material_t *mat = manifest.material();
-    if(!mat) return;
-
-    ded_detailtexture_t const *dtlDef = manifest.detailTextureDef();
-    Material_SetDetailTexture(mat,  reinterpret_cast<texture_s *>(dtlDef? findDetailTextureForDef(*dtlDef) : NULL));
-    Material_SetDetailStrength(mat, (dtlDef? dtlDef->strength : 0));
-    Material_SetDetailScale(mat,    (dtlDef? dtlDef->scale : 0));
-
-    ded_reflection_t const *refDef = manifest.reflectionDef();
-    Material_SetShinyTexture(mat,     reinterpret_cast<texture_s *>(refDef? findShinyTextureForDef(*refDef) : NULL));
-    Material_SetShinyMaskTexture(mat, reinterpret_cast<texture_s *>(refDef? findShinyMaskTextureForDef(*refDef) : NULL));
-    Material_SetShinyBlendmode(mat,   (refDef? refDef->blendMode : BM_ADD));
-    float const black[3] = { 0, 0, 0 };
-    Material_SetShinyMinColor(mat,    (refDef? refDef->minColor : black));
-    Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
-}
-
 MaterialSnapshot const &Materials::prepare(MaterialVariant &variant,
     bool updateSnapshot)
 {
