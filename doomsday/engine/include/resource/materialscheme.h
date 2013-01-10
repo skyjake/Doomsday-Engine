@@ -22,7 +22,7 @@
 
 #include <de/PathTree>
 #include "api_uri.h"
-#include "resource/materialbind.h"
+#include "resource/materialmanifest.h"
 
 namespace de {
 
@@ -37,10 +37,10 @@ public:
     static int const min_name_length = URI_MINSCHEMELENGTH;
 
     /// Binds within the scheme are placed into a tree.
-    typedef PathTreeT<MaterialBind> Index;
+    typedef PathTreeT<MaterialManifest> Index;
 
 public:
-    /// The requested bind could not be found in the index.
+    /// The requested manifest could not be found in the index.
     DENG2_ERROR(NotFoundError);
 
 public:
@@ -57,41 +57,41 @@ public:
     /// @return  Symbolic name of this scheme (e.g., "Flats").
     String const &name() const;
 
-    /// @return  Total number of binds in the scheme.
+    /// @return  Total number of manifests in the scheme.
     int size() const;
 
-    /// @return  Total number of binds in the scheme. Same as @ref size().
+    /// @return  Total number of manifests in the scheme. Same as @ref size().
     inline int count() const {
         return size();
     }
 
     /**
-     * Clear all binds in the scheme.
+     * Clear all manifests in the scheme.
      */
     void clear();
 
     /**
-     * Insert a new material bind at the given @a path into the scheme.
-     * If a bind already exists at this path, the existing bind is
+     * Insert a new material manifest at the given @a path into the scheme.
+     * If a manifest already exists at this path, the existing manifest is
      * returned and this is a no-op.
      *
-     * @param path  Virtual path for the resultant bind.
-     * @return  The (possibly newly created) bind at @a path.
+     * @param path  Virtual path for the resultant manifest.
+     * @return  The (possibly newly created) manifest at @a path.
      */
-    MaterialBind &insertBind(Path const &path, materialid_t id);
+    MaterialManifest &insertManifest(Path const &path, materialid_t id);
 
     /**
-     * Search the scheme for a bind matching @a path.
+     * Search the scheme for a manifest matching @a path.
      *
-     * @return  Found bind.
+     * @return  Found manifest.
      */
-    MaterialBind const &find(Path const &path) const;
+    MaterialManifest const &find(Path const &path) const;
 
     /// @copydoc find()
-    MaterialBind &find(Path const &path);
+    MaterialManifest &find(Path const &path);
 
     /**
-     * Provides access to the bind index for efficient traversal.
+     * Provides access to the manifest index for efficient traversal.
      */
     Index const &index() const;
 

@@ -1,4 +1,4 @@
-/** @file materialbind.h Material Bind.
+/** @file materialmanifest.h Material Manifest.
  *
  * @author Copyright &copy; 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MATERIALBIND_H
-#define LIBDENG_RESOURCE_MATERIALBIND_H
+#ifndef LIBDENG_RESOURCE_MATERIALMANIFEST_H
+#define LIBDENG_RESOURCE_MATERIALMANIFEST_H
 
 #ifdef __cplusplus
 
@@ -32,11 +32,11 @@ namespace de {
 class Materials;
 class MaterialScheme;
 
-class MaterialBind : public PathTree::Node
+class MaterialManifest : public PathTree::Node
 {
 public:
     /**
-     * Contains extended info about a material binding.
+     * Contains extended info about a material manifest.
      * There are two links for each definition type, the first (index @c 0)
      * for original game data and the second for external data.
      */
@@ -55,9 +55,9 @@ public:
          * - When the bound material is changed/first-configured.
          * - When said material's "custom" state changes.
          *
-         * @param bind  MaterialBind to link the definitions of.
+         * @param manifest  MaterialManifest to link the definitions of.
          */
-        void linkDefinitions(MaterialBind const &bind);
+        void linkDefinitions(MaterialManifest const &manifest);
 
         /**
          * Zeroes all links to definitions. Should be called when the
@@ -67,15 +67,15 @@ public:
     };
 
 public:
-    MaterialBind(PathTree::NodeArgs const &args);
+    MaterialManifest(PathTree::NodeArgs const &args);
 
-    virtual ~MaterialBind();
+    virtual ~MaterialManifest();
 
     void setId(materialid_t newId);
     void setCustom(bool yes);
 
     /**
-     * Returns the owning scheme of the material bind.
+     * Returns the owning scheme of the material manifest.
      */
     MaterialScheme &scheme() const;
 
@@ -83,50 +83,49 @@ public:
     String const &schemeName() const;
 
     /**
-     * Compose a URI of the form "scheme:path" for the material bind.
+     * Compose a URI of the form "scheme:path" for the material manifest.
      *
      * The scheme component of the URI will contain the symbolic name of
-     * the scheme for the material bind.
+     * the scheme for the material manifest.
      *
      * The path component of the URI will contain the percent-encoded path
-     * of the material bind.
+     * of the material manifest.
      */
     Uri composeUri(QChar sep = '/') const;
 
     /// @return  Unique identifier associated with this.
     materialid_t id() const;
 
-    /// @return  @c true if the material bind is not derived from an original game resource.
+    /// @return  @c true if the material manifest is not derived from an original game resource.
     bool isCustom() const;
 
-    /// @return  Material associated with this; otherwise @c NULL.
+    /// @return  Material associated with the manifest; otherwise @c NULL.
     material_t *material() const;
 
-    /// @return  Extended info owned by this; otherwise @c NULL.
+    /// @return  Extended info owned by the manifest; otherwise @c NULL.
     Info *info() const;
 
     /**
-     * Attach extended info data to this. If existing info is present it is replaced.
-     * MaterialBind is given ownership of the info.
+     * Attach extended Info data to the manifest. If existing info is present
+     * it will be replaced. MaterialManifest is given ownership of the info.
      * @param info  Extended info data to attach.
      */
     void attachInfo(Info &info);
 
     /**
-     * Detach any extended info owned by this and relinquish ownership to the caller.
+     * Detach any extended Info owned by the manifest, relinquishing ownership
+     * to the caller.
      * @return  Extended info or else @c NULL if not present.
      */
     Info *detachInfo();
 
     /**
-     * Change the Material associated with this binding.
+     * Change the material associated with this manifest.
      *
-     * @note Only the relationship from MaterialBind to @a material changes!
+     * @post If @a material differs from that currently associated with this,
+     *       any Info presently owned by this will destroyed (its invalid).
      *
-     * @post If @a material differs from that currently associated with this, any
-     *       MaterialBindInfo presently owned by this will destroyed (its invalid).
-     *
-     * @param  material  New Material to associate with this.
+     * @param  material  New material to associate with this.
      */
     void setMaterial(material_t *material);
 
@@ -154,4 +153,4 @@ private:
 
 #endif
 
-#endif /* LIBDENG_RESOURCE_MATERIALBIND_H */
+#endif /* LIBDENG_RESOURCE_MATERIALMANIFEST_H */

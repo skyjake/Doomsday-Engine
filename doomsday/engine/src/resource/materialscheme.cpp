@@ -17,7 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/materialbind.h"
+#include "resource/materialmanifest.h"
 #include "resource/materialscheme.h"
 
 namespace de {
@@ -73,14 +73,14 @@ int MaterialScheme::size() const
     return d->index->size();
 }
 
-MaterialBind &MaterialScheme::insertBind(Path const &path, materialid_t id)
+MaterialManifest &MaterialScheme::insertManifest(Path const &path, materialid_t id)
 {
-    MaterialBind &bind = d->index->insert(path);
-    bind.setId(id);
-    return bind;
+    MaterialManifest &manifest = d->index->insert(path);
+    manifest.setId(id);
+    return manifest;
 }
 
-MaterialBind const &MaterialScheme::find(Path const &path) const
+MaterialManifest const &MaterialScheme::find(Path const &path) const
 {
     try
     {
@@ -92,7 +92,7 @@ MaterialBind const &MaterialScheme::find(Path const &path) const
     }
 }
 
-MaterialBind &MaterialScheme::find(Path const &path)
+MaterialManifest &MaterialScheme::find(Path const &path)
 {
     Index::Node const &found = const_cast<MaterialScheme const *>(this)->find(path);
     return const_cast<Index::Node &>(found);

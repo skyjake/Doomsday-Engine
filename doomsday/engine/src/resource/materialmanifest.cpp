@@ -1,4 +1,4 @@
-/** @file materialbind.cpp Material Bind.
+/** @file materialmanifest.cpp Material Manifest.
  *
  * @author Copyright &copy; 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -23,37 +23,37 @@
 
 #include "uri.hh"
 #include "resource/materials.h"
-#include "resource/materialbind.h"
+#include "resource/materialmanifest.h"
 
 namespace de {
 
-MaterialBind::Info::Info()
+MaterialManifest::Info::Info()
 {
     clearDefinitionLinks();
 }
 
-void MaterialBind::Info::linkDefinitions(MaterialBind const &bind)
+void MaterialManifest::Info::linkDefinitions(MaterialManifest const &manifest)
 {
-    material_t *mat = bind.material();
+    material_t *mat = manifest.material();
 
     // Surface decorations (lights and models).
-    decorationDefs[0]    = Def_GetDecoration(mat, 0, bind.isCustom());
-    decorationDefs[1]    = Def_GetDecoration(mat, 1, bind.isCustom());
+    decorationDefs[0]    = Def_GetDecoration(mat, 0, manifest.isCustom());
+    decorationDefs[1]    = Def_GetDecoration(mat, 1, manifest.isCustom());
 
     // Reflection (aka shiny surface).
-    reflectionDefs[0]    = Def_GetReflection(mat, 0, bind.isCustom());
-    reflectionDefs[1]    = Def_GetReflection(mat, 1, bind.isCustom());
+    reflectionDefs[0]    = Def_GetReflection(mat, 0, manifest.isCustom());
+    reflectionDefs[1]    = Def_GetReflection(mat, 1, manifest.isCustom());
 
     // Generator (particles).
-    ptcgenDefs[0]        = Def_GetGenerator(mat, 0, bind.isCustom());
-    ptcgenDefs[1]        = Def_GetGenerator(mat, 1, bind.isCustom());
+    ptcgenDefs[0]        = Def_GetGenerator(mat, 0, manifest.isCustom());
+    ptcgenDefs[1]        = Def_GetGenerator(mat, 1, manifest.isCustom());
 
     // Detail texture.
-    detailtextureDefs[0] = Def_GetDetailTex(mat, 0, bind.isCustom());
-    detailtextureDefs[1] = Def_GetDetailTex(mat, 1, bind.isCustom());
+    detailtextureDefs[0] = Def_GetDetailTex(mat, 0, manifest.isCustom());
+    detailtextureDefs[1] = Def_GetDetailTex(mat, 1, manifest.isCustom());
 }
 
-void MaterialBind::Info::clearDefinitionLinks()
+void MaterialManifest::Info::clearDefinitionLinks()
 {
     decorationDefs[0]    = decorationDefs[1]    = 0;
     detailtextureDefs[0] = detailtextureDefs[1] = 0;
@@ -61,54 +61,54 @@ void MaterialBind::Info::clearDefinitionLinks()
     reflectionDefs[0]    = reflectionDefs[1]    = 0;
 }
 
-struct MaterialBind::Instance
+struct MaterialManifest::Instance
 {
     /// Material associated with this.
     material_t *material;
 
     /// Unique identifier.
-    materialid_t guid;
+    materialid_t id;
 
-    /// Extended info about this binding. Will be attached upon successfull preparation
+    /// Extended info for the manifest. Will be attached upon successfull preparation
     /// of the first derived variant of the associated Material.
-    MaterialBind::Info *extInfo;
+    MaterialManifest::Info *extInfo;
 
     /// @c true if the material is not derived from an original game resource.
     bool isCustom;
 };
 
-MaterialBind::MaterialBind(PathTree::NodeArgs const &args)
+MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
     : Node(args)
 {
     d = new Instance();
 }
 
-MaterialBind::~MaterialBind()
+MaterialManifest::~MaterialManifest()
 {
     Info *detachedInfo = detachInfo();
     if(detachedInfo) delete detachedInfo;
     delete d;
 }
 
-Materials &MaterialBind::materials()
+Materials &MaterialManifest::materials()
 {
     return *App_Materials();
 }
 
-void MaterialBind::setId(materialid_t id)
+void MaterialManifest::setId(materialid_t id)
 {
-    d->guid = id;
+    d->id = id;
 }
 
-void MaterialBind::setCustom(bool yes)
+void MaterialManifest::setCustom(bool yes)
 {
     d->isCustom = yes;
 }
 
-MaterialScheme &MaterialBind::scheme() const
+MaterialScheme &MaterialManifest::scheme() const
 {
-    LOG_AS("MaterialBind::scheme");
-    /// @todo Optimize: MaterialBind should contain a link to the owning MaterialScheme.
+    LOG_AS("MaterialManifest::scheme");
+    /// @todo Optimize: MaterialManifest should contain a link to the owning MaterialScheme.
     Materials::Schemes const &schemes = materials().allSchemes();
     DENG2_FOR_EACH_CONST(Materials::Schemes, i, schemes)
     {
@@ -118,46 +118,46 @@ MaterialScheme &MaterialBind::scheme() const
 
     // This should never happen...
     /// @throw Error Failed to determine the scheme of the manifest.
-    throw Error("MaterialBind::scheme", String("Failed to determine scheme for bind [%p].").arg(de::dintptr(this)));
+    throw Error("MaterialManifest::scheme", String("Failed to determine scheme for manifest [%p].").arg(de::dintptr(this)));
 }
 
-String const &MaterialBind::schemeName() const
+String const &MaterialManifest::schemeName() const
 {
     return scheme().name();
 }
 
-Uri MaterialBind::composeUri(QChar sep) const
+Uri MaterialManifest::composeUri(QChar sep) const
 {
     return Uri(schemeName(), path(sep));
 }
 
-materialid_t MaterialBind::id() const
+materialid_t MaterialManifest::id() const
 {
-    return d->guid;
+    return d->id;
 }
 
-bool MaterialBind::isCustom() const
+bool MaterialManifest::isCustom() const
 {
     return d->isCustom;
 }
 
-material_t *MaterialBind::material() const
+material_t *MaterialManifest::material() const
 {
     return d->material;
 }
 
-MaterialBind::Info *MaterialBind::info() const
+MaterialManifest::Info *MaterialManifest::info() const
 {
     return d->extInfo;
 }
 
-void MaterialBind::setMaterial(material_t *newMaterial)
+void MaterialManifest::setMaterial(material_t *newMaterial)
 {
     if(d->material != newMaterial)
     {
         // Any extended info will be invalid after this op, so destroy it
         // (it will automatically be rebuilt later, if subsequently needed).
-        MaterialBind::Info *detachedInfo = detachInfo();
+        MaterialManifest::Info *detachedInfo = detachInfo();
         if(detachedInfo) delete detachedInfo;
 
         // Associate with the new Material.
@@ -165,45 +165,45 @@ void MaterialBind::setMaterial(material_t *newMaterial)
     }
 }
 
-void MaterialBind::attachInfo(MaterialBind::Info &info)
+void MaterialManifest::attachInfo(MaterialManifest::Info &info)
 {
-    LOG_AS("MaterialBind::attachInfo");
+    LOG_AS("MaterialManifest::attachInfo");
     if(d->extInfo)
     {
 #if _DEBUG
-        LOG_DEBUG("Info already present for \"%s\", will replace.") << composeUri(d->guid);
+        LOG_DEBUG("Info already present for \"%s\", will replace.") << composeUri(d->id);
 #endif
         M_Free(d->extInfo);
     }
     d->extInfo = &info;
 }
 
-MaterialBind::Info *MaterialBind::detachInfo()
+MaterialManifest::Info *MaterialManifest::detachInfo()
 {
     Info *retInfo = d->extInfo;
     d->extInfo = 0;
     return retInfo;
 }
 
-ded_detailtexture_t *MaterialBind::detailTextureDef() const
+ded_detailtexture_t *MaterialManifest::detailTextureDef() const
 {
     if(!d->extInfo || !d->material || !Material_Prepared(d->material)) return 0;
     return d->extInfo->detailtextureDefs[Material_Prepared(d->material) - 1];
 }
 
-ded_decor_t *MaterialBind::decorationDef() const
+ded_decor_t *MaterialManifest::decorationDef() const
 {
     if(!d->extInfo || !d->material || !Material_Prepared(d->material)) return 0;
     return d->extInfo->decorationDefs[Material_Prepared(d->material) - 1];
 }
 
-ded_ptcgen_t *MaterialBind::ptcGenDef() const
+ded_ptcgen_t *MaterialManifest::ptcGenDef() const
 {
     if(!d->extInfo || !d->material || !Material_Prepared(d->material)) return 0;
     return d->extInfo->ptcgenDefs[Material_Prepared(d->material) - 1];
 }
 
-ded_reflection_t *MaterialBind::reflectionDef() const
+ded_reflection_t *MaterialManifest::reflectionDef() const
 {
     if(!d->extInfo || !d->material || !Material_Prepared(d->material)) return 0;
     return d->extInfo->reflectionDefs[Material_Prepared(d->material)-1];

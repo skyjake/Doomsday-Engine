@@ -30,13 +30,13 @@
 #include <de/Path>
 #include <de/String>
 #include "uri.hh"
-#include "resource/materialbind.h"
+#include "resource/materialmanifest.h"
 #include "resource/materialscheme.h"
 #include "resource/materialvariant.h"
 
 namespace de {
 
-class MaterialBind;
+class MaterialManifest;
 
 /**
  * Specialized resource collection for a set of materials.
@@ -250,18 +250,18 @@ public:
                      bool quiet = false) const;
 
     /**
-     * Determines if a bind exists for a material on @a path.
-     * @return @c true, if a bind exists; otherwise @a false.
+     * Determines if a manifest exists for a material on @a path.
+     * @return @c true, if a manifest exists; otherwise @a false.
      */
     bool has(Uri const &path) const;
 
     /**
-     * Find the material bind on @a path.
+     * Find the material manifest on @a path.
      *
      * @param search  The search term.
-     * @return Found material bind.
+     * @return Found material manifest.
      */
-    MaterialBind &find(Uri const &search) const;
+    MaterialManifest &find(Uri const &search) const;
 
     /**
      * Update @a material according to the supplied definition @a def.
@@ -272,7 +272,7 @@ public:
      */
     void rebuild(material_t &material, ded_material_t *def = 0);
 
-    void updateTextureLinks(MaterialBind &bind);
+    void updateTextureLinks(MaterialManifest &manifest);
 
     /// @return  (Particle) Generator definition associated with @a material else @c NULL.
     ded_ptcgen_t const *ptcGenDef(material_t &material);
@@ -292,8 +292,8 @@ public:
      */
     material_t *newFromDef(ded_material_t &def);
 
-    MaterialBind &newBind(MaterialScheme &scheme, Path const &path,
-                          material_t *material = 0);
+    MaterialManifest &newManifest(MaterialScheme &scheme, Path const &path,
+                                  material_t *material = 0);
 
     /**
      * Prepare a material variant specification in accordance to the specified
@@ -376,7 +376,7 @@ public:
     void resetAllMaterialAnimations();
 
     /// @todo Refactor away -ds
-    MaterialBind *toMaterialBind(materialid_t materialId);
+    MaterialManifest *toMaterialManifest(materialid_t id);
 
     /**
      * Lookup a material group by unique @a number.
@@ -462,9 +462,8 @@ void Materials_Shutdown(void);
 
 void Materials_Ticker(timespan_t elapsed);
 uint Materials_Count(void);
-materialid_t Materials_Id(material_t *material);
-material_t *Materials_ToMaterial(materialid_t materialId);
-struct uri_s *Materials_ComposeUri(materialid_t materialId);
+material_t *Materials_ToMaterial(materialid_t id);
+struct uri_s *Materials_ComposeUri(materialid_t id);
 materialid_t Materials_ResolveUri(struct uri_s const *uri);
 
 /// Same as Materials::resolveUri except @a uri is a C-string.

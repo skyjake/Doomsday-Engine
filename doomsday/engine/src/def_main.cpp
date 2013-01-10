@@ -472,7 +472,7 @@ ded_decor_t *Def_GetDecoration(material_t *mat, boolean hasExternal, boolean isC
 {
     DENG_ASSERT(mat);
 
-    de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
+    de::Uri uri = Material_Manifest(mat).composeUri();
     ded_decor_t *def;
     int i;
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
@@ -491,7 +491,7 @@ ded_reflection_t *Def_GetReflection(material_t *mat, boolean hasExternal, boolea
 {
     DENG_ASSERT(mat);
 
-    de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
+    de::Uri uri = Material_Manifest(mat).composeUri();
     ded_reflection_t *def;
     int i;
     for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
@@ -510,7 +510,7 @@ ded_detailtexture_t *Def_GetDetailTex(material_t *mat, boolean hasExternal, bool
 {
     DENG_ASSERT(mat);
 
-    de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
+    de::Uri uri = Material_Manifest(mat).composeUri();
     ded_detailtexture_t *def;
     int i;
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
@@ -537,7 +537,7 @@ ded_ptcgen_t* Def_GetGenerator(material_t *mat, boolean hasExternal, boolean isC
     DENG_ASSERT(mat);
     DENG_UNUSED(hasExternal); DENG_UNUSED(isCustom);
 
-    de::Uri uri = App_Materials()->toMaterialBind(Material_PrimaryBind(mat))->composeUri();
+    de::Uri uri = Material_Manifest(mat).composeUri();
     ded_ptcgen_t *def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
@@ -616,6 +616,7 @@ const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
     return NULL;
 }
 
+#undef Def_EvalFlags
 int Def_EvalFlags(char *ptr)
 {
     LOG_AS("Def_EvalFlags");
@@ -1148,7 +1149,7 @@ void Def_Read()
         ded_material_t *def = &defs.materials[i];
         try
         {
-            MaterialBind &bind = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->uri));
+            MaterialManifest &bind = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->uri));
             if(material_t *mat = bind.material())
             {
                 // Update existing.

@@ -297,7 +297,7 @@ DENG_HEADERS += \
     include/resource/lumpcache.h \
     include/resource/material.h \
     include/resource/materialarchive.h \
-    include/resource/materialbind.h \
+    include/resource/materialmanifest.h \
     include/resource/materials.h \
     include/resource/materialscheme.h \
     include/resource/materialsnapshot.h \
@@ -587,7 +587,7 @@ SOURCES += \
     src/resource/image.cpp \
     src/resource/material.cpp \
     src/resource/materialarchive.cpp \
-    src/resource/materialbind.cpp \
+    src/resource/materialmanifest.cpp \
     src/resource/materials.cpp \
     src/resource/materialscheme.cpp \
     src/resource/materialsnapshot.cpp \

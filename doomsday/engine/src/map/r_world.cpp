@@ -1630,7 +1630,7 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
     // During map load we log missing materials.
     if(ddMapSetup && verbose)
     {
-        String path = suf->material? App_Materials()->toMaterialBind(Material_PrimaryBind(suf->material))->composeUri().asText() : "<null>";
+        String path = suf->material? Material_Manifest(suf->material).composeUri().asText() : "<null>";
         LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
             << s->buildData.index - 1

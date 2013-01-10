@@ -58,6 +58,7 @@ typedef struct material_s material_t;
 namespace de {
 
 class MaterialAnim;
+class MaterialManifest;
 class MaterialVariant;
 struct MaterialVariantSpec;
 
@@ -192,14 +193,16 @@ byte Material_Prepared(material_t const *mat);
  */
 void Material_SetPrepared(material_t *mat, byte state);
 
-/// @return  Identifier of the primary MaterialBind associated with this (may return @c 0 - no binding).
-materialid_t Material_PrimaryBind(material_t const *mat);
+/// @return  Unique identifier of the MaterialManifest for the material.
+materialid_t Material_ManifestId(material_t const *mat);
 
 /**
- * Change the identifier of the primary binding associated with this.
- * @param bindId  New identifier.
+ * Change the unique identifier of the MaterialManifest for the material.
+ * @param id  New identifier.
+ *
+ * @todo Refactor away.
  */
-void Material_SetPrimaryBind(material_t *mat, materialid_t bindId);
+void Material_SetManifestId(material_t *mat, materialid_t id);
 
 /// @return  MaterialEnvironmentClass.
 material_env_class_t Material_EnvironmentClass(material_t const *mat);
@@ -306,6 +309,8 @@ int Material_SetProperty(material_t *material, setargs_t const *args);
 
 #ifdef __cplusplus
 } // extern "C"
+
+de::MaterialManifest &Material_Manifest(material_t const *material);
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
 /**

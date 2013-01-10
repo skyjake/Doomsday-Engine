@@ -40,8 +40,8 @@
 #include "resource/materials.h"
 #include "resource/materialsnapshot.h"
 
-/// Number of elements to block-allocate in the material index to materialbind map.
-#define MATERIALS_BINDINGMAP_BLOCK_ALLOC (32)
+/// Number of elements to block-allocate in the material index to materialmanifest map.
+#define MATERIALS_MANIFESTMAP_BLOCK_ALLOC (32)
 
 D_CMD(InspectMaterial);
 D_CMD(ListMaterials);
@@ -99,19 +99,19 @@ static void applyVariantSpec(MaterialVariantSpec &spec, materialcontext_t mc,
     spec.primarySpec = primarySpec;
 }
 
-static void updateMaterialBindInfo(MaterialBind &mb, bool canCreateInfo)
+static void updateMaterialManifestInfo(MaterialManifest &manifest, bool canCreateInfo)
 {
-    MaterialBind::Info *info = mb.info();
+    MaterialManifest::Info *info = manifest.info();
     if(!info)
     {
         if(!canCreateInfo) return;
 
-        // Create new info and attach to this binding.
-        info = new MaterialBind::Info();
-        mb.attachInfo(*info);
+        // Create new info and attach to this manifest.
+        info = new MaterialManifest::Info();
+        manifest.attachInfo(*info);
     }
 
-    info->linkDefinitions(mb);
+    info->linkDefinitions(manifest);
 }
 
 /// A list of materials.
@@ -166,21 +166,21 @@ struct Materials::Instance
     /// Material groups.
     Materials::Groups groups;
 
-    /// Total number of URI material bindings (in all schemes).
-    uint bindingCount;
+    /// Total number of URI material manifests (in all schemes).
+    uint manifestCount;
 
-    /// LUT which translates materialid_t => MaterialBind*.
+    /// LUT which translates materialid_t => MaterialManifest*.
     /// Index with materialid_t-1
-    uint bindingIdMapSize;
-    MaterialBind **bindingIdMap;
+    uint manifestIdMapSize;
+    MaterialManifest **manifestIdMap;
 
     Instance()
-        :  bindingCount(0), bindingIdMapSize(0), bindingIdMap(0)
+        :  manifestCount(0), manifestIdMapSize(0), manifestIdMap(0)
     {}
 
     ~Instance()
     {
-        clearBindings();
+        clearManifests();
         clearMaterials();
         clearVariantSpecs();
     }
@@ -201,7 +201,7 @@ struct Materials::Instance
         }
     }
 
-    void clearBindings()
+    void clearManifests()
     {
         DENG2_FOR_EACH(Materials::Schemes, i, schemes)
         {
@@ -209,13 +209,13 @@ struct Materials::Instance
         }
         schemes.clear();
 
-        // Clear the binding index/map.
-        if(bindingIdMap)
+        // Clear the manifest index/map.
+        if(manifestIdMap)
         {
-            M_Free(bindingIdMap); bindingIdMap = 0;
-            bindingIdMapSize = 0;
+            M_Free(manifestIdMap); manifestIdMap = 0;
+            manifestIdMapSize = 0;
         }
-        bindingCount = 0;
+        manifestCount = 0;
     }
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
@@ -275,10 +275,10 @@ struct Materials::Instance
         return *findVariantSpec(tpl, true);
     }
 
-    MaterialBind *materialBindForId(materialid_t id)
+    MaterialManifest *manifestForId(materialid_t Id)
     {
-        if(0 == id || id > bindingCount) return 0;
-        return bindingIdMap[id - 1];
+        if(0 == Id || Id > manifestCount) return 0;
+        return manifestIdMap[Id - 1];
     }
 };
 
@@ -355,7 +355,7 @@ void Materials::clearDefinitionLinks()
         PathTreeIterator<MaterialScheme::Index> iter((*i)->index().leafNodes());
         while(iter.hasNext())
         {
-            if(MaterialBind::Info *info = iter.next().info())
+            if(MaterialManifest::Info *info = iter.next().info())
             {
                 info->clearDefinitionLinks();
             }
@@ -371,13 +371,13 @@ void Materials::rebuild(material_t &mat, ded_material_t *def)
     Material_ClearVariants(&mat);
     Material_SetDefinition(&mat, def);
 
-    // Update bindings.
-    for(uint i = 0; i < d->bindingCount; ++i)
+    // Update manifests.
+    for(uint i = 0; i < d->manifestCount; ++i)
     {
-        MaterialBind *mb = d->bindingIdMap[i];
-        if(!mb || mb->material() != &mat) continue;
+        MaterialManifest *manifest = d->manifestIdMap[i];
+        if(!manifest || manifest->material() != &mat) continue;
 
-        updateMaterialBindInfo(*mb, false /*do not create, only update if present*/);
+        updateMaterialManifestInfo(*manifest, false /*do not create, only update if present*/);
     }
 }
 
@@ -396,11 +396,9 @@ void Materials::processCacheQueue()
     }
 }
 
-MaterialBind *Materials::toMaterialBind(materialid_t id)
+MaterialManifest *Materials::toMaterialManifest(materialid_t Id)
 {
-    MaterialBind *mb = d->materialBindForId(id);
-    if(!mb) return 0;
-    return mb;
+    return d->manifestForId(Id);
 }
 
 Materials::Scheme& Materials::createScheme(String name)
@@ -443,18 +441,18 @@ bool Materials::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet
     return true;
 }
 
-MaterialBind &Materials::find(Uri const &uri) const
+MaterialManifest &Materials::find(Uri const &uri) const
 {
     LOG_AS("Materials::find");
 
     if(!validateUri(uri, AnyScheme, true /*quiet please*/))
-        /// @throw NotFoundError Failed to locate a matching bind.
+        /// @throw NotFoundError Failed to locate a matching manifest.
         throw NotFoundError("Materials::find", "URI \"" + uri.asText() + "\" failed validation");
 
     // Perform the search.
     String const &path = uri.path();
 
-    // Does the user want a bind in a specific scheme?
+    // Does the user want a manifest in a specific scheme?
     if(!uri.scheme().isEmpty())
     {
         try
@@ -485,8 +483,8 @@ MaterialBind &Materials::find(Uri const &uri) const
         }
     }
 
-    /// @throw NotFoundError Failed to locate a matching bind.
-    throw NotFoundError("Materials::find", "Failed to locate a bind matching \"" + uri.asText() + "\"");
+    /// @throw NotFoundError Failed to locate a matching manifest.
+    throw NotFoundError("Materials::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
 bool Materials::has(Uri const &path) const
@@ -501,43 +499,43 @@ bool Materials::has(Uri const &path) const
     return false;
 }
 
-MaterialBind &Materials::newBind(MaterialScheme &scheme, Path const &path, material_t *material)
+MaterialManifest &Materials::newManifest(MaterialScheme &scheme, Path const &path, material_t *material)
 {
-    LOG_AS("Materials::newBind");
+    LOG_AS("Materials::newManifest");
 
-    // Have we already created a bind for this?
-    MaterialBind *bind = 0;
+    // Have we already created a manifest for this?
+    MaterialManifest *manifest = 0;
     try
     {
-        bind = &find(de::Uri(scheme.name(), path));
+        manifest = &find(de::Uri(scheme.name(), path));
     }
     catch(NotFoundError const &)
     {
-        // Acquire a new unique identifier for this binding.
-        materialid_t const bindId = ++d->bindingCount;
+        // Acquire a new unique identifier for this manifest.
+        materialid_t const Id = ++d->manifestCount;
 
-        bind = &scheme.insertBind(path, bindId);
+        manifest = &scheme.insertManifest(path, Id);
         if(material)
         {
-            Material_SetPrimaryBind(material, bindId);
+            Material_SetManifestId(material, Id);
         }
 
-        // Add the new binding to the bindings index/map.
-        if(d->bindingCount > d->bindingIdMapSize)
+        // Add the new manifest to the Id index/map.
+        if(d->manifestCount > d->manifestIdMapSize)
         {
             // Allocate more memory.
-            d->bindingIdMapSize += MATERIALS_BINDINGMAP_BLOCK_ALLOC;
-            d->bindingIdMap = (MaterialBind **) M_Realloc(d->bindingIdMap, sizeof *d->bindingIdMap * d->bindingIdMapSize);
-            if(!d->bindingIdMap) Con_Error("Materials::newBind: Failed on (re)allocation of %lu bytes enlarging MaterialBind map.", (unsigned long) sizeof *d->bindingIdMap * d->bindingIdMapSize);
+            d->manifestIdMapSize += MATERIALS_MANIFESTMAP_BLOCK_ALLOC;
+            d->manifestIdMap = (MaterialManifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
+            if(!d->manifestIdMap) Con_Error("Materials::newManifest: Failed on (re)allocation of %lu bytes enlarging manifest Id map.", (unsigned long) sizeof *d->manifestIdMap * d->manifestIdMapSize);
         }
-        d->bindingIdMap[d->bindingCount - 1] = bind; /* 1-based index */
+        d->manifestIdMap[d->manifestCount - 1] = manifest; /* 1-based index */
     }
 
-    // (Re)configure the binding.
-    bind->setMaterial(material);
-    updateMaterialBindInfo(*bind, false/*do not create, only update if present*/);
+    // (Re)configure the manifest.
+    manifest->setMaterial(material);
+    updateMaterialManifestInfo(*manifest, false/*do not create, only update if present*/);
 
-    return *bind;
+    return *manifest;
 }
 
 material_t *Materials::newFromDef(ded_material_t &def)
@@ -556,14 +554,14 @@ material_t *Materials::newFromDef(ded_material_t &def)
     }
 
     // Have we already created a material for this?
-    MaterialBind *bind = 0;
+    MaterialManifest *manifest = 0;
     try
     {
-        bind = &find(uri);
-        if(bind->material())
+        manifest = &find(uri);
+        if(manifest->material())
         {
             LOG_DEBUG("A Material with uri \"%s\" already exists, returning existing.") << uri;
-            return bind->material();
+            return manifest->material();
         }
     }
     catch(NotFoundError const &)
@@ -601,15 +599,15 @@ material_t *Materials::newFromDef(ded_material_t &def)
     material_t *mat = Material_New(def.flags, &def, &dimensions, envClass);
     d->materials.push_back(mat);
 
-    if(!bind)
+    if(!manifest)
     {
-        bind = &newBind(scheme(uri.scheme()), uri.path(), mat);
+        manifest = &newManifest(scheme(uri.scheme()), uri.path(), mat);
     }
     else
     {
-        bind->setMaterial(mat);
+        manifest->setMaterial(mat);
     }
-    bind->setCustom(tex->flags().testFlag(Texture::Custom));
+    manifest->setCustom(tex->flags().testFlag(Texture::Custom));
 
     return mat;
 }
@@ -722,12 +720,12 @@ static inline Texture *findShinyMaskTextureForDef(ded_reflection_t const &def)
     return findTextureByResourceUri("Masks", reinterpret_cast<de::Uri const &>(*def.maskMap));
 }
 
-static void updateMaterialTextureLinks(MaterialBind &mb)
+static void updateMaterialTextureLinks(MaterialManifest &mb)
 {
     material_t *mat = mb.material();
 
     // We may need to need to construct and attach the info.
-    updateMaterialBindInfo(mb, true /* create if not present */);
+    updateMaterialManifestInfo(mb, true /* create if not present */);
 
     if(!mat) return;
 
@@ -745,9 +743,9 @@ static void updateMaterialTextureLinks(MaterialBind &mb)
     Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
 }
 
-void Materials::updateTextureLinks(MaterialBind &bind)
+void Materials::updateTextureLinks(MaterialManifest &manifest)
 {
-    updateMaterialTextureLinks(bind);
+    updateMaterialTextureLinks(manifest);
 }
 
 MaterialSnapshot const &Materials::prepare(MaterialVariant &variant,
@@ -786,7 +784,7 @@ ded_decor_t const *Materials::decorationDef(material_t &mat)
     {
         prepare(mat, Rend_MapSurfaceMaterialSpec(), false);
     }
-    return d->materialBindForId(Material_PrimaryBind(&mat))->decorationDef();
+    return Material_Manifest(&mat).decorationDef();
 }
 
 ded_ptcgen_t const *Materials::ptcGenDef(material_t &mat)
@@ -796,7 +794,7 @@ ded_ptcgen_t const *Materials::ptcGenDef(material_t &mat)
     {
         prepare(mat, Rend_MapSurfaceMaterialSpec(), false);
     }
-    return d->materialBindForId(Material_PrimaryBind(&mat))->ptcGenDef();
+    return Material_Manifest(&mat).ptcGenDef();
 }
 
 uint Materials::size() const
@@ -915,8 +913,8 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
         float inter = variant.translationPoint();
 
         /// @todo kludge: Should not use App_Materials() here.
-        QByteArray curPath  = App_Materials()->toMaterialBind(Material_PrimaryBind(&cur->generalCase()))->composeUri().asText().toUtf8();
-        QByteArray nextPath = App_Materials()->toMaterialBind(Material_PrimaryBind(&next->generalCase()))->composeUri().asText().toUtf8();
+        QByteArray curPath  = Material_Manifest(&cur->generalCase()).composeUri().asText().toUtf8();
+        QByteArray nextPath = Material_Manifest(&next->generalCase()).composeUri().asText().toUtf8();
 
         Con_Printf("  Translation: Current:\"%s\" Next:\"%s\" Inter:%f\n",
                    curPath.constData(), nextPath.constData(), inter);
@@ -938,15 +936,14 @@ static void printMaterialInfo(material_t &mat)
 {
     ded_material_t const *def = Material_Definition(&mat);
 
-    /// @todo kludge: Should not use App_Materials() here.
-    MaterialBind &bind = *App_Materials()->toMaterialBind(Material_PrimaryBind(&mat));
-    Uri uri = bind.composeUri();
+    MaterialManifest &manifest = Material_Manifest(&mat);
+    Uri uri = manifest.composeUri();
     QByteArray path = uri.asText().toUtf8();
 
     // Print summary:
     Con_Printf("Material \"%s\" [%p] x%u origin:%s\n",
                path.constData(), (void *) &mat, Material_VariantCount(&mat),
-               !bind.isCustom()? "game" : (def->autoGenerated? "addon" : "def"));
+               !manifest.isCustom()? "game" : (def->autoGenerated? "addon" : "def"));
 
     if(Material_Width(&mat) <= 0 || Material_Height(&mat) <= 0)
         Con_Printf("Dimensions: unknown (not yet prepared)\n");
@@ -1002,23 +999,23 @@ static void printMaterialInfo(material_t &mat)
     }
 }
 
-static void printMaterialSummary(MaterialBind &bind, bool printSchemeName = true)
+static void printMaterialSummary(MaterialManifest &manifest, bool printSchemeName = true)
 {
-    material_t *material = bind.material();
-    Uri uri = bind.composeUri();
+    material_t *material = manifest.material();
+    Uri uri = manifest.composeUri();
     QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
 
     Con_FPrintf(!material? CPF_LIGHT : CPF_WHITE,
                 "%-*s %-6s x%u\n", printSchemeName? 22 : 14, path.constData(),
-                !material? "unknown" : (!bind.isCustom() ? "game" : (Material_Definition(material)->autoGenerated? "addon" : "def")),
+                !material? "unknown" : (!manifest.isCustom() ? "game" : (Material_Definition(material)->autoGenerated? "addon" : "def")),
                 !material? 0 : Material_VariantCount(material));
 }
 
 /**
  * @todo This logic should be implemented in de::PathTree -ds
  */
-static QList<MaterialBind *> collectMaterialBinds(MaterialScheme *scheme,
-    Path const &path, QList<MaterialBind *> *storage = 0)
+static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme,
+    Path const &path, QList<MaterialManifest *> *storage = 0)
 {
     int count = 0;
 
@@ -1028,16 +1025,16 @@ static QList<MaterialBind *> collectMaterialBinds(MaterialScheme *scheme,
         PathTreeIterator<MaterialScheme::Index> iter(scheme->index().leafNodes());
         while(iter.hasNext())
         {
-            MaterialBind &bind = iter.next();
+            MaterialManifest &manifest = iter.next();
             if(!path.isEmpty())
             {
                 /// @todo Use PathTree::Node::compare()
-                if(!bind.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
+                if(!manifest.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
             }
 
             if(storage) // Store mode.
             {
-                storage->push_back(&bind);
+                storage->push_back(&manifest);
             }
             else // Count mode.
             {
@@ -1054,16 +1051,16 @@ static QList<MaterialBind *> collectMaterialBinds(MaterialScheme *scheme,
             PathTreeIterator<MaterialScheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                MaterialBind &bind = iter.next();
+                MaterialManifest &manifest = iter.next();
                 if(!path.isEmpty())
                 {
                     /// @todo Use PathTree::Node::compare()
-                    if(!bind.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
+                    if(!manifest.path().toString().beginsWith(path, Qt::CaseInsensitive)) continue;
                 }
 
                 if(storage) // Store mode.
                 {
-                    storage->push_back(&bind);
+                    storage->push_back(&manifest);
                 }
                 else // Count mode.
                 {
@@ -1078,20 +1075,20 @@ static QList<MaterialBind *> collectMaterialBinds(MaterialScheme *scheme,
         return *storage;
     }
 
-    QList<MaterialBind *> result;
+    QList<MaterialManifest *> result;
     if(count == 0) return result;
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     result.reserve(count);
 #endif
-    return collectMaterialBinds(scheme, path, &result);
+    return collectMaterialManifests(scheme, path, &result);
 }
 
 /**
  * Decode and then lexicographically compare the two manifest
  * paths, returning @c true if @a is less than @a b.
  */
-static bool compareMaterialBindPathsAssending(MaterialBind const *a, MaterialBind const *b)
+static bool compareMaterialManifestPathsAssending(MaterialManifest const *a, MaterialManifest const *b)
 {
     String pathA = QString(QByteArray::fromPercentEncoding(a->path().toUtf8()));
     String pathB = QString(QByteArray::fromPercentEncoding(b->path().toUtf8()));
@@ -1116,7 +1113,7 @@ static bool compareMaterialBindPathsAssending(MaterialBind const *a, MaterialBin
  */
 static int printMaterials2(MaterialScheme *scheme, Path const &like, int flags)
 {
-    QList<MaterialBind *> found = collectMaterialBinds(scheme, like);
+    QList<MaterialManifest *> found = collectMaterialManifests(scheme, like);
     if(found.isEmpty()) return 0;
 
     bool const printSchemeName = !(flags & PTF_TRANSFORM_PATH_NO_SCHEME);
@@ -1140,9 +1137,9 @@ static int printMaterials2(MaterialScheme *scheme, Path const &like, int flags)
     Con_PrintRuler();
 
     // Sort and print the index.
-    qSort(found.begin(), found.end(), compareMaterialBindPathsAssending);
+    qSort(found.begin(), found.end(), compareMaterialManifestPathsAssending);
     int idx = 0;
-    DENG2_FOR_EACH(QList<MaterialBind *>, i, found)
+    DENG2_FOR_EACH(QList<MaterialManifest *>, i, found)
     {
         Con_Printf(" %*i: ", numFoundDigits, idx++);
         printMaterialSummary(**i, printSchemeName);
@@ -1266,7 +1263,7 @@ D_CMD(InspectMaterial)
 
     try
     {
-        de::MaterialBind &manifest = materials.find(search);
+        de::MaterialManifest &manifest = materials.find(search);
         if(material_t *mat = manifest.material())
         {
             de::printMaterialInfo(*mat);
@@ -1347,26 +1344,20 @@ uint Materials_Count()
     return App_Materials()->count();
 }
 
-materialid_t Materials_Id(material_t *material)
+material_t *Materials_ToMaterial(materialid_t Id)
 {
-    if(!material) return NOMATERIALID;
-    return Material_PrimaryBind(material);
-}
-
-material_t *Materials_ToMaterial(materialid_t materialId)
-{
-    de::MaterialBind *bind = App_Materials()->toMaterialBind(materialId);
-    if(bind) return bind->material();
+    de::MaterialManifest *manifest = App_Materials()->toMaterialManifest(Id);
+    if(manifest) return manifest->material();
     return 0;
 }
 
 #undef Materials_ComposeUri
-DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
+DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t Id)
 {
-    de::MaterialBind *bind = App_Materials()->toMaterialBind(materialId);
-    if(bind)
+    de::MaterialManifest *manifest = App_Materials()->toMaterialManifest(Id);
+    if(manifest)
     {
-        de::Uri uri = bind->composeUri();
+        de::Uri uri = manifest->composeUri();
         return Uri_Dup(reinterpret_cast<uri_s *>(&uri));
     }
     return Uri_New();

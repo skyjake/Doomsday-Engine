@@ -397,7 +397,7 @@ uint P_ToIndex(void const *ptr)
         return GET_PLANE_IDX((Plane *) ptr);
 
     case DMU_MATERIAL:
-        return Materials_Id((material_t *) ptr);
+        return Material_ManifestId((material_t *) ptr);
 
     default:
         QByteArray msg = QString("P_ToIndex: Unknown type %1.").arg(DMU_Str(DMU_GetType(ptr))).toUtf8();

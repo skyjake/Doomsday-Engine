@@ -44,8 +44,8 @@ struct material_s
     /// Environmental sound class.
     material_env_class_t envClass;
 
-    /// Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
-    materialid_t primaryBind;
+    /// Unique identifier of the MaterialManifest associated with this Material or @c NULL if not bound.
+    materialid_t manifestId;
 
     /// World dimensions in map coordinate space units.
     Size2 *dimensions;
@@ -75,7 +75,7 @@ struct material_s
 
     material_s(short _flags, ded_material_t *_def,
                Size2Raw &_dimensions, material_env_class_t _envClass)
-        : def(_def), envClass(_envClass), primaryBind(0),
+        : def(_def), envClass(_envClass), manifestId(0),
           dimensions(Size2_NewFromRaw(&_dimensions)), flags(_flags),
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
           inAnimGroup(false),
@@ -320,7 +320,7 @@ void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
 
     if(!mat->def) return;
 
-    MaterialBind &bind = *App_Materials()->toMaterialBind(mat->primaryBind);
+    MaterialManifest &manifest = Material_Manifest(mat);
 
     mat->flags = mat->def->flags;
     Size2Raw size(def->width, def->height);
@@ -330,16 +330,15 @@ void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
     // Update custom status.
     /// @todo This should take into account the whole definition, not just whether
     ///       the primary layer's first texture is custom or not.
-    bind.setCustom(false);
+    manifest.setCustom(false);
     if(def->layers[0].stageCount.num > 0 && def->layers[0].stages[0].texture)
     {
-        de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture);
         try
         {
-            TextureManifest &manifest = App_Textures()->find(*texUri);
-            if(Texture *tex = manifest.texture())
+            de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture);
+            if(Texture *tex = App_Textures()->find(*texUri).texture())
             {
-                bind.setCustom(tex->flags().testFlag(Texture::Custom));
+                manifest.setCustom(tex->flags().testFlag(Texture::Custom));
             }
         }
         catch(Textures::NotFoundError const &)
@@ -511,16 +510,23 @@ void Material_SetPrepared(material_t *mat, byte state)
     mat->prepared = state;
 }
 
-materialid_t Material_PrimaryBind(material_t const *mat)
+MaterialManifest &Material_Manifest(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    return mat->primaryBind;
+    /// @todo Material should store a link to the manifest.
+    return *App_Materials()->toMaterialManifest(mat->manifestId);
 }
 
-void Material_SetPrimaryBind(material_t *mat, materialid_t bindId)
+materialid_t Material_ManifestId(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    mat->primaryBind = bindId;
+    return mat->manifestId;
+}
+
+void Material_SetManifestId(material_t *mat, materialid_t id)
+{
+    DENG2_ASSERT(mat);
+    mat->manifestId = id;
 }
 
 material_env_class_t Material_EnvironmentClass(material_t const *mat)
@@ -699,8 +705,8 @@ boolean Material_HasDecorations(material_t *mat)
     {
         App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), false);
     }
-    MaterialBind &bind = *App_Materials()->toMaterialBind(mat->primaryBind);
-    if(bind.decorationDef()) return true;
+    MaterialManifest &manifest = Material_Manifest(mat);
+    if(manifest.decorationDef()) return true;
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     if(Material_IsGroupAnimated(mat))

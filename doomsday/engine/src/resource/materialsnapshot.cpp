@@ -194,10 +194,7 @@ void MaterialSnapshot::update()
             // Primary texture was (re)prepared.
             Material_SetPrepared(&mat, result == PTR_UPLOADED_ORIGINAL? 1 : 2);
 
-            if(MaterialBind *bind = App_Materials()->toMaterialBind(Material_PrimaryBind(&mat)))
-            {
-                App_Materials()->updateTextureLinks(*bind);
-            }
+            App_Materials()->updateTextureLinks(Material_Manifest(&mat));
 
             // Are we inheriting the logical dimensions from the texture?
             if(0 == Material_Width(&mat) && 0 == Material_Height(&mat))
