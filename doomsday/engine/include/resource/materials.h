@@ -274,12 +274,6 @@ public:
 
     void updateTextureLinks(MaterialManifest &manifest);
 
-    /// @return  (Particle) Generator definition associated with @a material else @c NULL.
-    ded_ptcgen_t const *ptcGenDef(material_t &material);
-
-    /// @return  Decoration defintion associated with @a material else @c NULL.
-    ded_decor_t const *decorationDef(material_t &material);
-
     /**
      * Create a new Material unless an existing Material is found at the path
      * (and within the same scheme) as that specified in @a def, in which case

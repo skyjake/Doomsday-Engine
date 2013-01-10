@@ -750,25 +750,6 @@ MaterialSnapshot const &Materials::prepare(MaterialVariant &variant,
     return *snapshot;
 }
 
-ded_decor_t const *Materials::decorationDef(material_t &mat)
-{
-    if(!Material_Prepared(&mat))
-    {
-        prepare(mat, Rend_MapSurfaceMaterialSpec(), false);
-    }
-    return Material_Manifest(&mat).decorationDef();
-}
-
-ded_ptcgen_t const *Materials::ptcGenDef(material_t &mat)
-{
-    if(isDedicated) return 0;
-    if(!Material_Prepared(&mat))
-    {
-        prepare(mat, Rend_MapSurfaceMaterialSpec(), false);
-    }
-    return Material_Manifest(&mat).ptcGenDef();
-}
-
 uint Materials::size() const
 {
     return d->materials.size();
@@ -884,7 +865,6 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
         MaterialVariant *next = variant.translationNext();
         float inter = variant.translationPoint();
 
-        /// @todo kludge: Should not use App_Materials() here.
         QByteArray curPath  = Material_Manifest(&cur->generalCase()).composeUri().asText().toUtf8();
         QByteArray nextPath = Material_Manifest(&next->generalCase()).composeUri().asText().toUtf8();
 

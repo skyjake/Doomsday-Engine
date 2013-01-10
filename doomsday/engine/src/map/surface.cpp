@@ -89,7 +89,7 @@ boolean Surface_SetMaterial(Surface *suf, material_t *mat)
 
                     if(DMU_GetType(suf->owner) == DMU_PLANE)
                     {
-                        ded_ptcgen_t const *def = App_Materials()->ptcGenDef(*mat);
+                        ded_ptcgen_t const *def = Material_Manifest(mat).ptcGenDef();
                         P_SpawnPlaneParticleGen(def, (Plane *)suf->owner);
                     }
                 }

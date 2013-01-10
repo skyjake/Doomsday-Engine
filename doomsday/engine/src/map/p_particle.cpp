@@ -190,7 +190,7 @@ void P_MapSpawnPlaneParticleGens()
             Plane *plane = sector->SP_plane(j);
             if(!plane->PS_material) continue;
 
-            ded_ptcgen_t const *def = App_Materials()->ptcGenDef(*plane->PS_material);
+            ded_ptcgen_t const *def = Material_Manifest(plane->PS_material).ptcGenDef();
             P_SpawnPlaneParticleGen(def, plane);
         }
     }

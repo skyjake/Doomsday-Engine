@@ -462,44 +462,37 @@ static uint generateDecorLights(ded_decorlight_t const *def, Surface *suf,
 static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT,
     vec3d_t v1, vec3d_t v2, Sector *sec, boolean visible)
 {
-    vec3d_t delta;
+    if(!visible) return;
 
+    ded_decor_t const *def = Material_Manifest(suf->material).decorationDef();
+    if(!def) return;
+
+    vec3d_t delta;
     V3d_Subtract(delta, v2, v1);
 
-    if(visible &&
-       (delta[VX] * delta[VY] != 0 ||
-        delta[VX] * delta[VZ] != 0 ||
-        delta[VY] * delta[VZ] != 0))
+    if(delta[VX] * delta[VY] != 0 || delta[VX] * delta[VZ] != 0 || delta[VY] * delta[VZ] != 0)
     {
-        // Ensure we've prepared a variant of this material.
-        App_Materials()->prepare(*suf->material, Rend_MapSurfaceMaterialSpec(),
-                                 true /*smooth*/, true /*do-create*/);
-
-        ded_decor_t const *def = App_Materials()->decorationDef(*suf->material);
-        if(def)
+        int const axis = V3f_MajorAxis(suf->normal);
+        coord_t width, height;
+        if(axis == VX || axis == VY)
         {
-            int const axis = V3f_MajorAxis(suf->normal);
-            coord_t width, height;
-            if(axis == VX || axis == VY)
-            {
-                width = sqrt(delta[VX] * delta[VX] + delta[VY] * delta[VY]);
-                height = delta[VZ];
-            }
-            else
-            {
-                width = sqrt(delta[VX] * delta[VX]);
-                height = delta[VY];
-            }
+            width = sqrt(delta[VX] * delta[VX] + delta[VY] * delta[VY]);
+            height = delta[VZ];
+        }
+        else
+        {
+            width = sqrt(delta[VX] * delta[VX]);
+            height = delta[VY];
+        }
 
-            if(width < 0)  width  = -width;
-            if(height < 0) height = -height;
+        if(width < 0)  width  = -width;
+        if(height < 0) height = -height;
 
-            // Generate a number of lights.
-            for(uint i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
-            {
-                generateDecorLights(&def->lights[i], suf, suf->material, v1, v2, width, height,
-                                    delta, axis, offsetS, offsetT, sec);
-            }
+        // Generate a number of lights.
+        for(uint i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+        {
+            generateDecorLights(&def->lights[i], suf, suf->material, v1, v2, width, height,
+                                delta, axis, offsetS, offsetT, sec);
         }
     }
 }

@@ -452,7 +452,7 @@ boolean Material_HasGlow(material_t *mat)
 
     /// @todo We should not need to prepare to determine this.
     MaterialSnapshot const &ms =
-        App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), true);
+        App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec());
 
     return (ms.glowStrength() > .0001f);
 }
@@ -704,7 +704,7 @@ boolean Material_HasDecorations(material_t *mat)
     /// @todo We should not need to prepare to determine this.
     if(!mat->prepared)
     {
-        App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), false);
+        App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec());
     }
     MaterialManifest &manifest = Material_Manifest(mat);
     if(manifest.decorationDef()) return true;

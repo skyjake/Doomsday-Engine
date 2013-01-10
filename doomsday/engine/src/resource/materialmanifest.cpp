@@ -21,8 +21,10 @@
 #include "de_defs.h"
 #include <de/memory.h>
 
-#include "uri.hh"
+#include "render/rend_main.h"
 #include "resource/materials.h"
+#include "uri.hh"
+
 #include "resource/materialmanifest.h"
 
 namespace de {
@@ -164,6 +166,11 @@ ded_detailtexture_t *MaterialManifest::detailTextureDef() const
         throw MissingMaterialError("MaterialManifest::detailTextureDef", "Missing required material");
     }
 
+    if(isDedicated) return 0;
+
+    // We must prepare a variant before we can determine which definition is in effect.
+    materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
+
     // We must prepare to determine which definition is in effect.
     byte prepared = Material_Prepared(d->material);
     if(prepared) return d->defs.detailtextures[prepared - 1];
@@ -178,7 +185,11 @@ ded_decor_t *MaterialManifest::decorationDef() const
         throw MissingMaterialError("MaterialManifest::decorationTextureDef", "Missing required material");
     }
 
-    // We must prepare to determine which definition is in effect.
+    if(isDedicated) return 0;
+
+    // We must prepare a variant before we can determine which definition is in effect.
+    materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
+
     byte prepared = Material_Prepared(d->material);
     if(prepared) return d->defs.decors[prepared - 1];
     return 0;
@@ -192,7 +203,11 @@ ded_ptcgen_t *MaterialManifest::ptcGenDef() const
         throw MissingMaterialError("MaterialManifest::ptcGenDef", "Missing required material");
     }
 
-    // We must prepare to determine which definition is in effect.
+    if(isDedicated) return 0;
+
+    // We must prepare a variant before we can determine which definition is in effect.
+    materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
+
     byte prepared = Material_Prepared(d->material);
     if(prepared) return d->defs.ptcgens[prepared - 1];
     return 0;
@@ -206,7 +221,11 @@ ded_reflection_t *MaterialManifest::reflectionDef() const
         throw MissingMaterialError("MaterialManifest::reflectionDef", "Missing required material");
     }
 
-    // We must prepare to determine which definition is in effect.
+    if(isDedicated) return 0;
+
+    // We must prepare a variant before we can determine which definition is in effect.
+    materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
+
     byte prepared = Material_Prepared(d->material);
     if(prepared) return d->defs.reflections[prepared - 1];
     return 0;
