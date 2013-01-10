@@ -84,13 +84,12 @@ extern "C" {
  * Construct a new material.
  *
  * @param flags  @see materialFlags
- * @param isCustom  @c true= the material does not come from the original game.
  * @param def  Definition for the material, if any.
  * @param dimensions  Dimensions of the material in map coordinate space units.
  * @param envClass  Environment class for the material.
  */
-material_t *Material_New(short flags, boolean isCustom, ded_material_t *def,
-                         Size2Raw *dimensions, material_env_class_t envClass);
+material_t *Material_New(short flags, ded_material_t *def, Size2Raw *dimensions,
+                         material_env_class_t envClass);
 
 void Material_Delete(material_t *mat);
 
@@ -153,9 +152,6 @@ void Material_SetFlags(material_t *mat, short flags);
  * ignored until such time as the current game is reset or is changed.
  */
 boolean Material_IsValid(material_t const *mat);
-
-/// @return  @c true if Material is not derived from an original game resource.
-boolean Material_IsCustom(material_t const *mat);
 
 /// @return  @c true= the material is animated.
 boolean Material_IsAnimated(material_t const *mat);

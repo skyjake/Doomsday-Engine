@@ -32,25 +32,25 @@ MaterialBind::Info::Info()
     clearDefinitionLinks();
 }
 
-void MaterialBind::Info::linkDefinitions(material_t *mat)
+void MaterialBind::Info::linkDefinitions(MaterialBind const &bind)
 {
-    bool isCustom = (mat? Material_IsCustom(mat) : false);
+    material_t *mat = bind.material();
 
     // Surface decorations (lights and models).
-    decorationDefs[0]    = Def_GetDecoration(mat, 0, isCustom);
-    decorationDefs[1]    = Def_GetDecoration(mat, 1, isCustom);
+    decorationDefs[0]    = Def_GetDecoration(mat, 0, bind.isCustom());
+    decorationDefs[1]    = Def_GetDecoration(mat, 1, bind.isCustom());
 
     // Reflection (aka shiny surface).
-    reflectionDefs[0]    = Def_GetReflection(mat, 0, isCustom);
-    reflectionDefs[1]    = Def_GetReflection(mat, 1, isCustom);
+    reflectionDefs[0]    = Def_GetReflection(mat, 0, bind.isCustom());
+    reflectionDefs[1]    = Def_GetReflection(mat, 1, bind.isCustom());
 
     // Generator (particles).
-    ptcgenDefs[0]        = Def_GetGenerator(mat, 0, isCustom);
-    ptcgenDefs[1]        = Def_GetGenerator(mat, 1, isCustom);
+    ptcgenDefs[0]        = Def_GetGenerator(mat, 0, bind.isCustom());
+    ptcgenDefs[1]        = Def_GetGenerator(mat, 1, bind.isCustom());
 
     // Detail texture.
-    detailtextureDefs[0] = Def_GetDetailTex(mat, 0, isCustom);
-    detailtextureDefs[1] = Def_GetDetailTex(mat, 1, isCustom);
+    detailtextureDefs[0] = Def_GetDetailTex(mat, 0, bind.isCustom());
+    detailtextureDefs[1] = Def_GetDetailTex(mat, 1, bind.isCustom());
 }
 
 void MaterialBind::Info::clearDefinitionLinks()
@@ -73,8 +73,8 @@ struct MaterialBind::Instance
     /// of the first derived variant of the associated Material.
     MaterialBind::Info *extInfo;
 
-    Instance() : material(0), guid(0), extInfo(0)
-    {}
+    /// @c true if the material is not derived from an original game resource.
+    bool isCustom;
 };
 
 MaterialBind::MaterialBind(PathTree::NodeArgs const &args)
@@ -98,6 +98,11 @@ Materials &MaterialBind::materials()
 void MaterialBind::setId(materialid_t id)
 {
     d->guid = id;
+}
+
+void MaterialBind::setCustom(bool yes)
+{
+    d->isCustom = yes;
 }
 
 MaterialScheme &MaterialBind::scheme() const
@@ -129,6 +134,11 @@ Uri MaterialBind::composeUri(QChar sep) const
 materialid_t MaterialBind::id() const
 {
     return d->guid;
+}
+
+bool MaterialBind::isCustom() const
+{
+    return d->isCustom;
 }
 
 material_t *MaterialBind::material() const

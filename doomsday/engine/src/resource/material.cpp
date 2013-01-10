@@ -58,8 +58,6 @@ struct material_s
     bool inAnimGroup;
 #endif
 
-    bool isCustom;
-
     /// Detail texture layer & properties.
     de::Texture *detailTex;
     float detailScale;
@@ -75,14 +73,13 @@ struct material_s
     /// Current prepared state.
     byte prepared;
 
-    material_s(short _flags, bool _isCustom, ded_material_t *_def,
+    material_s(short _flags, ded_material_t *_def,
                Size2Raw &_dimensions, material_env_class_t _envClass)
         : def(_def), envClass(_envClass), primaryBind(0),
           dimensions(Size2_NewFromRaw(&_dimensions)), flags(_flags),
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
           inAnimGroup(false),
 #endif
-          isCustom(_isCustom),
           detailTex(0), detailScale(0), detailStrength(0),
           shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0)
     {
@@ -273,10 +270,10 @@ void MaterialAnim::reset()
 
 using namespace de;
 
-material_t *Material_New(short flags, boolean isCustom, ded_material_t *def,
+material_t *Material_New(short flags, ded_material_t *def,
     Size2Raw *dimensions, material_env_class_t envClass)
 {
-    return new material_s(flags, CPP_BOOL(isCustom), def, *dimensions, envClass);
+    return new material_s(flags, def, *dimensions, envClass);
 }
 
 void Material_Delete(material_t *mat)
@@ -323,17 +320,17 @@ void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
 
     if(!mat->def) return;
 
-    mat->flags = mat->def->flags;
+    MaterialBind &bind = *App_Materials()->toMaterialBind(mat->primaryBind);
 
+    mat->flags = mat->def->flags;
     Size2Raw size(def->width, def->height);
     Material_SetDimensions(mat, &size);
-
     Material_SetEnvironmentClass(mat, S_MaterialEnvClassForUri(def->uri));
 
     // Update custom status.
     /// @todo This should take into account the whole definition, not just whether
     ///       the primary layer's first texture is custom or not.
-    mat->isCustom = false;
+    bind.setCustom(false);
     if(def->layers[0].stageCount.num > 0 && def->layers[0].stages[0].texture)
     {
         de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture);
@@ -342,7 +339,7 @@ void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
             TextureManifest &manifest = App_Textures()->find(*texUri);
             if(Texture *tex = manifest.texture())
             {
-                mat->isCustom = tex->flags().testFlag(Texture::Custom);
+                bind.setCustom(tex->flags().testFlag(Texture::Custom));
             }
         }
         catch(Textures::NotFoundError const &)
@@ -408,12 +405,6 @@ void Material_SetFlags(material_t *mat, short flags)
 {
     DENG2_ASSERT(mat);
     mat->flags = flags;
-}
-
-boolean Material_IsCustom(material_t const *mat)
-{
-    DENG2_ASSERT(mat);
-    return boolean( mat->isCustom );
 }
 
 boolean Material_IsAnimated(material_t const *mat)

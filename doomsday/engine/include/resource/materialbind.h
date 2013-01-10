@@ -55,9 +55,9 @@ public:
          * - When the bound material is changed/first-configured.
          * - When said material's "custom" state changes.
          *
-         * @param mat  Material to link the definitions of.
+         * @param bind  MaterialBind to link the definitions of.
          */
-        void linkDefinitions(material_t *mat);
+        void linkDefinitions(MaterialBind const &bind);
 
         /**
          * Zeroes all links to definitions. Should be called when the
@@ -72,6 +72,7 @@ public:
     virtual ~MaterialBind();
 
     void setId(materialid_t newId);
+    void setCustom(bool yes);
 
     /**
      * Returns the owning scheme of the material bind.
@@ -94,6 +95,9 @@ public:
 
     /// @return  Unique identifier associated with this.
     materialid_t id() const;
+
+    /// @return  @c true if the material bind is not derived from an original game resource.
+    bool isCustom() const;
 
     /// @return  Material associated with this; otherwise @c NULL.
     material_t *material() const;
