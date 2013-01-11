@@ -1585,6 +1585,8 @@ void Rend_DrawShadowOffsetVerts()
     static const float red[4] = { 1.f, .2f, .2f, 1.f};
     static const float yellow[4] = {.7f, .7f, .2f, 1.f};
 
+    if(!theMap) return;
+
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -1596,7 +1598,7 @@ void Rend_DrawShadowOffsetVerts()
 
     for(uint i = 0; i < NUM_LINEDEFS; ++i)
     {
-        LineDef *line = &lineDefs[i];
+        LineDef *line = GameMap_LineDef(theMap, i);
 
         for(uint k = 0; k < 2; ++k)
         {

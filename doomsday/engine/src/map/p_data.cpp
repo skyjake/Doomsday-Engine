@@ -63,8 +63,6 @@ struct uri_s* mapUri; // Name by which the game referred to the current map.
  */
 Vertex* vertexes;
 SideDef* sideDefs;
-LineDef* lineDefs;
-Sector* sectors;
 Polyobj** polyObjs;
 
 GameMap* theMap;
@@ -85,8 +83,6 @@ void P_SetCurrentMap(GameMap* map)
         }
 
         vertexes = 0;
-        sectors = 0;
-        lineDefs = 0;
         sideDefs = 0;
         polyObjs = 0;
 
@@ -98,8 +94,6 @@ void P_SetCurrentMap(GameMap* map)
 
     vertexes = map->vertexes;
     sideDefs = map->sideDefs;
-    lineDefs = map->lineDefs;
-    sectors  = map->sectors;
     polyObjs = map->polyObjs;
 
     theMap = map;

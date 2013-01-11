@@ -324,7 +324,7 @@ void SB_InitForMap(const char* uniqueID)
     ded_light_t* def;
     int i;
 
-    assert(theMap);
+    DENG_ASSERT(theMap);
 
     // Start with no sources whatsoever.
     numSources = 0;
@@ -367,7 +367,7 @@ void SB_InitForMap(const char* uniqueID)
 
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        Sector* sec = &sectors[i];
+        Sector* sec = GameMap_Sector(theMap, i);
         if(sec->bspLeafs && *sec->bspLeafs)
         {
             BspLeaf** bspLeafIter = sec->bspLeafs;
@@ -412,7 +412,7 @@ void SB_InitForMap(const char* uniqueID)
 
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        Sector* sec = &sectors[i];
+        Sector* sec = GameMap_Sector(theMap, i);
         if(sec->bspLeafs && *sec->bspLeafs)
         {
             BspLeaf** bspLeafIter = sec->bspLeafs;

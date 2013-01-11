@@ -487,7 +487,7 @@ static void R_UpdateMap()
     // Update all world surfaces.
     for(uint i = 0; i < NUM_SECTORS; ++i)
     {
-        Sector *sec = &sectors[i];
+        Sector *sec = GameMap_Sector(theMap, i);
         for(uint j = 0; j < sec->planeCount; ++j)
         {
             Surface_Update(&sec->SP_planesurface(j));
@@ -771,12 +771,14 @@ void R_CreateMobjLinks()
     }
 #endif
 
+    if(!theMap) return;
+
 BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
-    Sector *seciter = sectors;
-    for(uint i = 0; i < NUM_SECTORS; seciter++, ++i)
+    for(uint i = 0; i < NUM_SECTORS; ++i)
     {
-        for(mobj_t *iter = seciter->mobjList; iter; iter = iter->sNext)
+        Sector *sec = GameMap_Sector(theMap, i);
+        for(mobj_t *iter = sec->mobjList; iter; iter = iter->sNext)
         {
             R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
         }

@@ -23,9 +23,11 @@
 #ifndef LIBDENG_MAP_LINEDEF
 #define LIBDENG_MAP_LINEDEF
 
+#include <de/binangle.h>
 #include <de/mathutil.h> // Divline
 #include "resource/r_data.h"
-#include "map/p_dmu.h"
+#include "p_mapdata.h"
+#include "p_dmu.h"
 
 // Helper macros for accessing linedef data elements.
 #define L_v(n)                  v[(n)? 1:0]
@@ -95,8 +97,6 @@ typedef struct linedef_s {
     boolean             mapped[DDMAXPLAYERS]; /// Whether the line has been mapped by each player yet.
     int                 origIndex; /// Original index in the archived map.
 } LineDef;
-
-DENG_EXTERN_C LineDef* lineDefs;
 
 #ifdef __cplusplus
 extern "C" {

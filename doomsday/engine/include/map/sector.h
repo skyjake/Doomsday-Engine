@@ -111,8 +111,6 @@ typedef struct sector_s {
     msector_t           buildData;
 } Sector;
 
-DENG_EXTERN_C Sector* sectors;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
