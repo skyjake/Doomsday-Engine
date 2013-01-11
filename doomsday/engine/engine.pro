@@ -652,7 +652,6 @@ SOURCES += \
 
 OTHER_FILES += \
     data/cphelp.txt \
-    include/mapdata.hs \
     include/template.h.template \
     src/template.c.template
 
