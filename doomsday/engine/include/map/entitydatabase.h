@@ -2,6 +2,17 @@
  * @file entitydatabase.h
  * Entity property value database. @ingroup map
  *
+ * The EntityDatabase is used in the process of transferring mobj spawn spot
+ * information and stuff like linedef action specials from the wad map loader
+ * plugin via the engine, through to the game plugin.
+ *
+ * The primary reason for its existence is that the engine does not know about
+ * the game specific properties of the map data types. The engine does not care
+ * at all about the values or indeed even what properties are registered; it is
+ * simply a way of piping information from one part of the system to another.
+ *
+ * @todo C++ allows making this even more generic: a set/map of polymorphic objects.
+ *
  * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
