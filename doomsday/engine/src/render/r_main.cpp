@@ -496,7 +496,7 @@ static void R_UpdateMap()
 
     for(uint i = 0; i < NUM_SIDEDEFS; ++i)
     {
-        SideDef *side = &sideDefs[i];
+        SideDef *side = GameMap_SideDef(theMap, i);
         Surface_Update(&side->SW_topsurface);
         Surface_Update(&side->SW_middlesurface);
         Surface_Update(&side->SW_bottomsurface);
@@ -504,7 +504,7 @@ static void R_UpdateMap()
 
     for(uint i = 0; i < NUM_POLYOBJS; ++i)
     {
-        Polyobj *po = polyObjs[i];
+        Polyobj *po = GameMap_PolyobjByID(theMap, i);
         for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
         {
             LineDef *line = *lineIter;

@@ -324,7 +324,7 @@ BspNode* GameMap_BspNode(GameMap* map, uint idx);
  * @param vtx  Vertex to lookup.
  * @return  Unique index for the Vertex else @c -1 if not present.
  */
-int GameMap_VertexIndex(GameMap* map, Vertex* vtx);
+int GameMap_VertexIndex(GameMap* map, Vertex const *vtx);
 
 /**
  * Lookup the unique index for @a lineDef.

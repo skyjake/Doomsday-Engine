@@ -32,8 +32,6 @@ DD_BASE_POLYOBJ_ELEMENTS()
 
 #define POLYOBJ_SIZE        gx.polyobjSize
 
-DENG_EXTERN_C Polyobj** polyObjs; ///< List of all polyobjs on the current map.
-
 #ifdef __cplusplus
 extern "C" {
 #endif

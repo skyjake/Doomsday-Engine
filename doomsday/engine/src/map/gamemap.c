@@ -125,7 +125,7 @@ Vertex* GameMap_Vertex(GameMap* map, uint idx)
     return &map->vertexes[idx];
 }
 
-int GameMap_VertexIndex(GameMap* map, Vertex* vtx)
+int GameMap_VertexIndex(GameMap* map, Vertex const *vtx)
 {
     assert(map);
     if(!vtx || !(vtx >= map->vertexes && vtx <= &map->vertexes[map->numVertexes])) return -1;

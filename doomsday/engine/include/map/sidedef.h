@@ -112,8 +112,6 @@ typedef struct sidedef_s {
     edgespan_t          spans[2];      // [left, right]
 } SideDef;
 
-DENG_EXTERN_C SideDef* sideDefs;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

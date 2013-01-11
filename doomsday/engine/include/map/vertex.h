@@ -63,8 +63,6 @@ typedef struct vertex_s {
     mvertex_t buildData;
 } Vertex;
 
-DENG_EXTERN_C Vertex *vertexes;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

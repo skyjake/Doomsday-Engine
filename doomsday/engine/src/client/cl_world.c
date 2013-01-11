@@ -895,7 +895,7 @@ void Cl_ReadPolyDelta2(boolean skip)
     }
 #endif
 
-    po = polyObjs[num];
+    po = GameMap_PolyobjByID(theMap, num);
 
     if(df & PODF_DEST_X)
         po->dest[VX] = destX;
