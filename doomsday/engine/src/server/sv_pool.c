@@ -488,7 +488,7 @@ void Sv_RegisterSide(dt_side_t* reg, uint number)
  */
 void Sv_RegisterPoly(dt_poly_t* reg, uint number)
 {
-    Polyobj* poly = polyObjs[number];
+    Polyobj* poly = GameMap_PolyobjByID(theMap, number);
 
     reg->dest[VX] = poly->dest[VX];
     reg->dest[VY] = poly->dest[VY];
@@ -1569,7 +1569,7 @@ coord_t Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 
     if(delta->type == DT_SIDE)
     {
-        SideDef* sideDef = &sideDefs[delta->id];
+        SideDef* sideDef = GameMap_SideDef(theMap, delta->id);
         LineDef* line = sideDef->line;
         vec2d_t origin;
         V2d_Set(origin, line->L_v1origin[VX] + line->direction[VX] / 2,
@@ -1580,7 +1580,7 @@ coord_t Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 
     if(delta->type == DT_POLY)
     {
-        Polyobj* po = polyObjs[delta->id];
+        Polyobj* po = GameMap_PolyobjByID(theMap, delta->id);
         return M_ApproxDistance(info->origin[VX] - po->origin[VX],
                                 info->origin[VY] - po->origin[VY]);
     }
@@ -1598,7 +1598,7 @@ coord_t Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        Polyobj* po = polyObjs[delta->id];
+        Polyobj* po = GameMap_PolyobjByID(theMap, delta->id);
         return M_ApproxDistance(info->origin[VX] - po->origin[VX],
                                 info->origin[VY] - po->origin[VY]);
     }
@@ -2267,7 +2267,7 @@ void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     for(i = start; i < end; ++i)
     {
         // The side must be owned by a line.
-        if(sideDefs[i].line == NULL) continue;
+        if(GameMap_SideDef(theMap, i)->line == NULL) continue;
 
         if(Sv_RegisterCompareSide(reg, i, &delta, doUpdate))
         {

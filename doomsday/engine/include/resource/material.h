@@ -21,7 +21,7 @@
 #ifndef LIBDENG_RESOURCE_MATERIAL_H
 #define LIBDENG_RESOURCE_MATERIAL_H
 
-#include "map/p_maptypes.h"
+#include "map/p_mapdata.h"
 #include "map/p_dmu.h"
 
 struct ded_material_s;

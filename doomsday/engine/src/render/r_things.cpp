@@ -37,7 +37,6 @@
 #include "gl/sys_opengl.h" // TODO: get rid of this
 
 #include "def_main.h"
-#include "m_stack.h"
 #include "resource/materialsnapshot.h"
 
 #include <de/memoryblockset.h>

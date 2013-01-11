@@ -1,8 +1,7 @@
-/** @file p_maptypes.h Convenience header for including all map data types.
- * @ingroup map
+/** @file stack.h Stack of void* elements.
+ * @ingroup data
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,20 +17,31 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_MAP_DATA_TYPES_H
-#define LIBDENG_MAP_DATA_TYPES_H
+#ifndef LIBDENG_STACK_H
+#define LIBDENG_STACK_H
 
-#include "p_mapdata.h"
-#include "vertex.h"
-#include "hedge.h"
-#include "sidedef.h"
-#include "linedef.h"
-#include "surface.h"
-#include "plane.h"
-#include "sector.h"
-#include "bspleaf.h"
-#include "bspnode.h"
-#include "p_object.h"
-#include "polyobj.h"
+#include <de/libdeng1.h>
 
-#endif // LIBDENG_MAP_DATA_TYPES_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct ddstack_s; // opaque
+
+typedef struct ddstack_s ddstack_t;
+
+DENG_PUBLIC ddstack_t *Stack_New(void);
+
+DENG_PUBLIC void Stack_Delete(ddstack_t *stack);
+
+DENG_PUBLIC size_t Stack_Height(ddstack_t *stack);
+
+DENG_PUBLIC void Stack_Push(ddstack_t *stack, void *data);
+
+DENG_PUBLIC void *Stack_Pop(ddstack_t *stack);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBDENG_STACK_H

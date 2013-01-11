@@ -110,7 +110,8 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
         if(index < NUM_POLYOBJS)
         {
-            poly = polyObjs[index];
+            DENG_ASSERT(theMap);
+            poly = GameMap_PolyobjByID(theMap, index);
             emitter = (mobj_t *) poly;
         }
         else

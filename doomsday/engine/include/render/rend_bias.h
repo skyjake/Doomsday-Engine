@@ -83,6 +83,18 @@ typedef struct biastracker_s {
     uint            changes[MAX_BIAS_TRACKED];
 } biastracker_t;
 
+/**
+ * Stores the data pertaining to vertex lighting for a worldmap, surface.
+ */
+typedef struct biassurface_s {
+    uint            updated;
+    uint            size;
+    vertexillum_t*  illum; // [size]
+    biastracker_t   tracker;
+    biasaffection_t affected[MAX_BIAS_AFFECTED];
+
+    struct biassurface_s* next;
+} biassurface_t;
 
 extern int      useBias; // Bias lighting enabled.
 extern uint     currentTimeSB;

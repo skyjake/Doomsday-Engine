@@ -3125,7 +3125,7 @@ void Rend_RenderSurfaceVectors()
 
     for(i = 0; i < NUM_BSPLEAFS; ++i)
     {
-        BspLeaf* bspLeaf = bspLeafs[i];
+        BspLeaf* bspLeaf = GameMap_BspLeaf(theMap, i);
         uint j;
 
         if(!bspLeaf->sector) continue;
@@ -3145,7 +3145,7 @@ void Rend_RenderSurfaceVectors()
 
     for(i = 0; i < NUM_POLYOBJS; ++i)
     {
-        const Polyobj* po = polyObjs[i];
+        const Polyobj* po = GameMap_PolyobjByID(theMap, i);
         const Sector* sec = po->bspLeaf->sector;
         float zPos = sec->SP_floorheight + (sec->SP_ceilheight - sec->SP_floorheight)/2;
         vec3f_t origin;
@@ -3333,7 +3333,7 @@ static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alp
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    sprintf(buf, "%lu", (unsigned long) (vtx - vertexes));
+    sprintf(buf, "%i", GameMap_VertexIndex(theMap, vtx));
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -3416,6 +3416,8 @@ void Rend_Vertexes()
 
     if(!devVertexBars && !devVertexIndices) return;
 
+    DENG_ASSERT(theMap);
+
     glDisable(GL_DEPTH_TEST);
 
     if(devVertexBars)
@@ -3426,7 +3428,7 @@ void Rend_Vertexes()
 
         for(i = 0; i < NUM_VERTEXES; ++i)
         {
-            Vertex* vtx = &vertexes[i];
+            Vertex* vtx = GameMap_Vertex(theMap, i);
             float alpha;
 
             if(!vtx->lineOwners)
@@ -3457,7 +3459,7 @@ void Rend_Vertexes()
 
     for(i = 0; i < NUM_VERTEXES; ++i)
     {
-        Vertex* vtx = &vertexes[i];
+        Vertex* vtx = GameMap_Vertex(theMap, i);
         coord_t dist;
 
         if(!vtx->lineOwners)
@@ -3489,7 +3491,7 @@ void Rend_Vertexes()
 
         for(i = 0; i < NUM_VERTEXES; ++i)
         {
-            Vertex* vtx = &vertexes[i];
+            Vertex* vtx = GameMap_Vertex(theMap, i);
             coord_t pos[3], dist;
 
             if(!vtx->lineOwners) continue; // Not a linedef vertex.
@@ -3979,7 +3981,7 @@ static void Rend_RenderBoundingBoxes()
     {
         for(uint i = 0; i < NUM_POLYOBJS; ++i)
         {
-            Polyobj const *po = polyObjs[i];
+            Polyobj const *po = GameMap_PolyobjByID(theMap, i);
             Sector const *sec = po->bspLeaf->sector;
             coord_t width  = (po->aaBox.maxX - po->aaBox.minX)/2;
             coord_t length = (po->aaBox.maxY - po->aaBox.minY)/2;

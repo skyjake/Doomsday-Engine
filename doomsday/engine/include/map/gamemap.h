@@ -23,6 +23,7 @@
 #ifndef LIBDENG_GAMEMAP_H
 #define LIBDENG_GAMEMAP_H
 
+#include "p_maptypes.h"
 #include "p_particle.h"
 #include <EntityDatabase>
 #include <de/mathutil.h>
@@ -139,6 +140,11 @@ typedef struct gamemap_s {
     TraceOpening traceOpening;
     divline_t traceLOS;
 } GameMap;
+
+/**
+ * Change the global "current" map.
+ */
+void P_SetCurrentMap(GameMap* map);
 
 /**
  * This ID is the name of the lump tag that marks the beginning of map
@@ -318,7 +324,7 @@ BspNode* GameMap_BspNode(GameMap* map, uint idx);
  * @param vtx  Vertex to lookup.
  * @return  Unique index for the Vertex else @c -1 if not present.
  */
-int GameMap_VertexIndex(GameMap* map, Vertex* vtx);
+int GameMap_VertexIndex(GameMap* map, Vertex const *vtx);
 
 /**
  * Lookup the unique index for @a lineDef.
@@ -812,5 +818,8 @@ void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+// The current map.
+DENG_EXTERN_C GameMap* theMap;
 
 #endif /// LIBDENG_GAMEMAP_H

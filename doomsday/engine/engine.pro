@@ -108,7 +108,6 @@ DENG_API_HEADERS = \
     api/api_thinker.h \
     api/api_uri.h \
     api/api_wad.h \
-    api/dd_maptypes.h \
     api/dd_share.h \
     api/dd_types.h \
     api/dd_version.h \
@@ -208,7 +207,6 @@ DENG_HEADERS += \
     include/m_misc.h \
     include/m_nodepile.h \
     include/m_profiler.h \
-    include/m_stack.h \
     include/map/blockmap.h \
     include/map/blockmapvisual.h \
     include/map/bsp/bsptreenode.h \
@@ -369,7 +367,8 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_HEADERS
+    $$DENG_HEADERS \
+    include/render/walldiv.h
 
 # Platform-specific sources.
 win32 {
@@ -501,7 +500,6 @@ SOURCES += \
     src/m_decomp64.c \
     src/m_misc.c \
     src/m_nodepile.c \
-    src/m_stack.c \
     src/map/blockmap.c \
     src/map/blockmapvisual.c \
     src/map/bsp/hplane.cpp \
@@ -652,7 +650,6 @@ SOURCES += \
 
 OTHER_FILES += \
     data/cphelp.txt \
-    include/mapdata.hs \
     include/template.h.template \
     src/template.c.template
 

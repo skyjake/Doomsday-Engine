@@ -26,6 +26,8 @@
 #ifndef LIBDENG_MAP_UPDATE_H
 #define LIBDENG_MAP_UPDATE_H
 
+#include "api_mapedit.h" // valuetype_t
+
 #ifdef __cplusplus
 extern "C" {
 #endif

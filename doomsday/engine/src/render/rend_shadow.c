@@ -169,7 +169,10 @@ void Rend_RenderMobjShadows(void)
     mobj_t* mo;
     uint i;
 
+    if(!theMap) return;
+
     // Disabled for now, awaiting a heuristic analyser to enable it on selective mobjs.
+    /// @todo Re-enable mobj shadows.
     return;
 
     // Configure the render list primitive writer's texture unit state now.
@@ -182,7 +185,7 @@ void Rend_RenderMobjShadows(void)
     // Process all sectors:
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sec = sectors + i;
+        sec = GameMap_Sector(theMap, i);
 
         // We are only interested in those mobjs within sectors marked as
         // 'visible' for the current render frame (viewer dependent).

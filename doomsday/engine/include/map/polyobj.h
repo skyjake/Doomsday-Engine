@@ -23,7 +23,7 @@
 #ifndef LIBDENG_MAP_POLYOBJ_H
 #define LIBDENG_MAP_POLYOBJ_H
 
-//#include "p_dmu.h"
+#include "dd_share.h"
 
 // We'll use the base polyobj template directly as our polyobj.
 typedef struct polyobj_s {

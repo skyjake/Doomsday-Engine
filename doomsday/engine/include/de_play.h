@@ -51,6 +51,7 @@
 #include "map/p_players.h"
 #include "map/p_objlink.h"
 #include "map/p_mapdata.h"
+#include "map/p_maptypes.h"
 #include "map/r_world.h"
 #include "resource/material.h"
 #include "ui/p_control.h"

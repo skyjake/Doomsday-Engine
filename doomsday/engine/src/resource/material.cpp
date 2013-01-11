@@ -23,6 +23,7 @@
 #include "de_resource.h"
 #include "de_render.h"
 
+#include "api_map.h"
 #include "audio/s_environ.h"
 #include "gl/sys_opengl.h" // TODO: get rid of this
 #include "map/r_world.h"

@@ -30,7 +30,7 @@
 
 #include <de/mathutil.h>
 #include <de/vector1.h>
-#include "map/p_mapdata.h"
+#include "map/p_maptypes.h"
 
 namespace de {
 namespace bsp {

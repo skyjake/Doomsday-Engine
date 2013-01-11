@@ -100,7 +100,6 @@ DENG_API_HEADERS = \
     $$SRC/api/api_thinker.h \
     $$SRC/api/api_uri.h \
     $$SRC/api/api_wad.h \
-    $$SRC/api/dd_maptypes.h \
     $$SRC/api/dd_share.h \
     $$SRC/api/dd_types.h \
     $$SRC/api/dd_version.h \
@@ -177,7 +176,6 @@ DENG_HEADERS += \
     $$SRC/include/m_misc.h \
     $$SRC/include/m_nodepile.h \
     $$SRC/include/m_profiler.h \
-    $$SRC/include/m_stack.h \
     $$SRC/include/map/blockmap.h \
     $$SRC/include/map/bsp/bsptreenode.h \
     $$SRC/include/map/bsp/hedgeinfo.h \
@@ -384,7 +382,6 @@ SOURCES += \
     $$SRC/src/m_decomp64.c \
     $$SRC/src/m_misc.c \
     $$SRC/src/m_nodepile.c \
-    $$SRC/src/m_stack.c \
     $$SRC/src/map/blockmap.c \
     $$SRC/src/map/bsp/hplane.cpp \
     $$SRC/src/map/bsp/partitioner.cpp \
@@ -488,7 +485,6 @@ SOURCES += \
 
 OTHER_FILES += \
     data/cphelp.txt \
-    include/mapdata.hs \
     include/template.h.template \
     src/template.c.template
 

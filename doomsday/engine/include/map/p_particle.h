@@ -23,6 +23,9 @@
 #define LIBDENG_MAP_GENERATORS_H
 
 #include "def_data.h"
+#include "sector.h"
+#include "linedef.h"
+#include "plane.h"
 
 // Maximum number of particle textures (not instances).
 #define MAX_PTC_TEXTURES        32

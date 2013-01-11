@@ -58,20 +58,7 @@ extern "C" boolean mapSetup; // We are currently setting up a map.
 
 struct uri_s* mapUri; // Name by which the game referred to the current map.
 
-/**
- * These map data arrays are internal to the engine.
- */
-Vertex* vertexes;
-SideDef* sideDefs;
-LineDef* lineDefs;
-Sector* sectors;
-Polyobj** polyObjs;
-
-HEdge** hedges;
-BspLeaf** bspLeafs;
-BspNode** bspNodes;
-
-GameMap* theMap;
+GameMap* theMap; // Available globally inside the engine.
 
 void P_SetCurrentMap(GameMap* map)
 {
@@ -80,7 +67,7 @@ void P_SetCurrentMap(GameMap* map)
         // @todo: Merge in explicit map unload from branch beta6-mapcache.
 
         // Most memory is allocated from the zone.
-        Z_FreeTags(PU_MAP, PU_PURGELEVEL-1);
+        Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         if(mapUri)
         {
@@ -88,30 +75,11 @@ void P_SetCurrentMap(GameMap* map)
             mapUri = NULL;
         }
 
-        vertexes = 0;
-        hedges = 0;
-        sectors = 0;
-        bspLeafs = 0;
-        bspNodes = 0;
-        lineDefs = 0;
-        sideDefs = 0;
-        polyObjs = 0;
-
         theMap = map;
         return;
     }
 
     mapUri = map->uri;
-
-    vertexes = map->vertexes;
-    sideDefs = map->sideDefs;
-    lineDefs = map->lineDefs;
-    sectors  = map->sectors;
-    polyObjs = map->polyObjs;
-
-    hedges   = map->hedges;
-    bspLeafs = map->bspLeafs;
-    bspNodes = map->bspNodes;
 
     theMap = map;
 }

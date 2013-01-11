@@ -32,14 +32,9 @@
 #include "dd_share.h"
 #include "api_mapedit.h"
 #include "map/dam_main.h"
-#include "render/rend_bias.h"
 #include "m_nodepile.h"
 #include <de/binangle.h>
 #include <de/vector1.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define GET_VERTEX_IDX(vtx)     GameMap_VertexIndex(theMap, vtx)
 #define GET_LINE_IDX(li)        GameMap_LineDefIndex(theMap, li)
@@ -75,23 +70,6 @@ typedef struct runtime_mapdata_header_s {
     int             type; // One of the DMU type constants.
 } runtime_mapdata_header_t;
 
-typedef struct shadowcorner_s {
-    float           corner;
-    struct sector_s* proximity;
-    float           pOffset;
-    float           pHeight;
-} shadowcorner_t;
-
-typedef struct edgespan_s {
-    float           length;
-    float           shift;
-} edgespan_t;
-
-typedef struct planelist_s {
-    uint            num, maxNum;
-    struct plane_s** array;
-} planelist_t;
-
 typedef struct surfacelistnode_s {
     void*           data;
     struct surfacelistnode_s* next;
@@ -101,30 +79,6 @@ typedef struct surfacelist_s {
     uint            num;
     surfacelistnode_t* head;
 } surfacelist_t;
-
-/**
- * Stores the data pertaining to vertex lighting for a worldmap, surface.
- */
-typedef struct biassurface_s {
-    uint            updated;
-    uint            size;
-    vertexillum_t*  illum; // [size]
-    biastracker_t   tracker;
-    biasaffection_t affected[MAX_BIAS_AFFECTED];
-
-    struct biassurface_s* next;
-} biassurface_t;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#include "map/polyobj.h"
-#include "p_maptypes.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Map entity definitions.
 struct mapentitydef_s;
@@ -155,6 +109,10 @@ typedef struct mapentitydef_s {
     mapentitydef_s(int _id) : id(_id), numProps(0), props(0) {}
 #endif
 } MapEntityDef;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Lookup a defined property by identifier.
@@ -227,37 +185,6 @@ angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
 float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
 
 extern Uri* mapUri;
-
-/**
- * The map data arrays are accessible globally inside the engine.
- */
-extern Vertex* vertexes;
-extern SideDef* sideDefs;
-extern LineDef* lineDefs;
-extern Sector* sectors;
-extern Polyobj** polyObjs; ///< List of all polyobjs on the current map.
-
-extern BspNode** bspNodes;
-extern BspLeaf** bspLeafs;
-extern HEdge** hedges;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#include "gamemap.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// The current map.
-extern GameMap* theMap;
-
-/**
- * Change the global "current" map.
- */
-void P_SetCurrentMap(GameMap* map);
 
 /**
  * To be called to initialize the game map object defs.

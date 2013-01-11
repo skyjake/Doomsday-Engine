@@ -628,14 +628,14 @@ void LG_SectorChanged(Sector* sector)
 
 void LG_MarkAllForUpdate(void)
 {
-    if(!lgInited)
+    if(!lgInited || !theMap)
         return;
 
     // Mark all blocks and contributors.
     { uint i;
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        LG_SectorChanged(&sectors[i]);
+        LG_SectorChanged(GameMap_Sector(theMap, i));
     }}
 }
 

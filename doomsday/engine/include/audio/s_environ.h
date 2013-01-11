@@ -23,7 +23,7 @@
 #ifndef LIBDENG_SOUND_ENVIRON_H
 #define LIBDENG_SOUND_ENVIRON_H
 
-#include "map/p_mapdata.h"
+#include "map/gamemap.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,7 +40,7 @@ extern "C" {
  *
  * @param sec  Sector to calculate reverb properties of.
  */
-void S_MarkSectorReverbDirty(Sector* sec);
+void S_MarkSectorReverbDirty(Sector *sec);
 
 /**
  * Called during map init to determine which BSP leafs affect the reverb
@@ -48,7 +48,7 @@ void S_MarkSectorReverbDirty(Sector* sec);
  * two dimensions at least), they do not move and are not created/destroyed
  * once the map has been loaded; this step can be pre-processed.
  */
-void S_DetermineBspLeafsAffectingSectorReverb(GameMap* map);
+void S_DetermineBspLeafsAffectingSectorReverb(GameMap *map);
 
 /**
  * Recalculates reverb properties for a sector. One must first mark the sector
@@ -57,7 +57,7 @@ void S_DetermineBspLeafsAffectingSectorReverb(GameMap* map);
  *
  * @param sec  Sector in which to update reverb properties.
  */
-void S_UpdateReverbForSector(Sector* sec);
+void S_UpdateReverbForSector(Sector *sec);
 
 /**
  * Must be called when the map changes.
@@ -67,12 +67,12 @@ void S_ResetReverb(void);
 /**
  * @return  Environment class name for identifier @a mclass.
  */
-const char* S_MaterialEnvClassName(material_env_class_t mclass);
+char const *S_MaterialEnvClassName(material_env_class_t mclass);
 
 /**
  * @return  Environment class associated with material @a uri else @c MEC_UNKNOWN.
  */
-material_env_class_t S_MaterialEnvClassForUri(const Uri* uri);
+material_env_class_t S_MaterialEnvClassForUri(Uri const *uri);
 
 #ifdef __cplusplus
 } // extern "C"
