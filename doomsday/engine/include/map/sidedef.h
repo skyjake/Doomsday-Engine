@@ -86,6 +86,19 @@ typedef struct msidedef_s {
     int refCount;
 } msidedef_t;
 
+// FakeRadio shadow data.
+typedef struct shadowcorner_s {
+    float           corner;
+    struct sector_s* proximity;
+    float           pOffset;
+    float           pHeight;
+} shadowcorner_t;
+
+typedef struct edgespan_s {
+    float           length;
+    float           shift;
+} edgespan_t;
+
 typedef struct sidedef_s {
     runtime_mapdata_header_t header;
     Surface             sections[3];

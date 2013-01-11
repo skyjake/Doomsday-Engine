@@ -24,6 +24,8 @@
 #define LIBDENG_MAP_BSPLEAF
 
 #include "resource/r_data.h"
+#include "render/rend_bias.h"
+#include "p_mapdata.h"
 #include "p_dmu.h"
 
 /**
@@ -52,8 +54,6 @@ typedef struct bspleaf_s {
     struct biassurface_s** bsuf; /// [sector->planeCount] size.
     unsigned int        reverb[NUM_REVERB_DATA];
 } BspLeaf;
-
-DENG_EXTERN_C BspLeaf** bspLeafs;
 
 #ifdef __cplusplus
 extern "C" {

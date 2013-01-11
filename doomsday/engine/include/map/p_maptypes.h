@@ -31,6 +31,7 @@
 #include "sector.h"
 #include "bspleaf.h"
 #include "bspnode.h"
+#include "p_object.h"
 #include "polyobj.h"
 
 #endif // LIBDENG_MAP_DATA_TYPES_H

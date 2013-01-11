@@ -3122,7 +3122,7 @@ void Rend_RenderSurfaceVectors()
 
     for(i = 0; i < NUM_BSPLEAFS; ++i)
     {
-        BspLeaf* bspLeaf = bspLeafs[i];
+        BspLeaf* bspLeaf = GameMap_BspLeaf(theMap, i);
         uint j;
 
         if(!bspLeaf->sector) continue;

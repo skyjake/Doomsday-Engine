@@ -68,7 +68,6 @@ Sector* sectors;
 Polyobj** polyObjs;
 
 HEdge** hedges;
-BspLeaf** bspLeafs;
 BspNode** bspNodes;
 
 GameMap* theMap;
@@ -91,7 +90,6 @@ void P_SetCurrentMap(GameMap* map)
         vertexes = 0;
         hedges = 0;
         sectors = 0;
-        bspLeafs = 0;
         bspNodes = 0;
         lineDefs = 0;
         sideDefs = 0;
@@ -110,7 +108,6 @@ void P_SetCurrentMap(GameMap* map)
     polyObjs = map->polyObjs;
 
     hedges   = map->hedges;
-    bspLeafs = map->bspLeafs;
     bspNodes = map->bspNodes;
 
     theMap = map;

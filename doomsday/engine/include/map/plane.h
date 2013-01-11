@@ -59,6 +59,12 @@ typedef struct plane_s {
     int                 planeID;
 } Plane;
 
+typedef struct planelist_s {
+    uint num;
+    uint maxNum;
+    Plane **array;
+} planelist_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -27,6 +27,7 @@
 #include "p_dmu.h"
 #include "sector.h"
 #include "render/walldiv.h"
+#include "render/rend_bias.h"
 
 // Helper macros for accessing hedge data elements.
 #define FRONT 0
