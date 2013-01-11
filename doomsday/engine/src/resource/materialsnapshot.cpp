@@ -50,8 +50,10 @@ struct Store {
     /// Textures used on each texture unit.
     TextureVariant *textures[NUM_MATERIAL_TEXTURE_UNITS];
 
+#ifdef __CLIENT__
     /// Texture unit configuration.
     rtexmapunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
+#endif
 
     Store() { initialize(); }
 
@@ -72,13 +74,13 @@ struct Store {
     }
 
 #ifdef __CLIENT__
-    void writeTexUnit(byte unit, blendmode_t blendMode, QSizeF scale,
-        QPointF offset, float opacity)
+    void writeTexUnit(byte unit, TextureVariant *texture, blendmode_t blendMode,
+                      QSizeF scale, QPointF offset, float opacity)
     {
         DENG2_ASSERT(unit < NUM_MATERIAL_TEXTURE_UNITS);
-
         rtexmapunit_t *tu = &units[unit];
-        tu->texture.variant = reinterpret_cast<texturevariant_s *>(textures[unit]);
+
+        tu->texture.variant = reinterpret_cast<texturevariant_s *>(texture);
         tu->texture.flags   = TUF_TEXTURE_IS_MANAGED;
         tu->opacity   = MINMAX_OF(0, opacity, 1);
         tu->blendMode = blendMode;
@@ -248,9 +250,13 @@ void MaterialSnapshot::Instance::takeSnapshot()
 #ifdef __CLIENT__
     /*
      * Ensure all resources needed to visualize this have been prepared.
+     *
+     * If skymasked, we only need to update the primary tex unit (due to it
+     * being visible when skymask debug drawing is enabled).
      */
 
     // Do we need to prepare a DetailTexture?
+    if(!Material_IsSkyMasked(mat))
     if(texture_s *tex = Material_DetailTexture(mat))
     {
         float const contrast = Material_DetailStrength(mat) * detailFactor;
@@ -260,6 +266,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 
     // Do we need to prepare a shiny texture (and possibly a mask)?
+    if(!Material_IsSkyMasked(mat))
     if(texture_s *tex = Material_ShinyTexture(mat))
     {
         texturevariantspecification_t *texSpec =
@@ -356,58 +363,52 @@ void MaterialSnapshot::Instance::takeSnapshot()
             offset.setY(lsCur->texOrigin[1] * (1 - l.inter) + lsNext->texOrigin[1] * l.inter);
         }
 
-        stored.writeTexUnit(MTU_PRIMARY, BM_NORMAL,
+        stored.writeTexUnit(MTU_PRIMARY, tex, BM_NORMAL,
                             QSizeF(1.f / stored.dimensions.width(),
                                    1.f / stored.dimensions.height()),
                             offset, 1);
 #endif
     }
 
-    /**
-     * If skymasked, we only need to update the primary tex unit (due to it being
-     * visible when skymask debug drawing is enabled).
-     */
-    if(!Material_IsSkyMasked(mat))
+    // Setup the detail texture unit.
+    if(TextureVariant *tex = prepTextures[MTU_DETAIL])
     {
-        // Setup the detail texture unit?
-        if(stored.opaque)
-        if(TextureVariant *tex = prepTextures[MTU_DETAIL])
-        {
-            stored.textures[MTU_DETAIL] = tex;
+        stored.textures[MTU_DETAIL] = tex;
 #ifdef __CLIENT__
-            float scaleFactor = Material_DetailScale(mat);
-            if(detailScale > .0001f)
-                scaleFactor *= detailScale; // Global scale factor.
+        float scaleFactor = Material_DetailScale(mat);
+        if(detailScale > .0001f)
+            scaleFactor *= detailScale; // Global scale factor.
 
-            stored.writeTexUnit(MTU_DETAIL, BM_NORMAL,
-                                QSizeF(1.f / tex->generalCase().width()  * scaleFactor,
-                                       1.f / tex->generalCase().height() * scaleFactor),
-                                QPointF(0, 0), 1);
+        stored.writeTexUnit(MTU_DETAIL, tex, BM_NORMAL,
+                            QSizeF(1.f / tex->generalCase().width()  * scaleFactor,
+                                   1.f / tex->generalCase().height() * scaleFactor),
+                            QPointF(0, 0), 1);
 #endif
-        }
+    }
 
-        // Setup the shiny texture units?
-        if(TextureVariant *tex = prepTextures[MTU_REFLECTION])
-        {
-            stored.textures[MTU_REFLECTION] = tex;
+    // Setup the shiny texture units.
+    if(TextureVariant *tex = prepTextures[MTU_REFLECTION])
+    {
+        stored.textures[MTU_REFLECTION] = tex;
 #ifdef __CLIENT__
-            stored.writeTexUnit(MTU_REFLECTION, Material_ShinyBlendmode(mat),
-                                QSizeF(1, 1), QPointF(0, 0),
-                                Material_ShinyStrength(mat));
+        stored.writeTexUnit(MTU_REFLECTION, tex, Material_ShinyBlendmode(mat),
+                            QSizeF(1, 1), QPointF(0, 0),
+                            Material_ShinyStrength(mat));
 #endif
 
-            if(TextureVariant *tex = prepTextures[MTU_REFLECTION_MASK])
-            {
-                stored.textures[MTU_REFLECTION_MASK] = tex;
+    }
+
+    if(prepTextures[MTU_REFLECTION])
+    if(TextureVariant *tex = prepTextures[MTU_REFLECTION_MASK])
+    {
+        stored.textures[MTU_REFLECTION_MASK] = tex;
 #ifdef __CLIENT__
-                stored.writeTexUnit(MTU_REFLECTION_MASK, BM_NORMAL,
-                                    QSizeF(1.f / (stored.dimensions.width()  * tex->generalCase().width()),
-                                           1.f / (stored.dimensions.height() * tex->generalCase().height())),
-                                    QPointF(stored.units[MTU_PRIMARY].offset[0],
-                                            stored.units[MTU_PRIMARY].offset[1]), 1);
+        stored.writeTexUnit(MTU_REFLECTION_MASK, tex, BM_NORMAL,
+                            QSizeF(1.f / (stored.dimensions.width()  * tex->generalCase().width()),
+                                   1.f / (stored.dimensions.height() * tex->generalCase().height())),
+                            QPointF(stored.units[MTU_PRIMARY].offset[0],
+                                    stored.units[MTU_PRIMARY].offset[1]), 1);
 #endif
-            }
-        }
     }
 }
 
