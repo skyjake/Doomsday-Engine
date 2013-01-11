@@ -31,7 +31,7 @@
 #include "map/gamemap.h"
 #include "map/bsp/partitioner.h"
 
-#include <QGlobalStatic>
+#include <QtGlobal>
 
 namespace de {
 namespace bsp {
