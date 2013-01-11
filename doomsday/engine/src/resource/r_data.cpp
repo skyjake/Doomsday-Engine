@@ -31,6 +31,7 @@
 #include <de/String>
 #include <de/Time>
 #include <de/mathutil.h> // M_NumDigits()
+#include <de/stack.h>
 
 #include "de_base.h"
 #include "de_filesys.h"
@@ -39,7 +40,6 @@
 #include "def_main.h"
 #include "gl/gl_tex.h"
 #include "gl/gl_texmanager.h"
-#include "m_stack.h"
 #include "uri.hh"
 
 using namespace de;
