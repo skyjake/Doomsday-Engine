@@ -73,8 +73,6 @@ typedef struct hedge_s {
     uint                index; /// Unique. Set when saving the BSP.
 } HEdge;
 
-DENG_EXTERN_C HEdge** hedges;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

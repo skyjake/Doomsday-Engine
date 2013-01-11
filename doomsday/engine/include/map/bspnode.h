@@ -45,8 +45,6 @@ typedef struct bspnode_s {
     uint                index; /// Unique. Set when saving the BSP.
 } BspNode;
 
-DENG_EXTERN_C BspNode** bspNodes;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
