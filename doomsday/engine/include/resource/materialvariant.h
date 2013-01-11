@@ -132,14 +132,6 @@ public:
 
         /// Intermark from the current stage to the next [0..1].
         float inter;
-
-        /// Interpolated origin of the texture in material-space.
-        /// @todo Does not belong at this level.
-        float texOrigin[2];
-
-        /// Interpolated glow strength factor.
-        /// @todo Does not belong at this level.
-        float glowStrength;
     };
 
 public:

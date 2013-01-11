@@ -33,7 +33,7 @@ enum {
 
 #include <QSize>
 #include <de/Error>
-#include "de/vector1.h"
+#include <de/Vector>
 #include "render/rendpoly.h"
 
 namespace de {
@@ -82,7 +82,7 @@ public:
     /**
      * Returns the minimum ambient light color for the material snapshot.
      */
-    vec3f_t const &reflectionMinColor() const;
+    Vector3f const &reflectionMinColor() const;
 
     /**
      * Returns @c true if a texture with @a index is set for the material snapshot.
@@ -97,6 +97,7 @@ public:
      */
     TextureVariant &texture(int index) const;
 
+#ifdef __CLIENT__
     /**
      * Lookup a material snapshot texture unit by index.
      *
@@ -104,6 +105,7 @@ public:
      * @return  The associated texture unit.
      */
     rtexmapunit_t const &unit(int index) const;
+#endif
 
     /**
      * Prepare all textures and update property values.

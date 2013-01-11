@@ -17,29 +17,26 @@
  * 02110-1301 USA</small>
  */
 
+#include <cstring>
+
 #include "de_base.h"
 #include "de_graphics.h"
 #include "de_render.h"
 
-#include <cstring>
 #include <de/Error>
 #include <de/Log>
 
 #include "resource/material.h"
 #include "resource/texture.h"
-#include "resource/materialsnapshot.h"
-
 #include "gl/sys_opengl.h" // TODO: get rid of this
+
+#include "resource/materialsnapshot.h"
 
 namespace de {
 
-struct MaterialSnapshot::Instance
-{
-    /// Variant Material used to derive this snapshot.
-    MaterialVariant *material;
-
+struct Store {
     /// @c true= this material is completely opaque.
-    bool isOpaque;
+    bool opaque;
 
     /// Glow strength factor.
     float glowStrength;
@@ -48,7 +45,7 @@ struct MaterialSnapshot::Instance
     QSize dimensions;
 
     /// Minimum ambient light color for reflections.
-    vec3f_t reflectionMinColor;
+    Vector3f reflectionMinColor;
 
     /// Textures used on each texture unit.
     TextureVariant *textures[NUM_MATERIAL_TEXTURE_UNITS];
@@ -56,35 +53,57 @@ struct MaterialSnapshot::Instance
     /// Texture unit configuration.
     rtexmapunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
 
-    Instance(MaterialVariant &_material)
-        : material(&_material), isOpaque(true), glowStrength(0), dimensions(0, 0)
-    {
-        V3f_Set(reflectionMinColor, 0, 0, 0);
+    Store() { initialize(); }
 
-#ifdef __CLIENT__
+    void initialize()
+    {
+        dimensions         = QSize(0, 0);
+        reflectionMinColor = Vector3f(0, 0, 0);
+        opaque             = true;
+        glowStrength       = 0;
+
         for(int i = 0; i < NUM_MATERIAL_TEXTURE_UNITS; ++i)
         {
+            textures[i] = 0;
+#ifdef __CLIENT__
             Rtu_Init(&units[i]);
-            textures[i] = NULL;
-        }
 #endif
+        }
     }
 
-    void setupTexUnit(byte unit, TextureVariant *texture,
-        blendmode_t blendMode, float sScale, float tScale, float sOffset,
-        float tOffset, float opacity)
+#ifdef __CLIENT__
+    void writeTexUnit(byte unit, blendmode_t blendMode, QSizeF scale,
+        QPointF offset, float opacity)
     {
         DENG2_ASSERT(unit < NUM_MATERIAL_TEXTURE_UNITS);
 
-        textures[unit] = texture;
         rtexmapunit_t *tu = &units[unit];
-        tu->texture.variant = reinterpret_cast<texturevariant_s *>(texture);
-        tu->texture.flags = TUF_TEXTURE_IS_MANAGED;
+        tu->texture.variant = reinterpret_cast<texturevariant_s *>(textures[unit]);
+        tu->texture.flags   = TUF_TEXTURE_IS_MANAGED;
+        tu->opacity   = MINMAX_OF(0, opacity, 1);
         tu->blendMode = blendMode;
-        V2f_Set(tu->scale, sScale, tScale);
-        V2f_Set(tu->offset, sOffset, tOffset);
-        tu->opacity = MINMAX_OF(0, opacity, 1);
+        V2f_Set(tu->scale, scale.width(), scale.height());
+        V2f_Set(tu->offset, offset.x(), offset.y());
     }
+#endif // __CLIENT__
+};
+
+struct MaterialSnapshot::Instance
+{
+    /// Variant Material used to derive this snapshot.
+    MaterialVariant *material;
+
+    Store stored;
+
+    Instance(MaterialVariant &_material)
+        : material(&_material), stored()
+    {}
+
+    void takeSnapshot();
+
+#ifdef __CLIENT__
+    void updateMaterial(preparetextureresult_t result);
+#endif
 };
 
 MaterialSnapshot::MaterialSnapshot(MaterialVariant &_material)
@@ -104,28 +123,28 @@ MaterialVariant &MaterialSnapshot::material() const
 
 QSize const &MaterialSnapshot::dimensions() const
 {
-    return d->dimensions;
+    return d->stored.dimensions;
 }
 
 bool MaterialSnapshot::isOpaque() const
 {
-    return d->isOpaque;
+    return d->stored.opaque;
 }
 
 float MaterialSnapshot::glowStrength() const
 {
-    return d->glowStrength;
+    return d->stored.glowStrength;
 }
 
-vec3f_t const &MaterialSnapshot::reflectionMinColor() const
+Vector3f const &MaterialSnapshot::reflectionMinColor() const
 {
-    return d->reflectionMinColor;
+    return d->stored.reflectionMinColor;
 }
 
 bool MaterialSnapshot::hasTexture(int index) const
 {
     if(index < 0 || index >= NUM_MATERIAL_TEXTURE_UNITS) return false;
-    return d->textures[index] != 0;
+    return d->stored.textures[index] != 0;
 }
 
 TextureVariant &MaterialSnapshot::texture(int index) const
@@ -133,11 +152,12 @@ TextureVariant &MaterialSnapshot::texture(int index) const
     if(!hasTexture(index))
     {
         /// @throw InvalidUnitError Attempt to dereference with an invalid index.
-        throw InvalidUnitError("MaterialSnapshot::texture", QString("Invalid unit index %1").arg(index));
+        throw InvalidUnitError("MaterialSnapshot::texture", QString("Invalid texture index %1").arg(index));
     }
-    return *d->textures[index];
+    return *d->stored.textures[index];
 }
 
+#ifdef __CLIENT__
 rtexmapunit_t const &MaterialSnapshot::unit(int index) const
 {
     if(index < 0 || index >= NUM_MATERIAL_TEXTURE_UNITS)
@@ -145,7 +165,7 @@ rtexmapunit_t const &MaterialSnapshot::unit(int index) const
         /// @throw InvalidUnitError Attempt to obtain a reference to a unit with an invalid index.
         throw InvalidUnitError("MaterialSnapshot::unit", QString("Invalid unit index %1").arg(index));
     }
-    return d->units[index];
+    return d->stored.units[index];
 }
 
 static Texture *findTextureByResourceUri(String nameOfScheme, de::Uri const &resourceUri)
@@ -160,7 +180,6 @@ static Texture *findTextureByResourceUri(String nameOfScheme, de::Uri const &res
     return 0;
 }
 
-#ifdef __CLIENT__
 /// @todo Optimize: Cache this result at material level.
 static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
 {
@@ -172,7 +191,6 @@ static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
     {} // Ignore this error.
     return 0;
 }
-#endif
 
 static inline Texture *findDetailTextureForDef(ded_detailtexture_t const &def)
 {
@@ -192,64 +210,48 @@ static inline Texture *findShinyMaskTextureForDef(ded_reflection_t const &def)
     return findTextureByResourceUri("Masks", reinterpret_cast<de::Uri const &>(*def.maskMap));
 }
 
-void MaterialSnapshot::update()
+void MaterialSnapshot::Instance::updateMaterial(preparetextureresult_t result)
 {
+    material_t *mat = &material->generalCase();
+    MaterialManifest &manifest = Material_Manifest(mat);
+
+    Material_SetPrepared(mat, result == PTR_UPLOADED_ORIGINAL? 1 : 2);
+
+    ded_detailtexture_t const *dtlDef = manifest.detailTextureDef();
+    Material_SetDetailTexture(mat,  reinterpret_cast<texture_s *>(dtlDef? findDetailTextureForDef(*dtlDef) : NULL));
+    Material_SetDetailStrength(mat, (dtlDef? dtlDef->strength : 0));
+    Material_SetDetailScale(mat,    (dtlDef? dtlDef->scale : 0));
+
+    ded_reflection_t const *refDef = manifest.reflectionDef();
+    Material_SetShinyTexture(mat,     reinterpret_cast<texture_s *>(refDef? findShinyTextureForDef(*refDef) : NULL));
+    Material_SetShinyMaskTexture(mat, reinterpret_cast<texture_s *>(refDef? findShinyMaskTextureForDef(*refDef) : NULL));
+    Material_SetShinyBlendmode(mat,   (refDef? refDef->blendMode : BM_ADD));
+    float const black[3] = { 0, 0, 0 };
+    Material_SetShinyMinColor(mat,    (refDef? refDef->minColor : black));
+    Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
+}
+#endif // __CLIENT__
+
+void MaterialSnapshot::Instance::takeSnapshot()
+{
+    material_t *mat = &material->generalCase();
+//    MaterialManifest &manifest = Material_Manifest(mat);
+    ded_material_t const *def = Material_Definition(mat);
+    MaterialVariantSpec const &spec = material->spec();
+
     TextureVariant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS];
     std::memset(prepTextures, 0, sizeof prepTextures);
 
-    material_t *mat = &d->material->generalCase();
-    MaterialVariantSpec const &spec = d->material->spec();
+    // Reinitialize the stored values.
+    stored.initialize();
 
 #ifdef __CLIENT__
-    MaterialManifest &manifest = Material_Manifest(mat);
-    ded_material_t const *def = Material_Definition(mat);
-
-    // Ensure all resources needed to visualize this have been prepared.
-    int const layerCount = Material_LayerCount(mat);
-    for(int i = 0; i < layerCount; ++i)
-    {
-        MaterialVariant::LayerState const &l = d->material->layer(i);
-        ded_material_layer_stage_t const *lsDef = &def->layers[i].stages[l.stage];
-
-        Texture *tex = findTextureForLayerStage(*lsDef);
-        if(!tex) continue;
-
-        // Pick the instance matching the specified context.
-        preparetextureresult_t result;
-        prepTextures[i] = reinterpret_cast<TextureVariant *>(
-            GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(tex),
-                                      spec.primarySpec, &result));
-
-        if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
-        {
-            // Primary texture was (re)prepared.
-            Material_SetPrepared(mat, result == PTR_UPLOADED_ORIGINAL? 1 : 2);
-
-            ded_detailtexture_t const *dtlDef = manifest.detailTextureDef();
-            Material_SetDetailTexture(mat,  reinterpret_cast<texture_s *>(dtlDef? findDetailTextureForDef(*dtlDef) : NULL));
-            Material_SetDetailStrength(mat, (dtlDef? dtlDef->strength : 0));
-            Material_SetDetailScale(mat,    (dtlDef? dtlDef->scale : 0));
-
-            ded_reflection_t const *refDef = manifest.reflectionDef();
-            Material_SetShinyTexture(mat,     reinterpret_cast<texture_s *>(refDef? findShinyTextureForDef(*refDef) : NULL));
-            Material_SetShinyMaskTexture(mat, reinterpret_cast<texture_s *>(refDef? findShinyMaskTextureForDef(*refDef) : NULL));
-            Material_SetShinyBlendmode(mat,   (refDef? refDef->blendMode : BM_ADD));
-            float const black[3] = { 0, 0, 0 };
-            Material_SetShinyMinColor(mat,    (refDef? refDef->minColor : black));
-            Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
-
-            // Are we inheriting the logical dimensions from the texture?
-            if(0 == Material_Width(mat) && 0 == Material_Height(mat))
-            {
-                Size2Raw texSize(tex->width(), tex->height());
-                Material_SetDimensions(mat, &texSize);
-            }
-        }
-    }
+    /*
+     * Ensure all resources needed to visualize this have been prepared.
+     */
 
     // Do we need to prepare a DetailTexture?
-    texture_s *tex = Material_DetailTexture(mat);
-    if(tex)
+    if(texture_s *tex = Material_DetailTexture(mat))
     {
         float const contrast = Material_DetailStrength(mat) * detailFactor;
         texturevariantspecification_t *texSpec = GL_DetailTextureVariantSpecificationForContext(contrast);
@@ -258,8 +260,7 @@ void MaterialSnapshot::update()
     }
 
     // Do we need to prepare a shiny texture (and possibly a mask)?
-    tex = Material_ShinyTexture(mat);
-    if(tex)
+    if(texture_s *tex = Material_ShinyTexture(mat))
     {
         texturevariantspecification_t *texSpec =
             GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
@@ -278,38 +279,90 @@ void MaterialSnapshot::update()
         }
     }
 
-    for(int i = 0; i < NUM_MATERIAL_TEXTURE_UNITS; ++i)
+    int const layerCount = Material_LayerCount(mat);
+    for(int i = 0; i < layerCount; ++i)
     {
-        Rtu_Init(&d->units[i]);
-        d->textures[i] = NULL;
+        MaterialVariant::LayerState const &l = material->layer(i);
+        ded_material_layer_stage_t const *lsDef = &def->layers[i].stages[l.stage];
+
+        Texture *tex = findTextureForLayerStage(*lsDef);
+        if(!tex) continue;
+
+        // Pick the instance matching the specified context.
+        preparetextureresult_t result;
+        prepTextures[i] = reinterpret_cast<TextureVariant *>(
+            GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(tex),
+                                      spec.primarySpec, &result));
+
+        // Primary texture was (re)prepared?
+        if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
+        {
+            // Are we inheriting the logical dimensions from the texture?
+            if(0 == Material_Width(mat) && 0 == Material_Height(mat))
+            {
+                Size2Raw newDimensions(tex->width(), tex->height());
+                Material_SetDimensions(mat, &newDimensions);
+            }
+            updateMaterial(result);
+        }
     }
 #endif // __CLIENT__
 
-    Size2 const *materialDimensions = Material_Dimensions(mat);
-    d->dimensions.setWidth(Size2_Width(materialDimensions));
-    d->dimensions.setHeight(Size2_Height(materialDimensions));
+    stored.dimensions.setWidth(Material_Width(mat));
+    stored.dimensions.setHeight(Material_Height(mat));
 
-    d->glowStrength = 0;
-    d->isOpaque     = true;
-    V3f_Set(d->reflectionMinColor, 0, 0, 0);
+#ifdef __CLIENT__
+    stored.opaque = (prepTextures[MTU_PRIMARY] && !prepTextures[MTU_PRIMARY]->isMasked());
+#endif
 
-    if(d->dimensions.isEmpty()) return;
+    if(stored.dimensions.isEmpty()) return;
 
-    d->glowStrength = d->material->layer(0).glowStrength * glowFactor;
-    d->isOpaque     = (prepTextures[MTU_PRIMARY] && !prepTextures[MTU_PRIMARY]->isMasked());
+    MaterialVariant::LayerState const &l     = material->layer(0);
+    ded_material_layer_stage_t const *lsCur  = &def->layers[0].stages[l.stage];
+    ded_material_layer_stage_t const *lsNext = &def->layers[0].stages[(l.stage + 1) % def->layers[0].stageCount.num];
+
+    // Glow strength is presently taken from layer #0.
+    if(l.inter == 0)
+    {
+        stored.glowStrength = lsCur->glowStrength;
+    }
+    else // Interpolate.
+    {
+        stored.glowStrength = lsCur->glowStrength * (1 - l.inter) + lsNext->glowStrength * l.inter;
+    }
+
+    if(glowFactor > .0001f)
+        stored.glowStrength *= glowFactor; // Global scale factor.
+
+    if(MC_MAPSURFACE == spec.context && prepTextures[MTU_REFLECTION])
+    {
+        stored.reflectionMinColor = Vector3f(Material_ShinyMinColor(mat));
+    }
 
     // Setup the primary texture unit.
     if(TextureVariant *tex = prepTextures[MTU_PRIMARY])
     {
-        float const sScale = 1.f / d->dimensions.width();
-        float const tScale = 1.f / d->dimensions.height();
+        stored.textures[MTU_PRIMARY] = tex;
+#ifdef __CLIENT__
+        QPointF offset;
+        if(l.inter == 0)
+        {
+            offset = QPointF(lsCur->texOrigin[0], lsCur->texOrigin[1]);
+        }
+        else // Interpolate.
+        {
+            /// @todo Implement a more useful method of interpolation (but what? what do we want/need here?).
+            offset.setX(lsCur->texOrigin[0] * (1 - l.inter) + lsNext->texOrigin[0] * l.inter);
+            offset.setY(lsCur->texOrigin[1] * (1 - l.inter) + lsNext->texOrigin[1] * l.inter);
+        }
 
-        d->setupTexUnit(MTU_PRIMARY, tex, BM_NORMAL,
-                        sScale, tScale, d->material->layer(0).texOrigin[0],
-                        d->material->layer(0).texOrigin[1], 1);
+        stored.writeTexUnit(MTU_PRIMARY, BM_NORMAL,
+                            QSizeF(1.f / stored.dimensions.width(),
+                                   1.f / stored.dimensions.height()),
+                            offset, 1);
+#endif
     }
 
-#ifdef __CLIENT__
     /**
      * If skymasked, we only need to update the primary tex unit (due to it being
      * visible when skymask debug drawing is enabled).
@@ -317,47 +370,50 @@ void MaterialSnapshot::update()
     if(!Material_IsSkyMasked(mat))
     {
         // Setup the detail texture unit?
-        if(d->isOpaque)
+        if(stored.opaque)
         if(TextureVariant *tex = prepTextures[MTU_DETAIL])
         {
-            float const width   = tex->generalCase().width();
-            float const height  = tex->generalCase().height();
-            float scale = Material_DetailScale(mat);
-
-            // Apply the global scaling factor.
+            stored.textures[MTU_DETAIL] = tex;
+#ifdef __CLIENT__
+            float scaleFactor = Material_DetailScale(mat);
             if(detailScale > .0001f)
-                scale *= detailScale;
+                scaleFactor *= detailScale; // Global scale factor.
 
-            d->setupTexUnit(MTU_DETAIL, tex, BM_NORMAL,
-                            1.f / width * scale, 1.f / height * scale, 0, 0, 1);
+            stored.writeTexUnit(MTU_DETAIL, BM_NORMAL,
+                                QSizeF(1.f / tex->generalCase().width()  * scaleFactor,
+                                       1.f / tex->generalCase().height() * scaleFactor),
+                                QPointF(0, 0), 1);
+#endif
         }
 
         // Setup the shiny texture units?
         if(TextureVariant *tex = prepTextures[MTU_REFLECTION])
         {
-            blendmode_t const blendmode = Material_ShinyBlendmode(mat);
-            float const strength        = Material_ShinyStrength(mat);
-
-            d->setupTexUnit(MTU_REFLECTION, tex, blendmode, 1, 1, 0, 0, strength);
+            stored.textures[MTU_REFLECTION] = tex;
+#ifdef __CLIENT__
+            stored.writeTexUnit(MTU_REFLECTION, Material_ShinyBlendmode(mat),
+                                QSizeF(1, 1), QPointF(0, 0),
+                                Material_ShinyStrength(mat));
+#endif
 
             if(TextureVariant *tex = prepTextures[MTU_REFLECTION_MASK])
             {
-                d->setupTexUnit(MTU_REFLECTION_MASK, tex, BM_NORMAL,
-                                1.f / (d->dimensions.width()  * tex->generalCase().width()),
-                                1.f / (d->dimensions.height() * tex->generalCase().height()),
-                                d->units[MTU_PRIMARY].offset[0], d->units[MTU_PRIMARY].offset[1], 1);
+                stored.textures[MTU_REFLECTION_MASK] = tex;
+#ifdef __CLIENT__
+                stored.writeTexUnit(MTU_REFLECTION_MASK, BM_NORMAL,
+                                    QSizeF(1.f / (stored.dimensions.width()  * tex->generalCase().width()),
+                                           1.f / (stored.dimensions.height() * tex->generalCase().height())),
+                                    QPointF(stored.units[MTU_PRIMARY].offset[0],
+                                            stored.units[MTU_PRIMARY].offset[1]), 1);
+#endif
             }
         }
     }
-#endif // __CLIENT__
+}
 
-    if(MC_MAPSURFACE == spec.context && prepTextures[MTU_REFLECTION])
-    {
-        float const *minColor = Material_ShinyMinColor(mat);
-        d->reflectionMinColor[CR] = minColor[CR];
-        d->reflectionMinColor[CG] = minColor[CG];
-        d->reflectionMinColor[CB] = minColor[CB];
-    }
+void MaterialSnapshot::update()
+{
+    d->takeSnapshot();
 }
 
 } // namespace de

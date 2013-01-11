@@ -1010,12 +1010,12 @@ static boolean renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         if(shinyRTU && !drawAsVisSprite)
         {
             // Strength of the shine.
-            vec3f_t const &minColor = msA->reflectionMinColor();
+            Vector3f const &minColor = msA->reflectionMinColor();
             for(uint i = 0; i < numVertices; ++i)
             {
-                shinyColors[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], minColor[CR]);
-                shinyColors[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], minColor[CG]);
-                shinyColors[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], minColor[CB]);
+                shinyColors[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], minColor.x);
+                shinyColors[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], minColor.y);
+                shinyColors[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], minColor.z);
                 shinyColors[i].rgba[CA] = shinyRTU->opacity;
             }
         }

@@ -507,7 +507,6 @@ MaterialManifest &Materials::newManifest(MaterialScheme &scheme, Path const &pat
             // Allocate more memory.
             d->manifestIdMapSize += MATERIALS_MANIFESTMAP_BLOCK_ALLOC;
             d->manifestIdMap = (MaterialManifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
-            if(!d->manifestIdMap) Libdeng_BadAlloc();
         }
         d->manifestIdMap[d->manifestCount - 1] = manifest; /* 1-based index */
     }
@@ -829,9 +828,7 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
     for(int i = 0; i < layerCount; ++i)
     {
         MaterialVariant::LayerState const &l = variant.layer(i);
-
-        Con_Printf("  #%i: Stage:%i Tics:%i Offset: %.2f x %.2f Glow:%.2f\n",
-                   i, l.stage, int(l.tics), l.texOrigin[0], l.texOrigin[1], l.glowStrength);
+        Con_Printf("  #%i: Stage:%i Tics:%i\n", i, l.stage, int(l.tics));
     }
 }
 

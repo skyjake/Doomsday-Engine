@@ -135,8 +135,6 @@ void MaterialVariant::ticker(timespan_t /*ticLength*/)
 
         // Not animated?
         if(layerDef->stageCount.num == 1) continue;
-
-        ded_material_layer_stage_t const *lsCur = 0;
         LayerState &l = d->layers[i];
 
         if(DD_IsSharpTick() && l.tics-- <= 0)
@@ -149,7 +147,7 @@ void MaterialVariant::ticker(timespan_t /*ticLength*/)
             }
             l.inter = 0;
 
-            lsCur = &layerDef->stages[l.stage];
+            ded_material_layer_stage_t const *lsCur = &layerDef->stages[l.stage];
             if(lsCur->variance != 0)
                 l.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
             else
@@ -164,27 +162,9 @@ void MaterialVariant::ticker(timespan_t /*ticLength*/)
         }
         else
         {
-            lsCur = &layerDef->stages[l.stage];
+            ded_material_layer_stage_t const *lsCur = &layerDef->stages[l.stage];
             l.inter = 1 - (l.tics - frameTimePos) / float( lsCur->tics );
         }
-
-        if(l.inter == 0)
-        {
-            l.texOrigin[0] = lsCur->texOrigin[0];
-            l.texOrigin[1] = lsCur->texOrigin[1];
-            l.glowStrength = lsCur->glowStrength;
-            continue;
-        }
-
-        // Interpolate.
-        ded_material_layer_stage_t const *lsNext =
-            &layerDef->stages[(l.stage + 1) % layerDef->stageCount.num];
-
-        /// @todo Implement a more useful method of interpolation (but what? what do we want/need here?).
-        l.texOrigin[0] = lsCur->texOrigin[0] * (1 - l.inter) + lsNext->texOrigin[0] * l.inter;
-        l.texOrigin[1] = lsCur->texOrigin[1] * (1 - l.inter) + lsNext->texOrigin[1] * l.inter;
-
-        l.glowStrength = lsCur->glowStrength * (1 - l.inter) + lsNext->glowStrength * l.inter;
     }
 }
 
@@ -196,15 +176,11 @@ void MaterialVariant::resetAnim()
     int const layerCount      = Material_LayerCount(d->material);
     for(int i = 0; i < layerCount; ++i)
     {
-        ded_material_layer_t const *layerDef = &def->layers[i];
         LayerState &l = d->layers[i];
 
         l.stage = 0;
-        l.tics  = layerDef->stages[0].tics;
+        l.tics  = def->layers[i].stages[0].tics;
         l.inter = 0;
-        l.texOrigin[0] = layerDef->stages[0].texOrigin[0];
-        l.texOrigin[1] = layerDef->stages[0].texOrigin[1];
-        l.glowStrength = layerDef->stages[0].glowStrength;
     }
 }
 
