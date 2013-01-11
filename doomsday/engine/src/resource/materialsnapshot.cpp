@@ -255,6 +255,34 @@ void MaterialSnapshot::Instance::takeSnapshot()
      * being visible when skymask debug drawing is enabled).
      */
 
+    int const layerCount = Material_LayerCount(mat);
+    for(int i = 0; i < layerCount; ++i)
+    {
+        MaterialVariant::LayerState const &l = material->layer(i);
+        ded_material_layer_stage_t const *lsDef = &def->layers[i].stages[l.stage];
+
+        Texture *tex = findTextureForLayerStage(*lsDef);
+        if(!tex) continue;
+
+        // Pick the instance matching the specified context.
+        preparetextureresult_t result;
+        prepTextures[i] = reinterpret_cast<TextureVariant *>(
+            GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(tex),
+                                      spec.primarySpec, &result));
+
+        // Primary texture was (re)prepared?
+        if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
+        {
+            // Are we inheriting the logical dimensions from the texture?
+            if(0 == Material_Width(mat) && 0 == Material_Height(mat))
+            {
+                Size2Raw newDimensions(tex->width(), tex->height());
+                Material_SetDimensions(mat, &newDimensions);
+            }
+            updateMaterial(result);
+        }
+    }
+
     // Do we need to prepare a DetailTexture?
     if(!Material_IsSkyMasked(mat))
     if(texture_s *tex = Material_DetailTexture(mat))
@@ -283,34 +311,6 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                 -1, -1, -1, true, false, false, false);
             prepTextures[MTU_REFLECTION_MASK] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, texSpec));
-        }
-    }
-
-    int const layerCount = Material_LayerCount(mat);
-    for(int i = 0; i < layerCount; ++i)
-    {
-        MaterialVariant::LayerState const &l = material->layer(i);
-        ded_material_layer_stage_t const *lsDef = &def->layers[i].stages[l.stage];
-
-        Texture *tex = findTextureForLayerStage(*lsDef);
-        if(!tex) continue;
-
-        // Pick the instance matching the specified context.
-        preparetextureresult_t result;
-        prepTextures[i] = reinterpret_cast<TextureVariant *>(
-            GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(tex),
-                                      spec.primarySpec, &result));
-
-        // Primary texture was (re)prepared?
-        if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
-        {
-            // Are we inheriting the logical dimensions from the texture?
-            if(0 == Material_Width(mat) && 0 == Material_Height(mat))
-            {
-                Size2Raw newDimensions(tex->width(), tex->height());
-                Material_SetDimensions(mat, &newDimensions);
-            }
-            updateMaterial(result);
         }
     }
 #endif // __CLIENT__
