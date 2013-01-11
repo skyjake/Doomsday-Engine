@@ -23,7 +23,7 @@
 #ifndef LIBDENG_RENDER_THINGS_H
 #define LIBDENG_RENDER_THINGS_H
 
-#include "map/p_mapdata.h"
+#include "map/p_maptypes.h"
 #include "resource/r_data.h"
 #include "resource/materials.h"
 #include "rend_model.h"

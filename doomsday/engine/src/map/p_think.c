@@ -29,6 +29,8 @@
 #include "de_console.h"
 #include "de_network.h"
 
+#include "map/gamemap.h"
+
 typedef struct thinkerlist_s {
     boolean isPublic; ///< All thinkers in this list are visible publically.
     thinker_t thinkerCap;

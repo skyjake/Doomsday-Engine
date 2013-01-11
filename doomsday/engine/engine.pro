@@ -108,7 +108,6 @@ DENG_API_HEADERS = \
     api/api_thinker.h \
     api/api_uri.h \
     api/api_wad.h \
-    api/dd_maptypes.h \
     api/dd_share.h \
     api/dd_types.h \
     api/dd_version.h \
@@ -369,7 +368,8 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_HEADERS
+    $$DENG_HEADERS \
+    include/render/walldiv.h
 
 # Platform-specific sources.
 win32 {

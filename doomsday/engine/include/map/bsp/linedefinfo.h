@@ -28,7 +28,7 @@
 #ifndef LIBDENG_BSP_LINEDEFINFO
 #define LIBDENG_BSP_LINEDEFINFO
 
-#include "map/p_mapdata.h"
+#include "map/gamemap.h"
 #include "map/bsp/partitioner.h"
 
 #include <QGlobalStatic>

@@ -23,7 +23,7 @@
 #ifndef LIBDENG_MAP_POLYOBJ_H
 #define LIBDENG_MAP_POLYOBJ_H
 
-//#include "p_dmu.h"
+#include "dd_share.h"
 
 // We'll use the base polyobj template directly as our polyobj.
 typedef struct polyobj_s {
@@ -31,6 +31,8 @@ DD_BASE_POLYOBJ_ELEMENTS()
 } Polyobj;
 
 #define POLYOBJ_SIZE        gx.polyobjSize
+
+DENG_EXTERN_C Polyobj** polyObjs; ///< List of all polyobjs on the current map.
 
 #ifdef __cplusplus
 extern "C" {

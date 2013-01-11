@@ -120,7 +120,6 @@ typedef struct biassurface_s {
 #endif
 
 #include "map/polyobj.h"
-#include "p_maptypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -227,37 +226,6 @@ angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
 float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
 
 extern Uri* mapUri;
-
-/**
- * The map data arrays are accessible globally inside the engine.
- */
-extern Vertex* vertexes;
-extern SideDef* sideDefs;
-extern LineDef* lineDefs;
-extern Sector* sectors;
-extern Polyobj** polyObjs; ///< List of all polyobjs on the current map.
-
-extern BspNode** bspNodes;
-extern BspLeaf** bspLeafs;
-extern HEdge** hedges;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#include "gamemap.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// The current map.
-extern GameMap* theMap;
-
-/**
- * Change the global "current" map.
- */
-void P_SetCurrentMap(GameMap* map);
 
 /**
  * To be called to initialize the game map object defs.

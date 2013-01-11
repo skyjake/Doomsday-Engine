@@ -28,7 +28,7 @@
 #ifndef LIBDENG_BSPBUILDER
 #define LIBDENG_BSPBUILDER
 
-#include "p_mapdata.h"
+#include "map/gamemap.h"
 #include "map/bsp/bsptreenode.h"
 
 namespace de {

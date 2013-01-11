@@ -33,6 +33,7 @@
 
 #include "def_share.h"
 #include "api_uri.h"
+#include "api_gl.h"
 
 // Version 6 does not require semicolons.
 #define DED_VERSION                 6
@@ -86,7 +87,7 @@ typedef struct ded_ptcstage_s {
     ded_embsound_t  sound, hitSound;
 } ded_ptcstage_t;
 
-#include "map/p_mapdata.h"
+//#include "map/p_mapdata.h"
 
 typedef struct ded_count_s {
     int             num, max;

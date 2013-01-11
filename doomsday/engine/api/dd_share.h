@@ -41,7 +41,6 @@
 #include "dengproject.h"
 #include "dd_version.h"
 #include "dd_types.h"
-#include "dd_maptypes.h"
 #include "def_share.h"
 #include "api_wad.h"
 #include "api_gl.h"

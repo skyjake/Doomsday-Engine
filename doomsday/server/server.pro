@@ -100,7 +100,6 @@ DENG_API_HEADERS = \
     $$SRC/api/api_thinker.h \
     $$SRC/api/api_uri.h \
     $$SRC/api/api_wad.h \
-    $$SRC/api/dd_maptypes.h \
     $$SRC/api/dd_share.h \
     $$SRC/api/dd_types.h \
     $$SRC/api/dd_version.h \

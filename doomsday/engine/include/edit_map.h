@@ -28,7 +28,7 @@
 #ifndef __DOOMSDAY_MAP_EDITOR_H__
 #define __DOOMSDAY_MAP_EDITOR_H__
 
-#include "map/p_mapdata.h"
+#include "map/gamemap.h"
 #include "resource/materials.h"
 
 #ifdef __cplusplus

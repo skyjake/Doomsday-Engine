@@ -26,6 +26,27 @@
 #include "resource/r_data.h"
 #include "p_dmu.h"
 
+#define RIGHT                   0
+#define LEFT                    1
+
+/**
+ * An infinite line of the form point + direction vectors.
+ */
+typedef struct partition_s {
+    coord_t origin[2];
+    coord_t direction[2];
+} partition_t;
+
+typedef struct bspnode_s {
+    runtime_mapdata_header_t header;
+    partition_t         partition;
+    AABoxd              aaBox[2]; /// Bounding box for each child.
+    runtime_mapdata_header_t* children[2];
+    uint                index; /// Unique. Set when saving the BSP.
+} BspNode;
+
+DENG_EXTERN_C BspNode** bspNodes;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
