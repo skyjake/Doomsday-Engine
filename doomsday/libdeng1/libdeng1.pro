@@ -77,6 +77,7 @@ HEADERS += \
     include/de/rect.h \
     include/de/size.h \
     include/de/smoother.h \
+    include/de/stack.h \
     include/de/str.h \
     include/de/str.hh \
     include/de/stringarray.h \
@@ -105,6 +106,7 @@ SOURCES += \
     src/rect.c \
     src/size.c \
     src/smoother.cpp \
+    src/stack.c \
     src/str.c \
     src/stringarray.cpp \
     src/strutil.c \

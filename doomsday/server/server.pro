@@ -176,7 +176,6 @@ DENG_HEADERS += \
     $$SRC/include/m_misc.h \
     $$SRC/include/m_nodepile.h \
     $$SRC/include/m_profiler.h \
-    $$SRC/include/m_stack.h \
     $$SRC/include/map/blockmap.h \
     $$SRC/include/map/bsp/bsptreenode.h \
     $$SRC/include/map/bsp/hedgeinfo.h \
@@ -383,7 +382,6 @@ SOURCES += \
     $$SRC/src/m_decomp64.c \
     $$SRC/src/m_misc.c \
     $$SRC/src/m_nodepile.c \
-    $$SRC/src/m_stack.c \
     $$SRC/src/map/blockmap.c \
     $$SRC/src/map/bsp/hplane.cpp \
     $$SRC/src/map/bsp/partitioner.cpp \
