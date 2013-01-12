@@ -23,6 +23,13 @@
 #ifndef LIBDENG_MAP_HEDGE
 #define LIBDENG_MAP_HEDGE
 
+/*
+#ifndef __cplusplus
+#  error "map/hedge.h requires C++"
+#endif
+*/
+
+#include "MapObject"
 #include "resource/r_data.h"
 #include "p_dmu.h"
 #include "sector.h"
@@ -72,6 +79,17 @@ typedef struct hedge_s {
     short               frameFlags;
     uint                index; /// Unique. Set when saving the BSP.
 } HEdge;
+
+/*
+class HEdge : public de::MapObject, public hedge_s
+{
+public:
+    HEdge() : de::MapObject(DMU_HEDGE)
+    {
+        memset(static_cast<hedge_s *>(this), 0, sizeof(hedge_s));
+    }
+};
+*/
 
 #ifdef __cplusplus
 extern "C" {

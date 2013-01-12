@@ -30,7 +30,14 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_network.h"
+
+#include "client/cl_frame.h"
+#include "client/cl_mobj.h"
+#include "client/cl_player.h"
+#include "client/cl_sound.h"
+#include "client/cl_world.h"
+#include "network/net_main.h"
+#include "network/net_msg.h"
 
 // MACROS ------------------------------------------------------------------
 

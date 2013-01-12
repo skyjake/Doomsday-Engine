@@ -39,29 +39,6 @@
 extern "C" {
 #endif
 
-// Prefer adding new flags inside the deltas instead of adding new delta types.
-typedef enum {
-    DT_MOBJ = 0,
-    DT_PLAYER = 1,
-    //DT_SECTOR_R6 = 2, // 2 bytes for flags.
-    //DT_SIDE_R6 = 3, // 1 byte for flags.
-    DT_POLY = 4,
-    DT_LUMP = 5,
-    DT_SOUND = 6, // No emitter
-    DT_MOBJ_SOUND = 7,
-    DT_SECTOR_SOUND = 8,
-    DT_POLY_SOUND = 9,
-    DT_SECTOR = 10, // Flags in a packed long.
-
-    // Special types: (only in the PSV_FRAME2 packet when written to message)
-    DT_NULL_MOBJ = 11, // Mobj was removed (just type and ID).
-    DT_CREATE_MOBJ = 12, // Regular DT_MOBJ, but the mobj was just created.
-
-    DT_SIDE = 13, // Flags in a packed long.
-
-    NUM_DELTA_TYPES
-} deltatype_t;
-
 // OR'd with the type number when resending Unacked deltas.
 #define DT_RESENT               0x80
 

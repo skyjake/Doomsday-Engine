@@ -29,6 +29,8 @@
 #ifndef __DOOMSDAY_CLIENT_SOUND_H__
 #define __DOOMSDAY_CLIENT_SOUND_H__
 
+#include "server/sv_def.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

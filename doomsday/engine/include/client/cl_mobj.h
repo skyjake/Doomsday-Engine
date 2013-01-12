@@ -21,6 +21,8 @@
 #ifndef __DOOMSDAY_CLIENT_MOBJ_H__
 #define __DOOMSDAY_CLIENT_MOBJ_H__
 
+#include "map/p_object.h"
+
 /**
  * @defgroup clMobjFlags Client Mobj Flags
  * @ingroup flags

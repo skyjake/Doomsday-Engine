@@ -27,8 +27,10 @@
  */
 #include "de_base.h"
 #include "de_console.h"
-#include "de_network.h"
 #include "de_infine.h"
+
+#include "network/net_main.h"
+#include "network/net_msg.h"
 
 static finaleid_t currentFinale = 0;
 static finaleid_t remoteFinale = 0;
