@@ -287,35 +287,10 @@ void Material_Delete(material_t *mat)
     }
 }
 
-void Material_AddDecoration(material_t *mat, ded_decorlight_t const *def)
+void Material_AddDecoration(material_t *mat, ded_decorlight_t *def)
 {
-    DENG_ASSERT(mat);
-    Material::Decoration *decor = new Material::Decoration();
-    std::memcpy(decor->pos, def->pos, sizeof(decor->pos));
-    decor->elevation = def->elevation;
-    std::memcpy(decor->color, def->color, sizeof(decor->color));
-    decor->radius = def->radius;
-    decor->haloRadius = def->haloRadius;
-    std::memcpy(decor->patternOffset, def->patternOffset, sizeof(decor->patternOffset));
-    std::memcpy(decor->patternSkip, def->patternSkip, sizeof(decor->patternSkip));
-    std::memcpy(decor->lightLevels, def->lightLevels, sizeof(decor->lightLevels));
-    decor->flareTexture = def->flareTexture;
-    if(def->up)
-    {
-        decor->up = *reinterpret_cast<de::Uri const *>(def->up);
-    }
-    if(def->down)
-    {
-        decor->down = *reinterpret_cast<de::Uri const *>(def->down);
-    }
-    if(def->sides)
-    {
-        decor->sides = *reinterpret_cast<de::Uri const *>(def->sides);
-    }
-    if(def->flare)
-    {
-        decor->flare = *reinterpret_cast<de::Uri const *>(def->flare);
-    }
+    DENG_ASSERT(mat && def);
+    Material::Decoration *decor = new Material::Decoration(*def);
     mat->decorations.push_back(decor);
 }
 

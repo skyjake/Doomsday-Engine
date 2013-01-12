@@ -1139,22 +1139,23 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
         if(ISTOKEN("Material"))
         {
             boolean bModify = false;
-            ded_material_t* mat, dummyMat;
+            ded_material_t *mat, dummyMat;
             uint layer = 0;
+            int layerStage;
             uint light = 0;
-            int stage;
+            int lightStage;
 
             ReadToken();
             if(!ISTOKEN("Mods"))
             {
                 // A new material.
-                idx = DED_AddMaterial(ded, NULL);
+                idx = DED_AddMaterial(ded, 0);
                 mat = &ded->materials[idx];
             }
             else if(!bCopyNext)
             {
-                uri_s* otherMat = NULL;
-                AutoStr* otherMatPath;
+                uri_s *otherMat = 0;
+                AutoStr *otherMatPath;
 
                 READURI(&otherMat, NULL);
                 ReadToken();
@@ -1213,21 +1214,30 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     mat->layers[i].stages = (ded_material_layer_stage_t*) M_Malloc(sizeof(*mat->layers[i].stages) * l->stageCount.max);
                     std::memcpy(mat->layers[i].stages, l->stages, sizeof(*mat->layers[i].stages) * l->stageCount.num);
 
-                    for(int j = 0; j < l->stageCount.num; ++j)
+                    for(int k = 0; k < l->stageCount.num; ++k)
                     {
-                        if(l->stages[j].texture)
-                            mat->layers[i].stages[j].texture = Uri_Dup(l->stages[j].texture);
+                        if(l->stages[k].texture)
+                            mat->layers[i].stages[k].texture = Uri_Dup(l->stages[k].texture);
                     }
                 }
 
                 // Duplicate decorations.
                 for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
                 {
-                    ded_decorlight_t* dl = &mat->lights[i];
-                    if(dl->flare)   dl->flare = Uri_Dup(dl->flare);
-                    if(dl->up)      dl->up    = Uri_Dup(dl->up);
-                    if(dl->down)    dl->down  = Uri_Dup(dl->down);
-                    if(dl->sides)   dl->sides = Uri_Dup(dl->sides);
+                    ded_decorlight_t const *dl = &prevMaterial->lights[i];
+                    if(!dl->stages) continue;
+
+                    mat->lights[i].stages = (ded_decorlight_stage_t *) M_Malloc(sizeof(*mat->lights[i].stages) * dl->stageCount.max);
+                    std::memcpy(mat->lights[i].stages, dl->stages, sizeof(*mat->lights[i].stages) * dl->stageCount.num);
+
+                    for(int k = 0; k < dl->stageCount.num; ++k)
+                    {
+                        ded_decorlight_stage_t *stage = &mat->lights[i].stages[k];
+                        if(stage->flare)   stage->flare = Uri_Dup(stage->flare);
+                        if(stage->up)      stage->up    = Uri_Dup(stage->up);
+                        if(stage->down)    stage->down  = Uri_Dup(stage->down);
+                        if(stage->sides)   stage->sides = Uri_Dup(stage->sides);
+                    }
                 }
             }
 
@@ -1245,7 +1255,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_INT("Height", mat->height)
                 if(ISLABEL("Layer"))
                 {
-                    stage = 0;
+                    layerStage = 0;
                     if(layer >= DED_MAX_MATERIAL_LAYERS)
                     {
                         SetError("Too many Material layers.");
@@ -1262,12 +1272,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                             ded_material_layer_stage_t* st = NULL;
 
                             // Need to allocate a new stage?
-                            if(stage >= mat->layers[layer].stageCount.num)
+                            if(layerStage >= mat->layers[layer].stageCount.num)
                             {
-                                stage = DED_AddMaterialLayerStage(&mat->layers[layer]);
+                                layerStage = DED_AddMaterialLayerStage(&mat->layers[layer]);
                             }
 
-                            st = &mat->layers[layer].stages[stage];
+                            st = &mat->layers[layer].stages[layerStage];
 
                             FINDBEGIN;
                             for(;;)
@@ -1282,7 +1292,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                                 RV_END
                                 CHECKSC;
                             }
-                            ++stage;
+                            ++layerStage;
                         }
                         else RV_END
                         CHECKSC;
@@ -1291,8 +1301,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
                 else if(ISLABEL("Light"))
                 {
-                    ded_decorlight_t *dl = &mat->lights[light];
-
+                    lightStage = 0;
                     if(light == DED_DECOR_NUM_LIGHTS)
                     {
                         SetError("Too many lights in material.");
@@ -1300,41 +1309,60 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         goto ded_end_read;
                     }
 
+                    ded_decorlight_t *dl = &mat->lights[light];
                     FINDBEGIN;
                     for(;;)
                     {
                         READLABEL;
-                        RV_VEC("Offset", dl->pos, 2)
-                        RV_FLT("Distance", dl->elevation)
-                        RV_VEC("Color", dl->color, 3)
-                        RV_FLT("Radius", dl->radius)
-                        RV_FLT("Halo radius", dl->haloRadius)
                         RV_IVEC("Pattern offset", dl->patternOffset, 2)
                         RV_IVEC("Pattern skip", dl->patternSkip, 2)
-                        if(ISLABEL("Levels"))
+                        if(ISLABEL("Stage"))
                         {
-                            FINDBEGIN;
-                            for(int b = 0; b < 2; ++b)
+                            // Need to allocate a new stage?
+                            if(lightStage >= dl->stageCount.num)
                             {
-                                READFLT(dl->lightLevels[b])
-                                dl->lightLevels[b] /= 255.0f;
-                                if(dl->lightLevels[b] < 0)
-                                    dl->lightLevels[b] = 0;
-                                else if(dl->lightLevels[b] > 1)
-                                    dl->lightLevels[b] = 1;
+                                layerStage = DED_AddDecorLightStage(dl);
                             }
-                            ReadToken();
+
+                            ded_decorlight_stage_t *st = &dl->stages[lightStage];
+                            FINDBEGIN;
+                            for(;;)
+                            {
+                                READLABEL;
+                                RV_VEC("Offset", st->pos, 2)
+                                RV_FLT("Distance", st->elevation)
+                                RV_VEC("Color", st->color, 3)
+                                RV_FLT("Radius", st->radius)
+                                RV_FLT("Halo radius", st->haloRadius)
+                                if(ISLABEL("Levels"))
+                                {
+                                    FINDBEGIN;
+                                    for(int b = 0; b < 2; ++b)
+                                    {
+                                        READFLT(st->lightLevels[b])
+                                        st->lightLevels[b] /= 255.0f;
+                                        if(st->lightLevels[b] < 0)
+                                            st->lightLevels[b] = 0;
+                                        else if(st->lightLevels[b] > 1)
+                                            st->lightLevels[b] = 1;
+                                    }
+                                    ReadToken();
+                                }
+                                else
+                                RV_INT("Flare texture", st->flareTexture)
+                                RV_URI("Flare map", &st->flare, "LightMaps")
+                                RV_URI("Top map", &st->up, "LightMaps")
+                                RV_URI("Bottom map", &st->down, "LightMaps")
+                                RV_URI("Side map", &st->sides, "LightMaps")
+                                RV_END
+                                CHECKSC;
+                            }
+                            ++lightStage;
                         }
-                        else
-                        RV_INT("Flare texture", dl->flareTexture)
-                        RV_URI("Flare map", &dl->flare, "LightMaps")
-                        RV_URI("Top map", &dl->up, "LightMaps")
-                        RV_URI("Bottom map", &dl->down, "LightMaps")
-                        RV_URI("Side map", &dl->sides, "LightMaps")
-                        RV_END
+                        else RV_END
                         CHECKSC;
                     }
-                    light++;
+                    ++light;
                 }
                 else RV_END
                 CHECKSC;
@@ -2248,11 +2276,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
                 {
-                    ded_decorlight_t *dl = &decor->lights[i];
-                    if(dl->flare)   dl->flare = Uri_Dup(dl->flare);
-                    if(dl->up)      dl->up    = Uri_Dup(dl->up);
-                    if(dl->down)    dl->down  = Uri_Dup(dl->down);
-                    if(dl->sides)   dl->sides = Uri_Dup(dl->sides);
+                    ded_decorlight_stage_t *stage = &decor->lights[i].stages[0];
+                    if(stage->flare)   stage->flare = Uri_Dup(stage->flare);
+                    if(stage->up)      stage->up    = Uri_Dup(stage->up);
+                    if(stage->down)    stage->down  = Uri_Dup(stage->down);
+                    if(stage->sides)   stage->sides = Uri_Dup(stage->sides);
                 }
             }
 
@@ -2277,6 +2305,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 else if(ISLABEL("Light"))
                 {
                     ded_decorlight_t *dl = &decor->lights[sub];
+                    ded_decorlight_stage_t *st = &dl->stages[0];
 
                     if(sub == DED_DECOR_NUM_LIGHTS)
                     {
@@ -2289,11 +2318,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     for(;;)
                     {
                         READLABEL;
-                        RV_VEC("Offset", dl->pos, 2)
-                        RV_FLT("Distance", dl->elevation)
-                        RV_VEC("Color", dl->color, 3)
-                        RV_FLT("Radius", dl->radius)
-                        RV_FLT("Halo radius", dl->haloRadius)
+                        RV_VEC("Offset", st->pos, 2)
+                        RV_FLT("Distance", st->elevation)
+                        RV_VEC("Color", st->color, 3)
+                        RV_FLT("Radius", st->radius)
+                        RV_FLT("Halo radius", st->haloRadius)
                         RV_IVEC("Pattern offset", dl->patternOffset, 2)
                         RV_IVEC("Pattern skip", dl->patternSkip, 2)
                         if(ISLABEL("Levels"))
@@ -2301,21 +2330,21 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                             FINDBEGIN;
                             for(int b = 0; b < 2; ++b)
                             {
-                                READFLT(dl->lightLevels[b])
-                                dl->lightLevels[b] /= 255.0f;
-                                if(dl->lightLevels[b] < 0)
-                                    dl->lightLevels[b] = 0;
-                                else if(dl->lightLevels[b] > 1)
-                                    dl->lightLevels[b] = 1;
+                                READFLT(st->lightLevels[b])
+                                st->lightLevels[b] /= 255.0f;
+                                if(st->lightLevels[b] < 0)
+                                    st->lightLevels[b] = 0;
+                                else if(st->lightLevels[b] > 1)
+                                    st->lightLevels[b] = 1;
                             }
                             ReadToken();
                         }
                         else
-                        RV_INT("Flare texture", dl->flareTexture)
-                        RV_URI("Flare map", &dl->flare, "LightMaps")
-                        RV_URI("Top map", &dl->up, "LightMaps")
-                        RV_URI("Bottom map", &dl->down, "LightMaps")
-                        RV_URI("Side map", &dl->sides, "LightMaps")
+                        RV_INT("Flare texture", st->flareTexture)
+                        RV_URI("Flare map", &st->flare, "LightMaps")
+                        RV_URI("Top map", &st->up, "LightMaps")
+                        RV_URI("Bottom map", &st->down, "LightMaps")
+                        RV_URI("Side map", &st->sides, "LightMaps")
                         RV_END
                         CHECKSC;
                     }

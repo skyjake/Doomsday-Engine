@@ -1123,6 +1123,8 @@ static int DD_ActivateGameWorker(void* parameters)
     R_InitCompositeTextures();
     R_InitFlatTextures();
     R_InitSpriteTextures();
+    App_Textures()->scheme("Lightmaps").clear();
+    App_Textures()->scheme("Flaremaps").clear();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -1967,6 +1969,8 @@ boolean DD_Init(void)
         R_InitCompositeTextures();
         R_InitFlatTextures();
         R_InitSpriteTextures();
+        App_Textures()->scheme("Lightmaps").clear();
+        App_Textures()->scheme("Flaremaps").clear();
 
         Def_Read();
 

@@ -420,18 +420,23 @@ typedef struct ded_ptcgen_s {
     ded_count_t     stageCount;
 } ded_ptcgen_t;
 
-typedef struct ded_decorlight_s {
+typedef struct ded_decorlight_stage_s {
     float           pos[2]; // Coordinates on the surface.
     float           elevation; // Distance from the surface.
     float           color[3]; // Light color.
     float           radius; // Dynamic light radius (-1 = no light).
     float           haloRadius; // Halo radius (zero = no halo).
-    int             patternOffset[2];
-    int             patternSkip[2];
     float           lightLevels[2]; // Fade by sector lightlevel.
     int             flareTexture;
     Uri*            up, *down, *sides;
     Uri*            flare; // Overrides flare_texture
+} ded_decorlight_stage_t;
+
+typedef struct ded_decorlight_s {
+    int             patternOffset[2];
+    int             patternSkip[2];
+    ded_decorlight_stage_t *stages;
+    ded_count_t     stageCount;
 } ded_decorlight_t;
 
 // There is a fixed number of light decorations in each decoration.
@@ -644,7 +649,7 @@ int             DED_AddState(ded_t* ded, char const* id);
 int             DED_AddSprite(ded_t* ded, char const* name);
 int             DED_AddLight(ded_t* ded, char const* stateID);
 int             DED_AddMaterial(ded_t* ded, char const* uri);
-int             DED_AddMaterialLayerStage(ded_material_layer_t* ml);
+int             DED_AddMaterialLayerStage(ded_material_layer_t *ml);
 int             DED_AddModel(ded_t* ded, char const* spr);
 int             DED_AddSky(ded_t* ded, char const* id);
 int             DED_AddSound(ded_t* ded, char const* id);
@@ -658,6 +663,7 @@ int             DED_AddPtcGen(ded_t* ded, char const* state);
 int             DED_AddPtcGenStage(ded_ptcgen_t* gen);
 int             DED_AddFinale(ded_t* ded);
 int             DED_AddDecoration(ded_t* ded);
+int             DED_AddDecorLightStage(ded_decorlight_t *li);
 int             DED_AddReflection(ded_t* ded);
 int             DED_AddGroup(ded_t* ded);
 int             DED_AddGroupMember(ded_group_t* grp);

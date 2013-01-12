@@ -91,6 +91,9 @@ static mobjinfo_t* gettingFor;
 xgclass_t nullXgClassLinks; // Used when none defined.
 xgclass_t* xgClassLinks;
 
+static void defineFlaremap(uri_s const *_resourceUri);
+static void defineLightmap(uri_s const *_resourceUri);
+
 /**
  * Retrieves the XG Class list from the Game.
  * XGFunc links are provided by the Game, who owns the actual
@@ -1141,6 +1144,35 @@ void Def_Read()
     for(int i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t *def = &defs.materials[i];
+
+        for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
+        {
+            ded_decorlight_t* lig = &def->lights[k];
+            for(int m = 0; m < lig->stageCount.num; ++m)
+            {
+                ded_decorlight_stage_t *stage = &lig->stages[m];
+
+                if(!Def_IsValidLightDecoration(lig)) break;
+
+                if(stage->up)
+                {
+                    defineLightmap(stage->up);
+                }
+                if(stage->down)
+                {
+                    defineLightmap(stage->down);
+                }
+                if(stage->sides)
+                {
+                    defineLightmap(stage->sides);
+                }
+                if(stage->flare)
+                {
+                    defineFlaremap(stage->flare);
+                }
+            }
+        }
+
         try
         {
             MaterialManifest &bind = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->uri));
@@ -1503,8 +1535,6 @@ void Def_PostInit(void)
     }
 
     // Lights.
-    App_Textures()->scheme("Lightmaps").clear();
-    App_Textures()->scheme("Flaremaps").clear();
     for(int i = 0; i < defs.count.lights.num; ++i)
     {
         ded_light_t* lig = &defs.lights[i];
@@ -1524,38 +1554,6 @@ void Def_PostInit(void)
         if(lig->flare)
         {
             defineFlaremap(lig->flare);
-        }
-    }
-
-    for(int i = 0; i < defs.count.decorations.num; ++i)
-    {
-        ded_decor_t* decor = &defs.decorations[i];
-
-        // Ignore definitions which do not specify a material.
-        if(!decor->material || Uri_IsEmpty(decor->material)) continue;
-
-        for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            ded_decorlight_t* lig = &decor->lights[k];
-
-            if(!Def_IsValidLightDecoration(lig)) break;
-
-            if(lig->up)
-            {
-                defineLightmap(lig->up);
-            }
-            if(lig->down)
-            {
-                defineLightmap(lig->down);
-            }
-            if(lig->sides)
-            {
-                defineLightmap(lig->sides);
-            }
-            if(lig->flare)
-            {
-                defineFlaremap(lig->flare);
-            }
         }
     }
 
@@ -2118,9 +2116,9 @@ StringArray* Def_ListStateIDs(void)
 
 boolean Def_IsValidLightDecoration(ded_decorlight_t const* lightDef)
 {
-    return (lightDef &&
-            (lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
-             lightDef->color[2] != 0));
+    return (lightDef && lightDef->stageCount.num &&
+            (lightDef->stages[0].color[0] != 0 || lightDef->stages[0].color[1] != 0 ||
+             lightDef->stages[0].color[2] != 0));
 }
 
 #if 0 // $revise-texture-animation
