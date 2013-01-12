@@ -22,19 +22,20 @@
 
 #include <ctype.h>
 #include <math.h>
+#include <de/memory.h>
 
 #include "de_platform.h"
-#include "de_base.h"
 #include "de_console.h"
 #include "de_infine.h"
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_ui.h"
+#include "dd_main.h"
+#include "dd_loop.h"
 
 // For the debug visuals:
 #if _DEBUG
 #  include "de_graphics.h"
-#  include "de_render.h"
 #endif
 
 #define DEFAULT_JOYSTICK_DEADZONE .05f // 5%

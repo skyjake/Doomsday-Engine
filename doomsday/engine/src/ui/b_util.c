@@ -30,7 +30,7 @@
 
 #include <math.h>
 
-#include "de_base.h"
+#include "de_platform.h"
 #include "de_console.h"
 #include "de_misc.h"
 

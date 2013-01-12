@@ -31,10 +31,10 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "de_base.h"
 #include "de_console.h"
 #include "de_misc.h"
-#include "de_play.h"
+#include "dd_main.h"
+#include "dd_def.h"
 
 #include "ui/b_command.h"
 #include "ui/p_control.h"

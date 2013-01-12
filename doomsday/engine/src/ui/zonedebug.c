@@ -25,8 +25,8 @@
 
 #include "de_base.h"
 #include "de_graphics.h"
-#include "de_render.h"
 
+#include <math.h>
 #include <de/concurrency.h>
 
 #ifdef _DEBUG

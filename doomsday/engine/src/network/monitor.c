@@ -19,7 +19,6 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "de_console.h"
 #include "de_platform.h"
 

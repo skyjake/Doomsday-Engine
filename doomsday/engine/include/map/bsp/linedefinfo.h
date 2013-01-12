@@ -66,8 +66,8 @@ struct LineDefInfo
         : lineDef(_lineDef), flags(0), validCount(0), windowEffect(0)
     {
         DENG2_ASSERT(_lineDef);
-        const Vertex* start = lineDef->L_v1;
-        const Vertex* end   = lineDef->L_v2;
+        const vertex_s* start = lineDef->L_v1;
+        const vertex_s* end   = lineDef->L_v2;
 
         // Check for zero-length line.
         if((fabs(start->origin[VX] - end->origin[VX]) < distEpsilon) &&

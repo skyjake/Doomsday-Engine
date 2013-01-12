@@ -3293,7 +3293,7 @@ static void getVertexPlaneMinMax(const Vertex* vtx, coord_t* min, coord_t* max)
     } while(vo != base);
 }
 
-static void drawVertexPoint(const Vertex* vtx, coord_t z, float alpha)
+static void drawVertexPoint(const vertex_s* vtx, coord_t z, float alpha)
 {
     glBegin(GL_POINTS);
         glColor4f(.7f, .7f, .2f, alpha * 2);
@@ -3301,7 +3301,7 @@ static void drawVertexPoint(const Vertex* vtx, coord_t z, float alpha)
     glEnd();
 }
 
-static void drawVertexBar(Vertex const *vtx, coord_t bottom, coord_t top, float alpha)
+static void drawVertexBar(vertex_s const *vtx, coord_t bottom, coord_t top, float alpha)
 {
     int const EXTEND_DIST = 64;
 
@@ -3320,7 +3320,7 @@ static void drawVertexBar(Vertex const *vtx, coord_t bottom, coord_t top, float 
     glEnd();
 }
 
-static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alpha)
+static void drawVertexIndex(vertex_s const *vtx, coord_t z, float scale, float alpha)
 {
     Point2Raw const origin(2, 2);
     char buf[80];
@@ -3330,7 +3330,7 @@ static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alp
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    sprintf(buf, "%i", GameMap_VertexIndex(theMap, vtx));
+    sprintf(buf, "%i", GameMap_VertexIndex(theMap, static_cast<Vertex const *>(vtx)));
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -3353,7 +3353,7 @@ static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alp
 
 static int drawVertex1(LineDef *li, void *context)
 {
-    Vertex *vtx = li->L_v1;
+    vertex_s *vtx = li->L_v1;
     Polyobj *po = (Polyobj *) context;
     coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx->origin[VX], vOrigin[VZ] - vtx->origin[VY]);
 
@@ -3971,7 +3971,8 @@ static void Rend_RenderBoundingBoxes()
 
     if(devMobjBBox)
     {
-        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, drawMobjBBox, NULL);
+        GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                0x1, drawMobjBBox, NULL);
     }
 
     if(devPolyobjBBox)

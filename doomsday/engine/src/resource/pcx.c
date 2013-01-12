@@ -23,7 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-#include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"

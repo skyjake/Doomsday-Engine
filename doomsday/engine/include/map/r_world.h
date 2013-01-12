@@ -30,6 +30,8 @@
 #define LIBDENG_REFRESH_WORLD_H
 
 #include "resource/r_data.h"
+#include "map/vertex.h"
+#include "map/sector.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,7 +89,7 @@ void R_MapInitSurfaceLists(void);
  * is the leftmost vertex and @c verts[1] is the rightmost vertex, when the
  * @a line lies at the edge of @a sector.
  */
-void R_OrderVertices(LineDef const *line, Sector const *sector, Vertex *verts[2]);
+void R_OrderVertices(LineDef const *line, Sector const *sector, vertex_s *verts[2]);
 
 /**
  * Determine the map space Z coordinates of a wall section.
@@ -207,7 +209,7 @@ boolean R_IsGlowingPlane(const Plane* plane);
 
 float R_GlowStrength(const Plane* pln);
 
-lineowner_t* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
+lineowner_t* R_GetVtxLineOwner(const vertex_s* vtx, const LineDef* line);
 
 /**
  * A neighbour is a line that shares a vertex with 'line', and faces the

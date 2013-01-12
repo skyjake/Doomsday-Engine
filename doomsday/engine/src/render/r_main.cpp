@@ -35,6 +35,7 @@
 
 #include "gl/svg.h"
 #include "map/p_players.h"
+#include "map/p_objlink.h"
 #include "render/vignette.h"
 #include "api_render.h"
 
@@ -1386,7 +1387,8 @@ void Rend_CacheForMap()
         {
             spritedef_t *sprDef = &sprites[i];
 
-            if(GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1/* All mobjs are public*/,
+            if(GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                       0x1/* All mobjs are public*/,
                                        findSpriteOwner, sprDef))
             {
                 // This sprite is used by some state of at least one mobj.
@@ -1411,7 +1413,8 @@ void Rend_CacheForMap()
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, Models_CacheForMobj, NULL);
+        GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                0x1, Models_CacheForMobj, NULL);
     }
 }
 

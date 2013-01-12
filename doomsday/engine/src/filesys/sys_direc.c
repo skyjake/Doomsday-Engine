@@ -38,10 +38,12 @@
 #include <ctype.h>
 #include <de/findfile.h>
 
-#include "de_base.h"
 #include "de_platform.h"
 #include "de_system.h"
+#include "dd_main.h"
+#include "dd_def.h"
 #include "m_misc.h"
+#include "filesys/sys_direc.h"
 
 static void setPathFromPathDir(directory_t* dir, const char* path);
 

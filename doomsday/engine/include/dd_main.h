@@ -31,6 +31,7 @@
 
 #include "dd_types.h"
 #include "api_plugin.h"
+#include "api_gameexport.h"
 #include "resource/materials.h"
 #include "resource/textures.h"
 #include "filesys/sys_direc.h"

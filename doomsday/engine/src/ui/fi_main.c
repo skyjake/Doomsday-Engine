@@ -26,17 +26,16 @@
 
 #define DENG_NO_API_MACROS_INFINE
 
-#include "de_base.h"
+#include <de/memoryzone.h>
+
 #include "de_console.h"
-#include "de_play.h"
 #include "de_defs.h"
 #include "de_graphics.h"
-#include "de_render.h"
 #include "de_resource.h"
 #include "de_network.h"
-#include "de_audio.h"
 #include "de_infine.h"
 #include "de_misc.h"
+#include "dd_main.h"
 
 #include "ui/finaleinterpreter.h"
 

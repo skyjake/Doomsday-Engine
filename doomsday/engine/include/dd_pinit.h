@@ -42,7 +42,7 @@ extern uint mainWindowIdx;
  */
 void DD_ShutdownAll(void);
 
-int DD_CheckArg(char* tag, const char** value);
+int DD_CheckArg(char const *tag, const char** value);
 
 /**
  * Compose the title for the main window.

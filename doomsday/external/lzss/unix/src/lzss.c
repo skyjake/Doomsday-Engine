@@ -747,7 +747,7 @@ long lzPutLm(long l, LZFILE * f)
  *  normal file in packed mode will cause errno to be set to EDOM.
  */
 
-LZFILE *lzOpen(char *filename, char *mode)
+LZFILE *lzOpen(char const *filename, char const *mode)
 {
     LZFILE *f, *f2;
     FILE_SEARCH_STRUCT dta;

@@ -24,7 +24,7 @@
 #include "de_console.h"
 #include "de_play.h"
 
-void Vertex_CountLineOwners(Vertex* vtx, uint* oneSided, uint* twoSided)
+void Vertex_CountLineOwners(vertex_s* vtx, uint* oneSided, uint* twoSided)
 {
     DENG_ASSERT(vtx);
 

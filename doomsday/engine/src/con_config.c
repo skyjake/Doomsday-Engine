@@ -20,11 +20,15 @@
 
 #include <ctype.h>
 
-#include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_filesys.h"
+
+#include "dd_main.h"
+#include "dd_def.h"
+#include "dd_help.h"
+#include "dd_games.h"
 
 static filename_t cfgFile;
 static int flagsAllow = 0;

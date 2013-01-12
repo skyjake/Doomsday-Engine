@@ -31,17 +31,19 @@
 #define DENG_NO_API_MACROS_PLAYER
 
 #include <ctype.h>
+#include <de/memory.h>
 
-#include "de_base.h"
 #include "de_console.h"
-#include "de_play.h" // for P_LocalToConsole()
 #include "de_network.h"
 #include "de_misc.h"
 #include "de_system.h"
 #include "de_graphics.h"
+#include "dd_main.h"
 
+#include "map/p_players.h"
 #include "ui/b_main.h"
 #include "ui/b_device.h"
+#include "ui/p_control.h"
 
 // MACROS ------------------------------------------------------------------
 

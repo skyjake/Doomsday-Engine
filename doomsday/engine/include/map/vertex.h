@@ -23,8 +23,14 @@
 #ifndef LIBDENG_MAP_VERTEX
 #define LIBDENG_MAP_VERTEX
 
+#ifndef __cplusplus
+#  error "map/vertex.h requires C++"
+#endif
+
+#include <de/binangle.h>
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
+#include "MapObject"
 
 #define LO_prev     link[0]
 #define LO_next     link[1]
@@ -55,17 +61,21 @@ typedef struct mvertex_s {
     struct vertex_s *equiv;
 } mvertex_t;
 
-typedef struct vertex_s {
-    runtime_mapdata_header_t header;
+struct vertex_s {
     coord_t origin[2];
     unsigned int numLineOwners; ///< Number of line owners.
     lineowner_t *lineOwners;    ///< Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     mvertex_t buildData;
-} Vertex;
+};
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class Vertex : public de::MapObject, public vertex_s
+{
+public:
+    Vertex() : de::MapObject(DMU_VERTEX)
+    {
+        memset(static_cast<vertex_s *>(this), 0, sizeof(vertex_s));
+    }
+};
 
 /**
  * Count the total number of linedef "owners" of this vertex. An owner in
@@ -78,7 +88,7 @@ extern "C" {
  * @param oneSided  Total number of one-sided lines is written here. Can be @a NULL.
  * @param twoSided  Total number of two-sided lines is written here. Can be @a NULL.
  */
-void Vertex_CountLineOwners(Vertex* vtx, uint* oneSided, uint* twoSided);
+void Vertex_CountLineOwners(vertex_s* vtx, uint* oneSided, uint* twoSided);
 
 /**
  * Get a property value, selected by DMU_* name.
@@ -97,9 +107,5 @@ int Vertex_GetProperty(const Vertex* vertex, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Vertex_SetProperty(Vertex* vertex, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_VERTEX

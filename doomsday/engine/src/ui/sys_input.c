@@ -23,13 +23,14 @@
  */
 
 #include <stdlib.h>
+#include <de/c_wrapper.h>
 
 #ifdef WIN32
 #  include "directinput.h"
 #  include "mouse_win32.h"
 #endif
 
-#include "de_base.h"
+#include "de_platform.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"

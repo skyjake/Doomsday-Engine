@@ -30,8 +30,8 @@
  */
 
 #include <ctype.h>
+#include <de/memoryzone.h>
 
-#include "de_base.h"
 #include "de_system.h"
 #include "de_console.h"
 #include "de_misc.h"

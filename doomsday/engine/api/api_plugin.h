@@ -30,6 +30,7 @@
 
 #include "dd_version.h"
 #include "api_base.h"
+#include <de/rect.h>
 
 #ifdef __cplusplus
 extern "C" {

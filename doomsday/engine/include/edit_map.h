@@ -36,9 +36,10 @@ extern "C" {
 #endif
 
 // Editable map.
+/// @todo Obviously this shares functionality/data with GameMap; a common base class needed? -jk
 typedef struct editmap_s {
     uint numVertexes;
-    Vertex** vertexes;
+    vertex_s** vertexes;
     uint numLineDefs;
     LineDef** lineDefs;
     uint numSideDefs;

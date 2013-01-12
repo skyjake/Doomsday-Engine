@@ -27,7 +27,6 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
-#include "de_render.h"
 #include "de_ui.h"
 
 #include "cbuffer.h"
@@ -35,6 +34,7 @@
 #include "resource/image.h"
 #include "resource/font.h"
 #include "resource/fonts.h"
+#include "render/rend_font.h"
 #include "ui/busyvisual.h"
 
 static fontid_t busyFont = 0;

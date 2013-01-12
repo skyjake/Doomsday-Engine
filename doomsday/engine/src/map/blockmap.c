@@ -21,13 +21,13 @@
  */
 
 #include <math.h>
-
-#include "de_base.h"
-#include "de_console.h"
-
-#include "map/blockmap.h"
+#include <de/memoryzone.h>
 #include <de/vector1.h>
+
+#include "de_console.h"
+#include "dd_main.h"
 #include "gridmap.h"
+#include "map/blockmap.h"
 
 typedef struct blockmap_ringnode_s {
     void* object;
@@ -154,7 +154,7 @@ boolean Blockmap_CellBlock(Blockmap* bm, BlockmapCellBlock* cellBlock, const AAB
     return false;
 }
 
-const pvec2d_t Blockmap_Origin(Blockmap* bm)
+pcvec2d_t Blockmap_Origin(Blockmap* bm)
 {
     assert(bm);
     return bm->bounds.min;
@@ -196,7 +196,7 @@ coord_t Blockmap_CellHeight(Blockmap* bm)
     return bm->cellSize[VY];
 }
 
-const pvec2d_t Blockmap_CellSize(Blockmap* bm)
+pcvec2d_t Blockmap_CellSize(Blockmap* bm)
 {
     assert(bm);
     return bm->cellSize;

@@ -22,7 +22,9 @@
 #define LIBDENG_MAP_DATA_TYPES_H
 
 #include "p_mapdata.h"
-#include "vertex.h"
+#ifdef __cplusplus
+#  include "vertex.h"
+#endif
 #include "hedge.h"
 #include "sidedef.h"
 #include "linedef.h"

@@ -38,9 +38,10 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_system.h"
-#include "de_render.h"
 #include "de_ui.h"
 
+#include "render/rend_font.h"
+#include "render/rend_list.h"
 #include "resource/font.h"
 #include "resource/fonts.h"
 #include "resource/bitmapfont.h"

@@ -34,11 +34,11 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
-#include "de_render.h"
 #include "de_ui.h"
 
 #include "ui/displaymode.h"
 #include "render/rend_main.h"
+#include "render/rend_font.h"
 
 // MACROS ------------------------------------------------------------------
 

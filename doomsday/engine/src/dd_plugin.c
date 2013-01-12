@@ -28,9 +28,11 @@
 #  include "library.h"
 #endif
 
-#include "de_base.h"
+#include "api_plugin.h"
+#include "de_platform.h"
 #include "de_console.h"
 #include "de_defs.h"
+#include "dd_main.h"
 #include "dd_pinit.h"
 
 #include "updater/downloaddialog.h"

@@ -228,6 +228,7 @@ DENG_HEADERS += \
     include/map/generators.h \
     include/map/hedge.h \
     include/map/linedef.h \
+    include/map/mapobject.h \
     include/map/p_dmu.h \
     include/map/p_intercept.h \
     include/map/p_mapdata.h \
@@ -283,6 +284,7 @@ DENG_HEADERS += \
     include/render/sprite.h \
     include/render/vignette.h \
     include/render/vlight.h \
+    include/render/walldiv.h \
     include/resource/animgroups.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
@@ -367,8 +369,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_HEADERS \
-    include/render/walldiv.h
+    $$DENG_HEADERS
 
 # Platform-specific sources.
 win32 {
@@ -398,9 +399,9 @@ else:unix {
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
 
     SOURCES += \
-        src/unix/dd_uinit.c \
+        src/unix/dd_uinit.cpp \
         src/unix/joystick.c \
-        src/unix/sys_console.c
+        src/unix/sys_console.cpp
 }
 
 macx {
@@ -434,41 +435,41 @@ SOURCES += \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
     src/audio/m_mus2midi.c \
-    src/audio/s_cache.c \
+    src/audio/s_cache.cpp \
     src/audio/s_environ.cpp \
-    src/audio/s_logic.c \
-    src/audio/s_main.c \
-    src/audio/s_mus.c \
-    src/audio/s_sfx.c \
+    src/audio/s_logic.cpp \
+    src/audio/s_main.cpp \
+    src/audio/s_mus.cpp \
+    src/audio/s_sfx.cpp \
     src/audio/s_wav.c \
     src/audio/sys_audiod_dummy.c \
     src/busymode.cpp \
     src/cbuffer.c \
     src/client/cl_frame.c \
     src/client/cl_infine.c \
-    src/client/cl_main.c \
-    src/client/cl_mobj.c \
-    src/client/cl_player.c \
-    src/client/cl_sound.c \
-    src/client/cl_world.c \
+    src/client/cl_main.cpp \
+    src/client/cl_mobj.cpp \
+    src/client/cl_player.cpp \
+    src/client/cl_sound.cpp \
+    src/client/cl_world.cpp \
     src/color.cpp \
     src/con_bar.c \
     src/con_config.c \
     src/con_data.cpp \
-    src/con_main.c \
+    src/con_main.cpp \
     src/dd_games.cpp \
     src/dd_help.cpp \
     src/dd_init.cpp \
-    src/dd_loop.c \
+    src/dd_loop.cpp \
     src/dd_main.cpp \
-    src/dd_pinit.c \
+    src/dd_pinit.cpp \
     src/dd_plugin.c \
     src/dd_wad.cpp \
     src/def_data.c \
     src/def_main.cpp \
     src/def_read.cpp \
     src/dualstring.cpp \
-    src/edit_bias.c \
+    src/edit_bias.cpp \
     src/edit_bsp.cpp \
     src/edit_map.cpp \
     src/filesys/file.cpp \
@@ -486,53 +487,53 @@ SOURCES += \
     src/gl/dgl_draw.c \
     src/gl/gl_defer.c \
     src/gl/gl_deferredapi.c \
-    src/gl/gl_draw.c \
+    src/gl/gl_draw.cpp \
     src/gl/gl_drawvectorgraphic.c \
     src/gl/gl_main.cpp \
     src/gl/gl_model.cpp \
     src/gl/gl_tex.c \
     src/gl/gl_texmanager.cpp \
-    src/gl/svg.c \
+    src/gl/svg.cpp \
     src/gl/sys_opengl.c \
-    src/gridmap.c \
+    src/gridmap.cpp \
     src/kdtree.c \
     src/library.cpp \
     src/m_decomp64.c \
-    src/m_misc.c \
+    src/m_misc.cpp \
     src/m_nodepile.c \
     src/map/blockmap.c \
-    src/map/blockmapvisual.c \
+    src/map/blockmapvisual.cpp \
     src/map/bsp/hplane.cpp \
     src/map/bsp/partitioner.cpp \
     src/map/bsp/superblockmap.cpp \
     src/map/bspbuilder.cpp \
     src/map/bspleaf.cpp \
-    src/map/bspnode.c \
-    src/map/dam_file.c \
+    src/map/bspnode.cpp \
+    src/map/dam_file.cpp \
     src/map/dam_main.cpp \
     src/map/entitydatabase.cpp \
-    src/map/gamemap.c \
+    src/map/gamemap.cpp \
     src/map/generators.c \
     src/map/hedge.cpp \
-    src/map/linedef.c \
+    src/map/linedef.cpp \
     src/map/p_data.cpp \
     src/map/p_dmu.cpp \
-    src/map/p_intercept.c \
-    src/map/p_maputil.c \
-    src/map/p_mobj.c \
-    src/map/p_objlink.c \
+    src/map/p_intercept.cpp \
+    src/map/p_maputil.cpp \
+    src/map/p_mobj.cpp \
+    src/map/p_objlink.cpp \
     src/map/p_particle.cpp \
-    src/map/p_players.c \
-    src/map/p_polyobjs.c \
-    src/map/p_sight.c \
-    src/map/p_think.c \
-    src/map/p_ticker.c \
-    src/map/plane.c \
-    src/map/polyobj.c \
+    src/map/p_players.cpp \
+    src/map/p_polyobjs.cpp \
+    src/map/p_sight.cpp \
+    src/map/p_think.cpp \
+    src/map/p_ticker.cpp \
+    src/map/plane.cpp \
+    src/map/polyobj.cpp \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \
-    src/map/sector.c \
-    src/map/sidedef.c \
+    src/map/sector.cpp \
+    src/map/sidedef.cpp \
     src/map/surface.cpp \
     src/map/vertex.cpp \
     src/network/masterserver.cpp \
@@ -546,28 +547,28 @@ SOURCES += \
     src/network/protocol.c \
     src/network/sys_network.c \
     src/network/ui_mpi.c \
-    src/r_util.c \
+    src/r_util.cpp \
     src/render/api_render.c \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
-    src/render/r_fakeradio.c \
+    src/render/r_fakeradio.cpp \
     src/render/r_main.cpp \
-    src/render/r_lgrid.c \
-    src/render/r_shadow.c \
+    src/render/r_lgrid.cpp \
+    src/render/r_shadow.cpp \
     src/render/r_things.cpp \
-    src/render/rend_bias.c \
+    src/render/rend_bias.cpp \
     src/render/rend_clip.cpp \
     src/render/rend_console.cpp \
     src/render/rend_decor.cpp \
-    src/render/rend_dynlight.c \
+    src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \
     src/render/rend_font.c \
     src/render/rend_halo.c \
     src/render/rend_list.cpp \
     src/render/rend_main.cpp \
     src/render/rend_model.cpp \
-    src/render/rend_particle.c \
-    src/render/rend_shadow.c \
+    src/render/rend_particle.cpp \
+    src/render/rend_shadow.cpp \
     src/render/rendpoly.cpp \
     src/render/sky.cpp \
     src/render/sprite.cpp \
@@ -604,11 +605,11 @@ SOURCES += \
     src/resource/tga.c \
     src/resource/wad.cpp \
     src/resource/zip.cpp \
-    src/server/sv_frame.c \
+    src/server/sv_frame.cpp \
     src/server/sv_infine.c \
-    src/server/sv_main.c \
-    src/server/sv_missile.c \
-    src/server/sv_pool.c \
+    src/server/sv_main.cpp \
+    src/server/sv_missile.cpp \
+    src/server/sv_pool.cpp \
     src/server/sv_sound.cpp \
     src/sys_system.c \
     src/tab_tables.c \

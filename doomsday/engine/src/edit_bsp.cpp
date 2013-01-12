@@ -44,7 +44,7 @@ void BspBuilder_Register(void)
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
-BspBuilder_c* BspBuilder_New(GameMap* map, uint* numEditableVertexes, Vertex*** editableVertexes)
+BspBuilder_c* BspBuilder_New(GameMap* map, uint* numEditableVertexes, vertex_s*** editableVertexes)
 {
     DENG2_ASSERT(map);
     BspBuilder_c* builder = static_cast<BspBuilder_c*>(malloc(sizeof *builder));
@@ -134,7 +134,7 @@ static void finishHEdges(GameMap* map)
 
         if(hedge->lineDef)
         {
-            Vertex* vtx = hedge->lineDef->L_v(hedge->side);
+            vertex_s *vtx = hedge->lineDef->L_v(hedge->side);
 
             hedge->sector = hedge->lineDef->L_sector(hedge->side);
             hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx->origin);
@@ -244,43 +244,42 @@ static void hardenBSP(BspBuilder& builder, GameMap* dest)
     rootNode->traversePostOrder(populateBspObjectLuts, &p);
 }
 
-static void copyVertex(Vertex& vtx, Vertex const& other)
+static void copyVertex(Vertex& dest, vertex_s const& src)
 {
-    V2d_Copy(vtx.origin, other.origin);
-    vtx.numLineOwners = other.numLineOwners;
-    vtx.lineOwners = other.lineOwners;
+    DENG2_ASSERT(dest.type() == DMU_VERTEX);
 
-    vtx.buildData.index = other.buildData.index;
-    vtx.buildData.refCount = other.buildData.refCount;
-    vtx.buildData.equiv = other.buildData.equiv;
+    V2d_Copy(dest.origin, src.origin);
+    dest.numLineOwners = src.numLineOwners;
+    dest.lineOwners = src.lineOwners;
+
+    dest.buildData.index = src.buildData.index;
+    dest.buildData.refCount = src.buildData.refCount;
+    dest.buildData.equiv = src.buildData.equiv;
 }
 
 static void hardenVertexes(BspBuilder& builder, GameMap* map,
-    uint* numEditableVertexes, Vertex*** editableVertexes)
+    uint* numEditableVertexes, vertex_s*** editableVertexes)
 {
     uint bspVertexCount = builder.numVertexes();
 
-    map->numVertexes = *numEditableVertexes + bspVertexCount;
-    map->vertexes = static_cast<Vertex*>(Z_Calloc(map->numVertexes * sizeof(Vertex), PU_MAPSTATIC, 0));
+    map->vertexes.clearAndResize(*numEditableVertexes + bspVertexCount);
+
+    //map->vertexes = static_cast<Vertex*>(Z_Calloc(map->numVertexes * sizeof(Vertex), PU_MAPSTATIC, 0));
 
     uint n = 0;
     for(; n < *numEditableVertexes; ++n)
     {
-        Vertex& dest = map->vertexes[n];
-        Vertex const& src = *((*editableVertexes)[n]);
-
-        dest.header.type = DMU_VERTEX;
-        copyVertex(dest, src);
+        copyVertex(map->vertexes[n], *((*editableVertexes)[n]));
     }
 
     for(uint i = 0; i < bspVertexCount; ++i, ++n)
     {
         Vertex& dest = map->vertexes[n];
-        Vertex& src  = builder.vertex(i);
+        vertex_s& src  = builder.vertex(i);
 
-        builder.take(reinterpret_cast<runtime_mapdata_header_t*>(&src));
+        // TODO: necessary? just transfer the pointer
+        //builder.take(reinterpret_cast<runtime_mapdata_header_t*>(&src));
 
-        dest.header.type = DMU_VERTEX;
         copyVertex(dest, src);
     }
 }
@@ -305,7 +304,7 @@ static void updateVertexLinks(GameMap* map)
 }
 
 void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numEditableVertexes,
-    Vertex*** editableVertexes)
+    vertex_s*** editableVertexes)
 {
     Q_ASSERT(builder_c);
     BspBuilder& builder = *builder_c->inst;

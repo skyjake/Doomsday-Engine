@@ -30,7 +30,8 @@
 
 #define DENG_NO_API_MACROS_BINDING
 
-#include "de_base.h"
+#include <de/memory.h>
+
 #include "de_console.h"
 #include "de_misc.h"
 

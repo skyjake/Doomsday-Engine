@@ -17,7 +17,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
+#include <de/memory.h>
+#include <de/memoryzone.h>
+#include <de/c_wrapper.h>
+
 #include "de_console.h"
 #include "de_network.h"
 #include "de_misc.h"

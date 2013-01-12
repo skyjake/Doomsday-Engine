@@ -108,7 +108,7 @@ struct Partitioner::Instance
 
     /// @todo Refactor me away:
     uint* numEditableVertexes;
-    Vertex*** editableVertexes;
+    vertex_s*** editableVertexes;
 
     /// Running totals of constructed BSP data objects.
     uint numNodes;
@@ -131,7 +131,7 @@ struct Partitioner::Instance
 
     /// Extra vertexes allocated for the current map.
     /// @note May be larger than Instance::numVertexes (deallocation is lazy).
-    typedef std::vector<Vertex*> Vertexes;
+    typedef std::vector<vertex_s*> Vertexes;
     Vertexes vertexes;
 
     /// Root node of our internal binary tree around which the final BSP data
@@ -193,7 +193,7 @@ struct Partitioner::Instance
     bool builtOK;
 
     Instance(GameMap* _map, uint* _numEditableVertexes,
-             Vertex*** _editableVertexes, int _splitCostFactor)
+             vertex_s*** _editableVertexes, int _splitCostFactor)
       : splitCostFactor(_splitCostFactor),
         map(_map),
         numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
@@ -242,7 +242,7 @@ struct Partitioner::Instance
      * Retrieve the extended build info for the specified @a vertex.
      * @return  Extended info for that Vertex.
      */
-    VertexInfo& vertexInfo(const Vertex& vertex)
+    VertexInfo& vertexInfo(const vertex_s& vertex)
     {
         return vertexInfos[vertex.buildData.index - 1];
     }
@@ -394,7 +394,7 @@ struct Partitioner::Instance
         // (Used in the process of locating window effect lines.)
         for(uint i = 0; i < *numEditableVertexes; ++i)
         {
-            Vertex* vtx = (*editableVertexes)[i];
+            vertex_s* vtx = (*editableVertexes)[i];
             VertexInfo& vtxInfo = vertexInfo(*vtx);
             Vertex_CountLineOwners(vtx, &vtxInfo.oneSidedOwnerCount, &vtxInfo.twoSidedOwnerCount);
         }
@@ -413,7 +413,7 @@ struct Partitioner::Instance
     }
 
     /// @return The right half-edge (from @a start to @a end).
-    HEdge* buildHEdgesBetweenVertexes(Vertex* start, Vertex* end, Sector* frontSec,
+    HEdge* buildHEdgesBetweenVertexes(vertex_s* start, vertex_s* end, Sector* frontSec,
         Sector* backSec, LineDef* lineDef, LineDef* partitionLineDef)
     {
         DENG2_ASSERT(start && end);
@@ -517,7 +517,7 @@ struct Partitioner::Instance
         DENG2_ASSERT(hedge);
 
         // Already present on this edge?
-        Vertex* vertex = hedge->HE_v(leftSide);
+        vertex_s* vertex = hedge->HE_v(leftSide);
         const HPlaneIntercept* inter = partitionInterceptByVertex(vertex);
         if(inter) return inter;
 
@@ -701,7 +701,7 @@ struct Partitioner::Instance
         //LOG_DEBUG("Splitting hedge %p at [%1.1f, %1.1f].")
         //    << de::dintptr(oldHEdge) << point[VX] << point[VY];
 
-        Vertex* newVert = newVertex(point);
+        vertex_s* newVert = newVertex(point);
         { HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
         addHEdgeTip(newVert, M_InverseAngle(oldInfo.pAngle), oldHEdge->twin, oldHEdge);
         addHEdgeTip(newVert, oldInfo.pAngle, oldHEdge, oldHEdge->twin);
@@ -1552,7 +1552,7 @@ struct Partitioner::Instance
      *
      * @param vertex  Vertex to test.
      */
-    inline coord_t vertexDistanceFromPartition(Vertex const* vertex) const
+    inline coord_t vertexDistanceFromPartition(vertex_s const* vertex) const
     {
         DENG2_ASSERT(vertex);
         HEdgeInfo const& info = partitionInfo;
@@ -1624,8 +1624,8 @@ struct Partitioner::Instance
         // We can now reconfire the half-plane itself.
         setPartitionInfo(hedgeInfo(*hedge), lineDef);
 
-        const Vertex* from = lineDef->L_v(hedge->side);
-        const Vertex* to   = lineDef->L_v(hedge->side^1);
+        const vertex_s* from = lineDef->L_v(hedge->side);
+        const vertex_s* to   = lineDef->L_v(hedge->side^1);
         partition.setOrigin(from->origin);
 
         vec2d_t angle; V2d_Subtract(angle, to->origin, from->origin);
@@ -1887,7 +1887,7 @@ struct Partitioner::Instance
      *
      * @return  Ptr to the found intercept, else @c NULL;
      */
-    HPlaneIntercept const* partitionInterceptByVertex(Vertex* vertex)
+    HPlaneIntercept const* partitionInterceptByVertex(vertex_s* vertex)
     {
         if(!vertex) return NULL; // Hmm...
 
@@ -1904,7 +1904,7 @@ struct Partitioner::Instance
     /**
      * Create a new intersection.
      */
-    HEdgeIntercept* newHEdgeIntercept(Vertex* vertex, bool lineDefIsSelfReferencing)
+    HEdgeIntercept* newHEdgeIntercept(vertex_s* vertex, bool lineDefIsSelfReferencing)
     {
         DENG2_ASSERT(vertex);
 
@@ -1952,7 +1952,7 @@ struct Partitioner::Instance
     {
         DENG2_FOR_EACH(Vertexes, it, vertexes)
         {
-            Vertex* vtx = *it;
+            vertex_s* vtx = *it;
             // Has ownership of this vertex been claimed?
             if(!vtx) continue;
 
@@ -1988,13 +1988,12 @@ struct Partitioner::Instance
      *
      * @return  Newly created Vertex.
      */
-    Vertex* newVertex(const_pvec2d_t origin)
+    vertex_s* newVertex(const_pvec2d_t origin)
     {
-        Vertex* vtx;
+        vertex_s* vtx;
 
         // Allocate with M_Calloc for uniformity with the editable vertexes.
-        vtx = static_cast<Vertex*>(M_Calloc(sizeof *vtx));
-        vtx->header.type = DMU_VERTEX;
+        vtx = static_cast<vertex_s*>(M_Calloc(sizeof *vtx));
         vtx->buildData.index = *numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
         vertexes.push_back(vtx);
 
@@ -2009,13 +2008,13 @@ struct Partitioner::Instance
         return vtx;
     }
 
-    inline void addHEdgeTip(Vertex* vtx, coord_t angle, HEdge* front, HEdge* back)
+    inline void addHEdgeTip(vertex_s* vtx, coord_t angle, HEdge* front, HEdge* back)
     {
         DENG2_ASSERT(vtx);
         vertexInfo(*vtx).addHEdgeTip(angle, front, back);
     }
 
-    inline void clearHEdgeTipsByVertex(Vertex* vtx)
+    inline void clearHEdgeTipsByVertex(vertex_s* vtx)
     {
         if(!vtx) return;
         vertexInfo(*vtx).clearHEdgeTips();
@@ -2032,7 +2031,7 @@ struct Partitioner::Instance
     /**
      * Create a new half-edge.
      */
-    HEdge* newHEdge(Vertex* start, Vertex* end, Sector* sec, LineDef* lineDef = 0,
+    HEdge* newHEdge(vertex_s* start, vertex_s* end, Sector* sec, LineDef* lineDef = 0,
                     LineDef* sourceLineDef = 0)
     {
         DENG2_ASSERT(start && end && sec);
@@ -2126,7 +2125,7 @@ struct Partitioner::Instance
      * vertex is open. Returns a sector reference if it's open, or NULL if closed
      * (void space or directly along a linedef).
      */
-    Sector* openSectorAtAngle(Vertex* vtx, coord_t angle)
+    Sector* openSectorAtAngle(vertex_s* vtx, coord_t angle)
     {
         DENG2_ASSERT(vtx);
         const VertexInfo::HEdgeTips& hedgeTips = vertexInfo(*vtx).hedgeTips();
@@ -2388,7 +2387,7 @@ struct Partitioner::Instance
 };
 
 Partitioner::Partitioner(GameMap& map, uint* numEditableVertexes,
-    Vertex*** editableVertexes, int splitCostFactor)
+    vertex_s*** editableVertexes, int splitCostFactor)
 {
     d = new Instance(&map, numEditableVertexes, editableVertexes, splitCostFactor);
     d->initForMap();
@@ -2435,7 +2434,7 @@ uint Partitioner::numVertexes()
     return d->numVertexes;
 }
 
-Vertex& Partitioner::vertex(uint idx)
+vertex_s& Partitioner::vertex(uint idx)
 {
     DENG2_ASSERT(idx < d->vertexes.size());
     DENG2_ASSERT(d->vertexes[idx]);

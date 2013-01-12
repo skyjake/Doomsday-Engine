@@ -30,7 +30,9 @@
 #define __DOOMSDAY_PLAYSIM__
 
 #include "api_thinker.h"
-#include "map/vertex.h"
+#ifdef __cplusplus
+#  include "map/vertex.h"
+#endif
 #include "map/surface.h"
 #include "map/sidedef.h"
 #include "map/linedef.h"

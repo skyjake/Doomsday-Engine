@@ -38,13 +38,17 @@ typedef const_GridmapCell const_BlockmapCell;
 
 typedef GridmapCellBlock BlockmapCellBlock;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 Blockmap* Blockmap_New(coord_t const min[2], coord_t const max[2], uint cellWidth, uint cellHeight);
 
 /**
  * @param blockmap      Blockmap instance.
  * @return  "Origin" map space point for the Blockmap (minimal [x,y]).
  */
-const pvec2d_t Blockmap_Origin(Blockmap* blockmap);
+pcvec2d_t Blockmap_Origin(Blockmap* blockmap);
 
 /**
  * Retrieve the extremal map space points covered by the Blockmap.
@@ -89,7 +93,7 @@ coord_t Blockmap_CellHeight(Blockmap* blockmap);
  * @param blockmap      Blockmap instance.
  * @return  Size [width,height] of a Blockmap cell in map space units.
  */
-const pvec2d_t Blockmap_CellSize(Blockmap* blockmap);
+pcvec2d_t Blockmap_CellSize(Blockmap* blockmap);
 
 /**
  * Given map space X coordinate @a x, return the corresponding cell coordinate.
@@ -191,5 +195,9 @@ int Blockmap_IterateCellBlockObjects(Blockmap* blockmap, const BlockmapCellBlock
  * for debug purposes).
  */
 const Gridmap* Blockmap_Gridmap(Blockmap* blockmap);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_BLOCKMAP_H

@@ -321,8 +321,8 @@ else:unix {
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
 
     SOURCES += \
-        $$SRC/src/unix/dd_uinit.c \
-        $$SRC/src/unix/sys_console.c
+        $$SRC/src/unix/dd_uinit.cpp \
+        $$SRC/src/unix/sys_console.cpp
 }
 
 macx {
@@ -336,12 +336,12 @@ SOURCES += $$SRC/src/ui/displaymode_dummy.c
 
 # Platform-independent sources.
 SOURCES += \
-    src/server_dummies.c \
+    src/server_dummies.cpp \
     $$SRC/src/api_uri.cpp \
-    $$SRC/src/audio/s_cache.c \
+    $$SRC/src/audio/s_cache.cpp \
     $$SRC/src/audio/s_environ.cpp \
-    $$SRC/src/audio/s_logic.c \
-    $$SRC/src/audio/s_main.c \
+    $$SRC/src/audio/s_logic.cpp \
+    $$SRC/src/audio/s_main.cpp \
     $$SRC/src/audio/s_wav.c \
     $$SRC/src/busymode.cpp \
     $$SRC/src/cbuffer.c \
@@ -349,13 +349,13 @@ SOURCES += \
     $$SRC/src/con_bar.c \
     $$SRC/src/con_config.c \
     $$SRC/src/con_data.cpp \
-    $$SRC/src/con_main.c \
+    $$SRC/src/con_main.cpp \
     $$SRC/src/dd_games.cpp \
     $$SRC/src/dd_help.cpp \
     $$SRC/src/dd_init.cpp \
-    $$SRC/src/dd_loop.c \
+    $$SRC/src/dd_loop.cpp \
     $$SRC/src/dd_main.cpp \
-    $$SRC/src/dd_pinit.c \
+    $$SRC/src/dd_pinit.cpp \
     $$SRC/src/dd_plugin.c \
     $$SRC/src/dd_wad.cpp \
     $$SRC/src/def_data.c \
@@ -376,11 +376,11 @@ SOURCES += \
     $$SRC/src/filesys/sys_direc.c \
     $$SRC/src/game.cpp \
     $$SRC/src/gl/gl_texmanager.cpp \
-    $$SRC/src/gridmap.c \
+    $$SRC/src/gridmap.cpp \
     $$SRC/src/kdtree.c \
     $$SRC/src/library.cpp \
     $$SRC/src/m_decomp64.c \
-    $$SRC/src/m_misc.c \
+    $$SRC/src/m_misc.cpp \
     $$SRC/src/m_nodepile.c \
     $$SRC/src/map/blockmap.c \
     $$SRC/src/map/bsp/hplane.cpp \
@@ -388,32 +388,32 @@ SOURCES += \
     $$SRC/src/map/bsp/superblockmap.cpp \
     $$SRC/src/map/bspbuilder.cpp \
     $$SRC/src/map/bspleaf.cpp \
-    $$SRC/src/map/bspnode.c \
-    $$SRC/src/map/dam_file.c \
+    $$SRC/src/map/bspnode.cpp \
+    $$SRC/src/map/dam_file.cpp \
     $$SRC/src/map/dam_main.cpp \
     $$SRC/src/map/entitydatabase.cpp \
-    $$SRC/src/map/gamemap.c \
+    $$SRC/src/map/gamemap.cpp \
     $$SRC/src/map/generators.c \
     $$SRC/src/map/hedge.cpp \
-    $$SRC/src/map/linedef.c \
+    $$SRC/src/map/linedef.cpp \
     $$SRC/src/map/p_data.cpp \
     $$SRC/src/map/p_dmu.cpp \
-    $$SRC/src/map/p_intercept.c \
-    $$SRC/src/map/p_maputil.c \
-    $$SRC/src/map/p_mobj.c \
-    $$SRC/src/map/p_objlink.c \
+    $$SRC/src/map/p_intercept.cpp \
+    $$SRC/src/map/p_maputil.cpp \
+    $$SRC/src/map/p_mobj.cpp \
+    $$SRC/src/map/p_objlink.cpp \
     $$SRC/src/map/p_particle.cpp \
-    $$SRC/src/map/p_players.c \
-    $$SRC/src/map/p_polyobjs.c \
-    $$SRC/src/map/p_sight.c \
-    $$SRC/src/map/p_think.c \
-    $$SRC/src/map/p_ticker.c \
-    $$SRC/src/map/plane.c \
-    $$SRC/src/map/polyobj.c \
+    $$SRC/src/map/p_players.cpp \
+    $$SRC/src/map/p_polyobjs.cpp \
+    $$SRC/src/map/p_sight.cpp \
+    $$SRC/src/map/p_think.cpp \
+    $$SRC/src/map/p_ticker.cpp \
+    $$SRC/src/map/plane.cpp \
+    $$SRC/src/map/polyobj.cpp \
     $$SRC/src/map/propertyvalue.cpp \
     $$SRC/src/map/r_world.cpp \
-    $$SRC/src/map/sector.c \
-    $$SRC/src/map/sidedef.c \
+    $$SRC/src/map/sector.cpp \
+    $$SRC/src/map/sidedef.cpp \
     $$SRC/src/map/surface.cpp \
     $$SRC/src/map/vertex.cpp \
     $$SRC/src/network/masterserver.cpp \
@@ -425,7 +425,7 @@ SOURCES += \
     $$SRC/src/network/net_ping.c \
     $$SRC/src/network/protocol.c \
     $$SRC/src/network/sys_network.c \
-    $$SRC/src/r_util.c \
+    $$SRC/src/r_util.cpp \
     $$SRC/src/render/r_main.cpp \
     $$SRC/src/render/r_things.cpp \
     $$SRC/src/render/rend_main.cpp \
@@ -457,11 +457,11 @@ SOURCES += \
     $$SRC/src/resource/tga.c \
     $$SRC/src/resource/wad.cpp \
     $$SRC/src/resource/zip.cpp \
-    $$SRC/src/server/sv_frame.c \
+    $$SRC/src/server/sv_frame.cpp \
     $$SRC/src/server/sv_infine.c \
-    $$SRC/src/server/sv_main.c \
-    $$SRC/src/server/sv_missile.c \
-    $$SRC/src/server/sv_pool.c \
+    $$SRC/src/server/sv_main.cpp \
+    $$SRC/src/server/sv_missile.cpp \
+    $$SRC/src/server/sv_pool.cpp \
     $$SRC/src/server/sv_sound.cpp \
     $$SRC/src/sys_system.c \
     $$SRC/src/tab_tables.c \

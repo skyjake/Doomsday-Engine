@@ -31,8 +31,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <de/memory.h>
 
-#include "de_base.h"
+#include "de_platform.h"
 #include "de_console.h"
 #include "de_misc.h"
 #include "de_graphics.h"

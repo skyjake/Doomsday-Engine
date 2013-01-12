@@ -34,11 +34,11 @@
 #include "de_system.h"
 #include "de_filesys.h"
 #include "de_network.h"
-#include "de_render.h"
 #include "de_misc.h"
-#include "de_play.h"
 
 #include "render/r_main.h"
+#include "render/rend_main.h"
+#include "map/p_players.h"
 
 // MACROS ------------------------------------------------------------------
 

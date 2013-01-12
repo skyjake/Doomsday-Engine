@@ -23,14 +23,14 @@
 #ifndef LIBDENG_GAMEMAP_H
 #define LIBDENG_GAMEMAP_H
 
+#ifndef __cplusplus
+#  error "map/gamemap.h requires C++"
+#endif
+
 #include "p_maptypes.h"
 #include "p_particle.h"
 #include <EntityDatabase>
 #include <de/mathutil.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct thinkerlist_s;
 struct clmoinfo_s;
@@ -86,8 +86,7 @@ typedef struct gamemap_s {
     struct clpolyobj_s* clActivePolyobjs[CLIENT_MAX_MOVERS];
     // End client only data.
 
-    uint numVertexes;
-    Vertex* vertexes;
+    de::MapObjectList<Vertex> vertexes;
 
     uint numSectors;
     Sector* sectors;
@@ -814,10 +813,6 @@ void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_
  * @param max  Maximal coordinates for the map.
  */
 void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t max);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 // The current map.
 DENG_EXTERN_C GameMap* theMap;

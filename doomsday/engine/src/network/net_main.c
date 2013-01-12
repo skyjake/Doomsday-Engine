@@ -33,15 +33,16 @@
 
 #include <stdlib.h>             // for atoi()
 
-#include "de_base.h"
 #include "de_console.h"
-#include "de_edit.h"
 #include "de_system.h"
 #include "de_network.h"
-#include "de_play.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_ui.h"
+
+#ifdef _DEBUG
+#  include "ui/zonedebug.h"
+#endif
 
 #ifdef __CLIENT__
 #  include "render/rend_bias.h"
@@ -49,7 +50,12 @@
 #  include "render/rend_main.h"
 #  include "render/r_lgrid.h"
 #  include "map/blockmapvisual.h"
+#  include "edit_bias.h"
 #endif
+
+#include "dd_main.h"
+#include "dd_loop.h"
+#include "map/p_players.h"
 
 // MACROS ------------------------------------------------------------------
 

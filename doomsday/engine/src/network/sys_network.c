@@ -29,12 +29,13 @@
 #include <signal.h>
 #endif
 
-#include "de_base.h"
 #include "de_network.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
-#include "de_play.h"
+
+#include "dd_main.h"
+#include "map/p_players.h"
 
 #include <de/c_wrapper.h> // using LegacyNetwork
 

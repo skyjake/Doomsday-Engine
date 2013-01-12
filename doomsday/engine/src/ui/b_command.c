@@ -28,11 +28,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "de_base.h"
+#include <de/memory.h>
+
 #include "de_console.h"
 #include "de_misc.h"
-#include "de_play.h"
 
+#include "map/p_players.h"
 #include "ui/b_main.h"
 #include "ui/b_command.h"
 

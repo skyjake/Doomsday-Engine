@@ -35,13 +35,19 @@
 
 #include <signal.h>
 
-#include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
 #include "de_graphics.h"
-#include "de_audio.h"
 #include "de_misc.h"
+
+#include "dd_main.h"
+#include "dd_loop.h"
+#ifdef __CLIENT__
+#  include "gl/gl_main.h"
+#endif
+#include "ui/nativeui.h"
+#include "audio/s_main.h"
 
 int novideo;                // if true, stay in text mode for debugging
 
@@ -134,7 +140,9 @@ void Sys_Shutdown(void)
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
     S_Shutdown();
+#ifdef __CLIENT__
     GL_Shutdown();
+#endif
     DD_ClearEvents();
     I_ShutdownInputDevices();
     I_Shutdown();

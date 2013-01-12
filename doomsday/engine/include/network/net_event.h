@@ -41,6 +41,10 @@ typedef struct netevent_s {
 	nodeid_t        id;
 } netevent_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            N_MAPost(masteraction_t act);
 boolean         N_MADone(void);
 void            N_MAClear(void);
@@ -51,5 +55,9 @@ void            N_NETicker(timespan_t time);
 
 void            N_TerminateClient(int console);
 void            N_Update(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

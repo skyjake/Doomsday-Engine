@@ -27,13 +27,12 @@
  * Network Message Handling and Buffering
  */
 
-#include "de_base.h"
 #include "de_system.h"
 #include "de_network.h"
 #include "de_console.h"
 #include "de_misc.h"
-#include "de_play.h"
 
+#include <de/memory.h>
 #include <de/c_wrapper.h>
 
 #define MSG_MUTEX_NAME  "MsgQueueMutex"

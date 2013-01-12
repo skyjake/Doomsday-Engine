@@ -26,7 +26,6 @@
  * Server-side InFine.
  */
 
-#include "de_base.h"
 #include "de_network.h"
 #include "de_infine.h"
 

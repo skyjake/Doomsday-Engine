@@ -34,8 +34,11 @@ extern "C" {
  */
 ///@{
 
+struct thinker_s;
+
 /// Function pointer to a function to handle an actor's thinking.
-typedef void (*thinkfunc_t) ();
+/// The argument is a pointer to the object doing the thinking.
+typedef void (*thinkfunc_t) (void *);
 
 /**
  * Base for all thinker objects.

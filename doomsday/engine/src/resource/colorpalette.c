@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "de_console.h"
+#include "dd_def.h"
 #include "m_misc.h" // for M_ReadBits
 
 #include "resource/colorpalette.h"

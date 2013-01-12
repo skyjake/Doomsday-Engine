@@ -20,9 +20,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_console.h"
+#include <de/memoryzone.h>
 
+#include "de_console.h"
+#include "dd_main.h"
 #include "map/generators.h"
 
 typedef struct listnode_s {

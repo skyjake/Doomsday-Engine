@@ -53,6 +53,7 @@ DENG_EXTERN_C void GL_Shutdown();
 DENG_EXTERN_C void GL_ReleaseGLTexturesByTexture(struct texture_s *tex);
 DENG_EXTERN_C void GL_EarlyInitTextureManager();
 DENG_EXTERN_C void GL_PruneTextureVariantSpecifications();
+DENG_EXTERN_C struct texturevariant_s* GL_PreparePatchTexture(struct texture_s* tex);
 /*
 DENG_EXTERN_C void GL_SetFilter(int f);
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);

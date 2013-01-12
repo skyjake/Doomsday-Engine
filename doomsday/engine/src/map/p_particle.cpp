@@ -1217,7 +1217,8 @@ void P_PtcGenThinker(ptcgen_t *gen)
                     GameMap_ClMobjIterator(theMap, PIT_ClientMobjParticles, gen);
                 }
 #endif
-                GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1 /*mobjs are public*/,
+                GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                        0x1 /*mobjs are public*/,
                                         manyNewParticles, gen);
 
                 // The generator has no real source.

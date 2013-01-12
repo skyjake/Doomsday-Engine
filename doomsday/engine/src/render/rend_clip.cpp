@@ -1213,7 +1213,7 @@ int C_CheckBspLeaf(BspLeaf* leaf)
     HEdge* hedge = leaf->hedge;
     do
     {
-        Vertex* vtx = hedge->HE_v1;
+        vertex_s* vtx = hedge->HE_v1;
         // Shift for more accuracy.
         anglist[n++] = bamsAtan2((int) ((vtx->origin[VY] - vOrigin[VZ]) * 100),
                                  (int) ((vtx->origin[VX] - vOrigin[VX]) * 100));

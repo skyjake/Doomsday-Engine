@@ -46,7 +46,7 @@ namespace bsp {
 struct HEdgeIntercept
 {
     // Vertex in question.
-    Vertex* vertex;
+    vertex_s* vertex;
 
     // True if this intersection was on a self-referencing linedef.
     bool selfRef;

@@ -47,7 +47,7 @@ class Partitioner
 {
 public:
     Partitioner(GameMap&  _map, uint* numEditableVertexes,
-                Vertex*** editableVertexes, int _splitCostFactor=7);
+                vertex_s*** editableVertexes, int _splitCostFactor=7);
     ~Partitioner();
 
     /**
@@ -122,7 +122,7 @@ public:
      * this will result in fatal error. The caller should ensure the index is
      * within valid range using Partitioner::numVertexes()
      */
-    Vertex& vertex(uint index);
+    vertex_s& vertex(uint index);
 
     /**
      * Release ownership of the specified object.
