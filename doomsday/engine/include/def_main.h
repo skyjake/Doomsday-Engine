@@ -105,7 +105,7 @@ ded_light_t*    Def_GetLightDef(int spr, int frame);
 ded_decor_t*    Def_GetDecoration(Uri const *uri, boolean hasExternal, boolean isCustom);
 ded_reflection_t* Def_GetReflection(Uri const *uri, boolean hasExternal, boolean isCustom);
 ded_detailtexture_t* Def_GetDetailTex(Uri const *uri, boolean hasExternal, boolean isCustom);
-ded_ptcgen_t*   Def_GetGenerator(Uri const *uri, boolean hasExternal, boolean isCustom);
+ded_ptcgen_t*   Def_GetGenerator(Uri const *uri);
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
 
 int             Def_EvalFlags(char* string);

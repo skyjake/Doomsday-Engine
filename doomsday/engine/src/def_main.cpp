@@ -529,10 +529,9 @@ ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri, boolean hasExternal, boo
     return 0; // None found.
 }
 
-ded_ptcgen_t* Def_GetGenerator(uri_s const *uri, boolean hasExternal, boolean isCustom)
+ded_ptcgen_t* Def_GetGenerator(uri_s const *uri)
 {
     DENG_ASSERT(uri);
-    DENG_UNUSED(hasExternal); DENG_UNUSED(isCustom);
 
     ded_ptcgen_t *def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)

@@ -190,7 +190,8 @@ void P_MapSpawnPlaneParticleGens()
             Plane *plane = sector->SP_plane(j);
             if(!plane->PS_material) continue;
 
-            ded_ptcgen_t const *def = Material_Manifest(plane->PS_material).ptcGenDef();
+            de::Uri uri = Material_Manifest(plane->PS_material).composeUri();
+            ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
             P_SpawnPlaneParticleGen(def, plane);
         }
     }

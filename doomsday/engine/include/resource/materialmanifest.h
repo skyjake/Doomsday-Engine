@@ -105,9 +105,6 @@ public:
     /// @return  Decoration definition associated with this else @c NULL
     ded_decor_t *decorationDef() const;
 
-    /// @return  Particle generator definition associated with this else @c NULL
-    ded_ptcgen_t *ptcGenDef() const;
-
     /// @return  Reflection definition associated with this else @c NULL
     ded_reflection_t *reflectionDef() const;
 

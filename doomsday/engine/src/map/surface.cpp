@@ -20,6 +20,7 @@
 
 #include "de_base.h"
 #include "de_play.h"
+#include "de_defs.h"
 
 #include <de/LegacyCore>
 #include <de/Log>
@@ -89,7 +90,8 @@ boolean Surface_SetMaterial(Surface *suf, material_t *mat)
 
                     if(DMU_GetType(suf->owner) == DMU_PLANE)
                     {
-                        ded_ptcgen_t const *def = Material_Manifest(mat).ptcGenDef();
+                        de::Uri uri = Material_Manifest(mat).composeUri();
+                        ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
                         P_SpawnPlaneParticleGen(def, (Plane *)suf->owner);
                     }
                 }

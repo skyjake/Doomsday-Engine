@@ -46,7 +46,6 @@ struct MaterialManifest::Instance
     struct {
         ded_decor_t         *decors[2];
         ded_detailtexture_t *detailtextures[2];
-        ded_ptcgen_t        *ptcgens[2];
         ded_reflection_t    *reflections[2];
     } defs;
 
@@ -141,10 +140,6 @@ void MaterialManifest::linkDefinitions()
     d->defs.reflections[0]    = Def_GetReflection(uri, 0, d->isCustom);
     d->defs.reflections[1]    = Def_GetReflection(uri, 1, d->isCustom);
 
-    // Generator (particles).
-    d->defs.ptcgens[0]        = Def_GetGenerator(uri, 0, d->isCustom);
-    d->defs.ptcgens[1]        = Def_GetGenerator(uri, 1, d->isCustom);
-
     // Detail texture.
     d->defs.detailtextures[0] = Def_GetDetailTex(uri, 0, d->isCustom);
     d->defs.detailtextures[1] = Def_GetDetailTex(uri, 1, d->isCustom);
@@ -154,7 +149,6 @@ void MaterialManifest::clearDefinitionLinks()
 {
     d->defs.decors[0]         = d->defs.decors[1]         = 0;
     d->defs.detailtextures[0] = d->defs.detailtextures[1] = 0;
-    d->defs.ptcgens[0]        = d->defs.ptcgens[1]        = 0;
     d->defs.reflections[0]    = d->defs.reflections[1]    = 0;
 }
 
@@ -191,24 +185,6 @@ ded_decor_t *MaterialManifest::decorationDef() const
 
     byte prepared = Material_Prepared(d->material);
     if(prepared) return d->defs.decors[prepared - 1];
-    return 0;
-}
-
-ded_ptcgen_t *MaterialManifest::ptcGenDef() const
-{
-    if(!d->material)
-    {
-        /// @throw MissingMaterialError A material is required for this.
-        throw MissingMaterialError("MaterialManifest::ptcGenDef", "Missing required material");
-    }
-
-    if(isDedicated) return 0;
-
-    // We must prepare a variant before we can determine which definition is in effect.
-    materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
-
-    byte prepared = Material_Prepared(d->material);
-    if(prepared) return d->defs.ptcgens[prepared - 1];
     return 0;
 }
 
