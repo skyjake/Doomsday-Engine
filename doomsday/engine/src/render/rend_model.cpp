@@ -1138,7 +1138,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        material_t *mat = App_Materials()->find(de::Uri(Path("System:gray"))).material();
+        material_t *mat = App_Materials()->find(de::Uri("System", Path("gray"))).material();
         DENG_ASSERT(mat);
 
         MaterialVariantSpec const &spec =

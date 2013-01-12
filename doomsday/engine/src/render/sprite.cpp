@@ -391,7 +391,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const *params)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
         MaterialSnapshot const &ms =
-            App_Materials()->prepare(*App_Materials()->find(de::Uri(Path("System:gray"))).material(),
+            App_Materials()->prepare(*App_Materials()->find(de::Uri("System", Path("gray"))).material(),
                                      PSprite_MaterialSpec(), true);
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
@@ -874,7 +874,7 @@ static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        return App_Materials()->chooseVariant(*App_Materials()->find(de::Uri(Path("System:gray"))).material(),
+        return App_Materials()->chooseVariant(*App_Materials()->find(de::Uri("System", Path("gray"))).material(),
                                               Rend_SpriteMaterialSpec(),
                                               true, true);
     }
