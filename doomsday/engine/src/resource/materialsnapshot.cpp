@@ -18,17 +18,17 @@
  */
 
 #include <cstring>
-
-#include "de_base.h"
-#include "de_graphics.h"
-#include "de_render.h"
-
-#include <de/Error>
 #include <de/Log>
+#include "de_base.h"
+
+#include "render/rend_main.h" // glowFactor, TODO: get rid of this
+#ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
+#  include "gl/sys_opengl.h"
+#endif
 
 #include "resource/material.h"
 #include "resource/texture.h"
-#include "gl/sys_opengl.h" // TODO: get rid of this
 
 #include "resource/materialsnapshot.h"
 
@@ -304,14 +304,18 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
         prepTextures[MTU_REFLECTION] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, texSpec));
 
-        // We are only interested in a mask if we have a shiny texture.
-        if(prepTextures[MTU_REFLECTION] && (tex = Material_ShinyMaskTexture(mat)))
-        {
-            texSpec = GL_TextureVariantSpecificationForContext(
+    }
+
+    // We are only interested in a mask if we have a shiny texture.
+    if(prepTextures[MTU_REFLECTION])
+    if(texture_s *tex = Material_ShinyMaskTexture(mat))
+    {
+        texturevariantspecification_t *texSpec =
+            GL_TextureVariantSpecificationForContext(
                 TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                 -1, -1, -1, true, false, false, false);
-            prepTextures[MTU_REFLECTION_MASK] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, texSpec));
-        }
+
+        prepTextures[MTU_REFLECTION_MASK] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, texSpec));
     }
 #endif // __CLIENT__
 

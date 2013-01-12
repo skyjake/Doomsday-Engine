@@ -339,6 +339,7 @@ de::Material::Variants const &Material_Variants(material_t const *mat);
 
 #endif
 
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
 #ifdef __cplusplus
 
 #include <QList>
@@ -472,5 +473,6 @@ private:
 
 } // namespace de
 #endif // __cplusplus
+#endif // LIBDENG_OLD_MATERIAL_ANIM_METHOD
 
 #endif /* LIBDENG_RESOURCE_MATERIAL_H */
