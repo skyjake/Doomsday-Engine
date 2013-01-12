@@ -266,10 +266,20 @@ void DED_Clear(ded_t* ded)
                 {
                     if(mat->layers[j].stages[k].texture) Uri_Delete(mat->layers[j].stages[k].texture);
                 }
-                free(mat->layers[j].stages);
+                M_Free(mat->layers[j].stages);
+            }
+
+            for(j = 0; j < DED_DECOR_NUM_LIGHTS; ++j)
+            {
+                ded_decorlight_t* li = &mat->lights[j];
+
+                if(li->up) Uri_Delete(li->up);
+                if(li->down) Uri_Delete(li->down);
+                if(li->sides) Uri_Delete(li->sides);
+                if(li->flare) Uri_Delete(li->flare);
             }
         }
-        free(ded->materials);
+        M_Free(ded->materials);
         ded->materials = 0;
     }
 
@@ -564,6 +574,16 @@ int DED_AddMaterial(ded_t* ded, char const* uri)
 {
     ded_material_t* mat = DED_NewEntry((void**) &ded->materials, &ded->count.materials, sizeof(ded_material_t));
     if(uri) mat->uri = Uri_NewWithPath2(uri, RC_NULL);
+
+    // Init some default values.
+    { int i;
+    for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+    {
+        // The color (0,0,0) means the light is not active.
+        mat->lights[i].elevation = 1;
+        mat->lights[i].radius = 1;
+    }}
+
     return mat - ded->materials;
 }
 

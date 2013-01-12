@@ -34,13 +34,17 @@
 #define SUIF_UPDATE_FLAG_MASK 0xff00
 #define SUIF_UPDATE_DECORATIONS 0x8000
 
-typedef struct surfacedecor_s {
-    coord_t             origin[3]; // World coordinates of the decoration.
-    BspLeaf*		bspLeaf;
-    const struct ded_decorlight_s* def;
-} surfacedecor_t;
 
 typedef struct surface_s {
+#ifdef __cplusplus
+    struct Decoration
+    {
+        coord_t origin[3]; // World coordinates of the decoration.
+        BspLeaf *bspLeaf;
+        de::Material::Decoration const *def;
+    };
+#endif // __cplusplus
+
     runtime_mapdata_header_t header;
     ddmobj_base_t       base;
     void*               owner;         // Either @c DMU_SIDEDEF, or @c DMU_PLANE
@@ -57,9 +61,11 @@ typedef struct surface_s {
     float               visOffsetDelta[2];
     float               rgba[4];       // Surface color tint
     short               inFlags;       // SUIF_* flags
-    unsigned int        numDecorations;
-    surfacedecor_t      *decorations;
+    uint numDecorations;
+    struct surfacedecor_s *decorations;
 } Surface;
+
+struct surfacedecor_s;
 
 #ifdef __cplusplus
 extern "C" {
@@ -201,6 +207,10 @@ int Surface_GetProperty(const Surface* surface, setargs_t* args);
 int Surface_SetProperty(Surface* surface, const setargs_t* args);
 
 #ifdef __cplusplus
+Surface::Decoration *Surface_NewDecoration(Surface *suf);
+
+void Surface_ClearDecorations(Surface *suf);
+
 } // extern "C"
 #endif
 

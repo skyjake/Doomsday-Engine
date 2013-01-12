@@ -44,7 +44,6 @@ struct MaterialManifest::Instance
     /// There are two links for each definition type, the first (index @c 0)
     /// for original game data and the second for external data.
     struct {
-        ded_decor_t         *decors[2];
         ded_detailtexture_t *detailtextures[2];
         ded_reflection_t    *reflections[2];
     } defs;
@@ -132,10 +131,6 @@ void MaterialManifest::linkDefinitions()
     Uri _uri = composeUri();
     uri_s *uri = reinterpret_cast<uri_s *>(&_uri);
 
-    // Surface decorations (lights and models).
-    d->defs.decors[0]         = Def_GetDecoration(uri, 0, d->isCustom);
-    d->defs.decors[1]         = Def_GetDecoration(uri, 1, d->isCustom);
-
     // Reflection (aka shiny surface).
     d->defs.reflections[0]    = Def_GetReflection(uri, 0, d->isCustom);
     d->defs.reflections[1]    = Def_GetReflection(uri, 1, d->isCustom);
@@ -147,7 +142,6 @@ void MaterialManifest::linkDefinitions()
 
 void MaterialManifest::clearDefinitionLinks()
 {
-    d->defs.decors[0]         = d->defs.decors[1]         = 0;
     d->defs.detailtextures[0] = d->defs.detailtextures[1] = 0;
     d->defs.reflections[0]    = d->defs.reflections[1]    = 0;
 }
@@ -167,24 +161,6 @@ ded_detailtexture_t *MaterialManifest::detailTextureDef() const
 
     byte prepared = Material_Prepared(d->material);
     if(prepared) return d->defs.detailtextures[prepared - 1];
-    return 0;
-}
-
-ded_decor_t *MaterialManifest::decorationDef() const
-{
-    if(!d->material)
-    {
-        /// @throw MissingMaterialError A material is required for this.
-        throw MissingMaterialError("MaterialManifest::decorationTextureDef", "Missing required material");
-    }
-
-    if(isDedicated) return 0;
-
-    // We must prepare a variant before we can determine which definition is in effect.
-    materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
-
-    byte prepared = Material_Prepared(d->material);
-    if(prepared) return d->defs.decors[prepared - 1];
     return 0;
 }
 

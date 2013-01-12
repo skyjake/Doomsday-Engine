@@ -589,6 +589,29 @@ material_t *Materials::newFromDef(ded_material_t &def)
     // Add the material to the global material list.
     d->materials.push_back(mat);
 
+    // Add decorations.
+    for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+    {
+        if(!Def_IsValidLightDecoration(&def.lights[i])) break;
+
+        Material_AddDecoration(mat, &def.lights[i]);
+    }
+
+    if(!Material_DecorationCount(mat))
+    {
+        // Perhaps an oldschool linked decoration definition?
+        ded_decor_t *decor = Def_GetDecoration(reinterpret_cast<uri_s *>(&uri));
+        if(decor)
+        {
+            for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+            {
+                if(!Def_IsValidLightDecoration(&decor->lights[i])) break;
+
+                Material_AddDecoration(mat, &decor->lights[i]);
+            }
+        }
+    }
+
     return mat;
 }
 

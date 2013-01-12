@@ -443,8 +443,8 @@ typedef struct ded_decorlight_s {
 #define DCRF_EXTERNAL       0x4 // Can use if from external resource.
 
 typedef struct ded_decor_s {
-    Uri*            material;
-    ded_flags_t     flags;
+    Uri *material;
+    ded_flags_t flags;
     ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
 } ded_decor_t;
 
@@ -497,6 +497,7 @@ typedef struct ded_material_s {
     ded_flags_t     flags;
     int             width, height; // In world units.
     ded_material_layer_t layers[DED_MAX_MATERIAL_LAYERS];
+    ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
 } ded_material_t;
 
 typedef struct {

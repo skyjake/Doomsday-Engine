@@ -647,44 +647,6 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
     sec->planes = newList;
 }
 
-surfacedecor_t *R_CreateSurfaceDecoration(Surface *suf)
-{
-    if(!suf) return 0;
-
-    surfacedecor_t *decorations = (surfacedecor_t *) Z_Malloc(sizeof(*decorations) * (++suf->numDecorations), PU_MAP, 0);
-
-    if(suf->numDecorations > 1)
-    {
-        // Copy the existing decorations.
-        for(uint i = 0; i < suf->numDecorations - 1; ++i)
-        {
-            surfacedecor_t *d = &decorations[i];
-            surfacedecor_t *s = &suf->decorations[i];
-
-            std::memcpy(d, s, sizeof(*d));
-        }
-
-        Z_Free(suf->decorations);
-    }
-
-    // Add the new decoration.
-    surfacedecor_t *d = &decorations[suf->numDecorations - 1];
-    suf->decorations = decorations;
-
-    return d;
-}
-
-void R_ClearSurfaceDecorations(Surface *suf)
-{
-    if(!suf) return;
-
-    if(suf->decorations)
-    {
-        Z_Free(suf->decorations); suf->decorations = 0;
-    }
-    suf->numDecorations = 0;
-}
-
 void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
 {
     DENG_ASSERT(map);

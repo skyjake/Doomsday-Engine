@@ -54,6 +54,7 @@ typedef struct material_s material_t;
 
 #include <QList>
 #include <de/Error>
+#include "uri.hh"
 
 namespace de {
 
@@ -70,6 +71,24 @@ class Material
 public:
     /// A list of variant instances.
     typedef QList<MaterialVariant *> Variants;
+
+    struct Decoration
+    {
+        float pos[2]; // Coordinates in material space.
+        float elevation; // Distance from the surface.
+        float color[3]; // Light color.
+        float radius; // Dynamic light radius (-1 = no light).
+        float haloRadius; // Halo radius (zero = no halo).
+        int patternOffset[2];
+        int patternSkip[2];
+        float lightLevels[2]; // Fade by sector lightlevel.
+        int flareTexture;
+        de::Uri up, down, sides;
+        de::Uri flare; // Overrides flare_texture
+    };
+
+    /// A list of decorations.
+    typedef QList<Material::Decoration *> Decorations;
 
 public:
     /// The material is not a member of an animation group. @ingroup errors
@@ -93,6 +112,10 @@ material_t *Material_New(short flags, ded_material_t *def, Size2Raw *dimensions,
                          material_env_class_t envClass);
 
 void Material_Delete(material_t *mat);
+
+void Material_AddDecoration(material_t *mat, ded_decorlight_t const *def);
+
+int Material_DecorationCount(material_t const *mat);
 
 /**
  * Process a system tick event.
@@ -311,6 +334,11 @@ int Material_SetProperty(material_t *material, setargs_t const *args);
 } // extern "C"
 
 de::MaterialManifest &Material_Manifest(material_t const *material);
+
+/**
+ * Provides access to the list of decorations for efficient traversal.
+ */
+de::Material::Decorations const &Material_Decorations(material_t const *mat);
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
 /**

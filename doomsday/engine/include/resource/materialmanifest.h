@@ -102,9 +102,6 @@ public:
     /// @return  Detail texture definition associated with this else @c NULL
     ded_detailtexture_t *detailTextureDef() const;
 
-    /// @return  Decoration definition associated with this else @c NULL
-    ded_decor_t *decorationDef() const;
-
     /// @return  Reflection definition associated with this else @c NULL
     ded_reflection_t *reflectionDef() const;
 

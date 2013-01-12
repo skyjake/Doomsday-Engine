@@ -157,9 +157,6 @@ boolean R_MiddleMaterialCoversLineOpening(LineDef* line, int side, boolean ignor
 Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);
 
-surfacedecor_t* R_CreateSurfaceDecoration(Surface* suf);
-void            R_ClearSurfaceDecorations(Surface* suf);
-
 void            R_UpdateTrackedPlanes(void);
 void            R_InterpolateTrackedPlanes(boolean resetNextViewer);
 

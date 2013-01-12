@@ -468,7 +468,8 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
     return def;
 }
 
-ded_decor_t *Def_GetDecoration(uri_s const *uri, boolean hasExternal, boolean isCustom)
+// $revise-texture-animation
+ded_decor_t *Def_GetDecoration(uri_s const *uri /*, boolean hasExternal, boolean isCustom*/)
 {
     DENG_ASSERT(uri);
 
@@ -479,7 +480,7 @@ ded_decor_t *Def_GetDecoration(uri_s const *uri, boolean hasExternal, boolean is
         if(def->material && Uri_Equality(def->material, uri))
         {
             // Is this suitable?
-            if(Def_IsAllowedDecoration(def, hasExternal, isCustom))
+            //if(Def_IsAllowedDecoration(def, hasExternal, isCustom))
                 return def;
         }
     }
@@ -2122,12 +2123,14 @@ boolean Def_IsValidLightDecoration(ded_decorlight_t const* lightDef)
              lightDef->color[2] != 0));
 }
 
+#if 0 // $revise-texture-animation
 boolean Def_IsAllowedDecoration(ded_decor_t* def, boolean hasExternal, boolean isCustom)
 {
     if(hasExternal) return (def->flags & DCRF_EXTERNAL) != 0;
     if(!isCustom)   return (def->flags & DCRF_NO_IWAD ) == 0;
     return (def->flags & DCRF_PWAD) != 0;
 }
+#endif
 
 boolean Def_IsAllowedReflection(ded_reflection_t* def, boolean hasExternal, boolean isCustom)
 {

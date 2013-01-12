@@ -1141,6 +1141,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             boolean bModify = false;
             ded_material_t* mat, dummyMat;
             uint layer = 0;
+            uint light = 0;
             int stage;
 
             ReadToken();
@@ -1190,10 +1191,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             // Should we copy the previous definition?
             if(prevMaterialDefIdx >= 0 && bCopyNext)
             {
-                const ded_material_t* prevMaterial = ded->materials + prevMaterialDefIdx;
-                uri_s* uri = mat->uri;
+                ded_material_t const *prevMaterial = ded->materials + prevMaterialDefIdx;
+                uri_s *uri = mat->uri;
 
-                memcpy(mat, prevMaterial, sizeof(*mat));
+                std::memcpy(mat, prevMaterial, sizeof(*mat));
                 mat->uri = uri;
                 if(prevMaterial->uri)
                 {
@@ -1203,31 +1204,31 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         mat->uri = Uri_Dup(prevMaterial->uri);
                 }
 
-                // Duplicate the stage arrays.
-                { int i;
-                for(i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
+                // Duplicate the layers.
+                for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
                 {
-                    const ded_material_layer_t* l = &prevMaterial->layers[i];
+                    ded_material_layer_t const *l = &prevMaterial->layers[i];
+                    if(!l->stages) continue;
 
-                    if(!l->stages)
-                        continue;
+                    mat->layers[i].stages = (ded_material_layer_stage_t*) M_Malloc(sizeof(*mat->layers[i].stages) * l->stageCount.max);
+                    std::memcpy(mat->layers[i].stages, l->stages, sizeof(*mat->layers[i].stages) * l->stageCount.num);
 
-                    if(NULL == (mat->layers[i].stages = (ded_material_layer_stage_t*)
-                       malloc(sizeof(*mat->layers[i].stages) * l->stageCount.max)))
+                    for(int j = 0; j < l->stageCount.num; ++j)
                     {
-                        SetError("Out of memory.");
-                        retVal = false;
-                        goto ded_end_read;
-                    }
-
-                    memcpy(mat->layers[i].stages, l->stages,
-                        sizeof(*mat->layers[i].stages) * l->stageCount.num);
-                    { int j;
-                    for(j = 0; j < l->stageCount.num; ++j)
-                        if(NULL != l->stages[j].texture)
+                        if(l->stages[j].texture)
                             mat->layers[i].stages[j].texture = Uri_Dup(l->stages[j].texture);
                     }
-                }}
+                }
+
+                // Duplicate decorations.
+                for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+                {
+                    ded_decorlight_t* dl = &mat->lights[i];
+                    if(dl->flare)   dl->flare = Uri_Dup(dl->flare);
+                    if(dl->up)      dl->up    = Uri_Dup(dl->up);
+                    if(dl->down)    dl->down  = Uri_Dup(dl->down);
+                    if(dl->sides)   dl->sides = Uri_Dup(dl->sides);
+                }
             }
 
             FINDBEGIN;
@@ -1288,6 +1289,53 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     }
                     ++layer;
                 }
+                else if(ISLABEL("Light"))
+                {
+                    ded_decorlight_t *dl = &mat->lights[light];
+
+                    if(light == DED_DECOR_NUM_LIGHTS)
+                    {
+                        SetError("Too many lights in material.");
+                        retVal = false;
+                        goto ded_end_read;
+                    }
+
+                    FINDBEGIN;
+                    for(;;)
+                    {
+                        READLABEL;
+                        RV_VEC("Offset", dl->pos, 2)
+                        RV_FLT("Distance", dl->elevation)
+                        RV_VEC("Color", dl->color, 3)
+                        RV_FLT("Radius", dl->radius)
+                        RV_FLT("Halo radius", dl->haloRadius)
+                        RV_IVEC("Pattern offset", dl->patternOffset, 2)
+                        RV_IVEC("Pattern skip", dl->patternSkip, 2)
+                        if(ISLABEL("Levels"))
+                        {
+                            FINDBEGIN;
+                            for(int b = 0; b < 2; ++b)
+                            {
+                                READFLT(dl->lightLevels[b])
+                                dl->lightLevels[b] /= 255.0f;
+                                if(dl->lightLevels[b] < 0)
+                                    dl->lightLevels[b] = 0;
+                                else if(dl->lightLevels[b] > 1)
+                                    dl->lightLevels[b] = 1;
+                            }
+                            ReadToken();
+                        }
+                        else
+                        RV_INT("Flare texture", dl->flareTexture)
+                        RV_URI("Flare map", &dl->flare, "LightMaps")
+                        RV_URI("Top map", &dl->up, "LightMaps")
+                        RV_URI("Bottom map", &dl->down, "LightMaps")
+                        RV_URI("Side map", &dl->sides, "LightMaps")
+                        RV_END
+                        CHECKSC;
+                    }
+                    light++;
+                }
                 else RV_END
                 CHECKSC;
             }
@@ -1296,6 +1344,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             if(idx > 0)
             {
                 prevMaterialDefIdx = idx;
+            }
+            else
+            {
+                // Free memory allocated for the dummy.
+
             }
         }
 
@@ -2181,31 +2234,29 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("Decoration"))
         {
-            ded_decor_t* decor;
-            uint sub = 0;
-
             idx = DED_AddDecoration(ded);
-            decor = &ded->decorations[idx];
+            ded_decor_t *decor = &ded->decorations[idx];
 
             // Should we copy the previous definition?
             if(prevDecorDefIdx >= 0 && bCopyNext)
             {
-                const ded_decor_t* prevDecor = ded->decorations + prevDecorDefIdx;
+                ded_decor_t const *prevDecor = ded->decorations + prevDecorDefIdx;
 
-                memcpy(decor, prevDecor, sizeof(*decor));
+                std::memcpy(decor, prevDecor, sizeof(*decor));
 
                 if(decor->material) decor->material = Uri_Dup(decor->material);
-                { int i;
-                for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+
+                for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
                 {
-                    ded_decorlight_t* dl = &decor->lights[i];
+                    ded_decorlight_t *dl = &decor->lights[i];
                     if(dl->flare)   dl->flare = Uri_Dup(dl->flare);
                     if(dl->up)      dl->up    = Uri_Dup(dl->up);
                     if(dl->down)    dl->down  = Uri_Dup(dl->down);
                     if(dl->sides)   dl->sides = Uri_Dup(dl->sides);
-                }}
+                }
             }
 
+            uint sub = 0;
             FINDBEGIN;
             for(;;)
             {
@@ -2247,10 +2298,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         RV_IVEC("Pattern skip", dl->patternSkip, 2)
                         if(ISLABEL("Levels"))
                         {
-                            int                     b;
-
                             FINDBEGIN;
-                            for(b = 0; b < 2; ++b)
+                            for(int b = 0; b < 2; ++b)
                             {
                                 READFLT(dl->lightLevels[b])
                                 dl->lightLevels[b] /= 255.0f;

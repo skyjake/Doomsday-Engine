@@ -20,6 +20,7 @@
 #include <cstring>
 
 #include "de_base.h"
+#include "de_defs.h"
 #include "de_resource.h"
 #include "de_render.h"
 
@@ -71,6 +72,8 @@ struct material_s
     float shinyStrength;
     de::Texture *shinyMaskTex;
 
+    de::Material::Decorations decorations;
+
     /// Current prepared state.
     byte prepared;
 
@@ -91,6 +94,7 @@ struct material_s
 
     ~material_s()
     {
+        clearDecorations();
         clearVariants();
         Size2_Delete(dimensions);
     }
@@ -104,15 +108,12 @@ struct material_s
         prepared = 0;
     }
 
-    /**
-     * Add a new variant to the list of resources for this Material.
-     * Material takes ownership of the variant.
-     *
-     * @param variant  Variant instance to add to the list.
-     */
-    void addVariant(de::MaterialVariant &variant)
+    void clearDecorations()
     {
-        variants.push_back(&variant);
+        while(!decorations.isEmpty())
+        {
+            delete decorations.takeFirst();
+        }
     }
 };
 
@@ -284,6 +285,44 @@ void Material_Delete(material_t *mat)
     {
         delete (material_s *) mat;
     }
+}
+
+void Material_AddDecoration(material_t *mat, ded_decorlight_t const *def)
+{
+    DENG_ASSERT(mat);
+    Material::Decoration *decor = new Material::Decoration();
+    std::memcpy(decor->pos, def->pos, sizeof(decor->pos));
+    decor->elevation = def->elevation;
+    std::memcpy(decor->color, def->color, sizeof(decor->color));
+    decor->radius = def->radius;
+    decor->haloRadius = def->haloRadius;
+    std::memcpy(decor->patternOffset, def->patternOffset, sizeof(decor->patternOffset));
+    std::memcpy(decor->patternSkip, def->patternSkip, sizeof(decor->patternSkip));
+    std::memcpy(decor->lightLevels, def->lightLevels, sizeof(decor->lightLevels));
+    decor->flareTexture = def->flareTexture;
+    if(def->up)
+    {
+        decor->up = *reinterpret_cast<de::Uri const *>(def->up);
+    }
+    if(def->down)
+    {
+        decor->down = *reinterpret_cast<de::Uri const *>(def->down);
+    }
+    if(def->sides)
+    {
+        decor->sides = *reinterpret_cast<de::Uri const *>(def->sides);
+    }
+    if(def->flare)
+    {
+        decor->flare = *reinterpret_cast<de::Uri const *>(def->flare);
+    }
+    mat->decorations.push_back(decor);
+}
+
+int Material_DecorationCount(material_t const *mat)
+{
+    DENG2_ASSERT(mat);
+    return mat->decorations.count();
 }
 
 boolean Material_IsValid(material_t const *mat)
@@ -643,6 +682,11 @@ void Material_SetShinyMaskTexture(material_t *mat, struct texture_s *tex)
     mat->shinyMaskTex = reinterpret_cast<de::Texture *>(tex);
 }
 
+Material::Decorations const &Material_Decorations(material_t const *mat)
+{
+    return mat->decorations;
+}
+
 Material::Variants const &Material_Variants(material_t const *mat)
 {
     return mat->variants;
@@ -673,7 +717,7 @@ MaterialVariant *Material_ChooseVariant(material_t *mat,
         if(!canCreate) return 0;
 
         variant = new MaterialVariant(*mat, spec);
-        mat->addVariant(*variant);
+        mat->variants.push_back(variant);
     }
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
@@ -700,15 +744,8 @@ void Material_ClearVariants(material_t *mat)
 
 boolean Material_HasDecorations(material_t *mat)
 {
-    if(novideo) return false;
-
-    /// @todo We should not need to prepare to determine this.
-    if(!mat->prepared)
-    {
-        App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec());
-    }
-    MaterialManifest &manifest = Material_Manifest(mat);
-    if(manifest.decorationDef()) return true;
+    if(mat->decorations.count())
+        return true;
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     if(Material_IsGroupAnimated(mat))

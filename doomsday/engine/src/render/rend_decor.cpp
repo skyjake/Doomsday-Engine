@@ -51,7 +51,7 @@ typedef struct decorsource_s {
     BspLeaf *bspLeaf;
     unsigned int lumIdx; // Index+1 of linked lumobj, or 0.
     float fadeMul;
-    ded_decorlight_t const *def;
+    Material::Decoration const *def;
     DGLuint flareTex;
     struct decorsource_s *next;
 } decorsource_t;
@@ -194,7 +194,7 @@ void Rend_ProjectDecorations()
 
 static void addLuminousDecoration(decorsource_t *src)
 {
-    ded_decorlight_t const *def = src->def;
+    de::Material::Decoration const *def = src->def;
     float brightness;
     uint i, lumIdx;
     float min, max;
@@ -227,9 +227,9 @@ static void addLuminousDecoration(decorsource_t *src)
     l->decorSource = src;
 
     LUM_OMNI(l)->zOff = 0;
-    LUM_OMNI(l)->tex = GL_PrepareLightmap(def->sides);
-    LUM_OMNI(l)->ceilTex = GL_PrepareLightmap(def->up);
-    LUM_OMNI(l)->floorTex = GL_PrepareLightmap(def->down);
+    LUM_OMNI(l)->tex      = GL_PrepareLightmap(reinterpret_cast<uri_s const *>(&def->sides));
+    LUM_OMNI(l)->ceilTex  = GL_PrepareLightmap(reinterpret_cast<uri_s const *>(&def->up));
+    LUM_OMNI(l)->floorTex = GL_PrepareLightmap(reinterpret_cast<uri_s const *>(&def->down));
 
     // These are the same rules as in DL_MobjRadius().
     LUM_OMNI(l)->radius = def->radius * 40 * loRadiusFactor;
@@ -310,7 +310,7 @@ static decorsource_t *addDecoration()
 /**
  * A decorsource is created from the specified surface decoration.
  */
-static void createDecorSource(Surface const *suf, surfacedecor_t const *dec, float maxDistance)
+static void createDecorSource(Surface const *suf, Surface::Decoration const &dec, float maxDistance)
 {
     // Out of sources?
     if(numDecorations >= MAX_DECOR_LIGHTS) return;
@@ -319,18 +319,19 @@ static void createDecorSource(Surface const *suf, surfacedecor_t const *dec, flo
 
     // Fill in the data for a new surface decoration.
     decorsource_t *src = addDecoration();
-    V3d_Copy(src->origin, dec->origin);
+    V3d_Copy(src->origin, dec.origin);
     src->maxDistance = maxDistance;
-    src->bspLeaf = dec->bspLeaf;
+    src->bspLeaf = dec.bspLeaf;
     src->surface = suf;
     src->fadeMul = 1;
-    src->def = dec->def;
+    src->def = dec.def;
     if(src->def)
     {
-        ded_decorlight_t const *def = src->def;
-        if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
+        de::Material::Decoration const *def = src->def;
+        if(def->flare.isEmpty() || def->flare.path() != Path("-"))
         {
-            src->flareTex = GL_PrepareFlareTexture(def->flare, def->flareTexture);
+            src->flareTex = GL_PrepareFlareTexture(reinterpret_cast<uri_s const *>(&def->flare),
+                                                   def->flareTexture);
         }
     }
 }
@@ -345,7 +346,7 @@ boolean R_ProjectSurfaceDecorations(Surface *suf, void *context)
 
     if(suf->inFlags & SUIF_UPDATE_DECORATIONS)
     {
-        R_ClearSurfaceDecorations(suf);
+        Surface_ClearDecorations(suf);
 
         switch(DMU_GetType(suf->owner))
         {
@@ -367,10 +368,12 @@ boolean R_ProjectSurfaceDecorations(Surface *suf, void *context)
     }
 
     if(useLightDecorations)
-    for(i = 0; i < suf->numDecorations; ++i)
     {
-        surfacedecor_t const *d = &suf->decorations[i];
-        createDecorSource(suf, d, maxDist);
+        Surface::Decoration const *decorations = (Surface::Decoration const *)suf->decorations;
+        for(i = 0; i < suf->numDecorations; ++i)
+        {
+            createDecorSource(suf, decorations[i], maxDist);
+        }
     }
 
     return true;
@@ -389,7 +392,7 @@ static void getDecorationSkipPattern(int const patternSkip[2], int *skip)
     }
 }
 
-static uint generateDecorLights(ded_decorlight_t const *def, Surface *suf,
+static uint generateDecorLights(Material::Decoration const *def, Surface *suf,
     material_t *mat, pvec3d_t const v1, pvec3d_t const /*v2*/, coord_t width, coord_t height,
     pvec3d_t const delta, int axis, float offsetS, float offsetT, Sector* sec)
 {
@@ -399,7 +402,7 @@ static uint generateDecorLights(ded_decorlight_t const *def, Surface *suf,
     int skip[2];
     uint num;
 
-    if(!mat || !Def_IsValidLightDecoration(def)) return 0;
+    if(!mat /*|| !Def_IsValidLightDecoration(def)*/) return 0;
 
     // Skip must be at least one.
     getDecorationSkipPattern(def->patternSkip, skip);
@@ -427,7 +430,6 @@ static uint generateDecorLights(ded_decorlight_t const *def, Surface *suf,
 
         for(; t < height; t += patternH)
         {
-            surfacedecor_t *d;
             float offS = s / width, offT = t / height;
 
             V3d_Set(origin, delta[VX] * offS,
@@ -442,12 +444,11 @@ static uint generateDecorLights(ded_decorlight_t const *def, Surface *suf,
                     continue;
             }
 
-            d = R_CreateSurfaceDecoration(suf);
-            if(d)
+            if(Surface::Decoration *dec = Surface_NewDecoration(suf))
             {
-                V3d_Copy(d->origin, origin);
-                d->bspLeaf = P_BspLeafAtPoint(d->origin);
-                d->def = def;
+                V3d_Copy(dec->origin, origin);
+                dec->bspLeaf = P_BspLeafAtPoint(dec->origin);
+                dec->def = def;
                 num++;
             }
         }
@@ -463,9 +464,6 @@ static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT
     vec3d_t v1, vec3d_t v2, Sector *sec, boolean visible)
 {
     if(!visible) return;
-
-    ded_decor_t const *def = Material_Manifest(suf->material).decorationDef();
-    if(!def) return;
 
     vec3d_t delta;
     V3d_Subtract(delta, v2, v1);
@@ -489,9 +487,10 @@ static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT
         if(height < 0) height = -height;
 
         // Generate a number of lights.
-        for(uint i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+        Material::Decorations const &decorations = Material_Decorations(suf->material);
+        DENG2_FOR_EACH_CONST(Material::Decorations, i, decorations)
         {
-            generateDecorLights(&def->lights[i], suf, suf->material, v1, v2, width, height,
+            generateDecorLights(*i, suf, suf->material, v1, v2, width, height,
                                 delta, axis, offsetS, offsetT, sec);
         }
     }

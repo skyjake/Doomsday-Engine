@@ -2601,15 +2601,14 @@ DGLuint GL_PrepareRawTexture(rawtex_t *raw)
 
 DGLuint GL_PrepareLightmap(uri_s const *_resourceUri)
 {
-    if(_resourceUri)
+    de::Uri const *resourceUri = reinterpret_cast<de::Uri const *>(_resourceUri);
+    if(resourceUri && !resourceUri->isEmpty())
     {
-        de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
-        if(resourceUri.isEmpty()) return 0;
-        if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return 0;
+        if(!resourceUri->path().toStringRef().compareWithoutCase("-")) return 0;
 
         try
         {
-            TextureManifest &manifest = App_Textures()->scheme("Lightmaps").findByResourceUri(resourceUri);
+            TextureManifest &manifest = App_Textures()->scheme("Lightmaps").findByResourceUri(*resourceUri);
             if(de::Texture *tex = manifest.texture())
             {
                 /// @todo fixme: Render context texture specs should be defined only once.
@@ -2628,15 +2627,12 @@ DGLuint GL_PrepareLightmap(uri_s const *_resourceUri)
 
 DGLuint GL_PrepareFlareTexture(uri_s const *_resourceUri, int oldIdx)
 {
-    if(_resourceUri)
+    de::Uri const *resourceUri = reinterpret_cast<de::Uri const *>(_resourceUri);
+    if(resourceUri && !resourceUri->isEmpty())
     {
-        de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
-
-        if(resourceUri.isEmpty()) return 0; // automatic
-
-        if(resourceUri.path().length() == 1)
+        if(resourceUri->path().length() == 1)
         {
-            QChar first = resourceUri.path().toStringRef().first();
+            QChar first = resourceUri->path().toStringRef().first();
             if(first == '-') return 0; // automatic
 
             // Select a system flare by numeric identifier?
@@ -2650,7 +2646,7 @@ DGLuint GL_PrepareFlareTexture(uri_s const *_resourceUri, int oldIdx)
 
         try
         {
-            TextureManifest &manifest = App_Textures()->scheme("Flaremaps").findByResourceUri(resourceUri);
+            TextureManifest &manifest = App_Textures()->scheme("Flaremaps").findByResourceUri(*resourceUri);
             if(de::Texture *tex = manifest.texture())
             {
                 texturevariantspecification_t *texSpec =

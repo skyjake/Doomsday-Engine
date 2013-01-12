@@ -102,7 +102,8 @@ ded_sky_t*      Def_GetSky(const char* id);
 ded_material_t* Def_GetMaterial(const char* uri);
 ded_compositefont_t* Def_GetCompositeFont(const char* uri);
 ded_light_t*    Def_GetLightDef(int spr, int frame);
-ded_decor_t*    Def_GetDecoration(Uri const *uri, boolean hasExternal, boolean isCustom);
+/// @todo $revise-texture-animation
+ded_decor_t*    Def_GetDecoration(Uri const *uri /*, boolean hasExternal, boolean isCustom*/);
 ded_reflection_t* Def_GetReflection(Uri const *uri, boolean hasExternal, boolean isCustom);
 ded_detailtexture_t* Def_GetDetailTex(Uri const *uri, boolean hasExternal, boolean isCustom);
 ded_ptcgen_t*   Def_GetGenerator(Uri const *uri);
@@ -142,7 +143,9 @@ StringArray* Def_ListStateIDs(void);
 /**
  * Returns @c true iff @a def is compatible with the specified context.
  */
+#if 0 /// @todo $revise-texture-animation
 boolean Def_IsAllowedDecoration(ded_decor_t *def, boolean hasExternal, boolean isCustom);
+#endif
 
 /**
  * Returns @c true iff @a def is compatible with the specified context.
