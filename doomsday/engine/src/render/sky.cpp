@@ -798,14 +798,14 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         if(renderTextures == 2)
         {
-            mat = App_Materials()->find(de::Uri(Path("System:gray"))).material();
+            mat = App_Materials()->find(de::Uri("System", Path("gray"))).material();
         }
         else
         {
             mat = Sky_LayerMaterial(layer);
             if(!mat)
             {
-                mat = App_Materials()->find(de::Uri(Path("System:missing"))).material();
+                mat = App_Materials()->find(de::Uri("System", Path("missing"))).material();
                 rs.texXFlip = false;
             }
         }

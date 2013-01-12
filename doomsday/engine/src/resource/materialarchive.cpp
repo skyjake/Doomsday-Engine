@@ -142,7 +142,7 @@ struct MaterialArchive::Instance
      */
     void populate()
     {
-        insertRecord(Uri(Path(UNKNOWN_MATERIALNAME)));
+        insertRecord(Uri(UNKNOWN_MATERIALNAME, RC_NULL));
 
         /// @todo Assumes knowledge of how material ids are generated.
         /// Should be iterated by Materials using a callback function.
