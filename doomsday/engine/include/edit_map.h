@@ -41,8 +41,6 @@
 class EditMap
 {
 public:
-    //uint numVertexes;
-    //vertex_s** vertexes;
     typedef std::vector<Vertex*> Vertices;
     Vertices vertexes; // really needs to be std::vector? (not a MapObjectList?)
     uint numLineDefs;

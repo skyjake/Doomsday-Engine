@@ -65,7 +65,7 @@ typedef void (*con_textfilter_t) (char* text);
 // Forward declarations for map data types. The contents of these structs is
 // declared in p_maptypes.h.
 struct bspnode_s;
-struct vertex_s;
+//struct vertex_s;
 struct linedef_s;
 struct side_s;
 struct hedge_s;

@@ -63,19 +63,23 @@ typedef struct mvertex_s {
     Vertex *equiv;
 } mvertex_t;
 
-struct vertex_s {
+struct vertex_s; // opaque type
+
+class Vertex : public de::MapObject
+{
+public:
     coord_t origin[2];
     unsigned int numLineOwners; ///< Number of line owners.
     lineowner_t *lineOwners;    ///< Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     mvertex_t buildData;
-};
 
-class Vertex : public de::MapObject, public vertex_s
-{
 public:
     Vertex() : de::MapObject(DMU_VERTEX)
     {
-        memset(static_cast<vertex_s *>(this), 0, sizeof(vertex_s));
+        memset(origin, 0, sizeof(origin));
+        numLineOwners = 0;
+        lineOwners = 0;
+        memset(&buildData, 0, sizeof(buildData));
     }
 };
 

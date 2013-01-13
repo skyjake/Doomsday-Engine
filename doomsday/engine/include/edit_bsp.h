@@ -30,7 +30,6 @@
 #include "map/vertex.h"
 
 class GameMap;
-struct vertex_s;
 
 #ifdef __cplusplus
 extern "C" {

@@ -106,6 +106,7 @@
 
 #define DMT_BSPNODE_CHILDREN DDVT_PTR
 
+// Opaque types for public use.
 struct mobj_s;
 struct linedef_s;
 struct sector_s;
