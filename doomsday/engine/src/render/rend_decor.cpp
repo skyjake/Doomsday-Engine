@@ -498,28 +498,26 @@ static void updateSideSectionDecorations(LineDef &line, byte side, SideDefSectio
 {
     if(!line.L_sidedef(side)) return;
 
-    Surface &surface = line.L_sidedef(side)->SW_surface(section);
-    boolean visible = false;
-    float matOffset[2];
-    vec3d_t v1, v2;
+    Sector *frontSec  = line.L_sector(side);
+    Sector *backSec   = line.L_sector(side ^ 1);
+    SideDef *frontDef = line.L_sidedef(side);
+    SideDef *backDef  = line.L_sidedef(side ^ 1);
+    Surface &surface  = line.L_sidedef(side)->SW_surface(section);
+    DENG_ASSERT(surface.material);
 
-    if(surface.material)
+    coord_t low, hi;
+    float matOffset[2] = { 0, 0 };
+    boolean visible = R_FindBottomTop2(section, line.flags, frontSec, backSec, frontDef, backDef,
+                                       &low, &hi, matOffset);
+
+    vec3d_t v1, v2;
+    if(visible)
     {
-        Sector *frontSec  = line.L_sector(side);
-        Sector *backSec   = line.L_sector(side^1);
-        SideDef *frontDef = line.L_sidedef(side);
-        SideDef *backDef  = line.L_sidedef(side^1);
-        coord_t low, hi;
-        visible = R_FindBottomTop2(section, line.flags, frontSec, backSec, frontDef, backDef,
-                                   &low, &hi, matOffset);
-        if(visible)
-        {
-            V3d_Set(v1, line.L_vorigin(side  )[VX], line.L_vorigin(side  )[VY], hi);
-            V3d_Set(v2, line.L_vorigin(side^1)[VX], line.L_vorigin(side^1)[VY], low);
-        }
+        V3d_Set(v1, line.L_vorigin(side  )[VX], line.L_vorigin(side  )[VY], hi);
+        V3d_Set(v2, line.L_vorigin(side^1)[VX], line.L_vorigin(side^1)[VY], low);
     }
 
-    updateSurfaceDecorations2(surface, -matOffset[0], -matOffset[1], v1, v2, NULL, visible);
+    updateSurfaceDecorations2(surface, -matOffset[0], -matOffset[1], v1, v2, 0, visible);
 }
 
 void Rend_InitDecorationsForFrame()

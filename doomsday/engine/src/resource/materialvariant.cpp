@@ -59,6 +59,9 @@ struct MaterialVariant::Instance
     /// Layer animation states.
     MaterialVariant::LayerState layers[MaterialVariant::max_layers];
 
+    /// Decoration animation states.
+    MaterialVariant::DecorationState decorations[MaterialVariant::max_decorations];
+
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     /// For "smoothed" Material animation:
     bool hasTranslation;
@@ -126,7 +129,9 @@ void MaterialVariant::ticker(timespan_t /*ticLength*/)
     // Animation will only progress when not paused.
     if(isPaused()) return;
 
-    // Animate layers:
+    /*
+     * Animate layers:
+     */
     ded_material_t const *def = Material_Definition(d->material);
     int const layerCount      = Material_LayerCount(d->material);
     for(int i = 0; i < layerCount; ++i)
@@ -152,6 +157,43 @@ void MaterialVariant::ticker(timespan_t /*ticLength*/)
                 l.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
             else
                 l.tics = lsCur->tics;
+        }
+        else
+        {
+            ded_material_layer_stage_t const *lsCur = &layerDef->stages[l.stage];
+            l.inter = 1 - (l.tics - frameTimePos) / float( lsCur->tics );
+        }
+    }
+
+    /*
+     * Animate decorations:
+     */
+    uint idx = 0;
+    Material::Decorations const &decorations = Material_Decorations(d->material);
+    for(Material::Decorations::const_iterator it = decorations.begin();
+        it != decorations.end(); ++it, ++idx)
+    {
+        ded_decorlight_t const *lightDef = (*it)->def;
+
+        // Not animated?
+        if(lightDef->stageCount.num == 1) continue;
+        DecorationState &l = d->decorations[idx];
+
+        if(DD_IsSharpTick() && l.tics-- <= 0)
+        {
+            // Advance to next stage.
+            if(++l.stage == lightDef->stageCount.num)
+            {
+                // Loop back to the beginning.
+                l.stage = 0;
+            }
+            l.inter = 0;
+
+            ded_decorlight_stage_t const *lsCur = &lightDef->stages[l.stage];
+            if(lsCur->variance != 0)
+                l.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
+            else
+                l.tics = lsCur->tics;
 
             // Notify interested parties about this.
             if(d->spec.context == MC_MAPSURFACE)
@@ -162,7 +204,7 @@ void MaterialVariant::ticker(timespan_t /*ticLength*/)
         }
         else
         {
-            ded_material_layer_stage_t const *lsCur = &layerDef->stages[l.stage];
+            ded_decorlight_stage_t const *lsCur = &lightDef->stages[l.stage];
             l.inter = 1 - (l.tics - frameTimePos) / float( lsCur->tics );
         }
     }
@@ -182,6 +224,18 @@ void MaterialVariant::resetAnim()
         l.tics  = def->layers[i].stages[0].tics;
         l.inter = 0;
     }
+
+    uint idx = 0;
+    Material::Decorations const &decorations = Material_Decorations(d->material);
+    for(Material::Decorations::const_iterator it = decorations.begin();
+        it != decorations.end(); ++it, ++idx)
+    {
+        DecorationState &l = d->decorations[idx];
+
+        l.stage = 0;
+        l.tics  = (*it)->def->stages[0].tics;
+        l.inter = 0;
+    }
 }
 
 MaterialVariant::LayerState const &MaterialVariant::layer(int layerNum)
@@ -191,6 +245,15 @@ MaterialVariant::LayerState const &MaterialVariant::layer(int layerNum)
 
     /// @throw InvalidLayerError Invalid layer reference.
     throw InvalidLayerError("MaterialVariant::layer", QString("Invalid material layer #%1").arg(layerNum));
+}
+
+MaterialVariant::DecorationState const &MaterialVariant::decoration(int decorNum)
+{
+    if(decorNum >= 0 && decorNum < Material_DecorationCount(d->material))
+        return d->decorations[decorNum];
+
+    /// @throw InvalidDecorationError Invalid decoration reference.
+    throw InvalidDecorationError("MaterialVariant::decoration", QString("Invalid material decoration #%1").arg(decorNum));
 }
 
 MaterialSnapshot &MaterialVariant::attachSnapshot(MaterialSnapshot &newSnapshot)

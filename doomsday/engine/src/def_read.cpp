@@ -1329,6 +1329,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                             for(;;)
                             {
                                 READLABEL;
+                                RV_INT("Tics", st->tics)
+                                RV_FLT("Rnd", st->variance)
                                 RV_VEC("Offset", st->pos, 2)
                                 RV_FLT("Distance", st->elevation)
                                 RV_VEC("Color", st->color, 3)
@@ -2271,16 +2273,23 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 ded_decor_t const *prevDecor = ded->decorations + prevDecorDefIdx;
 
                 std::memcpy(decor, prevDecor, sizeof(*decor));
-
                 if(decor->material) decor->material = Uri_Dup(decor->material);
 
                 for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
                 {
-                    ded_decorlight_stage_t *stage = &decor->lights[i].stages[0];
-                    if(stage->flare)   stage->flare = Uri_Dup(stage->flare);
-                    if(stage->up)      stage->up    = Uri_Dup(stage->up);
-                    if(stage->down)    stage->down  = Uri_Dup(stage->down);
-                    if(stage->sides)   stage->sides = Uri_Dup(stage->sides);
+                    ded_decorlight_t *dl = &decor->lights[i];
+                    dl->stages = (ded_decorlight_stage_t*) M_Malloc(sizeof(*dl->stages) * dl->stageCount.max);
+                    std::memcpy(dl->stages, prevDecor->lights[i].stages, sizeof(*dl->stages) * dl->stageCount.num);
+
+                    for(int k = 0; k < dl->stageCount.num; ++k)
+                    {
+                        ded_decorlight_stage_t *stage = &dl->stages[k];
+
+                        if(stage->flare)   stage->flare = Uri_Dup(stage->flare);
+                        if(stage->up)      stage->up    = Uri_Dup(stage->up);
+                        if(stage->down)    stage->down  = Uri_Dup(stage->down);
+                        if(stage->sides)   stage->sides = Uri_Dup(stage->sides);
+                    }
                 }
             }
 

@@ -421,6 +421,8 @@ typedef struct ded_ptcgen_s {
 } ded_ptcgen_t;
 
 typedef struct ded_decorlight_stage_s {
+    int             tics;
+    float           variance; // Stage variance (time).
     float           pos[2]; // Coordinates on the surface.
     float           elevation; // Distance from the surface.
     float           color[3]; // Light color.

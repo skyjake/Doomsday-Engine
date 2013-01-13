@@ -134,9 +134,28 @@ public:
         float inter;
     };
 
+    /// Maximum number of (light) decorations a material supports.
+    static int const max_decorations = 16;
+
+    /// Current state of a material (light) decoration.
+    struct DecorationState
+    {
+        /// Animation stage else @c -1 => decoration not in use.
+        int stage;
+
+        /// Remaining (sharp) tics in the current stage.
+        short tics;
+
+        /// Intermark from the current stage to the next [0..1].
+        float inter;
+    };
+
 public:
     /// The requested layer does not exist. @ingroup errors
     DENG2_ERROR(InvalidLayerError);
+
+    /// The requested decoration does not exist. @ingroup errors
+    DENG2_ERROR(InvalidDecorationError);
 
     /// Required snapshot data is missing. @ingroup errors
     DENG2_ERROR(MissingSnapshotError);
@@ -188,6 +207,11 @@ public:
      * Returns the current state of @a layerNum for the variant.
      */
     LayerState const &layer(int layerNum);
+
+    /**
+     * Returns the current state of @a decorNum for the variant.
+     */
+    DecorationState const &decoration(int decorNum);
 
     /**
      * Attach new MaterialSnapshot data to the variant. If an existing snapshot
