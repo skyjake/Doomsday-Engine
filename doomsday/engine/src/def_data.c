@@ -801,14 +801,6 @@ void DED_RemoveFinale(ded_t* ded, int index)
 int DED_AddDecoration(ded_t* ded)
 {
     ded_decor_t* decor = DED_NewEntry((void**) &ded->decorations, &ded->count.decorations, sizeof(ded_decor_t));
-    int i;
-
-    // Each decorlight supports only one stage.
-    for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
-    {
-        DED_AddDecorLightStage(&decor->lights[i]);
-    }
-
     return decor - ded->decorations;
 }
 

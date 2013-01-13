@@ -87,7 +87,7 @@ struct MaterialVariant::Instance
 MaterialVariant::MaterialVariant(material_t &generalCase, MaterialVariantSpec const &spec)
 {
     d = new Instance(generalCase, spec);
-    // Initialize layer animation states.
+    // Initialize animation states.
     resetAnim();
 }
 

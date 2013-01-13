@@ -367,19 +367,17 @@ static inline void getDecorationSkipPattern(int const patternSkip[2], int skip[2
 }
 
 static uint generateDecorLights(Material::Decoration const &decor, Surface &suf,
-    material_t *mat, pvec3d_t const v1, pvec3d_t const /*v2*/, coord_t width, coord_t height,
+    material_t &mat, pvec3d_t const v1, pvec3d_t const /*v2*/, coord_t width, coord_t height,
     pvec3d_t const delta, int axis, float offsetS, float offsetT, Sector *sec)
 {
     ded_decorlight_stage_t const *def = &decor.def->stages[0];
-
-    if(!mat /*|| !Def_IsValidLightDecoration(def)*/) return 0;
 
     // Skip must be at least one.
     int skip[2];
     getDecorationSkipPattern(decor.def->patternSkip, skip);
 
-    coord_t patternW = Material_Width(mat)  * skip[0];
-    coord_t patternH = Material_Height(mat) * skip[1];
+    coord_t patternW = Material_Width(&mat)  * skip[0];
+    coord_t patternH = Material_Height(&mat) * skip[1];
 
     if(0 == patternW && 0 == patternH) return 0;
 
@@ -391,13 +389,13 @@ static uint generateDecorLights(Material::Decoration const &decor, Surface &suf,
 
     // Let's see where the top left light is.
     float s = M_CycleIntoRange(def->pos[0] -
-                               Material_Width(mat) * decor.def->patternOffset[0] +
+                               Material_Width(&mat) * decor.def->patternOffset[0] +
                                offsetS, patternW);
     uint num = 0;
     for(; s < width; s += patternW)
     {
         float t = M_CycleIntoRange(def->pos[1] -
-                                   Material_Height(mat) * decor.def->patternOffset[1] +
+                                   Material_Height(&mat) * decor.def->patternOffset[1] +
                                    offsetT, patternH);
 
         for(; t < height; t += patternH)
@@ -465,7 +463,7 @@ static void updateSurfaceDecorations2(Surface &suf, float offsetS, float offsetT
         Material::Decorations const &decorations = Material_Decorations(suf.material);
         DENG2_FOR_EACH_CONST(Material::Decorations, i, decorations)
         {
-            generateDecorLights(**i, suf, suf.material, v1, v2, width, height,
+            generateDecorLights(**i, suf, *suf.material, v1, v2, width, height,
                                 delta, axis, offsetS, offsetT, sec);
         }
     }

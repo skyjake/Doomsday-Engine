@@ -2314,7 +2314,6 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 else if(ISLABEL("Light"))
                 {
                     ded_decorlight_t *dl = &decor->lights[sub];
-                    ded_decorlight_stage_t *st = &dl->stages[0];
 
                     if(sub == DED_DECOR_NUM_LIGHTS)
                     {
@@ -2322,6 +2321,13 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         retVal = false;
                         goto ded_end_read;
                     }
+
+                    // Each decorlight supports only one stage.
+                    if(!dl->stageCount.num)
+                    {
+                        DED_AddDecorLightStage(dl);
+                    }
+                    ded_decorlight_stage_t *st = &dl->stages[0];
 
                     FINDBEGIN;
                     for(;;)
