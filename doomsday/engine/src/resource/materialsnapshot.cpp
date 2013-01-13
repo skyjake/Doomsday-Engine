@@ -20,6 +20,9 @@
 #include <cstring>
 #include <de/Log>
 #include "de_base.h"
+#ifdef __CLIENT__
+#  include "de_defs.h"
+#endif
 
 #include "render/rend_main.h" // glowFactor, TODO: get rid of this
 #ifdef __CLIENT__
@@ -53,6 +56,9 @@ struct Store {
 #ifdef __CLIENT__
     /// Texture unit configuration.
     rtexmapunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
+
+    /// Decoration configuration.
+    MaterialSnapshot::Decoration decorations[MaterialVariant::max_decorations];
 #endif
 
     Store() { initialize(); }
@@ -71,6 +77,10 @@ struct Store {
             Rtu_Init(&units[i]);
 #endif
         }
+
+#ifdef __CLIENT__
+        std::memset(decorations, 0, sizeof(decorations));
+#endif
     }
 
 #ifdef __CLIENT__
@@ -170,6 +180,16 @@ rtexmapunit_t const &MaterialSnapshot::unit(int index) const
     return d->stored.units[index];
 }
 
+MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
+{
+    if(index < 0 || index >= MaterialVariant::max_decorations)
+    {
+        /// @throw InvalidDecorationError Attempt to obtain a reference to a decoration with an invalid index.
+        throw InvalidDecorationError("MaterialSnapshot::decoration", QString("Invalid decoration index %1").arg(index));
+    }
+    return d->stored.decorations[index];
+}
+
 static Texture *findTextureByResourceUri(String nameOfScheme, de::Uri const &resourceUri)
 {
     if(resourceUri.isEmpty()) return 0;
@@ -237,7 +257,6 @@ void MaterialSnapshot::Instance::updateMaterial(preparetextureresult_t result)
 void MaterialSnapshot::Instance::takeSnapshot()
 {
     material_t *mat = &material->generalCase();
-//    MaterialManifest &manifest = Material_Manifest(mat);
     ded_material_t const *def = Material_Definition(mat);
     MaterialVariantSpec const &spec = material->spec();
 
@@ -414,6 +433,37 @@ void MaterialSnapshot::Instance::takeSnapshot()
                                     stored.units[MTU_PRIMARY].offset[1]), 1);
 #endif
     }
+
+#ifdef __CLIENT__
+    uint idx = 0;
+    Material::Decorations const &decorations = Material_Decorations(mat);
+    for(Material::Decorations::const_iterator it = decorations.begin();
+        it != decorations.end(); ++it, ++idx)
+    {
+        MaterialVariant::DecorationState const &l = material->decoration(idx);
+        ded_decorlight_t const *lDef = (*it)->def;
+        ded_decorlight_stage_t const *lsCur  = &lDef->stages[l.stage];
+        //ded_decorlight_stage_t const *lsNext = &lDef->stages[(l.stage + 1) % lDef->stageCount.num];
+
+        MaterialSnapshot::Decoration &decor = stored.decorations[idx];
+        std::memcpy(decor.pos, lsCur->pos, sizeof(decor.pos));
+        decor.elevation = lsCur->elevation;
+        std::memcpy(decor.color, lsCur->color, sizeof(decor.color));
+        decor.radius = lsCur->radius;
+        decor.haloRadius = lsCur->haloRadius;
+        std::memcpy(decor.lightLevels, lsCur->lightLevels, sizeof(decor.lightLevels));
+
+        decor.tex      = GL_PrepareLightmap(lsCur->sides);
+        decor.ceilTex  = GL_PrepareLightmap(lsCur->up);
+        decor.floorTex = GL_PrepareLightmap(lsCur->down);
+
+        de::Uri const *flareUri = reinterpret_cast<de::Uri const *>(lsCur->flare);
+        if((!flareUri || flareUri->isEmpty()) || flareUri->path() != Path("-"))
+        {
+            decor.flareTex = GL_PrepareFlareTexture(lsCur->flare, lsCur->flareTexture);
+        }
+    }
+#endif
 }
 
 void MaterialSnapshot::update()

@@ -47,8 +47,30 @@ class TextureVariant;
 class MaterialSnapshot
 {
 public:
+#ifdef __CLIENT__
+    /// Interpolated (light) decoration properties.
+    struct Decoration
+    {
+        float pos[2]; // Coordinates in material space.
+        float elevation; // Distance from the surface.
+        float color[3]; // Light color.
+        float radius; // Dynamic light radius (-1 = no light).
+        float haloRadius; // Halo radius (zero = no halo).
+        float lightLevels[2]; // Fade by sector lightlevel.
+
+        DGLuint tex, ceilTex, floorTex;
+        DGLuint flareTex;
+    };
+#endif
+
+public:
     /// Invalid texture unit referenced. @ingroup errors
     DENG2_ERROR(InvalidUnitError);
+
+#ifdef __CLIENT__
+    /// Invalid decoration referenced. @ingroup errors
+    DENG2_ERROR(InvalidDecorationError);
+#endif
 
 public:
     /**
@@ -105,6 +127,14 @@ public:
      * @return  The associated texture unit.
      */
     rtexmapunit_t const &unit(int index) const;
+
+    /**
+     * Lookup a material snapshot decoration by index.
+     *
+     * @param index  Index of the decoration to lookup.
+     * @return  The associated decoration data.
+     */
+    Decoration &decoration(int index) const;
 #endif
 
     /**
