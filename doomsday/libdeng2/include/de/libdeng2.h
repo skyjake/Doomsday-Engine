@@ -191,6 +191,21 @@
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
 
+template <typename FromType, typename ToType>
+inline ToType function_cast(FromType ptr)
+{
+    /**
+     * @note Casting to a pointer-to-function type: see
+     * http://www.trilithium.com/johan/2004/12/problem-with-dlsym/
+     */
+    // This is not 100% portable to all possible memory architectures; thus:
+    DENG2_ASSERT(sizeof(void *) == sizeof(ToType));
+
+    union { FromType original; ToType target; } forcedCast;
+    forcedCast.original = ptr;
+    return forcedCast.target;
+}
+
 /**
  * All serialization in all contexts use a common protocol version number.
  * Whenever anything changes in serialization, the protocol version needs to be
