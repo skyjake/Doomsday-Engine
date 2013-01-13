@@ -454,7 +454,7 @@ boolean Material_IsDrawable(material_t const *mat)
     return 0 == (mat->flags & MATF_NO_DRAW);
 }
 
-boolean Material_HasGlow(material_t *mat)
+boolean Material_HasGlow(material_t const *mat)
 {
     DENG_ASSERT(mat);
     if(mat->def)

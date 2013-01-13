@@ -213,30 +213,20 @@ boolean Material_IsValid(material_t const *mat);
 /// @return  @c true= the material is animated.
 boolean Material_IsAnimated(material_t const *mat);
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-/// @return  @c true= the material belongs to one or more anim groups.
-boolean Material_IsGroupAnimated(material_t const *mat);
-#endif
-
-/// @return  @c true if Material should be replaced with Sky.
+/// Returns @c true if the material is considered @em skymasked.
 boolean Material_IsSkyMasked(material_t const *mat);
 
-/// @return  @c true if Material is considered drawable.
+/// Returns @c true if the material is considered drawable.
 boolean Material_IsDrawable(material_t const *mat);
 
-/// @return  @c true if one or more animation stages are defined as "glowing".
-boolean Material_HasGlow(material_t *mat);
+/// Returns @c true if one or more (light) decorations are defined for the material.
+boolean Material_HasDecorations(material_t const *mat);
+
+/// Returns @c true if one or more of the material's layers are glowing.
+boolean Material_HasGlow(material_t const *mat);
 
 /// @return  Number of layers.
 int Material_LayerCount(material_t const *mat);
-
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-/// @return  @c true if there is an active translation.
-boolean Material_HasTranslation(material_t const *mat);
-
-/// Change the group animation status.
-void Material_SetGroupAnimated(material_t *mat, boolean yes);
-#endif
 
 /// @return  Prepared state of this material.
 byte Material_Prepared(material_t const *mat);
@@ -342,8 +332,16 @@ struct texture_s *Material_ShinyMaskTexture(material_t *mat);
  */
 void Material_SetShinyMaskTexture(material_t *mat, struct texture_s *tex);
 
-/// Returns @c true if one or more light decorations are defined for the material.
-boolean Material_HasDecorations(material_t *mat);
+#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+/// @return  @c true= the material belongs to one or more anim groups.
+boolean Material_IsGroupAnimated(material_t const *mat);
+
+/// @return  @c true if there is an active translation.
+boolean Material_HasTranslation(material_t const *mat);
+
+/// Change the group animation status.
+void Material_SetGroupAnimated(material_t *mat, boolean yes);
+#endif
 
 /**
  * Get a property value, selected by DMU_* name.
