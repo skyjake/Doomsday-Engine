@@ -42,7 +42,7 @@ class EditMap
 {
 public:
     typedef std::vector<Vertex *> Vertices;
-    Vertices vertexes; // really needs to be std::vector? (not a MapObjectList?)
+    Vertices vertexes; // really needs to be std::vector? (not a MapElementList?)
 
     uint numLineDefs;
     LineDef** lineDefs;

@@ -30,7 +30,7 @@
 #include <de/binangle.h>
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
-#include "MapObject"
+#include "MapElement"
 
 #define LO_prev     link[0]
 #define LO_next     link[1]
@@ -68,7 +68,7 @@ struct vertex_s; // opaque type
 /**
  * Vertex in the map geometry.
  */
-class Vertex : public de::MapObject
+class Vertex : public de::MapElement
 {
 public:
     coord_t origin[2];
@@ -77,7 +77,7 @@ public:
     mvertex_t buildData;
 
 public:
-    Vertex() : de::MapObject(DMU_VERTEX)
+    Vertex() : de::MapElement(DMU_VERTEX)
     {
         memset(origin, 0, sizeof(origin));
         numLineOwners = 0;

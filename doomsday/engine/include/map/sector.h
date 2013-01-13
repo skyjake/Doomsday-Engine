@@ -27,7 +27,7 @@
 #  error "map/sector.h requires C++"
 #endif
 
-#include "MapObject"
+#include "MapElement"
 #include "p_mapdata.h"
 #include "p_dmu.h"
 
@@ -90,7 +90,7 @@ typedef struct msector_s {
 
 struct sector_s; // opaque type
 
-class Sector : public de::MapObject
+class Sector : public de::MapElement
 {
 public:
     int                 frameFlags;

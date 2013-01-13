@@ -27,7 +27,7 @@
 #  error "map/hedge.h requires C++"
 #endif
 
-#include "MapObject"
+#include "MapElement"
 #include "resource/r_data.h"
 #include "p_dmu.h"
 #include "sector.h"

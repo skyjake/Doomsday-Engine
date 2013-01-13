@@ -1,4 +1,4 @@
-/** @file mapobject.h Base class for all map data objects.
+/** @file mapelement.h Base class for all map data objects.
  * @ingroup map
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -18,13 +18,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_MAPOBJECT_H
-#define LIBDENG_MAPOBJECT_H
+#ifndef LIBDENG_MAPELEMENT_H
+#define LIBDENG_MAPELEMENT_H
 
 #include "dd_share.h"
 
 #ifndef __cplusplus
-#  error "map/mapobject.h requires C++"
+#  error "map/mapelement.h requires C++"
 #endif
 
 #include <QList>
@@ -32,16 +32,15 @@
 namespace de {
 
 /**
- * Base class for all map data objects.
- *
- * @todo This shouldn't be confused with mobjs. Figure out a better name. -jk
+ * Base class for all elements of a map. Maps are composed out of vertices,
+ * lines, sectors, etc.
  */
-class MapObject
+class MapElement
 {
 public:
-    MapObject(int t = DMU_NONE) : _type(t) {}
+    MapElement(int t = DMU_NONE) : _type(t) {}
 
-    virtual ~MapObject() {}
+    virtual ~MapElement() {}
 
     int type() const
     {
@@ -53,20 +52,20 @@ private:
 };
 
 /**
- * Collection of owned map objects with type @a Type.
+ * Collection of owned map elements with type @a Type.
  */
 template <typename Type>
-class MapObjectList : public QList<MapObject *>
+class MapElementList : public QList<MapElement *>
 {
-    typedef QList<MapObject *> Super;
+    typedef QList<MapElement *> Super;
 
 public:
-    MapObjectList() {}
+    MapElementList() {}
 
     /**
      * Deletes all the objects in the list.
      */
-    virtual ~MapObjectList()
+    virtual ~MapElementList()
     {
         clear();
     }
@@ -110,4 +109,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG_MAPOBJECT_H
+#endif // LIBDENG_MAPELEMENT_H

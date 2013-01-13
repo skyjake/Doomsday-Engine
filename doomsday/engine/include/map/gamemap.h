@@ -88,13 +88,13 @@ public:
     struct clpolyobj_s* clActivePolyobjs[CLIENT_MAX_MOVERS];
     // End client only data.
 
-    de::MapObjectList<Vertex> vertexes;
-    de::MapObjectList<Sector> sectors;
+    de::MapElementList<Vertex> vertexes;
+    de::MapElementList<Sector> sectors;
 
     uint numLineDefs;
     LineDef* lineDefs;
 
-    de::MapObjectList<SideDef> sideDefs;
+    de::MapElementList<SideDef> sideDefs;
 
     //uint numSideDefs;
     //SideDef* sideDefs;

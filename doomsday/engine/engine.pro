@@ -122,6 +122,7 @@ DENG_HEADERS += \
 
 # Private headers.
 DENG_HEADERS += \
+    include/MapElement \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
     include/audio/m_mus2midi.h \
@@ -228,7 +229,7 @@ DENG_HEADERS += \
     include/map/generators.h \
     include/map/hedge.h \
     include/map/linedef.h \
-    include/map/mapobject.h \
+    include/map/mapelement.h \
     include/map/p_dmu.h \
     include/map/p_intercept.h \
     include/map/p_mapdata.h \

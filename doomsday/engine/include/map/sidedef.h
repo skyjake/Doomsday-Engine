@@ -27,7 +27,7 @@
 #  error "map/sidedef.h requires C++"
 #endif
 
-#include "MapObject"
+#include "MapElement"
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
 #include "map/surface.h"
@@ -106,7 +106,7 @@ typedef struct edgespan_s {
 
 struct sidedef_s; // opaque type
 
-class SideDef : public de::MapObject
+class SideDef : public de::MapElement
 {
 public:
     Surface             sections[3];

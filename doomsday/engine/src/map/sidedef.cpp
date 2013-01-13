@@ -24,7 +24,7 @@
 #include "de_console.h"
 #include "de_play.h"
 
-SideDef::SideDef() : de::MapObject(DMU_SIDEDEF)
+SideDef::SideDef() : de::MapElement(DMU_SIDEDEF)
 {
     memset(sections, 0, sizeof(sections));
     line = 0;

@@ -24,7 +24,7 @@
 #include "de_console.h"
 #include "de_play.h"
 
-Sector::Sector() : de::MapObject(DMU_SECTOR)
+Sector::Sector() : de::MapElement(DMU_SECTOR)
 {
     frameFlags = 0;
     validCount = 0;
