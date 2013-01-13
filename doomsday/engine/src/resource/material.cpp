@@ -72,6 +72,7 @@ struct material_s
     float shinyStrength;
     de::Texture *shinyMaskTex;
 
+    /// Decorations (will be projected into the map relative to a surface).
     de::Material::Decorations decorations;
 
     /// Current prepared state.
@@ -441,14 +442,6 @@ boolean Material_IsAnimated(material_t const *mat)
     return false; // Not at all.
 }
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-boolean Material_IsGroupAnimated(material_t const *mat)
-{
-    DENG2_ASSERT(mat);
-    return boolean( mat->inAnimGroup );
-}
-#endif
-
 boolean Material_IsSkyMasked(material_t const *mat)
 {
     DENG2_ASSERT(mat);
@@ -463,13 +456,21 @@ boolean Material_IsDrawable(material_t const *mat)
 
 boolean Material_HasGlow(material_t *mat)
 {
-    if(novideo) return false;
-
-    /// @todo We should not need to prepare to determine this.
-    MaterialSnapshot const &ms =
-        App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec());
-
-    return (ms.glowStrength() > .0001f);
+    DENG_ASSERT(mat);
+    if(mat->def)
+    {
+        int const layerCount = Material_LayerCount(mat);
+        for(int i = 0; i < layerCount; ++i)
+        {
+            ded_material_layer_t const &layer = mat->def->layers[i];
+            for(int k = 0; k < layer.stageCount.num; ++k)
+            {
+                ded_material_layer_stage_t const &stage = layer.stages[k];
+                if(stage.glowStrength > .0001f) return true;
+            }
+        }
+    }
+    return false;
 }
 
 int Material_LayerCount(material_t const *mat)
@@ -480,6 +481,12 @@ int Material_LayerCount(material_t const *mat)
 }
 
 #ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+boolean Material_IsGroupAnimated(material_t const *mat)
+{
+    DENG2_ASSERT(mat);
+    return boolean( mat->inAnimGroup );
+}
+
 boolean Material_HasTranslation(material_t const *mat)
 {
     DENG2_ASSERT(mat);
@@ -717,8 +724,9 @@ void Material_ClearVariants(material_t *mat)
     mat->clearVariants();
 }
 
-boolean Material_HasDecorations(material_t *mat)
+boolean Material_HasDecorations(material_t const *mat)
 {
+    DENG_ASSERT(mat);
     if(mat->decorations.count())
         return true;
 
