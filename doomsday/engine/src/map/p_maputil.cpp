@@ -103,7 +103,7 @@ DENG_EXTERN_C BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y)
 
 boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, const BspLeaf* bspLeaf)
 {
-    vertex_s* vi, *vj;
+    Vertex* vi, *vj;
     HEdge* hedge;
 
     if(!bspLeaf || !bspLeaf->hedge) return false; // I guess?

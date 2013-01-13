@@ -35,6 +35,8 @@
 #define LO_prev     link[0]
 #define LO_next     link[1]
 
+class Vertex;
+
 typedef struct lineowner_shadowvert_s {
     coord_t inner[2];
     coord_t extended[2];
@@ -58,7 +60,7 @@ typedef struct mvertex_s {
 
     /// Usually NULL, unless this vertex occupies the same location as a
     /// previous vertex. Only used during the pruning phase.
-    struct vertex_s *equiv;
+    Vertex *equiv;
 } mvertex_t;
 
 struct vertex_s {

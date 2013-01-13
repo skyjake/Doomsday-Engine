@@ -790,7 +790,7 @@ void GameMap_InitSkyFix(GameMap *map)
 /**
  * @return  Lineowner for this line for this vertex; otherwise @c 0.
  */
-lineowner_t *R_GetVtxLineOwner(vertex_s const *v, LineDef const *line)
+lineowner_t *R_GetVtxLineOwner(Vertex const *v, LineDef const *line)
 {
     if(v == line->L_v1)
         return line->L_vo1;
@@ -819,7 +819,7 @@ DENG_EXTERN_C void R_SetupFogDefaults()
     Con_Execute(CMDS_DDAY,"fog off", true, false);
 }
 
-void R_OrderVertices(LineDef const *line, Sector const *sector, vertex_s *verts[2])
+void R_OrderVertices(LineDef const *line, Sector const *sector, Vertex *verts[2])
 {
     byte edge = (sector == line->L_frontsector? 0:1);
     verts[0] = line->L_v(edge);

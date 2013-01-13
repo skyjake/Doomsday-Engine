@@ -69,16 +69,11 @@ static EditMap* e_map = &editMap;
 static boolean lastBuiltMapResult;
 static GameMap* lastBuiltMap;
 
-static vertex_s* rootVtx; // Used when sorting vertex line owners.
+static Vertex* rootVtx; // Used when sorting vertex line owners.
 
-static vertex_s* createVertex(void)
+static Vertex* createVertex(void)
 {
-    //vertex_s* vtx = (vertex_s*) M_Calloc(sizeof(*vtx));
     Vertex* vtx = new Vertex;
-
-    //e_map->vertexes = (vertex_s**) M_Realloc(e_map->vertexes, sizeof(vtx) * (++e_map->numVertexes + 1));
-    //e_map->vertexes[e_map->numVertexes-1] = vtx;
-    //e_map->vertexes[e_map->numVertexes] = NULL;
 
     e_map->vertexes.push_back(vtx);
 
@@ -255,14 +250,14 @@ static int vertexCompare(void const* p1, void const* p2)
 void MPE_DetectDuplicateVertices(EditMap* map)
 {
     DENG_ASSERT(map);
-    vertex_s** hits = (vertex_s**) M_Malloc(map->vertexCount() * sizeof(vertex_s*));
+    Vertex** hits = (Vertex**) M_Malloc(map->vertexCount() * sizeof(Vertex*));
 
     // Sort array of ptrs.
     for(uint i = 0; i < map->vertexCount(); ++i)
     {
         hits[i] = map->vertexes[i];
     }
-    qsort(hits, map->vertexCount(), sizeof(vertex_s*), vertexCompare);
+    qsort(hits, map->vertexCount(), sizeof(Vertex*), vertexCompare);
 
     // Now mark them off.
     for(uint i = 0; i < map->vertexCount() - 1; ++i)
@@ -271,8 +266,8 @@ void MPE_DetectDuplicateVertices(EditMap* map)
         if(vertexCompare(hits + i, hits + i + 1) == 0)
         {
             // Yes.
-            vertex_s* a = hits[i];
-            vertex_s* b = hits[i + 1];
+            Vertex* a = hits[i];
+            Vertex* b = hits[i + 1];
 
             b->buildData.equiv = (a->buildData.equiv ? a->buildData.equiv : a);
         }
@@ -823,7 +818,7 @@ static int lineAngleSorter(void const* a, void const* b)
         else
         {
             LineDef* line = own[i]->lineDef;
-            vertex_s *otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
+            Vertex *otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
 
             fixed_t dx = otherVtx->origin[VX] - rootVtx->origin[VX];
             fixed_t dy = otherVtx->origin[VY] - rootVtx->origin[VY];
@@ -925,7 +920,7 @@ static lineowner_t* sortLineOwners(lineowner_t* list,
     return list;
 }
 
-static void setVertexLineOwner(vertex_s* vtx, LineDef* lineptr, lineowner_t** storage)
+static void setVertexLineOwner(Vertex* vtx, LineDef* lineptr, lineowner_t** storage)
 {
     if(!lineptr) return;
 
@@ -983,7 +978,7 @@ static void buildVertexOwnerRings(EditMap* map)
 
         for(uint p = 0; p < 2; ++p)
         {
-            vertex_s* vtx = line->L_v(p);
+            Vertex* vtx = line->L_v(p);
             setVertexLineOwner(vtx, line, &allocator);
         }
     }
@@ -996,7 +991,7 @@ static void hardenVertexOwnerRings(GameMap* dest, EditMap* src)
 
     for(uint i = 0; i < src->vertexCount(); ++i)
     {
-        vertex_s* v = src->vertexes[i];
+        Vertex* v = src->vertexes[i];
 
         if(!v->numLineOwners) continue;
 
@@ -1706,7 +1701,7 @@ boolean MPE_GetLastBuiltMapResult(void)
 
 uint MPE_VertexCreate(coord_t x, coord_t y)
 {
-    vertex_s* v;
+    Vertex* v;
 
     if(!editMapInited) return 0;
 
@@ -1727,7 +1722,7 @@ boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
     // Create many vertexes.
     for(n = 0; n < num; ++n)
     {
-        vertex_s* v;
+        Vertex* v;
 
         v = createVertex();
         v->origin[VX] = values[n * 2];

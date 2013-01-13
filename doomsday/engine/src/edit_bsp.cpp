@@ -134,7 +134,7 @@ static void finishHEdges(GameMap* map)
 
         if(hedge->lineDef)
         {
-            vertex_s *vtx = hedge->lineDef->L_v(hedge->side);
+            Vertex *vtx = hedge->lineDef->L_v(hedge->side);
 
             hedge->sector = hedge->lineDef->L_sector(hedge->side);
             hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx->origin);

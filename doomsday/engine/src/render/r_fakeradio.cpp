@@ -208,7 +208,7 @@ void Rend_RadioInitForMap(void)
     uint startTime = Timer_RealMilliseconds();
 
     shadowlinkerparms_t data;
-    vertex_s* vtx0, *vtx1;
+    Vertex* vtx0, *vtx1;
     lineowner_t* vo0, *vo1;
     AABoxd bounds;
     vec2d_t point;
