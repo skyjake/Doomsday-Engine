@@ -150,8 +150,6 @@ public:
 
 };
 
-//typedef GameMap gamemap_s;
-
 /**
  * Change the global "current" map.
  */

@@ -47,7 +47,7 @@ typedef struct dummyline_s {
 } dummyline_t;
 
 typedef struct dummysector_s {
-    Sector sector; /// Sector data.
+    sector_s sector; /// Sector data.
     void *extraData; /// Pointer to user data.
     boolean inUse; /// true, if the dummy is being used.
 } dummysector_t;
@@ -274,7 +274,7 @@ void *P_AllocDummy(int type, void *extraData)
             {
                 dummySectors[i].inUse = true;
                 dummySectors[i].extraData = extraData;
-                dummySectors[i].sector.header.type = DMU_SECTOR;
+                //dummySectors[i].sector.header.type = DMU_SECTOR;
                 return &dummySectors[i];
             }
         }

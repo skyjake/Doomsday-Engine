@@ -89,7 +89,6 @@ typedef struct msector_s {
 } msector_t;
 
 struct sector_s {
-    runtime_mapdata_header_t header;
     int                 frameFlags;
     int                 validCount;    // if == validCount, already checked.
     AABoxd              aaBox;         // Bounding box for the sector.
