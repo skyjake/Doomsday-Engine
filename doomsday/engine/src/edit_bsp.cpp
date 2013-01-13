@@ -44,7 +44,7 @@ void BspBuilder_Register(void)
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
-BspBuilder_c* BspBuilder_New(GameMap* map, uint* numEditableVertexes, vertex_s*** editableVertexes)
+BspBuilder_c* BspBuilder_New(GameMap* map, uint numEditableVertexes, Vertex const **editableVertexes)
 {
     DENG2_ASSERT(map);
     BspBuilder_c* builder = static_cast<BspBuilder_c*>(malloc(sizeof *builder));
@@ -244,7 +244,7 @@ static void hardenBSP(BspBuilder& builder, GameMap* dest)
     rootNode->traversePostOrder(populateBspObjectLuts, &p);
 }
 
-static void copyVertex(Vertex& dest, vertex_s const& src)
+static void copyVertex(Vertex& dest, Vertex const& src)
 {
     DENG2_ASSERT(dest.type() == DMU_VERTEX);
 
@@ -258,7 +258,7 @@ static void copyVertex(Vertex& dest, vertex_s const& src)
 }
 
 static void hardenVertexes(BspBuilder& builder, GameMap* map,
-    uint* numEditableVertexes, vertex_s*** editableVertexes)
+    uint* numEditableVertexes, Vertex const ***editableVertexes)
 {
     uint bspVertexCount = builder.numVertexes();
 
@@ -275,7 +275,7 @@ static void hardenVertexes(BspBuilder& builder, GameMap* map,
     for(uint i = 0; i < bspVertexCount; ++i, ++n)
     {
         Vertex& dest = map->vertexes[n];
-        vertex_s& src  = builder.vertex(i);
+        Vertex& src  = builder.vertex(i);
 
         // TODO: necessary? just transfer the pointer
         //builder.take(reinterpret_cast<runtime_mapdata_header_t*>(&src));
@@ -303,8 +303,8 @@ static void updateVertexLinks(GameMap* map)
     }
 }
 
-void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numEditableVertexes,
-    vertex_s*** editableVertexes)
+void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint numEditableVertexes,
+                 Vertex const **editableVertexes)
 {
     Q_ASSERT(builder_c);
     BspBuilder& builder = *builder_c->inst;
@@ -326,7 +326,7 @@ void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numEditableVertexe
             << builder.numHEdges() << builder.numVertexes();
 
     buildHEdgeLut(builder, map);
-    hardenVertexes(builder, map, numEditableVertexes, editableVertexes);
+    hardenVertexes(builder, map, &numEditableVertexes, &editableVertexes);
     updateVertexLinks(map);
 
     finishHEdges(map);

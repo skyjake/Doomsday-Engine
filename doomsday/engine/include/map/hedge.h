@@ -23,11 +23,9 @@
 #ifndef LIBDENG_MAP_HEDGE
 #define LIBDENG_MAP_HEDGE
 
-/*
 #ifndef __cplusplus
 #  error "map/hedge.h requires C++"
 #endif
-*/
 
 #include "MapObject"
 #include "resource/r_data.h"
@@ -57,9 +55,11 @@
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
 
+class Vertex;
+
 typedef struct hedge_s {
     runtime_mapdata_header_t header;
-    struct vertex_s*    v[2]; /// [Start, End] of the segment.
+    Vertex *v[2]; /// [Start, End] of the segment.
     struct hedge_s*     next;
     struct hedge_s*     prev;
 
@@ -90,10 +90,6 @@ public:
     }
 };
 */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct bsphedgeinfo_s;
 
@@ -143,9 +139,5 @@ int HEdge_GetProperty(const HEdge* hedge, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_HEDGE

@@ -88,7 +88,7 @@ public:
  * @param oneSided  Total number of one-sided lines is written here. Can be @a NULL.
  * @param twoSided  Total number of two-sided lines is written here. Can be @a NULL.
  */
-void Vertex_CountLineOwners(vertex_s* vtx, uint* oneSided, uint* twoSided);
+void Vertex_CountLineOwners(Vertex const *vtx, uint* oneSided, uint* twoSided);
 
 /**
  * Get a property value, selected by DMU_* name.

@@ -53,7 +53,7 @@ public:
      * @param map  GameMap for which to construct a BSP object tree.
      * @param splitCostFactor  Cost factor attributed to splitting an existing half-edge.
      */
-    BspBuilder(GameMap& map, uint* numEditableVertexes, vertex_s*** editableVertexes,
+    BspBuilder(GameMap& map, uint numEditableVertexes, Vertex const **editableVertexes,
                int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
     ~BspBuilder();
 
@@ -119,7 +119,7 @@ public:
      * this will result in fatal error. The caller should ensure the index is
      * within valid range using Partitioner::numVertexes()
      */
-    vertex_s& vertex(uint idx);
+    Vertex& vertex(uint idx);
 
     /**
      * Release ownership of the specified object.

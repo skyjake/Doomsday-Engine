@@ -46,8 +46,8 @@ static const coord_t ANG_EPSILON = (1.0 / 1024.0);
 class Partitioner
 {
 public:
-    Partitioner(GameMap&  _map, uint* numEditableVertexes,
-                vertex_s*** editableVertexes, int _splitCostFactor=7);
+    Partitioner(GameMap&  _map, uint numEditableVertexes,
+                Vertex const **editableVertexes, int _splitCostFactor=7);
     ~Partitioner();
 
     /**
@@ -122,7 +122,7 @@ public:
      * this will result in fatal error. The caller should ensure the index is
      * within valid range using Partitioner::numVertexes()
      */
-    vertex_s& vertex(uint index);
+    Vertex& vertex(uint index);
 
     /**
      * Release ownership of the specified object.

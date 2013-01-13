@@ -23,6 +23,10 @@
 #ifndef LIBDENG_MAP_LINEDEF
 #define LIBDENG_MAP_LINEDEF
 
+#ifndef __cplusplus
+#  error "map/linedef.h requires C++"
+#endif
+
 #include <de/binangle.h>
 #include <de/mathutil.h> // Divline
 #include "resource/r_data.h"
@@ -81,9 +85,11 @@ typedef struct lineside_s {
     unsigned short shadowVisFrame; /// Framecount of last time shadows were drawn on this side.
 } lineside_t;
 
+class Vertex;
+
 typedef struct linedef_s {
     runtime_mapdata_header_t header;
-    struct vertex_s*    v[2];
+    Vertex *v[2];
     struct lineowner_s* vo[2]; /// Links to vertex line owner nodes [left, right].
     lineside_t          sides[2];
     int                 flags; /// Public DDLF_* flags.
@@ -97,10 +103,6 @@ typedef struct linedef_s {
     boolean             mapped[DDMAXPLAYERS]; /// Whether the line has been mapped by each player yet.
     int                 origIndex; /// Original index in the archived map.
 } LineDef;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * On which side of this LineDef does the specified box lie?
@@ -239,9 +241,5 @@ int LineDef_GetProperty(const LineDef* lineDef, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int LineDef_SetProperty(LineDef* lineDef, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_LINEDEF
