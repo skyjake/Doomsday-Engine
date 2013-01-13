@@ -41,7 +41,7 @@ extern "C" {
  *
  * @return  @c true, if the point is inside the sector.
  */
-boolean P_IsPointInSector(coord_t const point[2], const Sector* sector);
+boolean P_IsPointInSector(coord_t const point[2], const sector_s* sector);
 
 /**
  * Is the point inside the sector, according to the edge lines of the BspLeaf?
@@ -52,7 +52,7 @@ boolean P_IsPointInSector(coord_t const point[2], const Sector* sector);
  *
  * @return  @c true, if the point is inside the sector.
  */
-boolean P_IsPointXYInSector(coord_t x, coord_t y, const Sector* sector);
+boolean P_IsPointXYInSector(coord_t x, coord_t y, const sector_s* sector);
 
 /**
  * Is the point inside the BspLeaf (according to the edges)?

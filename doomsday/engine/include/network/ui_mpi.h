@@ -28,6 +28,14 @@
 #ifndef __DOOMSDAY_MPLAYINTERFACE_H__
 #define __DOOMSDAY_MPLAYINTERFACE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            DD_NetSetup(int server_mode);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

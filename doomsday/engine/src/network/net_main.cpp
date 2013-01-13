@@ -55,6 +55,7 @@
 
 #include "dd_main.h"
 #include "dd_loop.h"
+#include "server/sv_pool.h"
 #include "map/p_players.h"
 
 // MACROS ------------------------------------------------------------------
@@ -77,7 +78,7 @@ D_CMD(Login); // in cl_main.c
 D_CMD(Logout); // in sv_main.c
 D_CMD(Ping); // in net_ping.c
 
-int     Sv_GetRegisteredMobj(pool_t *, thid_t, mobjdelta_t *);
+int     Sv_GetRegisteredMobj(struct pool_s *, thid_t, struct mobjdelta_s *);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -208,13 +209,13 @@ void Net_Shutdown(void)
 }
 
 #undef Net_GetPlayerName
-const char* Net_GetPlayerName(int player)
+DENG_EXTERN_C const char* Net_GetPlayerName(int player)
 {
     return clients[player].name;
 }
 
 #undef Net_GetPlayerID
-ident_t Net_GetPlayerID(int player)
+DENG_EXTERN_C ident_t Net_GetPlayerID(int player)
 {
     if(!clients[player].connected)
         return 0;
@@ -298,7 +299,7 @@ boolean Net_GetPacket(void)
 }
 
 #undef Net_PlayerSmoother
-Smoother* Net_PlayerSmoother(int player)
+DENG_EXTERN_C Smoother* Net_PlayerSmoother(int player)
 {
     if(player < 0 || player >= DDMAXPLAYERS)
         return 0;
@@ -330,7 +331,7 @@ void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
  * This is the public interface of the message sender.
  */
 #undef Net_SendPacket
-void Net_SendPacket(int to_player, int type, const void* data, size_t length)
+DENG_EXTERN_C void Net_SendPacket(int to_player, int type, const void* data, size_t length)
 {
     unsigned int flags = 0;
 
@@ -492,13 +493,6 @@ void Net_Update(void)
 #elif __SERVER__
     Sv_GetPackets();
 #endif
-}
-
-/**
- * Build a ticcmd for the local player.
- */
-void Net_BuildLocalCommands(timespan_t time)
-{
 }
 
 void Net_AllocClientBuffers(int clientId)
@@ -752,102 +746,6 @@ void Net_Drawer(void)
 #endif // __CLIENT__
 }
 
-/**
- * Maintain the ack threshold average.
- */
-void Net_SetAckTime(int clientNumber, uint period)
-{
-    /*
-    client_t *client = &clients[clientNumber];
-
-    // Add the new time into the array.
-    client->ackTimes[client->ackIdx++] = period;
-    client->ackIdx %= NUM_ACK_TIMES;
-
-#ifdef _DEBUG
-    VERBOSE( Con_Printf("Net_SetAckTime: Client %i, new ack sample of %05u ms.\n",
-                        clientNumber, period) );
-#endif
-    */
-}
-
-/**
- * @return              The average ack time of the client.
- */
-uint Net_GetAckTime(int clientNumber)
-{
-    /*
-    client_t   *client = &clients[clientNumber];
-    uint        average = 0;
-    int         i, count = 0;
-    uint        smallest = 0, largest = 0;
-
-    // Find the smallest and largest so that they can be ignored.
-    smallest = largest = client->ackTimes[0];
-    for(i = 0; i < NUM_ACK_TIMES; ++i)
-    {
-        if(client->ackTimes[i] < smallest)
-            smallest = client->ackTimes[i];
-
-        if(client->ackTimes[i] > largest)
-            largest = client->ackTimes[i];
-    }
-
-    // Calculate the average.
-    for(i = 0; i < NUM_ACK_TIMES; ++i)
-    {
-        if(client->ackTimes[i] != largest && client->ackTimes[i] != smallest)
-        {
-            average += client->ackTimes[i];
-            count++;
-        }
-    }
-
-    if(count > 0)
-    {
-        return average / count;
-    }
-    else
-    {
-        return client->ackTimes[0];
-    }*/
-    return 0;
-}
-
-/**
- * Sets all the ack times. Used to initial the ack times for new clients.
- */
-void Net_SetInitialAckTime(int clientNumber, uint period)
-{
-    /*
-    int         i;
-
-    for(i = 0; i < NUM_ACK_TIMES; ++i)
-    {
-        clients[clientNumber].ackTimes[i] = period;
-    }
-    */
-}
-
-/**
- * The ack threshold is the maximum period of time to wait before
- * deciding an ack is not coming. The minimum threshold is 50 ms.
- */
-uint Net_GetAckThreshold(int clientNumber)
-{
-    /*
-    uint        threshold =
-        Net_GetAckTime(clientNumber) * ACK_THRESHOLD_MUL;
-
-    if(threshold < ACK_MINIMUM_THRESHOLD)
-    {
-        threshold = ACK_MINIMUM_THRESHOLD;
-    }
-
-    return threshold;*/
-    return 0;
-}
-
 void Net_Ticker(timespan_t time)
 {
     int         i;
@@ -869,8 +767,7 @@ void Net_Ticker(timespan_t time)
                 {
                     Con_Message("%i(rdy%i): avg=%05ims thres=%05ims "
                                 "bwr=%05i maxfs=%05lub unakd=%05i\n", i,
-                                clients[i].ready, Net_GetAckTime(i),
-                                Net_GetAckThreshold(i),
+                                clients[i].ready, 0, 0,
                                 clients[i].bandwidthRating,
                                 /*clients[i].bwrAdjustTime,*/
                                 (unsigned long) Sv_GetMaxFrameSize(i),

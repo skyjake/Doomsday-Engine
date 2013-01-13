@@ -209,7 +209,7 @@ void N_ReleaseMessage(netmessage_t *msg)
 {
     if(msg->handle)
     {
-        LegacyNetwork_FreeBuffer(msg->handle);
+        LegacyNetwork_FreeBuffer((unsigned char *)msg->handle);
         msg->handle = 0;
     }
     M_Free(msg);

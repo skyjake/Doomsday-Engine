@@ -22,7 +22,6 @@
 #include <de/c_wrapper.h>
 
 #include "de_console.h"
-#include "de_network.h"
 #include "de_misc.h"
 
 #include "network/sys_network.h"

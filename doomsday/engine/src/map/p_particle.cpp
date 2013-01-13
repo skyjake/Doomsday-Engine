@@ -614,7 +614,7 @@ static void P_NewParticle(ptcgen_t *gen)
     {
         fixed_t radius = gen->stages[pt->stage].radius;
         Plane const *plane = gen->plane;
-        Sector const *sector = gen->plane->sector;
+        sector_s const *sector = gen->plane->sector;
 
         // Choose a random spot inside the sector, on the spawn plane.
         if(gen->flags & PGF_SPACE_SPAWN)
@@ -780,8 +780,8 @@ int PIT_CheckLinePtc(LineDef *ld, void *parameters)
     ptcHitLine = ld;
     if(!ld->L_backsidedef) return true; // Boing!
 
-    Sector *front = ld->L_frontsector;
-    Sector *back  = ld->L_backsector;
+    sector_s *front = ld->L_frontsector;
+    sector_s *back  = ld->L_backsector;
 
     // Determine the opening we have here.
     /// @todo Use LineDef_OpenRange()
@@ -1069,8 +1069,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // particle should be killed (if it's moving slowly at max).
         if(pt->contact)
         {
-            Sector *front = (pt->contact->L_frontsidedef? pt->contact->L_frontsector : NULL);
-            Sector *back  =  (pt->contact->L_backsidedef? pt->contact->L_backsector  : NULL);
+            sector_s *front = (pt->contact->L_frontsidedef? pt->contact->L_frontsector : NULL);
+            sector_s *back  = (pt->contact->L_backsidedef?  pt->contact->L_backsector  : NULL);
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {

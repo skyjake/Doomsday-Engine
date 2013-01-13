@@ -40,7 +40,7 @@ extern "C" {
  *
  * @param sec  Sector to calculate reverb properties of.
  */
-void S_MarkSectorReverbDirty(Sector* sec);
+void S_MarkSectorReverbDirty(sector_s *sec);
 
 /**
  * Called during map init to determine which BSP leafs affect the reverb

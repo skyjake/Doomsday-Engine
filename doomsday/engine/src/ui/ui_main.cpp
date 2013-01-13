@@ -354,7 +354,7 @@ void UI_InitPage(ui_page_t* page, ui_object_t* objects)
     }
     UI_DefaultFocus(page);
     // Meta effects.
-    for(i = 0, meta.type = 0; i < page->count; ++i)
+    for(i = 0, meta.type = UI_NONE; i < page->count; ++i)
     {
         if(!meta.type && objects[i].type != UI_META)
             continue;
@@ -459,7 +459,7 @@ void UI_SetPage(ui_page_t* page)
         else if(ob->type == UI_LIST)
         {
             // List box number of visible items.
-            uidata_list_t* dat = ob->data;
+            uidata_list_t* dat = (uidata_list_t*) ob->data;
 
             dat->numvis = (ob->geometry.size.height - 2 * UI_BORDER) / listItemHeight(dat);
             if(dat->selection >= 0)
@@ -651,7 +651,7 @@ void UI_MouseFocus(void)
 
 void UI_Focus(ui_object_t* ob)
 {
-    uint i;
+    int i;
 
     if(!ob)
         Con_Error("UI_Focus: Tried to set focus on NULL.\n");
@@ -661,7 +661,7 @@ void UI_Focus(ui_object_t* ob)
         return;
 
     uiCurrentPage->focus = ob - uiCurrentPage->_objects;
-    for(i = 0; i < uiCurrentPage->count; ++i)
+    for(i = 0; i < (int)uiCurrentPage->count; ++i)
     {
         if(i == uiCurrentPage->focus)
             uiCurrentPage->_objects[i].flags |= UIF_FOCUS;
@@ -847,7 +847,7 @@ void UIPage_Drawer(ui_page_t* page)
     // Draw background?
     if(page->flags.showBackground)
     {
-        Point2Raw origin = { 0, 0 };
+        Point2Raw origin(0, 0);
         UI_DrawDDBackground(&origin, Window_Size(theWindow), uiAlpha);
     }
 
@@ -1016,7 +1016,7 @@ void UIButton_Drawer(ui_object_t* ob)
 
     if(ob->type == UI_BUTTON2EX)
     {
-        uidata_button_t* data = ob->data;
+        uidata_button_t* data = (uidata_button_t*) ob->data;
 
         if(down)
             text = data->yes;
@@ -1054,7 +1054,7 @@ void UIButton_Drawer(ui_object_t* ob)
 
 int UIEdit_Responder(ui_object_t* ob, ddevent_t* ev)
 {
-    uidata_edit_t* dat = ob->data;
+    uidata_edit_t* dat = (uidata_edit_t*) ob->data;
 
     if(ob->flags & UIF_ACTIVE)
     {
@@ -1135,7 +1135,7 @@ int UIEdit_Responder(ui_object_t* ob, ddevent_t* ev)
 
 void UIEdit_Drawer(ui_object_t* ob)
 {
-    uidata_edit_t* dat = ob->data;
+    uidata_edit_t* dat = (uidata_edit_t*) ob->data;
     int act = (ob->flags & UIF_ACTIVE) != 0;
     int dis = (ob->flags & UIF_DISABLED) != 0;
     int textWidth;
@@ -1213,7 +1213,7 @@ RectRaw* UIList_ItemGeometry(ui_object_t* ob, RectRaw* rect)
     assert(ob);
     if(rect)
     {
-        uidata_list_t* dat = ob->data;
+        uidata_list_t* dat = (uidata_list_t*) ob->data;
         rect->origin.x = ob->geometry.origin.x + UI_BORDER;
         rect->origin.y = ob->geometry.origin.y + UI_BORDER;
         rect->size.width  = ob->geometry.size.width  - 2 * UI_BORDER - (dat->count >= dat->numvis ? UI_BAR_WDH : 0);
@@ -1267,7 +1267,7 @@ RectRaw* UIList_ThumbGeometry(ui_object_t* ob, RectRaw* rect)
 
 int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
 {
-    uidata_list_t* dat = ob->data;
+    uidata_list_t* dat = (uidata_list_t*) ob->data;
     int i, oldsel = dat->selection;
     int used = false;
 
@@ -1415,7 +1415,7 @@ int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
 
 void UIList_Ticker(ui_object_t* ob)
 {
-    uidata_list_t* dat = ob->data;
+    uidata_list_t* dat = (uidata_list_t*) ob->data;
 
     if(ob->timer >= SCROLL_TIME && (dat->button[0] || dat->button[2]))
     {
@@ -1431,8 +1431,8 @@ void UIList_Ticker(ui_object_t* ob)
 
 void UIList_Drawer(ui_object_t* ob)
 {
-    uidata_list_t* dat = ob->data;
-    uidata_listitem_t* items = dat->items;
+    uidata_list_t* dat = (uidata_list_t*) ob->data;
+    uidata_listitem_t* items = (uidata_listitem_t*) dat->items;
     int dis = (ob->flags & UIF_DISABLED) != 0;
     int i, c, x, y, ihgt, maxw = ob->geometry.size.width - 2 * UI_BORDER;
     int maxh = ob->geometry.size.height - 2 * UI_BORDER;
@@ -1554,7 +1554,7 @@ int UISlider_ButtonWidth(ui_object_t* ob)
 
 int UISlider_ThumbPos(ui_object_t* ob)
 {
-    uidata_slider_t* dat = ob->data;
+    uidata_slider_t* dat = (uidata_slider_t*) ob->data;
     float range = dat->max - dat->min, useval;
     int butw = UISlider_ButtonWidth(ob);
 
@@ -1576,7 +1576,7 @@ int UISlider_ThumbPos(ui_object_t* ob)
 
 int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
 {
-    uidata_slider_t* dat = ob->data;
+    uidata_slider_t* dat = (uidata_slider_t*) ob->data;
     float oldvalue = dat->value;
     boolean used = false;
     int i, butw, inw;
@@ -1723,7 +1723,7 @@ int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
 
 void UISlider_Ticker(ui_object_t* ob)
 {
-    uidata_slider_t* dat = ob->data;
+    uidata_slider_t* dat = (uidata_slider_t*) ob->data;
     float oldval;
 
     if(ob->timer >= SCROLL_TIME && (dat->button[0] || dat->button[2]))
@@ -1745,7 +1745,7 @@ void UISlider_Ticker(ui_object_t* ob)
 
 void UISlider_Drawer(ui_object_t* ob)
 {
-    uidata_slider_t* dat = ob->data;
+    uidata_slider_t* dat = (uidata_slider_t*) ob->data;
     boolean dis = (ob->flags & UIF_DISABLED) != 0;
     int inwidth  = ob->geometry.size.width  - UI_BAR_BORDER * 2;
     int inheight = ob->geometry.size.height - UI_BAR_BORDER * 2;
@@ -1824,8 +1824,8 @@ void UISlider_Drawer(ui_object_t* ob)
 
 void UI_InitColumns(ui_object_t* ob)
 {
-    uidata_list_t* dat = ob->data;
-    uidata_listitem_t* list = dat->items;
+    uidata_list_t* dat = (uidata_list_t*) ob->data;
+    uidata_listitem_t* list = (uidata_listitem_t*) dat->items;
     int i, c, w, sep, last, maxw;
     char* endptr, *ptr, temp[256];
     int width[UI_MAX_COLUMNS];
@@ -1897,7 +1897,7 @@ static int listButtonHeight(ui_object_t* ob)
 
 static int listThumbPos(ui_object_t* ob)
 {
-    uidata_list_t* dat = ob->data;
+    uidata_list_t* dat = (uidata_list_t*) ob->data;
     int buth = listButtonHeight(ob);
     int barh = ob->geometry.size.height - 2 * (UI_BORDER + buth);
 
@@ -1908,7 +1908,7 @@ static int listThumbPos(ui_object_t* ob)
 
 int UI_ListFindItem(ui_object_t* ob, int dataValue)
 {
-    uidata_list_t* dat = ob->data;
+    uidata_list_t* dat = (uidata_list_t*) ob->data;
     int i;
     for(i = 0; i < dat->count; ++i)
         if(((uidata_listitem_t*) dat->items)[i].data == dataValue)

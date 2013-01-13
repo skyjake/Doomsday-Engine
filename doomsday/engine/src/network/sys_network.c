@@ -29,12 +29,19 @@
 #include <signal.h>
 #endif
 
-#include "de_network.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
 
 #include "dd_main.h"
+#include "network/net_main.h"
+#include "network/net_event.h"
+#ifdef __CLIENT__
+#  include "network/net_demo.h"
+#endif
+#include "network/protocol.h"
+#include "client/cl_def.h"
+#include "server/sv_def.h"
 #include "map/p_players.h"
 
 #include <de/c_wrapper.h> // using LegacyNetwork

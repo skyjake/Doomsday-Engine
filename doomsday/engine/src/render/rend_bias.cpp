@@ -772,7 +772,7 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
         {
             float minLevel = s->sectorLevel[0];
             float maxLevel = s->sectorLevel[1];
-            Sector* sector;
+            sector_s* sector;
             float oldIntensity = s->intensity;
 
             sector = P_BspLeafAtPoint(s->origin)->sector;

@@ -310,14 +310,14 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
                     if(!i)
                         tex = GL_PrepareSysFlaremap(FXT_BIGFLARE);
                     else
-                        tex = GL_PrepareSysFlaremap(fl->texture);
+                        tex = GL_PrepareSysFlaremap((flaretexid_t)fl->texture);
                 }
                 else
                 {
                     if(!i)
                         tex = GL_PrepareSysFlaremap(FXT_ROUND);
                     else
-                        tex = GL_PrepareSysFlaremap(fl->texture);
+                        tex = GL_PrepareSysFlaremap((flaretexid_t)fl->texture);
                 }
             }
         }

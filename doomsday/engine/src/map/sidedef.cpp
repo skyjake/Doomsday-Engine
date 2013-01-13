@@ -83,7 +83,7 @@ int SideDef_GetProperty(const SideDef* side, setargs_t* args)
     switch(args->prop)
     {
     case DMU_SECTOR: {
-        Sector* sector = side->line->L_sector(side == side->line->L_frontsidedef? FRONT : BACK);
+        sector_s* sector = side->line->L_sector(side == side->line->L_frontsidedef? FRONT : BACK);
         DMU_GetValue(DMT_SIDEDEF_SECTOR, &sector, args, 0);
         break; }
     case DMU_LINEDEF:

@@ -60,7 +60,7 @@ struct LineDefInfo
     int validCount;
 
     /// If the line is used for a window effect, this is the sector on the back side.
-    Sector* windowEffect;
+    sector_s* windowEffect;
 
     explicit LineDefInfo(LineDef* _lineDef, coord_t distEpsilon = 0.0001)
         : lineDef(_lineDef), flags(0), validCount(0), windowEffect(0)

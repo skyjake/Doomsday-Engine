@@ -626,10 +626,6 @@ void Sv_GetPackets(void)
                 sender->shakePing = Timer_RealMilliseconds() - sender->shakePing;
                 Con_Printf("Cl%i handshake ping: %i ms\n", netconsole,
                            sender->shakePing);
-
-                // Update the initial ack time accordingly. Since the ping
-                // fluctuates, assume the a poor case.
-                Net_SetInitialAckTime(netconsole, 2 * sender->shakePing);
             }
             break;
 
@@ -770,9 +766,6 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     cl->handshake = false;
     cl->nodeID = 0;
     cl->bandwidthRating = BWR_DEFAULT;
-
-    // Set a modest ack time by default.
-    Net_SetInitialAckTime(plrNum, ACK_DEFAULT);
 
     // Remove the player's data from the register.
     Sv_PlayerRemoved(plrNum);

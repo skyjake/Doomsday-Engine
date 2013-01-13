@@ -53,8 +53,8 @@ struct HEdgeIntercept
 
     // Sector on each side of the vertex (along the partition),
     // or NULL when that direction isn't OPEN.
-    Sector* before;
-    Sector* after;
+    sector_s* before;
+    sector_s* after;
 
     DENG_DEBUG_ONLY(
     static void DebugPrint(const HEdgeIntercept& inst)

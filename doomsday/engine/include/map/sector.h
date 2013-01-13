@@ -23,7 +23,11 @@
 #ifndef LIBDENG_MAP_SECTOR
 #define LIBDENG_MAP_SECTOR
 
-//#include "resource/r_data.h"
+#ifndef __cplusplus
+#  error "map/sector.h requires C++"
+#endif
+
+#include "MapObject"
 #include "p_mapdata.h"
 #include "p_dmu.h"
 
@@ -84,7 +88,7 @@ typedef struct msector_s {
     int	refCount;
 } msector_t;
 
-typedef struct sector_s {
+struct sector_s {
     runtime_mapdata_header_t header;
     int                 frameFlags;
     int                 validCount;    // if == validCount, already checked.
@@ -109,11 +113,18 @@ typedef struct sector_s {
     unsigned short*     blocks;        // Light grid block indices.
     float               reverb[NUM_REVERB_DATA];
     msector_t           buildData;
-} Sector;
+};
 
-#ifdef __cplusplus
+class Sector : public de::MapObject, public sector_s
+{
+public:
+    Sector() : de::MapObject(DMU_SECTOR)
+    {
+        memset(static_cast<sector_s *>(this), 0, sizeof(sector_s));
+    }
+};
+
 extern "C" {
-#endif
 
 /**
  * Update the Sector's map space axis-aligned bounding box to encompass the points
@@ -140,7 +151,7 @@ void Sector_UpdateArea(Sector* sector);
  *
  * @param sector  Sector instance.
  */
-void Sector_UpdateBaseOrigin(Sector* sector);
+void Sector_UpdateBaseOrigin(sector_s *sector);
 
 /**
  * Get a property value, selected by DMU_* name.

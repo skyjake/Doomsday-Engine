@@ -393,7 +393,7 @@ SOURCES += \
     $$SRC/src/map/dam_main.cpp \
     $$SRC/src/map/entitydatabase.cpp \
     $$SRC/src/map/gamemap.cpp \
-    $$SRC/src/map/generators.c \
+    $$SRC/src/map/generators.cpp \
     $$SRC/src/map/hedge.cpp \
     $$SRC/src/map/linedef.cpp \
     $$SRC/src/map/p_data.cpp \
@@ -418,11 +418,11 @@ SOURCES += \
     $$SRC/src/map/vertex.cpp \
     $$SRC/src/network/masterserver.cpp \
     $$SRC/src/network/monitor.c \
-    $$SRC/src/network/net_buf.c \
-    $$SRC/src/network/net_event.c \
-    $$SRC/src/network/net_main.c \
-    $$SRC/src/network/net_msg.c \
-    $$SRC/src/network/net_ping.c \
+    $$SRC/src/network/net_buf.cpp \
+    $$SRC/src/network/net_event.cpp \
+    $$SRC/src/network/net_main.cpp \
+    $$SRC/src/network/net_msg.cpp \
+    $$SRC/src/network/net_ping.cpp \
     $$SRC/src/network/protocol.c \
     $$SRC/src/network/sys_network.c \
     $$SRC/src/r_util.cpp \
@@ -458,7 +458,7 @@ SOURCES += \
     $$SRC/src/resource/wad.cpp \
     $$SRC/src/resource/zip.cpp \
     $$SRC/src/server/sv_frame.cpp \
-    $$SRC/src/server/sv_infine.c \
+    $$SRC/src/server/sv_infine.cpp \
     $$SRC/src/server/sv_main.cpp \
     $$SRC/src/server/sv_missile.cpp \
     $$SRC/src/server/sv_pool.cpp \

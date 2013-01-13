@@ -55,8 +55,8 @@ static float lightLevelDelta(const pvec2f_t normal)
  */
 static boolean backClosedForBlendNeighbor(LineDef* lineDef, int side, boolean ignoreOpacity)
 {
-    Sector* frontSec;
-    Sector* backSec;
+    sector_s* frontSec;
+    sector_s* backSec;
     DENG_ASSERT(lineDef);
 
     if(!lineDef->L_frontsidedef)   return false;
@@ -190,7 +190,7 @@ void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
 {
     DENG_ASSERT(line);
 {
-    Sector* front, *back;
+    sector_s* front, *back;
     coord_t bottom, top;
 
     if(!opening) return;
@@ -404,12 +404,12 @@ int LineDef_GetProperty(const LineDef* lin, setargs_t* args)
         DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &lin->slopeType, args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        Sector* sec = (lin->L_frontsidedef? lin->L_frontsector : NULL);
+        sector_s* sec = (lin->L_frontsidedef? lin->L_frontsector : NULL);
         DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, args, 0);
         break;
       }
     case DMU_BACK_SECTOR: {
-        Sector* sec = (lin->L_backsidedef? lin->L_backsector : NULL);
+        sector_s* sec = (lin->L_backsidedef? lin->L_backsector : NULL);
         DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, args, 0);
         break;
       }

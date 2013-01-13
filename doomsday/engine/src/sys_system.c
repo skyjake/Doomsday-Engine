@@ -37,7 +37,6 @@
 
 #include "de_console.h"
 #include "de_system.h"
-#include "de_network.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 
@@ -47,6 +46,7 @@
 #  include "gl/gl_main.h"
 #endif
 #include "ui/nativeui.h"
+#include "network/net_main.h"
 #include "audio/s_main.h"
 
 int novideo;                // if true, stay in text mode for debugging

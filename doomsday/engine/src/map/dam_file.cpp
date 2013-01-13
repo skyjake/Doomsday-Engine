@@ -267,7 +267,7 @@ static void writeLine(GameMap* map, uint idx)
 
     for(i = 0; i < 2; ++i)
     {
-        writeLong(l->L_sector(i)? (GameMap_SectorIndex(map, l->L_sector(i)) + 1) : 0);
+        writeLong(l->L_sector(i)? (GameMap_SectorIndex(map, static_cast<Sector *>(l->L_sector(i))) + 1) : 0);
         writeLong(l->L_sidedef(i)? (GameMap_SideDefIndex(map, l->L_sidedef(i)) + 1) : 0);
 
         writeLong(l->L_side(i).hedgeLeft? (GameMap_HEdgeIndex(map, l->L_side(i).hedgeLeft)  + 1) : 0);
@@ -589,14 +589,14 @@ static void archiveSectors(GameMap *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numSectors);
-        for(i = 0; i < map->numSectors; ++i)
+        writeLong(map->sectorCount());
+        for(i = 0; i < map->sectorCount(); ++i)
             writeSector(map, i);
     }
     else
     {
-        map->numSectors = readLong();
-        for(i = 0; i < map->numSectors; ++i)
+        map->sectors.clearAndResize(readLong());
+        for(i = 0; i < map->sectorCount(); ++i)
             readSector(map, i);
     }
 
@@ -618,7 +618,7 @@ static void writeBspLeaf(GameMap* map, BspLeaf* s)
     writeFloat(s->aaBox.maxY);
     writeFloat(s->midPoint[VX]);
     writeFloat(s->midPoint[VY]);
-    writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
+    writeLong(s->sector? ((map->sectors.indexOf(static_cast<Sector *>(s->sector))) + 1) : 0);
     writeLong(s->polyObj? (s->polyObj->idx + 1) : 0);
 
     // BspLeaf reverb.
@@ -1051,10 +1051,10 @@ static void archiveMap(GameMap *map, boolean write)
         // Call the game's setup routines.
         if(gx.SetupForMapData)
         {
-            gx.SetupForMapData(DMU_VERTEX, map->vertexes.size());
+            gx.SetupForMapData(DMU_VERTEX, map->vertexCount());
             gx.SetupForMapData(DMU_LINEDEF, map->numLineDefs);
             gx.SetupForMapData(DMU_SIDEDEF, map->numSideDefs);
-            gx.SetupForMapData(DMU_SECTOR, map->numSectors);
+            gx.SetupForMapData(DMU_SECTOR, map->sectorCount());
         }
     }
 

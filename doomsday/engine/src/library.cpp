@@ -26,6 +26,7 @@
 #include <de/Library>
 
 #include "de_base.h"
+#include "map/sector.h"
 #include "m_misc.h"
 
 #include "api_def.h"

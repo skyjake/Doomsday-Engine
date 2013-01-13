@@ -384,8 +384,8 @@ static void processSeg(HEdge* hedge, void* parameters)
         // On which side of the line are we? (distance is from hedge to origin).
         byte lineSide = hedge->side ^ (distance < 0);
         LineDef* line = hedge->lineDef;
-        Sector* frontSec  = lineSide == FRONT? leaf->sector : backLeaf->sector;
-        Sector* backSec   = lineSide == FRONT? backLeaf->sector : leaf->sector;
+        sector_s* frontSec  = lineSide == FRONT? leaf->sector : backLeaf->sector;
+        sector_s* backSec   = lineSide == FRONT? backLeaf->sector : leaf->sector;
         SideDef* frontDef = line->L_sidedef(lineSide);
         SideDef* backDef  = line->L_sidedef(lineSide^1);
 

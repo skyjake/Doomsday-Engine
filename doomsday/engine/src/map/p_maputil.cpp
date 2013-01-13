@@ -132,7 +132,7 @@ boolean P_IsPointInBspLeaf(coord_t const point[], const BspLeaf* bspLeaf)
     return P_IsPointXYInBspLeaf(point[VX], point[VY], bspLeaf);
 }
 
-boolean P_IsPointXYInSector(coord_t x, coord_t y, const Sector* sector)
+boolean P_IsPointXYInSector(coord_t x, coord_t y, const sector_s* sector)
 {
     BspLeaf* bspLeaf;
     if(!sector) return false; // I guess?
@@ -144,7 +144,7 @@ boolean P_IsPointXYInSector(coord_t x, coord_t y, const Sector* sector)
     return P_IsPointXYInBspLeaf(x, y, bspLeaf);
 }
 
-boolean P_IsPointInSector(coord_t const point[], const Sector* sector)
+boolean P_IsPointInSector(coord_t const point[], const sector_s* sector)
 {
     return P_IsPointXYInSector(point[VX], point[VY], sector);
 }
@@ -318,7 +318,7 @@ void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
 #undef P_MobjLink
 DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags)
 {
-    Sector* sec;
+    sector_s* sec;
 
     // Link into the sector.
     mo->bspLeaf = P_BspLeafAtPoint(mo->origin);
@@ -366,8 +366,8 @@ DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags)
 
         player->inVoid = true;
         if(P_IsPointXYInSector(player->mo->origin[VX],
-                              player->mo->origin[VY],
-                              player->mo->bspLeaf->sector) &&
+                               player->mo->origin[VY],
+                               player->mo->bspLeaf->sector) &&
            (player->mo->origin[VZ] < player->mo->bspLeaf->sector->SP_ceilvisheight + 4 &&
             player->mo->origin[VZ] >= player->mo->bspLeaf->sector->SP_floorvisheight))
             player->inVoid = false;
@@ -414,7 +414,7 @@ int GameMap_MobjSectorsIterator(GameMap* map, mobj_t* mo,
     nodeindex_t nix;
     linknode_t* tn;
     LineDef* ld;
-    Sector* sec;
+    sector_s* sec;
     int result = false;
     assert(map);
 

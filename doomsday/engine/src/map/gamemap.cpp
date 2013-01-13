@@ -159,25 +159,30 @@ SideDef* GameMap_SideDef(GameMap* map, uint idx)
     return &map->sideDefs[idx];
 }
 
-int GameMap_SectorIndex(GameMap* map, Sector* sec)
+int GameMap_SectorIndex(GameMap *map, Sector *sec)
 {
     assert(map);
-    if(!sec || !(sec >= map->sectors && sec <= &map->sectors[map->numSectors])) return -1;
-    return sec - map->sectors;
+    if(!sec) return -1;
+    return map->sectors.indexOf(sec);
+}
+
+int GameMap_SectorIndex(GameMap *map, sector_s *sec)
+{
+    assert(map);
+    return GameMap_SectorIndex(map, static_cast<Sector *>(sec));
 }
 
 Sector* GameMap_Sector(GameMap* map, uint idx)
 {
     assert(map);
-    if(idx >= map->numSectors) return NULL;
+    if(idx >= map->sectorCount()) return NULL;
     return &map->sectors[idx];
 }
 
 Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase)
 {
-    uint i;
     assert(map);
-    for(i = 0; i < map->numSectors; ++i)
+    for(int i = 0; i < map->sectors.size(); ++i)
     {
         Sector* sec = &map->sectors[i];
         if(ddMobjBase == &sec->base)
@@ -194,7 +199,7 @@ Surface* GameMap_SurfaceByBase(GameMap* map, const void* ddMobjBase)
     assert(map);
 
     // First try plane surfaces.
-    for(i = 0; i < map->numSectors; ++i)
+    for(i = 0; i < map->sectorCount(); ++i)
     {
         Sector* sec = &map->sectors[i];
         for(k = 0; k < sec->planeCount; ++k)
@@ -291,7 +296,7 @@ uint GameMap_SideDefCount(GameMap* map)
 uint GameMap_SectorCount(GameMap* map)
 {
     assert(map);
-    return map->numSectors;
+    return map->sectorCount();
 }
 
 uint GameMap_BspLeafCount(GameMap* map)
@@ -413,7 +418,7 @@ Generators* GameMap_Generators(GameMap* map)
     // Time to initialize a new collection?
     if(!map->generators)
     {
-        map->generators = Generators_New(map->numSectors);
+        map->generators = Generators_New(map->sectorCount());
     }
     return map->generators;
 }
@@ -814,7 +819,7 @@ void GameMap_LinkBspLeaf(GameMap* map, BspLeaf* bspLeaf)
 
 typedef struct subseciterparams_s {
     const AABoxd* box;
-    Sector* sector;
+    sector_s* sector;
     int localValidCount;
     int (*func) (BspLeaf*, void*);
     void* param;
@@ -854,7 +859,7 @@ static int blockmapCellBspLeafsIterator(void* object, void* context)
 }
 
 static int GameMap_IterateCellBspLeafs(GameMap* map, const_BlockmapCell cell,
-    Sector* sector, const AABoxd* box, int localValidCount,
+    sector_s* sector, const AABoxd* box, int localValidCount,
     int (*callback) (BspLeaf*, void*), void* context)
 {
     bmapbspleafiterateparams_t args;
@@ -1132,13 +1137,13 @@ int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), voi
     return false; // Continue iteration.
 }
 
-int GameMap_SectorIterator(GameMap* map, int (*callback) (Sector*, void*), void* parameters)
+int GameMap_SectorIterator(GameMap* map, int (*callback) (sector_s*, void*), void* parameters)
 {
     uint i;
     assert(map);
-    for(i = 0; i < map->numSectors; ++i)
+    for(i = 0; i < map->sectorCount(); ++i)
     {
-        int result = callback(map->sectors + i, parameters);
+        int result = callback(&map->sectors[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.

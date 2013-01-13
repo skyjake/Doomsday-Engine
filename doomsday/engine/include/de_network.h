@@ -40,8 +40,8 @@
 #endif
 
 #include "server/sv_def.h"
-#include "server/sv_pool.h"
 #include "server/sv_frame.h"
+#include "server/sv_pool.h"
 #include "server/sv_sound.h"
 #include "server/sv_missile.h"
 #include "server/sv_infine.h"

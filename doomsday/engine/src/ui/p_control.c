@@ -34,7 +34,6 @@
 #include <de/memory.h>
 
 #include "de_console.h"
-#include "de_network.h"
 #include "de_misc.h"
 #include "de_system.h"
 #include "de_graphics.h"

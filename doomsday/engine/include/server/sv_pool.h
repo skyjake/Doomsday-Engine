@@ -34,6 +34,7 @@
 #include "map/p_object.h"
 #include "resource/r_data.h"
 #include "resource/materials.h"
+#include "sv_missile.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -207,7 +208,7 @@ typedef struct delta_s {
 
 typedef mobj_t  dt_mobj_t;
 
-typedef struct {
+typedef struct mobjdelta_s {
     delta_t         delta; // The header.
     dt_mobj_t       mo; // The data of the delta.
 } mobjdelta_t;
@@ -307,16 +308,6 @@ typedef struct {
  * is checked every time a missile delta is added to a pool.
  */
 #define POOL_MISSILE_HASH_SIZE      256
-
-typedef struct misrecord_s {
-    struct misrecord_s* next, *prev;
-    thid_t          id;
-    //fixed_t momx, momy, momz;
-} misrecord_t;
-
-typedef struct mislink_s {
-    misrecord_t*    first, *last;
-} mislink_t;
 
 typedef struct deltalink_s {
     // Links to the first and last delta in the hash key.

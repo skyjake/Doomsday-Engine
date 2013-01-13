@@ -22,7 +22,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "doomsday.h"
+#include "con_main.h"
+#include "api_filesys.h"
 #include "filesys/fs_util.h"
 
 // MUS event types.

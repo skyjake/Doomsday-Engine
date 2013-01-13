@@ -955,7 +955,7 @@ static boolean createGlowLightForSurface(Surface *suf, void * /*parameters*/)
     {
     case DMU_PLANE: {
         Plane *pln = reinterpret_cast<Plane *>(suf->owner);
-        Sector *sec = pln->sector;
+        sector_s *sec = pln->sector;
 
         // Only produce a light for sectors with open space.
         /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.

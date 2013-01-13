@@ -513,7 +513,7 @@ SOURCES += \
     src/map/dam_main.cpp \
     src/map/entitydatabase.cpp \
     src/map/gamemap.cpp \
-    src/map/generators.c \
+    src/map/generators.cpp \
     src/map/hedge.cpp \
     src/map/linedef.cpp \
     src/map/p_data.cpp \
@@ -538,12 +538,12 @@ SOURCES += \
     src/map/vertex.cpp \
     src/network/masterserver.cpp \
     src/network/monitor.c \
-    src/network/net_buf.c \
-    src/network/net_demo.c \
-    src/network/net_event.c \
-    src/network/net_main.c \
-    src/network/net_msg.c \
-    src/network/net_ping.c \
+    src/network/net_buf.cpp \
+    src/network/net_demo.cpp \
+    src/network/net_event.cpp \
+    src/network/net_main.cpp \
+    src/network/net_msg.cpp \
+    src/network/net_ping.cpp \
     src/network/protocol.c \
     src/network/sys_network.c \
     src/network/ui_mpi.c \
@@ -563,7 +563,7 @@ SOURCES += \
     src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \
     src/render/rend_font.c \
-    src/render/rend_halo.c \
+    src/render/rend_halo.cpp \
     src/render/rend_list.cpp \
     src/render/rend_main.cpp \
     src/render/rend_model.cpp \
@@ -606,7 +606,7 @@ SOURCES += \
     src/resource/wad.cpp \
     src/resource/zip.cpp \
     src/server/sv_frame.cpp \
-    src/server/sv_infine.c \
+    src/server/sv_infine.cpp \
     src/server/sv_main.cpp \
     src/server/sv_missile.cpp \
     src/server/sv_pool.cpp \
@@ -631,7 +631,7 @@ SOURCES += \
     src/ui/p_control.c \
     src/ui/sys_input.c \
     src/ui/ui2_main.cpp \
-    src/ui/ui_main.c \
+    src/ui/ui_main.cpp \
     src/ui/ui_panel.c \
     src/ui/window.cpp \
     src/ui/zonedebug.c \

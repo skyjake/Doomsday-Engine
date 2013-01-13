@@ -566,7 +566,7 @@ void Sfx_ListenerUpdate(void)
         // Reverb effects. Has the current sector changed?
         if(listenerSector != listener->bspLeaf->sector)
         {
-            listenerSector = listener->bspLeaf->sector;
+            listenerSector = static_cast<Sector *>(listener->bspLeaf->sector);
 
             // It may be necessary to recalculate the reverb properties.
             S_UpdateReverbForSector(listenerSector);

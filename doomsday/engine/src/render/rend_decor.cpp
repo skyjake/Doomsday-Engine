@@ -391,7 +391,7 @@ static void getDecorationSkipPattern(int const patternSkip[2], int *skip)
 
 static uint generateDecorLights(ded_decorlight_t const *def, Surface *suf,
     material_t *mat, pvec3d_t const v1, pvec3d_t const /*v2*/, coord_t width, coord_t height,
-    pvec3d_t const delta, int axis, float offsetS, float offsetT, Sector* sec)
+    pvec3d_t const delta, int axis, float offsetS, float offsetT, sector_s* sec)
 {
     vec3d_t originBase, origin;
     coord_t patternW, patternH;
@@ -460,7 +460,7 @@ static uint generateDecorLights(ded_decorlight_t const *def, Surface *suf,
  * Generate decorations for the specified surface.
  */
 static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT,
-    vec3d_t v1, vec3d_t v2, Sector *sec, boolean visible)
+    vec3d_t v1, vec3d_t v2, sector_s *sec, boolean visible)
 {
     vec3d_t delta;
 
@@ -509,7 +509,7 @@ static void updateSurfaceDecorations2(Surface *suf, float offsetS, float offsetT
  */
 static void updatePlaneDecorations(Plane *pln)
 {
-    Sector *sec = pln->sector;
+    sector_s *sec = pln->sector;
     Surface *suf = &pln->surface;
     vec3d_t v1, v2;
     float offsetS, offsetT;
@@ -543,8 +543,8 @@ static void updateSideSectionDecorations(LineDef *line, byte side, SideDefSectio
     surface = &line->L_sidedef(side)->SW_surface(section);
     if(surface->material)
     {
-        Sector *frontSec  = line->L_sector(side);
-        Sector *backSec   = line->L_sector(side^1);
+        sector_s *frontSec  = line->L_sector(side);
+        sector_s *backSec   = line->L_sector(side^1);
         SideDef *frontDef = line->L_sidedef(side);
         SideDef *backDef  = line->L_sidedef(side^1);
         coord_t low, hi;

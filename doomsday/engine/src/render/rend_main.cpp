@@ -381,8 +381,8 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
     else
     {
         SideDef const *sideDef = line->L_sidedef(backSide);
-        Sector const *fsec  = line->L_sector(backSide);
-        Sector const *bsec  = line->L_sector(backSide^1);
+        sector_s const *fsec  = line->L_sector(backSide);
+        sector_s const *bsec  = line->L_sector(backSide^1);
         Plane const *fceil  = fsec->SP_plane(PLN_CEILING);
         Plane const *ffloor = fsec->SP_plane(PLN_FLOOR);
         Plane const *bceil  = bsec->SP_plane(PLN_CEILING);
@@ -1428,7 +1428,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
     uint                numVertices;
     rvertex_t*          rvertices;
     boolean             blended = false;
-    Sector*             sec = bspLeaf->sector;
+    sector_s*             sec = bspLeaf->sector;
     material_t*         mat = NULL;
     MaterialSnapshot const *msA = NULL, *msB = NULL;
 
@@ -1823,8 +1823,8 @@ static void reportLineDefDrawn(LineDef* line)
 static boolean Rend_RenderHEdge(HEdge* hedge, byte sections)
 {
     BspLeaf* leaf = currentBspLeaf;
-    Sector* frontSec = leaf->sector;
-    Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
+    sector_s* frontSec = leaf->sector;
+    sector_s* backSec  = HEDGE_BACK_SECTOR(hedge);
     lineside_t* front = HEDGE_SIDE(hedge);
 
     if(!front->sideDef) return false;
@@ -2119,8 +2119,8 @@ static coord_t skyFixCeilZ(const Plane* frontCeil, const Plane* backCeil)
  */
 static void skyFixZCoords(HEdge* hedge, int skyCap, coord_t* bottom, coord_t* top)
 {
-    const Sector* frontSec = hedge->sector;
-    const Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
+    const sector_s* frontSec = hedge->sector;
+    const sector_s* backSec  = HEDGE_BACK_SECTOR(hedge);
     const Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
     const Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
     const Plane* bceil  = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
@@ -2154,8 +2154,8 @@ static boolean hedgeBackClosedForSkyFix(const HEdge* hedge)
 {
     byte side = hedge->side;
     LineDef* line = hedge->lineDef;
-    Sector* frontSec  = line->L_sector(side);
-    Sector* backSec   = line->L_sector(side^1);
+    sector_s* frontSec  = line->L_sector(side);
+    sector_s* backSec   = line->L_sector(side^1);
     SideDef* frontDef = line->L_sidedef(side);
     SideDef* backDef  = line->L_sidedef(side^1);
 
@@ -2186,8 +2186,8 @@ static int chooseHEdgeSkyFixes(HEdge* hedge, int skyCap)
     if(hedge && hedge->lineDef && // "minisegs" have no linedefs.
        hedge->sector) // $degenleaf
     {
-        const Sector* frontSec = hedge->sector;
-        const Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
+        const sector_s* frontSec = hedge->sector;
+        const sector_s* backSec  = HEDGE_BACK_SECTOR(hedge);
 
         if(!backSec || backSec != hedge->sector)
         {
@@ -2710,8 +2710,8 @@ static void Rend_RenderWalls()
            hedge->lineDef && /* "mini-hedges" have no linedefs */
            HEDGE_SIDEDEF(hedge) /* "windows" have no sidedef */)
         {
-            Sector* frontSec = hedge->sector;
-            Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
+            sector_s* frontSec = hedge->sector;
+            sector_s* backSec  = HEDGE_BACK_SECTOR(hedge);
             byte sections = pvisibleLineSections(hedge->lineDef, hedge->side);
             boolean opaque;
 
@@ -2766,7 +2766,7 @@ static void Rend_RenderPolyobjs()
 static void Rend_RenderPlanes()
 {
     BspLeaf* leaf = currentBspLeaf;
-    Sector* sect;
+    sector_s* sect;
     uint i;
 
     if(!leaf || !leaf->sector) return; // An orphan BSP leaf?
@@ -2840,7 +2840,7 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
 {
     if(devNoCulling || !bspLeaf || !bspLeaf->hedge || P_IsInVoid(viewPlayer)) return;
 
-    Sector *front        = bspLeaf->sector;
+    sector_s *front        = bspLeaf->sector;
     coord_t const fFloor = front->SP_floorheight;
     coord_t const fCeil  = front->SP_ceilheight;
 
@@ -2851,7 +2851,7 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
         if(hedge->lineDef && HEDGE_BACK_SECTOR(hedge) &&
            (forwardFacing == ((hedge->frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
         {
-            Sector *back         = HEDGE_BACK_SECTOR(hedge);
+            sector_s *back         = HEDGE_BACK_SECTOR(hedge);
             coord_t const bFloor = back->SP_floorheight;
             coord_t const bCeil  = back->SP_ceilheight;
 
@@ -2899,7 +2899,7 @@ static void occludeBspLeaf(BspLeaf const *bspLeaf, bool forwardFacing)
 
 static inline boolean isNullLeaf(BspLeaf* leaf)
 {
-    Sector* sec = leaf? leaf->sector : NULL;
+    sector_s* sec = leaf? leaf->sector : NULL;
     if(!sec) return true; // An orphan leaf?
     if(sec->SP_ceilvisheight - sec->SP_floorvisheight <= 0) return true;
     if(leaf->hedgeCount < 3) return true;
@@ -2909,7 +2909,7 @@ static inline boolean isNullLeaf(BspLeaf* leaf)
 static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
 {
     uint bspLeafIdx;
-    Sector* sec;
+    sector_s* sec;
 
     if(isNullLeaf(bspLeaf))
     {
@@ -3056,7 +3056,7 @@ void Rend_RenderSurfaceVectors()
     {
         HEdge* hedge = GameMap_HEdge(theMap, i);
         float x, y, bottom, top;
-        Sector* backSec;
+        sector_s* backSec;
         LineDef* line;
         Surface* suf;
         vec3f_t origin;
@@ -3143,7 +3143,7 @@ void Rend_RenderSurfaceVectors()
     for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         const Polyobj* po = GameMap_PolyobjByID(theMap, i);
-        const Sector* sec = po->bspLeaf->sector;
+        const sector_s* sec = po->bspLeaf->sector;
         float zPos = sec->SP_floorheight + (sec->SP_ceilheight - sec->SP_floorheight)/2;
         vec3f_t origin;
         uint j;
@@ -3206,7 +3206,7 @@ static int drawSideDefSoundOrigins(SideDef* side, void* parameters)
     return false; // Continue iteration.
 }
 
-static int drawSectorSoundOrigins(Sector *sec, void *parameters)
+static int drawSectorSoundOrigins(sector_s *sec, void *parameters)
 {
     uint idx = GameMap_SectorIndex(theMap, sec); /// @todo Do not assume current map.
     char buf[80];
@@ -3980,7 +3980,7 @@ static void Rend_RenderBoundingBoxes()
         for(uint i = 0; i < NUM_POLYOBJS; ++i)
         {
             Polyobj const *po = GameMap_PolyobjByID(theMap, i);
-            Sector const *sec = po->bspLeaf->sector;
+            sector_s const *sec = po->bspLeaf->sector;
             coord_t width  = (po->aaBox.maxX - po->aaBox.minX)/2;
             coord_t length = (po->aaBox.maxY - po->aaBox.minY)/2;
             coord_t height = (sec->SP_ceilheight - sec->SP_floorheight)/2;

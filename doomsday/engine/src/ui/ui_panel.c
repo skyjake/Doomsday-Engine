@@ -37,7 +37,6 @@
 #include "de_ui.h"
 
 #include "ui/displaymode.h"
-#include "render/rend_main.h"
 #include "render/rend_font.h"
 
 // MACROS ------------------------------------------------------------------

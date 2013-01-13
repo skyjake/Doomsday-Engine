@@ -188,7 +188,7 @@ DENG_API_TYPEDEF(Map)
 
     // Sectors
 
-    int             (*S_TouchingMobjsIterator)(struct sector_s* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
+    int             (*S_TouchingMobjsIterator)(Sector* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
 
     // Map Objects
 
@@ -212,7 +212,7 @@ DENG_API_TYPEDEF(Map)
      * partly inside). This is not a 3D check; the mobj may actually reside
      * above or under the sector.
      */
-    int             (*MO_SectorsIterator)(struct mobj_s* mo, int (*callback) (struct sector_s*, void*), void* parameters);
+    int             (*MO_SectorsIterator)(struct mobj_s* mo, int (*callback) (Sector*, void*), void* parameters);
 
     /**
      * Calculate the visible @a origin of @a mobj in world space, including
@@ -302,7 +302,7 @@ DENG_API_TYPEDEF(Map)
      */
     int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
 
-    int             (*Box_BspLeafsIterator)(const AABoxd* box, struct sector_s* sector, int (*callback) (struct bspleaf_s*, void*), void* parameters);
+    int             (*Box_BspLeafsIterator)(const AABoxd* box, Sector* sector, int (*callback) (struct bspleaf_s*, void*), void* parameters);
     int             (*Box_PolyobjsIterator)(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
     int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
     int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);

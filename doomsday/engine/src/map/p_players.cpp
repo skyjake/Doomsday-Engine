@@ -166,7 +166,7 @@ boolean P_IsInVoid(player_t* player)
 
         if(ddpl->mo && ddpl->mo->bspLeaf)
         {
-            Sector* sec = ddpl->mo->bspLeaf->sector;
+            sector_s* sec = ddpl->mo->bspLeaf->sector;
 
             if(Surface_IsSkyMasked(&sec->SP_ceilsurface))
             {
@@ -206,7 +206,7 @@ float P_ShortToLookDir(short s)
 }
 
 #undef DD_GetPlayer
-ddplayer_t* DD_GetPlayer(int number)
+DENG_EXTERN_C ddplayer_t* DD_GetPlayer(int number)
 {
     return (ddplayer_t *) &ddPlayers[number].shared;
 }

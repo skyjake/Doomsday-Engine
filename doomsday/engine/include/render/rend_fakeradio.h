@@ -57,7 +57,7 @@ typedef struct {
     coord_t const *segOffset;
     coord_t const *segLength;
     coord_t const *linedefLength;
-    Sector const *frontSec, *backSec;
+    sector_s const *frontSec, *backSec;
     struct {
         struct {
             walldivnode_t *firstDiv;

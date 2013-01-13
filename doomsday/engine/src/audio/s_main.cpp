@@ -553,7 +553,7 @@ void S_StopSound2(int soundID, mobj_t* emitter, int flags)
         if(emitter->thinker.id)
         {
             // Emitter is a real Mobj.
-            Sector* sector = emitter->bspLeaf->sector;
+            sector_s* sector = emitter->bspLeaf->sector;
             stopSectorSounds((ddmobj_base_t*)&sector->base, soundID, flags);
             return;
         }

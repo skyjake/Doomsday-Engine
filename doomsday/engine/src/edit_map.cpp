@@ -117,7 +117,7 @@ static Sector* createSector(void)
     Sector* sec = (Sector*) M_Calloc(sizeof(*sec));
     sec->header.type = DMU_SECTOR;
 
-    e_map->sectors = (Sector**) M_Realloc(e_map->sectors, sizeof(sec) * (++e_map->numSectors + 1));
+    e_map->sectors = (sector_s**) M_Realloc(e_map->sectors, sizeof(sec) * (++e_map->numSectors + 1));
     e_map->sectors[e_map->numSectors-1] = sec;
     e_map->sectors[e_map->numSectors] = NULL;
 
@@ -196,7 +196,7 @@ static void destroyEditableSectors(editmap_t* map)
         for(i = 0; i < map->numSectors; ++i)
         {
             uint j;
-            Sector* s = map->sectors[i];
+            sector_s* s = map->sectors[i];
 
             if(s->planes)
             {
@@ -431,7 +431,7 @@ static void pruneUnusedSectors(editmap_t* map)
     }
 
     // Scan all sectors.
-    for(i = 0, newNum = 0; i < map->numSectors; ++i)
+    for(i = 0, newNum = 0; i < map->sectorCount(); ++i)
     {
         Sector* s = map->sectors[i];
 
@@ -445,10 +445,10 @@ static void pruneUnusedSectors(editmap_t* map)
         map->sectors[newNum++] = s;
     }
 
-    if(newNum < map->numSectors)
+    if(newNum < map->sectorCount())
     {
-        Con_Message("  Pruned %d unused sectors\n", map->numSectors - newNum);
-        map->numSectors = newNum;
+        Con_Message("  Pruned %d unused sectors\n", map->sectorCount() - newNum);
+        map->sectorCount() = newNum;
     }
 }
 #endif
@@ -506,7 +506,7 @@ static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
 {
     Sector* sec = &map->sectors[secIDX];
     uint i, n, count;
-    assert(secIDX < map->numSectors);
+    assert(secIDX < map->sectorCount());
 
     count = 0;
     for(i = 0; i < map->numBspLeafs; ++i)
@@ -541,7 +541,7 @@ static void buildSectorBspLeafLists(GameMap* map)
     uint i;
     VERBOSE( Con_Message(" Build BSP leaf tables...\n") )
 
-    for(i = 0; i < map->numSectors; ++i)
+    for(i = 0; i < map->sectorCount(); ++i)
     {
         hardenSectorBspLeafList(map, i);
     }
@@ -558,7 +558,7 @@ static void buildSectorLineLists(GameMap* map)
 
     // build line tables for each sector.
     zblockset_t* lineLinksBlockSet = ZBlockSet_New(sizeof(linelink_t), 512, PU_APPSTATIC);
-    linelink_t** sectorLineLinks = (linelink_t**) M_Calloc(sizeof(linelink_t*) * map->numSectors);
+    linelink_t** sectorLineLinks = (linelink_t**) M_Calloc(sizeof(linelink_t*) * map->sectorCount());
     uint totallinks = 0;
     LineDef* li = map->lineDefs;
     for(uint i = 0; i < map->numLineDefs; ++i, li++)
@@ -570,7 +570,7 @@ static void buildSectorLineLists(GameMap* map)
         {
             link = (linelink_t*) ZBlockSet_Allocate(lineLinksBlockSet);
 
-            secIDX = li->L_frontsector - map->sectors;
+            secIDX = map->sectors.indexOf(static_cast<Sector *>(li->L_frontsector));
             link->line = li;
 
             link->next = sectorLineLinks[secIDX];
@@ -583,7 +583,7 @@ static void buildSectorLineLists(GameMap* map)
         {
             link = (linelink_t*) ZBlockSet_Allocate(lineLinksBlockSet);
 
-            secIDX = li->L_backsector - map->sectors;
+            secIDX = map->sectors.indexOf(static_cast<Sector *>(li->L_backsector));
             link->line = li;
 
             link->next = sectorLineLinks[secIDX];
@@ -594,12 +594,13 @@ static void buildSectorLineLists(GameMap* map)
     }
 
     // Harden the sector line links into arrays.
-    LineDef** linebuffer = (LineDef**) Z_Malloc((totallinks + map->numSectors) * sizeof(LineDef*), PU_MAPSTATIC, 0);
+    LineDef** linebuffer = (LineDef**) Z_Malloc((totallinks + map->sectorCount()) * sizeof(LineDef*), PU_MAPSTATIC, 0);
     LineDef** linebptr = linebuffer;
 
-    Sector* sec = map->sectors;
-    for(uint i = 0; i < map->numSectors; ++i, sec++)
+    for(uint i = 0; i < map->sectorCount(); ++i)
     {
+        Sector* sec = &map->sectors[i];
+
         if(sectorLineLinks[i])
         {
             linelink_t* link = sectorLineLinks[i];
@@ -647,7 +648,7 @@ static void finishSectors(GameMap* map)
 {
     DENG_ASSERT(map);
 
-    for(uint i = 0; i < map->numSectors; ++i)
+    for(uint i = 0; i < map->sectorCount(); ++i)
     {
         Sector* sec = &map->sectors[i];
 
@@ -693,7 +694,7 @@ static void chainSectorBases(GameMap* map)
 {
     DENG_ASSERT(map);
 
-    for(uint i = 0; i < map->numSectors; ++i)
+    for(uint i = 0; i < map->sectorCount(); ++i)
     {
         Sector* sec = GameMap_Sector(map, i);
         ddmobj_base_t* base = &sec->base;
@@ -776,7 +777,7 @@ static void updateMapBounds(GameMap* map)
     DENG_ASSERT(map);
 
     bool isFirst = true;
-    for(uint i = 0; i < map->numSectors; ++i)
+    for(uint i = 0; i < map->sectorCount(); ++i)
     {
         Sector* sec = &map->sectors[i];
         if(!sec->lineDefCount) continue;
@@ -1122,15 +1123,17 @@ static void hardenSidedefs(GameMap* dest, editmap_t* src)
 
 static void hardenSectors(GameMap* dest, editmap_t* src)
 {
-    dest->numSectors = src->numSectors;
-    dest->sectors = (Sector*) Z_Malloc(dest->numSectors * sizeof(Sector), PU_MAPSTATIC, 0);
+    //dest->numSectors = src->numSectors;
+    //dest->sectors = (Sector*) Z_Malloc(dest->numSectors * sizeof(Sector), PU_MAPSTATIC, 0);
 
-    for(uint i = 0; i < dest->numSectors; ++i)
+    dest->sectors.clearAndResize(src->numSectors);
+
+    for(uint i = 0; i < src->numSectors; ++i)
     {
         Sector* destS = &dest->sectors[i];
-        Sector* srcS = src->sectors[i];
+        sector_s* srcS = src->sectors[i];
 
-        memcpy(destS, srcS, sizeof(*destS));
+        memcpy(static_cast<sector_s *>(destS), srcS, sizeof(sector_s));
         destS->planeCount = 0;
         destS->planes = NULL;
     }
@@ -1138,10 +1141,10 @@ static void hardenSectors(GameMap* dest, editmap_t* src)
 
 static void hardenPlanes(GameMap* dest, editmap_t* src)
 {
-    for(uint i = 0; i < dest->numSectors; ++i)
+    for(uint i = 0; i < dest->sectorCount(); ++i)
     {
         Sector* destS = &dest->sectors[i];
-        Sector* srcS = src->sectors[i];
+        sector_s* srcS = src->sectors[i];
 
         for(uint j = 0; j < srcS->planeCount; ++j)
         {
@@ -1660,7 +1663,7 @@ boolean MPE_End(void)
         gx.SetupForMapData(DMU_VERTEX, gamemap->vertexes.size());
         gx.SetupForMapData(DMU_LINEDEF, gamemap->numLineDefs);
         gx.SetupForMapData(DMU_SIDEDEF, gamemap->numSideDefs);
-        gx.SetupForMapData(DMU_SECTOR, gamemap->numSectors);
+        gx.SetupForMapData(DMU_SECTOR, gamemap->sectorCount());
     }
 
     /**
@@ -1977,7 +1980,7 @@ uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri,
     if(!editMapInited) return 0;
     if(sector == 0 || sector > e_map->numSectors) return 0;
 
-    Sector* s = e_map->sectors[sector - 1];
+    sector_s* s = e_map->sectors[sector - 1];
 
     Plane* pln = (Plane*) M_Calloc(sizeof(Plane));
     pln->surface.owner = (void*) pln;

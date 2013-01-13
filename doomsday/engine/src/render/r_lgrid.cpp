@@ -175,9 +175,9 @@ void LG_InitForMap(void)
     coord_t     off[2];
     lgsamplepoint_t *samplePoints = 0, sample;
 
-    Sector    **ssamples;
-    Sector    **blkSampleSectors;
-    GameMap    *map = theMap;
+    sector_s **ssamples;
+    sector_s **blkSampleSectors;
+    GameMap *map = theMap;
 
     if(!lgEnabled || !map)
     {
@@ -228,7 +228,7 @@ void LG_InitForMap(void)
      */
 
     // Allocate memory for all the sample results.
-    ssamples = (Sector **) M_Malloc(sizeof(Sector*) *
+    ssamples = (sector_s **) M_Malloc(sizeof(sector_s*) *
                                     ((lgBlockWidth * lgBlockHeight) * numSamples));
 
     // Determine the size^2 of the samplePoint array plus its center.
@@ -385,7 +385,7 @@ void LG_InitForMap(void)
                 (unsigned long) (sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight));
 
     // Allocate memory used for the collection of the sample results.
-    blkSampleSectors = (Sector **) M_Malloc(sizeof(Sector*) * numSamples);
+    blkSampleSectors = (sector_s **) M_Malloc(sizeof(sector_s*) * numSamples);
     if(numSamples > 1)
         sampleResults = (int *) M_Calloc(sizeof(int) * numSamples);
 
@@ -744,7 +744,7 @@ void LG_Update(void)
 
     gridblock_t        *block, *lastBlock, *other;
     int                 x, y, a, b;
-    Sector             *sector;
+    sector_s             *sector;
     const float        *color;
     int                 bias;
     int                 height;

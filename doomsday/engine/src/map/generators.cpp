@@ -1,6 +1,5 @@
-/**
- * @file generators.c
- * Generators. @ingroup map
+/** @file generators.cpp Generators.
+ * @ingroup map
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -45,17 +44,17 @@ struct generators_s {
 
 Generators* Generators_New(uint listCount)
 {
-    Generators* gens = Z_Malloc(sizeof(*gens), PU_MAP, 0);
+    Generators* gens = (Generators *) Z_Malloc(sizeof(*gens), PU_MAP, 0);
     if(!gens) Con_Error("Generators_New: Failed on allocation of %lu bytes for new Generators instance.", (unsigned long) sizeof(*gens));
 
     memset(gens->activeGens, 0, sizeof(gens->activeGens));
 
     gens->listsSize = listCount;
-    gens->lists = Z_Calloc(sizeof(listnode_t*) * listCount, PU_MAP, 0);
+    gens->lists = (listnode_t **) Z_Calloc(sizeof(listnode_t*) * listCount, PU_MAP, 0);
 
     // We can link 64 generators each into four lists each before running out of links.
     gens->linkStoreSize = 4 * GENERATORS_MAX;
-    gens->linkStore = Z_Malloc(sizeof(listnode_t) * gens->linkStoreSize, PU_MAP, 0);
+    gens->linkStore = (listnode_t *) Z_Malloc(sizeof(listnode_t) * gens->linkStoreSize, PU_MAP, 0);
     gens->linkStoreCursor = 0;
 
     return gens;

@@ -914,7 +914,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
 static int setProperty(void *obj, void *context)
 {
     setargs_t *args = (setargs_t *) context;
-    Sector *updateSector1 = NULL, *updateSector2 = NULL;
+    sector_s *updateSector1 = NULL, *updateSector2 = NULL;
     Plane *updatePlane = NULL;
     LineDef *updateLinedef = NULL;
     SideDef *updateSidedef = NULL;

@@ -40,6 +40,7 @@
 #include "de_network.h"
 #include "de_play.h"
 
+#include "server/sv_pool.h"
 #include "audio/s_main.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1008,7 +1009,7 @@ void Sv_UpdateOwnerInfo(pool_t* pool)
     // The acknowledgement threshold is a multiple of the average
     // ack time of the client. If an unacked delta is not acked within
     // the threshold, it'll be re-included in the ratings.
-    info->ackThreshold = Net_GetAckThreshold(pool->owner);
+    info->ackThreshold = 0; //Net_GetAckThreshold(pool->owner);
 }
 
 /**
@@ -2857,12 +2858,14 @@ void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
                ((!resent && delta->set == set) ||
                 (resent && delta->resend == resent)))
             {
+                /*
                 // Register the ack time only for the first acked delta.
                 if(!ackTimeRegistered)
                 {
                     Net_SetAckTime(clientNumber, Sv_DeltaAge(delta));
                     ackTimeRegistered = true;
                 }
+                */
 
                 // There may be something that we need to do now that the
                 // delta has been acknowledged.

@@ -29,10 +29,18 @@
 #ifndef LIBDENG_CONTROL_PANEL_H
 #define LIBDENG_CONTROL_PANEL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            CP_Register(void);
 
 // Helpful handlers.
 void            CP_CvarSlider(ui_object_t *ob);
 void            CP_InitCvarSliders(ui_object_t *ob);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_CONTROL_PANEL_H */

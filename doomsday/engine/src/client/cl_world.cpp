@@ -397,7 +397,7 @@ clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type
     DEBUG_Message(("GameMap_NewClPlane: Sector #%i, type:%s, dest:%f, speed:%f\n",
                    sectorIndex, type==CPT_FLOOR? "floor" : "ceiling", dest, speed));
 
-    if(sectorIndex >= map->numSectors)
+    if((int)sectorIndex >= map->sectors.size())
     {
         assert(0); // Invalid Sector index.
         return NULL;

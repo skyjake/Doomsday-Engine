@@ -263,7 +263,8 @@ void Rend_RadioInitForMap(void)
             data.lineDef = line;
             data.side = j;
 
-            P_BspLeafsBoxIterator(&bounds, line->L_sector(j), RIT_ShadowBspLeafLinker, &data);
+            P_BspLeafsBoxIterator(&bounds, static_cast<Sector *>(line->L_sector(j)),
+                                  RIT_ShadowBspLeafLinker, &data);
         }
     }
 

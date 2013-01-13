@@ -50,7 +50,7 @@ static materialenvinfo_t matInfo[NUM_MATERIAL_ENV_CLASSES] = {
 
 static ownernode_t* unusedNodeList;
 
-typedef std::set<Sector*> ReverbUpdateRequested;
+typedef std::set<sector_s *> ReverbUpdateRequested;
 ReverbUpdateRequested reverbUpdateRequested;
 
 const char* S_MaterialEnvClassName(material_env_class_t mclass)
@@ -180,7 +180,7 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
             ownernode_t* next = node->next;
             *ptr = (BspLeaf*) node->data;
 
-            if(i < map->numSectors - 1)
+            if(i < map->sectorCount() - 1)
             {
                 // Move this node to the unused list for re-use.
                 node->next = unusedNodeList;
@@ -398,7 +398,7 @@ void S_UpdateReverbForSector(Sector* sec)
     }
 }
 
-void S_MarkSectorReverbDirty(Sector* sec)
+void S_MarkSectorReverbDirty(sector_s* sec)
 {
     reverbUpdateRequested.insert(sec);
 }

@@ -87,9 +87,7 @@ typedef struct gamemap_s {
     // End client only data.
 
     de::MapObjectList<Vertex> vertexes;
-
-    uint numSectors;
-    Sector* sectors;
+    de::MapObjectList<Sector> sectors;
 
     uint numLineDefs;
     LineDef* lineDefs;
@@ -138,6 +136,12 @@ typedef struct gamemap_s {
     /// @todo Refactor to support concurrent traces.
     TraceOpening traceOpening;
     divline_t traceLOS;
+
+public:
+    uint vertexCount() const { return vertexes.size(); }
+
+    uint sectorCount() const { return sectors.size(); }
+
 } GameMap;
 
 /**
@@ -350,7 +354,17 @@ int GameMap_SideDefIndex(GameMap* map, SideDef* side);
  * @param sector  Sector to lookup.
  * @return  Unique index for the Sector else @c -1 if not present.
  */
-int GameMap_SectorIndex(GameMap* map, Sector* sector);
+int GameMap_SectorIndex(GameMap *map, Sector *sector);
+
+/**
+ * Lookup the unique index for @a sector.
+ *
+ * @param map
+ * @param sector  Sector instance.
+ *
+ * @return
+ */
+int GameMap_SectorIndex(GameMap *map, sector_s *sector);
 
 /**
  * Lookup the unique index for @a bspLeaf.
@@ -731,7 +745,7 @@ int GameMap_VertexIterator(GameMap* map, int (*callback) (Vertex*, void*), void*
 
 int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), void* parameters);
 
-int GameMap_SectorIterator(GameMap* map, int (*callback) (Sector*, void*), void* parameters);
+int GameMap_SectorIterator(GameMap* map, int (*callback)(struct sector_s *, void *), void* parameters);
 
 int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* parameters);
 
