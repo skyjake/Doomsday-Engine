@@ -22,9 +22,13 @@
 #ifndef LIBDENG_MAP_EDIT_BSP_H
 #define LIBDENG_MAP_EDIT_BSP_H
 
+#ifndef __cplusplus
+#  error "edit_bsp.h requires C++"
+#endif
+
 #include "dd_types.h"
 
-struct gamemap_s;
+class GameMap;
 struct vertex_s;
 
 #ifdef __cplusplus
@@ -39,7 +43,7 @@ extern int bspFactor;
 
 void BspBuilder_Register(void);
 
-BspBuilder_c* BspBuilder_New(struct gamemap_s* map, uint* numEditableVertexes, struct vertex_s*** editableVertexes);
+BspBuilder_c* BspBuilder_New(GameMap* map, uint* numEditableVertexes, struct vertex_s*** editableVertexes);
 
 void BspBuilder_Delete(BspBuilder_c* builder);
 
@@ -54,7 +58,7 @@ BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor);
  */
 boolean BspBuilder_Build(BspBuilder_c* builder);
 
-void MPE_SaveBsp(BspBuilder_c* builder, struct gamemap_s* map, uint* numEditableVertexes, struct vertex_s*** editableVertexes);
+void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, uint* numEditableVertexes, struct vertex_s*** editableVertexes);
 
 #ifdef __cplusplus
 } // extern "C"

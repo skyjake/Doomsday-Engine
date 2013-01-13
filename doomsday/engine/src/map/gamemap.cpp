@@ -35,6 +35,53 @@
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
 
+GameMap::GameMap()
+{
+    uri = 0;
+    memset(uniqueId, 0, sizeof(uniqueId));
+    memset(&aaBox, 0, sizeof(aaBox));
+    memset(&thinkers, 0, sizeof(thinkers));
+    generators = 0;
+    memset(&clMobjHash, 0, sizeof(clMobjHash));
+    memset(&clActivePlanes, 0, sizeof(clActivePlanes));
+    memset(&clActivePolyobjs, 0, sizeof(clActivePolyobjs));
+    numLineDefs = 0;
+    lineDefs = 0;
+    numSideDefs = 0;
+    sideDefs = 0;
+    numPolyObjs = 0;
+    polyObjs = 0;
+    bsp = 0;
+    numHEdges = 0;
+    hedges = 0;
+    numBspLeafs = 0;
+    bspLeafs = 0;
+    numBspNodes = 0;
+    bspNodes = 0;
+    entityDatabase = 0;
+    memset(&trackedPlanes, 0, sizeof(trackedPlanes));
+    memset(&scrollingSurfaces, 0, sizeof(scrollingSurfaces));
+    memset(&decoratedSurfaces, 0, sizeof(decoratedSurfaces));
+    memset(&glowingSurfaces, 0, sizeof(glowingSurfaces));
+    mobjBlockmap = 0;
+    polyobjBlockmap = 0;
+    lineDefBlockmap = 0;
+    bspLeafBlockmap = 0;
+    memset(&mobjNodes, 0, sizeof(mobjNodes));
+    memset(&lineNodes, 0, sizeof(lineNodes));
+    lineLinks = 0;
+    globalGravity = 0;
+    effectiveGravity = 0;
+    ambientLightLevel = 0;
+    memset(skyFix, 0, sizeof(skyFix));
+    memset(&traceOpening, 0, sizeof(traceOpening));
+    memset(&traceLOS, 0, sizeof(traceLOS));
+}
+
+GameMap::~GameMap()
+{
+}
+
 const Uri* GameMap_Uri(GameMap* map)
 {
     assert(map);

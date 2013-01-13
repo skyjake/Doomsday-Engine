@@ -62,7 +62,9 @@ typedef struct skyfix_s {
     coord_t height;
 } skyfix_t;
 
-typedef struct gamemap_s {
+class GameMap
+{
+public:
     Uri* uri;
     char uniqueId[256];
 
@@ -138,11 +140,17 @@ typedef struct gamemap_s {
     divline_t traceLOS;
 
 public:
+    GameMap();
+
+    virtual ~GameMap();
+
     uint vertexCount() const { return vertexes.size(); }
 
     uint sectorCount() const { return sectors.size(); }
 
-} GameMap;
+};
+
+//typedef GameMap gamemap_s;
 
 /**
  * Change the global "current" map.

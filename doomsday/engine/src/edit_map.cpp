@@ -112,10 +112,10 @@ static SideDef* createSide(void)
     return side;
 }
 
-static Sector* createSector(void)
+static sector_s* createSector(void)
 {
-    Sector* sec = (Sector*) M_Calloc(sizeof(*sec));
-    sec->header.type = DMU_SECTOR;
+    sector_s* sec = (sector_s*) M_Calloc(sizeof(*sec));
+    //sec->header.type = DMU_SECTOR;
 
     e_map->sectors = (sector_s**) M_Realloc(e_map->sectors, sizeof(sec) * (++e_map->numSectors + 1));
     e_map->sectors[e_map->numSectors-1] = sec;
@@ -1542,7 +1542,8 @@ boolean MPE_End(void)
     if(!editMapInited)
         return false;
 
-    GameMap* gamemap = (GameMap*) Z_Calloc(sizeof(*gamemap), PU_MAPSTATIC, 0);
+    //GameMap* gamemap = (GameMap*) Z_Calloc(sizeof(*gamemap), PU_MAPSTATIC, 0);
+    GameMap* gamemap = new GameMap;
 
     // Pass on the game-specific map entity property database. The game will
     // want to query it once we have finished constructing the map.
@@ -2017,7 +2018,7 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 {
     if(!editMapInited) return 0;
 
-    Sector* s = createSector();
+    sector_s* s = createSector();
 
     s->rgb[CR] = MINMAX_OF(0, red, 1);
     s->rgb[CG] = MINMAX_OF(0, green, 1);
