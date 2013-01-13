@@ -28,8 +28,6 @@
 #ifndef LIBDEHREAD_DEHREAD_H
 #define LIBDEHREAD_DEHREAD_H
 
-class Sector;
-
 /**
  * @attention @todo This plugin requires access to the internal definition arrays.
  * This dependency should be removed entirely, by making this plugin modify the

@@ -335,7 +335,7 @@ void Cl_Frame2Received(int packetType)
             case DT_MOBJ_SOUND:
             case DT_SECTOR_SOUND:
             case DT_POLY_SOUND:
-                Cl_ReadSoundDelta2(deltaType, skip);
+                Cl_ReadSoundDelta2((deltatype_t) deltaType, skip);
                 break;
 
             default:

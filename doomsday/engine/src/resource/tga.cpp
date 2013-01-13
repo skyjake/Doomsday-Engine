@@ -97,7 +97,7 @@ static void setLastError(const char* msg)
         return;
     }
 
-    lastErrorMsg = realloc(lastErrorMsg, len+1);
+    lastErrorMsg = (char *) M_Realloc(lastErrorMsg, len+1);
     strcpy(lastErrorMsg, msg);
 }
 
@@ -247,7 +247,7 @@ int TGA_Save24_rgb565(FILE* file, int w, int h, const uint16_t* buf)
      *
      * \note Alpha will always be @c 0.
      */
-    outBuf = malloc(w * h * 3);
+    outBuf = (uint8_t *) M_Malloc(w * h * 3);
     outBufStart = w * h - 1; // From the end.
     for(k = 0; k < h; ++k)
     for(i = 0; i < w; ++i)
@@ -293,7 +293,7 @@ int TGA_Save24_rgb888(FILE* file, int w, int h, const uint8_t* buf)
     writeImageSpec(0, 0, w, h, 24, file);
 
     // The save format is BGR.
-    outBuf = malloc(w * h * 3);
+    outBuf = (uint8_t *) M_Malloc(w * h * 3);
     for(i = 0; i < w * h; ++i)
     {
         const uint8_t* src = &buf[i * 3];
@@ -323,7 +323,7 @@ int TGA_Save24_rgba8888(FILE* file, int w, int h, const uint8_t* buf)
     writeImageSpec(0, 0, w, h, 24, file);
 
     // The save format is BGR.
-    outBuf = malloc(w * h * 3);
+    outBuf = (uint8_t *) M_Malloc(w * h * 3);
     for(i = 0; i < w * h; ++i)
     {
         const uint8_t* src = &buf[i * 4];
@@ -353,7 +353,7 @@ int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf)
     writeImageSpec(0, 0, w, h, 16, file);
 
     // The destination format is _RRRRRGG GGGBBBBB.
-    outBuf = malloc(w * h * 2);
+    outBuf = (int16_t *) M_Malloc(w * h * 2);
     for(i = 0; i < w * h; ++i)
     {
         const uint8_t* src = &buf[i * 3];
@@ -419,12 +419,12 @@ uint8_t* TGA_Load(FileHandle* file, int* w, int* h, int* pixelSize)
     *pixelSize = pixbytes;
 
     // Read the pixel data.
-    srcBuf = malloc((*w) * (*h) * pixbytes);
+    srcBuf = (uint8_t *) M_Malloc((*w) * (*h) * pixbytes);
     FileHandle_Read(file, srcBuf, (*w) * (*h) * pixbytes);
 
     // "Unpack" the pixels (origin in the lower left corner).
     // TGA pixels are in BGRA format.
-    dstBuf = malloc(4 * (*w) * (*h));
+    dstBuf = (uint8_t *) M_Malloc(4 * (*w) * (*h));
     src = srcBuf;
     for(y = (*h) - 1; y >= 0; y--)
         for(x = 0; x < (*w); x++)

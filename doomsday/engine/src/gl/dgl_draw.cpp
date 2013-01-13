@@ -130,7 +130,7 @@ void GL_DeleteLists(DGLuint list, int range)
     glDeleteLists(list, range);
 }
 
-void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
+DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -138,7 +138,7 @@ void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
     glColor3ub(r, g, b);
 }
 
-void DGL_Color3ubv(const DGLubyte* vec)
+DENG_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -146,7 +146,7 @@ void DGL_Color3ubv(const DGLubyte* vec)
     glColor3ubv(vec);
 }
 
-void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
+DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -154,7 +154,7 @@ void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
     glColor4ub(r, g, b, a);
 }
 
-void DGL_Color4ubv(const DGLubyte* vec)
+DENG_EXTERN_C void DGL_Color4ubv(const DGLubyte* vec)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -162,7 +162,7 @@ void DGL_Color4ubv(const DGLubyte* vec)
     glColor4ubv(vec);
 }
 
-void DGL_Color3f(float r, float g, float b)
+DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -170,7 +170,7 @@ void DGL_Color3f(float r, float g, float b)
     glColor3f(r, g, b);
 }
 
-void DGL_Color3fv(const float* vec)
+DENG_EXTERN_C void DGL_Color3fv(const float* vec)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -178,7 +178,7 @@ void DGL_Color3fv(const float* vec)
     glColor3fv(vec);
 }
 
-void DGL_Color4f(float r, float g, float b, float a)
+DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -186,7 +186,7 @@ void DGL_Color4f(float r, float g, float b, float a)
     glColor4f(r, g, b, a);
 }
 
-void DGL_Color4fv(const float* vec)
+DENG_EXTERN_C void DGL_Color4fv(const float* vec)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -194,7 +194,7 @@ void DGL_Color4fv(const float* vec)
     glColor4fv(vec);
 }
 
-void DGL_TexCoord2f(byte target, float s, float t)
+DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -202,7 +202,7 @@ void DGL_TexCoord2f(byte target, float s, float t)
     glMultiTexCoord2f(GL_TEXTURE0 + target, s, t);
 }
 
-void DGL_TexCoord2fv(byte target, float* vec)
+DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float* vec)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -210,7 +210,7 @@ void DGL_TexCoord2fv(byte target, float* vec)
     glMultiTexCoord2fv(GL_TEXTURE0 + target, vec);
 }
 
-void DGL_Vertex2f(float x, float y)
+DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -218,7 +218,7 @@ void DGL_Vertex2f(float x, float y)
     glVertex2f(x, y);
 }
 
-void DGL_Vertex2fv(const float* vec)
+DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -226,7 +226,7 @@ void DGL_Vertex2fv(const float* vec)
     glVertex2fv(vec);
 }
 
-void DGL_Vertex3f(float x, float y, float z)
+DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -234,7 +234,7 @@ void DGL_Vertex3f(float x, float y, float z)
     glVertex3f(x, y, z);
 }
 
-void DGL_Vertex3fv(const float* vec)
+DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -242,7 +242,7 @@ void DGL_Vertex3fv(const float* vec)
     glVertex3fv(vec);
 }
 
-void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
+DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -254,7 +254,7 @@ void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
     }
 }
 
-void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
+DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -266,7 +266,7 @@ void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
     }
 }
 
-void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
+DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -279,7 +279,7 @@ void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
     }
 }
 
-void DGL_Begin(dglprimtype_t mode)
+DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
 {
     if(novideo)
         return;
@@ -305,7 +305,7 @@ void DGL_Begin(dglprimtype_t mode)
             DGL_QUAD_STRIP ? GL_QUAD_STRIP : GL_QUADS);
 }
 
-void DGL_End(void)
+DENG_EXTERN_C void DGL_End(void)
 {
     if(novideo)
         return;
@@ -325,52 +325,52 @@ void DGL_End(void)
 #endif
 }
 
-boolean DGL_NewList(DGLuint list, int mode)
+DENG_EXTERN_C boolean DGL_NewList(DGLuint list, int mode)
 {
     return GL_NewList(list, mode);
 }
 
-DGLuint DGL_EndList(void)
+DENG_EXTERN_C DGLuint DGL_EndList(void)
 {
     return GL_EndList();
 }
 
-void DGL_CallList(DGLuint list)
+DENG_EXTERN_C void DGL_CallList(DGLuint list)
 {
     GL_CallList(list);
 }
 
-void DGL_DeleteLists(DGLuint list, int range)
+DENG_EXTERN_C void DGL_DeleteLists(DGLuint list, int range)
 {
     GL_DeleteLists(list, range);
 }
 
-void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a)
+DENG_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a)
 {
     GL_DrawLine(x1, y1, x2, y2, r, g, b, a);
 }
 
-void DGL_DrawRect(const RectRaw* rect)
+DENG_EXTERN_C void DGL_DrawRect(const RectRaw* rect)
 {
     GL_DrawRect(rect);
 }
 
-void DGL_DrawRect2(int x, int y, int w, int h)
+DENG_EXTERN_C void DGL_DrawRect2(int x, int y, int w, int h)
 {
     GL_DrawRect2(x, y, w, h);
 }
 
-void DGL_DrawRectf(const RectRawf* rect)
+DENG_EXTERN_C void DGL_DrawRectf(const RectRawf* rect)
 {
     GL_DrawRectf(rect);
 }
 
-void DGL_DrawRectf2(double x, double y, double w, double h)
+DENG_EXTERN_C void DGL_DrawRectf2(double x, double y, double w, double h)
 {
     GL_DrawRectf2(x, y, w, h);
 }
 
-void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
+DENG_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -379,24 +379,24 @@ void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float 
     GL_DrawRectf2(x, y, w, h);
 }
 
-void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
+DENG_EXTERN_C void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
 {
     GL_DrawRectf2Tiled(x, y, w, h, tw, th);
 }
 
-void DGL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff,
+DENG_EXTERN_C void DGL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff,
     const RectRawf* cutRect)
 {
     GL_DrawCutRectfTiled(rect, tw, th, txoff, tyoff, cutRect);
 }
 
-void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
+DENG_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
     int txoff, int tyoff, double cx, double cy, double cw, double ch)
 {
     GL_DrawCutRectf2Tiled(x, y, w, h, tw, th, txoff, tyoff, cx, cy, cw, ch);
 }
 
-void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2Raw* br,
+DENG_EXTERN_C void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2Raw* br,
     const Point2Raw* bl, const float color[4])
 {
     if(!tl || !tr || !br || !bl || (color && !(color[CA] > 0))) return;
@@ -413,7 +413,7 @@ void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2R
     glEnd();
 }
 
-void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int brX, int brY, int blX,
+DENG_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int brX, int brY, int blX,
     int blY, const float color[4])
 {
     Point2Raw tl, tr, bl, br;

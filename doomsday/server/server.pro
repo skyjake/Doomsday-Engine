@@ -342,12 +342,12 @@ SOURCES += \
     $$SRC/src/audio/s_environ.cpp \
     $$SRC/src/audio/s_logic.cpp \
     $$SRC/src/audio/s_main.cpp \
-    $$SRC/src/audio/s_wav.c \
+    $$SRC/src/audio/s_wav.cpp \
     $$SRC/src/busymode.cpp \
-    $$SRC/src/cbuffer.c \
+    $$SRC/src/cbuffer.cpp \
     $$SRC/src/color.cpp \
-    $$SRC/src/con_bar.c \
-    $$SRC/src/con_config.c \
+    $$SRC/src/con_bar.cpp \
+    $$SRC/src/con_config.cpp \
     $$SRC/src/con_data.cpp \
     $$SRC/src/con_main.cpp \
     $$SRC/src/dd_games.cpp \
@@ -356,9 +356,9 @@ SOURCES += \
     $$SRC/src/dd_loop.cpp \
     $$SRC/src/dd_main.cpp \
     $$SRC/src/dd_pinit.cpp \
-    $$SRC/src/dd_plugin.c \
+    $$SRC/src/dd_plugin.cpp \
     $$SRC/src/dd_wad.cpp \
-    $$SRC/src/def_data.c \
+    $$SRC/src/def_data.cpp \
     $$SRC/src/def_main.cpp \
     $$SRC/src/def_read.cpp \
     $$SRC/src/dualstring.cpp \
@@ -373,16 +373,16 @@ SOURCES += \
     $$SRC/src/filesys/lumpindex.cpp \
     $$SRC/src/filesys/manifest.cpp \
     $$SRC/src/filesys/searchpath.cpp \
-    $$SRC/src/filesys/sys_direc.c \
+    $$SRC/src/filesys/sys_direc.cpp \
     $$SRC/src/game.cpp \
     $$SRC/src/gl/gl_texmanager.cpp \
     $$SRC/src/gridmap.cpp \
-    $$SRC/src/kdtree.c \
+    $$SRC/src/kdtree.cpp \
     $$SRC/src/library.cpp \
-    $$SRC/src/m_decomp64.c \
+    $$SRC/src/m_decomp64.cpp \
     $$SRC/src/m_misc.cpp \
-    $$SRC/src/m_nodepile.c \
-    $$SRC/src/map/blockmap.c \
+    $$SRC/src/m_nodepile.cpp \
+    $$SRC/src/map/blockmap.cpp \
     $$SRC/src/map/bsp/hplane.cpp \
     $$SRC/src/map/bsp/partitioner.cpp \
     $$SRC/src/map/bsp/superblockmap.cpp \
@@ -417,25 +417,25 @@ SOURCES += \
     $$SRC/src/map/surface.cpp \
     $$SRC/src/map/vertex.cpp \
     $$SRC/src/network/masterserver.cpp \
-    $$SRC/src/network/monitor.c \
+    $$SRC/src/network/monitor.cpp \
     $$SRC/src/network/net_buf.cpp \
     $$SRC/src/network/net_event.cpp \
     $$SRC/src/network/net_main.cpp \
     $$SRC/src/network/net_msg.cpp \
     $$SRC/src/network/net_ping.cpp \
-    $$SRC/src/network/protocol.c \
-    $$SRC/src/network/sys_network.c \
+    $$SRC/src/network/protocol.cpp \
+    $$SRC/src/network/sys_network.cpp \
     $$SRC/src/r_util.cpp \
     $$SRC/src/render/r_main.cpp \
     $$SRC/src/render/r_things.cpp \
     $$SRC/src/render/rend_main.cpp \
     $$SRC/src/resource/animgroups.cpp \
     $$SRC/src/resource/api_material.cpp \
-    $$SRC/src/resource/api_resource.c \
-    $$SRC/src/resource/colorpalette.c \
+    $$SRC/src/resource/api_resource.cpp \
+    $$SRC/src/resource/colorpalette.cpp \
     $$SRC/src/resource/colorpalettes.cpp \
     $$SRC/src/resource/compositetexture.cpp \
-    $$SRC/src/resource/hq2x.c \
+    $$SRC/src/resource/hq2x.cpp \
     $$SRC/src/resource/image.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
@@ -446,7 +446,7 @@ SOURCES += \
     $$SRC/src/resource/materialvariant.cpp \
     $$SRC/src/resource/patch.cpp \
     $$SRC/src/resource/patchname.cpp \
-    $$SRC/src/resource/pcx.c \
+    $$SRC/src/resource/pcx.cpp \
     $$SRC/src/resource/r_data.cpp \
     $$SRC/src/resource/rawtexture.cpp \
     $$SRC/src/resource/texture.cpp \
@@ -454,7 +454,7 @@ SOURCES += \
     $$SRC/src/resource/texturescheme.cpp \
     $$SRC/src/resource/textures.cpp \
     $$SRC/src/resource/texturevariant.cpp \
-    $$SRC/src/resource/tga.c \
+    $$SRC/src/resource/tga.cpp \
     $$SRC/src/resource/wad.cpp \
     $$SRC/src/resource/zip.cpp \
     $$SRC/src/server/sv_frame.cpp \
@@ -463,22 +463,22 @@ SOURCES += \
     $$SRC/src/server/sv_missile.cpp \
     $$SRC/src/server/sv_pool.cpp \
     $$SRC/src/server/sv_sound.cpp \
-    $$SRC/src/sys_system.c \
+    $$SRC/src/sys_system.cpp \
     $$SRC/src/tab_tables.c \
-    $$SRC/src/ui/b_command.c \
-    $$SRC/src/ui/b_context.c \
-    $$SRC/src/ui/b_device.c \
-    $$SRC/src/ui/b_main.c \
-    $$SRC/src/ui/b_util.c \
+    $$SRC/src/ui/b_command.cpp \
+    $$SRC/src/ui/b_context.cpp \
+    $$SRC/src/ui/b_device.cpp \
+    $$SRC/src/ui/b_main.cpp \
+    $$SRC/src/ui/b_util.cpp \
     $$SRC/src/ui/canvas.cpp \
     $$SRC/src/ui/canvaswindow.cpp \
-    $$SRC/src/ui/dd_input.c \
+    $$SRC/src/ui/dd_input.cpp \
     $$SRC/src/ui/displaymode.cpp \
-    $$SRC/src/ui/fi_main.c \
-    $$SRC/src/ui/finaleinterpreter.c \
+    $$SRC/src/ui/fi_main.cpp \
+    $$SRC/src/ui/finaleinterpreter.cpp \
     $$SRC/src/ui/keycode.cpp \
-    $$SRC/src/ui/p_control.c \
-    $$SRC/src/ui/sys_input.c \
+    $$SRC/src/ui/p_control.cpp \
+    $$SRC/src/ui/sys_input.cpp \
     $$SRC/src/ui/ui2_main.cpp \
     $$SRC/src/ui/window.cpp \
     $$SRC/src/uri.cpp

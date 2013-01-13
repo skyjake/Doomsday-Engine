@@ -85,6 +85,8 @@
 #define FRONT                   0
 #define BACK                    1
 
+class LineDef;
+
 typedef struct msidedef_s {
     // Sidedef index. Always valid after loading & pruning.
     int index;
@@ -110,7 +112,7 @@ class SideDef : public de::MapElement
 {
 public:
     Surface             sections[3];
-    struct linedef_s*   line;
+    LineDef*   line;
     short               flags;
     msidedef_t          buildData;
     int                 fakeRadioUpdateCount; // frame number of last update

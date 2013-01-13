@@ -1,4 +1,4 @@
-/**\file sys_opengl.c
+/**\file sys_opengl.cpp
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -655,7 +655,7 @@ static void printExtensions(const GLubyte* extensions)
         return;
     len = strlen((const char*) extensions);
 
-    if(0 == (extbuf = malloc(len+1)))
+    if(0 == (extbuf = (char *) M_Malloc(len+1)))
         Con_Error("printExtensions: Failed on allocation of %lu bytes for print buffer.",
                   (unsigned long) (len+1));
 

@@ -1,6 +1,5 @@
-/**
- * @file vignette.c
- * Renders a vignette for the player view. @ingroup render
+/** @file vignette.cpp Renders a vignette for the player view.
+ * @ingroup render
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -24,6 +23,8 @@
 #include "de_graphics.h"
 #include <de/vector1.h>
 #include <math.h>
+
+#include "render/vignette.h"
 
 static byte  vignetteEnabled  = true;
 static float vignetteDarkness = 1.0f;

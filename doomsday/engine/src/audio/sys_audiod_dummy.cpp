@@ -74,7 +74,8 @@ int         DS_Dummy_SFX_Getv(int prop, void* values);
 audiodriver_t audiod_dummy = {
     DS_DummyInit,
     DS_DummyShutdown,
-    DS_DummyEvent
+    DS_DummyEvent,
+    0
 };
 
 audiointerface_sfx_t audiod_dummy_sfx = { {
@@ -141,7 +142,7 @@ sfxbuffer_t* DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate)
     sfxbuffer_t* buf;
 
     // Clear the buffer.
-    buf = Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
+    buf = (sfxbuffer_t *) Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
 
     buf->bytes = bits / 8;
     buf->rate = rate;

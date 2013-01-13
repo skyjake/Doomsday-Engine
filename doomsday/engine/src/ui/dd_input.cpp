@@ -154,13 +154,13 @@ void DD_RegisterInput(void)
 static void I_DeviceAllocKeys(inputdev_t *dev, uint count)
 {
     dev->numKeys = count;
-    dev->keys = M_Calloc(count * sizeof(inputdevkey_t));
+    dev->keys = (inputdevkey_t *) M_Calloc(count * sizeof(inputdevkey_t));
 }
 
 static void I_DeviceAllocHats(inputdev_t *dev, uint count)
 {
     dev->numHats = count;
-    dev->hats = M_Calloc(count * sizeof(inputdevhat_t));
+    dev->hats = (inputdevhat_t *) M_Calloc(count * sizeof(inputdevhat_t));
 }
 
 /**
@@ -170,7 +170,7 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
 {
     inputdevaxis_t *axis;
 
-    dev->axes = M_Realloc(dev->axes, sizeof(inputdevaxis_t) * ++dev->numAxes);
+    dev->axes = (inputdevaxis_t *) M_Realloc(dev->axes, sizeof(inputdevaxis_t) * ++dev->numAxes);
 
     axis = &dev->axes[dev->numAxes - 1];
     memset(axis, 0, sizeof(*axis));
@@ -1038,7 +1038,7 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
             {
                 int* data = &ev->data1;
                 ev->type = EV_JOY_AXIS;
-                ev->state = 0;
+                ev->state = (evstate_t) 0;
                 if(ddEvent->axis.id >= 0 && ddEvent->axis.id < 6)
                 {
                     data[ddEvent->axis.id] = ddEvent->axis.pos;
@@ -1211,7 +1211,7 @@ byte DD_ModKey(byte key)
  * Clears the repeaters array.
  */
 #undef DD_ClearKeyRepeaters
-void DD_ClearKeyRepeaters(void)
+DENG_EXTERN_C void DD_ClearKeyRepeaters(void)
 {
     memset(keyReps, 0, sizeof(keyReps));
 }
@@ -1584,7 +1584,7 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
 {
 #define BORDER            4
 
-    const Point2Raw textOffset = { BORDER, BORDER };
+    Point2Raw const textOffset(BORDER, BORDER);
     const float upColor[] = { .3f, .3f, .3f, .6f };
     const float downColor[] = { .3f, .3f, 1, .6f };
     const float expiredMarkColor[] = { 1, 0, 0, 1 };
@@ -2189,7 +2189,7 @@ void Rend_AllInputDeviceStateVisuals(void)
     };
     static inputdev_layout_t joyLayout = { joyGroups, NUMITEMS(joyGroups) };
 
-    Point2Raw origin = { 2, 2 };
+    Point2Raw origin(2, 2);
     Size2Raw dimensions;
 
     if(novideo || isDedicated) return; // Not for us.

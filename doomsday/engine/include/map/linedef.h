@@ -32,6 +32,7 @@
 #include "resource/r_data.h"
 #include "p_mapdata.h"
 #include "p_dmu.h"
+#include "MapElement"
 
 // Helper macros for accessing linedef data elements.
 #define L_v(n)                  v[(n)? 1:0]
@@ -90,8 +91,11 @@ typedef struct lineside_s {
 
 class Vertex;
 
-typedef struct linedef_s {
-    runtime_mapdata_header_t header;
+struct linedef_s; // opaque type
+
+class LineDef : public de::MapElement
+{
+public:
     Vertex *v[2];
     struct lineowner_s* vo[2]; /// Links to vertex line owner nodes [left, right].
     lineside_t          sides[2];
@@ -105,7 +109,25 @@ typedef struct linedef_s {
     AABoxd              aaBox;
     boolean             mapped[DDMAXPLAYERS]; /// Whether the line has been mapped by each player yet.
     int                 origIndex; /// Original index in the archived map.
-} LineDef;
+
+public:
+    LineDef() : de::MapElement(DMU_LINEDEF)
+    {
+        memset(v, 0, sizeof(v));
+        memset(vo, 0, sizeof(vo));
+        memset(sides, 0, sizeof(sides));
+        flags = 0;
+        inFlags = 0;
+        slopeType = (slopetype_t) 0;
+        validCount = 0;
+        angle = 0;
+        memset(direction, 0, sizeof(direction));
+        length = 0;
+        memset(&aaBox, 0, sizeof(aaBox));
+        memset(mapped, 0, sizeof(mapped));
+        origIndex = 0;
+    }
+};
 
 /**
  * On which side of this LineDef does the specified box lie?
@@ -117,7 +139,7 @@ typedef struct linedef_s {
  *          @c  0= line intersects bbox.
  *          @c >0= bbox wholly on the right side.
  */
-int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
+//int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
 
 /**
  * On which side of this LineDef does the specified box lie? The test is
@@ -134,13 +156,13 @@ int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
  * - Zero: line intersects bbox.
  * - Positive: bbox isentirely on the right side.
  */
-int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
+//int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
 
 /**
  * @param offset  Returns the position of the nearest point along the line [0..1].
  */
-coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
-coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
+//coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
+//coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
 
 /**
  * On which side of this LineDef does the specified point lie?
@@ -152,8 +174,8 @@ coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t*
  *         @c =0 Point lies directly on the line.
  *         @c >0 Point is to the right/front of the line.
  */
-coord_t LineDef_PointOnSide(const LineDef* lineDef, coord_t const point[2]);
-coord_t LineDef_PointXYOnSide(const LineDef* lineDef, coord_t x, coord_t y);
+//coord_t LineDef_PointOnSide(const LineDef* lineDef, coord_t const point[2]);
+//coord_t LineDef_PointXYOnSide(const LineDef* lineDef, coord_t x, coord_t y);
 
 /**
  * Configure the specified divline_t by setting the origin point to this LineDef's

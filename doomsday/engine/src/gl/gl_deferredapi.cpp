@@ -1,6 +1,5 @@
-/**
- * @file gl_deferredapi.c
- * Implementation of GL API deferring. @ingroup gl
+/** @file gl_deferredapi.cpp GL API deferring.
+ * @ingroup gl
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
@@ -22,7 +21,7 @@
 
 #define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
-#include "de_system.h"
+#include <de/concurrency.h>
 #include "gl/gl_defer.h"
 
 static boolean __inline mustDefer(void)
@@ -35,32 +34,32 @@ static boolean __inline mustDefer(void)
 #define GL_CALL2(form, func, x, y) \
     if(mustDefer()) GL_Defer_##form(func, x, y); else func(x, y);
 
-void Deferred_glEnable(GLenum e)
+DENG_EXTERN_C void Deferred_glEnable(GLenum e)
 {
     GL_CALL1(e, glEnable, e);
 }
 
-void Deferred_glDisable(GLenum e)
+DENG_EXTERN_C void Deferred_glDisable(GLenum e)
 {
     GL_CALL1(e, glDisable, e);
 }
 
-void Deferred_glDeleteTextures(GLsizei num, const GLuint* names)
+DENG_EXTERN_C void Deferred_glDeleteTextures(GLsizei num, const GLuint* names)
 {
     GL_CALL2(uintArray, glDeleteTextures, num, names);
 }
 
-void Deferred_glFogi(GLenum p, GLint v)
+DENG_EXTERN_C void Deferred_glFogi(GLenum p, GLint v)
 {
     GL_CALL2(i, glFogi, p, v);
 }
 
-void Deferred_glFogf(GLenum p, GLfloat v)
+DENG_EXTERN_C void Deferred_glFogf(GLenum p, GLfloat v)
 {
     GL_CALL2(f, glFogf, p, v);
 }
 
-void Deferred_glFogfv(GLenum p, const GLfloat* v)
+DENG_EXTERN_C void Deferred_glFogfv(GLenum p, const GLfloat* v)
 {
     GL_CALL2(fv4, glFogfv, p, v);
 }

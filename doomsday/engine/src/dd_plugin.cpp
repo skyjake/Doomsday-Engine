@@ -99,7 +99,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
         return 0;
     }
 
-    initializer = Library_Symbol(plugin, "DP_Initialize");
+    initializer = de::function_cast<void *, void (*)()>(Library_Symbol(plugin, "DP_Initialize"));
     if(!initializer)
     {
         DEBUG_Message(("  loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath));
@@ -160,7 +160,7 @@ void Plug_UnloadAll(void)
     }
 }
 
-int Plug_AddHook(int hookType, hookfunc_t hook)
+DENG_EXTERN_C int Plug_AddHook(int hookType, hookfunc_t hook)
 {
     int i, type = HOOKMASK(hookType);
 
@@ -197,7 +197,7 @@ int Plug_AddHook(int hookType, hookfunc_t hook)
     return true;
 }
 
-int Plug_RemoveHook(int hookType, hookfunc_t hook)
+DENG_EXTERN_C int Plug_RemoveHook(int hookType, hookfunc_t hook)
 {
     int i, type = HOOKMASK(hookType);
 
@@ -229,7 +229,7 @@ int Plug_RemoveHook(int hookType, hookfunc_t hook)
     return false;
 }
 
-int Plug_CheckForHook(int hookType)
+DENG_EXTERN_C int Plug_CheckForHook(int hookType)
 {
     size_t i;
     for(i = 0; i < MAX_HOOKS; ++i)
@@ -293,7 +293,7 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
     return addr;
 }
 
-void Plug_Notify(int notification, void* param)
+DENG_EXTERN_C void Plug_Notify(int notification, void* param)
 {
     DENG_UNUSED(param);
 

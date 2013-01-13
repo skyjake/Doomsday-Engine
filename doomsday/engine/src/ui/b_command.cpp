@@ -75,7 +75,7 @@ void B_DestroyCommandBindingList(evbinding_t* listRoot)
  */
 static evbinding_t* B_AllocCommandBinding(void)
 {
-    evbinding_t* eb = M_Calloc(sizeof(evbinding_t));
+    evbinding_t* eb = (evbinding_t *) M_Calloc(sizeof(evbinding_t));
     eb->bid = B_NewIdentifier();
     return eb;
 }
@@ -87,7 +87,7 @@ static evbinding_t* B_AllocCommandBinding(void)
  */
 static statecondition_t* B_AllocCommandBindingCondition(evbinding_t* eb)
 {
-    eb->conds = M_Realloc(eb->conds, ++eb->numConds * sizeof(statecondition_t));
+    eb->conds = (statecondition_t *) M_Realloc(eb->conds, ++eb->numConds * sizeof(statecondition_t));
     memset(&eb->conds[eb->numConds - 1], 0, sizeof(statecondition_t));
     return &eb->conds[eb->numConds - 1];
 }

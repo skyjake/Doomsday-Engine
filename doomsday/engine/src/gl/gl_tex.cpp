@@ -1,4 +1,4 @@
-/**\file gl_tex.c
+/**\file gl_tex.cpp
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -30,6 +30,7 @@
 #include "de_console.h"
 
 #include "color.h"
+#include "gl/gl_tex.h"
 #include "resource/colorpalettes.h"
 #include "resource/r_data.h"
 
@@ -45,7 +46,7 @@ static uint8_t* GetScratchBuffer(size_t size)
     // Need to enlarge?
     if(size > scratchBufferSize)
     {
-        scratchBuffer = Z_Realloc(scratchBuffer, size, PU_APPSTATIC);
+        scratchBuffer = (uint8_t *) Z_Realloc(scratchBuffer, size, PU_APPSTATIC);
         scratchBufferSize = size;
     }
     return scratchBuffer;
@@ -649,7 +650,7 @@ uint8_t* GL_ScaleBufferNearest(const uint8_t* in, int width, int height, int com
     ratioX = (int)(width  << 16) / outWidth  + 1;
     ratioY = (int)(height << 16) / outHeight + 1;
 
-    if(NULL == (out = malloc(comps * outWidth * outHeight)))
+    if(NULL == (out = (uint8_t *) M_Malloc(comps * outWidth * outHeight)))
         Con_Error("GL_ScaleBufferNearest: Failed on allocation of %lu bytes for "
                   "output buffer.", (unsigned long) (comps * outWidth * outHeight));
 
@@ -1475,7 +1476,7 @@ void SharpenPixels(uint8_t* pixels, int width, int height, int comps)
         return;
     }
 
-    result = calloc(1, comps * width * height);
+    result = (uint8_t *) M_Calloc(comps * width * height);
 
     A = strength;
     B = .70710678 * strength; // 1/sqrt(2)
@@ -1541,7 +1542,7 @@ uint8_t* ApplyColorKeying(uint8_t* buf, int width, int height, int pixelSize)
     if(pixelSize < 4)
     {
         const long numpels = width * height;
-        uint8_t* ckdest = malloc(4 * numpels);
+        uint8_t* ckdest = (uint8_t *) M_Malloc(4 * numpels);
         uint8_t* in, *out;
         long i;
         for(in = buf, out = ckdest, i = 0; i < numpels; ++i, in += pixelSize, out += 4)

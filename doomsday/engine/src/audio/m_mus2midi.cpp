@@ -1,4 +1,4 @@
-/** @file m_mus2midi.c MUS to MIDI conversion.
+/** @file m_mus2midi.cpp MUS to MIDI conversion.
  * @ingroup audio
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -25,6 +25,7 @@
 #include "con_main.h"
 #include "api_filesys.h"
 #include "filesys/fs_util.h"
+#include "audio/m_mus2midi.h"
 
 // MUS event types.
 enum {

@@ -177,12 +177,14 @@ extern "C" {
 
 boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propertyDef, uint elementIndex, valuetype_t valueType, void* valueAdr);
 
+/*
 byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId);
 short P_GetGMOShort(int entityId, uint elementIndex, int propertyId);
 int P_GetGMOInt(int entityId, uint elementIndex, int propertyId);
 fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId);
 angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
 float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
+*/
 
 extern Uri* mapUri;
 

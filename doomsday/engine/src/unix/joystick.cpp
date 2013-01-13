@@ -1,6 +1,5 @@
-/**
- * @file joystick.c
- * Joystick input pre-processing for Unix. @ingroup input
+/** @file joystick.cpp Joystick input pre-processing for Unix.
+ * @ingroup input
  *
  * Uses SDL.
  *

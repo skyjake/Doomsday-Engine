@@ -23,7 +23,6 @@
 #ifndef LIBDENG_PORTABLE_INIT_H
 #define LIBDENG_PORTABLE_INIT_H
 
-#include "dd_share.h"
 #include "api_gameexport.h"
 #include "api_internaldata.h"
 #include <de/c_wrapper.h>

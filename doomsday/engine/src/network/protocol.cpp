@@ -24,6 +24,7 @@
 #include "de_console.h"
 #include "de_misc.h"
 
+#include "network/protocol.h"
 #include "network/sys_network.h"
 
 boolean Protocol_Receive(nodeid_t from)
@@ -41,7 +42,7 @@ boolean Protocol_Receive(nodeid_t from)
 
     // Post the received message.
     {
-        netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
+        netmessage_t *msg = (netmessage_t *) M_Calloc(sizeof(netmessage_t));
 
         msg->sender = from;
         msg->data = packet;
@@ -58,7 +59,7 @@ void Protocol_FreeBuffer(void *handle)
 {
     if(handle)
     {
-        LegacyNetwork_FreeBuffer(handle);
+        LegacyNetwork_FreeBuffer((byte *) handle);
     }
 }
 
@@ -74,7 +75,7 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
     }
 
 #ifdef _DEBUG
-    Monitor_Add(data, size);
+    Monitor_Add((uint8_t const *) data, size);
 #endif
 
     LegacyNetwork_Send(N_GetNodeSocket(destination), data, size);

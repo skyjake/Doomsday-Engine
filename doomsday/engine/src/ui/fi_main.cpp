@@ -26,6 +26,7 @@
 
 #define DENG_NO_API_MACROS_INFINE
 
+#include <de/memory.h>
 #include <de/memoryzone.h>
 
 #include "de_console.h"
@@ -128,7 +129,7 @@ static finaleid_t finalesUniqueId(void)
 finale_t* P_CreateFinale(void)
 {
     finale_t* f;
-    finales = Z_Realloc(finales, sizeof(*finales) * ++finalesSize, PU_APPSTATIC);
+    finales = (finale_t *) Z_Realloc(finales, sizeof(*finales) * ++finalesSize, PU_APPSTATIC);
     f = &finales[finalesSize-1];
     f->id = finalesUniqueId();
     f->_interpreter = P_CreateFinaleInterpreter();
@@ -151,7 +152,7 @@ void P_DestroyFinale(finale_t* f)
 
         if(finalesSize > 1)
         {
-            finales = Z_Realloc(finales, sizeof(*finales) * --finalesSize, PU_APPSTATIC);
+            finales = (finale_t *) Z_Realloc(finales, sizeof(*finales) * --finalesSize, PU_APPSTATIC);
         }
         else
         {
@@ -306,7 +307,7 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
         size_t scriptLen = strlen(script);
         char* p;
 
-        p = tempScript = malloc(scriptLen + setupCmdsLen + 9 + 2 + 1);
+        p = tempScript = (char *) M_Malloc(scriptLen + setupCmdsLen + 9 + 2 + 1);
         strcpy(p, "OnLoad {\n"); p += 9;
         memcpy(p, setupCmds, setupCmdsLen); p += setupCmdsLen;
         strcpy(p, "}\n"); p += 2;
@@ -326,7 +327,9 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
     Con_Printf("Finale Begin - id:%u '%.30s'\n", f->id, _script);
 #endif
     if(tempScript)
-        free(tempScript);
+    {
+        M_Free(tempScript);
+    }
     return f->id;
 }
 

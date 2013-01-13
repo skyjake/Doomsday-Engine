@@ -271,7 +271,7 @@ void B_UpdateDeviceStateAssociations(void)
 
 static void B_SetContextCount(int count)
 {
-    bindContexts = M_Realloc(bindContexts, sizeof(bcontext_t*) * count);
+    bindContexts = (bcontext_t **) M_Realloc(bindContexts, sizeof(bcontext_t*) * count);
     bindContextCount = count;
 }
 
@@ -306,7 +306,7 @@ static void B_RemoveContext(bcontext_t* bc)
  */
 bcontext_t* B_NewContext(const char* name)
 {
-    bcontext_t* bc = M_Calloc(sizeof(bcontext_t));
+    bcontext_t* bc = (bcontext_t *) M_Calloc(sizeof(bcontext_t));
 
     bc->name = strdup(name);
     B_InitCommandBindingList(&bc->commandBinds);
@@ -439,7 +439,7 @@ controlbinding_t* B_NewControlBinding(bcontext_t* bc)
 {
     int                 i;
 
-    controlbinding_t* conBin = M_Calloc(sizeof(controlbinding_t));
+    controlbinding_t* conBin = (controlbinding_t *) M_Calloc(sizeof(controlbinding_t));
     conBin->bid = B_NewIdentifier();
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {

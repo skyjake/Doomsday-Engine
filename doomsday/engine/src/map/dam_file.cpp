@@ -174,7 +174,7 @@ static void writeVertex(const GameMap* map, uint idx)
         own = base = (v->lineOwners)->LO_prev;
         do
         {
-            writeLong((long) ((own->lineDef - map->lineDefs) + 1));
+            writeLong((long) (map->lineDefs.indexOf(own->lineDef) + 1));
             writeLong((long) own->angle);
             own = own->LO_prev;
         } while(own != base);
@@ -327,14 +327,14 @@ static void archiveLines(GameMap* map, boolean write)
 
     if(write)
     {
-        writeLong(map->numLineDefs);
-        for(i = 0; i < map->numLineDefs; ++i)
+        writeLong(map->lineDefCount());
+        for(i = 0; i < map->lineDefCount(); ++i)
             writeLine(map, i);
     }
     else
     {
-        map->numLineDefs = readLong();
-        for(i = 0; i < map->numLineDefs; ++i)
+        map->lineDefs.clearAndResize(readLong());
+        for(i = 0; i < map->lineDefCount(); ++i)
             readLine(map, i);
     }
 
@@ -480,7 +480,7 @@ static void writeSector(GameMap* map, uint idx)
     // Line list.
     writeLong((long) s->lineDefCount);
     for(i = 0; i < s->lineDefCount; ++i)
-        writeLong((s->lineDefs[i] - map->lineDefs) + 1);
+        writeLong(map->lineDefs.indexOf(s->lineDefs[i]) + 1);
 
     // BspLeaf list.
     writeLong((long) s->bspLeafCount);
@@ -722,7 +722,7 @@ static void writeSeg(GameMap* map, HEdge* s)
     writeLong(map->vertexes.indexOf(static_cast<Vertex const *>(s->v[1])) + 1);
     writeFloat(s->length);
     writeFloat(s->offset);
-    writeLong(s->lineDef? ((s->lineDef - map->lineDefs) + 1) : 0);
+    writeLong(s->lineDef? (map->lineDefs.indexOf(s->lineDef) + 1) : 0);
     writeLong(s->sector? (GameMap_SectorIndex(map, s->sector) + 1) : 0);
     writeLong(s->bspLeaf? (GameMap_BspLeafIndex(map, s->bspLeaf) + 1) : 0);
     writeLong(s->twin? (GameMap_HEdgeIndex(map, s->twin) + 1) : 0);
@@ -939,7 +939,7 @@ static void writePolyobj(GameMap* map, uint idx)
         writeLong(map->vertexes.indexOf(static_cast<Vertex const *>(he->v[1])) + 1);
         writeFloat(he->length);
         writeFloat(he->offset);
-        writeLong(he->lineDef? ((he->lineDef - map->lineDefs) + 1) : 0);
+        writeLong(he->lineDef? (map->lineDefs.indexOf(he->lineDef) + 1) : 0);
         writeLong(he->sector? (GameMap_SectorIndex(map, he->sector) + 1) : 0);
         writeLong((long) he->angle);
         writeByte(he->side);
@@ -1052,7 +1052,7 @@ static void archiveMap(GameMap *map, boolean write)
         if(gx.SetupForMapData)
         {
             gx.SetupForMapData(DMU_VERTEX, map->vertexCount());
-            gx.SetupForMapData(DMU_LINEDEF, map->numLineDefs);
+            gx.SetupForMapData(DMU_LINEDEF, map->lineDefCount());
             gx.SetupForMapData(DMU_SIDEDEF, map->sideDefCount());
             gx.SetupForMapData(DMU_SECTOR, map->sectorCount());
         }

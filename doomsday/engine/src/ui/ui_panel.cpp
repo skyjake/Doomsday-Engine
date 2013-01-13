@@ -160,7 +160,7 @@ uidata_listitem_t lstit_con_completion[] = {
     {"Cycle through", 1}
 };
 uidata_list_t lst_con_completion = {
-    lstit_con_completion, NUMITEMS(lstit_con_completion), "con-completion"
+    lstit_con_completion, NUMITEMS(lstit_con_completion), (void*) "con-completion"
 };
 
 uidata_listitem_t lstit_music_source[] = {
@@ -169,7 +169,7 @@ uidata_listitem_t lstit_music_source[] = {
     {"CD", 2}
 };
 uidata_list_t lst_music_source = {
-    lstit_music_source, NUMITEMS(lstit_music_source), "music-source"
+    lstit_music_source, NUMITEMS(lstit_music_source), (void*) "music-source"
 };
 
 uidata_listitem_t lstit_sound_rate[] = {
@@ -178,7 +178,7 @@ uidata_listitem_t lstit_sound_rate[] = {
     {"44100 Hz (4x)", 44100}
 };
 uidata_list_t lst_sound_rate = {
-    lstit_sound_rate, NUMITEMS(lstit_sound_rate), "sound-rate"
+    lstit_sound_rate, NUMITEMS(lstit_sound_rate), (void*) "sound-rate"
 };
 
 uidata_listitem_t lstit_smooth_move[] = {
@@ -187,7 +187,7 @@ uidata_listitem_t lstit_smooth_move[] = {
     {"Models and sprites", 2}
 };
 uidata_list_t lst_smooth_move = {
-    lstit_smooth_move, NUMITEMS(lstit_smooth_move), "rend-mobj-smooth-move"
+    lstit_smooth_move, NUMITEMS(lstit_smooth_move), (void*) "rend-mobj-smooth-move"
 };
 
 uidata_listitem_t lstit_sprite_align[] = {
@@ -197,7 +197,7 @@ uidata_listitem_t lstit_sprite_align[] = {
     {"View plane (limited)", 3}
 };
 uidata_list_t lst_sprite_align = {
-    lstit_sprite_align, NUMITEMS(lstit_sprite_align), "rend-sprite-align"
+    lstit_sprite_align, NUMITEMS(lstit_sprite_align), (void*) "rend-sprite-align"
 };
 
 uidata_listitem_t lstit_mipmap[] = {
@@ -209,7 +209,7 @@ uidata_listitem_t lstit_mipmap[] = {
     {"Linear filter, linear mip", 5}
 };
 uidata_list_t lst_mipmap = {
-    lstit_mipmap, NUMITEMS(lstit_mipmap), "rend-tex-mipmap"
+    lstit_mipmap, NUMITEMS(lstit_mipmap), (void*) "rend-tex-mipmap"
 };
 
 uidata_listitem_t lstit_blend[] = {
@@ -218,7 +218,7 @@ uidata_listitem_t lstit_blend[] = {
     {"Process wo/rendering", 2}
 };
 uidata_list_t lst_blend = {
-    lstit_blend, NUMITEMS(lstit_blend), "rend-light-blend"
+    lstit_blend, NUMITEMS(lstit_blend), (void*) "rend-light-blend"
 };
 
 uidata_listitem_t* lstit_resolution; /* = {
@@ -261,91 +261,91 @@ uidata_list_t lst_resolution = {
     //   lstit_resolution, NUMITEMS(lstit_resolution)
 };
 
-uidata_slider_t sld_con_alpha = { 0, 1, 0, .01f, true, "con-alpha" };
-uidata_slider_t sld_con_light = { 0, 1, 0, .01f, true, "con-light" };
-uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, "input-key-delay1" };
-uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, "input-key-delay2" };
-uidata_slider_t sld_mouse_x_scale = { 0, .01f, 0, .00005f, true, "input-mouse-x-scale" };
-uidata_slider_t sld_mouse_y_scale = { 0, .01f, 0, .00005f, true, "input-mouse-y-scale" };
+uidata_slider_t sld_con_alpha = { 0, 1, 0, .01f, true, (void*) "con-alpha" };
+uidata_slider_t sld_con_light = { 0, 1, 0, .01f, true, (void*) "con-light" };
+uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, (void*) "input-key-delay1" };
+uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, (void*) "input-key-delay2" };
+uidata_slider_t sld_mouse_x_scale = { 0, .01f, 0, .00005f, true, (void*) "input-mouse-x-scale" };
+uidata_slider_t sld_mouse_y_scale = { 0, .01f, 0, .00005f, true, (void*) "input-mouse-y-scale" };
 uidata_slider_t sld_client_pos_interval =
-    { 0, 70, 0, 1, false, "client-pos-interval" };
+    { 0, 70, 0, 1, false, (void*) "client-pos-interval" };
 uidata_slider_t sld_server_frame_interval =
-    { 0, 35, 0, 1, false, "server-frame-interval" };
-uidata_slider_t sld_sound_volume = { 0, 255, 0, 1, false, "sound-volume" };
-uidata_slider_t sld_music_volume = { 0, 255, 0, 1, false, "music-volume" };
+    { 0, 35, 0, 1, false, (void*) "server-frame-interval" };
+uidata_slider_t sld_sound_volume = { 0, 255, 0, 1, false, (void*) "sound-volume" };
+uidata_slider_t sld_music_volume = { 0, 255, 0, 1, false, (void*) "music-volume" };
 uidata_slider_t sld_reverb_volume =
-    { 0, 1, 0, .01f, true, "sound-reverb-volume" };
+    { 0, 1, 0, .01f, true, (void*) "sound-reverb-volume" };
 uidata_slider_t sld_particle_max =
-    { 0, 10000, 0, 10, false, "rend-particle-max", "Unlimited" };
+    { 0, 10000, 0, 10, false, (void*) "rend-particle-max", "Unlimited" };
 uidata_slider_t sld_particle_rate =
-    { .1f, 10, 0, .01f, true, "rend-particle-rate" };
+    { .1f, 10, 0, .01f, true, (void*) "rend-particle-rate" };
 uidata_slider_t sld_particle_diffuse =
-    { 0, 20, 0, .01f, true, "rend-particle-diffuse" };
+    { 0, 20, 0, .01f, true, (void*) "rend-particle-diffuse" };
 uidata_slider_t sld_particle_visnear =
-    { 0, 1000, 0, 1, false, "rend-particle-visible-near", "Disabled" };
+    { 0, 1000, 0, 1, false, (void*) "rend-particle-visible-near", "Disabled" };
 uidata_slider_t sld_model_far =
-    { 0, 3000, 0, 1, false, "rend-model-distance", "Unlimited" };
-uidata_slider_t sld_model_lights = { 0, 10, 0, 1, false, "rend-model-lights" };
+    { 0, 3000, 0, 1, false, (void*) "rend-model-distance", "Unlimited" };
+uidata_slider_t sld_model_lights = { 0, 10, 0, 1, false, (void*) "rend-model-lights" };
 uidata_slider_t sld_model_lod =
-    { 0, 1000, 0, 1, true, "rend-model-lod", "No LOD" };
+    { 0, 1000, 0, 1, true, (void*) "rend-model-lod", "No LOD" };
 uidata_slider_t sld_detail_scale =
-    { .1f, 32, 0, .01f, true, "rend-tex-detail-scale" };
+    { .1f, 32, 0, .01f, true, (void*) "rend-tex-detail-scale" };
 uidata_slider_t sld_detail_strength =
-    { 0, 2, 0, .01f, true, "rend-tex-detail-strength" };
+    { 0, 2, 0, .01f, true, (void*) "rend-tex-detail-strength" };
 uidata_slider_t sld_detail_far =
-    { 1, 1000, 0, 1, true, "rend-tex-detail-far" };
-uidata_slider_t sld_tex_quality = { 0, 8, 0, 1, false, "rend-tex-quality" };
-uidata_slider_t sld_tex_aniso = { -1, 4, 0, 1, false, "rend-tex-filter-anisotropic", "Best Available"};
+    { 1, 1000, 0, 1, true, (void*) "rend-tex-detail-far" };
+uidata_slider_t sld_tex_quality = { 0, 8, 0, 1, false, (void*) "rend-tex-quality" };
+uidata_slider_t sld_tex_aniso = { -1, 4, 0, 1, false, (void*) "rend-tex-filter-anisotropic", "Best Available"};
 uidata_slider_t sld_light_bright =
-    { 0, 1, 0, .01f, true, "rend-light-bright" };
+    { 0, 1, 0, .01f, true, (void*) "rend-light-bright" };
 uidata_slider_t sld_light_scale =
-    { .1f, 10, 0, .01f, true, "rend-light-radius-scale" };
+    { .1f, 10, 0, .01f, true, (void*) "rend-light-radius-scale" };
 uidata_slider_t sld_light_radmax =
-    { 64, 512, 0, 1, false, "rend-light-radius-max" };
+    { 64, 512, 0, 1, false, (void*) "rend-light-radius-max" };
 uidata_slider_t sld_light_max =
-    { 0, 2000, 0, 1, false, "rend-light-num", "Unlimited" };
+    { 0, 2000, 0, 1, false, (void*) "rend-light-num", "Unlimited" };
 uidata_slider_t sld_light_glow_strength =
-    { 0, 2, 0, .01f, true, "rend-glow" };
+    { 0, 2, 0, .01f, true, (void*) "rend-glow" };
 uidata_slider_t sld_light_fog_bright =
-    { 0, 1, 0, .01f, true, "rend-glow-fog-bright" };
+    { 0, 1, 0, .01f, true, (void*) "rend-glow-fog-bright" };
 uidata_slider_t sld_light_ambient =
-    { 0, 255, 0, 1, false, "rend-light-ambient" };
+    { 0, 255, 0, 1, false, (void*) "rend-light-ambient" };
 uidata_slider_t sld_light_compression =
-    { -1, 1, 0, 0.1f, true, "rend-light-compression" };
-uidata_slider_t sld_glow_height = { 0, 1024, 0, 1, false, "rend-glow-height" };
-uidata_slider_t sld_glow_scale = { .1f, 10, 0, 0.1f, true, "rend-glow-scale" };
-uidata_slider_t sld_fov = { 1, 179, 0, .01f, true, "rend-camera-fov" };
+    { -1, 1, 0, 0.1f, true, (void*) "rend-light-compression" };
+uidata_slider_t sld_glow_height = { 0, 1024, 0, 1, false, (void*) "rend-glow-height" };
+uidata_slider_t sld_glow_scale = { .1f, 10, 0, 0.1f, true, (void*) "rend-glow-scale" };
+uidata_slider_t sld_fov = { 1, 179, 0, .01f, true, (void*) "rend-camera-fov" };
 uidata_slider_t sld_sky_distance =
-    { 1, 10000, 0, 10, true, "rend-sky-distance" };
+    { 1, 10000, 0, 10, true, (void*) "rend-sky-distance" };
 uidata_slider_t sld_shadow_dark =
-    { 0, 2, 0, .01f, true, "rend-shadow-darkness" };
-uidata_slider_t sld_shadow_far = { 0, 3000, 0, 1, false, "rend-shadow-far" };
+    { 0, 2, 0, .01f, true, (void*) "rend-shadow-darkness" };
+uidata_slider_t sld_shadow_far = { 0, 3000, 0, 1, false, (void*) "rend-shadow-far" };
 uidata_slider_t sld_shadow_radmax =
-    { 0, 128, 0, 1, false, "rend-shadow-radius-max" };
+    { 0, 128, 0, 1, false, (void*) "rend-shadow-radius-max" };
 uidata_slider_t sld_fakeradio_dark =
-    { 0, 2, 0, .01f, true, "rend-fakeradio-darkness" };
-uidata_slider_t sld_vid_gamma = { .1f, 3, 0, .01f, true, "vid-gamma" };
-uidata_slider_t sld_vid_contrast = { .1f, 3, 0, .01f, true, "vid-contrast" };
-uidata_slider_t sld_vid_bright = { -.5f, .5f, 0, .01f, true, "vid-bright" };
-uidata_slider_t sld_halo = { 0, 5, 0, 1, false, "rend-halo", "None" };
-uidata_slider_t sld_halo_bright = { 0, 100, 0, 1, false, "rend-halo-bright" };
+    { 0, 2, 0, .01f, true, (void*) "rend-fakeradio-darkness" };
+uidata_slider_t sld_vid_gamma = { .1f, 3, 0, .01f, true, (void*) "vid-gamma" };
+uidata_slider_t sld_vid_contrast = { .1f, 3, 0, .01f, true, (void*) "vid-contrast" };
+uidata_slider_t sld_vid_bright = { -.5f, .5f, 0, .01f, true, (void*) "vid-bright" };
+uidata_slider_t sld_halo = { 0, 5, 0, 1, false, (void*) "rend-halo", "None" };
+uidata_slider_t sld_halo_bright = { 0, 100, 0, 1, false, (void*) "rend-halo-bright" };
 uidata_slider_t sld_halo_occlusion =
-    { 1, 256, 0, 1, false, "rend-halo-occlusion" };
-uidata_slider_t sld_halo_size = { 0, 100, 0, 1, false, "rend-halo-size" };
+    { 1, 256, 0, 1, false, (void*) "rend-halo-occlusion" };
+uidata_slider_t sld_halo_size = { 0, 100, 0, 1, false, (void*) "rend-halo-size" };
 uidata_slider_t sld_halo_seclimit =
-    { 0, 10, 0, .01f, true, "rend-halo-secondary-limit" };
+    { 0, 10, 0, .01f, true, (void*) "rend-halo-secondary-limit" };
 uidata_slider_t sld_halo_dimfar =
-    { 0, 200, 0, .01f, true, "rend-halo-dim-far" };
+    { 0, 200, 0, .01f, true, (void*) "rend-halo-dim-far" };
 uidata_slider_t sld_halo_dimnear =
-    { 0, 200, 0, .01f, true, "rend-halo-dim-near" };
+    { 0, 200, 0, .01f, true, (void*) "rend-halo-dim-near" };
 uidata_slider_t sld_halo_zmagdiv =
-    { 1, 200, 0, .01f, true, "rend-halo-zmag-div" };
+    { 1, 200, 0, .01f, true, (void*) "rend-halo-zmag-div" };
 uidata_slider_t sld_halo_radmin =
-    { 1, 80, 0, .01f, true, "rend-halo-radius-min" };
-uidata_slider_t sld_sprite_lights = { 0, 10, 0, 1, false, "rend-sprite-lights" };
+    { 1, 80, 0, .01f, true, (void*) "rend-halo-radius-min" };
+uidata_slider_t sld_sprite_lights = { 0, 10, 0, 1, false, (void*) "rend-sprite-lights" };
 
 uidata_edit_t ed_server_password =
-    { panel_sv_password, 100, "server-password" };
+    { panel_sv_password, 100, (void*) "server-password" };
 uidata_edit_t ed_res_x = { panel_res_x, 40 };
 uidata_edit_t ed_res_y = { panel_res_y, 40 };
 
@@ -714,7 +714,7 @@ void CP_DrawBorder(ui_object_t* ob)
 
 void CP_CvarButton(ui_object_t *ob)
 {
-    cvarbutton_t *cb = ob->data;
+    cvarbutton_t *cb = (cvarbutton_t *) ob->data;
     cvar_t     *var = Con_FindVariable(cb->cvarname);
     int         value;
 
@@ -745,8 +745,8 @@ void CP_CvarButton(ui_object_t *ob)
 
 void CP_CvarList(ui_object_t *ob)
 {
-    uidata_list_t *list = ob->data;
-    cvar_t* var = Con_FindVariable(list->data);
+    uidata_list_t *list = (uidata_list_t *) ob->data;
+    cvar_t* var = Con_FindVariable((char const *) list->data);
     int value = ((uidata_listitem_t *) list->items)[list->selection].data;
 
     if(list->selection < 0) return;
@@ -757,16 +757,16 @@ void CP_CvarList(ui_object_t *ob)
 
 void CP_CvarEdit(ui_object_t *ob)
 {
-    uidata_edit_t* ed = ob->data;
-    cvar_t* var = Con_FindVariable(ed->data);
+    uidata_edit_t* ed = (uidata_edit_t *) ob->data;
+    cvar_t* var = Con_FindVariable((char const *) ed->data);
     if(NULL == var) return;
     CVar_SetString2(var, ed->ptr, SVF_WRITE_OVERRIDE);
 }
 
 void CP_CvarSlider(ui_object_t *ob)
 {
-    uidata_slider_t *slid = ob->data;
-    cvar_t* var = Con_FindVariable(slid->data);
+    uidata_slider_t *slid = (uidata_slider_t *) ob->data;
+    cvar_t* var = Con_FindVariable((char const *) slid->data);
     float value = slid->value;
 
     if(NULL == var) return;
@@ -920,7 +920,7 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
 
 void CP_ResolutionList(ui_object_t* ob)
 {
-    uidata_list_t* list = ob->data;
+    uidata_list_t* list = (uidata_list_t *) ob->data;
     int seldata = ((uidata_listitem_t *) list->items)[list->selection].data;
 
     sprintf(panel_res_x, "%i", seldata & 0xffff);
@@ -1181,12 +1181,12 @@ void CP_InitCvarSliders(ui_object_t *ob)
     {
         if(ob->action == CP_CvarSlider)
         {
-            uidata_slider_t *slid = ob->data;
+            uidata_slider_t *slid = (uidata_slider_t *) ob->data;
 
             if(slid->floatmode)
-                slid->value = Con_GetFloat(slid->data);
+                slid->value = Con_GetFloat((char const *) slid->data);
             else
-                slid->value = Con_GetInteger(slid-> data);
+                slid->value = Con_GetInteger((char const *) slid->data);
         }
     }
 }
@@ -1195,7 +1195,7 @@ static void populateDisplayResolutions(void)
 {
     int i, k, p = 0;
 
-    lstit_resolution = Z_Recalloc(lstit_resolution,
+    lstit_resolution = (uidata_listitem_t *) Z_Recalloc(lstit_resolution,
                                   sizeof(*lstit_resolution) * DisplayMode_Count(),
                                   PU_APPSTATIC);
 
@@ -1286,7 +1286,7 @@ D_CMD(OpenPanel)
             if(ob->data)
             {
                 // This button has already been initialized.
-                cvb = ob->data;
+                cvb = (cvarbutton_t *) ob->data;
                 cvb->active = (Con_GetByte(cvb->cvarname) & (ob->data2? ob->data2 : ~0)) != 0;
                 strcpy(ob->text, cvb->active ? cvb->yes : cvb->no);
                 continue;
@@ -1305,15 +1305,15 @@ D_CMD(OpenPanel)
         }
         else if(ob->action == CP_CvarList)
         {
-            list = ob->data;
+            list = (uidata_list_t *) ob->data;
             // Choose the correct list item based on the value of the cvar.
-            list->selection = UI_ListFindItem(ob, Con_GetInteger(list->data));
+            list->selection = UI_ListFindItem(ob, Con_GetInteger((char const *) list->data));
         }
         else if(ob->action == CP_CvarEdit)
         {
-            uidata_edit_t *ed = ob->data;
+            uidata_edit_t *ed = (uidata_edit_t *) ob->data;
 
-            strncpy(ed->ptr, Con_GetString(ed->data), ed->maxlen);
+            strncpy(ed->ptr, Con_GetString((char const *) ed->data), ed->maxlen);
         }
     }
     CP_InitCvarSliders(ob_panel);
@@ -1323,7 +1323,7 @@ D_CMD(OpenPanel)
         boolean cFullscreen = Window_IsFullscreen(Window_Main());
 
         ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
-        list = ob->data;
+        list = (uidata_list_t *) ob->data;
         list->selection = UI_ListFindItem(ob,
             RES(Window_Width(theWindow), Window_Height(theWindow)));
         if(list->selection == -1)

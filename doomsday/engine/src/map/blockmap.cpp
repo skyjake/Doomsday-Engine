@@ -55,7 +55,7 @@ struct blockmap_s {
 
 Blockmap* Blockmap_New(coord_t const min[2], coord_t const max[2], uint cellWidth, uint cellHeight)
 {
-    Blockmap* bm = Z_Calloc(sizeof *bm, PU_MAPSTATIC, 0);
+    Blockmap* bm = (Blockmap *) Z_Calloc(sizeof *bm, PU_MAPSTATIC, 0);
     uint width, height;
     if(!bm) Con_Error("Blockmap::New: Failed on allocation of %lu bytes for new Blockmap.", (unsigned long) sizeof *bm);
 
@@ -210,7 +210,7 @@ static void linkObjectToRing(void* object, BlockmapCellData* data)
     if(!data->ringNodes)
     {
         // Create a new root node.
-        node = Z_Malloc(sizeof(*node), PU_MAP, 0);
+        node = (BlockmapRingNode *) Z_Malloc(sizeof(*node), PU_MAP, 0);
         node->next = NULL;
         node->prev = NULL;
         node->object = object;
@@ -230,7 +230,7 @@ static void linkObjectToRing(void* object, BlockmapCellData* data)
     }
 
     // Add a new node to the ring.
-    node->next = Z_Malloc(sizeof(*node), PU_MAP, 0);
+    node->next = (blockmap_ringnode_s *) Z_Malloc(sizeof(*node), PU_MAP, 0);
     node->next->next = NULL;
     node->next->prev = node;
     node->next->object = object;
@@ -380,7 +380,7 @@ int Blockmap_IterateCellObjects(Blockmap* bm, const_BlockmapCell cell,
     BlockmapCellData* data;
     assert(bm);
 
-    data = Gridmap_Cell(bm->gridmap, cell, false);
+    data = (BlockmapCellData *) Gridmap_Cell(bm->gridmap, cell, false);
     if(data)
     {
         return BlockmapCellData_IterateObjects(data, callback, context);

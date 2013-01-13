@@ -410,7 +410,7 @@ static __inline boolean objectInNamespace(fi_namespace_t* names, fi_object_t* ob
 static fi_object_t* addObjectToNamespace(fi_namespace_t* names, const char* name, fi_object_t* obj)
 {
     fi_namespace_record_t* rec;
-    names->vector = Z_Realloc(names->vector, sizeof(*names->vector) * ++names->num, PU_APPSTATIC);
+    names->vector = (fi_namespace_record_t *) Z_Realloc(names->vector, sizeof(*names->vector) * ++names->num, PU_APPSTATIC);
     rec = &names->vector[names->num-1];
 
     rec->objectId = obj->id;
@@ -435,7 +435,7 @@ static fi_object_t* removeObjectInNamespace(fi_namespace_t* names, fi_object_t* 
 
         if(names->num > 1)
         {
-            names->vector = Z_Realloc(names->vector, sizeof(*names->vector) * --names->num, PU_APPSTATIC);
+            names->vector = (fi_namespace_record_t *) Z_Realloc(names->vector, sizeof(*names->vector) * --names->num, PU_APPSTATIC);
         }
         else
         {
@@ -567,7 +567,7 @@ static fi_operand_t* prepareCommandOperands(finaleinterpreter_t* fi, const comma
     operandCount = countCommandOperands(cmd->operands);
     if(operandCount <= 0) return NULL;
 
-    operands = M_Malloc(sizeof(*operands) * operandCount);
+    operands = (fi_operand_t *) M_Malloc(sizeof(*operands) * operandCount);
     opRover = cmd->operands;
     for(op = operands; opRover && opRover[0]; opRover = nextOperand(opRover), op++)
     {
@@ -872,7 +872,7 @@ static fi_handler_t* findEventHandler(finaleinterpreter_t* fi, const ddevent_t* 
 static fi_handler_t* createEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, const char* marker)
 {
     fi_handler_t* h;
-    fi->_eventHandlers = Z_Realloc(fi->_eventHandlers, sizeof(*h) * ++fi->_numEventHandlers, PU_APPSTATIC);
+    fi->_eventHandlers = (fi_handler_t *) Z_Realloc(fi->_eventHandlers, sizeof(*h) * ++fi->_numEventHandlers, PU_APPSTATIC);
     h = &fi->_eventHandlers[fi->_numEventHandlers-1];
     memset(h, 0, sizeof(*h));
     memcpy(&h->ev, ev, sizeof(h->ev));
@@ -897,7 +897,7 @@ static void destroyEventHandler(finaleinterpreter_t* fi, fi_handler_t* h)
         // Resize storage?
         if(fi->_numEventHandlers > 1)
         {
-            fi->_eventHandlers = Z_Realloc(fi->_eventHandlers, sizeof(*fi->_eventHandlers) * --fi->_numEventHandlers, PU_APPSTATIC);
+            fi->_eventHandlers = (fi_handler_t *) Z_Realloc(fi->_eventHandlers, sizeof(*fi->_eventHandlers) * --fi->_numEventHandlers, PU_APPSTATIC);
         }
         else
         {
@@ -953,7 +953,7 @@ static void changePageBackground(fi_page_t* p, material_t* mat)
 
 finaleinterpreter_t* P_CreateFinaleInterpreter(void)
 {
-    return Z_Calloc(sizeof(finaleinterpreter_t), PU_APPSTATIC, 0);
+    return (finaleinterpreter_t *) Z_Calloc(sizeof(finaleinterpreter_t), PU_APPSTATIC, 0);
 }
 
 void P_DestroyFinaleInterpreter(finaleinterpreter_t* fi)
@@ -1029,7 +1029,7 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
     FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);
 
     // Take a copy of the script.
-    fi->_script = Z_Realloc(fi->_script, size + 1, PU_APPSTATIC);
+    fi->_script = (char *) Z_Realloc(fi->_script, size + 1, PU_APPSTATIC);
     memcpy(fi->_script, script, size);
     fi->_script[size] = '\0';
     fi->_scriptBegin = fi->_script;

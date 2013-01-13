@@ -503,7 +503,7 @@ void Con_TransitionRegister(void)
 void Con_TransitionConfigure(void)
 {
     transition.tics = rTransitionTics;
-    transition.style = rTransition;
+    transition.style = (transitionstyle_t) rTransition;
     if(transition.style == TS_DOOM || transition.style == TS_DOOMSMOOTH)
     {
         seedDoomWipeSine();

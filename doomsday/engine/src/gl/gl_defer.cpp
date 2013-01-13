@@ -155,7 +155,7 @@ static deferredtask_t* nextTask(void)
 
 LIBDENG_GL_DEFER1(e, GLenum e)
 {
-    apifunc_t* api = malloc(sizeof(apifunc_t));
+    apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_e = ptr;
     api->param.e = e;
 
@@ -164,7 +164,7 @@ LIBDENG_GL_DEFER1(e, GLenum e)
 
 LIBDENG_GL_DEFER2(i, GLenum e, GLint i)
 {
-    apifunc_t* api = malloc(sizeof(apifunc_t));
+    apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_ei = ptr;
     api->param.ei.e = e;
     api->param.ei.i = i;
@@ -173,7 +173,7 @@ LIBDENG_GL_DEFER2(i, GLenum e, GLint i)
 
 LIBDENG_GL_DEFER2(f, GLenum e, GLfloat f)
 {
-    apifunc_t* api = malloc(sizeof(apifunc_t));
+    apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_ef = ptr;
     api->param.ef.e = e;
     api->param.ef.f = f;
@@ -182,7 +182,7 @@ LIBDENG_GL_DEFER2(f, GLenum e, GLfloat f)
 
 LIBDENG_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
 {
-    apifunc_t* api = malloc(sizeof(apifunc_t));
+    apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_efv4 = ptr;
     api->param.efv4.e = e;
     memcpy(api->param.efv4.fv4, floatArrayWithFourValues, sizeof(GLfloat) * 4);
@@ -191,10 +191,10 @@ LIBDENG_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
 
 LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
 {
-    apifunc_t* api = malloc(sizeof(apifunc_t));
+    apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_uintArray = ptr;
     api->param.uintArray.count = s;
-    api->param.uintArray.values = M_MemDup(v, sizeof(GLuint) * s);
+    api->param.uintArray.values = (GLuint *) M_MemDup(v, sizeof(GLuint) * s);
     enqueueTask(DTT_FUNC_PTR_UINT_ARRAY, api);
 }
 
@@ -205,7 +205,7 @@ static void processTask(deferredtask_t* task)
     switch(task->type)
     {
     case DTT_UPLOAD_TEXTURECONTENT:
-        GL_UploadTextureContent(task->data);
+        GL_UploadTextureContent((struct texturecontent_s *) task->data);
         break;
 
     case DTT_SET_VSYNC:
@@ -248,7 +248,7 @@ static void destroyTaskData(deferredtask_t* d)
     switch(d->type)
     {
     case DTT_UPLOAD_TEXTURECONTENT:
-        GL_DestroyTextureContent(d->data);
+        GL_DestroyTextureContent((texturecontent_s *) d->data);
         break;
 
     case DTT_SET_VSYNC:

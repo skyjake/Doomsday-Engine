@@ -1,6 +1,5 @@
-/**
- * @file s_wav.c
- * WAV loader. @ingroup audio
+/** @file s_wav.cpp WAV loader.
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -25,6 +24,7 @@
 #include "de_system.h"
 #include "de_filesys.h"
 
+#include "audio/s_wav.h"
 #include "dd_main.h"
 #include "m_misc.h"
 
@@ -162,7 +162,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
             // Read data chunk.
             *samples = riff_chunk.len / wave_format.wBlockAlign;
             // Allocate the sample buffer.
-            sampledata = Z_Malloc(riff_chunk.len, PU_APPSTATIC, 0);
+            sampledata = (byte *) Z_Malloc(riff_chunk.len, PU_APPSTATIC, 0);
             memcpy(sampledata, data, riff_chunk.len);
 #ifdef __BIG_ENDIAN__
             // Correct endianness.
