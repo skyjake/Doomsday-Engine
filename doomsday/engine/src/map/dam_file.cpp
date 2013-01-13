@@ -403,7 +403,7 @@ static void readSide(GameMap* map, uint idx)
 
 static void archiveSides(GameMap *map, boolean write)
 {
-    uint                i;
+    int                i;
 
     if(write)
         beginSegment(DAMSEG_SIDES);
@@ -412,14 +412,14 @@ static void archiveSides(GameMap *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numSideDefs);
-        for(i = 0; i < map->numSideDefs; ++i)
+        writeLong(map->sideDefs.size());
+        for(i = 0; i < map->sideDefs.size(); ++i)
             writeSide(map, i);
     }
     else
     {
-        map->numSideDefs = readLong();
-        for(i = 0; i < map->numSideDefs; ++i)
+        map->sideDefs.clearAndResize(readLong());
+        for(i = 0; i < map->sideDefs.size(); ++i)
             readSide(map, i);
     }
 
@@ -1053,7 +1053,7 @@ static void archiveMap(GameMap *map, boolean write)
         {
             gx.SetupForMapData(DMU_VERTEX, map->vertexCount());
             gx.SetupForMapData(DMU_LINEDEF, map->numLineDefs);
-            gx.SetupForMapData(DMU_SIDEDEF, map->numSideDefs);
+            gx.SetupForMapData(DMU_SIDEDEF, map->sideDefCount());
             gx.SetupForMapData(DMU_SECTOR, map->sectorCount());
         }
     }

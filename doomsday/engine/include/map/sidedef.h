@@ -23,6 +23,11 @@
 #ifndef LIBDENG_MAP_SIDEDEF
 #define LIBDENG_MAP_SIDEDEF
 
+#ifndef __cplusplus
+#  error "map/sidedef.h requires C++"
+#endif
+
+#include "MapObject"
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
 #include "map/surface.h"
@@ -99,8 +104,11 @@ typedef struct edgespan_s {
     float           shift;
 } edgespan_t;
 
-typedef struct sidedef_s {
-    runtime_mapdata_header_t header;
+struct sidedef_s; // opaque type
+
+class SideDef : public de::MapObject
+{
+public:
     Surface             sections[3];
     struct linedef_s*   line;
     short               flags;
@@ -110,11 +118,10 @@ typedef struct sidedef_s {
     shadowcorner_t      bottomCorners[2];
     shadowcorner_t      sideCorners[2];
     edgespan_t          spans[2];      // [left, right]
-} SideDef;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+public:
+    SideDef();
+};
 
 /**
  * Update the SideDef's map space surface base origins according to the points
@@ -151,9 +158,5 @@ int SideDef_GetProperty(const SideDef* sideDef, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int SideDef_SetProperty(SideDef* sideDef, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_SIDEDEF

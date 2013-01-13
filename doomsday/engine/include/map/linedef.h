@@ -77,9 +77,12 @@
 #define SSF_TOP             0x4
 ///@}
 
+class Sector;
+class SideDef;
+
 typedef struct lineside_s {
     Sector* sector; /// Sector on this side.
-    struct sidedef_s* sideDef; /// SideDef on this side.
+    SideDef* sideDef; /// SideDef on this side.
     struct hedge_s* hedgeLeft;  /// Left-most HEdge on this side.
     struct hedge_s* hedgeRight; /// Right-most HEdge on this side.
     unsigned short shadowVisFrame; /// Framecount of last time shadows were drawn on this side.

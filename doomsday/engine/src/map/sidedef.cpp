@@ -24,6 +24,19 @@
 #include "de_console.h"
 #include "de_play.h"
 
+SideDef::SideDef() : de::MapObject(DMU_SIDEDEF)
+{
+    memset(sections, 0, sizeof(sections));
+    line = 0;
+    flags = 0;
+    memset(&buildData, 0, sizeof(buildData));
+    fakeRadioUpdateCount = 0;
+    memset(topCorners, 0, sizeof(topCorners));
+    memset(bottomCorners, 0, sizeof(bottomCorners));
+    memset(sideCorners, 0, sizeof(sideCorners));
+    memset(spans, 0, sizeof(spans));
+}
+
 void SideDef_UpdateBaseOrigins(SideDef* side)
 {
     assert(side);

@@ -94,8 +94,10 @@ public:
     uint numLineDefs;
     LineDef* lineDefs;
 
-    uint numSideDefs;
-    SideDef* sideDefs;
+    de::MapObjectList<SideDef> sideDefs;
+
+    //uint numSideDefs;
+    //SideDef* sideDefs;
 
     uint numPolyObjs;
     Polyobj** polyObjs;
@@ -148,6 +150,7 @@ public:
 
     uint sectorCount() const { return sectors.size(); }
 
+    uint sideDefCount() const { return sideDefs.size(); }
 };
 
 /**

@@ -46,8 +46,9 @@ public:
 
     uint numLineDefs;
     LineDef** lineDefs;
-    uint numSideDefs;
-    SideDef** sideDefs;
+
+    typedef std::vector<SideDef *> SideDefs;
+    SideDefs sideDefs;
 
     typedef std::vector<Sector *> Sectors;
     Sectors sectors;

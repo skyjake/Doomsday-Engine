@@ -34,18 +34,21 @@
 
 using namespace de;
 
+/// @todo must be a C++ class -jk
 typedef struct dummysidedef_s {
     SideDef sideDef; /// Side data.
     void *extraData; /// Pointer to user data.
     boolean inUse; /// true, if the dummy is being used.
 } dummysidedef_t;
 
+/// @todo must be a C++ class -jk
 typedef struct dummyline_s {
     LineDef line; /// Line data.
     void *extraData; /// Pointer to user data.
     boolean inUse; /// true, if the dummy is being used.
 } dummyline_t;
 
+/// @todo must be a C++ class -jk
 typedef struct dummysector_s {
     Sector sector; /// Sector data.
     void *extraData; /// Pointer to user data.
@@ -239,7 +242,7 @@ void *P_AllocDummy(int type, void *extraData)
             {
                 dummySideDefs[i].inUse = true;
                 dummySideDefs[i].extraData = extraData;
-                dummySideDefs[i].sideDef.header.type = DMU_SIDEDEF;
+                //dummySideDefs[i].sideDef.header.type = DMU_SIDEDEF;
                 dummySideDefs[i].sideDef.line = 0;
                 return &dummySideDefs[i];
             }

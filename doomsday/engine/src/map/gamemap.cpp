@@ -47,8 +47,6 @@ GameMap::GameMap()
     memset(&clActivePolyobjs, 0, sizeof(clActivePolyobjs));
     numLineDefs = 0;
     lineDefs = 0;
-    numSideDefs = 0;
-    sideDefs = 0;
     numPolyObjs = 0;
     polyObjs = 0;
     bsp = 0;
@@ -195,14 +193,14 @@ LineDef* GameMap_LineDef(GameMap* map, uint idx)
 int GameMap_SideDefIndex(GameMap* map, SideDef* side)
 {
     assert(map);
-    if(!side || !(side >= map->sideDefs && side <= &map->sideDefs[map->numSideDefs])) return -1;
-    return side - map->sideDefs;
+    if(!side) return -1;
+    return map->sideDefs.indexOf(side); // Note: Bad performance!
 }
 
 SideDef* GameMap_SideDef(GameMap* map, uint idx)
 {
     assert(map);
-    if(idx >= map->numSideDefs) return NULL;
+    if(idx >= (uint)map->sideDefs.size()) return NULL;
     return &map->sideDefs[idx];
 }
 
@@ -210,7 +208,7 @@ int GameMap_SectorIndex(GameMap *map, Sector *sec)
 {
     assert(map);
     if(!sec) return -1;
-    return map->sectors.indexOf(sec);
+    return map->sectors.indexOf(sec); // Note: Bad performance!
 }
 
 Sector* GameMap_Sector(GameMap* map, uint idx)
@@ -254,7 +252,7 @@ Surface* GameMap_SurfaceByBase(GameMap* map, const void* ddMobjBase)
     }
 
     // Perhaps a sidedef surface?
-    for(i = 0; i < map->numSideDefs; ++i)
+    for(i = 0; i < map->sideDefCount(); ++i)
     {
         SideDef* side = &map->sideDefs[i];
         if(ddMobjBase == &side->SW_middlesurface.base)
@@ -331,7 +329,7 @@ uint GameMap_LineDefCount(GameMap* map)
 uint GameMap_SideDefCount(GameMap* map)
 {
     assert(map);
-    return map->numSideDefs;
+    return map->sideDefCount();
 }
 
 uint GameMap_SectorCount(GameMap* map)
@@ -1170,9 +1168,9 @@ int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), voi
 {
     uint i;
     assert(map);
-    for(i = 0; i < map->numSideDefs; ++i)
+    for(i = 0; i < map->sideDefCount(); ++i)
     {
-        int result = callback(map->sideDefs + i, parameters);
+        int result = callback(&map->sideDefs[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.

@@ -96,14 +96,11 @@ static LineDef* createLine(void)
 
 static SideDef* createSide(void)
 {
-    SideDef* side = (SideDef*) M_Calloc(sizeof(*side));
-    side->header.type = DMU_SIDEDEF;
+    SideDef* side = new SideDef;
 
-    e_map->sideDefs = (SideDef**) M_Realloc(e_map->sideDefs, sizeof(side) * (++e_map->numSideDefs + 1));
-    e_map->sideDefs[e_map->numSideDefs-1] = side;
-    e_map->sideDefs[e_map->numSideDefs] = NULL;
+    e_map->sideDefs.push_back(side);
 
-    side->buildData.index = e_map->numSideDefs; // 1-based index, 0 = NIL.
+    side->buildData.index = e_map->sideDefs.size(); // 1-based index, 0 = NIL.
     side->SW_bottomsurface.owner = (void*) side;
     side->SW_middlesurface.owner = (void*) side;
     side->SW_topsurface.owner = (void*) side;
@@ -168,19 +165,11 @@ static void destroyEditableLineDefs(EditMap* map)
 
 static void destroyEditableSideDefs(EditMap* map)
 {
-    if(map->sideDefs)
+    DENG2_FOR_EACH(EditMap::SideDefs, s, map->sideDefs)
     {
-        uint i;
-        for(i = 0; i < map->numSideDefs; ++i)
-        {
-            SideDef* side = map->sideDefs[i];
-            M_Free(side);
-        }
-
-        M_Free(map->sideDefs);
+        delete *s;
     }
-    map->sideDefs = NULL;
-    map->numSideDefs = 0;
+    map->sideDefs.clear();
 }
 
 static void destroyEditableSectors(EditMap* map)
@@ -730,7 +719,7 @@ static void finishSideDefs(GameMap* map)
     DENG_ASSERT(map);
 
     // Calculate the tangent space surface vectors.
-    for(uint i = 0; i < map->numSideDefs; ++i)
+    for(uint i = 0; i < map->sideDefCount(); ++i)
     {
         SideDef* side = &map->sideDefs[i];
         SideDef_UpdateSurfaceTangents(side);
@@ -1094,15 +1083,14 @@ static void hardenLinedefs(GameMap* dest, EditMap* src)
 
 static void hardenSidedefs(GameMap* dest, EditMap* src)
 {
-    dest->numSideDefs = src->numSideDefs;
-    dest->sideDefs = (SideDef*) Z_Malloc(dest->numSideDefs * sizeof(SideDef), PU_MAPSTATIC, 0);
+    dest->sideDefs.clearAndResize(src->sideDefs.size());
 
-    for(uint i = 0; i < dest->numSideDefs; ++i)
+    for(uint i = 0; i < dest->sideDefCount(); ++i)
     {
         SideDef* destS = &dest->sideDefs[i];
         SideDef* srcS = src->sideDefs[i];
 
-        memcpy(destS, srcS, sizeof(*destS));
+        *destS = *srcS;
         destS->SW_bottomsurface.owner = destS;
         destS->SW_middlesurface.owner = destS;
         destS->SW_topsurface.owner = destS;
@@ -1655,9 +1643,9 @@ boolean MPE_End(void)
     // Call the game's setup routines.
     if(gx.SetupForMapData)
     {
-        gx.SetupForMapData(DMU_VERTEX, gamemap->vertexes.size());
+        gx.SetupForMapData(DMU_VERTEX, gamemap->vertexCount());
         gx.SetupForMapData(DMU_LINEDEF, gamemap->numLineDefs);
-        gx.SetupForMapData(DMU_SIDEDEF, gamemap->numSideDefs);
+        gx.SetupForMapData(DMU_SIDEDEF, gamemap->sideDefCount());
         gx.SetupForMapData(DMU_SECTOR, gamemap->sectorCount());
     }
 
@@ -1899,8 +1887,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     if(!editMapInited) return 0;
     if(frontSector > e_map->sectorCount()) return 0;
     if(backSector > e_map->sectorCount()) return 0;
-    if(frontSide > e_map->numSideDefs) return 0;
-    if(backSide > e_map->numSideDefs) return 0;
+    if(frontSide > e_map->sideDefs.size()) return 0;
+    if(backSide > e_map->sideDefs.size()) return 0;
     if(v1 == 0 || v1 > e_map->vertexCount()) return 0;
     if(v2 == 0 || v2 > e_map->vertexCount()) return 0;
     if(v1 == v2) return 0;
@@ -2094,8 +2082,6 @@ EditMap::EditMap()
 {
     numLineDefs = 0;
     lineDefs = 0;
-    numSideDefs = 0;
-    sideDefs = 0;
     numPolyObjs = 0;
     polyObjs = 0;
 
