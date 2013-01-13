@@ -333,19 +333,20 @@ void Surface_UpdateBaseOrigin(Surface *suf)
     }
 }
 
-Surface::Decoration *Surface_NewDecoration(Surface *suf)
+#ifdef __CLIENT__
+Surface::DecorSource *Surface_NewDecoration(Surface *suf)
 {
     DENG_ASSERT(suf);
 
-    Surface::Decoration *decorations = (Surface::Decoration *) Z_Malloc(sizeof(*decorations) * (++suf->numDecorations), PU_MAP, 0);
+    Surface::DecorSource *decorations = (Surface::DecorSource *) Z_Malloc(sizeof(*decorations) * (++suf->numDecorations), PU_MAP, 0);
 
     if(suf->numDecorations > 1)
     {
         // Copy the existing decorations.
         for(uint i = 0; i < suf->numDecorations - 1; ++i)
         {
-            Surface::Decoration *d = &decorations[i];
-            Surface::Decoration *s = &((Surface::Decoration *)suf->decorations)[i];
+            Surface::DecorSource *d = &decorations[i];
+            Surface::DecorSource *s = &((Surface::DecorSource *)suf->decorations)[i];
 
             std::memcpy(d, s, sizeof(*d));
         }
@@ -354,8 +355,8 @@ Surface::Decoration *Surface_NewDecoration(Surface *suf)
     }
 
     // Add the new decoration.
-    Surface::Decoration *d = &decorations[suf->numDecorations - 1];
-    suf->decorations = (surfacedecor_s *)decorations;
+    Surface::DecorSource *d = &decorations[suf->numDecorations - 1];
+    suf->decorations = (surfacedecorsource_s *)decorations;
 
     return d;
 }
@@ -370,6 +371,7 @@ void Surface_ClearDecorations(Surface *suf)
     }
     suf->numDecorations = 0;
 }
+#endif // __CLIENT__
 
 int Surface_SetProperty(Surface *suf, setargs_t const *args)
 {

@@ -26,6 +26,10 @@
 #include "map/p_dmu.h"
 #include "map/bspleaf.h"
 
+#ifdef __cplusplus
+#include "resource/materialsnapshot.h"
+#endif
+
 // Internal surface flags:
 #define SUIF_FIX_MISSING_MATERIAL   0x0001 ///< Current material is a fix replacement
                                            /// (not sent to clients, returned via DMU etc).
@@ -37,12 +41,15 @@
 
 typedef struct surface_s {
 #ifdef __cplusplus
-    struct Decoration
+#ifdef __CLIENT__
+    struct DecorSource
     {
         coord_t origin[3]; // World coordinates of the decoration.
         BspLeaf *bspLeaf;
-        de::Material::Decoration const *def;
+        /// @todo $revise-texture-animation reference by index.
+        de::MaterialSnapshot::Decoration const *decor;
     };
+#endif // __CLIENT__
 #endif // __cplusplus
 
     runtime_mapdata_header_t header;
@@ -62,10 +69,10 @@ typedef struct surface_s {
     float               rgba[4];       // Surface color tint
     short               inFlags;       // SUIF_* flags
     uint numDecorations;
-    struct surfacedecor_s *decorations;
+    struct surfacedecorsource_s *decorations;
 } Surface;
 
-struct surfacedecor_s;
+struct surfacedecorsource_s;
 
 #ifdef __cplusplus
 extern "C" {
@@ -207,9 +214,21 @@ int Surface_GetProperty(const Surface* surface, setargs_t* args);
 int Surface_SetProperty(Surface* surface, const setargs_t* args);
 
 #ifdef __cplusplus
-Surface::Decoration *Surface_NewDecoration(Surface *suf);
+#ifdef __CLIENT__
+/**
+ * Create a new projected (light) decoration source for the surface.
+ *
+ * @param surface  Surface instance.
+ * @return  Newly created decoration source.
+ */
+Surface::DecorSource *Surface_NewDecoration(Surface *surface);
 
-void Surface_ClearDecorations(Surface *suf);
+/**
+ * Clear all the projected (light) decoration sources for the surface.
+ * @param surface  Surface instance.
+ */
+void Surface_ClearDecorations(Surface *surface);
+#endif __CLIENT__
 
 } // extern "C"
 #endif
