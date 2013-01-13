@@ -110,16 +110,13 @@ static SideDef* createSide(void)
     return side;
 }
 
-static sector_s* createSector(void)
+static Sector* createSector(void)
 {
-    sector_s* sec = (sector_s*) M_Calloc(sizeof(*sec));
-    //sec->header.type = DMU_SECTOR;
+    Sector* sec = new Sector;
 
-    e_map->sectors = (sector_s**) M_Realloc(e_map->sectors, sizeof(sec) * (++e_map->numSectors + 1));
-    e_map->sectors[e_map->numSectors-1] = sec;
-    e_map->sectors[e_map->numSectors] = NULL;
+    e_map->sectors.push_back(sec);
 
-    sec->buildData.index = e_map->numSectors; // 1-based index, 0 = NIL.
+    sec->buildData.index = e_map->sectors.size(); // 1-based index, 0 = NIL.
     return sec;
 }
 
@@ -188,6 +185,7 @@ static void destroyEditableSideDefs(EditMap* map)
 
 static void destroyEditableSectors(EditMap* map)
 {
+    /*
     if(map->sectors)
     {
         uint i;
@@ -211,7 +209,13 @@ static void destroyEditableSectors(EditMap* map)
         M_Free(map->sectors);
     }
     map->sectors = NULL;
-    map->numSectors = 0;
+    map->numSectors = 0;*/
+
+    DENG2_FOR_EACH(EditMap::Sectors, sec, map->sectors)
+    {
+        delete *sec;
+    }
+    map->sectors.clear();
 }
 
 static void destroyEditableVertexes(EditMap* map)
@@ -1116,14 +1120,14 @@ static void hardenSectors(GameMap* dest, EditMap* src)
     //dest->numSectors = src->numSectors;
     //dest->sectors = (Sector*) Z_Malloc(dest->numSectors * sizeof(Sector), PU_MAPSTATIC, 0);
 
-    dest->sectors.clearAndResize(src->numSectors);
+    dest->sectors.clearAndResize(src->sectorCount());
 
-    for(uint i = 0; i < src->numSectors; ++i)
+    for(uint i = 0; i < src->sectorCount(); ++i)
     {
         Sector* destS = &dest->sectors[i];
-        sector_s* srcS = src->sectors[i];
+        Sector* srcS = src->sectors[i];
 
-        memcpy(static_cast<sector_s *>(destS), srcS, sizeof(sector_s));
+        *destS = *srcS;
         destS->planeCount = 0;
         destS->planes = NULL;
     }
@@ -1134,7 +1138,7 @@ static void hardenPlanes(GameMap* dest, EditMap* src)
     for(uint i = 0; i < dest->sectorCount(); ++i)
     {
         Sector* destS = &dest->sectors[i];
-        sector_s* srcS = src->sectors[i];
+        Sector* srcS = src->sectors[i];
 
         for(uint j = 0; j < srcS->planeCount; ++j)
         {
@@ -1448,7 +1452,7 @@ static void buildReject(gamemap_t* map)
     byte* matrix;
 
     secGroups = M_Malloc(sizeof(int) * numSectors);
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < sectorCount(); ++i)
     {
         sector_t  *sec = LookupSector(i);
         secGroups[i] = group++;
@@ -1893,8 +1897,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     float length;
 
     if(!editMapInited) return 0;
-    if(frontSector > e_map->numSectors) return 0;
-    if(backSector > e_map->numSectors) return 0;
+    if(frontSector > e_map->sectorCount()) return 0;
+    if(backSector > e_map->sectorCount()) return 0;
     if(frontSide > e_map->numSideDefs) return 0;
     if(backSide > e_map->numSideDefs) return 0;
     if(v1 == 0 || v1 > e_map->vertexCount()) return 0;
@@ -1969,9 +1973,9 @@ uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri,
     float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ)
 {
     if(!editMapInited) return 0;
-    if(sector == 0 || sector > e_map->numSectors) return 0;
+    if(sector == 0 || sector > e_map->sectorCount()) return 0;
 
-    sector_s* s = e_map->sectors[sector - 1];
+    Sector* s = e_map->sectors[sector - 1];
 
     Plane* pln = (Plane*) M_Calloc(sizeof(Plane));
     pln->surface.owner = (void*) pln;
@@ -2008,7 +2012,7 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 {
     if(!editMapInited) return 0;
 
-    sector_s* s = createSector();
+    Sector* s = createSector();
 
     s->rgb[CR] = MINMAX_OF(0, red, 1);
     s->rgb[CG] = MINMAX_OF(0, green, 1);
@@ -2092,10 +2096,9 @@ EditMap::EditMap()
     lineDefs = 0;
     numSideDefs = 0;
     sideDefs = 0;
-    numSectors = 0;
-    sectors = 0;
     numPolyObjs = 0;
     polyObjs = 0;
+
     entityDatabase = 0;
 }
 

@@ -88,7 +88,11 @@ typedef struct msector_s {
     int	refCount;
 } msector_t;
 
-struct sector_s {
+struct sector_s; // opaque type
+
+class Sector : public de::MapObject
+{
+public:
     int                 frameFlags;
     int                 validCount;    // if == validCount, already checked.
     AABoxd              aaBox;         // Bounding box for the sector.
@@ -112,18 +116,11 @@ struct sector_s {
     unsigned short*     blocks;        // Light grid block indices.
     float               reverb[NUM_REVERB_DATA];
     msector_t           buildData;
-};
 
-class Sector : public de::MapObject, public sector_s
-{
 public:
-    Sector() : de::MapObject(DMU_SECTOR)
-    {
-        memset(static_cast<sector_s *>(this), 0, sizeof(sector_s));
-    }
+    Sector();    
+    ~Sector();
 };
-
-extern "C" {
 
 /**
  * Update the Sector's map space axis-aligned bounding box to encompass the points
@@ -150,7 +147,7 @@ void Sector_UpdateArea(Sector* sector);
  *
  * @param sector  Sector instance.
  */
-void Sector_UpdateBaseOrigin(sector_s *sector);
+void Sector_UpdateBaseOrigin(Sector *sector);
 
 /**
  * Get a property value, selected by DMU_* name.
@@ -169,9 +166,5 @@ int Sector_GetProperty(const Sector* sector, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Sector_SetProperty(Sector* sector, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_SECTOR

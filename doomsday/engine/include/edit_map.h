@@ -41,14 +41,17 @@
 class EditMap
 {
 public:
-    typedef std::vector<Vertex*> Vertices;
+    typedef std::vector<Vertex *> Vertices;
     Vertices vertexes; // really needs to be std::vector? (not a MapObjectList?)
+
     uint numLineDefs;
     LineDef** lineDefs;
     uint numSideDefs;
     SideDef** sideDefs;
-    uint numSectors;
-    sector_s** sectors;
+
+    typedef std::vector<Sector *> Sectors;
+    Sectors sectors;
+
     uint numPolyObjs;
     Polyobj** polyObjs;
 
@@ -63,6 +66,7 @@ public:
     Vertex const **verticesAsArray() const { return const_cast<Vertex const **>(vertexes.data()); }
 
     uint vertexCount() const { return vertexes.size(); }
+    uint sectorCount() const { return sectors.size(); }
 };
 
 // Non-public (temporary)

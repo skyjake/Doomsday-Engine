@@ -57,7 +57,7 @@ END_PROF_TIMERS()
 // TYPES -------------------------------------------------------------------
 
 typedef struct gridblock_s {
-    struct sector_s *sector;
+    Sector *sector;
 
     byte        flags;
 
@@ -175,8 +175,8 @@ void LG_InitForMap(void)
     coord_t     off[2];
     lgsamplepoint_t *samplePoints = 0, sample;
 
-    sector_s **ssamples;
-    sector_s **blkSampleSectors;
+    Sector **ssamples;
+    Sector **blkSampleSectors;
     GameMap *map = theMap;
 
     if(!lgEnabled || !map)
@@ -228,7 +228,7 @@ void LG_InitForMap(void)
      */
 
     // Allocate memory for all the sample results.
-    ssamples = (sector_s **) M_Malloc(sizeof(sector_s*) *
+    ssamples = (Sector **) M_Malloc(sizeof(Sector*) *
                                     ((lgBlockWidth * lgBlockHeight) * numSamples));
 
     // Determine the size^2 of the samplePoint array plus its center.
@@ -385,7 +385,7 @@ void LG_InitForMap(void)
                 (unsigned long) (sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight));
 
     // Allocate memory used for the collection of the sample results.
-    blkSampleSectors = (sector_s **) M_Malloc(sizeof(sector_s*) * numSamples);
+    blkSampleSectors = (Sector **) M_Malloc(sizeof(Sector*) * numSamples);
     if(numSamples > 1)
         sampleResults = (int *) M_Calloc(sizeof(int) * numSamples);
 
@@ -744,7 +744,7 @@ void LG_Update(void)
 
     gridblock_t        *block, *lastBlock, *other;
     int                 x, y, a, b;
-    sector_s             *sector;
+    Sector             *sector;
     const float        *color;
     int                 bias;
     int                 height;

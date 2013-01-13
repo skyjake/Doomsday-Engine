@@ -213,12 +213,6 @@ int GameMap_SectorIndex(GameMap *map, Sector *sec)
     return map->sectors.indexOf(sec);
 }
 
-int GameMap_SectorIndex(GameMap *map, sector_s *sec)
-{
-    assert(map);
-    return GameMap_SectorIndex(map, static_cast<Sector *>(sec));
-}
-
 Sector* GameMap_Sector(GameMap* map, uint idx)
 {
     assert(map);
@@ -866,7 +860,7 @@ void GameMap_LinkBspLeaf(GameMap* map, BspLeaf* bspLeaf)
 
 typedef struct subseciterparams_s {
     const AABoxd* box;
-    sector_s* sector;
+    Sector* sector;
     int localValidCount;
     int (*func) (BspLeaf*, void*);
     void* param;
@@ -906,7 +900,7 @@ static int blockmapCellBspLeafsIterator(void* object, void* context)
 }
 
 static int GameMap_IterateCellBspLeafs(GameMap* map, const_BlockmapCell cell,
-    sector_s* sector, const AABoxd* box, int localValidCount,
+    Sector* sector, const AABoxd* box, int localValidCount,
     int (*callback) (BspLeaf*, void*), void* context)
 {
     bmapbspleafiterateparams_t args;
@@ -1184,7 +1178,7 @@ int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), voi
     return false; // Continue iteration.
 }
 
-int GameMap_SectorIterator(GameMap* map, int (*callback) (sector_s*, void*), void* parameters)
+int GameMap_SectorIterator(GameMap* map, int (*callback) (Sector*, void*), void* parameters)
 {
     uint i;
     assert(map);

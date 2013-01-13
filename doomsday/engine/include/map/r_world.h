@@ -61,7 +61,7 @@ extern boolean firstFrameAfterLoad;
 /**
  * Sector light color may be affected by the sky light color.
  */
-const float* R_GetSectorLightColor(const sector_s *sector);
+const float* R_GetSectorLightColor(const Sector *sector);
 
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
 
@@ -78,7 +78,7 @@ float R_ExtraLightDelta(void);
  */
 float R_CheckSectorLight(float lightlevel, float min, float max);
 
-boolean R_SectorContainsSkySurfaces(const sector_s* sec);
+boolean R_SectorContainsSkySurfaces(const Sector* sec);
 
 void R_UpdatePlanes(void);
 void R_ClearSectorFlags(void);
@@ -109,10 +109,10 @@ void R_OrderVertices(LineDef const *line, Sector const *sector, Vertex *verts[2]
  * @return  @c true iff the determined wall section height is @c >0
  */
 boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
-    sector_s* frontSec, sector_s* backSec, SideDef* frontDef, SideDef* backDef,
+    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
     coord_t* low, coord_t* hi, float matOffset[2]);
 boolean R_FindBottomTop(SideDefSection section, int lineFlags,
-    sector_s* frontSec, sector_s* backSec, SideDef* frontDef, SideDef* backDef,
+    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
     coord_t* low, coord_t* hi) /* matOffset = 0 */;
 
 /**
@@ -127,11 +127,11 @@ boolean R_FindBottomTop(SideDefSection section, int lineFlags,
  *
  * @return Height of the open range.
  */
-coord_t R_OpenRange(sector_s const* frontSec, sector_s const* backSec, coord_t* retBottom, coord_t* retTop);
+coord_t R_OpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
 
 /// Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
 /// height coordinates rather than the "sharp" coordinates.
-coord_t R_VisOpenRange(sector_s const* frontSec, sector_s const* backSec, coord_t* retBottom, coord_t* retTop);
+coord_t R_VisOpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
 
 /**
  * @param lineFlags     @ref ldefFlags.
@@ -144,7 +144,7 @@ coord_t R_VisOpenRange(sector_s const* frontSec, sector_s const* backSec, coord_
  * @return  @c true iff SideDef @a frontDef has a "middle" Material which completely
  *     covers the open range defined by sectors @a frontSec and @a backSec.
  */
-boolean R_MiddleMaterialCoversOpening(int lineFlags, sector_s* frontSec, sector_s* backSec,
+boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector* frontSec, Sector* backSec,
     SideDef* frontDef, SideDef* backDef, boolean ignoreOpacity);
 
 /**
@@ -171,7 +171,7 @@ boolean         R_RemoveTrackedPlane(planelist_t* plist, const Plane* pln);
 void            R_UpdateSurfaceScroll(void);
 void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
 
-boolean R_UpdateSector(struct sector_s *sec, boolean forceUpdate);
+boolean R_UpdateSector(Sector *sec, boolean forceUpdate);
 boolean R_UpdateLinedef(struct linedef_s *line, boolean forceUpdate);
 boolean R_UpdateSidedef(struct sidedef_s *side, boolean forceUpdate);
 boolean R_UpdatePlane(struct plane_s *pln, boolean forceUpdate);
@@ -215,10 +215,10 @@ lineowner_t* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
  * A neighbour is a line that shares a vertex with 'line', and faces the
  * specified sector.
  */
-LineDef* R_FindLineNeighbor(const sector_s* sector, const LineDef* line,
+LineDef* R_FindLineNeighbor(const Sector* sector, const LineDef* line,
     const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
 
-LineDef* R_FindSolidLineNeighbor(const sector_s *sector, const LineDef* line,
+LineDef* R_FindSolidLineNeighbor(const Sector *sector, const LineDef* line,
     const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
 
 /**

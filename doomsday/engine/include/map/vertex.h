@@ -65,6 +65,9 @@ typedef struct mvertex_s {
 
 struct vertex_s; // opaque type
 
+/**
+ * Vertex in the map geometry.
+ */
 class Vertex : public de::MapObject
 {
 public:

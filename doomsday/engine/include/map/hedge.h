@@ -70,7 +70,7 @@ typedef struct hedge_s {
     struct bspleaf_s*   bspLeaf;
 
     struct linedef_s*   lineDef;
-    struct sector_s*    sector;
+    Sector *sector;
     angle_t             angle;
     byte                side; /// On which side of the LineDef (0=front, 1=back)?
     coord_t             length; /// Accurate length of the segment (v1 -> v2).
@@ -119,7 +119,7 @@ coord_t HEdge_PointOnSide(const HEdge* hedge, coord_t const point[2]);
 coord_t HEdge_PointXYOnSide(const HEdge* hedge, coord_t x, coord_t y);
 
 boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
-    sector_s* frontSector, sector_s* backSector,
+    Sector* frontSector, Sector* backSector,
     walldivs_t* leftWallDivs, walldivs_t* rightWallDivs, float matOffset[2]);
 
 /**

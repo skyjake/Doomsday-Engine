@@ -96,7 +96,7 @@ typedef struct {
     short tics;
     fixed_t origin[3]; // Coordinates.
     fixed_t mov[3]; // Momentum.
-    struct sector_s *sector; // Updated when needed.
+    Sector *sector; // Updated when needed.
     LineDef *contact; // Updated when lines hit/avoided.
     ushort yaw, pitch; // Rotation angles (0-65536 => 0-360).
 } particle_t;

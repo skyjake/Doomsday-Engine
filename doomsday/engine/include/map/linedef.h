@@ -78,7 +78,7 @@
 ///@}
 
 typedef struct lineside_s {
-    struct sector_s* sector; /// Sector on this side.
+    Sector* sector; /// Sector on this side.
     struct sidedef_s* sideDef; /// SideDef on this side.
     struct hedge_s* hedgeLeft;  /// Left-most HEdge on this side.
     struct hedge_s* hedgeRight; /// Right-most HEdge on this side.

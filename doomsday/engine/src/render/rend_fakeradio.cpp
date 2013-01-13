@@ -47,7 +47,7 @@ using namespace de;
 typedef struct edge_s {
     boolean done;
     LineDef *line;
-    sector_s *sector;
+    Sector *sector;
     float length;
     binangle_t diff;
 } edge_t;
@@ -116,7 +116,7 @@ static void setRendpolyColor(ColorRawf *rcolors, uint num, float const shadowRGB
 }
 
 /// @return  @c true, if there is open space in the sector.
-static inline boolean isSectorOpen(sector_s *sector)
+static inline boolean isSectorOpen(Sector *sector)
 {
     return (sector && sector->SP_ceilheight > sector->SP_floorheight);
 }
@@ -156,8 +156,8 @@ static void scanNeighbor(boolean scanTop, LineDef const *line, uint side,
     coord_t iFFloor, iFCeil;
     coord_t iBFloor, iBCeil;
     int scanSecSide = side;
-    sector_s *startSector = line->L_sector(side);
-    sector_s *scanSector;
+    Sector *startSector = line->L_sector(side);
+    Sector *scanSector;
     boolean clockwise = toLeft;
     boolean stopScan = false;
     boolean closed;
@@ -1173,7 +1173,7 @@ static float radioEdgeOpenness(float fz, float bz, float bhz)
     return 2;
 }
 
-static void setRelativeHeights(sector_s const *front, sector_s const *back, boolean isCeiling,
+static void setRelativeHeights(Sector const *front, Sector const *back, boolean isCeiling,
     coord_t *fz, coord_t *bz, coord_t *bhz)
 {
     if(fz)
@@ -1196,7 +1196,7 @@ static void setRelativeHeights(sector_s const *front, sector_s const *back, bool
     }
 }
 
-static uint radioEdgeHackType(LineDef const *line, sector_s const *front, sector_s const *back,
+static uint radioEdgeHackType(LineDef const *line, Sector const *front, Sector const *back,
     int backside, boolean isCeiling, float fz, float bz)
 {
     Surface *surface = &line->L_sidedef(backside)->sections[isCeiling? SS_TOP:SS_BOTTOM];
@@ -1326,7 +1326,7 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
     // changes in the polygon corner vertices (placement, colour).
     vec2d_t inner[2], outer[2];
     vec2f_t edgeOpen, sideOpen;
-    sector_s *front = 0, *back = 0;
+    Sector *front = 0, *back = 0;
     coord_t fz = 0, bz = 0, bhz = 0;
     if(lineDef->L_backsidedef)
     {
@@ -1368,7 +1368,7 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
         }
         else if(!(neighbor == lineDef || !neighbor->L_backsidedef))
         {
-            sector_s *othersec;
+            Sector *othersec;
             byte otherSide;
 
             otherSide = (lineDef->L_v(i^side) == neighbor->L_v1? i : i^1);

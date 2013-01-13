@@ -952,7 +952,7 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
 
 void R_ProjectSprite(mobj_t *mo)
 {
-    sector_s *moSec;
+    Sector *moSec;
     float thangle = 0, alpha, yaw = 0, pitch = 0;
     coord_t distance, gzt, floorClip, secFloor, secCeil;
     vec3d_t visOff;
@@ -1363,7 +1363,7 @@ int RIT_AddSprite(void* ptr, void* paramaters)
 {
     mobj_t* mo = (mobj_t*) ptr;
     addspriteparams_t* params = (addspriteparams_t*)paramaters;
-    sector_s* sec = params->bspLeaf->sector;
+    Sector* sec = params->bspLeaf->sector;
     GameMap* map = theMap; /// @todo Do not assume mobj is from the CURRENT map.
 
     if(mo->addFrameCount != frameCount)

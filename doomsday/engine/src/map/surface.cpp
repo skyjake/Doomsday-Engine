@@ -48,7 +48,7 @@ boolean Surface_AttachedToMap(Surface *suf)
     if(!suf->owner) return false;
     if(DMU_GetType(suf->owner) == DMU_PLANE)
     {
-        sector_s *sec = ((Plane *)suf->owner)->sector;
+        Sector *sec = ((Plane *)suf->owner)->sector;
         if(0 == sec->bspLeafCount)
             return false;
     }
@@ -269,7 +269,7 @@ void Surface_UpdateBaseOrigin(Surface *suf)
     {
     case DMU_PLANE: {
         Plane *pln = (Plane *)suf->owner;
-        sector_s *sec = pln->sector;
+        Sector *sec = pln->sector;
         DENG_ASSERT(sec);
 
         suf->base.origin[VX] = sec->base.origin[VX];
@@ -280,7 +280,7 @@ void Surface_UpdateBaseOrigin(Surface *suf)
     case DMU_SIDEDEF: {
         SideDef *side = (SideDef *)suf->owner;
         LineDef *line = side->line;
-        sector_s *sec;
+        Sector *sec;
         DENG_ASSERT(line);
 
         suf->base.origin[VX] = (line->L_v1origin[VX] + line->L_v2origin[VX]) / 2;

@@ -143,7 +143,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
     const boolean isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontsidedef && hedge->lineDef->L_backsidedef)? true:false;
     const boolean clockwise = !doRight;
     const LineDef* line = hedge->lineDef;
-    sector_s* frontSec = line->L_sector(hedge->side);
+    Sector* frontSec = line->L_sector(hedge->side);
 
     // Check for neighborhood division?
     if(section == SS_MIDDLE && isTwoSided) return;
@@ -182,7 +182,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
             uint i = 0;
             do
             {   // First front, then back.
-                sector_s* scanSec = NULL;
+                Sector* scanSec = NULL;
                 if(!i && iter->L_frontsidedef && iter->L_frontsector != frontSec)
                     scanSec = iter->L_frontsector;
                 else if(i && iter->L_backsidedef && iter->L_backsector != frontSec)
@@ -289,7 +289,7 @@ static void buildWallDiv(walldivs_t* wallDivs, HEdge* hedge,
 }
 
 boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
-    sector_s* frontSec, sector_s* backSec,
+    Sector* frontSec, Sector* backSec,
     walldivs_t* leftWallDivs, walldivs_t* rightWallDivs, float matOffset[2])
 {
     DENG_ASSERT(hedge);
@@ -401,11 +401,11 @@ int HEdge_GetProperty(const HEdge* hedge, setargs_t* args)
         DMU_GetValue(DMT_HEDGE_LINEDEF, &hedge->lineDef, args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        sector_s* sec = hedge->sector? hedge->sector : NULL;
+        Sector* sec = hedge->sector? hedge->sector : NULL;
         DMU_GetValue(DMT_HEDGE_SECTOR, &sec, args, 0);
         break; }
     case DMU_BACK_SECTOR: {
-        sector_s* sec = HEDGE_BACK_SECTOR(hedge);
+        Sector* sec = HEDGE_BACK_SECTOR(hedge);
         DMU_GetValue(DMT_HEDGE_SECTOR, &sec, args, 0);
         break; }
     case DMU_ANGLE:

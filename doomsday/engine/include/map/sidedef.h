@@ -89,7 +89,7 @@ typedef struct msidedef_s {
 // FakeRadio shadow data.
 typedef struct shadowcorner_s {
     float           corner;
-    struct sector_s* proximity;
+    Sector *proximity;
     float           pOffset;
     float           pHeight;
 } shadowcorner_t;

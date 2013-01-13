@@ -41,7 +41,7 @@ void BspLeaf_Delete(BspLeaf* leaf)
 
     if(leaf->bsuf)
     {
-        sector_s* sec = leaf->sector;
+        Sector* sec = leaf->sector;
         for(uint i = 0; i < sec->planeCount; ++i)
         {
             SB_DestroySurface(leaf->bsuf[i]);

@@ -50,7 +50,7 @@ static materialenvinfo_t matInfo[NUM_MATERIAL_ENV_CLASSES] = {
 
 static ownernode_t* unusedNodeList;
 
-typedef std::set<sector_s *> ReverbUpdateRequested;
+typedef std::set<Sector *> ReverbUpdateRequested;
 ReverbUpdateRequested reverbUpdateRequested;
 
 const char* S_MaterialEnvClassName(material_env_class_t mclass)
@@ -398,7 +398,7 @@ void S_UpdateReverbForSector(Sector* sec)
     }
 }
 
-void S_MarkSectorReverbDirty(sector_s* sec)
+void S_MarkSectorReverbDirty(Sector* sec)
 {
     reverbUpdateRequested.insert(sec);
 }

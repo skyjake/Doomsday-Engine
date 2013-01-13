@@ -166,7 +166,7 @@ boolean P_IsInVoid(player_t* player)
 
         if(ddpl->mo && ddpl->mo->bspLeaf)
         {
-            sector_s* sec = ddpl->mo->bspLeaf->sector;
+            Sector* sec = ddpl->mo->bspLeaf->sector;
 
             if(Surface_IsSkyMasked(&sec->SP_ceilsurface))
             {

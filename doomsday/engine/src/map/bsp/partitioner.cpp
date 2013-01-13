@@ -81,7 +81,7 @@ static AABoxd findMapBounds(GameMap* map);
 static AABox blockmapBounds(AABoxd const& mapBounds);
 static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t midPoint);
 static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* line);
-static sector_s* findFirstSectorInHEdgeList(const BspLeaf* leaf);
+static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
 //DENG_DEBUG_ONLY(static bool bspLeafHasRealHEdge(BspLeaf const& leaf));
 //DENG_DEBUG_ONLY(static void printBspLeafHEdges(BspLeaf const& leaf));
 //DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
@@ -151,16 +151,16 @@ struct Partitioner::Instance
     /// Unclosed sectors are recorded here so we don't print too many warnings.
     struct UnclosedSectorRecord
     {
-        sector_s* sector;
+        Sector* sector;
         vec2d_t nearPoint;
 
-        UnclosedSectorRecord(sector_s* _sector, coord_t x, coord_t y)
+        UnclosedSectorRecord(Sector* _sector, coord_t x, coord_t y)
             : sector(_sector)
         {
             V2d_Set(nearPoint, x, y);
         }
     };
-    typedef std::map<sector_s*, UnclosedSectorRecord> UnclosedSectors;
+    typedef std::map<Sector*, UnclosedSectorRecord> UnclosedSectors;
     UnclosedSectors unclosedSectors;
 
     /// Unclosed BSP leafs are recorded here so we don't print too many warnings.
@@ -180,9 +180,9 @@ struct Partitioner::Instance
     struct MigrantHEdgeRecord
     {
         HEdge* hedge;
-        sector_s* facingSector;
+        Sector* facingSector;
 
-        MigrantHEdgeRecord(HEdge* _hedge, sector_s* _facingSector)
+        MigrantHEdgeRecord(HEdge* _hedge, Sector* _facingSector)
             : hedge(_hedge), facingSector(_facingSector)
         {}
     };
@@ -268,7 +268,7 @@ struct Partitioner::Instance
     struct testForWindowEffectParams
     {
         double frontDist, backDist;
-        sector_s* frontOpen, *backOpen;
+        Sector* frontOpen, *backOpen;
         LineDef* frontLine, *backLine;
         LineDef* testLine;
         coord_t mX, mY;
@@ -289,7 +289,7 @@ struct Partitioner::Instance
         if(LINE_SELFREF(line) /*|| line->buildData.overlap || line->length <= 0*/) return false;
 
         double dist = 0;
-        sector_s* hitSector = 0;
+        Sector* hitSector = 0;
         bool isFront = false;
         if(p.castHoriz)
         {
@@ -413,8 +413,8 @@ struct Partitioner::Instance
     }
 
     /// @return The right half-edge (from @a start to @a end).
-    HEdge* buildHEdgesBetweenVertexes(Vertex* start, Vertex* end, sector_s* frontSec,
-        sector_s* backSec, LineDef* lineDef, LineDef* partitionLineDef)
+    HEdge* buildHEdgesBetweenVertexes(Vertex* start, Vertex* end, Sector* frontSec,
+        Sector* backSec, LineDef* lineDef, LineDef* partitionLineDef)
     {
         DENG2_ASSERT(start && end);
 
@@ -460,8 +460,8 @@ struct Partitioner::Instance
 
             if(!lineInfo.flags.testFlag(LineDefInfo::ZeroLength))
             {
-                sector_s* frontSec = line->L_frontsector;
-                sector_s* backSec  = 0;
+                Sector* frontSec = line->L_frontsector;
+                Sector* backSec  = 0;
                 if(line->L_backsidedef)
                 {
                     backSec = line->L_backsector;
@@ -469,7 +469,7 @@ struct Partitioner::Instance
                 else
                 {
                     // Handle the 'One-Sided Window' trick.
-                    sector_s* windowSec = lineInfo.windowEffect;
+                    Sector* windowSec = lineInfo.windowEffect;
                     if(windowSec) backSec = windowSec;
                 }
 
@@ -646,7 +646,7 @@ struct Partitioner::Instance
                 else // This is definitely open space.
                 {
                     // Choose the non-self-referencing sector when we can.
-                    sector_s* sector = cur->after;
+                    Sector* sector = cur->after;
                     if(cur->after != next->before)
                     {
                         // Do a sanity check on the sectors (just for good measure).
@@ -1730,16 +1730,16 @@ struct Partitioner::Instance
     /**
      * Determine which sector this BSP leaf belongs to.
      */
-    sector_s* chooseSectorForBspLeaf(BspLeaf* leaf)
+    Sector* chooseSectorForBspLeaf(BspLeaf* leaf)
     {
         if(!leaf || !leaf->hedge) return 0;
 
-        sector_s* selfRefChoice = 0;
+        Sector* selfRefChoice = 0;
         HEdge* hedge = leaf->hedge;
         do
         {
             LineDef* line = hedge->lineDef;
-            sector_s* sector = line? line->L_sector(hedge->side) : 0;
+            Sector* sector = line? line->L_sector(hedge->side) : 0;
             if(sector)
             {
                 // The first sector from a non self-referencing line is our best choice.
@@ -2031,7 +2031,7 @@ struct Partitioner::Instance
     /**
      * Create a new half-edge.
      */
-    HEdge* newHEdge(Vertex* start, Vertex* end, sector_s* sec, LineDef* lineDef = 0,
+    HEdge* newHEdge(Vertex* start, Vertex* end, Sector* sec, LineDef* lineDef = 0,
                     LineDef* sourceLineDef = 0)
     {
         DENG2_ASSERT(start && end && sec);
@@ -2125,7 +2125,7 @@ struct Partitioner::Instance
      * vertex is open. Returns a sector reference if it's open, or NULL if closed
      * (void space or directly along a linedef).
      */
-    sector_s* openSectorAtAngle(Vertex* vtx, coord_t angle)
+    Sector* openSectorAtAngle(Vertex* vtx, coord_t angle)
     {
         DENG2_ASSERT(vtx);
         const VertexInfo::HEdgeTips& hedgeTips = vertexInfo(*vtx).hedgeTips();
@@ -2249,7 +2249,7 @@ struct Partitioner::Instance
      *
      * @return @c true iff the sector was newly registered.
      */
-    bool registerUnclosedSector(sector_s* sector, coord_t x, coord_t y)
+    bool registerUnclosedSector(Sector* sector, coord_t x, coord_t y)
     {
         if(!sector) return false;
 
@@ -2257,7 +2257,7 @@ struct Partitioner::Instance
         if(unclosedSectors.count(sector)) return false;
 
         // Add a new record.
-        unclosedSectors.insert(std::pair<sector_s*, UnclosedSectorRecord>(sector, UnclosedSectorRecord(sector, x, y)));
+        unclosedSectors.insert(std::pair<Sector*, UnclosedSectorRecord>(sector, UnclosedSectorRecord(sector, x, y)));
 
         // In the absence of a better mechanism, simply log this right away.
         /// @todo Implement something better!
@@ -2326,7 +2326,7 @@ struct Partitioner::Instance
      *
      * @return @c true iff the half-edge was newly registered.
      */
-    bool registerMigrantHEdge(HEdge* migrant, sector_s* sector)
+    bool registerMigrantHEdge(HEdge* migrant, Sector* sector)
     {
         if(!migrant || !sector) return false;
 
@@ -2360,7 +2360,7 @@ struct Partitioner::Instance
         if(!leaf) return;
 
         // Find a suitable half-edge for comparison.
-        sector_s* sector = findFirstSectorInHEdgeList(leaf);
+        Sector* sector = findFirstSectorInHEdgeList(leaf);
         if(!sector) return;
 
         // Log migrants.
@@ -2623,7 +2623,7 @@ static AABox blockmapBounds(AABoxd const& mapBounds)
     return blockBounds;
 }
 
-static sector_s* findFirstSectorInHEdgeList(const BspLeaf* leaf)
+static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf)
 {
     DENG2_ASSERT(leaf);
     HEdge* hedge = leaf->hedge;

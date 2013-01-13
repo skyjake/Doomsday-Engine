@@ -24,6 +24,46 @@
 #include "de_console.h"
 #include "de_play.h"
 
+Sector::Sector() : de::MapObject(DMU_SECTOR)
+{
+    frameFlags = 0;
+    validCount = 0;
+    memset(&aaBox, 0, sizeof(aaBox));
+    roughArea = 0;
+    lightLevel = 0;
+    oldLightLevel = 0;
+    memset(rgb, 0, sizeof(rgb));
+    memset(oldRGB, 0, sizeof(oldRGB));
+    mobjList = 0;
+    lineDefCount = 0;
+    lineDefs = 0;
+    bspLeafCount = 0;
+    bspLeafs = 0;
+    numReverbBspLeafAttributors = 0;
+    reverbBspLeafs = 0;
+    memset(&base, 0, sizeof(base));
+    planeCount = 0;
+    planes = 0;
+    blockCount = 0;
+    changedBlockCount = 0;
+    blocks = 0;
+    memset(reverb, 0, sizeof(reverb));
+    memset(&buildData, 0, sizeof(buildData));
+}
+
+Sector::~Sector()
+{
+    if(planes)
+    {
+        for(uint i = 0; i < planeCount; ++i)
+        {
+            M_Free(planes[i]);
+        }
+        M_Free(planes);
+    }
+
+}
+
 void Sector_UpdateAABox(Sector* sec)
 {
     LineDef** lineIter;
@@ -57,7 +97,7 @@ void Sector_UpdateArea(Sector* sec)
                      ((sec->aaBox.maxY - sec->aaBox.minY) / 128);
 }
 
-void Sector_UpdateBaseOrigin(sector_s* sec)
+void Sector_UpdateBaseOrigin(Sector* sec)
 {
     assert(sec);
     sec->base.origin[VX] = (sec->aaBox.minX + sec->aaBox.maxX) / 2;

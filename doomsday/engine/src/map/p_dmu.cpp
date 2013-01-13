@@ -47,7 +47,7 @@ typedef struct dummyline_s {
 } dummyline_t;
 
 typedef struct dummysector_s {
-    sector_s sector; /// Sector data.
+    Sector sector; /// Sector data.
     void *extraData; /// Pointer to user data.
     boolean inUse; /// true, if the dummy is being used.
 } dummysector_t;
@@ -914,7 +914,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
 static int setProperty(void *obj, void *context)
 {
     setargs_t *args = (setargs_t *) context;
-    sector_s *updateSector1 = NULL, *updateSector2 = NULL;
+    Sector *updateSector1 = NULL, *updateSector2 = NULL;
     Plane *updatePlane = NULL;
     LineDef *updateLinedef = NULL;
     SideDef *updateSidedef = NULL;

@@ -47,7 +47,7 @@ typedef enum {
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
-    struct sector_s*    sector;        /// Owner of the plane.
+    Sector *sector;                    ///< Owner of the plane.
     Surface             surface;
     coord_t             height;        /// Current height.
     coord_t             oldHeight[2];

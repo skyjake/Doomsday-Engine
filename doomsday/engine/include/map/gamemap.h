@@ -363,16 +363,6 @@ int GameMap_SideDefIndex(GameMap* map, SideDef* side);
 int GameMap_SectorIndex(GameMap *map, Sector *sector);
 
 /**
- * Lookup the unique index for @a sector.
- *
- * @param map
- * @param sector  Sector instance.
- *
- * @return
- */
-int GameMap_SectorIndex(GameMap *map, sector_s *sector);
-
-/**
  * Lookup the unique index for @a bspLeaf.
  *
  * @param map  GameMap instance.
@@ -751,7 +741,7 @@ int GameMap_VertexIterator(GameMap* map, int (*callback) (Vertex*, void*), void*
 
 int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), void* parameters);
 
-int GameMap_SectorIterator(GameMap* map, int (*callback)(struct sector_s *, void *), void* parameters);
+int GameMap_SectorIterator(GameMap* map, int (*callback)(Sector *, void *), void* parameters);
 
 int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* parameters);
 

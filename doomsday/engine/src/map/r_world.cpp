@@ -827,7 +827,7 @@ void R_OrderVertices(LineDef const *line, Sector const *sector, Vertex *verts[2]
 }
 
 boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
-    sector_s *frontSec, sector_s *backSec, SideDef *frontDef, SideDef *backDef,
+    Sector *frontSec, Sector *backSec, SideDef *frontDef, SideDef *backDef,
     coord_t *low, coord_t *hi, float matOffset[2])
 {
     bool const unpegBottom = !!(lineFlags & DDLF_DONTPEGBOTTOM);
@@ -978,14 +978,14 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
 }
 
 boolean R_FindBottomTop(SideDefSection section, int lineFlags,
-    sector_s *frontSec, sector_s *backSec, SideDef *frontDef, SideDef *backDef,
+    Sector *frontSec, Sector *backSec, SideDef *frontDef, SideDef *backDef,
     coord_t *low, coord_t *hi)
 {
     return R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
                             low, hi, 0/*offset not needed*/);
 }
 
-coord_t R_OpenRange(sector_s const *frontSec, sector_s const *backSec, coord_t *retBottom, coord_t *retTop)
+coord_t R_OpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
     DENG_ASSERT(frontSec);
 
@@ -1015,7 +1015,7 @@ coord_t R_OpenRange(sector_s const *frontSec, sector_s const *backSec, coord_t *
     return top - bottom;
 }
 
-coord_t R_VisOpenRange(sector_s const *frontSec, sector_s const *backSec, coord_t *retBottom, coord_t *retTop)
+coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
     DENG_ASSERT(frontSec);
 
@@ -1045,7 +1045,7 @@ coord_t R_VisOpenRange(sector_s const *frontSec, sector_s const *backSec, coord_
     return top - bottom;
 }
 
-boolean R_MiddleMaterialCoversOpening(int lineFlags, sector_s *frontSec, sector_s *backSec,
+boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *backSec,
     SideDef *frontDef, SideDef *backDef, boolean ignoreOpacity)
 {
     if(!frontSec || !frontDef) return false; // Never.
@@ -1084,14 +1084,14 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, sector_s *frontSec, sector_
 boolean R_MiddleMaterialCoversLineOpening(LineDef *line, int side, boolean ignoreOpacity)
 {
     DENG_ASSERT(line);
-    sector_s *frontSec  = line->L_sector(side);
-    sector_s *backSec   = line->L_sector(side ^ 1);
+    Sector *frontSec  = line->L_sector(side);
+    Sector *backSec   = line->L_sector(side ^ 1);
     SideDef *frontDef = line->L_sidedef(side);
     SideDef *backDef  = line->L_sidedef(side ^ 1);
     return R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef, ignoreOpacity);
 }
 
-LineDef *R_FindLineNeighbor(sector_s const *sector, LineDef const *line,
+LineDef *R_FindLineNeighbor(Sector const *sector, LineDef const *line,
     lineowner_t const *own, boolean antiClockwise, binangle_t *diff)
 {
     lineowner_t *cown = own->link[!antiClockwise];
@@ -1120,7 +1120,7 @@ LineDef *R_FindLineNeighbor(sector_s const *sector, LineDef const *line,
     return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-LineDef *R_FindSolidLineNeighbor(sector_s const *sector, LineDef const *line,
+LineDef *R_FindSolidLineNeighbor(Sector const *sector, LineDef const *line,
     lineowner_t const *own, boolean antiClockwise, binangle_t *diff)
 {
     lineowner_t *cown = own->link[!antiClockwise];
@@ -1502,7 +1502,7 @@ float R_GlowStrength(Plane const *pln)
  * @return  @c true, if one or more surfaces in the given sector use the
  * special sky mask material.
  */
-boolean R_SectorContainsSkySurfaces(sector_s const *sec)
+boolean R_SectorContainsSkySurfaces(Sector const *sec)
 {
     boolean sectorContainsSkySurfaces = false;
     uint n = 0;
@@ -1530,8 +1530,8 @@ static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
     material_t *choice1 = 0, *choice2 = 0;
     LineDef *line = s->line;
     byte side = (line->L_frontsidedef == s? FRONT : BACK);
-    sector_s *frontSec = line->L_sector(side);
-    sector_s *backSec  = line->L_sidedef(side ^ 1)? line->L_sector(side ^ 1) : 0;
+    Sector *frontSec = line->L_sector(side);
+    Sector *backSec  = line->L_sidedef(side ^ 1)? line->L_sector(side ^ 1) : 0;
 
     if(backSec)
     {
@@ -1580,7 +1580,7 @@ static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
             {
                 // Compare the relative heights to decide.
                 SideDef *otherSide = other->L_sidedef(other->L_frontsector == frontSec? FRONT : BACK);
-                sector_s *otherSec = other->L_sector(other->L_frontsector == frontSec? BACK  : FRONT);
+                Sector *otherSec = other->L_sector(other->L_frontsector == frontSec? BACK  : FRONT);
                 if(otherSec->SP_ceilheight <= frontSec->SP_floorheight)
                     choice1 = otherSide->SW_topmaterial;
                 else if(otherSec->SP_floorheight >= frontSec->SP_ceilheight)
@@ -1639,7 +1639,7 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
     }
 }
 
-static void R_UpdateLinedefsOfSector(sector_s *sec)
+static void R_UpdateLinedefsOfSector(Sector *sec)
 {
     if(!sec) return;
 
@@ -1650,8 +1650,8 @@ static void R_UpdateLinedefsOfSector(sector_s *sec)
 
         SideDef *front    = li->L_frontsidedef;
         SideDef *back     = li->L_backsidedef;
-        sector_s *frontSec  = li->L_frontsector;
-        sector_s *backSec   = li->L_backsector;
+        Sector *frontSec  = li->L_frontsector;
+        Sector *backSec   = li->L_backsector;
 
         // Do not fix "windows".
         if(!front || (!back && backSec)) continue;
@@ -1686,7 +1686,7 @@ static void R_UpdateLinedefsOfSector(sector_s *sec)
 
 boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
 {
-    sector_s *sec = pln->sector;
+    Sector *sec = pln->sector;
     boolean changed = false;
 
     // Geometry change?
@@ -1761,7 +1761,7 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
     return changed;
 }
 
-boolean R_UpdateSector(sector_s *sec, boolean forceUpdate)
+boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
 {
     boolean changed = false, planeChanged = false;
 
@@ -1875,7 +1875,7 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
 
 #ifdef __CLIENT__
 
-float const *R_GetSectorLightColor(sector_s const *sector)
+float const *R_GetSectorLightColor(Sector const *sector)
 {
     static vec3f_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
     static float oldRendSkyLight = -1;
