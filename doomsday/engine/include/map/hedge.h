@@ -57,19 +57,23 @@
 
 class Vertex;
 
-typedef struct hedge_s {
-    runtime_mapdata_header_t header;
+/**
+ * Half-edge.
+ */
+class HEdge : public de::MapElement
+{
+public:
     Vertex *v[2]; /// [Start, End] of the segment.
-    struct hedge_s*     next;
-    struct hedge_s*     prev;
+    HEdge *next;
+    HEdge *prev;
 
     // Half-edge on the other side, or NULL if one-sided. This relationship
     // is always one-to-one -- if one of the half-edges is split, the twin
     // must also be split.
-    struct hedge_s*     twin;
-    BspLeaf*   bspLeaf;
+    HEdge *twin;
+    BspLeaf *bspLeaf;
 
-    LineDef*   lineDef;
+    LineDef *lineDef;
     Sector *sector;
     angle_t             angle;
     byte                side; /// On which side of the LineDef (0=front, 1=back)?
@@ -78,18 +82,12 @@ typedef struct hedge_s {
     biassurface_t*      bsuf[3]; /// For each @ref SideDefSection.
     short               frameFlags;
     uint                index; /// Unique. Set when saving the BSP.
-} HEdge;
 
-/*
-class HEdge : public de::MapObject, public hedge_s
-{
 public:
-    HEdge() : de::MapObject(DMU_HEDGE)
-    {
-        memset(static_cast<hedge_s *>(this), 0, sizeof(hedge_s));
-    }
+    HEdge();
+    HEdge(HEdge const &other);
+    ~HEdge();
 };
-*/
 
 struct bsphedgeinfo_s;
 

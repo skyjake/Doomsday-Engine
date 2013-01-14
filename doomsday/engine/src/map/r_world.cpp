@@ -481,7 +481,7 @@ Plane *R_NewPlaneForSector(Sector *sec)
     // Initialize the surface.
     std::memset(&plane->surface, 0, sizeof(plane->surface)); // TODO: surface_s: update for C++ Surface
     Surface *suf = &plane->surface;
-    suf->header.type = DMU_SURFACE; // Setup header for DMU.
+    //suf->header.type = DMU_SURFACE; // Setup header for DMU.
     suf->normal[VZ] = 1;
     V3f_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
 

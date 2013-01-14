@@ -88,11 +88,7 @@ static int hedgeCollector(BspTreeNode& tree, void* parameters)
         do
         {
             // Take ownership of this HEdge.
-            runtime_mapdata_header_t* hdr = reinterpret_cast<runtime_mapdata_header_t*>(hedge);
-            DENG2_ASSERT(hdr);
-
-            // TODO: uncomment when HEdge is derived from MapElement
-            //p->builder->take(hdr);
+            p->builder->take(hedge);
 
             // Add this HEdge to the LUT.
             hedge->index = p->curIdx++;

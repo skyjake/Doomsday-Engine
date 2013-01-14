@@ -41,7 +41,7 @@ typedef struct surfacedecor_s {
 } surfacedecor_t;
 
 typedef struct surface_s {
-    runtime_mapdata_header_t header;
+    //runtime_mapdata_header_t header;
     ddmobj_base_t       base;
     void*               owner;         // Either @c DMU_SIDEDEF, or @c DMU_PLANE
     int                 flags;         // SUF_ flags

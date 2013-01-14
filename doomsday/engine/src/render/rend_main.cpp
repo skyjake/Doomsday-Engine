@@ -753,7 +753,7 @@ typedef struct {
     boolean         forceOpaque;
 
 // For bias:
-    void           *mapObject;
+    de::MapElement *mapElement;
     uint            elmIdx;
     biassurface_t  *bsuf;
 
@@ -930,7 +930,7 @@ static boolean renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         {   // Non-uniform color.
             if(useBias && p->bsuf)
             {   // Do BIAS lighting for this poly.
-                SB_RendPoly(rcolors, p->bsuf, rvertices, numVertices, p->normal, p->sectorLightLevel, p->mapObject, p->elmIdx, p->isWall);
+                SB_RendPoly(rcolors, p->bsuf, rvertices, numVertices, p->normal, p->sectorLightLevel, p->mapElement, p->elmIdx);
                 if(glowing > 0)
                 {
                     uint i;
@@ -1282,7 +1282,7 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
     params.wall.segLength = &hedge->length;
     params.forceOpaque = (alpha < 0? true : false);
     params.alpha = (alpha < 0? 1 : alpha);
-    params.mapObject = hedge;
+    params.mapElement = hedge;
     params.elmIdx = elmIdx;
     params.bsuf = bsuf;
     params.normal = normal;
@@ -1436,7 +1436,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
 
     params.flags = RPF_DEFAULT;
     params.isWall = false;
-    params.mapObject = bspLeaf;
+    params.mapElement = bspLeaf;
     params.elmIdx = elmIdx;
     params.bsuf = bsuf;
     params.normal = normal;

@@ -382,8 +382,7 @@ uint P_ToIndex(void const *ptr)
         return GET_VERTEX_IDX(elem->castTo<Vertex>());
 
     case DMU_HEDGE:
-        DENG2_ASSERT(false); // TODO: update this!
-        //return GET_HEDGE_IDX((HEdge *) ptr);
+        return GET_HEDGE_IDX(elem->castTo<HEdge>());
 
     case DMU_LINEDEF:
         return GET_LINE_IDX(elem->castTo<LineDef>());
@@ -405,7 +404,7 @@ uint P_ToIndex(void const *ptr)
 
     case DMU_MATERIAL:
         DENG2_ASSERT(false); // TODO: update this!
-        //return Materials_Id((material_t *) ptr);
+        //return Materials_Id(elem->castTo<Material>());
 
     default:
         DENG2_ASSERT(false); // Unknown/non-indexable DMU type.

@@ -1165,7 +1165,8 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
         destP->prevPts     = (povertex_t*) Z_Malloc(destP->lineCount * sizeof(povertex_t), PU_MAP, 0);
 
         // Create a hedge for each line of this polyobj.
-        hedges = (HEdge*) Z_Calloc(sizeof(HEdge) * destP->lineCount, PU_MAP, 0);
+        // TODO: Polyobj has ownership, must free it.
+        hedges = new HEdge[destP->lineCount];
 
         destP->lines = (LineDef**) Z_Malloc(sizeof(*destP->lines) * (destP->lineCount+1), PU_MAP, 0);
         for(j = 0; j < destP->lineCount; ++j)
@@ -1176,7 +1177,7 @@ static void hardenPolyobjs(GameMap* dest, EditMap* src)
             // This line belongs to a polyobj.
             line->inFlags |= LF_POLYOBJ;
 
-            hedge->header.type = DMU_HEDGE;
+            //hedge->header.type = DMU_HEDGE;
             hedge->lineDef = line;
             hedge->length = V2d_Distance(line->L_v2origin, line->L_v1origin);
             hedge->twin = NULL;

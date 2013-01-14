@@ -26,6 +26,40 @@
 
 #include <de/Log>
 
+HEdge::HEdge() : de::MapElement(DMU_HEDGE)
+{
+    memset(v, 0, sizeof(v));
+    next = 0;
+    prev = 0;
+    twin = 0;
+    bspLeaf = 0;
+    lineDef = 0;
+    sector = 0;
+    angle = 0;
+    side = 0;
+    length = 0;
+    offset = 0;
+    memset(bsuf, 0, sizeof(bsuf));
+    frameFlags = 0;
+    index = 0;
+}
+
+HEdge::HEdge(HEdge const &other) : de::MapElement(DMU_HEDGE)
+{
+    *this = other;
+}
+
+HEdge::~HEdge()
+{
+    for(uint i = 0; i < 3; ++i)
+    {
+        if(bsuf[i])
+        {
+            SB_DestroySurface(bsuf[i]);
+        }
+    }
+}
+
 coord_t WallDivNode_Height(walldivnode_t* node)
 {
     Q_ASSERT(node);
@@ -311,30 +345,17 @@ boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
 
 HEdge* HEdge_New(void)
 {
-    HEdge* hedge = static_cast<HEdge*>(Z_Calloc(sizeof *hedge, PU_MAPSTATIC, 0));
-    hedge->header.type = DMU_HEDGE;
-    return hedge;
+    return new HEdge;
 }
 
 HEdge* HEdge_NewCopy(const HEdge* other)
 {
-    assert(other);
-    HEdge* hedge = static_cast<HEdge*>(Z_Malloc(sizeof *hedge, PU_MAPSTATIC, 0));
-    memcpy(hedge, other, sizeof *hedge);
-    return hedge;
+    return new HEdge(*other);
 }
 
 void HEdge_Delete(HEdge* hedge)
 {
-    assert(hedge);
-    for(uint i = 0; i < 3; ++i)
-    {
-        if(hedge->bsuf[i])
-        {
-            SB_DestroySurface(hedge->bsuf[i]);
-        }
-    }
-    Z_Free(hedge);
+    delete hedge;
 }
 
 coord_t HEdge_PointDistance(HEdge* hedge, coord_t const point[2], coord_t* offset)

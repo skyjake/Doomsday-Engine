@@ -42,11 +42,12 @@
 ///@}
 
 class Sector;
+class HEdge;
 
 class BspLeaf : public de::MapElement
 {
 public:
-    struct hedge_s*     hedge; /// First HEdge in this leaf.
+    HEdge *hedge; /// First HEdge in this leaf.
     int                 flags; /// @ref bspLeafFlags.
     uint                index; /// Unique. Set when saving the BSP.
     int                 addSpriteCount; /// Frame number of last R_AddSprites.
@@ -54,7 +55,7 @@ public:
     uint                hedgeCount; /// Number of HEdge's in this leaf.
     Sector *sector;
     struct polyobj_s*   polyObj; /// First polyobj in this leaf. Can be @c NULL.
-    struct hedge_s*     fanBase; /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
+    HEdge *fanBase; /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
     struct shadowlink_s* shadows;
     AABoxd              aaBox; /// HEdge Vertex bounding box in the map coordinate space.
     coord_t             midPoint[2]; /// Center of vertices.

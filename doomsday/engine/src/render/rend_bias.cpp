@@ -917,15 +917,14 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  * @param numVertices   Number of vertices (in the array) to be lit.
  * @param normal        Surface normal.
  * @param sectorLightLevel Sector light level.
- * @param mapObject     Ptr to either a HEdge or BspLeaf.
+ * @param mapElement    Ptr to either a HEdge or BspLeaf.
  * @param elmIdx        Used with BspLeafs to select a specific plane.
- * @param isHEdge       @c true, if @a mapObject is a HEdge ELSE a BspLeaf.
  */
 void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
                  const struct rvertex_s* rvertices,
                  size_t numVertices, const vectorcompf_t* normal,
                  float sectorLightLevel,
-                 void* mapObject, uint elmIdx, boolean isHEdge)
+                 de::MapElement const *mapElement, uint elmIdx)
 {
     uint                i;
     boolean             forced;
@@ -956,15 +955,15 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
          * @todo This could be enhanced so that only the lights on the
          * right side of the surface are taken into consideration.
          */
-        if(isHEdge)
+        if(mapElement->type() == DMU_HEDGE)
         {
-            HEdge* hedge = (HEdge*) mapObject;
+            HEdge const *hedge = mapElement->castTo<HEdge>();
 
             updateAffected(bsuf, hedge->HE_v1origin, hedge->HE_v2origin, normal);
         }
         else
         {
-            BspLeaf* bspLeaf = (BspLeaf*) mapObject;
+            BspLeaf const *bspLeaf = mapElement->castTo<BspLeaf>();
             vec3d_t point;
 
             V3d_Set(point, bspLeaf->midPoint[VX], bspLeaf->midPoint[VY],
