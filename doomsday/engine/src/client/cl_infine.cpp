@@ -29,7 +29,6 @@
 #include "de_console.h"
 #include "de_infine.h"
 
-#include "client/cl_infine.h"
 #include "network/net_main.h"
 #include "network/net_msg.h"
 
@@ -53,7 +52,7 @@ void Cl_Finale(Reader* msg)
         // Read the script into map-scope memory. It will be freed
         // when the next map is loaded.
         len = Reader_ReadUInt32(msg);
-        script = (byte *) malloc(len + 1);
+        script = malloc(len + 1);
         Reader_Read(msg, script, len);
         script[len] = 0;
     }

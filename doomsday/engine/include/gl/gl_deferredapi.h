@@ -1,5 +1,6 @@
-/** @file gl_deferredapi.h GL API deferring.
- * @ingroup gl
+/**
+ * @file gl_deferredapi.h
+ * GL API deferring. @ingroup gl
  *
  * Redefines GL API functions so that they're replaced with ones that defer the
  * call when needed.

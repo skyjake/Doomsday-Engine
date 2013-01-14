@@ -21,10 +21,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/memory.h>
-
+#include "de_base.h"
+#include "de_console.h"
 #include "de_filesys.h"
-#include "con_main.h"
 #include "audio/audiodriver_music.h"
 
 #define BUFFERED_MUSIC_FILE      "dd-buffered-song"
@@ -165,7 +164,7 @@ void AudioDriver_Music_Set(int property, void* ptr)
 
     if(property == AUDIOP_SOUNDFONT_FILENAME)
     {
-        const char* fn = (char const *) ptr;
+        const char* fn = ptr;
         if(!fn || !fn[0]) return; // No path.
 
         if(F_FileExists(fn))

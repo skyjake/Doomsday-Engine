@@ -344,7 +344,7 @@ static boolean checkMobjBlocking(LineDef* line, Polyobj* po)
     return params.isBlocked;
 }
 
-int Polyobj_LineIterator(Polyobj* po, int (*callback) (LineDef*, void*),
+int Polyobj_LineIterator(Polyobj* po, int (*callback) (struct linedef_s*, void*),
     void* paramaters)
 {
     int result = false; // Continue iteration.

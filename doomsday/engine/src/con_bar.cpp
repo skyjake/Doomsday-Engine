@@ -1,5 +1,6 @@
-/** @file con_bar.cpp Console progress bar
- * @ingroup console
+/**
+ * @file con_bar.c
+ * Console progress bar @ingroup console
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>

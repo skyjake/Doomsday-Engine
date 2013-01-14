@@ -143,9 +143,9 @@ static int doubleClickThresholdMilliseconds = 300;
 
 static playercontrol_t* P_AllocPlayerControl(void)
 {
-    playerControls = (playercontrol_t *) M_Realloc(playerControls, sizeof(playercontrol_t) *
+    playerControls = M_Realloc(playerControls, sizeof(playercontrol_t) *
                                ++playerControlCount);
-    controlCounts = (controlcounter_t **) M_Realloc(controlCounts, sizeof(controlcounter_t*) *
+    controlCounts = M_Realloc(controlCounts, sizeof(controlcounter_t*) *
                               playerControlCount);
     memset(&playerControls[playerControlCount - 1], 0, sizeof(playercontrol_t));
     controlCounts[playerControlCount - 1] = NULL;
@@ -167,7 +167,7 @@ void P_ControlRegister(void)
 /**
  * This function is exported, so that plugins can register their controls.
  */
-DENG_EXTERN_C void P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext)
+void P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext)
 {
     playercontrol_t *pc = P_AllocPlayerControl();
     pc->id = id;
@@ -176,7 +176,7 @@ DENG_EXTERN_C void P_NewPlayerControl(int id, controltype_t type, const char *na
     pc->isTriggerable = (type == CTLT_NUMERIC_TRIGGERED || type == CTLT_IMPULSE);
     pc->bindContextName = strdup(bindContext);
     // Also allocate the impulse and double-click counters.
-    controlCounts[pc - playerControls] = (controlcounter_t *) M_Calloc(sizeof(controlcounter_t));
+    controlCounts[pc - playerControls] = M_Calloc(sizeof(controlcounter_t));
 }
 
 playercontrol_t* P_PlayerControlById(int id)
@@ -332,7 +332,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
 }
 
 #undef P_GetControlState
-DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
+void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
 {
     float tmp;
     struct bcontext_s* bc = 0;
@@ -363,7 +363,7 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, flo
  * @return  Number of times the impulse has been triggered since the last call.
  */
 #undef P_GetImpulseControlState
-DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int control)
+int P_GetImpulseControlState(int playerNum, int control)
 {
     playercontrol_t* pc = P_PlayerControlById(control);
     short *counter;
@@ -406,7 +406,7 @@ int P_GetControlDoubleClick(int playerNum, int control)
 }
 
 #undef P_Impulse
-DENG_EXTERN_C void P_Impulse(int playerNum, int control)
+void P_Impulse(int playerNum, int control)
 {
     playercontrol_t* pc = P_PlayerControlById(control);
 

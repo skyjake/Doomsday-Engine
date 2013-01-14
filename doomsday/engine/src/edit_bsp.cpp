@@ -286,7 +286,7 @@ static void hardenVertexes(BspBuilder& builder, GameMap* map,
 
 static void updateVertexLinks(GameMap* map)
 {
-    for(uint i = 0; i < map->lineDefCount(); ++i)
+    for(uint i = 0; i < map->numLineDefs; ++i)
     {
         LineDef* line = &map->lineDefs[i];
 

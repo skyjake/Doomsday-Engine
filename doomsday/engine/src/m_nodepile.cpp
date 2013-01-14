@@ -72,7 +72,7 @@ void NP_Init(nodepile_t *pile, int initial)
         initial = 2;
 
     size = sizeof(*pile->nodes) * initial;
-    pile->nodes = (linknode_t *) Z_Calloc(size, PU_MAP, 0);
+    pile->nodes = Z_Calloc(size, PU_MAP, 0);
     pile->count = initial;
     // Index #1 is the first.
     pile->pos = 1;
@@ -136,7 +136,7 @@ nodeindex_t NP_New(nodepile_t *pile, void *ptr)
         if(newcount > NP_MAX_NODES)
             newcount = NP_MAX_NODES;
 
-        newlist = (linknode_t *) Z_Malloc(sizeof(*newlist) * newcount, PU_MAP, 0);
+        newlist = Z_Malloc(sizeof(*newlist) * newcount, PU_MAP, 0);
         memcpy(newlist, pile->nodes, sizeof(*pile->nodes) * pile->count);
         memset(newlist + pile->count, 0,
                (newcount - pile->count) * sizeof(*newlist));

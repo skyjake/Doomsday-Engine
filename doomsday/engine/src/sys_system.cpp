@@ -277,7 +277,7 @@ void Sys_HideMouse(void)
  * Called when Doomsday should quit (will be deferred until convenient).
  */
 #undef Sys_Quit
-DENG_EXTERN_C void Sys_Quit(void)
+void Sys_Quit(void)
 {
     if(BusyMode_Active())
     {

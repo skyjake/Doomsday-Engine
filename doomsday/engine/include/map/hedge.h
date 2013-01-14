@@ -69,7 +69,7 @@ typedef struct hedge_s {
     struct hedge_s*     twin;
     struct bspleaf_s*   bspLeaf;
 
-    LineDef*   lineDef;
+    struct linedef_s*   lineDef;
     Sector *sector;
     angle_t             angle;
     byte                side; /// On which side of the LineDef (0=front, 1=back)?

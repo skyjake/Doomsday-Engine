@@ -102,7 +102,7 @@ char    str_ipport[128];
 serverstrings_t str_sinfo;
 
 uidata_slider_t sld_player_limit =
-    { 0, 16, 0, 1, false, (void *) "server-player-limit" };
+    { 0, 16, 0, 1, false, "server-player-limit" };
 
 uidata_listitem_t lstit_found[MAX_FOUND];
 
@@ -358,7 +358,7 @@ void MPIUpdateServerInfo(ui_object_t *ob)
  */
 void MPIServerInfoDrawer(ui_object_t* ob)
 {
-    UI_DrawHelpBox(&ob->geometry.origin, &ob->geometry.size, ob->flags & UIF_DISABLED ? .2f : 1, (char *) ob->data);
+    UI_DrawHelpBox(&ob->geometry.origin, &ob->geometry.size, ob->flags & UIF_DISABLED ? .2f : 1, ob->data);
 }
 
 void MPIToggleMasterItems(ui_object_t* ob)

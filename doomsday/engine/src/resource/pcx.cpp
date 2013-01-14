@@ -1,4 +1,4 @@
-/**\file pcx.cpp
+/**\file pcx.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -60,7 +60,7 @@ static void setLastError(const char* msg)
         return;
     }
 
-    lastErrorMsg = (char *) M_Realloc(lastErrorMsg, len+1);
+    lastErrorMsg = realloc(lastErrorMsg, len+1);
     strcpy(lastErrorMsg, msg);
 }
 
@@ -75,7 +75,7 @@ static int load(FileHandle* file, int width, int height, uint8_t* dstBuf)
     size_t len;
 
     len = FileHandle_Length(file);
-    if(0 == (raw = (uint8_t *) M_Malloc(len)))
+    if(0 == (raw = malloc(len)))
         Con_Error("PCX_Load: Failed on allocation of %lu bytes for read buffer.", (unsigned long) len);
     FileHandle_Read(file, raw, len);
     srcPos = raw;
@@ -151,7 +151,7 @@ uint8_t* PCX_Load(FileHandle* file, int* width, int* height, int* pixelSize)
         *pixelSize = 3;
 
         dstBufSize = 4 * (*width) * (*height);
-        if(0 == (dstBuf = (uint8_t *) M_Malloc(dstBufSize)))
+        if(0 == (dstBuf = malloc(dstBufSize)))
             Con_Error("PCX_Load: Failed on allocation of %lu bytes for output buffer.", (unsigned long) dstBufSize);
 
         FileHandle_Rewind(file);

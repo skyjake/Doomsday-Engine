@@ -436,7 +436,7 @@ void DED_Clear(ded_t* ded)
 
 int DED_AddMobj(ded_t* ded, char const* idstr)
 {
-    ded_mobj_t* mo = (ded_mobj_t *) DED_NewEntry((void**) &ded->mobjs, &ded->count.mobjs, sizeof(ded_mobj_t));
+    ded_mobj_t* mo = DED_NewEntry((void**) &ded->mobjs, &ded->count.mobjs, sizeof(ded_mobj_t));
 
     strcpy(mo->id, idstr);
     return mo - ded->mobjs;
@@ -449,7 +449,7 @@ void DED_RemoveMobj(ded_t* ded, int index)
 
 int DED_AddFlag(ded_t* ded, char const* name, char const* text, int value)
 {
-    ded_flag_t* fl = (ded_flag_t *) DED_NewEntry((void**) &ded->flags, &ded->count.flags, sizeof(ded_flag_t));
+    ded_flag_t* fl = DED_NewEntry((void**) &ded->flags, &ded->count.flags, sizeof(ded_flag_t));
 
     strcpy(fl->id, name);
     strcpy(fl->text, text);
@@ -465,7 +465,7 @@ void DED_RemoveFlag(ded_t* ded, int index)
 int DED_AddModel(ded_t* ded, char const* spr)
 {
     int i;
-    ded_model_t* md = (ded_model_t *) DED_NewEntry((void**) &ded->models, &ded->count.models, sizeof(ded_model_t));
+    ded_model_t* md = DED_NewEntry((void**) &ded->models, &ded->count.models, sizeof(ded_model_t));
 
     strcpy(md->sprite.id, spr);
     md->interRange[1] = 1;
@@ -488,7 +488,7 @@ void DED_RemoveModel(ded_t* ded, int index)
 
 int DED_AddSky(ded_t* ded, char const* id)
 {
-    ded_sky_t* sky = (ded_sky_t *) DED_NewEntry((void**) &ded->skies, &ded->count.skies, sizeof(ded_sky_t));
+    ded_sky_t* sky = DED_NewEntry((void**) &ded->skies, &ded->count.skies, sizeof(ded_sky_t));
     int i;
 
     strcpy(sky->id, id);
@@ -524,7 +524,7 @@ void DED_RemoveSky(ded_t* ded, int index)
 
 int DED_AddState(ded_t* ded, char const* id)
 {
-    ded_state_t* st = (ded_state_t *) DED_NewEntry((void**) &ded->states, &ded->count.states, sizeof(ded_state_t));
+    ded_state_t* st = DED_NewEntry((void**) &ded->states, &ded->count.states, sizeof(ded_state_t));
 
     strcpy(st->id, id);
     return st - ded->states;
@@ -537,7 +537,7 @@ void DED_RemoveState(ded_t* ded, int index)
 
 int DED_AddSprite(ded_t* ded, char const* name)
 {
-    ded_sprid_t* sp = (ded_sprid_t *) DED_NewEntry((void**) &ded->sprites, &ded->count.sprites, sizeof(ded_sprid_t));
+    ded_sprid_t* sp = DED_NewEntry((void**) &ded->sprites, &ded->count.sprites, sizeof(ded_sprid_t));
 
     strcpy(sp->id, name);
     return sp - ded->sprites;
@@ -550,7 +550,7 @@ void DED_RemoveSprite(ded_t* ded, int index)
 
 int DED_AddLight(ded_t* ded, char const* stateid)
 {
-    ded_light_t* light = (ded_light_t *) DED_NewEntry((void**) &ded->lights, &ded->count.lights, sizeof(ded_light_t));
+    ded_light_t* light = DED_NewEntry((void**) &ded->lights, &ded->count.lights, sizeof(ded_light_t));
 
     strcpy(light->state, stateid);
     return light - ded->lights;
@@ -563,14 +563,14 @@ void DED_RemoveLight(ded_t* ded, int index)
 
 int DED_AddMaterial(ded_t* ded, char const* uri)
 {
-    ded_material_t* mat = (ded_material_t *) DED_NewEntry((void**) &ded->materials, &ded->count.materials, sizeof(ded_material_t));
+    ded_material_t* mat = DED_NewEntry((void**) &ded->materials, &ded->count.materials, sizeof(ded_material_t));
     if(uri) mat->uri = Uri_NewWithPath2(uri, RC_NULL);
     return mat - ded->materials;
 }
 
 int DED_AddMaterialLayerStage(ded_material_layer_t* ml)
 {
-    ded_material_layer_stage_t* stage = (ded_material_layer_stage_t *) DED_NewEntry((void**) &ml->stages, &ml->stageCount, sizeof(*stage));
+    ded_material_layer_stage_t* stage = DED_NewEntry((void**) &ml->stages, &ml->stageCount, sizeof(*stage));
     return stage - ml->stages;
 }
 
@@ -581,7 +581,7 @@ void DED_RemoveMaterial(ded_t* ded, int index)
 
 int DED_AddSound(ded_t* ded, char const* id)
 {
-    ded_sound_t* snd = (ded_sound_t *) DED_NewEntry((void**) &ded->sounds, &ded->count.sounds, sizeof(ded_sound_t));
+    ded_sound_t* snd = DED_NewEntry((void**) &ded->sounds, &ded->count.sounds, sizeof(ded_sound_t));
 
     strcpy(snd->id, id);
     return snd - ded->sounds;
@@ -594,7 +594,7 @@ void DED_RemoveSound(ded_t* ded, int index)
 
 int DED_AddMusic(ded_t* ded, char const* id)
 {
-    ded_music_t* mus = (ded_music_t *) DED_NewEntry((void**) &ded->music, &ded->count.music, sizeof(ded_music_t));
+    ded_music_t* mus = DED_NewEntry((void**) &ded->music, &ded->count.music, sizeof(ded_music_t));
 
     strcpy(mus->id, id);
     return mus - ded->music;
@@ -607,7 +607,7 @@ void DED_RemoveMusic(ded_t* ded, int index)
 
 int DED_AddMapInfo(ded_t* ded, char const* uri)
 {
-    ded_mapinfo_t* inf = (ded_mapinfo_t *) DED_NewEntry((void**) &ded->mapInfo, &ded->count.mapInfo, sizeof(ded_mapinfo_t));
+    ded_mapinfo_t* inf = DED_NewEntry((void**) &ded->mapInfo, &ded->count.mapInfo, sizeof(ded_mapinfo_t));
     int i;
 
     if(uri) inf->uri = Uri_NewWithPath2(uri, RC_NULL);
@@ -646,7 +646,7 @@ void DED_RemoveMapInfo(ded_t* ded, int index)
 
 int DED_AddText(ded_t* ded, char const* id)
 {
-    ded_text_t* txt = (ded_text_t *) DED_NewEntry((void**) &ded->text, &ded->count.text, sizeof(ded_text_t));
+    ded_text_t* txt = DED_NewEntry((void**) &ded->text, &ded->count.text, sizeof(ded_text_t));
 
     strcpy(txt->id, id);
     return txt - ded->text;
@@ -660,7 +660,7 @@ void DED_RemoveText(ded_t* ded, int index)
 
 int DED_AddTextureEnv(ded_t* ded, char const* id)
 {
-    ded_tenviron_t* env = (ded_tenviron_t *) DED_NewEntry((void**) &ded->textureEnv, &ded->count.textureEnv, sizeof(ded_tenviron_t));
+    ded_tenviron_t* env = DED_NewEntry((void**) &ded->textureEnv, &ded->count.textureEnv, sizeof(ded_tenviron_t));
 
     strcpy(env->id, id);
     return env - ded->textureEnv;
@@ -681,7 +681,7 @@ void DED_RemoveTextureEnv(ded_t* ded, int index)
 
 int DED_AddCompositeFont(ded_t* ded, char const* uri)
 {
-    ded_compositefont_t* cfont = (ded_compositefont_t *) DED_NewEntry((void **) &ded->compositeFonts, &ded->count.compositeFonts, sizeof(ded_compositefont_t));
+    ded_compositefont_t* cfont = DED_NewEntry((void **) &ded->compositeFonts, &ded->count.compositeFonts, sizeof(ded_compositefont_t));
 
     if(uri) cfont->uri = Uri_NewWithPath2(uri, RC_NULL);
     return cfont - ded->compositeFonts;
@@ -705,11 +705,11 @@ void DED_RemoveCompositeFont(ded_t* ded, int index)
 
 int DED_AddValue(ded_t* ded, char const* id)
 {
-    ded_value_t* val = (ded_value_t *) DED_NewEntry((void**) &ded->values, &ded->count.values, sizeof(ded_value_t));
+    ded_value_t* val = DED_NewEntry((void**) &ded->values, &ded->count.values, sizeof(ded_value_t));
 
     if(id)
     {
-        val->id = (char *) M_Malloc(strlen(id) + 1);
+        val->id = M_Malloc(strlen(id) + 1);
         strcpy(val->id, id);
     }
     return val - ded->values;
@@ -724,7 +724,7 @@ void DED_RemoveValue(ded_t* ded, int index)
 
 int DED_AddDetail(ded_t* ded, char const* lumpname)
 {
-    ded_detailtexture_t* dtl = (ded_detailtexture_t *) DED_NewEntry((void**) &ded->details, &ded->count.details, sizeof(ded_detailtexture_t));
+    ded_detailtexture_t* dtl = DED_NewEntry((void**) &ded->details, &ded->count.details, sizeof(ded_detailtexture_t));
 
     if(lumpname && lumpname[0])
         dtl->detailTex = Uri_NewWithPath2(lumpname, RC_NULL);
@@ -742,7 +742,7 @@ void DED_RemoveDetail(ded_t* ded, int index)
 
 int DED_AddPtcGen(ded_t* ded, char const* state)
 {
-    ded_ptcgen_t* gen = (ded_ptcgen_t *) DED_NewEntry((void**) &ded->ptcGens, &ded->count.ptcGens, sizeof(ded_ptcgen_t));
+    ded_ptcgen_t* gen = DED_NewEntry((void**) &ded->ptcGens, &ded->count.ptcGens, sizeof(ded_ptcgen_t));
 
     strcpy(gen->state, state);
 
@@ -754,7 +754,7 @@ int DED_AddPtcGen(ded_t* ded, char const* state)
 
 int DED_AddPtcGenStage(ded_ptcgen_t* gen)
 {
-    ded_ptcstage_t* stage = (ded_ptcstage_t *) DED_NewEntry((void**) &gen->stages, &gen->stageCount, sizeof(ded_ptcstage_t));
+    ded_ptcstage_t* stage = DED_NewEntry((void**) &gen->stages, &gen->stageCount, sizeof(ded_ptcstage_t));
 
     stage->model = -1;
     stage->sound.volume = 1;
@@ -770,7 +770,7 @@ void DED_RemovePtcGen(ded_t* ded, int index)
 
 int DED_AddFinale(ded_t* ded)
 {
-    ded_finale_t* fin = (ded_finale_t *) DED_NewEntry((void**) &ded->finales, &ded->count.finales, sizeof(ded_finale_t));
+    ded_finale_t* fin = DED_NewEntry((void**) &ded->finales, &ded->count.finales, sizeof(ded_finale_t));
 
     return fin - ded->finales;
 }
@@ -783,7 +783,7 @@ void DED_RemoveFinale(ded_t* ded, int index)
 
 int DED_AddDecoration(ded_t* ded)
 {
-    ded_decor_t* decor = (ded_decor_t *) DED_NewEntry((void**) &ded->decorations, &ded->count.decorations, sizeof(ded_decor_t));
+    ded_decor_t* decor = DED_NewEntry((void**) &ded->decorations, &ded->count.decorations, sizeof(ded_decor_t));
     int i;
 
     // Init some default values.
@@ -804,7 +804,7 @@ void DED_RemoveDecoration(ded_t* ded, int index)
 
 int DED_AddReflection(ded_t* ded)
 {
-    ded_reflection_t* ref = (ded_reflection_t *) DED_NewEntry((void**) &ded->reflections, &ded->count.reflections, sizeof(ded_reflection_t));
+    ded_reflection_t* ref = DED_NewEntry((void**) &ded->reflections, &ded->count.reflections, sizeof(ded_reflection_t));
 
     // Init to defaults.
     ref->shininess = 1.0f;
@@ -824,7 +824,7 @@ void DED_RemoveReflection(ded_t* ded, int index)
 
 int DED_AddGroup(ded_t* ded)
 {
-    ded_group_t* group = (ded_group_t *) DED_NewEntry((void**) &ded->groups, &ded->count.groups, sizeof(ded_group_t));
+    ded_group_t* group = DED_NewEntry((void**) &ded->groups, &ded->count.groups, sizeof(ded_group_t));
     group->autoGenerated = false;
     return group - ded->groups;
 }
@@ -846,14 +846,14 @@ void DED_RemoveGroup(ded_t* ded, int index)
 
 int DED_AddGroupMember(ded_group_t* grp)
 {
-    ded_group_member_t* memb = (ded_group_member_t *) DED_NewEntry((void**) &grp->members, &grp->count, sizeof(ded_group_member_t));
+    ded_group_member_t* memb = DED_NewEntry((void**) &grp->members, &grp->count, sizeof(ded_group_member_t));
 
     return memb - grp->members;
 }
 
 int DED_AddSectorType(ded_t* ded, int id)
 {
-    ded_sectortype_t* sec = (ded_sectortype_t *) DED_NewEntry((void**) &ded->sectorTypes, &ded->count.sectorTypes, sizeof(ded_sectortype_t));
+    ded_sectortype_t* sec = DED_NewEntry((void**) &ded->sectorTypes, &ded->count.sectorTypes, sizeof(ded_sectortype_t));
 
     sec->id = id;
     return sec - ded->sectorTypes;
@@ -866,7 +866,7 @@ void DED_RemoveSectorType(ded_t* ded, int index)
 
 int DED_AddLineType(ded_t* ded, int id)
 {
-    ded_linetype_t* li = (ded_linetype_t *) DED_NewEntry((void**) &ded->lineTypes, &ded->count.lineTypes, sizeof(ded_linetype_t));
+    ded_linetype_t* li = DED_NewEntry((void**) &ded->lineTypes, &ded->count.lineTypes, sizeof(ded_linetype_t));
 
     li->id = id;
     //li->actCount = -1;

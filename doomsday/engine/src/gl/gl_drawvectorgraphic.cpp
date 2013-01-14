@@ -1,4 +1,4 @@
-/**\file gl_drawvectorgraphic.cpp
+/**\file gl_drawvectorgraphic.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -25,10 +25,10 @@
 
 #include <string.h>
 #include <assert.h>
-#include <de/memory.h>
 
-#include "dd_share.h"
-#include "con_main.h"
+#include "de_base.h"
+#include "de_console.h"
+
 #include "gl/svg.h"
 
 #define DEFAULT_SCALE               (1)
@@ -75,7 +75,9 @@ static Svg* insertSvg(Svg* svg)
 {
     if(svg)
     {
-        svgs = (Svg**) M_Realloc(svgs, sizeof(*svgs) * ++svgCount);
+        svgs = (Svg**)realloc(svgs, sizeof(*svgs) * ++svgCount);
+        if(!svgs) Con_Error("insertSvg: Failed on allocation of %lu bytes enlarging SVG collection.", (unsigned long) (sizeof(*svgs) * svgCount));
+
         svgs[svgCount-1] = svg;
     }
     return svg;
@@ -94,7 +96,7 @@ static Svg* removeSvg(Svg* svg)
         // Unlink from the collection.
         if(index != svgCount-1)
             memmove(svgs + index, svgs + index + 1, sizeof(*svgs) * (svgCount - index - 1));
-        svgs = (Svg**) M_Realloc(svgs, sizeof(*svgs) * --svgCount);
+        svgs = (Svg**)realloc(svgs, sizeof(*svgs) * --svgCount);
     }
     return svg;
 }
@@ -151,7 +153,7 @@ void R_UnloadSvgs(void)
     }
 }
 
-DENG_EXTERN_C void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale, float angle)
+void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale, float angle)
 {
     Svg* svg = svgForId(id);
 
@@ -197,17 +199,17 @@ DENG_EXTERN_C void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale
     DGL_Translatef(-origin->x, -origin->y, 0);
 }
 
-DENG_EXTERN_C void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale)
+void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale)
 {
     GL_DrawSvg3(id, origin, scale, DEFAULT_ANGLE);
 }
 
-DENG_EXTERN_C void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
+void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
 {
     GL_DrawSvg2(id, origin, DEFAULT_SCALE);
 }
 
-DENG_EXTERN_C void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines)
+void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines)
 {
     Svg* svg, *oldSvg;
 

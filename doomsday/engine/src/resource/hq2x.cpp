@@ -21,13 +21,11 @@
  */
 
 #include <stdlib.h>
-#include <de/memory.h>
 
 #include "dd_types.h"
 #include "dd_share.h"
 #include "de_console.h"
 #include "resource/image.h"
-#include "resource/hq2x.h"
 
 /*
  * RGB color space.
@@ -283,7 +281,7 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
     // | w7 | w8 | w9 |
     // +----+----+----+
 
-    if(0 == (dst = (uint8_t *) M_Malloc(BPP * 2 * width * height * 2)))
+    if(0 == (dst = malloc(BPP * 2 * width * height * 2)))
         Con_Error("GL_SmartFilterHQ2x: Failed on allocation of %lu bytes for "
                   "output buffer.", (unsigned long) (BPP * 2 * width * height * 2));
 

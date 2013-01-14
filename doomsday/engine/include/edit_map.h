@@ -44,8 +44,8 @@ public:
     typedef std::vector<Vertex *> Vertices;
     Vertices vertexes; // really needs to be std::vector? (not a MapElementList?)
 
-    typedef std::vector<LineDef *> LineDefs;
-    LineDefs lineDefs;
+    uint numLineDefs;
+    LineDef** lineDefs;
 
     typedef std::vector<SideDef *> SideDefs;
     SideDefs sideDefs;

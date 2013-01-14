@@ -128,7 +128,7 @@ DENG_EXTERN_C int FR_TextHeight(const char* text);
 
 DENG_EXTERN_C void Fonts_Init(void);
 DENG_EXTERN_C fontschemeid_t Fonts_ParseScheme(const char* str);
-//DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri);
+DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri);
 DENG_EXTERN_C fontid_t Fonts_ResolveUriCString(const char* uri);
 DENG_EXTERN_C void Fonts_ClearDefinitionLinks(void);
 DENG_EXTERN_C void Fonts_ClearRuntime(void);

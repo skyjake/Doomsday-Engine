@@ -20,7 +20,7 @@
  */
 
 #include "ui/displaymode_native.h"
-#include <de/libdeng1.h>
+#include "dd_share.h"
 
 void DisplayMode_Native_Init(void)
 {

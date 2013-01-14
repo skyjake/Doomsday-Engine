@@ -90,8 +90,14 @@ public:
 
     de::MapElementList<Vertex> vertexes;
     de::MapElementList<Sector> sectors;
-    de::MapElementList<LineDef> lineDefs;
+
+    uint numLineDefs;
+    LineDef* lineDefs;
+
     de::MapElementList<SideDef> sideDefs;
+
+    //uint numSideDefs;
+    //SideDef* sideDefs;
 
     uint numPolyObjs;
     Polyobj** polyObjs;
@@ -145,8 +151,6 @@ public:
     uint sectorCount() const { return sectors.size(); }
 
     uint sideDefCount() const { return sideDefs.size(); }
-
-    uint lineDefCount() const { return lineDefs.size(); }
 };
 
 /**

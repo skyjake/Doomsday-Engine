@@ -340,35 +340,35 @@ void            XL_Update(void);
 
 void            XL_Thinker(xlthinker_t* xl);
 
-void            XL_SetLineType(LineDef* line, int id);
+void            XL_SetLineType(struct linedef_s* line, int id);
 
 linetype_t*     XL_GetType(int id);
-int             XL_LineEvent(int evType, int lineType, LineDef* line,
+int             XL_LineEvent(int evType, int lineType, struct linedef_s* line,
                              int sideNum, void* data);
 void            XL_ActivateLine(boolean activating, linetype_t* info,
-                                LineDef* line, int sideNum,
+                                struct linedef_s* line, int sideNum,
                                 struct mobj_s* data, int evType);
-int             XL_TraverseLines(LineDef* line, int reftype, int ref,
+int             XL_TraverseLines(struct linedef_s* line, int reftype, int ref,
                                  void* context, void* context2, struct mobj_s* activator,
                                  int (C_DECL *func)());
-int             XL_TraversePlanes(LineDef* line, int reftype, int ref,
+int             XL_TraversePlanes(struct linedef_s* line, int reftype, int ref,
                                   void* context, void* context2, boolean travSectors,
                                   struct mobj_s* activator,
                                   int (C_DECL *func)());
 
 // Return false if the event was processed.
-int             XL_CrossLine(LineDef* line, int sideNum,
+int             XL_CrossLine(struct linedef_s* line, int sideNum,
                              struct mobj_s* thing);
-int             XL_UseLine(LineDef* line, int sideNum,
+int             XL_UseLine(struct linedef_s* line, int sideNum,
                            struct mobj_s* thing);
-int             XL_ShootLine(LineDef* line, int sideNum,
+int             XL_ShootLine(struct linedef_s* line, int sideNum,
                              struct mobj_s* thing);
-int             XL_HitLine(LineDef* line, int sideNum,
+int             XL_HitLine(struct linedef_s* line, int sideNum,
                            struct mobj_s* thing);
 
 int             XG_RandomInt(int min, int max);
 
-void            SV_WriteXGLine(LineDef* li);
-void            SV_ReadXGLine(LineDef* li);
+void            SV_WriteXGLine(struct linedef_s* li);
+void            SV_ReadXGLine(struct linedef_s* li);
 
 #endif

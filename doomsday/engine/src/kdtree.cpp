@@ -27,7 +27,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <de/memory.h>
 
 #include "de_platform.h"
 #include "de_console.h"
@@ -64,7 +63,7 @@ struct kdtree_s {
 
 KdTree* KdTree_New(const AABox* bounds)
 {
-    KdTree *kd = (KdTree *) M_Malloc(sizeof *kd);
+    KdTree* kd = malloc(sizeof *kd);
     if(!kd) Con_Error("KdTree_New: Failed on allocation of %lu bytes for new KdTree.", (unsigned long) sizeof *kd);
     kd->root = KdTreeNode_New(kd, bounds);
     return kd;
@@ -80,7 +79,7 @@ void KdTree_Delete(KdTree* kd)
 {
     assert(kd);
     KdTree_PostTraverse(kd, deleteKdTreeNode);
-    M_Free(kd);
+    free(kd);
 }
 
 KdTreeNode* KdTree_Root(KdTree* kd)
@@ -102,7 +101,7 @@ int KdTree_PostTraverse(KdTree* kd, int(*callback)(KdTreeNode*, void*))
 
 static KdTreeNode* KdTreeNode_NewWithUserData(KdTree* kdTree, const AABox* bounds, void* userData)
 {
-    KdTreeNode* kdn = (KdTreeNode *) M_Calloc(sizeof *kdn);
+    KdTreeNode* kdn = calloc(1, sizeof *kdn);
     if(!kdn) Con_Error("KdTreeNode_New: Failed on allocation of %lu bytes for new KdTreeNode.", sizeof *kdn);
     kdn->kdTree = kdTree;
     memcpy(&kdn->aaBox, bounds, sizeof(kdn->aaBox));

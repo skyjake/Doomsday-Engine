@@ -364,7 +364,7 @@ void GL_SetMultisample(boolean on)
 #endif
 }
 
-DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
+void DGL_SetScissor(RectRaw const *rect)
 {
     if(!rect) return;
 
@@ -374,7 +374,7 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
     glScissor(rect->origin.x, FLIP(rect->origin.y + rect->size.height - 1), rect->size.width, rect->size.height);
 }
 
-DENG_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
+void DGL_SetScissor2(int x, int y, int width, int height)
 {
     RectRaw rect;
     rect.origin.x = x;
@@ -384,7 +384,7 @@ DENG_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
     DGL_SetScissor(&rect);
 }
 
-DENG_EXTERN_C void DGL_Scissor(RectRaw *rect)
+void DGL_Scissor(RectRaw *rect)
 {
     if(!rect) return;
 
