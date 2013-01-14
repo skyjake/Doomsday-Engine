@@ -62,15 +62,9 @@ typedef char            filename_t[FILENAME_T_MAXLEN];
 
 typedef void (*con_textfilter_t) (char* text);
 
-// Forward declarations for map data types. The contents of these structs is
-// declared in p_maptypes.h.
+// Forward declarations for map data types.
 struct bspnode_s;
-//struct vertex_s;
-//struct linedef_s;
-struct side_s;
 struct hedge_s;
-struct bspleaf_s;
-//struct sector_s;
 struct polyblock_s;
 struct polyobj_s;
 struct plane_s;

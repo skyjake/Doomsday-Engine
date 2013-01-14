@@ -67,7 +67,7 @@ typedef struct hedge_s {
     // is always one-to-one -- if one of the half-edges is split, the twin
     // must also be split.
     struct hedge_s*     twin;
-    struct bspleaf_s*   bspLeaf;
+    BspLeaf*   bspLeaf;
 
     LineDef*   lineDef;
     Sector *sector;

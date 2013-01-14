@@ -736,7 +736,7 @@ enum { MX, MY, MZ };
     nodeindex_t     lineRoot; /* lines to which this is linked */ \
     struct mobj_s*  sNext, **sPrev; /* links in sector (if needed) */ \
 \
-    struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
+    BspLeaf *bspLeaf; /* bspLeaf in which this resides */ \
     coord_t         mom[3]; \
     angle_t         angle; \
     spritenum_t     sprite; /* used to find patch_t and flip value */ \
@@ -780,7 +780,7 @@ typedef struct povertex_s {
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
+    BspLeaf *bspLeaf; /* bspLeaf in which this resides */ \
     unsigned int    idx; /* Idx of polyobject. */ \
     int             tag; /* Reference tag. */ \
     int             validCount; \

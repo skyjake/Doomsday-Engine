@@ -106,15 +106,6 @@
 
 #define DMT_BSPNODE_CHILDREN DDVT_PTR
 
-/*
-#if defined __cplusplus && defined __DOOMSDAY__
-class LineDef;
-class SideDef;
-class Sector;
-class Vertex;
-#endif
-*/
-
 struct intercept_s;
 
 /**
@@ -149,8 +140,10 @@ typedef struct plane_s    Plane;
 
 #elif defined __cplusplus
 
+// Foward declarations.
 class LineDef;
 class Sector;
+class BspLeaf;
 
 #endif
 
@@ -282,7 +275,7 @@ DENG_API_TYPEDEF(Map)
 
     // BSP Leaves
 
-    struct bspleaf_s* (*BL_AtPoint)(coord_t const point[2]);
+    BspLeaf*        (*BL_AtPoint)(coord_t const point[2]);
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies in
@@ -296,7 +289,7 @@ DENG_API_TYPEDEF(Map)
      *
      * @return  BspLeaf instance for that BSP node's leaf.
      */
-    struct bspleaf_s* (*BL_AtPointXY)(coord_t x, coord_t y);
+    BspLeaf*        (*BL_AtPointXY)(coord_t x, coord_t y);
 
     // Iterators
 
@@ -319,7 +312,7 @@ DENG_API_TYPEDEF(Map)
      */
     int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
 
-    int             (*Box_BspLeafsIterator)(const AABoxd* box, Sector* sector, int (*callback) (struct bspleaf_s*, void*), void* parameters);
+    int             (*Box_BspLeafsIterator)(const AABoxd* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
     int             (*Box_PolyobjsIterator)(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
     int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (const struct intercept_s*, void* paramaters), void* parameters);
     int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (const struct intercept_s*, void* paramaters)/*parameters=NULL*/);

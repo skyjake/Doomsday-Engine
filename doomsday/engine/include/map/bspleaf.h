@@ -27,6 +27,7 @@
 #  error "map/bspleaf.h requires C++"
 #endif
 
+#include "MapElement"
 #include "resource/r_data.h"
 #include "render/rend_bias.h"
 #include "p_mapdata.h"
@@ -42,8 +43,9 @@
 
 class Sector;
 
-typedef struct bspleaf_s {
-    runtime_mapdata_header_t header;
+class BspLeaf : public de::MapElement
+{
+public:
     struct hedge_s*     hedge; /// First HEdge in this leaf.
     int                 flags; /// @ref bspLeafFlags.
     uint                index; /// Unique. Set when saving the BSP.
@@ -59,7 +61,11 @@ typedef struct bspleaf_s {
     coord_t             worldGridOffset[2]; /// Offset to align the top left of materials in the built geometry to the map coordinate space grid.
     struct biassurface_s** bsuf; /// [sector->planeCount] size.
     unsigned int        reverb[NUM_REVERB_DATA];
-} BspLeaf;
+
+public:
+    BspLeaf();
+    ~BspLeaf();
+};
 
 BspLeaf* BspLeaf_New(void);
 

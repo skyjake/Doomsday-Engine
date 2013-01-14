@@ -105,9 +105,9 @@ public:
     unsigned int        lineDefCount;
     LineDef**  lineDefs;      // [lineDefCount+1] size.
     unsigned int        bspLeafCount;
-    struct bspleaf_s**  bspLeafs;     // [bspLeafCount+1] size.
+    BspLeaf**  bspLeafs;     // [bspLeafCount+1] size.
     unsigned int        numReverbBspLeafAttributors;
-    struct bspleaf_s**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
+    BspLeaf**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
     ddmobj_base_t       base;
     unsigned int        planeCount;
     struct plane_s**    planes;        // [planeCount+1] size.
