@@ -1614,7 +1614,7 @@ static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
     if(choice2) return choice2;
 
     // We'll assign the special "missing" material...
-    return App_Materials()->find(de::Uri(Path("System:missing"))).material();
+    return App_Materials()->find(de::Uri("System", Path("missing"))).material();
 }
 
 static void addMissingMaterial(SideDef *s, SideDefSection section)

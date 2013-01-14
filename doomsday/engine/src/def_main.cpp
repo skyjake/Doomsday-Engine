@@ -1754,7 +1754,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 {
                     try
                     {
-                        l->iparm[k] = App_Materials()->find(de::Uri(Path(def->iparmStr[k]))).id();
+                        l->iparm[k] = App_Materials()->find(de::Uri(def->iparmStr[k], RC_NULL)).id();
                     }
                     catch(Materials::NotFoundError const &)
                     {} // Ignore this error.
