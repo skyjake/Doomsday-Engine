@@ -150,6 +150,7 @@ char const *DMU_Str(uint prop)
     return propStr;
 }
 
+#undef DMU_GetType
 int DMU_GetType(void const *ptr)
 {
     if(!ptr) return DMU_NONE;
@@ -157,10 +158,10 @@ int DMU_GetType(void const *ptr)
     int type = P_DummyType((void *)ptr);
     if(type != DMU_NONE) return type;
 
-    type = ((runtime_mapdata_header_t const *)ptr)->type;
+    de::MapElement const *elem = reinterpret_cast<de::MapElement const *>(ptr);
 
     // Make sure it's valid.
-    switch(type)
+    switch(elem->type())
     {
     case DMU_VERTEX:
     case DMU_HEDGE:
@@ -171,7 +172,7 @@ int DMU_GetType(void const *ptr)
     case DMU_PLANE:
     case DMU_BSPNODE:
     case DMU_MATERIAL:
-        return type;
+        return elem->type();
 
     default: break; // Unknown.
     }

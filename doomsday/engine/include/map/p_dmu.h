@@ -110,14 +110,6 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args, uint 
  */
 void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint index);
 
-#ifndef NDEBUG
-# define ASSERT_DMU_TYPE(ptr, dmuType) \
-    if(!ptr || ((runtime_mapdata_header_t *)ptr)->type != dmuType) \
-        Con_Error("ASSERT_DMU_TYPE failure on line %i in "__FILE__". " #ptr " is not %s.\n", __LINE__, DMU_Str(dmuType));
-#else
-# define ASSERT_DMU_TYPE(ptr, dmuType)
-#endif
-
 #ifdef __cplusplus
 } // extern "C"
 #endif
