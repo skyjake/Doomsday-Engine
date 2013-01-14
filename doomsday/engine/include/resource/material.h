@@ -54,6 +54,7 @@ typedef struct material_s material_t;
 
 #include <QList>
 #include <de/Error>
+#include <de/Vector>
 #include "uri.hh"
 
 namespace de {
@@ -72,11 +73,97 @@ public:
     /// A list of variant instances.
     typedef QList<MaterialVariant *> Variants;
 
-    struct Decoration
+    /**
+     * (Light) decoration.
+     */
+    class Decoration
     {
-        ded_decorlight_t *def;
-        Decoration(ded_decorlight_t &_def) : def(&_def)
+    public:
+        /// A list of stages.
+        typedef QList<ded_decorlight_stage_t *> Stages;
+
+    public:
+        /**
+         * Construct a new default decoration.
+         */
+        Decoration() : patternSkip_(0, 0), patternOffset_(0, 0)
         {}
+
+        Decoration(Vector2i const &_patternSkip, Vector2i const &_patternOffset)
+            : patternSkip_(_patternSkip), patternOffset_(_patternOffset)
+        {}
+
+        /**
+         * Construct a new decoration from the specified definition.
+         */
+        static Decoration *fromDef(ded_material_decoration_t &def)
+        {
+            Decoration *dec = new Decoration(Vector2i(def.patternSkip),
+                                             Vector2i(def.patternOffset));
+            for(int i = 0; i < def.stageCount.num; ++i)
+            {
+                dec->stages_.push_back(&def.stages[i]);
+            }
+            return dec;
+        }
+
+        /**
+         * Construct a new decoration from the specified definition.
+         */
+        static Decoration *fromDef(ded_decoration_t &def)
+        {
+            Decoration *dec = new Decoration(Vector2i(def.patternSkip),
+                                             Vector2i(def.patternOffset));
+            // Only the one stage.
+            dec->stages_.push_back(&def.stage);
+            return dec;
+        }
+
+        /**
+         * Retrieve the pattern skip for the decoration, Normally a decoration
+         * is repeated on a surface as many times as the material does. A skip
+         * pattern allows sparser repeats on the horizontal and vertical axes
+         * respectively.
+         */
+        Vector2i const &patternSkip() const
+        {
+            return patternSkip_;
+        }
+
+        /**
+         * Retrieve the pattern offset for the decoration. Used with pattern
+         * skip to offset the origin of the pattern.
+         */
+        Vector2i const &patternOffset() const
+        {
+            return patternOffset_;
+        }
+
+        /**
+         * Returns the total number of animation stages for the decoration.
+         */
+        int stageCount() const
+        {
+            return stages_.count();
+        }
+
+        /**
+         * Provides access to the animation stages for efficient traversal.
+         */
+        Stages const &stages() const
+        {
+            return stages_;
+        }
+
+    private:
+        /// Pattern skip intervals.
+        Vector2i patternSkip_;
+
+        /// Pattern skip interval offsets.
+        Vector2i patternOffset_;
+
+        /// Animation stages.
+        Stages stages_;
     };
 
     /// A list of decorations.
@@ -104,8 +191,6 @@ material_t *Material_New(short flags, ded_material_t *def, Size2Raw *dimensions,
                          material_env_class_t envClass);
 
 void Material_Delete(material_t *mat);
-
-void Material_AddDecoration(material_t *mat, ded_decorlight_t *def);
 
 int Material_DecorationCount(material_t const *mat);
 
@@ -315,6 +400,14 @@ int Material_SetProperty(material_t *material, setargs_t const *args);
 de::MaterialManifest &Material_Manifest(material_t const *material);
 
 /**
+ * Add a new (light) decoration to the material.
+ *
+ * @param mat       Material instance.
+ * @param decor     Decoration to add.
+ */
+void Material_AddDecoration(material_t *mat, de::Material::Decoration &decor);
+
+/**
  * Provides access to the list of decorations for efficient traversal.
  */
 de::Material::Decorations const &Material_Decorations(material_t const *mat);
@@ -322,9 +415,9 @@ de::Material::Decorations const &Material_Decorations(material_t const *mat);
 /**
  * Choose/create a variant of the material which fulfills @a spec.
  *
- * @param material      Material instance.
- * @param spec          Specification for the derivation of @a material.
- * @param canCreate     @c true= Create a new variant if no suitable one exists.
+ * @param material  Material instance.
+ * @param spec      Specification for the derivation of @a material.
+ * @param canCreate @c true= Create a new variant if no suitable one exists.
  *
  * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
  */

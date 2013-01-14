@@ -443,9 +443,9 @@ void MaterialSnapshot::Instance::takeSnapshot()
         it != decorations.end(); ++it, ++idx)
     {
         MaterialVariant::DecorationState const &l = material->decoration(idx);
-        ded_decorlight_t const *lDef = (*it)->def;
-        ded_decorlight_stage_t const *lsCur  = &lDef->stages[l.stage];
-        ded_decorlight_stage_t const *lsNext = &lDef->stages[(l.stage + 1) % lDef->stageCount.num];
+        Material::Decoration const *lDef = *it;
+        ded_decorlight_stage_t const *lsCur  = lDef->stages()[l.stage];
+        ded_decorlight_stage_t const *lsNext = lDef->stages()[(l.stage + 1) % lDef->stageCount()];
 
         MaterialSnapshot::Decoration &decor = stored.decorations[idx];
 

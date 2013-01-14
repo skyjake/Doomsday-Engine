@@ -157,11 +157,6 @@ boolean Def_IsAllowedReflection(ded_reflection_t *def, boolean hasExternal, bool
  */
 boolean Def_IsAllowedDetailTex(ded_detailtexture_t *def, boolean hasExternal, boolean isCustom);
 
-/**
- * Returns @c true iff @a lightDef is considered valid.
- */
-boolean Def_IsValidLightDecoration(ded_decorlight_t const *def);
-
 D_CMD(ListMobjs);
 
 #ifdef __cplusplus

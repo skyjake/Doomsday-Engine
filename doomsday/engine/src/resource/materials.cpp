@@ -568,25 +568,33 @@ material_t *Materials::newFromDef(ded_material_t &def)
     // Add the material to the global material list.
     d->materials.push_back(mat);
 
-    // Add decorations.
-    for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+    // Add (light) decorations to the material.
+    // Prefer decorations defined within the material.
+    for(int i = 0; i < DED_MAX_MATERIAL_DECORATIONS; ++i)
     {
-        if(!Def_IsValidLightDecoration(&def.lights[i])) break;
+        ded_material_decoration_t &lightDef = def.decorations[i];
 
-        Material_AddDecoration(mat, &def.lights[i]);
+        // Is this valid? (A zero number of stages signifies the last).
+        if(!lightDef.stageCount.num) break;
+
+        Material::Decoration *decor = Material::Decoration::fromDef(lightDef);
+        Material_AddDecoration(mat, *decor);
     }
 
     if(!Material_DecorationCount(mat))
     {
         // Perhaps an oldschool linked decoration definition?
-        ded_decor_t *decor = Def_GetDecoration(reinterpret_cast<uri_s *>(&uri));
-        if(decor)
+        ded_decor_t *decorDef = Def_GetDecoration(reinterpret_cast<uri_s *>(&uri));
+        if(decorDef)
         {
             for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
             {
-                if(!Def_IsValidLightDecoration(&decor->lights[i])) break;
+                ded_decoration_t &lightDef = decorDef->lights[i];
+                // Is this valid? (A zero-strength color signifies the last).
+                if(V3f_IsZero(lightDef.stage.color)) break;
 
-                Material_AddDecoration(mat, &decor->lights[i]);
+                Material::Decoration *decor = Material::Decoration::fromDef(lightDef);
+                Material_AddDecoration(mat, *decor);
             }
         }
     }
@@ -805,19 +813,17 @@ static void printMaterialInfo(material_t &mat)
     }
 
     // Print decoration config:
-    uint idx = 0;
     Material::Decorations const &decorations = Material_Decorations(&mat);
-    for(Material::Decorations::const_iterator it = decorations.begin();
-        it != decorations.end(); ++it, ++idx)
+    for(int i = 0; i < decorations.count(); ++i)
     {
-        ded_decorlight_t const *lDef = (*it)->def;
+        Material::Decoration const *lDef = decorations[i];
 
-        Con_Printf("Decoration #%i (%i %s):\n", idx, lDef->stageCount.num,
-                   lDef->stageCount.num == 1? "Stage" : "Stages");
+        Con_Printf("Decoration #%i (%i %s):\n", i, lDef->stageCount(),
+                   lDef->stageCount() == 1? "Stage" : "Stages");
 
-        for(int k = 0; k < lDef->stageCount.num; ++k)
+        for(int k = 0; k < lDef->stageCount(); ++k)
         {
-            ded_decorlight_stage_t const *sDef = &lDef->stages[k];
+            ded_decorlight_stage_t const *sDef = lDef->stages()[k];
 
             Con_Printf("  #%i: Tics:%i (~%.2f) Offset:%.2f x %.2f Elevation:%.2f"
                        "\n      Color:(r:%.2f, g:%.2f, g:%.2f) Radius:%.2f HaloRadius:%.2f"

@@ -126,13 +126,6 @@ void Material_Delete(material_t *mat)
     }
 }
 
-void Material_AddDecoration(material_t *mat, ded_decorlight_t *def)
-{
-    DENG_ASSERT(mat && def);
-    Material::Decoration *decor = new Material::Decoration(*def);
-    mat->decorations.push_back(decor);
-}
-
 int Material_DecorationCount(material_t const *mat)
 {
     DENG2_ASSERT(mat);
@@ -454,6 +447,12 @@ void Material_SetShinyMaskTexture(material_t *mat, struct texture_s *tex)
 {
     DENG2_ASSERT(mat);
     mat->shinyMaskTex = reinterpret_cast<de::Texture *>(tex);
+}
+
+void Material_AddDecoration(material_t *mat, de::Material::Decoration &decor)
+{
+    DENG_ASSERT(mat);
+    mat->decorations.push_back(&decor);
 }
 
 Material::Decorations const &Material_Decorations(material_t const *mat)

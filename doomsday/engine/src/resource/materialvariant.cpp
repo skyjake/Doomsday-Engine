@@ -162,23 +162,23 @@ void MaterialVariant::ticker(timespan_t /*ticLength*/)
     for(Material::Decorations::const_iterator it = decorations.begin();
         it != decorations.end(); ++it, ++idx)
     {
-        ded_decorlight_t const *lightDef = (*it)->def;
+        Material::Decoration const *lightDef = *it;
 
         // Not animated?
-        if(lightDef->stageCount.num == 1) continue;
+        if(lightDef->stageCount() == 1) continue;
         DecorationState &l = d->decorations[idx];
 
         if(DD_IsSharpTick() && l.tics-- <= 0)
         {
             // Advance to next stage.
-            if(++l.stage == lightDef->stageCount.num)
+            if(++l.stage == lightDef->stageCount())
             {
                 // Loop back to the beginning.
                 l.stage = 0;
             }
             l.inter = 0;
 
-            ded_decorlight_stage_t const *lsCur = &lightDef->stages[l.stage];
+            ded_decorlight_stage_t const *lsCur = lightDef->stages()[l.stage];
             if(lsCur->variance != 0)
                 l.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
             else
@@ -193,7 +193,7 @@ void MaterialVariant::ticker(timespan_t /*ticLength*/)
         }
         else
         {
-            ded_decorlight_stage_t const *lsCur = &lightDef->stages[l.stage];
+            ded_decorlight_stage_t const *lsCur = lightDef->stages()[l.stage];
             l.inter = 1 - (l.tics - frameTimePos) / float( lsCur->tics );
         }
     }
@@ -207,23 +207,21 @@ void MaterialVariant::resetAnim()
     int const layerCount      = Material_LayerCount(d->material);
     for(int i = 0; i < layerCount; ++i)
     {
-        LayerState &l = d->layers[i];
+        LayerState &ls = d->layers[i];
 
-        l.stage = 0;
-        l.tics  = def->layers[i].stages[0].tics;
-        l.inter = 0;
+        ls.stage = 0;
+        ls.tics  = def->layers[i].stages[0].tics;
+        ls.inter = 0;
     }
 
-    uint idx = 0;
     Material::Decorations const &decorations = Material_Decorations(d->material);
-    for(Material::Decorations::const_iterator it = decorations.begin();
-        it != decorations.end(); ++it, ++idx)
+    for(int i = 0; i < decorations.count(); ++i)
     {
-        DecorationState &l = d->decorations[idx];
+        DecorationState &ds = d->decorations[i];
 
-        l.stage = 0;
-        l.tics  = (*it)->def->stages[0].tics;
-        l.inter = 0;
+        ds.stage = 0;
+        ds.tics  = decorations[i]->stages()[0]->tics;
+        ds.inter = 0;
     }
 }
 

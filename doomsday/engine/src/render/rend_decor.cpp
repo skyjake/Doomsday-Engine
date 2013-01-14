@@ -91,6 +91,9 @@ static void projectDecoration(decorsource_t const &src)
 {
     MaterialSnapshot::Decoration const *decor = src.decor;
 
+    // Don't project decorations which emit no color.
+    if(V3f_IsZero(decor->color)) return;
+
     // Does it pass the sector light limitation?
     float min = decor->lightLevels[0];
     float max = decor->lightLevels[1];
@@ -178,6 +181,9 @@ void Rend_ProjectDecorations()
 static void addLuminousDecoration(decorsource_t &src)
 {
     MaterialSnapshot::Decoration const *decor = src.decor;
+
+    // Don't add decorations which emit no color.
+    if(V3f_IsZero(decor->color)) return;
 
     // Does it pass the sector light limitation?
     float min = decor->lightLevels[0];
@@ -346,19 +352,19 @@ static boolean projectSurfaceDecorations(Surface *suf, void *context)
     return true;
 }
 
-static inline void getDecorationSkipPattern(int const patternSkip[2], int skip[2])
+static inline void getDecorationSkipPattern(Vector2i const &patternSkip, int skip[2])
 {
-    DENG_ASSERT(patternSkip && skip);
-    for(uint i = 0; i < 2; ++i)
-    {
-        // Skip must be at least one.
-        skip[i] = patternSkip[i] + 1;
-        if(skip[i] < 1) skip[i] = 1;
-    }
+    DENG_ASSERT(skip);
+    skip[0] = patternSkip.x + 1;
+    skip[1] = patternSkip.y + 1;
+
+    // Skip must be at least one.
+    if(skip[0] < 1) skip[0] = 1;
+    if(skip[1] < 1) skip[1] = 1;
 }
 
 static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
-    int const patternOffset[2], int const patternSkip[2], Surface &suf,
+    Vector2i const &patternOffset, Vector2i const &patternSkip, Surface &suf,
     material_t &mat, pvec3d_t const v1, pvec3d_t const /*v2*/,
     coord_t width, coord_t height, pvec3d_t const delta, int axis,
     float offsetS, float offsetT, Sector *sec)
@@ -380,13 +386,13 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
 
     // Let's see where the top left light is.
     float s = M_CycleIntoRange(decor.pos[0] -
-                               Material_Width(&mat) * patternOffset[0] +
+                               Material_Width(&mat) * patternOffset.x +
                                offsetS, patternW);
     uint num = 0;
     for(; s < width; s += patternW)
     {
         float t = M_CycleIntoRange(decor.pos[1] -
-                                   Material_Height(&mat) * patternOffset[1] +
+                                   Material_Height(&mat) * patternOffset.y +
                                    offsetT, patternH);
 
         for(; t < height; t += patternH)
@@ -454,15 +460,13 @@ static void updateSurfaceDecorations2(Surface &suf, float offsetS, float offsetT
         MaterialSnapshot const &ms =
             App_Materials()->prepare(*suf.material, Rend_MapSurfaceMaterialSpec());
 
-        uint idx = 0;
         Material::Decorations const &decorations = Material_Decorations(suf.material);
-        for(Material::Decorations::const_iterator it = decorations.begin();
-            it != decorations.end(); ++it, ++idx)
+        for(int i = 0; i < decorations.count(); ++i)
         {
-            MaterialSnapshot::Decoration const &decor = ms.decoration(idx);
-            ded_decorlight_t const *def = (*it)->def;
+            MaterialSnapshot::Decoration const &decor = ms.decoration(i);
+            Material::Decoration const *def = decorations[i];
 
-            generateDecorLights(decor, def->patternOffset, def->patternSkip,
+            generateDecorLights(decor, def->patternOffset(), def->patternSkip(),
                                 suf, *suf.material, v1, v2, width, height,
                                 delta, axis, offsetS, offsetT, sec);
         }

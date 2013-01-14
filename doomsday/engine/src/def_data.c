@@ -253,28 +253,28 @@ void DED_Clear(ded_t* ded)
 
     if(ded->materials)
     {
-        int i, j, k;
+        int i, k, m;
         for(i = 0; i < ded->count.materials.num; ++i)
         {
             ded_material_t* mat = &ded->materials[i];
             if(mat->uri) Uri_Delete(mat->uri);
 
-            for(j = 0; j < DED_MAX_MATERIAL_LAYERS; ++j)
+            for(k = 0; k < DED_MAX_MATERIAL_LAYERS; ++k)
             {
-                ded_material_layer_t *layer = &mat->layers[j];
-                for(k = 0; k < layer->stageCount.num; ++k)
+                ded_material_layer_t *layer = &mat->layers[k];
+                for(m = 0; m < layer->stageCount.num; ++m)
                 {
-                    if(layer->stages[k].texture) Uri_Delete(layer->stages[k].texture);
+                    if(layer->stages[m].texture) Uri_Delete(layer->stages[m].texture);
                 }
                 M_Free(layer->stages);
             }
 
-            for(j = 0; j < DED_DECOR_NUM_LIGHTS; ++j)
+            for(k = 0; k < DED_MAX_MATERIAL_DECORATIONS; ++k)
             {
-                ded_decorlight_t *light = &mat->lights[j];
-                for(k = 0; k < light->stageCount.num; ++k)
+                ded_material_decoration_t *light = &mat->decorations[k];
+                for(m = 0; m < light->stageCount.num; ++m)
                 {
-                    ded_decorlight_stage_t *stage = &light->stages[k];
+                    ded_decorlight_stage_t *stage = &light->stages[m];
                     if(stage->up)    Uri_Delete(stage->up);
                     if(stage->down)  Uri_Delete(stage->down);
                     if(stage->sides) Uri_Delete(stage->sides);
@@ -347,7 +347,7 @@ void DED_Clear(ded_t* ded)
 
     if(ded->decorations)
     {
-        int i, j, k;
+        int i, j;
         for(i = 0; i < ded->count.decorations.num; ++i)
         {
             ded_decor_t *dec = &ded->decorations[i];
@@ -356,16 +356,11 @@ void DED_Clear(ded_t* ded)
 
             for(j = 0; j < DED_DECOR_NUM_LIGHTS; ++j)
             {
-                ded_decorlight_t *light = &dec->lights[j];
-                for(k = 0; k < light->stageCount.num; ++k)
-                {
-                    ded_decorlight_stage_t *stage = &light->stages[k];
-                    if(stage->up)    Uri_Delete(stage->up);
-                    if(stage->down)  Uri_Delete(stage->down);
-                    if(stage->sides) Uri_Delete(stage->sides);
-                    if(stage->flare) Uri_Delete(stage->flare);
-                }
-                M_Free(light->stages);
+                ded_decoration_t *light = &dec->lights[j];
+                if(light->stage.up)    Uri_Delete(light->stage.up);
+                if(light->stage.down)  Uri_Delete(light->stage.down);
+                if(light->stage.sides) Uri_Delete(light->stage.sides);
+                if(light->stage.flare) Uri_Delete(light->stage.flare);
             }
         }
         M_Free(ded->decorations);
@@ -591,6 +586,17 @@ int DED_AddMaterialLayerStage(ded_material_layer_t *ml)
     return stage - ml->stages;
 }
 
+int DED_AddMaterialDecorationStage(ded_material_decoration_t *li)
+{
+    ded_decorlight_stage_t *stage = DED_NewEntry((void**) &li->stages, &li->stageCount, sizeof(*stage));
+
+    // The color (0,0,0) means the light is not visible during this stage.
+    stage->elevation = 1;
+    stage->radius    = 1;
+
+    return stage - li->stages;
+}
+
 void DED_RemoveMaterial(ded_t* ded, int index)
 {
     DED_DelEntry(index, (void**) &ded->materials, &ded->count.materials, sizeof(ded_material_t));
@@ -801,23 +807,20 @@ void DED_RemoveFinale(ded_t* ded, int index)
 int DED_AddDecoration(ded_t* ded)
 {
     ded_decor_t* decor = DED_NewEntry((void**) &ded->decorations, &ded->count.decorations, sizeof(ded_decor_t));
+    int i;
+    for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+    {
+        // The color (0,0,0) means the light is not active.
+        decor->lights[i].stage.elevation = 1;
+        decor->lights[i].stage.radius    = 1;
+    }
+
     return decor - ded->decorations;
 }
 
 void DED_RemoveDecoration(ded_t* ded, int index)
 {
     DED_DelEntry(index, (void**) &ded->decorations, &ded->count.decorations, sizeof(ded_decor_t));
-}
-
-int DED_AddDecorLightStage(ded_decorlight_t *li)
-{
-    ded_decorlight_stage_t *stage = DED_NewEntry((void**) &li->stages, &li->stageCount, sizeof(*stage));
-
-    // The color (0,0,0) means the light is not active.
-    stage->elevation = 1;
-    stage->radius    = 1;
-
-    return stage - li->stages;
 }
 
 int DED_AddReflection(ded_t* ded)

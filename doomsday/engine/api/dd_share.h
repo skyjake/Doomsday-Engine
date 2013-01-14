@@ -1027,7 +1027,6 @@ typedef struct {
 /// Special value used to signify an invalid material id.
 #define NOMATERIALID            0
 
-#define DDMAX_MATERIAL_LAYERS   1
 ///@}
 
 /// Unique identifier associated with each archived material.

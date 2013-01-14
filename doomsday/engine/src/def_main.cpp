@@ -1140,19 +1140,46 @@ void Def_Read()
         }
     }
 
+    // Decorations. (Define textures).
+    for(int i = 0; i < defs.count.decorations.num; ++i)
+    {
+        ded_decor_t *dec = &defs.decorations[i];
+        for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
+        {
+            ded_decoration_t *dl = &dec->lights[k];
+
+            if(V3f_IsZero(dl->stage.color)) break;
+
+            if(dl->stage.up)
+            {
+                defineLightmap(dl->stage.up);
+            }
+            if(dl->stage.down)
+            {
+                defineLightmap(dl->stage.down);
+            }
+            if(dl->stage.sides)
+            {
+                defineLightmap(dl->stage.sides);
+            }
+            if(dl->stage.flare)
+            {
+                defineFlaremap(dl->stage.flare);
+            }
+        }
+    }
+
     // Materials.
     for(int i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t *def = &defs.materials[i];
 
-        for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
+        for(int k = 0; k < DED_MAX_MATERIAL_DECORATIONS; ++k)
         {
-            ded_decorlight_t* lig = &def->lights[k];
+            ded_material_decoration_t* lig = &def->decorations[k];
             for(int m = 0; m < lig->stageCount.num; ++m)
             {
                 ded_decorlight_stage_t *stage = &lig->stages[m];
-
-                if(!Def_IsValidLightDecoration(lig)) break;
 
                 if(stage->up)
                 {
@@ -2104,13 +2131,6 @@ StringArray* Def_ListStateIDs(void)
         StringArray_Append(array, defs.states[i].id);
     }
     return array;
-}
-
-boolean Def_IsValidLightDecoration(ded_decorlight_t const* lightDef)
-{
-    return (lightDef && lightDef->stageCount.num &&
-            (lightDef->stages[0].color[0] != 0 || lightDef->stages[0].color[1] != 0 ||
-             lightDef->stages[0].color[2] != 0));
 }
 
 #if 0 // $revise-texture-animation

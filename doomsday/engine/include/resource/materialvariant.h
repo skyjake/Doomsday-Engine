@@ -119,7 +119,7 @@ class MaterialVariant
 {
 public:
     /// Maximum number of layers a material supports.
-    static int const max_layers = DDMAX_MATERIAL_LAYERS;
+    static int const max_layers = DED_MAX_MATERIAL_LAYERS;
 
     /// Current state of a material layer.
     struct LayerState
@@ -135,7 +135,7 @@ public:
     };
 
     /// Maximum number of (light) decorations a material supports.
-    static int const max_decorations = 16;
+    static int const max_decorations = DED_MAX_MATERIAL_DECORATIONS;
 
     /// Current state of a material (light) decoration.
     struct DecorationState

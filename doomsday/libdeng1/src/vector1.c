@@ -794,7 +794,7 @@ int V3f_MajorAxis(pvec3f_t const vec)
     return axis;
 }
 
-boolean V3f_IsZero(pvec3f_t const vec)
+boolean V3f_IsZero(float const vec[3])
 {
     return vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0;
 }

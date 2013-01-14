@@ -443,7 +443,7 @@ DENG_PUBLIC int V3f_MajorAxis(pvec3f_t const vec);
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-DENG_PUBLIC boolean V3f_IsZero(pvec3f_t const vec);
+DENG_PUBLIC boolean V3f_IsZero(float const vec[3]);
 
 /**
  * Linear interpolation between a and b, by c.
