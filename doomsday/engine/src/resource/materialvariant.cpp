@@ -62,20 +62,9 @@ struct MaterialVariant::Instance
     /// Decoration animation states.
     MaterialVariant::DecorationState decorations[MaterialVariant::max_decorations];
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    /// For "smoothed" Material animation:
-    bool hasTranslation;
-    MaterialVariant *current;
-    MaterialVariant *next;
-    float inter;
-#endif
-
     Instance(material_t &generalCase, MaterialVariantSpec const &_spec)
         : material(&generalCase),
           spec(_spec), snapshot(0), snapshotPrepareFrame(-1)
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-          hasTranslation(false), current(0), next(0), inter(0),
-#endif
     {}
 
     ~Instance()
@@ -297,45 +286,5 @@ void MaterialVariant::setSnapshotPrepareFrame(int frameNum)
         d->snapshotPrepareFrame = frameNum;
     }
 }
-
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-MaterialVariant *MaterialVariant::translationNext()
-{
-    if(!d->hasTranslation) return this;
-    return d->next;
-}
-
-MaterialVariant *MaterialVariant::translationCurrent()
-{
-    if(!d->hasTranslation) return this;
-    return d->current;
-}
-
-float MaterialVariant::translationPoint()
-{
-    return d->inter;
-}
-
-void MaterialVariant::setTranslation(MaterialVariant *newCurrent, MaterialVariant *newNext)
-{
-    if(newCurrent && newNext && (newCurrent != this || newNext != this))
-    {
-        d->hasTranslation = true;
-        d->current = newCurrent;
-        d->next    = newNext;
-    }
-    else
-    {
-        d->hasTranslation = false;
-        d->current = d->next = 0;
-    }
-    d->inter = 0;
-}
-
-void MaterialVariant::setTranslationPoint(float newInter)
-{
-    d->inter = newInter;
-}
-#endif
 
 } // namespace de

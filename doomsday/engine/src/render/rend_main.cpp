@@ -706,7 +706,7 @@ static float getSnapshots(MaterialSnapshot const **msA,
     // Smooth Texture Animation?
     if(msB)
     {
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+#if 0 /// @todo $revise-texture-animation
         MaterialVariant *variant = Material_ChooseVariant(&mat, spec, false, false);
         if(variant->translationCurrent() != variant->translationNext())
         {

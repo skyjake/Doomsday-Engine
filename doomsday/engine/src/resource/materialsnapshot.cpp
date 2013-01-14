@@ -361,7 +361,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
     else // Interpolate.
     {
-        stored.glowStrength = lsCur->glowStrength * (1 - l.inter) + lsNext->glowStrength * l.inter;
+        stored.glowStrength = LERP(lsCur->glowStrength, lsNext->glowStrength, l.inter);
     }
 
     if(glowFactor > .0001f)

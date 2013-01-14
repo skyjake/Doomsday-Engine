@@ -546,7 +546,7 @@ ded_ptcgen_t* Def_GetGenerator(uri_s const *uri)
         if(Uri_Equality(def->material, uri))
             return def;
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+#if 0 /// @todo $revise-texture-animation
         if(def->flags & PGF_GROUP)
         {
             /**
@@ -1400,10 +1400,7 @@ static void initMaterialGroup(ded_group_t *def)
 {
     DENG_ASSERT(def);
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    int animNumber  = -1;
-#endif
-
+    //int animNumber  = -1;
     int groupNumber = -1;
     for(int i = 0; i < def->count.num; ++i)
     {
@@ -1424,7 +1421,7 @@ static void initMaterialGroup(ded_group_t *def)
 
                 App_Materials()->group(groupNumber).addMaterial(*mat);
             }
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+#if 0 /// @todo $revise-texture-animation
             else // An animation group.
             {
                 // Only create the group once the first material has been found.
@@ -1579,11 +1576,6 @@ void Def_PostInit(void)
 
     // Material groups (e.g., for precaching).
     App_Materials()->clearAllGroups();
-
-    // Material animation groups.
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    App_Materials()->clearAllAnimGroups();
-#endif
     for(int i = 0; i < defs.count.groups.num; ++i)
     {
         initMaterialGroup(&defs.groups[i]);

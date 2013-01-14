@@ -1409,7 +1409,7 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
                 return i + 1; // 1-based index.
             }
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+#if 0 /// @todo $revise-texture-animation
             if(def->flags & PGF_GROUP)
             {
                 // Generator triggered by all materials in the animation.

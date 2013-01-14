@@ -169,7 +169,7 @@ void Material_SetFlags(material_t *mat, short flags);
  */
 boolean Material_IsValid(material_t const *mat);
 
-/// @return  @c true= the material is animated.
+/// @return  @c true= the material has at least one animated layer.
 boolean Material_IsAnimated(material_t const *mat);
 
 /// Returns @c true if the material is considered @em skymasked.
@@ -291,17 +291,6 @@ struct texture_s *Material_ShinyMaskTexture(material_t *mat);
  */
 void Material_SetShinyMaskTexture(material_t *mat, struct texture_s *tex);
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-/// @return  @c true= the material belongs to one or more anim groups.
-boolean Material_IsGroupAnimated(material_t const *mat);
-
-/// @return  @c true if there is an active translation.
-boolean Material_HasTranslation(material_t const *mat);
-
-/// Change the group animation status.
-void Material_SetGroupAnimated(material_t *mat, boolean yes);
-#endif
-
 /**
  * Get a property value, selected by DMU_* name.
  *
@@ -330,13 +319,6 @@ de::MaterialManifest &Material_Manifest(material_t const *material);
  */
 de::Material::Decorations const &Material_Decorations(material_t const *mat);
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-/**
- * Returns the animation group for the material.
- */
-de::MaterialAnim &Material_AnimGroup(material_t *mat);
-#endif
-
 /**
  * Choose/create a variant of the material which fulfills @a spec.
  *
@@ -355,142 +337,6 @@ de::MaterialVariant *Material_ChooseVariant(material_t *mat,
  */
 de::Material::Variants const &Material_Variants(material_t const *mat);
 
-#endif
-
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-#ifdef __cplusplus
-
-#include <QList>
-#include <de/Error>
-
-namespace de {
-
-/**
- * @ingroup resource
- */
-class MaterialAnim
-{
-public:
-    /**
-     * One frame in the animation.
-     */
-    class Frame
-    {
-    public:
-        Frame(material_t &mat, ushort _tics, ushort _randomTics)
-            : material_(&mat), tics_(_tics), randomTics_(_randomTics)
-        {}
-
-        /**
-         * Returns the material of the frame.
-         */
-        material_t &material() const {
-            return *material_;
-        }
-
-        /**
-         * Returns the duration of the frame in (sharp) tics.
-         */
-        ushort tics() const {
-            return tics_;
-        }
-
-        /**
-         * Returns the random part of the frame duration in (sharp) tics.
-         */
-        ushort randomTics() const {
-            return randomTics_;
-        }
-
-    private:
-        material_t *material_;
-        ushort tics_;
-        ushort randomTics_;
-    };
-
-    /// All frames in the animation.
-    typedef QList<Frame> Frames;
-
-public:
-    /// An invalid frame reference was specified. @ingroup errors
-    DENG2_ERROR(InvalidFrameError);
-
-public:
-    MaterialAnim(int id, int flags);
-
-    /**
-     * Progress the animation one frame forward.
-     */
-    void animate();
-
-    /**
-     * Restart the animation over from the first frame.
-     */
-    void reset();
-
-    /**
-     * Returns the animation's unique identifier.
-     */
-    int id() const;
-
-    /**
-     * Returns the animation's @ref animationGroupFlags.
-     */
-    int flags() const;
-
-    /**
-     * Returns the total number of frames in the animation.
-     */
-    int frameCount() const;
-
-    /**
-     * Lookup a frame in the animation by number.
-     *
-     * @param number  Frame number to lookup.
-     * @return  Found animation frame.
-     */
-    Frame &frame(int number);
-
-    /**
-     * Extend the animation by adding a new frame to the end of the sequence.
-     *
-     * @param mat  Material for the frame.
-     * @param tics  Duration of the frame in (sharp) tics.
-     * @param randomTics  Random part of the frame duration in (sharp) tics.
-     */
-    void addFrame(material_t &mat, int tics, int randomTics);
-
-    /**
-     * Returns @c true iff @a mat is used by one or more frames in the animation.
-     *
-     * @param mat  Material to search for.
-     */
-    bool hasFrameForMaterial(material_t const &mat) const;
-
-    /**
-     * Provides access to the frame list for efficient traversal.
-     */
-    Frames const &allFrames() const;
-
-private:
-    /// Unique identifier.
-    int id_;
-
-    /// @ref animationGroupFlags.
-    int flags_;
-
-    /// Current frame index.
-    int index;
-
-    int maxTimer;
-    int timer;
-
-    /// All animation frames.
-    Frames frames;
-};
-
-} // namespace de
 #endif // __cplusplus
-#endif // LIBDENG_OLD_MATERIAL_ANIM_METHOD
 
 #endif /* LIBDENG_RESOURCE_MATERIAL_H */

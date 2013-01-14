@@ -145,11 +145,6 @@ struct Materials::Instance
     /// All materials in the system.
     MaterialList materials;
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    /// Animation groups.
-    Materials::AnimGroups animGroups;
-#endif
-
     /// Material groups.
     Materials::Groups groups;
 
@@ -204,16 +199,6 @@ struct Materials::Instance
         }
         manifestCount = 0;
     }
-
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    void animateAllGroups()
-    {
-        DENG2_FOR_EACH(Materials::AnimGroups, i, animGroups)
-        {
-            i->animate();
-        }
-    }
-#endif
 
     MaterialVariantSpec *findVariantSpec(MaterialVariantSpec const &tpl,
                                          bool canCreate)
@@ -290,9 +275,6 @@ Materials::Materials()
 
 Materials::~Materials()
 {
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    clearAllAnimGroups();
-#endif
     clearAllGroups();
     purgeCacheQueue();
     delete d;
@@ -638,25 +620,6 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
 
     if(!cacheGroups) return;
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    // If the material is part of one or more animations; cache all frames.
-    if(Material_IsGroupAnimated(&mat))
-    {
-        DENG2_FOR_EACH(AnimGroups, i, d->animGroups)
-        {
-            MaterialAnim &anim = *i;
-            if(!anim.hasFrameForMaterial(mat)) continue;
-
-            DENG2_FOR_EACH_CONST(MaterialAnim::Frames, k, anim.allFrames())
-            {
-                if(&k->material() == &mat) continue;
-
-                cache(k->material(), spec, smooth, false /* do not cache groups */);
-            }
-        }
-    }
-#endif
-
     // If the material is part of one or more groups; cache all other
     // materials within the same group(s).
     DENG2_FOR_EACH_CONST(Groups, i, d->groups)
@@ -679,18 +642,6 @@ void Materials::ticker(timespan_t time)
     {
         Material_Ticker(*i, time);
     }
-
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-#ifdef __CLIENT__
-    // Animations will only progress when the game is not paused.
-    if(clientPaused) return;
-#endif
-
-    if(DD_IsSharpTick())
-    {
-        d->animateAllGroups();
-    }
-#endif
 }
 
 MaterialSnapshot const &Materials::prepare(MaterialVariant &variant,
@@ -770,40 +721,6 @@ void Materials::clearAllGroups()
     d->groups.clear();
 }
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-int Materials::newAnimGroup(int flags)
-{
-    // Allocating one by one is inefficient, but it doesn't really matter.
-    // The group id is (index + 1)
-    int groupId = d->animGroups.count() + 1;
-    d->animGroups.push_back(MaterialAnim(groupId, flags));
-    return groupId;
-}
-
-void Materials::clearAllAnimGroups()
-{
-    d->animGroups.clear();
-}
-
-Materials::AnimGroups const &Materials::allAnimGroups() const
-{
-    return d->animGroups;
-}
-
-MaterialAnim &Materials::animGroup(int number) const
-{
-    number -= 1; // 1-based index.
-    if(number >= 0 && number < d->animGroups.count())
-    {
-        return d->animGroups[number];
-    }
-
-    /// @throw UnknownAnimGroupError An unknown scheme was referenced.
-    throw UnknownAnimGroupError("Materials::animGroup", QString("Invalid anim group number #%1, valid range [0..%2)")
-                                                            .arg(number).arg(d->animGroups.count()));
-}
-#endif
-
 void Materials::resetAllMaterialAnimations()
 {
     DENG2_FOR_EACH(MaterialList, i, d->materials)
@@ -814,37 +731,11 @@ void Materials::resetAllMaterialAnimations()
             (*k)->resetAnim();
         }
     }
-
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    DENG2_FOR_EACH(AnimGroups, i, d->animGroups)
-    {
-        i->reset();
-    }
-
-    // This'll get every group started on the first step.
-    d->animateAllGroups();
-#endif
 }
 
 static void printVariantInfo(MaterialVariant &variant, int variantIdx)
 {
     Con_Printf("Variant #%i: Spec:%p\n", variantIdx, (void *) &variant.spec());
-
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    // Print translation info:
-    if(Material_HasTranslation(&variant.generalCase()))
-    {
-        MaterialVariant *cur  = variant.translationCurrent();
-        MaterialVariant *next = variant.translationNext();
-        float inter = variant.translationPoint();
-
-        QByteArray curPath  = Material_Manifest(&cur->generalCase()).composeUri().asText().toUtf8();
-        QByteArray nextPath = Material_Manifest(&next->generalCase()).composeUri().asText().toUtf8();
-
-        Con_Printf("  Translation: Current:\"%s\" Next:\"%s\" Inter:%f\n",
-                   curPath.constData(), nextPath.constData(), inter);
-    }
-#endif
 
     // Print layer state info:
     int const layerCount = Material_LayerCount(&variant.generalCase());

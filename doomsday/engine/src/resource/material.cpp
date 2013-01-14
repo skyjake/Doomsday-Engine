@@ -55,11 +55,6 @@ struct material_s
     /// @see materialFlags
     short flags;
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    /// @c true if belongs to some animgroup.
-    bool inAnimGroup;
-#endif
-
     /// Detail texture layer & properties.
     de::Texture *detailTex;
     float detailScale;
@@ -82,9 +77,6 @@ struct material_s
                Size2Raw &_dimensions, material_env_class_t _envClass)
         : def(_def), envClass(_envClass), manifestId(0),
           dimensions(Size2_NewFromRaw(&_dimensions)), flags(_flags),
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-          inAnimGroup(false),
-#endif
           detailTex(0), detailScale(0), detailStrength(0),
           shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0),
           prepared(0)
@@ -117,160 +109,6 @@ struct material_s
         }
     }
 };
-
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-
-namespace de {
-
-MaterialAnim::MaterialAnim(int _id, int _flags)
-    : id_(_id), flags_(_flags),
-      index(0), maxTimer(0), timer(0)
-{}
-
-int MaterialAnim::id() const
-{
-    return id_;
-}
-
-int MaterialAnim::flags() const
-{
-    return flags_;
-}
-
-int MaterialAnim::frameCount() const
-{
-    return frames.count();
-}
-
-MaterialAnim::Frame &MaterialAnim::frame(int number)
-{
-    if(number < 0 || number >= frameCount())
-    {
-        /// @throw InvalidFrameError Attempt to access an invalid frame.
-        throw InvalidFrameError("MaterialAnim::frame", QString("Invalid frame #%1, valid range [0..%2)").arg(number).arg(frameCount()));
-    }
-    return frames[number];
-}
-
-void MaterialAnim::addFrame(material_t &mat, int tics, int randomTics)
-{
-    LOG_AS("MaterialAnim::addFrame");
-
-    // Mark the material as being part of an animation group.
-    Material_SetGroupAnimated(&mat, true);
-
-    // Allocate a new frame.
-    frames.push_back(Frame(mat, tics, randomTics));
-}
-
-bool MaterialAnim::hasFrameForMaterial(material_t const &mat) const
-{
-    DENG2_FOR_EACH_CONST(Frames, i, frames)
-    {
-        if(&i->material() == &mat)
-            return true;
-    }
-    return false;
-}
-
-MaterialAnim::Frames const &MaterialAnim::allFrames() const
-{
-    return frames;
-}
-
-static void setVariantTranslation(MaterialVariant &variant, material_t *current, material_t *next)
-{
-    MaterialVariantSpec const &spec = variant.spec();
-    MaterialVariant *currentV, *nextV;
-
-    currentV = Material_ChooseVariant(current, spec, false, true/*create if necessary*/);
-    nextV    = Material_ChooseVariant(next,    spec, false, true/*create if necessary*/);
-    variant.setTranslation(currentV, nextV);
-}
-
-void MaterialAnim::animate()
-{
-    if(frames.isEmpty()) return;
-
-    if(--timer <= 0)
-    {
-        // Advance to next frame.
-        index = (index + 1) % frames.count();
-        Frame const &nextFrame = frames[index];
-        int newTimer = nextFrame.tics();
-
-        if(nextFrame.randomTics())
-        {
-            newTimer += int(RNG_RandByte()) % (nextFrame.randomTics() + 1);
-        }
-        timer = maxTimer = newTimer;
-
-        // Update translations.
-        for(int i = 0; i < frames.count(); ++i)
-        {
-            material_t *current = &frames[(index + i    ) % frames.count()].material();
-            material_t *next    = &frames[(index + i + 1) % frames.count()].material();
-
-            Material::Variants const &variants = Material_Variants(&frames[i].material());
-            DENG2_FOR_EACH_CONST(Material::Variants, k, variants)
-            {
-                setVariantTranslation(**k, current, next);
-            }
-
-            // Surfaces using this material may need to be updated.
-            R_UpdateMapSurfacesOnMaterialChange(&frames[i].material());
-
-            // Just animate the first in the sequence?
-            if(flags_ & AGF_FIRST_ONLY) break;
-        }
-        return;
-    }
-
-    // Update the interpolation point of animated group members.
-    DENG2_FOR_EACH_CONST(Frames, i, frames)
-    {
-        /*ded_material_t *def = Material_Definition(mat);
-        if(def && def->layers[0].stageCount.num > 1)
-        {
-            de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture)
-            if(texUri && Textures::resolveUri(*texUri))
-                continue; // Animated elsewhere.
-        }*/
-
-        float interp;
-        if(flags_ & AGF_SMOOTH)
-        {
-            interp = 1 - timer / float( maxTimer );
-        }
-        else
-        {
-            interp = 0;
-        }
-
-        Material::Variants const &variants = Material_Variants(&i->material());
-        DENG2_FOR_EACH_CONST(Material::Variants, k, variants)
-        {
-            (*k)->setTranslationPoint(interp);
-        }
-
-        // Just animate the first in the sequence?
-        if(flags_ & AGF_FIRST_ONLY) break;
-    }
-}
-
-void MaterialAnim::reset()
-{
-    if(frames.isEmpty()) return;
-
-    timer = 0;
-    maxTimer = 1;
-
-    // The animation should restart from the first step using the correct timings.
-    index = frames.count() - 1;
-}
-
-} // namespace de
-#endif // LIBDENG_OLD_MATERIAL_ANIM_METHOD
 
 using namespace de;
 
@@ -425,19 +263,14 @@ void Material_SetFlags(material_t *mat, short flags)
 
 boolean Material_IsAnimated(material_t const *mat)
 {
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    if(Material_IsGroupAnimated(mat)) return true;
-#endif
+    // Materials cease animation once they are no longer valid.
+    if(!Material_IsValid(mat)) return false;
 
-    // Perhaps stage animated?
-    if(mat->def)
+    int const layerCount = Material_LayerCount(mat);
+    for(int i = 0; i < layerCount; ++i)
     {
-        int const layerCount = Material_LayerCount(mat);
-        for(int i = 0; i < layerCount; ++i)
-        {
-            ded_material_layer_t const &layer = mat->def->layers[i];
-            if(layer.stageCount.num > 1) return true;
-        }
+        ded_material_layer_t const &layer = mat->def->layers[i];
+        if(layer.stageCount.num > 1) return true;
     }
     return false; // Not at all.
 }
@@ -479,47 +312,6 @@ int Material_LayerCount(material_t const *mat)
     DENG2_UNUSED(mat);
     return 1;
 }
-
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-boolean Material_IsGroupAnimated(material_t const *mat)
-{
-    DENG2_ASSERT(mat);
-    return boolean( mat->inAnimGroup );
-}
-
-boolean Material_HasTranslation(material_t const *mat)
-{
-    DENG2_ASSERT(mat);
-    /// @todo Separate meanings.
-    return Material_IsGroupAnimated(mat);
-}
-
-de::MaterialAnim &Material_AnimGroup(material_t *mat)
-{
-    if(Material_IsGroupAnimated(mat))
-    {
-        Materials::AnimGroups const &allAnims = App_Materials()->allAnimGroups();
-        DENG2_FOR_EACH_CONST(Materials::AnimGroups, i, allAnims)
-        {
-            MaterialAnim &anim = const_cast<MaterialAnim &>(*i);
-            // Is this material in this animation?
-            if(!anim.hasFrameForMaterial(*mat)) continue;
-
-            return anim;
-        }
-    }
-
-    /// @throw Material::NoAnimGroupError The material is not group-animated.
-    throw Material::NoAnimGroupError("Material_AnimGroup", QString("Material [%1] is not group-animated")
-                                                               .arg(de::dintptr(mat)));
-}
-
-void Material_SetGroupAnimated(material_t *mat, boolean yes)
-{
-    DENG2_ASSERT(mat);
-    mat->inAnimGroup = CPP_BOOL(yes);
-}
-#endif
 
 byte Material_Prepared(material_t const *mat)
 {
@@ -678,9 +470,7 @@ MaterialVariant *Material_ChooseVariant(material_t *mat,
     MaterialVariantSpec const &spec, bool smoothed, bool canCreate)
 {
     DENG_ASSERT(mat);
-#ifndef LIBDENG_OLD_MATERIAL_ANIM_METHOD
     DENG_UNUSED(smoothed);
-#endif
 
     MaterialVariant *variant = 0;
     DENG2_FOR_EACH_CONST(Material::Variants, i, mat->variants)
@@ -702,7 +492,7 @@ MaterialVariant *Material_ChooseVariant(material_t *mat,
         mat->variants.push_back(variant);
     }
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
+#if 0 /// @todo $revise-texture-animation
     if(smoothed)
     {
         variant = variant->translationCurrent();
@@ -727,26 +517,7 @@ void Material_ClearVariants(material_t *mat)
 boolean Material_HasDecorations(material_t const *mat)
 {
     DENG_ASSERT(mat);
-    if(mat->decorations.count())
-        return true;
-
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    if(Material_IsGroupAnimated(mat))
-    {
-        // If any material in this animation has decorations then this material
-        // is considered to be decorated also.
-        MaterialAnim &anim = Material_AnimGroup(mat);
-        DENG2_FOR_EACH_CONST(MaterialAnim::Frames, i, anim.allFrames())
-        {
-            material_t *otherMaterial = &i->material();
-            if(otherMaterial == mat) continue; // Do not test the same material again.
-
-            if(Material_HasDecorations(otherMaterial)) return true;
-        }
-    }
-#endif
-
-    return false;
+    return mat->decorations.count() != 0;
 }
 
 int Material_GetProperty(material_t const *mat, setargs_t *args)

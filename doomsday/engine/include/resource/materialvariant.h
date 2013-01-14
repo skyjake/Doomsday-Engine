@@ -252,31 +252,6 @@ public:
      */
     void setSnapshotPrepareFrame(int frameNum);
 
-#ifdef LIBDENG_OLD_MATERIAL_ANIM_METHOD
-    /// @return  Translated 'next' (or target) MaterialVariant if set, else this.
-    MaterialVariant *translationNext();
-
-    /// @return  Translated 'current' MaterialVariant if set, else this.
-    MaterialVariant *translationCurrent();
-
-    /// @return  Translation position [0..1]
-    float translationPoint();
-
-    /**
-     * Change the translation target for this variant.
-     *
-     * @param current  Translated 'current' MaterialVariant.
-     * @param next  Translated 'next' (or target) MaterialVariant.
-     */
-    void setTranslation(MaterialVariant *current, MaterialVariant *next);
-
-    /**
-     * Change the translation point for this variant.
-     * @param inter  Translation point.
-     */
-    void setTranslationPoint(float inter);
-#endif
-
 private:
     struct Instance;
     Instance *d;
