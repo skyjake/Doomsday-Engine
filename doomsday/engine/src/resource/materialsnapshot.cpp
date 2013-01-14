@@ -254,8 +254,11 @@ void MaterialSnapshot::Instance::updateMaterial(preparetextureresult_t result)
 }
 #endif // __CLIENT__
 
+/// @todo Implement more useful methods of interpolation. (What do we want/need here?)
 void MaterialSnapshot::Instance::takeSnapshot()
 {
+#define LERP(start, end, pos) (end * pos + start * (1 - pos))
+
     material_t *mat = &material->generalCase();
     ded_material_t const *def = Material_Definition(mat);
     MaterialVariantSpec const &spec = material->spec();
@@ -381,9 +384,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
         }
         else // Interpolate.
         {
-            /// @todo Implement a more useful method of interpolation (but what? what do we want/need here?).
-            offset.setX(lsCur->texOrigin[0] * (1 - l.inter) + lsNext->texOrigin[0] * l.inter);
-            offset.setY(lsCur->texOrigin[1] * (1 - l.inter) + lsNext->texOrigin[1] * l.inter);
+            offset.setX(LERP(lsCur->texOrigin[0], lsNext->texOrigin[0], l.inter));
+            offset.setY(LERP(lsCur->texOrigin[1], lsNext->texOrigin[1], l.inter));
         }
 
         stored.writeTexUnit(MTU_PRIMARY, tex, BM_NORMAL,
@@ -443,27 +445,46 @@ void MaterialSnapshot::Instance::takeSnapshot()
         MaterialVariant::DecorationState const &l = material->decoration(idx);
         ded_decorlight_t const *lDef = (*it)->def;
         ded_decorlight_stage_t const *lsCur  = &lDef->stages[l.stage];
-        //ded_decorlight_stage_t const *lsNext = &lDef->stages[(l.stage + 1) % lDef->stageCount.num];
+        ded_decorlight_stage_t const *lsNext = &lDef->stages[(l.stage + 1) % lDef->stageCount.num];
 
         MaterialSnapshot::Decoration &decor = stored.decorations[idx];
-        std::memcpy(decor.pos, lsCur->pos, sizeof(decor.pos));
-        decor.elevation = lsCur->elevation;
-        std::memcpy(decor.color, lsCur->color, sizeof(decor.color));
-        decor.radius = lsCur->radius;
-        decor.haloRadius = lsCur->haloRadius;
-        std::memcpy(decor.lightLevels, lsCur->lightLevels, sizeof(decor.lightLevels));
+
+        if(l.inter == 0)
+        {
+            decor.pos[0]         = lsCur->pos[0];
+            decor.pos[1]         = lsCur->pos[1];
+            decor.elevation      = lsCur->elevation;
+            decor.radius         = lsCur->radius;
+            decor.haloRadius     = lsCur->haloRadius;
+            decor.lightLevels[0] = lsCur->lightLevels[0];
+            decor.lightLevels[1] = lsCur->lightLevels[1];
+
+            std::memcpy(decor.color, lsCur->color, sizeof(decor.color));
+        }
+        else // Interpolate.
+        {
+            decor.pos[0]         = LERP(lsCur->pos[0], lsNext->pos[0], l.inter);
+            decor.pos[1]         = LERP(lsCur->pos[1], lsNext->pos[1], l.inter);
+            decor.elevation      = LERP(lsCur->elevation, lsNext->elevation, l.inter);
+            decor.radius         = LERP(lsCur->radius, lsNext->radius, l.inter);
+            decor.haloRadius     = LERP(lsCur->haloRadius, lsNext->haloRadius, l.inter);
+            decor.lightLevels[0] = LERP(lsCur->lightLevels[0], lsNext->lightLevels[0], l.inter);
+            decor.lightLevels[1] = LERP(lsCur->lightLevels[1], lsNext->lightLevels[1], l.inter);
+
+            for(int c = 0; c < 3; ++c)
+            {
+                decor.color[c] = LERP(lsCur->color[c], lsNext->color[c], l.inter);
+            }
+        }
 
         decor.tex      = GL_PrepareLightmap(lsCur->sides);
         decor.ceilTex  = GL_PrepareLightmap(lsCur->up);
         decor.floorTex = GL_PrepareLightmap(lsCur->down);
-
-        de::Uri const *flareUri = reinterpret_cast<de::Uri const *>(lsCur->flare);
-        if((!flareUri || flareUri->isEmpty()) || flareUri->path() != Path("-"))
-        {
-            decor.flareTex = GL_PrepareFlareTexture(lsCur->flare, lsCur->flareTexture);
-        }
+        decor.flareTex = GL_PrepareFlareTexture(lsCur->flare, lsCur->flareTexture);
     }
-#endif
+#endif // __CLIENT__
+
+#undef LERP
 }
 
 void MaterialSnapshot::update()
