@@ -90,7 +90,7 @@ LPCWSTR ToWideString(const char* str)
 
     // Allocate the right amount of memory.
     int bufSize = wideChars * sizeof(wchar_t) + 1;
-    convBuf = realloc(convBuf, bufSize);
+    convBuf = (LPWSTR) M_Realloc(convBuf, bufSize);
     memset(convBuf, 0, bufSize);
 
     MultiByteToWideChar(CP_ACP, 0, str, -1, convBuf, wideChars);
@@ -104,7 +104,7 @@ LPCSTR ToAnsiString(const wchar_t* wstr)
     int utfBytes = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, 0, 0, 0, 0);
 
     // Allocate the right amount of memory.
-    utf8ConvBuf = realloc(utf8ConvBuf, utfBytes);
+    utf8ConvBuf = (LPSTR) M_Realloc(utf8ConvBuf, utfBytes);
 
     WideCharToMultiByte(CP_UTF8, 0, wstr, -1, utf8ConvBuf, utfBytes, 0, 0);
 
@@ -134,7 +134,7 @@ const char* DD_Win32_GetLastErrorMessage(void)
     if(!buffer || (size_t)(lpMsgBufLen+1+8) > currentBufferSize)
     {
         currentBufferSize = (size_t)(lpMsgBufLen+1+8);
-        buffer = M_Realloc(buffer, currentBufferSize);
+        buffer = (char *) M_Realloc(buffer, currentBufferSize);
     }
 
     dd_snprintf(buffer, currentBufferSize, "#%-5d: ", (int)dw);
@@ -157,11 +157,6 @@ static BOOL initDGL(void)
 #else
     return TRUE;
 #endif
-}
-
-static BOOL initApplication(application_t* app)
-{
-    return TRUE;
 }
 
 static void determineGlobalPaths(application_t* app)
@@ -431,8 +426,8 @@ void DD_Shutdown(void)
     Library_Shutdown();
 
 #ifdef UNICODE
-    free(convBuf); convBuf = 0;
-    free(utf8ConvBuf); utf8ConvBuf = 0;
+    M_Free(convBuf); convBuf = 0;
+    M_Free(utf8ConvBuf); utf8ConvBuf = 0;
 #endif
 
     // No more use of COM beyond, this point.

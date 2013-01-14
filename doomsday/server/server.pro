@@ -308,9 +308,9 @@ win32 {
     INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
 
     SOURCES += \
-        $$SRC/src/windows/dd_winit.c \
+        $$SRC/src/windows/dd_winit.cpp \
         $$SRC/src/windows/directinput.cpp \
-        $$SRC/src/windows/sys_console.c
+        $$SRC/src/windows/sys_console.cpp
 }
 else:unix {
     # Common Unix (including Mac OS X).

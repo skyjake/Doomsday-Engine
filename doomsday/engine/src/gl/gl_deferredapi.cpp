@@ -21,6 +21,8 @@
 
 #define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
+#include "de_platform.h"
+
 #include <de/concurrency.h>
 #include "gl/gl_defer.h"
 

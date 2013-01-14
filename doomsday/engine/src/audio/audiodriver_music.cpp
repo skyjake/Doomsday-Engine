@@ -21,6 +21,7 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
 #include <de/memory.h>
 
 #include "de_filesys.h"

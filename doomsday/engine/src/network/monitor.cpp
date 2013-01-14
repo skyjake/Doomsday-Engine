@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_console.h"
 #include "de_platform.h"
+#include "de_console.h"
 
 #if _DEBUG
 

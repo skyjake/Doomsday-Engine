@@ -21,6 +21,7 @@
 
 #include <de/memoryzone.h>
 
+#include "de_platform.h"
 #include "de_console.h"
 #include "dd_main.h"
 #include "map/generators.h"

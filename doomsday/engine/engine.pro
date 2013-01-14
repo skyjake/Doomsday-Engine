@@ -383,9 +383,9 @@ win32 {
     INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
 
     SOURCES += \
-        src/windows/dd_winit.c \
+        src/windows/dd_winit.cpp \
         src/windows/directinput.cpp \
-        src/windows/sys_console.c \
+        src/windows/sys_console.cpp \
         src/windows/joystick_win32.cpp \
         src/windows/mouse_win32.cpp
 
@@ -645,7 +645,7 @@ SOURCES += \
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h
-    SOURCES += src/audio/sys_audiod_sdlmixer.c
+    SOURCES += src/audio/sys_audiod_sdlmixer.cpp
 }
 
 OTHER_FILES += \

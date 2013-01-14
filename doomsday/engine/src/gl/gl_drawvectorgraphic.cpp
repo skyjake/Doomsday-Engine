@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <de/memory.h>
 
+#include "de_platform.h"
 #include "dd_share.h"
 #include "con_main.h"
 #include "gl/svg.h"

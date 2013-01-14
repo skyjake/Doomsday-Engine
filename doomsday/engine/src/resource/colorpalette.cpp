@@ -18,6 +18,7 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
 #include "de_console.h"
 #include "dd_def.h"
 #include "m_misc.h" // for M_ReadBits

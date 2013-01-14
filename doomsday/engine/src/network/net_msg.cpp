@@ -35,6 +35,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "de_platform.h"
 #include "de_network.h"
 #include "de_console.h"
 

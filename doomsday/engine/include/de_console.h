@@ -29,6 +29,10 @@
 #ifndef LIBDENG_CONSOLE
 #define LIBDENG_CONSOLE
 
+#ifdef WIN32
+#  include "de_platform.h"
+#endif
+
 #include "con_main.h"
 #include "con_config.h"
 #include "con_bar.h"

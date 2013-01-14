@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <de/memory.h>
 
+#include "de_platform.h"
 #include "dd_types.h"
 #include "dd_share.h"
 #include "de_console.h"
@@ -192,9 +193,9 @@ static __inline int Diff(uint32_t c1, uint32_t c2)
     YUV1 = ABGR8888toYUV888(c1);
     YUV2 = ABGR8888toYUV888(c2);
     return ( ((ABGR8888_COMP(3, c1) != 0) != ((ABGR8888_COMP(3, c2) != 0))) ||
-             (abs((YUV1 & YUV888_Ymask) - (YUV2 & YUV888_Ymask)) > ((trY & (int)0xFF) << 16)) ||
-             (abs((YUV1 & YUV888_Umask) - (YUV2 & YUV888_Umask)) > ((trU & (int)0xFF) << 8)) ||
-             (abs((YUV1 & YUV888_Vmask) - (YUV2 & YUV888_Vmask)) > ((trV & (int)0xFF)) ));
+             (ABS(int(YUV1 & YUV888_Ymask) - int(YUV2 & YUV888_Ymask)) > ((trY & (int)0xFF) << 16)) ||
+             (ABS(int(YUV1 & YUV888_Umask) - int(YUV2 & YUV888_Umask)) > ((trU & (int)0xFF) << 8)) ||
+             (ABS(int(YUV1 & YUV888_Vmask) - int(YUV2 & YUV888_Vmask)) > ((trV & (int)0xFF)) ));
 }
 
 static __inline void Transl(uint8_t* pc, uint32_t c)
@@ -360,9 +361,9 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
                 {
                     YUV2 = ABGR8888toYUV888(w[k]);
                     if(((ABGR8888_COMP(3, w[5]) != 0) != (ABGR8888_COMP(3, w[k]) != 0)) ||
-                       (abs((YUV1 & YUV888_Ymask) - (YUV2 & YUV888_Ymask)) > ((trY & (int)0xFF) << 16)) ||
-                       (abs((YUV1 & YUV888_Umask) - (YUV2 & YUV888_Umask)) > ((trU & (int)0xFF) << 8)) ||
-                       (abs((YUV1 & YUV888_Vmask) - (YUV2 & YUV888_Vmask)) > ((trV & (int)0xFF) )) )
+                       (ABS(int(YUV1 & YUV888_Ymask) - int(YUV2 & YUV888_Ymask)) > ((trY & (int)0xFF) << 16)) ||
+                       (ABS(int(YUV1 & YUV888_Umask) - int(YUV2 & YUV888_Umask)) > ((trU & (int)0xFF) << 8)) ||
+                       (ABS(int(YUV1 & YUV888_Vmask) - int(YUV2 & YUV888_Vmask)) > ((trV & (int)0xFF) )) )
                         pattern |= flag;
                 }
                 flag <<= 1;

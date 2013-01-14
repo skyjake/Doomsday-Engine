@@ -24,16 +24,14 @@
 
 #define DENG_NO_API_MACROS_PLUGIN
 
-#ifdef UNIX
-#  include "library.h"
-#endif
+#include "de_platform.h"
 
 #include "api_plugin.h"
-#include "de_platform.h"
 #include "de_console.h"
 #include "de_defs.h"
 #include "dd_main.h"
 #include "dd_pinit.h"
+#include "library.h"
 
 #include "updater/downloaddialog.h"
 

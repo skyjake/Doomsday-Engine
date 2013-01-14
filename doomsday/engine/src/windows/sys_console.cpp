@@ -31,6 +31,8 @@
  * sys_console.c: Std input handling - Win32 specific
  */
 
+#include <de/memory.h>
+
 #include "de_platform.h"
 #include "de_console.h"
 #include "de_misc.h"
@@ -384,7 +386,7 @@ Window* Sys_ConInit(const char* title)
     {
         win->hWnd = NULL;
         ok = false;
-        consoleShutdown(win);
+        consoleShutdown();
         return 0;
     }
 
@@ -411,7 +413,7 @@ static void initVKeyToDDKeyTlat(void)
     if(keymap)
         return; // Already been here.
 
-    keymap = M_Calloc(sizeof(byte) * 256);
+    keymap = (byte *) M_Calloc(sizeof(byte) * 256);
 
     keymap[VK_BACK] = DDKEY_BACKSPACE; // Backspace
     keymap[VK_TAB ] = DDKEY_TAB;
@@ -558,7 +560,7 @@ static void Sys_ConInputInit(void)
     initVKeyToDDKeyTlat();
 
     // And the down key array;
-    vKeyDown = M_Calloc(sizeof(byte) * 256);
+    vKeyDown = (byte *) M_Calloc(sizeof(byte) * 256);
 
     hcInput = GetStdHandle(STD_INPUT_HANDLE);
     if(hcInput == INVALID_HANDLE_VALUE)
@@ -597,7 +599,7 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
         min = MIN_OF((DWORD)bufsize, num);
         if(min > inputBufsize)
         {
-            inputBuf = M_Malloc(sizeof(INPUT_RECORD) * min);
+            inputBuf = (INPUT_RECORD *) M_Malloc(sizeof(INPUT_RECORD) * min);
             inputBufsize = min;
         }
 

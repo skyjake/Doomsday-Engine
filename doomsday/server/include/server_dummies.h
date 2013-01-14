@@ -44,7 +44,7 @@ DENG_EXTERN_C boolean ClMobj_IsValid(struct mobj_s* mo);
 DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum);
 */
 
-DENG_EXTERN_C void GameMap_ClMobjReset(GameMap* map);
+void GameMap_ClMobjReset(GameMap* map);
 
 DENG_EXTERN_C void Con_TransitionRegister();
 DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);

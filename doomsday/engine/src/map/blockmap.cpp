@@ -24,6 +24,7 @@
 #include <de/memoryzone.h>
 #include <de/vector1.h>
 
+#include "de_platform.h"
 #include "de_console.h"
 #include "dd_main.h"
 #include "gridmap.h"

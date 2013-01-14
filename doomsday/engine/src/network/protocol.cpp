@@ -21,6 +21,7 @@
 #include <de/memoryzone.h>
 #include <de/c_wrapper.h>
 
+#include "de_platform.h"
 #include "de_console.h"
 #include "de_misc.h"
 

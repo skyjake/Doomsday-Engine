@@ -178,7 +178,7 @@ KdTreeNode *KdTreeNode_AddChild(KdTreeNode *kdn, double distance, int vertical, 
 
     if(!vertical)
     {
-        int division = kdn->aaBox.minX + 0.5 + distance * (kdn->aaBox.maxX - kdn->aaBox.minX);
+        int division = (int) (kdn->aaBox.minX + 0.5 + distance * (kdn->aaBox.maxX - kdn->aaBox.minX));
 
         sub.minX = (left? division : kdn->aaBox.minX);
         sub.minY = kdn->aaBox.minY;
@@ -188,7 +188,7 @@ KdTreeNode *KdTreeNode_AddChild(KdTreeNode *kdn, double distance, int vertical, 
     }
     else
     {
-        int division = kdn->aaBox.minY + 0.5 + distance * (kdn->aaBox.maxY - kdn->aaBox.minY);
+        int division = (int) (kdn->aaBox.minY + 0.5 + distance * (kdn->aaBox.maxY - kdn->aaBox.minY));
 
         sub.minX = kdn->aaBox.minX;
         sub.minY = (left? division : kdn->aaBox.minY);

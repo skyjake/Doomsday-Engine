@@ -510,7 +510,8 @@ inputdevhat_t* I_GetHatByID(inputdev_t* device, uint id)
 
 boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
 {
-    char name[30], *ptr;
+    char name[30];
+    char const *ptr;
     inputdev_t* device;
 
     ptr = strchr(str, '-');

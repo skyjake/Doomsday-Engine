@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "de_platform.h"
 #include "con_main.h"
 #include "api_filesys.h"
 #include "filesys/fs_util.h"

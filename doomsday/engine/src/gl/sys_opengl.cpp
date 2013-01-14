@@ -33,12 +33,14 @@
 
 #include "gl/sys_opengl.h"
 
+#include <de/libdeng2.h>
+
 // MACROS ------------------------------------------------------------------
 
 #ifdef WIN32
-#   define GETPROC(x)   x = (void*)wglGetProcAddress(#x)
+#   define GETPROC(Type, x)   x = de::function_cast<void *, Type>(wglGetProcAddress(#x))
 #elif defined(UNIX)
-#   define GETPROC(x)   x = SDL_GL_GetProcAddress(#x)
+#   define GETPROC(Type, x)   x = SDL_GL_GetProcAddress(#x)
 #endif
 
 // TYPES -------------------------------------------------------------------
@@ -109,8 +111,8 @@ static void initialize(void)
     if(0 != (GL_state.extensions.lockArray = query("GL_EXT_compiled_vertex_array")))
     {
 #ifdef WIN32
-        GETPROC(glLockArraysEXT);
-        GETPROC(glUnlockArraysEXT);
+        GETPROC(PFNGLLOCKARRAYSEXTPROC, glLockArraysEXT);
+        GETPROC(PFNGLUNLOCKARRAYSEXTPROC, glUnlockArraysEXT);
         if(NULL == glLockArraysEXT || NULL == glUnlockArraysEXT)
             GL_state.features.elementArrays = false;
 #endif
@@ -132,7 +134,7 @@ static void initialize(void)
     if(0 != (GL_state.extensions.blendSub = query("GL_EXT_blend_subtract")))
     {
 #ifdef WIN32
-        GETPROC(glBlendEquationEXT);
+        GETPROC(PFNGLBLENDEQUATIONEXTPROC, glBlendEquationEXT);
         if(NULL == glBlendEquationEXT)
             GL_state.features.blendSubtract = false;
 #endif
@@ -168,10 +170,10 @@ static void initialize(void)
         GL_state.features.texCompression = false;
 
 #ifdef WIN32
-    GETPROC(glActiveTexture);
-    GETPROC(glClientActiveTexture);
-    GETPROC(glMultiTexCoord2f);
-    GETPROC(glMultiTexCoord2fv);
+    GETPROC(PFNGLACTIVETEXTUREPROC, glActiveTexture);
+    GETPROC(PFNGLCLIENTACTIVETEXTUREPROC, glClientActiveTexture);
+    GETPROC(PFNGLMULTITEXCOORD2FPROC, glMultiTexCoord2f);
+    GETPROC(PFNGLMULTITEXCOORD2FVPROC, glMultiTexCoord2fv);
 #endif
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &GL_state.maxTexUnits);
 
@@ -183,7 +185,7 @@ static void initialize(void)
 #ifdef WIN32
     if(0 != (GL_state.extensions.wglSwapIntervalEXT = query("WGL_EXT_swap_control")))
     {
-        GETPROC(wglSwapIntervalEXT);
+        GETPROC(PFNWGLSWAPINTERVALEXTPROC, wglSwapIntervalEXT);
     }
     if(0 == GL_state.extensions.wglSwapIntervalEXT || NULL == wglSwapIntervalEXT)
         GL_state.features.vsync = false;

@@ -1,4 +1,4 @@
-/**\file sys_audiod_sdlmixer.c
+/**\file sys_audiod_sdlmixer.cpp
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -89,13 +89,13 @@ int         DS_SDLMixer_Music_PlayFile(const char* fileName, int looped);
 
 boolean sdlInitOk = false;
 
-audiodriver_t audiod_sdlmixer = {
+DENG_EXTERN_C audiodriver_t audiod_sdlmixer = {
     DS_SDLMixerInit,
     DS_SDLMixerShutdown,
     DS_SDLMixerEvent
 };
 
-audiointerface_sfx_t audiod_sdlmixer_sfx = { {
+DENG_EXTERN_C audiointerface_sfx_t audiod_sdlmixer_sfx = { {
     DS_SDLMixer_SFX_Init,
     DS_SDLMixer_SFX_CreateBuffer,
     DS_SDLMixer_SFX_DestroyBuffer,
@@ -110,7 +110,7 @@ audiointerface_sfx_t audiod_sdlmixer_sfx = { {
     DS_SDLMixer_SFX_Listenerv
 } };
 
-audiointerface_music_t audiod_sdlmixer_music = { {
+DENG_EXTERN_C audiointerface_music_t audiod_sdlmixer_music = { {
     DS_SDLMixer_Music_Init,
     NULL,
     DS_SDLMixer_Music_Update,
@@ -226,7 +226,7 @@ void DS_SDLMixerShutdown(void)
         return;
 
     if(usedChannels)
-        free(usedChannels);
+        M_Free(usedChannels);
 
     if(lastMusic)
     {
@@ -257,7 +257,7 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
     sfxbuffer_t*        buf;
 
     // Create the buffer.
-    buf = Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
+    buf = (sfxbuffer_t *) Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
 
     buf->bytes = bits / 8;
     buf->rate = rate;
@@ -269,7 +269,7 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
     if(-1 == (buf->cursor = getFreeChannel()))
     {
         buf->cursor = numChannels++;
-        usedChannels = realloc(usedChannels, sizeof(usedChannels[0]) * numChannels);
+        usedChannels = (ddboolean_t *) M_Realloc(usedChannels, sizeof(usedChannels[0]) * numChannels);
 
         // Make sure we have enough channels allocated.
         Mix_AllocateChannels(numChannels);
@@ -309,7 +309,7 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
         // Free the existing data.
         buf->sample = NULL;
-        Mix_FreeChunk(buf->ptr);
+        Mix_FreeChunk((Mix_Chunk *) buf->ptr);
     }
 
     size = 8 + 4 + 8 + 16 + 8 + sample->size;
@@ -319,7 +319,7 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     }
     else
     {
-        conv = malloc(size);
+        conv = (char *) M_Malloc(size);
     }
 
     // Transfer the sample to SDL_mixer by converting it to WAVE format.
@@ -359,7 +359,7 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
     if(conv != localBuf)
     {
-        free(conv);
+        M_Free(conv);
     }
 
     buf->sample = sample;
@@ -377,7 +377,7 @@ void DS_SDLMixer_SFX_Reset(sfxbuffer_t* buf)
     buf->sample = NULL;
 
     // Unallocate the resources of the source.
-    Mix_FreeChunk(buf->ptr);
+    Mix_FreeChunk((Mix_Chunk *) buf->ptr);
     buf->ptr = NULL;
 }
 
@@ -389,7 +389,7 @@ void DS_SDLMixer_SFX_Play(sfxbuffer_t* buf)
 
     // Update the volume at which the sample will be played.
     Mix_Volume(buf->cursor, buf->written);
-    Mix_PlayChannel(buf->cursor, buf->ptr, (buf->flags & SFXBF_REPEAT ? -1 : 0));
+    Mix_PlayChannel(buf->cursor, (Mix_Chunk *) buf->ptr, (buf->flags & SFXBF_REPEAT ? -1 : 0));
 
     // Calculate the end time (milliseconds).
     buf->endTime = Timer_RealMilliseconds() + getBufLength(buf);
@@ -514,7 +514,7 @@ int DS_SDLMixer_Music_Get(int prop, void* value)
     switch(prop)
     {
     case MUSIP_ID:
-        strcpy(value, "SDLMixer::Music");
+        strcpy((char *) value, "SDLMixer::Music");
         break;
 
     case MUSIP_PLAYING:

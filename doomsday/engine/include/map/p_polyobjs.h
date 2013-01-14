@@ -41,11 +41,11 @@ void P_PolyobjChanged(Polyobj* po);
  *
  * @return  Found Polyobj instance, or @c NULL.
  */
-Polyobj* P_PolyobjByBase(void* ddMobjBase);
+//Polyobj* P_PolyobjByBase(void* ddMobjBase);
 
 /**
  * Translate the origin of @a polyobj in the map coordinate space.
  */
-boolean P_PolyobjMove(Polyobj* polyobj, coord_t xy[]);
+//boolean P_PolyobjMove(Polyobj* polyobj, coord_t xy[]);
 
 #endif /// LIBDENG_P_POLYOBJS_H

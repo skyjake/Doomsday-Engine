@@ -26,6 +26,7 @@
 #include <math.h>
 #include <ctype.h>
 
+#include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
 

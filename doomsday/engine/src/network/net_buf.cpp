@@ -27,6 +27,7 @@
  * Network Message Handling and Buffering
  */
 
+#include "de_platform.h"
 #include "de_system.h"
 #include "de_network.h"
 #include "de_console.h"
