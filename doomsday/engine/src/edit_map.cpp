@@ -83,14 +83,11 @@ static Vertex* createVertex(void)
 
 static LineDef* createLine(void)
 {
-    LineDef* line = (LineDef*) M_Calloc(sizeof(*line));
-    line->header.type = DMU_LINEDEF;
+    LineDef* line = new LineDef;
 
-    e_map->lineDefs = (LineDef**) M_Realloc(e_map->lineDefs, sizeof(line) * (++e_map->numLineDefs + 1));
-    e_map->lineDefs[e_map->numLineDefs-1] = line;
-    e_map->lineDefs[e_map->numLineDefs] = NULL;
+    e_map->lineDefs.push_back(line);
 
-    line->origIndex = e_map->numLineDefs; // 1-based index, 0 = NIL.
+    line->origIndex = e_map->lineDefs.size(); // 1-based index, 0 = NIL.
     return line;
 }
 
@@ -148,19 +145,11 @@ static void destroyEditablePolyObjs(EditMap* map)
 
 static void destroyEditableLineDefs(EditMap* map)
 {
-    if(map->lineDefs)
+    DENG2_FOR_EACH(EditMap::LineDefs, s, map->lineDefs)
     {
-        uint i;
-        for(i = 0; i < map->numLineDefs; ++i)
-        {
-            LineDef* line = map->lineDefs[i];
-            M_Free(line);
-        }
-
-        M_Free(map->lineDefs);
+        delete *s;
     }
-    map->lineDefs = NULL;
-    map->numLineDefs = 0;
+    map->lineDefs.clear();
 }
 
 static void destroyEditableSideDefs(EditMap* map)
@@ -543,9 +532,9 @@ static void buildSectorLineLists(GameMap* map)
     zblockset_t* lineLinksBlockSet = ZBlockSet_New(sizeof(linelink_t), 512, PU_APPSTATIC);
     linelink_t** sectorLineLinks = (linelink_t**) M_Calloc(sizeof(linelink_t*) * map->sectorCount());
     uint totallinks = 0;
-    LineDef* li = map->lineDefs;
-    for(uint i = 0; i < map->numLineDefs; ++i, li++)
+    for(uint i = 0; i < map->lineDefCount(); ++i)
     {
+        LineDef* li = &map->lineDefs[i];
         uint secIDX;
         linelink_t* link;
 
@@ -733,7 +722,7 @@ static void finishLineDefs(GameMap* map)
 
     LOG_VERBOSE("Finalizing LineDefs...");
 
-    for(uint i = 0; i < map->numLineDefs; ++i)
+    for(uint i = 0; i < map->lineDefCount(); ++i)
     {
         LineDef* ld = &map->lineDefs[i];
         if(!ld->L_frontside.hedgeLeft) continue;
@@ -962,10 +951,10 @@ static void buildVertexOwnerRings(EditMap* map)
     DENG_ASSERT(map);
 
     // We know how many vertex line owners we need (numLineDefs * 2).
-    lineowner_t* lineOwners = (lineowner_t*) Z_Malloc(sizeof(lineowner_t) * map->numLineDefs * 2, PU_MAPSTATIC, 0);
+    lineowner_t* lineOwners = (lineowner_t*) Z_Malloc(sizeof(lineowner_t) * map->lineDefs.size() * 2, PU_MAPSTATIC, 0);
     lineowner_t* allocator = lineOwners;
 
-    for(uint i = 0; i < map->numLineDefs; ++i)
+    for(uint i = 0; i < map->lineDefs.size(); ++i)
     {
         LineDef* line = map->lineDefs[i];
 
@@ -1052,15 +1041,14 @@ static void hardenVertexOwnerRings(GameMap* dest, EditMap* src)
 
 static void hardenLinedefs(GameMap* dest, EditMap* src)
 {
-    dest->numLineDefs = src->numLineDefs;
-    dest->lineDefs = (LineDef*) Z_Calloc(dest->numLineDefs * sizeof(LineDef), PU_MAPSTATIC, 0);
+    dest->lineDefs.clearAndResize(src->lineDefs.size());
 
-    for(uint i = 0; i < dest->numLineDefs; ++i)
+    for(uint i = 0; i < dest->lineDefCount(); ++i)
     {
         LineDef* destL = &dest->lineDefs[i];
         LineDef* srcL = src->lineDefs[i];
 
-        memcpy(destL, srcL, sizeof(*destL));
+        *destL = *srcL;
 
         /// @todo We shouldn't still have lines with missing fronts but...
         destL->L_frontsidedef = (srcL->L_frontsidedef?
@@ -1566,9 +1554,9 @@ boolean MPE_End(void)
     findBounds(e_map->verticesAsArray(), e_map->vertexCount(), min, max);
 
     GameMap_InitLineDefBlockmap(gamemap, min, max);
-    for(i = 0; i < gamemap->numLineDefs; ++i)
+    for(i = 0; i < gamemap->lineDefCount(); ++i)
     {
-        GameMap_LinkLineDef(gamemap, gamemap->lineDefs + i);
+        GameMap_LinkLineDef(gamemap, &gamemap->lineDefs[i]);
     }
 
     // Mobj and Polyobj blockmaps are maintained dynamically.
@@ -1644,7 +1632,7 @@ boolean MPE_End(void)
     if(gx.SetupForMapData)
     {
         gx.SetupForMapData(DMU_VERTEX, gamemap->vertexCount());
-        gx.SetupForMapData(DMU_LINEDEF, gamemap->numLineDefs);
+        gx.SetupForMapData(DMU_LINEDEF, gamemap->lineDefCount());
         gx.SetupForMapData(DMU_SIDEDEF, gamemap->sideDefCount());
         gx.SetupForMapData(DMU_SECTOR, gamemap->sectorCount());
     }
@@ -2022,7 +2010,7 @@ uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
     uint i;
     for(i = 0; i < lineCount; ++i)
     {
-        if(lines[i] == 0 || lines[i] > e_map->numLineDefs) return 0;
+        if(lines[i] == 0 || lines[i] > e_map->lineDefs.size()) return 0;
 
         LineDef* line = e_map->lineDefs[lines[i] - 1];
         if(line->inFlags & LF_POLYOBJ) return 0;
@@ -2080,8 +2068,6 @@ boolean MPE_GameObjProperty(const char* entityName, uint elementIndex,
 
 EditMap::EditMap()
 {
-    numLineDefs = 0;
-    lineDefs = 0;
     numPolyObjs = 0;
     polyObjs = 0;
 

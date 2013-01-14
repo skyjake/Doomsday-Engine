@@ -182,16 +182,7 @@ public:
      */
     template <typename Type>
     Type symbol(String const &name, SymbolLookupMode lookup = RequiredSymbol) {
-        /**
-         * @note Casting to a pointer-to-function type: see
-         * http://www.trilithium.com/johan/2004/12/problem-with-dlsym/
-         */
-        // This is not 100% portable to all possible memory architectures; thus:
-        DENG2_ASSERT(sizeof(void *) == sizeof(Type));
-
-        union { void *original; Type target; } forcedCast;
-        forcedCast.original = address(name, lookup);
-        return forcedCast.target;
+        return function_cast<void *, Type>(address(name, lookup));
     }
 
     /**

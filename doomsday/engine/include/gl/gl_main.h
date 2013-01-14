@@ -58,7 +58,7 @@ extern "C" {
     GLint p; \
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &p); \
     Sys_GLCheckError(); \
-    assert(p == tex); \
+    assert(p == (GLint)tex); \
 }
 #else
 #  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex)

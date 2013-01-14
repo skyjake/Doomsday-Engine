@@ -66,7 +66,7 @@ typedef void (*con_textfilter_t) (char* text);
 // declared in p_maptypes.h.
 struct bspnode_s;
 //struct vertex_s;
-struct linedef_s;
+//struct linedef_s;
 struct side_s;
 struct hedge_s;
 struct bspleaf_s;

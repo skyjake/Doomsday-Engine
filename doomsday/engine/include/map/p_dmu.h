@@ -60,7 +60,7 @@ void P_InitMapUpdate(void);
  *                      caller-allocated memory area of extra data for the
  *                      dummy.
  */
-void *P_AllocDummy(int type, void *extraData);
+//void *P_AllocDummy(int type, void *extraData);
 
 /**
  * Determines the type of a dummy object. For extra safety (in a debug build)
@@ -72,30 +72,30 @@ int P_DummyType(void *dummy);
 /**
  * Frees a dummy object.
  */
-void P_FreeDummy(void *dummy);
+//void P_FreeDummy(void *dummy);
 
 /**
  * Determines if a map data object is a dummy.
  */
-boolean P_IsDummy(void *dummy);
+//boolean P_IsDummy(void *dummy);
 
 /**
  * Returns the extra data pointer of the dummy, or NULL if the object is not
  * a dummy object.
  */
-void *P_DummyExtraData(void *dummy);
+//void *P_DummyExtraData(void *dummy);
 
 /**
  * Convert pointer to index.
  */
-uint P_ToIndex(void const *ptr);
+//uint P_ToIndex(void const *ptr);
 
 /**
  * Convert DMU enum constant into a string for error/debug messages.
  */
 char const *DMU_Str(uint prop);
 
-int DMU_GetType(void const *ptr);
+//int DMU_GetType(void const *ptr);
 
 /**
  * Sets a value. Does some basic type checking so that incompatible types are

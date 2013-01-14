@@ -26,7 +26,7 @@
 #ifndef __DOOMSDAY_MAP_H__
 #define __DOOMSDAY_MAP_H__
 
-#include "dd_share.h"
+#include "aabox.h"
 #include <de/mathutil.h>
 
 #define DMT_VERTEX_ORIGIN DDVT_DOUBLE
@@ -106,16 +106,16 @@
 
 #define DMT_BSPNODE_CHILDREN DDVT_PTR
 
-// Opaque types for public use.
-struct mobj_s;
-struct linedef_s;
-struct sector_s;
-struct bspleaf_s;
-struct bspnode_s;
-struct vertex_s;
-struct sidedef_s;
-struct hedge_s;
-struct plane_s;
+/*
+#if defined __cplusplus && defined __DOOMSDAY__
+class LineDef;
+class SideDef;
+class Sector;
+class Vertex;
+#endif
+*/
+
+struct intercept_s;
 
 /**
  * Public definitions of the internal map data pointers.  These can be
@@ -127,7 +127,17 @@ struct plane_s;
  * structures is needed.
  */
 #if !defined __DOOMSDAY__ && !defined DENG_INTERNAL_DATA_ACCESS
-// Opaque pointers:
+// Opaque types for public use.
+struct mobj_s;
+struct linedef_s;
+struct sector_s;
+struct bspleaf_s;
+struct bspnode_s;
+struct vertex_s;
+struct sidedef_s;
+struct hedge_s;
+struct plane_s;
+
 typedef struct bspnode_s  BspNode;
 typedef struct vertex_s   Vertex;
 typedef struct linedef_s  LineDef;
@@ -136,6 +146,12 @@ typedef struct hedge_s    HEdge;
 typedef struct bspleaf_s  BspLeaf;
 typedef struct sector_s   Sector;
 typedef struct plane_s    Plane;
+
+#elif defined __cplusplus
+
+class LineDef;
+class Sector;
+
 #endif
 
 #ifdef __cplusplus
@@ -179,13 +195,13 @@ DENG_API_TYPEDEF(Map)
 
     // Lines
 
-    int             (*LD_BoxOnSide)(struct linedef_s* line, const AABoxd* box);
-    int             (*LD_BoxOnSide_FixedPrecision)(struct linedef_s* line, const AABoxd* box);
-    coord_t         (*LD_PointDistance)(struct linedef_s* lineDef, coord_t const point[2], coord_t* offset);
-    coord_t         (*LD_PointXYDistance)(struct linedef_s* lineDef, coord_t x, coord_t y, coord_t* offset);
-    coord_t         (*LD_PointOnSide)(struct linedef_s const *lineDef, coord_t const point[2]);
-    coord_t         (*LD_PointXYOnSide)(struct linedef_s const *lineDef, coord_t x, coord_t y);
-    int             (*LD_MobjsIterator)(struct linedef_s* line, int (*callback) (struct mobj_s*, void *), void* parameters);
+    int             (*LD_BoxOnSide)(LineDef* line, const AABoxd* box);
+    int             (*LD_BoxOnSide_FixedPrecision)(LineDef* line, const AABoxd* box);
+    coord_t         (*LD_PointDistance)(LineDef* lineDef, coord_t const point[2], coord_t* offset);
+    coord_t         (*LD_PointXYDistance)(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
+    coord_t         (*LD_PointOnSide)(LineDef const *lineDef, coord_t const point[2]);
+    coord_t         (*LD_PointXYOnSide)(LineDef const *lineDef, coord_t x, coord_t y);
+    int             (*LD_MobjsIterator)(LineDef* line, int (*callback) (struct mobj_s*, void *), void* parameters);
 
     // Sectors
 
@@ -205,7 +221,7 @@ DENG_API_TYPEDEF(Map)
      * The callback function will be called once for each line that crosses
      * trough the object. This means all the lines will be two-sided.
      */
-    int             (*MO_LinesIterator)(struct mobj_s* mo, int (*callback) (struct linedef_s*, void*), void* parameters);
+    int             (*MO_LinesIterator)(struct mobj_s* mo, int (*callback) (LineDef*, void*), void* parameters);
 
     /**
      * Increment validCount before calling this routine. The callback function
@@ -285,7 +301,7 @@ DENG_API_TYPEDEF(Map)
     // Iterators
 
     int             (*Box_MobjsIterator)(const AABoxd* box, int (*callback) (struct mobj_s*, void*), void* parameters);
-    int             (*Box_LinesIterator)(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+    int             (*Box_LinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
 
     /**
      * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
@@ -294,26 +310,26 @@ DENG_API_TYPEDEF(Map)
      * in multiple mapblocks, so increment validCount before the first call
      * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
      */
-    int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+    int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
 
     /**
      * The validCount flags are used to avoid checking polys that are marked in
      * multiple mapblocks, so increment validCount before the first call, then
      * make one or more calls to it.
      */
-    int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+    int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
 
     int             (*Box_BspLeafsIterator)(const AABoxd* box, Sector* sector, int (*callback) (struct bspleaf_s*, void*), void* parameters);
     int             (*Box_PolyobjsIterator)(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
-    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
-    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
+    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (const struct intercept_s*, void* paramaters), void* parameters);
+    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (const struct intercept_s*, void* paramaters)/*parameters=NULL*/);
 
     /**
      * Same as P_PathTraverse except 'from' and 'to' arguments are specified
      * as two sets of separate X and Y map space coordinates.
      */
-    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* parameters);
-    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
+    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (const struct intercept_s*, void* paramaters), void* parameters);
+    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (const struct intercept_s*, void* paramaters)/*parameters=NULL*/);
 
     boolean         (*CheckLineSight)(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
 
@@ -329,13 +345,13 @@ DENG_API_TYPEDEF(Map)
      *
      * @note Always returns a valid TraceOpening even if there is no current map.
      */
-    TraceOpening const *(*traceOpening)(void);
+    struct traceopening_s const *(*traceOpening)(void);
 
     /**
      * Update the TraceOpening state for the CURRENT map according to the opening
      * defined by the inner-minimal planes heights which intercept @a linedef
      */
-    void            (*SetTraceOpening)(struct linedef_s* linedef);
+    void            (*SetTraceOpening)(LineDef* linedef);
 
     // Map Updates (DMU)
 

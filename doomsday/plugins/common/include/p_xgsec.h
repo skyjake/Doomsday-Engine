@@ -133,7 +133,7 @@ typedef struct {
     boolean         ceiling; // True if operates on the ceiling.
 
     int             flags;
-    struct linedef_s* origin;
+    LineDef* origin;
 
     coord_t         destination;
     float           speed;
@@ -158,7 +158,7 @@ coord_t         XS_Gravity(Sector *sector);
 coord_t         XS_Friction(Sector *sector);
 coord_t         XS_ThrustMul(Sector *sector);
 
-void            XS_InitMovePlane(struct linedef_s *line);
+void            XS_InitMovePlane(LineDef *line);
 int C_DECL      XSTrav_MovePlane(Sector *sector, boolean ceiling,
                                  void *context, void *context2, struct mobj_s *activator);
 int C_DECL      XSTrav_SectorType(Sector *sec, boolean ceiling,
@@ -167,7 +167,7 @@ int C_DECL      XSTrav_SectorLight(Sector *sector, boolean ceiling,
                                    void *context, void *context2, struct mobj_s *activator);
 int C_DECL      XSTrav_PlaneMaterial(Sector *sec, boolean ceiling,
                                      void *context, void *context2, struct mobj_s *activator);
-void            XS_InitStairBuilder(struct linedef_s *line);
+void            XS_InitStairBuilder(LineDef *line);
 int C_DECL      XSTrav_BuildStairs(Sector *sector, boolean ceiling,
                                    void *context, void *context2, struct mobj_s *activator);
 int C_DECL      XSTrav_SectorSound(Sector *sec, boolean ceiling,

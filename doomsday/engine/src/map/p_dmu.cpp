@@ -256,7 +256,7 @@ void *P_AllocDummy(int type, void *extraData)
             {
                 dummyLines[i].inUse = true;
                 dummyLines[i].extraData = extraData;
-                dummyLines[i].line.header.type = DMU_LINEDEF;
+                //dummyLines[i].line.header.type = DMU_LINEDEF;
                 dummyLines[i].line.L_frontsidedef =
                     dummyLines[i].line.L_backsidedef = 0;
                 dummyLines[i].line.L_frontsector = 0;
@@ -2347,7 +2347,15 @@ DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString);
 DENG_EXTERN_C boolean P_LoadMap(char const* uriCString);
 DENG_EXTERN_C uint P_CountGameMapObjs(int entityId);
 
-// p_maputil.c
+// p_mapdata.cpp
+DENG_EXTERN_C byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C short P_GetGMOShort(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C int P_GetGMOInt(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
+
+// p_maputil.cpp
 DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags);
 DENG_EXTERN_C int P_MobjUnlink(mobj_t* mo);
 DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters);
@@ -2393,6 +2401,14 @@ DENG_EXTERN_C void P_PolyobjUnlink(Polyobj* polyobj);
 DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id);
 DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag);
 DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
+
+// linedef.cpp
+DENG_EXTERN_C int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
+DENG_EXTERN_C int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
+DENG_EXTERN_C coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
+DENG_EXTERN_C coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
+DENG_EXTERN_C coord_t LineDef_PointOnSide(const LineDef* lineDef, coord_t const point[2]);
+DENG_EXTERN_C coord_t LineDef_PointXYOnSide(const LineDef* lineDef, coord_t x, coord_t y);
 
 DENG_DECLARE_API(Map) =
 {

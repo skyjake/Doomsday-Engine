@@ -103,7 +103,7 @@ public:
     float               oldRGB[3];
     struct mobj_s*      mobjList;      // List of mobjs in the sector.
     unsigned int        lineDefCount;
-    struct linedef_s**  lineDefs;      // [lineDefCount+1] size.
+    LineDef**  lineDefs;      // [lineDefCount+1] size.
     unsigned int        bspLeafCount;
     struct bspleaf_s**  bspLeafs;     // [bspLeafCount+1] size.
     unsigned int        numReverbBspLeafAttributors;

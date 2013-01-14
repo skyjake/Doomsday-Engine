@@ -36,6 +36,7 @@
 #define LO_next     link[1]
 
 class Vertex;
+class LineDef;
 
 typedef struct lineowner_shadowvert_s {
     coord_t inner[2];
@@ -43,7 +44,7 @@ typedef struct lineowner_shadowvert_s {
 } lineowner_shadowvert_t;
 
 typedef struct lineowner_s {
-    struct linedef_s *lineDef;
+    LineDef *lineDef;
     struct lineowner_s *link[2];    ///< {prev, next} (i.e. {anticlk, clk}).
     binangle_t angle;               ///< between this and next clockwise.
     lineowner_shadowvert_t shadowOffsets;

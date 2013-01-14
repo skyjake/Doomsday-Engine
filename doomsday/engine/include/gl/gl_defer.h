@@ -26,6 +26,7 @@
 #ifndef LIBDENG_GL_DEFERRED_H
 #define LIBDENG_GL_DEFERRED_H
 
+#include "api_gl.h"
 #include "sys_opengl.h"
 
 #ifdef __cplusplus

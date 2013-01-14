@@ -78,6 +78,7 @@ else {
 # Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
+    api/aabox.h \
     api/apis.h \
     api/api_audiod.h \
     api/api_audiod_mus.h \
@@ -401,7 +402,7 @@ else:unix {
 
     SOURCES += \
         src/unix/dd_uinit.cpp \
-        src/unix/joystick.c \
+        src/unix/joystick.cpp \
         src/unix/sys_console.cpp
 }
 
@@ -434,28 +435,28 @@ deng_nodisplaymode {
 SOURCES += \
     src/api_uri.cpp \
     src/audio/audiodriver.cpp \
-    src/audio/audiodriver_music.c \
-    src/audio/m_mus2midi.c \
+    src/audio/audiodriver_music.cpp \
+    src/audio/m_mus2midi.cpp \
     src/audio/s_cache.cpp \
     src/audio/s_environ.cpp \
     src/audio/s_logic.cpp \
     src/audio/s_main.cpp \
     src/audio/s_mus.cpp \
     src/audio/s_sfx.cpp \
-    src/audio/s_wav.c \
-    src/audio/sys_audiod_dummy.c \
+    src/audio/s_wav.cpp \
+    src/audio/sys_audiod_dummy.cpp \
     src/busymode.cpp \
-    src/cbuffer.c \
-    src/client/cl_frame.c \
-    src/client/cl_infine.c \
+    src/cbuffer.cpp \
+    src/client/cl_frame.cpp \
+    src/client/cl_infine.cpp \
     src/client/cl_main.cpp \
     src/client/cl_mobj.cpp \
     src/client/cl_player.cpp \
     src/client/cl_sound.cpp \
     src/client/cl_world.cpp \
     src/color.cpp \
-    src/con_bar.c \
-    src/con_config.c \
+    src/con_bar.cpp \
+    src/con_config.cpp \
     src/con_data.cpp \
     src/con_main.cpp \
     src/dd_games.cpp \
@@ -464,9 +465,9 @@ SOURCES += \
     src/dd_loop.cpp \
     src/dd_main.cpp \
     src/dd_pinit.cpp \
-    src/dd_plugin.c \
+    src/dd_plugin.cpp \
     src/dd_wad.cpp \
-    src/def_data.c \
+    src/def_data.cpp \
     src/def_main.cpp \
     src/def_read.cpp \
     src/dualstring.cpp \
@@ -482,27 +483,27 @@ SOURCES += \
     src/filesys/lumpindex.cpp \
     src/filesys/manifest.cpp \
     src/filesys/searchpath.cpp \
-    src/filesys/sys_direc.c \
+    src/filesys/sys_direc.cpp \
     src/game.cpp \
     src/gl/dgl_common.cpp \
-    src/gl/dgl_draw.c \
-    src/gl/gl_defer.c \
-    src/gl/gl_deferredapi.c \
+    src/gl/dgl_draw.cpp \
+    src/gl/gl_defer.cpp \
+    src/gl/gl_deferredapi.cpp \
     src/gl/gl_draw.cpp \
-    src/gl/gl_drawvectorgraphic.c \
+    src/gl/gl_drawvectorgraphic.cpp \
     src/gl/gl_main.cpp \
     src/gl/gl_model.cpp \
-    src/gl/gl_tex.c \
+    src/gl/gl_tex.cpp \
     src/gl/gl_texmanager.cpp \
     src/gl/svg.cpp \
-    src/gl/sys_opengl.c \
+    src/gl/sys_opengl.cpp \
     src/gridmap.cpp \
-    src/kdtree.c \
+    src/kdtree.cpp \
     src/library.cpp \
-    src/m_decomp64.c \
+    src/m_decomp64.cpp \
     src/m_misc.cpp \
-    src/m_nodepile.c \
-    src/map/blockmap.c \
+    src/m_nodepile.cpp \
+    src/map/blockmap.cpp \
     src/map/blockmapvisual.cpp \
     src/map/bsp/hplane.cpp \
     src/map/bsp/partitioner.cpp \
@@ -538,18 +539,18 @@ SOURCES += \
     src/map/surface.cpp \
     src/map/vertex.cpp \
     src/network/masterserver.cpp \
-    src/network/monitor.c \
+    src/network/monitor.cpp \
     src/network/net_buf.cpp \
     src/network/net_demo.cpp \
     src/network/net_event.cpp \
     src/network/net_main.cpp \
     src/network/net_msg.cpp \
     src/network/net_ping.cpp \
-    src/network/protocol.c \
-    src/network/sys_network.c \
-    src/network/ui_mpi.c \
+    src/network/protocol.cpp \
+    src/network/sys_network.cpp \
+    src/network/ui_mpi.cpp \
     src/r_util.cpp \
-    src/render/api_render.c \
+    src/render/api_render.cpp \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.cpp \
@@ -563,7 +564,7 @@ SOURCES += \
     src/render/rend_decor.cpp \
     src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \
-    src/render/rend_font.c \
+    src/render/rend_font.cpp \
     src/render/rend_halo.cpp \
     src/render/rend_list.cpp \
     src/render/rend_main.cpp \
@@ -573,17 +574,17 @@ SOURCES += \
     src/render/rendpoly.cpp \
     src/render/sky.cpp \
     src/render/sprite.cpp \
-    src/render/vignette.c \
+    src/render/vignette.cpp \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \
     src/resource/api_material.cpp \
-    src/resource/api_resource.c \
+    src/resource/api_resource.cpp \
     src/resource/bitmapfont.cpp \
-    src/resource/colorpalette.c \
+    src/resource/colorpalette.cpp \
     src/resource/colorpalettes.cpp \
     src/resource/compositetexture.cpp \
     src/resource/fonts.cpp \
-    src/resource/hq2x.c \
+    src/resource/hq2x.cpp \
     src/resource/image.cpp \
     src/resource/material.cpp \
     src/resource/materialarchive.cpp \
@@ -595,7 +596,7 @@ SOURCES += \
     src/resource/models.cpp \
     src/resource/patch.cpp \
     src/resource/patchname.cpp \
-    src/resource/pcx.c \
+    src/resource/pcx.cpp \
     src/resource/r_data.cpp \
     src/resource/rawtexture.cpp \
     src/resource/texture.cpp \
@@ -603,7 +604,7 @@ SOURCES += \
     src/resource/texturescheme.cpp \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \
-    src/resource/tga.c \
+    src/resource/tga.cpp \
     src/resource/wad.cpp \
     src/resource/zip.cpp \
     src/server/sv_frame.cpp \
@@ -612,30 +613,30 @@ SOURCES += \
     src/server/sv_missile.cpp \
     src/server/sv_pool.cpp \
     src/server/sv_sound.cpp \
-    src/sys_system.c \
+    src/sys_system.cpp \
     src/tab_tables.c \
-    src/ui/b_command.c \
-    src/ui/b_context.c \
-    src/ui/b_device.c \
-    src/ui/b_main.c \
-    src/ui/b_util.c \
-    src/ui/busyvisual.c \
+    src/ui/b_command.cpp \
+    src/ui/b_context.cpp \
+    src/ui/b_device.cpp \
+    src/ui/b_main.cpp \
+    src/ui/b_util.cpp \
+    src/ui/busyvisual.cpp \
     src/ui/canvas.cpp \
     src/ui/canvaswindow.cpp \
-    src/ui/dd_input.c \
+    src/ui/dd_input.cpp \
     src/ui/displaymode.cpp \
-    src/ui/fi_main.c \
-    src/ui/finaleinterpreter.c \
+    src/ui/fi_main.cpp \
+    src/ui/finaleinterpreter.cpp \
     src/ui/keycode.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
-    src/ui/p_control.c \
-    src/ui/sys_input.c \
+    src/ui/p_control.cpp \
+    src/ui/sys_input.cpp \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
-    src/ui/ui_panel.c \
+    src/ui/ui_panel.cpp \
     src/ui/window.cpp \
-    src/ui/zonedebug.c \
+    src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \
     src/updater/updateavailabledialog.cpp \

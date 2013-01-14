@@ -45,8 +45,6 @@ GameMap::GameMap()
     memset(&clMobjHash, 0, sizeof(clMobjHash));
     memset(&clActivePlanes, 0, sizeof(clActivePlanes));
     memset(&clActivePolyobjs, 0, sizeof(clActivePolyobjs));
-    numLineDefs = 0;
-    lineDefs = 0;
     numPolyObjs = 0;
     polyObjs = 0;
     bsp = 0;
@@ -179,14 +177,14 @@ int GameMap_VertexIndex(GameMap* map, Vertex const *vtx)
 int GameMap_LineDefIndex(GameMap* map, LineDef* line)
 {
     assert(map);
-    if(!line || !(line >= map->lineDefs && line <= &map->lineDefs[map->numLineDefs])) return -1;
-    return line - map->lineDefs;
+    if(!line) return -1;
+    return map->lineDefs.indexOf(line);
 }
 
 LineDef* GameMap_LineDef(GameMap* map, uint idx)
 {
     assert(map);
-    if(idx >= map->numLineDefs) return NULL;
+    if(idx >= (uint)map->lineDefs.size()) return NULL;
     return &map->lineDefs[idx];
 }
 
@@ -323,7 +321,7 @@ uint GameMap_VertexCount(GameMap* map)
 uint GameMap_LineDefCount(GameMap* map)
 {
     assert(map);
-    return map->numLineDefs;
+    return map->lineDefCount();
 }
 
 uint GameMap_SideDefCount(GameMap* map)
@@ -507,12 +505,12 @@ void GameMap_InitNodePiles(GameMap* map)
 
     // Initialize node piles and line rings.
     NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
-    NP_Init(&map->lineNodes, map->numLineDefs + 1000);
+    NP_Init(&map->lineNodes, map->lineDefCount() + 1000);
 
     // Allocate the rings.
-    map->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*map->lineLinks) * map->numLineDefs, PU_MAPSTATIC, 0);
+    map->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*map->lineLinks) * map->lineDefCount(), PU_MAPSTATIC, 0);
 
-    for(i = 0; i < map->numLineDefs; ++i)
+    for(i = 0; i < map->lineDefCount(); ++i)
     {
         map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
     }
@@ -816,9 +814,9 @@ int GameMap_LineDefIterator(GameMap* map, int (*callback) (LineDef*, void*), voi
 {
     uint i;
     assert(map);
-    for(i = 0; i < map->numLineDefs; ++i)
+    for(i = 0; i < map->lineDefCount(); ++i)
     {
-        int result = callback(map->lineDefs + i, parameters);
+        int result = callback(&map->lineDefs[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.
