@@ -788,23 +788,25 @@ static void archiveSegs(GameMap *map, boolean write)
 
 #define NF_LEAF            0x80000000
 
-static void writeBspReference(GameMap* map, runtime_mapdata_header_t* bspRef)
+static void writeBspReference(GameMap* map, de::MapElement* bspRef)
 {
     assert(map);
-    if(bspRef->type == DMU_BSPLEAF)
-        writeLong((long)(GameMap_BspLeafIndex(map, (BspLeaf*)bspRef) | NF_LEAF));
+    if(bspRef->type() == DMU_BSPLEAF)
+        writeLong((long)(GameMap_BspLeafIndex(map, bspRef->castTo<BspLeaf>()) | NF_LEAF));
     else
-        writeLong((long)GameMap_BspNodeIndex(map, (BspNode*)bspRef));
+        writeLong((long)GameMap_BspNodeIndex(map, bspRef->castTo<BspNode>()));
 }
 
-static runtime_mapdata_header_t* readBspReference(GameMap* map)
+static de::MapElement* readBspReference(GameMap* map)
 {
     long idx;
     assert(map);
     idx = readLong();
     if(idx & NF_LEAF)
-        return (runtime_mapdata_header_t*)GameMap_BspLeaf(map, idx & ~NF_LEAF);
-    return (runtime_mapdata_header_t*)GameMap_BspNode(map, idx);
+    {
+        return GameMap_BspLeaf(map, idx & ~NF_LEAF);
+    }
+    return GameMap_BspNode(map, idx);
 }
 
 #undef NF_LEAF

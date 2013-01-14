@@ -91,8 +91,6 @@ typedef struct lineside_s {
 
 class Vertex;
 
-struct linedef_s; // opaque type
-
 class LineDef : public de::MapElement
 {
 public:

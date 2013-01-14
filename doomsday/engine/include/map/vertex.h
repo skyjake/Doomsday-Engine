@@ -64,8 +64,6 @@ typedef struct mvertex_s {
     Vertex *equiv;
 } mvertex_t;
 
-struct vertex_s; // opaque type
-
 /**
  * Vertex in the map geometry.
  */

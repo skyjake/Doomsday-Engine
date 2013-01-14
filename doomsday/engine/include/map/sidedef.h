@@ -106,8 +106,6 @@ typedef struct edgespan_s {
     float           shift;
 } edgespan_t;
 
-struct sidedef_s; // opaque type
-
 class SideDef : public de::MapElement
 {
 public:

@@ -2980,23 +2980,23 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
     Rend_RenderPlanes();
 }
 
-static void Rend_RenderNode(runtime_mapdata_header_t* bspPtr)
+static void Rend_RenderNode(de::MapElement* bspPtr)
 {
     // If the clipper is full we're pretty much done. This means no geometry
     // will be visible in the distance because every direction has already been
     // fully covered by geometry.
     if(C_IsFull()) return;
 
-    if(bspPtr->type == DMU_BSPLEAF)
+    if(bspPtr->type() == DMU_BSPLEAF)
     {
         // We've arrived at a leaf. Render it.
-        Rend_RenderBspLeaf((BspLeaf*)bspPtr);
+        Rend_RenderBspLeaf(bspPtr->castTo<BspLeaf>());
     }
     else
     {
         // Descend deeper into the nodes.
         const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-        BspNode* node = (BspNode*)bspPtr;
+        BspNode* node = bspPtr->castTo<BspNode>();
         byte side;
 
         // Decide which side the view point is on.
@@ -3590,14 +3590,14 @@ void Rend_RenderMap()
 
         // We don't want BSP clip checking for the first BSP leaf.
         firstBspLeaf = true;
-        if(theMap->bsp->type == DMU_BSPNODE)
+        if(theMap->bsp->type() == DMU_BSPNODE)
         {
             Rend_RenderNode(theMap->bsp);
         }
         else
         {
             // A single leaf is a special case.
-            Rend_RenderBspLeaf((BspLeaf*)theMap->bsp);
+            Rend_RenderBspLeaf(theMap->bsp->castTo<BspLeaf>());
         }
 
         if(Rend_MobjShadowsEnabled())

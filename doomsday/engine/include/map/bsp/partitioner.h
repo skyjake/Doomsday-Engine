@@ -130,7 +130,7 @@ public:
      * @param ob  Map data object to release ownership of.
      * @return  Reference to this Partitioner.
      */
-    Partitioner& release(runtime_mapdata_header_t* ob);
+    Partitioner& release(de::MapElement* ob);
 
 private:
     struct Instance;

@@ -373,39 +373,43 @@ uint P_ToIndex(void const *ptr)
 {
     if(!ptr) return 0;
 
-    switch(DMU_GetType(ptr))
+    de::MapElement const *elem = reinterpret_cast<de::MapElement const *>(ptr);
+
+    switch(elem->type())
     {
     case DMU_VERTEX:
-        return GET_VERTEX_IDX((Vertex *) ptr);
+        return GET_VERTEX_IDX(elem->castTo<Vertex>());
 
     case DMU_HEDGE:
-        return GET_HEDGE_IDX((HEdge *) ptr);
+        DENG2_ASSERT(false); // TODO: update this!
+        //return GET_HEDGE_IDX((HEdge *) ptr);
 
     case DMU_LINEDEF:
-        return GET_LINE_IDX((LineDef *) ptr);
+        return GET_LINE_IDX(elem->castTo<LineDef>());
 
     case DMU_SIDEDEF:
-        return GET_SIDE_IDX((SideDef *) ptr);
+        return GET_SIDE_IDX(elem->castTo<SideDef>());
 
     case DMU_BSPLEAF:
-        return GET_BSPLEAF_IDX((BspLeaf *) ptr);
+        return GET_BSPLEAF_IDX(elem->castTo<BspLeaf>());
 
     case DMU_SECTOR:
-        return GET_SECTOR_IDX((Sector *) ptr);
+        return GET_SECTOR_IDX(elem->castTo<Sector>());
 
     case DMU_BSPNODE:
-        return GET_BSPNODE_IDX((BspNode *) ptr);
+        return GET_BSPNODE_IDX(elem->castTo<BspNode>());
 
     case DMU_PLANE:
-        return GET_PLANE_IDX((Plane *) ptr);
+        DENG2_ASSERT(false); // TODO: update this!
+        //return GET_PLANE_IDX((Plane *) ptr);
 
     case DMU_MATERIAL:
-        return Materials_Id((material_t *) ptr);
+        DENG2_ASSERT(false); // TODO: update this!
+        //return Materials_Id((material_t *) ptr);
 
     default:
-        QByteArray msg = QString("P_ToIndex: Unknown type %1.").arg(DMU_Str(DMU_GetType(ptr))).toUtf8();
-        LegacyCore_FatalError(msg.constData());
-        return 0; // Unreachable.
+        DENG2_ASSERT(false); // Unknown DMU type.
+        return 0;
     }
 }
 

@@ -63,7 +63,6 @@ typedef char            filename_t[FILENAME_T_MAXLEN];
 typedef void (*con_textfilter_t) (char* text);
 
 // Forward declarations for map data types.
-struct bspnode_s;
 struct hedge_s;
 struct polyblock_s;
 struct polyobj_s;

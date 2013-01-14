@@ -1,6 +1,5 @@
-/**
- * @file bspnode.c
- * BspNode implementation. @ingroup map
+/** @file bspnode.cpp BspNode implementation.
+ * @ingroup map
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -25,12 +24,22 @@
 #include "de_play.h"
 #include "de_misc.h"
 
+BspNode::BspNode() : de::MapElement(DMU_BSPNODE)
+{
+    memset(&partition, 0, sizeof(partition));
+    memset(aaBox, 0, sizeof(aaBox));
+    memset(children, 0, sizeof(children));
+    index = 0;
+}
+
+BspNode::~BspNode()
+{
+}
+
 BspNode* BspNode_New(coord_t const partitionOrigin[], coord_t const partitionDirection[])
 {
-    BspNode* node = (BspNode*)Z_Malloc(sizeof *node, PU_MAP, 0);
-    if(!node) Con_Error("BspNode_New: Failed on allocation of %lu bytes for new BspNode.", (unsigned long) sizeof *node);
+    BspNode* node = new BspNode;
 
-    node->header.type = DMU_BSPNODE;
     V2d_Copy(node->partition.origin, partitionOrigin);
     V2d_Copy(node->partition.direction, partitionDirection);
 
@@ -45,20 +54,19 @@ BspNode* BspNode_New(coord_t const partitionOrigin[], coord_t const partitionDir
 
 void BspNode_Delete(BspNode* node)
 {
-    assert(node);
-    Z_Free(node);
+    delete node;
 }
 
-BspNode* BspNode_SetChild(BspNode* node, int left, runtime_mapdata_header_t* child)
+BspNode* BspNode_SetChild(BspNode* node, int left, de::MapElement* child)
 {
-    assert(node && child != (runtime_mapdata_header_t*)node);
+    DENG2_ASSERT(node && child != node);
     node->children[left? LEFT:RIGHT] = child;
     return node;
 }
 
 BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxd* bounds)
 {
-    assert(node);
+    DENG2_ASSERT(node);
     if(bounds)
     {
         AABoxd* dst = &node->aaBox[left? LEFT:RIGHT];

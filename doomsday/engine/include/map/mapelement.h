@@ -47,6 +47,22 @@ public:
         return _type;
     }
 
+    template <typename Type>
+    inline Type *castTo()
+    {
+        Type *t = dynamic_cast<Type *>(this);
+        DENG2_ASSERT(t != 0);
+        return t;
+    }
+
+    template <typename Type>
+    inline Type const *castTo() const
+    {
+        Type const *t = dynamic_cast<Type const *>(this);
+        DENG2_ASSERT(t != 0);
+        return t;
+    }
+
 private:
     int _type;
 };

@@ -174,7 +174,7 @@ int GameMap_VertexIndex(GameMap* map, Vertex const *vtx)
     return map->vertexes.indexOf(vtx); // Note: Bad performance!
 }
 
-int GameMap_LineDefIndex(GameMap* map, LineDef* line)
+int GameMap_LineDefIndex(GameMap* map, const LineDef *line)
 {
     assert(map);
     if(!line) return -1;
@@ -188,7 +188,7 @@ LineDef* GameMap_LineDef(GameMap* map, uint idx)
     return &map->lineDefs[idx];
 }
 
-int GameMap_SideDefIndex(GameMap* map, SideDef* side)
+int GameMap_SideDefIndex(GameMap* map, SideDef const *side)
 {
     assert(map);
     if(!side) return -1;
@@ -202,7 +202,7 @@ SideDef* GameMap_SideDef(GameMap* map, uint idx)
     return &map->sideDefs[idx];
 }
 
-int GameMap_SectorIndex(GameMap *map, Sector *sec)
+int GameMap_SectorIndex(GameMap *map, Sector const *sec)
 {
     assert(map);
     if(!sec) return -1;
@@ -270,7 +270,7 @@ Surface* GameMap_SurfaceByBase(GameMap* map, const void* ddMobjBase)
     return NULL;
 }
 
-int GameMap_BspLeafIndex(GameMap* map, BspLeaf* leaf)
+int GameMap_BspLeafIndex(GameMap* map, BspLeaf const *leaf)
 {
     DENG_UNUSED(map);
     if(!leaf) return -1;
@@ -284,7 +284,7 @@ BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx)
     return map->bspLeafs[idx];
 }
 
-int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge)
+int GameMap_HEdgeIndex(GameMap* map, HEdge const *hedge)
 {
     DENG_UNUSED(map);
     if(hedge) return -1;
@@ -298,7 +298,7 @@ HEdge* GameMap_HEdge(GameMap* map, uint idx)
     return map->hedges[idx];
 }
 
-int GameMap_BspNodeIndex(GameMap* map, BspNode* node)
+int GameMap_BspNodeIndex(GameMap* map, BspNode const *node)
 {
     DENG_UNUSED(map);
     if(!node) return -1;
@@ -1471,19 +1471,19 @@ int GameMap_PathXYTraverse(GameMap* map, coord_t fromX, coord_t fromY, coord_t t
 
 BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, coord_t const point_[])
 {
-    runtime_mapdata_header_t* node;
+    de::MapElement* node;
     vec2d_t point;
 
     V2d_Set(point, point_? point_[VX] : 0,
                    point_? point_[VY] : 0);
 
     node = map->bsp;
-    while(node->type != DMU_BSPLEAF)
+    while(node->type() != DMU_BSPLEAF)
     {
-        BspNode* bspNode = (BspNode*)node;
+        BspNode* bspNode = node->castTo<BspNode>();
         node = bspNode->children[Partition_PointOnSide(&bspNode->partition, point)];
     }
-    return (BspLeaf*)node;
+    return node->castTo<BspLeaf>();
 }
 
 BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, coord_t x, coord_t y)

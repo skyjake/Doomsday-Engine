@@ -220,13 +220,13 @@ static boolean crossBspLeaf(GameMap* map, const BspLeaf* bspLeaf, losdata_t* los
 /**
  * @return  @c true iff trace crosses the node.
  */
-static boolean crossBspNode(GameMap* map, runtime_mapdata_header_t* bspPtr, losdata_t* los)
+static boolean crossBspNode(GameMap* map, de::MapElement const *bspPtr, losdata_t* los)
 {
-    while(bspPtr->type != DMU_BSPLEAF)
+    while(bspPtr->type() != DMU_BSPLEAF)
     {
-        const BspNode* node = (BspNode*)bspPtr;
+        BspNode const *node = bspPtr->castTo<BspNode>();
         int side = Partition_PointXYOnSide(&node->partition,
-                                         FIX2FLT(los->trace.origin[VX]), FIX2FLT(los->trace.origin[VY]));
+                                           FIX2FLT(los->trace.origin[VX]), FIX2FLT(los->trace.origin[VY]));
 
         // Would the trace completely cross this partition?
         if(side == Partition_PointOnSide(&node->partition, los->to))
@@ -244,7 +244,7 @@ static boolean crossBspNode(GameMap* map, runtime_mapdata_header_t* bspPtr, losd
         }
     }
 
-    return crossBspLeaf(map, (BspLeaf*)bspPtr, los);
+    return crossBspLeaf(map, bspPtr->castTo<BspLeaf>(), los);
 }
 
 boolean GameMap_CheckLineSight(GameMap* map, const coord_t from[3], const coord_t to[3],

@@ -87,7 +87,7 @@ Vertex& BspBuilder::vertex(uint idx)
     return partitioner->vertex(idx);
 }
 
-BspBuilder& BspBuilder::take(runtime_mapdata_header_t* ob)
+BspBuilder& BspBuilder::take(de::MapElement* ob)
 {
     partitioner->release(ob);
     return *this;

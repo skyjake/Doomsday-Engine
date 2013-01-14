@@ -23,6 +23,11 @@
 #ifndef LIBDENG_MAP_BSPNODE
 #define LIBDENG_MAP_BSPNODE
 
+#ifndef __cplusplus
+#  error "map/bspnode.h requires C++"
+#endif
+
+#include "MapElement"
 #include "resource/r_data.h"
 #include "p_dmu.h"
 
@@ -37,17 +42,22 @@ typedef struct partition_s {
     coord_t direction[2];
 } partition_t;
 
-typedef struct bspnode_s {
-    runtime_mapdata_header_t header;
-    partition_t         partition;
-    AABoxd              aaBox[2]; /// Bounding box for each child.
-    runtime_mapdata_header_t* children[2];
-    uint                index; /// Unique. Set when saving the BSP.
-} BspNode;
+/**
+ * Node in the BSP tree. Children of a node can be either instances of BspNode
+ * or BspLeaf.
+ */
+class BspNode : public de::MapElement
+{
+public:
+    partition_t     partition;
+    AABoxd          aaBox[2];   ///< Bounding box for each child.
+    de::MapElement *children[2];
+    uint            index;      ///< Unique. Set when saving the BSP.
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+public:
+    BspNode();
+    ~BspNode();
+};
 
 BspNode* BspNode_New(coord_t const partitionOrigin[2], coord_t const partitionDirection[2]);
 
@@ -56,7 +66,7 @@ BspNode* BspNode_New(coord_t const partitionOrigin[2], coord_t const partitionDi
  */
 void BspNode_Delete(BspNode* node);
 
-BspNode* BspNode_SetChild(BspNode* node, int left, runtime_mapdata_header_t* child);
+BspNode* BspNode_SetChild(BspNode* node, int left, de::MapElement* child);
 
 #define BspNode_SetRight(node, child) BspNode_SetChild((node), false, (child))
 #define BspNode_SetLeft(node,  child) BspNode_SetChild((node), true,  (child))
@@ -65,9 +75,5 @@ BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxd* bounds);
 
 #define BspNode_SetRightBounds(node, bounds) BspNode_SetChildBounds((node), false, (bounds))
 #define BspNode_SetLeftBounds(node,  bounds) BspNode_SetChildBounds((node), true,  (bounds))
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_BSPNODE

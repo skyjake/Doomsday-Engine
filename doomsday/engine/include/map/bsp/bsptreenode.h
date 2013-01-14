@@ -22,10 +22,10 @@
 #ifndef LIBDENG_BSPBUILDER_BSPTREENODE
 #define LIBDENG_BSPBUILDER_BSPTREENODE
 
-#include "map/p_mapdata.h"
 #include <de/BinaryTree>
+#include "MapElement"
 
 /// Nodes in BspBuilder's internal tree are modelled with this type.
-typedef de::BinaryTree<runtime_mapdata_header_t *> BspTreeNode;
+typedef de::BinaryTree<de::MapElement *> BspTreeNode;
 
 #endif /// LIBDENG_BSPBUILDER_BSPTREENODE

@@ -89,7 +89,7 @@ static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
 
 struct Partitioner::Instance
 {
-    typedef std::map<runtime_mapdata_header_t*, BspTreeNode*> BspTreeNodeMap;
+    typedef std::map<de::MapElement*, BspTreeNode*> BspTreeNodeMap;
 
     /// Used when sorting BSP leaf half-edges by angle around midpoint.
     typedef std::vector<HEdge*> HEdgeSortBuffer;
@@ -1423,8 +1423,8 @@ struct Partitioner::Instance
      */
     BspNode* newBspNode(coord_t const origin[2], coord_t const angle[2],
         AABoxd& rightBounds, AABoxd& leftBounds,
-        runtime_mapdata_header_t* rightChild = 0,
-        runtime_mapdata_header_t* leftChild = 0)
+        de::MapElement* rightChild = 0,
+        de::MapElement* leftChild = 0)
     {
         BspNode* node = BspNode_New(origin, angle);
         if(rightChild)
@@ -1444,7 +1444,7 @@ struct Partitioner::Instance
         return node;
     }
 
-    BspTreeNode* newTreeNode(runtime_mapdata_header_t* bspOb,
+    BspTreeNode* newTreeNode(de::MapElement* bspOb,
         BspTreeNode* rightChild = 0, BspTreeNode* leftChild = 0)
     {
         BspTreeNode* subtree = new BspTreeNode(bspOb);
@@ -1459,7 +1459,7 @@ struct Partitioner::Instance
             leftChild->setParent(subtree);
         }
 
-        treeNodeMap.insert(std::pair<runtime_mapdata_header_t*, BspTreeNode*>(bspOb, subtree));
+        treeNodeMap.insert(std::pair<de::MapElement*, BspTreeNode*>(bspOb, subtree));
         return subtree;
     }
 
@@ -1485,7 +1485,7 @@ struct Partitioner::Instance
     {
         LOG_AS("Partitioner::buildNodes");
 
-        runtime_mapdata_header_t* bspObject = 0; ///< Built BSP object at this node.
+        de::MapElement* bspObject = 0; ///< Built BSP object at this node.
         BspTreeNode* rightTree = 0, *leftTree = 0;
 
         // Pick a half-edge to use as the next partition plane.
@@ -1528,9 +1528,8 @@ struct Partitioner::Instance
                 return rightTree? rightTree : leftTree;
 
             // Construct the new node and link up the subtrees.
-            BspNode* node = newBspNode(origPartition.origin, origPartition.direction, rightBounds, leftBounds,
-                                       rightTree->userData(), leftTree->userData());
-            bspObject = reinterpret_cast<runtime_mapdata_header_t*>(node);
+            bspObject = newBspNode(origPartition.origin, origPartition.direction, rightBounds, leftBounds,
+                                   rightTree->userData(), leftTree->userData());
         }
         else
         {
@@ -1541,7 +1540,7 @@ struct Partitioner::Instance
             // Not a leaf? (collapse upward).
             if(!leaf) return 0;
 
-            bspObject = reinterpret_cast<runtime_mapdata_header_t*>(leaf);
+            bspObject = leaf;
         }
 
         return newTreeNode(bspObject, rightTree, leftTree);
@@ -1774,7 +1773,7 @@ struct Partitioner::Instance
     {
         DENG2_ASSERT(tree.isLeaf());
 
-        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
+        BspLeaf* leaf = tree.userData()->castTo<BspLeaf>();
         vec2d_t center;
 
         V2d_Set(center, 0, 0);
@@ -1921,7 +1920,8 @@ struct Partitioner::Instance
     void clearBspObject(BspTreeNode& tree)
     {
         LOG_AS("Partitioner::clearBspObject");
-        runtime_mapdata_header_t* dmuOb = tree.userData();
+
+        de::MapElement* dmuOb = tree.userData();
         if(!dmuOb) return;
 
         if(builtOK)
@@ -1931,16 +1931,15 @@ struct Partitioner::Instance
 
         if(tree.isLeaf())
         {
-            BspLeaf_Delete(reinterpret_cast<BspLeaf*>(dmuOb));
             // There is now one less BspLeaf.
             numLeafs -= 1;
         }
         else
         {
-            BspNode_Delete(reinterpret_cast<BspNode*>(dmuOb));
             // There is now one less BspNode.
             numNodes -= 1;
         }
+        delete dmuOb;
         tree.setUserData(0);
 
         BspTreeNodeMap::iterator found = treeNodeMap.find(dmuOb);
@@ -1966,10 +1965,11 @@ struct Partitioner::Instance
         }
     }
 
-    BspTreeNode* treeNodeForBspObject(runtime_mapdata_header_t* ob)
+    BspTreeNode* treeNodeForBspObject(de::MapElement* ob)
     {
         LOG_AS("Partitioner::treeNodeForBspObject");
-        const int dmuType = DMU_GetType(ob);
+
+        const int dmuType = ob->type();
         if(dmuType == DMU_BSPLEAF || dmuType == DMU_BSPNODE)
         {
             BspTreeNodeMap::const_iterator found = treeNodeMap.find(ob);
@@ -2184,13 +2184,12 @@ struct Partitioner::Instance
         partitionLineDef = lineDef;
     }
 
-    bool release(runtime_mapdata_header_t* dmuOb)
+    bool release(de::MapElement* dmuOb)
     {
-        int dmuType = DMU_GetType(dmuOb);
-        switch(dmuType)
+        switch(dmuOb->type())
         {
         case DMU_VERTEX: {
-            Vertex* vtx = reinterpret_cast<Vertex*>(dmuOb);
+            Vertex* vtx = dmuOb->castTo<Vertex>();
             if(vtx->buildData.index > 0 && uint(vtx->buildData.index) > numEditableVertexes)
             {
                 // Is this object owned?
@@ -2441,7 +2440,7 @@ Vertex& Partitioner::vertex(uint idx)
     return *d->vertexes[idx];
 }
 
-Partitioner& Partitioner::release(runtime_mapdata_header_t* ob)
+Partitioner& Partitioner::release(de::MapElement* ob)
 {
     if(!d->release(ob))
     {

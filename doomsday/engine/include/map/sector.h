@@ -88,8 +88,6 @@ typedef struct msector_s {
     int	refCount;
 } msector_t;
 
-struct sector_s; // opaque type
-
 class Sector : public de::MapElement
 {
 public:

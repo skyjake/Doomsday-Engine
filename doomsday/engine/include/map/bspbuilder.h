@@ -127,7 +127,7 @@ public:
      * @param ob  Map data object to release ownership of.
      * @return  Reference to this Partitioner.
      */
-    BspBuilder& take(runtime_mapdata_header_t* ob);
+    BspBuilder& take(de::MapElement* ob);
 
 private:
     bsp::Partitioner* partitioner;

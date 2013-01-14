@@ -96,7 +96,7 @@ public:
     uint numPolyObjs;
     Polyobj** polyObjs;
 
-    runtime_mapdata_header_t* bsp;
+    de::MapElement* bsp;
 
     /// BSP object LUTs:
     uint numHEdges;
@@ -341,7 +341,7 @@ int GameMap_VertexIndex(GameMap* map, Vertex const *vtx);
  * @param line  LineDef to lookup.
  * @return  Unique index for the LineDef else @c -1 if not present.
  */
-int GameMap_LineDefIndex(GameMap* map, LineDef* line);
+int GameMap_LineDefIndex(GameMap* map, LineDef const *line);
 
 /**
  * Lookup the unique index for @a sideDef.
@@ -350,7 +350,7 @@ int GameMap_LineDefIndex(GameMap* map, LineDef* line);
  * @param side  SideDef to lookup.
  * @return  Unique index for the SideDef else @c -1 if not present.
  */
-int GameMap_SideDefIndex(GameMap* map, SideDef* side);
+int GameMap_SideDefIndex(GameMap* map, SideDef const *side);
 
 /**
  * Lookup the unique index for @a sector.
@@ -359,7 +359,7 @@ int GameMap_SideDefIndex(GameMap* map, SideDef* side);
  * @param sector  Sector to lookup.
  * @return  Unique index for the Sector else @c -1 if not present.
  */
-int GameMap_SectorIndex(GameMap *map, Sector *sector);
+int GameMap_SectorIndex(GameMap *map, Sector const *sector);
 
 /**
  * Lookup the unique index for @a bspLeaf.
@@ -368,7 +368,7 @@ int GameMap_SectorIndex(GameMap *map, Sector *sector);
  * @param bspLeaf  BspLeaf to lookup.
  * @return  Unique index for the BspLeaf else @c -1 if not present.
  */
-int GameMap_BspLeafIndex(GameMap* map, BspLeaf* bspLeaf);
+int GameMap_BspLeafIndex(GameMap* map, BspLeaf const *bspLeaf);
 
 /**
  * Lookup the unique index for @a hedge.
@@ -377,7 +377,7 @@ int GameMap_BspLeafIndex(GameMap* map, BspLeaf* bspLeaf);
  * @param hedge  HEdge to lookup.
  * @return  Unique index for the HEdge else @c -1 if not present.
  */
-int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge);
+int GameMap_HEdgeIndex(GameMap* map, HEdge const *hedge);
 
 /**
  * Lookup the unique index for @a node.
@@ -386,7 +386,7 @@ int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge);
  * @param bspNode  BspNode to lookup.
  * @return  Unique index for the BspNode else @c -1 if not present.
  */
-int GameMap_BspNodeIndex(GameMap* map, BspNode* bspNode);
+int GameMap_BspNodeIndex(GameMap* map, BspNode const *bspNode);
 
 /**
  * Retrieve the number of Vertex instances owned by this.
