@@ -170,7 +170,6 @@ DENG_HEADERS += \
     $$SRC/include/game.h \
     $$SRC/include/gl/gl_texmanager.h \
     $$SRC/include/gridmap.h \
-    $$SRC/include/kdtree.h \
     $$SRC/include/library.h \
     $$SRC/include/m_decomp64.h \
     $$SRC/include/m_misc.h \
@@ -377,7 +376,6 @@ SOURCES += \
     $$SRC/src/game.cpp \
     $$SRC/src/gl/gl_texmanager.cpp \
     $$SRC/src/gridmap.cpp \
-    $$SRC/src/kdtree.cpp \
     $$SRC/src/library.cpp \
     $$SRC/src/m_decomp64.cpp \
     $$SRC/src/m_misc.cpp \

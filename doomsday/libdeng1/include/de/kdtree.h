@@ -1,10 +1,10 @@
-/**
- * @file kdtree.h
- * Kd-Tree data structure. @ingroup data
+/** @file kdtree.h Kd-Tree data structure.
+ * @ingroup data
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
  *
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -28,14 +28,14 @@
 #ifndef LIBDENG_KDTREE_H
 #define LIBDENG_KDTREE_H
 
-#include "de_platform.h"
+#include "aabox.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct kdtree_s;
-struct kdtreenode_s;
+struct kdtree_s; // opaque
+struct kdtreenode_s; // opaque
 
 typedef struct kdtree_s KdTree;
 typedef struct kdtreenode_s KdTreeNode;
@@ -44,43 +44,43 @@ typedef struct kdtreenode_s KdTreeNode;
  * Constructs a new KdTree. The kd-tree must be destroyed with KdTree_Delete()
  * when no longer needed.
  */
-KdTree* KdTree_New(const AABox* bounds);
+DENG_PUBLIC KdTree *KdTree_New(const AABox *bounds);
 
 /**
  * Destroys the KdTree.
  *
  * @param kdTree  KdTree instance.
  */
-void KdTree_Delete(KdTree* kdTree);
+DENG_PUBLIC void KdTree_Delete(KdTree *kdTree);
 
-struct kdtreenode_s* KdTree_Root(KdTree* kdTree);
+DENG_PUBLIC KdTreeNode *KdTree_Root(KdTree *kdTree);
 
-int KdTree_PostTraverse2(KdTree* kdTree, int(*callback)(KdTreeNode*, void*), void* parameters);
-int KdTree_PostTraverse(KdTree* kdTree, int(*callback)(KdTreeNode*, void*)/*, parameters=NULL*/);
+DENG_PUBLIC int KdTree_PostTraverse2(KdTree *kdTree, int(*callback)(KdTreeNode *, void *), void *parameters);
 
-void KdTreeNode_Delete(KdTreeNode* kdTreeNode);
+DENG_PUBLIC int KdTree_PostTraverse(KdTree *kdTree, int(*callback)(KdTreeNode *, void *)/*, parameters=NULL*/);
 
-KdTree* KdTreeNode_KdTree(KdTreeNode* kdTreeNode);
+DENG_PUBLIC void KdTreeNode_Delete(KdTreeNode *kdTreeNode);
 
-const AABox* KdTreeNode_Bounds(KdTreeNode* kdTreeNode);
+DENG_PUBLIC KdTree *KdTreeNode_KdTree(KdTreeNode *kdTreeNode);
 
-void* KdTreeNode_UserData(KdTreeNode* kdTreeNode);
-KdTreeNode* KdTreeNode_SetUserData(KdTreeNode* kdTreeNode, void* userData);
+DENG_PUBLIC const AABox *KdTreeNode_Bounds(KdTreeNode *kdTreeNode);
 
-KdTreeNode* KdTreeNode_Parent(KdTreeNode* kdTreeNode);
+DENG_PUBLIC void *KdTreeNode_UserData(KdTreeNode *kdTreeNode);
 
-KdTreeNode* KdTreeNode_Child(KdTreeNode* kdTreeNode, int left);
+DENG_PUBLIC KdTreeNode *KdTreeNode_SetUserData(KdTreeNode *kdTreeNode, void *userData);
+
+DENG_PUBLIC KdTreeNode *KdTreeNode_Parent(KdTreeNode *kdTreeNode);
+
+DENG_PUBLIC KdTreeNode *KdTreeNode_Child(KdTreeNode *kdTreeNode, int left);
 
 #define KdTreeNode_Right(kdTreeNode) KdTreeNode_Child((kdTreeNode), false)
 #define KdTreeNode_Left(kdTreeNode)  KdTreeNode_Child((kdTreeNode), true)
 
-KdTreeNode* KdTreeNode_AddChild(KdTreeNode* kdTreeNode, double distance, int vertical, int left, void* userData);
+DENG_PUBLIC KdTreeNode *KdTreeNode_AddChild(KdTreeNode *kdTreeNode, double distance, int vertical, int left, void *userData);
 
-#define KdTreeNode_AddRight(kdTreeNode), distance, vertical, userData) KdTreeNode_AddChild((kdTreeNode), (distance), (vertical), false, (userData))
-#define KdTreeNode_AddLeft(kdTreeNode), distance, vertical, userData) KdTreeNode_AddChild((kdTreeNode), (distance), (vertical), true, (userData))
+DENG_PUBLIC int KdTreeNode_Traverse2(KdTreeNode *kdTreeNode, int (*callback)(KdTreeNode *, void *), void *parameters);
 
-int KdTreeNode_Traverse2(KdTreeNode* kdTreeNode, int (*callback)(KdTreeNode*, void*), void* parameters);
-int KdTreeNode_Traverse(KdTreeNode* kdTreeNode, int (*callback)(KdTreeNode*, void*), void* parameters);
+DENG_PUBLIC int KdTreeNode_Traverse(KdTreeNode *kdTreeNode, int (*callback)(KdTreeNode *, void *));
 
 #ifdef __cplusplus
 } // extern "C"

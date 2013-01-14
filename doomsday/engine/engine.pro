@@ -78,7 +78,6 @@ else {
 # Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
-    api/aabox.h \
     api/apis.h \
     api/api_audiod.h \
     api/api_audiod_mus.h \
@@ -203,7 +202,6 @@ DENG_HEADERS += \
     include/gl/sys_opengl.h \
     include/gl/texturecontent.h \
     include/gridmap.h \
-    include/kdtree.h \
     include/library.h \
     include/m_decomp64.h \
     include/m_misc.h \
@@ -498,7 +496,6 @@ SOURCES += \
     src/gl/svg.cpp \
     src/gl/sys_opengl.cpp \
     src/gridmap.cpp \
-    src/kdtree.cpp \
     src/library.cpp \
     src/m_decomp64.cpp \
     src/m_misc.cpp \

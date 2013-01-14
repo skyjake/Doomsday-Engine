@@ -26,7 +26,7 @@
 #ifndef __DOOMSDAY_MAP_H__
 #define __DOOMSDAY_MAP_H__
 
-#include "aabox.h"
+#include <de/aabox.h>
 #include <de/mathutil.h>
 
 #define DMT_VERTEX_ORIGIN DDVT_DOUBLE

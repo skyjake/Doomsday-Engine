@@ -287,6 +287,7 @@ static void resample(void* dst, int dstBytesPer, int dstRate,
     }
 }
 
+#ifdef __CLIENT__
 /**
  * Determines whether the audio SFX driver wants all samples to use the same
  * sampler rate.
@@ -295,7 +296,6 @@ static void resample(void* dst, int dstBytesPer, int dstRate,
  */
 static boolean sfxMustUpsampleToSfxRate(void)
 {
-#ifdef __CLIENT__
     int anySampleRateAccepted = 0;
 
     if(AudioDriver_SFX()->Getv)
@@ -303,10 +303,8 @@ static boolean sfxMustUpsampleToSfxRate(void)
         AudioDriver_SFX()->Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anySampleRateAccepted);
     }
     return (anySampleRateAccepted? false : true);
-#else
-    return false;
-#endif
 }
+#endif
 
 /**
  * Caches a copy of the given sample. If it's already in the cache and has

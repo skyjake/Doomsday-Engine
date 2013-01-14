@@ -91,6 +91,7 @@ public:
 
     int indexOf(Type const *t, int from = 0) const
     {
+        // Note: Bad performance!
         return Super::indexOf(const_cast<Type *>(t), from);
     }
 
