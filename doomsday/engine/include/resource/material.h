@@ -324,13 +324,12 @@ de::Material::Decorations const &Material_Decorations(material_t const *mat);
  *
  * @param material      Material instance.
  * @param spec          Specification for the derivation of @a material.
- * @param smooth        @c true= Select the current frame if the material is group-animated.
  * @param canCreate     @c true= Create a new variant if no suitable one exists.
  *
  * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
  */
 de::MaterialVariant *Material_ChooseVariant(material_t *mat,
-    de::MaterialVariantSpec const &spec, bool smoothed = true, bool canCreate = false);
+    de::MaterialVariantSpec const &spec, bool canCreate = false);
 
 /**
  * Provides access to the list of variant instances for efficient traversal.

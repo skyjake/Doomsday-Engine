@@ -118,11 +118,8 @@ struct VariantCacheTask
     /// Specification of the variant to be cached.
     MaterialVariantSpec const *spec;
 
-    /// @c true= Select the current frame if the material is group-animated.
-    bool smooth;
-
-    VariantCacheTask(material_t &_mat, MaterialVariantSpec const &_spec, bool _smooth)
-        : mat(&_mat), spec(&_spec), smooth(_smooth)
+    VariantCacheTask(material_t &_mat, MaterialVariantSpec const &_spec)
+        : mat(&_mat), spec(&_spec)
     {}
 };
 
@@ -358,7 +355,7 @@ void Materials::processCacheQueue()
     while(!d->variantCacheQueue.isEmpty())
     {
          VariantCacheTask *cacheTask = d->variantCacheQueue.takeFirst();
-         prepare(*cacheTask->mat, *cacheTask->spec, cacheTask->smooth);
+         prepare(*cacheTask->mat, *cacheTask->spec);
          delete cacheTask;
     }
 }
@@ -598,7 +595,7 @@ material_t *Materials::newFromDef(ded_material_t &def)
 }
 
 void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
-    bool smooth, bool cacheGroups)
+    bool cacheGroups)
 {
 #ifdef __SERVER__
     return;
@@ -615,7 +612,7 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
         if(&mat == (*i)->mat && &spec == (*i)->spec) return;
     }
 
-    VariantCacheTask *newTask = new VariantCacheTask(mat, spec, smooth);
+    VariantCacheTask *newTask = new VariantCacheTask(mat, spec);
     d->variantCacheQueue.push_back(newTask);
 
     if(!cacheGroups) return;
@@ -631,7 +628,7 @@ void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
         {
             if(*k == &mat) continue;
 
-            cache(**k, spec, smooth, false /* do not cache groups */);
+            cache(**k, spec, false /* do not cache groups */);
         }
     }
 }

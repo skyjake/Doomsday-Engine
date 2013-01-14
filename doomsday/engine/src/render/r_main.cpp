@@ -1309,7 +1309,7 @@ static void cacheSpritesForState(int stateIndex, MaterialVariantSpec const &spec
         spriteframe_t *sprFrame = &sprDef->spriteFrames[i];
         for(int k = 0; k < 8; ++k)
         {
-            App_Materials()->cache(*sprFrame->mats[k], spec, true);
+            App_Materials()->cache(*sprFrame->mats[k], spec);
         }
     }
 }
@@ -1356,13 +1356,13 @@ void Rend_CacheForMap()
             SideDef *side = SIDE_PTR(i);
 
             if(side->SW_middlematerial)
-                App_Materials()->cache(*side->SW_middlematerial, spec, true);
+                App_Materials()->cache(*side->SW_middlematerial, spec);
 
             if(side->SW_topmaterial)
-                App_Materials()->cache(*side->SW_topmaterial, spec, true);
+                App_Materials()->cache(*side->SW_topmaterial, spec);
 
             if(side->SW_bottommaterial)
-                App_Materials()->cache(*side->SW_bottommaterial, spec, true);
+                App_Materials()->cache(*side->SW_bottommaterial, spec);
         }
 
         for(uint i = 0; i < NUM_SECTORS; ++i)
@@ -1373,7 +1373,7 @@ void Rend_CacheForMap()
             for(uint k = 0; k < sec->planeCount; ++k)
             {
                 if(sec->SP_planematerial(k))
-                    App_Materials()->cache(*sec->SP_planematerial(k), spec, true);
+                    App_Materials()->cache(*sec->SP_planematerial(k), spec);
             }
         }
     }
@@ -1397,7 +1397,7 @@ void Rend_CacheForMap()
                     spriteframe_t *sprFrame = &sprDef->spriteFrames[k];
                     for(int m = 0; m < 8; ++m)
                     {
-                        App_Materials()->cache(*sprFrame->mats[m], spec, true);
+                        App_Materials()->cache(*sprFrame->mats[m], spec);
                     }
                 }
             }

@@ -466,11 +466,10 @@ Material::Variants const &Material_Variants(material_t const *mat)
     return mat->variants;
 }
 
-MaterialVariant *Material_ChooseVariant(material_t *mat,
-    MaterialVariantSpec const &spec, bool smoothed, bool canCreate)
+MaterialVariant *Material_ChooseVariant(material_t *mat, MaterialVariantSpec const &spec,
+                                        bool canCreate)
 {
     DENG_ASSERT(mat);
-    DENG_UNUSED(smoothed);
 
     MaterialVariant *variant = 0;
     DENG2_FOR_EACH_CONST(Material::Variants, i, mat->variants)
@@ -491,13 +490,6 @@ MaterialVariant *Material_ChooseVariant(material_t *mat,
         variant = new MaterialVariant(*mat, spec);
         mat->variants.push_back(variant);
     }
-
-#if 0 /// @todo $revise-texture-animation
-    if(smoothed)
-    {
-        variant = variant->translationCurrent();
-    }
-#endif
 
     return variant;
 }

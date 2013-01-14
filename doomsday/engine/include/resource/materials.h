@@ -308,12 +308,11 @@ public:
      *
      * @param material      Base Material from which to derive a variant.
      * @param spec          Specification for the desired derivation of @a material.
-     * @param smooth        @c true= Select the current frame if the material is group-animated.
      * @param cacheGroups   @c true= variants for all Materials in any applicable groups
      *                      are desired, else just this specific Material.
      */
     void cache(material_t &material, MaterialVariantSpec const &spec,
-               bool smooth, bool cacheGroups = true);
+               bool cacheGroups = true);
 
     /**
      * Prepare variant @a material for render (e.g., upload textures if necessary).
@@ -339,15 +338,14 @@ public:
      *
      * @param material  Base Material from which to derive a variant.
      * @param spec      Specification for the derivation of @a material.
-     * @param smooth    @c true= Select the current frame if the material is group-animated.
      * @param forceSnapshotUpdate  @c true= Ensure to update the state snapshot.
      *
      * @return  Snapshot for the chosen and prepared variant of Material.
      */
     inline MaterialSnapshot const &prepare(material_t &material,
-        MaterialVariantSpec const &spec, bool smooth = true, bool forceSnapshotUpdate = false)
+        MaterialVariantSpec const &spec, bool forceSnapshotUpdate = false)
     {
-        return prepare(*Material_ChooseVariant(&material, spec, smooth, true /*can-create*/),
+        return prepare(*Material_ChooseVariant(&material, spec, true /*can-create*/),
                        forceSnapshotUpdate);
     }
 

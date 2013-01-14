@@ -540,7 +540,7 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
 
         // Choose a specific variant for use as a middle wall section.
         material = Material_ChooseVariant(&material->generalCase(),
-                                          mapSurfaceMaterialSpec(wrapS, wrapT), true, true);
+                                          mapSurfaceMaterialSpec(wrapS, wrapT), true);
     }
 
     VS_WALL(vis)->material = reinterpret_cast<materialvariant_s *>(material);
