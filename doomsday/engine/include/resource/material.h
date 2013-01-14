@@ -53,7 +53,6 @@ typedef struct material_s material_t;
 #ifdef __cplusplus
 
 #include <QList>
-#include <de/Error>
 #include <de/Vector>
 #include "uri.hh"
 
@@ -120,7 +119,7 @@ public:
         }
 
         /**
-         * Retrieve the pattern skip for the decoration, Normally a decoration
+         * Retrieve the pattern skip for the decoration. Normally a decoration
          * is repeated on a surface as many times as the material does. A skip
          * pattern allows sparser repeats on the horizontal and vertical axes
          * respectively.
@@ -168,10 +167,6 @@ public:
 
     /// A list of decorations.
     typedef QList<Material::Decoration *> Decorations;
-
-public:
-    /// The material is not a member of an animation group. @ingroup errors
-    DENG2_ERROR(NoAnimGroupError);
 };
 
 } // namespace de
