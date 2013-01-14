@@ -400,15 +400,14 @@ uint P_ToIndex(void const *ptr)
         return GET_BSPNODE_IDX(elem->castTo<BspNode>());
 
     case DMU_PLANE:
-        DENG2_ASSERT(false); // TODO: update this!
-        //return GET_PLANE_IDX((Plane *) ptr);
+        return GET_PLANE_IDX(elem->castTo<Plane>());
 
     case DMU_MATERIAL:
         DENG2_ASSERT(false); // TODO: update this!
         //return Materials_Id((material_t *) ptr);
 
     default:
-        DENG2_ASSERT(false); // Unknown DMU type.
+        DENG2_ASSERT(false); // Unknown/non-indexable DMU type.
         return 0;
     }
 }

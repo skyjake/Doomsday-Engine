@@ -32,10 +32,7 @@
 #include "resource/r_data.h"
 #include "map/vertex.h"
 #include "map/sector.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "map/plane.h"
 
 // Used for vertex sector owners, side line owners and reverb BSP leafs.
 typedef struct ownernode_s {
@@ -165,8 +162,8 @@ void            R_ClearSurfaceDecorations(Surface* suf);
 void            R_UpdateTrackedPlanes(void);
 void            R_InterpolateTrackedPlanes(boolean resetNextViewer);
 
-void            R_AddTrackedPlane(planelist_t* plist, Plane* pln);
-boolean         R_RemoveTrackedPlane(planelist_t* plist, const Plane* pln);
+void            R_AddTrackedPlane(PlaneSet* plist, Plane* pln);
+boolean         R_RemoveTrackedPlane(PlaneSet* plist, Plane* pln);
 
 void            R_UpdateSurfaceScroll(void);
 void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
@@ -174,7 +171,7 @@ void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
 boolean R_UpdateSector(Sector *sec, boolean forceUpdate);
 boolean R_UpdateLinedef(LineDef *line, boolean forceUpdate);
 boolean R_UpdateSidedef(SideDef *side, boolean forceUpdate);
-boolean R_UpdatePlane(struct plane_s *pln, boolean forceUpdate);
+boolean R_UpdatePlane(Plane *pln, boolean forceUpdate);
 boolean R_UpdateSurface(struct surface_s *suf, boolean forceUpdate);
 
 /**
@@ -247,9 +244,5 @@ LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
 ///@}
 
 coord_t R_SkyCapZ(BspLeaf* bspLeaf, int skyCap);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_REFRESH_WORLD_H */

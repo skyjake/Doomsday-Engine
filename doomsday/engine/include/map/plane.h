@@ -23,6 +23,12 @@
 #ifndef LIBDENG_MAP_PLANE
 #define LIBDENG_MAP_PLANE
 
+#ifndef __cplusplus
+#  error "map/plane.h requires C++"
+#endif
+
+#include <QSet>
+#include "MapElement"
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
 #include "map/surface.h"
@@ -45,29 +51,34 @@ typedef enum {
 #define PS_flags                surface.flags
 #define PS_inflags              surface.inFlags
 
-typedef struct plane_s {
-    runtime_mapdata_header_t header;
-    Sector *sector;                    ///< Owner of the plane.
-    Surface             surface;
-    coord_t             height;        /// Current height.
-    coord_t             oldHeight[2];
-    coord_t             target;        /// Target height.
-    coord_t             speed;         /// Move speed.
-    coord_t             visHeight;     /// Visible plane height (smoothed).
-    coord_t             visHeightDelta;
-    planetype_t         type;          /// PLN_* type.
-    int                 planeID;
-} Plane;
+class Plane : public de::MapElement
+{
+public:
+    Sector     *sector;        ///< Owner of the plane.
+    Surface     surface;
+    coord_t     height;        ///< Current height.
+    coord_t     oldHeight[2];
+    coord_t     target;        ///< Target height.
+    coord_t     speed;         ///< Move speed.
+    coord_t     visHeight;     ///< Visible plane height (smoothed).
+    coord_t     visHeightDelta;
+    planetype_t type;          ///< PLN_* type.
+    int         planeID;
 
+public:
+    Plane();
+    ~Plane();
+};
+
+typedef QSet<Plane *> PlaneSet;
+
+/*
 typedef struct planelist_s {
     uint num;
     uint maxNum;
     Plane **array;
 } planelist_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+*/
 
 // Return the index of plane within a sector's planes array.
 #define GET_PLANE_IDX(pln)      ( (int) ((pln) - (pln)->sector->planes[0]) )
@@ -89,9 +100,5 @@ int Plane_GetProperty(const Plane* plane, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Plane_SetProperty(Plane* plane, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_PLANE

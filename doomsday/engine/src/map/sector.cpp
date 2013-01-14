@@ -57,7 +57,7 @@ Sector::~Sector()
     {
         for(uint i = 0; i < planeCount; ++i)
         {
-            M_Free(planes[i]);
+            delete planes[i];
         }
         M_Free(planes);
     }

@@ -478,7 +478,7 @@ surfacelist_t* GameMap_ScrollingSurfaces(GameMap* map)
     return &map->scrollingSurfaces;
 }
 
-planelist_t* GameMap_TrackedPlanes(GameMap* map)
+PlaneSet* GameMap_TrackedPlanes(GameMap* map)
 {
     assert(map);
     return &map->trackedPlanes;

@@ -29,6 +29,7 @@
 
 #include "p_maptypes.h"
 #include "p_particle.h"
+#include "plane.h"
 #include <EntityDatabase>
 #include <de/mathutil.h>
 
@@ -110,7 +111,7 @@ public:
 
     EntityDatabase* entityDatabase;
 
-    planelist_t trackedPlanes;
+    PlaneSet trackedPlanes;
     surfacelist_t scrollingSurfaces;
     surfacelist_t decoratedSurfaces;
     surfacelist_t glowingSurfaces;
@@ -632,7 +633,7 @@ surfacelist_t* GameMap_ScrollingSurfaces(GameMap* map);
  * @param map  GameMap instance.
  * @return  List of tracked planes.
  */
-planelist_t* GameMap_TrackedPlanes(GameMap* map);
+PlaneSet* GameMap_TrackedPlanes(GameMap* map);
 
 /**
  * Initialize all Polyobjs in the map. To be called after map load.

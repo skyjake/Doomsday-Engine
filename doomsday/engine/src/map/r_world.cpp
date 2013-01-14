@@ -32,6 +32,7 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "map/plane.h"
 #include "resource/materialsnapshot.h"
 #include "resource/materialvariant.h"
 
@@ -282,55 +283,18 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
     }
 }
 
-void R_AddTrackedPlane(planelist_t *plist, Plane *pln)
+void R_AddTrackedPlane(PlaneSet *plist, Plane *pln)
 {
     if(!plist || !pln) return;
 
-    // Check whether we are already tracking this plane.
-    for(uint i = 0; i < plist->num; ++i)
-    {
-        if(plist->array[i] == pln)
-            return; // Yes we are.
-    }
-
-    plist->num++;
-
-    // Only allocate memory when it's needed.
-    if(plist->num > plist->maxNum)
-    {
-        plist->maxNum *= 2;
-
-        // The first time, allocate 8 watched plane nodes.
-        if(!plist->maxNum)
-            plist->maxNum = 8;
-
-        plist->array = (Plane **) Z_Realloc(plist->array, sizeof(Plane *) * (plist->maxNum + 1), PU_MAP);
-    }
-
-    // Add the plane to the list.
-    plist->array[plist->num - 1] = pln;
-    plist->array[plist->num] = NULL; // Terminate.
+    plist->insert(pln);
 }
 
-boolean R_RemoveTrackedPlane(planelist_t *plist, Plane const *pln)
+boolean R_RemoveTrackedPlane(PlaneSet *plist, Plane *pln)
 {
     if(!plist || !pln) return false;
 
-    for(uint i = 0; i < plist->num; ++i)
-    {
-        if(plist->array[i] == pln)
-        {
-            if(i == plist->num - 1)
-                plist->array[i] = 0;
-            else
-                std::memmove(&plist->array[i], &plist->array[i + 1], sizeof(Plane *) * (plist->num - 1 - i));
-
-            plist->num--;
-            return true;
-        }
-    }
-
-    return false;
+    return plist->remove(pln);
 }
 
 /**
@@ -340,12 +304,12 @@ void R_UpdateTrackedPlanes()
 {
     if(!theMap) return;
 
-    planelist_t* plist = GameMap_TrackedPlanes(theMap);
+    PlaneSet* plist = GameMap_TrackedPlanes(theMap);
     if(!plist) return;
 
-    for(uint i = 0; i < plist->num; ++i)
+    DENG2_FOR_EACH(PlaneSet, i, *plist)
     {
-        Plane *pln = plist->array[i];
+        Plane *pln = *i;
 
         pln->oldHeight[0] = pln->oldHeight[1];
         pln->oldHeight[1] = pln->height;
@@ -369,15 +333,15 @@ void R_InterpolateTrackedPlanes(boolean resetNextViewer)
 {
     if(!theMap) return;
 
-    planelist_t* plist = GameMap_TrackedPlanes(theMap);
+    PlaneSet* plist = GameMap_TrackedPlanes(theMap);
     if(!plist) return;
 
     if(resetNextViewer)
     {
         // $smoothplane: Reset the plane height trackers.
-        for(uint i = 0; i < plist->num; ++i)
+        DENG2_FOR_EACH(PlaneSet, i, *plist)
         {
-            Plane *pln = plist->array[i];
+            Plane *pln = *i;
 
             pln->visHeightDelta = 0;
             pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
@@ -386,19 +350,20 @@ void R_InterpolateTrackedPlanes(boolean resetNextViewer)
             {
                 R_MarkDependantSurfacesForDecorationUpdate(pln);
             }
-
-            if(R_RemoveTrackedPlane(plist, pln))
-                i = (i > 0? i-1 : 0);
         }
+
+        // Tracked movement is now all done.
+        plist->clear();
     }
     // While the game is paused there is no need to calculate any
     // visual plane offsets $smoothplane.
     else //if(!clientPaused)
     {
         // $smoothplane: Set the visible offsets.
-        for(uint i = 0; i < plist->num; ++i)
+        QMutableSetIterator<Plane *> iter(*plist);
+        while(iter.hasNext())
         {
-            Plane *pln = plist->array[i];
+            Plane *pln = iter.next();
 
             pln->visHeightDelta = pln->oldHeight[0] * (1 - frameTimePos) +
                         pln->height * frameTimePos -
@@ -415,8 +380,7 @@ void R_InterpolateTrackedPlanes(boolean resetNextViewer)
             // Has this plane reached its destination?
             if(pln->visHeight == pln->height) /// @todo  Can this fail? (float equality)
             {
-                if(R_RemoveTrackedPlane(plist, pln))
-                    i = (i > 0? i-1 : 0);
+                iter.remove();
             }
         }
     }
@@ -493,7 +457,7 @@ Plane *R_NewPlaneForSector(Sector *sec)
     if(!sec) return NULL; // Do wha?
 
     // Allocate the new plane.
-    Plane *plane = (Plane *) Z_Malloc(sizeof(Plane), PU_MAP, 0);
+    Plane *plane = new Plane;
 
     // Resize this sector's plane list.
     sec->planes = (Plane **) Z_Realloc(sec->planes, sizeof(Plane *) * (++sec->planeCount + 1), PU_MAP);
@@ -502,7 +466,7 @@ Plane *R_NewPlaneForSector(Sector *sec)
     sec->planes[sec->planeCount] = NULL; // Terminate.
 
     // Setup header for DMU.
-    plane->header.type = DMU_PLANE;
+    //plane->header.type = DMU_PLANE;
 
     // Initalize the plane.
     plane->sector = sec;
@@ -512,10 +476,10 @@ Plane *R_NewPlaneForSector(Sector *sec)
     plane->speed = 0;
     plane->target = 0;
     plane->type = PLN_MID;
-    plane->planeID = sec->planeCount-1;
+    plane->planeID = sec->planeCount - 1;
 
     // Initialize the surface.
-    std::memset(&plane->surface, 0, sizeof(plane->surface));
+    std::memset(&plane->surface, 0, sizeof(plane->surface)); // TODO: surface_s: update for C++ Surface
     Surface *suf = &plane->surface;
     suf->header.type = DMU_SURFACE; // Setup header for DMU.
     suf->normal[VZ] = 1;
@@ -612,7 +576,7 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
     }
 
     // If this plane is currently being watched, remove it.
-    planelist_t *plist = GameMap_TrackedPlanes(theMap);
+    PlaneSet *plist = GameMap_TrackedPlanes(theMap);
     if(plist) R_RemoveTrackedPlane(plist, plane);
 
     // If this plane's surface is in the moving list, remove it.

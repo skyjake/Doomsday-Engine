@@ -88,6 +88,8 @@ typedef struct msector_s {
     int	refCount;
 } msector_t;
 
+class Plane;
+
 class Sector : public de::MapElement
 {
 public:
@@ -108,7 +110,7 @@ public:
     BspLeaf**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
     ddmobj_base_t       base;
     unsigned int        planeCount;
-    struct plane_s**    planes;        // [planeCount+1] size.
+    Plane             **planes;        // [planeCount+1] size.
     unsigned int        blockCount;    // Number of gridblocks in the sector.
     unsigned int        changedBlockCount; // Number of blocks to mark changed.
     unsigned short*     blocks;        // Light grid block indices.

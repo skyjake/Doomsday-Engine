@@ -66,7 +66,6 @@ typedef void (*con_textfilter_t) (char* text);
 struct hedge_s;
 struct polyblock_s;
 struct polyobj_s;
-struct plane_s;
 struct surface_s;
 struct material_s;
 

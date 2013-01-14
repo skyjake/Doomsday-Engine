@@ -1953,7 +1953,7 @@ uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri,
 
     Sector* s = e_map->sectors[sector - 1];
 
-    Plane* pln = (Plane*) M_Calloc(sizeof(Plane));
+    Plane* pln = new Plane;
     pln->surface.owner = (void*) pln;
     pln->height = height;
 
