@@ -35,36 +35,37 @@
 #include "resource/materials.h"
 #include "api_map.h"
 
+// Converting a public void* pointer to an internal de::MapElement.
+#define IN_ELEM(p)          reinterpret_cast<de::MapElement *>(p)
+#define IN_ELEM_CONST(p)    reinterpret_cast<de::MapElement const *>(p)
+
 using namespace de;
 
-/// @todo must be a C++ class -jk
-typedef struct dummysidedef_s {
-    SideDef sideDef; /// Side data.
+/**
+ * Additional data for all dummy elements.
+ */
+class DummyData
+{
+public:
     void *extraData; /// Pointer to user data.
-    boolean inUse; /// true, if the dummy is being used.
-} dummysidedef_t;
 
-/// @todo must be a C++ class -jk
-typedef struct dummyline_s {
-    LineDef line; /// Line data.
-    void *extraData; /// Pointer to user data.
-    boolean inUse; /// true, if the dummy is being used.
-} dummyline_t;
+public:
+    DummyData()
+    {
+        extraData = 0;
+    }
 
-/// @todo must be a C++ class -jk
-typedef struct dummysector_s {
-    Sector sector; /// Sector data.
-    void *extraData; /// Pointer to user data.
-    boolean inUse; /// true, if the dummy is being used.
-} dummysector_t;
+    virtual ~DummyData() {}
+};
 
-static uint dummyCount = 8; // Number of dummies to allocate (per type).
+class DummySideDef : public SideDef, public DummyData {};
 
-static dummysidedef_t *dummySideDefs;
-static dummyline_t *dummyLines;
-static dummysector_t *dummySectors;
+class DummyLineDef : public LineDef, public DummyData {};
 
-static int usingDMUAPIver; // Version of the DMU API the game expects.
+class DummySector : public Sector, public DummyData {};
+
+typedef QSet<de::MapElement *> Dummies;
+static Dummies dummies;
 
 char const *DMU_Str(uint prop)
 {
@@ -158,10 +159,7 @@ int DMU_GetType(void const *ptr)
 {
     if(!ptr) return DMU_NONE;
 
-    int type = P_DummyType((void *)ptr);
-    if(type != DMU_NONE) return type;
-
-    de::MapElement const *elem = reinterpret_cast<de::MapElement const *>(ptr);
+    de::MapElement const *elem = IN_ELEM_CONST(ptr);
 
     // Make sure it's valid.
     switch(elem->type())
@@ -200,185 +198,103 @@ static void initArgs(setargs_t *args, int type, uint prop)
 
 void P_InitMapUpdate()
 {
-    if(DD_GameLoaded())
-    {
-        // Request the DMU API version the game is expecting.
-        usingDMUAPIver = gx.GetInteger(DD_DMU_VERSION);
-        if(!usingDMUAPIver)
-        {
-            QByteArray msg = String("P_InitMapUpdate: Game library is not compatible with %1 %2.")
-                                .arg(DOOMSDAY_NICENAME).arg(DOOMSDAY_VERSION_TEXT).toUtf8();
-            LegacyCore_FatalError(msg.constData());
-        }
+    // TODO: free existing/old dummies here?
 
-        if(usingDMUAPIver > DMUAPI_VER)
-        {
-            QByteArray msg = String("P_InitMapUpdate: Game library expects a later version of the\n"
-                                "DMU API then that defined by %1 %2 \n"
-                                "This game is for a newer version of %1.")
-                                .arg(DOOMSDAY_NICENAME).arg(DOOMSDAY_VERSION_TEXT).toUtf8();
-            LegacyCore_FatalError(msg.constData());
-        }
-    }
-    else
-    {
-        usingDMUAPIver = DMUAPI_VER;
-    }
-
-    // A fixed number of dummies is allocated because:
-    // - The number of dummies is mostly dependent on recursive depth of
-    //   game functions.
-    // - To test whether a pointer refers to a dummy is based on pointer
-    //   comparisons; if the array is reallocated, its address may change
-    //   and all existing dummies are invalidated.
-    dummyLines    = (dummyline_t *)    Z_Calloc(dummyCount * sizeof(dummyline_t),    PU_APPSTATIC, NULL);
-    dummySideDefs = (dummysidedef_t *) Z_Calloc(dummyCount * sizeof(dummysidedef_t), PU_APPSTATIC, NULL);
-    dummySectors  = (dummysector_t *)  Z_Calloc(dummyCount * sizeof(dummysector_t),  PU_APPSTATIC, NULL);
+    dummies.clear();
 }
 
+#undef P_AllocDummy
 void *P_AllocDummy(int type, void *extraData)
 {
     switch(type)
     {
-    case DMU_SIDEDEF:
-        for(uint i = 0; i < dummyCount; ++i)
-        {
-            if(!dummySideDefs[i].inUse)
-            {
-                dummySideDefs[i].inUse = true;
-                dummySideDefs[i].extraData = extraData;
-                //dummySideDefs[i].sideDef.header.type = DMU_SIDEDEF;
-                dummySideDefs[i].sideDef.line = 0;
-                return &dummySideDefs[i];
-            }
-        }
-        break;
+    case DMU_SIDEDEF: {
+        DummySideDef *ds = new DummySideDef;
+        dummies.insert(ds);
+        ds->extraData = extraData;
+        return ds;
+    }
 
-    case DMU_LINEDEF:
-        for(uint i = 0; i < dummyCount; ++i)
-        {
-            if(!dummyLines[i].inUse)
-            {
-                dummyLines[i].inUse = true;
-                dummyLines[i].extraData = extraData;
-                //dummyLines[i].line.header.type = DMU_LINEDEF;
-                dummyLines[i].line.L_frontsidedef =
-                    dummyLines[i].line.L_backsidedef = 0;
-                dummyLines[i].line.L_frontsector = 0;
-                dummyLines[i].line.L_frontside.hedgeLeft =
-                    dummyLines[i].line.L_frontside.hedgeRight =0;
-                dummyLines[i].line.L_backsector = 0;
-                dummyLines[i].line.L_backside.hedgeLeft =
-                    dummyLines[i].line.L_backside.hedgeRight =0;
-                return &dummyLines[i];
-            }
-        }
-        break;
+    case DMU_LINEDEF: {
+        DummyLineDef *dl = new DummyLineDef;
+        dummies.insert(dl);
+        dl->extraData = extraData;
+        return dl;
+    }
 
-    case DMU_SECTOR:
-        for(uint i = 0; i < dummyCount; ++i)
-        {
-            if(!dummySectors[i].inUse)
-            {
-                dummySectors[i].inUse = true;
-                dummySectors[i].extraData = extraData;
-                //dummySectors[i].sector.header.type = DMU_SECTOR;
-                return &dummySectors[i];
-            }
-        }
-        break;
+    case DMU_SECTOR: {
+        DummySector *ds = new DummySector;
+        dummies.insert(ds);
+        ds->extraData = extraData;
+        return ds;
+    }
 
     default: {
+        /// @throw Throw exception.
         QByteArray msg = String("P_AllocDummy: Dummies of type %1 not supported.").arg(DMU_Str(type)).toUtf8();
         LegacyCore_FatalError(msg.constData()); }
     }
 
-    QByteArray msg = String("P_AllocDummy: Out of dummies of type %1.").arg(DMU_Str(type)).toUtf8();
-    LegacyCore_FatalError(msg.constData());
     return 0; // Unreachable.
 }
 
-void P_FreeDummy(void *dummy)
-{
-    switch(P_DummyType(dummy))
-    {
-    case DMU_SIDEDEF:
-        ((dummysidedef_t *)dummy)->inUse = false;
-        break;
-
-    case DMU_LINEDEF:
-        ((dummyline_t *)dummy)->inUse = false;
-        break;
-
-    case DMU_SECTOR:
-        ((dummysector_t *)dummy)->inUse = false;
-        break;
-
-    default:
-        LegacyCore_FatalError("P_FreeDummy: Dummy is of unknown type.");
-    }
-}
-
-/**
- * Determines the type of a dummy object. For extra safety (in a debug build)
- * it would be possible to look through the dummy arrays and make sure the
- * pointer refers to a real dummy.
- */
-int P_DummyType(void *dummy)
-{
-    // Is it a SideDef?
-    if(dummy >= (void *) &dummySideDefs[0] &&
-       dummy <= (void *) &dummySideDefs[dummyCount - 1])
-    {
-        return DMU_SIDEDEF;
-    }
-
-    // Is it a line?
-    if(dummy >= (void *) &dummyLines[0] &&
-       dummy <= (void *) &dummyLines[dummyCount - 1])
-    {
-        return DMU_LINEDEF;
-    }
-
-    // A sector?
-    if(dummy >= (void *) &dummySectors[0] &&
-       dummy <= (void *) &dummySectors[dummyCount - 1])
-    {
-        return DMU_SECTOR;
-    }
-
-    // Unknown.
-    return DMU_NONE;
-}
-
-boolean P_IsDummy(void *dummy)
+boolean P_IsDummy(void const *dummy)
 {
     return P_DummyType(dummy) != DMU_NONE;
 }
 
+#undef P_FreeDummy
+void P_FreeDummy(void *dummy)
+{
+    de::MapElement *elem = IN_ELEM(dummy);
+
+    int type = P_DummyType(dummy);
+    if(type == DMU_NONE)
+    {
+        /// @todo Throw exception.
+        LegacyCore_FatalError("P_FreeDummy: Dummy is of unknown type.");
+    }
+
+    DENG2_ASSERT(dummies.contains(elem));
+
+    dummies.remove(elem);
+    delete elem;
+}
+
+/**
+ * Determines the type of a dummy object.
+ */
+int P_DummyType(void const *dummy)
+{
+    de::MapElement const *elem = IN_ELEM_CONST(dummy);
+
+    if(!dynamic_cast<DummyData const *>(elem))
+    {
+        // Not a dummy.
+        return DMU_NONE;
+    }
+
+    DENG2_ASSERT(dummies.contains(const_cast<de::MapElement *>(elem)));
+
+    return elem->type();
+}
+
 void *P_DummyExtraData(void *dummy)
 {
-    switch(P_DummyType(dummy))
+    if(P_IsDummy(dummy))
     {
-    case DMU_SIDEDEF:
-        return ((dummysidedef_t *)dummy)->extraData;
-
-    case DMU_LINEDEF:
-        return ((dummyline_t *)dummy)->extraData;
-
-    case DMU_SECTOR:
-        return ((dummysector_t *)dummy)->extraData;
-
-    default:
-        return 0;
+        de::MapElement *elem = IN_ELEM(dummy);
+        return elem->castTo<DummyData>()->extraData;
     }
+    return 0;
 }
 
 uint P_ToIndex(void const *ptr)
 {
     if(!ptr) return 0;
+    if(P_IsDummy(ptr)) return 0;
 
-    de::MapElement const *elem = reinterpret_cast<de::MapElement const *>(ptr);
+    de::MapElement const *elem = IN_ELEM_CONST(ptr);
 
     switch(elem->type())
     {
@@ -452,6 +368,7 @@ void *P_ToPtr(int type, uint index)
         return 0; /* Unreachable. */ }
 
     case DMU_MATERIAL:
+        // TODO: update!
         return Materials_ToMaterial(index);
 
     default: {
@@ -464,7 +381,7 @@ void *P_ToPtr(int type, uint index)
 
 int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, void *ctx))
 {
-    de::MapElement *elem = reinterpret_cast<de::MapElement *>(elPtr);
+    de::MapElement *elem = IN_ELEM(elPtr);
 
     switch(elem->type())
     {
@@ -643,7 +560,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
  */
 int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, void *ctx))
 {
-    de::MapElement *elem = reinterpret_cast<de::MapElement *>(elPtr);
+    de::MapElement *elem = IN_ELEM(elPtr);
 
     LOG_AS("P_Callbackp");
 
@@ -946,7 +863,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
  */
 static int setProperty(void *elPtr, void *context)
 {
-    de::MapElement *elem = reinterpret_cast<de::MapElement *>(elPtr);
+    de::MapElement *elem = IN_ELEM(elPtr);
     setargs_t *args = (setargs_t *) context;
     Sector *updateSector1 = NULL, *updateSector2 = NULL;
     Plane *updatePlane = NULL;

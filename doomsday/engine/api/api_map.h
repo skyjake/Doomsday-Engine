@@ -365,7 +365,7 @@ DENG_API_TYPEDEF(Map)
     // Dummy Objects
     void*           (*AllocDummy)(int type, void* extraData);
     void            (*FreeDummy)(void* dummy);
-    boolean         (*IsDummy)(void* dummy);
+    boolean         (*IsDummy)(void const *dummy);
     void*           (*DummyExtraData)(void* dummy);
 
     // Map Entities

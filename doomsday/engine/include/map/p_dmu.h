@@ -67,7 +67,7 @@ void P_InitMapUpdate(void);
  * it would be possible to look through the dummy arrays and make sure the
  * pointer refers to a real dummy.
  */
-int P_DummyType(void *dummy);
+int P_DummyType(void const *dummy);
 
 /**
  * Frees a dummy object.
