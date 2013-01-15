@@ -861,9 +861,9 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
  * When a property changes, the relevant subsystems are notified of the change
  * so that they can update their state accordingly.
  */
-static int setProperty(void *elPtr, void *context)
+static int setProperty(void *ptr, void *context)
 {
-    de::MapElement *elem = IN_ELEM(elPtr);
+    de::MapElement *elem = IN_ELEM(ptr);
     setargs_t *args = (setargs_t *) context;
     Sector *updateSector1 = NULL, *updateSector2 = NULL;
     Plane *updatePlane = NULL;
@@ -1130,8 +1130,7 @@ static int setProperty(void *elPtr, void *context)
     return true; // Continue iteration.
 }
 
-void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args,
-                  uint index)
+void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint index)
 {
     if(valueType == DDVT_FIXED)
     {
@@ -1354,7 +1353,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args,
         {
         case DDVT_INT:
             // Attempt automatic conversion using P_ToIndex(). Naturally only
-            // works with map data objects. Failure leads into a fatal error.
+            // works with map elements. Failure leads into a fatal error.
             args->intValues[index] = P_ToIndex(*s);
             break;
         case DDVT_PTR:
@@ -1373,8 +1372,9 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args,
     }
 }
 
-static int getProperty(void *ob, void *context)
+static int getProperty(void *ptr, void *context)
 {
+    de::MapElement const *elem = IN_ELEM_CONST(ptr);
     setargs_t *args = (setargs_t *) context;
 
     // Dereference where necessary. Note the order, these cascade.
@@ -1382,12 +1382,12 @@ static int getProperty(void *ob, void *context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            ob = ((BspLeaf *)ob)->sector;
+            elem = elem->castTo<BspLeaf>()->sector;
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            ob = ((BspLeaf *)ob)->sector;
+            elem = elem->castTo<BspLeaf>()->sector;
             args->type = DMU_SECTOR;
         }
         else
@@ -1396,7 +1396,7 @@ static int getProperty(void *ob, void *context)
             {
             case DMU_LIGHT_LEVEL:
             case DMT_MOBJS:
-                ob = ((BspLeaf *)ob)->sector;
+                elem = elem->castTo<BspLeaf>()->sector;
                 args->type = DMU_SECTOR;
                 break;
             default: break;
@@ -1408,14 +1408,14 @@ static int getProperty(void *ob, void *context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            Sector *sec = (Sector *)ob;
-            ob = sec->SP_plane(PLN_FLOOR);
+            Sector const *sec = elem->castTo<Sector>();
+            elem = sec->SP_plane(PLN_FLOOR);
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            Sector *sec = (Sector *)ob;
-            ob = sec->SP_plane(PLN_CEILING);
+            Sector const *sec = elem->castTo<Sector>();
+            elem = sec->SP_plane(PLN_CEILING);
             args->type = DMU_PLANE;
         }
     }
@@ -1424,27 +1424,31 @@ static int getProperty(void *ob, void *context)
     {
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            LineDef *li = ((LineDef *)ob);
+            LineDef const *li = elem->castTo<LineDef>();
             if(!li->L_frontsidedef) // $degenleaf
             {
+                /// @todo Throw exception.
                 QByteArray msg = String("DMU_setProperty: Linedef %1 has no front side.").arg(P_ToIndex(li)).toUtf8();
                 LegacyCore_FatalError(msg.constData());
             }
 
-            ob = li->L_frontsidedef;
+            elem = li->L_frontsidedef;
             args->type = DMU_SIDEDEF;
+            DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            LineDef *li = ((LineDef *)ob);
+            LineDef const *li = elem->castTo<LineDef>();
             if(!li->L_backsidedef)
             {
+                /// @todo Throw exception.
                 QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
                 LegacyCore_FatalError(msg.constData());
             }
 
-            ob = li->L_backsidedef;
+            elem = li->L_backsidedef;
             args->type = DMU_SIDEDEF;
+            DENG2_ASSERT(args->type == elem->type());
         }
     }
 
@@ -1452,18 +1456,21 @@ static int getProperty(void *ob, void *context)
     {
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            ob = &((SideDef *)ob)->SW_topsurface;
+            elem = &elem->castTo<SideDef>()->SW_topsurface;
             args->type = DMU_SURFACE;
+            DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            ob = &((SideDef *)ob)->SW_middlesurface;
+            elem = &elem->castTo<SideDef>()->SW_middlesurface;
             args->type = DMU_SURFACE;
+            DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            ob = &((SideDef *)ob)->SW_bottomsurface;
+            elem = &elem->castTo<SideDef>()->SW_bottomsurface;
             args->type = DMU_SURFACE;
+            DENG2_ASSERT(args->type == elem->type());
         }
     }
 
@@ -1495,8 +1502,9 @@ static int getProperty(void *ob, void *context)
         case DMU_BLENDMODE:
         case DMU_FLAGS:
         case DMU_BASE:
-            ob = &((Plane *)ob)->surface;
+            elem = &elem->castTo<Plane>()->surface;
             args->type = DMU_SURFACE;
+            DENG2_ASSERT(elem->type() == args->type);
             break;
 
         default:
@@ -1507,39 +1515,40 @@ static int getProperty(void *ob, void *context)
     switch(args->type)
     {
     case DMU_VERTEX:
-        Vertex_GetProperty((Vertex *)ob, args);
+        Vertex_GetProperty(elem->castTo<Vertex>(), args);
         break;
 
     case DMU_HEDGE:
-        HEdge_GetProperty((HEdge *)ob, args);
+        HEdge_GetProperty(elem->castTo<HEdge>(), args);
         break;
 
     case DMU_LINEDEF:
-        LineDef_GetProperty((LineDef *)ob, args);
+        LineDef_GetProperty(elem->castTo<LineDef>(), args);
         break;
 
     case DMU_SURFACE:
-        Surface_GetProperty((Surface *)ob, args);
+        Surface_GetProperty(elem->castTo<Surface>(), args);
         break;
 
     case DMU_PLANE:
-        Plane_GetProperty((Plane *)ob, args);
+        Plane_GetProperty(elem->castTo<Plane>(), args);
         break;
 
     case DMU_SECTOR:
-        Sector_GetProperty((Sector *)ob, args);
+        Sector_GetProperty(elem->castTo<Sector>(), args);
         break;
 
     case DMU_SIDEDEF:
-        SideDef_GetProperty((SideDef *)ob, args);
+        SideDef_GetProperty(elem->castTo<SideDef>(), args);
         break;
 
     case DMU_BSPLEAF:
-        BspLeaf_GetProperty((BspLeaf *)ob, args);
+        BspLeaf_GetProperty(elem->castTo<BspLeaf>(), args);
         break;
 
     case DMU_MATERIAL:
-        Material_GetProperty((material_t *)ob, args);
+        // TODO: Update this when Material is derived from MapElement.
+        //Material_GetProperty((material_t *)ob, args);
         break;
 
     default: {

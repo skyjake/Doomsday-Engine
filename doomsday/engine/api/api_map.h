@@ -364,7 +364,7 @@ DENG_API_TYPEDEF(Map)
     void*           (*ToPtr)(int type, uint index);
     int             (*Callback)(int type, uint index, void* context, int (*callback)(MapElementPtr p, void* ctx));
     int             (*Callbackp)(int type, MapElementPtr ptr, void* context, int (*callback)(MapElementPtr p, void* ctx));
-    int             (*Iteratep)(MapElementPtrConst ptr, uint prop, void* context, int (*callback) (MapElementPtr p, void* ctx));
+    int             (*Iteratep)(MapElementPtr ptr, uint prop, void* context, int (*callback) (MapElementPtr p, void* ctx));
 
     // Dummy Objects
     MapElementPtr   (*AllocDummy)(int type, void* extraData);
