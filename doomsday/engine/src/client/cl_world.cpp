@@ -612,28 +612,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 
     /// @todo Skipping is never done nowadays...
     static Sector dummy; // Used when skipping.
-    static Plane* dummyPlaneArray[2];
-    static Plane dummyPlanes[2];
 
-    GameMap* map = theMap; /// @todo Do not assume the CURRENT map.
-    unsigned short num;
-    Sector* sec;
-    int df;
+    /// @todo Do not assume the CURRENT map.
+    GameMap *map = theMap;
+
     float height[2] = { 0, 0 };
     float target[2] = { 0, 0 };
-    float speed[2] = { 0, 0 };
-
-    // Set up the dummy.
-    dummyPlaneArray[0] = &dummyPlanes[0];
-    dummyPlaneArray[1] = &dummyPlanes[1];
-    dummy.planes = dummyPlaneArray;
+    float speed[2]  = { 0, 0 };
 
     // Sector index number.
-    num = Reader_ReadUInt16(msgReader);
+    ushort num = Reader_ReadUInt16(msgReader);
 
-    // Flags.
-    df = Reader_ReadPackedUInt32(msgReader);
-
+    Sector *sec = 0;
     if(!skip)
     {
 #ifdef _DEBUG
@@ -650,6 +640,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         // Read the data into the dummy if we're skipping.
         sec = &dummy;
     }
+
+    // Set up the dummy planes.
+    Plane dummyFloorPlane(*sec, de::Vector3f(0, 0, 1));
+    Plane dummyCeilingPlane(*sec, de::Vector3f(0, 0, -1));
+    static Plane *dummyPlaneArray[2];
+
+    dummyPlaneArray[0] = &dummyFloorPlane;
+    dummyPlaneArray[1] = &dummyCeilingPlane;
+    dummy.planes = dummyPlaneArray;
+
+    // Flags.
+    int df = Reader_ReadPackedUInt32(msgReader);
 
     if(df & SDF_FLOOR_MATERIAL)
     {

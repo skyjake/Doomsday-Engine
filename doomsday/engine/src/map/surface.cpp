@@ -37,7 +37,7 @@ Surface::Surface() : de::MapElement(DMU_SURFACE)
     flags = 0;
     oldFlags = 0;
     material = 0;
-    blendMode = (blendmode_t) 0;
+    blendMode = BM_NORMAL;
     memset(tangent, 0, sizeof(tangent));
     memset(bitangent, 0, sizeof(bitangent));
     memset(normal, 0, sizeof(normal));
@@ -45,7 +45,7 @@ Surface::Surface() : de::MapElement(DMU_SURFACE)
     memset(oldOffset, 0, sizeof(oldOffset));
     memset(visOffset, 0, sizeof(visOffset));
     memset(visOffsetDelta, 0, sizeof(visOffsetDelta));
-    memset(rgba, 0, sizeof(rgba));
+    memset(rgba, 1, sizeof(rgba));
     inFlags = 0;
     numDecorations = 0;
     decorations = 0;

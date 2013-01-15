@@ -1,9 +1,7 @@
-/**
- * @file plane.h
- * Map Plane. @ingroup map
+/** @file plane.h Map Plane.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,6 +26,7 @@
 #endif
 
 #include <QSet>
+#include <de/Vector>
 #include "MapElement"
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
@@ -51,6 +50,9 @@ typedef enum {
 #define PS_flags                surface.flags
 #define PS_inflags              surface.inFlags
 
+/**
+ * @ingroup map
+ */
 class Plane : public de::MapElement
 {
 public:
@@ -66,10 +68,30 @@ public:
     int         planeID;
 
 public:
-    Plane();
+    /**
+     * Construct a new plane.
+     *
+     * @param sector  Sector with which the plane is to be linked.
+     * @param normal  Normal of the plane (will be normalized if necessary).
+     * @param height  Height of the plane in map space coordinates.
+     */
+    Plane(Sector &_sector, de::Vector3f const &normal, coord_t _height = 0);
     ~Plane();
+
+    /**
+     * Change the normal of the plane to @a newNormal (which if necessary will
+     * be normalized before being assigned to the plane).
+     *
+     * @post The plane's tangent vectors and logical plane type will have been
+     * updated also.
+     */
+    void setNormal(de::Vector3f const &newNormal);
 };
 
+/**
+ * A set of Planes.
+ * @ingroup map
+ */
 typedef QSet<Plane *> PlaneSet;
 
 /*

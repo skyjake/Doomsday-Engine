@@ -1,9 +1,7 @@
-/**
- * @file plane.h
- * Map Plane implementation. @ingroup map
+/** @file plane.h Map Plane.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,21 +22,34 @@
 #include "de_console.h"
 #include "de_play.h"
 
-Plane::Plane() : de::MapElement(DMU_PLANE)
+using namespace de;
+
+Plane::Plane(Sector &_sector, Vector3f const &normal, coord_t _height)
+    : de::MapElement(DMU_PLANE),
+    sector(&_sector), height(_height)
 {
-    sector = 0;
-    height = 0;
+    surface.owner = this;
     memset(oldHeight, 0, sizeof(oldHeight));
     target = 0;
     speed = 0;
     visHeight = 0;
     visHeightDelta = 0;
-    type = (planetype_t) 0;
     planeID = 0;
+
+    setNormal(normal);
 }
 
 Plane::~Plane()
 {
+}
+
+void Plane::setNormal(Vector3f const &newNormal)
+{
+    V3f_Set(surface.normal, newNormal.x, newNormal.y, newNormal.z);
+    V3f_Normalize(surface.normal);
+    V3f_BuildTangents(surface.tangent, surface.bitangent, surface.normal);
+
+    type = (surface.normal[VZ] < 0? PLN_CEILING : PLN_FLOOR);
 }
 
 int Plane_SetProperty(Plane* pln, const setargs_t* args)

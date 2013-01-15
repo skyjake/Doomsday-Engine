@@ -1952,31 +1952,25 @@ uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri,
     if(!editMapInited) return 0;
     if(sector == 0 || sector > e_map->sectorCount()) return 0;
 
-    Sector* s = e_map->sectors[sector - 1];
+    Sector *s = e_map->sectors[sector - 1];
 
-    Plane* pln = new Plane;
-    pln->surface.owner = pln;
-    pln->height = height;
+    vec3f_t normal;
+    V3f_Set(normal, normalX, normalY, normalZ);
+
+    Plane *pln = new Plane(*s, normal, height);
 
     assignSurfaceMaterial(&pln->surface, materialUri);
     Surface_SetColorAndAlpha(&pln->surface, r, g, b, a);
     Surface_SetMaterialOrigin(&pln->surface, matOffsetX, matOffsetY);
 
-    V3f_Set(pln->PS_normal, normalX, normalY, normalZ);
-    V3f_Normalize(pln->PS_normal);
-    V3f_BuildTangents(pln->PS_tangent, pln->PS_bitangent, pln->PS_normal);
-
-    pln->type = (pln->PS_normal[VZ] < 0? PLN_CEILING : PLN_FLOOR);
-
-    pln->sector = s;
-    Plane** newList = (Plane**) M_Malloc(sizeof(Plane*) * (++s->planeCount + 1));
-    uint i;
-    for(i = 0; i < s->planeCount - 1; ++i)
+    Plane **newList = (Plane **) M_Malloc(sizeof(Plane *) * (++s->planeCount + 1));
+    uint idx;
+    for(idx = 0; idx < s->planeCount - 1; ++idx)
     {
-        newList[i] = s->planes[i];
+        newList[idx] = s->planes[idx];
     }
-    newList[i++] = pln;
-    newList[i] = NULL; // Terminate.
+    newList[idx++] = pln;
+    newList[idx] = NULL; // Terminate.
 
     if(s->planes)
         M_Free(s->planes);

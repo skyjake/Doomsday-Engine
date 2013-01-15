@@ -360,7 +360,8 @@ Plane *R_NewPlaneForSector(Sector *sec)
     if(!sec) return NULL; // Do wha?
 
     // Allocate the new plane.
-    Plane *plane = new Plane;
+    Plane *plane = new Plane(*sec, de::Vector3f(0, 0, 1));
+    plane->type = PLN_MID;
 
     // Resize this sector's plane list.
     sec->planes = (Plane **) Z_Realloc(sec->planes, sizeof(Plane *) * (++sec->planeCount + 1), PU_MAP);
@@ -368,31 +369,11 @@ Plane *R_NewPlaneForSector(Sector *sec)
     sec->planes[sec->planeCount-1] = plane;
     sec->planes[sec->planeCount] = NULL; // Terminate.
 
-    // Setup header for DMU.
-    //plane->header.type = DMU_PLANE;
-
-    // Initalize the plane.
-    plane->sector = sec;
-    plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
-    plane->visHeight = plane->visHeightDelta = 0;
-    std::memset(&plane->PS_base.thinker, 0, sizeof(plane->PS_base.thinker));
-    plane->speed = 0;
-    plane->target = 0;
-    plane->type = PLN_MID;
     plane->planeID = sec->planeCount - 1;
 
     // Initialize the surface.
     Surface *suf = &plane->surface;
-    //suf->header.type = DMU_SURFACE; // Setup header for DMU.
-    suf->normal[VZ] = 1;
-    V3f_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
-
-    suf->owner = plane;
     /// @todo The initial material should be the "unknown" material.
-    Surface_SetMaterial(suf, NULL);
-    Surface_SetMaterialOrigin(suf, 0, 0);
-    Surface_SetColorAndAlpha(suf, 1, 1, 1, 1);
-    Surface_SetBlendMode(suf, BM_NORMAL);
     Surface_UpdateBaseOrigin(suf);
 
 #ifdef __CLIENT__
