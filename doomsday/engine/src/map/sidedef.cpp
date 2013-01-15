@@ -26,7 +26,6 @@
 
 SideDef::SideDef() : de::MapElement(DMU_SIDEDEF)
 {
-    memset(sections, 0, sizeof(sections));
     line = 0;
     flags = 0;
     memset(&buildData, 0, sizeof(buildData));
