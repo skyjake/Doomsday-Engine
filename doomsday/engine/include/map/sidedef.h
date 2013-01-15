@@ -106,6 +106,12 @@ typedef struct edgespan_s {
     float           shift;
 } edgespan_t;
 
+/**
+ * @attention SideDef is in the process of being replaced by lineside_t. All
+ * data/values which concern the geometry of surfaces should be relocated to
+ * lineside_t. There is no need to model the side of map's line as an object
+ * in Doomsday when a flag would suffice. -ds
+ */
 class SideDef : public de::MapElement
 {
 public:
