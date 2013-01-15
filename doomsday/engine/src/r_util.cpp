@@ -160,7 +160,7 @@ void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPla
         trX = center[VX] - viewData->current.origin[VX];
         trY = center[VY] - viewData->current.origin[VY];
 
-        thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - PI / 2;
+        thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - float(de::PI) / 2;
         sinrv = sin(thangle);
         cosrv = cos(thangle);
     }

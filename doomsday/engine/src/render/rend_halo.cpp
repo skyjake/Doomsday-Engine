@@ -212,7 +212,7 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
             if(turnAngle >= 1)
                 turnAngle = 0;
             else if(turnAngle <= -1)
-                turnAngle = (float) PI;
+                turnAngle = float(de::PI);
             else
                 turnAngle = acos(turnAngle);
 
@@ -249,7 +249,7 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
     glLoadIdentity();
     // Rotate around the center of the texture.
     glTranslatef(0.5f, 0.5f, 0);
-    glRotatef(turnAngle / PI * 180, 0, 0, 1);
+    glRotatef(turnAngle / float(de::PI) * 180, 0, 0, 1);
     glTranslatef(-0.5f, -0.5f, 0);
 
     for(i = 0, fl = flares; i < haloMode && i < NUM_FLARES; ++i, fl++)

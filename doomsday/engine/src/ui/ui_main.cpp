@@ -886,7 +886,7 @@ void UIPage_Drawer(ui_page_t* page)
             Point2Raw focusOrigin;
             Size2Raw focusSize;
 
-            t = (1 + sin(page->_timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
+            t = (1 + sin(page->_timer / (float) TICSPERSEC * 1.5f * float(de::PI))) / 2;
             UI_MixColors(UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_HI), &focuscol, t);
             glEnable(GL_TEXTURE_2D);
             UI_Shade(&ob->geometry.origin, &ob->geometry.size, UI_BORDER, UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_LOW), .2f + t * .3f, -1);

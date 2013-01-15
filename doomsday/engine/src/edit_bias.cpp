@@ -204,9 +204,9 @@ static void SBE_GetHueColor(float* color, float* angle, float* sat)
     hue = acos(V3f_DotProduct(proj, hueUp));
 
     if(V3f_DotProduct(proj, hueSide) > 0)
-        hue = 2*PI - hue;
+        hue = float(2 * de::PI) - hue;
 
-    hue /= (float) (2*PI);
+    hue /= float(2 * de::PI);
     hue += 0.25;
 
     if(angle) *angle = hue;
@@ -985,7 +985,7 @@ static void SBE_DrawHue(void)
     glBegin(GL_QUAD_STRIP);
     for(i = 0; i <= steps; ++i)
     {
-        angle = 2*PI * i/steps;
+        angle = float(2 * de::PI) * i/steps;
 
         // Calculate the hue color for this angle.
         M_HSVToRGB(color, i/steps, 1, 1);
@@ -1012,7 +1012,7 @@ static void SBE_DrawHue(void)
 
     // Draw the current hue.
     SBE_GetHueColor(sel, &hue, &saturation);
-    SBE_HueOffset(2*PI * hue, off);
+    SBE_HueOffset(float(2 * de::PI) * hue, off);
     sel[3] = 1;
     if(saturation > 0)
     {
@@ -1026,8 +1026,8 @@ static void SBE_DrawHue(void)
     // Draw the edges.
     for(i = 0; i < steps; ++i)
     {
-        SBE_HueOffset(2*PI * i/steps, off);
-        SBE_HueOffset(2*PI * (i + 1)/steps, off2);
+        SBE_HueOffset(float(2 * de::PI) * i/steps, off);
+        SBE_HueOffset(float(2 * de::PI) * (i + 1)/steps, off2);
 
         // Calculate the hue color for this angle.
         M_HSVToRGB(color, i/steps, 1, 1);
