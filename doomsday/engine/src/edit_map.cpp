@@ -1124,7 +1124,7 @@ static void hardenPlanes(GameMap* dest, EditMap* src)
             destP->height = destP->oldHeight[0] = destP->oldHeight[1] =
                 destP->visHeight = srcP->height;
             destP->visHeightDelta = 0;
-            memcpy(&destP->surface, &srcP->surface, sizeof(destP->surface));
+            destP->surface = srcP->surface;
             destP->type = srcP->type;
             destP->sector = destS;
             destP->surface.owner = destP;

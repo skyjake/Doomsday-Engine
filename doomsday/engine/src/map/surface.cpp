@@ -1,4 +1,4 @@
-/** @file surface.c Logical map surface.
+/** @file surface.cpp Logical map surface.
  *
  * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -29,6 +29,31 @@
 #include "resource/materials.h"
 
 using namespace de;
+
+Surface::Surface() : de::MapElement(DMU_SURFACE)
+{
+    memset(&base, 0, sizeof(base));
+    owner = 0;
+    flags = 0;
+    oldFlags = 0;
+    material = 0;
+    blendMode = (blendmode_t) 0;
+    memset(tangent, 0, sizeof(tangent));
+    memset(bitangent, 0, sizeof(bitangent));
+    memset(normal, 0, sizeof(normal));
+    memset(offset, 0, sizeof(offset));
+    memset(oldOffset, 0, sizeof(oldOffset));
+    memset(visOffset, 0, sizeof(visOffset));
+    memset(visOffsetDelta, 0, sizeof(visOffsetDelta));
+    memset(rgba, 0, sizeof(rgba));
+    inFlags = 0;
+    numDecorations = 0;
+    decorations = 0;
+}
+
+Surface::~Surface()
+{
+}
 
 boolean Surface_IsDrawable(Surface *suf)
 {

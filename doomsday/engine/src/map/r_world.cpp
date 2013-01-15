@@ -479,7 +479,6 @@ Plane *R_NewPlaneForSector(Sector *sec)
     plane->planeID = sec->planeCount - 1;
 
     // Initialize the surface.
-    std::memset(&plane->surface, 0, sizeof(plane->surface)); // TODO: surface_s: update for C++ Surface
     Surface *suf = &plane->surface;
     //suf->header.type = DMU_SURFACE; // Setup header for DMU.
     suf->normal[VZ] = 1;

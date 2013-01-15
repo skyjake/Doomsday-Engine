@@ -118,32 +118,33 @@ struct intercept_s;
  * structures is needed.
  */
 #if !defined __DOOMSDAY__ && !defined DENG_INTERNAL_DATA_ACCESS
+
 // Opaque types for public use.
-struct mobj_s;
-struct linedef_s;
-struct sector_s;
 struct bspleaf_s;
 struct bspnode_s;
-struct vertex_s;
-struct sidedef_s;
 struct hedge_s;
+struct linedef_s;
+struct mobj_s;
 struct plane_s;
+struct sector_s;
+struct sidedef_s;
+struct vertex_s;
 
-typedef struct bspnode_s  BspNode;
-typedef struct vertex_s   Vertex;
-typedef struct linedef_s  LineDef;
-typedef struct sidedef_s  SideDef;
-typedef struct hedge_s    HEdge;
 typedef struct bspleaf_s  BspLeaf;
-typedef struct sector_s   Sector;
+typedef struct bspnode_s  BspNode;
+typedef struct hedge_s    HEdge;
+typedef struct linedef_s  LineDef;
 typedef struct plane_s    Plane;
+typedef struct sector_s   Sector;
+typedef struct sidedef_s  SideDef;
+typedef struct vertex_s   Vertex;
 
 #elif defined __cplusplus
 
 // Foward declarations.
+class BspLeaf;
 class LineDef;
 class Sector;
-class BspLeaf;
 
 #endif
 

@@ -171,6 +171,7 @@ int DMU_GetType(void const *ptr)
     case DMU_SECTOR:
     case DMU_PLANE:
     case DMU_BSPNODE:
+    case DMU_SURFACE:
     case DMU_MATERIAL:
         return elem->type();
 

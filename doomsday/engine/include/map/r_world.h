@@ -172,7 +172,7 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate);
 boolean R_UpdateLinedef(LineDef *line, boolean forceUpdate);
 boolean R_UpdateSidedef(SideDef *side, boolean forceUpdate);
 boolean R_UpdatePlane(Plane *pln, boolean forceUpdate);
-boolean R_UpdateSurface(struct surface_s *suf, boolean forceUpdate);
+boolean R_UpdateSurface(Surface *suf, boolean forceUpdate);
 
 /**
  * Adds the surface to the given surface list.

@@ -27,7 +27,6 @@
 Plane::Plane() : de::MapElement(DMU_PLANE)
 {
     sector = 0;
-    memset(&surface, 0, sizeof(surface)); // TODO: remove when Surface is a C++ type!
     height = 0;
     memset(oldHeight, 0, sizeof(oldHeight));
     target = 0;

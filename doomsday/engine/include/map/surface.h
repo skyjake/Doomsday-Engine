@@ -21,6 +21,10 @@
 #ifndef LIBDENG_MAP_SURFACE
 #define LIBDENG_MAP_SURFACE
 
+#ifndef __cplusplus
+#  error "map/surface.h requires C++"
+#endif
+
 #include "resource/r_data.h"
 #include "resource/material.h"
 #include "map/p_dmu.h"
@@ -35,35 +39,36 @@
 #define SUIF_UPDATE_DECORATIONS 0x8000
 
 typedef struct surfacedecor_s {
-    coord_t             origin[3]; // World coordinates of the decoration.
-    BspLeaf*		bspLeaf;
+    coord_t origin[3]; ///< World coordinates of the decoration.
+    BspLeaf *bspLeaf;
     const struct ded_decorlight_s* def;
 } surfacedecor_t;
 
-typedef struct surface_s {
-    //runtime_mapdata_header_t header;
-    ddmobj_base_t       base;
-    de::MapElement     *owner;         // Either @c DMU_SIDEDEF, or @c DMU_PLANE
-    int                 flags;         // SUF_ flags
-    int                 oldFlags;
-    material_t*         material;
-    blendmode_t         blendMode;
-    float               tangent[3];
-    float               bitangent[3];
-    float               normal[3];
-    float               offset[2];     // [X, Y] Planar offset to surface material origin.
-    float               oldOffset[2][2];
-    float               visOffset[2];
-    float               visOffsetDelta[2];
-    float               rgba[4];       // Surface color tint
-    short               inFlags;       // SUIF_* flags
-    unsigned int        numDecorations;
-    surfacedecor_t      *decorations;
-} Surface;
+class Surface : public de::MapElement
+{
+public:
+    ddmobj_base_t  base;
+    de::MapElement *owner;        ///< Either @c DMU_SIDEDEF, or @c DMU_PLANE
+    int            flags;         ///< SUF_ flags
+    int            oldFlags;
+    material_t*    material;
+    blendmode_t    blendMode;
+    float          tangent[3];
+    float          bitangent[3];
+    float          normal[3];
+    float          offset[2];     ///< [X, Y] Planar offset to surface material origin.
+    float          oldOffset[2][2];
+    float          visOffset[2];
+    float          visOffsetDelta[2];
+    float          rgba[4];       ///< Surface color tint
+    short          inFlags;       ///< SUIF_* flags
+    unsigned int   numDecorations;
+    surfacedecor_t *decorations;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+public:
+    Surface();
+    ~Surface();
+};
 
 /**
  * Mark the surface as requiring a full update. To be called
@@ -199,9 +204,5 @@ int Surface_GetProperty(const Surface* surface, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Surface_SetProperty(Surface* surface, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_SURFACE
