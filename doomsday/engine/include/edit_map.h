@@ -64,7 +64,7 @@ public:
 
     virtual ~EditMap();
 
-    Vertex const **verticesAsArray() const { return const_cast<Vertex const **>(vertexes.data()); }
+    Vertex const **verticesAsArray() const { return const_cast<Vertex const **>(&(vertexes[0])); }
 
     uint vertexCount() const { return vertexes.size(); }
     uint sectorCount() const { return sectors.size(); }
