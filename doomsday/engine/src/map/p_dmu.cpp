@@ -190,6 +190,8 @@ int DMU_GetType(void const *ptr)
  */
 static void initArgs(setargs_t *args, int type, uint prop)
 {
+    DENG_ASSERT(args && VALID_DMU_ELEMENT_TYPE_ID(type));
+
     std::memset(args, 0, sizeof(*args));
     args->type = type;
     args->prop = prop & ~DMU_FLAG_MASK;
@@ -212,32 +214,31 @@ void *P_AllocDummy(int type, void *extraData)
         DummySideDef *ds = new DummySideDef;
         dummies.insert(ds);
         ds->extraData = extraData;
-        return ds;
-    }
+        return ds; }
 
     case DMU_LINEDEF: {
         DummyLineDef *dl = new DummyLineDef;
         dummies.insert(dl);
         dl->extraData = extraData;
-        return dl;
-    }
+        return dl; }
 
     case DMU_SECTOR: {
         DummySector *ds = new DummySector;
         dummies.insert(ds);
         ds->extraData = extraData;
-        return ds;
-    }
+        return ds; }
 
     default: {
         /// @throw Throw exception.
         QByteArray msg = String("P_AllocDummy: Dummies of type %1 not supported.").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData()); }
+        LegacyCore_FatalError(msg.constData());
+        break; }
     }
 
     return 0; // Unreachable.
 }
 
+#undef P_IsDummy
 boolean P_IsDummy(void const *dummy)
 {
     return P_DummyType(dummy) != DMU_NONE;

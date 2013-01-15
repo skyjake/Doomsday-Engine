@@ -417,7 +417,8 @@ enum {
 
     DMU_NONE = 0,
 
-    DMU_VERTEX = 1,
+    DMU_FIRST_ELEMENT_TYPE_ID = 1,
+    DMU_VERTEX = DMU_FIRST_ELEMENT_TYPE_ID,
     DMU_HEDGE,
     DMU_LINEDEF,
     DMU_SIDEDEF,
@@ -427,6 +428,7 @@ enum {
     DMU_PLANE,
     DMU_SURFACE,
     DMU_MATERIAL,
+    DMU_LAST_ELEMENT_TYPE_ID = DMU_MATERIAL,
 
     DMU_LINEDEF_BY_TAG,
     DMU_SECTOR_BY_TAG,
@@ -493,6 +495,9 @@ enum {
     DMU_FLOOR_PLANE,
     DMU_CEILING_PLANE
 };
+
+/// Determines whether @a val can be interpreted as a valid DMU element type id.
+#define VALID_DMU_ELEMENT_TYPE_ID(val) ((val) >= DMU_FIRST_ELEMENT_TYPE_ID && (val) <= DMU_LAST_ELEMENT_TYPE_ID)
 
 /**
  * @defgroup ldefFlags Linedef Flags
