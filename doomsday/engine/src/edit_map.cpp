@@ -98,9 +98,9 @@ static SideDef* createSide(void)
     e_map->sideDefs.push_back(side);
 
     side->buildData.index = e_map->sideDefs.size(); // 1-based index, 0 = NIL.
-    side->SW_bottomsurface.owner = (void*) side;
-    side->SW_middlesurface.owner = (void*) side;
-    side->SW_topsurface.owner = (void*) side;
+    side->SW_bottomsurface.owner = side;
+    side->SW_middlesurface.owner = side;
+    side->SW_topsurface.owner = side;
     return side;
 }
 
@@ -1955,7 +1955,7 @@ uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri,
     Sector* s = e_map->sectors[sector - 1];
 
     Plane* pln = new Plane;
-    pln->surface.owner = (void*) pln;
+    pln->surface.owner = pln;
     pln->height = height;
 
     assignSurfaceMaterial(&pln->surface, materialUri);

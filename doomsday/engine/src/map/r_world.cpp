@@ -485,7 +485,7 @@ Plane *R_NewPlaneForSector(Sector *sec)
     suf->normal[VZ] = 1;
     V3f_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
 
-    suf->owner = (void*) plane;
+    suf->owner = plane;
     /// @todo The initial material should be the "unknown" material.
     Surface_SetMaterial(suf, NULL);
     Surface_SetMaterialOrigin(suf, 0, 0);

@@ -371,7 +371,7 @@ struct Partitioner::Instance
             scanRegion.maxX = MAX_OF(line->L_v1origin[VX], line->L_v2origin[VX]) + DIST_EPSILON;
         }
         validCount++;
-        GameMap_LineDefsBoxIterator(map, &scanRegion, testForWindowEffectWorker, (void*)&p);
+        GameMap_LineDefsBoxIterator(map, &scanRegion, testForWindowEffectWorker, &p);
 
         if(p.backOpen && p.frontOpen && line->L_frontsector == p.backOpen)
         {
@@ -1931,11 +1931,13 @@ struct Partitioner::Instance
 
         if(tree.isLeaf())
         {
+            DENG2_ASSERT(dmuOb->type() == DMU_BSPLEAF);
             // There is now one less BspLeaf.
             numLeafs -= 1;
         }
         else
         {
+            DENG2_ASSERT(dmuOb->type() == DMU_BSPNODE);
             // There is now one less BspNode.
             numNodes -= 1;
         }

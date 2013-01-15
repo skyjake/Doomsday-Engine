@@ -347,20 +347,20 @@ boolean R_ProjectSurfaceDecorations(Surface *suf, void *context)
     {
         R_ClearSurfaceDecorations(suf);
 
-        switch(DMU_GetType(suf->owner))
+        switch(suf->owner->type())
         {
         case DMU_SIDEDEF: {
-            SideDef *sideDef = (SideDef *)suf->owner;
+            SideDef *sideDef = suf->owner->castTo<SideDef>();
             LineDef *line = sideDef->line;
             updateSideSectionDecorations(line, sideDef == line->L_frontsidedef? FRONT : BACK,
                                          &sideDef->SW_middlesurface == suf? SS_MIDDLE :
                                          &sideDef->SW_bottomsurface == suf? SS_BOTTOM : SS_TOP);
             break; }
         case DMU_PLANE:
-            updatePlaneDecorations((Plane *)suf->owner);
+            updatePlaneDecorations(suf->owner->castTo<Plane>());
             break;
         default:
-            Con_Error("R_ProjectSurfaceDecorations: Internal Error, unknown type %s.", DMU_Str(DMU_GetType(suf->owner)));
+            DENG2_ASSERT(false); // Invalid type.
             break;
         }
         suf->inFlags &= ~SUIF_UPDATE_DECORATIONS;

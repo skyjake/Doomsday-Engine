@@ -951,10 +951,10 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
  */
 static boolean createGlowLightForSurface(Surface *suf, void * /*parameters*/)
 {
-    switch(DMU_GetType(suf->owner))
+    switch(suf->owner->type())
     {
     case DMU_PLANE: {
-        Plane *pln = reinterpret_cast<Plane *>(suf->owner);
+        Plane *pln = suf->owner->castTo<Plane>();
         Sector *sec = pln->sector;
 
         // Only produce a light for sectors with open space.
@@ -997,8 +997,7 @@ static boolean createGlowLightForSurface(Surface *suf, void * /*parameters*/)
         return true; // Not yet supported by this algorithm.
 
     default:
-        Con_Error("createGlowLightForSurface: Internal error, unknown type %s.",
-                  DMU_Str(DMU_GetType(suf->owner)));
+        DENG2_ASSERT(false); // Invalid type.
     }
     return true;
 }

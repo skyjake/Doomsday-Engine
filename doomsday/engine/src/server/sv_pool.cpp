@@ -2318,10 +2318,10 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     else if(sourceSurface)
     {
         type = DT_SECTOR_SOUND;
-        switch(DMU_GetType(sourceSurface->owner))
+        switch(sourceSurface->owner->type())
         {
         case DMU_PLANE: {
-            Plane* pln = (Plane*)sourceSurface->owner;
+            Plane* pln = sourceSurface->owner->castTo<Plane>();
 
             // Clients need to know which emitter to use.
             if(emitter)
@@ -2369,8 +2369,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
             break; } */
 
         default:
-            DEBUG_Message(("Sv_NewSoundDelta: Invalid DMU type %s for sourceSurface object %p. Sector origin will be used.",
-                           DMU_Str(DMU_GetType(sourceSurface->owner)), sourceSurface->owner));
+            DENG2_ASSERT(false); // Invalid map element type.
             return;
         }
     }

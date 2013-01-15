@@ -474,7 +474,7 @@ String ScriptLex::unescapeStringToken(Token const &token)
             }
             else if(*ptr == 'x' && (end - ptr > 2))
             {
-                QString num(reinterpret_cast<QChar const *>(ptr + 1), 2);
+                QString num(const_cast<QChar const *>(ptr + 1), 2);
                 duint code = num.toInt(0, 16);
                 c = QChar(code);
                 ptr += 2; 

@@ -1128,18 +1128,18 @@ static int setProperty(void *obj, void *context)
     {
         if(R_UpdateSurface(updateSurface, false))
         {
-            switch(DMU_GetType(updateSurface->owner))
+            switch(updateSurface->owner->type())
             {
             case DMU_SIDEDEF:
-                updateSidedef = (SideDef *)updateSurface->owner;
+                updateSidedef = updateSurface->owner->castTo<SideDef>();
                 break;
 
             case DMU_PLANE:
-                updatePlane = (Plane *)updateSurface->owner;
+                updatePlane = updateSurface->owner->castTo<Plane>();
                 break;
 
             default:
-                LegacyCore_FatalError("SetPropert: Internal error, surface owner unknown.");
+                DENG2_ASSERT(false); // Unsupported type.
             }
         }
     }

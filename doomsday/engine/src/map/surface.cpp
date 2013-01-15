@@ -46,9 +46,9 @@ boolean Surface_AttachedToMap(Surface *suf)
 {
     DENG_ASSERT(suf);
     if(!suf->owner) return false;
-    if(DMU_GetType(suf->owner) == DMU_PLANE)
+    if(suf->owner->type() == DMU_PLANE)
     {
-        Sector *sec = ((Plane *)suf->owner)->sector;
+        Sector *sec = suf->owner->castTo<Plane>()->sector;
         if(0 == sec->bspLeafCount)
             return false;
     }
@@ -87,10 +87,10 @@ boolean Surface_SetMaterial(Surface *suf, material_t *mat)
                         R_SurfaceListAdd(GameMap_DecoratedSurfaces(map), suf);
                     }
 
-                    if(DMU_GetType(suf->owner) == DMU_PLANE)
+                    if(suf->owner->type() == DMU_PLANE)
                     {
                         ded_ptcgen_t const *def = App_Materials()->ptcGenDef(*mat);
-                        P_SpawnPlaneParticleGen(def, (Plane *)suf->owner);
+                        P_SpawnPlaneParticleGen(def, suf->owner->castTo<Plane>());
                     }
                 }
             }
@@ -265,10 +265,10 @@ void Surface_UpdateBaseOrigin(Surface *suf)
     LOG_AS("Surface_UpdateBaseOrigin");
 
     if(!suf->owner) return;
-    switch(DMU_GetType(suf->owner))
+    switch(suf->owner->type())
     {
     case DMU_PLANE: {
-        Plane *pln = (Plane *)suf->owner;
+        Plane *pln = suf->owner->castTo<Plane>();
         Sector *sec = pln->sector;
         DENG_ASSERT(sec);
 
@@ -278,7 +278,7 @@ void Surface_UpdateBaseOrigin(Surface *suf)
         break; }
 
     case DMU_SIDEDEF: {
-        SideDef *side = (SideDef *)suf->owner;
+        SideDef *side = suf->owner->castTo<SideDef>();
         LineDef *line = side->line;
         Sector *sec;
         DENG_ASSERT(line);
@@ -327,7 +327,8 @@ void Surface_UpdateBaseOrigin(Surface *suf)
 
     default:
         LOG_DEBUG("Invalid DMU type %s for owner object %p.")
-            << DMU_Str(DMU_GetType(suf->owner)) << de::dintptr(suf->owner);
+            << DMU_Str(suf->owner->type()) << de::dintptr(suf->owner);
+        DENG2_ASSERT(false);
     }
 }
 
