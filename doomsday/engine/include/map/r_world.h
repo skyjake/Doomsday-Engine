@@ -180,9 +180,9 @@ boolean R_UpdateSurface(Surface *suf, boolean forceUpdate);
  * @param sl  The surface list to add the surface to.
  * @param suf  The surface to add to the list.
  */
-void R_SurfaceListAdd(surfacelist_t* sl, Surface* suf);
-boolean R_SurfaceListRemove(surfacelist_t* sl, const Surface* suf);
-void R_SurfaceListClear(surfacelist_t* sl);
+void R_SurfaceListAdd(SurfaceSet* sl, Surface *suf);
+boolean R_SurfaceListRemove(SurfaceSet* sl, Surface *suf);
+void R_SurfaceListClear(SurfaceSet* sl);
 
 /**
  * Iterate the list of surfaces making a callback for each.
@@ -191,7 +191,7 @@ void R_SurfaceListClear(surfacelist_t* sl);
  *      a callback returns a zero value.
  * @param context  Is passed to the callback function.
  */
-boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (Surface* suf, void*), void* context);
+boolean R_SurfaceListIterate(SurfaceSet* sl, boolean (*callback) (Surface *suf, void*), void* context);
 
 void            R_MarkDependantSurfacesForDecorationUpdate(Plane* pln);
 

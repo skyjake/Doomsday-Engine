@@ -112,9 +112,9 @@ public:
     EntityDatabase* entityDatabase;
 
     PlaneSet trackedPlanes;
-    surfacelist_t scrollingSurfaces;
-    surfacelist_t decoratedSurfaces;
-    surfacelist_t glowingSurfaces;
+    SurfaceSet scrollingSurfaces;
+    SurfaceSet decoratedSurfaces;
+    SurfaceSet glowingSurfaces;
 
     struct blockmap_s* mobjBlockmap;
     struct blockmap_s* polyobjBlockmap;
@@ -609,7 +609,7 @@ struct generators_s* GameMap_Generators(GameMap* map);
  * @param map  GameMap instance.
  * @return  List of decorated surfaces.
  */
-surfacelist_t* GameMap_DecoratedSurfaces(GameMap* map);
+SurfaceSet* GameMap_DecoratedSurfaces(GameMap* map);
 
 /**
  * Retrieve a pointer to the glowing surface list for this map.
@@ -617,7 +617,7 @@ surfacelist_t* GameMap_DecoratedSurfaces(GameMap* map);
  * @param map  GameMap instance.
  * @return  List of glowing surfaces.
  */
-surfacelist_t* GameMap_GlowingSurfaces(GameMap* map);
+SurfaceSet* GameMap_GlowingSurfaces(GameMap* map);
 
 /**
  * Retrieve a pointer to the scrolling surface list for this map.
@@ -625,7 +625,7 @@ surfacelist_t* GameMap_GlowingSurfaces(GameMap* map);
  * @param map  GameMap instance.
  * @return  List of scrolling surfaces.
  */
-surfacelist_t* GameMap_ScrollingSurfaces(GameMap* map);
+SurfaceSet* GameMap_ScrollingSurfaces(GameMap* map);
 
 /**
  * Retrieve a pointer to the tracked plane list for this map.

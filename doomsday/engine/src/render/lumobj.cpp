@@ -1026,11 +1026,7 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
     // Create dynlights for all glowing surfaces.
     if(useWallGlow)
     {
-        surfacelist_t* slist = GameMap_GlowingSurfaces(theMap);
-        if(slist)
-        {
-            R_SurfaceListIterate(slist, createGlowLightForSurface, 0);
-        }
+        R_SurfaceListIterate(GameMap_GlowingSurfaces(theMap), createGlowLightForSurface, 0);
     }
 
 END_PROF( PROF_LUMOBJ_INIT_ADD );

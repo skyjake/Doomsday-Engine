@@ -565,7 +565,6 @@ static void updateSideSectionDecorations(LineDef *line, byte side, SideDefSectio
  */
 void Rend_InitDecorationsForFrame()
 {
-    surfacelist_t *slist;
 #ifdef DD_PROFILE
     static int i;
 
@@ -585,11 +584,7 @@ BEGIN_PROF( PROF_DECOR_PROJECT );
 
     clearDecorations();
 
-    slist = GameMap_DecoratedSurfaces(theMap);
-    if(slist)
-    {
-        R_SurfaceListIterate(slist, R_ProjectSurfaceDecorations, &decorMaxDist);
-    }
+    R_SurfaceListIterate(GameMap_DecoratedSurfaces(theMap), R_ProjectSurfaceDecorations, &decorMaxDist);
 
 END_PROF( PROF_DECOR_PROJECT );
 }

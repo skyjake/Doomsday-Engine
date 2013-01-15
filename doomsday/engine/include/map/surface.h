@@ -25,6 +25,7 @@
 #  error "map/surface.h requires C++"
 #endif
 
+#include <QSet>
 #include "resource/r_data.h"
 #include "resource/material.h"
 #include "map/p_dmu.h"
@@ -69,6 +70,8 @@ public:
     Surface();
     ~Surface();
 };
+
+typedef QSet<Surface *> SurfaceSet;
 
 /**
  * Mark the surface as requiring a full update. To be called

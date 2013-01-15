@@ -70,16 +70,6 @@ typedef struct runtime_mapdata_header_s {
     int             type; // One of the DMU type constants.
 } runtime_mapdata_header_t;
 
-typedef struct surfacelistnode_s {
-    void*           data;
-    struct surfacelistnode_s* next;
-} surfacelistnode_t;
-
-typedef struct surfacelist_s {
-    uint            num;
-    surfacelistnode_t* head;
-} surfacelist_t;
-
 // Map entity definitions.
 struct mapentitydef_s;
 

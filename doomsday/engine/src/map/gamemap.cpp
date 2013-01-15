@@ -80,19 +80,19 @@ GameMap::~GameMap()
 
 const Uri* GameMap_Uri(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->uri;
 }
 
 const char* GameMap_OldUniqueId(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->uniqueId;
 }
 
 void GameMap_Bounds(GameMap* map, coord_t* min, coord_t* max)
 {
-    assert(map);
+    DENG2_ASSERT(map);
 
     V2d_Copy(min, map->aaBox.min);
     V2d_Copy(max, map->aaBox.max);
@@ -100,39 +100,39 @@ void GameMap_Bounds(GameMap* map, coord_t* min, coord_t* max)
 
 coord_t GameMap_Gravity(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->effectiveGravity;
 }
 
 GameMap* GameMap_SetGravity(GameMap* map, coord_t gravity)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     map->effectiveGravity = gravity;
     return map;
 }
 
 GameMap* GameMap_RestoreGravity(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     map->effectiveGravity = map->globalGravity;
     return map;
 }
 
 const divline_t* GameMap_TraceLOS(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return &map->traceLOS;
 }
 
 const TraceOpening* GameMap_TraceOpening(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return &map->traceOpening;
 }
 
 void GameMap_SetTraceOpening(GameMap* map, LineDef* lineDef)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     // Is the linedef part of this map?
     if(!lineDef || GameMap_LineDefIndex(map, lineDef) < 0) return; // Odd...
 
@@ -141,84 +141,84 @@ void GameMap_SetTraceOpening(GameMap* map, LineDef* lineDef)
 
 int GameMap_AmbientLightLevel(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->ambientLightLevel;
 }
 
 coord_t GameMap_SkyFix(GameMap* map, boolean ceiling)
 {
     planetype_t plane = ceiling? PLN_CEILING : PLN_FLOOR;
-    assert(map);
+    DENG2_ASSERT(map);
     return map->skyFix[plane].height;
 }
 
 GameMap* GameMap_SetSkyFix(GameMap* map, boolean ceiling, coord_t height)
 {
     planetype_t plane = ceiling? PLN_CEILING : PLN_FLOOR;
-    assert(map);
+    DENG2_ASSERT(map);
     map->skyFix[plane].height = height;
     return map;
 }
 
 Vertex* GameMap_Vertex(GameMap* map, uint idx)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(idx >= (uint)map->vertexes.size()) return NULL;
     return &map->vertexes[idx];
 }
 
 int GameMap_VertexIndex(GameMap* map, Vertex const *vtx)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(!vtx) return -1;
     return map->vertexes.indexOf(vtx); // Note: Bad performance!
 }
 
 int GameMap_LineDefIndex(GameMap* map, const LineDef *line)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(!line) return -1;
     return map->lineDefs.indexOf(line);
 }
 
 LineDef* GameMap_LineDef(GameMap* map, uint idx)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(idx >= (uint)map->lineDefs.size()) return NULL;
     return &map->lineDefs[idx];
 }
 
 int GameMap_SideDefIndex(GameMap* map, SideDef const *side)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(!side) return -1;
     return map->sideDefs.indexOf(side); // Note: Bad performance!
 }
 
 SideDef* GameMap_SideDef(GameMap* map, uint idx)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(idx >= (uint)map->sideDefs.size()) return NULL;
     return &map->sideDefs[idx];
 }
 
 int GameMap_SectorIndex(GameMap *map, Sector const *sec)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(!sec) return -1;
     return map->sectors.indexOf(sec); // Note: Bad performance!
 }
 
 Sector* GameMap_Sector(GameMap* map, uint idx)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(idx >= map->sectorCount()) return NULL;
     return &map->sectors[idx];
 }
 
 Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     for(int i = 0; i < map->sectors.size(); ++i)
     {
         Sector* sec = &map->sectors[i];
@@ -233,7 +233,7 @@ Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase)
 Surface* GameMap_SurfaceByBase(GameMap* map, const void* ddMobjBase)
 {
     uint i, k;
-    assert(map);
+    DENG2_ASSERT(map);
 
     // First try plane surfaces.
     for(i = 0; i < map->sectorCount(); ++i)
@@ -279,7 +279,7 @@ int GameMap_BspLeafIndex(GameMap* map, BspLeaf const *leaf)
 
 BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(idx >= map->numBspLeafs) return NULL;
     return map->bspLeafs[idx];
 }
@@ -293,7 +293,7 @@ int GameMap_HEdgeIndex(GameMap* map, HEdge const *hedge)
 
 HEdge* GameMap_HEdge(GameMap* map, uint idx)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(idx >= map->numHEdges) return NULL;
     return map->hedges[idx];
 }
@@ -307,62 +307,62 @@ int GameMap_BspNodeIndex(GameMap* map, BspNode const *node)
 
 BspNode* GameMap_BspNode(GameMap* map, uint idx)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(idx >= map->numBspNodes) return NULL;
     return map->bspNodes[idx];
 }
 
 uint GameMap_VertexCount(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->vertexes.size();
 }
 
 uint GameMap_LineDefCount(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->lineDefCount();
 }
 
 uint GameMap_SideDefCount(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->sideDefCount();
 }
 
 uint GameMap_SectorCount(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->sectorCount();
 }
 
 uint GameMap_BspLeafCount(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->numBspLeafs;
 }
 
 uint GameMap_HEdgeCount(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->numHEdges;
 }
 
 uint GameMap_BspNodeCount(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->numBspNodes;
 }
 
 uint GameMap_PolyobjCount(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return map->numPolyObjs;
 }
 
 Polyobj* GameMap_PolyobjByID(GameMap* map, uint id)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(id < map->numPolyObjs)
         return map->polyObjs[id];
     return NULL;
@@ -371,7 +371,7 @@ Polyobj* GameMap_PolyobjByID(GameMap* map, uint id)
 Polyobj* GameMap_PolyobjByTag(GameMap* map, int tag)
 {
     uint i;
-    assert(map);
+    DENG2_ASSERT(map);
     for(i = 0; i < map->numPolyObjs; ++i)
     {
         Polyobj* po = map->polyObjs[i];
@@ -386,7 +386,7 @@ Polyobj* GameMap_PolyobjByTag(GameMap* map, int tag)
 Polyobj* GameMap_PolyobjByBase(GameMap* map, void* ddMobjBase)
 {
     uint i;
-    assert(map);
+    DENG2_ASSERT(map);
     for(i = 0; i < map->numPolyObjs; ++i)
     {
         Polyobj* po = map->polyObjs[i];
@@ -451,7 +451,7 @@ static void initPolyobj(Polyobj* po)
 
 Generators* GameMap_Generators(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     // Time to initialize a new collection?
     if(!map->generators)
     {
@@ -460,34 +460,34 @@ Generators* GameMap_Generators(GameMap* map)
     return map->generators;
 }
 
-surfacelist_t* GameMap_DecoratedSurfaces(GameMap* map)
+SurfaceSet* GameMap_DecoratedSurfaces(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return &map->decoratedSurfaces;
 }
 
-surfacelist_t* GameMap_GlowingSurfaces(GameMap* map)
+SurfaceSet* GameMap_GlowingSurfaces(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return &map->glowingSurfaces;
 }
 
-surfacelist_t* GameMap_ScrollingSurfaces(GameMap* map)
+SurfaceSet* GameMap_ScrollingSurfaces(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return &map->scrollingSurfaces;
 }
 
 PlaneSet* GameMap_TrackedPlanes(GameMap* map)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     return &map->trackedPlanes;
 }
 
 void GameMap_InitPolyobjs(GameMap* map)
 {
     uint i;
-    assert(map);
+    DENG2_ASSERT(map);
     for(i = 0; i < map->numPolyObjs; ++i)
     {
         initPolyobj(map->polyObjs[i]);
@@ -498,7 +498,7 @@ void GameMap_InitNodePiles(GameMap* map)
 {
     uint i, starttime = 0;
 
-    assert(map);
+    DENG2_ASSERT(map);
 
     VERBOSE( Con_Message("GameMap::InitNodePiles: Initializing...\n") )
     VERBOSE2( starttime = Timer_RealMilliseconds() )
@@ -525,7 +525,7 @@ void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d
 #define CELL_SIZE            MAPBLOCKUNITS
 
     vec2d_t min, max;
-    assert(map && min_ && max_);
+    DENG2_ASSERT(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -546,7 +546,7 @@ void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d_t 
 #define CELL_SIZE            MAPBLOCKUNITS
 
     vec2d_t min, max;
-    assert(map && min_ && max_);
+    DENG2_ASSERT(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -567,7 +567,7 @@ void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d
 #define CELL_SIZE            MAPBLOCKUNITS
 
     vec2d_t min, max;
-    assert(map && min_ && max_);
+    DENG2_ASSERT(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -588,7 +588,7 @@ void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d
 #define CELL_SIZE            MAPBLOCKUNITS
 
     vec2d_t min, max;
-    assert(map && min_ && max_);
+    DENG2_ASSERT(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -607,7 +607,7 @@ void GameMap_LinkMobj(GameMap* map, mobj_t* mo)
 {
     Blockmap* blockmap;
     BlockmapCell cell;
-    assert(map);
+    DENG2_ASSERT(map);
 
     // Do not link NULL mobjs.
     if(!mo)
@@ -624,7 +624,7 @@ void GameMap_LinkMobj(GameMap* map, mobj_t* mo)
 boolean GameMap_UnlinkMobj(GameMap* map, mobj_t* mo)
 {
     boolean unlinked = false;
-    assert(map);
+    DENG2_ASSERT(map);
 
     if(mo)
     {
@@ -664,7 +664,7 @@ static int GameMap_IterateCellMobjs(GameMap* map, const_BlockmapCell cell,
     int (*callback) (mobj_t*, void*), void* context)
 {
     bmapmoiterparams_t args;
-    assert(map);
+    DENG2_ASSERT(map);
 
     args.localValidCount = validCount;
     args.func = callback;
@@ -678,7 +678,7 @@ static int GameMap_IterateCellBlockMobjs(GameMap* map, const BlockmapCellBlock* 
     int (*callback) (mobj_t*, void*), void* context)
 {
     bmapmoiterparams_t args;
-    assert(map);
+    DENG2_ASSERT(map);
 
     args.localValidCount = validCount;
     args.func = callback;
@@ -692,7 +692,7 @@ int GameMap_MobjsBoxIterator(GameMap* map, const AABoxd* box,
     int (*callback) (mobj_t*, void*), void* parameters)
 {
     BlockmapCellBlock cellBlock;
-    assert(map);
+    DENG2_ASSERT(map);
     Blockmap_CellBlock(map->mobjBlockmap, &cellBlock, box);
     return GameMap_IterateCellBlockMobjs(map, &cellBlock, callback, parameters);
 }
@@ -703,7 +703,7 @@ void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
     BlockmapCellBlock cellBlock;
     Blockmap* blockmap;
     uint x, y;
-    assert(map);
+    DENG2_ASSERT(map);
 
     // Do not link NULL linedefs.
     if(!lineDef)
@@ -786,7 +786,7 @@ static int GameMap_IterateCellLineDefs(GameMap* map, const_BlockmapCell cell,
     int (*callback) (LineDef*, void*), void* context)
 {
     bmapiterparams_t args;
-    assert(map);
+    DENG2_ASSERT(map);
 
     args.localValidCount = validCount;
     args.func = callback;
@@ -800,7 +800,7 @@ static int GameMap_IterateCellBlockLineDefs(GameMap* map, const BlockmapCellBloc
     int (*callback) (LineDef*, void*), void* context)
 {
     bmapiterparams_t args;
-    assert(map);
+    DENG2_ASSERT(map);
 
     args.localValidCount = validCount;
     args.func = callback;
@@ -813,7 +813,7 @@ static int GameMap_IterateCellBlockLineDefs(GameMap* map, const BlockmapCellBloc
 int GameMap_LineDefIterator(GameMap* map, int (*callback) (LineDef*, void*), void* parameters)
 {
     uint i;
-    assert(map);
+    DENG2_ASSERT(map);
     for(i = 0; i < map->lineDefCount(); ++i)
     {
         int result = callback(&map->lineDefs[i], parameters);
@@ -828,7 +828,7 @@ void GameMap_LinkBspLeaf(GameMap* map, BspLeaf* bspLeaf)
     BlockmapCellBlock cellBlock;
     AABoxd aaBox;
     uint x, y;
-    assert(map);
+    DENG2_ASSERT(map);
 
     // Do not link NULL BSP leafs.
     if(!bspLeaf)
@@ -900,7 +900,7 @@ static int GameMap_IterateCellBspLeafs(GameMap* map, const_BlockmapCell cell,
     int (*callback) (BspLeaf*, void*), void* context)
 {
     bmapbspleafiterateparams_t args;
-    assert(map);
+    DENG2_ASSERT(map);
 
     args.localValidCount = localValidCount;
     args.func = callback;
@@ -917,7 +917,7 @@ static int GameMap_IterateCellBlockBspLeafs(GameMap* map, const BlockmapCellBloc
     int (*callback) (BspLeaf*, void*), void* context)
 {
     bmapbspleafiterateparams_t args;
-    assert(map);
+    DENG2_ASSERT(map);
 
     args.localValidCount = localValidCount;
     args.func = callback;
@@ -934,7 +934,7 @@ int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxd* box, Sector* sector,
 {
     static int localValidCount = 0;
     BlockmapCellBlock cellBlock;
-    assert(map);
+    DENG2_ASSERT(map);
 
     // This is only used here.
     localValidCount++;
@@ -947,7 +947,7 @@ int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxd* box, Sector* sector,
 int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), void* parameters)
 {
     uint i;
-    assert(map);
+    DENG2_ASSERT(map);
     for(i = 0; i < map->numBspLeafs; ++i)
     {
         int result = callback(map->bspLeafs[i], parameters);
@@ -961,7 +961,7 @@ void GameMap_LinkPolyobj(GameMap* map, Polyobj* po)
     Blockmap* blockmap;
     BlockmapCellBlock cellBlock;
     uint x, y;
-    assert(map);
+    DENG2_ASSERT(map);
 
     // Do not link NULL polyobjs.
     if(!po)
@@ -984,7 +984,7 @@ void GameMap_UnlinkPolyobj(GameMap* map, Polyobj* po)
 {
     Blockmap* blockmap;
     BlockmapCellBlock cellBlock;
-    assert(map);
+    DENG2_ASSERT(map);
 
     if(!po) return;
 
@@ -1021,7 +1021,7 @@ static int GameMap_IterateCellPolyobjs(GameMap* map, const_BlockmapCell cell,
     int (*callback) (Polyobj*, void*), void* context)
 {
     bmappoiterparams_t args;
-    assert(map);
+    DENG2_ASSERT(map);
 
     args.localValidCount = validCount;
     args.func = callback;
@@ -1035,7 +1035,7 @@ static int GameMap_IterateCellBlockPolyobjs(GameMap* map, const BlockmapCellBloc
     int (*callback) (Polyobj*, void*), void* context)
 {
     bmappoiterparams_t args;
-    assert(map);
+    DENG2_ASSERT(map);
 
     args.localValidCount = validCount;
     args.func = callback;
@@ -1049,7 +1049,7 @@ int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxd* box,
     int (*callback) (struct polyobj_s*, void*), void* parameters)
 {
     BlockmapCellBlock cellBlock;
-    assert(map);
+    DENG2_ASSERT(map);
     Blockmap_CellBlock(map->polyobjBlockmap, &cellBlock, box);
     return GameMap_IterateCellBlockPolyobjs(map, &cellBlock, callback, parameters);
 }
@@ -1057,7 +1057,7 @@ int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxd* box,
 int GameMap_PolyobjIterator(GameMap* map, int (*callback) (Polyobj*, void*), void* parameters)
 {
     uint i;
-    assert(map);
+    DENG2_ASSERT(map);
     for(i = 0; i < map->numPolyObjs; ++i)
     {
         int result = callback(map->polyObjs[i], parameters);
@@ -1083,7 +1083,7 @@ static int GameMap_IterateCellPolyobjLineDefsIterator(GameMap* map, const_Blockm
 {
     bmappoiterparams_t args;
     poiterparams_t poargs;
-    assert(map);
+    DENG2_ASSERT(map);
 
     poargs.func = callback;
     poargs.param = context;
@@ -1101,7 +1101,7 @@ static int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const BlockmapC
 {
     bmappoiterparams_t args;
     poiterparams_t poargs;
-    assert(map);
+    DENG2_ASSERT(map);
 
     poargs.func = callback;
     poargs.param = context;
@@ -1118,7 +1118,7 @@ int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxd* box,
     int (*callback) (LineDef*, void*), void* parameters)
 {
     BlockmapCellBlock cellBlock;
-    assert(map);
+    DENG2_ASSERT(map);
     Blockmap_CellBlock(map->lineDefBlockmap, &cellBlock, box);
     return GameMap_IterateCellBlockLineDefs(map, &cellBlock, callback, parameters);
 }
@@ -1127,7 +1127,7 @@ int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxd* box,
     int (*callback) (LineDef*, void*), void* parameters)
 {
     BlockmapCellBlock cellBlock;
-    assert(map);
+    DENG2_ASSERT(map);
     Blockmap_CellBlock(map->polyobjBlockmap, &cellBlock, box);
     return GameMap_IterateCellBlockPolyobjLineDefs(map, &cellBlock, callback, parameters);
 }
@@ -1142,7 +1142,7 @@ int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxd* box,
 int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxd* box,
     int (*callback) (LineDef*, void*), void* parameters)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     if(map->numPolyObjs > 0)
     {
         int result = P_PolyobjLinesBoxIterator(box, callback, parameters);
@@ -1153,7 +1153,7 @@ int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxd* box,
 
 int GameMap_VertexIterator(GameMap* map, int (*callback) (Vertex*, void*), void* parameters)
 {
-    assert(map);
+    DENG2_ASSERT(map);
     for(int i = 0; i < map->vertexes.size(); ++i)
     {
         int result = callback(&map->vertexes[i], parameters);
@@ -1165,7 +1165,7 @@ int GameMap_VertexIterator(GameMap* map, int (*callback) (Vertex*, void*), void*
 int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), void* parameters)
 {
     uint i;
-    assert(map);
+    DENG2_ASSERT(map);
     for(i = 0; i < map->sideDefCount(); ++i)
     {
         int result = callback(&map->sideDefs[i], parameters);
@@ -1177,7 +1177,7 @@ int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), voi
 int GameMap_SectorIterator(GameMap* map, int (*callback) (Sector*, void*), void* parameters)
 {
     uint i;
-    assert(map);
+    DENG2_ASSERT(map);
     for(i = 0; i < map->sectorCount(); ++i)
     {
         int result = callback(&map->sectors[i], parameters);
@@ -1189,7 +1189,7 @@ int GameMap_SectorIterator(GameMap* map, int (*callback) (Sector*, void*), void*
 int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* parameters)
 {
     uint i;
-    assert(map);
+    DENG2_ASSERT(map);
     for(i = 0; i < map->numHEdges; ++i)
     {
         int result = callback(map->hedges[i], parameters);
@@ -1201,7 +1201,7 @@ int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* p
 int GameMap_BspNodeIterator(GameMap* map, int (*callback) (BspNode*, void*), void* parameters)
 {
     uint i;
-    assert(map);
+    DENG2_ASSERT(map);
     for(i = 0; i < map->numBspNodes; ++i)
     {
         int result = callback(map->bspNodes[i], parameters);
@@ -1218,7 +1218,7 @@ static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
     coord_t intercept[2], delta[2], partial;
     uint count, block[2];
     int stepDir[2];
-    assert(bmap);
+    DENG2_ASSERT(bmap);
 
     if(toBlock[VX] > fromBlock[VX])
     {
@@ -1307,7 +1307,7 @@ static int traverseCellPath(GameMap* map, Blockmap* bmap, coord_t const from_[2]
     uint fromBlock[2], toBlock[2];
     vec2d_t from, to, min, max;
     coord_t dX, dY;
-    assert(bmap);
+    DENG2_ASSERT(bmap);
 
     V2d_Copy(min, Blockmap_Bounds(bmap)->min);
     V2d_Copy(max, Blockmap_Bounds(bmap)->max);
@@ -1424,7 +1424,7 @@ static int collectMobjIntercepts(uint const block[2], void* parameters)
 int GameMap_PathTraverse2(GameMap* map, const coord_t from[], const coord_t to[],
     int flags, traverser_t callback, void* parameters)
 {
-    assert(map);
+    DENG2_ASSERT(map);
 
     // A new intercept trace begins...
     P_ClearIntercepts();

@@ -53,125 +53,35 @@ byte rendSkyLightAuto         = true;
 boolean firstFrameAfterLoad;
 boolean ddMapSetup;
 
-static surfacelistnode_t *unusedSurfaceListNodes = 0;
-
-/**
- * Allocate a new surface list node.
- */
-static inline surfacelistnode_t *allocListNode()
-{
-    return (surfacelistnode_t *) Z_Calloc(sizeof(surfacelistnode_t), PU_APPSTATIC, 0);
-}
-
-surfacelistnode_t *R_SurfaceListNodeCreate()
-{
-    surfacelistnode_t *node;
-
-    // Is there a free node in the unused list?
-    if(unusedSurfaceListNodes)
-    {
-        node = unusedSurfaceListNodes;
-        unusedSurfaceListNodes = node->next;
-    }
-    else
-    {
-        node = allocListNode();
-    }
-
-    node->data = 0;
-    node->next = 0;
-
-    return node;
-}
-
-void R_SurfaceListNodeDestroy(surfacelistnode_t *node)
-{
-    // Move it to the list of unused nodes.
-    node->data = 0;
-    node->next = unusedSurfaceListNodes;
-    unusedSurfaceListNodes = node;
-}
-
-void R_SurfaceListAdd(surfacelist_t *sl, Surface *suf)
+void R_SurfaceListAdd(SurfaceSet *sl, Surface *suf)
 {
     if(!sl || !suf) return;
-
-    // Check whether this surface is already in the list.
-    surfacelistnode_t *node = sl->head;
-    while(node)
-    {
-        if((Surface *) node->data == suf) return; // Yep.
-
-        node = node->next;
-    }
-
-    // Not found, add it to the list.
-    node = R_SurfaceListNodeCreate();
-    node->data = suf;
-    node->next = sl->head;
-
-    sl->head = node;
-    sl->num++;
+    sl->insert(suf);
 }
 
-boolean R_SurfaceListRemove(surfacelist_t *sl, Surface const *suf)
+boolean R_SurfaceListRemove(SurfaceSet *sl, Surface *suf)
 {
-    if(!sl || !suf)
-        return false;
-
-    surfacelistnode_t *last = sl->head;
-    if(last)
-    {
-        surfacelistnode_t *n = last->next;
-        while(n)
-        {
-            if((Surface*) n->data == suf)
-            {
-                last->next = n->next;
-                R_SurfaceListNodeDestroy(n);
-                sl->num--;
-                return true;
-            }
-
-            last = n;
-            n = n->next;
-        }
-    }
-
-    return false;
+    if(!sl || !suf) return false;
+    return sl->remove(suf);
 }
 
-void R_SurfaceListClear(surfacelist_t *sl)
+void R_SurfaceListClear(SurfaceSet *sl)
 {
     if(!sl) return;
-
-    surfacelistnode_t *node = sl->head;
-    while(node)
-    {
-        surfacelistnode_t *next = node->next;
-        R_SurfaceListRemove(sl, (Surface *)node->data);
-        node = next;
-    }
+    sl->clear();
 }
 
-boolean R_SurfaceListIterate(surfacelist_t *sl, boolean (*callback) (Surface *suf, void *),
-    void *context)
+boolean R_SurfaceListIterate(SurfaceSet *sl, boolean (*callback)(Surface *suf, void *), void *context)
 {
-    boolean result = true;
-
     if(sl)
     {
-        surfacelistnode_t *n = sl->head;
-        while(n)
+        DENG2_FOR_EACH(SurfaceSet, i, *sl)
         {
-            surfacelistnode_t *np = n->next;
-            result = callback((Surface *) n->data, context);
-            if(!result) break;
-            n = np;
+            if(!callback(*i, context))
+                return false;
         }
     }
-
-    return result;
+    return true;
 }
 
 boolean updateSurfaceScroll(Surface *suf, void * /*context*/)
@@ -207,11 +117,7 @@ boolean updateSurfaceScroll(Surface *suf, void * /*context*/)
 void R_UpdateSurfaceScroll()
 {
     if(!theMap) return;
-
-    surfacelist_t *slist = GameMap_ScrollingSurfaces(theMap);
-    if(!slist) return;
-
-    R_SurfaceListIterate(slist, updateSurfaceScroll, 0);
+    R_SurfaceListIterate(GameMap_ScrollingSurfaces(theMap), updateSurfaceScroll, 0);
 }
 
 boolean resetSurfaceScroll(Surface *suf, void * /*context*/)
@@ -266,7 +172,7 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
 {
     if(!theMap) return;
 
-    surfacelist_t *slist = GameMap_ScrollingSurfaces(theMap);
+    SurfaceSet *slist = GameMap_ScrollingSurfaces(theMap);
     if(!slist) return;
 
     if(resetNextViewer)
@@ -434,11 +340,8 @@ void R_UpdateMapSurfacesOnMaterialChange(material_t *material)
 {
     if(!material || !theMap || ddMapSetup) return;
 
-    surfacelist_t *slist = GameMap_DecoratedSurfaces(theMap);
-    if(!slist) return;
-
     // Light decorations will need a refresh.
-    R_SurfaceListIterate(slist, markSurfaceForDecorationUpdate, material);
+    R_SurfaceListIterate(GameMap_DecoratedSurfaces(theMap), markSurfaceForDecorationUpdate, material);
 }
 
 /**
@@ -575,20 +478,16 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
     }
 
     // If this plane is currently being watched, remove it.
-    PlaneSet *plist = GameMap_TrackedPlanes(theMap);
-    if(plist) R_RemoveTrackedPlane(plist, plane);
+    R_RemoveTrackedPlane(GameMap_TrackedPlanes(theMap), plane);
 
     // If this plane's surface is in the moving list, remove it.
-    surfacelist_t *slist = GameMap_ScrollingSurfaces(theMap);
-    if(slist) R_SurfaceListRemove(slist, &plane->surface);
+    R_SurfaceListRemove(GameMap_ScrollingSurfaces(theMap), &plane->surface);
 
     // If this plane's surface is in the deocrated list, remove it.
-    slist = GameMap_DecoratedSurfaces(theMap);
-    if(slist) R_SurfaceListRemove(slist, &plane->surface);
+    R_SurfaceListRemove(GameMap_DecoratedSurfaces(theMap), &plane->surface);
 
     // If this plane's surface is in the glowing list, remove it.
-    slist = GameMap_GlowingSurfaces(theMap);
-    if(slist) R_SurfaceListRemove(slist, &plane->surface);
+    R_SurfaceListRemove(GameMap_GlowingSurfaces(theMap), &plane->surface);
 
     // Destroy the biassurfaces for this plane.
     for(BspLeaf **bspLeafIter = sec->bspLeafs; *bspLeafIter; bspLeafIter++)
@@ -602,7 +501,7 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
     }
 
     // Destroy the specified plane.
-    Z_Free(plane);
+    delete plane;
     sec->planeCount--;
 
     // Link the new list to the sector.
