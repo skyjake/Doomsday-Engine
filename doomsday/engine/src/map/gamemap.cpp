@@ -55,10 +55,6 @@ GameMap::GameMap()
     numBspNodes = 0;
     bspNodes = 0;
     entityDatabase = 0;
-    memset(&trackedPlanes, 0, sizeof(trackedPlanes));
-    memset(&scrollingSurfaces, 0, sizeof(scrollingSurfaces));
-    memset(&decoratedSurfaces, 0, sizeof(decoratedSurfaces));
-    memset(&glowingSurfaces, 0, sizeof(glowingSurfaces));
     mobjBlockmap = 0;
     polyobjBlockmap = 0;
     lineDefBlockmap = 0;
