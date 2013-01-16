@@ -320,7 +320,11 @@ public:
      * @see chooseVariant()
      *
      * @param material  Material variant to be prepared.
-     * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
+     * @param forceSnapshotUpdate  @c true= Force an update of the variant's state
+     *                             snapshot. The snapshot is automatically updated
+     *                             when first prepared for a new render frame.
+     *                             Typically the only time force is needed is when
+     *                             the material variant has changed since.
      *
      * @return  Snapshot for the chosen and prepared variant of Material.
      */
@@ -338,7 +342,11 @@ public:
      *
      * @param material  Base Material from which to derive a variant.
      * @param spec      Specification for the derivation of @a material.
-     * @param forceSnapshotUpdate  @c true= Ensure to update the state snapshot.
+     * @param forceSnapshotUpdate  @c true= Force an update of the variant's state
+     *                             snapshot. The snapshot is automatically updated
+     *                             when first prepared for a new render frame.
+     *                             Typically the only time force is needed is when
+     *                             the material variant has changed since.
      *
      * @return  Snapshot for the chosen and prepared variant of Material.
      */

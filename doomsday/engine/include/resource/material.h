@@ -132,6 +132,8 @@ public:
          * @param generalCase   Material from which this variant is derived.
          * @param spec          Specification used to derive this variant.
          *                      Ownership is NOT given to the Variant.
+         *
+         * @todo should only be accessible by material_t (Material).
          */
         Variant(material_t &generalCase, MaterialVariantSpec const &spec);
         ~Variant();

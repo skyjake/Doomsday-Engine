@@ -116,15 +116,16 @@ public:
          */
         Variant(Texture &generalCase, texturevariantspecification_t &spec,
                 TexSource source = TEXS_NONE);
+        ~Variant();
 
         /// @return  Superior texture of which the variant is a derivative.
-        Texture &generalCase() const { return texture; }
+        Texture &generalCase() const;
 
         /// @return  Texture variant specification for the variant.
         texturevariantspecification_t &spec() const;
 
         /// @return  Source of the variant.
-        TexSource source() const { return texSource; }
+        TexSource source() const;
 
         /**
          * Change the source of the variant.
@@ -132,41 +133,27 @@ public:
          */
         void setSource(TexSource newSource);
 
-        bool isMasked() const { return !!(flags & Masked); }
+        bool isMasked() const;
 
         void flagMasked(bool yes);
-
-        bool isUploaded() const { return !!(flags & Uploaded); }
-
-        void flagUploaded(bool yes);
-
-        bool isPrepared() const;
 
         void coords(float *s, float *t) const;
 
         void setCoords(float s, float t);
 
-        uint glName() const { return glTexName; }
+        bool isUploaded() const;
+
+        void flagUploaded(bool yes);
+
+        bool isPrepared() const;
+
+        uint glName() const;
 
         void setGLName(uint glName);
 
     private:
-        /// Superior Texture of which this is a derivative.
-        Texture &texture;
-
-        /// Source of this texture.
-        TexSource texSource;
-
-        Flags flags;
-
-        /// Name of the associated GL texture object.
-        uint glTexName;
-
-        /// Prepared coordinates for the bottom right of the texture minus border.
-        float s, t;
-
-        /// Specification used to derive this variant.
-        texturevariantspecification_t *varSpec;
+        struct Instance;
+        Instance *d;
     };
 
     /// A list of variants.
