@@ -24,8 +24,8 @@
 #  include "de_defs.h"
 #endif
 
-#include "render/rend_main.h" // detailFactor, detailScale, TODO: get rid of this
 #ifdef __CLIENT__
+#  include "render/rend_main.h" // detailFactor, detailScale
 #  include "gl/gl_texmanager.h"
 #  include "gl/sys_opengl.h"
 #endif
