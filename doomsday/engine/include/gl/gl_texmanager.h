@@ -39,7 +39,7 @@
 #include "resource/r_data.h" // For flaretexid_t, lightingtexid_t, etc...
 #include "resource/rawtexture.h"
 #include "resource/texture.h"
-#include "resource/texturevariantspecification.h"
+#include "resource/texturevariantspec.h"
 
 #ifdef __cplusplus
 extern "C" {

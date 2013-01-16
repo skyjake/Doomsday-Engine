@@ -21,7 +21,7 @@
 #ifndef LIBDENG_RESOURCE_TEXTURE_H
 #define LIBDENG_RESOURCE_TEXTURE_H
 
-#include "texturevariantspecification.h"
+#include "texturevariantspec.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -20,7 +20,7 @@
 #include "server_dummies.h"
 #include "ui/nativeui.h"
 #include "ui/finaleinterpreter.h"
-#include "resource/texturevariantspecification.h"
+#include "resource/texturevariantspec.h"
 #include "resource/texturevariant.h"
 #include "resource/texture.h"
 
