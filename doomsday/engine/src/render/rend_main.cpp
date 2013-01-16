@@ -743,12 +743,12 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     boolean useLights = false, useShadows = false, hasDynlights = false;
 
     // Map RTU configuration from prepared MaterialSnapshot(s).
-    rtexmapunit_t const *primaryRTU       = (!(p.flags & RPF_SKYMASK))? &ms.unit(MTU_PRIMARY) : NULL;
-    rtexmapunit_t const *primaryDetailRTU = (r_detail && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(MTU_DETAIL)))? &ms.unit(MTU_DETAIL) : NULL;
-    rtexmapunit_t const *interRTU         = 0; //(!(p->flags & RPF_SKYMASK) && msB && Rtu_HasTexture(&msB->unit(MTU_PRIMARY)))? &msB->unit(MTU_PRIMARY) : NULL;
-    rtexmapunit_t const *interDetailRTU   = 0; //(r_detail && !(p->flags & RPF_SKYMASK) && msB && Rtu_HasTexture(&msB->unit(MTU_DETAIL)))? &msB->unit(MTU_DETAIL) : NULL;
-    rtexmapunit_t const *shinyRTU         = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(MTU_REFLECTION)))? &ms.unit(MTU_REFLECTION) : NULL;
-    rtexmapunit_t const *shinyMaskRTU     = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(MTU_REFLECTION)) && Rtu_HasTexture(&ms.unit(MTU_REFLECTION_MASK)))? &ms.unit(MTU_REFLECTION_MASK) : NULL;
+    rtexmapunit_t const *primaryRTU       = (!(p.flags & RPF_SKYMASK))? &ms.unit(RTU_PRIMARY) : NULL;
+    rtexmapunit_t const *primaryDetailRTU = (r_detail && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(RTU_PRIMARY_DETAIL)))? &ms.unit(RTU_PRIMARY_DETAIL) : NULL;
+    rtexmapunit_t const *interRTU         = (!(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(RTU_INTER)))? &ms.unit(RTU_INTER) : NULL;
+    rtexmapunit_t const *interDetailRTU   = (r_detail && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(RTU_INTER_DETAIL)))? &ms.unit(RTU_INTER_DETAIL) : NULL;
+    rtexmapunit_t const *shinyRTU         = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(RTU_REFLECTION)))? &ms.unit(RTU_REFLECTION) : NULL;
+    rtexmapunit_t const *shinyMaskRTU     = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && Rtu_HasTexture(&ms.unit(RTU_REFLECTION)) && Rtu_HasTexture(&ms.unit(RTU_REFLECTION_MASK)))? &ms.unit(RTU_REFLECTION_MASK) : NULL;
 
     ColorRawf *rcolors          = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
     rtexcoord_t *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
@@ -1093,7 +1093,6 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         if(p.texOffset) RL_Rtu_TranslateOffsetv(RTU_PRIMARY_DETAIL, p.texOffset);
     }
 
-#if 0 /// @todo $revise-texture-animation
     if(interRTU)
     {
         if(p.texOffset) RL_Rtu_TranslateOffsetv(RTU_INTER, p.texOffset);
@@ -1104,7 +1103,6 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     {
         if(p.texOffset) RL_Rtu_TranslateOffsetv(RTU_INTER_DETAIL, p.texOffset);
     }
-#endif
 
     if(shinyMaskRTU)
     {
@@ -2320,7 +2318,7 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
         MaterialSnapshot const &ms = App_Materials()->prepare(*material, spec);
 
         RL_LoadDefaultRtus();
-        RL_MapRtu(RTU_PRIMARY, &ms.unit(MTU_PRIMARY));
+        RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
         RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rendPolyFlags, vertsSize, verts, NULL, coords, NULL);
     }
 

@@ -111,21 +111,21 @@ public:
     bool hasTexture(int index) const;
 
     /**
-     * Lookup a material snapshot texture unit texture by index.
+     * Lookup a material snapshot texture by logical material texture unit index.
      *
-     * @param index  Index of the texture unit to lookup.
-     * @return  The texture associated with the texture unit.
+     * @param index  Index of the texture to lookup.
+     * @return  The texture associated with the logical material texture unit.
      */
     Texture::Variant &texture(int index) const;
 
 #ifdef __CLIENT__
     /**
-     * Lookup a material snapshot texture unit by index.
+     * Lookup a material snapshot prepared texture unit by id.
      *
-     * @param index  Index of the texture unit to lookup.
-     * @return  The associated texture unit.
+     * @param id  Identifier of the texture unit to lookup.
+     * @return  The associated prepared texture unit.
      */
-    rtexmapunit_t const &unit(int index) const;
+    rtexmapunit_t const &unit(rtexmapunitid_t id) const;
 
     /**
      * Lookup a material snapshot decoration by index.

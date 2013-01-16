@@ -17,7 +17,6 @@
  * 02110-1301 USA</small>
  */
 
-//#include "de_base.h"
 #include "resource/texture.h"
 
 namespace de {

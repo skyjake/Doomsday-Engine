@@ -50,15 +50,16 @@ struct Store {
     /// Minimum ambient light color for reflections.
     Vector3f reflectionMinColor;
 
-    /// Textures used on each texture unit.
+    /// Textures used on each logical material texture unit.
     Texture::Variant *textures[NUM_MATERIAL_TEXTURE_UNITS];
 
 #ifdef __CLIENT__
-    /// Texture unit configuration.
-    rtexmapunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
-
     /// Decoration configuration.
     MaterialSnapshot::Decoration decorations[Material::Variant::max_decorations];
+
+    /// Prepared render texture unit configuration. These map directly
+    /// to the texture units supplied to the render lists module.
+    rtexmapunit_t units[NUM_TEXMAP_UNITS];
 #endif
 
     Store() { initialize(); }
@@ -70,32 +71,32 @@ struct Store {
         opaque             = true;
         glowStrength       = 0;
 
-        for(int i = 0; i < NUM_MATERIAL_TEXTURE_UNITS; ++i)
-        {
-            textures[i] = 0;
-#ifdef __CLIENT__
-            Rtu_Init(&units[i]);
-#endif
-        }
+        std::memset(textures, 0, sizeof(textures));
 
 #ifdef __CLIENT__
         std::memset(decorations, 0, sizeof(decorations));
+
+        for(int i = 0; i < NUM_TEXMAP_UNITS; ++i)
+        {
+            Rtu_Init(&units[i]);
+        }
 #endif
     }
 
 #ifdef __CLIENT__
-    void writeTexUnit(byte unit, Texture::Variant *texture, blendmode_t blendMode,
-                      QSizeF scale, QPointF offset, float opacity)
+    void writeTexUnit(rtexmapunitid_t unit, Texture::Variant *texture,
+                      blendmode_t blendMode, QSizeF scale, QPointF offset,
+                      float opacity)
     {
-        DENG2_ASSERT(unit < NUM_MATERIAL_TEXTURE_UNITS);
-        rtexmapunit_t *tu = &units[unit];
+        DENG2_ASSERT(unit >= 0 && unit < NUM_TEXMAP_UNITS);
+        rtexmapunit_t &tu = units[unit];
 
-        tu->texture.variant = reinterpret_cast<texturevariant_s *>(texture);
-        tu->texture.flags   = TUF_TEXTURE_IS_MANAGED;
-        tu->opacity   = MINMAX_OF(0, opacity, 1);
-        tu->blendMode = blendMode;
-        V2f_Set(tu->scale, scale.width(), scale.height());
-        V2f_Set(tu->offset, offset.x(), offset.y());
+        tu.texture.variant = reinterpret_cast<texturevariant_s *>(texture);
+        tu.texture.flags   = TUF_TEXTURE_IS_MANAGED;
+        tu.opacity   = MINMAX_OF(0, opacity, 1);
+        tu.blendMode = blendMode;
+        V2f_Set(tu.scale, scale.width(), scale.height());
+        V2f_Set(tu.offset, offset.x(), offset.y());
     }
 #endif // __CLIENT__
 };
@@ -170,14 +171,14 @@ Texture::Variant &MaterialSnapshot::texture(int index) const
 }
 
 #ifdef __CLIENT__
-rtexmapunit_t const &MaterialSnapshot::unit(int index) const
+rtexmapunit_t const &MaterialSnapshot::unit(rtexmapunitid_t id) const
 {
-    if(index < 0 || index >= NUM_MATERIAL_TEXTURE_UNITS)
+    if(id < 0 || id >= NUM_TEXMAP_UNITS)
     {
-        /// @throw InvalidUnitError Attempt to obtain a reference to a unit with an invalid index.
-        throw InvalidUnitError("MaterialSnapshot::unit", QString("Invalid unit index %1").arg(index));
+        /// @throw InvalidUnitError Attempt to obtain a reference to a unit with an invalid id.
+        throw InvalidUnitError("MaterialSnapshot::unit", QString("Invalid unit id %1").arg(id));
     }
-    return d->stored.units[index];
+    return d->stored.units[id];
 }
 
 MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
@@ -383,7 +384,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
             offset.setY(LERP(lsCur->texOrigin[1], lsNext->texOrigin[1], l.inter));
         }
 
-        stored.writeTexUnit(MTU_PRIMARY, tex, BM_NORMAL,
+        stored.writeTexUnit(RTU_PRIMARY, tex, BM_NORMAL,
                             QSizeF(1.f / stored.dimensions.width(),
                                    1.f / stored.dimensions.height()),
                             offset, 1);
@@ -399,7 +400,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(detailScale > .0001f)
             scaleFactor *= detailScale; // Global scale factor.
 
-        stored.writeTexUnit(MTU_DETAIL, tex, BM_NORMAL,
+        stored.writeTexUnit(RTU_PRIMARY_DETAIL, tex, BM_NORMAL,
                             QSizeF(1.f / tex->generalCase().width()  * scaleFactor,
                                    1.f / tex->generalCase().height() * scaleFactor),
                             QPointF(0, 0), 1);
@@ -411,7 +412,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         stored.textures[MTU_REFLECTION] = tex;
 #ifdef __CLIENT__
-        stored.writeTexUnit(MTU_REFLECTION, tex, Material_ShinyBlendmode(mat),
+        stored.writeTexUnit(RTU_REFLECTION, tex, Material_ShinyBlendmode(mat),
                             QSizeF(1, 1), QPointF(0, 0),
                             Material_ShinyStrength(mat));
 #endif
@@ -423,11 +424,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         stored.textures[MTU_REFLECTION_MASK] = tex;
 #ifdef __CLIENT__
-        stored.writeTexUnit(MTU_REFLECTION_MASK, tex, BM_NORMAL,
+        stored.writeTexUnit(RTU_REFLECTION_MASK, tex, BM_NORMAL,
                             QSizeF(1.f / (stored.dimensions.width()  * tex->generalCase().width()),
                                    1.f / (stored.dimensions.height() * tex->generalCase().height())),
-                            QPointF(stored.units[MTU_PRIMARY].offset[0],
-                                    stored.units[MTU_PRIMARY].offset[1]), 1);
+                            QPointF(stored.units[RTU_PRIMARY].offset[0],
+                                    stored.units[RTU_PRIMARY].offset[1]), 1);
 #endif
     }
 
