@@ -62,14 +62,6 @@
 
 #define NUM_POLYOBJS            GameMap_PolyobjCount(theMap)
 
-// Runtime map data objects, such as vertices, sectors, and BspLeafs all
-// have this header as their first member. This makes it possible to treat
-// an unknown map data pointer as a runtime_mapdata_header_t* and determine
-// its type. Note that this information is internal to the engine.
-typedef struct runtime_mapdata_header_s {
-    int             type; // One of the DMU type constants.
-} runtime_mapdata_header_t;
-
 // Map entity definitions.
 struct mapentitydef_s;
 
