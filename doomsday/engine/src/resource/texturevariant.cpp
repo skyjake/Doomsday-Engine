@@ -21,7 +21,6 @@
 
 #include "de_base.h"
 #include "resource/texture.h"
-#include "resource/texturevariant.h"
 
 namespace de {
 

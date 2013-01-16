@@ -36,7 +36,6 @@
 #include "resource/materialsnapshot.h"
 #include "resource/materialvariantspec.h"
 #include "resource/texture.h"
-#include "resource/texturevariant.h"
 
 using namespace de;
 

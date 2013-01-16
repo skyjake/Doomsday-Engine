@@ -38,7 +38,7 @@
 #include <de/memoryzone.h>
 
 #include "def_main.h"
-#include "resource/texturevariant.h"
+#include "resource/texture.h"
 #include "m_profiler.h"
 
 BEGIN_PROF_TIMERS()

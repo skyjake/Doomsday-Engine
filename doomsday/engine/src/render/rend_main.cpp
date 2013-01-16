@@ -36,7 +36,7 @@
 #include "network/net_main.h"
 #include "resource/materialsnapshot.h"
 #include "resource/materialvariantspec.h"
-#include "resource/texturevariant.h"
+#include "resource/texture.h"
 #include "map/blockmapvisual.h"
 #include "render/sprite.h"
 

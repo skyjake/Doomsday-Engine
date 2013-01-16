@@ -21,7 +21,6 @@
 #include "ui/nativeui.h"
 #include "ui/finaleinterpreter.h"
 #include "resource/texturevariantspec.h"
-#include "resource/texturevariant.h"
 #include "resource/texture.h"
 
 void DD_ReadMouse(void)

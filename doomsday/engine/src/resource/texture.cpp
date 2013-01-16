@@ -25,7 +25,6 @@
 
 #include "gl/gl_texmanager.h"
 #include "resource/compositetexture.h"
-#include "resource/texturevariant.h"
 #include "resource/texture.h"
 
 #include <de/Error>
