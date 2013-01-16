@@ -64,6 +64,7 @@ class MaterialVariant;
 struct MaterialVariantSpec;
 
 /**
+ * A logical material.
  * @ingroup resource
  */
 class Material
@@ -73,7 +74,9 @@ public:
     typedef QList<MaterialVariant *> Variants;
 
     /**
-     * Layer.
+     * Each material consitutes at least one layer. Layers are arranged in a
+     * stack according to the order in which they should be drawn, from the
+     * bottom-most to the top-most layer.
      */
     class Layer
     {
@@ -85,36 +88,22 @@ public:
         /**
          * Construct a new default layer.
          */
-        Layer() {}
+        Layer();
 
         /**
          * Construct a new layer from the specified definition.
          */
-        static Layer *fromDef(ded_material_layer_t &def)
-        {
-            Layer *layer = new Layer();
-            for(int i = 0; i < def.stageCount.num; ++i)
-            {
-                layer->stages_.push_back(&def.stages[i]);
-            }
-            return layer;
-        }
+        static Layer *fromDef(ded_material_layer_t &def);
 
         /**
          * Returns the total number of animation stages for the layer.
          */
-        int stageCount() const
-        {
-            return stages_.count();
-        }
+        int stageCount() const;
 
         /**
          * Provides access to the animation stages for efficient traversal.
          */
-        Stages const &stages() const
-        {
-            return stages_;
-        }
+        Stages const &stages() const;
 
     private:
         /// Animation stages.
@@ -137,38 +126,19 @@ public:
         /**
          * Construct a new default decoration.
          */
-        Decoration() : patternSkip_(0, 0), patternOffset_(0, 0)
-        {}
+        Decoration();
 
-        Decoration(Vector2i const &_patternSkip, Vector2i const &_patternOffset)
-            : patternSkip_(_patternSkip), patternOffset_(_patternOffset)
-        {}
+        Decoration(Vector2i const &_patternSkip, Vector2i const &_patternOffset);
 
         /**
          * Construct a new decoration from the specified definition.
          */
-        static Decoration *fromDef(ded_material_decoration_t &def)
-        {
-            Decoration *dec = new Decoration(Vector2i(def.patternSkip),
-                                             Vector2i(def.patternOffset));
-            for(int i = 0; i < def.stageCount.num; ++i)
-            {
-                dec->stages_.push_back(&def.stages[i]);
-            }
-            return dec;
-        }
+        static Decoration *fromDef(ded_material_decoration_t &def);
 
         /**
          * Construct a new decoration from the specified definition.
          */
-        static Decoration *fromDef(ded_decoration_t &def)
-        {
-            Decoration *dec = new Decoration(Vector2i(def.patternSkip),
-                                             Vector2i(def.patternOffset));
-            // Only the one stage.
-            dec->stages_.push_back(&def.stage);
-            return dec;
-        }
+        static Decoration *fromDef(ded_decoration_t &def);
 
         /**
          * Retrieve the pattern skip for the decoration. Normally a decoration
@@ -176,35 +146,23 @@ public:
          * pattern allows sparser repeats on the horizontal and vertical axes
          * respectively.
          */
-        Vector2i const &patternSkip() const
-        {
-            return patternSkip_;
-        }
+        Vector2i const &patternSkip() const;
 
         /**
          * Retrieve the pattern offset for the decoration. Used with pattern
          * skip to offset the origin of the pattern.
          */
-        Vector2i const &patternOffset() const
-        {
-            return patternOffset_;
-        }
+        Vector2i const &patternOffset() const;
 
         /**
          * Returns the total number of animation stages for the decoration.
          */
-        int stageCount() const
-        {
-            return stages_.count();
-        }
+        int stageCount() const;
 
         /**
          * Provides access to the animation stages for efficient traversal.
          */
-        Stages const &stages() const
-        {
-            return stages_;
-        }
+        Stages const &stages() const;
 
     private:
         /// Pattern skip intervals.

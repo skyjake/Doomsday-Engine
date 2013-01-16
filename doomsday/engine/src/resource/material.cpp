@@ -34,6 +34,77 @@
 
 using namespace de;
 
+Material::Layer::Layer()
+{}
+
+Material::Layer *Material::Layer::fromDef(ded_material_layer_t &def)
+{
+    Layer *layer = new Layer();
+    for(int i = 0; i < def.stageCount.num; ++i)
+    {
+        layer->stages_.push_back(&def.stages[i]);
+    }
+    return layer;
+}
+
+int Material::Layer::stageCount() const
+{
+    return stages_.count();
+}
+
+Material::Layer::Stages const &Material::Layer::stages() const
+{
+    return stages_;
+}
+
+Material::Decoration::Decoration()
+    : patternSkip_(0, 0), patternOffset_(0, 0)
+{}
+
+Material::Decoration::Decoration(Vector2i const &_patternSkip, Vector2i const &_patternOffset)
+    : patternSkip_(_patternSkip), patternOffset_(_patternOffset)
+{}
+
+Material::Decoration *Material::Decoration::fromDef(ded_material_decoration_t &def)
+{
+    Decoration *dec = new Decoration(Vector2i(def.patternSkip),
+                                     Vector2i(def.patternOffset));
+    for(int i = 0; i < def.stageCount.num; ++i)
+    {
+        dec->stages_.push_back(&def.stages[i]);
+    }
+    return dec;
+}
+
+Material::Decoration *Material::Decoration::fromDef(ded_decoration_t &def)
+{
+    Decoration *dec = new Decoration(Vector2i(def.patternSkip),
+                                     Vector2i(def.patternOffset));
+    // Only the one stage.
+    dec->stages_.push_back(&def.stage);
+    return dec;
+}
+
+Vector2i const &Material::Decoration::patternSkip() const
+{
+    return patternSkip_;
+}
+
+Vector2i const &Material::Decoration::patternOffset() const
+{
+    return patternOffset_;
+}
+
+int Material::Decoration::stageCount() const
+{
+    return stages_.count();
+}
+
+Material::Decoration::Stages const &Material::Decoration::stages() const
+{
+    return stages_;
+}
+
 struct material_s
 {
     /// DMU object header.
