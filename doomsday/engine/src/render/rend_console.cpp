@@ -559,7 +559,7 @@ static void drawConsoleBackground(Point2Raw const *origin, Size2Raw const *size,
             App_Materials()->variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                                    0, 1, 0, false, false, false, false);
         MaterialSnapshot const &ms =
-            App_Materials()->prepare(*consoleBackgroundMaterial, spec, Con_IsActive());
+            App_Materials()->prepare(*consoleBackgroundMaterial, spec);
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 

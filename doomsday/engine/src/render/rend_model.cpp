@@ -1143,7 +1143,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         MaterialVariantSpec const &spec =
             App_Materials()->variantSpecForContext(MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                                    1, -2, -1, true, true, false, false);
-        MaterialSnapshot const &ms = App_Materials()->prepare(*mat, spec, true);
+        MaterialSnapshot const &ms = App_Materials()->prepare(*mat, spec);
 
         skinTexture = &ms.texture(MTU_PRIMARY);
     }

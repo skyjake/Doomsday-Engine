@@ -305,7 +305,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     MaterialVariantSpec const &spec =
         App_Materials()->variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                                0, -2, 0, false, true, true, false);
-    MaterialSnapshot const &ms = App_Materials()->prepare(*sprFrame->mats[0], spec, true);
+    MaterialSnapshot const &ms = App_Materials()->prepare(*sprFrame->mats[0], spec);
 
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
@@ -391,7 +391,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const *params)
         // For lighting debug, render all solid surfaces using the gray texture.
         MaterialSnapshot const &ms =
             App_Materials()->prepare(*App_Materials()->find(de::Uri("System", Path("gray"))).material(),
-                                     PSprite_MaterialSpec(), true);
+                                     PSprite_MaterialSpec());
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);

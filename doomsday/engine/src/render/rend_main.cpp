@@ -1450,7 +1450,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
             material_t *mat = suf->material? suf->material : App_Materials()->find(de::Uri("System", Path("missing"))).material();
 
             MaterialSnapshot const &ms =
-                App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), true);
+                App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec());
             params.glowing = ms.glowStrength();
         }
 
@@ -2315,9 +2315,9 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
     }
     else
     {
-        // Map RTU configuration from prepared MaterialSnapshot(s).
+        // Map RTU configuration from the prepared MaterialSnapshot.
         MaterialVariantSpec const &spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
-        MaterialSnapshot const &ms = App_Materials()->prepare(*material, spec, true);
+        MaterialSnapshot const &ms = App_Materials()->prepare(*material, spec);
 
         RL_LoadDefaultRtus();
         RL_MapRtu(RTU_PRIMARY, &ms.unit(MTU_PRIMARY));
@@ -3908,7 +3908,7 @@ static void Rend_RenderBoundingBoxes()
 
     MaterialSnapshot const &ms =
         App_Materials()->prepare(*App_Materials()->find(de::Uri("System", Path("bbox"))).material(),
-                                 Rend_SpriteMaterialSpec(), true);
+                                 Rend_SpriteMaterialSpec());
 
     GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
     GL_BlendMode(BM_ADD);

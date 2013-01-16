@@ -459,7 +459,7 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
             App_Materials()->variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0,
                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
                                                    false, true, true, false);
-    MaterialSnapshot const &ms = App_Materials()->prepare(*mat, spec, false);
+    MaterialSnapshot const &ms = App_Materials()->prepare(*mat, spec);
 
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
@@ -502,7 +502,7 @@ coord_t R_VisualRadius(mobj_t *mo)
     if(material_t *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
     {
         MaterialSnapshot const &ms =
-            App_Materials()->prepare(*material, Rend_SpriteMaterialSpec(), true);
+            App_Materials()->prepare(*material, Rend_SpriteMaterialSpec());
         return ms.dimensions().width() / 2;
     }
 
@@ -546,7 +546,7 @@ float R_ShadowStrength(mobj_t *mo)
         {
             // Ensure we've prepared this.
             MaterialSnapshot const &ms =
-                App_Materials()->prepare(*mat, Rend_SpriteMaterialSpec(), true);
+                App_Materials()->prepare(*mat, Rend_SpriteMaterialSpec());
 
             averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_ALPHA);
             float weightedSpriteAlpha;
@@ -1048,7 +1048,7 @@ void R_ProjectSprite(mobj_t *mo)
     matFlipT = false;
 
     MaterialSnapshot const &ms =
-        App_Materials()->prepare(*mat, Rend_SpriteMaterialSpec(mo->tclass, mo->tmap), true);
+        App_Materials()->prepare(*mat, Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
 
     // An invalid sprite texture?
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
@@ -1291,7 +1291,7 @@ void R_ProjectSprite(mobj_t *mo)
 
         // Ensure we have up-to-date information about the material.
         MaterialSnapshot const &ms =
-            App_Materials()->prepare(*mat, Rend_SpriteMaterialSpec(), true);
+            App_Materials()->prepare(*mat, Rend_SpriteMaterialSpec());
 
         pointlight_analysis_t const *pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_SPRITE_AUTOLIGHT);
         if(!pl)
