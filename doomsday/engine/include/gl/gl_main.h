@@ -30,9 +30,10 @@
 #include "render/r_main.h"
 
 struct colorpalette_s;
-struct material_s;
 struct colorpalette_s;
 struct ColorRawf_s;
+
+class material_t;
 
 #define MAX_TEX_UNITS           2 // More aren't currently used.
 
@@ -173,10 +174,10 @@ void GL_CallList(DGLuint list);
 
 void GL_DeleteLists(DGLuint list, int range);
 
-void GL_SetMaterialUI2(struct material_s *mat, int wrapS, int wrapT);
-void GL_SetMaterialUI(struct material_s *mat);
+void GL_SetMaterialUI2(material_t *mat, int wrapS, int wrapT);
+void GL_SetMaterialUI(material_t *mat);
 
-void GL_SetPSprite(struct material_s *mat, int tclass, int tmap);
+void GL_SetPSprite(material_t *mat, int tclass, int tmap);
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
 

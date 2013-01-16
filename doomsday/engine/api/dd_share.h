@@ -960,7 +960,7 @@ typedef struct {
 
 /// Sprite Info
 typedef struct {
-    struct material_s* material;
+    material_t *material;
     int flip;
     RectRaw geometry;
     float texCoord[2]; // Prepared texture coordinates.

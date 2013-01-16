@@ -65,8 +65,6 @@ typedef void (*con_textfilter_t) (char* text);
 // Forward declarations for map data types.
 struct polyblock_s;
 struct polyobj_s;
-struct surface_s;
-struct material_s;
 
 #include <de/str.h>
 #include <de/strutil.h>

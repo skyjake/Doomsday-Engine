@@ -147,7 +147,7 @@ void Cl_ReadServerMobjStateIDs(void)
     StringArray_Delete(ar);
 }
 
-static material_t* Cl_FindLocalMaterial(materialarchive_serialid_t archId)
+static material_t *Cl_FindLocalMaterial(materialarchive_serialid_t archId)
 {
     if(!serverMaterials)
     {
@@ -155,7 +155,7 @@ static material_t* Cl_FindLocalMaterial(materialarchive_serialid_t archId)
         Con_Message("Cl_FindLocalMaterial: Cannot translate serial id %i, server has not sent its materials!\n", archId);
         return 0;
     }
-    return MaterialArchive_Find(serverMaterials, archId, 0);
+    return (material_t *)MaterialArchive_Find(serverMaterials, archId, 0);
 }
 
 int Cl_LocalMobjType(int serverMobjType)

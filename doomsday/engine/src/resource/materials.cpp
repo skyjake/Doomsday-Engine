@@ -1309,7 +1309,7 @@ uint Materials_Size()
     return App_Materials()->size();
 }
 
-materialid_t Materials_Id(material_t *material)
+materialid_t Materials_Id(material_t const *material)
 {
     if(!material) return NOMATERIALID;
     return Material_PrimaryBind(material);

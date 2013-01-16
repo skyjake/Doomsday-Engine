@@ -4,7 +4,8 @@
 #include "de_resource.h"
 #include "api_material.h"
 
-struct material_s *DD_MaterialForTextureUri(uri_s const *textureUri)
+#undef DD_MaterialForTextureUri
+material_t *DD_MaterialForTextureUri(uri_s const *textureUri)
 {
     if(!textureUri) return 0; // Not found.
 

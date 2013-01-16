@@ -373,7 +373,7 @@ void Materials_Shutdown(void);
 
 void Materials_Ticker(timespan_t elapsed);
 uint Materials_Size(void);
-materialid_t Materials_Id(material_t *material);
+materialid_t Materials_Id(material_t const *material);
 material_t *Materials_ToMaterial(materialid_t materialId);
 struct uri_s *Materials_ComposeUri(materialid_t materialId);
 materialid_t Materials_ResolveUri(struct uri_s const *uri);

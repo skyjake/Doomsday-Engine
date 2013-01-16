@@ -203,6 +203,33 @@ typedef struct material_variantlist_node_s {
     MaterialVariant *variant;
 } material_variantlist_node_t;
 
+material_t::material_t() : de::MapElement(DMU_MATERIAL)
+{
+    _def = 0;
+    _variants = 0;
+    _envClass = MEC_UNKNOWN;
+    _primaryBind = 0;
+    _size = Size2_New();
+    _flags = 0;
+    _inAnimGroup = false;
+    _isCustom = false;
+    _detailTex = 0;
+    _detailScale = 0;
+    _detailStrength = 0;
+    _shinyTex = 0;
+    _shinyBlendmode = blendmode_t(0);
+    memset(_shinyMinColor, 0, sizeof(_shinyMinColor));
+    _shinyStrength = 0;
+    _shinyMaskTex = 0;
+    _prepared = 0;
+}
+
+material_t::~material_t()
+{
+    Material_DestroyVariants(this);
+    Size2_Delete(_size);
+}
+
 static void destroyVariants(material_t *mat)
 {
     DENG2_ASSERT(mat);
@@ -218,20 +245,15 @@ static void destroyVariants(material_t *mat)
 
 material_t *Material_New()
 {
-    material_t *mat = (material_t *) M_Calloc(sizeof(*mat));
-    mat->header.type = DMU_MATERIAL;
-    mat->_envClass = MEC_UNKNOWN;
-    mat->_size = Size2_New();
-    return mat;
+    return new material_t();
 }
 
 void Material_Delete(material_t *mat)
 {
-    DENG2_ASSERT(mat);
-    Material_DestroyVariants(mat);
-    Size2_Delete(mat->_size);
-    mat->_size = 0;
-    M_Free(mat);
+    if(mat)
+    {
+        delete mat;
+    }
 }
 
 void Material_Ticker(material_t *mat, timespan_t time)

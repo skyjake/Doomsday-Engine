@@ -384,14 +384,14 @@ void MaterialArchive_Delete(MaterialArchive *arc)
 }
 
 #undef MaterialArchive_FindUniqueSerialId
-materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive const *arc, struct material_s *mat)
+materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive const *arc, material_t *mat)
 {
     SELF_CONST(arc);
     return self->findUniqueSerialId(mat);
 }
 
 #undef MaterialArchive_Find
-struct material_s *MaterialArchive_Find(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group)
+material_t *MaterialArchive_Find(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group)
 {
     SELF_CONST(arc);
     return self->find(serialId, group);

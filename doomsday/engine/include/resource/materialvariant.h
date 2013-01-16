@@ -132,7 +132,7 @@ public:
     DENG2_ERROR(InvalidLayerError);
 
 public:
-    MaterialVariant(struct material_s &generalCase, MaterialVariantSpec const &spec,
+    MaterialVariant(material_t &generalCase, MaterialVariantSpec const &spec,
                     ded_material_t const &def);
     ~MaterialVariant();
 
@@ -158,7 +158,7 @@ public:
     void resetAnim();
 
     /// @return  Material from which this variant is derived.
-    struct material_s &generalCase() const;
+    material_t &generalCase() const;
 
     /// @return  MaterialVariantSpec from which this variant is derived.
     MaterialVariantSpec const &spec() const;

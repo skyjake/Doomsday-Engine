@@ -280,6 +280,7 @@ int P_DummyType(void const *dummy)
     return elem->type();
 }
 
+#undef P_DummyExtraData
 void *P_DummyExtraData(void *dummy)
 {
     if(P_IsDummy(dummy))
@@ -290,6 +291,7 @@ void *P_DummyExtraData(void *dummy)
     return 0;
 }
 
+#undef P_ToIndex
 uint P_ToIndex(void const *ptr)
 {
     if(!ptr) return 0;
@@ -324,8 +326,7 @@ uint P_ToIndex(void const *ptr)
         return GET_PLANE_IDX(elem->castTo<Plane>());
 
     case DMU_MATERIAL:
-        DENG2_ASSERT(false); // TODO: update this!
-        //return Materials_Id(elem->castTo<Material>());
+        return Materials_Id(elem->castTo<material_t>());
 
     default:
         /// @todo Throw exception.
@@ -334,9 +335,7 @@ uint P_ToIndex(void const *ptr)
     }
 }
 
-/**
- * Convert index to pointer.
- */
+#undef P_ToPtr
 void *P_ToPtr(int type, uint index)
 {
     switch(type)
@@ -369,7 +368,6 @@ void *P_ToPtr(int type, uint index)
         return 0; /* Unreachable. */ }
 
     case DMU_MATERIAL:
-        // TODO: update!
         return Materials_ToMaterial(index);
 
     default: {
@@ -380,6 +378,7 @@ void *P_ToPtr(int type, uint index)
     }
 }
 
+#undef P_Iteratep
 int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, void *ctx))
 {
     de::MapElement *elem = IN_ELEM(elPtr);
@@ -1055,8 +1054,7 @@ static int setProperty(void *ptr, void *context)
         break;
 
     case DMU_MATERIAL:
-        // TODO: Update this when Material is derived from de::MapElement!
-        //Material_SetProperty(elem->castTo<Material>(), args);
+        Material_SetProperty(elem->castTo<material_t>(), args);
         break;
 
     case DMU_BSPNODE: {

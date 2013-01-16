@@ -21,6 +21,11 @@
 #ifndef LIBDENG_RESOURCE_MATERIAL_H
 #define LIBDENG_RESOURCE_MATERIAL_H
 
+#ifndef __cplusplus
+#  error "resource/material.h requires C++"
+#endif
+
+#include "MapElement"
 #include "map/p_mapdata.h"
 #include "map/p_dmu.h"
 
@@ -38,8 +43,15 @@ typedef enum {
 
 struct material_variantlist_node_s;
 
-typedef struct material_s {
-    runtime_mapdata_header_t header;
+struct material_s; // Opaque type
+
+/**
+ * Logical material resource.
+ * @todo Rename as Material
+ */
+class material_t : public de::MapElement
+{
+public:
     struct ded_material_s* _def;
     struct material_variantlist_node_s* _variants;
     material_env_class_t _envClass;    // Environmental sound class.
@@ -57,7 +69,14 @@ typedef struct material_s {
     float               _shinyStrength;
     struct texture_s*   _shinyMaskTex;
     byte                _prepared;
-} material_t;
+
+    material_t();
+    ~material_t();
+
+    operator material_s &() {
+        return (material_s &) *this;
+    }
+};
 
 #ifdef __cplusplus
 

@@ -25,6 +25,7 @@
 
 #include <de/rect.h>
 #include "dd_share.h"
+#include "api_map.h" // material_t
 
 #ifdef __cplusplus
 extern "C" {
@@ -272,10 +273,10 @@ DENG_API_TYPEDEF(GL)
     void (*DeleteLists)(DGLuint list, int range);
 
     void (*SetNoMaterial)(void);
-    void (*SetMaterialUI)(struct material_s* mat, DGLint wrapS, DGLint wrapT);
+    void (*SetMaterialUI)(material_t *mat, DGLint wrapS, DGLint wrapT);
     void (*SetPatch)(patchid_t id, DGLint wrapS, DGLint wrapT);
-    void (*SetPSprite)(struct material_s* mat);
-    void (*SetPSprite2)(struct material_s* mat, int tclass, int tmap);
+    void (*SetPSprite)(material_t *mat);
+    void (*SetPSprite2)(material_t *mat, int tclass, int tmap);
     void (*SetRawImage)(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT);
 
     void (*BlendOp)(int op);
@@ -345,52 +346,52 @@ DENG_API_T(GL);
 #ifndef DENG_NO_API_MACROS_GL
 #define DGL_Enable          _api_GL.Enable
 #define DGL_Disable         _api_GL.Disable
-#define DGL_GetIntegerv		_api_GL.GetIntegerv
-#define DGL_GetInteger		_api_GL.GetInteger
-#define DGL_SetInteger		_api_GL.SetInteger
-#define DGL_GetFloatv		_api_GL.GetFloatv
-#define DGL_GetFloat		_api_GL.GetFloat
-#define DGL_SetFloat		_api_GL.SetFloat
+#define DGL_GetIntegerv     _api_GL.GetIntegerv
+#define DGL_GetInteger      _api_GL.GetInteger
+#define DGL_SetInteger      _api_GL.SetInteger
+#define DGL_GetFloatv       _api_GL.GetFloatv
+#define DGL_GetFloat        _api_GL.GetFloat
+#define DGL_SetFloat        _api_GL.SetFloat
 #define DGL_Ortho           _api_GL.Ortho
 #define DGL_Scissor         _api_GL.Scissor
-#define DGL_SetScissor		_api_GL.SetScissor
-#define DGL_SetScissor2		_api_GL.SetScissor2
-#define DGL_MatrixMode		_api_GL.MatrixMode
-#define DGL_PushMatrix		_api_GL.PushMatrix
-#define DGL_PopMatrix		_api_GL.PopMatrix
-#define DGL_LoadIdentity	_api_GL.LoadIdentity
-#define DGL_Translatef		_api_GL.Translatef
+#define DGL_SetScissor      _api_GL.SetScissor
+#define DGL_SetScissor2     _api_GL.SetScissor2
+#define DGL_MatrixMode      _api_GL.MatrixMode
+#define DGL_PushMatrix      _api_GL.PushMatrix
+#define DGL_PopMatrix       _api_GL.PopMatrix
+#define DGL_LoadIdentity    _api_GL.LoadIdentity
+#define DGL_Translatef      _api_GL.Translatef
 #define DGL_Rotatef         _api_GL.Rotatef
 #define DGL_Scalef          _api_GL.Scalef
 #define DGL_Begin           _api_GL.Begin
 #define DGL_End             _api_GL.End
 #define DGL_NewList         _api_GL.NewList
 #define DGL_EndList         _api_GL.EndList
-#define DGL_CallList		_api_GL.CallList
-#define DGL_DeleteLists		_api_GL.DeleteLists
-#define DGL_SetNoMaterial	_api_GL.SetNoMaterial
-#define DGL_SetMaterialUI	_api_GL.SetMaterialUI
-#define DGL_SetPatch		_api_GL.SetPatch
-#define DGL_SetPSprite		_api_GL.SetPSprite
-#define DGL_SetPSprite2		_api_GL.SetPSprite2
-#define DGL_SetRawImage		_api_GL.SetRawImage
+#define DGL_CallList        _api_GL.CallList
+#define DGL_DeleteLists     _api_GL.DeleteLists
+#define DGL_SetNoMaterial   _api_GL.SetNoMaterial
+#define DGL_SetMaterialUI   _api_GL.SetMaterialUI
+#define DGL_SetPatch        _api_GL.SetPatch
+#define DGL_SetPSprite      _api_GL.SetPSprite
+#define DGL_SetPSprite2     _api_GL.SetPSprite2
+#define DGL_SetRawImage     _api_GL.SetRawImage
 #define DGL_BlendOp         _api_GL.BlendOp
-#define DGL_BlendFunc		_api_GL.BlendFunc
-#define DGL_BlendMode		_api_GL.BlendMode
-#define DGL_Color3ub		_api_GL.Color3ub
-#define DGL_Color3ubv		_api_GL.Color3ubv
-#define DGL_Color4ub		_api_GL.Color4ub
-#define DGL_Color4ubv		_api_GL.Color4ubv
+#define DGL_BlendFunc       _api_GL.BlendFunc
+#define DGL_BlendMode       _api_GL.BlendMode
+#define DGL_Color3ub        _api_GL.Color3ub
+#define DGL_Color3ubv       _api_GL.Color3ubv
+#define DGL_Color4ub        _api_GL.Color4ub
+#define DGL_Color4ubv       _api_GL.Color4ubv
 #define DGL_Color3f         _api_GL.Color3f
-#define DGL_Color3fv		_api_GL.Color3fv
+#define DGL_Color3fv        _api_GL.Color3fv
 #define DGL_Color4f         _api_GL.Color4f
-#define DGL_Color4fv		_api_GL.Color4fv
-#define DGL_TexCoord2f		_api_GL.TexCoord2f
-#define DGL_TexCoord2fv		_api_GL.TexCoord2fv
-#define DGL_Vertex2f		_api_GL.Vertex2f
-#define DGL_Vertex2fv		_api_GL.Vertex2fv
-#define DGL_Vertex3f		_api_GL.Vertex3f
-#define DGL_Vertex3fv		_api_GL.Vertex3fv
+#define DGL_Color4fv        _api_GL.Color4fv
+#define DGL_TexCoord2f      _api_GL.TexCoord2f
+#define DGL_TexCoord2fv     _api_GL.TexCoord2fv
+#define DGL_Vertex2f        _api_GL.Vertex2f
+#define DGL_Vertex2fv       _api_GL.Vertex2fv
+#define DGL_Vertex3f        _api_GL.Vertex3f
+#define DGL_Vertex3fv       _api_GL.Vertex3fv
 #define DGL_Vertices2ftv            _api_GL.Vertices2ftv
 #define DGL_Vertices3ftv            _api_GL.Vertices3ftv
 #define DGL_Vertices3fctv           _api_GL.Vertices3fctv
@@ -401,11 +402,11 @@ DENG_API_T(GL);
 #define DGL_DrawRectf2              _api_GL.DrawRectf2
 #define DGL_DrawRectf2Color         _api_GL.DrawRectf2Color
 #define DGL_DrawRectf2Tiled         _api_GL.DrawRectf2Tiled
-#define DGL_DrawCutRectfTiled		_api_GL.DrawCutRectfTiled
-#define DGL_DrawCutRectf2Tiled		_api_GL.DrawCutRectf2Tiled
+#define DGL_DrawCutRectfTiled       _api_GL.DrawCutRectfTiled
+#define DGL_DrawCutRectf2Tiled      _api_GL.DrawCutRectf2Tiled
 #define DGL_DrawQuadOutline         _api_GL.DrawQuadOutline
-#define DGL_DrawQuad2Outline		_api_GL.DrawQuad2Outline
-#define DGL_NewTextureWithParams	_api_GL.NewTextureWithParams
+#define DGL_DrawQuad2Outline        _api_GL.DrawQuad2Outline
+#define DGL_NewTextureWithParams    _api_GL.NewTextureWithParams
 #define DGL_Bind                    _api_GL.Bind
 #define DGL_DeleteTextures          _api_GL.DeleteTextures
 #define GL_UseFog                   _api_GL.UseFog
