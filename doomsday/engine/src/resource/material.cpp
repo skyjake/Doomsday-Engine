@@ -32,6 +32,8 @@
 
 #include "resource/material.h"
 
+using namespace de;
+
 struct material_s
 {
     /// DMU object header.
@@ -41,7 +43,7 @@ struct material_s
     ded_material_t *def;
 
     /// Set of use-case/context variant instances.
-    de::Material::Variants variants;
+    Material::Variants variants;
 
     /// Environmental sound class.
     material_env_class_t envClass;
@@ -56,26 +58,29 @@ struct material_s
     short flags;
 
     /// Detail texture layer & properties.
-    de::Texture *detailTex;
+    Texture *detailTex;
     float detailScale;
     float detailStrength;
 
     /// Shiny texture layer & properties.
-    de::Texture *shinyTex;
+    Texture *shinyTex;
     blendmode_t shinyBlendmode;
     float shinyMinColor[3];
     float shinyStrength;
-    de::Texture *shinyMaskTex;
+    Texture *shinyMaskTex;
+
+    /// Layers.
+    Material::Layers layers;
 
     /// Decorations (will be projected into the map relative to a surface).
-    de::Material::Decorations decorations;
+    Material::Decorations decorations;
 
     /// Current prepared state.
     byte prepared;
 
-    material_s(short _flags, ded_material_t *_def,
+    material_s(short _flags, ded_material_t &_def,
                Size2Raw &_dimensions, material_env_class_t _envClass)
-        : def(_def), envClass(_envClass), manifestId(0),
+        : def(&_def), envClass(_envClass), manifestId(0),
           dimensions(Size2_NewFromRaw(&_dimensions)), flags(_flags),
           detailTex(0), detailScale(0), detailStrength(0),
           shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0),
@@ -83,11 +88,18 @@ struct material_s
     {
         header.type = DMU_MATERIAL;
         std::memset(shinyMinColor, 0, sizeof(shinyMinColor));
+
+        for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
+        {
+            Material::Layer *layer = Material::Layer::fromDef(_def.layers[i]);
+            layers.push_back(layer);
+        }
     }
 
     ~material_s()
     {
         clearDecorations();
+        clearLayers();
         clearVariants();
         Size2_Delete(dimensions);
     }
@@ -101,6 +113,14 @@ struct material_s
         prepared = 0;
     }
 
+    void clearLayers()
+    {
+        while(!layers.isEmpty())
+        {
+            delete layers.takeFirst();
+        }
+    }
+
     void clearDecorations()
     {
         while(!decorations.isEmpty())
@@ -110,12 +130,11 @@ struct material_s
     }
 };
 
-using namespace de;
-
 material_t *Material_New(short flags, ded_material_t *def,
     Size2Raw *dimensions, material_env_class_t envClass)
 {
-    return new material_s(flags, def, *dimensions, envClass);
+    DENG_ASSERT(def && dimensions);
+    return new material_s(flags, *def, *dimensions, envClass);
 }
 
 void Material_Delete(material_t *mat)
@@ -179,11 +198,11 @@ void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
     /// @todo This should take into account the whole definition, not just whether
     ///       the primary layer's first texture is custom or not.
     manifest.setCustom(false);
-    if(def->layers[0].stageCount.num > 0 && def->layers[0].stages[0].texture)
+    if(mat->layers[0]->stageCount() > 0 && mat->layers[0]->stages()[0]->texture)
     {
         try
         {
-            de::Uri *texUri = reinterpret_cast<de::Uri *>(def->layers[0].stages[0].texture);
+            de::Uri *texUri = reinterpret_cast<de::Uri *>(mat->layers[0]->stages()[0]->texture);
             if(Texture *tex = App_Textures()->find(*texUri).texture())
             {
                 manifest.setCustom(tex->flags().testFlag(Texture::Custom));
@@ -259,11 +278,9 @@ boolean Material_IsAnimated(material_t const *mat)
     // Materials cease animation once they are no longer valid.
     if(!Material_IsValid(mat)) return false;
 
-    int const layerCount = Material_LayerCount(mat);
-    for(int i = 0; i < layerCount; ++i)
+    DENG2_FOR_EACH_CONST(Material::Layers, i, mat->layers)
     {
-        ded_material_layer_t const &layer = mat->def->layers[i];
-        if(layer.stageCount.num > 1) return true;
+        if((*i)->stageCount() > 1) return true;
     }
     return false; // Not at all.
 }
@@ -285,13 +302,12 @@ boolean Material_HasGlow(material_t const *mat)
     DENG_ASSERT(mat);
     if(mat->def)
     {
-        int const layerCount = Material_LayerCount(mat);
-        for(int i = 0; i < layerCount; ++i)
+        DENG2_FOR_EACH_CONST(Material::Layers, i, mat->layers)
         {
-            ded_material_layer_t const &layer = mat->def->layers[i];
-            for(int k = 0; k < layer.stageCount.num; ++k)
+            Material::Layer::Stages const &stages = (*i)->stages();
+            DENG2_FOR_EACH_CONST(Material::Layer::Stages, k, stages)
             {
-                ded_material_layer_stage_t const &stage = layer.stages[k];
+                ded_material_layer_stage_t const &stage = **k;
                 if(stage.glowStrength > .0001f) return true;
             }
         }
@@ -302,8 +318,7 @@ boolean Material_HasGlow(material_t const *mat)
 int Material_LayerCount(material_t const *mat)
 {
     DENG2_ASSERT(mat);
-    DENG2_UNUSED(mat);
-    return 1;
+    return mat->layers.count();
 }
 
 byte Material_Prepared(material_t const *mat)
@@ -449,6 +464,12 @@ void Material_SetShinyMaskTexture(material_t *mat, struct texture_s *tex)
     mat->shinyMaskTex = reinterpret_cast<de::Texture *>(tex);
 }
 
+Material::Layers const &Material_Layers(material_t const *mat)
+{
+    DENG_ASSERT(mat);
+    return mat->layers;
+}
+
 void Material_AddDecoration(material_t *mat, de::Material::Decoration &decor)
 {
     DENG_ASSERT(mat);
@@ -457,11 +478,13 @@ void Material_AddDecoration(material_t *mat, de::Material::Decoration &decor)
 
 Material::Decorations const &Material_Decorations(material_t const *mat)
 {
+    DENG_ASSERT(mat);
     return mat->decorations;
 }
 
 Material::Variants const &Material_Variants(material_t const *mat)
 {
+    DENG_ASSERT(mat);
     return mat->variants;
 }
 

@@ -73,6 +73,58 @@ public:
     typedef QList<MaterialVariant *> Variants;
 
     /**
+     * Layer.
+     */
+    class Layer
+    {
+    public:
+        /// A list of stages.
+        typedef QList<ded_material_layer_stage_t *> Stages;
+
+    public:
+        /**
+         * Construct a new default layer.
+         */
+        Layer() {}
+
+        /**
+         * Construct a new layer from the specified definition.
+         */
+        static Layer *fromDef(ded_material_layer_t &def)
+        {
+            Layer *layer = new Layer();
+            for(int i = 0; i < def.stageCount.num; ++i)
+            {
+                layer->stages_.push_back(&def.stages[i]);
+            }
+            return layer;
+        }
+
+        /**
+         * Returns the total number of animation stages for the layer.
+         */
+        int stageCount() const
+        {
+            return stages_.count();
+        }
+
+        /**
+         * Provides access to the animation stages for efficient traversal.
+         */
+        Stages const &stages() const
+        {
+            return stages_;
+        }
+
+    private:
+        /// Animation stages.
+        Stages stages_;
+    };
+
+    /// A list of layers.
+    typedef QList<Material::Layer *> Layers;
+
+    /**
      * (Light) decoration.
      */
     class Decoration
@@ -187,14 +239,25 @@ material_t *Material_New(short flags, ded_material_t *def, Size2Raw *dimensions,
 
 void Material_Delete(material_t *mat);
 
+/**
+ * Returns the number of material variants.
+ */
+int Material_VariantCount(material_t const *mat);
+
+/**
+ * Returns the number of material layers.
+ */
+int Material_LayerCount(material_t const *mat);
+
+/**
+ * Returns the number of material (light) decorations.
+ */
 int Material_DecorationCount(material_t const *mat);
 
 /**
  * Process a system tick event.
  */
 void Material_Ticker(material_t *mat, timespan_t time);
-
-int Material_VariantCount(material_t const *mat);
 
 /**
  * Destroys all derived MaterialVariants linked with this Material.
@@ -263,9 +326,6 @@ boolean Material_HasDecorations(material_t const *mat);
 
 /// Returns @c true if one or more of the material's layers are glowing.
 boolean Material_HasGlow(material_t const *mat);
-
-/// @return  Number of layers.
-int Material_LayerCount(material_t const *mat);
 
 /// @return  Prepared state of this material.
 byte Material_Prepared(material_t const *mat);
@@ -393,6 +453,11 @@ int Material_SetProperty(material_t *material, setargs_t const *args);
 } // extern "C"
 
 de::MaterialManifest &Material_Manifest(material_t const *material);
+
+/**
+ * Provides access to the list of layers for efficient traversal.
+ */
+de::Material::Layers const &Material_Layers(material_t const *mat);
 
 /**
  * Add a new (light) decoration to the material.

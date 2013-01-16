@@ -740,7 +740,7 @@ void Materials::resetAllMaterialAnimations()
 
 static void printVariantInfo(MaterialVariant &variant, int variantIdx)
 {
-    Con_Printf("Variant #%i: Spec:%p\n", variantIdx, (void *) &variant.spec());
+    Con_Printf("Variant #%i: Spec:%p\n", variantIdx, de::dintptr(&variant.spec()));
 
     // Print layer state info:
     int const layerCount = Material_LayerCount(&variant.generalCase());
@@ -790,17 +790,18 @@ static void printMaterialInfo(material_t &mat)
                Material_IsSkyMasked(&mat)    ? "yes" : "no");
 
     // Print full layer config:
-    int const layerCount = Material_LayerCount(&mat);
-    for(int idx = 0; idx < layerCount; ++idx)
+    Material::Layers const &layers = Material_Layers(&mat);
+    for(int i = 0; i < layers.count(); ++i)
     {
-        ded_material_layer_t const *lDef = &def->layers[idx];
+        Material::Layer const *lDef = layers[i];
+        int const stageCount = lDef->stageCount();
 
-        Con_Printf("Layer #%i (%i %s):\n", idx, lDef->stageCount.num,
-                   lDef->stageCount.num == 1? "Stage" : "Stages");
+        Con_Printf("Layer #%i (%i %s):\n",
+                   i, stageCount, stageCount == 1? "Stage" : "Stages");
 
-        for(int k = 0; k < lDef->stageCount.num; ++k)
+        for(int k = 0; k < stageCount; ++k)
         {
-            ded_material_layer_stage_t const *sDef = &lDef->stages[k];
+            ded_material_layer_stage_t const *sDef = lDef->stages()[k];
             QByteArray path = !sDef->texture? QString("(prev)").toUtf8()
                                             : reinterpret_cast<Uri *>(sDef->texture)->asText().toUtf8();
 

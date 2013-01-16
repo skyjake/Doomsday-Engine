@@ -260,7 +260,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
     material_t *mat = &material->generalCase();
-    ded_material_t const *def = Material_Definition(mat);
+    Material::Layers const &layers = Material_Layers(mat);
     MaterialVariantSpec const &spec = material->spec();
 
     TextureVariant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS];
@@ -276,12 +276,10 @@ void MaterialSnapshot::Instance::takeSnapshot()
      * If skymasked, we only need to update the primary tex unit (due to it
      * being visible when skymask debug drawing is enabled).
      */
-
-    int const layerCount = Material_LayerCount(mat);
-    for(int i = 0; i < layerCount; ++i)
+    for(int i = 0; i < layers.count(); ++i)
     {
         MaterialVariant::LayerState const &l = material->layer(i);
-        ded_material_layer_stage_t const *lsDef = &def->layers[i].stages[l.stage];
+        ded_material_layer_stage_t const *lsDef = layers[i]->stages()[l.stage];
 
         Texture *tex = findTextureForLayerStage(*lsDef);
         if(!tex) continue;
@@ -351,8 +349,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
     if(stored.dimensions.isEmpty()) return;
 
     MaterialVariant::LayerState const &l     = material->layer(0);
-    ded_material_layer_stage_t const *lsCur  = &def->layers[0].stages[l.stage];
-    ded_material_layer_stage_t const *lsNext = &def->layers[0].stages[(l.stage + 1) % def->layers[0].stageCount.num];
+    ded_material_layer_stage_t const *lsCur  = layers[0]->stages()[l.stage];
+    ded_material_layer_stage_t const *lsNext = layers[0]->stages()[(l.stage + 1) % layers[0]->stageCount()];
 
     // Glow strength is presently taken from layer #0.
     if(l.inter == 0)
