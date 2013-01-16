@@ -1260,6 +1260,8 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
     params.surfaceColor = color;
     params.wall.surfaceColor2 = color2;
     params.glowing = ms.glowStrength();
+    if(glowFactor > .0001f)
+        params.glowing *= glowFactor; // Global scale factor.
     params.blendMode = blendMode;
     params.texOffset = texOffset;
     params.texScale = texScale;
@@ -1469,6 +1471,9 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
                     App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec(), true);
             params.glowing = ms.glowStrength();
         }
+
+        if(glowFactor > .0001f)
+            params.glowing *= glowFactor; // Global scale factor.
 
         // Dynamic lights?
         if(addDLights && params.glowing < 1 && !(!useDynLights && !useWallGlow))
@@ -1690,9 +1695,13 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
             if(surface->inFlags & SUIF_NO_RADIO)
                 flags &= ~RHF_ADD_RADIO;
 
+            float glowStrength = ms.glowStrength();
+            if(glowFactor > .0001f)
+                glowStrength *= glowFactor; // Global scale factor.
+
             // Dynamic Lights?
             if((flags & RHF_ADD_DYNLIGHTS) &&
-               ms.glowStrength() < 1 && !(!useDynLights && !useWallGlow))
+               glowStrength < 1 && !(!useDynLights && !useWallGlow))
             {
                 lightListIdx = LO_ProjectToSurface(((section == SS_MIDDLE && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0), currentBspLeaf, 1,
                     texTL, texBR, HEDGE_SIDEDEF(hedge)->SW_middletangent, HEDGE_SIDEDEF(hedge)->SW_middlebitangent, HEDGE_SIDEDEF(hedge)->SW_middlenormal);
@@ -1700,14 +1709,14 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
 
             // Dynamic shadows?
             if((flags & RHF_ADD_DYNSHADOWS) &&
-               ms.glowStrength() < 1 && Rend_MobjShadowsEnabled())
+               glowStrength < 1 && Rend_MobjShadowsEnabled())
             {
                 // Glowing planes inversely diminish shadow strength.
-                shadowListIdx = R_ProjectShadowsToSurface(currentBspLeaf, 1 - ms.glowStrength(), texTL, texBR,
+                shadowListIdx = R_ProjectShadowsToSurface(currentBspLeaf, 1 - glowStrength, texTL, texBR,
                     HEDGE_SIDEDEF(hedge)->SW_middletangent, HEDGE_SIDEDEF(hedge)->SW_middlebitangent, HEDGE_SIDEDEF(hedge)->SW_middlenormal);
             }
 
-            if(ms.glowStrength() > 0)
+            if(glowStrength > 0)
                 flags &= ~RHF_ADD_RADIO;
 
             selectSurfaceColors(&color, &color2, HEDGE_SIDEDEF(hedge), section);

@@ -976,7 +976,11 @@ static boolean createGlowLightForSurface(Surface *suf, void * /*parameters*/)
 
         V3f_Copy(LUM_PLANE(lum)->normal, pln->PS_normal);
         V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
-        LUM_PLANE(lum)->intensity = ms.glowStrength();
+
+        float glowStrength = ms.glowStrength();
+        if(glowFactor > .0001f)
+            glowStrength *= glowFactor; // Global scale factor.
+        LUM_PLANE(lum)->intensity = glowStrength;
         LUM_PLANE(lum)->tex = GL_PrepareLSTexture(LST_GRADIENT);
         lum->maxDistance = 0;
         lum->decorSource = 0;

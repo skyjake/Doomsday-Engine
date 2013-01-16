@@ -202,6 +202,7 @@ void R_UpdateMapSurfacesOnMaterialChange(material_t* material);
 /// @return  @c true= @a plane is non-glowing (i.e. not glowing or a sky).
 boolean R_IsGlowingPlane(const Plane* plane);
 
+/// @return  Current glow strength for the plane.
 float R_GlowStrength(const Plane* pln);
 
 lineowner_t* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);

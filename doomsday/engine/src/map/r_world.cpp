@@ -1420,21 +1420,12 @@ void R_ClearSectorFlags()
 
 boolean R_IsGlowingPlane(Plane const *pln)
 {
-#ifdef __CLIENT__
-    /// @todo We should not need to prepare to determine this.
     material_t *mat = pln->surface.material;
     if(mat)
     {
-        MaterialSnapshot const &ms =
-            App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec());
-
-        if(!Material_IsDrawable(mat) || ms.glowStrength() > 0) return true;
+        if(!Material_IsDrawable(mat) || Material_HasGlow(mat)) return true;
     }
     return Surface_IsSkyMasked(&pln->surface);
-#else
-    DENG_UNUSED(pln);
-    return false;
-#endif
 }
 
 float R_GlowStrength(Plane const *pln)
@@ -1445,11 +1436,13 @@ float R_GlowStrength(Plane const *pln)
     {
         if(Material_IsDrawable(mat) && !Surface_IsSkyMasked(&pln->surface))
         {
-            /// @todo We should not need to prepare to determine this.
             MaterialSnapshot const &ms =
                 App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec());
 
-            return ms.glowStrength();
+            float glowStrength = ms.glowStrength();
+            if(glowFactor > .0001f)
+                glowStrength *= glowFactor; // Global scale factor.
+            return glowStrength;
         }
     }
 #else

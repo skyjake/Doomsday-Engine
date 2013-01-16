@@ -24,7 +24,7 @@
 #  include "de_defs.h"
 #endif
 
-#include "render/rend_main.h" // glowFactor, TODO: get rid of this
+#include "render/rend_main.h" // detailFactor, detailScale, TODO: get rid of this
 #ifdef __CLIENT__
 #  include "gl/gl_texmanager.h"
 #  include "gl/sys_opengl.h"
@@ -361,9 +361,6 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         stored.glowStrength = LERP(lsCur->glowStrength, lsNext->glowStrength, l.inter);
     }
-
-    if(glowFactor > .0001f)
-        stored.glowStrength *= glowFactor; // Global scale factor.
 
     if(MC_MAPSURFACE == spec.context && prepTextures[MTU_REFLECTION])
     {

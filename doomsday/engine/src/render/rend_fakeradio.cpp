@@ -1316,10 +1316,7 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
 
     // Glowing surfaces or missing textures shouldn't have shadows.
     if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || Surface_IsSkyMasked(suf)) return;
-
-    MaterialSnapshot const &ms =
-        App_Materials()->prepare(*pln->PS_material, Rend_MapSurfaceMaterialSpec(), true);
-    if(ms.glowStrength() > 0) return;
+    if(Material_HasGlow(pln->PS_material)) return;
 
     // Determine the openness of the lineDef. If this edge is edgeOpen,
     // there won't be a shadow at all. Open neighbours cause some
