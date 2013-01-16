@@ -1,7 +1,6 @@
 /** @file materialvariant.cpp Logical Material Variant.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2011-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -31,7 +30,7 @@
 #include "gl/gl_texmanager.h" // GL_CompareTextureVariantSpecifications
 #include "render/r_main.h" // frameTimePos
 
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 
 namespace de {
 
@@ -42,7 +41,7 @@ bool MaterialVariantSpec::compare(MaterialVariantSpec const &other) const
     return 1 == GL_CompareTextureVariantSpecifications(primarySpec, other.primarySpec);
 }
 
-struct MaterialVariant::Instance
+struct Material::Variant::Instance
 {
     /// Superior material of which this is a derivative.
     material_t *material;
@@ -57,10 +56,10 @@ struct MaterialVariant::Instance
     int snapshotPrepareFrame;
 
     /// Layer animation states.
-    MaterialVariant::LayerState layers[MaterialVariant::max_layers];
+    Material::Variant::LayerState layers[Material::Variant::max_layers];
 
     /// Decoration animation states.
-    MaterialVariant::DecorationState decorations[MaterialVariant::max_decorations];
+    Material::Variant::DecorationState decorations[Material::Variant::max_decorations];
 
     Instance(material_t &generalCase, MaterialVariantSpec const &_spec)
         : material(&generalCase),
@@ -73,29 +72,29 @@ struct MaterialVariant::Instance
     }
 };
 
-MaterialVariant::MaterialVariant(material_t &generalCase, MaterialVariantSpec const &spec)
+Material::Variant::Variant(material_t &generalCase, MaterialVariantSpec const &spec)
 {
     d = new Instance(generalCase, spec);
     // Initialize animation states.
     resetAnim();
 }
 
-MaterialVariant::~MaterialVariant()
+Material::Variant::~Variant()
 {
     delete d;
 }
 
-material_t &MaterialVariant::generalCase() const
+material_t &Material::Variant::generalCase() const
 {
     return *d->material;
 }
 
-MaterialVariantSpec const &MaterialVariant::spec() const
+MaterialVariantSpec const &Material::Variant::spec() const
 {
     return d->spec;
 }
 
-bool MaterialVariant::isPaused() const
+bool Material::Variant::isPaused() const
 {
 #ifdef __CLIENT__
     // Depending on the usage context, the animation should only progress
@@ -110,7 +109,7 @@ bool MaterialVariant::isPaused() const
 #endif
 }
 
-void MaterialVariant::ticker(timespan_t /*ticLength*/)
+void Material::Variant::ticker(timespan_t /*ticLength*/)
 {
     // Animation ceases once the material is no longer valid.
     if(!Material_IsValid(d->material)) return;
@@ -196,7 +195,7 @@ void MaterialVariant::ticker(timespan_t /*ticLength*/)
     }
 }
 
-void MaterialVariant::resetAnim()
+void Material::Variant::resetAnim()
 {
     if(!Material_IsValid(d->material)) return;
 
@@ -221,59 +220,59 @@ void MaterialVariant::resetAnim()
     }
 }
 
-MaterialVariant::LayerState const &MaterialVariant::layer(int layerNum)
+Material::Variant::LayerState const &Material::Variant::layer(int layerNum)
 {
     if(layerNum >= 0 && layerNum < Material_LayerCount(d->material))
         return d->layers[layerNum];
 
     /// @throw InvalidLayerError Invalid layer reference.
-    throw InvalidLayerError("MaterialVariant::layer", QString("Invalid material layer #%1").arg(layerNum));
+    throw InvalidLayerError("Material::Variant::layer", QString("Invalid material layer #%1").arg(layerNum));
 }
 
-MaterialVariant::DecorationState const &MaterialVariant::decoration(int decorNum)
+Material::Variant::DecorationState const &Material::Variant::decoration(int decorNum)
 {
     if(decorNum >= 0 && decorNum < Material_DecorationCount(d->material))
         return d->decorations[decorNum];
 
     /// @throw InvalidDecorationError Invalid decoration reference.
-    throw InvalidDecorationError("MaterialVariant::decoration", QString("Invalid material decoration #%1").arg(decorNum));
+    throw InvalidDecorationError("Material::Variant::decoration", QString("Invalid material decoration #%1").arg(decorNum));
 }
 
-MaterialSnapshot &MaterialVariant::attachSnapshot(MaterialSnapshot &newSnapshot)
+MaterialSnapshot &Material::Variant::attachSnapshot(MaterialSnapshot &newSnapshot)
 {
     if(d->snapshot)
     {
-        LOG_AS("MaterialVariant::AttachSnapshot");
-        LOG_WARNING("A snapshot is already attached to %p, it will be replaced.") << (void *) this;
+        LOG_AS("Material::Variant::AttachSnapshot");
+        LOG_WARNING("A snapshot is already attached to %p, it will be replaced.") << de::dintptr(this);
         M_Free(d->snapshot);
     }
     d->snapshot = &newSnapshot;
     return newSnapshot;
 }
 
-MaterialSnapshot *MaterialVariant::detachSnapshot()
+MaterialSnapshot *Material::Variant::detachSnapshot()
 {
     MaterialSnapshot *detachedSnapshot = d->snapshot;
     d->snapshot = 0;
     return detachedSnapshot;
 }
 
-MaterialSnapshot *MaterialVariant::snapshot() const
+MaterialSnapshot *Material::Variant::snapshot() const
 {
     return d->snapshot;
 }
 
-int MaterialVariant::snapshotPrepareFrame() const
+int Material::Variant::snapshotPrepareFrame() const
 {
     if(d->snapshot)
     {
         return d->snapshotPrepareFrame;
     }
     /// @throw MissingSnapshotError A snapshot is needed for this.
-    throw MissingSnapshotError("MaterialVariant::snapshotPrepareFrame", "Snapshot data is required");
+    throw MissingSnapshotError("Material::Variant::snapshotPrepareFrame", "Snapshot data is required");
 }
 
-void MaterialVariant::setSnapshotPrepareFrame(int frameNum)
+void Material::Variant::setSnapshotPrepareFrame(int frameNum)
 {
     if(d->snapshot)
     {

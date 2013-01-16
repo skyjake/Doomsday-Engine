@@ -30,7 +30,7 @@
 #include "gl/sys_opengl.h"
 #include <de/vector1.h>
 #include "resource/materialsnapshot.h"
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 #include "render/rendpoly.h"
 
 using namespace de;

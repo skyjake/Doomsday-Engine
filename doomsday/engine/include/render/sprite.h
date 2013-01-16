@@ -49,7 +49,7 @@ DENG_EXTERN_C void Rend_SpriteRegister(void);
 #ifdef __CLIENT__
 #ifdef __cplusplus
 
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 
 de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
 

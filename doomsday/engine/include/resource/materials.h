@@ -32,7 +32,7 @@
 #include "uri.hh"
 #include "resource/materialmanifest.h"
 #include "resource/materialscheme.h"
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 
 namespace de {
 
@@ -319,12 +319,12 @@ public:
      *
      * @see chooseVariant()
      *
-     * @param material  MaterialVariant to be prepared.
+     * @param material  Material variant to be prepared.
      * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
      *
      * @return  Snapshot for the chosen and prepared variant of Material.
      */
-    MaterialSnapshot const &prepare(MaterialVariant &material,
+    MaterialSnapshot const &prepare(Material::Variant &material,
                                     bool forceSnapshotUpdate = false);
 
     /**

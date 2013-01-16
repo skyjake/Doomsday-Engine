@@ -58,7 +58,7 @@ struct Store {
     rtexmapunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
 
     /// Decoration configuration.
-    MaterialSnapshot::Decoration decorations[MaterialVariant::max_decorations];
+    MaterialSnapshot::Decoration decorations[Material::Variant::max_decorations];
 #endif
 
     Store() { initialize(); }
@@ -103,11 +103,11 @@ struct Store {
 struct MaterialSnapshot::Instance
 {
     /// Variant Material used to derive this snapshot.
-    MaterialVariant *material;
+    Material::Variant *material;
 
     Store stored;
 
-    Instance(MaterialVariant &_material)
+    Instance(Material::Variant &_material)
         : material(&_material), stored()
     {}
 
@@ -118,7 +118,7 @@ struct MaterialSnapshot::Instance
 #endif
 };
 
-MaterialSnapshot::MaterialSnapshot(MaterialVariant &_material)
+MaterialSnapshot::MaterialSnapshot(Material::Variant &_material)
 {
     d = new Instance(_material);
 }
@@ -128,7 +128,7 @@ MaterialSnapshot::~MaterialSnapshot()
     delete d;
 }
 
-MaterialVariant &MaterialSnapshot::material() const
+Material::Variant &MaterialSnapshot::material() const
 {
     return *d->material;
 }
@@ -182,7 +182,7 @@ rtexmapunit_t const &MaterialSnapshot::unit(int index) const
 
 MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
 {
-    if(index < 0 || index >= MaterialVariant::max_decorations)
+    if(index < 0 || index >= Material::Variant::max_decorations)
     {
         /// @throw InvalidDecorationError Attempt to obtain a reference to a decoration with an invalid index.
         throw InvalidDecorationError("MaterialSnapshot::decoration", QString("Invalid decoration index %1").arg(index));
@@ -278,7 +278,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
      */
     for(int i = 0; i < layers.count(); ++i)
     {
-        MaterialVariant::LayerState const &l = material->layer(i);
+        Material::Variant::LayerState const &l  = material->layer(i);
         ded_material_layer_stage_t const *lsDef = layers[i]->stages()[l.stage];
 
         Texture *tex = findTextureForLayerStage(*lsDef);
@@ -348,7 +348,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(stored.dimensions.isEmpty()) return;
 
-    MaterialVariant::LayerState const &l     = material->layer(0);
+    Material::Variant::LayerState const &l   = material->layer(0);
     ded_material_layer_stage_t const *lsCur  = layers[0]->stages()[l.stage];
     ded_material_layer_stage_t const *lsNext = layers[0]->stages()[(l.stage + 1) % layers[0]->stageCount()];
 
@@ -440,7 +440,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     for(Material::Decorations::const_iterator it = decorations.begin();
         it != decorations.end(); ++it, ++idx)
     {
-        MaterialVariant::DecorationState const &l = material->decoration(idx);
+        Material::Variant::DecorationState const &l = material->decoration(idx);
         Material::Decoration const *lDef = *it;
         ded_decorlight_stage_t const *lsCur  = lDef->stages()[l.stage];
         ded_decorlight_stage_t const *lsNext = lDef->stages()[(l.stage + 1) % lDef->stageCount()];

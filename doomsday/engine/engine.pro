@@ -299,7 +299,7 @@ DENG_HEADERS += \
     include/resource/materials.h \
     include/resource/materialscheme.h \
     include/resource/materialsnapshot.h \
-    include/resource/materialvariant.h \
+    include/resource/materialvariantspec.h \
     include/resource/models.h \
     include/resource/patch.h \
     include/resource/patchname.h \

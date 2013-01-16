@@ -33,7 +33,7 @@
 #include "de_misc.h"
 
 #include "resource/materialsnapshot.h"
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 
 // $smoothplane: Maximum speed for a smoothed plane.
 #define MAX_SMOOTH_PLANE_MOVE   (64)

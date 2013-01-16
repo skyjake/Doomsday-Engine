@@ -40,7 +40,7 @@
 
 #include "network/net_main.h" // for gametic
 #include "resource/materialsnapshot.h"
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
 

@@ -559,12 +559,12 @@ Material::Variants const &Material_Variants(material_t const *mat)
     return mat->variants;
 }
 
-MaterialVariant *Material_ChooseVariant(material_t *mat, MaterialVariantSpec const &spec,
-                                        bool canCreate)
+Material::Variant *Material_ChooseVariant(material_t *mat, MaterialVariantSpec const &spec,
+                                          bool canCreate)
 {
     DENG_ASSERT(mat);
 
-    MaterialVariant *variant = 0;
+    Material::Variant *variant = 0;
     DENG2_FOR_EACH_CONST(Material::Variants, i, mat->variants)
     {
         MaterialVariantSpec const &cand = (*i)->spec();
@@ -580,7 +580,7 @@ MaterialVariant *Material_ChooseVariant(material_t *mat, MaterialVariantSpec con
     {
         if(!canCreate) return 0;
 
-        variant = new MaterialVariant(*mat, spec);
+        variant = new Material::Variant(*mat, spec);
         mat->variants.push_back(variant);
     }
 

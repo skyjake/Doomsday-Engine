@@ -39,7 +39,7 @@
 #endif
 
 #ifdef __cplusplus
-#  include "resource/materialvariant.h"
+#  include "resource/materialvariantspec.h"
 #  include "resource/materialsnapshot.h"
 #  include "resource/patch.h"
 #  include "resource/texturemanifest.h"

@@ -30,7 +30,7 @@
 #include <de/vector1.h>
 #include "def_main.h"
 #include "m_profiler.h"
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 
 #include "render/rend_decor.h"
 

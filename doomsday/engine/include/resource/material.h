@@ -53,6 +53,7 @@ typedef struct material_s material_t;
 #ifdef __cplusplus
 
 #include <QList>
+#include <de/Error>
 #include <de/Vector>
 #include "uri.hh"
 
@@ -60,7 +61,7 @@ namespace de {
 
 class MaterialAnim;
 class MaterialManifest;
-class MaterialVariant;
+class MaterialSnapshot;
 struct MaterialVariantSpec;
 
 /**
@@ -70,8 +71,161 @@ struct MaterialVariantSpec;
 class Material
 {
 public:
+    /**
+     * Context-specialized variant. Encapsulates all context variant values
+     * and logics pertaining to a specialized version of the @em superior
+     * Material instance.
+     *
+     * Variant instances are usually only created by the superior material
+     * when asked to prepare for render (@ref Material_ChooseVariant()) using
+     * a context specialization specification which it cannot fulfill/match.
+     *
+     * @see MaterialVariantSpec
+     */
+    class Variant
+    {
+    public:
+        /// Maximum number of layers a material supports.
+        static int const max_layers = DED_MAX_MATERIAL_LAYERS;
+
+        /// Current state of a material layer.
+        struct LayerState
+        {
+            /// Animation stage else @c -1 => layer not in use.
+            int stage;
+
+            /// Remaining (sharp) tics in the current stage.
+            short tics;
+
+            /// Intermark from the current stage to the next [0..1].
+            float inter;
+        };
+
+        /// Maximum number of (light) decorations a material supports.
+        static int const max_decorations = DED_MAX_MATERIAL_DECORATIONS;
+
+        /// Current state of a material (light) decoration.
+        struct DecorationState
+        {
+            /// Animation stage else @c -1 => decoration not in use.
+            int stage;
+
+            /// Remaining (sharp) tics in the current stage.
+            short tics;
+
+            /// Intermark from the current stage to the next [0..1].
+            float inter;
+        };
+
+    public:
+        /// The requested layer does not exist. @ingroup errors
+        DENG2_ERROR(InvalidLayerError);
+
+        /// The requested decoration does not exist. @ingroup errors
+        DENG2_ERROR(InvalidDecorationError);
+
+        /// Required snapshot data is missing. @ingroup errors
+        DENG2_ERROR(MissingSnapshotError);
+
+    public:
+        Variant(material_t &generalCase, MaterialVariantSpec const &spec);
+        ~Variant();
+
+        /**
+         * Retrieve the general case for this variant. Allows for a variant
+         * reference to be used in place of a material (implicit indirection).
+         *
+         * @see generalCase()
+         */
+        inline operator material_t &() const {
+            return generalCase();
+        }
+
+        /// @return  Superior material from which the variant was derived.
+        material_t &generalCase() const;
+
+        /// @return  Material variant specification for the variant.
+        MaterialVariantSpec const &spec() const;
+
+        /**
+         * Returns @c true if animation of the variant is currently paused
+         * (e.g., the variant is for use with an in-game render context and
+         * the client has paused the game).
+         */
+        bool isPaused() const;
+
+        /**
+         * Process a system tick event. If not currently paused and the material
+         * is valid; layer stages are animated and state property values are
+         * updated accordingly.
+         *
+         * @param ticLength  Length of the tick in seconds.
+         *
+         * @see isPaused()
+         */
+        void ticker(timespan_t ticLength);
+
+        /**
+         * Reset the staged animation point for this Material.
+         */
+        void resetAnim();
+
+        /**
+         * Returns the current state of @a layerNum for the variant.
+         */
+        LayerState const &layer(int layerNum);
+
+        /**
+         * Returns the current state of @a decorNum for the variant.
+         */
+        DecorationState const &decoration(int decorNum);
+
+        /**
+         * Attach new MaterialSnapshot data to the variant. If an existing
+         * snapshot is already present it will be replaced. Ownership of
+         * @a materialSnapshot is given to the variant.
+         *
+         * @return  Same as @a materialSnapshot for caller convenience.
+         *
+         * @see detachSnapshot(), snapshot()
+         */
+        MaterialSnapshot &attachSnapshot(MaterialSnapshot &snapshot);
+
+        /**
+         * Detach the MaterialSnapshot data from the variant, relinquishing
+         * ownership to the caller.
+         *
+         * @see attachSnapshot(), detachSnapshot()
+         */
+        MaterialSnapshot *detachSnapshot();
+
+        /**
+         * Returns the MaterialSnapshot data from the variant or otherwise @c 0.
+         * Ownership is unaffected.
+         *
+         * @see attachSnapshot(), detachSnapshot()
+         */
+        MaterialSnapshot *snapshot() const;
+
+        /**
+         * Returns the frame number when the variant's associated snapshot was last
+         * prepared/updated.
+         */
+        int snapshotPrepareFrame() const;
+
+        /**
+         * Change the frame number when the variant's snapshot was last prepared/updated.
+         * @param frameNum  Frame number to mark the snapshot with.
+         */
+        void setSnapshotPrepareFrame(int frameNum);
+
+    private:
+        struct Instance;
+        Instance *d;
+    };
+
     /// A list of variant instances.
-    typedef QList<MaterialVariant *> Variants;
+    typedef QList<Variant *> Variants;
 
     /**
      * Each material consitutes at least one layer. Layers are arranged in a
@@ -218,7 +372,7 @@ int Material_DecorationCount(material_t const *mat);
 void Material_Ticker(material_t *mat, timespan_t time);
 
 /**
- * Destroys all derived MaterialVariants linked with this Material.
+ * Destroys all derived material variants for the material.
  */
 void Material_ClearVariants(material_t *mat);
 
@@ -439,7 +593,7 @@ de::Material::Decorations const &Material_Decorations(material_t const *mat);
  *
  * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
  */
-de::MaterialVariant *Material_ChooseVariant(material_t *mat,
+de::Material::Variant *Material_ChooseVariant(material_t *mat,
     de::MaterialVariantSpec const &spec, bool canCreate = false);
 
 /**

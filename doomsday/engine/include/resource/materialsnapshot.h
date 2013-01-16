@@ -35,10 +35,10 @@ enum {
 #include <de/Error>
 #include <de/Vector>
 #include "render/rendpoly.h"
+#include "resource/material.h"
 
 namespace de {
 
-class MaterialVariant;
 class TextureVariant;
 
 /**
@@ -77,14 +77,14 @@ public:
      * Construct a new material snapshot instance.
      * @param material  Material to capture to produce the snapshot.
      */
-    MaterialSnapshot(MaterialVariant &material);
+    MaterialSnapshot(Material::Variant &material);
 
     ~MaterialSnapshot();
 
     /**
      * Returns the material variant of the material snapshot.
      */
-    MaterialVariant &material() const;
+    Material::Variant &material() const;
 
     /**
      * Returns the dimensions in the world coordinate space for the material snapshot.

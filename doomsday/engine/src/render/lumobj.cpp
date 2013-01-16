@@ -34,7 +34,7 @@
 
 #include "gl/sys_opengl.h"
 #include "resource/materialsnapshot.h"
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
 

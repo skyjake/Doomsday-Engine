@@ -26,7 +26,7 @@
 #include <de/Log>
 #include <de/String>
 
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 #include "resource/materials.h"
 
 using namespace de;

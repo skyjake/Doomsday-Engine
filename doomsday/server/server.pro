@@ -242,7 +242,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/materials.h \
     $$SRC/include/resource/materialscheme.h \
     $$SRC/include/resource/materialsnapshot.h \
-    $$SRC/include/resource/materialvariant.h \
+    $$SRC/include/resource/materialvariantspec.h \
     $$SRC/include/resource/patch.h \
     $$SRC/include/resource/patchname.h \
     $$SRC/include/resource/pcx.h \

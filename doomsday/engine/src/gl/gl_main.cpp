@@ -39,7 +39,7 @@
 #include "gl/texturecontent.h"
 #include "resource/colorpalettes.h"
 #include "resource/materialsnapshot.h"
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 #include "resource/texturevariant.h"
 #include "ui/displaymode.h"
 #include "api_render.h"

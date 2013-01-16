@@ -649,7 +649,7 @@ void Materials::ticker(timespan_t time)
     }
 }
 
-MaterialSnapshot const &Materials::prepare(MaterialVariant &variant,
+MaterialSnapshot const &Materials::prepare(Material::Variant &variant,
     bool updateSnapshot)
 {
     // Acquire the snapshot we are interested in.
@@ -738,7 +738,7 @@ void Materials::resetAllMaterialAnimations()
     }
 }
 
-static void printVariantInfo(MaterialVariant &variant, int variantIdx)
+static void printVariantInfo(Material::Variant &variant, int variantIdx)
 {
     Con_Printf("Variant #%i: Spec:%p\n", variantIdx, de::dintptr(&variant.spec()));
 
@@ -746,7 +746,7 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
     int const layerCount = Material_LayerCount(&variant.generalCase());
     for(int i = 0; i < layerCount; ++i)
     {
-        MaterialVariant::LayerState const &l = variant.layer(i);
+        Material::Variant::LayerState const &l = variant.layer(i);
         Con_Printf("  #%i: Stage:%i Tics:%i\n", i, l.stage, int(l.tics));
     }
 
@@ -754,7 +754,7 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
     int const decorationCount = Material_DecorationCount(&variant.generalCase());
     for(int i = 0; i < decorationCount; ++i)
     {
-        MaterialVariant::DecorationState const &l = variant.decoration(i);
+        Material::Variant::DecorationState const &l = variant.decoration(i);
         Con_Printf("  #%i: Stage:%i Tics:%i\n", i, l.stage, int(l.tics));
     }
 }

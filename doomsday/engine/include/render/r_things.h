@@ -28,8 +28,6 @@
 #include "resource/materials.h"
 #include "rend_model.h"
 
-struct materialvariant_s;
-
 /**
  * Sprites are patches with a special naming convention so they can be
  * recognized by R_InitSprites.  The sprite and frame specified by a
@@ -64,7 +62,7 @@ typedef enum {
 } visspritetype_t;
 
 typedef struct rendmaskedwallparams_s {
-    struct materialvariant_s *material;
+    void *material; /// Material::Variant
     blendmode_t blendMode; ///< Blendmode to be used when drawing
                                /// (two sided mid textures only)
     struct wall_vertex_s {
@@ -92,7 +90,7 @@ typedef struct rendspriteparams_s {
     blendmode_t blendMode;
 
     // Material:
-    struct materialvariant_s *material;
+    void *material; /// Material::Variant
     boolean matFlip[2]; // [S, T] Flip along the specified axis.
 
     // Lighting/color:

@@ -35,7 +35,7 @@
 
 #include "network/net_main.h"
 #include "resource/materialsnapshot.h"
-#include "resource/materialvariant.h"
+#include "resource/materialvariantspec.h"
 #include "resource/texturevariant.h"
 #include "map/blockmapvisual.h"
 #include "render/sprite.h"
@@ -486,7 +486,7 @@ static inline MaterialVariantSpec const &mapSurfaceMaterialSpec(int wrapS, int w
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
 void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
-    coord_t wallLength, MaterialVariant *material, float const texOffset[2],
+    coord_t wallLength, Material::Variant *material, float const texOffset[2],
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
     vissprite_t *vis = R_NewVisSprite();
