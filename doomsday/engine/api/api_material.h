@@ -23,16 +23,13 @@
 
 #include "api_base.h"
 #include "api_uri.h"
+#include "api_map.h"
 
 /**
  * @defgroup material Materials
  * @ingroup resource
  */
 ///@{
-
-#if !defined __DOOMSDAY__ && !defined DENG_INTERNAL_DATA_ACCESS
-typedef struct material_s { int type; } material_t;
-#endif
 
 DENG_API_TYPEDEF(Material)
 {

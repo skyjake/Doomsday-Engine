@@ -44,13 +44,13 @@
 #include "dd_types.h"
 #include "def_share.h"
 #include "api_wad.h"
+#include "api_thinker.h"
+#include "api_map.h"
 #include "api_gl.h"
 #include "api_busy.h"
-#include "api_thinker.h"
 #include "api_event.h"
 #include "api_player.h"
 #include "api_infine.h"
-#include "api_map.h"
 
 #ifdef __cplusplus
 extern "C" {

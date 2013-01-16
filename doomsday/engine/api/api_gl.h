@@ -25,7 +25,6 @@
 
 #include <de/rect.h>
 #include "dd_share.h"
-#include "api_map.h" // material_t
 
 #ifdef __cplusplus
 extern "C" {
