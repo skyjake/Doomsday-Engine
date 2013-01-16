@@ -131,6 +131,7 @@ static void objectsThink(fi_object_collection_t *c)
     }
 }
 
+#ifdef __CLIENT__
 static void objectsDraw(fi_object_collection_t *c, fi_obtype_e type,
     float const worldOrigin[3])
 {
@@ -141,6 +142,7 @@ static void objectsDraw(fi_object_collection_t *c, fi_obtype_e type,
         obj->drawer(obj, worldOrigin);
     }
 }
+#endif
 
 static uint objectsToIndex(fi_object_collection_t *c, fi_object_t *obj)
 {
@@ -501,6 +503,7 @@ void FI_DeleteObject(fi_object_t *obj)
     }
 }
 
+#ifdef __CLIENT__
 static void useColor(animator_t const *color, int components)
 {
     if(components == 3)
@@ -516,7 +519,6 @@ static void useColor(animator_t const *color, int components)
 static void drawPageBackground(fi_page_t *p, float x, float y, float width, float height,
     float light, float alpha)
 {
-#ifdef __CLIENT__
     vec3f_t topColor, bottomColor;
     float topAlpha, bottomAlpha;
 
@@ -552,8 +554,8 @@ static void drawPageBackground(fi_page_t *p, float x, float y, float width, floa
 
     GL_SetNoTexture();
     glEnable(GL_BLEND);
-#endif
 }
+#endif // __CLIENT__
 
 void FIPage_Drawer(fi_page_t *p)
 {
@@ -911,13 +913,7 @@ void FIData_PicThink(fi_object_t *obj)
     }
 }
 
-/**
- * Vertex layout:
- *
- * 0 - 1
- * | / |
- * 2 - 3
- */
+#ifdef __CLIENT__
 static size_t buildGeometry(float const /*dimensions*/[3], boolean flipTextureS,
     float const rgba[4], float const rgba2[4], rvertex_t **verts,
     ColorRawf **colors, rtexcoord_t **coords)
@@ -925,6 +921,10 @@ static size_t buildGeometry(float const /*dimensions*/[3], boolean flipTextureS,
     static rvertex_t rvertices[4];
     static ColorRawf rcolors[4];
     static rtexcoord_t rcoords[4];
+
+    // 0 - 1
+    // | / |  Vertex layout
+    // 2 - 3
 
     V3f_Set(rvertices[0].pos, 0, 0, 0);
     V3f_Set(rvertices[1].pos, 1, 0, 0);
@@ -964,7 +964,6 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     float /*const*/ scale[3], float const rgba[4], float const rgba2[4], float angle,
     float const worldOffset[3])
 {
-#ifdef __CLIENT__
     vec3f_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
     vec2f_t texScale = { 1, 1 };
     vec2f_t rotateCenter = { .5f, .5f };
@@ -1168,11 +1167,12 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-#endif
 }
+#endif // __CLIENT__
 
 void FIData_PicDraw(fi_object_t *obj, const float offset[3])
 {
+#ifdef __CLIENT__
     fidata_pic_t *p = (fidata_pic_t *)obj;
     if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicDraw: Not a FI_PIC.");
 
@@ -1189,6 +1189,9 @@ void FIData_PicDraw(fi_object_t *obj, const float offset[3])
         V4f_Set(rgba2, p->otherColor[CR].value, p->otherColor[CG].value, p->otherColor[CB].value, p->otherColor[CA].value);
 
     drawPicFrame(p, p->curFrame, origin, scale, rgba, (p->numFrames==0? rgba2 : rgba), p->angle.value, offset);
+#else
+    DENG_UNUSED(obj); DENG_UNUSED(offset);
+#endif
 }
 
 uint FIData_PicAppendFrame(fi_object_t *obj, fi_pic_type_t type, int tics, void *texRef, short sound,

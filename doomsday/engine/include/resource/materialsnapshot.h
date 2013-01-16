@@ -34,9 +34,12 @@ enum {
 #include <QSize>
 #include <de/Error>
 #include <de/Vector>
-#include "render/rendpoly.h"
 #include "resource/material.h"
 #include "resource/texture.h"
+
+#ifdef __CLIENT__
+#  include "render/rendpoly.h"
+#endif
 
 namespace de {
 

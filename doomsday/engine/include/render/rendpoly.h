@@ -1,5 +1,5 @@
-/**
- * @file rendpoly.h RendPoly data buffers
+/** @file rendpoly.h RendPoly data buffers
+ * @ingroup render
  *
  * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -40,7 +40,7 @@ typedef struct rtexcoord_s {
 } rtexcoord_t;
 
 /**
- * Logical texture unit indices.
+ * Symbolic identifiers for (virtual) texture units.
  */
 typedef enum {
     RTU_PRIMARY = 0,
@@ -94,8 +94,6 @@ typedef struct rtexmapuint_s {
     /// Texture-space origin translation (unscaled).
     vec2f_t offset;
 } rtexmapunit_t;
-
-#ifdef __CLIENT__
 
 extern byte rendInfoRPolys;
 
@@ -199,8 +197,6 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
     struct walldivnode_s *leftDivFirst, uint leftDivCount,
     struct walldivnode_s *rightDivFirst, uint rightDivCount,
     float bL, float tL, float bR, float tR);
-
-#endif // __CLIENT__
 
 #ifdef __cplusplus
 } // extern "C"
