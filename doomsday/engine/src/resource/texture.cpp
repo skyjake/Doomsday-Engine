@@ -110,7 +110,7 @@ void Texture::clearVariants()
             LOG_AS("Texture::clearVariants")
             LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
                 << glName << d->manifest.composeUri() << (void *)this;
-            GL_PrintTextureVariantSpecification((*i)->spec());
+            GL_PrintTextureVariantSpecification(&(*i)->spec());
         }
 #endif
         delete *i;
@@ -136,7 +136,7 @@ void *Texture::userDataPointer() const
 
 uint Texture::variantCount() const
 {
-    return uint(d->variants.size());
+    return uint(d->variants.count());
 }
 
 Texture::Variant &Texture::addVariant(Texture::Variant &variant)
@@ -188,7 +188,35 @@ void Texture::setOrigin(QPoint const &newOrigin)
     d->origin = newOrigin;
 }
 
-Texture::Variants const &Texture::variantList() const
+Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
+    texturevariantspecification_t const &spec)
+{
+    DENG2_FOR_EACH_CONST(Variants, i, d->variants)
+    {
+        texturevariantspecification_t const &cand = (*i)->spec();
+        switch(method)
+        {
+        case MatchSpec:
+            if(&cand == &spec)
+            {
+                // This is the one we're looking for.
+                return *i;
+            }
+            break;
+
+        case FuzzyMatchSpec:
+            if(GL_CompareTextureVariantSpecifications(&cand, &spec))
+            {
+                // This will do fine.
+                return *i;
+            }
+            break;
+        }
+    }
+    return 0;
+}
+
+Texture::Variants const &Texture::variants() const
 {
     return d->variants;
 }

@@ -564,26 +564,20 @@ Material::Variant *Material_ChooseVariant(material_t *mat, MaterialVariantSpec c
 {
     DENG_ASSERT(mat);
 
-    Material::Variant *variant = 0;
     DENG2_FOR_EACH_CONST(Material::Variants, i, mat->variants)
     {
         MaterialVariantSpec const &cand = (*i)->spec();
         if(cand.compare(spec))
         {
             // This will do fine.
-            variant = *i;
-            break;
+            return *i;
         }
     }
 
-    if(!variant)
-    {
-        if(!canCreate) return 0;
+    if(!canCreate) return 0;
 
-        variant = new Material::Variant(*mat, spec);
-        mat->variants.push_back(variant);
-    }
-
+    Material::Variant *variant = new Material::Variant(*mat, spec);
+    mat->variants.push_back(variant);
     return variant;
 }
 

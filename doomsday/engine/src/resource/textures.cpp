@@ -426,7 +426,7 @@ static void printVariantInfo(Texture::Variant &variant)
                variant.isUploaded()? "yes":"no", s, t);
 
     Con_Printf("  Specification: ");
-    GL_PrintTextureVariantSpecification(variant.spec());
+    GL_PrintTextureVariantSpecification(&variant.spec());
 }
 
 static void printTextureInfo(Texture &tex)
@@ -444,7 +444,7 @@ static void printTextureInfo(Texture &tex)
         Con_Printf("Dimensions: %d x %d\n", tex.width(), tex.height());
 
     uint variantIdx = 0;
-    DENG2_FOR_EACH_CONST(Texture::Variants, i, tex.variantList())
+    DENG2_FOR_EACH_CONST(Texture::Variants, i, tex.variants())
     {
         Texture::Variant &variant = **i;
 

@@ -35,6 +35,11 @@ Texture::Variant::Variant(Texture &generalCase,
       varSpec(&spec)
 {}
 
+texturevariantspecification_t &Texture::Variant::spec() const
+{
+    return *varSpec;
+}
+
 void Texture::Variant::setSource(TexSource newSource)
 {
     texSource = newSource;

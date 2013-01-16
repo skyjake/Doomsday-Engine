@@ -228,13 +228,13 @@ static inline int logicalAnisoLevelForVariantSpec(variantspecification_t const *
     return spec->anisoFilter < 0? texAniso : spec->anisoFilter;
 }
 
-static texturevariantspecification_t *unlinkVariantSpecification(texturevariantspecification_t *spec)
+static void unlinkVariantSpecification(texturevariantspecification_t &spec)
 {
     variantspecificationlist_t **listHead;
-    DENG_ASSERT(initedOk && spec);
+    DENG_ASSERT(initedOk);
 
     // Select list head according to variant specification type.
-    switch(spec->type)
+    switch(spec.type)
     {
     case TST_GENERAL:   listHead = &variantSpecs; break;
     case TST_DETAIL: {
@@ -243,14 +243,14 @@ static texturevariantspecification_t *unlinkVariantSpecification(texturevariants
         break; }
 
     default:
-        Con_Error("unlinkVariantSpecification: Invalid spec type %i.", spec->type);
+        Con_Error("unlinkVariantSpecification: Invalid spec type %i.", spec.type);
         exit(1); // Unreachable.
     }
 
     if(*listHead)
     {
         texturevariantspecificationlist_node_t *node = 0;
-        if((*listHead)->spec == spec)
+        if((*listHead)->spec == &spec)
         {
             node = (*listHead);
             *listHead = (*listHead)->next;
@@ -259,7 +259,7 @@ static texturevariantspecification_t *unlinkVariantSpecification(texturevariants
         {
             // Find the previous node.
             texturevariantspecificationlist_node_t *prevNode = (*listHead);
-            while(prevNode->next && prevNode->next->spec != spec)
+            while(prevNode->next && prevNode->next->spec != &spec)
             {
                 prevNode = prevNode->next;
             }
@@ -271,44 +271,41 @@ static texturevariantspecification_t *unlinkVariantSpecification(texturevariants
         }
         M_Free(node);
     }
-
-    return spec;
 }
 
-static void destroyVariantSpecification(texturevariantspecification_t *spec)
+static void destroyVariantSpecification(texturevariantspecification_t &spec)
 {
-    DENG_ASSERT(spec);
     unlinkVariantSpecification(spec);
-    if(spec->type == TST_GENERAL && (TS_GENERAL(spec)->flags & TSF_HAS_COLORPALETTE_XLAT))
+    if(spec.type == TST_GENERAL && (TS_GENERAL(spec)->flags & TSF_HAS_COLORPALETTE_XLAT))
         M_Free(TS_GENERAL(spec)->translated);
-    M_Free(spec);
+    M_Free(&spec);
 }
 
 static texturevariantspecification_t *copyVariantSpecification(
-    texturevariantspecification_t const *tpl)
+    texturevariantspecification_t const &tpl)
 {
     texturevariantspecification_t *spec = (texturevariantspecification_t*) M_Malloc(sizeof(*spec));
     if(!spec) Con_Error("Textures::copyVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecification.", (unsigned long) sizeof(*spec));
 
-    memcpy(spec, tpl, sizeof(texturevariantspecification_t));
+    memcpy(spec, &tpl, sizeof(texturevariantspecification_t));
     if(TS_GENERAL(tpl)->flags & TSF_HAS_COLORPALETTE_XLAT)
     {
         colorpalettetranslationspecification_t *cpt = (colorpalettetranslationspecification_t *) M_Malloc(sizeof(*cpt));
         if(!cpt) Con_Error("Textures::copyVariantSpecification: Failed on allocation of %lu bytes for new ColorPaletteTranslationSpecification.", (unsigned long) sizeof(*cpt));
 
         memcpy(cpt, TS_GENERAL(tpl)->translated, sizeof(colorpalettetranslationspecification_t));
-        TS_GENERAL(spec)->translated = cpt;
+        TS_GENERAL(*spec)->translated = cpt;
     }
     return spec;
 }
 
 static texturevariantspecification_t *copyDetailVariantSpecification(
-    texturevariantspecification_t const *tpl)
+    texturevariantspecification_t const &tpl)
 {
     texturevariantspecification_t *spec = (texturevariantspecification_t *) M_Malloc(sizeof(*spec));
     if(!spec) Con_Error("Textures::copyDetailVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecification.", (unsigned long) sizeof(*spec));
 
-    memcpy(spec, tpl, sizeof(texturevariantspecification_t));
+    memcpy(spec, &tpl, sizeof(texturevariantspecification_t));
     return spec;
 }
 
@@ -421,16 +418,16 @@ static int hashDetailVariantSpecification(detailvariantspecification_t const *sp
     return (spec->contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
 }
 
-static texturevariantspecification_t *linkVariantSpecification(
-    texturevariantspecificationtype_t type, texturevariantspecification_t *spec)
+static texturevariantspecification_t &linkVariantSpecification(
+    texturevariantspecificationtype_t type, texturevariantspecification_t &spec)
 {
     texturevariantspecificationlist_node_t *node;
-    DENG_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && spec);
+    DENG_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type));
 
     node = (texturevariantspecificationlist_node_t *) M_Malloc(sizeof(*node));
     if(!node) Con_Error("Textures::linkVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecificationListNode.", (unsigned long) sizeof(*node));
 
-    node->spec = spec;
+    node->spec = &spec;
     switch(type)
     {
     case TST_GENERAL:
@@ -447,11 +444,11 @@ static texturevariantspecification_t *linkVariantSpecification(
 }
 
 static texturevariantspecification_t *findVariantSpecification(
-    texturevariantspecificationtype_t type, texturevariantspecification_t const *tpl,
+    texturevariantspecificationtype_t type, texturevariantspecification_t const &tpl,
     bool canCreate)
 {
     texturevariantspecificationlist_node_t *node;
-    DENG_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && tpl);
+    DENG_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type));
 
     // Select list head according to variant specification type.
     switch(type)
@@ -470,7 +467,7 @@ static texturevariantspecification_t *findVariantSpecification(
     // Do we already have a concrete version of the template specification?
     for(; node; node = node->next)
     {
-        if(GL_CompareTextureVariantSpecifications(node->spec, tpl))
+        if(GL_CompareTextureVariantSpecifications(node->spec, &tpl))
             return node->spec;
     }
 
@@ -478,8 +475,8 @@ static texturevariantspecification_t *findVariantSpecification(
     if(canCreate)
     switch(type)
     {
-    case TST_GENERAL:   return linkVariantSpecification(type, copyVariantSpecification(tpl));
-    case TST_DETAIL:    return linkVariantSpecification(type, copyDetailVariantSpecification(tpl));
+    case TST_GENERAL:   return &linkVariantSpecification(type, *copyVariantSpecification(tpl));
+    case TST_DETAIL:    return &linkVariantSpecification(type, *copyDetailVariantSpecification(tpl));
     }
 
     return NULL;
@@ -503,12 +500,12 @@ static texturevariantspecification_t *getVariantSpecificationForContext(
         haveCpt = true;
     }
 
-    applyVariantSpecification(TS_GENERAL(&tpl), tc, flags, border, haveCpt? &cptTpl : NULL,
+    applyVariantSpecification(TS_GENERAL(tpl), tc, flags, border, haveCpt? &cptTpl : NULL,
         wrapS, wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection,
         noStretch, toAlpha);
 
     // Retrieve a concrete version of the rationalized specification.
-    return findVariantSpecification(tpl.type, &tpl, true);
+    return findVariantSpecification(tpl.type, tpl, true);
 }
 
 static texturevariantspecification_t *getDetailVariantSpecificationForContext(
@@ -518,8 +515,8 @@ static texturevariantspecification_t *getDetailVariantSpecificationForContext(
     DENG_ASSERT(initedOk);
 
     tpl.type = TST_DETAIL;
-    applyDetailVariantSpecification(TS_DETAIL(&tpl), contrast);
-    return findVariantSpecification(tpl.type, &tpl, true);
+    applyDetailVariantSpecification(TS_DETAIL(tpl), contrast);
+    return findVariantSpecification(tpl.type, tpl, true);
 }
 
 static void emptyVariantSpecificationList(variantspecificationlist_t *list)
@@ -530,7 +527,7 @@ static void emptyVariantSpecificationList(variantspecificationlist_t *list)
     while(node)
     {
         texturevariantspecificationlist_node_t *next = node->next;
-        destroyVariantSpecification(node->spec);
+        destroyVariantSpecification(*node->spec);
         node = next;
     }
 }
@@ -538,10 +535,10 @@ static void emptyVariantSpecificationList(variantspecificationlist_t *list)
 static int findTextureUsingVariantSpecificationWorker(de::Texture &tex, void *parameters)
 {
     texturevariantspecification_t *spec = (texturevariantspecification_t *)parameters;
-    de::Texture::Variants variants = tex.variantList();
+    de::Texture::Variants variants = tex.variants();
     DENG2_FOR_EACH_CONST(de::Texture::Variants, i, variants)
     {
-        if((*i)->spec() == spec)
+        if(&(*i)->spec() == spec)
         {
             return 1; // Found one; stop.
         }
@@ -558,7 +555,7 @@ static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t *li
         texturevariantspecificationlist_node_t *next = node->next;
         if(!App_Textures()->iterate(findTextureUsingVariantSpecificationWorker, (void *)node->spec))
         {
-            destroyVariantSpecification(node->spec);
+            destroyVariantSpecification(*node->spec);
             ++numPruned;
         }
         node = next;
@@ -606,46 +603,10 @@ static uploadcontentmethod_t chooseContentUploadMethod(texturecontent_t const *c
     return METHOD_DEFERRED;
 }
 
-typedef enum {
-    METHOD_MATCH = 0,
-    METHOD_FUZZY
-} choosevariantmethod_t;
-
-static de::Texture::Variant *chooseVariant(choosevariantmethod_t method, de::Texture &tex,
-    texturevariantspecification_t const *spec)
-{
-    DENG_ASSERT(initedOk && spec);
-    DENG2_FOR_EACH_CONST(de::Texture::Variants, i, tex.variantList())
-    {
-        de::Texture::Variant *variant = *i;
-        texturevariantspecification_t const *cand = variant->spec();
-
-        switch(method)
-        {
-        case METHOD_MATCH:
-            if(cand == spec)
-            {
-                // This is the one we're looking for.
-                return variant;
-            }
-            break;
-
-        case METHOD_FUZZY:
-            if(GL_CompareTextureVariantSpecifications(cand, spec))
-            {
-                // This will do fine.
-                return variant;
-            }
-            break;
-        }
-    }
-    return 0;
-}
-
 static int releaseVariantGLTexture(de::Texture::Variant *variant, void *parameters = 0)
 {
     texturevariantspecification_t *spec = (texturevariantspecification_t *)parameters;
-    if(!spec || spec == variant->spec())
+    if(!spec || spec == &variant->spec())
     {
         if(variant->isUploaded())
         {
@@ -706,7 +667,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     variantspecification_t const *spec;
     TexSource source = TEXS_NONE;
 
-    spec = TS_GENERAL(&baseSpec);
+    spec = TS_GENERAL(baseSpec);
     if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Attempt to load an external replacement for this composite texture?
@@ -1179,8 +1140,8 @@ int GL_CompareTextureVariantSpecifications(texturevariantspecification_t const *
     if(a->type != b->type) return 0;
     switch(a->type)
     {
-    case TST_GENERAL: return compareVariantSpecifications(TS_GENERAL(a), TS_GENERAL(b));
-    case TST_DETAIL:  return compareDetailVariantSpecifications(TS_DETAIL(a), TS_DETAIL(b));
+    case TST_GENERAL: return compareVariantSpecifications(TS_GENERAL(*a), TS_GENERAL(*b));
+    case TST_DETAIL:  return compareDetailVariantSpecifications(TS_DETAIL(*a), TS_DETAIL(*b));
     }
     Con_Error("GL_CompareTextureVariantSpecifications: Invalid type %i.", (int) a->type);
     exit(1); // Unreachable.
@@ -1229,12 +1190,12 @@ void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *ba
     switch(baseSpec->type)
     {
     case TST_DETAIL: {
-        detailvariantspecification_t const *spec = TS_DETAIL(baseSpec);
+        detailvariantspecification_t const *spec = TS_DETAIL(*baseSpec);
         Con_Printf(" contrast:%i%%\n", (int)(.5f + spec->contrast / 255.f * 100));
         break; }
 
     case TST_GENERAL: {
-        variantspecification_t const *spec = TS_GENERAL(baseSpec);
+        variantspecification_t const *spec = TS_GENERAL(*baseSpec);
         texturevariantusagecontext_t tc = spec->context;
         int glMinFilterNameIdx, glMagFilterNameIdx;
         DENG_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
@@ -2888,12 +2849,12 @@ void GL_SetAllTexturesMinFilter(int /*minFilter*/)
 }
 
 static void performImageAnalyses(de::Texture &tex, image_t const *image,
-    texturevariantspecification_t const *spec, bool forceUpdate)
+    texturevariantspecification_t const &spec, bool forceUpdate)
 {
-    DENG_ASSERT(spec && image);
+    DENG_ASSERT(image);
 
     // Do we need color palette info?
-    if(TST_GENERAL == spec->type && image->paletteId != 0)
+    if(TST_GENERAL == spec.type && image->paletteId != 0)
     {
         colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(tex.analysisDataPointer(TA_COLORPALETTE));
         bool firstInit = (!cp);
@@ -2910,7 +2871,7 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
     }
 
     // Calculate a point light source for Dynlight and/or Halo?
-    if(TST_GENERAL == spec->type && TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context)
+    if(TST_GENERAL == spec.type && TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context)
     {
         pointlight_analysis_t *pl = reinterpret_cast<pointlight_analysis_t*>(tex.analysisDataPointer(TA_SPRITE_AUTOLIGHT));
         bool firstInit = (!pl);
@@ -2929,7 +2890,7 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
     }
 
     // Average alpha?
-    if(spec->type == TST_GENERAL &&
+    if(spec.type == TST_GENERAL &&
        (TS_GENERAL(spec)->context == TC_SPRITE_DIFFUSE ||
         TS_GENERAL(spec)->context == TC_UI))
     {
@@ -2968,7 +2929,7 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
     }
 
     // Average color for sky ambient color?
-    if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
+    if(TST_GENERAL == spec.type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
         averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t*>(tex.analysisDataPointer(TA_COLOR));
         bool firstInit = (!ac);
@@ -2996,7 +2957,7 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
     }
 
     // Amplified average color for plane glow?
-    if(TST_GENERAL == spec->type && TC_MAPSURFACE_DIFFUSE == TS_GENERAL(spec)->context)
+    if(TST_GENERAL == spec.type && TC_MAPSURFACE_DIFFUSE == TS_GENERAL(spec)->context)
     {
         averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t*>(tex.analysisDataPointer(TA_COLOR_AMPLIFIED));
         bool firstInit = (!ac);
@@ -3025,7 +2986,7 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
     }
 
     // Average top line color for sky sphere fadeout?
-    if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
+    if(TST_GENERAL == spec.type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
         averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t*>(tex.analysisDataPointer(TA_LINE_TOP_COLOR));
         bool firstInit = (!ac);
@@ -3053,7 +3014,7 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
     }
 
     // Average bottom line color for sky sphere fadeout?
-    if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
+    if(TST_GENERAL == spec.type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
         averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t*>(tex.analysisDataPointer(TA_LINE_BOTTOM_COLOR));
         bool firstInit = (!ac);
@@ -3083,14 +3044,14 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
 }
 
 static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
-    texturevariantspecification_t *spec, de::Texture::Variant **variant)
+    texturevariantspecification_t &spec, de::Texture::Variant **variant)
 {
-    DENG_ASSERT(initedOk && spec);
+    DENG_ASSERT(initedOk);
     LOG_AS("tryLoadImageAndPrepareVariant");
 
     // Load the source image data.
     image_t image;
-    TexSource source = loadSourceImage(tex, *spec, image);
+    TexSource source = loadSourceImage(tex, spec, image);
 
     if(source == TEXS_NONE)
     {
@@ -3115,7 +3076,7 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     if(!*variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
-        *variant = new de::Texture::Variant(tex, *spec, source);
+        *variant = new de::Texture::Variant(tex, spec, source);
         (*variant)->setGLName(newGLName);
         tex.addVariant(**variant);
     }
@@ -3129,12 +3090,12 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
 
     // (Re)Prepare the variant according to specification.
     uploadcontentmethod_t uploadMethod;
-    switch(spec->type)
+    switch(spec.type)
     {
     case TST_GENERAL: uploadMethod = prepareVariantFromImage(*variant, &image); break;
     case TST_DETAIL:  uploadMethod = prepareDetailVariantFromImage(*variant, &image); break;
     default:
-        Con_Error("tryLoadImageAndPrepareVariant: Invalid spec type %i.", spec->type);
+        Con_Error("tryLoadImageAndPrepareVariant: Invalid spec type %i.", spec.type);
         exit(1); // Unreachable.
     }
 
@@ -3149,8 +3110,8 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     VERBOSE2(
         Con_Printf("  Content: ");
         Image_PrintMetadata(&image);
-        Con_Printf("  Specification [%p]: ", spec);
-        GL_PrintTextureVariantSpecification(spec);
+        Con_Printf("  Specification [%p]: ", de::dintptr(&spec));
+        GL_PrintTextureVariantSpecification(&spec);
         )
 #endif
 
@@ -3158,10 +3119,10 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
 }
 
 static de::Texture::Variant *findVariantForSpec(de::Texture &tex,
-    texturevariantspecification_t const *spec)
+    texturevariantspecification_t const &spec)
 {
     // Look for an exact match.
-    de::Texture::Variant *variant = chooseVariant(METHOD_MATCH, tex, spec);
+    de::Texture::Variant *variant = tex.chooseVariant(Texture::MatchSpec, spec);
 #if _DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
     // As such, the following should NOT return a valid variant iff the rest of
@@ -3171,7 +3132,7 @@ static de::Texture::Variant *findVariantForSpec(de::Texture &tex,
     if(!variant)
     {
         /// No luck, try fuzzy.
-        variant = chooseVariant(METHOD_FUZZY, tex, spec);
+        variant = tex.chooseVariant(Texture::FuzzyMatchSpec, spec);
         DENG_ASSERT(NULL == variant);
     }
 #endif
@@ -3181,11 +3142,11 @@ static de::Texture::Variant *findVariantForSpec(de::Texture &tex,
 texturevariant_s *GL_PrepareTextureVariant2(texture_s *_tex, texturevariantspecification_t *spec,
     preparetextureresult_t *outcome)
 {
-    DENG_ASSERT(_tex);
+    DENG_ASSERT(_tex && spec);
     de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
 
     // Have we already prepared something suitable?
-    de::Texture::Variant *variant = findVariantForSpec(tex, spec);
+    de::Texture::Variant *variant = findVariantForSpec(tex, *spec);
 
     if(variant && variant->isPrepared())
     {
@@ -3194,7 +3155,7 @@ texturevariant_s *GL_PrepareTextureVariant2(texture_s *_tex, texturevariantspeci
     }
 
     // Suffer the cache miss and attempt to (re)prepare a variant.
-    bool loadedOk = tryLoadImageAndPrepareVariant(tex, spec, &variant);
+    bool loadedOk = tryLoadImageAndPrepareVariant(tex, *spec, &variant);
     if(outcome)
     {
         if(loadedOk)
@@ -3245,12 +3206,12 @@ void GL_BindTexture(texturevariant_s *_tex)
     de::Texture::Variant *tex = reinterpret_cast<de::Texture::Variant *>(_tex);
     if(tex)
     {
-        spec = tex->spec();
+        spec = &tex->spec();
         // Ensure we've prepared this.
         if(!tex->isPrepared())
         {
             de::Texture::Variant **hndl = &tex;
-            if(!tryLoadImageAndPrepareVariant(tex->generalCase(), spec, hndl))
+            if(!tryLoadImageAndPrepareVariant(tex->generalCase(), *spec, hndl))
             {
                 tex = 0;
             }
@@ -3273,14 +3234,14 @@ void GL_BindTexture(texturevariant_s *_tex)
     // Apply dynamic adjustments to the GL texture state according to our spec.
     if(spec->type == TST_GENERAL)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec)->wrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(spec)->wrapT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(*spec)->wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(*spec)->wrapT);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glMagFilterForVariantSpec(TS_GENERAL(spec)));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glMagFilterForVariantSpec(TS_GENERAL(*spec)));
         if(GL_state.features.texFilterAniso)
         {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                            GL_GetTexAnisoMul(logicalAnisoLevelForVariantSpec(TS_GENERAL(spec))));
+                            GL_GetTexAnisoMul(logicalAnisoLevelForVariantSpec(TS_GENERAL(*spec))));
         }
     }
 }
@@ -3288,7 +3249,7 @@ void GL_BindTexture(texturevariant_s *_tex)
 void GL_ReleaseGLTexturesByTexture(texture_s *tex)
 {
     if(!tex) return;
-    de::Texture::Variants const &variants = reinterpret_cast<de::Texture *>(tex)->variantList();
+    de::Texture::Variants const &variants = reinterpret_cast<de::Texture *>(tex)->variants();
     DENG2_FOR_EACH_CONST(de::Texture::Variants, i, variants)
     {
         releaseVariantGLTexture(*i);
@@ -3309,7 +3270,7 @@ void GL_ReleaseTexturesByScheme(char const *schemeName)
 void GL_ReleaseVariantTexturesBySpec(texture_s *tex, texturevariantspecification_t *spec)
 {
     if(!tex) return;
-    de::Texture::Variants const &variants = reinterpret_cast<de::Texture *>(tex)->variantList();
+    de::Texture::Variants const &variants = reinterpret_cast<de::Texture *>(tex)->variants();
     DENG2_FOR_EACH_CONST(de::Texture::Variants, i, variants)
     {
         if(releaseVariantGLTexture(*i, spec)) break;

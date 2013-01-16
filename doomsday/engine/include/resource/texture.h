@@ -51,8 +51,8 @@ typedef enum {
 
 #ifdef __cplusplus
 
-#include <list>
 #include <QFlag>
+#include <QList>
 #include <QPoint>
 #include <QSize>
 #include <de/Error>
@@ -120,6 +120,9 @@ public:
         /// @return  Superior texture of which the variant is a derivative.
         Texture &generalCase() const { return texture; }
 
+        /// @return  Texture variant specification for the variant.
+        texturevariantspecification_t &spec() const;
+
         /// @return  Source of the variant.
         TexSource source() const { return texSource; }
 
@@ -128,9 +131,6 @@ public:
          * @param newSource  New TextureSource.
          */
         void setSource(TexSource newSource);
-
-        /// @return  TextureVariantSpec used to derive the variant.
-        texturevariantspecification_t *spec() const { return varSpec; }
 
         bool isMasked() const { return !!(flags & Masked); }
 
@@ -169,7 +169,24 @@ public:
         texturevariantspecification_t *varSpec;
     };
 
-    typedef std::list<Variant *> Variants;
+    /// A list of variants.
+    typedef QList<Variant *> Variants;
+
+    /**
+     * Logics for selecting a texture variant instance from the candidates.
+     *
+     * @see chooseVariant()
+     */
+    enum ChooseVariantMethod
+    {
+        /// The variant specification of the candidate must match exactly.
+        MatchSpec,
+
+        /// The variant specification of the candidate must match however
+        /// certain properties may vary (e.g., quality arguments) if it means
+        /// we can avoid creating a new variant.
+        FuzzyMatchSpec
+    };
 
 public:
     /**
@@ -293,9 +310,21 @@ public:
     void setOrigin(QPoint const &newOrigin);
 
     /**
+     * Choose/create a variant of the texture which fulfills @a spec.
+     *
+     * @param method    Method of selection.
+     * @param spec      Texture specialization specification.
+     * @param canCreate @c true= Create a new variant if no suitable one exists.
+     *
+     * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
+     */
+    Variant *chooseVariant(ChooseVariantMethod method,
+                           texturevariantspecification_t const &spec);
+
+    /**
      * Provides access to the list of variant textures for efficent traversals.
      */
-    Variants const &variantList() const;
+    Variants const &variants() const;
 
 private:
     struct Instance;

@@ -1035,7 +1035,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
-                texturevariantspecification_t const *texSpec = ms.texture(MTU_PRIMARY).spec();
+                texturevariantspecification_t const &texSpec = ms.texture(MTU_PRIMARY).spec();
 
                 /// @todo Utilize *all* properties of the Material.
                 V3f_Set(dimensions,
