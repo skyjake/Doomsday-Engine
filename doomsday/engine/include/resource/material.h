@@ -128,6 +128,11 @@ public:
         DENG2_ERROR(MissingSnapshotError);
 
     public:
+        /**
+         * @param generalCase   Material from which this variant is derived.
+         * @param spec          Specification used to derive this variant.
+         *                      Ownership is NOT given to the Variant.
+         */
         Variant(material_t &generalCase, MaterialVariantSpec const &spec);
         ~Variant();
 

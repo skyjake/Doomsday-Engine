@@ -25,7 +25,7 @@
 
 namespace de {
 
-TextureVariant::TextureVariant(Texture &generalCase,
+Texture::Variant::Variant(Texture &generalCase,
     texturevariantspecification_t &spec, TexSource source)
     : texture(generalCase),
       texSource(source),
@@ -36,39 +36,39 @@ TextureVariant::TextureVariant(Texture &generalCase,
       varSpec(&spec)
 {}
 
-void TextureVariant::setSource(TexSource newSource)
+void Texture::Variant::setSource(TexSource newSource)
 {
     texSource = newSource;
 }
 
-void TextureVariant::flagMasked(bool yes)
+void Texture::Variant::flagMasked(bool yes)
 {
     if(yes) flags |= Masked; else flags &= ~Masked;
 }
 
-void TextureVariant::flagUploaded(bool yes)
+void Texture::Variant::flagUploaded(bool yes)
 {
     if(yes) flags |= Uploaded; else flags &= ~Uploaded;
 }
 
-bool TextureVariant::isPrepared() const
+bool Texture::Variant::isPrepared() const
 {
     return isUploaded() && 0 != glTexName;
 }
 
-void TextureVariant::coords(float *outS, float *outT) const
+void Texture::Variant::coords(float *outS, float *outT) const
 {
     if(outS) *outS = s;
     if(outT) *outT = t;
 }
 
-void TextureVariant::setCoords(float newS, float newT)
+void Texture::Variant::setCoords(float newS, float newT)
 {
     s = newS;
     t = newT;
 }
 
-void TextureVariant::setGLName(uint newGLName)
+void Texture::Variant::setGLName(uint newGLName)
 {
     glTexName = newGLName;
 }

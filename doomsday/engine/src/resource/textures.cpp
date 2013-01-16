@@ -415,7 +415,7 @@ int Textures::iterateDeclared(String nameOfScheme,
     return 0;
 }
 
-static void printVariantInfo(TextureVariant &variant)
+static void printVariantInfo(Texture::Variant &variant)
 {
     float s, t;
     variant.coords(&s, &t);
@@ -446,7 +446,7 @@ static void printTextureInfo(Texture &tex)
     uint variantIdx = 0;
     DENG2_FOR_EACH_CONST(Texture::Variants, i, tex.variantList())
     {
-        TextureVariant &variant = **i;
+        Texture::Variant &variant = **i;
 
         Con_Printf("Variant #%i: GLName:%u\n", variantIdx, variant.glName());
         printVariantInfo(variant);

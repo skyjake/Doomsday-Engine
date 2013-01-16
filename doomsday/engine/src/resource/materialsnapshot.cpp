@@ -51,7 +51,7 @@ struct Store {
     Vector3f reflectionMinColor;
 
     /// Textures used on each texture unit.
-    TextureVariant *textures[NUM_MATERIAL_TEXTURE_UNITS];
+    Texture::Variant *textures[NUM_MATERIAL_TEXTURE_UNITS];
 
 #ifdef __CLIENT__
     /// Texture unit configuration.
@@ -84,7 +84,7 @@ struct Store {
     }
 
 #ifdef __CLIENT__
-    void writeTexUnit(byte unit, TextureVariant *texture, blendmode_t blendMode,
+    void writeTexUnit(byte unit, Texture::Variant *texture, blendmode_t blendMode,
                       QSizeF scale, QPointF offset, float opacity)
     {
         DENG2_ASSERT(unit < NUM_MATERIAL_TEXTURE_UNITS);
@@ -159,7 +159,7 @@ bool MaterialSnapshot::hasTexture(int index) const
     return d->stored.textures[index] != 0;
 }
 
-TextureVariant &MaterialSnapshot::texture(int index) const
+Texture::Variant &MaterialSnapshot::texture(int index) const
 {
     if(!hasTexture(index))
     {
@@ -263,7 +263,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     Material::Layers const &layers = Material_Layers(mat);
     MaterialVariantSpec const &spec = material->spec();
 
-    TextureVariant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS];
+    Texture::Variant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS];
     std::memset(prepTextures, 0, sizeof prepTextures);
 
     // Reinitialize the stored values.
@@ -286,7 +286,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
         // Pick the instance matching the specified context.
         preparetextureresult_t result;
-        prepTextures[i] = reinterpret_cast<TextureVariant *>(
+        prepTextures[i] = reinterpret_cast<Texture::Variant *>(
             GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(tex),
                                       spec.primarySpec, &result));
 
@@ -310,7 +310,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         float const contrast = Material_DetailStrength(mat) * detailFactor;
         texturevariantspecification_t *texSpec = GL_DetailTextureVariantSpecificationForContext(contrast);
 
-        prepTextures[MTU_DETAIL] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, texSpec));
+        prepTextures[MTU_DETAIL] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
     }
 
     // Do we need to prepare a shiny texture (and possibly a mask)?
@@ -322,7 +322,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
                 false, false, false, false);
 
-        prepTextures[MTU_REFLECTION] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, texSpec));
+        prepTextures[MTU_REFLECTION] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
 
     }
 
@@ -335,7 +335,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                 -1, -1, -1, true, false, false, false);
 
-        prepTextures[MTU_REFLECTION_MASK] = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, texSpec));
+        prepTextures[MTU_REFLECTION_MASK] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
     }
 #endif // __CLIENT__
 
@@ -371,7 +371,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 
     // Setup the primary texture unit.
-    if(TextureVariant *tex = prepTextures[MTU_PRIMARY])
+    if(Texture::Variant *tex = prepTextures[MTU_PRIMARY])
     {
         stored.textures[MTU_PRIMARY] = tex;
 #ifdef __CLIENT__
@@ -394,7 +394,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 
     // Setup the detail texture unit.
-    if(TextureVariant *tex = prepTextures[MTU_DETAIL])
+    if(Texture::Variant *tex = prepTextures[MTU_DETAIL])
     {
         stored.textures[MTU_DETAIL] = tex;
 #ifdef __CLIENT__
@@ -410,7 +410,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 
     // Setup the shiny texture units.
-    if(TextureVariant *tex = prepTextures[MTU_REFLECTION])
+    if(Texture::Variant *tex = prepTextures[MTU_REFLECTION])
     {
         stored.textures[MTU_REFLECTION] = tex;
 #ifdef __CLIENT__
@@ -422,7 +422,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 
     if(prepTextures[MTU_REFLECTION])
-    if(TextureVariant *tex = prepTextures[MTU_REFLECTION_MASK])
+    if(Texture::Variant *tex = prepTextures[MTU_REFLECTION_MASK])
     {
         stored.textures[MTU_REFLECTION_MASK] = tex;
 #ifdef __CLIENT__

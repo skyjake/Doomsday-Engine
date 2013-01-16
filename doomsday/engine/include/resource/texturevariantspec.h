@@ -1,9 +1,6 @@
-/**
- * @file texturevariantspecification.h
- * Logical texture. @ingroup resource
+/** @file texturevariantspec.h Texture Variant Specification.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2011-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_TEXTUREVARIANTSPECIFICATION_H
-#define LIBDENG_RESOURCE_TEXTUREVARIANTSPECIFICATION_H
+#ifndef LIBDENG_RESOURCE_TEXTUREVARIANTSPEC_H
+#define LIBDENG_RESOURCE_TEXTUREVARIANTSPEC_H
 
 #include "dd_types.h"
 
@@ -161,4 +158,4 @@ typedef struct texturevariantspecification_s {
     } data; // type-specific data.
 } texturevariantspecification_t;
 
-#endif /* LIBDENG_RESOURCE_TEXTUREVARIANTSPECIFICATION_H */
+#endif /* LIBDENG_RESOURCE_TEXTUREVARIANTSPEC_H */

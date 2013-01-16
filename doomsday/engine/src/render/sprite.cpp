@@ -541,7 +541,7 @@ static void selectTexUnits(int count)
 void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 {
     GLenum normalTarget, dynTarget;
-    TextureVariant *tex = 0;
+    Texture::Variant *tex = 0;
     boolean withDyn = false;
     int normal = 0, dyn = 1;
 

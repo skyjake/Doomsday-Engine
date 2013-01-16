@@ -140,7 +140,7 @@ uint Texture::variantCount() const
     return uint(d->variants.size());
 }
 
-TextureVariant &Texture::addVariant(TextureVariant &variant)
+Texture::Variant &Texture::addVariant(Texture::Variant &variant)
 {
     d->variants.push_back(&variant);
     return *d->variants.back();

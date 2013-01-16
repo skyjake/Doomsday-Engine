@@ -866,7 +866,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     float normYaw, normPitch, shinyAng, shinyPnt;
     float inter = parm->inter;
     blendmode_t blending;
-    TextureVariant *skinTexture = NULL, *shinyTexture = NULL;
+    Texture::Variant *skinTexture = NULL, *shinyTexture = NULL;
     int zSign = (parm->mirror? -1 : 1);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -1068,7 +1068,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         struct texture_s *tex = mf->sub[number].shinySkin;
         if(tex)
         {
-            shinyTexture = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, Rend_ModelShinyTextureSpec()));
+            shinyTexture = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, Rend_ModelShinyTextureSpec()));
         }
         else
         {
@@ -1155,7 +1155,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         skinTexture = 0;
         if(tex)
         {
-            skinTexture = reinterpret_cast<TextureVariant *>(GL_PrepareTextureVariant(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp)));
+            skinTexture = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp)));
         }
     }
 

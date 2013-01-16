@@ -250,10 +250,9 @@ DENG_HEADERS += \
     $$SRC/include/resource/rawtexture.h \
     $$SRC/include/resource/texture.h \
     $$SRC/include/resource/texturemanifest.h \
-    $$SRC/include/resource/texturescheme.h \
     $$SRC/include/resource/textures.h \
-    $$SRC/include/resource/texturevariant.h \
-    $$SRC/include/resource/texturevariantspecification.h \
+    $$SRC/include/resource/texturescheme.h \
+    $$SRC/include/resource/texturevariantspec.h \
     $$SRC/include/resource/tga.h \
     $$SRC/include/resource/wad.h \
     $$SRC/include/resource/zip.h \

@@ -21,7 +21,7 @@
 #ifndef LIBDENG_RESOURCE_TEXTURE_H
 #define LIBDENG_RESOURCE_TEXTURE_H
 
-#include "texturevariant.h"
+#include "texturevariantspecification.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,6 +55,7 @@ typedef enum {
 #include <QFlag>
 #include <QPoint>
 #include <QSize>
+#include <de/Error>
 
 namespace de {
 
@@ -86,7 +87,89 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-    typedef std::list<TextureVariant *> Variants;
+    /**
+     * Context-specialized variant. Encapsulates all context variant values
+     * and logics pertaining to a specialized version of the @em superior
+     * Texture instance.
+     *
+     * @see texturevariantspecification_t
+     */
+    class Variant
+    {
+    private:
+        enum Flag
+        {
+            /// Texture contains alpha.
+            Masked = 0x1,
+
+            /// Texture has been uploaded to GL.
+            Uploaded = 0x2
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
+    public:
+        /**
+         * @param generalCase   Texture from which this variant is derived.
+         * @param spec          Specification used to derive this variant.
+         *                      Ownership is NOT given to the Variant.
+         * @param source        Source of this variant.
+         */
+        Variant(Texture &generalCase, texturevariantspecification_t &spec,
+                TexSource source = TEXS_NONE);
+
+        /// @return  Superior texture of which the variant is a derivative.
+        Texture &generalCase() const { return texture; }
+
+        /// @return  Source of the variant.
+        TexSource source() const { return texSource; }
+
+        /**
+         * Change the source of the variant.
+         * @param newSource  New TextureSource.
+         */
+        void setSource(TexSource newSource);
+
+        /// @return  TextureVariantSpec used to derive the variant.
+        texturevariantspecification_t *spec() const { return varSpec; }
+
+        bool isMasked() const { return !!(flags & Masked); }
+
+        void flagMasked(bool yes);
+
+        bool isUploaded() const { return !!(flags & Uploaded); }
+
+        void flagUploaded(bool yes);
+
+        bool isPrepared() const;
+
+        void coords(float *s, float *t) const;
+
+        void setCoords(float s, float t);
+
+        uint glName() const { return glTexName; }
+
+        void setGLName(uint glName);
+
+    private:
+        /// Superior Texture of which this is a derivative.
+        Texture &texture;
+
+        /// Source of this texture.
+        TexSource texSource;
+
+        Flags flags;
+
+        /// Name of the associated GL texture object.
+        uint glTexName;
+
+        /// Prepared coordinates for the bottom right of the texture minus border.
+        float s, t;
+
+        /// Specification used to derive this variant.
+        texturevariantspecification_t *varSpec;
+    };
+
+    typedef std::list<Variant *> Variants;
 
 public:
     /**
@@ -131,8 +214,10 @@ public:
      * Texture takes ownership of the variant.
      *
      * @param variant  Variant instance to add to the resource list.
+     *
+     * @todo Should be private -ds
      */
-    TextureVariant &addVariant(TextureVariant &variant);
+    Variant &addVariant(Variant &variant);
 
     /// @return  Number of variants for the texture.
     uint variantCount() const;

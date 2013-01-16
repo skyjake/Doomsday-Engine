@@ -308,10 +308,9 @@ DENG_HEADERS += \
     include/resource/rawtexture.h \
     include/resource/texture.h \
     include/resource/texturemanifest.h \
-    include/resource/texturescheme.h \
     include/resource/textures.h \
-    include/resource/texturevariant.h \
-    include/resource/texturevariantspecification.h \
+    include/resource/texturescheme.h \
+    include/resource/texturevariantspec.h \
     include/resource/tga.h \
     include/resource/wad.h \
     include/resource/zip.h \

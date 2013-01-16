@@ -611,13 +611,13 @@ typedef enum {
     METHOD_FUZZY
 } choosevariantmethod_t;
 
-static de::TextureVariant *chooseVariant(choosevariantmethod_t method, de::Texture &tex,
+static de::Texture::Variant *chooseVariant(choosevariantmethod_t method, de::Texture &tex,
     texturevariantspecification_t const *spec)
 {
     DENG_ASSERT(initedOk && spec);
     DENG2_FOR_EACH_CONST(de::Texture::Variants, i, tex.variantList())
     {
-        de::TextureVariant *variant = *i;
+        de::Texture::Variant *variant = *i;
         texturevariantspecification_t const *cand = variant->spec();
 
         switch(method)
@@ -642,7 +642,7 @@ static de::TextureVariant *chooseVariant(choosevariantmethod_t method, de::Textu
     return 0;
 }
 
-static int releaseVariantGLTexture(de::TextureVariant *variant, void *parameters = 0)
+static int releaseVariantGLTexture(de::Texture::Variant *variant, void *parameters = 0)
 {
     texturevariantspecification_t *spec = (texturevariantspecification_t *)parameters;
     if(!spec || spec == variant->spec())
@@ -673,7 +673,7 @@ static void uploadContent(uploadcontentmethod_t uploadMethod, texturecontent_t c
 }
 
 static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploadMethod,
-    texturecontent_t const *content, de::TextureVariant *variant)
+    texturecontent_t const *content, de::Texture::Variant *variant)
 {
     DENG_ASSERT(content && variant);
     if(!novideo)
@@ -890,7 +890,7 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     return source;
 }
 
-static uploadcontentmethod_t prepareVariantFromImage(de::TextureVariant *tex, image_t *image)
+static uploadcontentmethod_t prepareVariantFromImage(de::Texture::Variant *tex, image_t *image)
 {
     DENG_ASSERT(image);
 
@@ -1076,7 +1076,7 @@ static uploadcontentmethod_t prepareVariantFromImage(de::TextureVariant *tex, im
     return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
 }
 
-static uploadcontentmethod_t prepareDetailVariantFromImage(de::TextureVariant *tex, image_t *image)
+static uploadcontentmethod_t prepareDetailVariantFromImage(de::Texture::Variant *tex, image_t *image)
 {
     DENG_ASSERT(image);
 
@@ -3083,7 +3083,7 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
 }
 
 static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
-    texturevariantspecification_t *spec, de::TextureVariant **variant)
+    texturevariantspecification_t *spec, de::Texture::Variant **variant)
 {
     DENG_ASSERT(initedOk && spec);
     LOG_AS("tryLoadImageAndPrepareVariant");
@@ -3115,7 +3115,7 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     if(!*variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
-        *variant = new de::TextureVariant(tex, *spec, source);
+        *variant = new de::Texture::Variant(tex, *spec, source);
         (*variant)->setGLName(newGLName);
         tex.addVariant(**variant);
     }
@@ -3157,11 +3157,11 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     return true;
 }
 
-static de::TextureVariant *findVariantForSpec(de::Texture &tex,
+static de::Texture::Variant *findVariantForSpec(de::Texture &tex,
     texturevariantspecification_t const *spec)
 {
     // Look for an exact match.
-    de::TextureVariant *variant = chooseVariant(METHOD_MATCH, tex, spec);
+    de::Texture::Variant *variant = chooseVariant(METHOD_MATCH, tex, spec);
 #if _DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
     // As such, the following should NOT return a valid variant iff the rest of
@@ -3185,7 +3185,7 @@ texturevariant_s *GL_PrepareTextureVariant2(texture_s *_tex, texturevariantspeci
     de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
 
     // Have we already prepared something suitable?
-    de::TextureVariant *variant = findVariantForSpec(tex, spec);
+    de::Texture::Variant *variant = findVariantForSpec(tex, spec);
 
     if(variant && variant->isPrepared())
     {
@@ -3226,7 +3226,7 @@ texturevariant_s *GL_PrepareTextureVariant(texture_s *tex, texturevariantspecifi
 DGLuint GL_PrepareTexture2(struct texture_s *tex, texturevariantspecification_t *spec,
     preparetextureresult_t *returnOutcome)
 {
-    de::TextureVariant const *variant = reinterpret_cast<TextureVariant const *>(GL_PrepareTextureVariant2(tex, spec, returnOutcome));
+    de::Texture::Variant const *variant = reinterpret_cast<Texture::Variant const *>(GL_PrepareTextureVariant2(tex, spec, returnOutcome));
     if(!variant) return 0;
     return variant->glName();
 }
@@ -3242,14 +3242,14 @@ void GL_BindTexture(texturevariant_s *_tex)
 
     if(BusyMode_InWorkerThread()) return;
 
-    de::TextureVariant *tex = reinterpret_cast<de::TextureVariant *>(_tex);
+    de::Texture::Variant *tex = reinterpret_cast<de::Texture::Variant *>(_tex);
     if(tex)
     {
         spec = tex->spec();
         // Ensure we've prepared this.
         if(!tex->isPrepared())
         {
-            de::TextureVariant **hndl = &tex;
+            de::Texture::Variant **hndl = &tex;
             if(!tryLoadImageAndPrepareVariant(tex->generalCase(), spec, hndl))
             {
                 tex = 0;
@@ -3319,7 +3319,7 @@ void GL_ReleaseVariantTexturesBySpec(texture_s *tex, texturevariantspecification
 void GL_ReleaseVariantTexture(texturevariant_s *tex)
 {
     if(!tex) return;
-    releaseVariantGLTexture(reinterpret_cast<de::TextureVariant *>(tex));
+    releaseVariantGLTexture(reinterpret_cast<de::Texture::Variant *>(tex));
 }
 
 static int releaseGLTexturesByColorPaletteWorker(de::Texture &tex, void *parameters)

@@ -273,7 +273,7 @@ void RL_Register()
 static inline boolean unitHasTexture(rtexmapunit_texture_t const *tu)
 {
     if(tu->flags & TUF_TEXTURE_IS_MANAGED)
-        return reinterpret_cast<de::TextureVariant *>(tu->variant)->glName() != 0;
+        return reinterpret_cast<de::Texture::Variant *>(tu->variant)->glName() != 0;
     return tu->gl.name != 0;
 }
 
@@ -282,7 +282,7 @@ static inline ushort unitHashForTexture(rtexmapunit_texture_t const *tu)
     DGLuint glName;
     if(tu->flags & TUF_TEXTURE_IS_MANAGED)
     {
-        glName = tu->variant? reinterpret_cast<de::TextureVariant *>(tu->variant)->glName() : 0;
+        glName = tu->variant? reinterpret_cast<de::Texture::Variant *>(tu->variant)->glName() : 0;
     }
     else
     {

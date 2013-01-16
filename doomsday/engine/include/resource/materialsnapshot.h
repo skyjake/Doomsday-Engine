@@ -36,10 +36,9 @@ enum {
 #include <de/Vector>
 #include "render/rendpoly.h"
 #include "resource/material.h"
+#include "resource/texture.h"
 
 namespace de {
-
-class TextureVariant;
 
 /**
  * @ingroup resource
@@ -117,7 +116,7 @@ public:
      * @param index  Index of the texture unit to lookup.
      * @return  The texture associated with the texture unit.
      */
-    TextureVariant &texture(int index) const;
+    Texture::Variant &texture(int index) const;
 
 #ifdef __CLIENT__
     /**

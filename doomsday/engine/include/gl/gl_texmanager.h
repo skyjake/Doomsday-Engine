@@ -236,7 +236,7 @@ texturevariantspecification_t *GL_DetailTextureVariantSpecificationForContext(
  */
 void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *spec);
 
-/// Result of a request to prepare a TextureVariant
+/// Result of a request to prepare a Texture::Variant
 typedef enum {
     PTR_NOTFOUND = 0,       /// Failed. No suitable variant could be found/prepared.
     PTR_FOUND,              /// Success. Reusing a cached resource.
@@ -266,7 +266,7 @@ DGLuint GL_PrepareTexture2(struct texture_s *tex, texturevariantspecification_t 
 DGLuint GL_PrepareTexture(struct texture_s *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
 
 /**
- * Same as GL_PrepareTexture(2) except for visibility of TextureVariant.
+ * Same as GL_PrepareTexture(2) except for visibility of Texture::Variant.
  */
 struct texturevariant_s *GL_PrepareTextureVariant2(struct texture_s *tex, texturevariantspecification_t *spec, preparetextureresult_t *returnOutcome);
 struct texturevariant_s *GL_PrepareTextureVariant(struct texture_s *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
@@ -276,7 +276,7 @@ struct texturevariant_s *GL_PrepareTextureVariant(struct texture_s *tex, texture
  * The bind process may result in modification of the GL texture state
  * according to the specification used to define this variant.
  *
- * @param tex  TextureVariant object which represents the GL texture to be bound.
+ * @param tex  Texture::Variant object which represents the GL texture to be bound.
  */
 void GL_BindTexture(struct texturevariant_s *tex);
 
