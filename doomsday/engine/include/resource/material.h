@@ -102,7 +102,7 @@ public:
     class Variant
     {
     public:
-        /// Current state of a material layer.
+        /// Current state of a material layer animation.
         struct LayerState
         {
             /// Animation stage else @c -1 => layer not in use.
@@ -115,7 +115,7 @@ public:
             float inter;
         };
 
-        /// Current state of a material (light) decoration.
+        /// Current state of a material (light) decoration animation.
         struct DecorationState
         {
             /// Animation stage else @c -1 => decoration not in use.
@@ -177,17 +177,20 @@ public:
         bool isPaused() const;
 
         /**
-         * Reset the staged animation point for this Material.
+         * Reset the staged animation point for the material. The animation
+         * states of all context variants will be rewound to the beginning.
          */
         void resetAnim();
 
         /**
-         * Returns the current state of @a layerNum for the variant.
+         * Returns the current state of the layer animation @a layerNum for
+         * the variant.
          */
         LayerState const &layer(int layerNum);
 
         /**
-         * Returns the current state of @a decorNum for the variant.
+         * Returns the current state of the (light) decoration animation
+         * @a decorNum for the variant.
          */
         DecorationState const &decoration(int decorNum);
 
@@ -211,7 +214,7 @@ public:
         de::MaterialSnapshot *detachSnapshot();
 
         /**
-         * Returns the MaterialSnapshot data from the variant or otherwise @c 0.
+         * Returns the MaterialSnapshot data from the variant; otherwise @c 0.
          * Ownership is unaffected.
          *
          * @see attachSnapshot(), detachSnapshot()
@@ -219,14 +222,20 @@ public:
         de::MaterialSnapshot *snapshot() const;
 
         /**
-         * Returns the frame number when the variant's associated snapshot was last
-         * prepared/updated.
+         * Returns the frame number when the variant's associated snapshot
+         * was last prepared/updated.
+         *
+         * @see setSnapshotPrepareFrame()
          */
         int snapshotPrepareFrame() const;
 
         /**
-         * Change the frame number when the variant's snapshot was last prepared/updated.
+         * Change the frame number when the variant's snapshot was last
+         * prepared/updated.
+         *
          * @param frameNum  Frame number to mark the snapshot with.
+         *
+         * @see snapshotPrepareFrame()
          */
         void setSnapshotPrepareFrame(int frameNum);
 
@@ -296,7 +305,8 @@ public:
          */
         Decoration();
 
-        Decoration(de::Vector2i const &_patternSkip, de::Vector2i const &_patternOffset);
+        Decoration(de::Vector2i const &_patternSkip,
+                   de::Vector2i const &_patternOffset);
 
         /**
          * Construct a new decoration from the specified definition.
@@ -313,12 +323,16 @@ public:
          * is repeated on a surface as many times as the material does. A skip
          * pattern allows sparser repeats on the horizontal and vertical axes
          * respectively.
+         *
+         * @see patternOffset()
          */
         de::Vector2i const &patternSkip() const;
 
         /**
          * Retrieve the pattern offset for the decoration. Used with pattern
          * skip to offset the origin of the pattern.
+         *
+         * @see patternSkip()
          */
         de::Vector2i const &patternOffset() const;
 
@@ -370,6 +384,8 @@ public:
     /**
      * Change the associated definition for the material.
      * @param def  New definition (can be @c 0).
+     *
+     * @see definition()
      */
     void setDefinition(struct ded_material_s *def);
 
@@ -400,7 +416,9 @@ public:
      */
     void setHeight(int height);
 
-    /// Returns the @ref materialFlags for the material.
+    /**
+     * Returns the @ref materialFlags for the material.
+     */
     short flags() const;
 
     /**
@@ -415,9 +433,10 @@ public:
      * from which it was produced) are destroyed as result of runtime file
      * unloading.
      *
-     * These 'orphaned' materials as the game may be holding on to pointers
-     * (which are considered eternal). Invalid materials are instead ignored
-     * until such time as the current game is reset or changed.
+     * These 'orphaned' materials cannot be immediately destroyed as the game
+     * may be holding on to pointers (which are considered eternal). Invalid
+     * materials are instead disabled and then ignored until such time as the
+     * current game is reset or changed.
      */
     bool isValid() const;
 
@@ -493,6 +512,8 @@ public:
      * Add a new (light) decoration to the material.
      *
      * @param decor     Decoration to add.
+     *
+     * @todo Mark existing variant snapshots as 'dirty'.
      */
     void addDecoration(Decoration &decor);
 

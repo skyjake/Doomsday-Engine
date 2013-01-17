@@ -47,7 +47,7 @@ typedef enum {
 #include <QSize>
 #include <de/Error>
 
-struct texturevariantspecification_t;
+#include "resource/texturevariantspec.h"
 
 namespace de {
 
