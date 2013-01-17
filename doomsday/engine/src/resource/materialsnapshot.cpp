@@ -25,7 +25,7 @@
 #endif
 
 #ifdef __CLIENT__
-#  include "render/rend_main.h" // detailFactor, detailScale
+#  include "render/rend_main.h" // detailFactor, detailScale, smoothTexAnim, etc...
 #  include "gl/gl_texmanager.h"
 #  include "gl/sys_opengl.h"
 #endif
@@ -264,7 +264,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     Material::Layers const &layers = Material_Layers(mat);
     MaterialVariantSpec const &spec = material->spec();
 
-    Texture::Variant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS];
+    Texture::Variant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS][2];
     std::memset(prepTextures, 0, sizeof prepTextures);
 
     // Reinitialize the stored values.
@@ -274,33 +274,46 @@ void MaterialSnapshot::Instance::takeSnapshot()
     /*
      * Ensure all resources needed to visualize this have been prepared.
      *
-     * If skymasked, we only need to update the primary tex unit (due to it
-     * being visible when skymask debug drawing is enabled).
+     * If skymasked, we only need to update the primary tex unit (due to
+     * it being visible when skymask debug drawing is enabled).
      */
     for(int i = 0; i < layers.count(); ++i)
     {
-        Material::Variant::LayerState const &l  = material->layer(i);
-        ded_material_layer_stage_t const *lsDef = layers[i]->stages()[l.stage];
+        Material::Variant::LayerState const &l   = material->layer(i);
 
-        Texture *tex = findTextureForLayerStage(*lsDef);
-        if(!tex) continue;
-
-        // Pick the instance matching the specified context.
-        preparetextureresult_t result;
-        prepTextures[i] = reinterpret_cast<Texture::Variant *>(
-            GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(tex),
-                                      spec.primarySpec, &result));
-
-        // Primary texture was (re)prepared?
-        if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
+        ded_material_layer_stage_t const *lsCur  = layers[i]->stages()[l.stage];
+        if(Texture *tex = findTextureForLayerStage(*lsCur))
         {
-            // Are we inheriting the logical dimensions from the texture?
-            if(0 == Material_Width(mat) && 0 == Material_Height(mat))
+            // Pick the instance matching the specified context.
+            preparetextureresult_t result;
+            prepTextures[i][0] = reinterpret_cast<Texture::Variant *>(
+                GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(tex),
+                                          spec.primarySpec, &result));
+
+            // Primary texture was (re)prepared?
+            if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
             {
-                Size2Raw newDimensions(tex->width(), tex->height());
-                Material_SetDimensions(mat, &newDimensions);
+                // Are we inheriting the logical dimensions from the texture?
+                if(0 == Material_Width(mat) && 0 == Material_Height(mat))
+                {
+                    Size2Raw newDimensions(tex->width(), tex->height());
+                    Material_SetDimensions(mat, &newDimensions);
+                }
+                updateMaterial(result);
             }
-            updateMaterial(result);
+        }
+
+        // Smooth Texture Animation?
+        if(!smoothTexAnim || layers[i]->stageCount() < 2) continue;
+
+        ded_material_layer_stage_t const *lsNext = layers[i]->stages()[(l.stage + 1) % layers[i]->stageCount()];
+        if(Texture *tex = findTextureForLayerStage(*lsNext))
+        {
+            // Pick the instance matching the specified context.
+            preparetextureresult_t result;
+            prepTextures[i][1] = reinterpret_cast<Texture::Variant *>(
+                GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(tex),
+                                          spec.primarySpec, &result));
         }
     }
 
@@ -311,7 +324,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         float const contrast = Material_DetailStrength(mat) * detailFactor;
         texturevariantspecification_t *texSpec = GL_DetailTextureVariantSpecificationForContext(contrast);
 
-        prepTextures[MTU_DETAIL] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
+        prepTextures[MTU_DETAIL][0] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
     }
 
     // Do we need to prepare a shiny texture (and possibly a mask)?
@@ -323,12 +336,12 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
                 false, false, false, false);
 
-        prepTextures[MTU_REFLECTION] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
+        prepTextures[MTU_REFLECTION][0] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
 
     }
 
     // We are only interested in a mask if we have a shiny texture.
-    if(prepTextures[MTU_REFLECTION])
+    if(prepTextures[MTU_REFLECTION][0])
     if(texture_s *tex = Material_ShinyMaskTexture(mat))
     {
         texturevariantspecification_t *texSpec =
@@ -336,7 +349,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                 -1, -1, -1, true, false, false, false);
 
-        prepTextures[MTU_REFLECTION_MASK] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
+        prepTextures[MTU_REFLECTION_MASK][0] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
     }
 #endif // __CLIENT__
 
@@ -344,7 +357,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     stored.dimensions.setHeight(Material_Height(mat));
 
 #ifdef __CLIENT__
-    stored.opaque = (prepTextures[MTU_PRIMARY] && !prepTextures[MTU_PRIMARY]->isMasked());
+    stored.opaque = (prepTextures[MTU_PRIMARY][0] && !prepTextures[MTU_PRIMARY][0]->isMasked());
 #endif
 
     if(stored.dimensions.isEmpty()) return;
@@ -363,13 +376,13 @@ void MaterialSnapshot::Instance::takeSnapshot()
         stored.glowStrength = LERP(lsCur->glowStrength, lsNext->glowStrength, l.inter);
     }
 
-    if(MC_MAPSURFACE == spec.context && prepTextures[MTU_REFLECTION])
+    if(MC_MAPSURFACE == spec.context && prepTextures[MTU_REFLECTION][0])
     {
         stored.reflectionMinColor = Vector3f(Material_ShinyMinColor(mat));
     }
 
     // Setup the primary texture unit.
-    if(Texture::Variant *tex = prepTextures[MTU_PRIMARY])
+    if(Texture::Variant *tex = prepTextures[MTU_PRIMARY][0])
     {
         stored.textures[MTU_PRIMARY] = tex;
 #ifdef __CLIENT__
@@ -391,8 +404,36 @@ void MaterialSnapshot::Instance::takeSnapshot()
 #endif
     }
 
+#ifdef __CLIENT__
+    // Setup the inter primary texture unit.
+    if(Texture::Variant *tex = prepTextures[MTU_PRIMARY][1])
+    {
+        // If fog is active, inter=0 is accepted as well. Otherwise
+        // flickering may occur if the rendering passes don't match for
+        // blended and unblended surfaces.
+        if(!(!usingFog && l.inter == 0))
+        {
+            QPointF offset;
+            if(l.inter == 0)
+            {
+                offset = QPointF(lsCur->texOrigin[0], lsCur->texOrigin[1]);
+            }
+            else // Interpolate.
+            {
+                offset.setX(LERP(lsCur->texOrigin[0], lsNext->texOrigin[0], l.inter));
+                offset.setY(LERP(lsCur->texOrigin[1], lsNext->texOrigin[1], l.inter));
+            }
+
+            stored.writeTexUnit(RTU_INTER, tex, BM_NORMAL,
+                                QSizeF(1.f / stored.dimensions.width(),
+                                       1.f / stored.dimensions.height()),
+                                offset, l.inter);
+        }
+    }
+#endif
+
     // Setup the detail texture unit.
-    if(Texture::Variant *tex = prepTextures[MTU_DETAIL])
+    if(Texture::Variant *tex = prepTextures[MTU_DETAIL][0])
     {
         stored.textures[MTU_DETAIL] = tex;
 #ifdef __CLIENT__
@@ -407,8 +448,29 @@ void MaterialSnapshot::Instance::takeSnapshot()
 #endif
     }
 
+/*#ifdef __CLIENT__
+    // Setup the inter detail texture unit.
+    if(Texture::Variant *tex = prepTextures[MTU_DETAIL][1])
+    {
+        // If fog is active, inter=0 is accepted as well. Otherwise
+        // flickering may occur if the rendering passes don't match for
+        // blended and unblended surfaces.
+        if(!(!usingFog && l.inter == 0))
+        {
+            float scaleFactor = Material_DetailScale(mat);
+            if(detailScale > .0001f)
+                scaleFactor *= detailScale; // Global scale factor.
+
+            stored.writeTexUnit(RTU_INTER_DETAIL, tex, BM_NORMAL,
+                                QSizeF(1.f / tex->generalCase().width()  * scaleFactor,
+                                       1.f / tex->generalCase().height() * scaleFactor),
+                                QPointF(0, 0), l.inter);
+        }
+    }
+#endif*/
+
     // Setup the shiny texture units.
-    if(Texture::Variant *tex = prepTextures[MTU_REFLECTION])
+    if(Texture::Variant *tex = prepTextures[MTU_REFLECTION][0])
     {
         stored.textures[MTU_REFLECTION] = tex;
 #ifdef __CLIENT__
@@ -419,8 +481,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     }
 
-    if(prepTextures[MTU_REFLECTION])
-    if(Texture::Variant *tex = prepTextures[MTU_REFLECTION_MASK])
+    if(prepTextures[MTU_REFLECTION][0])
+        if(Texture::Variant *tex = prepTextures[MTU_REFLECTION_MASK][0])
     {
         stored.textures[MTU_REFLECTION_MASK] = tex;
 #ifdef __CLIENT__
