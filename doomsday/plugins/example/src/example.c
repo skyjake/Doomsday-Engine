@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday.h"
+#include <doomsday.h>
 #include "version.h"
 
 /*
