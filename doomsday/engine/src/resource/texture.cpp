@@ -213,6 +213,17 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
             break;
         }
     }
+#if _DEBUG
+    // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
+    // As such, the following should NOT return a valid variant iff the rest of
+    // this subsystem has been implemented correctly.
+    //
+    // Presently this is used as a sanity check.
+    if(method == MatchSpec)
+    {
+        DENG_ASSERT(!chooseVariant(FuzzyMatchSpec, spec));
+    }
+#endif
     return 0;
 }
 

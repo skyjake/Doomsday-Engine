@@ -810,11 +810,9 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
     return source;
 }
 
-static uploadcontentmethod_t prepareVariantFromImage(de::Texture::Variant *tex, image_t *image)
+static uploadcontentmethod_t prepareVariantFromImage(Texture::Variant &tex, image_t &image)
 {
-    DENG_ASSERT(image);
-
-    variantspecification_t const *spec = TS_GENERAL(tex->spec());
+    variantspecification_t const *spec = TS_GENERAL(tex.spec());
     bool monochrome    = (spec->flags & TSF_MONOCHROME) != 0;
     bool noCompression = (spec->flags & TSF_NO_COMPRESSION) != 0;
     bool scaleSharp    = (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0;
@@ -827,90 +825,90 @@ static uploadcontentmethod_t prepareVariantFromImage(de::Texture::Variant *tex, 
 
     if(spec->toAlpha)
     {
-        if(0 != image->paletteId)
+        if(0 != image.paletteId)
         {
             // Paletted.
-            uint8_t* newPixels = GL_ConvertBuffer(image->pixels, image->size.width, image->size.height,
-                                                  ((image->flags & IMGF_IS_MASKED)? 2 : 1),
-                                                  R_ToColorPalette(image->paletteId), 3);
-            M_Free(image->pixels);
-            image->pixels = newPixels;
-            image->pixelSize = 3;
-            image->paletteId = 0;
-            image->flags &= ~IMGF_IS_MASKED;
+            uint8_t* newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
+                                                  ((image.flags & IMGF_IS_MASKED)? 2 : 1),
+                                                  R_ToColorPalette(image.paletteId), 3);
+            M_Free(image.pixels);
+            image.pixels = newPixels;
+            image.pixelSize = 3;
+            image.paletteId = 0;
+            image.flags &= ~IMGF_IS_MASKED;
         }
 
-        Image_ConvertToLuminance(image, false);
-        long total = image->size.width * image->size.height;
+        Image_ConvertToLuminance(&image, false);
+        long total = image.size.width * image.size.height;
         for(long i = 0; i < total; ++i)
         {
-            image->pixels[total + i] = image->pixels[i];
-            image->pixels[i] = 255;
+            image.pixels[total + i] = image.pixels[i];
+            image.pixels[i] = 255;
         }
-        image->pixelSize = 2;
+        image.pixelSize = 2;
     }
-    else if(0 != image->paletteId)
+    else if(0 != image.paletteId)
     {
-        if(fillOutlines && (image->flags & IMGF_IS_MASKED))
-            ColorOutlinesIdx(image->pixels, image->size.width, image->size.height);
+        if(fillOutlines && (image.flags & IMGF_IS_MASKED))
+            ColorOutlinesIdx(image.pixels, image.size.width, image.size.height);
 
         if(monochrome && !scaleSharp)
-            GL_DeSaturatePalettedImage(image->pixels, R_ToColorPalette(image->paletteId),
-                                       image->size.width, image->size.height);
+            GL_DeSaturatePalettedImage(image.pixels, R_ToColorPalette(image.paletteId),
+                                       image.size.width, image.size.height);
 
         if(scaleSharp)
         {
-            int scaleMethod = GL_ChooseSmartFilter(image->size.width, image->size.height, 0);
-            bool origMasked = (image->flags & IMGF_IS_MASKED) != 0;
-            colorpaletteid_t origPaletteId = image->paletteId;
+            int scaleMethod = GL_ChooseSmartFilter(image.size.width, image.size.height, 0);
+            bool origMasked = (image.flags & IMGF_IS_MASKED) != 0;
+            colorpaletteid_t origPaletteId = image.paletteId;
 
-            uint8_t* newPixels = GL_ConvertBuffer(image->pixels, image->size.width, image->size.height,
-                                                  ((image->flags & IMGF_IS_MASKED)? 2 : 1),
-                                                  R_ToColorPalette(image->paletteId), 4);
-            if(newPixels != image->pixels)
+            uint8_t* newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
+                                                  ((image.flags & IMGF_IS_MASKED)? 2 : 1),
+                                                  R_ToColorPalette(image.paletteId), 4);
+            if(newPixels != image.pixels)
             {
-                M_Free(image->pixels);
-                image->pixels = newPixels;
-                image->pixelSize = 4;
-                image->paletteId = 0;
-                image->flags &= ~IMGF_IS_MASKED;
+                M_Free(image.pixels);
+                image.pixels = newPixels;
+                image.pixelSize = 4;
+                image.paletteId = 0;
+                image.flags &= ~IMGF_IS_MASKED;
             }
 
             if(monochrome)
-                Desaturate(image->pixels, image->size.width, image->size.height, image->pixelSize);
+                Desaturate(image.pixels, image.size.width, image.size.height, image.pixelSize);
 
-            newPixels = GL_SmartFilter(scaleMethod, image->pixels, image->size.width, image->size.height,
-                                       0, &image->size.width, &image->size.height);
-            if(newPixels != image->pixels)
+            newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.size.width, image.size.height,
+                                       0, &image.size.width, &image.size.height);
+            if(newPixels != image.pixels)
             {
-                M_Free(image->pixels);
-                image->pixels = newPixels;
+                M_Free(image.pixels);
+                image.pixels = newPixels;
             }
 
-            EnhanceContrast(image->pixels, image->size.width, image->size.height, image->pixelSize);
-            //SharpenPixels(image->pixels, image->size.width, image->size.height, image->pixelSize);
-            //BlackOutlines(image->pixels, image->size.width, image->size.height, image->pixelSize);
+            EnhanceContrast(image.pixels, image.size.width, image.size.height, image.pixelSize);
+            //SharpenPixels(image.pixels, image.size.width, image.size.height, image.pixelSize);
+            //BlackOutlines(image.pixels, image.size.width, image.size.height, image.pixelSize);
 
             // Back to paletted+alpha?
             if(monochrome)
             {
                 // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
-                Image_ConvertToLuminance(image, true);
-                AmplifyLuma(image->pixels, image->size.width, image->size.height, image->pixelSize == 2);
+                Image_ConvertToLuminance(&image, true);
+                AmplifyLuma(image.pixels, image.size.width, image.size.height, image.pixelSize == 2);
             }
             else
-            {   // Yes. Quantize down from RGA(+A) to Paletted(+A), replacing the old image->
-                newPixels = GL_ConvertBuffer(image->pixels, image->size.width, image->size.height,
+            {   // Yes. Quantize down from RGA(+A) to Paletted(+A), replacing the old image.
+                newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
                                              (origMasked? 2 : 1), R_ToColorPalette(origPaletteId), 4);
-                if(newPixels != image->pixels)
+                if(newPixels != image.pixels)
                 {
-                    M_Free(image->pixels);
-                    image->pixels = newPixels;
-                    image->pixelSize = (origMasked? 2 : 1);
-                    image->paletteId = origPaletteId;
+                    M_Free(image.pixels);
+                    image.pixels = newPixels;
+                    image.pixelSize = (origMasked? 2 : 1);
+                    image.paletteId = origPaletteId;
                     if(origMasked)
-                        image->flags |= IMGF_IS_MASKED;
+                        image.flags |= IMGF_IS_MASKED;
                 }
             }
 
@@ -918,16 +916,16 @@ static uploadcontentmethod_t prepareVariantFromImage(de::Texture::Variant *tex, 
             noSmartFilter = true;
         }
     }
-    else if(image->pixelSize > 2)
+    else if(image.pixelSize > 2)
     {
         if(monochrome)
         {
-            Image_ConvertToLuminance(image, true);
-            AmplifyLuma(image->pixels, image->size.width, image->size.height, image->pixelSize == 2);
+            Image_ConvertToLuminance(&image, true);
+            AmplifyLuma(image.pixels, image.size.width, image.size.height, image.pixelSize == 2);
         }
     }
 
-    if(noCompression || (image->size.width < 128 || image->size.height < 128))
+    if(noCompression || (image.size.width < 128 || image.size.height < 128))
         flags |= TXCF_NO_COMPRESSION;
 
     if(spec->gammaCorrection) flags |= TXCF_APPLY_GAMMACORRECTION;
@@ -937,19 +935,19 @@ static uploadcontentmethod_t prepareVariantFromImage(de::Texture::Variant *tex, 
 
     if(monochrome)
     {
-        dglFormat = ( image->pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_LUMINANCE );
+        dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_LUMINANCE );
     }
     else
     {
-        if(0 != image->paletteId)
+        if(0 != image.paletteId)
         {   // Paletted.
-            dglFormat = (image->flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8;
+            dglFormat = (image.flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8;
         }
         else
         {
-            dglFormat = ( image->pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-                          image->pixelSize == 3 ? DGL_RGB :
-                          image->pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE );
+            dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
+                          image.pixelSize == 3 ? DGL_RGB :
+                          image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE );
         }
     }
 
@@ -967,25 +965,25 @@ static uploadcontentmethod_t prepareVariantFromImage(de::Texture::Variant *tex, 
     if((flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
        (!GL_state.features.texNonPowTwo || spec->mipmapped))
     {
-        int pw = M_CeilPow2(image->size.width), ph = M_CeilPow2(image->size.height);
-        s =  image->size.width / (float) pw;
-        t = image->size.height / (float) ph;
+        int pw = M_CeilPow2(image.size.width), ph = M_CeilPow2(image.size.height);
+        s =  image.size.width / (float) pw;
+        t = image.size.height / (float) ph;
     }
     else
     {
         s = t = 1;
     }
 
-    tex->setCoords(s, t);
-    tex->flagMasked((image->flags & IMGF_IS_MASKED) != 0);
+    tex.setCoords(s, t);
+    tex.flagMasked((image.flags & IMGF_IS_MASKED) != 0);
 
     GL_InitTextureContent(&c);
-    c.name = tex->glName();
+    c.name = tex.glName();
     c.format = dglFormat;
-    c.width = image->size.width;
-    c.height = image->size.height;
-    c.pixels = image->pixels;
-    c.paletteId = image->paletteId;
+    c.width = image.size.width;
+    c.height = image.size.height;
+    c.pixels = image.pixels;
+    c.paletteId = image.paletteId;
     c.flags = flags;
     c.magFilter = magFilter;
     c.minFilter = minFilter;
@@ -993,14 +991,12 @@ static uploadcontentmethod_t prepareVariantFromImage(de::Texture::Variant *tex, 
     c.wrap[0] = wrapS;
     c.wrap[1] = wrapT;
 
-    return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
+    return uploadContentForVariant(chooseContentUploadMethod(&c), &c, &tex);
 }
 
-static uploadcontentmethod_t prepareDetailVariantFromImage(de::Texture::Variant *tex, image_t *image)
+static uploadcontentmethod_t prepareDetailVariantFromImage(Texture::Variant &tex, image_t &image)
 {
-    DENG_ASSERT(image);
-
-    detailvariantspecification_t const *spec = TS_DETAIL(tex->spec());
+    detailvariantspecification_t const *spec = TS_DETAIL(tex.spec());
     float baMul, hiMul, loMul, s, t;
     int grayMipmapFactor, pw, ph, flags = 0;
     texturecontent_t c;
@@ -1008,13 +1004,13 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(de::Texture::Variant 
     grayMipmapFactor = spec->contrast;
 
     // We only want a luminance map.
-    if(image->pixelSize > 2)
+    if(image.pixelSize > 2)
     {
-        Image_ConvertToLuminance(image, false);
+        Image_ConvertToLuminance(&image, false);
     }
 
     // Try to normalize the luminance data so it works expectedly as a detail texture.
-    EqualizeLuma(image->pixels, image->size.width, image->size.height, &baMul, &hiMul, &loMul);
+    EqualizeLuma(image.pixels, image.size.width, image.size.height, &baMul, &hiMul, &loMul);
     if(baMul != 1 || hiMul != 1 || loMul != 1)
     {
         // Integrate the normalization factor with contrast.
@@ -1024,37 +1020,37 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(de::Texture::Variant 
         grayMipmapFactor = (uint8_t)(255 * MINMAX_OF(0, spec->contrast / 255.f - shift, 1));
 
         // Announce the normalization.
-        de::Uri uri = tex->generalCase().manifest().composeUri();
+        de::Uri uri = tex.generalCase().manifest().composeUri();
         LOG_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).")
             << uri << baMul << hiMul << loMul;
     }
 
     // Disable compression?
-    if(image->size.width < 128 || image->size.height < 128)
+    if(image.size.width < 128 || image.size.height < 128)
         flags |= TXCF_NO_COMPRESSION;
 
     // Calculate prepared texture coordinates.
-    pw = M_CeilPow2(image->size.width);
-    ph = M_CeilPow2(image->size.height);
-    s =  image->size.width / (float) pw;
-    t = image->size.height / (float) ph;
-    tex->setCoords(s, t);
+    pw = M_CeilPow2(image.size.width);
+    ph = M_CeilPow2(image.size.height);
+    s =  image.size.width / (float) pw;
+    t = image.size.height / (float) ph;
+    tex.setCoords(s, t);
 
     GL_InitTextureContent(&c);
-    c.name = tex->glName();
+    c.name = tex.glName();
     c.format = DGL_LUMINANCE;
     c.flags = flags | TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
     c.grayMipmap = grayMipmapFactor;
-    c.width = image->size.width;
-    c.height = image->size.height;
-    c.pixels = image->pixels;
+    c.width = image.size.width;
+    c.height = image.size.height;
+    c.pixels = image.pixels;
     c.anisoFilter = texAniso;
     c.magFilter = glmode[texMagMode];
     c.minFilter = GL_LINEAR_MIPMAP_LINEAR;
     c.wrap[0] = GL_REPEAT;
     c.wrap[1] = GL_REPEAT;
 
-    return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
+    return uploadContentForVariant(chooseContentUploadMethod(&c), &c, &tex);
 }
 
 void GL_EarlyInitTextureManager()
@@ -2510,13 +2506,18 @@ DGLuint GL_PrepareLightmap(uri_s const *_resourceUri)
         try
         {
             TextureManifest &manifest = App_Textures()->scheme("Lightmaps").findByResourceUri(*resourceUri);
-            if(de::Texture *tex = manifest.texture())
+            if(Texture *tex = manifest.texture())
             {
                 /// @todo fixme: Render context texture specs should be defined only once.
-                texturevariantspecification_t *texSpec =
-                    GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
-                        0, 0, 0, 0, GL_CLAMP, GL_CLAMP, 1, -1, -1, false, false, false, true);
-                return GL_PrepareTexture(reinterpret_cast<texture_s *>(tex), texSpec);
+                texturevariantspecification_t &texSpec =
+                    *GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
+                         0, 0, 0, 0, GL_CLAMP, GL_CLAMP, 1, -1, -1, false, false, false, true);
+
+                Texture::Variant const *variant = GL_PrepareTexture(*tex, texSpec);
+                if(variant) return variant->glName();
+
+                // Dang...
+                return 0;
             }
         }
         catch(Textures::Scheme::NotFoundError const &)
@@ -2550,11 +2551,16 @@ DGLuint GL_PrepareFlareTexture(uri_s const *_resourceUri, int oldIdx)
             TextureManifest &manifest = App_Textures()->scheme("Flaremaps").findByResourceUri(*resourceUri);
             if(de::Texture *tex = manifest.texture())
             {
-                texturevariantspecification_t *texSpec =
-                    GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
-                        TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                        1, 1, 0, false, false, false, true);
-                return GL_PrepareTexture(reinterpret_cast<texture_s *>(tex), texSpec);
+                texturevariantspecification_t &texSpec =
+                    *GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
+                         TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                         1, 1, 0, false, false, false, true);
+
+                Texture::Variant const *variant = GL_PrepareTexture(*tex, texSpec);
+                if(variant) return variant->glName();
+
+                // Dang...
+                return 0;
             }
         }
         catch(Textures::Scheme::NotFoundError const &)
@@ -2588,7 +2594,7 @@ texturevariant_s* GL_PreparePatchTexture2(texture_s* _tex, int wrapS, int wrapT)
             0 | (tex.flags().testFlag(de::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
               | (tex.flags().testFlag(de::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
             0, 0, 0, wrapS, wrapT, 0, -3, 0, false, false, false, false);
-    return GL_PrepareTextureVariant(reinterpret_cast<texture_s *>(&tex), texSpec);
+    return reinterpret_cast<texturevariant_s *>(GL_PrepareTexture(tex, *texSpec));
 }
 
 texturevariant_s* GL_PreparePatchTexture(texture_s* tex)
@@ -2983,11 +2989,77 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
     }
 }
 
-bool GL_LoadImageAndPrepareVariant(Texture &tex, texturevariantspecification_t &spec,
-                                   Texture::Variant **variant)
+preparetextureresult_t GL_PrepareTexture(Texture::Variant &variant)
 {
     DENG_ASSERT(initedOk);
-    LOG_AS("GL_LoadImageAndPrepareVariant");
+    LOG_AS("GL_PrepareTexture");
+
+    // Already been here?
+    if(variant.isPrepared()) return PTR_FOUND;
+
+    Texture &tex = variant.generalCase();
+    texturevariantspecification_t &spec = variant.spec();
+
+    // Load the source image data.
+    image_t image;
+    TexSource source = loadSourceImage(tex, spec, image);
+    if(source == TEXS_NONE) return PTR_NOTFOUND;
+
+    // Are we setting the logical dimensions to the actual pixel dimensions?
+    if(tex.dimensions().isEmpty())
+    {
+#if _DEBUG
+        LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels (%ix%i).")
+            << tex.manifest().composeUri() << image.size.width << image.size.height;
+#endif
+        tex.setDimensions(QSize(image.size.width, image.size.height));
+    }
+
+    performImageAnalyses(tex, &image, spec, true /*Always update*/);
+
+    // Are we re-preparing a released texture?
+    if(0 == variant.glName())
+    {
+        DGLuint newGLName = GL_GetReservedTextureName();
+        variant.setSource(source);
+        variant.setGLName(newGLName);
+    }
+
+    // (Re)Prepare the variant according to specification.
+    uploadcontentmethod_t uploadMethod;
+    switch(spec.type)
+    {
+    case TST_GENERAL: uploadMethod = prepareVariantFromImage(variant, image); break;
+    case TST_DETAIL:  uploadMethod = prepareDetailVariantFromImage(variant, image); break;
+    default:
+        Con_Error("GL_PrepareTexture: Invalid spec type %i.", spec.type);
+        exit(1); // Unreachable.
+    }
+
+    // We're done with the image data.
+    Image_Destroy(&image);
+
+#ifdef _DEBUG
+    LOG_VERBOSE("Prepared \"%s\" variant (glName:%u)%s")
+        << tex.manifest().composeUri() << uint(variant.glName())
+        << (METHOD_IMMEDIATE == uploadMethod? " while not busy!" : "");
+
+    VERBOSE2(
+        Con_Printf("  Content: ");
+        Image_PrintMetadata(&image);
+        Con_Printf("  Specification [%p]: ", de::dintptr(&spec));
+        GL_PrintTextureVariantSpecification(&spec);
+        )
+#endif
+
+    return source == TEXS_ORIGINAL? PTR_UPLOADED_ORIGINAL : PTR_UPLOADED_EXTERNAL;
+}
+
+static bool loadImageAndPrepareVariant(Texture &tex, texturevariantspecification_t &spec,
+                                       Texture::Variant **variant)
+{
+    DENG_ASSERT(initedOk);
+    LOG_AS("loadImageAndPrepareVariant");
 
     // Load the source image data.
     image_t image;
@@ -3027,15 +3099,16 @@ bool GL_LoadImageAndPrepareVariant(Texture &tex, texturevariantspecification_t &
         (*variant)->setSource(source);
         (*variant)->setGLName(newGLName);
     }
+    DENG_ASSERT(*variant);
 
     // (Re)Prepare the variant according to specification.
     uploadcontentmethod_t uploadMethod;
     switch(spec.type)
     {
-    case TST_GENERAL: uploadMethod = prepareVariantFromImage(*variant, &image); break;
-    case TST_DETAIL:  uploadMethod = prepareDetailVariantFromImage(*variant, &image); break;
+    case TST_GENERAL: uploadMethod = prepareVariantFromImage(**variant, image); break;
+    case TST_DETAIL:  uploadMethod = prepareDetailVariantFromImage(**variant, image); break;
     default:
-        Con_Error("GL_LoadImageAndPrepareVariant: Invalid spec type %i.", spec.type);
+        Con_Error("loadImageAndPrepareVariant: Invalid spec type %i.", spec.type);
         exit(1); // Unreachable.
     }
 
@@ -3058,57 +3131,25 @@ bool GL_LoadImageAndPrepareVariant(Texture &tex, texturevariantspecification_t &
     return true;
 }
 
-static de::Texture::Variant *findVariantForSpec(de::Texture &tex,
-    texturevariantspecification_t const &spec)
-{
-    // Look for an exact match.
-    de::Texture::Variant *variant = tex.chooseVariant(Texture::MatchSpec, spec);
-#if _DEBUG
-    // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
-    // As such, the following should NOT return a valid variant iff the rest of
-    // this subsystem has been implemented correctly.
-    //
-    // Presently this is used as a sanity check.
-    if(!variant)
-    {
-        /// No luck, try fuzzy.
-        variant = tex.chooseVariant(Texture::FuzzyMatchSpec, spec);
-        DENG_ASSERT(NULL == variant);
-    }
-#endif
-    return variant;
-}
-
-texturevariant_s *GL_PrepareTextureVariant2(texture_s *_tex, texturevariantspecification_t *spec,
+Texture::Variant *GL_PrepareTexture(Texture &tex, texturevariantspecification_t &spec,
     preparetextureresult_t *outcome)
 {
-    DENG_ASSERT(_tex && spec);
-    de::Texture &tex = reinterpret_cast<de::Texture &>(*_tex);
-
     // Have we already prepared something suitable?
-    de::Texture::Variant *variant = findVariantForSpec(tex, *spec);
+    Texture::Variant *variant = tex.chooseVariant(Texture::MatchSpec, spec);
 
     if(variant && variant->isPrepared())
     {
         if(outcome) *outcome = PTR_FOUND;
-        return reinterpret_cast<texturevariant_s *>(variant);
+        return variant;
     }
 
     // Suffer the cache miss and attempt to (re)prepare a variant.
-    bool loadedOk = GL_LoadImageAndPrepareVariant(tex, *spec, &variant);
+    bool loadedOk = loadImageAndPrepareVariant(tex, spec, &variant);
     if(outcome)
     {
         if(loadedOk)
         {
-            switch(variant->source())
-            {
-            case TEXS_ORIGINAL: *outcome = PTR_UPLOADED_ORIGINAL; break;
-            case TEXS_EXTERNAL: *outcome = PTR_UPLOADED_EXTERNAL; break;
-            default:
-                Con_Error("GL_PrepareTextureVariant2: Unknown TexSource %i.",
-                          int(variant->source()));
-                exit(1); // Unreachable.
-            }
+            *outcome = (variant->source() == TEXS_ORIGINAL? PTR_UPLOADED_ORIGINAL : PTR_UPLOADED_EXTERNAL);
         }
         else
         {
@@ -3116,32 +3157,14 @@ texturevariant_s *GL_PrepareTextureVariant2(texture_s *_tex, texturevariantspeci
         }
     }
 
-    return reinterpret_cast<texturevariant_s *>(variant);
-}
-
-texturevariant_s *GL_PrepareTextureVariant(texture_s *tex, texturevariantspecification_t *spec)
-{
-    return GL_PrepareTextureVariant2(tex, spec, NULL);
-}
-
-DGLuint GL_PrepareTexture2(struct texture_s *tex, texturevariantspecification_t *spec,
-    preparetextureresult_t *returnOutcome)
-{
-    de::Texture::Variant const *variant = reinterpret_cast<Texture::Variant const *>(GL_PrepareTextureVariant2(tex, spec, returnOutcome));
-    if(!variant) return 0;
-    return variant->glName();
-}
-
-DGLuint GL_PrepareTexture(struct texture_s *tex, texturevariantspecification_t *spec)
-{
-    return GL_PrepareTexture2(tex, spec, 0);
+    return variant;
 }
 
 void GL_ReleaseGLTexturesByTexture(texture_s *tex)
 {
     if(!tex) return;
-    de::Texture::Variants const &variants = reinterpret_cast<de::Texture *>(tex)->variants();
-    DENG2_FOR_EACH_CONST(de::Texture::Variants, i, variants)
+    Texture::Variants const &variants = reinterpret_cast<Texture *>(tex)->variants();
+    DENG2_FOR_EACH_CONST(Texture::Variants, i, variants)
     {
         releaseVariantGLTexture(*i);
     }

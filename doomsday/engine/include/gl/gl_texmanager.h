@@ -234,41 +234,6 @@ texturevariantspecification_t *GL_DetailTextureVariantSpecificationForContext(
  */
 void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *spec);
 
-/// Result of a request to prepare a Texture::Variant
-typedef enum {
-    PTR_NOTFOUND = 0,       /// Failed. No suitable variant could be found/prepared.
-    PTR_FOUND,              /// Success. Reusing a cached resource.
-    PTR_UPLOADED_ORIGINAL,  /// Success. Prepared and cached using an original-game resource.
-    PTR_UPLOADED_EXTERNAL   /// Success. Prepared and cached using an external-replacement resource.
-} preparetextureresult_t;
-
-/**
- * Attempt to prepare a variant of Texture which fulfills the specification
- * defined by the usage context. If a suitable variant cannot be found a new
- * one will be constructed and prepared.
- *
- * @note If a cache miss occurs texture content data may need to be uploaded
- * to GL to satisfy the variant specification. However the actual upload will
- * be deferred if possible. This has the side effect that although the variant
- * is considered "prepared", attempting to render using the associated texture
- * will result in "uninitialized" white texels being used instead.
- *
- * @param tex  Texture from which a prepared variant is desired.
- * @param spec  Variant specification for the proposed usage context.
- * @param returnOutcome  If not @c NULL detailed result information for this
- *      process is written back here.
- *
- * @return  GL-name of the prepared texture if successful else @c 0
- */
-DGLuint GL_PrepareTexture2(struct texture_s *tex, texturevariantspecification_t *spec, preparetextureresult_t *returnOutcome);
-DGLuint GL_PrepareTexture(struct texture_s *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
-
-/**
- * Same as GL_PrepareTexture(2) except for visibility of Texture::Variant.
- */
-struct texturevariant_s *GL_PrepareTextureVariant2(struct texture_s *tex, texturevariantspecification_t *spec, preparetextureresult_t *returnOutcome);
-struct texturevariant_s *GL_PrepareTextureVariant(struct texture_s *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
-
 /**
  * Dump the pixel data of @a img to an ARGB32 at @a filePath.
  *
@@ -321,8 +286,41 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height, u
 #ifdef __cplusplus
 } // extern "C"
 
-bool GL_LoadImageAndPrepareVariant(de::Texture &tex, texturevariantspecification_t &spec,
-                                   de::Texture::Variant **variant);
+/// Result of a request to prepare a Texture::Variant
+typedef enum {
+    PTR_NOTFOUND = 0,       /// Failed. No suitable variant could be found/prepared.
+    PTR_FOUND,              /// Success. Reusing a cached resource.
+    PTR_UPLOADED_ORIGINAL,  /// Success. Prepared and cached using an original-game resource.
+    PTR_UPLOADED_EXTERNAL   /// Success. Prepared and cached using an external-replacement resource.
+} preparetextureresult_t;
+
+/**
+ * Prepare variant @a texture for render.
+ *
+ * @param texture  Texture variant to be prepared.
+ * @return  Logical result.
+ */
+preparetextureresult_t GL_PrepareTexture(de::Texture::Variant &texture);
+
+/**
+ * Choose/create a variant of @a texture which fulfills @a spec and then
+ * immediately prepare it for render. If a suitable variant cannot be found a
+ * new one will be constructed and prepared.
+ *
+ * @note If a cache miss occurs texture content data may need to be uploaded
+ * to GL to satisfy the variant specification. However the actual upload will
+ * be deferred if possible. This has the side effect that although the variant
+ * is considered "prepared", attempting to render using the associated texture
+ * will result in "uninitialized" white texels being used instead.
+ *
+ * @param texture   Base texture from which to derive a variant.
+ * @param spec      Specification for the derivation of @a texture.
+ * @param returnOutcome  If not @c NULL the logical result is written back here.
+ *
+ * @return  The prepared texture variant if successful; otherwise @c 0.
+ */
+de::Texture::Variant *GL_PrepareTexture(de::Texture &texture, texturevariantspecification_t &spec,
+                                        preparetextureresult_t *returnOutcome = 0);
 #endif
 
 #endif /* LIBDENG_GL_TEXMANAGER_H */

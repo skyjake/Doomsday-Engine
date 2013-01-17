@@ -556,7 +556,7 @@ void BitmapCompositeFont_Prepare(font_t *font)
         ch->border = 0;
 
         de::Texture *tex = App_Textures()->scheme("Patches").findByUniqueId(patch).texture();
-        ch->tex = GL_PrepareTextureVariant(reinterpret_cast<texture_s *>(tex), BitmapCompositeFont_CharSpec());
+        ch->tex = reinterpret_cast<texturevariant_s *>(GL_PrepareTexture(*tex, *BitmapCompositeFont_CharSpec()));
         if(ch->tex && reinterpret_cast<de::Texture::Variant *>(ch->tex)->source() == TEXS_ORIGINAL)
         {
             // Upscale & Sharpen will have been applied.

@@ -286,9 +286,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         {
             // Pick the instance matching the specified context.
             preparetextureresult_t result;
-            prepTextures[i][0] = reinterpret_cast<Texture::Variant *>(
-                GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(tex),
-                                          spec.primarySpec, &result));
+            prepTextures[i][0] = GL_PrepareTexture(*tex, *spec.primarySpec, &result);
 
             // Primary texture was (re)prepared?
             if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
@@ -311,45 +309,43 @@ void MaterialSnapshot::Instance::takeSnapshot()
         {
             // Pick the instance matching the specified context.
             preparetextureresult_t result;
-            prepTextures[i][1] = reinterpret_cast<Texture::Variant *>(
-                GL_PrepareTextureVariant2(reinterpret_cast<texture_s *>(tex),
-                                          spec.primarySpec, &result));
+            prepTextures[i][1] = GL_PrepareTexture(*tex, *spec.primarySpec, &result);
         }
     }
 
     // Do we need to prepare a DetailTexture?
     if(!Material_IsSkyMasked(mat))
-    if(texture_s *tex = Material_DetailTexture(mat))
+    if(Texture *tex = reinterpret_cast<Texture *>(Material_DetailTexture(mat)))
     {
         float const contrast = Material_DetailStrength(mat) * detailFactor;
-        texturevariantspecification_t *texSpec = GL_DetailTextureVariantSpecificationForContext(contrast);
+        texturevariantspecification_t &texSpec = *GL_DetailTextureVariantSpecificationForContext(contrast);
 
-        prepTextures[MTU_DETAIL][0] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
+        prepTextures[MTU_DETAIL][0] = GL_PrepareTexture(*tex, texSpec);
     }
 
     // Do we need to prepare a shiny texture (and possibly a mask)?
     if(!Material_IsSkyMasked(mat))
-    if(texture_s *tex = Material_ShinyTexture(mat))
+    if(Texture *tex = reinterpret_cast<Texture *>(Material_ShinyTexture(mat)))
     {
-        texturevariantspecification_t *texSpec =
-            GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
-                TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
-                false, false, false, false);
+        texturevariantspecification_t &texSpec =
+            *GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
+                 TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
+                 false, false, false, false);
 
-        prepTextures[MTU_REFLECTION][0] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
+        prepTextures[MTU_REFLECTION][0] = GL_PrepareTexture(*tex, texSpec);
 
     }
 
     // We are only interested in a mask if we have a shiny texture.
     if(prepTextures[MTU_REFLECTION][0])
-    if(texture_s *tex = Material_ShinyMaskTexture(mat))
+    if(Texture *tex = reinterpret_cast<Texture *>(Material_ShinyMaskTexture(mat)))
     {
-        texturevariantspecification_t *texSpec =
-            GL_TextureVariantSpecificationForContext(
-                TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                -1, -1, -1, true, false, false, false);
+        texturevariantspecification_t &texSpec =
+            *GL_TextureVariantSpecificationForContext(
+                 TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                 -1, -1, -1, true, false, false, false);
 
-        prepTextures[MTU_REFLECTION_MASK][0] = reinterpret_cast<Texture::Variant *>(GL_PrepareTextureVariant(tex, texSpec));
+        prepTextures[MTU_REFLECTION_MASK][0] = GL_PrepareTexture(*tex, texSpec);
     }
 #endif // __CLIENT__
 

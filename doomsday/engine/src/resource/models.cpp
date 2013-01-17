@@ -1412,18 +1412,16 @@ void Models_Cache(modeldef_t* modef)
         // Load all skins.
         for(int k = 0; k < mdl->info.numSkins; ++k)
         {
-            texture_s* tex = mdl->skins[k].texture;
-            if(tex)
+            if(Texture *tex = reinterpret_cast<Texture *>(mdl->skins[k].texture))
             {
-                GL_PrepareTexture(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
+                GL_PrepareTexture(*tex, *Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
             }
         }
 
         // Load the shiny skin too.
-        texture_s* tex = subdef.shinySkin;
-        if(tex)
+        if(Texture *tex = reinterpret_cast<Texture *>(subdef.shinySkin))
         {
-            GL_PrepareTexture(tex, Rend_ModelShinyTextureSpec());
+            GL_PrepareTexture(*tex, *Rend_ModelShinyTextureSpec());
         }
     }
 }

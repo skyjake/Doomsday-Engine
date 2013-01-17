@@ -781,29 +781,12 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
     }
 }
 
-void GL_BindTexture(texturevariant_s *_tex)
+void GL_BindTexture(Texture::Variant &tex)
 {
-    Texture::Variant *tex = reinterpret_cast<Texture::Variant *>(_tex);
-
     if(BusyMode_InWorkerThread()) return;
 
-    texturevariantspecification_t *spec = 0;
-    if(tex)
-    {
-        spec = &tex->spec();
-        // Ensure we've prepared this.
-        if(!tex->isPrepared())
-        {
-            Texture::Variant **hndl = &tex;
-            if(!GL_LoadImageAndPrepareVariant(tex->generalCase(), *spec, hndl))
-            {
-                tex = 0;
-            }
-        }
-    }
-
-    // Bind our chosen texture.
-    if(!tex)
+    // Ensure we've prepared this.
+    if(GL_PrepareTexture(tex) == PTR_NOTFOUND)
     {
         GL_SetNoTexture();
         return;
@@ -812,22 +795,35 @@ void GL_BindTexture(texturevariant_s *_tex)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBindTexture(GL_TEXTURE_2D, tex->glName());
+    glBindTexture(GL_TEXTURE_2D, tex.glName());
     Sys_GLCheckError();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
-    if(spec->type == TST_GENERAL)
+    texturevariantspecification_t &spec = tex.spec();
+    if(spec.type == TST_GENERAL)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(*spec)->wrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(*spec)->wrapT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec)->wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(spec)->wrapT);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_MagFilterForVariantSpec(TS_GENERAL(*spec)));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_MagFilterForVariantSpec(TS_GENERAL(spec)));
         if(GL_state.features.texFilterAniso)
         {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                            GL_GetTexAnisoMul(GL_LogicalAnisoLevelForVariantSpec(TS_GENERAL(*spec))));
+                            GL_GetTexAnisoMul(GL_LogicalAnisoLevelForVariantSpec(TS_GENERAL(spec))));
         }
     }
+}
+
+/// @todo Remove me.
+void GL_BindTexture(texturevariant_s *_tex)
+{
+    if(BusyMode_InWorkerThread()) return;
+    if(Texture::Variant *tex = reinterpret_cast<Texture::Variant *>(_tex))
+    {
+        GL_BindTexture(*tex);
+        return;
+    }
+    GL_SetNoTexture();
 }
 
 void GL_BindTextureUnmanaged(DGLuint glName, int magMode)

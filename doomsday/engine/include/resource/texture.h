@@ -118,6 +118,16 @@ public:
                 TexSource source = TEXS_NONE);
         ~Variant();
 
+        /**
+         * Retrieve the general case for this variant. Allows for a variant
+         * reference to be used in place of a texture (implicit indirection).
+         *
+         * @see generalCase()
+         */
+        inline operator Texture &() const {
+            return generalCase();
+        }
+
         /// @return  Superior texture of which the variant is a derivative.
         Texture &generalCase() const;
 
