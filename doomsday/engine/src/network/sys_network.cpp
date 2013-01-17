@@ -34,14 +34,17 @@
 #include "de_misc.h"
 
 #include "dd_main.h"
+#include "dd_def.h"
 #include "network/net_main.h"
 #include "network/net_event.h"
 #ifdef __CLIENT__
 #  include "network/net_demo.h"
 #endif
+#ifdef __SERVER__
+#  include "server/sv_def.h"
+#endif
 #include "network/protocol.h"
 #include "client/cl_def.h"
-#include "server/sv_def.h"
 #include "map/p_players.h"
 
 #include <de/c_wrapper.h> // using LegacyNetwork
@@ -329,6 +332,8 @@ void N_TerminateNode(nodeid_t id)
     memset(node, 0, sizeof(*node));
 }
 
+#ifdef __SERVER__
+
 /**
  * Registers a new TCP socket as a client node. There can only be a limited
  * number of nodes at a time. This is only used by a server.
@@ -407,6 +412,9 @@ static boolean joinNode(nodeid_t id, int clientProtocol, const char *name)
     return true;
 }
 
+#endif // __SERVER__
+
+#ifdef __CLIENT__
 void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
 {
     netnode_t* svNode = &netNodes[nodeId];
@@ -433,7 +441,7 @@ void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
         do
         {
             ch = Str_GetLine(line, ch);
-            Sv_StringToInfo(Str_Text(line), &located.info);
+            Net_StringToServerInfo(Str_Text(line), &located.info);
         }
         while(*ch);
 
@@ -495,123 +503,9 @@ boolean N_LookForHosts(const char *address, int port, expectedresponder_t respon
     return true;
 }
 
-#ifdef __CLIENT__
-
-/**
- * Handles the server's response to a client's join request.
- */
-void N_ClientHandleResponseToJoin(int nodeId, const byte* data, int size)
-{
-    struct netnode_s* svNode = &netNodes[nodeId];
-    const char* buf = (const char*) data;
-
-    if(size < 5 || strncmp(buf, "Enter", 5))
-    {
-        Con_Message("Server refused connection (received %i bytes).\n", size);
-        N_Disconnect();
-        return;
-    }
-
-    // Put the server's socket in a socket set so we may listen to it.
-    joinedSockSet = LegacyNetwork_NewSocketSet();
-    LegacyNetwork_SocketSet_Add(joinedSockSet, svNode->sock);
-
-    // We'll switch to joined mode.
-    svNode->expectedResponder = NULL;
-
-    // Clients are allowed to send packets to the server.
-    svNode->hasJoined = true;
-
-    handshakeReceived = false;
-    allowSending = true;
-    netGame = true;             // Allow sending/receiving of packets.
-    isServer = false;
-    isClient = true;
-
-    // Call game's NetConnect.
-    gx.NetConnect(false);
-
-    // G'day mate!  The client is responsible for beginning the
-    // handshake.
-    Cl_SendHello();
-}
-
-/**
- * Connect a client to the server identified with 'index'.  We enter
- * clientside mode during this routine.
- */
-boolean N_Connect(int index)
-{
-    netnode_t *svNode = 0;
-    foundhost_t *host;
-    char buf[300], *pName;
-
-    if(!N_IsAvailable() || netServerMode || index != 0)
-        return false;
-
-    Demo_StopPlayback();
-
-    // Tell the Game that a connection is about to happen.
-    gx.NetConnect(true);
-
-    host = &located;
-
-    // We'll use node number zero for all communications.
-    svNode = &netNodes[0];
-    svNode->expectedResponder = NULL;
-    if(!(svNode->sock = LegacyNetwork_Open(host->addr.host, host->addr.port)))
-    {
-        N_IPToString(buf, &host->addr);
-        Con_Message("No reply from %s.\n", buf);
-        return false;
-    }
-    memcpy(&svNode->addr, &located.addr, sizeof(ipaddress_t));
-
-    // Connect by issuing: "Join (myname)"
-    pName = playerName;
-    if(!pName || !pName[0])
-    {
-        pName = (char *) "Anonymous";
-    }
-    sprintf(buf, "Join %04x %s", SV_VERSION, pName);
-    LegacyNetwork_Send(svNode->sock, buf, (int) strlen(buf));
-
-    svNode->expectedResponder = N_ClientHandleResponseToJoin;
-    return true;
-}
-
-/**
- * Disconnect from the server.
- */
-boolean N_Disconnect(void)
-{
-    netnode_t *svNode = &netNodes[0];
-
-    if(!N_IsAvailable())
-        return false;
-
-    // Tell the Game that a disconnection is about to happen.
-    if(gx.NetDisconnect)
-        gx.NetDisconnect(true);
-
-    // Close the control connection.  This will let the server know
-    // that we are no more.
-    LegacyNetwork_Close(svNode->sock);
-    memset(svNode, 0, sizeof(*svNode));
-
-    LegacyNetwork_DeleteSocketSet(joinedSockSet);
-    joinedSockSet = 0;
-
-    Net_StopGame();
-
-    // Tell the Game that the disconnection is now complete.
-    if(gx.NetDisconnect)
-        gx.NetDisconnect(false);
-
-    return true;
-}
-
 #endif // __CLIENT__
+
+#ifdef __SERVER__
 
 boolean N_ServerOpen(void)
 {
@@ -620,10 +514,6 @@ boolean N_ServerOpen(void)
         Con_Message("Server can only be started in dedicated mode! (run with -dedicated)\n");
         return false;
     }
-
-#ifdef __CLIENT__
-    Demo_StopPlayback();
-#endif
 
     // Let's make sure the correct service provider is initialized
     // in server mode.
@@ -800,6 +690,8 @@ void N_ServerListenUnjoinedNodes(void)
     }
 }
 
+#endif // __SERVER__
+
 #ifdef __CLIENT__
 
 /**
@@ -845,6 +737,120 @@ void N_ClientListenUnjoined(void)
             N_Disconnect();
         }
     }
+}
+
+/**
+ * Handles the server's response to a client's join request.
+ */
+void N_ClientHandleResponseToJoin(int nodeId, const byte* data, int size)
+{
+    struct netnode_s* svNode = &netNodes[nodeId];
+    const char* buf = (const char*) data;
+
+    if(size < 5 || strncmp(buf, "Enter", 5))
+    {
+        Con_Message("Server refused connection (received %i bytes).\n", size);
+        N_Disconnect();
+        return;
+    }
+
+    // Put the server's socket in a socket set so we may listen to it.
+    joinedSockSet = LegacyNetwork_NewSocketSet();
+    LegacyNetwork_SocketSet_Add(joinedSockSet, svNode->sock);
+
+    // We'll switch to joined mode.
+    svNode->expectedResponder = NULL;
+
+    // Clients are allowed to send packets to the server.
+    svNode->hasJoined = true;
+
+    handshakeReceived = false;
+    allowSending = true;
+    netGame = true;             // Allow sending/receiving of packets.
+    isServer = false;
+    isClient = true;
+
+    // Call game's NetConnect.
+    gx.NetConnect(false);
+
+    // G'day mate!  The client is responsible for beginning the
+    // handshake.
+    Cl_SendHello();
+}
+
+/**
+ * Connect a client to the server identified with 'index'.  We enter
+ * clientside mode during this routine.
+ */
+boolean N_Connect(int index)
+{
+    netnode_t *svNode = 0;
+    foundhost_t *host;
+    char buf[300], *pName;
+
+    if(!N_IsAvailable() || netServerMode || index != 0)
+        return false;
+
+    Demo_StopPlayback();
+
+    // Tell the Game that a connection is about to happen.
+    gx.NetConnect(true);
+
+    host = &located;
+
+    // We'll use node number zero for all communications.
+    svNode = &netNodes[0];
+    svNode->expectedResponder = NULL;
+    if(!(svNode->sock = LegacyNetwork_Open(host->addr.host, host->addr.port)))
+    {
+        N_IPToString(buf, &host->addr);
+        Con_Message("No reply from %s.\n", buf);
+        return false;
+    }
+    memcpy(&svNode->addr, &located.addr, sizeof(ipaddress_t));
+
+    // Connect by issuing: "Join (myname)"
+    pName = playerName;
+    if(!pName || !pName[0])
+    {
+        pName = (char *) "Anonymous";
+    }
+    sprintf(buf, "Join %04x %s", SV_VERSION, pName);
+    LegacyNetwork_Send(svNode->sock, buf, (int) strlen(buf));
+
+    svNode->expectedResponder = N_ClientHandleResponseToJoin;
+    return true;
+}
+
+/**
+ * Disconnect from the server.
+ */
+boolean N_Disconnect(void)
+{
+    netnode_t *svNode = &netNodes[0];
+
+    if(!N_IsAvailable())
+        return false;
+
+    // Tell the Game that a disconnection is about to happen.
+    if(gx.NetDisconnect)
+        gx.NetDisconnect(true);
+
+    // Close the control connection.  This will let the server know
+    // that we are no more.
+    LegacyNetwork_Close(svNode->sock);
+    memset(svNode, 0, sizeof(*svNode));
+
+    LegacyNetwork_DeleteSocketSet(joinedSockSet);
+    joinedSockSet = 0;
+
+    Net_StopGame();
+
+    // Tell the Game that the disconnection is now complete.
+    if(gx.NetDisconnect)
+        gx.NetDisconnect(false);
+
+    return true;
 }
 
 #endif // __CLIENT__

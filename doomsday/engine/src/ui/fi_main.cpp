@@ -39,7 +39,10 @@
 
 #include "ui/finaleinterpreter.h"
 #include "network/net_main.h"
-#include "server/sv_infine.h"
+
+#ifdef __SERVER__
+#  include "server/sv_infine.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -319,10 +322,15 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
     f = P_CreateFinale();
     f->flags = flags;
     FinaleInterpreter_LoadScript(f->_interpreter, script);
+
+#ifdef __SERVER__
     if(!(flags & FF_LOCAL) && isServer)
-    {   // Instruct clients to start playing this Finale.
-        Sv_Finale(f->id, FINF_BEGIN|FINF_SCRIPT, script);
+    {
+        // Instruct clients to start playing this Finale.
+        Sv_Finale(f->id, FINF_BEGIN | FINF_SCRIPT, script);
     }
+#endif
+
 #ifdef _DEBUG
     Con_Printf("Finale Begin - id:%u '%.30s'\n", f->id, _script);
 #endif

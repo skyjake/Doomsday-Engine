@@ -1894,6 +1894,7 @@ static void conPrintf(int flags, const char* format, va_list args)
         }
     }
 
+#ifdef __SERVER__
     // Servers might have to send the text to a number of clients.
     if(isServer)
     {
@@ -1902,6 +1903,7 @@ static void conPrintf(int flags, const char* format, va_list args)
         else if(netRemoteUser) // Is somebody logged in?
             Sv_SendText(netRemoteUser, flags | SV_CONSOLE_PRINT_FLAGS, text);
     }
+#endif
 
     if(isDedicated || novideo)
     {

@@ -322,12 +322,6 @@ DENG_HEADERS += \
     include/resource/wad.h \
     include/resource/zip.h \
     include/resourceclass.h \
-    include/server/sv_def.h \
-    include/server/sv_frame.h \
-    include/server/sv_infine.h \
-    include/server/sv_missile.h \
-    include/server/sv_pool.h \
-    include/server/sv_sound.h \
     include/sys_console.h \
     include/sys_system.h \
     include/tab_anorms.h \
@@ -608,12 +602,6 @@ SOURCES += \
     src/resource/tga.cpp \
     src/resource/wad.cpp \
     src/resource/zip.cpp \
-    src/server/sv_frame.cpp \
-    src/server/sv_infine.cpp \
-    src/server/sv_main.cpp \
-    src/server/sv_missile.cpp \
-    src/server/sv_pool.cpp \
-    src/server/sv_sound.cpp \
     src/sys_system.cpp \
     src/tab_tables.c \
     src/ui/b_command.cpp \

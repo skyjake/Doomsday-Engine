@@ -56,7 +56,6 @@
 
 #include "dd_main.h"
 #include "dd_loop.h"
-#include "server/sv_pool.h"
 #include "map/p_players.h"
 
 // MACROS ------------------------------------------------------------------
@@ -76,23 +75,31 @@
 #ifdef __CLIENT__
 D_CMD(Login); // in cl_main.c
 #endif
+
+#ifdef __SERVER__
 D_CMD(Logout); // in sv_main.c
+#endif
+
 D_CMD(Ping); // in net_ping.c
 
 int     Sv_GetRegisteredMobj(struct pool_s *, thid_t, struct mobjdelta_s *);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-D_CMD(Connect);
 D_CMD(Chat);
-D_CMD(Kick);
 D_CMD(MakeCamera);
 D_CMD(Net);
+D_CMD(SetTicks);
+
 #ifdef __CLIENT__
+D_CMD(Connect);
 D_CMD(SetConsole);
 D_CMD(SetName);
 #endif
-D_CMD(SetTicks);
+
+#ifdef __SERVER__
+D_CMD(Kick);
+#endif
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -132,7 +139,9 @@ netbuffer_t reboundStore;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+#ifdef __CLIENT__
 static int coordTimer = 0;
+#endif
 
 // CODE --------------------------------------------------------------------
 
@@ -150,11 +159,13 @@ void Net_Register(void)
     C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0);
     C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0);
 
+#ifdef __CLIENT__
     // Cvars (client)
     //C_VAR_INT("client-pos-interval", &netCoordTime, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("client-connect-timeout", &netConnectTimeout, CVF_NO_MAX,
-                0, 0);
+    C_VAR_FLOAT("client-connect-timeout", &netConnectTimeout, CVF_NO_MAX, 0, 0);
+#endif
 
+#ifdef __SERVER__
     // Cvars (server)
     C_VAR_CHARPTR("server-name", &serverName, 0, 0, 0);
     C_VAR_CHARPTR("server-info", &serverInfo, 0, 0, 0);
@@ -163,18 +174,21 @@ void Net_Register(void)
     C_VAR_BYTE("server-latencies", &netShowLatencies, 0, 0, 1);
     C_VAR_INT("server-frame-interval", &frameInterval, CVF_NO_MAX, 0, 0);
     C_VAR_INT("server-player-limit", &svMaxPlayers, 0, 0, DDMAXPLAYERS);
+#endif
 
     // Ccmds
     C_CMD_FLAGS("chat", NULL, Chat, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("chatnum", NULL, Chat, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("chatto", NULL, Chat, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("conlocp", "i", MakeCamera, CMDF_NO_NULLGAME);
-    C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("kick", "i", Kick, CMDF_NO_NULLGAME);
 #ifdef __CLIENT__
+    C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
     C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
 #endif
+#ifdef __SERVER__
     C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("kick", "i", Kick, CMDF_NO_NULLGAME);
+#endif
     C_CMD_FLAGS("net", NULL, Net, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("ping", NULL, Ping, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("say", NULL, Chat, CMDF_NO_NULLGAME);
@@ -434,8 +448,7 @@ static void Net_DoUpdate(void)
     lastTime = nowTime;
 
     // This is as far as dedicated servers go.
-    if(isDedicated)
-        return;
+#ifdef __CLIENT__
 
     /**
      * Clients will periodically send their coordinates to the server so
@@ -445,13 +458,13 @@ static void Net_DoUpdate(void)
 #ifdef _DEBUG
     if(netGame && verbose >= 2)
     {
-        Con_Message("Net_DoUpdate: coordTimer=%i cl:%i af:%i shmo:%p\n", coordTimer,
-                    isClient, allowFrames, ddPlayers[consolePlayer].shared.mo);
+        Con_Message("Net_DoUpdate: coordTimer=%i cl:%i shmo:%p\n", coordTimer,
+                    isClient, ddPlayers[consolePlayer].shared.mo);
     }
 #endif
 
     coordTimer -= newTics;
-    if(isClient /*&& allowFrames*/ && coordTimer <= 0 &&
+    if(isClient && coordTimer <= 0 &&
        ddPlayers[consolePlayer].shared.mo)
     {
         mobj_t *mo = ddPlayers[consolePlayer].shared.mo;
@@ -481,6 +494,7 @@ static void Net_DoUpdate(void)
 
         Net_SendBuffer(0, 0);
     }
+#endif // __CLIENT__
 }
 
 /**
@@ -596,8 +610,10 @@ void Net_StopGame(void)
     isServer = true;
     allowSending = false;
 
+#ifdef __SERVER__
     // No more remote users.
     netRemoteUser = 0;
+#endif
 
     // All remote players are forgotten.
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -761,6 +777,7 @@ void Net_Ticker(timespan_t time)
     // Network event ticker.
     N_NETicker(time);
 
+#ifdef __SERVER__
     if(netDev)
     {
         static int printTimer = 0;
@@ -785,6 +802,7 @@ void Net_Ticker(timespan_t time)
             }
         }
     }
+#endif // __SERVER__
 
     // The following stuff is only for netgames.
     if(!netGame)
@@ -960,6 +978,7 @@ D_CMD(Chat)
     return true;
 }
 
+#ifdef __SERVER__
 D_CMD(Kick)
 {
     DENG2_UNUSED2(src, argc);
@@ -994,6 +1013,7 @@ D_CMD(Kick)
     Sv_Kick(num);
     return true;
 }
+#endif // __SERVER__
 
 #ifdef __CLIENT__
 D_CMD(SetName)
@@ -1071,7 +1091,10 @@ D_CMD(MakeCamera)
     clients[cp].viewConsole = cp;
     ddPlayers[cp].shared.flags |= DDPF_LOCAL;
     Smoother_Clear(clients[cp].smoother);
+
+#ifdef __SERVER__
     Sv_InitPoolForClient(cp);
+#endif
 
 #ifdef __CLIENT__
     R_SetupDefaultViewWindow(cp);
@@ -1084,6 +1107,7 @@ D_CMD(MakeCamera)
 }
 
 #ifdef __CLIENT__
+
 D_CMD(SetConsole)
 {
     DENG2_UNUSED2(src, argc);
@@ -1098,7 +1122,6 @@ D_CMD(SetConsole)
     R_SetViewGrid(0, 0);
     return true;
 }
-#endif
 
 void Net_FinishConnection(int nodeId, const byte* data, int size)
 {
@@ -1206,6 +1229,8 @@ D_CMD(Connect)
     return Net_StartConnection(argv[1], port);
 }
 
+#endif // __CLIENT__
+
 /**
  * The 'net' console command.
  */
@@ -1221,18 +1246,21 @@ D_CMD(Net)
         Con_Printf("Commands:\n");
         Con_Printf("  init\n");
         Con_Printf("  shutdown\n");
-        Con_Printf("  setup client\n");
-        Con_Printf("  setup server\n");
         Con_Printf("  info\n");
-        Con_Printf("  announce\n");
         Con_Printf("  request\n");
+#ifdef __CLIENT__
+        Con_Printf("  setup client\n");
         Con_Printf("  search (address) [port]   (local or targeted query)\n");
         Con_Printf("  servers   (asks the master server)\n");
         Con_Printf("  connect (idx)\n");
         Con_Printf("  mconnect (m-idx)\n");
         Con_Printf("  disconnect\n");
+#endif
+#ifdef __SERVER__
         Con_Printf("  server go/start\n");
         Con_Printf("  server close/stop\n");
+        Con_Printf("  announce\n");
+#endif
         return true;
     }
 
@@ -1315,6 +1343,7 @@ D_CMD(Net)
 
     if(argc == 3) // Two arguments?
     {
+#ifdef __SERVER__
         if(!stricmp(argv[1], "server"))
         {
             if(!stricmp(argv[2], "go") || !stricmp(argv[2], "start"))
@@ -1352,11 +1381,12 @@ D_CMD(Net)
                 return false;
             }
         }
-        else if(!stricmp(argv[1], "search"))
+#endif // __SERVER__
+#ifdef __CLIENT__
+        if(!stricmp(argv[1], "search"))
         {
             success = N_LookForHosts(argv[2], 0, 0);
         }
-#ifdef __CLIENT__
         else if(!stricmp(argv[1], "connect"))
         {
             int             idx;
@@ -1397,6 +1427,7 @@ D_CMD(Net)
 #endif
     }
 
+#ifdef __CLIENT__
     if(argc == 4)
     {
         if(!stricmp(argv[1], "search"))
@@ -1404,6 +1435,128 @@ D_CMD(Net)
             success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0), 0);
         }
     }
+#endif
 
     return success;
+}
+
+/**
+ * Extracts the label and value from a string.  'max' is the maximum
+ * allowed length of a token, including terminating \0.
+ */
+static boolean tokenize(char const *line, char *label, char *value, int max)
+{
+    const char *src = line;
+    const char *colon = strchr(src, ':');
+
+    // The colon must exist near the beginning.
+    if(!colon || colon - src >= SVINFO_VALID_LABEL_LEN)
+        return false;
+
+    // Copy the label.
+    memset(label, 0, max);
+    strncpy(label, src, MIN_OF(colon - src, max - 1));
+
+    // Copy the value.
+    memset(value, 0, max);
+    strncpy(value, colon + 1, MIN_OF(strlen(line) - (colon - src + 1), (unsigned) max - 1));
+
+    // Everything is OK.
+    return true;
+}
+
+boolean Net_StringToServerInfo(const char *valuePair, serverinfo_t *info)
+{
+    char label[SVINFO_TOKEN_LEN], value[SVINFO_TOKEN_LEN];
+
+    // Extract the label and value. The maximum length of a value is
+    // TOKEN_LEN. Labels are returned in lower case.
+    if(!tokenize(valuePair, label, value, sizeof(value)))
+    {
+        // Badly formed lines are ignored.
+        return false;
+    }
+
+    if(!strcmp(label, "at"))
+    {
+        strncpy(info->address, value, sizeof(info->address) - 1);
+    }
+    else if(!strcmp(label, "port"))
+    {
+        info->port = strtol(value, 0, 0);
+    }
+    else if(!strcmp(label, "ver"))
+    {
+        info->version = strtol(value, 0, 0);
+    }
+    else if(!strcmp(label, "map"))
+    {
+        strncpy(info->map, value, sizeof(info->map) - 1);
+    }
+    else if(!strcmp(label, "game"))
+    {
+        strncpy(info->plugin, value, sizeof(info->plugin) - 1);
+    }
+    else if(!strcmp(label, "name"))
+    {
+        strncpy(info->name, value, sizeof(info->name) - 1);
+    }
+    else if(!strcmp(label, "info"))
+    {
+        strncpy(info->description, value, sizeof(info->description) - 1);
+    }
+    else if(!strcmp(label, "nump"))
+    {
+        info->numPlayers = strtol(value, 0, 0);
+    }
+    else if(!strcmp(label, "maxp"))
+    {
+        info->maxPlayers = strtol(value, 0, 0);
+    }
+    else if(!strcmp(label, "open"))
+    {
+        info->canJoin = strtol(value, 0, 0);
+    }
+    else if(!strcmp(label, "mode"))
+    {
+        strncpy(info->gameIdentityKey, value, sizeof(info->gameIdentityKey) - 1);
+    }
+    else if(!strcmp(label, "setup"))
+    {
+        strncpy(info->gameConfig, value, sizeof(info->gameConfig) - 1);
+    }
+    else if(!strcmp(label, "iwad"))
+    {
+        strncpy(info->iwad, value, sizeof(info->iwad) - 1);
+    }
+    else if(!strcmp(label, "wcrc"))
+    {
+        info->loadedFilesCRC = strtol(value, 0, 0);
+    }
+    else if(!strcmp(label, "pwads"))
+    {
+        strncpy(info->pwads, value, sizeof(info->pwads) - 1);
+    }
+    else if(!strcmp(label, "plrn"))
+    {
+        strncpy(info->clientNames, value, sizeof(info->clientNames) - 1);
+    }
+    else if(!strcmp(label, "data0"))
+    {
+        info->data[0] = strtol(value, 0, 16);
+    }
+    else if(!strcmp(label, "data1"))
+    {
+        info->data[1] = strtol(value, 0, 16);
+    }
+    else if(!strcmp(label, "data2"))
+    {
+        info->data[2] = strtol(value, 0, 16);
+    }
+    else
+    {
+        // Unknown labels are ignored.
+        return false;
+    }
+    return true;
 }

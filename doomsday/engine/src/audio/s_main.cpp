@@ -442,8 +442,10 @@ int S_LocalSoundFrom(int soundID, coord_t* fixedPos)
  */
 int S_StartSound(int soundID, mobj_t* origin)
 {
+#ifdef __SERVER__
     // The sound is audible to everybody.
     Sv_Sound(soundID, origin, SVSF_TO_ALL);
+#endif
     Sfx_StartLogical(soundID, origin, S_IsRepeating(soundID));
 
     return S_LocalSound(soundID, origin);
@@ -461,7 +463,9 @@ int S_StartSound(int soundID, mobj_t* origin)
  */
 int S_StartSoundEx(int soundID, mobj_t* origin)
 {
+#ifdef __SERVER__
     Sv_Sound(soundID, origin, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
+#endif
     Sfx_StartLogical(soundID, origin, S_IsRepeating(soundID));
 
     return S_LocalSound(soundID, origin);
@@ -474,7 +478,9 @@ int S_StartSoundEx(int soundID, mobj_t* origin)
  */
 int S_StartSoundAtVolume(int soundID, mobj_t* origin, float volume)
 {
+#ifdef __SERVER__
     Sv_SoundAtVolume(soundID, origin, volume, SVSF_TO_ALL);
+#endif
     Sfx_StartLogical(soundID, origin, S_IsRepeating(soundID));
 
     // The sound is audible to everybody.
@@ -488,7 +494,9 @@ int S_StartSoundAtVolume(int soundID, mobj_t* origin, float volume)
  */
 int S_ConsoleSound(int soundID, mobj_t* origin, int targetConsole)
 {
+#ifdef __SERVER__
     Sv_Sound(soundID, origin, targetConsole);
+#endif
 
     // If it's for us, we can hear it.
     if(targetConsole == consolePlayer)
@@ -539,10 +547,12 @@ void S_StopSound(int soundID, mobj_t* emitter)
     // Notify the LSM.
     if(Sfx_StopLogical(soundID, emitter))
     {
+#ifdef __SERVER__
         // In netgames, the server is responsible for telling clients
         // when to stop sounds. The LSM will tell us if a sound was
         // stopped somewhere in the world.
         Sv_StopSound(soundID, emitter);
+#endif
     }
 }
 

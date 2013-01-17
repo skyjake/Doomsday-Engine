@@ -30,32 +30,6 @@ extern "C" {
 #endif
 
 /**
- * @defgroup soundPacketFlags  Sound Packet Flags
- * Used with PSV_SOUND packets.
- * @ingroup flags
- */
-///@{
-#define SNDF_ORIGIN             0x01 ///< Sound has an origin.
-#define SNDF_SECTOR             0x02 ///< Originates from a degenmobj.
-#define SNDF_PLAYER             0x04 ///< Originates from a player.
-#define SNDF_VOLUME             0x08 ///< Volume included.
-#define SNDF_ID                 0x10 ///< Mobj ID of the origin.
-#define SNDF_REPEATING          0x20 ///< Repeat sound indefinitely.
-#define SNDF_SHORT_SOUND_ID     0x40 ///< Sound ID is a short.
-///@}
-
-/**
- * @defgroup stopSoundPacketFlags  Stop Sound Packet Flags
- * Used with PSV_STOP_SOUND packets.
- * @ingroup flags
- */
-///@{
-#define STOPSNDF_SOUND_ID       0x01
-#define STOPSNDF_ID             0x02
-#define STOPSNDF_SECTOR         0x04
-///@}
-
-/**
  * @defgroup svsoundFlags  Flags for Sv_Sound
  * Used to select the target audience for a sound delta.
  * @ingroup flags

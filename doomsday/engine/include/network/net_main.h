@@ -131,6 +131,11 @@ enum {
 // every 3rd tic.
 #define LOCALCAM_WRITE_TICS 3
 
+// Maximum length of a token in the textual representation of
+// serverinfo.
+#define SVINFO_TOKEN_LEN        128
+#define SVINFO_VALID_LABEL_LEN  16
+
 typedef struct {
     // High tics when ping was sent (0 if pinger not used).
     int             sent;
@@ -241,6 +246,12 @@ void            Net_Drawer(void);
 boolean         Net_IsLocalPlayer(int pNum);
 
 void            Net_PrintServerInfo(int index, serverinfo_t *info);
+
+/**
+ * Converts textual data to a serverinfo struct. Returns true if the
+ * label/value pair is recognized.
+ */
+boolean Net_StringToServerInfo(char const *valuePair, serverinfo_t *info);
 
 #ifdef __cplusplus
 } // extern "C"

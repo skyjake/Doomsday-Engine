@@ -2253,7 +2253,11 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&netGame, 0},
     {&isServer, 0},                         // An *open* server?
     {&isClient, 0},
+#ifdef __SERVER__
     {&allowFrames, &allowFrames},
+#else
+    {0, 0},
+#endif
     {&consolePlayer, &consolePlayer},
     {&displayPlayer, 0 /*&displayPlayer*/}, // use R_SetViewPortPlayer() instead
     {&mipmapping, 0},

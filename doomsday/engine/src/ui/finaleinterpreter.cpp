@@ -44,7 +44,11 @@
 #include "audio/s_main.h"
 #include "network/net_main.h"
 #include "client/cl_infine.h"
-#include "server/sv_infine.h"
+
+#ifdef __SERVER__
+#  include "server/sv_infine.h"
+#endif
+
 #include "gl/sys_opengl.h" // TODO: get rid of this
 
 #define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))
@@ -932,10 +936,15 @@ static void stopScript(finaleinterpreter_t* fi)
     Con_Printf("Finale End - id:%i '%.30s'\n", fi->_id, fi->_scriptBegin);
 #endif
     fi->flags.stopped = true;
+
+#ifdef __SERVER__
     if(isServer && !(FI_ScriptFlags(fi->_id) & FF_LOCAL))
-    {   // Tell clients to stop the finale.
+    {
+        // Tell clients to stop the finale.
         Sv_Finale(fi->_id, FINF_END, 0);
     }
+#endif
+
     // Any hooks?
     DD_CallHooks(HOOK_FINALE_SCRIPT_STOP, fi->_id, 0);
 }

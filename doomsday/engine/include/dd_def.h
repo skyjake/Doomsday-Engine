@@ -108,10 +108,6 @@ extern "C" {
 //enum { VX, VY, VZ };               // Vertex indices.
 enum { CR, CG, CB, CA };           // Color indices.
 
-// dd_pinit.c
-extern game_export_t __gx;
-#define gx __gx
-
 extern byte     gammaTable[256];
 extern float    texGamma;
 
@@ -122,5 +118,9 @@ extern fixed_t *fineCosine;
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+// dd_pinit.c
+DENG_EXTERN_C game_export_t __gx;
+#define gx __gx
 
 #endif

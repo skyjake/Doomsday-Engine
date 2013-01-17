@@ -43,29 +43,6 @@ extern "C" {
 // OR'd with the type number when resending Unacked deltas.
 #define DT_RESENT               0x80
 
-// Mobj delta flags. These are used to determine what a delta contains.
-// (Which parts of a delta mobj_t are used.)
-#define MDF_ORIGIN_X               0x0001
-#define MDF_ORIGIN_Y               0x0002
-#define MDF_ORIGIN_Z               0x0004
-#define MDF_ORIGIN                 0x0007
-#define MDF_MOM_X               0x0008
-#define MDF_MOM_Y               0x0010
-#define MDF_MOM_Z               0x0020
-#define MDF_MOM                 0x0038
-#define MDF_ANGLE               0x0040
-#define MDF_HEALTH              0x0080
-#define MDF_MORE_FLAGS          0x0100 // A byte of extra flags follows.
-#define MDF_SELSPEC             0x0200 // Only during transfer.
-#define MDF_SELECTOR            0x0400
-#define MDF_STATE               0x0800
-#define MDF_RADIUS              0x1000
-#define MDF_HEIGHT              0x2000
-#define MDF_FLAGS               0x4000
-#define MDF_FLOORCLIP           0x8000
-#define MDF_EVERYTHING          (MDF_ORIGIN | MDF_MOM | MDF_ANGLE | MDF_SELECTOR | MDF_STATE |\
-                                 MDF_RADIUS | MDF_HEIGHT | MDF_FLAGS | MDF_HEALTH | MDF_FLOORCLIP)
-
 // Mobj Delta Control flags (not included directly in the frame).
 #define MDFC_NULL               0x010000 // The delta is not defined.
 #define MDFC_CREATE             0x020000 // Mobj didn't exist before.
@@ -74,98 +51,17 @@ extern "C" {
 #define MDFC_TYPE               0x100000 // Mobj type specified in delta.
 #define MDFC_ON_FLOOR           0x200000 // Mobj Z is floorZ.
 
-// Extra flags for the Extra Flags byte.
-#define MDFE_FAST_MOM           0x01 // Momentum has 10.6 bits (+/- 512)
-#define MDFE_TRANSLUCENCY       0x02
-#define MDFE_Z_FLOOR            0x04 // Mobj z is on the floor.
-#define MDFE_Z_CEILING          0x08 // Mobj z+hgt is in the ceiling.
-#define MDFE_FADETARGET         0x10
-#define MDFE_TYPE               0x20 // Mobj type.
-
 // The flags that are not included when a mobj is the viewpoint.
 #define MDF_CAMERA_EXCLUDE      0x0e00
 
 // The flags that are not included for hidden mobjs.
 #define MDF_DONTDRAW_EXCLUDE    0x0ec0
 
-#define PDF_MOBJ                0x0001
-#define PDF_FORWARDMOVE         0x0002
-#define PDF_SIDEMOVE            0x0004
-#define PDF_ANGLE               0x0008
-#define PDF_TURNDELTA           0x0010
-#define PDF_FRICTION            0x0020
-#define PDF_EXTRALIGHT          0x0040 // Plus fixedcolormap (same byte).
-#define PDF_FILTER              0x0080
-//#define PDF_CLYAW               0x1000 // Sent in the player num byte.
-//#define PDF_CLPITCH             0x2000 // Sent in the player num byte.
-#define PDF_PSPRITES            0x4000 // Sent in the player num byte.
-
-// Written separately, stored in playerdelta flags 2 highest bytes.
-#define PSDF_STATEPTR           0x01
-#define PSDF_OFFSET             0x08
-#define PSDF_LIGHT              0x20
-#define PSDF_ALPHA              0x40
-#define PSDF_STATE              0x80
-
 // The flags that are not included when a player is the viewpoint.
 #define PDF_CAMERA_EXCLUDE      0x001e
 
 // The flags that are not included when a player is not the viewpoint.
 #define PDF_NONCAMERA_EXCLUDE   0x70de
-
-#define SDF_FLOOR_MATERIAL      0x00000001
-#define SDF_CEILING_MATERIAL    0x00000002
-#define SDF_LIGHT               0x00000004
-#define SDF_FLOOR_TARGET        0x00000008
-#define SDF_FLOOR_SPEED         0x00000010
-#define SDF_CEILING_TARGET      0x00000020
-#define SDF_CEILING_SPEED       0x00000040
-#define SDF_FLOOR_TEXMOVE       0x00000080
-//#define SDF_CEILING_TEXMOVE     0x00000100 // obsolete
-#define SDF_COLOR_RED           0x00000200
-#define SDF_COLOR_GREEN         0x00000400
-#define SDF_COLOR_BLUE          0x00000800
-#define SDF_FLOOR_SPEED_44      0x00001000 // Used for sent deltas.
-#define SDF_CEILING_SPEED_44    0x00002000 // Used for sent deltas.
-#define SDF_FLOOR_HEIGHT        0x00004000
-#define SDF_CEILING_HEIGHT      0x00008000
-#define SDF_FLOOR_COLOR_RED     0x00010000
-#define SDF_FLOOR_COLOR_GREEN   0x00020000
-#define SDF_FLOOR_COLOR_BLUE    0x00040000
-#define SDF_CEIL_COLOR_RED      0x00080000
-#define SDF_CEIL_COLOR_GREEN    0x00100000
-#define SDF_CEIL_COLOR_BLUE     0x00200000
-
-#define SIDF_TOP_MATERIAL       0x0001
-#define SIDF_MID_MATERIAL       0x0002
-#define SIDF_BOTTOM_MATERIAL    0x0004
-#define SIDF_LINE_FLAGS         0x0008
-#define SIDF_TOP_COLOR_RED      0x0010
-#define SIDF_TOP_COLOR_GREEN    0x0020
-#define SIDF_TOP_COLOR_BLUE     0x0040
-#define SIDF_MID_COLOR_RED      0x0080
-#define SIDF_MID_COLOR_GREEN    0x0100
-#define SIDF_MID_COLOR_BLUE     0x0200
-#define SIDF_MID_COLOR_ALPHA    0x0400
-#define SIDF_BOTTOM_COLOR_RED   0x0800
-#define SIDF_BOTTOM_COLOR_GREEN 0x1000
-#define SIDF_BOTTOM_COLOR_BLUE  0x2000
-#define SIDF_MID_BLENDMODE      0x4000
-#define SIDF_FLAGS              0x8000
-
-#define PODF_DEST_X             0x01
-#define PODF_DEST_Y             0x02
-#define PODF_SPEED              0x04
-#define PODF_DEST_ANGLE         0x08
-#define PODF_ANGSPEED           0x10
-#define PODF_PERPETUAL_ROTATE   0x20 // Special flag.
-
-#define LDF_INFO                0x01
-
-#define SNDDF_VOLUME            0x01 // 0=stop, 1=full, >1=no att.
-#define SNDDF_REPEAT            0x02 // Start repeating sound.
-#define SNDDF_PLANE_FLOOR       0x04 // Play sound from floor.
-#define SNDDF_PLANE_CEILING     0x08 // Play sound from ceiling.
 
 typedef enum deltastate_e {
     DELTA_NEW,

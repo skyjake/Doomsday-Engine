@@ -39,12 +39,14 @@
 #  include "api_client.h"
 #endif
 
-#include "server/sv_def.h"
-#include "server/sv_frame.h"
-#include "server/sv_pool.h"
-#include "server/sv_sound.h"
-#include "server/sv_missile.h"
-#include "server/sv_infine.h"
+#ifdef __SERVER__
+#  include "server/sv_def.h"
+#  include "server/sv_frame.h"
+#  include "server/sv_pool.h"
+#  include "server/sv_sound.h"
+#  include "server/sv_missile.h"
+#  include "server/sv_infine.h"
+#endif
 
 #ifdef __CLIENT__
 #  include "client/cl_def.h"

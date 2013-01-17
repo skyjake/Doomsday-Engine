@@ -267,22 +267,21 @@ void GameMap_ThinkerRemove(GameMap* map, thinker_t* th)
     // Has got an ID?
     if(th->id)
     {
-        // Then it must be a mobj.
-        mobj_t* mo = (mobj_t *) th;
-
         // Flag the ID as free.
         GameMap_SetMobjID(map, th->id, false);
+
+#ifdef __SERVER__
+        // Then it must be a mobj.
+        mobj_t* mo = (mobj_t *) th;
 
         // If the state of the mobj is the NULL state, this is a
         // predictable mobj removal (result of animation reaching its
         // end) and shouldn't be included in netGame deltas.
-        if(!isClient)
+        if(!mo->state || mo->state == states)
         {
-            if(!mo->state || mo->state == states)
-            {
-                Sv_MobjRemoved(th->id);
-            }
+            Sv_MobjRemoved(th->id);
         }
+#endif
     }
 
     th->function = (thinkfunc_t) -1;

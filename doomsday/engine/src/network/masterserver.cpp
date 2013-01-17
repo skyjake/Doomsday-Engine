@@ -29,7 +29,10 @@
 #include <list>
 #include "network/masterserver.h"
 #include "network/net_main.h"
-#include "server/sv_def.h"
+#include "network/protocol.h"
+#ifdef __SERVER__
+#  include "server/sv_def.h"
+#endif
 #include "dd_main.h"
 #include "con_main.h"
 #include "m_misc.h"
@@ -131,6 +134,7 @@ void MasterWorker::nextJob()
     QNetworkRequest req(masterUrl(d->currentAction == REQUEST_SERVERS? "?list" : 0));
     req.setRawHeader("User-Agent", "Doomsday Engine " DOOMSDAY_VERSION_TEXT);
 
+#ifdef __SERVER__
     if(d->currentAction == ANNOUNCE)
     {
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-deng-announce");
@@ -150,6 +154,7 @@ void MasterWorker::nextJob()
         Str_Delete(msg);
     }
     else
+#endif
     {
         LOG_DEBUG("GET request ") << req.url().toString();
         foreach(const QByteArray& hdr, req.rawHeaderList())
@@ -235,7 +240,7 @@ bool MasterWorker::parseResponse(const QByteArray& response)
 
         if(info)
         {
-            Sv_StringToInfo(Str_Text(&line), info);
+            Net_StringToServerInfo(Str_Text(&line), info);
         }
     }
 
@@ -264,6 +269,7 @@ void N_MasterShutdown(void)
 
 void N_MasterAnnounceServer(boolean isOpen)
 {
+#ifdef __SERVER__
     // Must be a server.
    if(isClient) return;
 
@@ -281,6 +287,9 @@ void N_MasterAnnounceServer(boolean isOpen)
 
     assert(worker);
     worker->newJob(MasterWorker::ANNOUNCE, info);
+#else
+    DENG_UNUSED(isOpen);
+#endif
 }
 
 void N_MasterRequestList(void)

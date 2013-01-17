@@ -261,12 +261,12 @@ DENG_HEADERS += \
     $$SRC/include/resource/wad.h \
     $$SRC/include/resource/zip.h \
     $$SRC/include/resourceclass.h \
-    $$SRC/include/server/sv_def.h \
-    $$SRC/include/server/sv_frame.h \
-    $$SRC/include/server/sv_infine.h \
-    $$SRC/include/server/sv_missile.h \
-    $$SRC/include/server/sv_pool.h \
-    $$SRC/include/server/sv_sound.h \
+    include/server/sv_def.h \
+    include/server/sv_frame.h \
+    include/server/sv_infine.h \
+    include/server/sv_missile.h \
+    include/server/sv_pool.h \
+    include/server/sv_sound.h \
     $$SRC/include/sys_console.h \
     $$SRC/include/sys_system.h \
     $$SRC/include/tab_anorms.h \
@@ -459,12 +459,12 @@ SOURCES += \
     $$SRC/src/resource/tga.cpp \
     $$SRC/src/resource/wad.cpp \
     $$SRC/src/resource/zip.cpp \
-    $$SRC/src/server/sv_frame.cpp \
-    $$SRC/src/server/sv_infine.cpp \
-    $$SRC/src/server/sv_main.cpp \
-    $$SRC/src/server/sv_missile.cpp \
-    $$SRC/src/server/sv_pool.cpp \
-    $$SRC/src/server/sv_sound.cpp \
+    src/server/sv_frame.cpp \
+    src/server/sv_infine.cpp \
+    src/server/sv_main.cpp \
+    src/server/sv_missile.cpp \
+    src/server/sv_pool.cpp \
+    src/server/sv_sound.cpp \
     $$SRC/src/sys_system.cpp \
     $$SRC/src/tab_tables.c \
     $$SRC/src/ui/b_command.cpp \

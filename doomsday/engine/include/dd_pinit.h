@@ -62,8 +62,6 @@ void DD_InitAPI(void);
  */
 void DD_InitCommandLine(void);
 
-extern game_export_t gx;
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

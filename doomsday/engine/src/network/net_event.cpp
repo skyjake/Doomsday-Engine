@@ -223,13 +223,17 @@ void N_NETicker(timespan_t time)
 void N_Update(void)
 {
     netevent_t  nevent;
-    char        name[256];
+
+#ifdef __SERVER__
+    char name[256];
+#endif
 
     // Are there any events to process?
     while(N_NEGet(&nevent))
     {
         switch(nevent.type)
         {
+#ifdef __SERVER__
         case NE_CLIENT_ENTRY:
             // Find out the name of the new player.
             memset(name, 0, sizeof(name));
@@ -248,6 +252,7 @@ void N_Update(void)
             // Update the master.
             masterHeartbeat = MASTER_UPDATETIME;
             break;
+#endif // __SERVER__
 
         case NE_TERMINATE_NODE:
             // The server receives this event when a client's connection is broken.

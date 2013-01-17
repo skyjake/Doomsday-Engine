@@ -66,15 +66,20 @@ void            N_ShutdownService(void);
 boolean         N_IsAvailable(void);
 boolean         N_UsingInternet(void);
 void            N_PrintInfo(void);
-boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
-void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
 void            N_Listen(void);
 void            N_ListenNodes(void);
 
+#ifdef __CLIENT__
+boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
+void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
 boolean         N_Connect(int index);
 boolean         N_Disconnect(void);
+#endif
+
+#ifdef __SERVER__
 boolean         N_ServerOpen(void);
 boolean         N_ServerClose(void);
+#endif
 
 void            N_TerminateNode(nodeid_t id);
 

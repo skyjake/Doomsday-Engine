@@ -1201,8 +1201,10 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         // We are now finished with the map entity db.
         EntityDatabase_Delete(theMap->entityDatabase);
 
+#ifdef __SERVER__
         // Init server data.
         Sv_InitPools();
+#endif
 
         // Recalculate the light range mod matrix.
         Rend_CalcLightModRange();

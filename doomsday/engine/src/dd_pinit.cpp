@@ -180,7 +180,9 @@ void DD_ShutdownAll(void)
 #endif
 
     P_ControlShutdown();
+#ifdef __SERVER__
     Sv_Shutdown();
+#endif
     R_Shutdown();
     Materials_Shutdown();
     Def_Destroy();

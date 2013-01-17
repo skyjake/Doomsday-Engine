@@ -30,30 +30,8 @@
 #define __DOOMSDAY_SERVER_H__
 
 #include "dd_def.h"
+#include "network/protocol.h"
 #include "network/sys_network.h"
-
-// Prefer adding new flags inside the deltas instead of adding new delta types.
-typedef enum {
-    DT_MOBJ = 0,
-    DT_PLAYER = 1,
-    //DT_SECTOR_R6 = 2, // 2 bytes for flags.
-    //DT_SIDE_R6 = 3, // 1 byte for flags.
-    DT_POLY = 4,
-    DT_LUMP = 5,
-    DT_SOUND = 6, // No emitter
-    DT_MOBJ_SOUND = 7,
-    DT_SECTOR_SOUND = 8,
-    DT_POLY_SOUND = 9,
-    DT_SECTOR = 10, // Flags in a packed long.
-
-    // Special types: (only in the PSV_FRAME2 packet when written to message)
-    DT_NULL_MOBJ = 11, // Mobj was removed (just type and ID).
-    DT_CREATE_MOBJ = 12, // Regular DT_MOBJ, but the mobj was just created.
-
-    DT_SIDE = 13, // Flags in a packed long.
-
-    NUM_DELTA_TYPES
-} deltatype_t;
 
 struct material_s;
 
@@ -61,7 +39,6 @@ struct material_s;
 extern "C" {
 #endif
 
-#define SV_VERSION          21
 #define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R21)"
 
 // Anything closer than this is always taken into consideration when
@@ -100,7 +77,6 @@ int             Sv_Latency(byte cmdTime);
 void            Sv_Kick(int who);
 void            Sv_GetInfo(serverinfo_t* info);
 size_t          Sv_InfoToString(serverinfo_t* info, ddstring_t* msg);
-boolean         Sv_StringToInfo(const char* valuePair, serverinfo_t* info);
 int             Sv_GetNumPlayers(void);
 int             Sv_GetNumConnected(void);
 boolean         Sv_CheckBandwidth(int playerNumber);
