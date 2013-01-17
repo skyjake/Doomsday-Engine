@@ -4,12 +4,12 @@
 include(../config.pri)
 
 TEMPLATE = subdirs
-SUBDIRS = dehread wadmapconverter
+SUBDIRS = dehread wadmapconverter example
 
 # Games.
 SUBDIRS += doom heretic hexen
 
-# Experimental games.
+# Experimental plugins.
 SUBDIRS += doom64
 
 # Optional plugins.

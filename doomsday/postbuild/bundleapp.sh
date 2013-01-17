@@ -37,6 +37,7 @@ $CP plugins/heretic/heretic.bundle                 $PLUGDIR/
 $CP plugins/hexen/hexen.bundle                     $PLUGDIR/
 $CP plugins/doom64/doom64.bundle                   $PLUGDIR/
 $CP plugins/fmod/audio_fmod.bundle                 $PLUGDIR/
+$CP plugins/example/example.bundle                 $PLUGDIR/
 
 # Tools
 #$CP tools/wadtool/wadtool $APPDIR/Resources
