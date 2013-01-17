@@ -799,7 +799,7 @@ void GL_BindTexture(Texture::Variant &tex)
     Sys_GLCheckError();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
-    texturevariantspecification_t &spec = tex.spec();
+    texturevariantspecification_t const &spec = tex.spec();
     if(spec.type == TST_GENERAL)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec)->wrapS);

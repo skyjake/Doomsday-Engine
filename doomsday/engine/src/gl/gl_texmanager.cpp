@@ -2998,7 +2998,7 @@ preparetextureresult_t GL_PrepareTexture(Texture::Variant &variant)
     if(variant.isPrepared()) return PTR_FOUND;
 
     Texture &tex = variant.generalCase();
-    texturevariantspecification_t &spec = variant.spec();
+    texturevariantspecification_t const &spec = variant.spec();
 
     // Load the source image data.
     image_t image;
@@ -3053,111 +3053,6 @@ preparetextureresult_t GL_PrepareTexture(Texture::Variant &variant)
 #endif
 
     return source == TEXS_ORIGINAL? PTR_UPLOADED_ORIGINAL : PTR_UPLOADED_EXTERNAL;
-}
-
-static bool loadImageAndPrepareVariant(Texture &tex, texturevariantspecification_t &spec,
-                                       Texture::Variant **variant)
-{
-    DENG_ASSERT(initedOk);
-    LOG_AS("loadImageAndPrepareVariant");
-
-    // Load the source image data.
-    image_t image;
-    TexSource source = loadSourceImage(tex, spec, image);
-
-    if(source == TEXS_NONE)
-    {
-        // No image found/failed to load.
-        //LOG_WARNING("No image found for \"%s\".") << tex->name();
-        return false;
-    }
-
-    // Are we setting the logical dimensions to the actual pixel dimensions?
-    if(tex.dimensions().isEmpty())
-    {
-#if _DEBUG
-        LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels (%ix%i).")
-            << tex.manifest().composeUri() << image.size.width << image.size.height;
-#endif
-        tex.setDimensions(QSize(image.size.width, image.size.height));
-    }
-
-    performImageAnalyses(tex, &image, spec, true /*Always update*/);
-
-    // Do we need to allocate a variant?
-    if(!*variant)
-    {
-        DGLuint newGLName = GL_GetReservedTextureName();
-        *variant = new Texture::Variant(tex, spec, source);
-        (*variant)->setGLName(newGLName);
-        tex.addVariant(**variant);
-    }
-    // Are we re-preparing a released texture?
-    else if(0 == (*variant)->glName())
-    {
-        DGLuint newGLName = GL_GetReservedTextureName();
-        (*variant)->setSource(source);
-        (*variant)->setGLName(newGLName);
-    }
-    DENG_ASSERT(*variant);
-
-    // (Re)Prepare the variant according to specification.
-    uploadcontentmethod_t uploadMethod;
-    switch(spec.type)
-    {
-    case TST_GENERAL: uploadMethod = prepareVariantFromImage(**variant, image); break;
-    case TST_DETAIL:  uploadMethod = prepareDetailVariantFromImage(**variant, image); break;
-    default:
-        Con_Error("loadImageAndPrepareVariant: Invalid spec type %i.", spec.type);
-        exit(1); // Unreachable.
-    }
-
-    // We're done with the image data.
-    Image_Destroy(&image);
-
-#ifdef _DEBUG
-    LOG_VERBOSE("Prepared \"%s\" variant (glName:%u)%s")
-        << tex.manifest().composeUri() << uint((*variant)->glName())
-        << (METHOD_IMMEDIATE == uploadMethod? " while not busy!" : "");
-
-    VERBOSE2(
-        Con_Printf("  Content: ");
-        Image_PrintMetadata(&image);
-        Con_Printf("  Specification [%p]: ", de::dintptr(&spec));
-        GL_PrintTextureVariantSpecification(&spec);
-        )
-#endif
-
-    return true;
-}
-
-Texture::Variant *GL_PrepareTexture(Texture &tex, texturevariantspecification_t &spec,
-    preparetextureresult_t *outcome)
-{
-    // Have we already prepared something suitable?
-    Texture::Variant *variant = tex.chooseVariant(Texture::MatchSpec, spec);
-
-    if(variant && variant->isPrepared())
-    {
-        if(outcome) *outcome = PTR_FOUND;
-        return variant;
-    }
-
-    // Suffer the cache miss and attempt to (re)prepare a variant.
-    bool loadedOk = loadImageAndPrepareVariant(tex, spec, &variant);
-    if(outcome)
-    {
-        if(loadedOk)
-        {
-            *outcome = (variant->source() == TEXS_ORIGINAL? PTR_UPLOADED_ORIGINAL : PTR_UPLOADED_EXTERNAL);
-        }
-        else
-        {
-            *outcome = PTR_NOTFOUND;
-        }
-    }
-
-    return variant;
 }
 
 void GL_ReleaseGLTexturesByTexture(texture_s *tex)

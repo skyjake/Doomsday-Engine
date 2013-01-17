@@ -60,6 +60,30 @@ struct Texture::Instance
     {
         std::memset(analyses, 0, sizeof(analyses));
     }
+
+    ~Instance()
+    {
+        clearVariants();
+    }
+
+    void clearVariants()
+    {
+        DENG2_FOR_EACH(Variants, i, variants)
+        {
+#if _DEBUG
+            uint glName = (*i)->glName();
+            if(glName)
+            {
+                LOG_AS("Texture::clearVariants")
+                LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
+                    << glName << manifest.composeUri() << (void *)this;
+                GL_PrintTextureVariantSpecification(&(*i)->spec());
+            }
+#endif
+            delete *i;
+        }
+        variants.clear();
+    }
 };
 
 Texture::Texture(TextureManifest &_manifest, void *_userData)
@@ -71,7 +95,6 @@ Texture::~Texture()
 {
     GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(this));
 
-    /// @todo Texture should employ polymorphism.
     TextureScheme const &scheme = d->manifest.scheme();
     if(!scheme.name().compareWithoutCase("Textures"))
     {
@@ -80,7 +103,7 @@ Texture::~Texture()
     }
 
     clearAnalyses();
-    clearVariants();
+    delete d;
 }
 
 TextureManifest &Texture::manifest() const
@@ -97,25 +120,6 @@ void Texture::clearAnalyses()
         if(data) M_Free(data);
         setAnalysisDataPointer(analysis, 0);
     }
-}
-
-void Texture::clearVariants()
-{
-    DENG2_FOR_EACH(Variants, i, d->variants)
-    {
-#if _DEBUG
-        uint glName = (*i)->glName();
-        if(glName)
-        {
-            LOG_AS("Texture::clearVariants")
-            LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
-                << glName << d->manifest.composeUri() << (void *)this;
-            GL_PrintTextureVariantSpecification(&(*i)->spec());
-        }
-#endif
-        delete *i;
-    }
-    d->variants.clear();
 }
 
 void Texture::setUserDataPointer(void *newUserData)
@@ -137,12 +141,6 @@ void *Texture::userDataPointer() const
 uint Texture::variantCount() const
 {
     return uint(d->variants.count());
-}
-
-Texture::Variant &Texture::addVariant(Texture::Variant &variant)
-{
-    d->variants.push_back(&variant);
-    return *d->variants.back();
 }
 
 int Texture::width() const
@@ -189,7 +187,7 @@ void Texture::setOrigin(QPoint const &newOrigin)
 }
 
 Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
-    texturevariantspecification_t const &spec)
+    texturevariantspecification_t const &spec, bool canCreate)
 {
     DENG2_FOR_EACH_CONST(Variants, i, d->variants)
     {
@@ -224,7 +222,12 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
         DENG_ASSERT(!chooseVariant(FuzzyMatchSpec, spec));
     }
 #endif
-    return 0;
+
+    if(!canCreate) return 0;
+
+    Variant *variant = new Variant(*this, spec);
+    d->variants.push_back(variant);
+    return variant;
 }
 
 Texture::Variants const &Texture::variants() const

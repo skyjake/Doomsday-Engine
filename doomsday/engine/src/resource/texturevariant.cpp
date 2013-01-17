@@ -78,7 +78,7 @@ struct Texture::Variant::Instance
     Texture &texture;
 
     /// Specification used to derive this variant.
-    texturevariantspecification_t &spec;
+    texturevariantspecification_t const &spec;
 
     /// Variant flags.
     Texture::Variant::Flags flags;
@@ -92,18 +92,16 @@ struct Texture::Variant::Instance
     /// Prepared coordinates for the bottom right of the texture minus border.
     float s, t;
 
-    Instance(Texture &generalCase, texturevariantspecification_t &spec)
+    Instance(Texture &generalCase, texturevariantspecification_t const &spec)
         : texture(generalCase), spec(spec),
           flags(0), texSource(TEXS_NONE),
           glTexName(0), s(0), t(0)
     {}
 };
 
-Texture::Variant::Variant(Texture &generalCase,
-    texturevariantspecification_t &spec, TexSource source)
+Texture::Variant::Variant(Texture &generalCase, texturevariantspecification_t const &spec)
 {
     d = new Instance(generalCase, spec);
-    setSource(source);
 }
 
 Texture::Variant::~Variant()
@@ -116,7 +114,7 @@ Texture &Texture::Variant::generalCase() const
     return d->texture;
 }
 
-texturevariantspecification_t &Texture::Variant::spec() const
+texturevariantspecification_t const &Texture::Variant::spec() const
 {
     return d->spec;
 }

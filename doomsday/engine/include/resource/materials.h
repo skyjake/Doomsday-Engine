@@ -337,7 +337,7 @@ public:
      *
      * @note A convenient shorthand of the call tree:
      * <pre>
-     *    prepare( Material_ChooseVariant( @a material, @a spec, @a smooth, @c true ), @a forceSnapshotUpdate )
+     *    prepare( Material_ChooseVariant( @a material, @a spec, @c true ), @a forceSnapshotUpdate )
      * </pre>
      *
      * @param material  Base Material from which to derive a variant.

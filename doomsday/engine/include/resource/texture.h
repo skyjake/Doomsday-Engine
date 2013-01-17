@@ -112,10 +112,8 @@ public:
          * @param generalCase   Texture from which this variant is derived.
          * @param spec          Specification used to derive this variant.
          *                      Ownership is NOT given to the Variant.
-         * @param source        Source of this variant.
          */
-        Variant(Texture &generalCase, texturevariantspecification_t &spec,
-                TexSource source = TEXS_NONE);
+        Variant(Texture &generalCase, texturevariantspecification_t const &spec);
         ~Variant();
 
         /**
@@ -132,7 +130,7 @@ public:
         Texture &generalCase() const;
 
         /// @return  Texture variant specification for the variant.
-        texturevariantspecification_t &spec() const;
+        texturevariantspecification_t const &spec() const;
 
         /// @return  Source of the variant.
         TexSource source() const;
@@ -223,24 +221,8 @@ public:
      */
     void setUserDataPointer(void *userData);
 
-    /**
-     * Add a new prepared variant to the list of resources for this Texture.
-     * Texture takes ownership of the variant.
-     *
-     * @param variant  Variant instance to add to the resource list.
-     *
-     * @todo Should be private -ds
-     */
-    Variant &addVariant(Variant &variant);
-
-    /// @return  Number of variants for the texture.
-    uint variantCount() const;
-
     /// Destroy all analyses for the texture.
     void clearAnalyses();
-
-    /// Destroy all prepared variants for the texture.
-    void clearVariants();
 
     /**
      * Retrieve the value of an identified @a analysis data pointer.
@@ -307,6 +289,11 @@ public:
     void setOrigin(QPoint const &newOrigin);
 
     /**
+     * Returns the number of variants for the texture.
+     */
+    uint variantCount() const;
+
+    /**
      * Choose/create a variant of the texture which fulfills @a spec.
      *
      * @param method    Method of selection.
@@ -316,7 +303,7 @@ public:
      * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
      */
     Variant *chooseVariant(ChooseVariantMethod method,
-                           texturevariantspecification_t const &spec);
+        texturevariantspecification_t const &spec, bool canCreate = false);
 
     /**
      * Provides access to the list of variant textures for efficent traversals.
