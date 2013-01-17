@@ -207,14 +207,14 @@ def startGame(profile):
     isServer = '-dedicated' in options
     if isServer:
         idx = options.index('-dedicated')
-        options = options[:idx] + options[idx+10:]
+        options = options[:idx] + options[idx+11:]
         engineBin = st.getSystemString('doomsday-server-binary')
         userPath = paths.getUserPath(paths.SERVER_RUNTIME)
     else:
         engineBin = st.getSystemString('doomsday-binary')        
         userPath = paths.getUserPath(paths.RUNTIME)
 
-    options += '-userdir ' + paths.quote(userPath)
+    options += ' -userdir ' + paths.quote(userPath)
 
     # Put the response file in the user's runtime directory.
     responseFile = os.path.join(userPath, 'Options.rsp')
