@@ -37,6 +37,7 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
 #include <de/aabox.h>
 #include "dengproject.h"
