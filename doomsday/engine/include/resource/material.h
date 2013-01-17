@@ -31,6 +31,7 @@
 #include "def_data.h"
 
 #include <QList>
+#include <QSize>
 #include <de/Error>
 #include <de/Vector>
 #include "uri.hh"
@@ -62,34 +63,45 @@ struct MaterialVariantSpec;
 
 /**
  * Logical material resource.
- *
- * Prepared states:
- * - 0 Not yet prepared.
- * - 1 Prepared from original game textures.
- * - 2 Prepared from custom or replacement textures.
- *
  * @ingroup resource
  */
 class Material : public de::MapElement
 {
+    struct Instance; // Needs to be friended by Variant
+
 public:
+    /// Maximum number of layers a material supports.
+    static int const max_layers = DED_MAX_MATERIAL_LAYERS;
+
+    /// Maximum number of (light) decorations a material supports.
+    static int const max_decorations = DED_MAX_MATERIAL_DECORATIONS;
+
+    /// The referenced layer does not exist. @ingroup errors
+    DENG2_ERROR(UnknownLayerError);
+
+    /// The referenced decoration does not exist. @ingroup errors
+    DENG2_ERROR(UnknownDecorationError);
+
+    /// The referenced property does not exist. @ingroup errors
+    DENG2_ERROR(UnknownPropertyError);
+
+    /// The referenced property is not writeable. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
+
     /**
      * Context-specialized variant. Encapsulates all context variant values
      * and logics pertaining to a specialized version of the @em superior
-     * Material instance.
+     * material instance.
      *
      * Variant instances are usually only created by the superior material
-     * when asked to prepare for render (@ref Material_ChooseVariant()) using
-     * a context specialization specification which it cannot fulfill/match.
+     * when asked to prepare for render (@ref chooseVariant()) using a context
+     * specialization specification which it cannot fulfill/match.
      *
      * @see MaterialVariantSpec
      */
     class Variant
     {
     public:
-        /// Maximum number of layers a material supports.
-        static int const max_layers = DED_MAX_MATERIAL_LAYERS;
-
         /// Current state of a material layer.
         struct LayerState
         {
@@ -102,9 +114,6 @@ public:
             /// Intermark from the current stage to the next [0..1].
             float inter;
         };
-
-        /// Maximum number of (light) decorations a material supports.
-        static int const max_decorations = DED_MAX_MATERIAL_DECORATIONS;
 
         /// Current state of a material (light) decoration.
         struct DecorationState
@@ -120,26 +129,30 @@ public:
         };
 
     public:
-        /// The requested layer does not exist. @ingroup errors
-        DENG2_ERROR(InvalidLayerError);
-
-        /// The requested decoration does not exist. @ingroup errors
-        DENG2_ERROR(InvalidDecorationError);
-
         /// Required snapshot data is missing. @ingroup errors
         DENG2_ERROR(MissingSnapshotError);
 
-    public:
+    private:
         /**
          * @param generalCase   Material from which this variant is derived.
          * @param spec          Specification used to derive this variant.
          *                      Ownership is NOT given to the Variant.
-         *
-         * @todo should only be accessible by Material (Material).
          */
         Variant(Material &generalCase, de::MaterialVariantSpec const &spec);
         ~Variant();
 
+        /**
+         * Process a system tick event. If not currently paused and the material
+         * is valid; layer stages are animated and state property values are
+         * updated accordingly.
+         *
+         * @param ticLength  Length of the tick in seconds.
+         *
+         * @see isPaused()
+         */
+        void ticker(timespan_t ticLength);
+
+    public:
         /**
          * Retrieve the general case for this variant. Allows for a variant
          * reference to be used in place of a material (implicit indirection).
@@ -162,17 +175,6 @@ public:
          * the client has paused the game).
          */
         bool isPaused() const;
-
-        /**
-         * Process a system tick event. If not currently paused and the material
-         * is valid; layer stages are animated and state property values are
-         * updated accordingly.
-         *
-         * @param ticLength  Length of the tick in seconds.
-         *
-         * @see isPaused()
-         */
-        void ticker(timespan_t ticLength);
 
         /**
          * Reset the staged animation point for this Material.
@@ -227,6 +229,9 @@ public:
          * @param frameNum  Frame number to mark the snapshot with.
          */
         void setSnapshotPrepareFrame(int frameNum);
+
+        friend class Material;
+        friend struct Material::Instance;
 
     private:
         struct Instance;
@@ -346,18 +351,133 @@ public:
      * Construct a new material.
      *
      * @param flags  @see materialFlags
-     * @param def  Definition for the material, if any.
+     * @param def  Definition for the material.
      * @param dimensions  Dimensions of the material in map coordinate space units.
-     * @param envClass  Environment class for the material.
      */
-    Material(short flags, ded_material_t *def, Size2Raw *dimensions,
-             material_env_class_t envClass);
+    Material(short flags, ded_material_t &def, QSize const &dimensions = QSize());
     ~Material();
 
     /**
-     * Returns the number of material variants.
+     * Returns the MaterialManifest derived to yield the material.
      */
-    int variantCount() const;
+    de::MaterialManifest &manifest() const;
+
+    /**
+     * Returns the definition for the material; otherwise @c 0 if invalid.
+     */
+    struct ded_material_s *definition() const;
+
+    /**
+     * Change the associated definition for the material.
+     * @param def  New definition (can be @c 0).
+     */
+    void setDefinition(struct ded_material_s *def);
+
+    /// Returns the dimensions of the material in map coordinate space units.
+    QSize const &dimensions() const;
+
+    /// Returns the width of the material in map coordinate space units.
+    inline int width() const { return dimensions().width(); }
+
+    /// Returns the height of the material in map coordinate space units.
+    inline int height() const { return dimensions().height(); }
+
+    /**
+     * Change the world dimensions of the material.
+     * @param newDimensions  New dimensions in map coordinate space units.
+     */
+    void setDimensions(QSize const &newDimensions);
+
+    /**
+     * Change the world width of the material.
+     * @param newWidth  New width in map coordinate space units.
+     */
+    void setWidth(int newWidth);
+
+    /**
+     * Change the world height of the material.
+     * @param newHeight  New height in map coordinate space units.
+     */
+    void setHeight(int height);
+
+    /// Returns the @ref materialFlags for the material.
+    short flags() const;
+
+    /**
+     * Change the material's flags.
+     * @param flags  @ref materialFlags
+     */
+    void setFlags(short flags);
+
+    /**
+     * Returns @c true if the material is considered @em valid. A material is
+     * only invalidated when resources it depends on (such as the definition
+     * from which it was produced) are destroyed as result of runtime file
+     * unloading.
+     *
+     * These 'orphaned' materials as the game may be holding on to pointers
+     * (which are considered eternal). Invalid materials are instead ignored
+     * until such time as the current game is reset or changed.
+     */
+    bool isValid() const;
+
+    /// Returns @c true if the material has at least one animated layer.
+    bool isAnimated() const;
+
+    /// Returns @c true if the material is considered drawable.
+    bool isDrawable() const;
+
+    /// Returns @c true if the material is considered @em skymasked.
+    bool isSkyMasked() const;
+
+    /// Returns @c true if the material has one or more (light) decorations.
+    bool hasDecorations() const;
+
+    /// Returns @c true if one or more of the material's layers are glowing.
+    bool hasGlow() const;
+
+    /**
+     * Returns the current prepared state of the material:
+     * @return       @c 0= Not yet prepared.
+     *               @c 1= Prepared from original game textures.
+     *               @c 2= Prepared from custom or replacement textures.
+     */
+    byte prepared() const;
+
+    /**
+     * Change the prepared status of the material.
+     * @param state  @c 0= Not yet prepared.
+     *               @c 1= Prepared from original game textures.
+     *               @c 2= Prepared from custom or replacement textures.
+     */
+    void setPrepared(byte state);
+
+    /**
+     * Returns the environment audio class for the material.
+     */
+    material_env_class_t environmentClass() const;
+
+    /**
+     * Change the material's environment audio class.
+     * @param envClass  New MaterialEnvironmentClass.
+     *
+     * @todo If attached to a map Surface update accordingly!
+     */
+    void setEnvironmentClass(material_env_class_t envClass);
+
+    /**
+     * Process a system tick event for all context variants of the material.
+     * Each if not currently paused is animated independently; layer stages
+     * and (light) decorations are animated and state property values are
+     * updated accordingly.
+     *
+     * @note If the material is not valid no animation will be done.
+     *
+     * @param ticLength  Length of the tick in seconds.
+     *
+     * @see isValid()
+     */
+    void ticker(timespan_t time);
 
     /**
      * Returns the number of material layers.
@@ -365,114 +485,83 @@ public:
     int layerCount() const;
 
     /**
+     * Provides access to the list of layers for efficient traversal.
+     */
+    Layers const &layers() const;
+
+    /**
+     * Add a new (light) decoration to the material.
+     *
+     * @param decor     Decoration to add.
+     */
+    void addDecoration(Decoration &decor);
+
+    /**
+     * Provides access to the list of decorations for efficient traversal.
+     */
+    Decorations const &decorations() const;
+
+    /**
      * Returns the number of material (light) decorations.
      */
     int decorationCount() const;
 
     /**
-     * Process a system tick event.
-     */
-    void ticker(timespan_t time);
-
-    /**
-     * Destroys all derived material variants for the material.
+     * Destroys all derived variants for the material.
      */
     void clearVariants();
 
-    /// @return  Definition associated with this.
-    struct ded_material_s *definition() const;
-
     /**
-     * Change the associated definition.
-     * @param def  New definition. Can be @c NULL.
-     */
-    void setDefinition(struct ded_material_s *def);
-
-    /// Returns the dimensions of the material in map coordinate space units.
-    Size2 const *dimensions() const;
-
-    /**
-     * Change the world dimensions of the material.
-     * @param newDimensions  New dimensions in map coordinate space units.
-     */
-    void setDimensions(Size2Raw const *size);
-
-    /// @return  Width of the material in map coordinate space units.
-    int width() const;
-
-    void setWidth(int width);
-
-    /// @return  Height of the material in map coordinate space units.
-    int height() const;
-
-    void setHeight(int height);
-
-    /// @return  @see materialFlags
-    short flags() const;
-
-    /**
-     * Change the public Material Flags.
-     * @param flags  @ref materialFlags
-     */
-    void setFlags(short flags);
-
-    /**
-     * Returns @c true if the material is considered to be @em valid. A material
-     * can only be invalidated when resources it depends on (such as the definition
-     * from which it was produced) are removed as result of runtime file unloading.
+     * Choose/create a variant of the material which fulfills @a spec.
      *
-     * We can't yet purge these 'orphaned' materials as the game may be holding on
-     * to pointers (which are considered eternal). Instead, an invalid material is
-     * ignored until such time as the current game is reset or is changed.
+     * @param spec      Specification for the derivation of @a material.
+     * @param canCreate @c true= Create a new variant if no suitable one exists.
+     *
+     * @return  The chosen variant; otherwise @c 0 (if none suitable, when
+     *          not creating).
      */
-    bool isValid() const;
-
-    /// @return  @c true= the material has at least one animated layer.
-    bool isAnimated() const;
-
-    /// Returns @c true if the material is considered @em skymasked.
-    bool isSkyMasked() const;
-
-    /// Returns @c true if the material is considered drawable.
-    bool isDrawable() const;
-
-    /// Returns @c true if one or more (light) decorations are defined for the material.
-    bool hasDecorations() const;
-
-    /// Returns @c true if one or more of the material's layers are glowing.
-    bool hasGlow() const;
-
-    /// @return  Prepared state of this material.
-    byte prepared() const;
+    Variant *chooseVariant(de::MaterialVariantSpec const &spec,
+                           bool canCreate = false);
 
     /**
-     * Change the prepared status of this material.
-     * @param state  @c 0: Not yet prepared.
-     *               @c 1: Prepared from original game textures.
-     *               @c 2: Prepared from custom or replacement textures.
+     * Provides access to the list of variant instances for efficient traversal.
      */
-    void setPrepared(byte state);
+    Variants const &variants() const;
 
-    /// @return  Unique identifier of the MaterialManifest for the material.
+    /**
+     * Returns the number of material variants.
+     */
+    int variantCount() const;
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int getProperty(setargs_t &args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int setProperty(setargs_t const &args);
+
+public:
+    /*
+     * Here follows methods awaiting cleanup/redesign/removal.
+     */
+
+    /// @return  Unique identifier of the manifest for the material.
     materialid_t manifestId() const;
 
     /**
-     * Change the unique identifier of the MaterialManifest for the material.
+     * Change the unique identifier of the manifest for the material.
      * @param id  New identifier.
-     *
-     * @todo Refactor away.
      */
     void setManifestId(materialid_t id);
-
-    /// @return  MaterialEnvironmentClass.
-    material_env_class_t environmentClass() const;
-
-    /**
-     * Change the associated environment class.
-     * @todo If attached to a Map Surface update accordingly!
-     * @param envClass  New MaterialEnvironmentClass.
-     */
-    void setEnvironmentClass(material_env_class_t envClass);
 
     /// @return  Detail Texture linked to this else @c NULL
     struct texture_s *detailTexture();
@@ -546,58 +635,7 @@ public:
      */
     void setShinyMaskTexture(struct texture_s *tex);
 
-    de::MaterialManifest &manifest() const;
-
-    /**
-     * Provides access to the list of layers for efficient traversal.
-     */
-    Layers const &layers() const;
-
-    /**
-     * Add a new (light) decoration to the material.
-     *
-     * @param decor     Decoration to add.
-     */
-    void addDecoration(Decoration &decor);
-
-    /**
-     * Provides access to the list of decorations for efficient traversal.
-     */
-    Decorations const &decorations() const;
-
-    /**
-     * Choose/create a variant of the material which fulfills @a spec.
-     *
-     * @param spec      Specification for the derivation of @a material.
-     * @param canCreate @c true= Create a new variant if no suitable one exists.
-     *
-     * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
-     */
-    Variant *chooseVariant(de::MaterialVariantSpec const &spec, bool canCreate = false);
-
-    /**
-     * Provides access to the list of variant instances for efficient traversal.
-     */
-    Variants const &variants() const;
-
-    /**
-     * Get a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
-    int getProperty(setargs_t *args) const;
-
-    /**
-     * Update a property value, selected by DMU_* name.
-     *
-     * @param args  Property arguments.
-     * @return  Always @c 0 (can be used as an iterator).
-     */
-    int setProperty(setargs_t const *args);
-
 private:
-    struct Instance;
     Instance *d;
 };
 

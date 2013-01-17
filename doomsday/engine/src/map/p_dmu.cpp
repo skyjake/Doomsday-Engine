@@ -1046,7 +1046,7 @@ static int setProperty(void *ptr, void *context)
         break;
 
     case DMU_MATERIAL:
-        elem->castTo<Material>()->setProperty(args);
+        elem->castTo<Material>()->setProperty(*args);
         break;
 
     case DMU_BSPNODE: {
@@ -1538,8 +1538,7 @@ static int getProperty(void *ptr, void *context)
         break;
 
     case DMU_MATERIAL:
-        // TODO: Update this when Material is derived from MapElement.
-        //Material_GetProperty((Material *)ob, args);
+        elem->castTo<Material>()->getProperty(*args);
         break;
 
     default: {

@@ -556,11 +556,9 @@ Material *Materials::newFromDef(ded_material_t &def)
     manifest->linkDefinitions();
 
     // Create a material for this right away.
-    Size2Raw dimensions(MAX_OF(0, def.width), MAX_OF(0, def.height));
-    material_env_class_t envClass = S_MaterialEnvClassForUri(reinterpret_cast<struct uri_s const *>(&uri));
-
-    Material *mat = new Material(def.flags, &def, &dimensions, envClass);
+    Material *mat = new Material(def.flags, def, QSize(MAX_OF(0, def.width), MAX_OF(0, def.height)));
     mat->setManifestId(manifest->id());
+    mat->setEnvironmentClass(S_MaterialEnvClassForUri(reinterpret_cast<struct uri_s const *>(&uri)));
 
     // Attach the material to the manifest.
     manifest->setMaterial(mat);

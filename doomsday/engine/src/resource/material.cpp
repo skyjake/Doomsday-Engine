@@ -20,15 +20,11 @@
 #include <cstring>
 
 #include "de_base.h"
-#include "de_defs.h"
-#include "de_resource.h"
-#include "de_render.h"
+#include "def_main.h"
 
 #include "api_map.h"
 #include "audio/s_environ.h"
-#include "gl/sys_opengl.h" // TODO: get rid of this
 #include "map/r_world.h"
-#include "sys_system.h" // var: novideo
 
 #include "resource/material.h"
 
@@ -116,11 +112,11 @@ struct Material::Instance
     /// Environmental sound class.
     material_env_class_t envClass;
 
-    /// Unique identifier of the MaterialManifest associated with this Material or @c NULL if not bound.
+    /// Unique identifier of the primary binding in the owning collection.
     materialid_t manifestId;
 
     /// World dimensions in map coordinate space units.
-    Size2 *dimensions;
+    QSize dimensions;
 
     /// @see materialFlags
     short flags;
@@ -146,10 +142,9 @@ struct Material::Instance
     /// Current prepared state.
     byte prepared;
 
-    Instance(short _flags, ded_material_t &_def, Size2Raw &_dimensions,
-             material_env_class_t _envClass)
-        : def(&_def), envClass(_envClass), manifestId(0),
-          dimensions(Size2_NewFromRaw(&_dimensions)), flags(_flags),
+    Instance(short _flags, ded_material_t &_def, QSize const &_dimensions)
+        : def(&_def), envClass(MEC_UNKNOWN), manifestId(0),
+          dimensions(_dimensions), flags(_flags),
           detailTex(0), detailScale(0), detailStrength(0),
           shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0),
           prepared(0)
@@ -168,7 +163,6 @@ struct Material::Instance
         clearDecorations();
         clearLayers();
         clearVariants();
-        Size2_Delete(dimensions);
     }
 
     void clearVariants()
@@ -197,12 +191,10 @@ struct Material::Instance
     }
 };
 
-Material::Material(short flags, ded_material_t *def, Size2Raw *dimensions,
-                   material_env_class_t envClass)
+Material::Material(short flags, ded_material_t &def, QSize const &dimensions)
     : de::MapElement(DMU_MATERIAL)
 {
-    DENG_ASSERT(def && dimensions);
-    d = new Instance(flags, *def, *dimensions, envClass);
+    d = new Instance(flags, def, dimensions);
 }
 
 Material::~Material()
@@ -250,8 +242,7 @@ void Material::setDefinition(struct ded_material_s *def)
     MaterialManifest &_manifest = manifest();
 
     d->flags = d->def->flags;
-    Size2Raw size(def->width, def->height);
-    setDimensions(&size);
+    setDimensions(QSize(def->width, def->height));
     setEnvironmentClass(S_MaterialEnvClassForUri(def->uri));
 
     // Update custom status.
@@ -273,46 +264,36 @@ void Material::setDefinition(struct ded_material_s *def)
     }
 }
 
-Size2 const *Material::dimensions() const
+QSize const &Material::dimensions() const
 {
     return d->dimensions;
 }
 
-void Material::setDimensions(Size2Raw const *newSize)
+void Material::setDimensions(QSize const &newDimensions)
 {
-    if(!newSize) return;
-
-    Size2 *size = Size2_NewFromRaw(newSize);
-    if(!Size2_Equality(d->dimensions, size))
+    if(d->dimensions != newDimensions)
     {
-        Size2_SetWidthHeight(d->dimensions, newSize->width, newSize->height);
+        d->dimensions = newDimensions;
         R_UpdateMapSurfacesOnMaterialChange(this);
     }
-    Size2_Delete(size);
-}
-
-int Material::width() const
-{
-    return Size2_Width(d->dimensions);
 }
 
 void Material::setWidth(int width)
 {
-    if(Size2_Width(d->dimensions) == width) return;
-    Size2_SetWidth(d->dimensions, width);
-    R_UpdateMapSurfacesOnMaterialChange(this);
-}
-
-int Material::height() const
-{
-    return Size2_Height(d->dimensions);
+    if(d->dimensions.width() != width)
+    {
+        d->dimensions.setWidth(width);
+        R_UpdateMapSurfacesOnMaterialChange(this);
+    }
 }
 
 void Material::setHeight(int height)
 {
-    if(Size2_Height(d->dimensions) == height) return;
-    Size2_SetHeight(d->dimensions, height);
-    R_UpdateMapSurfacesOnMaterialChange(this);
+    if(d->dimensions.height() != height)
+    {
+        d->dimensions.setHeight(height);
+        R_UpdateMapSurfacesOnMaterialChange(this);
+    }
 }
 
 short Material::flags() const
@@ -545,33 +526,34 @@ bool Material::hasDecorations() const
     return d->decorations.count() != 0;
 }
 
-int Material::getProperty(setargs_t *args) const
+int Material::getProperty(setargs_t &args) const
 {
-    DENG_ASSERT(args);
-    switch(args->prop)
+    switch(args.prop)
     {
     case DMU_FLAGS: {
         short flags_ = flags();
-        DMU_GetValue(DMT_MATERIAL_FLAGS, &flags_, args, 0);
+        DMU_GetValue(DMT_MATERIAL_FLAGS, &flags_, &args, 0);
         break; }
 
     case DMU_WIDTH: {
         int width_ = width();
-        DMU_GetValue(DMT_MATERIAL_WIDTH, &width_, args, 0);
+        DMU_GetValue(DMT_MATERIAL_WIDTH, &width_, &args, 0);
         break; }
 
     case DMU_HEIGHT: {
         int height_ = height();
-        DMU_GetValue(DMT_MATERIAL_HEIGHT, &height_, args, 0);
+        DMU_GetValue(DMT_MATERIAL_HEIGHT, &height_, &args, 0);
         break; }
 
     default:
-        throw Error("Material::getProperty", QString("No property %1").arg(DMU_Str(args->prop)));
+        /// @throw UnknownPropertyError  The requested property does not exist.
+        throw UnknownPropertyError("Material::getProperty", QString("No property %1").arg(DMU_Str(args.prop)));
     }
     return false; // Continue iteration.
 }
 
-int Material::setProperty(setargs_t const *args)
+int Material::setProperty(setargs_t const &args)
 {
-    throw Error("Material_SetProperty", QString("Property '%1' is not writable").arg(DMU_Str(args->prop)));
+    /// @throw WritePropertyError  The requested property is not writable.
+    throw WritePropertyError("Material::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
 }

@@ -55,7 +55,7 @@ struct Store {
 
 #ifdef __CLIENT__
     /// Decoration configuration.
-    MaterialSnapshot::Decoration decorations[Material::Variant::max_decorations];
+    MaterialSnapshot::Decoration decorations[Material::max_decorations];
 
     /// Prepared render texture unit configuration. These map directly
     /// to the texture units supplied to the render lists module.
@@ -183,10 +183,10 @@ rtexmapunit_t const &MaterialSnapshot::unit(rtexmapunitid_t id) const
 
 MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
 {
-    if(index < 0 || index >= Material::Variant::max_decorations)
+    if(index < 0 || index >= Material::max_decorations)
     {
-        /// @throw InvalidDecorationError Attempt to obtain a reference to a decoration with an invalid index.
-        throw InvalidDecorationError("MaterialSnapshot::decoration", QString("Invalid decoration index %1").arg(index));
+        /// @throw UnknownDecorationError Attempt to obtain a reference to a decoration with an invalid index.
+        throw UnknownDecorationError("MaterialSnapshot::decoration", QString("Invalid decoration index %1").arg(index));
     }
     return d->stored.decorations[index];
 }
@@ -294,8 +294,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 // Are we inheriting the logical dimensions from the texture?
                 if(0 == mat->width() && 0 == mat->height())
                 {
-                    Size2Raw newDimensions(tex->width(), tex->height());
-                    mat->setDimensions(&newDimensions);
+                    mat->setDimensions(tex->dimensions());
                 }
                 updateMaterial(result);
             }

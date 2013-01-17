@@ -71,7 +71,7 @@ public:
 
 #ifdef __CLIENT__
     /// Invalid decoration referenced. @ingroup errors
-    DENG2_ERROR(InvalidDecorationError);
+    DENG2_ERROR(UnknownDecorationError);
 #endif
 
 public:

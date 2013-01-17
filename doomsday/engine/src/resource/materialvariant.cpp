@@ -59,10 +59,10 @@ struct Material::Variant::Instance
     int snapshotPrepareFrame;
 
     /// Layer animation states.
-    Material::Variant::LayerState layers[Material::Variant::max_layers];
+    Material::Variant::LayerState layers[Material::max_layers];
 
     /// Decoration animation states.
-    Material::Variant::DecorationState decorations[Material::Variant::max_decorations];
+    Material::Variant::DecorationState decorations[Material::max_decorations];
 
     Instance(Material &generalCase, MaterialVariantSpec const &_spec)
         : material(&generalCase),
@@ -228,8 +228,8 @@ Material::Variant::LayerState const &Material::Variant::layer(int layerNum)
     if(layerNum >= 0 && layerNum < d->material->layerCount())
         return d->layers[layerNum];
 
-    /// @throw InvalidLayerError Invalid layer reference.
-    throw InvalidLayerError("Material::Variant::layer", QString("Invalid material layer #%1").arg(layerNum));
+    /// @throw UnknownLayerError Invalid layer reference.
+    throw UnknownLayerError("Material::Variant::layer", QString("Invalid material layer #%1").arg(layerNum));
 }
 
 Material::Variant::DecorationState const &Material::Variant::decoration(int decorNum)
@@ -237,8 +237,8 @@ Material::Variant::DecorationState const &Material::Variant::decoration(int deco
     if(decorNum >= 0 && decorNum < d->material->decorationCount())
         return d->decorations[decorNum];
 
-    /// @throw InvalidDecorationError Invalid decoration reference.
-    throw InvalidDecorationError("Material::Variant::decoration", QString("Invalid material decoration #%1").arg(decorNum));
+    /// @throw UnknownDecorationError Invalid decoration reference.
+    throw UnknownDecorationError("Material::Variant::decoration", QString("Invalid material decoration #%1").arg(decorNum));
 }
 
 MaterialSnapshot &Material::Variant::attachSnapshot(MaterialSnapshot &newSnapshot)
