@@ -741,7 +741,7 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
-void GL_SetMaterialUI2(material_t *mat, int wrapS, int wrapT)
+void GL_SetMaterialUI2(Material *mat, int wrapS, int wrapT)
 {
     if(!mat) return; // @todo we need a "NULL material".
 
@@ -752,12 +752,12 @@ void GL_SetMaterialUI2(material_t *mat, int wrapS, int wrapT)
     GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
 }
 
-void GL_SetMaterialUI(material_t* mat)
+void GL_SetMaterialUI(Material* mat)
 {
     GL_SetMaterialUI2(mat, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 }
 
-void GL_SetPSprite(material_t *mat, int tClass, int tMap)
+void GL_SetPSprite(Material *mat, int tClass, int tMap)
 {
     if(!mat) return; // @todo we need a "NULL material".
 

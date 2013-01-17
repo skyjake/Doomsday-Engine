@@ -30,7 +30,7 @@
 #include <de/writer.h>
 #include <de/reader.h>
 
-class material_t;
+class Material;
 
 namespace de {
 
@@ -51,7 +51,7 @@ public:
     /**
      * @return A new (unused) SerialId for the specified material.
      */
-    materialarchive_serialid_t findUniqueSerialId(material_t *mat) const;
+    materialarchive_serialid_t findUniqueSerialId(Material *mat) const;
 
     /**
      * Finds and returns a material with the identifier @a serialId.
@@ -61,7 +61,7 @@ public:
      *
      * @return  Pointer to a material instance. Ownership not given.
      */
-    material_t *find(materialarchive_serialid_t serialId, int group) const;
+    Material *find(materialarchive_serialid_t serialId, int group) const;
 
     /**
      * Returns the number of materials in the archive.

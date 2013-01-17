@@ -880,8 +880,8 @@ static void P_FinalizeMap(void)
     if(!(gameModeBits & (GM_DOOM2_HACX|GM_DOOM_CHEX)))
     {
         uint i, k;
-        material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
-        material_t* bottomMat, *midMat;
+        Material* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
+        Material* bottomMat, *midMat;
         float yoff;
         SideDef* sidedef;
         LineDef* line;

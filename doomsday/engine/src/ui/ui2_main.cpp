@@ -262,7 +262,7 @@ static fidata_pic_frame_t *createPicFrame(fi_pic_type_t type, int tics, void *te
     f->tics = tics;
     switch(f->type)
     {
-    case PFT_MATERIAL:  f->texRef.material =  ((material_t *)texRef); break;
+    case PFT_MATERIAL:  f->texRef.material =  ((Material *)texRef); break;
     case PFT_PATCH:     f->texRef.patch    = *((patchid_t *)texRef);  break;
     case PFT_RAW:       f->texRef.lumpNum  = *((lumpnum_t *)texRef);  break;
     case PFT_XIMAGE:    f->texRef.tex      = *((DGLuint *)texRef);    break;
@@ -699,13 +699,13 @@ fi_object_t *FIPage_RemoveObject(fi_page_t *p, fi_object_t *obj)
     return obj;
 }
 
-material_t *FIPage_BackgroundMaterial(fi_page_t *p)
+Material *FIPage_BackgroundMaterial(fi_page_t *p)
 {
     if(!p) Con_Error("FIPage_BackgroundMaterial: Invalid page.");
     return p->_bg.material;
 }
 
-void FIPage_SetBackgroundMaterial(fi_page_t *p, material_t *mat)
+void FIPage_SetBackgroundMaterial(fi_page_t *p, Material *mat)
 {
     if(!p) Con_Error("FIPage_SetBackgroundMaterial: Invalid page.");
     p->_bg.material = mat;
@@ -1022,7 +1022,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             break;
 
         case PFT_MATERIAL: {
-            material_t *mat = f->texRef.material;
+            Material *mat = f->texRef.material;
             if(mat)
             {
                 MaterialVariantSpec const &spec =

@@ -65,7 +65,7 @@ public:
     {
     public:
         /// All materials in the group.
-        typedef QList<material_t *> Materials;
+        typedef QList<Material *> Materials;
 
     public:
         /// An invalid group member reference was specified. @ingroup errors
@@ -90,21 +90,21 @@ public:
          * @param number  Material number to lookup.
          * @return  Found material.
          */
-        material_t &material(int number);
+        Material &material(int number);
 
         /**
          * Extend the group by adding a new material to the end of the group.
          *
          * @param material  Material to add.
          */
-        void addMaterial(material_t &material);
+        void addMaterial(Material &material);
 
         /**
          * Returns @c true iff @a material is part of this group.
          *
          * @param mat  Material to search for.
          */
-        bool hasMaterial(material_t &material) const;
+        bool hasMaterial(Material &material) const;
 
         /**
          * Provides access to the material list for efficient traversal.
@@ -260,7 +260,7 @@ public:
      * @param material  Material to be updated.
      * @param def  Material definition to update using.
      */
-    void rebuild(material_t &material, ded_material_t *def = 0);
+    void rebuild(Material &material, ded_material_t *def = 0);
 
     /**
      * Create a new Material unless an existing Material is found at the path
@@ -272,7 +272,7 @@ public:
      * @param def  Material definition to construct from.
      * @return  The newly-created/existing material; otherwise @c NULL.
      */
-    material_t *newFromDef(ded_material_t &def);
+    Material *newFromDef(ded_material_t &def);
 
     MaterialManifest &newManifest(MaterialScheme &scheme, Path const &path);
 
@@ -311,7 +311,7 @@ public:
      * @param cacheGroups   @c true= variants for all Materials in any applicable groups
      *                      are desired, else just this specific Material.
      */
-    void cache(material_t &material, MaterialVariantSpec const &spec,
+    void cache(Material &material, MaterialVariantSpec const &spec,
                bool cacheGroups = true);
 
     /**
@@ -350,10 +350,10 @@ public:
      *
      * @return  Snapshot for the chosen and prepared variant of Material.
      */
-    inline MaterialSnapshot const &prepare(material_t &material,
+    inline MaterialSnapshot const &prepare(Material &material,
         MaterialVariantSpec const &spec, bool forceSnapshotUpdate = false)
     {
-        return prepare(*Material_ChooseVariant(&material, spec, true /*can-create*/),
+        return prepare(*material.chooseVariant(spec, true /*can-create*/),
                        forceSnapshotUpdate);
     }
 
@@ -419,7 +419,7 @@ void Materials_Shutdown(void);
 
 void Materials_Ticker(timespan_t elapsed);
 uint Materials_Count(void);
-material_t *Materials_ToMaterial(materialid_t id);
+Material *Materials_ToMaterial(materialid_t id);
 struct uri_s *Materials_ComposeUri(materialid_t id);
 materialid_t Materials_ResolveUri(struct uri_s const *uri);
 

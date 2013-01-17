@@ -140,7 +140,7 @@ typedef struct plane_s      Plane;
 typedef struct sector_s     Sector;
 typedef struct sidedef_s    SideDef;
 typedef struct vertex_s     Vertex;
-typedef struct material_s   material_t;
+typedef struct material_s   Material;
 
 #elif defined __cplusplus
 
@@ -148,7 +148,7 @@ typedef struct material_s   material_t;
 class BspLeaf;
 class LineDef;
 class Sector;
-class material_t;
+class Material;
 
 #endif
 

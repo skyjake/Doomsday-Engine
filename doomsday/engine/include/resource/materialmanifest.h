@@ -73,7 +73,7 @@ public:
     bool isCustom() const;
 
     /// @return  Material associated with the manifest; otherwise @c NULL.
-    material_t *material() const;
+    Material *material() const;
 
     /**
      * Change the material associated with this manifest.
@@ -83,7 +83,7 @@ public:
      *
      * @param  material  New material to associate with this.
      */
-    void setMaterial(material_t *material);
+    void setMaterial(Material *material);
 
     /**
      * Update the manifest with new linked definitions. Should be called:

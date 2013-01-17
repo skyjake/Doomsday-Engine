@@ -583,13 +583,13 @@ int DED_AddMaterial(ded_t* ded, char const* uri)
 
 int DED_AddMaterialLayerStage(ded_material_layer_t *ml)
 {
-    ded_material_layer_stage_t *stage = DED_NewEntry((void**) &ml->stages, &ml->stageCount, sizeof(*stage));
+    ded_material_layer_stage_t *stage = (ded_material_layer_stage_t *) DED_NewEntry((void**) &ml->stages, &ml->stageCount, sizeof(*stage));
     return stage - ml->stages;
 }
 
 int DED_AddMaterialDecorationStage(ded_material_decoration_t *li)
 {
-    ded_decorlight_stage_t *stage = DED_NewEntry((void**) &li->stages, &li->stageCount, sizeof(*stage));
+    ded_decorlight_stage_t *stage = (ded_decorlight_stage_t *) DED_NewEntry((void**) &li->stages, &li->stageCount, sizeof(*stage));
 
     // The color (0,0,0) means the light is not visible during this stage.
     stage->elevation = 1;

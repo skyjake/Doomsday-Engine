@@ -136,7 +136,7 @@
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void            XL_ChangeMaterial(LineDef* line, int sidenum, int section,
-                                  material_t* mat, blendmode_t blend,
+                                  Material* mat, blendmode_t blend,
                                   byte rgba[4], int flags);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -1421,7 +1421,7 @@ int C_DECL XLTrav_ChangeWallMaterial(LineDef* line, boolean dummy,
     SideDef*        side;
     blendmode_t     blend = BM_NORMAL;
     byte            rgba[4];
-    material_t*     mat = NULL;
+    Material*     mat = NULL;
 
     if(!line)
         return true; // Continue iteration.
@@ -1923,7 +1923,7 @@ void XL_SwapSwitchTextures(LineDef* line, int snum)
  * Changes material of the given line.
  */
 void XL_ChangeMaterial(LineDef* line, int sidenum, int section,
-                       material_t* mat, blendmode_t blendmode, byte rgba[4],
+                       Material* mat, blendmode_t blendmode, byte rgba[4],
                        int flags)
 {
     int                 i;
@@ -1945,7 +1945,7 @@ void XL_ChangeMaterial(LineDef* line, int sidenum, int section,
     if(section == LWS_MID)
     {
         // Are we removing the middle texture?
-        if(mat == (material_t*) -1)
+        if(mat == (Material*) -1)
             P_SetPtrp(side, DMU_MIDDLE_MATERIAL, NULL);
         else if(mat)
             P_SetPtrp(side, DMU_MIDDLE_MATERIAL, mat);

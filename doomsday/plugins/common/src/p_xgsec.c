@@ -655,7 +655,7 @@ xgplanemover_t *XS_GetPlaneMover(Sector *sec, boolean ceiling)
 }
 
 void XS_ChangePlaneMaterial(Sector *sector, boolean ceiling,
-                            material_t* mat, float *rgb)
+                            Material* mat, float *rgb)
 {
     XG_Dev("XS_ChangePlaneMaterial: Sector %i, %s, texture %i",
            P_ToIndex(sector), (ceiling ? "ceiling" : "floor"), P_ToIndex(mat));
@@ -767,7 +767,7 @@ int XS_TextureHeight(LineDef* line, int part)
     Sector* front = P_GetPtrp(line, DMU_FRONT_SECTOR);
     Sector* back = P_GetPtrp(line, DMU_BACK_SECTOR);
     boolean twosided = front && back;
-    material_t* mat;
+    Material* mat;
 
     if(part != LWS_MID && !twosided)
         return DDMAXINT;
@@ -979,9 +979,9 @@ int findSectorExtremalMaterialHeight(void* ptr, void* context)
 }
 
 boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
-    coord_t* height, material_t** mat, Sector** planeSector)
+    coord_t* height, Material** mat, Sector** planeSector)
 {
-    material_t* otherMat;
+    Material* otherMat;
     coord_t otherHeight;
     Sector* otherSec = NULL, *iter;
     xline_t* xline;
@@ -1007,7 +1007,7 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
     if(height)
         *height = P_GetDoublep(sector, DMU_FLOOR_HEIGHT);
     if(mat)
-        *mat = (material_t*) P_GetPtrp(sector, DMU_FLOOR_MATERIAL);
+        *mat = (Material*) P_GetPtrp(sector, DMU_FLOOR_MATERIAL);
     if(planeSector)
         *planeSector = sector;
 
@@ -1104,14 +1104,14 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
             if(height)
                 *height = P_GetDoublep(iter, DMU_FLOOR_HEIGHT);
             if(mat)
-                *mat = (material_t*) P_GetPtrp(iter, DMU_FLOOR_MATERIAL);
+                *mat = (Material*) P_GetPtrp(iter, DMU_FLOOR_MATERIAL);
         }
         else
         {
             if(height)
                 *height = P_GetDoublep(iter, DMU_CEILING_HEIGHT);
             if(mat)
-                *mat = (material_t*) P_GetPtrp(iter, DMU_CEILING_MATERIAL);
+                *mat = (Material*) P_GetPtrp(iter, DMU_CEILING_MATERIAL);
         }
 
         return true;
@@ -1133,7 +1133,7 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
         if(height)
             *height = P_GetDoublep(frontsector, DMU_FLOOR_HEIGHT);
         if(mat)
-            *mat = (material_t*) P_GetPtrp(frontsector, DMU_FLOOR_MATERIAL);
+            *mat = (Material*) P_GetPtrp(frontsector, DMU_FLOOR_MATERIAL);
         if(planeSector)
             *planeSector = frontsector;
         return true;
@@ -1155,7 +1155,7 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
         if(height)
             *height = P_GetDoublep(backsector, DMU_FLOOR_HEIGHT);
         if(mat)
-            *mat = (material_t*) P_GetPtrp(backsector, DMU_FLOOR_MATERIAL);
+            *mat = (Material*) P_GetPtrp(backsector, DMU_FLOOR_MATERIAL);
         if(planeSector)
             *planeSector = backsector;
 
@@ -1178,7 +1178,7 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
         if(height)
             *height = P_GetDoublep(frontsector, DMU_CEILING_HEIGHT);
         if(mat)
-            *mat = (material_t*) P_GetPtrp(frontsector, DMU_CEILING_MATERIAL);
+            *mat = (Material*) P_GetPtrp(frontsector, DMU_CEILING_MATERIAL);
         if(planeSector)
             *planeSector = frontsector;
         return true;
@@ -1200,7 +1200,7 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
         if(height)
             *height = P_GetDoublep(backsector, DMU_CEILING_HEIGHT);
         if(mat)
-            *mat = (material_t*) P_GetPtrp(backsector, DMU_CEILING_MATERIAL);
+            *mat = (Material*) P_GetPtrp(backsector, DMU_CEILING_MATERIAL);
         if(planeSector)
             *planeSector = backsector;
         return true;
@@ -1211,7 +1211,7 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
         if(height)
             *height = P_ToXSector(sector)->SP_floororigheight;
         if(mat)
-            *mat = (material_t*) P_GetPtrp(sector, DMU_FLOOR_MATERIAL);
+            *mat = (Material*) P_GetPtrp(sector, DMU_FLOOR_MATERIAL);
         return true;
     }
 
@@ -1220,7 +1220,7 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
         if(height)
             *height = P_ToXSector(sector)->SP_ceilorigheight;
         if(mat)
-            *mat = (material_t*) P_GetPtrp(sector, DMU_CEILING_MATERIAL);
+            *mat = (Material*) P_GetPtrp(sector, DMU_CEILING_MATERIAL);
         return true;
     }
 
@@ -1229,7 +1229,7 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
         if(height)
             *height = P_GetDoublep(sector, DMU_FLOOR_HEIGHT);
         if(mat)
-            *mat = (material_t*) P_GetPtrp(sector, DMU_FLOOR_MATERIAL);
+            *mat = (Material*) P_GetPtrp(sector, DMU_FLOOR_MATERIAL);
         return true;
     }
 
@@ -1238,7 +1238,7 @@ boolean XS_GetPlane(LineDef* actline, Sector* sector, int ref, uint* refdata,
         if(height)
             *height = P_GetDoublep(sector, DMU_CEILING_HEIGHT);
         if(mat)
-            *mat = (material_t*) P_GetPtrp(sector, DMU_CEILING_MATERIAL);
+            *mat = (Material*) P_GetPtrp(sector, DMU_CEILING_MATERIAL);
         return true;
     }
 
@@ -1386,7 +1386,7 @@ int C_DECL XSTrav_MovePlane(Sector *sector, boolean ceiling, void *context,
     linetype_t*     info = (linetype_t *) context2;
     xgplanemover_t* mover;
     int             st;
-    material_t*     mat;
+    Material*     mat;
     xline_t*        xline = P_ToXLine(line);
     boolean         playsound;
 
@@ -1598,7 +1598,7 @@ boolean XS_DoBuild(Sector* sector, boolean ceiling, LineDef* origin,
 
 typedef struct spreadbuildparams_s {
     Sector*             baseSec;
-    material_t*         baseMat;
+    Material*         baseMat;
     byte                flags;
     LineDef*            origin;
     linetype_t*         info;
@@ -1667,7 +1667,7 @@ static void markBuiltSectors(void)
 
 static boolean spreadBuildToNeighborAll(LineDef* origin, linetype_t* info,
                                         boolean picstop, boolean ceiling,
-                                        material_t* myMat, int stepCount)
+                                        Material* myMat, int stepCount)
 {
     uint                i;
     boolean             result = false;
@@ -1713,7 +1713,7 @@ static boolean spreadBuildToNeighborAll(LineDef* origin, linetype_t* info,
 
 typedef struct findbuildneighborparams_s {
     Sector*             baseSec;
-    material_t*         baseMat;
+    Material*         baseMat;
     byte                flags;
     LineDef*            origin;
     linetype_t*         info;
@@ -1771,7 +1771,7 @@ int findBuildNeighbor(void* ptr, void* context)
 
 boolean spreadBuildToNeighborLowestIDX(LineDef* origin, linetype_t* info,
                                        boolean picstop, boolean ceiling,
-                                       material_t* myMat, int stepcount,
+                                       Material* myMat, int stepcount,
                                        Sector* foundSec)
 {
     uint                i;
@@ -1828,7 +1828,7 @@ int C_DECL XSTrav_BuildStairs(Sector* sector, boolean ceiling,
     Sector*             foundSec = NULL;
     boolean             picstop = info->iparm[2] != 0;
     boolean             spread = info->iparm[3] != 0;
-    material_t*         myMat;
+    Material*         myMat;
 
     XG_Dev("XSTrav_BuildStairs: Sector %i, %s", P_ToIndex(sector),
            ceiling ? "ceiling" : "floor");
@@ -1909,7 +1909,7 @@ int C_DECL XSTrav_PlaneMaterial(Sector *sec, boolean ceiling,
 {
     LineDef*        line = (LineDef *) context;
     linetype_t*     info = context2;
-    material_t*     mat;
+    Material*     mat;
     float           rgb[3];
 
     // i2: (spref) material origin

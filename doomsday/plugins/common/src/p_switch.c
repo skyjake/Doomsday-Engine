@@ -142,7 +142,7 @@ switchlist_t switchInfo[] = {
 };
 #endif
 
-static material_t** switchlist;
+static Material** switchlist;
 static int max_numswitches;
 static int numswitches;
 
@@ -269,7 +269,7 @@ void P_InitSwitchList(void)
 }
 #endif
 
-static material_t* findSwitch(material_t* mat, const switchlist_t** info)
+static Material* findSwitch(Material* mat, const switchlist_t** info)
 {
     int i;
     if(!mat) return NULL;
@@ -308,7 +308,7 @@ void T_MaterialChanger(materialchanger_t* mchanger)
 }
 
 static void spawnMaterialChanger(SideDef* side, SideDefSection section,
-    material_t* mat, int tics)
+    Material* mat, int tics)
 {
     materialchanger_t* mchanger;
 
@@ -340,7 +340,7 @@ static int findMaterialChanger(thinker_t* th, void* parameters)
 }
 
 static void startButton(SideDef* side, SideDefSection section,
-    material_t* mat, int tics)
+    Material* mat, int tics)
 {
     findmaterialchangerparams_t params;
 
@@ -370,7 +370,7 @@ boolean P_ToggleSwitch2(SideDef* side, SideDefSection section, int sound,
     boolean silent, int tics)
 {
     const int sectionFlags = DMU_FLAG_FOR_SIDEDEFSECTION(section);
-    material_t* mat, *current;
+    Material* mat, *current;
     const switchlist_t* info;
 
     current = P_GetPtrp(side, sectionFlags | DMU_MATERIAL);

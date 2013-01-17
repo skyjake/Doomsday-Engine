@@ -94,7 +94,7 @@ boolean floatOk;
 coord_t tmFloorZ;
 coord_t tmCeilingZ;
 #if __JHEXEN__
-material_t* tmFloorMaterial;
+Material* tmFloorMaterial;
 #endif
 
 boolean fellDown; // $dropoff_fix

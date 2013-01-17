@@ -329,9 +329,10 @@ static boolean projectSurfaceDecorations(Surface *suf, void *context)
                                          &sideDef->SW_bottomsurface == suf? SS_BOTTOM : SS_TOP);
             break; }
 
-        case DMU_PLANE:
-            updatePlaneDecorations(suf->owner->castTo<Plane>());
-            break;
+        case DMU_PLANE: {
+            Plane *plane = suf->owner->castTo<Plane>();
+            updatePlaneDecorations(*plane);
+            break; }
 
         default:
             DENG2_ASSERT(false); // Invalid type.
@@ -365,7 +366,7 @@ static inline void getDecorationSkipPattern(Vector2i const &patternSkip, int ski
 
 static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
     Vector2i const &patternOffset, Vector2i const &patternSkip, Surface &suf,
-    material_t &mat, pvec3d_t const v1, pvec3d_t const /*v2*/,
+    Material &material, pvec3d_t const v1, pvec3d_t const /*v2*/,
     coord_t width, coord_t height, pvec3d_t const delta, int axis,
     float offsetS, float offsetT, Sector *sec)
 {
@@ -373,8 +374,8 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
     int skip[2];
     getDecorationSkipPattern(patternSkip, skip);
 
-    coord_t patternW = Material_Width(&mat)  * skip[0];
-    coord_t patternH = Material_Height(&mat) * skip[1];
+    coord_t patternW = material.width()  * skip[0];
+    coord_t patternH = material.height() * skip[1];
 
     if(0 == patternW && 0 == patternH) return 0;
 
@@ -386,13 +387,13 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
 
     // Let's see where the top left light is.
     float s = M_CycleIntoRange(decor.pos[0] -
-                               Material_Width(&mat) * patternOffset.x +
+                               material.width() * patternOffset.x +
                                offsetS, patternW);
     uint num = 0;
     for(; s < width; s += patternW)
     {
         float t = M_CycleIntoRange(decor.pos[1] -
-                                   Material_Height(&mat) * patternOffset.y +
+                                   material.height() * patternOffset.y +
                                    offsetT, patternH);
 
         for(; t < height; t += patternH)
@@ -460,7 +461,7 @@ static void updateSurfaceDecorations2(Surface &suf, float offsetS, float offsetT
         MaterialSnapshot const &ms =
             App_Materials()->prepare(*suf.material, Rend_MapSurfaceMaterialSpec());
 
-        Material::Decorations const &decorations = Material_Decorations(suf.material);
+        Material::Decorations const &decorations = suf.material->decorations();
         for(int i = 0; i < decorations.count(); ++i)
         {
             MaterialSnapshot::Decoration const &decor = ms.decoration(i);

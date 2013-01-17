@@ -41,7 +41,7 @@
 
 typedef struct {
     byte rotate; // 0= no rotations, 1= only front, 2= more...
-    material_t *mats[8]; // Material to use for view angles 0-7
+    Material *mats[8]; // Material to use for view angles 0-7
     byte flip[8]; // Flip (1 = flip) to use for view angles 0-7
 } spriteframe_t;
 
@@ -206,7 +206,7 @@ DENG_EXTERN_C int psp3d;
 extern "C" {
 #endif
 
-material_t *R_GetMaterialForSprite(int sprite, int frame);
+Material *R_GetMaterialForSprite(int sprite, int frame);
 
 /// @return  Radius of the mobj as it would visually appear to be.
 coord_t R_VisualRadius(struct mobj_s *mo);

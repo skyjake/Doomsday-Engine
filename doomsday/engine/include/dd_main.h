@@ -206,7 +206,7 @@ fontschemeid_t DD_ParseFontSchemeName(char const *str);
 AutoStr *DD_MaterialSchemeNameForTextureScheme(Str const *textureSchemeName);
 
 /// @return  Material associated with specified @a textureUri; otherwise @c NULL.
-material_t *DD_MaterialForTextureUri(Uri const *textureUri);
+Material *DD_MaterialForTextureUri(Uri const *textureUri);
 
 const char* value_Str(int val);
 

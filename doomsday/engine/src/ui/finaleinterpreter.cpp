@@ -940,7 +940,7 @@ static void stopScript(finaleinterpreter_t* fi)
     DD_CallHooks(HOOK_FINALE_SCRIPT_STOP, fi->_id, 0);
 }
 
-static void changePageBackground(fi_page_t* p, material_t* mat)
+static void changePageBackground(fi_page_t* p, Material* mat)
 {
     // If the page does not yet have a background set we must setup the color+alpha.
     if(mat && !FIPage_BackgroundMaterial(p))
@@ -1338,7 +1338,7 @@ DEFFC(End)
 DEFFC(BGMaterial)
 {
     // First attempt to resolve as a Values URI (which defines the material URI).
-    material_t* material;
+    Material* material;
     ded_value_t* value = Def_GetValueByUri(OP_URI(0));
     if(value)
     {

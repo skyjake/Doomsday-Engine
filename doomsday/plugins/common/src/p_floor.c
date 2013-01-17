@@ -80,7 +80,7 @@ typedef struct stairdata_s {
     coord_t         stepDelta;
     int             direction;
     float           speed;
-    material_t*     material;
+    Material*     material;
     int             startDelay;
     int             startDelayDelta;
     int             textureChange;
@@ -448,7 +448,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
     if(frontSec && backSec)
     {
         SideDef* side;
-        material_t* mat;
+        Material* mat;
 
         side = P_GetPtrp(li, DMU_SIDEDEF0);
         mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
@@ -1002,7 +1002,7 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
  */
 typedef struct spreadsectorparams_s {
     Sector* baseSec;
-    material_t* material;
+    Material* material;
     Sector* foundSec;
     coord_t height, stairSize;
 } spreadsectorparams_t;

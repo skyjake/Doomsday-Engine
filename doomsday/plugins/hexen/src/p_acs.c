@@ -1297,7 +1297,7 @@ static int CmdChangeFloor(void)
 {
     Sector* sec = NULL;
     iterlist_t* list;
-    material_t* mat;
+    Material* mat;
     ddstring_t path;
     Uri* uri;
     int tag;
@@ -1330,7 +1330,7 @@ static int CmdChangeFloor(void)
 static int CmdChangeFloorDirect(void)
 {
     Sector* sec = NULL;
-    material_t* mat;
+    Material* mat;
     iterlist_t* list;
     ddstring_t path;
     Uri* uri;
@@ -1363,7 +1363,7 @@ static int CmdChangeFloorDirect(void)
 static int CmdChangeCeiling(void)
 {
     Sector* sec = NULL;
-    material_t* mat;
+    Material* mat;
     iterlist_t* list;
     ddstring_t path;
     Uri* uri;
@@ -1397,7 +1397,7 @@ static int CmdChangeCeiling(void)
 static int CmdChangeCeilingDirect(void)
 {
     Sector* sec = NULL;
-    material_t* mat;
+    Material* mat;
     iterlist_t* list;
     ddstring_t path;
     Uri* uri;
@@ -1752,7 +1752,7 @@ static int CmdSoundSequence(void)
 static int CmdSetLineTexture(void)
 {
     int lineTag, side, position;
-    material_t* mat;
+    Material* mat;
     LineDef* line;
     iterlist_t* list;
     ddstring_t path;

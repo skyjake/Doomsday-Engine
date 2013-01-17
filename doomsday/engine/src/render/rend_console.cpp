@@ -64,7 +64,7 @@ static float ConsoleDestY; // Where the console bottom should be?
 static float ConsoleBlink; // Cursor blink timer (35 Hz tics).
 static boolean openingOrClosing;
 static float consoleAlpha, consoleAlphaTarget;
-static material_t *consoleBackgroundMaterial;
+static Material *consoleBackgroundMaterial;
 
 static float fontSy; // Font size Y.
 static float funnyAng;

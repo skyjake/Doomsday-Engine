@@ -1049,7 +1049,7 @@ unsigned short SV_ThingArchiveNum(mobj_t* mo)
     return firstEmpty + 1;
 }
 
-material_t* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group)
+Material* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group)
 {
     errorIfNotInited("SV_GetArchiveMaterial");
     assert(materialArchive);
@@ -2369,8 +2369,8 @@ static void SV_WriteSector(Sector *sec)
     short ceilingheight = (short) P_GetIntp(sec, DMU_CEILING_HEIGHT);
     short floorFlags = (short) P_GetIntp(sec, DMU_FLOOR_FLAGS);
     short ceilingFlags = (short) P_GetIntp(sec, DMU_CEILING_FLAGS);
-    material_t* floorMaterial = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
-    material_t* ceilingMaterial = P_GetPtrp(sec, DMU_CEILING_MATERIAL);
+    Material* floorMaterial = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
+    Material* ceilingMaterial = P_GetPtrp(sec, DMU_CEILING_MATERIAL);
     xsector_t* xsec = P_ToXSector(sec);
     float rgb[3];
 
@@ -2456,7 +2456,7 @@ static void SV_ReadSector(Sector* sec)
 {
     int i, ver = 1;
     int type = 0;
-    material_t* floorMaterial = NULL, *ceilingMaterial = NULL;
+    Material* floorMaterial = NULL, *ceilingMaterial = NULL;
     byte rgb[3], lightlevel;
     xsector_t* xsec = P_ToXSector(sec);
     int fh, ch;
@@ -2688,7 +2688,7 @@ static void SV_ReadLine(LineDef* li)
     int i, j;
     lineclass_t type;
     int ver;
-    material_t* topMaterial = NULL, *bottomMaterial = NULL, *middleMaterial = NULL;
+    Material* topMaterial = NULL, *bottomMaterial = NULL, *middleMaterial = NULL;
     short flags;
     xline_t* xli = P_ToXLine(li);
 

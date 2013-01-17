@@ -88,7 +88,7 @@ float Sky_LayerFadeoutLimit(int layerId);
 boolean Sky_LayerMasked(int layerId);
 
 /// @return  Material assigned to the identified @a layerId of the current Sky.
-material_t *Sky_LayerMaterial(int layerId);
+Material *Sky_LayerMaterial(int layerId);
 
 /// @return  Horizontal offset for the identified @a layerId of the current Sky.
 float Sky_LayerOffset(int layerId);
@@ -115,7 +115,7 @@ void Sky_LayerSetFadeoutLimit(int layerId, float limit);
  * Change the Material assigned to the identified @a layerId of the current Sky.
  * @post Sky light color and layer Material are marked for update (deferred).
  */
-void Sky_LayerSetMaterial(int layerId, material_t *material);
+void Sky_LayerSetMaterial(int layerId, Material *material);
 
 /**
  * Change the horizontal offset for the identified @a layerId of the current Sky.

@@ -196,7 +196,7 @@ void            R_MarkDependantSurfacesForDecorationUpdate(Plane* pln);
  * To be called in response to a Material property changing which may
  * require updating any map surfaces which are presently using it.
  */
-void R_UpdateMapSurfacesOnMaterialChange(material_t* material);
+void R_UpdateMapSurfacesOnMaterialChange(Material* material);
 
 /// @return  @c true= @a plane is non-glowing (i.e. not glowing or a sky).
 boolean R_IsGlowingPlane(const Plane* plane);

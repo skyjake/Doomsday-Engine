@@ -33,7 +33,7 @@ struct ColorRawf_s;
 struct material_s;
 struct texturevariant_s;
 
-class material_t;
+class Material;
 
 #define MAX_TEX_UNITS           2 // More aren't currently used.
 
@@ -174,10 +174,10 @@ void GL_CallList(DGLuint list);
 
 void GL_DeleteLists(DGLuint list, int range);
 
-void GL_SetMaterialUI2(material_t *mat, int wrapS, int wrapT);
-void GL_SetMaterialUI(material_t *mat);
+void GL_SetMaterialUI2(Material *mat, int wrapS, int wrapT);
+void GL_SetMaterialUI(Material *mat);
 
-void GL_SetPSprite(material_t *mat, int tclass, int tmap);
+void GL_SetPSprite(Material *mat, int tclass, int tmap);
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
 

@@ -143,7 +143,7 @@ typedef struct fi_page_s {
     struct fi_page_s *previous;
 
     struct fi_page_background_s {
-        material_t *material;
+        Material *material;
         animatorvector4_t topColor;
         animatorvector4_t bottomColor;
     } _bg;
@@ -174,7 +174,7 @@ struct fi_object_s *FIPage_RemoveObject(fi_page_t *page, struct fi_object_s *obj
 boolean FIPage_HasObject(fi_page_t *page, struct fi_object_s *obj);
 
 /// Current background Material.
-material_t *FIPage_BackgroundMaterial(fi_page_t *page);
+Material *FIPage_BackgroundMaterial(fi_page_t *page);
 
 /// Sets the 'is-visible' state.
 void FIPage_MakeVisible(fi_page_t *page, boolean yes);
@@ -183,7 +183,7 @@ void FIPage_MakeVisible(fi_page_t *page, boolean yes);
 void FIPage_Pause(fi_page_t *page, boolean yes);
 
 /// Sets the background Material.
-void FIPage_SetBackgroundMaterial(fi_page_t *page, material_t *mat);
+void FIPage_SetBackgroundMaterial(fi_page_t *page, Material *mat);
 
 /// Sets the background top color.
 void FIPage_SetBackgroundTopColor(fi_page_t *page, float red, float green, float blue, int steps);
@@ -240,7 +240,7 @@ typedef struct fidata_pic_frame_s {
         char flip:1;
     } flags;
     union {
-        material_t *material;
+        Material *material;
         patchid_t patch;
         lumpnum_t lumpNum;
         DGLuint tex;

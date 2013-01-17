@@ -85,19 +85,19 @@ static void readArchivedUri(Uri &uri, int version, reader_s &reader)
 }
 
 /**
- * Mappings between URI and material_t.
+ * Mappings between URI and Material.
  * The pointer user value holds a pointer to the resolved Material (if found).
  * The integer user value tracks whether a material has yet been looked up.
  */
 typedef StringPool Records;
 typedef StringPool::Id SerialId;
 
-static material_t *findRecordMaterial(Records &records, SerialId id)
+static Material *findRecordMaterial(Records &records, SerialId id)
 {
     // Time to lookup the material for the record's URI?
     if(!records.userValue(id))
     {
-        material_t *material = 0;
+        Material *material = 0;
         try
         {
             material = App_Materials()->find(Uri(records.stringRef(id), RC_NULL)).material();
@@ -110,7 +110,7 @@ static material_t *findRecordMaterial(Records &records, SerialId id)
         return material;
     }
 
-    return (material_t *) records.userPointer(id);
+    return (Material *) records.userPointer(id);
 }
 
 struct MaterialArchive::Instance
@@ -121,7 +121,7 @@ struct MaterialArchive::Instance
     /// Segment id assertion (Hexen saves).
     bool useSegments;
 
-    /// Mappings between URI and material_t.
+    /// Mappings between URI and Material.
     Records records;
 
     /// Used with older versions.
@@ -234,7 +234,7 @@ MaterialArchive::~MaterialArchive()
 
 struct findUniqueSerialIdWorker_params {
     Records *records;
-    material_t *material;
+    Material *material;
 };
 
 static int findUniqueSerialIdWorker(SerialId id, void *parameters)
@@ -248,7 +248,7 @@ static int findUniqueSerialIdWorker(SerialId id, void *parameters)
     return 0; // Continue iteration.
 }
 
-materialarchive_serialid_t MaterialArchive::findUniqueSerialId(material_t *material) const
+materialarchive_serialid_t MaterialArchive::findUniqueSerialId(Material *material) const
 {
     if(!material) return 0; // Invalid.
 
@@ -262,7 +262,7 @@ materialarchive_serialid_t MaterialArchive::findUniqueSerialId(material_t *mater
     return d->records.size() + 1;
 }
 
-material_t *MaterialArchive::find(materialarchive_serialid_t serialId, int group) const
+Material *MaterialArchive::find(materialarchive_serialid_t serialId, int group) const
 {
     if(serialId <= 0 || serialId > d->records.size() + 1) return 0; // Invalid.
 
@@ -384,14 +384,14 @@ void MaterialArchive_Delete(MaterialArchive *arc)
 }
 
 #undef MaterialArchive_FindUniqueSerialId
-materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive const *arc, material_t *mat)
+materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive const *arc, Material *mat)
 {
     SELF_CONST(arc);
     return self->findUniqueSerialId(mat);
 }
 
 #undef MaterialArchive_Find
-material_t *MaterialArchive_Find(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group)
+Material *MaterialArchive_Find(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group)
 {
     SELF_CONST(arc);
     return self->find(serialId, group);

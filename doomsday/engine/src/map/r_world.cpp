@@ -326,9 +326,9 @@ void R_MarkDependantSurfacesForDecorationUpdate(Plane *pln)
     }
 }
 
-static boolean markSurfaceForDecorationUpdate(Surface *surface, void *paramaters)
+static boolean markSurfaceForDecorationUpdate(Surface *surface, void *parameters)
 {
-    material_t *material = (material_t *) paramaters;
+    Material *material = (Material *) parameters;
     if(material == surface->material)
     {
         Surface_Update(surface);
@@ -336,7 +336,7 @@ static boolean markSurfaceForDecorationUpdate(Surface *surface, void *paramaters
     return 1; // Continue iteration.
 }
 
-void R_UpdateMapSurfacesOnMaterialChange(material_t *material)
+void R_UpdateMapSurfacesOnMaterialChange(Material *material)
 {
     if(!material || !theMap || ddMapSetup) return;
 
@@ -563,7 +563,7 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
                     if(skyFloor)
                     {
                         float bottom = sec->SP_floorvisheight +
-                                si->SW_middlevisoffset[VY] - Material_Height(si->SW_middlematerial);
+                                si->SW_middlevisoffset[VY] - si->SW_middlematerial->height();
 
                         if(bottom < map->skyFix[PLN_FLOOR].height)
                         {
@@ -738,7 +738,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
 
                 coord_t const openBottom = *low;
                 coord_t const openTop    = *hi;
-                int const matHeight      = Material_Height(suf->material);
+                int const matHeight      = suf->material->height();
                 coord_t const matYOffset = suf->visOffset[VY];
 
                 if(openTop > openBottom)
@@ -855,7 +855,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
 {
     if(!frontSec || !frontDef) return false; // Never.
 
-    material_t *material = frontDef->SW_middlematerial;
+    Material *material = frontDef->SW_middlematerial;
     if(!material) return false;
 
     // Ensure we have up to date info about the material.
@@ -1081,16 +1081,16 @@ void R_MapInitSurfaces(boolean forceUpdate)
     }
 }
 
-static void addToSurfaceLists(Surface *suf, material_t *mat)
+static void addToSurfaceLists(Surface *suf, Material *material)
 {
-    if(!suf || !mat) return;
+    if(!suf || !material) return;
 
-    if(Material_HasGlow(mat))
+    if(material->hasGlow())
     {
         R_SurfaceListAdd(GameMap_GlowingSurfaces(theMap),   suf);
     }
 
-    if(Material_HasDecorations(mat))
+    if(material->hasDecorations())
     {
         R_SurfaceListAdd(GameMap_DecoratedSurfaces(theMap), suf);
     }
@@ -1263,10 +1263,10 @@ void R_ClearSectorFlags()
 
 boolean R_IsGlowingPlane(Plane const *pln)
 {
-    material_t *mat = pln->surface.material;
-    if(mat)
+    Material *material = pln->surface.material;
+    if(material)
     {
-        if(!Material_IsDrawable(mat) || Material_HasGlow(mat)) return true;
+        if(!material->isDrawable() || material->hasGlow()) return true;
     }
     return Surface_IsSkyMasked(&pln->surface);
 }
@@ -1274,13 +1274,13 @@ boolean R_IsGlowingPlane(Plane const *pln)
 float R_GlowStrength(Plane const *pln)
 {
 #ifdef __CLIENT__
-    material_t *mat = pln->surface.material;
-    if(mat)
+    Material *material = pln->surface.material;
+    if(material)
     {
-        if(Material_IsDrawable(mat) && !Surface_IsSkyMasked(&pln->surface))
+        if(material->isDrawable() && !Surface_IsSkyMasked(&pln->surface))
         {
             MaterialSnapshot const &ms =
-                App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec());
+                App_Materials()->prepare(*material, Rend_MapSurfaceMaterialSpec());
 
             float glowStrength = ms.glowStrength();
             if(glowFactor > .0001f)
@@ -1323,9 +1323,9 @@ boolean R_SectorContainsSkySurfaces(Sector const *sec)
  * Non-animated materials are preferred.
  * Sky materials are ignored.
  */
-static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
+static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
 {
-    material_t *choice1 = 0, *choice2 = 0;
+    Material *choice1 = 0, *choice2 = 0;
     LineDef *line = s->line;
     byte side = (line->L_frontsidedef == s? FRONT : BACK);
     Sector *frontSec = line->L_sector(side);
@@ -1351,7 +1351,7 @@ static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
 
         // In the special case of sky mask on the back plane, our best
         // choice is always this material.
-        if(choice1 && Material_IsSkyMasked(choice1))
+        if(choice1 && choice1->isSkyMasked())
         {
             return choice1;
         }
@@ -1396,15 +1396,15 @@ static material_t *chooseFixMaterial(SideDef *s, SideDefSection section)
     choice2 = frontSec->SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->PS_material;
 
     // Prefer a non-animated, non-masked material.
-    if(choice1 && !Material_IsAnimated(choice1) && !Material_IsSkyMasked(choice1))
+    if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())
         return choice1;
-    if(choice2 && !Material_IsAnimated(choice2) && !Material_IsSkyMasked(choice2))
+    if(choice2 && !choice2->isAnimated() && !choice2->isSkyMasked())
         return choice2;
 
     // Prefer a non-masked material.
-    if(choice1 && !Material_IsSkyMasked(choice1))
+    if(choice1 && !choice1->isSkyMasked())
         return choice1;
-    if(choice2 && !Material_IsSkyMasked(choice2))
+    if(choice2 && !choice2->isSkyMasked())
         return choice2;
 
     // At this point we'll accept anything if it means avoiding HOM.
@@ -1428,7 +1428,7 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
     // During map load we log missing materials.
     if(ddMapSetup && verbose)
     {
-        String path = suf->material? Material_Manifest(suf->material).composeUri().asText() : "<null>";
+        String path = suf->material? suf->material->manifest().composeUri().asText() : "<null>";
         LOG_WARNING("SideDef #%u is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
             << s->buildData.index - 1

@@ -384,7 +384,7 @@ static byte pvisibleLineSections(LineDef *line, int backSide)
         sections |= SSF_MIDDLE | SSF_BOTTOM | SSF_TOP;
 
         // Middle?
-        if(!sideDef->SW_middlematerial || !Material_IsDrawable(sideDef->SW_middlematerial) || sideDef->SW_middlergba[3] <= 0)
+        if(!sideDef->SW_middlematerial || !sideDef->SW_middlematerial->isDrawable() || sideDef->SW_middlergba[3] <= 0)
             sections &= ~SSF_MIDDLE;
 
         // Top?
@@ -532,8 +532,7 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
         }
 
         // Choose a specific variant for use as a middle wall section.
-        material = Material_ChooseVariant(&material->generalCase(),
-                                          mapSurfaceMaterialSpec(wrapS, wrapT), true);
+        material = material->generalCase().chooseVariant(mapSurfaceMaterialSpec(wrapS, wrapT), true);
     }
 
     VS_WALL(vis)->material = reinterpret_cast<materialvariant_s *>(material);
@@ -737,7 +736,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
     uint const realNumVertices = ((p.isWall && (p.wall.left.divCount || p.wall.right.divCount))? 3 + p.wall.left.divCount + 3 + p.wall.right.divCount : numVertices);
 
-    bool const skyMaskedMaterial = ((p.flags & RPF_SKYMASK) || (Material_IsSkyMasked(&ms.material().generalCase())));
+    bool const skyMaskedMaterial = ((p.flags & RPF_SKYMASK) || (ms.material().generalCase().isSkyMasked()));
     bool const drawAsVisSprite   = (!p.forceOpaque && !(p.flags & RPF_SKYMASK) && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     boolean useLights = false, useShadows = false, hasDynlights = false;
@@ -1363,7 +1362,7 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
 
 static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
     vec3f_t tangent, vec3f_t bitangent, vec3f_t normal,
-    material_t* inMat, const float sufColor[4], blendmode_t blendMode,
+    Material* inMat, const float sufColor[4], blendmode_t blendMode,
     vec3d_t texTL, vec3d_t texBR,
     float const texOffset[2], float const texScale[2],
     boolean skyMasked,
@@ -1375,7 +1374,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
     uint                numVertices;
     rvertex_t*          rvertices;
     Sector*             sec = bspLeaf->sector;
-    material_t*         mat = NULL;
+    Material*         mat = NULL;
 
     memset(&params, 0, sizeof(params));
 
@@ -1445,7 +1444,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
         else
         {
             Surface *suf = &bspLeaf->sector->planes[elmIdx]->surface;
-            material_t *mat = suf->material? suf->material : App_Materials()->find(de::Uri("System", Path("missing"))).material();
+            Material *mat = suf->material? suf->material : App_Materials()->find(de::Uri("System", Path("missing"))).material();
 
             MaterialSnapshot const &ms =
                 App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec());
@@ -1478,7 +1477,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
 
 static void Rend_RenderPlane(planetype_t type, coord_t height,
     const_pvec3f_t _tangent, const_pvec3f_t _bitangent, const_pvec3f_t _normal,
-    material_t* inMat, float const sufColor[4], blendmode_t blendMode,
+    Material* inMat, float const sufColor[4], blendmode_t blendMode,
     float const texOffset[2], float const texScale[2],
     boolean skyMasked, boolean addDLights, boolean addMobjShadows,
     biassurface_t* bsuf, uint elmIdx /*tmp*/,
@@ -1488,7 +1487,7 @@ static void Rend_RenderPlane(planetype_t type, coord_t height,
     vec3f_t vec, tangent, bitangent, normal;
 
     // Must have a visible surface.
-    if(!inMat || !Material_IsDrawable(inMat)) return;
+    if(!inMat || !inMat->isDrawable()) return;
 
     V3f_Set(vec, vOrigin[VX] - bspLeaf->midPoint[VX], vOrigin[VZ] - bspLeaf->midPoint[VY], vOrigin[VY] - height);
 
@@ -1591,7 +1590,7 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
         uint lightListIdx = 0, shadowListIdx = 0;
         vec3d_t texTL, texBR;
         float texScale[2];
-        material_t* mat = NULL;
+        Material* mat = NULL;
         int rpFlags = RPF_DEFAULT;
         boolean isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontsidedef && hedge->lineDef->L_backsidedef)? true:false;
         blendmode_t blendMode = BM_NORMAL;
@@ -1635,7 +1634,7 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
                 mat = surface->material;
             }
 
-            if(Material_IsSkyMasked(mat))
+            if(mat->isSkyMasked())
             {
                 if(!devRendSkyMode)
                 {
@@ -2297,7 +2296,7 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
 }
 
 static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode,
-    HEdge *endNode, boolean antiClockwise, int skyFix, material_t *material)
+    HEdge *endNode, boolean antiClockwise, int skyFix, Material *material)
 {
     int const rendPolyFlags = RPF_DEFAULT | (!devRendSkyMode? RPF_SKYMASK : 0);
     rtexcoord_t *coords = 0;
@@ -2335,7 +2334,7 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
     const boolean antiClockwise = false;
     HEdge* baseNode, *startNode, *node;
     coord_t startZBottom, startZTop;
-    material_t* startMaterial;
+    Material* startMaterial;
 
     if(!leaf || !leaf->hedgeCount || !leaf->sector) return;
     if(!(skyFix & (SKYCAP_LOWER|SKYCAP_UPPER))) return;
@@ -2357,7 +2356,7 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
         if(chooseHEdgeSkyFixes(hedge, skyFix))
         {
             coord_t zBottom, zTop;
-            material_t* skyMaterial = 0;
+            Material* skyMaterial = 0;
 
             skyFixZCoords(hedge, skyFix, &zBottom, &zTop);
 
@@ -2724,7 +2723,7 @@ static void Rend_RenderPlanes()
         boolean clipBackFacing = false;
         float texOffset[2];
         float texScale[2];
-        material_t* mat;
+        Material* mat;
         int texMode;
 
         isSkyMasked = Surface_IsSkyMasked(suf);

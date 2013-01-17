@@ -32,7 +32,7 @@ namespace de {
 struct MaterialManifest::Instance
 {
     /// Material associated with this.
-    material_t *material;
+    Material *material;
 
     /// Unique identifier.
     materialid_t id;
@@ -115,12 +115,12 @@ bool MaterialManifest::isCustom() const
     return d->isCustom;
 }
 
-material_t *MaterialManifest::material() const
+Material *MaterialManifest::material() const
 {
     return d->material;
 }
 
-void MaterialManifest::setMaterial(material_t *newMaterial)
+void MaterialManifest::setMaterial(Material *newMaterial)
 {
     if(d->material == newMaterial) return;
     d->material = newMaterial;
@@ -159,7 +159,7 @@ ded_detailtexture_t *MaterialManifest::detailTextureDef() const
     // We must prepare a variant before we can determine which definition is in effect.
     materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
 
-    byte prepared = Material_Prepared(d->material);
+    byte prepared = d->material->prepared();
     if(prepared) return d->defs.detailtextures[prepared - 1];
     return 0;
 }
@@ -177,7 +177,7 @@ ded_reflection_t *MaterialManifest::reflectionDef() const
     // We must prepare a variant before we can determine which definition is in effect.
     materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
 
-    byte prepared = Material_Prepared(d->material);
+    byte prepared = d->material->prepared();
     if(prepared) return d->defs.reflections[prepared - 1];
     return 0;
 }

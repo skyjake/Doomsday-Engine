@@ -216,7 +216,7 @@ void R_DrawViewBorder()
 
     // View background.
     Materials &materials = *App_Materials();
-    material_t *mat = materials.find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND])).material();
+    Material *mat = materials.find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND])).material();
     if(mat)
     {
         MaterialSnapshot const &ms = materials.prepare(*mat, Ui_MaterialSpec());

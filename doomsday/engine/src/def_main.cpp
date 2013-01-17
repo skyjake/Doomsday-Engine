@@ -1203,7 +1203,7 @@ void Def_Read()
         try
         {
             MaterialManifest &bind = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->uri));
-            if(material_t *mat = bind.material())
+            if(Material *mat = bind.material())
             {
                 // Update existing.
                 App_Materials()->rebuild(*mat, def);
@@ -1436,7 +1436,7 @@ static void initMaterialGroup(ded_group_t *def)
 
         try
         {
-            material_t *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(gm->material)).material();
+            Material *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(gm->material)).material();
 
             if(def->flags & AGF_PRECACHE) // A precache group.
             {

@@ -109,7 +109,7 @@ boolean         Sv_CanTrustClientPos(int plrNum);
 /**
  * Returns a unique id for material @a mat that can be passed on to clients.
  */
-unsigned int Sv_IdForMaterial(material_t *mat);
+unsigned int Sv_IdForMaterial(Material *mat);
 
 #ifdef __cplusplus
 } // extern "C"

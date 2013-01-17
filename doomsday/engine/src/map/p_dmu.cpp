@@ -318,7 +318,7 @@ uint P_ToIndex(void const *ptr)
         return GET_PLANE_IDX(elem->castTo<Plane>());
 
     case DMU_MATERIAL:
-        return Material_ManifestId(elem->castTo(Material)());
+        return elem->castTo<Material>()->manifestId();
 
     default:
         /// @todo Throw exception.
@@ -1046,7 +1046,7 @@ static int setProperty(void *ptr, void *context)
         break;
 
     case DMU_MATERIAL:
-        Material_SetProperty(elem->castTo<material_t>(), args);
+        elem->castTo<Material>()->setProperty(args);
         break;
 
     case DMU_BSPNODE: {
@@ -1539,7 +1539,7 @@ static int getProperty(void *ptr, void *context)
 
     case DMU_MATERIAL:
         // TODO: Update this when Material is derived from MapElement.
-        //Material_GetProperty((material_t *)ob, args);
+        //Material_GetProperty((Material *)ob, args);
         break;
 
     default: {

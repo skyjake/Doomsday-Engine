@@ -715,7 +715,7 @@ static void addLuminous(mobj_t *mo)
     ded_light_t *def;
     spritedef_t *sprDef;
     spriteframe_t *sprFrame;
-    material_t *mat;
+    Material *mat;
     pointlight_analysis_t const *pl;
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&

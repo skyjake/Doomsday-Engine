@@ -66,7 +66,7 @@ int Materials::Group::materialCount() const
     return materials.count();
 }
 
-material_t &Materials::Group::material(int number)
+Material &Materials::Group::material(int number)
 {
     if(number < 0 || number >= materialCount())
     {
@@ -76,14 +76,14 @@ material_t &Materials::Group::material(int number)
     return *materials[number];
 }
 
-void Materials::Group::addMaterial(material_t &mat)
+void Materials::Group::addMaterial(Material &mat)
 {
     LOG_AS("Materials::Group::addMaterial");
     if(hasMaterial(mat)) return;
     materials.push_back(&mat);
 }
 
-bool Materials::Group::hasMaterial(material_t &mat) const
+bool Materials::Group::hasMaterial(Material &mat) const
 {
     return materials.contains(&mat);
 }
@@ -102,7 +102,7 @@ static void applyVariantSpec(MaterialVariantSpec &spec, materialcontext_t mc,
 }
 
 /// A list of materials.
-typedef QList<material_t *> MaterialList;
+typedef QList<Material *> MaterialList;
 
 /// A list of specifications for material variants.
 typedef QList<MaterialVariantSpec *> VariantSpecs;
@@ -113,12 +113,12 @@ typedef QList<MaterialVariantSpec *> VariantSpecs;
 struct VariantCacheTask
 {
     /// The material from which to cache a variant.
-    material_t *mat;
+    Material *mat;
 
     /// Specification of the variant to be cached.
     MaterialVariantSpec const *spec;
 
-    VariantCacheTask(material_t &_mat, MaterialVariantSpec const &_spec)
+    VariantCacheTask(Material &_mat, MaterialVariantSpec const &_spec)
         : mat(&_mat), spec(&_spec)
     {}
 };
@@ -176,7 +176,7 @@ struct Materials::Instance
     {
         while(!materials.isEmpty())
         {
-            Material_Delete(materials.takeLast());
+            delete materials.takeLast();
         }
     }
 
@@ -313,7 +313,7 @@ void Materials::clearDefinitionLinks()
 {
     DENG2_FOR_EACH(MaterialList, i, d->materials)
     {
-        Material_SetDefinition(*i, 0);
+        (*i)->setDefinition(0);
     }
 
     DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
@@ -327,19 +327,19 @@ void Materials::clearDefinitionLinks()
     }
 }
 
-void Materials::rebuild(material_t &mat, ded_material_t *def)
+void Materials::rebuild(Material &material, ded_material_t *def)
 {
     if(!def) return;
 
     /// @todo We should be able to rebuild the variants.
-    Material_ClearVariants(&mat);
-    Material_SetDefinition(&mat, def);
+    material.clearVariants();
+    material.setDefinition(def);
 
     // Update manifests.
     for(uint i = 0; i < d->manifestCount; ++i)
     {
         MaterialManifest *manifest = d->manifestIdMap[i];
-        if(!manifest || manifest->material() != &mat) continue;
+        if(!manifest || manifest->material() != &material) continue;
 
         manifest->linkDefinitions();
     }
@@ -493,7 +493,7 @@ MaterialManifest &Materials::newManifest(MaterialScheme &scheme, Path const &pat
     return *manifest;
 }
 
-material_t *Materials::newFromDef(ded_material_t &def)
+Material *Materials::newFromDef(ded_material_t &def)
 {
     LOG_AS("Materials::newFromDef");
 
@@ -559,8 +559,8 @@ material_t *Materials::newFromDef(ded_material_t &def)
     Size2Raw dimensions(MAX_OF(0, def.width), MAX_OF(0, def.height));
     material_env_class_t envClass = S_MaterialEnvClassForUri(reinterpret_cast<struct uri_s const *>(&uri));
 
-    material_t *mat = Material_New(def.flags, &def, &dimensions, envClass);
-    Material_SetManifestId(mat, manifest->id());
+    Material *mat = new Material(def.flags, &def, &dimensions, envClass);
+    mat->setManifestId(manifest->id());
 
     // Attach the material to the manifest.
     manifest->setMaterial(mat);
@@ -578,10 +578,10 @@ material_t *Materials::newFromDef(ded_material_t &def)
         if(!lightDef.stageCount.num) break;
 
         Material::Decoration *decor = Material::Decoration::fromDef(lightDef);
-        Material_AddDecoration(mat, *decor);
+        mat->addDecoration(*decor);
     }
 
-    if(!Material_DecorationCount(mat))
+    if(!mat->decorationCount())
     {
         // Perhaps an oldschool linked decoration definition?
         ded_decor_t *decorDef = Def_GetDecoration(reinterpret_cast<uri_s *>(&uri));
@@ -594,7 +594,7 @@ material_t *Materials::newFromDef(ded_material_t &def)
                 if(V3f_IsZero(lightDef.stage.color)) break;
 
                 Material::Decoration *decor = Material::Decoration::fromDef(lightDef);
-                Material_AddDecoration(mat, *decor);
+                mat->addDecoration(*decor);
             }
         }
     }
@@ -602,7 +602,7 @@ material_t *Materials::newFromDef(ded_material_t &def)
     return mat;
 }
 
-void Materials::cache(material_t &mat, MaterialVariantSpec const &spec,
+void Materials::cache(Material &mat, MaterialVariantSpec const &spec,
     bool cacheGroups)
 {
 #ifdef __SERVER__
@@ -645,7 +645,7 @@ void Materials::ticker(timespan_t time)
 {
     DENG2_FOR_EACH(MaterialList, i, d->materials)
     {
-        Material_Ticker(*i, time);
+        (*i)->ticker(time);
     }
 }
 
@@ -730,7 +730,7 @@ void Materials::resetAllMaterialAnimations()
 {
     DENG2_FOR_EACH(MaterialList, i, d->materials)
     {
-        Material::Variants const &variants = Material_Variants(*i);
+        Material::Variants const &variants = (*i)->variants();
         DENG2_FOR_EACH_CONST(Material::Variants, k, variants)
         {
             (*k)->resetAnim();
@@ -743,7 +743,7 @@ static void printVariantInfo(Material::Variant &variant, int variantIdx)
     Con_Printf("Variant #%i: Spec:%p\n", variantIdx, de::dintptr(&variant.spec()));
 
     // Print layer state info:
-    int const layerCount = Material_LayerCount(&variant.generalCase());
+    int const layerCount = variant.generalCase().layerCount();
     for(int i = 0; i < layerCount; ++i)
     {
         Material::Variant::LayerState const &l = variant.layer(i);
@@ -751,7 +751,7 @@ static void printVariantInfo(Material::Variant &variant, int variantIdx)
     }
 
     // Print decoration state info:
-    int const decorationCount = Material_DecorationCount(&variant.generalCase());
+    int const decorationCount = variant.generalCase().decorationCount();
     for(int i = 0; i < decorationCount; ++i)
     {
         Material::Variant::DecorationState const &l = variant.decoration(i);
@@ -759,38 +759,38 @@ static void printVariantInfo(Material::Variant &variant, int variantIdx)
     }
 }
 
-static void printMaterialInfo(material_t &mat)
+static void printMaterialInfo(Material &material)
 {
-    ded_material_t const *def = Material_Definition(&mat);
+    ded_material_t const *def = material.definition();
 
-    MaterialManifest &manifest = Material_Manifest(&mat);
+    MaterialManifest &manifest = material.manifest();
     Uri uri = manifest.composeUri();
     QByteArray path = uri.asText().toUtf8();
 
     // Print summary:
     Con_Printf("Material \"%s\" [%p] x%u origin:%s\n",
-               path.constData(), (void *) &mat, Material_VariantCount(&mat),
+               path.constData(), (void *) &material, material.variantCount(),
                !manifest.isCustom()? "game" : (def->autoGenerated? "addon" : "def"));
 
-    if(Material_Width(&mat) <= 0 || Material_Height(&mat) <= 0)
+    if(material.width() <= 0 || material.height() <= 0)
         Con_Printf("Dimensions:unknown (not yet prepared)\n");
     else
-        Con_Printf("Dimensions:%d x %d\n", Material_Width(&mat), Material_Height(&mat));
+        Con_Printf("Dimensions:%d x %d\n", material.width(), material.height());
 
     // Print synopsis:
     Con_Printf("Drawable:%s EnvClass:\"%s\" Decorated:%s"
                "\nDetailed:%s Glowing:%s Shiny:%s%s SkyMasked:%s\n",
-               Material_IsDrawable(&mat)     ? "yes" : "no",
-               Material_EnvironmentClass(&mat) == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(Material_EnvironmentClass(&mat)),
-               Material_HasDecorations(&mat) ? "yes" : "no",
-               Material_DetailTexture(&mat)  ? "yes" : "no",
-               Material_HasGlow(&mat)        ? "yes" : "no",
-               Material_ShinyTexture(&mat)   ? "yes" : "no",
-               Material_ShinyMaskTexture(&mat)? "(masked)" : "",
-               Material_IsSkyMasked(&mat)    ? "yes" : "no");
+               material.isDrawable()     ? "yes" : "no",
+               material.environmentClass() == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(material.environmentClass()),
+               material.hasDecorations() ? "yes" : "no",
+               material.detailTexture()  ? "yes" : "no",
+               material.hasGlow()        ? "yes" : "no",
+               material.shinyTexture()   ? "yes" : "no",
+               material.shinyMaskTexture()? "(masked)" : "",
+               material.isSkyMasked()    ? "yes" : "no");
 
     // Print full layer config:
-    Material::Layers const &layers = Material_Layers(&mat);
+    Material::Layers const &layers = material.layers();
     for(int i = 0; i < layers.count(); ++i)
     {
         Material::Layer const *lDef = layers[i];
@@ -814,7 +814,7 @@ static void printMaterialInfo(material_t &mat)
     }
 
     // Print decoration config:
-    Material::Decorations const &decorations = Material_Decorations(&mat);
+    Material::Decorations const &decorations = material.decorations();
     for(int i = 0; i < decorations.count(); ++i)
     {
         Material::Decoration const *lDef = decorations[i];
@@ -837,13 +837,13 @@ static void printMaterialInfo(material_t &mat)
         }
     }
 
-    if(!Material_VariantCount(&mat)) return;
+    if(!material.variantCount()) return;
 
     Con_PrintRuler();
 
     // Print variant specs and current animation states:
     int variantIdx = 0;
-    Material::Variants const &variants = Material_Variants(&mat);
+    Material::Variants const &variants = material.variants();
     DENG2_FOR_EACH_CONST(Material::Variants, i, variants)
     {
         printVariantInfo(**i, variantIdx);
@@ -853,14 +853,14 @@ static void printMaterialInfo(material_t &mat)
 
 static void printMaterialSummary(MaterialManifest &manifest, bool printSchemeName = true)
 {
-    material_t *material = manifest.material();
+    Material *material = manifest.material();
     Uri uri = manifest.composeUri();
     QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
 
     Con_FPrintf(!material? CPF_LIGHT : CPF_WHITE,
                 "%-*s %-6s x%u\n", printSchemeName? 22 : 14, path.constData(),
-                !material? "unknown" : (!manifest.isCustom() ? "game" : (Material_Definition(material)->autoGenerated? "addon" : "def")),
-                !material? 0 : Material_VariantCount(material));
+                !material? "unknown" : (!manifest.isCustom() ? "game" : (material->definition()->autoGenerated? "addon" : "def")),
+                !material? 0 : material->variantCount());
 }
 
 /**
@@ -1116,7 +1116,7 @@ D_CMD(InspectMaterial)
     try
     {
         de::MaterialManifest &manifest = materials.find(search);
-        if(material_t *mat = manifest.material())
+        if(Material *mat = manifest.material())
         {
             de::printMaterialInfo(*mat);
         }
@@ -1196,7 +1196,7 @@ uint Materials_Count()
     return App_Materials()->count();
 }
 
-material_t *Materials_ToMaterial(materialid_t id)
+Material *Materials_ToMaterial(materialid_t id)
 {
     de::MaterialManifest *manifest = App_Materials()->toMaterialManifest(id);
     if(manifest) return manifest->material();

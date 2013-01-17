@@ -59,13 +59,13 @@ Surface::~Surface()
 boolean Surface_IsDrawable(Surface *suf)
 {
     DENG_ASSERT(suf);
-    return suf->material && Material_IsDrawable(suf->material);
+    return suf->material && suf->material->isDrawable();
 }
 
 boolean Surface_IsSkyMasked(Surface const *suf)
 {
     DENG_ASSERT(suf);
-    return suf->material && Material_IsSkyMasked(suf->material);
+    return suf->material && suf->material->isSkyMasked();
 }
 
 boolean Surface_AttachedToMap(Surface *suf)
@@ -81,15 +81,15 @@ boolean Surface_AttachedToMap(Surface *suf)
     return true;
 }
 
-boolean Surface_SetMaterial(Surface *suf, material_t *mat)
+boolean Surface_SetMaterial(Surface *suf, Material *material)
 {
     DENG_ASSERT(suf);
-    if(suf->material != mat)
+    if(suf->material != material)
     {
         if(Surface_AttachedToMap(suf))
         {
             // No longer a missing texture fix?
-            if(mat && (suf->oldFlags & SUIF_FIX_MISSING_MATERIAL))
+            if(material && (suf->oldFlags & SUIF_FIX_MISSING_MATERIAL))
                 suf->inFlags &= ~SUIF_FIX_MISSING_MATERIAL;
 
             if(!ddMapSetup)
@@ -101,21 +101,21 @@ boolean Surface_SetMaterial(Surface *suf, material_t *mat)
                 // If this plane's surface is in the glowing list, remove it.
                 R_SurfaceListRemove(GameMap_GlowingSurfaces(map), suf);
 
-                if(mat)
+                if(material)
                 {
-                    if(Material_HasGlow(mat))
+                    if(material->hasGlow())
                     {
                         R_SurfaceListAdd(GameMap_GlowingSurfaces(map), suf);
                     }
 
-                    if(Material_HasDecorations(mat))
+                    if(material->hasDecorations())
                     {
                         R_SurfaceListAdd(GameMap_DecoratedSurfaces(map), suf);
                     }
 
                     if(suf->owner->type() == DMU_PLANE)
                     {
-                        de::Uri uri = Material_Manifest(mat).composeUri();
+                        de::Uri uri = material->manifest().composeUri();
                         ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
                         P_SpawnPlaneParticleGen(def, suf->owner->castTo<Plane>());
                     }
@@ -123,7 +123,7 @@ boolean Surface_SetMaterial(Surface *suf, material_t *mat)
             }
         }
 
-        suf->material = mat;
+        suf->material = material;
         suf->oldFlags = suf->inFlags;
         if(Surface_AttachedToMap(suf))
             suf->inFlags |= SUIF_UPDATE_DECORATIONS;
@@ -448,7 +448,7 @@ int Surface_SetProperty(Surface *suf, setargs_t const *args)
         break; }
 
     case DMU_MATERIAL: {
-        material_t *mat;
+        Material *mat;
         DMU_SetValue(DMT_SURFACE_MATERIAL, &mat, args, 0);
         Surface_SetMaterial(suf, mat);
         break; }
@@ -490,7 +490,7 @@ int Surface_GetProperty(Surface const *suf, setargs_t *args)
         break; }
 
     case DMU_MATERIAL: {
-        material_t *mat = suf->material;
+        Material *mat = suf->material;
         if(suf->inFlags & SUIF_FIX_MISSING_MATERIAL)
             mat = NULL;
         DMU_GetValue(DMT_SURFACE_MATERIAL, &mat, args, 0);

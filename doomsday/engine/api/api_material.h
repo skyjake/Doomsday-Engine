@@ -35,7 +35,7 @@ DENG_API_TYPEDEF(Material)
 {
     de_api_t api;
 
-    material_t *(*ForTextureUri)(Uri const *textureUri);
+    Material *(*ForTextureUri)(Uri const *textureUri);
     Uri *(*ComposeUri)(materialid_t materialId);
     materialid_t (*ResolveUri)(const Uri* uri);
     materialid_t (*ResolveUriCString)(const char* path);

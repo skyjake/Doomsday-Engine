@@ -28,9 +28,16 @@
 #include "MapElement"
 #include "map/p_mapdata.h"
 #include "map/p_dmu.h"
+#include "def_data.h"
+
+#include <QList>
+#include <de/Error>
+#include <de/Vector>
+#include "uri.hh"
 
 struct ded_material_s;
 struct materialvariant_s;
+struct texture_s;
 
 typedef enum {
     MEC_UNKNOWN = -1,
@@ -44,34 +51,23 @@ typedef enum {
 
 #define VALID_MATERIAL_ENV_CLASS(v) ((v) >= MEC_FIRST && (v) < NUM_MATERIAL_ENV_CLASSES)
 
+namespace de {
+
+// Forward declarations.
+class MaterialManifest;
+class MaterialSnapshot;
+struct MaterialVariantSpec;
+
+}
+
 /**
+ * Logical material resource.
+ *
  * Prepared states:
  * - 0 Not yet prepared.
  * - 1 Prepared from original game textures.
  * - 2 Prepared from custom or replacement textures.
  *
- * @ingroup resource
- */
-struct material_s;
-typedef struct material_s material_t;
-
-#ifdef __cplusplus
-
-#include <QList>
-#include <de/Error>
-#include <de/Vector>
-#include "uri.hh"
-
-namespace de {
-
-class MaterialAnim;
-class MaterialManifest;
-class MaterialSnapshot;
-struct MaterialVariantSpec;
-
-
-/**
- * Logical material resource.
  * @ingroup resource
  */
 class Material : public de::MapElement
@@ -139,9 +135,9 @@ public:
          * @param spec          Specification used to derive this variant.
          *                      Ownership is NOT given to the Variant.
          *
-         * @todo should only be accessible by material_t (Material).
+         * @todo should only be accessible by Material (Material).
          */
-        Variant(material_t &generalCase, MaterialVariantSpec const &spec);
+        Variant(Material &generalCase, de::MaterialVariantSpec const &spec);
         ~Variant();
 
         /**
@@ -150,15 +146,15 @@ public:
          *
          * @see generalCase()
          */
-        inline operator material_t &() const {
+        inline operator Material &() const {
             return generalCase();
         }
 
         /// @return  Superior material from which the variant was derived.
-        material_t &generalCase() const;
+        Material &generalCase() const;
 
         /// @return  Material variant specification for the variant.
-        MaterialVariantSpec const &spec() const;
+        de::MaterialVariantSpec const &spec() const;
 
         /**
          * Returns @c true if animation of the variant is currently paused
@@ -202,7 +198,7 @@ public:
          *
          * @see detachSnapshot(), snapshot()
          */
-        MaterialSnapshot &attachSnapshot(MaterialSnapshot &snapshot);
+        de::MaterialSnapshot &attachSnapshot(de::MaterialSnapshot &snapshot);
 
         /**
          * Detach the MaterialSnapshot data from the variant, relinquishing
@@ -210,7 +206,7 @@ public:
          *
          * @see attachSnapshot(), detachSnapshot()
          */
-        MaterialSnapshot *detachSnapshot();
+        de::MaterialSnapshot *detachSnapshot();
 
         /**
          * Returns the MaterialSnapshot data from the variant or otherwise @c 0.
@@ -218,7 +214,7 @@ public:
          *
          * @see attachSnapshot(), detachSnapshot()
          */
-        MaterialSnapshot *snapshot() const;
+        de::MaterialSnapshot *snapshot() const;
 
         /**
          * Returns the frame number when the variant's associated snapshot was last
@@ -295,7 +291,7 @@ public:
          */
         Decoration();
 
-        Decoration(Vector2i const &_patternSkip, Vector2i const &_patternOffset);
+        Decoration(de::Vector2i const &_patternSkip, de::Vector2i const &_patternOffset);
 
         /**
          * Construct a new decoration from the specified definition.
@@ -313,13 +309,13 @@ public:
          * pattern allows sparser repeats on the horizontal and vertical axes
          * respectively.
          */
-        Vector2i const &patternSkip() const;
+        de::Vector2i const &patternSkip() const;
 
         /**
          * Retrieve the pattern offset for the decoration. Used with pattern
          * skip to offset the origin of the pattern.
          */
-        Vector2i const &patternOffset() const;
+        de::Vector2i const &patternOffset() const;
 
         /**
          * Returns the total number of animation stages for the decoration.
@@ -333,10 +329,10 @@ public:
 
     private:
         /// Pattern skip intervals.
-        Vector2i patternSkip_;
+        de::Vector2i patternSkip_;
 
         /// Pattern skip interval offsets.
-        Vector2i patternOffset_;
+        de::Vector2i patternOffset_;
 
         /// Animation stages.
         Stages stages_;
@@ -346,278 +342,265 @@ public:
     typedef QList<Material::Decoration *> Decorations;
 
 public:
-    Material();
+    /**
+     * Construct a new material.
+     *
+     * @param flags  @see materialFlags
+     * @param def  Definition for the material, if any.
+     * @param dimensions  Dimensions of the material in map coordinate space units.
+     * @param envClass  Environment class for the material.
+     */
+    Material(short flags, ded_material_t *def, Size2Raw *dimensions,
+             material_env_class_t envClass);
     ~Material();
+
+    /**
+     * Returns the number of material variants.
+     */
+    int variantCount() const;
+
+    /**
+     * Returns the number of material layers.
+     */
+    int layerCount() const;
+
+    /**
+     * Returns the number of material (light) decorations.
+     */
+    int decorationCount() const;
+
+    /**
+     * Process a system tick event.
+     */
+    void ticker(timespan_t time);
+
+    /**
+     * Destroys all derived material variants for the material.
+     */
+    void clearVariants();
+
+    /// @return  Definition associated with this.
+    struct ded_material_s *definition() const;
+
+    /**
+     * Change the associated definition.
+     * @param def  New definition. Can be @c NULL.
+     */
+    void setDefinition(struct ded_material_s *def);
+
+    /// Returns the dimensions of the material in map coordinate space units.
+    Size2 const *dimensions() const;
+
+    /**
+     * Change the world dimensions of the material.
+     * @param newDimensions  New dimensions in map coordinate space units.
+     */
+    void setDimensions(Size2Raw const *size);
+
+    /// @return  Width of the material in map coordinate space units.
+    int width() const;
+
+    void setWidth(int width);
+
+    /// @return  Height of the material in map coordinate space units.
+    int height() const;
+
+    void setHeight(int height);
+
+    /// @return  @see materialFlags
+    short flags() const;
+
+    /**
+     * Change the public Material Flags.
+     * @param flags  @ref materialFlags
+     */
+    void setFlags(short flags);
+
+    /**
+     * Returns @c true if the material is considered to be @em valid. A material
+     * can only be invalidated when resources it depends on (such as the definition
+     * from which it was produced) are removed as result of runtime file unloading.
+     *
+     * We can't yet purge these 'orphaned' materials as the game may be holding on
+     * to pointers (which are considered eternal). Instead, an invalid material is
+     * ignored until such time as the current game is reset or is changed.
+     */
+    bool isValid() const;
+
+    /// @return  @c true= the material has at least one animated layer.
+    bool isAnimated() const;
+
+    /// Returns @c true if the material is considered @em skymasked.
+    bool isSkyMasked() const;
+
+    /// Returns @c true if the material is considered drawable.
+    bool isDrawable() const;
+
+    /// Returns @c true if one or more (light) decorations are defined for the material.
+    bool hasDecorations() const;
+
+    /// Returns @c true if one or more of the material's layers are glowing.
+    bool hasGlow() const;
+
+    /// @return  Prepared state of this material.
+    byte prepared() const;
+
+    /**
+     * Change the prepared status of this material.
+     * @param state  @c 0: Not yet prepared.
+     *               @c 1: Prepared from original game textures.
+     *               @c 2: Prepared from custom or replacement textures.
+     */
+    void setPrepared(byte state);
+
+    /// @return  Unique identifier of the MaterialManifest for the material.
+    materialid_t manifestId() const;
+
+    /**
+     * Change the unique identifier of the MaterialManifest for the material.
+     * @param id  New identifier.
+     *
+     * @todo Refactor away.
+     */
+    void setManifestId(materialid_t id);
+
+    /// @return  MaterialEnvironmentClass.
+    material_env_class_t environmentClass() const;
+
+    /**
+     * Change the associated environment class.
+     * @todo If attached to a Map Surface update accordingly!
+     * @param envClass  New MaterialEnvironmentClass.
+     */
+    void setEnvironmentClass(material_env_class_t envClass);
+
+    /// @return  Detail Texture linked to this else @c NULL
+    struct texture_s *detailTexture();
+
+    /**
+     * Change the Detail Texture linked to this.
+     * @param tex  Texture to be linked with.
+     */
+    void setDetailTexture(struct texture_s *tex);
+
+    /// @return  Detail Texture blending factor for this [0..1].
+    float detailStrength();
+
+    /**
+     * Change the Detail Texture strength factor for this.
+     * @param strength  New strength value (will be clamped to [0..1]).
+     */
+    void setDetailStrength(float strength);
+
+    /// @return  Detail Texture scale factor for this [0..1].
+    float detailScale();
+
+    /**
+     * Change the Detail Texture scale factor for this.
+     * @param scale  New scale value (will be clamped to [0..1]).
+     */
+    void setDetailScale(float scale);
+
+    /// @return  Shiny Texture linked to this else @c NULL
+    struct texture_s *shinyTexture();
+
+    /**
+     * Change the Shiny Texture linked to this.
+     * @param tex  Texture to be linked with.
+     */
+    void setShinyTexture(struct texture_s *tex);
+
+    /// @return  Shiny Texture blendmode for this.
+    blendmode_t shinyBlendmode();
+
+    /**
+     * Change the Shiny Texture blendmode for this.
+     * @param blendmode  New blendmode value.
+     */
+    void setShinyBlendmode(blendmode_t blendmode);
+
+    /// @return  Shiny Texture strength factor for this.
+    float shinyStrength();
+
+    /**
+     * Change the Shiny Texture strength factor for this.
+     * @param strength  New strength value (will be clamped to [0..1]).
+     */
+    void setShinyStrength(float strength);
+
+    /// @return  Shiny Texture minColor (RGB triplet) for this.
+    float const *shinyMinColor();
+
+    /**
+     * Change the Shiny Texture minColor for this.
+     * @param colorRGB  New RGB color values (each component will be clamped to [0..1]).
+     */
+    void setShinyMinColor(float const colorRGB[3]);
+
+    /// @return  ShinyMask Texture linked to this else @c NULL
+    struct texture_s *shinyMaskTexture();
+
+    /**
+     * Change the material's linked shiny mask texture.
+     * @param tex  Texture to be linked with.
+     */
+    void setShinyMaskTexture(struct texture_s *tex);
+
+    de::MaterialManifest &manifest() const;
+
+    /**
+     * Provides access to the list of layers for efficient traversal.
+     */
+    Layers const &layers() const;
+
+    /**
+     * Add a new (light) decoration to the material.
+     *
+     * @param decor     Decoration to add.
+     */
+    void addDecoration(Decoration &decor);
+
+    /**
+     * Provides access to the list of decorations for efficient traversal.
+     */
+    Decorations const &decorations() const;
+
+    /**
+     * Choose/create a variant of the material which fulfills @a spec.
+     *
+     * @param spec      Specification for the derivation of @a material.
+     * @param canCreate @c true= Create a new variant if no suitable one exists.
+     *
+     * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
+     */
+    Variant *chooseVariant(de::MaterialVariantSpec const &spec, bool canCreate = false);
+
+    /**
+     * Provides access to the list of variant instances for efficient traversal.
+     */
+    Variants const &variants() const;
+
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int getProperty(setargs_t *args) const;
+
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int setProperty(setargs_t const *args);
+
+private:
+    struct Instance;
+    Instance *d;
 };
 
-} // namespace de
-
-extern "C" {
-#endif
-
-/**
- * Construct a new material.
- *
- * @param flags  @see materialFlags
- * @param def  Definition for the material, if any.
- * @param dimensions  Dimensions of the material in map coordinate space units.
- * @param envClass  Environment class for the material.
- */
-material_t *Material_New(short flags, ded_material_t *def, Size2Raw *dimensions,
-                         material_env_class_t envClass);
-
-void Material_Delete(material_t *mat);
-
-/**
- * Returns the number of material variants.
- */
-int Material_VariantCount(material_t const *mat);
-
-/**
- * Returns the number of material layers.
- */
-int Material_LayerCount(material_t const *mat);
-
-/**
- * Returns the number of material (light) decorations.
- */
-int Material_DecorationCount(material_t const *mat);
-
-/**
- * Process a system tick event.
- */
-void Material_Ticker(material_t *mat, timespan_t time);
-
-/**
- * Destroys all derived material variants for the material.
- */
-void Material_ClearVariants(material_t *mat);
-
-/// @return  Definition associated with this.
-struct ded_material_s *Material_Definition(material_t const *mat);
-
-/**
- * Change the associated definition.
- * @param def  New definition. Can be @c NULL.
- */
-void Material_SetDefinition(material_t *mat, struct ded_material_s *def);
-
-/// Returns the dimensions of the material in map coordinate space units.
-Size2 const *Material_Dimensions(material_t const *mat);
-
-/**
- * Change the world dimensions of the material.
- * @param newDimensions  New dimensions in map coordinate space units.
- */
-void Material_SetDimensions(material_t *mat, Size2Raw const *size);
-
-/// @return  Width of the material in map coordinate space units.
-int Material_Width(material_t const *mat);
-
-void Material_SetWidth(material_t *mat, int width);
-
-/// @return  Height of the material in map coordinate space units.
-int Material_Height(material_t const *mat);
-
-void Material_SetHeight(material_t *mat, int height);
-
-/// @return  @see materialFlags
-short Material_Flags(material_t const *mat);
-
-/**
- * Change the public Material Flags.
- * @param flags  @ref materialFlags
- */
-void Material_SetFlags(material_t *mat, short flags);
-
-/**
- * Returns @c true if the material is considered to be @em valid. A material
- * can only be invalidated when resources it depends on (such as the definition
- * from which it was produced) are removed as result of runtime file unloading.
- *
- * We can't yet purge these 'orphaned' materials as the game may be holding on
- * to pointers (which are considered eternal). Instead, an invalid material is
- * ignored until such time as the current game is reset or is changed.
- */
-boolean Material_IsValid(material_t const *mat);
-
-/// @return  @c true= the material has at least one animated layer.
-boolean Material_IsAnimated(material_t const *mat);
-
-/// Returns @c true if the material is considered @em skymasked.
-boolean Material_IsSkyMasked(material_t const *mat);
-
-/// Returns @c true if the material is considered drawable.
-boolean Material_IsDrawable(material_t const *mat);
-
-/// Returns @c true if one or more (light) decorations are defined for the material.
-boolean Material_HasDecorations(material_t const *mat);
-
-/// Returns @c true if one or more of the material's layers are glowing.
-boolean Material_HasGlow(material_t const *mat);
-
-/// @return  Prepared state of this material.
-byte Material_Prepared(material_t const *mat);
-
-/**
- * Change the prepared status of this material.
- * @param state  @c 0: Not yet prepared.
- *               @c 1: Prepared from original game textures.
- *               @c 2: Prepared from custom or replacement textures.
- */
-void Material_SetPrepared(material_t *mat, byte state);
-
-/// @return  Unique identifier of the MaterialManifest for the material.
-materialid_t Material_ManifestId(material_t const *mat);
-
-/**
- * Change the unique identifier of the MaterialManifest for the material.
- * @param id  New identifier.
- *
- * @todo Refactor away.
- */
-void Material_SetManifestId(material_t *mat, materialid_t id);
-
-/// @return  MaterialEnvironmentClass.
-material_env_class_t Material_EnvironmentClass(material_t const *mat);
-
-/**
- * Change the associated environment class.
- * @todo If attached to a Map Surface update accordingly!
- * @param envClass  New MaterialEnvironmentClass.
- */
-void Material_SetEnvironmentClass(material_t *mat, material_env_class_t envClass);
-
-/// @return  Detail Texture linked to this else @c NULL
-struct texture_s *Material_DetailTexture(material_t *mat);
-
-/**
- * Change the Detail Texture linked to this.
- * @param tex  Texture to be linked with.
- */
-void Material_SetDetailTexture(material_t *mat, struct texture_s *tex);
-
-/// @return  Detail Texture blending factor for this [0..1].
-float Material_DetailStrength(material_t *mat);
-
-/**
- * Change the Detail Texture strength factor for this.
- * @param strength  New strength value (will be clamped to [0..1]).
- */
-void Material_SetDetailStrength(material_t *mat, float strength);
-
-/// @return  Detail Texture scale factor for this [0..1].
-float Material_DetailScale(material_t *mat);
-
-/**
- * Change the Detail Texture scale factor for this.
- * @param scale  New scale value (will be clamped to [0..1]).
- */
-void Material_SetDetailScale(material_t *mat, float scale);
-
-/// @return  Shiny Texture linked to this else @c NULL
-struct texture_s *Material_ShinyTexture(material_t *mat);
-
-/**
- * Change the Shiny Texture linked to this.
- * @param tex  Texture to be linked with.
- */
-void Material_SetShinyTexture(material_t *mat, struct texture_s *tex);
-
-/// @return  Shiny Texture blendmode for this.
-blendmode_t Material_ShinyBlendmode(material_t *mat);
-
-/**
- * Change the Shiny Texture blendmode for this.
- * @param blendmode  New blendmode value.
- */
-void Material_SetShinyBlendmode(material_t *mat, blendmode_t blendmode);
-
-/// @return  Shiny Texture strength factor for this.
-float Material_ShinyStrength(material_t *mat);
-
-/**
- * Change the Shiny Texture strength factor for this.
- * @param strength  New strength value (will be clamped to [0..1]).
- */
-void Material_SetShinyStrength(material_t *mat, float strength);
-
-/// @return  Shiny Texture minColor (RGB triplet) for this.
-float const *Material_ShinyMinColor(material_t *mat);
-
-/**
- * Change the Shiny Texture minColor for this.
- * @param colorRGB  New RGB color values (each component will be clamped to [0..1]).
- */
-void Material_SetShinyMinColor(material_t *mat, float const colorRGB[3]);
-
-/// @return  ShinyMask Texture linked to this else @c NULL
-struct texture_s *Material_ShinyMaskTexture(material_t *mat);
-
-/**
- * Change the ShinyMask Texture linked to this.
- * @param tex  Texture to be linked with.
- */
-void Material_SetShinyMaskTexture(material_t *mat, struct texture_s *tex);
-
-/**
- * Get a property value, selected by DMU_* name.
- *
- * @param material  Material instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Material_GetProperty(material_t const *material, setargs_t *args);
-
-/**
- * Update a property value, selected by DMU_* name.
- *
- * @param material  Material instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Material_SetProperty(material_t *material, setargs_t const *args);
-
-#ifdef __cplusplus
-} // extern "C"
-
-de::MaterialManifest &Material_Manifest(material_t const *material);
-
-/**
- * Provides access to the list of layers for efficient traversal.
- */
-de::Material::Layers const &Material_Layers(material_t const *mat);
-
-/**
- * Add a new (light) decoration to the material.
- *
- * @param mat       Material instance.
- * @param decor     Decoration to add.
- */
-void Material_AddDecoration(material_t *mat, de::Material::Decoration &decor);
-
-/**
- * Provides access to the list of decorations for efficient traversal.
- */
-de::Material::Decorations const &Material_Decorations(material_t const *mat);
-
-/**
- * Choose/create a variant of the material which fulfills @a spec.
- *
- * @param material  Material instance.
- * @param spec      Specification for the derivation of @a material.
- * @param canCreate @c true= Create a new variant if no suitable one exists.
- *
- * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
- */
-de::Material::Variant *Material_ChooseVariant(material_t *mat,
-    de::MaterialVariantSpec const &spec, bool canCreate = false);
-
-/**
- * Provides access to the list of variant instances for efficient traversal.
- */
-de::Material::Variants const &Material_Variants(material_t const *mat);
-
-#endif // __cplusplus
+//} // namespace de
 
 #endif /* LIBDENG_RESOURCE_MATERIAL_H */

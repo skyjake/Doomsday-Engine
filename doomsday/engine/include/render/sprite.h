@@ -32,7 +32,7 @@ typedef struct rendpspriteparams_s
     float pos[2]; // {X, Y} Screen-space position.
     float width, height;
 
-    material_t *mat;
+    Material *mat;
     float texOffset[2];
     boolean texFlip[2]; // {X, Y} Flip along the specified axis.
 

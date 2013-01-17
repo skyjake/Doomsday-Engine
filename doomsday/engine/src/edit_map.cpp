@@ -1782,7 +1782,7 @@ static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr
 {
     DENG_ASSERT(suf);
 
-    material_t *material = 0;
+    Material *material = 0;
     if(materialUriStr && !Str_IsEmpty(materialUriStr))
     {
         // Are we yet to instantiate the dictionary?
@@ -1801,7 +1801,7 @@ static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr
         if(refCount)
         {
             // Yes, if resolved the user pointer holds the found material.
-            material = (material_t *) materialDict->userPointer(internId);
+            material = (Material *) materialDict->userPointer(internId);
         }
         else
         {

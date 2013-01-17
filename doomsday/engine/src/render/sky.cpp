@@ -65,7 +65,7 @@ using namespace de;
 struct skylayer_t
 {
     int flags;
-    material_t *material;
+    Material *material;
     float offset;
     float fadeoutLimit;
 };
@@ -294,7 +294,7 @@ void Sky_Configure(ded_sky_t *def)
         {
             try
             {
-                material_t *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(sl->material)).material();
+                Material *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(sl->material)).material();
                 if(mat)
                 {
                     Sky_LayerSetMaterial(i, mat);
@@ -483,7 +483,7 @@ boolean Sky_LayerMasked(int id)
     return !!(layer->flags & SLF_MASKED);
 }
 
-material_t *Sky_LayerMaterial(int id)
+Material *Sky_LayerMaterial(int id)
 {
     skylayer_t *layer = skyLayerById(id);
     if(!layer)
@@ -496,7 +496,7 @@ material_t *Sky_LayerMaterial(int id)
     return layer->material;
 }
 
-void Sky_LayerSetMaterial(int id, material_t *mat)
+void Sky_LayerSetMaterial(int id, Material *mat)
 {
     skylayer_t *layer = skyLayerById(id);
     if(!layer)
@@ -605,7 +605,7 @@ static void internalSkyParams(int layer, int param, void *data)
         break;
 
     case DD_MATERIAL:
-        Sky_LayerSetMaterial(layer, (material_t *)data);
+        Sky_LayerSetMaterial(layer, (Material *)data);
         break;
 
     case DD_OFFSET:
@@ -793,7 +793,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
     if(renderTextures != 0)
     {
-        material_t *mat;
+        Material *mat;
 
         if(renderTextures == 2)
         {

@@ -5,7 +5,7 @@
 #include "api_material.h"
 
 #undef DD_MaterialForTextureUri
-material_t *DD_MaterialForTextureUri(uri_s const *textureUri)
+Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 {
     if(!textureUri) return 0; // Not found.
 

@@ -190,7 +190,7 @@ void P_MapSpawnPlaneParticleGens()
             Plane *plane = sector->SP_plane(j);
             if(!plane->PS_material) continue;
 
-            de::Uri uri = Material_Manifest(plane->PS_material).composeUri();
+            de::Uri uri = plane->PS_material->manifest().composeUri();
             ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
             P_SpawnPlaneParticleGen(def, plane);
         }
@@ -1396,9 +1396,9 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
         // A flat generator?
         if(gen->plane && def->material)
         {
-            material_t *defMat = Materials_ToMaterial(Materials_ResolveUri(def->material));
+            Material *defMat = Materials_ToMaterial(Materials_ResolveUri(def->material));
 
-            material_t *mat = gen->plane->PS_material;
+            Material *mat = gen->plane->PS_material;
             if(def->flags & PGF_FLOOR_SPAWN)
                 mat = gen->plane->sector->SP_plane(PLN_FLOOR)->PS_material;
             if(def->flags & PGF_CEILING_SPAWN)

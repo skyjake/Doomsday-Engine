@@ -34,7 +34,7 @@ typedef struct {
     int timer;
     SideDef* side;
     SideDefSection section;
-    material_t* material;
+    Material* material;
 } materialchanger_t;
 
 /**

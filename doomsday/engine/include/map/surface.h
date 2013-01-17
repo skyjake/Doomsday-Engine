@@ -62,7 +62,7 @@ public:
     de::MapElement *owner;        ///< Either @c DMU_SIDEDEF, or @c DMU_PLANE
     int            flags;         ///< SUF_ flags
     int            oldFlags;
-    material_t*    material;
+    Material*      material;
     blendmode_t    blendMode;
     float          tangent[3];
     float          bitangent[3];
@@ -123,7 +123,7 @@ boolean Surface_AttachedToMap(Surface* surface);
  * @param surface  Surface instance.
  * @param mat  New Material.
  */
-boolean Surface_SetMaterial(Surface* surface, material_t* material);
+boolean Surface_SetMaterial(Surface* surface, Material *material);
 
 /**
  * Change Material origin.

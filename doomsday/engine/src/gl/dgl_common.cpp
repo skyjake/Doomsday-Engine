@@ -717,7 +717,7 @@ static int DGL_ToGLWrapCap(DGLint cap)
     }
 }
 
-void DGL_SetMaterialUI(material_t *mat, DGLint wrapS, DGLint wrapT)
+void DGL_SetMaterialUI(Material *mat, DGLint wrapS, DGLint wrapT)
 {
     GL_SetMaterialUI2(mat, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
 }
@@ -738,12 +738,12 @@ void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
     }
 }
 
-void DGL_SetPSprite(material_t *mat)
+void DGL_SetPSprite(Material *mat)
 {
     GL_SetPSprite(mat, 0, 0);
 }
 
-void DGL_SetPSprite2(material_t *mat, int tclass, int tmap)
+void DGL_SetPSprite2(Material *mat, int tclass, int tmap)
 {
     GL_SetPSprite(mat, tclass, tmap);
 }

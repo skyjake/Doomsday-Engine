@@ -267,7 +267,7 @@ static void drawPositionIndicator(float x, float y, float radius, float pos,
     // Vertices along the edge.
     for(i = 0; i <= edgeCount; ++i)
     {
-        float angle = 2 * PI * pos * (i / (float)edgeCount) + PI/2;
+        float angle = 2 * de::PI * pos * (i / (float)edgeCount) + de::PI/2;
         glTexCoord2f(.5f + cos(angle)*.5f, .5f + sin(angle)*.5f);
         glVertex2f(x + cos(angle)*radius*1.05f, y + sin(angle)*radius*1.05f);
     }

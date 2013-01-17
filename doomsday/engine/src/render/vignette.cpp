@@ -79,7 +79,7 @@ void Vignette_Render(const RectRaw* viewRect, float fov)
     glBegin(GL_TRIANGLE_STRIP);
     for(i = 0; i <= DIVS; ++i)
     {
-        float ang = (float)(2 * PI * i) / (float)DIVS;
+        float ang = (float)(2 * de::PI * i) / (float)DIVS;
         float dx = cos(ang);
         float dy = sin(ang);
 

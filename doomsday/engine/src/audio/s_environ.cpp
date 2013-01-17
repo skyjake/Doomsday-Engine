@@ -243,8 +243,8 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
     {
         if(hedge->lineDef && HEDGE_SIDEDEF(hedge) && HEDGE_SIDEDEF(hedge)->SW_middlematerial)
         {
-            material_t* mat = HEDGE_SIDEDEF(hedge)->SW_middlematerial;
-            material_env_class_t mclass = Material_EnvironmentClass(mat);
+            Material *mat = HEDGE_SIDEDEF(hedge)->SW_middlematerial;
+            material_env_class_t mclass = mat->environmentClass();
             if(!(mclass >= 0 && mclass < NUM_MATERIAL_ENV_CLASSES))
                 mclass = MEC_WOOD; // Assume it's wood if unknown.
 

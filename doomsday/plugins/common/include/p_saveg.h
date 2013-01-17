@@ -195,7 +195,7 @@ unsigned short SV_ThingArchiveNum(mobj_t* mo);
 mobj_t* SV_GetArchiveThing(int thingid, void* address);
 
 MaterialArchive* SV_MaterialArchive(void);
-material_t* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
+Material* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
 
 /**
  * Update mobj flag values from those used in legacy game-save formats

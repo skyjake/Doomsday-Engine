@@ -40,10 +40,14 @@ bool MaterialVariantSpec::compare(MaterialVariantSpec const &other) const
     return 1 == TextureVariantSpec_Compare(primarySpec, other.primarySpec);
 }
 
+}
+
+using namespace de;
+
 struct Material::Variant::Instance
 {
     /// Superior material of which this is a derivative.
-    material_t *material;
+    Material *material;
 
     /// Specification used to derive this variant.
     MaterialVariantSpec const &spec;
@@ -60,7 +64,7 @@ struct Material::Variant::Instance
     /// Decoration animation states.
     Material::Variant::DecorationState decorations[Material::Variant::max_decorations];
 
-    Instance(material_t &generalCase, MaterialVariantSpec const &_spec)
+    Instance(Material &generalCase, MaterialVariantSpec const &_spec)
         : material(&generalCase),
           spec(_spec), snapshot(0), snapshotPrepareFrame(-1)
     {}
@@ -71,7 +75,7 @@ struct Material::Variant::Instance
     }
 };
 
-Material::Variant::Variant(material_t &generalCase, MaterialVariantSpec const &spec)
+Material::Variant::Variant(Material &generalCase, MaterialVariantSpec const &spec)
 {
     d = new Instance(generalCase, spec);
     // Initialize animation states.
@@ -83,7 +87,7 @@ Material::Variant::~Variant()
     delete d;
 }
 
-material_t &Material::Variant::generalCase() const
+Material &Material::Variant::generalCase() const
 {
     return *d->material;
 }
@@ -111,7 +115,7 @@ bool Material::Variant::isPaused() const
 void Material::Variant::ticker(timespan_t /*ticLength*/)
 {
     // Animation ceases once the material is no longer valid.
-    if(!Material_IsValid(d->material)) return;
+    if(!d->material->isValid()) return;
 
     // Animation will only progress when not paused.
     if(isPaused()) return;
@@ -119,7 +123,7 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
     /*
      * Animate layers:
      */
-    Material::Layers const &layers = Material_Layers(d->material);
+    Material::Layers const &layers = d->material->layers();
     for(int i = 0; i < layers.count(); ++i)
     {
         Material::Layer const *layerDef = layers[i];
@@ -154,7 +158,7 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
     /*
      * Animate decorations:
      */
-    Material::Decorations const &decorations = Material_Decorations(d->material);
+    Material::Decorations const &decorations = d->material->decorations();
     for(int i = 0; i < decorations.count(); ++i)
     {
         Material::Decoration const *lightDef = decorations[i];
@@ -196,9 +200,9 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
 
 void Material::Variant::resetAnim()
 {
-    if(!Material_IsValid(d->material)) return;
+    if(!d->material->isValid()) return;
 
-    Material::Layers const &layers = Material_Layers(d->material);
+    Material::Layers const &layers = d->material->layers();
     for(int i = 0; i < layers.count(); ++i)
     {
         LayerState &ls = d->layers[i];
@@ -208,7 +212,7 @@ void Material::Variant::resetAnim()
         ls.inter = 0;
     }
 
-    Material::Decorations const &decorations = Material_Decorations(d->material);
+    Material::Decorations const &decorations = d->material->decorations();
     for(int i = 0; i < decorations.count(); ++i)
     {
         DecorationState &ds = d->decorations[i];
@@ -221,7 +225,7 @@ void Material::Variant::resetAnim()
 
 Material::Variant::LayerState const &Material::Variant::layer(int layerNum)
 {
-    if(layerNum >= 0 && layerNum < Material_LayerCount(d->material))
+    if(layerNum >= 0 && layerNum < d->material->layerCount())
         return d->layers[layerNum];
 
     /// @throw InvalidLayerError Invalid layer reference.
@@ -230,7 +234,7 @@ Material::Variant::LayerState const &Material::Variant::layer(int layerNum)
 
 Material::Variant::DecorationState const &Material::Variant::decoration(int decorNum)
 {
-    if(decorNum >= 0 && decorNum < Material_DecorationCount(d->material))
+    if(decorNum >= 0 && decorNum < d->material->decorationCount())
         return d->decorations[decorNum];
 
     /// @throw InvalidDecorationError Invalid decoration reference.
@@ -279,4 +283,4 @@ void Material::Variant::setSnapshotPrepareFrame(int frameNum)
     }
 }
 
-} // namespace de
+//} // namespace de

@@ -105,11 +105,8 @@ Material::Decoration::Stages const &Material::Decoration::stages() const
     return stages_;
 }
 
-struct material_s
+struct Material::Instance
 {
-    /// DMU object header.
-    runtime_mapdata_header_t header;
-
     /// Definition from which this material was derived (if any).
     ded_material_t *def;
 
@@ -149,15 +146,14 @@ struct material_s
     /// Current prepared state.
     byte prepared;
 
-    material_s(short _flags, ded_material_t &_def,
-               Size2Raw &_dimensions, material_env_class_t _envClass)
+    Instance(short _flags, ded_material_t &_def, Size2Raw &_dimensions,
+             material_env_class_t _envClass)
         : def(&_def), envClass(_envClass), manifestId(0),
           dimensions(Size2_NewFromRaw(&_dimensions)), flags(_flags),
           detailTex(0), detailScale(0), detailStrength(0),
           shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0),
           prepared(0)
     {
-        header.type = DMU_MATERIAL;
         std::memset(shinyMinColor, 0, sizeof(shinyMinColor));
 
         for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
@@ -167,7 +163,7 @@ struct material_s
         }
     }
 
-    ~material_s()
+    ~Instance()
     {
         clearDecorations();
         clearLayers();
@@ -201,82 +197,75 @@ struct material_s
     }
 };
 
-material_t *Material_New(short flags, ded_material_t *def,
-    Size2Raw *dimensions, material_env_class_t envClass)
+Material::Material(short flags, ded_material_t *def, Size2Raw *dimensions,
+                   material_env_class_t envClass)
+    : de::MapElement(DMU_MATERIAL)
 {
     DENG_ASSERT(def && dimensions);
-    return new material_s(flags, *def, *dimensions, envClass);
+    d = new Instance(flags, *def, *dimensions, envClass);
 }
 
-void Material_Delete(material_t *mat)
+Material::~Material()
 {
-    if(mat)
-    {
-        delete (material_s *) mat;
-    }
+    delete d;
 }
 
-int Material_DecorationCount(material_t const *mat)
+int Material::decorationCount() const
 {
-    DENG2_ASSERT(mat);
-    return mat->decorations.count();
+    return d->decorations.count();
 }
 
-boolean Material_IsValid(material_t const *mat)
+bool Material::isValid() const
 {
-    DENG2_ASSERT(mat);
-    return !!Material_Definition(mat);
+    return !!definition();
 }
 
-void Material_Ticker(material_t *mat, timespan_t time)
+void Material::ticker(timespan_t time)
 {
-    DENG2_ASSERT(mat);
-    DENG2_FOR_EACH(Material::Variants, i, mat->variants)
+    DENG2_FOR_EACH(Variants, i, d->variants)
     {
         (*i)->ticker(time);
     }
 }
 
-ded_material_t *Material_Definition(material_t const *mat)
+ded_material_t *Material::definition() const
 {
-    DENG2_ASSERT(mat);
-    return mat->def;
+    return d->def;
 }
 
-void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
+void Material::setDefinition(struct ded_material_s *def)
 {
-    DENG2_ASSERT(mat);
-    if(mat->def != def)
+    if(d->def != def)
     {
-        mat->def = def;
+        d->def = def;
 
         // Textures are updated automatically at prepare-time, so just clear them.
-        Material_SetDetailTexture(mat, NULL);
-        Material_SetShinyTexture(mat, NULL);
-        Material_SetShinyMaskTexture(mat, NULL);
+        setDetailTexture(0);
+        setShinyTexture(0);
+        setShinyMaskTexture(0);
     }
 
-    if(!mat->def) return;
+    if(!d->def) return;
 
-    MaterialManifest &manifest = Material_Manifest(mat);
+    MaterialManifest &_manifest = manifest();
 
-    mat->flags = mat->def->flags;
+    d->flags = d->def->flags;
     Size2Raw size(def->width, def->height);
-    Material_SetDimensions(mat, &size);
-    Material_SetEnvironmentClass(mat, S_MaterialEnvClassForUri(def->uri));
+    setDimensions(&size);
+    setEnvironmentClass(S_MaterialEnvClassForUri(def->uri));
 
     // Update custom status.
     /// @todo This should take into account the whole definition, not just whether
     ///       the primary layer's first texture is custom or not.
-    manifest.setCustom(false);
-    if(mat->layers[0]->stageCount() > 0 && mat->layers[0]->stages()[0]->texture)
+    _manifest.setCustom(false);
+    if(d->layers[0]->stageCount() > 0 && d->layers[0]->stages()[0]->texture)
     {
         try
         {
-            de::Uri *texUri = reinterpret_cast<de::Uri *>(mat->layers[0]->stages()[0]->texture);
+            de::Uri *texUri = reinterpret_cast<de::Uri *>(d->layers[0]->stages()[0]->texture);
             if(Texture *tex = App_Textures()->find(*texUri).texture())
             {
-                manifest.setCustom(tex->flags().testFlag(Texture::Custom));
+                _manifest.setCustom(tex->flags().testFlag(Texture::Custom));
             }
         }
         catch(Textures::NotFoundError const &)
@@ -284,99 +273,88 @@ void Material_SetDefinition(material_t *mat, struct ded_material_s *def)
     }
 }
 
-Size2 const *Material_Dimensions(material_t const *mat)
+Size2 const *Material::dimensions() const
 {
-    DENG2_ASSERT(mat);
-    return mat->dimensions;
+    return d->dimensions;
 }
 
-void Material_SetDimensions(material_t* mat, const Size2Raw* newSize)
+void Material::setDimensions(Size2Raw const *newSize)
 {
-    DENG2_ASSERT(mat);
     if(!newSize) return;
 
     Size2 *size = Size2_NewFromRaw(newSize);
-    if(!Size2_Equality(mat->dimensions, size))
+    if(!Size2_Equality(d->dimensions, size))
     {
-        Size2_SetWidthHeight(mat->dimensions, newSize->width, newSize->height);
-        R_UpdateMapSurfacesOnMaterialChange(mat);
+        Size2_SetWidthHeight(d->dimensions, newSize->width, newSize->height);
+        R_UpdateMapSurfacesOnMaterialChange(this);
     }
     Size2_Delete(size);
 }
 
-int Material_Width(material_t const *mat)
+int Material::width() const
 {
-    DENG2_ASSERT(mat);
-    return Size2_Width(mat->dimensions);
+    return Size2_Width(d->dimensions);
 }
 
-void Material_SetWidth(material_t *mat, int width)
+void Material::setWidth(int width)
 {
-    DENG2_ASSERT(mat);
-    if(Size2_Width(mat->dimensions) == width) return;
-    Size2_SetWidth(mat->dimensions, width);
-    R_UpdateMapSurfacesOnMaterialChange(mat);
+    if(Size2_Width(d->dimensions) == width) return;
+    Size2_SetWidth(d->dimensions, width);
+    R_UpdateMapSurfacesOnMaterialChange(this);
 }
 
-int Material_Height(material_t const *mat)
+int Material::height() const
 {
-    DENG2_ASSERT(mat);
-    return Size2_Height(mat->dimensions);
+    return Size2_Height(d->dimensions);
 }
 
-void Material_SetHeight(material_t *mat, int height)
+void Material::setHeight(int height)
 {
-    DENG2_ASSERT(mat);
-    if(Size2_Height(mat->dimensions) == height) return;
-    Size2_SetHeight(mat->dimensions, height);
-    R_UpdateMapSurfacesOnMaterialChange(mat);
+    if(Size2_Height(d->dimensions) == height) return;
+    Size2_SetHeight(d->dimensions, height);
+    R_UpdateMapSurfacesOnMaterialChange(this);
 }
 
-short Material_Flags(material_t const *mat)
+short Material::flags() const
 {
-    DENG2_ASSERT(mat);
-    return mat->flags;
+    return d->flags;
 }
 
-void Material_SetFlags(material_t *mat, short flags)
+void Material::setFlags(short flags)
 {
-    DENG2_ASSERT(mat);
-    mat->flags = flags;
+    d->flags = flags;
 }
 
-boolean Material_IsAnimated(material_t const *mat)
+bool Material::isAnimated() const
 {
     // Materials cease animation once they are no longer valid.
-    if(!Material_IsValid(mat)) return false;
+    if(!isValid()) return false;
 
-    DENG2_FOR_EACH_CONST(Material::Layers, i, mat->layers)
+    DENG2_FOR_EACH_CONST(Layers, i, d->layers)
     {
         if((*i)->stageCount() > 1) return true;
     }
     return false; // Not at all.
 }
 
-boolean Material_IsSkyMasked(material_t const *mat)
+bool Material::isSkyMasked() const
 {
-    DENG2_ASSERT(mat);
-    return 0 != (mat->flags & MATF_SKYMASK);
+    return 0 != (d->flags & MATF_SKYMASK);
 }
 
-boolean Material_IsDrawable(material_t const *mat)
+bool Material::isDrawable() const
 {
-    DENG2_ASSERT(mat);
-    return 0 == (mat->flags & MATF_NO_DRAW);
+    return 0 == (d->flags & MATF_NO_DRAW);
 }
 
-boolean Material_HasGlow(material_t const *mat)
+bool Material::hasGlow() const
 {
-    DENG_ASSERT(mat);
-    if(mat->def)
+    if(d->def)
     {
-        DENG2_FOR_EACH_CONST(Material::Layers, i, mat->layers)
+        DENG2_FOR_EACH_CONST(Layers, i, d->layers)
         {
-            Material::Layer::Stages const &stages = (*i)->stages();
-            DENG2_FOR_EACH_CONST(Material::Layer::Stages, k, stages)
+            Layer::Stages const &stages = (*i)->stages();
+            DENG2_FOR_EACH_CONST(Layer::Stages, k, stages)
             {
                 ded_material_layer_stage_t const &stage = **k;
                 if(stage.glowStrength > .0001f) return true;
@@ -386,185 +364,156 @@ boolean Material_HasGlow(material_t const *mat)
     return false;
 }
 
-int Material_LayerCount(material_t const *mat)
+int Material::layerCount() const
 {
-    DENG2_ASSERT(mat);
-    return mat->layers.count();
+    return d->layers.count();
 }
 
-byte Material_Prepared(material_t const *mat)
+byte Material::prepared() const
 {
-    DENG2_ASSERT(mat);
-    return mat->prepared;
+    return d->prepared;
 }
 
-void Material_SetPrepared(material_t *mat, byte state)
+void Material::setPrepared(byte state)
 {
-    DENG2_ASSERT(mat && state <= 2);
-    mat->prepared = state;
+    DENG2_ASSERT(state <= 2);
+    d->prepared = state;
 }
 
-MaterialManifest &Material_Manifest(material_t const *mat)
+MaterialManifest &Material::manifest() const
 {
-    DENG2_ASSERT(mat);
     /// @todo Material should store a link to the manifest.
-    return *App_Materials()->toMaterialManifest(mat->manifestId);
+    return *App_Materials()->toMaterialManifest(d->manifestId);
 }
 
-materialid_t Material_ManifestId(material_t const *mat)
+materialid_t Material::manifestId() const
 {
-    DENG2_ASSERT(mat);
-    return mat->manifestId;
+    return d->manifestId;
 }
 
-void Material_SetManifestId(material_t *mat, materialid_t id)
+void Material::setManifestId(materialid_t id)
 {
-    DENG2_ASSERT(mat);
-    mat->manifestId = id;
+    d->manifestId = id;
 }
 
-material_env_class_t Material_EnvironmentClass(material_t const *mat)
+material_env_class_t Material::environmentClass() const
 {
-    DENG2_ASSERT(mat);
-    if(!Material_IsDrawable(mat))
-        return MEC_UNKNOWN;
-    return mat->envClass;
+    if(isDrawable()) return d->envClass;
+    return MEC_UNKNOWN;
 }
 
-void Material_SetEnvironmentClass(material_t *mat, material_env_class_t envClass)
+void Material::setEnvironmentClass(material_env_class_t envClass)
 {
-    DENG2_ASSERT(mat);
-    mat->envClass = envClass;
+    d->envClass = envClass;
 }
 
-struct texture_s *Material_DetailTexture(material_t *mat)
+struct texture_s *Material::detailTexture()
 {
-    DENG2_ASSERT(mat);
-    return reinterpret_cast<struct texture_s *>(mat->detailTex);
+    return reinterpret_cast<struct texture_s *>(d->detailTex);
 }
 
-void Material_SetDetailTexture(material_t *mat, struct texture_s *tex)
+void Material::setDetailTexture(struct texture_s *tex)
 {
-    DENG2_ASSERT(mat);
-    mat->detailTex = reinterpret_cast<de::Texture *>(tex);
+    d->detailTex = reinterpret_cast<de::Texture *>(tex);
 }
 
-float Material_DetailStrength(material_t *mat)
+float Material::detailStrength()
 {
-    DENG2_ASSERT(mat);
-    return mat->detailStrength;
+    return d->detailStrength;
 }
 
-void Material_SetDetailStrength(material_t *mat, float strength)
+void Material::setDetailStrength(float strength)
 {
-    DENG2_ASSERT(mat);
-    mat->detailStrength = MINMAX_OF(0, strength, 1);
+    d->detailStrength = MINMAX_OF(0, strength, 1);
 }
 
-float Material_DetailScale(material_t *mat)
+float Material::detailScale()
 {
-    DENG2_ASSERT(mat);
-    return mat->detailScale;
+    return d->detailScale;
 }
 
-void Material_SetDetailScale(material_t *mat, float scale)
+void Material::setDetailScale(float scale)
 {
-    DENG2_ASSERT(mat);
-    mat->detailScale = MINMAX_OF(0, scale, 1);
+    d->detailScale = MINMAX_OF(0, scale, 1);
 }
 
-struct texture_s *Material_ShinyTexture(material_t *mat)
+struct texture_s *Material::shinyTexture()
 {
-    DENG2_ASSERT(mat);
-    return reinterpret_cast<struct texture_s *>(mat->shinyTex);
+    return reinterpret_cast<struct texture_s *>(d->shinyTex);
 }
 
-void Material_SetShinyTexture(material_t *mat, struct texture_s *tex)
+void Material::setShinyTexture(struct texture_s *tex)
 {
-    DENG2_ASSERT(mat);
-    mat->shinyTex = reinterpret_cast<de::Texture *>(tex);
+    d->shinyTex = reinterpret_cast<Texture *>(tex);
 }
 
-blendmode_t Material_ShinyBlendmode(material_t *mat)
+blendmode_t Material::shinyBlendmode()
 {
-    DENG2_ASSERT(mat);
-    return mat->shinyBlendmode;
+    return d->shinyBlendmode;
 }
 
-void Material_SetShinyBlendmode(material_t *mat, blendmode_t blendmode)
+void Material::setShinyBlendmode(blendmode_t blendmode)
 {
-    DENG2_ASSERT(mat && VALID_BLENDMODE(blendmode));
-    mat->shinyBlendmode = blendmode;
+    DENG2_ASSERT(VALID_BLENDMODE(blendmode));
+    d->shinyBlendmode = blendmode;
 }
 
-float const *Material_ShinyMinColor(material_t *mat)
+float const *Material::shinyMinColor()
 {
-    DENG2_ASSERT(mat);
-    return mat->shinyMinColor;
+    return d->shinyMinColor;
 }
 
-void Material_SetShinyMinColor(material_t *mat, float const colorRGB[3])
+void Material::setShinyMinColor(float const colorRGB[3])
 {
-    DENG2_ASSERT(mat && colorRGB);
-    mat->shinyMinColor[CR] = MINMAX_OF(0, colorRGB[CR], 1);
-    mat->shinyMinColor[CG] = MINMAX_OF(0, colorRGB[CG], 1);
-    mat->shinyMinColor[CB] = MINMAX_OF(0, colorRGB[CB], 1);
+    DENG2_ASSERT(colorRGB);
+    d->shinyMinColor[CR] = MINMAX_OF(0, colorRGB[CR], 1);
+    d->shinyMinColor[CG] = MINMAX_OF(0, colorRGB[CG], 1);
+    d->shinyMinColor[CB] = MINMAX_OF(0, colorRGB[CB], 1);
 }
 
-float Material_ShinyStrength(material_t *mat)
+float Material::shinyStrength()
 {
-    DENG2_ASSERT(mat);
-    return mat->shinyStrength;
+    return d->shinyStrength;
 }
 
-void Material_SetShinyStrength(material_t *mat, float strength)
+void Material::setShinyStrength(float strength)
 {
-    DENG2_ASSERT(mat);
-    mat->shinyStrength = MINMAX_OF(0, strength, 1);
+    d->shinyStrength = MINMAX_OF(0, strength, 1);
 }
 
-struct texture_s *Material_ShinyMaskTexture(material_t *mat)
+struct texture_s *Material::shinyMaskTexture()
 {
-    DENG2_ASSERT(mat);
-    return reinterpret_cast<struct texture_s *>(mat->shinyMaskTex);
+    return reinterpret_cast<struct texture_s *>(d->shinyMaskTex);
 }
 
-void Material_SetShinyMaskTexture(material_t *mat, struct texture_s *tex)
+void Material::setShinyMaskTexture(struct texture_s *tex)
 {
-    DENG2_ASSERT(mat);
-    mat->shinyMaskTex = reinterpret_cast<de::Texture *>(tex);
+    d->shinyMaskTex = reinterpret_cast<Texture *>(tex);
 }
 
-Material::Layers const &Material_Layers(material_t const *mat)
+Material::Layers const &Material::layers() const
 {
-    DENG_ASSERT(mat);
-    return mat->layers;
+    return d->layers;
 }
 
-void Material_AddDecoration(material_t *mat, de::Material::Decoration &decor)
+void Material::addDecoration(Material::Decoration &decor)
 {
-    DENG_ASSERT(mat);
-    mat->decorations.push_back(&decor);
+    d->decorations.push_back(&decor);
 }
 
-Material::Decorations const &Material_Decorations(material_t const *mat)
+Material::Decorations const &Material::decorations() const
 {
-    DENG_ASSERT(mat);
-    return mat->decorations;
+    return d->decorations;
 }
 
-Material::Variants const &Material_Variants(material_t const *mat)
+Material::Variants const &Material::variants() const
 {
-    DENG_ASSERT(mat);
-    return mat->variants;
+    return d->variants;
 }
 
-Material::Variant *Material_ChooseVariant(material_t *mat, MaterialVariantSpec const &spec,
-                                          bool canCreate)
+Material::Variant *Material::chooseVariant(MaterialVariantSpec const &spec, bool canCreate)
 {
-    DENG_ASSERT(mat);
-
-    DENG2_FOR_EACH_CONST(Material::Variants, i, mat->variants)
+    DENG2_FOR_EACH_CONST(Variants, i, d->variants)
     {
         MaterialVariantSpec const &cand = (*i)->spec();
         if(cand.compare(spec))
@@ -576,61 +525,53 @@ Material::Variant *Material_ChooseVariant(material_t *mat, MaterialVariantSpec c
 
     if(!canCreate) return 0;
 
-    Material::Variant *variant = new Material::Variant(*mat, spec);
-    mat->variants.push_back(variant);
+    Variant *variant = new Variant(*this, spec);
+    d->variants.push_back(variant);
     return variant;
 }
 
-int Material_VariantCount(material_t const *mat)
+int Material::variantCount() const
 {
-    DENG_ASSERT(mat);
-    return mat->variants.count();
+    return d->variants.count();
 }
 
-void Material_ClearVariants(material_t *mat)
+void Material::clearVariants()
 {
-    DENG_ASSERT(mat);
-    mat->clearVariants();
+    d->clearVariants();
 }
 
-boolean Material_HasDecorations(material_t const *mat)
+bool Material::hasDecorations() const
 {
-    DENG_ASSERT(mat);
-    return mat->decorations.count() != 0;
+    return d->decorations.count() != 0;
 }
 
-int Material_GetProperty(material_t const *mat, setargs_t *args)
+int Material::getProperty(setargs_t *args) const
 {
-    DENG_ASSERT(mat && args);
+    DENG_ASSERT(args);
     switch(args->prop)
     {
     case DMU_FLAGS: {
-        short flags = Material_Flags(mat);
-        DMU_GetValue(DMT_MATERIAL_FLAGS, &flags, args, 0);
+        short flags_ = flags();
+        DMU_GetValue(DMT_MATERIAL_FLAGS, &flags_, args, 0);
         break; }
 
     case DMU_WIDTH: {
-        int width = Material_Width(mat);
-        DMU_GetValue(DMT_MATERIAL_WIDTH, &width, args, 0);
+        int width_ = width();
+        DMU_GetValue(DMT_MATERIAL_WIDTH, &width_, args, 0);
         break; }
 
     case DMU_HEIGHT: {
-        int height = Material_Height(mat);
-        DMU_GetValue(DMT_MATERIAL_HEIGHT, &height, args, 0);
+        int height_ = height();
+        DMU_GetValue(DMT_MATERIAL_HEIGHT, &height_, args, 0);
         break; }
 
-    default: {
-        QByteArray msg = String("Material_GetProperty: No property %1.").arg(DMU_Str(args->prop)).toUtf8();
-        LegacyCore_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
+    default:
+        throw Error("Material::getProperty", QString("No property %1").arg(DMU_Str(args->prop)));
     }
     return false; // Continue iteration.
 }
 
-int Material_SetProperty(material_t *mat, setargs_t const *args)
+int Material::setProperty(setargs_t const *args)
 {
-    DENG_UNUSED(mat);
-    QByteArray msg = String("Material_SetProperty: Property '%1' is not writable.").arg(DMU_Str(args->prop)).toUtf8();
-    LegacyCore_FatalError(msg.constData());
-    return 0; // Unreachable.
+    throw Error("Material_SetProperty", QString("Property '%1' is not writable").arg(DMU_Str(args->prop)));
 }

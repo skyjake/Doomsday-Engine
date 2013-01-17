@@ -49,7 +49,7 @@ using namespace de;
 typedef struct spriterecord_frame_s {
     byte frame[2];
     byte rotation[2];
-    material_t* mat;
+    Material* mat;
     struct spriterecord_frame_s* next;
 } spriterecord_frame_t;
 
@@ -108,7 +108,7 @@ static void clearSpriteDefs()
 }
 
 static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
-    material_t* mat, uint frame, uint rotation, boolean flipped)
+    Material* mat, uint frame, uint rotation, boolean flipped)
 {
     if(frame >= 30 || rotation > 8)
     {
@@ -410,7 +410,7 @@ void R_ShutdownSprites()
     clearSpriteDefs();
 }
 
-material_t *R_GetMaterialForSprite(int sprite, int frame)
+Material *R_GetMaterialForSprite(int sprite, int frame)
 {
     if((unsigned) sprite < (unsigned) numSprites)
     {
@@ -452,7 +452,7 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
         return true;
     }
 
-    material_t *mat = sprFrame->mats[0];
+    Material *mat = sprFrame->mats[0];
 
     /// @todo fixme: We should not be using the PSprite spec here. -ds
     MaterialVariantSpec const &spec =
@@ -499,7 +499,7 @@ coord_t R_VisualRadius(mobj_t *mo)
     }
 
     // Use the sprite frame's width?
-    if(material_t *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
+    if(Material *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
     {
         MaterialSnapshot const &ms =
             App_Materials()->prepare(*material, Rend_SpriteMaterialSpec());
@@ -541,7 +541,7 @@ float R_ShadowStrength(mobj_t *mo)
     // Sprites have their own shadow strength factor.
     if(!currentModelDefForMobj(mo))
     {
-        material_t *mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
+        Material *mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
         if(mat)
         {
             // Ensure we've prepared this.
@@ -801,7 +801,7 @@ int RIT_VisMobjZ(Sector *sector, void *parameters)
 static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     float x, float y, float z, float distance, float visOffX, float visOffY, float visOffZ,
     float /*secFloor*/, float /*secCeil*/, float /*floorClip*/, float /*top*/,
-    material_t &mat, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
+    Material &material, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
     float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
     uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeaf,
     boolean /*floorAdjust*/, boolean /*fitTop*/, boolean /*fitBottom*/, boolean viewAligned)
@@ -809,7 +809,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     if(!params) return; // Wha?
 
     MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
-    Material::Variant *variant = Material_ChooseVariant(&mat, spec, true);
+    Material::Variant *variant = material.chooseVariant(spec, true);
 
 #ifdef DENG_DEBUG
     if(tClass || tMap)
@@ -967,7 +967,7 @@ void R_ProjectSprite(mobj_t *mo)
     visspritetype_t visType = VSPR_SPRITE;
     float ambientColor[3];
     uint vLightListIdx = 0;
-    material_t *mat;
+    Material *mat;
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     coord_t moPos[3];
 
@@ -1275,7 +1275,7 @@ void R_ProjectSprite(mobj_t *mo)
         spritedef_t *sprDef     = &sprites[mo->sprite];
         spriteframe_t *sprFrame = &sprDef->spriteFrames[mo->frame];
 
-        material_t *mat;
+        Material *mat;
         if(sprFrame->rotate)
         {
             mat = sprFrame->mats[(R_ViewPointXYToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
@@ -1368,21 +1368,20 @@ int RIT_AddSprite(void* ptr, void* paramaters)
 
     if(mo->addFrameCount != frameCount)
     {
-        material_t* mat;
         R_ProjectSprite(mo);
 
         // Hack: Sprites have a tendency to extend into the ceiling in
         // sky sectors. Here we will raise the skyfix dynamically, to make sure
         // that no sprites get clipped by the sky.
         // Only check
-        mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
-        if(mat && Surface_IsSkyMasked(&sec->SP_ceilsurface))
+        Material *material = R_GetMaterialForSprite(mo->sprite, mo->frame);
+        if(material && Surface_IsSkyMasked(&sec->SP_ceilsurface))
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
                mo->origin[VZ] <= sec->SP_ceilheight &&
                mo->origin[VZ] >= sec->SP_floorheight)
             {
-                coord_t visibleTop = mo->origin[VZ] + Material_Height(mat);
+                coord_t visibleTop = mo->origin[VZ] + material->height();
                 if(visibleTop > GameMap_SkyFixCeiling(map))
                 {
                     // Raise skyfix ceiling.

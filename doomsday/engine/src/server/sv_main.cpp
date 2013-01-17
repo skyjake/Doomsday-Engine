@@ -934,7 +934,7 @@ void Sv_StopNetGame(void)
     }
 }
 
-unsigned int Sv_IdForMaterial(material_t* mat)
+unsigned int Sv_IdForMaterial(Material* mat)
 {
     assert(materialDict);
     return MaterialArchive_FindUniqueSerialId(materialDict, mat);
