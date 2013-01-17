@@ -1,35 +1,27 @@
-/**\file gl_texmanager.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file gl_texmanager.h GL-Texture Management.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * GL-Texture Management.
- *
- * 'Runtime' textures are not loaded until precached or actually needed.
+ * @em Runtime textures are not loaded until precached or actually needed.
  * They may be cleared, in which case they will be reloaded when needed.
  *
- * 'System' textures are loaded at startup and remain in memory all the
+ * @em System textures are loaded at startup and remain in memory all the
  * time. After clearing they must be manually reloaded.
+ *
+ * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_GL_TEXMANAGER_H
@@ -247,42 +239,6 @@ void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *sp
  */
 boolean GL_DumpImage(struct image_s const *img, char const *filePath);
 
-/*
- * Here follows miscellaneous routines currently awaiting refactoring into the
- * revised texture management APIs.
- */
-
-/**
- * Set mode to 2 to include an alpha channel. Set to 3 to make the actual pixel
- * colors all white.
- */
-DGLuint GL_PrepareExtTexture(char const *name, gfxmode_t mode, int useMipmap,
-    int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT, int flags);
-
-DGLuint GL_PrepareSysFlaremap(flaretexid_t flare);
-DGLuint GL_PrepareLightmap(Uri const *path);
-DGLuint GL_PrepareLSTexture(lightingtexid_t which);
-DGLuint GL_PrepareRawTexture(rawtex_t *rawTex);
-
-struct texturevariant_s *GL_PreparePatchTexture2(struct texture_s *tex, int wrapS, int wrapT);
-struct texturevariant_s *GL_PreparePatchTexture(struct texture_s *tex);
-
-/**
- * Attempt to locate and prepare a flare texture.
- * Somewhat more complicated than it needs to be due to the fact there
- * are two different selection methods.
- *
- * @param name          Name of a flare texture or "0" to "4".
- * @param oldIdx        Old method of flare texture selection, by id.
- *
- * @return  @c 0= Use the automatic selection logic.
- */
-DGLuint GL_PrepareFlareTexture(Uri const *path, int oldIdx);
-
-DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
-DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
-                                 int grayMipmap, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
-
 #ifdef __cplusplus
 } // extern "C"
 
@@ -334,6 +290,47 @@ inline de::Texture::Variant *GL_PrepareTexture(de::Texture &texture,
     return variant;
 }
 
+extern "C" {
+#endif // __cplusplus
+
+/*
+ * Here follows miscellaneous routines currently awaiting refactoring into the
+ * revised texture management APIs.
+ */
+
+/**
+ * Set mode to 2 to include an alpha channel. Set to 3 to make the actual pixel
+ * colors all white.
+ */
+DGLuint GL_PrepareExtTexture(char const *name, gfxmode_t mode, int useMipmap,
+    int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT, int flags);
+
+DGLuint GL_PrepareSysFlaremap(flaretexid_t flare);
+DGLuint GL_PrepareLightmap(Uri const *path);
+DGLuint GL_PrepareLSTexture(lightingtexid_t which);
+DGLuint GL_PrepareRawTexture(rawtex_t *rawTex);
+
+struct texturevariant_s *GL_PreparePatchTexture2(struct texture_s *tex, int wrapS, int wrapT);
+struct texturevariant_s *GL_PreparePatchTexture(struct texture_s *tex);
+
+/**
+ * Attempt to locate and prepare a flare texture.
+ * Somewhat more complicated than it needs to be due to the fact there
+ * are two different selection methods.
+ *
+ * @param name          Name of a flare texture or "0" to "4".
+ * @param oldIdx        Old method of flare texture selection, by id.
+ *
+ * @return  @c 0= Use the automatic selection logic.
+ */
+DGLuint GL_PrepareFlareTexture(Uri const *path, int oldIdx);
+
+DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
+DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
+                                 int grayMipmap, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_GL_TEXMANAGER_H */
