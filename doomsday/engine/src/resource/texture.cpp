@@ -68,21 +68,21 @@ struct Texture::Instance
 
     void clearVariants()
     {
-        DENG2_FOR_EACH(Variants, i, variants)
+        while(!variants.isEmpty())
         {
+            Texture::Variant *variant = variants.takeFirst();
 #if _DEBUG
-            uint glName = (*i)->glName();
+            uint glName = variant->glName();
             if(glName)
             {
                 LOG_AS("Texture::clearVariants")
                 LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
                     << glName << manifest.composeUri() << (void *)this;
-                GL_PrintTextureVariantSpecification(&(*i)->spec());
+                GL_PrintTextureVariantSpecification(&variant->spec());
             }
 #endif
-            delete *i;
+            delete variant;
         }
-        variants.clear();
     }
 };
 
@@ -143,37 +143,24 @@ uint Texture::variantCount() const
     return uint(d->variants.count());
 }
 
-int Texture::width() const
-{
-    return d->dimensions.width();
-}
-
-void Texture::setWidth(int newWidth)
-{
-    d->dimensions.setWidth(newWidth);
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
-}
-
-int Texture::height() const
-{
-    return d->dimensions.height();
-}
-
 QSize const &Texture::dimensions() const
 {
     return d->dimensions;
 }
 
-void Texture::setHeight(int newHeight)
-{
-    d->dimensions.setHeight(newHeight);
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
-}
-
 void Texture::setDimensions(QSize const &newDimensions)
 {
     d->dimensions = newDimensions;
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
+}
+
+void Texture::setWidth(int newWidth)
+{
+    d->dimensions.setWidth(newWidth);
+}
+
+void Texture::setHeight(int newHeight)
+{
+    d->dimensions.setHeight(newHeight);
 }
 
 QPoint const &Texture::origin() const
@@ -233,6 +220,11 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
 Texture::Variants const &Texture::variants() const
 {
     return d->variants;
+}
+
+void Texture::clearVariants()
+{
+    d->clearVariants();
 }
 
 void *Texture::analysisDataPointer(texture_analysisid_t analysisId) const

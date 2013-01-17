@@ -21,12 +21,6 @@
 #ifndef LIBDENG_RESOURCE_TEXTURE_H
 #define LIBDENG_RESOURCE_TEXTURE_H
 
-#include "texturevariantspec.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /// @addtogroup resource
 ///@{
 typedef enum {
@@ -42,12 +36,8 @@ typedef enum {
 } texture_analysisid_t;
 
 #define VALID_TEXTURE_ANALYSISID(id) (\
-    (id) >= TEXTURE_ANALYSIS_FIRST && (id) < TEXTURE_ANALYSIS_COUNT)
+    (int)(id) >= TEXTURE_ANALYSIS_FIRST && (int)(id) < TEXTURE_ANALYSIS_COUNT)
 ///@}
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #ifdef __cplusplus
 
@@ -56,6 +46,8 @@ typedef enum {
 #include <QPoint>
 #include <QSize>
 #include <de/Error>
+
+struct texturevariantspecification_t;
 
 namespace de {
 
@@ -67,6 +59,8 @@ class TextureManifest;
  */
 class Texture
 {
+    struct Instance; // Needs to be friended by Variant
+
 public:
     /**
      * Classification/processing flags
@@ -107,7 +101,7 @@ public:
         };
         Q_DECLARE_FLAGS(Flags, Flag)
 
-    public:
+    private:
         /**
          * @param generalCase   Texture from which this variant is derived.
          * @param spec          Specification used to derive this variant.
@@ -116,6 +110,7 @@ public:
         Variant(Texture &generalCase, texturevariantspecification_t const &spec);
         ~Variant();
 
+    public:
         /**
          * Retrieve the general case for this variant. Allows for a variant
          * reference to be used in place of a texture (implicit indirection).
@@ -159,6 +154,9 @@ public:
 
         void setGLName(uint glName);
 
+        friend class Texture;
+        friend struct Texture::Instance;
+
     private:
         struct Instance;
         Instance *d;
@@ -189,8 +187,56 @@ public:
      * @param userData  User data to associate with the resultant texture.
      */
     Texture(TextureManifest &manifest, void *userData = 0);
-
     ~Texture();
+
+    /**
+     * Returns the TextureManifest derived to yield the texture.
+     */
+    TextureManifest &manifest() const;
+
+    /// Returns the dimensions of the texture in map coordinate space units.
+    QSize const &dimensions() const;
+
+    /// Returns the world width of the texture in map coordinate space units.
+    inline int width() const { return dimensions().width(); }
+
+    /// Returns the world height of the texture in map coordinate space units.
+    inline int height() const { return dimensions().height(); }
+
+    /**
+     * Change the world dimensions of the texture.
+     * @param newDimensions  New dimensions in map coordinate space units.
+     *
+     * @todo Update any Materials (and thus Surfaces) which reference this.
+     */
+    void setDimensions(QSize const &newDimensions);
+
+    /**
+     * Change the world width of the texture.
+     * @param newWidth  New width in map coordinate space units.
+     *
+     * @todo Update any Materials (and thus Surfaces) which reference this.
+     */
+    void setWidth(int newWidth);
+
+    /**
+     * Change the world height of the texture.
+     * @param newHeight  New height in map coordinate space units.
+     *
+     * @todo Update any Materials (and thus Surfaces) which reference this.
+     */
+    void setHeight(int newHeight);
+
+    /**
+     * Returns the world origin offset of texture in map coordinate space units.
+     */
+    QPoint const &origin() const;
+
+    /**
+     * Change the world origin offset of the texture.
+     * @param newOrigin  New origin in map coordinate space units.
+     */
+    void setOrigin(QPoint const &newOrigin);
 
     /// @return  Provides access to the classification/processing flags.
     Flags const &flags() const;
@@ -199,9 +245,55 @@ public:
     Flags &flags();
 
     /**
-     * Returns the TextureManifest derived to yield the texture.
+     * Destroys all derived variants for the texture.
      */
-    TextureManifest &manifest() const;
+    void clearVariants();
+
+    /**
+     * Choose/create a variant of the texture which fulfills @a spec.
+     *
+     * @param method    Method of selection.
+     * @param spec      Texture specialization specification.
+     * @param canCreate @c true= Create a new variant if no suitable one exists.
+     *
+     * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
+     */
+    Variant *chooseVariant(ChooseVariantMethod method,
+        texturevariantspecification_t const &spec, bool canCreate = false);
+
+    /**
+     * Provides access to the list of variant instances for efficent traversal.
+     */
+    Variants const &variants() const;
+
+    /**
+     * Returns the number of variants for the texture.
+     */
+    uint variantCount() const;
+
+    /**
+     * Destroys all analyses for the texture.
+     */
+    void clearAnalyses();
+
+    /**
+     * Retrieve the value of an identified @a analysis data pointer.
+     * @return  Associated data pointer value.
+     */
+    void *analysisDataPointer(texture_analysisid_t analysis) const;
+
+    /**
+     * Set the value of an identified @a analysis data pointer. Ownership of
+     * the data is not given to this instance.
+     *
+     * @note If already set the old value will be replaced (so if it points
+     *       to some dynamically constructed data/resource it is the caller's
+     *       responsibility to release it beforehand).
+     *
+     * @param analysis  Identifier of the data being attached.
+     * @param data  Data to be attached.
+     */
+    void setAnalysisDataPointer(texture_analysisid_t analysis, void *data);
 
     /**
      * Retrieve the value of the associated user data pointer.
@@ -221,97 +313,7 @@ public:
      */
     void setUserDataPointer(void *userData);
 
-    /// Destroy all analyses for the texture.
-    void clearAnalyses();
-
-    /**
-     * Retrieve the value of an identified @a analysis data pointer.
-     * @return  Associated data pointer value.
-     **/
-    void *analysisDataPointer(texture_analysisid_t analysis) const;
-
-    /**
-     * Set the value of an identified @a analysis data pointer. Ownership of
-     * the data is not given to this instance.
-     *
-     * @note If already set the old value will be replaced (so if it points
-     *       to some dynamically constructed data/resource it is the caller's
-     *       responsibility to release it beforehand).
-     *
-     * @param analysis  Identifier of the data being attached.
-     * @param data  Data to be attached.
-     */
-    void setAnalysisDataPointer(texture_analysisid_t analysis, void *data);
-
-    /**
-     * Returns the world width of the texture in map coordinate space units.
-     */
-    int width() const;
-
-    /**
-     * Returns the world height of the texture in map coordinate space units.
-     */
-    int height() const;
-
-    /**
-     * Returns the world dimensions [width, height] of the texture in map
-     * coordinate space units.
-     */
-    QSize const &dimensions() const;
-
-    /**
-     * Change the world width of the texture.
-     * @param newWidth  New width in map coordinate space units.
-     */
-    void setWidth(int newWidth);
-
-    /**
-     * Change the world height of the texture.
-     * @param newHeight  New height in map coordinate space units.
-     */
-    void setHeight(int newHeight);
-
-    /**
-     * Change the world dimensions of the texture.
-     * @param newDimensions  New dimensions [width, height] in map coordinate space units.
-     */
-    void setDimensions(QSize const &newDimensions);
-
-    /**
-     * Returns the world origin offset of texture in map coordinate space units.
-     */
-    QPoint const &origin() const;
-
-    /**
-     * Change the world origin offset of the texture.
-     * @param newOrigin  New origin in map coordinate space units.
-     */
-    void setOrigin(QPoint const &newOrigin);
-
-    /**
-     * Returns the number of variants for the texture.
-     */
-    uint variantCount() const;
-
-    /**
-     * Choose/create a variant of the texture which fulfills @a spec.
-     *
-     * @param method    Method of selection.
-     * @param spec      Texture specialization specification.
-     * @param canCreate @c true= Create a new variant if no suitable one exists.
-     *
-     * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
-     */
-    Variant *chooseVariant(ChooseVariantMethod method,
-        texturevariantspecification_t const &spec, bool canCreate = false);
-
-    /**
-     * Provides access to the list of variant textures for efficent traversals.
-     */
-    Variants const &variants() const;
-
 private:
-    struct Instance;
     Instance *d;
 };
 

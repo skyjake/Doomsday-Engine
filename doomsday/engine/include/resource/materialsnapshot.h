@@ -66,11 +66,11 @@ public:
 #endif
 
 public:
-    /// Invalid texture unit referenced. @ingroup errors
-    DENG2_ERROR(InvalidUnitError);
+    /// The referenced (texture) unit does not exist. @ingroup errors
+    DENG2_ERROR(UnknownUnitError);
 
 #ifdef __CLIENT__
-    /// Invalid decoration referenced. @ingroup errors
+    /// The referenced decoration does not exist. @ingroup errors
     DENG2_ERROR(UnknownDecorationError);
 #endif
 

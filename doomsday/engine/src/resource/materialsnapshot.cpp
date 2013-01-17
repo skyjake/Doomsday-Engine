@@ -164,8 +164,8 @@ Texture::Variant &MaterialSnapshot::texture(int index) const
 {
     if(!hasTexture(index))
     {
-        /// @throw InvalidUnitError Attempt to dereference with an invalid index.
-        throw InvalidUnitError("MaterialSnapshot::texture", QString("Invalid texture index %1").arg(index));
+        /// @throw UnknownUnitError Attempt to dereference with an invalid index.
+        throw UnknownUnitError("MaterialSnapshot::texture", QString("Invalid texture index %1").arg(index));
     }
     return *d->stored.textures[index];
 }
@@ -175,8 +175,8 @@ rtexmapunit_t const &MaterialSnapshot::unit(rtexmapunitid_t id) const
 {
     if(id < 0 || id >= NUM_TEXMAP_UNITS)
     {
-        /// @throw InvalidUnitError Attempt to obtain a reference to a unit with an invalid id.
-        throw InvalidUnitError("MaterialSnapshot::unit", QString("Invalid unit id %1").arg(id));
+        /// @throw UnknownUnitError Attempt to obtain a reference to a unit with an invalid id.
+        throw UnknownUnitError("MaterialSnapshot::unit", QString("Invalid unit id %1").arg(id));
     }
     return d->stored.units[id];
 }
