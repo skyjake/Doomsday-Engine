@@ -4,13 +4,13 @@
 include(../config.pri)
 
 TEMPLATE = subdirs
-SUBDIRS = dehread wadmapconverter
+SUBDIRS = dehread wadmapconverter example
 
 # Games.
 SUBDIRS += doom heretic hexen
 
 # Experimental plugins.
-SUBDIRS += doom64 exampleplugin
+SUBDIRS += doom64
 
 # Optional plugins.
 deng_openal:!deng_noopenal {
