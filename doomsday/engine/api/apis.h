@@ -21,6 +21,7 @@
 #define DOOMSDAY_APIS_H
 
 #include <de/libdeng1.h>
+#include <string.h>
 
 /**
  * All APIs exported from the executable.
