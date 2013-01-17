@@ -9,8 +9,8 @@ SUBDIRS = dehread wadmapconverter
 # Games.
 SUBDIRS += doom heretic hexen
 
-# Experimental games.
-SUBDIRS += doom64
+# Experimental plugins.
+SUBDIRS += doom64 exampleplugin
 
 # Optional plugins.
 deng_openal:!deng_noopenal {

@@ -35,5 +35,6 @@ DIRECTSOUND_VERSION     = $$findVersion(plugins/directsound/include/version.h)
 OPENAL_VERSION          = $$findVersion(plugins/openal/include/version.h)
 FMOD_VERSION            = $$findVersion(plugins/fmod/include/version.h)
 WINMM_VERSION           = $$findVersion(plugins/winmm/include/version.h)
+EXAMPLE_VERSION         = $$findVersion(plugins/example/include/version.h)
 
 JDOOM64_VERSION         = $$findVersion(engine/api/dd_version.h)
