@@ -32,18 +32,16 @@
  * time. After clearing they must be manually reloaded.
  */
 
-#ifndef LIBDENG_GLTEXTURE_MANAGER_H
-#define LIBDENG_GLTEXTURE_MANAGER_H
+#ifndef LIBDENG_GL_TEXMANAGER_H
+#define LIBDENG_GL_TEXMANAGER_H
+
+#include "sys_opengl.h"
 
 #include "filehandle.h"
 #include "resource/r_data.h" // For flaretexid_t, lightingtexid_t, etc...
 #include "resource/rawtexture.h"
 #include "resource/texture.h"
 #include "resource/texturevariantspec.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct image_s;
 struct texturecontent_s;
@@ -53,18 +51,22 @@ struct texturevariant_s;
 #define MINTEXWIDTH             8
 #define MINTEXHEIGHT            8
 
-extern int ratioLimit;
-extern int mipmapping, filterUI, texQuality, filterSprites;
-extern int texMagMode, texAniso;
-extern int useSmartFilter;
-extern int texMagMode;
-extern int monochrome, upscaleAndSharpenPatches;
-extern int glmode[6];
-extern boolean fillOutlines;
-extern boolean noHighResTex;
-extern boolean noHighResPatches;
-extern boolean highResWithPWAD;
-extern byte loadExtAlways;
+DENG_EXTERN_C int ratioLimit;
+DENG_EXTERN_C int mipmapping, filterUI, texQuality, filterSprites;
+DENG_EXTERN_C int texMagMode, texAniso;
+DENG_EXTERN_C int useSmartFilter;
+DENG_EXTERN_C int texMagMode;
+DENG_EXTERN_C int monochrome, upscaleAndSharpenPatches;
+DENG_EXTERN_C int glmode[6];
+DENG_EXTERN_C boolean fillOutlines;
+DENG_EXTERN_C boolean noHighResTex;
+DENG_EXTERN_C boolean noHighResPatches;
+DENG_EXTERN_C boolean highResWithPWAD;
+DENG_EXTERN_C byte loadExtAlways;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void GL_TexRegister(void);
 
@@ -195,6 +197,10 @@ uint8_t *GL_LoadImageStr(struct image_s *img, ddstring_t const *filePath);
 
 TexSource GL_LoadExtTexture(struct image_s *image, char const *name, gfxmode_t mode);
 
+GLint GL_MinFilterForVariantSpec(variantspecification_t const *spec);
+GLint GL_MagFilterForVariantSpec(variantspecification_t const *spec);
+int GL_LogicalAnisoLevelForVariantSpec(variantspecification_t const *spec);
+
 /**
  * Compare the given TextureVariantSpecifications and determine whether they can
  * be considered equal (dependent on current engine state and the available features
@@ -272,15 +278,6 @@ struct texturevariant_s *GL_PrepareTextureVariant2(struct texture_s *tex, textur
 struct texturevariant_s *GL_PrepareTextureVariant(struct texture_s *tex, texturevariantspecification_t *spec/*, returnOutcome = 0 */);
 
 /**
- * Bind this texture to the currently active texture unit.
- * The bind process may result in modification of the GL texture state
- * according to the specification used to define this variant.
- *
- * @param tex  Texture::Variant object which represents the GL texture to be bound.
- */
-void GL_BindTexture(struct texturevariant_s *tex);
-
-/**
  * Dump the pixel data of @a img to an ARGB32 at @a filePath.
  *
  * @param img           The image to be dumped. A temporary copy will be made if
@@ -331,6 +328,9 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height, u
 
 #ifdef __cplusplus
 } // extern "C"
+
+bool GL_LoadImageAndPrepareVariant(de::Texture &tex, texturevariantspecification_t &spec,
+                                   de::Texture::Variant **variant);
 #endif
 
-#endif /* LIBDENG_GLTEXTURE_MANAGER_H */
+#endif /* LIBDENG_GL_TEXMANAGER_H */

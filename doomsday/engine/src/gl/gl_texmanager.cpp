@@ -191,7 +191,7 @@ void GL_TexRegister()
     Textures::consoleRegister();
 }
 
-static inline GLint glMinFilterForVariantSpec(variantspecification_t const *spec)
+GLint GL_MinFilterForVariantSpec(variantspecification_t const *spec)
 {
     DENG_ASSERT(spec);
     if(spec->minFilter >= 0) // Constant logical value.
@@ -202,7 +202,7 @@ static inline GLint glMinFilterForVariantSpec(variantspecification_t const *spec
     return spec->mipmapped? glmode[mipmapping] : GL_LINEAR;
 }
 
-static inline GLint glMagFilterForVariantSpec(variantspecification_t const *spec)
+GLint GL_MagFilterForVariantSpec(variantspecification_t const *spec)
 {
     DENG_ASSERT(spec);
     if(spec->magFilter >= 0) // Constant logical value.
@@ -222,7 +222,7 @@ static inline GLint glMagFilterForVariantSpec(variantspecification_t const *spec
     }
 }
 
-static inline int logicalAnisoLevelForVariantSpec(variantspecification_t const *spec)
+int GL_LogicalAnisoLevelForVariantSpec(variantspecification_t const *spec)
 {
     DENG_ASSERT(spec);
     return spec->anisoFilter < 0? texAniso : spec->anisoFilter;
@@ -994,9 +994,9 @@ static uploadcontentmethod_t prepareVariantFromImage(de::Texture::Variant *tex, 
         }
     }
 
-    minFilter   = glMinFilterForVariantSpec(spec);
-    magFilter   = glMagFilterForVariantSpec(spec);
-    anisoFilter = logicalAnisoLevelForVariantSpec(spec);
+    minFilter   = GL_MinFilterForVariantSpec(spec);
+    magFilter   = GL_MagFilterForVariantSpec(spec);
+    anisoFilter = GL_LogicalAnisoLevelForVariantSpec(spec);
 
     /**
      * Calculate texture coordinates based on the image dimensions. The
@@ -3043,11 +3043,11 @@ static void performImageAnalyses(de::Texture &tex, image_t const *image,
     }
 }
 
-static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
-    texturevariantspecification_t &spec, de::Texture::Variant **variant)
+bool GL_LoadImageAndPrepareVariant(Texture &tex, texturevariantspecification_t &spec,
+                                   Texture::Variant **variant)
 {
     DENG_ASSERT(initedOk);
-    LOG_AS("tryLoadImageAndPrepareVariant");
+    LOG_AS("GL_LoadImageAndPrepareVariant");
 
     // Load the source image data.
     image_t image;
@@ -3076,7 +3076,7 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     if(!*variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
-        *variant = new de::Texture::Variant(tex, spec, source);
+        *variant = new Texture::Variant(tex, spec, source);
         (*variant)->setGLName(newGLName);
         tex.addVariant(**variant);
     }
@@ -3095,7 +3095,7 @@ static bool tryLoadImageAndPrepareVariant(de::Texture &tex,
     case TST_GENERAL: uploadMethod = prepareVariantFromImage(*variant, &image); break;
     case TST_DETAIL:  uploadMethod = prepareDetailVariantFromImage(*variant, &image); break;
     default:
-        Con_Error("tryLoadImageAndPrepareVariant: Invalid spec type %i.", spec.type);
+        Con_Error("GL_LoadImageAndPrepareVariant: Invalid spec type %i.", spec.type);
         exit(1); // Unreachable.
     }
 
@@ -3155,7 +3155,7 @@ texturevariant_s *GL_PrepareTextureVariant2(texture_s *_tex, texturevariantspeci
     }
 
     // Suffer the cache miss and attempt to (re)prepare a variant.
-    bool loadedOk = tryLoadImageAndPrepareVariant(tex, *spec, &variant);
+    bool loadedOk = GL_LoadImageAndPrepareVariant(tex, *spec, &variant);
     if(outcome)
     {
         if(loadedOk)
@@ -3195,55 +3195,6 @@ DGLuint GL_PrepareTexture2(struct texture_s *tex, texturevariantspecification_t 
 DGLuint GL_PrepareTexture(struct texture_s *tex, texturevariantspecification_t *spec)
 {
     return GL_PrepareTexture2(tex, spec, 0);
-}
-
-void GL_BindTexture(texturevariant_s *_tex)
-{
-    texturevariantspecification_t *spec = 0;
-
-    if(BusyMode_InWorkerThread()) return;
-
-    de::Texture::Variant *tex = reinterpret_cast<de::Texture::Variant *>(_tex);
-    if(tex)
-    {
-        spec = &tex->spec();
-        // Ensure we've prepared this.
-        if(!tex->isPrepared())
-        {
-            de::Texture::Variant **hndl = &tex;
-            if(!tryLoadImageAndPrepareVariant(tex->generalCase(), *spec, hndl))
-            {
-                tex = 0;
-            }
-        }
-    }
-
-    // Bind our chosen texture.
-    if(!tex)
-    {
-        GL_SetNoTexture();
-        return;
-    }
-
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    glBindTexture(GL_TEXTURE_2D, tex->glName());
-    Sys_GLCheckError();
-
-    // Apply dynamic adjustments to the GL texture state according to our spec.
-    if(spec->type == TST_GENERAL)
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(*spec)->wrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(*spec)->wrapT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glMagFilterForVariantSpec(TS_GENERAL(*spec)));
-        if(GL_state.features.texFilterAniso)
-        {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                            GL_GetTexAnisoMul(logicalAnisoLevelForVariantSpec(TS_GENERAL(*spec))));
-        }
-    }
 }
 
 void GL_ReleaseGLTexturesByTexture(texture_s *tex)

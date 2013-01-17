@@ -1,5 +1,4 @@
-/**
- * @file gl_main.h GL-Graphics Subsystem
+/** @file gl_main.h GL-Graphics Subsystem.
  * @ingroup gl
  *
  * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -30,9 +29,9 @@
 #include "render/r_main.h"
 
 struct colorpalette_s;
-struct material_s;
-struct colorpalette_s;
 struct ColorRawf_s;
+struct material_s;
+struct texturevariant_s;
 
 #define MAX_TEX_UNITS           2 // More aren't currently used.
 
@@ -179,6 +178,15 @@ void GL_SetMaterialUI(struct material_s *mat);
 void GL_SetPSprite(struct material_s *mat, int tclass, int tmap);
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
+
+/**
+ * Bind this texture to the currently active texture unit.
+ * The bind process may result in modification of the GL texture state
+ * according to the specification used to define this variant.
+ *
+ * @param tex  Texture::Variant object which represents the GL texture to be bound.
+ */
+void GL_BindTexture(struct texturevariant_s *tex);
 
 void GL_BindTextureUnmanaged(DGLuint texname, int magMode);
 
