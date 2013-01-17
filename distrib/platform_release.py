@@ -217,9 +217,9 @@ def mac_release():
     os.chdir(WORK_DIR)
     copytree(SNOWBERRY_DIR + sbLoc, 'Doomsday Engine.app')
 
-    print 'Coping release binaries into the launcher bundle.'
-    duptree(os.path.join(MAC_WORK_DIR, 'engine/Doomsday.app'), 'Doomsday Engine.app/Contents/Doomsday.app')
-    for f in glob.glob(os.path.join(MAC_WORK_DIR, 'engine/*.bundle')):
+    print 'Copying release binaries into the launcher bundle.'
+    duptree(os.path.join(MAC_WORK_DIR, 'client/Doomsday.app'), 'Doomsday Engine.app/Contents/Doomsday.app')
+    for f in glob.glob(os.path.join(MAC_WORK_DIR, 'client/*.bundle')):
         # Exclude jDoom64.
         if not 'jDoom64' in f:
             duptree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))

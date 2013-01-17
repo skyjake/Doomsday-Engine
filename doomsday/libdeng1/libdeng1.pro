@@ -141,8 +141,8 @@ macx {
     fixDengLinkage("QtOpenGL.framework/Versions/4/QtOpenGL")
 
     # Update the library included in the main app bundle.
-    doPostLink("mkdir -p ../engine/Doomsday.app/Contents/Frameworks")
-    doPostLink("cp -fRp libdeng1*dylib ../engine/Doomsday.app/Contents/Frameworks")
+    doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
+    doPostLink("cp -fRp libdeng1*dylib ../client/Doomsday.app/Contents/Frameworks")
 }
 else {
     INSTALLS += target

@@ -1,0 +1,9 @@
+DOOMSDAY CLIENT/SERVER PUBLIC API
+=================================
+
+This folder contains header files for the Doomsday Client and Server public
+APIs: this is all the functionality made available by the executables at
+runtime. Plugins need to use these APIs for registering hooks and accessing
+the engine's runtime functionality.
+
+See also: libdeng1, libdeng2

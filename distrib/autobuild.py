@@ -315,18 +315,18 @@ def generate_apidoc():
     system_command('doxygen api2.doxy >/dev/null 2>../doxyissues-api2.txt')
     system_command('wc -l ../doxyissues-api2.txt')
 
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/engine'))    
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/client'))    
     
     print >> sys.stderr, "\nPublic API docs..."
     system_command('doxygen api.doxy >/dev/null 2>../doxyissues-api.txt')
     system_command('wc -l ../doxyissues-api.txt')
 
     print >> sys.stderr, "\nInternal Win32 docs..."
-    system_command('doxygen engine-win32.doxy >/dev/null 2>../doxyissues-win32.txt')
+    system_command('doxygen client-win32.doxy >/dev/null 2>../doxyissues-win32.txt')
     system_command('wc -l ../doxyissues-win32.txt')
 
     print >> sys.stderr, "\nInternal Mac/Unix docs..."
-    system_command('doxygen engine-mac.doxy >/dev/null 2>../doxyissues-mac.txt')        
+    system_command('doxygen client-mac.doxy >/dev/null 2>../doxyissues-mac.txt')        
     system_command('wc -l ../doxyissues-mac.txt')
 
     print >> sys.stderr, "\nDoom plugin docs..."

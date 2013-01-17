@@ -14,8 +14,8 @@ VERSION  = $$DEHREAD_VERSION
 # TODO: the dependencies to internal headers should be removed
 # (see comment in dehread.cpp)
 INCLUDEPATH += include \
-    ../../engine/include \
-    ../../engine/include/render
+    ../../client/include \
+    ../../client/include/render
 
 HEADERS += include/dehread.h \
     include/dehreader.h \

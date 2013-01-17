@@ -8,7 +8,7 @@ CP="cp -fRp"
 SRCDIR=$1
 echo "Source directory: $SRCDIR"
 
-BUILDDIR=engine
+BUILDDIR=client
 
 if [ ! -e $BUILDDIR/doomsday.app ]; then
     echo "Built product not found, skipping bundling."

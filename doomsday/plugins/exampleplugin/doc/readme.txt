@@ -48,7 +48,7 @@ API function:
 The type of hook being attached to. Doomsday presents various hooks,
 defined in
     
-    ./engine/api/dd_plugin.h
+    ./api/api_plugin.h
 
 @hookFunc - (int(function)(int type, int param, void *data))
 A pointer to the function to be called when the hook is processed.

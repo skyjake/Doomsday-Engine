@@ -10,13 +10,13 @@ win32|macx: TARGET = Doomsday
 
 include(../config.pri)
 
+VERSION = $$DENG_VERSION
+echo(Doomsday Client $${DENG_VERSION}.)
+
 # Some messy old code here:
 *-g++*|*-gcc*|*-clang* {
     QMAKE_CXXFLAGS_WARN_ON += -Wno-missing-field-initializers
 }
-
-VERSION = $$DENG_VERSION
-echo(Doomsday version $${DENG_VERSION}.)
 
 # External Dependencies ------------------------------------------------------
 
@@ -82,42 +82,42 @@ else {
 # Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
-    api/apis.h \
-    api/api_audiod.h \
-    api/api_audiod_mus.h \
-    api/api_audiod_sfx.h \
-    api/api_base.h \
-    api/api_busy.h \
-    api/api_client.h \
-    api/api_console.h \
-    api/api_def.h \
-    api/api_event.h \
-    api/api_infine.h \
-    api/api_internaldata.h \
-    api/api_filesys.h \
-    api/api_fontrender.h \
-    api/api_gameexport.h \
-    api/api_gl.h \
-    api/api_material.h \
-    api/api_materialarchive.h \
-    api/api_map.h \
-    api/api_mapedit.h \
-    api/api_player.h \
-    api/api_plugin.h \
-    api/api_render.h \
-    api/api_resource.h \
-    api/api_resourceclass.h \
-    api/api_sound.h \
-    api/api_svg.h \
-    api/api_thinker.h \
-    api/api_uri.h \
-    api/api_wad.h \
-    api/dd_share.h \
-    api/dd_types.h \
-    api/dd_version.h \
-    api/def_share.h \
-    api/dengproject.h \
-    api/doomsday.h
+    $$DENG_API_DIR/apis.h \
+    $$DENG_API_DIR/api_audiod.h \
+    $$DENG_API_DIR/api_audiod_mus.h \
+    $$DENG_API_DIR/api_audiod_sfx.h \
+    $$DENG_API_DIR/api_base.h \
+    $$DENG_API_DIR/api_busy.h \
+    $$DENG_API_DIR/api_client.h \
+    $$DENG_API_DIR/api_console.h \
+    $$DENG_API_DIR/api_def.h \
+    $$DENG_API_DIR/api_event.h \
+    $$DENG_API_DIR/api_infine.h \
+    $$DENG_API_DIR/api_internaldata.h \
+    $$DENG_API_DIR/api_filesys.h \
+    $$DENG_API_DIR/api_fontrender.h \
+    $$DENG_API_DIR/api_gameexport.h \
+    $$DENG_API_DIR/api_gl.h \
+    $$DENG_API_DIR/api_material.h \
+    $$DENG_API_DIR/api_materialarchive.h \
+    $$DENG_API_DIR/api_map.h \
+    $$DENG_API_DIR/api_mapedit.h \
+    $$DENG_API_DIR/api_player.h \
+    $$DENG_API_DIR/api_plugin.h \
+    $$DENG_API_DIR/api_render.h \
+    $$DENG_API_DIR/api_resource.h \
+    $$DENG_API_DIR/api_resourceclass.h \
+    $$DENG_API_DIR/api_sound.h \
+    $$DENG_API_DIR/api_svg.h \
+    $$DENG_API_DIR/api_thinker.h \
+    $$DENG_API_DIR/api_uri.h \
+    $$DENG_API_DIR/api_wad.h \
+    $$DENG_API_DIR/dd_share.h \
+    $$DENG_API_DIR/dd_types.h \
+    $$DENG_API_DIR/dd_version.h \
+    $$DENG_API_DIR/def_share.h \
+    $$DENG_API_DIR/dengproject.h \
+    $$DENG_API_DIR/doomsday.h
 
 # Convenience headers.
 DENG_HEADERS += \

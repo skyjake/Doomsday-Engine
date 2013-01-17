@@ -1,7 +1,7 @@
-# API documentation for the engine
+# API documentation for the Doomsday Client
 @INCLUDE = ../doomsday.doxy
 
-PROJECT_NAME        = "Doomsday Engine"
+PROJECT_NAME        = "Doomsday Client"
 PROJECT_NUMBER      = 1.10
 PROJECT_BRIEF       = "Internal documentation (Mac OS X)"
 OUTPUT_DIRECTORY    = ../apidoc/mac/
@@ -10,4 +10,4 @@ INPUT               = api include src
 EXCLUDE             = include/windows src/windows
 
 MACRO_EXPANSION     = YES
-PREDEFINED          = __DOOMSDAY__ UNIX MACOSX __cplusplus "C_DECL=" "GL_CALL="
+PREDEFINED          = __DOOMSDAY__ __CLIENT__ UNIX MACOSX __cplusplus "C_DECL=" "GL_CALL="
