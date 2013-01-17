@@ -23,6 +23,11 @@
 #ifndef LIBDENG_MAP_HEDGE
 #define LIBDENG_MAP_HEDGE
 
+#ifndef __cplusplus
+#  error "map/hedge.h requires C++"
+#endif
+
+#include "MapElement"
 #include "resource/r_data.h"
 #include "p_dmu.h"
 #include "sector.h"
@@ -50,20 +55,26 @@
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
 
-typedef struct hedge_s {
-    runtime_mapdata_header_t header;
-    struct vertex_s*    v[2]; /// [Start, End] of the segment.
-    struct hedge_s*     next;
-    struct hedge_s*     prev;
+class Vertex;
+
+/**
+ * Half-edge.
+ */
+class HEdge : public de::MapElement
+{
+public:
+    Vertex *v[2]; /// [Start, End] of the segment.
+    HEdge *next;
+    HEdge *prev;
 
     // Half-edge on the other side, or NULL if one-sided. This relationship
     // is always one-to-one -- if one of the half-edges is split, the twin
     // must also be split.
-    struct hedge_s*     twin;
-    struct bspleaf_s*   bspLeaf;
+    HEdge *twin;
+    BspLeaf *bspLeaf;
 
-    struct linedef_s*   lineDef;
-    struct sector_s*    sector;
+    LineDef *lineDef;
+    Sector *sector;
     angle_t             angle;
     byte                side; /// On which side of the LineDef (0=front, 1=back)?
     coord_t             length; /// Accurate length of the segment (v1 -> v2).
@@ -71,11 +82,12 @@ typedef struct hedge_s {
     biassurface_t*      bsuf[3]; /// For each @ref SideDefSection.
     short               frameFlags;
     uint                index; /// Unique. Set when saving the BSP.
-} HEdge;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+public:
+    HEdge();
+    HEdge(HEdge const &other);
+    ~HEdge();
+};
 
 struct bsphedgeinfo_s;
 
@@ -125,9 +137,5 @@ int HEdge_GetProperty(const HEdge* hedge, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_HEDGE

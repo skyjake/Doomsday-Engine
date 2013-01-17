@@ -21,6 +21,11 @@
 #ifndef LIBDENG_MAP_SURFACE
 #define LIBDENG_MAP_SURFACE
 
+#ifndef __cplusplus
+#  error "map/surface.h requires C++"
+#endif
+
+#include <QSet>
 #include "resource/r_data.h"
 #include "resource/material.h"
 #include "map/p_dmu.h"
@@ -39,44 +44,45 @@
 #define SUIF_UPDATE_DECORATIONS 0x8000
 
 
-typedef struct surface_s {
-#ifdef __cplusplus
+class Surface : public de::MapElement
+{
+public:
 #ifdef __CLIENT__
     struct DecorSource
     {
-        coord_t origin[3]; // World coordinates of the decoration.
+        coord_t origin[3]; ///< World coordinates of the decoration.
         BspLeaf *bspLeaf;
         /// @todo $revise-texture-animation reference by index.
         de::MaterialSnapshot::Decoration const *decor;
     };
 #endif // __CLIENT__
-#endif // __cplusplus
 
-    runtime_mapdata_header_t header;
-    ddmobj_base_t       base;
-    void*               owner;         // Either @c DMU_SIDEDEF, or @c DMU_PLANE
-    int                 flags;         // SUF_ flags
-    int                 oldFlags;
-    material_t*         material;
-    blendmode_t         blendMode;
-    float               tangent[3];
-    float               bitangent[3];
-    float               normal[3];
-    float               offset[2];     // [X, Y] Planar offset to surface material origin.
-    float               oldOffset[2][2];
-    float               visOffset[2];
-    float               visOffsetDelta[2];
-    float               rgba[4];       // Surface color tint
-    short               inFlags;       // SUIF_* flags
-    uint numDecorations;
+public:
+    ddmobj_base_t  base;
+    de::MapElement *owner;        ///< Either @c DMU_SIDEDEF, or @c DMU_PLANE
+    int            flags;         ///< SUF_ flags
+    int            oldFlags;
+    material_t*    material;
+    blendmode_t    blendMode;
+    float          tangent[3];
+    float          bitangent[3];
+    float          normal[3];
+    float          offset[2];     ///< [X, Y] Planar offset to surface material origin.
+    float          oldOffset[2][2];
+    float          visOffset[2];
+    float          visOffsetDelta[2];
+    float          rgba[4];       ///< Surface color tint
+    short          inFlags;       ///< SUIF_* flags
+    unsigned int   numDecorations;
     struct surfacedecorsource_s *decorations;
-} Surface;
 
+public:
+    Surface();
+    ~Surface();
+};
 struct surfacedecorsource_s;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef QSet<Surface *> SurfaceSet;
 
 /**
  * Mark the surface as requiring a full update. To be called
@@ -213,7 +219,6 @@ int Surface_GetProperty(const Surface* surface, setargs_t* args);
  */
 int Surface_SetProperty(Surface* surface, const setargs_t* args);
 
-#ifdef __cplusplus
 #ifdef __CLIENT__
 /**
  * Create a new projected (light) decoration source for the surface.
@@ -229,8 +234,5 @@ Surface::DecorSource *Surface_NewDecoration(Surface *surface);
  */
 void Surface_ClearDecorations(Surface *surface);
 #endif __CLIENT__
-
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_SURFACE

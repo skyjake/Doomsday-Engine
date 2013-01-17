@@ -58,6 +58,10 @@ typedef struct gridmapcellblock_s {
     };
 } GridmapCellBlock;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialize @a block using the specified coordinates.
  */
@@ -197,5 +201,9 @@ boolean Gridmap_ClipBlock(Gridmap* gridmap, GridmapCellBlock* block);
  * @param gridmap         Gridmap instance.
  */
 void Gridmap_DebugDrawer(const Gridmap* gridmap);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_DATA_GRIDMAP_H

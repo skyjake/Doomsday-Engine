@@ -113,7 +113,7 @@ void            SB_RendPoly(struct ColorRawf_s* rcolors,
                             const struct rvertex_s* rvertices,
                             size_t numVertices, const vectorcompf_t* normal,
                             float sectorLightLevel,
-                            void* mapObject, uint elmIdx, boolean isHEdge);
+                            de::MapElement const *mapElement, uint elmIdx);
 void            SB_EndFrame(void);
 
 int             SB_NewSourceAt(coord_t x, coord_t y, coord_t z, float size, float minLight,

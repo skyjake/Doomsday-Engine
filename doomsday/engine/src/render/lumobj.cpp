@@ -950,10 +950,10 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
  */
 static boolean createGlowLightForSurface(Surface *suf, void * /*parameters*/)
 {
-    switch(DMU_GetType(suf->owner))
+    switch(suf->owner->type())
     {
     case DMU_PLANE: {
-        Plane *pln = reinterpret_cast<Plane *>(suf->owner);
+        Plane *pln = suf->owner->castTo<Plane>();
         Sector *sec = pln->sector;
 
         // Only produce a light for sectors with open space.
@@ -1000,8 +1000,7 @@ static boolean createGlowLightForSurface(Surface *suf, void * /*parameters*/)
         return true; // Not yet supported by this algorithm.
 
     default:
-        Con_Error("createGlowLightForSurface: Internal error, unknown type %s.",
-                  DMU_Str(DMU_GetType(suf->owner)));
+        DENG2_ASSERT(false); // Invalid type.
     }
     return true;
 }
@@ -1030,11 +1029,7 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
     // Create dynlights for all glowing surfaces.
     if(useWallGlow)
     {
-        surfacelist_t* slist = GameMap_GlowingSurfaces(theMap);
-        if(slist)
-        {
-            R_SurfaceListIterate(slist, createGlowLightForSurface, 0);
-        }
+        R_SurfaceListIterate(GameMap_GlowingSurfaces(theMap), createGlowLightForSurface, 0);
     }
 
 END_PROF( PROF_LUMOBJ_INIT_ADD );
@@ -1204,7 +1199,8 @@ void LO_UnlinkMobjLumobjs(void)
     if(!useDynLights && theMap)
     {
         // Mobjs are always public.
-        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, LOIT_UnlinkMobjLumobj, NULL);
+        GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                0x1, LOIT_UnlinkMobjLumobj, NULL);
     }
 }
 

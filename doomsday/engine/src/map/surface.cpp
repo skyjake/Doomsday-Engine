@@ -1,4 +1,4 @@
-/** @file surface.c Logical map surface.
+/** @file surface.cpp Logical map surface.
  *
  * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -31,6 +31,31 @@
 
 using namespace de;
 
+Surface::Surface() : de::MapElement(DMU_SURFACE)
+{
+    memset(&base, 0, sizeof(base));
+    owner = 0;
+    flags = 0;
+    oldFlags = 0;
+    material = 0;
+    blendMode = BM_NORMAL;
+    memset(tangent, 0, sizeof(tangent));
+    memset(bitangent, 0, sizeof(bitangent));
+    memset(normal, 0, sizeof(normal));
+    memset(offset, 0, sizeof(offset));
+    memset(oldOffset, 0, sizeof(oldOffset));
+    memset(visOffset, 0, sizeof(visOffset));
+    memset(visOffsetDelta, 0, sizeof(visOffsetDelta));
+    memset(rgba, 1, sizeof(rgba));
+    inFlags = 0;
+    numDecorations = 0;
+    decorations = 0;
+}
+
+Surface::~Surface()
+{
+}
+
 boolean Surface_IsDrawable(Surface *suf)
 {
     DENG_ASSERT(suf);
@@ -47,9 +72,9 @@ boolean Surface_AttachedToMap(Surface *suf)
 {
     DENG_ASSERT(suf);
     if(!suf->owner) return false;
-    if(DMU_GetType(suf->owner) == DMU_PLANE)
+    if(suf->owner->type() == DMU_PLANE)
     {
-        Sector *sec = ((Plane *)suf->owner)->sector;
+        Sector *sec = suf->owner->castTo<Plane>()->sector;
         if(0 == sec->bspLeafCount)
             return false;
     }
@@ -88,11 +113,11 @@ boolean Surface_SetMaterial(Surface *suf, material_t *mat)
                         R_SurfaceListAdd(GameMap_DecoratedSurfaces(map), suf);
                     }
 
-                    if(DMU_GetType(suf->owner) == DMU_PLANE)
+                    if(suf->owner->type() == DMU_PLANE)
                     {
                         de::Uri uri = Material_Manifest(mat).composeUri();
                         ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                        P_SpawnPlaneParticleGen(def, (Plane *)suf->owner);
+                        P_SpawnPlaneParticleGen(def, suf->owner->castTo<Plane>());
                     }
                 }
             }
@@ -267,10 +292,10 @@ void Surface_UpdateBaseOrigin(Surface *suf)
     LOG_AS("Surface_UpdateBaseOrigin");
 
     if(!suf->owner) return;
-    switch(DMU_GetType(suf->owner))
+    switch(suf->owner->type())
     {
     case DMU_PLANE: {
-        Plane *pln = (Plane *)suf->owner;
+        Plane *pln = suf->owner->castTo<Plane>();
         Sector *sec = pln->sector;
         DENG_ASSERT(sec);
 
@@ -280,7 +305,7 @@ void Surface_UpdateBaseOrigin(Surface *suf)
         break; }
 
     case DMU_SIDEDEF: {
-        SideDef *side = (SideDef *)suf->owner;
+        SideDef *side = suf->owner->castTo<SideDef>();
         LineDef *line = side->line;
         Sector *sec;
         DENG_ASSERT(line);
@@ -329,7 +354,8 @@ void Surface_UpdateBaseOrigin(Surface *suf)
 
     default:
         LOG_DEBUG("Invalid DMU type %s for owner object %p.")
-            << DMU_Str(DMU_GetType(suf->owner)) << de::dintptr(suf->owner);
+            << DMU_Str(suf->owner->type()) << de::dintptr(suf->owner);
+        DENG2_ASSERT(false);
     }
 }
 

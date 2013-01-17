@@ -10,8 +10,12 @@ win32|macx: TARGET = Doomsday
 
 include(../config.pri)
 
-VERSION = $$DENG_VERSION
+# Some messy old code here:
+*-g++*|*-gcc*|*-clang* {
+    QMAKE_CXXFLAGS_WARN_ON += -Wno-missing-field-initializers
+}
 
+VERSION = $$DENG_VERSION
 echo(Doomsday version $${DENG_VERSION}.)
 
 # External Dependencies ------------------------------------------------------
@@ -122,6 +126,7 @@ DENG_HEADERS += \
 
 # Private headers.
 DENG_HEADERS += \
+    include/MapElement \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
     include/audio/m_mus2midi.h \
@@ -201,7 +206,6 @@ DENG_HEADERS += \
     include/gl/sys_opengl.h \
     include/gl/texturecontent.h \
     include/gridmap.h \
-    include/kdtree.h \
     include/library.h \
     include/m_decomp64.h \
     include/m_misc.h \
@@ -228,6 +232,7 @@ DENG_HEADERS += \
     include/map/generators.h \
     include/map/hedge.h \
     include/map/linedef.h \
+    include/map/mapelement.h \
     include/map/p_dmu.h \
     include/map/p_intercept.h \
     include/map/p_mapdata.h \
@@ -283,6 +288,7 @@ DENG_HEADERS += \
     include/render/sprite.h \
     include/render/vignette.h \
     include/render/vlight.h \
+    include/render/walldiv.h \
     include/resource/animgroups.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
@@ -366,8 +372,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_HEADERS \
-    include/render/walldiv.h
+    $$DENG_HEADERS
 
 # Platform-specific sources.
 win32 {
@@ -381,9 +386,9 @@ win32 {
     INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
 
     SOURCES += \
-        src/windows/dd_winit.c \
+        src/windows/dd_winit.cpp \
         src/windows/directinput.cpp \
-        src/windows/sys_console.c \
+        src/windows/sys_console.cpp \
         src/windows/joystick_win32.cpp \
         src/windows/mouse_win32.cpp
 
@@ -397,9 +402,9 @@ else:unix {
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
 
     SOURCES += \
-        src/unix/dd_uinit.c \
-        src/unix/joystick.c \
-        src/unix/sys_console.c
+        src/unix/dd_uinit.cpp \
+        src/unix/joystick.cpp \
+        src/unix/sys_console.cpp
 }
 
 macx {
@@ -431,43 +436,43 @@ deng_nodisplaymode {
 SOURCES += \
     src/api_uri.cpp \
     src/audio/audiodriver.cpp \
-    src/audio/audiodriver_music.c \
-    src/audio/m_mus2midi.c \
-    src/audio/s_cache.c \
+    src/audio/audiodriver_music.cpp \
+    src/audio/m_mus2midi.cpp \
+    src/audio/s_cache.cpp \
     src/audio/s_environ.cpp \
-    src/audio/s_logic.c \
-    src/audio/s_main.c \
-    src/audio/s_mus.c \
-    src/audio/s_sfx.c \
-    src/audio/s_wav.c \
-    src/audio/sys_audiod_dummy.c \
+    src/audio/s_logic.cpp \
+    src/audio/s_main.cpp \
+    src/audio/s_mus.cpp \
+    src/audio/s_sfx.cpp \
+    src/audio/s_wav.cpp \
+    src/audio/sys_audiod_dummy.cpp \
     src/busymode.cpp \
-    src/cbuffer.c \
-    src/client/cl_frame.c \
-    src/client/cl_infine.c \
-    src/client/cl_main.c \
-    src/client/cl_mobj.c \
-    src/client/cl_player.c \
-    src/client/cl_sound.c \
-    src/client/cl_world.c \
+    src/cbuffer.cpp \
+    src/client/cl_frame.cpp \
+    src/client/cl_infine.cpp \
+    src/client/cl_main.cpp \
+    src/client/cl_mobj.cpp \
+    src/client/cl_player.cpp \
+    src/client/cl_sound.cpp \
+    src/client/cl_world.cpp \
     src/color.cpp \
-    src/con_bar.c \
-    src/con_config.c \
+    src/con_bar.cpp \
+    src/con_config.cpp \
     src/con_data.cpp \
-    src/con_main.c \
+    src/con_main.cpp \
     src/dd_games.cpp \
     src/dd_help.cpp \
     src/dd_init.cpp \
-    src/dd_loop.c \
+    src/dd_loop.cpp \
     src/dd_main.cpp \
-    src/dd_pinit.c \
-    src/dd_plugin.c \
+    src/dd_pinit.cpp \
+    src/dd_plugin.cpp \
     src/dd_wad.cpp \
-    src/def_data.c \
+    src/def_data.cpp \
     src/def_main.cpp \
     src/def_read.cpp \
     src/dualstring.cpp \
-    src/edit_bias.c \
+    src/edit_bias.cpp \
     src/edit_bsp.cpp \
     src/edit_map.cpp \
     src/filesys/file.cpp \
@@ -479,108 +484,107 @@ SOURCES += \
     src/filesys/lumpindex.cpp \
     src/filesys/manifest.cpp \
     src/filesys/searchpath.cpp \
-    src/filesys/sys_direc.c \
+    src/filesys/sys_direc.cpp \
     src/game.cpp \
     src/gl/dgl_common.cpp \
-    src/gl/dgl_draw.c \
-    src/gl/gl_defer.c \
-    src/gl/gl_deferredapi.c \
-    src/gl/gl_draw.c \
-    src/gl/gl_drawvectorgraphic.c \
+    src/gl/dgl_draw.cpp \
+    src/gl/gl_defer.cpp \
+    src/gl/gl_deferredapi.cpp \
+    src/gl/gl_draw.cpp \
+    src/gl/gl_drawvectorgraphic.cpp \
     src/gl/gl_main.cpp \
     src/gl/gl_model.cpp \
-    src/gl/gl_tex.c \
+    src/gl/gl_tex.cpp \
     src/gl/gl_texmanager.cpp \
-    src/gl/svg.c \
-    src/gl/sys_opengl.c \
-    src/gridmap.c \
-    src/kdtree.c \
+    src/gl/svg.cpp \
+    src/gl/sys_opengl.cpp \
+    src/gridmap.cpp \
     src/library.cpp \
-    src/m_decomp64.c \
-    src/m_misc.c \
-    src/m_nodepile.c \
-    src/map/blockmap.c \
-    src/map/blockmapvisual.c \
+    src/m_decomp64.cpp \
+    src/m_misc.cpp \
+    src/m_nodepile.cpp \
+    src/map/blockmap.cpp \
+    src/map/blockmapvisual.cpp \
     src/map/bsp/hplane.cpp \
     src/map/bsp/partitioner.cpp \
     src/map/bsp/superblockmap.cpp \
     src/map/bspbuilder.cpp \
     src/map/bspleaf.cpp \
-    src/map/bspnode.c \
-    src/map/dam_file.c \
+    src/map/bspnode.cpp \
+    src/map/dam_file.cpp \
     src/map/dam_main.cpp \
     src/map/entitydatabase.cpp \
-    src/map/gamemap.c \
-    src/map/generators.c \
+    src/map/gamemap.cpp \
+    src/map/generators.cpp \
     src/map/hedge.cpp \
-    src/map/linedef.c \
+    src/map/linedef.cpp \
     src/map/p_data.cpp \
     src/map/p_dmu.cpp \
-    src/map/p_intercept.c \
-    src/map/p_maputil.c \
-    src/map/p_mobj.c \
-    src/map/p_objlink.c \
+    src/map/p_intercept.cpp \
+    src/map/p_maputil.cpp \
+    src/map/p_mobj.cpp \
+    src/map/p_objlink.cpp \
     src/map/p_particle.cpp \
-    src/map/p_players.c \
-    src/map/p_polyobjs.c \
-    src/map/p_sight.c \
-    src/map/p_think.c \
-    src/map/p_ticker.c \
-    src/map/plane.c \
-    src/map/polyobj.c \
+    src/map/p_players.cpp \
+    src/map/p_polyobjs.cpp \
+    src/map/p_sight.cpp \
+    src/map/p_think.cpp \
+    src/map/p_ticker.cpp \
+    src/map/plane.cpp \
+    src/map/polyobj.cpp \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \
-    src/map/sector.c \
-    src/map/sidedef.c \
+    src/map/sector.cpp \
+    src/map/sidedef.cpp \
     src/map/surface.cpp \
     src/map/vertex.cpp \
     src/network/masterserver.cpp \
-    src/network/monitor.c \
-    src/network/net_buf.c \
-    src/network/net_demo.c \
-    src/network/net_event.c \
-    src/network/net_main.c \
-    src/network/net_msg.c \
-    src/network/net_ping.c \
-    src/network/protocol.c \
-    src/network/sys_network.c \
-    src/network/ui_mpi.c \
-    src/r_util.c \
-    src/render/api_render.c \
+    src/network/monitor.cpp \
+    src/network/net_buf.cpp \
+    src/network/net_demo.cpp \
+    src/network/net_event.cpp \
+    src/network/net_main.cpp \
+    src/network/net_msg.cpp \
+    src/network/net_ping.cpp \
+    src/network/protocol.cpp \
+    src/network/sys_network.cpp \
+    src/network/ui_mpi.cpp \
+    src/r_util.cpp \
+    src/render/api_render.cpp \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
-    src/render/r_fakeradio.c \
+    src/render/r_fakeradio.cpp \
     src/render/r_main.cpp \
-    src/render/r_lgrid.c \
-    src/render/r_shadow.c \
+    src/render/r_lgrid.cpp \
+    src/render/r_shadow.cpp \
     src/render/r_things.cpp \
-    src/render/rend_bias.c \
+    src/render/rend_bias.cpp \
     src/render/rend_clip.cpp \
     src/render/rend_console.cpp \
     src/render/rend_decor.cpp \
-    src/render/rend_dynlight.c \
+    src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \
-    src/render/rend_font.c \
-    src/render/rend_halo.c \
+    src/render/rend_font.cpp \
+    src/render/rend_halo.cpp \
     src/render/rend_list.cpp \
     src/render/rend_main.cpp \
     src/render/rend_model.cpp \
-    src/render/rend_particle.c \
-    src/render/rend_shadow.c \
+    src/render/rend_particle.cpp \
+    src/render/rend_shadow.cpp \
     src/render/rendpoly.cpp \
     src/render/sky.cpp \
     src/render/sprite.cpp \
-    src/render/vignette.c \
+    src/render/vignette.cpp \
     src/render/vlight.cpp \
     src/resource/animgroups.cpp \
     src/resource/api_material.cpp \
-    src/resource/api_resource.c \
+    src/resource/api_resource.cpp \
     src/resource/bitmapfont.cpp \
-    src/resource/colorpalette.c \
+    src/resource/colorpalette.cpp \
     src/resource/colorpalettes.cpp \
     src/resource/compositetexture.cpp \
     src/resource/fonts.cpp \
-    src/resource/hq2x.c \
+    src/resource/hq2x.cpp \
     src/resource/image.cpp \
     src/resource/material.cpp \
     src/resource/materialarchive.cpp \
@@ -592,7 +596,7 @@ SOURCES += \
     src/resource/models.cpp \
     src/resource/patch.cpp \
     src/resource/patchname.cpp \
-    src/resource/pcx.c \
+    src/resource/pcx.cpp \
     src/resource/r_data.cpp \
     src/resource/rawtexture.cpp \
     src/resource/texture.cpp \
@@ -600,39 +604,39 @@ SOURCES += \
     src/resource/texturescheme.cpp \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \
-    src/resource/tga.c \
+    src/resource/tga.cpp \
     src/resource/wad.cpp \
     src/resource/zip.cpp \
-    src/server/sv_frame.c \
-    src/server/sv_infine.c \
-    src/server/sv_main.c \
-    src/server/sv_missile.c \
-    src/server/sv_pool.c \
+    src/server/sv_frame.cpp \
+    src/server/sv_infine.cpp \
+    src/server/sv_main.cpp \
+    src/server/sv_missile.cpp \
+    src/server/sv_pool.cpp \
     src/server/sv_sound.cpp \
-    src/sys_system.c \
+    src/sys_system.cpp \
     src/tab_tables.c \
-    src/ui/b_command.c \
-    src/ui/b_context.c \
-    src/ui/b_device.c \
-    src/ui/b_main.c \
-    src/ui/b_util.c \
-    src/ui/busyvisual.c \
+    src/ui/b_command.cpp \
+    src/ui/b_context.cpp \
+    src/ui/b_device.cpp \
+    src/ui/b_main.cpp \
+    src/ui/b_util.cpp \
+    src/ui/busyvisual.cpp \
     src/ui/canvas.cpp \
     src/ui/canvaswindow.cpp \
-    src/ui/dd_input.c \
+    src/ui/dd_input.cpp \
     src/ui/displaymode.cpp \
-    src/ui/fi_main.c \
-    src/ui/finaleinterpreter.c \
+    src/ui/fi_main.cpp \
+    src/ui/finaleinterpreter.cpp \
     src/ui/keycode.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
-    src/ui/p_control.c \
-    src/ui/sys_input.c \
+    src/ui/p_control.cpp \
+    src/ui/sys_input.cpp \
     src/ui/ui2_main.cpp \
-    src/ui/ui_main.c \
-    src/ui/ui_panel.c \
+    src/ui/ui_main.cpp \
+    src/ui/ui_panel.cpp \
     src/ui/window.cpp \
-    src/ui/zonedebug.c \
+    src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \
     src/updater/updateavailabledialog.cpp \
@@ -644,7 +648,7 @@ SOURCES += \
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h
-    SOURCES += src/audio/sys_audiod_sdlmixer.c
+    SOURCES += src/audio/sys_audiod_sdlmixer.cpp
 }
 
 OTHER_FILES += \

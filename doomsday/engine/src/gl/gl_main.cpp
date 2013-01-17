@@ -36,6 +36,7 @@
 #include "de_defs.h"
 
 #include "map/gamemap.h"
+//#include "gl/gl_main.h"
 #include "gl/texturecontent.h"
 #include "resource/colorpalettes.h"
 #include "resource/materialsnapshot.h"

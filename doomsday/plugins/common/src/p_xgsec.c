@@ -294,7 +294,7 @@ int destroyXSThinker(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-void XS_SetSectorType(struct sector_s* sec, int special)
+void XS_SetSectorType(Sector* sec, int special)
 {
     int                 i;
     xsector_t*          xsec = P_ToXSector(sec);
@@ -1903,7 +1903,7 @@ int C_DECL XSTrav_SectorSound(Sector* sec, boolean ceiling, void* context,
     return true;
 }
 
-int C_DECL XSTrav_PlaneMaterial(struct sector_s *sec, boolean ceiling,
+int C_DECL XSTrav_PlaneMaterial(Sector *sec, boolean ceiling,
                                 void *context, void *context2,
                                 mobj_t *activator)
 {
@@ -1938,7 +1938,7 @@ int C_DECL XSTrav_PlaneMaterial(struct sector_s *sec, boolean ceiling,
     return true;
 }
 
-int C_DECL XSTrav_SectorType(struct sector_s* sec, boolean ceiling,
+int C_DECL XSTrav_SectorType(Sector* sec, boolean ceiling,
                              void* context, void* context2,
                              mobj_t* activator)
 {
@@ -2999,7 +2999,7 @@ void XS_Thinker(xsthinker_t* xs)
     }
 }
 
-coord_t XS_Gravity(struct sector_s* sec)
+coord_t XS_Gravity(Sector* sec)
 {
     xsector_t* xsec;
 
@@ -3022,7 +3022,7 @@ coord_t XS_Gravity(struct sector_s* sec)
     }
 }
 
-coord_t XS_Friction(struct sector_s* sector)
+coord_t XS_Friction(Sector* sector)
 {
     if(!P_ToXSector(sector)->xg || !(P_ToXSector(sector)->xg->info.flags & STF_FRICTION))
         return FRICTION_NORMAL; // Normal friction.
@@ -3033,7 +3033,7 @@ coord_t XS_Friction(struct sector_s* sector)
 /**
  * @return              The thrust multiplier to emulate by friction.
  */
-coord_t XS_ThrustMul(struct sector_s *sector)
+coord_t XS_ThrustMul(Sector *sector)
 {
     coord_t x = XS_Friction(sector);
 

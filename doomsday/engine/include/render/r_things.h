@@ -98,7 +98,7 @@ typedef struct rendspriteparams_s {
     uint vLightListIdx;
 
 // Misc
-    struct bspleaf_s *bspLeaf;
+    BspLeaf *bspLeaf;
 } rendspriteparams_t;
 
 /** @name rendFlareFlags */

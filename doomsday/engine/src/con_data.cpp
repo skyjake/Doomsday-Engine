@@ -34,9 +34,14 @@
 #include "de_console.h"
 
 #include "cbuffer.h"
+#include "dd_games.h"
+#include "dd_help.h"
+#include "dd_main.h"
 #include "m_misc.h"
 
 #include <de/PathTree>
+#include <de/memory.h>
+#include <de/memoryzone.h>
 #include <de/memoryblockset.h>
 
 // Substrings in CVar names are delimited by this character.

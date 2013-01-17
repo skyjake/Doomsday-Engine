@@ -62,24 +62,6 @@
 
 #define NUM_POLYOBJS            GameMap_PolyobjCount(theMap)
 
-// Runtime map data objects, such as vertices, sectors, and BspLeafs all
-// have this header as their first member. This makes it possible to treat
-// an unknown map data pointer as a runtime_mapdata_header_t* and determine
-// its type. Note that this information is internal to the engine.
-typedef struct runtime_mapdata_header_s {
-    int             type; // One of the DMU type constants.
-} runtime_mapdata_header_t;
-
-typedef struct surfacelistnode_s {
-    void*           data;
-    struct surfacelistnode_s* next;
-} surfacelistnode_t;
-
-typedef struct surfacelist_s {
-    uint            num;
-    surfacelistnode_t* head;
-} surfacelist_t;
-
 // Map entity definitions.
 struct mapentitydef_s;
 
@@ -177,12 +159,14 @@ extern "C" {
 
 boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propertyDef, uint elementIndex, valuetype_t valueType, void* valueAdr);
 
+/*
 byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId);
 short P_GetGMOShort(int entityId, uint elementIndex, int propertyId);
 int P_GetGMOInt(int entityId, uint elementIndex, int propertyId);
 fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId);
 angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
 float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
+*/
 
 extern Uri* mapUri;
 

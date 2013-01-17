@@ -145,7 +145,17 @@
 /**
  * Macro for hiding the warning about an unused parameter.
  */
-#define DENG2_UNUSED(x)     (void)x
+#define DENG2_UNUSED(x)         (void)x
+
+/**
+ * Macro for hiding the warning about an two unused parameters.
+ */
+#define DENG2_UNUSED2(x, y)     (void)x, (void)y
+
+/**
+ * Macro for hiding the warning about an three unused parameters.
+ */
+#define DENG2_UNUSED3(x, y, z)  (void)x, (void)y, (void)z
 
 /**
  * Macro for defining an opaque type in the C wrapper API.
@@ -190,6 +200,21 @@
 
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
+
+template <typename FromType, typename ToType>
+inline ToType function_cast(FromType ptr)
+{
+    /**
+     * @note Casting to a pointer-to-function type: see
+     * http://www.trilithium.com/johan/2004/12/problem-with-dlsym/
+     */
+    // This is not 100% portable to all possible memory architectures; thus:
+    DENG2_ASSERT(sizeof(void *) == sizeof(ToType));
+
+    union { FromType original; ToType target; } forcedCast;
+    forcedCast.original = ptr;
+    return forcedCast.target;
+}
 
 /**
  * All serialization in all contexts use a common protocol version number.

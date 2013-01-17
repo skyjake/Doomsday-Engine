@@ -32,6 +32,7 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "map/plane.h"
 #include "resource/materialsnapshot.h"
 #include "resource/materialvariantspec.h"
 
@@ -52,125 +53,35 @@ byte rendSkyLightAuto         = true;
 boolean firstFrameAfterLoad;
 boolean ddMapSetup;
 
-static surfacelistnode_t *unusedSurfaceListNodes = 0;
-
-/**
- * Allocate a new surface list node.
- */
-static inline surfacelistnode_t *allocListNode()
-{
-    return (surfacelistnode_t *) Z_Calloc(sizeof(surfacelistnode_t), PU_APPSTATIC, 0);
-}
-
-surfacelistnode_t *R_SurfaceListNodeCreate()
-{
-    surfacelistnode_t *node;
-
-    // Is there a free node in the unused list?
-    if(unusedSurfaceListNodes)
-    {
-        node = unusedSurfaceListNodes;
-        unusedSurfaceListNodes = node->next;
-    }
-    else
-    {
-        node = allocListNode();
-    }
-
-    node->data = 0;
-    node->next = 0;
-
-    return node;
-}
-
-void R_SurfaceListNodeDestroy(surfacelistnode_t *node)
-{
-    // Move it to the list of unused nodes.
-    node->data = 0;
-    node->next = unusedSurfaceListNodes;
-    unusedSurfaceListNodes = node;
-}
-
-void R_SurfaceListAdd(surfacelist_t *sl, Surface *suf)
+void R_SurfaceListAdd(SurfaceSet *sl, Surface *suf)
 {
     if(!sl || !suf) return;
-
-    // Check whether this surface is already in the list.
-    surfacelistnode_t *node = sl->head;
-    while(node)
-    {
-        if((Surface *) node->data == suf) return; // Yep.
-
-        node = node->next;
-    }
-
-    // Not found, add it to the list.
-    node = R_SurfaceListNodeCreate();
-    node->data = suf;
-    node->next = sl->head;
-
-    sl->head = node;
-    sl->num++;
+    sl->insert(suf);
 }
 
-boolean R_SurfaceListRemove(surfacelist_t *sl, Surface const *suf)
+boolean R_SurfaceListRemove(SurfaceSet *sl, Surface *suf)
 {
-    if(!sl || !suf)
-        return false;
-
-    surfacelistnode_t *last = sl->head;
-    if(last)
-    {
-        surfacelistnode_t *n = last->next;
-        while(n)
-        {
-            if((Surface*) n->data == suf)
-            {
-                last->next = n->next;
-                R_SurfaceListNodeDestroy(n);
-                sl->num--;
-                return true;
-            }
-
-            last = n;
-            n = n->next;
-        }
-    }
-
-    return false;
+    if(!sl || !suf) return false;
+    return sl->remove(suf);
 }
 
-void R_SurfaceListClear(surfacelist_t *sl)
+void R_SurfaceListClear(SurfaceSet *sl)
 {
     if(!sl) return;
-
-    surfacelistnode_t *node = sl->head;
-    while(node)
-    {
-        surfacelistnode_t *next = node->next;
-        R_SurfaceListRemove(sl, (Surface *)node->data);
-        node = next;
-    }
+    sl->clear();
 }
 
-boolean R_SurfaceListIterate(surfacelist_t *sl, boolean (*callback) (Surface *suf, void *),
-    void *context)
+boolean R_SurfaceListIterate(SurfaceSet *sl, boolean (*callback)(Surface *suf, void *), void *context)
 {
-    boolean result = true;
-
     if(sl)
     {
-        surfacelistnode_t *n = sl->head;
-        while(n)
+        DENG2_FOR_EACH(SurfaceSet, i, *sl)
         {
-            surfacelistnode_t *np = n->next;
-            result = callback((Surface *) n->data, context);
-            if(!result) break;
-            n = np;
+            if(!callback(*i, context))
+                return false;
         }
     }
-
-    return result;
+    return true;
 }
 
 boolean updateSurfaceScroll(Surface *suf, void * /*context*/)
@@ -206,11 +117,7 @@ boolean updateSurfaceScroll(Surface *suf, void * /*context*/)
 void R_UpdateSurfaceScroll()
 {
     if(!theMap) return;
-
-    surfacelist_t *slist = GameMap_ScrollingSurfaces(theMap);
-    if(!slist) return;
-
-    R_SurfaceListIterate(slist, updateSurfaceScroll, 0);
+    R_SurfaceListIterate(GameMap_ScrollingSurfaces(theMap), updateSurfaceScroll, 0);
 }
 
 boolean resetSurfaceScroll(Surface *suf, void * /*context*/)
@@ -265,7 +172,7 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
 {
     if(!theMap) return;
 
-    surfacelist_t *slist = GameMap_ScrollingSurfaces(theMap);
+    SurfaceSet *slist = GameMap_ScrollingSurfaces(theMap);
     if(!slist) return;
 
     if(resetNextViewer)
@@ -282,55 +189,18 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
     }
 }
 
-void R_AddTrackedPlane(planelist_t *plist, Plane *pln)
+void R_AddTrackedPlane(PlaneSet *plist, Plane *pln)
 {
     if(!plist || !pln) return;
 
-    // Check whether we are already tracking this plane.
-    for(uint i = 0; i < plist->num; ++i)
-    {
-        if(plist->array[i] == pln)
-            return; // Yes we are.
-    }
-
-    plist->num++;
-
-    // Only allocate memory when it's needed.
-    if(plist->num > plist->maxNum)
-    {
-        plist->maxNum *= 2;
-
-        // The first time, allocate 8 watched plane nodes.
-        if(!plist->maxNum)
-            plist->maxNum = 8;
-
-        plist->array = (Plane **) Z_Realloc(plist->array, sizeof(Plane *) * (plist->maxNum + 1), PU_MAP);
-    }
-
-    // Add the plane to the list.
-    plist->array[plist->num - 1] = pln;
-    plist->array[plist->num] = NULL; // Terminate.
+    plist->insert(pln);
 }
 
-boolean R_RemoveTrackedPlane(planelist_t *plist, Plane const *pln)
+boolean R_RemoveTrackedPlane(PlaneSet *plist, Plane *pln)
 {
     if(!plist || !pln) return false;
 
-    for(uint i = 0; i < plist->num; ++i)
-    {
-        if(plist->array[i] == pln)
-        {
-            if(i == plist->num - 1)
-                plist->array[i] = 0;
-            else
-                std::memmove(&plist->array[i], &plist->array[i + 1], sizeof(Plane *) * (plist->num - 1 - i));
-
-            plist->num--;
-            return true;
-        }
-    }
-
-    return false;
+    return plist->remove(pln);
 }
 
 /**
@@ -340,12 +210,12 @@ void R_UpdateTrackedPlanes()
 {
     if(!theMap) return;
 
-    planelist_t* plist = GameMap_TrackedPlanes(theMap);
+    PlaneSet* plist = GameMap_TrackedPlanes(theMap);
     if(!plist) return;
 
-    for(uint i = 0; i < plist->num; ++i)
+    DENG2_FOR_EACH(PlaneSet, i, *plist)
     {
-        Plane *pln = plist->array[i];
+        Plane *pln = *i;
 
         pln->oldHeight[0] = pln->oldHeight[1];
         pln->oldHeight[1] = pln->height;
@@ -369,15 +239,15 @@ void R_InterpolateTrackedPlanes(boolean resetNextViewer)
 {
     if(!theMap) return;
 
-    planelist_t* plist = GameMap_TrackedPlanes(theMap);
+    PlaneSet* plist = GameMap_TrackedPlanes(theMap);
     if(!plist) return;
 
     if(resetNextViewer)
     {
         // $smoothplane: Reset the plane height trackers.
-        for(uint i = 0; i < plist->num; ++i)
+        DENG2_FOR_EACH(PlaneSet, i, *plist)
         {
-            Plane *pln = plist->array[i];
+            Plane *pln = *i;
 
             pln->visHeightDelta = 0;
             pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
@@ -386,19 +256,20 @@ void R_InterpolateTrackedPlanes(boolean resetNextViewer)
             {
                 R_MarkDependantSurfacesForDecorationUpdate(pln);
             }
-
-            if(R_RemoveTrackedPlane(plist, pln))
-                i = (i > 0? i-1 : 0);
         }
+
+        // Tracked movement is now all done.
+        plist->clear();
     }
     // While the game is paused there is no need to calculate any
     // visual plane offsets $smoothplane.
     else //if(!clientPaused)
     {
         // $smoothplane: Set the visible offsets.
-        for(uint i = 0; i < plist->num; ++i)
+        QMutableSetIterator<Plane *> iter(*plist);
+        while(iter.hasNext())
         {
-            Plane *pln = plist->array[i];
+            Plane *pln = iter.next();
 
             pln->visHeightDelta = pln->oldHeight[0] * (1 - frameTimePos) +
                         pln->height * frameTimePos -
@@ -415,8 +286,7 @@ void R_InterpolateTrackedPlanes(boolean resetNextViewer)
             // Has this plane reached its destination?
             if(pln->visHeight == pln->height) /// @todo  Can this fail? (float equality)
             {
-                if(R_RemoveTrackedPlane(plist, pln))
-                    i = (i > 0? i-1 : 0);
+                iter.remove();
             }
         }
     }
@@ -470,11 +340,8 @@ void R_UpdateMapSurfacesOnMaterialChange(material_t *material)
 {
     if(!material || !theMap || ddMapSetup) return;
 
-    surfacelist_t *slist = GameMap_DecoratedSurfaces(theMap);
-    if(!slist) return;
-
     // Light decorations will need a refresh.
-    R_SurfaceListIterate(slist, markSurfaceForDecorationUpdate, material);
+    R_SurfaceListIterate(GameMap_DecoratedSurfaces(theMap), markSurfaceForDecorationUpdate, material);
 }
 
 /**
@@ -493,7 +360,8 @@ Plane *R_NewPlaneForSector(Sector *sec)
     if(!sec) return NULL; // Do wha?
 
     // Allocate the new plane.
-    Plane *plane = (Plane *) Z_Malloc(sizeof(Plane), PU_MAP, 0);
+    Plane *plane = new Plane(*sec, de::Vector3f(0, 0, 1));
+    plane->type = PLN_MID;
 
     // Resize this sector's plane list.
     sec->planes = (Plane **) Z_Realloc(sec->planes, sizeof(Plane *) * (++sec->planeCount + 1), PU_MAP);
@@ -501,32 +369,11 @@ Plane *R_NewPlaneForSector(Sector *sec)
     sec->planes[sec->planeCount-1] = plane;
     sec->planes[sec->planeCount] = NULL; // Terminate.
 
-    // Setup header for DMU.
-    plane->header.type = DMU_PLANE;
-
-    // Initalize the plane.
-    plane->sector = sec;
-    plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
-    plane->visHeight = plane->visHeightDelta = 0;
-    std::memset(&plane->PS_base.thinker, 0, sizeof(plane->PS_base.thinker));
-    plane->speed = 0;
-    plane->target = 0;
-    plane->type = PLN_MID;
-    plane->planeID = sec->planeCount-1;
+    plane->planeID = sec->planeCount - 1;
 
     // Initialize the surface.
-    std::memset(&plane->surface, 0, sizeof(plane->surface));
     Surface *suf = &plane->surface;
-    suf->header.type = DMU_SURFACE; // Setup header for DMU.
-    suf->normal[VZ] = 1;
-    V3f_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
-
-    suf->owner = (void*) plane;
     /// @todo The initial material should be the "unknown" material.
-    Surface_SetMaterial(suf, NULL);
-    Surface_SetMaterialOrigin(suf, 0, 0);
-    Surface_SetColorAndAlpha(suf, 1, 1, 1, 1);
-    Surface_SetBlendMode(suf, BM_NORMAL);
     Surface_UpdateBaseOrigin(suf);
 
 #ifdef __CLIENT__
@@ -612,20 +459,16 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
     }
 
     // If this plane is currently being watched, remove it.
-    planelist_t *plist = GameMap_TrackedPlanes(theMap);
-    if(plist) R_RemoveTrackedPlane(plist, plane);
+    R_RemoveTrackedPlane(GameMap_TrackedPlanes(theMap), plane);
 
     // If this plane's surface is in the moving list, remove it.
-    surfacelist_t *slist = GameMap_ScrollingSurfaces(theMap);
-    if(slist) R_SurfaceListRemove(slist, &plane->surface);
+    R_SurfaceListRemove(GameMap_ScrollingSurfaces(theMap), &plane->surface);
 
     // If this plane's surface is in the deocrated list, remove it.
-    slist = GameMap_DecoratedSurfaces(theMap);
-    if(slist) R_SurfaceListRemove(slist, &plane->surface);
+    R_SurfaceListRemove(GameMap_DecoratedSurfaces(theMap), &plane->surface);
 
     // If this plane's surface is in the glowing list, remove it.
-    slist = GameMap_GlowingSurfaces(theMap);
-    if(slist) R_SurfaceListRemove(slist, &plane->surface);
+    R_SurfaceListRemove(GameMap_GlowingSurfaces(theMap), &plane->surface);
 
     // Destroy the biassurfaces for this plane.
     for(BspLeaf **bspLeafIter = sec->bspLeafs; *bspLeafIter; bspLeafIter++)
@@ -639,7 +482,7 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
     }
 
     // Destroy the specified plane.
-    Z_Free(plane);
+    delete plane;
     sec->planeCount--;
 
     // Link the new list to the sector.
@@ -743,9 +586,9 @@ void GameMap_InitSkyFix(GameMap *map)
     map->skyFix[PLN_CEILING].height = DDMINFLOAT;
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
-    for(uint i = 0; i < map->numSectors; ++i)
+    for(uint i = 0; i < map->sectorCount(); ++i)
     {
-        GameMap_UpdateSkyFixForSector(map, map->sectors + i);
+        GameMap_UpdateSkyFixForSector(map, &map->sectors[i]);
     }
 }
 
@@ -1594,7 +1437,7 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
     }
 }
 
-void R_UpdateLinedefsOfSector(Sector *sec)
+static void R_UpdateLinedefsOfSector(Sector *sec)
 {
     if(!sec) return;
 
@@ -1731,7 +1574,7 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
         sec->oldLightLevel = sec->lightLevel;
         std::memcpy(sec->oldRGB, sec->rgb, sizeof(sec->oldRGB));
 
-        LG_SectorChanged(sec);
+        LG_SectorChanged(static_cast<Sector *>(sec));
         changed = true;
     }
     else

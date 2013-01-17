@@ -21,6 +21,11 @@
 #ifndef LIBDENG_RESOURCE_MATERIAL_H
 #define LIBDENG_RESOURCE_MATERIAL_H
 
+#ifndef __cplusplus
+#  error "resource/material.h requires C++"
+#endif
+
+#include "MapElement"
 #include "map/p_mapdata.h"
 #include "map/p_dmu.h"
 
@@ -64,11 +69,12 @@ class MaterialManifest;
 class MaterialSnapshot;
 struct MaterialVariantSpec;
 
+
 /**
- * A logical material.
+ * Logical material resource.
  * @ingroup resource
  */
-class Material
+class Material : public de::MapElement
 {
 public:
     /**
@@ -338,6 +344,10 @@ public:
 
     /// A list of decorations.
     typedef QList<Material::Decoration *> Decorations;
+
+public:
+    Material();
+    ~Material();
 };
 
 } // namespace de

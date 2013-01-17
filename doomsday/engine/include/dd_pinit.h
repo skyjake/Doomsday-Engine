@@ -23,7 +23,6 @@
 #ifndef LIBDENG_PORTABLE_INIT_H
 #define LIBDENG_PORTABLE_INIT_H
 
-#include "dd_share.h"
 #include "api_gameexport.h"
 #include "api_internaldata.h"
 #include <de/c_wrapper.h>
@@ -42,7 +41,7 @@ extern uint mainWindowIdx;
  */
 void DD_ShutdownAll(void);
 
-int DD_CheckArg(char* tag, const char** value);
+int DD_CheckArg(char const *tag, const char** value);
 
 /**
  * Compose the title for the main window.

@@ -319,10 +319,10 @@ static boolean projectSurfaceDecorations(Surface *suf, void *context)
     {
         Surface_ClearDecorations(suf);
 
-        switch(DMU_GetType(suf->owner))
+        switch(suf->owner->type())
         {
         case DMU_SIDEDEF: {
-            SideDef *sideDef = (SideDef *)suf->owner;
+            SideDef *sideDef = suf->owner->castTo<SideDef>();
             LineDef *line = sideDef->line;
             updateSideSectionDecorations(*line, sideDef == line->L_frontsidedef? FRONT : BACK,
                                          &sideDef->SW_middlesurface == suf? SS_MIDDLE :
@@ -330,11 +330,11 @@ static boolean projectSurfaceDecorations(Surface *suf, void *context)
             break; }
 
         case DMU_PLANE:
-            updatePlaneDecorations(*((Plane *)suf->owner));
+            updatePlaneDecorations(suf->owner->castTo<Plane>());
             break;
 
         default:
-            Con_Error("projectSurfaceDecorations: Unknown type %s.", DMU_Str(DMU_GetType(suf->owner)));
+            DENG2_ASSERT(false); // Invalid type.
             break;
         }
         suf->inFlags &= ~SUIF_UPDATE_DECORATIONS;
@@ -542,10 +542,7 @@ BEGIN_PROF( PROF_DECOR_PROJECT );
 
     clearDecorations();
 
-    if(surfacelist_t *slist = GameMap_DecoratedSurfaces(theMap))
-    {
-        R_SurfaceListIterate(slist, projectSurfaceDecorations, &decorMaxDist);
-    }
+    R_SurfaceListIterate(GameMap_DecoratedSurfaces(theMap), projectSurfaceDecorations, &decorMaxDist);
 
 END_PROF( PROF_DECOR_PROJECT );
 }

@@ -23,6 +23,11 @@
 #ifndef LIBDENG_MAP_BSPLEAF
 #define LIBDENG_MAP_BSPLEAF
 
+#ifndef __cplusplus
+#  error "map/bspleaf.h requires C++"
+#endif
+
+#include "MapElement"
 #include "resource/r_data.h"
 #include "render/rend_bias.h"
 #include "p_mapdata.h"
@@ -36,28 +41,32 @@
 #define BLF_UPDATE_FANBASE      0x1 ///< The tri-fan base requires an update.
 ///@}
 
-typedef struct bspleaf_s {
-    runtime_mapdata_header_t header;
-    struct hedge_s*     hedge; /// First HEdge in this leaf.
+class Sector;
+class HEdge;
+
+class BspLeaf : public de::MapElement
+{
+public:
+    HEdge *hedge; /// First HEdge in this leaf.
     int                 flags; /// @ref bspLeafFlags.
     uint                index; /// Unique. Set when saving the BSP.
     int                 addSpriteCount; /// Frame number of last R_AddSprites.
     int                 validCount;
     uint                hedgeCount; /// Number of HEdge's in this leaf.
-    struct sector_s*    sector;
+    Sector *sector;
     struct polyobj_s*   polyObj; /// First polyobj in this leaf. Can be @c NULL.
-    struct hedge_s*     fanBase; /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
+    HEdge *fanBase; /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
     struct shadowlink_s* shadows;
     AABoxd              aaBox; /// HEdge Vertex bounding box in the map coordinate space.
     coord_t             midPoint[2]; /// Center of vertices.
     coord_t             worldGridOffset[2]; /// Offset to align the top left of materials in the built geometry to the map coordinate space grid.
     struct biassurface_s** bsuf; /// [sector->planeCount] size.
     unsigned int        reverb[NUM_REVERB_DATA];
-} BspLeaf;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+public:
+    BspLeaf();
+    ~BspLeaf();
+};
 
 BspLeaf* BspLeaf_New(void);
 
@@ -110,9 +119,5 @@ int BspLeaf_GetProperty(const BspLeaf* bspLeaf, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int BspLeaf_SetProperty(BspLeaf* bspLeaf, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_BSPLEAF

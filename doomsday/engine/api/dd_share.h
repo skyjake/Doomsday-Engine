@@ -38,14 +38,16 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <de/aabox.h>
 #include "dengproject.h"
 #include "dd_version.h"
 #include "dd_types.h"
 #include "def_share.h"
 #include "api_wad.h"
+#include "api_thinker.h"
+#include "api_map.h"
 #include "api_gl.h"
 #include "api_busy.h"
-#include "api_thinker.h"
 #include "api_event.h"
 #include "api_player.h"
 #include "api_infine.h"
@@ -83,11 +85,6 @@ extern "C" {
 #else
 #   define PRINTF_F(f,v)
 #endif
-
-/**
- * Macro for hiding the warning about an unused parameter.
- */
-#define DENG_UNUSED(x)      (void)x
 
 int16_t         ShortSwap(int16_t);
 int32_t         LongSwap(int32_t);
@@ -420,7 +417,8 @@ enum {
 
     DMU_NONE = 0,
 
-    DMU_VERTEX = 1,
+    DMU_FIRST_ELEMENT_TYPE_ID = 1,
+    DMU_VERTEX = DMU_FIRST_ELEMENT_TYPE_ID,
     DMU_HEDGE,
     DMU_LINEDEF,
     DMU_SIDEDEF,
@@ -430,6 +428,7 @@ enum {
     DMU_PLANE,
     DMU_SURFACE,
     DMU_MATERIAL,
+    DMU_LAST_ELEMENT_TYPE_ID = DMU_MATERIAL,
 
     DMU_LINEDEF_BY_TAG,
     DMU_SECTOR_BY_TAG,
@@ -496,6 +495,9 @@ enum {
     DMU_FLOOR_PLANE,
     DMU_CEILING_PLANE
 };
+
+/// Determines whether @a val can be interpreted as a valid DMU element type id.
+#define VALID_DMU_ELEMENT_TYPE_ID(val) ((int)(val) >= (int)DMU_FIRST_ELEMENT_TYPE_ID && (int)(val) <= (int)DMU_LAST_ELEMENT_TYPE_ID)
 
 /**
  * @defgroup ldefFlags Linedef Flags
@@ -629,7 +631,7 @@ typedef struct intercept_s {
     intercepttype_t type;
     union {
         struct mobj_s* mobj;
-        struct linedef_s* lineDef;
+        LineDef* lineDef;
     } d;
 } intercept_t;
 
@@ -638,7 +640,7 @@ typedef int (*traverser_t) (const intercept_t* intercept, void* paramaters);
 /**
  * A simple POD data structure for representing line trace openings.
  */
-typedef struct {
+typedef struct traceopening_s {
     /// Top and bottom z of the opening.
     float top, bottom;
 
@@ -732,142 +734,6 @@ typedef struct linknode_s {
 /// Momentum axis indices. @ingroup mobj
 enum { MX, MY, MZ };
 
-/**
- * Axis-aligned bounding box with integer precision.
- * Handy POD structure for manipulation of bounding boxes. @ingroup map
- */
-typedef struct aabox_s {
-    union {
-        struct {
-            int vec4[4];
-        };
-        struct {
-            int arvec2[2][2];
-        };
-        struct {
-            int min[2];
-            int max[2];
-        };
-        struct {
-            int minX;
-            int minY;
-            int maxX;
-            int maxY;
-        };
-    };
-#ifdef __cplusplus
-    aabox_s() : minX(DDMAXINT), minY(DDMAXINT), maxX(DDMININT), maxY(DDMININT) {}
-    aabox_s(int _minX, int _minY, int _maxX, int _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
-
-    aabox_s& operator = (aabox_s const& other)
-    {
-        minX = other.minX;
-        minY = other.minY;
-        maxX = other.maxX;
-        maxY = other.maxY;
-        return *this;
-    }
-
-    aabox_s& clear()
-    {
-        minX = minY = DDMAXINT;
-        maxX = maxY = DDMININT;
-        return *this;
-    }
-#endif
-} AABox;
-
-/**
- * Axis-aligned bounding box with floating-point precision.
- * Handy POD structure for manipulation of bounding boxes. @ingroup map
- */
-typedef struct aaboxf_s {
-    union {
-        struct {
-            float vec4[4];
-        };
-        struct {
-            float arvec2[2][2];
-        };
-        struct {
-            float min[2];
-            float max[2];
-        };
-        struct {
-            float minX;
-            float minY;
-            float maxX;
-            float maxY;
-        };
-    };
-#ifdef __cplusplus
-    aaboxf_s() : minX(DDMAXFLOAT), minY(DDMAXFLOAT), maxX(DDMINFLOAT), maxY(DDMINFLOAT) {}
-    aaboxf_s(float _minX, float _minY, float _maxX, float _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
-
-    aaboxf_s& operator = (aaboxf_s const& other)
-    {
-        minX = other.minX;
-        minY = other.minY;
-        maxX = other.maxX;
-        maxY = other.maxY;
-        return *this;
-    }
-
-    aaboxf_s& clear()
-    {
-        minX = minY = DDMAXFLOAT;
-        maxX = maxY = DDMINFLOAT;
-        return *this;
-    }
-#endif
-} AABoxf;
-
-/**
- * Axis-aligned bounding box with double floating-point precision.
- * Handy POD structure for manipulation of bounding boxes. @ingroup map
- */
-typedef struct aaboxd_s {
-    union {
-        struct {
-            double vec4[4];
-        };
-        struct {
-            double arvec2[2][2];
-        };
-        struct {
-            double min[2];
-            double max[2];
-        };
-        struct {
-            double minX;
-            double minY;
-            double maxX;
-            double maxY;
-        };
-    };
-#ifdef __cplusplus
-    aaboxd_s() : minX(DDMAXFLOAT), minY(DDMAXFLOAT), maxX(DDMINFLOAT), maxY(DDMINFLOAT) {}
-    aaboxd_s(double _minX, double _minY, double _maxX, double _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
-
-    aaboxd_s& operator = (aaboxd_s const& other)
-    {
-        minX = other.minX;
-        minY = other.minY;
-        maxX = other.maxX;
-        maxY = other.maxY;
-        return *this;
-    }
-
-    aaboxd_s& clear()
-    {
-        minX = minY = DDMAXFLOAT;
-        maxX = maxY = DDMINFLOAT;
-        return *this;
-    }
-
-#endif
-} AABoxd;
-
 /// Base mobj_t elements. Games MUST use this as the basis for mobj_t. @ingroup mobj
 #define DD_BASE_MOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
@@ -875,7 +741,7 @@ typedef struct aaboxd_s {
     nodeindex_t     lineRoot; /* lines to which this is linked */ \
     struct mobj_s*  sNext, **sPrev; /* links in sector (if needed) */ \
 \
-    struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
+    BspLeaf *bspLeaf; /* bspLeaf in which this resides */ \
     coord_t         mom[3]; \
     angle_t         angle; \
     spritenum_t     sprite; /* used to find patch_t and flip value */ \
@@ -919,7 +785,7 @@ typedef struct povertex_s {
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
+    BspLeaf *bspLeaf; /* bspLeaf in which this resides */ \
     unsigned int    idx; /* Idx of polyobject. */ \
     int             tag; /* Reference tag. */ \
     int             validCount; \
@@ -928,7 +794,7 @@ typedef struct povertex_s {
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
     angle_t         angleSpeed; /* Rotation speed. */ \
-    struct linedef_s** lines; \
+    LineDef** lines; \
     unsigned int    lineCount; \
     struct povertex_s* originalPts; /* Used as the base for the rotations. */ \
     struct povertex_s* prevPts; /* Use to restore the old point values. */ \
@@ -1093,7 +959,7 @@ typedef struct {
 
 /// Sprite Info
 typedef struct {
-    struct material_s* material;
+    material_t *material;
     int flip;
     RectRaw geometry;
     float texCoord[2]; // Prepared texture coordinates.
@@ -1241,7 +1107,7 @@ typedef struct ccmdtemplate_s {
 } ccmdtemplate_t;
 
 /// Helper macro for declaring console command functions. @ingroup console
-#define D_CMD(x)            int CCmd##x(byte src, int argc, char** argv)
+#define D_CMD(x)        DENG_EXTERN_C int CCmd##x(byte src, int argc, char** argv)
 
 /**
  * Helper macro for registering new console commands.

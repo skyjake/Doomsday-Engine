@@ -27,7 +27,7 @@
 
 // We'll use the base polyobj template directly as our polyobj.
 typedef struct polyobj_s {
-DD_BASE_POLYOBJ_ELEMENTS()
+    DD_BASE_POLYOBJ_ELEMENTS()
 } Polyobj;
 
 #define POLYOBJ_SIZE        gx.polyobjSize
@@ -84,7 +84,7 @@ void Polyobj_UpdateSurfaceTangents(Polyobj* polyobj);
  * @return  @c 0 iff iteration completed wholly.
  */
 int Polyobj_LineIterator(Polyobj* polyobj,
-    int (*callback) (struct linedef_s*, void* paramaters), void* paramaters);
+    int (*callback) (LineDef*, void* paramaters), void* paramaters);
 
 #if 0
 boolean Polyobj_GetProperty(const Polyobj* po, setargs_t* args);

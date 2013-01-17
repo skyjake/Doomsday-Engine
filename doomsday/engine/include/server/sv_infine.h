@@ -30,6 +30,14 @@
 
 #include "de_infine.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void Sv_Finale(finaleid_t id, int flags, const char *script);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_SERVER_INFINE */

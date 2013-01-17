@@ -27,66 +27,85 @@
 #include "de_play.h"
 #include "m_misc.h"
 
+BspLeaf::BspLeaf() : de::MapElement(DMU_BSPLEAF)
+{
+    hedge = 0;
+    flags = 0;
+    index = 0;
+    addSpriteCount = 0;
+    validCount = 0;
+    hedgeCount = 0;
+    sector = 0;
+    polyObj = 0;
+    fanBase = 0;
+    shadows = 0;
+    memset(&aaBox, 0, sizeof(aaBox));
+    memset(midPoint, 0, sizeof(midPoint));
+    memset(worldGridOffset, 0, sizeof(worldGridOffset));
+    bsuf = 0;
+    memset(reverb, 0, sizeof(reverb));
+}
+
+BspLeaf::~BspLeaf()
+{
+    if(bsuf)
+    {
+        for(uint i = 0; i < sector->planeCount; ++i)
+        {
+            SB_DestroySurface(bsuf[i]);
+        }
+        Z_Free(bsuf);
+    }
+
+    // Clear the HEdges.
+    if(hedge)
+    {
+        HEdge *he = hedge;
+        if(he->next == he)
+        {
+            HEdge_Delete(he);
+        }
+        else
+        {
+            // Break the ring, if linked.
+            if(he->prev)
+            {
+                he->prev->next = NULL;
+            }
+
+            while(he)
+            {
+                HEdge *next = he->next;
+                HEdge_Delete(he);
+                he = next;
+            }
+        }
+    }
+}
+
 BspLeaf* BspLeaf_New(void)
 {
-    BspLeaf* leaf = static_cast<BspLeaf*>(Z_Calloc(sizeof(*leaf), PU_MAP, 0));
-    leaf->header.type = DMU_BSPLEAF;
+    BspLeaf* leaf = new BspLeaf;
+    //leaf->header.type = DMU_BSPLEAF;
     leaf->flags |= BLF_UPDATE_FANBASE;
     return leaf;
 }
 
 void BspLeaf_Delete(BspLeaf* leaf)
 {
-    Q_ASSERT(leaf);
-
-    if(leaf->bsuf)
-    {
-        Sector* sec = leaf->sector;
-        for(uint i = 0; i < sec->planeCount; ++i)
-        {
-            SB_DestroySurface(leaf->bsuf[i]);
-        }
-        Z_Free(leaf->bsuf);
-    }
-
-    // Clear the HEdges.
-    if(leaf->hedge)
-    {
-        HEdge* hedge = leaf->hedge;
-        if(hedge->next == hedge)
-        {
-            HEdge_Delete(hedge);
-        }
-        else
-        {
-            // Break the ring, if linked.
-            if(hedge->prev)
-            {
-                hedge->prev->next = NULL;
-            }
-
-            while(hedge)
-            {
-                HEdge* next = hedge->next;
-                HEdge_Delete(hedge);
-                hedge = next;
-            }
-        }
-    }
-
-    Z_Free(leaf);
+    delete leaf;
 }
 
 biassurface_t* BspLeaf_BiasSurfaceForGeometryGroup(BspLeaf* leaf, uint groupId)
 {
-    Q_ASSERT(leaf);
+    DENG2_ASSERT(leaf);
     if(!leaf->sector || groupId > leaf->sector->planeCount) return NULL;
     return leaf->bsuf[groupId];
 }
 
 BspLeaf* BspLeaf_UpdateAABox(BspLeaf* leaf)
 {
-    Q_ASSERT(leaf);
+    DENG2_ASSERT(leaf);
 
     V2d_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
     V2d_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
@@ -106,7 +125,7 @@ BspLeaf* BspLeaf_UpdateAABox(BspLeaf* leaf)
 
 BspLeaf* BspLeaf_UpdateMidPoint(BspLeaf* leaf)
 {
-    Q_ASSERT(leaf);
+    DENG2_ASSERT(leaf);
     // The middle is the center of our AABox.
     leaf->midPoint[VX] = leaf->aaBox.minX + (leaf->aaBox.maxX - leaf->aaBox.minX) / 2;
     leaf->midPoint[VY] = leaf->aaBox.minY + (leaf->aaBox.maxY - leaf->aaBox.minY) / 2;
@@ -115,7 +134,7 @@ BspLeaf* BspLeaf_UpdateMidPoint(BspLeaf* leaf)
 
 BspLeaf* BspLeaf_UpdateWorldGridOffset(BspLeaf* leaf)
 {
-    Q_ASSERT(leaf);
+    DENG2_ASSERT(leaf);
     leaf->worldGridOffset[VX] = fmod(leaf->aaBox.minX, 64);
     leaf->worldGridOffset[VY] = fmod(leaf->aaBox.maxY, 64);
     return leaf;
@@ -123,7 +142,7 @@ BspLeaf* BspLeaf_UpdateWorldGridOffset(BspLeaf* leaf)
 
 int BspLeaf_SetProperty(BspLeaf* leaf, const setargs_t* args)
 {
-    Q_ASSERT(leaf);
+    DENG2_ASSERT(leaf);
     DENG_UNUSED(leaf);
     Con_Error("BspLeaf::SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     exit(1); // Unreachable.
@@ -131,7 +150,7 @@ int BspLeaf_SetProperty(BspLeaf* leaf, const setargs_t* args)
 
 int BspLeaf_GetProperty(const BspLeaf* leaf, setargs_t* args)
 {
-    Q_ASSERT(leaf);
+    DENG2_ASSERT(leaf);
     switch(args->prop)
     {
     case DMU_SECTOR:

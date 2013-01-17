@@ -1071,7 +1071,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         if(pt->contact)
         {
             Sector *front = (pt->contact->L_frontsidedef? pt->contact->L_frontsector : NULL);
-            Sector *back  =  (pt->contact->L_backsidedef? pt->contact->L_backsector  : NULL);
+            Sector *back  = (pt->contact->L_backsidedef?  pt->contact->L_backsector  : NULL);
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {
@@ -1218,7 +1218,8 @@ void P_PtcGenThinker(ptcgen_t *gen)
                     GameMap_ClMobjIterator(theMap, PIT_ClientMobjParticles, gen);
                 }
 #endif
-                GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1 /*mobjs are public*/,
+                GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                        0x1 /*mobjs are public*/,
                                         manyNewParticles, gen);
 
                 // The generator has no real source.

@@ -59,7 +59,7 @@ DENG_API_TYPEDEF(MaterialArchive)
     /**
      * @return A new (unused) SerialId for the specified material.
      */
-    materialarchive_serialid_t (*FindUniqueSerialId)(MaterialArchive const *arc, struct material_s *mat);
+    materialarchive_serialid_t (*FindUniqueSerialId)(MaterialArchive const *arc, material_t *mat);
 
     /**
      * Finds and returns a material with the identifier @a serialId.
@@ -70,7 +70,7 @@ DENG_API_TYPEDEF(MaterialArchive)
      *
      * @return  Pointer to a material instance. Ownership not given.
      */
-    struct material_s *(*Find)(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group);
+    material_t *(*Find)(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group);
 
     /**
      * Returns the number of materials in the archive.

@@ -60,42 +60,42 @@ void P_InitMapUpdate(void);
  *                      caller-allocated memory area of extra data for the
  *                      dummy.
  */
-void *P_AllocDummy(int type, void *extraData);
+//void *P_AllocDummy(int type, void *extraData);
 
 /**
  * Determines the type of a dummy object. For extra safety (in a debug build)
  * it would be possible to look through the dummy arrays and make sure the
  * pointer refers to a real dummy.
  */
-int P_DummyType(void *dummy);
+int P_DummyType(void const *dummy);
 
 /**
  * Frees a dummy object.
  */
-void P_FreeDummy(void *dummy);
+//void P_FreeDummy(void *dummy);
 
 /**
  * Determines if a map data object is a dummy.
  */
-boolean P_IsDummy(void *dummy);
+//boolean P_IsDummy(void *dummy);
 
 /**
  * Returns the extra data pointer of the dummy, or NULL if the object is not
  * a dummy object.
  */
-void *P_DummyExtraData(void *dummy);
+//void *P_DummyExtraData(void *dummy);
 
 /**
  * Convert pointer to index.
  */
-uint P_ToIndex(void const *ptr);
+//uint P_ToIndex(void const *ptr);
 
 /**
  * Convert DMU enum constant into a string for error/debug messages.
  */
 char const *DMU_Str(uint prop);
 
-int DMU_GetType(void const *ptr);
+//int DMU_GetType(void const *ptr);
 
 /**
  * Sets a value. Does some basic type checking so that incompatible types are
@@ -109,14 +109,6 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args, uint 
  * fixed.
  */
 void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint index);
-
-#ifndef NDEBUG
-# define ASSERT_DMU_TYPE(ptr, dmuType) \
-    if(!ptr || ((runtime_mapdata_header_t *)ptr)->type != dmuType) \
-        Con_Error("ASSERT_DMU_TYPE failure on line %i in "__FILE__". " #ptr " is not %s.\n", __LINE__, DMU_Str(dmuType));
-#else
-# define ASSERT_DMU_TYPE(ptr, dmuType)
-#endif
 
 #ifdef __cplusplus
 } // extern "C"

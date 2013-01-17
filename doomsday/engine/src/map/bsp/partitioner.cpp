@@ -89,7 +89,7 @@ static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
 
 struct Partitioner::Instance
 {
-    typedef std::map<runtime_mapdata_header_t*, BspTreeNode*> BspTreeNodeMap;
+    typedef std::map<de::MapElement*, BspTreeNode*> BspTreeNodeMap;
 
     /// Used when sorting BSP leaf half-edges by angle around midpoint.
     typedef std::vector<HEdge*> HEdgeSortBuffer;
@@ -107,8 +107,8 @@ struct Partitioner::Instance
     AABoxd mapBounds;
 
     /// @todo Refactor me away:
-    uint* numEditableVertexes;
-    Vertex*** editableVertexes;
+    uint numEditableVertexes;
+    Vertex const **editableVertexes;
 
     /// Running totals of constructed BSP data objects.
     uint numNodes;
@@ -192,8 +192,8 @@ struct Partitioner::Instance
     /// @c true = a BSP for the current map has been built successfully.
     bool builtOK;
 
-    Instance(GameMap* _map, uint* _numEditableVertexes,
-             Vertex*** _editableVertexes, int _splitCostFactor)
+    Instance(GameMap* _map, uint _numEditableVertexes,
+             Vertex const **_editableVertexes, int _splitCostFactor)
       : splitCostFactor(_splitCostFactor),
         map(_map),
         numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
@@ -242,7 +242,7 @@ struct Partitioner::Instance
      * Retrieve the extended build info for the specified @a vertex.
      * @return  Extended info for that Vertex.
      */
-    VertexInfo& vertexInfo(const Vertex& vertex)
+    VertexInfo& vertexInfo(Vertex const &vertex)
     {
         return vertexInfos[vertex.buildData.index - 1];
     }
@@ -371,7 +371,7 @@ struct Partitioner::Instance
             scanRegion.maxX = MAX_OF(line->L_v1origin[VX], line->L_v2origin[VX]) + DIST_EPSILON;
         }
         validCount++;
-        GameMap_LineDefsBoxIterator(map, &scanRegion, testForWindowEffectWorker, (void*)&p);
+        GameMap_LineDefsBoxIterator(map, &scanRegion, testForWindowEffectWorker, &p);
 
         if(p.backOpen && p.frontOpen && line->L_frontsector == p.backOpen)
         {
@@ -388,13 +388,13 @@ struct Partitioner::Instance
         mapBounds = findMapBounds(map);
 
         // Initialize vertex info for the initial set of vertexes.
-        vertexInfos.resize(*numEditableVertexes);
+        vertexInfos.resize(numEditableVertexes);
 
         // Count the total number of one and two-sided line owners for each vertex.
         // (Used in the process of locating window effect lines.)
-        for(uint i = 0; i < *numEditableVertexes; ++i)
+        for(uint i = 0; i < numEditableVertexes; ++i)
         {
-            Vertex* vtx = (*editableVertexes)[i];
+            Vertex const *vtx = editableVertexes[i];
             VertexInfo& vtxInfo = vertexInfo(*vtx);
             Vertex_CountLineOwners(vtx, &vtxInfo.oneSidedOwnerCount, &vtxInfo.twoSidedOwnerCount);
         }
@@ -1423,8 +1423,8 @@ struct Partitioner::Instance
      */
     BspNode* newBspNode(coord_t const origin[2], coord_t const angle[2],
         AABoxd& rightBounds, AABoxd& leftBounds,
-        runtime_mapdata_header_t* rightChild = 0,
-        runtime_mapdata_header_t* leftChild = 0)
+        de::MapElement* rightChild = 0,
+        de::MapElement* leftChild = 0)
     {
         BspNode* node = BspNode_New(origin, angle);
         if(rightChild)
@@ -1444,7 +1444,7 @@ struct Partitioner::Instance
         return node;
     }
 
-    BspTreeNode* newTreeNode(runtime_mapdata_header_t* bspOb,
+    BspTreeNode* newTreeNode(de::MapElement* bspOb,
         BspTreeNode* rightChild = 0, BspTreeNode* leftChild = 0)
     {
         BspTreeNode* subtree = new BspTreeNode(bspOb);
@@ -1459,7 +1459,7 @@ struct Partitioner::Instance
             leftChild->setParent(subtree);
         }
 
-        treeNodeMap.insert(std::pair<runtime_mapdata_header_t*, BspTreeNode*>(bspOb, subtree));
+        treeNodeMap.insert(std::pair<de::MapElement*, BspTreeNode*>(bspOb, subtree));
         return subtree;
     }
 
@@ -1485,7 +1485,7 @@ struct Partitioner::Instance
     {
         LOG_AS("Partitioner::buildNodes");
 
-        runtime_mapdata_header_t* bspObject = 0; ///< Built BSP object at this node.
+        de::MapElement* bspObject = 0; ///< Built BSP object at this node.
         BspTreeNode* rightTree = 0, *leftTree = 0;
 
         // Pick a half-edge to use as the next partition plane.
@@ -1528,9 +1528,8 @@ struct Partitioner::Instance
                 return rightTree? rightTree : leftTree;
 
             // Construct the new node and link up the subtrees.
-            BspNode* node = newBspNode(origPartition.origin, origPartition.direction, rightBounds, leftBounds,
-                                       rightTree->userData(), leftTree->userData());
-            bspObject = reinterpret_cast<runtime_mapdata_header_t*>(node);
+            bspObject = newBspNode(origPartition.origin, origPartition.direction, rightBounds, leftBounds,
+                                   rightTree->userData(), leftTree->userData());
         }
         else
         {
@@ -1541,7 +1540,7 @@ struct Partitioner::Instance
             // Not a leaf? (collapse upward).
             if(!leaf) return 0;
 
-            bspObject = reinterpret_cast<runtime_mapdata_header_t*>(leaf);
+            bspObject = leaf;
         }
 
         return newTreeNode(bspObject, rightTree, leftTree);
@@ -1774,7 +1773,7 @@ struct Partitioner::Instance
     {
         DENG2_ASSERT(tree.isLeaf());
 
-        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
+        BspLeaf* leaf = tree.userData()->castTo<BspLeaf>();
         vec2d_t center;
 
         V2d_Set(center, 0, 0);
@@ -1921,7 +1920,8 @@ struct Partitioner::Instance
     void clearBspObject(BspTreeNode& tree)
     {
         LOG_AS("Partitioner::clearBspObject");
-        runtime_mapdata_header_t* dmuOb = tree.userData();
+
+        de::MapElement* dmuOb = tree.userData();
         if(!dmuOb) return;
 
         if(builtOK)
@@ -1931,16 +1931,17 @@ struct Partitioner::Instance
 
         if(tree.isLeaf())
         {
-            BspLeaf_Delete(reinterpret_cast<BspLeaf*>(dmuOb));
+            DENG2_ASSERT(dmuOb->type() == DMU_BSPLEAF);
             // There is now one less BspLeaf.
             numLeafs -= 1;
         }
         else
         {
-            BspNode_Delete(reinterpret_cast<BspNode*>(dmuOb));
+            DENG2_ASSERT(dmuOb->type() == DMU_BSPNODE);
             // There is now one less BspNode.
             numNodes -= 1;
         }
+        delete dmuOb;
         tree.setUserData(0);
 
         BspTreeNodeMap::iterator found = treeNodeMap.find(dmuOb);
@@ -1966,10 +1967,11 @@ struct Partitioner::Instance
         }
     }
 
-    BspTreeNode* treeNodeForBspObject(runtime_mapdata_header_t* ob)
+    BspTreeNode* treeNodeForBspObject(de::MapElement* ob)
     {
         LOG_AS("Partitioner::treeNodeForBspObject");
-        const int dmuType = DMU_GetType(ob);
+
+        const int dmuType = ob->type();
         if(dmuType == DMU_BSPLEAF || dmuType == DMU_BSPNODE)
         {
             BspTreeNodeMap::const_iterator found = treeNodeMap.find(ob);
@@ -1994,8 +1996,7 @@ struct Partitioner::Instance
 
         // Allocate with M_Calloc for uniformity with the editable vertexes.
         vtx = static_cast<Vertex*>(M_Calloc(sizeof *vtx));
-        vtx->header.type = DMU_VERTEX;
-        vtx->buildData.index = *numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
+        vtx->buildData.index = numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
         vertexes.push_back(vtx);
 
         // There is now one more Vertex.
@@ -2015,7 +2016,7 @@ struct Partitioner::Instance
         vertexInfo(*vtx).addHEdgeTip(angle, front, back);
     }
 
-    inline void clearHEdgeTipsByVertex(Vertex* vtx)
+    inline void clearHEdgeTipsByVertex(Vertex const *vtx)
     {
         if(!vtx) return;
         vertexInfo(*vtx).clearHEdgeTips();
@@ -2023,9 +2024,9 @@ struct Partitioner::Instance
 
     void clearAllHEdgeTips()
     {
-        for(uint i = 0; i < *numEditableVertexes; ++i)
+        for(uint i = 0; i < numEditableVertexes; ++i)
         {
-            clearHEdgeTipsByVertex((*editableVertexes)[i]);
+            clearHEdgeTipsByVertex(editableVertexes[i]);
         }
     }
 
@@ -2185,17 +2186,16 @@ struct Partitioner::Instance
         partitionLineDef = lineDef;
     }
 
-    bool release(runtime_mapdata_header_t* dmuOb)
+    bool release(de::MapElement* dmuOb)
     {
-        int dmuType = DMU_GetType(dmuOb);
-        switch(dmuType)
+        switch(dmuOb->type())
         {
         case DMU_VERTEX: {
-            Vertex* vtx = reinterpret_cast<Vertex*>(dmuOb);
-            if(vtx->buildData.index > 0 && uint(vtx->buildData.index) > *numEditableVertexes)
+            Vertex* vtx = dmuOb->castTo<Vertex>();
+            if(vtx->buildData.index > 0 && uint(vtx->buildData.index) > numEditableVertexes)
             {
                 // Is this object owned?
-                uint idx = uint(vtx->buildData.index) - 1 - *numEditableVertexes;
+                uint idx = uint(vtx->buildData.index) - 1 - numEditableVertexes;
                 if(idx < vertexes.size() && vertexes[idx])
                 {
                     vertexes[idx] = 0;
@@ -2387,8 +2387,8 @@ struct Partitioner::Instance
     }
 };
 
-Partitioner::Partitioner(GameMap& map, uint* numEditableVertexes,
-    Vertex*** editableVertexes, int splitCostFactor)
+Partitioner::Partitioner(GameMap& map, uint numEditableVertexes,
+    Vertex const **editableVertexes, int splitCostFactor)
 {
     d = new Instance(&map, numEditableVertexes, editableVertexes, splitCostFactor);
     d->initForMap();
@@ -2442,7 +2442,7 @@ Vertex& Partitioner::vertex(uint idx)
     return *d->vertexes[idx];
 }
 
-Partitioner& Partitioner::release(runtime_mapdata_header_t* ob)
+Partitioner& Partitioner::release(de::MapElement* ob)
 {
     if(!d->release(ob))
     {

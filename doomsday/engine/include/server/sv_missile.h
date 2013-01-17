@@ -30,11 +30,23 @@
 #define __DOOMSDAY_SERVER_POOL_MISSILE_H__
 
 #include "sv_def.h"
-#include "sv_pool.h"
 
-misrecord_t    *Sv_MRFind(pool_t *pool, thid_t id);
-void            Sv_MRAdd(pool_t *pool, const mobjdelta_t *delta);
-int             Sv_MRCheck(pool_t *pool, const mobjdelta_t *mobj);
-void            Sv_MRRemove(pool_t *pool, thid_t id);
+struct pool_s;
+struct mobjdelta_s;
+
+typedef struct misrecord_s {
+    struct misrecord_s* next, *prev;
+    thid_t          id;
+    //fixed_t momx, momy, momz;
+} misrecord_t;
+
+typedef struct mislink_s {
+    misrecord_t*    first, *last;
+} mislink_t;
+
+misrecord_t    *Sv_MRFind(struct pool_s *pool, thid_t id);
+void            Sv_MRAdd(struct pool_s *pool, struct mobjdelta_s const *delta);
+int             Sv_MRCheck(struct pool_s *pool, struct mobjdelta_s const *mobj);
+void            Sv_MRRemove(struct pool_s *pool, thid_t id);
 
 #endif

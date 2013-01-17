@@ -33,6 +33,8 @@ struct ColorRawf_s;
 struct material_s;
 struct texturevariant_s;
 
+class material_t;
+
 #define MAX_TEX_UNITS           2 // More aren't currently used.
 
 DENG_EXTERN_C int numTexUnits;
@@ -57,7 +59,7 @@ extern "C" {
     GLint p; \
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &p); \
     Sys_GLCheckError(); \
-    assert(p == tex); \
+    assert(p == (GLint)tex); \
 }
 #else
 #  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex)
@@ -172,10 +174,10 @@ void GL_CallList(DGLuint list);
 
 void GL_DeleteLists(DGLuint list, int range);
 
-void GL_SetMaterialUI2(struct material_s *mat, int wrapS, int wrapT);
-void GL_SetMaterialUI(struct material_s *mat);
+void GL_SetMaterialUI2(material_t *mat, int wrapS, int wrapT);
+void GL_SetMaterialUI(material_t *mat);
 
-void GL_SetPSprite(struct material_s *mat, int tclass, int tmap);
+void GL_SetPSprite(material_t *mat, int tclass, int tmap);
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
 

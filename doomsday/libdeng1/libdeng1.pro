@@ -60,6 +60,7 @@ deng_writertypecheck {
 
 # Public headers
 HEADERS += \
+    include/de/aabox.h \
     include/de/animator.h \
     include/de/binangle.h \
     include/de/concurrency.h \
@@ -68,6 +69,7 @@ HEADERS += \
     include/de/fixedpoint.h \
     include/de/garbage.h \
     include/de/libdeng1.h \
+    include/de/kdtree.h \
     include/de/mathutil.h \
     include/de/memory.h \
     include/de/memoryblockset.h \
@@ -96,6 +98,7 @@ SOURCES += \
     src/fixedpoint.c \
     src/garbage.cpp \
     src/libdeng.c \
+    src/kdtree.c \
     src/mathutil.c \
     src/memory.c \
     src/memoryblockset.c \

@@ -37,7 +37,11 @@
 #define LIBDENG_RENDER_FAKERADIO_H
 
 #include "map/linedef.h"
+#include "map/sidedef.h"
+#include "map/vertex.h"
+#include "map/sector.h"
 #include "render/rendpoly.h"
+#include "render/walldiv.h"
 
 typedef struct shadowlink_s {
     struct shadowlink_s *next;

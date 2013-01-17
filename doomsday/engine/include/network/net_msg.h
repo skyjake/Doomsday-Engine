@@ -32,8 +32,12 @@
 #include <de/reader.h>
 #include <de/writer.h>
 
-extern Writer* msgWriter;
-extern Reader* msgReader;
+DENG_EXTERN_C Writer* msgWriter;
+DENG_EXTERN_C Reader* msgReader;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Begin writing a message to netBuffer. If a message is currently being
@@ -50,5 +54,9 @@ boolean Msg_BeingWritten(void);
  */
 void Msg_BeginRead(void);
 void Msg_EndRead(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

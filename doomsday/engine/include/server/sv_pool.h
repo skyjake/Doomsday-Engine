@@ -34,33 +34,11 @@
 #include "map/p_object.h"
 #include "resource/r_data.h"
 #include "resource/materials.h"
+#include "sv_missile.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// Prefer adding new flags inside the deltas instead of adding new delta types.
-typedef enum {
-    DT_MOBJ = 0,
-    DT_PLAYER = 1,
-    //DT_SECTOR_R6 = 2, // 2 bytes for flags.
-    //DT_SIDE_R6 = 3, // 1 byte for flags.
-    DT_POLY = 4,
-    DT_LUMP = 5,
-    DT_SOUND = 6, // No emitter
-    DT_MOBJ_SOUND = 7,
-    DT_SECTOR_SOUND = 8,
-    DT_POLY_SOUND = 9,
-    DT_SECTOR = 10, // Flags in a packed long.
-
-    // Special types: (only in the PSV_FRAME2 packet when written to message)
-    DT_NULL_MOBJ = 11, // Mobj was removed (just type and ID).
-    DT_CREATE_MOBJ = 12, // Regular DT_MOBJ, but the mobj was just created.
-
-    DT_SIDE = 13, // Flags in a packed long.
-
-    NUM_DELTA_TYPES
-} deltatype_t;
 
 // OR'd with the type number when resending Unacked deltas.
 #define DT_RESENT               0x80
@@ -230,7 +208,7 @@ typedef struct delta_s {
 
 typedef mobj_t  dt_mobj_t;
 
-typedef struct {
+typedef struct mobjdelta_s {
     delta_t         delta; // The header.
     dt_mobj_t       mo; // The data of the delta.
 } mobjdelta_t;
@@ -330,16 +308,6 @@ typedef struct {
  * is checked every time a missile delta is added to a pool.
  */
 #define POOL_MISSILE_HASH_SIZE      256
-
-typedef struct misrecord_s {
-    struct misrecord_s* next, *prev;
-    thid_t          id;
-    //fixed_t momx, momy, momz;
-} misrecord_t;
-
-typedef struct mislink_s {
-    misrecord_t*    first, *last;
-} mislink_t;
 
 typedef struct deltalink_s {
     // Links to the first and last delta in the hash key.

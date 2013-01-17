@@ -30,10 +30,9 @@
 #define LIBDENG_REFRESH_WORLD_H
 
 #include "resource/r_data.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "map/vertex.h"
+#include "map/sector.h"
+#include "map/plane.h"
 
 // Used for vertex sector owners, side line owners and reverb BSP leafs.
 typedef struct ownernode_s {
@@ -59,7 +58,7 @@ extern boolean firstFrameAfterLoad;
 /**
  * Sector light color may be affected by the sky light color.
  */
-const float* R_GetSectorLightColor(const Sector* sector);
+const float* R_GetSectorLightColor(const Sector *sector);
 
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
 
@@ -160,17 +159,17 @@ void            R_DestroyPlaneOfSector(uint id, Sector* sec);
 void            R_UpdateTrackedPlanes(void);
 void            R_InterpolateTrackedPlanes(boolean resetNextViewer);
 
-void            R_AddTrackedPlane(planelist_t* plist, Plane* pln);
-boolean         R_RemoveTrackedPlane(planelist_t* plist, const Plane* pln);
+void            R_AddTrackedPlane(PlaneSet* plist, Plane* pln);
+boolean         R_RemoveTrackedPlane(PlaneSet* plist, Plane* pln);
 
 void            R_UpdateSurfaceScroll(void);
 void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
 
-boolean R_UpdateSector(struct sector_s *sec, boolean forceUpdate);
-boolean R_UpdateLinedef(struct linedef_s *line, boolean forceUpdate);
-boolean R_UpdateSidedef(struct sidedef_s *side, boolean forceUpdate);
-boolean R_UpdatePlane(struct plane_s *pln, boolean forceUpdate);
-boolean R_UpdateSurface(struct surface_s *suf, boolean forceUpdate);
+boolean R_UpdateSector(Sector *sec, boolean forceUpdate);
+boolean R_UpdateLinedef(LineDef *line, boolean forceUpdate);
+boolean R_UpdateSidedef(SideDef *side, boolean forceUpdate);
+boolean R_UpdatePlane(Plane *pln, boolean forceUpdate);
+boolean R_UpdateSurface(Surface *suf, boolean forceUpdate);
 
 /**
  * Adds the surface to the given surface list.
@@ -178,9 +177,9 @@ boolean R_UpdateSurface(struct surface_s *suf, boolean forceUpdate);
  * @param sl  The surface list to add the surface to.
  * @param suf  The surface to add to the list.
  */
-void R_SurfaceListAdd(surfacelist_t* sl, Surface* suf);
-boolean R_SurfaceListRemove(surfacelist_t* sl, const Surface* suf);
-void R_SurfaceListClear(surfacelist_t* sl);
+void R_SurfaceListAdd(SurfaceSet* sl, Surface *suf);
+boolean R_SurfaceListRemove(SurfaceSet* sl, Surface *suf);
+void R_SurfaceListClear(SurfaceSet* sl);
 
 /**
  * Iterate the list of surfaces making a callback for each.
@@ -189,7 +188,7 @@ void R_SurfaceListClear(surfacelist_t* sl);
  *      a callback returns a zero value.
  * @param context  Is passed to the callback function.
  */
-boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (Surface* suf, void*), void* context);
+boolean R_SurfaceListIterate(SurfaceSet* sl, boolean (*callback) (Surface *suf, void*), void* context);
 
 void            R_MarkDependantSurfacesForDecorationUpdate(Plane* pln);
 
@@ -214,7 +213,7 @@ lineowner_t* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
 LineDef* R_FindLineNeighbor(const Sector* sector, const LineDef* line,
     const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
 
-LineDef* R_FindSolidLineNeighbor(const Sector* sector, const LineDef* line,
+LineDef* R_FindSolidLineNeighbor(const Sector *sector, const LineDef* line,
     const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
 
 /**
@@ -243,9 +242,5 @@ LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
 ///@}
 
 coord_t R_SkyCapZ(BspLeaf* bspLeaf, int skyCap);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_REFRESH_WORLD_H */

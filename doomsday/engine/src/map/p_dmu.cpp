@@ -1,5 +1,8 @@
 /** @file p_dmu.cpp Doomsday Map Update API
  *
+ * @todo Throw a game-terminating exception if an illegal value is given
+ * to a public API function.
+ *
  * @author Copyright &copy; 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -32,33 +35,29 @@
 #include "resource/materials.h"
 #include "api_map.h"
 
+// Converting a public void* pointer to an internal de::MapElement.
+#define IN_ELEM(p)          reinterpret_cast<de::MapElement *>(p)
+#define IN_ELEM_CONST(p)    reinterpret_cast<de::MapElement const *>(p)
+
 using namespace de;
 
-typedef struct dummysidedef_s {
-    SideDef sideDef; /// Side data.
+/**
+ * Additional data for all dummy elements.
+ */
+struct DummyData
+{
     void *extraData; /// Pointer to user data.
-    boolean inUse; /// true, if the dummy is being used.
-} dummysidedef_t;
 
-typedef struct dummyline_s {
-    LineDef line; /// Line data.
-    void *extraData; /// Pointer to user data.
-    boolean inUse; /// true, if the dummy is being used.
-} dummyline_t;
+    DummyData() : extraData(0) {}
+    virtual ~DummyData() {} // polymorphic
+};
 
-typedef struct dummysector_s {
-    Sector sector; /// Sector data.
-    void *extraData; /// Pointer to user data.
-    boolean inUse; /// true, if the dummy is being used.
-} dummysector_t;
+class DummySideDef : public SideDef, public DummyData {};
+class DummyLineDef : public LineDef, public DummyData {};
+class DummySector  : public Sector,  public DummyData {};
 
-static uint dummyCount = 8; // Number of dummies to allocate (per type).
-
-static dummysidedef_t *dummySideDefs;
-static dummyline_t *dummyLines;
-static dummysector_t *dummySectors;
-
-static int usingDMUAPIver; // Version of the DMU API the game expects.
+typedef QSet<de::MapElement *> Dummies;
+static Dummies dummies;
 
 char const *DMU_Str(uint prop)
 {
@@ -147,17 +146,15 @@ char const *DMU_Str(uint prop)
     return propStr;
 }
 
+#undef DMU_GetType
 int DMU_GetType(void const *ptr)
 {
     if(!ptr) return DMU_NONE;
 
-    int type = P_DummyType((void *)ptr);
-    if(type != DMU_NONE) return type;
-
-    type = ((runtime_mapdata_header_t const *)ptr)->type;
+    de::MapElement const *elem = IN_ELEM_CONST(ptr);
 
     // Make sure it's valid.
-    switch(type)
+    switch(elem->type())
     {
     case DMU_VERTEX:
     case DMU_HEDGE:
@@ -167,8 +164,9 @@ int DMU_GetType(void const *ptr)
     case DMU_SECTOR:
     case DMU_PLANE:
     case DMU_BSPNODE:
+    case DMU_SURFACE:
     case DMU_MATERIAL:
-        return type;
+        return elem->type();
 
     default: break; // Unknown.
     }
@@ -184,6 +182,8 @@ int DMU_GetType(void const *ptr)
  */
 static void initArgs(setargs_t *args, int type, uint prop)
 {
+    DENG_ASSERT(args && VALID_DMU_ELEMENT_TYPE_ID(type));
+
     std::memset(args, 0, sizeof(*args));
     args->type = type;
     args->prop = prop & ~DMU_FLAG_MASK;
@@ -192,223 +192,142 @@ static void initArgs(setargs_t *args, int type, uint prop)
 
 void P_InitMapUpdate()
 {
-    if(DD_GameLoaded())
-    {
-        // Request the DMU API version the game is expecting.
-        usingDMUAPIver = gx.GetInteger(DD_DMU_VERSION);
-        if(!usingDMUAPIver)
-        {
-            QByteArray msg = String("P_InitMapUpdate: Game library is not compatible with %1 %2.")
-                                .arg(DOOMSDAY_NICENAME).arg(DOOMSDAY_VERSION_TEXT).toUtf8();
-            LegacyCore_FatalError(msg.constData());
-        }
+    // TODO: free existing/old dummies here?
 
-        if(usingDMUAPIver > DMUAPI_VER)
-        {
-            QByteArray msg = String("P_InitMapUpdate: Game library expects a later version of the\n"
-                                "DMU API then that defined by %1 %2 \n"
-                                "This game is for a newer version of %1.")
-                                .arg(DOOMSDAY_NICENAME).arg(DOOMSDAY_VERSION_TEXT).toUtf8();
-            LegacyCore_FatalError(msg.constData());
-        }
-    }
-    else
-    {
-        usingDMUAPIver = DMUAPI_VER;
-    }
-
-    // A fixed number of dummies is allocated because:
-    // - The number of dummies is mostly dependent on recursive depth of
-    //   game functions.
-    // - To test whether a pointer refers to a dummy is based on pointer
-    //   comparisons; if the array is reallocated, its address may change
-    //   and all existing dummies are invalidated.
-    dummyLines    = (dummyline_t *)    Z_Calloc(dummyCount * sizeof(dummyline_t),    PU_APPSTATIC, NULL);
-    dummySideDefs = (dummysidedef_t *) Z_Calloc(dummyCount * sizeof(dummysidedef_t), PU_APPSTATIC, NULL);
-    dummySectors  = (dummysector_t *)  Z_Calloc(dummyCount * sizeof(dummysector_t),  PU_APPSTATIC, NULL);
+    dummies.clear();
 }
 
+#undef P_AllocDummy
 void *P_AllocDummy(int type, void *extraData)
 {
     switch(type)
     {
-    case DMU_SIDEDEF:
-        for(uint i = 0; i < dummyCount; ++i)
-        {
-            if(!dummySideDefs[i].inUse)
-            {
-                dummySideDefs[i].inUse = true;
-                dummySideDefs[i].extraData = extraData;
-                dummySideDefs[i].sideDef.header.type = DMU_SIDEDEF;
-                dummySideDefs[i].sideDef.line = 0;
-                return &dummySideDefs[i];
-            }
-        }
-        break;
+    case DMU_SIDEDEF: {
+        DummySideDef *ds = new DummySideDef;
+        dummies.insert(ds);
+        ds->extraData = extraData;
+        return ds; }
 
-    case DMU_LINEDEF:
-        for(uint i = 0; i < dummyCount; ++i)
-        {
-            if(!dummyLines[i].inUse)
-            {
-                dummyLines[i].inUse = true;
-                dummyLines[i].extraData = extraData;
-                dummyLines[i].line.header.type = DMU_LINEDEF;
-                dummyLines[i].line.L_frontsidedef =
-                    dummyLines[i].line.L_backsidedef = 0;
-                dummyLines[i].line.L_frontsector = 0;
-                dummyLines[i].line.L_frontside.hedgeLeft =
-                    dummyLines[i].line.L_frontside.hedgeRight =0;
-                dummyLines[i].line.L_backsector = 0;
-                dummyLines[i].line.L_backside.hedgeLeft =
-                    dummyLines[i].line.L_backside.hedgeRight =0;
-                return &dummyLines[i];
-            }
-        }
-        break;
+    case DMU_LINEDEF: {
+        DummyLineDef *dl = new DummyLineDef;
+        dummies.insert(dl);
+        dl->extraData = extraData;
+        return dl; }
 
-    case DMU_SECTOR:
-        for(uint i = 0; i < dummyCount; ++i)
-        {
-            if(!dummySectors[i].inUse)
-            {
-                dummySectors[i].inUse = true;
-                dummySectors[i].extraData = extraData;
-                dummySectors[i].sector.header.type = DMU_SECTOR;
-                return &dummySectors[i];
-            }
-        }
-        break;
+    case DMU_SECTOR: {
+        DummySector *ds = new DummySector;
+        dummies.insert(ds);
+        ds->extraData = extraData;
+        return ds; }
 
     default: {
+        /// @throw Throw exception.
         QByteArray msg = String("P_AllocDummy: Dummies of type %1 not supported.").arg(DMU_Str(type)).toUtf8();
-        LegacyCore_FatalError(msg.constData()); }
+        LegacyCore_FatalError(msg.constData());
+        break; }
     }
 
-    QByteArray msg = String("P_AllocDummy: Out of dummies of type %1.").arg(DMU_Str(type)).toUtf8();
-    LegacyCore_FatalError(msg.constData());
     return 0; // Unreachable.
 }
 
-void P_FreeDummy(void *dummy)
-{
-    switch(P_DummyType(dummy))
-    {
-    case DMU_SIDEDEF:
-        ((dummysidedef_t *)dummy)->inUse = false;
-        break;
-
-    case DMU_LINEDEF:
-        ((dummyline_t *)dummy)->inUse = false;
-        break;
-
-    case DMU_SECTOR:
-        ((dummysector_t *)dummy)->inUse = false;
-        break;
-
-    default:
-        LegacyCore_FatalError("P_FreeDummy: Dummy is of unknown type.");
-    }
-}
-
-/**
- * Determines the type of a dummy object. For extra safety (in a debug build)
- * it would be possible to look through the dummy arrays and make sure the
- * pointer refers to a real dummy.
- */
-int P_DummyType(void *dummy)
-{
-    // Is it a SideDef?
-    if(dummy >= (void *) &dummySideDefs[0] &&
-       dummy <= (void *) &dummySideDefs[dummyCount - 1])
-    {
-        return DMU_SIDEDEF;
-    }
-
-    // Is it a line?
-    if(dummy >= (void *) &dummyLines[0] &&
-       dummy <= (void *) &dummyLines[dummyCount - 1])
-    {
-        return DMU_LINEDEF;
-    }
-
-    // A sector?
-    if(dummy >= (void *) &dummySectors[0] &&
-       dummy <= (void *) &dummySectors[dummyCount - 1])
-    {
-        return DMU_SECTOR;
-    }
-
-    // Unknown.
-    return DMU_NONE;
-}
-
-boolean P_IsDummy(void *dummy)
+#undef P_IsDummy
+boolean P_IsDummy(void const *dummy)
 {
     return P_DummyType(dummy) != DMU_NONE;
 }
 
+#undef P_FreeDummy
+void P_FreeDummy(void *dummy)
+{
+    de::MapElement *elem = IN_ELEM(dummy);
+
+    int type = P_DummyType(dummy);
+    if(type == DMU_NONE)
+    {
+        /// @todo Throw exception.
+        LegacyCore_FatalError("P_FreeDummy: Dummy is of unknown type.");
+    }
+
+    DENG2_ASSERT(dummies.contains(elem));
+
+    dummies.remove(elem);
+    delete elem;
+}
+
+/**
+ * Determines the type of a dummy object.
+ */
+int P_DummyType(void const *dummy)
+{
+    de::MapElement const *elem = IN_ELEM_CONST(dummy);
+
+    if(!dynamic_cast<DummyData const *>(elem))
+    {
+        // Not a dummy.
+        return DMU_NONE;
+    }
+
+    DENG2_ASSERT(dummies.contains(const_cast<de::MapElement *>(elem)));
+
+    return elem->type();
+}
+
+#undef P_DummyExtraData
 void *P_DummyExtraData(void *dummy)
 {
-    switch(P_DummyType(dummy))
+    if(P_IsDummy(dummy))
     {
-    case DMU_SIDEDEF:
-        return ((dummysidedef_t *)dummy)->extraData;
+        de::MapElement *elem = IN_ELEM(dummy);
+        return elem->castTo<DummyData>()->extraData;
+    }
+    return 0;
+}
+
+#undef P_ToIndex
+uint P_ToIndex(void const *ptr)
+{
+    if(!ptr) return 0;
+    if(P_IsDummy(ptr)) return 0;
+
+    de::MapElement const *elem = IN_ELEM_CONST(ptr);
+
+    switch(elem->type())
+    {
+    case DMU_VERTEX:
+        return GET_VERTEX_IDX(elem->castTo<Vertex>());
+
+    case DMU_HEDGE:
+        return GET_HEDGE_IDX(elem->castTo<HEdge>());
 
     case DMU_LINEDEF:
-        return ((dummyline_t *)dummy)->extraData;
+        return GET_LINE_IDX(elem->castTo<LineDef>());
+
+    case DMU_SIDEDEF:
+        return GET_SIDE_IDX(elem->castTo<SideDef>());
+
+    case DMU_BSPLEAF:
+        return GET_BSPLEAF_IDX(elem->castTo<BspLeaf>());
 
     case DMU_SECTOR:
-        return ((dummysector_t *)dummy)->extraData;
+        return GET_SECTOR_IDX(elem->castTo<Sector>());
+
+    case DMU_BSPNODE:
+        return GET_BSPNODE_IDX(elem->castTo<BspNode>());
+
+    case DMU_PLANE:
+        return GET_PLANE_IDX(elem->castTo<Plane>());
+
+    case DMU_MATERIAL:
+        return Material_ManifestId(elem->castTo(Material)());
 
     default:
+        /// @todo Throw exception.
+        DENG2_ASSERT(false); // Unknown/non-indexable DMU type.
         return 0;
     }
 }
 
-uint P_ToIndex(void const *ptr)
-{
-    if(!ptr) return 0;
-
-    switch(DMU_GetType(ptr))
-    {
-    case DMU_VERTEX:
-        return GET_VERTEX_IDX((Vertex *) ptr);
-
-    case DMU_HEDGE:
-        return GET_HEDGE_IDX((HEdge *) ptr);
-
-    case DMU_LINEDEF:
-        return GET_LINE_IDX((LineDef *) ptr);
-
-    case DMU_SIDEDEF:
-        return GET_SIDE_IDX((SideDef *) ptr);
-
-    case DMU_BSPLEAF:
-        return GET_BSPLEAF_IDX((BspLeaf *) ptr);
-
-    case DMU_SECTOR:
-        return GET_SECTOR_IDX((Sector *) ptr);
-
-    case DMU_BSPNODE:
-        return GET_BSPNODE_IDX((BspNode *) ptr);
-
-    case DMU_PLANE:
-        return GET_PLANE_IDX((Plane *) ptr);
-
-    case DMU_MATERIAL:
-        return Material_ManifestId((material_t *) ptr);
-
-    default:
-        QByteArray msg = QString("P_ToIndex: Unknown type %1.").arg(DMU_Str(DMU_GetType(ptr))).toUtf8();
-        LegacyCore_FatalError(msg.constData());
-        return 0; // Unreachable.
-    }
-}
-
-/**
- * Convert index to pointer.
- */
+#undef P_ToPtr
 void *P_ToPtr(int type, uint index)
 {
     switch(type)
@@ -435,6 +354,7 @@ void *P_ToPtr(int type, uint index)
         return BSPNODE_PTR(index);
 
     case DMU_PLANE: {
+        /// @todo Throw exception.
         QByteArray msg = String("P_ToPtr: Cannot convert %1 to a ptr (sector is unknown).").arg(DMU_Str(type)).toUtf8();
         LegacyCore_FatalError(msg.constData());
         return 0; /* Unreachable. */ }
@@ -443,23 +363,25 @@ void *P_ToPtr(int type, uint index)
         return Materials_ToMaterial(index);
 
     default: {
+        /// @todo Throw exception.
         QByteArray msg = String("P_ToPtr: unknown type %1.").arg(DMU_Str(type)).toUtf8();
         LegacyCore_FatalError(msg.constData());
         return 0; /* Unreachable. */ }
     }
 }
 
-int P_Iteratep(void *ptr, uint prop, void *context, int (*callback) (void *p, void *ctx))
+#undef P_Iteratep
+int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, void *ctx))
 {
-    int type = DMU_GetType(ptr);
+    de::MapElement *elem = IN_ELEM(elPtr);
 
-    switch(type)
+    switch(elem->type())
     {
     case DMU_SECTOR:
         switch(prop)
         {
         case DMU_LINEDEF: {
-            Sector *sec = (Sector *) ptr;
+            Sector *sec = elem->castTo<Sector>();
             int result = false; // Continue iteration.
 
             if(sec->lineDefs)
@@ -473,7 +395,7 @@ int P_Iteratep(void *ptr, uint prop, void *context, int (*callback) (void *p, vo
             return result; }
 
         case DMU_PLANE: {
-            Sector *sec = (Sector *) ptr;
+            Sector *sec = elem->castTo<Sector>();
             int result = false; // Continue iteration.
 
             if(sec->planes)
@@ -487,7 +409,7 @@ int P_Iteratep(void *ptr, uint prop, void *context, int (*callback) (void *p, vo
             return result; }
 
         case DMU_BSPLEAF: {
-            Sector *sec = (Sector *) ptr;
+            Sector *sec = elem->castTo<Sector>();
             int result = false; // Continue iteration.
 
             if(sec->bspLeafs)
@@ -501,6 +423,7 @@ int P_Iteratep(void *ptr, uint prop, void *context, int (*callback) (void *p, vo
             return result; }
 
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("P_Iteratep: Property %1 unknown/not vector.").arg(DMU_Str(prop)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             return 0; /* Unreachable */ }
@@ -510,7 +433,7 @@ int P_Iteratep(void *ptr, uint prop, void *context, int (*callback) (void *p, vo
         switch(prop)
         {
         case DMU_HEDGE: {
-            BspLeaf *bspLeaf = (BspLeaf *) ptr;
+            BspLeaf *bspLeaf = elem->castTo<BspLeaf>();
             int result = false; // Continue iteration.
             if(bspLeaf->hedge)
             {
@@ -524,13 +447,15 @@ int P_Iteratep(void *ptr, uint prop, void *context, int (*callback) (void *p, vo
             return result; }
 
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("P_Iteratep: Property %1 unknown/not vector.").arg(DMU_Str(prop)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             return 0; /* Unreachable */ }
         }
 
     default: {
-        QByteArray msg = String("P_Iteratep: Type %1 unknown.").arg(DMU_Str(type)).toUtf8();
+        /// @todo Throw exception.
+        QByteArray msg = String("P_Iteratep: Type %1 unknown.").arg(DMU_Str(elem->type())).toUtf8();
         LegacyCore_FatalError(msg.constData());
         return 0; /* Unreachable */ }
     }
@@ -591,6 +516,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
         break;
 
     case DMU_PLANE: {
+        /// @todo Throw exception.
         QByteArray msg = String("P_Callback: %1 cannot be referenced by id alone (sector is unknown).").arg(DMU_Str(type)).toUtf8();
         LegacyCore_FatalError(msg.constData());
         return 0; /* Unreachable */ }
@@ -604,11 +530,13 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
     case DMU_SECTOR_BY_TAG:
     case DMU_LINEDEF_BY_ACT_TAG:
     case DMU_SECTOR_BY_ACT_TAG: {
+        /// @todo Throw exception.
         QByteArray msg = String("P_Callback: Type %1 not implemented yet.").arg(DMU_Str(type)).toUtf8();
         LegacyCore_FatalError(msg.constData());
         return 0; /* Unreachable */ }
 
     default: {
+        /// @todo Throw exception.
         QByteArray msg = String("P_Callback: Type %1 unknown (index %2).").arg(DMU_Str(type)).arg(index).toUtf8();
         LegacyCore_FatalError(msg.constData());
         return 0; /* Unreachable */ }
@@ -622,8 +550,10 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
  * Another version of callback iteration. The set of selected objects is
  * determined by 'type' and 'ptr'. Otherwise works like P_Callback.
  */
-int P_Callbackp(int type, void *ptr, void *context, int (*callback)(void *p, void *ctx))
+int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, void *ctx))
 {
+    de::MapElement *elem = IN_ELEM(elPtr);
+
     LOG_AS("P_Callbackp");
 
     switch(type)
@@ -638,21 +568,22 @@ int P_Callbackp(int type, void *ptr, void *context, int (*callback)(void *p, voi
     case DMU_PLANE:
     case DMU_MATERIAL:
         // Only do the callback if the type is the same as the object's.
-        if(type == DMU_GetType(ptr))
+        if(type == elem->type())
         {
-            return callback(ptr, context);
+            return callback(elem, context);
         }
 #if _DEBUG
         else
         {
-            LOG_DEBUG("Type mismatch %s != %s\n")
-                << DMU_Str(type) << DMU_Str(DMU_GetType(ptr));
+            LOG_DEBUG("Type mismatch %s != %s\n") << DMU_Str(type) << DMU_Str(elem->type());
+            DENG2_ASSERT(false);
         }
 #endif
         break;
 
     default: {
-        QByteArray msg = String("P_Callbackp: Type %1 unknown.").arg(DMU_Str(type)).toUtf8();
+        /// @todo Throw exception.
+        QByteArray msg = String("P_Callbackp: Type %1 unknown.").arg(DMU_Str(elem->type())).toUtf8();
         LegacyCore_FatalError(msg.constData());
         return 0; /* Unreachable */ }
     }
@@ -684,6 +615,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             *d = FLT2FIX(args->doubleValues[index]);
             break;
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_FIXED incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             }
@@ -711,6 +643,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             *d = (float)args->doubleValues[index];
             break;
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             }
@@ -738,6 +671,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             *d = args->doubleValues[index];
             break;
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             }
@@ -753,6 +687,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             *d = args->booleanValues[index];
             break;
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_BOOL incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             }
@@ -780,6 +715,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             *d = (byte) args->doubleValues[index];
             break;
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_BYTE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             }
@@ -810,6 +746,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             *d = (args->fixedValues[index] >> FRACBITS);
             break;
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_INT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             }
@@ -840,6 +777,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             *d = (args->fixedValues[index] >> FRACBITS);
             break;
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_SHORT incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             }
@@ -855,6 +793,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             *d = args->angleValues[index];
             break;
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             }
@@ -876,6 +815,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             *d = blendmode_t(args->intValues[index]);
             break;
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             }
@@ -891,6 +831,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
             *d = args->ptrValues[index];
             break;
         default: {
+            /// @todo Throw exception.
             QByteArray msg = String("SetValue: DDVT_PTR incompatible with value type %1.").arg(value_Str(args->valueType)).toUtf8();
             LegacyCore_FatalError(msg.constData());
             }
@@ -898,6 +839,7 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
     }
     else
     {
+        /// @todo Throw exception.
         QByteArray msg = String("SetValue: unknown value type %1.").arg(valueType).toUtf8();
         LegacyCore_FatalError(msg.constData());
     }
@@ -911,8 +853,9 @@ void DMU_SetValue(valuetype_t valueType, void *dst, setargs_t const *args,
  * When a property changes, the relevant subsystems are notified of the change
  * so that they can update their state accordingly.
  */
-static int setProperty(void *obj, void *context)
+static int setProperty(void *ptr, void *context)
 {
+    de::MapElement *elem = IN_ELEM(ptr);
     setargs_t *args = (setargs_t *) context;
     Sector *updateSector1 = NULL, *updateSector2 = NULL;
     Plane *updatePlane = NULL;
@@ -938,85 +881,84 @@ static int setProperty(void *obj, void *context)
     // Dereference where necessary. Note the order, these cascade.
     if(args->type == DMU_BSPLEAF)
     {
-        // updateBspLeaf = (BspLeaf *) obj;
-
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            obj = ((BspLeaf *) obj)->sector;
+            elem = elem->castTo<BspLeaf>()->sector;
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            obj = ((BspLeaf *) obj)->sector;
+            elem = elem->castTo<BspLeaf>()->sector;
             args->type = DMU_SECTOR;
         }
     }
 
     if(args->type == DMU_SECTOR)
     {
-        updateSector1 = (Sector *) obj;
+        updateSector1 = elem->castTo<Sector>();
 
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            Sector* sec = (Sector *) obj;
-            obj = sec->SP_plane(PLN_FLOOR);
+            Sector* sec = elem->castTo<Sector>();
+            elem = sec->SP_plane(PLN_FLOOR);
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            Sector* sec = (Sector *) obj;
-            obj = sec->SP_plane(PLN_CEILING);
+            Sector* sec = elem->castTo<Sector>();
+            elem = sec->SP_plane(PLN_CEILING);
             args->type = DMU_PLANE;
         }
     }
 
     if(args->type == DMU_LINEDEF)
     {
-        updateLinedef = (LineDef *) obj;
+        updateLinedef = elem->castTo<LineDef>();
 
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            obj = ((LineDef *) obj)->L_frontsidedef;
+            elem = elem->castTo<LineDef>()->L_frontsidedef;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            LineDef *li = ((LineDef *) obj);
+            LineDef *li = elem->castTo<LineDef>();
             if(!li->L_backsidedef)
             {
+                /// @todo Throw exception.
                 QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
                 LegacyCore_FatalError(msg.constData());
             }
 
-            obj = li->L_backsidedef;
+            elem = li->L_backsidedef;
             args->type = DMU_SIDEDEF;
         }
     }
 
     if(args->type == DMU_SIDEDEF)
     {
-        updateSidedef = (SideDef *) obj;
+        updateSidedef = elem->castTo<SideDef>();
 
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            obj = &((SideDef *) obj)->SW_topsurface;
+            elem = &updateSidedef->SW_topsurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            obj = &((SideDef *) obj)->SW_middlesurface;
+            elem = &updateSidedef->SW_middlesurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            obj = &((SideDef *) obj)->SW_bottomsurface;
+            elem = &updateSidedef->SW_bottomsurface;
             args->type = DMU_SURFACE;
         }
     }
 
     if(args->type == DMU_PLANE)
     {
-        updatePlane = (Plane *) obj;
+        updatePlane = elem->castTo<Plane>();
 
         switch(args->prop)
         {
@@ -1043,7 +985,7 @@ static int setProperty(void *obj, void *context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            obj = &((Plane *) obj)->surface;
+            elem = &elem->castTo<Plane>()->surface;
             args->type = DMU_SURFACE;
             break;
 
@@ -1054,7 +996,7 @@ static int setProperty(void *obj, void *context)
 
     if(args->type == DMU_SURFACE)
     {
-        updateSurface = (Surface *) obj;
+        updateSurface = elem->castTo<Surface>();
 /*
         // Resolve implicit references to properties of the surface's material.
         switch(args->prop)
@@ -1072,47 +1014,49 @@ static int setProperty(void *obj, void *context)
     switch(args->type)
     {
     case DMU_SURFACE:
-        Surface_SetProperty((Surface *)obj, args);
+        Surface_SetProperty(elem->castTo<Surface>(), args);
         break;
 
     case DMU_PLANE:
-        Plane_SetProperty((Plane *)obj, args);
+        Plane_SetProperty(elem->castTo<Plane>(), args);
         break;
 
     case DMU_VERTEX:
-        Vertex_SetProperty((Vertex *)obj, args);
+        Vertex_SetProperty(elem->castTo<Vertex>(), args);
         break;
 
     case DMU_HEDGE:
-        HEdge_SetProperty((HEdge *)obj, args);
+        HEdge_SetProperty(elem->castTo<HEdge>(), args);
         break;
 
     case DMU_LINEDEF:
-        LineDef_SetProperty((LineDef *)obj, args);
+        LineDef_SetProperty(elem->castTo<LineDef>(), args);
         break;
 
     case DMU_SIDEDEF:
-        SideDef_SetProperty((SideDef *)obj, args);
+        SideDef_SetProperty(elem->castTo<SideDef>(), args);
         break;
 
     case DMU_BSPLEAF:
-        BspLeaf_SetProperty((BspLeaf *)obj, args);
+        BspLeaf_SetProperty(elem->castTo<BspLeaf>(), args);
         break;
 
     case DMU_SECTOR:
-        Sector_SetProperty((Sector *)obj, args);
+        Sector_SetProperty(elem->castTo<Sector>(), args);
         break;
 
     case DMU_MATERIAL:
-        Material_SetProperty((material_t *)obj, args);
+        Material_SetProperty(elem->castTo<material_t>(), args);
         break;
 
     case DMU_BSPNODE: {
+        /// @todo Throw exception.
         QByteArray msg = String("SetProperty: Property %1 is not writable in DMU_BSPNODE.").arg(DMU_Str(args->prop)).toUtf8();
         LegacyCore_FatalError(msg.constData());
         break; }
 
     default: {
+        /// @todo Throw exception.
         QByteArray msg = String("SetProperty: Type %1 not writable.").arg(DMU_Str(args->type)).toUtf8();
         LegacyCore_FatalError(msg.constData());
         return 0; /* Unreachable */ }
@@ -1122,18 +1066,18 @@ static int setProperty(void *obj, void *context)
     {
         if(R_UpdateSurface(updateSurface, false))
         {
-            switch(DMU_GetType(updateSurface->owner))
+            switch(updateSurface->owner->type())
             {
             case DMU_SIDEDEF:
-                updateSidedef = (SideDef *)updateSurface->owner;
+                updateSidedef = updateSurface->owner->castTo<SideDef>();
                 break;
 
             case DMU_PLANE:
-                updatePlane = (Plane *)updateSurface->owner;
+                updatePlane = updateSurface->owner->castTo<Plane>();
                 break;
 
             default:
-                LegacyCore_FatalError("SetPropert: Internal error, surface owner unknown.");
+                DENG2_ASSERT(false); // Unsupported type.
             }
         }
     }
@@ -1177,8 +1121,7 @@ static int setProperty(void *obj, void *context)
     return true; // Continue iteration.
 }
 
-void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args,
-                  uint index)
+void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args, uint index)
 {
     if(valueType == DDVT_FIXED)
     {
@@ -1401,7 +1344,7 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args,
         {
         case DDVT_INT:
             // Attempt automatic conversion using P_ToIndex(). Naturally only
-            // works with map data objects. Failure leads into a fatal error.
+            // works with map elements. Failure leads into a fatal error.
             args->intValues[index] = P_ToIndex(*s);
             break;
         case DDVT_PTR:
@@ -1420,8 +1363,9 @@ void DMU_GetValue(valuetype_t valueType, void const *src, setargs_t *args,
     }
 }
 
-static int getProperty(void *ob, void *context)
+static int getProperty(void *ptr, void *context)
 {
+    de::MapElement const *elem = IN_ELEM_CONST(ptr);
     setargs_t *args = (setargs_t *) context;
 
     // Dereference where necessary. Note the order, these cascade.
@@ -1429,12 +1373,12 @@ static int getProperty(void *ob, void *context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            ob = ((BspLeaf *)ob)->sector;
+            elem = elem->castTo<BspLeaf>()->sector;
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            ob = ((BspLeaf *)ob)->sector;
+            elem = elem->castTo<BspLeaf>()->sector;
             args->type = DMU_SECTOR;
         }
         else
@@ -1443,7 +1387,7 @@ static int getProperty(void *ob, void *context)
             {
             case DMU_LIGHT_LEVEL:
             case DMT_MOBJS:
-                ob = ((BspLeaf *)ob)->sector;
+                elem = elem->castTo<BspLeaf>()->sector;
                 args->type = DMU_SECTOR;
                 break;
             default: break;
@@ -1455,14 +1399,14 @@ static int getProperty(void *ob, void *context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            Sector *sec = (Sector *)ob;
-            ob = sec->SP_plane(PLN_FLOOR);
+            Sector const *sec = elem->castTo<Sector>();
+            elem = sec->SP_plane(PLN_FLOOR);
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            Sector *sec = (Sector *)ob;
-            ob = sec->SP_plane(PLN_CEILING);
+            Sector const *sec = elem->castTo<Sector>();
+            elem = sec->SP_plane(PLN_CEILING);
             args->type = DMU_PLANE;
         }
     }
@@ -1471,27 +1415,31 @@ static int getProperty(void *ob, void *context)
     {
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            LineDef *li = ((LineDef *)ob);
+            LineDef const *li = elem->castTo<LineDef>();
             if(!li->L_frontsidedef) // $degenleaf
             {
+                /// @todo Throw exception.
                 QByteArray msg = String("DMU_setProperty: Linedef %1 has no front side.").arg(P_ToIndex(li)).toUtf8();
                 LegacyCore_FatalError(msg.constData());
             }
 
-            ob = li->L_frontsidedef;
+            elem = li->L_frontsidedef;
             args->type = DMU_SIDEDEF;
+            DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            LineDef *li = ((LineDef *)ob);
+            LineDef const *li = elem->castTo<LineDef>();
             if(!li->L_backsidedef)
             {
+                /// @todo Throw exception.
                 QByteArray msg = String("DMU_setProperty: Linedef %1 has no back side.").arg(P_ToIndex(li)).toUtf8();
                 LegacyCore_FatalError(msg.constData());
             }
 
-            ob = li->L_backsidedef;
+            elem = li->L_backsidedef;
             args->type = DMU_SIDEDEF;
+            DENG2_ASSERT(args->type == elem->type());
         }
     }
 
@@ -1499,18 +1447,21 @@ static int getProperty(void *ob, void *context)
     {
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            ob = &((SideDef *)ob)->SW_topsurface;
+            elem = &elem->castTo<SideDef>()->SW_topsurface;
             args->type = DMU_SURFACE;
+            DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            ob = &((SideDef *)ob)->SW_middlesurface;
+            elem = &elem->castTo<SideDef>()->SW_middlesurface;
             args->type = DMU_SURFACE;
+            DENG2_ASSERT(args->type == elem->type());
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            ob = &((SideDef *)ob)->SW_bottomsurface;
+            elem = &elem->castTo<SideDef>()->SW_bottomsurface;
             args->type = DMU_SURFACE;
+            DENG2_ASSERT(args->type == elem->type());
         }
     }
 
@@ -1542,8 +1493,9 @@ static int getProperty(void *ob, void *context)
         case DMU_BLENDMODE:
         case DMU_FLAGS:
         case DMU_BASE:
-            ob = &((Plane *)ob)->surface;
+            elem = &elem->castTo<Plane>()->surface;
             args->type = DMU_SURFACE;
+            DENG2_ASSERT(elem->type() == args->type);
             break;
 
         default:
@@ -1554,39 +1506,40 @@ static int getProperty(void *ob, void *context)
     switch(args->type)
     {
     case DMU_VERTEX:
-        Vertex_GetProperty((Vertex *)ob, args);
+        Vertex_GetProperty(elem->castTo<Vertex>(), args);
         break;
 
     case DMU_HEDGE:
-        HEdge_GetProperty((HEdge *)ob, args);
+        HEdge_GetProperty(elem->castTo<HEdge>(), args);
         break;
 
     case DMU_LINEDEF:
-        LineDef_GetProperty((LineDef *)ob, args);
+        LineDef_GetProperty(elem->castTo<LineDef>(), args);
         break;
 
     case DMU_SURFACE:
-        Surface_GetProperty((Surface *)ob, args);
+        Surface_GetProperty(elem->castTo<Surface>(), args);
         break;
 
     case DMU_PLANE:
-        Plane_GetProperty((Plane *)ob, args);
+        Plane_GetProperty(elem->castTo<Plane>(), args);
         break;
 
     case DMU_SECTOR:
-        Sector_GetProperty((Sector *)ob, args);
+        Sector_GetProperty(elem->castTo<Sector>(), args);
         break;
 
     case DMU_SIDEDEF:
-        SideDef_GetProperty((SideDef *)ob, args);
+        SideDef_GetProperty(elem->castTo<SideDef>(), args);
         break;
 
     case DMU_BSPLEAF:
-        BspLeaf_GetProperty((BspLeaf *)ob, args);
+        BspLeaf_GetProperty(elem->castTo<BspLeaf>(), args);
         break;
 
     case DMU_MATERIAL:
-        Material_GetProperty((material_t *)ob, args);
+        // TODO: Update this when Material is derived from MapElement.
+        //Material_GetProperty((material_t *)ob, args);
         break;
 
     default: {
@@ -2344,7 +2297,15 @@ DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString);
 DENG_EXTERN_C boolean P_LoadMap(char const* uriCString);
 DENG_EXTERN_C uint P_CountGameMapObjs(int entityId);
 
-// p_maputil.c
+// p_mapdata.cpp
+DENG_EXTERN_C byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C short P_GetGMOShort(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C int P_GetGMOInt(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
+DENG_EXTERN_C float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
+
+// p_maputil.cpp
 DENG_EXTERN_C void P_MobjLink(mobj_t* mo, byte flags);
 DENG_EXTERN_C int P_MobjUnlink(mobj_t* mo);
 DENG_EXTERN_C int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters);
@@ -2390,6 +2351,14 @@ DENG_EXTERN_C void P_PolyobjUnlink(Polyobj* polyobj);
 DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id);
 DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag);
 DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
+
+// linedef.cpp
+DENG_EXTERN_C int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
+DENG_EXTERN_C int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box);
+DENG_EXTERN_C coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
+DENG_EXTERN_C coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
+DENG_EXTERN_C coord_t LineDef_PointOnSide(const LineDef* lineDef, coord_t const point[2]);
+DENG_EXTERN_C coord_t LineDef_PointXYOnSide(const LineDef* lineDef, coord_t x, coord_t y);
 
 DENG_DECLARE_API(Map) =
 {

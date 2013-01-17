@@ -26,7 +26,8 @@
 #ifndef __DOOMSDAY_MAP_H__
 #define __DOOMSDAY_MAP_H__
 
-#include "dd_share.h"
+#include "apis.h"
+#include <de/aabox.h>
 #include <de/mathutil.h>
 
 #define DMT_VERTEX_ORIGIN DDVT_DOUBLE
@@ -106,15 +107,7 @@
 
 #define DMT_BSPNODE_CHILDREN DDVT_PTR
 
-struct mobj_s;
-struct linedef_s;
-struct sector_s;
-struct bspleaf_s;
-struct bspnode_s;
-struct vertex_s;
-struct sidedef_s;
-struct hedge_s;
-struct plane_s;
+struct intercept_s;
 
 /**
  * Public definitions of the internal map data pointers.  These can be
@@ -126,16 +119,41 @@ struct plane_s;
  * structures is needed.
  */
 #if !defined __DOOMSDAY__ && !defined DENG_INTERNAL_DATA_ACCESS
-// Opaque pointers:
-typedef struct bspnode_s  BspNode;
-typedef struct vertex_s   Vertex;
-typedef struct linedef_s  LineDef;
-typedef struct sidedef_s  SideDef;
-typedef struct hedge_s    HEdge;
-typedef struct bspleaf_s  BspLeaf;
-typedef struct sector_s   Sector;
-typedef struct plane_s    Plane;
+
+// Opaque types for public use.
+struct bspleaf_s;
+struct bspnode_s;
+struct hedge_s;
+struct linedef_s;
+struct mobj_s;
+struct plane_s;
+struct sector_s;
+struct sidedef_s;
+struct vertex_s;
+struct material_s;
+
+typedef struct bspleaf_s    BspLeaf;
+typedef struct bspnode_s    BspNode;
+typedef struct hedge_s      HEdge;
+typedef struct linedef_s    LineDef;
+typedef struct plane_s      Plane;
+typedef struct sector_s     Sector;
+typedef struct sidedef_s    SideDef;
+typedef struct vertex_s     Vertex;
+typedef struct material_s   material_t;
+
+#elif defined __cplusplus
+
+// Foward declarations.
+class BspLeaf;
+class LineDef;
+class Sector;
+class material_t;
+
 #endif
+
+typedef void *MapElementPtr;
+typedef void const *MapElementPtrConst;
 
 #ifdef __cplusplus
 extern "C" {
@@ -178,17 +196,17 @@ DENG_API_TYPEDEF(Map)
 
     // Lines
 
-    int             (*LD_BoxOnSide)(struct linedef_s* line, const AABoxd* box);
-    int             (*LD_BoxOnSide_FixedPrecision)(struct linedef_s* line, const AABoxd* box);
-    coord_t         (*LD_PointDistance)(struct linedef_s* lineDef, coord_t const point[2], coord_t* offset);
-    coord_t         (*LD_PointXYDistance)(struct linedef_s* lineDef, coord_t x, coord_t y, coord_t* offset);
-    coord_t         (*LD_PointOnSide)(struct linedef_s const *lineDef, coord_t const point[2]);
-    coord_t         (*LD_PointXYOnSide)(struct linedef_s const *lineDef, coord_t x, coord_t y);
-    int             (*LD_MobjsIterator)(struct linedef_s* line, int (*callback) (struct mobj_s*, void *), void* parameters);
+    int             (*LD_BoxOnSide)(LineDef* line, const AABoxd* box);
+    int             (*LD_BoxOnSide_FixedPrecision)(LineDef* line, const AABoxd* box);
+    coord_t         (*LD_PointDistance)(LineDef* lineDef, coord_t const point[2], coord_t* offset);
+    coord_t         (*LD_PointXYDistance)(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
+    coord_t         (*LD_PointOnSide)(LineDef const *lineDef, coord_t const point[2]);
+    coord_t         (*LD_PointXYOnSide)(LineDef const *lineDef, coord_t x, coord_t y);
+    int             (*LD_MobjsIterator)(LineDef* line, int (*callback) (struct mobj_s*, void *), void* parameters);
 
     // Sectors
 
-    int             (*S_TouchingMobjsIterator)(struct sector_s* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
+    int             (*S_TouchingMobjsIterator)(Sector* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
 
     // Map Objects
 
@@ -204,7 +222,7 @@ DENG_API_TYPEDEF(Map)
      * The callback function will be called once for each line that crosses
      * trough the object. This means all the lines will be two-sided.
      */
-    int             (*MO_LinesIterator)(struct mobj_s* mo, int (*callback) (struct linedef_s*, void*), void* parameters);
+    int             (*MO_LinesIterator)(struct mobj_s* mo, int (*callback) (LineDef*, void*), void* parameters);
 
     /**
      * Increment validCount before calling this routine. The callback function
@@ -212,7 +230,7 @@ DENG_API_TYPEDEF(Map)
      * partly inside). This is not a 3D check; the mobj may actually reside
      * above or under the sector.
      */
-    int             (*MO_SectorsIterator)(struct mobj_s* mo, int (*callback) (struct sector_s*, void*), void* parameters);
+    int             (*MO_SectorsIterator)(struct mobj_s* mo, int (*callback) (Sector*, void*), void* parameters);
 
     /**
      * Calculate the visible @a origin of @a mobj in world space, including
@@ -263,9 +281,9 @@ DENG_API_TYPEDEF(Map)
      */
     void            (*PO_SetCallback)(void (*func)(struct mobj_s*, void*, void*));
 
-    // BSP Leaves
+    // BSP Leafs
 
-    struct bspleaf_s* (*BL_AtPoint)(coord_t const point[2]);
+    BspLeaf*        (*BL_AtPoint)(coord_t const point[2]);
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies in
@@ -279,12 +297,12 @@ DENG_API_TYPEDEF(Map)
      *
      * @return  BspLeaf instance for that BSP node's leaf.
      */
-    struct bspleaf_s* (*BL_AtPointXY)(coord_t x, coord_t y);
+    BspLeaf*        (*BL_AtPointXY)(coord_t x, coord_t y);
 
     // Iterators
 
     int             (*Box_MobjsIterator)(const AABoxd* box, int (*callback) (struct mobj_s*, void*), void* parameters);
-    int             (*Box_LinesIterator)(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+    int             (*Box_LinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
 
     /**
      * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
@@ -293,26 +311,26 @@ DENG_API_TYPEDEF(Map)
      * in multiple mapblocks, so increment validCount before the first call
      * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
      */
-    int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+    int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
 
     /**
      * The validCount flags are used to avoid checking polys that are marked in
      * multiple mapblocks, so increment validCount before the first call, then
      * make one or more calls to it.
      */
-    int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+    int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
 
-    int             (*Box_BspLeafsIterator)(const AABoxd* box, struct sector_s* sector, int (*callback) (struct bspleaf_s*, void*), void* parameters);
+    int             (*Box_BspLeafsIterator)(const AABoxd* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
     int             (*Box_PolyobjsIterator)(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
-    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
-    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
+    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (const struct intercept_s*, void* paramaters), void* parameters);
+    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (const struct intercept_s*, void* paramaters)/*parameters=NULL*/);
 
     /**
      * Same as P_PathTraverse except 'from' and 'to' arguments are specified
      * as two sets of separate X and Y map space coordinates.
      */
-    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* parameters);
-    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
+    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (const struct intercept_s*, void* paramaters), void* parameters);
+    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (const struct intercept_s*, void* paramaters)/*parameters=NULL*/);
 
     boolean         (*CheckLineSight)(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
 
@@ -328,13 +346,13 @@ DENG_API_TYPEDEF(Map)
      *
      * @note Always returns a valid TraceOpening even if there is no current map.
      */
-    TraceOpening const *(*traceOpening)(void);
+    struct traceopening_s const *(*traceOpening)(void);
 
     /**
      * Update the TraceOpening state for the CURRENT map according to the opening
      * defined by the inner-minimal planes heights which intercept @a linedef
      */
-    void            (*SetTraceOpening)(struct linedef_s* linedef);
+    void            (*SetTraceOpening)(LineDef* linedef);
 
     // Map Updates (DMU)
 
@@ -343,19 +361,19 @@ DENG_API_TYPEDEF(Map)
      *
      * @param ptr  Pointer to a map data object.
      */
-    int             (*GetType)(const void* ptr);
+    int             (*GetType)(MapElementPtrConst ptr);
 
-    unsigned int    (*ToIndex)(const void* ptr);
+    unsigned int    (*ToIndex)(MapElementPtrConst ptr);
     void*           (*ToPtr)(int type, uint index);
-    int             (*Callback)(int type, uint index, void* context, int (*callback)(void* p, void* ctx));
-    int             (*Callbackp)(int type, void* ptr, void* context, int (*callback)(void* p, void* ctx));
-    int             (*Iteratep)(void *ptr, uint prop, void* context, int (*callback) (void* p, void* ctx));
+    int             (*Callback)(int type, uint index, void* context, int (*callback)(MapElementPtr p, void* ctx));
+    int             (*Callbackp)(int type, MapElementPtr ptr, void* context, int (*callback)(MapElementPtr p, void* ctx));
+    int             (*Iteratep)(MapElementPtr ptr, uint prop, void* context, int (*callback) (MapElementPtr p, void* ctx));
 
     // Dummy Objects
-    void*           (*AllocDummy)(int type, void* extraData);
-    void            (*FreeDummy)(void* dummy);
-    boolean         (*IsDummy)(void* dummy);
-    void*           (*DummyExtraData)(void* dummy);
+    MapElementPtr   (*AllocDummy)(int type, void* extraData);
+    void            (*FreeDummy)(MapElementPtr dummy);
+    boolean         (*IsDummy)(MapElementPtrConst dummy);
+    void*           (*DummyExtraData)(MapElementPtr dummy);
 
     // Map Entities
     uint            (*CountGameMapObjs)(int entityId);
@@ -365,11 +383,6 @@ DENG_API_TYPEDEF(Map)
     fixed_t         (*GetGMOFixed)(int entityId, uint elementIndex, int propertyId);
     angle_t         (*GetGMOAngle)(int entityId, uint elementIndex, int propertyId);
     float           (*GetGMOFloat)(int entityId, uint elementIndex, int propertyId);
-
-    ///@}
-
-    /// @addtogroup dmu
-    ///@{
 
     /* index-based write functions */
     void            (*SetBool)(int type, uint index, uint prop, boolean param);
@@ -391,23 +404,23 @@ DENG_API_TYPEDEF(Map)
     void            (*SetPtrv)(int type, uint index, uint prop, void* params);
 
     /* pointer-based write functions */
-    void            (*SetBoolp)(void* ptr, uint prop, boolean param);
-    void            (*SetBytep)(void* ptr, uint prop, byte param);
-    void            (*SetIntp)(void* ptr, uint prop, int param);
-    void            (*SetFixedp)(void* ptr, uint prop, fixed_t param);
-    void            (*SetAnglep)(void* ptr, uint prop, angle_t param);
-    void            (*SetFloatp)(void* ptr, uint prop, float param);
-    void            (*SetDoublep)(void* ptr, uint prop, double param);
-    void            (*SetPtrp)(void* ptr, uint prop, void* param);
+    void            (*SetBoolp)(MapElementPtr ptr, uint prop, boolean param);
+    void            (*SetBytep)(MapElementPtr ptr, uint prop, byte param);
+    void            (*SetIntp)(MapElementPtr ptr, uint prop, int param);
+    void            (*SetFixedp)(MapElementPtr ptr, uint prop, fixed_t param);
+    void            (*SetAnglep)(MapElementPtr ptr, uint prop, angle_t param);
+    void            (*SetFloatp)(MapElementPtr ptr, uint prop, float param);
+    void            (*SetDoublep)(MapElementPtr ptr, uint prop, double param);
+    void            (*SetPtrp)(MapElementPtr ptr, uint prop, void* param);
 
-    void            (*SetBoolpv)(void* ptr, uint prop, boolean* params);
-    void            (*SetBytepv)(void* ptr, uint prop, byte* params);
-    void            (*SetIntpv)(void* ptr, uint prop, int* params);
-    void            (*SetFixedpv)(void* ptr, uint prop, fixed_t* params);
-    void            (*SetAnglepv)(void* ptr, uint prop, angle_t* params);
-    void            (*SetFloatpv)(void* ptr, uint prop, float* params);
-    void            (*SetDoublepv)(void* ptr, uint prop, double* params);
-    void            (*SetPtrpv)(void* ptr, uint prop, void* params);
+    void            (*SetBoolpv)(MapElementPtr ptr, uint prop, boolean* params);
+    void            (*SetBytepv)(MapElementPtr ptr, uint prop, byte* params);
+    void            (*SetIntpv)(MapElementPtr ptr, uint prop, int* params);
+    void            (*SetFixedpv)(MapElementPtr ptr, uint prop, fixed_t* params);
+    void            (*SetAnglepv)(MapElementPtr ptr, uint prop, angle_t* params);
+    void            (*SetFloatpv)(MapElementPtr ptr, uint prop, float* params);
+    void            (*SetDoublepv)(MapElementPtr ptr, uint prop, double* params);
+    void            (*SetPtrpv)(MapElementPtr ptr, uint prop, void* params);
 
     /* index-based read functions */
     boolean         (*GetBool)(int type, uint index, uint prop);
@@ -429,23 +442,23 @@ DENG_API_TYPEDEF(Map)
     void            (*GetPtrv)(int type, uint index, uint prop, void* params);
 
     /* pointer-based read functions */
-    boolean         (*GetBoolp)(void* ptr, uint prop);
-    byte            (*GetBytep)(void* ptr, uint prop);
-    int             (*GetIntp)(void* ptr, uint prop);
-    fixed_t         (*GetFixedp)(void* ptr, uint prop);
-    angle_t         (*GetAnglep)(void* ptr, uint prop);
-    float           (*GetFloatp)(void* ptr, uint prop);
-    double          (*GetDoublep)(void* ptr, uint prop);
-    void*           (*GetPtrp)(void* ptr, uint prop);
+    boolean         (*GetBoolp)(MapElementPtr ptr, uint prop);
+    byte            (*GetBytep)(MapElementPtr ptr, uint prop);
+    int             (*GetIntp)(MapElementPtr ptr, uint prop);
+    fixed_t         (*GetFixedp)(MapElementPtr ptr, uint prop);
+    angle_t         (*GetAnglep)(MapElementPtr ptr, uint prop);
+    float           (*GetFloatp)(MapElementPtr ptr, uint prop);
+    double          (*GetDoublep)(MapElementPtr ptr, uint prop);
+    void*           (*GetPtrp)(MapElementPtr ptr, uint prop);
 
-    void            (*GetBoolpv)(void* ptr, uint prop, boolean* params);
-    void            (*GetBytepv)(void* ptr, uint prop, byte* params);
-    void            (*GetIntpv)(void* ptr, uint prop, int* params);
-    void            (*GetFixedpv)(void* ptr, uint prop, fixed_t* params);
-    void            (*GetAnglepv)(void* ptr, uint prop, angle_t* params);
-    void            (*GetFloatpv)(void* ptr, uint prop, float* params);
-    void            (*GetDoublepv)(void* ptr, uint prop, double* params);
-    void            (*GetPtrpv)(void* ptr, uint prop, void* params);
+    void            (*GetBoolpv)(MapElementPtr ptr, uint prop, boolean* params);
+    void            (*GetBytepv)(MapElementPtr ptr, uint prop, byte* params);
+    void            (*GetIntpv)(MapElementPtr ptr, uint prop, int* params);
+    void            (*GetFixedpv)(MapElementPtr ptr, uint prop, fixed_t* params);
+    void            (*GetAnglepv)(MapElementPtr ptr, uint prop, angle_t* params);
+    void            (*GetFloatpv)(MapElementPtr ptr, uint prop, float* params);
+    void            (*GetDoublepv)(MapElementPtr ptr, uint prop, double* params);
+    void            (*GetPtrpv)(MapElementPtr ptr, uint prop, void* params);
 }
 DENG_API_T(Map);
 
@@ -595,7 +608,5 @@ DENG_USING_API(Map);
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-///@}
 
 #endif // __DOOMSDAY_MAP_H__

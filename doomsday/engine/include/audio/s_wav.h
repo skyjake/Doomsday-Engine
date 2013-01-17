@@ -23,6 +23,10 @@
 #ifndef LIBDENG_SOUND_WAVE_FILE_H
 #define LIBDENG_SOUND_WAVE_FILE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Verifies that the data in the buffer @a data looks like WAV.
  * @return @c true, if the "RIFF" and "WAVE" strings are found.
@@ -61,5 +65,9 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples);
  * data using Z_Free() when it's no longer needed.
  */
 void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, int* samples);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDENG_SOUND_WAVE_FILE_H

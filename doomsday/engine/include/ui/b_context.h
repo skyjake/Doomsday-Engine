@@ -29,7 +29,6 @@
 #ifndef LIBDENG_BIND_CONTEXT_H
 #define LIBDENG_BIND_CONTEXT_H
 
-#include "de_base.h"
 #include "b_command.h"
 #include "b_device.h"
 
@@ -57,6 +56,10 @@ typedef struct bcontext_s {
     int           (*fallbackResponder)(event_t* event); // event_t
 } bcontext_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            B_UpdateDeviceStateAssociations(void);
 bcontext_t*     B_NewContext(const char* name);
 void            B_DestroyAllContexts(void);
@@ -83,5 +86,9 @@ boolean         B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1, dbind
 void            B_PrintContexts(void);
 void            B_PrintAllBindings(void);
 void            B_WriteContextToFile(const bcontext_t* bc, FILE* file);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_BIND_CONTEXT_H */

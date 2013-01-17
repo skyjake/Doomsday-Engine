@@ -23,6 +23,10 @@
 
 #include "sys_network.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// Largest message sendable using the protocol.
 #define PROTOCOL_MAX_DATAGRAM_SIZE (1 << 22) // 4 MB
 
@@ -48,5 +52,9 @@ boolean Protocol_Receive(nodeid_t from);
  * @param handle  Message buffer received with Protocol_Receive().
  */
 void Protocol_FreeBuffer(void *handle);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDENG_NETWORK_PROTOCOL_H

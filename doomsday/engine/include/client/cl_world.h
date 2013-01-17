@@ -29,6 +29,10 @@
 #ifndef __DOOMSDAY_CLIENT_WORLD_H__
 #define __DOOMSDAY_CLIENT_WORLD_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            Cl_WorldInit(void);
 void            Cl_WorldReset(void);
 
@@ -60,5 +64,9 @@ void            Cl_ReadPolyDelta2(boolean skip);
 int             Cl_ReadSectorDelta(void); // obsolete
 int             Cl_ReadSideDelta(void); // obsolete
 int             Cl_ReadPolyDelta(void); // obsolete
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

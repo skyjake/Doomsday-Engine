@@ -29,9 +29,15 @@
 #ifndef __DOOMSDAY_SERVER_FRAME_H__
 #define __DOOMSDAY_SERVER_FRAME_H__
 
-//extern int      bwrAdjustTime;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void            Sv_TransmitFrame(void);
 size_t          Sv_GetMaxFrameSize(int playerNumber);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

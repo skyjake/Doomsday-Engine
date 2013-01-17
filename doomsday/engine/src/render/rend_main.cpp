@@ -711,7 +711,7 @@ struct rendworldpoly_params_t
     boolean         forceOpaque;
 
 // For bias:
-    void           *mapObject;
+    de::MapElement *mapElement;
     uint            elmIdx;
     biassurface_t  *bsuf;
 
@@ -883,7 +883,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             {
                 // Do BIAS lighting for this poly.
                 SB_RendPoly(rcolors, p.bsuf, rvertices, numVertices, p.normal,
-                            p.sectorLightLevel, p.mapObject, p.elmIdx, p.isWall);
+                            p.sectorLightLevel, p.mapElement, p.elmIdx);
 
                 if(p.glowing > 0)
                 {
@@ -1228,7 +1228,7 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
     params.wall.segLength = &hedge->length;
     params.forceOpaque = (alpha < 0? true : false);
     params.alpha = (alpha < 0? 1 : alpha);
-    params.mapObject = hedge;
+    params.mapElement = hedge;
     params.elmIdx = elmIdx;
     params.bsuf = bsuf;
     params.normal = normal;
@@ -1381,7 +1381,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
 
     params.flags = RPF_DEFAULT;
     params.isWall = false;
-    params.mapObject = bspLeaf;
+    params.mapElement = bspLeaf;
     params.elmIdx = elmIdx;
     params.bsuf = bsuf;
     params.normal = normal;
@@ -2922,23 +2922,23 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
     Rend_RenderPlanes();
 }
 
-static void Rend_RenderNode(runtime_mapdata_header_t* bspPtr)
+static void Rend_RenderNode(de::MapElement* bspPtr)
 {
     // If the clipper is full we're pretty much done. This means no geometry
     // will be visible in the distance because every direction has already been
     // fully covered by geometry.
     if(C_IsFull()) return;
 
-    if(bspPtr->type == DMU_BSPLEAF)
+    if(bspPtr->type() == DMU_BSPLEAF)
     {
         // We've arrived at a leaf. Render it.
-        Rend_RenderBspLeaf((BspLeaf*)bspPtr);
+        Rend_RenderBspLeaf(bspPtr->castTo<BspLeaf>());
     }
     else
     {
         // Descend deeper into the nodes.
         const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-        BspNode* node = (BspNode*)bspPtr;
+        BspNode* node = bspPtr->castTo<BspNode>();
         byte side;
 
         // Decide which side the view point is on.
@@ -3272,7 +3272,7 @@ static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alp
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    sprintf(buf, "%i", GameMap_VertexIndex(theMap, vtx));
+    sprintf(buf, "%i", GameMap_VertexIndex(theMap, static_cast<Vertex const *>(vtx)));
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -3532,14 +3532,14 @@ void Rend_RenderMap()
 
         // We don't want BSP clip checking for the first BSP leaf.
         firstBspLeaf = true;
-        if(theMap->bsp->type == DMU_BSPNODE)
+        if(theMap->bsp->type() == DMU_BSPNODE)
         {
             Rend_RenderNode(theMap->bsp);
         }
         else
         {
             // A single leaf is a special case.
-            Rend_RenderBspLeaf((BspLeaf*)theMap->bsp);
+            Rend_RenderBspLeaf(theMap->bsp->castTo<BspLeaf>());
         }
 
         if(Rend_MobjShadowsEnabled())
@@ -3913,7 +3913,8 @@ static void Rend_RenderBoundingBoxes()
 
     if(devMobjBBox)
     {
-        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, drawMobjBBox, NULL);
+        GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                0x1, drawMobjBBox, NULL);
     }
 
     if(devPolyobjBBox)

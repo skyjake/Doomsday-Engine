@@ -28,29 +28,47 @@
 #ifndef __DOOMSDAY_MAP_EDITOR_H__
 #define __DOOMSDAY_MAP_EDITOR_H__
 
+#ifndef __cplusplus
+#  error "edit_map.h requires C++"
+#endif
+
+#include <vector>
 #include "map/gamemap.h"
 #include "resource/materials.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // Editable map.
-typedef struct editmap_s {
-    uint numVertexes;
-    Vertex** vertexes;
-    uint numLineDefs;
-    LineDef** lineDefs;
-    uint numSideDefs;
-    SideDef** sideDefs;
-    uint numSectors;
-    Sector** sectors;
+/// @todo Obviously this shares functionality/data with GameMap; a common base class needed? -jk
+class EditMap
+{
+public:
+    typedef std::vector<Vertex *> Vertices;
+    Vertices vertexes; // really needs to be std::vector? (not a MapElementList?)
+
+    typedef std::vector<LineDef *> LineDefs;
+    LineDefs lineDefs;
+
+    typedef std::vector<SideDef *> SideDefs;
+    SideDefs sideDefs;
+
+    typedef std::vector<Sector *> Sectors;
+    Sectors sectors;
+
     uint numPolyObjs;
     Polyobj** polyObjs;
 
     // Game-specific map entity property values.
     EntityDatabase* entityDatabase;
-} editmap_t;
+
+public:
+    EditMap();
+
+    virtual ~EditMap();
+
+    Vertex const **verticesAsArray() const { return const_cast<Vertex const **>(&(vertexes[0])); }
+
+    uint vertexCount() const { return vertexes.size(); }
+    uint sectorCount() const { return sectors.size(); }
+};
 
 // Non-public (temporary)
 // Flags for MPE_PruneRedundantMapData().
@@ -60,13 +78,9 @@ typedef struct editmap_s {
 #define PRUNE_SECTORS       0x8
 #define PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
 
-void            MPE_PruneRedundantMapData(editmap_t* map, int flags);
+void            MPE_PruneRedundantMapData(EditMap* map, int flags);
 
 GameMap*        MPE_GetLastBuiltMap(void);
 boolean         MPE_GetLastBuiltMapResult(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif

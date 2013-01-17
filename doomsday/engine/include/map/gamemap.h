@@ -23,14 +23,15 @@
 #ifndef LIBDENG_GAMEMAP_H
 #define LIBDENG_GAMEMAP_H
 
+#ifndef __cplusplus
+#  error "map/gamemap.h requires C++"
+#endif
+
 #include "p_maptypes.h"
 #include "p_particle.h"
+#include "plane.h"
 #include <EntityDatabase>
 #include <de/mathutil.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct thinkerlist_s;
 struct clmoinfo_s;
@@ -62,7 +63,9 @@ typedef struct skyfix_s {
     coord_t height;
 } skyfix_t;
 
-typedef struct gamemap_s {
+class GameMap
+{
+public:
     Uri* uri;
     char uniqueId[256];
 
@@ -86,22 +89,15 @@ typedef struct gamemap_s {
     struct clpolyobj_s* clActivePolyobjs[CLIENT_MAX_MOVERS];
     // End client only data.
 
-    uint numVertexes;
-    Vertex* vertexes;
-
-    uint numSectors;
-    Sector* sectors;
-
-    uint numLineDefs;
-    LineDef* lineDefs;
-
-    uint numSideDefs;
-    SideDef* sideDefs;
+    de::MapElementList<Vertex> vertexes;
+    de::MapElementList<Sector> sectors;
+    de::MapElementList<LineDef> lineDefs;
+    de::MapElementList<SideDef> sideDefs;
 
     uint numPolyObjs;
     Polyobj** polyObjs;
 
-    runtime_mapdata_header_t* bsp;
+    de::MapElement* bsp;
 
     /// BSP object LUTs:
     uint numHEdges;
@@ -115,10 +111,10 @@ typedef struct gamemap_s {
 
     EntityDatabase* entityDatabase;
 
-    planelist_t trackedPlanes;
-    surfacelist_t scrollingSurfaces;
-    surfacelist_t decoratedSurfaces;
-    surfacelist_t glowingSurfaces;
+    PlaneSet trackedPlanes;
+    SurfaceSet scrollingSurfaces;
+    SurfaceSet decoratedSurfaces;
+    SurfaceSet glowingSurfaces;
 
     struct blockmap_s* mobjBlockmap;
     struct blockmap_s* polyobjBlockmap;
@@ -139,7 +135,20 @@ typedef struct gamemap_s {
     /// @todo Refactor to support concurrent traces.
     TraceOpening traceOpening;
     divline_t traceLOS;
-} GameMap;
+
+public:
+    GameMap();
+
+    virtual ~GameMap();
+
+    uint vertexCount() const { return vertexes.size(); }
+
+    uint sectorCount() const { return sectors.size(); }
+
+    uint sideDefCount() const { return sideDefs.size(); }
+
+    uint lineDefCount() const { return lineDefs.size(); }
+};
 
 /**
  * Change the global "current" map.
@@ -333,7 +342,7 @@ int GameMap_VertexIndex(GameMap* map, Vertex const *vtx);
  * @param line  LineDef to lookup.
  * @return  Unique index for the LineDef else @c -1 if not present.
  */
-int GameMap_LineDefIndex(GameMap* map, LineDef* line);
+int GameMap_LineDefIndex(GameMap* map, LineDef const *line);
 
 /**
  * Lookup the unique index for @a sideDef.
@@ -342,7 +351,7 @@ int GameMap_LineDefIndex(GameMap* map, LineDef* line);
  * @param side  SideDef to lookup.
  * @return  Unique index for the SideDef else @c -1 if not present.
  */
-int GameMap_SideDefIndex(GameMap* map, SideDef* side);
+int GameMap_SideDefIndex(GameMap* map, SideDef const *side);
 
 /**
  * Lookup the unique index for @a sector.
@@ -351,7 +360,7 @@ int GameMap_SideDefIndex(GameMap* map, SideDef* side);
  * @param sector  Sector to lookup.
  * @return  Unique index for the Sector else @c -1 if not present.
  */
-int GameMap_SectorIndex(GameMap* map, Sector* sector);
+int GameMap_SectorIndex(GameMap *map, Sector const *sector);
 
 /**
  * Lookup the unique index for @a bspLeaf.
@@ -360,7 +369,7 @@ int GameMap_SectorIndex(GameMap* map, Sector* sector);
  * @param bspLeaf  BspLeaf to lookup.
  * @return  Unique index for the BspLeaf else @c -1 if not present.
  */
-int GameMap_BspLeafIndex(GameMap* map, BspLeaf* bspLeaf);
+int GameMap_BspLeafIndex(GameMap* map, BspLeaf const *bspLeaf);
 
 /**
  * Lookup the unique index for @a hedge.
@@ -369,7 +378,7 @@ int GameMap_BspLeafIndex(GameMap* map, BspLeaf* bspLeaf);
  * @param hedge  HEdge to lookup.
  * @return  Unique index for the HEdge else @c -1 if not present.
  */
-int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge);
+int GameMap_HEdgeIndex(GameMap* map, HEdge const *hedge);
 
 /**
  * Lookup the unique index for @a node.
@@ -378,7 +387,7 @@ int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge);
  * @param bspNode  BspNode to lookup.
  * @return  Unique index for the BspNode else @c -1 if not present.
  */
-int GameMap_BspNodeIndex(GameMap* map, BspNode* bspNode);
+int GameMap_BspNodeIndex(GameMap* map, BspNode const *bspNode);
 
 /**
  * Retrieve the number of Vertex instances owned by this.
@@ -600,7 +609,7 @@ struct generators_s* GameMap_Generators(GameMap* map);
  * @param map  GameMap instance.
  * @return  List of decorated surfaces.
  */
-surfacelist_t* GameMap_DecoratedSurfaces(GameMap* map);
+SurfaceSet* GameMap_DecoratedSurfaces(GameMap* map);
 
 /**
  * Retrieve a pointer to the glowing surface list for this map.
@@ -608,7 +617,7 @@ surfacelist_t* GameMap_DecoratedSurfaces(GameMap* map);
  * @param map  GameMap instance.
  * @return  List of glowing surfaces.
  */
-surfacelist_t* GameMap_GlowingSurfaces(GameMap* map);
+SurfaceSet* GameMap_GlowingSurfaces(GameMap* map);
 
 /**
  * Retrieve a pointer to the scrolling surface list for this map.
@@ -616,7 +625,7 @@ surfacelist_t* GameMap_GlowingSurfaces(GameMap* map);
  * @param map  GameMap instance.
  * @return  List of scrolling surfaces.
  */
-surfacelist_t* GameMap_ScrollingSurfaces(GameMap* map);
+SurfaceSet* GameMap_ScrollingSurfaces(GameMap* map);
 
 /**
  * Retrieve a pointer to the tracked plane list for this map.
@@ -624,7 +633,7 @@ surfacelist_t* GameMap_ScrollingSurfaces(GameMap* map);
  * @param map  GameMap instance.
  * @return  List of tracked planes.
  */
-planelist_t* GameMap_TrackedPlanes(GameMap* map);
+PlaneSet* GameMap_TrackedPlanes(GameMap* map);
 
 /**
  * Initialize all Polyobjs in the map. To be called after map load.
@@ -732,7 +741,7 @@ int GameMap_VertexIterator(GameMap* map, int (*callback) (Vertex*, void*), void*
 
 int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), void* parameters);
 
-int GameMap_SectorIterator(GameMap* map, int (*callback) (Sector*, void*), void* parameters);
+int GameMap_SectorIterator(GameMap* map, int (*callback)(Sector *, void *), void* parameters);
 
 int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* parameters);
 
@@ -814,10 +823,6 @@ void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_
  * @param max  Maximal coordinates for the map.
  */
 void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t max);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 // The current map.
 DENG_EXTERN_C GameMap* theMap;

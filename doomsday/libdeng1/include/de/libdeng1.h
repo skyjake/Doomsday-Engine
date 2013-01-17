@@ -72,6 +72,11 @@
 #  define DENG_DEBUG_ONLY(x)
 #endif
 
+/**
+ * Macro for hiding the warning about an unused parameter.
+ */
+#define DENG_UNUSED(x)      (void)x
+
 /*
  * Utility macros.
  */

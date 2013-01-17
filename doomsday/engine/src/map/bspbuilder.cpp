@@ -27,7 +27,7 @@
 
 using namespace de;
 
-BspBuilder::BspBuilder(GameMap& map, uint* numEditableVertexes, Vertex*** editableVertexes, int splitCostFactor)
+BspBuilder::BspBuilder(GameMap& map, uint numEditableVertexes, const Vertex **editableVertexes, int splitCostFactor)
 {
     partitioner = new bsp::Partitioner(map, numEditableVertexes, editableVertexes, splitCostFactor);
 }
@@ -87,7 +87,7 @@ Vertex& BspBuilder::vertex(uint idx)
     return partitioner->vertex(idx);
 }
 
-BspBuilder& BspBuilder::take(runtime_mapdata_header_t* ob)
+BspBuilder& BspBuilder::take(de::MapElement* ob)
 {
     partitioner->release(ob);
     return *this;

@@ -47,6 +47,7 @@ typedef double vectorcompd_t;
 typedef vectorcompd_t vec2d_t[2];
 typedef double const const_pvec2d_t[2];
 typedef vectorcompd_t* pvec2d_t;
+typedef vectorcompd_t const * pcvec2d_t;
 typedef vec2d_t* arvec2d_t;
 
 DENG_PUBLIC fixed_t V2x_Intersection(fixed_t const v1[2], fixed_t const v1Delta[2], fixed_t const v2[2], fixed_t const v2Delta[2]);

@@ -44,7 +44,7 @@ DENG_EXTERN_C boolean ClMobj_IsValid(struct mobj_s* mo);
 DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum);
 */
 
-DENG_EXTERN_C void GameMap_ClMobjReset(GameMap* map);
+void GameMap_ClMobjReset(GameMap* map);
 
 DENG_EXTERN_C void Con_TransitionRegister();
 DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);
@@ -53,6 +53,7 @@ DENG_EXTERN_C void GL_Shutdown();
 DENG_EXTERN_C void GL_ReleaseGLTexturesByTexture(struct texture_s *tex);
 DENG_EXTERN_C void GL_EarlyInitTextureManager();
 DENG_EXTERN_C void GL_PruneTextureVariantSpecifications();
+DENG_EXTERN_C struct texturevariant_s* GL_PreparePatchTexture(struct texture_s* tex);
 /*
 DENG_EXTERN_C void GL_SetFilter(int f);
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
@@ -127,7 +128,7 @@ DENG_EXTERN_C int FR_TextHeight(const char* text);
 
 DENG_EXTERN_C void Fonts_Init(void);
 DENG_EXTERN_C fontschemeid_t Fonts_ParseScheme(const char* str);
-DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri);
+//DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri);
 DENG_EXTERN_C fontid_t Fonts_ResolveUriCString(const char* uri);
 DENG_EXTERN_C void Fonts_ClearDefinitionLinks(void);
 DENG_EXTERN_C void Fonts_ClearRuntime(void);

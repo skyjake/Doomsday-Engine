@@ -46,8 +46,8 @@ static const coord_t ANG_EPSILON = (1.0 / 1024.0);
 class Partitioner
 {
 public:
-    Partitioner(GameMap&  _map, uint* numEditableVertexes,
-                Vertex*** editableVertexes, int _splitCostFactor=7);
+    Partitioner(GameMap&  _map, uint numEditableVertexes,
+                Vertex const **editableVertexes, int _splitCostFactor=7);
     ~Partitioner();
 
     /**
@@ -130,7 +130,7 @@ public:
      * @param ob  Map data object to release ownership of.
      * @return  Reference to this Partitioner.
      */
-    Partitioner& release(runtime_mapdata_header_t* ob);
+    Partitioner& release(de::MapElement* ob);
 
 private:
     struct Instance;

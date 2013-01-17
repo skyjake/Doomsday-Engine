@@ -10,10 +10,14 @@ TARGET = doomsday-server
 include(../config.pri)
 
 VERSION = $$DENG_VERSION
-
 echo(Doomsday Server $${DENG_VERSION}.)
 
 CONFIG -= app_bundle
+
+# Some messy old code here:
+*-g++*|*-gcc*|*-clang* {
+    QMAKE_CXXFLAGS_WARN_ON += -Wno-missing-field-initializers
+}
 
 # External Dependencies ------------------------------------------------------
 
@@ -170,7 +174,6 @@ DENG_HEADERS += \
     $$SRC/include/game.h \
     $$SRC/include/gl/gl_texmanager.h \
     $$SRC/include/gridmap.h \
-    $$SRC/include/kdtree.h \
     $$SRC/include/library.h \
     $$SRC/include/m_decomp64.h \
     $$SRC/include/m_misc.h \
@@ -308,9 +311,9 @@ win32 {
     INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
 
     SOURCES += \
-        $$SRC/src/windows/dd_winit.c \
+        $$SRC/src/windows/dd_winit.cpp \
         $$SRC/src/windows/directinput.cpp \
-        $$SRC/src/windows/sys_console.c
+        $$SRC/src/windows/sys_console.cpp
 }
 else:unix {
     # Common Unix (including Mac OS X).
@@ -320,8 +323,8 @@ else:unix {
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
 
     SOURCES += \
-        $$SRC/src/unix/dd_uinit.c \
-        $$SRC/src/unix/sys_console.c
+        $$SRC/src/unix/dd_uinit.cpp \
+        $$SRC/src/unix/sys_console.cpp
 }
 
 macx {
@@ -335,29 +338,29 @@ SOURCES += $$SRC/src/ui/displaymode_dummy.c
 
 # Platform-independent sources.
 SOURCES += \
-    src/server_dummies.c \
+    src/server_dummies.cpp \
     $$SRC/src/api_uri.cpp \
-    $$SRC/src/audio/s_cache.c \
+    $$SRC/src/audio/s_cache.cpp \
     $$SRC/src/audio/s_environ.cpp \
-    $$SRC/src/audio/s_logic.c \
-    $$SRC/src/audio/s_main.c \
-    $$SRC/src/audio/s_wav.c \
+    $$SRC/src/audio/s_logic.cpp \
+    $$SRC/src/audio/s_main.cpp \
+    $$SRC/src/audio/s_wav.cpp \
     $$SRC/src/busymode.cpp \
-    $$SRC/src/cbuffer.c \
+    $$SRC/src/cbuffer.cpp \
     $$SRC/src/color.cpp \
-    $$SRC/src/con_bar.c \
-    $$SRC/src/con_config.c \
+    $$SRC/src/con_bar.cpp \
+    $$SRC/src/con_config.cpp \
     $$SRC/src/con_data.cpp \
-    $$SRC/src/con_main.c \
+    $$SRC/src/con_main.cpp \
     $$SRC/src/dd_games.cpp \
     $$SRC/src/dd_help.cpp \
     $$SRC/src/dd_init.cpp \
-    $$SRC/src/dd_loop.c \
+    $$SRC/src/dd_loop.cpp \
     $$SRC/src/dd_main.cpp \
-    $$SRC/src/dd_pinit.c \
-    $$SRC/src/dd_plugin.c \
+    $$SRC/src/dd_pinit.cpp \
+    $$SRC/src/dd_plugin.cpp \
     $$SRC/src/dd_wad.cpp \
-    $$SRC/src/def_data.c \
+    $$SRC/src/def_data.cpp \
     $$SRC/src/def_main.cpp \
     $$SRC/src/def_read.cpp \
     $$SRC/src/dualstring.cpp \
@@ -372,69 +375,68 @@ SOURCES += \
     $$SRC/src/filesys/lumpindex.cpp \
     $$SRC/src/filesys/manifest.cpp \
     $$SRC/src/filesys/searchpath.cpp \
-    $$SRC/src/filesys/sys_direc.c \
+    $$SRC/src/filesys/sys_direc.cpp \
     $$SRC/src/game.cpp \
     $$SRC/src/gl/gl_texmanager.cpp \
-    $$SRC/src/gridmap.c \
-    $$SRC/src/kdtree.c \
+    $$SRC/src/gridmap.cpp \
     $$SRC/src/library.cpp \
-    $$SRC/src/m_decomp64.c \
-    $$SRC/src/m_misc.c \
-    $$SRC/src/m_nodepile.c \
-    $$SRC/src/map/blockmap.c \
+    $$SRC/src/m_decomp64.cpp \
+    $$SRC/src/m_misc.cpp \
+    $$SRC/src/m_nodepile.cpp \
+    $$SRC/src/map/blockmap.cpp \
     $$SRC/src/map/bsp/hplane.cpp \
     $$SRC/src/map/bsp/partitioner.cpp \
     $$SRC/src/map/bsp/superblockmap.cpp \
     $$SRC/src/map/bspbuilder.cpp \
     $$SRC/src/map/bspleaf.cpp \
-    $$SRC/src/map/bspnode.c \
-    $$SRC/src/map/dam_file.c \
+    $$SRC/src/map/bspnode.cpp \
+    $$SRC/src/map/dam_file.cpp \
     $$SRC/src/map/dam_main.cpp \
     $$SRC/src/map/entitydatabase.cpp \
-    $$SRC/src/map/gamemap.c \
-    $$SRC/src/map/generators.c \
+    $$SRC/src/map/gamemap.cpp \
+    $$SRC/src/map/generators.cpp \
     $$SRC/src/map/hedge.cpp \
-    $$SRC/src/map/linedef.c \
+    $$SRC/src/map/linedef.cpp \
     $$SRC/src/map/p_data.cpp \
     $$SRC/src/map/p_dmu.cpp \
-    $$SRC/src/map/p_intercept.c \
-    $$SRC/src/map/p_maputil.c \
-    $$SRC/src/map/p_mobj.c \
-    $$SRC/src/map/p_objlink.c \
+    $$SRC/src/map/p_intercept.cpp \
+    $$SRC/src/map/p_maputil.cpp \
+    $$SRC/src/map/p_mobj.cpp \
+    $$SRC/src/map/p_objlink.cpp \
     $$SRC/src/map/p_particle.cpp \
-    $$SRC/src/map/p_players.c \
-    $$SRC/src/map/p_polyobjs.c \
-    $$SRC/src/map/p_sight.c \
-    $$SRC/src/map/p_think.c \
-    $$SRC/src/map/p_ticker.c \
-    $$SRC/src/map/plane.c \
-    $$SRC/src/map/polyobj.c \
+    $$SRC/src/map/p_players.cpp \
+    $$SRC/src/map/p_polyobjs.cpp \
+    $$SRC/src/map/p_sight.cpp \
+    $$SRC/src/map/p_think.cpp \
+    $$SRC/src/map/p_ticker.cpp \
+    $$SRC/src/map/plane.cpp \
+    $$SRC/src/map/polyobj.cpp \
     $$SRC/src/map/propertyvalue.cpp \
     $$SRC/src/map/r_world.cpp \
-    $$SRC/src/map/sector.c \
-    $$SRC/src/map/sidedef.c \
+    $$SRC/src/map/sector.cpp \
+    $$SRC/src/map/sidedef.cpp \
     $$SRC/src/map/surface.cpp \
     $$SRC/src/map/vertex.cpp \
     $$SRC/src/network/masterserver.cpp \
-    $$SRC/src/network/monitor.c \
-    $$SRC/src/network/net_buf.c \
-    $$SRC/src/network/net_event.c \
-    $$SRC/src/network/net_main.c \
-    $$SRC/src/network/net_msg.c \
-    $$SRC/src/network/net_ping.c \
-    $$SRC/src/network/protocol.c \
-    $$SRC/src/network/sys_network.c \
-    $$SRC/src/r_util.c \
+    $$SRC/src/network/monitor.cpp \
+    $$SRC/src/network/net_buf.cpp \
+    $$SRC/src/network/net_event.cpp \
+    $$SRC/src/network/net_main.cpp \
+    $$SRC/src/network/net_msg.cpp \
+    $$SRC/src/network/net_ping.cpp \
+    $$SRC/src/network/protocol.cpp \
+    $$SRC/src/network/sys_network.cpp \
+    $$SRC/src/r_util.cpp \
     $$SRC/src/render/r_main.cpp \
     $$SRC/src/render/r_things.cpp \
     $$SRC/src/render/rend_main.cpp \
     $$SRC/src/resource/animgroups.cpp \
     $$SRC/src/resource/api_material.cpp \
-    $$SRC/src/resource/api_resource.c \
-    $$SRC/src/resource/colorpalette.c \
+    $$SRC/src/resource/api_resource.cpp \
+    $$SRC/src/resource/colorpalette.cpp \
     $$SRC/src/resource/colorpalettes.cpp \
     $$SRC/src/resource/compositetexture.cpp \
-    $$SRC/src/resource/hq2x.c \
+    $$SRC/src/resource/hq2x.cpp \
     $$SRC/src/resource/image.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
@@ -445,7 +447,7 @@ SOURCES += \
     $$SRC/src/resource/materialvariant.cpp \
     $$SRC/src/resource/patch.cpp \
     $$SRC/src/resource/patchname.cpp \
-    $$SRC/src/resource/pcx.c \
+    $$SRC/src/resource/pcx.cpp \
     $$SRC/src/resource/r_data.cpp \
     $$SRC/src/resource/rawtexture.cpp \
     $$SRC/src/resource/texture.cpp \
@@ -453,31 +455,31 @@ SOURCES += \
     $$SRC/src/resource/texturescheme.cpp \
     $$SRC/src/resource/textures.cpp \
     $$SRC/src/resource/texturevariant.cpp \
-    $$SRC/src/resource/tga.c \
+    $$SRC/src/resource/tga.cpp \
     $$SRC/src/resource/wad.cpp \
     $$SRC/src/resource/zip.cpp \
-    $$SRC/src/server/sv_frame.c \
-    $$SRC/src/server/sv_infine.c \
-    $$SRC/src/server/sv_main.c \
-    $$SRC/src/server/sv_missile.c \
-    $$SRC/src/server/sv_pool.c \
+    $$SRC/src/server/sv_frame.cpp \
+    $$SRC/src/server/sv_infine.cpp \
+    $$SRC/src/server/sv_main.cpp \
+    $$SRC/src/server/sv_missile.cpp \
+    $$SRC/src/server/sv_pool.cpp \
     $$SRC/src/server/sv_sound.cpp \
-    $$SRC/src/sys_system.c \
+    $$SRC/src/sys_system.cpp \
     $$SRC/src/tab_tables.c \
-    $$SRC/src/ui/b_command.c \
-    $$SRC/src/ui/b_context.c \
-    $$SRC/src/ui/b_device.c \
-    $$SRC/src/ui/b_main.c \
-    $$SRC/src/ui/b_util.c \
+    $$SRC/src/ui/b_command.cpp \
+    $$SRC/src/ui/b_context.cpp \
+    $$SRC/src/ui/b_device.cpp \
+    $$SRC/src/ui/b_main.cpp \
+    $$SRC/src/ui/b_util.cpp \
     $$SRC/src/ui/canvas.cpp \
     $$SRC/src/ui/canvaswindow.cpp \
-    $$SRC/src/ui/dd_input.c \
+    $$SRC/src/ui/dd_input.cpp \
     $$SRC/src/ui/displaymode.cpp \
-    $$SRC/src/ui/fi_main.c \
-    $$SRC/src/ui/finaleinterpreter.c \
+    $$SRC/src/ui/fi_main.cpp \
+    $$SRC/src/ui/finaleinterpreter.cpp \
     $$SRC/src/ui/keycode.cpp \
-    $$SRC/src/ui/p_control.c \
-    $$SRC/src/ui/sys_input.c \
+    $$SRC/src/ui/p_control.cpp \
+    $$SRC/src/ui/sys_input.cpp \
     $$SRC/src/ui/ui2_main.cpp \
     $$SRC/src/ui/window.cpp \
     $$SRC/src/uri.cpp

@@ -23,6 +23,11 @@
 #ifndef LIBDENG_MAP_SIDEDEF
 #define LIBDENG_MAP_SIDEDEF
 
+#ifndef __cplusplus
+#  error "map/sidedef.h requires C++"
+#endif
+
+#include "MapElement"
 #include "resource/r_data.h"
 #include "map/p_dmu.h"
 #include "map/surface.h"
@@ -80,6 +85,8 @@
 #define FRONT                   0
 #define BACK                    1
 
+class LineDef;
+
 typedef struct msidedef_s {
     // Sidedef index. Always valid after loading & pruning.
     int index;
@@ -89,7 +96,7 @@ typedef struct msidedef_s {
 // FakeRadio shadow data.
 typedef struct shadowcorner_s {
     float           corner;
-    struct sector_s* proximity;
+    Sector *proximity;
     float           pOffset;
     float           pHeight;
 } shadowcorner_t;
@@ -99,10 +106,17 @@ typedef struct edgespan_s {
     float           shift;
 } edgespan_t;
 
-typedef struct sidedef_s {
-    runtime_mapdata_header_t header;
+/**
+ * @attention SideDef is in the process of being replaced by lineside_t. All
+ * data/values which concern the geometry of surfaces should be relocated to
+ * lineside_t. There is no need to model the side of map's line as an object
+ * in Doomsday when a flag would suffice. -ds
+ */
+class SideDef : public de::MapElement
+{
+public:
     Surface             sections[3];
-    struct linedef_s*   line;
+    LineDef*   line;
     short               flags;
     msidedef_t          buildData;
     int                 fakeRadioUpdateCount; // frame number of last update
@@ -110,11 +124,10 @@ typedef struct sidedef_s {
     shadowcorner_t      bottomCorners[2];
     shadowcorner_t      sideCorners[2];
     edgespan_t          spans[2];      // [left, right]
-} SideDef;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+public:
+    SideDef();
+};
 
 /**
  * Update the SideDef's map space surface base origins according to the points
@@ -151,9 +164,5 @@ int SideDef_GetProperty(const SideDef* sideDef, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int SideDef_SetProperty(SideDef* sideDef, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_SIDEDEF

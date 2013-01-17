@@ -23,7 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "kdtree.h"
+#include <de/kdtree.h>
 #include "map/bsp/superblockmap.h"
 
 using namespace de::bsp;

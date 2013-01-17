@@ -126,7 +126,7 @@ void SV_ReadXGFunction(xgsector_t* xg, function_t* fn)
     fn->oldValue = SV_ReadFloat();
 }
 
-void SV_WriteXGSector(struct sector_s* sec)
+void SV_WriteXGSector(Sector* sec)
 {
     xgsector_t* xg;
     sectortype_t* info;
@@ -151,7 +151,7 @@ void SV_WriteXGSector(struct sector_s* sec)
     SV_WriteXGFunction(xg, &xg->light);
 }
 
-void SV_ReadXGSector(struct sector_s *sec)
+void SV_ReadXGSector(Sector *sec)
 {
     int         i;
     xgsector_t *xg;

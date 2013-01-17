@@ -23,7 +23,11 @@
 #ifndef LIBDENG_MAP_SECTOR
 #define LIBDENG_MAP_SECTOR
 
-//#include "resource/r_data.h"
+#ifndef __cplusplus
+#  error "map/sector.h requires C++"
+#endif
+
+#include "MapElement"
 #include "p_mapdata.h"
 #include "p_dmu.h"
 
@@ -84,8 +88,11 @@ typedef struct msector_s {
     int	refCount;
 } msector_t;
 
-typedef struct sector_s {
-    runtime_mapdata_header_t header;
+class Plane;
+
+class Sector : public de::MapElement
+{
+public:
     int                 frameFlags;
     int                 validCount;    // if == validCount, already checked.
     AABoxd              aaBox;         // Bounding box for the sector.
@@ -96,24 +103,24 @@ typedef struct sector_s {
     float               oldRGB[3];
     struct mobj_s*      mobjList;      // List of mobjs in the sector.
     unsigned int        lineDefCount;
-    struct linedef_s**  lineDefs;      // [lineDefCount+1] size.
+    LineDef**  lineDefs;      // [lineDefCount+1] size.
     unsigned int        bspLeafCount;
-    struct bspleaf_s**  bspLeafs;     // [bspLeafCount+1] size.
+    BspLeaf**  bspLeafs;     // [bspLeafCount+1] size.
     unsigned int        numReverbBspLeafAttributors;
-    struct bspleaf_s**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
+    BspLeaf**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
     ddmobj_base_t       base;
     unsigned int        planeCount;
-    struct plane_s**    planes;        // [planeCount+1] size.
+    Plane             **planes;        // [planeCount+1] size.
     unsigned int        blockCount;    // Number of gridblocks in the sector.
     unsigned int        changedBlockCount; // Number of blocks to mark changed.
     unsigned short*     blocks;        // Light grid block indices.
     float               reverb[NUM_REVERB_DATA];
     msector_t           buildData;
-} Sector;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+public:
+    Sector();    
+    ~Sector();
+};
 
 /**
  * Update the Sector's map space axis-aligned bounding box to encompass the points
@@ -140,7 +147,7 @@ void Sector_UpdateArea(Sector* sector);
  *
  * @param sector  Sector instance.
  */
-void Sector_UpdateBaseOrigin(Sector* sector);
+void Sector_UpdateBaseOrigin(Sector *sector);
 
 /**
  * Get a property value, selected by DMU_* name.
@@ -159,9 +166,5 @@ int Sector_GetProperty(const Sector* sector, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Sector_SetProperty(Sector* sector, const setargs_t* args);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_SECTOR

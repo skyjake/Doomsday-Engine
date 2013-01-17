@@ -23,6 +23,7 @@
 
 #include "api_base.h"
 #include "api_uri.h"
+#include "api_map.h"
 
 /**
  * @defgroup material Materials
@@ -30,15 +31,11 @@
  */
 ///@{
 
-#if !defined __DOOMSDAY__ && !defined DENG_INTERNAL_DATA_ACCESS
-typedef struct material_s { int type; } material_t;
-#endif
-
 DENG_API_TYPEDEF(Material)
 {
     de_api_t api;
 
-    struct material_s *(*ForTextureUri)(Uri const *textureUri);
+    material_t *(*ForTextureUri)(Uri const *textureUri);
     Uri *(*ComposeUri)(materialid_t materialId);
     materialid_t (*ResolveUri)(const Uri* uri);
     materialid_t (*ResolveUriCString)(const char* path);
