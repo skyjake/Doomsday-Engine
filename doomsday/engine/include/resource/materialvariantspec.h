@@ -21,8 +21,7 @@
 #define LIBDENG_RESOURCE_MATERIALVARIANTSPEC_H
 
 #include "def_data.h"
-
-struct texturevariantspecification_s;
+#include "resource/texture.h" // TextureVariantSpec
 
 /// Identifiers for material usage contexts.
 typedef enum {
@@ -58,7 +57,7 @@ public:
     materialcontext_t context;
 
     /// Specification for the primary texture.
-    struct texturevariantspecification_s *primarySpec;
+    texturevariantspecification_t *primarySpec;
 
 public:
     /**

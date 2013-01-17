@@ -19,6 +19,57 @@
 
 #include "resource/texture.h"
 
+/**
+ * @todo Magnification, Anisotropic filter level and GL texture wrap modes
+ * will be handled through dynamic changes to GL's texture environment state.
+ * Consequently they should be ignored here.
+ */
+static int compareVariantSpecifications(variantspecification_t const *a,
+    variantspecification_t const *b)
+{
+    /// @todo We can be a bit cleverer here...
+    if(a->context != b->context) return 0;
+    if(a->flags != b->flags) return 0;
+    if(a->wrapS != b->wrapS || a->wrapT != b->wrapT) return 0;
+    //if(a->magFilter != b->magFilter) return 0;
+    //if(a->anisoFilter != b->anisoFilter) return 0;
+    if(a->mipmapped != b->mipmapped) return 0;
+    if(a->noStretch != b->noStretch) return 0;
+    if(a->gammaCorrection != b->gammaCorrection) return 0;
+    if(a->toAlpha != b->toAlpha) return 0;
+    if(a->border != b->border) return 0;
+    if(a->flags & TSF_HAS_COLORPALETTE_XLAT)
+    {
+        colorpalettetranslationspecification_t const *cptA = a->translated;
+        colorpalettetranslationspecification_t const *cptB = b->translated;
+        DENG_ASSERT(cptA && cptB);
+        if(cptA->tClass != cptB->tClass) return 0;
+        if(cptA->tMap != cptB->tMap) return 0;
+    }
+    return 1; // Equal.
+}
+
+static int compareDetailVariantSpecifications(detailvariantspecification_t const *a,
+    detailvariantspecification_t const *b)
+{
+    if(a->contrast != b->contrast) return 0;
+    return 1; // Equal.
+}
+
+int TextureVariantSpec_Compare(texturevariantspecification_t const *a,
+    texturevariantspecification_t const *b)
+{
+    DENG_ASSERT(a && b);
+    if(a == b) return 1;
+    if(a->type != b->type) return 0;
+    switch(a->type)
+    {
+    case TST_GENERAL: return compareVariantSpecifications(TS_GENERAL(*a), TS_GENERAL(*b));
+    case TST_DETAIL:  return compareDetailVariantSpecifications(TS_DETAIL(*a), TS_DETAIL(*b));
+    }
+    throw de::Error("TextureVariantSpec_Compare", QString("Invalid type %1").arg(a->type));
+}
+
 namespace de {
 
 struct Texture::Variant::Instance

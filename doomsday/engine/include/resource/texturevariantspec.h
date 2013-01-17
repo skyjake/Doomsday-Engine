@@ -158,4 +158,12 @@ typedef struct texturevariantspecification_s {
     } data; // type-specific data.
 } texturevariantspecification_t;
 
+/**
+ * Compare the given TextureVariantSpecifications and determine whether they can
+ * be considered equal (dependent on current engine state and the available features
+ * of the GL implementation).
+ */
+int TextureVariantSpec_Compare(texturevariantspecification_t const *a,
+    texturevariantspecification_t const *b);
+
 #endif /* LIBDENG_RESOURCE_TEXTUREVARIANTSPEC_H */

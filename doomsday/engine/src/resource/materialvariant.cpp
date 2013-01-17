@@ -27,7 +27,6 @@
 #endif
 
 #include "map/r_world.h" // R_UpdateMapSurfacesOnMaterialChange
-#include "gl/gl_texmanager.h" // GL_CompareTextureVariantSpecifications
 #include "render/r_main.h" // frameTimePos
 
 #include "resource/materialvariantspec.h"
@@ -38,7 +37,7 @@ bool MaterialVariantSpec::compare(MaterialVariantSpec const &other) const
 {
     if(this == &other) return 1;
     if(context != other.context) return 0;
-    return 1 == GL_CompareTextureVariantSpecifications(primarySpec, other.primarySpec);
+    return 1 == TextureVariantSpec_Compare(primarySpec, other.primarySpec);
 }
 
 struct Material::Variant::Instance

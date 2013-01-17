@@ -205,7 +205,7 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
             break;
 
         case FuzzyMatchSpec:
-            if(GL_CompareTextureVariantSpecifications(&cand, &spec))
+            if(TextureVariantSpec_Compare(&cand, &spec))
             {
                 // This will do fine.
                 return *i;

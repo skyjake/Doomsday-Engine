@@ -202,14 +202,6 @@ GLint GL_MagFilterForVariantSpec(variantspecification_t const *spec);
 int GL_LogicalAnisoLevelForVariantSpec(variantspecification_t const *spec);
 
 /**
- * Compare the given TextureVariantSpecifications and determine whether they can
- * be considered equal (dependent on current engine state and the available features
- * of the GL implementation).
- */
-int GL_CompareTextureVariantSpecifications(texturevariantspecification_t const *a,
-    texturevariantspecification_t const *b);
-
-/**
  * Prepare a TextureVariantSpecification according to usage context. If incomplete
  * context information is supplied, suitable defaults are chosen in their place.
  *
