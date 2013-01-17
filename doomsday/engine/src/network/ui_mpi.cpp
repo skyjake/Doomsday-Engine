@@ -284,7 +284,7 @@ void MPITranslateString(char *dest, const char *src, char match,
  * Update the strings that display information about currently selected
  * server. This is called when the server selection changes in the list.
  */
-void MPIUpdateServerInfo(ui_object_t *ob)
+void MPIUpdateServerInfo(ui_object_t *)
 {
     serverinfo_t info;
     char    str[256];
@@ -356,12 +356,12 @@ void MPIUpdateServerInfo(ui_object_t *ob)
 /*
  * Draw a framed text box.
  */
-void MPIServerInfoDrawer(ui_object_t* ob)
+void MPIServerInfoDrawer(ui_object_t *ob)
 {
     UI_DrawHelpBox(&ob->geometry.origin, &ob->geometry.size, ob->flags & UIF_DISABLED ? .2f : 1, (char *) ob->data);
 }
 
-void MPIToggleMasterItems(ui_object_t* ob)
+void MPIToggleMasterItems(ui_object_t *)
 {
     UI_FlagGroup(page_server._objects, 1, UIF_DISABLED, UIFG_XOR);
     MPIUpdatePublicButton();
@@ -372,7 +372,7 @@ void MPIGotoPage(ui_object_t* ob)
     UI_SetPage((ui_page_t*) ob->data);
 }
 
-void MPIGoBack(ui_object_t* ob)
+void MPIGoBack(ui_object_t *)
 {
     if(!UI_CurrentPage()->previous)
         UI_End();
@@ -380,7 +380,7 @@ void MPIGoBack(ui_object_t* ob)
         UI_SetPage(UI_CurrentPage()->previous);
 }
 
-void MPIStartServer(ui_object_t* ob)
+void MPIStartServer(ui_object_t *)
 {
     N_ShutdownService();
     Con_SetInteger2("net-port-data", strtol(str_ipport, 0, 0), SVF_WRITE_OVERRIDE);
@@ -564,12 +564,12 @@ void MPIRetrieveServersFromMaster()
     N_MAPost(MAC_WAIT);
 }
 
-void MPIRetrieve(ui_object_t *ob)
+void MPIRetrieve(ui_object_t *)
 {
     MPIRetrieveServersFromMaster();
 }
 
-void MPIConnect(ui_object_t *ob)
+void MPIConnect(ui_object_t *)
 {
     char    buf[80];
 

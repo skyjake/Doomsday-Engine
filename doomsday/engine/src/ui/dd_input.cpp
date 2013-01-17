@@ -452,17 +452,17 @@ inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive)
 
 const ddstring_t* I_DeviceNameStr(uint ident)
 {
-    static const ddstring_t names[1+NUM_INPUT_DEVICES] = {
-        { "(invalid-identifier)" },
-        { "keyboard" },
-        { "mouse" },
-        { "joystick" },
-        { "joystick2" },
-        { "joystick3" },
-        { "joystick4" }
+    static const de::Str names[1 + NUM_INPUT_DEVICES] = {
+        "(invalid-identifier)",
+        "keyboard",
+        "mouse",
+        "joystick",
+        "joystick2",
+        "joystick3",
+        "joystick4"
     };
-    if(ident >= NUM_INPUT_DEVICES) return &names[0];
-    return &names[1+ident];
+    if(ident >= NUM_INPUT_DEVICES) return names[0];
+    return names[1 + ident];
 }
 
 inputdevaxis_t* I_GetAxisByID(inputdev_t* device, uint id)
@@ -2342,6 +2342,8 @@ D_CMD(AxisChangeValue)
  */
 D_CMD(ListInputDevices)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     inputdev_t* dev;
     uint i, j;
 
@@ -2365,6 +2367,8 @@ D_CMD(ListInputDevices)
 
 D_CMD(ReleaseMouse)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     Window_TrapMouse(Window_Main(), false);
     return true;
 }

@@ -2845,7 +2845,7 @@ void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
     int                 i;
     pool_t*             pool = &pools[clientNumber];
     delta_t*            delta, *next = NULL;
-    boolean             ackTimeRegistered = false;
+    //boolean             ackTimeRegistered = false;
 
     // Iterate through the entire hash table.
     for(i = 0; i < POOL_HASH_SIZE; ++i)

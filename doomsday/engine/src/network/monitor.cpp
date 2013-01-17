@@ -85,6 +85,8 @@ static void Monitor_Print(void)
 
 D_CMD(NetFreqs)
 {
+    DENG2_UNUSED(src);
+
     if(argc == 1) // No args?
     {
         Con_Printf("Usage:\n  %s start (maxsize)\n  %s stop\n  %s print/show\n", argv[0], argv[0], argv[0]);

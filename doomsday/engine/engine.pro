@@ -10,8 +10,12 @@ win32|macx: TARGET = Doomsday
 
 include(../config.pri)
 
-VERSION = $$DENG_VERSION
+# Some messy old code here:
+*-g++*|*-gcc*|*-clang* {
+    QMAKE_CXXFLAGS_WARN_ON += -Wno-missing-field-initializers
+}
 
+VERSION = $$DENG_VERSION
 echo(Doomsday version $${DENG_VERSION}.)
 
 # External Dependencies ------------------------------------------------------

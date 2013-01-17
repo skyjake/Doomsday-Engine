@@ -254,10 +254,10 @@ void Sys_ShowCursor(boolean show)
 {
 #ifdef WIN32
     ShowCursor(show);
+#else
+    // The cursor is controlled using Qt in Canvas.
+    DENG2_UNUSED(show);
 #endif
-/*#ifdef UNIX
-    SDL_ShowCursor(show ? SDL_ENABLE : SDL_DISABLE);
-#endif*/
 }
 
 void Sys_HideMouse(void)

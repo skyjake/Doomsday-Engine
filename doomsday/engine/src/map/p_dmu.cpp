@@ -44,25 +44,17 @@ using namespace de;
 /**
  * Additional data for all dummy elements.
  */
-class DummyData
+struct DummyData
 {
-public:
     void *extraData; /// Pointer to user data.
 
-public:
-    DummyData()
-    {
-        extraData = 0;
-    }
-
-    virtual ~DummyData() {}
+    DummyData() : extraData(0) {}
+    virtual ~DummyData() {} // polymorphic
 };
 
 class DummySideDef : public SideDef, public DummyData {};
-
 class DummyLineDef : public LineDef, public DummyData {};
-
-class DummySector : public Sector, public DummyData {};
+class DummySector  : public Sector,  public DummyData {};
 
 typedef QSet<de::MapElement *> Dummies;
 static Dummies dummies;

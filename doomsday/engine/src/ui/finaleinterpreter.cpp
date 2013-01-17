@@ -79,8 +79,8 @@ typedef struct {
 } fi_operand_t;
 
 typedef struct command_s {
-    char* token;
-    const char* operands;
+    char const *token;
+    char const *operands;
 
     void (*func) (const struct command_s* cmd, const fi_operand_t* ops, finaleinterpreter_t* fi);
 

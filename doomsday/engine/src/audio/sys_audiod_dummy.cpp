@@ -127,7 +127,7 @@ void DS_DummyShutdown(void)
  *
  * @param type  Type of event.
  */
-void DS_DummyEvent(int type)
+void DS_DummyEvent(int /*type*/)
 {
     // Do nothing...
 }
@@ -292,7 +292,7 @@ void DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value)
  * @param property      SFXBP_POSITION
  *                      SFXBP_VELOCITY
  */
-void DS_Dummy_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
+void DS_Dummy_SFX_Setv(sfxbuffer_t* /*buf*/, int /*prop*/, float* /*values*/)
 {
     // Nothing to do.
 }
@@ -302,7 +302,7 @@ void DS_Dummy_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
  *                      SFXLP_DOPPLER
  *                      SFXLP_UPDATE
  */
-void DS_Dummy_SFX_Listener(int prop, float value)
+void DS_Dummy_SFX_Listener(int /*prop*/, float /*value*/)
 {
     // Nothing to do.
 }
@@ -310,7 +310,7 @@ void DS_Dummy_SFX_Listener(int prop, float value)
 /**
  * Values use SRD_* for indices.
  */
-void DS_DummyListenerEnvironment(float* rev)
+void DS_DummyListenerEnvironment(float* /*rev*/)
 {
     // Nothing to do.
 }
@@ -318,7 +318,7 @@ void DS_DummyListenerEnvironment(float* rev)
 /**
  * Call SFXLP_UPDATE at the end of every channel update.
  */
-void DS_Dummy_SFX_Listenerv(int prop, float* values)
+void DS_Dummy_SFX_Listenerv(int /*prop*/, float* /*values*/)
 {
     // Nothing to do.
 }

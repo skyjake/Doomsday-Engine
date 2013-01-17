@@ -149,6 +149,8 @@ void Net_PingResponse(void)
 
 D_CMD(Ping)
 {
+    DENG2_UNUSED(src);
+
     int                 dest, count = 4;
 
     if(!netGame)

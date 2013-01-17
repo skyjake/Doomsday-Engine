@@ -539,7 +539,7 @@ int GameMap_SectorTouchingMobjsIterator(GameMap* map, Sector* sector,
  *
  * @return  Non-zero if current iteration should stop.
  */
-int PIT_AddLineDefIntercepts(LineDef* lineDef, void* parameters)
+int PIT_AddLineDefIntercepts(LineDef* lineDef, void* /*parameters*/)
 {
     /// @todo Do not assume lineDef is from the current map.
     const divline_t* traceLOS = GameMap_TraceLOS(theMap);
@@ -575,7 +575,7 @@ int PIT_AddLineDefIntercepts(LineDef* lineDef, void* parameters)
     return false;
 }
 
-int PIT_AddMobjIntercepts(mobj_t* mo, void* paramaters)
+int PIT_AddMobjIntercepts(mobj_t* mo, void* /*paramaters*/)
 {
     const divline_t* traceLOS;
     vec2d_t from, to;

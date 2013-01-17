@@ -293,6 +293,8 @@ coord_t Mobj_ApproxPointDistance(mobj_t* mo, coord_t const* point)
 
 D_CMD(InspectMobj)
 {
+    DENG2_UNUSED(src);
+
     mobj_t* mo = 0;
     thid_t id = 0;
     char const *moType = "Mobj";

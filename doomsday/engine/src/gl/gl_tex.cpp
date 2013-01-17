@@ -1077,7 +1077,8 @@ void FindAverageAlpha(const uint8_t* pixels, int width, int height,
     if(coverage) *coverage = (float)alphaCount / numPels;
 }
 
-void FindAverageAlphaIdx(const uint8_t* pixels, int w, int h, const colorpalette_t* palette,
+/// @todo @a palette is unused; should be removed?
+void FindAverageAlphaIdx(const uint8_t* pixels, int w, int h, const colorpalette_t* /*palette*/,
     float* alpha, float* coverage)
 {
     long i, numPels, avg = 0, alphaCount = 0;

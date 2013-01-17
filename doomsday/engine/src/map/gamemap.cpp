@@ -891,6 +891,7 @@ static int blockmapCellBspLeafsIterator(void* object, void* context)
     return false; // Continue iteration.
 }
 
+/*
 static int GameMap_IterateCellBspLeafs(GameMap* map, const_BlockmapCell cell,
     Sector* sector, const AABoxd* box, int localValidCount,
     int (*callback) (BspLeaf*, void*), void* context)
@@ -907,6 +908,7 @@ static int GameMap_IterateCellBspLeafs(GameMap* map, const_BlockmapCell cell,
     return Blockmap_IterateCellObjects(map->bspLeafBlockmap, cell,
                                        blockmapCellBspLeafsIterator, (void*)&args);
 }
+*/
 
 static int GameMap_IterateCellBlockBspLeafs(GameMap* map, const BlockmapCellBlock* cellBlock,
     Sector* sector,  const AABoxd* box, int localValidCount,
@@ -1074,6 +1076,7 @@ int PTR_PolyobjLines(Polyobj* po, void* context)
     return Polyobj_LineIterator(po, args->func, args->param);
 }
 
+/*
 static int GameMap_IterateCellPolyobjLineDefsIterator(GameMap* map, const_BlockmapCell cell,
     int (*callback) (LineDef*, void*), void* context)
 {
@@ -1091,6 +1094,7 @@ static int GameMap_IterateCellPolyobjLineDefsIterator(GameMap* map, const_Blockm
     return Blockmap_IterateCellObjects(map->polyobjBlockmap, cell,
                                        blockmapCellPolyobjsIterator, &args);
 }
+*/
 
 static int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const BlockmapCellBlock* cellBlock,
     int (*callback) (LineDef*, void*), void* context)

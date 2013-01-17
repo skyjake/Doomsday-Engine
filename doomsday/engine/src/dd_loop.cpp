@@ -267,7 +267,7 @@ static void startFrame(void)
     }
 }
 
-static uint lastShowAt;
+//static uint lastShowAt;
 
 static void endFrame(void)
 {

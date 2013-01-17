@@ -78,10 +78,12 @@ static boolean closeMapFile(void)
     return (lzClose(mapFile)? true : false);
 }
 
+/*
 static void writeNBytes(void* data, long len)
 {
     lzWrite(data, len, mapFile);
 }
+*/
 
 static void writeByte(byte val)
 {
@@ -105,10 +107,12 @@ static void writeFloat(float val)
     lzPutL(temp, mapFile);
 }
 
+/*
 static void readNBytes(void *ptr, long len)
 {
     lzRead(ptr, len, mapFile);
 }
+*/
 
 static byte readByte(void)
 {

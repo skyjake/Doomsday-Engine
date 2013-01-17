@@ -36,7 +36,7 @@
 byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = BSP leafs, 4 = polyobjs.
 float bmapDebugSize = 1.5f;
 
-static int rendMobj(mobj_t* mo, void* parameters)
+static int rendMobj(mobj_t* mo, void* /*parameters*/)
 {
     if(mo->validCount != validCount)
     {
@@ -53,7 +53,7 @@ static int rendMobj(mobj_t* mo, void* parameters)
     return false; // Continue iteration.
 }
 
-static int rendLineDef(LineDef* line, void* parameters)
+static int rendLineDef(LineDef* line, void* /*parameters*/)
 {
     if(line->validCount != validCount)
     {
@@ -65,7 +65,7 @@ static int rendLineDef(LineDef* line, void* parameters)
     return false; // Continue iteration.
 }
 
-static int rendBspLeaf(BspLeaf* bspLeaf, void* parameters)
+static int rendBspLeaf(BspLeaf* bspLeaf, void* /*parameters*/)
 {
     if(bspLeaf->validCount != validCount)
     {

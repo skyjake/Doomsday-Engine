@@ -47,8 +47,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    int             key; // DDKEY
-    char*           name;
+    int key;            ///< DDKEY
+    char const *name;
 } keyname_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -520,6 +520,8 @@ boolean B_Delete(int bid)
 
 D_CMD(BindEventToCommand)
 {
+    DENG2_UNUSED2(src, argc);
+
     evbinding_t*        b = B_BindCommand(argv[1], argv[2]);
 
     if(b)
@@ -532,6 +534,8 @@ D_CMD(BindEventToCommand)
 
 D_CMD(BindControlToDevice)
 {
+    DENG2_UNUSED2(src, argc);
+
     dbinding_t*         b = B_BindControl(argv[1], argv[2]);
 
     if(b)
@@ -544,12 +548,16 @@ D_CMD(BindControlToDevice)
 
 D_CMD(ListBindingContexts)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     B_PrintContexts();
     return true;
 }
 
 D_CMD(ListBindings)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     B_PrintAllBindings();
     return true;
 }
@@ -564,6 +572,8 @@ D_CMD(ClearBindingContexts)
 
 D_CMD(ClearBindings)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     int i;
 
     for(i = 0; i < B_ContextCount(); ++i)
@@ -579,6 +589,8 @@ D_CMD(ClearBindings)
 
 D_CMD(DeleteBindingById)
 {
+    DENG2_UNUSED2(src, argc);
+
     int                 bid = strtoul(argv[1], NULL, 10);
 
     if(B_Delete(bid))
@@ -595,6 +607,8 @@ D_CMD(DeleteBindingById)
 
 D_CMD(DefaultBindings)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     if(isDedicated)
         return false;
 
@@ -606,6 +620,8 @@ D_CMD(DefaultBindings)
 
 D_CMD(ActivateBindingContext)
 {
+    DENG2_UNUSED2(src, argc);
+
     boolean doActivate = !stricmp(argv[0], "activatebcontext");
     bcontext_t* bc = B_ContextByName(argv[1]);
 

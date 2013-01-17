@@ -62,7 +62,7 @@
 void    Sv_ClientCoords(int playerNum);
 
 int     netRemoteUser = 0; // The client who is currently logged in.
-char   *netPassword = ""; // Remote login password.
+char   *netPassword = (char *) ""; // Remote login password.
 
 // This is the limit when accepting new clients.
 int     svMaxPlayers = DDMAXPLAYERS;
@@ -1136,8 +1136,12 @@ int Sv_GetNumConnected(void)
 /**
  * The bandwidth rating is updated according to the status of the
  * player's send queue. Returns true if a new packet may be sent.
+ *
+ * @todo This functionality needs to be restored: servers can't simply output
+ * an arbitrary amount of data to clients with no regard to the available
+ * bandwidth.
  */
-boolean Sv_CheckBandwidth(int playerNumber)
+boolean Sv_CheckBandwidth(int /*playerNumber*/)
 {
     return true;
     /*
@@ -1270,6 +1274,8 @@ boolean Sv_CanTrustClientPos(int plrNum)
  */
 D_CMD(Logout)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     // Only servers can execute this command.
     if(!netRemoteUser || !isServer)
         return false;

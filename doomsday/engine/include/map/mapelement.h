@@ -1,4 +1,4 @@
-/** @file mapelement.h Base class for all map data objects.
+/** @file mapelement.h Base class for all map elements.
  * @ingroup map
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -32,8 +32,14 @@
 namespace de {
 
 /**
- * Base class for all elements of a map. Maps are composed out of vertices,
- * lines, sectors, etc.
+ * Base class for all elements of a map. Provides runtime type information and
+ * safe dynamic casting to various derived types.
+ *
+ * Maps are composed out of vertices, lines, sectors, etc.
+ *
+ * Abstract handling of map elements is particularly helpful in the public Map
+ * Update (DMU) API, where objects can be referenced either by type and index
+ * or by an opaque pointer.
  */
 class MapElement
 {

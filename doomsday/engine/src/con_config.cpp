@@ -279,6 +279,8 @@ void Con_SaveDefaults(void)
 
 D_CMD(WriteConsole)
 {
+    DENG2_UNUSED2(src, argc);
+
     Con_Message("Writing to \"%s\"...\n", argv[1]);
     return !Con_WriteState(argv[1], NULL);
 }

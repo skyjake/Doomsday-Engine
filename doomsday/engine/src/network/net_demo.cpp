@@ -596,7 +596,7 @@ void Demo_ReadLocalCamera(void)
 /**
  * Called once per tic.
  */
-void Demo_Ticker(timespan_t time)
+void Demo_Ticker(timespan_t /*time*/)
 {
     if(!DD_IsSharpTick())
         return;
@@ -638,12 +638,16 @@ void Demo_Ticker(timespan_t time)
 
 D_CMD(PlayDemo)
 {
+    DENG2_UNUSED2(src, argc);
+
     Con_Printf("Playing demo \"%s\"...\n", argv[1]);
     return Demo_BeginPlayback(argv[1]);
 }
 
 D_CMD(RecordDemo)
 {
+    DENG2_UNUSED(src);
+
     int                 plnum = consolePlayer;
 
     if(argc == 3 && isClient)
@@ -675,6 +679,8 @@ D_CMD(RecordDemo)
 
 D_CMD(PauseDemo)
 {
+    DENG2_UNUSED(src);
+
     int         plnum = consolePlayer;
 
     if(argc >= 2)
@@ -700,6 +706,8 @@ D_CMD(PauseDemo)
 
 D_CMD(StopDemo)
 {
+    DENG2_UNUSED(src);
+
     int plnum = consolePlayer;
 
     if(argc > 2)
@@ -732,6 +740,8 @@ D_CMD(StopDemo)
  */
 D_CMD(DemoLump)
 {
+    DENG2_UNUSED2(src, argc);
+
     char buf[64];
     memset(buf, 0, sizeof(buf));
     strncpy(buf, argv[1], 64);

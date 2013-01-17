@@ -392,6 +392,8 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
  */
 D_CMD(FlareConfig)
 {
+    DENG2_UNUSED(src);
+
     int             i;
     float           val;
 

@@ -145,7 +145,17 @@
 /**
  * Macro for hiding the warning about an unused parameter.
  */
-#define DENG2_UNUSED(x)     (void)x
+#define DENG2_UNUSED(x)         (void)x
+
+/**
+ * Macro for hiding the warning about an two unused parameters.
+ */
+#define DENG2_UNUSED2(x, y)     (void)x, (void)y
+
+/**
+ * Macro for hiding the warning about an three unused parameters.
+ */
+#define DENG2_UNUSED3(x, y, z)  (void)x, (void)y, (void)z
 
 /**
  * Macro for defining an opaque type in the C wrapper API.

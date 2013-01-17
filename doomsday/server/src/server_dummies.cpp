@@ -162,11 +162,11 @@ void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
 {}
 */
 
-DENG_EXTERN_C void GL_PrepareLSTexture(lightingtexid_t which)
+DENG_EXTERN_C void GL_PrepareLSTexture(lightingtexid_t /*which*/)
 {}
 
 
-DENG_EXTERN_C void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *baseSpec)
+DENG_EXTERN_C void GL_PrintTextureVariantSpecification(texturevariantspecification_t const */*baseSpec*/)
 {}
 
 DENG_EXTERN_C void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
@@ -174,15 +174,15 @@ DENG_EXTERN_C void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
     DENG_UNUSED(paletteId);
 }
 
-struct texturevariant_s* GL_PreparePatchTexture(struct texture_s* tex)
+struct texturevariant_s* GL_PreparePatchTexture(struct texture_s* /*tex*/)
 {
     return 0;
 }
 
 DENG_EXTERN_C texturevariantspecification_t *GL_TextureVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
-    int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
-    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
+    texturevariantusagecontext_t /*tc*/, int /*flags*/, byte /*border*/, int /*tClass*/, int /*tMap*/,
+    int /*wrapS*/, int /*wrapT*/, int /*minFilter*/, int /*magFilter*/, int /*anisoFilter*/,
+    boolean /*mipmapped*/, boolean /*gammaCorrection*/, boolean /*noStretch*/, boolean /*toAlpha*/)
 {
     return 0;
 }
@@ -802,22 +802,22 @@ void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, c
     DENG_UNUSED(detailedMsg);
 }
 
-void Sys_MessageBox2(messageboxtype_t type, const char *title, const char *msg, const char *informativeMsg, const char *detailedMsg)
+void Sys_MessageBox2(messageboxtype_t /*type*/, const char */*title*/, const char */*msg*/, const char */*informativeMsg*/, const char */*detailedMsg*/)
 {
 }
 
-void Sys_MessageBoxf(messageboxtype_t type, const char* title, const char* format, ...)
+void Sys_MessageBoxf(messageboxtype_t /*type*/, const char* /*title*/, const char* /*format*/, ...)
 {
 }
 
-int Sys_MessageBoxWithButtons(messageboxtype_t type, const char* title, const char* msg,
-                              const char* informativeMsg, const char** buttons)
+int Sys_MessageBoxWithButtons(messageboxtype_t /*type*/, const char* /*title*/, const char* /*msg*/,
+                              const char* /*informativeMsg*/, const char** /*buttons*/)
 {
     return 0;
 }
 
-void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t type, const char* title, const char* msg,
-                                       const char* informativeMsg, const char* detailsFileName)
+void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t /*type*/, const char* /*title*/, const char* /*msg*/,
+                                       const char* /*informativeMsg*/, const char* /*detailsFileName*/)
 {
 }
 

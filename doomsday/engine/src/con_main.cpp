@@ -583,6 +583,7 @@ void Con_SetFontTracking(int value)
     Rend_ConsoleResize(true/*force*/);
 }
 
+#ifdef __CLIENT__
 /**
  * Send a console command to the server.
  * This shouldn't be called unless we're logged in with the right password.
@@ -606,6 +607,7 @@ static void Con_Send(const char *command, byte src, int silent)
     Msg_End();
     Net_SendBuffer(0, 0);
 }
+#endif // __CLIENT__
 
 static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
                          byte source, boolean isNetCmd)
@@ -2171,6 +2173,8 @@ static void Con_Alias(char *aName, char *command)
 
 D_CMD(Help)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     char actKeyName[40];
 
     strcpy(actKeyName, B_ShortNameForKey(consoleActiveKey));
@@ -2202,6 +2206,8 @@ D_CMD(Help)
 
 D_CMD(Clear)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     CBuffer_Clear(histBuf);
     bLineOff = 0;
     return true;
@@ -2209,6 +2215,8 @@ D_CMD(Clear)
 
 D_CMD(Version)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     Con_Printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT);
     Con_Printf("Homepage: %s\n", DOOMSDAY_HOMEURL);
     Con_Printf("Project homepage: %s\n", DENGPROJECT_HOMEURL);
@@ -2222,6 +2230,8 @@ D_CMD(Version)
 
 D_CMD(Quit)
 {
+    DENG2_UNUSED2(src, argc);
+
 #ifdef __CLIENT__
     if(Updater_IsDownloadInProgress())
     {
@@ -2244,6 +2254,8 @@ D_CMD(Quit)
 
 D_CMD(Alias)
 {
+    DENG2_UNUSED(src);
+
     if(argc != 3 && argc != 2)
     {
         Con_Printf("Usage: %s (alias) (cmd)\n", argv[0]);
@@ -2261,6 +2273,8 @@ D_CMD(Alias)
 
 D_CMD(Parse)
 {
+    DENG2_UNUSED(src);
+
     int     i;
 
     for(i = 1; i < argc; ++i)
@@ -2273,6 +2287,8 @@ D_CMD(Parse)
 
 D_CMD(Wait)
 {
+    DENG2_UNUSED2(src, argc);
+
     timespan_t offset;
 
     offset = strtod(argv[1], NULL) / 35;    // Offset in seconds.
@@ -2284,6 +2300,8 @@ D_CMD(Wait)
 
 D_CMD(Repeat)
 {
+    DENG2_UNUSED2(src, argc);
+
     int     count;
     timespan_t interval, offset;
 
@@ -2300,6 +2318,8 @@ D_CMD(Repeat)
 
 D_CMD(Echo)
 {
+    DENG2_UNUSED(src);
+
     int     i;
 
     for(i = 1; i < argc; ++i)
@@ -2347,6 +2367,8 @@ static boolean cvarAddSub(const char* name, float delta, boolean force)
  */
 D_CMD(AddSub)
 {
+    DENG2_UNUSED(src);
+
     boolean             force = false;
     float               delta = 0;
 
@@ -2373,6 +2395,8 @@ D_CMD(AddSub)
  */
 D_CMD(IncDec)
 {
+    DENG2_UNUSED(src);
+
     boolean force = false;
     cvar_t* cvar;
     float val;
@@ -2417,6 +2441,8 @@ D_CMD(IncDec)
  */
 D_CMD(Toggle)
 {
+    DENG2_UNUSED2(src, argc);
+
     Con_SetInteger(argv[1], Con_GetInteger(argv[1]) ? 0 : 1);
     return true;
 }
@@ -2531,6 +2557,8 @@ D_CMD(If)
  */
 D_CMD(OpenClose)
 {
+    DENG2_UNUSED2(src, argc);
+
     if(!stricmp(argv[0], "conopen"))
     {
         Con_Open(true);
@@ -2550,6 +2578,8 @@ D_CMD(OpenClose)
 
 D_CMD(Font)
 {
+    DENG2_UNUSED(src);
+
     if(argc == 1 || argc > 3)
     {
         int listCount, i;
@@ -2660,6 +2690,8 @@ D_CMD(Font)
 
 D_CMD(DebugCrash)
 {
+    DENG2_UNUSED3(src, argv, argc);
+
     int* ptr = (int*) 0x123;
 
     // Goodbye cruel world.
@@ -2669,6 +2701,8 @@ D_CMD(DebugCrash)
 
 D_CMD(DebugError)
 {
+    DENG2_UNUSED3(src, argv, argc);
+
     Con_Error("Fatal error.\n");
     return true;
 }

@@ -204,7 +204,6 @@ void S_Reset(void)
 
 void S_StartFrame(void)
 {
-    static int          oldMusVolume = -1;
 #ifdef DD_PROFILE
     static int          i;
     if(++i > 40)
@@ -217,6 +216,8 @@ void S_StartFrame(void)
 BEGIN_PROF( PROF_SOUND_STARTFRAME );
 
 #ifdef __CLIENT__
+    static int oldMusVolume = -1;
+
     if(musVolume != oldMusVolume)
     {
         oldMusVolume = musVolume;
@@ -677,6 +678,8 @@ void S_Drawer(void)
  */
 D_CMD(PlaySound)
 {
+    DENG2_UNUSED(src);
+
     coord_t fixedPos[3];
     boolean useFixedPos = false;
     float volume = 1;

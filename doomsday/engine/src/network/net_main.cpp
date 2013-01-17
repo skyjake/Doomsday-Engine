@@ -88,8 +88,10 @@ D_CMD(Chat);
 D_CMD(Kick);
 D_CMD(MakeCamera);
 D_CMD(Net);
+#ifdef __CLIENT__
 D_CMD(SetConsole);
 D_CMD(SetName);
+#endif
 D_CMD(SetTicks);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -98,9 +100,9 @@ D_CMD(SetTicks);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char   *serverName = "Doomsday";
-char   *serverInfo = "Multiplayer Host";
-char   *playerName = "Player";
+char   *serverName = (char *) "Doomsday";
+char   *serverInfo = (char *) "Multiplayer Host";
+char   *playerName = (char *) "Player";
 int     serverData[3];          // Some parameters passed to master server.
 
 client_t clients[DDMAXPLAYERS];   // All network data for the players.
@@ -178,8 +180,10 @@ void Net_Register(void)
     C_CMD_FLAGS("say", NULL, Chat, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("saynum", NULL, Chat, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("sayto", NULL, Chat, CMDF_NO_NULLGAME);
+#ifdef __CLIENT__
     C_CMD("setname", "s", SetName);
     C_CMD("setcon", "i", SetConsole);
+#endif
     C_CMD("settics", "i", SetTicks);
 
     N_Register();
@@ -654,6 +658,7 @@ int Net_TimeDelta(byte now, byte then)
     return delta;
 }
 
+#ifdef __CLIENT__
 /// @return  @c true iff a demo is currently being recorded.
 static boolean recordingDemo(void)
 {
@@ -665,6 +670,7 @@ static boolean recordingDemo(void)
     }
     return false;
 }
+#endif
 
 #ifdef __CLIENT__
 
@@ -861,6 +867,8 @@ void Net_WriteChatMessage(int from, int toMask, const char* message)
  */
 D_CMD(Chat)
 {
+    DENG2_UNUSED(src);
+
     char    buffer[100];
     int     i, mode = !stricmp(argv[0], "chat") ||
         !stricmp(argv[0], "say") ? 0 : !stricmp(argv[0], "chatNum") ||
@@ -954,6 +962,8 @@ D_CMD(Chat)
 
 D_CMD(Kick)
 {
+    DENG2_UNUSED2(src, argc);
+
     int     num;
 
     if(!netGame)
@@ -985,8 +995,11 @@ D_CMD(Kick)
     return true;
 }
 
+#ifdef __CLIENT__
 D_CMD(SetName)
 {
+    DENG2_UNUSED2(src, argc);
+
     Con_SetString("net-name", argv[1]);
 
     if(!netGame)
@@ -1001,9 +1014,12 @@ D_CMD(SetName)
     Net_SendPlayerInfo(consolePlayer, 0);
     return true;
 }
+#endif
 
 D_CMD(SetTicks)
 {
+    DENG2_UNUSED2(src, argc);
+
 //  extern double lastSharpFrameTime;
 
     firstNetUpdate = true;
@@ -1014,6 +1030,8 @@ D_CMD(SetTicks)
 
 D_CMD(MakeCamera)
 {
+    DENG2_UNUSED2(src, argc);
+
     /*  int cp;
        mobj_t *mo;
        ddplayer_t *conp = players + consolePlayer;
@@ -1065,9 +1083,11 @@ D_CMD(MakeCamera)
     return true;
 }
 
+#ifdef __CLIENT__
 D_CMD(SetConsole)
 {
-#ifdef __CLIENT__
+    DENG2_UNUSED2(src, argc);
+
     int cp = atoi(argv[1]);
     if(ddPlayers[cp].shared.inGame)
     {
@@ -1076,9 +1096,9 @@ D_CMD(SetConsole)
 
     // Update the viewports.
     R_SetViewGrid(0, 0);
-#endif
     return true;
 }
+#endif
 
 void Net_FinishConnection(int nodeId, const byte* data, int size)
 {
@@ -1152,6 +1172,8 @@ int Net_StartConnection(const char* address, int port)
  */
 D_CMD(Connect)
 {
+    DENG2_UNUSED(src);
+
     char *ptr;
     int port = 0;
 
@@ -1189,6 +1211,8 @@ D_CMD(Connect)
  */
 D_CMD(Net)
 {
+    DENG2_UNUSED(src);
+
     boolean success = true;
 
     if(argc == 1) // No args?

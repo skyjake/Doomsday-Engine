@@ -46,7 +46,7 @@ D_CMD(StopMusic);
 static void Mus_UpdateSoundFont(void);
 
 static int     musPreference = MUSP_EXT;
-static char*   soundFontPath = "";
+static char*   soundFontPath = (char*) "";
 
 static boolean musAvail = false;
 static boolean musicPaused = false;
@@ -443,6 +443,8 @@ static void Mus_UpdateSoundFont(void)
  */
 D_CMD(PlayMusic)
 {
+    DENG2_UNUSED(src);
+
     if(!musAvail)
     {
         Con_Printf("The Music module is not available.\n");
@@ -505,12 +507,16 @@ D_CMD(PlayMusic)
 
 D_CMD(StopMusic)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     Mus_Stop();
     return true;
 }
 
 D_CMD(PauseMusic)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     musicPaused = !musicPaused;
     Mus_Pause(musicPaused);
     return true;

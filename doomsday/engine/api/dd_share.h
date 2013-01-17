@@ -497,7 +497,7 @@ enum {
 };
 
 /// Determines whether @a val can be interpreted as a valid DMU element type id.
-#define VALID_DMU_ELEMENT_TYPE_ID(val) ((val) >= DMU_FIRST_ELEMENT_TYPE_ID && (val) <= DMU_LAST_ELEMENT_TYPE_ID)
+#define VALID_DMU_ELEMENT_TYPE_ID(val) ((int)(val) >= (int)DMU_FIRST_ELEMENT_TYPE_ID && (int)(val) <= (int)DMU_LAST_ELEMENT_TYPE_ID)
 
 /**
  * @defgroup ldefFlags Linedef Flags

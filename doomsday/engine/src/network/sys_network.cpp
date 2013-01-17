@@ -80,7 +80,7 @@ typedef struct foundhost_s {
 
 static void N_IPToString(char *buf, ipaddress_t *ip);
 
-char   *nptIPAddress = "";
+char   *nptIPAddress = (char *) "";
 int     nptIPPort = 0;          // This is the port *we* use to communicate.
 int     defaultTCPPort = DEFAULT_TCP_PORT;
 
@@ -571,7 +571,7 @@ boolean N_Connect(int index)
     pName = playerName;
     if(!pName || !pName[0])
     {
-        pName = "Anonymous";
+        pName = (char *) "Anonymous";
     }
     sprintf(buf, "Join %04x %s", SV_VERSION, pName);
     LegacyNetwork_Send(svNode->sock, buf, (int) strlen(buf));

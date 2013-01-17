@@ -513,6 +513,8 @@ void Cl_Ticker(timespan_t ticLength)
  */
 D_CMD(Login)
 {
+    DENG2_UNUSED(src);
+
     // Only clients can log in.
     if(!isClient)
         return false;

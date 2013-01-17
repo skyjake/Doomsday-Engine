@@ -157,7 +157,7 @@ boolean FR_Available(void)
     return inited;
 }
 
-void FR_Ticker(timespan_t ticLength)
+void FR_Ticker(timespan_t /*ticLength*/)
 {
     if(!inited)
         return;
@@ -499,11 +499,13 @@ static int textFragmentHeight(const char* fragment)
     }
 }
 
+/*
 static void textFragmentSize(int* width, int* height, const char* fragment)
 {
     if(width)  *width  = textFragmentWidth(fragment);
     if(height) *height = textFragmentHeight(fragment);
 }
+*/
 
 static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlags,
     short textFlags, int initialCount)
@@ -716,7 +718,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 }
 
 static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
-    int alignFlags, short textFlags)
+    int alignFlags, short /*textFlags*/)
 {
     float x = (float) posX, y = (float) posY;
     Point2Raw coords[4];
