@@ -1422,30 +1422,28 @@ void Def_Read()
     defsInited = true;
 }
 
-static void initMaterialGroup(ded_group_t *def)
+static void initMaterialGroup(ded_group_t &def)
 {
-    DENG_ASSERT(def);
-
     //int animNumber  = -1;
-    int groupNumber = -1;
-    for(int i = 0; i < def->count.num; ++i)
+    Materials::Group *group = 0;
+    for(int i = 0; i < def.count.num; ++i)
     {
-        ded_group_member_t *gm = &def->members[i];
+        ded_group_member_t *gm = &def.members[i];
         if(!gm->material) continue;
 
         try
         {
-            Material &material = App_Materials().find(*reinterpret_cast<de::Uri *>(gm->material)).material();
+            MaterialManifest &manifest = App_Materials().find(*reinterpret_cast<de::Uri *>(gm->material));
 
-            if(def->flags & AGF_PRECACHE) // A precache group.
+            if(def.flags & AGF_PRECACHE) // A precache group.
             {
                 // Only create the group once the first material has been found.
-                if(groupNumber == -1)
+                if(!group)
                 {
-                    groupNumber = App_Materials().newGroup();
+                    group = &App_Materials().newGroup();
                 }
 
-                App_Materials().group(groupNumber).addMaterial(material);
+                group->addManifest(manifest);
             }
 #if 0 /// @todo $revise-texture-animation
             else // An animation group.
@@ -1453,15 +1451,13 @@ static void initMaterialGroup(ded_group_t *def)
                 // Only create the group once the first material has been found.
                 if(animNumber == -1)
                 {
-                    animNumber = App_Materials().newAnimGroup(def->flags & ~AGF_PRECACHE);
+                    animNumber = App_Materials().newAnimGroup(def.flags & ~AGF_PRECACHE);
                 }
 
-                App_Materials().animGroup(animNumber).addFrame(material, gm->tics, gm->randomTics);
+                App_Materials().animGroup(animNumber).addFrame(manifest.material(), gm->tics, gm->randomTics);
             }
 #endif
         }
-        catch(Materials::Manifest::MissingMaterialError const &)
-        {} // Ignore this error.
         catch(Materials::NotFoundError const &er)
         {
             // Log but otherwise ignore this error.
@@ -1606,7 +1602,7 @@ void Def_PostInit(void)
     App_Materials().clearAllGroups();
     for(int i = 0; i < defs.count.groups.num; ++i)
     {
-        initMaterialGroup(&defs.groups[i]);
+        initMaterialGroup(defs.groups[i]);
     }
 }
 

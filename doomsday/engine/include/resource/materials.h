@@ -58,17 +58,17 @@ public:
     typedef class MaterialManifest Manifest;
 
     /**
-     * Defines a group of one or more materials.
+     * Defines a group of one or more material manifests.
      */
     class Group
     {
     public:
-        /// All materials in the group.
-        typedef QList<Material *> Materials;
+        /// A list of material manifests.
+        typedef QList<Manifest *> Manifests;
 
     public:
         /// An invalid group member reference was specified. @ingroup errors
-        DENG2_ERROR(InvalidMaterialError);
+        DENG2_ERROR(InvalidManifestError);
 
     public:
         Group(int id);
@@ -79,43 +79,43 @@ public:
         int id() const;
 
         /**
-         * Returns the total number of materials in the group.
+         * Returns the total number of material manifests in the group.
          */
-        int materialCount() const;
+        int manifestCount() const;
 
         /**
-         * Lookup a material in the group by number.
+         * Lookup a manifest in the group by number.
          *
-         * @param number  Material number to lookup.
-         * @return  Found material.
+         * @param number  Material manifest number to lookup.
+         * @return  Found manifest.
          */
-        Material &material(int number);
+        Manifest &manifest(int number);
 
         /**
-         * Extend the group by adding a new material to the end of the group.
+         * Extend the group by adding a new manifest to the end of the group.
          *
-         * @param material  Material to add.
+         * @param manifest  Manifest to add.
          */
-        void addMaterial(Material &material);
+        void addManifest(Manifest &manifest);
 
         /**
-         * Returns @c true iff @a material is part of this group.
+         * Returns @c true iff @a manifest is part of this group.
          *
-         * @param mat  Material to search for.
+         * @param mat  Manifest to search for.
          */
-        bool hasMaterial(Material &material) const;
+        bool hasManifest(Manifest &manifest) const;
 
         /**
-         * Provides access to the material list for efficient traversal.
+         * Provides access to the manifest list for efficient traversal.
          */
-        Materials const &allMaterials() const;
+        Manifests const &allManifests() const;
 
     private:
         /// Unique identifier.
         int id_;
 
-        /// All materials in the group.
-        Materials materials;
+        /// All material manifests in the group.
+        Manifests manifests;
     };
 
     /**
@@ -334,10 +334,9 @@ public:
     Group &group(int number) const;
 
     /**
-     * Create a new material group.
-     * @return  Unique identifier associated with the new group.
+     * Create a new (empty) material group.
      */
-    int newGroup();
+    Group &newGroup();
 
     /**
      * To be called to destroy all materials groups when they are no longer needed.
@@ -352,9 +351,7 @@ public:
     /**
      * Returns the total number of material groups in the collection.
      */
-    inline int groupCount() const {
-        return allGroups().count();
-    }
+    inline int groupCount() const { return allGroups().count(); }
 
 private:
     struct Instance;

@@ -54,36 +54,36 @@ int Materials::Group::id() const
     return id_;
 }
 
-int Materials::Group::materialCount() const
+int Materials::Group::manifestCount() const
 {
-    return materials.count();
+    return manifests.count();
 }
 
-Material &Materials::Group::material(int number)
+Materials::Manifest &Materials::Group::manifest(int number)
 {
-    if(number < 0 || number >= materialCount())
+    if(number < 0 || number >= manifestCount())
     {
-        /// @throw InvalidMaterialError Attempt to access an invalid material.
-        throw InvalidMaterialError("Materials::Group::material", QString("Invalid material #%1, valid range [0..%2)").arg(number).arg(materialCount()));
+        /// @throw InvalidManifestError Attempt to access an invalid manifest.
+        throw InvalidManifestError("Materials::Group::manifest", QString("Invalid manifest #%1, valid range [0..%2)").arg(number).arg(manifestCount()));
     }
-    return *materials[number];
+    return *manifests[number];
 }
 
-void Materials::Group::addMaterial(Material &mat)
+void Materials::Group::addManifest(Materials::Manifest &manifest)
 {
-    LOG_AS("Materials::Group::addMaterial");
-    if(hasMaterial(mat)) return;
-    materials.push_back(&mat);
+    LOG_AS("Materials::Group::addManifest");
+    if(hasManifest(manifest)) return;
+    manifests.push_back(&manifest);
 }
 
-bool Materials::Group::hasMaterial(Material &mat) const
+bool Materials::Group::hasManifest(Materials::Manifest &manifest) const
 {
-    return materials.contains(&mat);
+    return manifests.contains(&manifest);
 }
 
-Materials::Group::Materials const &Materials::Group::allMaterials() const
+Materials::Group::Manifests const &Materials::Group::allManifests() const
 {
-    return materials;
+    return manifests;
 }
 
 static void applyVariantSpec(MaterialVariantSpec &spec, materialcontext_t mc,
@@ -106,13 +106,13 @@ typedef QList<MaterialVariantSpec *> VariantSpecs;
 struct VariantCacheTask
 {
     /// The material from which to cache a variant.
-    Material *mat;
+    Material *material;
 
     /// Specification of the variant to be cached.
     MaterialVariantSpec const *spec;
 
-    VariantCacheTask(Material &_mat, MaterialVariantSpec const &_spec)
-        : mat(&_mat), spec(&_spec)
+    VariantCacheTask(Material &_material, MaterialVariantSpec const &_spec)
+        : material(&_material), spec(&_spec)
     {}
 };
 
@@ -350,8 +350,8 @@ void Materials::processCacheQueue()
     {
          VariantCacheTask *cacheTask = d->variantCacheQueue.takeFirst();
 
-         /// @todo prepare all textures in the animation (if animated).
-         cacheTask->mat->prepare(*cacheTask->spec);
+         /// @todo $revise-texture-animation: prepare all textures in the animation (if animated).
+         cacheTask->material->prepare(*cacheTask->spec);
 
          delete cacheTask;
     }
@@ -597,16 +597,16 @@ Material *Materials::newFromDef(ded_material_t &def)
     return material;
 }
 
-void Materials::cache(Material &mat, MaterialVariantSpec const &spec,
+void Materials::cache(Material &material, MaterialVariantSpec const &spec,
     bool cacheGroups)
 {
     // Already in the queue?
     DENG2_FOR_EACH_CONST(VariantCacheQueue, i, d->variantCacheQueue)
     {
-        if(&mat == (*i)->mat && &spec == (*i)->spec) return;
+        if(&material == (*i)->material && &spec == (*i)->spec) return;
     }
 
-    VariantCacheTask *newTask = new VariantCacheTask(mat, spec);
+    VariantCacheTask *newTask = new VariantCacheTask(material, spec);
     d->variantCacheQueue.push_back(newTask);
 
     if(!cacheGroups) return;
@@ -618,13 +618,14 @@ void Materials::cache(Material &mat, MaterialVariantSpec const &spec,
     DENG2_FOR_EACH_CONST(Groups, i, d->groups)
     {
         Group const &group = *i;
-        if(!group.hasMaterial(mat)) continue;
+        if(!group.hasManifest(material.manifest())) continue;
 
-        DENG2_FOR_EACH_CONST(Group::Materials, k, group.allMaterials())
+        DENG2_FOR_EACH_CONST(Group::Manifests, k, group.allManifests())
         {
-            if(*k == &mat) continue; // We've already enqueued this.
+            if(!(*k)->hasMaterial()) continue;
+            if(&(*k)->material() == &material) continue; // We've already enqueued this.
 
-            cache(**k, spec, false /* do not cache groups */);
+            cache((*k)->material(), spec, false /* do not cache groups */);
         }
     }
 }
@@ -652,13 +653,13 @@ MaterialVariantSpec const &Materials::variantSpecForContext(
                                        mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-int Materials::newGroup()
+Materials::Group &Materials::newGroup()
 {
     // Allocating one by one is inefficient, but it doesn't really matter.
-    // The group id is (index + 1)
-    int groupId = d->groups.count() + 1;
-    d->groups.push_back(Group(groupId));
-    return groupId;
+    // The group number is (index + 1)
+    int groupNumber = d->groups.count() + 1;
+    d->groups.push_back(Group(groupNumber));
+    return d->groups.back();
 }
 
 Materials::Group &Materials::group(int number) const
