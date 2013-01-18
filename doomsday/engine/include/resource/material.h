@@ -321,31 +321,15 @@ public:
      * Construct a new material.
      *
      * @param manifest  Manifest derived to yield the material.
-     * @param flags  @see materialFlags
      * @param def  Definition for the material.
-     * @param dimensions  Dimensions of the material in map coordinate space units.
      */
-    Material(de::MaterialManifest &manifest, short flags, ded_material_t &def,
-             QSize const &dimensions = QSize());
+    Material(de::MaterialManifest &manifest, ded_material_t &def);
     ~Material();
 
     /**
      * Returns the MaterialManifest derived to yield the material.
      */
     de::MaterialManifest &manifest() const;
-
-    /**
-     * Returns the definition for the material; otherwise @c 0 if invalid.
-     */
-    ded_material_t *definition() const;
-
-    /**
-     * Change the associated definition for the material.
-     * @param def  New definition (can be @c 0).
-     *
-     * @see definition()
-     */
-    void setDefinition(ded_material_t *def);
 
     /// Returns the dimensions of the material in map coordinate space units.
     QSize const &dimensions() const;
@@ -414,6 +398,20 @@ public:
     bool hasGlow() const;
 
     /**
+     * Process a system tick event for all context variants of the material.
+     * Each if not currently paused is animated independently; layer stages
+     * and (light) decorations are animated and state property values are
+     * updated accordingly.
+     *
+     * @note If the material is not valid no animation will be done.
+     *
+     * @param ticLength  Length of the tick in seconds.
+     *
+     * @see isValid()
+     */
+    void ticker(timespan_t time);
+
+    /**
      * Choose/create a variant of the material which fulfills @a spec and then
      * immediately prepare it for render (e.g., upload textures if necessary).
      *
@@ -439,26 +437,6 @@ public:
     }
 
     /**
-     * Returns the current prepared state of the material:
-     * @return       @c 0= Not yet prepared.
-     *               @c 1= Prepared from original game textures.
-     *               @c 2= Prepared from custom or replacement textures.
-     *
-     * @see prepare()
-     */
-    byte prepared() const;
-
-    /**
-     * Change the prepared status of the material.
-     * @param state  @c 0= Not yet prepared.
-     *               @c 1= Prepared from original game textures.
-     *               @c 2= Prepared from custom or replacement textures.
-     *
-     * @see prepare()
-     */
-    void setPrepared(byte state);
-
-    /**
      * Returns the environment audio class for the material.
      */
     audioenvironmentclass_e audioEnvironment() const;
@@ -470,20 +448,6 @@ public:
      * @todo If attached to a map Surface update accordingly!
      */
     void setAudioEnvironment(audioenvironmentclass_e newEnvironment);
-
-    /**
-     * Process a system tick event for all context variants of the material.
-     * Each if not currently paused is animated independently; layer stages
-     * and (light) decorations are animated and state property values are
-     * updated accordingly.
-     *
-     * @note If the material is not valid no animation will be done.
-     *
-     * @param ticLength  Length of the tick in seconds.
-     *
-     * @see isValid()
-     */
-    void ticker(timespan_t time);
 
     /**
      * Returns the number of material layers.
@@ -633,6 +597,37 @@ public:
      * @param tex  Texture to be linked with.
      */
     void setShinyMaskTexture(struct texture_s *tex);
+
+    /**
+     * Returns the definition for the material; otherwise @c 0 if invalid.
+     */
+    ded_material_t *definition() const;
+
+    /**
+     * Change the associated definition for the material.
+     * @param def  New definition (can be @c 0).
+     */
+    void setDefinition(ded_material_t *def);
+
+    /**
+     * Returns the current prepared state of the material:
+     * @return       @c 0= Not yet prepared.
+     *               @c 1= Prepared from original game textures.
+     *               @c 2= Prepared from custom or replacement textures.
+     *
+     * @see prepare()
+     */
+    byte prepared() const;
+
+    /**
+     * Change the prepared status of the material.
+     * @param state  @c 0= Not yet prepared.
+     *               @c 1= Prepared from original game textures.
+     *               @c 2= Prepared from custom or replacement textures.
+     *
+     * @see prepare()
+     */
+    void setPrepared(byte state);
 
 private:
     Instance *d;

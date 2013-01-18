@@ -44,9 +44,6 @@ public:
 
     virtual ~MaterialManifest();
 
-    void setId(materialid_t newId);
-    void setCustom(bool yes);
-
     /**
      * Returns the owning scheme of the material manifest.
      */
@@ -66,11 +63,22 @@ public:
      */
     Uri composeUri(QChar sep = '/') const;
 
+    /**
+     * Returns a textual description of the origin of the manifest.
+     *
+     * @return Human-friendly description of the origin of the manifest.
+     */
+    String originDescription() const;
+
     /// @return  Unique identifier associated with this.
     materialid_t id() const;
 
+    void setId(materialid_t newId);
+
     /// @return  @c true if the manifest is not derived from an original game resource.
     bool isCustom() const;
+
+    void setCustom(bool yes);
 
     /// @return  @c true if the manifest has an associated material.
     bool hasMaterial() const;

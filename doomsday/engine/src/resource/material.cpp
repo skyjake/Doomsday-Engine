@@ -142,11 +142,9 @@ struct Material::Instance
     /// Current prepared state.
     byte prepared;
 
-    Instance(MaterialManifest &_manifest, short _flags, ded_material_t &_def,
-             QSize const &_dimensions)
+    Instance(MaterialManifest &_manifest, ded_material_t &_def)
         : manifest(_manifest), def(&_def), envClass(AEC_UNKNOWN),
-          dimensions(_dimensions), flags(_flags),
-          detailTex(0), detailScale(0), detailStrength(0),
+          flags(0), detailTex(0), detailScale(0), detailStrength(0),
           shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0),
           prepared(0)
     {
@@ -192,11 +190,12 @@ struct Material::Instance
     }
 };
 
-Material::Material(MaterialManifest &_manifest, short flags, ded_material_t &def,
-                   QSize const &dimensions)
+Material::Material(MaterialManifest &_manifest, ded_material_t &def)
     : de::MapElement(DMU_MATERIAL)
 {
-    d = new Instance(_manifest, flags, def, dimensions);
+    d = new Instance(_manifest, def);
+    d->flags      = def.flags;
+    d->dimensions = QSize(MAX_OF(0, def.width), MAX_OF(0, def.height));
 }
 
 Material::~Material()
@@ -211,7 +210,7 @@ int Material::decorationCount() const
 
 bool Material::isValid() const
 {
-    return !!definition();
+    return !!d->def;
 }
 
 void Material::ticker(timespan_t time)
@@ -227,7 +226,7 @@ ded_material_t *Material::definition() const
     return d->def;
 }
 
-void Material::setDefinition(struct ded_material_s *def)
+void Material::setDefinition(ded_material_t *def)
 {
     if(d->def != def)
     {
