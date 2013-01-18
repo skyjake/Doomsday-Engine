@@ -28,6 +28,7 @@
 #include "ui/sys_input.h"
 #include "network/sys_network.h"
 #include "network/masterserver.h"
+
 #ifdef __CLIENT__
 #  include "gl/sys_opengl.h"
 #endif
