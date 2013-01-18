@@ -1,4 +1,4 @@
-/**\file
+/** @file
  *
  * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

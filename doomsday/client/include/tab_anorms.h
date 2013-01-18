@@ -1,4 +1,4 @@
-/**\file
+/** @file
  *\section License
  * License: GPL
  *

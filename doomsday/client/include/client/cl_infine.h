@@ -1,4 +1,4 @@
-/**\file
+/** @file
  *
  * @authors Copyright © 2010 Daniel Swanson <danij@dengine.net>
  *
