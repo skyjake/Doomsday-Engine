@@ -18,14 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstdlib>
-#include <cstring>
-
 #include "de_base.h"
 #include "de_console.h"
-#ifdef __CLIENT__
-#  include "de_network.h" // playback
-#endif
 #include "de_audio.h" // For environmental audio properties.
 
 #include <QtAlgorithms>
@@ -42,7 +36,7 @@
 #include "resource/materials.h"
 
 /// Number of elements to block-allocate in the material index to material manifest map.
-#define MATERIALS_MANIFESTMAP_BLOCK_ALLOC (32)
+#define MANIFESTIDMAP_BLOCK_ALLOC (32)
 
 D_CMD(InspectMaterial);
 D_CMD(ListMaterials);
@@ -356,6 +350,7 @@ void Materials::processCacheQueue()
     {
          VariantCacheTask *cacheTask = d->variantCacheQueue.takeFirst();
 
+         /// @todo prepare all textures in the animation (if animated).
          cacheTask->mat->prepare(*cacheTask->spec);
 
          delete cacheTask;
@@ -486,7 +481,7 @@ Materials::Manifest &Materials::newManifest(Materials::Scheme &scheme, Path cons
         if(d->manifestCount > d->manifestIdMapSize)
         {
             // Allocate more memory.
-            d->manifestIdMapSize += MATERIALS_MANIFESTMAP_BLOCK_ALLOC;
+            d->manifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
             d->manifestIdMap = (Manifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
         }
         d->manifestIdMap[d->manifestCount - 1] = manifest; /* 1-based index */
@@ -730,7 +725,7 @@ static void printMaterialInfo(Material &material)
     QByteArray sourceDescription = material.manifest().sourceDescription().toUtf8();
 
     // Print summary:
-    Con_Printf("Material \"%s\" [%p] x%u origin:%s\n",
+    Con_Printf("Material \"%s\" [%p] x%u source:%s\n",
                path.constData(), (void *) &material, material.variantCount(),
                sourceDescription.constData());
 
@@ -946,7 +941,7 @@ static int printMaterials2(Materials::Scheme *scheme, Path const &like, int flag
     // Print the result index key.
     int numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits(found.count()));
 
-    Con_Printf(" %*s: %-*s origin n#\n", numFoundDigits, "idx",
+    Con_Printf(" %*s: %-*s source n#\n", numFoundDigits, "idx",
                printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
     Con_PrintRuler();
 
