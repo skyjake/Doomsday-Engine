@@ -1338,7 +1338,7 @@ DEFFC(End)
 DEFFC(BGMaterial)
 {
     // First attempt to resolve as a Values URI (which defines the material URI).
-    de::Materials::Manifest *manifest;
+    de::Materials::Manifest *manifest = 0;
     try
     {
         if(ded_value_t* value = Def_GetValueByUri(OP_URI(0)))
