@@ -13,7 +13,7 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
     {
         de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
-        return App_Materials()->find(uri).material();
+        return App_Materials().find(uri).material();
     }
     catch(de::Materials::UnknownSchemeError const &er)
     {
@@ -36,7 +36,7 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 #undef Materials_ComposeUri
 DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 {
-    de::Materials::Manifest *manifest = App_Materials()->toManifest(materialId);
+    de::Materials::Manifest *manifest = App_Materials().toManifest(materialId);
     if(manifest)
     {
         de::Uri uri = manifest->composeUri();
@@ -50,7 +50,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
 {
     try
     {
-        return App_Materials()->find(*reinterpret_cast<de::Uri const *>(uri)).id();
+        return App_Materials().find(*reinterpret_cast<de::Uri const *>(uri)).id();
     }
     catch(de::Materials::NotFoundError const &)
     {} // Ignore this error.
@@ -64,7 +64,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
     {
         try
         {
-            return App_Materials()->find(de::Uri(uriCString, RC_NULL)).id();
+            return App_Materials().find(de::Uri(uriCString, RC_NULL)).id();
         }
         catch(de::Materials::NotFoundError const &)
         {} // Ignore this error.

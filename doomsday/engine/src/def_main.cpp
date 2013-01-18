@@ -1030,7 +1030,7 @@ void Def_Read()
         FS1::Scheme &scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
         scheme.reset();
 
-        App_Materials()->clearDefinitionLinks();
+        App_Materials().clearDefinitionLinks();
         Fonts_ClearDefinitionLinks();
 
         Def_Destroy();
@@ -1202,17 +1202,17 @@ void Def_Read()
 
         try
         {
-            MaterialManifest &bind = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->uri));
+            MaterialManifest &bind = App_Materials().find(*reinterpret_cast<de::Uri *>(def->uri));
             if(Material *mat = bind.material())
             {
                 // Update existing.
-                App_Materials()->rebuild(*mat, def);
+                App_Materials().rebuild(*mat, def);
             }
         }
         catch(Materials::NotFoundError const &)
         {
             // A new Material.
-            App_Materials()->newFromDef(*def);
+            App_Materials().newFromDef(*def);
         }
     }
 
@@ -1436,17 +1436,17 @@ static void initMaterialGroup(ded_group_t *def)
 
         try
         {
-            Material *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(gm->material)).material();
+            Material *mat = App_Materials().find(*reinterpret_cast<de::Uri *>(gm->material)).material();
 
             if(def->flags & AGF_PRECACHE) // A precache group.
             {
                 // Only create the group once the first material has been found.
                 if(groupNumber == -1)
                 {
-                    groupNumber = App_Materials()->newGroup();
+                    groupNumber = App_Materials().newGroup();
                 }
 
-                App_Materials()->group(groupNumber).addMaterial(*mat);
+                App_Materials().group(groupNumber).addMaterial(*mat);
             }
 #if 0 /// @todo $revise-texture-animation
             else // An animation group.
@@ -1454,10 +1454,10 @@ static void initMaterialGroup(ded_group_t *def)
                 // Only create the group once the first material has been found.
                 if(animNumber == -1)
                 {
-                    animNumber = App_Materials()->newAnimGroup(def->flags & ~AGF_PRECACHE);
+                    animNumber = App_Materials().newAnimGroup(def->flags & ~AGF_PRECACHE);
                 }
 
-                App_Materials()->animGroup(animNumber).addFrame(*mat, gm->tics, gm->randomTics);
+                App_Materials().animGroup(animNumber).addFrame(*mat, gm->tics, gm->randomTics);
             }
 #endif
         }
@@ -1602,7 +1602,7 @@ void Def_PostInit(void)
     }
 
     // Material groups (e.g., for precaching).
-    App_Materials()->clearAllGroups();
+    App_Materials().clearAllGroups();
     for(int i = 0; i < defs.count.groups.num; ++i)
     {
         initMaterialGroup(&defs.groups[i]);
@@ -1692,14 +1692,14 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
 
     try
     {
-        l->actMaterial = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->actMaterial)).id();
+        l->actMaterial = App_Materials().find(*reinterpret_cast<de::Uri *>(def->actMaterial)).id();
     }
     catch(Materials::NotFoundError const &)
     {} // Ignore this error.
 
     try
     {
-        l->deactMaterial = App_Materials()->find(*reinterpret_cast<de::Uri *>(def->deactMaterial)).id();
+        l->deactMaterial = App_Materials().find(*reinterpret_cast<de::Uri *>(def->deactMaterial)).id();
     }
     catch(Materials::NotFoundError const &)
     {} // Ignore this error.
@@ -1737,7 +1737,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 {
                     try
                     {
-                        l->iparm[k] = App_Materials()->find(de::Uri(def->iparmStr[k], RC_NULL)).id();
+                        l->iparm[k] = App_Materials().find(de::Uri(def->iparmStr[k], RC_NULL)).id();
                     }
                     catch(Materials::NotFoundError const &)
                     {} // Ignore this error.

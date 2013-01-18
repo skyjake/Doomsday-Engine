@@ -122,7 +122,7 @@ int P_MobjTicker(thinker_t* th, void* context)
 void P_Ticker(timespan_t time)
 {
     P_ControlTicker(time);
-    App_Materials()->ticker(time);
+    App_Materials().ticker(time);
 
     if(!theMap || !GameMap_ThinkerListInited(theMap)) return; // Not initialized yet.
 

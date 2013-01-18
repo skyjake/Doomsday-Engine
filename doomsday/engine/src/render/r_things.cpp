@@ -212,7 +212,7 @@ static void buildSprite(TextureManifest &manifest)
         link = true;
     }
 
-    frame->mat         = App_Materials()->find(de::Uri("Sprites", manifest.path())).material();
+    frame->mat         = App_Materials().find(de::Uri("Sprites", manifest.path())).material();
     frame->frame[0]    = frameNumber;
     frame->rotation[0] = rotationNumber;
 
@@ -456,7 +456,7 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
 
     /// @todo fixme: We should not be using the PSprite spec here. -ds
     MaterialVariantSpec const &spec =
-            App_Materials()->variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0,
+            App_Materials().variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0,
                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
                                                    false, true, true, false);
     MaterialSnapshot const &ms = mat->prepare(spec);

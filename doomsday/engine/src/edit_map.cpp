@@ -1809,7 +1809,7 @@ static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr
             // First try the preferred scheme, then any.
             try
             {
-                material = App_Materials()->find(materialUri).material();
+                material = App_Materials().find(materialUri).material();
             }
             catch(Materials::NotFoundError const &)
             {
@@ -1817,7 +1817,7 @@ static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr
                 try
                 {
                     materialUri.setScheme("");
-                    material = App_Materials()->find(materialUri).material();
+                    material = App_Materials().find(materialUri).material();
                 }
                 catch(Materials::NotFoundError const &)
                 {}

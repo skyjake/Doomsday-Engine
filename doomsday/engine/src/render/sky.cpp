@@ -168,7 +168,7 @@ static void configureDefaultSky()
         layer->flags = (i == 0? SLF_ACTIVE : 0);
         try
         {
-            layer->material = App_Materials()->find(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)).material();
+            layer->material = App_Materials().find(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)).material();
         }
         catch(Materials::NotFoundError const &)
         {
@@ -184,7 +184,7 @@ static void configureDefaultSky()
 
 MaterialVariantSpec const &Sky_SphereMaterialSpec(bool masked)
 {
-    return App_Materials()->variantSpecForContext(MC_SKYSPHERE,
+    return App_Materials().variantSpecForContext(MC_SKYSPHERE,
                                                   TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
                                                   0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1,
                                                   false, true, false, false);
@@ -294,7 +294,7 @@ void Sky_Configure(ded_sky_t *def)
         {
             try
             {
-                Material *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(sl->material)).material();
+                Material *mat = App_Materials().find(*reinterpret_cast<de::Uri *>(sl->material)).material();
                 if(mat)
                 {
                     Sky_LayerSetMaterial(i, mat);
@@ -797,14 +797,14 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         if(renderTextures == 2)
         {
-            mat = App_Materials()->find(de::Uri("System", Path("gray"))).material();
+            mat = App_Materials().find(de::Uri("System", Path("gray"))).material();
         }
         else
         {
             mat = Sky_LayerMaterial(layer);
             if(!mat)
             {
-                mat = App_Materials()->find(de::Uri("System", Path("missing"))).material();
+                mat = App_Materials().find(de::Uri("System", Path("missing"))).material();
                 rs.texXFlip = false;
             }
         }

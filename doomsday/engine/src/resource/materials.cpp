@@ -859,7 +859,7 @@ static QList<Materials::Manifest *> collectMaterialManifests(Materials::Scheme *
     else
     {
         // Consider materials in any scheme.
-        Materials::Schemes const &schemes = App_Materials()->allSchemes();
+        Materials::Schemes const &schemes = App_Materials().allSchemes();
         DENG2_FOR_EACH_CONST(Materials::Schemes, i, schemes)
         {
             PathTreeIterator<Materials::Scheme::Index> iter((*i)->index().leafNodes());
@@ -964,7 +964,7 @@ static int printMaterials2(Materials::Scheme *scheme, Path const &like, int flag
 
 static void printMaterials(de::Uri const &search, int flags = DEFAULT_PRINTMATERIALFLAGS)
 {
-    Materials &materials = *App_Materials();
+    Materials &materials = App_Materials();
 
     int printTotal = 0;
 
@@ -1029,7 +1029,7 @@ static de::Uri composeSearchUri(char **argv, int argc, bool matchSchemeOnly = tr
             }
 
             // Just a scheme name?
-            if(matchSchemeOnly && App_Materials()->knownScheme(rawUri))
+            if(matchSchemeOnly && App_Materials().knownScheme(rawUri))
             {
                 return de::Uri().setScheme(rawUri);
             }
@@ -1051,7 +1051,7 @@ D_CMD(ListMaterials)
 {
     DENG2_UNUSED(src);
 
-    de::Materials &materials = *App_Materials();
+    de::Materials &materials = App_Materials();
     de::Uri search = composeSearchUri(&argv[1], argc - 1);
     if(!search.scheme().isEmpty() && !materials.knownScheme(search.scheme()))
     {
@@ -1067,7 +1067,7 @@ D_CMD(InspectMaterial)
 {
     DENG2_UNUSED(src);
 
-    de::Materials &materials = *App_Materials();
+    de::Materials &materials = App_Materials();
     de::Uri search = composeSearchUri(&argv[1], argc - 1, false /*don't match schemes*/);
     if(!search.scheme().isEmpty() && !materials.knownScheme(search.scheme()))
     {
@@ -1101,7 +1101,7 @@ D_CMD(PrintMaterialStats)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    de::Materials &materials = *App_Materials();
+    de::Materials &materials = App_Materials();
 
     Con_FPrintf(CPF_YELLOW, "Material Statistics:\n");
     de::Materials::Schemes const &schemes = materials.allSchemes();

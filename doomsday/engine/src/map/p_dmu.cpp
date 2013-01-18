@@ -360,7 +360,7 @@ void *P_ToPtr(int type, uint index)
         return 0; /* Unreachable. */ }
 
     case DMU_MATERIAL:
-        if(Materials::Manifest *manifest = App_Materials()->toManifest(index))
+        if(Materials::Manifest *manifest = App_Materials().toManifest(index))
         {
             return manifest->material();
         }
@@ -527,7 +527,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
         return 0; /* Unreachable */ }
 
     case DMU_MATERIAL:
-        if(Materials::Manifest *manifest = App_Materials()->toManifest(index))
+        if(Materials::Manifest *manifest = App_Materials().toManifest(index))
         {
             return callback(manifest->material(), context);
         }

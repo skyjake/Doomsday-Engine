@@ -576,15 +576,15 @@ void DD_ClearSystemTextureSchemes()
     GL_PruneTextureVariantSpecifications();
 }
 
-Materials *App_Materials()
+Materials &App_Materials()
 {
     if(!materials) throw Error("App_Materials", "Materials collection not yet initialized");
-    return materials;
+    return *materials;
 }
 
 void DD_CreateMaterialSchemes()
 {
-    Materials &materials = *App_Materials();
+    Materials &materials = App_Materials();
 
     materials.createScheme("System");
     materials.createScheme("Flats");
@@ -2274,7 +2274,7 @@ void DD_UpdateEngineState(void)
         gx.UpdateState(DD_POST);
 
     // Reset the material animations.
-    App_Materials()->resetAllMaterialAnimations();
+    App_Materials().resetAllMaterialAnimations();
 }
 
 /* *INDENT-OFF* */

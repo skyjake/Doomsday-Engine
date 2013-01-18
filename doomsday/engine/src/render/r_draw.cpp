@@ -176,7 +176,7 @@ void R_DrawPatchTiled(struct texture_s *_tex, int x, int y, int w, int h, int wr
 
 MaterialVariantSpec const &Ui_MaterialSpec()
 {
-    return App_Materials()->variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+    return App_Materials().variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                                   0, -3, 0, false, false, false, false);
 }
 
@@ -215,7 +215,7 @@ void R_DrawViewBorder()
     glColor4f(1, 1, 1, 1);
 
     // View background.
-    Material *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND])).material();
+    Material *mat = App_Materials().find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND])).material();
     if(mat)
     {
         MaterialSnapshot const &ms = mat->prepare(Ui_MaterialSpec());

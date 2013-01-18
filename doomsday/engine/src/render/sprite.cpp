@@ -303,7 +303,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     flip = sprFrame->flip[0];
 
     MaterialVariantSpec const &spec =
-        App_Materials()->variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+        App_Materials().variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                                0, -2, 0, false, true, true, false);
     MaterialSnapshot const &ms = sprFrame->mats[0]->prepare(spec);
 
@@ -374,7 +374,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
 MaterialVariantSpec const &PSprite_MaterialSpec()
 {
-    return App_Materials()->variantSpecForContext(MC_SPRITE, 0, 0, 0, 0,
+    return App_Materials().variantSpecForContext(MC_SPRITE, 0, 0, 0, 0,
                                                   GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0,
                                                   false, true, true, false);
 }
@@ -390,7 +390,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const *params)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
         MaterialSnapshot const &ms =
-            App_Materials()->find(de::Uri("System", Path("gray"))).material()->prepare(PSprite_MaterialSpec());
+            App_Materials().find(de::Uri("System", Path("gray"))).material()->prepare(PSprite_MaterialSpec());
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
@@ -861,7 +861,7 @@ void Rend_DrawMasked(void)
 
 MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass, int tmap)
 {
-    return App_Materials()->variantSpecForContext(MC_SPRITE, 0, 1, tclass, tmap,
+    return App_Materials().variantSpecForContext(MC_SPRITE, 0, 1, tclass, tmap,
                                                   GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1,
                                                   true, true, true, false);
 }
@@ -872,7 +872,7 @@ static Material::Variant *chooseSpriteMaterial(rendspriteparams_t const &p)
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        return App_Materials()->find(de::Uri("System", Path("gray"))).material()->chooseVariant(Rend_SpriteMaterialSpec(), true);
+        return App_Materials().find(de::Uri("System", Path("gray"))).material()->chooseVariant(Rend_SpriteMaterialSpec(), true);
     }
 
     // Use the pre-chosen sprite.

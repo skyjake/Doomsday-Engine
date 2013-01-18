@@ -181,10 +181,15 @@ void DD_ShutdownAll(void)
     P_ControlShutdown();
     Sv_Shutdown();
     R_Shutdown();
-    if(de::Materials *materials = App_Materials())
+
+    // Ensure the global material collection is destroyed.
+    try
     {
-        delete materials;
+        delete &App_Materials();
     }
+    catch(de::Error const &)
+    {} // Ignore this error.
+
     Def_Destroy();
     F_Shutdown();
     DD_ClearResourceClasses();

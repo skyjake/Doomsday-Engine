@@ -1133,7 +1133,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         // A new map is about to be setup.
         ddMapSetup = true;
 
-        App_Materials()->purgeCacheQueue();
+        App_Materials().purgeCacheQueue();
         return;
 
     case DDSMM_AFTER_LOADING:
@@ -1175,7 +1175,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
         float startTime = Timer_Seconds();
         Rend_CacheForMap();
-        App_Materials()->processCacheQueue();
+        App_Materials().processCacheQueue();
         VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Timer_Seconds() - startTime) )
 
         S_SetupForChangedMap();
@@ -1409,7 +1409,7 @@ static Material *chooseFixMaterial(SideDef *s, SideDefSection section)
     if(choice2) return choice2;
 
     // We'll assign the special "missing" material...
-    return App_Materials()->find(de::Uri("System", Path("missing"))).material();
+    return App_Materials().find(de::Uri("System", Path("missing"))).material();
 }
 
 static void addMissingMaterial(SideDef *s, SideDefSection section)

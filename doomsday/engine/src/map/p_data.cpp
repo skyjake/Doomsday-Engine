@@ -178,7 +178,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const* uriCString)
         R_ResetViewer();
 
         // Material animations should begin from their first step.
-        App_Materials()->resetAllMaterialAnimations();
+        App_Materials().resetAllMaterialAnimations();
 
         R_InitObjlinkBlockmapForMap();
 

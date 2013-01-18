@@ -198,7 +198,7 @@ de::ResourceClass& DD_ResourceClassByName(de::String name);
 de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 
 /// @return  The application's global Material collection.
-de::Materials *App_Materials();
+de::Materials &App_Materials();
 
 extern "C" {
 #endif // __cplusplus

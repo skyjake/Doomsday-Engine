@@ -66,7 +66,7 @@ MaterialManifest::~MaterialManifest()
 
 Materials &MaterialManifest::materials()
 {
-    return *App_Materials();
+    return App_Materials();
 }
 
 void MaterialManifest::setId(materialid_t id)

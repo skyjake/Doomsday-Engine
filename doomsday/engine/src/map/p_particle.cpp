@@ -1395,7 +1395,7 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
         {
             try
             {
-                Material *defMat = App_Materials()->find(*reinterpret_cast<de::Uri const *>(def->material)).material();
+                Material *defMat = App_Materials().find(*reinterpret_cast<de::Uri const *>(def->material)).material();
 
                 Material *mat = gen->plane->PS_material;
                 if(def->flags & PGF_FLOOR_SPAWN)

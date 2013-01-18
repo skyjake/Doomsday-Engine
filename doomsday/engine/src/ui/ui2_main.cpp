@@ -533,7 +533,7 @@ static void drawPageBackground(fi_page_t *p, float x, float y, float width, floa
     if(p->_bg.material)
     {
         MaterialVariantSpec const &spec =
-            App_Materials()->variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+            App_Materials().variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                                    0, 1, 0, false, false, false, false);
         MaterialSnapshot const &ms = p->_bg.material->prepare(spec);
 
@@ -1026,7 +1026,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             if(mat)
             {
                 MaterialVariantSpec const &spec =
-                    App_Materials()->variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                    App_Materials().variantSpecForContext(MC_UI, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                                            0, -3, 0, false, false, false, false);
                 MaterialSnapshot const &ms = mat->prepare(spec);
 
