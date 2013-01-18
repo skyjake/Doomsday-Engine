@@ -29,6 +29,7 @@
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_ui.h"
+#include "dd_def.h"
 #include "dd_main.h"
 #include "dd_loop.h"
 
