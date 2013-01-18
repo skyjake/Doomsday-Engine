@@ -161,6 +161,9 @@ extern GETGAMEAPI GetGameAPI;
 // The Game collection.
 static de::GameCollection* games;
 
+// The Material collection.
+static de::Materials *materials;
+
 #ifdef __CLIENT__
 
 D_CMD(CheckForUpdates)
@@ -571,6 +574,22 @@ void DD_ClearSystemTextureSchemes()
 
     textures.scheme("System").clear();
     GL_PruneTextureVariantSpecifications();
+}
+
+Materials *App_Materials()
+{
+    if(!materials) throw Error("App_Materials", "Materials collection not yet initialized");
+    return materials;
+}
+
+void DD_CreateMaterialSchemes()
+{
+    Materials &materials = *App_Materials();
+
+    materials.createScheme("System");
+    materials.createScheme("Flats");
+    materials.createScheme("Textures");
+    materials.createScheme("Sprites");
 }
 
 /**
@@ -1484,8 +1503,9 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     FI_Shutdown();
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
-    /// @todo Materials database should not be shutdown during a reload.
-    Materials_Shutdown();
+    /// @todo Material collection should not be destroyed during a reload.
+    DENG_ASSERT(materials);
+    delete materials; materials = 0;
 
     VERBOSE(
         if(!isNullGame(game))
@@ -1513,7 +1533,10 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
             return false;
         }
 
-        Materials_Init();
+        DENG_ASSERT(!materials);
+        materials = new Materials();
+        DD_CreateMaterialSchemes();
+
         FI_Init();
     }
 
@@ -2078,7 +2101,9 @@ static int DD_StartupWorker(void* parm)
     DD_CreateTextureSchemes();
 
     // Get the material collection up and running.
-    Materials_Init();
+    DENG_ASSERT(!materials);
+    materials = new Materials();
+    DD_CreateMaterialSchemes();
 
     Con_SetProgress(140);
     Con_Message("Initializing Binding subsystem...\n");

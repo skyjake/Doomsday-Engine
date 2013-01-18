@@ -1118,32 +1118,3 @@ D_CMD(PrintMaterialStats)
     return true;
 }
 #endif
-
-/*
- * C wrapper API:
- */
-
-static de::Materials *materials;
-
-de::Materials *App_Materials()
-{
-    if(!materials) throw de::Error("App_Materials", "Materials collection not yet initialized");
-    return materials;
-}
-
-void Materials_Init()
-{
-    DENG_ASSERT(!materials);
-    materials = new de::Materials();
-
-    materials->createScheme("System");
-    materials->createScheme("Flats");
-    materials->createScheme("Textures");
-    materials->createScheme("Sprites");
-}
-
-void Materials_Shutdown()
-{
-    if(!materials) return;
-    delete materials; materials = 0;
-}

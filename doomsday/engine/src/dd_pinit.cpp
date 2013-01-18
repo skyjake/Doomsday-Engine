@@ -172,17 +172,19 @@ void DD_ShutdownAll(void)
 
 #ifdef __CLIENT__
     // Stop all demo recording.
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        int i;
-        for(i = 0; i < DDMAXPLAYERS; ++i)
-            Demo_StopRecording(i);
+        Demo_StopRecording(i);
     }
 #endif
 
     P_ControlShutdown();
     Sv_Shutdown();
     R_Shutdown();
-    Materials_Shutdown();
+    if(de::Materials *materials = App_Materials())
+    {
+        delete materials;
+    }
     Def_Destroy();
     F_Shutdown();
     DD_ClearResourceClasses();

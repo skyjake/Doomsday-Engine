@@ -21,15 +21,13 @@
 #ifndef LIBDENG_RESOURCE_MATERIALS_H
 #define LIBDENG_RESOURCE_MATERIALS_H
 
-#include "def_data.h"
-#include "material.h"
-
-#ifdef __cplusplus
-
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
+
+#include "def_data.h"
 #include "uri.hh"
+#include "resource/material.h"
 #include "resource/materialmanifest.h"
 #include "resource/materialscheme.h"
 #include "resource/materialvariantspec.h"
@@ -366,24 +364,5 @@ private:
 Q_DECLARE_OPERATORS_FOR_FLAGS(Materials::UriValidationFlags)
 
 } // namespace de
-
-de::Materials *App_Materials();
-
-extern "C" {
-#endif // __cplusplus
-
-/*
- * C wrapper API:
- */
-
-/// Initialize this module. Cannot be re-initialized, must shutdown first.
-void Materials_Init(void);
-
-/// Shutdown this module.
-void Materials_Shutdown(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_RESOURCE_MATERIALS_H */
