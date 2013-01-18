@@ -290,14 +290,15 @@ void Rend_ConsoleUpdateBackground()
     DENG_ASSERT(inited);
     if(!consoleBackgroundMaterialUri || Str_IsEmpty(Uri_Path(consoleBackgroundMaterialUri))) return;
 
+    consoleBackgroundMaterial = 0;
     try
     {
-        consoleBackgroundMaterial = App_Materials().find(*reinterpret_cast<de::Uri *>(consoleBackgroundMaterialUri)).material();
+        consoleBackgroundMaterial = &App_Materials().find(*reinterpret_cast<de::Uri *>(consoleBackgroundMaterialUri)).material();
     }
+    catch(Materials::Manifest::MissingMaterialError const &)
+    {} // Ignore this error.
     catch(Materials::NotFoundError const &)
-    {
-        consoleBackgroundMaterial = 0;
-    }
+    {} // Ignore this error.
 }
 
 void Rend_ConsoleToggleFullscreen()

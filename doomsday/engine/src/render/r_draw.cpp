@@ -180,6 +180,7 @@ MaterialVariantSpec const &Ui_MaterialSpec()
                                                   0, -3, 0, false, false, false, false);
 }
 
+/// @todo Optimize: Do not search for resources (materials, textures) each frame.
 void R_DrawViewBorder()
 {
     DENG_ASSERT(inited);
@@ -215,16 +216,18 @@ void R_DrawViewBorder()
     glColor4f(1, 1, 1, 1);
 
     // View background.
-    Material *mat = App_Materials().find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND])).material();
-    if(mat)
+    try
     {
-        MaterialSnapshot const &ms = mat->prepare(Ui_MaterialSpec());
+        MaterialSnapshot const &ms = App_Materials().find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]))
+            .material().prepare(Ui_MaterialSpec());
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.dimensions().width(), ms.dimensions().height(), 0, 0,
                             vd->window.origin.x - border, vd->window.origin.y - border,
                             vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
     }
+    catch(Materials::Manifest::MissingMaterialError const &)
+    {} // Ignore this error.
 
     if(border != 0)
     {

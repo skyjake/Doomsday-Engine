@@ -362,7 +362,7 @@ void *P_ToPtr(int type, uint index)
     case DMU_MATERIAL:
         if(Materials::Manifest *manifest = App_Materials().toManifest(index))
         {
-            return manifest->material();
+            return &manifest->material();
         }
         /// @todo Throw exception?
         return 0;
@@ -529,7 +529,7 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
     case DMU_MATERIAL:
         if(Materials::Manifest *manifest = App_Materials().toManifest(index))
         {
-            return callback(manifest->material(), context);
+            return callback(&manifest->material(), context);
         }
         break;
 

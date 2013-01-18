@@ -69,19 +69,21 @@ public:
     /// @return  Unique identifier associated with this.
     materialid_t id() const;
 
-    /// @return  @c true if the material manifest is not derived from an original game resource.
+    /// @return  @c true if the manifest is not derived from an original game resource.
     bool isCustom() const;
 
-    /// @return  Material associated with the manifest; otherwise @c NULL.
-    Material *material() const;
+    /// @return  @c true if the manifest has an associated material.
+    bool hasMaterial() const;
 
     /**
-     * Change the material associated with this manifest.
+     * Returns the material associated with the manifest.
+     */
+    Material &material() const;
+
+    /**
+     * Change the material associated with the manifest.
      *
-     * @post If @a material differs from that currently associated with this,
-     *       any Info presently owned by this will destroyed (its invalid).
-     *
-     * @param  material  New material to associate with this.
+     * @param  material  New material to associate with.
      */
     void setMaterial(Material *material);
 

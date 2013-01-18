@@ -100,7 +100,7 @@ static Material *findRecordMaterial(Records &records, SerialId id)
         Material *material = 0;
         try
         {
-            material = App_Materials().find(Uri(records.stringRef(id), RC_NULL)).material();
+            material = &App_Materials().find(Uri(records.stringRef(id), RC_NULL)).material();
         }
         catch(Materials::NotFoundError const &)
         {} // Ignore this error.
@@ -151,7 +151,7 @@ struct MaterialArchive::Instance
         {
             MaterialManifest *manifest = App_Materials().toManifest(i);
             SerialId id = insertRecord(manifest->composeUri());
-            records.setUserPointer(id, manifest->material());
+            records.setUserPointer(id, &manifest->material());
             records.setUserValue(id, true);
         }
     }

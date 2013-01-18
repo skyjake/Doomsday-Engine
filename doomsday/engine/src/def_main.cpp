@@ -1202,13 +1202,12 @@ void Def_Read()
 
         try
         {
-            MaterialManifest &bind = App_Materials().find(*reinterpret_cast<de::Uri *>(def->uri));
-            if(Material *mat = bind.material())
-            {
-                // Update existing.
-                App_Materials().rebuild(*mat, def);
-            }
+            // Update existing.
+            Material &material = App_Materials().find(*reinterpret_cast<de::Uri *>(def->uri)).material();
+            App_Materials().rebuild(material, def);
         }
+        catch(Materials::Manifest::MissingMaterialError const&)
+        {} // Ignore this error.
         catch(Materials::NotFoundError const &)
         {
             // A new Material.
@@ -1436,7 +1435,7 @@ static void initMaterialGroup(ded_group_t *def)
 
         try
         {
-            Material *mat = App_Materials().find(*reinterpret_cast<de::Uri *>(gm->material)).material();
+            Material &material = App_Materials().find(*reinterpret_cast<de::Uri *>(gm->material)).material();
 
             if(def->flags & AGF_PRECACHE) // A precache group.
             {
@@ -1446,7 +1445,7 @@ static void initMaterialGroup(ded_group_t *def)
                     groupNumber = App_Materials().newGroup();
                 }
 
-                App_Materials().group(groupNumber).addMaterial(*mat);
+                App_Materials().group(groupNumber).addMaterial(material);
             }
 #if 0 /// @todo $revise-texture-animation
             else // An animation group.
@@ -1457,10 +1456,12 @@ static void initMaterialGroup(ded_group_t *def)
                     animNumber = App_Materials().newAnimGroup(def->flags & ~AGF_PRECACHE);
                 }
 
-                App_Materials().animGroup(animNumber).addFrame(*mat, gm->tics, gm->randomTics);
+                App_Materials().animGroup(animNumber).addFrame(material, gm->tics, gm->randomTics);
             }
 #endif
         }
+        catch(Materials::Manifest::MissingMaterialError const &)
+        {} // Ignore this error.
         catch(Materials::NotFoundError const &er)
         {
             // Log but otherwise ignore this error.

@@ -338,7 +338,8 @@ void Materials::rebuild(Material &material, ded_material_t *def)
     for(uint i = 0; i < d->manifestCount; ++i)
     {
         Manifest *manifest = d->manifestIdMap[i];
-        if(!manifest || manifest->material() != &material) continue;
+        if(!manifest || !manifest->hasMaterial()) continue;
+        if(&manifest->material() != &material) continue;
 
         manifest->linkDefinitions();
     }
@@ -514,10 +515,10 @@ Material *Materials::newFromDef(ded_material_t &def)
     try
     {
         manifest = &find(uri);
-        if(manifest->material())
+        if(manifest->hasMaterial())
         {
             LOG_DEBUG("A Material with uri \"%s\" already exists, returning existing.") << uri;
-            return manifest->material();
+            return &manifest->material();
         }
     }
     catch(NotFoundError const &)
@@ -815,7 +816,7 @@ static void printMaterialInfo(Material &material)
 
 static void printMaterialSummary(Materials::Manifest &manifest, bool printSchemeName = true)
 {
-    Material *material = manifest.material();
+    Material *material = manifest.hasMaterial()? &manifest.material() : 0;
     Uri uri = manifest.composeUri();
     QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
 
@@ -1078,9 +1079,9 @@ D_CMD(InspectMaterial)
     try
     {
         de::Materials::Manifest &manifest = materials.find(search);
-        if(Material *mat = manifest.material())
+        if(manifest.hasMaterial())
         {
-            de::printMaterialInfo(*mat);
+            de::printMaterialInfo(manifest.material());
         }
         else
         {

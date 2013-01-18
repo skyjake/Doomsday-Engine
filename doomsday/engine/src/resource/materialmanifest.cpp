@@ -115,9 +115,19 @@ bool MaterialManifest::isCustom() const
     return d->isCustom;
 }
 
-Material *MaterialManifest::material() const
+bool MaterialManifest::hasMaterial() const
 {
-    return d->material;
+    return !!d->material;
+}
+
+Material &MaterialManifest::material() const
+{
+    if(!d->material)
+    {
+        /// @throw MissingMaterialError  The manifest is not presently associated with a material.
+        throw MissingMaterialError("MaterialManifest::material", "Missing required material");
+    }
+    return *d->material;
 }
 
 void MaterialManifest::setMaterial(Material *newMaterial)
@@ -148,36 +158,24 @@ void MaterialManifest::clearDefinitionLinks()
 
 ded_detailtexture_t *MaterialManifest::detailTextureDef() const
 {
-    if(!d->material)
-    {
-        /// @throw MissingMaterialError A material is required for this.
-        throw MissingMaterialError("MaterialManifest::detailTextureDef", "Missing required material");
-    }
-
     if(isDedicated) return 0;
 
     // We must prepare a variant before we can determine which definition is in effect.
-    d->material->prepare(Rend_MapSurfaceMaterialSpec());
+    material().prepare(Rend_MapSurfaceMaterialSpec());
 
-    byte prepared = d->material->prepared();
+    byte prepared = material().prepared();
     if(prepared) return d->defs.detailtextures[prepared - 1];
     return 0;
 }
 
 ded_reflection_t *MaterialManifest::reflectionDef() const
 {
-    if(!d->material)
-    {
-        /// @throw MissingMaterialError A material is required for this.
-        throw MissingMaterialError("MaterialManifest::reflectionDef", "Missing required material");
-    }
-
     if(isDedicated) return 0;
 
     // We must prepare a variant before we can determine which definition is in effect.
-    d->material->prepare(Rend_MapSurfaceMaterialSpec());
+    material().prepare(Rend_MapSurfaceMaterialSpec());
 
-    byte prepared = d->material->prepared();
+    byte prepared = material().prepared();
     if(prepared) return d->defs.reflections[prepared - 1];
     return 0;
 }

@@ -1443,7 +1443,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
         else
         {
             Surface *suf = &bspLeaf->sector->planes[elmIdx]->surface;
-            Material *mat = suf->material? suf->material : App_Materials().find(de::Uri("System", Path("missing"))).material();
+            Material *mat = suf->material? suf->material : &App_Materials().find(de::Uri("System", Path("missing"))).material();
 
             MaterialSnapshot const &ms = mat->prepare(Rend_MapSurfaceMaterialSpec());
             params.glowing = ms.glowStrength();
@@ -1618,13 +1618,13 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
             if(renderTextures == 2)
             {
                 // Lighting debug mode; render using System:gray.
-                mat = App_Materials().find(de::Uri("System", Path("gray"))).material();
+                mat = &App_Materials().find(de::Uri("System", Path("gray"))).material();
             }
             else if(!surface->material ||
                     ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))
             {
                 // Missing material debug mode; render using System:missing.
-                mat = App_Materials().find(de::Uri("System", Path("missing"))).material();
+                mat = &App_Materials().find(de::Uri("System", Path("missing"))).material();
             }
             else
             {
@@ -2741,10 +2741,10 @@ static void Rend_RenderPlanes()
         else if(texMode == 1)
             // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
-            mat = App_Materials().find(de::Uri("System", Path("missing"))).material();
+            mat = &App_Materials().find(de::Uri("System", Path("missing"))).material();
         else
             // For lighting debug, render all solid surfaces using the gray texture.
-            mat = App_Materials().find(de::Uri("System", Path("gray"))).material();
+            mat = &App_Materials().find(de::Uri("System", Path("gray"))).material();
 
         V2f_Copy(texOffset, suf->visOffset);
         // Add the Y offset to orient the Y flipped texture.
@@ -3900,7 +3900,7 @@ static void Rend_RenderBoundingBoxes()
     glDisable(GL_CULL_FACE);
 
     MaterialSnapshot const &ms = App_Materials().
-            find(de::Uri("System", Path("bbox"))).material()->prepare(Rend_SpriteMaterialSpec());
+            find(de::Uri("System", Path("bbox"))).material().prepare(Rend_SpriteMaterialSpec());
 
     GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
     GL_BlendMode(BM_ADD);
