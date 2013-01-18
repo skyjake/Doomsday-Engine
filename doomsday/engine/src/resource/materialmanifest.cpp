@@ -105,7 +105,7 @@ Uri MaterialManifest::composeUri(QChar sep) const
     return Uri(schemeName(), path(sep));
 }
 
-String MaterialManifest::originDescription() const
+String MaterialManifest::sourceDescription() const
 {
     /// @todo We should not need a material and a definition to determine this.
     if(!d->material || !d->material->definition()) return "unknown";

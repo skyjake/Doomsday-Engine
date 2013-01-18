@@ -727,12 +727,12 @@ static void printMaterialInfo(Material &material)
     Materials::Manifest &manifest = material.manifest();
     Uri uri = manifest.composeUri();
     QByteArray path = uri.asText().toUtf8();
-    QByteArray originDescription = material.manifest().originDescription().toUtf8();
+    QByteArray sourceDescription = material.manifest().sourceDescription().toUtf8();
 
     // Print summary:
     Con_Printf("Material \"%s\" [%p] x%u origin:%s\n",
                path.constData(), (void *) &material, material.variantCount(),
-               originDescription.constData());
+               sourceDescription.constData());
 
     if(material.width() <= 0 || material.height() <= 0)
         Con_Printf("Dimensions:unknown (not yet prepared)\n");
@@ -817,11 +817,11 @@ static void printMaterialSummary(Materials::Manifest &manifest, bool printScheme
 {
     Uri uri = manifest.composeUri();
     QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
-    QByteArray originDescription = manifest.originDescription().toUtf8();
+    QByteArray sourceDescription = manifest.sourceDescription().toUtf8();
 
     Con_FPrintf(!manifest.hasMaterial()? CPF_LIGHT : CPF_WHITE,
                 "%-*s %-6s x%u\n", printSchemeName? 22 : 14, path.constData(),
-                originDescription.constData(),
+                sourceDescription.constData(),
                 !manifest.hasMaterial()? 0 : manifest.material().variantCount());
 }
 

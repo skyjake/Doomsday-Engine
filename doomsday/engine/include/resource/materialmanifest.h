@@ -64,11 +64,11 @@ public:
     Uri composeUri(QChar sep = '/') const;
 
     /**
-     * Returns a textual description of the origin of the manifest.
+     * Returns a textual description of the source of the manifest.
      *
-     * @return Human-friendly description of the origin of the manifest.
+     * @return Human-friendly description of the source of the manifest.
      */
-    String originDescription() const;
+    String sourceDescription() const;
 
     /// @return  Unique identifier associated with this.
     materialid_t id() const;
