@@ -29,6 +29,7 @@
 
 #include "de_console.h"
 #include "de_misc.h"
+#include "dd_main.h"
 
 #include "ui/b_main.h"
 #include "ui/b_context.h"
