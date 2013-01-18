@@ -25,6 +25,19 @@
 
 #include "map/gamemap.h"
 
+typedef enum audioenvironmentclass_e {
+    AEC_UNKNOWN = -1,
+    AEC_FIRST = 0,
+    AEC_METAL = AEC_FIRST,
+    AEC_ROCK,
+    AEC_WOOD,
+    AEC_CLOTH,
+    NUM_AUDIO_ENVIRONMENT_CLASSES
+} AudioEnvironmentClass;
+
+#define VALID_AUDIO_ENVIRONMENT_CLASS(val) (\
+    (int)(val) >= AEC_FIRST && (int)(val) < NUM_AUDIO_ENVIRONMENT_CLASSES)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -67,12 +80,12 @@ void S_ResetReverb(void);
 /**
  * @return  Environment class name for identifier @a mclass.
  */
-char const *S_MaterialEnvClassName(material_env_class_t mclass);
+char const *S_AudioEnvironmentName(AudioEnvironmentClass environment);
 
 /**
- * @return  Environment class associated with material @a uri else @c MEC_UNKNOWN.
+ * @return  Environment class associated with material @a uri else @c AEC_UNKNOWN.
  */
-material_env_class_t S_MaterialEnvClassForUri(Uri const *uri);
+AudioEnvironmentClass S_AudioEnvironmentForMaterial(Uri const *uri);
 
 #ifdef __cplusplus
 } // extern "C"

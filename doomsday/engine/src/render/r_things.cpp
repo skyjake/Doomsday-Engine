@@ -827,7 +827,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->viewAligned = viewAligned;
     params->noZWrite = noSpriteZWrite;
 
-    params->material = reinterpret_cast<materialvariant_s *>(variant);
+    params->material = variant;
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = (useSpriteBlend? blendMode : BM_NORMAL);

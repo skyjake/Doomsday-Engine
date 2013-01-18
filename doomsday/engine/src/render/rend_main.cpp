@@ -535,7 +535,7 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
         material = material->generalCase().chooseVariant(mapSurfaceMaterialSpec(wrapS, wrapT), true);
     }
 
-    VS_WALL(vis)->material = reinterpret_cast<materialvariant_s *>(material);
+    VS_WALL(vis)->material = material;
     VS_WALL(vis)->blendMode = blendMode;
 
     for(i = 0; i < 4; ++i)

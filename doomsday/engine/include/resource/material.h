@@ -36,29 +36,13 @@
 #include <de/Vector>
 #include "uri.hh"
 
-struct ded_material_s;
-struct materialvariant_s;
-struct texture_s;
-
-typedef enum {
-    MEC_UNKNOWN = -1,
-    MEC_FIRST = 0,
-    MEC_METAL = MEC_FIRST,
-    MEC_ROCK,
-    MEC_WOOD,
-    MEC_CLOTH,
-    NUM_MATERIAL_ENV_CLASSES
-} material_env_class_t;
-
-#define VALID_MATERIAL_ENV_CLASS(v) ((v) >= MEC_FIRST && (v) < NUM_MATERIAL_ENV_CLASSES)
-
-namespace de {
-
 // Forward declarations.
+struct texture_s;
+enum audioenvironmentclass_e;
+namespace de {
 class MaterialManifest;
 class MaterialSnapshot;
 struct MaterialVariantSpec;
-
 }
 
 /**
@@ -353,7 +337,7 @@ public:
     /**
      * Returns the definition for the material; otherwise @c 0 if invalid.
      */
-    struct ded_material_s *definition() const;
+    ded_material_t *definition() const;
 
     /**
      * Change the associated definition for the material.
@@ -361,7 +345,7 @@ public:
      *
      * @see definition()
      */
-    void setDefinition(struct ded_material_s *def);
+    void setDefinition(ded_material_t *def);
 
     /// Returns the dimensions of the material in map coordinate space units.
     QSize const &dimensions() const;
@@ -477,15 +461,15 @@ public:
     /**
      * Returns the environment audio class for the material.
      */
-    material_env_class_t environmentClass() const;
+    audioenvironmentclass_e audioEnvironment() const;
 
     /**
      * Change the material's environment audio class.
-     * @param envClass  New MaterialEnvironmentClass.
+     * @param newEnvironment  New environment to apply.
      *
      * @todo If attached to a map Surface update accordingly!
      */
-    void setEnvironmentClass(material_env_class_t envClass);
+    void setAudioEnvironment(audioenvironmentclass_e newEnvironment);
 
     /**
      * Process a system tick event for all context variants of the material.

@@ -1,11 +1,10 @@
-/**
- * @file s_environ.cpp
- * Environmental sound effects. @ingroup audio
+/** @file s_environ.cpp Environmental audio effects.
+ * @ingroup audio
  *
  * Calculation of the aural properties of sectors.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -39,9 +38,9 @@ typedef struct {
     int         volumeMul;
     int         decayMul;
     int         dampingMul;
-} materialenvinfo_t;
+} audioenvinfo_t;
 
-static materialenvinfo_t matInfo[NUM_MATERIAL_ENV_CLASSES] = {
+static audioenvinfo_t envInfo[NUM_AUDIO_ENVIRONMENT_CLASSES] = {
     {"Metal",     255,     255,    25},
     {"Rock",      200,     160,    100},
     {"Wood",      80,      50,     200},
@@ -53,14 +52,14 @@ static ownernode_t* unusedNodeList;
 typedef std::set<Sector *> ReverbUpdateRequested;
 ReverbUpdateRequested reverbUpdateRequested;
 
-const char* S_MaterialEnvClassName(material_env_class_t mclass)
+const char* S_AudioEnvironmentName(AudioEnvironmentClass env)
 {
-    if(VALID_MATERIAL_ENV_CLASS(mclass))
-        return matInfo[mclass - MEC_FIRST].name;
+    if(VALID_AUDIO_ENVIRONMENT_CLASS(env))
+        return envInfo[env - AEC_FIRST].name;
     return "";
 }
 
-material_env_class_t S_MaterialEnvClassForUri(const Uri* uri)
+AudioEnvironmentClass S_AudioEnvironmentForMaterial(const Uri* uri)
 {
     if(uri)
     {
@@ -73,16 +72,16 @@ material_env_class_t S_MaterialEnvClassForUri(const Uri* uri)
                 if(!ref || !Uri_Equality(ref, uri)) continue;
 
                 // See if we recognise the material name.
-                for(int l = 0; l < NUM_MATERIAL_ENV_CLASSES; ++l)
+                for(int l = 0; l < NUM_AUDIO_ENVIRONMENT_CLASSES; ++l)
                 {
-                    if(!stricmp(env->id, matInfo[l].name))
-                        return material_env_class_t(MEC_FIRST + l);
+                    if(!stricmp(env->id, envInfo[l].name))
+                        return AudioEnvironmentClass(AEC_FIRST + l);
                 }
-                return MEC_UNKNOWN;
+                return AEC_UNKNOWN;
             }
         }
     }
-    return MEC_UNKNOWN;
+    return AEC_UNKNOWN;
 }
 
 // Free any nodes left in the unused list.
@@ -226,8 +225,8 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
         return false;
     }
 
-    float materials[NUM_MATERIAL_ENV_CLASSES];
-    memset(&materials, 0, sizeof(materials));
+    float envSpaceAccum[NUM_AUDIO_ENVIRONMENT_CLASSES];
+    std::memset(&envSpaceAccum, 0, sizeof(envSpaceAccum));
 
     // Space is the rough volume of the BSP leaf (bounding box).
     bspLeaf->reverb[SRD_SPACE] =
@@ -244,13 +243,13 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
         if(hedge->lineDef && HEDGE_SIDEDEF(hedge) && HEDGE_SIDEDEF(hedge)->SW_middlematerial)
         {
             Material *mat = HEDGE_SIDEDEF(hedge)->SW_middlematerial;
-            material_env_class_t mclass = mat->environmentClass();
-            if(!(mclass >= 0 && mclass < NUM_MATERIAL_ENV_CLASSES))
-                mclass = MEC_WOOD; // Assume it's wood if unknown.
+            AudioEnvironmentClass env = mat->audioEnvironment();
+            if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENT_CLASSES))
+                env = AEC_WOOD; // Assume it's wood if unknown.
 
             total += hedge->length;
 
-            materials[mclass] += hedge->length;
+            envSpaceAccum[env] += hedge->length;
         }
     } while((hedge = hedge->next) != bspLeaf->hedge);
 
@@ -264,31 +263,31 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
 
     // Average the results.
     uint i, v;
-    for(i = 0; i < NUM_MATERIAL_ENV_CLASSES; ++i)
+    for(i = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
     {
-        materials[i] /= total;
+        envSpaceAccum[i] /= total;
     }
 
     // Volume.
-    for(i = 0, v = 0; i < NUM_MATERIAL_ENV_CLASSES; ++i)
+    for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
     {
-        v += materials[i] * matInfo[i].volumeMul;
+        v += envSpaceAccum[i] * envInfo[i].volumeMul;
     }
     if(v > 255) v = 255;
     bspLeaf->reverb[SRD_VOLUME] = v;
 
     // Decay time.
-    for(i = 0, v = 0; i < NUM_MATERIAL_ENV_CLASSES; ++i)
+    for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
     {
-        v += materials[i] * matInfo[i].decayMul;
+        v += envSpaceAccum[i] * envInfo[i].decayMul;
     }
     if(v > 255) v = 255;
     bspLeaf->reverb[SRD_DECAY] = v;
 
     // High frequency damping.
-    for(i = 0, v = 0; i < NUM_MATERIAL_ENV_CLASSES; ++i)
+    for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
     {
-        v += materials[i] * matInfo[i].dampingMul;
+        v += envSpaceAccum[i] * envInfo[i].dampingMul;
     }
     if(v > 255) v = 255;
     bspLeaf->reverb[SRD_DAMPING] = v;

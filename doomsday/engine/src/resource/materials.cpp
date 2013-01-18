@@ -560,7 +560,7 @@ Material *Materials::newFromDef(ded_material_t &def)
     // Create a material for this right away.
     Material *mat = new Material(*manifest, def.flags, def,
                                  QSize(MAX_OF(0, def.width), MAX_OF(0, def.height)));
-    mat->setEnvironmentClass(S_MaterialEnvClassForUri(reinterpret_cast<struct uri_s const *>(&uri)));
+    mat->setAudioEnvironment(S_AudioEnvironmentForMaterial(reinterpret_cast<struct uri_s const *>(&uri)));
 
     // Attach the material to the manifest.
     manifest->setMaterial(mat);
@@ -744,7 +744,7 @@ static void printMaterialInfo(Material &material)
     Con_Printf("Drawable:%s EnvClass:\"%s\" Decorated:%s"
                "\nDetailed:%s Glowing:%s Shiny:%s%s SkyMasked:%s\n",
                material.isDrawable()     ? "yes" : "no",
-               material.environmentClass() == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(material.environmentClass()),
+               material.audioEnvironment() == AEC_UNKNOWN? "N/A" : S_AudioEnvironmentName(material.audioEnvironment()),
                material.hasDecorations() ? "yes" : "no",
                material.detailTexture()  ? "yes" : "no",
                material.hasGlow()        ? "yes" : "no",

@@ -112,8 +112,8 @@ struct Material::Instance
     /// Set of use-case/context variant instances.
     Material::Variants variants;
 
-    /// Environmental sound class.
-    material_env_class_t envClass;
+    /// Environment audio class.
+    AudioEnvironmentClass envClass;
 
     /// World dimensions in map coordinate space units.
     QSize dimensions;
@@ -144,7 +144,7 @@ struct Material::Instance
 
     Instance(MaterialManifest &_manifest, short _flags, ded_material_t &_def,
              QSize const &_dimensions)
-        : manifest(_manifest), def(&_def), envClass(MEC_UNKNOWN),
+        : manifest(_manifest), def(&_def), envClass(AEC_UNKNOWN),
           dimensions(_dimensions), flags(_flags),
           detailTex(0), detailScale(0), detailStrength(0),
           shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0),
@@ -245,7 +245,7 @@ void Material::setDefinition(struct ded_material_s *def)
 
     d->flags = d->def->flags;
     setDimensions(QSize(def->width, def->height));
-    setEnvironmentClass(S_MaterialEnvClassForUri(def->uri));
+    setAudioEnvironment(S_AudioEnvironmentForMaterial(def->uri));
 
     // Update custom status.
     /// @todo This should take into account the whole definition, not just whether
@@ -363,13 +363,13 @@ MaterialManifest &Material::manifest() const
     return d->manifest;
 }
 
-material_env_class_t Material::environmentClass() const
+AudioEnvironmentClass Material::audioEnvironment() const
 {
     if(isDrawable()) return d->envClass;
-    return MEC_UNKNOWN;
+    return AEC_UNKNOWN;
 }
 
-void Material::setEnvironmentClass(material_env_class_t envClass)
+void Material::setAudioEnvironment(AudioEnvironmentClass envClass)
 {
     d->envClass = envClass;
 }
