@@ -5,7 +5,7 @@
 #include "api_material.h"
 
 #undef DD_MaterialForTextureUri
-Material *DD_MaterialForTextureUri(uri_s const *textureUri)
+DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 {
     if(!textureUri) return 0; // Not found.
 
@@ -33,10 +33,44 @@ Material *DD_MaterialForTextureUri(uri_s const *textureUri)
     return 0; // Not found.
 }
 
-// materials.cpp
-DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId);
-DENG_EXTERN_C materialid_t Materials_ResolveUri(Uri const *uri/*, quiet=!(verbose >= 1)*/);
-DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uri/*, quiet=!(verbose >= 1)*/);
+#undef Materials_ComposeUri
+DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
+{
+    de::Materials::Manifest *manifest = App_Materials()->toManifest(materialId);
+    if(manifest)
+    {
+        de::Uri uri = manifest->composeUri();
+        return Uri_Dup(reinterpret_cast<uri_s *>(&uri));
+    }
+    return Uri_New();
+}
+
+#undef Materials_ResolveUri
+DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
+{
+    try
+    {
+        return App_Materials()->find(*reinterpret_cast<de::Uri const *>(uri)).id();
+    }
+    catch(de::Materials::NotFoundError const &)
+    {} // Ignore this error.
+    return NOMATERIALID;
+}
+
+#undef Materials_ResolveUriCString
+DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
+{
+    if(uriCString && uriCString[0])
+    {
+        try
+        {
+            return App_Materials()->find(de::Uri(uriCString, RC_NULL)).id();
+        }
+        catch(de::Materials::NotFoundError const &)
+        {} // Ignore this error.
+    }
+    return NOMATERIALID;
+}
 
 DENG_DECLARE_API(Material) =
 {

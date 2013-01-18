@@ -360,7 +360,12 @@ void *P_ToPtr(int type, uint index)
         return 0; /* Unreachable. */ }
 
     case DMU_MATERIAL:
-        return Materials_ToMaterial(index);
+        if(Materials::Manifest *manifest = App_Materials()->toManifest(index))
+        {
+            return manifest->material();
+        }
+        /// @todo Throw exception?
+        return 0;
 
     default: {
         /// @todo Throw exception.
@@ -522,8 +527,10 @@ int P_Callback(int type, uint index, void *context, int (*callback)(void *p, voi
         return 0; /* Unreachable */ }
 
     case DMU_MATERIAL:
-        if(index < Materials_Count())
-            return callback(Materials_ToMaterial(index), context);
+        if(Materials::Manifest *manifest = App_Materials()->toManifest(index))
+        {
+            return callback(manifest->material(), context);
+        }
         break;
 
     case DMU_LINEDEF_BY_TAG:

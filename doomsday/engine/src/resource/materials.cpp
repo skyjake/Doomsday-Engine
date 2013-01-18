@@ -41,7 +41,7 @@
 
 #include "resource/materials.h"
 
-/// Number of elements to block-allocate in the material index to materialmanifest map.
+/// Number of elements to block-allocate in the material index to material manifest map.
 #define MATERIALS_MANIFESTMAP_BLOCK_ALLOC (32)
 
 D_CMD(InspectMaterial);
@@ -150,7 +150,7 @@ struct Materials::Instance
     /// LUT which translates materialid_t => MaterialManifest*.
     /// Index with materialid_t-1
     uint manifestIdMapSize;
-    MaterialManifest **manifestIdMap;
+    Materials::Manifest **manifestIdMap;
 
     Instance()
         :  manifestCount(0), manifestIdMapSize(0), manifestIdMap(0)
@@ -243,7 +243,7 @@ struct Materials::Instance
         return *findVariantSpec(tpl, true);
     }
 
-    MaterialManifest *manifestForId(materialid_t id)
+    Materials::Manifest *manifestForId(materialid_t id)
     {
         if(0 == id || id > manifestCount) return 0;
         return manifestIdMap[id - 1];
@@ -317,10 +317,10 @@ void Materials::clearDefinitionLinks()
 
     DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
     {
-        PathTreeIterator<MaterialScheme::Index> iter((*i)->index().leafNodes());
+        PathTreeIterator<Scheme::Index> iter((*i)->index().leafNodes());
         while(iter.hasNext())
         {
-            MaterialManifest &manifest = iter.next();
+            Manifest &manifest = iter.next();
             manifest.clearDefinitionLinks();
         }
     }
@@ -337,7 +337,7 @@ void Materials::rebuild(Material &material, ded_material_t *def)
     // Update manifests.
     for(uint i = 0; i < d->manifestCount; ++i)
     {
-        MaterialManifest *manifest = d->manifestIdMap[i];
+        Manifest *manifest = d->manifestIdMap[i];
         if(!manifest || manifest->material() != &material) continue;
 
         manifest->linkDefinitions();
@@ -361,7 +361,7 @@ void Materials::processCacheQueue()
     }
 }
 
-MaterialManifest *Materials::toMaterialManifest(materialid_t id)
+Materials::Manifest *Materials::toManifest(materialid_t id)
 {
     return d->manifestForId(id);
 }
@@ -406,7 +406,7 @@ bool Materials::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet
     return true;
 }
 
-MaterialManifest &Materials::find(Uri const &uri) const
+Materials::Manifest &Materials::find(Uri const &uri) const
 {
     LOG_AS("Materials::find");
 
@@ -424,7 +424,7 @@ MaterialManifest &Materials::find(Uri const &uri) const
         {
             return scheme(uri.scheme()).find(path);
         }
-        catch(MaterialScheme::NotFoundError const &)
+        catch(Scheme::NotFoundError const &)
         {} // Ignore, we'll throw our own...
     }
     else
@@ -443,7 +443,7 @@ MaterialManifest &Materials::find(Uri const &uri) const
             {
                 return scheme(order[i]).find(path);
             }
-            catch(MaterialScheme::NotFoundError const &)
+            catch(Scheme::NotFoundError const &)
             {} // Ignore this error.
         }
     }
@@ -464,12 +464,12 @@ bool Materials::has(Uri const &path) const
     return false;
 }
 
-MaterialManifest &Materials::newManifest(MaterialScheme &scheme, Path const &path)
+Materials::Manifest &Materials::newManifest(Materials::Scheme &scheme, Path const &path)
 {
     LOG_AS("Materials::newManifest");
 
     // Have we already created a manifest for this?
-    MaterialManifest *manifest = 0;
+    Manifest *manifest = 0;
     try
     {
         manifest = &find(de::Uri(scheme.name(), path));
@@ -486,7 +486,7 @@ MaterialManifest &Materials::newManifest(MaterialScheme &scheme, Path const &pat
         {
             // Allocate more memory.
             d->manifestIdMapSize += MATERIALS_MANIFESTMAP_BLOCK_ALLOC;
-            d->manifestIdMap = (MaterialManifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
+            d->manifestIdMap = (Manifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
         }
         d->manifestIdMap[d->manifestCount - 1] = manifest; /* 1-based index */
     }
@@ -510,7 +510,7 @@ Material *Materials::newFromDef(ded_material_t &def)
     }
 
     // Have we already created a material for this?
-    MaterialManifest *manifest = 0;
+    Manifest *manifest = 0;
     try
     {
         manifest = &find(uri);
@@ -725,7 +725,7 @@ static void printMaterialInfo(Material &material)
 {
     ded_material_t const *def = material.definition();
 
-    MaterialManifest &manifest = material.manifest();
+    Materials::Manifest &manifest = material.manifest();
     Uri uri = manifest.composeUri();
     QByteArray path = uri.asText().toUtf8();
 
@@ -813,7 +813,7 @@ static void printMaterialInfo(Material &material)
     }
 }
 
-static void printMaterialSummary(MaterialManifest &manifest, bool printSchemeName = true)
+static void printMaterialSummary(Materials::Manifest &manifest, bool printSchemeName = true)
 {
     Material *material = manifest.material();
     Uri uri = manifest.composeUri();
@@ -828,18 +828,18 @@ static void printMaterialSummary(MaterialManifest &manifest, bool printSchemeNam
 /**
  * @todo This logic should be implemented in de::PathTree -ds
  */
-static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme,
-    Path const &path, QList<MaterialManifest *> *storage = 0)
+static QList<Materials::Manifest *> collectMaterialManifests(Materials::Scheme *scheme,
+    Path const &path, QList<Materials::Manifest *> *storage = 0)
 {
     int count = 0;
 
     if(scheme)
     {
         // Only consider materials in this scheme.
-        PathTreeIterator<MaterialScheme::Index> iter(scheme->index().leafNodes());
+        PathTreeIterator<Materials::Scheme::Index> iter(scheme->index().leafNodes());
         while(iter.hasNext())
         {
-            MaterialManifest &manifest = iter.next();
+            Materials::Manifest &manifest = iter.next();
             if(!path.isEmpty())
             {
                 /// @todo Use PathTree::Node::compare()
@@ -862,10 +862,10 @@ static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme
         Materials::Schemes const &schemes = App_Materials()->allSchemes();
         DENG2_FOR_EACH_CONST(Materials::Schemes, i, schemes)
         {
-            PathTreeIterator<MaterialScheme::Index> iter((*i)->index().leafNodes());
+            PathTreeIterator<Materials::Scheme::Index> iter((*i)->index().leafNodes());
             while(iter.hasNext())
             {
-                MaterialManifest &manifest = iter.next();
+                Materials::Manifest &manifest = iter.next();
                 if(!path.isEmpty())
                 {
                     /// @todo Use PathTree::Node::compare()
@@ -889,7 +889,7 @@ static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme
         return *storage;
     }
 
-    QList<MaterialManifest *> result;
+    QList<Materials::Manifest *> result;
     if(count == 0) return result;
 
 #ifdef DENG2_QT_4_7_OR_NEWER
@@ -902,7 +902,7 @@ static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme
  * Decode and then lexicographically compare the two manifest
  * paths, returning @c true if @a is less than @a b.
  */
-static bool compareMaterialManifestPathsAssending(MaterialManifest const *a, MaterialManifest const *b)
+static bool compareMaterialManifestPathsAssending(Materials::Manifest const *a, Materials::Manifest const *b)
 {
     String pathA = QString(QByteArray::fromPercentEncoding(a->path().toUtf8()));
     String pathB = QString(QByteArray::fromPercentEncoding(b->path().toUtf8()));
@@ -925,9 +925,9 @@ static bool compareMaterialManifestPathsAssending(MaterialManifest const *a, Mat
  * @param like      Material path search term.
  * @param flags     @ref printTextureFlags
  */
-static int printMaterials2(MaterialScheme *scheme, Path const &like, int flags)
+static int printMaterials2(Materials::Scheme *scheme, Path const &like, int flags)
 {
-    QList<MaterialManifest *> found = collectMaterialManifests(scheme, like);
+    QList<Materials::Manifest *> found = collectMaterialManifests(scheme, like);
     if(found.isEmpty()) return 0;
 
     bool const printSchemeName = !(flags & PTF_TRANSFORM_PATH_NO_SCHEME);
@@ -953,7 +953,7 @@ static int printMaterials2(MaterialScheme *scheme, Path const &like, int flags)
     // Sort and print the index.
     qSort(found.begin(), found.end(), compareMaterialManifestPathsAssending);
     int idx = 0;
-    DENG2_FOR_EACH(QList<MaterialManifest *>, i, found)
+    DENG2_FOR_EACH(QList<Materials::Manifest *>, i, found)
     {
         Con_Printf(" %*i: ", numFoundDigits, idx++);
         printMaterialSummary(**i, printSchemeName);
@@ -1077,7 +1077,7 @@ D_CMD(InspectMaterial)
 
     try
     {
-        de::MaterialManifest &manifest = materials.find(search);
+        de::Materials::Manifest &manifest = materials.find(search);
         if(Material *mat = manifest.material())
         {
             de::printMaterialInfo(*mat);
@@ -1099,7 +1099,7 @@ D_CMD(InspectMaterial)
 #if _DEBUG
 D_CMD(PrintMaterialStats)
 {
-    DENG2_UNUSED(src); DENG2_UNUSED(argc); DENG2_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     de::Materials &materials = *App_Materials();
 
@@ -1108,7 +1108,7 @@ D_CMD(PrintMaterialStats)
     DENG2_FOR_EACH_CONST(de::Materials::Schemes, i, schemes)
     {
         de::Materials::Scheme &scheme = **i;
-        de::MaterialScheme::Index const &index = scheme.index();
+        de::Materials::Scheme::Index const &index = scheme.index();
 
         uint count = index.count();
         Con_Printf("Scheme: %s (%u %s)\n", scheme.name().toUtf8().constData(), count, count == 1? "material":"materials");
@@ -1146,60 +1146,4 @@ void Materials_Shutdown()
 {
     if(!materials) return;
     delete materials; materials = 0;
-}
-
-void Materials_Ticker(timespan_t elapsed)
-{
-    App_Materials()->ticker(elapsed);
-}
-
-uint Materials_Count()
-{
-    return App_Materials()->count();
-}
-
-Material *Materials_ToMaterial(materialid_t id)
-{
-    de::MaterialManifest *manifest = App_Materials()->toMaterialManifest(id);
-    if(manifest) return manifest->material();
-    return 0;
-}
-
-#undef Materials_ComposeUri
-DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t id)
-{
-    de::MaterialManifest *manifest = App_Materials()->toMaterialManifest(id);
-    if(manifest)
-    {
-        de::Uri uri = manifest->composeUri();
-        return Uri_Dup(reinterpret_cast<uri_s *>(&uri));
-    }
-    return Uri_New();
-}
-
-#undef Materials_ResolveUri
-DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
-{
-    try
-    {
-        return App_Materials()->find(*reinterpret_cast<de::Uri const *>(uri)).id();
-    }
-    catch(de::Materials::NotFoundError const &)
-    {} // Ignore this error.
-    return NOMATERIALID;
-}
-
-#undef Materials_ResolveUriCString
-DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
-{
-    if(uriCString && uriCString[0])
-    {
-        try
-        {
-            return App_Materials()->find(de::Uri(uriCString, RC_NULL)).id();
-        }
-        catch(de::Materials::NotFoundError const &)
-        {} // Ignore this error.
-    }
-    return NOMATERIALID;
 }

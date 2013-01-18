@@ -359,7 +359,7 @@ void Material::setPrepared(byte state)
 MaterialManifest &Material::manifest() const
 {
     /// @todo Material should store a link to the manifest.
-    return *App_Materials()->toMaterialManifest(d->manifestId);
+    return *App_Materials()->toManifest(d->manifestId);
 }
 
 materialid_t Material::manifestId() const

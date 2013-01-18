@@ -181,7 +181,7 @@ public:
          *      prepared for a new render frame. Typically the only time force
          *      is needed is when the material variant has changed since.
          *
-         * @return  Snapshot for the chosen and prepared variant of Material.
+         * @return  Snapshot for the prepared context variant.
          *
          * @see Material::chooseVariant(), Material::prepare()
          */
@@ -428,7 +428,7 @@ public:
     bool hasGlow() const;
 
     /**
-     * Choose/create a variant of thematerial which fulfills @a spec and then
+     * Choose/create a variant of the material which fulfills @a spec and then
      * immediately prepare it for render (e.g., upload textures if necessary).
      *
      * @note A convenient shorthand of the call tree:
@@ -436,12 +436,11 @@ public:
      *    chooseVariant( @a spec, @c true )->prepare( @a forceSnapshotUpdate )
      * </pre>
      *
-     * @param spec      Specification for the derivation of @a material.
-     * @param forceSnapshotUpdate  @c true= Force an update of the variant's state
-     *                             snapshot. The snapshot is automatically updated
-     *                             when first prepared for a new render frame.
-     *                             Typically the only time force is needed is when
-     *                             the material variant has changed since.
+     * @param spec  Specification for the derivation of @a material.
+     * @param forceSnapshotUpdate  @c true= Force an update of the variant's
+     *      state snapshot. The snapshot is automatically updated when first
+     *      prepared for a new render frame. Typically the only time force is
+     *      needed is when the material variant has changed since.
      *
      * @return  Snapshot for the chosen and prepared variant of Material.
      *

@@ -149,7 +149,7 @@ struct MaterialArchive::Instance
         uint num = App_Materials()->count();
         for(uint i = 1; i < num + 1; ++i)
         {
-            MaterialManifest *manifest = App_Materials()->toMaterialManifest(i);
+            MaterialManifest *manifest = App_Materials()->toManifest(i);
             SerialId id = insertRecord(manifest->composeUri());
             records.setUserPointer(id, manifest->material());
             records.setUserValue(id, true);

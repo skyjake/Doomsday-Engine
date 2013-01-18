@@ -1338,17 +1338,22 @@ DEFFC(End)
 DEFFC(BGMaterial)
 {
     // First attempt to resolve as a Values URI (which defines the material URI).
-    Material* material;
-    ded_value_t* value = Def_GetValueByUri(OP_URI(0));
-    if(value)
+    de::Materials::Manifest *manifest;
+    try
     {
-        material = Materials_ToMaterial(Materials_ResolveUriCString(value->text));
+        if(ded_value_t* value = Def_GetValueByUri(OP_URI(0)))
+        {
+            manifest = &App_Materials()->find(de::Uri(value->text, RC_NULL));
+        }
+        else
+        {
+            manifest = &App_Materials()->find(*reinterpret_cast<de::Uri const *>(OP_URI(0)));
+        }
     }
-    else
-    {
-        material = Materials_ToMaterial(Materials_ResolveUri(OP_URI(0)));
-    }
+    catch(de::Materials::NotFoundError const &)
+    {} // Ignore this error.
 
+    Material *material = manifest? manifest->material() : 0;
     changePageBackground(fi->_pages[PAGE_PICS], material);
 }
 

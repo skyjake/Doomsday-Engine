@@ -1367,14 +1367,11 @@ DENG_EXTERN_C void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int a
 
 static int findDefForGenerator(ptcgen_t *gen, void *parameters)
 {
-    ded_ptcgen_t *def;
-    int i;
-
     DENG_UNUSED(parameters);
 
     // Search for a suitable definition.
-    def = defs.ptcGens;
-    for(i = 0; i < defs.count.ptcGens.num; ++i, def++)
+    ded_ptcgen_t *def = defs.ptcGens;
+    for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
         // A type generator?
         if(def->typeNum == DED_PTCGEN_ANY_MOBJ_TYPE && gen->type == DED_PTCGEN_ANY_MOBJ_TYPE)
@@ -1396,32 +1393,37 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
         // A flat generator?
         if(gen->plane && def->material)
         {
-            Material *defMat = Materials_ToMaterial(Materials_ResolveUri(def->material));
-
-            Material *mat = gen->plane->PS_material;
-            if(def->flags & PGF_FLOOR_SPAWN)
-                mat = gen->plane->sector->SP_plane(PLN_FLOOR)->PS_material;
-            if(def->flags & PGF_CEILING_SPAWN)
-                mat = gen->plane->sector->SP_plane(PLN_CEILING)->PS_material;
-
-            // Is this suitable?
-            if(mat == defMat)
+            try
             {
-                return i + 1; // 1-based index.
-            }
+                Material *defMat = App_Materials()->find(*reinterpret_cast<de::Uri const *>(def->material)).material();
 
-#if 0 /// @todo $revise-texture-animation
-            if(def->flags & PGF_GROUP)
-            {
-                // Generator triggered by all materials in the animation.
-                if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat) &&
-                   &Material_AnimGroup(defMat) == &Material_AnimGroup(mat))
+                Material *mat = gen->plane->PS_material;
+                if(def->flags & PGF_FLOOR_SPAWN)
+                    mat = gen->plane->sector->SP_plane(PLN_FLOOR)->PS_material;
+                if(def->flags & PGF_CEILING_SPAWN)
+                    mat = gen->plane->sector->SP_plane(PLN_CEILING)->PS_material;
+
+                // Is this suitable?
+                if(mat == defMat)
                 {
-                    // Both are in this animation! This def will do.
                     return i + 1; // 1-based index.
                 }
-            }
+
+#if 0 /// @todo $revise-texture-animation
+                if(def->flags & PGF_GROUP)
+                {
+                    // Generator triggered by all materials in the animation.
+                    if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat) &&
+                       &Material_AnimGroup(defMat) == &Material_AnimGroup(mat))
+                    {
+                        // Both are in this animation! This def will do.
+                        return i + 1; // 1-based index.
+                    }
+                }
 #endif
+            }
+            catch(Materials::NotFoundError const &)
+            {} // Ignore this error.
         }
 
         // A state generator?

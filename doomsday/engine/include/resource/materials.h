@@ -57,6 +57,7 @@ class Materials
 {
 public:
     typedef class MaterialScheme Scheme;
+    typedef class MaterialManifest Manifest;
 
     /**
      * Defines a group of one or more materials.
@@ -251,7 +252,7 @@ public:
      * @param search  The search term.
      * @return Found material manifest.
      */
-    MaterialManifest &find(Uri const &search) const;
+    Manifest &find(Uri const &search) const;
 
     /**
      * Update @a material according to the supplied definition @a def.
@@ -274,7 +275,7 @@ public:
      */
     Material *newFromDef(ded_material_t &def);
 
-    MaterialManifest &newManifest(MaterialScheme &scheme, Path const &path);
+    Manifest &newManifest(Scheme &scheme, Path const &path);
 
     /**
      * Prepare a material variant specification in accordance to the specified
@@ -319,9 +320,6 @@ public:
      */
     void resetAllMaterialAnimations();
 
-    /// @todo Refactor away -ds
-    MaterialManifest *toMaterialManifest(materialid_t id);
-
     /**
      * Lookup a material group by unique @a number.
      */
@@ -350,6 +348,9 @@ public:
         return allGroups().count();
     }
 
+    /// @todo Refactor away -ds
+    Manifest *toManifest(materialid_t id);
+
 private:
     struct Instance;
     Instance *d;
@@ -373,15 +374,6 @@ void Materials_Init(void);
 
 /// Shutdown this module.
 void Materials_Shutdown(void);
-
-void Materials_Ticker(timespan_t elapsed);
-uint Materials_Count(void);
-Material *Materials_ToMaterial(materialid_t id);
-struct uri_s *Materials_ComposeUri(materialid_t id);
-materialid_t Materials_ResolveUri(struct uri_s const *uri);
-
-/// Same as Materials::resolveUri except @a uri is a C-string.
-materialid_t Materials_ResolveUriCString(char const *uri);
 
 #ifdef __cplusplus
 } // extern "C"

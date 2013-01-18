@@ -1,8 +1,8 @@
 /** @file api_material.h Public API for materials.
  * @ingroup resource
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -37,8 +37,8 @@ DENG_API_TYPEDEF(Material)
 
     Material *(*ForTextureUri)(Uri const *textureUri);
     Uri *(*ComposeUri)(materialid_t materialId);
-    materialid_t (*ResolveUri)(const Uri* uri);
-    materialid_t (*ResolveUriCString)(const char* path);
+    materialid_t (*ResolveUri)(Uri const *uri);
+    materialid_t (*ResolveUriCString)(char const *path);
 
 }
 DENG_API_T(Material);
