@@ -188,6 +188,16 @@ public:
     void ticker(timespan_t elapsed);
 
     /**
+     * Lookup a material manifest by unique identifier.
+     *
+     * @param id  Unique identifier for the manifest to be looked up. Note
+     *            that @c 0 is not a valid identifier.
+     *
+     * @return  The found manifest; otherwise @c 0.
+     */
+    Manifest *toManifest(materialid_t id);
+
+    /**
      * Lookup a subspace scheme by symbolic name.
      *
      * @param name  Symbolic name of the scheme.
@@ -200,8 +210,8 @@ public:
     /**
      * Create a new subspace scheme.
      *
-     * @param name      Unique symbolic name of the new scheme. Must be at
-     *                  least @c Scheme::min_name_length characters long.
+     * @param name  Unique symbolic name of the new scheme. Must be at least
+     *              @c Scheme::min_name_length characters long.
      */
     Scheme &createScheme(String name);
 
@@ -347,9 +357,6 @@ public:
     inline int groupCount() const {
         return allGroups().count();
     }
-
-    /// @todo Refactor away -ds
-    Manifest *toManifest(materialid_t id);
 
 private:
     struct Instance;
