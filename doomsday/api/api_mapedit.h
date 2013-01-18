@@ -109,8 +109,7 @@ DENG_API_TYPEDEF(MPE)
      * @param backSide      Idx of the back sidedef.
      * @param flags         DDLF_* flags.
      *
-     * @return              Idx of the newly created linedef else @c 0 if there
-     *                      was an error.
+     * @return  Index of the newly created linedef else @c 0 if there was an error.
      */
     uint            (*LinedefCreate)(uint v1, uint v2, uint frontSector, uint backSector, uint frontSide, uint backSide, int flags);
     uint            (*SectorCreate)(float lightlevel, float red, float green, float blue);

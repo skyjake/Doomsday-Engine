@@ -6,7 +6,7 @@ PROJECT_NUMBER          = 1.10
 PROJECT_BRIEF           = "Public API"
 OUTPUT_DIRECTORY        = ../apidoc/api/
 
-INPUT                   = api ../libdeng1/include
+INPUT                   = ../api ../libdeng1/include
 PREDEFINED              = __DOOMSDAY__ __DENG__ \
                           "DENG_API_TYPEDEF(Name)=typedef struct de_api_##Name##_s" \
                           "DENG_API_T(Name)=de_api_##Name##_t" \

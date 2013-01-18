@@ -163,15 +163,15 @@ DENG_API_TYPEDEF(FR)
      * the same attribute.
      *
      * Examples:
-     *
+     * <pre>
      *   "{r = 1.0; g = 0.0; b = 0.0; case}This is red text with a case-scaled first character"
      *   "This is text with an {y = -14}offset{y = 0} internal fragment."
      *   "{fontb; r=0.5; g=1; b=0; x=2; y=-2}This is good!"
+     * </pre>
      */
 
     /**
      * Draw a text block.
-     * @note Member of the Doomsday public API.
      *
      * @param text    Block of text to be drawn.
      * @param origin  Orient drawing about this offset (topleft:[0,0]).
@@ -186,7 +186,6 @@ DENG_API_TYPEDEF(FR)
 
     /**
      * Draw a text block.
-     * @note Member of the Doomsday public API.
      *
      * @param text        Block of text to be drawn.
      * @param _origin     Orient drawing about this offset (topleft:[0,0]).
