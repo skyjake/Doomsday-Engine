@@ -1,7 +1,4 @@
-/**
- * @file sv_sound.h
- * Serverside Sound Management.
- *
+/** @file sv_sound.h Serverside Sound Management.
  * @ingroup server
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
