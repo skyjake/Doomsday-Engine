@@ -166,7 +166,7 @@ DENG_EXTERN_C void GL_PrepareLSTexture(lightingtexid_t /*which*/)
 {}
 
 
-DENG_EXTERN_C void GL_PrintTextureVariantSpecification(texturevariantspecification_t const */*baseSpec*/)
+DENG_EXTERN_C void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *)
 {}
 
 DENG_EXTERN_C void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
@@ -802,7 +802,7 @@ void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, c
     DENG_UNUSED(detailedMsg);
 }
 
-void Sys_MessageBox2(messageboxtype_t /*type*/, const char */*title*/, const char */*msg*/, const char */*informativeMsg*/, const char */*detailedMsg*/)
+void Sys_MessageBox2(messageboxtype_t /*type*/, const char * /*title*/, const char * /*msg*/, const char * /*informativeMsg*/, const char * /*detailedMsg*/)
 {
 }
 

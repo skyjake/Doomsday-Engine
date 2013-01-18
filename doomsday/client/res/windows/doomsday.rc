@@ -30,7 +30,7 @@
 #define APSTUDIO_READONLY_SYMBOLS
 
 #include "windows.h"
-#include "../../api/dd_version.h"
+#include "../../../api/dd_version.h"
 
 #undef APSTUDIO_READONLY_SYMBOLS
 
