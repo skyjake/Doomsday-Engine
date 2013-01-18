@@ -1,4 +1,9 @@
-/** @file
+/** @file de_platform.h Platform Independence.
+ *
+ * Define either WIN32 or UNIX when compiling.
+ *
+ * Use this header file in source files which can be compiled on any
+ * platform but still use some platform specific code.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -15,15 +20,6 @@
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
- */
-
-/**
- * de_platform.h: Platform Independence
- *
- * Define either WIN32 or UNIX when compiling.
- *
- * Use this header file in source files which can be compiled on any
- * platform but still use some platform specific code.
  */
 
 #ifndef __DOOMSDAY_PLATFORM__
