@@ -392,7 +392,8 @@ public:
     bool isSkyMasked() const;
 
     /// Returns @c true if the material has one or more (light) decorations.
-    bool hasDecorations() const;
+    /// Equivalent to @code decorationCount() != 0; @endcode
+    inline bool hasDecorations() const { return decorationCount() != 0; }
 
     /// Returns @c true if one or more of the material's layers are glowing.
     bool hasGlow() const;
@@ -415,12 +416,12 @@ public:
      * Choose/create a variant of the material which fulfills @a spec and then
      * immediately prepare it for render (e.g., upload textures if necessary).
      *
-     * @note A convenient shorthand of the call tree:
-     * <pre>
-     *    chooseVariant( @a spec, @c true )->prepare( @a forceSnapshotUpdate )
-     * </pre>
+     * Intended as a convenient shorthand of the call tree:
+     * @code
+     *    chooseVariant(@a spec, true)->prepare(@a forceSnapshotUpdate)
+     * @endcode
      *
-     * @param spec  Specification for the derivation of @a material.
+     * @param spec  Specification with which to derive the variant.
      * @param forceSnapshotUpdate  @c true= Force an update of the variant's
      *      state snapshot. The snapshot is automatically updated when first
      *      prepared for a new render frame. Typically the only time force is
@@ -428,7 +429,7 @@ public:
      *
      * @return  Snapshot for the chosen and prepared variant of Material.
      *
-     * @see chooseVariant(), Variant::prepare()
+     * @see Materials::variantSpecForContext(), chooseVariant(), Variant::prepare()
      */
     inline de::MaterialSnapshot const &prepare(de::MaterialVariantSpec const &spec,
                                                bool forceSnapshotUpdate = false)

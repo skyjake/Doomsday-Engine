@@ -511,11 +511,6 @@ void Material::clearVariants()
     d->clearVariants();
 }
 
-bool Material::hasDecorations() const
-{
-    return d->decorations.count() != 0;
-}
-
 int Material::getProperty(setargs_t &args) const
 {
     switch(args.prop)
