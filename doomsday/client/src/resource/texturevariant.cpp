@@ -1,6 +1,5 @@
-/**
- * @file texturevariant.cpp
- * Logical texture variant. @ingroup resource
+/** @file texturevariant.cpp Logical texture variant. 
+ * @ingroup resource
  *
  * @authors Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
  *

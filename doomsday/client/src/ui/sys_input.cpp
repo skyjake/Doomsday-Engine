@@ -1,6 +1,5 @@
-/**
- * @file sys_input.c
- * Keyboard and mouse input pre-processing. @ingroup input
+/** @file sys_input.cpp Keyboard and mouse input pre-processing. 
+ * @ingroup input
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>

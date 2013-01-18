@@ -1,5 +1,5 @@
-/**
- * @file finaleinterpreter.c
+/** @file finaleinterpreter.cpp
+ *
  * InFine "Finale" script interpreter.
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>

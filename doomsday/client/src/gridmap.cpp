@@ -1,6 +1,5 @@
-/**
- * @file gridmap.h
- * Gridmap implementation. @ingroup data
+/** @file gridmap.h Gridmap implementation. 
+ * @ingroup data
  *
  * @authors Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
  *

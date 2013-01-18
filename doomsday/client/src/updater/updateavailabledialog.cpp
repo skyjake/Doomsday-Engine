@@ -1,6 +1,5 @@
-/**
- * @file updateavailabledialog.cpp
- * Dialog for notifying the user about available updates. @ingroup updater
+/** @file updateavailabledialog.cpp Dialog for notifying the user about available updates. 
+ * @ingroup updater
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>

@@ -1,6 +1,5 @@
-/**
- * @file gl_defer.c
- * Implementation of deferred GL tasks. @ingroup gl
+/** @file gl_defer.cpp Implementation of deferred GL tasks. 
+ * @ingroup gl
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>

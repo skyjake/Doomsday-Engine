@@ -1,8 +1,7 @@
-/**
- * @file propertyvalue.cpp
- * Data types for representing property values. @ingroup data
+/** @file propertyvalue.cpp Data types for representing property values. 
+ * @ingroup data
  *
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

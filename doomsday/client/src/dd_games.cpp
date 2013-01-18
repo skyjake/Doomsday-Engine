@@ -1,9 +1,8 @@
-/**
- * @file dd_games.cpp
- * Game collection. @ingroup core
+/** @file dd_games.cpp Game collection. 
+ * @ingroup core
  *
- * @author Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

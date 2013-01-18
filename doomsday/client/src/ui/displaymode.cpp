@@ -1,6 +1,5 @@
-/**
- * @file displaymode.cpp
- * Platform-independent display mode management. @ingroup gl
+/** @file displaymode.cpp Platform-independent display mode management. 
+ * @ingroup gl
  *
  * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

@@ -1,13 +1,12 @@
-/**
- * @file dd_wad.cpp
+/** @file dd_wad.cpp
  *
  * Wrapper API for accessing data stored in DOOM WAD files.
  *
  * @ingroup resource
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

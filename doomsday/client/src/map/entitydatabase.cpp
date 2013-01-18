@@ -1,8 +1,7 @@
-/**
- * @file entitydatabase.cpp
- * Database of map entity property values. @ingroup map
+/** @file entitydatabase.cpp Database of map entity property values. 
+ * @ingroup map
  *
- * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

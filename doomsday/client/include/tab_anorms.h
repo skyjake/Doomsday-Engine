@@ -2,8 +2,8 @@
  *\section License
  * License: GPL
  *
- *\author Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © id Software, Inc.
+ * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © id Software, Inc.
  *
  * From Quake.
  */

@@ -1,6 +1,5 @@
-/**
- * @file processcheckdialog.cpp
- * Dialog for checking running processes on Windows. @ingroup updater
+/** @file processcheckdialog.cpp Dialog for checking running processes on Windows. 
+ * @ingroup updater
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

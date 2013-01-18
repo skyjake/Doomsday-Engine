@@ -1,5 +1,4 @@
-/**
- * @file def_read.cpp
+/** @file def_read.cpp
  *
  * Doomsday Engine Definition File Reader.
  *
@@ -18,8 +17,8 @@
  * a bunch of tokens, and the same parsing rules would be applied for
  * everything.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

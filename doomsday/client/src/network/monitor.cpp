@@ -1,6 +1,5 @@
-/**
- * @file monitor.c
- * Implementation of network traffic monitoring. @ingroup network
+/** @file monitor.cpp Implementation of network traffic monitoring. 
+ * @ingroup network
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

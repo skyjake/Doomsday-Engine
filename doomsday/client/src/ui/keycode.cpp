@@ -1,6 +1,5 @@
-/**
- * @file keycode.cpp
- * Keycode translation. @ingroup input
+/** @file keycode.cpp Keycode translation. 
+ * @ingroup input
  *
  * Depends on Qt GUI.
  *

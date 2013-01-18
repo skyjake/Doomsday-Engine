@@ -1,6 +1,5 @@
-/**
- * @file s_environ.cpp
- * Environmental sound effects. @ingroup audio
+/** @file s_environ.cpp Environmental sound effects. 
+ * @ingroup audio
  *
  * Calculation of the aural properties of sectors.
  *

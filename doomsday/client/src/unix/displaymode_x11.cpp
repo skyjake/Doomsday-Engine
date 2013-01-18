@@ -1,6 +1,5 @@
-/**
- * @file displaymode_x11.cpp
- * X11 implementation of the DisplayMode native functionality. @ingroup gl
+/** @file displaymode_x11.cpp X11 implementation of the DisplayMode native functionality. 
+ * @ingroup gl
  *
  * Uses the XRandR extension to manipulate the display.
  *

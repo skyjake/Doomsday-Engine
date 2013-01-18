@@ -1,5 +1,5 @@
-/**
- * @file mouse_win32.cpp
+/** @file mouse_win32.cpp
+ *
  * Mouse driver that gets mouse input from DirectInput on Windows.
  * @ingroup input
  *

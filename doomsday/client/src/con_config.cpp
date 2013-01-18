@@ -1,4 +1,4 @@
-/** @file con_config.c Config files.
+/** @file con_config.cpp Config files.
  * @ingroup console
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>

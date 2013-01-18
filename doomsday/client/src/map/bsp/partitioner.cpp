@@ -1,16 +1,15 @@
-/**
- * @file partitioner.cpp
- * BSP Partitioner. Recursive node creation and sorting. @ingroup map
+/** @file partitioner.cpp BSP Partitioner. Recursive node creation and sorting. 
+ * @ingroup map
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted
  * on SourceForge: http://sourceforge.net/projects/glbsp/
  *
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
- * @author Copyright &copy; 2000-2007 Andrew Apted <ajapted@gmail.com>
- * @author Copyright &copy; 1998-2000 Colin Reed <cph@moria.org.uk>
- * @author Copyright &copy; 1998-2000 Lee Killough <killough@rsn.hp.com>
- * @author Copyright &copy; 1997-1998 Raphael.Quinet <raphael.quinet@eed.ericsson.se>
+ * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright &copy; 2000-2007 Andrew Apted <ajapted@gmail.com>
+ * @authors Copyright &copy; 1998-2000 Colin Reed <cph@moria.org.uk>
+ * @authors Copyright &copy; 1998-2000 Lee Killough <killough@rsn.hp.com>
+ * @authors Copyright &copy; 1997-1998 Raphael.Quinet <raphael.quinet@eed.ericsson.se>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

@@ -1,6 +1,5 @@
-/**
- * @file audiodriver.cpp
- * Audio driver loading and interface management. @ingroup audio
+/** @file audiodriver.cpp Audio driver loading and interface management. 
+ * @ingroup audio
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>

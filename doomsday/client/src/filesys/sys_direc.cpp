@@ -1,4 +1,4 @@
-/** @file sys_direc.c Native file system directories.
+/** @file sys_direc.cpp Native file system directories.
  * @ingroup system
  *
  * @todo Rewrite using libdeng2's NativePath (and Qt).

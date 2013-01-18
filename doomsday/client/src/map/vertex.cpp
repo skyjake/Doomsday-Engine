@@ -1,6 +1,5 @@
-/**
- * @file vertex.cpp
- * Logical map vertex. @ingroup map
+/** @file vertex.cpp Logical map vertex. 
+ * @ingroup map
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>

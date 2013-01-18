@@ -1,11 +1,10 @@
-/**
- * @file gl_texmanager.cpp GL-Texture management
+/** @file gl_texmanager.cpp GL-Texture management
  *
  * @todo This file needs to be split into smaller portions.
  *
- * @author Copyright &copy; 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 2002 Graham Jackson <no contact email published>
+ * @authors Copyright &copy; 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2002 Graham Jackson <no contact email published>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

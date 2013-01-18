@@ -1,9 +1,8 @@
-/**
- * @file api_uri.cpp
- * Universal Resource Identifier (public C wrapper). @ingroup base
+/** @file api_uri.cpp Universal Resource Identifier (public C wrapper). 
+ * @ingroup base
  *
- * @author Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

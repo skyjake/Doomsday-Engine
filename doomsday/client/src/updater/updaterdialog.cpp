@@ -1,6 +1,5 @@
-/**
- * @file updaterdialog.cpp
- * Common base class for the updater dialogs. @ingroup updater
+/** @file updaterdialog.cpp Common base class for the updater dialogs. 
+ * @ingroup updater
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

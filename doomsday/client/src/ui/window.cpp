@@ -1,6 +1,5 @@
-/** @file window.cpp Window manager.
- *
- * Window manager that manages a QWidget-based window. @ingroup base
+/** @file window.cpp Window manager. Window manager that manages a QWidget-based window. 
+ * @ingroup base
  *
  * The Doomsday window management is responsible for the positioning, sizing,
  * and state of the game's native windows. In practice, the code operates on Qt

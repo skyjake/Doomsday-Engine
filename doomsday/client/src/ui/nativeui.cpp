@@ -1,6 +1,5 @@
-/**
- * @file nativeui.cpp
- * Native GUI functionality. @ingroup base
+/** @file nativeui.cpp Native GUI functionality. 
+ * @ingroup base
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>

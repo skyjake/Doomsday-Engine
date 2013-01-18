@@ -1,6 +1,5 @@
-/**
- * @file material.cpp
- * Logical material. @ingroup resource
+/** @file material.cpp Logical material. 
+ * @ingroup resource
  *
  * @authors Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
  *

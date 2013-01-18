@@ -1,5 +1,5 @@
-/** @file sys_console.cpp
- * Text-mode console for Unix. @ingroup base
+/** @file sys_console.cpp Text-mode console for Unix. 
+ * @ingroup base
  *
  * Only used in novideo/dedicated mode. Implemented using the curses library.
  *

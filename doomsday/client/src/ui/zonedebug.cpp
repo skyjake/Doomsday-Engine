@@ -1,6 +1,5 @@
-/**
- * @file zonedebug.c
- * Memory zone debug visualization. @ingroup memzone
+/** @file zonedebug.cpp Memory zone debug visualization. 
+ * @ingroup memzone
  *
  * Shows the contents of the memory zone as on-screen visualization. This is
  * only available in debug builds and provides a view to the layout of the

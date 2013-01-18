@@ -1,6 +1,5 @@
-/**
- * @file s_mus.c
- * Music subsystem. @ingroup audio
+/** @file s_mus.cpp Music subsystem. 
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>

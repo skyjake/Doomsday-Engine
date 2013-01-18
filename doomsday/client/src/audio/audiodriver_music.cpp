@@ -1,6 +1,5 @@
-/**
- * @file audiodriver_music.c
- * Low-level music interface of the audio driver. @ingroup audio
+/** @file audiodriver_music.cpp Low-level music interface of the audio driver. 
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>

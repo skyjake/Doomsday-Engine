@@ -1,6 +1,5 @@
-/**
- * @file bspbuilder.cpp
- * BspBuilder interface class. @ingroup map
+/** @file bspbuilder.cpp BspBuilder interface class. 
+ * @ingroup map
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *

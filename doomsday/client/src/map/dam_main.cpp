@@ -1,9 +1,7 @@
-/**
- * @file dam_main.cpp
+/** @file dam_main.cpp Doomsday Archived Map (DAM), map management. 
+ * @ingroup map
  *
- * Doomsday Archived Map (DAM), map management. @ingroup map
- *
- * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

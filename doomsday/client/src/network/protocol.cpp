@@ -1,6 +1,5 @@
-/**
- * @file protocol.c
- * Implementation of the network protocol. @ingroup network
+/** @file protocol.cpp Implementation of the network protocol. 
+ * @ingroup network
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

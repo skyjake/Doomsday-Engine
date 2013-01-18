@@ -1,5 +1,5 @@
-/**
- * @file dualstring.cpp
+/** @file dualstring.cpp
+ *
  * Utility class for strings that need both Unicode and C-string access.
  * @ingroup data
  *

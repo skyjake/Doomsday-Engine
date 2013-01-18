@@ -1,6 +1,5 @@
-/**
- * @file svg.c
- * Scalable Vector Graphic (SVG) implementation. @ingroup gl
+/** @file svg.cpp Scalable Vector Graphic (SVG) implementation. 
+ * @ingroup gl
  *
  * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>

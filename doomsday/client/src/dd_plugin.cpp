@@ -1,6 +1,5 @@
-/**
- * @file dd_plugin.c
- * Plugin subsystem. @ingroup base
+/** @file dd_plugin.cpp Plugin subsystem. 
+ * @ingroup base
  *
  * @todo Convert to C++, rename.
  *

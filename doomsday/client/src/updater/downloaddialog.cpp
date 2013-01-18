@@ -1,6 +1,5 @@
-/**
- * @file downloaddialog.cpp
- * Dialog that downloads a distribution package. @ingroup updater
+/** @file downloaddialog.cpp Dialog that downloads a distribution package. 
+ * @ingroup updater
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
