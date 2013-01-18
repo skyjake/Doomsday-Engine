@@ -318,7 +318,7 @@ uint P_ToIndex(void const *ptr)
         return GET_PLANE_IDX(elem->castTo<Plane>());
 
     case DMU_MATERIAL:
-        return elem->castTo<Material>()->manifestId();
+        return elem->castTo<Material>()->manifest().id();
 
     default:
         /// @todo Throw exception.

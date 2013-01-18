@@ -336,11 +336,13 @@ public:
     /**
      * Construct a new material.
      *
+     * @param manifest  Manifest derived to yield the material.
      * @param flags  @see materialFlags
      * @param def  Definition for the material.
      * @param dimensions  Dimensions of the material in map coordinate space units.
      */
-    Material(short flags, ded_material_t &def, QSize const &dimensions = QSize());
+    Material(de::MaterialManifest &manifest, short flags, ded_material_t &def,
+             QSize const &dimensions = QSize());
     ~Material();
 
     /**
@@ -575,15 +577,6 @@ public:
     /*
      * Here follows methods awaiting cleanup/redesign/removal.
      */
-
-    /// @return  Unique identifier of the manifest for the material.
-    materialid_t manifestId() const;
-
-    /**
-     * Change the unique identifier of the manifest for the material.
-     * @param id  New identifier.
-     */
-    void setManifestId(materialid_t id);
 
     /// @return  Detail Texture linked to this else @c NULL
     struct texture_s *detailTexture();

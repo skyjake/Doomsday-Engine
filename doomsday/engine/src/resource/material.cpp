@@ -103,6 +103,9 @@ Material::Decoration::Stages const &Material::Decoration::stages() const
 
 struct Material::Instance
 {
+    /// Manifest derived to yield the material.
+    MaterialManifest &manifest;
+
     /// Definition from which this material was derived (if any).
     ded_material_t *def;
 
@@ -111,9 +114,6 @@ struct Material::Instance
 
     /// Environmental sound class.
     material_env_class_t envClass;
-
-    /// Unique identifier of the primary binding in the owning collection.
-    materialid_t manifestId;
 
     /// World dimensions in map coordinate space units.
     QSize dimensions;
@@ -142,8 +142,9 @@ struct Material::Instance
     /// Current prepared state.
     byte prepared;
 
-    Instance(short _flags, ded_material_t &_def, QSize const &_dimensions)
-        : def(&_def), envClass(MEC_UNKNOWN), manifestId(0),
+    Instance(MaterialManifest &_manifest, short _flags, ded_material_t &_def,
+             QSize const &_dimensions)
+        : manifest(_manifest), def(&_def), envClass(MEC_UNKNOWN),
           dimensions(_dimensions), flags(_flags),
           detailTex(0), detailScale(0), detailStrength(0),
           shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0),
@@ -191,10 +192,11 @@ struct Material::Instance
     }
 };
 
-Material::Material(short flags, ded_material_t &def, QSize const &dimensions)
+Material::Material(MaterialManifest &_manifest, short flags, ded_material_t &def,
+                   QSize const &dimensions)
     : de::MapElement(DMU_MATERIAL)
 {
-    d = new Instance(flags, def, dimensions);
+    d = new Instance(_manifest, flags, def, dimensions);
 }
 
 Material::~Material()
@@ -358,18 +360,7 @@ void Material::setPrepared(byte state)
 
 MaterialManifest &Material::manifest() const
 {
-    /// @todo Material should store a link to the manifest.
-    return *App_Materials()->toManifest(d->manifestId);
-}
-
-materialid_t Material::manifestId() const
-{
-    return d->manifestId;
-}
-
-void Material::setManifestId(materialid_t id)
-{
-    d->manifestId = id;
+    return d->manifest;
 }
 
 material_env_class_t Material::environmentClass() const

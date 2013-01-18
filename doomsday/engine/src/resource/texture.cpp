@@ -34,10 +34,10 @@ namespace de {
 
 struct Texture::Instance
 {
-    Texture::Flags flags;
-
-    /// Unique identifier of the primary binding in the owning collection.
+    /// Manifest derived to yield the texture.
     TextureManifest &manifest;
+
+    Texture::Flags flags;
 
     /// List of variants (e.g., color translations).
     Texture::Variants variants;
