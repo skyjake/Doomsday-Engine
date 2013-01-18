@@ -215,11 +215,10 @@ void R_DrawViewBorder()
     glColor4f(1, 1, 1, 1);
 
     // View background.
-    Materials &materials = *App_Materials();
-    Material *mat = materials.find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND])).material();
+    Material *mat = App_Materials()->find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND])).material();
     if(mat)
     {
-        MaterialSnapshot const &ms = materials.prepare(*mat, Ui_MaterialSpec());
+        MaterialSnapshot const &ms = mat->prepare(Ui_MaterialSpec());
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.dimensions().width(), ms.dimensions().height(), 0, 0,

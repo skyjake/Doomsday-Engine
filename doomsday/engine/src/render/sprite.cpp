@@ -305,7 +305,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     MaterialVariantSpec const &spec =
         App_Materials()->variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                                0, -2, 0, false, true, true, false);
-    MaterialSnapshot const &ms = App_Materials()->prepare(*sprFrame->mats[0], spec);
+    MaterialSnapshot const &ms = sprFrame->mats[0]->prepare(spec);
 
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
@@ -390,8 +390,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const *params)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
         MaterialSnapshot const &ms =
-            App_Materials()->prepare(*App_Materials()->find(de::Uri("System", Path("gray"))).material(),
-                                     PSprite_MaterialSpec());
+            App_Materials()->find(de::Uri("System", Path("gray"))).material()->prepare(PSprite_MaterialSpec());
 
         GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
         glEnable(GL_TEXTURE_2D);
@@ -547,7 +546,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
     if(renderTextures)
     {
         MaterialSnapshot const &ms =
-                App_Materials()->prepare(*reinterpret_cast<Material::Variant *>(p->material));
+            reinterpret_cast<Material::Variant *>(p->material)->prepare();
         tex = &ms.texture(MTU_PRIMARY);
     }
 
@@ -902,7 +901,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
         variantspecification_t const *texSpec;
 
         // Ensure this variant has been prepared.
-        ms = &App_Materials()->prepare(*reinterpret_cast<Material::Variant *>(params->material));
+        ms = &reinterpret_cast<Material::Variant *>(params->material)->prepare();
 
         texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
         DENG_ASSERT(texSpec);
@@ -920,7 +919,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     mat = chooseSpriteMaterial(*params);
     if(mat != reinterpret_cast<Material::Variant *>(params->material))
     {
-        ms = mat? &App_Materials()->prepare(*mat) : 0;
+        ms = mat? &mat->prepare() : 0;
     }
 
     if(ms)

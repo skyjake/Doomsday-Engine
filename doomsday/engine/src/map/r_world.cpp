@@ -340,7 +340,6 @@ void R_UpdateMapSurfacesOnMaterialChange(Material *material)
 {
     if(!material || !theMap || ddMapSetup) return;
 
-    // Light decorations will need a refresh.
     R_SurfaceListIterate(GameMap_DecoratedSurfaces(theMap), markSurfaceForDecorationUpdate, material);
 }
 
@@ -859,8 +858,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
     if(!material) return false;
 
     // Ensure we have up to date info about the material.
-    MaterialSnapshot const &ms =
-        App_Materials()->prepare(*material, Rend_MapSurfaceMaterialSpec());
+    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
     if(ignoreOpacity || (ms.isOpaque() && !frontDef->SW_middleblendmode && frontDef->SW_middlergba[3] >= 1))
     {
@@ -1279,8 +1277,7 @@ float R_GlowStrength(Plane const *pln)
     {
         if(material->isDrawable() && !Surface_IsSkyMasked(&pln->surface))
         {
-            MaterialSnapshot const &ms =
-                App_Materials()->prepare(*material, Rend_MapSurfaceMaterialSpec());
+            MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
             float glowStrength = ms.glowStrength();
             if(glowFactor > .0001f)

@@ -315,49 +315,6 @@ public:
                bool cacheGroups = true);
 
     /**
-     * Prepare variant @a material for render (e.g., upload textures if necessary).
-     *
-     * @see chooseVariant()
-     *
-     * @param material  Material variant to be prepared.
-     * @param forceSnapshotUpdate  @c true= Force an update of the variant's state
-     *                             snapshot. The snapshot is automatically updated
-     *                             when first prepared for a new render frame.
-     *                             Typically the only time force is needed is when
-     *                             the material variant has changed since.
-     *
-     * @return  Snapshot for the chosen and prepared variant of Material.
-     */
-    MaterialSnapshot const &prepare(Material::Variant &material,
-                                    bool forceSnapshotUpdate = false);
-
-    /**
-     * Choose/create a variant of @a material which fulfills @a spec and then
-     * immediately prepare it for render (e.g., upload textures if necessary).
-     *
-     * @note A convenient shorthand of the call tree:
-     * <pre>
-     *    prepare( Material_ChooseVariant( @a material, @a spec, @c true ), @a forceSnapshotUpdate )
-     * </pre>
-     *
-     * @param material  Base Material from which to derive a variant.
-     * @param spec      Specification for the derivation of @a material.
-     * @param forceSnapshotUpdate  @c true= Force an update of the variant's state
-     *                             snapshot. The snapshot is automatically updated
-     *                             when first prepared for a new render frame.
-     *                             Typically the only time force is needed is when
-     *                             the material variant has changed since.
-     *
-     * @return  Snapshot for the chosen and prepared variant of Material.
-     */
-    inline MaterialSnapshot const &prepare(Material &material,
-        MaterialVariantSpec const &spec, bool forceSnapshotUpdate = false)
-    {
-        return prepare(*material.chooseVariant(spec, true /*can-create*/),
-                       forceSnapshotUpdate);
-    }
-
-    /**
      * To be called to reset all animations back to their initial state.
      */
     void resetAllMaterialAnimations();

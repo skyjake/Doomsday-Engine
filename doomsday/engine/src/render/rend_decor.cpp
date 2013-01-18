@@ -458,8 +458,7 @@ static void updateSurfaceDecorations2(Surface &suf, float offsetS, float offsetT
         if(height < 0) height = -height;
 
         // Generate a number of lights.
-        MaterialSnapshot const &ms =
-            App_Materials()->prepare(*suf.material, Rend_MapSurfaceMaterialSpec());
+        MaterialSnapshot const &ms = suf.material->prepare(Rend_MapSurfaceMaterialSpec());
 
         Material::Decorations const &decorations = suf.material->decorations();
         for(int i = 0; i < decorations.count(); ++i)

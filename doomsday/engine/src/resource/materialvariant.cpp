@@ -27,7 +27,7 @@
 #endif
 
 #include "map/r_world.h" // R_UpdateMapSurfacesOnMaterialChange
-#include "render/r_main.h" // frameTimePos
+#include "render/r_main.h" // frameCount, frameTimePos
 
 #include "resource/materialvariantspec.h"
 
@@ -72,6 +72,35 @@ struct Material::Variant::Instance
     ~Instance()
     {
         if(snapshot) M_Free(snapshot);
+    }
+
+    /**
+     * Attach new MaterialSnapshot data to the variant. If an existing
+     * snapshot is already present it will be replaced. Ownership of
+     * @a materialSnapshot is given to the variant.
+     */
+    void attachSnapshot(MaterialSnapshot &newSnapshot)
+    {
+        if(snapshot)
+        {
+#ifdef DENG_DEBUG
+            LOG_AS("Material::Variant::AttachSnapshot");
+            LOG_WARNING("A snapshot is already attached to %p, it will be replaced.") << de::dintptr(this);
+#endif
+            delete snapshot;
+        }
+        snapshot = &newSnapshot;
+    }
+
+    /**
+     * Detach the MaterialSnapshot data from the variant, relinquishing
+     * ownership to the caller.
+     */
+    MaterialSnapshot *detachSnapshot()
+    {
+        MaterialSnapshot *detachedSnapshot = snapshot;
+        snapshot = 0;
+        return detachedSnapshot;
     }
 };
 
@@ -198,6 +227,35 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
     }
 }
 
+MaterialSnapshot const &Material::Variant::prepare(bool forceSnapshotUpdate)
+{
+    // Acquire the snapshot we are interested in.
+    MaterialSnapshot *snapshot = d->snapshot;
+    if(!snapshot)
+    {
+        // Time to allocate the snapshot.
+        snapshot = new MaterialSnapshot(*this);
+        d->attachSnapshot(*snapshot);
+
+        // Update the snapshot right away.
+        forceSnapshotUpdate = true;
+    }
+    else if(d->snapshotPrepareFrame != frameCount)
+    {
+        // Time to update the snapshot.
+        forceSnapshotUpdate = true;
+    }
+
+    // We have work to do?
+    if(forceSnapshotUpdate)
+    {
+        d->snapshotPrepareFrame = frameCount;
+        snapshot->update();
+    }
+
+    return *snapshot;
+}
+
 void Material::Variant::resetAnim()
 {
     if(!d->material->isValid()) return;
@@ -241,46 +299,9 @@ Material::Variant::DecorationState const &Material::Variant::decoration(int deco
     throw UnknownDecorationError("Material::Variant::decoration", QString("Invalid material decoration #%1").arg(decorNum));
 }
 
-MaterialSnapshot &Material::Variant::attachSnapshot(MaterialSnapshot &newSnapshot)
-{
-    if(d->snapshot)
-    {
-        LOG_AS("Material::Variant::AttachSnapshot");
-        LOG_WARNING("A snapshot is already attached to %p, it will be replaced.") << de::dintptr(this);
-        M_Free(d->snapshot);
-    }
-    d->snapshot = &newSnapshot;
-    return newSnapshot;
-}
-
-MaterialSnapshot *Material::Variant::detachSnapshot()
-{
-    MaterialSnapshot *detachedSnapshot = d->snapshot;
-    d->snapshot = 0;
-    return detachedSnapshot;
-}
-
 MaterialSnapshot *Material::Variant::snapshot() const
 {
     return d->snapshot;
-}
-
-int Material::Variant::snapshotPrepareFrame() const
-{
-    if(d->snapshot)
-    {
-        return d->snapshotPrepareFrame;
-    }
-    /// @throw MissingSnapshotError A snapshot is needed for this.
-    throw MissingSnapshotError("Material::Variant::snapshotPrepareFrame", "Snapshot data is required");
-}
-
-void Material::Variant::setSnapshotPrepareFrame(int frameNum)
-{
-    if(d->snapshot)
-    {
-        d->snapshotPrepareFrame = frameNum;
-    }
 }
 
 //} // namespace de

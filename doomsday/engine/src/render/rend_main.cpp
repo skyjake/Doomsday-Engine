@@ -505,7 +505,7 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
     // wrapping.
     if(renderTextures)
     {
-        MaterialSnapshot const &ms = App_Materials()->prepare(*material);
+        MaterialSnapshot const &ms = material->prepare();
         int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
 
         VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms.dimensions().width();
@@ -1432,8 +1432,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
     Rend_BuildBspLeafPlaneGeometry(bspLeaf, (type == PLN_CEILING), height,
                                    &rvertices, &numVertices);
 
-    MaterialSnapshot const &ms =
-        App_Materials()->prepare(*mat, mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+    MaterialSnapshot const &ms = mat->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
 
     if(!(params.flags & RPF_SKYMASK))
     {
@@ -1446,8 +1445,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
             Surface *suf = &bspLeaf->sector->planes[elmIdx]->surface;
             Material *mat = suf->material? suf->material : App_Materials()->find(de::Uri("System", Path("missing"))).material();
 
-            MaterialSnapshot const &ms =
-                App_Materials()->prepare(*mat, Rend_MapSurfaceMaterialSpec());
+            MaterialSnapshot const &ms = mat->prepare(Rend_MapSurfaceMaterialSpec());
             params.glowing = ms.glowStrength();
         }
 
@@ -1650,8 +1648,7 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
             }
         }
 
-        MaterialSnapshot const &ms =
-            App_Materials()->prepare(*mat, mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+        MaterialSnapshot const &ms = mat->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
 
         // Fill in the remaining params data.
         if(!(rpFlags & RPF_SKYMASK))
@@ -2313,8 +2310,7 @@ static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf *leaf, HEdge *startNode
     else
     {
         // Map RTU configuration from the prepared MaterialSnapshot.
-        MaterialVariantSpec const &spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
-        MaterialSnapshot const &ms = App_Materials()->prepare(*material, spec);
+        MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
 
         RL_LoadDefaultRtus();
         RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
@@ -3903,9 +3899,8 @@ static void Rend_RenderBoundingBoxes()
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    MaterialSnapshot const &ms =
-        App_Materials()->prepare(*App_Materials()->find(de::Uri("System", Path("bbox"))).material(),
-                                 Rend_SpriteMaterialSpec());
+    MaterialSnapshot const &ms = App_Materials()->
+            find(de::Uri("System", Path("bbox"))).material()->prepare(Rend_SpriteMaterialSpec());
 
     GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
     GL_BlendMode(BM_ADD);

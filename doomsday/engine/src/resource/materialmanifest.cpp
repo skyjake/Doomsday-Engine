@@ -157,7 +157,7 @@ ded_detailtexture_t *MaterialManifest::detailTextureDef() const
     if(isDedicated) return 0;
 
     // We must prepare a variant before we can determine which definition is in effect.
-    materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
+    d->material->prepare(Rend_MapSurfaceMaterialSpec());
 
     byte prepared = d->material->prepared();
     if(prepared) return d->defs.detailtextures[prepared - 1];
@@ -175,7 +175,7 @@ ded_reflection_t *MaterialManifest::reflectionDef() const
     if(isDedicated) return 0;
 
     // We must prepare a variant before we can determine which definition is in effect.
-    materials().prepare(*d->material, Rend_MapSurfaceMaterialSpec());
+    d->material->prepare(Rend_MapSurfaceMaterialSpec());
 
     byte prepared = d->material->prepared();
     if(prepared) return d->defs.reflections[prepared - 1];

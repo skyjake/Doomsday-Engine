@@ -128,10 +128,6 @@ public:
             float inter;
         };
 
-    public:
-        /// Required snapshot data is missing. @ingroup errors
-        DENG2_ERROR(MissingSnapshotError);
-
     private:
         /**
          * @param generalCase   Material from which this variant is derived.
@@ -177,6 +173,21 @@ public:
         bool isPaused() const;
 
         /**
+         * Prepare the context variant for render (if necessary, uploading
+         * GL textures and updating the state snapshot).
+         *
+         * @param forceSnapshotUpdate  @c true= Force an update of the state
+         *      snapshot. The snapshot is automatically updated when first
+         *      prepared for a new render frame. Typically the only time force
+         *      is needed is when the material variant has changed since.
+         *
+         * @return  Snapshot for the chosen and prepared variant of Material.
+         *
+         * @see Material::chooseVariant(), Material::prepare()
+         */
+        de::MaterialSnapshot const &prepare(bool forceSnapshotUpdate = false);
+
+        /**
          * Reset the staged animation point for the material. The animation
          * states of all context variants will be rewound to the beginning.
          */
@@ -195,49 +206,10 @@ public:
         DecorationState const &decoration(int decorNum);
 
         /**
-         * Attach new MaterialSnapshot data to the variant. If an existing
-         * snapshot is already present it will be replaced. Ownership of
-         * @a materialSnapshot is given to the variant.
-         *
-         * @return  Same as @a materialSnapshot for caller convenience.
-         *
-         * @see detachSnapshot(), snapshot()
-         */
-        de::MaterialSnapshot &attachSnapshot(de::MaterialSnapshot &snapshot);
-
-        /**
-         * Detach the MaterialSnapshot data from the variant, relinquishing
-         * ownership to the caller.
-         *
-         * @see attachSnapshot(), detachSnapshot()
-         */
-        de::MaterialSnapshot *detachSnapshot();
-
-        /**
-         * Returns the MaterialSnapshot data from the variant; otherwise @c 0.
-         * Ownership is unaffected.
-         *
-         * @see attachSnapshot(), detachSnapshot()
+         * Returns the MaterialSnapshot data for the variant if present;
+         * otherwise @c 0.
          */
         de::MaterialSnapshot *snapshot() const;
-
-        /**
-         * Returns the frame number when the variant's associated snapshot
-         * was last prepared/updated.
-         *
-         * @see setSnapshotPrepareFrame()
-         */
-        int snapshotPrepareFrame() const;
-
-        /**
-         * Change the frame number when the variant's snapshot was last
-         * prepared/updated.
-         *
-         * @param frameNum  Frame number to mark the snapshot with.
-         *
-         * @see snapshotPrepareFrame()
-         */
-        void setSnapshotPrepareFrame(int frameNum);
 
         friend class Material;
         friend struct Material::Instance;
@@ -456,10 +428,38 @@ public:
     bool hasGlow() const;
 
     /**
+     * Choose/create a variant of thematerial which fulfills @a spec and then
+     * immediately prepare it for render (e.g., upload textures if necessary).
+     *
+     * @note A convenient shorthand of the call tree:
+     * <pre>
+     *    chooseVariant( @a spec, @c true )->prepare( @a forceSnapshotUpdate )
+     * </pre>
+     *
+     * @param spec      Specification for the derivation of @a material.
+     * @param forceSnapshotUpdate  @c true= Force an update of the variant's state
+     *                             snapshot. The snapshot is automatically updated
+     *                             when first prepared for a new render frame.
+     *                             Typically the only time force is needed is when
+     *                             the material variant has changed since.
+     *
+     * @return  Snapshot for the chosen and prepared variant of Material.
+     *
+     * @see chooseVariant(), Variant::prepare()
+     */
+    inline de::MaterialSnapshot const &prepare(de::MaterialVariantSpec const &spec,
+                                               bool forceSnapshotUpdate = false)
+    {
+        return chooseVariant(spec, true /*can-create*/)->prepare(forceSnapshotUpdate);
+    }
+
+    /**
      * Returns the current prepared state of the material:
      * @return       @c 0= Not yet prepared.
      *               @c 1= Prepared from original game textures.
      *               @c 2= Prepared from custom or replacement textures.
+     *
+     * @see prepare()
      */
     byte prepared() const;
 
@@ -468,6 +468,8 @@ public:
      * @param state  @c 0= Not yet prepared.
      *               @c 1= Prepared from original game textures.
      *               @c 2= Prepared from custom or replacement textures.
+     *
+     * @see prepare()
      */
     void setPrepared(byte state);
 

@@ -37,7 +37,6 @@
 #include <de/memory.h>
 
 #include "gl/gl_texmanager.h" // GL_TextureVariantSpecificationForContext
-#include "render/r_main.h" // frameCount
 #include "resource/materialsnapshot.h"
 
 #include "resource/materials.h"
@@ -355,7 +354,9 @@ void Materials::processCacheQueue()
     while(!d->variantCacheQueue.isEmpty())
     {
          VariantCacheTask *cacheTask = d->variantCacheQueue.takeFirst();
-         prepare(*cacheTask->mat, *cacheTask->spec);
+
+         cacheTask->mat->prepare(*cacheTask->spec);
+
          delete cacheTask;
     }
 }
@@ -603,15 +604,6 @@ Material *Materials::newFromDef(ded_material_t &def)
 void Materials::cache(Material &mat, MaterialVariantSpec const &spec,
     bool cacheGroups)
 {
-#ifdef __SERVER__
-    return;
-#endif
-
-#ifdef __CLIENT__
-    // Don't cache when playing a demo. (at all???)
-    if(isDedicated || playback) return;
-#endif
-
     // Already in the queue?
     DENG2_FOR_EACH_CONST(VariantCacheQueue, i, d->variantCacheQueue)
     {
@@ -623,8 +615,10 @@ void Materials::cache(Material &mat, MaterialVariantSpec const &spec,
 
     if(!cacheGroups) return;
 
-    // If the material is part of one or more groups; cache all other
-    // materials within the same group(s).
+    // If the material is part of one or more groups; enqueue cache tasks for all
+    // other materials within the same group(s). Although we could use a flag in
+    // the task and have it find the groups come prepare time, this way we can be
+    // sure there are no overlapping tasks.
     DENG2_FOR_EACH_CONST(Groups, i, d->groups)
     {
         Group const &group = *i;
@@ -632,7 +626,7 @@ void Materials::cache(Material &mat, MaterialVariantSpec const &spec,
 
         DENG2_FOR_EACH_CONST(Group::Materials, k, group.allMaterials())
         {
-            if(*k == &mat) continue;
+            if(*k == &mat) continue; // We've already enqueued this.
 
             cache(**k, spec, false /* do not cache groups */);
         }
@@ -645,36 +639,6 @@ void Materials::ticker(timespan_t time)
     {
         (*i)->ticker(time);
     }
-}
-
-MaterialSnapshot const &Materials::prepare(Material::Variant &variant,
-    bool updateSnapshot)
-{
-    // Acquire the snapshot we are interested in.
-    MaterialSnapshot *snapshot = variant.snapshot();
-    if(!snapshot)
-    {
-        // Time to allocate the snapshot.
-        snapshot = new MaterialSnapshot(variant);
-        variant.attachSnapshot(*snapshot);
-
-        // Update the snapshot right away.
-        updateSnapshot = true;
-    }
-    else if(variant.snapshotPrepareFrame() != frameCount)
-    {
-        // Time to update the snapshot.
-        updateSnapshot = true;
-    }
-
-    // We have work to do?
-    if(updateSnapshot)
-    {
-        variant.setSnapshotPrepareFrame(frameCount);
-        snapshot->update();
-    }
-
-    return *snapshot;
 }
 
 uint Materials::size() const

@@ -1277,8 +1277,6 @@ void R_RenderViewPorts()
     R_UseViewPort(NULL);
 }
 
-#endif // __CLIENT__
-
 static int findSpriteOwner(thinker_t *th, void *context)
 {    mobj_t *mo = (mobj_t *) th;
     spritedef_t *sprDef = (spritedef_t *) context;
@@ -1315,8 +1313,6 @@ static void cacheSpritesForState(int stateIndex, MaterialVariantSpec const &spec
     }
 }
 
-#ifdef __CLIENT__
-
 #undef Rend_CacheForMobjType
 DENG_EXTERN_C void Rend_CacheForMobjType(int num)
 {
@@ -1342,8 +1338,12 @@ DENG_EXTERN_C void Rend_CacheForMobjType(int num)
 
 void Rend_CacheForMap()
 {
-    // Don't precache when playing demo.
-    if(isDedicated || playback) return;
+#ifdef __SERVER__
+    return;
+#endif
+
+    // Don't precache when playing a demo (why not? -ds).
+    if(playback) return;
 
     // Precaching from 100 to 200.
     Con_SetProgress(100);

@@ -345,11 +345,6 @@ bool Material::hasGlow() const
     return false;
 }
 
-int Material::layerCount() const
-{
-    return d->layers.count();
-}
-
 byte Material::prepared() const
 {
     return d->prepared;
@@ -470,6 +465,11 @@ struct texture_s *Material::shinyMaskTexture()
 void Material::setShinyMaskTexture(struct texture_s *tex)
 {
     d->shinyMaskTex = reinterpret_cast<Texture *>(tex);
+}
+
+int Material::layerCount() const
+{
+    return d->layers.count();
 }
 
 Material::Layers const &Material::layers() const
