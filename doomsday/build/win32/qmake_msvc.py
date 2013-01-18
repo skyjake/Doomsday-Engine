@@ -1,4 +1,16 @@
-# Python script for generating a Microsoft Visual Studio solution from doomsday.pro
+# qmake_msvc.py is a script that generates a full Visual Studio solution with 
+# a .vcxproj for each subproject. You must set up envconfig.bat before running 
+# the script. The solution is always placed in a folder called 
+# "doomsday-msvc-build" at the repository root.
+#
+# qmake_msvc.py must be called whenever the .pro/.pri files change. The .sln
+# and .vcxproj files are then rewritten -- manual edits will be gone!
+# 
+# The solution automatically deploys all built binaries into the
+# "distrib\products" folder. The user is expected to 1) copy the required
+# dependency .dlls to products\bin, and 2) define the appropriate launch
+# command line and options (which are persistently then stored in the 
+# .vcxproj.user file).
 
 import os, sys, re
 
