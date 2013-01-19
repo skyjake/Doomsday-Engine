@@ -16,3 +16,5 @@ TEMPLATE = subdirs
 CONFIG += ordered
 
 SUBDIRS += libshell shell-gui
+
+unix: SUBDIRS += shell-text
