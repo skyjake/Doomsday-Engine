@@ -21,7 +21,8 @@ CONFIG -= app_bundle
 
 # External Dependencies ------------------------------------------------------
 
-CONFIG += deng_nogui
+# TODO: Get rid of this. The dedicated server should need no GL code.
+CONFIG += deng_qtopengl
 
 include(../dep_zlib.pri)
 include(../dep_curses.pri)

@@ -31,6 +31,6 @@ win32 {
 
 macx {
     linkToBundledLibdeng2(audio_openal)
-    linkToBundledLibdeng(audio_openal)
+    linkToBundledLibdeng1(audio_openal)
 }
 

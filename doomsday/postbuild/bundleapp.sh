@@ -26,6 +26,9 @@ rm -rf $BUILDDIR/*.bundle
 echo "Copying server..."
 $CP server/doomsday-server $APPDIR/Resources
 
+echo "Copying doomsday-shell-curses..."
+$CP tools/shell/shell-text/doomsday-shell-curses $APPDIR/Resources
+
 echo "Copying bundles from plugins..."
 PLUGDIR=$APPDIR/DengPlugins
 rm -rf $PLUGDIR

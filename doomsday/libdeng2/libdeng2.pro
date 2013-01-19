@@ -27,7 +27,7 @@ DEFINES += LIBDENG2_VERSION=\\\"$${LIBDENG2_MAJOR_VERSION}.$${LIBDENG2_MINOR_VER
 DEFINES += __DENG2__
 
 # Using Qt.
-QT += core network gui opengl
+QT += core network gui
 
 win32 {
     # Keep the version number out of the file name.
@@ -123,7 +123,7 @@ macx {
     fixInstallName("QtCore.framework/Versions/4/QtCore")
     fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
     fixInstallName("QtGui.framework/Versions/4/QtGui")
-    fixInstallName("QtOpenGL.framework/Versions/4/QtOpenGL")
+    #fixInstallName("QtOpenGL.framework/Versions/4/QtOpenGL")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")

@@ -17,7 +17,10 @@ win32 {
 LIBS += -ldeng1
 
 macx {
-    defineTest(linkToBundledLibdeng) {
+    defineTest(linkBinaryToBundledLibdeng1) {
+        fixInstallName($${1}, libdeng1.1.dylib, ..)
+    }
+    defineTest(linkToBundledLibdeng1) {
         fixInstallName($${1}.bundle/$$1, libdeng1.1.dylib, ..)
     }
 }
