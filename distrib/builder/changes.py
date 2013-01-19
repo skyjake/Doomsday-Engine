@@ -247,7 +247,7 @@ class Changes:
                     print >> out, '<li>'    
                     print >> out, '<a href="%s">%s</a>: ' % (entry.link, entry.date[:10])
                     print >> out, '<b>%s</b>' % entry.subject
-                    print >> out, 'by <i>%s</i>%s' % (entry.author, others)
+                    print >> out, 'by <i>%s</i>%s' % (encodedText(entry.author), others)
                     print >> out, '<blockquote style="color:#666;">%s</blockquote>' % entry.message(encodeHtml=True)
                     
                 print >> out, '</ul>'
@@ -260,7 +260,7 @@ class Changes:
             for entry in self.entries:
                 print >> out, '<commit>'
                 print >> out, '<submitDate>%s</submitDate>' % entry.date
-                print >> out, '<author>%s</author>' % entry.author
+                print >> out, '<author>%s</author>' % encodedText(entry.author)
                 print >> out, '<repositoryUrl>%s</repositoryUrl>' % entry.link
                 print >> out, '<sha1>%s</sha1>' % entry.hash
                 if entry.tags or entry.guessedTags:
