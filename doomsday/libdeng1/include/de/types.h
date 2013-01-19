@@ -22,6 +22,9 @@
 #ifndef LIBDENG_BASIC_TYPES_H
 #define LIBDENG_BASIC_TYPES_H
 
+// This header is ignored if read by Microsoft RC.
+#ifndef RC_INVOKED
+
 #include <de/libdeng1.h>
 
 enum {
@@ -176,5 +179,7 @@ typedef int32_t         int_from_pointer_t;
 #define DDMININT    ((int32_t)0x80000000)   ///< Min negative 32-bit integer
 #define DDMINLONG   ((int32_t)0x80000000)
 #define DDMINFLOAT  ((float)-(1E+37))
+
+#endif // RC_INVOKED
 
 #endif // LIBDENG_BASIC_TYPES_H
