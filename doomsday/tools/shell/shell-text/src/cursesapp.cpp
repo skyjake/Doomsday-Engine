@@ -21,9 +21,10 @@
 #include <QTextStream>
 #include <QDebug>
 #include "cursesapp.h"
+#include "cursestextcanvas.h"
 #include <curses.h>
-#include <de/Vector>
 #include <stdio.h>
+#include <de/Vector>
 
 static void windowResized(int)
 {
@@ -61,10 +62,11 @@ struct CursesApp::Instance
     // Curses state:
     WINDOW *rootWin;
     de::Vector2i rootSize;
-
     QTimer *inputPollTimer;
 
-    Instance(CursesApp &a) : self(a)
+    CursesTextCanvas *canvas;
+
+    Instance(CursesApp &a) : self(a), canvas(0)
     {
         initCurses();
     }
@@ -90,6 +92,10 @@ struct CursesApp::Instance
         inputPollTimer = new QTimer(&self);
         QObject::connect(inputPollTimer, SIGNAL(timeout()), &self, SLOT(pollForInput()));
         inputPollTimer->start(1000 / 20);
+
+        // Create the canvas.
+        canvas = new CursesTextCanvas(rootSize, rootWin);
+        canvas->show();
     }
 
     void initCursesState()
@@ -99,7 +105,6 @@ struct CursesApp::Instance
 
         scrollok(rootWin, FALSE);
         wclear(rootWin);
-        wrefresh(rootWin);
 
         // Initialize input.
         cbreak();
@@ -111,6 +116,9 @@ struct CursesApp::Instance
 
     void shutdownCurses()
     {
+        delete canvas;
+        canvas = 0;
+
         delete inputPollTimer;
         inputPollTimer = 0;
 

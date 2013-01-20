@@ -26,11 +26,15 @@ INCLUDEPATH += ../libshell/include
 
 HEADERS += \
     src/cursesapp.h \
-    src/main.h
+    src/main.h \
+    src/textcanvas.h \
+    src/cursestextcanvas.h
 
 SOURCES += \
     src/cursesapp.cpp \
-    src/main.cpp
+    src/main.cpp \
+    src/textcanvas.cpp \
+    src/cursestextcanvas.cpp
 
 # Installation --------------------------------------------------------------
 

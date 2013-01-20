@@ -1,4 +1,4 @@
-/** @file cursesapp.h Application based on curses for input and output.
+/** @file cursestextcanvas.h Text-based drawing surface for curses.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,30 +16,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CURSESAPP_H
-#define CURSESAPP_H
+#ifndef CURSESTEXTCANVAS_H
+#define CURSESTEXTCANVAS_H
 
-#include <QApplication>
+#include <curses.h>
+#include "textcanvas.h"
 
-class CursesApp : public QApplication
+class CursesTextCanvas : public TextCanvas
 {
-    Q_OBJECT
-
 public:
-    CursesApp(int &argc, char **argv);
-    ~CursesApp();
+    CursesTextCanvas(Size const &size, WINDOW *window, Coord const &originInWindow = Coord(0, 0));
 
-    void windowWasResized();
-
-protected slots:
-    void pollForInput();
-
-signals:
-    void viewResized(int cols, int rows);
+    void show();
 
 private:
-    struct Instance;
-    Instance *d;
+    WINDOW *_window;
+    Coord _origin;
 };
 
-#endif // CURSESAPP_H
+#endif // CURSESTEXTCANVAS_H
