@@ -1,10 +1,11 @@
 /** @file materialarchive.h Material Archive.
+ *
  * Collection of identifier-material pairs.
  *
  * Used when saving map state (savegames) or sharing world changes with clients.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

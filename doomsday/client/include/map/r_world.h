@@ -27,6 +27,7 @@
 #include "resource/r_data.h"
 #include "map/vertex.h"
 #include "map/sector.h"
+#include "map/sidedef.h"
 #include "map/plane.h"
 
 // Used for vertex sector owners, side line owners and reverb BSP leafs.

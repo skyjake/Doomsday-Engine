@@ -1,7 +1,7 @@
 /** @file textures.h Texture Resource Collection.
  *
- * @author Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 2010-2013 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2010-2013 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -39,7 +39,6 @@ namespace de {
 
 /**
  * Specialized resource collection for a set of logical textures.
- * @ingroup resource
  *
  * @em Clearing a texture is to 'undefine' it - any names bound to it will be
  * deleted and any GL textures acquired for it are 'released'. The logical
@@ -53,6 +52,8 @@ namespace de {
  *
  *   A) Declared but not defined.
  *   B) Declared and defined.
+ *
+ * @ingroup resource
  */
 class Textures
 {

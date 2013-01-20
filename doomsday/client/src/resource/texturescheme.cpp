@@ -1,6 +1,6 @@
 /** @file texturescheme.cpp Texture system subspace scheme.
  *
- * @authors Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

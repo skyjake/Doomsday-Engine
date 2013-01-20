@@ -1,6 +1,6 @@
 /** @file texturemanifest.h Texture Manifest.
  *
- * @author Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -32,10 +32,11 @@ class TextureScheme;
 
 /**
  * Metadata for a would-be logical Texture resource.
- * @ingroup resource
  *
  * Models a reference to and the associated metadata for a logical texture
  * in the texture resource collection.
+ *
+ * @ingroup resource
  */
 class TextureManifest : public PathTree::Node
 {

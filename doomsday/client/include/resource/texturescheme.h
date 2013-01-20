@@ -1,8 +1,6 @@
-/**
- * @file texturescheme.h
- * @ingroup resource
+/** @file texturescheme.h
  *
- * @author Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,6 +28,7 @@ namespace de {
 
 /**
  * TextureScheme defines a texture system subspace.
+ * @ingroup resource
  */
 class TextureScheme
 {

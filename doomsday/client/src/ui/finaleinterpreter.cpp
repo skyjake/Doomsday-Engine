@@ -1350,7 +1350,6 @@ DEFFC(BGMaterial)
     Material *material = 0;
     try
     {
-        de::Materials::Manifest *manifest = 0;
         if(ded_value_t* value = Def_GetValueByUri(OP_URI(0)))
         {
             material = &App_Materials().find(de::Uri(value->text, RC_NULL)).material();

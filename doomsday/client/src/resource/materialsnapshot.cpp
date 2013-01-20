@@ -1,6 +1,6 @@
 /** @file materialsnapshot.cpp Material Snapshot.
  *
- * @authors Copyright &copy; 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
