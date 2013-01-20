@@ -25,9 +25,11 @@ INCLUDEPATH += ../libshell/include
 # Sources -------------------------------------------------------------------
 
 HEADERS += \
+    src/cursesapp.h \
     src/main.h
 
 SOURCES += \
+    src/cursesapp.cpp \
     src/main.cpp
 
 # Installation --------------------------------------------------------------

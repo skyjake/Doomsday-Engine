@@ -1,4 +1,4 @@
-/** @file main.cpp Application startup and shutdown.
+/** @file cursesapp.h Application based on curses for input and output.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,12 +16,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <QApplication>
-#include <de/libdeng2.h>
-#include "cursesapp.h"
+#ifndef CURSESAPP_H
+#define CURSESAPP_H
 
-int main(int argc, char *argv[])
+#include <QApplication>
+
+class CursesApp : public QApplication
 {
-    CursesApp a(argc, argv);
-    return a.exec();
-}
+    Q_OBJECT
+
+public:
+    CursesApp(int &argc, char **argv);
+    ~CursesApp();
+
+    void windowWasResized();
+
+public slots:
+    void pollForInput();
+
+signals:
+    void viewResized(int cols, int rows);
+
+private:
+    struct Instance;
+    Instance *d;
+};
+
+#endif // CURSESAPP_H
