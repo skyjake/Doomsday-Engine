@@ -19,9 +19,9 @@
 #ifndef CURSESAPP_H
 #define CURSESAPP_H
 
-#include <QApplication>
+#include <QCoreApplication>
 
-class CursesApp : public QApplication
+class CursesApp : public QCoreApplication
 {
     Q_OBJECT
 

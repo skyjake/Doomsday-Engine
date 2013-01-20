@@ -73,7 +73,7 @@ struct CursesApp::Instance
 
     ~Instance()
     {
-        delete inputPollTimer;
+        shutdownCurses();
     }
 
     void initCurses()
@@ -138,14 +138,29 @@ struct CursesApp::Instance
         {
             if(key == KEY_RESIZE)
             {
+                // Terminal has been resized.
                 de::Vector2i size = actualTerminalSize();
                 resize_term(size.y, size.x);
 
                 emit self.viewResized(size.x, size.y);
             }
+            else if(key & KEY_CODE_YES)
+            {
+                // There is a curses key code.
+                switch(key)
+                {
+                default:
+                    // This key code is ignored.
+                    break;
+                }
+            }
+            else if(key == 0x1b) // Escape
+            {
+                self.quit();
+            }
             else
             {
-                qDebug() << "Got key" << QString("%1").arg(key, 0, 16);
+                qDebug() << "Got key" << QString("0x%1").arg(key, 0, 16).toAscii().constData();
             }
         }
     }
@@ -157,7 +172,7 @@ struct CursesApp::Instance
 };
 
 CursesApp::CursesApp(int &argc, char **argv)
-    : QApplication(argc, argv, QApplication::Tty), d(new Instance(*this))
+    : QCoreApplication(argc, argv), d(new Instance(*this))
 {
 }
 
