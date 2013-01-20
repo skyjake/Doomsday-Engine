@@ -198,25 +198,33 @@ def startGame(profile):
     """
     setLaunchMessage(language.translate('launch-message'))
     
-    # Broadcast a notification about the launch of a game.
-
-    # Locate the paths and binaries.  Most of these are configured in
-    # the .conf files.
-    engineBin = st.getSystemString('doomsday-binary')
-
     options = generateOptions(profile)
     if options == None:
         return
 
+    # Locate the paths and binaries.  Most of these are configured in
+    # the .conf files.
+    isServer = '-dedicated' in options
+    if isServer:
+        idx = options.index('-dedicated')
+        options = options[:idx] + options[idx+11:]
+        engineBin = st.getSystemString('doomsday-server-binary')
+        userPath = paths.getUserPath(paths.SERVER_RUNTIME)
+    else:
+        engineBin = st.getSystemString('doomsday-binary')        
+        userPath = paths.getUserPath(paths.RUNTIME)
+
+    options += ' -userdir ' + paths.quote(userPath)
+
     # Put the response file in the user's runtime directory.
-    responseFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'Options.rsp')
+    responseFile = os.path.join(userPath, 'Options.rsp')
 
     file(responseFile, 'w').write(options + "\n")
 
     # Execute the command line.
     if host.isWindows():
-        if '-dedicated' in options:
-            batFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'launch.bat')
+        if isServer:
+            batFile = os.path.join(userPath, 'launch.bat')
             bat = file(batFile, 'wt')
             print >> bat, '@ECHO OFF'
             print >> bat, 'ECHO Launching Doomsday...'
@@ -228,9 +236,9 @@ def startGame(profile):
             spawnFunc = spawnWithTerminal
         else:
             spawnFunc = os.spawnv
-    elif host.isMac() and '-dedicated' in options:
+    elif host.isMac() and isServer:
         # On the Mac, we'll tell Terminal to run it.
-        osaFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'Launch.scpt')
+        osaFile = os.path.join(userPath, 'Launch.scpt')
         scpt = file(osaFile, 'w')
         print >> scpt, 'tell application "Terminal"'
         print >> scpt, '    activate'
@@ -243,8 +251,8 @@ def startGame(profile):
         scpt.close()
         engineBin = osaFile
         spawnFunc = spawnWithTerminal
-    elif host.isUnix() and '-dedicated' in options:
-        shFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'launch.sh')
+    elif host.isUnix() and isServer:
+        shFile = os.path.join(userPath, 'launch.sh')
         sh = file(shFile, 'w')
         print >> sh, '#!/bin/sh'
         print >> sh, "cd %s" % (paths.quote(os.getcwd()))
@@ -306,9 +314,6 @@ def generateOptions(profile):
     if st.isDefined('doomsday-base'):
         basePath = os.path.abspath(st.getSystemString('doomsday-base'))
         cmdLine.append('-basedir ' + paths.quote(basePath))
-
-    userPath = paths.getUserPath(paths.RUNTIME)
-    cmdLine.append('-userdir ' + paths.quote(userPath))
 
     # Determine the components used by the profile.
     for compId in profile.getComponents():

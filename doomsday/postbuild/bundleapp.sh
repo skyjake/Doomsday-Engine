@@ -8,7 +8,7 @@ CP="cp -fRp"
 SRCDIR=$1
 echo "Source directory: $SRCDIR"
 
-BUILDDIR=engine
+BUILDDIR=client
 
 if [ ! -e $BUILDDIR/doomsday.app ]; then
     echo "Built product not found, skipping bundling."
@@ -37,6 +37,7 @@ $CP plugins/heretic/heretic.bundle                 $PLUGDIR/
 $CP plugins/hexen/hexen.bundle                     $PLUGDIR/
 $CP plugins/doom64/doom64.bundle                   $PLUGDIR/
 $CP plugins/fmod/audio_fmod.bundle                 $PLUGDIR/
+$CP plugins/example/example.bundle                 $PLUGDIR/
 
 # Tools
 #$CP tools/wadtool/wadtool $APPDIR/Resources

@@ -43,9 +43,9 @@
 *
 * This code does not build on Win32.
 *
-* For now LZSS compression is used by FileReader in engine/src/m_misc.c
+* For now LZSS compression is used by FileReader in client/src/m_misc.c
 * by plugins/jhexen/src/sv_save.c in many routines, and by
-* engine/include/net_main.h in the Demo_* rouines.
+* client/include/net_main.h in the Demo_* rouines.
 */
 
 // HEADER FILES ------------------------------------------------------------

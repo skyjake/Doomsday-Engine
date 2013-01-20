@@ -64,6 +64,7 @@ PLUGINS = 'plugins'
 PROFILES = 'profiles'
 GRAPHICS = 'graphics'
 RUNTIME = 'runtime'
+SERVER_RUNTIME = 'server-runtime'
 
 # List of custom addons directories.
 addonPaths = []
@@ -152,7 +153,7 @@ def _checkSnowberryHome():
 
     # Create the rest of the user directories if they don't exist yet.
     for p in [ADDONS, MANIFESTS, UNINSTALLED, CONF, LANG, PLUGINS, PROFILES,
-              GRAPHICS, RUNTIME]:
+              GRAPHICS, RUNTIME, SERVER_RUNTIME]:
         _createDir(getUserPath(p))
 
 

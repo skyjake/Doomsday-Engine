@@ -1,0 +1,6 @@
+LIBRARY			EXAMPLE
+
+EXPORTS
+    DP_Initialize
+    deng_LibraryType
+    deng_API

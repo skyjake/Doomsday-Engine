@@ -1,0 +1,12 @@
+# API documentation for the Doomsday Client
+@INCLUDE = ../doomsday.doxy
+
+PROJECT_NAME        = "Doomsday Client"
+PROJECT_NUMBER      = 1.10
+PROJECT_BRIEF       = "Internal documentation (Windows)"
+OUTPUT_DIRECTORY    = ../apidoc/win32/
+
+INPUT               = api include src
+EXCLUDE             = include/unix include/macx src/unix src/macx
+
+PREDEFINED          = __DOOMSDAY__ __CLIENT__ WIN32 __cplusplus

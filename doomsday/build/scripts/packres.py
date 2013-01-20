@@ -68,8 +68,8 @@ class Pack:
 # Directory contents added recursively.
 p = Pack()
 p.add_files(
-    [ ('engine/defs', 'defs'),
-      ('engine/data', 'data') ] )
+    [ ('client/defs', 'defs'),
+      ('client/data', 'data') ] )
 p.create('doomsday.pk3')
 
 # libdoom.pk3

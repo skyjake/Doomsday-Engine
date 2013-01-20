@@ -71,45 +71,45 @@ else {
 # Source Files ---------------------------------------------------------------
 
 # Prefix for source files (shared for now):
-SRC = ../engine
+SRC = ../client
 
 DENG_API_HEADERS = \
-    $$SRC/api/apis.h \
-    $$SRC/api/api_audiod.h \
-    $$SRC/api/api_audiod_mus.h \
-    $$SRC/api/api_audiod_sfx.h \
-    $$SRC/api/api_base.h \
-    $$SRC/api/api_busy.h \
-    $$SRC/api/api_console.h \
-    $$SRC/api/api_def.h \
-    $$SRC/api/api_event.h \
-    $$SRC/api/api_gl.h \
-    $$SRC/api/api_infine.h \
-    $$SRC/api/api_internaldata.h \
-    $$SRC/api/api_filesys.h \
-    $$SRC/api/api_fontrender.h \
-    $$SRC/api/api_gameexport.h \
-    $$SRC/api/api_material.h \
-    $$SRC/api/api_materialarchive.h \
-    $$SRC/api/api_map.h \
-    $$SRC/api/api_mapedit.h \
-    $$SRC/api/api_player.h \
-    $$SRC/api/api_plugin.h \
-    $$SRC/api/api_render.h \
-    $$SRC/api/api_resource.h \
-    $$SRC/api/api_resourceclass.h \
-    $$SRC/api/api_server.h \
-    $$SRC/api/api_sound.h \
-    $$SRC/api/api_svg.h \
-    $$SRC/api/api_thinker.h \
-    $$SRC/api/api_uri.h \
-    $$SRC/api/api_wad.h \
-    $$SRC/api/dd_share.h \
-    $$SRC/api/dd_types.h \
-    $$SRC/api/dd_version.h \
-    $$SRC/api/def_share.h \
-    $$SRC/api/dengproject.h \
-    $$SRC/api/doomsday.h
+    $$DENG_API_DIR/apis.h \
+    $$DENG_API_DIR/api_audiod.h \
+    $$DENG_API_DIR/api_audiod_mus.h \
+    $$DENG_API_DIR/api_audiod_sfx.h \
+    $$DENG_API_DIR/api_base.h \
+    $$DENG_API_DIR/api_busy.h \
+    $$DENG_API_DIR/api_console.h \
+    $$DENG_API_DIR/api_def.h \
+    $$DENG_API_DIR/api_event.h \
+    $$DENG_API_DIR/api_gl.h \
+    $$DENG_API_DIR/api_infine.h \
+    $$DENG_API_DIR/api_internaldata.h \
+    $$DENG_API_DIR/api_filesys.h \
+    $$DENG_API_DIR/api_fontrender.h \
+    $$DENG_API_DIR/api_gameexport.h \
+    $$DENG_API_DIR/api_material.h \
+    $$DENG_API_DIR/api_materialarchive.h \
+    $$DENG_API_DIR/api_map.h \
+    $$DENG_API_DIR/api_mapedit.h \
+    $$DENG_API_DIR/api_player.h \
+    $$DENG_API_DIR/api_plugin.h \
+    $$DENG_API_DIR/api_render.h \
+    $$DENG_API_DIR/api_resource.h \
+    $$DENG_API_DIR/api_resourceclass.h \
+    $$DENG_API_DIR/api_server.h \
+    $$DENG_API_DIR/api_sound.h \
+    $$DENG_API_DIR/api_svg.h \
+    $$DENG_API_DIR/api_thinker.h \
+    $$DENG_API_DIR/api_uri.h \
+    $$DENG_API_DIR/api_wad.h \
+    $$DENG_API_DIR/dd_share.h \
+    $$DENG_API_DIR/dd_types.h \
+    $$DENG_API_DIR/dd_version.h \
+    $$DENG_API_DIR/def_share.h \
+    $$DENG_API_DIR/dengproject.h \
+    $$DENG_API_DIR/doomsday.h
 
 # Convenience headers.
 DENG_HEADERS += \
@@ -260,12 +260,12 @@ DENG_HEADERS += \
     $$SRC/include/resource/wad.h \
     $$SRC/include/resource/zip.h \
     $$SRC/include/resourceclass.h \
-    $$SRC/include/server/sv_def.h \
-    $$SRC/include/server/sv_frame.h \
-    $$SRC/include/server/sv_infine.h \
-    $$SRC/include/server/sv_missile.h \
-    $$SRC/include/server/sv_pool.h \
-    $$SRC/include/server/sv_sound.h \
+    include/server/sv_def.h \
+    include/server/sv_frame.h \
+    include/server/sv_infine.h \
+    include/server/sv_missile.h \
+    include/server/sv_pool.h \
+    include/server/sv_sound.h \
     $$SRC/include/sys_console.h \
     $$SRC/include/sys_system.h \
     $$SRC/include/tab_anorms.h \
@@ -458,12 +458,12 @@ SOURCES += \
     $$SRC/src/resource/tga.cpp \
     $$SRC/src/resource/wad.cpp \
     $$SRC/src/resource/zip.cpp \
-    $$SRC/src/server/sv_frame.cpp \
-    $$SRC/src/server/sv_infine.cpp \
-    $$SRC/src/server/sv_main.cpp \
-    $$SRC/src/server/sv_missile.cpp \
-    $$SRC/src/server/sv_pool.cpp \
-    $$SRC/src/server/sv_sound.cpp \
+    src/server/sv_frame.cpp \
+    src/server/sv_infine.cpp \
+    src/server/sv_main.cpp \
+    src/server/sv_missile.cpp \
+    src/server/sv_pool.cpp \
+    src/server/sv_sound.cpp \
     $$SRC/src/sys_system.cpp \
     $$SRC/src/tab_tables.c \
     $$SRC/src/ui/b_command.cpp \

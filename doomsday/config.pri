@@ -38,8 +38,8 @@ CONFIG *= thread
 
 # Directories ----------------------------------------------------------------
 
-DENG_API_DIR          = $$PWD/engine/api
-DENG_INCLUDE_DIR      = $$PWD/engine/include
+DENG_API_DIR          = $$PWD/api
+DENG_INCLUDE_DIR      = $$PWD/client/include
 DENG_UNIX_INCLUDE_DIR = $$DENG_INCLUDE_DIR/unix
 DENG_MAC_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/macx
 DENG_WIN_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/windows

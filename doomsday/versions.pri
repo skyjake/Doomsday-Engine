@@ -13,7 +13,7 @@ defineReplace(findVersion) {
 }
 
 defineReplace(dengReleaseType) {
-    info = $$system(python \"$$PWD/../distrib/build_version.py\"  \"$$PWD/engine/api/dd_version.h\")
+    info = $$system(python \"$$PWD/../distrib/build_version.py\"  \"$$PWD/api/dd_version.h\")
     return($$member(info, 2))
 }
 
@@ -23,11 +23,11 @@ defineTest(isStableRelease) {
     else: return(false)
 }
 
-DENG_VERSION            = $$findVersion(engine/api/dd_version.h)
+DENG_VERSION            = $$findVersion(api/dd_version.h)
 
-JDOOM_VERSION           = $$findVersion(engine/api/dd_version.h)
-JHERETIC_VERSION        = $$findVersion(engine/api/dd_version.h)
-JHEXEN_VERSION          = $$findVersion(engine/api/dd_version.h)
+JDOOM_VERSION           = $$findVersion(api/dd_version.h)
+JHERETIC_VERSION        = $$findVersion(api/dd_version.h)
+JHEXEN_VERSION          = $$findVersion(api/dd_version.h)
 
 DEHREAD_VERSION         = $$findVersion(plugins/dehread/include/version.h)
 WADMAPCONVERTER_VERSION = $$findVersion(plugins/wadmapconverter/include/version.h)
@@ -35,5 +35,6 @@ DIRECTSOUND_VERSION     = $$findVersion(plugins/directsound/include/version.h)
 OPENAL_VERSION          = $$findVersion(plugins/openal/include/version.h)
 FMOD_VERSION            = $$findVersion(plugins/fmod/include/version.h)
 WINMM_VERSION           = $$findVersion(plugins/winmm/include/version.h)
+EXAMPLE_VERSION         = $$findVersion(plugins/example/include/version.h)
 
-JDOOM64_VERSION         = $$findVersion(engine/api/dd_version.h)
+JDOOM64_VERSION         = $$findVersion(api/dd_version.h)
