@@ -73,7 +73,6 @@ static int gameLoopExitCode = 0;
 
 static double lastRunTicsTime;
 static float fps;
-static int lastFrameCount;
 static boolean firstTic = true;
 static boolean tickIsSharp = false;
 static boolean noninteractive = false;
@@ -84,8 +83,6 @@ static int timeDeltasIndex = 0;
 
 static float realFrameTimePos = 0;
 
-static void startFrame(void);
-static void endFrame(void);
 static void runTics(void);
 
 void DD_RegisterLoop(void)
@@ -163,6 +160,56 @@ void DD_GameLoopCallback(void)
     }
 #endif
 }
+
+#ifdef __CLIENT__
+
+//static uint frameStartAt;
+
+static void startFrame(void)
+{
+    //frameStartAt = Timer_RealMilliseconds();
+
+    S_StartFrame();
+    if(gx.BeginFrame)
+    {
+        gx.BeginFrame();
+    }
+}
+
+//static uint lastShowAt;
+
+static void endFrame(void)
+{
+    static uint lastFpsTime = 0;
+
+    uint nowTime = Timer_RealMilliseconds();
+
+    /*
+    Con_Message("endFrame with %i ms (%i render)\n", nowTime - lastShowAt, nowTime - frameStartAt);
+    lastShowAt = nowTime;
+    */
+
+    // Increment the (local) frame counter.
+    rFrameCount++;
+
+    // Count the frames every other second.
+    if(nowTime - 2500 >= lastFpsTime)
+    {
+        static int lastFrameCount = 0;
+        fps = (rFrameCount - lastFrameCount) / ((nowTime - lastFpsTime)/1000.0f);
+        lastFpsTime = nowTime;
+        lastFrameCount = rFrameCount;
+    }
+
+    if(gx.EndFrame)
+    {
+        gx.EndFrame();
+    }
+
+    S_EndFrame();
+}
+
+#endif // __CLIENT__
 
 void DD_GameLoopDrawer(void)
 {
@@ -252,51 +299,6 @@ void DD_GameLoopDrawer(void)
     endFrame();
 
 #endif // __CLIENT__
-}
-
-//static uint frameStartAt;
-
-static void startFrame(void)
-{
-    //frameStartAt = Timer_RealMilliseconds();
-
-    S_StartFrame();
-    if(gx.BeginFrame)
-    {
-        gx.BeginFrame();
-    }
-}
-
-//static uint lastShowAt;
-
-static void endFrame(void)
-{
-    static uint lastFpsTime = 0;
-
-    uint nowTime = Timer_RealMilliseconds();
-
-    /*
-    Con_Message("endFrame with %i ms (%i render)\n", nowTime - lastShowAt, nowTime - frameStartAt);
-    lastShowAt = nowTime;
-    */
-
-    // Increment the (local) frame counter.
-    rFrameCount++;
-
-    // Count the frames every other second.
-    if(nowTime - 2500 >= lastFpsTime)
-    {
-        fps = (rFrameCount - lastFrameCount) / ((nowTime - lastFpsTime)/1000.0f);
-        lastFpsTime = nowTime;
-        lastFrameCount = rFrameCount;
-    }
-
-    if(gx.EndFrame)
-    {
-        gx.EndFrame();
-    }
-
-    S_EndFrame();
 }
 
 float DD_GetFrameRate(void)
