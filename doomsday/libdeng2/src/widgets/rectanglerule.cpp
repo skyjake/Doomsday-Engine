@@ -186,7 +186,7 @@ void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, Time::Delta 
 
 void RectangleRule::update()
 {
-    // All the edges must be defined, otherwise the visual's position is ambiguous.
+    // All the edges must be defined, otherwise the rectangle's position is ambiguous.
     bool leftDefined   = false;
     bool topDefined    = false;
     bool rightDefined  = false;

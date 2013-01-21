@@ -25,8 +25,8 @@
 namespace de {
 
 /**
- * The value of a derived rule is dependent on some other rule. When the
- * source rule is invalidated, the derived rule is likewise invalidated.
+ * The value of a derived rule is dependent on some other rule. The other
+ * rule is expected to set the derived rule's value when it gets updated.
  */
 class DerivedRule : public ConstantRule
 {

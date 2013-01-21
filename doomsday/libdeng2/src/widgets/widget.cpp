@@ -230,7 +230,7 @@ void Widget::update()
 void Widget::draw()
 {}
 
-bool Widget::handleEvent(const Event *)
+bool Widget::handleEvent(Event const *)
 {
     // Event is not handled.
     return false;

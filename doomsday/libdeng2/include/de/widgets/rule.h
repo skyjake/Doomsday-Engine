@@ -72,7 +72,7 @@ protected:
 
     void addDependent(Rule *rule);
     void removeDependent(Rule *rule);
-    void setValue(float value);
+    void setValue(float value, bool markValid = true);
 
     float cachedValue() const;
 

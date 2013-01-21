@@ -64,10 +64,14 @@ float Rule::cachedValue() const
     return _value;
 }
 
-void Rule::setValue(float v)
+void Rule::setValue(float v, bool markValid)
 {
     _value = v;
-    _isValid = true;
+
+    if(markValid)
+    {
+        _isValid = true;
+    }
 }
 
 void Rule::replace(Rule *newRule)

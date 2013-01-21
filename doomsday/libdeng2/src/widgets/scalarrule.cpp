@@ -33,12 +33,12 @@ void ScalarRule::set(float value, de::Time::Delta transition)
 
 void ScalarRule::update()
 {
-    setValue(_animation);
-
-    if(!_animation.done())
+    // Avoid repeated evaluation.
+    Time const now = Animation::currentTime();
+    if(_validAt != now)
     {
-        // Still invalid.
-        invalidate();
+        setValue(_animation, _animation.done());
+        _validAt = now;
     }
 }
 

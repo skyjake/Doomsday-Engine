@@ -17,9 +17,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "rule.h"
-#include "constantrule.h"
-#include "derivedrule.h"
-#include "scalarrule.h"
-#include "operatorrule.h"
-#include "rectanglerule.h"
+#include "../Rule"
+#include "../ConstantRule"
+#include "../DerivedRule"
+#include "../ScalarRule"
+#include "../OperatorRule"
+#include "../RectangleRule"

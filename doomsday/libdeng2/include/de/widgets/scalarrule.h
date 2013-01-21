@@ -51,6 +51,7 @@ protected:
 
 private:
     Animation _animation;
+    Time _validAt;
 };
 
 } // namespace de
