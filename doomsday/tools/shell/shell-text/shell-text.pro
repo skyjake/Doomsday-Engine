@@ -8,7 +8,7 @@
 include(../../../config.pri)
 
 TEMPLATE = app
-TARGET   = doomsday-shell-curses
+TARGET   = doomsday-shell-text
 VERSION  = 1.0.0
 
 # Build Configuration -------------------------------------------------------
