@@ -18,6 +18,7 @@
  */
 
 #include "de/App"
+#include "de/Animation"
 #include "de/ArchiveFeed"
 #include "de/ArrayValue"
 #include "de/Block"
@@ -53,6 +54,9 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
     NativePath cachedBasePath;
     NativePath cachedPluginBinaryPath;
     NativePath cachedHomePath;
+
+    /// Primary (wall) clock.
+    Clock clock;
 
     /// The file system.
     FS fs;
@@ -149,6 +153,9 @@ App::App(int &argc, char **argv, GUIMode guiMode)
     : QApplication(argc, argv, guiMode == GUIEnabled),
       d(new Instance(*this, arguments()))
 {
+    // Global time source for animations.
+    Animation::setClock(&d->clock);
+
     // This instance of LogBuffer is used globally.
     LogBuffer::setAppBuffer(d->logBuffer);
 
@@ -358,6 +365,9 @@ void App::initSubsystems(SubsystemInitFlags flags)
 #endif
     }
 
+    // Update the wall clock time.
+    d->clock.setTime(Time());
+
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
 }
 
@@ -387,6 +397,11 @@ bool App::notify(QObject *receiver, QEvent *event)
 App &App::app()
 {
     return *DENG2_APP;
+}
+
+Clock &App::clock()
+{
+    return DENG2_APP->d->clock;
 }
 
 CommandLine &App::commandLine()

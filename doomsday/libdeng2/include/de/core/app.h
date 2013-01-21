@@ -21,6 +21,7 @@
 #define LIBDENG2_APP_H
 
 #include "../libdeng2.h"
+#include "../Clock"
 #include "../CommandLine"
 #include "../NativePath"
 #include "../LogBuffer"
@@ -99,6 +100,11 @@ public:
     void addNativeModule(String const &name, Record &module);
 
     static App &app();
+
+    /**
+     * Returns the primary (wall) clock.
+     */
+    static Clock &clock();
 
     /**
      * Returns the command line used to start the application.

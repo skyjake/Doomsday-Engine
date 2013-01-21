@@ -44,7 +44,7 @@ public:
     /**
      * Difference between two points in time. @ingroup types
      */
-    class DENG2_PUBLIC Delta
+    class DENG2_PUBLIC Delta : public ISerializable
     {
     public:
         /**
@@ -71,6 +71,11 @@ public:
 
         Delta operator - (ddouble const &d) const;
 
+        Delta &operator -= (ddouble const &d) {
+            _seconds -= d;
+            return *this;
+        }
+
         /**
          * Convert the delta to milliseconds.
          *
@@ -92,6 +97,10 @@ public:
          * Blocks the thread.
          */
         void sleep() const;
+
+        // Implements ISerializable.
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
 
     private:
         ddouble _seconds;
@@ -127,6 +136,8 @@ public:
     bool operator >= (Time const &t) const { return !(*this < t); }
 
     bool operator == (Time const &t) const;
+
+    bool operator != (Time const &t) const { return !(*this == t); }
 
     /**
      * Add a delta to the point of time.

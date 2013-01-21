@@ -60,16 +60,19 @@ include(filesys.pri)
 include(legacy.pri)
 include(network.pri)
 include(scriptsys.pri)
+include(widgets.pri)
 
 # Convenience headers.
 HEADERS += \
     include/de/App \
+    include/de/Clock \
     include/de/CommandLine \
     include/de/Config \
     include/de/Error \
     include/de/Library \
     include/de/Log \
     include/de/LogBuffer \
+    include/de/Rectangle \
     include/de/UnixInfo \
     include/de/Vector \
     include/de/Version
@@ -79,9 +82,11 @@ HEADERS += \
     include/de/error.h \
     include/de/libdeng2.h \
     include/de/math.h \
+    include/de/rectangle.h \
     include/de/vector.h \
     include/de/version.h \
     include/de/core/app.h \
+    include/de/core/clock.h \
     include/de/core/config.h \
     include/de/core/commandline.h \
     include/de/core/library.h \
@@ -105,7 +110,8 @@ SOURCES += \
     src/core/library.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp \
-    src/core/unixinfo.cpp
+    src/core/unixinfo.cpp \
+    include/de/core/clock.cpp
 
 OTHER_FILES += \
     modules/Config.de \
@@ -123,7 +129,6 @@ macx {
     fixInstallName("QtCore.framework/Versions/4/QtCore")
     fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
     fixInstallName("QtGui.framework/Versions/4/QtGui")
-    #fixInstallName("QtOpenGL.framework/Versions/4/QtOpenGL")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")

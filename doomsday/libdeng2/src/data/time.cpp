@@ -80,6 +80,16 @@ void Time::Delta::sleep() const
     }
 }
 
+void Time::Delta::operator >> (Writer &to) const
+{
+    to << _seconds;
+}
+
+void Time::Delta::operator << (Reader &from)
+{
+    from >> _seconds;
+}
+
 Time::Delta Time::Delta::operator + (ddouble const &d) const
 {
     return _seconds + d;
