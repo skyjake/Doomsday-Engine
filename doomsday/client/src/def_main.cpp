@@ -470,7 +470,7 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
     return def;
 }
 
-// $revise-texture-animation
+/// @todo $revise-texture-animation
 ded_decor_t *Def_GetDecoration(uri_s const *uri /*, boolean hasExternal, boolean isCustom*/)
 {
     DENG_ASSERT(uri);
@@ -489,7 +489,8 @@ ded_decor_t *Def_GetDecoration(uri_s const *uri /*, boolean hasExternal, boolean
     return 0; // None found.
 }
 
-ded_reflection_t *Def_GetReflection(uri_s const *uri, boolean hasExternal, boolean isCustom)
+/// @todo $revise-texture-animation
+ded_reflection_t *Def_GetReflection(uri_s const *uri /*, boolean hasExternal, boolean isCustom*/)
 {
     DENG_ASSERT(uri);
 
@@ -500,14 +501,15 @@ ded_reflection_t *Def_GetReflection(uri_s const *uri, boolean hasExternal, boole
         if(def->material && Uri_Equality(def->material, uri))
         {
             // Is this suitable?
-            if(Def_IsAllowedReflection(def, hasExternal, isCustom))
+            //if(Def_IsAllowedReflection(def, hasExternal, isCustom))
                 return def;
         }
     }
     return 0; // None found.
 }
 
-ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri, boolean hasExternal, boolean isCustom)
+/// @todo $revise-texture-animation
+ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri /*, boolean hasExternal, boolean isCustom*/)
 {
     DENG_ASSERT(uri);
 
@@ -518,14 +520,14 @@ ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri, boolean hasExternal, boo
         if(def->material1 && Uri_Equality(def->material1, uri))
         {
             // Is this suitable?
-            if(Def_IsAllowedDetailTex(def, hasExternal, isCustom))
+            //if(Def_IsAllowedDetailTex(def, hasExternal, isCustom))
                 return def;
         }
 
         if(def->material2 && Uri_Equality(def->material2, uri))
         {
             // Is this suitable?
-            if(Def_IsAllowedDetailTex(def, hasExternal, isCustom))
+            //if(Def_IsAllowedDetailTex(def, hasExternal, isCustom))
                 return def;
         }
     }
@@ -2173,14 +2175,13 @@ StringArray* Def_ListStateIDs(void)
     return array;
 }
 
-#if 0 // $revise-texture-animation
+#if 0 /// @todo $revise-texture-animation
 boolean Def_IsAllowedDecoration(ded_decor_t* def, boolean hasExternal, boolean isCustom)
 {
     if(hasExternal) return (def->flags & DCRF_EXTERNAL) != 0;
     if(!isCustom)   return (def->flags & DCRF_NO_IWAD ) == 0;
     return (def->flags & DCRF_PWAD) != 0;
 }
-#endif
 
 boolean Def_IsAllowedReflection(ded_reflection_t* def, boolean hasExternal, boolean isCustom)
 {
@@ -2195,6 +2196,7 @@ boolean Def_IsAllowedDetailTex(ded_detailtexture_t* def, boolean hasExternal, bo
     if(!isCustom)   return (def->flags & DTLF_NO_IWAD ) == 0;
     return (def->flags & DTLF_PWAD) != 0;
 }
+#endif
 
 /**
  * Prints a list of all the registered mobjs to the console.

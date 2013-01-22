@@ -150,6 +150,15 @@ void MaterialManifest::linkDefinitions()
     Uri _uri = composeUri();
     uri_s *uri = reinterpret_cast<uri_s *>(&_uri);
 
+#if 1
+    // Reflection (aka shiny surface).
+    d->defs.reflections[0]    = Def_GetReflection(uri);
+    d->defs.reflections[1]    = 0;
+
+    // Detail texture.
+    d->defs.detailtextures[0] = Def_GetDetailTex(uri);
+    d->defs.detailtextures[1] = 0;
+#else
     // Reflection (aka shiny surface).
     d->defs.reflections[0]    = Def_GetReflection(uri, 0, d->isCustom);
     d->defs.reflections[1]    = Def_GetReflection(uri, 1, d->isCustom);
@@ -157,6 +166,7 @@ void MaterialManifest::linkDefinitions()
     // Detail texture.
     d->defs.detailtextures[0] = Def_GetDetailTex(uri, 0, d->isCustom);
     d->defs.detailtextures[1] = Def_GetDetailTex(uri, 1, d->isCustom);
+#endif
 }
 
 void MaterialManifest::clearDefinitionLinks()
