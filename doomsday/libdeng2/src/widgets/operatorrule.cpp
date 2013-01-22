@@ -30,12 +30,12 @@ OperatorRule::OperatorRule(Operator op, Rule const *unary, QObject *parent)
     dependsOn(_leftOperand);
 }
 
-OperatorRule::OperatorRule(Operator op, Rule *unary, QObject *parent)
-    : Rule(parent), _operator(op), _leftOperand(unary), _rightOperand(0)
+OperatorRule::OperatorRule(Operator op, Rule *unaryOwn, QObject *parent)
+    : Rule(parent), _operator(op), _leftOperand(unaryOwn), _rightOperand(0)
 {
     DENG2_ASSERT(_leftOperand != 0);
 
-    claim(unary);
+    claim(unaryOwn);
     dependsOn(_leftOperand);
 }
 
@@ -49,14 +49,36 @@ OperatorRule::OperatorRule(Operator op, Rule const *left, Rule const *right, QOb
     dependsOn(_rightOperand);
 }
 
-OperatorRule::OperatorRule(Operator op, Rule *left, Rule *right, QObject *parent)
-    : Rule(parent), _operator(op), _leftOperand(left), _rightOperand(right)
+OperatorRule::OperatorRule(Operator op, Rule const *left, Rule *rightOwn, QObject *parent)
+    : Rule(parent), _operator(op), _leftOperand(left), _rightOperand(rightOwn)
 {
     DENG2_ASSERT(_leftOperand != 0);
     DENG2_ASSERT(_rightOperand != 0);
 
-    claim(left);
-    claim(right);
+    claim(rightOwn);
+    dependsOn(_leftOperand);
+    dependsOn(_rightOperand);
+}
+
+OperatorRule::OperatorRule(Operator op, Rule *leftOwn, Rule const *right, QObject *parent)
+    : Rule(parent), _operator(op), _leftOperand(leftOwn), _rightOperand(right)
+{
+    DENG2_ASSERT(_leftOperand != 0);
+    DENG2_ASSERT(_rightOperand != 0);
+
+    claim(leftOwn);
+    dependsOn(_leftOperand);
+    dependsOn(_rightOperand);
+}
+
+OperatorRule::OperatorRule(Operator op, Rule *leftOwn, Rule *rightOwn, QObject *parent)
+    : Rule(parent), _operator(op), _leftOperand(leftOwn), _rightOperand(rightOwn)
+{
+    DENG2_ASSERT(_leftOperand != 0);
+    DENG2_ASSERT(_rightOperand != 0);
+
+    claim(leftOwn);
+    claim(rightOwn);
     dependsOn(_leftOperand);
     dependsOn(_rightOperand);
 }

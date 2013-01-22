@@ -25,6 +25,8 @@
 
 namespace de {
 
+class Rule;
+
 class RootWidget : public Widget
 {
 public:
@@ -32,13 +34,15 @@ public:
     ~RootWidget();
 
     Vector2i viewSize() const;
+    Rule const *viewWidth() const;
+    Rule const *viewHeight() const;
 
     /**
      * Sets the size of the view. All widgets in the tree are notified.
      *
      * @param size  View size.
      */
-    void setViewSize(Vector2i const &size);
+    virtual void setViewSize(Vector2i const &viewSize);
 
     void initialize();
     void draw();

@@ -18,12 +18,26 @@
  */
 
 #include "de/RootWidget"
+#include "de/ConstantRule"
+#include "de/math.h"
 
 namespace de {
 
 struct RootWidget::Instance
 {
-    Vector2i viewSize;
+    std::auto_ptr<ConstantRule> viewWidth;
+    std::auto_ptr<ConstantRule> viewHeight;
+
+    Instance()
+    {
+        viewWidth.reset(new ConstantRule(0));
+        viewHeight.reset(new ConstantRule(0));
+    }
+
+    Vector2i viewSize() const
+    {
+        return Vector2i(de::floor(viewWidth->value()), de::floor(viewHeight->value()));
+    }
 };
 
 RootWidget::RootWidget() : Widget(), d(new Instance)
@@ -36,13 +50,25 @@ RootWidget::~RootWidget()
 
 Vector2i RootWidget::viewSize() const
 {
-    return d->viewSize;
+    return d->viewSize();
 }
 
 void RootWidget::setViewSize(Vector2i const &size)
 {
-    d->viewSize = size;
+    d->viewWidth->set(size.x);
+    d->viewHeight->set(size.y);
+
     notifyTree(&Widget::viewResized);
+}
+
+Rule const *RootWidget::viewWidth() const
+{
+    return d->viewWidth.get();
+}
+
+Rule const *RootWidget::viewHeight() const
+{
+    return d->viewHeight.get();
 }
 
 void RootWidget::initialize()

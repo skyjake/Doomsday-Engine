@@ -74,7 +74,7 @@ void Rule::setValue(float v, bool markValid)
     }
 }
 
-void Rule::replace(Rule *newRule)
+void Rule::transferDependencies(Rule *toRule)
 {
     foreach(Rule *rule, _dependentRules)
     {
@@ -82,9 +82,9 @@ void Rule::replace(Rule *newRule)
         removeDependent(rule);
 
         // Connect to the new rule.
-        newRule->addDependent(rule);
+        toRule->addDependent(rule);
 
-        rule->dependencyReplaced(this, newRule);
+        rule->dependencyReplaced(this, toRule);
         rule->invalidate();
     }
 
@@ -132,12 +132,13 @@ void Rule::ruleDestroyed(QObject *rule)
     removeDependent(static_cast<Rule *>(rule));
 }
 
-void Rule::claim(Rule *child)
+bool Rule::claim(Rule *child)
 {
     if(!child->parent())
     {
         child->setParent(this);
     }
+    return (child->parent() == this);
 }
 
 } // namespace de

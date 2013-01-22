@@ -52,7 +52,19 @@ public:
 
 public:
     explicit RectangleRule(QObject *parent = 0);
+
+    /**
+     * Constructs a rectangle rule with individual rules defining the placement
+     * of the rectangle. Ownership of the input rules is not claimed.
+     *
+     * @param left    Rule for the left coordinate.
+     * @param top     Rule for the top coordinate.
+     * @param right   Rule for the right coordinate.
+     * @param bottom  Rule for the bottom coordinate.
+     * @param parent  Parent object.
+     */
     explicit RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom, QObject *parent = 0);
+
     explicit RectangleRule(RectangleRule const *rect, QObject *parent = 0);
 
     // Output rules.
@@ -66,9 +78,18 @@ public:
      * previously been defined, the old one is destroyed first.
      *
      * @param inputRule  Input rule to set.
-     * @param rule       RectangleRule takes ownership.
+     * @param ruleOwn       RectangleRule claims ownership (if rule has no parent yet).
      */
-    void setRule(InputRule inputRule, Rule* rule);
+    RectangleRule &setInput(InputRule inputRule, Rule *ruleOwn);
+
+    /**
+     * Sets one of the input rules of the rectangle. If the particular rule has
+     * previously been defined, the old one is destroyed first.
+     *
+     * @param inputRule  Input rule to set.
+     * @param rule       RectangleRule does not take ownership.
+     */
+    RectangleRule &setInput(InputRule inputRule, Rule const *rule);
 
     /**
      * Returns an input rule.
@@ -97,6 +118,12 @@ public:
      */
     Rectanglef rect() const;
 
+    /**
+     * Returns the current rectangle as defined by the input rules.
+     * Values are floored to integers.
+     */
+    Rectanglei recti() const;
+
 public slots:
     void currentTimeChanged();
 
@@ -106,22 +133,8 @@ protected:
     void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
 
 private:
-    Rule const **ruleRef(InputRule rule);
-
-    DerivedRule *_left;
-    DerivedRule *_top;
-    DerivedRule *_right;
-    DerivedRule *_bottom;
-
-    AnimationVector2 _normalizedAnchorPoint;
-    Rule const *_anchorXRule;
-    Rule const *_anchorYRule;
-    Rule const *_leftRule;
-    Rule const *_topRule;
-    Rule const *_rightRule;
-    Rule const *_bottomRule;
-    Rule const *_widthRule;
-    Rule const *_heightRule;
+    struct Instance;
+    Instance *d;
 };
 
 } // namespace de

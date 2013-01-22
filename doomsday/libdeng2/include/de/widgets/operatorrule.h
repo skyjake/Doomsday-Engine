@@ -48,14 +48,16 @@ public:
     /**
      *  The operator rule takes ownership of the operands that have no parent.
      */
-    explicit OperatorRule(Operator op, Rule *unary, QObject *parent = 0);
+    explicit OperatorRule(Operator op, Rule *unaryOwn, QObject *parent = 0);
 
     explicit OperatorRule(Operator op, Rule const *left, Rule const *right, QObject *parent = 0);
+    explicit OperatorRule(Operator op, Rule const *left, Rule *rightOwn, QObject *parent = 0);
+    explicit OperatorRule(Operator op, Rule *leftOwn, Rule const *right, QObject *parent = 0);
 
     /**
      *  The operator rule takes ownership of the operands that have no parent.
      */
-    explicit OperatorRule(Operator op, Rule *left, Rule *right, QObject *parent = 0);
+    explicit OperatorRule(Operator op, Rule *leftOwn, Rule *rightOwn, QObject *parent = 0);
 
 protected:
     void update();

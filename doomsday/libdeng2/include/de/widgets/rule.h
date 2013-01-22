@@ -50,6 +50,12 @@ public:
     float value() const;
 
     /**
+     * Transfers this rule's dependencies to @a newRule. The dependent rules
+     * are updated accordingly. Afterwards, this rule has no more dependencies.
+     */
+    void transferDependencies(Rule *toRule);
+
+    /**
      * Updates the rule with a valid value. Derived classes must call
      * setValue() in their implementation of this method, because it sets the
      * new valid value for the rule.
@@ -57,12 +63,6 @@ public:
      * This is called automatically when needed.
      */
     virtual void update();
-
-    /**
-     * Replaces this rule with @a newRule. The dependent rules are updated
-     * accordingly. Afterwards, this rule has no more dependencies.
-     */
-    void replace(Rule *newRule);
 
 protected:
     /**
@@ -80,8 +80,10 @@ protected:
      * Takes ownership of a rule.
      *
      * @param child  Rule whose ownership should be claimed.
+     *
+     * @return @c true, if ownership was taken.
      */
-    void claim(Rule *child);
+    bool claim(Rule *child);
 
     /**
      * Called to notify that the dependency @a oldRule has been replaced with
