@@ -168,6 +168,11 @@ RectangleRule::RectangleRule(RectangleRule const *rect, QObject *parent)
     dependsOn(d->bottomRule);
 }
 
+RectangleRule::~RectangleRule()
+{
+    delete d;
+}
+
 void RectangleRule::setup()
 {
     // When the application's time changes, check whether this rule

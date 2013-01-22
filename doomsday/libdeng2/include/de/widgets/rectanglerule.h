@@ -67,6 +67,8 @@ public:
 
     explicit RectangleRule(RectangleRule const *rect, QObject *parent = 0);
 
+    ~RectangleRule();
+
     // Output rules.
     Rule const *left() const;
     Rule const *top() const;
