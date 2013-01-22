@@ -24,6 +24,7 @@ CursesTextCanvas::CursesTextCanvas(Size const &size, WINDOW *window, Coord const
 
 void CursesTextCanvas::show()
 {
+    bool somethingDrawn = false;
     Size const dims = size();
 
     // All dirty characters are drawn.
@@ -56,11 +57,16 @@ void CursesTextCanvas::show()
                      (ch.attrib.underline? A_UNDERLINE : 0));
 
             waddch(_window, ch.ch.unicode()); // cursor advanced
+
+            somethingDrawn = true;
         }
     }
 
     // Mark everything clean.
     TextCanvas::show();
 
-    wrefresh(_window);
+    if(somethingDrawn)
+    {
+        wrefresh(_window);
+    }
 }

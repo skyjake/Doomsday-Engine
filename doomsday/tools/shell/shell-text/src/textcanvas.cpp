@@ -18,6 +18,7 @@
 
 #include "textcanvas.h"
 #include <QList>
+#include <QDebug>
 
 struct TextCanvas::Instance
 {
@@ -50,34 +51,36 @@ struct TextCanvas::Instance
         if(newSize == size) return;
 
         // Allocate or free lines.
-        while(newSize.y < size.y)
+        while(newSize.y < lines.size())
         {
             lines.removeLast();
-            size.y--;
         }
-        while(newSize.y > size.y)
+        while(newSize.y > lines.size())
         {
             lines.append(makeLine());
-            size.y++;
         }
+
+        Q_ASSERT(lines.size() == newSize.y);
+        size.y = newSize.y;
 
         // Make sure all lines are the correct width.
         for(int row = 0; row < lines.size(); ++row)
         {
-            Line &line = lines[row];
-            if(line.size() == newSize.x) continue;
+            Line &lin = lines[row];
 
-            while(newSize.x < line.size())
+            while(newSize.x < lin.size())
             {
-                line.removeLast();
+                lin.removeLast();
             }
-            while(newSize.x > line.size())
+            while(newSize.x > lin.size())
             {
-                line.append(Char());
+                lin.append(Char());
             }
+
+            Q_ASSERT(lin.size() == newSize.x);
         }
 
-        Q_ASSERT(lines.size() == size.y);
+        size.x = newSize.x;
     }
 
     void markAllAsDirty(bool markDirty)
@@ -115,18 +118,47 @@ void TextCanvas::resize(Size const &newSize)
 
 TextCanvas::Char &TextCanvas::at(Coord const &pos)
 {
-    Q_ASSERT(pos.x >= 0 && pos.x < d->size.x);
-    Q_ASSERT(pos.y >= 0 && pos.y < d->size.y);
-    Char &c = d->lines[pos.y][pos.x];
-    c.attrib.dirty = true;
-    return c;
+    Q_ASSERT(isValid(pos));
+    return d->lines[pos.y][pos.x];
 }
 
 TextCanvas::Char const &TextCanvas::at(Coord const &pos) const
 {
-    Q_ASSERT(pos.x >= 0 && pos.x < d->size.x);
-    Q_ASSERT(pos.y >= 0 && pos.y < d->size.y);
+    Q_ASSERT(isValid(pos));
     return d->lines[pos.y].at(pos.x);
+}
+
+bool TextCanvas::isValid(const Coord &pos) const
+{
+    return (pos.x >= 0 && pos.y >= 0 && pos.x < d->size.x && pos.y < d->size.y);
+}
+
+void TextCanvas::fill(de::Rectanglei const &rect, Char const &ch)
+{
+    for(int y = rect.top(); y < rect.bottom(); ++y)
+    {
+        for(int x = rect.left(); x < rect.right(); ++x)
+        {
+            Coord const xy(x, y);
+            if(isValid(xy)) at(xy) = ch;
+        }
+    }
+}
+
+void TextCanvas::blit(TextCanvas &dest, Coord const &topLeft) const
+{
+    for(int y = 0; y < d->size.y; ++y)
+    {
+        for(int x = 0; x < d->size.x; ++x)
+        {
+            Coord const xy(x, y);
+            Coord const p = topLeft + xy;
+            if(dest.isValid(p))
+            {
+                dest.at(p) = at(xy);
+            }
+        }
+    }
 }
 
 void TextCanvas::show()

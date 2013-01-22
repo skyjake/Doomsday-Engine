@@ -1,4 +1,4 @@
-/** @file cursesapp.h Application based on curses for input and output.
+/** @file textrootwidget.cpp Text-based root widget.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,30 +16,32 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CURSESAPP_H
-#define CURSESAPP_H
-
-#include <QCoreApplication>
 #include "textrootwidget.h"
 
-class CursesApp : public QCoreApplication
+TextRootWidget::TextRootWidget(TextCanvas *cv) : de::RootWidget(), _canvas(cv)
 {
-    Q_OBJECT
+    DENG2_ASSERT(cv != 0);
+    setViewSize(cv->size());
+}
 
-public:
-    CursesApp(int &argc, char **argv);
-    ~CursesApp();
+TextRootWidget::~TextRootWidget()
+{
+    delete _canvas;
+}
 
-    TextRootWidget &rootWidget();
+TextCanvas &TextRootWidget::rootCanvas()
+{
+    return *_canvas;
+}
 
-    void windowWasResized();
+void TextRootWidget::setViewSize(de::Vector2i const &viewSize)
+{
+    _canvas->resize(viewSize);
+    RootWidget::setViewSize(viewSize);
+}
 
-protected slots:
-    void refresh();
-
-private:
-    struct Instance;
-    Instance *d;
-};
-
-#endif // CURSESAPP_H
+void TextRootWidget::draw()
+{
+    RootWidget::draw();
+    _canvas->show();
+}

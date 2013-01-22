@@ -1,4 +1,4 @@
-/** @file main.cpp Application startup and shutdown.
+/** @file shellapp.cpp Doomsday shell connection app.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,12 +16,38 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <QApplication>
-#include <de/libdeng2.h>
 #include "shellapp.h"
+#include "logwidget.h"
 
-int main(int argc, char *argv[])
+using namespace de;
+
+struct ShellApp::Instance
 {
-    ShellApp a(argc, argv);
-    return a.exec();
+    ShellApp &self;
+    LogWidget *logWidget;
+
+    Instance(ShellApp &a) : self(a)
+    {
+        logWidget = new LogWidget;
+
+        logWidget->rule()
+                .setInput(RectangleRule::Left,   new ConstantRule(0))
+                .setInput(RectangleRule::Top,    new ConstantRule(0))
+                .setInput(RectangleRule::Width,  self.rootWidget().viewWidth())
+                .setInput(RectangleRule::Height, self.rootWidget().viewHeight());
+
+        self.rootWidget().add(logWidget);
+
+        self.rootWidget().draw();
+    }
+};
+
+ShellApp::ShellApp(int &argc, char **argv) : CursesApp(argc, argv), d(new Instance(*this))
+{
 }
+
+ShellApp::~ShellApp()
+{
+    delete d;
+}
+

@@ -21,6 +21,7 @@
 
 #include <QChar>
 #include <de/Vector>
+#include <de/Rectangle>
 
 /**
  * Text-based, device-independent drawing surface.
@@ -41,14 +42,27 @@ public:
             unsigned char dirty     : 1;
         } attrib;
 
-        Char() : ch(0)
+        Char(QChar const &c = QChar(' ')) : ch(c)
         {
-            ch = QChar('a');
-
             attrib.bold      = false;
             attrib.underline = false;
             attrib.reverse   = false;
             attrib.dirty     = true;
+        }
+
+        Char &operator = (Char const &other)
+        {
+            bool changed = false;
+
+#define CH_COPY(prop) if(prop != other.prop) { prop = other.prop; changed = true; }
+            CH_COPY(ch);
+            CH_COPY(attrib.bold);
+            CH_COPY(attrib.underline);
+            CH_COPY(attrib.reverse);
+#undef CH_COPY
+
+            attrib.dirty = changed;
+            return *this;
         }
     };
 
@@ -63,7 +77,7 @@ public:
 
     /**
      * Returns a modifiable reference to a character. The character is
-     * automatically marked dirty.
+     * not marked dirty automatically.
      *
      * @param pos  Position of the character.
      *
@@ -72,6 +86,23 @@ public:
     Char &at(Coord const &pos);
 
     Char const &at(Coord const &pos) const;
+
+    /**
+     * Determines if a coordinate is valid.
+     * @param pos  Coordinate.
+     * @return @c true, if the position can be accessed with at().
+     */
+    bool isValid(Coord const &pos) const;
+
+    void fill(de::Rectanglei const &rect, Char const &ch);
+
+    /**
+     * Copies the contents of this canvas onto another canvas.
+     *
+     * @param dest     Destination canvas.
+     * @param topLeft  Top left coordinate of the destination area.
+     */
+    void blit(TextCanvas &dest, Coord const &topLeft) const;
 
     /**
      * Draws all characters marked dirty onto the screen so that they become

@@ -1,4 +1,4 @@
-/** @file cursesapp.h Application based on curses for input and output.
+/** @file logwidget.h  Widget for output message log.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,30 +16,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CURSESAPP_H
-#define CURSESAPP_H
+#ifndef LOGWIDGET_H
+#define LOGWIDGET_H
 
-#include <QCoreApplication>
-#include "textrootwidget.h"
+#include "textwidget.h"
 
-class CursesApp : public QCoreApplication
+class LogWidget : public TextWidget
 {
-    Q_OBJECT
-
 public:
-    CursesApp(int &argc, char **argv);
-    ~CursesApp();
+    LogWidget(de::String const &name = "");
+    virtual ~LogWidget();
 
-    TextRootWidget &rootWidget();
-
-    void windowWasResized();
-
-protected slots:
-    void refresh();
+    void draw();
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // CURSESAPP_H
+#endif // LOGWIDGET_H

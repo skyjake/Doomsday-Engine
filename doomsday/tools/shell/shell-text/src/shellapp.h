@@ -1,4 +1,4 @@
-/** @file cursesapp.h Application based on curses for input and output.
+/** @file shellapp.h Doomsday shell connection app.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,30 +16,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CURSESAPP_H
-#define CURSESAPP_H
+#ifndef SHELLAPP_H
+#define SHELLAPP_H
 
-#include <QCoreApplication>
-#include "textrootwidget.h"
+#include "cursesapp.h"
 
-class CursesApp : public QCoreApplication
+class ShellApp : public CursesApp
 {
-    Q_OBJECT
-
 public:
-    CursesApp(int &argc, char **argv);
-    ~CursesApp();
+    ShellApp(int &argc, char **argv);
 
-    TextRootWidget &rootWidget();
-
-    void windowWasResized();
-
-protected slots:
-    void refresh();
+    ~ShellApp();
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // CURSESAPP_H
+#endif // SHELLAPP_H

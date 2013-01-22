@@ -22,8 +22,11 @@
 #include <QDebug>
 #include "cursesapp.h"
 #include "cursestextcanvas.h"
+#include "textrootwidget.h"
 #include <curses.h>
 #include <stdio.h>
+#include <de/Clock>
+#include <de/Animation>
 #include <de/Vector>
 
 static void windowResized(int)
@@ -58,22 +61,35 @@ static de::Vector2i actualTerminalSize()
 struct CursesApp::Instance
 {
     CursesApp &self;
+    de::Clock clock;
 
     // Curses state:
     WINDOW *rootWin;
     de::Vector2i rootSize;
-    QTimer *inputPollTimer;
+    QTimer *refreshTimer;
 
-    CursesTextCanvas *canvas;
+    TextRootWidget *rootWidget;
 
-    Instance(CursesApp &a) : self(a), canvas(0)
+    Instance(CursesApp &a) : self(a), rootWidget(0)
     {
+        de::Animation::setClock(&clock);
+        de::Clock::setAppClock(&clock);
+
         initCurses();
+
+        // Create the canvas.
+        rootWidget = new TextRootWidget(new CursesTextCanvas(rootSize, rootWin));
+        rootWidget->draw();
     }
 
     ~Instance()
     {
+        delete rootWidget;
+
         shutdownCurses();
+
+        de::Clock::setAppClock(0);
+        de::Animation::setClock(0);
     }
 
     void initCurses()
@@ -89,13 +105,9 @@ struct CursesApp::Instance
         // Listen for window resizing.
         signal(SIGWINCH, windowResized);
 
-        inputPollTimer = new QTimer(&self);
-        QObject::connect(inputPollTimer, SIGNAL(timeout()), &self, SLOT(pollForInput()));
-        inputPollTimer->start(1000 / 20);
-
-        // Create the canvas.
-        canvas = new CursesTextCanvas(rootSize, rootWin);
-        canvas->show();
+        refreshTimer = new QTimer(&self);
+        QObject::connect(refreshTimer, SIGNAL(timeout()), &self, SLOT(refresh()));
+        refreshTimer->start(1000 / 20);
     }
 
     void initCursesState()
@@ -116,11 +128,8 @@ struct CursesApp::Instance
 
     void shutdownCurses()
     {
-        delete canvas;
-        canvas = 0;
-
-        delete inputPollTimer;
-        inputPollTimer = 0;
+        delete refreshTimer;
+        refreshTimer = 0;
 
         delwin(rootWin);
         rootWin = 0;
@@ -129,10 +138,14 @@ struct CursesApp::Instance
         refresh();
     }
 
-    void pollForInput()
+    void refresh()
     {
         if(!rootWin) return;
 
+        // Update time.
+        clock.setTime(de::Time());
+
+        // Poll for input.
         int key;
         while((key = wgetch(rootWin)) != ERR)
         {
@@ -140,15 +153,25 @@ struct CursesApp::Instance
             {
                 // Terminal has been resized.
                 de::Vector2i size = actualTerminalSize();
+
+                // Curses needs to resize its buffers.
+                wclear(rootWin);
                 resize_term(size.y, size.x);
 
-                emit self.viewResized(size.x, size.y);
+                // The root widget will update the UI.
+                rootWidget->setViewSize(size);
+                rootWidget->draw();
             }
             else if(key & KEY_CODE_YES)
             {
+                //qDebug() << "Got code" << QString("0%1").arg(key, 0, 8).toAscii().constData();
+
                 // There is a curses key code.
                 switch(key)
                 {
+                case KEY_BTAB: // back-tab
+
+                    break;
                 default:
                     // This key code is ignored.
                     break;
@@ -169,6 +192,11 @@ struct CursesApp::Instance
     {
         ungetch(KEY_RESIZE);
     }
+
+    void update()
+    {
+        rootWidget->draw();
+    }
 };
 
 CursesApp::CursesApp(int &argc, char **argv)
@@ -181,12 +209,17 @@ CursesApp::~CursesApp()
     delete d;
 }
 
+TextRootWidget &CursesApp::rootWidget()
+{
+    return *d->rootWidget;
+}
+
 void CursesApp::windowWasResized() // called from signal handler
 {
     d->windowWasResized();
 }
 
-void CursesApp::pollForInput()
+void CursesApp::refresh()
 {
-    d->pollForInput();
+    d->refresh();
 }
