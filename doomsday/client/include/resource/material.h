@@ -252,25 +252,7 @@ public:
          *
          * @see Material::isDetailed()
          */
-        DetailLayerState const &detailLayer() const;
-
-        /**
-         * Change the detail texture linked to this.
-         * @param tex  Texture to be linked with.
-         */
-        void setDetailTexture(de::Texture *tex);
-
-        /**
-         * Change the detail texture strength factor for this.
-         * @param strength  New strength value (will be clamped to [0..1]).
-         */
-        void setDetailStrength(float strength);
-
-        /**
-         * Change the detail texture scale factor for this.
-         * @param scale  New scale value (will be clamped to [0..1]).
-         */
-        void setDetailScale(float scale);
+        DetailLayerState /*const*/ &detailLayer() const;
 
         /**
          * Provides access to the shine texturing layer state.
@@ -279,37 +261,7 @@ public:
          *
          * @see Material::isShiny()
          */
-        ShineLayerState const &shineLayer() const;
-
-        /**
-         * Change the Shiny Texture linked to this.
-         * @param tex  Texture to be linked with.
-         */
-        void setShinyTexture(de::Texture *tex);
-
-        /**
-         * Change the material's linked shiny mask texture.
-         * @param tex  Texture to be linked with.
-         */
-        void setShinyMaskTexture(de::Texture *tex);
-
-        /**
-         * Change the Shiny Texture blendmode for this.
-         * @param blendmode  New blendmode value.
-         */
-        void setShinyBlendmode(blendmode_t blendmode);
-
-        /**
-         * Change the Shiny Texture strength factor for this.
-         * @param strength  New strength value (will be clamped to [0..1]).
-         */
-        void setShinyStrength(float strength);
-
-        /**
-         * Change the Shiny Texture minColor for this.
-         * @param colorRGB  New RGB color values (each component will be clamped to [0..1]).
-         */
-        void setShinyMinColor(float const colorRGB[3]);
+        ShineLayerState /*const*/ &shineLayer() const;
 
     private:
         struct Instance;

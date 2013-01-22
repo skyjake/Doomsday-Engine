@@ -272,27 +272,38 @@ void MaterialSnapshot::Instance::takeSnapshot()
                     mat->setDimensions(tex->dimensions());
                 }
 
-                MaterialManifest &manifest = mat->manifest();
+                if(mat->isDetailed())
+                {
+                    Uri uri(mat->manifest().composeUri());
+                    ded_detailtexture_t const *dtlDef =
+                        Def_GetDetailTex(reinterpret_cast<uri_s *>(&uri)/*,
+                                         result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
+                    DENG_ASSERT(dtlDef);
 
-                Uri uri(manifest.composeUri());
-                ded_detailtexture_t const *dtlDef =
-                    Def_GetDetailTex(reinterpret_cast<uri_s *>(&uri)/*,
-                                     result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
+                    Material::Variant::DetailLayerState &details = material->detailLayer();
+                    details.texture  = findDetailTextureForDef(*dtlDef);
+                    details.strength = MINMAX_OF(0, dtlDef->strength, 1);
+                    details.scale    = MINMAX_OF(0, dtlDef->scale, 1);
+                }
 
-                material->setDetailTexture(dtlDef? findDetailTextureForDef(*dtlDef) : 0);
-                material->setDetailStrength(dtlDef? dtlDef->strength : 0);
-                material->setDetailScale(dtlDef? dtlDef->scale : 0);
+                if(mat->isShiny())
+                {
+                    Uri uri(mat->manifest().composeUri());
+                    ded_reflection_t const *refDef =
+                        Def_GetReflection(reinterpret_cast<uri_s *>(&uri)/*,
+                                          result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
+                    DENG_ASSERT(refDef);
 
-                ded_reflection_t const *refDef =
-                    Def_GetReflection(reinterpret_cast<uri_s *>(&uri)/*,
-                                      result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
-
-                material->setShinyTexture(refDef? findShinyTextureForDef(*refDef) : 0);
-                material->setShinyMaskTexture(refDef? findShinyMaskTextureForDef(*refDef) : 0);
-                material->setShinyBlendmode(refDef? refDef->blendMode : BM_ADD);
-                float const black[3] = { 0, 0, 0 };
-                material->setShinyMinColor(refDef? refDef->minColor : black);
-                material->setShinyStrength(refDef? refDef->shininess : 0);
+                    Material::Variant::ShineLayerState &shiny = material->shineLayer();
+                    shiny.texture      = findShinyTextureForDef(*refDef);
+                    shiny.maskTexture  = findShinyMaskTextureForDef(*refDef);
+                    shiny.strength     = MINMAX_OF(0, refDef->shininess, 1);
+                    shiny.blendmode    = refDef->blendMode;
+                    DENG2_ASSERT(VALID_BLENDMODE(shiny.blendmode));
+                    shiny.minColor[CR] = MINMAX_OF(0, refDef->minColor[CR], 1);
+                    shiny.minColor[CG] = MINMAX_OF(0, refDef->minColor[CG], 1);
+                    shiny.minColor[CB] = MINMAX_OF(0, refDef->minColor[CB], 1);
+                }
             }
         }
 

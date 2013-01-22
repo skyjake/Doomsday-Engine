@@ -290,27 +290,14 @@ void Material::Variant::resetAnim()
 Material::Variant::LayerState const &Material::Variant::layer(int layerNum) const
 {
     if(layerNum >= 0 && layerNum < d->material->layerCount())
+    {
         return d->layers[layerNum];
-
-    /// @throw UnknownLayerError Invalid layer reference.
-    throw UnknownLayerError("Material::Variant::layer", QString("Invalid material layer #%1").arg(layerNum));
+    }
+    /// @throw Material::UnknownLayerError Invalid layer reference.
+    throw Material::UnknownLayerError("Material::Variant::layer", QString("Invalid material layer #%1").arg(layerNum));
 }
 
-Material::Variant::DecorationState const &Material::Variant::decoration(int decorNum) const
-{
-    if(decorNum >= 0 && decorNum < d->material->decorationCount())
-        return d->decorations[decorNum];
-
-    /// @throw UnknownDecorationError Invalid decoration reference.
-    throw UnknownDecorationError("Material::Variant::decoration", QString("Invalid material decoration #%1").arg(decorNum));
-}
-
-MaterialSnapshot *Material::Variant::snapshot() const
-{
-    return d->snapshot;
-}
-
-Material::Variant::DetailLayerState const &Material::Variant::detailLayer() const
+Material::Variant::DetailLayerState /*const*/ &Material::Variant::detailLayer() const
 {
     if(d->material->isDetailed())
     {
@@ -320,22 +307,7 @@ Material::Variant::DetailLayerState const &Material::Variant::detailLayer() cons
     throw Material::UnknownLayerError("Material::Variant::detailLayer", "Material has no details layer");
 }
 
-void Material::Variant::setDetailTexture(Texture *tex)
-{
-    d->detailLayer.texture = tex;
-}
-
-void Material::Variant::setDetailStrength(float strength)
-{
-    d->detailLayer.strength = MINMAX_OF(0, strength, 1);
-}
-
-void Material::Variant::setDetailScale(float scale)
-{
-    d->detailLayer.scale = MINMAX_OF(0, scale, 1);
-}
-
-Material::Variant::ShineLayerState const &Material::Variant::shineLayer() const
+Material::Variant::ShineLayerState /*const*/ &Material::Variant::shineLayer() const
 {
     if(d->material->isShiny())
     {
@@ -345,33 +317,19 @@ Material::Variant::ShineLayerState const &Material::Variant::shineLayer() const
     throw Material::UnknownLayerError("Material::Variant::shineLayer", "Material has no shine layer");
 }
 
-void Material::Variant::setShinyTexture(Texture *tex)
+Material::Variant::DecorationState const &Material::Variant::decoration(int decorNum) const
 {
-    d->shineLayer.texture = tex;
+    if(decorNum >= 0 && decorNum < d->material->decorationCount())
+    {
+        return d->decorations[decorNum];
+    }
+    /// @throw Material::UnknownDecorationError Invalid decoration reference.
+    throw Material::UnknownDecorationError("Material::Variant::decoration", QString("Invalid material decoration #%1").arg(decorNum));
 }
 
-void Material::Variant::setShinyMaskTexture(Texture *tex)
+MaterialSnapshot *Material::Variant::snapshot() const
 {
-    d->shineLayer.maskTexture = tex;
-}
-
-void Material::Variant::setShinyBlendmode(blendmode_t blendmode)
-{
-    DENG2_ASSERT(VALID_BLENDMODE(blendmode));
-    d->shineLayer.blendmode = blendmode;
-}
-
-void Material::Variant::setShinyMinColor(float const colorRGB[3])
-{
-    DENG2_ASSERT(colorRGB);
-    d->shineLayer.minColor[CR] = MINMAX_OF(0, colorRGB[CR], 1);
-    d->shineLayer.minColor[CG] = MINMAX_OF(0, colorRGB[CG], 1);
-    d->shineLayer.minColor[CB] = MINMAX_OF(0, colorRGB[CB], 1);
-}
-
-void Material::Variant::setShinyStrength(float strength)
-{
-    d->shineLayer.strength = MINMAX_OF(0, strength, 1);
+    return d->snapshot;
 }
 
 //} // namespace de
