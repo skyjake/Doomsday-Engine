@@ -1022,9 +1022,6 @@ static void generateMaterialDefs()
 
 static void updateMaterialFromDef(Material &material, ded_material_t &def)
 {
-    // Nothing to do?
-    if(material.definition() == &def) return;
-
     material.setDefinition(&def);
     // Textures are updated automatically at prepare-time, so just clear them.
     material.setDetailTexture(0);

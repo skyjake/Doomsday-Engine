@@ -169,9 +169,7 @@ public:
      *
      * Same as size()
      */
-    inline uint count() const {
-        return size();
-    }
+    inline uint count() const { return size(); }
 
     /// Process all outstanding tasks in the cache queue.
     void processCacheQueue();
