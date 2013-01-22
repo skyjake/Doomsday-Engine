@@ -1054,9 +1054,6 @@ static void updateMaterialFromDef(Material &material, ded_material_t &def)
         catch(Textures::NotFoundError const &)
         {} // Ignore this error.
     }
-
-    // Re-link definitions.
-    manifest.linkDefinitions();
 }
 
 static void interpretMaterialDef(ded_material_t &def)

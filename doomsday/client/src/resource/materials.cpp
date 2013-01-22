@@ -301,16 +301,6 @@ void Materials::clearDefinitionLinks()
     {
         (*i)->setDefinition(0);
     }
-
-    DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
-    {
-        PathTreeIterator<Scheme::Index> iter((*i)->index().leafNodes());
-        while(iter.hasNext())
-        {
-            Manifest &manifest = iter.next();
-            manifest.clearDefinitionLinks();
-        }
-    }
 }
 
 void Materials::purgeCacheQueue()
@@ -535,7 +525,6 @@ Material *Materials::newFromDef(ded_material_t &def)
         manifest = &newManifest(scheme(uri.scheme()), uri.path());
     }
     manifest->setCustom(tex->flags().testFlag(Texture::Custom));
-    manifest->linkDefinitions();
 
     // Create a material for this right away.
     Material *material = new Material(*manifest, def);

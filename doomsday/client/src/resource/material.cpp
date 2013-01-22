@@ -316,17 +316,6 @@ bool Material::hasGlow() const
     return false;
 }
 
-byte Material::prepared() const
-{
-    return d->prepared;
-}
-
-void Material::setPrepared(byte state)
-{
-    DENG2_ASSERT(state <= 2);
-    d->prepared = state;
-}
-
 MaterialManifest &Material::manifest() const
 {
     return d->manifest;

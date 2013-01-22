@@ -650,26 +650,6 @@ public:
      */
     void setDefinition(ded_material_t *def);
 
-    /**
-     * Returns the current prepared state of the material:
-     * @return       @c 0= Not yet prepared.
-     *               @c 1= Prepared from original game textures.
-     *               @c 2= Prepared from custom or replacement textures.
-     *
-     * @see prepare()
-     */
-    byte prepared() const;
-
-    /**
-     * Change the prepared status of the material.
-     * @param state  @c 0= Not yet prepared.
-     *               @c 1= Prepared from original game textures.
-     *               @c 2= Prepared from custom or replacement textures.
-     *
-     * @see prepare()
-     */
-    void setPrepared(byte state);
-
 private:
     Instance *d;
 };

@@ -95,26 +95,6 @@ public:
      */
     void setMaterial(Material *material);
 
-    /**
-     * Update the manifest with new linked definitions. Should be called:
-     *
-     * - When the bound material is changed/first-configured.
-     * - When said material's "custom" state changes.
-     */
-    void linkDefinitions();
-
-    /**
-     * Zeroes all links to definitions. Should be called when the
-     * definition database is reset.
-     */
-    void clearDefinitionLinks();
-
-    /// @return  Detail texture definition associated with this else @c NULL
-    ded_detailtexture_t *detailTextureDef() const;
-
-    /// @return  Reflection definition associated with this else @c NULL
-    ded_reflection_t *reflectionDef() const;
-
     /// Returns a reference to the application's material system.
     static Materials &materials();
 

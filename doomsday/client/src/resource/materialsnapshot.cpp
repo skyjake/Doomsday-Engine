@@ -235,17 +235,24 @@ static inline Texture *findShinyMaskTextureForDef(ded_reflection_t const &def)
 
 void MaterialSnapshot::Instance::updateMaterial(preparetextureresult_t result)
 {
+    DENG_UNUSED(result);
+
     Material *mat = &material->generalCase();
     MaterialManifest &manifest = mat->manifest();
 
-    mat->setPrepared(result == PTR_UPLOADED_ORIGINAL? 1 : 2);
+    Uri uri(manifest.composeUri());
+    ded_detailtexture_t const *dtlDef =
+        Def_GetDetailTex(reinterpret_cast<uri_s *>(&uri)/*,
+                         result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
 
-    ded_detailtexture_t const *dtlDef = manifest.detailTextureDef();
     mat->setDetailTexture(dtlDef? findDetailTextureForDef(*dtlDef) : 0);
     mat->setDetailStrength(dtlDef? dtlDef->strength : 0);
     mat->setDetailScale(dtlDef? dtlDef->scale : 0);
 
-    ded_reflection_t const *refDef = manifest.reflectionDef();
+    ded_reflection_t const *refDef =
+        Def_GetReflection(reinterpret_cast<uri_s *>(&uri)/*,
+                          result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
+
     mat->setShinyTexture(refDef? findShinyTextureForDef(*refDef) : 0);
     mat->setShinyMaskTexture(refDef? findShinyMaskTextureForDef(*refDef) : 0);
     mat->setShinyBlendmode(refDef? refDef->blendMode : BM_ADD);

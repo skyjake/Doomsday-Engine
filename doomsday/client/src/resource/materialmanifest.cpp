@@ -40,14 +40,6 @@ struct MaterialManifest::Instance
     /// @c true if the material is not derived from an original game resource.
     bool isCustom;
 
-    /// Linked definitions contain further property values.
-    /// There are two links for each definition type, the first (index @c 0)
-    /// for original game data and the second for external data.
-    struct {
-        ded_detailtexture_t *detailtextures[2];
-        ded_reflection_t    *reflections[2];
-    } defs;
-
     Instance() : material(0), id(0), isCustom(false)
     {}
 };
@@ -56,7 +48,6 @@ MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
     : Node(args)
 {
     d = new Instance();
-    clearDefinitionLinks();
 }
 
 MaterialManifest::~MaterialManifest()
@@ -143,60 +134,6 @@ void MaterialManifest::setMaterial(Material *newMaterial)
 {
     if(d->material == newMaterial) return;
     d->material = newMaterial;
-}
-
-void MaterialManifest::linkDefinitions()
-{
-    Uri _uri = composeUri();
-    uri_s *uri = reinterpret_cast<uri_s *>(&_uri);
-
-#if 1
-    // Reflection (aka shiny surface).
-    d->defs.reflections[0]    = Def_GetReflection(uri);
-    d->defs.reflections[1]    = 0;
-
-    // Detail texture.
-    d->defs.detailtextures[0] = Def_GetDetailTex(uri);
-    d->defs.detailtextures[1] = 0;
-#else
-    // Reflection (aka shiny surface).
-    d->defs.reflections[0]    = Def_GetReflection(uri, 0, d->isCustom);
-    d->defs.reflections[1]    = Def_GetReflection(uri, 1, d->isCustom);
-
-    // Detail texture.
-    d->defs.detailtextures[0] = Def_GetDetailTex(uri, 0, d->isCustom);
-    d->defs.detailtextures[1] = Def_GetDetailTex(uri, 1, d->isCustom);
-#endif
-}
-
-void MaterialManifest::clearDefinitionLinks()
-{
-    d->defs.detailtextures[0] = d->defs.detailtextures[1] = 0;
-    d->defs.reflections[0]    = d->defs.reflections[1]    = 0;
-}
-
-ded_detailtexture_t *MaterialManifest::detailTextureDef() const
-{
-    if(isDedicated) return 0;
-
-    // We must prepare a variant before we can determine which definition is in effect.
-    material().prepare(Rend_MapSurfaceMaterialSpec());
-
-    byte prepared = material().prepared();
-    if(prepared) return d->defs.detailtextures[prepared - 1];
-    return 0;
-}
-
-ded_reflection_t *MaterialManifest::reflectionDef() const
-{
-    if(isDedicated) return 0;
-
-    // We must prepare a variant before we can determine which definition is in effect.
-    material().prepare(Rend_MapSurfaceMaterialSpec());
-
-    byte prepared = material().prepared();
-    if(prepared) return d->defs.reflections[prepared - 1];
-    return 0;
 }
 
 } // namespace de
