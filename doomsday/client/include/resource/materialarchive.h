@@ -35,6 +35,9 @@ class Material;
 
 namespace de {
 
+/**
+ * @ingroup resource
+ */
 class MaterialArchive
 {
 public:
@@ -43,11 +46,27 @@ public:
 
 public:
     /**
-     * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
+     * @param useSegments  If @c true, the serialized archive will be preceded
+     *      by a segment id number.
+     * @param recordSymbolicMaterials  Add records for the symbolic materials
+     *      used to record special references in the serialized archive.
      */
-    MaterialArchive(int useSegments, bool populate = true);
+    MaterialArchive(int useSegments, bool recordSymbolicMaterials = true);
 
     ~MaterialArchive();
+
+    /**
+     * Returns the number of materials in the archive.
+     */
+    int count() const;
+
+    /**
+     * Returns the number of materials in the archive.
+     * Same as count()
+     */
+    inline int size() const {
+        return count();
+    }
 
     /**
      * @return A new (unused) SerialId for the specified material.
@@ -65,17 +84,14 @@ public:
     Material *find(materialarchive_serialid_t serialId, int group) const;
 
     /**
-     * Returns the number of materials in the archive.
+     * Insert the specified @a material into the archive. If this material
+     * is already present the existing serial ID is returned and the archive
+     * is unchanged.
+     *
+     * @param material  The material to be recorded.
+     * @return  Unique SerialId of the recorded material.
      */
-    int count() const;
-
-    /**
-     * Returns the number of materials in the archive.
-     * Same as count()
-     */
-    inline int size() const {
-        return count();
-    }
+    materialarchive_serialid_t addRecord(Material const &material);
 
     /**
      * Serializes the state of the archive using @a writer.

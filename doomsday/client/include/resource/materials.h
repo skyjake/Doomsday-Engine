@@ -28,6 +28,7 @@
 #include "def_data.h"
 #include "uri.hh"
 #include "resource/material.h"
+#include "resource/materialarchive.h"
 #include "resource/materialmanifest.h"
 #include "resource/materialscheme.h"
 #include "resource/materialvariantspec.h"
@@ -354,6 +355,12 @@ public:
      * Returns the total number of material groups in the collection.
      */
     inline int groupCount() const { return allGroups().count(); }
+
+    /**
+     * Record in the archive all materials in the collection.
+     * @param archive  The archive to be populated.
+     */
+    void populateArchive(MaterialArchive &archive) const;
 
 private:
     struct Instance;

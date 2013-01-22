@@ -701,6 +701,14 @@ void Materials::resetAllMaterialAnimations()
     }
 }
 
+void Materials::populateArchive(MaterialArchive &archive) const
+{
+    DENG2_FOR_EACH(MaterialList, i, d->materials)
+    {
+        archive.addRecord(**i);
+    }
+}
+
 static void printVariantInfo(Material::Variant &variant, int variantIdx)
 {
     Con_Printf("Variant #%i: Spec:%p\n", variantIdx, de::dintptr(&variant.spec()));

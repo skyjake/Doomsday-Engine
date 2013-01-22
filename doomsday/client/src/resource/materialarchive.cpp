@@ -1,7 +1,7 @@
 /** @file materialarchive.cpp Material Archive.
  *
- * @authors Copyright © 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright ï¿½ 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright ï¿½ 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -137,25 +137,6 @@ struct MaterialArchive::Instance
         return records.intern(uri.compose());
     }
 
-    /**
-     * Populate the archive using the global Materials list.
-     */
-    void populate()
-    {
-        insertRecord(Uri(UNKNOWN_MATERIALNAME, RC_NULL));
-
-        /// @todo Assumes knowledge of how material ids are generated.
-        /// Should be iterated by Materials using a callback function.
-        uint num = App_Materials().count();
-        for(uint i = 1; i < num + 1; ++i)
-        {
-            MaterialManifest *manifest = App_Materials().toManifest(i);
-            SerialId id = insertRecord(manifest->composeUri());
-            records.setUserPointer(id, &manifest->material());
-            records.setUserValue(id, true);
-        }
-    }
-
     void beginSegment(int seg, writer_s &writer)
     {
         if(!useSegments) return;
@@ -218,12 +199,13 @@ struct MaterialArchive::Instance
     }
 };
 
-MaterialArchive::MaterialArchive(int useSegments, bool populate)
+MaterialArchive::MaterialArchive(int useSegments, bool recordSymbolicMaterials)
 {
     d = new Instance(useSegments);
-    if(populate)
+    if(recordSymbolicMaterials)
     {
-        d->populate();
+        // The first material is the special "unknown material".
+        d->insertRecord(de::Uri(UNKNOWN_MATERIALNAME, RC_NULL));
     }
 }
 
@@ -282,6 +264,14 @@ Material *MaterialArchive::find(materialarchive_serialid_t serialId, int group) 
     }
 
     return findRecordMaterial(d->records, serialId);
+}
+
+materialarchive_serialid_t MaterialArchive::addRecord(Material const &material)
+{
+    SerialId id = d->insertRecord(material.manifest().composeUri());
+    d->records.setUserPointer(id, const_cast<Material *>(&material));
+    d->records.setUserValue(id, true);
+    return materialarchive_serialid_t(id);
 }
 
 int MaterialArchive::count() const
@@ -364,7 +354,12 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
 #undef MaterialArchive_New
 MaterialArchive *MaterialArchive_New(int useSegments)
 {
-    return reinterpret_cast<MaterialArchive *>(new de::MaterialArchive(useSegments));
+    de::MaterialArchive *archive = new de::MaterialArchive(useSegments);
+
+    // Populate the archive using the global Materials collection.
+    App_Materials().populateArchive(*archive);
+
+    return reinterpret_cast<MaterialArchive *>(archive);
 }
 
 #undef MaterialArchive_NewEmpty
