@@ -102,11 +102,6 @@ public:
     static App &app();
 
     /**
-     * Returns the primary (wall) clock.
-     */
-    static Clock &clock();
-
-    /**
      * Returns the command line used to start the application.
      */
     static CommandLine &commandLine();

@@ -20,6 +20,8 @@
 
 namespace de {
 
+Clock *Clock::_appClock = 0;
+
 Clock::Clock()
 {}
 
@@ -51,6 +53,17 @@ Time::Delta Clock::elapsed() const
 Time const &Clock::time() const
 {
     return _time;
+}
+
+void Clock::setAppClock(Clock *c)
+{
+    _appClock = c;
+}
+
+Clock &Clock::appClock()
+{
+    DENG2_ASSERT(_appClock != 0);
+    return *_appClock;
 }
 
 } // namespace de

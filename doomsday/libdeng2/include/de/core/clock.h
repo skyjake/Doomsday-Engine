@@ -55,12 +55,17 @@ public:
      */
     Time const &time() const;
 
+    static void setAppClock(Clock *c);
+    static Clock &appClock();
+
 signals:
     void timeChanged();
 
 private:
     Time _startedAt;
     Time _time;
+
+    static Clock *_appClock;
 };
 
 } // namespace de

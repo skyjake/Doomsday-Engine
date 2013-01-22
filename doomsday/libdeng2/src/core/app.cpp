@@ -81,7 +81,9 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
     Modules modules;
 
     Instance(App &a, QStringList args) : app(a), cmdLine(args), persistentData(0), config(0)
-    {}
+    {
+        Clock::setAppClock(&clock);
+    }
 
     ~Instance()
     {
@@ -90,6 +92,7 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
             i.value()->audienceForDeletion -= this;
         }
         delete config;
+        Clock::setAppClock(0);
     }
 
     void recordBeingDeleted(Record &record)
@@ -397,11 +400,6 @@ bool App::notify(QObject *receiver, QEvent *event)
 App &App::app()
 {
     return *DENG2_APP;
-}
-
-Clock &App::clock()
-{
-    return DENG2_APP->d->clock;
 }
 
 CommandLine &App::commandLine()
