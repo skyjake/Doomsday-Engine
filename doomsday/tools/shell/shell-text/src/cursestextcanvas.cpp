@@ -62,6 +62,8 @@ void CursesTextCanvas::show()
         }
     }
 
+    wmove(_window, 0, 0);
+
     // Mark everything clean.
     TextCanvas::show();
 

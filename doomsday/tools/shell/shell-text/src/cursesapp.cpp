@@ -186,6 +186,8 @@ struct CursesApp::Instance
                 qDebug() << "Got key" << QString("0x%1").arg(key, 0, 16).toAscii().constData();
             }
         }
+
+        rootWidget->draw();
     }
 
     void windowWasResized() // called from signal handler

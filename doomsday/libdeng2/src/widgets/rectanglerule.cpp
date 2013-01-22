@@ -246,7 +246,7 @@ Rule const *RectangleRule::inputRule(InputRule inputRule)
     return d->ruleRef(inputRule).rule.constPtr;
 }
 
-void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, Time::Delta const &transition)
+void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
 {
     d->normalizedAnchorPoint.setValue(normalizedPoint, transition);
     invalidate();

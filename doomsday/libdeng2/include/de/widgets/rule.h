@@ -64,15 +64,19 @@ public:
      */
     virtual void update();
 
+    bool isValid() const;
+
 protected:
     /**
      * Links rules together. This rule will depend on @a dependency.
      */
     void dependsOn(Rule const *dependency);
 
+    void independentOf(Rule const *dependency);
+
     void addDependent(Rule *rule);
     void removeDependent(Rule *rule);
-    void setValue(float value, bool markValid = true);
+    void setValue(float value);
 
     float cachedValue() const;
 
@@ -90,6 +94,8 @@ protected:
      * @a newRule.
      */
     virtual void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
+
+    void invalidateSilently();
 
 public slots:
     void invalidate();

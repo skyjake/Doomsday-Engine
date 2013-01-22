@@ -18,27 +18,76 @@
  */
 
 #include "de/ScalarRule"
+#include "de/Clock"
+#include <QDebug>
 
 namespace de {
 
 ScalarRule::ScalarRule(float initialValue, QObject *parent)
-    : Rule(initialValue, parent), _animation(initialValue)
+    : Rule(initialValue, parent), _animation(initialValue), _rule(0), _ruleOwned(false)
 {}
 
-void ScalarRule::set(float value, de::Time::Delta transition)
+void ScalarRule::set(float target, de::TimeDelta transition)
 {
-    _animation.setValue(value, transition);
+    dismissTargetRule();
+
+    connect(&_animation.clock(), SIGNAL(timeChanged()), this, SLOT(timeChanged()));
+    _animation.setValue(target, transition);
     invalidate();
+}
+
+void ScalarRule::set(Rule const *target, TimeDelta transition)
+{
+    set(target->value(), transition);
+
+    _ruleOwned = false;
+    _rule = target;
+    dependsOn(_rule);
+}
+
+void ScalarRule::set(Rule *targetOwn, TimeDelta transition)
+{
+    set(targetOwn->value(), transition);
+
+    _ruleOwned = claim(targetOwn);
+    _rule = targetOwn;
+    dependsOn(_rule);
 }
 
 void ScalarRule::update()
 {
-    // Avoid repeated evaluation.
-    Time const now = Animation::currentTime();
-    if(_validAt != now)
+    setValue(_animation);
+}
+
+void ScalarRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
+{
+    if(oldRule == _rule)
     {
-        setValue(_animation, _animation.done());
-        _validAt = now;
+        dismissTargetRule();
+        oldRule = newRule;
+    }
+}
+
+void ScalarRule::dismissTargetRule()
+{
+    if(_rule)
+    {
+        independentOf(_rule);
+        if(_ruleOwned) delete _rule;
+        _rule = 0;
+    }
+    _ruleOwned = false;
+}
+
+void ScalarRule::timeChanged()
+{
+    if(!_animation.done() || cachedValue() != _animation.value())
+    {
+        invalidate();
+    }
+    if(_animation.done())
+    {
+        disconnect(this, SLOT(timeChanged()));
     }
 }
 

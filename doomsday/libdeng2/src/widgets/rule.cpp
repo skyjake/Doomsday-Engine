@@ -45,6 +45,8 @@ float Rule::value() const
         // Force an update.
         const_cast<Rule *>(this)->update();
     }
+    DENG2_ASSERT(_isValid);
+
     return _value;
 }
 
@@ -54,9 +56,19 @@ void Rule::update()
     _isValid = true;
 }
 
+bool Rule::isValid() const
+{
+    return _isValid;
+}
+
 void Rule::dependencyReplaced(Rule const *, Rule const *)
 {
     // No dependencies.
+}
+
+void Rule::invalidateSilently()
+{
+    _isValid = false;
 }
 
 float Rule::cachedValue() const
@@ -64,14 +76,10 @@ float Rule::cachedValue() const
     return _value;
 }
 
-void Rule::setValue(float v, bool markValid)
+void Rule::setValue(float v)
 {
     _value = v;
-
-    if(markValid)
-    {
-        _isValid = true;
-    }
+    _isValid = true;
 }
 
 void Rule::transferDependencies(Rule *toRule)
@@ -98,6 +106,13 @@ void Rule::dependsOn(Rule const *dependency)
     const_cast<Rule *>(dependency)->addDependent(this);
 }
 
+void Rule::independentOf(Rule const *dependency)
+{
+    DENG2_ASSERT(dependency != 0);
+
+    const_cast<Rule *>(dependency)->removeDependent(this);
+}
+
 void Rule::addDependent(Rule *rule)
 {
     DENG2_ASSERT(!_dependentRules.contains(rule));
@@ -122,7 +137,7 @@ void Rule::invalidate()
 {
     if(_isValid)
     {
-        _isValid = false;
+        invalidateSilently();
         emit valueInvalidated();
     }
 }

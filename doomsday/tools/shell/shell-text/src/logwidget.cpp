@@ -17,7 +17,6 @@
  */
 
 #include "logwidget.h"
-#include <QDebug>
 
 struct LogWidget::Instance
 {
