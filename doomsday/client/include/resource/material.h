@@ -78,7 +78,7 @@ public:
      * material instance.
      *
      * Variant instances are usually only created by the superior material
-     * when asked to prepare for render (@ref chooseVariant()) using a context
+     * when asked to @ref Material::prepare() for render using a context
      * specialization specification which it cannot fulfill/match.
      *
      * @see MaterialVariantSpec
@@ -181,13 +181,13 @@ public:
          * Returns the current state of the layer animation @a layerNum for
          * the variant.
          */
-        LayerState const &layer(int layerNum);
+        LayerState const &layer(int layerNum) const;
 
         /**
          * Returns the current state of the (light) decoration animation
          * @a decorNum for the variant.
          */
-        DecorationState const &decoration(int decorNum);
+        DecorationState const &decoration(int decorNum) const;
 
         /**
          * Returns the MaterialSnapshot data for the variant if present;

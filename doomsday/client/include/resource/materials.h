@@ -34,8 +34,6 @@
 
 namespace de {
 
-class MaterialManifest;
-
 /**
  * Specialized resource collection for a set of materials.
  *
@@ -89,7 +87,7 @@ public:
          * @param number  Material manifest number to lookup.
          * @return  Found manifest.
          */
-        Manifest &manifest(int number);
+        Manifest &manifest(int number) const;
 
         /**
          * Extend the group by adding a new manifest to the end of the group.
@@ -125,7 +123,8 @@ public:
      */
     enum UriValidationFlag
     {
-        AnyScheme  = 0x1 ///< The scheme of the URI may be of zero-length; signifying "any scheme".
+        /// The scheme of the URI may be of zero-length; signifying "any scheme".
+        AnyScheme = 0x1
     };
     Q_DECLARE_FLAGS(UriValidationFlags, UriValidationFlag)
 
@@ -136,14 +135,17 @@ public:
     typedef QList<Group> Groups;
 
 public:
-    /// The referenced texture was not found. @ingroup errors
+    /// The referenced material/manifest was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
-    /// An unknown scheme was referenced. @ingroup errors
-    DENG2_ERROR(UnknownSchemeError);
+    /// The specified material id was invalid (out of range). @ingroup errors
+    DENG2_ERROR(InvalidMaterialIdError);
 
     /// An unknown group was referenced. @ingroup errors
     DENG2_ERROR(UnknownGroupError);
+
+    /// An unknown scheme was referenced. @ingroup errors
+    DENG2_ERROR(UnknownSchemeError);
 
 public:
     /**
@@ -180,7 +182,7 @@ public:
     void clearDefinitionLinks();
 
     /**
-     * Process a tic of @a elapsed length, animating materials and anim-groups.
+     * Process a tic of @a elapsed length, animating all materials.
      * @param elapsed  Length of tic to be processed.
      */
     void ticker(timespan_t elapsed);
@@ -191,9 +193,9 @@ public:
      * @param id  Unique identifier for the manifest to be looked up. Note
      *            that @c 0 is not a valid identifier.
      *
-     * @return  The found manifest; otherwise @c 0.
+     * @return  The associated manifest.
      */
-    Manifest *toManifest(materialid_t id);
+    Manifest &toManifest(materialid_t id) const;
 
     /**
      * Lookup a subspace scheme by symbolic name.

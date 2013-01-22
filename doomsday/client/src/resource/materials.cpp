@@ -59,14 +59,13 @@ int Materials::Group::manifestCount() const
     return manifests.count();
 }
 
-Materials::Manifest &Materials::Group::manifest(int number)
+Materials::Manifest &Materials::Group::manifest(int number) const
 {
-    if(number < 0 || number >= manifestCount())
-    {
-        /// @throw InvalidManifestError Attempt to access an invalid manifest.
-        throw InvalidManifestError("Materials::Group::manifest", QString("Invalid manifest #%1, valid range [0..%2)").arg(number).arg(manifestCount()));
-    }
-    return *manifests[number];
+    if(number >= 0 && number < manifestCount())
+        return *manifests[number];
+
+    /// @throw InvalidManifestError Attempt to access an invalid manifest.
+    throw InvalidManifestError("Materials::Group::manifest", QString("Invalid manifest #%1, valid range [0..%2)").arg(number).arg(manifestCount()));
 }
 
 void Materials::Group::addManifest(Materials::Manifest &manifest)
@@ -236,12 +235,6 @@ struct Materials::Instance
         applyVariantSpec(tpl, mc, primarySpec);
         return *findVariantSpec(tpl, true);
     }
-
-    Materials::Manifest *manifestForId(materialid_t id)
-    {
-        if(0 == id || id > manifestCount) return 0;
-        return manifestIdMap[id - 1];
-    }
 };
 
 void Materials::consoleRegister()
@@ -357,9 +350,20 @@ void Materials::processCacheQueue()
     }
 }
 
-Materials::Manifest *Materials::toManifest(materialid_t id)
+Materials::Manifest &Materials::toManifest(materialid_t id) const
 {
-    return d->manifestForId(id);
+    if(0 > id && id <= d->manifestCount)
+    {
+        duint32 idx = id - 1; // 1-based index.
+        if(d->manifestIdMap[idx])
+            return *d->manifestIdMap[idx];
+
+        // Internal bookeeping error.
+        DENG_ASSERT(0);
+    }
+
+    /// @throw InvalidMaterialIdError The specified material id is invalid.
+    throw InvalidMaterialIdError("Materials::toManifest", QString("Invalid material ID %1, valid range [1..%2)").arg(id).arg(d->manifestCount + 1));
 }
 
 Materials::Scheme& Materials::createScheme(String name)

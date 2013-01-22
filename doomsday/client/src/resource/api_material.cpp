@@ -36,13 +36,8 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 #undef Materials_ComposeUri
 DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 {
-    de::Materials::Manifest *manifest = App_Materials().toManifest(materialId);
-    if(manifest)
-    {
-        de::Uri uri = manifest->composeUri();
-        return Uri_Dup(reinterpret_cast<uri_s *>(&uri));
-    }
-    return Uri_New();
+    de::Materials::Manifest &manifest = App_Materials().toManifest(materialId);
+    return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
 }
 
 #undef Materials_ResolveUri

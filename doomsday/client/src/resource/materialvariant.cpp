@@ -281,7 +281,7 @@ void Material::Variant::resetAnim()
     }
 }
 
-Material::Variant::LayerState const &Material::Variant::layer(int layerNum)
+Material::Variant::LayerState const &Material::Variant::layer(int layerNum) const
 {
     if(layerNum >= 0 && layerNum < d->material->layerCount())
         return d->layers[layerNum];
@@ -290,7 +290,7 @@ Material::Variant::LayerState const &Material::Variant::layer(int layerNum)
     throw UnknownLayerError("Material::Variant::layer", QString("Invalid material layer #%1").arg(layerNum));
 }
 
-Material::Variant::DecorationState const &Material::Variant::decoration(int decorNum)
+Material::Variant::DecorationState const &Material::Variant::decoration(int decorNum) const
 {
     if(decorNum >= 0 && decorNum < d->material->decorationCount())
         return d->decorations[decorNum];
