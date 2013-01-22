@@ -50,7 +50,7 @@ public:
 
     /// Wait for the specified period of time to secure the
     /// resource.  If timeout occurs, an exception is thrown.
-    void wait(Time::Delta const &timeOut);
+    void wait(TimeDelta const &timeOut);
 
     /// Mark the resource as available by incrementing the
     /// semaphore value.

@@ -26,17 +26,17 @@ namespace de {
 
 static float const DEFAULT_SPRING = 3.f;
 
-static inline float easeIn(Time::Delta t)
+static inline float easeIn(TimeDelta t)
 {
     return t * (2 - t);
 }
 
-static inline float easeOut(Time::Delta t)
+static inline float easeOut(TimeDelta t)
 {
     return t * t;
 }
 
-static inline float easeBoth(Time::Delta t)
+static inline float easeBoth(TimeDelta t)
 {
     if(t < .5)
     {
@@ -57,7 +57,7 @@ struct Animation::Instance
 {
     float value;
     float target;
-    Time::Delta startDelay;
+    TimeDelta startDelay;
     Time setTime;
     Time targetTime;
     Style style;
@@ -80,11 +80,11 @@ struct Animation::Instance
      */
     float valueAt(Time const &now) const
     {
-        Time::Delta span = targetTime - setTime;
+        TimeDelta span = targetTime - setTime;
 
         float s2 = 0;
-        Time::Delta peak = 0;
-        Time::Delta peak2 = 0;
+        TimeDelta peak = 0;
+        TimeDelta peak2 = 0;
 
         // Spring values.
         if(style == Bounce || style == FixedBounce)
@@ -101,8 +101,8 @@ struct Animation::Instance
         else
         {
             span -= startDelay;
-            Time::Delta const elapsed = now - setTime - startDelay;
-            Time::Delta const t = clamp(0.0, elapsed/span, 1.0);
+            TimeDelta const elapsed = now - setTime - startDelay;
+            TimeDelta const t = clamp(0.0, elapsed/span, 1.0);
             float const delta = target - value;
             switch(style)
             {
@@ -177,7 +177,7 @@ float Animation::bounce() const
     return d->spring;
 }
 
-void Animation::setValue(float v, Time::Delta transitionSpan, Time::Delta startDelay)
+void Animation::setValue(float v, TimeDelta transitionSpan, TimeDelta startDelay)
 {
     Time now = currentTime();
 
@@ -196,12 +196,12 @@ void Animation::setValue(float v, Time::Delta transitionSpan, Time::Delta startD
     d->startDelay = startDelay;
 }
 
-void Animation::setValue(int v, Time::Delta transitionSpan, Time::Delta startDelay)
+void Animation::setValue(int v, TimeDelta transitionSpan, TimeDelta startDelay)
 {
     setValue(float(v), transitionSpan, startDelay);
 }
 
-void Animation::setValueFrom(float fromValue, float toValue, Time::Delta transitionSpan, Time::Delta startDelay)
+void Animation::setValueFrom(float fromValue, float toValue, TimeDelta transitionSpan, TimeDelta startDelay)
 {
     setValue(fromValue);
     setValue(toValue, transitionSpan, startDelay);
@@ -222,7 +222,7 @@ float Animation::target() const
     return d->target;
 }
 
-Time::Delta Animation::remainingTime() const
+TimeDelta Animation::remainingTime() const
 {
     Time const now = currentTime();
     if(now >= d->targetTime)
@@ -248,6 +248,16 @@ String Animation::asText() const
     return String("Animation(%1 -> %2, ETA:%3 s)").arg(d->value).arg(d->target).arg(remainingTime());
 }
 
+Clock const &Animation::clock()
+{
+    DENG2_ASSERT(_clock != 0);
+    if(!_clock)
+    {
+        throw ClockMissing("Animation::clock", "Animation has no clock");
+    }
+    return *_clock;
+}
+
 void Animation::operator >> (Writer &to) const
 {
     Time now = currentTime();
@@ -266,7 +276,7 @@ void Animation::operator << (Reader &from)
     from >> d->value >> d->target;
 
     // Times are relative to current frame time.
-    Time::Delta relSet, relTarget;
+    TimeDelta relSet, relTarget;
     from >> relSet >> relTarget;
 
     d->setTime    = now + relSet;
@@ -291,7 +301,7 @@ Time Animation::currentTime()
     DENG2_ASSERT(_clock != 0);
     if(!_clock)
     {
-        throw ClockMissing("Animation::currentTime", "Animation has no clock");
+        throw ClockMissing("Animation::clock", "Animation has no clock");
     }
     return _clock->time();
 }

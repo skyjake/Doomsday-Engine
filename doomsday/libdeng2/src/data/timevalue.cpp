@@ -57,12 +57,12 @@ dint TimeValue::compare(Value const &value) const
 
 void TimeValue::sum(Value const &value)
 {
-    _time += Time::Delta(value.asNumber());
+    _time += TimeDelta(value.asNumber());
 }
 
 void TimeValue::subtract(Value const &subtrahend)
 {
-    _time -= Time::Delta(subtrahend.asNumber());
+    _time -= TimeDelta(subtrahend.asNumber());
 }
 
 void TimeValue::operator >> (Writer &to) const

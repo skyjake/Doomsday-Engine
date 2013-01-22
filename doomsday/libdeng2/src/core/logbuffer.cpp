@@ -32,7 +32,7 @@
 
 namespace de {
 
-Time::Delta const FLUSH_INTERVAL = .2; // seconds
+TimeDelta const FLUSH_INTERVAL = .2; // seconds
 
 namespace internal {
 

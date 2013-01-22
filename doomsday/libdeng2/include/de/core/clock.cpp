@@ -40,12 +40,12 @@ void Clock::setTime(Time const &currentTime)
     }
 }
 
-void Clock::advanceTime(Time::Delta const &span)
+void Clock::advanceTime(TimeDelta const &span)
 {
     setTime(_time + span);
 }
 
-Time::Delta Clock::elapsed() const
+TimeDelta Clock::elapsed() const
 {
     return _time - _startedAt;
 }

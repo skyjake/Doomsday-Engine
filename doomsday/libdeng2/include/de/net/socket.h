@@ -80,7 +80,7 @@ public:
      * @param address  Address to connect to.
      * @param timeOut  Maximum time to wait for connection.
      */
-    Socket(Address const &address, Time::Delta const &timeOut = 5);
+    Socket(Address const &address, TimeDelta const &timeOut = 5);
 
     virtual ~Socket();
 

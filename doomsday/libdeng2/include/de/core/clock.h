@@ -40,13 +40,13 @@ public:
 
     virtual void setTime(Time const &currentTime);
 
-    void advanceTime(Time::Delta const &span);
+    void advanceTime(TimeDelta const &span);
 
     /**
      * Returns the amount of time elapsed since the clock was created.
      * @return Elapsed time.
      */
-    Time::Delta elapsed() const;
+    TimeDelta elapsed() const;
 
     /**
      * Returns a reference to the current time.

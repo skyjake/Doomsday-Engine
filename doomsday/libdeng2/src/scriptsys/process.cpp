@@ -31,7 +31,7 @@ using namespace de;
 using std::auto_ptr;
     
 /// If execution continues for longer than this, a HangError is thrown.
-static Time::Delta const MAX_EXECUTION_TIME = 10;
+static TimeDelta const MAX_EXECUTION_TIME = 10;
 
 Process::Process(Record *externalGlobalNamespace) : _state(STOPPED), _workingPath("/")
 {

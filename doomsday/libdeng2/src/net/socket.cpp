@@ -366,7 +366,7 @@ struct Socket::Instance
     }
 };
 
-Socket::Socket(Address const &address, Time::Delta const &timeOut)
+Socket::Socket(Address const &address, TimeDelta const &timeOut)
 {
     LOG_AS("Socket");
 

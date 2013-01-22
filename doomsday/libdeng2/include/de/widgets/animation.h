@@ -72,9 +72,9 @@ public:
      *                        This includes @a startDelay.
      * @param startDelay      Number of seconds to wait before starting the transition.
      */
-    void setValue(float v, Time::Delta transitionSpan = 0, Time::Delta startDelay = 0);
+    void setValue(float v, TimeDelta transitionSpan = 0, TimeDelta startDelay = 0);
 
-    void setValue(int v, Time::Delta transitionSpan = 0, Time::Delta startDelay = 0);
+    void setValue(int v, TimeDelta transitionSpan = 0, TimeDelta startDelay = 0);
 
     /**
      * Starts a new transition.
@@ -85,7 +85,7 @@ public:
      *                        This includes @a startDelay.
      * @param startDelay      Number of seconds to wait before starting the transition.
      */
-    void setValueFrom(float fromValue, float toValue, Time::Delta transitionSpan = 0, Time::Delta startDelay = 0);
+    void setValueFrom(float fromValue, float toValue, TimeDelta transitionSpan = 0, TimeDelta startDelay = 0);
 
     /**
      * Current value.
@@ -105,7 +105,7 @@ public:
     /**
      * Number of seconds remaining in the ongoing transition.
      */
-    Time::Delta remainingTime() const;
+    TimeDelta remainingTime() const;
 
     /**
      * Move the current value and the target value by @a valueDelta.
@@ -134,6 +134,11 @@ public:
     inline operator float() const { return value(); }
 
     String asText() const;
+
+    /**
+     * Returns the clock used for this animation.
+     */
+    Clock const &clock();
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
