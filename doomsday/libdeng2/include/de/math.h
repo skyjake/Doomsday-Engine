@@ -21,6 +21,7 @@
 #define LIBDENG2_MATH_H
 
 #include <de/libdeng2.h>
+#include <cmath>
 
 #ifdef min
 #   undef min
@@ -66,6 +67,14 @@ inline Type const &max(Type const &a, Type const &b) {
 template <typename Type>
 inline Type clamp(Type const &low, Type const &value, Type const &high) {
     return min(max(value, low), high);
+}
+
+inline dint32 floor(dfloat const &value) {
+    return dint32(std::floor(value));
+}
+
+inline dint64 floor(ddouble const &value) {
+    return dint64(std::floor(value));
 }
 
 /// Compare two floating-point values for equality, with the precision of EPSILON.
