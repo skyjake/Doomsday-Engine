@@ -313,25 +313,6 @@ void Materials::clearDefinitionLinks()
     }
 }
 
-void Materials::rebuild(Material &material, ded_material_t *def)
-{
-    if(!def) return;
-
-    /// @todo We should be able to rebuild the variants.
-    material.clearVariants();
-    material.setDefinition(def);
-
-    // Update manifests.
-    for(uint i = 0; i < d->manifestCount; ++i)
-    {
-        Manifest *manifest = d->manifestIdMap[i];
-        if(!manifest || !manifest->hasMaterial()) continue;
-        if(&manifest->material() != &material) continue;
-
-        manifest->linkDefinitions();
-    }
-}
-
 void Materials::purgeCacheQueue()
 {
     d->variantCacheQueue.clear();

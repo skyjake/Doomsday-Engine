@@ -1203,7 +1203,13 @@ void Def_Read()
         {
             // Update existing.
             Material &material = App_Materials().find(*reinterpret_cast<de::Uri *>(def->uri)).material();
-            App_Materials().rebuild(material, def);
+
+            /// @todo We should be able to rebuild the variants.
+            material.clearVariants();
+            material.setDefinition(def);
+
+            // Re-link definitions.
+            material.manifest().linkDefinitions();
         }
         catch(Materials::Manifest::MissingMaterialError const&)
         {} // Ignore this error.

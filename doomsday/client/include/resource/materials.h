@@ -266,15 +266,6 @@ public:
     Manifest &find(Uri const &search) const;
 
     /**
-     * Update @a material according to the supplied definition @a def.
-     * To be called after an engine update/reset.
-     *
-     * @param material  Material to be updated.
-     * @param def  Material definition to update using.
-     */
-    void rebuild(Material &material, ded_material_t *def = 0);
-
-    /**
      * Create a new Material unless an existing Material is found at the path
      * (and within the same scheme) as that specified in @a def, in which case
      * it is returned instead.
