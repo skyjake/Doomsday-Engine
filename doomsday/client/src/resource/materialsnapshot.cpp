@@ -113,10 +113,6 @@ struct MaterialSnapshot::Instance
     {}
 
     void takeSnapshot();
-
-#ifdef __CLIENT__
-    void updateMaterial(preparetextureresult_t result);
-#endif
 };
 
 MaterialSnapshot::MaterialSnapshot(Material::Variant &_material)
@@ -232,34 +228,6 @@ static inline Texture *findShinyMaskTextureForDef(ded_reflection_t const &def)
     if(!def.maskMap) return 0;
     return findTextureByResourceUri("Masks", reinterpret_cast<de::Uri const &>(*def.maskMap));
 }
-
-void MaterialSnapshot::Instance::updateMaterial(preparetextureresult_t result)
-{
-    DENG_UNUSED(result);
-
-    Material *mat = &material->generalCase();
-    MaterialManifest &manifest = mat->manifest();
-
-    Uri uri(manifest.composeUri());
-    ded_detailtexture_t const *dtlDef =
-        Def_GetDetailTex(reinterpret_cast<uri_s *>(&uri)/*,
-                         result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
-
-    mat->setDetailTexture(dtlDef? findDetailTextureForDef(*dtlDef) : 0);
-    mat->setDetailStrength(dtlDef? dtlDef->strength : 0);
-    mat->setDetailScale(dtlDef? dtlDef->scale : 0);
-
-    ded_reflection_t const *refDef =
-        Def_GetReflection(reinterpret_cast<uri_s *>(&uri)/*,
-                          result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
-
-    mat->setShinyTexture(refDef? findShinyTextureForDef(*refDef) : 0);
-    mat->setShinyMaskTexture(refDef? findShinyMaskTextureForDef(*refDef) : 0);
-    mat->setShinyBlendmode(refDef? refDef->blendMode : BM_ADD);
-    float const black[3] = { 0, 0, 0 };
-    mat->setShinyMinColor(refDef? refDef->minColor : black);
-    mat->setShinyStrength(refDef? refDef->shininess : 0);
-}
 #endif // __CLIENT__
 
 /// @todo Implement more useful methods of interpolation. (What do we want/need here?)
@@ -303,7 +271,28 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 {
                     mat->setDimensions(tex->dimensions());
                 }
-                updateMaterial(result);
+
+                MaterialManifest &manifest = mat->manifest();
+
+                Uri uri(manifest.composeUri());
+                ded_detailtexture_t const *dtlDef =
+                    Def_GetDetailTex(reinterpret_cast<uri_s *>(&uri)/*,
+                                     result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
+
+                material->setDetailTexture(dtlDef? findDetailTextureForDef(*dtlDef) : 0);
+                material->setDetailStrength(dtlDef? dtlDef->strength : 0);
+                material->setDetailScale(dtlDef? dtlDef->scale : 0);
+
+                ded_reflection_t const *refDef =
+                    Def_GetReflection(reinterpret_cast<uri_s *>(&uri)/*,
+                                      result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
+
+                material->setShinyTexture(refDef? findShinyTextureForDef(*refDef) : 0);
+                material->setShinyMaskTexture(refDef? findShinyMaskTextureForDef(*refDef) : 0);
+                material->setShinyBlendmode(refDef? refDef->blendMode : BM_ADD);
+                float const black[3] = { 0, 0, 0 };
+                material->setShinyMinColor(refDef? refDef->minColor : black);
+                material->setShinyStrength(refDef? refDef->shininess : 0);
             }
         }
 
@@ -322,7 +311,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare a DetailTexture?
     if(!mat->isSkyMasked() && mat->isDetailed())
     {
-        Material::DetailLayerState const &details = mat->detailLayer();
+        Material::Variant::DetailLayerState const &details = material->detailLayer();
         if(Texture *tex = details.texture)
         {
             float const contrast = details.strength * detailFactor /*Global strength multiplier*/;
@@ -335,7 +324,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare a shiny texture (and possibly a mask)?
     if(!mat->isSkyMasked() && mat->isShiny())
     {
-        Material::ShineLayerState const &shiny = mat->shineLayer();
+        Material::Variant::ShineLayerState const &shiny = material->shineLayer();
         if(Texture *tex = shiny.texture)
         {
             texturevariantspecification_t &texSpec =
@@ -386,7 +375,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(MC_MAPSURFACE == spec.context && prepTextures[MTU_REFLECTION][0])
     {
-        Material::ShineLayerState const &shiny = mat->shineLayer();
+        Material::Variant::ShineLayerState const &shiny = material->shineLayer();
         stored.reflectionMinColor = Vector3f(shiny.minColor);
     }
 
@@ -446,7 +435,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         stored.textures[MTU_DETAIL] = tex;
 #ifdef __CLIENT__
-        float scaleFactor = mat->detailLayer().scale;
+        float scaleFactor = material->detailLayer().scale;
         if(detailScale > .0001f)
             scaleFactor *= detailScale; // Global scale factor.
 
@@ -483,15 +472,14 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         stored.textures[MTU_REFLECTION] = tex;
 #ifdef __CLIENT__
-        Material::ShineLayerState const &shiny = mat->shineLayer();
+        Material::Variant::ShineLayerState const &shiny = material->shineLayer();
         stored.writeTexUnit(RTU_REFLECTION, tex, shiny.blendmode,
                             QSizeF(1, 1), QPointF(0, 0), shiny.strength);
 #endif
-
     }
 
     if(prepTextures[MTU_REFLECTION][0])
-        if(Texture::Variant *tex = prepTextures[MTU_REFLECTION_MASK][0])
+    if(Texture::Variant *tex = prepTextures[MTU_REFLECTION_MASK][0])
     {
         stored.textures[MTU_REFLECTION_MASK] = tex;
 #ifdef __CLIENT__

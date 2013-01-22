@@ -61,6 +61,12 @@ struct Material::Variant::Instance
     /// Layer animation states.
     Material::Variant::LayerState layers[Material::max_layers];
 
+    /// Detail texturing layer state.
+    Material::Variant::DetailLayerState detailLayer;
+
+    /// Shine texturing layer state.
+    Material::Variant::ShineLayerState shineLayer;
+
     /// Decoration animation states.
     Material::Variant::DecorationState decorations[Material::max_decorations];
 
@@ -302,6 +308,70 @@ Material::Variant::DecorationState const &Material::Variant::decoration(int deco
 MaterialSnapshot *Material::Variant::snapshot() const
 {
     return d->snapshot;
+}
+
+Material::Variant::DetailLayerState const &Material::Variant::detailLayer() const
+{
+    if(d->material->isDetailed())
+    {
+        return d->detailLayer;
+    }
+    /// @throw Material::UnknownLayerError The material has no details layer.
+    throw Material::UnknownLayerError("Material::Variant::detailLayer", "Material has no details layer");
+}
+
+void Material::Variant::setDetailTexture(Texture *tex)
+{
+    d->detailLayer.texture = tex;
+}
+
+void Material::Variant::setDetailStrength(float strength)
+{
+    d->detailLayer.strength = MINMAX_OF(0, strength, 1);
+}
+
+void Material::Variant::setDetailScale(float scale)
+{
+    d->detailLayer.scale = MINMAX_OF(0, scale, 1);
+}
+
+Material::Variant::ShineLayerState const &Material::Variant::shineLayer() const
+{
+    if(d->material->isShiny())
+    {
+        return d->shineLayer;
+    }
+    /// @throw Material::UnknownLayerError The material has no shine layer.
+    throw Material::UnknownLayerError("Material::Variant::shineLayer", "Material has no shine layer");
+}
+
+void Material::Variant::setShinyTexture(Texture *tex)
+{
+    d->shineLayer.texture = tex;
+}
+
+void Material::Variant::setShinyMaskTexture(Texture *tex)
+{
+    d->shineLayer.maskTexture = tex;
+}
+
+void Material::Variant::setShinyBlendmode(blendmode_t blendmode)
+{
+    DENG2_ASSERT(VALID_BLENDMODE(blendmode));
+    d->shineLayer.blendmode = blendmode;
+}
+
+void Material::Variant::setShinyMinColor(float const colorRGB[3])
+{
+    DENG2_ASSERT(colorRGB);
+    d->shineLayer.minColor[CR] = MINMAX_OF(0, colorRGB[CR], 1);
+    d->shineLayer.minColor[CG] = MINMAX_OF(0, colorRGB[CG], 1);
+    d->shineLayer.minColor[CB] = MINMAX_OF(0, colorRGB[CB], 1);
+}
+
+void Material::Variant::setShinyStrength(float strength)
+{
+    d->shineLayer.strength = MINMAX_OF(0, strength, 1);
 }
 
 //} // namespace de

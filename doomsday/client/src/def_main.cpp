@@ -1024,14 +1024,9 @@ static void generateMaterialDefs()
 
 static void updateMaterialFromDef(Material &material, ded_material_t &def)
 {
-    material.setDefinition(&def);
-    // Textures are updated automatically at prepare-time, so just clear them.
-    material.setDetailTexture(0);
-    material.setShinyTexture(0);
-    material.setShinyMaskTexture(0);
-
     MaterialManifest &manifest = material.manifest();
 
+    material.setDefinition(&def);
     material.setFlags(def.flags);
     material.setDimensions(QSize(def.width, def.height));
     material.setAudioEnvironment(S_AudioEnvironmentForMaterial(def.uri));

@@ -121,12 +121,6 @@ struct Material::Instance
     /// @see materialFlags
     short flags;
 
-    /// Detail texturing layer.
-    Material::DetailLayerState detailLayer;
-
-    /// Shine texturing layer.
-    Material::ShineLayerState shineLayer;
-
     /// Layers.
     Material::Layers layers;
 
@@ -279,14 +273,14 @@ bool Material::isAnimated() const
 
 bool Material::isDetailed() const
 {
-    /// @todo fixme: Do not determine this from the layer state.
-    return !!d->detailLayer.texture;
+    /// @todo fixme: Determine this from our own configuration.
+    return false;
 }
 
 bool Material::isShiny() const
 {
-    /// @todo fixme: Do not determine this from the layer state.
-    return !!d->shineLayer.texture;
+    /// @todo fixme: Determine this from our own configuration.
+    return false;
 }
 
 bool Material::isSkyMasked() const
@@ -330,70 +324,6 @@ AudioEnvironmentClass Material::audioEnvironment() const
 void Material::setAudioEnvironment(AudioEnvironmentClass envClass)
 {
     d->envClass = envClass;
-}
-
-Material::DetailLayerState const &Material::detailLayer() const
-{
-    if(isDetailed())
-    {
-        return d->detailLayer;
-    }
-    /// @throw UnknownLayerError The material has no details layer.
-    throw UnknownLayerError("Material::detailLayer", "Material has no details layer");
-}
-
-void Material::setDetailTexture(Texture *tex)
-{
-    d->detailLayer.texture = tex;
-}
-
-void Material::setDetailStrength(float strength)
-{
-    d->detailLayer.strength = MINMAX_OF(0, strength, 1);
-}
-
-void Material::setDetailScale(float scale)
-{
-    d->detailLayer.scale = MINMAX_OF(0, scale, 1);
-}
-
-Material::ShineLayerState const &Material::shineLayer() const
-{
-    if(isShiny())
-    {
-        return d->shineLayer;
-    }
-    /// @throw UnknownLayerError The material has no shine layer.
-    throw UnknownLayerError("Material::shineLayer", "Material has no shine layer");
-}
-
-void Material::setShinyTexture(Texture *tex)
-{
-    d->shineLayer.texture = tex;
-}
-
-void Material::setShinyMaskTexture(Texture *tex)
-{
-    d->shineLayer.maskTexture = tex;
-}
-
-void Material::setShinyBlendmode(blendmode_t blendmode)
-{
-    DENG2_ASSERT(VALID_BLENDMODE(blendmode));
-    d->shineLayer.blendmode = blendmode;
-}
-
-void Material::setShinyMinColor(float const colorRGB[3])
-{
-    DENG2_ASSERT(colorRGB);
-    d->shineLayer.minColor[CR] = MINMAX_OF(0, colorRGB[CR], 1);
-    d->shineLayer.minColor[CG] = MINMAX_OF(0, colorRGB[CG], 1);
-    d->shineLayer.minColor[CB] = MINMAX_OF(0, colorRGB[CB], 1);
-}
-
-void Material::setShinyStrength(float strength)
-{
-    d->shineLayer.strength = MINMAX_OF(0, strength, 1);
 }
 
 int Material::layerCount() const
