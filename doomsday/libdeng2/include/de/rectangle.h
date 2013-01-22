@@ -55,6 +55,10 @@ public:
     String asText() const {
         return "[" + topLeft.asText() + ", " + bottomRight.asText() + "]";
     }
+    Type left() const { return topLeft.x; }
+    Type right() const { return bottomRight.x; }
+    Type top() const { return topLeft.y; }
+    Type bottom() const { return bottomRight.y; }
     Corner topRight() const {
         return Corner(bottomRight.x, topLeft.y);
     }
