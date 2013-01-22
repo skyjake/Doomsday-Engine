@@ -228,41 +228,8 @@ ded_material_t *Material::definition() const
 
 void Material::setDefinition(ded_material_t *def)
 {
-    if(d->def != def)
-    {
-        d->def = def;
-
-        // Textures are updated automatically at prepare-time, so just clear them.
-        setDetailTexture(0);
-        setShinyTexture(0);
-        setShinyMaskTexture(0);
-    }
-
-    if(!d->def) return;
-
-    MaterialManifest &_manifest = manifest();
-
-    d->flags = d->def->flags;
-    setDimensions(QSize(def->width, def->height));
-    setAudioEnvironment(S_AudioEnvironmentForMaterial(def->uri));
-
-    // Update custom status.
-    /// @todo This should take into account the whole definition, not just whether
-    ///       the primary layer's first texture is custom or not.
-    _manifest.setCustom(false);
-    if(d->layers[0]->stageCount() > 0 && d->layers[0]->stages()[0]->texture)
-    {
-        try
-        {
-            de::Uri *texUri = reinterpret_cast<de::Uri *>(d->layers[0]->stages()[0]->texture);
-            if(Texture *tex = App_Textures()->find(*texUri).texture())
-            {
-                _manifest.setCustom(tex->flags().testFlag(Texture::Custom));
-            }
-        }
-        catch(Textures::NotFoundError const &)
-        {} // Ignore this error.
-    }
+    if(d->def == def) return;
+    d->def = def;
 }
 
 QSize const &Material::dimensions() const

@@ -1020,6 +1020,93 @@ static void generateMaterialDefs()
     textures.iterateDeclared("Sprites",  generateMaterialDefForTextureWorker);
 }
 
+static void updateMaterialFromDef(Material &material, ded_material_t &def)
+{
+    // Nothing to do?
+    if(material.definition() == &def) return;
+
+    material.setDefinition(&def);
+    // Textures are updated automatically at prepare-time, so just clear them.
+    material.setDetailTexture(0);
+    material.setShinyTexture(0);
+    material.setShinyMaskTexture(0);
+
+    MaterialManifest &manifest = material.manifest();
+
+    material.setFlags(def.flags);
+    material.setDimensions(QSize(def.width, def.height));
+    material.setAudioEnvironment(S_AudioEnvironmentForMaterial(def.uri));
+
+    // Update custom status.
+    /// @todo This should take into account the whole definition, not just whether
+    ///       the primary layer's first texture is custom or not.
+    manifest.setCustom(false);
+    Material::Layer const &layer = *material.layers()[0];
+    if(layer.stageCount() > 0 && layer.stages()[0]->texture)
+    {
+        try
+        {
+            de::Uri *texUri = reinterpret_cast<de::Uri *>(layer.stages()[0]->texture);
+            if(Texture *tex = App_Textures()->find(*texUri).texture())
+            {
+                manifest.setCustom(tex->flags().testFlag(Texture::Custom));
+            }
+        }
+        catch(Textures::NotFoundError const &)
+        {} // Ignore this error.
+    }
+
+    // Re-link definitions.
+    manifest.linkDefinitions();
+}
+
+static void interpretMaterialDef(ded_material_t &def)
+{
+    for(int i = 0; i < DED_MAX_MATERIAL_DECORATIONS; ++i)
+    {
+        ded_material_decoration_t* lig = &def.decorations[i];
+        for(int k = 0; k < lig->stageCount.num; ++k)
+        {
+            ded_decorlight_stage_t *stage = &lig->stages[k];
+
+            if(stage->up)
+            {
+                defineLightmap(stage->up);
+            }
+            if(stage->down)
+            {
+                defineLightmap(stage->down);
+            }
+            if(stage->sides)
+            {
+                defineLightmap(stage->sides);
+            }
+            if(stage->flare)
+            {
+                defineFlaremap(stage->flare);
+            }
+        }
+    }
+
+    try
+    {
+        // Update existing.
+        Material &material = App_Materials().find(*reinterpret_cast<de::Uri *>(def.uri)).material();
+
+        /// @todo We should be able to rebuild the variants.
+        material.clearVariants();
+
+        updateMaterialFromDef(material, def);
+    }
+    catch(Materials::Manifest::MissingMaterialError const&)
+    {} // Ignore this error.
+    catch(Materials::NotFoundError const &)
+    {
+        // A new Material.
+        App_Materials().newFromDef(def);
+    }
+}
+
 void Def_Read()
 {
     if(defsInited)
@@ -1171,53 +1258,7 @@ void Def_Read()
     // Materials.
     for(int i = 0; i < defs.count.materials.num; ++i)
     {
-        ded_material_t *def = &defs.materials[i];
-
-        for(int k = 0; k < DED_MAX_MATERIAL_DECORATIONS; ++k)
-        {
-            ded_material_decoration_t* lig = &def->decorations[k];
-            for(int m = 0; m < lig->stageCount.num; ++m)
-            {
-                ded_decorlight_stage_t *stage = &lig->stages[m];
-
-                if(stage->up)
-                {
-                    defineLightmap(stage->up);
-                }
-                if(stage->down)
-                {
-                    defineLightmap(stage->down);
-                }
-                if(stage->sides)
-                {
-                    defineLightmap(stage->sides);
-                }
-                if(stage->flare)
-                {
-                    defineFlaremap(stage->flare);
-                }
-            }
-        }
-
-        try
-        {
-            // Update existing.
-            Material &material = App_Materials().find(*reinterpret_cast<de::Uri *>(def->uri)).material();
-
-            /// @todo We should be able to rebuild the variants.
-            material.clearVariants();
-            material.setDefinition(def);
-
-            // Re-link definitions.
-            material.manifest().linkDefinitions();
-        }
-        catch(Materials::Manifest::MissingMaterialError const&)
-        {} // Ignore this error.
-        catch(Materials::NotFoundError const &)
-        {
-            // A new Material.
-            App_Materials().newFromDef(*def);
-        }
+        interpretMaterialDef(defs.materials[i]);
     }
 
     DED_NewEntries((void **) &stateLights, &countStateLights, sizeof(*stateLights), defs.count.states.num);
