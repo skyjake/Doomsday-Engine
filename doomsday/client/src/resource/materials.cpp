@@ -333,7 +333,7 @@ void Materials::processCacheQueue()
 
 Materials::Manifest &Materials::toManifest(materialid_t id) const
 {
-    if(0 > id && id <= d->manifestCount)
+    if(id > 0 && id <= d->manifestCount)
     {
         duint32 idx = id - 1; // 1-based index.
         if(d->manifestIdMap[idx])
@@ -730,14 +730,13 @@ static void printMaterialInfo(Material &material)
 
     // Print synopsis:
     Con_Printf("Drawable:%s EnvClass:\"%s\" Decorated:%s"
-               "\nDetailed:%s Glowing:%s Shiny:%s%s SkyMasked:%s\n",
+               "\nDetailed:%s Glowing:%s Shiny:%s SkyMasked:%s\n",
                material.isDrawable()     ? "yes" : "no",
                material.audioEnvironment() == AEC_UNKNOWN? "N/A" : S_AudioEnvironmentName(material.audioEnvironment()),
                material.hasDecorations() ? "yes" : "no",
-               material.detailTexture()  ? "yes" : "no",
+               material.isDetailed()     ? "yes" : "no",
                material.hasGlow()        ? "yes" : "no",
-               material.shinyTexture()   ? "yes" : "no",
-               material.shinyMaskTexture()? "(masked)" : "",
+               material.isShiny()        ? "yes" : "no",
                material.isSkyMasked()    ? "yes" : "no");
 
     // Print full layer config:

@@ -241,13 +241,13 @@ void MaterialSnapshot::Instance::updateMaterial(preparetextureresult_t result)
     mat->setPrepared(result == PTR_UPLOADED_ORIGINAL? 1 : 2);
 
     ded_detailtexture_t const *dtlDef = manifest.detailTextureDef();
-    mat->setDetailTexture(reinterpret_cast<texture_s *>(dtlDef? findDetailTextureForDef(*dtlDef) : NULL));
+    mat->setDetailTexture(dtlDef? findDetailTextureForDef(*dtlDef) : 0);
     mat->setDetailStrength(dtlDef? dtlDef->strength : 0);
     mat->setDetailScale(dtlDef? dtlDef->scale : 0);
 
     ded_reflection_t const *refDef = manifest.reflectionDef();
-    mat->setShinyTexture(reinterpret_cast<texture_s *>(refDef? findShinyTextureForDef(*refDef) : NULL));
-    mat->setShinyMaskTexture(reinterpret_cast<texture_s *>(refDef? findShinyMaskTextureForDef(*refDef) : NULL));
+    mat->setShinyTexture(refDef? findShinyTextureForDef(*refDef) : 0);
+    mat->setShinyMaskTexture(refDef? findShinyMaskTextureForDef(*refDef) : 0);
     mat->setShinyBlendmode(refDef? refDef->blendMode : BM_ADD);
     float const black[3] = { 0, 0, 0 };
     mat->setShinyMinColor(refDef? refDef->minColor : black);
@@ -313,38 +313,44 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 
     // Do we need to prepare a DetailTexture?
-    if(!mat->isSkyMasked())
-    if(Texture *tex = reinterpret_cast<Texture *>(mat->detailTexture()))
+    if(!mat->isSkyMasked() && mat->isDetailed())
     {
-        float const contrast = mat->detailStrength() * detailFactor;
-        texturevariantspecification_t &texSpec = *GL_DetailTextureVariantSpecificationForContext(contrast);
+        Material::DetailLayerState const &details = mat->detailLayer();
+        if(Texture *tex = details.texture)
+        {
+            float const contrast = details.strength * detailFactor /*Global strength multiplier*/;
+            texturevariantspecification_t &texSpec = *GL_DetailTextureVariantSpecificationForContext(contrast);
 
-        prepTextures[MTU_DETAIL][0] = GL_PrepareTexture(*tex, texSpec);
+            prepTextures[MTU_DETAIL][0] = GL_PrepareTexture(*tex, texSpec);
+        }
     }
 
     // Do we need to prepare a shiny texture (and possibly a mask)?
-    if(!mat->isSkyMasked())
-    if(Texture *tex = reinterpret_cast<Texture *>(mat->shinyTexture()))
+    if(!mat->isSkyMasked() && mat->isShiny())
     {
-        texturevariantspecification_t &texSpec =
-            *GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
-                 TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
-                 false, false, false, false);
+        Material::ShineLayerState const &shiny = mat->shineLayer();
+        if(Texture *tex = shiny.texture)
+        {
+            texturevariantspecification_t &texSpec =
+                *GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
+                     TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
+                     false, false, false, false);
 
-        prepTextures[MTU_REFLECTION][0] = GL_PrepareTexture(*tex, texSpec);
+            prepTextures[MTU_REFLECTION][0] = GL_PrepareTexture(*tex, texSpec);
 
-    }
+        }
 
-    // We are only interested in a mask if we have a shiny texture.
-    if(prepTextures[MTU_REFLECTION][0])
-    if(Texture *tex = reinterpret_cast<Texture *>(mat->shinyMaskTexture()))
-    {
-        texturevariantspecification_t &texSpec =
-            *GL_TextureVariantSpecificationForContext(
-                 TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                 -1, -1, -1, true, false, false, false);
+        // We are only interested in a mask if we have a shiny texture.
+        if(prepTextures[MTU_REFLECTION][0])
+        if(Texture *tex = shiny.maskTexture)
+        {
+            texturevariantspecification_t &texSpec =
+                *GL_TextureVariantSpecificationForContext(
+                     TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                     -1, -1, -1, true, false, false, false);
 
-        prepTextures[MTU_REFLECTION_MASK][0] = GL_PrepareTexture(*tex, texSpec);
+            prepTextures[MTU_REFLECTION_MASK][0] = GL_PrepareTexture(*tex, texSpec);
+        }
     }
 #endif // __CLIENT__
 
@@ -373,7 +379,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(MC_MAPSURFACE == spec.context && prepTextures[MTU_REFLECTION][0])
     {
-        stored.reflectionMinColor = Vector3f(mat->shinyMinColor());
+        Material::ShineLayerState const &shiny = mat->shineLayer();
+        stored.reflectionMinColor = Vector3f(shiny.minColor);
     }
 
     // Setup the primary texture unit.
@@ -432,7 +439,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         stored.textures[MTU_DETAIL] = tex;
 #ifdef __CLIENT__
-        float scaleFactor = mat->detailScale();
+        float scaleFactor = mat->detailLayer().scale;
         if(detailScale > .0001f)
             scaleFactor *= detailScale; // Global scale factor.
 
@@ -469,9 +476,9 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         stored.textures[MTU_REFLECTION] = tex;
 #ifdef __CLIENT__
-        stored.writeTexUnit(RTU_REFLECTION, tex, mat->shinyBlendmode(),
-                            QSizeF(1, 1), QPointF(0, 0),
-                            mat->shinyStrength());
+        Material::ShineLayerState const &shiny = mat->shineLayer();
+        stored.writeTexUnit(RTU_REFLECTION, tex, shiny.blendmode,
+                            QSizeF(1, 1), QPointF(0, 0), shiny.strength);
 #endif
 
     }

@@ -37,12 +37,12 @@
 #include "uri.hh"
 
 // Forward declarations.
-struct texture_s;
 enum audioenvironmentclass_e;
 namespace de {
 class MaterialManifest;
 class MaterialSnapshot;
 struct MaterialVariantSpec;
+class Texture;
 }
 
 /**
@@ -243,6 +243,46 @@ public:
         Stages stages_;
     };
 
+    /// @todo Does not belong here - relocate to Variant.
+    struct DetailLayerState
+    {
+        /// The details texture.
+        de::Texture *texture;
+
+        /// Scaling factor [0..1] (for both axes).
+        float scale;
+
+        /// Strength multiplier [0..1].
+        float strength;
+
+        DetailLayerState() : texture(0), scale(0), strength(0) {}
+    };
+
+    /// @todo Does not belong here - relocate to Variant.
+    struct ShineLayerState
+    {
+        /// The shine texture.
+        de::Texture *texture;
+
+        /// The mask texture (if any).
+        de::Texture *maskTexture;
+
+        /// Texture blendmode for the shine texture.
+        blendmode_t blendmode;
+
+        /// Strength multiplier [0..1].
+        float strength;
+
+        /// Minimum sector color (RGB).
+        float minColor[3];
+
+        ShineLayerState()
+            : texture(0), maskTexture(0), blendmode(blendmode_t(0)), strength(0)
+        {
+            std::memset(minColor, 0, sizeof(minColor));
+        }
+    };
+
     /// A list of layers.
     typedef QList<Material::Layer *> Layers;
 
@@ -385,8 +425,14 @@ public:
     /// Returns @c true if the material has at least one animated layer.
     bool isAnimated() const;
 
+    /// Returns @c true if the material has a detail texturing layer.
+    bool isDetailed() const;
+
     /// Returns @c true if the material is considered drawable.
     bool isDrawable() const;
+
+    /// Returns @c true if the material has a shine texturing layer.
+    bool isShiny() const;
 
     /// Returns @c true if the material is considered @em skymasked.
     bool isSkyMasked() const;
@@ -527,44 +573,53 @@ public:
      * Here follows methods awaiting cleanup/redesign/removal.
      */
 
-    /// @return  Detail Texture linked to this else @c NULL
-    struct texture_s *detailTexture();
+    /**
+     * Provides access to the detail texturing layer state.
+     *
+     * @throws UnknownLayerError if the material has no details layer.
+     *
+     * @see isDetailed()
+     */
+    DetailLayerState const &detailLayer() const;
 
     /**
-     * Change the Detail Texture linked to this.
+     * Change the detail texture linked to this.
      * @param tex  Texture to be linked with.
      */
-    void setDetailTexture(struct texture_s *tex);
-
-    /// @return  Detail Texture blending factor for this [0..1].
-    float detailStrength();
+    void setDetailTexture(de::Texture *tex);
 
     /**
-     * Change the Detail Texture strength factor for this.
+     * Change the detail texture strength factor for this.
      * @param strength  New strength value (will be clamped to [0..1]).
      */
     void setDetailStrength(float strength);
 
-    /// @return  Detail Texture scale factor for this [0..1].
-    float detailScale();
-
     /**
-     * Change the Detail Texture scale factor for this.
+     * Change the detail texture scale factor for this.
      * @param scale  New scale value (will be clamped to [0..1]).
      */
     void setDetailScale(float scale);
 
-    /// @return  Shiny Texture linked to this else @c NULL
-    struct texture_s *shinyTexture();
+    /**
+     * Provides access to the shine texturing layer state.
+     *
+     * @throws UnknownLayerError if the material has no shiny layer.
+     *
+     * @see isShiny()
+     */
+    ShineLayerState const &shineLayer() const;
 
     /**
      * Change the Shiny Texture linked to this.
      * @param tex  Texture to be linked with.
      */
-    void setShinyTexture(struct texture_s *tex);
+    void setShinyTexture(de::Texture *tex);
 
-    /// @return  Shiny Texture blendmode for this.
-    blendmode_t shinyBlendmode();
+    /**
+     * Change the material's linked shiny mask texture.
+     * @param tex  Texture to be linked with.
+     */
+    void setShinyMaskTexture(de::Texture *tex);
 
     /**
      * Change the Shiny Texture blendmode for this.
@@ -572,32 +627,17 @@ public:
      */
     void setShinyBlendmode(blendmode_t blendmode);
 
-    /// @return  Shiny Texture strength factor for this.
-    float shinyStrength();
-
     /**
      * Change the Shiny Texture strength factor for this.
      * @param strength  New strength value (will be clamped to [0..1]).
      */
     void setShinyStrength(float strength);
 
-    /// @return  Shiny Texture minColor (RGB triplet) for this.
-    float const *shinyMinColor();
-
     /**
      * Change the Shiny Texture minColor for this.
      * @param colorRGB  New RGB color values (each component will be clamped to [0..1]).
      */
     void setShinyMinColor(float const colorRGB[3]);
-
-    /// @return  ShinyMask Texture linked to this else @c NULL
-    struct texture_s *shinyMaskTexture();
-
-    /**
-     * Change the material's linked shiny mask texture.
-     * @param tex  Texture to be linked with.
-     */
-    void setShinyMaskTexture(struct texture_s *tex);
 
     /**
      * Returns @c true if the material is marked as "autogenerated".

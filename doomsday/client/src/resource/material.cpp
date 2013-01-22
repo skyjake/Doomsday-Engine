@@ -121,17 +121,11 @@ struct Material::Instance
     /// @see materialFlags
     short flags;
 
-    /// Detail texture layer & properties.
-    Texture *detailTex;
-    float detailScale;
-    float detailStrength;
+    /// Detail texturing layer.
+    Material::DetailLayerState detailLayer;
 
-    /// Shiny texture layer & properties.
-    Texture *shinyTex;
-    blendmode_t shinyBlendmode;
-    float shinyMinColor[3];
-    float shinyStrength;
-    Texture *shinyMaskTex;
+    /// Shine texturing layer.
+    Material::ShineLayerState shineLayer;
 
     /// Layers.
     Material::Layers layers;
@@ -144,12 +138,8 @@ struct Material::Instance
 
     Instance(MaterialManifest &_manifest, ded_material_t &_def)
         : manifest(_manifest), def(&_def), envClass(AEC_UNKNOWN),
-          flags(0), detailTex(0), detailScale(0), detailStrength(0),
-          shinyTex(0), shinyBlendmode(BM_ADD), shinyStrength(0), shinyMaskTex(0),
-          prepared(0)
+          flags(0), prepared(0)
     {
-        std::memset(shinyMinColor, 0, sizeof(shinyMinColor));
-
         for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
         {
             Material::Layer *layer = Material::Layer::fromDef(_def.layers[i]);
@@ -287,6 +277,18 @@ bool Material::isAnimated() const
     return false; // Not at all.
 }
 
+bool Material::isDetailed() const
+{
+    /// @todo fixme: Do not determine this from the layer state.
+    return !!d->detailLayer.texture;
+}
+
+bool Material::isShiny() const
+{
+    /// @todo fixme: Do not determine this from the layer state.
+    return !!d->shineLayer.texture;
+}
+
 bool Material::isSkyMasked() const
 {
     return 0 != (d->flags & MATF_SKYMASK);
@@ -341,88 +343,68 @@ void Material::setAudioEnvironment(AudioEnvironmentClass envClass)
     d->envClass = envClass;
 }
 
-struct texture_s *Material::detailTexture()
+Material::DetailLayerState const &Material::detailLayer() const
 {
-    return reinterpret_cast<struct texture_s *>(d->detailTex);
+    if(isDetailed())
+    {
+        return d->detailLayer;
+    }
+    /// @throw UnknownLayerError The material has no details layer.
+    throw UnknownLayerError("Material::detailLayer", "Material has no details layer");
 }
 
-void Material::setDetailTexture(struct texture_s *tex)
+void Material::setDetailTexture(Texture *tex)
 {
-    d->detailTex = reinterpret_cast<de::Texture *>(tex);
-}
-
-float Material::detailStrength()
-{
-    return d->detailStrength;
+    d->detailLayer.texture = tex;
 }
 
 void Material::setDetailStrength(float strength)
 {
-    d->detailStrength = MINMAX_OF(0, strength, 1);
-}
-
-float Material::detailScale()
-{
-    return d->detailScale;
+    d->detailLayer.strength = MINMAX_OF(0, strength, 1);
 }
 
 void Material::setDetailScale(float scale)
 {
-    d->detailScale = MINMAX_OF(0, scale, 1);
+    d->detailLayer.scale = MINMAX_OF(0, scale, 1);
 }
 
-struct texture_s *Material::shinyTexture()
+Material::ShineLayerState const &Material::shineLayer() const
 {
-    return reinterpret_cast<struct texture_s *>(d->shinyTex);
+    if(isShiny())
+    {
+        return d->shineLayer;
+    }
+    /// @throw UnknownLayerError The material has no shine layer.
+    throw UnknownLayerError("Material::shineLayer", "Material has no shine layer");
 }
 
-void Material::setShinyTexture(struct texture_s *tex)
+void Material::setShinyTexture(Texture *tex)
 {
-    d->shinyTex = reinterpret_cast<Texture *>(tex);
+    d->shineLayer.texture = tex;
 }
 
-blendmode_t Material::shinyBlendmode()
+void Material::setShinyMaskTexture(Texture *tex)
 {
-    return d->shinyBlendmode;
+    d->shineLayer.maskTexture = tex;
 }
 
 void Material::setShinyBlendmode(blendmode_t blendmode)
 {
     DENG2_ASSERT(VALID_BLENDMODE(blendmode));
-    d->shinyBlendmode = blendmode;
-}
-
-float const *Material::shinyMinColor()
-{
-    return d->shinyMinColor;
+    d->shineLayer.blendmode = blendmode;
 }
 
 void Material::setShinyMinColor(float const colorRGB[3])
 {
     DENG2_ASSERT(colorRGB);
-    d->shinyMinColor[CR] = MINMAX_OF(0, colorRGB[CR], 1);
-    d->shinyMinColor[CG] = MINMAX_OF(0, colorRGB[CG], 1);
-    d->shinyMinColor[CB] = MINMAX_OF(0, colorRGB[CB], 1);
-}
-
-float Material::shinyStrength()
-{
-    return d->shinyStrength;
+    d->shineLayer.minColor[CR] = MINMAX_OF(0, colorRGB[CR], 1);
+    d->shineLayer.minColor[CG] = MINMAX_OF(0, colorRGB[CG], 1);
+    d->shineLayer.minColor[CB] = MINMAX_OF(0, colorRGB[CB], 1);
 }
 
 void Material::setShinyStrength(float strength)
 {
-    d->shinyStrength = MINMAX_OF(0, strength, 1);
-}
-
-struct texture_s *Material::shinyMaskTexture()
-{
-    return reinterpret_cast<struct texture_s *>(d->shinyMaskTex);
-}
-
-void Material::setShinyMaskTexture(struct texture_s *tex)
-{
-    d->shinyMaskTex = reinterpret_cast<Texture *>(tex);
+    d->shineLayer.strength = MINMAX_OF(0, strength, 1);
 }
 
 int Material::layerCount() const
