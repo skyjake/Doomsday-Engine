@@ -180,9 +180,9 @@ static void setupBindings()
 
     bindings = new de::Record;
 
-    de::Function *func = new de::Function("DisplayMode_OriginalMode");
-    bindings->addFunction("originalMode", func).setReadOnly();
-    func->release(); // we don't keep a ref
+    bindings->addFunction("originalMode",
+                          de::refless(new de::Function("DisplayMode_OriginalMode")))
+            .setReadOnly();
 
     DENG2_APP->addNativeModule("DisplayMode", *bindings);
 }

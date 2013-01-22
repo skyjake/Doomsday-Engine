@@ -78,7 +78,22 @@ private:
     /// Number of other things that refer to this object, i.e. have
     /// a pointer to it.
     dint _refCount;
+
+    template <typename Type>
+    friend Type *refless(Type *counted);
 };
+
+/**
+ * Reduces a reference count by one without deleting the object. This should be
+ * used when allocating reference-counted objects (with new) in a situation
+ * where a reference will immediately be taken by someone else. It avoids one
+ * having to call release() on the newly allocated object.
+ */
+template <typename Type>
+inline Type *refless(Type *counted) {
+    counted->addRef(-1);
+    return counted;
+}
 
 } // namespace de
 
