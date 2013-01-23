@@ -97,10 +97,13 @@ public:
 };
 
 /**
- * Reduces a reference count by one without deleting the object. This should be
- * used when allocating reference-counted objects (with new) in a situation
- * where a reference will immediately be taken by someone else. It avoids one
- * having to call release() on the newly allocated object.
+ * Reduces the reference count by one without deleting the object. This should
+ * be used when allocating reference-counted objects (with new) in a situation
+ * where a reference to the new object is not kept and a reference will
+ * immediately be taken by someone else. It avoids one having to call release()
+ * on the newly allocated object.
+ *
+ * @param counted  Reference-counted object.
  */
 template <typename Type>
 inline Type *refless(Type *counted) {

@@ -28,29 +28,27 @@ struct ShellApp::Instance
 
     Instance(ShellApp &a) : self(a)
     {
+        RootWidget &root = self.rootWidget();
+
         logWidget = new LogWidget;
 
-        ScalarRule *anim = de::refless(new ScalarRule(0));
-        anim->set(de::refless(new de::OperatorRule(de::OperatorRule::Divide,
-                                                   self.rootWidget().viewWidth(),
-                                                   de::refless(new ConstantRule(2)))), 2);
-        /*anim->set(de::refless(new de::ConstantRule(10)), 2);*/
+        ScalarRule *anim = refless(new ScalarRule(0));
+        anim->set(refless(new OperatorRule(
+                OperatorRule::Divide, root.viewWidth(), refless(new ConstantRule(2)))));
+        /*anim->set(refless(new ConstantRule(10)), 2);*/
 
         logWidget->rule()
                 .setInput(RectangleRule::Left,   anim)
-                .setInput(RectangleRule::Top,    de::refless(new ConstantRule(0)))
-                .setInput(RectangleRule::Width,  self.rootWidget().viewWidth())
-                .setInput(RectangleRule::Height, self.rootWidget().viewHeight());
+                .setInput(RectangleRule::Top,    refless(new ConstantRule(0)))
+                .setInput(RectangleRule::Width,  root.viewWidth())
+                .setInput(RectangleRule::Height, root.viewHeight());
 
-        self.rootWidget().add(logWidget);
-
-        self.rootWidget().draw();
+        root.add(logWidget); // takes ownership
     }
 };
 
 ShellApp::ShellApp(int &argc, char **argv) : CursesApp(argc, argv), d(new Instance(*this))
-{
-}
+{}
 
 ShellApp::~ShellApp()
 {
