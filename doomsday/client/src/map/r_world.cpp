@@ -1088,7 +1088,7 @@ static void addToSurfaceLists(Surface *suf, Material *material)
         R_SurfaceListAdd(GameMap_GlowingSurfaces(theMap),   suf);
     }
 
-    if(material->hasDecorations())
+    if(material->isDecorated())
     {
         R_SurfaceListAdd(GameMap_DecoratedSurfaces(theMap), suf);
     }

@@ -722,7 +722,7 @@ static void printMaterialInfo(Material &material)
                "\nDetailed:%s Glowing:%s Shiny:%s SkyMasked:%s\n",
                material.isDrawable()     ? "yes" : "no",
                material.audioEnvironment() == AEC_UNKNOWN? "N/A" : S_AudioEnvironmentName(material.audioEnvironment()),
-               material.hasDecorations() ? "yes" : "no",
+               material.isDecorated() ? "yes" : "no",
                material.isDetailed()     ? "yes" : "no",
                material.hasGlow()        ? "yes" : "no",
                material.isShiny()        ? "yes" : "no",

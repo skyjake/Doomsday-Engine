@@ -50,10 +50,10 @@ struct Material::Variant::Instance
     Material *material;
 
     /// Specification used to derive this variant.
-    MaterialVariantSpec const &spec;
+    Material::VariantSpec const &spec;
 
     /// Cached animation state snapshot (if any).
-    MaterialSnapshot *snapshot;
+    Material::Snapshot *snapshot;
 
     /// Frame count when the snapshot was last prepared/updated.
     int snapshotPrepareFrame;
@@ -70,7 +70,7 @@ struct Material::Variant::Instance
     /// Decoration animation states.
     Material::Variant::DecorationState decorations[Material::max_decorations];
 
-    Instance(Material &generalCase, MaterialVariantSpec const &_spec)
+    Instance(Material &generalCase, Material::VariantSpec const &_spec)
         : material(&generalCase),
           spec(_spec), snapshot(0), snapshotPrepareFrame(-1)
     {}
@@ -81,11 +81,11 @@ struct Material::Variant::Instance
     }
 
     /**
-     * Attach new MaterialSnapshot data to the variant. If an existing
-     * snapshot is already present it will be replaced. Ownership of
-     * @a materialSnapshot is given to the variant.
+     * Attach new snapshot data to the variant. If an existing snapshot is already
+     * present it will be replaced. Ownership of @a materialSnapshot is given to
+     * the variant.
      */
-    void attachSnapshot(MaterialSnapshot &newSnapshot)
+    void attachSnapshot(Material::Snapshot &newSnapshot)
     {
         if(snapshot)
         {
@@ -99,18 +99,17 @@ struct Material::Variant::Instance
     }
 
     /**
-     * Detach the MaterialSnapshot data from the variant, relinquishing
-     * ownership to the caller.
+     * Detach the snapshot data from the variant, relinquishing ownership to the caller.
      */
-    MaterialSnapshot *detachSnapshot()
+    Material::Snapshot *detachSnapshot()
     {
-        MaterialSnapshot *detachedSnapshot = snapshot;
+        Material::Snapshot *detachedSnapshot = snapshot;
         snapshot = 0;
         return detachedSnapshot;
     }
 };
 
-Material::Variant::Variant(Material &generalCase, MaterialVariantSpec const &spec)
+Material::Variant::Variant(Material &generalCase, Material::VariantSpec const &spec)
 {
     d = new Instance(generalCase, spec);
     // Initialize animation states.
@@ -127,7 +126,7 @@ Material &Material::Variant::generalCase() const
     return *d->material;
 }
 
-MaterialVariantSpec const &Material::Variant::spec() const
+Material::VariantSpec const &Material::Variant::spec() const
 {
     return d->spec;
 }
@@ -233,14 +232,14 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
     }
 }
 
-MaterialSnapshot const &Material::Variant::prepare(bool forceSnapshotUpdate)
+Material::Snapshot const &Material::Variant::prepare(bool forceSnapshotUpdate)
 {
     // Acquire the snapshot we are interested in.
-    MaterialSnapshot *snapshot = d->snapshot;
+    Material::Snapshot *snapshot = d->snapshot;
     if(!snapshot)
     {
         // Time to allocate the snapshot.
-        snapshot = new MaterialSnapshot(*this);
+        snapshot = new Material::Snapshot(*this);
         d->attachSnapshot(*snapshot);
 
         // Update the snapshot right away.
@@ -327,7 +326,7 @@ Material::Variant::DecorationState const &Material::Variant::decoration(int deco
     throw Material::UnknownDecorationError("Material::Variant::decoration", QString("Invalid material decoration #%1").arg(decorNum));
 }
 
-MaterialSnapshot *Material::Variant::snapshot() const
+Material::Snapshot *Material::Variant::snapshot() const
 {
     return d->snapshot;
 }
