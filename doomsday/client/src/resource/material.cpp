@@ -106,9 +106,6 @@ struct Material::Instance
     /// Manifest derived to yield the material.
     MaterialManifest &manifest;
 
-    /// Definition from which this material was derived (if any).
-    ded_material_t *def;
-
     /// Set of use-case/context variant instances.
     Material::Variants variants;
 
@@ -127,19 +124,13 @@ struct Material::Instance
     /// Decorations (will be projected into the map relative to a surface).
     Material::Decorations decorations;
 
-    /// Current prepared state.
-    byte prepared;
+    /// Definition from which this material was derived (if any).
+    /// @todo Refactor away -ds
+    ded_material_t *def;
 
-    Instance(MaterialManifest &_manifest, ded_material_t &_def)
-        : manifest(_manifest), def(&_def), envClass(AEC_UNKNOWN),
-          flags(0), prepared(0)
-    {
-        for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
-        {
-            Material::Layer *layer = Material::Layer::fromDef(_def.layers[i]);
-            layers.push_back(layer);
-        }
-    }
+    Instance(MaterialManifest &_manifest)
+        : manifest(_manifest), envClass(AEC_UNKNOWN), flags(0), def(0)
+    {}
 
     ~Instance()
     {
@@ -154,7 +145,6 @@ struct Material::Instance
         {
              delete variants.takeFirst();
         }
-        prepared = 0;
     }
 
     void clearLayers()
@@ -177,9 +167,16 @@ struct Material::Instance
 Material::Material(MaterialManifest &_manifest, ded_material_t &def)
     : de::MapElement(DMU_MATERIAL)
 {
-    d = new Instance(_manifest, def);
+    d = new Instance(_manifest);
     d->flags      = def.flags;
     d->dimensions = QSize(MAX_OF(0, def.width), MAX_OF(0, def.height));
+
+    d->def        = &def;
+    for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
+    {
+        Material::Layer *layer = Material::Layer::fromDef(def.layers[i]);
+        d->layers.push_back(layer);
+    }
 }
 
 Material::~Material()

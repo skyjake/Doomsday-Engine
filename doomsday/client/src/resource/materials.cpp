@@ -1,7 +1,7 @@
 /** @file materials.cpp Material Resource Collection.
  *
- * @authors Copyright © 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright ï¿½ 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright ï¿½ 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -722,7 +722,7 @@ static void printMaterialInfo(Material &material)
                "\nDetailed:%s Glowing:%s Shiny:%s SkyMasked:%s\n",
                material.isDrawable()     ? "yes" : "no",
                material.audioEnvironment() == AEC_UNKNOWN? "N/A" : S_AudioEnvironmentName(material.audioEnvironment()),
-               material.isDecorated() ? "yes" : "no",
+               material.isDecorated()    ? "yes" : "no",
                material.isDetailed()     ? "yes" : "no",
                material.hasGlow()        ? "yes" : "no",
                material.isShiny()        ? "yes" : "no",
