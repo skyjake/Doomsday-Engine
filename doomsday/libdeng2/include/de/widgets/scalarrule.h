@@ -57,7 +57,7 @@ protected slots:
 
 private:
     Animation _animation;
-    Rule const *_rule;
+    Rule const *_targetRule;
 };
 
 } // namespace de

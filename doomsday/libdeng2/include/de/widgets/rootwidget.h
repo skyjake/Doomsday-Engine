@@ -27,6 +27,16 @@ namespace de {
 
 class Rule;
 
+/**
+ * Widget that represents the root of the widget tree.
+ *
+ * Events passed to and draw requests on the root widget propagate to the
+ * entire tree. Other widgets may query the size of the view from the root
+ * widget.
+ *
+ * The view dimensions are available as Rule instances so that widgets'
+ * position rules may be defined relative to them.
+ */
 class RootWidget : public Widget
 {
 public:

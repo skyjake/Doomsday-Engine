@@ -24,15 +24,15 @@
 namespace de {
 
 ScalarRule::ScalarRule(float initialValue)
-    : Rule(initialValue), _animation(initialValue), _rule(0)
+    : Rule(initialValue), _animation(initialValue), _targetRule(0)
 {}
 
 void ScalarRule::set(float target, de::TimeDelta transition)
 {
-    if(_rule)
+    if(_targetRule)
     {
-        independentOf(_rule);
-        _rule = 0;
+        independentOf(_targetRule);
+        _targetRule = 0;
     }
 
     connect(&_animation.clock(), SIGNAL(timeChanged()), this, SLOT(timeChanged()));
@@ -47,15 +47,15 @@ void ScalarRule::set(Rule const *target, TimeDelta transition)
 
     // Keep a reference.
     dependsOn(target);
-    _rule = target;
+    _targetRule = target;
 }
 
 void ScalarRule::update()
 {
     // When using a rule for the target, keep it updated.
-    if(_rule)
+    if(_targetRule)
     {
-        _animation.adjustTarget(_rule->value());
+        _animation.adjustTarget(_targetRule->value());
     }
 
     setValue(_animation);
