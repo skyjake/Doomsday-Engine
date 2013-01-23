@@ -46,7 +46,7 @@ void ScalarRule::set(Rule const *target, TimeDelta transition)
     set(target->value(), transition);
 
     // Keep a reference.
-    dependsOn(_rule);
+    dependsOn(target);
     _rule = target;
 }
 
