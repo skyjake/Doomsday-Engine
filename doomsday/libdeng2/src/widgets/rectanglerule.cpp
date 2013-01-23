@@ -26,27 +26,29 @@ namespace de {
 struct RectangleRule::Instance
 {
     RectangleRule &self;
-    DelegateRule *left;
-    DelegateRule *top;
-    DelegateRule *right;
-    DelegateRule *bottom;
     AnimationVector2 normalizedAnchorPoint;
     Rule const *inputRules[MAX_RULES];
 
-    Instance(RectangleRule &rr) : self(rr)
+    // The output rules.
+    DelegateRule left;
+    DelegateRule top;
+    DelegateRule right;
+    DelegateRule bottom;
+
+    Instance(RectangleRule &r) : self(r), left(r), top(r), right(r), bottom(r)
     {
         memset(inputRules, 0, sizeof(inputRules));
         setup();
     }
 
-    Instance(RectangleRule &rr, Rule const *left, Rule const *top, Rule const *right, Rule const *bottom)
-        : self(rr)
+    Instance(RectangleRule &r, Rule const *inLeft, Rule const *inTop, Rule const *inRight, Rule const *inBottom)
+        : self(r), left(r), top(r), right(r), bottom(r)
     {
         memset(inputRules, 0, sizeof(inputRules));
-        inputRules[Left]   = left;
-        inputRules[Top]    = top;
-        inputRules[Right]  = right;
-        inputRules[Bottom] = bottom;
+        inputRules[Left]   = inLeft;
+        inputRules[Top]    = inTop;
+        inputRules[Right]  = inRight;
+        inputRules[Bottom] = inBottom;
         setup();
     }
 
@@ -58,23 +60,11 @@ struct RectangleRule::Instance
             self.dependsOn(inputRules[i]);
         }
 
-        // The output rules.
-        left   = new DelegateRule(self);
-        right  = new DelegateRule(self);
-        top    = new DelegateRule(self);
-        bottom = new DelegateRule(self);
-
         self.invalidate();
     }
 
     ~Instance()
     {
-        // Delete the delegates.
-        delete left;
-        delete right;
-        delete top;
-        delete bottom;
-
         for(int i = 0; i < int(MAX_RULES); ++i)
         {
             self.independentOf(inputRules[i]);
@@ -177,10 +167,10 @@ struct RectangleRule::Instance
         DENG2_ASSERT(bottomDefined);
 
         // Update the derived output rules.
-        left->set(r.topLeft.x);
-        top->set(r.topLeft.y);
-        right->set(r.bottomRight.x);
-        bottom->set(r.bottomRight.y);
+        left.set(r.topLeft.x);
+        top.set(r.topLeft.y);
+        right.set(r.bottomRight.x);
+        bottom.set(r.bottomRight.y);
 
         // Mark this rule as valid.
         self.setValue(r.width() * r.height());
@@ -206,22 +196,22 @@ RectangleRule::~RectangleRule()
 
 Rule const *RectangleRule::left() const
 {
-    return d->left;
+    return &d->left;
 }
 
 Rule const *RectangleRule::top() const
 {
-    return d->top;
+    return &d->top;
 }
 
 Rule const *RectangleRule::right() const
 {
-    return d->right;
+    return &d->right;
 }
 
 Rule const *RectangleRule::bottom() const
 {
-    return d->bottom;
+    return &d->bottom;
 }
 
 RectangleRule &RectangleRule::setInput(InputRule inputRule, Rule const *rule)
@@ -264,8 +254,8 @@ void RectangleRule::timeChanged()
 
 Rectanglef RectangleRule::rect() const
 {
-    return Rectanglef(Vector2f(d->left->value(),  d->top->value()),
-                      Vector2f(d->right->value(), d->bottom->value()));
+    return Rectanglef(Vector2f(d->left.value(),  d->top.value()),
+                      Vector2f(d->right.value(), d->bottom.value()));
 }
 
 Rectanglei RectangleRule::recti() const
