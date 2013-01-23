@@ -25,17 +25,17 @@
 
 using namespace de;
 
-FunctionValue::FunctionValue() : _func(new Function())
+FunctionValue::FunctionValue() : _func(new Function)
 {
     // We now hold the only reference to the function.
 }
 
-FunctionValue::FunctionValue(Function *func) : _func(func->ref<Function>())
+FunctionValue::FunctionValue(Function *func) : _func(de::holdRef(func))
 {}
 
 FunctionValue::~FunctionValue()
 {
-    _func->release();
+    de::releaseRef(_func);
 }
 
 Value *FunctionValue::duplicate() const

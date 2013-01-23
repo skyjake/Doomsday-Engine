@@ -95,10 +95,10 @@ struct RectangleRule::Instance
 
     ~Instance()
     {
-        left->release();
-        right->release();
-        top->release();
-        bottom->release();
+        de::releaseRef(left);
+        de::releaseRef(right);
+        de::releaseRef(top);
+        de::releaseRef(bottom);
     }
 
     void setup()

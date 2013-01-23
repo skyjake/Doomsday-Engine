@@ -57,6 +57,8 @@ public:
     /**
      * Releases a reference that was acquired earlier with ref(). The
      * object destroys itself when the reference counter hits zero.
+     *
+     * @see de::releaseRef() for a more convenient way to release a reference.
      */
     void release() const;
 

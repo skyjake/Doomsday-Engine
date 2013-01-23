@@ -42,7 +42,7 @@ FunctionStatement::FunctionStatement(Expression *identifier)
 FunctionStatement::~FunctionStatement()
 {
     delete _identifier;
-    _function->release();
+    de::releaseRef(_function);
 }
 
 Compound &FunctionStatement::compound()
