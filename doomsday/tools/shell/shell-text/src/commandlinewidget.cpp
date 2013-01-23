@@ -17,18 +17,31 @@
  */
 
 #include "commandlinewidget.h"
+#include <de/String>
+
+using namespace de;
 
 struct CommandLineWidget::Instance
 {
-    Instance()
-    {}
+    ConstantRule *height;
+    String command;
+    int cursorPos;
+
+    Instance() : cursorPos(0)
+    {
+        // Initial height of the command line (1 row).
+        height = new ConstantRule(1);
+    }
 
     ~Instance()
-    {}
+    {
+        releaseRef(height);
+    }
 };
 
 CommandLineWidget::CommandLineWidget(de::String const &name) : TextWidget(name), d(new Instance)
 {
+    rule().setInput(RectangleRule::Height, d->height);
 }
 
 CommandLineWidget::~CommandLineWidget()
@@ -36,12 +49,23 @@ CommandLineWidget::~CommandLineWidget()
     delete d;
 }
 
+Vector2i CommandLineWidget::cursorPosition()
+{
+    de::Rectanglei pos = rule().recti();
+    return pos.topLeft + Vector2i(2 + d->cursorPos);
+}
+
 void CommandLineWidget::draw()
 {
-    if(!targetCanvas()) return;
+    TextCanvas *cv = targetCanvas();
+    if(!cv) return;
 
     de::Rectanglei pos = rule().recti();
 
-    targetCanvas()->fill(pos, TextCanvas::Char('+'));
-}
+    TextCanvas::Char::Attribs attr = TextCanvas::Char::Reverse;
+    TextCanvas::Char bg(' ', attr);
 
+    cv->fill(pos, bg);
+    cv->put(pos.topLeft, TextCanvas::Char('>', attr | TextCanvas::Char::Bold));
+    cv->drawText(pos.topLeft + Vector2i(2, 0), d->command, attr);
+}

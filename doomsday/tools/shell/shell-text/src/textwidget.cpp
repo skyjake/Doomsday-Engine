@@ -74,3 +74,9 @@ de::RectangleRule &TextWidget::rule()
     DENG2_ASSERT(d->rule != 0);
     return *d->rule;
 }
+
+de::Vector2i TextWidget::cursorPosition()
+{
+    return de::Vector2i(de::floor(rule().left()->value()),
+                        de::floor(rule().top()->value()));
+}

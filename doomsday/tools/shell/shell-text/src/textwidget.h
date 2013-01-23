@@ -54,6 +54,14 @@ public:
 
     de::RectangleRule &rule();
 
+    /**
+     * Returns the position of the cursor for the widget. If the widget
+     * has focus, this is where the cursor will be positioned.
+     *
+     * @return Cursor position.
+     */
+    virtual de::Vector2i cursorPosition();
+
 private:
     struct Instance;
     Instance *d;

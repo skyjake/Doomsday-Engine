@@ -20,6 +20,7 @@
 #define TEXTCANVAS_H
 
 #include <QChar>
+#include <QFlags>
 #include <de/Vector>
 #include <de/Rectangle>
 
@@ -34,35 +35,55 @@ public:
 
     struct Char
     {
-        QChar ch;
-        struct {
-            unsigned char bold      : 1;
-            unsigned char underline : 1;
-            unsigned char reverse   : 1;
-            unsigned char dirty     : 1;
-        } attrib;
-
-        Char(QChar const &c = QChar(' ')) : ch(c)
+        enum Attrib
         {
-            attrib.bold      = false;
-            attrib.underline = false;
-            attrib.reverse   = false;
-            attrib.dirty     = true;
+            Bold      = 0x1,
+            Underline = 0x2,
+            Reverse   = 0x4,
+
+            Dirty     = 0x80000000,
+
+            DefaultAttributes = 0,
+            VisualAttributes = Bold | Underline | Reverse
+        };
+        Q_DECLARE_FLAGS(Attribs, Attrib)
+
+        QChar ch;
+        Attribs attribs;
+
+    public:
+        Char(QChar const &c = QChar(' '), Attribs const &at = DefaultAttributes)
+            : ch(c), attribs(at)
+        {
+            attribs |= Dirty;
         }
 
         Char &operator = (Char const &other)
         {
             bool changed = false;
 
-#define CH_COPY(prop) if(prop != other.prop) { prop = other.prop; changed = true; }
-            CH_COPY(ch);
-            CH_COPY(attrib.bold);
-            CH_COPY(attrib.underline);
-            CH_COPY(attrib.reverse);
-#undef CH_COPY
+            if(ch != other.ch)
+            {
+                ch = other.ch;
+                changed = true;
+            }
+            if((attribs & VisualAttributes) != (other.attribs & VisualAttributes))
+            {
+                attribs &= ~VisualAttributes;
+                attribs |= (other.attribs & VisualAttributes);
+                changed = true;
+            }
 
-            attrib.dirty = changed;
+            if(changed)
+            {
+                attribs |= Dirty;
+            }
             return *this;
+        }
+
+        bool isDirty() const
+        {
+            return attribs.testFlag(Dirty);
         }
     };
 
@@ -94,7 +115,16 @@ public:
      */
     bool isValid(Coord const &pos) const;
 
+    /**
+     * Marks the entire canvas dirty.
+     */
+    void markDirty();
+
     void fill(de::Rectanglei const &rect, Char const &ch);
+
+    void put(de::Vector2i const &pos, Char const &ch);
+
+    void drawText(de::Vector2i const &pos, de::String const &text, Char::Attribs const &attribs);
 
     /**
      * Copies the contents of this canvas onto another canvas.
@@ -111,9 +141,18 @@ public:
      */
     virtual void show();
 
+    /**
+     * Sets the position of the cursor on the canvas.
+     *
+     * @param pos  Position.
+     */
+    virtual void setCursorPosition(de::Vector2i const &pos);
+
 private:
     struct Instance;
     Instance *d;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(TextCanvas::Char::Attribs)
 
 #endif // TEXTCANVAS_H

@@ -27,11 +27,13 @@ class CursesTextCanvas : public TextCanvas
 public:
     CursesTextCanvas(Size const &size, WINDOW *window, Coord const &originInWindow = Coord(0, 0));
 
+    void setCursorPosition(de::Vector2i const &pos);
+
     void show();
 
 private:
-    WINDOW *_window;
-    Coord _origin;
+    struct Instance;
+    Instance *d;
 };
 
 #endif // CURSESTEXTCANVAS_H

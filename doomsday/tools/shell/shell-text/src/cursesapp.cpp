@@ -23,6 +23,7 @@
 #include "cursesapp.h"
 #include "cursestextcanvas.h"
 #include "textrootwidget.h"
+#include "textwidget.h"
 #include <curses.h>
 #include <stdio.h>
 #include <de/Clock>
@@ -161,6 +162,9 @@ struct CursesApp::Instance
 
                 // The root widget will update the UI.
                 rootWidget->setViewSize(size);
+
+                // We must redraw all characters since wclear was called.
+                rootWidget->rootCanvas().markDirty();
             }
             else if(key & KEY_CODE_YES)
             {
@@ -191,6 +195,13 @@ struct CursesApp::Instance
         if(de::Rule::invalidRulesExist())
         {
             rootWidget->draw();
+        }
+
+        if(rootWidget->focus())
+        {
+            de::Vector2i p = rootWidget->focus()->cursorPosition();
+            wmove(rootWin, p.y, p.x);
+            wrefresh(rootWin);
         }
     }
 

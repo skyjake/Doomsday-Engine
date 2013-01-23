@@ -27,21 +27,16 @@ struct ShellApp::Instance
     ShellApp &self;
     LogWidget *log;
     CommandLineWidget *cli;
-    ConstantRule *cliHeight;
 
     Instance(ShellApp &a) : self(a)
     {
         RootWidget &root = self.rootWidget();
 
-        // Initial height of the command line (1 row).
-        cliHeight = new ConstantRule(1);
-
         cli = new CommandLineWidget;
         cli->rule()
                 .setInput(RectangleRule::Left,   root.viewLeft())
                 .setInput(RectangleRule::Width,  root.viewWidth())
-                .setInput(RectangleRule::Bottom, root.viewBottom())
-                .setInput(RectangleRule::Height, cliHeight);
+                .setInput(RectangleRule::Bottom, root.viewBottom());
 
         log = new LogWidget;
         log->rule()
@@ -50,14 +45,14 @@ struct ShellApp::Instance
                 .setInput(RectangleRule::Top,    root.viewTop())
                 .setInput(RectangleRule::Bottom, cli->rule().top());
 
-        root.add(cli); // takes ownership
-        root.add(log); // takes ownership
+        root.add(cli);
+        root.add(log);
+
+        root.setFocus(cli);
     }
 
     ~Instance()
-    {
-        releaseRef(cliHeight);
-    }
+    {}
 };
 
 ShellApp::ShellApp(int &argc, char **argv)

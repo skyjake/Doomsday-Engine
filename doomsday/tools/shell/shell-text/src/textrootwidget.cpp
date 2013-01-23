@@ -17,6 +17,7 @@
  */
 
 #include "textrootwidget.h"
+#include "textwidget.h"
 
 TextRootWidget::TextRootWidget(TextCanvas *cv) : de::RootWidget(), _canvas(cv)
 {
@@ -40,8 +41,17 @@ void TextRootWidget::setViewSize(de::Vector2i const &viewSize)
     RootWidget::setViewSize(viewSize);
 }
 
+TextWidget *TextRootWidget::focus() const
+{
+    return static_cast<TextWidget *>(RootWidget::focus());
+}
+
 void TextRootWidget::draw()
 {
     RootWidget::draw();
+    if(focus())
+    {
+        _canvas->setCursorPosition(focus()->cursorPosition());
+    }
     _canvas->show();
 }

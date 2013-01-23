@@ -18,13 +18,28 @@
 
 #include "cursestextcanvas.h"
 
+struct CursesTextCanvas::Instance
+{
+    WINDOW *window;
+    Coord origin;
+    de::Vector2i cursorPos;
+
+    Instance(WINDOW *window, Coord const &originInWindow)
+        : window(window), origin(originInWindow)
+    {}
+};
+
 CursesTextCanvas::CursesTextCanvas(Size const &size, WINDOW *window, Coord const &originInWindow)
-    : TextCanvas(size), _window(window), _origin(originInWindow)
+    : TextCanvas(size), d(new Instance(window, originInWindow))
 {}
+
+void CursesTextCanvas::setCursorPosition(const de::Vector2i &pos)
+{
+    d->cursorPos = pos;
+}
 
 void CursesTextCanvas::show()
 {
-    bool somethingDrawn = false;
     Size const dims = size();
 
     // All dirty characters are drawn.
@@ -37,7 +52,7 @@ void CursesTextCanvas::show()
             Coord const pos(col, row);
             Char const &ch = at(pos);
 
-            if(!ch.attrib.dirty)
+            if(!ch.isDirty())
             {
                 needMove = true;
                 continue;
@@ -46,29 +61,23 @@ void CursesTextCanvas::show()
             if(needMove)
             {
                 // Advance cursor.
-                wmove(_window, _origin.y + row, _origin.x + col);
+                wmove(d->window, d->origin.y + row, d->origin.x + col);
                 needMove = false;
             }
 
             // Set attributes.
-            wattrset(_window,
-                     (ch.attrib.bold?      A_BOLD : 0) |
-                     (ch.attrib.reverse?   A_REVERSE : 0) |
-                     (ch.attrib.underline? A_UNDERLINE : 0));
+            wattrset(d->window,
+                     (ch.attribs.testFlag(Char::Bold)?      A_BOLD : 0) |
+                     (ch.attribs.testFlag(Char::Reverse)?   A_REVERSE : 0) |
+                     (ch.attribs.testFlag(Char::Underline)? A_UNDERLINE : 0));
 
-            waddch(_window, ch.ch.unicode()); // cursor advanced
-
-            somethingDrawn = true;
+            waddch(d->window, ch.ch.unicode()); // cursor advanced
         }
     }
-
-    wmove(_window, 0, 0);
 
     // Mark everything clean.
     TextCanvas::show();
 
-    if(somethingDrawn)
-    {
-        wrefresh(_window);
-    }
+    wmove(d->window, d->cursorPos.y, d->cursorPos.x);
+    wrefresh(d->window);
 }

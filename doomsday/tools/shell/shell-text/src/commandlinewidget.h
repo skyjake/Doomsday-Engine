@@ -24,8 +24,16 @@
 class CommandLineWidget : public TextWidget
 {
 public:
+    /**
+     * The height rule of the widget is set up during construction.
+     *
+     * @param name  Widget name.
+     */
     CommandLineWidget(de::String const &name = "");
+
     virtual ~CommandLineWidget();
+
+    de::Vector2i cursorPosition();
 
     void draw();
 

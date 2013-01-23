@@ -90,7 +90,11 @@ struct TextCanvas::Instance
             Line &line = lines[row];
             for(int col = 0; col < line.size(); ++col)
             {
-                line[col].attrib.dirty = markDirty;
+                Char &c = line[col];
+                if(markDirty)
+                    c.attribs |= Char::Dirty;
+                else
+                    c.attribs &= ~Char::Dirty;
             }
         }
     }
@@ -133,6 +137,11 @@ bool TextCanvas::isValid(const Coord &pos) const
     return (pos.x >= 0 && pos.y >= 0 && pos.x < d->size.x && pos.y < d->size.y);
 }
 
+void TextCanvas::markDirty()
+{
+    d->markAllAsDirty(true);
+}
+
 void TextCanvas::fill(de::Rectanglei const &rect, Char const &ch)
 {
     for(int y = rect.top(); y < rect.bottom(); ++y)
@@ -142,6 +151,27 @@ void TextCanvas::fill(de::Rectanglei const &rect, Char const &ch)
             Coord const xy(x, y);
             if(isValid(xy)) at(xy) = ch;
         }
+    }
+}
+
+void TextCanvas::put(de::Vector2i const &pos, Char const &ch)
+{
+    if(isValid(pos))
+    {
+        at(pos) = ch;
+    }
+}
+
+void TextCanvas::drawText(de::Vector2i const &pos, de::String const &text, Char::Attribs const &attribs)
+{
+    de::Vector2i p = pos;
+    DENG2_FOR_EACH_CONST(de::String, i, text)
+    {
+        if(isValid(p))
+        {
+            at(p) = Char(*i, attribs);
+        }
+        p.x += 1;
     }
 }
 
@@ -165,3 +195,6 @@ void TextCanvas::show()
 {
     d->markAllAsDirty(false);
 }
+
+void TextCanvas::setCursorPosition(const de::Vector2i &)
+{}

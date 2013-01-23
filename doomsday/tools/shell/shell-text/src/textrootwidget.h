@@ -22,6 +22,8 @@
 #include <de/RootWidget>
 #include "textcanvas.h"
 
+class TextWidget;
+
 class TextRootWidget : public de::RootWidget
 {
 public:
@@ -42,6 +44,8 @@ public:
      * @param viewSize  New size.
      */
     void setViewSize(de::Vector2i const &viewSize);
+
+    TextWidget *focus() const;
 
     void draw();
 
