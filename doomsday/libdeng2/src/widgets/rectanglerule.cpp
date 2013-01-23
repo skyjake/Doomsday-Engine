@@ -26,14 +26,11 @@ namespace de {
 struct RectangleRule::Instance
 {
     RectangleRule &self;
-
     DerivedRule *left;
     DerivedRule *top;
     DerivedRule *right;
     DerivedRule *bottom;
-
     AnimationVector2 normalizedAnchorPoint;
-
     Rule const *inputRules[MAX_RULES];
 
     Instance(RectangleRule &rr) : self(rr)
@@ -61,7 +58,7 @@ struct RectangleRule::Instance
             self.dependsOn(inputRules[i]);
         }
 
-        // The output rules. Each one of these depends on the RectangleRule,
+        // The output rules. Each one of these depends on this RectangleRule,
         // but the reference counter is adjusted in the RectangleRule
         // constructor to hide these internal references.
         left   = new DerivedRule(&self);
@@ -74,10 +71,10 @@ struct RectangleRule::Instance
 
     ~Instance()
     {
-        de::releaseRef(left);
-        de::releaseRef(right);
-        de::releaseRef(top);
-        de::releaseRef(bottom);
+        releaseRef(left);
+        releaseRef(right);
+        releaseRef(top);
+        releaseRef(bottom);
 
         for(int i = 0; i < int(MAX_RULES); ++i)
         {
@@ -245,20 +242,6 @@ RectangleRule &RectangleRule::setInput(InputRule inputRule, Rule const *rule)
     d->setInputRule(inputRule, rule);
     return *this;
 }
-
-/*
-void RectangleRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
-{
-    for(int i = 0; i < MAX_RULES; ++i)
-    {
-        Instance::InputRuleRef &dep = d->ruleRef(InputRule(i));
-        if(dep.rule.constPtr == oldRule)
-        {
-            dep.rule.constPtr = newRule;
-        }
-    }
-}
-*/
 
 Rule const *RectangleRule::inputRule(InputRule inputRule)
 {

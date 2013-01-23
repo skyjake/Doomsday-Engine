@@ -24,6 +24,10 @@
 
 namespace de {
 
+/**
+ * Calculates a value by applying a mathematical operator to the values of one
+ * or two other rules.
+ */
 class OperatorRule : public Rule
 {
     Q_OBJECT
@@ -51,7 +55,6 @@ public:
 
 protected:
     void update();
-    //void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
 
 private:
     Operator _operator;

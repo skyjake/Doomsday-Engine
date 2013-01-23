@@ -53,14 +53,6 @@ public:
      */
     float value() const;
 
-#if 0
-    /**
-     * Transfers this rule's dependencies to @a newRule. The dependent rules
-     * are updated accordingly. Afterwards, this rule has no more dependencies.
-     */
-    void transferDependencies(Rule *toRule);
-#endif
-
     /**
      * Updates the rule with a valid value. Derived classes must call
      * setValue() in their implementation of this method, because it sets the
@@ -107,24 +99,6 @@ protected:
      */
     void independentOf(Rule const *dependency);
 
-#if 0
-    /**
-     * Adds a dependent rule.
-     *
-     * @param rule  Rule that depends on this rule. A reference to @a rule
-     *              is retained.
-     */
-    void addDependent(Rule *rule);
-
-    /**
-     * Removes a dependent rule.
-     *
-     * @param rule  Rule that depends on this rule. A reference to @a rule
-     *              is released.
-     */
-    void removeDependent(Rule *rule);
-#endif
-
     /**
      * Sets the current value of the rule and marks it valid.
      *
@@ -134,21 +108,8 @@ protected:
 
     float cachedValue() const;
 
-#if 0
-    /**
-     * Called to notify that the dependency @a oldRule has been replaced with
-     * @a newRule.
-     */
-    virtual void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
-#endif    
-
 signals:
     void valueInvalidated();
-
-#if 0
-protected slots:
-    void ruleDestroyed(QObject *rule);
-#endif
 
 private:
     struct Instance;

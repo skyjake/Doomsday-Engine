@@ -45,14 +45,4 @@ void DerivedRule::update()
     ConstantRule::update();
 }
 
-/*
-void DerivedRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
-{
-    if(_source == oldRule)
-    {
-        _source = newRule;
-    }
-}
-*/
-
 } // namespace de

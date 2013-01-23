@@ -99,18 +99,4 @@ void OperatorRule::update()
     setValue(v);
 }
 
-/*
-void OperatorRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
-{
-    if(_leftOperand == oldRule)
-    {
-        _leftOperand = newRule;
-    }
-    if(_rightOperand == oldRule)
-    {
-        _rightOperand = newRule;
-    }
-}
-*/
-
 } // namespace de

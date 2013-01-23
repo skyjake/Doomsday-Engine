@@ -52,7 +52,6 @@ public:
 
 protected:
     void update();
-    //void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
 
 protected slots:
     void timeChanged();

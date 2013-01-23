@@ -63,17 +63,6 @@ void ScalarRule::update()
     setValue(_animation);
 }
 
-#if 0
-void ScalarRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
-{
-    if(oldRule == _rule)
-    {
-        dismissTargetRule();
-        oldRule = newRule;
-    }
-}
-#endif
-
 void ScalarRule::timeChanged()
 {
     invalidate();

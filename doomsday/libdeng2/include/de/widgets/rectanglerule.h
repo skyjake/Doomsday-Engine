@@ -121,7 +121,6 @@ protected:
     ~RectangleRule();
 
     void update();
-    //void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
 
 private:
     struct Instance;

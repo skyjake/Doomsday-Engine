@@ -26,7 +26,6 @@ bool Rule::_invalidRulesExist = false;
 struct Rule::Instance
 {
     typedef QSet<Rule const *> Dependencies;
-    //Dependencies _rulesThatDependOnThis; // ref'd
     Dependencies dependencies; // ref'd
 
     /// Current value of the rule.
@@ -87,13 +86,6 @@ bool Rule::invalidRulesExist()
     return _invalidRulesExist;
 }
 
-#if 0
-void Rule::dependencyReplaced(Rule const *, Rule const *)
-{
-    // No dependencies.
-}
-#endif
-
 float Rule::cachedValue() const
 {
     return d->value;
@@ -104,25 +96,6 @@ void Rule::setValue(float v)
     d->value = v;
     d->isValid = true;
 }
-
-#if 0
-void Rule::transferDependencies(Rule *toRule)
-{
-    foreach(Rule *rule, _dependentRules)
-    {
-        // Disconnect from this rule.
-        removeDependent(rule);
-
-        // Connect to the new rule.
-        toRule->addDependent(rule);
-
-        rule->dependencyReplaced(this, toRule);
-        rule->invalidate();
-    }
-
-    DENG2_ASSERT(_dependentRules.isEmpty());
-}
-#endif
 
 void Rule::dependsOn(Rule const *dependency)
 {
@@ -147,31 +120,6 @@ void Rule::independentOf(Rule const *dependency)
     }
 }
 
-#if 0
-void Rule::addDependent(Rule *rule)
-{
-    DENG2_ASSERT(!_rulesThatDependOnThis.contains(rule));
-
-    //connect(rule, SIGNAL(destroyed(QObject *)), this, SLOT(ruleDestroyed(QObject *)));
-    connect(this, SIGNAL(valueInvalidated()), rule, SLOT(invalidate()));
-
-    // Acquire a reference.
-    _rulesThatDependOnThis.insert(de::holdRef(rule));
-}
-
-void Rule::removeDependent(Rule *rule)
-{
-    DENG2_ASSERT(_rulesThatDependOnThis.contains(rule));
-
-    disconnect(rule, SLOT(invalidate()));
-
-    _rulesThatDependOnThis.remove(rule);
-    de::releaseRef(rule);
-
-    //rule->disconnect(this, SLOT(ruleDestroyed(QObject *)));
-}
-#endif
-
 void Rule::invalidate()
 {
     if(d->isValid)
@@ -184,12 +132,5 @@ void Rule::invalidate()
         emit valueInvalidated();
     }
 }
-
-#if 0
-void Rule::ruleDestroyed(QObject *rule)
-{
-    removeDependent(static_cast<Rule *>(rule));
-}
-#endif
 
 } // namespace de

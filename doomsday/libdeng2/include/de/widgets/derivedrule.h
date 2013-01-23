@@ -38,7 +38,6 @@ public:
 
 protected:
     void update();
-    //void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
 
 private:
     Rule const *_source;
