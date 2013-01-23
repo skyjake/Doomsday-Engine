@@ -28,6 +28,7 @@ OperatorRule::OperatorRule(Operator op, Rule const *unary)
     DENG2_ASSERT(_leftOperand != 0);
 
     dependsOn(_leftOperand);
+    invalidate();
 }
 
 OperatorRule::OperatorRule(Operator op, Rule const *left, Rule const *right)
@@ -38,6 +39,7 @@ OperatorRule::OperatorRule(Operator op, Rule const *left, Rule const *right)
 
     dependsOn(_leftOperand);
     dependsOn(_rightOperand);
+    invalidate();
 }
 
 OperatorRule::~OperatorRule()
