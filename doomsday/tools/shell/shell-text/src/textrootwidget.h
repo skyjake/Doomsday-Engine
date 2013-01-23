@@ -38,6 +38,10 @@ public:
 
     TextCanvas &rootCanvas();
 
+    void requestDraw();
+
+    bool drawWasRequested() const;
+
     /**
      * Resizes the canvas and changes the view size.
      *
@@ -51,6 +55,7 @@ public:
 
 private:
     TextCanvas *_canvas;
+    bool _drawRequest;
 };
 
 #endif // TEXTROOTWIDGET_H

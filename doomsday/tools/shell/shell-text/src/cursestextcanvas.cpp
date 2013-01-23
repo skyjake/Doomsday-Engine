@@ -71,7 +71,8 @@ void CursesTextCanvas::show()
                      (ch.attribs.testFlag(Char::Reverse)?   A_REVERSE : 0) |
                      (ch.attribs.testFlag(Char::Underline)? A_UNDERLINE : 0));
 
-            waddch(d->window, ch.ch.unicode()); // cursor advanced
+            // TODO: What about Unicode output? (libncursesw?)
+            waddch(d->window, ch.ch.toAscii()); // cursor advanced
         }
     }
 

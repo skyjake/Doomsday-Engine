@@ -75,7 +75,8 @@ HEADERS += \
     include/de/Rectangle \
     include/de/UnixInfo \
     include/de/Vector \
-    include/de/Version
+    include/de/Version \
+    include/de/widgets/event.h
 
 HEADERS += \
     include/de/c_wrapper.h \
@@ -104,14 +105,14 @@ SOURCES += \
     src/error.cpp \
     src/version.cpp \
     src/core/app.cpp \
+    src/core/callbacktimer.cpp \
+    src/core/clock.cpp \
     src/core/commandline.cpp \
     src/core/config.cpp \
-    src/core/callbacktimer.cpp \
     src/core/library.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp \
-    src/core/unixinfo.cpp \
-    include/de/core/clock.cpp
+    src/core/unixinfo.cpp
 
 OTHER_FILES += \
     modules/Config.de \

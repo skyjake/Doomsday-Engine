@@ -123,4 +123,9 @@ void RootWidget::draw()
     Rule::markRulesValid(); // All done for this frame.
 }
 
+bool RootWidget::handleEvent(Event const *event)
+{
+    return dispatchEvent(event, &Widget::handleEvent);
+}
+
 } // namespace de

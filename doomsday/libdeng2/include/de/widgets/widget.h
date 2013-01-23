@@ -21,11 +21,11 @@
 #define LIBDENG2_WIDGET_H
 
 #include "../String"
+#include "../Event"
 
 namespace de {
 
 class RootWidget;
-class Event;
 
 class Widget
 {

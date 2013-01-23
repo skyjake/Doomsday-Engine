@@ -33,7 +33,8 @@ HEADERS += \
     src/logwidget.h \
     src/textwidget.h \
     src/textrootwidget.h \
-    src/commandlinewidget.h
+    src/commandlinewidget.h \
+    src/keyevent.h
 
 SOURCES += \
     src/cursesapp.cpp \

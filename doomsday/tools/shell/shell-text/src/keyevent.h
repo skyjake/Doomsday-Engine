@@ -1,4 +1,4 @@
-/** @file commandlinewidget.h  Widget for command line input.
+/** @file keyevent.h Key event.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,31 +16,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef COMMANDLINEWIDGET_H
-#define COMMANDLINEWIDGET_H
+#ifndef KEYEVENT_H
+#define KEYEVENT_H
 
-#include "textwidget.h"
+#include <de/Event>
+#include <de/String>
 
-class CommandLineWidget : public TextWidget
+/**
+ * Key press event generated when the user presses a key on the keyboard.
+ */
+class KeyEvent : public de::Event
 {
 public:
-    /**
-     * The height rule of the widget is set up during construction.
-     *
-     * @param name  Widget name.
-     */
-    CommandLineWidget(de::String const &name = "");
+    KeyEvent(de::String const &keyStr) : Event(KeyPress), _key(keyStr) {}
 
-    virtual ~CommandLineWidget();
-
-    de::Vector2i cursorPosition();
-
-    void draw();
-    bool handleEvent(de::Event const *event);
+    de::String key() const { return _key; }
 
 private:
-    struct Instance;
-    Instance *d;
+    de::String _key;
 };
 
-#endif // COMMANDLINEWIDGET_H
+#endif // KEYEVENT_H

@@ -19,7 +19,7 @@
 #include "textrootwidget.h"
 #include "textwidget.h"
 
-TextRootWidget::TextRootWidget(TextCanvas *cv) : de::RootWidget(), _canvas(cv)
+TextRootWidget::TextRootWidget(TextCanvas *cv) : de::RootWidget(), _canvas(cv), _drawRequest(false)
 {
     DENG2_ASSERT(cv != 0);
     setViewSize(cv->size());
@@ -46,6 +46,16 @@ TextWidget *TextRootWidget::focus() const
     return static_cast<TextWidget *>(RootWidget::focus());
 }
 
+void TextRootWidget::requestDraw()
+{
+    _drawRequest = true;
+}
+
+bool TextRootWidget::drawWasRequested() const
+{
+    return _drawRequest;
+}
+
 void TextRootWidget::draw()
 {
     RootWidget::draw();
@@ -54,4 +64,5 @@ void TextRootWidget::draw()
         _canvas->setCursorPosition(focus()->cursorPosition());
     }
     _canvas->show();
+    _drawRequest = false;
 }

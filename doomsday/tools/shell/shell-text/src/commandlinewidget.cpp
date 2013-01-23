@@ -17,6 +17,8 @@
  */
 
 #include "commandlinewidget.h"
+#include "textrootwidget.h"
+#include "keyevent.h"
 #include <de/String>
 
 using namespace de;
@@ -68,4 +70,16 @@ void CommandLineWidget::draw()
     cv->fill(pos, bg);
     cv->put(pos.topLeft, TextCanvas::Char('>', attr | TextCanvas::Char::Bold));
     cv->drawText(pos.topLeft + Vector2i(2, 0), d->command, attr);
+}
+
+bool CommandLineWidget::handleEvent(Event const *event)
+{
+    DENG2_ASSERT(event->type() == Event::KeyPress);
+    KeyEvent const *ev = static_cast<KeyEvent const *>(event);
+
+    d->command += ev->key();
+    d->cursorPos++;
+
+    root().requestDraw();
+    return true;
 }

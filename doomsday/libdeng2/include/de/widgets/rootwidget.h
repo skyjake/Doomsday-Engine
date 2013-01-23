@@ -74,6 +74,7 @@ public:
 
     void initialize();
     void draw();
+    bool handleEvent(Event const *event);
 
 private:
     struct Instance;

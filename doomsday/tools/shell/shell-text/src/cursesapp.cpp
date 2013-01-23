@@ -22,6 +22,7 @@
 #include <QDebug>
 #include "cursesapp.h"
 #include "cursestextcanvas.h"
+#include "keyevent.h"
 #include "textrootwidget.h"
 #include "textwidget.h"
 #include <curses.h>
@@ -69,10 +70,11 @@ struct CursesApp::Instance
     WINDOW *rootWin;
     de::Vector2i rootSize;
     QTimer *refreshTimer;
+    int unicodeCont;
 
     TextRootWidget *rootWidget;
 
-    Instance(CursesApp &a) : self(a), rootWidget(0)
+    Instance(CursesApp &a) : self(a), unicodeCont(0), rootWidget(0)
     {
         de::Animation::setClock(&clock);
         de::Clock::setAppClock(&clock);
@@ -187,12 +189,39 @@ struct CursesApp::Instance
             }
             else
             {
-                qDebug() << "Got key" << QString("0x%1").arg(key, 0, 16).toAscii().constData();
+                // Convert the key code(s) into a string.
+                de::String keyStr;
+
+                if(unicodeCont)
+                {
+                    char utf8[3] = { char(unicodeCont), char(key), 0 };
+                    keyStr = de::String(utf8);
+                    //qDebug() << QString("%1 %2, %3").arg(unicodeCont, 0, 16).arg(key, 0, 16)
+                    //            .arg(keyStr[0].unicode(), 0, 16);
+                    unicodeCont = 0;
+                }
+                else
+                {
+                    // Unicode continuation?
+                    if((key >= 0x80 && key <= 0xbf) ||
+                       (key >= 0xc2 && key <= 0xf4))
+                    {
+                        unicodeCont = key;
+                        continue;
+                    }
+                    else
+                    {
+                        keyStr.append(QChar(key));
+                    }
+                }
+
+                KeyEvent ev(keyStr);
+                rootWidget->handleEvent(&ev);
             }
         }
 
         // Automatically redraw the UI if the values of layout rules have changed.
-        if(de::Rule::invalidRulesExist())
+        if(de::Rule::invalidRulesExist() || rootWidget->drawWasRequested())
         {
             rootWidget->draw();
         }

@@ -1,4 +1,4 @@
-/** @file commandlinewidget.h  Widget for command line input.
+/** @file event.h Base class for events.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,31 +16,38 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef COMMANDLINEWIDGET_H
-#define COMMANDLINEWIDGET_H
+#ifndef LIBDENG2_EVENT_H
+#define LIBDENG2_EVENT_H
 
-#include "textwidget.h"
+namespace de {
 
-class CommandLineWidget : public TextWidget
+/**
+ * Base class for events.
+ *
+ * @ingroup widgets
+ */
+class Event
 {
 public:
+    enum {
+        KeyPress = 1,
+        KeyRelease = 2
+    };
+
+public:
+    Event(int type_ = 0) : _type(type_) {}
+
+    virtual ~Event() {}
+
     /**
-     * The height rule of the widget is set up during construction.
-     *
-     * @param name  Widget name.
+     * Returns the type code of the event.
      */
-    CommandLineWidget(de::String const &name = "");
-
-    virtual ~CommandLineWidget();
-
-    de::Vector2i cursorPosition();
-
-    void draw();
-    bool handleEvent(de::Event const *event);
+    int type() const { return _type; }
 
 private:
-    struct Instance;
-    Instance *d;
+    int _type;
 };
 
-#endif // COMMANDLINEWIDGET_H
+} // namespace de
+
+#endif // LIBDENG2_EVENT_H

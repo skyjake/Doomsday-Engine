@@ -3,6 +3,7 @@ HEADERS += \
     include/de/AnimationVector \
     include/de/DelegateRule \
     include/de/ConstantRule \
+    include/de/Event \
     include/de/OperatorRule \
     include/de/RectangleRule \
     include/de/RootWidget \
@@ -12,6 +13,7 @@ HEADERS += \
     include/de/widgets/animationvector.h \
     include/de/widgets/constantrule.h \
     include/de/widgets/delegaterule.h \
+    include/de/widgets/event.h \
     include/de/widgets/operatorrule.h \
     include/de/widgets/rectanglerule.h \
     include/de/widgets/rootwidget.h \
