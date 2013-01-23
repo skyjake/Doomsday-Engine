@@ -362,19 +362,24 @@ typedef struct {
     int             ceilInterval[2];
 } ded_sectortype_t;
 
+typedef struct ded_detail_stage_s {
+    Uri            *texture; // The file/lump with the detail texture.
+    float           scale;
+    float           strength;
+    float           maxDist;
+} ded_detail_stage_t;
+
 // Flags for detail texture definitions.
 #define DTLF_NO_IWAD        0x1 // Don't use if from IWAD.
 #define DTLF_PWAD           0x2 // Can use if from PWAD.
 #define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 
 typedef struct ded_detailtexture_s {
-    Uri*            material1;
-    Uri*            material2;
+    Uri            *material1;
+    Uri            *material2;
     ded_flags_t     flags;
-    Uri*            detailTex; // The file/lump with the detail texture.
-    float           scale;
-    float           strength;
-    float           maxDist;
+    // There is only one stage.
+    ded_detail_stage_t stage;
 } ded_detailtexture_t;
 
 typedef struct ded_ptcgen_s {
@@ -416,21 +421,26 @@ typedef struct ded_ptcgen_s {
     ded_count_t     stageCount;
 } ded_ptcgen_t;
 
+typedef struct ded_shine_stage_s {
+    blendmode_t     blendMode; // Blend mode flags (bm_*).
+    float           shininess;
+    float           minColor[3];
+    Uri            *texture;
+    Uri            *maskTexture;
+    float           maskWidth;
+    float           maskHeight;
+} ded_shine_stage_t;
+
 // Flags for reflection definitions.
 #define REFF_NO_IWAD        0x1 // Don't use if from IWAD.
 #define REFF_PWAD           0x2 // Can use if from PWAD.
 #define REFF_EXTERNAL       0x4 // Can use if from external resource.
 
 typedef struct ded_reflection_s {
-    Uri*            material;
+    Uri            *material;
     ded_flags_t     flags;
-    blendmode_t     blendMode; // Blend mode flags (bm_*).
-    float           shininess;
-    float           minColor[3];
-    Uri*            shinyMap;
-    Uri*            maskMap;
-    float           maskWidth;
-    float           maskHeight;
+    // There is only one stage.
+    ded_shine_stage_t stage;
 } ded_reflection_t;
 
 typedef struct ded_group_member_s {

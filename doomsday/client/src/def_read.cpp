@@ -1996,21 +1996,19 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("Detail")) // Detail Texture
         {
-            ded_detailtexture_t* dtl;
-
             idx = DED_AddDetail(ded, "");
-            dtl = &ded->details[idx];
+            ded_detailtexture_t *dtl = &ded->details[idx];
 
              // Should we copy the previous definition?
             if(prevDetailDefIdx >= 0 && bCopyNext)
             {
-                const ded_detailtexture_t* prevDetail = ded->details + prevDetailDefIdx;
+                ded_detailtexture_t const *prevDetail = ded->details + prevDetailDefIdx;
 
-                memcpy(dtl, prevDetail, sizeof(*dtl));
+                std::memcpy(dtl, prevDetail, sizeof(*dtl));
 
                 if(dtl->material1) dtl->material1  = Uri_Dup(dtl->material1);
                 if(dtl->material2) dtl->material2  = Uri_Dup(dtl->material2);
-                if(dtl->detailTex) dtl->detailTex  = Uri_Dup(dtl->detailTex);
+                if(dtl->stage.texture) dtl->stage.texture = Uri_Dup(dtl->stage.texture);
             }
 
             FINDBEGIN;
@@ -2032,16 +2030,16 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
                 else if(ISLABEL("Lump"))
                 {
-                    READURI(&dtl->detailTex, "Lumps")
+                    READURI(&dtl->stage.texture, "Lumps")
                 }
                 else if(ISLABEL("File"))
                 {
-                    READURI(&dtl->detailTex, 0)
+                    READURI(&dtl->stage.texture, 0)
                 }
                 else
-                RV_FLT("Scale", dtl->scale)
-                RV_FLT("Strength", dtl->strength)
-                RV_FLT("Distance", dtl->maxDist)
+                RV_FLT("Scale", dtl->stage.scale)
+                RV_FLT("Strength", dtl->stage.strength)
+                RV_FLT("Distance", dtl->stage.maxDist)
                 RV_END
                 CHECKSC;
             }
@@ -2062,9 +2060,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 memcpy(ref, prevRef, sizeof(*ref));
 
-                if(ref->material)   ref->material = Uri_Dup(ref->material);
-                if(ref->shinyMap)   ref->shinyMap = Uri_Dup(ref->shinyMap);
-                if(ref->maskMap)    ref->maskMap  = Uri_Dup(ref->maskMap);
+                if(ref->material) ref->material = Uri_Dup(ref->material);
+                if(ref->stage.texture) ref->stage.texture = Uri_Dup(ref->stage.texture);
+                if(ref->stage.maskTexture) ref->stage.maskTexture = Uri_Dup(ref->stage.maskTexture);
             }
 
             FINDBEGIN;
@@ -2072,13 +2070,13 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             {
                 READLABEL;
                 RV_FLAGS("Flags", ref->flags, "rff_")
-                RV_FLT("Shininess", ref->shininess)
-                RV_VEC("Min color", ref->minColor, 3)
-                RV_BLENDMODE("Blending mode", ref->blendMode)
-                RV_URI("Shiny map", &ref->shinyMap, "LightMaps")
-                RV_URI("Mask map", &ref->maskMap, "LightMaps")
-                RV_FLT("Mask width", ref->maskWidth)
-                RV_FLT("Mask height", ref->maskHeight)
+                RV_FLT("Shininess", ref->stage.shininess)
+                RV_VEC("Min color", ref->stage.minColor, 3)
+                RV_BLENDMODE("Blending mode", ref->stage.blendMode)
+                RV_URI("Shiny map", &ref->stage.texture, "LightMaps")
+                RV_URI("Mask map", &ref->stage.maskTexture, "LightMaps")
+                RV_FLT("Mask width", ref->stage.maskWidth)
+                RV_FLT("Mask height", ref->stage.maskHeight)
                 if(ISLABEL("Material"))
                 {
                     READURI(&ref->material, 0)

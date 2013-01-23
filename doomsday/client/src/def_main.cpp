@@ -1587,9 +1587,9 @@ void Def_PostInit(void)
         if((!dtl->material1 || Uri_IsEmpty(dtl->material1)) &&
            (!dtl->material2 || Uri_IsEmpty(dtl->material2))) continue;
 
-        if(!dtl->detailTex) continue;
+        if(!dtl->stage.texture) continue;
 
-        R_DefineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->detailTex));
+        R_DefineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->stage.texture));
     }
 
     // Lights.
@@ -1620,18 +1620,19 @@ void Def_PostInit(void)
     App_Textures()->scheme("Masks").clear();
     for(int i = 0; i < defs.count.reflections.num; ++i)
     {
-        ded_reflection_t* ref = &defs.reflections[i];
+        ded_reflection_t *ref = &defs.reflections[i];
 
         // Ignore definitions which do not specify a material.
         if(!ref->material || Uri_IsEmpty(ref->material)) continue;
 
-        if(ref->shinyMap)
+        if(ref->stage.texture)
         {
-            R_DefineTexture("Reflections", reinterpret_cast<de::Uri &>(*ref->shinyMap));
+            R_DefineTexture("Reflections", reinterpret_cast<de::Uri &>(*ref->stage.texture));
         }
-        if(ref->maskMap)
+        if(ref->stage.maskTexture)
         {
-            R_DefineTexture("Masks", reinterpret_cast<de::Uri &>(*ref->maskMap), QSize(ref->maskWidth, ref->maskHeight));
+            R_DefineTexture("Masks", reinterpret_cast<de::Uri &>(*ref->stage.maskTexture),
+                            QSize(ref->stage.maskWidth, ref->stage.maskHeight));
         }
     }
 

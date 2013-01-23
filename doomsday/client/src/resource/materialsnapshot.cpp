@@ -103,21 +103,21 @@ struct Store {
 
 struct MaterialSnapshot::Instance
 {
-    /// Variant Material used to derive this snapshot.
-    Material::Variant *material;
+    /// Variant material used to derive this snapshot.
+    Material::Variant *variant;
 
     Store stored;
 
-    Instance(Material::Variant &_material)
-        : material(&_material), stored()
+    Instance(Material::Variant &_variant)
+        : variant(&_variant), stored()
     {}
 
     void takeSnapshot();
 };
 
-MaterialSnapshot::MaterialSnapshot(Material::Variant &_material)
+MaterialSnapshot::MaterialSnapshot(Material::Variant &materialVariant)
 {
-    d = new Instance(_material);
+    d = new Instance(materialVariant);
 }
 
 MaterialSnapshot::~MaterialSnapshot()
@@ -125,9 +125,9 @@ MaterialSnapshot::~MaterialSnapshot()
     delete d;
 }
 
-Material::Variant &MaterialSnapshot::material() const
+Material::Variant &MaterialSnapshot::materialVariant() const
 {
-    return *d->material;
+    return *d->variant;
 }
 
 QSize const &MaterialSnapshot::dimensions() const
@@ -187,18 +187,6 @@ MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
     return d->stored.decorations[index];
 }
 
-static Texture *findTextureByResourceUri(String nameOfScheme, de::Uri const &resourceUri)
-{
-    if(resourceUri.isEmpty()) return 0;
-    try
-    {
-        return App_Textures()->scheme(nameOfScheme).findByResourceUri(resourceUri).texture();
-    }
-    catch(Textures::Scheme::NotFoundError const &)
-    {} // Ignore this error.
-    return 0;
-}
-
 /// @todo Optimize: Cache this result at material level.
 static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
 {
@@ -211,22 +199,17 @@ static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
     return 0;
 }
 
-static inline Texture *findDetailTextureForDef(ded_detailtexture_t const &def)
+/// @todo Optimize: Cache this result at material level.
+static Texture *findTextureByResourceUri(String nameOfScheme, de::Uri const &resourceUri)
 {
-    if(!def.detailTex) return 0;
-    return findTextureByResourceUri("Details", reinterpret_cast<de::Uri const &>(*def.detailTex));
-}
-
-static inline Texture *findShinyTextureForDef(ded_reflection_t const &def)
-{
-    if(!def.shinyMap) return 0;
-    return findTextureByResourceUri("Reflections", reinterpret_cast<de::Uri const &>(*def.shinyMap));
-}
-
-static inline Texture *findShinyMaskTextureForDef(ded_reflection_t const &def)
-{
-    if(!def.maskMap) return 0;
-    return findTextureByResourceUri("Masks", reinterpret_cast<de::Uri const &>(*def.maskMap));
+    if(resourceUri.isEmpty()) return 0;
+    try
+    {
+        return App_Textures()->scheme(nameOfScheme).findByResourceUri(resourceUri).texture();
+    }
+    catch(Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
+    return 0;
 }
 #endif // __CLIENT__
 
@@ -235,9 +218,9 @@ void MaterialSnapshot::Instance::takeSnapshot()
 {
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
-    Material *mat = &material->generalCase();
-    Material::Layers const &layers = mat->layers();
-    MaterialVariantSpec const &spec = material->spec();
+    Material *material = &variant->generalCase();
+    Material::Layers const &layers = material->layers();
+    MaterialVariantSpec const &spec = variant->spec();
 
     Texture::Variant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS][2];
     std::memset(prepTextures, 0, sizeof prepTextures);
@@ -254,9 +237,9 @@ void MaterialSnapshot::Instance::takeSnapshot()
      */
     for(int i = 0; i < layers.count(); ++i)
     {
-        Material::Variant::LayerState const &l   = material->layer(i);
+        Material::Variant::LayerState const &l = variant->layer(i);
 
-        ded_material_layer_stage_t const *lsCur  = layers[i]->stages()[l.stage];
+        ded_material_layer_stage_t const *lsCur = layers[i]->stages()[l.stage];
         if(Texture *tex = findTextureForLayerStage(*lsCur))
         {
             // Pick the instance matching the specified context.
@@ -264,45 +247,13 @@ void MaterialSnapshot::Instance::takeSnapshot()
             prepTextures[i][0] = GL_PrepareTexture(*tex, *spec.primarySpec, &result);
 
             // Primary texture was (re)prepared?
-            if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
+            if(i == 0 && l.stage == 0 &&
+               (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
             {
                 // Are we inheriting the logical dimensions from the texture?
-                if(0 == mat->width() && 0 == mat->height())
+                if(material->dimensions().isEmpty())
                 {
-                    mat->setDimensions(tex->dimensions());
-                }
-
-                if(mat->isDetailed())
-                {
-                    Uri uri(mat->manifest().composeUri());
-                    ded_detailtexture_t const *dtlDef =
-                        Def_GetDetailTex(reinterpret_cast<uri_s *>(&uri)/*,
-                                         result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
-                    DENG_ASSERT(dtlDef);
-
-                    Material::Variant::DetailLayerState &details = material->detailLayer();
-                    details.texture  = findDetailTextureForDef(*dtlDef);
-                    details.strength = MINMAX_OF(0, dtlDef->strength, 1);
-                    details.scale    = MINMAX_OF(0, dtlDef->scale, 1);
-                }
-
-                if(mat->isShiny())
-                {
-                    Uri uri(mat->manifest().composeUri());
-                    ded_reflection_t const *refDef =
-                        Def_GetReflection(reinterpret_cast<uri_s *>(&uri)/*,
-                                          result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
-                    DENG_ASSERT(refDef);
-
-                    Material::Variant::ShineLayerState &shiny = material->shineLayer();
-                    shiny.texture      = findShinyTextureForDef(*refDef);
-                    shiny.maskTexture  = findShinyMaskTextureForDef(*refDef);
-                    shiny.strength     = MINMAX_OF(0, refDef->shininess, 1);
-                    shiny.blendmode    = refDef->blendMode;
-                    DENG2_ASSERT(VALID_BLENDMODE(shiny.blendmode));
-                    shiny.minColor[CR] = MINMAX_OF(0, refDef->minColor[CR], 1);
-                    shiny.minColor[CG] = MINMAX_OF(0, refDef->minColor[CG], 1);
-                    shiny.minColor[CB] = MINMAX_OF(0, refDef->minColor[CB], 1);
+                    material->setDimensions(tex->dimensions());
                 }
             }
         }
@@ -319,10 +270,20 @@ void MaterialSnapshot::Instance::takeSnapshot()
         }
     }
 
-    // Do we need to prepare a DetailTexture?
-    if(!mat->isSkyMasked() && mat->isDetailed())
+    // Do we need to prepare detail texture(s)?
+    if(!material->isSkyMasked() && material->isDetailed())
     {
-        Material::Variant::DetailLayerState const &details = material->detailLayer();
+        Material::Variant::DetailLayerState &details = variant->detailLayer();
+
+        Uri uri(material->manifest().composeUri());
+        ded_detailtexture_t const *dtlDef =
+            Def_GetDetailTex(reinterpret_cast<uri_s *>(&uri)/*,
+                             result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
+        DENG_ASSERT(dtlDef);
+
+        details.texture  = dtlDef->stage.texture? findTextureByResourceUri("Details", reinterpret_cast<de::Uri const &>(*dtlDef->stage.texture)) : 0;
+        details.strength = MINMAX_OF(0, dtlDef->stage.strength, 1);
+        details.scale    = MINMAX_OF(0, dtlDef->stage.scale, 1);
         if(Texture *tex = details.texture)
         {
             float const contrast = details.strength * detailFactor /*Global strength multiplier*/;
@@ -333,9 +294,25 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 
     // Do we need to prepare a shiny texture (and possibly a mask)?
-    if(!mat->isSkyMasked() && mat->isShiny())
+    if(!material->isSkyMasked() && material->isShiny())
     {
-        Material::Variant::ShineLayerState const &shiny = material->shineLayer();
+        Material::Variant::ShineLayerState &shiny = variant->shineLayer();
+
+        Uri uri(material->manifest().composeUri());
+        ded_reflection_t const *refDef =
+            Def_GetReflection(reinterpret_cast<uri_s *>(&uri)/*,
+                              result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
+        DENG_ASSERT(refDef);
+
+        shiny.texture      = refDef->stage.texture? findTextureByResourceUri("Reflections", reinterpret_cast<de::Uri const&>(*refDef->stage.texture)) : 0;
+        shiny.maskTexture  = refDef->stage.maskTexture? findTextureByResourceUri("Masks", reinterpret_cast<de::Uri const&>(*refDef->stage.maskTexture)) : 0;
+        shiny.strength     = MINMAX_OF(0, refDef->stage.shininess, 1);
+        shiny.blendmode    = refDef->stage.blendMode;
+        DENG2_ASSERT(VALID_BLENDMODE(shiny.blendmode));
+        shiny.minColor[CR] = MINMAX_OF(0, refDef->stage.minColor[CR], 1);
+        shiny.minColor[CG] = MINMAX_OF(0, refDef->stage.minColor[CG], 1);
+        shiny.minColor[CB] = MINMAX_OF(0, refDef->stage.minColor[CB], 1);
+
         if(Texture *tex = shiny.texture)
         {
             texturevariantspecification_t &texSpec =
@@ -344,7 +321,6 @@ void MaterialSnapshot::Instance::takeSnapshot()
                      false, false, false, false);
 
             prepTextures[MTU_REFLECTION][0] = GL_PrepareTexture(*tex, texSpec);
-
         }
 
         // We are only interested in a mask if we have a shiny texture.
@@ -361,8 +337,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 #endif // __CLIENT__
 
-    stored.dimensions.setWidth(mat->width());
-    stored.dimensions.setHeight(mat->height());
+    stored.dimensions.setWidth(material->width());
+    stored.dimensions.setHeight(material->height());
 
 #ifdef __CLIENT__
     stored.opaque = (prepTextures[MTU_PRIMARY][0] && !prepTextures[MTU_PRIMARY][0]->isMasked());
@@ -370,7 +346,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(stored.dimensions.isEmpty()) return;
 
-    Material::Variant::LayerState const &l   = material->layer(0);
+    Material::Variant::LayerState const &l   = variant->layer(0);
     ded_material_layer_stage_t const *lsCur  = layers[0]->stages()[l.stage];
     ded_material_layer_stage_t const *lsNext = layers[0]->stages()[(l.stage + 1) % layers[0]->stageCount()];
 
@@ -386,7 +362,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(MC_MAPSURFACE == spec.context && prepTextures[MTU_REFLECTION][0])
     {
-        Material::Variant::ShineLayerState const &shiny = material->shineLayer();
+        Material::Variant::ShineLayerState const &shiny = variant->shineLayer();
         stored.reflectionMinColor = Vector3f(shiny.minColor);
     }
 
@@ -446,7 +422,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         stored.textures[MTU_DETAIL] = tex;
 #ifdef __CLIENT__
-        float scaleFactor = material->detailLayer().scale;
+        float scaleFactor = variant->detailLayer().scale;
         if(detailScale > .0001f)
             scaleFactor *= detailScale; // Global scale factor.
 
@@ -457,7 +433,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 #endif
     }
 
-/*#ifdef __CLIENT__
+#ifdef __CLIENT__
     // Setup the inter detail texture unit.
     if(Texture::Variant *tex = prepTextures[MTU_DETAIL][1])
     {
@@ -466,7 +442,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         // blended and unblended surfaces.
         if(!(!usingFog && l.inter == 0))
         {
-            float scaleFactor = mat->detailScale();
+            float scaleFactor = variant->detailLayer().scale;
             if(detailScale > .0001f)
                 scaleFactor *= detailScale; // Global scale factor.
 
@@ -476,14 +452,14 @@ void MaterialSnapshot::Instance::takeSnapshot()
                                 QPointF(0, 0), l.inter);
         }
     }
-#endif*/
+#endif
 
     // Setup the shiny texture units.
     if(Texture::Variant *tex = prepTextures[MTU_REFLECTION][0])
     {
         stored.textures[MTU_REFLECTION] = tex;
 #ifdef __CLIENT__
-        Material::Variant::ShineLayerState const &shiny = material->shineLayer();
+        Material::Variant::ShineLayerState const &shiny = variant->shineLayer();
         stored.writeTexUnit(RTU_REFLECTION, tex, shiny.blendmode,
                             QSizeF(1, 1), QPointF(0, 0), shiny.strength);
 #endif
@@ -504,11 +480,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
 #ifdef __CLIENT__
     uint idx = 0;
-    Material::Decorations const &decorations = mat->decorations();
+    Material::Decorations const &decorations = material->decorations();
     for(Material::Decorations::const_iterator it = decorations.begin();
         it != decorations.end(); ++it, ++idx)
     {
-        Material::Variant::DecorationState const &l = material->decoration(idx);
+        Material::Variant::DecorationState const &l = variant->decoration(idx);
         Material::Decoration const *lDef = *it;
         ded_decorlight_stage_t const *lsCur  = lDef->stages()[l.stage];
         ded_decorlight_stage_t const *lsNext = lDef->stages()[(l.stage + 1) % lDef->stageCount()];

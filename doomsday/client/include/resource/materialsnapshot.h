@@ -77,16 +77,16 @@ public:
 public:
     /**
      * Construct a new material snapshot instance.
-     * @param material  Material to capture to produce the snapshot.
+     * @param materialVariant  Material variant to capture to produce the snapshot.
      */
-    MaterialSnapshot(Material::Variant &material);
+    MaterialSnapshot(Material::Variant &materialVariant);
 
     ~MaterialSnapshot();
 
     /**
      * Returns the material variant of the material snapshot.
      */
-    Material::Variant &material() const;
+    Material::Variant &materialVariant() const;
 
     /**
      * Returns the dimensions in the world coordinate space for the material snapshot.

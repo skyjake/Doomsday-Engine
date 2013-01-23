@@ -241,7 +241,7 @@ void DED_Clear(ded_t* ded)
             ded_detailtexture_t* dtex = &ded->details[i];
             if(dtex->material1) Uri_Delete(dtex->material1);
             if(dtex->material2) Uri_Delete(dtex->material2);
-            if(dtex->detailTex) Uri_Delete(dtex->detailTex);
+            if(dtex->stage.texture) Uri_Delete(dtex->stage.texture);
         }
         M_Free(ded->details);
         ded->details = 0;
@@ -371,8 +371,8 @@ void DED_Clear(ded_t* ded)
             ded_reflection_t* ref = &ded->reflections[i];
 
             if(ref->material) Uri_Delete(ref->material);
-            if(ref->shinyMap) Uri_Delete(ref->shinyMap);
-            if(ref->maskMap) Uri_Delete(ref->maskMap);
+            if(ref->stage.texture) Uri_Delete(ref->stage.texture);
+            if(ref->stage.maskTexture) Uri_Delete(ref->stage.maskTexture);
         }
         free(ded->reflections);
         ded->reflections = 0;
@@ -741,16 +741,20 @@ void DED_RemoveValue(ded_t* ded, int index)
     DED_DelEntry(index, (void**) &ded->values, &ded->count.values, sizeof(ded_value_t));
 }
 
-int DED_AddDetail(ded_t* ded, char const* lumpname)
+int DED_AddDetail(ded_t *ded, char const *lumpname)
 {
-    ded_detailtexture_t* dtl = (ded_detailtexture_t *) DED_NewEntry((void**) &ded->details, &ded->count.details, sizeof(ded_detailtexture_t));
+    ded_detailtexture_t *dtl = (ded_detailtexture_t *) DED_NewEntry((void**) &ded->details, &ded->count.details, sizeof(ded_detailtexture_t));
 
-    if(lumpname && lumpname[0])
-        dtl->detailTex = Uri_NewWithPath2(lumpname, RC_NULL);
-    dtl->scale = 1;
-    dtl->strength = 1;
     // Default usage is allowed with custom textures and external replacements.
     dtl->flags = DTLF_PWAD|DTLF_EXTERNAL;
+
+    if(lumpname && lumpname[0])
+    {
+        dtl->stage.texture = Uri_NewWithPath2(lumpname, RC_NULL);
+    }
+    dtl->stage.scale = 1;
+    dtl->stage.strength = 1;
+
     return dtl - ded->details;
 }
 
@@ -819,24 +823,25 @@ void DED_RemoveDecoration(ded_t* ded, int index)
     DED_DelEntry(index, (void**) &ded->decorations, &ded->count.decorations, sizeof(ded_decor_t));
 }
 
-int DED_AddReflection(ded_t* ded)
+int DED_AddReflection(ded_t *ded)
 {
-    ded_reflection_t* ref = (ded_reflection_t *) DED_NewEntry((void**) &ded->reflections, &ded->count.reflections, sizeof(ded_reflection_t));
+    ded_reflection_t *ref = (ded_reflection_t *) DED_NewEntry((void **) &ded->reflections, &ded->count.reflections, sizeof(ded_reflection_t));
 
-    // Init to defaults.
-    ref->shininess = 1.0f;
-    ref->maskWidth = 1.0f;
-    ref->maskHeight = 1.0f;
-    ref->blendMode = BM_ADD;
     // Default usage is allowed with custom textures and external replacements.
     ref->flags = REFF_PWAD|REFF_EXTERNAL;
+
+    // Init to defaults.
+    ref->stage.shininess  = 1.0f;
+    ref->stage.blendMode  = BM_ADD;
+    ref->stage.maskWidth  = 1.0f;
+    ref->stage.maskHeight = 1.0f;
 
     return ref - ded->reflections;
 }
 
-void DED_RemoveReflection(ded_t* ded, int index)
+void DED_RemoveReflection(ded_t *ded, int index)
 {
-    DED_DelEntry(index, (void**) &ded->reflections, &ded->count.reflections, sizeof(ded_reflection_t));
+    DED_DelEntry(index, (void **) &ded->reflections, &ded->count.reflections, sizeof(ded_reflection_t));
 }
 
 int DED_AddGroup(ded_t* ded)

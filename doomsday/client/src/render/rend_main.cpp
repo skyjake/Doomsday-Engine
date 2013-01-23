@@ -736,7 +736,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
     uint const realNumVertices = ((p.isWall && (p.wall.left.divCount || p.wall.right.divCount))? 3 + p.wall.left.divCount + 3 + p.wall.right.divCount : numVertices);
 
-    bool const skyMaskedMaterial = ((p.flags & RPF_SKYMASK) || (ms.material().generalCase().isSkyMasked()));
+    bool const skyMaskedMaterial = ((p.flags & RPF_SKYMASK) || (ms.materialVariant().generalCase().isSkyMasked()));
     bool const drawAsVisSprite   = (!p.forceOpaque && !(p.flags & RPF_SKYMASK) && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     boolean useLights = false, useShadows = false, hasDynlights = false;
@@ -1014,7 +1014,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
          * This is needed because all masked polys must be sorted (sprites
          * are masked polys). Otherwise there will be artifacts.
          */
-        Rend_AddMaskedPoly(rvertices, rcolors, *p.wall.segLength, &ms.material(),
+        Rend_AddMaskedPoly(rvertices, rcolors, *p.wall.segLength, &ms.materialVariant(),
                            p.texOffset, p.blendMode, p.lightListIdx, p.glowing);
 
         R_FreeRendTexCoords(primaryCoords);
