@@ -37,6 +37,8 @@ class ScalarRule : public Rule
 public:
     explicit ScalarRule(float initialValue);
 
+    ~ScalarRule();
+
     void set(float target, TimeDelta transition = 0);
 
     void set(Rule const *target, TimeDelta transition = 0);

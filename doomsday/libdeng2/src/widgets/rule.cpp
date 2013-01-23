@@ -21,37 +21,70 @@
 
 namespace de {
 
-Rule::Rule(float initialValue)
-    : QObject(), _value(initialValue), _isValid(true)
+bool Rule::_invalidRulesExist = false;
+
+struct Rule::Instance
+{
+    typedef QSet<Rule const *> Dependencies;
+    //Dependencies _rulesThatDependOnThis; // ref'd
+    Dependencies dependencies; // ref'd
+
+    /// Current value of the rule.
+    float value;
+
+    /// The value is valid.
+    bool isValid;
+
+    Instance(float initialValue) : value(initialValue), isValid(true)
+    {}
+
+    ~Instance()
+    {
+        // Auto-release remaining references to dependencies.
+        DENG2_FOR_EACH(Dependencies, i, dependencies)
+        {
+            Rule const *rule = *i;
+            de::releaseRef(rule);
+        }
+    }
+};
+
+Rule::Rule(float initialValue) : d(new Instance(initialValue))
 {}
 
 Rule::~Rule()
 {
-    // Release references to the dependent rules.
-    DENG2_FOR_EACH(Dependents, i, _dependentRules)
-    {
-        (*i)->release();
-    }
+    delete d;
 }
 
 float Rule::value() const
 {
-    if(!_isValid)
+    if(!d->isValid)
     {
         // Force an update.
         const_cast<Rule *>(this)->update();
     }
 
     // It must be valid now, after the update.
-    DENG2_ASSERT(_isValid);
+    DENG2_ASSERT(d->isValid);
 
-    return _value;
+    return d->value;
 }
 
 void Rule::update()
 {
     // This is a fixed value, so don't do anything.
-    _isValid = true;
+    d->isValid = true;
+}
+
+void Rule::markRulesValid()
+{
+    _invalidRulesExist = false;
+}
+
+bool Rule::invalidRulesExist()
+{
+    return _invalidRulesExist;
 }
 
 #if 0
@@ -63,13 +96,13 @@ void Rule::dependencyReplaced(Rule const *, Rule const *)
 
 float Rule::cachedValue() const
 {
-    return _value;
+    return d->value;
 }
 
 void Rule::setValue(float v)
 {
-    _value = v;
-    _isValid = true;
+    d->value = v;
+    d->isValid = true;
 }
 
 #if 0
@@ -93,46 +126,61 @@ void Rule::transferDependencies(Rule *toRule)
 
 void Rule::dependsOn(Rule const *dependency)
 {
-    DENG2_ASSERT(dependency != 0);
+    if(dependency)
+    {
+        DENG2_ASSERT(!d->dependencies.contains(dependency));
+        d->dependencies.insert(de::holdRef(dependency));
 
-    const_cast<Rule *>(dependency)->addDependent(this);
+        connect(dependency, SIGNAL(valueInvalidated()), this, SLOT(invalidate()));
+    }
 }
 
 void Rule::independentOf(Rule const *dependency)
 {
-    DENG2_ASSERT(dependency != 0);
+    if(dependency)
+    {
+        disconnect(dependency, SIGNAL(valueInvalidated()), this, SLOT(invalidate()));
 
-    const_cast<Rule *>(dependency)->removeDependent(this);
+        DENG2_ASSERT(d->dependencies.contains(dependency));
+        d->dependencies.remove(dependency);
+        de::releaseRef(dependency);
+    }
 }
 
+#if 0
 void Rule::addDependent(Rule *rule)
 {
-    DENG2_ASSERT(!_dependentRules.contains(rule));
+    DENG2_ASSERT(!_rulesThatDependOnThis.contains(rule));
 
     //connect(rule, SIGNAL(destroyed(QObject *)), this, SLOT(ruleDestroyed(QObject *)));
     connect(this, SIGNAL(valueInvalidated()), rule, SLOT(invalidate()));
 
     // Acquire a reference.
-    _dependentRules.insert(de::holdRef(rule));
+    _rulesThatDependOnThis.insert(de::holdRef(rule));
 }
 
 void Rule::removeDependent(Rule *rule)
 {
-    DENG2_ASSERT(_dependentRules.contains(rule));
+    DENG2_ASSERT(_rulesThatDependOnThis.contains(rule));
 
     disconnect(rule, SLOT(invalidate()));
 
-    _dependentRules.remove(rule);
+    _rulesThatDependOnThis.remove(rule);
     de::releaseRef(rule);
 
     //rule->disconnect(this, SLOT(ruleDestroyed(QObject *)));
 }
+#endif
 
 void Rule::invalidate()
 {
-    if(_isValid)
+    if(d->isValid)
     {
-        _isValid = false;
+        d->isValid = false;
+
+        // Also set the global flag.
+        Rule::_invalidRulesExist = true;
+
         emit valueInvalidated();
     }
 }

@@ -47,6 +47,8 @@ public:
 
     explicit OperatorRule(Operator op, Rule const *left, Rule const *right);
 
+    ~OperatorRule();
+
 protected:
     void update();
     //void dependencyReplaced(Rule const *oldRule, Rule const *newRule);

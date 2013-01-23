@@ -30,6 +30,11 @@ DerivedRule::DerivedRule(Rule const *source)
     invalidate();
 }
 
+DerivedRule::~DerivedRule()
+{
+    independentOf(_source);
+}
+
 void DerivedRule::update()
 {
     DENG2_ASSERT(_source != 0);

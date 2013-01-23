@@ -19,21 +19,36 @@
 
 #include "de/Counted"
 
-using namespace de;
+namespace de {
+
+#ifdef DENG2_DEBUG
+int Counted::totalCount = 0; ///< Should return back to zero when program ends.
+#endif
 
 Counted::Counted() : _refCount(1)
-{}
+{
+#ifdef DENG2_DEBUG
+    totalCount++;
+#endif
+}
 
 Counted::~Counted()
 {
+#ifdef DENG2_DEBUG
+    totalCount--;
+#endif
     DENG2_ASSERT(_refCount == 0);
 }
 
 void Counted::release() const
 {
+    //qDebug() << "Counted" << this << typeid(*this).name() << "ref dec'd to" << _refCount-1;
+
     DENG2_ASSERT(_refCount > 0);
     if(!--_refCount)
     {
         delete this;
     }
 }
+
+} // namespace de

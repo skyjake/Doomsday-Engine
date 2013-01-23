@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <de/Clock>
 #include <de/Animation>
+#include <de/Rule>
 #include <de/Vector>
 
 static void windowResized(int)
@@ -160,7 +161,6 @@ struct CursesApp::Instance
 
                 // The root widget will update the UI.
                 rootWidget->setViewSize(size);
-                rootWidget->draw();
             }
             else if(key & KEY_CODE_YES)
             {
@@ -187,7 +187,11 @@ struct CursesApp::Instance
             }
         }
 
-        rootWidget->draw();
+        // Automatically redraw the UI if the values of layout rules have changed.
+        if(de::Rule::invalidRulesExist())
+        {
+            rootWidget->draw();
+        }
     }
 
     void windowWasResized() // called from signal handler

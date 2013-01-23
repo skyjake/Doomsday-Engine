@@ -46,13 +46,30 @@ struct RectangleRule::Instance
         : self(rr)
     {
         memset(inputRules, 0, sizeof(inputRules));
-
         inputRules[Left]   = left;
         inputRules[Top]    = top;
         inputRules[Right]  = right;
         inputRules[Bottom] = bottom;
-
         setup();
+    }
+
+    void setup()
+    {
+        // Depend on all specified input rules.
+        for(int i = 0; i < int(MAX_RULES); ++i)
+        {
+            self.dependsOn(inputRules[i]);
+        }
+
+        // The output rules. Each one of these depends on the RectangleRule,
+        // but the reference counter is adjusted in the RectangleRule
+        // constructor to hide these internal references.
+        left   = new DerivedRule(&self);
+        right  = new DerivedRule(&self);
+        top    = new DerivedRule(&self);
+        bottom = new DerivedRule(&self);
+
+        self.invalidate();
     }
 
     ~Instance()
@@ -61,23 +78,11 @@ struct RectangleRule::Instance
         de::releaseRef(right);
         de::releaseRef(top);
         de::releaseRef(bottom);
-    }
 
-    void setup()
-    {
-        // Depend on all specified input rules.
         for(int i = 0; i < int(MAX_RULES); ++i)
         {
-            if(inputRules[i]) self.dependsOn(inputRules[i]);
+            self.independentOf(inputRules[i]);
         }
-
-        // The output rules.
-        left   = new DerivedRule(&self);
-        right  = new DerivedRule(&self);
-        top    = new DerivedRule(&self);
-        bottom = new DerivedRule(&self);
-
-        self.invalidate();
     }
 
     Rule const **ruleRef(InputRule rule)
@@ -90,11 +95,9 @@ struct RectangleRule::Instance
     {
         DENG2_ASSERT(rule != 0);
 
+        // Forget the old dependency.
         Rule const **input = ruleRef(inputRule);
-        if(*input)
-        {
-            self.independentOf(*input);
-        }
+        self.independentOf(*input);
 
         // Define a new dependency.
         *input = rule;
@@ -188,19 +191,33 @@ struct RectangleRule::Instance
 
 RectangleRule::RectangleRule()
     : Rule(), d(new Instance(*this))
-{}
+{
+    // Hide internal refs.
+    addRef(-4);
+}
 
 RectangleRule::RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom)
     : Rule(), d(new Instance(*this, left, top, right, bottom))
-{}
+{
+    // Hide internal refs.
+    addRef(-4);
+}
 
 RectangleRule::RectangleRule(RectangleRule const *rect)
     : Rule(), d(new Instance(*this, rect->left(), rect->top(), rect->right(), rect->bottom()))
-{}
+{
+    // Hide internal refs.
+    addRef(-4);
+}
 
 RectangleRule::~RectangleRule()
 {
+    // Restore hidden internal refs. One is added so we don't cause delete to
+    // be called a second time for this instance when the final internal
+    // reference is released.
+    addRef(4 + 1);
     delete d;
+    addRef(-1);
 }
 
 Rule const *RectangleRule::left() const
@@ -271,7 +288,7 @@ void RectangleRule::timeChanged()
 
     if(d->normalizedAnchorPoint.done())
     {
-        disconnect(this, SLOT(timeChanged()));
+        disconnect(&Clock::appClock(), SIGNAL(timeChanged()), this, SLOT(timeChanged()));
     }
 }
 

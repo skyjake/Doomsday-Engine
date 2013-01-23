@@ -27,13 +27,15 @@ ScalarRule::ScalarRule(float initialValue)
     : Rule(initialValue), _animation(initialValue), _targetRule(0)
 {}
 
+ScalarRule::~ScalarRule()
+{
+    independentOf(_targetRule);
+}
+
 void ScalarRule::set(float target, de::TimeDelta transition)
 {
-    if(_targetRule)
-    {
-        independentOf(_targetRule);
-        _targetRule = 0;
-    }
+    independentOf(_targetRule);
+    _targetRule = 0;
 
     connect(&_animation.clock(), SIGNAL(timeChanged()), this, SLOT(timeChanged()));
 
@@ -46,8 +48,8 @@ void ScalarRule::set(Rule const *target, TimeDelta transition)
     set(target->value(), transition);
 
     // Keep a reference.
-    dependsOn(target);
     _targetRule = target;
+    dependsOn(_targetRule);
 }
 
 void ScalarRule::update()
@@ -78,7 +80,7 @@ void ScalarRule::timeChanged()
 
     if(_animation.done())
     {
-        disconnect(this, SLOT(timeChanged()));
+        disconnect(&_animation.clock(), SIGNAL(timeChanged()), this, SLOT(timeChanged()));
     }
 }
 

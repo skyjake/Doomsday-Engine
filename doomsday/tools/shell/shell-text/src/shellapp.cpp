@@ -31,7 +31,10 @@ struct ShellApp::Instance
         logWidget = new LogWidget;
 
         ScalarRule *anim = de::refless(new ScalarRule(0));
-        anim->set(self.rootWidget().viewWidth(), 2);
+        /*anim->set(de::refless(new de::OperatorRule(de::OperatorRule::Divide,
+                                                   self.rootWidget().viewWidth(),
+                                                   de::refless(new ConstantRule(2)))), 2);*/
+        anim->set(de::refless(new de::ConstantRule(10)), 2);
 
         logWidget->rule()
                 .setInput(RectangleRule::Left,   anim)

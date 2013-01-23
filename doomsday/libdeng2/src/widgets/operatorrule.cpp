@@ -40,6 +40,12 @@ OperatorRule::OperatorRule(Operator op, Rule const *left, Rule const *right)
     dependsOn(_rightOperand);
 }
 
+OperatorRule::~OperatorRule()
+{
+    independentOf(_leftOperand);
+    independentOf(_rightOperand);
+}
+
 void OperatorRule::update()
 {
     float leftValue  = (_leftOperand?  _leftOperand->value()  : 0);

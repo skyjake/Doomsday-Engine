@@ -70,6 +70,21 @@ public:
      */
     virtual void update();
 
+    /**
+     * Clearss the flag that determines whether there are any invalid rules.
+     * This could, for example, be called after drawing a frame.
+     */
+    static void markRulesValid();
+
+    /**
+     * Determines whether there are invalid rules. If there are invalid rules,
+     * it could for example mean that the user interface needs to be redrawn.
+     *
+     * @return @c true, a rule has been invalidated since the last call to
+     * markAllRulesValid().
+     */
+    static bool invalidRulesExist();
+
 public slots:
     /**
      * Marks the rule invalid, causing all dependent rules to be invalid, too.
@@ -92,6 +107,7 @@ protected:
      */
     void independentOf(Rule const *dependency);
 
+#if 0
     /**
      * Adds a dependent rule.
      *
@@ -107,6 +123,7 @@ protected:
      *              is released.
      */
     void removeDependent(Rule *rule);
+#endif
 
     /**
      * Sets the current value of the rule and marks it valid.
@@ -123,7 +140,7 @@ protected:
      * @a newRule.
      */
     virtual void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
-#endif
+#endif    
 
 signals:
     void valueInvalidated();
@@ -134,14 +151,10 @@ protected slots:
 #endif
 
 private:
-    typedef QSet<Rule *> Dependents;
-    Dependents _dependentRules; // ref'd
+    struct Instance;
+    Instance *d;
 
-    /// Current value of the rule.
-    float _value;
-
-    /// The value is valid.
-    bool _isValid;
+    static bool _invalidRulesExist;
 };
 
 } // namespace de

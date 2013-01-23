@@ -34,6 +34,7 @@ class DerivedRule : public ConstantRule
 
 public:
     explicit DerivedRule(Rule const *source);
+    ~DerivedRule();
 
 protected:
     void update();

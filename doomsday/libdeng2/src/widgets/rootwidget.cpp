@@ -83,8 +83,10 @@ void RootWidget::initialize()
 }
 
 void RootWidget::draw()
-{
+{   
     notifyTree(&Widget::draw);
+
+    Rule::markRulesValid(); // All done for this frame.
 }
 
 } // namespace de

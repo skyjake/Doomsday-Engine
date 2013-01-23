@@ -18,10 +18,18 @@
 
 #include <QApplication>
 #include <de/libdeng2.h>
+#include <de/Counted>
 #include "shellapp.h"
 
 int main(int argc, char *argv[])
 {
-    ShellApp a(argc, argv);
-    return a.exec();
+    int result;
+    {
+        ShellApp a(argc, argv);
+        result = a.exec();
+    }
+#ifdef DENG2_DEBUG
+    DENG2_ASSERT(de::Counted::totalCount == 0);
+#endif
+    return result;
 }

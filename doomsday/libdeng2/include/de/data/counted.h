@@ -89,6 +89,11 @@ private:
 
     template <typename Type>
     friend Type *refless(Type *counted);
+
+#ifdef DENG2_DEBUG
+public:
+    static int totalCount; // Number of Counted objects in existence.
+#endif
 };
 
 /**
@@ -99,6 +104,7 @@ private:
  */
 template <typename Type>
 inline Type *refless(Type *counted) {
+    if(!counted) return 0;
     counted->addRef(-1);
     return counted;
 }
@@ -110,6 +116,7 @@ inline Type *refless(Type *counted) {
  */
 template <typename CountedType>
 inline CountedType *holdRef(CountedType *counted) {
+    if(!counted) return 0;
     return counted->template ref<CountedType>();
 }
 
