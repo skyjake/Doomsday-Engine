@@ -59,6 +59,19 @@ public:
      */
     virtual void setViewSize(Vector2i const &viewSize);
 
+    /**
+     * Sets the focus widget. It is the first widget to be offered input
+     * events.
+     *
+     * @param widget  Widget to have focus. Set to @c NULL to clear focus.
+     */
+    void setFocus(Widget *widget);
+
+    /**
+     * Returns the current focus widget.
+     */
+    Widget *focus() const;
+
     void initialize();
     void draw();
 

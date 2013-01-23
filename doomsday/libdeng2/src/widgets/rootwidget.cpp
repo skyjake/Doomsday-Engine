@@ -27,8 +27,9 @@ namespace de {
 struct RootWidget::Instance
 {
     RectangleRule *viewRect;
+    Widget *focus;
 
-    Instance()
+    Instance() : focus(0)
     {
         viewRect = new RectangleRule(
                     refless(new ConstantRule(0)),
@@ -88,6 +89,16 @@ void RootWidget::setViewSize(Vector2i const &size)
     d->viewRect->setInput(RectangleRule::Bottom, refless(new ConstantRule(size.y)));
 
     notifyTree(&Widget::viewResized);
+}
+
+void RootWidget::setFocus(Widget *widget)
+{
+    d->focus = widget;
+}
+
+Widget *RootWidget::focus() const
+{
+    return d->focus;
 }
 
 Rule const *RootWidget::viewWidth() const
