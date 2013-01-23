@@ -25,34 +25,6 @@ namespace de {
 
 struct RectangleRule::Instance
 {
-    /*
-    struct InputRuleRef
-    {
-        union {
-            Rule *ptr;
-            Rule const *constPtr;
-        } rule;
-        bool isOwned;
-
-        InputRuleRef(Rule const *cr = 0) : isOwned(false) {
-            rule.constPtr = cr;
-        }
-        InputRuleRef(Rule *r, bool owned) : isOwned(owned) {
-            rule.ptr = r;
-        }
-        float value() const {
-            if(!rule.constPtr) return 0;
-            return rule.constPtr->value();
-        }
-        operator bool () const {
-            return rule.constPtr != 0;
-        }
-        operator Rule const * () const {
-            return rule.constPtr;
-        }
-    };
-    */
-
     RectangleRule &self;
 
     DerivedRule *left;
@@ -63,16 +35,6 @@ struct RectangleRule::Instance
     AnimationVector2 normalizedAnchorPoint;
 
     Rule const *inputRules[MAX_RULES];
-    /*
-    Rule const *anchorXRule;
-    Rule const *anchorYRule;
-    Rule const *leftRule;
-    Rule const *topRule;
-    Rule const *rightRule;
-    Rule const *bottomRule;
-    Rule const *widthRule;
-    Rule const *heightRule;
-    */
 
     Instance(RectangleRule &rr) : self(rr)
     {
@@ -108,10 +70,6 @@ struct RectangleRule::Instance
         {
             if(inputRules[i]) self.dependsOn(inputRules[i]);
         }
-
-        // When the application's time changes, check whether this rule
-        // needs to be invalidated.
-        //connect(&Clock::appClock(), SIGNAL(timeChanged()), this, SLOT(currentTimeChanged()));
 
         // The output rules.
         left   = new DerivedRule(&self);
@@ -297,6 +255,7 @@ void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta co
 
     if(transition > 0.0)
     {
+        // Animation started, keep an eye on the clock until it ends.
         connect(&Clock::appClock(), SIGNAL(timeChanged()), this, SLOT(timeChanged()));
     }
 }
