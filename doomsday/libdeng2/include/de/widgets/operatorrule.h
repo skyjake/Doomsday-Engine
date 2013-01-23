@@ -51,9 +51,9 @@ public:
 
     explicit OperatorRule(Operator op, Rule const *left, Rule const *right);
 
+protected:
     ~OperatorRule();
 
-protected:
     void update();
 
 private:

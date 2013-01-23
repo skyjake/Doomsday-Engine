@@ -1,4 +1,4 @@
-/** @file logwidget.cpp  Widget for output message log.
+/** @file commandlinewidget.cpp  Widget for command line input.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "logwidget.h"
+#include "commandlinewidget.h"
 
-struct LogWidget::Instance
+struct CommandLineWidget::Instance
 {
     Instance()
     {}
@@ -27,20 +27,21 @@ struct LogWidget::Instance
     {}
 };
 
-LogWidget::LogWidget(de::String const &name) : TextWidget(name), d(new Instance)
+CommandLineWidget::CommandLineWidget(de::String const &name) : TextWidget(name), d(new Instance)
 {
 }
 
-LogWidget::~LogWidget()
+CommandLineWidget::~CommandLineWidget()
 {
     delete d;
 }
 
-void LogWidget::draw()
+void CommandLineWidget::draw()
 {
     if(!targetCanvas()) return;
 
     de::Rectanglei pos = rule().recti();
 
-    targetCanvas()->fill(pos, TextCanvas::Char('m'));
+    targetCanvas()->fill(pos, TextCanvas::Char('+'));
 }
+

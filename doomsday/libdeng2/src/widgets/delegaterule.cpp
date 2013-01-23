@@ -17,30 +17,28 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/DerivedRule"
+#include "de/DelegateRule"
 
 namespace de {
 
-DerivedRule::DerivedRule(Rule const *source)
+DelegateRule::DelegateRule(Rule const &source)
     : ConstantRule(0), _source(source)
 {
-    DENG2_ASSERT(source != 0);
+    // As a delegate, we are considered part of the owner.
+    setDelegate(&_source);
 
-    dependsOn(source);
+    connect(&source, SIGNAL(valueInvalidated()), this, SLOT(invalidate()));
+
     invalidate();
 }
 
-DerivedRule::~DerivedRule()
-{
-    independentOf(_source);
-}
+DelegateRule::~DelegateRule()
+{}
 
-void DerivedRule::update()
+void DelegateRule::update()
 {
-    DENG2_ASSERT(_source != 0);
-
     // The value gets updated by the source.
-    const_cast<Rule *>(_source)->update();
+    const_cast<Rule *>(&_source)->update();
 
     ConstantRule::update();
 }

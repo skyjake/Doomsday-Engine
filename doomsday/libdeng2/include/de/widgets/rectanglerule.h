@@ -119,7 +119,6 @@ public slots:
 
 protected:
     ~RectangleRule();
-
     void update();
 
 private:

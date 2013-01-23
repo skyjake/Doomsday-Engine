@@ -26,10 +26,10 @@ namespace de {
 struct RectangleRule::Instance
 {
     RectangleRule &self;
-    DerivedRule *left;
-    DerivedRule *top;
-    DerivedRule *right;
-    DerivedRule *bottom;
+    DelegateRule *left;
+    DelegateRule *top;
+    DelegateRule *right;
+    DelegateRule *bottom;
     AnimationVector2 normalizedAnchorPoint;
     Rule const *inputRules[MAX_RULES];
 
@@ -58,23 +58,22 @@ struct RectangleRule::Instance
             self.dependsOn(inputRules[i]);
         }
 
-        // The output rules. Each one of these depends on this RectangleRule,
-        // but the reference counter is adjusted in the RectangleRule
-        // constructor to hide these internal references.
-        left   = new DerivedRule(&self);
-        right  = new DerivedRule(&self);
-        top    = new DerivedRule(&self);
-        bottom = new DerivedRule(&self);
+        // The output rules.
+        left   = new DelegateRule(self);
+        right  = new DelegateRule(self);
+        top    = new DelegateRule(self);
+        bottom = new DelegateRule(self);
 
         self.invalidate();
     }
 
     ~Instance()
     {
-        releaseRef(left);
-        releaseRef(right);
-        releaseRef(top);
-        releaseRef(bottom);
+        // Delete the delegates.
+        delete left;
+        delete right;
+        delete top;
+        delete bottom;
 
         for(int i = 0; i < int(MAX_RULES); ++i)
         {
@@ -99,6 +98,8 @@ struct RectangleRule::Instance
         // Define a new dependency.
         *input = rule;
         self.dependsOn(rule);
+
+        self.invalidate();
     }
 
     void update()
@@ -188,33 +189,19 @@ struct RectangleRule::Instance
 
 RectangleRule::RectangleRule()
     : Rule(), d(new Instance(*this))
-{
-    // Hide internal refs.
-    addRef(-4);
-}
+{}
 
 RectangleRule::RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom)
     : Rule(), d(new Instance(*this, left, top, right, bottom))
-{
-    // Hide internal refs.
-    addRef(-4);
-}
+{}
 
 RectangleRule::RectangleRule(RectangleRule const *rect)
     : Rule(), d(new Instance(*this, rect->left(), rect->top(), rect->right(), rect->bottom()))
-{
-    // Hide internal refs.
-    addRef(-4);
-}
+{}
 
 RectangleRule::~RectangleRule()
 {
-    // Restore hidden internal refs. One is added so we don't cause delete to
-    // be called a second time for this instance when the final internal
-    // reference is released.
-    addRef(4 + 1);
     delete d;
-    addRef(-1);
 }
 
 Rule const *RectangleRule::left() const

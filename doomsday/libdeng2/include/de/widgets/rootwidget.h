@@ -44,6 +44,11 @@ public:
     ~RootWidget();
 
     Vector2i viewSize() const;
+
+    Rule const *viewLeft() const;
+    Rule const *viewRight() const;
+    Rule const *viewTop() const;
+    Rule const *viewBottom() const;
     Rule const *viewWidth() const;
     Rule const *viewHeight() const;
 

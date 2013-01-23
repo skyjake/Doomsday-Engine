@@ -19,7 +19,7 @@
 
 #include "../Rule"
 #include "../ConstantRule"
-#include "../DerivedRule"
+#include "../DelegateRule"
 #include "../ScalarRule"
 #include "../OperatorRule"
 #include "../RectangleRule"

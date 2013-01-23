@@ -19,30 +19,33 @@
 
 #include "de/RootWidget"
 #include "de/ConstantRule"
+#include "de/RectangleRule"
 #include "de/math.h"
 
 namespace de {
 
 struct RootWidget::Instance
 {
-    ConstantRule *viewWidth;
-    ConstantRule *viewHeight;
+    RectangleRule *viewRect;
 
     Instance()
     {
-        viewWidth  = new ConstantRule(0);
-        viewHeight = new ConstantRule(0);
+        viewRect = new RectangleRule(
+                    refless(new ConstantRule(0)),
+                    refless(new ConstantRule(0)),
+                    refless(new ConstantRule(0)),
+                    refless(new ConstantRule(0)));
     }
 
     ~Instance()
     {
-        de::releaseRef(viewWidth);
-        de::releaseRef(viewHeight);
+        releaseRef(viewRect);
     }
 
     Vector2i viewSize() const
     {
-        return Vector2i(de::floor(viewWidth->value()), de::floor(viewHeight->value()));
+        return Vector2i(de::floor(viewRect->right()->value()),
+                        de::floor(viewRect->bottom()->value()));
     }
 };
 
@@ -59,22 +62,42 @@ Vector2i RootWidget::viewSize() const
     return d->viewSize();
 }
 
+Rule const *RootWidget::viewLeft() const
+{
+    return d->viewRect->left();
+}
+
+Rule const *RootWidget::viewRight() const
+{
+    return d->viewRect->right();
+}
+
+Rule const *RootWidget::viewTop() const
+{
+    return d->viewRect->top();
+}
+
+Rule const *RootWidget::viewBottom() const
+{
+    return d->viewRect->bottom();
+}
+
 void RootWidget::setViewSize(Vector2i const &size)
 {
-    d->viewWidth->set(size.x);
-    d->viewHeight->set(size.y);
+    d->viewRect->setInput(RectangleRule::Right,  refless(new ConstantRule(size.x)));
+    d->viewRect->setInput(RectangleRule::Bottom, refless(new ConstantRule(size.y)));
 
     notifyTree(&Widget::viewResized);
 }
 
 Rule const *RootWidget::viewWidth() const
 {
-    return d->viewWidth;
+    return d->viewRect->right();
 }
 
 Rule const *RootWidget::viewHeight() const
 {
-    return d->viewHeight;
+    return d->viewRect->bottom();
 }
 
 void RootWidget::initialize()

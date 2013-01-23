@@ -23,6 +23,7 @@
 #include "../libdeng2.h"
 
 namespace de {
+
 /**
  * Reference-counted object. Gets destroyed when its reference counter
  * hits zero.
@@ -33,23 +34,39 @@ class DENG2_PUBLIC Counted
 {
 public:
     /**
-     * New counted objects have a reference count of 1 -- it is assumed
-     * that whoever constructs the object holds on to one reference.
+     * Constructs a new reference-counted object. New counted objects have a
+     * reference count of 1 -- it is assumed that whoever constructs the object
+     * holds on to one reference.
      */
     Counted();
 
     /**
+     * Converts the reference-counted object to a delegated one. Delegated
+     * reference counting means that references held to and released from the
+     * object actually are held to/released from the delegate target.
+     *
+     * @note The reference count of this object is ignored (set to zero). This
+     * object must then be deleted directly rathen than via releasing (as
+     * releasing would actually attempt to release the delegate target).
+     *
+     * @param delegate  Delegate target.
+     */
+    void setDelegate(Counted const *delegate);
+
+    /**
      * Acquires a reference to the reference-counted object. Use the
      * template to get the correct type of pointer from a derived class.
+     *
+     * @see de::holdRef() for a slightly more convenient way to hold a reference.
      */
     template <typename Type>
-    Type *ref() {
+    inline Type *ref() {
         addRef();
         return static_cast<Type *>(this);
     }
 
     template <typename Type>
-    Type const *ref() const {
+    inline Type const *ref() const {
         addRef();
         return static_cast<Type const *>(this);
     }
@@ -70,10 +87,7 @@ protected:
      *
      * @param count  Added to the reference counter.
      */
-    void addRef(dint count = 1) const {
-        _refCount += count;
-        DENG2_ASSERT(_refCount >= 0);
-    }
+    void addRef(dint count = 1) const;
 
     /**
      * Non-public destructor. When a counted object is destroyed, its reference
@@ -86,6 +100,8 @@ private:
     /// Number of other things that refer to this object, i.e. have
     /// a pointer to it.
     mutable dint _refCount;
+
+    Counted const *_delegate;
 
     template <typename Type>
     friend Type *refless(Type *counted);

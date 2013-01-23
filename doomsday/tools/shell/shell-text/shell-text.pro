@@ -32,7 +32,8 @@ HEADERS += \
     src/textcanvas.h \
     src/logwidget.h \
     src/textwidget.h \
-    src/textrootwidget.h
+    src/textrootwidget.h \
+    src/commandlinewidget.h
 
 SOURCES += \
     src/cursesapp.cpp \
@@ -42,7 +43,8 @@ SOURCES += \
     src/textcanvas.cpp \
     src/logwidget.cpp \
     src/textwidget.cpp \
-    src/textrootwidget.cpp
+    src/textrootwidget.cpp \
+    src/commandlinewidget.cpp
 
 # Installation --------------------------------------------------------------
 

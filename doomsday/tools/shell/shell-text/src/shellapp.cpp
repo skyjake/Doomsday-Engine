@@ -18,36 +18,50 @@
 
 #include "shellapp.h"
 #include "logwidget.h"
+#include "commandlinewidget.h"
 
 using namespace de;
 
 struct ShellApp::Instance
 {
     ShellApp &self;
-    LogWidget *logWidget;
+    LogWidget *log;
+    CommandLineWidget *cli;
+    ConstantRule *cliHeight;
 
     Instance(ShellApp &a) : self(a)
     {
         RootWidget &root = self.rootWidget();
 
-        logWidget = new LogWidget;
+        // Initial height of the command line (1 row).
+        cliHeight = new ConstantRule(1);
 
-        ScalarRule *anim = refless(new ScalarRule(0));
-        anim->set(refless(new OperatorRule(
-                OperatorRule::Divide, root.viewWidth(), refless(new ConstantRule(2)))));
-        /*anim->set(refless(new ConstantRule(10)), 2);*/
-
-        logWidget->rule()
-                .setInput(RectangleRule::Left,   anim)
-                .setInput(RectangleRule::Top,    refless(new ConstantRule(0)))
+        cli = new CommandLineWidget;
+        cli->rule()
+                .setInput(RectangleRule::Left,   root.viewLeft())
                 .setInput(RectangleRule::Width,  root.viewWidth())
-                .setInput(RectangleRule::Height, root.viewHeight());
+                .setInput(RectangleRule::Bottom, root.viewBottom())
+                .setInput(RectangleRule::Height, cliHeight);
 
-        root.add(logWidget); // takes ownership
+        log = new LogWidget;
+        log->rule()
+                .setInput(RectangleRule::Left,   root.viewLeft())
+                .setInput(RectangleRule::Width,  root.viewWidth())
+                .setInput(RectangleRule::Top,    root.viewTop())
+                .setInput(RectangleRule::Bottom, cli->rule().top());
+
+        root.add(cli); // takes ownership
+        root.add(log); // takes ownership
+    }
+
+    ~Instance()
+    {
+        releaseRef(cliHeight);
     }
 };
 
-ShellApp::ShellApp(int &argc, char **argv) : CursesApp(argc, argv), d(new Instance(*this))
+ShellApp::ShellApp(int &argc, char **argv)
+    : CursesApp(argc, argv), d(new Instance(*this))
 {}
 
 ShellApp::~ShellApp()
