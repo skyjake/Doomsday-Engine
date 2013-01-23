@@ -33,11 +33,11 @@ class DerivedRule : public ConstantRule
     Q_OBJECT
 
 public:
-    explicit DerivedRule(Rule const *source, QObject *parent = 0);
+    explicit DerivedRule(Rule const *source);
 
 protected:
     void update();
-    void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
+    //void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
 
 private:
     Rule const *_source;

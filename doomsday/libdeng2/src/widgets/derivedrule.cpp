@@ -21,8 +21,8 @@
 
 namespace de {
 
-DerivedRule::DerivedRule(Rule const *source, QObject *parent)
-    : ConstantRule(0, parent), _source(source)
+DerivedRule::DerivedRule(Rule const *source)
+    : ConstantRule(0), _source(source)
 {
     DENG2_ASSERT(source != 0);
 
@@ -40,6 +40,7 @@ void DerivedRule::update()
     ConstantRule::update();
 }
 
+/*
 void DerivedRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
 {
     if(_source == oldRule)
@@ -47,5 +48,6 @@ void DerivedRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
         _source = newRule;
     }
 }
+*/
 
 } // namespace de

@@ -51,11 +51,11 @@ public:
     };
 
 public:
-    explicit RectangleRule(QObject *parent = 0);
+    explicit RectangleRule();
 
     /**
      * Constructs a rectangle rule with individual rules defining the placement
-     * of the rectangle. Ownership of the input rules is not claimed.
+     * of the rectangle. References are kept to all non-NULL rules.
      *
      * @param left    Rule for the left coordinate.
      * @param top     Rule for the top coordinate.
@@ -63,11 +63,9 @@ public:
      * @param bottom  Rule for the bottom coordinate.
      * @param parent  Parent object.
      */
-    explicit RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom, QObject *parent = 0);
+    explicit RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom);
 
-    explicit RectangleRule(RectangleRule const *rect, QObject *parent = 0);
-
-    ~RectangleRule();
+    explicit RectangleRule(RectangleRule const *rect);
 
     // Output rules.
     Rule const *left() const;
@@ -76,20 +74,10 @@ public:
     Rule const *bottom() const;
 
     /**
-     * Sets one of the input rules of the rectangle. If the particular rule has
-     * previously been defined, the old one is destroyed first.
+     * Sets one of the input rules of the rectangle.
      *
-     * @param inputRule  Input rule to set.
-     * @param ruleOwn       RectangleRule claims ownership (if rule has no parent yet).
-     */
-    RectangleRule &setInput(InputRule inputRule, Rule *ruleOwn);
-
-    /**
-     * Sets one of the input rules of the rectangle. If the particular rule has
-     * previously been defined, the old one is destroyed first.
-     *
-     * @param inputRule  Input rule to set.
-     * @param rule       RectangleRule does not take ownership.
+     * @param inputRule  InputRule to set.
+     * @param rule       Rule to use as input. A reference is held.
      */
     RectangleRule &setInput(InputRule inputRule, Rule const *rule);
 
@@ -127,12 +115,13 @@ public:
     Rectanglei recti() const;
 
 public slots:
-    void currentTimeChanged();
+    void timeChanged();
 
 protected:
-    void setup();
+    ~RectangleRule();
+
     void update();
-    void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
+    //void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
 
 private:
     struct Instance;

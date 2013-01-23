@@ -34,7 +34,7 @@ class ConstantRule : public Rule
     Q_OBJECT
 
 public:
-    explicit ConstantRule(float constantValue, QObject *parent = 0);
+    explicit ConstantRule(float constantValue);
 
     /**
      * Changes the value of the constant in the rule.

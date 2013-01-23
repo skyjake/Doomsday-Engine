@@ -222,6 +222,14 @@ float Animation::target() const
     return d->target;
 }
 
+void Animation::adjustTarget(float newTarget)
+{
+    if(!fequal(newTarget, d->target))
+    {
+        setValue(newTarget, remainingTime());
+    }
+}
+
 TimeDelta Animation::remainingTime() const
 {
     Time const now = currentTime();

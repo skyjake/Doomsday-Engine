@@ -29,7 +29,7 @@ Counted::~Counted()
     DENG2_ASSERT(_refCount == 0);
 }
 
-void Counted::release()
+void Counted::release() const
 {
     DENG2_ASSERT(_refCount > 0);
     if(!--_refCount)

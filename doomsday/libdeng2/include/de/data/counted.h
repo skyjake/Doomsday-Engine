@@ -48,11 +48,17 @@ public:
         return static_cast<Type *>(this);
     }
 
+    template <typename Type>
+    Type const *ref() const {
+        addRef();
+        return static_cast<Type const *>(this);
+    }
+
     /**
      * Releases a reference that was acquired earlier with ref(). The
      * object destroys itself when the reference counter hits zero.
      */
-    void release();
+    void release() const;
 
 protected:
     /**
@@ -62,22 +68,22 @@ protected:
      *
      * @param count  Added to the reference counter.
      */
-    void addRef(dint count = 1) {
+    void addRef(dint count = 1) const {
         _refCount += count;
         DENG2_ASSERT(_refCount >= 0);
     }
 
     /**
-     * When a counted object is destroyed, its reference counter must be
-     * zero. Note that this is only called from release() when all
-     * references have been released.
+     * Non-public destructor. When a counted object is destroyed, its reference
+     * counter must be zero. Note that this is only called from release() when
+     * all references have been released.
      */
     virtual ~Counted();
 
 private:
     /// Number of other things that refer to this object, i.e. have
     /// a pointer to it.
-    dint _refCount;
+    mutable dint _refCount;
 
     template <typename Type>
     friend Type *refless(Type *counted);
@@ -93,6 +99,40 @@ template <typename Type>
 inline Type *refless(Type *counted) {
     counted->addRef(-1);
     return counted;
+}
+
+/**
+ * Holds a reference to a Counted object.
+ * @param counted  Counted object.
+ * @return Same as @a counted (with reference count incremented).
+ */
+template <typename CountedType>
+inline CountedType *holdRef(CountedType *counted) {
+    return counted->template ref<CountedType>();
+}
+
+/**
+ * Releases a reference to a Counted object. Afterwards, the pointer is cleared
+ * to NULL.
+ *
+ * @param ref  Pointer that holds a reference. May be NULL.
+ */
+template <typename CountedType>
+inline void releaseRef(CountedType *&ref) {
+    if(ref) ref->release();
+    ref = 0;
+}
+
+/**
+ * Releases a const reference to a Counted object. Afterwards, the pointer is
+ * cleared to NULL.
+ *
+ * @param ref  Pointer that holds a reference. May be NULL.
+ */
+template <typename CountedType>
+inline void releaseRef(CountedType const *&ref) {
+    if(ref) ref->release();
+    ref = 0;
 }
 
 } // namespace de

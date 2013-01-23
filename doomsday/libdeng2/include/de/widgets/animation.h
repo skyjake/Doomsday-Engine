@@ -103,6 +103,13 @@ public:
     float target() const;
 
     /**
+     * Changes the target value without modifying any other parameters.
+     *
+     * @param newTarget  Target value.
+     */
+    void adjustTarget(float newTarget);
+
+    /**
      * Number of seconds remaining in the ongoing transition.
      */
     TimeDelta remainingTime() const;

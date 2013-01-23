@@ -23,6 +23,7 @@
 #include <QObject>
 #include <QSet>
 #include "../libdeng2.h"
+#include "../Counted"
 
 namespace de {
 
@@ -35,25 +36,30 @@ namespace de {
  * - When the value changes, all dependent rules are notified and marked as invalid.
  * - When a rule is invalid, its current value will be updated (i.e., validated).
  * - Rules can be replaced dynamically with other rules, see Rule::replace().
+ * - Reference counting is used for lifetime management.
  *
  * @ingroup widgets
  */
-class Rule : public QObject
+class Rule : public QObject, public Counted
 {
     Q_OBJECT
 
 public:
-    explicit Rule(QObject *parent = 0);
-    explicit Rule(float initialValue, QObject *parent = 0);
-    ~Rule();
+    explicit Rule(float initialValue = 0);
 
+    /**
+     * Determines the rule's current value. If it has been marked invalid,
+     * the value is updated first (see update()).
+     */
     float value() const;
 
+#if 0
     /**
      * Transfers this rule's dependencies to @a newRule. The dependent rules
      * are updated accordingly. Afterwards, this rule has no more dependencies.
      */
     void transferDependencies(Rule *toRule);
+#endif
 
     /**
      * Updates the rule with a valid value. Derived classes must call
@@ -64,50 +70,72 @@ public:
      */
     virtual void update();
 
-    bool isValid() const;
+public slots:
+    /**
+     * Marks the rule invalid, causing all dependent rules to be invalid, too.
+     */
+    void invalidate();
 
 protected:
+    ~Rule(); // Counted
+
     /**
-     * Links rules together. This rule will depend on @a dependency.
+     * Links rules together. This rule will depend on @a dependency; if @a
+     * dependency becomes invalid, this rule will likewise become invalid.
+     * @a dependency will hold a reference to this rule.
      */
     void dependsOn(Rule const *dependency);
 
+    /**
+     * Unlinks rules. This rule will no longer depend on @a dependency.
+     * @a dependency will release its reference to this rule.
+     */
     void independentOf(Rule const *dependency);
 
+    /**
+     * Adds a dependent rule.
+     *
+     * @param rule  Rule that depends on this rule. A reference to @a rule
+     *              is retained.
+     */
     void addDependent(Rule *rule);
+
+    /**
+     * Removes a dependent rule.
+     *
+     * @param rule  Rule that depends on this rule. A reference to @a rule
+     *              is released.
+     */
     void removeDependent(Rule *rule);
+
+    /**
+     * Sets the current value of the rule and marks it valid.
+     *
+     * @param value  New valid value.
+     */
     void setValue(float value);
 
     float cachedValue() const;
 
-    /**
-     * Takes ownership of a rule.
-     *
-     * @param child  Rule whose ownership should be claimed.
-     *
-     * @return @c true, if ownership was taken.
-     */
-    bool claim(Rule *child);
-
+#if 0
     /**
      * Called to notify that the dependency @a oldRule has been replaced with
      * @a newRule.
      */
     virtual void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
-
-    void invalidateSilently();
-
-public slots:
-    void invalidate();
-
-protected slots:
-    void ruleDestroyed(QObject *rule);
+#endif
 
 signals:
     void valueInvalidated();
 
+#if 0
+protected slots:
+    void ruleDestroyed(QObject *rule);
+#endif
+
 private:
-    QSet<Rule *> _dependentRules;
+    typedef QSet<Rule *> Dependents;
+    Dependents _dependentRules; // ref'd
 
     /// Current value of the rule.
     float _value;

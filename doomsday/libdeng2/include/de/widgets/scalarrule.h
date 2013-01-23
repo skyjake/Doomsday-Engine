@@ -35,13 +35,11 @@ class ScalarRule : public Rule
     Q_OBJECT
 
 public:
-    explicit ScalarRule(float initialValue, QObject *parent = 0);
+    explicit ScalarRule(float initialValue);
 
     void set(float target, TimeDelta transition = 0);
 
     void set(Rule const *target, TimeDelta transition = 0);
-
-    void set(Rule *targetOwn, TimeDelta transition = 0);
 
     /**
      * Read-only access to the scalar animation.
@@ -52,9 +50,7 @@ public:
 
 protected:
     void update();
-    void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
-
-    void dismissTargetRule();
+    //void dependencyReplaced(Rule const *oldRule, Rule const *newRule);
 
 protected slots:
     void timeChanged();
@@ -62,7 +58,6 @@ protected slots:
 private:
     Animation _animation;
     Rule const *_rule;
-    bool _ruleOwned;
 };
 
 } // namespace de

@@ -21,20 +21,16 @@
 
 namespace de {
 
-Rule::Rule(QObject *parent)
-    : QObject(parent), _value(0), _isValid(true)
-{}
-
-Rule::Rule(float initialValue, QObject *parent)
-    : QObject(parent), _value(initialValue), _isValid(true)
+Rule::Rule(float initialValue)
+    : QObject(), _value(initialValue), _isValid(true)
 {}
 
 Rule::~Rule()
 {
-    // Notify of a dependency going away.
-    foreach(Rule *rule, _dependentRules)
+    // Release references to the dependent rules.
+    DENG2_FOR_EACH(Dependents, i, _dependentRules)
     {
-        rule->dependencyReplaced(this, 0);
+        (*i)->release();
     }
 }
 
@@ -45,6 +41,8 @@ float Rule::value() const
         // Force an update.
         const_cast<Rule *>(this)->update();
     }
+
+    // It must be valid now, after the update.
     DENG2_ASSERT(_isValid);
 
     return _value;
@@ -56,20 +54,12 @@ void Rule::update()
     _isValid = true;
 }
 
-bool Rule::isValid() const
-{
-    return _isValid;
-}
-
+#if 0
 void Rule::dependencyReplaced(Rule const *, Rule const *)
 {
     // No dependencies.
 }
-
-void Rule::invalidateSilently()
-{
-    _isValid = false;
-}
+#endif
 
 float Rule::cachedValue() const
 {
@@ -82,6 +72,7 @@ void Rule::setValue(float v)
     _isValid = true;
 }
 
+#if 0
 void Rule::transferDependencies(Rule *toRule)
 {
     foreach(Rule *rule, _dependentRules)
@@ -98,6 +89,7 @@ void Rule::transferDependencies(Rule *toRule)
 
     DENG2_ASSERT(_dependentRules.isEmpty());
 }
+#endif
 
 void Rule::dependsOn(Rule const *dependency)
 {
@@ -117,43 +109,39 @@ void Rule::addDependent(Rule *rule)
 {
     DENG2_ASSERT(!_dependentRules.contains(rule));
 
-    connect(rule, SIGNAL(destroyed(QObject *)), this, SLOT(ruleDestroyed(QObject *)));
+    //connect(rule, SIGNAL(destroyed(QObject *)), this, SLOT(ruleDestroyed(QObject *)));
     connect(this, SIGNAL(valueInvalidated()), rule, SLOT(invalidate()));
 
-    _dependentRules.insert(rule);
+    // Acquire a reference.
+    _dependentRules.insert(de::holdRef(rule));
 }
 
 void Rule::removeDependent(Rule *rule)
 {
     DENG2_ASSERT(_dependentRules.contains(rule));
 
-    _dependentRules.remove(rule);
-
     disconnect(rule, SLOT(invalidate()));
-    rule->disconnect(this, SLOT(ruleDestroyed(QObject *)));
+
+    _dependentRules.remove(rule);
+    de::releaseRef(rule);
+
+    //rule->disconnect(this, SLOT(ruleDestroyed(QObject *)));
 }
 
 void Rule::invalidate()
 {
     if(_isValid)
     {
-        invalidateSilently();
+        _isValid = false;
         emit valueInvalidated();
     }
 }
 
+#if 0
 void Rule::ruleDestroyed(QObject *rule)
 {
     removeDependent(static_cast<Rule *>(rule));
 }
-
-bool Rule::claim(Rule *child)
-{
-    if(!child->parent())
-    {
-        child->setParent(this);
-    }
-    return (child->parent() == this);
-}
+#endif
 
 } // namespace de

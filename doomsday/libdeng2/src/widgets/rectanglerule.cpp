@@ -25,6 +25,7 @@ namespace de {
 
 struct RectangleRule::Instance
 {
+    /*
     struct InputRuleRef
     {
         union {
@@ -50,6 +51,7 @@ struct RectangleRule::Instance
             return rule.constPtr;
         }
     };
+    */
 
     RectangleRule &self;
 
@@ -60,132 +62,187 @@ struct RectangleRule::Instance
 
     AnimationVector2 normalizedAnchorPoint;
 
-    InputRuleRef anchorXRule;
-    InputRuleRef anchorYRule;
-    InputRuleRef leftRule;
-    InputRuleRef topRule;
-    InputRuleRef rightRule;
-    InputRuleRef bottomRule;
-    InputRuleRef widthRule;
-    InputRuleRef heightRule;
+    Rule const *inputRules[MAX_RULES];
+    /*
+    Rule const *anchorXRule;
+    Rule const *anchorYRule;
+    Rule const *leftRule;
+    Rule const *topRule;
+    Rule const *rightRule;
+    Rule const *bottomRule;
+    Rule const *widthRule;
+    Rule const *heightRule;
+    */
 
-    Instance(RectangleRule &rr) : self(rr) {}
-
-    Instance(RectangleRule &rr, Rule const *left, Rule const *top, Rule const *right, Rule const *bottom)
-        : self(rr),
-          leftRule(left),
-          topRule(top),
-          rightRule(right),
-          bottomRule(bottom)
-    {}
-
-    InputRuleRef &ruleRef(InputRule rule)
+    Instance(RectangleRule &rr) : self(rr)
     {
-        switch(rule)
-        {
-        case Left:
-            return leftRule;
-
-        case Right:
-            return rightRule;
-
-        case Top:
-            return topRule;
-
-        case Bottom:
-            return bottomRule;
-
-        case Width:
-            return widthRule;
-
-        case Height:
-            return heightRule;
-
-        case AnchorX:
-            return anchorXRule;
-
-        default:
-            return anchorYRule;
-        }
+        memset(inputRules, 0, sizeof(inputRules));
+        setup();
     }
 
-    void setInputRule(InputRule inputRule, Rule *rule, bool owned)
+    Instance(RectangleRule &rr, Rule const *left, Rule const *top, Rule const *right, Rule const *bottom)
+        : self(rr)
+    {
+        memset(inputRules, 0, sizeof(inputRules));
+
+        inputRules[Left]   = left;
+        inputRules[Top]    = top;
+        inputRules[Right]  = right;
+        inputRules[Bottom] = bottom;
+
+        setup();
+    }
+
+    ~Instance()
+    {
+        left->release();
+        right->release();
+        top->release();
+        bottom->release();
+    }
+
+    void setup()
+    {
+        // Depend on all specified input rules.
+        for(int i = 0; i < int(MAX_RULES); ++i)
+        {
+            if(inputRules[i]) self.dependsOn(inputRules[i]);
+        }
+
+        // When the application's time changes, check whether this rule
+        // needs to be invalidated.
+        //connect(&Clock::appClock(), SIGNAL(timeChanged()), this, SLOT(currentTimeChanged()));
+
+        // The output rules.
+        left   = new DerivedRule(&self);
+        right  = new DerivedRule(&self);
+        top    = new DerivedRule(&self);
+        bottom = new DerivedRule(&self);
+
+        self.invalidate();
+    }
+
+    Rule const **ruleRef(InputRule rule)
+    {
+        DENG2_ASSERT(rule < MAX_RULES);
+        return &inputRules[rule];
+    }
+
+    void setInputRule(InputRule inputRule, Rule const *rule)
     {
         DENG2_ASSERT(rule != 0);
 
-        InputRuleRef &input = ruleRef(inputRule);
-        if(input.rule.ptr)
+        Rule const **input = ruleRef(inputRule);
+        if(*input)
         {
-            // Move the existing dependencies to the new rule.
-            //input.rule.ptr->transferDependencies(rule);
-
-            if(input.isOwned)
-            {
-                // We own this rule, so let's get rid of it now.
-                DENG2_ASSERT(input.rule.ptr->parent() == &self);
-                delete input.rule.ptr;
-            }
-        }
-        else
-        {
-            // Define a new dependency.
-            self.dependsOn(rule);
+            self.independentOf(*input);
         }
 
-        input.rule.ptr = rule;
-        input.isOwned  = owned;
+        // Define a new dependency.
+        *input = rule;
+        self.dependsOn(rule);
+    }
 
-        DENG2_ASSERT(input.rule.ptr);
-        DENG2_ASSERT(!input.isOwned || input.rule.ptr->parent() == &self);
+    void update()
+    {
+        // All the edges must be defined, otherwise the rectangle's position is ambiguous.
+        bool leftDefined   = false;
+        bool topDefined    = false;
+        bool rightDefined  = false;
+        bool bottomDefined = false;
+
+        Rectanglef r;
+
+        if(inputRules[AnchorX] && inputRules[Width])
+        {
+            r.topLeft.x = inputRules[AnchorX]->value() -
+                    normalizedAnchorPoint.x * inputRules[Width]->value();
+            r.setWidth(inputRules[Width]->value());
+            leftDefined = rightDefined = true;
+        }
+
+        if(inputRules[AnchorY] && inputRules[Height])
+        {
+            r.topLeft.y = inputRules[AnchorY]->value() -
+                    normalizedAnchorPoint.y * inputRules[Height]->value();
+            r.setHeight(inputRules[Height]->value());
+            topDefined = bottomDefined = true;
+        }
+
+        if(inputRules[Left])
+        {
+            r.topLeft.x = inputRules[Left]->value();
+            leftDefined = true;
+        }
+        if(inputRules[Top])
+        {
+            r.topLeft.y = inputRules[Top]->value();
+            topDefined = true;
+        }
+        if(inputRules[Right])
+        {
+            r.bottomRight.x = inputRules[Right]->value();
+            rightDefined = true;
+        }
+        if(inputRules[Bottom])
+        {
+            r.bottomRight.y = inputRules[Bottom]->value();
+            bottomDefined = true;
+        }
+
+        if(inputRules[Width] && leftDefined && !rightDefined)
+        {
+            r.setWidth(inputRules[Width]->value());
+            rightDefined = true;
+        }
+        if(inputRules[Width] && !leftDefined && rightDefined)
+        {
+            r.topLeft.x = r.bottomRight.x - inputRules[Width]->value();
+            leftDefined = true;
+        }
+
+        if(inputRules[Height] && topDefined && !bottomDefined)
+        {
+            r.setHeight(inputRules[Height]->value());
+            bottomDefined = true;
+        }
+        if(inputRules[Height] && !topDefined && bottomDefined)
+        {
+            r.topLeft.y = r.bottomRight.y - inputRules[Height]->value();
+            topDefined = true;
+        }
+
+        DENG2_ASSERT(leftDefined);
+        DENG2_ASSERT(rightDefined);
+        DENG2_ASSERT(topDefined);
+        DENG2_ASSERT(bottomDefined);
+
+        // Update the derived output rules.
+        left->set(r.topLeft.x);
+        top->set(r.topLeft.y);
+        right->set(r.bottomRight.x);
+        bottom->set(r.bottomRight.y);
+
+        // Mark this rule as valid.
+        self.setValue(r.width() * r.height());
     }
 };
 
-RectangleRule::RectangleRule(QObject *parent)
-    : Rule(parent), d(new Instance(*this))
-{
-    setup();
-}
+RectangleRule::RectangleRule()
+    : Rule(), d(new Instance(*this))
+{}
 
-RectangleRule::RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom, QObject *parent)
-    : Rule(parent), d(new Instance(*this, left, top, right, bottom))
-{
-    setup();
+RectangleRule::RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom)
+    : Rule(), d(new Instance(*this, left, top, right, bottom))
+{}
 
-    dependsOn(left);
-    dependsOn(top);
-    dependsOn(right);
-    dependsOn(bottom);
-}
-
-RectangleRule::RectangleRule(RectangleRule const *rect, QObject *parent)
-    : Rule(parent), d(new Instance(*this, rect->left(), rect->top(), rect->right(), rect->bottom()))
-{
-    setup();
-
-    dependsOn(d->leftRule);
-    dependsOn(d->topRule);
-    dependsOn(d->rightRule);
-    dependsOn(d->bottomRule);
-}
+RectangleRule::RectangleRule(RectangleRule const *rect)
+    : Rule(), d(new Instance(*this, rect->left(), rect->top(), rect->right(), rect->bottom()))
+{}
 
 RectangleRule::~RectangleRule()
 {
     delete d;
-}
-
-void RectangleRule::setup()
-{
-    // When the application's time changes, check whether this rule
-    // needs to be invalidated.
-    connect(&Clock::appClock(), SIGNAL(timeChanged()), this, SLOT(currentTimeChanged()));
-
-    // The output rules.
-    d->left   = new DerivedRule(this, this);
-    d->right  = new DerivedRule(this, this);
-    d->top    = new DerivedRule(this, this);
-    d->bottom = new DerivedRule(this, this);
-
-    invalidate();
 }
 
 Rule const *RectangleRule::left() const
@@ -208,27 +265,13 @@ Rule const *RectangleRule::bottom() const
     return d->bottom;
 }
 
-RectangleRule &RectangleRule::setInput(InputRule inputRule, Rule *ruleOwn)
-{
-    DENG2_ASSERT(ruleOwn != 0);
-
-    // Claim ownership.
-    bool owned = false;
-    if(claim(ruleOwn))
-    {
-        owned = true;
-    }
-
-    d->setInputRule(inputRule, ruleOwn, owned);
-    return *this;
-}
-
 RectangleRule &RectangleRule::setInput(InputRule inputRule, Rule const *rule)
 {
-    d->setInputRule(inputRule, const_cast<Rule *>(rule), false);
+    d->setInputRule(inputRule, rule);
     return *this;
 }
 
+/*
 void RectangleRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
 {
     for(int i = 0; i < MAX_RULES; ++i)
@@ -240,105 +283,36 @@ void RectangleRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
         }
     }
 }
+*/
 
 Rule const *RectangleRule::inputRule(InputRule inputRule)
 {
-    return d->ruleRef(inputRule).rule.constPtr;
+    return *d->ruleRef(inputRule);
 }
 
 void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
 {
     d->normalizedAnchorPoint.setValue(normalizedPoint, transition);
     invalidate();
+
+    if(transition > 0.0)
+    {
+        connect(&Clock::appClock(), SIGNAL(timeChanged()), this, SLOT(timeChanged()));
+    }
 }
 
 void RectangleRule::update()
 {
-    // All the edges must be defined, otherwise the rectangle's position is ambiguous.
-    bool leftDefined   = false;
-    bool topDefined    = false;
-    bool rightDefined  = false;
-    bool bottomDefined = false;
-
-    Rectanglef r;
-
-    if(d->anchorXRule && d->widthRule)
-    {
-        r.topLeft.x = d->anchorXRule.value() - d->normalizedAnchorPoint.x * d->widthRule.value();
-        r.setWidth(d->widthRule.value());
-        leftDefined = rightDefined = true;
-    }
-
-    if(d->anchorYRule && d->heightRule)
-    {
-        r.topLeft.y = d->anchorYRule.value() - d->normalizedAnchorPoint.y * d->heightRule.value();
-        r.setHeight(d->heightRule.value());
-        topDefined = bottomDefined = true;
-    }
-
-    if(d->leftRule)
-    {
-        r.topLeft.x = d->leftRule.value();
-        leftDefined = true;
-    }
-    if(d->topRule)
-    {
-        r.topLeft.y = d->topRule.value();
-        topDefined = true;
-    }
-    if(d->rightRule)
-    {
-        r.bottomRight.x = d->rightRule.value();
-        rightDefined = true;
-    }
-    if(d->bottomRule)
-    {
-        r.bottomRight.y = d->bottomRule.value();
-        bottomDefined = true;
-    }
-
-    if(d->widthRule && leftDefined && !rightDefined)
-    {
-        r.setWidth(d->widthRule.value());
-        rightDefined = true;
-    }
-    if(d->widthRule && !leftDefined && rightDefined)
-    {
-        r.topLeft.x = r.bottomRight.x - d->widthRule.value();
-        leftDefined = true;
-    }
-
-    if(d->heightRule && topDefined && !bottomDefined)
-    {
-        r.setHeight(d->heightRule.value());
-        bottomDefined = true;
-    }
-    if(d->heightRule && !topDefined && bottomDefined)
-    {
-        r.topLeft.y = r.bottomRight.y - d->heightRule.value();
-        topDefined = true;
-    }
-
-    DENG2_ASSERT(leftDefined);
-    DENG2_ASSERT(rightDefined);
-    DENG2_ASSERT(topDefined);
-    DENG2_ASSERT(bottomDefined);
-
-    // Update the derived output rules.
-    d->left->set(r.topLeft.x);
-    d->top->set(r.topLeft.y);
-    d->right->set(r.bottomRight.x);
-    d->bottom->set(r.bottomRight.y);
-
-    // Mark this rule as valid.
-    setValue(r.width() * r.height());
+    d->update();
 }
 
-void RectangleRule::currentTimeChanged()
+void RectangleRule::timeChanged()
 {
-    if(!d->normalizedAnchorPoint.done())
+    invalidate();
+
+    if(d->normalizedAnchorPoint.done())
     {
-        invalidate();
+        disconnect(this, SLOT(timeChanged()));
     }
 }
 

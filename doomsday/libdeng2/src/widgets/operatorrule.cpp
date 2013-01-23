@@ -22,63 +22,20 @@
 
 namespace de {
 
-OperatorRule::OperatorRule(Operator op, Rule const *unary, QObject *parent)
-    : Rule(parent), _operator(op), _leftOperand(unary), _rightOperand(0)
+OperatorRule::OperatorRule(Operator op, Rule const *unary)
+    : Rule(), _operator(op), _leftOperand(unary), _rightOperand(0)
 {
     DENG2_ASSERT(_leftOperand != 0);
 
     dependsOn(_leftOperand);
 }
 
-OperatorRule::OperatorRule(Operator op, Rule *unaryOwn, QObject *parent)
-    : Rule(parent), _operator(op), _leftOperand(unaryOwn), _rightOperand(0)
-{
-    DENG2_ASSERT(_leftOperand != 0);
-
-    claim(unaryOwn);
-    dependsOn(_leftOperand);
-}
-
-OperatorRule::OperatorRule(Operator op, Rule const *left, Rule const *right, QObject *parent)
-    : Rule(parent), _operator(op), _leftOperand(left), _rightOperand(right)
+OperatorRule::OperatorRule(Operator op, Rule const *left, Rule const *right)
+    : Rule(), _operator(op), _leftOperand(left), _rightOperand(right)
 {
     DENG2_ASSERT(_leftOperand != 0);
     DENG2_ASSERT(_rightOperand != 0);
 
-    dependsOn(_leftOperand);
-    dependsOn(_rightOperand);
-}
-
-OperatorRule::OperatorRule(Operator op, Rule const *left, Rule *rightOwn, QObject *parent)
-    : Rule(parent), _operator(op), _leftOperand(left), _rightOperand(rightOwn)
-{
-    DENG2_ASSERT(_leftOperand != 0);
-    DENG2_ASSERT(_rightOperand != 0);
-
-    claim(rightOwn);
-    dependsOn(_leftOperand);
-    dependsOn(_rightOperand);
-}
-
-OperatorRule::OperatorRule(Operator op, Rule *leftOwn, Rule const *right, QObject *parent)
-    : Rule(parent), _operator(op), _leftOperand(leftOwn), _rightOperand(right)
-{
-    DENG2_ASSERT(_leftOperand != 0);
-    DENG2_ASSERT(_rightOperand != 0);
-
-    claim(leftOwn);
-    dependsOn(_leftOperand);
-    dependsOn(_rightOperand);
-}
-
-OperatorRule::OperatorRule(Operator op, Rule *leftOwn, Rule *rightOwn, QObject *parent)
-    : Rule(parent), _operator(op), _leftOperand(leftOwn), _rightOperand(rightOwn)
-{
-    DENG2_ASSERT(_leftOperand != 0);
-    DENG2_ASSERT(_rightOperand != 0);
-
-    claim(leftOwn);
-    claim(rightOwn);
     dependsOn(_leftOperand);
     dependsOn(_rightOperand);
 }
@@ -134,6 +91,7 @@ void OperatorRule::update()
     setValue(v);
 }
 
+/*
 void OperatorRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
 {
     if(_leftOperand == oldRule)
@@ -145,5 +103,6 @@ void OperatorRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
         _rightOperand = newRule;
     }
 }
+*/
 
 } // namespace de

@@ -29,7 +29,7 @@ struct TextWidget::Instance
 
     ~Instance()
     {
-        delete rule;
+        de::releaseRef(rule);
     }
 };
 
@@ -65,8 +65,8 @@ TextCanvas *TextWidget::targetCanvas() const
 
 void TextWidget::setRule(de::RectangleRule *rule)
 {
-    delete d->rule;
-    d->rule = rule;
+    de::releaseRef(d->rule);
+    d->rule = de::holdRef(rule);
 }
 
 de::RectangleRule &TextWidget::rule()

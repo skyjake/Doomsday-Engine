@@ -34,8 +34,8 @@ struct ShellApp::Instance
         anim->set(5, 2);
 
         logWidget->rule()
-                .setInput(RectangleRule::Left,   anim)
-                .setInput(RectangleRule::Top,    new ConstantRule(0))
+                .setInput(RectangleRule::Left,   de::refless(anim))
+                .setInput(RectangleRule::Top,    de::refless(new ConstantRule(0)))
                 .setInput(RectangleRule::Width,  self.rootWidget().viewWidth())
                 .setInput(RectangleRule::Height, self.rootWidget().viewHeight());
 

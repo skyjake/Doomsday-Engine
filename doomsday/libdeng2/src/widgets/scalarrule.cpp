@@ -23,15 +23,20 @@
 
 namespace de {
 
-ScalarRule::ScalarRule(float initialValue, QObject *parent)
-    : Rule(initialValue, parent), _animation(initialValue), _rule(0), _ruleOwned(false)
+ScalarRule::ScalarRule(float initialValue)
+    : Rule(initialValue), _animation(initialValue), _rule(0)
 {}
 
 void ScalarRule::set(float target, de::TimeDelta transition)
 {
-    dismissTargetRule();
+    if(_rule)
+    {
+        independentOf(_rule);
+        _rule = 0;
+    }
 
     connect(&_animation.clock(), SIGNAL(timeChanged()), this, SLOT(timeChanged()));
+
     _animation.setValue(target, transition);
     invalidate();
 }
@@ -40,25 +45,23 @@ void ScalarRule::set(Rule const *target, TimeDelta transition)
 {
     set(target->value(), transition);
 
-    _ruleOwned = false;
+    // Keep a reference.
+    dependsOn(_rule);
     _rule = target;
-    dependsOn(_rule);
-}
-
-void ScalarRule::set(Rule *targetOwn, TimeDelta transition)
-{
-    set(targetOwn->value(), transition);
-
-    _ruleOwned = claim(targetOwn);
-    _rule = targetOwn;
-    dependsOn(_rule);
 }
 
 void ScalarRule::update()
 {
+    // When using a rule for the target, keep it updated.
+    if(_rule)
+    {
+        _animation.adjustTarget(_rule->value());
+    }
+
     setValue(_animation);
 }
 
+#if 0
 void ScalarRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
 {
     if(oldRule == _rule)
@@ -67,24 +70,12 @@ void ScalarRule::dependencyReplaced(Rule const *oldRule, Rule const *newRule)
         oldRule = newRule;
     }
 }
-
-void ScalarRule::dismissTargetRule()
-{
-    if(_rule)
-    {
-        independentOf(_rule);
-        if(_ruleOwned) delete _rule;
-        _rule = 0;
-    }
-    _ruleOwned = false;
-}
+#endif
 
 void ScalarRule::timeChanged()
 {
-    if(!_animation.done() || cachedValue() != _animation.value())
-    {
-        invalidate();
-    }
+    invalidate();
+
     if(_animation.done())
     {
         disconnect(this, SLOT(timeChanged()));

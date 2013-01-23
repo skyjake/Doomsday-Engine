@@ -25,13 +25,19 @@ namespace de {
 
 struct RootWidget::Instance
 {
-    std::auto_ptr<ConstantRule> viewWidth;
-    std::auto_ptr<ConstantRule> viewHeight;
+    ConstantRule *viewWidth;
+    ConstantRule *viewHeight;
 
     Instance()
     {
-        viewWidth.reset(new ConstantRule(0));
-        viewHeight.reset(new ConstantRule(0));
+        viewWidth  = new ConstantRule(0);
+        viewHeight = new ConstantRule(0);
+    }
+
+    ~Instance()
+    {
+        de::releaseRef(viewWidth);
+        de::releaseRef(viewHeight);
     }
 
     Vector2i viewSize() const
@@ -63,12 +69,12 @@ void RootWidget::setViewSize(Vector2i const &size)
 
 Rule const *RootWidget::viewWidth() const
 {
-    return d->viewWidth.get();
+    return d->viewWidth;
 }
 
 Rule const *RootWidget::viewHeight() const
 {
-    return d->viewHeight.get();
+    return d->viewHeight;
 }
 
 void RootWidget::initialize()

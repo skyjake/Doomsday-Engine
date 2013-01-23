@@ -21,8 +21,8 @@
 
 namespace de {
 
-ConstantRule::ConstantRule(float constantValue, QObject *parent)
-    : Rule(constantValue, parent), _newValue(constantValue)
+ConstantRule::ConstantRule(float constantValue)
+    : Rule(constantValue), _newValue(constantValue)
 {}
 
 void ConstantRule::set(float newValue)
