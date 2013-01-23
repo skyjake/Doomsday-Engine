@@ -84,9 +84,14 @@ public:
     ~MaterialSnapshot();
 
     /**
-     * Returns the material variant of the material snapshot.
+     * Returns the material variant for the snapshot.
      */
     Material::Variant &materialVariant() const;
+
+    /**
+     * Returns the material for the snapshot, for convenience.
+     */
+    inline Material &material() const { return materialVariant().generalCase(); }
 
     /**
      * Returns the dimensions in the world coordinate space for the material snapshot.
