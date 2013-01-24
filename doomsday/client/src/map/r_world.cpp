@@ -120,72 +120,65 @@ void R_UpdateSurfaceScroll()
     R_SurfaceListIterate(GameMap_ScrollingSurfaces(theMap), updateSurfaceScroll, 0);
 }
 
-boolean resetSurfaceScroll(Surface *suf, void * /*context*/)
-{
-    // X Offset.
-    suf->visOffsetDelta[0] = 0;
-    suf->oldOffset[0][0] = suf->oldOffset[0][1] = suf->offset[0];
-
-    // Y Offset.
-    suf->visOffsetDelta[1] = 0;
-    suf->oldOffset[1][0] = suf->oldOffset[1][1] = suf->offset[1];
-
-    Surface_Update(suf);
-    /// @todo Do not assume surface is from the CURRENT map.
-    R_SurfaceListRemove(GameMap_ScrollingSurfaces(theMap), suf);
-
-    return true;
-}
-
-boolean interpSurfaceScroll(Surface *suf, void * /*context*/)
-{
-    // X Offset.
-    suf->visOffsetDelta[0] =
-        suf->oldOffset[0][0] * (1 - frameTimePos) +
-                suf->offset[0] * frameTimePos - suf->offset[0];
-
-    // Y Offset.
-    suf->visOffsetDelta[1] =
-        suf->oldOffset[1][0] * (1 - frameTimePos) +
-                suf->offset[1] * frameTimePos - suf->offset[1];
-
-    // Visible material offset.
-    suf->visOffset[0] = suf->offset[0] + suf->visOffsetDelta[0];
-    suf->visOffset[1] = suf->offset[1] + suf->visOffsetDelta[1];
-
-    Surface_Update(suf);
-
-    // Has this material reached its destination?
-    if(suf->visOffset[0] == suf->offset[0] && suf->visOffset[1] == suf->offset[1])
-    {
-        /// @todo Do not assume surface is from the CURRENT map.
-        R_SurfaceListRemove(GameMap_ScrollingSurfaces(theMap), suf);
-    }
-
-    return true;
-}
-
 /**
  * $smoothmatoffset: interpolate the visual offset.
  */
 void R_InterpolateSurfaceScroll(boolean resetNextViewer)
 {
     if(!theMap) return;
-
     SurfaceSet *slist = GameMap_ScrollingSurfaces(theMap);
     if(!slist) return;
 
-    if(resetNextViewer)
+    SurfaceSet::iterator it = slist->begin();
+    while(it != slist->end())
     {
-        // Reset the material offset trackers.
-        R_SurfaceListIterate(slist, resetSurfaceScroll, 0);
-    }
-    // While the game is paused there is no need to calculate any
-    // visual material offsets.
-    else //if(!clientPaused)
-    {
-        // Set the visible material offsets.
-        R_SurfaceListIterate(slist, interpSurfaceScroll, 0);
+        Surface &suf = **it;
+
+        if(resetNextViewer)
+        {
+            // Reset the material offset trackers.
+            // X Offset.
+            suf.visOffsetDelta[0] = 0;
+            suf.oldOffset[0][0] = suf.oldOffset[0][1] = suf.offset[0];
+
+            // Y Offset.
+            suf.visOffsetDelta[1] = 0;
+            suf.oldOffset[1][0] = suf.oldOffset[1][1] = suf.offset[1];
+
+            Surface_Update(&suf);
+            it++;
+        }
+        // While the game is paused there is no need to calculate any
+        // visual material offsets.
+        else //if(!clientPaused)
+        {
+            // Set the visible material offsets.
+            // X Offset.
+            suf.visOffsetDelta[0] =
+                suf.oldOffset[0][0] * (1 - frameTimePos) +
+                        suf.offset[0] * frameTimePos - suf.offset[0];
+
+            // Y Offset.
+            suf.visOffsetDelta[1] =
+                suf.oldOffset[1][0] * (1 - frameTimePos) +
+                        suf.offset[1] * frameTimePos - suf.offset[1];
+
+            // Visible material offset.
+            suf.visOffset[0] = suf.offset[0] + suf.visOffsetDelta[0];
+            suf.visOffset[1] = suf.offset[1] + suf.visOffsetDelta[1];
+
+            Surface_Update(&suf);
+
+            // Has this material reached its destination?
+            if(suf.visOffset[0] == suf.offset[0] && suf.visOffset[1] == suf.offset[1])
+            {
+                it = slist->erase(it);
+            }
+            else
+            {
+                it++;
+            }
+        }
     }
 }
 

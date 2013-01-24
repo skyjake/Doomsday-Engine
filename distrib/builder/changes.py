@@ -260,7 +260,7 @@ class Changes:
             for entry in self.entries:
                 print >> out, '<commit>'
                 print >> out, '<submitDate>%s</submitDate>' % entry.date
-                print >> out, '<author>%s</author>' % encodedText(entry.author)
+                print >> out, '<author>%s</author>' % entry.author
                 print >> out, '<repositoryUrl>%s</repositoryUrl>' % entry.link
                 print >> out, '<sha1>%s</sha1>' % entry.hash
                 if entry.tags or entry.guessedTags:
