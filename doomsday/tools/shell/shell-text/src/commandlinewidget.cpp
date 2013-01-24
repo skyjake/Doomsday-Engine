@@ -74,12 +74,70 @@ void CommandLineWidget::draw()
 
 bool CommandLineWidget::handleEvent(Event const *event)
 {
+    // There are only key press events.
     DENG2_ASSERT(event->type() == Event::KeyPress);
     KeyEvent const *ev = static_cast<KeyEvent const *>(event);
 
-    d->command += ev->key();
-    d->cursorPos++;
+    bool eaten = true;
+
+    // Insert text?
+    if(!ev->text().isEmpty())
+    {
+        d->command.insert(d->cursorPos++, ev->text());
+    }
+    else
+    {
+        // Control character.
+        eaten = handleControlKey(ev->key());
+    }
 
     root().requestDraw();
-    return true;
+    return eaten;
 }
+
+bool CommandLineWidget::handleControlKey(int key)
+{
+    switch(key)
+    {
+    case Qt::Key_Backspace:
+        if(d->command.size() > 0 && d->cursorPos > 0)
+        {
+            d->command.remove(--d->cursorPos, 1);
+        }
+        return true;
+
+    case Qt::Key_Delete:
+        if(d->command.size() > d->cursorPos)
+        {
+            d->command.remove(d->cursorPos, 1);
+        }
+        return true;
+
+    case Qt::Key_Left:
+        if(d->cursorPos > 0) --d->cursorPos;
+        return true;
+
+    case Qt::Key_Right:
+        if(d->cursorPos < d->command.size()) ++d->cursorPos;
+        return true;
+
+    case Qt::Key_Home:
+        d->cursorPos = 0;
+        return true;
+
+    case Qt::Key_End:
+        d->cursorPos = d->command.size();
+        return true;
+
+    case Qt::Key_K: // assuming Control mod
+        d->command = d->command.left(d->cursorPos);
+        return true;
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
+

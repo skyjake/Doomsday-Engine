@@ -111,7 +111,7 @@ struct CursesApp::Instance
 
         refreshTimer = new QTimer(&self);
         QObject::connect(refreshTimer, SIGNAL(timeout()), &self, SLOT(refresh()));
-        refreshTimer->start(1000 / 20);
+        refreshTimer->start(1000 / 30);
     }
 
     void initCursesState()
@@ -168,24 +168,71 @@ struct CursesApp::Instance
                 // We must redraw all characters since wclear was called.
                 rootWidget->rootCanvas().markDirty();
             }
-            else if(key & KEY_CODE_YES)
+            else if((key & KEY_CODE_YES) || key < 0x20 || key == 0x7f)
             {
-                //qDebug() << "Got code" << QString("0%1").arg(key, 0, 8).toAscii().constData();
+                int code = 0;
+                KeyEvent::Modifiers mods;
 
-                // There is a curses key code.
+                // Control keys.
                 switch(key)
                 {
-                case KEY_BTAB: // back-tab
+                case 0x1b: // Escape
+                    self.quit(); // development only
+                    return;
 
+                case 0x7f: // Delete
+                    code = Qt::Key_Backspace;
                     break;
+
+                case 0x4: // Ctrl-D
+                    code = Qt::Key_Delete;
+                    break;
+
+                case KEY_BACKSPACE:
+                    code = Qt::Key_Backspace;
+                    break;
+
+                case KEY_BTAB: // back-tab
+                    code = Qt::Key_Backtab;
+                    break;
+
+                case KEY_LEFT:
+                    code = Qt::Key_Left;
+                    break;
+
+                case KEY_RIGHT:
+                    code = Qt::Key_Right;
+                    break;
+
+                case KEY_HOME:
+                case 0x1: // Ctrl-A
+                    code = Qt::Key_Home;
+                    break;
+
+                case KEY_END:
+                case 0x5: // Ctrl-E
+                    code = Qt::Key_End;
+                    break;
+
+                case 0xb: // Ctrl-K
+                    code = Qt::Key_K;
+                    mods = KeyEvent::Control;
+                    break;
+
                 default:
-                    // This key code is ignored.
+                    if(key & KEY_CODE_YES)
+                        qDebug() << "CURSES" << QString("0%1").arg(key, 0, 8).toAscii().constData();
+                    else
+                        // This key code is ignored.
+                        qDebug() << QString("%1").arg(key, 0, 16);
                     break;
                 }
-            }
-            else if(key == 0x1b) // Escape
-            {
-                self.quit();
+
+                if(code)
+                {
+                    KeyEvent ev(code, mods);
+                    rootWidget->processEvent(&ev);
+                }
             }
             else
             {
@@ -216,7 +263,7 @@ struct CursesApp::Instance
                 }
 
                 KeyEvent ev(keyStr);
-                rootWidget->handleEvent(&ev);
+                rootWidget->processEvent(&ev);
             }
         }
 

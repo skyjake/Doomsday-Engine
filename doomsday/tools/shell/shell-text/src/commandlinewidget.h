@@ -36,7 +36,10 @@ public:
     de::Vector2i cursorPosition();
 
     void draw();
+
     bool handleEvent(de::Event const *event);
+
+    bool handleControlKey(int key);
 
 private:
     struct Instance;

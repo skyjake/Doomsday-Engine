@@ -72,9 +72,17 @@ public:
      */
     Widget *focus() const;
 
+    /**
+     * Propagates an event to the full tree of widgets (until it gets eaten).
+     *
+     * @param event  Event to handle.
+     *
+     * @return @c true, if event was eaten.
+     */
+    bool processEvent(Event const *event);
+
     void initialize();
     void draw();
-    bool handleEvent(Event const *event);
 
 private:
     struct Instance;
