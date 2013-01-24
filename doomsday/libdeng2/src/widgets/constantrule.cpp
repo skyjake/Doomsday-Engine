@@ -18,6 +18,7 @@
  */
 
 #include "de/ConstantRule"
+#include "de/math.h"
 
 namespace de {
 
@@ -27,7 +28,7 @@ ConstantRule::ConstantRule(float constantValue)
 
 void ConstantRule::set(float newValue)
 {
-    if(cachedValue() != newValue)
+    if(!fequal(cachedValue(), newValue))
     {
         _newValue = newValue;
         invalidate();

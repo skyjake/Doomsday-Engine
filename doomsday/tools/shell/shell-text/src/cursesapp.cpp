@@ -70,11 +70,11 @@ struct CursesApp::Instance
     WINDOW *rootWin;
     de::Vector2i rootSize;
     QTimer *refreshTimer;
-    int unicodeCont;
+    int unicodeContinuation;
 
     TextRootWidget *rootWidget;
 
-    Instance(CursesApp &a) : self(a), unicodeCont(0), rootWidget(0)
+    Instance(CursesApp &a) : self(a), unicodeContinuation(0), rootWidget(0)
     {
         de::Animation::setClock(&clock);
         de::Clock::setAppClock(&clock);
@@ -185,6 +185,7 @@ struct CursesApp::Instance
                     break;
 
                 case 0x4: // Ctrl-D
+                case KEY_DC:
                     code = Qt::Key_Delete;
                     break;
 
@@ -202,6 +203,14 @@ struct CursesApp::Instance
 
                 case KEY_RIGHT:
                     code = Qt::Key_Right;
+                    break;
+
+                case KEY_UP:
+                    code = Qt::Key_Up;
+                    break;
+
+                case KEY_DOWN:
+                    code = Qt::Key_Down;
                     break;
 
                 case KEY_HOME:
@@ -239,21 +248,19 @@ struct CursesApp::Instance
                 // Convert the key code(s) into a string.
                 de::String keyStr;
 
-                if(unicodeCont)
+                if(unicodeContinuation)
                 {
-                    char utf8[3] = { char(unicodeCont), char(key), 0 };
+                    char utf8[3] = { char(unicodeContinuation), char(key), 0 };
                     keyStr = de::String(utf8);
                     //qDebug() << QString("%1 %2, %3").arg(unicodeCont, 0, 16).arg(key, 0, 16)
                     //            .arg(keyStr[0].unicode(), 0, 16);
-                    unicodeCont = 0;
+                    unicodeContinuation = 0;
                 }
                 else
                 {
-                    // Unicode continuation?
-                    if((key >= 0x80 && key <= 0xbf) ||
-                       (key >= 0xc2 && key <= 0xf4))
+                    if((key >= 0x80 && key <= 0xbf) || (key >= 0xc2 && key <= 0xf4))
                     {
-                        unicodeCont = key;
+                        unicodeContinuation = key;
                         continue;
                     }
                     else

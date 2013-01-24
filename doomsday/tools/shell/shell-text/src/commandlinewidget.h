@@ -35,8 +35,8 @@ public:
 
     de::Vector2i cursorPosition();
 
+    void viewResized();
     void draw();
-
     bool handleEvent(de::Event const *event);
 
     bool handleControlKey(int key);
