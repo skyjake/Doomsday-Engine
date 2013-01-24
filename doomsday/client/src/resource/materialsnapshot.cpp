@@ -218,11 +218,13 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
     {
         if(findMask)
         {
-            return App_Textures()->scheme("Masks").findByResourceUri(*reinterpret_cast<de::Uri *>(def.maskTexture)).texture();
+            if(def.maskTexture)
+                return App_Textures()->scheme("Masks").findByResourceUri(*reinterpret_cast<de::Uri *>(def.maskTexture)).texture();
         }
         else
         {
-            return App_Textures()->scheme("Reflections").findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+            if(def.texture)
+                return App_Textures()->scheme("Reflections").findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
         }
     }
     catch(Textures::Scheme::NotFoundError const &)
@@ -237,7 +239,6 @@ void MaterialSnapshot::Instance::takeSnapshot()
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
     Material *material = &variant->generalCase();
-    MaterialVariantSpec const &spec = variant->spec();
     Material::Layers const &layers = material->layers();
 #ifdef __CLIENT__
     Material::DetailLayer const *detailLayer = material->isDetailed()? &material->detailLayer() : 0;
@@ -266,7 +267,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         {
             // Pick the instance matching the specified context.
             preparetextureresult_t result;
-            prepTextures[i][0] = GL_PrepareTexture(*tex, *spec.primarySpec, &result);
+            prepTextures[i][0] = GL_PrepareTexture(*tex, *variant->spec().primarySpec, &result);
 
             // Primary texture was (re)prepared?
             if(i == 0 && l.stage == 0 &&
@@ -288,7 +289,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         {
             // Pick the instance matching the specified context.
             preparetextureresult_t result;
-            prepTextures[i][1] = GL_PrepareTexture(*tex, *spec.primarySpec, &result);
+            prepTextures[i][1] = GL_PrepareTexture(*tex, *variant->spec().primarySpec, &result);
         }
     }
 
