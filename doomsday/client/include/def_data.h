@@ -363,10 +363,12 @@ typedef struct {
 } ded_sectortype_t;
 
 typedef struct ded_detail_stage_s {
+    int             tics;
+    float           variance;
     Uri            *texture; // The file/lump with the detail texture.
     float           scale;
     float           strength;
-    float           maxDist;
+    float           maxDistance;
 } ded_detail_stage_t;
 
 // Flags for detail texture definitions.

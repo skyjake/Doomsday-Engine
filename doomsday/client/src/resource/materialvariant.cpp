@@ -62,7 +62,7 @@ struct Material::Variant::Instance
     Material::Variant::LayerState layers[Material::max_layers];
 
     /// Detail texturing layer state.
-    Material::Variant::DetailLayerState detailLayer;
+    Material::Variant::LayerState detailLayer;
 
     /// Shine texturing layer state.
     Material::Variant::ShineLayerState shineLayer;
@@ -160,23 +160,23 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
     Material::Layers const &layers = d->material->layers();
     for(int i = 0; i < layers.count(); ++i)
     {
-        Material::Layer const *layerDef = layers[i];
+        Material::Layer const &layerDef = *layers[i];
 
         // Not animated?
-        if(layerDef->stageCount() == 1) continue;
+        if(layerDef.stageCount() == 1) continue;
         LayerState &ls = d->layers[i];
 
         if(DD_IsSharpTick() && ls.tics-- <= 0)
         {
             // Advance to next stage.
-            if(++ls.stage == layerDef->stageCount())
+            if(++ls.stage == layerDef.stageCount())
             {
                 // Loop back to the beginning.
                 ls.stage = 0;
             }
             ls.inter = 0;
 
-            ded_material_layer_stage_t const *lsCur = layerDef->stages()[ls.stage];
+            ded_material_layer_stage_t const *lsCur = layerDef.stages()[ls.stage];
             if(lsCur->variance != 0)
                 ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
             else
@@ -184,8 +184,40 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
         }
         else
         {
-            ded_material_layer_stage_t const *lsCur = layerDef->stages()[ls.stage];
+            ded_material_layer_stage_t const *lsCur = layerDef.stages()[ls.stage];
             ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
+        }
+    }
+
+    if(d->material->isDetailed())
+    {
+        Material::DetailLayer const &layerDef = d->material->detailLayer();
+        // Not animated?
+        if(layerDef.stageCount() > 1)
+        {
+            LayerState &ls = d->detailLayer;
+
+            if(DD_IsSharpTick() && ls.tics-- <= 0)
+            {
+                // Advance to next stage.
+                if(++ls.stage == layerDef.stageCount())
+                {
+                    // Loop back to the beginning.
+                    ls.stage = 0;
+                }
+                ls.inter = 0;
+
+                ded_detail_stage_t const *lsCur = layerDef.stages()[ls.stage];
+                if(lsCur->variance != 0)
+                    ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
+                else
+                    ls.tics = lsCur->tics;
+            }
+            else
+            {
+                ded_detail_stage_t const *lsCur = layerDef.stages()[ls.stage];
+                ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
+            }
         }
     }
 
@@ -275,6 +307,14 @@ void Material::Variant::resetAnim()
         ls.inter = 0;
     }
 
+    if(d->material->isDetailed())
+    {
+        LayerState &ls = d->detailLayer;
+        ls.stage = 0;
+        ls.tics  = d->material->detailLayer().stages()[0]->tics;
+        ls.inter = 0;
+    }
+
     Material::Decorations const &decorations = d->material->decorations();
     for(int i = 0; i < decorations.count(); ++i)
     {
@@ -296,7 +336,7 @@ Material::Variant::LayerState const &Material::Variant::layer(int layerNum) cons
     throw Material::UnknownLayerError("Material::Variant::layer", QString("Invalid material layer #%1").arg(layerNum));
 }
 
-Material::Variant::DetailLayerState /*const*/ &Material::Variant::detailLayer() const
+Material::Variant::LayerState const &Material::Variant::detailLayer() const
 {
     if(d->material->isDetailed())
     {

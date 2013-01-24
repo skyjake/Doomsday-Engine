@@ -119,22 +119,6 @@ public:
 
         /// @todo Much of this does not belong here, these values should be
         /// interpolated by MaterialSnapshot.
-        struct DetailLayerState
-        {
-            /// The details texture.
-            de::Texture *texture;
-
-            /// Scaling factor [0..1] (for both axes).
-            float scale;
-
-            /// Strength multiplier [0..1].
-            float strength;
-
-            DetailLayerState() : texture(0), scale(0), strength(0) {}
-        };
-
-        /// @todo Much of this does not belong here, these values should be
-        /// interpolated by MaterialSnapshot.
         struct ShineLayerState
         {
             /// The shine texture.
@@ -231,6 +215,14 @@ public:
         LayerState const &layer(int layerNum) const;
 
         /**
+         * Returns the current state of the detail layer animation for the
+         * variant.
+         *
+         * @see Material::isDetailed()
+         */
+        LayerState const &detailLayer() const;
+
+        /**
          * Returns the current state of the (light) decoration animation
          * @a decorNum for the variant.
          */
@@ -249,15 +241,6 @@ public:
         /*
          * Here follows methods awaiting cleanup/redesign/removal.
          */
-
-        /**
-         * Provides access to the detail texturing layer state.
-         *
-         * @throws UnknownLayerError if the material has no details layer.
-         *
-         * @see Material::isDetailed()
-         */
-        DetailLayerState /*const*/ &detailLayer() const;
 
         /**
          * Provides access to the shine texturing layer state.
@@ -315,6 +298,39 @@ public:
 
     /// A list of layers.
     typedef QList<Material::Layer *> Layers;
+
+    /// @todo $revise-texture-animation Merge with Material::Layer
+    class DetailLayer
+    {
+    public:
+        /// A list of stages.
+        typedef QList<ded_detail_stage_t *> Stages;
+
+    public:
+        /**
+         * Construct a new default layer.
+         */
+        DetailLayer();
+
+        /**
+         * Construct a new layer from the specified definition.
+         */
+        static DetailLayer *fromDef(ded_detailtexture_t &def);
+
+        /**
+         * Returns the total number of animation stages for the layer.
+         */
+        int stageCount() const;
+
+        /**
+         * Provides access to the animation stages for efficient traversal.
+         */
+        Stages const &stages() const;
+
+    private:
+        /// Animation stages.
+        Stages stages_;
+    };
 
     /**
      * (Light) decoration.
@@ -393,7 +409,7 @@ public:
      * @param manifest  Manifest derived to yield the material.
      * @param def  Definition for the material.
      */
-    Material(Manifest &manifest, ded_material_t &def);
+    Material(Manifest &manifest, ded_material_t *def);
     ~Material();
 
     /**
@@ -536,6 +552,13 @@ public:
      * Provides access to the list of layers for efficient traversal.
      */
     Layers const &layers() const;
+
+    /**
+     * Provides access to the detail layer.
+     *
+     * @see isDetailed()
+     */
+    DetailLayer const &detailLayer() const;
 
     /**
      * Returns the number of material (light) decorations.

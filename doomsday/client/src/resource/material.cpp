@@ -53,6 +53,29 @@ Material::Layer::Stages const &Material::Layer::stages() const
     return stages_;
 }
 
+Material::DetailLayer::DetailLayer()
+{}
+
+Material::DetailLayer *Material::DetailLayer::fromDef(ded_detailtexture_t &def)
+{
+    DetailLayer *layer = new DetailLayer();
+    for(int i = 0; i < 1/*def.stageCount.num*/; ++i)
+    {
+        layer->stages_.push_back(&def.stage /*&def.stages[i]*/);
+    }
+    return layer;
+}
+
+int Material::DetailLayer::stageCount() const
+{
+    return stages_.count();
+}
+
+Material::DetailLayer::Stages const &Material::DetailLayer::stages() const
+{
+    return stages_;
+}
+
 Material::Decoration::Decoration()
     : patternSkip_(0, 0), patternOffset_(0, 0)
 {}
@@ -121,6 +144,8 @@ struct Material::Instance
     /// Layers.
     Material::Layers layers;
 
+    Material::DetailLayer *detailLayer;
+
     /// Decorations (will be projected into the map relative to a surface).
     Material::Decorations decorations;
 
@@ -129,7 +154,8 @@ struct Material::Instance
     ded_material_t *def;
 
     Instance(MaterialManifest &_manifest)
-        : manifest(_manifest), envClass(AEC_UNKNOWN), flags(0), def(0)
+        : manifest(_manifest), envClass(AEC_UNKNOWN), flags(0),
+          detailLayer(0), def(0)
     {}
 
     ~Instance()
@@ -153,6 +179,7 @@ struct Material::Instance
         {
             delete layers.takeFirst();
         }
+        if(detailLayer) delete detailLayer;
     }
 
     void clearDecorations()
@@ -164,18 +191,35 @@ struct Material::Instance
     }
 };
 
-Material::Material(MaterialManifest &_manifest, ded_material_t &def)
+Material::Material(MaterialManifest &_manifest, ded_material_t *def)
     : de::MapElement(DMU_MATERIAL)
 {
+    DENG_ASSERT(def);
     d = new Instance(_manifest);
-    d->flags      = def.flags;
-    d->dimensions = QSize(MAX_OF(0, def.width), MAX_OF(0, def.height));
+    d->flags      = def->flags;
+    d->dimensions = QSize(MAX_OF(0, def->width), MAX_OF(0, def->height));
 
-    d->def        = &def;
+    d->def = def;
     for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
     {
-        Material::Layer *layer = Material::Layer::fromDef(def.layers[i]);
+        Layer *layer = Layer::fromDef(def->layers[i]);
         d->layers.push_back(layer);
+
+        Layer::Stages const &stages = layer->stages();
+        DENG2_FOR_EACH_CONST(Layer::Stages, s, stages)
+        {
+            ded_material_layer_stage_t *stageDef = *s;
+            ded_detailtexture_t *detailDef = Def_GetDetailTex(stageDef->texture/*, UNKNOWN VALUE, manifest.isCustom()*/);
+            if(!detailDef) continue;
+
+            // Time to allocate the detail layer?
+            if(!d->detailLayer)
+            {
+                d->detailLayer = DetailLayer::fromDef(*detailDef);
+            }
+
+            // Add stages.
+        }
     }
 }
 
@@ -258,8 +302,7 @@ bool Material::isAnimated() const
 
 bool Material::isDetailed() const
 {
-    /// @todo fixme: Determine this from our own configuration.
-    return false;
+    return !!d->detailLayer;
 }
 
 bool Material::isShiny() const
@@ -309,6 +352,17 @@ void Material::setAudioEnvironment(AudioEnvironmentClass envClass)
 Material::Layers const &Material::layers() const
 {
     return d->layers;
+}
+
+Material::DetailLayer const &Material::detailLayer() const
+{
+    if(isDetailed())
+    {
+        DENG_ASSERT(d->detailLayer);
+        return *d->detailLayer;
+    }
+    /// @throw Material::UnknownLayerError Invalid layer reference.
+    throw UnknownLayerError("Material::detailLayer", "Material has no details layer");
 }
 
 void Material::addDecoration(Material::Decoration &decor)

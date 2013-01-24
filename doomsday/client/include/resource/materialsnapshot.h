@@ -104,14 +104,14 @@ public:
     bool isOpaque() const;
 
     /**
-     * Returns the glow strength multiplier for the material snapshot.
+     * Returns the interpolated, glow strength multiplier for the material snapshot.
      */
     float glowStrength() const;
 
     /**
-     * Returns the minimum ambient light color for the material snapshot.
+     * Returns the interpolated, shine effect minimum ambient light color for the material snapshot.
      */
-    Vector3f const &reflectionMinColor() const;
+    Vector3f const &shineMinColor() const;
 
     /**
      * Returns @c true if a texture with @a index is set for the material snapshot.

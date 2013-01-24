@@ -2039,7 +2039,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 else
                 RV_FLT("Scale", dtl->stage.scale)
                 RV_FLT("Strength", dtl->stage.strength)
-                RV_FLT("Distance", dtl->stage.maxDist)
+                RV_FLT("Distance", dtl->stage.maxDistance)
                 RV_END
                 CHECKSC;
             }

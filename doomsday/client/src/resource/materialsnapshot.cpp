@@ -47,8 +47,8 @@ struct Store {
     /// Dimensions in the world coordinate space.
     QSize dimensions;
 
-    /// Minimum ambient light color for reflections.
-    Vector3f reflectionMinColor;
+    /// Minimum ambient light color for shine texture.
+    Vector3f shineMinColor;
 
     /// Textures used on each logical material texture unit.
     Texture::Variant *textures[NUM_MATERIAL_TEXTURE_UNITS];
@@ -66,10 +66,10 @@ struct Store {
 
     void initialize()
     {
-        dimensions         = QSize(0, 0);
-        reflectionMinColor = Vector3f(0, 0, 0);
-        opaque             = true;
-        glowStrength       = 0;
+        dimensions    = QSize(0, 0);
+        shineMinColor = Vector3f(0, 0, 0);
+        opaque        = true;
+        glowStrength  = 0;
 
         std::memset(textures, 0, sizeof(textures));
 
@@ -145,9 +145,9 @@ float MaterialSnapshot::glowStrength() const
     return d->stored.glowStrength;
 }
 
-Vector3f const &MaterialSnapshot::reflectionMinColor() const
+Vector3f const &MaterialSnapshot::shineMinColor() const
 {
-    return d->stored.reflectionMinColor;
+    return d->stored.shineMinColor;
 }
 
 bool MaterialSnapshot::hasTexture(int index) const
@@ -200,6 +200,18 @@ static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
 }
 
 /// @todo Optimize: Cache this result at material level.
+static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
+{
+    try
+    {
+        return App_Textures()->scheme("Details").findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+    }
+    catch(Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
+    return 0;
+}
+
+/// @todo Optimize: Cache this result at material level.
 static Texture *findTextureByResourceUri(String nameOfScheme, de::Uri const &resourceUri)
 {
     if(resourceUri.isEmpty()) return 0;
@@ -219,8 +231,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
     Material *material = &variant->generalCase();
-    Material::Layers const &layers = material->layers();
     MaterialVariantSpec const &spec = variant->spec();
+    Material::Layers const &layers = material->layers();
+#ifdef __CLIENT__
+    Material::DetailLayer const *detailLayer = material->isDetailed()? &material->detailLayer() : 0;
+#endif
 
     Texture::Variant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS][2];
     std::memset(prepTextures, 0, sizeof prepTextures);
@@ -273,23 +288,26 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare detail texture(s)?
     if(!material->isSkyMasked() && material->isDetailed())
     {
-        Material::Variant::DetailLayerState &details = variant->detailLayer();
+        Material::Variant::LayerState const &l = variant->detailLayer();
+        ded_detail_stage_t const *lsCur = detailLayer->stages()[l.stage];
 
-        Uri uri(material->manifest().composeUri());
-        ded_detailtexture_t const *dtlDef =
-            Def_GetDetailTex(reinterpret_cast<uri_s *>(&uri)/*,
-                             result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
-        DENG_ASSERT(dtlDef);
-
-        details.texture  = dtlDef->stage.texture? findTextureByResourceUri("Details", reinterpret_cast<de::Uri const &>(*dtlDef->stage.texture)) : 0;
-        details.strength = MINMAX_OF(0, dtlDef->stage.strength, 1);
-        details.scale    = MINMAX_OF(0, dtlDef->stage.scale, 1);
-        if(Texture *tex = details.texture)
+        float const contrast = MINMAX_OF(0, lsCur->strength, 1) * detailFactor /*Global strength multiplier*/;
+        texturevariantspecification_t &texSpec = *GL_DetailTextureVariantSpecificationForContext(contrast);
+        if(Texture *tex = findTextureForDetailLayerStage(*lsCur))
         {
-            float const contrast = details.strength * detailFactor /*Global strength multiplier*/;
-            texturevariantspecification_t &texSpec = *GL_DetailTextureVariantSpecificationForContext(contrast);
-
+            // Pick the instance matching the specified context.
             prepTextures[MTU_DETAIL][0] = GL_PrepareTexture(*tex, texSpec);
+        }
+
+        // Smooth Texture Animation?
+        if(smoothTexAnim && detailLayer->stageCount() > 1)
+        {
+            ded_detail_stage_t const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
+            if(Texture *tex = findTextureForDetailLayerStage(*lsNext))
+            {
+                // Pick the instance matching the specified context.
+                prepTextures[MTU_DETAIL][1] = GL_PrepareTexture(*tex, texSpec);
+            }
         }
     }
 
@@ -362,8 +380,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(MC_MAPSURFACE == spec.context && prepTextures[MTU_REFLECTION][0])
     {
-        Material::Variant::ShineLayerState const &shiny = variant->shineLayer();
-        stored.reflectionMinColor = Vector3f(shiny.minColor);
+        stored.shineMinColor = Vector3f(variant->shineLayer().minColor);
     }
 
     // Setup the primary texture unit.
@@ -398,61 +415,69 @@ void MaterialSnapshot::Instance::takeSnapshot()
         // blended and unblended surfaces.
         if(!(!usingFog && l.inter == 0))
         {
-            QPointF offset;
+            stored.writeTexUnit(RTU_INTER, tex, BM_NORMAL,
+                                QSizeF(stored.units[RTU_PRIMARY].scale[0],
+                                       stored.units[RTU_PRIMARY].scale[1]),
+                                QPointF(stored.units[RTU_PRIMARY].offset[0],
+                                        stored.units[RTU_PRIMARY].offset[1]),
+                                l.inter);
+        }
+    }
+#endif
+
+    if(!material->isSkyMasked() && material->isDetailed())
+    {
+#ifdef __CLIENT__
+        Material::Variant::LayerState const &l = variant->detailLayer();
+        ded_detail_stage_t const *lsCur  = detailLayer->stages()[l.stage];
+        ded_detail_stage_t const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
+#endif
+
+        // Setup the detail texture unit.
+        if(Texture::Variant *tex = prepTextures[MTU_DETAIL][0])
+        {
+            stored.textures[MTU_DETAIL] = tex;
+#ifdef __CLIENT__
+            float scale;
             if(l.inter == 0)
             {
-                offset = QPointF(lsCur->texOrigin[0], lsCur->texOrigin[1]);
+                scale = lsCur->scale;
             }
             else // Interpolate.
             {
-                offset.setX(LERP(lsCur->texOrigin[0], lsNext->texOrigin[0], l.inter));
-                offset.setY(LERP(lsCur->texOrigin[1], lsNext->texOrigin[1], l.inter));
+                scale = LERP(lsCur->scale, lsNext->scale, l.inter);
             }
 
-            stored.writeTexUnit(RTU_INTER, tex, BM_NORMAL,
-                                QSizeF(1.f / stored.dimensions.width(),
-                                       1.f / stored.dimensions.height()),
-                                offset, l.inter);
-        }
-    }
-#endif
-
-    // Setup the detail texture unit.
-    if(Texture::Variant *tex = prepTextures[MTU_DETAIL][0])
-    {
-        stored.textures[MTU_DETAIL] = tex;
-#ifdef __CLIENT__
-        float scaleFactor = variant->detailLayer().scale;
-        if(detailScale > .0001f)
-            scaleFactor *= detailScale; // Global scale factor.
-
-        stored.writeTexUnit(RTU_PRIMARY_DETAIL, tex, BM_NORMAL,
-                            QSizeF(1.f / tex->generalCase().width()  * scaleFactor,
-                                   1.f / tex->generalCase().height() * scaleFactor),
-                            QPointF(0, 0), 1);
-#endif
-    }
-
-#ifdef __CLIENT__
-    // Setup the inter detail texture unit.
-    if(Texture::Variant *tex = prepTextures[MTU_DETAIL][1])
-    {
-        // If fog is active, inter=0 is accepted as well. Otherwise
-        // flickering may occur if the rendering passes don't match for
-        // blended and unblended surfaces.
-        if(!(!usingFog && l.inter == 0))
-        {
-            float scaleFactor = variant->detailLayer().scale;
+            // Apply the global scale factor.
             if(detailScale > .0001f)
-                scaleFactor *= detailScale; // Global scale factor.
+                scale *= detailScale;
 
-            stored.writeTexUnit(RTU_INTER_DETAIL, tex, BM_NORMAL,
-                                QSizeF(1.f / tex->generalCase().width()  * scaleFactor,
-                                       1.f / tex->generalCase().height() * scaleFactor),
-                                QPointF(0, 0), l.inter);
-        }
-    }
+            stored.writeTexUnit(RTU_PRIMARY_DETAIL, tex, BM_NORMAL,
+                                QSizeF(1.f / tex->generalCase().width()  * scale,
+                                       1.f / tex->generalCase().height() * scale),
+                                QPointF(0, 0), 1);
 #endif
+        }
+
+#ifdef __CLIENT__
+        // Setup the inter detail texture unit.
+        if(Texture::Variant *tex = prepTextures[MTU_DETAIL][1])
+        {
+            // If fog is active, inter=0 is accepted as well. Otherwise
+            // flickering may occur if the rendering passes don't match for
+            // blended and unblended surfaces.
+            if(!(!usingFog && l.inter == 0))
+            {
+                stored.writeTexUnit(RTU_INTER_DETAIL, tex, BM_NORMAL,
+                                    QSizeF(stored.units[RTU_PRIMARY_DETAIL].scale[0],
+                                           stored.units[RTU_PRIMARY_DETAIL].scale[1]),
+                                    QPointF(stored.units[RTU_PRIMARY_DETAIL].offset[0],
+                                            stored.units[RTU_PRIMARY_DETAIL].offset[1]),
+                                    l.inter);
+            }
+        }
+#endif
+    }
 
     // Setup the shiny texture units.
     if(Texture::Variant *tex = prepTextures[MTU_REFLECTION][0])

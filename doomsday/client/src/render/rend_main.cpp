@@ -964,7 +964,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         if(shinyRTU && !drawAsVisSprite)
         {
             // Strength of the shine.
-            Vector3f const &minColor = ms.reflectionMinColor();
+            Vector3f const &minColor = ms.shineMinColor();
             for(uint i = 0; i < numVertices; ++i)
             {
                 ColorRawf &color = shinyColors[i];
