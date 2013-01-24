@@ -60,12 +60,8 @@ struct Material::Variant::Instance
 
     /// Layer animation states.
     Material::Variant::LayerState layers[Material::max_layers];
-
-    /// Detail texturing layer state.
     Material::Variant::LayerState detailLayer;
-
-    /// Shine texturing layer state.
-    Material::Variant::ShineLayerState shineLayer;
+    Material::Variant::LayerState shineLayer;
 
     /// Decoration animation states.
     Material::Variant::DecorationState decorations[Material::max_decorations];
@@ -221,6 +217,38 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
         }
     }
 
+    if(d->material->isShiny())
+    {
+        Material::ShineLayer const &layerDef = d->material->shineLayer();
+        // Not animated?
+        if(layerDef.stageCount() > 1)
+        {
+            LayerState &ls = d->shineLayer;
+
+            if(DD_IsSharpTick() && ls.tics-- <= 0)
+            {
+                // Advance to next stage.
+                if(++ls.stage == layerDef.stageCount())
+                {
+                    // Loop back to the beginning.
+                    ls.stage = 0;
+                }
+                ls.inter = 0;
+
+                ded_shine_stage_t const *lsCur = layerDef.stages()[ls.stage];
+                if(lsCur->variance != 0)
+                    ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
+                else
+                    ls.tics = lsCur->tics;
+            }
+            else
+            {
+                ded_shine_stage_t const *lsCur = layerDef.stages()[ls.stage];
+                ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
+            }
+        }
+    }
+
     /*
      * Animate decorations:
      */
@@ -315,6 +343,14 @@ void Material::Variant::resetAnim()
         ls.inter = 0;
     }
 
+    if(d->material->isShiny())
+    {
+        LayerState &ls = d->shineLayer;
+        ls.stage = 0;
+        ls.tics  = d->material->shineLayer().stages()[0]->tics;
+        ls.inter = 0;
+    }
+
     Material::Decorations const &decorations = d->material->decorations();
     for(int i = 0; i < decorations.count(); ++i)
     {
@@ -346,7 +382,7 @@ Material::Variant::LayerState const &Material::Variant::detailLayer() const
     throw Material::UnknownLayerError("Material::Variant::detailLayer", "Material has no details layer");
 }
 
-Material::Variant::ShineLayerState /*const*/ &Material::Variant::shineLayer() const
+Material::Variant::LayerState const &Material::Variant::shineLayer() const
 {
     if(d->material->isShiny())
     {

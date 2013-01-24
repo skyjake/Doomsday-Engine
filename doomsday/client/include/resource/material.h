@@ -117,32 +117,6 @@ public:
             float inter;
         };
 
-        /// @todo Much of this does not belong here, these values should be
-        /// interpolated by MaterialSnapshot.
-        struct ShineLayerState
-        {
-            /// The shine texture.
-            de::Texture *texture;
-
-            /// The mask texture (if any).
-            de::Texture *maskTexture;
-
-            /// Texture blendmode for the shine texture.
-            blendmode_t blendmode;
-
-            /// Strength multiplier [0..1].
-            float strength;
-
-            /// Minimum sector color (RGB).
-            float minColor[3];
-
-            ShineLayerState()
-                : texture(0), maskTexture(0), blendmode(blendmode_t(0)), strength(0)
-            {
-                std::memset(minColor, 0, sizeof(minColor));
-            }
-        };
-
     private:
         /**
          * @param generalCase   Material from which this variant is derived.
@@ -223,6 +197,14 @@ public:
         LayerState const &detailLayer() const;
 
         /**
+         * Returns the current state of the shine layer animation for the
+         * variant.
+         *
+         * @see Material::isShiny()
+         */
+        LayerState const &shineLayer() const;
+
+        /**
          * Returns the current state of the (light) decoration animation
          * @a decorNum for the variant.
          */
@@ -236,20 +218,6 @@ public:
 
         friend class Material;
         friend struct Material::Instance;
-
-    public:
-        /*
-         * Here follows methods awaiting cleanup/redesign/removal.
-         */
-
-        /**
-         * Provides access to the shine texturing layer state.
-         *
-         * @throws UnknownLayerError if the material has no shiny layer.
-         *
-         * @see Material::isShiny()
-         */
-        ShineLayerState /*const*/ &shineLayer() const;
 
     private:
         struct Instance;
@@ -316,6 +284,39 @@ public:
          * Construct a new layer from the specified definition.
          */
         static DetailLayer *fromDef(ded_detailtexture_t &def);
+
+        /**
+         * Returns the total number of animation stages for the layer.
+         */
+        int stageCount() const;
+
+        /**
+         * Provides access to the animation stages for efficient traversal.
+         */
+        Stages const &stages() const;
+
+    private:
+        /// Animation stages.
+        Stages stages_;
+    };
+
+    /// @todo $revise-texture-animation Merge with Material::Layer
+    class ShineLayer
+    {
+    public:
+        /// A list of stages.
+        typedef QList<ded_shine_stage_t *> Stages;
+
+    public:
+        /**
+         * Construct a new default layer.
+         */
+        ShineLayer();
+
+        /**
+         * Construct a new layer from the specified definition.
+         */
+        static ShineLayer *fromDef(ded_reflection_t &def);
 
         /**
          * Returns the total number of animation stages for the layer.
@@ -559,6 +560,13 @@ public:
      * @see isDetailed()
      */
     DetailLayer const &detailLayer() const;
+
+    /**
+     * Provides access to the shine layer.
+     *
+     * @see isShiny()
+     */
+    ShineLayer const &shineLayer() const;
 
     /**
      * Returns the number of material (light) decorations.

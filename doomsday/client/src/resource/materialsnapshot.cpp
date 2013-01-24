@@ -212,12 +212,18 @@ static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
 }
 
 /// @todo Optimize: Cache this result at material level.
-static Texture *findTextureByResourceUri(String nameOfScheme, de::Uri const &resourceUri)
+static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool findMask)
 {
-    if(resourceUri.isEmpty()) return 0;
     try
     {
-        return App_Textures()->scheme(nameOfScheme).findByResourceUri(resourceUri).texture();
+        if(findMask)
+        {
+            return App_Textures()->scheme("Masks").findByResourceUri(*reinterpret_cast<de::Uri *>(def.maskTexture)).texture();
+        }
+        else
+        {
+            return App_Textures()->scheme("Reflections").findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+        }
     }
     catch(Textures::Scheme::NotFoundError const &)
     {} // Ignore this error.
@@ -235,6 +241,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     Material::Layers const &layers = material->layers();
 #ifdef __CLIENT__
     Material::DetailLayer const *detailLayer = material->isDetailed()? &material->detailLayer() : 0;
+    Material::ShineLayer const *shineLayer   =    material->isShiny()? &material->shineLayer()  : 0;
 #endif
 
     Texture::Variant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS][2];
@@ -314,42 +321,30 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare a shiny texture (and possibly a mask)?
     if(!material->isSkyMasked() && material->isShiny())
     {
-        Material::Variant::ShineLayerState &shiny = variant->shineLayer();
+        Material::Variant::LayerState const &l = variant->shineLayer();
+        ded_shine_stage_t const *lsCur = shineLayer->stages()[l.stage];
 
-        Uri uri(material->manifest().composeUri());
-        ded_reflection_t const *refDef =
-            Def_GetReflection(reinterpret_cast<uri_s *>(&uri)/*,
-                              result == PTR_UPLOADED_EXTERNAL, manifest.isCustom()*/);
-        DENG_ASSERT(refDef);
-
-        shiny.texture      = refDef->stage.texture? findTextureByResourceUri("Reflections", reinterpret_cast<de::Uri const&>(*refDef->stage.texture)) : 0;
-        shiny.maskTexture  = refDef->stage.maskTexture? findTextureByResourceUri("Masks", reinterpret_cast<de::Uri const&>(*refDef->stage.maskTexture)) : 0;
-        shiny.strength     = MINMAX_OF(0, refDef->stage.shininess, 1);
-        shiny.blendmode    = refDef->stage.blendMode;
-        DENG2_ASSERT(VALID_BLENDMODE(shiny.blendmode));
-        shiny.minColor[CR] = MINMAX_OF(0, refDef->stage.minColor[CR], 1);
-        shiny.minColor[CG] = MINMAX_OF(0, refDef->stage.minColor[CG], 1);
-        shiny.minColor[CB] = MINMAX_OF(0, refDef->stage.minColor[CB], 1);
-
-        if(Texture *tex = shiny.texture)
+        if(Texture *tex = findTextureForShineLayerStage(*lsCur, false/*not-mask*/))
         {
             texturevariantspecification_t &texSpec =
                 *GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
                      TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
                      false, false, false, false);
 
+            // Pick the instance matching the specified context.
             prepTextures[MTU_REFLECTION][0] = GL_PrepareTexture(*tex, texSpec);
         }
 
         // We are only interested in a mask if we have a shiny texture.
         if(prepTextures[MTU_REFLECTION][0])
-        if(Texture *tex = shiny.maskTexture)
+        if(Texture *tex = findTextureForShineLayerStage(*lsCur, true/*the-mask*/))
         {
             texturevariantspecification_t &texSpec =
                 *GL_TextureVariantSpecificationForContext(
                      TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                      -1, -1, -1, true, false, false, false);
 
+            // Pick the instance matching the specified context.
             prepTextures[MTU_REFLECTION_MASK][0] = GL_PrepareTexture(*tex, texSpec);
         }
     }
@@ -376,11 +371,6 @@ void MaterialSnapshot::Instance::takeSnapshot()
     else // Interpolate.
     {
         stored.glowStrength = LERP(lsCur->glowStrength, lsNext->glowStrength, l.inter);
-    }
-
-    if(MC_MAPSURFACE == spec.context && prepTextures[MTU_REFLECTION][0])
-    {
-        stored.shineMinColor = Vector3f(variant->shineLayer().minColor);
     }
 
     // Setup the primary texture unit.
@@ -479,28 +469,64 @@ void MaterialSnapshot::Instance::takeSnapshot()
 #endif
     }
 
-    // Setup the shiny texture units.
-    if(Texture::Variant *tex = prepTextures[MTU_REFLECTION][0])
+    if(!material->isSkyMasked() && material->isShiny())
     {
-        stored.textures[MTU_REFLECTION] = tex;
 #ifdef __CLIENT__
-        Material::Variant::ShineLayerState const &shiny = variant->shineLayer();
-        stored.writeTexUnit(RTU_REFLECTION, tex, shiny.blendmode,
-                            QSizeF(1, 1), QPointF(0, 0), shiny.strength);
+        Material::Variant::LayerState const &l = variant->shineLayer();
+        ded_shine_stage_t const *lsCur  = shineLayer->stages()[l.stage];
+        ded_shine_stage_t const *lsNext = shineLayer->stages()[(l.stage + 1) % shineLayer->stageCount()];
 #endif
-    }
 
-    if(prepTextures[MTU_REFLECTION][0])
-    if(Texture::Variant *tex = prepTextures[MTU_REFLECTION_MASK][0])
-    {
-        stored.textures[MTU_REFLECTION_MASK] = tex;
+        // Setup the shine texture unit.
+        if(Texture::Variant *tex = prepTextures[MTU_REFLECTION][0])
+        {
+            stored.textures[MTU_REFLECTION] = tex;
+
 #ifdef __CLIENT__
-        stored.writeTexUnit(RTU_REFLECTION_MASK, tex, BM_NORMAL,
-                            QSizeF(1.f / (stored.dimensions.width()  * tex->generalCase().width()),
-                                   1.f / (stored.dimensions.height() * tex->generalCase().height())),
-                            QPointF(stored.units[RTU_PRIMARY].offset[0],
-                                    stored.units[RTU_PRIMARY].offset[1]), 1);
+            float minColor[3];
+            for(int i = 0; i < 3; ++i)
+            {
+                if(l.inter == 0)
+                {
+                    minColor[i] = lsCur->minColor[i];
+                }
+                else // Interpolate.
+                {
+                    minColor[i] = LERP(lsCur->minColor[i], lsNext->minColor[i], l.inter);
+                }
+                minColor[i] = MINMAX_OF(0, minColor[i], 1);
+            }
+            stored.shineMinColor = Vector3f(minColor);
+
+            float shininess;
+            if(l.inter == 0)
+            {
+                shininess = lsCur->shininess;
+            }
+            else // Interpolate.
+            {
+                shininess = LERP(lsCur->shininess, lsNext->shininess, l.inter);
+            }
+            shininess = MINMAX_OF(0, shininess, 1);
+
+            stored.writeTexUnit(RTU_REFLECTION, tex, lsCur->blendMode,
+                                QSizeF(1, 1), QPointF(0, 0), shininess);
 #endif
+        }
+
+        // Setup the shine mask texture unit.
+        if(prepTextures[MTU_REFLECTION][0])
+        if(Texture::Variant *tex = prepTextures[MTU_REFLECTION_MASK][0])
+        {
+            stored.textures[MTU_REFLECTION_MASK] = tex;
+#ifdef __CLIENT__
+            stored.writeTexUnit(RTU_REFLECTION_MASK, tex, BM_NORMAL,
+                                QSizeF(1.f / (stored.dimensions.width()  * tex->generalCase().width()),
+                                       1.f / (stored.dimensions.height() * tex->generalCase().height())),
+                                QPointF(stored.units[RTU_PRIMARY].offset[0],
+                                        stored.units[RTU_PRIMARY].offset[1]), 1);
+#endif
+        }
     }
 
 #ifdef __CLIENT__

@@ -1,7 +1,7 @@
 /** @file materials.cpp Material Resource Collection.
  *
- * @authors Copyright ï¿½ 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- * @authors Copyright ï¿½ 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -31,6 +31,7 @@
 #include <de/memory.h>
 
 #include "gl/gl_texmanager.h" // GL_TextureVariantSpecificationForContext
+#include "r_util.h" // R_NameForBlendMode
 #include "resource/materialsnapshot.h"
 
 #include "resource/materials.h"
@@ -700,6 +701,13 @@ static void printVariantInfo(Material::Variant &variant, int variantIdx)
         Con_Printf("  DetailLayer #0: Stage:%i Tics:%i\n", l.stage, int(l.tics));
     }
 
+    // Print shine layer state info:
+    if(variant.generalCase().isShiny())
+    {
+        Material::Variant::LayerState const &l = variant.shineLayer();
+        Con_Printf("  ShineLayer #0: Stage:%i Tics:%i\n", l.stage, int(l.tics));
+    }
+
     // Print decoration state info:
     int const decorationCount = variant.generalCase().decorationCount();
     for(int i = 0; i < decorationCount; ++i)
@@ -780,6 +788,32 @@ static void printMaterialInfo(Material &material)
                        "\n      Scale:%.2f Strength:%.2f MaxDistance:%.2f\n",
                        i, path.constData(), sDef.tics, sDef.variance,
                        sDef.scale, sDef.strength, sDef.maxDistance);
+        }
+    }
+
+    // Print shine layer config:
+    if(material.isShiny())
+    {
+        Material::ShineLayer const &lDef = material.shineLayer();
+        int const stageCount = lDef.stageCount();
+
+        Con_Printf("ShineLayer #0 (%i %s):\n",
+                   stageCount, stageCount == 1? "Stage" : "Stages");
+
+        for(int i = 0; i < stageCount; ++i)
+        {
+            ded_shine_stage_t const &sDef = *(lDef.stages()[i]);
+            QByteArray path = !sDef.texture? QString("(prev)").toUtf8()
+                                           : reinterpret_cast<Uri *>(sDef.texture)->asText().toUtf8();
+            QByteArray maskPath = !sDef.maskTexture? QString("(none)").toUtf8()
+                                                   : reinterpret_cast<Uri *>(sDef.maskTexture)->asText().toUtf8();
+
+            Con_Printf("  #%i: Texture:\"%s\" MaskTexture:\"%s\" Tics:%i (~%.2f)"
+                       "\n      Shininess:%.2f BlendMode:%s MaskWidth:%.2f MaskHeight:%.2f"
+                       "\n      MinColor:(r:%.2f, g:%.2f, b:%.2f)\n",
+                       i, path.constData(), maskPath.constData(), sDef.tics, sDef.variance,
+                       sDef.shininess, R_NameForBlendMode(sDef.blendMode), sDef.maskWidth, sDef.maskHeight,
+                       sDef.minColor[CR], sDef.minColor[CG], sDef.minColor[CB]);
         }
     }
 

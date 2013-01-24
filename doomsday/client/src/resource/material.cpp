@@ -76,6 +76,29 @@ Material::DetailLayer::Stages const &Material::DetailLayer::stages() const
     return stages_;
 }
 
+Material::ShineLayer::ShineLayer()
+{}
+
+Material::ShineLayer *Material::ShineLayer::fromDef(ded_reflection_t &def)
+{
+    ShineLayer *layer = new ShineLayer();
+    for(int i = 0; i < 1/*def.stageCount.num*/; ++i)
+    {
+        layer->stages_.push_back(&def.stage /*&def.stages[i]*/);
+    }
+    return layer;
+}
+
+int Material::ShineLayer::stageCount() const
+{
+    return stages_.count();
+}
+
+Material::ShineLayer::Stages const &Material::ShineLayer::stages() const
+{
+    return stages_;
+}
+
 Material::Decoration::Decoration()
     : patternSkip_(0, 0), patternOffset_(0, 0)
 {}
@@ -143,8 +166,8 @@ struct Material::Instance
 
     /// Layers.
     Material::Layers layers;
-
     Material::DetailLayer *detailLayer;
+    Material::ShineLayer *shineLayer;
 
     /// Decorations (will be projected into the map relative to a surface).
     Material::Decorations decorations;
@@ -155,7 +178,7 @@ struct Material::Instance
 
     Instance(MaterialManifest &_manifest)
         : manifest(_manifest), envClass(AEC_UNKNOWN), flags(0),
-          detailLayer(0), def(0)
+          detailLayer(0), shineLayer(0), def(0)
     {}
 
     ~Instance()
@@ -180,6 +203,7 @@ struct Material::Instance
             delete layers.takeFirst();
         }
         if(detailLayer) delete detailLayer;
+        if(shineLayer) delete shineLayer;
     }
 
     void clearDecorations()
@@ -209,16 +233,28 @@ Material::Material(MaterialManifest &_manifest, ded_material_t *def)
         DENG2_FOR_EACH_CONST(Layer::Stages, s, stages)
         {
             ded_material_layer_stage_t *stageDef = *s;
-            ded_detailtexture_t *detailDef = Def_GetDetailTex(stageDef->texture/*, UNKNOWN VALUE, manifest.isCustom()*/);
-            if(!detailDef) continue;
 
-            // Time to allocate the detail layer?
-            if(!d->detailLayer)
+            ded_detailtexture_t *detailDef = Def_GetDetailTex(stageDef->texture/*, UNKNOWN VALUE, manifest.isCustom()*/);
+            if(detailDef)
             {
-                d->detailLayer = DetailLayer::fromDef(*detailDef);
+                // Time to allocate the detail layer?
+                if(!d->detailLayer)
+                {
+                    d->detailLayer = DetailLayer::fromDef(*detailDef);
+                }
+                // Add stages.
             }
 
-            // Add stages.
+            ded_reflection_t *reflectionDef = Def_GetReflection(stageDef->texture/*, UNKNOWN VALUE, manifest.isCustom()*/);
+            if(reflectionDef)
+            {
+                // Time to allocate the shine layer?
+                if(!d->shineLayer)
+                {
+                    d->shineLayer = ShineLayer::fromDef(*reflectionDef);
+                }
+                // Add stages.
+            }
         }
     }
 }
@@ -307,8 +343,7 @@ bool Material::isDetailed() const
 
 bool Material::isShiny() const
 {
-    /// @todo fixme: Determine this from our own configuration.
-    return false;
+    return !!d->shineLayer;
 }
 
 bool Material::isSkyMasked() const
@@ -363,6 +398,17 @@ Material::DetailLayer const &Material::detailLayer() const
     }
     /// @throw Material::UnknownLayerError Invalid layer reference.
     throw UnknownLayerError("Material::detailLayer", "Material has no details layer");
+}
+
+Material::ShineLayer const &Material::shineLayer() const
+{
+    if(isShiny())
+    {
+        DENG_ASSERT(d->shineLayer);
+        return *d->shineLayer;
+    }
+    /// @throw Material::UnknownLayerError Invalid layer reference.
+    throw UnknownLayerError("Material::shineLayer", "Material has no shine layer");
 }
 
 void Material::addDecoration(Material::Decoration &decor)

@@ -130,7 +130,8 @@ typedef enum dglprimtype_e {
 
 /// Blending modes.
 typedef enum blendmode_e {
-    BM_ZEROALPHA = -1,
+    BM_FIRST = -1,
+    BM_ZEROALPHA = BM_FIRST,
     BM_NORMAL,
     BM_ADD,
     BM_DARK,
@@ -139,10 +140,13 @@ typedef enum blendmode_e {
     BM_MUL,
     BM_INVERSE,
     BM_INVERSE_MUL,
-    BM_ALPHA_SUBTRACT
+    BM_ALPHA_SUBTRACT,
+    BM_LAST = BM_ALPHA_SUBTRACT
 } blendmode_t;
 
-#define VALID_BLENDMODE(val) ((val) >= BM_ZEROALPHA && (val) <= BM_ALPHA_SUBTRACT)
+#define VALID_BLENDMODE(val) ((int)(val) >= BM_FIRST && (int)(val) <= BM_LAST)
+
+#define NUM_BLENDMODES       (BM_LAST - BM_FIRST)
 
 typedef struct dgl_vertex_s {
     float           xyz[4]; ///< The fourth is padding.

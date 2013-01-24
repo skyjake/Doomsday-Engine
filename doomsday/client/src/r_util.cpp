@@ -230,6 +230,25 @@ boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float 
     return true;
 }
 
+char const *R_NameForBlendMode(blendmode_t mode)
+{
+    static char const *names[1 + NUM_BLENDMODES] = {
+        /* invalid */               "(invalid)"
+        /* BM_ZEROALPHA */          "zero_alpha",
+        /* BM_NORMAL */             "normal",
+        /* BM_ADD */                "add",
+        /* BM_DARK */               "dark",
+        /* BM_SUBTRACT */           "subtract",
+        /* BM_REVERSE_SUBTRACT */   "reverse_subtract"
+        /* BM_MUL */                "mul",
+        /* BM_INVERSE */            "inverse",
+        /* BM_INVERSE_MUL */        "inverse_mul",
+        /* BM_ALPHA_SUBTRACT */     "alpha_subtract"
+    };
+    if(!VALID_BLENDMODE(mode)) return names[0];
+    return names[int(mode)];
+}
+
 #undef R_ChooseAlignModeAndScaleFactor
 DENG_EXTERN_C boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
     int availWidth, int availHeight, scalemode_t scaleMode)

@@ -424,11 +424,13 @@ typedef struct ded_ptcgen_s {
 } ded_ptcgen_t;
 
 typedef struct ded_shine_stage_s {
+    int             tics;
+    float           variance;
+    Uri            *texture;
+    Uri            *maskTexture;
     blendmode_t     blendMode; // Blend mode flags (bm_*).
     float           shininess;
     float           minColor[3];
-    Uri            *texture;
-    Uri            *maskTexture;
     float           maskWidth;
     float           maskHeight;
 } ded_shine_stage_t;
