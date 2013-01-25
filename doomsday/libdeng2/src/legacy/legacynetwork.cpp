@@ -99,7 +99,7 @@ int LegacyNetwork::open(Address const &address)
     LOG_AS("LegacyNetwork::open");
     try
     {
-        Socket *sock = new Socket(address);
+        Socket *sock = new Socket(address, 5.0 /* seconds for timeout */);
         int id = d->nextId();
         d->sockets.insert(id, sock);
         return id;

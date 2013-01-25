@@ -68,7 +68,7 @@ public:
      *
      * @return  Specialized Packet, or @c NULL.
      */
-    typedef Packet* (*Constructor)(Block const &);
+    typedef Packet *(*Constructor)(Block const &);
 
     /// Reply types. @see reply()
     enum Reply {
@@ -80,7 +80,7 @@ public:
 public:
     Protocol();
 
-    ~Protocol();
+    virtual ~Protocol();
 
     /**
      * Registers a new constructor function.

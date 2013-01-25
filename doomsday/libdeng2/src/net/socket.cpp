@@ -366,7 +366,16 @@ struct Socket::Instance
     }
 };
 
-Socket::Socket(Address const &address, TimeDelta const &timeOut)
+Socket::Socket()
+{
+    d = new Instance;
+    d->socket = new QTcpSocket;
+    initialize();
+
+    QObject::connect(d->socket, SIGNAL(connected()), this, SIGNAL(connected()));
+}
+
+Socket::Socket(Address const &address, TimeDelta const &timeOut) // blocking
 {
     LOG_AS("Socket");
 
@@ -392,6 +401,18 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut)
 
     DENG2_ASSERT(d->socket->isOpen() && d->socket->isWritable() &&
                  d->socket->state() == QAbstractSocket::ConnectedState);
+}
+
+void Socket::connect(Address const &address) // non-blocking
+{    
+    DENG2_ASSERT(d->socket);
+    DENG2_ASSERT(!d->socket->isOpen());
+    DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
+
+    LOG_AS("Socket");
+    LOG_MSG("Opening connection to %s.") << address.asText();
+
+    d->socket->connectToHost(address.host(), address.port());
 }
 
 Socket::Socket(QTcpSocket *existingSocket)
@@ -422,11 +443,11 @@ void Socket::initialize()
     // Options.
     d->socket->setSocketOption(QTcpSocket::LowDelayOption, 1); // prefer short buffering
 
-    connect(d->socket, SIGNAL(bytesWritten(qint64)), this, SLOT(bytesWereWritten(qint64)));
-    connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(d->socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)), Qt::DirectConnection);
-    connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncomingBytes()));
-    connect(d->socket, SIGNAL(destroyed()), this, SLOT(socketDestroyed()));
+    QObject::connect(d->socket, SIGNAL(bytesWritten(qint64)), this, SLOT(bytesWereWritten(qint64)));
+    QObject::connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    QObject::connect(d->socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)), Qt::DirectConnection);
+    QObject::connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncomingBytes()));
+    QObject::connect(d->socket, SIGNAL(destroyed()), this, SLOT(socketDestroyed()));
 }
 
 void Socket::close()

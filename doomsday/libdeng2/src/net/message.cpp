@@ -19,7 +19,7 @@
 
 #include "de/Message"
 
-using namespace de;
+namespace de {
 
 Message::Message(IByteArray const &other) : Block(other), _channel(0)
 {}
@@ -35,3 +35,5 @@ Message::Message(Address const &addr, Channel channel, IByteArray const &other)
 Message::Message(Address const &addr, Channel channel, IByteArray const &other, Offset at, Size count)
     : Block(other, at, count), _address(addr), _channel(channel)
 {}
+
+} // namespace de

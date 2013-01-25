@@ -48,6 +48,8 @@ public:
      */
     Address(QHostAddress const &address, duint16 port = 0);
 
+    Address(String const &addressWithOptionalPort);
+
     Address(char const *address, duint16 port = 0);
 
     Address(Address const &other);
