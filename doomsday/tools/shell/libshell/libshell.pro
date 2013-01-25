@@ -18,11 +18,15 @@ INCLUDEPATH += include
 # Public headers.
 HEADERS += \
     include/de/shell/KeyEvent \
+    include/de/shell/Link \
+    include/de/shell/Protocol \
     include/de/shell/TextCanvas \
     include/de/shell/TextEditWidget \
     include/de/shell/TextRootWidget \
     include/de/shell/TextWidget \
     include/de/shell/keyevent.h \
+    include/de/shell/link.h \
+    include/de/shell/protocol.h \
     include/de/shell/textcanvas.h \
     include/de/shell/texteditwidget.h \
     include/de/shell/textrootwidget.h \
@@ -34,7 +38,9 @@ SOURCES += \
     src/textcanvas.cpp \
     src/texteditwidget.cpp \
     src/textrootwidget.cpp \
-    src/textwidget.cpp
+    src/textwidget.cpp \
+    src/protocol.cpp \
+    src/link.cpp
 
 # Installation ---------------------------------------------------------------
 
