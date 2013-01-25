@@ -17,10 +17,14 @@ INCLUDEPATH += include
 
 # Public headers.
 HEADERS += \
+    include/de/shell/KeyEvent \
     include/de/shell/TextCanvas \
+    include/de/shell/TextEditWidget \
     include/de/shell/TextRootWidget \
     include/de/shell/TextWidget \
+    include/de/shell/keyevent.h \
     include/de/shell/textcanvas.h \
+    include/de/shell/texteditwidget.h \
     include/de/shell/textrootwidget.h \
     include/de/shell/textwidget.h
 
@@ -28,6 +32,7 @@ HEADERS += \
 SOURCES += \
     src/deng_shell.cpp \
     src/textcanvas.cpp \
+    src/texteditwidget.cpp \
     src/textrootwidget.cpp \
     src/textwidget.cpp
 

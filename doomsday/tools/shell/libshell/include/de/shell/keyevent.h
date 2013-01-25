@@ -16,17 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef KEYEVENT_H
-#define KEYEVENT_H
+#ifndef LIBSHELL_KEYEVENT_H
+#define LIBSHELL_KEYEVENT_H
 
 #include <de/Event>
 #include <de/String>
 #include <QFlags>
 
+namespace de {
+namespace shell {
+
 /**
  * Key press event generated when the user presses a key on the keyboard.
  */
-class KeyEvent : public de::Event
+class KeyEvent : public Event
 {
 public:
     enum Modifier
@@ -37,19 +40,22 @@ public:
     Q_DECLARE_FLAGS(Modifiers, Modifier)
 
 public:
-    KeyEvent(de::String const &keyText) : Event(KeyPress), _text(keyText), _code(0) {}
+    KeyEvent(String const &keyText) : Event(KeyPress), _text(keyText), _code(0) {}
     KeyEvent(int keyCode, Modifiers mods = None) : Event(KeyPress), _code(keyCode), _modifiers(mods) {}
 
-    de::String text() const { return _text; }
+    String text() const { return _text; }
     int key() const { return _code; }
     Modifiers modifiers() const { return _modifiers; }
 
 private:
-    de::String _text;
+    String _text;
     int _code;
     Modifiers _modifiers;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(KeyEvent::Modifiers)
 
-#endif // KEYEVENT_H
+} // namespace shell
+} // namespace de
+
+#endif // LIBSHELL_KEYEVENT_H

@@ -19,28 +19,19 @@
 #ifndef COMMANDLINEWIDGET_H
 #define COMMANDLINEWIDGET_H
 
-#include <de/shell/TextWidget>
+#include <de/shell/TextEditWidget>
 
-class CommandLineWidget : public de::shell::TextWidget
+/**
+ * Text editor with a history.
+ */
+class CommandLineWidget : public de::shell::TextEditWidget
 {
     Q_OBJECT
 
 public:
-    /**
-     * The height rule of the widget is set up during construction.
-     *
-     * @param name  Widget name.
-     */
     CommandLineWidget(de::String const &name = "");
-
     virtual ~CommandLineWidget();
 
-    de::Vector2i cursorPosition();
-    bool handleControlKey(int key);
-
-    // Events.
-    void viewResized();
-    void draw();
     bool handleEvent(de::Event const *event);
 
 signals:

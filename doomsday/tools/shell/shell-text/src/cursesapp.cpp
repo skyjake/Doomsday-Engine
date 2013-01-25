@@ -22,7 +22,6 @@
 #include <QDebug>
 #include "cursesapp.h"
 #include "cursestextcanvas.h"
-#include "keyevent.h"
 #include <curses.h>
 #include <stdio.h>
 #include <de/Clock>
@@ -31,6 +30,7 @@
 #include <de/Vector>
 #include <de/shell/TextRootWidget>
 #include <de/shell/TextWidget>
+#include <de/shell/KeyEvent>
 
 using namespace de::shell;
 

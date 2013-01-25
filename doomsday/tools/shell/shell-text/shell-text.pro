@@ -27,7 +27,6 @@ HEADERS += \
     src/commandlinewidget.h \
     src/cursesapp.h \
     src/cursestextcanvas.h \
-    src/keyevent.h \
     src/logwidget.h \
     src/main.h \
     src/shellapp.h
