@@ -34,8 +34,7 @@
 
 static void windowResized(int)
 {
-    Q_ASSERT(qApp);
-    static_cast<CursesApp *>(qApp)->windowWasResized();
+    ungetch(KEY_RESIZE);
 }
 
 /**
@@ -126,6 +125,7 @@ struct CursesApp::Instance
         cbreak();
         noecho();
         nonl();
+        raw(); // Ctrl-C shouldn't cause a signal
         nodelay(rootWin, TRUE);
         keypad(rootWin, TRUE);
     }
@@ -180,12 +180,17 @@ struct CursesApp::Instance
                     self.quit(); // development only
                     return;
 
+                case KEY_ENTER:
+                case 0xd: // Enter
+                    code = Qt::Key_Enter;
+                    break;
+
                 case 0x7f: // Delete
                     code = Qt::Key_Backspace;
                     break;
 
-                case 0x4: // Ctrl-D
                 case KEY_DC:
+                case 0x4: // Ctrl-D
                     code = Qt::Key_Delete;
                     break;
 
@@ -288,11 +293,6 @@ struct CursesApp::Instance
         }
     }
 
-    void windowWasResized() // called from signal handler
-    {
-        ungetch(KEY_RESIZE);
-    }
-
     void update()
     {
         rootWidget->draw();
@@ -312,11 +312,6 @@ CursesApp::~CursesApp()
 TextRootWidget &CursesApp::rootWidget()
 {
     return *d->rootWidget;
-}
-
-void CursesApp::windowWasResized() // called from signal handler
-{
-    d->windowWasResized();
 }
 
 void CursesApp::refresh()

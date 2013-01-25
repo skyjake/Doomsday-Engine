@@ -32,8 +32,6 @@ public:
 
     TextRootWidget &rootWidget();
 
-    void windowWasResized();
-
 protected slots:
     void refresh();
 
