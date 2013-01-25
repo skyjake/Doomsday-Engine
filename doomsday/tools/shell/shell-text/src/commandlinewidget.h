@@ -19,9 +19,9 @@
 #ifndef COMMANDLINEWIDGET_H
 #define COMMANDLINEWIDGET_H
 
-#include "textwidget.h"
+#include <de/shell/TextWidget>
 
-class CommandLineWidget : public TextWidget
+class CommandLineWidget : public de::shell::TextWidget
 {
     Q_OBJECT
 

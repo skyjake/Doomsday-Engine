@@ -16,15 +16,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef TEXTROOTWIDGET_H
-#define TEXTROOTWIDGET_H
+#ifndef LIBSHELL_TEXTROOTWIDGET_H
+#define LIBSHELL_TEXTROOTWIDGET_H
 
 #include <de/RootWidget>
-#include "textcanvas.h"
+#include "TextCanvas"
+
+namespace de {
+namespace shell {
 
 class TextWidget;
 
-class TextRootWidget : public de::RootWidget
+class TextRootWidget : public RootWidget
 {
 public:
     /**
@@ -47,7 +50,7 @@ public:
      *
      * @param viewSize  New size.
      */
-    void setViewSize(de::Vector2i const &viewSize);
+    void setViewSize(Vector2i const &viewSize);
 
     TextWidget *focus() const;
 
@@ -58,4 +61,7 @@ private:
     bool _drawRequest;
 };
 
-#endif // TEXTROOTWIDGET_H
+} // namespace shell
+} // namespace de
+
+#endif // LIBSHELL_TEXTROOTWIDGET_H

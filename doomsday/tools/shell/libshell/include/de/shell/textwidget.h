@@ -16,13 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef TEXTWIDGET_H
-#define TEXTWIDGET_H
+#ifndef LIBSHELL_TEXTWIDGET_H
+#define LIBSHELL_TEXTWIDGET_H
 
 #include <de/Widget>
 #include <de/RectangleRule>
 #include <QObject>
-#include "textcanvas.h"
+#include "TextCanvas"
+
+namespace de {
+namespace shell {
 
 class TextRootWidget;
 
@@ -34,12 +37,12 @@ class TextRootWidget;
  *
  * QObject is a base class for signals and slots.
  */
-class TextWidget : public QObject, public de::Widget
+class TextWidget : public QObject, public Widget
 {
     Q_OBJECT
 
 public:
-    TextWidget(de::String const &name = "");
+    TextWidget(String const &name = "");
     virtual ~TextWidget();
 
     TextRootWidget &root() const;
@@ -54,9 +57,9 @@ public:
      * @param rule  Rectangle that the widget occupied.
      *              Widget takes ownership.
      */
-    void setRule(de::RectangleRule *rule);
+    void setRule(RectangleRule *rule);
 
-    de::RectangleRule &rule();
+    RectangleRule &rule();
 
     /**
      * Returns the position of the cursor for the widget. If the widget
@@ -64,11 +67,14 @@ public:
      *
      * @return Cursor position.
      */
-    virtual de::Vector2i cursorPosition();
+    virtual Vector2i cursorPosition();
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // TEXTWIDGET_H
+} // namespace shell
+} // namespace de
+
+#endif // LIBSHELL_TEXTWIDGET_H

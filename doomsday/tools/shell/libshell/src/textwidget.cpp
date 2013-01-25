@@ -16,24 +16,27 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "textwidget.h"
-#include "textrootwidget.h"
+#include "de/shell/TextWidget"
+#include "de/shell/TextRootWidget"
+
+namespace de {
+namespace shell {
 
 struct TextWidget::Instance
 {
     TextCanvas *canvas;
-    de::RectangleRule *rule;
+    RectangleRule *rule;
 
-    Instance() : canvas(0), rule(new de::RectangleRule)
+    Instance() : canvas(0), rule(new RectangleRule)
     {}
 
     ~Instance()
     {
-        de::releaseRef(rule);
+        releaseRef(rule);
     }
 };
 
-TextWidget::TextWidget(de::String const &name) : de::Widget(name), d(new Instance)
+TextWidget::TextWidget(String const &name) : Widget(name), d(new Instance)
 {}
 
 TextWidget::~TextWidget()
@@ -63,20 +66,23 @@ TextCanvas *TextWidget::targetCanvas() const
     return d->canvas;
 }
 
-void TextWidget::setRule(de::RectangleRule *rule)
+void TextWidget::setRule(RectangleRule *rule)
 {
-    de::releaseRef(d->rule);
-    d->rule = de::holdRef(rule);
+    releaseRef(d->rule);
+    d->rule = holdRef(rule);
 }
 
-de::RectangleRule &TextWidget::rule()
+RectangleRule &TextWidget::rule()
 {
     DENG2_ASSERT(d->rule != 0);
     return *d->rule;
 }
 
-de::Vector2i TextWidget::cursorPosition()
+Vector2i TextWidget::cursorPosition()
 {
-    return de::Vector2i(de::floor(rule().left()->value()),
-                        de::floor(rule().top()->value()));
+    return Vector2i(floor(rule().left()->value()),
+                    floor(rule().top()->value()));
 }
+
+} // namespace shell
+} // namespace de

@@ -16,41 +16,35 @@ VERSION  = 1.0.0
 CONFIG -= app_bundle
 
 include(../../../dep_deng2.pri)
+include(../../../dep_shell.pri)
 include(../../../dep_curses.pri)
-
-QT -= opengl
 
 INCLUDEPATH += ../libshell/include
 
 # Sources -------------------------------------------------------------------
 
 HEADERS += \
+    src/commandlinewidget.h \
     src/cursesapp.h \
     src/cursestextcanvas.h \
-    src/main.h \
-    src/shellapp.h \
-    src/textcanvas.h \
+    src/keyevent.h \
     src/logwidget.h \
-    src/textwidget.h \
-    src/textrootwidget.h \
-    src/commandlinewidget.h \
-    src/keyevent.h
+    src/main.h \
+    src/shellapp.h
 
 SOURCES += \
+    src/commandlinewidget.cpp \
     src/cursesapp.cpp \
     src/cursestextcanvas.cpp \
-    src/main.cpp \
-    src/shellapp.cpp \
-    src/textcanvas.cpp \
     src/logwidget.cpp \
-    src/textwidget.cpp \
-    src/textrootwidget.cpp \
-    src/commandlinewidget.cpp
+    src/main.cpp \
+    src/shellapp.cpp
 
 # Installation --------------------------------------------------------------
 
 macx {
     linkBinaryToBundledLibdeng2($$TARGET)
+    linkBinaryToBundledLibdengShell($$TARGET)
 }
 else {
     INSTALLS += target

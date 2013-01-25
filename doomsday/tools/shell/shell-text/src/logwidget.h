@@ -19,9 +19,9 @@
 #ifndef LOGWIDGET_H
 #define LOGWIDGET_H
 
-#include "textwidget.h"
+#include <de/shell/TextWidget>
 
-class LogWidget : public TextWidget
+class LogWidget : public de::shell::TextWidget
 {
 public:
     LogWidget(de::String const &name = "");

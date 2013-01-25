@@ -20,9 +20,9 @@
 #define CURSESTEXTCANVAS_H
 
 #include <curses.h>
-#include "textcanvas.h"
+#include <de/shell/TextCanvas>
 
-class CursesTextCanvas : public TextCanvas
+class CursesTextCanvas : public de::shell::TextCanvas
 {
 public:
     CursesTextCanvas(Size const &size, WINDOW *window, Coord const &originInWindow = Coord(0, 0));

@@ -16,9 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "textcanvas.h"
+#include "de/shell/TextCanvas"
 #include <QList>
 #include <QDebug>
+
+namespace de {
+namespace shell {
 
 struct TextCanvas::Instance
 {
@@ -144,10 +147,10 @@ void TextCanvas::markDirty()
 
 void TextCanvas::clear(Char const &ch)
 {
-    fill(de::Rectanglei(de::Vector2i(0, 0), d->size), ch);
+    fill(Rectanglei(Vector2i(0, 0), d->size), ch);
 }
 
-void TextCanvas::fill(de::Rectanglei const &rect, Char const &ch)
+void TextCanvas::fill(Rectanglei const &rect, Char const &ch)
 {
     for(int y = rect.top(); y < rect.bottom(); ++y)
     {
@@ -159,7 +162,7 @@ void TextCanvas::fill(de::Rectanglei const &rect, Char const &ch)
     }
 }
 
-void TextCanvas::put(de::Vector2i const &pos, Char const &ch)
+void TextCanvas::put(Vector2i const &pos, Char const &ch)
 {
     if(isValid(pos))
     {
@@ -167,10 +170,10 @@ void TextCanvas::put(de::Vector2i const &pos, Char const &ch)
     }
 }
 
-void TextCanvas::drawText(de::Vector2i const &pos, de::String const &text, Char::Attribs const &attribs)
+void TextCanvas::drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs)
 {
-    de::Vector2i p = pos;
-    DENG2_FOR_EACH_CONST(de::String, i, text)
+    Vector2i p = pos;
+    DENG2_FOR_EACH_CONST(String, i, text)
     {
         if(isValid(p))
         {
@@ -201,5 +204,8 @@ void TextCanvas::show()
     d->markAllAsDirty(false);
 }
 
-void TextCanvas::setCursorPosition(const de::Vector2i &)
+void TextCanvas::setCursorPosition(Vector2i const &)
 {}
+
+} // namespace shell
+} // namespace de

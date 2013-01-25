@@ -20,7 +20,7 @@
 #define CURSESAPP_H
 
 #include <QCoreApplication>
-#include "textrootwidget.h"
+#include <de/shell/TextRootWidget>
 
 class CursesApp : public QCoreApplication
 {
@@ -30,7 +30,7 @@ public:
     CursesApp(int &argc, char **argv);
     ~CursesApp();
 
-    TextRootWidget &rootWidget();
+    de::shell::TextRootWidget &rootWidget();
 
 protected slots:
     void refresh();

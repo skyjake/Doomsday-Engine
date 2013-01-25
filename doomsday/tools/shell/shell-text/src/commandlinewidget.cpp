@@ -17,12 +17,13 @@
  */
 
 #include "commandlinewidget.h"
-#include "textrootwidget.h"
 #include "keyevent.h"
-#include <de/RectangleRule>
 #include <de/String>
+#include <de/RectangleRule>
+#include <de/shell/TextRootWidget>
 
 using namespace de;
+using namespace de::shell;
 
 struct CommandLineWidget::Instance
 {

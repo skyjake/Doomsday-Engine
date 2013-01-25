@@ -18,6 +18,8 @@
 
 #include "logwidget.h"
 
+using namespace de::shell;
+
 struct LogWidget::Instance
 {
     Instance()

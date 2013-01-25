@@ -16,13 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef TEXTCANVAS_H
-#define TEXTCANVAS_H
+#ifndef LIBSHELL_TEXTCANVAS_H
+#define LIBSHELL_TEXTCANVAS_H
 
 #include <QChar>
 #include <QFlags>
 #include <de/Vector>
 #include <de/Rectangle>
+
+namespace de {
+namespace shell {
 
 /**
  * Text-based, device-independent drawing surface.
@@ -157,4 +160,7 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(TextCanvas::Char::Attribs)
 
-#endif // TEXTCANVAS_H
+} // namespace shell
+} // namespace de
+
+#endif // LIBSHELL_TEXTCANVAS_H

@@ -16,10 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "textrootwidget.h"
-#include "textwidget.h"
+#include "de/shell/TextRootWidget"
+#include "de/shell/TextWidget"
 
-TextRootWidget::TextRootWidget(TextCanvas *cv) : de::RootWidget(), _canvas(cv), _drawRequest(false)
+namespace de {
+namespace shell {
+
+TextRootWidget::TextRootWidget(TextCanvas *cv) : RootWidget(), _canvas(cv), _drawRequest(false)
 {
     DENG2_ASSERT(cv != 0);
     setViewSize(cv->size());
@@ -35,7 +38,7 @@ TextCanvas &TextRootWidget::rootCanvas()
     return *_canvas;
 }
 
-void TextRootWidget::setViewSize(de::Vector2i const &viewSize)
+void TextRootWidget::setViewSize(Vector2i const &viewSize)
 {
     _canvas->resize(viewSize);
     RootWidget::setViewSize(viewSize);
@@ -66,3 +69,6 @@ void TextRootWidget::draw()
     _canvas->show();
     _drawRequest = false;
 }
+
+} // namespace shell
+} // namespace de

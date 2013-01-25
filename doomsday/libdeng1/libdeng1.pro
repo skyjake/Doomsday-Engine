@@ -129,16 +129,7 @@ else:unix {
 macx {
     linkDylibToBundledLibdeng2(libdeng1)
 
-    defineTest(fixDengLinkage) {
-        doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
-        doPostLink("install_name_tool -change $$(QTDIR)lib/$$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
-        doPostLink("install_name_tool -change $$(QTDIR)/lib/$$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
-    }
     doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng1.1.dylib libdeng1.1.dylib")
-    fixDengLinkage("QtCore.framework/Versions/4/QtCore")
-    fixDengLinkage("QtNetwork.framework/Versions/4/QtNetwork")
-    fixDengLinkage("QtGui.framework/Versions/4/QtGui")
-    fixDengLinkage("QtOpenGL.framework/Versions/4/QtOpenGL")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
