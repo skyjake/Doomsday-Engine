@@ -30,7 +30,7 @@ namespace shell {
  * The widget adjusts its height automatically to fit to the full contents of
  * the edited, wrapped line.
  */
-class TextEditWidget : public TextWidget
+class DENG2_PUBLIC TextEditWidget : public TextWidget
 {
     Q_OBJECT
 
@@ -58,6 +58,7 @@ public:
     int cursor() const;
 
     Vector2i cursorPosition();
+
     bool handleControlKey(int key);
 
     // Events.

@@ -29,7 +29,7 @@ namespace shell {
 /**
  * Key press event generated when the user presses a key on the keyboard.
  */
-class KeyEvent : public Event
+class DENG2_PUBLIC KeyEvent : public Event
 {
 public:
     enum Modifier

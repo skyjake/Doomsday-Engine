@@ -34,7 +34,7 @@ class TextWidget;
  * be drawn on the screen, the text root widget assumes that by default drawing
  * is unnecessary, and redraws must be requested by widgets when suitable.
  */
-class TextRootWidget : public RootWidget
+class DENG2_PUBLIC TextRootWidget : public RootWidget
 {
 public:
     /**

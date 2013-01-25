@@ -35,7 +35,7 @@ namespace shell {
  * characters need to be drawn, as they are the only ones that have changed
  * relative to the previous state.
  */
-class TextCanvas
+class DENG2_PUBLIC TextCanvas
 {
 public:
     typedef Vector2i Size;

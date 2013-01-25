@@ -37,7 +37,7 @@ class TextRootWidget;
  *
  * QObject is a base class for signals and slots.
  */
-class TextWidget : public QObject, public Widget
+class DENG2_PUBLIC TextWidget : public QObject, public Widget
 {
     Q_OBJECT
 
