@@ -120,6 +120,8 @@ public:
      */
     void markDirty();
 
+    void clear(Char const &ch = Char());
+
     void fill(de::Rectanglei const &rect, Char const &ch);
 
     void put(de::Vector2i const &pos, Char const &ch);

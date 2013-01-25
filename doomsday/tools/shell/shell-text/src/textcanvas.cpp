@@ -142,6 +142,11 @@ void TextCanvas::markDirty()
     d->markAllAsDirty(true);
 }
 
+void TextCanvas::clear(Char const &ch)
+{
+    fill(de::Rectanglei(de::Vector2i(0, 0), d->size), ch);
+}
+
 void TextCanvas::fill(de::Rectanglei const &rect, Char const &ch)
 {
     for(int y = rect.top(); y < rect.bottom(); ++y)

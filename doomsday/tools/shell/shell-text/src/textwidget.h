@@ -21,6 +21,7 @@
 
 #include <de/Widget>
 #include <de/RectangleRule>
+#include <QObject>
 #include "textcanvas.h"
 
 class TextRootWidget;
@@ -30,12 +31,15 @@ class TextRootWidget;
  *
  * It is assumed that the root widget under which text widgets are used is
  * derived from TextRootWidget.
+ *
+ * QObject is a base class for signals and slots.
  */
-class TextWidget : public de::Widget
+class TextWidget : public QObject, public de::Widget
 {
+    Q_OBJECT
+
 public:
     TextWidget(de::String const &name = "");
-
     virtual ~TextWidget();
 
     TextRootWidget &root() const;

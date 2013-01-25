@@ -28,28 +28,84 @@ struct CommandLineWidget::Instance
 {
     CommandLineWidget &self;
     ConstantRule *height;
-    String command;
-    int cursorPos;
-    QList<int> wraps;
 
+    /**
+     * Line of text with a cursor.
+     */
+    struct Command
+    {
+        String text;
+        int cursor; ///< Index in range [0...text.size()]
+
+        Command() : cursor(0) {}
+
+        void doBackspace()
+        {
+            if(!text.isEmpty() && cursor > 0)
+            {
+                text.remove(--cursor, 1);
+            }
+        }
+
+        void doDelete()
+        {
+            if(text.size() > cursor)
+            {
+                text.remove(cursor, 1);
+            }
+        }
+
+        void doLeft()
+        {
+            if(cursor > 0) --cursor;
+        }
+
+        void doRight()
+        {
+            if(cursor < text.size()) ++cursor;
+        }
+
+        void insert(String const &str)
+        {
+            text.insert(cursor++, str);
+        }
+    };
+
+    // Command history.
+    QList<Command> history;
+    int historyPos;
+
+    // Word wrapping.
     struct Span
     {
         int start;
         int end;
         bool isFinal;
     };
+    QList<int> wraps;
 
-    Instance(CommandLineWidget &cli) : self(cli), cursorPos(0)
+    Instance(CommandLineWidget &cli) : self(cli), historyPos(0)
     {
         // Initial height of the command line (1 row).
         height = new ConstantRule(1);
 
         wraps.append(0);
+        history.append(Command());
     }
 
     ~Instance()
     {
         releaseRef(height);
+    }
+
+    Command &command()
+    {
+        return history[historyPos];
+    }
+
+    Command const &command() const
+    {
+        return history[historyPos];
     }
 
     /**
@@ -60,20 +116,22 @@ struct CommandLineWidget::Instance
     {
         wraps.clear();
 
-        int const lineWidth = self.rule().recti().width() - 3;
+        int const lineWidth = de::max(1, self.rule().recti().width() - 3);
+
+        String const &cmd = command().text;
 
         int begin = 0;
         forever
         {
             int end = begin + lineWidth;
-            if(end >= command.size())
+            if(end >= cmd.size())
             {
                 // Time to stop.
-                wraps.append(command.size());
+                wraps.append(cmd.size());
                 break;
             }
             // Find a good break point.
-            while(!command.at(end).isSpace())
+            while(!cmd.at(end).isSpace())
             {
                 --end;
                 if(end == begin)
@@ -83,7 +141,7 @@ struct CommandLineWidget::Instance
                     break;
                 }
             }
-            if(command.at(end).isSpace()) ++end;
+            if(cmd.at(end).isSpace()) ++end;
             wraps.append(end);
             begin = end;
         }
@@ -110,11 +168,12 @@ struct CommandLineWidget::Instance
     }
 
     /**
-     * Calculates the visual position of the cursor, including the line that it
-     * is on.
+     * Calculates the visual position of the cursor (of the current command),
+     * including the line that it is on.
      */
     de::Vector2i lineCursorPos() const
     {
+        int const cursorPos = command().cursor;
         de::Vector2i pos(cursorPos);
         for(pos.y = 0; pos.y < wraps.size(); ++pos.y)
         {
@@ -148,9 +207,9 @@ struct CommandLineWidget::Instance
 
         // Move cursor onto the adjacent line.
         Span span = lineSpan(linePos.y + lineOff);
-        cursorPos = span.start + linePos.x;
+        command().cursor = span.start + linePos.x;
         if(!span.isFinal) span.end--;
-        if(cursorPos > span.end) cursorPos = span.end;
+        if(command().cursor > span.end) command().cursor = span.end;
         return true;
     }
 };
@@ -182,21 +241,25 @@ void CommandLineWidget::draw()
     TextCanvas *cv = targetCanvas();
     if(!cv) return;
 
-    de::Rectanglei pos = rule().recti();
+    Rectanglei pos = rule().recti();
+
+    // Temporary buffer for drawing.
+    TextCanvas buf(pos.size());
 
     TextCanvas::Char::Attribs attr = TextCanvas::Char::Reverse;
-    TextCanvas::Char bg(' ', attr);
+    buf.clear(TextCanvas::Char(' ', attr));
 
-    cv->fill(pos, bg);
-    cv->put(pos.topLeft, TextCanvas::Char('>', attr | TextCanvas::Char::Bold));
+    buf.put(Vector2i(0, 0), TextCanvas::Char('>', attr | TextCanvas::Char::Bold));
 
     // Draw all the lines, wrapped as previously determined.
     for(int y = 0; y < d->wraps.size(); ++y)
     {
         Instance::Span span = d->lineSpan(y);
-        String part = d->command.substr(span.start, span.end - span.start);
-        cv->drawText(pos.topLeft + Vector2i(2, y), part, attr);
+        String part = d->command().text.substr(span.start, span.end - span.start);
+        buf.drawText(Vector2i(2, y), part, attr);
     }
+
+    buf.blit(*cv, pos.topLeft);
 }
 
 bool CommandLineWidget::handleEvent(Event const *event)
@@ -210,7 +273,7 @@ bool CommandLineWidget::handleEvent(Event const *event)
     // Insert text?
     if(!ev->text().isEmpty())
     {
-        d->command.insert(d->cursorPos++, ev->text());
+        d->command().insert(ev->text());
     }
     else
     {
@@ -218,63 +281,85 @@ bool CommandLineWidget::handleEvent(Event const *event)
         eaten = handleControlKey(ev->key());
     }
 
-    d->updateWrapsAndHeight();
-
-    root().requestDraw();
+    if(eaten)
+    {
+        d->updateWrapsAndHeight();
+        root().requestDraw();
+    }
     return eaten;
 }
 
 bool CommandLineWidget::handleControlKey(int key)
 {
+    Instance::Command &cmd = d->command();
+
     switch(key)
     {
     case Qt::Key_Backspace:
-        if(d->command.size() > 0 && d->cursorPos > 0)
-        {
-            d->command.remove(--d->cursorPos, 1);
-        }
+        cmd.doBackspace();
         return true;
 
     case Qt::Key_Delete:
-        if(d->command.size() > d->cursorPos)
-        {
-            d->command.remove(d->cursorPos, 1);
-        }
+        cmd.doDelete();
         return true;
 
     case Qt::Key_Left:
-        if(d->cursorPos > 0) --d->cursorPos;
+        cmd.doLeft();
         return true;
 
     case Qt::Key_Right:
-        if(d->cursorPos < d->command.size()) ++d->cursorPos;
+        cmd.doRight();
         return true;
 
     case Qt::Key_Home:
-        d->cursorPos = d->lineSpan(d->lineCursorPos().y).start;
+        cmd.cursor = d->lineSpan(d->lineCursorPos().y).start;
         return true;
 
-    case Qt::Key_End:
-    {
-        Instance::Span span = d->lineSpan(d->lineCursorPos().y);
-        d->cursorPos = span.end - (span.isFinal? 0 : 1);
-        return true;
-    }
+    case Qt::Key_End: {
+        Instance::Span const span = d->lineSpan(d->lineCursorPos().y);
+        cmd.cursor = span.end - (span.isFinal? 0 : 1);
+        return true; }
 
     case Qt::Key_K: // assuming Control mod
-        d->command = d->command.remove(d->cursorPos,
-                d->lineSpan(d->lineCursorPos().y).end - d->cursorPos);
+        cmd.text.remove(cmd.cursor, d->lineSpan(d->lineCursorPos().y).end - cmd.cursor);
         return true;
 
     case Qt::Key_Up:
         // First try moving within the current command.
-        d->moveCursorByLine(-1);
+        if(!d->moveCursorByLine(-1))
+        {
+            if(d->historyPos > 0) d->historyPos--;
+        }
         return true;
 
     case Qt::Key_Down:
         // First try moving within the current command.
-        d->moveCursorByLine(+1);
+        if(!d->moveCursorByLine(+1))
+        {
+            if(d->historyPos < d->history.size() - 1) d->historyPos++;
+        }
         return true;
+
+    case Qt::Key_Enter: {
+        String entered = cmd.text;
+
+        // Update the history.
+        if(d->historyPos < d->history.size() - 1)
+        {
+            if(d->history.last().text.isEmpty())
+            {
+                // Prune an empty entry in the end of history.
+                d->history.removeLast();
+            }
+            // Currently back in the history; duplicate the edited entry.
+            d->history.append(cmd);
+        }
+        // Move on.
+        d->history.append(Instance::Command());
+        d->historyPos = d->history.size() - 1;
+
+        emit commandEntered(entered);
+        return true; }
 
     default:
         break;

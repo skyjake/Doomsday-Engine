@@ -23,6 +23,8 @@
 
 class CommandLineWidget : public TextWidget
 {
+    Q_OBJECT
+
 public:
     /**
      * The height rule of the widget is set up during construction.
@@ -34,12 +36,15 @@ public:
     virtual ~CommandLineWidget();
 
     de::Vector2i cursorPosition();
+    bool handleControlKey(int key);
 
+    // Events.
     void viewResized();
     void draw();
     bool handleEvent(de::Event const *event);
 
-    bool handleControlKey(int key);
+signals:
+    void commandEntered(de::String command);
 
 private:
     struct Instance;
