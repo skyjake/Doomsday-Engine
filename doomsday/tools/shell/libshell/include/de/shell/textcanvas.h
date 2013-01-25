@@ -29,12 +29,17 @@ namespace shell {
 
 /**
  * Text-based, device-independent drawing surface.
+ *
+ * When characters are written to the canvas (or their properties change), they
+ * get marked dirty. When a surface is drawn on screen, only the dirty
+ * characters need to be drawn, as they are the only ones that have changed
+ * relative to the previous state.
  */
 class TextCanvas
 {
 public:
-    typedef de::Vector2i Size;
-    typedef de::Vector2i Coord;
+    typedef Vector2i Size;
+    typedef Vector2i Coord;
 
     struct Char
     {
@@ -125,11 +130,11 @@ public:
 
     void clear(Char const &ch = Char());
 
-    void fill(de::Rectanglei const &rect, Char const &ch);
+    void fill(Rectanglei const &rect, Char const &ch);
 
-    void put(de::Vector2i const &pos, Char const &ch);
+    void put(Vector2i const &pos, Char const &ch);
 
-    void drawText(de::Vector2i const &pos, de::String const &text, Char::Attribs const &attribs);
+    void drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs);
 
     /**
      * Copies the contents of this canvas onto another canvas.
@@ -147,11 +152,13 @@ public:
     virtual void show();
 
     /**
-     * Sets the position of the cursor on the canvas.
+     * Sets the position of the cursor on the canvas. Derived classes may
+     * choose to visualize the cursor in some fashion (especially if this isn't
+     * taken care of by the display device).
      *
      * @param pos  Position.
      */
-    virtual void setCursorPosition(de::Vector2i const &pos);
+    virtual void setCursorPosition(Vector2i const &pos);
 
 private:
     struct Instance;

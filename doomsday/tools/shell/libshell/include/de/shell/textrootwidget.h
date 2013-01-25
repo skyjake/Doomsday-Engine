@@ -27,6 +27,13 @@ namespace shell {
 
 class TextWidget;
 
+/**
+ * Root widget for device-independent, text-based UIs.
+ *
+ * As TextCanvas uses the concept of dirty characters to indicidate changes to
+ * be drawn on the screen, the text root widget assumes that by default drawing
+ * is unnecessary, and redraws must be requested by widgets when suitable.
+ */
 class TextRootWidget : public RootWidget
 {
 public:
