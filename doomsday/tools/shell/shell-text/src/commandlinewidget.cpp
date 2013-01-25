@@ -63,6 +63,18 @@ struct CommandLineWidget::Instance
         return history[historyPos];
     }
 
+    void updateCommandFromEditor()
+    {
+        command().text = self.text();
+        command().cursor = self.cursor();
+    }
+
+    void updateEditor()
+    {
+        self.setText(command().text);
+        self.setCursor(command().cursor);
+    }
+
     bool navigateHistory(int offset)
     {
         if((offset < 0 && historyPos >= -offset) ||
@@ -78,18 +90,6 @@ struct CommandLineWidget::Instance
             return true;
         }
         return false;
-    }
-
-    void updateCommandFromEditor()
-    {
-        command().text = self.text();
-        command().cursor = self.cursor();
-    }
-
-    void updateEditor()
-    {
-        self.setText(command().text);
-        self.setCursor(command().cursor);
     }
 };
 
@@ -170,4 +170,3 @@ bool CommandLineWidget::handleEvent(Event const *event)
         return TextEditWidget::handleEvent(event);
     }
 }
-
