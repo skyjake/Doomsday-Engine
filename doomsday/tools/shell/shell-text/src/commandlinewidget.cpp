@@ -118,10 +118,11 @@ bool CommandLineWidget::handleEvent(Event const *event)
         // Override the editor's normal Enter handling.
         if(ev->key() == Qt::Key_Enter)
         {
+            d->updateCommandFromEditor();
+
             String entered = d->command().text;
 
             // Update the history.
-            d->updateCommandFromEditor();
             if(d->historyPos < d->history.size() - 1)
             {
                 if(d->history.last().text.isEmpty())

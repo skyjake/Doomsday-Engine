@@ -28,6 +28,9 @@ public:
 
     ~ShellApp();
 
+public slots:
+    void sendCommandToServer(de::String command);
+
 private:
     struct Instance;
     Instance *d;

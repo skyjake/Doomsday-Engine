@@ -49,6 +49,8 @@ struct ShellApp::Instance
         root.add(log);
 
         root.setFocus(cli);
+
+        QObject::connect(cli, SIGNAL(commandEntered(de::String)), &self, SLOT(sendCommandToServer(de::String)));
     }
 
     ~Instance()
@@ -62,5 +64,12 @@ ShellApp::ShellApp(int &argc, char **argv)
 ShellApp::~ShellApp()
 {
     delete d;
+}
+
+void ShellApp::sendCommandToServer(String command)
+{
+    DENG2_UNUSED(command);
+
+    // todo
 }
 
