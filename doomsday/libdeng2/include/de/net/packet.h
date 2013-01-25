@@ -29,8 +29,8 @@ namespace de {
 class String;
     
 /**
- * Base class for all network packets in the libdeng2 network communications protocol.
- * All packets are based on this.
+ * Base class for all network packets in the libdeng2 network communications
+ * protocol. All packets are based on this class.
  *
  * @ingroup protocol
  */
@@ -73,9 +73,9 @@ public:
     void setFrom(Address const &from) { _from = from; }
 
     /**
-     * Execute whatever action the packet defines. This is called for all packets
-     * once received and interpreted by the protocol. A packet defined outside
-     * libdeng2 may use this to add functionality to the packet.
+     * Execute whatever action the packet defines. This is called for all
+     * packets once received and interpreted by the protocol. A packet defined
+     * outside libdeng2 may use this to add functionality to the packet.
      */
     virtual void execute() const;
 

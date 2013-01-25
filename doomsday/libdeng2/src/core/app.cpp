@@ -323,7 +323,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
         arch.add("Info", String("# Package for Doomsday's persistent state.\n").toUtf8());
         Writer(homeFolder().newFile("persist.pack")) << arch;
 
-        homeFolder().populate(Folder::PopulateJustThisFolder);
+        homeFolder().populate(Folder::PopulateOnlyThisFolder);
     }            
 
     d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
