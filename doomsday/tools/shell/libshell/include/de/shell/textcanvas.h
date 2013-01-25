@@ -48,6 +48,7 @@ public:
             Bold      = 0x1,
             Underline = 0x2,
             Reverse   = 0x4,
+            Blink     = 0x8,
 
             Dirty     = 0x80000000,
 
@@ -134,7 +135,7 @@ public:
 
     void put(Vector2i const &pos, Char const &ch);
 
-    void drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs);
+    void drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs = Char::DefaultAttributes);
 
     /**
      * Copies the contents of this canvas onto another canvas.

@@ -66,6 +66,16 @@ TextCanvas *TextWidget::targetCanvas() const
     return d->canvas;
 }
 
+void TextWidget::drawAndShow()
+{
+    if(targetCanvas())
+    {
+        draw();
+        notifyTree(&Widget::draw);
+        targetCanvas()->show();
+    }
+}
+
 void TextWidget::setRule(RectangleRule *rule)
 {
     releaseRef(d->rule);

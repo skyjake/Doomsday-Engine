@@ -52,6 +52,14 @@ public:
     TextCanvas *targetCanvas() const;
 
     /**
+     * Draw this widget and all its children, and show the target canvas
+     * afterwards. Use this in special cases for faster redrawing of portions
+     * of the screen when only one widget's contents have changed and need
+     * updating.
+     */
+    void drawAndShow();
+
+    /**
      * Defines the placement of the widget on the target canvas.
      *
      * @param rule  Rectangle that the widget occupied.
