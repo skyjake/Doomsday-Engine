@@ -35,6 +35,7 @@ struct CommandLineWidget::Instance
     struct Command
     {
         String text;
+        String original; ///< For undoing editing in history.
         int cursor; ///< Index in range [0...text.size()]
 
         Command() : cursor(0) {}
@@ -91,6 +92,16 @@ struct CommandLineWidget::Instance
         }
         return false;
     }
+
+    void restoreTextsToOriginal()
+    {
+        for(int i = 0; i < history.size(); ++i)
+        {
+            Command &cmd = history[i];
+            cmd.text = cmd.original;
+            cmd.cursor = de::min(cmd.cursor, cmd.text.size());
+        }
+    }
 };
 
 CommandLineWidget::CommandLineWidget(de::String const &name)
@@ -133,17 +144,21 @@ bool CommandLineWidget::handleEvent(Event const *event)
                 // Currently back in the history; duplicate the edited entry.
                 d->history.append(d->command());
             }
+
+            d->history.last().original = entered;
+
             // Move on.
             d->history.append(Instance::Command());
             d->historyPos = d->history.size() - 1;
             d->updateEditor();
+            d->restoreTextsToOriginal();
 
             emit commandEntered(entered);
 
             return true;
         }
 
-        eaten = TextEditWidget::handleControlKey(ev->key());
+        eaten = TextEditWidget::handleEvent(event);
 
         if(!eaten)
         {
