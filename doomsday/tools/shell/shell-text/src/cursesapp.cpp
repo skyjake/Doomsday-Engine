@@ -25,9 +25,11 @@
 #include <curses.h>
 #include <stdio.h>
 #include <de/Clock>
+#include <de/Error>
 #include <de/Animation>
 #include <de/Rule>
 #include <de/Vector>
+#include <de/LogBuffer>
 #include <de/shell/TextRootWidget>
 #include <de/shell/TextWidget>
 #include <de/shell/KeyEvent>
@@ -65,6 +67,7 @@ static de::Vector2i actualTerminalSize()
 struct CursesApp::Instance
 {
     CursesApp &self;
+    de::LogBuffer logBuffer;
     de::Clock clock;
 
     // Curses state:
@@ -77,6 +80,9 @@ struct CursesApp::Instance
 
     Instance(CursesApp &a) : self(a), unicodeContinuation(0), rootWidget(0)
     {
+        logBuffer.enableStandardOutput(false);
+
+        de::LogBuffer::setAppBuffer(logBuffer);
         de::Animation::setClock(&clock);
         de::Clock::setAppClock(&clock);
 
@@ -309,6 +315,19 @@ CursesApp::CursesApp(int &argc, char **argv)
 CursesApp::~CursesApp()
 {
     delete d;
+}
+
+bool CursesApp::notify(QObject *receiver, QEvent *event)
+{
+    try
+    {
+        return QCoreApplication::notify(receiver, event);
+    }
+    catch(de::Error const &er)
+    {
+        qDebug() << "Caught exception:" << er.asText().toAscii().constData();
+    }
+    return false;
 }
 
 TextRootWidget &CursesApp::rootWidget()

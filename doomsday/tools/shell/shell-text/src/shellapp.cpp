@@ -19,6 +19,9 @@
 #include "shellapp.h"
 #include "logwidget.h"
 #include "commandlinewidget.h"
+#include "statuswidget.h"
+#include <de/shell/Link>
+#include <QStringList>
 
 using namespace de;
 
@@ -27,16 +30,25 @@ struct ShellApp::Instance
     ShellApp &self;
     LogWidget *log;
     CommandLineWidget *cli;
+    StatusWidget *status;
+    shell::Link *link;
 
-    Instance(ShellApp &a) : self(a)
+    Instance(ShellApp &a) : self(a), link(0)
     {
         RootWidget &root = self.rootWidget();
+
+        status = new StatusWidget;
+        status->rule()
+                .setInput(RectangleRule::Height, refless(new ConstantRule(1)))
+                .setInput(RectangleRule::Bottom, root.viewBottom())
+                .setInput(RectangleRule::Width,  root.viewWidth())
+                .setInput(RectangleRule::Left,   root.viewLeft());
 
         cli = new CommandLineWidget;
         cli->rule()
                 .setInput(RectangleRule::Left,   root.viewLeft())
                 .setInput(RectangleRule::Width,  root.viewWidth())
-                .setInput(RectangleRule::Bottom, root.viewBottom());
+                .setInput(RectangleRule::Bottom, status->rule().top());
 
         log = new LogWidget;
         log->rule()
@@ -45,6 +57,8 @@ struct ShellApp::Instance
                 .setInput(RectangleRule::Top,    root.viewTop())
                 .setInput(RectangleRule::Bottom, cli->rule().top());
 
+        // Ownership also given to the root widget:
+        root.add(status);
         root.add(cli);
         root.add(log);
 
@@ -54,12 +68,23 @@ struct ShellApp::Instance
     }
 
     ~Instance()
-    {}
+    {
+        delete link;
+    }
 };
 
 ShellApp::ShellApp(int &argc, char **argv)
     : CursesApp(argc, argv), d(new Instance(*this))
-{}
+{
+    QStringList args = arguments();
+
+    if(args.size() > 1)
+    {
+        // Open a connection.
+        d->link = new shell::Link(Address(args[1]));
+        d->status->setShellLink(d->link);
+    }
+}
 
 ShellApp::~ShellApp()
 {
@@ -72,4 +97,3 @@ void ShellApp::sendCommandToServer(String command)
 
     // todo
 }
-

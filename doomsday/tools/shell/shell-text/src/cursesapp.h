@@ -30,6 +30,8 @@ public:
     CursesApp(int &argc, char **argv);
     ~CursesApp();
 
+    bool notify(QObject *receiver, QEvent *event);
+
     de::shell::TextRootWidget &rootWidget();
 
 protected slots:

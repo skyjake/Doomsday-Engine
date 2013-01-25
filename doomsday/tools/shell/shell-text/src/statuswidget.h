@@ -1,4 +1,4 @@
-/** @file shellapp.h Doomsday shell connection app.
+/** @file statuswidget.h  Widget for status information.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,26 +16,37 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SHELLAPP_H
-#define SHELLAPP_H
+#ifndef STATUSWIDGET_H
+#define STATUSWIDGET_H
 
-#include "cursesapp.h"
+#include <de/shell/TextWidget>
+#include <de/shell/Link>
 
-class ShellApp : public CursesApp
+class StatusWidget : public de::shell::TextWidget
 {
     Q_OBJECT
 
 public:
-    ShellApp(int &argc, char **argv);
+    StatusWidget(de::String const &name = "");
+    virtual ~StatusWidget();
 
-    ~ShellApp();
+    /**
+     * Sets the shell Link whose status is to be shown on screen.
+     *
+     * @param link  Shell connection.
+     */
+    void setShellLink(de::shell::Link *link);
+
+    void draw();
 
 public slots:
-    void sendCommandToServer(de::String command);
+    void redraw();
+    void linkConnected();
+    void linkDisconnected();
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // SHELLAPP_H
+#endif // STATUSWIDGET_H
