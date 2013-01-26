@@ -1,5 +1,4 @@
 /** @file monospacelogsinkformatter.h  Fixed-width log entry formatter.
- * @ingroup core
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -27,6 +26,7 @@ namespace de {
 /**
  * Log entry formatter with fixed line length and the assumption of fixed-width
  * fonts. This formatter is for plain text output.
+ * @ingroup core
  */
 class MonospaceLogSinkFormatter : public LogSink::IFormatter
 {

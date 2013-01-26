@@ -1,5 +1,4 @@
 /** @file filelogsink.h  Log sink that uses a File for output.
- * @ingroup core
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -28,6 +27,7 @@ namespace de {
 
 /**
  * Log sink that uses a File for output.
+ * @ingroup core
  */
 class FileLogSink : public LogSink
 {

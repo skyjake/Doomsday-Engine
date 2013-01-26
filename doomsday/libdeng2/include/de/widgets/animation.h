@@ -72,9 +72,9 @@ public:
      *                        This includes @a startDelay.
      * @param startDelay      Number of seconds to wait before starting the transition.
      */
-    void setValue(float v, TimeDelta transitionSpan = 0, TimeDelta startDelay = 0);
+    void setValue(float toValue, TimeDelta transitionSpan = 0, TimeDelta startDelay = 0);
 
-    void setValue(int v, TimeDelta transitionSpan = 0, TimeDelta startDelay = 0);
+    void setValue(int toValue, TimeDelta transitionSpan = 0, TimeDelta startDelay = 0);
 
     /**
      * Starts a new transition.
@@ -130,7 +130,7 @@ public:
      *
      * @param value  New value for the Animation, set without a transition.
      */
-    inline Animation &operator = (float v) {
+    inline Animation &operator = (float value) {
         setValue(v);
         return *this;
     }

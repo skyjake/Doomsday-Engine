@@ -61,7 +61,6 @@ public:
      * @param top     Rule for the top coordinate.
      * @param right   Rule for the right coordinate.
      * @param bottom  Rule for the bottom coordinate.
-     * @param parent  Parent object.
      */
     explicit RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom);
 

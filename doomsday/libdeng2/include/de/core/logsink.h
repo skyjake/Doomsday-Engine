@@ -1,5 +1,4 @@
 /** @file logsink.h  Sink where log entries are flushed from the LogBuffer.
- * @ingroup core
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -28,6 +27,7 @@ namespace de {
 
 /**
  * Sink where log entries are flushed from the LogBuffer.
+ * @ingroup core
  */
 class DENG2_PUBLIC LogSink
 {

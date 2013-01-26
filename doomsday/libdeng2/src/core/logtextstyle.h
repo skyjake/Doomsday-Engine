@@ -48,6 +48,6 @@ char const *TEXT_STYLE_LOG_BAD_LEVEL = DENG2_STR_ESCAPE("4");
 char const *TEXT_STYLE_SECTION       = DENG2_STR_ESCAPE("5");
 char const *TEXT_STYLE_MESSAGE       = DENG2_STR_ESCAPE("6");
 
-}
+} // namespace de
 
 #endif // LIBDENG2_LOGTEXTSTYLE_H

@@ -55,7 +55,7 @@ public:
     /**
      * Sets the size of the view. All widgets in the tree are notified.
      *
-     * @param size  View size.
+     * @param viewSize  View size.
      */
     virtual void setViewSize(Vector2i const &viewSize);
 

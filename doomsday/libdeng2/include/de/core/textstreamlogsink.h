@@ -1,5 +1,4 @@
 /** @file textstreamlogsink.h  Log sink that uses a QTextStream for output.
- * @ingroup core
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -27,6 +26,7 @@ namespace de {
 
 /**
  * Log sink that outputs to a QTextStream.
+ * @ingroup core
  */
 class TextStreamLogSink : public LogSink
 {

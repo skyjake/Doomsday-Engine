@@ -98,7 +98,7 @@ public:
      */
     Packet *interpret(Block const &block) const;
 
-    /**
+    /*
      * Sends a command packet and waits for reply. This is intended for issuing
      * synchronous commands that can be responded to immediately.
      *
