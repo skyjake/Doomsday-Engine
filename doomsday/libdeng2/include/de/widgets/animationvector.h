@@ -1,5 +1,4 @@
 /** @file animationvector.h Vector whose components are Animation instances.
- * @ingroup widgets
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -27,6 +26,7 @@ namespace de {
 
 /**
  * Animated 2D vector.
+ * @ingroup math
  */
 class AnimationVector2
 {
@@ -74,6 +74,7 @@ public:
 
 /**
  * Animated 3D vector.
+ * @ingroup math
  */
 class AnimationVector3
 {

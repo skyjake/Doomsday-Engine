@@ -32,6 +32,8 @@ namespace de {
  * The value of the rectangle rule is the area of the rectangle (width *
  * height). RectangleRule::rect() returns the rectangle itself. The output
  * rules for the sides can be used normally in other rules.
+ *
+ * @ingroup widgets
  */
 class RectangleRule : public Rule
 {

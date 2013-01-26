@@ -27,6 +27,7 @@ namespace de {
 /**
  * Calculates a value by applying a mathematical operator to the values of one
  * or two other rules.
+ * @ingroup widgets
  */
 class OperatorRule : public Rule
 {

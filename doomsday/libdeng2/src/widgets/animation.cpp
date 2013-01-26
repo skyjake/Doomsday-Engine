@@ -1,5 +1,4 @@
 /** @file animation.h Animation function.
- * @ingroup widgets
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

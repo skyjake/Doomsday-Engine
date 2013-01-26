@@ -26,6 +26,7 @@ namespace de {
 
 /**
  * The value of a constant rule never changes unless manually changed.
+ * @ingroup widgets
  *
  * @see ScalarRule
  */

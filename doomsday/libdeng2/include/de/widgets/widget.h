@@ -1,5 +1,6 @@
 /** @file widget.h Base class for widgets.
- * @ingroup widget
+ *
+ * @defgroup widgets  Widget Framework
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -27,6 +28,10 @@ namespace de {
 
 class RootWidget;
 
+/**
+ * Base class for widgets.
+ * @ingroup widgets
+ */
 class Widget
 {
 public:

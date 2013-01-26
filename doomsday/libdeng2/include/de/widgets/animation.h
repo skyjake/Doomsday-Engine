@@ -1,5 +1,4 @@
 /** @file animation.h Animation function.
- * @ingroup widgets
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -49,7 +48,7 @@ public:
     };
 
     /// Animation has no defined time source. @ingroup errors
-    DENG2_ERROR(ClockMissing);
+    DENG2_ERROR(ClockMissingError);
 
 public:
     Animation(float value = 0, Style style = EaseIn);

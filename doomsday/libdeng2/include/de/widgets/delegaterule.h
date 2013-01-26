@@ -33,6 +33,8 @@ namespace de {
  * on their own but instead only as part of another rule. (Delegated reference
  * counting means that references held to the derived rule actually are held to
  * the delegate target.)
+ *
+ * @ingroup widgets
  */
 class DelegateRule : public ConstantRule
 {

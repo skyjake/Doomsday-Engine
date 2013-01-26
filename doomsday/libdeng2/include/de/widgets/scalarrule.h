@@ -29,6 +29,7 @@ namespace de {
 
 /**
  * Rule with a scalar value. The value is animated over time.
+ * @ingroup widgets
  */
 class ScalarRule : public Rule
 {

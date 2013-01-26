@@ -1,5 +1,4 @@
 /** @file rootwidget.h Widget for managing the root of the UI.
- * @ingroup widget
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -36,6 +35,8 @@ class Rule;
  *
  * The view dimensions are available as Rule instances so that widgets'
  * position rules may be defined relative to them.
+ *
+ * @ingroup widgets
  */
 class RootWidget : public Widget
 {

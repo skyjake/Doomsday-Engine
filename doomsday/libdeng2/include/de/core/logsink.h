@@ -36,14 +36,14 @@ public:
     {
         Disabled,
         Enabled,
-        OnlyNormalEntries,
-        OnlyWarningEntries
+        OnlyNormalEntries,  ///< Info or lower.
+        OnlyWarningEntries  ///< Warning or higher.
     };
 
 public:
     /**
      * Formatters are responsible for converting LogEntry instances to a
-     * human-presentable, print-ready format suitable for the sink.. It may,
+     * human-presentable, print-ready format suitable for the sink. It may,
      * for instance, apply indenting and omit repeating parts.
      */
     class DENG2_PUBLIC IFormatter
