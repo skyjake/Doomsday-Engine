@@ -20,14 +20,26 @@
 #define LOGWIDGET_H
 
 #include <de/shell/TextWidget>
+#include <de/LogSink>
 
 class LogWidget : public de::shell::TextWidget
 {
+    Q_OBJECT
+
 public:
     LogWidget(de::String const &name = "");
     virtual ~LogWidget();
 
+    /**
+     * Returns the log sink that can be connected to a log buffer for receiving
+     * log entries into the widget's buffer.
+     */
+    de::LogSink &logSink();
+
     void draw();
+
+public slots:
+    void redraw();
 
 private:
     struct Instance;

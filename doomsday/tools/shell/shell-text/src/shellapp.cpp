@@ -21,6 +21,7 @@
 #include "commandlinewidget.h"
 #include "statuswidget.h"
 #include <de/shell/Link>
+#include <de/LogBuffer>
 #include <QStringList>
 
 using namespace de;
@@ -76,8 +77,10 @@ struct ShellApp::Instance
 ShellApp::ShellApp(int &argc, char **argv)
     : CursesApp(argc, argv), d(new Instance(*this))
 {
-    QStringList args = arguments();
+    LogBuffer::appBuffer().setMaxEntryCount(50); // buffered here rather than appBuffer
+    LogBuffer::appBuffer().addSink(d->log->logSink());
 
+    QStringList args = arguments();
     if(args.size() > 1)
     {
         // Open a connection.
@@ -88,12 +91,14 @@ ShellApp::ShellApp(int &argc, char **argv)
 
 ShellApp::~ShellApp()
 {
+    LogBuffer::appBuffer().removeSink(d->log->logSink());
+
     delete d;
 }
 
 void ShellApp::sendCommandToServer(String command)
 {
-    DENG2_UNUSED(command);
+    LOG_MSG("%s") << command;
 
     // todo
 }
