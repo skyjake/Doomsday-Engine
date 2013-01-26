@@ -20,6 +20,8 @@
 #ifndef LIBDENG2_LOGTEXTSTYLE_H
 #define LIBDENG2_LOGTEXTSTYLE_H
 
+#include "de/libdeng2.h"
+
 /**
  * @file logtextstyle.h
  * @internal Predefined text styles for log message text.
@@ -38,13 +40,13 @@ enum LogTextStyle
     LOG_MSG
 };
 
-char const *TEXT_STYLE_NORMAL = "$0";
-char const *TEXT_STYLE_STRONG = "$1";
-char const *TEXT_STYLE_LOG_TIME = "$2";
-char const *TEXT_STYLE_LOG_LEVEL = "$3";
-char const *TEXT_STYLE_LOG_BAD_LEVEL = "$4";
-char const *TEXT_STYLE_SECTION = "$5";
-char const *TEXT_STYLE_MESSAGE = "$6";
+char const *TEXT_STYLE_NORMAL        = DENG2_STR_ESCAPE("0");
+char const *TEXT_STYLE_STRONG        = DENG2_STR_ESCAPE("1");
+char const *TEXT_STYLE_LOG_TIME      = DENG2_STR_ESCAPE("2");
+char const *TEXT_STYLE_LOG_LEVEL     = DENG2_STR_ESCAPE("3");
+char const *TEXT_STYLE_LOG_BAD_LEVEL = DENG2_STR_ESCAPE("4");
+char const *TEXT_STYLE_SECTION       = DENG2_STR_ESCAPE("5");
+char const *TEXT_STYLE_MESSAGE       = DENG2_STR_ESCAPE("6");
 
 }
 
