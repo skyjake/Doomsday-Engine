@@ -260,7 +260,7 @@ Clock const &Animation::clock()
     DENG2_ASSERT(_clock != 0);
     if(!_clock)
     {
-        throw ClockMissing("Animation::clock", "Animation has no clock");
+        throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
     return *_clock;
 }
@@ -308,7 +308,7 @@ Time Animation::currentTime()
     DENG2_ASSERT(_clock != 0);
     if(!_clock)
     {
-        throw ClockMissing("Animation::clock", "Animation has no clock");
+        throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
     return _clock->time();
 }

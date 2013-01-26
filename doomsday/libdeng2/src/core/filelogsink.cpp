@@ -25,15 +25,6 @@ FileLogSink::FileLogSink(File &outputFile)
     : LogSink(_format), _file(outputFile)
 {}
 
-LogSink &FileLogSink::operator << (LogEntry const &entry)
-{
-    foreach(String line, _format.logEntryToTextLines(entry))
-    {
-        *this << line;
-    }
-    return *this;
-}
-
 LogSink &FileLogSink::operator << (String const &plainText)
 {
     _file << Block((plainText + "\n").toUtf8());

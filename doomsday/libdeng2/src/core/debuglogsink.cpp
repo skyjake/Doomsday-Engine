@@ -31,15 +31,6 @@ DebugLogSink::~DebugLogSink()
     delete _qs;
 }
 
-LogSink &DebugLogSink::operator << (LogEntry const &entry)
-{
-    foreach(String line, _format.logEntryToTextLines(entry))
-    {
-        *_qs << line;
-    }
-    return *this;
-}
-
 LogSink &DebugLogSink::operator << (String const &plainText)
 {
     *_qs << plainText.toUtf8().constData();

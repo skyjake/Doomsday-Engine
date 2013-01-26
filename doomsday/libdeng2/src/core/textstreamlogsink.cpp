@@ -32,15 +32,6 @@ TextStreamLogSink::~TextStreamLogSink()
     delete _ts;
 }
 
-LogSink &TextStreamLogSink::operator << (LogEntry const &entry)
-{
-    foreach(String line, _format.logEntryToTextLines(entry))
-    {
-        *this << line;
-    }
-    return *this;
-}
-
 LogSink &TextStreamLogSink::operator << (String const &plainText)
 {
     *_ts << plainText + "\n";

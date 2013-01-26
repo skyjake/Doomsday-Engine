@@ -61,4 +61,15 @@ LogSink::IFormatter *LogSink::formatter()
     return _formatter;
 }
 
+LogSink &LogSink::operator << (LogEntry const &entry)
+{
+    DENG2_ASSERT(formatter());
+
+    foreach(String line, formatter()->logEntryToTextLines(entry))
+    {
+        *this << line;
+    }
+    return *this;
+}
+
 } // namespace de

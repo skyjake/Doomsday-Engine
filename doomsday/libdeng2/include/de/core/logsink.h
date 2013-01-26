@@ -79,9 +79,12 @@ public:
      * isAccepted() whether this is an acceptable entry according to the mode
      * of the sink.
      *
-     * @param entry
+     * The default implementation uses the formatter to convert the entry
+     * to one or more lines of text.
+     *
+     * @param entry  Log entry to output.
      */
-    virtual LogSink &operator << (LogEntry const &entry) = 0;
+    virtual LogSink &operator << (LogEntry const &entry);
 
     virtual LogSink &operator << (String const &plainText) = 0;
 

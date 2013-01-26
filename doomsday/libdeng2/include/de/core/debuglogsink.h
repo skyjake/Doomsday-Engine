@@ -32,10 +32,8 @@ class DebugLogSink : public LogSink
 {
 public:
     DebugLogSink(QtMsgType msgType);
-
     ~DebugLogSink();
 
-    LogSink &operator << (LogEntry const &entry);
     LogSink &operator << (String const &plainText);
 
 private:

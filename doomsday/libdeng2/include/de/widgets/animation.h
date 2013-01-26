@@ -130,7 +130,7 @@ public:
      * @param value  New value for the Animation, set without a transition.
      */
     inline Animation &operator = (float value) {
-        setValue(v);
+        setValue(value);
         return *this;
     }
 

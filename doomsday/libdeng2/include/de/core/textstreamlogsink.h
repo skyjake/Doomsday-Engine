@@ -40,8 +40,6 @@ public:
 
     ~TextStreamLogSink();
 
-    LogSink &operator << (LogEntry const &entry);
-
     LogSink &operator << (String const &plainText);
 
     void flush();
