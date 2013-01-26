@@ -21,8 +21,14 @@
 
 namespace de {
 
+LogSink::LogSink()
+    : _formatter(0),
+      _mode(Enabled)
+{}
+
 LogSink::LogSink(LogSink::IFormatter &formatter)
-    : _formatter(&formatter), _mode(Enabled)
+    : _formatter(&formatter),
+      _mode(Enabled)
 {}
 
 LogSink::~LogSink()

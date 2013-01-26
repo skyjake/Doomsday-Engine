@@ -139,14 +139,14 @@ public:
      *
      * @param sink  Log sink. Caller retains ownership.
      */
-    void addSink(LogSink *sink);
+    void addSink(LogSink &sink);
 
     /**
      * Removes a log sink from use.
      *
      * @param sink  Log sink to remove.
      */
-    void removeSink(LogSink *sink);
+    void removeSink(LogSink &sink);
 
     // File observer.
     void fileBeingDeleted(File const &file);

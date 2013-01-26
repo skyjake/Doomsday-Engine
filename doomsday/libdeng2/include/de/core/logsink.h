@@ -55,7 +55,7 @@ public:
     };
 
 public:
-    LogSink() : _formatter(0) {}
+    LogSink();
 
     /**
      * Construct a sink.

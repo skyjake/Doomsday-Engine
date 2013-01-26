@@ -234,18 +234,18 @@ void LogBuffer::setOutputFile(String const &path)
     }
 }
 
-void LogBuffer::addSink(LogSink *sink)
+void LogBuffer::addSink(LogSink &sink)
 {
     DENG2_GUARD(this);
 
-    d->sinks.insert(sink);
+    d->sinks.insert(&sink);
 }
 
-void LogBuffer::removeSink(LogSink *sink)
+void LogBuffer::removeSink(LogSink &sink)
 {
     DENG2_GUARD(this);
 
-    d->sinks.remove(sink);
+    d->sinks.remove(&sink);
 }
 
 void LogBuffer::flush()
