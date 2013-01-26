@@ -246,7 +246,7 @@ void TextEditWidget::draw()
         buf.drawText(Vector2i(d->prompt.size(), y), part, attr);
     }
 
-    buf.blit(*cv, pos.topLeft);
+    cv->draw(buf, pos.topLeft);
 }
 
 bool TextEditWidget::handleEvent(Event const *event)

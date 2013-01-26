@@ -183,17 +183,17 @@ void TextCanvas::drawText(Vector2i const &pos, String const &text, Char::Attribs
     }
 }
 
-void TextCanvas::blit(TextCanvas &dest, Coord const &topLeft) const
+void TextCanvas::draw(TextCanvas const &canvas, Coord const &topLeft)
 {
-    for(int y = 0; y < d->size.y; ++y)
+    for(int y = 0; y < canvas.d->size.y; ++y)
     {
-        for(int x = 0; x < d->size.x; ++x)
+        for(int x = 0; x < canvas.d->size.x; ++x)
         {
             Coord const xy(x, y);
             Coord const p = topLeft + xy;
-            if(dest.isValid(p))
+            if(isValid(p))
             {
-                dest.at(p) = at(xy);
+                at(p) = canvas.at(xy);
             }
         }
     }

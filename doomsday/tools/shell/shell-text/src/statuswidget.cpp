@@ -93,7 +93,7 @@ void StatusWidget::draw()
         buf.drawText(x, host);
     }
 
-    buf.blit(*targetCanvas(), pos.topLeft);
+    targetCanvas()->draw(buf, pos.topLeft);
 }
 
 void StatusWidget::redraw()

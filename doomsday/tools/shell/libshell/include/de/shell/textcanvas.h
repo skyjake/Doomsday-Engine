@@ -138,12 +138,12 @@ public:
     void drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs = Char::DefaultAttributes);
 
     /**
-     * Copies the contents of this canvas onto another canvas.
+     * Draws the contents of a canvas onto this canvas.
      *
-     * @param dest     Destination canvas.
+     * @param dest     Source canvas.
      * @param topLeft  Top left coordinate of the destination area.
      */
-    void blit(TextCanvas &dest, Coord const &topLeft) const;
+    void draw(TextCanvas const &canvas, Coord const &topLeft);
 
     /**
      * Draws all characters marked dirty onto the screen so that they become
