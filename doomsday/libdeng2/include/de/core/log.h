@@ -262,6 +262,19 @@ public:
                 break; }
             }
         }
+        Arg(Arg const &other) : _type(other._type) {
+            switch(other._type) {
+            case INTEGER:
+                _data.intValue = other._data.intValue;
+                break;
+            case FLOATING_POINT:
+                _data.floatValue = other._data.floatValue;
+                break;
+            case STRING: {
+                _data.stringValue = new String(*other._data.stringValue);
+                break; }
+            }
+        }
         ~Arg() {
             if(_type == STRING) {
                 delete _data.stringValue;
@@ -349,6 +362,12 @@ public:
     LogEntry();
 
     LogEntry(Level level, String const &section, int sectionDepth, String const &format, Args args);
+
+    /**
+     * Copy constructor.
+     * @param other  Log entry.
+     */
+    LogEntry(LogEntry const &other);
 
     ~LogEntry();
 

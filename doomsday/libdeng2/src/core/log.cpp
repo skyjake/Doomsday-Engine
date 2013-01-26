@@ -66,11 +66,31 @@ LogEntry::LogEntry() : _level(TRACE), _sectionDepth(0), _disabled(true)
 {}
 
 LogEntry::LogEntry(Level level, String const &section, int sectionDepth, String const &format, Args args)
-    : _level(level), _section(section), _sectionDepth(sectionDepth), _format(format), _disabled(false), _args(args)
+    : _level(level),
+      _section(section),
+      _sectionDepth(sectionDepth),
+      _format(format),
+      _disabled(false),
+      _args(args)
 {
     if(!LogBuffer::appBuffer().isEnabled(level))
     {
         _disabled = true;
+    }
+}
+
+LogEntry::LogEntry(LogEntry const &other)
+    : _when(other._when),
+      _level(other._level),
+      _section(other._section),
+      _sectionDepth(other._sectionDepth),
+      _format(other._format),
+      _defaultFlags(other._defaultFlags),
+      _disabled(other._disabled)
+{
+    DENG2_FOR_EACH_CONST(Args, i, other._args)
+    {
+        _args.append(new Arg(**i));
     }
 }
 
