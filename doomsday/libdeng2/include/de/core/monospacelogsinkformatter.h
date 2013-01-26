@@ -35,6 +35,16 @@ public:
 
     QList<String> logEntryToTextLines(LogEntry const &entry);
 
+    /**
+     * Sets the maximum line length. Entries will be wrapped onto multiple
+     * lines if they don't fit on one line.
+     *
+     * @param maxLength  Maximum line length.
+     */
+    void setMaxLength(duint maxLength);
+
+    duint maxLength() const;
+
 private:
     duint _maxLength;
     int _minimumIndent;

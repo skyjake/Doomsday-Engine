@@ -178,4 +178,14 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
     return resultLines;
 }
 
+void MonospaceLogSinkFormatter::setMaxLength(duint maxLength)
+{
+    _maxLength = maxLength;
+}
+
+duint MonospaceLogSinkFormatter::maxLength() const
+{
+    return _maxLength;
+}
+
 } // namespace de
