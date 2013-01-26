@@ -29,6 +29,7 @@
 namespace de {
 
 class LogEntry;
+class LogSink;
 
 /**
  * Central buffer for log entries.
@@ -131,6 +132,23 @@ public:
      */
     void setOutputFile(String const &path);
 
+    /**
+     * Adds a new sink where log entries will be flushed. There can be any
+     * number of sinks in use. The sink must not be deleted while it is
+     * being used in the log buffer.
+     *
+     * @param sink  Log sink. Caller retains ownership.
+     */
+    void addSink(LogSink *sink);
+
+    /**
+     * Removes a log sink from use.
+     *
+     * @param sink  Log sink to remove.
+     */
+    void removeSink(LogSink *sink);
+
+    // File observer.
     void fileBeingDeleted(File const &file);
 
 public:

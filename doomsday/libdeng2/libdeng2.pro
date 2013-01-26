@@ -68,15 +68,19 @@ HEADERS += \
     include/de/Clock \
     include/de/CommandLine \
     include/de/Config \
+    include/de/DebugLogSink \
     include/de/Error \
+    include/de/FileLogSink \
     include/de/Library \
     include/de/Log \
     include/de/LogBuffer \
+    include/de/LogSink \
+    include/de/MonospaceLogSinkFormatter \
     include/de/Rectangle \
+    include/de/TextStreamLogSink \
     include/de/UnixInfo \
     include/de/Vector \
-    include/de/Version \
-    include/de/widgets/event.h
+    include/de/Version
 
 HEADERS += \
     include/de/c_wrapper.h \
@@ -88,11 +92,16 @@ HEADERS += \
     include/de/version.h \
     include/de/core/app.h \
     include/de/core/clock.h \
-    include/de/core/config.h \
     include/de/core/commandline.h \
+    include/de/core/config.h \
+    include/de/core/debuglogsink.h \
+    include/de/core/filelogsink.h \
     include/de/core/library.h \
     include/de/core/log.h \
     include/de/core/logbuffer.h \
+    include/de/core/logsink.h \
+    include/de/core/monospacelogsinkformatter.h \
+    include/de/core/textstreamlogsink.h \
     include/de/core/unixinfo.h
 
 # Private headers.
@@ -109,9 +118,14 @@ SOURCES += \
     src/core/clock.cpp \
     src/core/commandline.cpp \
     src/core/config.cpp \
+    src/core/debuglogsink.cpp \
+    src/core/filelogsink.cpp \
     src/core/library.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp \
+    src/core/logsink.cpp \
+    src/core/monospacelogsinkformatter.cpp \
+    src/core/textstreamlogsink.cpp \
     src/core/unixinfo.cpp
 
 OTHER_FILES += \

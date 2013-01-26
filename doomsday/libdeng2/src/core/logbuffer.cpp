@@ -18,6 +18,10 @@
  */
 
 #include "de/LogBuffer"
+#include "de/LogSink"
+#include "de/FileLogSink"
+#include "de/DebugLogSink"
+#include "de/TextStreamLogSink"
 #include "de/Writer"
 #include "de/FixedByteArray"
 #include "de/Guard"
@@ -27,6 +31,7 @@
 #include <QTextStream>
 #include <QCoreApplication>
 #include <QList>
+#include <QSet>
 #include <QTimer>
 #include <QDebug>
 
@@ -34,106 +39,69 @@ namespace de {
 
 TimeDelta const FLUSH_INTERVAL = .2; // seconds
 
-namespace internal {
-
-/**
- * @internal
- * Interface for output streams for printing log messages.
- */
-class IOutputStream
-{
-public:
-    virtual ~IOutputStream() {}
-    virtual void flush() {}
-    virtual IOutputStream &operator << (QString const &text) = 0;
-};
-
-/// @internal Stream that outputs to a de::File.
-class FileOutputStream : public IOutputStream
-{
-public:
-    FileOutputStream(File *f) : _file(f) {}
-    void flush() {
-        if(_file) _file->flush();
-    }
-    IOutputStream &operator << (QString const &text) {
-        if(_file) *_file << Block(text.toUtf8());
-        return *this;
-    }
-private:
-    File *_file;
-};
-
-/// @internal Stream that outputs to a QTextStream.
-class TextOutputStream : public IOutputStream
-{
-public:
-    TextOutputStream(QTextStream *ts) : _ts(ts) {
-        if(_ts) _ts->setCodec("UTF-8");
-    }
-    ~TextOutputStream() {
-        delete _ts;
-    }
-    void flush() {
-        if(_ts) _ts->flush();
-    }
-    IOutputStream &operator << (QString const &text) {
-        if(_ts) (*_ts) << text;
-        return *this;
-    }
-private:
-    QTextStream *_ts;
-};
-
-/// @internal Stream that outputs to QDebug.
-class DebugOutputStream : public IOutputStream
-{
-public:
-    DebugOutputStream(QtMsgType msgType) {
-        _qs = new QDebug(msgType);
-    }
-    ~DebugOutputStream() {
-        delete _qs;
-    }
-    IOutputStream &operator << (QString const &text) {
-        _qs->nospace();
-        (*_qs) << text.toUtf8().constData();
-        _qs->nospace();
-        return *this;
-    }
-private:
-    QDebug *_qs;
-};
-
-} // namespace internal
-
 struct LogBuffer::Instance
 {
     typedef QList<LogEntry *> EntryList;
+    typedef QSet<LogSink *> Sinks;
 
     dint enabledOverLevel;
     dint maxEntryCount;
-    bool standardOutput;
+    bool useStandardOutput;
     bool flushingEnabled;
     File *outputFile;
+    FileLogSink *fileLogSink;
+#ifndef WIN32
+    TextStreamLogSink outSink;
+    TextStreamLogSink errSink;
+#else
+    DebugLogSink outSink;
+    DebugLogSink errSink;
+#endif
     EntryList entries;
     EntryList toBeFlushed;
     Time lastFlushedAt;
     QTimer *autoFlushTimer;
-
-    /// @todo These belong in the formatter.
-    String sectionOfPreviousLine;
-    int sectionDepthOfPreviousLine;
+    Sinks sinks;
 
     Instance(duint maxEntryCount)
         : enabledOverLevel(LogEntry::MESSAGE),
           maxEntryCount(maxEntryCount),
-          standardOutput(true),
+          useStandardOutput(true),
           flushingEnabled(true),
           outputFile(0),
-          autoFlushTimer(0),
-          sectionDepthOfPreviousLine(0)
-    {}
+          fileLogSink(0),
+#ifndef WIN32
+          outSink(new QTextStream(stdout)),
+          errSink(new QTextStream(stderr)),
+#else
+          // Windows GUI apps don't have stdout/stderr.
+          outSink(QtDebugMsg),
+          errSink(QtWarningMsg),
+#endif
+          autoFlushTimer(0)
+    {
+        // Standard output enabled by default.
+        outSink.setMode(LogSink::OnlyNormalEntries);
+        errSink.setMode(LogSink::OnlyWarningEntries);
+
+        sinks.insert(&outSink);
+        sinks.insert(&errSink);
+    }
+
+    ~Instance()
+    {
+        delete fileLogSink;
+    }
+
+    void disposeFileLogSink()
+    {
+        if(fileLogSink)
+        {
+            sinks.remove(fileLogSink);
+            delete fileLogSink;
+            fileLogSink = 0;
+        }
+    }
 };
 
 LogBuffer *LogBuffer::_appBuffer = 0;
@@ -143,10 +111,6 @@ LogBuffer::LogBuffer(duint maxEntryCount)
 {
     d->autoFlushTimer = new QTimer(this);
     connect(d->autoFlushTimer, SIGNAL(timeout()), this, SLOT(flush()));
-
-#ifdef WIN32
-    d->standardOutput = false;
-#endif
 }
 
 LogBuffer::~LogBuffer()
@@ -232,7 +196,12 @@ bool LogBuffer::isEnabled(LogEntry::Level overLevel) const
 
 void LogBuffer::enableStandardOutput(bool yes)
 {
-    d->standardOutput = yes;
+    DENG2_GUARD(this);
+
+    d->useStandardOutput = yes;
+
+    d->outSink.setMode(yes? LogSink::OnlyNormalEntries  : LogSink::Disabled);
+    d->errSink.setMode(yes? LogSink::OnlyWarningEntries : LogSink::Disabled);
 }
 
 void LogBuffer::enableFlushing(bool yes)
@@ -242,7 +211,10 @@ void LogBuffer::enableFlushing(bool yes)
 
 void LogBuffer::setOutputFile(String const &path)
 {
+    DENG2_GUARD(this);
+
     flush();
+    d->disposeFileLogSink();
 
     if(d->outputFile)
     {
@@ -255,219 +227,60 @@ void LogBuffer::setOutputFile(String const &path)
         d->outputFile = &App::rootFolder().replaceFile(path);
         d->outputFile->setMode(File::Write);
         d->outputFile->audienceForDeletion += this;
+
+        // Add a sink for the file.
+        d->fileLogSink = new FileLogSink(*d->outputFile);
+        d->sinks.insert(d->fileLogSink);
     }
+}
+
+void LogBuffer::addSink(LogSink *sink)
+{
+    DENG2_GUARD(this);
+
+    d->sinks.insert(sink);
+}
+
+void LogBuffer::removeSink(LogSink *sink)
+{
+    DENG2_GUARD(this);
+
+    d->sinks.remove(sink);
 }
 
 void LogBuffer::flush()
 {
-    using internal::IOutputStream;
-    using internal::FileOutputStream;
-    using internal::TextOutputStream;
-    using internal::DebugOutputStream;
-
     if(!d->flushingEnabled) return;
 
     DENG2_GUARD(this);
 
     if(!d->toBeFlushed.isEmpty())
     {
-        FileOutputStream fs(d->outputFile? d->outputFile : 0);
-#ifndef WIN32
-        TextOutputStream outs(d->standardOutput? new QTextStream(stdout) : 0);
-        TextOutputStream errs(d->standardOutput? new QTextStream(stderr) : 0);
-#else
-        DebugOutputStream outs(QtDebugMsg);
-        DebugOutputStream errs(QtWarningMsg);
-#endif
         try
         {
-            /**
-             * @todo This is a hard-coded line formatter with fixed line length
-             * and the assumption of fixed-width fonts. In the future there
-             * should be multiple formatters that can be plugged into
-             * LogBuffer, and this one should be used only for debug output and
-             * the log text file (doomsday.out).
-             */
-#ifdef _DEBUG
-            // Debug builds include a timestamp and msg type indicator.
-            duint const MAX_LENGTH = 110;
-#else
-            duint const MAX_LENGTH = 89;
-#endif
-
             DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
             {
-                // Error messages will go to stderr instead of stdout.
-                QList<IOutputStream *> os;
-                os << ((*i)->level() >= LogEntry::WARNING? &errs : &outs) << &fs;
-
-                String const &section = (*i)->section();
-
-                int cutSection = 0;
-#ifndef DENG2_DEBUG
-                // In a release build we can dispense with the metadata.
-                LogEntry::Flags entryFlags = LogEntry::Simple;
-#else
-                LogEntry::Flags entryFlags;
-#endif
-                // Compare the current entry's section with the previous one
-                // and if there is an opportunity to omit or abbreviate.
-                if(!d->sectionOfPreviousLine.isEmpty()
-                        && (*i)->sectionDepth() >= 1
-                        && d->sectionDepthOfPreviousLine <= (*i)->sectionDepth())
+                foreach(LogSink *sink, d->sinks)
                 {
-                    if(d->sectionOfPreviousLine == section)
+                    if(sink->willAccept(**i))
                     {
-                        // Previous section is exactly the same, omit completely.
-                        entryFlags |= LogEntry::SectionSameAsBefore;
-                    }
-                    else if(section.startsWith(d->sectionOfPreviousLine))
-                    {
-                        // Previous section is partially the same, omit the common beginning.
-                        cutSection = d->sectionOfPreviousLine.size();
-                        entryFlags |= LogEntry::SectionSameAsBefore;
-                    }
-                    else
-                    {
-                        int prefix = section.commonPrefixLength(d->sectionOfPreviousLine);
-                        if(prefix > 5)
-                        {
-                            // Some commonality with previous section, we can abbreviate
-                            // those parts of the section.
-                            entryFlags |= LogEntry::AbbreviateSection;
-                            cutSection = prefix;
-                        }
-                    }
-                }
-                String message = (*i)->asText(entryFlags, cutSection);
-
-                // Remember for the next line.
-                d->sectionOfPreviousLine      = section;
-                d->sectionDepthOfPreviousLine = (*i)->sectionDepth();
-
-                // The wrap indentation will be determined dynamically based on the content
-                // of the line.
-                int wrapIndent = -1;
-                int nextWrapIndent = -1;
-
-                // Print line by line.
-                String::size_type pos = 0;
-                while(pos != String::npos)
-                {
-#ifdef DENG2_DEBUG
-                    int const minimumIndent = 25;
-#else
-                    int const minimumIndent = 0;
-#endif
-
-                    // Find the length of the current line.
-                    String::size_type next = message.indexOf('\n', pos);
-                    duint lineLen = (next == String::npos? message.size() - pos : next - pos);
-                    duint const maxLen = (pos > 0? MAX_LENGTH - wrapIndent : MAX_LENGTH);
-                    if(lineLen > maxLen)
-                    {
-                        // Wrap overly long lines.
-                        next = pos + maxLen;
-                        lineLen = maxLen;
-
-                        // Maybe there's whitespace we can wrap at.
-                        int checkPos = pos + maxLen;
-                        while(checkPos > pos)
-                        {
-                            /// @todo remove isPunct() and just check for the breaking chars
-                            if(message[checkPos].isSpace() ||
-                                    (message[checkPos].isPunct() && message[checkPos] != '.' &&
-                                     message[checkPos] != ','    && message[checkPos] != '-' &&
-                                     message[checkPos] != '\''   && message[checkPos] != '"' &&
-                                     message[checkPos] != '('    && message[checkPos] != ')' &&
-                                     message[checkPos] != '['    && message[checkPos] != ']' &&
-                                     message[checkPos] != '_'))
-                            {
-                                if(!message[checkPos].isSpace())
-                                {
-                                    // Include the punctuation on this line.
-                                    checkPos++;
-                                }
-
-                                // Break here.
-                                next = checkPos;
-                                lineLen = checkPos - pos;
-                                break;
-                            }
-                            checkPos--;
-                        }
-                    }
-
-                    // Crop this line's text out of the entire message.
-                    String lineText = message.substr(pos, lineLen);
-
-                    // For lines other than the first one, print an indentation.
-                    if(pos > 0)
-                    {
-                        lineText = QString(wrapIndent, QChar(' ')) + lineText;
-                    }
-
-                    // The wrap indent for this paragraph depends on the first line's content.
-                    if(nextWrapIndent < 0)
-                    {
-                        int w = minimumIndent;
-                        int firstNonSpace = -1;
-                        for(; w < lineText.size(); ++w)
-                        {
-                            if(firstNonSpace < 0 && !lineText[w].isSpace())
-                                firstNonSpace = w;
-
-                            // Indent to colons automatically (but not too deeply).
-                            if(lineText[w] == ':' && w < lineText.size() - 1 && lineText[w + 1].isSpace())
-                                firstNonSpace = (w < int(MAX_LENGTH)*2/3? -1 : minimumIndent);
-                        }
-
-                        nextWrapIndent = qMax(minimumIndent, firstNonSpace);
-                    }
-
-                    // Check for formatting symbols.
-                    lineText.replace("$R", String(maxLen - minimumIndent, '-'));
-
-                    foreach(IOutputStream *stream, os)
-                    {
-                        if(stream) *stream << lineText;
-                    }
-
-                    // Advance to the next line.
-                    wrapIndent = nextWrapIndent;
-                    pos = next;
-                    if(pos != String::npos && message[pos].isSpace())
-                    {
-                        // At a forced newline, reset the wrap indentation.
-                        if(message[pos] == '\n')
-                        {
-                            nextWrapIndent = -1;
-                            wrapIndent = minimumIndent;
-                        }
-                        pos++; // Skip whitespace.
-                    }
-
-                    foreach(IOutputStream *stream, os)
-                    {
-                        if(stream) *stream << "\n";
+                        *sink << **i;
                     }
                 }
             }
         }
         catch(de::Error const &error)
         {
-            QList<IOutputStream *> os;
-            os << &errs << &fs;
-            foreach(IOutputStream *stream, os)
+            foreach(LogSink *sink, d->sinks)
             {
-                if(stream) *stream << "Exception during log flush:\n" << error.what() << "\n";
+                *sink << "Exception during log flush:\n" << error.what();
             }
         }
 
         d->toBeFlushed.clear();
 
-        // Make sure it really gets written now.
-        fs.flush();
+        // Make sure everything really gets written now.
+        foreach(LogSink *sink, d->sinks) sink->flush();
     }
 
     d->lastFlushedAt = Time();
@@ -485,8 +298,10 @@ void LogBuffer::fileBeingDeleted(File const &file)
 {
     DENG2_ASSERT(d->outputFile == &file);
     DENG2_UNUSED(file);
+
     flush();
-    d->outputFile = 0;
+    d->disposeFileLogSink();
+    d->outputFile = 0;   
 }
 
 void LogBuffer::setAppBuffer(LogBuffer &appBuffer)
