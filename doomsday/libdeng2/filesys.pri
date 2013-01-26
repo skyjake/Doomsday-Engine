@@ -10,7 +10,9 @@ HEADERS += \
     include/de/LibraryFile \
     include/de/NativeFile \
     include/de/NativePath \
-    include/de/PackageFolder \
+    include/de/PackageFolder
+
+HEADERS += \
     include/de/filesys/archivefeed.h \
     include/de/filesys/archiveentryfile.h \
     include/de/filesys/bytearrayfile.h \

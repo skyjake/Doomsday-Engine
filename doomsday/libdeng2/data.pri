@@ -45,7 +45,9 @@ HEADERS += \
     include/de/WaitableFIFO \
     include/de/Writer \
     include/de/Zeroed \
-    include/de/ZipArchive \
+    include/de/ZipArchive
+
+HEADERS += \
     include/de/data/accessorvalue.h \
     include/de/data/archive.h \
     include/de/data/arrayvalue.h \

@@ -7,7 +7,9 @@ HEADERS += \
     include/de/Protocol \
     include/de/RecordPacket \
     include/de/Socket \
-    include/de/Transmitter \
+    include/de/Transmitter
+
+HEADERS += \
     include/de/net/address.h \
     include/de/net/identifiedpacket.h \
     include/de/net/message.h \

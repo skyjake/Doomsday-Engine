@@ -8,7 +8,9 @@ HEADERS += \
     include/de/RectangleRule \
     include/de/RootWidget \
     include/de/ScalarRule \
-    include/de/Widget \
+    include/de/Widget
+
+HEADERS += \
     include/de/widgets/animation.h \
     include/de/widgets/animationvector.h \
     include/de/widgets/constantrule.h \
