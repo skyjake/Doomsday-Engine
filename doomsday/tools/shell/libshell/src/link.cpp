@@ -54,9 +54,12 @@ Link::Link(Address const &address) : d(new Instance(*this))
 
     connect(d->socket, SIGNAL(connected()), this, SLOT(socketConnected()));
     connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(d->socket, SIGNAL(messagesReady()), this, SLOT(handleIncomingPackets()));
+    connect(d->socket, SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
 
-    d->socket->connect(address);
+    // Fallback to default port.
+    if(!d->peerAddress.port()) d->peerAddress.setPort(13209);
+
+    d->socket->connect(d->peerAddress);
 
     d->status = Connecting;
 }
@@ -66,8 +69,9 @@ Link::Link(Socket *openSocket) : d(new Instance(*this))
     d->peerAddress = openSocket->peerAddress();
     d->socket = openSocket;
 
+    // Note: socketConnected() not used because the socket is already open.
     connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(d->socket, SIGNAL(messagesReady()), this, SLOT(handleIncomingPackets()));
+    connect(d->socket, SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
 
     d->status = Connected;
     d->connectedAt = Time();
@@ -105,14 +109,7 @@ Packet *Link::nextPacket()
 
     std::auto_ptr<Message> data(d->socket->receive());
     Packet *packet = d->protocol.interpret(*data.get());
-    try
-    {
-        packet->setFrom(d->socket->peerAddress());
-    }
-    catch(Socket::PeerError const &)
-    {
-        // Socket must already be closed.
-    }
+    if(packet) packet->setFrom(d->peerAddress);
     return packet;
 }
 
@@ -124,7 +121,10 @@ void Link::send(IByteArray const &data)
 void Link::socketConnected()
 {
     LOG_AS("Link");
-    LOG_VERBOSE("Successfully connected to %s") << d->socket->peerAddress();
+    LOG_VERBOSE("Successfully connected to server %s") << d->socket->peerAddress();
+
+    // Tell the server to switch to shell mode (v1).
+    *d->socket << String("Shell").toLatin1();
 
     d->status = Connected;
     d->connectedAt = Time();
@@ -144,14 +144,6 @@ void Link::socketDisconnected()
     // Slots have now had an opportunity to observe the total
     // duration of the connection that has just ended.
     d->connectedAt = Time::invalidTime();
-}
-
-void Link::handleIncomingPackets()
-{
-    while(Packet *ptr = nextPacket())
-    {
-        QScopedPointer<Packet> packet(ptr);
-    }
 }
 
 } // namespace shell

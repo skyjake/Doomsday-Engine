@@ -95,11 +95,11 @@ public:
 protected slots:
     void socketConnected();
     void socketDisconnected();
-    void handleIncomingPackets();
 
 signals:
     void connected();
     void disconnected();
+    void packetsReady();
 
 private:
     struct Instance;

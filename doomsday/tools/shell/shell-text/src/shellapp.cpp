@@ -87,6 +87,7 @@ ShellApp::ShellApp(int &argc, char **argv)
         // Open a connection.
         d->link = new shell::Link(Address(args[1]));
         d->status->setShellLink(d->link);
+        connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
     }
 }
 
@@ -103,4 +104,15 @@ void ShellApp::sendCommandToServer(String command)
 
     QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
     *d->link << *packet;
+}
+
+void ShellApp::handleIncomingPackets()
+{
+    forever
+    {
+        QScopedPointer<Packet> packet(d->link->nextPacket());
+        if(packet.isNull()) break;
+
+        packet->execute();
+    }
 }

@@ -32,6 +32,7 @@ public:
 
 public slots:
     void sendCommandToServer(de::String command);
+    void handleIncomingPackets();
 
 private:
     struct Instance;

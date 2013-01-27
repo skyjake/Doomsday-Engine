@@ -82,8 +82,8 @@ void StatusWidget::draw()
         TimeDelta elapsed = d->link->connectedAt().since();
         String time = String("| %1:%2:%3")
                 .arg(int(elapsed.asHours()))
-                .arg(int(elapsed.asMinutes()) % 60)
-                .arg(int(elapsed) % 60);
+                .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))
+                .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0'));
         String host = "| " + d->link->address().asText();
 
         int x = buf.size().x - time.size() - 1;

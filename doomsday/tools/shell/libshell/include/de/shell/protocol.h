@@ -35,7 +35,15 @@ public:
     LogEntryPacket();
     ~LogEntryPacket();
 
-    void clear();
+    void clear();   
+    bool isEmpty() const;
+
+    /**
+     * Adds a log entry to the packet.
+     * @param entry  Log entry.
+     */
+    void add(LogEntry const &entry);
+
     void execute() const;
 
     // Implements ISerializable.

@@ -44,6 +44,16 @@ void LogEntryPacket::clear()
     _entries.clear();
 }
 
+bool LogEntryPacket::isEmpty() const
+{
+    return _entries.isEmpty();
+}
+
+void LogEntryPacket::add(LogEntry const &entry)
+{
+    _entries.append(new LogEntry(entry));
+}
+
 void LogEntryPacket::execute() const
 {
     // Copies of all entries in the packet are added to the LogBuffer.
@@ -76,10 +86,18 @@ Packet *LogEntryPacket::fromBlock(Block const &block)
 // Protocol ------------------------------------------------------------------
 
 Protocol::Protocol()
-{}
+{
+    define(LogEntryPacket::fromBlock);
+}
 
 Protocol::PacketType Protocol::recognize(Packet const *packet)
 {
+    if(packet->type() == LOG_ENTRY_PACKET_TYPE)
+    {
+        DENG2_ASSERT(dynamic_cast<LogEntryPacket const *>(packet) != 0);
+        return LogEntries;
+    }
+
     RecordPacket const *rec = dynamic_cast<RecordPacket const *>(packet);
     if(rec)
     {
