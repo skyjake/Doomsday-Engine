@@ -90,9 +90,6 @@ static mobjinfo_t* gettingFor;
 xgclass_t nullXgClassLinks; // Used when none defined.
 xgclass_t* xgClassLinks;
 
-static void defineFlaremap(uri_s const *_resourceUri);
-static void defineLightmap(uri_s const *_resourceUri);
-
 /**
  * Retrieves the XG Class list from the Game.
  * XGFunc links are provided by the Game, who owns the actual
@@ -930,6 +927,32 @@ static animgroup_t const *findAnimGroupForTexture(TextureManifest &manifest)
     return 0; // Not found.
 }
 
+static void defineFlaremap(de::Uri const &resourceUri)
+{
+    if(resourceUri.isEmpty()) return;
+
+    // Reference to none?
+    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
+
+    // Reference to a "built-in" flaremap?
+    String const &resourcePathStr = resourceUri.path().toStringRef();
+    if(resourcePathStr.length() == 1 &&
+       resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
+        return;
+
+    R_DefineTexture("Flaremaps", resourceUri);
+}
+
+static void defineLightmap(de::Uri const &resourceUri)
+{
+    if(resourceUri.isEmpty()) return;
+
+    // Reference to none?
+    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
+
+    R_DefineTexture("Lightmaps", resourceUri);
+}
+
 static void generateMaterialDefForTexture(TextureManifest &manifest)
 {
     LOG_AS("generateMaterialDefForTexture");
@@ -1040,18 +1063,12 @@ static void updateMaterialFromDef(Material &material, ded_material_t &def)
     ///       the primary layer's first texture is custom or not.
     manifest.setCustom(false);
     Material::Layer const &layer = *material.layers()[0];
-    if(layer.stageCount() > 0 && layer.stages()[0]->texture)
+    if(layer.stageCount())
     {
-        try
+        if(Texture *tex = layer.stages()[0]->texture)
         {
-            de::Uri *texUri = reinterpret_cast<de::Uri *>(layer.stages()[0]->texture);
-            if(Texture *tex = App_Textures()->find(*texUri).texture())
-            {
-                manifest.setCustom(tex->flags().testFlag(Texture::Custom));
-            }
+            manifest.setCustom(tex->flags().testFlag(Texture::Custom));
         }
-        catch(Textures::NotFoundError const &)
-        {} // Ignore this error.
     }
 }
 
@@ -1066,19 +1083,19 @@ static void interpretMaterialDef(ded_material_t &def)
 
             if(stage->up)
             {
-                defineLightmap(stage->up);
+                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->up));
             }
             if(stage->down)
             {
-                defineLightmap(stage->down);
+                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->down));
             }
             if(stage->sides)
             {
-                defineLightmap(stage->sides);
+                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->sides));
             }
             if(stage->flare)
             {
-                defineFlaremap(stage->flare);
+                defineFlaremap(*reinterpret_cast<de::Uri const *>(stage->flare));
             }
         }
     }
@@ -1233,20 +1250,56 @@ void Def_Read()
 
             if(dl->stage.up)
             {
-                defineLightmap(dl->stage.up);
+                defineLightmap(*reinterpret_cast<de::Uri const *>(dl->stage.up));
             }
             if(dl->stage.down)
             {
-                defineLightmap(dl->stage.down);
+                defineLightmap(*reinterpret_cast<de::Uri const *>(dl->stage.down));
             }
             if(dl->stage.sides)
             {
-                defineLightmap(dl->stage.sides);
+                defineLightmap(*reinterpret_cast<de::Uri const *>(dl->stage.sides));
             }
             if(dl->stage.flare)
             {
-                defineFlaremap(dl->stage.flare);
+                defineFlaremap(*reinterpret_cast<de::Uri const *>(dl->stage.flare));
             }
+        }
+    }
+
+    // Detail textures.
+    App_Textures()->scheme("Details").clear();
+    for(int i = 0; i < defs.count.details.num; ++i)
+    {
+        ded_detailtexture_t *dtl = &defs.details[i];
+
+        // Ignore definitions which do not specify a material.
+        if((!dtl->material1 || Uri_IsEmpty(dtl->material1)) &&
+           (!dtl->material2 || Uri_IsEmpty(dtl->material2))) continue;
+
+        if(!dtl->stage.texture) continue;
+
+        R_DefineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->stage.texture));
+    }
+
+    // Surface reflections.
+    App_Textures()->scheme("Reflections").clear();
+    App_Textures()->scheme("Masks").clear();
+    for(int i = 0; i < defs.count.reflections.num; ++i)
+    {
+        ded_reflection_t *ref = &defs.reflections[i];
+
+        // Ignore definitions which do not specify a material.
+        if(!ref->material || Uri_IsEmpty(ref->material)) continue;
+
+        if(ref->stage.texture)
+        {
+            R_DefineTexture("Reflections", reinterpret_cast<de::Uri &>(*ref->stage.texture));
+        }
+        if(ref->stage.maskTexture)
+        {
+            R_DefineTexture("Masks", reinterpret_cast<de::Uri &>(*ref->stage.maskTexture),
+                            QSize(ref->stage.maskWidth, ref->stage.maskHeight));
         }
     }
 
@@ -1509,36 +1562,6 @@ static void initMaterialGroup(ded_group_t &def)
     }
 }
 
-static void defineFlaremap(uri_s const *_resourceUri)
-{
-    if(!_resourceUri) return;
-    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
-    if(resourceUri.isEmpty()) return;
-
-    // Reference to none?
-    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
-
-    // Reference to a "built-in" flaremap?
-    String const &resourcePathStr = resourceUri.path().toStringRef();
-    if(resourcePathStr.length() == 1 &&
-       resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
-        return;
-
-    R_DefineTexture("Flaremaps", resourceUri);
-}
-
-static void defineLightmap(uri_s const *_resourceUri)
-{
-    if(!_resourceUri) return;
-    de::Uri const &resourceUri = reinterpret_cast<de::Uri const &>(*_resourceUri);
-    if(resourceUri.isEmpty()) return;
-
-    // Reference to none?
-    if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
-
-    R_DefineTexture("Lightmaps", resourceUri);
-}
-
 void Def_PostInit(void)
 {
 #ifdef __CLIENT__
@@ -1581,21 +1604,6 @@ void Def_PostInit(void)
 
 #endif // __CLIENT__
 
-    // Detail textures.
-    App_Textures()->scheme("Details").clear();
-    for(int i = 0; i < defs.count.details.num; ++i)
-    {
-        ded_detailtexture_t *dtl = &defs.details[i];
-
-        // Ignore definitions which do not specify a material.
-        if((!dtl->material1 || Uri_IsEmpty(dtl->material1)) &&
-           (!dtl->material2 || Uri_IsEmpty(dtl->material2))) continue;
-
-        if(!dtl->stage.texture) continue;
-
-        R_DefineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->stage.texture));
-    }
-
     // Lights.
     for(int i = 0; i < defs.count.lights.num; ++i)
     {
@@ -1603,40 +1611,19 @@ void Def_PostInit(void)
 
         if(lig->up)
         {
-            defineLightmap(lig->up);
+            defineLightmap(*reinterpret_cast<de::Uri const *>(lig->up));
         }
         if(lig->down)
         {
-            defineLightmap(lig->down);
+            defineLightmap(*reinterpret_cast<de::Uri const *>(lig->down));
         }
         if(lig->sides)
         {
-            defineLightmap(lig->sides);
+            defineLightmap(*reinterpret_cast<de::Uri const *>(lig->sides));
         }
         if(lig->flare)
         {
-            defineFlaremap(lig->flare);
-        }
-    }
-
-    // Surface reflections.
-    App_Textures()->scheme("Reflections").clear();
-    App_Textures()->scheme("Masks").clear();
-    for(int i = 0; i < defs.count.reflections.num; ++i)
-    {
-        ded_reflection_t *ref = &defs.reflections[i];
-
-        // Ignore definitions which do not specify a material.
-        if(!ref->material || Uri_IsEmpty(ref->material)) continue;
-
-        if(ref->stage.texture)
-        {
-            R_DefineTexture("Reflections", reinterpret_cast<de::Uri &>(*ref->stage.texture));
-        }
-        if(ref->stage.maskTexture)
-        {
-            R_DefineTexture("Masks", reinterpret_cast<de::Uri &>(*ref->stage.maskTexture),
-                            QSize(ref->stage.maskWidth, ref->stage.maskHeight));
+            defineFlaremap(*reinterpret_cast<de::Uri const *>(lig->flare));
         }
     }
 

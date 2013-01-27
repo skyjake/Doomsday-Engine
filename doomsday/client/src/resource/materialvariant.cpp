@@ -172,7 +172,7 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
             }
             ls.inter = 0;
 
-            ded_material_layer_stage_t const *lsCur = layerDef.stages()[ls.stage];
+            Layer::Stage const *lsCur = layerDef.stages()[ls.stage];
             if(lsCur->variance != 0)
                 ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
             else
@@ -180,7 +180,7 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
         }
         else
         {
-            ded_material_layer_stage_t const *lsCur = layerDef.stages()[ls.stage];
+            Layer::Stage const *lsCur = layerDef.stages()[ls.stage];
             ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
         }
     }
@@ -203,7 +203,7 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
                 }
                 ls.inter = 0;
 
-                ded_detail_stage_t const *lsCur = layerDef.stages()[ls.stage];
+                Material::DetailLayer::Stage const *lsCur = layerDef.stages()[ls.stage];
                 if(lsCur->variance != 0)
                     ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
                 else
@@ -211,7 +211,7 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
             }
             else
             {
-                ded_detail_stage_t const *lsCur = layerDef.stages()[ls.stage];
+                Material::DetailLayer::Stage const *lsCur = layerDef.stages()[ls.stage];
                 ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
             }
         }
@@ -235,7 +235,7 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
                 }
                 ls.inter = 0;
 
-                ded_shine_stage_t const *lsCur = layerDef.stages()[ls.stage];
+                Material::ShineLayer::Stage const *lsCur = layerDef.stages()[ls.stage];
                 if(lsCur->variance != 0)
                     ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
                 else
@@ -243,7 +243,7 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
             }
             else
             {
-                ded_shine_stage_t const *lsCur = layerDef.stages()[ls.stage];
+                Material::ShineLayer::Stage const *lsCur = layerDef.stages()[ls.stage];
                 ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
             }
         }

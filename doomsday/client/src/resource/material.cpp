@@ -33,12 +33,39 @@ using namespace de;
 Material::Layer::Layer()
 {}
 
-Material::Layer *Material::Layer::fromDef(ded_material_layer_t &def)
+Material::Layer::~Layer()
+{
+    DENG2_FOR_EACH(Stages, i, stages_)
+    {
+        delete *i;
+    }
+}
+
+static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
+{
+    try
+    {
+        if(def.texture)
+        {
+            return App_Textures()->find(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+        }
+    }
+    catch(Textures::NotFoundError const &)
+    {} // Ignore this error.
+    return 0;
+}
+
+Material::Layer *Material::Layer::fromDef(ded_material_layer_t const &layerDef)
 {
     Layer *layer = new Layer();
-    for(int i = 0; i < def.stageCount.num; ++i)
+    for(int i = 0; i < layerDef.stageCount.num; ++i)
     {
-        layer->stages_.push_back(&def.stages[i]);
+        ded_material_layer_stage_t const &stageDef = layerDef.stages[i];
+
+        Texture *texture = findTextureForLayerStage(stageDef);
+        Stage *stage = new Stage(texture, stageDef.tics, stageDef.variance, stageDef.glowStrength,
+                                 stageDef.glowStrengthVariance, Vector2f(stageDef.texOrigin));
+        layer->stages_.push_back(stage);
     }
     return layer;
 }
@@ -56,12 +83,40 @@ Material::Layer::Stages const &Material::Layer::stages() const
 Material::DetailLayer::DetailLayer()
 {}
 
-Material::DetailLayer *Material::DetailLayer::fromDef(ded_detailtexture_t &def)
+Material::DetailLayer::~DetailLayer()
+{
+    DENG2_FOR_EACH(Stages, i, stages_)
+    {
+        delete *i;
+    }
+}
+
+static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
+{
+    try
+    {
+        if(def.texture)
+        {
+            return App_Textures()->scheme("Details")
+                        .findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+        }
+    }
+    catch(Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
+    return 0;
+}
+
+Material::DetailLayer *Material::DetailLayer::fromDef(ded_detailtexture_t const &layerDef)
 {
     DetailLayer *layer = new DetailLayer();
     for(int i = 0; i < 1/*def.stageCount.num*/; ++i)
     {
-        layer->stages_.push_back(&def.stage /*&def.stages[i]*/);
+        ded_detail_stage_t const &stageDef = layerDef.stage; //layerDef.stages[i];
+
+        Texture *texture = findTextureForDetailLayerStage(stageDef);
+        Stage *stage = new Stage(stageDef.tics, stageDef.variance, texture,
+                                 stageDef.scale, stageDef.strength, stageDef.maxDistance);
+        layer->stages_.push_back(stage);
     }
     return layer;
 }
@@ -79,12 +134,53 @@ Material::DetailLayer::Stages const &Material::DetailLayer::stages() const
 Material::ShineLayer::ShineLayer()
 {}
 
-Material::ShineLayer *Material::ShineLayer::fromDef(ded_reflection_t &def)
+Material::ShineLayer::~ShineLayer()
+{
+    DENG2_FOR_EACH(Stages, i, stages_)
+    {
+        delete *i;
+    }
+}
+
+static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool findMask)
+{
+    try
+    {
+        if(findMask)
+        {
+            if(def.maskTexture)
+            {
+                return App_Textures()->scheme("Masks")
+                            .findByResourceUri(*reinterpret_cast<de::Uri *>(def.maskTexture)).texture();
+            }
+        }
+        else
+        {
+            if(def.texture)
+            {
+                return App_Textures()->scheme("Reflections")
+                            .findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+            }
+        }
+    }
+    catch(Textures::Scheme::NotFoundError const &)
+    {} // Ignore this error.
+    return 0;
+}
+
+Material::ShineLayer *Material::ShineLayer::fromDef(ded_reflection_t const &layerDef)
 {
     ShineLayer *layer = new ShineLayer();
     for(int i = 0; i < 1/*def.stageCount.num*/; ++i)
     {
-        layer->stages_.push_back(&def.stage /*&def.stages[i]*/);
+        ded_shine_stage_t const &stageDef = layerDef.stage; //layerDef.stages[i];
+
+        Texture *texture = findTextureForShineLayerStage(stageDef, false/*not mask*/);
+        Texture *maskTexture = findTextureForShineLayerStage(stageDef, true/*mask*/);
+        Stage *stage = new Stage(stageDef.tics, stageDef.variance, texture, maskTexture,
+                                 stageDef.blendMode, stageDef.shininess, de::Vector3f(stageDef.minColor),
+                                 QSizeF(stageDef.maskWidth, stageDef.maskHeight));
+        layer->stages_.push_back(stage);
     }
     return layer;
 }
@@ -232,9 +328,11 @@ Material::Material(MaterialManifest &_manifest, ded_material_t *def)
         Layer::Stages const &stages = layer->stages();
         DENG2_FOR_EACH_CONST(Layer::Stages, s, stages)
         {
-            ded_material_layer_stage_t *stageDef = *s;
+            Layer::Stage *stageDef = *s;
+            if(!stageDef->texture) continue;
 
-            ded_detailtexture_t *detailDef = Def_GetDetailTex(stageDef->texture/*, UNKNOWN VALUE, manifest.isCustom()*/);
+            de::Uri textureUri(stageDef->texture->manifest().composeUri());
+            ded_detailtexture_t *detailDef = Def_GetDetailTex(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
             if(detailDef)
             {
                 // Time to allocate the detail layer?
@@ -245,7 +343,7 @@ Material::Material(MaterialManifest &_manifest, ded_material_t *def)
                 // Add stages.
             }
 
-            ded_reflection_t *reflectionDef = Def_GetReflection(stageDef->texture/*, UNKNOWN VALUE, manifest.isCustom()*/);
+            ded_reflection_t *reflectionDef = Def_GetReflection(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
             if(reflectionDef)
             {
                 // Time to allocate the shine layer?
@@ -366,7 +464,7 @@ bool Material::hasGlow() const
         Layer::Stages const &stages = (*i)->stages();
         DENG2_FOR_EACH_CONST(Layer::Stages, k, stages)
         {
-            ded_material_layer_stage_t const &stage = **k;
+            Layer::Stage const &stage = **k;
             if(stage.glowStrength > .0001f) return true;
         }
     }

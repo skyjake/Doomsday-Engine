@@ -186,51 +186,6 @@ MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
     }
     return d->stored.decorations[index];
 }
-
-/// @todo Optimize: Cache this result at material level.
-static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
-{
-    try
-    {
-        return App_Textures()->find(*reinterpret_cast<de::Uri *>(def.texture)).texture();
-    }
-    catch(Textures::NotFoundError const &)
-    {} // Ignore this error.
-    return 0;
-}
-
-/// @todo Optimize: Cache this result at material level.
-static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
-{
-    try
-    {
-        return App_Textures()->scheme("Details").findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
-    }
-    catch(Textures::Scheme::NotFoundError const &)
-    {} // Ignore this error.
-    return 0;
-}
-
-/// @todo Optimize: Cache this result at material level.
-static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool findMask)
-{
-    try
-    {
-        if(findMask)
-        {
-            if(def.maskTexture)
-                return App_Textures()->scheme("Masks").findByResourceUri(*reinterpret_cast<de::Uri *>(def.maskTexture)).texture();
-        }
-        else
-        {
-            if(def.texture)
-                return App_Textures()->scheme("Reflections").findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
-        }
-    }
-    catch(Textures::Scheme::NotFoundError const &)
-    {} // Ignore this error.
-    return 0;
-}
 #endif // __CLIENT__
 
 /// @todo Implement more useful methods of interpolation. (What do we want/need here?)
@@ -262,8 +217,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         Material::Variant::LayerState const &l = variant->layer(i);
 
-        ded_material_layer_stage_t const *lsCur = layers[i]->stages()[l.stage];
-        if(Texture *tex = findTextureForLayerStage(*lsCur))
+        Material::Layer::Stage const *lsCur = layers[i]->stages()[l.stage];
+        if(Texture *tex = lsCur->texture)
         {
             // Pick the instance matching the specified context.
             preparetextureresult_t result;
@@ -284,8 +239,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
         // Smooth Texture Animation?
         if(!smoothTexAnim || layers[i]->stageCount() < 2) continue;
 
-        ded_material_layer_stage_t const *lsNext = layers[i]->stages()[(l.stage + 1) % layers[i]->stageCount()];
-        if(Texture *tex = findTextureForLayerStage(*lsNext))
+        Material::Layer::Stage const *lsNext = layers[i]->stages()[(l.stage + 1) % layers[i]->stageCount()];
+        if(Texture *tex = lsNext->texture)
         {
             // Pick the instance matching the specified context.
             preparetextureresult_t result;
@@ -297,11 +252,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
     if(!material->isSkyMasked() && material->isDetailed())
     {
         Material::Variant::LayerState const &l = variant->detailLayer();
-        ded_detail_stage_t const *lsCur = detailLayer->stages()[l.stage];
+        Material::DetailLayer::Stage const *lsCur = detailLayer->stages()[l.stage];
 
         float const contrast = MINMAX_OF(0, lsCur->strength, 1) * detailFactor /*Global strength multiplier*/;
         texturevariantspecification_t &texSpec = *GL_DetailTextureVariantSpecificationForContext(contrast);
-        if(Texture *tex = findTextureForDetailLayerStage(*lsCur))
+        if(Texture *tex = lsCur->texture)
         {
             // Pick the instance matching the specified context.
             prepTextures[MTU_DETAIL][0] = GL_PrepareTexture(*tex, texSpec);
@@ -310,8 +265,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
         // Smooth Texture Animation?
         if(smoothTexAnim && detailLayer->stageCount() > 1)
         {
-            ded_detail_stage_t const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
-            if(Texture *tex = findTextureForDetailLayerStage(*lsNext))
+            Material::DetailLayer::Stage const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
+            if(Texture *tex = lsNext->texture)
             {
                 // Pick the instance matching the specified context.
                 prepTextures[MTU_DETAIL][1] = GL_PrepareTexture(*tex, texSpec);
@@ -323,9 +278,9 @@ void MaterialSnapshot::Instance::takeSnapshot()
     if(!material->isSkyMasked() && material->isShiny())
     {
         Material::Variant::LayerState const &l = variant->shineLayer();
-        ded_shine_stage_t const *lsCur = shineLayer->stages()[l.stage];
+        Material::ShineLayer::Stage const *lsCur = shineLayer->stages()[l.stage];
 
-        if(Texture *tex = findTextureForShineLayerStage(*lsCur, false/*not-mask*/))
+        if(Texture *tex = lsCur->texture)
         {
             texturevariantspecification_t &texSpec =
                 *GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
@@ -338,7 +293,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
         // We are only interested in a mask if we have a shiny texture.
         if(prepTextures[MTU_REFLECTION][0])
-        if(Texture *tex = findTextureForShineLayerStage(*lsCur, true/*the-mask*/))
+        if(Texture *tex = lsCur->maskTexture)
         {
             texturevariantspecification_t &texSpec =
                 *GL_TextureVariantSpecificationForContext(
@@ -360,9 +315,9 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(stored.dimensions.isEmpty()) return;
 
-    Material::Variant::LayerState const &l   = variant->layer(0);
-    ded_material_layer_stage_t const *lsCur  = layers[0]->stages()[l.stage];
-    ded_material_layer_stage_t const *lsNext = layers[0]->stages()[(l.stage + 1) % layers[0]->stageCount()];
+    Material::Variant::LayerState const &l = variant->layer(0);
+    Material::Layer::Stage const *lsCur  = layers[0]->stages()[l.stage];
+    Material::Layer::Stage const *lsNext = layers[0]->stages()[(l.stage + 1) % layers[0]->stageCount()];
 
     // Glow strength is presently taken from layer #0.
     if(l.inter == 0)
@@ -420,8 +375,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
 #ifdef __CLIENT__
         Material::Variant::LayerState const &l = variant->detailLayer();
-        ded_detail_stage_t const *lsCur  = detailLayer->stages()[l.stage];
-        ded_detail_stage_t const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
+        Material::DetailLayer::Stage const *lsCur  = detailLayer->stages()[l.stage];
+        Material::DetailLayer::Stage const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
 #endif
 
         // Setup the detail texture unit.
@@ -474,8 +429,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
 #ifdef __CLIENT__
         Material::Variant::LayerState const &l = variant->shineLayer();
-        ded_shine_stage_t const *lsCur  = shineLayer->stages()[l.stage];
-        ded_shine_stage_t const *lsNext = shineLayer->stages()[(l.stage + 1) % shineLayer->stageCount()];
+        Material::ShineLayer::Stage const *lsCur  = shineLayer->stages()[l.stage];
+        Material::ShineLayer::Stage const *lsNext = shineLayer->stages()[(l.stage + 1) % shineLayer->stageCount()];
 #endif
 
         // Setup the shine texture unit.

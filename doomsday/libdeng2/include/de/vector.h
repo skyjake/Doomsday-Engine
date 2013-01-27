@@ -21,6 +21,7 @@
 #define LIBDENG2_VECTOR_H
 
 #include "math.h"
+#include "Error"
 #include "ISerializable"
 #include "Writer"
 #include "Reader"
@@ -57,6 +58,11 @@ public:
     /// Conversion operator to a double vector.
     operator Vector2<ddouble> () const {
         return Vector2<ddouble>(ddouble(x), ddouble(y));
+    }
+    Type operator [] (int index) const {
+        if(index == 0) return x;
+        if(index == 1) return y;
+        throw Error("Vector2::operator []", QString("Illegal index %1").arg(index));
     }
     Vector2 operator + (Vector2 const &other) const {
         return Vector2(x + other.x, y + other.y);
@@ -174,6 +180,11 @@ public:
     /// Conversion operator to a double vector.
     operator Vector3<ddouble> () const {
         return Vector3<ddouble>(Vector2<Type>::x, Vector2<Type>::y, z);
+    }
+    Type operator [] (int index) const {
+        if(index < 2) return Vector2<Type>::operator [] (index);
+        if(index == 2) return z;
+        throw Error("Vector3::operator[]", QString("Illegal index %1").arg(index));
     }
     Vector3 operator + (Vector3 const &other) const {
         return Vector3(Vector2<Type>::x + other.x, Vector2<Type>::y + other.y, z + other.z);
@@ -295,6 +306,11 @@ public:
     /// Conversion operator to a double vector.
     operator Vector4<ddouble> () const {
         return Vector4<ddouble>(Vector3<Type>::x, Vector3<Type>::y, Vector3<Type>::z, w);
+    }
+    Type operator [] (int index) const {
+        if(index < 3) return Vector3<Type>::operator [] (index);
+        if(index == 3) return w;
+        throw Error("Vector4::operator[]", QString("Illegal index %1").arg(index));
     }
     Vector4 operator + (Vector4 const &other) const {
         return Vector4(Vector3<Type>::x + other.x, Vector3<Type>::y + other.y,

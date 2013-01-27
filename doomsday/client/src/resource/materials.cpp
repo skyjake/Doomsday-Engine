@@ -757,9 +757,9 @@ static void printMaterialInfo(Material &material)
 
         for(int k = 0; k < stageCount; ++k)
         {
-            ded_material_layer_stage_t const &sDef = *(lDef.stages()[k]);
-            QByteArray path = !sDef.texture? QString("(prev)").toUtf8()
-                                           : reinterpret_cast<Uri *>(sDef.texture)->asText().toUtf8();
+            Material::Layer::Stage const &sDef = *(lDef.stages()[k]);
+            QByteArray path = sDef.texture? sDef.texture->manifest().composeUri().asText().toUtf8()
+                                          : QString("(prev)").toUtf8();
 
             Con_Printf("  #%i: Texture:\"%s\" Tics:%i (~%.2f)"
                        "\n      Offset:%.2f x %.2f Glow:%.2f (~%.2f)\n",
@@ -780,9 +780,9 @@ static void printMaterialInfo(Material &material)
 
         for(int i = 0; i < stageCount; ++i)
         {
-            ded_detail_stage_t const &sDef = *(lDef.stages()[i]);
-            QByteArray path = !sDef.texture? QString("(prev)").toUtf8()
-                                           : reinterpret_cast<Uri *>(sDef.texture)->asText().toUtf8();
+            Material::DetailLayer::Stage const &sDef = *(lDef.stages()[i]);
+            QByteArray path = sDef.texture? sDef.texture->manifest().composeUri().asText().toUtf8()
+                                          : QString("(prev)").toUtf8();
 
             Con_Printf("  #%i: Texture:\"%s\" Tics:%i (~%.2f)"
                        "\n      Scale:%.2f Strength:%.2f MaxDistance:%.2f\n",
@@ -802,17 +802,18 @@ static void printMaterialInfo(Material &material)
 
         for(int i = 0; i < stageCount; ++i)
         {
-            ded_shine_stage_t const &sDef = *(lDef.stages()[i]);
-            QByteArray path = !sDef.texture? QString("(prev)").toUtf8()
-                                           : reinterpret_cast<Uri *>(sDef.texture)->asText().toUtf8();
-            QByteArray maskPath = !sDef.maskTexture? QString("(none)").toUtf8()
-                                                   : reinterpret_cast<Uri *>(sDef.maskTexture)->asText().toUtf8();
+            Material::ShineLayer::Stage const &sDef = *(lDef.stages()[i]);
+            QByteArray path = sDef.texture? sDef.texture->manifest().composeUri().asText().toUtf8()
+                                          : QString("(prev)").toUtf8();
+            QByteArray maskPath = sDef.maskTexture? sDef.maskTexture->manifest().composeUri().asText().toUtf8()
+                                                  : QString("(none)").toUtf8();
 
             Con_Printf("  #%i: Texture:\"%s\" MaskTexture:\"%s\" Tics:%i (~%.2f)"
                        "\n      Shininess:%.2f BlendMode:%s MaskWidth:%.2f MaskHeight:%.2f"
                        "\n      MinColor:(r:%.2f, g:%.2f, b:%.2f)\n",
                        i, path.constData(), maskPath.constData(), sDef.tics, sDef.variance,
-                       sDef.shininess, R_NameForBlendMode(sDef.blendMode), sDef.maskWidth, sDef.maskHeight,
+                       sDef.shininess, R_NameForBlendMode(sDef.blendMode),
+                       sDef.maskDimensions.width(), sDef.maskDimensions.height(),
                        sDef.minColor[CR], sDef.minColor[CG], sDef.minColor[CB]);
         }
     }

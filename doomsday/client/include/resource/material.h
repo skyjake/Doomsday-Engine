@@ -235,19 +235,39 @@ public:
     class Layer
     {
     public:
+        struct Stage
+        {
+            de::Texture *texture;
+            int tics;
+            float variance; // Stage variance (time).
+            float glowStrength;
+            float glowStrengthVariance;
+            de::Vector2f texOrigin;
+
+            Stage(de::Texture *_texture, int _tics, float _variance,
+                  float _glowStrength, float _glowStrengthVariance,
+                  de::Vector2f const _texOrigin)
+                : texture(_texture), tics(_tics), variance(_variance),
+                  glowStrength(_glowStrength),
+                  glowStrengthVariance(_glowStrengthVariance),
+                  texOrigin(_texOrigin)
+            {}
+        };
+
         /// A list of stages.
-        typedef QList<ded_material_layer_stage_t *> Stages;
+        typedef QList<Stage *> Stages;
 
     public:
         /**
          * Construct a new default layer.
          */
         Layer();
+        ~Layer();
 
         /**
          * Construct a new layer from the specified definition.
          */
-        static Layer *fromDef(ded_material_layer_t &def);
+        static Layer *fromDef(ded_material_layer_t const &def);
 
         /**
          * Returns the total number of animation stages for the layer.
@@ -271,19 +291,36 @@ public:
     class DetailLayer
     {
     public:
+        struct Stage
+        {
+            int tics;
+            float variance;
+            de::Texture *texture; // The file/lump with the detail texture.
+            float scale;
+            float strength;
+            float maxDistance;
+
+            Stage(int _tics, float _variance, de::Texture *_texture,
+                  float _scale, float _strength, float _maxDistance)
+                : tics(_tics), variance(_variance), texture(_texture),
+                  scale(_scale), strength(_strength), maxDistance(_maxDistance)
+            {}
+        };
+
         /// A list of stages.
-        typedef QList<ded_detail_stage_t *> Stages;
+        typedef QList<Stage *> Stages;
 
     public:
         /**
          * Construct a new default layer.
          */
         DetailLayer();
+        ~DetailLayer();
 
         /**
          * Construct a new layer from the specified definition.
          */
-        static DetailLayer *fromDef(ded_detailtexture_t &def);
+        static DetailLayer *fromDef(ded_detailtexture_t const &def);
 
         /**
          * Returns the total number of animation stages for the layer.
@@ -304,19 +341,42 @@ public:
     class ShineLayer
     {
     public:
+        struct Stage
+        {
+            int tics;
+            float variance;
+            de::Texture *texture;
+            de::Texture *maskTexture;
+            blendmode_t blendMode; // Blend mode flags (bm_*).
+            float shininess;
+            de::Vector3f minColor;
+            QSizeF maskDimensions;
+
+            Stage(int _tics, float _variance, de::Texture *_texture,
+                  de::Texture *_maskTexture, blendmode_t _blendMode,
+                  float _shininess, de::Vector3f const &_minColor,
+                  QSizeF const &_maskDimensions)
+                : tics(_tics), variance(_variance), texture(_texture),
+                  maskTexture(_maskTexture), blendMode(_blendMode),
+                  shininess(_shininess), minColor(_minColor),
+                  maskDimensions(_maskDimensions)
+            {}
+        };
+
         /// A list of stages.
-        typedef QList<ded_shine_stage_t *> Stages;
+        typedef QList<Stage *> Stages;
 
     public:
         /**
          * Construct a new default layer.
          */
         ShineLayer();
+        ~ShineLayer();
 
         /**
          * Construct a new layer from the specified definition.
          */
-        static ShineLayer *fromDef(ded_reflection_t &def);
+        static ShineLayer *fromDef(ded_reflection_t const &def);
 
         /**
          * Returns the total number of animation stages for the layer.
