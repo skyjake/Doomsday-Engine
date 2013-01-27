@@ -75,14 +75,7 @@ void RecordPacket::operator << (Reader &from)
 
 Packet *RecordPacket::fromBlock(Block const &block)
 {
-    Reader from(block);
-    if(checkType(from, RECORD_PACKET_TYPE))
-    {    
-        std::auto_ptr<RecordPacket> p(new RecordPacket);
-        from >> *p.get();
-        return p.release();
-    }
-    return 0;
+    return constructFromBlock<RecordPacket>(block, RECORD_PACKET_TYPE);
 }
 
 } // namespace de

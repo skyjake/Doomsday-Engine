@@ -75,7 +75,7 @@ public:
      *
      * @return  Variable.
      */
-    const Variable& operator [] (String const &variableName) const;
+    Variable const &operator [] (String const &variableName) const;
 
     /**
      * Convenience method that returns a variable's value as text from
@@ -93,7 +93,7 @@ public:
 
 public:
     /// Constructor for the Protocol.
-    static Packet* fromBlock(Block const &block);
+    static Packet *fromBlock(Block const &block);
 
 private:
     String _name;

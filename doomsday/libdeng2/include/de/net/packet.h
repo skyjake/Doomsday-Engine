@@ -23,6 +23,7 @@
 #include "../ISerializable"
 #include "../Address"
 #include "../String"
+#include "../Reader"
 
 namespace de {
 
@@ -100,6 +101,19 @@ public:
      * @param type  Packet identifier.
      */
     static bool checkType(Reader &from, String const &type);
+
+    template <typename PacketType>
+    static PacketType *constructFromBlock(Block const &block, char const *packetTypeIdentifier)
+    {
+        Reader from(block);
+        if(checkType(from, packetTypeIdentifier))
+        {
+            std::auto_ptr<PacketType> p(new PacketType);
+            from >> *p.get();
+            return p.release();
+        }
+        return 0;
+    }
 
 private:
     /// The type is identified with a four-character string.
