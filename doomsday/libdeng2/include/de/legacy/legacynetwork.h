@@ -28,6 +28,7 @@ namespace de {
 class Address;
 class Block;
 class IByteArray;
+class Socket;
 
 /**
  * Network communications for the legacy engine implementation. Implements
@@ -65,6 +66,16 @@ public:
      * @return  @c true if there are one or more incoming messages, otherwise @c false.
      */
     bool incomingForSocket(int socket);
+
+    /**
+     * Relinquishes ownership of a socket. The socket is removed from any
+     * socket sets, and loses its LegacyNetwork-specific id.
+     *
+     * @param socket  Socket id.
+     *
+     * @return de::Socket instance. Caller gets ownership.
+     */
+    Socket *takeSocket(int socket);
 
 private:
     struct Instance;
