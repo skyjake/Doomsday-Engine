@@ -169,6 +169,19 @@ public:
     Writer &operator << (IWritable const &writable);
 
     /**
+     * Writes a list of objects. ListType is expected to be an iterable
+     * list containing pointers to IWritable objects.
+     *
+     * @param list  List of objects.
+     */
+    template <typename ListType>
+    Writer &writeObjects(ListType const &list) {
+        *this << duint32(list.size());
+        DENG2_FOR_EACH_CONST(typename ListType, i, list) *this << **i;
+        return *this;
+    }
+
+    /**
      * Returns the destination byte array used by the writer.
      */
     IByteArray const *destination() const;

@@ -166,6 +166,40 @@ public:
     Reader &operator >> (IReadable &readable);
 
     /**
+     * Reads a list of objects. ListType is expected to be an iterable
+     * list containing pointers to IReadable objects. The list will
+     * own the read instances.
+     *
+     * @param list  List of objects.
+     */
+    template <typename ObjectType, typename ListType>
+    Reader &readObjects(ListType &list) {
+        duint32 count;
+        *this >> count;
+        while(count-- > 0) {
+            std::auto_ptr<ObjectType> entry(new ObjectType);
+            *this >> *entry.get();
+            list.push_back(entry.release());
+        }
+        return *this;
+    }
+
+    /**
+     * Reads something from the source and converts it to another type before
+     * assigning to the destination. Use this for instance when reading an
+     * enumerated type that has been written as an integer.
+     *
+     * @param value  Value to read.
+     */
+    template <typename SerializedType, typename Type>
+    Reader &readAs(Type &value) {
+        SerializedType t;
+        *this >> t;
+        value = Type(t);
+        return *this;
+    }
+
+    /**
      * Reads bytes from the source buffer until a specified delimiter value is
      * encountered. The delimiter is included as part of the read data. The end
      * of the source data is also considered a valid delimiter; no exception
