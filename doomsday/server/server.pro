@@ -29,6 +29,7 @@ include(../dep_curses.pri)
 include(../dep_lzss.pri)
 include(../dep_deng2.pri)
 include(../dep_deng1.pri)
+include(../dep_shell.pri)
 
 # TODO: Get rid of this. The dedicated server should need no GL code.
 win32: include(../dep_opengl.pri)
@@ -120,6 +121,14 @@ DENG_HEADERS += \
 # Private headers.
 DENG_HEADERS += \
     include/server_dummies.h \
+    include/shelluser.h \
+    include/shellusers.h \
+    include/server/sv_def.h \
+    include/server/sv_frame.h \
+    include/server/sv_infine.h \
+    include/server/sv_missile.h \
+    include/server/sv_pool.h \
+    include/server/sv_sound.h \
     $$SRC/include/audio/s_cache.h \
     $$SRC/include/audio/s_environ.h \
     $$SRC/include/audio/s_logic.h \
@@ -262,12 +271,6 @@ DENG_HEADERS += \
     $$SRC/include/resource/wad.h \
     $$SRC/include/resource/zip.h \
     $$SRC/include/resourceclass.h \
-    include/server/sv_def.h \
-    include/server/sv_frame.h \
-    include/server/sv_infine.h \
-    include/server/sv_missile.h \
-    include/server/sv_pool.h \
-    include/server/sv_sound.h \
     $$SRC/include/sys_console.h \
     $$SRC/include/sys_system.h \
     $$SRC/include/tab_anorms.h \
@@ -336,11 +339,17 @@ macx {
 else:unix {
 }
 
-SOURCES += $$SRC/src/ui/displaymode_dummy.c
-
 # Platform-independent sources.
 SOURCES += \
     src/server_dummies.cpp \
+    src/shelluser.cpp \
+    src/shellusers.cpp \
+    src/server/sv_frame.cpp \
+    src/server/sv_infine.cpp \
+    src/server/sv_main.cpp \
+    src/server/sv_missile.cpp \
+    src/server/sv_pool.cpp \
+    src/server/sv_sound.cpp \
     $$SRC/src/api_uri.cpp \
     $$SRC/src/audio/s_cache.cpp \
     $$SRC/src/audio/s_environ.cpp \
@@ -460,12 +469,6 @@ SOURCES += \
     $$SRC/src/resource/tga.cpp \
     $$SRC/src/resource/wad.cpp \
     $$SRC/src/resource/zip.cpp \
-    src/server/sv_frame.cpp \
-    src/server/sv_infine.cpp \
-    src/server/sv_main.cpp \
-    src/server/sv_missile.cpp \
-    src/server/sv_pool.cpp \
-    src/server/sv_sound.cpp \
     $$SRC/src/sys_system.cpp \
     $$SRC/src/tab_tables.c \
     $$SRC/src/ui/b_command.cpp \
@@ -477,6 +480,7 @@ SOURCES += \
     $$SRC/src/ui/canvaswindow.cpp \
     $$SRC/src/ui/dd_input.cpp \
     $$SRC/src/ui/displaymode.cpp \
+    $$SRC/src/ui/displaymode_dummy.c \
     $$SRC/src/ui/fi_main.cpp \
     $$SRC/src/ui/finaleinterpreter.cpp \
     $$SRC/src/ui/keycode.cpp \
@@ -513,6 +517,7 @@ macx {
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
     linkBinaryToBundledLibdeng2($$TARGET)
+    linkBinaryToBundledLibdengShell($$TARGET)
 }
 
 # Installation ---------------------------------------------------------------
