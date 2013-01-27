@@ -83,9 +83,19 @@ public:
      * to one or more lines of text.
      *
      * @param entry  Log entry to output.
+     *
+     * @return Reference to this sink.
      */
     virtual LogSink &operator << (LogEntry const &entry);
 
+    /**
+     * Output a plain text string to the sink. This will be called as a
+     * fallback if the formatting of a LogEntry causes an exception.
+     *
+     * @param plainText  Message.
+     *
+     * @return Reference to this sink.
+     */
     virtual LogSink &operator << (String const &plainText) = 0;
 
     /**

@@ -33,6 +33,9 @@ class Variable;
  * An identified packet that contains a Record. The record itself can be
  * identified by a name.
  *
+ * Record packets can be used as a generic packet format for multiple purposes.
+ * It is easy to construct record packets in scripts.
+ *
  * @ingroup protocol
  */
 class DENG2_PUBLIC RecordPacket : public IdentifiedPacket
