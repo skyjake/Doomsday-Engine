@@ -18,6 +18,7 @@
  */
 
 #include "de/MonospaceLogSinkFormatter"
+#include <de/math.h>
 
 namespace de {
 
@@ -180,7 +181,7 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
 
 void MonospaceLogSinkFormatter::setMaxLength(duint maxLength)
 {
-    _maxLength = maxLength;
+    _maxLength = de::max(duint(_minimumIndent + 10), maxLength);
 }
 
 duint MonospaceLogSinkFormatter::maxLength() const

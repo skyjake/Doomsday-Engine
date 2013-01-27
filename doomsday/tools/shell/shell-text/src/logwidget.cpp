@@ -77,11 +77,11 @@ struct LogWidget::Instance
 {
     Sink sink;
     MonospaceLogSinkFormatter formatter;
-    QList<TextCanvas *> cache;
+    int cacheWidth;
+    QList<TextCanvas *> cache; ///< Indices match entry indices in sink.
 
-    Instance(LogWidget &inst) : sink(inst)
-    {
-    }
+    Instance(LogWidget &inst) : sink(inst), cacheWidth(0)
+    {}
 
     ~Instance()
     {
@@ -116,9 +116,10 @@ void LogWidget::draw()
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
 
-    if(d->formatter.maxLength() != duint(pos.width()))
+    if(d->cacheWidth != pos.width())
     {
-        d->formatter.setMaxLength(pos.width());
+        d->cacheWidth = pos.width();
+        d->formatter.setMaxLength(d->cacheWidth);
 
         // Width has changed, zap the cache.
         d->clearCache();
