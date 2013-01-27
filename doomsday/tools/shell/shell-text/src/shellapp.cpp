@@ -77,8 +77,9 @@ struct ShellApp::Instance
 ShellApp::ShellApp(int &argc, char **argv)
     : CursesApp(argc, argv), d(new Instance(*this))
 {
-    LogBuffer::appBuffer().setMaxEntryCount(50); // buffered here rather than appBuffer
-    LogBuffer::appBuffer().addSink(d->log->logSink());
+    LogBuffer &buf = LogBuffer::appBuffer();
+    buf.setMaxEntryCount(50); // buffered here rather than appBuffer
+    buf.addSink(d->log->logSink());
 
     QStringList args = arguments();
     if(args.size() > 1)
@@ -98,7 +99,8 @@ ShellApp::~ShellApp()
 
 void ShellApp::sendCommandToServer(String command)
 {
-    LOG_MSG("%s") << command;
+    LOG_INFO(">") << command;
 
-    // todo
+    QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
+    *d->link << *packet;
 }
