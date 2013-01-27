@@ -26,9 +26,7 @@ namespace shell {
 struct TextCanvas::Instance
 {
     Size size;
-
-    typedef QList<Char> Line;
-    QList<Line> lines;
+    QList<Char *> lines;
 
     Instance(Size const &initialSize) : size(initialSize)
     {
@@ -39,14 +37,17 @@ struct TextCanvas::Instance
         }
     }
 
-    Line makeLine()
+    ~Instance()
     {
-        Line line;
-        for(int col = 0; col < size.x; ++col)
+        for(int i = 0; i < lines.size(); ++i)
         {
-            line.append(Char());
+            delete [] lines[i];
         }
-        return line;
+    }
+
+    Char *makeLine()
+    {
+        return new Char[size.x];
     }
 
     void resize(Size const &newSize)
@@ -69,18 +70,10 @@ struct TextCanvas::Instance
         // Make sure all lines are the correct width.
         for(int row = 0; row < lines.size(); ++row)
         {
-            Line &lin = lines[row];
-
-            while(newSize.x < lin.size())
-            {
-                lin.removeLast();
-            }
-            while(newSize.x > lin.size())
-            {
-                lin.append(Char());
-            }
-
-            Q_ASSERT(lin.size() == newSize.x);
+            Char *newLine = new Char[newSize.x];
+            memcpy(newLine, lines[row], sizeof(Char) * de::min(size.x, newSize.x));
+            delete [] lines[row];
+            lines[row] = newLine;
         }
 
         size.x = newSize.x;
@@ -90,8 +83,8 @@ struct TextCanvas::Instance
     {
         for(int row = 0; row < lines.size(); ++row)
         {
-            Line &line = lines[row];
-            for(int col = 0; col < line.size(); ++col)
+            Char *line = lines[row];
+            for(int col = 0; col < size.x; ++col)
             {
                 Char &c = line[col];
                 if(markDirty)
@@ -132,7 +125,7 @@ TextCanvas::Char &TextCanvas::at(Coord const &pos)
 TextCanvas::Char const &TextCanvas::at(Coord const &pos) const
 {
     Q_ASSERT(isValid(pos));
-    return d->lines[pos.y].at(pos.x);
+    return d->lines[pos.y][pos.x];
 }
 
 bool TextCanvas::isValid(const Coord &pos) const
@@ -179,7 +172,7 @@ void TextCanvas::drawText(Vector2i const &pos, String const &text, Char::Attribs
         {
             at(p) = Char(*i, attribs);
         }
-        p.x += 1;
+        p.x++;
     }
 }
 
