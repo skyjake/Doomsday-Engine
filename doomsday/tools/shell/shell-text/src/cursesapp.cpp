@@ -41,15 +41,10 @@ static void windowResized(int)
     ungetch(KEY_RESIZE);
 }
 
-/**
- * Determines the actual current size of the terminal.
- *
- * @return Terminal columns and rows.
- */
-static de::Vector2i actualTerminalSize()
+static QByteArray runSystemCommand(char const *cmd)
 {
     QByteArray result;
-    FILE *p = popen("stty size", "r");
+    FILE *p = popen(cmd, "r");
     forever
     {
         int c = fgetc(p);
@@ -57,9 +52,22 @@ static de::Vector2i actualTerminalSize()
         result.append(c);
     }
     pclose(p);
+    return result;
+}
 
+/**
+ * Determines the actual current size of the terminal.
+ *
+ * @param oldSize  Old size of the terminal, used as the default value
+ *                 in case we can't determine the current size.
+ *
+ * @return Terminal columns and rows.
+ */
+static de::Vector2i actualTerminalSize(de::Vector2i const &oldSize)
+{
+    de::Vector2i size = oldSize;
+    QByteArray result = runSystemCommand("stty size");
     QTextStream is(result);
-    de::Vector2i size;
     is >> size.y >> size.x;
     return size;
 }
@@ -150,6 +158,23 @@ struct CursesApp::Instance
         refresh();
     }
 
+    void handleResize()
+    {
+        // Terminal has been resized.
+        de::Vector2i size = actualTerminalSize(rootSize);
+
+        // Curses needs to resize its buffers.
+        werase(rootWin);
+        resize_term(size.y, size.x);
+
+        // The root widget will update the UI.
+        rootWidget->setViewSize(size);
+        rootSize = size;
+
+        // We must redraw all characters since wclear was called.
+        rootWidget->rootCanvas().markDirty();
+    }
+
     void refresh()
     {
         if(!rootWin) return;
@@ -163,18 +188,7 @@ struct CursesApp::Instance
         {
             if(key == KEY_RESIZE)
             {
-                // Terminal has been resized.
-                de::Vector2i size = actualTerminalSize();
-
-                // Curses needs to resize its buffers.
-                wclear(rootWin);
-                resize_term(size.y, size.x);
-
-                // The root widget will update the UI.
-                rootWidget->setViewSize(size);
-
-                // We must redraw all characters since wclear was called.
-                rootWidget->rootCanvas().markDirty();
+                handleResize();
             }
             else if((key & KEY_CODE_YES) || key < 0x20 || key == 0x7f)
             {
