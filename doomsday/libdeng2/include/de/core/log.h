@@ -235,35 +235,33 @@ public:
         };
 
     public:
-        Arg()                    : _type(INTEGER)        { _data.intValue   = 0; }
-        Arg(dint i)              : _type(INTEGER)        { _data.intValue   = i; }
-        Arg(duint i)             : _type(INTEGER)        { _data.intValue   = i; }
-        Arg(long int i)          : _type(INTEGER)        { _data.intValue   = i; }
-        Arg(long unsigned int i) : _type(INTEGER)        { _data.intValue   = i; }
-        Arg(duint64 i)           : _type(INTEGER)        { _data.intValue   = dint64(i); }
-        Arg(dint64 i)            : _type(INTEGER)        { _data.intValue   = i; }
-        Arg(ddouble d)           : _type(FLOATING_POINT) { _data.floatValue = d; }
-        Arg(void const *p)       : _type(INTEGER)        { _data.intValue   = dint64(p); }
-        Arg(char const *s) : _type(STRING) {
-            _data.stringValue = new String(s);
-        }
-        Arg(String const &s) : _type(STRING) {
-            _data.stringValue = new String(s.data(), s.size());
-        }
+        Arg()                    : _type(INTEGER)        { _data.intValue    = 0; }
+        Arg(dint i)              : _type(INTEGER)        { _data.intValue    = i; }
+        Arg(duint i)             : _type(INTEGER)        { _data.intValue    = i; }
+        Arg(long int i)          : _type(INTEGER)        { _data.intValue    = i; }
+        Arg(long unsigned int i) : _type(INTEGER)        { _data.intValue    = i; }
+        Arg(duint64 i)           : _type(INTEGER)        { _data.intValue    = dint64(i); }
+        Arg(dint64 i)            : _type(INTEGER)        { _data.intValue    = i; }
+        Arg(ddouble d)           : _type(FLOATING_POINT) { _data.floatValue  = d; }
+        Arg(void const *p)       : _type(INTEGER)        { _data.intValue    = dint64(p); }
+        Arg(char const *s)       : _type(STRING)         { _data.stringValue = new String(s); }
+        Arg(String const &s)     : _type(STRING)         { _data.stringValue = new String(s.data(), s.size()); }
+
         Arg(Base const &arg);
         Arg(Arg const &other);
+
         ~Arg();
 
-        Type type() const { return _type; }
-        dint64 intValue() const {
+        inline Type type() const { return _type; }
+        inline dint64 intValue() const {
             DENG2_ASSERT(_type == INTEGER);
             return _data.intValue;
         }
-        ddouble floatValue() const {
+        inline ddouble floatValue() const {
             DENG2_ASSERT(_type == FLOATING_POINT);
             return _data.floatValue;
         }
-        QString stringValue() const {
+        inline QString stringValue() const {
             DENG2_ASSERT(_type == STRING);
             return *_data.stringValue;
         }
