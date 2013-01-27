@@ -56,37 +56,6 @@ struct TextEditWidget::Instance
         releaseRef(height);
     }
 
-    void doBackspace()
-    {
-        if(!text.isEmpty() && cursor > 0)
-        {
-            text.remove(--cursor, 1);
-        }
-    }
-
-    void doDelete()
-    {
-        if(text.size() > cursor)
-        {
-            text.remove(cursor, 1);
-        }
-    }
-
-    void doLeft()
-    {
-        if(cursor > 0) --cursor;
-    }
-
-    void doRight()
-    {
-        if(cursor < text.size()) ++cursor;
-    }
-
-    void insert(String const &str)
-    {
-        text.insert(cursor++, str);
-    }
-
     /**
      * Determines where word wrapping needs to occur and updates the height of
      * the widget to accommodate all the needed lines.
@@ -187,6 +156,53 @@ struct TextEditWidget::Instance
         if(!span.isFinal) span.end--;
         if(cursor > span.end) cursor = span.end;
         return true;
+    }
+
+    void insert(String const &str)
+    {
+        text.insert(cursor++, str);
+    }
+
+    void doBackspace()
+    {
+        if(!text.isEmpty() && cursor > 0)
+        {
+            text.remove(--cursor, 1);
+        }
+    }
+
+    void doDelete()
+    {
+        if(text.size() > cursor)
+        {
+            text.remove(cursor, 1);
+        }
+    }
+
+    void doLeft()
+    {
+        if(cursor > 0) --cursor;
+    }
+
+    void doRight()
+    {
+        if(cursor < text.size()) ++cursor;
+    }
+
+    void doHome()
+    {
+        cursor = lineSpan(lineCursorPos().y).start;
+    }
+
+    void doEnd()
+    {
+        Span const span = lineSpan(lineCursorPos().y);
+        cursor = span.end - (span.isFinal? 0 : 1);
+    }
+
+    void killEndOfLine()
+    {
+        text.remove(cursor, lineSpan(lineCursorPos().y).end - cursor);
     }
 };
 
@@ -297,16 +313,15 @@ bool TextEditWidget::handleControlKey(int key)
         return true;
 
     case Qt::Key_Home:
-        d->cursor = d->lineSpan(d->lineCursorPos().y).start;
+        d->doHome();
         return true;
 
-    case Qt::Key_End: {
-        Instance::Span const span = d->lineSpan(d->lineCursorPos().y);
-        d->cursor = span.end - (span.isFinal? 0 : 1);
-        return true; }
+    case Qt::Key_End:
+        d->doEnd();
+        return true;
 
     case Qt::Key_K: // assuming Control mod
-        d->text.remove(d->cursor, d->lineSpan(d->lineCursorPos().y).end - d->cursor);
+        d->killEndOfLine();
         return true;
 
     case Qt::Key_Up:
