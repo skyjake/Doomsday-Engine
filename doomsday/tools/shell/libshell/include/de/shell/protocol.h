@@ -20,9 +20,33 @@
 #define LIBSHELL_PROTOCOL_H
 
 #include <de/Protocol>
+#include <de/RecordPacket>
+#include <QList>
 
 namespace de {
 namespace shell {
+
+/**
+ * Packet with one or more log entries.
+ */
+class LogEntryPacket : public Packet
+{
+public:
+    LogEntryPacket();
+    ~LogEntryPacket();
+
+    void clear();
+    void execute() const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+    static Packet *fromBlock(Block const &block);
+
+private:
+    QList<LogEntry *> _entries;
+};
 
 /**
  * Network protocol for communicating with a server.
@@ -30,7 +54,43 @@ namespace shell {
 class Protocol : public de::Protocol
 {
 public:
+    /// Type of provided packet is incorrect. @ingroup errors
+    DENG2_ERROR(TypeError);
+
+    enum PacketType
+    {
+        Unknown,
+        Command,        ///< Console command (only to server).
+        LogEntries,     ///< Log entries.
+        ConsoleLexicon, ///< Known words for command line completion.
+        GameState,      ///< Current state of the game (mode, map).
+        Leaderboard,    ///< Frags leaderboard.
+        MapOutline,     ///< Sectors of the map for visual overview.
+        PlayerPositions ///< Current player positions.
+    };
+
+public:
     Protocol();
+
+    /**
+     * Detects the type of a packet.
+     *
+     * @param packet  Any packet.
+     *
+     * @return Type of the packet.
+     */
+    PacketType recognize(Packet const *packet);
+
+    /**
+     * Constructs a console command packet.
+     *
+     * @param command  Command to execute on the server.
+     *
+     * @return Packet. Caller gets ownership.
+     */
+    RecordPacket *newCommand(String const &command);
+
+    String command(Packet const &commandPacket);
 };
 
 } // namespace shell

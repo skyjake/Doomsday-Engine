@@ -21,6 +21,7 @@
 #define LIBDENG2_PROTOCOL_H
 
 #include "../libdeng2.h"
+#include <de/Reader>
 
 #include <QList>
 

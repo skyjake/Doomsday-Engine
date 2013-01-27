@@ -20,6 +20,7 @@
 #define LIBSHELL_LINK_H
 
 #include <de/Address>
+#include <de/Socket>
 #include <de/Time>
 #include <de/Transmitter>
 #include <de/shell/Protocol>
@@ -51,6 +52,13 @@ public:
      */
     Link(Address const &address);
 
+    /**
+     * Takes over an existing socket.
+     *
+     * @param openSocket  Socket. Link takes ownership.
+     */
+    Link(Socket *openSocket);
+
     virtual ~Link();
 
     /**
@@ -69,6 +77,11 @@ public:
     Time connectedAt() const;
 
     /**
+     * Shell protocol for constructing and interpreting packets.
+     */
+    Protocol &protocol();
+
+    /**
      * Returns the next received packet.
      *
      * @return Received packet. Ownership given to caller. Returns @c NULL if
@@ -82,10 +95,10 @@ public:
 protected slots:
     void socketConnected();
     void socketDisconnected();
+    void handleIncomingPackets();
 
 signals:
     void connected();
-    void packetsReady();
     void disconnected();
 
 private:

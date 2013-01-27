@@ -29,31 +29,48 @@ namespace shell {
 struct Link::Instance
 {
     Link &self;
-    Address serverAddress;
-    Socket socket;
+    Address peerAddress;
+    Socket *socket;
     Protocol protocol;
     Status status;
     Time connectedAt;
 
     Instance(Link &i)
         : self(i),
+          socket(0),
           status(Disconnected),
           connectedAt(Time::invalidTime()) {}
 
-    ~Instance() {}
+    ~Instance()
+    {
+        delete socket;
+    }
 };
 
 Link::Link(Address const &address) : d(new Instance(*this))
 {
-    d->serverAddress = address;
+    d->peerAddress = address;
+    d->socket = new Socket;
 
-    connect(&d->socket, SIGNAL(connected()), this, SLOT(socketConnected()));
-    connect(&d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(&d->socket, SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
+    connect(d->socket, SIGNAL(connected()), this, SLOT(socketConnected()));
+    connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(d->socket, SIGNAL(messagesReady()), this, SLOT(handleIncomingPackets()));
 
-    d->socket.connect(address);
+    d->socket->connect(address);
 
     d->status = Connecting;
+}
+
+Link::Link(Socket *openSocket) : d(new Instance(*this))
+{
+    d->peerAddress = openSocket->peerAddress();
+    d->socket = openSocket;
+
+    connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(d->socket, SIGNAL(messagesReady()), this, SLOT(handleIncomingPackets()));
+
+    d->status = Connected;
+    d->connectedAt = Time();
 }
 
 Link::~Link()
@@ -63,8 +80,8 @@ Link::~Link()
 
 Address Link::address() const
 {
-    if(d->socket.isOpen()) return d->socket.peerAddress();
-    return d->serverAddress;
+    if(d->socket->isOpen()) return d->socket->peerAddress();
+    return d->peerAddress;
 }
 
 Link::Status Link::status() const
@@ -77,23 +94,37 @@ Time Link::connectedAt() const
     return d->connectedAt;
 }
 
+Protocol &Link::protocol()
+{
+    return d->protocol;
+}
+
 Packet *Link::nextPacket()
 {
-    if(!d->socket.hasIncoming()) return 0;
+    if(!d->socket->hasIncoming()) return 0;
 
-    std::auto_ptr<Message> data(d->socket.receive());
-    return d->protocol.interpret(*data.get());
+    std::auto_ptr<Message> data(d->socket->receive());
+    Packet *packet = d->protocol.interpret(*data.get());
+    try
+    {
+        packet->setFrom(d->socket->peerAddress());
+    }
+    catch(Socket::PeerError const &)
+    {
+        // Socket must already be closed.
+    }
+    return packet;
 }
 
 void Link::send(IByteArray const &data)
 {
-    d->socket.send(data);
+    d->socket->send(data);
 }
 
 void Link::socketConnected()
 {
     LOG_AS("Link");
-    LOG_VERBOSE("Successfully connected to %s") << d->socket.peerAddress();
+    LOG_VERBOSE("Successfully connected to %s") << d->socket->peerAddress();
 
     d->status = Connected;
     d->connectedAt = Time();
@@ -104,7 +135,7 @@ void Link::socketConnected()
 void Link::socketDisconnected()
 {
     LOG_AS("Link");
-    LOG_INFO("Disconnected from %s") << d->serverAddress;
+    LOG_INFO("Disconnected from %s") << d->peerAddress;
 
     d->status = Disconnected;
 
@@ -113,6 +144,14 @@ void Link::socketDisconnected()
     // Slots have now had an opportunity to observe the total
     // duration of the connection that has just ended.
     d->connectedAt = Time::invalidTime();
+}
+
+void Link::handleIncomingPackets()
+{
+    while(Packet *ptr = nextPacket())
+    {
+        QScopedPointer<Packet> packet(ptr);
+    }
 }
 
 } // namespace shell

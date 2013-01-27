@@ -17,14 +17,93 @@
  */
 
 #include "de/shell/Protocol"
+#include <de/LogBuffer>
+#include <de/Reader>
+#include <de/Writer>
 
 namespace de {
 namespace shell {
 
-Protocol::Protocol()
+static String const PT_COMMAND = "shell.command";
+
+// LogEntryPacket ------------------------------------------------------------
+
+static char const *LOG_ENTRY_PACKET_TYPE = "LOGE";
+
+LogEntryPacket::LogEntryPacket() : Packet(LOG_ENTRY_PACKET_TYPE)
+{}
+
+LogEntryPacket::~LogEntryPacket()
 {
-    // Register all the known packet types.
-    //define();
+    clear();
+}
+
+void LogEntryPacket::clear()
+{
+    foreach(LogEntry *e, _entries) delete e;
+    _entries.clear();
+}
+
+void LogEntryPacket::execute() const
+{
+    // Copies of all entries in the packet are added to the LogBuffer.
+    LogBuffer &buf = LogBuffer::appBuffer();
+    foreach(LogEntry *e, _entries)
+    {
+        buf.add(new LogEntry(*e));
+    }
+}
+
+void LogEntryPacket::operator >> (Writer &to) const
+{
+    Packet::operator >> (to);
+    to.writeObjects(_entries);
+}
+
+void LogEntryPacket::operator << (Reader &from)
+{
+    _entries.clear();
+
+    Packet::operator << (from);
+    from.readObjects<LogEntry>(_entries);
+}
+
+Packet *LogEntryPacket::fromBlock(Block const &block)
+{
+    return constructFromBlock<LogEntryPacket>(block, LOG_ENTRY_PACKET_TYPE);
+}
+
+// Protocol ------------------------------------------------------------------
+
+Protocol::Protocol()
+{}
+
+Protocol::PacketType Protocol::recognize(Packet const *packet)
+{
+    RecordPacket const *rec = dynamic_cast<RecordPacket const *>(packet);
+    if(rec)
+    {
+        if(rec->name() == PT_COMMAND)
+            return Command;
+    }
+    return Unknown;
+}
+
+RecordPacket *Protocol::newCommand(String const &command)
+{
+    RecordPacket *cmd = new RecordPacket(PT_COMMAND);
+    cmd->record().addText("cmd", command);
+    return cmd;
+}
+
+String Protocol::command(Packet const &commandPacket)
+{
+    DENG2_ASSERT(recognize(&commandPacket) == Command);
+
+    RecordPacket const *rec = dynamic_cast<RecordPacket const *>(&commandPacket);
+    DENG2_ASSERT(rec != 0);
+
+    return (*rec)["cmd"].value().asText();
 }
 
 } // namespace shell
