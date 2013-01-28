@@ -100,10 +100,13 @@ ShellApp::~ShellApp()
 
 void ShellApp::sendCommandToServer(String command)
 {
-    LOG_INFO(">") << command;
+    if(d->link && d->link->status() == shell::Link::Connected)
+    {
+        LOG_INFO(">") << command;
 
-    QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
-    *d->link << *packet;
+        QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
+        *d->link << *packet;
+    }
 }
 
 void ShellApp::handleIncomingPackets()
