@@ -11,6 +11,10 @@ CONFIG -= app_bundle
 win32: CONFIG += console
 QT -= core gui
 
+*-g++* | *-gcc* | *-clang* {
+    QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-result
+}
+
 SOURCES += import.cpp texc.cpp
 
 HEADERS += texc.h
