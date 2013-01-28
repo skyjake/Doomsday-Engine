@@ -29,7 +29,7 @@ namespace de {
  * or two other rules.
  * @ingroup widgets
  */
-class OperatorRule : public Rule
+class DENG2_PUBLIC OperatorRule : public Rule
 {
     Q_OBJECT
 

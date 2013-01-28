@@ -30,7 +30,7 @@ namespace de {
  *
  * @see ScalarRule
  */
-class ConstantRule : public Rule
+class DENG2_PUBLIC ConstantRule : public Rule
 {
     Q_OBJECT
 

@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup widgets
  */
-class RectangleRule : public Rule
+class DENG2_PUBLIC RectangleRule : public Rule
 {
     Q_OBJECT
 

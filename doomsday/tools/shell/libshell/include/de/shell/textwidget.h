@@ -19,6 +19,7 @@
 #ifndef LIBSHELL_TEXTWIDGET_H
 #define LIBSHELL_TEXTWIDGET_H
 
+#include "libshell.h"
 #include <de/Widget>
 #include <de/RectangleRule>
 #include <QObject>
@@ -37,7 +38,7 @@ class TextRootWidget;
  *
  * QObject is a base class for signals and slots.
  */
-class DENG2_PUBLIC TextWidget : public QObject, public Widget
+class LIBSHELL_PUBLIC TextWidget : public QObject, public Widget
 {
     Q_OBJECT
 

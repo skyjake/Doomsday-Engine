@@ -35,6 +35,7 @@ public:
     ~DebugLogSink();
 
     LogSink &operator << (String const &plainText);
+    void flush();
 
 private:
     QDebug *_qs;

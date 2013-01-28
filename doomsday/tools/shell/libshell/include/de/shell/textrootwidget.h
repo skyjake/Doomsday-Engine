@@ -19,6 +19,7 @@
 #ifndef LIBSHELL_TEXTROOTWIDGET_H
 #define LIBSHELL_TEXTROOTWIDGET_H
 
+#include "libshell.h"
 #include <de/RootWidget>
 #include "TextCanvas"
 
@@ -34,7 +35,7 @@ class TextWidget;
  * be drawn on the screen, the text root widget assumes that by default drawing
  * is unnecessary, and redraws must be requested by widgets when suitable.
  */
-class DENG2_PUBLIC TextRootWidget : public RootWidget
+class LIBSHELL_PUBLIC TextRootWidget : public RootWidget
 {
 public:
     /**

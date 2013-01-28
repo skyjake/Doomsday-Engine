@@ -32,7 +32,7 @@ class RootWidget;
  * Base class for widgets.
  * @ingroup widgets
  */
-class Widget
+class DENG2_PUBLIC Widget
 {
 public:
     /// Widget that was expected to exist was not found. @ingroup errors

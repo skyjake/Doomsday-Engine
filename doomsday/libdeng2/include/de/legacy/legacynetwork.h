@@ -36,7 +36,7 @@ class Socket;
  *
  * There is a C wrapper for LegacyNetwork (see c_wrapper.h).
  */
-class LegacyNetwork
+class DENG2_PUBLIC LegacyNetwork
 {
 public:
     LegacyNetwork();

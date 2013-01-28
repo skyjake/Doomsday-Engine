@@ -13,6 +13,13 @@ VERSION  = 0.1.0
 
 include(../../../dep_deng2.pri)
 
+win32 {
+    # Keep the version number out of the file name.
+    TARGET_EXT = .dll
+}
+
+DEFINES += __LIBSHELL__
+
 INCLUDEPATH += include
 
 # Public headers.
@@ -25,6 +32,7 @@ HEADERS += \
     include/de/shell/TextRootWidget \
     include/de/shell/TextWidget \
     include/de/shell/keyevent.h \
+    include/de/shell/libshell.h \
     include/de/shell/link.h \
     include/de/shell/protocol.h \
     include/de/shell/textcanvas.h \
@@ -34,13 +42,13 @@ HEADERS += \
 
 # Sources and private headers.
 SOURCES += \
-    src/deng_shell.cpp \
+    src/libshell.cpp \
+    src/link.cpp \
+    src/protocol.cpp \
     src/textcanvas.cpp \
     src/texteditwidget.cpp \
     src/textrootwidget.cpp \
-    src/textwidget.cpp \
-    src/protocol.cpp \
-    src/link.cpp
+    src/textwidget.cpp
 
 # Installation ---------------------------------------------------------------
 

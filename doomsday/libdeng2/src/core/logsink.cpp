@@ -60,6 +60,7 @@ bool LogSink::willAccept(LogEntry const &entry) const
     case OnlyWarningEntries:
         return entry.level() >= LogEntry::WARNING;
     }
+    return false;
 }
 
 LogSink::IFormatter *LogSink::formatter()

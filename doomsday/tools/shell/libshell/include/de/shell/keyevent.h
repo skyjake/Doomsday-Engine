@@ -19,6 +19,7 @@
 #ifndef LIBSHELL_KEYEVENT_H
 #define LIBSHELL_KEYEVENT_H
 
+#include "libshell.h"
 #include <de/Event>
 #include <de/String>
 #include <QFlags>
@@ -29,7 +30,7 @@ namespace shell {
 /**
  * Key press event generated when the user presses a key on the keyboard.
  */
-class DENG2_PUBLIC KeyEvent : public Event
+class LIBSHELL_PUBLIC KeyEvent : public Event
 {
 public:
     enum Modifier

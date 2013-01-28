@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup math
  */
-class Animation : public ISerializable
+class DENG2_PUBLIC Animation : public ISerializable
 {
 public:
     enum Style {

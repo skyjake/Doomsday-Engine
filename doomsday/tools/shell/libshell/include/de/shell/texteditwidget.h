@@ -19,6 +19,7 @@
 #ifndef LIBSHELL_TEXTEDITWIDGET_H
 #define LIBSHELL_TEXTEDITWIDGET_H
 
+#include "libshell.h"
 #include "TextWidget"
 
 namespace de {
@@ -30,7 +31,7 @@ namespace shell {
  * The widget adjusts its height automatically to fit to the full contents of
  * the edited, wrapped line.
  */
-class DENG2_PUBLIC TextEditWidget : public TextWidget
+class LIBSHELL_PUBLIC TextEditWidget : public TextWidget
 {
     Q_OBJECT
 

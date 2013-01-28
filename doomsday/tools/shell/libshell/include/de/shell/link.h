@@ -19,6 +19,7 @@
 #ifndef LIBSHELL_LINK_H
 #define LIBSHELL_LINK_H
 
+#include "libshell.h"
 #include <de/Address>
 #include <de/Socket>
 #include <de/Time>
@@ -32,7 +33,7 @@ namespace shell {
 /**
  * Network connection to a server using the shell protocol.
  */
-class DENG2_PUBLIC Link : public QObject, public Transmitter
+class LIBSHELL_PUBLIC Link : public QObject, public Transmitter
 {
     Q_OBJECT
 

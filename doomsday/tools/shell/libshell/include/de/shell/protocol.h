@@ -19,6 +19,7 @@
 #ifndef LIBSHELL_PROTOCOL_H
 #define LIBSHELL_PROTOCOL_H
 
+#include "libshell.h"
 #include <de/Protocol>
 #include <de/RecordPacket>
 #include <QList>
@@ -29,7 +30,7 @@ namespace shell {
 /**
  * Packet with one or more log entries.
  */
-class LogEntryPacket : public Packet
+class LIBSHELL_PUBLIC LogEntryPacket : public Packet
 {
 public:
     LogEntryPacket();
@@ -59,7 +60,7 @@ private:
 /**
  * Network protocol for communicating with a server.
  */
-class Protocol : public de::Protocol
+class LIBSHELL_PUBLIC Protocol : public de::Protocol
 {
 public:
     /// Type of provided packet is incorrect. @ingroup errors

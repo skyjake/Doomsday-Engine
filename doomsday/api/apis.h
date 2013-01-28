@@ -20,8 +20,10 @@
 #ifndef DOOMSDAY_APIS_H
 #define DOOMSDAY_APIS_H
 
-#include <de/libdeng1.h>
-#include <string.h>
+#ifndef RC_INVOKED
+#  include <de/libdeng1.h>
+#  include <string.h>
+#endif
 
 /**
  * All APIs exported from the executable.

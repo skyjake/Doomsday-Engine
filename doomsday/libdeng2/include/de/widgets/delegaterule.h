@@ -36,7 +36,7 @@ namespace de {
  *
  * @ingroup widgets
  */
-class DelegateRule : public ConstantRule
+class DENG2_PUBLIC DelegateRule : public ConstantRule
 {
     Q_OBJECT
 

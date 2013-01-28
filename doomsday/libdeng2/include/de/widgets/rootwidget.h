@@ -38,7 +38,7 @@ class Rule;
  *
  * @ingroup widgets
  */
-class RootWidget : public Widget
+class DENG2_PUBLIC RootWidget : public Widget
 {
 public:
     RootWidget();

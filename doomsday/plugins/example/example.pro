@@ -22,7 +22,8 @@ win32 {
     OTHER_FILES += \
         api/example.def \
         doc/readme.txt \
-        doc/LICENSE
+        doc/LICENSE \
+        $$RC_FILE
 }
 
 !macx {

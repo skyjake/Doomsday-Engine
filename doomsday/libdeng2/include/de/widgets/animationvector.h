@@ -28,7 +28,7 @@ namespace de {
  * Animated 2D vector.
  * @ingroup math
  */
-class AnimationVector2
+class DENG2_PUBLIC AnimationVector2
 {
 public:
     AnimationVector2(Animation::Style style = Animation::EaseIn)

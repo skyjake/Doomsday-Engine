@@ -1,4 +1,4 @@
-/** @file event.h Base class for events.
+/** @file libshell.h  Common definitions for libshell.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,38 +16,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_EVENT_H
-#define LIBDENG2_EVENT_H
+#ifndef LIBSHELL_MAIN_H
+#define LIBSHELL_MAIN_H
 
-namespace de {
-
-/**
- * Base class for events.
- *
- * @ingroup widgets
+/*
+ * The LIBSHELL_PUBLIC macro is used for declaring exported symbols. It must be
+ * applied in all exported classes and functions. DEF files are not used for
+ * exporting symbols out of libshell.
  */
-class DENG2_PUBLIC Event
-{
-public:
-    enum {
-        KeyPress = 1,
-        KeyRelease = 2
-    };
+#if defined(_WIN32) && defined(_MSC_VER)
+#  ifdef __LIBSHELL__
+// This is defined when compiling the library.
+#    define LIBSHELL_PUBLIC __declspec(dllexport)
+#  else
+#    define LIBSHELL_PUBLIC __declspec(dllimport)
+#  endif
+#else
+// No need to use any special declarators.
+#  define LIBSHELL_PUBLIC
+#endif
 
-public:
-    Event(int type_ = 0) : _type(type_) {}
-
-    virtual ~Event() {}
-
-    /**
-     * Returns the type code of the event.
-     */
-    int type() const { return _type; }
-
-private:
-    int _type;
-};
-
-} // namespace de
-
-#endif // LIBDENG2_EVENT_H
+#endif // LIBSHELL_MAIN_H

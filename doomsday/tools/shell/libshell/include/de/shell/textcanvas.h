@@ -19,6 +19,7 @@
 #ifndef LIBSHELL_TEXTCANVAS_H
 #define LIBSHELL_TEXTCANVAS_H
 
+#include "libshell.h"
 #include <QChar>
 #include <QFlags>
 #include <de/Vector>
@@ -35,7 +36,7 @@ namespace shell {
  * characters need to be drawn, as they are the only ones that have changed
  * relative to the previous state.
  */
-class DENG2_PUBLIC TextCanvas
+class LIBSHELL_PUBLIC TextCanvas
 {
 public:
     typedef Vector2i Size;

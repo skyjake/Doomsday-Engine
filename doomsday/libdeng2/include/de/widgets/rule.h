@@ -40,7 +40,7 @@ namespace de {
  *
  * @ingroup widgets
  */
-class Rule : public QObject, public Counted
+class DENG2_PUBLIC Rule : public QObject, public Counted
 {
     Q_OBJECT
 

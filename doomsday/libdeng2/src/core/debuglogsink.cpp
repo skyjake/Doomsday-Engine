@@ -37,4 +37,7 @@ LogSink &DebugLogSink::operator << (String const &plainText)
     return *this;
 }
 
+void DebugLogSink::flush()
+{}
+
 } // namespace de
