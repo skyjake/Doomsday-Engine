@@ -33,6 +33,7 @@ public:
 public slots:
     void sendCommandToServer(de::String command);
     void handleIncomingPackets();
+    void disconnected();
 
 private:
     struct Instance;

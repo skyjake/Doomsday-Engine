@@ -87,7 +87,9 @@ ShellApp::ShellApp(int &argc, char **argv)
         // Open a connection.
         d->link = new shell::Link(Address(args[1]));
         d->status->setShellLink(d->link);
+
         connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+        connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
     }
 }
 
@@ -100,7 +102,7 @@ ShellApp::~ShellApp()
 
 void ShellApp::sendCommandToServer(String command)
 {
-    if(d->link && d->link->status() == shell::Link::Connected)
+    if(d->link)
     {
         LOG_INFO(">") << command;
 
@@ -113,9 +115,22 @@ void ShellApp::handleIncomingPackets()
 {
     forever
     {
+        DENG2_ASSERT(d->link != 0);
+
         QScopedPointer<Packet> packet(d->link->nextPacket());
         if(packet.isNull()) break;
 
         packet->execute();
     }
+}
+
+void ShellApp::disconnected()
+{
+    if(!d->link) return;
+
+    // The link was disconnected.
+    disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+    d->link->deleteLater();
+    d->link = 0;
+    d->status->setShellLink(0);
 }
