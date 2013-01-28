@@ -5,13 +5,13 @@
 # version 2 (or, at your option, any later version). Please visit
 # http://www.gnu.org/licenses/gpl.html for details.
 
-include(../../../config.pri)
+include(../config.pri)
 
 TEMPLATE = lib
 TARGET   = deng_shell
 VERSION  = 0.1.0
 
-include(../../../dep_deng2.pri)
+include(../dep_deng2.pri)
 
 win32 {
     # Keep the version number out of the file name.
@@ -58,8 +58,8 @@ macx {
     doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_shell.0.dylib libdeng_shell.0.dylib")
 
     # Update the library included in the main app bundle.
-    doPostLink("mkdir -p ../../../client/Doomsday.app/Contents/Frameworks")
-    doPostLink("cp -fRp libdeng_shell*dylib ../../../client/Doomsday.app/Contents/Frameworks")
+    doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
+    doPostLink("cp -fRp libdeng_shell*dylib ../client/Doomsday.app/Contents/Frameworks")
 }
 else {
     INSTALLS += target

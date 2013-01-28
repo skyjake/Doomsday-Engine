@@ -1,5 +1,5 @@
 # Build configuration for using the libdeng_shell library.
-shellDir = tools/shell/libshell
+shellDir = libshell
 INCLUDEPATH += $$PWD/$$shellDir/include
 
 # Use the appropriate library path.

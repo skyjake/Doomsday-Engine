@@ -17,10 +17,9 @@ VERSION = 0.1.0
 # Build Configuration -------------------------------------------------------
 
 include(../../../dep_deng2.pri)
+include(../../../dep_shell.pri)
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
-INCLUDEPATH += ../libshell/include
 
 # Sources -------------------------------------------------------------------
 

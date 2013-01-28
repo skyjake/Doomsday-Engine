@@ -19,8 +19,6 @@ include(../../../dep_deng2.pri)
 include(../../../dep_shell.pri)
 include(../../../dep_curses.pri)
 
-INCLUDEPATH += ../libshell/include
-
 # Sources -------------------------------------------------------------------
 
 HEADERS += \
