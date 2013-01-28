@@ -24,6 +24,7 @@
 #include "cursestextcanvas.h"
 #include <curses.h>
 #include <stdio.h>
+#include <signal.h>
 #include <de/Clock>
 #include <de/Error>
 #include <de/Animation>
