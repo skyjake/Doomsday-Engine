@@ -199,10 +199,6 @@ struct CursesApp::Instance
                 // Control keys.
                 switch(key)
                 {
-                case 0x1b: // Escape
-                    self.quit(); // development only
-                    return;
-
                 case KEY_ENTER:
                 case 0xd: // Enter
                     code = Qt::Key_Enter;
@@ -212,6 +208,11 @@ struct CursesApp::Instance
                     code = Qt::Key_Backspace;
                     break;
 
+                case 0x3: // Ctrl-C
+                    code = Qt::Key_C;
+                    mods = KeyEvent::Control;
+                    break;
+
                 case KEY_DC:
                 case 0x4: // Ctrl-D
                     code = Qt::Key_Delete;
@@ -219,6 +220,10 @@ struct CursesApp::Instance
 
                 case KEY_BACKSPACE:
                     code = Qt::Key_Backspace;
+                    break;
+
+                case 0x9:
+                    code = Qt::Key_Tab;
                     break;
 
                 case KEY_BTAB: // back-tab
@@ -251,8 +256,32 @@ struct CursesApp::Instance
                     code = Qt::Key_End;
                     break;
 
-                case 0xb: // Ctrl-K
+                case KEY_NPAGE:
+                case 0x16: // Ctrl-V
+                    code = Qt::Key_PageDown;
+                    break;
+
+                case KEY_PPAGE:
+                case 0x19: // Ctrl-Y
+                    code = Qt::Key_PageUp;
+                    break;
+
+                case 0xb:
                     code = Qt::Key_K;
+                    mods = KeyEvent::Control;
+                    break;
+
+                case KEY_F(9):
+                    code = Qt::Key_F9;
+                    break;
+
+                case 0x18:
+                    code = Qt::Key_X;
+                    mods = KeyEvent::Control;
+                    break;
+
+                case 0x1a:
+                    code = Qt::Key_Z;
                     mods = KeyEvent::Control;
                     break;
 
