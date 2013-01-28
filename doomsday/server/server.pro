@@ -15,8 +15,11 @@ echo(Doomsday Server $${DENG_VERSION}.)
 CONFIG -= app_bundle
 
 # Some messy old code here:
-*-g++*|*-gcc*|*-clang* {
-    QMAKE_CXXFLAGS_WARN_ON += -Wno-missing-field-initializers
+*-g++* | *-gcc* | *-clang* {
+    QMAKE_CXXFLAGS_WARN_ON += \
+        -Wno-missing-field-initializers \
+        -Wno-unused-parameter \
+        -Wno-missing-braces
 }
 
 # External Dependencies ------------------------------------------------------

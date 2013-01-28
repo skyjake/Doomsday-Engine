@@ -2173,7 +2173,7 @@ int C_DECL XSTrav_Teleport(Sector* sector, boolean ceiling, void* context,
         thinker_t *th = (thinker_t*) mo;
 
         // Not a mobj.
-        if(th->function != P_MobjThinker)
+        if(th->function != (thinkfunc_t) P_MobjThinker)
             continue;
 
         // Not a teleportman.
@@ -2918,7 +2918,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_FLOOR;
-            Thinker_Iterate(P_MobjThinker, XSTrav_SectorChain, &params);
+            Thinker_Iterate((thinkfunc_t) P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Ceiling chain. Check any mobjs that are touching the ceiling.
@@ -2928,7 +2928,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_CEILING;
-            Thinker_Iterate(P_MobjThinker, XSTrav_SectorChain, &params);
+            Thinker_Iterate((thinkfunc_t) P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Inside chain. Check any sectorlinked mobjs.
@@ -2938,7 +2938,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_INSIDE;
-            Thinker_Iterate(P_MobjThinker, XSTrav_SectorChain, &params);
+            Thinker_Iterate((thinkfunc_t) P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Ticker chain. Send an activate event if TICKER_D flag is not set.
@@ -2995,7 +2995,7 @@ void XS_Thinker(xsthinker_t* xs)
         xstrav_windparams_t params;
 
         params.sec = sector;
-        Thinker_Iterate(P_MobjThinker, XSTrav_Wind, &params);
+        Thinker_Iterate((thinkfunc_t) P_MobjThinker, XSTrav_Wind, &params);
     }
 }
 

@@ -439,7 +439,7 @@ static void P_v19_UnArchiveWorld(void)
 
 static int removeThinker(thinker_t* th, void* context)
 {
-    if(th->function == P_MobjThinker)
+    if(th->function == (thinkfunc_t) P_MobjThinker)
         P_MobjRemove((mobj_t *) th, true);
     else
         Z_Free(th);
