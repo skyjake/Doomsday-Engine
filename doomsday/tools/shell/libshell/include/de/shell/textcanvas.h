@@ -54,7 +54,7 @@ public:
             Dirty     = 0x80000000,
 
             DefaultAttributes = 0,
-            VisualAttributes = Bold | Underline | Reverse
+            VisualAttributes = Bold | Underline | Reverse | Blink
         };
         Q_DECLARE_FLAGS(Attribs, Attrib)
 

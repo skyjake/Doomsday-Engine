@@ -76,7 +76,7 @@ public:
  * Animated 3D vector.
  * @ingroup math
  */
-class AnimationVector3
+class DENG2_PUBLIC AnimationVector3
 {
 public:
     AnimationVector3(Animation::Style style = Animation::EaseIn)
