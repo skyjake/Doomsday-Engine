@@ -329,6 +329,11 @@ def generate_apidoc():
     system_command('doxygen client-mac.doxy >/dev/null 2>../doxyissues-mac.txt')        
     system_command('wc -l ../doxyissues-mac.txt')
 
+    print >> sys.stderr, "\nlibshell docs..."
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/libshell'))
+    system_command('doxygen shell.doxy >/dev/null 2>../doxyissues-shell.txt')
+    system_command('wc -l ../doxyissues-shell.txt')
+
     print >> sys.stderr, "\nDoom plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/doom'))
     system_command('doxygen doom.doxy >/dev/null 2>../../doxyissues-doom.txt')

@@ -1,0 +1,22 @@
+# Public API documentation for libshell
+@INCLUDE = ../doomsday.doxy
+
+PROJECT_NAME            = "libshell"
+PROJECT_NUMBER          = 0.1.0
+PROJECT_BRIEF           = "Tool Library for Shell Connections and UI"
+OUTPUT_DIRECTORY        = ../apidoc/shell/
+
+INPUT                   = include src
+FILE_PATTERNS           = *
+EXCLUDE_PATTERNS        = .DS_Store
+PREDEFINED              = __cplusplus __LIBSHELL__ \ 
+                          "DENG2_ERROR(N)=class N : public de::Error {};" \
+                          "DENG2_SUB_ERROR(B,N)=class N : public B {};" 
+
+INCLUDED_BY_GRAPH       = NO
+COLLABORATION_GRAPH     = NO
+REFERENCED_BY_RELATION  = NO
+OPTIMIZE_OUTPUT_FOR_C   = NO
+MACRO_EXPANSION         = YES
+EXPAND_ONLY_PREDEF      = YES
+INTERNAL_DOCS           = NO
