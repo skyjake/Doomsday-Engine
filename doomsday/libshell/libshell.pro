@@ -25,28 +25,28 @@ INCLUDEPATH += include
 # Public headers.
 HEADERS += \
     include/de/shell/KeyEvent \
+    include/de/shell/LineEditWidget \
     include/de/shell/Link \
     include/de/shell/Protocol \
     include/de/shell/TextCanvas \
-    include/de/shell/TextEditWidget \
     include/de/shell/TextRootWidget \
     include/de/shell/TextWidget \
     include/de/shell/keyevent.h \
     include/de/shell/libshell.h \
+    include/de/shell/lineeditwidget.h \
     include/de/shell/link.h \
     include/de/shell/protocol.h \
     include/de/shell/textcanvas.h \
-    include/de/shell/texteditwidget.h \
     include/de/shell/textrootwidget.h \
     include/de/shell/textwidget.h
 
 # Sources and private headers.
 SOURCES += \
     src/libshell.cpp \
+    src/lineeditwidget.cpp \
     src/link.cpp \
     src/protocol.cpp \
     src/textcanvas.cpp \
-    src/texteditwidget.cpp \
     src/textrootwidget.cpp \
     src/textwidget.cpp
 

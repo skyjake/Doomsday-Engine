@@ -105,7 +105,7 @@ struct CommandLineWidget::Instance
 };
 
 CommandLineWidget::CommandLineWidget(de::String const &name)
-    : TextEditWidget(name), d(new Instance(*this))
+    : LineEditWidget(name), d(new Instance(*this))
 {
     setPrompt("> ");
 }
@@ -158,7 +158,7 @@ bool CommandLineWidget::handleEvent(Event const *event)
             return true;
         }
 
-        eaten = TextEditWidget::handleEvent(event);
+        eaten = LineEditWidget::handleEvent(event);
 
         if(!eaten)
         {
@@ -183,6 +183,6 @@ bool CommandLineWidget::handleEvent(Event const *event)
     }
     else
     {
-        return TextEditWidget::handleEvent(event);
+        return LineEditWidget::handleEvent(event);
     }
 }

@@ -141,7 +141,7 @@ public:
     /**
      * Draws the contents of a canvas onto this canvas.
      *
-     * @param dest     Source canvas.
+     * @param canvas   Source canvas.
      * @param topLeft  Top left coordinate of the destination area.
      */
     void draw(TextCanvas const &canvas, Coord const &topLeft);

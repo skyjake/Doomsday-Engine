@@ -1,4 +1,4 @@
-/** @file deng_shell.cpp Library init.
+/** @file libshell.cpp Library init.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

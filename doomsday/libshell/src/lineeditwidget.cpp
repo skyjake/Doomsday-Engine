@@ -1,4 +1,4 @@
-/** @file texteditwidget.cpp  Widget for word-wrapped text editing.
+/** @file lineeditwidget.cpp  Widget for word-wrapped text editing.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -18,16 +18,16 @@
 
 #include <de/String>
 #include <de/RectangleRule>
-#include "de/shell/TextEditWidget"
+#include "de/shell/LineEditWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 
 using namespace de;
 using namespace de::shell;
 
-struct TextEditWidget::Instance
+struct LineEditWidget::Instance
 {
-    TextEditWidget &self;
+    LineEditWidget &self;
     ConstantRule *height;
 
     String prompt;
@@ -43,7 +43,7 @@ struct TextEditWidget::Instance
     };
     QList<int> wraps;
 
-    Instance(TextEditWidget &cli) : self(cli), cursor(0)
+    Instance(LineEditWidget &cli) : self(cli), cursor(0)
     {
         // Initial height of the command line (1 row).
         height = new ConstantRule(1);
@@ -206,18 +206,18 @@ struct TextEditWidget::Instance
     }
 };
 
-TextEditWidget::TextEditWidget(de::String const &name)
+LineEditWidget::LineEditWidget(de::String const &name)
     : TextWidget(name), d(new Instance(*this))
 {
     rule().setInput(RectangleRule::Height, d->height);
 }
 
-TextEditWidget::~TextEditWidget()
+LineEditWidget::~LineEditWidget()
 {
     delete d;
 }
 
-void TextEditWidget::setPrompt(const String &promptText)
+void LineEditWidget::setPrompt(const String &promptText)
 {
     d->prompt = promptText;
 
@@ -228,18 +228,18 @@ void TextEditWidget::setPrompt(const String &promptText)
     }
 }
 
-Vector2i TextEditWidget::cursorPosition()
+Vector2i LineEditWidget::cursorPosition()
 {
     de::Rectanglei pos = rule().recti();
     return pos.topLeft + Vector2i(d->prompt.size(), 0) + d->lineCursorPos();
 }
 
-void TextEditWidget::viewResized()
+void LineEditWidget::viewResized()
 {
     d->updateWrapsAndHeight();
 }
 
-void TextEditWidget::draw()
+void LineEditWidget::draw()
 {
     TextCanvas *cv = targetCanvas();
     if(!cv) return;
@@ -265,7 +265,7 @@ void TextEditWidget::draw()
     cv->draw(buf, pos.topLeft);
 }
 
-bool TextEditWidget::handleEvent(Event const *event)
+bool LineEditWidget::handleEvent(Event const *event)
 {
     // There are only key press events.
     DENG2_ASSERT(event->type() == Event::KeyPress);
@@ -292,7 +292,7 @@ bool TextEditWidget::handleEvent(Event const *event)
     return eaten;
 }
 
-bool TextEditWidget::handleControlKey(int key)
+bool LineEditWidget::handleControlKey(int key)
 {
     switch(key)
     {
@@ -345,7 +345,7 @@ bool TextEditWidget::handleControlKey(int key)
     return false;
 }
 
-void TextEditWidget::setText(String const &contents)
+void LineEditWidget::setText(String const &contents)
 {
     d->text = contents;
     d->cursor = contents.size();
@@ -353,18 +353,18 @@ void TextEditWidget::setText(String const &contents)
     root().requestDraw();
 }
 
-String TextEditWidget::text() const
+String LineEditWidget::text() const
 {
     return d->text;
 }
 
-void TextEditWidget::setCursor(int index)
+void LineEditWidget::setCursor(int index)
 {
     d->cursor = index;
     root().requestDraw();
 }
 
-int TextEditWidget::cursor() const
+int LineEditWidget::cursor() const
 {
     return d->cursor;
 }

@@ -1,4 +1,4 @@
-/** @file texteditwidget.h  Widget for word-wrapped text editing.
+/** @file lineeditwidget.h  Widget for word-wrapped text editing.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_TEXTEDITWIDGET_H
-#define LIBSHELL_TEXTEDITWIDGET_H
+#ifndef LIBSHELL_LINEEDITWIDGET_H
+#define LIBSHELL_LINEEDITWIDGET_H
 
 #include "libshell.h"
 #include "TextWidget"
@@ -31,7 +31,7 @@ namespace shell {
  * The widget adjusts its height automatically to fit to the full contents of
  * the edited, wrapped line.
  */
-class LIBSHELL_PUBLIC TextEditWidget : public TextWidget
+class LIBSHELL_PUBLIC LineEditWidget : public TextWidget
 {
     Q_OBJECT
 
@@ -41,9 +41,9 @@ public:
      *
      * @param name  Widget name.
      */
-    TextEditWidget(String const &name = "");
+    LineEditWidget(String const &name = "");
 
-    virtual ~TextEditWidget();
+    virtual ~LineEditWidget();
 
     /**
      * Sets the prompt that is displayed in front of the edited text.
@@ -78,4 +78,4 @@ private:
 } // namespace shell
 } // namespace de
 
-#endif // LIBSHELL_TEXTEDITWIDGET_H
+#endif // LIBSHELL_LINEEDITWIDGET_H
