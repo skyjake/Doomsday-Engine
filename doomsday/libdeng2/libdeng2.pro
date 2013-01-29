@@ -27,7 +27,7 @@ DEFINES += LIBDENG2_VERSION=\\\"$${LIBDENG2_MAJOR_VERSION}.$${LIBDENG2_MINOR_VER
 DEFINES += __DENG2__
 
 # Using Qt.
-QT += core network gui opengl
+QT += core network gui
 
 win32 {
     # Keep the version number out of the file name.
@@ -60,16 +60,24 @@ include(filesys.pri)
 include(legacy.pri)
 include(network.pri)
 include(scriptsys.pri)
+include(widgets.pri)
 
 # Convenience headers.
 HEADERS += \
     include/de/App \
+    include/de/Clock \
     include/de/CommandLine \
     include/de/Config \
+    include/de/DebugLogSink \
     include/de/Error \
+    include/de/FileLogSink \
     include/de/Library \
     include/de/Log \
     include/de/LogBuffer \
+    include/de/LogSink \
+    include/de/MonospaceLogSinkFormatter \
+    include/de/Rectangle \
+    include/de/TextStreamLogSink \
     include/de/UnixInfo \
     include/de/Vector \
     include/de/Version
@@ -79,14 +87,21 @@ HEADERS += \
     include/de/error.h \
     include/de/libdeng2.h \
     include/de/math.h \
+    include/de/rectangle.h \
     include/de/vector.h \
     include/de/version.h \
     include/de/core/app.h \
-    include/de/core/config.h \
+    include/de/core/clock.h \
     include/de/core/commandline.h \
+    include/de/core/config.h \
+    include/de/core/debuglogsink.h \
+    include/de/core/filelogsink.h \
     include/de/core/library.h \
     include/de/core/log.h \
     include/de/core/logbuffer.h \
+    include/de/core/logsink.h \
+    include/de/core/monospacelogsinkformatter.h \
+    include/de/core/textstreamlogsink.h \
     include/de/core/unixinfo.h
 
 # Private headers.
@@ -99,12 +114,18 @@ SOURCES += \
     src/error.cpp \
     src/version.cpp \
     src/core/app.cpp \
+    src/core/callbacktimer.cpp \
+    src/core/clock.cpp \
     src/core/commandline.cpp \
     src/core/config.cpp \
-    src/core/callbacktimer.cpp \
+    src/core/debuglogsink.cpp \
+    src/core/filelogsink.cpp \
     src/core/library.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp \
+    src/core/logsink.cpp \
+    src/core/monospacelogsinkformatter.cpp \
+    src/core/textstreamlogsink.cpp \
     src/core/unixinfo.cpp
 
 OTHER_FILES += \
@@ -123,7 +144,6 @@ macx {
     fixInstallName("QtCore.framework/Versions/4/QtCore")
     fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
     fixInstallName("QtGui.framework/Versions/4/QtGui")
-    fixInstallName("QtOpenGL.framework/Versions/4/QtOpenGL")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")

@@ -127,6 +127,7 @@
 #  define DENG2_DEBUG
 #  ifdef DENG2_USE_QT
 #    define DENG2_ASSERT(x) Q_ASSERT(x)
+#    include <QDebug>
 #  else
 #    define DENG2_ASSERT(x) assert(x)
 #  endif
@@ -156,6 +157,12 @@
  * Macro for hiding the warning about an three unused parameters.
  */
 #define DENG2_UNUSED3(x, y, z)  (void)x, (void)y, (void)z
+
+/**
+ * Forms an escape sequence string literal. Escape sequences begin
+ * with an ASCII Escape character.
+ */
+#define DENG2_STR_ESCAPE(StringLiteral) "\x1b" StringLiteral
 
 /**
  * Macro for defining an opaque type in the C wrapper API.

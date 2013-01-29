@@ -46,20 +46,40 @@ struct LegacyNetwork::Instance
     SocketSets sets;
 
     Instance() : idGen(0) {}
-    ~Instance() {
+
+    ~Instance()
+    {
         // Cleanup time! Delete all existing sockets.
-        foreach(Socket *s, sockets.values()) {
+        foreach(Socket *s, sockets.values())
+        {
             delete s;
         }
-        foreach(ListenSocket *s, serverSockets.values()) {
+        foreach(ListenSocket *s, serverSockets.values())
+        {
             delete s;
         }
     }
-    int nextId() {
+
+    int nextId()
+    {
         /** @todo This will fail after 2.1 billion sockets have been opened.
          * That might take a while, though...
          */
         return ++idGen;
+    }
+
+    Socket *take(int id)
+    {
+        Socket *sock = sockets[id];
+        sockets.remove(id);
+
+        // Remove from any sets.
+        DENG2_FOR_EACH(SocketSets, i, sets)
+        {
+            i->members.removeAll(sock);
+        }
+
+        return sock;
     }
 };
 
@@ -99,7 +119,7 @@ int LegacyNetwork::open(Address const &address)
     LOG_AS("LegacyNetwork::open");
     try
     {
-        Socket *sock = new Socket(address);
+        Socket *sock = new Socket(address, 5.0 /* seconds for timeout */);
         int id = d->nextId();
         d->sockets.insert(id, sock);
         return id;
@@ -238,6 +258,11 @@ bool LegacyNetwork::incomingForSocket(int socket)
 {
     DENG2_ASSERT(d->sockets.contains(socket));
     return d->sockets[socket]->hasIncoming();
+}
+
+Socket *LegacyNetwork::takeSocket(int socket)
+{
+    return d->take(socket);
 }
 
 } // namespace de

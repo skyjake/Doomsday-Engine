@@ -15,10 +15,15 @@ echo(Doomsday Client $${DENG_VERSION}.)
 
 # Some messy old code here:
 *-g++*|*-gcc*|*-clang* {
-    QMAKE_CXXFLAGS_WARN_ON += -Wno-missing-field-initializers
+    QMAKE_CXXFLAGS_WARN_ON += \
+        -Wno-missing-field-initializers \
+        -Wno-unused-parameter \
+        -Wno-missing-braces
 }
 
 # External Dependencies ------------------------------------------------------
+
+CONFIG += deng_qtopengl
 
 include(../dep_sdl.pri)
 include(../dep_opengl.pri)

@@ -23,14 +23,15 @@
 #include "../ISerializable"
 #include "../Address"
 #include "../String"
+#include "../Reader"
 
 namespace de {
 
 class String;
     
 /**
- * Base class for all network packets in the libdeng2 network communications protocol.
- * All packets are based on this.
+ * Base class for all network packets in the libdeng2 network communications
+ * protocol. All packets are based on this class.
  *
  * @ingroup protocol
  */
@@ -73,9 +74,9 @@ public:
     void setFrom(Address const &from) { _from = from; }
 
     /**
-     * Execute whatever action the packet defines. This is called for all packets
-     * once received and interpreted by the protocol. A packet defined outside
-     * libdeng2 may use this to add functionality to the packet.
+     * Execute whatever action the packet defines. This is called for all
+     * packets once received and interpreted by the protocol. A packet defined
+     * outside libdeng2 may use this to add functionality to the packet.
      */
     virtual void execute() const;
 
@@ -100,6 +101,19 @@ public:
      * @param type  Packet identifier.
      */
     static bool checkType(Reader &from, String const &type);
+
+    template <typename PacketType>
+    static PacketType *constructFromBlock(Block const &block, char const *packetTypeIdentifier)
+    {
+        Reader from(block);
+        if(checkType(from, packetTypeIdentifier))
+        {
+            std::auto_ptr<PacketType> p(new PacketType);
+            from >> *p.get();
+            return p.release();
+        }
+        return 0;
+    }
 
 private:
     /// The type is identified with a four-character string.

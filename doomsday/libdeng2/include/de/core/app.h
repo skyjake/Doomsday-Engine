@@ -21,6 +21,7 @@
 #define LIBDENG2_APP_H
 
 #include "../libdeng2.h"
+#include "../Clock"
 #include "../CommandLine"
 #include "../NativePath"
 #include "../LogBuffer"

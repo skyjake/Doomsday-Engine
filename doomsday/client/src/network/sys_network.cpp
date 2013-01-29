@@ -42,12 +42,16 @@
 #endif
 #ifdef __SERVER__
 #  include "server/sv_def.h"
+#  include "shellusers.h"
 #endif
 #include "network/protocol.h"
 #include "client/cl_def.h"
 #include "map/p_players.h"
 
 #include <de/c_wrapper.h> // using LegacyNetwork
+#include <de/Socket>
+#include <de/LegacyCore>
+#include <de/LegacyNetwork>
 
 #define MAX_NODES                   32
 
@@ -334,6 +338,8 @@ void N_TerminateNode(nodeid_t id)
 
 #ifdef __SERVER__
 
+static ShellUsers shellUsers;
+
 /**
  * Registers a new TCP socket as a client node. There can only be a limited
  * number of nodes at a time. This is only used by a server.
@@ -412,101 +418,6 @@ static boolean joinNode(nodeid_t id, int clientProtocol, const char *name)
     return true;
 }
 
-#endif // __SERVER__
-
-#ifdef __CLIENT__
-void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
-{
-    netnode_t* svNode = &netNodes[nodeId];
-
-    // Close the connection; that was all the information we need.
-    LegacyNetwork_Close(svNode->sock);
-    svNode->sock = 0;
-
-    // Did we receive what we expected to receive?
-    if(size >= 5 && !strncmp((const char*)data, "Info\n", 5))
-    {
-        const char *ch;
-        ddstring_t *line;
-        ddstring_t* response = Str_New();
-
-        // Make a null-terminated copy of the response text.
-        Str_PartAppend(response, (const char*)data, 0, size);
-
-        located.valid = true;
-
-        // Convert the string into a serverinfo_s.
-        line = Str_New();
-        ch = Str_Text(response);
-        do
-        {
-            ch = Str_GetLine(line, ch);
-            Net_StringToServerInfo(Str_Text(line), &located.info);
-        }
-        while(*ch);
-
-        Str_Delete(line);
-        Str_Delete(response);
-
-        // Show the information in the console.
-        Con_Message("%i server%s been found.\n", N_GetHostCount(), N_GetHostCount() != 1 ? "s have" : " has");
-        Net_PrintServerInfo(0, NULL);
-        Net_PrintServerInfo(0, &located.info);
-    }
-    else
-    {
-        located.valid = false;
-        Con_Message("Reply from %s (port %i) was invalid.\n", svNode->addr.host, svNode->addr.port);
-    }
-
-    memset(svNode, 0, sizeof(*svNode));
-}
-
-/**
- * @todo Socket connection shouldn't block while forming the connection.
- * Instead, there should be a notification after the connection has opened or
- * failed.
- */
-boolean N_LookForHosts(const char *address, int port, expectedresponder_t responder)
-{
-    netnode_t* svNode = &netNodes[0];
-
-    // We must be a client.
-    if(!N_IsAvailable() || netServerMode)
-        return false;
-
-    if(!port)
-        port = DEFAULT_TCP_PORT;
-
-    memset(svNode, 0, sizeof(*svNode));
-
-    // Get rid of previous findings.
-    memset(&located, 0, sizeof(located));
-    strncpy(located.addr.host, address, sizeof(located.addr.host) - 1);
-    located.addr.port = port;
-    memcpy(&svNode->addr, &located.addr, sizeof(located.addr));
-
-    // I say, anyone there?
-    svNode->sock = LegacyNetwork_Open(located.addr.host, located.addr.port);
-    if(!svNode->sock)
-    {
-        Con_Message("No reply from %s (port %i).\n", address, port);
-        memset(svNode, 0, sizeof(*svNode));
-        return false;
-    }
-
-    // Send an INFO query.
-    LegacyNetwork_Send(svNode->sock, "Info?", 5);
-    Con_Message("Sent info query to %s (port %i).\n", address, port);
-
-    svNode->expectedResponder = (responder? responder : N_ClientHandleResponseToInfoQuery);
-    return true;
-}
-
-#endif // __CLIENT__
-
-#ifdef __SERVER__
-
 boolean N_ServerOpen(void)
 {
     if(!isDedicated)
@@ -567,6 +478,17 @@ boolean N_ServerClose(void)
     return true;
 }
 
+static void switchNodeToShellMode(nodeid_t node)
+{
+    de::Socket *socket = de::LegacyCore::instance().network()
+            .takeSocket(netNodes[node].sock);
+
+    // The socket is no longer maintained by the legacy network.
+    memset(&netNodes[node], 0, sizeof(netnode_t));
+
+    shellUsers.add(new ShellUser(socket));
+}
+
 /**
  * Validate and process the command, which has been sent by a remote agent.
  *
@@ -598,6 +520,12 @@ static boolean serverHandleNodeRequest(nodeid_t node, const char *command, int l
 
         LegacyNetwork_Send(sock, Str_Text(&msg), (int) Str_Length(&msg));
         Str_Free(&msg);
+    }
+    else if(length == 5 && !strncmp(command, "Shell", 5))
+    {
+        // This node will switch to shell mode: ownership of the socket is
+        // passed to a ShellUser.
+        switchNodeToShellMode(node);
     }
     else if(length >= 10 && !strncmp(command, "Join ", 5) && command[9] == ' ')
     {
@@ -690,53 +618,192 @@ void N_ServerListenUnjoinedNodes(void)
     }
 }
 
+void N_ServerListenJoinedNodes(void)
+{
+    if(!joinedSockSet) return;
+
+    // Any activity on the client sockets?
+    while(LegacyNetwork_SocketSet_Activity(joinedSockSet))
+    {
+        int i;
+        for(i = 0; i < MAX_NODES; ++i)
+        {
+            netnode_t* node = netNodes + i;
+
+            // Does this socket have got any activity?
+            if(node->hasJoined)
+            {
+                if(LegacyNetwork_IsDisconnected(node->sock) ||
+                   (LegacyNetwork_BytesReady(node->sock) && !Protocol_Receive(i)))
+                {
+                    netevent_t nev;
+                    nev.type = NE_TERMINATE_NODE;
+                    nev.id = i;
+                    N_NEPost(&nev);
+                }
+            }
+        }
+
+        // Should we go take care of the events?
+        if(N_NEPending()) break;
+    }
+}
+
+/**
+ * Called from "net info" (server-side).
+ */
+void N_PrintNetworkStatus(void)
+{
+    int i, first;
+
+    Con_Message("SERVER: ");
+    if(serverSock)
+    {
+        char buf[80];
+        N_IPToString(buf, &netNodes[0].addr);
+        Con_Message("Open at %s.\n", buf);
+    }
+    else
+    {
+        Con_Message("No server socket open.\n");
+    }
+    first = true;
+    for(i = 1; i < DDMAXPLAYERS; ++i)
+    {
+        client_t *cl = &clients[i];
+        player_t *plr = &ddPlayers[i];
+        netnode_t* node = &netNodes[cl->nodeID];
+        if(cl->nodeID)
+        {
+            if(first)
+            {
+                Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:\n");
+                first = false;
+            }
+            Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec\n",
+                        i, cl->name, cl->nodeID,
+                        node->hasJoined? '*' : ' ',
+                        cl->handshake? '*' : ' ',
+                        cl->ready? '*' : ' ',
+                        plr->shared.inGame? '*' : ' ',
+                        Timer_RealSeconds() - cl->enterTime);
+        }
+    }
+    if(first)
+    {
+        Con_Message("No clients connected.\n");
+    }
+
+    if(shellUsers.count())
+    {
+        Con_Message("%i connected shell user%s.\n",
+                    shellUsers.count(),
+                    shellUsers.count() == 1? "" : "s");
+    }
+
+    N_PrintBufferInfo();
+
+    Con_Message("Configuration:\n");
+    Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
+}
+
+void N_ListenNodes(void)
+{
+    // This is only for the server.
+    N_ServerListenUnjoinedNodes();
+    N_ServerListenJoinedNodes();
+}
+
 #endif // __SERVER__
 
 #ifdef __CLIENT__
 
-/**
- * Handles messages from the server when the client is connected but has not
- * yet joined to game.
- */
-void N_ClientListenUnjoined(void)
+void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
 {
-    netnode_t *svNode = &netNodes[0];
+    netnode_t* svNode = &netNodes[nodeId];
 
-    if(!svNode->sock || svNode->hasJoined)
-        return;
+    // Close the connection; that was all the information we need.
+    LegacyNetwork_Close(svNode->sock);
+    svNode->sock = 0;
 
-    if(LegacyNetwork_IsDisconnected(svNode->sock))
+    // Did we receive what we expected to receive?
+    if(size >= 5 && !strncmp((const char*)data, "Info\n", 5))
     {
-        // Connection to the server has been closed.
-        N_Disconnect();
-        return;
+        const char *ch;
+        ddstring_t *line;
+        ddstring_t* response = Str_New();
+
+        // Make a null-terminated copy of the response text.
+        Str_PartAppend(response, (const char*)data, 0, size);
+
+        located.valid = true;
+
+        // Convert the string into a serverinfo_s.
+        line = Str_New();
+        ch = Str_Text(response);
+        do
+        {
+            ch = Str_GetLine(line, ch);
+            Net_StringToServerInfo(Str_Text(line), &located.info);
+        }
+        while(*ch);
+
+        Str_Delete(line);
+        Str_Delete(response);
+
+        // Show the information in the console.
+        Con_Message("%i server%s been found.\n", N_GetHostCount(), N_GetHostCount() != 1 ? "s have" : " has");
+        Net_PrintServerInfo(0, NULL);
+        Net_PrintServerInfo(0, &located.info);
+    }
+    else
+    {
+        located.valid = false;
+        Con_Message("Reply from %s (port %i) was invalid.\n", svNode->addr.host, svNode->addr.port);
     }
 
-    // Any incoming messages?
-    while(LegacyNetwork_BytesReady(svNode->sock))
+    memset(svNode, 0, sizeof(*svNode));
+}
+
+/**
+ * @todo Socket connection shouldn't block while forming the connection.
+ * Instead, there should be a notification after the connection has opened or
+ * failed.
+ */
+boolean N_LookForHosts(const char *address, int port, expectedresponder_t responder)
+{
+    netnode_t* svNode = &netNodes[0];
+
+    // We must be a client.
+    if(!N_IsAvailable() || netServerMode)
+        return false;
+
+    if(!port)
+        port = DEFAULT_TCP_PORT;
+
+    memset(svNode, 0, sizeof(*svNode));
+
+    // Get rid of previous findings.
+    memset(&located, 0, sizeof(located));
+    strncpy(located.addr.host, address, sizeof(located.addr.host) - 1);
+    located.addr.port = port;
+    memcpy(&svNode->addr, &located.addr, sizeof(located.addr));
+
+    // I say, anyone there?
+    svNode->sock = LegacyNetwork_Open(located.addr.host, located.addr.port);
+    if(!svNode->sock)
     {
-        int size = 0;
-        byte* data = LegacyNetwork_Receive(svNode->sock, &size);
-        if(data)
-        {
-            if(svNode->expectedResponder)
-            {
-                // The responder may change during the execution of this.
-                svNode->expectedResponder(0, data, size);
-            }
-            else
-            {
-                Con_Message("Unexpected message from server (%i bytes), ignoring.\n", size);
-            }
-            LegacyNetwork_FreeBuffer(data);
-        }
-        else
-        {
-            // An error!
-            Con_Message("Connection closed.\n");
-            N_Disconnect();
-        }
+        Con_Message("No reply from %s (port %i).\n", address, port);
+        memset(svNode, 0, sizeof(*svNode));
+        return false;
     }
+
+    // Send an INFO query.
+    LegacyNetwork_Send(svNode->sock, "Info?", 5);
+    Con_Message("Sent info query to %s (port %i).\n", address, port);
+
+    svNode->expectedResponder = (responder? responder : N_ClientHandleResponseToInfoQuery);
+    return true;
 }
 
 /**
@@ -853,44 +920,50 @@ boolean N_Disconnect(void)
     return true;
 }
 
-#endif // __CLIENT__
-
-#ifdef __SERVER__
-
-void N_ServerListenJoinedNodes(void)
+/**
+ * Handles messages from the server when the client is connected but has not
+ * yet joined to game.
+ */
+void N_ClientListenUnjoined(void)
 {
-    if(!joinedSockSet) return;
+    netnode_t *svNode = &netNodes[0];
 
-    // Any activity on the client sockets?
-    while(LegacyNetwork_SocketSet_Activity(joinedSockSet))
+    if(!svNode->sock || svNode->hasJoined)
+        return;
+
+    if(LegacyNetwork_IsDisconnected(svNode->sock))
     {
-        int i;
-        for(i = 0; i < MAX_NODES; ++i)
+        // Connection to the server has been closed.
+        N_Disconnect();
+        return;
+    }
+
+    // Any incoming messages?
+    while(LegacyNetwork_BytesReady(svNode->sock))
+    {
+        int size = 0;
+        byte* data = LegacyNetwork_Receive(svNode->sock, &size);
+        if(data)
         {
-            netnode_t* node = netNodes + i;
-
-            // Does this socket have got any activity?
-            if(node->hasJoined)
+            if(svNode->expectedResponder)
             {
-                if(LegacyNetwork_IsDisconnected(node->sock) ||
-                   (LegacyNetwork_BytesReady(node->sock) && !Protocol_Receive(i)))
-                {
-                    netevent_t nev;
-                    nev.type = NE_TERMINATE_NODE;
-                    nev.id = i;
-                    N_NEPost(&nev);
-                }
+                // The responder may change during the execution of this.
+                svNode->expectedResponder(0, data, size);
             }
+            else
+            {
+                Con_Message("Unexpected message from server (%i bytes), ignoring.\n", size);
+            }
+            LegacyNetwork_FreeBuffer(data);
         }
-
-        // Should we go take care of the events?
-        if(N_NEPending()) break;
+        else
+        {
+            // An error!
+            Con_Message("Connection closed.\n");
+            N_Disconnect();
+        }
     }
 }
-
-#endif // __SERVER__
-
-#ifdef __CLIENT__
 
 void N_ClientListen(void)
 {
@@ -913,87 +986,29 @@ void N_ClientListen(void)
     }
 }
 
-#endif
-
-void N_ListenNodes(void)
-{
-    if(netServerMode)
-    {
-#ifdef __SERVER__
-        // This is only for the server.
-        N_ServerListenUnjoinedNodes();
-        N_ServerListenJoinedNodes();
-#endif
-    }
-    else
-    {
-#ifdef __CLIENT__
-        N_ClientListenUnjoined();
-        N_ClientListen();
-#endif
-    }
-}
-
 /**
- * Called from "net info".
+ * Called from "net info" (client-side).
  */
 void N_PrintNetworkStatus(void)
 {
-    int i, first;
-
-    if(isServer && !serverSock)
-    {
-        Con_Message("OFFLINE: Single-player mode.\n");
-    }
-    else if(isServer)
-    {
-        if(isDedicated) Con_Message("DEDICATED ");
-        Con_Message("SERVER: ");
-        if(serverSock)
-        {
-            char buf[80];
-            N_IPToString(buf, &netNodes[0].addr);
-            Con_Message("Open at %s.\n", buf);
-        }
-        else
-        {
-            Con_Message("No server socket open.\n");
-        }
-        first = true;
-        for(i = 1; i < DDMAXPLAYERS; ++i)
-        {
-            client_t *cl = &clients[i];
-            player_t *plr = &ddPlayers[i];
-            netnode_t* node = &netNodes[cl->nodeID];
-            if(cl->nodeID)
-            {
-                if(first)
-                {
-                    Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:\n");
-                    first = false;
-                }
-                Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec\n",
-                            i, cl->name, cl->nodeID,
-                            node->hasJoined? '*' : ' ',
-                            cl->handshake? '*' : ' ',
-                            cl->ready? '*' : ' ',
-                            plr->shared.inGame? '*' : ' ',
-                            Timer_RealSeconds() - cl->enterTime);
-            }
-        }
-        if(first)
-        {
-            Con_Message("No clients connected.\n");
-        }
-    }
     if(isClient)
     {
         char buf[80];
         N_IPToString(buf, &netNodes[0].addr);
         Con_Message("CLIENT: Connected to server at %s.\n", buf);
     }
-    N_PrintBufferInfo();
+    else
+    {
+        Con_Message("OFFLINE: Single-player mode.\n");
+    }
 
-    Con_Message("Configuration:\n");
-    Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
+    N_PrintBufferInfo();
 }
+
+void N_ListenNodes(void)
+{
+    N_ClientListenUnjoined();
+    N_ClientListen();
+}
+
+#endif // __CLIENT__

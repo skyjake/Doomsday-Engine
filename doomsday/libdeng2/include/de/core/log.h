@@ -24,6 +24,7 @@
 #include "../String"
 #include "../Lockable"
 #include "../Guard"
+#include "../ISerializable"
 
 #include <QList>
 #include <vector>
@@ -96,7 +97,7 @@ class LogBuffer;
  *
  * @ingroup core
  */
-class DENG2_PUBLIC LogEntry : public Lockable
+class DENG2_PUBLIC LogEntry : public Lockable, public ISerializable
 {
 public:
     /// Level of the log entry.
@@ -195,7 +196,7 @@ public:
      *
      * @ingroup core
      */
-    class DENG2_PUBLIC Arg : public String::IPatternArg
+    class DENG2_PUBLIC Arg : public String::IPatternArg, public ISerializable
     {
     public:
         /// The wrong type is used in accessing the value. @ingroup errors
@@ -234,76 +235,44 @@ public:
         };
 
     public:
-        Arg(dint i)              : _type(INTEGER)        { _data.intValue   = i; }
-        Arg(duint i)             : _type(INTEGER)        { _data.intValue   = i; }
-        Arg(long int i)          : _type(INTEGER)        { _data.intValue   = i; }
-        Arg(long unsigned int i) : _type(INTEGER)        { _data.intValue   = i; }
-        Arg(duint64 i)           : _type(INTEGER)        { _data.intValue   = dint64(i); }
-        Arg(dint64 i)            : _type(INTEGER)        { _data.intValue   = i; }
-        Arg(ddouble d)           : _type(FLOATING_POINT) { _data.floatValue = d; }
-        Arg(void const *p)       : _type(INTEGER)        { _data.intValue   = dint64(p); }
-        Arg(char const *s) : _type(STRING) {
-            _data.stringValue = new String(s);
-        }
-        Arg(String const &s) : _type(STRING) {
-            _data.stringValue = new String(s.data(), s.size());
-        }
-        Arg(Base const &arg) : _type(arg.logEntryArgType()) {
-            switch(_type) {
-            case INTEGER:
-                _data.intValue = arg.asInt64();
-                break;
-            case FLOATING_POINT:
-                _data.floatValue = arg.asDouble();
-                break;
-            case STRING: {
-                String s = arg.asText();
-                _data.stringValue = new String(s.data(), s.size());
-                break; }
-            }
-        }
-        ~Arg() {
-            if(_type == STRING) {
-                delete _data.stringValue;
-            }
-        }
+        Arg()                    : _type(INTEGER)        { _data.intValue    = 0; }
+        Arg(dint i)              : _type(INTEGER)        { _data.intValue    = i; }
+        Arg(duint i)             : _type(INTEGER)        { _data.intValue    = i; }
+        Arg(long int i)          : _type(INTEGER)        { _data.intValue    = i; }
+        Arg(long unsigned int i) : _type(INTEGER)        { _data.intValue    = i; }
+        Arg(duint64 i)           : _type(INTEGER)        { _data.intValue    = dint64(i); }
+        Arg(dint64 i)            : _type(INTEGER)        { _data.intValue    = i; }
+        Arg(ddouble d)           : _type(FLOATING_POINT) { _data.floatValue  = d; }
+        Arg(void const *p)       : _type(INTEGER)        { _data.intValue    = dint64(p); }
+        Arg(char const *s)       : _type(STRING)         { _data.stringValue = new String(s); }
+        Arg(String const &s)     : _type(STRING)         { _data.stringValue = new String(s.data(), s.size()); }
 
-        Type type() const { return _type; }
-        dint64 intValue() const {
+        Arg(Base const &arg);
+        Arg(Arg const &other);
+
+        ~Arg();
+
+        inline Type type() const { return _type; }
+        inline dint64 intValue() const {
             DENG2_ASSERT(_type == INTEGER);
             return _data.intValue;
         }
-        ddouble floatValue() const {
+        inline ddouble floatValue() const {
             DENG2_ASSERT(_type == FLOATING_POINT);
             return _data.floatValue;
         }
-        QString stringValue() const {
+        inline QString stringValue() const {
             DENG2_ASSERT(_type == STRING);
             return *_data.stringValue;
         }
 
         // Implements String::IPatternArg.
-        ddouble asNumber() const {
-            if(_type == INTEGER) {
-                return ddouble(_data.intValue);
-            }
-            else if(_type == FLOATING_POINT) {
-                return _data.floatValue;
-            }
-            throw TypeError("Log::Arg::asNumber", "String argument cannot be used as a number");
-        }
-        String asText() const {
-            if(_type == STRING) {
-                return *_data.stringValue;
-            }
-            else if(_type == INTEGER) {
-                return String::number(_data.intValue);
-            }
-            else if(_type == FLOATING_POINT) {
-                return String::number(_data.floatValue);
-            }
-            throw TypeError("Log::Arg::asText", "Number argument cannot be used a string");
-        }
+        ddouble asNumber() const;
+        String asText() const;
+
+        // Implements ISerializable.
+        void operator >> (Writer &to) const;
+        void operator << (Reader &from);
 
     private:
         Type _type;
@@ -350,6 +319,12 @@ public:
 
     LogEntry(Level level, String const &section, int sectionDepth, String const &format, Args args);
 
+    /**
+     * Copy constructor.
+     * @param other  Log entry.
+     */
+    LogEntry(LogEntry const &other);
+
     ~LogEntry();
 
     /// Returns the timestamp of the entry.
@@ -375,6 +350,10 @@ public:
      * @return Composed textual representation of the entry.
      */
     String asText(Flags const &flags = 0, int shortenSection = 0) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
 private:
     void advanceFormat(String::const_iterator &i) const;

@@ -124,7 +124,7 @@ boolean Sys_InMainThread(void)
 
 void Thread_Sleep(int milliseconds)
 {
-    de::Time::Delta::fromMilliSeconds(milliseconds).sleep();
+    de::TimeDelta::fromMilliSeconds(milliseconds).sleep();
 }
 
 thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm)

@@ -22,6 +22,8 @@
 #include "de/Date"
 #include "de/LogBuffer"
 #include "de/Guard"
+#include "de/Reader"
+#include "de/Writer"
 #include "logtextstyle.h"
 
 #include <QMap>
@@ -62,15 +64,153 @@ public:
 /// The logs table contains the log of each thread that uses logging.
 static std::auto_ptr<internal::Logs> logsPtr;
 
+LogEntry::Arg::Arg(const LogEntry::Arg::Base &arg) : _type(arg.logEntryArgType())
+{
+    switch(_type)
+    {
+    case INTEGER:
+        _data.intValue = arg.asInt64();
+        break;
+
+    case FLOATING_POINT:
+        _data.floatValue = arg.asDouble();
+        break;
+
+    case STRING: {
+        String s = arg.asText();
+        _data.stringValue = new String(s.data(), s.size());
+        break; }
+    }
+}
+
+LogEntry::Arg::Arg(Arg const &other) : _type(other._type)
+{
+    switch(other._type)
+    {
+    case INTEGER:
+        _data.intValue = other._data.intValue;
+        break;
+
+    case FLOATING_POINT:
+        _data.floatValue = other._data.floatValue;
+        break;
+
+    case STRING:
+        _data.stringValue = new String(*other._data.stringValue);
+        break;
+    }
+}
+
+LogEntry::Arg::~Arg()
+{
+    if(_type == STRING)
+    {
+        delete _data.stringValue;
+    }
+}
+
+ddouble LogEntry::Arg::asNumber() const
+{
+    if(_type == INTEGER)
+    {
+        return ddouble(_data.intValue);
+    }
+    else if(_type == FLOATING_POINT)
+    {
+        return _data.floatValue;
+    }
+    throw TypeError("Log::Arg::asNumber", "String argument cannot be used as a number");
+}
+
+String LogEntry::Arg::asText() const
+{
+    if(_type == STRING)
+    {
+        return *_data.stringValue;
+    }
+    else if(_type == INTEGER)
+    {
+        return String::number(_data.intValue);
+    }
+    else if(_type == FLOATING_POINT)
+    {
+        return String::number(_data.floatValue);
+    }
+    throw TypeError("Log::Arg::asText", "Number argument cannot be used a string");
+}
+
+void LogEntry::Arg::operator >> (Writer &to) const
+{
+    to << dbyte(_type);
+
+    switch(_type)
+    {
+    case INTEGER:
+        to << _data.intValue;
+        break;
+
+    case FLOATING_POINT:
+        to << _data.floatValue;
+        break;
+
+    case STRING:
+        to << *_data.stringValue;
+        break;
+    }
+}
+
+void LogEntry::Arg::operator << (Reader &from)
+{
+    if(_type == STRING) delete _data.stringValue;
+
+    from.readAs<dbyte>(_type);
+
+    switch(_type)
+    {
+    case INTEGER:
+        from >> _data.intValue;
+        break;
+
+    case FLOATING_POINT:
+        from >> _data.floatValue;
+        break;
+
+    case STRING:
+        _data.stringValue = new String;
+        from >> *_data.stringValue;
+        break;
+    }
+}
+
 LogEntry::LogEntry() : _level(TRACE), _sectionDepth(0), _disabled(true)
 {}
 
 LogEntry::LogEntry(Level level, String const &section, int sectionDepth, String const &format, Args args)
-    : _level(level), _section(section), _sectionDepth(sectionDepth), _format(format), _disabled(false), _args(args)
+    : _level(level),
+      _section(section),
+      _sectionDepth(sectionDepth),
+      _format(format),
+      _disabled(false),
+      _args(args)
 {
     if(!LogBuffer::appBuffer().isEnabled(level))
     {
         _disabled = true;
+    }
+}
+
+LogEntry::LogEntry(LogEntry const &other)
+    : _when(other._when),
+      _level(other._level),
+      _section(other._section),
+      _sectionDepth(other._sectionDepth),
+      _format(other._format),
+      _defaultFlags(other._defaultFlags),
+      _disabled(other._disabled)
+{
+    DENG2_FOR_EACH_CONST(Args, i, other._args)
+    {
+        _args.append(new Arg(**i));
     }
 }
 
@@ -259,6 +399,32 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     }
     
     return result;
+}
+
+void LogEntry::operator >> (Writer &to) const
+{
+    to << _when
+       << _section
+       << _format
+       << dbyte(_level)
+       << dbyte(_sectionDepth)
+       << duint32(_defaultFlags);
+
+    to.writeObjects(_args);
+}
+
+void LogEntry::operator << (Reader &from)
+{
+    foreach(Arg *a, _args) delete a;
+    _args.clear();
+
+    from >> _when
+         >> _section
+         >> _format;
+    from.readAs<dbyte>(_level)
+        .readAs<dbyte>(_sectionDepth)
+        .readAs<duint32>(_defaultFlags)
+        .readObjects<Arg>(_args);
 }
 
 QTextStream &operator << (QTextStream &stream, LogEntry::Arg const &arg)

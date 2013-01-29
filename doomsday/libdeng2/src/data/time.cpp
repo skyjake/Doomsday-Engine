@@ -48,27 +48,27 @@ public:
 
 } // namespace internal
 
-duint64 Time::Delta::asMilliSeconds() const
+duint64 TimeDelta::asMilliSeconds() const
 {
     return duint64(_seconds * 1000);
 }
 
-ddouble Time::Delta::asMinutes() const
+ddouble TimeDelta::asMinutes() const
 {
     return _seconds / 60;
 }
 
-ddouble Time::Delta::asHours() const
+ddouble TimeDelta::asHours() const
 {
     return _seconds / 3600;
 }
 
-ddouble Time::Delta::asDays() const
+ddouble TimeDelta::asDays() const
 {
     return asHours() / 24;
 }
 
-void Time::Delta::sleep() const
+void TimeDelta::sleep() const
 {
     if(_seconds < 60)
     {
@@ -80,17 +80,33 @@ void Time::Delta::sleep() const
     }
 }
 
-Time::Delta Time::Delta::operator + (ddouble const &d) const
+void TimeDelta::operator >> (Writer &to) const
+{
+    to << _seconds;
+}
+
+void TimeDelta::operator << (Reader &from)
+{
+    from >> _seconds;
+}
+
+TimeDelta TimeDelta::operator + (ddouble const &d) const
 {
     return _seconds + d;
 }
 
-Time::Delta Time::Delta::operator - (ddouble const &d) const
+TimeDelta TimeDelta::operator - (ddouble const &d) const
 {
     return _seconds - d;
 }
 
 Time::Time() : _time(QDateTime::currentDateTime())
+{}
+
+Time::Time(Time const &other) : ISerializable(), _time(other._time)
+{}
+
+Time::Time(QDateTime const &t) : ISerializable(), _time(t)
 {}
 
 Time Time::invalidTime()
@@ -126,7 +142,7 @@ Time &Time::operator += (Delta const &delta)
     return *this;
 }
 
-Time::Delta Time::operator - (Time const &earlierTime) const
+TimeDelta Time::operator - (Time const &earlierTime) const
 {
 #ifdef DENG2_QT_4_7_OR_NEWER
     return earlierTime._time.msecsTo(_time) / 1000.0;

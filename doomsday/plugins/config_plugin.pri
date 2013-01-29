@@ -9,6 +9,13 @@ win32 {
     TARGET_EXT = .dll
 }
 
+*-g++* | *-gcc* | *-clang* {
+    # In the game plugins there is a large number of thinkfunc_t related
+    # casting from various types of functions. This should be removed
+    # when the issue has been resolved:
+    QMAKE_CFLAGS_WARN_ON += -Wno-incompatible-pointer-types
+}
+
 INCLUDEPATH += $$DENG_API_DIR
 
 !dengplugin_libdeng2_full {

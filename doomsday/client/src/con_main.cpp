@@ -1865,7 +1865,7 @@ void Con_PrintRuler(void)
             Sys_ConPrint(mainWindowIdx, "\n", 0);
         }
 
-        LegacyCore_PrintLogFragment("$R\n");
+        LegacyCore_PrintLogFragment(DENG2_STR_ESCAPE("R") "\n");
     }
 }
 

@@ -18,6 +18,7 @@
  */
 
 #include "de/App"
+#include "de/Animation"
 #include "de/ArchiveFeed"
 #include "de/ArrayValue"
 #include "de/Block"
@@ -54,6 +55,9 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
     NativePath cachedPluginBinaryPath;
     NativePath cachedHomePath;
 
+    /// Primary (wall) clock.
+    Clock clock;
+
     /// The file system.
     FS fs;
 
@@ -77,7 +81,9 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
     Modules modules;
 
     Instance(App &a, QStringList args) : app(a), cmdLine(args), persistentData(0), config(0)
-    {}
+    {
+        Clock::setAppClock(&clock);
+    }
 
     ~Instance()
     {
@@ -86,6 +92,7 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
             i.value()->audienceForDeletion -= this;
         }
         delete config;
+        Clock::setAppClock(0);
     }
 
     void recordBeingDeleted(Record &record)
@@ -149,6 +156,9 @@ App::App(int &argc, char **argv, GUIMode guiMode)
     : QApplication(argc, argv, guiMode == GUIEnabled),
       d(new Instance(*this, arguments()))
 {
+    // Global time source for animations.
+    Animation::setClock(&d->clock);
+
     // This instance of LogBuffer is used globally.
     LogBuffer::setAppBuffer(d->logBuffer);
 
@@ -313,7 +323,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
         arch.add("Info", String("# Package for Doomsday's persistent state.\n").toUtf8());
         Writer(homeFolder().newFile("persist.pack")) << arch;
 
-        homeFolder().populate(Folder::PopulateJustThisFolder);
+        homeFolder().populate(Folder::PopulateOnlyThisFolder);
     }            
 
     d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
@@ -357,6 +367,9 @@ void App::initSubsystems(SubsystemInitFlags flags)
         loadPlugins();
 #endif
     }
+
+    // Update the wall clock time.
+    d->clock.setTime(Time());
 
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
 }

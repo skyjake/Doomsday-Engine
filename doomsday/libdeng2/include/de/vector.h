@@ -423,19 +423,50 @@ QTextStream &operator << (QTextStream &os, Vector4<Type> const &vec4)
     return os;
 }
 
+// Equality operators for integer types.
+inline bool operator == (Vector2<dint> const &a, Vector2<dint> const &b)
+{
+    return a.x == b.x && a.y == b.y;
+}
+
+inline bool operator == (Vector3<dint> const &a, Vector3<dint> const &b)
+{
+    return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+
+inline bool operator == (Vector4<dint> const &a, Vector4<dint> const &b)
+{
+    return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+}
+
+inline bool operator == (Vector2<duint> const &a, Vector2<duint> const &b)
+{
+    return a.x == b.x && a.y == b.y;
+}
+
+inline bool operator == (Vector3<duint> const &a, Vector3<duint> const &b)
+{
+    return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+
+inline bool operator == (Vector4<duint> const &a, Vector4<duint> const &b)
+{
+    return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+}
+
 //@{
 /// @ingroup types
-typedef Vector2<dint> Vector2i;     ///< 2-component vector of integer values.
-typedef Vector2<duint> Vector2ui;   ///< 2-component vector of unsigned integer values.
-typedef Vector2<dfloat> Vector2f;   ///< 2-component vector of floating point values.
+typedef Vector2<dint>    Vector2i;  ///< 2-component vector of integer values.
+typedef Vector2<duint>   Vector2ui; ///< 2-component vector of unsigned integer values.
+typedef Vector2<dfloat>  Vector2f;  ///< 2-component vector of floating point values.
 typedef Vector2<ddouble> Vector2d;  ///< 2-component vector of high-precision floating point values.
-typedef Vector3<dint> Vector3i;     ///< 3-component vector of integer values.
-typedef Vector3<duint> Vector3ui;   ///< 3-component vector of unsigned integer values.
-typedef Vector3<dfloat> Vector3f;   ///< 3-component vector of floating point values.
+typedef Vector3<dint>    Vector3i;  ///< 3-component vector of integer values.
+typedef Vector3<duint>   Vector3ui; ///< 3-component vector of unsigned integer values.
+typedef Vector3<dfloat>  Vector3f;  ///< 3-component vector of floating point values.
 typedef Vector3<ddouble> Vector3d;  ///< 3-component vector of high-precision floating point values.
-typedef Vector4<dint> Vector4i;     ///< 4-component vector of integer values.
-typedef Vector4<duint> Vector4ui;   ///< 4-component vector of unsigned integer values.
-typedef Vector4<dfloat> Vector4f;   ///< 4-component vector of floating point values.
+typedef Vector4<dint>    Vector4i;  ///< 4-component vector of integer values.
+typedef Vector4<duint>   Vector4ui; ///< 4-component vector of unsigned integer values.
+typedef Vector4<dfloat>  Vector4f;  ///< 4-component vector of floating point values.
 typedef Vector4<ddouble> Vector4d;  ///< 4-component vector of high-precision floating point values.
 //@}
 

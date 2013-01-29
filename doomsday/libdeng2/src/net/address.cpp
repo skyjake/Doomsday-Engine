@@ -42,6 +42,25 @@ Address::Address(QHostAddress const &host, duint16 port)
     : _host(host), _port(port)
 {}
 
+Address::Address(String const &addressWithOptionalPort) : _port(0)
+{
+    String str = addressWithOptionalPort;
+    if(str.contains(':'))
+    {
+        int pos = str.indexOf(':');
+        _port = str.mid(pos + 1).toInt();
+        str = str.left(pos);
+    }
+    if(str == "localhost")
+    {
+        _host = QHostAddress(QHostAddress::LocalHost);
+    }
+    else
+    {
+        _host = QHostAddress(str);
+    }
+}
+
 Address::Address(Address const &other)
     : LogEntry::Arg::Base(), _host(other._host), _port(other._port)
 {}
@@ -58,7 +77,7 @@ bool Address::matches(Address const &other, duint32 mask)
 
 String Address::asText() const
 {
-    String result = _host.toString();
+    String result = (_host == QHostAddress::LocalHost? "localhost" : _host.toString());
     if(_port)
     {
         result += ":" + QString::number(_port);

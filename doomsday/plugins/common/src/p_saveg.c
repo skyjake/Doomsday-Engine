@@ -194,7 +194,7 @@ static MaterialArchive* materialArchive;
 static thinkerinfo_t thinkerInfo[] = {
     {
       TC_MOBJ,
-      P_MobjThinker,
+      (thinkfunc_t) P_MobjThinker,
       TSF_SERVERONLY,
       SV_WriteMobj,
       SV_ReadMobj,
@@ -912,7 +912,7 @@ static thinkerinfo_t* infoForThinker(thinker_t* th)
 
 static int removeThinker(thinker_t* th, void* context)
 {
-    if(th->function == P_MobjThinker)
+    if(th->function == (thinkfunc_t) P_MobjThinker)
         P_MobjRemove((mobj_t *) th, true);
     else
         Z_Free(th);
@@ -958,7 +958,7 @@ static uint SV_InitThingArchive(boolean load, boolean savePlayers)
     else
     {
         // Count the number of mobjs we'll be writing.
-        Thinker_Iterate(P_MobjThinker, countMobjs, &params);
+        Thinker_Iterate((thinkfunc_t) P_MobjThinker, countMobjs, &params);
     }
 
     thingArchive = calloc(params.count, sizeof(mobj_t*));
@@ -1014,7 +1014,7 @@ unsigned short SV_ThingArchiveNum(mobj_t* mo)
     errorIfNotInited("SV_ThingArchiveNum");
 
     // We only archive valid mobj thinkers.
-    if(mo == NULL || ((thinker_t *) mo)->function != P_MobjThinker)
+    if(mo == NULL || ((thinker_t *) mo)->function != (thinkfunc_t) P_MobjThinker)
         return 0;
 
 #if __JHEXEN__
@@ -4282,7 +4282,7 @@ static int archiveThinker(thinker_t* th, void* context)
     boolean             savePlayers = *(boolean*) context;
 
     // Are we archiving players?
-    if(!(th->function == P_MobjThinker && ((mobj_t *) th)->player &&
+    if(!(th->function == (thinkfunc_t) P_MobjThinker && ((mobj_t *) th)->player &&
        !savePlayers))
     {
         thinkerinfo_t*      thInfo = infoForThinker(th);
@@ -4454,7 +4454,7 @@ static void rebuildCorpseQueue(void)
 {
     P_InitCorpseQueue();
     // Search the thinker list for corpses and place them in the queue.
-    Thinker_Iterate(P_MobjThinker, rebuildCorpseQueueWorker, NULL/*no params*/);
+    Thinker_Iterate((thinkfunc_t) P_MobjThinker, rebuildCorpseQueueWorker, NULL/*no params*/);
 }
 #endif
 
@@ -4569,7 +4569,7 @@ static void P_UnArchiveThinkers(void)
                     if(thInfo->thinkclass == TC_MOBJ)
                     {
                         th = (thinker_t*)
-                            P_MobjCreateXYZ(P_MobjThinker, 0, 0, 0, 0, 64, 64, 0);
+                            P_MobjCreateXYZ((thinkfunc_t) P_MobjThinker, 0, 0, 0, 0, 64, 64, 0);
                     }
                     else
                     {
@@ -4608,11 +4608,11 @@ static void P_UnArchiveThinkers(void)
 
     // Update references to things.
 #if __JHEXEN__
-    Thinker_Iterate(P_MobjThinker, restoreMobjLinks, NULL);
+    Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinks, NULL);
 #else
     if(IS_SERVER)
     {
-        Thinker_Iterate(P_MobjThinker, restoreMobjLinks, NULL);
+        Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinks, NULL);
 
         for(i = 0; i < numlines; ++i)
         {

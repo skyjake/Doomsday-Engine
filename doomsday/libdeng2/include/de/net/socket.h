@@ -71,6 +71,8 @@ public:
     Q_DECLARE_FLAGS(HeaderFlags, HeaderFlag)
 
 public:
+    Socket();
+
     /**
      * Opens a socket to @a address and waits (blocks) until the connection has
      * been formed. The socket is ready to be used after the constructor
@@ -80,7 +82,15 @@ public:
      * @param address  Address to connect to.
      * @param timeOut  Maximum time to wait for connection.
      */
-    Socket(Address const &address, Time::Delta const &timeOut = 5);
+    Socket(Address const &address, TimeDelta const &timeOut);
+
+    /**
+     * Opens a connection to @a address and returns immediately. The
+     * connected() signal is emitted when the connection is ready to use.
+     *
+     * @param address  Address to connect to.
+     */
+    void connect(Address const &address);
 
     virtual ~Socket();
 
@@ -165,6 +175,7 @@ public:
     void close();
 
 signals:
+    void connected();
     void messagesReady();
     void connectionFailure();
     void disconnected();

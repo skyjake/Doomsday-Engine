@@ -581,7 +581,7 @@ static void thrustMobj(struct mobj_s* mo, void* linep, void* pop)
     pe = (polyevent_t*) po->specialData;
     if(pe)
     {
-        if(pe->thinker.function == T_RotatePoly)
+        if(pe->thinker.function == (thinkfunc_t) T_RotatePoly)
         {
             force = FIX2FLT(pe->intSpeed >> 8);
         }

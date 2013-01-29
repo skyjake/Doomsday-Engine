@@ -7,6 +7,7 @@ SUBDIRS =    \
     build    \
     libdeng2 \
     libdeng1 \
+    libshell \
     client   \
     server   \
     plugins  \

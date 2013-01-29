@@ -877,7 +877,7 @@ void P_MobjThinker(mobj_t* mobj)
         coord_t oldZ = mobj->origin[VZ];
 
         P_MobjMoveZ(mobj);
-        if(mobj->thinker.function != P_MobjThinker)
+        if(mobj->thinker.function != (thinkfunc_t) P_MobjThinker)
             return; // mobj was removed
 
         /**

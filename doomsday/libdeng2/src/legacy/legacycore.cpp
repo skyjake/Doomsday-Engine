@@ -227,6 +227,9 @@ void LegacyCore::setTerminateFunc(void (*func)(char const *))
 
 void LegacyCore::callback()
 {
+    // Update the application clock.
+    Clock::appClock().setTime(Time());
+
     if(d->loop.func)
     {
         d->loop.func();

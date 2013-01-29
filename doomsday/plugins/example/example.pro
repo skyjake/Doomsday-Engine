@@ -22,7 +22,8 @@ win32 {
     OTHER_FILES += \
         api/example.def \
         doc/readme.txt \
-        doc/LICENSE
+        doc/LICENSE \
+        $$RC_FILE
 }
 
 !macx {
@@ -32,5 +33,5 @@ win32 {
 
 macx {
     fixPluginInstallId($$TARGET, 1)
-    linkToBundledLibdeng($$TARGET)
+    linkToBundledLibdeng1($$TARGET)
 }

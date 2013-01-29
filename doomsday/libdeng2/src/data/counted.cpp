@@ -19,21 +19,59 @@
 
 #include "de/Counted"
 
-using namespace de;
+namespace de {
 
-Counted::Counted() : _refCount(1)
-{}
+#ifdef DENG2_DEBUG
+int Counted::totalCount = 0; ///< Should return back to zero when program ends.
+#endif
+
+Counted::Counted() : _refCount(1), _delegate(0)
+{
+#ifdef DENG2_DEBUG
+    totalCount++;
+#endif
+}
+
+void Counted::setDelegate(Counted const *delegate)
+{
+    DENG2_ASSERT(_delegate == 0);
+    DENG2_ASSERT(_refCount == 1);
+
+    _delegate = delegate;
+    _refCount = 0; // won't be released any more
+}
 
 Counted::~Counted()
 {
+#ifdef DENG2_DEBUG
+    totalCount--;
+#endif
+    //qDebug() << "~Counted" << this << typeid(*this).name() << "refCount:" << _refCount;
+
+    DENG2_ASSERT(!_delegate || _delegate->_refCount == 0);
     DENG2_ASSERT(_refCount == 0);
 }
 
-void Counted::release()
+void Counted::release() const
 {
-    DENG2_ASSERT(_refCount > 0);
-    if(!--_refCount)
+    Counted const *c = (!_delegate? this : _delegate);
+
+    //qDebug() << "Counted" << c << typeid(*c).name() << "ref dec'd to" << c->_refCount - 1;
+
+    DENG2_ASSERT(c->_refCount > 0);
+    if(!--c->_refCount)
     {
-        delete this;
+        delete c;
     }
 }
+
+void Counted::addRef(dint count) const
+{
+    Counted const *c = (!_delegate? this : _delegate);
+
+    DENG2_ASSERT(c->_refCount >= 0);
+    c->_refCount += count;
+    DENG2_ASSERT(c->_refCount >= 0);
+}
+
+} // namespace de

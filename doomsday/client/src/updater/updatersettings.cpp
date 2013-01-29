@@ -187,7 +187,7 @@ de::NativePath UpdaterSettings::defaultDownloadPath()
 de::String UpdaterSettings::lastCheckAgo() const
 {
     de::Time when = lastCheckTime();
-    de::Time::Delta delta = when.since();
+    de::TimeDelta delta = when.since();
 
     int t;
     if(delta < 60.0)

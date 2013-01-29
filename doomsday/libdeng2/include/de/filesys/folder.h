@@ -80,7 +80,7 @@ public:
 
     enum PopulationBehavior {
         PopulateFullTree       = 0,     ///< The full tree is populated.
-        PopulateJustThisFolder = 0x1    ///< Do not descend into subfolders while populating.
+        PopulateOnlyThisFolder = 0x1    ///< Do not descend into subfolders while populating.
     };
 
 public:
