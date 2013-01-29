@@ -24,14 +24,19 @@ INCLUDEPATH += include
 
 # Public headers.
 HEADERS += \
+    include/de/shell/Action \
     include/de/shell/KeyEvent \
+    include/de/shell/LabelWidget \
     include/de/shell/LineEditWidget \
     include/de/shell/Link \
     include/de/shell/Protocol \
     include/de/shell/TextCanvas \
     include/de/shell/TextRootWidget \
     include/de/shell/TextWidget \
+    \
+    include/de/shell/action.h \
     include/de/shell/keyevent.h \
+    include/de/shell/labelwidget.h \
     include/de/shell/libshell.h \
     include/de/shell/lineeditwidget.h \
     include/de/shell/link.h \
@@ -42,6 +47,8 @@ HEADERS += \
 
 # Sources and private headers.
 SOURCES += \
+    src/action.cpp \
+    src/labelwidget.cpp \
     src/libshell.cpp \
     src/lineeditwidget.cpp \
     src/link.cpp \
