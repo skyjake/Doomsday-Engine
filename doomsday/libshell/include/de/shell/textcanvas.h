@@ -102,7 +102,9 @@ public:
 
     virtual ~TextCanvas();
 
-    Size size() const;
+    Size size() const;    
+    int width() const;
+    int height() const;
 
     void resize(Size const &newSize);
 

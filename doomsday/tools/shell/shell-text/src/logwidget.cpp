@@ -111,8 +111,6 @@ LogSink &LogWidget::logSink()
 
 void LogWidget::draw()
 {
-    if(!targetCanvas()) return;
-
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
 
@@ -160,7 +158,7 @@ void LogWidget::draw()
 
     d->sink.unlock();
 
-    targetCanvas()->draw(buf, pos.topLeft);
+    targetCanvas().draw(buf, pos.topLeft);
 }
 
 void LogWidget::redraw()

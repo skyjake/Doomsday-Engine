@@ -22,8 +22,8 @@
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 
-using namespace de;
-using namespace de::shell;
+namespace de {
+namespace shell {
 
 struct LineEditWidget::Instance
 {
@@ -217,7 +217,7 @@ LineEditWidget::~LineEditWidget()
     delete d;
 }
 
-void LineEditWidget::setPrompt(const String &promptText)
+void LineEditWidget::setPrompt(String const &promptText)
 {
     d->prompt = promptText;
 
@@ -241,9 +241,7 @@ void LineEditWidget::viewResized()
 
 void LineEditWidget::draw()
 {
-    TextCanvas *cv = targetCanvas();
-    if(!cv) return;
-
+    TextCanvas &cv = targetCanvas();
     Rectanglei pos = rule().recti();
 
     // Temporary buffer for drawing.
@@ -262,7 +260,7 @@ void LineEditWidget::draw()
         buf.drawText(Vector2i(d->prompt.size(), y), part, attr);
     }
 
-    cv->draw(buf, pos.topLeft);
+    cv.draw(buf, pos.topLeft);
 }
 
 bool LineEditWidget::handleEvent(Event const *event)
@@ -368,3 +366,6 @@ int LineEditWidget::cursor() const
 {
     return d->cursor;
 }
+
+} // namespace shell
+} // namespace de

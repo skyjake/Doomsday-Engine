@@ -111,6 +111,16 @@ TextCanvas::Size TextCanvas::size() const
     return d->size;
 }
 
+int TextCanvas::width() const
+{
+    return d->size.x;
+}
+
+int TextCanvas::height() const
+{
+    return d->size.y;
+}
+
 void TextCanvas::resize(Size const &newSize)
 {
     d->resize(newSize);

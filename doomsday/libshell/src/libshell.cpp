@@ -16,3 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de/shell/libshell.h"
+
+namespace de {
+namespace shell {
+} // namespace shell
+} // namespace de

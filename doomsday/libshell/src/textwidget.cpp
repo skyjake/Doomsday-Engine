@@ -18,6 +18,8 @@
 
 #include "de/shell/TextWidget"
 #include "de/shell/TextRootWidget"
+#include "de/shell/Action"
+#include <QList>
 
 namespace de {
 namespace shell {
@@ -26,6 +28,7 @@ struct TextWidget::Instance
 {
     TextCanvas *canvas;
     RectangleRule *rule;
+    QList<Action *> actions;
 
     Instance() : canvas(0), rule(new RectangleRule)
     {}
@@ -33,6 +36,7 @@ struct TextWidget::Instance
     ~Instance()
     {
         releaseRef(rule);
+        foreach(Action *act, actions) delete act;
     }
 };
 
@@ -56,24 +60,21 @@ void TextWidget::setTargetCanvas(TextCanvas *canvas)
     d->canvas = canvas;
 }
 
-TextCanvas *TextWidget::targetCanvas() const
+TextCanvas &TextWidget::targetCanvas() const
 {
     if(!d->canvas)
     {
         // A specific target not defined, use the root canvas.
-        return &root().rootCanvas();
+        return root().rootCanvas();
     }
-    return d->canvas;
+    return *d->canvas;
 }
 
 void TextWidget::drawAndShow()
 {
-    if(targetCanvas())
-    {
-        draw();
-        notifyTree(&Widget::draw);
-        targetCanvas()->show();
-    }
+    draw();
+    notifyTree(&Widget::draw);
+    targetCanvas().show();
 }
 
 void TextWidget::setRule(RectangleRule *rule)
@@ -92,6 +93,34 @@ Vector2i TextWidget::cursorPosition()
 {
     return Vector2i(floor(rule().left()->value()),
                     floor(rule().top()->value()));
+}
+
+void TextWidget::addAction(Action *action)
+{
+    d->actions.append(action);
+}
+
+void TextWidget::removeAction(Action &action)
+{
+    d->actions.removeAll(&action);
+}
+
+bool TextWidget::handleEvent(Event const *event)
+{
+    // We only support KeyEvents.
+    if(event->type() == Event::KeyPress)
+    {
+        DENG2_ASSERT(dynamic_cast<KeyEvent const *>(event) != 0);
+        KeyEvent const *keyEvent = static_cast<KeyEvent const *>(event);
+
+        foreach(Action *act, d->actions)
+        {
+            // Event will be used by actions.
+            if(act->tryTrigger(*keyEvent)) return true;
+        }
+    }
+
+    return Widget::handleEvent(event);
 }
 
 } // namespace shell

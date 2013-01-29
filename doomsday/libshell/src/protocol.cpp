@@ -98,6 +98,7 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
         return LogEntries;
     }
 
+    // One of the generic-format packets?
     RecordPacket const *rec = dynamic_cast<RecordPacket const *>(packet);
     if(rec)
     {
@@ -110,7 +111,7 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
 RecordPacket *Protocol::newCommand(String const &command)
 {
     RecordPacket *cmd = new RecordPacket(PT_COMMAND);
-    cmd->record().addText("cmd", command);
+    cmd->record().addText("execute", command);
     return cmd;
 }
 
@@ -121,7 +122,7 @@ String Protocol::command(Packet const &commandPacket)
     RecordPacket const *rec = dynamic_cast<RecordPacket const *>(&commandPacket);
     DENG2_ASSERT(rec != 0);
 
-    return (*rec)["cmd"].value().asText();
+    return (*rec)["execute"].value().asText();
 }
 
 } // namespace shell

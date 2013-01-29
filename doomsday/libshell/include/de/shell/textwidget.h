@@ -23,15 +23,34 @@
 #include <de/Widget>
 #include <de/RectangleRule>
 #include <QObject>
+#include <QFlags>
 #include "TextCanvas"
 
 namespace de {
 namespace shell {
 
 class TextRootWidget;
+class Action;
+
+/**
+ * Flags for specifying alignment.
+ */
+enum AlignmentFlag
+{
+    AlignTop    = 0x1,
+    AlignBottom = 0x2,
+    AlignLeft   = 0x4,
+    AlignRight  = 0x8
+};
+Q_DECLARE_FLAGS(Alignment, AlignmentFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Alignment)
 
 /**
  * Generic widget with a text-based visual.
+ *
+ * TextWidget is the base class for all widgets in libshell, because they are
+ * intended to be device-independent and compatible with all character-based
+ * UIs, regardless of whether the underlying device is text-only or graphical.
  *
  * It is assumed that the root widget under which text widgets are used is
  * derived from TextRootWidget.
@@ -48,9 +67,21 @@ public:
 
     TextRootWidget &root() const;
 
+    /**
+     * Sets the text canvas on which this widget is to be drawn. Calling this
+     * is optional; by default all widgets use the root widget's canvas.
+     *
+     * @param canvas  Canvas for drawing. Ownership not taken.
+     */
     void setTargetCanvas(TextCanvas *canvas);
 
-    TextCanvas *targetCanvas() const;
+    /**
+     * Returns the text canvas on which this widget is to be drawn. Derived
+     * classes can use this method to find out where to draw themselves.
+     *
+     * @return Destination canvas for drawing.
+     */
+    TextCanvas &targetCanvas() const;
 
     /**
      * Draw this widget and all its children, and show the target canvas
@@ -77,6 +108,26 @@ public:
      * @return Cursor position.
      */
     virtual Vector2i cursorPosition();
+
+    /**
+     * Adds a new action for the widget. During event processing actions are
+     * checked in the order they have been added to the widget.
+     *
+     * @param action  Action instance. Ownership taken.
+     */
+    void addAction(Action *action);
+
+    /**
+     * Removes an action from the widget.
+     *
+     * @param action  Action instance.
+     */
+    void removeAction(Action &action);
+
+    /**
+     * Checks actions and triggers them when suitable event is received.
+     */
+    bool handleEvent(Event const *event);
 
 private:
     struct Instance;

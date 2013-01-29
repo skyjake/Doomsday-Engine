@@ -62,8 +62,6 @@ void StatusWidget::setShellLink(Link *link)
 
 void StatusWidget::draw()
 {
-    if(!targetCanvas()) return;
-
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
 
@@ -93,7 +91,7 @@ void StatusWidget::draw()
         buf.drawText(x, host);
     }
 
-    targetCanvas()->draw(buf, pos.topLeft);
+    targetCanvas().draw(buf, pos.topLeft);
 }
 
 void StatusWidget::redraw()

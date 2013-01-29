@@ -109,7 +109,7 @@ Packet *Link::nextPacket()
 
     std::auto_ptr<Message> data(d->socket->receive());
     Packet *packet = d->protocol.interpret(*data.get());
-    if(packet) packet->setFrom(d->peerAddress);
+    if(packet) packet->setFrom(data->address());
     return packet;
 }
 
