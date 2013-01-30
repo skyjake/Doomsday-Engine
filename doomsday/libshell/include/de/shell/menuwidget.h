@@ -38,6 +38,13 @@ class MenuWidget : public TextWidget
     Q_OBJECT
 
 public:
+    enum BorderStyle
+    {
+        NoBorder,
+        LineBorder
+    };
+
+public:
     MenuWidget(String const &name = "");
 
     ~MenuWidget();
@@ -65,6 +72,8 @@ public:
     void setSelectionAttribs(TextCanvas::Char::Attribs const &attribs);
 
     void setBackgroundAttribs(TextCanvas::Char::Attribs const &attribs);
+
+    void setBorder(BorderStyle style);
 
     void setBorderAttribs(TextCanvas::Char::Attribs const &attribs);
 

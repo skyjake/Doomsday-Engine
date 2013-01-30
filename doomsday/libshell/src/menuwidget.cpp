@@ -32,6 +32,7 @@ struct MenuWidget::Instance
     TextCanvas::Char::Attribs borderAttr;
     TextCanvas::Char::Attribs backgroundAttr;
     TextCanvas::Char::Attribs selectionAttr;
+    BorderStyle borderStyle;
     Vector2i cursorPos; ///< Visual position.
 
     struct Item
@@ -51,6 +52,7 @@ struct MenuWidget::Instance
         : self(inst),
           borderAttr(TextCanvas::Char::Reverse),
           backgroundAttr(TextCanvas::Char::Reverse),
+          borderStyle(LineBorder),
           cursor(0)
     {
         width  = new ConstantRule(1);
@@ -203,6 +205,12 @@ void MenuWidget::setBackgroundAttribs(TextCanvas::Char::Attribs const &attribs)
     redraw();
 }
 
+void MenuWidget::setBorder(MenuWidget::BorderStyle style)
+{
+    d->borderStyle = style;
+    redraw();
+}
+
 void MenuWidget::setBorderAttribs(TextCanvas::Char::Attribs const &attribs)
 {
     d->borderAttr = attribs;
@@ -273,8 +281,11 @@ void MenuWidget::draw()
         }
     }
 
-    // Draw a frame.
-    buf.drawLineRect(buf.rect(), d->borderAttr);
+    if(d->borderStyle == LineBorder)
+    {
+        // Draw a frame.
+        buf.drawLineRect(buf.rect(), d->borderAttr);
+    }
 
     targetCanvas().draw(buf, pos.topLeft);
 }
