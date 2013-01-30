@@ -21,7 +21,7 @@
 namespace de {
 namespace shell {
 
-Action::Action(KeyEvent const &event, QObject *target, const char *slot)
+Action::Action(KeyEvent const &event, QObject *target, char const *slot)
     : _event(event)
 {
     if(target && slot)
@@ -30,8 +30,21 @@ Action::Action(KeyEvent const &event, QObject *target, const char *slot)
     }
 }
 
-Action::~Action()
+Action::Action(String const &label, KeyEvent const &event, QObject *target, char const *slot)
+    : _event(event), _label(label)
 {
+    if(target && slot)
+    {
+        connect(this, SIGNAL(triggered()), target, slot);
+    }
+}
+
+Action::~Action()
+{}
+
+String Action::label() const
+{
+    return _label;
 }
 
 bool Action::tryTrigger(KeyEvent const &ev)

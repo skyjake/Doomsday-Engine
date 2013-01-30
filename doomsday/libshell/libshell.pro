@@ -43,7 +43,8 @@ HEADERS += \
     include/de/shell/protocol.h \
     include/de/shell/textcanvas.h \
     include/de/shell/textrootwidget.h \
-    include/de/shell/textwidget.h
+    include/de/shell/textwidget.h \
+    include/de/shell/menuwidget.h
 
 # Sources and private headers.
 SOURCES += \
@@ -55,7 +56,8 @@ SOURCES += \
     src/protocol.cpp \
     src/textcanvas.cpp \
     src/textrootwidget.cpp \
-    src/textwidget.cpp
+    src/textwidget.cpp \
+    src/menuwidget.cpp
 
 # Installation ---------------------------------------------------------------
 

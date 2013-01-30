@@ -34,7 +34,12 @@ class Action : public QObject
 
 public:
     Action(KeyEvent const &event, QObject *target = 0, char const *slot = 0);
+
+    Action(String const &label, KeyEvent const &event, QObject *target = 0, char const *slot = 0);
+
     ~Action();
+
+    String label() const;
 
     /**
      * Triggers the action if the event matches the action's condition.
@@ -50,6 +55,7 @@ signals:
 
 private:
     KeyEvent _event;
+    String _label;
 };
 
 } // namespace shell
