@@ -1,4 +1,4 @@
-/** @file libshell.cpp Library init.
+/** @file libshell.cpp  Common utility functions for libshell.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -20,6 +20,43 @@
 
 namespace de {
 namespace shell {
+
+QList<WrappedLine> wordWrapText(String const &text, int maxWidth)
+{
+    QList<WrappedLine> wraps;
+
+    int const lineWidth = maxWidth;
+    int begin = 0;
+    forever
+    {
+        int end = begin + lineWidth;
+        if(end >= text.size())
+        {
+            // Time to stop.
+            wraps.append(WrappedLine(begin, text.size()));
+            break;
+        }
+        // Find a good break point.
+        while(!text.at(end).isSpace())
+        {
+            --end;
+            if(end == begin)
+            {
+                // Ran out of non-space chars, force a break.
+                end = begin + lineWidth;
+                break;
+            }
+        }
+        if(text.at(end).isSpace()) ++end;
+        wraps.append(WrappedLine(begin, end));
+        begin = end;
+    }
+
+    // Mark the final line.
+    wraps.last().isFinal = true;
+
+    return wraps;
+}
 
 } // namespace shell
 } // namespace de

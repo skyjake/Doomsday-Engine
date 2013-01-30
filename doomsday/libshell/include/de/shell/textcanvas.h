@@ -141,6 +141,17 @@ public:
 
     void drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs = Char::DefaultAttributes);
 
+    /**
+     * Draws line wrapped text. Use de::shell::wordWrapText() to determine
+     * appropriate wrapped lines.
+     *
+     * @param pos      Top left / starting point for the text.
+     * @param text     The entire text to be drawn.
+     * @param wraps    Line wrapping.
+     * @param attribs  Character attributes.
+     */
+    void drawWrappedText(Vector2i const &pos, String const &text, QList<WrappedLine> wraps, Char::Attribs const &attribs = Char::DefaultAttributes);
+
     void drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs = Char::DefaultAttributes);
 
     /**

@@ -19,6 +19,9 @@
 #ifndef LIBSHELL_MAIN_H
 #define LIBSHELL_MAIN_H
 
+#include <QList>
+#include <de/String>
+
 /*
  * The LIBSHELL_PUBLIC macro is used for declaring exported symbols. It must be
  * applied in all exported classes and functions. DEF files are not used for
@@ -35,5 +38,33 @@
 // No need to use any special declarators.
 #  define LIBSHELL_PUBLIC
 #endif
+
+namespace de {
+namespace shell {
+
+// Word wrapping.
+struct WrappedLine
+{
+    int start;
+    int end;
+    bool isFinal;
+
+    WrappedLine(int a, int b, bool final = false)
+        : start(a), end(b), isFinal(final) {}
+};
+
+/**
+ * Determines word wrapping for a line of text.
+ *
+ * @param text      Text to wrap.
+ * @param maxWidth  Maximum width for each text line.
+ *
+ * @return List of positions in @a text where to break the lines. Total number
+ * of word-wrapped lines is equal to the size of the returned list.
+ */
+QList<WrappedLine> wordWrapText(String const &text, int maxWidth);
+
+} // namespace shell
+} // namespace de
 
 #endif // LIBSHELL_MAIN_H

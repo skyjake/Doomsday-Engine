@@ -191,6 +191,17 @@ void TextCanvas::drawText(Vector2i const &pos, String const &text, Char::Attribs
     }
 }
 
+void TextCanvas::drawWrappedText(Vector2i const &pos, String const &text,
+                                 QList<WrappedLine> wraps, Char::Attribs const &attribs)
+{
+    for(int y = 0; y < wraps.size(); ++y)
+    {
+        WrappedLine span = wraps[y];
+        String part = text.substr(span.start, span.end - span.start);
+        drawText(pos + Vector2i(0, y), part, attribs);
+    }
+}
+
 void TextCanvas::drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs)
 {
     Char const corner('+', attribs);

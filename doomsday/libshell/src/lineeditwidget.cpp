@@ -35,20 +35,14 @@ struct LineEditWidget::Instance
     int cursor; ///< Index in range [0...text.size()]
 
     // Word wrapping.
-    struct Span
-    {
-        int start;
-        int end;
-        bool isFinal;
-    };
-    QList<int> wraps;
+    QList<WrappedLine> wraps;
 
     Instance(LineEditWidget &cli) : self(cli), cursor(0)
     {
         // Initial height of the command line (1 row).
         height = new ConstantRule(1);
 
-        wraps.append(0);
+        wraps.append(WrappedLine(0, 0, true));
     }
 
     ~Instance()
@@ -62,55 +56,14 @@ struct LineEditWidget::Instance
      */
     void updateWrapsAndHeight()
     {
-        wraps.clear();
-
-        int const lineWidth = de::max(1, self.rule().recti().width() - prompt.size() - 1);
-
-        int begin = 0;
-        forever
-        {
-            int end = begin + lineWidth;
-            if(end >= text.size())
-            {
-                // Time to stop.
-                wraps.append(text.size());
-                break;
-            }
-            // Find a good break point.
-            while(!text.at(end).isSpace())
-            {
-                --end;
-                if(end == begin)
-                {
-                    // Ran out of non-space chars, force a break.
-                    end = begin + lineWidth;
-                    break;
-                }
-            }
-            if(text.at(end).isSpace()) ++end;
-            wraps.append(end);
-            begin = end;
-        }
-
+        wraps = wordWrapText(text, de::max(1, self.rule().recti().width() - prompt.size() - 1));
         height->set(wraps.size());
     }
 
-    Span lineSpan(int line) const
+    WrappedLine lineSpan(int line) const
     {
         DENG2_ASSERT(line < wraps.size());
-
-        Span s;
-        s.isFinal = (line == wraps.size() - 1);
-        s.end = wraps[line];
-        if(!line)
-        {
-            s.start = 0;
-        }
-        else
-        {
-            s.start = wraps[line - 1];
-        }
-        return s;
+        return wraps[line];
     }
 
     /**
@@ -122,7 +75,7 @@ struct LineEditWidget::Instance
         de::Vector2i pos(cursor);
         for(pos.y = 0; pos.y < wraps.size(); ++pos.y)
         {
-            Span span = lineSpan(pos.y);
+            WrappedLine span = lineSpan(pos.y);
             if(!span.isFinal) span.end--;
             if(cursor >= span.start && cursor <= span.end)
             {
@@ -151,7 +104,7 @@ struct LineEditWidget::Instance
         if(linePos.y == wraps.size() - 1 && lineOff > 0) return false;
 
         // Move cursor onto the adjacent line.
-        Span span = lineSpan(linePos.y + lineOff);
+        WrappedLine span = lineSpan(linePos.y + lineOff);
         cursor = span.start + linePos.x;
         if(!span.isFinal) span.end--;
         if(cursor > span.end) cursor = span.end;
@@ -196,7 +149,7 @@ struct LineEditWidget::Instance
 
     void doEnd()
     {
-        Span const span = lineSpan(lineCursorPos().y);
+        WrappedLine const span = lineSpan(lineCursorPos().y);
         cursor = span.end - (span.isFinal? 0 : 1);
     }
 
@@ -241,7 +194,6 @@ void LineEditWidget::viewResized()
 
 void LineEditWidget::draw()
 {
-    TextCanvas &cv = targetCanvas();
     Rectanglei pos = rule().recti();
 
     // Temporary buffer for drawing.
@@ -252,16 +204,9 @@ void LineEditWidget::draw()
     buf.clear(TextCanvas::Char(' ', attr));
 
     buf.drawText(Vector2i(0, 0), d->prompt, attr | TextCanvas::Char::Bold);
+    buf.drawWrappedText(Vector2i(d->prompt.size(), 0), d->text, d->wraps, attr);
 
-    // Draw all the lines, wrapped as previously determined.
-    for(int y = 0; y < d->wraps.size(); ++y)
-    {
-        Instance::Span span = d->lineSpan(y);
-        String part = d->text.substr(span.start, span.end - span.start);
-        buf.drawText(Vector2i(d->prompt.size(), y), part, attr);
-    }
-
-    cv.draw(buf, pos.topLeft);
+    targetCanvas().draw(buf, pos.topLeft);
 }
 
 bool LineEditWidget::handleEvent(Event const *event)
