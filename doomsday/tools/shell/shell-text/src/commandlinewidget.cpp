@@ -18,7 +18,6 @@
 
 #include "commandlinewidget.h"
 #include <de/String>
-#include <de/RectangleRule>
 #include <de/shell/TextRootWidget>
 #include <de/shell/KeyEvent>
 

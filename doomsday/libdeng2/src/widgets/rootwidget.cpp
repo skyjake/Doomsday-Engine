@@ -19,19 +19,19 @@
 
 #include "de/RootWidget"
 #include "de/ConstantRule"
-#include "de/RectangleRule"
+#include "de/RuleRectangle"
 #include "de/math.h"
 
 namespace de {
 
 struct RootWidget::Instance
 {
-    RectangleRule *viewRect;
+    RuleRectangle *viewRect;
     Widget *focus;
 
     Instance() : focus(0)
     {
-        viewRect = new RectangleRule(
+        viewRect = new RuleRectangle(
                     refless(new ConstantRule(0)),
                     refless(new ConstantRule(0)),
                     refless(new ConstantRule(0)),
@@ -85,8 +85,8 @@ Rule const *RootWidget::viewBottom() const
 
 void RootWidget::setViewSize(Vector2i const &size)
 {
-    d->viewRect->setInput(RectangleRule::Right,  refless(new ConstantRule(size.x)));
-    d->viewRect->setInput(RectangleRule::Bottom, refless(new ConstantRule(size.y)));
+    d->viewRect->setInput(RuleRectangle::Right,  refless(new ConstantRule(size.x)));
+    d->viewRect->setInput(RuleRectangle::Bottom, refless(new ConstantRule(size.y)));
 
     notifyTree(&Widget::viewResized);
 }

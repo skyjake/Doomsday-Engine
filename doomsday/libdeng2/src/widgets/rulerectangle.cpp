@@ -17,14 +17,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/RectangleRule"
+#include "de/RuleRectangle"
 #include "de/DelegateRule"
 #include "de/App"
 #include "de/math.h"
 
 namespace de {
 
-struct RectangleRule::Instance : public DelegateRule::ISource
+struct RuleRectangle::Instance : public DelegateRule::ISource
 {
     // Internal identifiers for the output rules.
     enum OutputIds
@@ -263,64 +263,64 @@ struct RectangleRule::Instance : public DelegateRule::ISource
     }
 };
 
-RectangleRule::RectangleRule() : d(new Instance)
+RuleRectangle::RuleRectangle() : d(new Instance)
 {}
 
-RectangleRule::RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom)
+RuleRectangle::RuleRectangle(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom)
     : d(new Instance(left, top, right, bottom))
 {}
 
-RectangleRule::RectangleRule(RectangleRule const *rect)
+RuleRectangle::RuleRectangle(RuleRectangle const *rect)
     : d(new Instance(rect->left(), rect->top(), rect->right(), rect->bottom()))
 {}
 
-RectangleRule::~RectangleRule()
+RuleRectangle::~RuleRectangle()
 {
     delete d;
 }
 
-Rule const *RectangleRule::left() const
+Rule const *RuleRectangle::left() const
 {
     return d->outputRules[Instance::OutLeft];
 }
 
-Rule const *RectangleRule::top() const
+Rule const *RuleRectangle::top() const
 {
     return d->outputRules[Instance::OutTop];
 }
 
-Rule const *RectangleRule::right() const
+Rule const *RuleRectangle::right() const
 {
     return d->outputRules[Instance::OutRight];
 }
 
-Rule const *RectangleRule::bottom() const
+Rule const *RuleRectangle::bottom() const
 {
     return d->outputRules[Instance::OutBottom];
 }
 
-Rule const *RectangleRule::width() const
+Rule const *RuleRectangle::width() const
 {
     return d->outputRules[Instance::OutWidth];
 }
 
-Rule const *RectangleRule::height() const
+Rule const *RuleRectangle::height() const
 {
     return d->outputRules[Instance::OutHeight];
 }
 
-RectangleRule &RectangleRule::setInput(InputRule inputRule, Rule const *rule)
+RuleRectangle &RuleRectangle::setInput(InputRule inputRule, Rule const *rule)
 {
     d->setInputRule(inputRule, rule);
     return *this;
 }
 
-Rule const *RectangleRule::inputRule(InputRule inputRule)
+Rule const *RuleRectangle::inputRule(InputRule inputRule)
 {
     return d->ruleRef(inputRule);
 }
 
-void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
+void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
 {
     d->normalizedAnchorPoint.setValue(normalizedPoint, transition);
     d->invalidateOutputs();
@@ -332,7 +332,7 @@ void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta co
     }
 }
 
-void RectangleRule::timeChanged(Clock const &clock)
+void RuleRectangle::timeChanged(Clock const &clock)
 {
     d->invalidateOutputs();
 
@@ -342,13 +342,13 @@ void RectangleRule::timeChanged(Clock const &clock)
     }
 }
 
-Rectanglef RectangleRule::rect() const
+Rectanglef RuleRectangle::rect() const
 {
     return Rectanglef(Vector2f(left()->value(),  top()->value()),
                       Vector2f(right()->value(), bottom()->value()));
 }
 
-Rectanglei RectangleRule::recti() const
+Rectanglei RuleRectangle::recti() const
 {
     Rectanglef const r = rect();
     return Rectanglei(Vector2i(de::floor(r.topLeft.x),     de::floor(r.topLeft.y)),

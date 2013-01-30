@@ -27,10 +27,10 @@ namespace shell {
 struct TextWidget::Instance
 {
     TextCanvas *canvas;
-    RectangleRule *rule;
+    RuleRectangle *rule;
     QList<Action *> actions;
 
-    Instance() : canvas(0), rule(new RectangleRule)
+    Instance() : canvas(0), rule(new RuleRectangle)
     {}
 
     ~Instance()
@@ -85,20 +85,20 @@ void TextWidget::drawAndShow()
     }
 }
 
-void TextWidget::setRule(RectangleRule *rule)
+void TextWidget::setRule(RuleRectangle *rule)
 {
     DENG2_ASSERT(rule != 0);
     delete d->rule;
     d->rule = rule;
 }
 
-RectangleRule &TextWidget::rule()
+RuleRectangle &TextWidget::rule()
 {
     DENG2_ASSERT(d->rule != 0);
     return *d->rule;
 }
 
-RectangleRule const &TextWidget::rule() const
+RuleRectangle const &TextWidget::rule() const
 {
     DENG2_ASSERT(d->rule != 0);
     return *d->rule;

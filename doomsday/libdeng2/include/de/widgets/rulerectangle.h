@@ -29,17 +29,17 @@ namespace de {
 /**
  * A set of rules defining a rectangle.
  *
- * RectangleRule is not derived from Rule, but instead manages a complex
- * mapping between a set of input and output rules. Note that RectangleRule is
+ * Instead of being derived from Rule, RuleRectangle acts as a complex mapping
+ * between a set of input and output Rule instances. Note that RuleRectangle is
  * not reference-counted like Rule instances.
  *
- * RectangleRule::rect() returns the rectangle's currently valid bounds. The
+ * RuleRectangle::rect() returns the rectangle's currently valid bounds. The
  * output rules for the sides can be used normally in other rules. Horizontal
  * and vertical axes are handled independently.
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC RectangleRule : DENG2_OBSERVES(Clock, TimeChange)
+class DENG2_PUBLIC RuleRectangle : DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
     enum InputRule {
@@ -55,7 +55,7 @@ public:
     };
 
 public:
-    RectangleRule();
+    RuleRectangle();
 
     /**
      * Constructs a rectangle rule with individual rules defining the placement
@@ -66,11 +66,11 @@ public:
      * @param right   Rule for the right coordinate.
      * @param bottom  Rule for the bottom coordinate.
      */
-    RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom);
+    RuleRectangle(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom);
 
-    RectangleRule(RectangleRule const *rect);
+    RuleRectangle(RuleRectangle const *rect);
 
-    ~RectangleRule();
+    ~RuleRectangle();
 
     // Output rules.
     Rule const *left() const;
@@ -86,7 +86,7 @@ public:
      * @param inputRule  InputRule to set.
      * @param rule       Rule to use as input. A reference is held.
      */
-    RectangleRule &setInput(InputRule inputRule, Rule const *rule);
+    RuleRectangle &setInput(InputRule inputRule, Rule const *rule);
 
     /**
      * Returns an input rule.

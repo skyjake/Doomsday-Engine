@@ -17,7 +17,7 @@
  */
 
 #include <de/String>
-#include <de/RectangleRule>
+#include <de/RuleRectangle>
 #include "de/shell/LineEditWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
@@ -209,7 +209,7 @@ struct LineEditWidget::Instance
 LineEditWidget::LineEditWidget(de::String const &name)
     : TextWidget(name), d(new Instance(*this))
 {
-    rule().setInput(RectangleRule::Height, d->height);
+    rule().setInput(RuleRectangle::Height, d->height);
 }
 
 LineEditWidget::~LineEditWidget()

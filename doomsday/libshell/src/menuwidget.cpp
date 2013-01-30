@@ -107,8 +107,8 @@ struct MenuWidget::Instance
 MenuWidget::MenuWidget(const String &name)
     : TextWidget(name), d(new Instance(*this))
 {
-    rule().setInput(RectangleRule::Width,  d->width)
-          .setInput(RectangleRule::Height, d->height);
+    rule().setInput(RuleRectangle::Width,  d->width)
+          .setInput(RuleRectangle::Height, d->height);
 }
 
 MenuWidget::~MenuWidget()

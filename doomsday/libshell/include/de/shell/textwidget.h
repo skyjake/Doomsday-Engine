@@ -21,7 +21,7 @@
 
 #include "libshell.h"
 #include <de/Widget>
-#include <de/RectangleRule>
+#include <de/RuleRectangle>
 #include <QObject>
 #include <QFlags>
 #include "TextCanvas"
@@ -102,11 +102,11 @@ public:
      * @param rule  Rectangle that the widget occupied.
      *              Widget takes ownership.
      */
-    void setRule(RectangleRule *rule);
+    void setRule(RuleRectangle *rule);
 
-    RectangleRule &rule();
+    RuleRectangle &rule();
 
-    RectangleRule const &rule() const;
+    RuleRectangle const &rule() const;
 
     /**
      * Returns the position of the cursor for the widget. If the widget
