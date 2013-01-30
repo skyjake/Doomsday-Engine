@@ -86,7 +86,7 @@ struct ShellApp::Instance
         // Main menu.
         menu = new MenuWidget;
         menu->hide(); // closed initially
-        menu->appendItem(new Action("Open connection...",
+        menu->appendItem(new Action("Connect to...",
                                     KeyEvent(Qt::Key_O),
                                     &self, SLOT(openConnection())), "O");
         menu->appendItem(new Action("Disconnect"));

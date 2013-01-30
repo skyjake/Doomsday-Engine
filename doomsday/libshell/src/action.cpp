@@ -39,6 +39,15 @@ Action::Action(String const &label, KeyEvent const &event, QObject *target, char
     }
 }
 
+Action::Action(String const &label, QObject *target, char const *slot)
+    : _event(KeyEvent("")), _label(label)
+{
+    if(target && slot)
+    {
+        connect(this, SIGNAL(triggered()), target, slot);
+    }
+}
+
 Action::Action(String const &label) : _event(KeyEvent("")), _label(label)
 {}
 
