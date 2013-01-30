@@ -21,13 +21,11 @@
 
 namespace de {
 
-DelegateRule::DelegateRule(Rule const &source)
-    : ConstantRule(0), _source(source)
+DelegateRule::DelegateRule(ISource &source, int delegateId)
+    : ConstantRule(0), _source(source), _delegateId(delegateId)
 {
     // As a delegate, we are considered part of the owner.
-    setDelegate(&_source);
-
-    connect(&source, SIGNAL(valueInvalidated()), this, SLOT(invalidate()));
+    setDelegate(&_source.delegateSource(delegateId));
 
     invalidate();
 }
@@ -37,10 +35,13 @@ DelegateRule::~DelegateRule()
 
 void DelegateRule::update()
 {
-    // The value gets updated by the source.
-    const_cast<Rule *>(&_source)->update();
+    // During this, the source is expected to call ConstantRule::set() on us.
+    _source.delegateUpdate(_delegateId);
 
     ConstantRule::update();
+
+    // It must be valid now, after the update.
+    DENG2_ASSERT(isValid());
 }
 
 } // namespace de

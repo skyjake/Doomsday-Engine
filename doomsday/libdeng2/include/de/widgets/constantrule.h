@@ -46,7 +46,7 @@ protected:
     void update();
 
 private:
-    float _newValue;
+    float _pendingValue;
 };
 
 } // namespace de

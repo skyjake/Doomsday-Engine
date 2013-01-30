@@ -23,26 +23,43 @@
 
 namespace de {
 
-struct RectangleRule::Instance
+struct RectangleRule::Instance : public DelegateRule::ISource
 {
+    enum OutputIds
+    {
+        OutLeft,
+        OutRight,
+        OutWidth,
+
+        OutTop,
+        OutBottom,
+        OutHeight,
+
+        MAX_OUTPUT_RULES,
+
+        // Ranges:
+        FIRST_HORIZ_OUTPUT = OutLeft,
+        LAST_HORIZ_OUTPUT  = OutWidth,
+        FIRST_VERT_OUTPUT  = OutTop,
+        LAST_VERT_OUTPUT   = OutBottom
+    };
+
     RectangleRule &self;
     AnimationVector2 normalizedAnchorPoint;
     Rule const *inputRules[MAX_RULES];
 
     // The output rules.
-    DelegateRule left;
-    DelegateRule top;
-    DelegateRule right;
-    DelegateRule bottom;
+    DelegateRule *outputRules[MAX_OUTPUT_RULES];
 
-    Instance(RectangleRule &r) : self(r), left(r), top(r), right(r), bottom(r)
+    Instance(RectangleRule &r)
+        : self(r)
     {
         memset(inputRules, 0, sizeof(inputRules));
         setup();
     }
 
     Instance(RectangleRule &r, Rule const *inLeft, Rule const *inTop, Rule const *inRight, Rule const *inBottom)
-        : self(r), left(r), top(r), right(r), bottom(r)
+        : self(r)
     {
         memset(inputRules, 0, sizeof(inputRules));
         inputRules[Left]   = inLeft;
@@ -54,20 +71,32 @@ struct RectangleRule::Instance
 
     void setup()
     {
+        // Create the output rules.
+        for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
+        {
+            outputRules[i] = new DelegateRule(*this, i);
+        }
+
         // Depend on all specified input rules.
         for(int i = 0; i < int(MAX_RULES); ++i)
         {
-            self.dependsOn(inputRules[i]);
+            //self.dependsOn(inputRules[i]);
+            connectInputToOutputs(InputRule(i), true);
         }
 
-        self.invalidate();
+        self.invalidate(); // remains invalid throughout lifetime
     }
 
     ~Instance()
     {
         for(int i = 0; i < int(MAX_RULES); ++i)
         {
-            self.independentOf(inputRules[i]);
+            //self.independentOf(inputRules[i]);
+            connectInputToOutputs(InputRule(i), false);
+        }
+        for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
+        {
+            delete outputRules[i];
         }
     }
 
@@ -77,10 +106,51 @@ struct RectangleRule::Instance
         return &inputRules[rule];
     }
 
+    void invalidateOutputs()
+    {
+        for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
+        {
+            outputRules[i]->invalidate();
+        }
+    }
+
+    void connectInputToOutputs(InputRule inputRule, bool doConnect)
+    {
+        Rule const *input = *ruleRef(inputRule);
+        if(!input) return;
+
+        bool isHoriz = (inputRule == Left  || inputRule == Right ||
+                        inputRule == Width || inputRule == AnchorX);
+
+        int const start = (isHoriz? FIRST_HORIZ_OUTPUT : FIRST_VERT_OUTPUT);
+        int const end   = (isHoriz? LAST_HORIZ_OUTPUT  : LAST_VERT_OUTPUT );
+
+        for(int i = start; i <= end; ++i)
+        {
+            if(doConnect)
+            {
+                outputRules[i]->dependsOn(input);
+                outputRules[i]->invalidate();
+                //QObject::connect(input, SIGNAL(valueInvalidated()),
+                //                 outputRules[i], SLOT(invalidate()));
+            }
+            else
+            {
+                outputRules[i]->independentOf(input);
+                //QObject::disconnect(input, SIGNAL(valueInvalidated()),
+                //                    outputRules[i], SLOT(invalidate()));
+            }
+        }
+    }
+
     void setInputRule(InputRule inputRule, Rule const *rule)
     {
         DENG2_ASSERT(rule != 0);
 
+        // Disconnect signals from the old input rule to relevant outputs.
+        connectInputToOutputs(inputRule, false);
+
+        /*
         // Forget the old dependency.
         Rule const **input = ruleRef(inputRule);
         self.independentOf(*input);
@@ -88,17 +158,29 @@ struct RectangleRule::Instance
         // Define a new dependency.
         *input = rule;
         self.dependsOn(rule);
+        */
 
-        self.invalidate();
+        *ruleRef(inputRule) = rule;
+
+        // Connect signals to relevant outputs.
+        connectInputToOutputs(inputRule, true);
     }
 
-    void update()
+    void updateHorizontal()
     {
-        // All the edges must be defined, otherwise the rectangle's position is ambiguous.
+        /*
+        if(outputRules[OutLeft].isValid() &&
+           outputRules[OutRight].isValid() &&
+           outputRules[OutWidth].isValid())
+        {
+            // Already got valid values for both edges.
+            return;
+        }
+        */
+
+        // Both edges must be defined, otherwise the rectangle's position is ambiguous.
         bool leftDefined   = false;
-        bool topDefined    = false;
         bool rightDefined  = false;
-        bool bottomDefined = false;
 
         Rectanglef r;
 
@@ -110,33 +192,15 @@ struct RectangleRule::Instance
             leftDefined = rightDefined = true;
         }
 
-        if(inputRules[AnchorY] && inputRules[Height])
-        {
-            r.topLeft.y = inputRules[AnchorY]->value() -
-                    normalizedAnchorPoint.y * inputRules[Height]->value();
-            r.setHeight(inputRules[Height]->value());
-            topDefined = bottomDefined = true;
-        }
-
         if(inputRules[Left])
         {
             r.topLeft.x = inputRules[Left]->value();
             leftDefined = true;
         }
-        if(inputRules[Top])
-        {
-            r.topLeft.y = inputRules[Top]->value();
-            topDefined = true;
-        }
         if(inputRules[Right])
         {
             r.bottomRight.x = inputRules[Right]->value();
             rightDefined = true;
-        }
-        if(inputRules[Bottom])
-        {
-            r.bottomRight.y = inputRules[Bottom]->value();
-            bottomDefined = true;
         }
 
         if(inputRules[Width] && leftDefined && !rightDefined)
@@ -150,6 +214,49 @@ struct RectangleRule::Instance
             leftDefined = true;
         }
 
+        DENG2_ASSERT(leftDefined);
+        DENG2_ASSERT(rightDefined);
+
+        outputRules[OutLeft]->set(r.topLeft.x);
+        outputRules[OutRight]->set(r.bottomRight.x);
+        outputRules[OutWidth]->set(r.width());
+    }
+
+    void updateVertical()
+    {
+        /*
+        if(top.isValid() && bottom.isValid() && height.isValid())
+        {
+            // Already got valid edges.
+            return;
+        }
+        */
+
+        // Both edges must be defined, otherwise the rectangle's position is ambiguous.
+        bool topDefined    = false;
+        bool bottomDefined = false;
+
+        Rectanglef r;
+
+        if(inputRules[AnchorY] && inputRules[Height])
+        {
+            r.topLeft.y = inputRules[AnchorY]->value() -
+                    normalizedAnchorPoint.y * inputRules[Height]->value();
+            r.setHeight(inputRules[Height]->value());
+            topDefined = bottomDefined = true;
+        }
+
+        if(inputRules[Top])
+        {
+            r.topLeft.y = inputRules[Top]->value();
+            topDefined = true;
+        }
+        if(inputRules[Bottom])
+        {
+            r.bottomRight.y = inputRules[Bottom]->value();
+            bottomDefined = true;
+        }
+
         if(inputRules[Height] && topDefined && !bottomDefined)
         {
             r.setHeight(inputRules[Height]->value());
@@ -161,19 +268,37 @@ struct RectangleRule::Instance
             topDefined = true;
         }
 
-        DENG2_ASSERT(leftDefined);
-        DENG2_ASSERT(rightDefined);
         DENG2_ASSERT(topDefined);
         DENG2_ASSERT(bottomDefined);
 
         // Update the derived output rules.
-        left.set(r.topLeft.x);
-        top.set(r.topLeft.y);
-        right.set(r.bottomRight.x);
-        bottom.set(r.bottomRight.y);
+        outputRules[OutTop]->set(r.topLeft.y);
+        outputRules[OutBottom]->set(r.bottomRight.y);
+        outputRules[OutHeight]->set(r.height());
+    }
 
-        // Mark this rule as valid.
-        self.setValue(r.width() * r.height());
+    // Implements DelegateRule::ISource.
+    Counted const &delegateSource(int /*id*/)
+    {
+        return self;
+    }
+
+    void delegateUpdate(int id)
+    {
+        switch(id)
+        {
+        case OutLeft:
+        case OutRight:
+        case OutWidth:
+            updateHorizontal();
+            break;
+
+        case OutTop:
+        case OutBottom:
+        case OutHeight:
+            updateVertical();
+            break;
+        }
     }
 };
 
@@ -196,22 +321,32 @@ RectangleRule::~RectangleRule()
 
 Rule const *RectangleRule::left() const
 {
-    return &d->left;
+    return d->outputRules[Instance::OutLeft];
 }
 
 Rule const *RectangleRule::top() const
 {
-    return &d->top;
+    return d->outputRules[Instance::OutTop];
 }
 
 Rule const *RectangleRule::right() const
 {
-    return &d->right;
+    return d->outputRules[Instance::OutRight];
 }
 
 Rule const *RectangleRule::bottom() const
 {
-    return &d->bottom;
+    return d->outputRules[Instance::OutBottom];
+}
+
+Rule const *RectangleRule::width() const
+{
+    return d->outputRules[Instance::OutWidth];
+}
+
+Rule const *RectangleRule::height() const
+{
+    return d->outputRules[Instance::OutHeight];
 }
 
 RectangleRule &RectangleRule::setInput(InputRule inputRule, Rule const *rule)
@@ -228,7 +363,7 @@ Rule const *RectangleRule::inputRule(InputRule inputRule)
 void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
 {
     d->normalizedAnchorPoint.setValue(normalizedPoint, transition);
-    invalidate();
+    d->invalidateOutputs();
 
     if(transition > 0.0)
     {
@@ -239,12 +374,13 @@ void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta co
 
 void RectangleRule::update()
 {
-    d->update();
+    // Not applicable.
+    DENG2_ASSERT(false);
 }
 
 void RectangleRule::timeChanged()
 {
-    invalidate();
+    d->invalidateOutputs();
 
     if(d->normalizedAnchorPoint.done())
     {
@@ -254,8 +390,8 @@ void RectangleRule::timeChanged()
 
 Rectanglef RectangleRule::rect() const
 {
-    return Rectanglef(Vector2f(d->left.value(),  d->top.value()),
-                      Vector2f(d->right.value(), d->bottom.value()));
+    return Rectanglef(Vector2f(left()->value(),  top()->value()),
+                      Vector2f(right()->value(), bottom()->value()));
 }
 
 Rectanglei RectangleRule::recti() const

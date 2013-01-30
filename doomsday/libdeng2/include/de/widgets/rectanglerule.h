@@ -73,6 +73,8 @@ public:
     Rule const *top() const;
     Rule const *right() const;
     Rule const *bottom() const;
+    Rule const *width() const;
+    Rule const *height() const;
 
     /**
      * Sets one of the input rules of the rectangle.

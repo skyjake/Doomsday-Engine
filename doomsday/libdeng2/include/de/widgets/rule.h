@@ -62,6 +62,21 @@ public:
      */
     virtual void update();
 
+    bool isValid() const;
+
+    /**
+     * Links rules together. This rule will depend on @a dependency; if @a
+     * dependency becomes invalid, this rule will likewise become invalid.
+     * @a dependency will hold a reference to this rule.
+     */
+    void dependsOn(Rule const *dependency);
+
+    /**
+     * Unlinks rules. This rule will no longer depend on @a dependency.
+     * @a dependency will release its reference to this rule.
+     */
+    void independentOf(Rule const *dependency);
+
     /**
      * Clearss the flag that determines whether there are any invalid rules.
      * This could, for example, be called after drawing a frame.
@@ -85,19 +100,6 @@ public slots:
 
 protected:
     ~Rule(); // Counted
-
-    /**
-     * Links rules together. This rule will depend on @a dependency; if @a
-     * dependency becomes invalid, this rule will likewise become invalid.
-     * @a dependency will hold a reference to this rule.
-     */
-    void dependsOn(Rule const *dependency);
-
-    /**
-     * Unlinks rules. This rule will no longer depend on @a dependency.
-     * @a dependency will release its reference to this rule.
-     */
-    void independentOf(Rule const *dependency);
 
     /**
      * Sets the current value of the rule and marks it valid.

@@ -76,6 +76,11 @@ void Rule::update()
     d->isValid = true;
 }
 
+bool Rule::isValid() const
+{
+    return d->isValid;
+}
+
 void Rule::markRulesValid()
 {
     _invalidRulesExist = false;
