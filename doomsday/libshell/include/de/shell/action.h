@@ -37,6 +37,8 @@ public:
 
     Action(String const &label, KeyEvent const &event, QObject *target = 0, char const *slot = 0);
 
+    Action(String const &label);
+
     ~Action();
 
     String label() const;
@@ -49,6 +51,8 @@ public:
      * @return @c true, if the event is eaten by the action.
      */
     bool tryTrigger(KeyEvent const &ev);
+
+    void trigger();
 
 signals:
     void triggered();

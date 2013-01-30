@@ -35,6 +35,8 @@ namespace shell {
  */
 class MenuWidget : public TextWidget
 {
+    Q_OBJECT
+
 public:
     MenuWidget(String const &name = "");
 
@@ -71,6 +73,13 @@ public:
     // Events.
     void draw();
     bool handleEvent(Event const *);
+
+public slots:
+    void open();
+    void close();
+
+signals:
+    void closed();
 
 private:
     struct Instance;

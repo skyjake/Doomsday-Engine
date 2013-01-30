@@ -130,7 +130,7 @@ bool Widget::isHidden() const
 
 void Widget::show(bool doShow)
 {
-    d->hidden = doShow;
+    d->hidden = !doShow;
 }
 
 void Widget::clear()

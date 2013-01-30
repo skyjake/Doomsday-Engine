@@ -93,7 +93,7 @@ void RootWidget::setViewSize(Vector2i const &size)
 
 void RootWidget::setFocus(Widget *widget)
 {
-    d->focus = widget;
+    d->focus = widget;    
 }
 
 Widget *RootWidget::focus() const

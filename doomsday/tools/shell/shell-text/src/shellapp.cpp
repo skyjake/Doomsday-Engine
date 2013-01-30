@@ -20,52 +20,99 @@
 #include "logwidget.h"
 #include "commandlinewidget.h"
 #include "statuswidget.h"
+#include <de/shell/LabelWidget>
+#include <de/shell/MenuWidget>
 #include <de/shell/Link>
+#include <de/shell/Action>
 #include <de/LogBuffer>
 #include <QStringList>
 
 using namespace de;
+using namespace shell;
 
 struct ShellApp::Instance
 {
     ShellApp &self;
+    MenuWidget *menu;
     LogWidget *log;
     CommandLineWidget *cli;
+    LabelWidget *menuLabel;
     StatusWidget *status;
-    shell::Link *link;
+    Link *link;
 
     Instance(ShellApp &a) : self(a), link(0)
     {
         RootWidget &root = self.rootWidget();
 
+        // Status bar in the bottom of the view.
         status = new StatusWidget;
         status->rule()
-                .setInput(RectangleRule::Height, refless(new ConstantRule(1)))
-                .setInput(RectangleRule::Bottom, root.viewBottom())
-                .setInput(RectangleRule::Width,  root.viewWidth())
-                .setInput(RectangleRule::Left,   root.viewLeft());
+                .setInput(RuleRectangle::Height, refless(new ConstantRule(1)))
+                .setInput(RuleRectangle::Bottom, root.viewBottom())
+                .setInput(RuleRectangle::Width,  root.viewWidth())
+                .setInput(RuleRectangle::Left,   root.viewLeft());
 
+        // Menu button at the left edge.
+        menuLabel = new LabelWidget;
+        menuLabel->setAlignment(AlignTop);
+        menuLabel->setLabel(" F9:Menu ");
+        menuLabel->setAttribs(TextCanvas::Char::Bold);
+        menuLabel->rule()
+                .setInput(RuleRectangle::Left,   root.viewLeft())
+                .setInput(RuleRectangle::Width,  refless(new ConstantRule(menuLabel->label().size())))
+                .setInput(RuleRectangle::Bottom, status->rule().top());
+
+        menuLabel->addAction(new Action(KeyEvent(Qt::Key_F9), &self, SLOT(openMenu())));
+        menuLabel->addAction(new Action(KeyEvent(Qt::Key_Z, KeyEvent::Control), &self, SLOT(openMenu())));
+        menuLabel->addAction(new Action(KeyEvent(Qt::Key_C, KeyEvent::Control), &self, SLOT(openMenu())));
+
+        // Expanding command line widget.
         cli = new CommandLineWidget;
         cli->rule()
-                .setInput(RectangleRule::Left,   root.viewLeft())
-                .setInput(RectangleRule::Width,  root.viewWidth())
-                .setInput(RectangleRule::Bottom, status->rule().top());
+                .setInput(RuleRectangle::Left,   menuLabel->rule().right())
+                .setInput(RuleRectangle::Right,  root.viewRight())
+                .setInput(RuleRectangle::Bottom, status->rule().top());
 
+        menuLabel->rule().setInput(RuleRectangle::Top, cli->rule().top());
+
+        // Log history covers the rest of the view.
         log = new LogWidget;
         log->rule()
-                .setInput(RectangleRule::Left,   root.viewLeft())
-                .setInput(RectangleRule::Width,  root.viewWidth())
-                .setInput(RectangleRule::Top,    root.viewTop())
-                .setInput(RectangleRule::Bottom, cli->rule().top());
+                .setInput(RuleRectangle::Left,   root.viewLeft())
+                .setInput(RuleRectangle::Width,  root.viewWidth())
+                .setInput(RuleRectangle::Top,    root.viewTop())
+                .setInput(RuleRectangle::Bottom, cli->rule().top());
 
-        // Ownership also given to the root widget:
+        // Main menu.
+        menu = new MenuWidget;
+        menu->hide(); // closed initially
+        menu->appendItem(new Action("Open connection...",
+                                    KeyEvent(Qt::Key_O),
+                                    &self, SLOT(openConnection())), "O");
+        menu->appendItem(new Action("Disconnect"));
+        menu->appendSeparator();
+        menu->appendItem(new Action("Start new server"));
+        menu->appendSeparator();
+        menu->appendItem(new Action("About"));
+        menu->appendItem(new Action("Quit Shell",
+                                    KeyEvent(Qt::Key_X, KeyEvent::Control),
+                                    &self, SLOT(quit())), "Ctrl-X");
+        menu->rule()
+                .setInput(RuleRectangle::Bottom, menuLabel->rule().top())
+                .setInput(RuleRectangle::Left,   menuLabel->rule().left());
+
+        // Compose the UI.
         root.add(status);
         root.add(cli);
         root.add(log);
+        root.add(menuLabel);
+        root.add(menu);
 
         root.setFocus(cli);
 
+        // Signals.
         QObject::connect(cli, SIGNAL(commandEntered(de::String)), &self, SLOT(sendCommandToServer(de::String)));
+        QObject::connect(menu, SIGNAL(closed()), &self, SLOT(menuClosed()));
     }
 
     ~Instance()
@@ -85,7 +132,7 @@ ShellApp::ShellApp(int &argc, char **argv)
     if(args.size() > 1)
     {
         // Open a connection.
-        d->link = new shell::Link(Address(args[1]));
+        d->link = new Link(Address(args[1]));
         d->status->setShellLink(d->link);
 
         connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
@@ -98,6 +145,10 @@ ShellApp::~ShellApp()
     LogBuffer::appBuffer().removeSink(d->log->logSink());
 
     delete d;
+}
+
+void ShellApp::openConnection()
+{
 }
 
 void ShellApp::sendCommandToServer(String command)
@@ -133,4 +184,17 @@ void ShellApp::disconnected()
     d->link->deleteLater();
     d->link = 0;
     d->status->setShellLink(0);
+}
+
+void ShellApp::openMenu()
+{
+    d->menuLabel->setAttribs(TextCanvas::Char::Reverse);
+    rootWidget().setFocus(d->menu);
+    d->menu->open();
+}
+
+void ShellApp::menuClosed()
+{
+    d->menuLabel->setAttribs(TextCanvas::Char::Bold);
+    rootWidget().setFocus(d->cli);
 }

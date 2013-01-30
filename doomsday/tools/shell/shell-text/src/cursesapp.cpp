@@ -285,6 +285,10 @@ struct CursesApp::Instance
                     mods = KeyEvent::Control;
                     break;
 
+                case 0x1b:
+                    code = Qt::Key_Escape;
+                    break;
+
                 default:
                     if(key & KEY_CODE_YES)
                         qDebug() << "CURSES" << QString("0%1").arg(key, 0, 8).toAscii().constData();

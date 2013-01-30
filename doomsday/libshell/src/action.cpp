@@ -39,6 +39,9 @@ Action::Action(String const &label, KeyEvent const &event, QObject *target, char
     }
 }
 
+Action::Action(String const &label) : _event(KeyEvent("")), _label(label)
+{}
+
 Action::~Action()
 {}
 
@@ -51,10 +54,15 @@ bool Action::tryTrigger(KeyEvent const &ev)
 {
     if(ev == _event)
     {
-        emit triggered();
+        trigger();
         return true;
     }
     return false;
+}
+
+void Action::trigger()
+{
+    emit triggered();
 }
 
 } // namespace shell

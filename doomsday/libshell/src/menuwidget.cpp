@@ -38,9 +38,9 @@ struct MenuWidget::Instance
     {
         Action *action;
         String shortcutLabel;
-        bool separatorBefore;
+        bool separatorAfter;
 
-        Item() : action(0), separatorBefore(false)
+        Item() : action(0), separatorAfter(false)
         {}
     };
 
@@ -82,7 +82,7 @@ struct MenuWidget::Instance
         foreach(Item const &item, items)
         {
             lines++;
-            if(item.separatorBefore) lines++;
+            if(item.separatorAfter) lines++;
 
             int w = item.action->label().size();
             if(!item.shortcutLabel.isEmpty())
@@ -137,7 +137,7 @@ void MenuWidget::appendSeparator()
 {
     if(d->items.isEmpty()) return;
 
-    d->items.last().separatorBefore = true;
+    d->items.last().separatorAfter = true;
     d->updateSize();
     redraw();
 }
@@ -158,7 +158,7 @@ void MenuWidget::insertSeparator(int pos)
 {
     if(pos < 0 || pos >= d->items.size()) return;
 
-    d->items[pos].separatorBefore = true;
+    d->items[pos].separatorAfter = true;
     d->updateSize();
     redraw();
 }
@@ -214,6 +214,19 @@ Vector2i MenuWidget::cursorPosition() const
     return d->cursorPos;
 }
 
+void MenuWidget::open()
+{
+    show();
+    redraw();
+}
+
+void MenuWidget::close()
+{
+    emit closed();
+    hide();
+    redraw();
+}
+
 void MenuWidget::draw()
 {
     Rectanglei pos = rule().recti();
@@ -225,14 +238,6 @@ void MenuWidget::draw()
     {
         Instance::Item const &item = d->items[i];
 
-        // Draw a separator.
-        if(item.separatorBefore)
-        {
-            buf.fill(Rectanglei(Vector2i(1, y), Vector2i(pos.width() - 1, 2)),
-                     TextCanvas::Char('-', d->borderAttr));
-            y++;
-        }
-
         // Determine style.
         TextCanvas::Char::Attribs itemAttr = (d->cursor == i && hasFocus()?
                                               d->selectionAttr : d->backgroundAttr);
@@ -240,7 +245,7 @@ void MenuWidget::draw()
         // Cursor.
         if(d->cursor == i)
         {
-            buf.fill(Rectanglei(Vector2i(1, y), Vector2i(pos.width() - 1, 2)),
+            buf.fill(Rectanglei(Vector2i(1, y), Vector2i(pos.width() - 1, y + 1)),
                      TextCanvas::Char(' ', itemAttr));
 
             d->cursorPos = Vector2i(2, y);
@@ -258,6 +263,14 @@ void MenuWidget::draw()
         }
 
         y++;
+
+        // Draw a separator.
+        if(item.separatorAfter)
+        {
+            buf.fill(Rectanglei(Vector2i(1, y), Vector2i(pos.width() - 1, y + 1)),
+                     TextCanvas::Char('-', d->borderAttr));
+            y++;
+        }
     }
 
     // Draw a frame.
@@ -270,10 +283,62 @@ bool MenuWidget::handleEvent(Event const *event)
 {
     if(event->type() != Event::KeyPress) return false;
 
+    // Check registered actions.
+    if(TextWidget::handleEvent(event))
+        return true;
+
     KeyEvent const *ev = static_cast<KeyEvent const *>(event);
 
-    // Fall back to default handling.
-    TextWidget::handleEvent(event);
+    if(ev->text() == " ")
+    {
+        itemAction(d->cursor).trigger();
+        close();
+        return true;
+    }
+
+    if(ev->text().isEmpty())
+    {
+        switch(ev->key())
+        {
+        case Qt::Key_Up:
+            if(d->cursor > 0)
+            {
+                d->cursor--;
+                redraw();
+            }
+            return true;
+
+        case Qt::Key_Down:
+            if(d->cursor < itemCount() - 1)
+            {
+                d->cursor++;
+                redraw();
+            }
+            return true;
+
+        case Qt::Key_Home:
+        case Qt::Key_PageUp:
+            d->cursor = 0;
+            redraw();
+            return true;
+
+        case Qt::Key_End:
+        case Qt::Key_PageDown:
+            d->cursor = itemCount() - 1;
+            redraw();
+            return true;
+
+        case Qt::Key_Enter:
+            itemAction(d->cursor).trigger();
+            close();
+            return true;
+
+        default:
+            // Any other control key closes the menu.
+            close();
+            return true;
+        }
+    }
 
     // When open, a menu eats all key events.
     return true;

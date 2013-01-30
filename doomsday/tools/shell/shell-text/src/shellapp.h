@@ -31,9 +31,12 @@ public:
     ~ShellApp();
 
 public slots:
+    void openConnection();
     void sendCommandToServer(de::String command);
     void handleIncomingPackets();
     void disconnected();
+    void openMenu();
+    void menuClosed();
 
 private:
     struct Instance;
