@@ -58,7 +58,7 @@ public:
     void setCursor(int index);
     int cursor() const;
 
-    Vector2i cursorPosition();
+    Vector2i cursorPosition() const;
 
     bool handleControlKey(int key);
 

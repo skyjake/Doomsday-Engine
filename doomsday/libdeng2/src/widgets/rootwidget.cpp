@@ -40,7 +40,7 @@ struct RootWidget::Instance
 
     ~Instance()
     {
-        releaseRef(viewRect);
+        delete viewRect;
     }
 
     Vector2i viewSize() const
@@ -118,13 +118,18 @@ void RootWidget::initialize()
 
 void RootWidget::draw()
 {   
-    notifyTree(&Widget::draw);
+    notifyTree(&Widget::drawIfVisible);
 
     Rule::markRulesValid(); // All done for this frame.
 }
 
 bool RootWidget::processEvent(Event const *event)
 {
+    if(focus() && focus()->handleEvent(event))
+    {
+        // The focused widget ate the event.
+        return true;
+    }
     return dispatchEvent(event, &Widget::handleEvent);
 }
 

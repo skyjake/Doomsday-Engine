@@ -228,7 +228,7 @@ void LineEditWidget::setPrompt(String const &promptText)
     }
 }
 
-Vector2i LineEditWidget::cursorPosition()
+Vector2i LineEditWidget::cursorPosition() const
 {
     de::Rectanglei pos = rule().recti();
     return pos.topLeft + Vector2i(d->prompt.size(), 0) + d->lineCursorPos();
@@ -247,7 +247,8 @@ void LineEditWidget::draw()
     // Temporary buffer for drawing.
     TextCanvas buf(pos.size());
 
-    TextCanvas::Char::Attribs attr = TextCanvas::Char::Reverse;
+    TextCanvas::Char::Attribs attr =
+            (hasFocus()? TextCanvas::Char::Reverse : TextCanvas::Char::DefaultAttributes);
     buf.clear(TextCanvas::Char(' ', attr));
 
     buf.drawText(Vector2i(0, 0), d->prompt, attr | TextCanvas::Char::Bold);

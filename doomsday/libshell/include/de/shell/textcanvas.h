@@ -105,6 +105,7 @@ public:
     Size size() const;    
     int width() const;
     int height() const;
+    Rectanglei rect() const;
 
     void resize(Size const &newSize);
 
@@ -139,6 +140,8 @@ public:
     void put(Vector2i const &pos, Char const &ch);
 
     void drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs = Char::DefaultAttributes);
+
+    void drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs = Char::DefaultAttributes);
 
     /**
      * Draws the contents of a canvas onto this canvas.

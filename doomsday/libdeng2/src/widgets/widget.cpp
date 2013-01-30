@@ -29,13 +29,14 @@ struct Widget::Instance
     Widget &self;
     String name;
     Widget *parent;
+    bool hidden;
 
     typedef QList<Widget *> Children;
     typedef QMap<String, Widget *> NamedChildren;
     Children children;
     NamedChildren index;
 
-    Instance(Widget &w, String const &n) : self(w), name(n), parent(0)
+    Instance(Widget &w, String const &n) : self(w), name(n), parent(0), hidden(false)
     {}
 
     ~Instance()
@@ -111,6 +112,25 @@ RootWidget &Widget::root() const
         w = w->parent();
     }
     throw NotFoundError("Widget::root", "No root widget found");
+}
+
+bool Widget::hasFocus() const
+{
+    return hasRoot() && root().focus() == this;
+}
+
+bool Widget::isHidden() const
+{
+    for(Widget const *w = this; w != 0; w = w->d->parent)
+    {
+        if(w->d->hidden) return true;
+    }
+    return false;
+}
+
+void Widget::show(bool doShow)
+{
+    d->hidden = doShow;
 }
 
 void Widget::clear()
@@ -195,6 +215,9 @@ void Widget::notifyTreeReversed(void (Widget::*notifyFunc)())
 
 bool Widget::dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event const *))
 {
+    // Hidden widgets do not get events.
+    if(isHidden()) return false;
+
     // Tree is traversed in reverse order.
     for(int i = d->children.size() - 1; i >= 0; --i)
     {
@@ -226,6 +249,14 @@ void Widget::viewResized()
 
 void Widget::update()
 {}
+
+void Widget::drawIfVisible()
+{
+    if(!isHidden())
+    {
+        draw();
+    }
+}
 
 void Widget::draw()
 {}

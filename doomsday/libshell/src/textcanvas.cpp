@@ -121,6 +121,11 @@ int TextCanvas::height() const
     return d->size.y;
 }
 
+Rectanglei TextCanvas::rect() const
+{
+    return Rectanglei(Vector2i(0, 0), size());
+}
+
 void TextCanvas::resize(Size const &newSize)
 {
     d->resize(newSize);
@@ -184,6 +189,32 @@ void TextCanvas::drawText(Vector2i const &pos, String const &text, Char::Attribs
         }
         p.x++;
     }
+}
+
+void TextCanvas::drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs)
+{
+    Char const corner('+', attribs);
+    Char const hEdge ('-', attribs);
+    Char const vEdge ('|', attribs);
+
+    // Horizontal edges.
+    for(int x = 1; x < rect.width() - 1; ++x)
+    {
+        put(rect.topLeft + Vector2i(x, 0), hEdge);
+        put(rect.bottomLeft() + Vector2i(x, -1), hEdge);
+    }
+
+    // Vertical edges.
+    for(int y = 1; y < rect.width() - 1; ++y)
+    {
+        put(rect.topLeft + Vector2i(0, y), vEdge);
+        put(rect.topRight() + Vector2i(-1, y), vEdge);
+    }
+
+    put(rect.topLeft, corner);
+    put(rect.topRight() - Vector2i(1, 0), corner);
+    put(rect.bottomRight - Vector2i(1, 1), corner);
+    put(rect.bottomLeft() - Vector2i(0, 1), corner);
 }
 
 void TextCanvas::draw(TextCanvas const &canvas, Coord const &topLeft)

@@ -20,5 +20,6 @@
 
 namespace de {
 namespace shell {
+
 } // namespace shell
 } // namespace de

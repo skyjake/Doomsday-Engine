@@ -84,6 +84,11 @@ public:
     TextCanvas &targetCanvas() const;
 
     /**
+     * Requests the root widget to redraw all the user interface.
+     */
+    void redraw();
+
+    /**
      * Draw this widget and all its children, and show the target canvas
      * afterwards. Use this in special cases for faster redrawing of portions
      * of the screen when only one widget's contents have changed and need
@@ -101,13 +106,15 @@ public:
 
     RectangleRule &rule();
 
+    RectangleRule const &rule() const;
+
     /**
      * Returns the position of the cursor for the widget. If the widget
      * has focus, this is where the cursor will be positioned.
      *
      * @return Cursor position.
      */
-    virtual Vector2i cursorPosition();
+    virtual Vector2i cursorPosition() const;
 
     /**
      * Adds a new action for the widget. During event processing actions are

@@ -49,22 +49,19 @@ void LabelWidget::setLabel(String const &text, TextCanvas::Char::Attribs attribs
 {
     d->label   = text;
     d->attribs = attribs;
-
-    if(hasRoot()) root().requestDraw();
+    redraw();
 }
 
 void LabelWidget::setAttribs(TextCanvas::Char::Attribs const &attribs)
 {
     d->attribs = attribs;
-
-    if(hasRoot()) root().requestDraw();
+    redraw();
 }
 
 void LabelWidget::setAlignment(Alignment align)
 {
     d->align = align;
-
-    if(hasRoot()) root().requestDraw();
+    redraw();
 }
 
 String LabelWidget::label() const

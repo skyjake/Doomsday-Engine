@@ -35,7 +35,7 @@ struct TextWidget::Instance
 
     ~Instance()
     {
-        releaseRef(rule);
+        delete rule;
         foreach(Action *act, actions) delete act;
     }
 };
@@ -70,17 +70,26 @@ TextCanvas &TextWidget::targetCanvas() const
     return *d->canvas;
 }
 
+void TextWidget::redraw()
+{
+    if(hasRoot()) root().requestDraw();
+}
+
 void TextWidget::drawAndShow()
 {
-    draw();
-    notifyTree(&Widget::draw);
-    targetCanvas().show();
+    if(!isHidden())
+    {
+        draw();
+        notifyTree(&Widget::drawIfVisible);
+        targetCanvas().show();
+    }
 }
 
 void TextWidget::setRule(RectangleRule *rule)
 {
-    releaseRef(d->rule);
-    d->rule = holdRef(rule);
+    DENG2_ASSERT(rule != 0);
+    delete d->rule;
+    d->rule = rule;
 }
 
 RectangleRule &TextWidget::rule()
@@ -89,7 +98,13 @@ RectangleRule &TextWidget::rule()
     return *d->rule;
 }
 
-Vector2i TextWidget::cursorPosition()
+RectangleRule const &TextWidget::rule() const
+{
+    DENG2_ASSERT(d->rule != 0);
+    return *d->rule;
+}
+
+Vector2i TextWidget::cursorPosition() const
 {
     return Vector2i(floor(rule().left()->value()),
                     floor(rule().top()->value()));

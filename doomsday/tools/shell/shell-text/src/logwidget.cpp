@@ -160,8 +160,3 @@ void LogWidget::draw()
 
     targetCanvas().draw(buf, pos.topLeft);
 }
-
-void LogWidget::redraw()
-{
-    drawAndShow();
-}

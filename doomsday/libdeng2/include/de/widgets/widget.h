@@ -46,6 +46,10 @@ public:
     void setName(String const &name);
     bool hasRoot() const;
     RootWidget &root() const;
+    bool hasFocus() const;
+    bool isHidden() const;
+    inline void hide() { show(false); }
+    void show(bool doShow = true);
 
     // Tree organization.
     void clear();
@@ -60,11 +64,13 @@ public:
     void notifyTree(void (Widget::*notifyFunc)());
     void notifyTreeReversed(void (Widget::*notifyFunc)());
     bool dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event const *));
+    void redraw();
 
     // Events.
     virtual void initialize();
     virtual void viewResized();
     virtual void update();
+    virtual void drawIfVisible();
     virtual void draw();
     virtual bool handleEvent(Event const *event);
 

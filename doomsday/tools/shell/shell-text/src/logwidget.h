@@ -24,8 +24,6 @@
 
 class LogWidget : public de::shell::TextWidget
 {
-    Q_OBJECT
-
 public:
     LogWidget(de::String const &name = "");
     virtual ~LogWidget();
@@ -37,9 +35,6 @@ public:
     de::LogSink &logSink();
 
     void draw();
-
-public slots:
-    void redraw();
 
 private:
     struct Instance;
