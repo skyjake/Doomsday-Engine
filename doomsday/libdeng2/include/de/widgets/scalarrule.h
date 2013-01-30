@@ -31,12 +31,10 @@ namespace de {
  * Rule with a scalar value. The value is animated over time.
  * @ingroup widgets
  */
-class DENG2_PUBLIC ScalarRule : public Rule
+class DENG2_PUBLIC ScalarRule : public Rule, DENG2_OBSERVES(Clock, TimeChange)
 {
-    Q_OBJECT
-
 public:
-    explicit ScalarRule(float initialValue);
+    ScalarRule(float initialValue);
 
     void set(float target, TimeDelta transition = 0);
 
@@ -53,8 +51,7 @@ protected:
     ~ScalarRule();
     void update();
 
-protected slots:
-    void timeChanged();
+    void timeChanged(Clock const &);
 
 private:
     Animation _animation;

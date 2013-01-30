@@ -18,6 +18,7 @@
  */
 
 #include "de/Rule"
+#include <set>
 
 namespace de {
 
@@ -25,7 +26,7 @@ bool Rule::_invalidRulesExist = false;
 
 struct Rule::Instance
 {
-    typedef QSet<Rule const *> Dependencies;
+    typedef std::set<Rule const *> Dependencies;
     Dependencies dependencies; // ref'd
 
     /// Current value of the rule.
@@ -96,6 +97,12 @@ float Rule::cachedValue() const
     return d->value;
 }
 
+void Rule::ruleInvalidated()
+{
+    // A dependency was invalidated, also invalidate this value.
+    invalidate();
+}
+
 void Rule::setValue(float v)
 {
     d->value = v;
@@ -106,10 +113,10 @@ void Rule::dependsOn(Rule const *dependency)
 {
     if(dependency)
     {
-        DENG2_ASSERT(!d->dependencies.contains(dependency));
+        DENG2_ASSERT(d->dependencies.find(dependency) == d->dependencies.end());
         d->dependencies.insert(de::holdRef(dependency));
 
-        connect(dependency, SIGNAL(valueInvalidated()), this, SLOT(invalidate()));
+        dependency->audienceForRuleInvalidation += this;
     }
 }
 
@@ -117,10 +124,10 @@ void Rule::independentOf(Rule const *dependency)
 {
     if(dependency)
     {
-        disconnect(dependency, SIGNAL(valueInvalidated()), this, SLOT(invalidate()));
+        dependency->audienceForRuleInvalidation -= this;
 
-        DENG2_ASSERT(d->dependencies.contains(dependency));
-        d->dependencies.remove(dependency);
+        DENG2_ASSERT(d->dependencies.find(dependency) != d->dependencies.end());
+        d->dependencies.erase(dependency);
         de::releaseRef(dependency);
     }
 }
@@ -134,7 +141,7 @@ void Rule::invalidate()
         // Also set the global flag.
         Rule::_invalidRulesExist = true;
 
-        emit valueInvalidated();
+        DENG2_FOR_AUDIENCE(RuleInvalidation, i) i->ruleInvalidated();
     }
 }
 

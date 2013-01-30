@@ -35,10 +35,8 @@ namespace de {
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC RectangleRule : public Rule
+class DENG2_PUBLIC RectangleRule : public Rule, DENG2_OBSERVES(Clock, TimeChange)
 {
-    Q_OBJECT
-
 public:
     enum InputRule {
         Left,
@@ -49,11 +47,11 @@ public:
         Height,
         AnchorX,
         AnchorY,
-        MAX_RULES
+        MAX_INPUT_RULES
     };
 
 public:
-    explicit RectangleRule();
+    RectangleRule();
 
     /**
      * Constructs a rectangle rule with individual rules defining the placement
@@ -64,9 +62,9 @@ public:
      * @param right   Rule for the right coordinate.
      * @param bottom  Rule for the bottom coordinate.
      */
-    explicit RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom);
+    RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom);
 
-    explicit RectangleRule(RectangleRule const *rect);
+    RectangleRule(RectangleRule const *rect);
 
     // Output rules.
     Rule const *left() const;
@@ -117,12 +115,10 @@ public:
      */
     Rectanglei recti() const;
 
-public slots:
-    void timeChanged();
-
 protected:
     ~RectangleRule();
     void update();
+    void timeChanged(Clock const &);
 
 private:
     struct Instance;

@@ -32,10 +32,8 @@ namespace de {
  */
 class DENG2_PUBLIC ConstantRule : public Rule
 {
-    Q_OBJECT
-
 public:
-    explicit ConstantRule(float constantValue);
+    ConstantRule(float constantValue);
 
     /**
      * Changes the value of the constant in the rule.

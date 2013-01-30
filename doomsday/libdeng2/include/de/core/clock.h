@@ -20,8 +20,8 @@
 #ifndef LIBDENG2_CLOCK_H
 #define LIBDENG2_CLOCK_H
 
-#include <QObject>
 #include "../Time"
+#include "../Observers"
 
 namespace de {
 
@@ -29,9 +29,10 @@ namespace de {
  * Time source.
  * @ingroup core
  */
-class Clock : public QObject
+class Clock
 {
-    Q_OBJECT
+public:
+    DENG2_DEFINE_AUDIENCE(TimeChange, void timeChanged(Clock const &))
 
 public:
     Clock();
@@ -57,9 +58,6 @@ public:
 
     static void setAppClock(Clock *c);
     static Clock &appClock();
-
-signals:
-    void timeChanged();
 
 private:
     Time _startedAt;

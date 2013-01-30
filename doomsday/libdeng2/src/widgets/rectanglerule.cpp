@@ -25,6 +25,7 @@ namespace de {
 
 struct RectangleRule::Instance : public DelegateRule::ISource
 {
+    // Internal identifiers for the output (delegate) rules.
     enum OutputIds
     {
         OutLeft,
@@ -46,7 +47,7 @@ struct RectangleRule::Instance : public DelegateRule::ISource
 
     RectangleRule &self;
     AnimationVector2 normalizedAnchorPoint;
-    Rule const *inputRules[MAX_RULES];
+    Rule const *inputRules[MAX_INPUT_RULES];
 
     // The output rules.
     DelegateRule *outputRules[MAX_OUTPUT_RULES];
@@ -78,9 +79,8 @@ struct RectangleRule::Instance : public DelegateRule::ISource
         }
 
         // Depend on all specified input rules.
-        for(int i = 0; i < int(MAX_RULES); ++i)
+        for(int i = 0; i < int(MAX_INPUT_RULES); ++i)
         {
-            //self.dependsOn(inputRules[i]);
             connectInputToOutputs(InputRule(i), true);
         }
 
@@ -89,9 +89,10 @@ struct RectangleRule::Instance : public DelegateRule::ISource
 
     ~Instance()
     {
-        for(int i = 0; i < int(MAX_RULES); ++i)
+        DENG2_ASSERT(!self.isValid());
+
+        for(int i = 0; i < int(MAX_INPUT_RULES); ++i)
         {
-            //self.independentOf(inputRules[i]);
             connectInputToOutputs(InputRule(i), false);
         }
         for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
@@ -100,10 +101,12 @@ struct RectangleRule::Instance : public DelegateRule::ISource
         }
     }
 
-    Rule const **ruleRef(InputRule rule)
+    Rule const *&ruleRef(InputRule rule)
     {
-        DENG2_ASSERT(rule < MAX_RULES);
-        return &inputRules[rule];
+        DENG2_ASSERT(rule >= Left);
+        DENG2_ASSERT(rule < MAX_INPUT_RULES);
+
+        return inputRules[rule];
     }
 
     void invalidateOutputs()
@@ -116,7 +119,7 @@ struct RectangleRule::Instance : public DelegateRule::ISource
 
     void connectInputToOutputs(InputRule inputRule, bool doConnect)
     {
-        Rule const *input = *ruleRef(inputRule);
+        Rule const *&input = ruleRef(inputRule);
         if(!input) return;
 
         bool isHoriz = (inputRule == Left  || inputRule == Right ||
@@ -131,14 +134,10 @@ struct RectangleRule::Instance : public DelegateRule::ISource
             {
                 outputRules[i]->dependsOn(input);
                 outputRules[i]->invalidate();
-                //QObject::connect(input, SIGNAL(valueInvalidated()),
-                //                 outputRules[i], SLOT(invalidate()));
             }
             else
             {
                 outputRules[i]->independentOf(input);
-                //QObject::disconnect(input, SIGNAL(valueInvalidated()),
-                //                    outputRules[i], SLOT(invalidate()));
             }
         }
     }
@@ -147,37 +146,17 @@ struct RectangleRule::Instance : public DelegateRule::ISource
     {
         DENG2_ASSERT(rule != 0);
 
-        // Disconnect signals from the old input rule to relevant outputs.
+        // Disconnect the old input rule from relevant outputs.
         connectInputToOutputs(inputRule, false);
 
-        /*
-        // Forget the old dependency.
-        Rule const **input = ruleRef(inputRule);
-        self.independentOf(*input);
+        ruleRef(inputRule) = rule;
 
-        // Define a new dependency.
-        *input = rule;
-        self.dependsOn(rule);
-        */
-
-        *ruleRef(inputRule) = rule;
-
-        // Connect signals to relevant outputs.
+        // Connect to relevant outputs.
         connectInputToOutputs(inputRule, true);
     }
 
     void updateHorizontal()
     {
-        /*
-        if(outputRules[OutLeft].isValid() &&
-           outputRules[OutRight].isValid() &&
-           outputRules[OutWidth].isValid())
-        {
-            // Already got valid values for both edges.
-            return;
-        }
-        */
-
         // Both edges must be defined, otherwise the rectangle's position is ambiguous.
         bool leftDefined   = false;
         bool rightDefined  = false;
@@ -224,14 +203,6 @@ struct RectangleRule::Instance : public DelegateRule::ISource
 
     void updateVertical()
     {
-        /*
-        if(top.isValid() && bottom.isValid() && height.isValid())
-        {
-            // Already got valid edges.
-            return;
-        }
-        */
-
         // Both edges must be defined, otherwise the rectangle's position is ambiguous.
         bool topDefined    = false;
         bool bottomDefined = false;
@@ -357,7 +328,7 @@ RectangleRule &RectangleRule::setInput(InputRule inputRule, Rule const *rule)
 
 Rule const *RectangleRule::inputRule(InputRule inputRule)
 {
-    return *d->ruleRef(inputRule);
+    return d->ruleRef(inputRule);
 }
 
 void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
@@ -368,7 +339,7 @@ void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta co
     if(transition > 0.0)
     {
         // Animation started, keep an eye on the clock until it ends.
-        connect(&Clock::appClock(), SIGNAL(timeChanged()), this, SLOT(timeChanged()));
+        Clock::appClock().audienceForTimeChange += this;
     }
 }
 
@@ -378,13 +349,13 @@ void RectangleRule::update()
     DENG2_ASSERT(false);
 }
 
-void RectangleRule::timeChanged()
+void RectangleRule::timeChanged(Clock const &clock)
 {
     d->invalidateOutputs();
 
     if(d->normalizedAnchorPoint.done())
     {
-        disconnect(&Clock::appClock(), SIGNAL(timeChanged()), this, SLOT(timeChanged()));
+        clock.audienceForTimeChange -= this;
     }
 }
 

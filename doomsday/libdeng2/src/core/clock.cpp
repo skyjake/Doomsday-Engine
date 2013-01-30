@@ -36,7 +36,7 @@ void Clock::setTime(Time const &currentTime)
 
     if(changed)
     {
-        emit timeChanged();
+        DENG2_FOR_AUDIENCE(TimeChange, i) i->timeChanged(*this);
     }
 }
 

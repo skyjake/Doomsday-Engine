@@ -31,8 +31,6 @@ namespace de {
  */
 class DENG2_PUBLIC OperatorRule : public Rule
 {
-    Q_OBJECT
-
 public:
     enum Operator {
         Equals,
@@ -48,9 +46,9 @@ public:
     };
 
 public:
-    explicit OperatorRule(Operator op, Rule const *unary);
+    OperatorRule(Operator op, Rule const *unary);
 
-    explicit OperatorRule(Operator op, Rule const *left, Rule const *right);
+    OperatorRule(Operator op, Rule const *left, Rule const *right);
 
 protected:
     ~OperatorRule();

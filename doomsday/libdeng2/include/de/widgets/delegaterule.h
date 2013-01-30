@@ -36,8 +36,6 @@ namespace de {
  */
 class DENG2_PUBLIC DelegateRule : public ConstantRule
 {
-    Q_OBJECT
-
 public:
     /**
      * Source of the delegate, responsible for setting the delegate's value.
@@ -65,7 +63,7 @@ public:
      * @param source      Source.
      * @param delegateId  Id passed to the source to identify this delegate.
      */
-    explicit DelegateRule(ISource &source, int delegateId = 0);
+    DelegateRule(ISource &source, int delegateId = 0);
 
     /**
      * Public destructor. The source rule/owner is expected to directly call
