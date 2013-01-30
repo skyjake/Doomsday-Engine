@@ -56,6 +56,7 @@ public:
      */
     Time const &time() const;
 
+public:
     static void setAppClock(Clock *c);
     static Clock &appClock();
 

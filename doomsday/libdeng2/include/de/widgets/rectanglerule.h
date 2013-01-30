@@ -29,13 +29,17 @@ namespace de {
 /**
  * A set of rules defining a rectangle.
  *
- * The value of the rectangle rule is the area of the rectangle (width *
- * height). RectangleRule::rect() returns the rectangle itself. The output
- * rules for the sides can be used normally in other rules.
+ * RectangleRule is not derived from Rule, but instead manages a complex
+ * mapping between a set of input and output rules. Note that RectangleRule is
+ * not reference-counted like Rule instances.
+ *
+ * RectangleRule::rect() returns the rectangle's currently valid bounds. The
+ * output rules for the sides can be used normally in other rules. Horizontal
+ * and vertical axes are handled independently.
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC RectangleRule : public Rule, DENG2_OBSERVES(Clock, TimeChange)
+class DENG2_PUBLIC RectangleRule : DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
     enum InputRule {
@@ -65,6 +69,8 @@ public:
     RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom);
 
     RectangleRule(RectangleRule const *rect);
+
+    ~RectangleRule();
 
     // Output rules.
     Rule const *left() const;
@@ -116,8 +122,6 @@ public:
     Rectanglei recti() const;
 
 protected:
-    ~RectangleRule();
-    void update();
     void timeChanged(Clock const &);
 
 private:

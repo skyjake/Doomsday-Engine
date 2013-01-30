@@ -18,6 +18,7 @@
  */
 
 #include "de/RectangleRule"
+#include "de/DelegateRule"
 #include "de/App"
 #include "de/math.h"
 
@@ -25,7 +26,7 @@ namespace de {
 
 struct RectangleRule::Instance : public DelegateRule::ISource
 {
-    // Internal identifiers for the output (delegate) rules.
+    // Internal identifiers for the output rules.
     enum OutputIds
     {
         OutLeft,
@@ -45,22 +46,19 @@ struct RectangleRule::Instance : public DelegateRule::ISource
         LAST_VERT_OUTPUT   = OutBottom
     };
 
-    RectangleRule &self;
     AnimationVector2 normalizedAnchorPoint;
     Rule const *inputRules[MAX_INPUT_RULES];
 
     // The output rules.
     DelegateRule *outputRules[MAX_OUTPUT_RULES];
 
-    Instance(RectangleRule &r)
-        : self(r)
+    Instance()
     {
         memset(inputRules, 0, sizeof(inputRules));
         setup();
     }
 
-    Instance(RectangleRule &r, Rule const *inLeft, Rule const *inTop, Rule const *inRight, Rule const *inBottom)
-        : self(r)
+    Instance(Rule const *inLeft, Rule const *inTop, Rule const *inRight, Rule const *inBottom)
     {
         memset(inputRules, 0, sizeof(inputRules));
         inputRules[Left]   = inLeft;
@@ -83,21 +81,18 @@ struct RectangleRule::Instance : public DelegateRule::ISource
         {
             connectInputToOutputs(InputRule(i), true);
         }
-
-        self.invalidate(); // remains invalid throughout lifetime
     }
 
     ~Instance()
     {
-        DENG2_ASSERT(!self.isValid());
-
         for(int i = 0; i < int(MAX_INPUT_RULES); ++i)
         {
             connectInputToOutputs(InputRule(i), false);
         }
         for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
         {
-            delete outputRules[i];
+            outputRules[i]->setSource(0);
+            releaseRef(outputRules[i]);
         }
     }
 
@@ -249,11 +244,6 @@ struct RectangleRule::Instance : public DelegateRule::ISource
     }
 
     // Implements DelegateRule::ISource.
-    Counted const &delegateSource(int /*id*/)
-    {
-        return self;
-    }
-
     void delegateUpdate(int id)
     {
         switch(id)
@@ -273,16 +263,15 @@ struct RectangleRule::Instance : public DelegateRule::ISource
     }
 };
 
-RectangleRule::RectangleRule()
-    : Rule(), d(new Instance(*this))
+RectangleRule::RectangleRule() : d(new Instance)
 {}
 
 RectangleRule::RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom)
-    : Rule(), d(new Instance(*this, left, top, right, bottom))
+    : d(new Instance(left, top, right, bottom))
 {}
 
 RectangleRule::RectangleRule(RectangleRule const *rect)
-    : Rule(), d(new Instance(*this, rect->left(), rect->top(), rect->right(), rect->bottom()))
+    : d(new Instance(rect->left(), rect->top(), rect->right(), rect->bottom()))
 {}
 
 RectangleRule::~RectangleRule()
@@ -341,12 +330,6 @@ void RectangleRule::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta co
         // Animation started, keep an eye on the clock until it ends.
         Clock::appClock().audienceForTimeChange += this;
     }
-}
-
-void RectangleRule::update()
-{
-    // Not applicable.
-    DENG2_ASSERT(false);
 }
 
 void RectangleRule::timeChanged(Clock const &clock)

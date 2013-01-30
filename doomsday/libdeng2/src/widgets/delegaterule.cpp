@@ -22,11 +22,8 @@
 namespace de {
 
 DelegateRule::DelegateRule(ISource &source, int delegateId)
-    : ConstantRule(0), _source(source), _delegateId(delegateId)
+    : ConstantRule(0), _source(&source), _delegateId(delegateId)
 {
-    // As a delegate, we are considered part of the owner.
-    setDelegate(&_source.delegateSource(delegateId));
-
     invalidate();
 }
 
@@ -35,13 +32,22 @@ DelegateRule::~DelegateRule()
 
 void DelegateRule::update()
 {
-    // During this, the source is expected to call ConstantRule::set() on us.
-    _source.delegateUpdate(_delegateId);
+    // Value cannot be determined without a source.
+    if(_source)
+    {
+        // During this, the source is expected to call ConstantRule::set() on us.
+        _source->delegateUpdate(_delegateId);
+    }
 
     ConstantRule::update();
 
     // It must be valid now, after the update.
     DENG2_ASSERT(isValid());
+}
+
+void DelegateRule::setSource(DelegateRule::ISource *source)
+{
+    _source = source;
 }
 
 } // namespace de
