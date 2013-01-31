@@ -62,6 +62,7 @@ int DialogWidget::exec(TextRootWidget &root)
 
     int result = d->subloop.exec();
 
+    root.setFocus(0);
     hide();
     redraw();
 
@@ -90,6 +91,7 @@ bool DialogWidget::handleEvent(Event const *event)
             return true;
         }
     }
+
     // All events not handled by children are eaten by the dialog.
     return true;
 }
