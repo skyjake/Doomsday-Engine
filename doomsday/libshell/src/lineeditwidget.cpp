@@ -162,6 +162,8 @@ struct LineEditWidget::Instance
 LineEditWidget::LineEditWidget(de::String const &name)
     : TextWidget(name), d(new Instance(*this))
 {
+    setBehavior(HandleEventsOnlyWhenFocused);
+
     rule().setInput(RuleRectangle::Height, *d->height);
 }
 
@@ -232,8 +234,10 @@ bool LineEditWidget::handleEvent(Event const *event)
     {
         d->updateWrapsAndHeight();
         redraw();
+        return true;
     }
-    return eaten;
+
+    return TextWidget::handleEvent(event);
 }
 
 bool LineEditWidget::handleControlKey(int key)

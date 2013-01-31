@@ -34,6 +34,8 @@ struct MenuWidget::Instance
     TextCanvas::Char::Attribs selectionAttr;
     BorderStyle borderStyle;
     Vector2i cursorPos; ///< Visual position.
+    bool closable;
+    bool cycleCursor;
 
     struct Item
     {
@@ -53,6 +55,8 @@ struct MenuWidget::Instance
           borderAttr(TextCanvas::Char::Reverse),
           backgroundAttr(TextCanvas::Char::Reverse),
           borderStyle(LineBorder),
+          closable(true),
+          cycleCursor(true),
           cursor(0)
     {
         width  = new ConstantRule(1);
@@ -80,7 +84,7 @@ struct MenuWidget::Instance
     void updateSize()
     {
         int cols = 0;
-        int lines = 2; // borders
+        int lines = (borderStyle == NoBorder? 0 : 2);
         foreach(Item const &item, items)
         {
             lines++;
@@ -94,7 +98,7 @@ struct MenuWidget::Instance
             cols = de::max(w, cols);
         }
         height->set(lines);
-        width->set(6 + cols); // cursor and borders
+        width->set(4 + cols + (borderStyle == NoBorder? 0 : 2)); // cursor
     }
 
     void removeItem(int pos)
@@ -106,9 +110,24 @@ struct MenuWidget::Instance
     }
 };
 
-MenuWidget::MenuWidget(const String &name)
+MenuWidget::MenuWidget(Preset preset, String const &name)
     : TextWidget(name), d(new Instance(*this))
 {
+    switch(preset)
+    {
+    case Popup:
+        setBehavior(HandleEventsOnlyWhenFocused, true);
+        setClosable(true);
+        d->cycleCursor = true;
+        hide();
+        break;
+
+    case AlwaysOpen:
+        setClosable(false);
+        d->cycleCursor = false;
+        break;
+    }
+
     rule().setInput(RuleRectangle::Width,  *d->width)
           .setInput(RuleRectangle::Height, *d->height);
 }
@@ -193,6 +212,11 @@ int MenuWidget::cursor() const
     return d->cursor;
 }
 
+void MenuWidget::setClosable(bool canBeClosed)
+{
+    d->closable = canBeClosed;
+}
+
 void MenuWidget::setSelectionAttribs(TextCanvas::Char::Attribs const &attribs)
 {
     d->selectionAttr = attribs;
@@ -224,15 +248,24 @@ Vector2i MenuWidget::cursorPosition() const
 
 void MenuWidget::open()
 {
+    DENG2_ASSERT(hasRoot());
+
+    root().setFocus(this);
     show();
     redraw();
 }
 
 void MenuWidget::close()
 {
-    emit closed();
-    hide();
-    redraw();
+    if(d->closable)
+    {
+        DENG2_ASSERT(hasRoot());
+
+        root().setFocus(0);
+        emit closed();
+        hide();
+        redraw();
+    }
 }
 
 void MenuWidget::draw()
@@ -241,7 +274,8 @@ void MenuWidget::draw()
     TextCanvas buf(pos.size());
     buf.clear(TextCanvas::Char(' ', d->backgroundAttr));
 
-    int y = 1;
+    int const border = (d->borderStyle == NoBorder? 0 : 1);
+    int y = border;
     for(int i = 0; i < d->items.size(); ++i)
     {
         Instance::Item const &item = d->items[i];
@@ -253,20 +287,20 @@ void MenuWidget::draw()
         // Cursor.
         if(d->cursor == i)
         {
-            buf.fill(Rectanglei(Vector2i(1, y), Vector2i(pos.width() - 1, y + 1)),
+            buf.fill(Rectanglei(Vector2i(border, y), Vector2i(pos.width() - border, y + 1)),
                      TextCanvas::Char(' ', itemAttr));
 
-            d->cursorPos = Vector2i(2, y);
+            d->cursorPos = Vector2i(border + 1, y);
             buf.put(d->cursorPos, TextCanvas::Char('*', itemAttr));
             d->cursorPos += pos.topLeft;
         }
 
-        buf.drawText(Vector2i(4, y), item.action->label(),
+        buf.drawText(Vector2i(border + 3, y), item.action->label(),
                      itemAttr | (d->cursor == i? TextCanvas::Char::Bold : TextCanvas::Char::DefaultAttributes));
 
         if(item.shortcutLabel)
         {
-            buf.drawText(Vector2i(buf.width() - 2 - item.shortcutLabel.size(), y),
+            buf.drawText(Vector2i(buf.width() - 1 - border - item.shortcutLabel.size(), y),
                          item.shortcutLabel, itemAttr);
         }
 
@@ -275,7 +309,7 @@ void MenuWidget::draw()
         // Draw a separator.
         if(item.separatorAfter)
         {
-            buf.fill(Rectanglei(Vector2i(1, y), Vector2i(pos.width() - 1, y + 1)),
+            buf.fill(Rectanglei(Vector2i(border, y), Vector2i(pos.width() - border, y + 1)),
                      TextCanvas::Char('-', d->borderAttr));
             y++;
         }
@@ -314,13 +348,28 @@ bool MenuWidget::handleEvent(Event const *event)
         switch(ev->key())
         {
         case Qt::Key_Up:
-            if(d->cursor == 0) d->cursor = itemCount() - 1;
-            else d->cursor--;
+            if(d->cursor == 0)
+            {
+                if(!d->cycleCursor) break;
+                d->cursor = itemCount() - 1;
+            }
+            else
+            {
+                d->cursor--;
+            }
             redraw();
             return true;
 
         case Qt::Key_Down:
-            d->cursor = (d->cursor + 1) % itemCount();
+            if(d->cursor == itemCount() - 1)
+            {
+                if(!d->cycleCursor) break;
+                d->cursor = 0;
+            }
+            else
+            {
+                d->cursor++;
+            }
             redraw();
             return true;
 
@@ -342,14 +391,17 @@ bool MenuWidget::handleEvent(Event const *event)
             return true;
 
         default:
-            // Any other control key closes the menu.
-            close();
-            return true;
+            if(d->closable)
+            {
+                // Any other control key closes the menu.
+                close();
+                return true;
+            }
+            break;
         }
     }
 
-    // When open, a menu eats all key events.
-    return true;
+    return false;
 }
 
 } // namespace shell

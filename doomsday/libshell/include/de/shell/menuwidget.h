@@ -38,6 +38,12 @@ class LIBSHELL_PUBLIC MenuWidget : public TextWidget
     Q_OBJECT
 
 public:
+    enum Preset
+    {
+        Popup,      ///< Menu initially hidden, will popup on demand.
+        AlwaysOpen  ///< Menu initially shown, stays open.
+    };
+
     enum BorderStyle
     {
         NoBorder,
@@ -45,7 +51,7 @@ public:
     };
 
 public:
-    MenuWidget(String const &name = "");
+    MenuWidget(Preset preset, String const &name = "");
 
     ~MenuWidget();
 
@@ -68,6 +74,14 @@ public:
     void setCursor(int pos);
 
     int cursor() const;
+
+    /**
+     * Allows or disallows the menu to close when receiving an unhandled control
+     * key.
+     *
+     * @param canBeClosed  @c true to allow closing, @c false to disallow.
+     */
+    void setClosable(bool canBeClosed);
 
     void setSelectionAttribs(TextCanvas::Char::Attribs const &attribs);
 

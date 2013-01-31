@@ -68,7 +68,7 @@ public:
     bool handleEvent(Event const *event);
 
 signals:
-    void enterPressed(String text);
+    void enterPressed(de::String text);
 
 private:
     struct Instance;
