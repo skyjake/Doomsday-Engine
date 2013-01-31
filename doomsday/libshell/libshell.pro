@@ -25,10 +25,12 @@ INCLUDEPATH += include
 # Public headers.
 HEADERS += \
     include/de/shell/Action \
+    include/de/shell/DialogWidget \
     include/de/shell/KeyEvent \
     include/de/shell/LabelWidget \
     include/de/shell/LineEditWidget \
     include/de/shell/Link \
+    include/de/shell/MenuWidget \
     include/de/shell/Protocol \
     include/de/shell/TextCanvas \
     include/de/shell/TextRootWidget \
@@ -44,7 +46,8 @@ HEADERS += \
     include/de/shell/textcanvas.h \
     include/de/shell/textrootwidget.h \
     include/de/shell/textwidget.h \
-    include/de/shell/menuwidget.h
+    include/de/shell/menuwidget.h \
+    include/de/shell/dialogwidget.h
 
 # Sources and private headers.
 SOURCES += \
@@ -57,7 +60,8 @@ SOURCES += \
     src/textcanvas.cpp \
     src/textrootwidget.cpp \
     src/textwidget.cpp \
-    src/menuwidget.cpp
+    src/menuwidget.cpp \
+    src/dialogwidget.cpp
 
 # Installation ---------------------------------------------------------------
 

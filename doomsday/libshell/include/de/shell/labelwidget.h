@@ -42,7 +42,16 @@ public:
     void setBackground(TextCanvas::Char const &background);
 
     /**
-     * Sets the label of the widget. Only one line of text is supported.
+     * Allows or disallows the label to expand vertically to fit provided label.
+     * By default, labels do not adjust their own size.
+     *
+     * @param expand  @c true to allow the widget to modify its own height.
+     */
+    void setExpandsToFitLines(bool expand);
+
+    /**
+     * Sets the label of the widget. The text is wrapped to fit the label's
+     * rectangle.
      *
      * @param text     Text to show.
      * @param attribs  Attributes for the text.
@@ -64,6 +73,7 @@ public:
      */
     String label() const;
 
+    void update();
     void draw();
 
 private:

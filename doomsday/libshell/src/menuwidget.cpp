@@ -109,8 +109,8 @@ struct MenuWidget::Instance
 MenuWidget::MenuWidget(const String &name)
     : TextWidget(name), d(new Instance(*this))
 {
-    rule().setInput(RuleRectangle::Width,  d->width)
-          .setInput(RuleRectangle::Height, d->height);
+    rule().setInput(RuleRectangle::Width,  *d->width)
+          .setInput(RuleRectangle::Height, *d->height);
 }
 
 MenuWidget::~MenuWidget()
@@ -292,6 +292,8 @@ void MenuWidget::draw()
 
 bool MenuWidget::handleEvent(Event const *event)
 {
+    if(!itemCount()) return false;
+
     if(event->type() != Event::KeyPress) return false;
 
     // Check registered actions.
@@ -312,19 +314,14 @@ bool MenuWidget::handleEvent(Event const *event)
         switch(ev->key())
         {
         case Qt::Key_Up:
-            if(d->cursor > 0)
-            {
-                d->cursor--;
-                redraw();
-            }
+            if(d->cursor == 0) d->cursor = itemCount() - 1;
+            else d->cursor--;
+            redraw();
             return true;
 
         case Qt::Key_Down:
-            if(d->cursor < itemCount() - 1)
-            {
-                d->cursor++;
-                redraw();
-            }
+            d->cursor = (d->cursor + 1) % itemCount();
+            redraw();
             return true;
 
         case Qt::Key_Home:

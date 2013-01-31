@@ -35,7 +35,7 @@ struct LineEditWidget::Instance
     int cursor; ///< Index in range [0...text.size()]
 
     // Word wrapping.
-    QList<WrappedLine> wraps;
+    LineWrapping wraps;
 
     Instance(LineEditWidget &cli) : self(cli), cursor(0)
     {
@@ -56,8 +56,8 @@ struct LineEditWidget::Instance
      */
     void updateWrapsAndHeight()
     {
-        wraps = wordWrapText(text, de::max(1, self.rule().recti().width() - prompt.size() - 1));
-        height->set(wraps.size());
+        wraps.wrapTextToWidth(text, de::max(1, self.rule().recti().width() - prompt.size() - 1));
+        height->set(wraps.height());
     }
 
     WrappedLine lineSpan(int line) const
@@ -162,7 +162,7 @@ struct LineEditWidget::Instance
 LineEditWidget::LineEditWidget(de::String const &name)
     : TextWidget(name), d(new Instance(*this))
 {
-    rule().setInput(RuleRectangle::Height, d->height);
+    rule().setInput(RuleRectangle::Height, *d->height);
 }
 
 LineEditWidget::~LineEditWidget()
@@ -177,7 +177,7 @@ void LineEditWidget::setPrompt(String const &promptText)
     if(hasRoot())
     {
         d->updateWrapsAndHeight();
-        root().requestDraw();
+        redraw();
     }
 }
 
@@ -231,7 +231,7 @@ bool LineEditWidget::handleEvent(Event const *event)
     if(eaten)
     {
         d->updateWrapsAndHeight();
-        root().requestDraw();
+        redraw();
     }
     return eaten;
 }
@@ -294,7 +294,7 @@ void LineEditWidget::setText(String const &contents)
     d->text = contents;
     d->cursor = contents.size();
     d->updateWrapsAndHeight();
-    root().requestDraw();
+    redraw();
 }
 
 String LineEditWidget::text() const
@@ -305,7 +305,7 @@ String LineEditWidget::text() const
 void LineEditWidget::setCursor(int index)
 {
     d->cursor = index;
-    root().requestDraw();
+    redraw();
 }
 
 int LineEditWidget::cursor() const

@@ -37,7 +37,7 @@ public:
 
     Action(String const &label, KeyEvent const &event, QObject *target = 0, char const *slot = 0);
 
-    Action(String const &label, QObject *target = 0, char const *slot = 0);
+    Action(String const &label, QObject *target, char const *slot = 0);
 
     Action(String const &label);
 

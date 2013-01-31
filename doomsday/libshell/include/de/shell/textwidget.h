@@ -33,19 +33,6 @@ class TextRootWidget;
 class Action;
 
 /**
- * Flags for specifying alignment.
- */
-enum AlignmentFlag
-{
-    AlignTop    = 0x1,
-    AlignBottom = 0x2,
-    AlignLeft   = 0x4,
-    AlignRight  = 0x8
-};
-Q_DECLARE_FLAGS(Alignment, AlignmentFlag)
-Q_DECLARE_OPERATORS_FOR_FLAGS(Alignment)
-
-/**
  * Generic widget with a text-based visual.
  *
  * TextWidget is the base class for all widgets in libshell, because they are

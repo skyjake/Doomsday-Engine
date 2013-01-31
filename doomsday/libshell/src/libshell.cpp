@@ -17,13 +17,14 @@
  */
 
 #include "de/shell/libshell.h"
+#include <de/math.h>
 
 namespace de {
 namespace shell {
 
-QList<WrappedLine> wordWrapText(String const &text, int maxWidth)
+void LineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 {
-    QList<WrappedLine> wraps;
+    clear();
 
     int const lineWidth = maxWidth;
     int begin = 0;
@@ -33,7 +34,7 @@ QList<WrappedLine> wordWrapText(String const &text, int maxWidth)
         if(end >= text.size())
         {
             // Time to stop.
-            wraps.append(WrappedLine(begin, text.size()));
+            append(WrappedLine(begin, text.size()));
             break;
         }
         // Find a good break point.
@@ -48,14 +49,28 @@ QList<WrappedLine> wordWrapText(String const &text, int maxWidth)
             }
         }
         if(text.at(end).isSpace()) ++end;
-        wraps.append(WrappedLine(begin, end));
+        append(WrappedLine(begin, end));
         begin = end;
     }
 
     // Mark the final line.
-    wraps.last().isFinal = true;
+    last().isFinal = true;
+}
 
-    return wraps;
+int LineWrapping::width() const
+{
+    int w = 0;
+    for(int i = 0; i < size(); ++i)
+    {
+        WrappedLine const &span = at(i);
+        w = de::max(w, span.end - span.start);
+    }
+    return w;
+}
+
+int LineWrapping::height() const
+{
+    return size();
 }
 
 } // namespace shell

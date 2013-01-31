@@ -29,6 +29,19 @@ namespace de {
 namespace shell {
 
 /**
+ * Flags for specifying alignment.
+ */
+enum AlignmentFlag
+{
+    AlignTop    = 0x1,
+    AlignBottom = 0x2,
+    AlignLeft   = 0x4,
+    AlignRight  = 0x8
+};
+Q_DECLARE_FLAGS(Alignment, AlignmentFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Alignment)
+
+/**
  * Text-based, device-independent drawing surface.
  *
  * When characters are written to the canvas (or their properties change), they
@@ -145,12 +158,15 @@ public:
      * Draws line wrapped text. Use de::shell::wordWrapText() to determine
      * appropriate wrapped lines.
      *
-     * @param pos      Top left / starting point for the text.
-     * @param text     The entire text to be drawn.
-     * @param wraps    Line wrapping.
-     * @param attribs  Character attributes.
+     * @param pos            Top left / starting point for the text.
+     * @param text           The entire text to be drawn.
+     * @param wraps          Line wrapping.
+     * @param attribs        Character attributes.
+     * @param lineAlignment  Alignment for lines.
      */
-    void drawWrappedText(Vector2i const &pos, String const &text, QList<WrappedLine> wraps, Char::Attribs const &attribs = Char::DefaultAttributes);
+    void drawWrappedText(Vector2i const &pos, String const &text, LineWrapping const &wraps,
+                         Char::Attribs const &attribs = Char::DefaultAttributes,
+                         Alignment lineAlignment = AlignLeft);
 
     void drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs = Char::DefaultAttributes);
 

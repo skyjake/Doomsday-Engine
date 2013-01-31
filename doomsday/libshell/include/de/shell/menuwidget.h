@@ -33,7 +33,7 @@ namespace shell {
  * is needed for the items and their possible shortcut labels. The height of
  * the widget depends on the number of items in the menu.
  */
-class MenuWidget : public TextWidget
+class LIBSHELL_PUBLIC MenuWidget : public TextWidget
 {
     Q_OBJECT
 

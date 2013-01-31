@@ -106,8 +106,8 @@ RuleRectangle const &TextWidget::rule() const
 
 Vector2i TextWidget::cursorPosition() const
 {
-    return Vector2i(floor(rule().left()->value()),
-                    floor(rule().top()->value()));
+    return Vector2i(floor(rule().left().value()),
+                    floor(rule().top().value()));
 }
 
 void TextWidget::addAction(Action *action)

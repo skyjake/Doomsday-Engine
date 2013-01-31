@@ -18,6 +18,7 @@
 
 #include "de/shell/LabelWidget"
 #include "de/shell/TextRootWidget"
+#include <de/ConstantRule>
 
 namespace de {
 namespace shell {
@@ -26,14 +27,32 @@ struct LabelWidget::Instance
 {
     TextCanvas::Char background;
     String label;
+    LineWrapping wraps;
     TextCanvas::Char::Attribs attribs;
     Alignment align;
+    bool vertExpand;
+    ConstantRule *height;
+
+    Instance() : align(0), vertExpand(false)
+    {
+        height = new ConstantRule(0);
+    }
+
+    ~Instance()
+    {
+        releaseRef(height);
+    }
+
+    void updateWraps(int width)
+    {
+        wraps.wrapTextToWidth(label, width);
+        if(vertExpand) height->set(wraps.height());
+    }
 };
 
 LabelWidget::LabelWidget(String const &name)
     : TextWidget(name), d(new Instance)
-{
-}
+{}
 
 LabelWidget::~LabelWidget()
 {
@@ -49,6 +68,7 @@ void LabelWidget::setLabel(String const &text, TextCanvas::Char::Attribs attribs
 {
     d->label   = text;
     d->attribs = attribs;
+    d->wraps.clear(); // updated later
     redraw();
 }
 
@@ -64,19 +84,38 @@ void LabelWidget::setAlignment(Alignment align)
     redraw();
 }
 
+void LabelWidget::setExpandsToFitLines(bool expand)
+{
+    d->vertExpand = expand;
+    if(expand)
+    {
+        rule().setInput(RuleRectangle::Height, *d->height);
+    }
+    redraw();
+}
+
 String LabelWidget::label() const
 {
     return d->label;
+}
+
+void LabelWidget::update()
+{
+    if(d->wraps.isEmpty())
+    {
+        d->updateWraps(de::floor(rule().width().value()));
+    }
 }
 
 void LabelWidget::draw()
 {
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
-
     buf.clear(d->background);
 
-    Vector2i labelSize(d->label.size(), 1);
+    // Use the wrapped lines to determine width and height.
+    DENG2_ASSERT(!d->wraps.isEmpty());
+    Vector2i labelSize(d->wraps.width(), d->wraps.height());
 
     // Determine position of the label based on alignment.
     Vector2i labelPos;
@@ -97,7 +136,7 @@ void LabelWidget::draw()
         labelPos.y = buf.height()/2 - labelSize.y/2;
     }
 
-    buf.drawText(labelPos, d->label, d->attribs);
+    buf.drawWrappedText(labelPos, d->label, d->wraps, d->attribs, d->align);
 
     targetCanvas().draw(buf, pos.topLeft);
 }

@@ -192,13 +192,25 @@ void TextCanvas::drawText(Vector2i const &pos, String const &text, Char::Attribs
 }
 
 void TextCanvas::drawWrappedText(Vector2i const &pos, String const &text,
-                                 QList<WrappedLine> wraps, Char::Attribs const &attribs)
+                                 LineWrapping const &wraps, Char::Attribs const &attribs,
+                                 Alignment lineAlignment)
 {
+    int const width = wraps.width();
+
     for(int y = 0; y < wraps.size(); ++y)
     {
-        WrappedLine span = wraps[y];
+        WrappedLine const &span = wraps[y];
         String part = text.substr(span.start, span.end - span.start);
-        drawText(pos + Vector2i(0, y), part, attribs);
+        int x = 0;
+        if(lineAlignment.testFlag(AlignRight))
+        {
+            x = width - part.size();
+        }
+        else if(!lineAlignment.testFlag(AlignLeft))
+        {
+            x = width/2 - part.size()/2;
+        }
+        drawText(pos + Vector2i(x, y), part, attribs);
     }
 }
 
@@ -216,7 +228,7 @@ void TextCanvas::drawLineRect(Rectanglei const &rect, Char::Attribs const &attri
     }
 
     // Vertical edges.
-    for(int y = 1; y < rect.width() - 1; ++y)
+    for(int y = 1; y < rect.height() - 1; ++y)
     {
         put(rect.topLeft + Vector2i(0, y), vEdge);
         put(rect.topRight() + Vector2i(-1, y), vEdge);

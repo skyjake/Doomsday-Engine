@@ -53,16 +53,23 @@ struct WrappedLine
         : start(a), end(b), isFinal(final) {}
 };
 
-/**
- * Determines word wrapping for a line of text.
- *
- * @param text      Text to wrap.
- * @param maxWidth  Maximum width for each text line.
- *
- * @return List of positions in @a text where to break the lines. Total number
- * of word-wrapped lines is equal to the size of the returned list.
- */
-QList<WrappedLine> wordWrapText(String const &text, int maxWidth);
+class LineWrapping : public QList<WrappedLine>
+{
+public:
+    /**
+     * Determines word wrapping for a line of text given a maximum line width.
+     *
+     * @param text      Text to wrap.
+     * @param maxWidth  Maximum width for each text line.
+     *
+     * @return List of positions in @a text where to break the lines. Total number
+     * of word-wrapped lines is equal to the size of the returned list.
+     */
+    void wrapTextToWidth(String const &text, int maxWidth);
+
+    int width() const;
+    int height() const;
+};
 
 } // namespace shell
 } // namespace de
