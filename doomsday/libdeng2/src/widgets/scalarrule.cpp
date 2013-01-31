@@ -43,12 +43,12 @@ void ScalarRule::set(float target, de::TimeDelta transition)
     invalidate();
 }
 
-void ScalarRule::set(Rule const *target, TimeDelta transition)
+void ScalarRule::set(Rule const &target, TimeDelta transition)
 {
-    set(target->value(), transition);
+    set(target.value(), transition);
 
     // Keep a reference.
-    _targetRule = target;
+    _targetRule = &target;
     dependsOn(_targetRule);
 }
 

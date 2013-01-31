@@ -47,18 +47,20 @@ public:
     DENG2_AUDIENCE(RuleInvalidation)
 
 public:
-    Rule(float initialValue = 0);
+    Rule();
+
+    Rule(float initialValue);
 
     /**
      * Determines the rule's current value. If it has been marked invalid,
      * the value is updated first (see update()).
      */
-    float value() const;    
+    float value() const;
 
     /**
      * Marks the rule invalid, causing all dependent rules to be invalid, too.
      */
-    void invalidate();
+    virtual void invalidate();
 
     /**
      * Updates the rule with a valid value. Derived classes must call
@@ -81,13 +83,17 @@ public:
      * dependency becomes invalid, this rule will likewise become invalid.
      * @a dependency will hold a reference to this rule.
      */
-    void dependsOn(Rule const *dependency);
+    void dependsOn(Rule const &dependency);
+
+    void dependsOn(Rule const *dependencyOrNull);
 
     /**
      * Unlinks rules. This rule will no longer depend on @a dependency.
      * @a dependency will release its reference to this rule.
      */
-    void independentOf(Rule const *dependency);
+    void independentOf(Rule const &dependency);
+
+    void independentOf(Rule const *dependencyOrNull);
 
 public:
     /**

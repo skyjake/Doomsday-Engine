@@ -22,10 +22,8 @@
 namespace de {
 
 DelegateRule::DelegateRule(ISource &source, int delegateId)
-    : ConstantRule(0), _source(&source), _delegateId(delegateId)
-{
-    invalidate();
-}
+    : ConstantRule(), _source(&source), _delegateId(delegateId)
+{}
 
 DelegateRule::~DelegateRule()
 {}
@@ -48,6 +46,19 @@ void DelegateRule::update()
 void DelegateRule::setSource(DelegateRule::ISource *source)
 {
     _source = source;
+}
+
+void DelegateRule::invalidate()
+{
+    if(isValid())
+    {
+        Rule::invalidate();
+
+        if(_source)
+        {
+            _source->delegateInvalidation(_delegateId);
+        }
+    }
 }
 
 } // namespace de

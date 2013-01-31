@@ -38,7 +38,7 @@ public:
 
     void set(float target, TimeDelta transition = 0);
 
-    void set(Rule const *target, TimeDelta transition = 0);
+    void set(Rule const &target, TimeDelta transition = 0);
 
     /**
      * Read-only access to the scalar animation.

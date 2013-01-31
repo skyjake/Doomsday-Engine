@@ -137,17 +137,28 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
         }
     }
 
-    void setInputRule(InputRule inputRule, Rule const *rule)
+    void setInputRule(InputRule inputRule, Rule const &rule)
     {
-        DENG2_ASSERT(rule != 0);
-
         // Disconnect the old input rule from relevant outputs.
         connectInputToOutputs(inputRule, false);
 
-        ruleRef(inputRule) = rule;
+        ruleRef(inputRule) = &rule;
 
         // Connect to relevant outputs.
         connectInputToOutputs(inputRule, true);
+    }
+
+    void updateWidth()
+    {
+        if(inputRules[Width])
+        {
+            outputRules[OutWidth]->set(inputRules[Width]->value());
+        }
+        else
+        {
+            // Need to calculate width using edges.
+            updateHorizontal();
+        }
     }
 
     void updateHorizontal()
@@ -194,6 +205,19 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
         outputRules[OutLeft]->set(r.topLeft.x);
         outputRules[OutRight]->set(r.bottomRight.x);
         outputRules[OutWidth]->set(r.width());
+    }
+
+    void updateHeight()
+    {
+        if(inputRules[Height])
+        {
+            outputRules[OutHeight]->set(inputRules[Height]->value());
+        }
+        else
+        {
+            // Need to calculate width using edges.
+            updateVertical();
+        }
     }
 
     void updateVertical()
@@ -250,14 +274,49 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
         {
         case OutLeft:
         case OutRight:
-        case OutWidth:
             updateHorizontal();
+            break;
+
+        case OutWidth:
+            updateWidth();
             break;
 
         case OutTop:
         case OutBottom:
-        case OutHeight:
             updateVertical();
+            break;
+
+        case OutHeight:
+            updateHeight();
+            break;
+        }
+    }
+
+    void delegateInvalidation(int id)
+    {
+        // Due to the intrinsic relationships between the outputs (as edges of
+        // a rectangle), invalidation of one may cause others to become
+        // invalid, too.
+        switch(id)
+        {
+        case OutLeft:
+        case OutRight:
+            outputRules[OutWidth]->invalidate();
+            break;
+
+        case OutWidth:
+            outputRules[OutLeft]->invalidate();
+            outputRules[OutRight]->invalidate();
+            break;
+
+        case OutTop:
+        case OutBottom:
+            outputRules[OutHeight]->invalidate();
+            break;
+
+        case OutHeight:
+            outputRules[OutTop]->invalidate();
+            outputRules[OutBottom]->invalidate();
             break;
         }
     }
@@ -266,12 +325,12 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
 RuleRectangle::RuleRectangle() : d(new Instance)
 {}
 
-RuleRectangle::RuleRectangle(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom)
-    : d(new Instance(left, top, right, bottom))
+RuleRectangle::RuleRectangle(Rule const &left, Rule const &top, Rule const &right, Rule const &bottom)
+    : d(new Instance(&left, &top, &right, &bottom))
 {}
 
-RuleRectangle::RuleRectangle(RuleRectangle const *rect)
-    : d(new Instance(rect->left(), rect->top(), rect->right(), rect->bottom()))
+RuleRectangle::RuleRectangle(RuleRectangle const &rect)
+    : d(new Instance(&rect.left(), &rect.top(), &rect.right(), &rect.bottom()))
 {}
 
 RuleRectangle::~RuleRectangle()
@@ -279,45 +338,45 @@ RuleRectangle::~RuleRectangle()
     delete d;
 }
 
-Rule const *RuleRectangle::left() const
+Rule const &RuleRectangle::left() const
 {
-    return d->outputRules[Instance::OutLeft];
+    return *d->outputRules[Instance::OutLeft];
 }
 
-Rule const *RuleRectangle::top() const
+Rule const &RuleRectangle::top() const
 {
-    return d->outputRules[Instance::OutTop];
+    return *d->outputRules[Instance::OutTop];
 }
 
-Rule const *RuleRectangle::right() const
+Rule const &RuleRectangle::right() const
 {
-    return d->outputRules[Instance::OutRight];
+    return *d->outputRules[Instance::OutRight];
 }
 
-Rule const *RuleRectangle::bottom() const
+Rule const &RuleRectangle::bottom() const
 {
-    return d->outputRules[Instance::OutBottom];
+    return *d->outputRules[Instance::OutBottom];
 }
 
-Rule const *RuleRectangle::width() const
+Rule const &RuleRectangle::width() const
 {
-    return d->outputRules[Instance::OutWidth];
+    return *d->outputRules[Instance::OutWidth];
 }
 
-Rule const *RuleRectangle::height() const
+Rule const &RuleRectangle::height() const
 {
-    return d->outputRules[Instance::OutHeight];
+    return *d->outputRules[Instance::OutHeight];
 }
 
-RuleRectangle &RuleRectangle::setInput(InputRule inputRule, Rule const *rule)
+RuleRectangle &RuleRectangle::setInput(InputRule inputRule, Rule const &rule)
 {
     d->setInputRule(inputRule, rule);
     return *this;
 }
 
-Rule const *RuleRectangle::inputRule(InputRule inputRule)
+Rule const &RuleRectangle::inputRule(InputRule inputRule)
 {
-    return d->ruleRef(inputRule);
+    return *d->ruleRef(inputRule);
 }
 
 void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
@@ -344,8 +403,8 @@ void RuleRectangle::timeChanged(Clock const &clock)
 
 Rectanglef RuleRectangle::rect() const
 {
-    return Rectanglef(Vector2f(left()->value(),  top()->value()),
-                      Vector2f(right()->value(), bottom()->value()));
+    return Rectanglef(Vector2f(left().value(),  top().value()),
+                      Vector2f(right().value(), bottom().value()));
 }
 
 Rectanglei RuleRectangle::recti() const

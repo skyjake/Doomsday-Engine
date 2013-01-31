@@ -66,19 +66,19 @@ public:
      * @param right   Rule for the right coordinate.
      * @param bottom  Rule for the bottom coordinate.
      */
-    RuleRectangle(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom);
+    RuleRectangle(Rule const &left, Rule const &top, Rule const &right, Rule const &bottom);
 
-    RuleRectangle(RuleRectangle const *rect);
+    RuleRectangle(RuleRectangle const &rect);
 
     ~RuleRectangle();
 
     // Output rules.
-    Rule const *left() const;
-    Rule const *top() const;
-    Rule const *right() const;
-    Rule const *bottom() const;
-    Rule const *width() const;
-    Rule const *height() const;
+    Rule const &left() const;
+    Rule const &top() const;
+    Rule const &right() const;
+    Rule const &bottom() const;
+    Rule const &width() const;
+    Rule const &height() const;
 
     /**
      * Sets one of the input rules of the rectangle.
@@ -86,16 +86,16 @@ public:
      * @param inputRule  InputRule to set.
      * @param rule       Rule to use as input. A reference is held.
      */
-    RuleRectangle &setInput(InputRule inputRule, Rule const *rule);
+    RuleRectangle &setInput(InputRule inputRule, Rule const &rule);
 
     /**
      * Returns an input rule.
      */
-    Rule const *inputRule(InputRule inputRule);
+    Rule const &inputRule(InputRule inputRule);
 
     template <class RuleType>
     RuleType const &inputRuleAs(InputRule input) {
-        RuleType const *r = dynamic_cast<RuleType const *>(inputRule(input));
+        RuleType const *r = dynamic_cast<RuleType const *>(&inputRule(input));
         DENG2_ASSERT(r != 0);
         return *r;
     }

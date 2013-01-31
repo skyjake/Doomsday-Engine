@@ -22,6 +22,11 @@
 
 namespace de {
 
+ConstantRule::ConstantRule() : Rule(), _pendingValue(0)
+{
+    // No valid value defined.
+}
+
 ConstantRule::ConstantRule(float constantValue)
     : Rule(constantValue), _pendingValue(constantValue)
 {}

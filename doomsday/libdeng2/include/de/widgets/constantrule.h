@@ -33,6 +33,8 @@ namespace de {
 class DENG2_PUBLIC ConstantRule : public Rule
 {
 public:
+    ConstantRule();
+
     ConstantRule(float constantValue);
 
     /**

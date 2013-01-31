@@ -47,6 +47,8 @@ public:
          * @param id  Delegate id.
          */
         virtual void delegateUpdate(int id) = 0;
+
+        virtual void delegateInvalidation(int id) = 0;
     };
 
 public:
@@ -66,6 +68,8 @@ public:
      * @param source  Source.
      */
     void setSource(ISource *source);
+
+    void invalidate();
 
 protected:
     ~DelegateRule(); // Counted

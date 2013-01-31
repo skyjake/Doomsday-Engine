@@ -22,24 +22,22 @@
 
 namespace de {
 
-OperatorRule::OperatorRule(Operator op, Rule const *unary)
-    : Rule(), _operator(op), _leftOperand(unary), _rightOperand(0)
+OperatorRule::OperatorRule(Operator op, Rule const &unary)
+    : Rule(), _operator(op), _leftOperand(&unary), _rightOperand(0)
 {
     DENG2_ASSERT(_leftOperand != 0);
 
     dependsOn(_leftOperand);
-    invalidate();
 }
 
-OperatorRule::OperatorRule(Operator op, Rule const *left, Rule const *right)
-    : Rule(), _operator(op), _leftOperand(left), _rightOperand(right)
+OperatorRule::OperatorRule(Operator op, Rule const &left, Rule const &right)
+    : Rule(), _operator(op), _leftOperand(&left), _rightOperand(&right)
 {
     DENG2_ASSERT(_leftOperand != 0);
     DENG2_ASSERT(_rightOperand != 0);
 
     dependsOn(_leftOperand);
     dependsOn(_rightOperand);
-    invalidate();
 }
 
 OperatorRule::~OperatorRule()
@@ -93,6 +91,10 @@ void OperatorRule::update()
 
     case Minimum:
         v = de::min(leftValue, rightValue);
+        break;
+
+    case Floor:
+        v = de::floor(leftValue);
         break;
     }
 

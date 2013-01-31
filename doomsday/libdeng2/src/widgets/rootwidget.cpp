@@ -32,10 +32,10 @@ struct RootWidget::Instance
     Instance() : focus(0)
     {
         viewRect = new RuleRectangle(
-                    refless(new ConstantRule(0)),
-                    refless(new ConstantRule(0)),
-                    refless(new ConstantRule(0)),
-                    refless(new ConstantRule(0)));
+                    *refless(new ConstantRule(0)),
+                    *refless(new ConstantRule(0)),
+                    *refless(new ConstantRule(0)),
+                    *refless(new ConstantRule(0)));
     }
 
     ~Instance()
@@ -45,8 +45,8 @@ struct RootWidget::Instance
 
     Vector2i viewSize() const
     {
-        return Vector2i(de::floor(viewRect->right()->value()),
-                        de::floor(viewRect->bottom()->value()));
+        return Vector2i(de::floor(viewRect->right().value()),
+                        de::floor(viewRect->bottom().value()));
     }
 };
 
@@ -63,30 +63,40 @@ Vector2i RootWidget::viewSize() const
     return d->viewSize();
 }
 
-Rule const *RootWidget::viewLeft() const
+Rule const &RootWidget::viewLeft() const
 {
     return d->viewRect->left();
 }
 
-Rule const *RootWidget::viewRight() const
+Rule const &RootWidget::viewRight() const
 {
     return d->viewRect->right();
 }
 
-Rule const *RootWidget::viewTop() const
+Rule const &RootWidget::viewTop() const
 {
     return d->viewRect->top();
 }
 
-Rule const *RootWidget::viewBottom() const
+Rule const &RootWidget::viewBottom() const
+{
+    return d->viewRect->bottom();
+}
+
+Rule const &RootWidget::viewWidth() const
+{
+    return d->viewRect->right();
+}
+
+Rule const &RootWidget::viewHeight() const
 {
     return d->viewRect->bottom();
 }
 
 void RootWidget::setViewSize(Vector2i const &size)
 {
-    d->viewRect->setInput(RuleRectangle::Right,  refless(new ConstantRule(size.x)));
-    d->viewRect->setInput(RuleRectangle::Bottom, refless(new ConstantRule(size.y)));
+    d->viewRect->setInput(RuleRectangle::Right,  *refless(new ConstantRule(size.x)));
+    d->viewRect->setInput(RuleRectangle::Bottom, *refless(new ConstantRule(size.y)));
 
     notifyTree(&Widget::viewResized);
 }
@@ -101,19 +111,14 @@ Widget *RootWidget::focus() const
     return d->focus;
 }
 
-Rule const *RootWidget::viewWidth() const
-{
-    return d->viewRect->right();
-}
-
-Rule const *RootWidget::viewHeight() const
-{
-    return d->viewRect->bottom();
-}
-
 void RootWidget::initialize()
 {
     notifyTree(&Widget::initialize);
+}
+
+void RootWidget::update()
+{
+    notifyTree(&Widget::update);
 }
 
 void RootWidget::draw()
