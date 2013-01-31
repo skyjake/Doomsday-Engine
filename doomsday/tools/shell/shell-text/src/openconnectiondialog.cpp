@@ -58,7 +58,8 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name)
             .setInput(RuleRectangle::Left,  rect.left());
 
     // Address editor.
-    d->address = new LineEditWidget;
+    d->address = new LineEditWidget("OpenConnectionDialog.address");
+    d->address->setFocusNext("OpenConnectionDialog.menu");
     d->address->setPrompt(tr("Address: "));
 
     d->address->rule()
@@ -66,8 +67,11 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name)
             .setInput(RuleRectangle::Left,  rect.left())
             .setInput(RuleRectangle::Top,   d->label->rule().bottom() + 1);
 
+    QObject::connect(d->address, SIGNAL(enterPressed(de::String)), this, SLOT(enterPressedInAddress(de::String)));
+
     // Menu for actions.
-    d->menu = new MenuWidget;
+    d->menu = new MenuWidget(MenuWidget::AlwaysOpen, "OpenConnectionDialog.menu");
+    d->menu->setFocusNext("OpenConnectionDialog.address");
     d->menu->setBorder(MenuWidget::NoBorder);
     d->menu->setBackgroundAttribs(TextCanvas::Char::DefaultAttributes);
     d->menu->setSelectionAttribs(TextCanvas::Char::Reverse);
@@ -76,6 +80,7 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name)
                                    this, SLOT(reject())), "Ctrl-C");
 
     d->menu->rule()
+            .setInput(RuleRectangle::Width,  rect.width())
             .setInput(RuleRectangle::Left,   rect.left())
             .setInput(RuleRectangle::Bottom, rect.bottom());
 
@@ -88,7 +93,7 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name)
     rect.setInput(RuleRectangle::Height,
                   d->menu->rule().height() +
                   d->address->rule().height() +
-                  d->label->rule().height() + 1);
+                  d->label->rule().height() + 2);
 }
 
 OpenConnectionDialog::~OpenConnectionDialog()
@@ -101,4 +106,10 @@ void OpenConnectionDialog::prepare()
     DialogWidget::prepare();
 
     root().setFocus(d->address);
+}
+
+void OpenConnectionDialog::enterPressedInAddress(String)
+{
+    root().setFocus(d->menu);
+    root().requestDraw();
 }

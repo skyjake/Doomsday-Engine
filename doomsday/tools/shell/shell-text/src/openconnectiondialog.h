@@ -34,6 +34,9 @@ public:
 
     void prepare();
 
+public slots:
+    void enterPressedInAddress(de::String);
+
 private:
     struct Instance;
     Instance *d;
