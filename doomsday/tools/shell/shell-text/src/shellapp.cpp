@@ -20,6 +20,7 @@
 #include "logwidget.h"
 #include "commandlinewidget.h"
 #include "statuswidget.h"
+#include "openconnectiondialog.h"
 #include <de/shell/LabelWidget>
 #include <de/shell/MenuWidget>
 #include <de/shell/Link>
@@ -150,6 +151,10 @@ ShellApp::~ShellApp()
 
 void ShellApp::openConnection()
 {
+    RootWidget &root = rootWidget();
+
+    OpenConnectionDialog dlg;
+    dlg.exec(root);
 }
 
 void ShellApp::sendCommandToServer(String command)

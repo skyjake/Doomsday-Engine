@@ -28,7 +28,8 @@ HEADERS += \
     src/logwidget.h \
     src/main.h \
     src/shellapp.h \
-    src/statuswidget.h
+    src/statuswidget.h \
+    src/openconnectiondialog.h
 
 SOURCES += \
     src/commandlinewidget.cpp \
@@ -37,7 +38,8 @@ SOURCES += \
     src/logwidget.cpp \
     src/main.cpp \
     src/shellapp.cpp \
-    src/statuswidget.cpp
+    src/statuswidget.cpp \
+    src/openconnectiondialog.cpp
 
 # Installation --------------------------------------------------------------
 
