@@ -38,18 +38,21 @@ public:
 
 public:
     Rectangle() {}
-    Rectangle(const Corner& tl, const Corner& br) : topLeft(tl), bottomRight(br) {}
+    Rectangle(Corner const &tl, Corner const &br) : topLeft(tl), bottomRight(br) {}
     Type width() const { return abs(bottomRight.x - topLeft.x); }
     Type height() const { return abs(bottomRight.y - topLeft.y); }
     Vector2<Type> size() const { return Vector2<Type>(width(), height()); }
     void setWidth(Type w) { bottomRight.x = topLeft.x + w; }
     void setHeight(Type h) { bottomRight.y = topLeft.y + h; }
     void setSize(const Vector2<Type>& s) { setWidth(s.x); setHeight(s.y); }
-    void include(const Corner& point) {
+    void include(Corner const &point) {
         topLeft = topLeft.min(point);
         bottomRight = bottomRight.max(point);
     }
-    bool contains(const Corner& point) const {
+    Rectangle<VectorType> adjusted(VectorType const &tl, VectorType const &br) const {
+        return Rectangle<VectorType>(topLeft + tl, bottomRight + br);
+    }
+    bool contains(Corner const &point) const {
         return point >= topLeft && point <= bottomRight;
     }
     String asText() const {
