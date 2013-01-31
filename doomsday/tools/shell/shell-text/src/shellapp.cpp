@@ -47,7 +47,7 @@ struct ShellApp::Instance
         // Status bar in the bottom of the view.
         status = new StatusWidget;
         status->rule()
-                .setInput(RuleRectangle::Height, refless(new ConstantRule(1)))
+                .setInput(RuleRectangle::Height, *refless(new ConstantRule(1)))
                 .setInput(RuleRectangle::Bottom, root.viewBottom())
                 .setInput(RuleRectangle::Width,  root.viewWidth())
                 .setInput(RuleRectangle::Left,   root.viewLeft());
@@ -55,15 +55,16 @@ struct ShellApp::Instance
         // Menu button at the left edge.
         menuLabel = new LabelWidget;
         menuLabel->setAlignment(AlignTop);
-        menuLabel->setLabel(" F9:Menu ");
+        menuLabel->setLabel(tr(" F9:Menu "));
         menuLabel->setAttribs(TextCanvas::Char::Bold);
         menuLabel->rule()
                 .setInput(RuleRectangle::Left,   root.viewLeft())
-                .setInput(RuleRectangle::Width,  refless(new ConstantRule(menuLabel->label().size())))
+                .setInput(RuleRectangle::Width,  *refless(new ConstantRule(menuLabel->label().size())))
                 .setInput(RuleRectangle::Bottom, status->rule().top());
 
         menuLabel->addAction(new Action(KeyEvent(Qt::Key_F9), &self, SLOT(openMenu())));
         menuLabel->addAction(new Action(KeyEvent(Qt::Key_Z, KeyEvent::Control), &self, SLOT(openMenu())));
+        menuLabel->addAction(new Action(KeyEvent(Qt::Key_X, KeyEvent::Control), &self, SLOT(openMenu())));
         menuLabel->addAction(new Action(KeyEvent(Qt::Key_C, KeyEvent::Control), &self, SLOT(openMenu())));
 
         // Expanding command line widget.
@@ -86,15 +87,15 @@ struct ShellApp::Instance
         // Main menu.
         menu = new MenuWidget;
         menu->hide(); // closed initially
-        menu->appendItem(new Action("Connect to...",
-                                    KeyEvent(Qt::Key_O),
+        menu->appendItem(new Action(tr("Connect to..."),
+                                    KeyEvent("o"),
                                     &self, SLOT(openConnection())), "O");
-        menu->appendItem(new Action("Disconnect"));
+        menu->appendItem(new Action(tr("Disconnect")));
         menu->appendSeparator();
-        menu->appendItem(new Action("Start new server"));
+        menu->appendItem(new Action(tr("Start new server")));
         menu->appendSeparator();
-        menu->appendItem(new Action("About"));
-        menu->appendItem(new Action("Quit Shell",
+        menu->appendItem(new Action(tr("About")));
+        menu->appendItem(new Action(tr("Quit Shell"),
                                     KeyEvent(Qt::Key_X, KeyEvent::Control),
                                     &self, SLOT(quit())), "Ctrl-X");
         menu->rule()

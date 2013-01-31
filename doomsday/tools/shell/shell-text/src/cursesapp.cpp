@@ -82,7 +82,6 @@ struct CursesApp::Instance
     // Curses state:
     WINDOW *rootWin;
     de::Vector2i rootSize;
-    QTimer *refreshTimer;
     int unicodeContinuation;
 
     TextRootWidget *rootWidget;
@@ -125,9 +124,7 @@ struct CursesApp::Instance
         // Listen for window resizing.
         signal(SIGWINCH, windowResized);
 
-        refreshTimer = new QTimer(&self);
-        QObject::connect(refreshTimer, SIGNAL(timeout()), &self, SLOT(refresh()));
-        refreshTimer->start(1000 / 30);
+        requestRefresh();
     }
 
     void initCursesState()
@@ -149,14 +146,16 @@ struct CursesApp::Instance
 
     void shutdownCurses()
     {
-        delete refreshTimer;
-        refreshTimer = 0;
-
         delwin(rootWin);
         rootWin = 0;
 
         endwin();
         refresh();
+    }
+
+    void requestRefresh()
+    {
+        QTimer::singleShot(1000 / 30, &self, SLOT(refresh()));
     }
 
     void handleResize()
@@ -179,6 +178,9 @@ struct CursesApp::Instance
     void refresh()
     {
         if(!rootWin) return;
+
+        // Schedule the next refresh.
+        requestRefresh();
 
         // Update time.
         clock.setTime(de::Time());
@@ -335,6 +337,8 @@ struct CursesApp::Instance
             }
         }
 
+        rootWidget->update();
+
         // Automatically redraw the UI if the values of layout rules have changed.
         if(de::Rule::invalidRulesExist() || rootWidget->drawWasRequested())
         {
@@ -347,11 +351,6 @@ struct CursesApp::Instance
             wmove(rootWin, p.y, p.x);
             wrefresh(rootWin);
         }
-    }
-
-    void update()
-    {
-        rootWidget->draw();
     }
 };
 
