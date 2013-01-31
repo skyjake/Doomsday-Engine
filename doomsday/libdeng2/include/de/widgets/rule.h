@@ -49,7 +49,7 @@ public:
 public:
     Rule();
 
-    Rule(float initialValue);
+    explicit Rule(float initialValue);
 
     /**
      * Determines the rule's current value. If it has been marked invalid,

@@ -34,7 +34,7 @@ namespace de {
 class DENG2_PUBLIC ScalarRule : public Rule, DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
-    ScalarRule(float initialValue);
+    explicit ScalarRule(float initialValue);
 
     void set(float target, TimeDelta transition = 0);
 

@@ -84,7 +84,7 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name)
     add(d->address);
 
     // Outer dimensions.
-    rect.setInput(RuleRectangle::Width, *refless(new ConstantRule(50)));
+    rect.setInput(RuleRectangle::Width, Const(50));
     rect.setInput(RuleRectangle::Height,
                   d->menu->rule().height() +
                   d->address->rule().height() +

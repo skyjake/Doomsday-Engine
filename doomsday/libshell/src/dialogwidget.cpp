@@ -48,7 +48,7 @@ void DialogWidget::prepare()
     redraw();
 }
 
-int DialogWidget::exec(RootWidget &root)
+int DialogWidget::exec(TextRootWidget &root)
 {
     // The widget is added to the root temporarily (as top child).
     DENG2_ASSERT(!hasRoot());
@@ -62,11 +62,11 @@ int DialogWidget::exec(RootWidget &root)
 
     int result = d->subloop.exec();
 
+    hide();
+    redraw();
+
     // No longer in the root.
     root.remove(*this);
-
-    hide();    
-    redraw();
     return result;
 }
 

@@ -64,7 +64,6 @@ public:
     void notifyTree(void (Widget::*notifyFunc)());
     void notifyTreeReversed(void (Widget::*notifyFunc)());
     bool dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event const *));
-    void redraw();
 
     // Events.
     virtual void initialize();

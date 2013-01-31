@@ -48,7 +48,7 @@ struct ShellApp::Instance
         // Status bar in the bottom of the view.
         status = new StatusWidget;
         status->rule()
-                .setInput(RuleRectangle::Height, *refless(new ConstantRule(1)))
+                .setInput(RuleRectangle::Height, Const(1))
                 .setInput(RuleRectangle::Bottom, root.viewBottom())
                 .setInput(RuleRectangle::Width,  root.viewWidth())
                 .setInput(RuleRectangle::Left,   root.viewLeft());
@@ -60,7 +60,7 @@ struct ShellApp::Instance
         menuLabel->setAttribs(TextCanvas::Char::Bold);
         menuLabel->rule()
                 .setInput(RuleRectangle::Left,   root.viewLeft())
-                .setInput(RuleRectangle::Width,  *refless(new ConstantRule(menuLabel->label().size())))
+                .setInput(RuleRectangle::Width,  Const(menuLabel->label().size()))
                 .setInput(RuleRectangle::Bottom, status->rule().top());
 
         menuLabel->addAction(new Action(KeyEvent(Qt::Key_F9), &self, SLOT(openMenu())));
@@ -151,10 +151,8 @@ ShellApp::~ShellApp()
 
 void ShellApp::openConnection()
 {
-    RootWidget &root = rootWidget();
-
     OpenConnectionDialog dlg;
-    dlg.exec(root);
+    dlg.exec(rootWidget());
 }
 
 void ShellApp::sendCommandToServer(String command)

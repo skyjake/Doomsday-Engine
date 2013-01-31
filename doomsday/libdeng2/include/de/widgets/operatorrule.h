@@ -64,11 +64,11 @@ private:
 };
 
 inline OperatorRule &operator + (Rule const &left, int right) {
-    return *refless(new OperatorRule(OperatorRule::Sum, left, *refless(new ConstantRule(float(right)))));
+    return *refless(new OperatorRule(OperatorRule::Sum, left, Const(right)));
 }
 
 inline OperatorRule &operator + (Rule const &left, float right) {
-    return *refless(new OperatorRule(OperatorRule::Sum, left, *refless(new ConstantRule(right))));
+    return *refless(new OperatorRule(OperatorRule::Sum, left, Constf(right)));
 }
 
 inline OperatorRule &operator + (Rule const &left, Rule const &right) {
@@ -80,11 +80,11 @@ inline OperatorRule &operator - (Rule const &unary) {
 }
 
 inline OperatorRule &operator - (Rule const &left, int right) {
-    return *refless(new OperatorRule(OperatorRule::Subtract, left, *refless(new ConstantRule(float(right)))));
+    return *refless(new OperatorRule(OperatorRule::Subtract, left, Const(right)));
 }
 
 inline OperatorRule &operator - (Rule const &left, float right) {
-    return *refless(new OperatorRule(OperatorRule::Subtract, left, *refless(new ConstantRule(right))));
+    return *refless(new OperatorRule(OperatorRule::Subtract, left, Constf(right)));
 }
 
 inline OperatorRule &operator - (Rule const &left, Rule const &right) {
@@ -92,7 +92,7 @@ inline OperatorRule &operator - (Rule const &left, Rule const &right) {
 }
 
 inline OperatorRule &operator * (Rule const &left, float right) {
-    return *refless(new OperatorRule(OperatorRule::Multiply, left, *refless(new ConstantRule(right))));
+    return *refless(new OperatorRule(OperatorRule::Multiply, left, Constf(right)));
 }
 
 inline OperatorRule &operator * (Rule const &left, Rule const &right) {
@@ -102,12 +102,11 @@ inline OperatorRule &operator * (Rule const &left, Rule const &right) {
 inline OperatorRule &operator / (Rule const &left, int right) {
     return *refless(new OperatorRule(OperatorRule::Floor,
                                      *refless(new OperatorRule(OperatorRule::Divide,
-                                                               left,
-                                                               *refless(new ConstantRule(right))))));
+                                                               left, Const(right)))));
 }
 
 inline OperatorRule &operator / (Rule const &left, float right) {
-    return *refless(new OperatorRule(OperatorRule::Divide, left, *refless(new ConstantRule(right))));
+    return *refless(new OperatorRule(OperatorRule::Divide, left, Constf(right)));
 }
 
 inline OperatorRule &operator / (Rule const &left, Rule const &right) {

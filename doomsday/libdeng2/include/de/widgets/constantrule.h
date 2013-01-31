@@ -33,9 +33,32 @@ namespace de {
 class DENG2_PUBLIC ConstantRule : public Rule
 {
 public:
+    /**
+     * Utility template for constructing refless ConstantRule instances.
+     * Instead of: <pre>   *refless(new ConstantRule(10))</pre> one can just
+     * write: <pre>   Const(10)</pre> (see typedefs de::Const and de::Constf).
+     */
+    template <typename NumberType>
+    class Builder
+    {
+    public:
+        Builder(NumberType const &number) : _number(number) {}
+
+        /**
+         * Returns a new, refless ConstantRule instance with @a _number as
+         * value. Caller is responsible for making sure a reference is taken
+         * to the returned rule.
+         */
+        operator Rule const & () const;
+
+    private:
+        NumberType _number;
+    };
+
+public:
     ConstantRule();
 
-    ConstantRule(float constantValue);
+    explicit ConstantRule(float constantValue);
 
     /**
      * Changes the value of the constant in the rule.
@@ -48,6 +71,14 @@ protected:
 private:
     float _pendingValue;
 };
+
+template <typename Type>
+ConstantRule::Builder<Type>::operator Rule const & () const {
+    return *refless(new ConstantRule(_number));
+}
+
+typedef ConstantRule::Builder<int>   Const;
+typedef ConstantRule::Builder<float> Constf;
 
 } // namespace de
 

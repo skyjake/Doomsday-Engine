@@ -31,11 +31,7 @@ struct RootWidget::Instance
 
     Instance() : focus(0)
     {
-        viewRect = new RuleRectangle(
-                    *refless(new ConstantRule(0)),
-                    *refless(new ConstantRule(0)),
-                    *refless(new ConstantRule(0)),
-                    *refless(new ConstantRule(0)));
+        viewRect = new RuleRectangle(Const(0), Const(0), Const(0), Const(0));
     }
 
     ~Instance()
@@ -95,8 +91,8 @@ Rule const &RootWidget::viewHeight() const
 
 void RootWidget::setViewSize(Vector2i const &size)
 {
-    d->viewRect->setInput(RuleRectangle::Right,  *refless(new ConstantRule(size.x)));
-    d->viewRect->setInput(RuleRectangle::Bottom, *refless(new ConstantRule(size.y)));
+    d->viewRect->setInput(RuleRectangle::Right,  Const(size.x));
+    d->viewRect->setInput(RuleRectangle::Bottom, Const(size.y));
 
     notifyTree(&Widget::viewResized);
 }

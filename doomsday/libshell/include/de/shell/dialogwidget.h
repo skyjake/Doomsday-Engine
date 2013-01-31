@@ -44,7 +44,7 @@ public:
      *
      * @return Result code.
      */
-    int exec(RootWidget &root);
+    int exec(TextRootWidget &root);
 
     // Events.
     void draw();
