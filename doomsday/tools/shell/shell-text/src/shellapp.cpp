@@ -86,8 +86,7 @@ struct ShellApp::Instance
                 .setInput(RuleRectangle::Bottom, cli->rule().top());
 
         // Main menu.
-        menu = new MenuWidget;
-        menu->hide(); // closed initially
+        menu = new MenuWidget(MenuWidget::Popup);
         menu->appendItem(new Action(tr("Connect to..."),
                                     KeyEvent("o"),
                                     &self, SLOT(openConnection())), "O");
@@ -193,7 +192,6 @@ void ShellApp::disconnected()
 void ShellApp::openMenu()
 {
     d->menuLabel->setAttribs(TextCanvas::Char::Reverse);
-    rootWidget().setFocus(d->menu);
     d->menu->open();
 }
 
