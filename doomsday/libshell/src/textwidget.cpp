@@ -126,12 +126,25 @@ bool TextWidget::handleEvent(Event const *event)
     if(event->type() == Event::KeyPress)
     {
         DENG2_ASSERT(dynamic_cast<KeyEvent const *>(event) != 0);
+
         KeyEvent const *keyEvent = static_cast<KeyEvent const *>(event);
 
         foreach(Action *act, d->actions)
         {
             // Event will be used by actions.
             if(act->tryTrigger(*keyEvent)) return true;
+        }
+
+        // Focus navigation.
+        if(keyEvent->key() == Qt::Key_Tab && hasFocus() && !focusNext().isEmpty())
+        {
+            Widget *next = root().find(focusNext());
+            if(next)
+            {
+                root().setFocus(next);
+                root().requestDraw();
+                return true;
+            }
         }
     }
 

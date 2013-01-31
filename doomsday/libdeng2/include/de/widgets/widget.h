@@ -38,6 +38,20 @@ public:
     /// Widget that was expected to exist was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
+    enum Behavior
+    {
+        /// Widget is invisible: not drawn. Hidden widgets also receive no events.
+        Hidden = 0x1,
+
+        /// Widget will only receive events if it has focus.
+        HandleEventsOnlyWhenFocused = 0x2,
+
+        DefaultBehavior = 0
+    };
+    Q_DECLARE_FLAGS(Behaviors, Behavior)
+
+    typedef QList<Widget *> Children;
+
 public:
     Widget(String const &name = "");
     virtual ~Widget();
@@ -51,13 +65,33 @@ public:
     inline void hide() { show(false); }
     void show(bool doShow = true);
 
+    /**
+     * Sets or clears one or more behavior flags.
+     *
+     * @param behavior  Flags.
+     * @param set       @c true to set, @c false to clear.
+     */
+    void setBehavior(Behaviors behavior, bool set = true);
+
+    Behaviors behavior() const;
+
+    /**
+     * Sets the identifier of the widget that will receive focus when
+     * a focus navigation is requested.
+     *
+     * @param name  Name of a widget.
+     */
+    void setFocusNext(String const &name);
+
+    String focusNext() const;
+
     // Tree organization.
     void clear();
     Widget &add(Widget *child);
     Widget *remove(Widget &child);
     Widget *find(String const &name);
     Widget const *find(String const &name) const;
-    QList<Widget *> children() const;
+    Children children() const;
     Widget *parent() const;
 
     // Utilities.

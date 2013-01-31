@@ -29,14 +29,15 @@ struct Widget::Instance
     Widget &self;
     String name;
     Widget *parent;
-    bool hidden;
+    Behaviors behavior;
+    String focusNext;
 
     typedef QList<Widget *> Children;
     typedef QMap<String, Widget *> NamedChildren;
     Children children;
     NamedChildren index;
 
-    Instance(Widget &w, String const &n) : self(w), name(n), parent(0), hidden(false)
+    Instance(Widget &w, String const &n) : self(w), name(n), parent(0)
     {}
 
     ~Instance()
@@ -123,14 +124,41 @@ bool Widget::isHidden() const
 {
     for(Widget const *w = this; w != 0; w = w->d->parent)
     {
-        if(w->d->hidden) return true;
+        if(w->d->behavior.testFlag(Hidden)) return true;
     }
     return false;
 }
 
 void Widget::show(bool doShow)
 {
-    d->hidden = !doShow;
+    setBehavior(Hidden, !doShow);
+}
+
+void Widget::setBehavior(Behaviors behavior, bool set)
+{
+    if(set)
+    {
+        d->behavior |= behavior;
+    }
+    else
+    {
+        d->behavior &= ~behavior;
+    }
+}
+
+Widget::Behaviors Widget::behavior() const
+{
+    return d->behavior;
+}
+
+void Widget::setFocusNext(String const &name)
+{
+    d->focusNext = name;
+}
+
+String Widget::focusNext() const
+{
+    return d->focusNext;
 }
 
 void Widget::clear()
@@ -218,6 +246,19 @@ bool Widget::dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event 
     // Hidden widgets do not get events.
     if(isHidden()) return false;
 
+    bool const thisHasFocus = (hasRoot() && root().focus() == this);
+
+    if(d->behavior.testFlag(HandleEventsOnlyWhenFocused) && !thisHasFocus)
+    {
+        return false;
+    }
+
+    if(thisHasFocus)
+    {
+        // The focused widget is offered events before dispatching to the tree.
+        return false;
+    }
+
     // Tree is traversed in reverse order.
     for(int i = d->children.size() - 1; i >= 0; --i)
     {
@@ -236,7 +277,7 @@ bool Widget::dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event 
     return false;
 }
 
-QList<Widget *> Widget::children() const
+Widget::Children Widget::children() const
 {
     return d->children;
 }
