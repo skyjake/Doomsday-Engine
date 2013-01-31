@@ -44,7 +44,7 @@ public:
     Vector2<Type> size() const { return Vector2<Type>(width(), height()); }
     void setWidth(Type w) { bottomRight.x = topLeft.x + w; }
     void setHeight(Type h) { bottomRight.y = topLeft.y + h; }
-    void setSize(const Vector2<Type>& s) { setWidth(s.x); setHeight(s.y); }
+    void setSize(Vector2<Type> const &s) { setWidth(s.x); setHeight(s.y); }
     void include(Corner const &point) {
         topLeft = topLeft.min(point);
         bottomRight = bottomRight.max(point);
