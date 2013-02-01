@@ -58,6 +58,14 @@ public:
     void setCursor(int index);
     int cursor() const;
 
+    /**
+     * Enables or disables the signal emitted when the edit widget receives an
+     * Enter key.
+     *
+     * @param enterHandled @c true to enable signal, @c false to disable.
+     */
+    void setSignalOnEnter(int enterSignal);
+
     Vector2i cursorPosition() const;
 
     bool handleControlKey(int key);

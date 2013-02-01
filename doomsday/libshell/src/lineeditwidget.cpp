@@ -29,7 +29,7 @@ struct LineEditWidget::Instance
 {
     LineEditWidget &self;
     ConstantRule *height;
-
+    bool signalOnEnter;
     String prompt;
     String text;
     int cursor; ///< Index in range [0...text.size()]
@@ -37,7 +37,10 @@ struct LineEditWidget::Instance
     // Word wrapping.
     LineWrapping wraps;
 
-    Instance(LineEditWidget &cli) : self(cli), cursor(0)
+    Instance(LineEditWidget &cli)
+        : self(cli),
+          signalOnEnter(false),
+          cursor(0)
     {
         // Initial height of the command line (1 row).
         height = new ConstantRule(1);
@@ -283,8 +286,12 @@ bool LineEditWidget::handleControlKey(int key)
         return true;
 
     case Qt::Key_Enter:
-        emit enterPressed(d->text);
-        return true;
+        if(d->signalOnEnter)
+        {
+            emit enterPressed(d->text);
+            return true;
+        }
+        break;
 
     default:
         break;
@@ -315,6 +322,11 @@ void LineEditWidget::setCursor(int index)
 int LineEditWidget::cursor() const
 {
     return d->cursor;
+}
+
+void LineEditWidget::setSignalOnEnter(int enterSignal)
+{
+    d->signalOnEnter = enterSignal;
 }
 
 } // namespace shell

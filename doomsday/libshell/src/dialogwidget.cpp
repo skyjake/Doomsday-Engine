@@ -48,6 +48,13 @@ void DialogWidget::prepare()
     redraw();
 }
 
+void DialogWidget::finish(int /*result*/)
+{
+    hide();
+    root().setFocus(0);
+    redraw();
+}
+
 int DialogWidget::exec(TextRootWidget &root)
 {
     // The widget is added to the root temporarily (as top child).
@@ -62,9 +69,7 @@ int DialogWidget::exec(TextRootWidget &root)
 
     int result = d->subloop.exec();
 
-    root.setFocus(0);
-    hide();
-    redraw();
+    finish(result);
 
     // No longer in the root.
     root.remove(*this);

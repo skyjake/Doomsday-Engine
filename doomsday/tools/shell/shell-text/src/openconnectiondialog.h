@@ -33,9 +33,13 @@ public:
     ~OpenConnectionDialog();
 
     void prepare();
+    void finish(int result);
 
-public slots:
-    void enterPressedInAddress(de::String);
+    /**
+     * Returns the address that the user entered in the dialog. If the dialog
+     * was rejected, the returned string is empy.
+     */
+    de::String address();
 
 private:
     struct Instance;

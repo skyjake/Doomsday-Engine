@@ -31,6 +31,7 @@ struct OpenConnectionDialog::Instance
     LabelWidget *label;
     LineEditWidget *address;
     MenuWidget *menu;
+    String result;
 
     Instance() : label(0), address(0), menu(0)
     {}
@@ -67,8 +68,6 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name)
             .setInput(RuleRectangle::Left,  rect.left())
             .setInput(RuleRectangle::Top,   d->label->rule().bottom() + 1);
 
-    QObject::connect(d->address, SIGNAL(enterPressed(de::String)), this, SLOT(enterPressedInAddress(de::String)));
-
     // Menu for actions.
     d->menu = new MenuWidget(MenuWidget::AlwaysOpen, "OpenConnectionDialog.menu");
     d->menu->setFocusNext("OpenConnectionDialog.address");
@@ -85,8 +84,8 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name)
             .setInput(RuleRectangle::Bottom, rect.bottom());
 
     add(d->label);
-    add(d->menu);
     add(d->address);
+    add(d->menu);
 
     // Outer dimensions.
     rect.setInput(RuleRectangle::Width, Const(50));
@@ -94,6 +93,7 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name)
                   d->menu->rule().height() +
                   d->address->rule().height() +
                   d->label->rule().height() + 2);
+
 }
 
 OpenConnectionDialog::~OpenConnectionDialog()
@@ -105,11 +105,19 @@ void OpenConnectionDialog::prepare()
 {
     DialogWidget::prepare();
 
+    d->result.clear();
     root().setFocus(d->address);
 }
 
-void OpenConnectionDialog::enterPressedInAddress(String)
+void OpenConnectionDialog::finish(int result)
 {
-    root().setFocus(d->menu);
-    root().requestDraw();
+    d->result.clear();
+    if(result) d->result = d->address->text();
+
+    DialogWidget::finish(result);
+}
+
+String OpenConnectionDialog::address()
+{
+    return d->result;
 }

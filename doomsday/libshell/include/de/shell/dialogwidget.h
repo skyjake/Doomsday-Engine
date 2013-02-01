@@ -51,16 +51,24 @@ public:
     bool handleEvent(Event const *event);
 
 public slots:
-    void accept(int result = 0);
+    void accept(int result = 1);
     void reject(int result = 0);
 
 protected:
     /**
      * Derived classes can override this to do additional tasks before
      * execution of the dialog begins. DialogWidget::prepare() must be called
-     * from the overridden methods.
+     * from the overridding methods.
      */
     virtual void prepare();
+
+    /**
+     * Handles any tasks needed when the dialog is closing.
+     * DialogWidget::finish() must be called from overridding methods.
+     *
+     * @param result  Result code.
+     */
+    virtual void finish(int result);
 
 signals:
     void accepted(int result);
