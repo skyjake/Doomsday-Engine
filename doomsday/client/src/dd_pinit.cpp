@@ -132,7 +132,7 @@ void DD_ConsoleInit(void)
     Str_Init(&nativePath); Str_Set(&nativePath, outFileName);
     F_ToNativeSlashes(&nativePath, &nativePath);
 
-    // We'll redirect stdout to a log file.
+    // We'll redirect log output to a file.
     outFileOk = LegacyCore_SetLogFile(Str_Text(&nativePath));
     Str_Free(&nativePath);
 
