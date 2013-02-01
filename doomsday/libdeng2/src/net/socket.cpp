@@ -184,7 +184,7 @@ using namespace internal;
 
 struct Socket::Instance
 {
-    duint16 port;
+    Address target;
 
     enum ReceptionState {
         ReceivingHeader,
@@ -211,7 +211,6 @@ struct Socket::Instance
     dint64 totalBytesWritten;
 
     Instance() :
-        port(0),
         receptionState(ReceivingHeader),
         activeChannel(0),
         socket(0),
@@ -402,7 +401,7 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) // blocking
 
     LOG_MSG("Connection opened to %s") << address.asText();
 
-    d->port = address.port();
+    d->target = address;
 
     DENG2_ASSERT(d->socket->isOpen() && d->socket->isWritable() &&
                  d->socket->state() == QAbstractSocket::ConnectedState);
@@ -418,23 +417,23 @@ void Socket::connect(Address const &address) // non-blocking
     LOG_MSG("Opening connection to %s") << address.asText();
 
     d->socket->connectToHost(address.host(), address.port());
-    d->port = address.port();
+    d->target = address;
 }
 
 void Socket::connectToDomain(String const &domainNameWithOptionalPort,
                              duint16 defaultPort) // non-blocking
 {
     String str = domainNameWithOptionalPort;
-    d->port = defaultPort;
+    duint16 port = defaultPort;
     if(str.contains(':'))
     {
         int pos = str.indexOf(':');
-        d->port = str.mid(pos + 1).toInt();
+        port = str.mid(pos + 1).toInt();
         str = str.left(pos);
     }
     if(str == "localhost")
     {
-        connect(Address(str.toLatin1(), d->port));
+        connect(Address(str.toLatin1(), port));
         return;
     }
 
@@ -442,9 +441,11 @@ void Socket::connectToDomain(String const &domainNameWithOptionalPort,
     if(!host.isNull())
     {
         // Looks like a regular IP address.
-        connect(Address(str.toLatin1(), d->port));
+        connect(Address(str.toLatin1(), port));
         return;
     }
+
+    d->target.setPort(port);
 
     // Looks like we will need to look this up.
     QHostInfo::lookupHost(str, this, SLOT(hostResolved(QHostInfo)));
@@ -563,7 +564,7 @@ void Socket::hostResolved(QHostInfo const &info)
     else
     {
         // Now we know where to connect.
-        connect(Address(info.addresses().first(), d->port));
+        connect(Address(info.addresses().first(), d->target.port()));
 
         emit addressResolved();
     }
@@ -598,12 +599,11 @@ void Socket::flush()
 
 Address Socket::peerAddress() const
 {
-    if(isOpen())
+    if(isOpen() && d->socket->state() == QTcpSocket::ConnectedState)
     {
         return Address(d->socket->peerAddress(), d->socket->peerPort());
     }
-    /// @throw PeerError Could not determine the TCP/IP address of the socket.
-    throw PeerError("Socket::peerAddress", "Socket is unavailable");
+    return d->target;
 }
 
 bool Socket::isOpen() const

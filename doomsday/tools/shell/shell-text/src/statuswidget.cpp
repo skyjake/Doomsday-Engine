@@ -38,7 +38,7 @@ struct StatusWidget::Instance
 StatusWidget::StatusWidget(String const &name)
     : TextWidget(name), d(new Instance(*this))
 {
-    connect(d->updateTimer, SIGNAL(timeout()), this, SLOT(redraw()));
+    connect(d->updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
 }
 
 StatusWidget::~StatusWidget()
@@ -53,7 +53,7 @@ void StatusWidget::setShellLink(Link *link)
     if(link)
     {
         // Observe changes in link status.
-        connect(link, SIGNAL(addressResolved()), this, SLOT(redraw()));
+        connect(link, SIGNAL(addressResolved()), this, SLOT(refresh()));
         connect(link, SIGNAL(connected()), this, SLOT(linkConnected()));
         connect(link, SIGNAL(disconnected()), this, SLOT(linkDisconnected()));
     }
@@ -103,9 +103,9 @@ void StatusWidget::draw()
     targetCanvas().draw(buf, pos.topLeft);
 }
 
-void StatusWidget::redraw()
+void StatusWidget::refresh()
 {
-    drawAndShow();
+    redraw();
 }
 
 void StatusWidget::linkConnected()
