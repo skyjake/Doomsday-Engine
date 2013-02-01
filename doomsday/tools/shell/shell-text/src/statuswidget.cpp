@@ -53,6 +53,7 @@ void StatusWidget::setShellLink(Link *link)
     if(link)
     {
         // Observe changes in link status.
+        connect(link, SIGNAL(addressResolved()), this, SLOT(redraw()));
         connect(link, SIGNAL(connected()), this, SLOT(linkConnected()));
         connect(link, SIGNAL(disconnected()), this, SLOT(linkDisconnected()));
     }
@@ -67,12 +68,20 @@ void StatusWidget::draw()
 
     if(!d->link || d->link->status() == Link::Disconnected)
     {
-        String msg = "Not connected to a server";
+        String msg = tr("Not connected to a server");
         buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg, TextCanvas::Char::Bold);
     }
     else if(d->link->status() == Link::Connecting)
     {
-        String msg = "Connecting to " + d->link->address().asText();
+        String msg;
+        if(!d->link->address().isNull())
+        {
+            msg = tr("Connecting to ") + d->link->address().asText();
+        }
+        else
+        {
+            msg = tr("Looking up host...");
+        }
         buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg);
     }
     else if(d->link->status() == Link::Connected)

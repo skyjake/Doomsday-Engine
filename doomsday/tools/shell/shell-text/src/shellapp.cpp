@@ -89,8 +89,8 @@ struct ShellApp::Instance
         menu = new MenuWidget(MenuWidget::Popup);
         menu->appendItem(new Action(tr("Connect to..."),
                                     KeyEvent("o"),
-                                    &self, SLOT(openConnection())), "O");
-        menu->appendItem(new Action(tr("Disconnect")));
+                                    &self, SLOT(askToOpenConnection())), "O");
+        menu->appendItem(new Action(tr("Disconnect"), &self, SLOT(closeConnection())));
         menu->appendSeparator();
         menu->appendItem(new Action(tr("Start new server")));
         menu->appendSeparator();
@@ -133,11 +133,7 @@ ShellApp::ShellApp(int &argc, char **argv)
     if(args.size() > 1)
     {
         // Open a connection.
-        d->link = new Link(Address(args[1]));
-        d->status->setShellLink(d->link);
-
-        connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
-        connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+        openConnection(args[1]);
     }
 }
 
@@ -148,10 +144,42 @@ ShellApp::~ShellApp()
     delete d;
 }
 
-void ShellApp::openConnection()
+void ShellApp::openConnection(String const &address)
+{
+    closeConnection();
+
+    LOG_INFO("Opening connection to %s") << address;
+
+    d->link = new Link(address);
+    d->status->setShellLink(d->link);
+
+    connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+    connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+}
+
+void ShellApp::askToOpenConnection()
 {
     OpenConnectionDialog dlg;
     dlg.exec(rootWidget());
+    if(!dlg.address().isEmpty())
+    {
+        openConnection(dlg.address());
+    }
+}
+
+void ShellApp::closeConnection()
+{
+    if(d->link)
+    {
+        LOG_INFO("Closing existing connection to %s") << d->link->address();
+
+        // Get rid of the old connection.
+        disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+        disconnect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+        delete d->link;
+        d->link = 0;
+        d->status->setShellLink(0);
+    }
 }
 
 void ShellApp::sendCommandToServer(String command)
