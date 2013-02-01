@@ -54,6 +54,11 @@ Action::Action(String const &label) : _event(KeyEvent("")), _label(label)
 Action::~Action()
 {}
 
+void Action::setLabel(String const &label)
+{
+    _label = label;
+}
+
 String Action::label() const
 {
     return _label;

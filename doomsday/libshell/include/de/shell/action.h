@@ -43,6 +43,8 @@ public:
 
     ~Action();
 
+    void setLabel(String const &label);
+
     String label() const;
 
     /**

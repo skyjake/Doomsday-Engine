@@ -24,9 +24,12 @@
 
 namespace de {
 
+static duint32 widgetIdGen = 0;
+
 struct Widget::Instance
 {
     Widget &self;
+    duint32 id;
     String name;
     Widget *parent;
     Behaviors behavior;
@@ -38,7 +41,10 @@ struct Widget::Instance
     NamedChildren index;
 
     Instance(Widget &w, String const &n) : self(w), name(n), parent(0)
-    {}
+    {
+        // A unique ID is generated for each Widget instance.
+        id = ++widgetIdGen;
+    }
 
     ~Instance()
     {
@@ -68,6 +74,11 @@ Widget::~Widget()
     }
 
     delete d;
+}
+
+duint32 Widget::id() const
+{
+    return d->id;
 }
 
 String Widget::name() const

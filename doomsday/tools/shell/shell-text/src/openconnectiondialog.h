@@ -19,31 +19,21 @@
 #ifndef OPENCONNECTIONDIALOG_H
 #define OPENCONNECTIONDIALOG_H
 
-#include <de/shell/DialogWidget>
+#include <de/shell/InputDialog>
 
 /**
  * Dialog for specifying address for opening a connection.
  */
-class OpenConnectionDialog : public de::shell::DialogWidget
+class OpenConnectionDialog : public de::shell::InputDialog
 {
-    Q_OBJECT
-
 public:
     OpenConnectionDialog(de::String const &name = "");
-    ~OpenConnectionDialog();
-
-    void prepare();
-    void finish(int result);
 
     /**
      * Returns the address that the user entered in the dialog. If the dialog
      * was rejected, the returned string is empy.
      */
     de::String address();
-
-private:
-    struct Instance;
-    Instance *d;
 };
 
 #endif // OPENCONNECTIONDIALOG_H

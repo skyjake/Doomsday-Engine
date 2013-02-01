@@ -26,6 +26,7 @@ INCLUDEPATH += include
 HEADERS += \
     include/de/shell/Action \
     include/de/shell/DialogWidget \
+	include/de/shell/InputDialog \
     include/de/shell/KeyEvent \
     include/de/shell/LabelWidget \
     include/de/shell/LineEditWidget \
@@ -37,31 +38,33 @@ HEADERS += \
     include/de/shell/TextWidget \
     \
     include/de/shell/action.h \
+    include/de/shell/dialogwidget.h \
+    include/de/shell/inputdialog.h \
     include/de/shell/keyevent.h \
     include/de/shell/labelwidget.h \
     include/de/shell/libshell.h \
     include/de/shell/lineeditwidget.h \
     include/de/shell/link.h \
+    include/de/shell/menuwidget.h \
     include/de/shell/protocol.h \
     include/de/shell/textcanvas.h \
     include/de/shell/textrootwidget.h \
-    include/de/shell/textwidget.h \
-    include/de/shell/menuwidget.h \
-    include/de/shell/dialogwidget.h
+    include/de/shell/textwidget.h 
 
 # Sources and private headers.
 SOURCES += \
     src/action.cpp \
+    src/dialogwidget.cpp \
+    src/inputdialog.cpp \
     src/labelwidget.cpp \
     src/libshell.cpp \
     src/lineeditwidget.cpp \
     src/link.cpp \
+    src/menuwidget.cpp \
     src/protocol.cpp \
     src/textcanvas.cpp \
     src/textrootwidget.cpp \
-    src/textwidget.cpp \
-    src/menuwidget.cpp \
-    src/dialogwidget.cpp
+    src/textwidget.cpp
 
 # Installation ---------------------------------------------------------------
 

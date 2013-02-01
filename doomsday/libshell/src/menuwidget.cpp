@@ -330,9 +330,12 @@ bool MenuWidget::handleEvent(Event const *event)
 
     if(event->type() != Event::KeyPress) return false;
 
-    // Check registered actions.
+    // Check registered actions (shortcuts).
     if(TextWidget::handleEvent(event))
+    {
+        close();
         return true;
+    }
 
     KeyEvent const *ev = static_cast<KeyEvent const *>(event);
 

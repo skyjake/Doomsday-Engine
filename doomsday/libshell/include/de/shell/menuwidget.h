@@ -32,6 +32,9 @@ namespace shell {
  * The width of the widget is automatically determined based on how much space
  * is needed for the items and their possible shortcut labels. The height of
  * the widget depends on the number of items in the menu.
+ *
+ * Actions added to the menu are considered shortcuts and triggering them will
+ * cause the menu to close (if it is closable).
  */
 class LIBSHELL_PUBLIC MenuWidget : public TextWidget
 {
@@ -57,11 +60,24 @@ public:
 
     int itemCount() const;
 
+    /**
+     * Appends an item into the menu as the last item.
+     *
+     * @param action  Action to add as a shortcut for triggering the item.
+     * @param shortcutLabel  Label to show, representing the action shortcut to the user.
+     */
     void appendItem(Action *action, String const &shortcutLabel = "");
 
-    void appendSeparator();
-
+    /**
+     * Inserts an item into the menu.
+     *
+     * @param pos  Index of the new item.
+     * @param action  Action to add as a shortcut for triggering the item.
+     * @param shortcutLabel  Label to show, representing the action shortcut to the user.
+     */
     void insertItem(int pos, Action *action, String const &shortcutLabel = "");
+
+    void appendSeparator();
 
     void insertSeparator(int pos);
 

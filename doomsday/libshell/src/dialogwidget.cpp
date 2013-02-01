@@ -52,7 +52,6 @@ void DialogWidget::finish(int /*result*/)
 {
     hide();
     root().setFocus(0);
-    redraw();
 }
 
 int DialogWidget::exec(TextRootWidget &root)
@@ -73,6 +72,7 @@ int DialogWidget::exec(TextRootWidget &root)
 
     // No longer in the root.
     root.remove(*this);
+    root.requestDraw();
     return result;
 }
 
