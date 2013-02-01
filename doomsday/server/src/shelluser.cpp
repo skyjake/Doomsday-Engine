@@ -86,14 +86,21 @@ void ShellUser::handleIncomingPackets()
         QScopedPointer<Packet> packet(nextPacket());
         if(packet.isNull()) break;
 
-        switch(protocol().recognize(packet.data()))
+        try
         {
-        case shell::Protocol::Command:
-            Con_Execute(CMDS_CONSOLE, protocol().command(*packet).toUtf8().constData(), false, true);
-            break;
+            switch(protocol().recognize(packet.data()))
+            {
+            case shell::Protocol::Command:
+                Con_Execute(CMDS_CONSOLE, protocol().command(*packet).toUtf8().constData(), false, true);
+                break;
 
-        default:
-            break;
+            default:
+                break;
+            }
+        }
+        catch(Error const &er)
+        {
+            LOG_WARNING("Error while processing packet from %s:\n%s") << packet->from() << er.asText();
         }
     }
 }
