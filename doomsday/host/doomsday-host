@@ -277,6 +277,21 @@ def rebuildAndInstall():
     
     msg('Successful rebuild from branch %s.' % branch)
     return True
+
+
+def logCleanup():
+    for sv in servers:
+        files = os.listdir(sv.runtime)
+        logs = []
+        for fn in files:
+            if fn[-4:] == '.out' and '-' in fn:
+                logs.append(fn)
+        logs.sort()
+        # Process all except the latest one.
+        logs = logs[:-1]
+        for log in logs:
+            fn = os.path.join(sv.runtime, log)
+            run('gzip -9 ' + fn)
     
     
 def startInstance():
@@ -333,6 +348,9 @@ def main():
         
     # Save the state.
     pickle.dump(state, file(stateFn, 'wb')) 
+
+    # Archive old log files.
+    logCleanup()
     
     # We're done.
     endInstance()
