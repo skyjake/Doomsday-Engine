@@ -174,6 +174,14 @@ int main(int argc, char** argv)
         }
 #endif
 
+#ifdef __SERVER__
+        if(dengApp.commandLine().has("-daemon"))
+        {
+            // In server mode, stay quiet on the standard outputs.
+            LogBuffer_EnableStandardOutput(false);
+        }
+#endif
+
         dengApp.initSubsystems();
 
         Libdeng_Init();
