@@ -184,6 +184,8 @@ using namespace internal;
 
 struct Socket::Instance
 {
+    duint16 port;
+
     enum ReceptionState {
         ReceivingHeader,
         ReceivingPayload
@@ -209,6 +211,7 @@ struct Socket::Instance
     dint64 totalBytesWritten;
 
     Instance() :
+        port(0),
         receptionState(ReceivingHeader),
         activeChannel(0),
         socket(0),
@@ -397,7 +400,9 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) // blocking
         throw ConnectionError("Socket", "Opening the connection to " + address.asText() + " failed: " + msg);
     }
 
-    LOG_MSG("Connection opened to %s.") << address.asText();
+    LOG_MSG("Connection opened to %s") << address.asText();
+
+    d->port = address.port();
 
     DENG2_ASSERT(d->socket->isOpen() && d->socket->isWritable() &&
                  d->socket->state() == QAbstractSocket::ConnectedState);
@@ -410,9 +415,39 @@ void Socket::connect(Address const &address) // non-blocking
     DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
 
     LOG_AS("Socket");
-    LOG_MSG("Opening connection to %s.") << address.asText();
+    LOG_MSG("Opening connection to %s") << address.asText();
 
     d->socket->connectToHost(address.host(), address.port());
+    d->port = address.port();
+}
+
+void Socket::connectToDomain(String const &domainNameWithOptionalPort,
+                             duint16 defaultPort) // non-blocking
+{
+    String str = domainNameWithOptionalPort;
+    d->port = defaultPort;
+    if(str.contains(':'))
+    {
+        int pos = str.indexOf(':');
+        d->port = str.mid(pos + 1).toInt();
+        str = str.left(pos);
+    }
+    if(str == "localhost")
+    {
+        connect(Address(str.toLatin1(), d->port));
+        return;
+    }
+
+    QHostAddress host(str);
+    if(!host.isNull())
+    {
+        // Looks like a regular IP address.
+        connect(Address(str.toLatin1(), d->port));
+        return;
+    }
+
+    // Looks like we will need to look this up.
+    QHostInfo::lookupHost(str, this, SLOT(hostResolved(QHostInfo)));
 }
 
 Socket::Socket(QTcpSocket *existingSocket)
@@ -515,6 +550,22 @@ void Socket::readIncomingBytes()
     if(!d->receivedMessages.isEmpty())
     {
         emit messagesReady();
+    }
+}
+
+void Socket::hostResolved(QHostInfo const &info)
+{
+    if(info.error() != QHostInfo::NoError || info.addresses().isEmpty())
+    {
+        LOG_WARNING("Could not resolve host: ") << info.errorString();
+        emit disconnected();
+    }
+    else
+    {
+        // Now we know where to connect.
+        connect(Address(info.addresses().first(), d->port));
+
+        emit addressResolved();
     }
 }
 

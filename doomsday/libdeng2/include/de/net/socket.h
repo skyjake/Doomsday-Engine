@@ -26,6 +26,7 @@
 #include "../Transmitter"
 
 #include <QTcpSocket>
+#include <QHostInfo>
 #include <QList>
 #include <QFlags>
 
@@ -84,6 +85,8 @@ public:
      */
     Socket(Address const &address, TimeDelta const &timeOut);
 
+    virtual ~Socket();
+
     /**
      * Opens a connection to @a address and returns immediately. The
      * connected() signal is emitted when the connection is ready to use.
@@ -92,7 +95,19 @@ public:
      */
     void connect(Address const &address);
 
-    virtual ~Socket();
+    /**
+     * Opens a connection to a host and returns immediately. If the IP address
+     * is not known, this must be called instead of connect() as Address does
+     * not work with domain names.
+     *
+     * The connected() signal is emitted when the connection is ready to use. A
+     * disconnected() signal is emitted if the domain name lookup fails.
+     *
+     * @param domainNameWithOptionalPort  Domain name or IP address, with
+     * optional port appended (e.g., "myhost.com:13209").
+     * @param defaultPort  Port number to use if not specified in the first argument.
+     */
+    void connectToDomain(String const &domainNameWithOptionalPort, duint16 defaultPort = 0);
 
     /**
      * Returns the currently active channel.
@@ -175,9 +190,9 @@ public:
     void close();
 
 signals:
+    void addressResolved();
     void connected();
     void messagesReady();
-    void connectionFailure();
     void disconnected();
 
 public slots:
@@ -186,6 +201,7 @@ public slots:
     void readIncomingBytes();
 
 private slots:
+    void hostResolved(QHostInfo const &);
     void bytesWereWritten(qint64 bytes);
     void socketDestroyed();
 
