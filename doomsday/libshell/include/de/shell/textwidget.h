@@ -84,15 +84,15 @@ public:
     void drawAndShow();
 
     /**
-     * Defines the placement of the widget on the target canvas.
-     *
-     * @param rule  Rectangle that the widget occupied.
-     *              Widget takes ownership.
+     * Returns the rule rectangle that defines the placement of the widget on
+     * the target canvas.
      */
-    void setRule(RuleRectangle *rule);
-
     RuleRectangle &rule();
 
+    /**
+     * Returns the rule rectangle that defines the placement of the widget on
+     * the target canvas.
+     */
     RuleRectangle const &rule() const;
 
     /**

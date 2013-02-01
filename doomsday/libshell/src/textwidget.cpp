@@ -85,13 +85,6 @@ void TextWidget::drawAndShow()
     }
 }
 
-void TextWidget::setRule(RuleRectangle *rule)
-{
-    DENG2_ASSERT(rule != 0);
-    delete d->rule;
-    d->rule = rule;
-}
-
 RuleRectangle &TextWidget::rule()
 {
     DENG2_ASSERT(d->rule != 0);
