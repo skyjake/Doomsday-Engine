@@ -166,12 +166,15 @@ void Mobj_XYMoveStopping(mobj_t* mo)
 
 boolean Mobj_IsPlayerClMobj(mobj_t* mo)
 {
-    int i;
-
-    for(i = 0; i < MAXPLAYERS; i++)
+    if(IS_CLIENT)
     {
-        if(ClPlayer_ClMobj(i) == mo)
-            return true;
+        int i;
+
+        for(i = 0; i < MAXPLAYERS; i++)
+        {
+            if(ClPlayer_ClMobj(i) == mo)
+                return true;
+        }
     }
     return false;
 }
