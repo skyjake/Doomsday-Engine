@@ -1319,13 +1319,10 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
     }
 #endif
 #ifdef __SERVER__
-    {
-        // Tell clients to skip.
-        Sv_Finale(fi->_id, FINF_SKIP, 0);
-        return FinaleInterpreter_Skip(fi);
-    }
+    // Tell clients to skip.
+    Sv_Finale(fi->_id, FINF_SKIP, 0);
 #endif
-    return false;
+    return FinaleInterpreter_Skip(fi);
 }
 
 DEFFC(Do)
