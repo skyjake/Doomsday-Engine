@@ -24,19 +24,26 @@ namespace shell {
 
 void LineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 {
+    QChar const newline('\n');
+
     clear();
 
     int const lineWidth = maxWidth;
     int begin = 0;
     forever
     {
-        int end = begin + lineWidth;
-        if(end >= text.size())
+        // Newlines always cause a wrap.
+        int end = begin;
+        while(end < begin + lineWidth &&
+              end < text.size() && text.at(end) != newline) ++end;
+
+        if(end == text.size())
         {
             // Time to stop.
             append(WrappedLine(begin, text.size()));
             break;
         }
+
         // Find a good break point.
         while(!text.at(end).isSpace())
         {
@@ -48,9 +55,19 @@ void LineWrapping::wrapTextToWidth(String const &text, int maxWidth)
                 break;
             }
         }
-        if(text.at(end).isSpace()) ++end;
-        append(WrappedLine(begin, end));
-        begin = end;
+
+        if(text.at(end) == newline)
+        {
+            // The newline will be omitted from the wrapped lines.
+            append(WrappedLine(begin, end));
+            begin = end + 1;
+        }
+        else
+        {
+            if(text.at(end).isSpace()) ++end;
+            append(WrappedLine(begin, end));
+            begin = end;
+        }
     }
 
     // Mark the final line.

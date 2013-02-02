@@ -55,31 +55,11 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
     Instance()
     {
         memset(inputRules, 0, sizeof(inputRules));
-        setup();
-    }
 
-    Instance(Rule const *inLeft, Rule const *inTop, Rule const *inRight, Rule const *inBottom)
-    {
-        memset(inputRules, 0, sizeof(inputRules));
-        inputRules[Left]   = inLeft;
-        inputRules[Top]    = inTop;
-        inputRules[Right]  = inRight;
-        inputRules[Bottom] = inBottom;
-        setup();
-    }
-
-    void setup()
-    {
         // Create the output rules.
         for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
         {
             outputRules[i] = new DelegateRule(*this, i);
-        }
-
-        // Depend on all specified input rules.
-        for(int i = 0; i < int(MAX_INPUT_RULES); ++i)
-        {
-            connectInputToOutputs(InputRule(i), true);
         }
     }
 
@@ -325,14 +305,6 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
 RuleRectangle::RuleRectangle() : d(new Instance)
 {}
 
-RuleRectangle::RuleRectangle(Rule const &left, Rule const &top, Rule const &right, Rule const &bottom)
-    : d(new Instance(&left, &top, &right, &bottom))
-{}
-
-RuleRectangle::RuleRectangle(RuleRectangle const &rect)
-    : d(new Instance(&rect.left(), &rect.top(), &rect.right(), &rect.bottom()))
-{}
-
 RuleRectangle::~RuleRectangle()
 {
     delete d;
@@ -371,6 +343,27 @@ Rule const &RuleRectangle::height() const
 RuleRectangle &RuleRectangle::setInput(InputRule inputRule, Rule const &rule)
 {
     d->setInputRule(inputRule, rule);
+    return *this;
+}
+
+RuleRectangle &RuleRectangle::setLeftTop(Rule const &left, Rule const &top)
+{
+    setInput(RuleRectangle::Left, left);
+    setInput(RuleRectangle::Top,  top);
+    return *this;
+}
+
+RuleRectangle &RuleRectangle::setRightBottom(Rule const &right, Rule const &bottom)
+{
+    setInput(RuleRectangle::Right,  right);
+    setInput(RuleRectangle::Bottom, bottom);
+    return *this;
+}
+
+RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
+{
+    setInput(RuleRectangle::Width,  width);
+    setInput(RuleRectangle::Height, height);
     return *this;
 }
 

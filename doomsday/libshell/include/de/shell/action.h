@@ -33,13 +33,13 @@ class Action : public QObject
     Q_OBJECT
 
 public:
-    Action(KeyEvent const &event, QObject *target = 0, char const *slot = 0);
-
-    Action(String const &label, KeyEvent const &event, QObject *target = 0, char const *slot = 0);
+    Action(String const &label);
 
     Action(String const &label, QObject *target, char const *slot = 0);
 
-    Action(String const &label);
+    Action(String const &label, KeyEvent const &event, QObject *target = 0, char const *slot = 0);
+
+    Action(KeyEvent const &event, QObject *target = 0, char const *slot = 0);
 
     ~Action();
 

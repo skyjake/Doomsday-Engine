@@ -21,8 +21,11 @@
 namespace de {
 namespace shell {
 
-Action::Action(KeyEvent const &event, QObject *target, char const *slot)
-    : _event(event)
+Action::Action(String const &label) : _event(KeyEvent("")), _label(label)
+{}
+
+Action::Action(String const &label, QObject *target, char const *slot)
+    : _event(KeyEvent("")), _label(label)
 {
     if(target && slot)
     {
@@ -39,17 +42,14 @@ Action::Action(String const &label, KeyEvent const &event, QObject *target, char
     }
 }
 
-Action::Action(String const &label, QObject *target, char const *slot)
-    : _event(KeyEvent("")), _label(label)
+Action::Action(KeyEvent const &event, QObject *target, char const *slot)
+    : _event(event)
 {
     if(target && slot)
     {
         connect(this, SIGNAL(triggered()), target, slot);
     }
 }
-
-Action::Action(String const &label) : _event(KeyEvent("")), _label(label)
-{}
 
 Action::~Action()
 {}

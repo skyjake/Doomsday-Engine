@@ -31,7 +31,9 @@ struct RootWidget::Instance
 
     Instance() : focus(0)
     {
-        viewRect = new RuleRectangle(Const(0), Const(0), Const(0), Const(0));
+        viewRect = new RuleRectangle;
+        viewRect->setLeftTop    (Const(0), Const(0))
+                 .setRightBottom(Const(0), Const(0));
     }
 
     ~Instance()

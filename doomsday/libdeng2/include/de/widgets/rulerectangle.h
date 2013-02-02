@@ -57,19 +57,6 @@ public:
 public:
     RuleRectangle();
 
-    /**
-     * Constructs a rectangle rule with individual rules defining the placement
-     * of the rectangle. References are kept to all non-NULL rules.
-     *
-     * @param left    Rule for the left coordinate.
-     * @param top     Rule for the top coordinate.
-     * @param right   Rule for the right coordinate.
-     * @param bottom  Rule for the bottom coordinate.
-     */
-    RuleRectangle(Rule const &left, Rule const &top, Rule const &right, Rule const &bottom);
-
-    RuleRectangle(RuleRectangle const &rect);
-
     ~RuleRectangle();
 
     // Output rules.
@@ -87,6 +74,10 @@ public:
      * @param rule       Rule to use as input. A reference is held.
      */
     RuleRectangle &setInput(InputRule inputRule, Rule const &rule);
+
+    RuleRectangle &setLeftTop(Rule const &left, Rule const &top);
+    RuleRectangle &setRightBottom(Rule const &right, Rule const &bottom);
+    RuleRectangle &setSize(Rule const &width, Rule const &height);
 
     /**
      * Returns an input rule.
