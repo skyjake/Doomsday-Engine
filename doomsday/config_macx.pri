@@ -94,8 +94,8 @@ isEmpty(qtbase):!isEmpty(QMAKE_MAC_SDK) {
 
 # What's our arch?
 archs = "Architectures:"
-ppc: archs += ppc32
-x86: archs += intel32
+   ppc: archs += ppc32
+   x86: archs += intel32
 x86_64: archs += intel64
 echo($$archs)
 

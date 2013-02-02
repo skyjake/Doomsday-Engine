@@ -11,8 +11,10 @@ CONFIG -= app_bundle
 win32: CONFIG += console
 QT -= core gui
 
-*-g++* | *-gcc* | *-clang* {
-    QMAKE_CFLAGS_WARN_ON += -Wno-unused-result
+!deng_macx4u_32bit : !deng_macx6_32bit_64bit {
+    *-g++* | *-gcc* | *-clang* {
+        QMAKE_CFLAGS_WARN_ON += -Wno-unused-result
+    }
 }
 
 SOURCES += md2tool.c
