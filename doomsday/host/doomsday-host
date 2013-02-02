@@ -242,8 +242,8 @@ class State:
             #msg('PATH=' + os.getenv('PATH'))
             #msg('HOME=' + os.getenv('HOME'))
             #msg('Start options: ' + string.join(args, ' '))
-            outfile = file(os.path.join(sv.runtime, 'stdout-%s.log' % timestamp), 'wt')
-            po = subprocess.Popen(args, stdout=outfile, stderr=outfile)
+            #outfile = file(os.path.join(sv.runtime, 'stdout-%s.log' % timestamp), 'wt')
+            po = subprocess.Popen(args) #, stdout=outfile, stderr=outfile)
             pid = po.pid
             time.sleep(3)
             if po.poll() is not None:
