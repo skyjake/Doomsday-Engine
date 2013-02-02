@@ -1,4 +1,4 @@
-/** @file shellapp.h Doomsday shell connection app.
+/** @file aboutdialog.h  Dialog for information about the program.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,36 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SHELLAPP_H
-#define SHELLAPP_H
+#ifndef ABOUTDIALOG_H
+#define ABOUTDIALOG_H
 
-#include "cursesapp.h"
-#include <de/Address>
+#include <de/shell/DialogWidget>
 
-class ShellApp : public CursesApp
+/**
+ * Dialog for information about the program.
+ */
+class AboutDialog : public de::shell::DialogWidget
 {
-    Q_OBJECT
-
 public:
-    ShellApp(int &argc, char **argv);
+    AboutDialog();
 
-    ~ShellApp();
-
-    void openConnection(de::String const &address);
-
-public slots:
-    void showAbout();
-    void askToOpenConnection();
-    void closeConnection();
-    void sendCommandToServer(de::String command);
-    void handleIncomingPackets();
-    void disconnected();
-    void openMenu();
-    void menuClosed();
-
-private:
-    struct Instance;
-    Instance *d;
+    bool handleEvent(de::Event const *event);
 };
 
-#endif // SHELLAPP_H
+#endif // ABOUTDIALOG_H

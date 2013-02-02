@@ -21,6 +21,7 @@
 #include "commandlinewidget.h"
 #include "statuswidget.h"
 #include "openconnectiondialog.h"
+#include "aboutdialog.h"
 #include <de/shell/LabelWidget>
 #include <de/shell/MenuWidget>
 #include <de/shell/Link>
@@ -94,7 +95,7 @@ struct ShellApp::Instance
         menu->appendSeparator();
         menu->appendItem(new Action(tr("Start new server")));
         menu->appendSeparator();
-        menu->appendItem(new Action(tr("About")));
+        menu->appendItem(new Action(tr("About"), &self, SLOT(showAbout())));
         menu->appendItem(new Action(tr("Quit Shell"),
                                     KeyEvent(Qt::Key_X, KeyEvent::Control),
                                     &self, SLOT(quit())), "Ctrl-X");
@@ -157,14 +158,9 @@ void ShellApp::openConnection(String const &address)
     connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
 }
 
-void ShellApp::askToOpenConnection()
+void ShellApp::showAbout()
 {
-    OpenConnectionDialog dlg;
-    dlg.exec(rootWidget());
-    if(!dlg.address().isEmpty())
-    {
-        openConnection(dlg.address());
-    }
+    AboutDialog().exec(rootWidget());
 }
 
 void ShellApp::closeConnection()
@@ -179,6 +175,16 @@ void ShellApp::closeConnection()
         delete d->link;
         d->link = 0;
         d->status->setShellLink(0);
+    }
+}
+
+void ShellApp::askToOpenConnection()
+{
+    OpenConnectionDialog dlg;
+    dlg.exec(rootWidget());
+    if(!dlg.address().isEmpty())
+    {
+        openConnection(dlg.address());
     }
 }
 
