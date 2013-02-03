@@ -19,6 +19,7 @@
 #ifndef LOCALSERVERDIALOG_H
 #define LOCALSERVERDIALOG_H
 
+#include <de/libdeng2.h>
 #include <de/shell/InputDialog>
 
 class LocalServerDialog : public de::shell::InputDialog
@@ -26,6 +27,10 @@ class LocalServerDialog : public de::shell::InputDialog
 public:
     LocalServerDialog();
     ~LocalServerDialog();
+
+    de::duint16 port() const;
+
+    de::String gameMode() const;
 
 protected:
     void prepare();

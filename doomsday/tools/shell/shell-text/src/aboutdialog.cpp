@@ -34,7 +34,7 @@ AboutDialog::AboutDialog()
     label->setExpandsToFitLines(true);
     label->rule()
             .setLeftTop(rule().left(), rule().top())
-            .setInput(RuleRectangle::Width, rule().width());
+            .setInput(Rule::Width, rule().width());
 
     add(label);
 

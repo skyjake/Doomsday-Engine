@@ -29,6 +29,7 @@ using namespace de::shell;
 struct LocalServerDialog::Instance
 {
     ChoiceWidget *choice;
+    LineEditWidget *port;
 };
 
 static struct
@@ -38,7 +39,7 @@ static struct
 }
 gameModes[] =
 {
-    { "None",                                   "" },
+    //{ "None",                                   "" },
 
     { "Shareware DOOM",                         "doom1-share" },
     { "DOOM",                                   "doom1" },
@@ -63,8 +64,12 @@ gameModes[] =
 
 LocalServerDialog::LocalServerDialog() : d(new Instance)
 {
-    d->choice = new ChoiceWidget(String("#%1.choice").arg(id()));
+    d->choice = new ChoiceWidget("gameMode");
+    d->port = new LineEditWidget("serverPort");
+    add(d->choice);
+    add(d->port);
 
+    // Define the contents for the choice list.
     ChoiceWidget::Items modes;
     for(int i = 0; gameModes[i].name; ++i)
     {
@@ -74,27 +79,31 @@ LocalServerDialog::LocalServerDialog() : d(new Instance)
     d->choice->setPrompt(tr("Game mode: "));
     d->choice->setBackground(TextCanvas::Char(' ', TextCanvas::Char::Reverse));
 
-    setFocusCycle(WidgetList()
-                  << d->choice
-                  << &lineEdit()
-                  << &menu());
-
-    add(d->choice);
+    setFocusCycle(WidgetList() << d->choice << d->port << &lineEdit() << &menu());
 
     d->choice->rule()
-            .setInput(RuleRectangle::Height, Const(1))
-            .setInput(RuleRectangle::Width,  rule().width())
-            .setInput(RuleRectangle::Left,   rule().left())
-            .setInput(RuleRectangle::Top,    label().rule().bottom() + 1);
+            .setInput(Rule::Height, Const(1))
+            .setInput(Rule::Width,  rule().width())
+            .setInput(Rule::Left,   rule().left())
+            .setInput(Rule::Top,    label().rule().bottom() + 1);
+
+    d->port->setPrompt(tr("TCP port: "));
+    d->port->setText("13209");
+
+    d->port->rule()
+            .setInput(Rule::Width,  Const(16))
+            .setInput(Rule::Left,   rule().left())
+            .setInput(Rule::Top,    d->choice->rule().bottom() + 1);
 
     lineEdit().rule()
-            .setInput(RuleRectangle::Top,    d->choice->rule().bottom() + 1);
+            .setInput(Rule::Top,    d->port->rule().bottom() + 1);
 
-    rule().setInput(RuleRectangle::Height,
-                    label().rule().height() +
+    rule().setInput(Rule::Height,
+                    label().rule()   .height() +
                     d->choice->rule().height() +
+                    d->port->rule()  .height() +
                     lineEdit().rule().height() +
-                    menu().rule().height() + 3);
+                    menu().rule()    .height() + 4);
 
     setDescription(tr("Specify the settings for starting a new local server."));
 
@@ -106,6 +115,16 @@ LocalServerDialog::LocalServerDialog() : d(new Instance)
 LocalServerDialog::~LocalServerDialog()
 {
     delete d;
+}
+
+duint16 LocalServerDialog::port() const
+{
+    return d->port->text().toInt();
+}
+
+String LocalServerDialog::gameMode() const
+{
+    return gameModes[d->choice->selection()].mode;
 }
 
 void LocalServerDialog::prepare()

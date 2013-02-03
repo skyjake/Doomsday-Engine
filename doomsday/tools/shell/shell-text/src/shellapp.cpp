@@ -25,8 +25,9 @@
 #include "aboutdialog.h"
 #include <de/shell/LabelWidget>
 #include <de/shell/MenuWidget>
-#include <de/shell/Link>
 #include <de/shell/Action>
+#include <de/shell/Link>
+#include <de/shell/LocalServer>
 #include <de/LogBuffer>
 #include <QStringList>
 
@@ -50,10 +51,10 @@ struct ShellApp::Instance
         // Status bar in the bottom of the view.
         status = new StatusWidget;
         status->rule()
-                .setInput(RuleRectangle::Height, Const(1))
-                .setInput(RuleRectangle::Bottom, root.viewBottom())
-                .setInput(RuleRectangle::Width,  root.viewWidth())
-                .setInput(RuleRectangle::Left,   root.viewLeft());
+                .setInput(Rule::Height, Const(1))
+                .setInput(Rule::Bottom, root.viewBottom())
+                .setInput(Rule::Width,  root.viewWidth())
+                .setInput(Rule::Left,   root.viewLeft());
 
         // Menu button at the left edge.
         menuLabel = new LabelWidget;
@@ -61,9 +62,9 @@ struct ShellApp::Instance
         menuLabel->setLabel(tr(" F9:Menu "));
         menuLabel->setAttribs(TextCanvas::Char::Bold);
         menuLabel->rule()
-                .setInput(RuleRectangle::Left,   root.viewLeft())
-                .setInput(RuleRectangle::Width,  Const(menuLabel->label().size()))
-                .setInput(RuleRectangle::Bottom, status->rule().top());
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Width,  Const(menuLabel->label().size()))
+                .setInput(Rule::Bottom, status->rule().top());
 
         menuLabel->addAction(new Action(KeyEvent(Qt::Key_F9), &self, SLOT(openMenu())));
         menuLabel->addAction(new Action(KeyEvent(Qt::Key_Z, KeyEvent::Control), &self, SLOT(openMenu())));
@@ -73,19 +74,19 @@ struct ShellApp::Instance
         // Expanding command line widget.
         cli = new CommandLineWidget;
         cli->rule()
-                .setInput(RuleRectangle::Left,   menuLabel->rule().right())
-                .setInput(RuleRectangle::Right,  root.viewRight())
-                .setInput(RuleRectangle::Bottom, status->rule().top());
+                .setInput(Rule::Left,   menuLabel->rule().right())
+                .setInput(Rule::Right,  root.viewRight())
+                .setInput(Rule::Bottom, status->rule().top());
 
-        menuLabel->rule().setInput(RuleRectangle::Top, cli->rule().top());
+        menuLabel->rule().setInput(Rule::Top, cli->rule().top());
 
         // Log history covers the rest of the view.
         log = new LogWidget;
         log->rule()
-                .setInput(RuleRectangle::Left,   root.viewLeft())
-                .setInput(RuleRectangle::Width,  root.viewWidth())
-                .setInput(RuleRectangle::Top,    root.viewTop())
-                .setInput(RuleRectangle::Bottom, cli->rule().top());
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Width,  root.viewWidth())
+                .setInput(Rule::Top,    root.viewTop())
+                .setInput(Rule::Bottom, cli->rule().top());
 
         // Main menu.
         menu = new MenuWidget(MenuWidget::Popup);
@@ -101,8 +102,8 @@ struct ShellApp::Instance
                                     KeyEvent(Qt::Key_X, KeyEvent::Control),
                                     &self, SLOT(quit())), "Ctrl-X");
         menu->rule()
-                .setInput(RuleRectangle::Bottom, menuLabel->rule().top())
-                .setInput(RuleRectangle::Left,   menuLabel->rule().left());
+                .setInput(Rule::Bottom, menuLabel->rule().top())
+                .setInput(Rule::Left,   menuLabel->rule().left());
 
         // Compose the UI.
         root.add(status);
@@ -130,6 +131,9 @@ ShellApp::ShellApp(int &argc, char **argv)
     LogBuffer &buf = LogBuffer::appBuffer();
     buf.setMaxEntryCount(50); // buffered here rather than appBuffer
     buf.addSink(d->log->logSink());
+#ifdef _DEBUG
+    buf.enable(LogEntry::DEBUG);
+#endif
 
     QStringList args = arguments();
     if(args.size() > 1)
@@ -152,7 +156,8 @@ void ShellApp::openConnection(String const &address)
 
     LOG_INFO("Opening connection to %s") << address;
 
-    d->link = new Link(address);
+    // Keep trying to connect to 30 seconds.
+    d->link = new Link(address, 30);
     d->status->setShellLink(d->link);
 
     connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
@@ -191,10 +196,15 @@ void ShellApp::askToOpenConnection()
 
 void ShellApp::askToStartLocalServer()
 {
+    closeConnection();
+
     LocalServerDialog dlg;
     if(dlg.exec(rootWidget()))
     {
+        LocalServer sv;
+        sv.start(dlg.port(), dlg.gameMode());
 
+        openConnection("localhost:" + String::number(dlg.port()));
     }
 }
 
