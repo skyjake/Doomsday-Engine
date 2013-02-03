@@ -26,7 +26,10 @@
 
 namespace de {
 
+class Widget;
 class RootWidget;
+
+typedef QList<Widget *> WidgetList;
 
 /**
  * Base class for widgets.
@@ -50,7 +53,7 @@ public:
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)
 
-    typedef QList<Widget *> Children;
+    typedef WidgetList Children;
 
 public:
     Widget(String const &name = "");
@@ -82,13 +85,22 @@ public:
 
     /**
      * Sets the identifier of the widget that will receive focus when
-     * a focus navigation is requested.
+     * a forward focus navigation is requested.
      *
-     * @param name  Name of a widget.
+     * @param name  Name of a widget for forwards navigation.
      */
     void setFocusNext(String const &name);
 
+    /**
+     * Sets the identifier of the widget that will receive focus when
+     * a backwards focus navigation is requested.
+     *
+     * @param name  Name of a widget for backwards navigation.
+     */
+    void setFocusPrev(String const &name);
+
     String focusNext() const;
+    String focusPrev() const;
 
     // Tree organization.
     void clear();
@@ -107,10 +119,15 @@ public:
     // Events.
     virtual void initialize();
     virtual void viewResized();
+    virtual void focusGained();
+    virtual void focusLost();
     virtual void update();
     virtual void drawIfVisible();
     virtual void draw();
     virtual bool handleEvent(Event const *event);
+
+public:
+    static void setFocusCycle(WidgetList const &order);
 
 private:
     struct Instance;

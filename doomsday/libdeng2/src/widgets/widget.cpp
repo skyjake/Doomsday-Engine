@@ -34,6 +34,7 @@ struct Widget::Instance
     Widget *parent;
     Behaviors behavior;
     String focusNext;
+    String focusPrev;
 
     typedef QList<Widget *> Children;
     typedef QMap<String, Widget *> NamedChildren;
@@ -67,6 +68,11 @@ Widget::Widget(String const &name) : d(new Instance(*this, name))
 
 Widget::~Widget()
 {
+    if(hasRoot() && root().focus() == this)
+    {
+        root().setFocus(0);
+    }
+
     // Remove from parent automatically.
     if(d->parent)
     {
@@ -167,9 +173,19 @@ void Widget::setFocusNext(String const &name)
     d->focusNext = name;
 }
 
+void Widget::setFocusPrev(String const &name)
+{
+    d->focusPrev = name;
+}
+
 String Widget::focusNext() const
 {
     return d->focusNext;
+}
+
+String Widget::focusPrev() const
+{
+    return d->focusPrev;
 }
 
 void Widget::clear()
@@ -299,6 +315,12 @@ void Widget::initialize()
 void Widget::viewResized()
 {}
 
+void Widget::focusGained()
+{}
+
+void Widget::focusLost()
+{}
+
 void Widget::update()
 {}
 
@@ -317,6 +339,18 @@ bool Widget::handleEvent(Event const *)
 {
     // Event is not handled.
     return false;
+}
+
+void Widget::setFocusCycle(WidgetList const &order)
+{
+    for(int i = 0; i < order.size(); ++i)
+    {
+        Widget *a = order[i];
+        Widget *b = order[(i + 1) % order.size()];
+
+        a->setFocusNext(b->name());
+        b->setFocusPrev(a->name());
+    }
 }
 
 } // namespace de
