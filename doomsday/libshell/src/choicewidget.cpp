@@ -27,10 +27,11 @@ struct ChoiceWidget::Instance
 {
     ChoiceWidget &self;
     Items items;
+    int selection;
     MenuWidget *menu;
     String prompt;
 
-    Instance(ChoiceWidget &inst) : self(inst)
+    Instance(ChoiceWidget &inst) : self(inst), selection(0)
     {}
 
     void updateMenu()
@@ -40,11 +41,12 @@ struct ChoiceWidget::Instance
         {
             menu->appendItem(new Action(item, &self, SLOT(updateSelectionFromMenu())));
         }
+        menu->setCursor(selection);
     }
 
     void updateLabel()
     {
-        self.setLabel(prompt + items[menu->cursor()], self.attribs());
+        self.setLabel(prompt + items[selection], self.attribs());
     }
 };
 
@@ -92,19 +94,20 @@ ChoiceWidget::Items ChoiceWidget::items() const
 
 void ChoiceWidget::select(int pos)
 {
+    d->selection = pos;
     d->menu->setCursor(pos);
     d->updateLabel();
 }
 
 int ChoiceWidget::selection() const
 {
-    return d->menu->cursor();
+    return d->selection;
 }
 
 QList<int> ChoiceWidget::selections() const
 {
     QList<int> sels;
-    sels.append(selection());
+    sels.append(d->selection);
     return sels;
 }
 
@@ -152,6 +155,24 @@ bool ChoiceWidget::handleEvent(Event const *ev)
                 event->key() == Qt::Key_Down)
         {
             DENG2_ASSERT(!isOpen());
+            if(event->text().isEmpty())
+            {
+                d->menu->setCursor(d->selection);
+            }
+            else
+            {
+                // Preselect the first item that begins with the given letter.
+                int curs = d->selection;
+                for(int i = 0; i < d->items.size(); ++i)
+                {
+                    if(d->items[i].toLower().startsWith(event->text().toLower()))
+                    {
+                        curs = i;
+                        break;
+                    }
+                }
+                d->menu->setCursor(curs);
+            }
             d->menu->open();
             return true;
         }
@@ -163,6 +184,7 @@ bool ChoiceWidget::handleEvent(Event const *ev)
 void ChoiceWidget::updateSelectionFromMenu()
 {
     DENG2_ASSERT(isOpen());
+    d->selection = d->menu->cursor();
     d->updateLabel();
 }
 
