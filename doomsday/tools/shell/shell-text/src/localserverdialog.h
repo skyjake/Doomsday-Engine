@@ -1,4 +1,4 @@
-/** @file shellapp.h Doomsday shell connection app.
+/** @file localserverdialog.h  Dialog for starting a local server.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,37 +16,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SHELLAPP_H
-#define SHELLAPP_H
+#ifndef LOCALSERVERDIALOG_H
+#define LOCALSERVERDIALOG_H
 
-#include "cursesapp.h"
-#include <de/Address>
+#include <de/shell/InputDialog>
 
-class ShellApp : public CursesApp
+class LocalServerDialog : public de::shell::InputDialog
 {
-    Q_OBJECT
-
 public:
-    ShellApp(int &argc, char **argv);
+    LocalServerDialog();
+    ~LocalServerDialog();
 
-    ~ShellApp();
-
-    void openConnection(de::String const &address);
-
-public slots:
-    void showAbout();
-    void askToOpenConnection();
-    void askToStartLocalServer();
-    void closeConnection();
-    void sendCommandToServer(de::String command);
-    void handleIncomingPackets();
-    void disconnected();
-    void openMenu();
-    void menuClosed();
+protected:
+    void prepare();
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // SHELLAPP_H
+#endif // LOCALSERVERDIALOG_H

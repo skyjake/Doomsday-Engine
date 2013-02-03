@@ -21,6 +21,7 @@
 #include "commandlinewidget.h"
 #include "statuswidget.h"
 #include "openconnectiondialog.h"
+#include "localserverdialog.h"
 #include "aboutdialog.h"
 #include <de/shell/LabelWidget>
 #include <de/shell/MenuWidget>
@@ -93,7 +94,7 @@ struct ShellApp::Instance
                                     &self, SLOT(askToOpenConnection())), "O");
         menu->appendItem(new Action(tr("Disconnect"), &self, SLOT(closeConnection())));
         menu->appendSeparator();
-        menu->appendItem(new Action(tr("Start new server")));
+        menu->appendItem(new Action(tr("Start new server"), &self, SLOT(askToStartLocalServer())));
         menu->appendSeparator();
         menu->appendItem(new Action(tr("About"), &self, SLOT(showAbout())));
         menu->appendItem(new Action(tr("Quit Shell"),
@@ -185,6 +186,15 @@ void ShellApp::askToOpenConnection()
     if(!dlg.address().isEmpty())
     {
         openConnection(dlg.address());
+    }
+}
+
+void ShellApp::askToStartLocalServer()
+{
+    LocalServerDialog dlg;
+    if(dlg.exec(rootWidget()))
+    {
+
     }
 }
 

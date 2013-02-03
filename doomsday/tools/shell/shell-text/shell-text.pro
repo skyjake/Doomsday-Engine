@@ -32,7 +32,8 @@ HEADERS += \
     src/shellapp.h \
     src/statuswidget.h \
     src/openconnectiondialog.h \
-    src/aboutdialog.h
+    src/aboutdialog.h \
+    src/localserverdialog.h
 
 SOURCES += \
     src/commandlinewidget.cpp \
@@ -43,7 +44,8 @@ SOURCES += \
     src/shellapp.cpp \
     src/statuswidget.cpp \
     src/openconnectiondialog.cpp \
-    src/aboutdialog.cpp
+    src/aboutdialog.cpp \
+    src/localserverdialog.cpp
 
 # Installation --------------------------------------------------------------
 
