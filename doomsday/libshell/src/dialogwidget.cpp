@@ -61,8 +61,8 @@ int DialogWidget::exec(TextRootWidget &root)
     root.add(this);
 
     // Center the dialog.
-    rule().setInput(RuleRectangle::Left,  (root.viewWidth()  - rule().width())  / 2)
-          .setInput(RuleRectangle::Top,   (root.viewHeight() - rule().height()) / 2);
+    rule().setInput(Rule::Left,  (root.viewWidth()  - rule().width())  / 2)
+          .setInput(Rule::Top,   (root.viewHeight() - rule().height()) / 2);
 
     prepare();
 

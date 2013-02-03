@@ -43,7 +43,6 @@ struct InputDialog::Instance
 InputDialog::InputDialog(String const &name)
     : DialogWidget(name), d(new Instance)
 {
-    String prefix = '#' + String::number(id());
     RuleRectangle &rect = rule();
 
     // Label.
@@ -51,20 +50,22 @@ InputDialog::InputDialog(String const &name)
     d->label->setExpandsToFitLines(true); // determines height independently
 
     d->label->rule()
-            .setInput(RuleRectangle::Width, rect.width())
-            .setInput(RuleRectangle::Top,   rect.top())
-            .setInput(RuleRectangle::Left,  rect.left());
+            .setInput(Rule::Width, rect.width())
+            .setInput(Rule::Top,   rect.top())
+            .setInput(Rule::Left,  rect.left());
 
     // Address editor.
-    d->edit = new LineEditWidget(prefix + ".edit");
+    d->edit = new LineEditWidget;
+    d->edit->setName(d->edit->uniqueName("edit"));
 
     d->edit->rule()
-            .setInput(RuleRectangle::Width, rect.width())
-            .setInput(RuleRectangle::Left,  rect.left())
-            .setInput(RuleRectangle::Top,   d->label->rule().bottom() + 1);
+            .setInput(Rule::Width, rect.width())
+            .setInput(Rule::Left,  rect.left())
+            .setInput(Rule::Top,   d->label->rule().bottom() + 1);
 
     // Menu for actions.
-    d->menu = new MenuWidget(MenuWidget::AlwaysOpen, prefix + ".menu");
+    d->menu = new MenuWidget(MenuWidget::AlwaysOpen);
+    d->menu->setName(d->menu->uniqueName("menu"));
     d->menu->setBorder(MenuWidget::NoBorder);
     d->menu->setBackgroundAttribs(TextCanvas::Char::DefaultAttributes);
     d->menu->setSelectionAttribs(TextCanvas::Char::Reverse);
@@ -73,9 +74,9 @@ InputDialog::InputDialog(String const &name)
                                    this, SLOT(reject())), "Ctrl-C");
 
     d->menu->rule()
-            .setInput(RuleRectangle::Width,  rect.width())
-            .setInput(RuleRectangle::Left,   rect.left())
-            .setInput(RuleRectangle::Bottom, rect.bottom());
+            .setInput(Rule::Width,  rect.width())
+            .setInput(Rule::Left,   rect.left())
+            .setInput(Rule::Bottom, rect.bottom());
 
     add(d->label);
     add(d->edit);
@@ -84,8 +85,8 @@ InputDialog::InputDialog(String const &name)
     setFocusCycle(WidgetList() << d->edit << d->menu);
 
     // Outer dimensions.
-    rect.setInput(RuleRectangle::Width, Const(50));
-    rect.setInput(RuleRectangle::Height,
+    rect.setInput(Rule::Width, Const(50));
+    rect.setInput(Rule::Height,
                   d->menu->rule().height() +
                   d->edit->rule().height() +
                   d->label->rule().height() + 2);
@@ -113,7 +114,7 @@ MenuWidget &InputDialog::menu()
 
 void InputDialog::setWidth(int width)
 {
-    rule().setInput(RuleRectangle::Width, Const(width));
+    rule().setInput(Rule::Width, Const(width));
 }
 
 void InputDialog::setDescription(String const &desc)

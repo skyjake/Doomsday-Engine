@@ -128,8 +128,7 @@ MenuWidget::MenuWidget(Preset preset, String const &name)
         break;
     }
 
-    rule().setInput(RuleRectangle::Width,  *d->width)
-          .setInput(RuleRectangle::Height, *d->height);
+    rule().setSize(*d->width, *d->height);
 }
 
 MenuWidget::~MenuWidget()
@@ -408,7 +407,7 @@ bool MenuWidget::handleEvent(Event const *event)
         // Look for an item that begins with the letter.
         for(int i = 0; i < d->items.size(); ++i)
         {
-            int idx = (i + d->cursor + 1) % d->items.size();
+            int idx = (d->cursor + i + 1) % d->items.size();
             if(d->items[idx].action->label().toLower().startsWith(ev->text().toLower()))
             {
                 setCursor(idx);

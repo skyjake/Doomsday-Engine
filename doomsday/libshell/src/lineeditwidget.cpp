@@ -167,7 +167,7 @@ LineEditWidget::LineEditWidget(de::String const &name)
 {
     setBehavior(HandleEventsOnlyWhenFocused);
 
-    rule().setInput(RuleRectangle::Height, *d->height);
+    rule().setInput(Rule::Height, *d->height);
 }
 
 LineEditWidget::~LineEditWidget()
@@ -178,6 +178,7 @@ LineEditWidget::~LineEditWidget()
 void LineEditWidget::setPrompt(String const &promptText)
 {
     d->prompt = promptText;
+    d->wraps.clear();
 
     if(hasRoot())
     {
@@ -195,6 +196,14 @@ Vector2i LineEditWidget::cursorPosition() const
 void LineEditWidget::viewResized()
 {
     d->updateWrapsAndHeight();
+}
+
+void LineEditWidget::update()
+{
+    if(d->wraps.isEmpty())
+    {
+        d->updateWrapsAndHeight();
+    }
 }
 
 void LineEditWidget::draw()
@@ -304,8 +313,13 @@ void LineEditWidget::setText(String const &contents)
 {
     d->text = contents;
     d->cursor = contents.size();
-    d->updateWrapsAndHeight();
-    redraw();
+    d->wraps.clear();
+
+    if(hasRoot())
+    {
+        d->updateWrapsAndHeight();
+        redraw();
+    }
 }
 
 String LineEditWidget::text() const

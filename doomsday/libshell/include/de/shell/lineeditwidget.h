@@ -72,6 +72,7 @@ public:
 
     // Events.
     void viewResized();
+    void update();
     void draw();
     bool handleEvent(Event const *event);
 

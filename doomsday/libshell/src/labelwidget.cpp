@@ -100,7 +100,7 @@ void LabelWidget::setExpandsToFitLines(bool expand)
     d->vertExpand = expand;
     if(expand)
     {
-        rule().setInput(RuleRectangle::Height, *d->height);
+        rule().setInput(Rule::Height, *d->height);
     }
     redraw();
 }

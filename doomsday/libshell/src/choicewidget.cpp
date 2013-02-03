@@ -57,13 +57,12 @@ ChoiceWidget::ChoiceWidget(const String &name)
     setAlignment(AlignLeft);
 
     d->menu = new MenuWidget(MenuWidget::Popup);
+    add(d->menu);
 
     d->menu->rule()
-            .setInput(RuleRectangle::Right, rule().right())
-            .setInput(RuleRectangle::AnchorY, rule().top())
+            .setInput(Rule::Right, rule().right())
+            .setInput(Rule::AnchorY, rule().top())
             .setAnchorPoint(Vector2f(0, .5f));
-
-    add(d->menu);
 
     connect(d->menu, SIGNAL(closed()), this, SLOT(menuClosed()));
 }
@@ -173,6 +172,8 @@ bool ChoiceWidget::handleEvent(Event const *ev)
                 }
                 d->menu->setCursor(curs);
             }
+            remove(*d->menu);
+            root().add(d->menu);
             d->menu->open();
             return true;
         }
@@ -191,7 +192,10 @@ void ChoiceWidget::updateSelectionFromMenu()
 void ChoiceWidget::menuClosed()
 {
     root().setFocus(this);
+    root().remove(*d->menu);
     redraw();
+
+    add(d->menu);
 }
 
 } // namespace shell

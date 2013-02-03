@@ -22,6 +22,7 @@
 #include <de/Socket>
 #include <de/Time>
 #include <de/Log>
+#include <QTimer>
 
 namespace de {
 namespace shell {
@@ -29,6 +30,9 @@ namespace shell {
 struct Link::Instance
 {
     Link &self;
+    String tryingToConnectToHost;
+    Time startedTryingAt;
+    TimeDelta timeout;
     Address peerAddress;
     Socket *socket;
     Protocol protocol;
@@ -47,7 +51,7 @@ struct Link::Instance
     }
 };
 
-Link::Link(String const &domain) : d(new Instance(*this))
+Link::Link(String const &domain, TimeDelta const &timeout) : d(new Instance(*this))
 {
     d->socket = new Socket;
 
@@ -57,9 +61,12 @@ Link::Link(String const &domain) : d(new Instance(*this))
     connect(d->socket, SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
 
     // Fallback to default port.
-    d->socket->connectToDomain(domain, 13209);
+    d->tryingToConnectToHost = domain;
+    d->socket->connectToDomain(d->tryingToConnectToHost, 13209 /* default port */);
 
     d->status = Connecting;
+    d->startedTryingAt = Time();
+    d->timeout = timeout;
 }
 
 Link::Link(Address const &address) : d(new Instance(*this))
@@ -77,6 +84,8 @@ Link::Link(Address const &address) : d(new Instance(*this))
     d->socket->connect(d->peerAddress);
 
     d->status = Connecting;
+    d->startedTryingAt = Time();
+    d->timeout = 0;
 }
 
 Link::Link(Socket *openSocket) : d(new Instance(*this))
@@ -151,6 +160,17 @@ void Link::socketConnected()
 void Link::socketDisconnected()
 {
     LOG_AS("Link");
+
+    if(d->status == Connecting)
+    {
+        if(d->startedTryingAt.since() < d->timeout)
+        {
+            // Let's try again a bit later.
+            QTimer::singleShot(500, d->socket, SLOT(reconnect()));
+            return;
+        }
+    }
+
     if(!d->peerAddress.isNull())
     {
         LOG_INFO("Disconnected from %s") << d->peerAddress;
