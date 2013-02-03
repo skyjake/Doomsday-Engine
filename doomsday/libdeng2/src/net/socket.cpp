@@ -410,7 +410,7 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) // blocking
 void Socket::connect(Address const &address) // non-blocking
 {    
     DENG2_ASSERT(d->socket);
-    DENG2_ASSERT(!d->socket->isOpen());
+    //DENG2_ASSERT(!d->socket->isOpen());
     DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
 
     LOG_AS("Socket");
@@ -449,6 +449,13 @@ void Socket::connectToDomain(String const &domainNameWithOptionalPort,
 
     // Looks like we will need to look this up.
     QHostInfo::lookupHost(str, this, SLOT(hostResolved(QHostInfo)));
+}
+
+void Socket::reconnect()
+{
+    DENG2_ASSERT(!isOpen());
+
+    connect(d->target);
 }
 
 Socket::Socket(QTcpSocket *existingSocket)

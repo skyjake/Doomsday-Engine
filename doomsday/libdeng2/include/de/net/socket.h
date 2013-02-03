@@ -199,6 +199,7 @@ public slots:
     void socketDisconnected();
     void socketError(QAbstractSocket::SocketError socketError);
     void readIncomingBytes();
+    void reconnect();
 
 private slots:
     void hostResolved(QHostInfo const &);
