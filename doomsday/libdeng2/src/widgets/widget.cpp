@@ -211,6 +211,9 @@ Widget &Widget::add(Widget *child)
 
 Widget *Widget::remove(Widget &child)
 {
+    DENG2_ASSERT(child.d->parent == this);
+    child.d->parent = 0;
+
     d->children.removeOne(&child);
     if(!child.name().isEmpty())
     {
@@ -247,6 +250,11 @@ Widget const *Widget::find(String const &name) const
 Widget *Widget::parent() const
 {
     return d->parent;
+}
+
+String Widget::uniqueName(String const &name) const
+{
+    return String("#%1.%2").arg(id()).arg(name);
 }
 
 void Widget::notifyTree(void (Widget::*notifyFunc)())

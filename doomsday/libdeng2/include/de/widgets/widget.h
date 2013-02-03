@@ -112,6 +112,7 @@ public:
     Widget *parent() const;
 
     // Utilities.
+    String uniqueName(String const &name) const;
     void notifyTree(void (Widget::*notifyFunc)());
     void notifyTreeReversed(void (Widget::*notifyFunc)());
     bool dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event const *));

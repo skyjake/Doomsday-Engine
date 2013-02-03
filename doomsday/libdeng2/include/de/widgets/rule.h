@@ -46,6 +46,19 @@ class DENG2_PUBLIC Rule : public Counted, public DENG2_AUDIENCE_INTERFACE(RuleIn
 public:
     DENG2_AUDIENCE(RuleInvalidation)
 
+    /// Semantic identifiers (e.g., for RuleRectangle).
+    enum Semantic {
+        Left,
+        Top,
+        Right,
+        Bottom,
+        Width,
+        Height,
+        AnchorX,
+        AnchorY,
+        MAX_SEMANTICS
+    };
+
 public:
     Rule();
 

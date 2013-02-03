@@ -93,8 +93,8 @@ Rule const &RootWidget::viewHeight() const
 
 void RootWidget::setViewSize(Vector2i const &size)
 {
-    d->viewRect->setInput(RuleRectangle::Right,  Const(size.x));
-    d->viewRect->setInput(RuleRectangle::Bottom, Const(size.y));
+    d->viewRect->setInput(Rule::Right,  Const(size.x));
+    d->viewRect->setInput(Rule::Bottom, Const(size.y));
 
     notifyTree(&Widget::viewResized);
 }

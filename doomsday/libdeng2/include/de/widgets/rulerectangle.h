@@ -42,19 +42,6 @@ namespace de {
 class DENG2_PUBLIC RuleRectangle : DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
-    enum InputRule {
-        Left,
-        Top,
-        Right,
-        Bottom,
-        Width,
-        Height,
-        AnchorX,
-        AnchorY,
-        MAX_INPUT_RULES
-    };
-
-public:
     RuleRectangle();
 
     ~RuleRectangle();
@@ -70,10 +57,10 @@ public:
     /**
      * Sets one of the input rules of the rectangle.
      *
-     * @param inputRule  InputRule to set.
+     * @param inputRule  Semantic of the input rule.
      * @param rule       Rule to use as input. A reference is held.
      */
-    RuleRectangle &setInput(InputRule inputRule, Rule const &rule);
+    RuleRectangle &setInput(Rule::Semantic inputRule, Rule const &rule);
 
     RuleRectangle &setLeftTop(Rule const &left, Rule const &top);
     RuleRectangle &setRightBottom(Rule const &right, Rule const &bottom);
@@ -82,10 +69,10 @@ public:
     /**
      * Returns an input rule.
      */
-    Rule const &inputRule(InputRule inputRule);
+    Rule const &inputRule(Rule::Semantic inputRule);
 
     template <class RuleType>
-    RuleType const &inputRuleAs(InputRule input) {
+    RuleType const &inputRuleAs(Rule::Semantic input) {
         RuleType const *r = dynamic_cast<RuleType const *>(&inputRule(input));
         DENG2_ASSERT(r != 0);
         return *r;

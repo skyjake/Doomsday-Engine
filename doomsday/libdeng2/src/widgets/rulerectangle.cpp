@@ -47,7 +47,7 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
     };
 
     AnimationVector2 normalizedAnchorPoint;
-    Rule const *inputRules[MAX_INPUT_RULES];
+    Rule const *inputRules[Rule::MAX_SEMANTICS];
 
     // The output rules.
     DelegateRule *outputRules[MAX_OUTPUT_RULES];
@@ -65,9 +65,9 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
 
     ~Instance()
     {
-        for(int i = 0; i < int(MAX_INPUT_RULES); ++i)
+        for(int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
         {
-            connectInputToOutputs(InputRule(i), false);
+            connectInputToOutputs(Rule::Semantic(i), false);
         }
         for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
         {
@@ -76,10 +76,10 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
         }
     }
 
-    Rule const *&ruleRef(InputRule rule)
+    Rule const *&ruleRef(Rule::Semantic rule)
     {
-        DENG2_ASSERT(rule >= Left);
-        DENG2_ASSERT(rule < MAX_INPUT_RULES);
+        DENG2_ASSERT(rule >= Rule::Left);
+        DENG2_ASSERT(rule < Rule::MAX_SEMANTICS);
 
         return inputRules[rule];
     }
@@ -92,13 +92,13 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
         }
     }
 
-    void connectInputToOutputs(InputRule inputRule, bool doConnect)
+    void connectInputToOutputs(Rule::Semantic inputRule, bool doConnect)
     {
         Rule const *&input = ruleRef(inputRule);
         if(!input) return;
 
-        bool isHoriz = (inputRule == Left  || inputRule == Right ||
-                        inputRule == Width || inputRule == AnchorX);
+        bool isHoriz = (inputRule == Rule::Left  || inputRule == Rule::Right ||
+                        inputRule == Rule::Width || inputRule == Rule::AnchorX);
 
         int const start = (isHoriz? FIRST_HORIZ_OUTPUT : FIRST_VERT_OUTPUT);
         int const end   = (isHoriz? LAST_HORIZ_OUTPUT  : LAST_VERT_OUTPUT );
@@ -117,7 +117,7 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
         }
     }
 
-    void setInputRule(InputRule inputRule, Rule const &rule)
+    void setInputRule(Rule::Semantic inputRule, Rule const &rule)
     {
         // Disconnect the old input rule from relevant outputs.
         connectInputToOutputs(inputRule, false);
@@ -130,9 +130,9 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
 
     void updateWidth()
     {
-        if(inputRules[Width])
+        if(inputRules[Rule::Width])
         {
-            outputRules[OutWidth]->set(inputRules[Width]->value());
+            outputRules[OutWidth]->set(inputRules[Rule::Width]->value());
         }
         else
         {
@@ -149,33 +149,33 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
 
         Rectanglef r;
 
-        if(inputRules[AnchorX] && inputRules[Width])
+        if(inputRules[Rule::AnchorX] && inputRules[Rule::Width])
         {
-            r.topLeft.x = inputRules[AnchorX]->value() -
-                    normalizedAnchorPoint.x * inputRules[Width]->value();
-            r.setWidth(inputRules[Width]->value());
+            r.topLeft.x = inputRules[Rule::AnchorX]->value() -
+                    normalizedAnchorPoint.x * inputRules[Rule::Width]->value();
+            r.setWidth(inputRules[Rule::Width]->value());
             leftDefined = rightDefined = true;
         }
 
-        if(inputRules[Left])
+        if(inputRules[Rule::Left])
         {
-            r.topLeft.x = inputRules[Left]->value();
+            r.topLeft.x = inputRules[Rule::Left]->value();
             leftDefined = true;
         }
-        if(inputRules[Right])
+        if(inputRules[Rule::Right])
         {
-            r.bottomRight.x = inputRules[Right]->value();
+            r.bottomRight.x = inputRules[Rule::Right]->value();
             rightDefined = true;
         }
 
-        if(inputRules[Width] && leftDefined && !rightDefined)
+        if(inputRules[Rule::Width] && leftDefined && !rightDefined)
         {
-            r.setWidth(inputRules[Width]->value());
+            r.setWidth(inputRules[Rule::Width]->value());
             rightDefined = true;
         }
-        if(inputRules[Width] && !leftDefined && rightDefined)
+        if(inputRules[Rule::Width] && !leftDefined && rightDefined)
         {
-            r.topLeft.x = r.bottomRight.x - inputRules[Width]->value();
+            r.topLeft.x = r.bottomRight.x - inputRules[Rule::Width]->value();
             leftDefined = true;
         }
 
@@ -189,9 +189,9 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
 
     void updateHeight()
     {
-        if(inputRules[Height])
+        if(inputRules[Rule::Height])
         {
-            outputRules[OutHeight]->set(inputRules[Height]->value());
+            outputRules[OutHeight]->set(inputRules[Rule::Height]->value());
         }
         else
         {
@@ -208,33 +208,33 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
 
         Rectanglef r;
 
-        if(inputRules[AnchorY] && inputRules[Height])
+        if(inputRules[Rule::AnchorY] && inputRules[Rule::Height])
         {
-            r.topLeft.y = inputRules[AnchorY]->value() -
-                    normalizedAnchorPoint.y * inputRules[Height]->value();
-            r.setHeight(inputRules[Height]->value());
+            r.topLeft.y = inputRules[Rule::AnchorY]->value() -
+                    normalizedAnchorPoint.y * inputRules[Rule::Height]->value();
+            r.setHeight(inputRules[Rule::Height]->value());
             topDefined = bottomDefined = true;
         }
 
-        if(inputRules[Top])
+        if(inputRules[Rule::Top])
         {
-            r.topLeft.y = inputRules[Top]->value();
+            r.topLeft.y = inputRules[Rule::Top]->value();
             topDefined = true;
         }
-        if(inputRules[Bottom])
+        if(inputRules[Rule::Bottom])
         {
-            r.bottomRight.y = inputRules[Bottom]->value();
+            r.bottomRight.y = inputRules[Rule::Bottom]->value();
             bottomDefined = true;
         }
 
-        if(inputRules[Height] && topDefined && !bottomDefined)
+        if(inputRules[Rule::Height] && topDefined && !bottomDefined)
         {
-            r.setHeight(inputRules[Height]->value());
+            r.setHeight(inputRules[Rule::Height]->value());
             bottomDefined = true;
         }
-        if(inputRules[Height] && !topDefined && bottomDefined)
+        if(inputRules[Rule::Height] && !topDefined && bottomDefined)
         {
-            r.topLeft.y = r.bottomRight.y - inputRules[Height]->value();
+            r.topLeft.y = r.bottomRight.y - inputRules[Rule::Height]->value();
             topDefined = true;
         }
 
@@ -340,7 +340,7 @@ Rule const &RuleRectangle::height() const
     return *d->outputRules[Instance::OutHeight];
 }
 
-RuleRectangle &RuleRectangle::setInput(InputRule inputRule, Rule const &rule)
+RuleRectangle &RuleRectangle::setInput(Rule::Semantic inputRule, Rule const &rule)
 {
     d->setInputRule(inputRule, rule);
     return *this;
@@ -348,26 +348,26 @@ RuleRectangle &RuleRectangle::setInput(InputRule inputRule, Rule const &rule)
 
 RuleRectangle &RuleRectangle::setLeftTop(Rule const &left, Rule const &top)
 {
-    setInput(RuleRectangle::Left, left);
-    setInput(RuleRectangle::Top,  top);
+    setInput(Rule::Left, left);
+    setInput(Rule::Top,  top);
     return *this;
 }
 
 RuleRectangle &RuleRectangle::setRightBottom(Rule const &right, Rule const &bottom)
 {
-    setInput(RuleRectangle::Right,  right);
-    setInput(RuleRectangle::Bottom, bottom);
+    setInput(Rule::Right,  right);
+    setInput(Rule::Bottom, bottom);
     return *this;
 }
 
 RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
 {
-    setInput(RuleRectangle::Width,  width);
-    setInput(RuleRectangle::Height, height);
+    setInput(Rule::Width,  width);
+    setInput(Rule::Height, height);
     return *this;
 }
 
-Rule const &RuleRectangle::inputRule(InputRule inputRule)
+Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)
 {
     return *d->ruleRef(inputRule);
 }
