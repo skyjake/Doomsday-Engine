@@ -57,7 +57,6 @@ InputDialog::InputDialog(String const &name)
 
     // Address editor.
     d->edit = new LineEditWidget(prefix + ".edit");
-    d->edit->setFocusNext(prefix + ".menu");
 
     d->edit->rule()
             .setInput(RuleRectangle::Width, rect.width())
@@ -66,7 +65,6 @@ InputDialog::InputDialog(String const &name)
 
     // Menu for actions.
     d->menu = new MenuWidget(MenuWidget::AlwaysOpen, prefix + ".menu");
-    d->menu->setFocusNext(prefix + ".edit");
     d->menu->setBorder(MenuWidget::NoBorder);
     d->menu->setBackgroundAttribs(TextCanvas::Char::DefaultAttributes);
     d->menu->setSelectionAttribs(TextCanvas::Char::Reverse);
@@ -83,6 +81,8 @@ InputDialog::InputDialog(String const &name)
     add(d->edit);
     add(d->menu);
 
+    setFocusCycle(WidgetList() << d->edit << d->menu);
+
     // Outer dimensions.
     rect.setInput(RuleRectangle::Width, Const(50));
     rect.setInput(RuleRectangle::Height,
@@ -94,6 +94,21 @@ InputDialog::InputDialog(String const &name)
 InputDialog::~InputDialog()
 {
     delete d;
+}
+
+LabelWidget &InputDialog::label()
+{
+    return *d->label;
+}
+
+LineEditWidget &InputDialog::lineEdit()
+{
+    return *d->edit;
+}
+
+MenuWidget &InputDialog::menu()
+{
+    return *d->menu;
 }
 
 void InputDialog::setWidth(int width)

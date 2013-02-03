@@ -24,6 +24,10 @@
 namespace de {
 namespace shell {
 
+class LabelWidget;
+class LineEditWidget;
+class MenuWidget;
+
 /**
  * Dialog for querying text from the user.
  */
@@ -32,6 +36,10 @@ class InputDialog : public de::shell::DialogWidget
 public:
     InputDialog(de::String const &name = "");
     ~InputDialog();
+
+    LabelWidget &label();
+    LineEditWidget &lineEdit();
+    MenuWidget &menu();
 
     /**
      * Sets the width of the dialog. The default width is 50.

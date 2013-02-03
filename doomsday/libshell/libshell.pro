@@ -24,7 +24,8 @@ INCLUDEPATH += include
 
 # Public headers.
 HEADERS += \
-    include/de/shell/Action \
+	include/de/shell/Action \
+	include/de/shell/ChoiceWidget \
     include/de/shell/DialogWidget \
 	include/de/shell/InputDialog \
     include/de/shell/KeyEvent \
@@ -38,6 +39,7 @@ HEADERS += \
     include/de/shell/TextWidget \
     \
     include/de/shell/action.h \
+    include/de/shell/choicewidget.h \
     include/de/shell/dialogwidget.h \
     include/de/shell/inputdialog.h \
     include/de/shell/keyevent.h \
@@ -64,7 +66,8 @@ SOURCES += \
     src/protocol.cpp \
     src/textcanvas.cpp \
     src/textrootwidget.cpp \
-    src/textwidget.cpp
+    src/textwidget.cpp \
+    src/choicewidget.cpp
 
 # Installation ---------------------------------------------------------------
 

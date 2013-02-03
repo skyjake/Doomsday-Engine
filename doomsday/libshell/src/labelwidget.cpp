@@ -78,6 +78,17 @@ void LabelWidget::setAttribs(TextCanvas::Char::Attribs const &attribs)
     redraw();
 }
 
+void LabelWidget::setBackgroundAttribs(TextCanvas::Char::Attribs const &attribs)
+{
+    d->background.attribs = attribs;
+    redraw();
+}
+
+TextCanvas::Char::Attribs LabelWidget::attribs() const
+{
+    return d->attribs;
+}
+
 void LabelWidget::setAlignment(Alignment align)
 {
     d->align = align;

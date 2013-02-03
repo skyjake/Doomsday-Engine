@@ -72,7 +72,7 @@ TextCanvas &TextWidget::targetCanvas() const
 
 void TextWidget::redraw()
 {
-    if(hasRoot()) root().requestDraw();
+    if(hasRoot() && !isHidden()) root().requestDraw();
 }
 
 void TextWidget::drawAndShow()
@@ -135,6 +135,16 @@ bool TextWidget::handleEvent(Event const *event)
             if(next)
             {
                 root().setFocus(next);
+                root().requestDraw();
+                return true;
+            }
+        }
+        if(keyEvent->key() == Qt::Key_Backtab && hasFocus() && !focusPrev().isEmpty())
+        {
+            Widget *prev = root().find(focusPrev());
+            if(prev)
+            {
+                root().setFocus(prev);
                 root().requestDraw();
                 return true;
             }

@@ -60,6 +60,10 @@ public:
 
     void setAttribs(TextCanvas::Char::Attribs const &attribs);
 
+    void setBackgroundAttribs(TextCanvas::Char::Attribs const &attribs);
+
+    TextCanvas::Char::Attribs attribs() const;
+
     /**
      * Sets the alignment of the label inside the widget's rectangle. The default
      * alignment is in the middle (horiz + vert).
