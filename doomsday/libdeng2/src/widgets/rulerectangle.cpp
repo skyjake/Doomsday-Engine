@@ -280,7 +280,12 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
         switch(id)
         {
         case OutLeft:
+            outputRules[OutRight]->invalidate();
+            outputRules[OutWidth]->invalidate();
+            break;
+
         case OutRight:
+            outputRules[OutLeft]->invalidate();
             outputRules[OutWidth]->invalidate();
             break;
 
@@ -290,7 +295,12 @@ struct RuleRectangle::Instance : public DelegateRule::ISource
             break;
 
         case OutTop:
+            outputRules[OutBottom]->invalidate();
+            outputRules[OutHeight]->invalidate();
+            break;
+
         case OutBottom:
+            outputRules[OutTop]->invalidate();
             outputRules[OutHeight]->invalidate();
             break;
 

@@ -33,13 +33,10 @@ ConstantRule::ConstantRule(float constantValue)
 
 void ConstantRule::set(float newValue)
 {
-    if(!fequal(cachedValue(), newValue))
-    {
-        _pendingValue = newValue;
+    _pendingValue = newValue;
 
-        // Dependent values will need updating.
-        invalidate();
-    }
+    // Dependent values will need updating.
+    invalidate();
 }
 
 void ConstantRule::update()
