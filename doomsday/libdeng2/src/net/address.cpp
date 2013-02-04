@@ -121,6 +121,19 @@ String Address::asText() const
     return result;
 }
 
+Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPort)
+{
+    duint16 port = defaultPort;
+    String str = addressWithOptionalPort;
+    if(str.contains(':'))
+    {
+        int pos = str.indexOf(':');
+        port = str.mid(pos + 1).toInt();
+        str = str.left(pos);
+    }
+    return Address(str.toAscii(), port);
+}
+
 QTextStream &operator << (QTextStream &os, Address const &address)
 {
     os << address.asText();

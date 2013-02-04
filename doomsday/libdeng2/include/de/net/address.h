@@ -95,6 +95,8 @@ public:
      */
     String asText() const;
 
+    static Address parse(String const &addressWithOptionalPort, duint16 defaultPort = 0);
+
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
 

@@ -17,6 +17,8 @@
  */
 
 #include "de/Beacon"
+#include "de/Reader"
+#include "de/Writer"
 #include <QUdpSocket>
 #include <QHostInfo>
 #include <QNetworkInterface>
@@ -30,6 +32,7 @@ static char const *discoveryMessage = "Doomsday Beacon 1.0";
 struct Beacon::Instance
 {
     duint16 port;
+    duint16 servicePort;
     QUdpSocket *socket;
     Block message;
     QTimer *timer;
@@ -56,9 +59,11 @@ Beacon::~Beacon()
     delete d;
 }
 
-void Beacon::start()
+void Beacon::start(duint16 serviceListenPort)
 {
     DENG2_ASSERT(!d->socket);
+
+    d->servicePort = serviceListenPort;
 
     d->socket = new QUdpSocket;
     connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncoming()));
@@ -72,7 +77,12 @@ void Beacon::start()
 
 void Beacon::setMessage(IByteArray const &advertisedMessage)
 {
-    d->message = advertisedMessage;
+    d->message.clear();
+
+    // Begin with the service listening port.
+    Writer(d->message) << d->servicePort;
+
+    d->message += Block(advertisedMessage);
 }
 
 void Beacon::stop()
@@ -81,7 +91,7 @@ void Beacon::stop()
     d->socket = 0;
 }
 
-void Beacon::discover(TimeDelta const &timeOut)
+void Beacon::discover(TimeDelta const &timeOut, TimeDelta const &interval)
 {
     if(d->timer) return; // Already discovering.
 
@@ -100,10 +110,17 @@ void Beacon::discover(TimeDelta const &timeOut)
     d->found.clear();
 
     // Time-out timer.
-    d->discoveryEndsAt = Time() + timeOut;
+    if(timeOut > 0.0)
+    {
+        d->discoveryEndsAt = Time() + timeOut;
+    }
+    else
+    {
+        d->discoveryEndsAt = Time::invalidTime();
+    }
     d->timer = new QTimer;
     connect(d->timer, SIGNAL(timeout()), this, SLOT(continueDiscovery()));
-    d->timer->start(500);
+    d->timer->start(interval.asMilliSeconds());
 }
 
 QList<Address> Beacon::foundHosts() const
@@ -131,7 +148,7 @@ void Beacon::readIncoming()
         d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
                                 block.size(), &from, &port);
 
-        LOG_DEBUG("Received %i bytes from %s port %i") << block.size() << from.toString() << port;
+        LOG_TRACE("Received %i bytes from %s port %i") << block.size() << from.toString() << port;
 
         if(block == discoveryMessage)
         {
@@ -158,11 +175,15 @@ void Beacon::readDiscoveryReply()
         if(block == discoveryMessage)
             continue;
 
-        LOG_DEBUG("Received %i bytes from %s") << block.size() << from.toString();
+        // Remove the service listening port from the beginning.
+        duint16 listenPort = 0;
+        Reader(block) >> listenPort;
+        block.remove(0, 2);
 
-        d->found.insert(Address(from), block);
+        Address host(from, listenPort);
+        d->found.insert(host, block);
 
-        emit found(Address(from), block);
+        emit found(host, block);
     }
 }
 
@@ -172,7 +193,7 @@ void Beacon::continueDiscovery()
     DENG2_ASSERT(d->timer);
 
     // Time to stop discovering?
-    if(Time() > d->discoveryEndsAt)
+    if(d->discoveryEndsAt.isValid() && Time() > d->discoveryEndsAt)
     {
         d->timer->stop();
 
@@ -188,7 +209,7 @@ void Beacon::continueDiscovery()
 
     Block block(discoveryMessage);
 
-    LOG_DEBUG("Broadcasting %i bytes") << block.size();
+    LOG_TRACE("Broadcasting %i bytes") << block.size();
 
     // Send a new broadcast.
     d->socket->writeDatagram(block,

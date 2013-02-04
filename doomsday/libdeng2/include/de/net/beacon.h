@@ -46,10 +46,11 @@ public:
     /**
      * Starts the beacon with a message to give out.
      *
-     * @param advertisedMessage  Message to send to requesters.
-     * @param port  UDP port to advertise on.
+     * @param serviceListenPort
+     *      TCP port that the advertised service listens on. Recipients will
+     *      pair this with the IP address to form a full address.
      */
-    void start();
+    void start(duint16 serviceListenPort);
 
     /**
      * Changes the message to advertise.
@@ -66,10 +67,12 @@ public:
     /**
      * Looks for any beacons on all accessible networks.
      *
-     * @param port     UDP port to discover on.
-     * @param timeOut  Maximum time to spend discovering.
+     * @param port      UDP port to discover on.
+     * @param timeOut   Maximum time to spend discovering. If the timeout
+     *                  is zero or negative, discovery will not end.
+     * @param interval  Interval between query broadcasts.
      */
-    void discover(TimeDelta const &timeOut = 10);
+    void discover(TimeDelta const &timeOut, TimeDelta const &interval = TimeDelta(1.0));
 
     QList<Address> foundHosts() const;
     Block messageFromHost(Address const &host) const;

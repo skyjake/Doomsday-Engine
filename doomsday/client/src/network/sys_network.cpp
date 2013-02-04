@@ -106,7 +106,7 @@ static foundhost_t located;
 
 #ifdef __SERVER__
 // Beacon for informing clients that a server is present.
-static de::Beacon beacon(53209);
+static de::Beacon beacon(13209);
 #endif
 
 void N_Register(void)
@@ -155,6 +155,11 @@ void N_IPToString(char *buf, ipaddress_t *ip)
     sprintf(buf, "%s:%i", ip->host, ip->port);
 }
 
+de::duint16 N_ServerPort()
+{
+    return (!nptIPPort ? defaultTCPPort : nptIPPort);
+}
+
 /**
  * Initialize the chosen service provider each in server or client
  * mode.  If a service provider has already been initialized, it will
@@ -175,7 +180,7 @@ boolean N_InitService(boolean inServerMode)
 
     if(inServerMode)
     {
-        port = (!nptIPPort ? defaultTCPPort : nptIPPort);
+        port = N_ServerPort();
 
         Con_Message("Listening on TCP port %i.\n", port);
 
@@ -461,7 +466,7 @@ boolean N_ServerOpen(void)
     }
 
     // Start the beacon.
-    beacon.start();
+    beacon.start(N_ServerPort());
 
     return true;
 }
