@@ -35,6 +35,9 @@
 #include "api_materialarchive.h"
 #include "map/r_world.h"
 
+#include <de/ArrayValue>
+#include <de/NumberValue>
+
 // This is absolute maximum bandwidth rating. Frame size is practically
 // unlimited with this score.
 #define MAX_BANDWIDTH_RATING    100
@@ -107,6 +110,35 @@ void Sv_GetInfo(serverinfo_t* info)
 
     // This should be a CRC number that describes all the loaded data.
     info->loadedFilesCRC = F_LoadedFilesCRC();
+}
+
+de::Record *Sv_InfoToRecord(serverinfo_t *info)
+{
+    de::Record *rec = new de::Record;
+
+    rec->addNumber ("port",  info->port);
+    rec->addText   ("name",  info->name);
+    rec->addText   ("info",  info->description);
+    rec->addNumber ("ver",   info->version);
+    rec->addText   ("game",  info->plugin);
+    rec->addText   ("mode",  info->gameIdentityKey);
+    rec->addText   ("setup", info->gameConfig);
+    rec->addText   ("iwad",  info->iwad);
+    rec->addNumber ("wcrc",  info->loadedFilesCRC);
+    rec->addText   ("pwads", info->pwads);
+    rec->addText   ("map",   info->map);
+    rec->addNumber ("nump",  info->numPlayers);
+    rec->addNumber ("maxp",  info->maxPlayers);
+    rec->addBoolean("open",  info->canJoin);
+    rec->addText   ("plrn",  info->clientNames);
+
+    de::ArrayValue &data = rec->addArray("data").value<de::ArrayValue>();
+    for(uint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
+    {
+        data << de::NumberValue(info->data[i]);
+    }
+
+    return rec;
 }
 
 /**

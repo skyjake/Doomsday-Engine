@@ -43,6 +43,9 @@
 #ifdef __SERVER__
 #  include "server/sv_def.h"
 #  include "shellusers.h"
+#  include "map/gamemap.h"
+#  include <de/Beacon>
+#  include <de/ByteRefArray>
 #endif
 #include "network/protocol.h"
 #include "client/cl_def.h"
@@ -100,6 +103,11 @@ static netnode_t netNodes[MAX_NODES];
 static int sockSet;
 static int joinedSockSet;
 static foundhost_t located;
+
+#ifdef __SERVER__
+// Beacon for informing clients that a server is present.
+static de::Beacon beacon(53209);
+#endif
 
 void N_Register(void)
 {
@@ -451,6 +459,10 @@ boolean N_ServerOpen(void)
         // Let the master server know that we are running a public server.
         N_MasterAnnounceServer(true);
     }
+
+    // Start the beacon.
+    beacon.start();
+
     return true;
 }
 
@@ -458,6 +470,9 @@ boolean N_ServerClose(void)
 {
     if(!N_IsAvailable())
         return false;
+
+    // Stop the beacon.
+    beacon.stop();
 
     if(masterAware && N_UsingInternet())
     {
@@ -707,8 +722,25 @@ void N_PrintNetworkStatus(void)
     Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
 }
 
+void N_ServerUpdateBeacon()
+{
+    // Update the status message in the server's presence beacon.
+    if(serverSock && theMap)
+    {
+        serverinfo_t info;
+        Sv_GetInfo(&info);
+
+        QScopedPointer<de::Record> rec(Sv_InfoToRecord(&info));
+        de::Block msg;
+        de::Writer(msg).withHeader() << *rec;
+        beacon.setMessage(msg);
+    }
+}
+
 void N_ListenNodes(void)
 {
+    N_ServerUpdateBeacon();
+
     // This is only for the server.
     N_ServerListenUnjoinedNodes();
     N_ServerListenJoinedNodes();
