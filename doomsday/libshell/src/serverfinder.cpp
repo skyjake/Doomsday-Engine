@@ -19,34 +19,70 @@
 #include "de/shell/ServerFinder"
 #include <de/Beacon>
 #include <de/Reader>
+#include <de/TextValue>
+#include <de/NumberValue>
 #include <QMap>
+#include <QTimer>
 
 namespace de {
 namespace shell {
 
+static TimeDelta MSG_EXPIRATION_SECS = 10;
+
 struct ServerFinder::Instance
 {
     Beacon beacon;
-    QMap<Address, Record *> messages;
+    struct Found
+    {
+        Record *message;
+        Time at;
 
-    Instance() : beacon(53209) {}
+        Found() : message(0), at(Time()) {}
+    };
+    QMap<Address, Found> servers;
+
+    Instance() : beacon(13209) {}
 
     ~Instance()
     {
-        clearMessages();
+        clearServers();
     }
 
-    void clearMessages()
+    void clearServers()
     {
-        foreach(Record *msg, messages.values()) delete msg;
-        messages.clear();
+        foreach(Found const &found, servers.values())
+        {
+            delete found.message;
+        }
+        servers.clear();
+    }
+
+    bool removeExpired()
+    {
+        bool changed = false;
+
+        QMutableMapIterator<Address, Found> iter(servers);
+        while(iter.hasNext())
+        {
+            Found &found = iter.next().value();
+            if(found.at.since() > MSG_EXPIRATION_SECS)
+            {
+                delete found.message;
+                iter.remove();
+                changed = true;
+            }
+        }
+
+        return changed;
     }
 };
 
 ServerFinder::ServerFinder() : d(new Instance)
 {
     connect(&d->beacon, SIGNAL(found(de::Address, de::Block)), this, SLOT(found(de::Address, de::Block)));
-    connect(&d->beacon, SIGNAL(finished()), this, SIGNAL(finished()));
+    QTimer::singleShot(1000, this, SLOT(expire()));
+
+    d->beacon.discover(0 /* no timeout */, 2);
 }
 
 ServerFinder::~ServerFinder()
@@ -54,45 +90,83 @@ ServerFinder::~ServerFinder()
     delete d;
 }
 
-void ServerFinder::start()
+void ServerFinder::clear()
 {
-    d->clearMessages();
-    d->beacon.discover(20);
+    d->clearServers();
 }
 
 QList<Address> ServerFinder::foundServers() const
 {
-    return d->beacon.foundHosts();
+    return d->servers.keys();
+}
+
+String ServerFinder::name(Address const &server) const
+{
+    return messageFromServer(server)["name"].value<TextValue>();
+}
+
+int ServerFinder::playerCount(Address const &server) const
+{
+    return messageFromServer(server)["nump"].value<NumberValue>().as<int>();
+}
+
+int ServerFinder::maxPlayers(Address const &server) const
+{
+    return messageFromServer(server)["maxp"].value<NumberValue>().as<int>();
 }
 
 Record const &ServerFinder::messageFromServer(Address const &address) const
 {
-    return *d->messages[address];
+    if(!d->servers.contains(address))
+    {
+        /// @throws NotFoundError @a address not found in the registry of server responses.
+        throw NotFoundError("ServerFinder::messageFromServer",
+                            "No message from server " + address.asText());
+    }
+    return *d->servers[address].message;
 }
 
 void ServerFinder::found(Address host, Block block)
 {
     try
     {
-        LOG_DEBUG("Received a server message from %s with %i bytes")
+        LOG_TRACE("Received a server message from %s with %i bytes")
                 << host << block.size();
 
         // Replace or insert the information for this host.
-        Record *rec;
-        if(d->messages.contains(host))
+        Instance::Found found;
+        if(d->servers.contains(host))
         {
-            rec = d->messages[host];
+            found.message = d->servers[host].message;
+            d->servers[host].at = Time();
         }
         else
         {
-            d->messages.insert(host, rec = new Record);
+            found.message = new Record;
+            d->servers.insert(host, found);
         }
-        Reader(block).withHeader() >> *rec;
+        Reader(block).withHeader() >> *found.message;
 
         emit updated();
     }
     catch(Error const &)
-    {}
+    {
+        // Remove the message that failed to deserialize.
+        if(d->servers.contains(host))
+        {
+            delete d->servers[host].message;
+            d->servers.remove(host);
+        }
+    }
+}
+
+void ServerFinder::expire()
+{
+    if(d->removeExpired())
+    {
+        emit updated();
+    }
+    QTimer::singleShot(1000, this, SLOT(expire()));
 }
 
 } // namespace shell

@@ -20,6 +20,7 @@
 #define LIBSHELL_SERVERFINDER_H
 
 #include <QObject>
+#include <de/Error>
 #include <de/Address>
 #include <de/Record>
 
@@ -34,12 +35,23 @@ class ServerFinder : public QObject
     Q_OBJECT
 
 public:
+    /// Specified server was not found. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
+public:
     ServerFinder();
     virtual ~ServerFinder();
 
-    void start();
+    /**
+     * Forgets all servers found so far.
+     */
+    void clear();
 
     QList<Address> foundServers() const;
+
+    String name(Address const &server) const;
+    int playerCount(Address const &server) const;
+    int maxPlayers(Address const &server) const;
 
     /**
      * Returns the message sent by a server's beacon.
@@ -53,10 +65,10 @@ public:
 
 protected slots:
     void found(de::Address address, de::Block info);
+    void expire();
 
 signals:
     void updated();
-    void finished();
 
 private:
     struct Instance;
