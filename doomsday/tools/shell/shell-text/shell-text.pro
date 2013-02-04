@@ -24,28 +24,28 @@ include(../../../dep_curses.pri)
 # Sources -------------------------------------------------------------------
 
 HEADERS += \
+    src/aboutdialog.h \
     src/commandlinewidget.h \
     src/cursesapp.h \
     src/cursestextcanvas.h \
+    src/localserverdialog.h \
     src/logwidget.h \
     src/main.h \
-    src/shellapp.h \
-    src/statuswidget.h \
     src/openconnectiondialog.h \
-    src/aboutdialog.h \
-    src/localserverdialog.h
+    src/shellapp.h \
+    src/statuswidget.h 
 
 SOURCES += \
+    src/aboutdialog.cpp \
     src/commandlinewidget.cpp \
     src/cursesapp.cpp \
     src/cursestextcanvas.cpp \
+    src/localserverdialog.cpp \
     src/logwidget.cpp \
     src/main.cpp \
-    src/shellapp.cpp \
-    src/statuswidget.cpp \
     src/openconnectiondialog.cpp \
-    src/aboutdialog.cpp \
-    src/localserverdialog.cpp
+    src/shellapp.cpp \
+    src/statuswidget.cpp 
 
 # Installation --------------------------------------------------------------
 

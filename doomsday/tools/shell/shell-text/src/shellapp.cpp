@@ -1,4 +1,4 @@
-/** @file shellapp.cpp Doomsday shell connection app.
+/** @file shellapp.cpp  Doomsday shell connection app.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -28,6 +28,7 @@
 #include <de/shell/Action>
 #include <de/shell/Link>
 #include <de/shell/LocalServer>
+#include <de/shell/ServerFinder>
 #include <de/LogBuffer>
 #include <QStringList>
 
@@ -43,6 +44,7 @@ struct ShellApp::Instance
     LabelWidget *menuLabel;
     StatusWidget *status;
     Link *link;
+    ServerFinder finder;
 
     Instance(ShellApp &a) : self(a), link(0)
     {
@@ -95,7 +97,8 @@ struct ShellApp::Instance
                                     &self, SLOT(askToOpenConnection())), "O");
         menu->appendItem(new Action(tr("Disconnect"), &self, SLOT(closeConnection())));
         menu->appendSeparator();
-        menu->appendItem(new Action(tr("Start new server"), &self, SLOT(askToStartLocalServer())));
+        menu->appendItem(new Action(tr("Start local server"), &self, SLOT(askToStartLocalServer())));
+        menu->appendItem(new Action(tr("Look for servers"), &self, SLOT(lookForServers())));
         menu->appendSeparator();
         menu->appendItem(new Action(tr("About"), &self, SLOT(showAbout())));
         menu->appendItem(new Action(tr("Quit Shell"),
@@ -206,6 +209,11 @@ void ShellApp::askToStartLocalServer()
 
         openConnection("localhost:" + String::number(dlg.port()));
     }
+}
+
+void ShellApp::lookForServers()
+{
+    d->finder.start();
 }
 
 void ShellApp::sendCommandToServer(String command)
