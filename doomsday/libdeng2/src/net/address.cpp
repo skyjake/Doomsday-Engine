@@ -71,6 +71,11 @@ Address &Address::operator = (Address const &other)
     return *this;
 }
 
+bool Address::operator < (Address const &other) const
+{
+    return d->host.toIPv4Address() < other.d->host.toIPv4Address();
+}
+
 bool Address::operator == (Address const &other) const
 {
     return d->host == other.d->host && d->port == other.d->port;

@@ -57,6 +57,8 @@ public:
 
     Address &operator = (Address const &other);
 
+    bool operator < (Address const &other) const;
+
     /**
      * Checks two addresses for equality.
      *
