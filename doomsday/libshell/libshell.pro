@@ -32,8 +32,10 @@ HEADERS += \
     include/de/shell/LabelWidget \
     include/de/shell/LineEditWidget \
     include/de/shell/Link \
+    include/de/shell/LocalServer \
     include/de/shell/MenuWidget \
     include/de/shell/Protocol \
+    include/de/shell/ServerFinder \
     include/de/shell/TextCanvas \
     include/de/shell/TextRootWidget \
     include/de/shell/TextWidget \
@@ -47,12 +49,13 @@ HEADERS += \
     include/de/shell/libshell.h \
     include/de/shell/lineeditwidget.h \
     include/de/shell/link.h \
+    include/de/shell/localserver.h \
     include/de/shell/menuwidget.h \
     include/de/shell/protocol.h \
     include/de/shell/textcanvas.h \
     include/de/shell/textrootwidget.h \
     include/de/shell/textwidget.h \ 
-    include/de/shell/localserver.h
+    include/de/shell/serverfinder.h
 
 # Sources and private headers.
 SOURCES += \
@@ -69,7 +72,8 @@ SOURCES += \
     src/textrootwidget.cpp \
     src/textwidget.cpp \
     src/choicewidget.cpp \
-    src/localserver.cpp
+    src/localserver.cpp \
+    src/serverfinder.cpp
 
 # Installation ---------------------------------------------------------------
 

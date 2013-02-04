@@ -1,4 +1,4 @@
-/** @file localserver.h  Starting and stopping local servers.
+/** @file serverfinder.h  Looks up servers via beacon.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,32 +16,47 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_LOCALSERVER_H
-#define LIBSHELL_LOCALSERVER_H
+#ifndef LIBSHELL_SERVERFINDER_H
+#define LIBSHELL_SERVERFINDER_H
 
-#include "Link"
+#include <QObject>
+#include <de/Address>
+#include <de/Record>
 
 namespace de {
 namespace shell {
 
 /**
- * Utility for starting and stopping local servers.
+ * Looks up servers via beacon.
  */
-class LocalServer
+class ServerFinder : public QObject
 {
+    Q_OBJECT
+
 public:
-    LocalServer();
+    ServerFinder();
+    virtual ~ServerFinder();
 
-    virtual ~LocalServer();
+    void start();
 
-    void start(duint16 port, String const &gameMode);
-
-    void stop();
+    QList<Address> foundServers() const;
 
     /**
-     * Returns the Link for communicating with the server.
+     * Returns the message sent by a server's beacon.
+     *
+     * @param address  Address of a found server.
+     *
+     * @return Reference to a record. The reference is valid until start() is
+     * called.
      */
-    //Link *openLink();
+    Record const &messageFromServer(Address const &address) const;
+
+protected slots:
+    void found(de::Address address, de::Block info);
+
+signals:
+    void updated();
+    void finished();
 
 private:
     struct Instance;
@@ -51,4 +66,4 @@ private:
 } // namespace shell
 } // namespace de
 
-#endif // LIBSHELL_LOCALSERVER_H
+#endif // LIBSHELL_SERVERFINDER_H
