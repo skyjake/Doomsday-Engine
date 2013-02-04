@@ -144,12 +144,7 @@ Record::Record(Record const &other)
     : ISerializable(), LogEntry::Arg::Base(), Variable::IDeletionObserver(),
       d(new Instance(*this))
 {
-    DENG2_FOR_EACH_CONST(Members, i, other.d->members)
-    {
-        Variable *var = new Variable(*i->second);
-        var->audienceForDeletion += this;
-        d->members[i->first] = var;
-    }
+    copyMembersFrom(other);
 }
 
 Record::~Record()
@@ -171,6 +166,23 @@ void Record::clear()
         }
         d->members.clear();
     }
+}
+
+void Record::copyMembersFrom(Record const &other)
+{
+    DENG2_FOR_EACH_CONST(Members, i, other.d->members)
+    {
+        Variable *var = new Variable(*i->second);
+        var->audienceForDeletion += this;
+        d->members[i->first] = var;
+    }
+}
+
+Record &Record::operator = (Record const &other)
+{
+    clear();
+    copyMembersFrom(other);
+    return *this;
 }
 
 bool Record::has(String const &name) const
@@ -427,7 +439,7 @@ Function const *Record::function(String const &name) const
     catch(NotFoundError &) {}    
     return 0;
 }
-    
+
 void Record::operator >> (Writer &to) const
 {
     to << d->uniqueId << duint32(d->members.size());
