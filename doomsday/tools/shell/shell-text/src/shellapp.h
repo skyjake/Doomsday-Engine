@@ -37,7 +37,8 @@ public slots:
     void showAbout();
     void askToOpenConnection();
     void askToStartLocalServer();
-    void lookForServers();
+    void updateMenuWithFoundServers();
+    void connectToFoundServer();
     void closeConnection();
     void sendCommandToServer(de::String command);
     void handleIncomingPackets();

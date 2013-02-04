@@ -23,6 +23,7 @@
 #include "openconnectiondialog.h"
 #include "localserverdialog.h"
 #include "aboutdialog.h"
+#include "persistentdata.h"
 #include <de/shell/LabelWidget>
 #include <de/shell/MenuWidget>
 #include <de/shell/Action>
@@ -38,6 +39,7 @@ using namespace shell;
 struct ShellApp::Instance
 {
     ShellApp &self;
+    PersistentData persist;
     MenuWidget *menu;
     LogWidget *log;
     CommandLineWidget *cli;
@@ -93,12 +95,10 @@ struct ShellApp::Instance
         // Main menu.
         menu = new MenuWidget(MenuWidget::Popup);
         menu->appendItem(new Action(tr("Connect to..."),
-                                    KeyEvent("o"),
-                                    &self, SLOT(askToOpenConnection())), "O");
+                                    &self, SLOT(askToOpenConnection())));
         menu->appendItem(new Action(tr("Disconnect"), &self, SLOT(closeConnection())));
         menu->appendSeparator();
         menu->appendItem(new Action(tr("Start local server"), &self, SLOT(askToStartLocalServer())));
-        menu->appendItem(new Action(tr("Look for servers"), &self, SLOT(lookForServers())));
         menu->appendSeparator();
         menu->appendItem(new Action(tr("About"), &self, SLOT(showAbout())));
         menu->appendItem(new Action(tr("Quit Shell"),
@@ -120,6 +120,7 @@ struct ShellApp::Instance
         // Signals.
         QObject::connect(cli, SIGNAL(commandEntered(de::String)), &self, SLOT(sendCommandToServer(de::String)));
         QObject::connect(menu, SIGNAL(closed()), &self, SLOT(menuClosed()));
+        QObject::connect(&finder, SIGNAL(updated()), &self, SLOT(updateMenuWithFoundServers()));
     }
 
     ~Instance()
@@ -131,6 +132,13 @@ struct ShellApp::Instance
 ShellApp::ShellApp(int &argc, char **argv)
     : CursesApp(argc, argv), d(new Instance(*this))
 {
+    // Metadata.
+    setOrganizationDomain ("dengine.net");
+    setOrganizationName   ("Deng Team");
+    setApplicationName    ("doomsday-shell-text");
+    setApplicationVersion (SHELL_VERSION);
+
+    // Configure the log buffer.
     LogBuffer &buf = LogBuffer::appBuffer();
     buf.setMaxEntryCount(50); // buffered here rather than appBuffer
     buf.addSink(d->log->logSink());
@@ -211,9 +219,37 @@ void ShellApp::askToStartLocalServer()
     }
 }
 
-void ShellApp::lookForServers()
+void ShellApp::updateMenuWithFoundServers()
 {
-    d->finder.start();
+    // Remove old servers.
+    for(int i = 2; i < d->menu->itemCount() - 3; ++i)
+    {
+        if(d->menu->itemAction(i).label()[0].isDigit())
+        {
+            d->menu->removeItem(i);
+            --i;
+        }
+    }
+
+    int pos = 2;
+    foreach(Address const &sv, d->finder.foundServers())
+    {
+        String label = sv.asText() + String(" (%1; %2/%3)")
+                .arg(d->finder.name(sv).left(20))
+                .arg(d->finder.playerCount(sv))
+                .arg(d->finder.maxPlayers(sv));
+
+        d->menu->insertItem(pos++, new Action(label, this, SLOT(connectToFoundServer())));
+    }
+}
+
+void ShellApp::connectToFoundServer()
+{
+    String label = d->menu->itemAction(d->menu->cursor()).label();
+
+    LOG_INFO("Selected: ") << label;
+
+    openConnection(label.left(label.indexOf('(') - 1));
 }
 
 void ShellApp::sendCommandToServer(String command)

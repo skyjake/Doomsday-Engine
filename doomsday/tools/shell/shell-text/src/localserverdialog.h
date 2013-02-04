@@ -34,6 +34,7 @@ public:
 
 protected:
     void prepare();
+    void finish(int result);
 
 private:
     struct Instance;

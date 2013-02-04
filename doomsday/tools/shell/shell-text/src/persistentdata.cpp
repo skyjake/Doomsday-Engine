@@ -1,4 +1,4 @@
-/** @file openconnectiondialog.h  Dialog for specifying address for opening a connection.
+/** @file persistentdata.cpp  Data that persists even after restarting the app.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,27 +16,37 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef OPENCONNECTIONDIALOG_H
-#define OPENCONNECTIONDIALOG_H
+#include "persistentdata.h"
+#include <QSettings>
 
-#include <de/shell/InputDialog>
+using namespace de;
 
-/**
- * Dialog for specifying address for opening a connection.
- */
-class OpenConnectionDialog : public de::shell::InputDialog
+PersistentData::PersistentData()
+{}
+
+PersistentData::~PersistentData()
+{}
+
+void PersistentData::set(String const &name, String const &value)
 {
-public:
-    OpenConnectionDialog(de::String const &name = "");
+    QSettings st;
+    st.setValue(name, value);
+}
 
-    /**
-     * Returns the address that the user entered in the dialog. If the dialog
-     * was rejected, the returned string is empy.
-     */
-    de::String address();
+void PersistentData::set(String const &name, int value)
+{
+    QSettings st;
+    st.setValue(name, value);
+}
 
-protected:
-    void finish(int result);
-};
+String PersistentData::get(String const &name, String const &defaultValue)
+{
+    QSettings st;
+    return st.value(name, defaultValue).toString();
+}
 
-#endif // OPENCONNECTIONDIALOG_H
+int PersistentData::geti(String const &name, int defaultValue)
+{
+    QSettings st;
+    return st.value(name, defaultValue).toInt();
+}

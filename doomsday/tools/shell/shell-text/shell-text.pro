@@ -15,7 +15,7 @@ VERSION  = 1.0.0
 
 CONFIG -= app_bundle
 
-DEFINES += LIBSHELL_VERSION=\\\"$$VERSION\\\"
+DEFINES += SHELL_VERSION=\\\"$$VERSION\\\"
 
 include(../../../dep_deng2.pri)
 include(../../../dep_shell.pri)
@@ -33,7 +33,8 @@ HEADERS += \
     src/main.h \
     src/openconnectiondialog.h \
     src/shellapp.h \
-    src/statuswidget.h 
+    src/statuswidget.h \ 
+    src/persistentdata.h
 
 SOURCES += \
     src/aboutdialog.cpp \
@@ -45,7 +46,8 @@ SOURCES += \
     src/main.cpp \
     src/openconnectiondialog.cpp \
     src/shellapp.cpp \
-    src/statuswidget.cpp 
+    src/statuswidget.cpp \ 
+    src/persistentdata.cpp
 
 # Installation --------------------------------------------------------------
 

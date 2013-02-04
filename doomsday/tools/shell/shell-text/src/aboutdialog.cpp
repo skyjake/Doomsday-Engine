@@ -28,7 +28,7 @@ AboutDialog::AboutDialog()
     label->setLabel(tr("Doomsday Shell %1\nCopyright (c) %2\n\n"
                        "The Shell is a utility for controlling and monitoring "
                        "Doomsday servers using a text-based (curses) user interface.")
-                    .arg(LIBSHELL_VERSION)
+                    .arg(SHELL_VERSION)
                     .arg("2013 Deng Team"));
 
     label->setExpandsToFitLines(true);

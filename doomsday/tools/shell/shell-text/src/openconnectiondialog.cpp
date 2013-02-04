@@ -17,6 +17,8 @@
  */
 
 #include "openconnectiondialog.h"
+#include "persistentdata.h"
+#include <de/shell/LineEditWidget>
 
 using namespace de;
 
@@ -28,6 +30,7 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name) : shell::InputDia
                       "\"10.0.1.1:13209\"."));
 
     setPrompt(tr("Address: "));
+    lineEdit().setText(PersistentData::get("OpenConnection.address"));
 
     setAcceptLabel(tr("Connect to server"));
 }
@@ -35,4 +38,14 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name) : shell::InputDia
 String OpenConnectionDialog::address()
 {
     return text();
+}
+
+void OpenConnectionDialog::finish(int result)
+{
+    InputDialog::finish(result);
+
+    if(result)
+    {
+        PersistentData::set("OpenConnection.address", text());
+    }
 }

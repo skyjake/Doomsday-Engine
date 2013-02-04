@@ -17,6 +17,7 @@
  */
 
 #include "localserverdialog.h"
+#include "persistentdata.h"
 #include <de/shell/TextRootWidget>
 #include <de/shell/LabelWidget>
 #include <de/shell/MenuWidget>
@@ -88,7 +89,6 @@ LocalServerDialog::LocalServerDialog() : d(new Instance)
             .setInput(Rule::Top,    label().rule().bottom() + 1);
 
     d->port->setPrompt(tr("TCP port: "));
-    d->port->setText("13209");
 
     d->port->rule()
             .setInput(Rule::Width,  Const(16))
@@ -110,6 +110,11 @@ LocalServerDialog::LocalServerDialog() : d(new Instance)
     setPrompt(tr("Options: "));
 
     setAcceptLabel(tr("Start local server"));
+
+    // Values.
+    d->choice->select (PersistentData::geti("LocalServer.gameMode"));
+    d->port->setText  (PersistentData::get ("LocalServer.port", "13209"));
+    lineEdit().setText(PersistentData::get ("LocalServer.options"));
 }
 
 LocalServerDialog::~LocalServerDialog()
@@ -132,4 +137,16 @@ void LocalServerDialog::prepare()
     InputDialog::prepare();
 
     root().setFocus(d->choice);
+}
+
+void LocalServerDialog::finish(int result)
+{
+    InputDialog::finish(result);
+
+    if(result)
+    {
+        PersistentData::set("LocalServer.gameMode", d->choice->selection());
+        PersistentData::set("LocalServer.port", d->port->text());
+        PersistentData::set("LocalServer.options", lineEdit().text());
+    }
 }

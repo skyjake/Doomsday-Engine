@@ -1,4 +1,4 @@
-/** @file openconnectiondialog.h  Dialog for specifying address for opening a connection.
+/** @file persistentdata.h  Data that persists even after restarting the app.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,27 +16,27 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef OPENCONNECTIONDIALOG_H
-#define OPENCONNECTIONDIALOG_H
+#ifndef PERSISTENTDATA_H
+#define PERSISTENTDATA_H
 
-#include <de/shell/InputDialog>
+#include <de/String>
 
 /**
- * Dialog for specifying address for opening a connection.
+ * Data that persists even after restarting the app.
+ *
+ * A singleton class.
  */
-class OpenConnectionDialog : public de::shell::InputDialog
+class PersistentData
 {
 public:
-    OpenConnectionDialog(de::String const &name = "");
+    PersistentData();
+    ~PersistentData();
 
-    /**
-     * Returns the address that the user entered in the dialog. If the dialog
-     * was rejected, the returned string is empy.
-     */
-    de::String address();
+    static void set(de::String const &name, de::String const &value);
+    static void set(de::String const &name, int value);
 
-protected:
-    void finish(int result);
+    static de::String get(de::String const &name, de::String const &defaultValue = "");
+    static int geti(de::String const &name, int defaultValue = 0);
 };
 
-#endif // OPENCONNECTIONDIALOG_H
+#endif // PERSISTENTDATA_H
