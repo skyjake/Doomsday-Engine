@@ -60,7 +60,7 @@ void LogEntryPacket::execute() const
     LogBuffer &buf = LogBuffer::appBuffer();
     foreach(LogEntry *e, _entries)
     {
-        buf.add(new LogEntry(*e));
+        buf.add(new LogEntry(*e, LogEntry::Remote));
     }
 }
 
