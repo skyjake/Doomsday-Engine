@@ -20,6 +20,7 @@
 #define LIBSHELL_PROTOCOL_H
 
 #include "libshell.h"
+#include "Lexicon"
 #include <de/Protocol>
 #include <de/RecordPacket>
 #include <QList>
@@ -88,7 +89,7 @@ public:
      *
      * @return Type of the packet.
      */
-    PacketType recognize(Packet const *packet);
+    static PacketType recognize(Packet const *packet);
 
     /**
      * Constructs a console command packet.
@@ -100,6 +101,17 @@ public:
     RecordPacket *newCommand(String const &command);
 
     String command(Packet const &commandPacket);
+
+    /**
+     * Constructs a packet that defines all known terms of the console.
+     *
+     * @param lexicon  Lexicon.
+     *
+     * @return Packet. Caller gets ownership.
+     */
+    RecordPacket *newConsoleLexicon(Lexicon const &lexicon);
+
+    Lexicon lexicon(Packet const &consoleLexiconPacket);
 };
 
 } // namespace shell

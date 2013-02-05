@@ -279,6 +279,19 @@ void ShellApp::handleIncomingPackets()
         if(packet.isNull()) break;
 
         packet->execute();
+
+        // Process packet contents.
+        shell::Protocol &protocol = d->link->protocol();
+        switch(protocol.recognize(packet.data()))
+        {
+        case shell::Protocol::ConsoleLexicon:
+            // Terms for auto-completion.
+            d->cli->setLexicon(protocol.lexicon(*packet));
+            break;
+
+        default:
+            break;
+        }
     }
 }
 

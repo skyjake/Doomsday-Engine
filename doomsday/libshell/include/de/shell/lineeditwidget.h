@@ -25,6 +25,8 @@
 namespace de {
 namespace shell {
 
+class Lexicon;
+
 /**
  * Widget for word-wrapped text editing.
  *
@@ -57,6 +59,13 @@ public:
 
     void setCursor(int index);
     int cursor() const;
+
+    /**
+     * Defines the terms and rules for auto-completion.
+     *
+     * @param lexicon  Lexicon.
+     */
+    void setLexicon(Lexicon const &lexicon);
 
     /**
      * Enables or disables the signal emitted when the edit widget receives an

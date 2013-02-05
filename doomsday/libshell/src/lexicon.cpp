@@ -1,5 +1,4 @@
-/** @file shellusers.cpp  All remote shell users.
- * @ingroup server
+/** @file lexicon.cpp  Lexicon containing terms and grammatical rules.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,43 +16,40 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "shellusers.h"
+#include "de/shell/Lexicon"
 
-ShellUsers::ShellUsers()
+namespace de {
+namespace shell {
+
+Lexicon::Lexicon()
+{}
+
+void Lexicon::setAdditionalWordChars(String const &chars)
 {
+    _extraChars = chars;
 }
 
-ShellUsers::~ShellUsers()
+void Lexicon::addTerm(String const &term)
 {
-    foreach(ShellUser *user, _users)
-    {
-        delete user;
-    }
+    _terms.insert(term);
 }
 
-void ShellUsers::add(ShellUser *user)
+Lexicon::Terms Lexicon::terms() const
 {
-    LOG_INFO("New shell user from %s") << user->address();
-
-    _users.insert(user);
-    connect(user, SIGNAL(disconnected()), this, SLOT(userDisconnected()));
-
-    user->sendInitialUpdate();
+    return _terms;
 }
 
-int ShellUsers::count() const
+String Lexicon::additionalWordChars() const
 {
-    return _users.size();
+    return _extraChars;
 }
 
-void ShellUsers::userDisconnected()
+bool Lexicon::isWordChar(QChar ch) const
 {
-    DENG2_ASSERT(dynamic_cast<ShellUser *>(sender()) != 0);
-
-    ShellUser *user = static_cast<ShellUser *>(sender());
-    _users.remove(user);
-
-    LOG_INFO("Shell user from %s has disconnected") << user->address();
-
-    user->deleteLater();
+    // Default word characters.
+    if(ch.isLetterOrNumber()) return true;
+    return _extraChars.contains(ch);
 }
+
+} // namespace shell
+} // namespace de

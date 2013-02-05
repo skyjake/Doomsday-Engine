@@ -1303,6 +1303,11 @@ static AutoStr* textForKnownWord(knownword_t const* word)
     return text;
 }
 
+AutoStr *Con_KnownWordToString(knownword_t const *word)
+{
+    return textForKnownWord(word);
+}
+
 int Con_IterateKnownWords(char const* pattern, knownwordtype_t type,
     int (*callback) (knownword_t const* word, void* parameters), void* parameters)
 {

@@ -18,6 +18,8 @@
 
 #include "de/shell/Protocol"
 #include <de/LogBuffer>
+#include <de/ArrayValue>
+#include <de/TextValue>
 #include <de/Reader>
 #include <de/Writer>
 
@@ -25,6 +27,7 @@ namespace de {
 namespace shell {
 
 static String const PT_COMMAND = "shell.command";
+static String const PT_LEXICON = "shell.lexicon";
 
 // LogEntryPacket ------------------------------------------------------------
 
@@ -104,6 +107,8 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
     {
         if(rec->name() == PT_COMMAND)
             return Command;
+        else if(rec->name() == PT_LEXICON)
+            return ConsoleLexicon;
     }
     return Unknown;
 }
@@ -115,14 +120,42 @@ RecordPacket *Protocol::newCommand(String const &command)
     return cmd;
 }
 
+static RecordPacket const &asRecordPacket(Packet const &packet, Protocol::PacketType type)
+{
+    RecordPacket const *rec = dynamic_cast<RecordPacket const *>(&packet);
+    DENG2_ASSERT(rec != 0);
+    DENG2_ASSERT(Protocol::recognize(&packet) == type);
+    return *rec;
+}
+
 String Protocol::command(Packet const &commandPacket)
 {
-    DENG2_ASSERT(recognize(&commandPacket) == Command);
+    RecordPacket const &rec = asRecordPacket(commandPacket, Command);
+    return rec["execute"].value().asText();
+}
 
-    RecordPacket const *rec = dynamic_cast<RecordPacket const *>(&commandPacket);
-    DENG2_ASSERT(rec != 0);
+RecordPacket *Protocol::newConsoleLexicon(Lexicon const &lexicon)
+{
+    RecordPacket *lex = new RecordPacket(PT_LEXICON);
+    lex->record().addText("extraChars", lexicon.additionalWordChars());
+    ArrayValue &arr = lex->record().addArray("terms").value<ArrayValue>();
+    foreach(String const &term, lexicon.terms())
+    {
+        arr << TextValue(term);
+    }
+    return lex;
+}
 
-    return (*rec)["execute"].value().asText();
+Lexicon Protocol::lexicon(Packet const &consoleLexiconPacket)
+{
+    RecordPacket const &rec = asRecordPacket(consoleLexiconPacket, ConsoleLexicon);
+    Lexicon lexicon;
+    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, rec["terms"].value<ArrayValue>().elements())
+    {
+        lexicon.addTerm((*i)->asText());
+    }
+    lexicon.setAdditionalWordChars(rec.valueAsText("extraChars"));
+    return lexicon;
 }
 
 } // namespace shell

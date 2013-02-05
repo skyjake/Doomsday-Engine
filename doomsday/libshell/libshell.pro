@@ -55,7 +55,8 @@ HEADERS += \
     include/de/shell/textcanvas.h \
     include/de/shell/textrootwidget.h \
     include/de/shell/textwidget.h \ 
-    include/de/shell/serverfinder.h
+    include/de/shell/serverfinder.h \
+    include/de/shell/lexicon.h
 
 # Sources and private headers.
 SOURCES += \
@@ -73,7 +74,8 @@ SOURCES += \
     src/textwidget.cpp \
     src/choicewidget.cpp \
     src/localserver.cpp \
-    src/serverfinder.cpp
+    src/serverfinder.cpp \
+    src/lexicon.cpp
 
 # Installation ---------------------------------------------------------------
 

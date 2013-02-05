@@ -19,6 +19,7 @@
 #include "de/shell/LineEditWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
+#include "de/shell/Lexicon"
 #include <de/RuleRectangle>
 #include <de/String>
 #include <de/Log>
@@ -35,21 +36,22 @@ struct LineEditWidget::Instance
     String prompt;
     String text;
     int cursor; ///< Index in range [0...text.size()]
-    QSet<String> lexicon;
-    struct Suggestion
+    Lexicon lexicon;
+    struct Completion
     {
         int pos;
         int size;
-        int lexiconIndex;
+        int ordinal; ///< Ordinal within list of possible completions.
 
         void reset() {
-            pos = size = lexiconIndex = 0;
+            pos = size = ordinal = 0;
         }
         Range range() const {
             return Range(pos, pos + size);
         }
     };
-    Suggestion suggestion;
+    Completion completion;
+    QList<String> suggestions;
 
     // Word wrapping.
     LineWrapping wraps;
@@ -64,12 +66,7 @@ struct LineEditWidget::Instance
 
         wraps.append(WrappedLine(Range(), true));
 
-        suggestion.reset();
-
-        // testing
-        lexicon.insert("verbs");
-        lexicon.insert("verbose");
-        lexicon.insert("version");
+        completion.reset();
     }
 
     ~Instance()
@@ -122,7 +119,7 @@ struct LineEditWidget::Instance
      */
     bool moveCursorByLine(int lineOff)
     {
-        acceptSuggestion();
+        acceptCompletion();
 
         DENG2_ASSERT(lineOff == 1 || lineOff == -1);
 
@@ -142,7 +139,7 @@ struct LineEditWidget::Instance
 
     void insert(String const &str)
     {
-        acceptSuggestion();
+        acceptCompletion();
 
         text.insert(cursor++, str);
     }
@@ -151,7 +148,7 @@ struct LineEditWidget::Instance
     {
         if(suggestingCompletion())
         {
-            rejectSuggestion();
+            rejectCompletion();
             return;
         }
 
@@ -171,28 +168,28 @@ struct LineEditWidget::Instance
 
     void doLeft()
     {
-        acceptSuggestion();
+        acceptCompletion();
 
         if(cursor > 0) --cursor;
     }
 
     void doRight()
     {
-        acceptSuggestion();
+        acceptCompletion();
 
         if(cursor < text.size()) ++cursor;
     }
 
     void doHome()
     {
-        acceptSuggestion();
+        acceptCompletion();
 
         cursor = lineSpan(lineCursorPos().y).range.start;
     }
 
     void doEnd()
     {
-        acceptSuggestion();
+        acceptCompletion();
 
         WrappedLine const span = lineSpan(lineCursorPos().y);
         cursor = span.range.end - (span.isFinal? 0 : 1);
@@ -205,27 +202,28 @@ struct LineEditWidget::Instance
 
     bool suggestingCompletion() const
     {
-        return suggestion.size > 0;
+        return completion.size > 0;
     }
 
     String wordBehindCursor() const
     {
         String word;
         int i = cursor - 1;
-        while(i >= 0 && !text[i].isSpace()) word.prepend(text[i--]);
+        while(i >= 0 && lexicon.isWordChar(text[i])) word.prepend(text[i--]);
         return word;
     }
 
-    QList<String> suggestionsForBase(String base) const
+    QList<String> completionsForBase(String base) const
     {
         QList<String> suggestions;
-        foreach(String term, lexicon)
+        foreach(String term, lexicon.terms())
         {
-            if(term.startsWith(base, Qt::CaseInsensitive))
+            if(term.startsWith(base, Qt::CaseInsensitive) && term.size() > base.size())
             {
                 suggestions.append(term);
             }
         }
+        qSort(suggestions);
         return suggestions;
     }
 
@@ -236,51 +234,51 @@ struct LineEditWidget::Instance
             String const base = wordBehindCursor();
             if(!base.isEmpty())
             {
-                QList<String> suggestions = suggestionsForBase(base);
+                // Find all the possible completions and apply the first one.
+                suggestions = completionsForBase(base);
                 if(!suggestions.isEmpty())
                 {
-                    String sug = suggestions.first();
-                    sug.remove(0, base.size());
-                    suggestion.lexiconIndex = 0;
-                    suggestion.pos = cursor;
-                    suggestion.size = sug.size();
-                    text.insert(cursor, sug);
-                    cursor += suggestion.size;
+                    String comp = suggestions.first();
+                    comp.remove(0, base.size());
+                    completion.ordinal = 0;
+                    completion.pos = cursor;
+                    completion.size = comp.size();
+                    text.insert(cursor, comp);
+                    cursor += completion.size;
                     return true;
                 }
             }
         }
         else
         {
-            cursor = suggestion.pos;
+            // Replace the current completion with another suggestion.
+            cursor = completion.pos;
             String const base = wordBehindCursor();
 
             // Go to next suggestion.
-            QList<String> suggestions = suggestionsForBase(base);
-            suggestion.lexiconIndex = (suggestion.lexiconIndex + 1) % suggestions.size();
-            String newSug = suggestions[suggestion.lexiconIndex];
-            newSug.remove(0, base.size());
+            completion.ordinal = (completion.ordinal + 1) % suggestions.size();
+            String comp = suggestions[completion.ordinal];
+            comp.remove(0, base.size());
 
-            text.remove(suggestion.pos, suggestion.size);
-            text.insert(suggestion.pos, newSug);
-            suggestion.size = newSug.size();
-            cursor = suggestion.pos + suggestion.size;
-
+            text.remove(completion.pos, completion.size);
+            text.insert(completion.pos, comp);
+            completion.size = comp.size();
+            cursor = completion.pos + completion.size;
             return true;
         }
         return false;
     }
 
-    void acceptSuggestion()
+    void acceptCompletion()
     {
-        suggestion.reset();
+        completion.reset();
     }
 
-    void rejectSuggestion()
+    void rejectCompletion()
     {
-        text.remove(suggestion.pos, suggestion.size);
-        cursor = suggestion.pos;
-        suggestion.reset();
+        text.remove(completion.pos, completion.size);
+        cursor = completion.pos;
+        completion.reset();
     }
 };
 
@@ -344,7 +342,7 @@ void LineEditWidget::draw()
     // Underline the suggestion for completion.
     if(d->suggestingCompletion())
     {
-        buf.setRichFormatRange(TextCanvas::Char::Underline, d->suggestion.range());
+        buf.setRichFormatRange(TextCanvas::Char::Underline, d->completion.range());
     }
     buf.drawWrappedText(Vector2i(d->prompt.size(), 0), d->text, d->wraps, attr);
 
@@ -430,7 +428,7 @@ bool LineEditWidget::handleControlKey(int key)
         return true;
 
     case Qt::Key_Enter:
-        d->acceptSuggestion();
+        d->acceptCompletion();
         if(d->signalOnEnter)
         {
             emit enterPressed(d->text);
@@ -447,7 +445,7 @@ bool LineEditWidget::handleControlKey(int key)
 
 void LineEditWidget::setText(String const &contents)
 {
-    d->suggestion.reset();
+    d->completion.reset();
     d->text = contents;
     d->cursor = contents.size();
     d->wraps.clear();
@@ -466,7 +464,7 @@ String LineEditWidget::text() const
 
 void LineEditWidget::setCursor(int index)
 {
-    d->suggestion.reset();
+    d->completion.reset();
     d->cursor = index;
     redraw();
 }
@@ -474,6 +472,11 @@ void LineEditWidget::setCursor(int index)
 int LineEditWidget::cursor() const
 {
     return d->cursor;
+}
+
+void LineEditWidget::setLexicon(Lexicon const &lexicon)
+{
+    d->lexicon = lexicon;
 }
 
 void LineEditWidget::setSignalOnEnter(int enterSignal)
