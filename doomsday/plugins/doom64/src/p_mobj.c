@@ -654,7 +654,7 @@ void P_MobjThinker(mobj_t *mobj)
     else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0))
     {
         P_MobjMoveZ(mobj);
-        if(mobj->thinker.function != P_MobjThinker) // Must've been removed.
+        if(mobj->thinker.function != (thinkfunc_t) P_MobjThinker) // Must've been removed.
             return; // Mobj was removed.
     }
     // Non-sentient objects at rest.

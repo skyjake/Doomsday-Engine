@@ -194,6 +194,15 @@ public:
     dint compareWithoutCase(String const &str) const;
 
     /**
+     * Compare two strings (case insensitive), but only up to @a n characters.
+     * @param str  Other string.
+     * @param n    Maximum length to compare up to.
+     * @return 0, if @a a and @a b are identical. Positive, if @a a > @a b.
+     *         Negative, if @a a < @a b.
+     */
+    dint compareWithoutCase(String const &str, int n) const;
+
+    /**
      * Compares two strings (case sensitive) to see how many characters they
      * have in common starting from the left.
      *

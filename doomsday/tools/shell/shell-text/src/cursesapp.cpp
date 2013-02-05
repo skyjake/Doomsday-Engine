@@ -82,7 +82,6 @@ struct CursesApp::Instance
     // Curses state:
     WINDOW *rootWin;
     de::Vector2i rootSize;
-    QTimer *refreshTimer;
     int unicodeContinuation;
 
     TextRootWidget *rootWidget;
@@ -125,9 +124,7 @@ struct CursesApp::Instance
         // Listen for window resizing.
         signal(SIGWINCH, windowResized);
 
-        refreshTimer = new QTimer(&self);
-        QObject::connect(refreshTimer, SIGNAL(timeout()), &self, SLOT(refresh()));
-        refreshTimer->start(1000 / 30);
+        requestRefresh();
     }
 
     void initCursesState()
@@ -149,14 +146,16 @@ struct CursesApp::Instance
 
     void shutdownCurses()
     {
-        delete refreshTimer;
-        refreshTimer = 0;
-
         delwin(rootWin);
         rootWin = 0;
 
         endwin();
         refresh();
+    }
+
+    void requestRefresh()
+    {
+        QTimer::singleShot(1000 / 30, &self, SLOT(refresh()));
     }
 
     void handleResize()
@@ -180,6 +179,9 @@ struct CursesApp::Instance
     {
         if(!rootWin) return;
 
+        // Schedule the next refresh.
+        requestRefresh();
+
         // Update time.
         clock.setTime(de::Time());
 
@@ -199,10 +201,6 @@ struct CursesApp::Instance
                 // Control keys.
                 switch(key)
                 {
-                case 0x1b: // Escape
-                    self.quit(); // development only
-                    return;
-
                 case KEY_ENTER:
                 case 0xd: // Enter
                     code = Qt::Key_Enter;
@@ -212,6 +210,11 @@ struct CursesApp::Instance
                     code = Qt::Key_Backspace;
                     break;
 
+                case 0x3: // Ctrl-C
+                    code = Qt::Key_C;
+                    mods = KeyEvent::Control;
+                    break;
+
                 case KEY_DC:
                 case 0x4: // Ctrl-D
                     code = Qt::Key_Delete;
@@ -219,6 +222,10 @@ struct CursesApp::Instance
 
                 case KEY_BACKSPACE:
                     code = Qt::Key_Backspace;
+                    break;
+
+                case 0x9:
+                    code = Qt::Key_Tab;
                     break;
 
                 case KEY_BTAB: // back-tab
@@ -251,9 +258,81 @@ struct CursesApp::Instance
                     code = Qt::Key_End;
                     break;
 
-                case 0xb: // Ctrl-K
+                case KEY_NPAGE:
+                case 0x16: // Ctrl-V
+                    code = Qt::Key_PageDown;
+                    break;
+
+                case KEY_PPAGE:
+                case 0x19: // Ctrl-Y
+                    code = Qt::Key_PageUp;
+                    break;
+
+                case 0xb:
                     code = Qt::Key_K;
                     mods = KeyEvent::Control;
+                    break;
+
+                case KEY_F(1):
+                    code = Qt::Key_F1;
+                    break;
+
+                case KEY_F(2):
+                    code = Qt::Key_F2;
+                    break;
+
+                case KEY_F(3):
+                    code = Qt::Key_F3;
+                    break;
+
+                case KEY_F(4):
+                    code = Qt::Key_F4;
+                    break;
+
+                case KEY_F(5):
+                    code = Qt::Key_F5;
+                    break;
+
+                case KEY_F(6):
+                    code = Qt::Key_F6;
+                    break;
+
+                case KEY_F(7):
+                    code = Qt::Key_F7;
+                    break;
+
+                case KEY_F(8):
+                    code = Qt::Key_F8;
+                    break;
+
+                case KEY_F(9):
+                    code = Qt::Key_F9;
+                    break;
+
+                case KEY_F(10):
+                    code = Qt::Key_F10;
+                    break;
+
+                case KEY_F(11):
+                    code = Qt::Key_F11;
+                    break;
+
+                case KEY_F(12):
+                    code = Qt::Key_F12;
+                    break;
+
+                case 0x18:
+                    code = Qt::Key_X;
+                    mods = KeyEvent::Control;
+                    break;
+
+                case 0x1a:
+                    code = Qt::Key_Z;
+                    mods = KeyEvent::Control;
+                    break;
+
+                case 0x1b:
+                    code = Qt::Key_Escape;
                     break;
 
                 default:
@@ -302,6 +381,8 @@ struct CursesApp::Instance
             }
         }
 
+        rootWidget->update();
+
         // Automatically redraw the UI if the values of layout rules have changed.
         if(de::Rule::invalidRulesExist() || rootWidget->drawWasRequested())
         {
@@ -314,11 +395,6 @@ struct CursesApp::Instance
             wmove(rootWin, p.y, p.x);
             wrefresh(rootWin);
         }
-    }
-
-    void update()
-    {
-        rootWidget->draw();
     }
 };
 

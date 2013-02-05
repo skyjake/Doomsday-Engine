@@ -302,7 +302,11 @@ public:
 
         /// Parts of the section can be abbreviated because they are clear
         /// from the context (e.g., previous line).
-        AbbreviateSection = 0x10
+        AbbreviateSection = 0x10,
+
+        /// Entry is not from a local source. Could be used to mark entries
+        /// originating from a remote LogBuffer (over the network).
+        Remote = 0x20
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -323,9 +327,11 @@ public:
      * Copy constructor.
      * @param other  Log entry.
      */
-    LogEntry(LogEntry const &other);
+    LogEntry(LogEntry const &other, Flags extraFlags = 0);
 
     ~LogEntry();
+
+    Flags flags() const;
 
     /// Returns the timestamp of the entry.
     Time when() const { return _when; }
@@ -349,7 +355,7 @@ public:
      *
      * @return Composed textual representation of the entry.
      */
-    String asText(Flags const &flags = 0, int shortenSection = 0) const;
+    String asText(Flags const &flags = 0, int shortenSection = 0) const;    
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

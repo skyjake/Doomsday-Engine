@@ -43,6 +43,9 @@
 #ifdef __SERVER__
 #  include "server/sv_def.h"
 #  include "shellusers.h"
+#  include "map/gamemap.h"
+#  include <de/Beacon>
+#  include <de/ByteRefArray>
 #endif
 #include "network/protocol.h"
 #include "client/cl_def.h"
@@ -101,6 +104,11 @@ static int sockSet;
 static int joinedSockSet;
 static foundhost_t located;
 
+#ifdef __SERVER__
+// Beacon for informing clients that a server is present.
+static de::Beacon beacon(13209);
+#endif
+
 void N_Register(void)
 {
     C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
@@ -147,6 +155,11 @@ void N_IPToString(char *buf, ipaddress_t *ip)
     sprintf(buf, "%s:%i", ip->host, ip->port);
 }
 
+de::duint16 N_ServerPort()
+{
+    return (!nptIPPort ? defaultTCPPort : nptIPPort);
+}
+
 /**
  * Initialize the chosen service provider each in server or client
  * mode.  If a service provider has already been initialized, it will
@@ -167,7 +180,7 @@ boolean N_InitService(boolean inServerMode)
 
     if(inServerMode)
     {
-        port = (!nptIPPort ? defaultTCPPort : nptIPPort);
+        port = N_ServerPort();
 
         Con_Message("Listening on TCP port %i.\n", port);
 
@@ -451,6 +464,10 @@ boolean N_ServerOpen(void)
         // Let the master server know that we are running a public server.
         N_MasterAnnounceServer(true);
     }
+
+    // Start the beacon.
+    beacon.start(N_ServerPort());
+
     return true;
 }
 
@@ -458,6 +475,9 @@ boolean N_ServerClose(void)
 {
     if(!N_IsAvailable())
         return false;
+
+    // Stop the beacon.
+    beacon.stop();
 
     if(masterAware && N_UsingInternet())
     {
@@ -707,8 +727,25 @@ void N_PrintNetworkStatus(void)
     Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
 }
 
+void N_ServerUpdateBeacon()
+{
+    // Update the status message in the server's presence beacon.
+    if(serverSock && theMap)
+    {
+        serverinfo_t info;
+        Sv_GetInfo(&info);
+
+        QScopedPointer<de::Record> rec(Sv_InfoToRecord(&info));
+        de::Block msg;
+        de::Writer(msg).withHeader() << *rec;
+        beacon.setMessage(msg);
+    }
+}
+
 void N_ListenNodes(void)
 {
+    N_ServerUpdateBeacon();
+
     // This is only for the server.
     N_ServerListenUnjoinedNodes();
     N_ServerListenJoinedNodes();

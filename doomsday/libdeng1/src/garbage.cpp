@@ -58,7 +58,7 @@ struct Garbage
 
         beingRecycled = true;
 
-        LOG_DEBUG("Recycling %i allocations/instances.") << allocs.size();
+        LOG_TRACE("Recycling %i allocations/instances.") << allocs.size();
 
         for(Allocs::iterator i = allocs.begin(); i != allocs.end(); ++i)
         {

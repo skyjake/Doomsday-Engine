@@ -37,6 +37,8 @@ void ShellUsers::add(ShellUser *user)
 
     _users.insert(user);
     connect(user, SIGNAL(disconnected()), this, SLOT(userDisconnected()));
+
+    user->sendInitialUpdate();
 }
 
 int ShellUsers::count() const

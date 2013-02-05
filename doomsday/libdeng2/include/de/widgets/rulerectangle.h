@@ -29,67 +29,51 @@ namespace de {
 /**
  * A set of rules defining a rectangle.
  *
- * The value of the rectangle rule is the area of the rectangle (width *
- * height). RectangleRule::rect() returns the rectangle itself. The output
- * rules for the sides can be used normally in other rules.
+ * Instead of being derived from Rule, RuleRectangle acts as a complex mapping
+ * between a set of input and output Rule instances. Note that RuleRectangle is
+ * not reference-counted like Rule instances.
+ *
+ * RuleRectangle::rect() returns the rectangle's currently valid bounds. The
+ * output rules for the sides can be used normally in other rules. Horizontal
+ * and vertical axes are handled independently.
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC RectangleRule : public Rule
+class DENG2_PUBLIC RuleRectangle : DENG2_OBSERVES(Clock, TimeChange)
 {
-    Q_OBJECT
-
 public:
-    enum InputRule {
-        Left,
-        Top,
-        Right,
-        Bottom,
-        Width,
-        Height,
-        AnchorX,
-        AnchorY,
-        MAX_RULES
-    };
+    RuleRectangle();
 
-public:
-    explicit RectangleRule();
-
-    /**
-     * Constructs a rectangle rule with individual rules defining the placement
-     * of the rectangle. References are kept to all non-NULL rules.
-     *
-     * @param left    Rule for the left coordinate.
-     * @param top     Rule for the top coordinate.
-     * @param right   Rule for the right coordinate.
-     * @param bottom  Rule for the bottom coordinate.
-     */
-    explicit RectangleRule(Rule const *left, Rule const *top, Rule const *right, Rule const *bottom);
-
-    explicit RectangleRule(RectangleRule const *rect);
+    ~RuleRectangle();
 
     // Output rules.
-    Rule const *left() const;
-    Rule const *top() const;
-    Rule const *right() const;
-    Rule const *bottom() const;
+    Rule const &left() const;
+    Rule const &top() const;
+    Rule const &right() const;
+    Rule const &bottom() const;
+    Rule const &width() const;
+    Rule const &height() const;
 
     /**
      * Sets one of the input rules of the rectangle.
      *
-     * @param inputRule  InputRule to set.
+     * @param inputRule  Semantic of the input rule.
      * @param rule       Rule to use as input. A reference is held.
      */
-    RectangleRule &setInput(InputRule inputRule, Rule const *rule);
+    RuleRectangle &setInput(Rule::Semantic inputRule, Rule const &rule);
+
+    RuleRectangle &setLeftTop(Rule const &left, Rule const &top);
+    RuleRectangle &setRightBottom(Rule const &right, Rule const &bottom);
+    RuleRectangle &setSize(Rule const &width, Rule const &height);
 
     /**
      * Returns an input rule.
      */
-    Rule const *inputRule(InputRule inputRule);
+    Rule const &inputRule(Rule::Semantic inputRule);
 
     template <class RuleType>
-    RuleType const &inputRuleAs(InputRule input) {
-        RuleType const *r = dynamic_cast<RuleType const *>(inputRule(input));
+    RuleType const &inputRuleAs(Rule::Semantic input) {
+        RuleType const *r = dynamic_cast<RuleType const *>(&inputRule(input));
         DENG2_ASSERT(r != 0);
         return *r;
     }
@@ -115,12 +99,8 @@ public:
      */
     Rectanglei recti() const;
 
-public slots:
-    void timeChanged();
-
 protected:
-    ~RectangleRule();
-    void update();
+    void timeChanged(Clock const &);
 
 private:
     struct Instance;

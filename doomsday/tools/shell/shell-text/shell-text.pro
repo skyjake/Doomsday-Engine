@@ -15,6 +15,8 @@ VERSION  = 1.0.0
 
 CONFIG -= app_bundle
 
+DEFINES += SHELL_VERSION=\\\"$$VERSION\\\"
+
 include(../../../dep_deng2.pri)
 include(../../../dep_shell.pri)
 include(../../../dep_curses.pri)
@@ -22,22 +24,30 @@ include(../../../dep_curses.pri)
 # Sources -------------------------------------------------------------------
 
 HEADERS += \
+    src/aboutdialog.h \
     src/commandlinewidget.h \
     src/cursesapp.h \
     src/cursestextcanvas.h \
+    src/localserverdialog.h \
     src/logwidget.h \
     src/main.h \
+    src/openconnectiondialog.h \
+    src/persistentdata.h \
     src/shellapp.h \
     src/statuswidget.h
 
 SOURCES += \
+    src/aboutdialog.cpp \
     src/commandlinewidget.cpp \
     src/cursesapp.cpp \
     src/cursestextcanvas.cpp \
+    src/localserverdialog.cpp \
     src/logwidget.cpp \
     src/main.cpp \
+    src/openconnectiondialog.cpp \
+    src/persistentdata.cpp \
     src/shellapp.cpp \
-    src/statuswidget.cpp
+    src/statuswidget.cpp 
 
 # Installation --------------------------------------------------------------
 

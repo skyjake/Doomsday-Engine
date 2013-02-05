@@ -20,12 +20,14 @@
 #ifndef LIBDENG2_RULE_H
 #define LIBDENG2_RULE_H
 
-#include <QObject>
-#include <QSet>
 #include "../libdeng2.h"
 #include "../Counted"
+#include "../Observers"
 
 namespace de {
+
+// Declared outside Rule because Rule itself implements the interface.
+DENG2_DECLARE_AUDIENCE(RuleInvalidation, void ruleInvalidated())
 
 /**
  * Rules are used together to evaluate formulas dependent on other rules.
@@ -35,23 +37,43 @@ namespace de {
  * - Every rule knows where its value comes from / how it's generated.
  * - When the value changes, all dependent rules are notified and marked as invalid.
  * - When a rule is invalid, its current value will be updated (i.e., validated).
- * - Rules can be replaced dynamically with other rules, see Rule::replace().
  * - Reference counting is used for lifetime management.
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC Rule : public QObject, public Counted
+class DENG2_PUBLIC Rule : public Counted, public DENG2_AUDIENCE_INTERFACE(RuleInvalidation)
 {
-    Q_OBJECT
+public:
+    DENG2_AUDIENCE(RuleInvalidation)
+
+    /// Semantic identifiers (e.g., for RuleRectangle).
+    enum Semantic {
+        Left,
+        Top,
+        Right,
+        Bottom,
+        Width,
+        Height,
+        AnchorX,
+        AnchorY,
+        MAX_SEMANTICS
+    };
 
 public:
-    explicit Rule(float initialValue = 0);
+    Rule();
+
+    explicit Rule(float initialValue);
 
     /**
      * Determines the rule's current value. If it has been marked invalid,
      * the value is updated first (see update()).
      */
     float value() const;
+
+    /**
+     * Marks the rule invalid, causing all dependent rules to be invalid, too.
+     */
+    virtual void invalidate();
 
     /**
      * Updates the rule with a valid value. Derived classes must call
@@ -63,7 +85,32 @@ public:
     virtual void update();
 
     /**
-     * Clearss the flag that determines whether there are any invalid rules.
+     * Determines if the rule's value is currently valid. A rule becomes
+     * invalid if any of its dependencies are invalidated, or invalidate() is
+     * called directly on the rule.
+     */
+    bool isValid() const;
+
+    /**
+     * Links rules together. This rule will depend on @a dependency; if @a
+     * dependency becomes invalid, this rule will likewise become invalid.
+     * @a dependency will hold a reference to this rule.
+     */
+    void dependsOn(Rule const &dependency);
+
+    void dependsOn(Rule const *dependencyOrNull);
+
+    /**
+     * Unlinks rules. This rule will no longer depend on @a dependency.
+     * @a dependency will release its reference to this rule.
+     */
+    void independentOf(Rule const &dependency);
+
+    void independentOf(Rule const *dependencyOrNull);
+
+public:
+    /**
+     * Clears the flag that determines whether there are any invalid rules.
      * This could, for example, be called after drawing a frame.
      */
     static void markRulesValid();
@@ -77,27 +124,8 @@ public:
      */
     static bool invalidRulesExist();
 
-public slots:
-    /**
-     * Marks the rule invalid, causing all dependent rules to be invalid, too.
-     */
-    void invalidate();
-
 protected:
     ~Rule(); // Counted
-
-    /**
-     * Links rules together. This rule will depend on @a dependency; if @a
-     * dependency becomes invalid, this rule will likewise become invalid.
-     * @a dependency will hold a reference to this rule.
-     */
-    void dependsOn(Rule const *dependency);
-
-    /**
-     * Unlinks rules. This rule will no longer depend on @a dependency.
-     * @a dependency will release its reference to this rule.
-     */
-    void independentOf(Rule const *dependency);
 
     /**
      * Sets the current value of the rule and marks it valid.
@@ -108,8 +136,8 @@ protected:
 
     float cachedValue() const;
 
-signals:
-    void valueInvalidated();
+    // Implements IRuleInvalidationObserver.
+    void ruleInvalidated();
 
 private:
     struct Instance;

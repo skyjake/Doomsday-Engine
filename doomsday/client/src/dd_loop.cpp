@@ -58,7 +58,7 @@ int maxFrameRate = 120; // Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 int rFrameCount = 0;
 byte devShowFrameTimeDeltas = false;
-byte processSharpEventsAfterTickers = true;
+byte processSharpEventsAfterTickers = false;
 
 timespan_t sysTime, gameTime, demoTime, ddMapTime;
 //timespan_t frameStartTime;

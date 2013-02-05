@@ -199,13 +199,13 @@ LogEntry::LogEntry(Level level, String const &section, int sectionDepth, String 
     }
 }
 
-LogEntry::LogEntry(LogEntry const &other)
+LogEntry::LogEntry(LogEntry const &other, Flags extraFlags)
     : _when(other._when),
       _level(other._level),
       _section(other._section),
       _sectionDepth(other._sectionDepth),
       _format(other._format),
-      _defaultFlags(other._defaultFlags),
+      _defaultFlags(other._defaultFlags | extraFlags),
       _disabled(other._disabled)
 {
     DENG2_FOR_EACH_CONST(Args, i, other._args)
@@ -222,7 +222,12 @@ LogEntry::~LogEntry()
     for(Args::iterator i = _args.begin(); i != _args.end(); ++i) 
     {
         delete *i;
-    }    
+    }
+}
+
+LogEntry::Flags LogEntry::flags() const
+{
+    return _defaultFlags;
 }
 
 String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
@@ -255,7 +260,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                 "(deb)",
                 "(vrb)",
                 "",
-                "(inf)",
+                "(i)",
                 "(WRN)",
                 "(ERR)",
                 "(!!!)"        

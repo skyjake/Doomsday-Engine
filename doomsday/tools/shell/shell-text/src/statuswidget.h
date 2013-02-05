@@ -40,7 +40,7 @@ public:
     void draw();
 
 public slots:
-    void redraw();
+    void refresh();
     void linkConnected();
     void linkDisconnected();
 

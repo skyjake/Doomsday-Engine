@@ -24,6 +24,7 @@
 #include "dd_def.h"
 #include "network/protocol.h"
 #include "network/sys_network.h"
+#include <de/Record>
 
 struct material_s;
 
@@ -69,6 +70,7 @@ int             Sv_Latency(byte cmdTime);
 void            Sv_Kick(int who);
 void            Sv_GetInfo(serverinfo_t* info);
 size_t          Sv_InfoToString(serverinfo_t* info, ddstring_t* msg);
+de::Record *    Sv_InfoToRecord(serverinfo_t *info);
 int             Sv_GetNumPlayers(void);
 int             Sv_GetNumConnected(void);
 boolean         Sv_CheckBandwidth(int playerNumber);

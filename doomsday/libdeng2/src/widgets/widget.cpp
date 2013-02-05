@@ -24,11 +24,17 @@
 
 namespace de {
 
+static duint32 widgetIdGen = 0;
+
 struct Widget::Instance
 {
     Widget &self;
+    duint32 id;
     String name;
     Widget *parent;
+    Behaviors behavior;
+    String focusNext;
+    String focusPrev;
 
     typedef QList<Widget *> Children;
     typedef QMap<String, Widget *> NamedChildren;
@@ -36,7 +42,10 @@ struct Widget::Instance
     NamedChildren index;
 
     Instance(Widget &w, String const &n) : self(w), name(n), parent(0)
-    {}
+    {
+        // A unique ID is generated for each Widget instance.
+        id = ++widgetIdGen;
+    }
 
     ~Instance()
     {
@@ -59,6 +68,11 @@ Widget::Widget(String const &name) : d(new Instance(*this, name))
 
 Widget::~Widget()
 {
+    if(hasRoot() && root().focus() == this)
+    {
+        root().setFocus(0);
+    }
+
     // Remove from parent automatically.
     if(d->parent)
     {
@@ -66,6 +80,11 @@ Widget::~Widget()
     }
 
     delete d;
+}
+
+duint32 Widget::id() const
+{
+    return d->id;
 }
 
 String Widget::name() const
@@ -113,6 +132,62 @@ RootWidget &Widget::root() const
     throw NotFoundError("Widget::root", "No root widget found");
 }
 
+bool Widget::hasFocus() const
+{
+    return hasRoot() && root().focus() == this;
+}
+
+bool Widget::isHidden() const
+{
+    for(Widget const *w = this; w != 0; w = w->d->parent)
+    {
+        if(w->d->behavior.testFlag(Hidden)) return true;
+    }
+    return false;
+}
+
+void Widget::show(bool doShow)
+{
+    setBehavior(Hidden, !doShow);
+}
+
+void Widget::setBehavior(Behaviors behavior, bool set)
+{
+    if(set)
+    {
+        d->behavior |= behavior;
+    }
+    else
+    {
+        d->behavior &= ~behavior;
+    }
+}
+
+Widget::Behaviors Widget::behavior() const
+{
+    return d->behavior;
+}
+
+void Widget::setFocusNext(String const &name)
+{
+    d->focusNext = name;
+}
+
+void Widget::setFocusPrev(String const &name)
+{
+    d->focusPrev = name;
+}
+
+String Widget::focusNext() const
+{
+    return d->focusNext;
+}
+
+String Widget::focusPrev() const
+{
+    return d->focusPrev;
+}
+
 void Widget::clear()
 {
     d->clear();
@@ -136,6 +211,9 @@ Widget &Widget::add(Widget *child)
 
 Widget *Widget::remove(Widget &child)
 {
+    DENG2_ASSERT(child.d->parent == this);
+    child.d->parent = 0;
+
     d->children.removeOne(&child);
     if(!child.name().isEmpty())
     {
@@ -174,6 +252,11 @@ Widget *Widget::parent() const
     return d->parent;
 }
 
+String Widget::uniqueName(String const &name) const
+{
+    return String("#%1.%2").arg(id()).arg(name);
+}
+
 void Widget::notifyTree(void (Widget::*notifyFunc)())
 {
     DENG2_FOR_EACH(Instance::Children, i, d->children)
@@ -195,6 +278,22 @@ void Widget::notifyTreeReversed(void (Widget::*notifyFunc)())
 
 bool Widget::dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event const *))
 {
+    // Hidden widgets do not get events.
+    if(isHidden()) return false;
+
+    bool const thisHasFocus = (hasRoot() && root().focus() == this);
+
+    if(d->behavior.testFlag(HandleEventsOnlyWhenFocused) && !thisHasFocus)
+    {
+        return false;
+    }
+
+    if(thisHasFocus)
+    {
+        // The focused widget is offered events before dispatching to the tree.
+        return false;
+    }
+
     // Tree is traversed in reverse order.
     for(int i = d->children.size() - 1; i >= 0; --i)
     {
@@ -213,7 +312,7 @@ bool Widget::dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event 
     return false;
 }
 
-QList<Widget *> Widget::children() const
+Widget::Children Widget::children() const
 {
     return d->children;
 }
@@ -224,8 +323,22 @@ void Widget::initialize()
 void Widget::viewResized()
 {}
 
+void Widget::focusGained()
+{}
+
+void Widget::focusLost()
+{}
+
 void Widget::update()
 {}
+
+void Widget::drawIfVisible()
+{
+    if(!isHidden())
+    {
+        draw();
+    }
+}
 
 void Widget::draw()
 {}
@@ -234,6 +347,18 @@ bool Widget::handleEvent(Event const *)
 {
     // Event is not handled.
     return false;
+}
+
+void Widget::setFocusCycle(WidgetList const &order)
+{
+    for(int i = 0; i < order.size(); ++i)
+    {
+        Widget *a = order[i];
+        Widget *b = order[(i + 1) % order.size()];
+
+        a->setFocusNext(b->name());
+        b->setFocusPrev(a->name());
+    }
 }
 
 } // namespace de

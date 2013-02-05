@@ -28,6 +28,13 @@ struct TextCanvas::Instance
     Size size;
     QList<Char *> lines;
 
+    struct RichFormat
+    {
+        Char::Attribs attrib;
+        Range range;
+    };
+    QList<RichFormat> richFormats;
+
     Instance(Size const &initialSize) : size(initialSize)
     {
         // Allocate lines based on supplied initial size.
@@ -94,6 +101,19 @@ struct TextCanvas::Instance
             }
         }
     }
+
+    Char::Attribs richAttribsForTextIndex(int pos, int offset = 0) const
+    {
+        Char::Attribs attr;
+        foreach(RichFormat const &rf, richFormats)
+        {
+            if(rf.range.contains(offset + pos))
+            {
+                attr |= rf.attrib;
+            }
+        }
+        return attr;
+    }
 };
 
 TextCanvas::TextCanvas(Size const &size) : d(new Instance(size))
@@ -109,6 +129,21 @@ TextCanvas::~TextCanvas()
 TextCanvas::Size TextCanvas::size() const
 {
     return d->size;
+}
+
+int TextCanvas::width() const
+{
+    return d->size.x;
+}
+
+int TextCanvas::height() const
+{
+    return d->size.y;
+}
+
+Rectanglei TextCanvas::rect() const
+{
+    return Rectanglei(Vector2i(0, 0), size());
 }
 
 void TextCanvas::resize(Size const &newSize)
@@ -163,17 +198,80 @@ void TextCanvas::put(Vector2i const &pos, Char const &ch)
     }
 }
 
-void TextCanvas::drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs)
+void TextCanvas::clearRichFormat()
+{
+    d->richFormats.clear();
+}
+
+void TextCanvas::setRichFormatRange(Char::Attribs const &attribs, Range const &range)
+{
+    Instance::RichFormat rf;
+    rf.attrib = attribs;
+    rf.range = range;
+    d->richFormats.append(rf);
+}
+
+void TextCanvas::drawText(Vector2i const &pos, String const &text,
+                          Char::Attribs const &attribs, int richOffset)
 {
     Vector2i p = pos;
-    DENG2_FOR_EACH_CONST(String, i, text)
+    for(int i = 0; i < text.size(); ++i)
     {
         if(isValid(p))
         {
-            at(p) = Char(*i, attribs);
+            at(p) = Char(text[i], attribs | d->richAttribsForTextIndex(i, richOffset));
         }
         p.x++;
     }
+}
+
+void TextCanvas::drawWrappedText(Vector2i const &pos, String const &text,
+                                 LineWrapping const &wraps, Char::Attribs const &attribs,
+                                 Alignment lineAlignment)
+{
+    int const width = wraps.width();
+
+    for(int y = 0; y < wraps.size(); ++y)
+    {
+        WrappedLine const &span = wraps[y];
+        String part = text.substr(span.range.start, span.range.size());
+        int x = 0;
+        if(lineAlignment.testFlag(AlignRight))
+        {
+            x = width - part.size();
+        }
+        else if(!lineAlignment.testFlag(AlignLeft))
+        {
+            x = width/2 - part.size()/2;
+        }
+        drawText(pos + Vector2i(x, y), part, attribs, span.range.start);
+    }
+}
+
+void TextCanvas::drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs)
+{
+    Char const corner('+', attribs);
+    Char const hEdge ('-', attribs);
+    Char const vEdge ('|', attribs);
+
+    // Horizontal edges.
+    for(int x = 1; x < rect.width() - 1; ++x)
+    {
+        put(rect.topLeft + Vector2i(x, 0), hEdge);
+        put(rect.bottomLeft() + Vector2i(x, -1), hEdge);
+    }
+
+    // Vertical edges.
+    for(int y = 1; y < rect.height() - 1; ++y)
+    {
+        put(rect.topLeft + Vector2i(0, y), vEdge);
+        put(rect.topRight() + Vector2i(-1, y), vEdge);
+    }
+
+    put(rect.topLeft, corner);
+    put(rect.topRight() - Vector2i(1, 0), corner);
+    put(rect.bottomRight - Vector2i(1, 1), corner);
+    put(rect.bottomLeft() - Vector2i(0, 1), corner);
 }
 
 void TextCanvas::draw(TextCanvas const &canvas, Coord const &topLeft)

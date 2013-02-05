@@ -22,22 +22,26 @@
 
 namespace de {
 
+ConstantRule::ConstantRule() : Rule(), _pendingValue(0)
+{
+    // No valid value defined.
+}
+
 ConstantRule::ConstantRule(float constantValue)
-    : Rule(constantValue), _newValue(constantValue)
+    : Rule(constantValue), _pendingValue(constantValue)
 {}
 
 void ConstantRule::set(float newValue)
 {
-    if(!fequal(cachedValue(), newValue))
-    {
-        _newValue = newValue;
-        invalidate();
-    }
+    _pendingValue = newValue;
+
+    // Dependent values will need updating.
+    invalidate();
 }
 
 void ConstantRule::update()
 {
-    setValue(_newValue);
+    setValue(_pendingValue);
 }
 
 } // namespace de

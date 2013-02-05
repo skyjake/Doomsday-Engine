@@ -19,6 +19,7 @@
 
 #include "shelluser.h"
 #include <de/shell/Protocol>
+#include <de/shell/Lexicon>
 #include <de/LogSink>
 #include <de/Log>
 #include <de/LogBuffer>
@@ -74,6 +75,23 @@ ShellUser::ShellUser(Socket *socket) : shell::Link(socket), d(new Instance(*this
     connect(this, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
 }
 
+static int addToTerms(knownword_t const *word, void *parameters)
+{
+    shell::Lexicon *lexi = reinterpret_cast<shell::Lexicon *>(parameters);
+    lexi->addTerm(Str_Text(Con_KnownWordToString(word)));
+    return 0;
+}
+
+void ShellUser::sendInitialUpdate()
+{
+    // Console lexicon.
+    shell::Lexicon lexi;
+    Con_IterateKnownWords(0, WT_ANY, addToTerms, &lexi);
+    lexi.setAdditionalWordChars("-_.");
+    QScopedPointer<RecordPacket> packet(protocol().newConsoleLexicon(lexi));
+    *this << *packet;
+}
+
 ShellUser::~ShellUser()
 {
     delete d;
@@ -86,14 +104,21 @@ void ShellUser::handleIncomingPackets()
         QScopedPointer<Packet> packet(nextPacket());
         if(packet.isNull()) break;
 
-        switch(protocol().recognize(packet.data()))
+        try
         {
-        case shell::Protocol::Command:
-            Con_Execute(CMDS_CONSOLE, protocol().command(*packet).toUtf8().constData(), false, true);
-            break;
+            switch(protocol().recognize(packet.data()))
+            {
+            case shell::Protocol::Command:
+                Con_Execute(CMDS_CONSOLE, protocol().command(*packet).toUtf8().constData(), false, true);
+                break;
 
-        default:
-            break;
+            default:
+                break;
+            }
+        }
+        catch(Error const &er)
+        {
+            LOG_WARNING("Error while processing packet from %s:\n%s") << packet->from() << er.asText();
         }
     }
 }

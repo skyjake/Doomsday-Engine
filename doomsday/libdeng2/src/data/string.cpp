@@ -349,6 +349,11 @@ dint String::compareWithoutCase(String const &str) const
     return compare(str, Qt::CaseInsensitive);
 }
 
+dint String::compareWithoutCase(const String &str, int n) const
+{
+    return left(n).compare(str.left(n), Qt::CaseInsensitive);
+}
+
 int String::commonPrefixLength(String const &str) const
 {
     int count = 0;

@@ -88,6 +88,8 @@ public:
 
     /// Copies the contents of another block.
     Block &operator = (Block const &other);
+
+    Block &operator = (IByteArray const &byteArray);
 };
 
 } // namespace de

@@ -37,9 +37,13 @@ public:
     de::LogSink &logSink();
 
     void draw();
+    bool handleEvent(de::Event const *event);
 
 public slots:
-    void redraw();
+    /**
+     * Moves the scroll offset of the widget to the bottom of the history.
+     */
+    void scrollToBottom();
 
 private:
     struct Instance;

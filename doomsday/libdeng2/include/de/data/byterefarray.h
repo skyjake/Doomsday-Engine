@@ -42,7 +42,7 @@ public:
      * @param base  Pointer to the start of the array.
      * @param size  Total size of the array.
      */
-    ByteRefArray(Byte *base, Size size);
+    ByteRefArray(void *base, Size size);
 
     /**
      * Constructs a new non-modifiable byte reference array.
@@ -50,7 +50,7 @@ public:
      * @param base  Pointer to the start of the array.
      * @param size  Total size of the array.
      */
-    ByteRefArray(Byte const *base, Size size);
+    ByteRefArray(void const *base, Size size);
 
     // Implements IByteArray.
     Size size() const;

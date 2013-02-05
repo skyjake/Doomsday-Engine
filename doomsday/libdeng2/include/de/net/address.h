@@ -43,16 +43,21 @@ public:
     /**
      * Constructs an Address.
      *
-     * @param address  Network address. E.g., "localhost" or "127.0.0.1".
+     * @param address  IP address. E.g., "localhost" or "127.0.0.1".
+     *                 Domain names are not allowed.
      * @param port     Port number.
      */
     Address(QHostAddress const &address, duint16 port = 0);
 
-    Address(String const &addressWithOptionalPort);
-
     Address(char const *address, duint16 port = 0);
 
     Address(Address const &other);
+
+    ~Address();
+
+    Address &operator = (Address const &other);
+
+    bool operator < (Address const &other) const;
 
     /**
      * Checks two addresses for equality.
@@ -63,20 +68,25 @@ public:
      */
     bool operator == (Address const &other) const;
 
-    QHostAddress const &host() const { return _host; }
+    bool isNull() const;
 
-    void setHost(QHostAddress const &host) { _host = host; }
+    /**
+     * Returns the host IP address.
+     */
+    QHostAddress const &host() const;
 
-    duint16 port() const { return _port; }
+    void setHost(QHostAddress const &host);
 
-    void setPort(duint16 p) { _port = p; }
+    duint16 port() const;
+
+    void setPort(duint16 p);
 
     /**
      * Checks if two IP address match. Port numbers are ignored.
      *
      * @param other  Address to check against.
-     * @param mask  Net mask. Use to check if subnets match. The default
-     *      checks if two IP addresses match.
+     * @param mask   Net mask. Use to check if subnets match. The default
+     *               checks if two IP addresses match.
      */
     bool matches(Address const &other, duint32 mask = 0xffffffff);
 
@@ -85,12 +95,14 @@ public:
      */
     String asText() const;
 
+    static Address parse(String const &addressWithOptionalPort, duint16 defaultPort = 0);
+
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
 
 private:
-    QHostAddress _host;
-    duint16 _port;
+    struct Instance;
+    Instance *d;
 };
 
 DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Address const &address);

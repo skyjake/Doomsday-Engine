@@ -20,6 +20,7 @@
 #define SHELLAPP_H
 
 #include "cursesapp.h"
+#include <de/Address>
 
 class ShellApp : public CursesApp
 {
@@ -30,10 +31,20 @@ public:
 
     ~ShellApp();
 
+    void openConnection(de::String const &address);
+
 public slots:
+    void showAbout();
+    void askToOpenConnection();
+    void askToStartLocalServer();
+    void updateMenuWithFoundServers();
+    void connectToFoundServer();
+    void closeConnection();
     void sendCommandToServer(de::String command);
     void handleIncomingPackets();
     void disconnected();
+    void openMenu();
+    void menuClosed();
 
 private:
     struct Instance;

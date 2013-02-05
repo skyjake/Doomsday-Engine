@@ -18,6 +18,7 @@
  */
 
 #include "de/Rule"
+#include <set>
 
 namespace de {
 
@@ -25,7 +26,7 @@ bool Rule::_invalidRulesExist = false;
 
 struct Rule::Instance
 {
-    typedef QSet<Rule const *> Dependencies;
+    typedef std::set<Rule const *> Dependencies;
     Dependencies dependencies; // ref'd
 
     /// Current value of the rule.
@@ -34,19 +35,20 @@ struct Rule::Instance
     /// The value is valid.
     bool isValid;
 
+    Instance() : value(0), isValid(false)
+    {}
+
     Instance(float initialValue) : value(initialValue), isValid(true)
     {}
 
     ~Instance()
     {
-        // Auto-release remaining references to dependencies.
-        DENG2_FOR_EACH(Dependencies, i, dependencies)
-        {
-            Rule const *rule = *i;
-            de::releaseRef(rule);
-        }
+        DENG2_ASSERT(dependencies.empty());
     }
 };
+
+Rule::Rule() : d(new Instance)
+{}
 
 Rule::Rule(float initialValue) : d(new Instance(initialValue))
 {}
@@ -76,6 +78,11 @@ void Rule::update()
     d->isValid = true;
 }
 
+bool Rule::isValid() const
+{
+    return d->isValid;
+}
+
 void Rule::markRulesValid()
 {
     _invalidRulesExist = false;
@@ -91,33 +98,43 @@ float Rule::cachedValue() const
     return d->value;
 }
 
+void Rule::ruleInvalidated()
+{
+    // A dependency was invalidated, also invalidate this value.
+    invalidate();
+}
+
 void Rule::setValue(float v)
 {
     d->value = v;
     d->isValid = true;
 }
 
-void Rule::dependsOn(Rule const *dependency)
+void Rule::dependsOn(Rule const &dependency)
 {
-    if(dependency)
-    {
-        DENG2_ASSERT(!d->dependencies.contains(dependency));
-        d->dependencies.insert(de::holdRef(dependency));
+    DENG2_ASSERT(d->dependencies.find(&dependency) == d->dependencies.end());
+    d->dependencies.insert(de::holdRef(&dependency));
 
-        connect(dependency, SIGNAL(valueInvalidated()), this, SLOT(invalidate()));
-    }
+    dependency.audienceForRuleInvalidation += this;
 }
 
-void Rule::independentOf(Rule const *dependency)
+void Rule::dependsOn(Rule const *dependencyOrNull)
 {
-    if(dependency)
-    {
-        disconnect(dependency, SIGNAL(valueInvalidated()), this, SLOT(invalidate()));
+    if(dependencyOrNull) dependsOn(*dependencyOrNull);
+}
 
-        DENG2_ASSERT(d->dependencies.contains(dependency));
-        d->dependencies.remove(dependency);
-        de::releaseRef(dependency);
-    }
+void Rule::independentOf(Rule const &dependency)
+{
+    dependency.audienceForRuleInvalidation -= this;
+
+    DENG2_ASSERT(d->dependencies.find(&dependency) != d->dependencies.end());
+    d->dependencies.erase(&dependency);
+    dependency.release();
+}
+
+void Rule::independentOf(Rule const *dependencyOrNull)
+{
+    if(dependencyOrNull) independentOf(*dependencyOrNull);
 }
 
 void Rule::invalidate()
@@ -129,7 +146,7 @@ void Rule::invalidate()
         // Also set the global flag.
         Rule::_invalidRulesExist = true;
 
-        emit valueInvalidated();
+        DENG2_FOR_AUDIENCE(RuleInvalidation, i) i->ruleInvalidated();
     }
 }
 

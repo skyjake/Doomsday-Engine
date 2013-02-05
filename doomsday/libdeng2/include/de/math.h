@@ -69,6 +69,15 @@ inline Type clamp(Type const &low, Type const &value, Type const &high) {
     return min(max(value, low), high);
 }
 
+/// Wrap value within range [low, high).
+template <typename Type>
+Type wrap(Type value, Type const &low, Type const &high) {
+    Type const range = high - low;
+    while(value < low) value += range;
+    while(value >= high) value -= range;
+    return value;
+}
+
 inline dint32 floor(dfloat const &value) {
     return dint32(std::floor(value));
 }

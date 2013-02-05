@@ -29,6 +29,19 @@ namespace de {
 namespace shell {
 
 /**
+ * Flags for specifying alignment.
+ */
+enum AlignmentFlag
+{
+    AlignTop    = 0x1,
+    AlignBottom = 0x2,
+    AlignLeft   = 0x4,
+    AlignRight  = 0x8
+};
+Q_DECLARE_FLAGS(Alignment, AlignmentFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Alignment)
+
+/**
  * Text-based, device-independent drawing surface.
  *
  * When characters are written to the canvas (or their properties change), they
@@ -102,7 +115,10 @@ public:
 
     virtual ~TextCanvas();
 
-    Size size() const;
+    Size size() const;    
+    int width() const;
+    int height() const;
+    Rectanglei rect() const;
 
     void resize(Size const &newSize);
 
@@ -136,12 +152,34 @@ public:
 
     void put(Vector2i const &pos, Char const &ch);
 
-    void drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs = Char::DefaultAttributes);
+    void drawText(Vector2i const &pos, String const &text,
+                  Char::Attribs const &attribs = Char::DefaultAttributes,
+                  int richOffset = 0);
+
+    /**
+     * Draws line wrapped text. Use de::shell::wordWrapText() to determine
+     * appropriate wrapped lines.
+     *
+     * @param pos            Top left / starting point for the text.
+     * @param text           The entire text to be drawn.
+     * @param wraps          Line wrapping.
+     * @param attribs        Character attributes.
+     * @param lineAlignment  Alignment for lines.
+     */
+    void drawWrappedText(Vector2i const &pos, String const &text, LineWrapping const &wraps,
+                         Char::Attribs const &attribs = Char::DefaultAttributes,
+                         Alignment lineAlignment = AlignLeft);
+
+    void clearRichFormat();
+
+    void setRichFormatRange(Char::Attribs const &attribs, Range const &range);
+
+    void drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs = Char::DefaultAttributes);
 
     /**
      * Draws the contents of a canvas onto this canvas.
      *
-     * @param dest     Source canvas.
+     * @param canvas   Source canvas.
      * @param topLeft  Top left coordinate of the destination area.
      */
     void draw(TextCanvas const &canvas, Coord const &topLeft);
