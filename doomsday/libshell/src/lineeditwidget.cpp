@@ -227,7 +227,7 @@ struct LineEditWidget::Instance
         return suggestions;
     }
 
-    bool doCompletion()
+    bool doCompletion(bool forwardCycle)
     {        
         if(!suggestingCompletion())
         {
@@ -238,9 +238,9 @@ struct LineEditWidget::Instance
                 suggestions = completionsForBase(base);
                 if(!suggestions.isEmpty())
                 {
-                    String comp = suggestions.first();
+                    completion.ordinal = (forwardCycle? 0 : suggestions.size() - 1);
+                    String comp = suggestions[completion.ordinal];
                     comp.remove(0, base.size());
-                    completion.ordinal = 0;
                     completion.pos = cursor;
                     completion.size = comp.size();
                     text.insert(cursor, comp);
@@ -256,7 +256,9 @@ struct LineEditWidget::Instance
             String const base = wordBehindCursor();
 
             // Go to next suggestion.
-            completion.ordinal = (completion.ordinal + 1) % suggestions.size();
+            completion.ordinal += (forwardCycle? 1 : -1);
+            if(completion.ordinal < 0) completion.ordinal += suggestions.size();
+            if(completion.ordinal >= suggestions.size()) completion.ordinal -= suggestions.size();
             String comp = suggestions[completion.ordinal];
             comp.remove(0, base.size());
 
@@ -407,7 +409,8 @@ bool LineEditWidget::handleControlKey(int key)
         return true;
 
     case Qt::Key_Tab:
-        if(d->doCompletion())
+    case Qt::Key_Backtab:
+        if(d->doCompletion(key == Qt::Key_Tab))
         {
             return true;
         }
