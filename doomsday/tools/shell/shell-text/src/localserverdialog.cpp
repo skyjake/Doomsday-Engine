@@ -146,7 +146,7 @@ void LocalServerDialog::finish(int result)
     if(result)
     {
         PersistentData::set("LocalServer.gameMode", d->choice->selection());
-        PersistentData::set("LocalServer.port", d->port->text());
-        PersistentData::set("LocalServer.options", lineEdit().text());
+        PersistentData::set("LocalServer.port",     d->port->text());
+        PersistentData::set("LocalServer.options",  lineEdit().text());
     }
 }
