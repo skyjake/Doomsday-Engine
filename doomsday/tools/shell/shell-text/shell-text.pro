@@ -32,9 +32,9 @@ HEADERS += \
     src/logwidget.h \
     src/main.h \
     src/openconnectiondialog.h \
+    src/persistentdata.h \
     src/shellapp.h \
-    src/statuswidget.h \ 
-    src/persistentdata.h
+    src/statuswidget.h
 
 SOURCES += \
     src/aboutdialog.cpp \
@@ -45,9 +45,9 @@ SOURCES += \
     src/logwidget.cpp \
     src/main.cpp \
     src/openconnectiondialog.cpp \
+    src/persistentdata.cpp \
     src/shellapp.cpp \
-    src/statuswidget.cpp \ 
-    src/persistentdata.cpp
+    src/statuswidget.cpp 
 
 # Installation --------------------------------------------------------------
 

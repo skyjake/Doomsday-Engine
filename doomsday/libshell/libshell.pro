@@ -30,6 +30,7 @@ HEADERS += \
     include/de/shell/InputDialog \
     include/de/shell/KeyEvent \
     include/de/shell/LabelWidget \
+    include/de/shell/Lexicon \
     include/de/shell/LineEditWidget \
     include/de/shell/Link \
     include/de/shell/LocalServer \
@@ -46,17 +47,17 @@ HEADERS += \
     include/de/shell/inputdialog.h \
     include/de/shell/keyevent.h \
     include/de/shell/labelwidget.h \
+    include/de/shell/lexicon.h \
     include/de/shell/libshell.h \
     include/de/shell/lineeditwidget.h \
     include/de/shell/link.h \
     include/de/shell/localserver.h \
     include/de/shell/menuwidget.h \
     include/de/shell/protocol.h \
+    include/de/shell/serverfinder.h \
     include/de/shell/textcanvas.h \
     include/de/shell/textrootwidget.h \
-    include/de/shell/textwidget.h \ 
-    include/de/shell/serverfinder.h \
-    include/de/shell/lexicon.h
+    include/de/shell/textwidget.h 
 
 # Sources and private headers.
 SOURCES += \
