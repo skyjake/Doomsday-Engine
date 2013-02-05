@@ -273,8 +273,52 @@ struct CursesApp::Instance
                     mods = KeyEvent::Control;
                     break;
 
+                case KEY_F(1):
+                    code = Qt::Key_F1;
+                    break;
+
+                case KEY_F(2):
+                    code = Qt::Key_F2;
+                    break;
+
+                case KEY_F(3):
+                    code = Qt::Key_F3;
+                    break;
+
+                case KEY_F(4):
+                    code = Qt::Key_F4;
+                    break;
+
+                case KEY_F(5):
+                    code = Qt::Key_F5;
+                    break;
+
+                case KEY_F(6):
+                    code = Qt::Key_F6;
+                    break;
+
+                case KEY_F(7):
+                    code = Qt::Key_F7;
+                    break;
+
+                case KEY_F(8):
+                    code = Qt::Key_F8;
+                    break;
+
                 case KEY_F(9):
                     code = Qt::Key_F9;
+                    break;
+
+                case KEY_F(10):
+                    code = Qt::Key_F10;
+                    break;
+
+                case KEY_F(11):
+                    code = Qt::Key_F11;
+                    break;
+
+                case KEY_F(12):
+                    code = Qt::Key_F12;
                     break;
 
                 case 0x18:
