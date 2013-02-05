@@ -119,6 +119,12 @@ Block &Block::operator = (Block const &other)
     return *this;
 }
 
+Block &Block::operator = (IByteArray const &byteArray)
+{
+    copyFrom(byteArray, 0, byteArray.size());
+    return *this;
+}
+
 void Block::clear()
 {
     QByteArray::clear();

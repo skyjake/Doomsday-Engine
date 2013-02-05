@@ -82,7 +82,6 @@ struct CursesApp::Instance
     // Curses state:
     WINDOW *rootWin;
     de::Vector2i rootSize;
-    QTimer *refreshTimer;
     int unicodeContinuation;
 
     TextRootWidget *rootWidget;
@@ -125,9 +124,7 @@ struct CursesApp::Instance
         // Listen for window resizing.
         signal(SIGWINCH, windowResized);
 
-        refreshTimer = new QTimer(&self);
-        QObject::connect(refreshTimer, SIGNAL(timeout()), &self, SLOT(refresh()));
-        refreshTimer->start(1000 / 30);
+        requestRefresh();
     }
 
     void initCursesState()
@@ -149,14 +146,16 @@ struct CursesApp::Instance
 
     void shutdownCurses()
     {
-        delete refreshTimer;
-        refreshTimer = 0;
-
         delwin(rootWin);
         rootWin = 0;
 
         endwin();
         refresh();
+    }
+
+    void requestRefresh()
+    {
+        QTimer::singleShot(1000 / 30, &self, SLOT(refresh()));
     }
 
     void handleResize()
@@ -179,6 +178,9 @@ struct CursesApp::Instance
     void refresh()
     {
         if(!rootWin) return;
+
+        // Schedule the next refresh.
+        requestRefresh();
 
         // Update time.
         clock.setTime(de::Time());
@@ -271,8 +273,52 @@ struct CursesApp::Instance
                     mods = KeyEvent::Control;
                     break;
 
+                case KEY_F(1):
+                    code = Qt::Key_F1;
+                    break;
+
+                case KEY_F(2):
+                    code = Qt::Key_F2;
+                    break;
+
+                case KEY_F(3):
+                    code = Qt::Key_F3;
+                    break;
+
+                case KEY_F(4):
+                    code = Qt::Key_F4;
+                    break;
+
+                case KEY_F(5):
+                    code = Qt::Key_F5;
+                    break;
+
+                case KEY_F(6):
+                    code = Qt::Key_F6;
+                    break;
+
+                case KEY_F(7):
+                    code = Qt::Key_F7;
+                    break;
+
+                case KEY_F(8):
+                    code = Qt::Key_F8;
+                    break;
+
                 case KEY_F(9):
                     code = Qt::Key_F9;
+                    break;
+
+                case KEY_F(10):
+                    code = Qt::Key_F10;
+                    break;
+
+                case KEY_F(11):
+                    code = Qt::Key_F11;
+                    break;
+
+                case KEY_F(12):
+                    code = Qt::Key_F12;
                     break;
 
                 case 0x18:
@@ -283,6 +329,10 @@ struct CursesApp::Instance
                 case 0x1a:
                     code = Qt::Key_Z;
                     mods = KeyEvent::Control;
+                    break;
+
+                case 0x1b:
+                    code = Qt::Key_Escape;
                     break;
 
                 default:
@@ -331,6 +381,8 @@ struct CursesApp::Instance
             }
         }
 
+        rootWidget->update();
+
         // Automatically redraw the UI if the values of layout rules have changed.
         if(de::Rule::invalidRulesExist() || rootWidget->drawWasRequested())
         {
@@ -343,11 +395,6 @@ struct CursesApp::Instance
             wmove(rootWin, p.y, p.x);
             wrefresh(rootWin);
         }
-    }
-
-    void update()
-    {
-        rootWidget->draw();
     }
 };
 

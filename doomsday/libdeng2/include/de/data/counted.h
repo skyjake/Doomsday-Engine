@@ -96,11 +96,12 @@ protected:
      */
     virtual ~Counted();
 
-private:
+public:
     /// Number of other things that refer to this object, i.e. have
     /// a pointer to it.
     mutable dint _refCount;
 
+private:
     Counted const *_delegate;
 
     template <typename Type>

@@ -25,7 +25,38 @@
 #include <set>
 
 /**
- * Macro for defining an observer interface with a single method.
+ * Macro that forms the name of an observer interface.
+ */
+#define DENG2_AUDIENCE_INTERFACE(Name) \
+    I##Name##Observer
+
+/**
+ * Macro for declaring an observer interface containing one method.
+ *
+ * @param Name    Name of the audience. E.g., "Deletion" produces @c DeletionAudience.
+ * @param Method  The pure virtual method that the observer has to implement.
+ *                The @c virtual keyword and <code>=0</code> are automatically included.
+ */
+#define DENG2_DECLARE_AUDIENCE(Name, Method) \
+    class DENG2_AUDIENCE_INTERFACE(Name) { \
+    public: \
+        virtual ~DENG2_AUDIENCE_INTERFACE(Name)() {} \
+        virtual Method = 0; \
+    };
+
+/**
+ * Defines an audience. Typically used inside a class to define the observers
+ * as a public member variable (used by DENG_DEFINE_AUDIENCE). Produces a
+ * member variable called "audienceFor{Name}".
+ *
+ * @param Name  Name of the audience.
+ */
+#define DENG2_AUDIENCE(Name) \
+    typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+    Name##Audience audienceFor##Name;
+
+/**
+ * Macro for defining an observer interface containing a single method.
  *
  * @param Name    Name of the audience. E.g., "Deletion" produces @c DeletionAudience 
  *                and @c audienceForDeletion.
@@ -33,13 +64,8 @@
  *                The @c virtual keyword and <code>=0</code> are automatically included.
  */
 #define DENG2_DEFINE_AUDIENCE(Name, Method) \
-class I##Name##Observer { \
-public: \
-    virtual ~I##Name##Observer() {} \
-    virtual Method = 0; \
-}; \
-typedef de::Observers<I##Name##Observer> Name##Audience; \
-Name##Audience audienceFor##Name;   
+    DENG2_DECLARE_AUDIENCE(Name, Method) \
+    DENG2_AUDIENCE(Name)
 
 /**
  * Macro that can be used in class declarations to specify which audiences the class
@@ -51,14 +77,6 @@ Name##Audience audienceFor##Name;
 #define DENG2_OBSERVES(Type, Audience) public Type::I##Audience##Observer
 
 /**
- * Macro for looping through the audience members.
- *
- * @param Name  Name of the audience.
- * @param Var   Variable used in the loop.
- */
-#define DENG2_FOR_AUDIENCE(Name, Var) for(Name##Audience::Loop Var(audienceFor##Name); !Var.done(); ++Var)
-
-/**
  * Macro for looping through all observers. @note The @a Audience type needs to be defined
  * in the scope.
  *
@@ -67,6 +85,15 @@ Name##Audience audienceFor##Name;
  * @param Name     Name of the observer set.
  */
 #define DENG2_FOR_EACH_OBSERVER(SetName, Var, Name) for(SetName::Loop Var(Name); !Var.done(); ++Var)
+
+/**
+ * Macro for looping through the audience members.
+ *
+ * @param Name  Name of the audience.
+ * @param Var   Variable used in the loop.
+ */
+#define DENG2_FOR_AUDIENCE(Name, Var) \
+    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name)
 
 namespace de
 {
@@ -145,6 +172,11 @@ namespace de
             add(observer);
             return *this;
         }
+
+        Observers<Type> const &operator += (Type *observer) const {
+            const_cast<Observers<Type> *>(this)->add(observer);
+            return *this;
+        }
         
         void remove(Type *observer) {
             if(_members) {
@@ -158,6 +190,11 @@ namespace de
         
         Observers<Type> &operator -= (Type *observer) {
             remove(observer);
+            return *this;
+        }
+
+        Observers<Type> const &operator -= (Type *observer) const {
+            const_cast<Observers<Type> *>(this)->remove(observer);
             return *this;
         }
 

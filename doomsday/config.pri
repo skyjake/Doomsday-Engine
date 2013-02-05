@@ -43,10 +43,6 @@ DENG_INCLUDE_DIR      = $$PWD/client/include
 DENG_UNIX_INCLUDE_DIR = $$DENG_INCLUDE_DIR/unix
 DENG_MAC_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/macx
 DENG_WIN_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/windows
-
-# Binaries and generated files are placed here.
-DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
-
 DENG_MODULES_DIR      = $$PWD/libdeng2/modules
 
 # Versions -------------------------------------------------------------------

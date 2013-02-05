@@ -19,6 +19,8 @@
 #ifndef LIBDENG2_EVENT_H
 #define LIBDENG2_EVENT_H
 
+#include "../libdeng2.h"
+
 namespace de {
 
 /**

@@ -37,6 +37,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <de/findfile.h>
+#include <de/memory.h>
+#include <de/Log>
 
 #include "de_platform.h"
 #include "de_system.h"
@@ -56,20 +58,16 @@ static void resolvePathRelativeDirectives(char* path);
 
 directory_t* Dir_New(const char* path)
 {
-    directory_t* dir = (directory_t*) malloc(sizeof *dir);
-    if(!dir)
-        printf("Dir::Construct: Failed on allocation of %lu bytes for new Dir.", (unsigned long) sizeof(*dir));
+    directory_t* dir = (directory_t*) M_Calloc(sizeof *dir);
     Dir_SetPath(dir, path);
     return dir;
 }
 
 directory_t* Dir_NewFromCWD(void)
 {
-    directory_t* dir = (directory_t*) malloc(sizeof *dir);
+    directory_t* dir = (directory_t*) M_Calloc(sizeof *dir);
     size_t lastIndex;
     char* cwd;
-    if(!dir)
-        printf("Dir::ConstructFromWorkDir: Failed on allocation of %lu bytes for new Dir.\n", (unsigned long) sizeof(*dir));
 
     cwd = Dir_CurrentPath();
     lastIndex = strlen(cwd);
@@ -90,17 +88,15 @@ directory_t* Dir_FromText(const char* path)
     if(!path || !path[0])
         return Dir_NewFromCWD();
 
-    dir = (directory_t*) malloc(sizeof *dir);
-    if(!dir)
-        printf("Dir::ConstructFromFileDir: Failed on allocation of %lu bytes for new Dir.", (unsigned long) sizeof(*dir));
+    dir = (directory_t*) M_Calloc(sizeof *dir);
     setPathFromPathDir(dir, path);
     return dir;
 }
 
 void Dir_Delete(directory_t* dir)
 {
-    assert(NULL != dir);
-    free(dir);
+    DENG_ASSERT(NULL != dir);
+    M_Free(dir);
 }
 
 boolean Dir_IsEqual(directory_t* a, directory_t* b)
@@ -115,14 +111,14 @@ boolean Dir_IsEqual(directory_t* a, directory_t* b)
 
 const char* Dir_Path(directory_t* dir)
 {
-    assert(NULL != dir);
+    DENG_ASSERT(NULL != dir);
     return dir->path;
 }
 
 void Dir_SetPath(directory_t* dir, const char* path)
 {
     filename_t fileName;
-    assert(dir);
+    DENG_ASSERT(dir);
 
     setPathFromPathDir(dir, path);
     Dir_FileName(fileName, path, FILENAME_T_MAXLEN);
@@ -134,7 +130,7 @@ void Dir_SetPath(directory_t* dir, const char* path)
 static void setPathFromPathDir(directory_t* dir, const char* path)
 {
     filename_t temp, transPath;
-    assert(dir && path && path[0]);
+    DENG_ASSERT(dir && path && path[0]);
 
     resolveAppRelativeDirectives(transPath, path, FILENAME_T_MAXLEN);
 #ifdef UNIX
@@ -155,7 +151,7 @@ static void setPathFromPathDir(directory_t* dir, const char* path)
 
 static void prependBasePath(char* newPath, const char* path, size_t maxLen)
 {
-    assert(newPath && path);
+    DENG_ASSERT(newPath && path);
     // Cannot prepend to absolute paths.
     if(!Dir_IsAbsolutePath(path))
     {
@@ -170,7 +166,7 @@ static void prependBasePath(char* newPath, const char* path, size_t maxLen)
 static void resolveAppRelativeDirectives(char* translated, const char* path, size_t maxLen)
 {
     filename_t buf;
-    assert(translated && path);
+    DENG_ASSERT(translated && path);
 
     if(path[0] == '>' || path[0] == '}')
     {
@@ -191,7 +187,7 @@ static void resolveAppRelativeDirectives(char* translated, const char* path, siz
 static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
 {
     filename_t buf;
-    assert(path);
+    DENG_ASSERT(path);
 
     if(!path[0] || 0 == maxLen || path[0] != '~') return;
 
@@ -234,8 +230,8 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
 
 static void resolvePathRelativeDirectives(char* path)
 {
-    assert(NULL != path);
-    {
+    DENG_ASSERT(NULL != path);
+
     char* ch = path;
     char* end = path + strlen(path);
     char* prev = path; // Assume an absolute path.
@@ -260,7 +256,6 @@ static void resolvePathRelativeDirectives(char* path)
         }
         if(*ch == '/')
             prev = ch;
-    }
     }
 }
 
@@ -413,11 +408,13 @@ void Dir_FixSeparators(char* path, size_t len)
 
 boolean Dir_SetCurrent(const char* path)
 {
+    LOG_AS("Dir");
+
     boolean success = false;
     if(path && path[0])
     {
         success = !_chdir(path);
     }
-    printf("Dir::ChangeWorkDir: %s: %s\n", success ? "Succeeded" : "Failed", path);
+    LOG_VERBOSE("Changing current directory to \"%s\" %s") << (success? "succeeded" : "failed") <<  path;
     return success;
 }

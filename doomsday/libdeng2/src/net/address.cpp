@@ -20,73 +20,125 @@
 #include "de/Address"
 #include "de/String"
 
-using namespace de;
+namespace de {
 
-Address::Address() : _port(0)
+struct Address::Instance
+{
+    QHostAddress host;
+    duint16 port;
+
+    Instance() : port(0) {}
+};
+
+Address::Address() : d(new Instance)
 {}
 
-Address::Address(char const *address, duint16 port)
-    : _port(port)
+Address::Address(char const *address, duint16 port) : d(new Instance)
 {
+    d->port = port;
+
     if(QLatin1String(address) == "localhost")
     {
-        _host = QHostAddress(QHostAddress::LocalHost);
+        d->host = QHostAddress(QHostAddress::LocalHost);
     }
     else
     {
-        _host = QHostAddress(address);
+        d->host = QHostAddress(address);
     }
 }
 
-Address::Address(QHostAddress const &host, duint16 port)
-    : _host(host), _port(port)
-{}
-
-Address::Address(String const &addressWithOptionalPort) : _port(0)
+Address::Address(QHostAddress const &host, duint16 port) : d(new Instance)
 {
-    String str = addressWithOptionalPort;
-    if(str.contains(':'))
-    {
-        int pos = str.indexOf(':');
-        _port = str.mid(pos + 1).toInt();
-        str = str.left(pos);
-    }
-    if(str == "localhost")
-    {
-        _host = QHostAddress(QHostAddress::LocalHost);
-    }
-    else
-    {
-        _host = QHostAddress(str);
-    }
+    d->host = host;
+    d->port = port;
 }
 
-Address::Address(Address const &other)
-    : LogEntry::Arg::Base(), _host(other._host), _port(other._port)
-{}
+Address::Address(Address const &other) : LogEntry::Arg::Base(), d(new Instance)
+{
+    d->host = other.d->host;
+    d->port = other.d->port;
+}
+
+Address::~Address()
+{
+    delete d;
+}
+
+Address &Address::operator = (Address const &other)
+{
+    d->host = other.d->host;
+    d->port = other.d->port;
+    return *this;
+}
+
+bool Address::operator < (Address const &other) const
+{
+    return d->host.toIPv4Address() < other.d->host.toIPv4Address();
+}
 
 bool Address::operator == (Address const &other) const
 {
-    return _host == other._host && _port == other._port;
+    return d->host == other.d->host && d->port == other.d->port;
+}
+
+bool Address::isNull() const
+{
+    return d->host.isNull();
+}
+
+QHostAddress const &Address::host() const
+{
+    return d->host;
+}
+
+void Address::setHost(QHostAddress const &host)
+{
+    d->host = host;
+}
+
+duint16 Address::port() const
+{
+    return d->port;
+}
+
+void Address::setPort(duint16 p)
+{
+    d->port = p;
 }
 
 bool Address::matches(Address const &other, duint32 mask)
 {
-    return (_host.toIPv4Address() & mask) == (other._host.toIPv4Address() & mask);
+    return (d->host.toIPv4Address() & mask) == (other.d->host.toIPv4Address() & mask);
 }
 
 String Address::asText() const
 {
-    String result = (_host == QHostAddress::LocalHost? "localhost" : _host.toString());
-    if(_port)
+    String result = (d->host == QHostAddress::LocalHost? "localhost" : d->host.toString());
+    if(d->port)
     {
-        result += ":" + QString::number(_port);
+        result += ":" + QString::number(d->port);
     }
     return result;
 }
 
-QTextStream &de::operator << (QTextStream &os, Address const &address)
+Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPort)
+{
+    duint16 port = defaultPort;
+    String str = addressWithOptionalPort;
+    if(str.contains(':'))
+    {
+        int pos = str.indexOf(':');
+        port = str.mid(pos + 1).toInt();
+        str = str.left(pos);
+    }
+    return Address(str.toAscii(), port);
+}
+
+QTextStream &operator << (QTextStream &os, Address const &address)
 {
     os << address.asText();
     return os;
 }
+
+} // namespace de
+

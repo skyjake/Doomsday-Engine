@@ -18,6 +18,8 @@
 
 #include "de/shell/TextWidget"
 #include "de/shell/TextRootWidget"
+#include "de/shell/Action"
+#include <QList>
 
 namespace de {
 namespace shell {
@@ -25,14 +27,36 @@ namespace shell {
 struct TextWidget::Instance
 {
     TextCanvas *canvas;
-    RectangleRule *rule;
+    RuleRectangle *rule;
+    QList<Action *> actions;
 
-    Instance() : canvas(0), rule(new RectangleRule)
+    Instance() : canvas(0), rule(new RuleRectangle)
     {}
 
     ~Instance()
     {
-        releaseRef(rule);
+        delete rule;
+        foreach(Action *act, actions) delete act;
+    }
+
+    /**
+     * Navigates focus to another widget, assuming this widget currently has
+     * focus. Used in focus cycle navigation.
+     *
+     * @param name  Name of the widget to change focus to.
+     *
+     * @return Focus changed successfully.
+     */
+    bool navigateFocus(TextRootWidget &root, String const &name)
+    {
+        Widget *w = root.find(name);
+        if(w)
+        {
+            root.setFocus(w);
+            root.requestDraw();
+            return true;
+        }
+        return false;
     }
 };
 
@@ -56,42 +80,90 @@ void TextWidget::setTargetCanvas(TextCanvas *canvas)
     d->canvas = canvas;
 }
 
-TextCanvas *TextWidget::targetCanvas() const
+TextCanvas &TextWidget::targetCanvas() const
 {
     if(!d->canvas)
     {
         // A specific target not defined, use the root canvas.
-        return &root().rootCanvas();
+        return root().rootCanvas();
     }
-    return d->canvas;
+    return *d->canvas;
+}
+
+void TextWidget::redraw()
+{
+    if(hasRoot() && !isHidden()) root().requestDraw();
 }
 
 void TextWidget::drawAndShow()
 {
-    if(targetCanvas())
+    if(!isHidden())
     {
         draw();
-        notifyTree(&Widget::draw);
-        targetCanvas()->show();
+        notifyTree(&Widget::drawIfVisible);
+        targetCanvas().show();
     }
 }
 
-void TextWidget::setRule(RectangleRule *rule)
-{
-    releaseRef(d->rule);
-    d->rule = holdRef(rule);
-}
-
-RectangleRule &TextWidget::rule()
+RuleRectangle &TextWidget::rule()
 {
     DENG2_ASSERT(d->rule != 0);
     return *d->rule;
 }
 
-Vector2i TextWidget::cursorPosition()
+RuleRectangle const &TextWidget::rule() const
 {
-    return Vector2i(floor(rule().left()->value()),
-                    floor(rule().top()->value()));
+    DENG2_ASSERT(d->rule != 0);
+    return *d->rule;
+}
+
+Vector2i TextWidget::cursorPosition() const
+{
+    return Vector2i(floor(rule().left().value()),
+                    floor(rule().top().value()));
+}
+
+void TextWidget::addAction(Action *action)
+{
+    d->actions.append(action);
+}
+
+void TextWidget::removeAction(Action &action)
+{
+    d->actions.removeAll(&action);
+}
+
+bool TextWidget::handleEvent(Event const *event)
+{
+    // We only support KeyEvents.
+    if(event->type() == Event::KeyPress)
+    {
+        DENG2_ASSERT(dynamic_cast<KeyEvent const *>(event) != 0);
+
+        KeyEvent const *keyEvent = static_cast<KeyEvent const *>(event);
+
+        foreach(Action *act, d->actions)
+        {
+            // Event will be used by actions.
+            if(act->tryTrigger(*keyEvent)) return true;
+        }
+
+        // Focus navigation.
+        if((keyEvent->key() == Qt::Key_Tab || keyEvent->key() == Qt::Key_Down) &&
+                hasFocus() && !focusNext().isEmpty())
+        {
+            if(d->navigateFocus(root(), focusNext()))
+                return true;
+        }
+        if((keyEvent->key() == Qt::Key_Backtab || keyEvent->key() == Qt::Key_Up) &&
+                hasFocus() && !focusPrev().isEmpty())
+        {
+            if(d->navigateFocus(root(), focusPrev()))
+                return true;
+        }
+    }
+
+    return Widget::handleEvent(event);
 }
 
 } // namespace shell

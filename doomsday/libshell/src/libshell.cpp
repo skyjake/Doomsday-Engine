@@ -1,4 +1,4 @@
-/** @file deng_shell.cpp Library init.
+/** @file libshell.cpp  Common utility functions for libshell.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,3 +16,79 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de/shell/libshell.h"
+#include <de/math.h>
+
+namespace de {
+namespace shell {
+
+void LineWrapping::wrapTextToWidth(String const &text, int maxWidth)
+{
+    QChar const newline('\n');
+
+    clear();
+
+    int const lineWidth = maxWidth;
+    int begin = 0;
+    forever
+    {
+        // Newlines always cause a wrap.
+        int end = begin;
+        while(end < begin + lineWidth &&
+              end < text.size() && text.at(end) != newline) ++end;
+
+        if(end == text.size())
+        {
+            // Time to stop.
+            append(WrappedLine(Range(begin, text.size())));
+            break;
+        }
+
+        // Find a good break point.
+        while(!text.at(end).isSpace())
+        {
+            --end;
+            if(end == begin)
+            {
+                // Ran out of non-space chars, force a break.
+                end = begin + lineWidth;
+                break;
+            }
+        }
+
+        if(text.at(end) == newline)
+        {
+            // The newline will be omitted from the wrapped lines.
+            append(WrappedLine(Range(begin, end)));
+            begin = end + 1;
+        }
+        else
+        {
+            if(text.at(end).isSpace()) ++end;
+            append(WrappedLine(Range(begin, end)));
+            begin = end;
+        }
+    }
+
+    // Mark the final line.
+    last().isFinal = true;
+}
+
+int LineWrapping::width() const
+{
+    int w = 0;
+    for(int i = 0; i < size(); ++i)
+    {
+        WrappedLine const &span = at(i);
+        w = de::max(w, span.range.size());
+    }
+    return w;
+}
+
+int LineWrapping::height() const
+{
+    return size();
+}
+
+} // namespace shell
+} // namespace de

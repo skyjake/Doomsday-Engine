@@ -82,6 +82,20 @@ public:
     void clear();
 
     /**
+     * Adds a copy of each member of another record into this record. The
+     * previous contents of this record are untouched as long as they have no
+     * members with the same names as in @a other.
+     *
+     * @param other  Record whose members are to be copied.
+     */
+    void copyMembersFrom(Record const &other);
+
+    /**
+     * Assignment operator.
+     */
+    Record &operator = (Record const &other);
+
+    /**
      * Determines if the record contains a variable or a subrecord named @a variableName.
      */
     bool has(String const &name) const;

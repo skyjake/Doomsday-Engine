@@ -21,6 +21,7 @@
 #define LIBDENG2_OPERATORRULE_H
 
 #include "../Rule"
+#include "../ConstantRule"
 
 namespace de {
 
@@ -31,8 +32,6 @@ namespace de {
  */
 class DENG2_PUBLIC OperatorRule : public Rule
 {
-    Q_OBJECT
-
 public:
     enum Operator {
         Equals,
@@ -44,13 +43,14 @@ public:
         Multiply,
         Divide,
         Maximum,
-        Minimum
+        Minimum,
+        Floor
     };
 
 public:
-    explicit OperatorRule(Operator op, Rule const *unary);
+    OperatorRule(Operator op, Rule const &unary);
 
-    explicit OperatorRule(Operator op, Rule const *left, Rule const *right);
+    OperatorRule(Operator op, Rule const &left, Rule const &right);
 
 protected:
     ~OperatorRule();
@@ -62,6 +62,56 @@ private:
     Rule const *_leftOperand;
     Rule const *_rightOperand;
 };
+
+inline OperatorRule &operator + (Rule const &left, int right) {
+    return *refless(new OperatorRule(OperatorRule::Sum, left, Const(right)));
+}
+
+inline OperatorRule &operator + (Rule const &left, float right) {
+    return *refless(new OperatorRule(OperatorRule::Sum, left, Constf(right)));
+}
+
+inline OperatorRule &operator + (Rule const &left, Rule const &right) {
+    return *refless(new OperatorRule(OperatorRule::Sum, left, right));
+}
+
+inline OperatorRule &operator - (Rule const &unary) {
+    return *refless(new OperatorRule(OperatorRule::Negate, unary));
+}
+
+inline OperatorRule &operator - (Rule const &left, int right) {
+    return *refless(new OperatorRule(OperatorRule::Subtract, left, Const(right)));
+}
+
+inline OperatorRule &operator - (Rule const &left, float right) {
+    return *refless(new OperatorRule(OperatorRule::Subtract, left, Constf(right)));
+}
+
+inline OperatorRule &operator - (Rule const &left, Rule const &right) {
+    return *refless(new OperatorRule(OperatorRule::Subtract, left, right));
+}
+
+inline OperatorRule &operator * (Rule const &left, float right) {
+    return *refless(new OperatorRule(OperatorRule::Multiply, left, Constf(right)));
+}
+
+inline OperatorRule &operator * (Rule const &left, Rule const &right) {
+    return *refless(new OperatorRule(OperatorRule::Multiply, left, right));
+}
+
+inline OperatorRule &operator / (Rule const &left, int right) {
+    return *refless(new OperatorRule(OperatorRule::Floor,
+                                     *refless(new OperatorRule(OperatorRule::Divide,
+                                                               left, Const(right)))));
+}
+
+inline OperatorRule &operator / (Rule const &left, float right) {
+    return *refless(new OperatorRule(OperatorRule::Divide, left, Constf(right)));
+}
+
+inline OperatorRule &operator / (Rule const &left, Rule const &right) {
+    return *refless(new OperatorRule(OperatorRule::Divide, left, right));
+}
 
 } // namespace de
 

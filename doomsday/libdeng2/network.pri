@@ -1,5 +1,6 @@
 HEADERS += \
     include/de/Address \
+    include/de/Beacon \
     include/de/IdentifiedPacket \
     include/de/Message \
     include/de/ListenSocket \
@@ -11,6 +12,7 @@ HEADERS += \
 
 HEADERS += \
     include/de/net/address.h \
+    include/de/net/beacon.h \
     include/de/net/identifiedpacket.h \
     include/de/net/message.h \
     include/de/net/listensocket.h \
@@ -25,6 +27,7 @@ HEADERS +=
 
 SOURCES += \
     src/net/address.cpp \
+    src/net/beacon.cpp \
     src/net/identifiedpacket.cpp \
     src/net/message.cpp \
     src/net/listensocket.cpp \

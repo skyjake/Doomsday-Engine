@@ -432,17 +432,20 @@ bool CommandLine::matches(String const &full, String const &fullOrAlias) const
 
 bool CommandLine::execute() const
 {
+    LOG_AS("CommandLine");
+
     if(count() < 1) return false;
 
     QStringList args;
     for(int i = 1; i < count(); ++i) args << at(i);
 
-    if(!QProcess::startDetached(at(0), args))
+    qint64 pid = 0;
+    if(!QProcess::startDetached(at(0), args, d->initialDir.path(), &pid))
     {
-        qWarning() << "CommandLine: Failed to start" << at(0);
+        LOG_WARNING("Failed to start \"%s\"") << at(0);
         return false;
     }
 
-    qDebug() << "CommandLine: Started detached process" << at(0);
+    LOG_DEBUG("Started detached process %i using \"%s\"") << pid << at(0);
     return true;
 }

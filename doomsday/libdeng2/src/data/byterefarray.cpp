@@ -22,10 +22,16 @@
 
 using namespace de;
 
-ByteRefArray::ByteRefArray(Byte *base, Size size) : _writeBase(base), _readBase(base), _size(size)
+ByteRefArray::ByteRefArray(void *base, Size size)
+    : _writeBase(reinterpret_cast<Byte *>(base)),
+      _readBase(reinterpret_cast<Byte const *>(base)),
+      _size(size)
 {}
 
-ByteRefArray::ByteRefArray(Byte const *base, Size size) : _writeBase(0), _readBase(base), _size(size)
+ByteRefArray::ByteRefArray(void const *base, Size size)
+    : _writeBase(0),
+      _readBase(reinterpret_cast<Byte const *>(base)),
+      _size(size)
 {}
 
 ByteRefArray::Size ByteRefArray::size() const

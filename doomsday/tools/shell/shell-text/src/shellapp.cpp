@@ -1,4 +1,4 @@
-/** @file shellapp.cpp Doomsday shell connection app.
+/** @file shellapp.cpp  Doomsday shell connection app.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -20,52 +20,108 @@
 #include "logwidget.h"
 #include "commandlinewidget.h"
 #include "statuswidget.h"
+#include "openconnectiondialog.h"
+#include "localserverdialog.h"
+#include "aboutdialog.h"
+#include "persistentdata.h"
+#include <de/shell/LabelWidget>
+#include <de/shell/MenuWidget>
+#include <de/shell/Action>
 #include <de/shell/Link>
+#include <de/shell/LocalServer>
+#include <de/shell/ServerFinder>
 #include <de/LogBuffer>
 #include <QStringList>
 
 using namespace de;
+using namespace shell;
 
 struct ShellApp::Instance
 {
     ShellApp &self;
+    PersistentData persist;
+    MenuWidget *menu;
     LogWidget *log;
     CommandLineWidget *cli;
+    LabelWidget *menuLabel;
     StatusWidget *status;
-    shell::Link *link;
+    Link *link;
+    ServerFinder finder;
 
     Instance(ShellApp &a) : self(a), link(0)
     {
         RootWidget &root = self.rootWidget();
 
+        // Status bar in the bottom of the view.
         status = new StatusWidget;
         status->rule()
-                .setInput(RectangleRule::Height, refless(new ConstantRule(1)))
-                .setInput(RectangleRule::Bottom, root.viewBottom())
-                .setInput(RectangleRule::Width,  root.viewWidth())
-                .setInput(RectangleRule::Left,   root.viewLeft());
+                .setInput(Rule::Height, Const(1))
+                .setInput(Rule::Bottom, root.viewBottom())
+                .setInput(Rule::Width,  root.viewWidth())
+                .setInput(Rule::Left,   root.viewLeft());
 
+        // Menu button at the left edge.
+        menuLabel = new LabelWidget;
+        menuLabel->setAlignment(AlignTop);
+        menuLabel->setLabel(tr(" F9:Menu "));
+        menuLabel->setAttribs(TextCanvas::Char::Bold);
+        menuLabel->rule()
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Width,  Const(menuLabel->label().size()))
+                .setInput(Rule::Bottom, status->rule().top());
+
+        menuLabel->addAction(new Action(KeyEvent(Qt::Key_F9), &self, SLOT(openMenu())));
+        menuLabel->addAction(new Action(KeyEvent(Qt::Key_Z, KeyEvent::Control), &self, SLOT(openMenu())));
+        menuLabel->addAction(new Action(KeyEvent(Qt::Key_C, KeyEvent::Control), &self, SLOT(openMenu())));
+        menuLabel->addAction(new Action(KeyEvent(Qt::Key_X, KeyEvent::Control), &self, SLOT(quit())));
+
+        // Expanding command line widget.
         cli = new CommandLineWidget;
         cli->rule()
-                .setInput(RectangleRule::Left,   root.viewLeft())
-                .setInput(RectangleRule::Width,  root.viewWidth())
-                .setInput(RectangleRule::Bottom, status->rule().top());
+                .setInput(Rule::Left,   menuLabel->rule().right())
+                .setInput(Rule::Right,  root.viewRight())
+                .setInput(Rule::Bottom, status->rule().top());
 
+        menuLabel->rule().setInput(Rule::Top, cli->rule().top());
+
+        // Log history covers the rest of the view.
         log = new LogWidget;
         log->rule()
-                .setInput(RectangleRule::Left,   root.viewLeft())
-                .setInput(RectangleRule::Width,  root.viewWidth())
-                .setInput(RectangleRule::Top,    root.viewTop())
-                .setInput(RectangleRule::Bottom, cli->rule().top());
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Width,  root.viewWidth())
+                .setInput(Rule::Top,    root.viewTop())
+                .setInput(Rule::Bottom, cli->rule().top());
 
-        // Ownership also given to the root widget:
+        log->addAction(new Action(KeyEvent(Qt::Key_F5), log, SLOT(scrollToBottom())));
+
+        // Main menu.
+        menu = new MenuWidget(MenuWidget::Popup);
+        menu->appendItem(new Action(tr("Connect to..."),
+                                    &self, SLOT(askToOpenConnection())));
+        menu->appendItem(new Action(tr("Disconnect"), &self, SLOT(closeConnection())));
+        menu->appendSeparator();
+        menu->appendItem(new Action(tr("Start local server"), &self, SLOT(askToStartLocalServer())));
+        menu->appendSeparator();
+        menu->appendItem(new Action(tr("Scroll to bottom"), log, SLOT(scrollToBottom())), "F5");
+        menu->appendItem(new Action(tr("About"), &self, SLOT(showAbout())));
+        menu->appendItem(new Action(tr("Quit Shell"), &self, SLOT(quit())), "Ctrl-X");
+        menu->rule()
+                .setInput(Rule::Bottom, menuLabel->rule().top())
+                .setInput(Rule::Left,   menuLabel->rule().left());
+
+        // Compose the UI.
         root.add(status);
         root.add(cli);
         root.add(log);
+        root.add(menuLabel);
+        root.add(menu);
 
         root.setFocus(cli);
 
+        // Signals.
         QObject::connect(cli, SIGNAL(commandEntered(de::String)), &self, SLOT(sendCommandToServer(de::String)));
+        QObject::connect(menu, SIGNAL(closed()), &self, SLOT(menuClosed()));
+        QObject::connect(&finder, SIGNAL(updated()), &self, SLOT(updateMenuWithFoundServers()));
     }
 
     ~Instance()
@@ -77,19 +133,25 @@ struct ShellApp::Instance
 ShellApp::ShellApp(int &argc, char **argv)
     : CursesApp(argc, argv), d(new Instance(*this))
 {
+    // Metadata.
+    setOrganizationDomain ("dengine.net");
+    setOrganizationName   ("Deng Team");
+    setApplicationName    ("doomsday-shell-text");
+    setApplicationVersion (SHELL_VERSION);
+
+    // Configure the log buffer.
     LogBuffer &buf = LogBuffer::appBuffer();
     buf.setMaxEntryCount(50); // buffered here rather than appBuffer
     buf.addSink(d->log->logSink());
+#ifdef _DEBUG
+    buf.enable(LogEntry::DEBUG);
+#endif
 
     QStringList args = arguments();
     if(args.size() > 1)
     {
         // Open a connection.
-        d->link = new shell::Link(Address(args[1]));
-        d->status->setShellLink(d->link);
-
-        connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
-        connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+        openConnection(args[1]);
     }
 }
 
@@ -98,6 +160,102 @@ ShellApp::~ShellApp()
     LogBuffer::appBuffer().removeSink(d->log->logSink());
 
     delete d;
+}
+
+void ShellApp::openConnection(String const &address)
+{
+    closeConnection();
+
+    LOG_INFO("Opening connection to %s") << address;
+
+    // Keep trying to connect to 30 seconds.
+    d->link = new Link(address, 30);
+    d->status->setShellLink(d->link);
+
+    connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+    connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+}
+
+void ShellApp::showAbout()
+{
+    AboutDialog().exec(rootWidget());
+}
+
+void ShellApp::closeConnection()
+{
+    if(d->link)
+    {
+        LOG_INFO("Closing existing connection to %s") << d->link->address();
+
+        // Get rid of the old connection.
+        disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+        disconnect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+        delete d->link;
+        d->link = 0;
+        d->status->setShellLink(0);
+    }
+}
+
+void ShellApp::askToOpenConnection()
+{
+    OpenConnectionDialog dlg;
+    dlg.exec(rootWidget());
+    if(!dlg.address().isEmpty())
+    {
+        openConnection(dlg.address());
+    }
+}
+
+void ShellApp::askToStartLocalServer()
+{
+    closeConnection();
+
+    LocalServerDialog dlg;
+    if(dlg.exec(rootWidget()))
+    {
+        LocalServer sv;
+        sv.start(dlg.port(), dlg.gameMode());
+
+        openConnection("localhost:" + String::number(dlg.port()));
+    }
+}
+
+void ShellApp::updateMenuWithFoundServers()
+{
+    String oldSel = d->menu->itemAction(d->menu->cursor()).label();
+
+    // Remove old servers.
+    for(int i = 2; i < d->menu->itemCount() - 3; ++i)
+    {
+        if(d->menu->itemAction(i).label()[0].isDigit())
+        {
+            d->menu->removeItem(i);
+            --i;
+        }
+    }
+
+    int pos = 2;
+    foreach(Address const &sv, d->finder.foundServers())
+    {
+        String label = sv.asText() + String(" (%1; %2/%3)")
+                .arg(d->finder.name(sv).left(20))
+                .arg(d->finder.playerCount(sv))
+                .arg(d->finder.maxPlayers(sv));
+
+        d->menu->insertItem(pos++, new Action(label, this, SLOT(connectToFoundServer())));
+    }
+
+    // Update cursor position after changing menu items.
+    d->menu->setCursorByLabel(oldSel);
+}
+
+void ShellApp::connectToFoundServer()
+{
+    String label = d->menu->itemAction(d->menu->cursor()).label();
+
+    LOG_INFO("Selected: ") << label;
+
+    openConnection(label.left(label.indexOf('(') - 1));
 }
 
 void ShellApp::sendCommandToServer(String command)
@@ -121,6 +279,19 @@ void ShellApp::handleIncomingPackets()
         if(packet.isNull()) break;
 
         packet->execute();
+
+        // Process packet contents.
+        shell::Protocol &protocol = d->link->protocol();
+        switch(protocol.recognize(packet.data()))
+        {
+        case shell::Protocol::ConsoleLexicon:
+            // Terms for auto-completion.
+            d->cli->setLexicon(protocol.lexicon(*packet));
+            break;
+
+        default:
+            break;
+        }
     }
 }
 
@@ -133,4 +304,16 @@ void ShellApp::disconnected()
     d->link->deleteLater();
     d->link = 0;
     d->status->setShellLink(0);
+}
+
+void ShellApp::openMenu()
+{
+    d->menuLabel->setAttribs(TextCanvas::Char::Reverse);
+    d->menu->open();
+}
+
+void ShellApp::menuClosed()
+{
+    d->menuLabel->setAttribs(TextCanvas::Char::Bold);
+    rootWidget().setFocus(d->cli);
 }

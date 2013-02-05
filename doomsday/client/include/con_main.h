@@ -338,6 +338,8 @@ int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
 const knownword_t** Con_CollectKnownWordsMatchingWord(const char* word,
     knownwordtype_t type, unsigned int* count);
 
+AutoStr *Con_KnownWordToString(knownword_t const *word);
+
 /**
  * Print a 'global' message (to stdout and the console).
  *

@@ -46,12 +46,12 @@ public:
 
     Vector2i viewSize() const;
 
-    Rule const *viewLeft() const;
-    Rule const *viewRight() const;
-    Rule const *viewTop() const;
-    Rule const *viewBottom() const;
-    Rule const *viewWidth() const;
-    Rule const *viewHeight() const;
+    Rule const &viewLeft() const;
+    Rule const &viewRight() const;
+    Rule const &viewTop() const;
+    Rule const &viewBottom() const;
+    Rule const &viewWidth() const;
+    Rule const &viewHeight() const;
 
     /**
      * Sets the size of the view. All widgets in the tree are notified.
@@ -83,6 +83,16 @@ public:
     bool processEvent(Event const *event);
 
     void initialize();
+
+    /**
+     * Update the widget tree. Call this before drawing the widget tree so that
+     * the widgets may update their internal state for the current time.
+     */
+    void update();
+
+    /**
+     * Draws the widget tree using the current time.
+     */
     void draw();
 
 private:

@@ -1,4 +1,4 @@
-/** @file texteditwidget.h  Widget for word-wrapped text editing.
+/** @file lineeditwidget.h  Widget for word-wrapped text editing.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_TEXTEDITWIDGET_H
-#define LIBSHELL_TEXTEDITWIDGET_H
+#ifndef LIBSHELL_LINEEDITWIDGET_H
+#define LIBSHELL_LINEEDITWIDGET_H
 
 #include "libshell.h"
 #include "TextWidget"
@@ -25,13 +25,15 @@
 namespace de {
 namespace shell {
 
+class Lexicon;
+
 /**
  * Widget for word-wrapped text editing.
  *
  * The widget adjusts its height automatically to fit to the full contents of
  * the edited, wrapped line.
  */
-class LIBSHELL_PUBLIC TextEditWidget : public TextWidget
+class LIBSHELL_PUBLIC LineEditWidget : public TextWidget
 {
     Q_OBJECT
 
@@ -41,9 +43,9 @@ public:
      *
      * @param name  Widget name.
      */
-    TextEditWidget(String const &name = "");
+    LineEditWidget(String const &name = "");
 
-    virtual ~TextEditWidget();
+    virtual ~LineEditWidget();
 
     /**
      * Sets the prompt that is displayed in front of the edited text.
@@ -58,17 +60,33 @@ public:
     void setCursor(int index);
     int cursor() const;
 
-    Vector2i cursorPosition();
+    /**
+     * Defines the terms and rules for auto-completion.
+     *
+     * @param lexicon  Lexicon.
+     */
+    void setLexicon(Lexicon const &lexicon);
+
+    /**
+     * Enables or disables the signal emitted when the edit widget receives an
+     * Enter key. By default, a signal is emitted.
+     *
+     * @param enterSignal  @c true to enable signal, @c false to disable.
+     */
+    void setSignalOnEnter(int enterSignal);
+
+    Vector2i cursorPosition() const;
 
     bool handleControlKey(int key);
 
     // Events.
     void viewResized();
+    void update();
     void draw();
     bool handleEvent(Event const *event);
 
 signals:
-    void enterPressed(String text);
+    void enterPressed(de::String text);
 
 private:
     struct Instance;
@@ -78,4 +96,4 @@ private:
 } // namespace shell
 } // namespace de
 
-#endif // LIBSHELL_TEXTEDITWIDGET_H
+#endif // LIBSHELL_LINEEDITWIDGET_H

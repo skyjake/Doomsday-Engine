@@ -26,7 +26,10 @@
 
 namespace de {
 
+class Widget;
 class RootWidget;
+
+typedef QList<Widget *> WidgetList;
 
 /**
  * Base class for widgets.
@@ -38,14 +41,66 @@ public:
     /// Widget that was expected to exist was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
+    enum Behavior
+    {
+        /// Widget is invisible: not drawn. Hidden widgets also receive no events.
+        Hidden = 0x1,
+
+        /// Widget will only receive events if it has focus.
+        HandleEventsOnlyWhenFocused = 0x2,
+
+        DefaultBehavior = 0
+    };
+    Q_DECLARE_FLAGS(Behaviors, Behavior)
+
+    typedef WidgetList Children;
+
 public:
     Widget(String const &name = "");
     virtual ~Widget();
+
+    /**
+     * Returns the automatically generated, unique identifier of the widget.
+     */
+    duint32 id() const;
 
     String name() const;
     void setName(String const &name);
     bool hasRoot() const;
     RootWidget &root() const;
+    bool hasFocus() const;
+    bool isHidden() const;
+    inline void hide() { show(false); }
+    void show(bool doShow = true);
+
+    /**
+     * Sets or clears one or more behavior flags.
+     *
+     * @param behavior  Flags.
+     * @param set       @c true to set, @c false to clear.
+     */
+    void setBehavior(Behaviors behavior, bool set = true);
+
+    Behaviors behavior() const;
+
+    /**
+     * Sets the identifier of the widget that will receive focus when
+     * a forward focus navigation is requested.
+     *
+     * @param name  Name of a widget for forwards navigation.
+     */
+    void setFocusNext(String const &name);
+
+    /**
+     * Sets the identifier of the widget that will receive focus when
+     * a backwards focus navigation is requested.
+     *
+     * @param name  Name of a widget for backwards navigation.
+     */
+    void setFocusPrev(String const &name);
+
+    String focusNext() const;
+    String focusPrev() const;
 
     // Tree organization.
     void clear();
@@ -53,10 +108,11 @@ public:
     Widget *remove(Widget &child);
     Widget *find(String const &name);
     Widget const *find(String const &name) const;
-    QList<Widget *> children() const;
+    Children children() const;
     Widget *parent() const;
 
     // Utilities.
+    String uniqueName(String const &name) const;
     void notifyTree(void (Widget::*notifyFunc)());
     void notifyTreeReversed(void (Widget::*notifyFunc)());
     bool dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event const *));
@@ -64,9 +120,15 @@ public:
     // Events.
     virtual void initialize();
     virtual void viewResized();
+    virtual void focusGained();
+    virtual void focusLost();
     virtual void update();
+    virtual void drawIfVisible();
     virtual void draw();
     virtual bool handleEvent(Event const *event);
+
+public:
+    static void setFocusCycle(WidgetList const &order);
 
 private:
     struct Instance;

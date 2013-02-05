@@ -184,6 +184,9 @@ using namespace internal;
 
 struct Socket::Instance
 {
+    Address target;
+    bool quiet;
+
     enum ReceptionState {
         ReceivingHeader,
         ReceivingPayload
@@ -209,6 +212,7 @@ struct Socket::Instance
     dint64 totalBytesWritten;
 
     Instance() :
+        quiet(false),
         receptionState(ReceivingHeader),
         activeChannel(0),
         socket(0),
@@ -397,7 +401,9 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) // blocking
         throw ConnectionError("Socket", "Opening the connection to " + address.asText() + " failed: " + msg);
     }
 
-    LOG_MSG("Connection opened to %s.") << address.asText();
+    LOG_MSG("Connection opened to %s") << address.asText();
+
+    d->target = address;
 
     DENG2_ASSERT(d->socket->isOpen() && d->socket->isWritable() &&
                  d->socket->state() == QAbstractSocket::ConnectedState);
@@ -406,13 +412,51 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) // blocking
 void Socket::connect(Address const &address) // non-blocking
 {    
     DENG2_ASSERT(d->socket);
-    DENG2_ASSERT(!d->socket->isOpen());
     DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
 
     LOG_AS("Socket");
-    LOG_MSG("Opening connection to %s.") << address.asText();
+    if(!d->quiet) LOG_MSG("Opening connection to %s") << address.asText();
 
     d->socket->connectToHost(address.host(), address.port());
+    d->target = address;
+}
+
+void Socket::connectToDomain(String const &domainNameWithOptionalPort,
+                             duint16 defaultPort) // non-blocking
+{
+    String str = domainNameWithOptionalPort;
+    duint16 port = defaultPort;
+    if(str.contains(':'))
+    {
+        int pos = str.indexOf(':');
+        port = str.mid(pos + 1).toInt();
+        str = str.left(pos);
+    }
+    if(str == "localhost")
+    {
+        connect(Address(str.toLatin1(), port));
+        return;
+    }
+
+    QHostAddress host(str);
+    if(!host.isNull())
+    {
+        // Looks like a regular IP address.
+        connect(Address(str.toLatin1(), port));
+        return;
+    }
+
+    d->target.setPort(port);
+
+    // Looks like we will need to look this up.
+    QHostInfo::lookupHost(str, this, SLOT(hostResolved(QHostInfo)));
+}
+
+void Socket::reconnect()
+{
+    DENG2_ASSERT(!isOpen());
+
+    connect(d->target);
 }
 
 Socket::Socket(QTcpSocket *existingSocket)
@@ -464,6 +508,11 @@ void Socket::close()
     }
 
     d->socket->close();
+}
+
+void Socket::setQuiet(bool noLogOutput)
+{
+    d->quiet = noLogOutput;
 }
 
 duint Socket::channel() const
@@ -518,6 +567,22 @@ void Socket::readIncomingBytes()
     }
 }
 
+void Socket::hostResolved(QHostInfo const &info)
+{
+    if(info.error() != QHostInfo::NoError || info.addresses().isEmpty())
+    {
+        LOG_WARNING("Could not resolve host: ") << info.errorString();
+        emit disconnected();
+    }
+    else
+    {
+        // Now we know where to connect.
+        connect(Address(info.addresses().first(), d->target.port()));
+
+        emit addressResolved();
+    }
+}
+
 Message *Socket::receive()
 {
     if(d->receivedMessages.isEmpty())
@@ -547,12 +612,11 @@ void Socket::flush()
 
 Address Socket::peerAddress() const
 {
-    if(isOpen())
+    if(isOpen() && d->socket->state() == QTcpSocket::ConnectedState)
     {
         return Address(d->socket->peerAddress(), d->socket->peerPort());
     }
-    /// @throw PeerError Could not determine the TCP/IP address of the socket.
-    throw PeerError("Socket::peerAddress", "Socket is unavailable");
+    return d->target;
 }
 
 bool Socket::isOpen() const
@@ -570,7 +634,7 @@ void Socket::socketError(QAbstractSocket::SocketError socketError)
     if(socketError != QAbstractSocket::SocketTimeoutError)
     {
         LOG_AS("Socket");
-        LOG_WARNING(d->socket->errorString());
+        if(!d->quiet) LOG_WARNING(d->socket->errorString());
 
         emit disconnected(); //error(socketError);
     }

@@ -19,12 +19,12 @@
 #ifndef COMMANDLINEWIDGET_H
 #define COMMANDLINEWIDGET_H
 
-#include <de/shell/TextEditWidget>
+#include <de/shell/LineEditWidget>
 
 /**
  * Text editor with a history.
  */
-class CommandLineWidget : public de::shell::TextEditWidget
+class CommandLineWidget : public de::shell::LineEditWidget
 {
     Q_OBJECT
 

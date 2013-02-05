@@ -22,6 +22,7 @@
 #include <de/Socket>
 #include <de/Time>
 #include <de/Log>
+#include <QTimer>
 
 namespace de {
 namespace shell {
@@ -29,6 +30,9 @@ namespace shell {
 struct Link::Instance
 {
     Link &self;
+    String tryingToConnectToHost;
+    Time startedTryingAt;
+    TimeDelta timeout;
     Address peerAddress;
     Socket *socket;
     Protocol protocol;
@@ -47,6 +51,25 @@ struct Link::Instance
     }
 };
 
+Link::Link(String const &domain, TimeDelta const &timeout) : d(new Instance(*this))
+{
+    d->socket = new Socket;
+
+    connect(d->socket, SIGNAL(addressResolved()), this, SIGNAL(addressResolved()));
+    connect(d->socket, SIGNAL(connected()), this, SLOT(socketConnected()));
+    connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(d->socket, SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
+
+    // Fallback to default port.
+    d->tryingToConnectToHost = domain;
+    d->socket->setQuiet(true); // we'll be retrying a few times
+    d->socket->connectToDomain(d->tryingToConnectToHost, 13209 /* default port */);
+
+    d->status = Connecting;
+    d->startedTryingAt = Time();
+    d->timeout = timeout;
+}
+
 Link::Link(Address const &address) : d(new Instance(*this))
 {
     d->peerAddress = address;
@@ -62,6 +85,8 @@ Link::Link(Address const &address) : d(new Instance(*this))
     d->socket->connect(d->peerAddress);
 
     d->status = Connecting;
+    d->startedTryingAt = Time();
+    d->timeout = 0;
 }
 
 Link::Link(Socket *openSocket) : d(new Instance(*this))
@@ -109,7 +134,7 @@ Packet *Link::nextPacket()
 
     std::auto_ptr<Message> data(d->socket->receive());
     Packet *packet = d->protocol.interpret(*data.get());
-    if(packet) packet->setFrom(d->peerAddress);
+    if(packet) packet->setFrom(data->address());
     return packet;
 }
 
@@ -128,6 +153,7 @@ void Link::socketConnected()
 
     d->status = Connected;
     d->connectedAt = Time();
+    d->peerAddress = d->socket->peerAddress();
 
     emit connected();
 }
@@ -135,7 +161,26 @@ void Link::socketConnected()
 void Link::socketDisconnected()
 {
     LOG_AS("Link");
-    LOG_INFO("Disconnected from %s") << d->peerAddress;
+
+    if(d->status == Connecting)
+    {
+        if(d->startedTryingAt.since() < d->timeout)
+        {
+            // Let's try again a bit later.
+            QTimer::singleShot(500, d->socket, SLOT(reconnect()));
+            return;
+        }
+        d->socket->setQuiet(false);
+    }
+
+    if(!d->peerAddress.isNull())
+    {
+        LOG_INFO("Disconnected from %s") << d->peerAddress;
+    }
+    else
+    {
+        LOG_INFO("Disconnected");
+    }
 
     d->status = Disconnected;
 

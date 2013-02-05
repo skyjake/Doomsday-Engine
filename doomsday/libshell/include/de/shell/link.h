@@ -49,6 +49,14 @@ public:
     /**
      * Opens a connection to a server over the network.
      *
+     * @param address  Domain/IP address of the server.
+     * @param timeout  Keep trying until this much time has passed.
+     */
+    Link(String const &domain, TimeDelta const &timeout = 0);
+
+    /**
+     * Opens a connection to a server over the network.
+     *
      * @param address  Address of the server.
      */
     Link(Address const &address);
@@ -63,7 +71,8 @@ public:
     virtual ~Link();
 
     /**
-     * Peer address of the link.
+     * Peer address of the link. The address may be a null address if the IP
+     * address hasn't been resolved yet.
      */
     Address address() const;
 
@@ -98,6 +107,7 @@ protected slots:
     void socketDisconnected();
 
 signals:
+    void addressResolved();
     void connected();
     void disconnected();
     void packetsReady();

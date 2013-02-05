@@ -38,7 +38,7 @@ struct StatusWidget::Instance
 StatusWidget::StatusWidget(String const &name)
     : TextWidget(name), d(new Instance(*this))
 {
-    connect(d->updateTimer, SIGNAL(timeout()), this, SLOT(redraw()));
+    connect(d->updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
 }
 
 StatusWidget::~StatusWidget()
@@ -53,6 +53,7 @@ void StatusWidget::setShellLink(Link *link)
     if(link)
     {
         // Observe changes in link status.
+        connect(link, SIGNAL(addressResolved()), this, SLOT(refresh()));
         connect(link, SIGNAL(connected()), this, SLOT(linkConnected()));
         connect(link, SIGNAL(disconnected()), this, SLOT(linkDisconnected()));
     }
@@ -62,19 +63,25 @@ void StatusWidget::setShellLink(Link *link)
 
 void StatusWidget::draw()
 {
-    if(!targetCanvas()) return;
-
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
 
     if(!d->link || d->link->status() == Link::Disconnected)
     {
-        String msg = "Not connected to a server";
-        buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg, TextCanvas::Char::Bold);
+        String msg = tr("Not connected to a server");
+        buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg /*, TextCanvas::Char::Bold*/);
     }
     else if(d->link->status() == Link::Connecting)
     {
-        String msg = "Connecting to " + d->link->address().asText();
+        String msg;
+        if(!d->link->address().isNull())
+        {
+            msg = tr("Connecting to ") + d->link->address().asText();
+        }
+        else
+        {
+            msg = tr("Looking up host...");
+        }
         buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg);
     }
     else if(d->link->status() == Link::Connected)
@@ -93,12 +100,12 @@ void StatusWidget::draw()
         buf.drawText(x, host);
     }
 
-    targetCanvas()->draw(buf, pos.topLeft);
+    targetCanvas().draw(buf, pos.topLeft);
 }
 
-void StatusWidget::redraw()
+void StatusWidget::refresh()
 {
-    drawAndShow();
+    redraw();
 }
 
 void StatusWidget::linkConnected()

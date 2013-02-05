@@ -126,7 +126,7 @@ SOURCES += \
     src/core/logsink.cpp \
     src/core/monospacelogsinkformatter.cpp \
     src/core/textstreamlogsink.cpp \
-    src/core/unixinfo.cpp
+    src/core/unixinfo.cpp 
 
 OTHER_FILES += \
     modules/Config.de \

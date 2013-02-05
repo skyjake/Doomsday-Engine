@@ -22,4 +22,4 @@
 #include "../DelegateRule"
 #include "../ScalarRule"
 #include "../OperatorRule"
-#include "../RectangleRule"
+#include "../RuleRectangle"
