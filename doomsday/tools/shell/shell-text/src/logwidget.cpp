@@ -20,6 +20,7 @@
 #include <de/MonospaceLogSinkFormatter>
 #include <de/Lockable>
 #include <de/LogBuffer>
+#include <de/shell/KeyEvent>
 #include <de/shell/TextRootWidget>
 #include <QList>
 
@@ -68,6 +69,14 @@ public:
         return *_entries[index];
     }
 
+    void remove(int pos, int n = 1)
+    {
+        while(n-- > 0)
+        {
+            delete _entries.takeAt(pos);
+        }
+    }
+
 private:
     LogWidget &_widget;
     QList<LogEntry *> _entries;
@@ -79,8 +88,14 @@ struct LogWidget::Instance
     MonospaceLogSinkFormatter formatter;
     int cacheWidth;
     QList<TextCanvas *> cache; ///< Indices match entry indices in sink.
+    int maxEntries;
+    int visibleOffset;
 
-    Instance(LogWidget &inst) : sink(inst), cacheWidth(0)
+    Instance(LogWidget &inst)
+        : sink(inst),
+          cacheWidth(0),
+          maxEntries(1000),
+          visibleOffset(0)
     {}
 
     ~Instance()
@@ -92,6 +107,41 @@ struct LogWidget::Instance
     {
         foreach(TextCanvas *cv, cache) delete cv;
         cache.clear();
+    }
+
+    void prune()
+    {
+        // Remove old entries if there are too many.
+        int excess = sink.entryCount() - maxEntries;
+        if(excess > 0)
+        {
+            sink.remove(0, excess);
+        }
+        while(excess-- > 0 && !cache.isEmpty())
+        {
+            delete cache.takeFirst();
+        }
+    }
+
+    int totalHeight()
+    {
+        int total = 0;
+        for(int idx = sink.entryCount() - 1; idx >= 0; --idx)
+        {
+            total += cache[idx]->size().y;
+        }
+        return total;
+    }
+
+    int maxVisibleOffset(int visibleHeight)
+    {
+        // Determine total height of all entries.
+        return de::max(0, totalHeight() - visibleHeight);
+    }
+
+    void clampVisibleOffset(int visibleHeight)
+    {
+        visibleOffset = de::min(visibleOffset, maxVisibleOffset(visibleHeight));
     }
 };
 
@@ -139,24 +189,83 @@ void LogWidget::draw()
         TextCanvas *buf = new TextCanvas(Vector2i(pos.width(), lines.size()));
         d->cache.append(buf);
 
+        TextCanvas::Char::Attribs attribs = (entry.flags() & LogEntry::Remote?
+                TextCanvas::Char::DefaultAttributes : TextCanvas::Char::Bold);
+
         // Draw the text.
         for(int i = 0; i < lines.size(); ++i)
         {
-            buf->drawText(Vector2i(0, i), lines[i]);
+            buf->drawText(Vector2i(0, i), lines[i], attribs);
         }
+
+        // Adjust visible offset.
+        if(d->visibleOffset > 0) d->visibleOffset += lines.size();
     }
 
+    DENG2_ASSERT(d->cache.size() == d->sink.entryCount());
+
+    d->clampVisibleOffset(buf.height());
+
     // Draw in reverse, as much as we need.
-    int yBottom = pos.size().y;
+    int yBottom = buf.height() + d->visibleOffset;
 
     for(int idx = d->sink.entryCount() - 1; yBottom > 0 && idx >= 0; --idx)
     {
         TextCanvas *canvas = d->cache[idx];
         yBottom -= canvas->size().y;
-        buf.draw(*canvas, Vector2i(0, yBottom));
+        if(yBottom < buf.height())
+        {
+            buf.draw(*canvas, Vector2i(0, yBottom));
+        }
     }
 
-    d->sink.unlock();
+    // Draw the scroll indicator.
+    if(d->visibleOffset > 0)
+    {
+        int const indHeight = de::clamp(2, de::floor(float(buf.height() * buf.height()) /
+                                               float(d->totalHeight())), buf.height() / 2);
+        float const indPos = float(d->visibleOffset) / float(d->maxVisibleOffset(buf.height()));
+        int const avail = buf.height() - indHeight;
+        for(int i = 0; i < indHeight; ++i)
+        {
+            buf.put(Vector2i(buf.width() - 1, i + avail - indPos * avail),
+                    TextCanvas::Char(':', TextCanvas::Char::Reverse));
+        }
+    }
 
     targetCanvas().draw(buf, pos.topLeft);
+
+    d->prune();
+    d->sink.unlock();
+}
+
+bool LogWidget::handleEvent(Event const *event)
+{
+    if(event->type() != Event::KeyPress) return false;
+
+    KeyEvent const *ev = static_cast<KeyEvent const *>(event);
+
+    switch(ev->key())
+    {
+    case Qt::Key_PageUp:
+        d->visibleOffset += 3;
+        redraw();
+        return true;
+
+    case Qt::Key_PageDown:
+        d->visibleOffset = de::max(0, d->visibleOffset - 3);
+        redraw();
+        return true;
+
+    default:
+        break;
+    }
+
+    return TextWidget::handleEvent(event);
+}
+
+void LogWidget::scrollToBottom()
+{
+    d->visibleOffset = 0;
+    redraw();
 }

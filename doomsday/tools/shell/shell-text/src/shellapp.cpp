@@ -72,8 +72,8 @@ struct ShellApp::Instance
 
         menuLabel->addAction(new Action(KeyEvent(Qt::Key_F9), &self, SLOT(openMenu())));
         menuLabel->addAction(new Action(KeyEvent(Qt::Key_Z, KeyEvent::Control), &self, SLOT(openMenu())));
-        menuLabel->addAction(new Action(KeyEvent(Qt::Key_X, KeyEvent::Control), &self, SLOT(openMenu())));
         menuLabel->addAction(new Action(KeyEvent(Qt::Key_C, KeyEvent::Control), &self, SLOT(openMenu())));
+        menuLabel->addAction(new Action(KeyEvent(Qt::Key_X, KeyEvent::Control), &self, SLOT(quit())));
 
         // Expanding command line widget.
         cli = new CommandLineWidget;
@@ -92,6 +92,8 @@ struct ShellApp::Instance
                 .setInput(Rule::Top,    root.viewTop())
                 .setInput(Rule::Bottom, cli->rule().top());
 
+        log->addAction(new Action(KeyEvent(Qt::Key_F5), log, SLOT(scrollToBottom())));
+
         // Main menu.
         menu = new MenuWidget(MenuWidget::Popup);
         menu->appendItem(new Action(tr("Connect to..."),
@@ -100,10 +102,9 @@ struct ShellApp::Instance
         menu->appendSeparator();
         menu->appendItem(new Action(tr("Start local server"), &self, SLOT(askToStartLocalServer())));
         menu->appendSeparator();
+        menu->appendItem(new Action(tr("Scroll to bottom"), log, SLOT(scrollToBottom())), "F5");
         menu->appendItem(new Action(tr("About"), &self, SLOT(showAbout())));
-        menu->appendItem(new Action(tr("Quit Shell"),
-                                    KeyEvent(Qt::Key_X, KeyEvent::Control),
-                                    &self, SLOT(quit())), "Ctrl-X");
+        menu->appendItem(new Action(tr("Quit Shell"), &self, SLOT(quit())), "Ctrl-X");
         menu->rule()
                 .setInput(Rule::Bottom, menuLabel->rule().top())
                 .setInput(Rule::Left,   menuLabel->rule().left());

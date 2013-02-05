@@ -24,6 +24,8 @@
 
 class LogWidget : public de::shell::TextWidget
 {
+    Q_OBJECT
+
 public:
     LogWidget(de::String const &name = "");
     virtual ~LogWidget();
@@ -35,6 +37,13 @@ public:
     de::LogSink &logSink();
 
     void draw();
+    bool handleEvent(de::Event const *event);
+
+public slots:
+    /**
+     * Moves the scroll offset of the widget to the bottom of the history.
+     */
+    void scrollToBottom();
 
 private:
     struct Instance;
