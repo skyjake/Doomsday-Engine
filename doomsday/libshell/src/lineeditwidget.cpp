@@ -256,9 +256,8 @@ struct LineEditWidget::Instance
             String const base = wordBehindCursor();
 
             // Go to next suggestion.
-            completion.ordinal += (forwardCycle? 1 : -1);
-            if(completion.ordinal < 0) completion.ordinal += suggestions.size();
-            if(completion.ordinal >= suggestions.size()) completion.ordinal -= suggestions.size();
+            completion.ordinal = de::wrap(completion.ordinal + (forwardCycle? 1 : -1),
+                                          0, suggestions.size());
             String comp = suggestions[completion.ordinal];
             comp.remove(0, base.size());
 
