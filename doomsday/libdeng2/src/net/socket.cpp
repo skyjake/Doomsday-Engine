@@ -185,6 +185,7 @@ using namespace internal;
 struct Socket::Instance
 {
     Address target;
+    bool quiet;
 
     enum ReceptionState {
         ReceivingHeader,
@@ -211,6 +212,7 @@ struct Socket::Instance
     dint64 totalBytesWritten;
 
     Instance() :
+        quiet(false),
         receptionState(ReceivingHeader),
         activeChannel(0),
         socket(0),
@@ -410,11 +412,10 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) // blocking
 void Socket::connect(Address const &address) // non-blocking
 {    
     DENG2_ASSERT(d->socket);
-    //DENG2_ASSERT(!d->socket->isOpen());
     DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
 
     LOG_AS("Socket");
-    LOG_MSG("Opening connection to %s") << address.asText();
+    if(!d->quiet) LOG_MSG("Opening connection to %s") << address.asText();
 
     d->socket->connectToHost(address.host(), address.port());
     d->target = address;
@@ -507,6 +508,11 @@ void Socket::close()
     }
 
     d->socket->close();
+}
+
+void Socket::setQuiet(bool noLogOutput)
+{
+    d->quiet = noLogOutput;
 }
 
 duint Socket::channel() const
@@ -628,7 +634,7 @@ void Socket::socketError(QAbstractSocket::SocketError socketError)
     if(socketError != QAbstractSocket::SocketTimeoutError)
     {
         LOG_AS("Socket");
-        LOG_WARNING(d->socket->errorString());
+        if(!d->quiet) LOG_WARNING(d->socket->errorString());
 
         emit disconnected(); //error(socketError);
     }

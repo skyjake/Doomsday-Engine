@@ -148,13 +148,11 @@ bool ChoiceWidget::handleEvent(Event const *ev)
     if(ev->type() == Event::KeyPress)
     {
         KeyEvent const *event = static_cast<KeyEvent const *>(ev);
-        if(!event->text().isEmpty() ||
-                event->key() == Qt::Key_Enter /*||
-                event->key() == Qt::Key_Up ||
-                event->key() == Qt::Key_Down*/)
+        if(!event->text().isEmpty() || event->key() == Qt::Key_Enter)
         {
             DENG2_ASSERT(!isOpen());
-            if(event->text().isEmpty())
+
+            if(event->text().isEmpty() || event->text() == " ")
             {
                 d->menu->setCursor(d->selection);
             }

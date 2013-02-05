@@ -189,6 +189,13 @@ public:
      */
     void close();
 
+    /**
+     * Allows or disallows the socket from outputting log output.
+     *
+     * @param noLogOutput  @c true to be quiet, @c false to allow output.
+     */
+    void setQuiet(bool noLogOutput);
+
 signals:
     void addressResolved();
     void connected();

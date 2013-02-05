@@ -62,6 +62,7 @@ Link::Link(String const &domain, TimeDelta const &timeout) : d(new Instance(*thi
 
     // Fallback to default port.
     d->tryingToConnectToHost = domain;
+    d->socket->setQuiet(true); // we'll be retrying a few times
     d->socket->connectToDomain(d->tryingToConnectToHost, 13209 /* default port */);
 
     d->status = Connecting;
@@ -169,6 +170,7 @@ void Link::socketDisconnected()
             QTimer::singleShot(500, d->socket, SLOT(reconnect()));
             return;
         }
+        d->socket->setQuiet(false);
     }
 
     if(!d->peerAddress.isNull())
