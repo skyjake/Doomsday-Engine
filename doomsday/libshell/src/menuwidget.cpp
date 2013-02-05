@@ -200,10 +200,39 @@ Action &MenuWidget::itemAction(int pos) const
     return *d->items[pos].action;
 }
 
+int MenuWidget::findLabel(String const &label) const
+{
+    for(int i = 0; i < d->items.size(); ++i)
+    {
+        if(!d->items[i].action->label().compareWithoutCase(label))
+            return i;
+    }
+    return -1;
+}
+
+bool MenuWidget::hasLabel(String const &label) const
+{
+    return findLabel(label) >= 0;
+}
+
 void MenuWidget::setCursor(int pos)
 {
-    d->cursor = pos;
+    d->cursor = de::min(pos, itemCount() - 1);
     redraw();
+}
+
+void MenuWidget::setCursorByLabel(String const &label)
+{
+    int idx = findLabel(label);
+    if(idx >= 0)
+    {
+        setCursor(idx);
+    }
+    else
+    {
+        // Try to reselect the previous item by index.
+        setCursor(d->cursor);
+    }
 }
 
 int MenuWidget::cursor() const
@@ -329,22 +358,9 @@ bool MenuWidget::handleEvent(Event const *event)
 
     if(event->type() != Event::KeyPress) return false;
 
-    // Check registered actions (shortcuts).
-    if(TextWidget::handleEvent(event))
-    {
-        close();
-        return true;
-    }
-
     KeyEvent const *ev = static_cast<KeyEvent const *>(event);
 
-    if(ev->text() == " ")
-    {
-        itemAction(d->cursor).trigger();
-        close();
-        return true;
-    }
-
+    // Check menu-related control keys.
     if(ev->text().isEmpty())
     {
         switch(ev->key())
@@ -393,13 +409,31 @@ bool MenuWidget::handleEvent(Event const *event)
             return true;
 
         default:
-            if(d->closable)
-            {
-                // Any other control key closes the menu.
-                close();
-                return true;
-            }
             break;
+        }
+    }
+
+    if(ev->text() == " ")
+    {
+        itemAction(d->cursor).trigger();
+        close();
+        return true;
+    }
+
+    // Check registered actions (shortcuts), focus navigation.
+    if(TextWidget::handleEvent(event))
+    {
+        close();
+        return true;
+    }
+
+    if(ev->text().isEmpty())
+    {
+        if(d->closable)
+        {
+            // Any other control key closes the menu.
+            close();
+            return true;
         }
     }
     else

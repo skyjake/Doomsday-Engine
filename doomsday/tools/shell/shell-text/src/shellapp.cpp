@@ -221,6 +221,8 @@ void ShellApp::askToStartLocalServer()
 
 void ShellApp::updateMenuWithFoundServers()
 {
+    String oldSel = d->menu->itemAction(d->menu->cursor()).label();
+
     // Remove old servers.
     for(int i = 2; i < d->menu->itemCount() - 3; ++i)
     {
@@ -241,6 +243,9 @@ void ShellApp::updateMenuWithFoundServers()
 
         d->menu->insertItem(pos++, new Action(label, this, SLOT(connectToFoundServer())));
     }
+
+    // Update cursor position after changing menu items.
+    d->menu->setCursorByLabel(oldSel);
 }
 
 void ShellApp::connectToFoundServer()

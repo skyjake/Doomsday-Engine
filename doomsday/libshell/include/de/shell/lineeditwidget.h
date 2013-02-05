@@ -60,9 +60,9 @@ public:
 
     /**
      * Enables or disables the signal emitted when the edit widget receives an
-     * Enter key.
+     * Enter key. By default, a signal is emitted.
      *
-     * @param enterHandled @c true to enable signal, @c false to disable.
+     * @param enterSignal  @c true to enable signal, @c false to disable.
      */
     void setSignalOnEnter(int enterSignal);
 

@@ -87,7 +87,13 @@ public:
 
     Action &itemAction(int pos) const;
 
+    int findLabel(String const &label) const;
+
+    bool hasLabel(String const &label) const;
+
     void setCursor(int pos);
+
+    void setCursorByLabel(String const &label);
 
     int cursor() const;
 

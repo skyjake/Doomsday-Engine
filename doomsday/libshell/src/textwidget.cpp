@@ -38,6 +38,26 @@ struct TextWidget::Instance
         delete rule;
         foreach(Action *act, actions) delete act;
     }
+
+    /**
+     * Navigates focus to another widget, assuming this widget currently has
+     * focus. Used in focus cycle navigation.
+     *
+     * @param name  Name of the widget to change focus to.
+     *
+     * @return Focus changed successfully.
+     */
+    bool navigateFocus(TextRootWidget &root, String const &name)
+    {
+        Widget *w = root.find(name);
+        if(w)
+        {
+            root.setFocus(w);
+            root.requestDraw();
+            return true;
+        }
+        return false;
+    }
 };
 
 TextWidget::TextWidget(String const &name) : Widget(name), d(new Instance)
@@ -129,25 +149,17 @@ bool TextWidget::handleEvent(Event const *event)
         }
 
         // Focus navigation.
-        if(keyEvent->key() == Qt::Key_Tab && hasFocus() && !focusNext().isEmpty())
+        if((keyEvent->key() == Qt::Key_Tab || keyEvent->key() == Qt::Key_Down) &&
+                hasFocus() && !focusNext().isEmpty())
         {
-            Widget *next = root().find(focusNext());
-            if(next)
-            {
-                root().setFocus(next);
-                root().requestDraw();
+            if(d->navigateFocus(root(), focusNext()))
                 return true;
-            }
         }
-        if(keyEvent->key() == Qt::Key_Backtab && hasFocus() && !focusPrev().isEmpty())
+        if((keyEvent->key() == Qt::Key_Backtab || keyEvent->key() == Qt::Key_Up) &&
+                hasFocus() && !focusPrev().isEmpty())
         {
-            Widget *prev = root().find(focusPrev());
-            if(prev)
-            {
-                root().setFocus(prev);
-                root().requestDraw();
+            if(d->navigateFocus(root(), focusPrev()))
                 return true;
-            }
         }
     }
 

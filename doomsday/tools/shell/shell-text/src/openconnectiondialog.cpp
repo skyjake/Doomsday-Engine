@@ -30,6 +30,7 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name) : shell::InputDia
                       "\"10.0.1.1:13209\"."));
 
     setPrompt(tr("Address: "));
+    lineEdit().setSignalOnEnter(false); // let menu handle it
     lineEdit().setText(PersistentData::get("OpenConnection.address"));
 
     setAcceptLabel(tr("Connect to server"));

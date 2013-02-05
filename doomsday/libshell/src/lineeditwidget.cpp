@@ -39,7 +39,7 @@ struct LineEditWidget::Instance
 
     Instance(LineEditWidget &cli)
         : self(cli),
-          signalOnEnter(false),
+          signalOnEnter(true),
           cursor(0)
     {
         // Initial height of the command line (1 row).

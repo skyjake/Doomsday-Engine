@@ -96,14 +96,14 @@ LocalServerDialog::LocalServerDialog() : d(new Instance)
             .setInput(Rule::Top,    d->choice->rule().bottom() + 1);
 
     lineEdit().rule()
-            .setInput(Rule::Top,    d->port->rule().bottom() + 1);
+            .setInput(Rule::Top,    d->port->rule().bottom());
 
     rule().setInput(Rule::Height,
                     label().rule()   .height() +
                     d->choice->rule().height() +
                     d->port->rule()  .height() +
                     lineEdit().rule().height() +
-                    menu().rule()    .height() + 4);
+                    menu().rule()    .height() + 3);
 
     setDescription(tr("Specify the settings for starting a new local server."));
 

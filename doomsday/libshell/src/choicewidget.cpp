@@ -149,9 +149,9 @@ bool ChoiceWidget::handleEvent(Event const *ev)
     {
         KeyEvent const *event = static_cast<KeyEvent const *>(ev);
         if(!event->text().isEmpty() ||
-                event->key() == Qt::Key_Enter ||
+                event->key() == Qt::Key_Enter /*||
                 event->key() == Qt::Key_Up ||
-                event->key() == Qt::Key_Down)
+                event->key() == Qt::Key_Down*/)
         {
             DENG2_ASSERT(!isOpen());
             if(event->text().isEmpty())
