@@ -121,6 +121,8 @@ void Beacon::discover(TimeDelta const &timeOut, TimeDelta const &interval)
     d->timer = new QTimer;
     connect(d->timer, SIGNAL(timeout()), this, SLOT(continueDiscovery()));
     d->timer->start(interval.asMilliSeconds());
+
+    continueDiscovery();
 }
 
 QList<Address> Beacon::foundHosts() const
