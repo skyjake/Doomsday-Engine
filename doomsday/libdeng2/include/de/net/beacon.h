@@ -30,7 +30,7 @@ namespace de {
  * UDP-based peer discovery mechanism.
  * @ingroup net
  */
-class Beacon : public QObject
+class DENG2_PUBLIC Beacon : public QObject
 {
     Q_OBJECT
 

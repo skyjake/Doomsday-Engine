@@ -19,6 +19,7 @@
 #ifndef LIBSHELL_LEXICON_H
 #define LIBSHELL_LEXICON_H
 
+#include "libshell.h"
 #include <QSet>
 #include <de/String>
 
@@ -28,7 +29,7 @@ namespace shell {
 /**
  * Lexicon containing terms and grammatical rules.
  */
-class Lexicon
+class LIBSHELL_PUBLIC Lexicon
 {
 public:
     typedef QSet<String> Terms;
