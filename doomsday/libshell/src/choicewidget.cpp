@@ -162,7 +162,7 @@ bool ChoiceWidget::handleEvent(Event const *ev)
                 int curs = d->selection;
                 for(int i = 0; i < d->items.size(); ++i)
                 {
-                    if(d->items[i].toLower().startsWith(event->text().toLower()))
+                    if(d->items[i].startsWith(event->text(), Qt::CaseInsensitive))
                     {
                         curs = i;
                         break;

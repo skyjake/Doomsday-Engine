@@ -442,7 +442,7 @@ bool MenuWidget::handleEvent(Event const *event)
         for(int i = 0; i < d->items.size(); ++i)
         {
             int idx = (d->cursor + i + 1) % d->items.size();
-            if(d->items[idx].action->label().toLower().startsWith(ev->text().toLower()))
+            if(d->items[idx].action->label().startsWith(ev->text(), Qt::CaseInsensitive))
             {
                 setCursor(idx);
                 return true;

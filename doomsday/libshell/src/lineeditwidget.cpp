@@ -16,11 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/String>
-#include <de/RuleRectangle>
 #include "de/shell/LineEditWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
+#include <de/RuleRectangle>
+#include <de/String>
+#include <de/Log>
+#include <QSet>
 
 namespace de {
 namespace shell {
@@ -33,6 +35,21 @@ struct LineEditWidget::Instance
     String prompt;
     String text;
     int cursor; ///< Index in range [0...text.size()]
+    QSet<String> lexicon;
+    struct Suggestion
+    {
+        int pos;
+        int size;
+        int lexiconIndex;
+
+        void reset() {
+            pos = size = lexiconIndex = 0;
+        }
+        Range range() const {
+            return Range(pos, pos + size);
+        }
+    };
+    Suggestion suggestion;
 
     // Word wrapping.
     LineWrapping wraps;
@@ -45,7 +62,14 @@ struct LineEditWidget::Instance
         // Initial height of the command line (1 row).
         height = new ConstantRule(1);
 
-        wraps.append(WrappedLine(0, 0, true));
+        wraps.append(WrappedLine(Range(), true));
+
+        suggestion.reset();
+
+        // testing
+        lexicon.insert("verbs");
+        lexicon.insert("verbose");
+        lexicon.insert("version");
     }
 
     ~Instance()
@@ -79,13 +103,13 @@ struct LineEditWidget::Instance
         for(pos.y = 0; pos.y < wraps.size(); ++pos.y)
         {
             WrappedLine span = lineSpan(pos.y);
-            if(!span.isFinal) span.end--;
-            if(cursor >= span.start && cursor <= span.end)
+            if(!span.isFinal) span.range.end--;
+            if(cursor >= span.range.start && cursor <= span.range.end)
             {
                 // Stop here. Cursor is on this line.
                 break;
             }
-            pos.x -= span.end - span.start + 1;
+            pos.x -= span.range.end - span.range.start + 1;
         }
         return pos;
     }
@@ -98,6 +122,8 @@ struct LineEditWidget::Instance
      */
     bool moveCursorByLine(int lineOff)
     {
+        acceptSuggestion();
+
         DENG2_ASSERT(lineOff == 1 || lineOff == -1);
 
         de::Vector2i const linePos = lineCursorPos();
@@ -108,19 +134,27 @@ struct LineEditWidget::Instance
 
         // Move cursor onto the adjacent line.
         WrappedLine span = lineSpan(linePos.y + lineOff);
-        cursor = span.start + linePos.x;
-        if(!span.isFinal) span.end--;
-        if(cursor > span.end) cursor = span.end;
+        cursor = span.range.start + linePos.x;
+        if(!span.isFinal) span.range.end--;
+        if(cursor > span.range.end) cursor = span.range.end;
         return true;
     }
 
     void insert(String const &str)
     {
+        acceptSuggestion();
+
         text.insert(cursor++, str);
     }
 
     void doBackspace()
     {
+        if(suggestingCompletion())
+        {
+            rejectSuggestion();
+            return;
+        }
+
         if(!text.isEmpty() && cursor > 0)
         {
             text.remove(--cursor, 1);
@@ -137,28 +171,116 @@ struct LineEditWidget::Instance
 
     void doLeft()
     {
+        acceptSuggestion();
+
         if(cursor > 0) --cursor;
     }
 
     void doRight()
     {
+        acceptSuggestion();
+
         if(cursor < text.size()) ++cursor;
     }
 
     void doHome()
     {
-        cursor = lineSpan(lineCursorPos().y).start;
+        acceptSuggestion();
+
+        cursor = lineSpan(lineCursorPos().y).range.start;
     }
 
     void doEnd()
     {
+        acceptSuggestion();
+
         WrappedLine const span = lineSpan(lineCursorPos().y);
-        cursor = span.end - (span.isFinal? 0 : 1);
+        cursor = span.range.end - (span.isFinal? 0 : 1);
     }
 
     void killEndOfLine()
     {
-        text.remove(cursor, lineSpan(lineCursorPos().y).end - cursor);
+        text.remove(cursor, lineSpan(lineCursorPos().y).range.end - cursor);
+    }
+
+    bool suggestingCompletion() const
+    {
+        return suggestion.size > 0;
+    }
+
+    String wordBehindCursor() const
+    {
+        String word;
+        int i = cursor - 1;
+        while(i >= 0 && !text[i].isSpace()) word.prepend(text[i--]);
+        return word;
+    }
+
+    QList<String> suggestionsForBase(String base) const
+    {
+        QList<String> suggestions;
+        foreach(String term, lexicon)
+        {
+            if(term.startsWith(base, Qt::CaseInsensitive))
+            {
+                suggestions.append(term);
+            }
+        }
+        return suggestions;
+    }
+
+    bool doCompletion()
+    {        
+        if(!suggestingCompletion())
+        {
+            String const base = wordBehindCursor();
+            if(!base.isEmpty())
+            {
+                QList<String> suggestions = suggestionsForBase(base);
+                if(!suggestions.isEmpty())
+                {
+                    String sug = suggestions.first();
+                    sug.remove(0, base.size());
+                    suggestion.lexiconIndex = 0;
+                    suggestion.pos = cursor;
+                    suggestion.size = sug.size();
+                    text.insert(cursor, sug);
+                    cursor += suggestion.size;
+                    return true;
+                }
+            }
+        }
+        else
+        {
+            cursor = suggestion.pos;
+            String const base = wordBehindCursor();
+
+            // Go to next suggestion.
+            QList<String> suggestions = suggestionsForBase(base);
+            suggestion.lexiconIndex = (suggestion.lexiconIndex + 1) % suggestions.size();
+            String newSug = suggestions[suggestion.lexiconIndex];
+            newSug.remove(0, base.size());
+
+            text.remove(suggestion.pos, suggestion.size);
+            text.insert(suggestion.pos, newSug);
+            suggestion.size = newSug.size();
+            cursor = suggestion.pos + suggestion.size;
+
+            return true;
+        }
+        return false;
+    }
+
+    void acceptSuggestion()
+    {
+        suggestion.reset();
+    }
+
+    void rejectSuggestion()
+    {
+        text.remove(suggestion.pos, suggestion.size);
+        cursor = suggestion.pos;
+        suggestion.reset();
     }
 };
 
@@ -218,6 +340,12 @@ void LineEditWidget::draw()
     buf.clear(TextCanvas::Char(' ', attr));
 
     buf.drawText(Vector2i(0, 0), d->prompt, attr | TextCanvas::Char::Bold);
+
+    // Underline the suggestion for completion.
+    if(d->suggestingCompletion())
+    {
+        buf.setRichFormatRange(TextCanvas::Char::Underline, d->suggestion.range());
+    }
     buf.drawWrappedText(Vector2i(d->prompt.size(), 0), d->text, d->wraps, attr);
 
     targetCanvas().draw(buf, pos.topLeft);
@@ -280,6 +408,13 @@ bool LineEditWidget::handleControlKey(int key)
         d->doEnd();
         return true;
 
+    case Qt::Key_Tab:
+        if(d->doCompletion())
+        {
+            return true;
+        }
+        break;
+
     case Qt::Key_K: // assuming Control mod
         d->killEndOfLine();
         return true;
@@ -295,6 +430,7 @@ bool LineEditWidget::handleControlKey(int key)
         return true;
 
     case Qt::Key_Enter:
+        d->acceptSuggestion();
         if(d->signalOnEnter)
         {
             emit enterPressed(d->text);
@@ -311,6 +447,7 @@ bool LineEditWidget::handleControlKey(int key)
 
 void LineEditWidget::setText(String const &contents)
 {
+    d->suggestion.reset();
     d->text = contents;
     d->cursor = contents.size();
     d->wraps.clear();
@@ -329,6 +466,7 @@ String LineEditWidget::text() const
 
 void LineEditWidget::setCursor(int index)
 {
+    d->suggestion.reset();
     d->cursor = index;
     redraw();
 }
