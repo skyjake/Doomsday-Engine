@@ -152,7 +152,9 @@ public:
 
     void put(Vector2i const &pos, Char const &ch);
 
-    void drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs = Char::DefaultAttributes);
+    void drawText(Vector2i const &pos, String const &text,
+                  Char::Attribs const &attribs = Char::DefaultAttributes,
+                  int richOffset = 0);
 
     /**
      * Draws line wrapped text. Use de::shell::wordWrapText() to determine
@@ -167,6 +169,10 @@ public:
     void drawWrappedText(Vector2i const &pos, String const &text, LineWrapping const &wraps,
                          Char::Attribs const &attribs = Char::DefaultAttributes,
                          Alignment lineAlignment = AlignLeft);
+
+    void clearRichFormat();
+
+    void setRichFormatRange(Char::Attribs const &attribs, Range const &range);
 
     void drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs = Char::DefaultAttributes);
 

@@ -28,6 +28,13 @@ struct TextCanvas::Instance
     Size size;
     QList<Char *> lines;
 
+    struct RichFormat
+    {
+        Char::Attribs attrib;
+        Range range;
+    };
+    QList<RichFormat> richFormats;
+
     Instance(Size const &initialSize) : size(initialSize)
     {
         // Allocate lines based on supplied initial size.
@@ -93,6 +100,19 @@ struct TextCanvas::Instance
                     c.attribs &= ~Char::Dirty;
             }
         }
+    }
+
+    Char::Attribs richAttribsForTextIndex(int pos, int offset = 0) const
+    {
+        Char::Attribs attr;
+        foreach(RichFormat const &rf, richFormats)
+        {
+            if(rf.range.contains(offset + pos))
+            {
+                attr |= rf.attrib;
+            }
+        }
+        return attr;
     }
 };
 
@@ -178,14 +198,28 @@ void TextCanvas::put(Vector2i const &pos, Char const &ch)
     }
 }
 
-void TextCanvas::drawText(Vector2i const &pos, String const &text, Char::Attribs const &attribs)
+void TextCanvas::clearRichFormat()
+{
+    d->richFormats.clear();
+}
+
+void TextCanvas::setRichFormatRange(Char::Attribs const &attribs, Range const &range)
+{
+    Instance::RichFormat rf;
+    rf.attrib = attribs;
+    rf.range = range;
+    d->richFormats.append(rf);
+}
+
+void TextCanvas::drawText(Vector2i const &pos, String const &text,
+                          Char::Attribs const &attribs, int richOffset)
 {
     Vector2i p = pos;
-    DENG2_FOR_EACH_CONST(String, i, text)
+    for(int i = 0; i < text.size(); ++i)
     {
         if(isValid(p))
         {
-            at(p) = Char(*i, attribs);
+            at(p) = Char(text[i], attribs | d->richAttribsForTextIndex(i, richOffset));
         }
         p.x++;
     }
@@ -200,7 +234,7 @@ void TextCanvas::drawWrappedText(Vector2i const &pos, String const &text,
     for(int y = 0; y < wraps.size(); ++y)
     {
         WrappedLine const &span = wraps[y];
-        String part = text.substr(span.start, span.end - span.start);
+        String part = text.substr(span.range.start, span.range.size());
         int x = 0;
         if(lineAlignment.testFlag(AlignRight))
         {
@@ -210,7 +244,7 @@ void TextCanvas::drawWrappedText(Vector2i const &pos, String const &text,
         {
             x = width/2 - part.size()/2;
         }
-        drawText(pos + Vector2i(x, y), part, attribs);
+        drawText(pos + Vector2i(x, y), part, attribs, span.range.start);
     }
 }
 

@@ -42,15 +42,24 @@
 namespace de {
 namespace shell {
 
-// Word wrapping.
-struct WrappedLine
+struct Range
 {
     int start;
     int end;
+
+    Range(int a = 0, int b = 0) : start(a), end(b) {}
+    inline int size() const { return end - start; }
+    inline bool contains(int i) const { return i >= start && i < end; }
+};
+
+/// Word wrapping.
+struct WrappedLine
+{
+    Range range;
     bool isFinal;
 
-    WrappedLine(int a, int b, bool final = false)
-        : start(a), end(b), isFinal(final) {}
+    WrappedLine(Range const &range_, bool final = false)
+        : range(range_), isFinal(final) {}
 };
 
 class LineWrapping : public QList<WrappedLine>

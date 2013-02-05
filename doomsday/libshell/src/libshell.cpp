@@ -40,7 +40,7 @@ void LineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         if(end == text.size())
         {
             // Time to stop.
-            append(WrappedLine(begin, text.size()));
+            append(WrappedLine(Range(begin, text.size())));
             break;
         }
 
@@ -59,13 +59,13 @@ void LineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         if(text.at(end) == newline)
         {
             // The newline will be omitted from the wrapped lines.
-            append(WrappedLine(begin, end));
+            append(WrappedLine(Range(begin, end)));
             begin = end + 1;
         }
         else
         {
             if(text.at(end).isSpace()) ++end;
-            append(WrappedLine(begin, end));
+            append(WrappedLine(Range(begin, end)));
             begin = end;
         }
     }
@@ -80,7 +80,7 @@ int LineWrapping::width() const
     for(int i = 0; i < size(); ++i)
     {
         WrappedLine const &span = at(i);
-        w = de::max(w, span.end - span.start);
+        w = de::max(w, span.range.size());
     }
     return w;
 }
