@@ -69,7 +69,7 @@ void StatusWidget::draw()
     if(!d->link || d->link->status() == Link::Disconnected)
     {
         String msg = tr("Not connected to a server");
-        buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg, TextCanvas::Char::Bold);
+        buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg /*, TextCanvas::Char::Bold*/);
     }
     else if(d->link->status() == Link::Connecting)
     {
