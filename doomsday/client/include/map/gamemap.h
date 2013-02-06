@@ -112,9 +112,9 @@ public:
     EntityDatabase* entityDatabase;
 
     PlaneSet trackedPlanes;
-    SurfaceSet scrollingSurfaces;
-    SurfaceSet decoratedSurfaces;
-    SurfaceSet glowingSurfaces;
+    SurfaceSet scrollingSurfaces_;
+    SurfaceSet decoratedSurfaces_;
+    SurfaceSet glowingSurfaces_;
 
     struct blockmap_s* mobjBlockmap;
     struct blockmap_s* polyobjBlockmap;
@@ -148,6 +148,21 @@ public:
     uint sideDefCount() const { return sideDefs.size(); }
 
     uint lineDefCount() const { return lineDefs.size(); }
+
+    /**
+     * Returns the set of scrolling surfaces for the map.
+     */
+    SurfaceSet &scrollingSurfaces();
+
+    /**
+     * Returns the set of decorated surfaces for the map.
+     */
+    SurfaceSet &decoratedSurfaces();
+
+    /**
+     * Returns the set of glowing surfaces for the map.
+     */
+    SurfaceSet &glowingSurfaces();
 };
 
 /**
@@ -602,30 +617,6 @@ struct clplane_s* GameMap_NewClPlane(GameMap* map, uint sectornum, clplanetype_t
  * @return  Generators collection for this map.
  */
 struct generators_s* GameMap_Generators(GameMap* map);
-
-/**
- * Retrieve a pointer to the decorated surface list for this map.
- *
- * @param map  GameMap instance.
- * @return  List of decorated surfaces.
- */
-SurfaceSet* GameMap_DecoratedSurfaces(GameMap* map);
-
-/**
- * Retrieve a pointer to the glowing surface list for this map.
- *
- * @param map  GameMap instance.
- * @return  List of glowing surfaces.
- */
-SurfaceSet* GameMap_GlowingSurfaces(GameMap* map);
-
-/**
- * Retrieve a pointer to the scrolling surface list for this map.
- *
- * @param map  GameMap instance.
- * @return  List of scrolling surfaces.
- */
-SurfaceSet* GameMap_ScrollingSurfaces(GameMap* map);
 
 /**
  * Retrieve a pointer to the tracked plane list for this map.

@@ -946,22 +946,22 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
  * Generate one dynlight node for each plane glow.
  * The light is attached to the appropriate dynlight node list.
  */
-static boolean createGlowLightForSurface(Surface *suf, void * /*parameters*/)
+static void createGlowLightForSurface(Surface &suf)
 {
-    switch(suf->owner->type())
+    switch(suf.owner->type())
     {
     case DMU_PLANE: {
-        Plane *pln = suf->owner->castTo<Plane>();
+        Plane *pln = suf.owner->castTo<Plane>();
         Sector *sec = pln->sector;
 
         // Only produce a light for sectors with open space.
         /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.
         if(!sec->bspLeafCount || sec->SP_floorvisheight >= sec->SP_ceilvisheight)
-            return true; // Continue iteration.
+            break;
 
         // Are we glowing at this moment in time?
-        MaterialSnapshot const &ms = suf->material->prepare(Rend_MapSurfaceMaterialSpec());
-        if(!(ms.glowStrength() > .001f)) return true; // Continue iteration.
+        MaterialSnapshot const &ms = suf.material->prepare(Rend_MapSurfaceMaterialSpec());
+        if(!(ms.glowStrength() > .001f)) break;
 
         averagecolor_analysis_t const *avgColorAmplified = (averagecolor_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_COLOR_AMPLIFIED);
         if(!avgColorAmplified) throw Error("createGlowLightForSurface", QString("Texture \"%1\" has no TA_COLOR_AMPLIFIED analysis)").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
@@ -994,12 +994,11 @@ static boolean createGlowLightForSurface(Surface *suf, void * /*parameters*/)
         break; }
 
     case DMU_SIDEDEF:
-        return true; // Not yet supported by this algorithm.
+        break; // Not yet supported by this algorithm.
 
     default:
         DENG2_ASSERT(false); // Invalid type.
     }
-    return true;
 }
 
 void LO_AddLuminousMobjs(void)
@@ -1026,7 +1025,10 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
     // Create dynlights for all glowing surfaces.
     if(useWallGlow)
     {
-        R_SurfaceListIterate(GameMap_GlowingSurfaces(theMap), createGlowLightForSurface, 0);
+        foreach(Surface *surface, theMap->glowingSurfaces())
+        {
+            createGlowLightForSurface(*surface);
+        }
     }
 
 END_PROF( PROF_LUMOBJ_INIT_ADD );

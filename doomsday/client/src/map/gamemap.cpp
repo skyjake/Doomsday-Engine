@@ -74,6 +74,21 @@ GameMap::~GameMap()
 {
 }
 
+SurfaceSet &GameMap::scrollingSurfaces()
+{
+    return scrollingSurfaces_;
+}
+
+SurfaceSet &GameMap::decoratedSurfaces()
+{
+    return decoratedSurfaces_;
+}
+
+SurfaceSet &GameMap::glowingSurfaces()
+{
+    return glowingSurfaces_;
+}
+
 const Uri* GameMap_Uri(GameMap* map)
 {
     DENG2_ASSERT(map);
@@ -454,24 +469,6 @@ Generators* GameMap_Generators(GameMap* map)
         map->generators = Generators_New(map->sectorCount());
     }
     return map->generators;
-}
-
-SurfaceSet* GameMap_DecoratedSurfaces(GameMap* map)
-{
-    DENG2_ASSERT(map);
-    return &map->decoratedSurfaces;
-}
-
-SurfaceSet* GameMap_GlowingSurfaces(GameMap* map)
-{
-    DENG2_ASSERT(map);
-    return &map->glowingSurfaces;
-}
-
-SurfaceSet* GameMap_ScrollingSurfaces(GameMap* map)
-{
-    DENG2_ASSERT(map);
-    return &map->scrollingSurfaces;
 }
 
 PlaneSet* GameMap_TrackedPlanes(GameMap* map)

@@ -509,13 +509,9 @@ BEGIN_PROF( PROF_DECOR_BEGIN_FRAME );
 
     recycleSources();
 
-    SurfaceSet *decoratedSurfaces = GameMap_DecoratedSurfaces(theMap);
-    if(decoratedSurfaces)
+    foreach(Surface *surface, theMap->decoratedSurfaces())
     {
-        DENG2_FOR_EACH(SurfaceSet, i, *decoratedSurfaces)
-        {
-            plotSourcesForSurface(**i);
-        }
+        plotSourcesForSurface(*surface);
     }
 
 END_PROF( PROF_DECOR_BEGIN_FRAME );

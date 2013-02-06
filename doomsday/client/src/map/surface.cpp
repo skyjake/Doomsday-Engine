@@ -97,20 +97,21 @@ boolean Surface_SetMaterial(Surface *suf, Material *material)
                 GameMap *map = theMap; /// @todo Do not assume surface is from the CURRENT map.
 
                 // If this plane's surface is in the decorated list, remove it.
-                R_SurfaceListRemove(GameMap_DecoratedSurfaces(map), suf);
+                map->decoratedSurfaces().remove(suf);
+
                 // If this plane's surface is in the glowing list, remove it.
-                R_SurfaceListRemove(GameMap_GlowingSurfaces(map), suf);
+                map->glowingSurfaces().remove(suf);
 
                 if(material)
                 {
                     if(material->hasGlow())
                     {
-                        R_SurfaceListAdd(GameMap_GlowingSurfaces(map), suf);
+                        map->glowingSurfaces().insert(suf);
                     }
 
                     if(material->isDecorated())
                     {
-                        R_SurfaceListAdd(GameMap_DecoratedSurfaces(map), suf);
+                        map->decoratedSurfaces().insert(suf);
                     }
 
                     if(suf->owner->type() == DMU_PLANE)
@@ -143,7 +144,7 @@ boolean Surface_SetMaterialOriginX(Surface *suf, float x)
             if(!ddMapSetup)
             {
                 /// @todo Do not assume surface is from the CURRENT map.
-                R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
+                theMap->scrollingSurfaces().insert(suf);
             }
         }
     }
@@ -162,7 +163,7 @@ boolean Surface_SetMaterialOriginY(Surface *suf, float y)
             if(!ddMapSetup)
             {
                 /// @todo Do not assume surface is from the CURRENT map.
-                R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
+                theMap->scrollingSurfaces().insert(suf);
             }
         }
     }
@@ -182,7 +183,7 @@ boolean Surface_SetMaterialOrigin(Surface *suf, float x, float y)
             if(!ddMapSetup)
             {
                 /// @todo Do not assume surface is from the CURRENT map.
-                R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
+                theMap->scrollingSurfaces().insert(suf);
             }
         }
     }

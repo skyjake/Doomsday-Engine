@@ -53,71 +53,37 @@ byte rendSkyLightAuto         = true;
 boolean firstFrameAfterLoad;
 boolean ddMapSetup;
 
-void R_SurfaceListAdd(SurfaceSet *sl, Surface *suf)
-{
-    if(!sl || !suf) return;
-    sl->insert(suf);
-}
-
-boolean R_SurfaceListRemove(SurfaceSet *sl, Surface *suf)
-{
-    if(!sl || !suf) return false;
-    return sl->remove(suf);
-}
-
-void R_SurfaceListClear(SurfaceSet *sl)
-{
-    if(!sl) return;
-    sl->clear();
-}
-
-boolean R_SurfaceListIterate(SurfaceSet *sl, boolean (*callback)(Surface *suf, void *), void *context)
-{
-    if(sl)
-    {
-        DENG2_FOR_EACH(SurfaceSet, i, *sl)
-        {
-            if(!callback(*i, context))
-                return false;
-        }
-    }
-    return true;
-}
-
-boolean updateSurfaceScroll(Surface *suf, void * /*context*/)
-{
-    // X Offset
-    suf->oldOffset[0][0] = suf->oldOffset[0][1];
-    suf->oldOffset[0][1] = suf->offset[0];
-    if(suf->oldOffset[0][0] != suf->oldOffset[0][1])
-        if(fabs(suf->oldOffset[0][0] - suf->oldOffset[0][1]) >=
-           MAX_SMOOTH_MATERIAL_MOVE)
-        {
-            // Too fast: make an instantaneous jump.
-            suf->oldOffset[0][0] = suf->oldOffset[0][1];
-        }
-
-    // Y Offset
-    suf->oldOffset[1][0] = suf->oldOffset[1][1];
-    suf->oldOffset[1][1] = suf->offset[1];
-    if(suf->oldOffset[1][0] != suf->oldOffset[1][1])
-        if(fabs(suf->oldOffset[1][0] - suf->oldOffset[1][1]) >=
-           MAX_SMOOTH_MATERIAL_MOVE)
-        {
-            // Too fast: make an instantaneous jump.
-            suf->oldOffset[1][0] = suf->oldOffset[1][1];
-        }
-
-    return true;
-}
-
 /**
  * $smoothmatoffset: Roll the surface material offset tracker buffers.
  */
 void R_UpdateSurfaceScroll()
 {
     if(!theMap) return;
-    R_SurfaceListIterate(GameMap_ScrollingSurfaces(theMap), updateSurfaceScroll, 0);
+
+    foreach(Surface *surface, theMap->scrollingSurfaces())
+    {
+        // X Offset
+        surface->oldOffset[0][0] = surface->oldOffset[0][1];
+        surface->oldOffset[0][1] = surface->offset[0];
+        if(surface->oldOffset[0][0] != surface->oldOffset[0][1])
+        if(de::abs(surface->oldOffset[0][0] - surface->oldOffset[0][1]) >=
+           MAX_SMOOTH_MATERIAL_MOVE)
+        {
+            // Too fast: make an instantaneous jump.
+            surface->oldOffset[0][0] = surface->oldOffset[0][1];
+        }
+
+        // Y Offset
+        surface->oldOffset[1][0] = surface->oldOffset[1][1];
+        surface->oldOffset[1][1] = surface->offset[1];
+        if(surface->oldOffset[1][0] != surface->oldOffset[1][1])
+        if(de::abs(surface->oldOffset[1][0] - surface->oldOffset[1][1]) >=
+           MAX_SMOOTH_MATERIAL_MOVE)
+        {
+            // Too fast: make an instantaneous jump.
+            surface->oldOffset[1][0] = surface->oldOffset[1][1];
+        }
+    }
 }
 
 /**
@@ -126,11 +92,9 @@ void R_UpdateSurfaceScroll()
 void R_InterpolateSurfaceScroll(boolean resetNextViewer)
 {
     if(!theMap) return;
-    SurfaceSet *slist = GameMap_ScrollingSurfaces(theMap);
-    if(!slist) return;
-
-    SurfaceSet::iterator it = slist->begin();
-    while(it != slist->end())
+    SurfaceSet &surfaces = theMap->scrollingSurfaces();
+    SurfaceSet::iterator it = surfaces.begin();
+    while(it != surfaces.end())
     {
         Surface &suf = **it;
 
@@ -172,7 +136,7 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
             // Has this material reached its destination?
             if(suf.visOffset[0] == suf.offset[0] && suf.visOffset[1] == suf.offset[1])
             {
-                it = slist->erase(it);
+                it = surfaces.erase(it);
             }
             else
             {
@@ -319,21 +283,18 @@ void R_MarkDependantSurfacesForDecorationUpdate(Plane *pln)
     }
 }
 
-static boolean markSurfaceForDecorationUpdate(Surface *surface, void *parameters)
-{
-    Material *material = (Material *) parameters;
-    if(material == surface->material)
-    {
-        Surface_Update(surface);
-    }
-    return 1; // Continue iteration.
-}
-
 void R_UpdateMapSurfacesOnMaterialChange(Material *material)
 {
-    if(!material || !theMap || ddMapSetup) return;
+    if(!material || ddMapSetup) return;
+    if(!theMap) return;
 
-    R_SurfaceListIterate(GameMap_DecoratedSurfaces(theMap), markSurfaceForDecorationUpdate, material);
+    foreach(Surface *surface, theMap->decoratedSurfaces())
+    {
+        if(material == surface->material)
+        {
+            Surface_Update(surface);
+        }
+    }
 }
 
 /**
@@ -454,13 +415,13 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
     R_RemoveTrackedPlane(GameMap_TrackedPlanes(theMap), plane);
 
     // If this plane's surface is in the moving list, remove it.
-    R_SurfaceListRemove(GameMap_ScrollingSurfaces(theMap), &plane->surface);
+    theMap->scrollingSurfaces().remove(&plane->surface);
 
     // If this plane's surface is in the deocrated list, remove it.
-    R_SurfaceListRemove(GameMap_DecoratedSurfaces(theMap), &plane->surface);
+    theMap->decoratedSurfaces().remove(&plane->surface);
 
     // If this plane's surface is in the glowing list, remove it.
-    R_SurfaceListRemove(GameMap_GlowingSurfaces(theMap), &plane->surface);
+    theMap->glowingSurfaces().remove(&plane->surface);
 
     // Destroy the biassurfaces for this plane.
     for(BspLeaf **bspLeafIter = sec->bspLeafs; *bspLeafIter; bspLeafIter++)
@@ -1072,35 +1033,33 @@ void R_MapInitSurfaces(boolean forceUpdate)
     }
 }
 
-static void addToSurfaceLists(Surface *suf, Material *material)
+static void addToSurfaceSets(Surface *suf, Material *material)
 {
     if(!suf || !material) return;
 
     if(material->hasGlow())
     {
-        R_SurfaceListAdd(GameMap_GlowingSurfaces(theMap),   suf);
+        theMap->glowingSurfaces().insert(suf);
     }
 
     if(material->isDecorated())
     {
-        R_SurfaceListAdd(GameMap_DecoratedSurfaces(theMap), suf);
+        theMap->decoratedSurfaces().insert(suf);
     }
 }
 
 void R_MapInitSurfaceLists()
 {
-    if(novideo) return;
-
-    R_SurfaceListClear(GameMap_DecoratedSurfaces(theMap));
-    R_SurfaceListClear(GameMap_GlowingSurfaces(theMap));
+    theMap->decoratedSurfaces().clear();
+    theMap->glowingSurfaces().clear();
 
     for(uint i = 0; i < NUM_SIDEDEFS; ++i)
     {
         SideDef *side = SIDE_PTR(i);
 
-        addToSurfaceLists(&side->SW_middlesurface, side->SW_middlematerial);
-        addToSurfaceLists(&side->SW_topsurface,    side->SW_topmaterial);
-        addToSurfaceLists(&side->SW_bottomsurface, side->SW_bottommaterial);
+        addToSurfaceSets(&side->SW_middlesurface, side->SW_middlematerial);
+        addToSurfaceSets(&side->SW_topsurface,    side->SW_topmaterial);
+        addToSurfaceSets(&side->SW_bottomsurface, side->SW_bottommaterial);
     }
 
     for(uint i = 0; i < NUM_SECTORS; ++i)
@@ -1110,7 +1069,7 @@ void R_MapInitSurfaceLists()
 
         for(uint j = 0; j < sec->planeCount; ++j)
         {
-            addToSurfaceLists(&sec->SP_planesurface(j), sec->SP_planematerial(j));
+            addToSurfaceSets(&sec->SP_planesurface(j), sec->SP_planematerial(j));
         }
     }
 }

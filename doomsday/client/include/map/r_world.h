@@ -167,26 +167,7 @@ boolean R_UpdateSidedef(SideDef *side, boolean forceUpdate);
 boolean R_UpdatePlane(Plane *pln, boolean forceUpdate);
 boolean R_UpdateSurface(Surface *suf, boolean forceUpdate);
 
-/**
- * Adds the surface to the given surface list.
- *
- * @param sl  The surface list to add the surface to.
- * @param suf  The surface to add to the list.
- */
-void R_SurfaceListAdd(SurfaceSet* sl, Surface *suf);
-boolean R_SurfaceListRemove(SurfaceSet* sl, Surface *suf);
-void R_SurfaceListClear(SurfaceSet* sl);
-
-/**
- * Iterate the list of surfaces making a callback for each.
- *
- * @param callback  The callback to make. Iteration will continue until
- *      a callback returns a zero value.
- * @param context  Is passed to the callback function.
- */
-boolean R_SurfaceListIterate(SurfaceSet* sl, boolean (*callback) (Surface *suf, void*), void* context);
-
-void            R_MarkDependantSurfacesForDecorationUpdate(Plane* pln);
+void R_MarkDependantSurfacesForDecorationUpdate(Plane* pln);
 
 /**
  * To be called in response to a Material property changing which may
