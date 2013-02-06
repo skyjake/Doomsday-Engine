@@ -145,41 +145,40 @@ int P_GetDDPlayerIdx(ddplayer_t* ddpl)
  */
 boolean P_IsInVoid(player_t* player)
 {
-    ddplayer_t* ddpl;
-
-    if(!player)
-        return false;
-
-    ddpl = &player->shared;
+    if(!player) return false;
+    ddplayer_t* ddpl = &player->shared;
 
     // Cameras are allowed to move completely freely (so check z height
     // above/below ceiling/floor).
     if(ddpl->flags & DDPF_CAMERA)
     {
-        if(ddpl->inVoid)
-            return true;
+        if(ddpl->inVoid) return true;
 
         if(ddpl->mo && ddpl->mo->bspLeaf)
         {
-            Sector* sec = ddpl->mo->bspLeaf->sector;
+            Sector *sec = ddpl->mo->bspLeaf->sector;
 
-            if(Surface_IsSkyMasked(&sec->SP_ceilsurface))
+            if(sec->SP_ceilsurface.isSkyMasked())
             {
-                const coord_t skyCeil = GameMap_SkyFixCeiling(theMap);
+                coord_t const skyCeil = GameMap_SkyFixCeiling(theMap);
                 if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
                     return true;
             }
             else if(ddpl->mo->origin[VZ] > sec->SP_ceilvisheight - 4)
-                return true;
-
-            if(Surface_IsSkyMasked(&sec->SP_floorsurface))
             {
-                const coord_t skyFloor = GameMap_SkyFixFloor(theMap);
+                return true;
+            }
+
+            if(sec->SP_floorsurface.isSkyMasked())
+            {
+                coord_t const skyFloor = GameMap_SkyFixFloor(theMap);
                 if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
                     return true;
             }
             else if(ddpl->mo->origin[VZ] < sec->SP_floorvisheight + 4)
+            {
                 return true;
+            }
         }
     }
 

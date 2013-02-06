@@ -21,29 +21,26 @@
 #ifndef LIBDENG_MAP_SURFACE
 #define LIBDENG_MAP_SURFACE
 
-#ifndef __cplusplus
-#  error "map/surface.h requires C++"
-#endif
-
-#include <QSet>
 #include "resource/r_data.h"
-#include "Material"
 #include "map/p_dmu.h"
 #include "map/bspleaf.h"
-
-#ifdef __cplusplus
-#include "MaterialSnapshot"
+#include "Material"
+#ifdef __CLIENT__
+#  include "MaterialSnapshot"
 #endif
+#include <QSet>
 
 // Internal surface flags:
 #define SUIF_FIX_MISSING_MATERIAL   0x0001 ///< Current material is a fix replacement
                                            /// (not sent to clients, returned via DMU etc).
 #define SUIF_NO_RADIO               0x0002 ///< No fakeradio for this surface.
 
-#define SUIF_UPDATE_FLAG_MASK 0xff00
-#define SUIF_UPDATE_DECORATIONS 0x8000
+#define SUIF_UPDATE_FLAG_MASK       0xff00
+#define SUIF_UPDATE_DECORATIONS     0x8000
 
-
+/**
+ * @ingroup map
+ */
 class Surface : public de::MapElement
 {
 public:
@@ -79,160 +76,146 @@ public:
 public:
     Surface();
     ~Surface();
-};
-struct surfacedecorsource_s;
 
-typedef QSet<Surface *> SurfaceSet;
+    /**
+     * Mark the surface as requiring a full update. To be called during an
+     * engine reset.
+     */
+    void update();
 
-/**
- * Mark the surface as requiring a full update. To be called
- * during engine reset.
- */
-void Surface_Update(Surface *surface);
+    /**
+     * Update the Surface's map space base origin according to relevant points in
+     * the owning object.
+     *
+     * If this surface is owned by a SideDef then the origin is updated using the
+     * points defined by the associated LineDef's vertices and the plane heights of
+     * the Sector on that SideDef's side.
+     *
+     * If this surface is owned by a Plane then the origin is updated using the
+     * points defined the center of the Plane's Sector (on the XY plane) and the Z
+     * height of the plane.
+     *
+     * If no owner is presently associated this is a no-op.
+     */
+    void updateBaseOrigin();
 
-/**
- * Update the Surface's map space base origin according to relevant points in
- * the owning object.
- *
- * If this surface is owned by a SideDef then the origin is updated using the
- * points defined by the associated LineDef's vertices and the plane heights of
- * the Sector on that SideDef's side.
- *
- * If this surface is owned by a Plane then the origin is updated using the
- * points defined the center of the Plane's Sector (on the XY plane) and the Z
- * height of the plane.
- *
- * If no owner is presently associated this is a no-op.
- *
- * @param surface  Surface instance.
- */
-void Surface_UpdateBaseOrigin(Surface *surface);
+    /// @return @c true= is drawable (i.e., a drawable Material is bound).
+    bool isDrawable() const;
 
-/// @return @c true= is drawable (i.e., a drawable Material is bound).
-boolean Surface_IsDrawable(Surface *surface);
+    /// @return @c true= is sky-masked (i.e., a sky-masked Material is bound).
+    bool isSkyMasked() const;
 
-/// @return @c true= is sky-masked (i.e., a sky-masked Material is bound).
-boolean Surface_IsSkyMasked(Surface const *suf);
+    /// @return @c true= is owned by some element of the Map geometry.
+    bool isAttachedToMap() const;
 
-/// @return @c true= is owned by some element of the Map geometry.
-boolean Surface_AttachedToMap(Surface *surface);
+    /**
+     * Change Material bound to this surface.
+     *
+     * @param mat  New Material.
+     */
+    bool setMaterial(Material *material);
 
-/**
- * Change Material bound to this surface.
- *
- * @param surface  Surface instance.
- * @param mat  New Material.
- */
-boolean Surface_SetMaterial(Surface *surface, Material *material);
+    /**
+     * Change Material origin.
+     *
+     * @param x  New X origin in map space.
+     * @param y  New Y origin in map space.
+     */
+    bool setMaterialOrigin(float x, float y);
 
-/**
- * Change Material origin.
- *
- * @param surface  Surface instance.
- * @param x  New X origin in map space.
- * @param y  New Y origin in map space.
- */
-boolean Surface_SetMaterialOrigin(Surface *surface, float x, float y);
+    /**
+     * Change Material origin X coordinate.
+     *
+     * @param x  New X origin in map space.
+     */
+    bool setMaterialOriginX(float x);
 
-/**
- * Change Material origin X coordinate.
- *
- * @param surface  Surface instance.
- * @param x  New X origin in map space.
- */
-boolean Surface_SetMaterialOriginX(Surface *surface, float x);
+    /**
+     * Change Material origin Y coordinate.
+     *
+     * @param y  New Y origin in map space.
+     */
+    bool setMaterialOriginY(float y);
 
-/**
- * Change Material origin Y coordinate.
- *
- * @param surface  Surface instance.
- * @param y  New Y origin in map space.
- */
-boolean Surface_SetMaterialOriginY(Surface *surface, float y);
+    /**
+     * Change surface color tint and alpha.
+     *
+     * @param red      Red color component [0..1].
+     * @param green    Green color component [0..1].
+     * @param blue     Blue color component [0..1].
+     * @param alpha    Alpha component [0..1].
+     */
+    bool setColorAndAlpha(float red, float green, float blue, float alpha);
 
-/**
- * Change surface color tint and alpha.
- *
- * @param surface  Surface instance.
- * @param red      Red color component [0..1].
- * @param green    Green color component [0..1].
- * @param blue     Blue color component [0..1].
- * @param alpha    Alpha component [0..1].
- */
-boolean Surface_SetColorAndAlpha(Surface *surface, float red, float green, float blue, float alpha);
+    /**
+     * Change surfacecolor tint.
+     *
+     * @param red      Red color component [0..1].
+     */
+    bool setColorRed(float red);
 
-/**
- * Change surfacecolor tint.
- *
- * @param surface  Surface instance.
- * @param red      Red color component [0..1].
- */
-boolean Surface_SetColorRed(Surface *surface, float red);
+    /**
+     * Change surfacecolor tint.
+     *
+     * @param green    Green color component [0..1].
+     */
+    bool setColorGreen(float green);
 
-/**
- * Change surfacecolor tint.
- *
- * @param surface  Surface instance.
- * @param green    Green color component [0..1].
- */
-boolean Surface_SetColorGreen(Surface *surface, float green);
+    /**
+     * Change surfacecolor tint.
+     *
+     * @param blue     Blue color component [0..1].
+     */
+    bool setColorBlue(float blue);
 
-/**
- * Change surfacecolor tint.
- *
- * @param surface  Surface instance.
- * @param blue     Blue color component [0..1].
- */
-boolean Surface_SetColorBlue(Surface *surface, float blue);
+    /**
+     * Change surface alpha.
+     *
+     * @param alpha    New alpha value [0..1].
+     */
+    bool setAlpha(float alpha);
 
-/**
- * Change surface alpha.
- *
- * @param surface  Surface instance.
- * @param alpha    New alpha value [0..1].
- */
-boolean Surface_SetAlpha(Surface *surface, float alpha);
+    /**
+     * Change blendmode.
+     *
+     * @param newBlendMode  New blendmode.
+     */
+    bool setBlendMode(blendmode_t newBlendMode);
 
-/**
- * Change blendmode.
- *
- * @param surface  Surface instance.
- * @param blendMode  New blendmode.
- */
-boolean Surface_SetBlendMode(Surface *surface, blendmode_t blendMode);
+    /**
+     * Get a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int property(setargs_t &args) const;
 
-/**
- * Get a property value, selected by DMU_* name.
- *
- * @param surface  Surface instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Surface_GetProperty(Surface const *surface, setargs_t *args);
-
-/**
- * Update a property value, selected by DMU_* name.
- *
- * @param surface  Surface instance.
- * @param args  Property arguments.
- * @return  Always @c 0 (can be used as an iterator).
- */
-int Surface_SetProperty(Surface *surface, setargs_t const *args);
+    /**
+     * Update a property value, selected by DMU_* name.
+     *
+     * @param args  Property arguments.
+     * @return  Always @c 0 (can be used as an iterator).
+     */
+    int setProperty(setargs_t const &args);
 
 #ifdef __CLIENT__
-/**
- * Create a new projected (light) decoration source for the surface.
- *
- * @param surface  Surface instance.
- * @return  Newly created decoration source.
- */
-Surface::DecorSource *Surface_NewDecoration(Surface *surface);
+    /**
+     * Create a new projected (light) decoration source for the surface.
+     *
+     * @return  Newly created decoration source.
+     */
+    DecorSource *newDecoration();
 
-/**
- * Clear all the projected (light) decoration sources for the surface.
- * @param surface  Surface instance.
- */
-void Surface_ClearDecorations(Surface *surface);
+    /**
+     * Clear all the projected (light) decoration sources for the surface.
+     */
+    void clearDecorations();
 #endif __CLIENT__
+};
+
+struct surfacedecorsource_s;
+
+/// Set of surfaces.
+typedef QSet<Surface *> SurfaceSet;
 
 #endif /// LIBDENG_MAP_SURFACE

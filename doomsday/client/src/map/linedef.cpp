@@ -346,23 +346,20 @@ int LineDef_SetProperty(LineDef* lin, const setargs_t* args)
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &lin->validCount, args, 0);
         break;
     case DMU_FLAGS: {
-        SideDef* s;
-
         DMU_SetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
 
-        s = lin->L_frontsidedef;
-        Surface_Update(&s->SW_topsurface);
-        Surface_Update(&s->SW_bottomsurface);
-        Surface_Update(&s->SW_middlesurface);
+        SideDef *s = lin->L_frontsidedef;
+        s->SW_topsurface.update();
+        s->SW_bottomsurface.update();
+        s->SW_middlesurface.update();
         if(lin->L_backsidedef)
         {
             s = lin->L_backsidedef;
-            Surface_Update(&s->SW_topsurface);
-            Surface_Update(&s->SW_bottomsurface);
-            Surface_Update(&s->SW_middlesurface);
+            s->SW_topsurface.update();
+            s->SW_bottomsurface.update();
+            s->SW_middlesurface.update();
         }
-        break;
-      }
+        break; }
     default:
         Con_Error("LineDef_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     }

@@ -23,6 +23,7 @@
 #endif
 #include "map/r_world.h" // R_UpdateMapSurfacesOnMaterialChange
 #include "render/r_main.h" // frameCount, frameTimePos
+#include "MaterialSnapshot"
 #include <de/Error>
 #include <de/Log>
 #include <de/mathutil.h>

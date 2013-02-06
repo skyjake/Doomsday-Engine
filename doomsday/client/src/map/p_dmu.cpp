@@ -1015,7 +1015,7 @@ static int setProperty(void *ptr, void *context)
     switch(args->type)
     {
     case DMU_SURFACE:
-        Surface_SetProperty(elem->castTo<Surface>(), args);
+        elem->castTo<Surface>()->setProperty(*args);
         break;
 
     case DMU_PLANE:
@@ -1519,7 +1519,7 @@ static int getProperty(void *ptr, void *context)
         break;
 
     case DMU_SURFACE:
-        Surface_GetProperty(elem->castTo<Surface>(), args);
+        elem->castTo<Surface>()->property(*args);
         break;
 
     case DMU_PLANE:

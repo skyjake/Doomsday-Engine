@@ -1,5 +1,4 @@
 /** @file sidedef.cpp SideDef implementation. 
- * @ingroup map
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -19,6 +18,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <cstring> // memset, memcpy
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
@@ -27,29 +28,29 @@ SideDef::SideDef() : de::MapElement(DMU_SIDEDEF)
 {
     line = 0;
     flags = 0;
-    memset(&buildData, 0, sizeof(buildData));
+    std::memset(&buildData, 0, sizeof(buildData));
     fakeRadioUpdateCount = 0;
-    memset(topCorners, 0, sizeof(topCorners));
-    memset(bottomCorners, 0, sizeof(bottomCorners));
-    memset(sideCorners, 0, sizeof(sideCorners));
-    memset(spans, 0, sizeof(spans));
+    std::memset(topCorners, 0, sizeof(topCorners));
+    std::memset(bottomCorners, 0, sizeof(bottomCorners));
+    std::memset(sideCorners, 0, sizeof(sideCorners));
+    std::memset(spans, 0, sizeof(spans));
 }
 
-void SideDef_UpdateBaseOrigins(SideDef* side)
+void SideDef_UpdateBaseOrigins(SideDef *side)
 {
-    assert(side);
+    DENG2_ASSERT(side);
     if(!side->line) return;
-    Surface_UpdateBaseOrigin(&side->SW_middlesurface);
-    Surface_UpdateBaseOrigin(&side->SW_bottomsurface);
-    Surface_UpdateBaseOrigin(&side->SW_topsurface);
+    side->SW_middlesurface.updateBaseOrigin();
+    side->SW_bottomsurface.updateBaseOrigin();
+    side->SW_topsurface.updateBaseOrigin();
 }
 
-void SideDef_UpdateSurfaceTangents(SideDef* side)
+void SideDef_UpdateSurfaceTangents(SideDef *side)
 {
     Surface* surface = &side->SW_topsurface;
     LineDef* line = side->line;
     byte sid;
-    assert(side);
+    DENG2_ASSERT(side);
 
     if(!line) return;
 
@@ -60,18 +61,18 @@ void SideDef_UpdateSurfaceTangents(SideDef* side)
     V3f_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
     // All surfaces of a sidedef have the same vectors.
-    memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
-    memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
-    memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+    std::memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
+    std::memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
+    std::memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
 
-    memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
-    memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
-    memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
+    std::memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
+    std::memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
+    std::memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
 }
 
 int SideDef_SetProperty(SideDef* side, const setargs_t* args)
 {
-    assert(side);
+    DENG2_ASSERT(side);
     switch(args->prop)
     {
     case DMU_FLAGS:
@@ -90,7 +91,7 @@ int SideDef_SetProperty(SideDef* side, const setargs_t* args)
 
 int SideDef_GetProperty(const SideDef* side, setargs_t* args)
 {
-    assert(side);
+    DENG2_ASSERT(side);
     switch(args->prop)
     {
     case DMU_SECTOR: {

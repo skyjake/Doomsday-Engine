@@ -368,30 +368,29 @@ static void writeSide(GameMap* map, uint idx)
     writeShort(s->flags);
 }
 
-static void readSide(GameMap* map, uint idx)
+static void readSide(GameMap *map, uint idx)
 {
-    uint i;
     float offset[2], rgba[4];
-    SideDef* s = &map->sideDefs[idx];
+    SideDef *s = &map->sideDefs[idx];
 
-    for(i = 0; i < 3; ++i)
+    for(uint i = 0; i < 3; ++i)
     {
-        Surface* suf = &s->sections[i];
+        Surface *suf = &s->sections[i];
 
         suf->flags = (int) readLong();
-        //Surface_SetMaterial(suf, lookupMaterialFromDict(materialDict, readLong()));
-        Surface_SetBlendMode(suf, (blendmode_t) readLong());
+        //suf->setMaterial(lookupMaterialFromDict(materialDict, readLong()));
+        suf->setBlendMode(blendmode_t(readLong()));
         suf->normal[VX] = readFloat();
         suf->normal[VY] = readFloat();
         suf->normal[VZ] = readFloat();
         offset[VX] = readFloat();
         offset[VY] = readFloat();
-        Surface_SetMaterialOrigin(suf, offset[VX], offset[VY]);
+        suf->setMaterialOrigin(offset[VX], offset[VY]);
         rgba[CR] = readFloat();
         rgba[CG] = readFloat();
         rgba[CB] = readFloat();
         rgba[CA] = readFloat();
-        Surface_SetColorAndAlpha(suf, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+        suf->setColorAndAlpha(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
         suf->decorations = NULL;
         suf->numDecorations = 0;
     }
@@ -402,8 +401,6 @@ static void readSide(GameMap* map, uint idx)
 
 static void archiveSides(GameMap *map, boolean write)
 {
-    int                i;
-
     if(write)
         beginSegment(DAMSEG_SIDES);
     else
@@ -412,14 +409,18 @@ static void archiveSides(GameMap *map, boolean write)
     if(write)
     {
         writeLong(map->sideDefs.size());
-        for(i = 0; i < map->sideDefs.size(); ++i)
+        for(int i = 0; i < map->sideDefs.size(); ++i)
+        {
             writeSide(map, i);
+        }
     }
     else
     {
         map->sideDefs.clearAndResize(readLong());
-        for(i = 0; i < map->sideDefs.size(); ++i)
+        for(int i = 0; i < map->sideDefs.size(); ++i)
+        {
             readSide(map, i);
+        }
     }
 
     if(write)
@@ -492,11 +493,11 @@ static void writeSector(GameMap* map, uint idx)
         writeLong(GameMap_BspLeafIndex(map, s->reverbBspLeafs[i]) + 1);
 }
 
-static void readSector(GameMap* map, uint idx)
+static void readSector(GameMap *map, uint idx)
 {
-    uint                i, numPlanes;
-    float               offset[2], rgba[4];
-    Sector             *s = &map->sectors[idx];
+    uint i, numPlanes;
+    float offset[2], rgba[4];
+    Sector *s = &map->sectors[idx];
 
     s->lightLevel = readFloat();
     s->rgb[CR] = readFloat();
@@ -505,7 +506,7 @@ static void readSector(GameMap* map, uint idx)
     numPlanes = (uint) readLong();
     for(i = 0; i < numPlanes; ++i)
     {
-        Plane              *p = R_NewPlaneForSector(s);
+        Plane *p = R_NewPlaneForSector(s);
 
         p->height = readFloat();
         p->target = readFloat();
@@ -514,19 +515,19 @@ static void readSector(GameMap* map, uint idx)
         p->visHeightDelta = readFloat();
 
         p->surface.flags = (int) readLong();
-        //Surface_SetMaterial(&p->surface, lookupMaterialFromDict(materialDict, readLong()));
-        Surface_SetBlendMode(&p->surface, (blendmode_t) readLong());
+        //p->surface.setMaterial(lookupMaterialFromDict(materialDict, readLong()));
+        p->surface.setBlendMode(blendmode_t(readLong()));
         p->surface.normal[VX] = readFloat();
         p->surface.normal[VY] = readFloat();
         p->surface.normal[VZ] = readFloat();
         offset[VX] = readFloat();
         offset[VY] = readFloat();
-        Surface_SetMaterialOrigin(&p->surface, offset[VX], offset[VY]);
+        p->surface.setMaterialOrigin(offset[VX], offset[VY]);
         rgba[CR] = readFloat();
         rgba[CG] = readFloat();
         rgba[CB] = readFloat();
         rgba[CA] = readFloat();
-        Surface_SetColorAndAlpha(&p->surface, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+        p->surface.setColorAndAlpha(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
         p->surface.decorations = NULL;
         p->surface.numDecorations = 0;
@@ -540,8 +541,8 @@ static void readSector(GameMap* map, uint idx)
     Sector_UpdateBaseOrigin(s);
     for(i = 0; i < numPlanes; ++i)
     {
-        Plane* pln = s->planes[i];
-        Surface_UpdateBaseOrigin(&pln->surface);
+        Plane *pln = s->planes[i];
+        pln->surface.updateBaseOrigin();
     }
 
     for(i = 0; i < NUM_REVERB_DATA; ++i)

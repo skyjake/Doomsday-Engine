@@ -1371,7 +1371,7 @@ int RIT_AddSprite(void* ptr, void* paramaters)
         // that no sprites get clipped by the sky.
         // Only check
         Material *material = R_GetMaterialForSprite(mo->sprite, mo->frame);
-        if(material && Surface_IsSkyMasked(&sec->SP_ceilsurface))
+        if(material && sec->SP_ceilsurface.isSkyMasked())
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
                mo->origin[VZ] <= sec->SP_ceilheight &&

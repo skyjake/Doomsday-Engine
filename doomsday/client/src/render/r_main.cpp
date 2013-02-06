@@ -491,18 +491,19 @@ static void R_UpdateMap()
         Sector *sec = GameMap_Sector(theMap, i);
         for(uint j = 0; j < sec->planeCount; ++j)
         {
-            Surface_Update(&sec->SP_planesurface(j));
+            sec->SP_planesurface(j).update();
         }
     }
 
     for(uint i = 0; i < NUM_SIDEDEFS; ++i)
     {
         SideDef *side = GameMap_SideDef(theMap, i);
-        Surface_Update(&side->SW_topsurface);
-        Surface_Update(&side->SW_middlesurface);
-        Surface_Update(&side->SW_bottomsurface);
+        side->SW_topsurface.update();
+        side->SW_middlesurface.update();
+        side->SW_bottomsurface.update();
     }
 
+    /// @todo Is this even necessary?
     for(uint i = 0; i < NUM_POLYOBJS; ++i)
     {
         Polyobj *po = GameMap_PolyobjByID(theMap, i);
@@ -510,7 +511,7 @@ static void R_UpdateMap()
         {
             LineDef *line = *lineIter;
             SideDef *side = line->L_frontsidedef;
-            Surface_Update(&side->SW_middlesurface);
+            side->SW_middlesurface.update();
         }
     }
 #endif

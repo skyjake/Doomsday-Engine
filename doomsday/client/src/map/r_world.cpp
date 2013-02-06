@@ -109,7 +109,7 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
             suf.visOffsetDelta[1] = 0;
             suf.oldOffset[1][0] = suf.oldOffset[1][1] = suf.offset[1];
 
-            Surface_Update(&suf);
+            suf.update();
             it++;
         }
         // While the game is paused there is no need to calculate any
@@ -131,7 +131,7 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
             suf.visOffset[0] = suf.offset[0] + suf.visOffsetDelta[0];
             suf.visOffset[1] = suf.offset[1] + suf.visOffsetDelta[1];
 
-            Surface_Update(&suf);
+            suf.update();
 
             // Has this material reached its destination?
             if(suf.visOffset[0] == suf.offset[0] && suf.visOffset[1] == suf.offset[1])
@@ -268,15 +268,15 @@ void R_MarkDependantSurfacesForDecorationUpdate(Plane *pln)
     {
         LineDef *li = *linep;
 
-        Surface_Update(&li->L_frontsidedef->SW_surface(SS_MIDDLE));
-        Surface_Update(&li->L_frontsidedef->SW_surface(SS_BOTTOM));
-        Surface_Update(&li->L_frontsidedef->SW_surface(SS_TOP));
+        li->L_frontsidedef->SW_surface(SS_MIDDLE).update();
+        li->L_frontsidedef->SW_surface(SS_BOTTOM).update();
+        li->L_frontsidedef->SW_surface(SS_TOP).update();
 
         if(li->L_backsidedef)
         {
-            Surface_Update(&li->L_backsidedef->SW_surface(SS_MIDDLE));
-            Surface_Update(&li->L_backsidedef->SW_surface(SS_BOTTOM));
-            Surface_Update(&li->L_backsidedef->SW_surface(SS_TOP));
+            li->L_backsidedef->SW_surface(SS_MIDDLE).update();
+            li->L_backsidedef->SW_surface(SS_BOTTOM).update();
+            li->L_backsidedef->SW_surface(SS_TOP).update();
         }
 
         linep++;
@@ -292,7 +292,7 @@ void R_UpdateMapSurfacesOnMaterialChange(Material *material)
     {
         if(material == surface->material)
         {
-            Surface_Update(surface);
+            surface->update();
         }
     }
 }
@@ -327,7 +327,7 @@ Plane *R_NewPlaneForSector(Sector *sec)
     // Initialize the surface.
     Surface *suf = &plane->surface;
     /// @todo The initial material should be the "unknown" material.
-    Surface_UpdateBaseOrigin(suf);
+    suf->updateBaseOrigin();
 
 #ifdef __CLIENT__
     /**
@@ -449,8 +449,8 @@ void GameMap_UpdateSkyFixForSector(GameMap *map, Sector *sec)
 
     if(!sec || 0 == sec->lineDefCount) return;
 
-    boolean skyFloor = Surface_IsSkyMasked(&sec->SP_floorsurface);
-    boolean skyCeil  = Surface_IsSkyMasked(&sec->SP_ceilsurface);
+    bool skyFloor = sec->SP_floorsurface.isSkyMasked();
+    bool skyCeil  = sec->SP_ceilsurface.isSkyMasked();
 
     if(!skyFloor && !skyCeil) return;
 
@@ -640,7 +640,7 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
             break;
 
         case SS_BOTTOM: {
-            bool const raiseToBackFloor = (Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) &&
+            bool const raiseToBackFloor = (fceil->surface.isSkyMasked() && bceil->surface.isSkyMasked() &&
                                            fceil->visHeight < bceil->visHeight &&
                                            bfloor->visHeight > fceil->visHeight);
             coord_t t = bfloor->visHeight;
@@ -686,8 +686,8 @@ boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
 
             if(suf->material && !stretchMiddle)
             {
-                boolean const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface));
-                boolean const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&fceil->surface)  && Surface_IsSkyMasked(&bceil->surface));
+                bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface.isSkyMasked() && bfloor->surface.isSkyMasked());
+                bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface.isSkyMasked()  && bceil->surface.isSkyMasked());
 
                 coord_t const openBottom = *low;
                 coord_t const openTop    = *hi;
@@ -1220,7 +1220,7 @@ boolean R_IsGlowingPlane(Plane const *pln)
     {
         if(!material->isDrawable() || material->hasGlow()) return true;
     }
-    return Surface_IsSkyMasked(&pln->surface);
+    return pln->surface.isSkyMasked();
 }
 
 float R_GlowStrength(Plane const *pln)
@@ -1229,7 +1229,7 @@ float R_GlowStrength(Plane const *pln)
     Material *material = pln->surface.material;
     if(material)
     {
-        if(material->isDrawable() && !Surface_IsSkyMasked(&pln->surface))
+        if(material->isDrawable() && !pln->surface.isSkyMasked())
         {
             MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
@@ -1257,7 +1257,7 @@ boolean R_SectorContainsSkySurfaces(Sector const *sec)
     uint n = 0;
     do
     {
-        if(Surface_IsSkyMasked(&sec->SP_planesurface(n)))
+        if(sec->SP_planesurface(n).isSkyMasked())
             sectorContainsSkySurfaces = true;
         else
             n++;
@@ -1373,7 +1373,7 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
     if(suf->material) return;
 
     // Look for a suitable replacement.
-    Surface_SetMaterial(suf, chooseFixMaterial(s, section));
+    suf->setMaterial(chooseFixMaterial(s, section));
     suf->inFlags |= SUIF_FIX_MISSING_MATERIAL;
 
     // During map load we log missing materials.
@@ -1461,7 +1461,7 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
         }
 
         // Update the base origins for this plane and all relevant sidedef surfaces.
-        Surface_UpdateBaseOrigin(&pln->surface);
+        pln->surface.updateBaseOrigin();
         for(uint i = 0; i < sec->lineDefCount; ++i)
         {
             LineDef *line = sec->lineDefs[i];
@@ -1502,7 +1502,7 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
         }
 
         // We need the decorations updated.
-        Surface_Update(&pln->surface);
+        pln->surface.update();
 
         changed = true;
     }

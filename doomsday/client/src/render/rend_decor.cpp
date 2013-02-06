@@ -309,7 +309,7 @@ static void plotSourcesForSurface(Surface &suf)
 {
     if(suf.inFlags & SUIF_UPDATE_DECORATIONS)
     {
-        Surface_ClearDecorations(&suf);
+        suf.clearDecorations();
 
         switch(suf.owner->type())
         {
@@ -396,7 +396,7 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
                     continue;
             }
 
-            if(Surface::DecorSource *source = Surface_NewDecoration(&suf))
+            if(Surface::DecorSource *source = suf.newDecoration())
             {
                 V3d_Set(source->origin, origin.x, origin.y, origin.z);
                 source->bspLeaf = P_BspLeafAtPoint(source->origin);

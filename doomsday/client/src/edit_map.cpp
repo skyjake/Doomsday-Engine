@@ -633,7 +633,7 @@ static void finishSectors(GameMap* map)
         {
             Plane* pln = sec->planes[k];
 
-            Surface_UpdateBaseOrigin(&pln->surface);
+            pln->surface.updateBaseOrigin();
             pln->target = pln->height;
         }
     }
@@ -1832,7 +1832,7 @@ static void assignSurfaceMaterial(Surface *suf, ddstring_t const *materialUriStr
     }
 
     // Assign the resolved material if found.
-    Surface_SetMaterial(suf, material);
+    suf->setMaterial(material);
 }
 
 uint MPE_SidedefCreate(short flags, const ddstring_t* topMaterial,
@@ -1850,16 +1850,16 @@ uint MPE_SidedefCreate(short flags, const ddstring_t* topMaterial,
     s->flags = flags;
 
     assignSurfaceMaterial(&s->SW_topsurface, topMaterial);
-    Surface_SetMaterialOrigin(&s->SW_topsurface, topOffsetX, topOffsetY);
-    Surface_SetColorAndAlpha(&s->SW_topsurface, topRed, topGreen, topBlue, 1);
+    s->SW_topsurface.setMaterialOrigin(topOffsetX, topOffsetY);
+    s->SW_topsurface.setColorAndAlpha(topRed, topGreen, topBlue, 1);
 
     assignSurfaceMaterial(&s->SW_middlesurface, middleMaterial);
-    Surface_SetMaterialOrigin(&s->SW_middlesurface, middleOffsetX, middleOffsetY);
-    Surface_SetColorAndAlpha(&s->SW_middlesurface, middleRed, middleGreen, middleBlue, middleAlpha);
+    s->SW_middlesurface.setMaterialOrigin(middleOffsetX, middleOffsetY);
+    s->SW_middlesurface.setColorAndAlpha(middleRed, middleGreen, middleBlue, middleAlpha);
 
     assignSurfaceMaterial(&s->SW_bottomsurface, bottomMaterial);
-    Surface_SetMaterialOrigin(&s->SW_bottomsurface, bottomOffsetX, bottomOffsetY);
-    Surface_SetColorAndAlpha(&s->SW_bottomsurface, bottomRed, bottomGreen, bottomBlue, 1);
+    s->SW_bottomsurface.setMaterialOrigin(bottomOffsetX, bottomOffsetY);
+    s->SW_bottomsurface.setColorAndAlpha(bottomRed, bottomGreen, bottomBlue, 1);
 
     return s->buildData.index;
 }
@@ -1959,8 +1959,8 @@ uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri,
     Plane *pln = new Plane(*s, normal, height);
 
     assignSurfaceMaterial(&pln->surface, materialUri);
-    Surface_SetColorAndAlpha(&pln->surface, r, g, b, a);
-    Surface_SetMaterialOrigin(&pln->surface, matOffsetX, matOffsetY);
+    pln->surface.setColorAndAlpha(r, g, b, a);
+    pln->surface.setMaterialOrigin(matOffsetX, matOffsetY);
 
     Plane **newList = (Plane **) M_Malloc(sizeof(Plane *) * (++s->planeCount + 1));
     uint idx;

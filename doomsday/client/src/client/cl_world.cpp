@@ -688,18 +688,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec->rgb[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        Surface_SetColorRed(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        sec->SP_floorsurface.setColorRed(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        Surface_SetColorGreen(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        sec->SP_floorsurface.setColorGreen(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        Surface_SetColorBlue(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        sec->SP_floorsurface.setColorBlue(Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        Surface_SetColorRed(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        sec->SP_ceilsurface.setColorRed(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        Surface_SetColorGreen(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        sec->SP_ceilsurface.setColorGreen(Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        Surface_SetColorBlue(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        sec->SP_ceilsurface.setColorBlue(Reader_ReadByte(msgReader) / 255.f);
 
     // The whole delta has been read. If we're about to skip, let's do so.
     if(skip)
@@ -801,42 +801,42 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        Surface_SetMaterial(&side->SW_topsurface, Cl_FindLocalMaterial(topMat));
+        side->SW_topsurface.setMaterial(Cl_FindLocalMaterial(topMat));
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        Surface_SetMaterial(&side->SW_middlesurface, Cl_FindLocalMaterial(midMat));
+        side->SW_middlesurface.setMaterial(Cl_FindLocalMaterial(midMat));
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        Surface_SetMaterial(&side->SW_bottomsurface, Cl_FindLocalMaterial(botMat));
+        side->SW_bottomsurface.setMaterial(Cl_FindLocalMaterial(botMat));
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        Surface_SetColorRed(&side->SW_topsurface, toprgb[CR]);
+        side->SW_topsurface.setColorRed(toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        Surface_SetColorGreen(&side->SW_topsurface, toprgb[CG]);
+        side->SW_topsurface.setColorGreen(toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        Surface_SetColorBlue(&side->SW_topsurface, toprgb[CB]);
+        side->SW_topsurface.setColorBlue(toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        Surface_SetColorRed(&side->SW_middlesurface, midrgba[CR]);
+        side->SW_middlesurface.setColorRed(midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        Surface_SetColorGreen(&side->SW_middlesurface, midrgba[CG]);
+        side->SW_middlesurface.setColorGreen(midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        Surface_SetColorBlue(&side->SW_middlesurface, midrgba[CB]);
+        side->SW_middlesurface.setColorBlue(midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        Surface_SetAlpha(&side->SW_middlesurface, midrgba[CA]);
+        side->SW_middlesurface.setAlpha(midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        Surface_SetColorRed(&side->SW_bottomsurface, bottomrgb[CR]);
+        side->SW_bottomsurface.setColorRed(bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        Surface_SetColorGreen(&side->SW_bottomsurface, bottomrgb[CG]);
+        side->SW_bottomsurface.setColorGreen(bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        Surface_SetColorBlue(&side->SW_bottomsurface, bottomrgb[CB]);
+        side->SW_bottomsurface.setColorBlue(bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
-        Surface_SetBlendMode(&side->SW_middlesurface, (blendmode_t) blendmode);
+        side->SW_middlesurface.setBlendMode(blendmode_t(blendmode));
 
     if(df & SIDF_FLAGS)
     {
