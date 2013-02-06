@@ -248,12 +248,12 @@ bool LogWidget::handleEvent(Event const *event)
     switch(ev->key())
     {
     case Qt::Key_PageUp:
-        d->visibleOffset += 3;
+        d->visibleOffset += 5;
         redraw();
         return true;
 
     case Qt::Key_PageDown:
-        d->visibleOffset = de::max(0, d->visibleOffset - 3);
+        d->visibleOffset = de::max(0, d->visibleOffset - 5);
         redraw();
         return true;
 
