@@ -336,11 +336,13 @@ struct CursesApp::Instance
                     break;
 
                 default:
+#ifdef _DEBUG
                     if(key & KEY_CODE_YES)
                         qDebug() << "CURSES" << QString("0%1").arg(key, 0, 8).toAscii().constData();
                     else
                         // This key code is ignored.
                         qDebug() << QString("%1").arg(key, 0, 16);
+#endif
                     break;
                 }
 

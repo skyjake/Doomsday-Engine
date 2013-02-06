@@ -1,4 +1,4 @@
-/** @file main.cpp Application startup and shutdown.
+/** @file qtguiapp.h  Application based on Qt GUI widgets.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,15 +16,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "qtguiapp.h"
-#include "mainwindow.h"
+#ifndef QTGUIAPP_H
+#define QTGUIAPP_H
 
-#include <de/libdeng2.h>
+#include <QApplication>
 
-int main(int argc, char *argv[])
+class QtGuiApp : public QApplication
 {
-    QtGuiApp a(argc, argv);
-    MainWindow w;
-    w.show();
-    return a.exec();
-}
+    Q_OBJECT
+
+public:
+    QtGuiApp(int &argc, char **argv);
+    ~QtGuiApp();
+
+    bool notify(QObject *receiver, QEvent *event);
+
+private:
+    struct Instance;
+    Instance *d;
+};
+
+#endif // QTGUIAPP_H

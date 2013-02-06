@@ -26,8 +26,20 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 # Sources -------------------------------------------------------------------
 
 HEADERS += \
-    src/mainwindow.h
+    src/mainwindow.h \
+    src/qtguiapp.h
 
 SOURCES += \
     src/main.cpp \
-    src/mainwindow.cpp
+    src/mainwindow.cpp \
+    src/qtguiapp.cpp
+
+# Deployment ----------------------------------------------------------------
+
+macx {
+    # Clean up previous deployment.
+    doPostLink("rm -rf Doomsday-Shell.app/Contents/PlugIns/")
+    doPostLink("rm -f Doomsday-Shell.app/Contents/Resources/qt.conf")
+
+    doPostLink("macdeployqt Doomsday-Shell.app")
+}
