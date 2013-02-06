@@ -16,16 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "logwidget.h"
+#include "de/shell/LogWidget"
+#include "de/shell/KeyEvent"
+#include "de/shell/TextRootWidget"
 #include <de/MonospaceLogSinkFormatter>
 #include <de/Lockable>
 #include <de/LogBuffer>
-#include <de/shell/KeyEvent>
-#include <de/shell/TextRootWidget>
 #include <QList>
 
-using namespace de;
-using namespace de::shell;
+namespace de {
+namespace shell {
 
 /**
  * Log sink for incoming entries (local and remote). Rather than formatting the
@@ -269,3 +269,6 @@ void LogWidget::scrollToBottom()
     d->visibleOffset = 0;
     redraw();
 }
+
+} // namespace shell
+} // namespace de

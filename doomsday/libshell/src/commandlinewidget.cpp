@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "commandlinewidget.h"
+#include "de/shell/CommandLineWidget"
+#include "de/shell/TextRootWidget"
+#include "de/shell/KeyEvent"
 #include <de/String>
-#include <de/shell/TextRootWidget>
-#include <de/shell/KeyEvent>
 
-using namespace de;
-using namespace de::shell;
+namespace de {
+namespace shell {
 
 struct CommandLineWidget::Instance
 {
@@ -185,3 +185,6 @@ bool CommandLineWidget::handleEvent(Event const *event)
         return LineEditWidget::handleEvent(event);
     }
 }
+
+} // namespace shell
+} // namespace de

@@ -1,4 +1,4 @@
-/** @file commandlinewidget.h  Widget for command line input.
+/** @file logwidget.h  Widget for output message log.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,30 +16,44 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef COMMANDLINEWIDGET_H
-#define COMMANDLINEWIDGET_H
+#ifndef LOGWIDGET_H
+#define LOGWIDGET_H
 
-#include <de/shell/LineEditWidget>
+#include <de/shell/TextWidget>
+#include <de/LogSink>
 
-/**
- * Text editor with a history.
- */
-class CommandLineWidget : public de::shell::LineEditWidget
+namespace de {
+namespace shell {
+
+class LogWidget : public TextWidget
 {
     Q_OBJECT
 
 public:
-    CommandLineWidget(de::String const &name = "");
-    virtual ~CommandLineWidget();
+    LogWidget(String const &name = "");
+    virtual ~LogWidget();
 
-    bool handleEvent(de::Event const *event);
+    /**
+     * Returns the log sink that can be connected to a log buffer for receiving
+     * log entries into the widget's buffer.
+     */
+    LogSink &logSink();
 
-signals:
-    void commandEntered(de::String command);
+    void draw();
+    bool handleEvent(Event const *event);
+
+public slots:
+    /**
+     * Moves the scroll offset of the widget to the bottom of the history.
+     */
+    void scrollToBottom();
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // COMMANDLINEWIDGET_H
+} // namespace shell
+} // namespace de
+
+#endif // LOGWIDGET_H

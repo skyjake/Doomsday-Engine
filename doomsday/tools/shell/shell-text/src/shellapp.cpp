@@ -17,8 +17,6 @@
  */
 
 #include "shellapp.h"
-#include "logwidget.h"
-#include "commandlinewidget.h"
 #include "statuswidget.h"
 #include "openconnectiondialog.h"
 #include "localserverdialog.h"
@@ -26,6 +24,8 @@
 #include "persistentdata.h"
 #include <de/shell/LabelWidget>
 #include <de/shell/MenuWidget>
+#include <de/shell/CommandLineWidget>
+#include <de/shell/LogWidget>
 #include <de/shell/Action>
 #include <de/shell/Link>
 #include <de/shell/LocalServer>
