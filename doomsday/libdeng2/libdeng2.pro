@@ -27,7 +27,7 @@ DEFINES += LIBDENG2_VERSION=\\\"$${LIBDENG2_MAJOR_VERSION}.$${LIBDENG2_MINOR_VER
 DEFINES += __DENG2__
 
 # Using Qt.
-QT += core network gui
+QT += core network
 
 win32 {
     # Keep the version number out of the file name.
@@ -77,6 +77,7 @@ HEADERS += \
     include/de/LogSink \
     include/de/MonospaceLogSinkFormatter \
     include/de/Rectangle \
+    include/de/TextApp \
     include/de/TextStreamLogSink \
     include/de/UnixInfo \
     include/de/Vector \
@@ -101,6 +102,7 @@ HEADERS += \
     include/de/core/logbuffer.h \
     include/de/core/logsink.h \
     include/de/core/monospacelogsinkformatter.h \
+    include/de/core/textapp.h \
     include/de/core/textstreamlogsink.h \
     include/de/core/unixinfo.h
 
@@ -125,8 +127,9 @@ SOURCES += \
     src/core/logbuffer.cpp \
     src/core/logsink.cpp \
     src/core/monospacelogsinkformatter.cpp \
+    src/core/textapp.cpp \
     src/core/textstreamlogsink.cpp \
-    src/core/unixinfo.cpp 
+    src/core/unixinfo.cpp
 
 OTHER_FILES += \
     modules/Config.de \
@@ -143,7 +146,6 @@ macx {
     doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng2.2.dylib libdeng2.2.dylib")
     fixInstallName("QtCore.framework/Versions/4/QtCore")
     fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
-    fixInstallName("QtGui.framework/Versions/4/QtGui")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")

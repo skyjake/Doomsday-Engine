@@ -1,4 +1,4 @@
-/** @file main.cpp Application startup and shutdown.
+/** @file libgui.h  Common definitions for libgui.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,19 +16,28 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/libdeng2.h>
-#include <de/Counted>
-#include "shellapp.h"
+#ifndef LIBGUI_MAIN_H
+#define LIBGUI_MAIN_H
 
-int main(int argc, char *argv[])
-{
-    int result;
-    {
-        ShellApp a(argc, argv);
-        result = a.exec();
-    }
-#ifdef DENG2_DEBUG
-    DENG2_ASSERT(de::Counted::totalCount == 0);
+/*
+ * The LIBGUI_PUBLIC macro is used for declaring exported symbols. It must be
+ * applied in all exported classes and functions. DEF files are not used for
+ * exporting symbols out of libshell.
+ */
+#if defined(_WIN32) && defined(_MSC_VER)
+#  ifdef __LIBGUI__
+// This is defined when compiling the library.
+#    define LIBGUI_PUBLIC __declspec(dllexport)
+#  else
+#    define LIBGUI_PUBLIC __declspec(dllimport)
+#  endif
+#else
+// No need to use any special declarators.
+#  define LIBGUI_PUBLIC
 #endif
-    return result;
-}
+
+namespace de {
+
+} // namespace de
+
+#endif // LIBGUI_MAIN_H

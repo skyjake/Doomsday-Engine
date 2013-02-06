@@ -6,6 +6,7 @@ CONFIG += ordered
 SUBDIRS =    \
     build    \
     libdeng2 \
+    libgui   \
     libdeng1 \
     libshell \
     client   \

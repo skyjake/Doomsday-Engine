@@ -16,6 +16,8 @@ VERSION = 0.1.0
 
 # Build Configuration -------------------------------------------------------
 
+CONFIG += deng_qtgui
+
 include(../../../dep_deng2.pri)
 include(../../../dep_shell.pri)
 

@@ -20,6 +20,7 @@
 #include "de/LegacyCore"
 #include "de/LegacyNetwork"
 #include "de/LogBuffer"
+#include "de/App"
 
 #include "../core/callbacktimer.h"
 
@@ -42,7 +43,6 @@ struct LegacyCore::Instance
         Loop() : interval(1), paused(false), func(0) {}
     };
     QList<Loop> loopStack;
-    void (*terminateFunc)(char const *);
 
     App *app;
     QTimer *loopTimer;
@@ -55,19 +55,17 @@ struct LegacyCore::Instance
     /// Current log output line being formed.
     std::string currentLogLine;
 
-    Instance() : terminateFunc(0), app(0) {}
+    Instance() : app(0) {}
     ~Instance() {}
 };
 
-LegacyCore::LegacyCore(App *dengApp)
+LegacyCore::LegacyCore()
 {
     _appCore = this;
     d = new Instance;
 
     // Construct a new core application (must have one for the event loop).
-    d->app = dengApp;
-
-    connect(d->app, SIGNAL(uncaughtException(QString)), this, SLOT(handleUncaughtException(QString)));
+    d->app = DENG2_APP;
 
     // This will trigger loop callbacks.
     d->loopTimer = new QTimer(this);
@@ -161,7 +159,7 @@ int LegacyCore::runEventLoop()
 
     // Run the Qt event loop. In the future this will be replaced by the
     // application's main Qt event loop, where deng2 will hook into.
-    int code = d->app->exec();
+    int code = d->app->execLoop();
 
     LOG_MSG("Event loop exited with code %i.") << code;
     return code;
@@ -186,7 +184,7 @@ void LegacyCore::setLoopRate(int freqHz)
 void LegacyCore::stop(int exitCode)
 {
     d->loopTimer->stop();
-    d->app->exit(exitCode);
+    d->app->stopLoop(exitCode);
 }
 
 void LegacyCore::timer(duint32 milliseconds, void (*func)(void))
@@ -220,11 +218,6 @@ void LegacyCore::printLogFragment(char const *text, LogEntry::Level level)
     }
 }
 
-void LegacyCore::setTerminateFunc(void (*func)(char const *))
-{
-    d->terminateFunc = func;
-}
-
 void LegacyCore::callback()
 {
     // Update the application clock.
@@ -234,13 +227,6 @@ void LegacyCore::callback()
     {
         d->loop.func();
     }
-}
-
-void LegacyCore::handleUncaughtException(QString message)
-{
-    LOG_CRITICAL(message);
-
-    if(d->terminateFunc) d->terminateFunc(message.toUtf8().constData());
 }
 
 } // namespace de

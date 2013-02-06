@@ -35,10 +35,11 @@
 #include "de/ZipArchive"
 #include "de/math.h"
 
-#include <QDesktopServices>
 #include <QDir>
 
 namespace de {
+
+static App *singletonApp;
 
 struct App::Instance : DENG2_OBSERVES(Record, Deletion)
 {
@@ -80,8 +81,13 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
     typedef QMap<String, Module *> Modules;
     Modules modules;
 
-    Instance(App &a, QStringList args) : app(a), cmdLine(args), persistentData(0), config(0)
+    void (*terminateFunc)(char const *);
+
+    Instance(App &a, QStringList args)
+        : app(a), cmdLine(args), persistentData(0), config(0), terminateFunc(0)
     {
+        singletonApp = &a;
+
         Clock::setAppClock(&clock);
     }
 
@@ -152,9 +158,8 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
     }
 };
 
-App::App(int &argc, char **argv, GUIMode guiMode)
-    : QApplication(argc, argv, guiMode == GUIEnabled),
-      d(new Instance(*this, arguments()))
+App::App(NativePath const &appFilePath, QStringList args)
+    : d(new Instance(*this, args))
 {
     // Global time source for animations.
     Animation::setClock(&d->clock);
@@ -185,10 +190,13 @@ App::App(int &argc, char **argv, GUIMode guiMode)
         qWarning("%s", er.asText().toAscii().constData());
     }
     // Aliases have not been defined at this point.
-    level = qMax(LogEntry::TRACE, LogEntry::Level(level - d->cmdLine.has("-verbose") - d->cmdLine.has("-v")));
+    level = de::max(LogEntry::TRACE,
+                    LogEntry::Level(level
+                                    - d->cmdLine.has("-verbose")
+                                    - d->cmdLine.has("-v")));
     d->logBuffer.enable(level);
 
-    d->appPath = applicationFilePath();
+    d->appPath = appFilePath;
 
     LOG_INFO("Application path: ") << d->appPath;
     LOG_INFO("Enabled log entry level: ") << LogEntry::levelToText(level);
@@ -222,6 +230,20 @@ App::~App()
     LOG_AS("~App");
 
     delete d;
+
+    singletonApp = 0;
+}
+
+void App::setTerminateFunc(void (*func)(char const *))
+{
+    d->terminateFunc = func;
+}
+
+void App::handleUncaughtException(String message)
+{
+    LOG_CRITICAL(message);
+
+    if(d->terminateFunc) d->terminateFunc(message.toUtf8().constData());
 }
 
 NativePath App::nativePluginBinaryPath()
@@ -255,13 +277,13 @@ NativePath App::nativeHomePath()
     }
 
 #ifdef MACOSX
-    NativePath nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
+    NativePath nativeHome = QDir::homePath();
     nativeHome = nativeHome / "Library/Application Support/Doomsday Engine/runtime";
 #elif WIN32
-    NativePath nativeHome = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    NativePath nativeHome = appDataPath();
     nativeHome = nativeHome / "runtime";
 #else // UNIX
-    NativePath nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
+    NativePath nativeHome = QDir::homePath();
     nativeHome = nativeHome / ".doomsday/runtime";
 #endif
     return (d->cachedHomePath = nativeHome);
@@ -380,26 +402,9 @@ void App::addNativeModule(String const &name, Record &module)
     module.audienceForDeletion += d;
 }
 
-bool App::notify(QObject *receiver, QEvent *event)
-{
-    try
-    {
-        return QApplication::notify(receiver, event);
-    }
-    catch(std::exception const &error)
-    {
-        emit uncaughtException(error.what());
-    }
-    catch(...)
-    {
-        emit uncaughtException("de::App caught exception of unknown type.");
-    }
-    return false;
-}
-
 App &App::app()
 {
-    return *DENG2_APP;
+    return *singletonApp;
 }
 
 CommandLine &App::commandLine()
@@ -531,11 +536,6 @@ Record &App::importModule(String const &name, String const &fromPath)
     }
 
     throw NotFoundError("App::importModule", "Cannot find module '" + name + "'");
-}
-
-void App::notifyDisplayModeChanged()
-{
-    emit displayModeChanged();
 }
 
 } // namespace de

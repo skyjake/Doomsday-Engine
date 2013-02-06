@@ -34,11 +34,11 @@
 
 #define DENG2_LEGACYCORE()      de::LegacyCore::instance()
 #define DENG2_LEGACYNETWORK()   DENG2_LEGACYCORE().network()
-#define DENG2_COMMANDLINE()     static_cast<de::App *>(qApp)->commandLine()
+#define DENG2_COMMANDLINE()     DENG2_APP->commandLine()
 
-LegacyCore *LegacyCore_New(void *dengApp)
+LegacyCore *LegacyCore_New()
 {
-    return reinterpret_cast<LegacyCore *>(new de::LegacyCore(reinterpret_cast<de::App *>(dengApp)));
+    return reinterpret_cast<LegacyCore *>(new de::LegacyCore());
 }
 
 void LegacyCore_Delete(LegacyCore *lc)
@@ -147,14 +147,9 @@ void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, char const
     DENG2_LEGACYCORE().printLogFragment(buffer, logLevel);
 }
 
-void LegacyCore_SetTerminateFunc(void (*func)(char const *))
-{
-    DENG2_LEGACYCORE().setTerminateFunc(func);
-}
-
 void LegacyCore_FatalError(char const *msg)
 {
-    DENG2_LEGACYCORE().handleUncaughtException(msg);
+    DENG2_APP->handleUncaughtException(msg);
 }
 
 void CommandLine_Alias(char const *longname, char const *shortname)
