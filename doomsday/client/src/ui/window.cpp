@@ -83,6 +83,8 @@
 #include <de/c_wrapper.h>
 #include <de/Log>
 
+uint mainWindowIdx;
+
 #ifdef MACOSX
 static const int WAIT_MILLISECS_AFTER_MODE_CHANGE = 100; // ms
 #else

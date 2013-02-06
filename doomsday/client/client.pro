@@ -458,7 +458,6 @@ SOURCES += \
     src/con_main.cpp \
     src/dd_games.cpp \
     src/dd_help.cpp \
-    src/dd_init.cpp \
     src/dd_loop.cpp \
     src/dd_main.cpp \
     src/dd_pinit.cpp \
@@ -499,6 +498,7 @@ SOURCES += \
     src/m_decomp64.cpp \
     src/m_misc.cpp \
     src/m_nodepile.cpp \
+    src/main_client.cpp \
     src/map/blockmap.cpp \
     src/map/blockmapvisual.cpp \
     src/map/bsp/hplane.cpp \

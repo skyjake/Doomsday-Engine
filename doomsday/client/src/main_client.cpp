@@ -1,4 +1,4 @@
-/** @file dd_init.cpp Application entrypoint. 
+/** @file main_client.cpp Client application entrypoint.
  * @ingroup base
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -55,14 +55,9 @@
  * via LegacyCore.
  */
 
-#ifdef __CLIENT__
-#  include <QAction>
-#  include <QMenuBar>
-#  include <de/GuiApp>
-#endif
-#ifdef __SERVER__
-#  include <de/TextApp>
-#endif
+#include <QAction>
+#include <QMenuBar>
+#include <de/GuiApp>
 #include <QNetworkProxyFactory>
 #include <QDebug>
 #include <stdlib.h>
@@ -76,18 +71,8 @@
 #include "con_main.h"
 #include "ui/displaymode.h"
 #include "sys_system.h"
-
-#ifdef __CLIENT__
-#  include "ui/window.h"
-#  include "updater.h"
-#endif
-
-extern "C" {
-
-/// @todo  Refactor this away.
-uint mainWindowIdx;   // Main window index.
-
-boolean DD_Init(void);
+#include "ui/window.h"
+#include "updater.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -100,9 +85,6 @@ boolean DD_Init(void);
  */
 static LegacyCore* de2LegacyCore;
 
-} // extern "C"
-
-#ifdef __CLIENT__
 static void continueInitWithEventLoopRunning(void)
 {
     // This function only needs to be called once, so clear the callback.
@@ -112,7 +94,6 @@ static void continueInitWithEventLoopRunning(void)
     // as the canvas is visible and ready for initialization.
     Window_Show(Window_Main(), true);
 }
-#endif
 
 static void handleLegacyCoreTerminate(const char* msg)
 {
@@ -125,17 +106,11 @@ static void handleLegacyCoreTerminate(const char* msg)
 int main(int argc, char** argv)
 {
     // Application core.
-    de::App *dengApp;
-#ifdef __CLIENT__
     de::GuiApp guiApp(argc, argv);
-    dengApp = &guiApp;
+    de::App *dengApp = &guiApp;
     novideo = false;
+
     QMenuBar* menuBar = 0;
-#else
-    de::TextApp textApp(argc, argv);
-    dengApp = &textApp;
-    novideo = true;
-#endif
 
     dengApp->setTerminateFunc(handleLegacyCoreTerminate);
 
@@ -156,7 +131,6 @@ int main(int argc, char** argv)
         // C interface to the app.
         de2LegacyCore = LegacyCore_New();
 
-#ifdef __CLIENT__
         // Config needs DisplayMode, so let's initialize it before the configuration.
         DisplayMode_Init();
 
@@ -164,21 +138,11 @@ int main(int argc, char** argv)
          * @todo DisplayMode should be moved under de::App's ownership, so
          * this is handled automatically.
          */
-#endif
-
-#ifdef __SERVER__
-        if(!CommandLine_Exists("-stdout"))
-        {
-            // In server mode, stay quiet on the standard outputs.
-            LogBuffer_EnableStandardOutput(false);
-        }
-#endif
 
         dengApp->initSubsystems();
 
         Libdeng_Init();
 
-#ifdef __CLIENT__
         // Check for updates automatically.
         Updater_Init();
 
@@ -190,7 +154,6 @@ int main(int argc, char** argv)
                                                        SLOT(checkNowShowingProgress()));
         checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 #endif
-#endif
 
         // Initialize.
 #if WIN32
@@ -199,15 +162,11 @@ int main(int argc, char** argv)
         if(!DD_Unix_Init()) return 1;
 #endif
 
-#ifdef __CLIENT__
         // Create the main window.
         char title[256];
         DD_ComposeMainWindowTitle(title);
         Window_New(title);
         LegacyCore_SetLoopFunc(continueInitWithEventLoopRunning);
-#else
-        DD_FinishInitializationAfterWindowReady();
-#endif
     }
     catch(de::Error const &er)
     {
@@ -222,9 +181,7 @@ int main(int argc, char** argv)
     DD_Shutdown();
     LegacyCore_Delete(de2LegacyCore);
 
-#ifdef __CLIENT__
     delete menuBar;
-#endif
 
     return result;
 }

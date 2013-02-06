@@ -320,6 +320,7 @@ else:unix {
 
 # Platform-independent sources.
 SOURCES += \
+    src/main_server.cpp \
     src/server_dummies.cpp \
     src/shelluser.cpp \
     src/shellusers.cpp \
@@ -344,7 +345,6 @@ SOURCES += \
     $$SRC/src/con_main.cpp \
     $$SRC/src/dd_games.cpp \
     $$SRC/src/dd_help.cpp \
-    $$SRC/src/dd_init.cpp \
     $$SRC/src/dd_loop.cpp \
     $$SRC/src/dd_main.cpp \
     $$SRC/src/dd_pinit.cpp \
