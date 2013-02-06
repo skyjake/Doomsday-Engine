@@ -78,15 +78,14 @@ void Sys_Init(void)
 
     startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
 
-    if(!isDedicated)
-    {
-        VERBOSE( Con_Message("Initializing Input subsystem...\n") )
-        if(!I_Init())
-            Con_Error("Failed to initialize Input subsystem.\n");
-    }
+#ifdef __CLIENT__
+    VERBOSE( Con_Message("Initializing Input subsystem...\n") )
+    if(!I_Init())
+        Con_Error("Failed to initialize Input subsystem.\n");
 
     // Virtual devices need to be created even in dedicated mode.
     I_InitVirtualInputDevices();
+#endif
 
     VERBOSE( Con_Message("Initializing Audio subsystem...\n") )
     S_Init();
@@ -130,17 +129,17 @@ void Sys_Shutdown(void)
     if(DD_GameLoaded())
         Con_Execute(CMDS_DDAY, "unload", true, false);
 
-    B_Shutdown();
     Net_Shutdown();
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
     S_Shutdown();
 #ifdef __CLIENT__
+    B_Shutdown();
     GL_Shutdown();
-#endif
     DD_ClearEvents();
     I_ShutdownInputDevices();
     I_Shutdown();
+#endif
 
     DD_DestroyGames();
 }

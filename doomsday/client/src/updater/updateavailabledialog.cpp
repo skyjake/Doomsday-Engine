@@ -24,7 +24,7 @@
 #include "updatersettingsdialog.h"
 #include "versioninfo.h"
 #include "ui/window.h"
-#include <de/App>
+#include <de/GuiApp>
 #include <de/Log>
 #include <QUrl>
 #include <QDesktopWidget>
@@ -237,7 +237,7 @@ UpdateAvailableDialog::UpdateAvailableDialog(const VersionInfo& latestVersion, d
     d = new Instance(this, latestVersion);
     d->changeLog = changeLogUri;
 
-    connect(DENG2_APP, SIGNAL(displayModeChanged()), this, SLOT(recenterDialog()));
+    connect(DENG2_GUI_APP, SIGNAL(displayModeChanged()), this, SLOT(recenterDialog()));
 }
 
 UpdateAvailableDialog::~UpdateAvailableDialog()

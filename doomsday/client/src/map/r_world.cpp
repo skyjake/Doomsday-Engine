@@ -1233,9 +1233,11 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
             Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
         }
 
+#ifdef __CLIENT__
         // Clear any input events that might have accumulated during the
         // setup period.
         DD_ClearEvents();
+#endif
 
         // Now that the setup is done, let's reset the tictimer so it'll
         // appear that no time has passed during the setup.

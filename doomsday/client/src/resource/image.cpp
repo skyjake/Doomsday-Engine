@@ -28,7 +28,9 @@
 #include <de/Log>
 #include <de/NativePath>
 #include <QByteArray>
-#include <QImage>
+#ifdef __CLIENT__
+#  include <QImage>
+#endif
 
 #ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
 #  define constBits bits
@@ -168,6 +170,7 @@ boolean Image_HasAlpha(image_t const *image)
 
 boolean Image_LoadFromFileWithFormat(image_t *img, char const *format, filehandle_s *_hndl)
 {
+#ifdef __CLIENT__
     /// @todo There are too many copies made here. It would be best if image_t
     /// contained an instance of QImage. -jk
 
@@ -219,10 +222,15 @@ boolean Image_LoadFromFileWithFormat(image_t *img, char const *format, filehandl
     // Back to the original file position.
     hndl.seek(initPos, SeekSet);
     return true;
+#else
+    // Server does not load image files.
+    return false;
+#endif
 }
 
 boolean Image_Save(image_t const *img, char const *filePath)
 {
+#ifdef __CLIENT__
     DENG_ASSERT(img);
 
     // Compose the full path.
@@ -243,4 +251,7 @@ boolean Image_Save(image_t const *img, char const *filePath)
     image = image.rgbSwapped();
 
     return CPP_BOOL(image.save(NativePath(fullPath)));
+#else
+    return false;
+#endif
 }

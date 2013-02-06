@@ -83,12 +83,12 @@ static boolean noRndPitch;
 
 // CODE --------------------------------------------------------------------
 
+#ifdef __CLIENT__
 static void S_ReverbVolumeChanged(void)
 {
-#ifdef __CLIENT__
     Sfx_UpdateReverb();
-#endif
 }
+#endif
 
 void S_Register(void)
 {

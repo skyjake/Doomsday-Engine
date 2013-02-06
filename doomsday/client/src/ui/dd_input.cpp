@@ -81,7 +81,6 @@ inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
 //-------------------------------------------------------------------------
 
-static boolean inputDisabledFully = false;
 static boolean ignoreInput = false;
 
 static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
@@ -197,7 +196,6 @@ void I_InitVirtualInputDevices(void)
 {
     inputdev_t* dev;
     inputdevaxis_t* axis;
-    int i;
 
     // Allow re-init.
     I_ShutdownInputDevices();
@@ -256,7 +254,7 @@ void I_InitVirtualInputDevices(void)
     strcpy(dev->name, "joy");
     I_DeviceAllocKeys(dev, IJOY_MAXBUTTONS);
 
-    for(i = 0; i < IJOY_MAXAXES; ++i)
+    for(int i = 0; i < IJOY_MAXAXES; ++i)
     {
         char name[32];
         if(i < 4)
@@ -273,7 +271,7 @@ void I_InitVirtualInputDevices(void)
     }
 
     // Register console variables for the axis settings.
-    for(i = 0; i < IJOY_MAXAXES; ++i)
+    for(int i = 0; i < IJOY_MAXAXES; ++i)
     {
         inputdevaxis_t* axis = &dev->axes[i];
         char varName[80];
@@ -289,7 +287,7 @@ void I_InitVirtualInputDevices(void)
     }
 
     I_DeviceAllocHats(dev, IJOY_MAXHATS);
-    for(i = 0; i < IJOY_MAXHATS; ++i)
+    for(int i = 0; i < IJOY_MAXHATS; ++i)
     {
         dev->hats[i].pos = -1; // centered
     }
@@ -831,8 +829,6 @@ void DD_InitInput(void)
 {
     int i;
 
-    inputDisabledFully = CommandLine_Exists("-noinput");
-
     for(i = 0; i < 256; ++i)
     {
         if(i >= 32 && i <= 127)
@@ -1130,8 +1126,6 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
  */
 static void postEvents(void)
 {
-    if(inputDisabledFully) return;
-
     DD_ReadKeyboard();
 
     // In dedicated mode, we don't do mice or joysticks.
@@ -1289,10 +1283,10 @@ void DD_ReadKeyboard(void)
     }
 
     // Read the new keyboard events.
-    if(novideo)
-        numkeyevs = I_GetConsoleKeyEvents(keyevs, KBDQUESIZE);
-    else
+    if(!novideo)
+    {
         numkeyevs = Keyboard_GetEvents(keyevs, KBDQUESIZE);
+    }
 
     // Convert to ddevents and post them.
     for(n = 0; n < numkeyevs; ++n)
@@ -2367,8 +2361,10 @@ D_CMD(ListInputDevices)
 
 D_CMD(ReleaseMouse)
 {
+#ifdef __CLIENT__
     DENG2_UNUSED3(src, argc, argv);
 
     Window_TrapMouse(Window_Main(), false);
+#endif
     return true;
 }

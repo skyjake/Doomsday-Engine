@@ -73,8 +73,6 @@ void LocalServer::start(duint16 port, String const &gameMode)
     cmd.append("}Data/jHexen/");
 #endif
 
-    cmd.append("-server");
-    cmd.append("-daemon");
     cmd.append("-game");
     cmd.append(gameMode);
     cmd.append("-cmd");

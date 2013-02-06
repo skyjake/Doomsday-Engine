@@ -24,15 +24,13 @@
 #include <de/timer.h>
 
 #include "sys_system.h"
-#include "sys_console.h"
-#include "ui/sys_input.h"
 #include "network/sys_network.h"
 #include "network/masterserver.h"
 
 #ifdef __CLIENT__
 #  include "gl/sys_opengl.h"
+#  include "ui/window.h"
+#  include "ui/sys_input.h"
 #endif
-
-#include "ui/window.h"
 
 #endif /* LIBDENG_SYSTEM_H */

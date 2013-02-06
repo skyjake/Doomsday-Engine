@@ -26,11 +26,12 @@
 #ifndef LIBDENG_SYSTEM_INPUT_H
 #define LIBDENG_SYSTEM_INPUT_H
 
-#include <de/types.h>
-
-#ifdef __CLIENT__
-#  include "joystick.h"
+#ifndef __CLIENT__
+#  error "Input requires __CLIENT__"
 #endif
+
+#include <de/types.h>
+#include "joystick.h"
 
 #ifdef __cplusplus
 extern "C" {

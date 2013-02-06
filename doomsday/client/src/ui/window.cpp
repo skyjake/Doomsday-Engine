@@ -49,15 +49,15 @@
  * 02110-1301 USA</small>
  */
 
-#include <QWidget>
-#include <QApplication>
-#include <QPaintEvent>
-#include <QDesktopWidget>
 #include <QDebug>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <de/App>
+#include <de/GuiApp>
+#include <QPaintEvent>
+#include <QWidget>
+#include <QDesktopWidget>
+#include "ui/canvaswindow.h"
 #include <de/Config>
 #include <de/Record>
 #include <de/NumberValue>
@@ -70,17 +70,13 @@
 #include "de_platform.h"
 
 #include "ui/window.h"
-#include "ui/consolewindow.h"
-#include "ui/canvaswindow.h"
 #include "ui/displaymode.h"
-#include "../updater/downloaddialog.h"
 #include "sys_system.h"
 #include "busymode.h"
 #include "dd_main.h"
 #include "con_main.h"
-#ifdef __CLIENT__
-#  include "gl/gl_main.h"
-#endif
+#include "gl/gl_main.h"
+#include "../updater/downloaddialog.h"
 #include "ui/ui_main.h"
 #include "filesys/fs_util.h"
 
@@ -129,13 +125,11 @@ struct ddwindow_s
     bool needWait;
     bool willUpdateWindowState;
 
-    ddwindowtype_t type;
     boolean inited;
     RectRaw geometry;       ///< Current actual geometry.
     RectRaw normalGeometry; ///< Normal-mode geometry (when not maximized or fullscreen).
     int colorDepthBits;
     int flags;
-    consolewindow_t console; ///< Only used for WT_CONSOLE windows.
 
     void __inline assertWindow() const
     {
@@ -699,7 +693,7 @@ Window* Window_Main(void)
 static void notifyAboutModeChange(void)
 {
     LOG_MSG("Display mode has changed.");
-    DENG2_APP->notifyDisplayModeChanged();
+    DENG2_GUI_APP->notifyDisplayModeChanged();
 }
 
 static void endWindowWait(void)
@@ -1150,7 +1144,7 @@ static void windowWasResized(Canvas& canvas)
     win->updateLayout();
 }
 
-static Window* createWindow(ddwindowtype_t type, const char* title)
+static Window* createWindow(const char* title)
 {
     if(mainWindowInited) return NULL; /// @todo  Allow multiple.
 
@@ -1158,84 +1152,69 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
     memset(wnd, 0, sizeof(*wnd));
     mainWindowIdx = 1;
 
-    if(type == WT_CONSOLE)
-    {
-        mainWindow.type = WT_CONSOLE;
-        Sys_ConInit(title);
-    }
-    else
-    {
-        Window_RestoreState(&mainWindow);
+    Window_RestoreState(&mainWindow);
 
-        // Create the main window (hidden).
-        mainWindow.widget = new CanvasWindow;
-        Window_SetTitle(&mainWindow, title);
+    // Create the main window (hidden).
+    mainWindow.widget = new CanvasWindow;
+    Window_SetTitle(&mainWindow, title);
 
-        // Minimum possible size when resizing.
-        mainWindow.widget->setMinimumSize(QSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT));
+    // Minimum possible size when resizing.
+    mainWindow.widget->setMinimumSize(QSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT));
 
-        // After the main window is created, we can finish with the engine init.
-        mainWindow.widget->canvas().setInitFunc(finishMainWindowInit);
+    // After the main window is created, we can finish with the engine init.
+    mainWindow.widget->canvas().setInitFunc(finishMainWindowInit);
 
-        mainWindow.widget->setCloseFunc(windowIsClosing);
-        mainWindow.widget->setMoveFunc(windowWasMoved);
-        mainWindow.widget->canvas().setResizedFunc(windowWasResized);
+    mainWindow.widget->setCloseFunc(windowIsClosing);
+    mainWindow.widget->setMoveFunc(windowWasMoved);
+    mainWindow.widget->canvas().setResizedFunc(windowWasResized);
 
-        // Let's see if there are command line options overriding the previous state.
-        mainWindow.modifyAccordingToOptions();
+    // Let's see if there are command line options overriding the previous state.
+    mainWindow.modifyAccordingToOptions();
 
-        // Make it so. (Not shown yet.)
-        mainWindow.applyWindowGeometry();
+    // Make it so. (Not shown yet.)
+    mainWindow.applyWindowGeometry();
 
 #ifdef WIN32
-        // Set an icon for the window.
-        AutoStr* iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
-        F_PrependBasePath(iconPath, iconPath);
-        LOG_DEBUG("Window icon: ") << de::NativePath(Str_Text(iconPath)).pretty();
-        mainWindow.widget->setWindowIcon(QIcon(Str_Text(iconPath)));
+    // Set an icon for the window.
+    AutoStr* iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
+    F_PrependBasePath(iconPath, iconPath);
+    LOG_DEBUG("Window icon: ") << de::NativePath(Str_Text(iconPath)).pretty();
+    mainWindow.widget->setWindowIcon(QIcon(Str_Text(iconPath)));
 #endif
 
-        mainWindow.inited = true;
-    }
+    mainWindow.inited = true;
 
     /// @todo Refactor for multiwindow support.
     mainWindowInited = true;
     return &mainWindow;
 }
 
-Window* Window_New(ddwindowtype_t type, const char* title)
+Window* Window_New(const char* title)
 {
     if(!winManagerInited) return 0;
-    return createWindow(type, title);
+    return createWindow(title);
 }
 
 void Window_Delete(Window* wnd)
 {
     assert(wnd);
 
-    if(wnd->type == WT_CONSOLE)
+    wnd->assertWindow();
+    wnd->widget->canvas().setFocusFunc(0);
+    wnd->widget->canvas().setResizedFunc(0);
+
+    // Make sure we'll remember the config.
+    Window_SaveState(wnd);
+
+    if(wnd == &mainWindow)
     {
-        Sys_ConShutdown(wnd);
+        DisplayMode_Shutdown();
     }
-    else
-    {
-        wnd->assertWindow();
-        wnd->widget->canvas().setFocusFunc(0);
-        wnd->widget->canvas().setResizedFunc(0);
 
-        // Make sure we'll remember the config.
-        Window_SaveState(wnd);
+    // Delete the CanvasWindow.
+    delete wnd->widget;
 
-        if(wnd == &mainWindow)
-        {
-            DisplayMode_Shutdown();
-        }
-
-        // Delete the CanvasWindow.
-        delete wnd->widget;
-
-        memset(wnd, 0, sizeof(*wnd));
-    }
+    memset(wnd, 0, sizeof(*wnd));
 }
 
 boolean Window_ChangeAttributes(Window* wnd, int* attribs)
@@ -1297,62 +1276,37 @@ void Window_SetTitle(const Window* win, const char *title)
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    switch(win->type)
-    {
-    case WT_NORMAL:
-        assert(win->widget);
-        win->widget->setWindowTitle(QString::fromLatin1(title));
-        break;
-
-    case WT_CONSOLE:
-        ConsoleWindow_SetTitle(win, title);
-        break;
-
-    default:
-        break;
-    }
+    assert(win->widget);
+    win->widget->setWindowTitle(QString::fromLatin1(title));
 }
 
 boolean Window_IsFullscreen(const Window* wnd)
 {
     assert(wnd);
-    if(wnd->type == WT_CONSOLE) return false;
     return (wnd->flags & DDWF_FULLSCREEN) != 0;
 }
 
 boolean Window_IsCentered(const Window* wnd)
 {
     assert(wnd);
-    if(wnd->type == WT_CONSOLE) return false;
     return (wnd->flags & DDWF_CENTER) != 0;
 }
 
 boolean Window_IsMaximized(const Window* wnd)
 {
     assert(wnd);
-    if(wnd->type == WT_CONSOLE) return false;
     return (wnd->flags & DDWF_MAXIMIZE) != 0;
 }
 
 void* Window_NativeHandle(const Window* wnd)
 {
     if(!wnd) return 0;
-
-#ifdef WIN32
-    if(wnd->type == WT_CONSOLE)
-    {
-        return reinterpret_cast<void*>(wnd->console.hWnd);
-    }
-#endif
-
     if(!wnd->widget) return 0;
     return reinterpret_cast<void*>(wnd->widget->winId());
 }
 
 void Window_SetDrawFunc(Window* win, void (*drawFunc)(void))
 {
-    if(win->type == WT_CONSOLE) return;
-
     assert(win);
     assert(win->widget);
 
@@ -1363,8 +1317,6 @@ void Window_SetDrawFunc(Window* win, void (*drawFunc)(void))
 
 void Window_Draw(Window* win)
 {
-    if(win->type == WT_CONSOLE) return;
-
 #ifdef __CLIENT__
 
     assert(win);
@@ -1401,19 +1353,8 @@ void Window_Draw(Window* win)
 void Window_Show(Window *wnd, boolean show)
 {
     assert(wnd);
-
-    if(wnd->type == WT_CONSOLE)
-    {
-        if(show)
-        {
-            /// @todo  Kludge: finish init in dedicated mode.
-            /// This should only be done once, at startup.
-            DD_FinishInitializationAfterWindowReady();
-            return;
-        }
-    }
-
     assert(wnd->widget);
+
     if(show)
     {
         if(wnd->flags & DDWF_FULLSCREEN)
@@ -1429,24 +1370,6 @@ void Window_Show(Window *wnd, boolean show)
     {
         wnd->widget->hide();
     }
-}
-
-ddwindowtype_t Window_Type(const Window* wnd)
-{
-    assert(wnd);
-    return wnd->type;
-}
-
-struct consolewindow_s* Window_Console(Window* wnd)
-{
-    if(!wnd) return 0;
-    return &wnd->console;
-}
-
-const struct consolewindow_s* Window_ConsoleConst(const Window* wnd)
-{
-    assert(wnd);
-    return &wnd->console;
 }
 
 int Window_X(const Window* wnd)
@@ -1520,9 +1443,6 @@ void Window_SaveState(Window* wnd)
 {
     assert(wnd);
 
-    // Console windows are not saved.
-    if(wnd->type == WT_CONSOLE) return;
-
     //uint idx = mainWindowIdx;
     //DENG_ASSERT(idx == 1);
 
@@ -1556,9 +1476,6 @@ void Window_RestoreState(Window* wnd)
 {
     LOG_AS("Window_RestoreState");
     DENG_ASSERT(wnd);
-
-    // Console windows can not be restored.
-    if(wnd->type == WT_CONSOLE) return;
 
     assert(wnd == &mainWindow);  /// @todo  Figure out the window index if there are many.
     //uint idx = mainWindowIdx;
@@ -1605,7 +1522,6 @@ void Window_TrapMouse(const Window* wnd, boolean enable)
 
 boolean Window_IsMouseTrapped(const Window* wnd)
 {
-    if(wnd->type == WT_CONSOLE) return false;
     wnd->assertWindow();
     return wnd->widget->canvas().isMouseTrapped();
 }
@@ -1640,7 +1556,6 @@ void Window_GLActivate(Window* wnd)
 {
 #ifdef __CLIENT__
 
-    if(wnd->type == WT_CONSOLE) return;
     wnd->assertWindow();
     wnd->widget->canvas().makeCurrent();
 
@@ -1655,7 +1570,6 @@ void Window_GLDone(Window* wnd)
 {
 #ifdef __CLIENT__
 
-    if(wnd->type == WT_CONSOLE) return;
     wnd->assertWindow();
     wnd->widget->canvas().doneCurrent();
 
@@ -1666,6 +1580,6 @@ void Window_GLDone(Window* wnd)
 
 QWidget* Window_Widget(Window* wnd)
 {
-    if(!wnd || wnd->type == WT_CONSOLE) return 0;
+    if(!wnd) return 0;
     return wnd->widget;
 }

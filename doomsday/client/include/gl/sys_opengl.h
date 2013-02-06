@@ -74,7 +74,9 @@
 
 #include <string.h>
 #include "gl_deferredapi.h"
-#include "ui/window.h"
+#ifdef __CLIENT__
+#  include "ui/window.h"
+#endif
 
 /**
  * Configure available features
