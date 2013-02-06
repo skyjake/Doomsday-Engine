@@ -33,9 +33,12 @@
 #  include <windows.h>
 #  include <GL/gl.h>
 #  include <GL/glu.h>
-#  include <GL/glext.h>
 #  ifdef __CLIENT__
+#    include <GL/glext.h>
 #    include <GL/wglext.h>
+#  endif
+#  ifdef __SERVER__
+#    define GL_CLAMP_TO_EDGE    0
 #  endif
 #  define GL_CALL   __stdcall
 #endif
