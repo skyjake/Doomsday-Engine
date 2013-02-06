@@ -1,4 +1,4 @@
-/** @file materialscheme.h Material Scheme.
+/** @file materialscheme.h Material collection subspace.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -20,14 +20,17 @@
 #ifndef LIBDENG_RESOURCE_MATERIALSCHEME_H
 #define LIBDENG_RESOURCE_MATERIALSCHEME_H
 
-#include <de/PathTree>
 #include "api_uri.h"
-#include "resource/materialmanifest.h"
+
+#include <de/PathTree>
 
 namespace de {
 
+class MaterialManifest;
+
 /**
- * A material system subspace.
+ * Material collection subspace.
+ *
  * @ingroup resource
  */
 class MaterialScheme
@@ -36,8 +39,10 @@ public:
     /// Minimum length of a symbolic name.
     static int const min_name_length = URI_MINSCHEMELENGTH;
 
-    /// Binds within the scheme are placed into a tree.
-    typedef PathTreeT<MaterialManifest> Index;
+    typedef MaterialManifest Manifest;
+
+    /// Manifests in the scheme are placed into a tree.
+    typedef PathTreeT<Manifest> Index;
 
 public:
     /// The requested manifest could not be found in the index.
@@ -58,12 +63,10 @@ public:
     String const &name() const;
 
     /// @return  Total number of manifests in the scheme.
-    int size() const;
+    inline int size() const { return index().size(); }
 
     /// @return  Total number of manifests in the scheme. Same as @ref size().
-    inline int count() const {
-        return size();
-    }
+    inline int count() const { return size(); }
 
     /**
      * Clear all manifests in the scheme.
@@ -73,22 +76,22 @@ public:
     /**
      * Insert a new material manifest at the given @a path into the scheme.
      * If a manifest already exists at this path, the existing manifest is
-     * returned and this is a no-op.
+     * returned and the call is a no-op.
      *
      * @param path  Virtual path for the resultant manifest.
      * @return  The (possibly newly created) manifest at @a path.
      */
-    MaterialManifest &insertManifest(Path const &path, materialid_t id);
+    Manifest &insertManifest(Path const &path, materialid_t id);
 
     /**
      * Search the scheme for a manifest matching @a path.
      *
      * @return  Found manifest.
      */
-    MaterialManifest const &find(Path const &path) const;
+    Manifest const &find(Path const &path) const;
 
     /// @copydoc find()
-    MaterialManifest &find(Path const &path);
+    Manifest &find(Path const &path);
 
     /**
      * Provides access to the manifest index for efficient traversal.

@@ -37,7 +37,7 @@
 #include "gl/sys_opengl.h" // TODO: get rid of this
 
 #include "def_main.h"
-#include "resource/materialsnapshot.h"
+#include "MaterialSnapshot"
 
 #include <de/memoryblockset.h>
 
@@ -244,7 +244,7 @@ static void buildSprites()
     spriteRecordBlockSet = BlockSet_New(sizeof(spriterecord_t), 64),
     spriteRecordFrameBlockSet = BlockSet_New(sizeof(spriterecord_frame_t), 256);
 
-    PathTreeIterator<TextureScheme::Index> iter(App_Textures()->scheme("Sprites").index().leafNodes());
+    PathTreeIterator<TextureScheme::Index> iter(App_Textures().scheme("Sprites").index().leafNodes());
     while(iter.hasNext())
     {
         buildSprite(iter.next());

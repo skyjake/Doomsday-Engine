@@ -1,4 +1,4 @@
-/** @file materialvariantspec.h Material Variant Specification.
+/** @file materialvariantspec.h Specialization specification for a variant material.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -21,7 +21,7 @@
 #define LIBDENG_RESOURCE_MATERIALVARIANTSPEC_H
 
 #include "def_data.h"
-#include "resource/texture.h" // TextureVariantSpec
+#include "Texture" // TextureVariantSpec
 
 /// Identifiers for material usage contexts.
 typedef enum {
@@ -44,8 +44,9 @@ typedef enum {
 namespace de {
 
 /**
- * Specialization specification for a variant material. Property values are
- * public for user convenience.
+ * Specialization specification for a variant material.
+ *
+ * Property values are public for user convenience.
  *
  * @see Material, Material::Variant
  * @ingroup resource

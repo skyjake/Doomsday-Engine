@@ -32,8 +32,8 @@
 #include "filehandle.h"
 #include "resource/r_data.h" // For flaretexid_t, lightingtexid_t, etc...
 #include "resource/rawtexture.h"
-#include "resource/texture.h"
-#include "resource/texturevariantspec.h"
+#include "Texture"
+#include "TextureVariantSpec"
 
 struct image_s;
 struct texturecontent_s;

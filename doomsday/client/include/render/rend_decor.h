@@ -23,7 +23,6 @@
 #include <de/libdeng1.h>
 
 DENG_EXTERN_C byte useLightDecorations;
-DENG_EXTERN_C float decorMaxDist; ///< No decorations are visible beyond this.
 DENG_EXTERN_C float decorLightBrightFactor;
 DENG_EXTERN_C float decorLightFadeAngle;
 
@@ -42,17 +41,17 @@ void Rend_DecorInit(void);
 /**
  * Decorations are generated for each frame.
  */
-void Rend_InitDecorationsForFrame(void);
+void Rend_DecorBeginFrame(void);
 
 /**
  * Create lumobjs for all decorations who want them.
  */
-void Rend_AddLuminousDecorations(void);
+void Rend_DecorAddLuminous(void);
 
 /**
  * Project all the non-clipped decorations. They become regular vissprites.
  */
-void Rend_ProjectDecorations(void);
+void Rend_DecorProject(void);
 
 #ifdef __cplusplus
 } // extern "C"

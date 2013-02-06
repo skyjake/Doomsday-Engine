@@ -26,8 +26,8 @@
 #include <de/Log>
 #include <de/String>
 
-#include "resource/materialvariantspec.h"
-#include "resource/materials.h"
+#include "MaterialVariantSpec"
+#include "Materials"
 
 using namespace de;
 

@@ -24,7 +24,7 @@
 #include "de_play.h"
 #include "de_resource.h"
 
-#include "resource/materialsnapshot.h"
+#include "MaterialSnapshot"
 #include "render/r_draw.h"
 #include "gl/sys_opengl.h"
 
@@ -231,7 +231,7 @@ void R_DrawViewBorder()
 
     if(border != 0)
     {
-        Textures &textures = *App_Textures();
+        Textures &textures = App_Textures();
         R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOP]).texture()),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
         R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOM]).texture()), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
         R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_LEFT]).texture()),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
@@ -243,7 +243,7 @@ void R_DrawViewBorder()
 
     if(border != 0)
     {
-        Textures &textures = *App_Textures();
+        Textures &textures = App_Textures();
         R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPLEFT]).texture()),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
         R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPRIGHT]).texture()),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
         R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMRIGHT]).texture()), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);

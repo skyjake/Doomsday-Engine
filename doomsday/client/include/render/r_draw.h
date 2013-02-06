@@ -23,7 +23,7 @@
 #ifndef LIBDENG_RENDER_MISC_H
 #define LIBDENG_RENDER_MISC_H
 
-#include "resource/texture.h"
+#include "Texture"
 
 #ifdef __cplusplus
 extern "C" {

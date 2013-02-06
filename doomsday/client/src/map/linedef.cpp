@@ -25,7 +25,7 @@
 #include "de_render.h"
 
 #include "m_misc.h"
-#include "resource/materials.h"
+#include "Materials"
 #include "map/linedef.h"
 
 #include <math.h>

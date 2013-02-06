@@ -17,8 +17,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstring>
-
 #include "de_base.h"
 #include "def_main.h"
 
@@ -26,7 +24,10 @@
 #include "audio/s_environ.h"
 #include "map/r_world.h"
 
-#include "resource/material.h"
+#include <de/math.h>
+#include <QtAlgorithms>
+
+#include "Material"
 
 using namespace de;
 
@@ -35,10 +36,7 @@ Material::Layer::Layer()
 
 Material::Layer::~Layer()
 {
-    DENG2_FOR_EACH(Stages, i, stages_)
-    {
-        delete *i;
-    }
+    qDeleteAll(stages_);
 }
 
 static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
@@ -47,7 +45,7 @@ static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
     {
         if(def.texture)
         {
-            return App_Textures()->find(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+            return App_Textures().find(*reinterpret_cast<de::Uri *>(def.texture)).texture();
         }
     }
     catch(Textures::NotFoundError const &)
@@ -85,10 +83,7 @@ Material::DetailLayer::DetailLayer()
 
 Material::DetailLayer::~DetailLayer()
 {
-    DENG2_FOR_EACH(Stages, i, stages_)
-    {
-        delete *i;
-    }
+    qDeleteAll(stages_);
 }
 
 static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
@@ -97,7 +92,7 @@ static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
     {
         if(def.texture)
         {
-            return App_Textures()->scheme("Details")
+            return App_Textures().scheme("Details")
                         .findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
         }
     }
@@ -136,10 +131,7 @@ Material::ShineLayer::ShineLayer()
 
 Material::ShineLayer::~ShineLayer()
 {
-    DENG2_FOR_EACH(Stages, i, stages_)
-    {
-        delete *i;
-    }
+    qDeleteAll(stages_);
 }
 
 static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool findMask)
@@ -150,7 +142,7 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
         {
             if(def.maskTexture)
             {
-                return App_Textures()->scheme("Masks")
+                return App_Textures().scheme("Masks")
                             .findByResourceUri(*reinterpret_cast<de::Uri *>(def.maskTexture)).texture();
             }
         }
@@ -158,7 +150,7 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
         {
             if(def.texture)
             {
-                return App_Textures()->scheme("Reflections")
+                return App_Textures().scheme("Reflections")
                             .findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
             }
         }
@@ -178,7 +170,7 @@ Material::ShineLayer *Material::ShineLayer::fromDef(ded_reflection_t const &laye
         Texture *texture = findTextureForShineLayerStage(stageDef, false/*not mask*/);
         Texture *maskTexture = findTextureForShineLayerStage(stageDef, true/*mask*/);
         Stage *stage = new Stage(stageDef.tics, stageDef.variance, texture, maskTexture,
-                                 stageDef.blendMode, stageDef.shininess, de::Vector3f(stageDef.minColor),
+                                 stageDef.blendMode, stageDef.shininess, Vector3f(stageDef.minColor),
                                  QSizeF(stageDef.maskWidth, stageDef.maskHeight));
         layer->stages_.push_back(stage);
     }
@@ -258,7 +250,7 @@ struct Material::Instance
     QSize dimensions;
 
     /// @see materialFlags
-    short flags;
+    Material::Flags flags;
 
     /// Layers.
     Material::Layers layers;
@@ -268,20 +260,19 @@ struct Material::Instance
     /// Decorations (will be projected into the map relative to a surface).
     Material::Decorations decorations;
 
-    /// Definition from which this material was derived (if any).
-    /// @todo Refactor away -ds
-    ded_material_t *def;
+    /// @c false= the material is no longer valid.
+    bool valid;
 
     Instance(MaterialManifest &_manifest)
         : manifest(_manifest), envClass(AEC_UNKNOWN), flags(0),
-          detailLayer(0), shineLayer(0), def(0)
+          detailLayer(0), shineLayer(0), valid(true)
     {}
 
     ~Instance()
     {
+        clearVariants();
         clearDecorations();
         clearLayers();
-        clearVariants();
     }
 
     void clearVariants()
@@ -290,45 +281,40 @@ struct Material::Instance
         {
              delete variants.takeFirst();
         }
+        variants.clear();
     }
 
     void clearLayers()
     {
-        while(!layers.isEmpty())
-        {
-            delete layers.takeFirst();
-        }
+        qDeleteAll(layers);
+        layers.clear();
+
         if(detailLayer) delete detailLayer;
         if(shineLayer) delete shineLayer;
     }
 
     void clearDecorations()
     {
-        while(!decorations.isEmpty())
-        {
-            delete decorations.takeFirst();
-        }
+        qDeleteAll(decorations);
+        decorations.clear();
     }
 };
 
-Material::Material(MaterialManifest &_manifest, ded_material_t *def)
-    : de::MapElement(DMU_MATERIAL)
+Material::Material(MaterialManifest &_manifest, ded_material_t const *def)
+    : de::MapElement(DMU_MATERIAL), d(new Instance(_manifest))
 {
     DENG_ASSERT(def);
-    d = new Instance(_manifest);
-    d->flags      = def->flags;
-    d->dimensions = QSize(MAX_OF(0, def->width), MAX_OF(0, def->height));
+    if(def->flags & MATF_NO_DRAW) d->flags |= NoDraw;
+    if(def->flags & MATF_SKYMASK) d->flags |= SkyMask;
+    d->dimensions = QSize(de::max(0, def->width), de::max(0, def->height));
 
-    d->def = def;
     for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
     {
         Layer *layer = Layer::fromDef(def->layers[i]);
         d->layers.push_back(layer);
 
-        Layer::Stages const &stages = layer->stages();
-        DENG2_FOR_EACH_CONST(Layer::Stages, s, stages)
+        foreach(Layer::Stage *stageDef, layer->stages())
         {
-            Layer::Stage *stageDef = *s;
             if(!stageDef->texture) continue;
 
             de::Uri textureUri(stageDef->texture->manifest().composeUri());
@@ -367,16 +353,11 @@ MaterialManifest &Material::manifest() const
     return d->manifest;
 }
 
-bool Material::isValid() const
-{
-    return !!d->def;
-}
-
 void Material::ticker(timespan_t time)
 {
-    DENG2_FOR_EACH(Variants, i, d->variants)
+    foreach(Variant *variant, d->variants)
     {
-        (*i)->ticker(time);
+        variant->ticker(time);
     }
 }
 
@@ -394,42 +375,46 @@ void Material::setDimensions(QSize const &newDimensions)
     }
 }
 
-void Material::setWidth(int width)
+void Material::setWidth(int newWidth)
 {
-    if(d->dimensions.width() != width)
+    if(d->dimensions.width() != newWidth)
     {
-        d->dimensions.setWidth(width);
+        d->dimensions.setWidth(newWidth);
         R_UpdateMapSurfacesOnMaterialChange(this);
     }
 }
 
-void Material::setHeight(int height)
+void Material::setHeight(int newHeight)
 {
-    if(d->dimensions.height() != height)
+    if(d->dimensions.height() != newHeight)
     {
-        d->dimensions.setHeight(height);
+        d->dimensions.setHeight(newHeight);
         R_UpdateMapSurfacesOnMaterialChange(this);
     }
 }
 
-short Material::flags() const
+Material::Flags Material::flags() const
 {
     return d->flags;
 }
 
-void Material::setFlags(short flags)
+void Material::setFlags(Material::Flags flagsToChange, bool set)
 {
-    d->flags = flags;
+    if(set)
+    {
+        d->flags |= flagsToChange;
+    }
+    else
+    {
+        d->flags &= ~flagsToChange;
+    }
 }
 
 bool Material::isAnimated() const
 {
-    // Materials cease animation once they are no longer valid.
-    if(!isValid()) return false;
-
-    DENG2_FOR_EACH_CONST(Layers, i, d->layers)
+    foreach(Layer *layer, d->layers)
     {
-        if((*i)->stageCount() > 1) return true;
+        if(layer->isAnimated()) return true;
     }
     return false; // Not at all.
 }
@@ -444,29 +429,12 @@ bool Material::isShiny() const
     return !!d->shineLayer;
 }
 
-bool Material::isSkyMasked() const
-{
-    return 0 != (d->flags & MATF_SKYMASK);
-}
-
-bool Material::isDrawable() const
-{
-    return 0 == (d->flags & MATF_NO_DRAW);
-}
-
 bool Material::hasGlow() const
 {
-    // Invalid materials do not glow.
-    if(!isValid()) return false;
-
-    DENG2_FOR_EACH_CONST(Layers, i, d->layers)
+    foreach(Layer *layer, d->layers)
+    foreach(Layer::Stage *stage, layer->stages())
     {
-        Layer::Stages const &stages = (*i)->stages();
-        DENG2_FOR_EACH_CONST(Layer::Stages, k, stages)
-        {
-            Layer::Stage const &stage = **k;
-            if(stage.glowStrength > .0001f) return true;
-        }
+        if(stage->glowStrength > .0001f) return true;
     }
     return false;
 }
@@ -526,21 +494,20 @@ Material::Variants const &Material::variants() const
 
 Material::Variant *Material::chooseVariant(Material::VariantSpec const &spec, bool canCreate)
 {
-    DENG2_FOR_EACH_CONST(Variants, i, d->variants)
+    foreach(Variant *variant, d->variants)
     {
-        VariantSpec const &cand = (*i)->spec();
+        VariantSpec const &cand = variant->spec();
         if(cand.compare(spec))
         {
             // This will do fine.
-            return *i;
+            return variant;
         }
     }
 
     if(!canCreate) return 0;
 
-    Variant *variant = new Variant(*this, spec);
-    d->variants.push_back(variant);
-    return variant;
+    d->variants.push_back(new Variant(*this, spec));
+    return d->variants.back();
 }
 
 void Material::clearVariants()
@@ -548,7 +515,7 @@ void Material::clearVariants()
     d->clearVariants();
 }
 
-int Material::getProperty(setargs_t &args) const
+int Material::property(setargs_t &args) const
 {
     switch(args.prop)
     {
@@ -569,7 +536,7 @@ int Material::getProperty(setargs_t &args) const
 
     default:
         /// @throw UnknownPropertyError  The requested property does not exist.
-        throw UnknownPropertyError("Material::getProperty", QString("No property %1").arg(DMU_Str(args.prop)));
+        throw UnknownPropertyError("Material::property", QString("Property '%1' is unknown").arg(DMU_Str(args.prop)));
     }
     return false; // Continue iteration.
 }
@@ -580,8 +547,13 @@ int Material::setProperty(setargs_t const &args)
     throw WritePropertyError("Material::setProperty", QString("Property '%1' is not writable").arg(DMU_Str(args.prop)));
 }
 
-void Material::setDefinition(ded_material_t *def)
+bool Material::isValid() const
 {
-    if(d->def == def) return;
-    d->def = def;
+    return d->valid;
+}
+
+void Material::markValid(bool yes)
+{
+    if(d->valid == yes) return;
+    d->valid = yes;
 }

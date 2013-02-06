@@ -20,8 +20,8 @@
 #include "server_dummies.h"
 #include "ui/nativeui.h"
 #include "ui/finaleinterpreter.h"
-#include "resource/texturevariantspec.h"
-#include "resource/texture.h"
+#include "TextureVariantSpec"
+#include "Texture"
 
 void DD_ReadMouse(void)
 {}

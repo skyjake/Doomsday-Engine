@@ -1,4 +1,4 @@
-/** @file materialsnapshot.h Material Snapshot.
+/** @file materialsnapshot.h Logical material state snapshot.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -29,21 +29,20 @@ enum {
     NUM_MATERIAL_TEXTURE_UNITS
 };
 
-#ifdef __cplusplus
-
-#include <QSize>
-#include <de/Error>
-#include <de/Vector>
-#include "resource/material.h"
-#include "resource/texture.h"
-
+#include "Material"
+#include "Texture"
 #ifdef __CLIENT__
 #  include "render/rendpoly.h"
 #endif
+#include <de/Error>
+#include <de/Vector>
+#include <QSize>
 
 namespace de {
 
 /**
+ * Logical material state snapshot.
+ *
  * @ingroup resource
  */
 class MaterialSnapshot
@@ -155,7 +154,5 @@ private:
 };
 
 } // namespace de
-
-#endif
 
 #endif /* LIBDENG_RESOURCE_MATERIALSNAPSHOT_H */

@@ -23,17 +23,16 @@
 
 #include "api_uri.h"
 
-#ifdef __cplusplus
-
-#include <QList>
-#include <QSize>
+#include "Texture"
+#include "TextureManifest"
+#include "TextureScheme"
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
 #include <de/PathTree>
-#include "resource/texture.h"
-#include "resource/texturemanifest.h"
-#include "resource/texturescheme.h"
+#include <QList>
+#include <QMap>
+#include <QSize>
 
 namespace de {
 
@@ -85,13 +84,16 @@ public:
      */
     enum UriValidationFlag
     {
-        AnyScheme  = 0x1, ///< The scheme of the URI may be of zero-length; signifying "any scheme".
-        NotUrn     = 0x2  ///< Do not accept a URN.
+        /// The scheme of the URI may be of zero-length; signifying "any scheme".
+        AnyScheme  = 0x1,
+
+        /// Do not accept a URN.
+        NotUrn     = 0x2
     };
     Q_DECLARE_FLAGS(UriValidationFlags, UriValidationFlag)
 
-    /// Texture system subspace schemes.
-    typedef QList<Scheme*> Schemes;
+    /// Texture-system subspace schemes.
+    typedef QMap<String, Scheme*> Schemes;
 
 public:
     /// The referenced texture was not found. @ingroup errors
@@ -110,44 +112,6 @@ public:
 
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
-
-    /**
-     * Lookup a subspace scheme by symbolic name.
-     *
-     * @param name  Symbolic name of the scheme.
-     * @return  Scheme associated with @a name.
-     *
-     * @throws UnknownSchemeError If @a name is unknown.
-     */
-    Scheme &scheme(String name) const;
-
-    /**
-     * Create a new subspace scheme.
-     *
-     * @param name      Unique symbolic name of the new scheme. Must be at
-     *                  least @c Scheme::min_name_length characters long.
-     */
-    Scheme &createScheme(String name);
-
-    /**
-     * Returns @c true iff a Scheme exists with the symbolic @a name.
-     */
-    bool knownScheme(String name) const;
-
-    /**
-     * Returns a list of all the schemes for efficient traversal.
-     */
-    Schemes const &allSchemes() const;
-
-    /**
-     * Clear all textures in all schemes.
-     * @see Scheme::clear().
-     */
-    inline void clearAllSchemes()
-    {
-        Schemes schemes = allSchemes();
-        DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->clear(); }
-    }
 
     /**
      * Validate @a uri to determine if it is well-formed and is usable as a
@@ -177,6 +141,53 @@ public:
      * @return Found unique identifier.
      */
     Manifest &find(Uri const &search) const;
+
+    /**
+     * Lookup a subspace scheme by symbolic name.
+     *
+     * @param name  Symbolic name of the scheme.
+     * @return  Scheme associated with @a name.
+     *
+     * @throws UnknownSchemeError If @a name is unknown.
+     */
+    Scheme &scheme(String name) const;
+
+    /**
+     * Create a new subspace scheme.
+     *
+     * @note Scheme creation order defines the order in which schemes are tried
+     *       by @ref find() when presented with an ambiguous URI (i.e., those
+     *       without a scheme).
+     *
+     * @param name      Unique symbolic name of the new scheme. Must be at
+     *                  least @c Scheme::min_name_length characters long.
+     */
+    Scheme &createScheme(String name);
+
+    /**
+     * Returns @c true iff a Scheme exists with the symbolic @a name.
+     */
+    bool knownScheme(String name) const;
+
+    /**
+     * Returns a list of all the schemes for efficient traversal.
+     */
+    Schemes const &allSchemes() const;
+
+    /**
+     * Returns the total number of manifest schemes in the collection.
+     */
+    inline int schemeCount() const { return allSchemes().count(); }
+
+    /**
+     * Clear all textures in all schemes.
+     * @see Scheme::clear().
+     */
+    inline void clearAllSchemes()
+    {
+        Schemes schemes = allSchemes();
+        DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->clear(); }
+    }
 
     /**
      * Declare a texture in the collection, producing a manifest for a logical
@@ -259,27 +270,5 @@ private:
 Q_DECLARE_OPERATORS_FOR_FLAGS(Textures::UriValidationFlags)
 
 } // namespace de
-
-de::Textures* App_Textures();
-
-#endif // __cplusplus
-
-/*
- * C wrapper API
- */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/// Initialize this module. Cannot be re-initialized, must shutdown first.
-void Textures_Init(void);
-
-/// Shutdown this module.
-void Textures_Shutdown(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_RESOURCE_TEXTURES_H */

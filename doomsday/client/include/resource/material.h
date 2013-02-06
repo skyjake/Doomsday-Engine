@@ -1,7 +1,6 @@
-/** @file material.h Logical material.
+/** @file material.h Logical material resource.
  *
- * @authors Copyright ï¿½ 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- * @authors Copyright ï¿½ 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,22 +20,17 @@
 #ifndef LIBDENG_RESOURCE_MATERIAL_H
 #define LIBDENG_RESOURCE_MATERIAL_H
 
-#ifndef __cplusplus
-#  error "resource/material.h requires C++"
-#endif
-
 #include "MapElement"
+#include "def_data.h"
 #include "map/p_mapdata.h"
 #include "map/p_dmu.h"
-#include "def_data.h"
-
-#include <QList>
-#include <QSize>
+#include "uri.hh"
 #include <de/Error>
 #include <de/Vector>
-#include "uri.hh"
+#include <QList>
+#include <QSize>
 
-// Forward declarations.
+// Forward declarations:
 enum audioenvironmentclass_e;
 namespace de {
 class MaterialManifest;
@@ -47,23 +41,24 @@ class Texture;
 
 /**
  * Logical material resource.
+ *
  * @ingroup resource
  */
 class Material : public de::MapElement
 {
     struct Instance; // Needs to be friended by Variant
 
-    /// Internal typedefs for code brevity/cleanliness.
+    /// Internal typedefs for brevity/cleanliness.
     typedef de::MaterialManifest Manifest;
     typedef de::MaterialSnapshot Snapshot;
     typedef de::MaterialVariantSpec VariantSpec;
 
 public:
     /// Maximum number of layers a material supports.
-    static int const max_layers = DED_MAX_MATERIAL_LAYERS;
+    static int const max_layers = 1;
 
     /// Maximum number of (light) decorations a material supports.
-    static int const max_decorations = DED_MAX_MATERIAL_DECORATIONS;
+    static int const max_decorations = 16;
 
     /// The referenced layer does not exist. @ingroup errors
     DENG2_ERROR(UnknownLayerError);
@@ -77,155 +72,18 @@ public:
     /// The referenced property is not writeable. @ingroup errors
     DENG2_ERROR(WritePropertyError);
 
-    /**
-     * Context-specialized variant. Encapsulates all context variant values
-     * and logics pertaining to a specialized version of the @em superior
-     * material instance.
-     *
-     * Variant instances are usually only created by the superior material
-     * when asked to @ref Material::prepare() for render using a context
-     * specialization specification which it cannot fulfill/match.
-     *
-     * @see MaterialVariantSpec
-     */
-    class Variant
+    /// @todo Define these values here instead of at API level
+    enum Flag
     {
-    public:
-        /// Current state of a material layer animation.
-        struct LayerState
-        {
-            /// Animation stage else @c -1 => layer not in use.
-            int stage;
+        //Unused1 = MATF_UNUSED1,
 
-            /// Remaining (sharp) tics in the current stage.
-            short tics;
+        /// Map surfaces using the material should never be drawn.
+        NoDraw = MATF_NO_DRAW,
 
-            /// Intermark from the current stage to the next [0..1].
-            float inter;
-        };
-
-        /// Current state of a material (light) decoration animation.
-        struct DecorationState
-        {
-            /// Animation stage else @c -1 => decoration not in use.
-            int stage;
-
-            /// Remaining (sharp) tics in the current stage.
-            short tics;
-
-            /// Intermark from the current stage to the next [0..1].
-            float inter;
-        };
-
-    private:
-        /**
-         * @param generalCase   Material from which this variant is derived.
-         * @param spec          Specification used to derive this variant.
-         *                      Ownership is NOT given to the Variant.
-         */
-        Variant(Material &generalCase, VariantSpec const &spec);
-        ~Variant();
-
-        /**
-         * Process a system tick event. If not currently paused and the material
-         * is valid; layer stages are animated and state property values are
-         * updated accordingly.
-         *
-         * @param ticLength  Length of the tick in seconds.
-         *
-         * @see isPaused()
-         */
-        void ticker(timespan_t ticLength);
-
-    public:
-        /**
-         * Retrieve the general case for this variant. Allows for a variant
-         * reference to be used in place of a material (implicit indirection).
-         *
-         * @see generalCase()
-         */
-        inline operator Material &() const {
-            return generalCase();
-        }
-
-        /// @return  Superior material from which the variant was derived.
-        Material &generalCase() const;
-
-        /// @return  Material variant specification for the variant.
-        VariantSpec const &spec() const;
-
-        /**
-         * Returns @c true if animation of the variant is currently paused
-         * (e.g., the variant is for use with an in-game render context and
-         * the client has paused the game).
-         */
-        bool isPaused() const;
-
-        /**
-         * Prepare the context variant for render (if necessary, uploading
-         * GL textures and updating the state snapshot).
-         *
-         * @param forceSnapshotUpdate  @c true= Force an update of the state
-         *      snapshot. The snapshot is automatically updated when first
-         *      prepared for a new render frame. Typically the only time force
-         *      is needed is when the material variant has changed since.
-         *
-         * @return  Snapshot for the prepared context variant.
-         *
-         * @see Material::chooseVariant(), Material::prepare()
-         */
-        Snapshot const &prepare(bool forceSnapshotUpdate = false);
-
-        /**
-         * Reset the staged animation point for the material. The animation
-         * states of all context variants will be rewound to the beginning.
-         */
-        void resetAnim();
-
-        /**
-         * Returns the current state of the layer animation @a layerNum for
-         * the variant.
-         */
-        LayerState const &layer(int layerNum) const;
-
-        /**
-         * Returns the current state of the detail layer animation for the
-         * variant.
-         *
-         * @see Material::isDetailed()
-         */
-        LayerState const &detailLayer() const;
-
-        /**
-         * Returns the current state of the shine layer animation for the
-         * variant.
-         *
-         * @see Material::isShiny()
-         */
-        LayerState const &shineLayer() const;
-
-        /**
-         * Returns the current state of the (light) decoration animation
-         * @a decorNum for the variant.
-         */
-        DecorationState const &decoration(int decorNum) const;
-
-        /**
-         * Returns the MaterialSnapshot data for the variant if present;
-         * otherwise @c 0.
-         */
-        Snapshot *snapshot() const;
-
-        friend class Material;
-        friend struct Material::Instance;
-
-    private:
-        struct Instance;
-        Instance *d;
+        /// Apply sky masking for map surfaces using the material.
+        SkyMask = MATF_SKYMASK
     };
-
-    /// A list of variant instances.
-    typedef QList<Variant *> Variants;
+    Q_DECLARE_FLAGS(Flags, Flag)
 
     /**
      * Each material consitutes at least one layer. Layers are arranged in a
@@ -268,6 +126,9 @@ public:
          * Construct a new layer from the specified definition.
          */
         static Layer *fromDef(ded_material_layer_t const &def);
+
+        /// @return  @c true if the layer is animated; otherwise @c false.
+        inline bool isAnimated() const { return stageCount() > 1; }
 
         /**
          * Returns the total number of animation stages for the layer.
@@ -321,6 +182,9 @@ public:
          * Construct a new layer from the specified definition.
          */
         static DetailLayer *fromDef(ded_detailtexture_t const &def);
+
+        /// @return  @c true if the layer is animated; otherwise @c false.
+        inline bool isAnimated() const { return stageCount() > 1; }
 
         /**
          * Returns the total number of animation stages for the layer.
@@ -378,6 +242,9 @@ public:
          */
         static ShineLayer *fromDef(ded_reflection_t const &def);
 
+        /// @return  @c true if the layer is animated; otherwise @c false.
+        inline bool isAnimated() const { return stageCount() > 1; }
+
         /**
          * Returns the total number of animation stages for the layer.
          */
@@ -421,6 +288,9 @@ public:
          */
         static Decoration *fromDef(ded_decoration_t &def);
 
+        /// @return  @c true if the decoration is animated; otherwise @c false.
+        inline bool isAnimated() const { return stageCount() > 1; }
+
         /**
          * Retrieve the pattern skip for the decoration. Normally a decoration
          * is repeated on a surface as many times as the material does. A skip
@@ -463,6 +333,154 @@ public:
     /// A list of decorations.
     typedef QList<Decoration *> Decorations;
 
+    /**
+     * Context-specialized variant. Encapsulates all context variant values
+     * and logics pertaining to a specialized version of the @em superior
+     * material instance.
+     *
+     * Variant instances are only created by the superior material when asked
+     * to @ref Material::prepare() for render using a context specialization
+     * specification which it cannot fulfill/match.
+     *
+     * @see MaterialVariantSpec
+     */
+    class Variant
+    {
+    public:
+        /// Current state of a material layer animation.
+        struct LayerState
+        {
+            /// Animation stage else @c -1 => layer not in use.
+            int stage;
+
+            /// Remaining (sharp) tics in the current stage.
+            short tics;
+
+            /// Intermark from the current stage to the next [0..1].
+            float inter;
+        };
+
+        /// Current state of a material (light) decoration animation.
+        struct DecorationState
+        {
+            /// Animation stage else @c -1 => decoration not in use.
+            int stage;
+
+            /// Remaining (sharp) tics in the current stage.
+            short tics;
+
+            /// Intermark from the current stage to the next [0..1].
+            float inter;
+        };
+
+    private:
+        /**
+         * @param generalCase  Material from which the variant is to be derived.
+         * @param spec         Specification used to derive the variant.
+         */
+        Variant(Material &generalCase, VariantSpec const &spec);
+        ~Variant();
+
+        /**
+         * Process a system tick event. If not currently paused and still valid;
+         * the variant material's layers and decorations are animated.
+         *
+         * @param ticLength  Length of the tick in seconds.
+         *
+         * @see isPaused()
+         */
+        void ticker(timespan_t ticLength);
+
+    public:
+        /**
+         * Retrieve the general case for this variant. Allows for a variant
+         * reference to be used in place of a material (implicit indirection).
+         *
+         * @see generalCase()
+         */
+        inline operator Material &() const {
+            return generalCase();
+        }
+
+        /// @return  Superior material from which the variant was derived.
+        Material &generalCase() const;
+
+        /// @return  Material variant specification for the variant.
+        VariantSpec const &spec() const;
+
+        /**
+         * Returns @c true if animation of the variant is currently paused
+         * (e.g., the variant is for use with an in-game render context and
+         * the client has paused the game).
+         */
+        bool isPaused() const;
+
+        /**
+         * Prepare the context variant for render (if necessary, uploading
+         * GL textures and updating the state snapshot).
+         *
+         * @param forceSnapshotUpdate  @c true= Force an update of the state
+         *      snapshot. The snapshot is automatically updated when first
+         *      prepared for a new render frame. Typically the only time force
+         *      is needed is when the material variant has changed since.
+         *
+         * @return  Snapshot for the variant.
+         *
+         * @see Material::chooseVariant(), Material::prepare()
+         */
+        Snapshot const &prepare(bool forceSnapshotUpdate = false);
+
+        /**
+         * Reset the staged animation point for the material. The animation
+         * states of all layers and decorations will be rewound to the beginning.
+         */
+        void resetAnim();
+
+        /**
+         * Returns the current state of the layer animation @a layerNum for
+         * the variant.
+         */
+        LayerState const &layer(int layerNum) const;
+
+        /**
+         * Returns the current state of the detail layer animation for the
+         * variant.
+         *
+         * @see Material::isDetailed()
+         */
+        LayerState const &detailLayer() const;
+
+        /**
+         * Returns the current state of the shine layer animation for the
+         * variant.
+         *
+         * @see Material::isShiny()
+         */
+        LayerState const &shineLayer() const;
+
+        /**
+         * Returns the current state of the (light) decoration animation
+         * @a decorNum for the variant.
+         */
+        DecorationState const &decoration(int decorNum) const;
+
+        /**
+         * Returns the MaterialSnapshot data for the variant if present;
+         * otherwise @c 0.
+         */
+        Snapshot *snapshot() const;
+
+        friend class Material;
+        friend struct Material::Instance;
+
+    private:
+        struct Instance;
+        Instance *d;
+    };
+
+    /// A list of variant instances.
+    typedef QList<Variant *> Variants;
+
 public:
     /**
      * Construct a new material.
@@ -470,7 +488,7 @@ public:
      * @param manifest  Manifest derived to yield the material.
      * @param def  Definition for the material.
      */
-    Material(Manifest &manifest, ded_material_t *def);
+    Material(Manifest &manifest, ded_material_t const *def);
     ~Material();
 
     /**
@@ -490,6 +508,13 @@ public:
      * current game is reset or changed.
      */
     bool isValid() const;
+
+    /**
+     * Mark the material as invalid.
+     *
+     * @see isValid();
+     */
+    void markValid(bool yes);
 
     /**
      * Process a system tick event for all context variants of the material.
@@ -540,13 +565,13 @@ public:
     bool isDetailed() const;
 
     /// Returns @c true if the material is considered drawable.
-    bool isDrawable() const;
+    bool isDrawable() const { return !flags().testFlag(NoDraw); }
 
     /// Returns @c true if the material has a shine texturing layer.
     bool isShiny() const;
 
     /// Returns @c true if the material is considered @em skymasked.
-    bool isSkyMasked() const;
+    inline bool isSkyMasked() const { return flags().testFlag(SkyMask); }
 
     /// Returns @c true if one or more of the material's layers are glowing.
     bool hasGlow() const;
@@ -578,18 +603,20 @@ public:
      * Change the world height of the material.
      * @param newHeight  New height in map coordinate space units.
      */
-    void setHeight(int height);
+    void setHeight(int newHeight);
 
     /**
-     * Returns the @ref materialFlags for the material.
+     * Returns the flags for the material.
      */
-    short flags() const;
+    Flags flags() const;
 
     /**
      * Change the material's flags.
-     * @param flags  @ref materialFlags
+     *
+     * @param flagsToChange  Flags to change the value of.
+     * @param set  @c true to set, @c false to clear.
      */
-    void setFlags(short flags);
+    void setFlags(Flags flagsToChange, bool set = true);
 
     /**
      * Returns the environment audio class for the material.
@@ -658,6 +685,11 @@ public:
     void clearVariants();
 
     /**
+     * Provides access to the list of variant instances for efficient traversal.
+     */
+    Variants const &variants() const;
+
+    /**
      * Choose/create a variant of the material which fulfills @a spec.
      *
      * @param spec      Specification for the derivation of @a material.
@@ -668,17 +700,12 @@ public:
     Variant *chooseVariant(VariantSpec const &spec, bool canCreate = false);
 
     /**
-     * Provides access to the list of variant instances for efficient traversal.
-     */
-    Variants const &variants() const;
-
-    /**
      * Get a property value, selected by DMU_* name.
      *
      * @param args  Property arguments.
      * @return  Always @c 0 (can be used as an iterator).
      */
-    int getProperty(setargs_t &args) const;
+    int property(setargs_t &args) const;
 
     /**
      * Update a property value, selected by DMU_* name.
@@ -688,18 +715,10 @@ public:
      */
     int setProperty(setargs_t const &args);
 
-    /**
-     * Change the associated definition for the material.
-     * @param def  New definition (can be @c 0).
-     *
-     * @deprecated todo: refactor away -ds
-     */
-    void setDefinition(ded_material_t *def);
-
 private:
     Instance *d;
 };
 
-//} // namespace de
+Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)
 
 #endif /* LIBDENG_RESOURCE_MATERIAL_H */

@@ -1,4 +1,4 @@
-/** @file materialvariant.cpp Logical Material Variant.
+/** @file materialvariant.cpp Context-specialized logical material variant.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,19 +17,17 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Error>
-#include <de/Log>
-#include <de/mathutil.h>
-
 #include "de_base.h"
 #ifdef __CLIENT__
 #  include "de_network.h" // playback / clientPaused
 #endif
-
 #include "map/r_world.h" // R_UpdateMapSurfacesOnMaterialChange
 #include "render/r_main.h" // frameCount, frameTimePos
+#include <de/Error>
+#include <de/Log>
+#include <de/mathutil.h>
 
-#include "resource/materialvariantspec.h"
+#include "MaterialVariantSpec"
 
 namespace de {
 
@@ -73,7 +71,7 @@ struct Material::Variant::Instance
 
     ~Instance()
     {
-        if(snapshot) M_Free(snapshot);
+        if(snapshot) delete snapshot;
     }
 
     /**
@@ -103,11 +101,85 @@ struct Material::Variant::Instance
         snapshot = 0;
         return detachedSnapshot;
     }
+
+    template <typename Type>
+    void resetLayer(Material::Variant::LayerState &ls, Type const &stage)
+    {
+        ls.stage = 0;
+        ls.tics  = stage.tics;
+        ls.inter = 0;
+    }
+
+    void resetDecoration(Material::Variant::DecorationState &ds,
+                         ded_decorlight_stage_t const &stage)
+    {
+        ds.stage = 0;
+        ds.tics  = stage.tics;
+        ds.inter = 0;
+    }
+
+    template <typename LayerType>
+    void animateLayer(Material::Variant::LayerState &ls, LayerType const &layer)
+    {
+        if(DD_IsSharpTick() && ls.tics-- <= 0)
+        {
+            // Advance to next stage.
+            if(++ls.stage == layer.stageCount())
+            {
+                // Loop back to the beginning.
+                ls.stage = 0;
+            }
+            ls.inter = 0;
+
+            LayerType::Stage const *lsCur = layer.stages()[ls.stage];
+            if(lsCur->variance != 0)
+                ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
+            else
+                ls.tics = lsCur->tics;
+        }
+        else
+        {
+            LayerType::Stage const *lsCur = layer.stages()[ls.stage];
+            ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
+        }
+    }
+
+    void animateDecoration(Material::Variant::DecorationState &ds, Material::Decoration const &decor)
+    {
+        if(DD_IsSharpTick() && ds.tics-- <= 0)
+        {
+            // Advance to next stage.
+            if(++ds.stage == decor.stageCount())
+            {
+                // Loop back to the beginning.
+                ds.stage = 0;
+            }
+            ds.inter = 0;
+
+            ded_decorlight_stage_t const *lsCur = decor.stages()[ds.stage];
+            if(lsCur->variance != 0)
+                ds.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
+            else
+                ds.tics = lsCur->tics;
+
+            // Notify interested parties about this.
+            if(spec.context == MC_MAPSURFACE)
+            {
+                // Surfaces using this material may need to be updated.
+                R_UpdateMapSurfacesOnMaterialChange(material);
+            }
+        }
+        else
+        {
+            ded_decorlight_stage_t const *lsCur = decor.stages()[ds.stage];
+            ds.inter = 1 - (ds.tics - frameTimePos) / float( lsCur->tics );
+        }
+    }
 };
 
 Material::Variant::Variant(Material &generalCase, Material::VariantSpec const &spec)
+    : d(new Instance(generalCase, spec))
 {
-    d = new Instance(generalCase, spec);
     // Initialize animation states.
     resetAnim();
 }
@@ -156,97 +228,18 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
     Material::Layers const &layers = d->material->layers();
     for(int i = 0; i < layers.count(); ++i)
     {
-        Material::Layer const &layerDef = *layers[i];
-
-        // Not animated?
-        if(layerDef.stageCount() == 1) continue;
-        LayerState &ls = d->layers[i];
-
-        if(DD_IsSharpTick() && ls.tics-- <= 0)
-        {
-            // Advance to next stage.
-            if(++ls.stage == layerDef.stageCount())
-            {
-                // Loop back to the beginning.
-                ls.stage = 0;
-            }
-            ls.inter = 0;
-
-            Layer::Stage const *lsCur = layerDef.stages()[ls.stage];
-            if(lsCur->variance != 0)
-                ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
-            else
-                ls.tics = lsCur->tics;
-        }
-        else
-        {
-            Layer::Stage const *lsCur = layerDef.stages()[ls.stage];
-            ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
-        }
+        if(layers[i]->isAnimated())
+            d->animateLayer(d->layers[i], *layers[i]);
     }
 
-    if(d->material->isDetailed())
+    if(d->material->isDetailed() && d->material->detailLayer().isAnimated())
     {
-        Material::DetailLayer const &layerDef = d->material->detailLayer();
-        // Not animated?
-        if(layerDef.stageCount() > 1)
-        {
-            LayerState &ls = d->detailLayer;
-
-            if(DD_IsSharpTick() && ls.tics-- <= 0)
-            {
-                // Advance to next stage.
-                if(++ls.stage == layerDef.stageCount())
-                {
-                    // Loop back to the beginning.
-                    ls.stage = 0;
-                }
-                ls.inter = 0;
-
-                Material::DetailLayer::Stage const *lsCur = layerDef.stages()[ls.stage];
-                if(lsCur->variance != 0)
-                    ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
-                else
-                    ls.tics = lsCur->tics;
-            }
-            else
-            {
-                Material::DetailLayer::Stage const *lsCur = layerDef.stages()[ls.stage];
-                ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
-            }
-        }
+        d->animateLayer(d->detailLayer, d->material->detailLayer());
     }
 
-    if(d->material->isShiny())
+    if(d->material->isShiny() && d->material->shineLayer().isAnimated())
     {
-        Material::ShineLayer const &layerDef = d->material->shineLayer();
-        // Not animated?
-        if(layerDef.stageCount() > 1)
-        {
-            LayerState &ls = d->shineLayer;
-
-            if(DD_IsSharpTick() && ls.tics-- <= 0)
-            {
-                // Advance to next stage.
-                if(++ls.stage == layerDef.stageCount())
-                {
-                    // Loop back to the beginning.
-                    ls.stage = 0;
-                }
-                ls.inter = 0;
-
-                Material::ShineLayer::Stage const *lsCur = layerDef.stages()[ls.stage];
-                if(lsCur->variance != 0)
-                    ls.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
-                else
-                    ls.tics = lsCur->tics;
-            }
-            else
-            {
-                Material::ShineLayer::Stage const *lsCur = layerDef.stages()[ls.stage];
-                ls.inter = 1 - (ls.tics - frameTimePos) / float( lsCur->tics );
-            }
-        }
+        d->animateLayer(d->shineLayer, d->material->shineLayer());
     }
 
     /*
@@ -255,40 +248,8 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
     Material::Decorations const &decorations = d->material->decorations();
     for(int i = 0; i < decorations.count(); ++i)
     {
-        Material::Decoration const *lightDef = decorations[i];
-
-        // Not animated?
-        if(lightDef->stageCount() == 1) continue;
-        DecorationState &ds = d->decorations[i];
-
-        if(DD_IsSharpTick() && ds.tics-- <= 0)
-        {
-            // Advance to next stage.
-            if(++ds.stage == lightDef->stageCount())
-            {
-                // Loop back to the beginning.
-                ds.stage = 0;
-            }
-            ds.inter = 0;
-
-            ded_decorlight_stage_t const *lsCur = lightDef->stages()[ds.stage];
-            if(lsCur->variance != 0)
-                ds.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
-            else
-                ds.tics = lsCur->tics;
-
-            // Notify interested parties about this.
-            if(d->spec.context == MC_MAPSURFACE)
-            {
-                // Surfaces using this material may need to be updated.
-                R_UpdateMapSurfacesOnMaterialChange(d->material);
-            }
-        }
-        else
-        {
-            ded_decorlight_stage_t const *lsCur = lightDef->stages()[ds.stage];
-            ds.inter = 1 - (ds.tics - frameTimePos) / float( lsCur->tics );
-        }
+        if(decorations[i]->isAnimated())
+            d->animateDecoration(d->decorations[i], *decorations[i]);
     }
 }
 
@@ -328,37 +289,23 @@ void Material::Variant::resetAnim()
     Material::Layers const &layers = d->material->layers();
     for(int i = 0; i < layers.count(); ++i)
     {
-        LayerState &ls = d->layers[i];
-
-        ls.stage = 0;
-        ls.tics  = layers[i]->stages()[0]->tics;
-        ls.inter = 0;
+        d->resetLayer(d->layers[i], *layers[i]->stages()[0]);
     }
 
     if(d->material->isDetailed())
     {
-        LayerState &ls = d->detailLayer;
-        ls.stage = 0;
-        ls.tics  = d->material->detailLayer().stages()[0]->tics;
-        ls.inter = 0;
+        d->resetLayer(d->detailLayer, *d->material->detailLayer().stages()[0]);
     }
 
     if(d->material->isShiny())
     {
-        LayerState &ls = d->shineLayer;
-        ls.stage = 0;
-        ls.tics  = d->material->shineLayer().stages()[0]->tics;
-        ls.inter = 0;
+        d->resetLayer(d->shineLayer, *d->material->shineLayer().stages()[0]);
     }
 
     Material::Decorations const &decorations = d->material->decorations();
     for(int i = 0; i < decorations.count(); ++i)
     {
-        DecorationState &ds = d->decorations[i];
-
-        ds.stage = 0;
-        ds.tics  = decorations[i]->stages()[0]->tics;
-        ds.inter = 0;
+        d->resetDecoration(d->decorations[i], *decorations[i]->stages()[0]);
     }
 }
 
@@ -406,5 +353,3 @@ Material::Snapshot *Material::Variant::snapshot() const
 {
     return d->snapshot;
 }
-
-//} // namespace de

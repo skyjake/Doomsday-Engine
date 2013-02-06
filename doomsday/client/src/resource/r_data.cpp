@@ -47,10 +47,10 @@ using namespace de;
 static QList<PatchName> patchNames;
 
 /// Ensure a texture has been derived for @a manifest.
-static de::Texture *deriveTexture(TextureManifest &manifest)
+static Texture *deriveTexture(TextureManifest &manifest)
 {
     LOG_AS("deriveTexture");
-    de::Texture *tex = manifest.derive();
+    Texture *tex = manifest.derive();
     if(!tex)
     {
         LOG_WARNING("Failed to derive a Texture for \"%s\", ignoring.") << manifest.composeUri();
@@ -88,18 +88,18 @@ void R_InitSystemTextures()
     for(uint i = 0; !names[i].isEmpty(); ++i)
     {
         de::Uri uri("System", Path(names[i]));
-        de::Texture::Flags flags = de::Texture::Custom;
+        Texture::Flags flags = Texture::Custom;
         QSize dimensions;
         QPoint origin;
         int uniqueId = i + 1/*1-based index*/;
         de::Uri resourceUri("Graphics", Path(names[i]));
 
-        App_Textures()->declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+        App_Textures().declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
     }
 
     // Define any as yet undefined system textures.
     /// @todo Defer until necessary (manifest texture is first referenced).
-    App_Textures()->iterateDeclared("System", defineTextureWorker);
+    App_Textures().iterateDeclared("System", defineTextureWorker);
 }
 
 #undef R_ComposePatchPath
@@ -107,7 +107,7 @@ DENG_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
 {
     try
     {
-        TextureManifest &manifest = App_Textures()->scheme("Patches").findByUniqueId(id);
+        TextureManifest &manifest = App_Textures().scheme("Patches").findByUniqueId(id);
         return AutoStr_FromTextStd(manifest.path().toUtf8().constData());
     }
     catch(Textures::Scheme::NotFoundError const &er)
@@ -123,7 +123,7 @@ DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
 {
     try
     {
-        TextureManifest &manifest = App_Textures()->scheme("Patches").findByUniqueId(id);
+        TextureManifest &manifest = App_Textures().scheme("Patches").findByUniqueId(id);
         return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
     }
     catch(Textures::Scheme::NotFoundError const &er)
@@ -145,7 +145,7 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
         return 0;
     }
 
-    Textures &textures = *App_Textures();
+    Textures &textures = App_Textures();
 
     // WAD format allows characters not normally permitted in native paths.
     // To achieve uniformity we apply a percent encoding to the "raw" names.
@@ -171,12 +171,12 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
 
     de::File1 &file = App_FileSystem()->nameIndex().lump(lumpNum);
 
-    de::Texture::Flags flags;
-    if(file.container().hasCustom()) flags |= de::Texture::Custom;
+    Texture::Flags flags;
+    if(file.container().hasCustom()) flags |= Texture::Custom;
 
     // Take a copy of the current texture filter state.
-    if(monochrome)               flags |= de::Texture::Monochrome;
-    if(upscaleAndSharpenPatches) flags |= de::Texture::UpscaleAndSharpen;
+    if(monochrome)               flags |= Texture::Monochrome;
+    if(upscaleAndSharpenPatches) flags |= Texture::UpscaleAndSharpen;
 
     QSize dimensions(0, 0);
     QPoint origin(0, 0);
@@ -227,14 +227,14 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 
     try
     {
-        de::Texture *tex = App_Textures()->scheme("Patches").findByUniqueId(id).texture();
+        Texture *tex = App_Textures().scheme("Patches").findByUniqueId(id).texture();
         if(!tex) return false;
 
         // Ensure we have up to date information about this patch.
         GL_PreparePatchTexture(reinterpret_cast<texture_s*>(tex));
 
         info->id = id;
-        info->flags.isCustom = tex->flags().testFlag(de::Texture::Custom);
+        info->flags.isCustom = tex->flags().testFlag(Texture::Custom);
 
         averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex->analysisDataPointer(TA_ALPHA));
         info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
@@ -246,11 +246,11 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         info->geometry.origin.y = tex->origin().y();
 
         /// @todo fixme: kludge:
-        info->extraOffset[0] = info->extraOffset[1] = (tex->flags().testFlag(de::Texture::UpscaleAndSharpen)? -1 : 0);
+        info->extraOffset[0] = info->extraOffset[1] = (tex->flags().testFlag(Texture::UpscaleAndSharpen)? -1 : 0);
         // Kludge end.
         return true;
     }
-    catch(de::Textures::Scheme::NotFoundError const &er)
+    catch(Textures::Scheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
@@ -360,7 +360,7 @@ static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
     return result;
 }
 
-typedef QList<CompositeTexture*> CompositeTextures;
+typedef QList<CompositeTexture *> CompositeTextures;
 
 /**
  * Reads patch composite texture definitions from @a file.
@@ -595,22 +595,22 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
         CompositeTexture &def = *defs.takeFirst();
         de::Uri uri("Textures", Path(def.percentEncodedName()));
 
-        de::Texture::Flags flags;
-        if(def.flags().testFlag(CompositeTexture::Custom)) flags |= de::Texture::Custom;
+        Texture::Flags flags;
+        if(def.flags().testFlag(CompositeTexture::Custom)) flags |= Texture::Custom;
 
         /*
          * The id Tech 1 implementation of the texture collection has a flaw
          * which results in the first texture being used dually as a "NULL"
          * texture.
          */
-        if(def.origIndex() == 0) flags |= de::Texture::NoDraw;
+        if(def.origIndex() == 0) flags |= Texture::NoDraw;
 
 
-        TextureManifest *manifest = App_Textures()->declare(uri, flags, def.logicalDimensions(), QPoint(), def.origIndex());
+        TextureManifest *manifest = App_Textures().declare(uri, flags, def.logicalDimensions(), QPoint(), def.origIndex());
         if(manifest)
         {
             // Are we redefining an existing texture?
-            if(de::Texture *tex = manifest->texture())
+            if(Texture *tex = manifest->texture())
             {
                 // Yes. Destroy the existing definition (*should* exist).
                 CompositeTexture *oldDef = reinterpret_cast<CompositeTexture *>(tex->userDataPointer());
@@ -626,7 +626,7 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
                 continue;
             }
             // A new texture.
-            else if(de::Texture *tex = manifest->derive())
+            else if(Texture *tex = manifest->derive())
             {
                 tex->setUserDataPointer((void *)&def);
                 continue;
@@ -661,7 +661,7 @@ void R_InitFlatTextures()
 
     LOG_VERBOSE("Initializing Flat textures...");
 
-    de::Textures &textures = *App_Textures();
+    Textures &textures = App_Textures();
 
     LumpIndex const &index = App_FileSystem()->nameIndex();
     lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
@@ -703,8 +703,8 @@ void R_InitFlatTextures()
             de::Uri uri("Flats", Path(percentEncodedName));
             if(textures.has(uri)) continue;
 
-            de::Texture::Flags flags;
-            if(file.container().hasCustom()) flags |= de::Texture::Custom;
+            Texture::Flags flags;
+            if(file.container().hasCustom()) flags |= Texture::Custom;
 
             /*
              * Kludge Assume 64x64 else when the flat is loaded it will inherit the
@@ -793,11 +793,11 @@ void R_InitSpriteTextures()
 
         de::Uri uri = de::Uri("Sprites", Path(fileName));
 
-        de::Texture::Flags flags = 0;
+        Texture::Flags flags = 0;
         // If this is from an add-on flag it as "custom".
         if(file.container().hasCustom())
         {
-            flags |= de::Texture::Custom;
+            flags |= Texture::Custom;
         }
 
         QSize dimensions(0, 0);
@@ -826,7 +826,7 @@ void R_InitSpriteTextures()
         file.unlock();
 
         de::Uri resourceUri = composeLumpIndexResourceUrn(i);
-        TextureManifest *manifest = App_Textures()->declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+        TextureManifest *manifest = App_Textures().declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
         if(!manifest) continue; // Invalid uri?
 
         uniqueId++;
@@ -839,7 +839,7 @@ void R_InitSpriteTextures()
 
     // Define any as yet undefined sprite textures.
     /// @todo Defer until necessary (manifest texture is first referenced).
-    App_Textures()->iterateDeclared("Sprites", defineTextureWorker);
+    App_Textures().iterateDeclared("Sprites", defineTextureWorker);
 
     LOG_INFO(String("R_InitSpriteTextures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
@@ -852,10 +852,10 @@ Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
     if(resourceUri.isEmpty()) return 0;
 
     // Have we already created one for this?
-    Textures::Scheme &scheme = App_Textures()->scheme(schemeName);
+    Textures::Scheme &scheme = App_Textures().scheme(schemeName);
     try
     {
-        de::Texture *tex = scheme.findByResourceUri(resourceUri).texture();
+        Texture *tex = scheme.findByResourceUri(resourceUri).texture();
         if(tex) return tex;
     }
     catch(Textures::Scheme::NotFoundError const &)
@@ -870,7 +870,7 @@ Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
     }
 
     de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
-    TextureManifest *manifest = App_Textures()->declare(uri, de::Texture::Custom, dimensions,
+    TextureManifest *manifest = App_Textures().declare(uri, Texture::Custom, dimensions,
                                                         QPoint(0, 0), uniqueId, &resourceUri);
     if(!manifest) return 0; // Invalid URI?
 
@@ -878,7 +878,7 @@ Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
     return deriveTexture(*manifest);
 }
 
-de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri)
+Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri)
 {
     return R_DefineTexture(schemeName, resourceUri, QSize());
 }

@@ -25,7 +25,7 @@
 
 #include "map/p_maptypes.h"
 #include "resource/r_data.h"
-#include "resource/materials.h"
+#include "Materials"
 #include "rend_model.h"
 
 /**

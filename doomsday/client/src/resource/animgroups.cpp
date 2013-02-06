@@ -105,7 +105,7 @@ DENG_EXTERN_C void R_AddAnimGroupFrame(int groupNum, uri_s const *textureUri, in
 
     try
     {
-        TextureManifest &manifest = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri));
+        TextureManifest &manifest = App_Textures().find(reinterpret_cast<de::Uri const &>(*textureUri));
 
         // Allocate a new animframe.
         group->frames = (animframe_t *) Z_Realloc(group->frames, sizeof(*group->frames) * ++group->count, PU_APPSTATIC);
@@ -132,7 +132,7 @@ boolean R_IsTextureInAnimGroup(uri_s const *textureUri, int groupNum)
 
     try
     {
-        TextureManifest &manifest = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri));
+        TextureManifest &manifest = App_Textures().find(reinterpret_cast<de::Uri const &>(*textureUri));
         return isInAnimGroup(*group, manifest);
     }
     catch(Textures::NotFoundError const &er)

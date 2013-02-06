@@ -26,7 +26,7 @@
 
 #include "color.h"
 #include "resource/models.h"
-#include "resource/material.h"
+#include "Material"
 
 #define MAX_SKY_LAYERS                   ( 2 )
 #define MAX_SKY_MODELS                   ( 32 )

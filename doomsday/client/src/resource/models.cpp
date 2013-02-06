@@ -43,7 +43,7 @@
 
 #include "def_main.h"
 
-#include "resource/materialsnapshot.h"
+#include "MaterialSnapshot"
 
 #include "render/r_things.h"
 #include "render/rend_model.h"

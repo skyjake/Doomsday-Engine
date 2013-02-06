@@ -26,6 +26,8 @@
 #include "resource/colorpalettes.h"
 #include "resource/patch.h"
 
+#include <de/math.h>
+
 namespace de {
 
 namespace internal {
@@ -250,11 +252,11 @@ static Block compositeImage(Reader &reader, IByteArray const *xlatTable,
             int offset = 0;
             if(y < 0)
             {
-                offset = MIN_OF(-y, length);
+                offset = de::min(-y, length);
                 y = 0;
             }
 
-            length = MAX_OF(0, length - offset);
+            length = de::max(0, length - offset);
 
             // Skip empty ranges.
             if(!length) continue;

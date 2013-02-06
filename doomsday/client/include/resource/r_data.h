@@ -27,7 +27,7 @@
 #endif
 #include "dd_def.h"
 #include "def_data.h"
-#include "resource/textures.h"
+#include "Textures"
 #include "api_thinker.h"
 
 struct font_s;

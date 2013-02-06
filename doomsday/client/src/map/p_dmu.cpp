@@ -32,7 +32,7 @@
 #include <de/LegacyCore>
 #include <de/memoryzone.h>
 
-#include "resource/materials.h"
+#include "Materials"
 #include "api_map.h"
 
 // Converting a public void* pointer to an internal de::MapElement.
@@ -1539,7 +1539,7 @@ static int getProperty(void *ptr, void *context)
         break;
 
     case DMU_MATERIAL:
-        elem->castTo<Material>()->getProperty(*args);
+        elem->castTo<Material>()->property(*args);
         break;
 
     default: {

@@ -20,10 +20,10 @@
 #ifndef LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 #define LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 
-#include <QSize>
-#include <de/PathTree>
+#include "Texture"
 #include "uri.hh"
-#include "resource/texture.h"
+#include <de/PathTree>
+#include <QSize>
 
 namespace de {
 

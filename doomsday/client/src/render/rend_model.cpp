@@ -39,9 +39,9 @@
 #include <de/memory.h>
 
 #include "network/net_main.h" // for gametic
-#include "resource/materialsnapshot.h"
-#include "resource/materialvariantspec.h"
-#include "resource/texture.h"
+#include "MaterialSnapshot"
+#include "MaterialVariantSpec"
+#include "Texture"
 
 using namespace de;
 

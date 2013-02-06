@@ -554,7 +554,7 @@ void BitmapCompositeFont_Prepare(font_t *font)
         ch->geometry.size.height += font->_marginHeight * 2;
         ch->border = 0;
 
-        de::Texture *tex = App_Textures()->scheme("Patches").findByUniqueId(patch).texture();
+        de::Texture *tex = App_Textures().scheme("Patches").findByUniqueId(patch).texture();
         ch->tex = reinterpret_cast<texturevariant_s *>(GL_PrepareTexture(*tex, *BitmapCompositeFont_CharSpec()));
         if(ch->tex && reinterpret_cast<de::Texture::Variant *>(ch->tex)->source() == TEXS_ORIGINAL)
         {

@@ -31,9 +31,9 @@
 
 #include <de/vector1.h>
 
-#include "resource/materialsnapshot.h"
-#include "resource/materialvariantspec.h"
-#include "resource/texture.h"
+#include "MaterialSnapshot"
+#include "MaterialVariantSpec"
+#include "Texture"
 
 #include "render/sky.h"
 

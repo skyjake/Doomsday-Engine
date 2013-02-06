@@ -36,12 +36,11 @@
 #include "de_defs.h"
 
 #include "map/gamemap.h"
-//#include "gl/gl_main.h"
 #include "gl/texturecontent.h"
 #include "resource/colorpalettes.h"
-#include "resource/materialsnapshot.h"
-#include "resource/materialvariantspec.h"
-#include "resource/texture.h"
+#include "MaterialSnapshot"
+#include "MaterialVariantSpec"
+#include "Texture"
 #include "ui/displaymode.h"
 #include "api_render.h"
 
@@ -401,7 +400,15 @@ void GL_Shutdown()
     Rend_ModelShutdown();
     Sky_Shutdown();
     Rend_Reset();
-    Textures_Shutdown();
+
+    // Ensure the global texture collection is destroyed.
+    try
+    {
+        delete &App_Textures();
+    }
+    catch(Error const &)
+    {} // Ignore this error.
+
     GL_ShutdownRefresh();
 
     // Shutdown OpenGL.

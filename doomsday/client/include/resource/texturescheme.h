@@ -20,9 +20,10 @@
 #ifndef LIBDENG_RESOURCE_TEXTURESCHEME_H
 #define LIBDENG_RESOURCE_TEXTURESCHEME_H
 
-#include <de/PathTree>
 #include "api_uri.h"
-#include "resource/texturemanifest.h"
+
+#include "TextureManifest"
+#include <de/PathTree>
 
 namespace de {
 

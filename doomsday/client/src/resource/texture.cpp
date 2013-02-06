@@ -22,13 +22,12 @@
 #include <cstring>
 
 #include "de_base.h"
-
 #include "gl/gl_texmanager.h"
 #include "resource/compositetexture.h"
-#include "resource/texture.h"
-
 #include <de/Error>
 #include <de/Log>
+
+#include "Texture"
 
 namespace de {
 
@@ -55,8 +54,8 @@ struct Texture::Instance
     /// on the variant specification.
     void *analyses[TEXTURE_ANALYSIS_COUNT];
 
-    Instance(TextureManifest &_manifest, void *_userData)
-        : manifest(_manifest), userData(_userData)
+    Instance(TextureManifest &_manifest)
+        : manifest(_manifest), userData(0)
     {
         std::memset(analyses, 0, sizeof(analyses));
     }
@@ -86,10 +85,8 @@ struct Texture::Instance
     }
 };
 
-Texture::Texture(TextureManifest &_manifest, void *_userData)
-{
-    d = new Instance(_manifest, _userData);
-}
+Texture::Texture(TextureManifest &manifest) : d(new Instance(manifest))
+{}
 
 Texture::~Texture()
 {
@@ -176,16 +173,16 @@ void Texture::setOrigin(QPoint const &newOrigin)
 Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
     texturevariantspecification_t const &spec, bool canCreate)
 {
-    DENG2_FOR_EACH_CONST(Variants, i, d->variants)
+    foreach(Variant *variant, d->variants)
     {
-        texturevariantspecification_t const &cand = (*i)->spec();
+        texturevariantspecification_t const &cand = variant->spec();
         switch(method)
         {
         case MatchSpec:
             if(&cand == &spec)
             {
                 // This is the one we're looking for.
-                return *i;
+                return variant;
             }
             break;
 
@@ -193,7 +190,7 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
             if(TextureVariantSpec_Compare(&cand, &spec))
             {
                 // This will do fine.
-                return *i;
+                return variant;
             }
             break;
         }
@@ -212,9 +209,8 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
 
     if(!canCreate) return 0;
 
-    Variant *variant = new Variant(*this, spec);
-    d->variants.push_back(variant);
-    return variant;
+    d->variants.push_back(new Variant(*this, spec));
+    return d->variants.back();
 }
 
 Texture::Variants const &Texture::variants() const
@@ -247,12 +243,7 @@ void Texture::setAnalysisDataPointer(texture_analysisid_t analysisId, void *data
     d->analyses[analysisId] = data;
 }
 
-Texture::Flags const &Texture::flags() const
-{
-    return d->flags;
-}
-
-Texture::Flags &Texture::flags()
+Texture::Flags Texture::flags() const
 {
     return d->flags;
 }

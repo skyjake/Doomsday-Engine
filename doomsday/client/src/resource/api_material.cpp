@@ -11,7 +11,7 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 
     try
     {
-        de::Uri uri = App_Textures()->find(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
+        de::Uri uri = App_Textures().find(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
         return &App_Materials().find(uri).material();
     }

@@ -163,6 +163,9 @@ static de::GameCollection* games;
 // The Material collection.
 static de::Materials *materials;
 
+// The Texture collection.
+static de::Textures* textures;
+
 #ifdef __CLIENT__
 
 D_CMD(CheckForUpdates)
@@ -529,16 +532,22 @@ void DD_CreateFileSystemSchemes()
     }
 }
 
+Textures &App_Textures()
+{
+    if(!textures) throw Error("App_Textures", "Textures collection not yet initialized");
+    return *textures;
+}
+
 void DD_CreateTextureSchemes()
 {
-    LOG_VERBOSE("Initializing Textures subsystem...");
+    Textures &textures = App_Textures();
 
-    Textures &textures = *App_Textures();
-    textures.createScheme("System");
-    textures.createScheme("Flats");
-    textures.createScheme("Textures");
+    /// @note Order here defines the ambigious-URI search order.
     textures.createScheme("Sprites");
+    textures.createScheme("Textures");
+    textures.createScheme("Flats");
     textures.createScheme("Patches");
+    textures.createScheme("System");
     textures.createScheme("Details");
     textures.createScheme("Reflections");
     textures.createScheme("Masks");
@@ -550,7 +559,7 @@ void DD_CreateTextureSchemes()
 
 void DD_ClearRuntimeTextureSchemes()
 {
-    Textures &textures = *App_Textures();
+    Textures &textures = App_Textures();
 
     textures.scheme("Flats").clear();
     textures.scheme("Textures").clear();
@@ -569,7 +578,7 @@ void DD_ClearRuntimeTextureSchemes()
 
 void DD_ClearSystemTextureSchemes()
 {
-    Textures &textures = *App_Textures();
+    Textures &textures = App_Textures();
 
     textures.scheme("System").clear();
     GL_PruneTextureVariantSpecifications();
@@ -585,10 +594,11 @@ void DD_CreateMaterialSchemes()
 {
     Materials &materials = App_Materials();
 
-    materials.createScheme("System");
-    materials.createScheme("Flats");
-    materials.createScheme("Textures");
+    /// @note Order here defines the ambigious-URI search order.
     materials.createScheme("Sprites");
+    materials.createScheme("Textures");
+    materials.createScheme("Flats");
+    materials.createScheme("System");
 }
 
 /**
@@ -1143,8 +1153,8 @@ static int DD_ActivateGameWorker(void* parameters)
     R_InitCompositeTextures();
     R_InitFlatTextures();
     R_InitSpriteTextures();
-    App_Textures()->scheme("Lightmaps").clear();
-    App_Textures()->scheme("Flaremaps").clear();
+    App_Textures().scheme("Lightmaps").clear();
+    App_Textures().scheme("Flaremaps").clear();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -1993,8 +2003,8 @@ boolean DD_Init(void)
         R_InitCompositeTextures();
         R_InitFlatTextures();
         R_InitSpriteTextures();
-        App_Textures()->scheme("Lightmaps").clear();
-        App_Textures()->scheme("Flaremaps").clear();
+        App_Textures().scheme("Lightmaps").clear();
+        App_Textures().scheme("Flaremaps").clear();
 
         Def_Read();
 
@@ -2028,20 +2038,16 @@ static void DD_InitResourceSystem(void)
     Def_Init();
 }
 
-static int DD_StartupWorker(void* parm)
+static int DD_StartupWorker(void* /*parm*/)
 {
-    DENG_UNUSED(parm);
-
 #ifdef WIN32
     // Initialize COM for this thread (needed for DirectInput).
     CoInitialize(NULL);
 #endif
-
     Con_SetProgress(10);
 
     // Any startup hooks?
     DD_CallHooks(HOOK_STARTUP, 0, 0);
-
     Con_SetProgress(20);
 
     // Was the change to userdir OK?
@@ -2059,14 +2065,14 @@ static int DD_StartupWorker(void* parm)
     // Read config files that should be read BEFORE engine init.
     if(CommandLine_CheckWith("-cparse", 1))
     {
-        uint startTime;
+        uint startTime = Timer_RealMilliseconds();
+
         Con_Message("Parsing additional (pre-init) config files:\n");
-        startTime = Timer_RealMilliseconds();
         for(;;)
         {
-            const char* arg = CommandLine_NextAsPath();
-            if(!arg || arg[0] == '-')
-                break;
+            char const *arg = CommandLine_NextAsPath();
+            if(!arg || arg[0] == '-') break;
+
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
             Con_ParseCommands(arg);
         }
@@ -2087,31 +2093,32 @@ static int DD_StartupWorker(void* parm)
 
     // Load engine help resources.
     DD_InitHelp();
-
     Con_SetProgress(60);
 
     // Execute the startup script (Startup.cfg).
     Con_ParseCommands("startup.cfg");
-
     Con_SetProgress(90);
+
     GL_EarlyInitTextureManager();
 
-    Textures_Init();
+    Con_Message("Initializing Texture subsystem...\n");
+    DENG_ASSERT(!textures);
+    textures = new Textures();
     DD_CreateTextureSchemes();
 
-    // Get the material collection up and running.
+    Con_Message("Initializing Material subsystem...\n");
     DENG_ASSERT(!materials);
     materials = new Materials();
     DD_CreateMaterialSchemes();
-
     Con_SetProgress(140);
+
     Con_Message("Initializing Binding subsystem...\n");
     B_Init();
-
     Con_SetProgress(150);
-    R_Init();
 
+    R_Init();
     Con_SetProgress(165);
+
     Net_InitGame();
 #ifdef __CLIENT__
     Demo_Init();
@@ -2122,7 +2129,6 @@ static int DD_StartupWorker(void* parm)
 
     Con_Message("Initializing UI subsystem...\n");
     UI_Init();
-
     Con_SetProgress(190);
 
     // In dedicated mode the console must be opened, so all input events
@@ -2134,11 +2140,9 @@ static int DD_StartupWorker(void* parm)
         // Also make sure the game loop isn't running needlessly often.
         LegacyCore_SetLoopRate(35);
     }
-
     Con_SetProgress(199);
 
     DD_CallHooks(HOOK_INIT, 0, 0); // Any initialization hooks?
-
     Con_SetProgress(200);
 
 #ifdef WIN32
@@ -2273,7 +2277,7 @@ void DD_UpdateEngineState(void)
         gx.UpdateState(DD_POST);
 
     // Reset the material animations.
-    App_Materials().resetAllMaterialAnimations();
+    App_Materials().resetAllAnims();
 }
 
 /* *INDENT-OFF* */

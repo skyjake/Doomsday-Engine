@@ -29,7 +29,7 @@
 
 #include <vector>
 #include "map/gamemap.h"
-#include "resource/materials.h"
+#include "Materials"
 
 // Editable map.
 /// @todo Obviously this shares functionality/data with GameMap; a common base class needed? -jk

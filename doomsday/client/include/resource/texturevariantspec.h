@@ -31,7 +31,7 @@ typedef enum {
     TEXS_EXTERNAL                 /// An "external" replacement.
 } TexSource;
 
-const char* TexSource_Name(TexSource source);
+char const *TexSource_Name(TexSource source);
 
 typedef enum {
     TC_UNKNOWN = -1,
@@ -130,7 +130,7 @@ typedef struct {
     int anisoFilter;
 
     /// Additional color palette translation spec.
-    colorpalettetranslationspecification_t* translated;
+    colorpalettetranslationspecification_t *translated;
 } variantspecification_t;
 
 /**

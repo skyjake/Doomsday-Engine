@@ -32,9 +32,9 @@
 #include "de_defs.h"
 
 #include "gl/sys_opengl.h"
-#include "resource/materialsnapshot.h"
-#include "resource/materialvariantspec.h"
-#include "resource/texture.h"
+#include "MaterialSnapshot"
+#include "MaterialVariantSpec"
+#include "Texture"
 
 using namespace de;
 

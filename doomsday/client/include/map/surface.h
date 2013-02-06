@@ -27,12 +27,12 @@
 
 #include <QSet>
 #include "resource/r_data.h"
-#include "resource/material.h"
+#include "Material"
 #include "map/p_dmu.h"
 #include "map/bspleaf.h"
 
 #ifdef __cplusplus
-#include "resource/materialsnapshot.h"
+#include "MaterialSnapshot"
 #endif
 
 // Internal surface flags:
@@ -58,22 +58,22 @@ public:
 #endif // __CLIENT__
 
 public:
-    ddmobj_base_t  base;
-    de::MapElement *owner;        ///< Either @c DMU_SIDEDEF, or @c DMU_PLANE
-    int            flags;         ///< SUF_ flags
-    int            oldFlags;
-    Material*      material;
-    blendmode_t    blendMode;
-    float          tangent[3];
-    float          bitangent[3];
-    float          normal[3];
-    float          offset[2];     ///< [X, Y] Planar offset to surface material origin.
-    float          oldOffset[2][2];
-    float          visOffset[2];
-    float          visOffsetDelta[2];
-    float          rgba[4];       ///< Surface color tint
-    short          inFlags;       ///< SUIF_* flags
-    unsigned int   numDecorations;
+    ddmobj_base_t base;
+    de::MapElement *owner; ///< Either @c DMU_SIDEDEF, or @c DMU_PLANE
+    int flags; ///< SUF_ flags
+    int oldFlags;
+    Material *material;
+    blendmode_t blendMode;
+    float tangent[3];
+    float bitangent[3];
+    float normal[3];
+    float offset[2]; ///< [X, Y] Planar offset to surface material origin.
+    float oldOffset[2][2];
+    float visOffset[2];
+    float visOffsetDelta[2];
+    float rgba[4]; ///< Surface color tint
+    short inFlags; ///< SUIF_* flags
+    uint numDecorations;
     struct surfacedecorsource_s *decorations;
 
 public:
@@ -88,7 +88,7 @@ typedef QSet<Surface *> SurfaceSet;
  * Mark the surface as requiring a full update. To be called
  * during engine reset.
  */
-void Surface_Update(Surface* surface);
+void Surface_Update(Surface *surface);
 
 /**
  * Update the Surface's map space base origin according to relevant points in
@@ -106,16 +106,16 @@ void Surface_Update(Surface* surface);
  *
  * @param surface  Surface instance.
  */
-void Surface_UpdateBaseOrigin(Surface* surface);
+void Surface_UpdateBaseOrigin(Surface *surface);
 
 /// @return @c true= is drawable (i.e., a drawable Material is bound).
-boolean Surface_IsDrawable(Surface* surface);
+boolean Surface_IsDrawable(Surface *surface);
 
 /// @return @c true= is sky-masked (i.e., a sky-masked Material is bound).
-boolean Surface_IsSkyMasked(const Surface* suf);
+boolean Surface_IsSkyMasked(Surface const *suf);
 
 /// @return @c true= is owned by some element of the Map geometry.
-boolean Surface_AttachedToMap(Surface* surface);
+boolean Surface_AttachedToMap(Surface *surface);
 
 /**
  * Change Material bound to this surface.
@@ -123,7 +123,7 @@ boolean Surface_AttachedToMap(Surface* surface);
  * @param surface  Surface instance.
  * @param mat  New Material.
  */
-boolean Surface_SetMaterial(Surface* surface, Material *material);
+boolean Surface_SetMaterial(Surface *surface, Material *material);
 
 /**
  * Change Material origin.
@@ -132,7 +132,7 @@ boolean Surface_SetMaterial(Surface* surface, Material *material);
  * @param x  New X origin in map space.
  * @param y  New Y origin in map space.
  */
-boolean Surface_SetMaterialOrigin(Surface* surface, float x, float y);
+boolean Surface_SetMaterialOrigin(Surface *surface, float x, float y);
 
 /**
  * Change Material origin X coordinate.
@@ -140,7 +140,7 @@ boolean Surface_SetMaterialOrigin(Surface* surface, float x, float y);
  * @param surface  Surface instance.
  * @param x  New X origin in map space.
  */
-boolean Surface_SetMaterialOriginX(Surface* surface, float x);
+boolean Surface_SetMaterialOriginX(Surface *surface, float x);
 
 /**
  * Change Material origin Y coordinate.
@@ -148,50 +148,50 @@ boolean Surface_SetMaterialOriginX(Surface* surface, float x);
  * @param surface  Surface instance.
  * @param y  New Y origin in map space.
  */
-boolean Surface_SetMaterialOriginY(Surface* surface, float y);
+boolean Surface_SetMaterialOriginY(Surface *surface, float y);
 
 /**
  * Change surface color tint and alpha.
  *
  * @param surface  Surface instance.
- * @param red      Red color component (0...1).
- * @param green    Green color component (0...1).
- * @param blue     Blue color component (0...1).
- * @param alpha    Alpha component (0...1).
+ * @param red      Red color component [0..1].
+ * @param green    Green color component [0..1].
+ * @param blue     Blue color component [0..1].
+ * @param alpha    Alpha component [0..1].
  */
-boolean Surface_SetColorAndAlpha(Surface* surface, float red, float green, float blue, float alpha);
+boolean Surface_SetColorAndAlpha(Surface *surface, float red, float green, float blue, float alpha);
 
 /**
  * Change surfacecolor tint.
  *
  * @param surface  Surface instance.
- * @param red      Red color component (0...1).
+ * @param red      Red color component [0..1].
  */
-boolean Surface_SetColorRed(Surface* surface, float red);
+boolean Surface_SetColorRed(Surface *surface, float red);
 
 /**
  * Change surfacecolor tint.
  *
  * @param surface  Surface instance.
- * @param green    Green color component (0...1).
+ * @param green    Green color component [0..1].
  */
-boolean Surface_SetColorGreen(Surface* surface, float green);
+boolean Surface_SetColorGreen(Surface *surface, float green);
 
 /**
  * Change surfacecolor tint.
  *
  * @param surface  Surface instance.
- * @param blue     Blue color component (0...1).
+ * @param blue     Blue color component [0..1].
  */
-boolean Surface_SetColorBlue(Surface* surface, float blue);
+boolean Surface_SetColorBlue(Surface *surface, float blue);
 
 /**
  * Change surface alpha.
  *
  * @param surface  Surface instance.
- * @param alpha    New alpha value (0...1).
+ * @param alpha    New alpha value [0..1].
  */
-boolean Surface_SetAlpha(Surface* surface, float alpha);
+boolean Surface_SetAlpha(Surface *surface, float alpha);
 
 /**
  * Change blendmode.
@@ -199,7 +199,7 @@ boolean Surface_SetAlpha(Surface* surface, float alpha);
  * @param surface  Surface instance.
  * @param blendMode  New blendmode.
  */
-boolean Surface_SetBlendMode(Surface* surface, blendmode_t blendMode);
+boolean Surface_SetBlendMode(Surface *surface, blendmode_t blendMode);
 
 /**
  * Get a property value, selected by DMU_* name.
@@ -208,7 +208,7 @@ boolean Surface_SetBlendMode(Surface* surface, blendmode_t blendMode);
  * @param args  Property arguments.
  * @return  Always @c 0 (can be used as an iterator).
  */
-int Surface_GetProperty(const Surface* surface, setargs_t* args);
+int Surface_GetProperty(Surface const *surface, setargs_t *args);
 
 /**
  * Update a property value, selected by DMU_* name.
@@ -217,7 +217,7 @@ int Surface_GetProperty(const Surface* surface, setargs_t* args);
  * @param args  Property arguments.
  * @return  Always @c 0 (can be used as an iterator).
  */
-int Surface_SetProperty(Surface* surface, const setargs_t* args);
+int Surface_SetProperty(Surface *surface, setargs_t const *args);
 
 #ifdef __CLIENT__
 /**

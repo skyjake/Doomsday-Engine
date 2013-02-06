@@ -30,7 +30,7 @@
 #include "api_fontrender.h"
 #include "api_svg.h"
 
-#include "resource/material.h"
+#include "Material"
 
 /**
  * @defgroup gui GUI

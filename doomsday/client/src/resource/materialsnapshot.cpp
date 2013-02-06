@@ -1,4 +1,4 @@
-/** @file materialsnapshot.cpp Material Snapshot.
+/** @file materialsnapshot.cpp Logical material state snapshot.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,23 +17,21 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstring>
-#include <de/Log>
+#include <cstring> // memset
+
 #include "de_base.h"
 #ifdef __CLIENT__
 #  include "de_defs.h"
-#endif
-
-#ifdef __CLIENT__
 #  include "render/rend_main.h" // detailFactor, detailScale, smoothTexAnim, etc...
 #  include "gl/gl_texmanager.h"
 #  include "gl/sys_opengl.h"
 #endif
 
-#include "resource/material.h"
-#include "resource/texture.h"
+#include "Material"
+#include "Texture"
+#include <de/Log>
 
-#include "resource/materialsnapshot.h"
+#include "MaterialSnapshot"
 
 namespace de {
 
@@ -93,7 +91,7 @@ struct Store {
 
         tu.texture.variant = reinterpret_cast<texturevariant_s *>(texture);
         tu.texture.flags   = TUF_TEXTURE_IS_MANAGED;
-        tu.opacity   = MINMAX_OF(0, opacity, 1);
+        tu.opacity   = de::clamp(0.f, opacity, 1.f);
         tu.blendMode = blendMode;
         V2f_Set(tu.scale, scale.width(), scale.height());
         V2f_Set(tu.offset, offset.x(), offset.y());
@@ -116,9 +114,8 @@ struct MaterialSnapshot::Instance
 };
 
 MaterialSnapshot::MaterialSnapshot(Material::Variant &materialVariant)
-{
-    d = new Instance(materialVariant);
-}
+    : d(new Instance(materialVariant))
+{}
 
 MaterialSnapshot::~MaterialSnapshot()
 {
@@ -254,7 +251,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         Material::Variant::LayerState const &l = variant->detailLayer();
         Material::DetailLayer::Stage const *lsCur = detailLayer->stages()[l.stage];
 
-        float const contrast = MINMAX_OF(0, lsCur->strength, 1) * detailFactor /*Global strength multiplier*/;
+        float const contrast = de::clamp(0.f, lsCur->strength, 1.f) * detailFactor /*Global strength multiplier*/;
         texturevariantspecification_t &texSpec = *GL_DetailTextureVariantSpecificationForContext(contrast);
         if(Texture *tex = lsCur->texture)
         {
@@ -450,7 +447,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 {
                     minColor[i] = LERP(lsCur->minColor[i], lsNext->minColor[i], l.inter);
                 }
-                minColor[i] = MINMAX_OF(0, minColor[i], 1);
+                minColor[i] = de::clamp(0.0f, minColor[i], 1.0f);
             }
             stored.shineMinColor = Vector3f(minColor);
 
@@ -463,7 +460,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
             {
                 shininess = LERP(lsCur->shininess, lsNext->shininess, l.inter);
             }
-            shininess = MINMAX_OF(0, shininess, 1);
+            shininess = de::clamp(0.0f, shininess, 1.0f);
 
             stored.writeTexUnit(RTU_REFLECTION, tex, lsCur->blendMode,
                                 QSizeF(1, 1), QPointF(0, 0), shininess);

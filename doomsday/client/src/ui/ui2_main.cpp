@@ -33,7 +33,7 @@
 #include <de/memoryzone.h>
 #include <cstring> // memcpy, memmove
 
-#include "resource/materialsnapshot.h"
+#include "MaterialSnapshot"
 
 using namespace de;
 
@@ -1056,7 +1056,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             break; }
 
         case PFT_PATCH: {
-            Texture *texture = App_Textures()->scheme("Patches").findByUniqueId(f->texRef.patch).texture();
+            Texture *texture = App_Textures().scheme("Patches").findByUniqueId(f->texRef.patch).texture();
             if(texture)
             {
                 GL_BindTexture(GL_PreparePatchTexture(reinterpret_cast<texture_s *>(texture)));

@@ -24,8 +24,8 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "resource/materials.h"
-#include "resource/materialarchive.h"
+#include "Materials"
+#include "MaterialArchive"
 
 /// For identifying the archived format version. Written to disk.
 #define MATERIALARCHIVE_VERSION     4
@@ -356,8 +356,11 @@ MaterialArchive *MaterialArchive_New(int useSegments)
 {
     de::MaterialArchive *archive = new de::MaterialArchive(useSegments);
 
-    // Populate the archive using the global Materials collection.
-    App_Materials().populateArchive(*archive);
+    // Populate the archive using the application's global/main Material collection.
+    foreach(Material *material, App_Materials().all())
+    {
+        archive->addRecord(*material);
+    }
 
     return reinterpret_cast<MaterialArchive *>(archive);
 }

@@ -17,8 +17,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/textures.h"
-#include "resource/texturemanifest.h"
+#include "de_base.h"
+
+#include "Textures"
+#include "TextureManifest"
 
 namespace de {
 
@@ -51,10 +53,9 @@ struct TextureManifest::Instance
     }
 };
 
-TextureManifest::TextureManifest(PathTree::NodeArgs const &args) : Node(args)
-{
-    d = new Instance();
-}
+TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
+    : Node(args), d(new Instance())
+{}
 
 TextureManifest::~TextureManifest()
 {
@@ -70,7 +71,7 @@ TextureManifest::~TextureManifest()
 
 Textures &TextureManifest::textures()
 {
-    return *App_Textures();
+    return App_Textures();
 }
 
 Texture *TextureManifest::derive()
@@ -98,15 +99,11 @@ Textures::Scheme &TextureManifest::scheme() const
 {
     LOG_AS("TextureManifest::scheme");
     /// @todo Optimize: TextureManifest should contain a link to the owning Textures::Scheme.
-    Textures::Schemes const &schemes = textures().allSchemes();
-    DENG2_FOR_EACH_CONST(Textures::Schemes, i, schemes)
+    foreach(Textures::Scheme *scheme, textures().allSchemes())
     {
-        Textures::Scheme &scheme = **i;
-        if(&scheme.index() == &tree()) return scheme;
+        if(&scheme->index() == &tree()) return *scheme;
     }
-
-    // This should never happen...
-    /// @throw Error Failed to determine the scheme of the manifest.
+    /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
     throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%p].").arg(de::dintptr(this)));
 }
 

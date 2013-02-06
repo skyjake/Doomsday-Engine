@@ -39,15 +39,12 @@ typedef enum {
     (int)(id) >= TEXTURE_ANALYSIS_FIRST && (int)(id) < TEXTURE_ANALYSIS_COUNT)
 ///@}
 
-#ifdef __cplusplus
-
+#include "TextureVariantSpec"
+#include <de/Error>
 #include <QFlag>
 #include <QList>
 #include <QPoint>
 #include <QSize>
-#include <de/Error>
-
-#include "resource/texturevariantspec.h"
 
 namespace de {
 
@@ -90,7 +87,7 @@ public:
      */
     class Variant
     {
-    private:
+    public:
         enum Flag
         {
             /// Texture contains alpha.
@@ -136,19 +133,31 @@ public:
          */
         void setSource(TexSource newSource);
 
-        bool isMasked() const;
-
-        void flagMasked(bool yes);
-
         void coords(float *s, float *t) const;
 
         void setCoords(float s, float t);
 
-        bool isUploaded() const;
+        /// Returns @c true if the material is flagged as "masked".
+        inline bool isMasked() const { return flags().testFlag(Masked); }
 
-        void flagUploaded(bool yes);
+        /// Returns @c true if the material is flagged as "uploaded".
+        inline bool isUploaded() const { return flags().testFlag(Uploaded); }
 
-        bool isPrepared() const;
+        /// Returns @c true if the material is "prepared".
+        inline bool isPrepared() const { return isUploaded() && glName() != 0; }
+
+        /**
+         * Returns the flags for the variant.
+         */
+        Flags flags() const;
+
+        /**
+         * Change the variant's flags.
+         *
+         * @param flagsToChange  Flags to change the value of.
+         * @param set  @c true to set, @c false to clear.
+         */
+        void setFlags(Flags flagsToChange, bool set = true);
 
         uint glName() const;
 
@@ -184,9 +193,8 @@ public:
 public:
     /**
      * @param manifest  Manifest derived to yield the texture.
-     * @param userData  User data to associate with the resultant texture.
      */
-    Texture(TextureManifest &manifest, void *userData = 0);
+    Texture(TextureManifest &manifest);
     ~Texture();
 
     /**
@@ -239,10 +247,7 @@ public:
     void setOrigin(QPoint const &newOrigin);
 
     /// @return  Provides access to the classification/processing flags.
-    Flags const &flags() const;
-
-    /// @return  Provides access to the classification/processing flags.
-    Flags &flags();
+    Flags flags() const;
 
     /**
      * Destroys all derived variants for the texture.
@@ -318,8 +323,6 @@ private:
 };
 
 } // namespace de
-
-#endif // __cplusplus
 
 struct texture_s; // The texture instance (opaque).
 

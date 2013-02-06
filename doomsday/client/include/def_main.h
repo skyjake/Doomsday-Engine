@@ -24,7 +24,7 @@
 #define LIBDENG_DEFINITIONS_MAIN_H
 
 #include "def_data.h"
-#include "resource/material.h"
+#include "Material"
 #include <de/stringarray.h>
 
 #ifdef __cplusplus

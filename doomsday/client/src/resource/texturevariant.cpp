@@ -17,7 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/texture.h"
+#include "Texture"
 
 /**
  * @todo Magnification, Anisotropic filter level and GL texture wrap modes
@@ -100,9 +100,8 @@ struct Texture::Variant::Instance
 };
 
 Texture::Variant::Variant(Texture &generalCase, texturevariantspecification_t const &spec)
-{
-    d = new Instance(generalCase, spec);
-}
+    : d(new Instance(generalCase, spec))
+{}
 
 Texture::Variant::~Variant()
 {
@@ -129,15 +128,21 @@ void Texture::Variant::setSource(TexSource newSource)
     d->texSource = newSource;
 }
 
-bool Texture::Variant::isMasked() const
+Texture::Variant::Flags Texture::Variant::flags() const
 {
-    return !!(d->flags & Masked);
+    return d->flags;
 }
 
-void Texture::Variant::flagMasked(bool yes)
+void Texture::Variant::setFlags(Texture::Variant::Flags flagsToChange, bool set)
 {
-    if(yes) d->flags |= Masked;
-    else    d->flags &= ~Masked;
+    if(set)
+    {
+        d->flags |= flagsToChange;
+    }
+    else
+    {
+        d->flags &= ~flagsToChange;
+    }
 }
 
 void Texture::Variant::coords(float *outS, float *outT) const
@@ -150,22 +155,6 @@ void Texture::Variant::setCoords(float newS, float newT)
 {
     d->s = newS;
     d->t = newT;
-}
-
-bool Texture::Variant::isUploaded() const
-{
-    return !!(d->flags & Uploaded);
-}
-
-void Texture::Variant::flagUploaded(bool yes)
-{
-    if(yes) d->flags |= Uploaded;
-    else    d->flags &= ~Uploaded;
-}
-
-bool Texture::Variant::isPrepared() const
-{
-    return isUploaded() && d->glTexName;
 }
 
 uint Texture::Variant::glName() const

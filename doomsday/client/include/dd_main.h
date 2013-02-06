@@ -27,7 +27,7 @@
 #include "dd_types.h"
 #include "api_plugin.h"
 #include "api_gameexport.h"
-#include "resource/materials.h"
+#include "Materials"
 #include "resource/textures.h"
 #include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>
@@ -194,6 +194,9 @@ de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 
 /// @return  The application's global Material collection.
 de::Materials &App_Materials();
+
+/// @return  The application's global Texture collection.
+de::Textures &App_Textures();
 
 extern "C" {
 #endif // __cplusplus

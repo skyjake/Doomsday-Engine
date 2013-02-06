@@ -132,6 +132,18 @@ DENG_HEADERS += \
 # Private headers.
 DENG_HEADERS += \
     include/MapElement \
+    include/Material \
+    include/MaterialArchive \
+    include/MaterialManifest \
+    include/Materials \
+    include/MaterialScheme \
+    include/MaterialSnapshot \
+    include/MaterialVariantSpec \
+    include/Texture \
+    include/TextureManifest \
+    include/Textures \
+    include/TextureScheme \
+    include/TextureVariantSpec \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
     include/audio/m_mus2midi.h \

@@ -28,11 +28,11 @@
 #include "resource/font.h"
 #include "resource/fonts.h"
 #include "resource/r_data.h"
-#include "resource/materials.h"
+#include "Materials"
 #include "resource/models.h"
 #include "resource/compositetexture.h"
 #include "resource/rawtexture.h"
-#include "resource/textures.h"
+#include "Textures"
 
 #ifdef __CLIENT__
 #  include "resource/bitmapfont.h"

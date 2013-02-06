@@ -1,4 +1,4 @@
-/** @file materials.h Material Collection.
+/** @file materials.h Specialized resource collection for a set of materials.
  *
  * @authors Copyright © 2003-2013 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -21,17 +21,17 @@
 #ifndef LIBDENG_RESOURCE_MATERIALS_H
 #define LIBDENG_RESOURCE_MATERIALS_H
 
+#include "Material"
+#include "MaterialManifest"
+#include "MaterialScheme"
+#include "MaterialVariantSpec"
+#include "def_data.h"
+#include "uri.hh"
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
-
-#include "def_data.h"
-#include "uri.hh"
-#include "resource/material.h"
-#include "resource/materialarchive.h"
-#include "resource/materialmanifest.h"
-#include "resource/materialscheme.h"
-#include "resource/materialvariantspec.h"
+#include <QList>
+#include <QMap>
 
 namespace de {
 
@@ -55,22 +55,24 @@ class Materials
 public:
     typedef class MaterialScheme Scheme;
     typedef class MaterialManifest Manifest;
+    typedef struct MaterialVariantSpec VariantSpec;
 
     /**
      * Defines a group of one or more material manifests.
      */
-    class Group
+    class ManifestGroup
     {
     public:
-        /// A list of material manifests.
-        typedef QList<Manifest *> Manifests;
+        /// Manifests.
+        typedef QList<Manifest *> All;
 
     public:
         /// An invalid group member reference was specified. @ingroup errors
         DENG2_ERROR(InvalidManifestError);
 
     public:
-        Group(int id);
+        ManifestGroup(int id);
+        ~ManifestGroup();
 
         /**
          * Returns the group's unique identifier.
@@ -80,7 +82,7 @@ public:
         /**
          * Returns the total number of material manifests in the group.
          */
-        int manifestCount() const;
+        int count() const { return all().count(); }
 
         /**
          * Lookup a manifest in the group by number.
@@ -88,33 +90,30 @@ public:
          * @param number  Material manifest number to lookup.
          * @return  Found manifest.
          */
-        Manifest &manifest(int number) const;
+        Manifest &toManifest(int number) const;
 
         /**
          * Extend the group by adding a new manifest to the end of the group.
          *
          * @param manifest  Manifest to add.
          */
-        void addManifest(Manifest &manifest);
+        void add(Manifest &manifest);
 
         /**
          * Returns @c true iff @a manifest is part of this group.
          *
          * @param mat  Manifest to search for.
          */
-        bool hasManifest(Manifest &manifest) const;
+        bool has(Manifest &manifest) const;
 
         /**
          * Provides access to the manifest list for efficient traversal.
          */
-        Manifests const &allManifests() const;
+        All const &all() const;
 
     private:
-        /// Unique identifier.
-        int id_;
-
-        /// All material manifests in the group.
-        Manifests manifests;
+        struct Instance;
+        Instance *d;
     };
 
     /**
@@ -129,11 +128,14 @@ public:
     };
     Q_DECLARE_FLAGS(UriValidationFlags, UriValidationFlag)
 
-    /// Material system subspace schemes.
-    typedef QList<Scheme*> Schemes;
+    /// System subspace schemes.
+    typedef QMap<String, Scheme *> Schemes;
 
-    /// Material groups.
-    typedef QList<Group> Groups;
+    /// Manifest groups.
+    typedef QList<ManifestGroup *> ManifestGroups;
+
+    /// Material instances.
+    typedef QList<Material *> All;
 
 public:
     /// The referenced material/manifest was not found. @ingroup errors
@@ -162,32 +164,46 @@ public:
     /**
      * Returns the total number of unique materials in the collection.
      */
-    uint size() const;
+    uint count() const { return all().count(); }
 
     /**
      * Returns the total number of unique materials in the collection.
      *
      * Same as size()
      */
-    inline uint count() const { return size(); }
-
-    /// Process all outstanding tasks in the cache queue.
-    void processCacheQueue();
-
-    /// Empty the Material cache queue, cancelling all outstanding tasks.
-    void purgeCacheQueue();
-
-    /// To be called during a definition database reset to clear all links to defs.
-    void clearDefinitionLinks();
+    inline uint size() const { return count(); }
 
     /**
-     * Process a tic of @a elapsed length, animating all materials.
-     * @param elapsed  Length of tic to be processed.
+     * Validate @a uri to determine if it is well-formed and is usable as a
+     * search argument.
+     *
+     * @param uri       Uri to be validated.
+     * @param flags     Validation flags.
+     * @param quiet     @c true= Do not output validation remarks to the log.
+     *
+     * @return  @c true if @a Uri passes validation.
+     *
+     * @todo Should throw de::Error exceptions -ds
      */
-    void ticker(timespan_t elapsed);
+    bool validateUri(Uri const &uri, UriValidationFlags flags = 0,
+                     bool quiet = false) const;
 
     /**
-     * Lookup a material manifest by unique identifier.
+     * Determines if a manifest exists for a material on @a path.
+     * @return @c true if a manifest exists; otherwise @a false.
+     */
+    bool has(Uri const &path) const;
+
+    /**
+     * Find the material manifest on @a path.
+     *
+     * @param path  The path to search for.
+     * @return  Found material manifest.
+     */
+    Manifest &find(Uri const &path) const;
+
+    /**
+     * Lookup a manifest by unique identifier.
      *
      * @param id  Unique identifier for the manifest to be looked up. Note
      *            that @c 0 is not a valid identifier.
@@ -209,6 +225,10 @@ public:
     /**
      * Create a new subspace scheme.
      *
+     * @note Scheme creation order defines the order in which schemes are tried
+     *       by @ref find() when presented with an ambiguous URI (i.e., those
+     *       without a scheme).
+     *
      * @param name  Unique symbolic name of the new scheme. Must be at least
      *              @c Scheme::min_name_length characters long.
      */
@@ -225,43 +245,49 @@ public:
     Schemes const &allSchemes() const;
 
     /**
+     * Returns the total number of manifest schemes in the collection.
+     */
+    inline int schemeCount() const { return allSchemes().count(); }
+
+    /**
      * Clear all materials in all schemes.
-     * @see Scheme::clear().
+     * @see allSchemes(), Scheme::clear().
      */
     inline void clearAllSchemes()
     {
-        Schemes schemes = allSchemes();
-        DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->clear(); }
+        foreach(Scheme *scheme, allSchemes())
+        {
+            scheme->clear();
+        }
     }
 
     /**
-     * Validate @a uri to determine if it is well-formed and is usable as a
-     * search argument.
-     *
-     * @param uri       Uri to be validated.
-     * @param flags     Validation flags.
-     * @param quiet     @c true= Do not output validation remarks to the log.
-     *
-     * @return  @c true if @a Uri passes validation.
-     *
-     * @todo Should throw de::Error exceptions -ds
+     * Lookup a manifest group by unique @a number.
      */
-    bool validateUri(Uri const &uri, UriValidationFlags flags = 0,
-                     bool quiet = false) const;
+    ManifestGroup &group(int number) const;
 
     /**
-     * Determines if a manifest exists for a material on @a path.
-     * @return @c true, if a manifest exists; otherwise @a false.
+     * Create a new (empty) manifest group.
      */
-    bool has(Uri const &path) const;
+    ManifestGroup &createGroup();
 
     /**
-     * Find the material manifest on @a path.
-     *
-     * @param search  The search term.
-     * @return Found material manifest.
+     * To be called to destroy all manifest groups when they are no longer needed.
      */
-    Manifest &find(Uri const &search) const;
+    void destroyAllGroups();
+
+    /**
+     * Provides access to the list of manifest groups for efficient traversal.
+     */
+    ManifestGroups const &allGroups() const;
+
+    /**
+     * Returns the total number of manifest groups in the collection.
+     */
+    inline int groupCount() const { return allGroups().count(); }
+
+    ///
+    Manifest &newManifest(Scheme &scheme, Path const &path);
 
     /**
      * Create a new Material unless an existing Material is found at the path
@@ -275,7 +301,41 @@ public:
      */
     Material *newFromDef(ded_material_t &def);
 
-    Manifest &newManifest(Scheme &scheme, Path const &path);
+    /**
+     * Returns a list of all the unique material instances in the collection,
+     * from all schemes.
+     */
+    All const &all() const;
+
+    /**
+     * Reset all material instance animations back to their initial state.
+     *
+     * @see all(), Material::Variant::resetAnim()
+     */
+    inline void resetAllAnims() const
+    {
+        foreach(Material *material, all())
+        foreach(Material::Variant *variant, material->variants())
+        {
+            variant->resetAnim();
+        }
+    }
+
+    /**
+     * Add a variant of @a material to the cache queue for deferred preparation.
+     *
+     * @param material      Base material from which to derive a context variant.
+     * @param spec          Specification for the derivation of @a material.
+     * @param cacheGroups   @c true= variants for all materials in any applicable
+     *                      groups are desired; otherwise just specified material.
+     */
+    void cache(Material &material, VariantSpec const &spec, bool cacheGroups = true);
+
+    /// Process all outstanding tasks in the cache queue.
+    void processCacheQueue();
+
+    /// Empty the Material cache queue, cancelling all outstanding tasks.
+    void purgeCacheQueue();
 
     /**
      * Prepare a material variant specification in accordance to the specified
@@ -299,57 +359,10 @@ public:
      *
      * @return  Rationalized (and interned) copy of the final specification.
      */
-    MaterialVariantSpec const &variantSpecForContext(materialcontext_t materialContext,
+    VariantSpec const &variantSpecForContext(materialcontext_t materialContext,
         int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
         int minFilter, int magFilter, int anisoFilter,
         bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha);
-
-    /**
-     * Add a variant of @a material to the cache queue for deferred preparation.
-     *
-     * @param material      Base Material from which to derive a variant.
-     * @param spec          Specification for the desired derivation of @a material.
-     * @param cacheGroups   @c true= variants for all Materials in any applicable groups
-     *                      are desired, else just this specific Material.
-     */
-    void cache(Material &material, MaterialVariantSpec const &spec,
-               bool cacheGroups = true);
-
-    /**
-     * To be called to reset all animations back to their initial state.
-     */
-    void resetAllMaterialAnimations();
-
-    /**
-     * Lookup a material group by unique @a number.
-     */
-    Group &group(int number) const;
-
-    /**
-     * Create a new (empty) material group.
-     */
-    Group &newGroup();
-
-    /**
-     * To be called to destroy all materials groups when they are no longer needed.
-     */
-    void clearAllGroups();
-
-    /**
-     * Provides access to the list of material groups for efficient traversal.
-     */
-    Groups const &allGroups() const;
-
-    /**
-     * Returns the total number of material groups in the collection.
-     */
-    inline int groupCount() const { return allGroups().count(); }
-
-    /**
-     * Record in the archive all materials in the collection.
-     * @param archive  The archive to be populated.
-     */
-    void populateArchive(MaterialArchive &archive) const;
 
 private:
     struct Instance;

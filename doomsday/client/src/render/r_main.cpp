@@ -810,10 +810,10 @@ void R_BeginWorldFrame()
         R_InitForNewFrame();
 
         // Generate surface decorations for the frame.
-        Rend_InitDecorationsForFrame();
+        Rend_DecorBeginFrame();
 
         // Spawn omnilights for decorations.
-        Rend_AddLuminousDecorations();
+        Rend_DecorAddLuminous();
 
         // Spawn omnilights for mobjs.
         LO_AddLuminousMobjs();

@@ -48,7 +48,7 @@
 #include "map/p_mapdata.h"
 #include "map/p_maptypes.h"
 #include "map/r_world.h"
-#include "resource/material.h"
+#include "Material"
 #include "ui/p_control.h"
 #include "r_util.h"
 

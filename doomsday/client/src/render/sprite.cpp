@@ -28,9 +28,9 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
-#include "resource/materialsnapshot.h"
-#include "resource/materialvariantspec.h"
-#include "resource/texture.h"
+#include "MaterialSnapshot"
+#include "MaterialVariantSpec"
+#include "Texture"
 
 using namespace de;
 

@@ -28,7 +28,7 @@
 #include "de_resource.h"
 #include "de_ui.h"
 
-#include "resource/materialsnapshot.h"
+#include "MaterialSnapshot"
 #include "cbuffer.h"
 
 using namespace de;

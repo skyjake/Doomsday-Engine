@@ -1,8 +1,4 @@
-/** @file materialarchive.h Material Archive.
- *
- * Collection of identifier-material pairs.
- *
- * Used when saving map state (savegames) or sharing world changes with clients.
+/** @file materialarchive.h Collection of identifier-material pairs.
  *
  * @authors Copyright © 2003-2013 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -25,8 +21,6 @@
 #ifndef LIBDENG_RESOURCE_MATERIALARCHIVE_H
 #define LIBDENG_RESOURCE_MATERIALARCHIVE_H
 
-#ifdef __cplusplus
-
 #include <de/Error>
 #include <de/writer.h>
 #include <de/reader.h>
@@ -36,6 +30,10 @@ class Material;
 namespace de {
 
 /**
+ * Collection of identifier-material pairs.
+ *
+ * Used when saving map state (savegames) or sharing world changes with clients.
+ *
  * @ingroup resource
  */
 class MaterialArchive
@@ -115,7 +113,5 @@ private:
 };
 
 } // namespace de
-
-#endif // __cplusplus
 
 #endif /* LIBDENG_RESOURCE_MATERIALARCHIVE_H */

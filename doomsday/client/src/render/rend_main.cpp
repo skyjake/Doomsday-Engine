@@ -34,9 +34,9 @@
 #include "de_system.h"
 
 #include "network/net_main.h"
-#include "resource/materialsnapshot.h"
-#include "resource/materialvariantspec.h"
-#include "resource/texture.h"
+#include "MaterialSnapshot"
+#include "MaterialVariantSpec"
+#include "Texture"
 #include "map/blockmapvisual.h"
 #include "render/sprite.h"
 
@@ -3495,7 +3495,7 @@ void Rend_RenderMap()
         VL_InitForNewFrame();
 
         // Make vissprites of all the visible decorations.
-        Rend_ProjectDecorations();
+        Rend_DecorProject();
 
         LO_BeginFrame();
 

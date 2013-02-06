@@ -511,7 +511,7 @@ static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t *li
     while(node)
     {
         texturevariantspecificationlist_node_t *next = node->next;
-        if(!App_Textures()->iterate(findTextureUsingVariantSpecificationWorker, (void *)node->spec))
+        if(!App_Textures().iterate(findTextureUsingVariantSpecificationWorker, (void *)node->spec))
         {
             destroyVariantSpecification(*node->spec);
             ++numPruned;
@@ -572,7 +572,7 @@ static int releaseVariantGLTexture(de::Texture::Variant *variant, void *paramete
             DGLuint glName = variant->glName();
             glDeleteTextures(1, (GLuint const *) &glName);
             variant->setGLName(0);
-            variant->flagUploaded(false);
+            variant->setFlags(Texture::Variant::Uploaded, false);
         }
 
         if(spec) return true; // We're done.
@@ -599,7 +599,7 @@ static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploa
     {
         uploadContent(uploadMethod, content);
     }
-    variant->flagUploaded(true);
+    variant->setFlags(Texture::Variant::Uploaded, true);
     return uploadMethod;
 }
 
@@ -974,7 +974,7 @@ static uploadcontentmethod_t prepareVariantFromImage(Texture::Variant &tex, imag
     }
 
     tex.setCoords(s, t);
-    tex.flagMasked((image.flags & IMGF_IS_MASKED) != 0);
+    tex.setFlags(Texture::Variant::Masked, !!(image.flags & IMGF_IS_MASKED));
 
     GL_InitTextureContent(&c);
     c.name = tex.glName();
@@ -2504,7 +2504,7 @@ DGLuint GL_PrepareLightmap(uri_s const *_resourceUri)
 
         try
         {
-            TextureManifest &manifest = App_Textures()->scheme("Lightmaps").findByResourceUri(*resourceUri);
+            TextureManifest &manifest = App_Textures().scheme("Lightmaps").findByResourceUri(*resourceUri);
             if(Texture *tex = manifest.texture())
             {
                 /// @todo fixme: Render context texture specs should be defined only once.
@@ -2547,7 +2547,7 @@ DGLuint GL_PrepareFlareTexture(uri_s const *_resourceUri, int oldIdx)
 
         try
         {
-            TextureManifest &manifest = App_Textures()->scheme("Flaremaps").findByResourceUri(*resourceUri);
+            TextureManifest &manifest = App_Textures().scheme("Flaremaps").findByResourceUri(*resourceUri);
             if(de::Texture *tex = manifest.texture())
             {
                 texturevariantspecification_t &texSpec =
@@ -3067,7 +3067,7 @@ void GL_ReleaseGLTexturesByTexture(texture_s *tex)
 void GL_ReleaseTexturesByScheme(char const *schemeName)
 {
     if(!schemeName) return;
-    PathTreeIterator<Textures::Scheme::Index> iter(App_Textures()->scheme(schemeName).index().leafNodes());
+    PathTreeIterator<Textures::Scheme::Index> iter(App_Textures().scheme(schemeName).index().leafNodes());
     while(iter.hasNext())
     {
         TextureManifest &manifest = iter.next();
@@ -3106,7 +3106,7 @@ static int releaseGLTexturesByColorPaletteWorker(de::Texture &tex, void *paramet
 
 void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
 {
-    App_Textures()->iterate(releaseGLTexturesByColorPaletteWorker, (void *)&paletteId);
+    App_Textures().iterate(releaseGLTexturesByColorPaletteWorker, (void *)&paletteId);
 }
 
 void GL_InitTextureContent(texturecontent_t *content)

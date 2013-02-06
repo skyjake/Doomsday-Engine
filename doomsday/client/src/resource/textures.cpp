@@ -31,8 +31,8 @@
 #include <de/mathutil.h> // for M_NumDigits
 
 #include "resource/compositetexture.h"
-#include "resource/texturemanifest.h"
-#include "resource/textures.h"
+#include "TextureManifest"
+#include "Textures"
 
 char const *TexSource_Name(TexSource source)
 {
@@ -54,10 +54,11 @@ static Uri emptyUri;
 Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, void *userData)
 {
     LOG_AS("Textures::ResourceClass::interpret");
-    Texture *tex = new Texture(manifest, userData);
+    Texture *tex = new Texture(manifest);
     tex->flags() = manifest.flags();
     tex->setDimensions(manifest.logicalDimensions());
     tex->setOrigin(manifest.origin());
+    tex->setUserDataPointer(userData);
     return tex;
 }
 
@@ -65,14 +66,16 @@ struct Textures::Instance
 {
     /// System subspace schemes containing the textures.
     Textures::Schemes schemes;
+    QList<Textures::Scheme *> schemeCreationOrder;
 
-    ~Instance()
+    Instance() {}
+    ~Instance() { clearManifests(); }
+
+    void clearManifests()
     {
-        DENG2_FOR_EACH(Textures::Schemes, i, schemes)
-        {
-            delete *i;
-        }
+        qDeleteAll(schemes);
         schemes.clear();
+        schemeCreationOrder.clear();
     }
 };
 
@@ -88,15 +91,25 @@ void Textures::consoleRegister()
 #endif
 }
 
-Textures::Textures()
-{
-    d = new Instance();
-}
+Textures::Textures() : d(new Instance())
+{}
 
 Textures::~Textures()
 {
     clearAllSchemes();
     delete d;
+}
+
+Textures::Scheme &Textures::scheme(String name) const
+{
+    LOG_AS("Textures::scheme");
+    if(!name.isEmpty())
+    {
+        Schemes::iterator found = d->schemes.find(name.toLower());
+        if(found != d->schemes.end()) return **found;
+    }
+    /// @throw UnknownSchemeError An unknown scheme was referenced.
+    throw Textures::UnknownSchemeError("Textures::scheme", "No scheme found matching '" + name + "'");
 }
 
 Textures::Scheme& Textures::createScheme(String name)
@@ -107,9 +120,25 @@ Textures::Scheme& Textures::createScheme(String name)
     if(knownScheme(name)) return scheme(name);
 
     // Create a new scheme.
-    Scheme* newScheme = new Scheme(name);
-    d->schemes.push_back(newScheme);
+    Scheme *newScheme = new Scheme(name);
+    d->schemes.insert(name.toLower(), newScheme);
+    d->schemeCreationOrder.push_back(newScheme);
     return *newScheme;
+}
+
+bool Textures::knownScheme(String name) const
+{
+    if(!name.isEmpty())
+    {
+        Schemes::iterator found = d->schemes.find(name.toLower());
+        if(found != d->schemes.end()) return true;
+    }
+    return false;
+}
+
+Textures::Schemes const& Textures::allSchemes() const
+{
+    return d->schemes;
 }
 
 bool Textures::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet) const
@@ -162,11 +191,12 @@ bool Textures::validateUri(Uri const &uri, UriValidationFlags flags, bool quiet)
     return true;
 }
 
-TextureManifest &Textures::find(Uri const &uri) const
+Textures::Manifest &Textures::find(Uri const &uri) const
 {
     LOG_AS("Textures::find");
 
     if(!validateUri(uri, AnyScheme, true /*quiet please*/))
+        /// @throw NotFoundError Failed to locate a matching manifest.
         throw NotFoundError("Textures::find", "URI \"" + uri.asText() + "\" failed validation");
 
     // Perform the search.
@@ -205,28 +235,12 @@ TextureManifest &Textures::find(Uri const &uri) const
         }
         else
         {
-            // No, check in each of these schemes (in priority order).
-            /// @todo This priorty order should be defined by the user.
-            static String const order[] = {
-                "Sprites",
-                "Textures",
-                "Flats",
-                "Patches",
-                "System",
-                "Details",
-                "Reflections",
-                "Masks",
-                "ModelSkins",
-                "ModelReflectionSkins",
-                "Lightmaps",
-                "Flaremaps",
-                ""
-            };
-            for(int i = 0; !order[i].isEmpty(); ++i)
+            // No, check each scheme in priority order.
+            foreach(Scheme *scheme, d->schemeCreationOrder)
             {
                 try
                 {
-                    return scheme(order[i]).find(path);
+                    return scheme->find(path);
                 }
                 catch(Scheme::NotFoundError const &)
                 {} // Ignore this error.
@@ -316,38 +330,6 @@ TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
     return manifest;
 }
 
-bool Textures::knownScheme(String name) const
-{
-    if(!name.isEmpty())
-    {
-        DENG2_FOR_EACH(Schemes, i, d->schemes)
-        {
-            if(!(*i)->name().compareWithoutCase(name))
-                return true;
-        }
-        //Schemes::iterator found = d->schemes.find(name.toLower());
-        //if(found != d->schemes.end()) return true;
-    }
-    return false;
-}
-
-Textures::Scheme &Textures::scheme(String name) const
-{
-    LOG_AS("Textures::scheme");
-    DENG2_FOR_EACH(Schemes, i, d->schemes)
-    {
-        if(!(*i)->name().compareWithoutCase(name))
-            return **i;
-    }
-    /// @throw UnknownSchemeError An unknown scheme was referenced.
-    throw Textures::UnknownSchemeError("Textures::scheme", "No scheme found matching '" + name + "'");
-}
-
-Textures::Schemes const& Textures::allSchemes() const
-{
-    return d->schemes;
-}
-
 int Textures::iterate(String nameOfScheme,
     int (*callback)(Texture &tex, void *parameters), void *parameters) const
 {
@@ -367,9 +349,9 @@ int Textures::iterate(String nameOfScheme,
     }
     else
     {
-        DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
+        foreach(Scheme *scheme, d->schemes)
         {
-            PathTreeIterator<TextureScheme::Index> iter((*i)->index().leafNodes());
+            PathTreeIterator<TextureScheme::Index> iter(scheme->index().leafNodes());
             while(iter.hasNext())
             {
                 TextureManifest &manifest = iter.next();
@@ -400,9 +382,9 @@ int Textures::iterateDeclared(String nameOfScheme,
     }
     else
     {
-        DENG2_FOR_EACH_CONST(Schemes, i, d->schemes)
+        foreach(Scheme *scheme, d->schemes)
         {
-            PathTreeIterator<TextureScheme::Index> iter((*i)->index().leafNodes());
+            PathTreeIterator<TextureScheme::Index> iter(scheme->index().leafNodes());
             while(iter.hasNext())
             {
                 TextureManifest &manifest = iter.next();
@@ -444,12 +426,10 @@ static void printTextureInfo(Texture &tex)
         Con_Printf("Dimensions: %d x %d\n", tex.width(), tex.height());
 
     uint variantIdx = 0;
-    DENG2_FOR_EACH_CONST(Texture::Variants, i, tex.variants())
+    foreach(Texture::Variant *variant, tex.variants())
     {
-        Texture::Variant &variant = **i;
-
-        Con_Printf("Variant #%i: GLName:%u\n", variantIdx, variant.glName());
-        printVariantInfo(variant);
+        Con_Printf("Variant #%i: GLName:%u\n", variantIdx, variant->glName());
+        printVariantInfo(*variant);
 
         ++variantIdx;
     }
@@ -504,10 +484,9 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
     else
     {
         // Consider textures in any scheme.
-        Textures::Schemes const &schemes = App_Textures()->allSchemes();
-        DENG2_FOR_EACH_CONST(Textures::Schemes, i, schemes)
+        foreach(Textures::Scheme *scheme, App_Textures().allSchemes())
         {
-            PathTreeIterator<Textures::Scheme::Index> iter((*i)->index().leafNodes());
+            PathTreeIterator<Textures::Scheme::Index> iter(scheme->index().leafNodes());
             while(iter.hasNext())
             {
                 TextureManifest &manifest = iter.next();
@@ -590,7 +569,7 @@ static int printTextures2(Textures::Scheme *scheme, Path const &like, int flags)
     Con_FPrintf(CPF_YELLOW, "%s", heading.toUtf8().constData());
 
     // Print the result index key.
-    int numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits(found.count()));
+    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
 
     Con_Printf(" %*s: %-*s origin n# uri\n", numFoundDigits, "idx",
                printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
@@ -599,10 +578,10 @@ static int printTextures2(Textures::Scheme *scheme, Path const &like, int flags)
     // Sort and print the index.
     qSort(found.begin(), found.end(), compareTextureManifestPathsAssending);
     int idx = 0;
-    DENG2_FOR_EACH(QList<TextureManifest *>, i, found)
+    foreach(TextureManifest *manifest, found)
     {
         Con_Printf(" %*i: ", numFoundDigits, idx++);
-        printTextureSummary(**i, printSchemeName);
+        printTextureSummary(*manifest, printSchemeName);
     }
 
     return found.count();
@@ -610,7 +589,7 @@ static int printTextures2(Textures::Scheme *scheme, Path const &like, int flags)
 
 static void printTextures(de::Uri const &search, int flags = DEFAULT_PRINTTEXTUREFLAGS)
 {
-    Textures &textures = *App_Textures();
+    Textures &textures = App_Textures();
 
     int printTotal = 0;
 
@@ -629,10 +608,9 @@ static void printTextures(de::Uri const &search, int flags = DEFAULT_PRINTTEXTUR
     else
     {
         // Collect and sort results in each scheme separately.
-        Textures::Schemes const &schemes = textures.allSchemes();
-        DENG2_FOR_EACH_CONST(Textures::Schemes, i, schemes)
+        foreach(Textures::Scheme *scheme, textures.allSchemes())
         {
-            int numPrinted = printTextures2(*i, search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
+            int numPrinted = printTextures2(scheme, search.path(), flags | PTF_TRANSFORM_PATH_NO_SCHEME);
             if(numPrinted)
             {
                 Con_PrintRuler();
@@ -675,7 +653,7 @@ static de::Uri composeSearchUri(char **argv, int argc, bool matchSchemeOnly = tr
             }
 
             // Just a scheme name?
-            if(matchSchemeOnly && App_Textures()->knownScheme(rawUri))
+            if(matchSchemeOnly && App_Textures().knownScheme(rawUri))
             {
                 return de::Uri().setScheme(rawUri);
             }
@@ -693,60 +671,11 @@ static de::Uri composeSearchUri(char **argv, int argc, bool matchSchemeOnly = tr
     return de::Uri();
 }
 
-static de::Textures* textures;
-
-de::Textures* App_Textures()
-{
-    if(!textures) throw de::Error("App_Textures", "Textures collection not yet initialized");
-    return textures;
-}
-
-void Textures_Init(void)
-{
-    DENG_ASSERT(!textures);
-    textures = new de::Textures();
-}
-
-void Textures_Shutdown(void)
-{
-    if(!textures) return;
-    delete textures; textures = 0;
-}
-
-#undef Textures_UniqueId2
-DENG_EXTERN_C int Textures_UniqueId2(Uri const *_uri, boolean quiet)
-{
-    LOG_AS("Textures_UniqueId");
-    if(!_uri) return -1;
-    de::Uri const &uri = reinterpret_cast<de::Uri const &>(*_uri);
-
-    de::Textures &textures = *App_Textures();
-    try
-    {
-        return textures.find(uri).uniqueId();
-    }
-    catch(de::Textures::NotFoundError const &)
-    {
-        // Log but otherwise ignore this error.
-        if(!quiet)
-        {
-            LOG_WARNING("Unknown texture %s.") << uri;
-        }
-    }
-    return -1;
-}
-
-#undef Textures_UniqueId
-DENG_EXTERN_C int Textures_UniqueId(Uri const *uri)
-{
-    return Textures_UniqueId2(uri, false);
-}
-
 D_CMD(ListTextures)
 {
     DENG2_UNUSED(src);
 
-    de::Textures &textures = *App_Textures();
+    de::Textures &textures = App_Textures();
     de::Uri search = composeSearchUri(&argv[1], argc - 1);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
@@ -762,7 +691,7 @@ D_CMD(InspectTexture)
 {
     DENG2_UNUSED(src);
 
-    de::Textures &textures = *App_Textures();
+    de::Textures &textures = App_Textures();
     de::Uri search = composeSearchUri(&argv[1], argc - 1, false /*don't match schemes*/);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
@@ -796,7 +725,7 @@ D_CMD(PrintTextureStats)
 {
     DENG2_UNUSED(src); DENG2_UNUSED(argc); DENG2_UNUSED(argv);
 
-    de::Textures &textures = *App_Textures();
+    de::Textures &textures = App_Textures();
 
     Con_FPrintf(CPF_YELLOW, "Texture Statistics:\n");
     de::Textures::Schemes const &schemes = textures.allSchemes();
