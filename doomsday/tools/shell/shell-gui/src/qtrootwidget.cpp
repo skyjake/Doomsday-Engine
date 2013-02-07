@@ -1,4 +1,4 @@
-/** @file qtrootwidget.cpp  Root widget that works with a Qt canvas.
+/** @file qtrootwidget.cpp  Root widget that works with a Qt canvas->
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -19,6 +19,8 @@
 #include "qtrootwidget.h"
 #include "qttextcanvas.h"
 #include <de/shell/KeyEvent>
+#include <de/AnimationVector>
+#include <de/Clock>
 #include <QFontMetrics>
 #include <QKeyEvent>
 #include <QPainter>
@@ -27,23 +29,34 @@
 using namespace de;
 using namespace de::shell;
 
-struct QtRootWidget::Instance
+const int BLINK_INTERVAL = 500; // ms
+
+#ifdef MACOSX
+#  define CONTROL_MOD   Qt::MetaModifier
+#else
+#  define CONTROL_MOD   Qt::ControlModifier
+#endif
+
+DENG2_PIMPL(QtRootWidget)
 {
-    QtRootWidget &self;
     int margin;
     Vector2i charSize;
-    QtTextCanvas canvas;
+    QtTextCanvas *canvas;
+    TextRootWidget root;
     QFont font;
     QTimer *blinkTimer;
     bool blinkVisible;
+    QPoint origin;
 
-    Instance(QtRootWidget &inst)
-        : self(inst), margin(4), canvas(Vector2i(1, 1)),
-          blinkTimer(0),
-          blinkVisible(true)
+    Instance(Public &inst) : Private(inst),
+        margin(4),
+        canvas(new QtTextCanvas(Vector2i(1, 1))),
+        root(canvas),
+        blinkTimer(0),
+        blinkVisible(true)
     {
-        canvas.setForegroundColor(QColor(40, 40, 50));
-        canvas.setBackgroundColor(QColor(200, 200, 210));
+        canvas->setForegroundColor(QColor(40, 40, 50));
+        canvas->setBackgroundColor(QColor(210, 210, 220));
     }
 
     void setFont(QFont const &fnt)
@@ -54,21 +67,21 @@ struct QtRootWidget::Instance
         charSize.x = metrics.width('W');
         charSize.y = metrics.lineSpacing();
 
-        canvas.setFont(font);
-        canvas.setCharSize(charSize);
+        canvas->setFont(font);
+        canvas->setCharSize(charSize);
     }
 
     void updateSize(int widthPx, int heightPx)
     {
         if(!charSize.x || !charSize.y) return;
 
-        widthPx  -= margin * 2;
-        heightPx -= margin * 2;
-
         // Determine number of characters that fits in the new size.
-        Vector2i size(widthPx / charSize.x, heightPx / charSize.y);
-        canvas.resize(size);
-        self.setViewSize(size);
+        Vector2i size((widthPx - 2*margin) / charSize.x, (heightPx - 2*margin) / charSize.y);
+        root.setViewSize(size);
+
+        //origin = QPoint((widthPx  - canvas->image().width())  / 2,
+        //                (heightPx - canvas->image().height()) / 2);
+        origin = QPoint(margin, heightPx - canvas->image().height() - margin);
     }
 };
 
@@ -79,7 +92,7 @@ QtRootWidget::QtRootWidget(QWidget *parent)
 
     d->blinkTimer = new QTimer(this);
     connect(d->blinkTimer, SIGNAL(timeout()), this, SLOT(blink()));
-    d->blinkTimer->start(500);
+    d->blinkTimer->start(BLINK_INTERVAL);
 }
 
 QtRootWidget::~QtRootWidget()
@@ -87,33 +100,86 @@ QtRootWidget::~QtRootWidget()
     delete d;
 }
 
+TextRootWidget &QtRootWidget::rootWidget()
+{
+    return d->root;
+}
+
 void QtRootWidget::setFont(QFont const &font)
 {
     d->setFont(font);
     d->updateSize(width(), height());
 
-    setMinimumSize(d->charSize.x * 80 + 2 * d->margin,
-                   d->charSize.y * 24 + 2 * d->margin);
+    setMinimumSize(d->charSize.x * 40 + 2 * d->margin,
+                   d->charSize.y * 6 + 2 * d->margin);
 }
 
 void QtRootWidget::keyPressEvent(QKeyEvent *ev)
 {
-    ev->accept();
+    bool eaten;
 
-    if(!ev->text().isEmpty())
+    /*
+    qDebug() << "key:" << QString::number(ev->key(), 16) << "text:" << ev->text()
+             << "mods:" << ev->modifiers();
+    */
+
+    if(!ev->text().isEmpty() && ev->text()[0].isPrint() &&
+            !ev->modifiers().testFlag(CONTROL_MOD))
     {
         KeyEvent event(ev->text());
-        processEvent(&event);
+        eaten = d->root.processEvent(&event);
     }
     else
     {
-        KeyEvent event(ev->key(),
-                       ev->modifiers().testFlag(Qt::ControlModifier)?
-                           KeyEvent::Control : KeyEvent::None);
-        processEvent(&event);
+        int key = ev->key();
+        KeyEvent::Modifiers mods = ev->modifiers().testFlag(CONTROL_MOD)?
+                    KeyEvent::Control : KeyEvent::None;
+
+        // Special control key mappings.
+        if(mods & KeyEvent::Control)
+        {
+            switch(key)
+            {
+            case Qt::Key_A:
+                key = Qt::Key_Home;
+                mods = KeyEvent::None;
+                break;
+
+            case Qt::Key_D:
+                key = Qt::Key_Delete;
+                mods = KeyEvent::None;
+                break;
+
+            case Qt::Key_E:
+                key = Qt::Key_End;
+                mods = KeyEvent::None;
+                break;
+
+            default:
+                break;
+            }
+        }
+
+        KeyEvent event(key, mods);
+        eaten = d->root.processEvent(&event);
     }
 
-    QWidget::keyPressEvent(ev);
+    if(eaten)
+    {
+        ev->accept();
+
+        // Restart blink.
+        d->blinkVisible = true;
+        d->blinkTimer->stop();
+        d->blinkTimer->start(BLINK_INTERVAL);
+
+        update();
+    }
+    else
+    {
+        ev->ignore();
+        QWidget::keyPressEvent(ev);
+    }
 }
 
 void QtRootWidget::resizeEvent(QResizeEvent *ev)
@@ -125,35 +191,40 @@ void QtRootWidget::resizeEvent(QResizeEvent *ev)
 
 void QtRootWidget::paintEvent(QPaintEvent *)
 {
+    Clock::appClock().setTime(Time());
+
+    // Update changed portions.
+    d->root.update();
+    d->root.draw();
+
     QSize size(width(), height());
 
     QPainter painter(this);
     painter.setPen(Qt::NoPen);
-    painter.fillRect(QRect(QPoint(0, 0), size), d->canvas.backgroundColor());
+    painter.fillRect(QRect(QPoint(0, 0), size), d->canvas->backgroundColor());
 
-    // Update changed portions.
-    d->canvas.show();
+    QImage const &buf = d->canvas->image();
+    QPoint origin = d->origin;
 
-    QImage const &buf = d->canvas.image();
-    painter.drawImage(d->margin, d->margin, buf);
+    painter.drawImage(origin, buf);
 
     // Blinking cursor.
     if(d->blinkVisible)
     {
-        QPoint pos(d->margin + d->charSize.x * d->canvas.cursorPosition().x,
-                   d->margin + d->charSize.y * d->canvas.cursorPosition().y);
+        QPoint pos = origin + QPoint(d->charSize.x * d->canvas->cursorPosition().x,
+                                     d->charSize.y * d->canvas->cursorPosition().y);
 
-        TextCanvas::Char ch = d->canvas.at(d->canvas.cursorPosition());
+        TextCanvas::Char ch = d->canvas->at(d->canvas->cursorPosition());
 
         painter.setPen(Qt::NoPen);
         painter.fillRect(QRect(pos, QSize(de::max(1, d->charSize.x / 5), d->charSize.y)),
                          ch.attribs.testFlag(TextCanvas::Char::Reverse)?
-                             d->canvas.backgroundColor() : d->canvas.foregroundColor());
+                             d->canvas->backgroundColor() : d->canvas->foregroundColor());
     }
 }
 
 void QtRootWidget::blink()
 {
     d->blinkVisible = !d->blinkVisible;
-    QWidget::update();
+    update();
 }

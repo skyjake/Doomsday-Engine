@@ -20,21 +20,23 @@
 #define QTROOTWIDGET_H
 
 #include <QWidget>
-#include <de/RootWidget>
+#include <de/shell/TextRootWidget>
 
 /**
  * Root widget that works with a Qt canvas.
  *
- * QtRootWidget is an actual QWidget as well; any received input events will be
+ * QtRootWidget owns a TextRootWidget; any received input events will be
  * passed to the de::Widgets in the tree.
  */
-class QtRootWidget : public QWidget, public de::RootWidget
+class QtRootWidget : public QWidget
 {
     Q_OBJECT
 
 public:
     explicit QtRootWidget(QWidget *parent = 0);
     ~QtRootWidget();
+
+    de::shell::TextRootWidget &rootWidget();
 
     /**
      * Sets the font to use on the canvas. The size of the font determines the
