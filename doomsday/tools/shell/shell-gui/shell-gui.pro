@@ -27,12 +27,16 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 HEADERS += \
     src/mainwindow.h \
-    src/qtguiapp.h
+    src/qtguiapp.h \
+    src/qttextcanvas.h \
+    src/qtrootwidget.h
 
 SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
-    src/qtguiapp.cpp
+    src/qtguiapp.cpp \
+    src/qttextcanvas.cpp \
+    src/qtrootwidget.cpp
 
 # Deployment ----------------------------------------------------------------
 

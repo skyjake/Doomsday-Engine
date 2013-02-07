@@ -18,12 +18,30 @@
 
 #include "qtguiapp.h"
 #include <QMessageBox>
+#include <de/LogBuffer>
 #include <de/Error>
+#include <de/Clock>
+#include <de/Animation>
 
 using namespace de;
 
 struct QtGuiApp::Instance
 {
+    LogBuffer logBuffer;
+    Clock clock;
+
+    Instance()
+    {
+        LogBuffer::setAppBuffer(logBuffer);
+        Clock::setAppClock(&clock);
+        Animation::setClock(&clock);
+    }
+
+    ~Instance()
+    {
+        Clock::setAppClock(0);
+        Animation::setClock(0);
+    }
 };
 
 QtGuiApp::QtGuiApp(int &argc, char **argv)
@@ -44,7 +62,7 @@ bool QtGuiApp::notify(QObject *receiver, QEvent *event)
     }
     catch(Error const &er)
     {
-        QMessageBox::critical(NULL, "Caught Exception", er.asText());
+        QMessageBox::critical(NULL, "Uncaught Exception", er.asText());
     }
     return false;
 }
