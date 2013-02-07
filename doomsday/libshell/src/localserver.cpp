@@ -40,7 +40,7 @@ LocalServer::~LocalServer()
     delete d;
 }
 
-void LocalServer::start(duint16 port, String const &gameMode)
+void LocalServer::start(duint16 port, String const &gameMode, QStringList additionalOptions)
 {
     DENG2_ASSERT(d->link == 0);
 
@@ -77,6 +77,8 @@ void LocalServer::start(duint16 port, String const &gameMode)
     cmd.append(gameMode);
     cmd.append("-cmd");
     cmd.append("net-ip-port " + String::number(port));
+
+    foreach(String opt, additionalOptions) cmd.append(opt);
 
     LOG_INFO("Starting local server with port %i using game mode '%s'")
             << port << gameMode;

@@ -20,6 +20,7 @@
 #define LIBSHELL_LOCALSERVER_H
 
 #include "Link"
+#include <QStringList>
 
 namespace de {
 namespace shell {
@@ -34,7 +35,8 @@ public:
 
     virtual ~LocalServer();
 
-    void start(duint16 port, String const &gameMode);
+    void start(duint16 port, String const &gameMode,
+               QStringList additionalOptions = QStringList());
 
     void stop();
 
