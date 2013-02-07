@@ -45,7 +45,9 @@ DENG2_PIMPL(QtRootWidget)
     TextRootWidget root;
     QFont font;
     QTimer *blinkTimer;
+    QTimer *cursorTimer;
     bool blinkVisible;
+    bool cursorVisible;
     QPoint origin;
 
     Instance(Public &inst) : Private(inst),
@@ -53,7 +55,9 @@ DENG2_PIMPL(QtRootWidget)
         canvas(new QtTextCanvas(Vector2i(1, 1))),
         root(canvas),
         blinkTimer(0),
-        blinkVisible(true)
+        cursorTimer(0),
+        blinkVisible(true),
+        cursorVisible(true)
     {
         canvas->setForegroundColor(QColor(40, 40, 50));
         canvas->setBackgroundColor(QColor(210, 210, 220));
@@ -90,9 +94,14 @@ QtRootWidget::QtRootWidget(QWidget *parent)
 {
     setFocusPolicy(Qt::StrongFocus);
 
+    // Blinking timers.
     d->blinkTimer = new QTimer(this);
     connect(d->blinkTimer, SIGNAL(timeout()), this, SLOT(blink()));
     d->blinkTimer->start(BLINK_INTERVAL);
+
+    d->cursorTimer = new QTimer(this);
+    connect(d->cursorTimer, SIGNAL(timeout()), this, SLOT(cursorBlink()));
+    d->cursorTimer->start(BLINK_INTERVAL);
 }
 
 QtRootWidget::~QtRootWidget()
@@ -168,10 +177,10 @@ void QtRootWidget::keyPressEvent(QKeyEvent *ev)
     {
         ev->accept();
 
-        // Restart blink.
-        d->blinkVisible = true;
-        d->blinkTimer->stop();
-        d->blinkTimer->start(BLINK_INTERVAL);
+        // Restart cursor blink.
+        d->cursorVisible = true;
+        d->cursorTimer->stop();
+        d->cursorTimer->start(BLINK_INTERVAL);
 
         update();
     }
@@ -193,6 +202,8 @@ void QtRootWidget::paintEvent(QPaintEvent *)
 {
     Clock::appClock().setTime(Time());
 
+    d->canvas->setBlinkVisible(d->blinkVisible);
+
     // Update changed portions.
     d->root.update();
     d->root.draw();
@@ -209,7 +220,7 @@ void QtRootWidget::paintEvent(QPaintEvent *)
     painter.drawImage(origin, buf);
 
     // Blinking cursor.
-    if(d->blinkVisible)
+    if(d->cursorVisible)
     {
         QPoint pos = origin + QPoint(d->charSize.x * d->canvas->cursorPosition().x,
                                      d->charSize.y * d->canvas->cursorPosition().y);
@@ -226,5 +237,11 @@ void QtRootWidget::paintEvent(QPaintEvent *)
 void QtRootWidget::blink()
 {
     d->blinkVisible = !d->blinkVisible;
+    update();
+}
+
+void QtRootWidget::cursorBlink()
+{
+    d->cursorVisible = !d->cursorVisible;
     update();
 }

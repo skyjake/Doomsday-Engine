@@ -52,6 +52,7 @@ public:
 
 protected slots:
     void blink();
+    void cursorBlink();
 
 private:
     struct Instance;

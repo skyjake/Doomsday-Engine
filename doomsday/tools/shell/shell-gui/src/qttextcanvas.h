@@ -61,6 +61,8 @@ public:
 
     Coord cursorPosition() const;
 
+    void setBlinkVisible(bool visible);
+
     /**
      * Draws the changed portions of the text canvas into the destination
      * buffer.

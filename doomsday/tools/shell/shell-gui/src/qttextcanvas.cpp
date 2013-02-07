@@ -34,11 +34,12 @@ struct QtTextCanvas::Instance
     QColor foreground;
     QColor background;
     Vector2i cursorPos;
+    bool blinkVisible;
 
     typedef QMap<Char, QImage> Cache;
     Cache cache;
 
-    Instance()
+    Instance() : blinkVisible(true)
     {}
 
     QSize pixelSize() const
@@ -182,6 +183,11 @@ TextCanvas::Coord QtTextCanvas::cursorPosition() const
     return d->cursorPos;
 }
 
+void QtTextCanvas::setBlinkVisible(bool visible)
+{
+    d->blinkVisible = visible;
+}
+
 void QtTextCanvas::show()
 {
     QPainter painter(&d->backBuffer);
@@ -194,14 +200,22 @@ void QtTextCanvas::show()
             Coord const pos(x, y);
             Char const &ch = at(pos);
 
-            if(!ch.isDirty())
+            if(!ch.isDirty() && !ch.attribs.testFlag(Char::Blink))
                 continue;
 
             QRect const rect(QPoint(x * d->charSizePx.x,
                                     y * d->charSizePx.y),
                              QSize(d->charSizePx.x, d->charSizePx.y));
 
-            painter.drawImage(rect.topLeft(), d->glyph(ch));
+            if(ch.attribs.testFlag(Char::Blink) && !d->blinkVisible)
+            {
+                // Blinked out.
+                painter.drawImage(rect.topLeft(), d->glyph(Char(' ', ch.attribs)));
+            }
+            else
+            {
+                painter.drawImage(rect.topLeft(), d->glyph(ch));
+            }
 
             // Select attributes.
             if(ch.attribs.testFlag(Char::Underline))
