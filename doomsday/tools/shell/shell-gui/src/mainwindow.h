@@ -11,6 +11,11 @@ public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    void setTitle(QString const &title);
+
+    bool isConnected() const;
+    void closeEvent(QCloseEvent *);
+
 private:
     struct Instance;
     Instance *d;

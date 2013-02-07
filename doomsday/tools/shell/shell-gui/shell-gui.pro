@@ -12,9 +12,11 @@ TEMPLATE = app
 win32|macx: TARGET = Doomsday-Shell
       else: TARGET = doomsday-shell
 
-VERSION = 0.1.0
+VERSION = 1.0.0
 
 # Build Configuration -------------------------------------------------------
+
+DEFINES += SHELL_VERSION=\\\"$$VERSION\\\"
 
 CONFIG += deng_qtgui
 
@@ -29,14 +31,16 @@ HEADERS += \
     src/mainwindow.h \
     src/qtguiapp.h \
     src/qttextcanvas.h \
-    src/qtrootwidget.h
+    src/qtrootwidget.h \
+    src/guishellapp.h
 
 SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
     src/qtguiapp.cpp \
     src/qttextcanvas.cpp \
-    src/qtrootwidget.cpp
+    src/qtrootwidget.cpp \
+    src/guishellapp.cpp
 
 # Deployment ----------------------------------------------------------------
 

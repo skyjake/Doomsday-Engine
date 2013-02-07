@@ -1,4 +1,4 @@
-/** @file main.cpp Application startup and shutdown.
+/** @file shellapp.h  Shell GUI application.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,13 +16,35 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "guishellapp.h"
-#include "mainwindow.h"
+#ifndef GUISHELLAPP_H
+#define GUISHELLAPP_H
 
-#include <de/libdeng2.h>
+#include "qtguiapp.h"
 
-int main(int argc, char *argv[])
+class MainWindow;
+
+class GuiShellApp : public QtGuiApp
 {
-    GuiShellApp a(argc, argv);
-    return a.exec();
-}
+    Q_OBJECT
+
+public:
+    GuiShellApp(int &argc, char **argv);
+    ~GuiShellApp();
+
+    void openNewConnectionWindow();
+    MainWindow *newOrReusedConnectionWindow();
+
+public slots:
+    void connectToServer();
+    void connectToLocalServer();
+    void disconnectFromServer();
+    void startLocalServer();
+    void updateLocalServerMenu();
+    void aboutShell();
+
+private:
+    struct Instance;
+    Instance *d;
+};
+
+#endif // GUISHELLAPP_H

@@ -212,8 +212,10 @@ void ShellApp::askToStartLocalServer()
     LocalServerDialog dlg;
     if(dlg.exec(rootWidget()))
     {
+        QStringList opts = dlg.text().split(' ', QString::SkipEmptyParts);
+
         LocalServer sv;
-        sv.start(dlg.port(), dlg.gameMode());
+        sv.start(dlg.port(), dlg.gameMode(), opts);
 
         openConnection("localhost:" + String::number(dlg.port()));
     }
