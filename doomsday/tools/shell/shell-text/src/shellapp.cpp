@@ -36,9 +36,8 @@
 using namespace de;
 using namespace shell;
 
-struct ShellApp::Instance
+DENG2_PIMPL(ShellApp)
 {
-    ShellApp &self;
     PersistentData persist;
     MenuWidget *menu;
     LogWidget *log;
@@ -48,7 +47,7 @@ struct ShellApp::Instance
     Link *link;
     ServerFinder finder;
 
-    Instance(ShellApp &a) : self(a), link(0)
+    Instance(Public &i) : Private(i), link(0)
     {
         RootWidget &root = self.rootWidget();
 

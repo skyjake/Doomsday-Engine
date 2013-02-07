@@ -23,13 +23,12 @@
 using namespace de;
 using namespace de::shell;
 
-struct StatusWidget::Instance
+DENG2_PIMPL(StatusWidget)
 {
-    StatusWidget &self;
     Link *link;
     QTimer *updateTimer;
 
-    Instance(StatusWidget &i) : self(i), link(0)
+    Instance(Public &i) : Private(i), link(0)
     {
         updateTimer = new QTimer(&self);
     }
