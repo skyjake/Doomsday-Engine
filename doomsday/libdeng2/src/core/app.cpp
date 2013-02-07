@@ -41,10 +41,8 @@ namespace de {
 
 static App *singletonApp;
 
-struct App::Instance : DENG2_OBSERVES(Record, Deletion)
+DENG2_PIMPL(App), DENG2_OBSERVES(Record, Deletion)
 {
-    App &app;
-
     CommandLine cmdLine;
 
     LogBuffer logBuffer;
@@ -83,8 +81,8 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
 
     void (*terminateFunc)(char const *);
 
-    Instance(App &a, QStringList args)
-        : app(a), cmdLine(args), persistentData(0), config(0), terminateFunc(0)
+    Instance(Public &a, QStringList args)
+        : Private(a), cmdLine(args), persistentData(0), config(0), terminateFunc(0)
     {
         singletonApp = &a;
 
@@ -126,10 +124,10 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
         binFolder.attach(new DirectoryFeed(appDir));
         if(allowPlugins)
         {
-            binFolder.attach(new DirectoryFeed(app.nativePluginBinaryPath()));
+            binFolder.attach(new DirectoryFeed(self.nativePluginBinaryPath()));
         }
-        fs.makeFolder("/data").attach(new DirectoryFeed(app.nativeBasePath()));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(app.nativeBasePath() / "modules"));
+        fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
+        fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 
 #elif WIN32
         if(allowPlugins)
@@ -150,7 +148,7 @@ struct App::Instance : DENG2_OBSERVES(Record, Deletion)
 #endif
 
         // User's home folder.
-        fs.makeFolder("/home").attach(new DirectoryFeed(app.nativeHomePath(),
+        fs.makeFolder("/home").attach(new DirectoryFeed(self.nativeHomePath(),
             DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
 
         // Populate the file system.

@@ -24,10 +24,8 @@
 namespace de {
 namespace shell {
 
-struct CommandLineWidget::Instance
+DENG2_PIMPL(CommandLineWidget)
 {
-    CommandLineWidget &self;
-
     /**
      * Line of text with a cursor.
      */
@@ -44,7 +42,7 @@ struct CommandLineWidget::Instance
     QList<Command> history;
     int historyPos;
 
-    Instance(CommandLineWidget &cli) : self(cli), historyPos(0)
+    Instance(Public &i) : Private(i), historyPos(0)
     {
         history.append(Command());
     }
