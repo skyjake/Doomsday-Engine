@@ -33,6 +33,8 @@
 #include <de/Log>
 #include <QDebug>
 
+using namespace de;
+
 static QString defaultLocationName()
 {
     QString name = QDesktopServices::displayName(QDesktopServices::TempLocation);
@@ -43,9 +45,8 @@ static QString defaultLocationName()
     return name;
 }
 
-struct UpdaterSettingsDialog::Instance
+DENG2_PIMPL(UpdaterSettingsDialog)
 {
-    UpdaterSettingsDialog* self;
     QCheckBox* autoCheck;
     QComboBox* freqList;
     QLabel* lastChecked;
@@ -53,14 +54,14 @@ struct UpdaterSettingsDialog::Instance
     QComboBox* pathList;
     QCheckBox* deleteAfter;
 
-    Instance(UpdaterSettingsDialog* dlg) : self(dlg)
+    Instance(Public &i) : Private(i)
     {
         // As a modal dialog it is implicitly clear that this belongs to
         // Doomsday, so we don't need to have the name in the window title.
-        self->setWindowTitle(tr("Updater Settings"));
+        self.setWindowTitle(tr("Updater Settings"));
 
         QVBoxLayout* mainLayout = new QVBoxLayout;
-        self->setLayout(mainLayout);
+        self.setLayout(mainLayout);
 
         QFormLayout* form = new QFormLayout;
         mainLayout->addLayout(form);
@@ -104,10 +105,10 @@ struct UpdaterSettingsDialog::Instance
         fetch();
 
         // Connections.
-        QObject::connect(autoCheck, SIGNAL(toggled(bool)), self, SLOT(autoCheckToggled(bool)));
-        QObject::connect(pathList, SIGNAL(activated(int)), self, SLOT(pathActivated(int)));
-        QObject::connect(ok, SIGNAL(clicked()), self, SLOT(accept()));
-        QObject::connect(cancel, SIGNAL(clicked()), self, SLOT(reject()));
+        QObject::connect(autoCheck, SIGNAL(toggled(bool)), &self, SLOT(autoCheckToggled(bool)));
+        QObject::connect(pathList, SIGNAL(activated(int)), &self, SLOT(pathActivated(int)));
+        QObject::connect(ok, SIGNAL(clicked()), &self, SLOT(accept()));
+        QObject::connect(cancel, SIGNAL(clicked()), &self, SLOT(reject()));
     }
 
     void fetch()
@@ -163,10 +164,8 @@ struct UpdaterSettingsDialog::Instance
 };
 
 UpdaterSettingsDialog::UpdaterSettingsDialog(QWidget *parent)
-    : UpdaterDialog(parent)
-{
-    d = new Instance(this);
-}
+    : UpdaterDialog(parent), d(new Instance(*this))
+{}
 
 UpdaterSettingsDialog::~UpdaterSettingsDialog()
 {
