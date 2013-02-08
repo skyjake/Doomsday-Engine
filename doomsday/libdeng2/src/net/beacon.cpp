@@ -101,10 +101,19 @@ void Beacon::discover(TimeDelta const &timeOut, TimeDelta const &interval)
     connect(d->socket, SIGNAL(readyRead()), this, SLOT(readDiscoveryReply()));
 
     // Choose a semi-random port for listening to replies from servers' beacons.
-    if(!d->socket->bind(d->port + 1 + qrand() % 1024, QUdpSocket::ShareAddress))
+    int tries = 10;
+    forever
     {
-        /// @throws PortError Could not open the UDP port.
-        throw PortError("Beacon::start", "Could not bind to UDP port " + String::number(d->port));
+        if(d->socket->bind(d->port + 1 + qrand() % 0x4000, QUdpSocket::DontShareAddress))
+        {
+            // Got a port open successfully.
+            break;
+        }
+        if(!--tries)
+        {
+            /// @throws PortError Could not open the UDP port.
+            throw PortError("Beacon::start", "Could not bind to UDP port " + String::number(d->port));
+        }
     }
 
     d->found.clear();
