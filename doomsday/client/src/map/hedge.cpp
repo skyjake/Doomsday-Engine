@@ -50,6 +50,7 @@ HEdge::HEdge(HEdge const &other) : de::MapElement(DMU_HEDGE)
 
 HEdge::~HEdge()
 {
+#ifdef __CLIENT__
     for(uint i = 0; i < 3; ++i)
     {
         if(bsuf[i])
@@ -57,6 +58,7 @@ HEdge::~HEdge()
             SB_DestroySurface(bsuf[i]);
         }
     }
+#endif
 }
 
 coord_t WallDivNode_Height(walldivnode_t* node)

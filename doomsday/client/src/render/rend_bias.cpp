@@ -424,6 +424,7 @@ void SB_InitForMap(const char* uniqueID)
                     bsuf->illum = illums;
                     illums += bsuf->size;
 
+                    DENG2_ASSERT(leaf->bsuf != 0);
                     leaf->bsuf[j] = bsuf;
                 }
             }
