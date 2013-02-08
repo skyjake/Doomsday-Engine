@@ -357,12 +357,9 @@ Plane *R_NewPlaneForSector(Sector *sec)
     plane->type = PLN_MID;
 
     // Resize this sector's plane list.
-    sec->planes = (Plane **) Z_Realloc(sec->planes, sizeof(Plane *) * (++sec->planeCount + 1), PU_MAP);
-    // Add the new plane to the end of the list.
-    sec->planes[sec->planeCount-1] = plane;
-    sec->planes[sec->planeCount] = NULL; // Terminate.
+    sec->planes.append(plane);
 
-    plane->planeID = sec->planeCount - 1;
+    plane->planeID = sec->planes.size() - 1;
 
     // Initialize the surface.
     Surface *suf = &plane->surface;
@@ -383,11 +380,11 @@ Plane *R_NewPlaneForSector(Sector *sec)
             BspLeaf *bspLeaf = *ssecIter;
             uint n = 0;
 
-            biassurface_t **newList = (biassurface_t **) Z_Calloc(sec->planeCount * sizeof(biassurface_t *), PU_MAP, 0);
+            biassurface_t **newList = (biassurface_t **) Z_Calloc(sec->planeCount() * sizeof(biassurface_t *), PU_MAP, 0);
             // Copy the existing list?
             if(bspLeaf->bsuf)
             {
-                for(; n < sec->planeCount - 1; ++n)
+                for(; n < sec->planeCount() - 1 /* exclude newly added */; ++n)
                 {
                     newList[n] = bspLeaf->bsuf[n];
                 }
@@ -430,27 +427,11 @@ Plane *R_NewPlaneForSector(Sector *sec)
 void R_DestroyPlaneOfSector(uint id, Sector *sec)
 {
     if(!sec) return; // Do wha?
-    if(id >= sec->planeCount)
+    if(id > sec->planeCount())
         Con_Error("P_DestroyPlaneOfSector: Plane id #%i is not valid for "
                   "sector #%u", id, (uint) GET_SECTOR_IDX(sec));
 
     Plane *plane = sec->planes[id];
-
-    // Create a new plane list?
-    Plane **newList = 0;
-    if(sec->planeCount > 1)
-    {
-        newList = (Plane **) Z_Malloc(sizeof(*newList) * sec->planeCount, PU_MAP, 0);
-
-        // Copy ptrs to the planes.
-        uint n = 0;
-        for(uint i = 0; i < sec->planeCount; ++i)
-        {
-            if(i == id) continue;
-            newList[n++] = sec->planes[i];
-        }
-        newList[n] = NULL; // Terminate.
-    }
 
     // If this plane is currently being watched, remove it.
     R_RemoveTrackedPlane(GameMap_TrackedPlanes(theMap), plane);
@@ -471,7 +452,7 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
         BspLeaf *bspLeaf = *bspLeafIter;
         DENG2_ASSERT(bspLeaf->bsuf != 0);
         SB_DestroySurface(bspLeaf->bsuf[id]);
-        if(id < sec->planeCount)
+        if(id < sec->planeCount())
         {
             std::memmove(bspLeaf->bsuf + id, bspLeaf->bsuf + id + 1, sizeof(biassurface_t *));
         }
@@ -479,12 +460,8 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
 #endif // __CLIENT__
 
     // Destroy the specified plane.
+    sec->planes.removeOne(plane);
     delete plane;
-    sec->planeCount--;
-
-    // Link the new list to the sector.
-    Z_Free(sec->planes);
-    sec->planes = newList;
 }
 
 surfacedecor_t *R_CreateSurfaceDecoration(Surface *suf)
@@ -1097,7 +1074,7 @@ void R_MapInitSurfaces(boolean forceUpdate)
 
         R_UpdateSector(sec, forceUpdate);
 
-        for(uint j = 0; j < sec->planeCount; ++j)
+        for(uint j = 0; j < sec->planeCount(); ++j)
         {
             Plane *pln = sec->SP_plane(j);
 
@@ -1152,7 +1129,7 @@ void R_MapInitSurfaceLists()
         Sector *sec = SECTOR_PTR(i);
         if(!sec->lineDefCount) continue;
 
-        for(uint j = 0; j < sec->planeCount; ++j)
+        for(uint j = 0; j < sec->planeCount(); ++j)
         {
             addToSurfaceLists(&sec->SP_planesurface(j), sec->SP_planematerial(j));
         }
@@ -1354,7 +1331,7 @@ boolean R_SectorContainsSkySurfaces(Sector const *sec)
             sectorContainsSkySurfaces = true;
         else
             n++;
-    } while(!sectorContainsSkySurfaces && n < sec->planeCount);
+    } while(!sectorContainsSkySurfaces && n < sec->planeCount());
     return sectorContainsSkySurfaces;
 }
 
@@ -1629,7 +1606,7 @@ boolean R_UpdateSector(Sector *sec, boolean forceUpdate)
     }
 
     // For each plane.
-    for(uint i = 0; i < sec->planeCount; ++i)
+    for(uint i = 0; i < sec->planeCount(); ++i)
     {
         if(R_UpdatePlane(sec->planes[i], forceUpdate))
         {

@@ -629,7 +629,7 @@ static void finishSectors(GameMap* map)
 
         // Set the position of the sound origin for all plane sound origins.
         // Set target heights for all planes.
-        for(uint k = 0; k < sec->planeCount; ++k)
+        for(uint k = 0; k < sec->planeCount(); ++k)
         {
             Plane* pln = sec->planes[k];
 
@@ -674,7 +674,7 @@ static void chainSectorBases(GameMap* map)
         base->thinker.next = base->thinker.prev = 0;
 
         // Add all plane base mobjs.
-        for(uint j = 0; j < sec->planeCount; ++j)
+        for(uint j = 0; j < sec->planeCount(); ++j)
         {
             Plane* pln = sec->SP_plane(j);
             linkBaseToSectorChain(sec, &pln->PS_base);
@@ -1103,8 +1103,7 @@ static void hardenSectors(GameMap* dest, EditMap* src)
         Sector* srcS = src->sectors[i];
 
         *destS = *srcS;
-        destS->planeCount = 0;
-        destS->planes = NULL;
+        destS->planes.clear(); // ownership of planes not transferred
     }
 }
 
@@ -1115,7 +1114,7 @@ static void hardenPlanes(GameMap* dest, EditMap* src)
         Sector* destS = &dest->sectors[i];
         Sector* srcS = src->sectors[i];
 
-        for(uint j = 0; j < srcS->planeCount; ++j)
+        for(uint j = 0; j < srcS->planeCount(); ++j)
         {
             Plane* destP = R_NewPlaneForSector(destS);
             Plane* srcP = srcS->planes[j];
@@ -1962,20 +1961,9 @@ uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri,
     Surface_SetColorAndAlpha(&pln->surface, r, g, b, a);
     Surface_SetMaterialOrigin(&pln->surface, matOffsetX, matOffsetY);
 
-    Plane **newList = (Plane **) M_Malloc(sizeof(Plane *) * (++s->planeCount + 1));
-    uint idx;
-    for(idx = 0; idx < s->planeCount - 1; ++idx)
-    {
-        newList[idx] = s->planes[idx];
-    }
-    newList[idx++] = pln;
-    newList[idx] = NULL; // Terminate.
+    s->planes.append(pln);
 
-    if(s->planes)
-        M_Free(s->planes);
-    s->planes = newList;
-
-    return s->planeCount; // 1-based index.
+    return s->planes.size(); // 1-based index.
 }
 
 uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
@@ -1988,8 +1976,6 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
     s->rgb[CG] = MINMAX_OF(0, green, 1);
     s->rgb[CB] = MINMAX_OF(0, blue, 1);
     s->lightLevel = MINMAX_OF(0, lightlevel, 1);
-    s->planeCount = 0;
-    s->planes = NULL;
 
     return s->buildData.index;
 }

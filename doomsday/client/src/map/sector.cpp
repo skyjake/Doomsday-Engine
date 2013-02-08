@@ -41,8 +41,6 @@ Sector::Sector() : de::MapElement(DMU_SECTOR)
     numReverbBspLeafAttributors = 0;
     reverbBspLeafs = 0;
     memset(&base, 0, sizeof(base));
-    planeCount = 0;
-    planes = 0;
     blockCount = 0;
     changedBlockCount = 0;
     blocks = 0;
@@ -52,15 +50,10 @@ Sector::Sector() : de::MapElement(DMU_SECTOR)
 
 Sector::~Sector()
 {
-    if(planes)
+    foreach(Plane *p, planes)
     {
-        for(uint i = 0; i < planeCount; ++i)
-        {
-            delete planes[i];
-        }
-        M_Free(planes);
+        delete p;
     }
-
 }
 
 void Sector_UpdateAABox(Sector* sec)

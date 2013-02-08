@@ -50,7 +50,7 @@ BspLeaf::~BspLeaf()
     if(bsuf)
     {
 #ifdef __CLIENT__
-        for(uint i = 0; i < sector->planeCount; ++i)
+        for(uint i = 0; i < sector->planeCount(); ++i)
         {
             SB_DestroySurface(bsuf[i]);
         }
@@ -100,7 +100,7 @@ void BspLeaf_Delete(BspLeaf* leaf)
 biassurface_t* BspLeaf_BiasSurfaceForGeometryGroup(BspLeaf* leaf, uint groupId)
 {
     DENG2_ASSERT(leaf);
-    if(!leaf->sector || groupId > leaf->sector->planeCount) return NULL;
+    if(!leaf->sector || groupId > leaf->sector->planeCount()) return NULL;
     DENG2_ASSERT(leaf->bsuf != 0);
     return leaf->bsuf[groupId];
 }
