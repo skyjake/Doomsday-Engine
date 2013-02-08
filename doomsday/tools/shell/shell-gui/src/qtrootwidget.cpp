@@ -127,10 +127,8 @@ void QtRootWidget::keyPressEvent(QKeyEvent *ev)
 {
     bool eaten;
 
-    /*
     qDebug() << "key:" << QString::number(ev->key(), 16) << "text:" << ev->text()
              << "mods:" << ev->modifiers();
-    */
 
     if(!ev->text().isEmpty() && ev->text()[0].isPrint() &&
             !ev->modifiers().testFlag(CONTROL_MOD))
@@ -143,6 +141,8 @@ void QtRootWidget::keyPressEvent(QKeyEvent *ev)
         int key = ev->key();
         KeyEvent::Modifiers mods = ev->modifiers().testFlag(CONTROL_MOD)?
                     KeyEvent::Control : KeyEvent::None;
+
+        if(key == Qt::Key_Return) key = Qt::Key_Enter;
 
         // Special control key mappings.
         if(mods & KeyEvent::Control)

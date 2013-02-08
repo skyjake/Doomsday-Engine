@@ -11,14 +11,14 @@
 using namespace de;
 using namespace de::shell;
 
-struct MainWindow::Instance
+DENG2_PIMPL(MainWindow)
 {
     LogBuffer logBuffer;
     LogWidget *log;
     CommandLineWidget *cli;
     Link *link;
 
-    Instance() : link(0)
+    Instance(Public &i) : Private(i), link(0)
     {
         // Configure the log buffer.
         logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
@@ -31,11 +31,13 @@ struct MainWindow::Instance
         log = new LogWidget;
 
         logBuffer.addSink(log->logSink());
+
+        QObject::connect(cli, SIGNAL(commandEntered(de::String)), &self, SLOT(sendCommandToServer(de::String)));
     }
 };
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), d(new Instance)
+    : QMainWindow(parent), d(new Instance(*this))
 {
     setUnifiedTitleAndToolBarOnMac(true);
 
@@ -169,12 +171,26 @@ void MainWindow::handleIncomingPackets()
 
         case shell::Protocol::ConsoleLexicon:
             // Terms for auto-completion.
-            //d->cli->setLexicon(protocol.lexicon(*packet));
+            d->cli->setLexicon(protocol.lexicon(*packet));
             break;
 
         default:
             break;
         }
+    }
+}
+
+void MainWindow::sendCommandToServer(de::String command)
+{
+    if(d->link)
+    {
+        // Echo the command locally.
+        LogEntry *e = new LogEntry(LogEntry::INFO, "", 0, ">",
+                                   LogEntry::Args() << new LogEntry::Arg(command));
+        d->logBuffer.add(e);
+
+        QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
+        *d->link << *packet;
     }
 }
 

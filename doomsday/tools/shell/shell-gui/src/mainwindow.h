@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <de/String>
 
 class MainWindow : public QMainWindow
 {
@@ -22,6 +23,7 @@ public slots:
 
 protected slots:
     void handleIncomingPackets();
+    void sendCommandToServer(de::String command);
     void disconnected();
 
 private:
