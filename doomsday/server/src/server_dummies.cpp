@@ -597,21 +597,6 @@ void Models_CacheForState(int stateIndex)
     DENG_UNUSED(stateIndex);
 }
 
-void SB_InitForMap(const char* uniqueID)
-{
-    DENG_UNUSED(uniqueID);
-}
-
-void SB_SurfaceMoved(biassurface_t* bsuf)
-{
-    DENG_UNUSED(bsuf);
-}
-
-void SB_DestroySurface(struct biassurface_s* bsuf)
-{
-    DENG_UNUSED(bsuf);
-};
-
 void LG_SectorChanged(Sector* sector)
 {
     DENG_UNUSED(sector);

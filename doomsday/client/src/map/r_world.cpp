@@ -392,6 +392,7 @@ Plane *R_NewPlaneForSector(Sector *sec)
                     newList[n] = bspLeaf->bsuf[n];
                 }
                 Z_Free(bspLeaf->bsuf);
+                bspLeaf->bsuf = 0;
             }
 
             if(!ddMapSetup)
@@ -463,16 +464,19 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
     // If this plane's surface is in the glowing list, remove it.
     R_SurfaceListRemove(GameMap_GlowingSurfaces(theMap), &plane->surface);
 
+#ifdef __CLIENT__
     // Destroy the biassurfaces for this plane.
     for(BspLeaf **bspLeafIter = sec->bspLeafs; *bspLeafIter; bspLeafIter++)
     {
         BspLeaf *bspLeaf = *bspLeafIter;
+        DENG2_ASSERT(bspLeaf->bsuf != 0);
         SB_DestroySurface(bspLeaf->bsuf[id]);
         if(id < sec->planeCount)
         {
             std::memmove(bspLeaf->bsuf + id, bspLeaf->bsuf + id + 1, sizeof(biassurface_t *));
         }
     }
+#endif // __CLIENT__
 
     // Destroy the specified plane.
     delete plane;
@@ -1564,6 +1568,7 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
             }
         }
 
+#ifdef __CLIENT__
         // Inform the shadow bias of changed geometry.
         if(sec->bspLeafs && *sec->bspLeafs)
         {
@@ -1589,6 +1594,7 @@ boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)
                 SB_SurfaceMoved(bspLeaf->bsuf[pln->planeID]);
             }
         }
+#endif // __CLIENT__
 
         // We need the decorations updated.
         Surface_Update(&pln->surface);

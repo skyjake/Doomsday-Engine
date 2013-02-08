@@ -151,10 +151,6 @@ DENG_EXTERN_C void Models_Init();
 DENG_EXTERN_C void Models_Shutdown();
 DENG_EXTERN_C void Models_CacheForState(int stateIndex);
 
-DENG_EXTERN_C void SB_InitForMap(const char* uniqueID);
-DENG_EXTERN_C void SB_SurfaceMoved(biassurface_t* bsuf);
-DENG_EXTERN_C void SB_DestroySurface(struct biassurface_s* bsuf);
-
 DENG_EXTERN_C void LG_SectorChanged(Sector* sector);
 
 DENG_EXTERN_C void Cl_InitPlayers(void);

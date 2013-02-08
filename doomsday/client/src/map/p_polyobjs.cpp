@@ -45,11 +45,13 @@ void P_PolyobjChanged(Polyobj* po)
         HEdge* hedge = line->L_frontside.hedgeLeft;
         int i;
 
+#ifdef __CLIENT__
         // Shadow bias must be told.
         for(i = 0; i < 3; ++i)
         {
             SB_SurfaceMoved(hedge->bsuf[i]);
         }
+#endif
     }
 }
 
