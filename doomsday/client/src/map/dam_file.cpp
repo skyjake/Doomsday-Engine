@@ -437,10 +437,10 @@ static void writeSector(GameMap* map, uint idx)
     writeFloat(s->rgb[CR]);
     writeFloat(s->rgb[CG]);
     writeFloat(s->rgb[CB]);
-    writeLong(s->planeCount);
-    for(i = 0; i < s->planeCount; ++i)
+    writeLong(s->planeCount());
+    for(i = 0; i < s->planeCount(); ++i)
     {
-        Plane              *p = s->planes[i];
+        Plane *p = s->planes[i];
 
         writeFloat(p->height);
         writeFloat(p->target);

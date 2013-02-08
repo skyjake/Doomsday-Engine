@@ -398,13 +398,10 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
             Sector *sec = elem->castTo<Sector>();
             int result = false; // Continue iteration.
 
-            if(sec->planes)
+            foreach(Plane *plane, sec->planes)
             {
-                Plane **planePtr = sec->planes;
-                while(*planePtr && !(result = callback(*planePtr, context)))
-                {
-                    planePtr++;
-                }
+                if((result = callback(plane, context)) != 0)
+                    break;
             }
             return result; }
 

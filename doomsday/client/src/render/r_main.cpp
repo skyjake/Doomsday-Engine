@@ -495,7 +495,7 @@ static void R_UpdateMap()
     for(uint i = 0; i < NUM_SECTORS; ++i)
     {
         Sector *sec = GameMap_Sector(theMap, i);
-        for(uint j = 0; j < sec->planeCount; ++j)
+        for(uint j = 0; j < sec->planeCount(); ++j)
         {
             Surface_Update(&sec->SP_planesurface(j));
         }
@@ -1373,7 +1373,7 @@ void Rend_CacheForMap()
             Sector *sec = SECTOR_PTR(i);
             if(!sec->lineDefCount) continue;
 
-            for(uint k = 0; k < sec->planeCount; ++k)
+            for(uint k = 0; k < sec->planeCount(); ++k)
             {
                 if(sec->SP_planematerial(k))
                     App_Materials()->cache(*sec->SP_planematerial(k), spec, true);

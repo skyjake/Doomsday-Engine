@@ -30,6 +30,7 @@
 #include "MapElement"
 #include "p_mapdata.h"
 #include "p_dmu.h"
+#include <QList>
 
 // Helper macros for accessing sector floor/ceiling plane data elements.
 #define SP_plane(n)             planes[(n)]
@@ -93,6 +94,8 @@ class Plane;
 class Sector : public de::MapElement
 {
 public:
+    typedef QList<Plane *> Planes;
+
     int                 frameFlags;
     int                 validCount;    // if == validCount, already checked.
     AABoxd              aaBox;         // Bounding box for the sector.
@@ -109,8 +112,7 @@ public:
     unsigned int        numReverbBspLeafAttributors;
     BspLeaf**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
     ddmobj_base_t       base;
-    unsigned int        planeCount;
-    Plane             **planes;        // [planeCount+1] size.
+    Planes              planes;
     unsigned int        blockCount;    // Number of gridblocks in the sector.
     unsigned int        changedBlockCount; // Number of blocks to mark changed.
     unsigned short*     blocks;        // Light grid block indices.
@@ -120,6 +122,10 @@ public:
 public:
     Sector();    
     ~Sector();
+
+    uint planeCount() const {
+        return planes.size();
+    }
 };
 
 /**

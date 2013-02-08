@@ -227,7 +227,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
                 {
                     if(scanSec->SP_ceilvisheight - scanSec->SP_floorvisheight > 0)
                     {
-                        for(uint j = 0; j < scanSec->planeCount && !stopScan; ++j)
+                        for(uint j = 0; j < scanSec->planeCount() && !stopScan; ++j)
                         {
                             Plane* pln = scanSec->SP_plane(j);
 
