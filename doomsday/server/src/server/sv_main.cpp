@@ -887,6 +887,10 @@ void Sv_SendPlayerFixes(int plrNum)
     Writer_WriteUInt32(msgWriter, fixes);
     Writer_WriteUInt16(msgWriter, ddpl->mo->thinker.id);
 
+#ifdef _DEBUG
+    Con_Message("Sv_SendPlayerFixes: Fixing mobj %i...\n", ddpl->mo->thinker.id);
+#endif
+
     // Increment counters.
     if(ddpl->flags & DDPF_FIXANGLES)
     {
@@ -895,9 +899,8 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteFloat(msgWriter, ddpl->lookDir);
 
 #ifdef _DEBUG
-Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%f lookdir=%f\n",
-            ddpl->fixCounter.angles, FIX2FLT(ddpl->mo->angle),
-            ddpl->lookDir);
+        Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%x lookdir=%f\n",
+                    ddpl->fixCounter.angles, ddpl->mo->angle, ddpl->lookDir);
 #endif
     }
 
@@ -909,9 +912,9 @@ Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%f lookdir=%f\n",
         Writer_WriteFloat(msgWriter, ddpl->mo->origin[VZ]);
 
 #ifdef _DEBUG
-Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
-            ddpl->fixCounter.origin,
-            ddpl->mo->origin[VX], ddpl->mo->origin[VY], ddpl->mo->origin[VZ]);
+        Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
+                    ddpl->fixCounter.origin,
+                    ddpl->mo->origin[VX], ddpl->mo->origin[VY], ddpl->mo->origin[VZ]);
 #endif
     }
 
@@ -923,9 +926,9 @@ Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
         Writer_WriteFloat(msgWriter, ddpl->mo->mom[MZ]);
 
 #ifdef _DEBUG
-Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
-            ddpl->fixCounter.mom,
-            ddpl->mo->mom[MX], ddpl->mo->mom[MY], ddpl->mo->mom[MZ]);
+        Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
+                    ddpl->fixCounter.mom,
+                    ddpl->mo->mom[MX], ddpl->mo->mom[MY], ddpl->mo->mom[MZ]);
 #endif
     }
 

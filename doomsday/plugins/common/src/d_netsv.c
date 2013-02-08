@@ -637,6 +637,9 @@ void NetSv_NewPlayerEnters(int plrNum)
         if((start = P_GetPlayerStart(gameMapEntryPoint, plrNum, false)))
         {
             const mapspot_t* spot = &mapSpots[start->spot];
+#ifdef _DEBUG
+            Con_Message("NetSv_NewPlayerEnters: Spawning player with angle:%x\n", spot->angle);
+#endif
             P_SpawnPlayer(plrNum, pClass, spot->origin[VX], spot->origin[VY],
                           spot->origin[VZ], spot->angle, spot->flags,
                           false, true);
