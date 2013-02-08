@@ -83,6 +83,7 @@ uint BspBuilder::numVertexes()
 
 Vertex& BspBuilder::vertex(uint idx)
 {
+    DENG2_ASSERT(partitioner->vertex(idx).type() == DMU_VERTEX);
     return partitioner->vertex(idx);
 }
 
