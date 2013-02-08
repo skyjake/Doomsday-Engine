@@ -1644,6 +1644,8 @@ void P_PlayerThinkLookYaw(player_t* player)
     float offsetSensitivity = 100; /// @todo Should be done engine-side, mouse sensitivity!
     float vel, off, turnSpeedPerTic;
 
+    if(IS_DEDICATED) return;
+
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return;
 
@@ -1682,6 +1684,8 @@ void P_PlayerThinkLookPitch(player_t* player, timespan_t ticLength)
     ddplayer_t* plr = player->plr;
     float vel, off;
     float offsetSensitivity = 100; /// @todo Should be done engine-side, mouse sensitivity!
+
+    if(IS_DEDICATED) return;
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
@@ -1732,11 +1736,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
     playerbrain_t      *brain = &player->brain;
     boolean             oldAttack = brain->attack;
 
-    if(IS_DEDICATED)
-    {
-        // There are no players on the server that need control.
-        return;
-    }
+    if(IS_DEDICATED) return;
 
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
