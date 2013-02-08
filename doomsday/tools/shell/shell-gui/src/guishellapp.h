@@ -20,6 +20,7 @@
 #define GUISHELLAPP_H
 
 #include "qtguiapp.h"
+#include <de/shell/ServerFinder>
 
 class MainWindow;
 
@@ -33,6 +34,10 @@ public:
 
     void openNewConnectionWindow();
     MainWindow *newOrReusedConnectionWindow();
+
+    static GuiShellApp &app();
+
+    de::shell::ServerFinder &serverFinder();
 
 public slots:
     void connectToServer();

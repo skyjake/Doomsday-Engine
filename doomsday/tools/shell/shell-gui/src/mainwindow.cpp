@@ -29,6 +29,8 @@ struct MainWindow::Instance
 
         cli = new CommandLineWidget;
         log = new LogWidget;
+
+        logBuffer.addSink(log->logSink());
     }
 };
 
@@ -104,5 +106,88 @@ void MainWindow::closeEvent(QCloseEvent *event)
             return;
         }
     }
+
+    closeConnection();
     event->accept();
+}
+
+void MainWindow::openConnection(QString address)
+{
+    closeConnection();
+
+    qDebug() << "Opening connection to" << address;
+
+    // Keep trying to connect to 30 seconds.
+    d->link = new Link(address, 30);
+    //d->status->setShellLink(d->link);
+
+    connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+    connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+
+    setTitle(address);
+}
+
+void MainWindow::closeConnection()
+{
+    if(d->link)
+    {
+        qDebug() << "Closing existing connection to" << d->link->address().asText();
+
+        // Get rid of the old connection.
+        disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+        disconnect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+
+        delete d->link;
+        d->link = 0;
+        //d->status->setShellLink(0);
+
+        setTitle(tr("Disconnected"));
+    }
+}
+
+void MainWindow::handleIncomingPackets()
+{
+    forever
+    {
+        DENG2_ASSERT(d->link != 0);
+
+        QScopedPointer<Packet> packet(d->link->nextPacket());
+        if(packet.isNull()) break;
+
+        // Process packet contents.
+        shell::Protocol &protocol = d->link->protocol();
+        switch(protocol.recognize(packet.data()))
+        {
+        case shell::Protocol::LogEntries: {
+            // Add the entries into the local log buffer.
+            LogEntryPacket *entries = static_cast<LogEntryPacket *>(packet.data());
+            foreach(LogEntry *e, entries->entries())
+            {
+                d->logBuffer.add(new LogEntry(*e));
+            }
+            break; }
+
+        case shell::Protocol::ConsoleLexicon:
+            // Terms for auto-completion.
+            //d->cli->setLexicon(protocol.lexicon(*packet));
+            break;
+
+        default:
+            break;
+        }
+    }
+}
+
+void MainWindow::disconnected()
+{
+    if(!d->link) return;
+
+    // The link was disconnected.
+    disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+
+    d->link->deleteLater();
+    d->link = 0;
+    //d->status->setShellLink(0);
+
+    setTitle(tr("Disconnected"));
 }

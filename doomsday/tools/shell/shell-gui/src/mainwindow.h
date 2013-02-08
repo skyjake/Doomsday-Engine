@@ -16,6 +16,14 @@ public:
     bool isConnected() const;
     void closeEvent(QCloseEvent *);
 
+public slots:
+    void openConnection(QString address);
+    void closeConnection();
+
+protected slots:
+    void handleIncomingPackets();
+    void disconnected();
+
 private:
     struct Instance;
     Instance *d;

@@ -32,7 +32,8 @@ HEADERS += \
     src/qtguiapp.h \
     src/qttextcanvas.h \
     src/qtrootwidget.h \
-    src/guishellapp.h
+    src/guishellapp.h \
+    src/opendialog.h
 
 SOURCES += \
     src/main.cpp \
@@ -40,7 +41,8 @@ SOURCES += \
     src/qtguiapp.cpp \
     src/qttextcanvas.cpp \
     src/qtrootwidget.cpp \
-    src/guishellapp.cpp
+    src/guishellapp.cpp \
+    src/opendialog.cpp
 
 # Deployment ----------------------------------------------------------------
 

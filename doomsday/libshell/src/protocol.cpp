@@ -57,6 +57,11 @@ void LogEntryPacket::add(LogEntry const &entry)
     _entries.append(new LogEntry(entry));
 }
 
+LogEntryPacket::Entries const &LogEntryPacket::entries() const
+{
+    return _entries;
+}
+
 void LogEntryPacket::execute() const
 {
     // Copies of all entries in the packet are added to the LogBuffer.

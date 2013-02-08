@@ -18,6 +18,7 @@
 
 #include "guishellapp.h"
 #include "mainwindow.h"
+#include "opendialog.h"
 #include <QMenuBar>
 #include <de/shell/ServerFinder>
 
@@ -104,14 +105,34 @@ MainWindow *GuiShellApp::newOrReusedConnectionWindow()
     if(!found)
     {
         found = new MainWindow;
-        d->windows.prepend(found);
     }
+
+    d->windows.prepend(found);
     found->show();
     return found;
 }
 
+GuiShellApp &GuiShellApp::app()
+{
+    return *static_cast<GuiShellApp *>(qApp);
+}
+
+ServerFinder &GuiShellApp::serverFinder()
+{
+    return d->finder;
+}
+
 void GuiShellApp::connectToServer()
 {
+    MainWindow *win = newOrReusedConnectionWindow();
+
+    QScopedPointer<OpenDialog> dlg(new OpenDialog(win));
+    dlg->setWindowModality(Qt::WindowModal);
+
+    if(dlg->exec() == OpenDialog::Accepted)
+    {
+        win->openConnection(dlg->address());
+    }
 }
 
 void GuiShellApp::connectToLocalServer()

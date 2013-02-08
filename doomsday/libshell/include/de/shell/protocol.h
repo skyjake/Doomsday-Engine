@@ -34,6 +34,9 @@ namespace shell {
 class LIBSHELL_PUBLIC LogEntryPacket : public Packet
 {
 public:
+    typedef QList<LogEntry *> Entries;
+
+public:
     LogEntryPacket();
     ~LogEntryPacket();
 
@@ -46,6 +49,11 @@ public:
      */
     void add(LogEntry const &entry);
 
+    Entries const &entries() const;
+
+    /**
+     * Adds all the entries into the application's log buffer.
+     */
     void execute() const;
 
     // Implements ISerializable.
@@ -55,7 +63,7 @@ public:
     static Packet *fromBlock(Block const &block);
 
 private:
-    QList<LogEntry *> _entries;
+    Entries _entries;
 };
 
 /**
