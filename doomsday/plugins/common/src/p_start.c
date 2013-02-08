@@ -467,8 +467,9 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
                   x, y, z, angle);
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player #%i spawned pos:[%g, %g, %g] floorz:%g\n",
-                plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ], mo->floorZ);
+    Con_Message("P_SpawnPlayer: Player #%i spawned pos:[%g, %g, %g] angle:%x floorz:%g mobjid:%i\n",
+                plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ], mo->angle, mo->floorZ,
+                mo->thinker.id);
 #endif
 
     p = &players[plrNum];
@@ -503,6 +504,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     p->plr->lookDir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
     p->plr->flags &= ~DDPF_UNDEFINED_ORIGIN;
+    assert(mo->angle == angle);
     p->jumpTics = 0;
     p->airCounter = 0;
     mo->player = p;
@@ -871,7 +873,8 @@ void P_RebornPlayer(int plrNum)
     }
 
 #ifdef _DEBUG
-    Con_Message("P_RebornPlayer: Spawning player at (%f,%f,%f).\n", pos[VX], pos[VY], pos[VZ]);
+    Con_Message("P_RebornPlayer: Spawning player at (%f,%f,%f) angle:%x.\n",
+                pos[VX], pos[VY], pos[VZ], angle);
 #endif
 
     spawnPlayer(plrNum, pClass, pos[VX], pos[VY], pos[VZ], angle,
