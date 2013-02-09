@@ -47,9 +47,26 @@ SOURCES += \
 # Deployment ----------------------------------------------------------------
 
 macx {
+    ICON = res/macx/shell.icns
+
     # Clean up previous deployment.
     doPostLink("rm -rf Doomsday-Shell.app/Contents/PlugIns/")
     doPostLink("rm -f Doomsday-Shell.app/Contents/Resources/qt.conf")
 
     doPostLink("macdeployqt Doomsday-Shell.app")
 }
+
+HEADERS += \
+    src/aboutdialog.h
+
+SOURCES += \
+    src/aboutdialog.cpp
+
+RESOURCES += \
+    res/shell.qrc
+
+HEADERS += \
+    src/localserverdialog.h
+
+SOURCES += \
+    src/localserverdialog.cpp

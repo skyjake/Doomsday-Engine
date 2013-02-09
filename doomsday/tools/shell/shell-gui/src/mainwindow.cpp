@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "qtrootwidget.h"
+#include "qttextcanvas.h"
 #include <de/LogBuffer>
 #include <de/shell/LogWidget>
 #include <de/shell/CommandLineWidget>
@@ -13,26 +14,41 @@ using namespace de::shell;
 
 DENG2_PIMPL(MainWindow)
 {
+    QtRootWidget *root;
     LogBuffer logBuffer;
     LogWidget *log;
     CommandLineWidget *cli;
     Link *link;
 
-    Instance(Public &i) : Private(i), link(0)
+    Instance(Public &i) : Private(i), root(0), link(0)
     {
         // Configure the log buffer.
         logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
 #ifdef _DEBUG
         logBuffer.enable(LogEntry::DEBUG);
 #endif
-        //buf.addSink(d->log->logSink());
 
+        // Shell widgets.
         cli = new CommandLineWidget;
         log = new LogWidget;
 
         logBuffer.addSink(log->logSink());
 
         QObject::connect(cli, SIGNAL(commandEntered(de::String)), &self, SLOT(sendCommandToServer(de::String)));
+    }
+
+    void updateStyle()
+    {
+        if(self.isConnected())
+        {
+            root->canvas().setBackgroundColor(Qt::white);
+            root->canvas().setForegroundColor(Qt::black);
+        }
+        else
+        {
+            root->canvas().setBackgroundColor(QColor(192, 192, 192));
+            root->canvas().setForegroundColor(QColor(64, 64, 64));
+        }
     }
 };
 
@@ -41,20 +57,21 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setUnifiedTitleAndToolBarOnMac(true);
 
-    QtRootWidget *w = new QtRootWidget;
+    d->root = new QtRootWidget;
 #ifdef MACOSX
-    w->setFont(QFont("Monaco", 13));
+    d->root->setFont(QFont("Menlo", 13));
 #else
-    w->setFont(QFont("Courier", 15));
+    d->root->setFont(QFont("Courier", 15));
 #endif
-    setCentralWidget(w);
+    d->updateStyle();
+    setCentralWidget(d->root);
 
     /*
     QToolBar *tools = addToolBar(tr("Connection"));
     tools->addAction("Connect");
     tools->addAction("Disconnect");*/
 
-    TextRootWidget &root = w->rootWidget();
+    TextRootWidget &root = d->root->rootWidget();
 
     // Set up the widgets.
     d->cli->rule()
@@ -72,10 +89,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     root.setFocus(d->cli);
 
-    w->setFocus();
+    d->root->setFocus();
 
     resize(QSize(640, 480));
 
+    d->root->setOverlaidMessage(tr("Disconnected"));
     setTitle(tr("Disconnected"));
 }
 
@@ -111,6 +129,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     closeConnection();
     event->accept();
+
+    emit closed(this);
+
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::openConnection(QString address)
@@ -123,10 +145,14 @@ void MainWindow::openConnection(QString address)
     d->link = new Link(address, 30);
     //d->status->setShellLink(d->link);
 
+    connect(d->link, SIGNAL(addressResolved()), this, SLOT(addressResolved()));
+    connect(d->link, SIGNAL(connected()), this, SLOT(connected()));
     connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
     connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
 
-    setTitle(address);
+    setTitle(address);    
+    d->root->setOverlaidMessage(tr("Looking up host..."));
+    d->updateStyle();
 }
 
 void MainWindow::closeConnection()
@@ -144,6 +170,8 @@ void MainWindow::closeConnection()
         //d->status->setShellLink(0);
 
         setTitle(tr("Disconnected"));
+        d->root->setOverlaidMessage(tr("Disconnected"));
+        d->updateStyle();
     }
 }
 
@@ -194,6 +222,16 @@ void MainWindow::sendCommandToServer(de::String command)
     }
 }
 
+void MainWindow::addressResolved()
+{
+    d->root->setOverlaidMessage(tr("Connecting..."));
+}
+
+void MainWindow::connected()
+{
+    d->root->setOverlaidMessage("");
+}
+
 void MainWindow::disconnected()
 {
     if(!d->link) return;
@@ -206,4 +244,6 @@ void MainWindow::disconnected()
     //d->status->setShellLink(0);
 
     setTitle(tr("Disconnected"));
+    d->root->setOverlaidMessage(tr("Disconnected"));
+    d->updateStyle();
 }

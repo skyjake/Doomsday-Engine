@@ -154,6 +154,7 @@ void QtTextCanvas::setFont(QFont const &font)
 void QtTextCanvas::setForegroundColor(QColor const &fg)
 {
     d->clearCache();
+    markDirty();
     d->foreground = fg;
 }
 
@@ -165,6 +166,7 @@ QColor QtTextCanvas::foregroundColor() const
 void QtTextCanvas::setBackgroundColor(QColor const &bg)
 {
     d->clearCache();
+    markDirty();
     d->background = bg;
 }
 

@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>shell.png</file>
+        <file>shell@2x.png</file>
+    </qresource>
+</RCC>

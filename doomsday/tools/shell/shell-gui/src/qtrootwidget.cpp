@@ -44,11 +44,13 @@ DENG2_PIMPL(QtRootWidget)
     QtTextCanvas *canvas;
     TextRootWidget root;
     QFont font;
+    QFont overlayFont;
     QTimer *blinkTimer;
     QTimer *cursorTimer;
     bool blinkVisible;
     bool cursorVisible;
     QPoint origin;
+    QString overlay;
 
     Instance(Public &inst) : Private(inst),
         margin(4),
@@ -59,8 +61,8 @@ DENG2_PIMPL(QtRootWidget)
         blinkVisible(true),
         cursorVisible(true)
     {
-        canvas->setForegroundColor(QColor(40, 40, 50));
-        canvas->setBackgroundColor(QColor(210, 210, 220));
+        canvas->setForegroundColor(Qt::black);
+        canvas->setBackgroundColor(Qt::white);
     }
 
     void setFont(QFont const &fnt)
@@ -114,6 +116,11 @@ TextRootWidget &QtRootWidget::rootWidget()
     return d->root;
 }
 
+QtTextCanvas &QtRootWidget::canvas()
+{
+    return *d->canvas;
+}
+
 void QtRootWidget::setFont(QFont const &font)
 {
     d->setFont(font);
@@ -121,14 +128,26 @@ void QtRootWidget::setFont(QFont const &font)
 
     setMinimumSize(d->charSize.x * 40 + 2 * d->margin,
                    d->charSize.y * 6 + 2 * d->margin);
+
+    d->overlayFont = QWidget::font();
+    d->overlayFont.setBold(true);
+    d->overlayFont.setPixelSize(24);
+}
+
+void QtRootWidget::setOverlaidMessage(const QString &msg)
+{
+    d->overlay = msg;
+    update();
 }
 
 void QtRootWidget::keyPressEvent(QKeyEvent *ev)
 {
     bool eaten;
 
+    /*
     qDebug() << "key:" << QString::number(ev->key(), 16) << "text:" << ev->text()
              << "mods:" << ev->modifiers();
+    */
 
     if(!ev->text().isEmpty() && ev->text()[0].isPrint() &&
             !ev->modifiers().testFlag(CONTROL_MOD))
@@ -231,6 +250,18 @@ void QtRootWidget::paintEvent(QPaintEvent *)
         painter.fillRect(QRect(pos, QSize(de::max(1, d->charSize.x / 5), d->charSize.y)),
                          ch.attribs.testFlag(TextCanvas::Char::Reverse)?
                              d->canvas->backgroundColor() : d->canvas->foregroundColor());
+    }
+
+    // Overlaid message?
+    if(!d->overlay.isEmpty())
+    {
+        painter.setFont(d->overlayFont);
+        painter.setBrush(Qt::NoBrush);
+        QColor fg = d->canvas->foregroundColor();
+        painter.setPen(Qt::white);
+        painter.drawText(QRect(2, 2, width(), height()), d->overlay, QTextOption(Qt::AlignCenter));
+        painter.setPen(fg);
+        painter.drawText(rect(), d->overlay, QTextOption(Qt::AlignCenter));
     }
 }
 

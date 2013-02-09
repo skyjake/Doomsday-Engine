@@ -22,6 +22,8 @@
 #include <QWidget>
 #include <de/shell/TextRootWidget>
 
+class QtTextCanvas;
+
 /**
  * Root widget that works with a Qt canvas.
  *
@@ -38,6 +40,8 @@ public:
 
     de::shell::TextRootWidget &rootWidget();
 
+    QtTextCanvas &canvas();
+
     /**
      * Sets the font to use on the canvas. The size of the font determines the
      * number of character size.
@@ -45,6 +49,8 @@ public:
      * @param font  Font.
      */
     void setFont(QFont const &font);
+
+    void setOverlaidMessage(QString const &msg = "");
 
     void keyPressEvent(QKeyEvent *ev);
     void resizeEvent(QResizeEvent *ev);

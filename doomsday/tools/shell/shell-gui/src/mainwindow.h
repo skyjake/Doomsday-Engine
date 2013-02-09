@@ -17,6 +17,9 @@ public:
     bool isConnected() const;
     void closeEvent(QCloseEvent *);
 
+signals:
+    void closed(MainWindow *window);
+
 public slots:
     void openConnection(QString address);
     void closeConnection();
@@ -24,6 +27,8 @@ public slots:
 protected slots:
     void handleIncomingPackets();
     void sendCommandToServer(de::String command);
+    void addressResolved();
+    void connected();
     void disconnected();
 
 private:

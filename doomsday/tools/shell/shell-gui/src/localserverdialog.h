@@ -1,4 +1,4 @@
-/** @file shellapp.h  Shell GUI application.
+/** @file localserverdialog.h  Dialog for starting a local server.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,42 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GUISHELLAPP_H
-#define GUISHELLAPP_H
+#ifndef LOCALSERVERGUIDIALOG_H
+#define LOCALSERVERGUIDIALOG_H
 
-#include "qtguiapp.h"
-#include <de/shell/ServerFinder>
+#include <QDialog>
 
-class MainWindow;
-
-class GuiShellApp : public QtGuiApp
+class LocalServerDialog : public QDialog
 {
-    Q_OBJECT
-
 public:
-    GuiShellApp(int &argc, char **argv);
-    ~GuiShellApp();
-
-    MainWindow *newOrReusedConnectionWindow();
-
-    static GuiShellApp &app();
-
-    de::shell::ServerFinder &serverFinder();
-
-public slots:
-    void connectToServer();
-    void connectToLocalServer();
-    void disconnectFromServer();
-    void startLocalServer();
-    void updateLocalServerMenu();
-    void aboutShell();
-
-protected slots:
-    void windowClosed(MainWindow *window);
+    explicit LocalServerDialog(QWidget *parent = 0);
+    ~LocalServerDialog();
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // GUISHELLAPP_H
+#endif // LOCALSERVERGUIDIALOG_H

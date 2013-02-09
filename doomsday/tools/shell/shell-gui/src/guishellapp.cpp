@@ -19,6 +19,7 @@
 #include "guishellapp.h"
 #include "mainwindow.h"
 #include "opendialog.h"
+#include "aboutdialog.h"
 #include <QMenuBar>
 #include <de/shell/ServerFinder>
 
@@ -69,20 +70,12 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
 
     menu->addAction(tr("About"), this, SLOT(aboutShell()));
 
-    openNewConnectionWindow();
-
+    newOrReusedConnectionWindow();
 }
 
 GuiShellApp::~GuiShellApp()
 {
     delete d;
-}
-
-void GuiShellApp::openNewConnectionWindow()
-{
-    MainWindow *win = new MainWindow;
-    d->windows.prepend(win);
-    win->show();
 }
 
 MainWindow *GuiShellApp::newOrReusedConnectionWindow()
@@ -105,6 +98,7 @@ MainWindow *GuiShellApp::newOrReusedConnectionWindow()
     if(!found)
     {
         found = new MainWindow;
+        connect(found, SIGNAL(closed(MainWindow *)), this, SLOT(windowClosed(MainWindow *)));
     }
 
     d->windows.prepend(found);
@@ -138,11 +132,19 @@ void GuiShellApp::connectToServer()
 void GuiShellApp::connectToLocalServer()
 {
     QAction *act = dynamic_cast<QAction *>(sender());
-    qDebug() << act;
+    Address host = act->data().value<Address>();
+
+    MainWindow *win = newOrReusedConnectionWindow();
+    win->openConnection(host.asText());
 }
 
 void GuiShellApp::disconnectFromServer()
 {
+    MainWindow *win = dynamic_cast<MainWindow *>(activeWindow());
+    if(win)
+    {
+        win->closeConnection();
+    }
 }
 
 void GuiShellApp::startLocalServer()
@@ -161,13 +163,18 @@ void GuiShellApp::updateLocalServerMenu()
                 .arg(d->finder.playerCount(host))
                 .arg(d->finder.maxPlayers(host));
 
-        d->localMenu->addAction(label, this, SLOT(connectToLocalServer()));
+        QAction *act = d->localMenu->addAction(label, this, SLOT(connectToLocalServer()));
+        act->setData(QVariant::fromValue(host));
     }
 }
 
 void GuiShellApp::aboutShell()
 {
+    AboutDialog().exec();
 }
 
-
-
+void GuiShellApp::windowClosed(MainWindow *window)
+{
+    d->windows.removeAll(window);
+    window->deleteLater();
+}
