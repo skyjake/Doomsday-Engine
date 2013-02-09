@@ -17,7 +17,7 @@
  */
 
 #include "guishellapp.h"
-#include "mainwindow.h"
+#include "linkwindow.h"
 #include "opendialog.h"
 #include "aboutdialog.h"
 #include "localserverdialog.h"
@@ -35,11 +35,11 @@ struct GuiShellApp::Instance
 
     QMenuBar *menuBar;
     QMenu *localMenu;
-    QList<MainWindow *> windows;
+    QList<LinkWindow *> windows;
 
     ~Instance()
     {
-        foreach(MainWindow *win, windows)
+        foreach(LinkWindow *win, windows)
         {
             delete win;
         }
@@ -86,13 +86,13 @@ GuiShellApp::~GuiShellApp()
     delete d;
 }
 
-MainWindow *GuiShellApp::newOrReusedConnectionWindow()
+LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 {
-    MainWindow *found = 0;
+    LinkWindow *found = 0;
     QWidget *other = activeWindow(); // for positioning a new window
 
     // Look for a window with a closed connection.
-    foreach(MainWindow *win, d->windows)
+    foreach(LinkWindow *win, d->windows)
     {
         if(!win->isConnected())
         {
@@ -107,8 +107,8 @@ MainWindow *GuiShellApp::newOrReusedConnectionWindow()
 
     if(!found)
     {
-        found = new MainWindow;
-        connect(found, SIGNAL(closed(MainWindow *)), this, SLOT(windowClosed(MainWindow *)));
+        found = new LinkWindow;
+        connect(found, SIGNAL(closed(LinkWindow *)), this, SLOT(windowClosed(LinkWindow *)));
 
         // Initial position and size.
         if(other)
@@ -134,7 +134,7 @@ ServerFinder &GuiShellApp::serverFinder()
 
 void GuiShellApp::connectToServer()
 {
-    MainWindow *win = newOrReusedConnectionWindow();
+    LinkWindow *win = newOrReusedConnectionWindow();
 
     QScopedPointer<OpenDialog> dlg(new OpenDialog(win));
     dlg->setWindowModality(Qt::WindowModal);
@@ -150,13 +150,13 @@ void GuiShellApp::connectToLocalServer()
     QAction *act = dynamic_cast<QAction *>(sender());
     Address host = act->data().value<Address>();
 
-    MainWindow *win = newOrReusedConnectionWindow();
+    LinkWindow *win = newOrReusedConnectionWindow();
     win->openConnection(host.asText());
 }
 
 void GuiShellApp::disconnectFromServer()
 {
-    MainWindow *win = dynamic_cast<MainWindow *>(activeWindow());
+    LinkWindow *win = dynamic_cast<LinkWindow *>(activeWindow());
     if(win)
     {
         win->closeConnection();
@@ -214,7 +214,7 @@ void GuiShellApp::aboutShell()
     AboutDialog().exec();
 }
 
-void GuiShellApp::windowClosed(MainWindow *window)
+void GuiShellApp::windowClosed(LinkWindow *window)
 {
     d->windows.removeAll(window);
     window->deleteLater();

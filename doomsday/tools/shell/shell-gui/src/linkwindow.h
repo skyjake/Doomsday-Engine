@@ -1,4 +1,4 @@
-/** @file shellapp.h  Shell GUI application.
+/** @file linkwindow.h  Window for a server link.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,42 +16,48 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GUISHELLAPP_H
-#define GUISHELLAPP_H
+#ifndef LINKWINDOW_H
+#define LINKWINDOW_H
 
-#include "qtguiapp.h"
-#include <de/shell/ServerFinder>
+#include <QMainWindow>
+#include <de/String>
 
-class LinkWindow;
-
-class GuiShellApp : public QtGuiApp
+/**
+ * Window for a server link.
+ */
+class LinkWindow : public QMainWindow
 {
     Q_OBJECT
-
+    
 public:
-    GuiShellApp(int &argc, char **argv);
-    ~GuiShellApp();
+    LinkWindow(QWidget *parent = 0);
+    ~LinkWindow();
 
-    LinkWindow *newOrReusedConnectionWindow();
-    de::shell::ServerFinder &serverFinder();
+    void setTitle(QString const &title);
 
-    static GuiShellApp &app();
+    bool isConnected() const;
+    void closeEvent(QCloseEvent *);
+
+signals:
+    void closed(LinkWindow *window);
 
 public slots:
-    void connectToServer();
-    void connectToLocalServer();
-    void disconnectFromServer();
-    void closeActiveWindow();
-    void startLocalServer();
-    void updateLocalServerMenu();
-    void aboutShell();
+    void openConnection(QString address);
+    void closeConnection();
+    void switchToStatus();
+    void switchToConsole();
+    void updateWhenConnected();
 
 protected slots:
-    void windowClosed(LinkWindow *window);
+    void handleIncomingPackets();
+    void sendCommandToServer(de::String command);
+    void addressResolved();
+    void connected();
+    void disconnected();
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // GUISHELLAPP_H
+#endif // LINKWINDOW_H

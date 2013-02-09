@@ -32,22 +32,24 @@ HEADERS += \
     src/aboutdialog.h \
     src/guishellapp.h \
     src/localserverdialog.h \
-    src/mainwindow.h \
+    src/linkwindow.h \
     src/opendialog.h \
     src/qtguiapp.h \
     src/qtrootwidget.h \
-    src/qttextcanvas.h
+    src/qttextcanvas.h \
+    src/statuswidget.h
 
 SOURCES += \
     src/aboutdialog.cpp \
     src/guishellapp.cpp \
     src/localserverdialog.cpp \
     src/main.cpp \
-    src/mainwindow.cpp \
+    src/linkwindow.cpp \
     src/opendialog.cpp \
     src/qtguiapp.cpp \
     src/qtrootwidget.cpp \
-    src/qttextcanvas.cpp
+    src/qttextcanvas.cpp \
+    src/statuswidget.cpp
 
 RESOURCES += \
     res/shell.qrc
@@ -63,4 +65,3 @@ macx {
 
     doPostLink("macdeployqt \"Doomsday Shell.app\"")
 }
-

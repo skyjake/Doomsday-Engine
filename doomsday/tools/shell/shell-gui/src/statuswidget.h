@@ -1,4 +1,4 @@
-/** @file main.cpp Application startup and shutdown.
+/** @file statuswindow.h  Widget for showing server's status.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,11 +16,32 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "guishellapp.h"
-#include <de/libdeng2.h>
+#ifndef STATUSWIDGET_H
+#define STATUSWIDGET_H
 
-int main(int argc, char *argv[])
+#include <QWidget>
+#include <de/shell/Link>
+
+/**
+ * Widget for showing server's status.
+ */
+class StatusWidget : public QWidget
 {
-    GuiShellApp a(argc, argv);
-    return a.exec();
-}
+    Q_OBJECT
+
+public:
+    explicit StatusWidget(QWidget *parent = 0);
+    ~StatusWidget();
+
+    void paintEvent(QPaintEvent *);
+
+public slots:
+    void linkConnected(de::shell::Link *link);
+    void linkDisconnected();
+
+private:
+    struct Instance;
+    Instance *d;
+};
+
+#endif // STATUSWIDGET_H
