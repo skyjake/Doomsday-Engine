@@ -42,6 +42,7 @@ public slots:
     void connectToServer();
     void connectToLocalServer();
     void disconnectFromServer();
+    void closeActiveWindow();
     void startLocalServer();
     void updateLocalServerMenu();
     void aboutShell();

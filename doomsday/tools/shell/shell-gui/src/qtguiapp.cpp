@@ -46,8 +46,7 @@ struct QtGuiApp::Instance
 
 QtGuiApp::QtGuiApp(int &argc, char **argv)
     : QApplication(argc, argv), d(new Instance)
-{
-}
+{}
 
 QtGuiApp::~QtGuiApp()
 {

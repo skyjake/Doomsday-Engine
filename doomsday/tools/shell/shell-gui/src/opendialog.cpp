@@ -33,14 +33,17 @@
 using namespace de;
 using namespace de::shell;
 
+static int const MAX_HISTORY_SIZE = 10;
+
 DENG2_PIMPL(OpenDialog)
 {
     QComboBox *address;
     QLabel *localCount;
     int firstFoundIdx;
     QStringList history;
+    bool edited;
 
-    Instance(Public &i) : Private(i)
+    Instance(Public &i) : Private(i), edited(false)
     {
         // Restore the historical entries.
         QSettings st;
@@ -102,9 +105,10 @@ DENG2_PIMPL(OpenDialog)
 OpenDialog::OpenDialog(QWidget *parent)
     : QDialog(parent), d(new Instance(*this))
 {
-    connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
-
     updateLocalList(true /* autoselect first found server */);
+
+    connect(d->address, SIGNAL(editTextChanged(QString)), this, SLOT(textEdited(QString)));
+    connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
 }
 
 OpenDialog::~OpenDialog()
@@ -190,6 +194,33 @@ void OpenDialog::updateLocalList(bool autoselect)
 
 void OpenDialog::saveState()
 {
+    if(d->edited)
+    {
+        String text = d->address->itemText(0);
+        d->history.removeAll(text);
+        d->history.prepend(text);
+
+        // Make sure there aren't too many entries.
+        while(d->history.size() > MAX_HISTORY_SIZE)
+        {
+            d->history.removeLast();
+        }
+    }
+
     QSettings st;
     st.setValue("OpenDialog.history", d->history);
+}
+
+void OpenDialog::textEdited(QString text)
+{
+    if(!d->edited)
+    {
+        d->edited = true;
+        d->address->insertItem(0, text);
+        d->address->setCurrentIndex(0);
+    }
+    else
+    {
+        d->address->setItemText(0, text);
+    }
 }

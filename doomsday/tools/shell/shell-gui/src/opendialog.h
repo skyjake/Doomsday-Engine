@@ -22,6 +22,7 @@ public slots:
 
 protected slots:
     void saveState();
+    void textEdited(QString);
 
 private:
     struct Instance;

@@ -52,7 +52,9 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     setApplicationName    ("doomsday-shell-gui");
     setApplicationVersion (SHELL_VERSION);
 
+#ifdef MACOSX
     setQuitOnLastWindowClosed(false);
+#endif
 
     d->menuBar = new QMenuBar(0);
 
@@ -60,7 +62,10 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     menu->addAction(tr("Connect..."), this, SLOT(connectToServer()),
                     QKeySequence(tr("Ctrl+O", "Server|Connect")));
     menu->addAction(tr("Disconnect"), this, SLOT(disconnectFromServer()),
-                    QKeySequence(tr("Ctrl+W", "Server|Disconnect")));
+                    QKeySequence(tr("Ctrl+D", "Server|Disconnect")));
+    menu->addSeparator();
+    menu->addAction(tr("Close Window"), this, SLOT(closeActiveWindow()),
+                    QKeySequence(tr("Ctrl+W", "Server|Close Window")));
     menu->addSeparator();
     menu->addAction(tr("Start Local Server"), this, SLOT(startLocalServer()),
                     QKeySequence(tr("Ctrl+N", "Server|Start Local Server")));
@@ -81,6 +86,7 @@ GuiShellApp::~GuiShellApp()
 MainWindow *GuiShellApp::newOrReusedConnectionWindow()
 {
     MainWindow *found = 0;
+    QWidget *other = activeWindow(); // for positioning a new window
 
     // Look for a window with a closed connection.
     foreach(MainWindow *win, d->windows)
@@ -93,12 +99,19 @@ MainWindow *GuiShellApp::newOrReusedConnectionWindow()
             d->windows.removeOne(win);
             break;
         }
+        if(!other) other = win;
     }
 
     if(!found)
     {
         found = new MainWindow;
         connect(found, SIGNAL(closed(MainWindow *)), this, SLOT(windowClosed(MainWindow *)));
+
+        // Initial position and size.
+        if(other)
+        {
+            found->move(other->pos() + QPoint(30, 30));
+        }
     }
 
     d->windows.prepend(found);
@@ -145,6 +158,12 @@ void GuiShellApp::disconnectFromServer()
     {
         win->closeConnection();
     }
+}
+
+void GuiShellApp::closeActiveWindow()
+{
+    QWidget *win = activeWindow();
+    if(win) win->close();
 }
 
 void GuiShellApp::startLocalServer()
