@@ -28,21 +28,28 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 # Sources -------------------------------------------------------------------
 
 HEADERS += \
-    src/mainwindow.h \
-    src/qtguiapp.h \
-    src/qttextcanvas.h \
-    src/qtrootwidget.h \
+    src/aboutdialog.h \
     src/guishellapp.h \
-    src/opendialog.h
+    src/localserverdialog.h \
+    src/mainwindow.h \
+    src/opendialog.h \
+    src/qtguiapp.h \
+    src/qtrootwidget.h \
+    src/qttextcanvas.h
 
 SOURCES += \
+    src/aboutdialog.cpp \
+    src/guishellapp.cpp \
+    src/localserverdialog.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
+    src/opendialog.cpp \
     src/qtguiapp.cpp \
-    src/qttextcanvas.cpp \
     src/qtrootwidget.cpp \
-    src/guishellapp.cpp \
-    src/opendialog.cpp
+    src/qttextcanvas.cpp
+
+RESOURCES += \
+    res/shell.qrc
 
 # Deployment ----------------------------------------------------------------
 
@@ -56,17 +63,3 @@ macx {
     doPostLink("macdeployqt Doomsday-Shell.app")
 }
 
-HEADERS += \
-    src/aboutdialog.h
-
-SOURCES += \
-    src/aboutdialog.cpp
-
-RESOURCES += \
-    res/shell.qrc
-
-HEADERS += \
-    src/localserverdialog.h
-
-SOURCES += \
-    src/localserverdialog.cpp
