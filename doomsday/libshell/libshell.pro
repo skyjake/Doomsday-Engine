@@ -28,6 +28,7 @@ HEADERS += \
     include/de/shell/ChoiceWidget \
     include/de/shell/CommandLineWidget \
     include/de/shell/DialogWidget \
+    include/de/shell/DoomsdayInfo \
     include/de/shell/InputDialog \
     include/de/shell/KeyEvent \
     include/de/shell/LabelWidget \
@@ -47,6 +48,7 @@ HEADERS += \
     include/de/shell/choicewidget.h \
     include/de/shell/commandlinewidget.h \
     include/de/shell/dialogwidget.h \
+    include/de/shell/doomsdayinfo.h \
     include/de/shell/inputdialog.h \
     include/de/shell/keyevent.h \
     include/de/shell/labelwidget.h \
@@ -69,6 +71,7 @@ SOURCES += \
     src/choicewidget.cpp \
     src/commandlinewidget.cpp \
     src/dialogwidget.cpp \
+    src/doomsdayinfo.cpp \
     src/inputdialog.cpp \
     src/labelwidget.cpp \
     src/lexicon.cpp \
