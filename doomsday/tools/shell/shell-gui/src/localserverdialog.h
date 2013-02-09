@@ -20,6 +20,7 @@
 #define LOCALSERVERGUIDIALOG_H
 
 #include <QDialog>
+#include <de/NativePath>
 
 class LocalServerDialog : public QDialog
 {
@@ -28,6 +29,11 @@ class LocalServerDialog : public QDialog
 public:
     explicit LocalServerDialog(QWidget *parent = 0);
     ~LocalServerDialog();
+
+    quint16 port() const;
+    QString gameMode() const;
+    QStringList additionalOptions() const;
+    de::NativePath runtimeFolder() const;
 
 protected slots:
     void pickFolder();

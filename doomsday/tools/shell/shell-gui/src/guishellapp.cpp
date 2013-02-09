@@ -24,6 +24,7 @@
 #include <QMenuBar>
 #include <de/shell/LocalServer>
 #include <de/shell/ServerFinder>
+#include <QMessageBox>
 
 using namespace de;
 using namespace de::shell;
@@ -170,10 +171,24 @@ void GuiShellApp::closeActiveWindow()
 
 void GuiShellApp::startLocalServer()
 {
-    LocalServerDialog dlg;
-    if(dlg.exec() == QDialog::Accepted)
+    try
     {
+        LocalServerDialog dlg;
+        if(dlg.exec() == QDialog::Accepted)
+        {
+            LocalServer sv;
+            sv.start(dlg.port(),
+                     dlg.gameMode(),
+                     dlg.additionalOptions(),
+                     dlg.runtimeFolder());
 
+            newOrReusedConnectionWindow()->
+                    openConnection("localhost:" + String::number(dlg.port()));
+        }
+    }
+    catch(Error const &er)
+    {
+        QMessageBox::critical(0, tr("Failed to Start Server"), er.asText());
     }
 }
 

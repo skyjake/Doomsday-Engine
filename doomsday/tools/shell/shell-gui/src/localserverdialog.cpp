@@ -108,6 +108,26 @@ LocalServerDialog::~LocalServerDialog()
     delete d;
 }
 
+quint16 LocalServerDialog::port() const
+{
+    return d->port->text().toInt();
+}
+
+QString LocalServerDialog::gameMode() const
+{
+    return d->games->itemData(d->games->currentIndex()).toString();
+}
+
+QStringList LocalServerDialog::additionalOptions() const
+{
+    return d->options->text().split(' ', QString::SkipEmptyParts);
+}
+
+NativePath LocalServerDialog::runtimeFolder() const
+{
+    return d->folder->text();
+}
+
 void LocalServerDialog::pickFolder()
 {
     QString dir = QFileDialog::getExistingDirectory(this,

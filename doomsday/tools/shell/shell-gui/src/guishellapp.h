@@ -33,10 +33,9 @@ public:
     ~GuiShellApp();
 
     MainWindow *newOrReusedConnectionWindow();
+    de::shell::ServerFinder &serverFinder();
 
     static GuiShellApp &app();
-
-    de::shell::ServerFinder &serverFinder();
 
 public slots:
     void connectToServer();
