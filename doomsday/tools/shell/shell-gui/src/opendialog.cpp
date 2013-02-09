@@ -73,7 +73,7 @@ DENG2_PIMPL(OpenDialog)
         item->setAlignment(Qt::AlignBottom);
 
         localCount = new QLabel;
-        form->addRow(new QWidget, localCount);
+        form->addRow(0, localCount);
         QObject::connect(&GuiShellApp::app().serverFinder(), SIGNAL(updated()),
                          &self, SLOT(updateLocalList()));
 

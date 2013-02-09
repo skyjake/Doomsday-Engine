@@ -33,5 +33,5 @@ AboutDialog::AboutDialog(QWidget *parent)
     QDialogButtonBox *bbox = new QDialogButtonBox;
     box->addWidget(bbox);
     QPushButton *button = bbox->addButton(QDialogButtonBox::Close);
-    connect(button, SIGNAL(pressed()), this, SLOT(accept()));
+    connect(button, SIGNAL(clicked()), this, SLOT(accept()));
 }

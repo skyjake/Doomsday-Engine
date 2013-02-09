@@ -20,7 +20,9 @@
 #include "mainwindow.h"
 #include "opendialog.h"
 #include "aboutdialog.h"
+#include "localserverdialog.h"
 #include <QMenuBar>
+#include <de/shell/LocalServer>
 #include <de/shell/ServerFinder>
 
 using namespace de;
@@ -168,6 +170,11 @@ void GuiShellApp::closeActiveWindow()
 
 void GuiShellApp::startLocalServer()
 {
+    LocalServerDialog dlg;
+    if(dlg.exec() == QDialog::Accepted)
+    {
+
+    }
 }
 
 void GuiShellApp::updateLocalServerMenu()

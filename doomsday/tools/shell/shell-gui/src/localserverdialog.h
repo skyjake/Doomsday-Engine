@@ -23,9 +23,17 @@
 
 class LocalServerDialog : public QDialog
 {
+    Q_OBJECT
+
 public:
     explicit LocalServerDialog(QWidget *parent = 0);
     ~LocalServerDialog();
+
+protected slots:
+    void pickFolder();
+    void configureGameOptions();
+    void saveState();
+    void validate();
 
 private:
     struct Instance;
