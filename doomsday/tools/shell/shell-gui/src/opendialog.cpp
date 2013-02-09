@@ -47,7 +47,7 @@ DENG2_PIMPL(OpenDialog)
     {
         // Restore the historical entries.
         QSettings st;
-        history = st.value("OpenDialog.history", QStringList() << "localhost").toStringList();
+        history = st.value("OpenDialog/history", QStringList() << "localhost").toStringList();
 
         self.setWindowTitle(tr("Open Connection"));
 
@@ -209,7 +209,7 @@ void OpenDialog::saveState()
     }
 
     QSettings st;
-    st.setValue("OpenDialog.history", d->history);
+    st.setValue("OpenDialog/history", d->history);
 }
 
 void OpenDialog::textEdited(QString text)
