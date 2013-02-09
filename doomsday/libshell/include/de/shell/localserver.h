@@ -20,6 +20,8 @@
 #define LIBSHELL_LOCALSERVER_H
 
 #include "Link"
+#include <de/Error>
+#include <de/NativePath>
 #include <QStringList>
 
 namespace de {
@@ -31,12 +33,18 @@ namespace shell {
 class LocalServer
 {
 public:
+    /// Failed to locate the server executable. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
+public:
     LocalServer();
 
     virtual ~LocalServer();
 
-    void start(duint16 port, String const &gameMode,
-               QStringList additionalOptions = QStringList());
+    void start(duint16 port,
+               String const &gameMode,
+               QStringList additionalOptions = QStringList(),
+               NativePath const &runtimePath = "");
 
     void stop();
 

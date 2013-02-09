@@ -40,28 +40,61 @@ LocalServer::~LocalServer()
     delete d;
 }
 
-void LocalServer::start(duint16 port, String const &gameMode, QStringList additionalOptions)
+void LocalServer::start(duint16 port, String const &gameMode, QStringList additionalOptions,
+                        NativePath const &runtimePath)
 {
+    NativePath userDir = runtimePath;
+
     DENG2_ASSERT(d->link == 0);
 
     CommandLine cmd;
 
 #ifdef MACOSX
+    if(userDir.isEmpty())
+    {
+        // Default runtime location.
+        userDir = QDir::home().filePath("Library/Application Support/Doomsday Engine/server-runtime");
+    }
+
+    // First locate the server executable.
+    NativePath bin = NativePath(qApp->applicationDirPath()) / "../Resources/doomsday-server";
+    if(!bin.exists())
+    {
+        // Try another location: Doomsday-Shell.app -> Doomsday Engine.app/Contents/Doomsday.app
+        bin = NativePath(qApp->applicationDirPath()) /
+                "../../../Doomsday Engine.app/Contents/Doomsday.app/Contents/Resources/doomsday-server";
+    }
+    if(!bin.exists())
+    {
+        // Yet another possibility: Doomsday-Shell.app -> Doomsday.app
+        bin = NativePath(qApp->applicationDirPath()) /
+                "../../../Doomsday.app/Contents/Resources/doomsday-server";
+    }
+    if(!bin.exists())
+    {
+        // Undeployed, e.g., a developer build.
+        bin = NativePath(qApp->applicationDirPath()) /
+                "../../../../../../client/Doomsday.app/Contents/Resources/doomsday-server";
+    }
+    if(!bin.exists())
+    {
+        throw NotFoundError("LocalServer::start", "Could not find Doomsday.app");
+    }
+
     /**
      * @todo These options will be much simpler when libdeng2 FS is used for
      * all file access.
      */
-    cmd.append(String(qApp->applicationDirPath()) / "../Resources/doomsday-server");
-    cmd.append("-userdir");
-    cmd.append(QDir::home().filePath("Library/Application Support/Doomsday Engine/server-runtime"));
+
+    cmd.append(bin);
     cmd.append("-appdir");
     cmd.append(".");
     cmd.append("-vdmap");
     cmd.append("..");
     cmd.append("}Data");
     cmd.append("-basedir");
-    cmd.append(String(qApp->applicationDirPath()) / "../Resources");
-    String plugDir = String(qApp->applicationDirPath()) / "../DengPlugins";
+    cmd.append(bin.fileNamePath() / "../Resources");
+    String plugDir = bin.fileNamePath() / "../DengPlugins";
     cmd.append("-vdmap");
     cmd.append(plugDir / "doom.bundle/Contents/Resources");
     cmd.append("}Data/jDoom/");
@@ -73,6 +106,8 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
     cmd.append("}Data/jHexen/");
 #endif
 
+    cmd.append("-userdir");
+    cmd.append(userDir);
     cmd.append("-game");
     cmd.append(gameMode);
     cmd.append("-cmd");
