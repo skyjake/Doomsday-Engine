@@ -87,14 +87,14 @@ if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     	@executable_path/../Frameworks/libintl.8.dylib $DSFS
 fi
 
-echo "Bundling Doomsday-Shell.app..."
+echo "Bundling Doomsday Shell.app..."
 
 BUILDDIR=tools/shell/shell-gui
-APPDIR=$BUILDDIR/Doomsday-Shell.app/Contents
+APPDIR="$BUILDDIR/Doomsday Shell.app/Contents"
 
-mkdir -p $APPDIR/Frameworks
+mkdir -p "$APPDIR/Frameworks"
 
-$CP libdeng2/libdeng2*dylib      $APPDIR/Frameworks
-$CP libshell/libdeng_shell*dylib $APPDIR/Frameworks
+$CP libdeng2/libdeng2*dylib      "$APPDIR/Frameworks"
+$CP libshell/libdeng_shell*dylib "$APPDIR/Frameworks"
 
 echo "Bundling done."

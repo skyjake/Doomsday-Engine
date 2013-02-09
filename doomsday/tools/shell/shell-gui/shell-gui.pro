@@ -9,7 +9,8 @@ include(../../../config.pri)
 
 TEMPLATE = app
 
-win32|macx: TARGET = Doomsday-Shell
+      macx: TARGET = "Doomsday Shell"
+else:win32: TARGET = Doomsday-Shell
       else: TARGET = doomsday-shell
 
 VERSION = 1.0.0
@@ -57,9 +58,9 @@ macx {
     ICON = res/macx/shell.icns
 
     # Clean up previous deployment.
-    doPostLink("rm -rf Doomsday-Shell.app/Contents/PlugIns/")
-    doPostLink("rm -f Doomsday-Shell.app/Contents/Resources/qt.conf")
+    doPostLink("rm -rf \"Doomsday Shell.app/Contents/PlugIns/\"")
+    doPostLink("rm -f \"Doomsday Shell.app/Contents/Resources/qt.conf\"")
 
-    doPostLink("macdeployqt Doomsday-Shell.app")
+    doPostLink("macdeployqt \"Doomsday Shell.app\"")
 }
 
