@@ -53,6 +53,7 @@ DENG2_PIMPL(OpenDialog)
 
         QVBoxLayout *mainLayout = new QVBoxLayout;
         self.setLayout(mainLayout);
+        mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
         QFormLayout *form = new QFormLayout;
         mainLayout->addLayout(form);
