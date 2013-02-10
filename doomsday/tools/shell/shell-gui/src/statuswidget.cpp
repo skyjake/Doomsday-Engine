@@ -19,6 +19,7 @@
 #include "statuswidget.h"
 #include <de/libdeng2.h>
 #include <de/String>
+#include <de/shell/DoomsdayInfo>
 #include <QPainter>
 #include <QTimer>
 
@@ -34,8 +35,14 @@ DENG2_PIMPL(StatusWidget)
 
     Instance(Public &i) : Private(i), link(0)
     {
-        gameMode = "Ultimate DOOM";
-        map = "E1M3";
+        //gameMode = "Ultimate DOOM";
+        //map = "E1M3";
+    }
+
+    void clear()
+    {
+        gameMode.clear();
+        map.clear();
     }
 };
 
@@ -53,6 +60,20 @@ StatusWidget::StatusWidget(QWidget *parent)
 StatusWidget::~StatusWidget()
 {
     delete d;
+}
+
+void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QString mapTitle)
+{
+    d->gameMode = shell::DoomsdayInfo::titleForGameMode(mode);
+    if(!rules.isEmpty()) d->gameMode += " - " + rules;
+
+    d->map = mapTitle;
+    if(!mapId.isEmpty() && !mapTitle.contains(mapId))
+    {
+        d->map += " (" + mapId + ")";
+    }
+
+    update();
 }
 
 void StatusWidget::paintEvent(QPaintEvent *)
@@ -98,5 +119,6 @@ void StatusWidget::linkConnected(shell::Link *link)
 void StatusWidget::linkDisconnected()
 {
     d->link = 0;
+    d->clear();
     update();
 }

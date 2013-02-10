@@ -320,6 +320,15 @@ void LinkWindow::handleIncomingPackets()
             d->cli->setLexicon(protocol.lexicon(*packet));
             break;
 
+        case shell::Protocol::GameState: {
+            Record &rec = static_cast<RecordPacket *>(packet.data())->record();
+            d->status->setGameState(
+                    rec["mode"].value().asText(),
+                    rec["rules"].value().asText(),
+                    rec["mapId"].value().asText(),
+                    rec["mapTitle"].value().asText());
+            break; }
+
         default:
             break;
         }
