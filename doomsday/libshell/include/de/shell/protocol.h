@@ -120,6 +120,21 @@ public:
     RecordPacket *newConsoleLexicon(Lexicon const &lexicon);
 
     Lexicon lexicon(Packet const &consoleLexiconPacket);
+
+    /**
+     * Constructs a packet that describes the current gameplay state.
+     *
+     * @param mode      Game mode (e.g., doom2).
+     * @param rules     Name of the game rules (e.g., Deathmatch).
+     * @param mapId     Identifier of the map (e.g., E1M3).
+     * @param mapTitle  Title of the map (from mapinfo/defs).
+     *
+     * @return Packet. Caller gets ownership.
+     */
+    RecordPacket *newGameState(String const &mode,
+                               String const &rules,
+                               String const &mapId,
+                               String const &mapTitle);
 };
 
 } // namespace shell

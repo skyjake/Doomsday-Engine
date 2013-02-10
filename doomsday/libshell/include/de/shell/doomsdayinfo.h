@@ -45,6 +45,8 @@ public:
      */
     static QList<GameMode> allGameModes();
 
+    static String titleForGameMode(String const &mode);
+
     static NativePath defaultServerRuntimeFolder();
 };
 

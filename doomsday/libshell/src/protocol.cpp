@@ -28,6 +28,7 @@ namespace shell {
 
 static String const PT_COMMAND = "shell.command";
 static String const PT_LEXICON = "shell.lexicon";
+static String const PT_GAME_STATE = "shell.game.state";
 
 // LogEntryPacket ------------------------------------------------------------
 
@@ -114,6 +115,8 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
             return Command;
         else if(rec->name() == PT_LEXICON)
             return ConsoleLexicon;
+        else if(rec->name() == PT_GAME_STATE)
+            return GameState;
     }
     return Unknown;
 }
@@ -161,6 +164,18 @@ Lexicon Protocol::lexicon(Packet const &consoleLexiconPacket)
     }
     lexicon.setAdditionalWordChars(rec.valueAsText("extraChars"));
     return lexicon;
+}
+
+RecordPacket *Protocol::newGameState(String const &mode, String const &rules,
+                                     String const &mapId, String const &mapTitle)
+{
+    RecordPacket *gs = new RecordPacket(PT_GAME_STATE);
+    Record &r = gs->record();
+    r.addText("mode", mode);
+    r.addText("rules", rules);
+    r.addText("mapId", mapId);
+    r.addText("mapTitle", mapTitle);
+    return gs;
 }
 
 } // namespace shell

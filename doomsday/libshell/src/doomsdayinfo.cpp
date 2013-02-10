@@ -65,6 +65,16 @@ QList<DoomsdayInfo::GameMode> DoomsdayInfo::allGameModes()
     return modes;
 }
 
+String DoomsdayInfo::titleForGameMode(String const &mode)
+{
+    for(int i = 0; gameModes[i].name; ++i)
+    {
+        if(gameModes[i].mode == mode)
+            return gameModes[i].name;
+    }
+    return mode;
+}
+
 NativePath DoomsdayInfo::defaultServerRuntimeFolder()
 {
 #ifdef MACOSX
