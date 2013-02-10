@@ -25,6 +25,11 @@
 #include <de/LogBuffer>
 
 #include "con_main.h"
+#include "dd_main.h"
+#include "dd_games.h"
+#include "game.h"
+#include "def_main.h"
+#include "map/gamemap.h"
 
 using namespace de;
 
@@ -89,6 +94,42 @@ void ShellUser::sendInitialUpdate()
     Con_IterateKnownWords(0, WT_ANY, addToTerms, &lexi);
     lexi.setAdditionalWordChars("-_.");
     QScopedPointer<RecordPacket> packet(protocol().newConsoleLexicon(lexi));
+    *this << *packet;
+
+    sendGameState();
+}
+
+void ShellUser::sendGameState()
+{
+    de::Game *game = App_CurrentGame();
+    String mode = (game? Str_Text(game->identityKey()) : "");
+
+    /// @todo This information needs to come form the Game Rules.
+    int deathmatch = Con_GetInteger("server-game-deathmatch");
+    String rules = (!deathmatch    ? "Coop" :
+                    deathmatch == 1? "Deathmatch"  :
+                                     "Deathmatch II");
+
+    String mapId;
+    String mapTitle;
+
+    // Check the map's information from definitions.
+    /// @todo DD_GetVariable() is not an appropriate place to ask for this --
+    /// should be moved to the GameMap class. (Ditto for the ID query below.)
+    char const *name = reinterpret_cast<char const *>(DD_GetVariable(DD_MAP_NAME));
+    if(name) mapTitle = name;
+
+    // Check the map's information from definitions.
+    if(theMap)
+    {
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(theMap->uri);
+        if(mapInfo)
+        {
+            mapId = Str_Text(Uri_ToString(mapInfo->uri));
+        }
+    }
+
+    QScopedPointer<RecordPacket> packet(protocol().newGameState(mode, rules, mapId, mapTitle));
     *this << *packet;
 }
 

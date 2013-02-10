@@ -21,10 +21,13 @@
 
 ShellUsers::ShellUsers()
 {
+    audienceForMapChange += this;
 }
 
 ShellUsers::~ShellUsers()
 {
+    audienceForMapChange -= this;
+
     foreach(ShellUser *user, _users)
     {
         delete user;
@@ -44,6 +47,14 @@ void ShellUsers::add(ShellUser *user)
 int ShellUsers::count() const
 {
     return _users.size();
+}
+
+void ShellUsers::currentMapChanged()
+{
+    foreach(ShellUser *user, _users)
+    {
+        user->sendGameState();
+    }
 }
 
 void ShellUsers::userDisconnected()

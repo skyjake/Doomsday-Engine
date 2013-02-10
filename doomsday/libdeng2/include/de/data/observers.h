@@ -55,6 +55,10 @@
     typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
     Name##Audience audienceFor##Name;
 
+#define DENG2_EXTERN_AUDIENCE(Name) \
+    typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+    extern Name##Audience audienceFor##Name;
+
 /**
  * Macro for defining an observer interface containing a single method.
  *

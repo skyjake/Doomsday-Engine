@@ -54,6 +54,8 @@ public:
      */
     void sendInitialUpdate();
 
+    void sendGameState();
+
 protected slots:
     void handleIncomingPackets();
 

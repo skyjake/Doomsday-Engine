@@ -23,11 +23,12 @@
 #include <QObject>
 #include <QSet>
 #include "shelluser.h"
+#include "map/r_world.h"
 
 /**
  * All remote shell users.
  */
-class ShellUsers : public QObject
+class ShellUsers : public QObject, public IMapChangeObserver
 {
     Q_OBJECT
 
@@ -46,6 +47,8 @@ public:
     void add(ShellUser *user);
 
     int count() const;
+
+    void currentMapChanged();
 
 protected slots:
     void userDisconnected();
