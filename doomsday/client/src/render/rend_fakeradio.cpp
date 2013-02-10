@@ -1306,7 +1306,7 @@ static void processEdgeShadow(BspLeaf const *bspLeaf, LineDef const *lineDef,
 {
     DENG_ASSERT(bspLeaf);
     DENG_ASSERT(lineDef && (side == FRONT || side == BACK) && lineDef->L_sidedef(side));
-    DENG_ASSERT(planeId <= lineDef->L_sector(side)->planeCount);
+    DENG_ASSERT(planeId < lineDef->L_sector(side)->planeCount());
 
     if(!(shadowDark > .0001)) return;
 
@@ -1435,7 +1435,7 @@ static void drawLinkedEdgeShadows(BspLeaf const *bspLeaf, shadowlink_t *link,
         processEdgeShadow(bspLeaf, link->lineDef, link->side, PLN_CEILING, shadowDark);
     }
 
-    for(uint pln = PLN_MID; pln < bspLeaf->sector->planeCount; ++pln)
+    for(uint pln = PLN_MID; pln < bspLeaf->sector->planeCount(); ++pln)
     {
         processEdgeShadow(bspLeaf, link->lineDef, link->side, pln, shadowDark);
     }
@@ -1478,7 +1478,7 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
     vec[VZ] = 0;
 
     // Do we need to enlarge the size of the doPlanes array?
-    if(bspLeaf->sector->planeCount > doPlaneSize)
+    if(bspLeaf->sector->planeCount() > doPlaneSize)
     {
         if(!doPlaneSize)
             doPlaneSize = 2;
@@ -1491,7 +1491,7 @@ static void radioBspLeafEdges(BspLeaf const *bspLeaf)
     std::memset(doPlanes, 0, doPlaneSize);
 
     // See if any of this BspLeaf's planes will get shadows.
-    for(uint pln = 0; pln < bspLeaf->sector->planeCount; ++pln)
+    for(uint pln = 0; pln < bspLeaf->sector->planeCount(); ++pln)
     {
         Plane const *plane = bspLeaf->sector->planes[pln];
 

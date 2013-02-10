@@ -1991,10 +1991,7 @@ struct Partitioner::Instance
      */
     Vertex* newVertex(const_pvec2d_t origin)
     {
-        Vertex* vtx;
-
-        // Allocate with M_Calloc for uniformity with the editable vertexes.
-        vtx = static_cast<Vertex*>(M_Calloc(sizeof *vtx));
+        Vertex* vtx = new Vertex;
         vtx->buildData.index = numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
         vertexes.push_back(vtx);
 
@@ -2443,9 +2440,10 @@ Vertex& Partitioner::vertex(uint idx)
 
 Partitioner& Partitioner::release(de::MapElement* ob)
 {
+    LOG_AS("Partitioner::release");
+
     if(!d->release(ob))
     {
-        LOG_AS("Partitioner::release");
         LOG_DEBUG("Attempted to release an unknown/unowned object %p.") << de::dintptr(ob);
     }
     return *this;

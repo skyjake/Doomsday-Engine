@@ -606,12 +606,9 @@ clplane_t* GameMap_ClPlaneBySectorIndex(GameMap* map, uint sectorIndex, clplanet
  * Reads a sector delta from the PSV_FRAME2 message buffer and applies it
  * to the world.
  */
-void Cl_ReadSectorDelta2(int deltaType, boolean skip)
+void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
 {
     DENG_UNUSED(deltaType);
-
-    /// @todo Skipping is never done nowadays...
-    static Sector dummy; // Used when skipping.
 
     /// @todo Do not assume the CURRENT map.
     GameMap *map = theMap;
@@ -624,31 +621,14 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     ushort num = Reader_ReadUInt16(msgReader);
 
     Sector *sec = 0;
-    if(!skip)
-    {
 #ifdef _DEBUG
-        if(num >= NUM_SECTORS)
-        {
-            // This is worrisome.
-            Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
-        }
-#endif
-        sec = SECTOR_PTR(num);
-    }
-    else
+    if(num >= NUM_SECTORS)
     {
-        // Read the data into the dummy if we're skipping.
-        sec = &dummy;
+        // This is worrisome.
+        Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
     }
-
-    // Set up the dummy planes.
-    Plane dummyFloorPlane(*sec, de::Vector3f(0, 0, 1));
-    Plane dummyCeilingPlane(*sec, de::Vector3f(0, 0, -1));
-    static Plane *dummyPlaneArray[2];
-
-    dummyPlaneArray[0] = &dummyFloorPlane;
-    dummyPlaneArray[1] = &dummyCeilingPlane;
-    dummy.planes = dummyPlaneArray;
+#endif
+    sec = SECTOR_PTR(num);
 
     // Flags.
     int df = Reader_ReadPackedUInt32(msgReader);
@@ -701,9 +681,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     if(df & SDF_CEIL_COLOR_BLUE)
         sec->SP_ceilsurface.setColorBlue(Reader_ReadByte(msgReader) / 255.f);
 
-    // The whole delta has been read. If we're about to skip, let's do so.
-    if(skip)
-        return;
+    // The whole delta has now been read.
 
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)

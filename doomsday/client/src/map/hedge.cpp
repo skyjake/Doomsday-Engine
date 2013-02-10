@@ -50,6 +50,7 @@ HEdge::HEdge(HEdge const &other) : de::MapElement(DMU_HEDGE)
 
 HEdge::~HEdge()
 {
+#ifdef __CLIENT__
     for(uint i = 0; i < 3; ++i)
     {
         if(bsuf[i])
@@ -57,6 +58,7 @@ HEdge::~HEdge()
             SB_DestroySurface(bsuf[i]);
         }
     }
+#endif
 }
 
 coord_t WallDivNode_Height(walldivnode_t* node)
@@ -225,7 +227,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
                 {
                     if(scanSec->SP_ceilvisheight - scanSec->SP_floorvisheight > 0)
                     {
-                        for(uint j = 0; j < scanSec->planeCount && !stopScan; ++j)
+                        for(uint j = 0; j < scanSec->planeCount() && !stopScan; ++j)
                         {
                             Plane* pln = scanSec->SP_plane(j);
 

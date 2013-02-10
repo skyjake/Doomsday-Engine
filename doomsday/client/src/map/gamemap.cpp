@@ -250,7 +250,7 @@ Surface* GameMap_SurfaceByBase(GameMap* map, const void* ddMobjBase)
     for(i = 0; i < map->sectorCount(); ++i)
     {
         Sector* sec = &map->sectors[i];
-        for(k = 0; k < sec->planeCount; ++k)
+        for(k = 0; k < sec->planeCount(); ++k)
         {
             Plane* pln = sec->SP_plane(k);
             if(ddMobjBase == &pln->surface.base)

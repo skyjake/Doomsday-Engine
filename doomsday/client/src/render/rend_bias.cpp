@@ -369,7 +369,7 @@ void SB_InitForMap(const char* uniqueID)
             for(; *bspLeafIter; bspLeafIter++)
             {
                 BspLeaf* leaf = *bspLeafIter;
-                numVertIllums += Rend_NumFanVerticesForBspLeaf(leaf) * sec->planeCount;
+                numVertIllums += Rend_NumFanVerticesForBspLeaf(leaf) * sec->planeCount();
             }
         }
     }
@@ -416,7 +416,7 @@ void SB_InitForMap(const char* uniqueID)
                 BspLeaf* leaf = *bspLeafIter;
                 uint j;
 
-                for(j = 0; j < sec->planeCount; ++j)
+                for(j = 0; j < sec->planeCount(); ++j)
                 {
                     biassurface_t* bsuf = SB_CreateSurface();
 
@@ -424,6 +424,7 @@ void SB_InitForMap(const char* uniqueID)
                     bsuf->illum = illums;
                     illums += bsuf->size;
 
+                    DENG2_ASSERT(leaf->bsuf != 0);
                     leaf->bsuf[j] = bsuf;
                 }
             }

@@ -2708,7 +2708,7 @@ static void Rend_RenderPlanes()
     Sector *sect = leaf->sector;
 
     // Render all planes of this sector.
-    for(uint i = 0; i < sect->planeCount; ++i)
+    for(uint i = 0; i < sect->planeCount(); ++i)
     {
         Plane const *plane = sect->planes[i];
         Surface const *suf = &plane->surface;
@@ -3061,7 +3061,7 @@ void Rend_RenderSurfaceVectors()
 
         if(!bspLeaf->sector) continue;
 
-        for(uint j = 0; j < bspLeaf->sector->planeCount; ++j)
+        for(uint j = 0; j < bspLeaf->sector->planeCount(); ++j)
         {
             Plane *pln = bspLeaf->sector->SP_plane(j);
             vec3f_t origin;
@@ -3147,7 +3147,7 @@ static int drawSectorSoundOrigins(Sector *sec, void *parameters)
     if(devSoundOrigins & SOF_PLANE)
     {
         uint i;
-        for(i = 0; i < sec->planeCount; ++i)
+        for(i = 0; i < sec->planeCount(); ++i)
         {
             Plane* pln = sec->SP_plane(i);
             dd_snprintf(buf, 80, "Sector #%i (pln:%i)", idx, i);

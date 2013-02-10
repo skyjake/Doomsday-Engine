@@ -49,10 +49,12 @@ BspLeaf::~BspLeaf()
 {
     if(bsuf)
     {
-        for(uint i = 0; i < sector->planeCount; ++i)
+#ifdef __CLIENT__
+        for(uint i = 0; i < sector->planeCount(); ++i)
         {
             SB_DestroySurface(bsuf[i]);
         }
+#endif
         Z_Free(bsuf);
     }
 
@@ -98,7 +100,8 @@ void BspLeaf_Delete(BspLeaf* leaf)
 biassurface_t* BspLeaf_BiasSurfaceForGeometryGroup(BspLeaf* leaf, uint groupId)
 {
     DENG2_ASSERT(leaf);
-    if(!leaf->sector || groupId > leaf->sector->planeCount) return NULL;
+    if(!leaf->sector || groupId > leaf->sector->planeCount()) return NULL;
+    DENG2_ASSERT(leaf->bsuf != 0);
     return leaf->bsuf[groupId];
 }
 
