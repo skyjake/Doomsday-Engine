@@ -44,13 +44,13 @@ signals:
 public slots:
     void openConnection(QString address);
     void closeConnection();
+    void sendCommandToServer(de::String command);
     void switchToStatus();
     void switchToConsole();
     void updateWhenConnected();
 
 protected slots:
     void handleIncomingPackets();
-    void sendCommandToServer(de::String command);
     void addressResolved();
     void connected();
     void disconnected();

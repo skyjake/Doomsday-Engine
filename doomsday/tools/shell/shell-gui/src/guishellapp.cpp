@@ -55,10 +55,13 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     setApplicationName    ("doomsday-shell-gui");
     setApplicationVersion (SHELL_VERSION);
 
+    d->localMenu = new QMenu(tr("Local Servers"));
+    connect(d->localMenu, SIGNAL(aboutToShow()), this, SLOT(updateLocalServerMenu()));
+
 #ifdef MACOSX
     setQuitOnLastWindowClosed(false);
-#endif
 
+    // On Mac OS X, the menu is not window-specific.
     d->menuBar = new QMenuBar(0);
 
     QMenu *menu = d->menuBar->addMenu(tr("Server"));
@@ -73,10 +76,10 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     menu->addAction(tr("Start Local Server"), this, SLOT(startLocalServer()),
                     QKeySequence(tr("Ctrl+N", "Server|Start Local Server")));
 
-    d->localMenu = menu->addMenu(tr("Local Servers"));
-    connect(d->localMenu, SIGNAL(aboutToShow()), this, SLOT(updateLocalServerMenu()));
+    menu->addMenu(d->localMenu);
 
     menu->addAction(tr("About"), this, SLOT(aboutShell()));
+#endif
 
     newOrReusedConnectionWindow();
 }
@@ -125,6 +128,11 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 GuiShellApp &GuiShellApp::app()
 {
     return *static_cast<GuiShellApp *>(qApp);
+}
+
+QMenu *GuiShellApp::localServersMenu()
+{
+    return d->localMenu;
 }
 
 ServerFinder &GuiShellApp::serverFinder()
@@ -189,6 +197,20 @@ void GuiShellApp::startLocalServer()
     catch(Error const &er)
     {
         QMessageBox::critical(0, tr("Failed to Start Server"), er.asText());
+    }
+}
+
+void GuiShellApp::stopServer()
+{
+    LinkWindow *win = dynamic_cast<LinkWindow *>(activeWindow());
+    if(win && win->isConnected())
+    {
+        if(QMessageBox::question(win, tr("Stop Server?"),
+                                 tr("Are you sure you want to stop this server?"),
+                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+        {
+            win->sendCommandToServer("quit");
+        }
     }
 }
 

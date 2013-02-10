@@ -37,6 +37,7 @@ public:
 
 protected slots:
     void pickFolder();
+    void pickIwadFolder();
     void configureGameOptions();
     void saveState();
     void validate();

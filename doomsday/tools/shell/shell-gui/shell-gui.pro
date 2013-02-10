@@ -56,7 +56,11 @@ RESOURCES += \
 
 # Deployment ----------------------------------------------------------------
 
-macx {
+win32 {
+    INSTALLS += target
+    target.path = $$DENG_BIN_DIR
+}
+else:macx {
     ICON = res/macx/shell.icns
 
     # Clean up previous deployment.

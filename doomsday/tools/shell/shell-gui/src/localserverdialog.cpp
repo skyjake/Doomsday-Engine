@@ -39,6 +39,7 @@ DENG2_PIMPL(LocalServerDialog)
     QLineEdit *port;
     QLineEdit *options;
     QLineEdit *folder;
+    QLineEdit *iwadFolder;
 
     Instance(Public &i) : Private(i)
     {
@@ -69,13 +70,31 @@ DENG2_PIMPL(LocalServerDialog)
 
         folder = new QLineEdit;
         folder->setMinimumWidth(300);
-        folder->setText(st.value("LocalServer/runtime",
-                                 DoomsdayInfo::defaultServerRuntimeFolder().toString()).toString());
+        folder->setText(st.value("LocalServer/runtime").toString());
+        if(folder->text().isEmpty())
+        {
+            folder->setText(DoomsdayInfo::defaultServerRuntimeFolder().toString());
+        }
         form->addRow(tr("Runtime folder:"), folder);
 
         QPushButton *folderButton = new QPushButton(tr("Select Folder"));
         connect(folderButton, SIGNAL(clicked()), &self, SLOT(pickFolder()));
         form->addRow(0, folderButton);
+#ifdef WIN32
+        folderButton->setMaximumWidth(100);
+#endif
+
+        iwadFolder = new QLineEdit;
+        iwadFolder->setMinimumWidth(300);
+        iwadFolder->setText(st.value("LocalServer/iwad").toString());
+        form->addRow(tr("IWAD folder:"), iwadFolder);
+
+        QPushButton *iwadFolderButton = new QPushButton(tr("Select Folder"));
+        connect(iwadFolderButton, SIGNAL(clicked()), &self, SLOT(pickIwadFolder()));
+        form->addRow(0, iwadFolderButton);
+#ifdef WIN32
+        iwadFolderButton->setMaximumWidth(100);
+#endif
 
         options = new QLineEdit;
         options->setMinimumWidth(300);
@@ -120,7 +139,9 @@ QString LocalServerDialog::gameMode() const
 
 QStringList LocalServerDialog::additionalOptions() const
 {
-    return d->options->text().split(' ', QString::SkipEmptyParts);
+    QStringList opts = d->options->text().split(' ', QString::SkipEmptyParts);
+    opts << "-iwad" << d->iwadFolder->text();
+    return opts;
 }
 
 NativePath LocalServerDialog::runtimeFolder() const
@@ -138,6 +159,16 @@ void LocalServerDialog::pickFolder()
     validate();
 }
 
+void LocalServerDialog::pickIwadFolder()
+{
+    QString dir = QFileDialog::getExistingDirectory(this,
+                                                    tr("Select IWAD Folder"),
+                                                    d->iwadFolder->text());
+    if(!dir.isEmpty()) d->iwadFolder->setText(dir);
+
+    validate();
+}
+
 void LocalServerDialog::configureGameOptions()
 {
 }
@@ -148,6 +179,7 @@ void LocalServerDialog::saveState()
     st.setValue("LocalServer/gameMode", d->games->itemData(d->games->currentIndex()).toString());
     st.setValue("LocalServer/port", d->port->text().toInt());
     st.setValue("LocalServer/runtime", d->folder->text());
+    st.setValue("LocalServer/iwad", d->iwadFolder->text());
     st.setValue("LocalServer/options", d->options->text());
 }
 
@@ -164,6 +196,8 @@ void LocalServerDialog::validate()
     }
 
     if(d->folder->text().isEmpty()) isValid = false;
+
+    if(d->iwadFolder->text().isEmpty()) isValid = false;
 
     d->yes->setEnabled(isValid);
 }

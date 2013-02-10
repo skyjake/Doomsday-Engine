@@ -20,11 +20,13 @@
 #include "statuswidget.h"
 #include "qtrootwidget.h"
 #include "qttextcanvas.h"
+#include "guishellapp.h"
 #include <de/LogBuffer>
 #include <de/shell/LogWidget>
 #include <de/shell/CommandLineWidget>
 #include <de/shell/Link>
 #include <QToolBar>
+#include <QMenuBar>
 #include <QTimer>
 #include <QCloseEvent>
 #include <QMessageBox>
@@ -50,6 +52,7 @@ DENG2_PIMPL(LinkWindow)
     QtRootWidget *root;
     QLabel *timeCounter;
     QLabel *currentHost;
+    QAction *stopAction;
 
     Instance(Public &i)
         : Private(i),
@@ -93,23 +96,37 @@ DENG2_PIMPL(LinkWindow)
 
     void updateCurrentHost()
     {
+        QString txt;
         if(link)
         {
             if(self.isConnected() && !link->address().isNull())
             {
-                currentHost->setText(QString("<small><b>%1</b>:%2</small>")
-                                     .arg(link->address().host().toString())
-                                     .arg(link->address().port()));
+                txt = tr("<b>%1</b>:%2")
+                        .arg(link->address().host().toString())
+                        .arg(link->address().port());
             }
             else if(self.isConnected() && link->address().isNull())
             {
-                currentHost->setText(tr("<small>Looking up host...</small>"));
+                txt = tr("Looking up host...");
             }
         }
-        else
-        {
-            currentHost->setText("<small></small>");
-        }
+#ifdef MACOSX
+        currentHost->setText("<small>" + txt + "</small>");
+#else
+        currentHost->setText(txt);
+#endif
+    }
+
+    void disconnected()
+    {
+        self.setTitle(tr("Disconnected"));
+        root->setOverlaidMessage(tr("Disconnected"));
+        self.statusBar()->clearMessage();
+        stopAction->setDisabled(true);
+
+        status->linkDisconnected();
+        updateCurrentHost();
+        updateStyle();
     }
 };
 
@@ -117,6 +134,30 @@ LinkWindow::LinkWindow(QWidget *parent)
     : QMainWindow(parent), d(new Instance(*this))
 {
     setUnifiedTitleAndToolBarOnMac(true);
+
+    GuiShellApp *app = &GuiShellApp::app();
+
+    d->stopAction = new QAction(tr("Stop Server"), this);
+    connect(d->stopAction, SIGNAL(triggered()), app, SLOT(stopServer()));
+
+#ifndef MACOSX
+    // Menus are window-specific on non-Mac platforms.
+    QMenu *menu = menuBar()->addMenu(tr("Server"));
+    menu->addAction(tr("Connect..."), app, SLOT(connectToServer()),
+                    QKeySequence(tr("Ctrl+O", "Server|Connect")));
+    menu->addAction(tr("Disconnect"), this, SLOT(closeConnection()),
+                    QKeySequence(tr("Ctrl+D", "Server|Disconnect")));
+    menu->addSeparator();
+    menu->addAction(tr("Start Local Server"), app, SLOT(startLocalServer()),
+                    QKeySequence(tr("Ctrl+N", "Server|Start Local Server")));
+    menu->addAction(d->stopAction);
+
+    menu->addMenu(app->localServersMenu());
+
+    menu->addSeparator();
+
+    menu->addAction(tr("&Quit"), app, SLOT(quit()), QKeySequence(tr("Ctrl+Q")));
+#endif
 
     d->stack = new QStackedWidget;
 
@@ -131,7 +172,7 @@ LinkWindow::LinkWindow(QWidget *parent)
 #ifdef MACOSX
     d->root->setFont(QFont("Menlo", 13));
 #else
-    d->root->setFont(QFont("Courier", 15));
+    d->root->setFont(QFont("Fixedsys", 9));
 #endif
     d->updateStyle();
 
@@ -140,7 +181,11 @@ LinkWindow::LinkWindow(QWidget *parent)
     setCentralWidget(d->stack);
 
     // Status bar.
+#ifdef MACOSX
     d->timeCounter = new QLabel("<small>0:00:00</small>");
+#else
+    d->timeCounter = new QLabel("0:00:00");
+#endif
     d->currentHost = new QLabel;
     statusBar()->addPermanentWidget(d->currentHost);
     statusBar()->addPermanentWidget(d->timeCounter);
@@ -148,6 +193,7 @@ LinkWindow::LinkWindow(QWidget *parent)
     QToolBar *tools = addToolBar(tr("View"));
 
     d->statusButton = new QToolButton;
+    d->statusButton->setFocusPolicy(Qt::NoFocus);
     d->statusButton->setText(tr("Status"));
     d->statusButton->setCheckable(true);
     d->statusButton->setChecked(true);
@@ -155,6 +201,7 @@ LinkWindow::LinkWindow(QWidget *parent)
     tools->addWidget(d->statusButton);
 
     d->consoleButton = new QToolButton;
+    d->consoleButton->setFocusPolicy(Qt::NoFocus);
     d->consoleButton->setText(tr("Console"));
     d->consoleButton->setCheckable(true);
     connect(d->consoleButton, SIGNAL(pressed()), this, SLOT(switchToConsole()));
@@ -181,6 +228,7 @@ LinkWindow::LinkWindow(QWidget *parent)
 
     d->root->setOverlaidMessage(tr("Disconnected"));
     setTitle(tr("Disconnected"));
+    d->stopAction->setDisabled(true);
 }
 
 LinkWindow::~LinkWindow()
@@ -238,6 +286,7 @@ void LinkWindow::openConnection(QString address)
 
     setTitle(address);    
     d->root->setOverlaidMessage(tr("Looking up host..."));
+    statusBar()->showMessage(tr("Looking up host..."));
     d->status->linkConnected(d->link);
     d->updateCurrentHost();
     d->updateStyle();
@@ -255,13 +304,8 @@ void LinkWindow::closeConnection()
 
         delete d->link;
         d->link = 0;
-        //d->status->setShellLink(0);
 
-        setTitle(tr("Disconnected"));
-        d->root->setOverlaidMessage(tr("Disconnected"));
-        d->status->linkDisconnected();
-        d->updateCurrentHost();
-        d->updateStyle();
+        d->disconnected();
     }
 }
 
@@ -283,7 +327,11 @@ void LinkWindow::updateWhenConnected()
     if(d->link)
     {
         TimeDelta elapsed = d->link->connectedAt().since();
+#ifdef MACOSX
         String time = String("<small>%1:%2:%3</small>")
+#else
+        String time = String("%1:%2:%3")
+#endif
                 .arg(int(elapsed.asHours()))
                 .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))
                 .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0'));
@@ -311,7 +359,7 @@ void LinkWindow::handleIncomingPackets()
             LogEntryPacket *pkt = static_cast<LogEntryPacket *>(packet.data());
             foreach(LogEntry *e, pkt->entries())
             {
-                d->logBuffer.add(new LogEntry(*e));
+                d->logBuffer.add(new LogEntry(*e, LogEntry::Remote));
             }
             break; }
 
@@ -356,6 +404,7 @@ void LinkWindow::sendCommandToServer(de::String command)
 void LinkWindow::addressResolved()
 {
     d->root->setOverlaidMessage(tr("Connecting..."));
+    statusBar()->showMessage(tr("Connecting..."));
     d->updateCurrentHost();
 }
 
@@ -363,24 +412,20 @@ void LinkWindow::connected()
 {
     d->root->setOverlaidMessage("");
     d->status->linkConnected(d->link);
+    statusBar()->clearMessage();
     updateWhenConnected();
+    d->stopAction->setEnabled(true);
 }
 
 void LinkWindow::disconnected()
 {
     if(!d->link) return;
 
-    d->status->linkDisconnected();
-
     // The link was disconnected.
     disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
 
     d->link->deleteLater();
     d->link = 0;
-    //d->status->setShellLink(0);
 
-    setTitle(tr("Disconnected"));
-    d->root->setOverlaidMessage(tr("Disconnected"));
-    d->updateCurrentHost();
-    d->updateStyle();
+    d->disconnected();
 }

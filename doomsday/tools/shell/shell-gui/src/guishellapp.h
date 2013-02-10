@@ -21,6 +21,7 @@
 
 #include "qtguiapp.h"
 #include <de/shell/ServerFinder>
+#include <QMenu>
 
 class LinkWindow;
 
@@ -36,6 +37,7 @@ public:
     de::shell::ServerFinder &serverFinder();
 
     static GuiShellApp &app();
+    QMenu *localServersMenu();
 
 public slots:
     void connectToServer();
@@ -43,6 +45,7 @@ public slots:
     void disconnectFromServer();
     void closeActiveWindow();
     void startLocalServer();
+    void stopServer();
     void updateLocalServerMenu();
     void aboutShell();
 
