@@ -253,7 +253,7 @@ static int compareKnownWordByName(void const* a, void const* b)
         textAString = CVar_ComposePath((cvar_t*)wA->data);
         textA = Str_Text(textAString);
         break;
-    case WT_GAME: textA = Str_Text(&reinterpret_cast<de::Game*>(wA->data)->identityKey()); break;
+    case WT_GAME: textA = Str_Text(reinterpret_cast<de::Game*>(wA->data)->identityKey()); break;
     default:
         Con_Error("compareKnownWordByName: Invalid type %i for word A.", wA->type);
         exit(1); // Unreachable
@@ -267,7 +267,7 @@ static int compareKnownWordByName(void const* a, void const* b)
         textBString = CVar_ComposePath((cvar_t*)wB->data);
         textB = Str_Text(textBString);
         break;
-    case WT_GAME: textB = Str_Text(&reinterpret_cast<de::Game*>(wB->data)->identityKey()); break;
+    case WT_GAME: textB = Str_Text(reinterpret_cast<de::Game*>(wB->data)->identityKey()); break;
     default:
         Con_Error("compareKnownWordByName: Invalid type %i for word B.", wB->type);
         exit(1); // Unreachable
@@ -369,7 +369,11 @@ static void updateKnownWords(void)
     }
 
     // Build the known words table.
-    numKnownWords = numUniqueNamedCCmds + countCVarParams.count + numCAliases + GameCollection_Count(App_GameCollection());
+    numKnownWords =
+            numUniqueNamedCCmds +
+            countCVarParams.count +
+            numCAliases +
+            App_GameCollection().count();
     size_t len = sizeof(knownword_t) * numKnownWords;
     knownWords = (knownword_t*) M_Realloc(knownWords, len);
     memset(knownWords, 0, len);
@@ -409,7 +413,7 @@ static void updateKnownWords(void)
     }
 
     // Add games?
-    de::GameCollection& gameCollection = reinterpret_cast<de::GameCollection&>( *App_GameCollection() );
+    de::GameCollection& gameCollection = App_GameCollection();
     DENG2_FOR_EACH_CONST(de::GameCollection::Games, i, gameCollection.games())
     {
         knownWords[knownWordIdx].type = WT_GAME;
@@ -1294,7 +1298,7 @@ static AutoStr* textForKnownWord(knownword_t const* word)
     case WT_CALIAS:   Str_Set(text = AutoStr_NewStd(), ((calias_t*)word->data)->name); break;
     case WT_CCMD:     Str_Set(text = AutoStr_NewStd(), ((ccmd_t*)word->data)->name); break;
     case WT_CVAR:     text = CVar_ComposePath((cvar_t*)word->data); break;
-    case WT_GAME:     Str_Set(text = AutoStr_NewStd(), Str_Text(&reinterpret_cast<de::Game*>(word->data)->identityKey())); break;
+    case WT_GAME:     Str_Set(text = AutoStr_NewStd(), Str_Text(reinterpret_cast<de::Game*>(word->data)->identityKey())); break;
     default:
         Con_Error("textForKnownWord: Invalid type %i for word.", word->type);
         exit(1); // Unreachable
@@ -1465,7 +1469,7 @@ static int aproposPrinter(knownword_t const* word, void* matching)
             }
             else if(word->type == WT_GAME)
             {
-                Str_Set(&tmp, Str_Text(&reinterpret_cast<de::Game*>(word->data)->title()));
+                Str_Set(&tmp, Str_Text(reinterpret_cast<de::Game*>(word->data)->title()));
             }
 
             // Truncate.
@@ -1558,7 +1562,7 @@ static void printHelpAbout(char const* query)
     {
         try
         {
-            de::Game& game = reinterpret_cast<de::GameCollection&>( *App_GameCollection() ).byIdentityKey(query);
+            de::Game& game = App_GameCollection().byIdentityKey(query);
             de::Game::print(game, PGF_EVERYTHING);
             found = true;
         }
@@ -1627,7 +1631,7 @@ static int printKnownWordWorker(knownword_t const* word, void* parameters)
 
     case WT_GAME: {
         de::Game* game = (de::Game*) word->data;
-        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", Str_Text(&game->identityKey()));
+        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", Str_Text(game->identityKey()));
         break; }
 
     default:

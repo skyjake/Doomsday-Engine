@@ -1155,7 +1155,7 @@ static int DD_ActivateGameWorker(void* parameters)
     }
     else
     {
-        configFileName = &games->currentGame().mainConfig();
+        configFileName = games->currentGame().mainConfig();
     }
 
     Con_Message("Parsing primary config \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
@@ -1171,7 +1171,7 @@ static int DD_ActivateGameWorker(void* parameters)
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands2(Str_Text(&games->currentGame().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
+        Con_ParseCommands2(Str_Text(games->currentGame().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
     }
 #endif
 
@@ -1226,22 +1226,23 @@ static int DD_ActivateGameWorker(void* parameters)
     return 0;
 }
 
-struct gamecollection_s* App_GameCollection()
+de::GameCollection &App_GameCollection()
 {
-    return reinterpret_cast<struct gamecollection_s*>(games);
+    DENG2_ASSERT(games != 0);
+    return *games;
 }
 
-struct game_s* App_CurrentGame()
+de::Game *App_CurrentGame()
 {
     if(!games) return 0;
-    return reinterpret_cast<struct game_s*>(&games->currentGame());
+    return &games->currentGame();
 }
 
 static void populateGameInfo(GameInfo& info, de::Game& game)
 {
-    info.identityKey = Str_Text(&game.identityKey());
-    info.title       = Str_Text(&game.title());
-    info.author      = Str_Text(&game.author());
+    info.identityKey = Str_Text(game.identityKey());
+    info.title       = Str_Text(game.title());
+    info.author      = Str_Text(game.author());
 }
 
 /// @note Part of the Doomsday public API.
@@ -1362,7 +1363,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         if(!allowReload)
         {
             if(DD_GameLoaded())
-                Con_Message("%s (%s) - already loaded.\n", Str_Text(&game.title()), Str_Text(&game.identityKey()));
+                Con_Message("%s (%s) - already loaded.\n", Str_Text(game.title()), Str_Text(game.identityKey()));
             return true;
         }
         // We are re-loading.
@@ -1492,7 +1493,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     VERBOSE(
         if(!isNullGame(game))
         {
-            Con_Message("Selecting game '%s'...\n", Str_Text(&game.identityKey()));
+            Con_Message("Selecting game '%s'...\n", Str_Text(game.identityKey()));
         }
         else if(!isReload)
         {
@@ -2734,7 +2735,7 @@ D_CMD(Load)
         {
             Con_Message("Failed to locate all required startup resources:\n");
             de::Game::printFiles(game, FF_STARTUP);
-            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(&game.title()), Str_Text(&game.identityKey()));
+            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(game.title()), Str_Text(game.identityKey()));
             Str_Free(&searchPath);
             return true;
         }
@@ -2871,7 +2872,7 @@ D_CMD(Unload)
                 return DD_ChangeGame(games->nullGame());
             }
 
-            Con_Message("%s is not currently loaded.\n", Str_Text(&game.identityKey()));
+            Con_Message("%s is not currently loaded.\n", Str_Text(game.identityKey()));
             return true;
         }
         catch(de::GameCollection::NotFoundError const&)

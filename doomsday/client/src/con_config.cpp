@@ -278,7 +278,8 @@ boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
  */
 void Con_SaveDefaults(void)
 {
-    Con_WriteState(cfgFile, (!isDedicated? Str_Text(Game_BindingConfig(App_CurrentGame())) : 0));
+    Con_WriteState(cfgFile, (!isDedicated && App_CurrentGame()?
+                                 Str_Text(App_CurrentGame()->bindingConfig()) : 0));
 }
 
 D_CMD(WriteConsole)

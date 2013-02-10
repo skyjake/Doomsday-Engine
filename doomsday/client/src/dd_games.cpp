@@ -1,4 +1,4 @@
-/** @file dd_games.cpp Game collection. 
+/** @file dd_games.cpp Game collection.
  * @ingroup core
  *
  * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -145,7 +145,7 @@ Game& GameCollection::byIdentityKey(char const* identityKey) const
         DENG2_FOR_EACH_CONST(GameCollection::Games, i, d->games)
         {
             Game* game = *i;
-            if(!Str_CompareIgnoreCase(&game->identityKey(), identityKey))
+            if(!Str_CompareIgnoreCase(game->identityKey(), identityKey))
                 return *game;
         }
     }
@@ -227,7 +227,7 @@ static int locateAllResourcesWorker(void* parameters)
     {
         Game* game = *i;
 
-        Con_Message("Locating \"%s\"...\n", Str_Text(&game->title()));
+        Con_Message("Locating \"%s\"...\n", Str_Text(game->title()));
 
         gameCollection->locateStartupResources(*game);
         Con_SetProgress((n + 1) * 200 / gameCollection->count() - 1);
@@ -252,8 +252,8 @@ D_CMD(ListGames)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    de::GameCollection* games = reinterpret_cast<de::GameCollection*>(App_GameCollection());
-    if(!games || !games->count())
+    de::GameCollection& games = App_GameCollection();
+    if(!games.count())
     {
         Con_Printf("No Registered Games.\n");
         return true;
@@ -264,7 +264,7 @@ D_CMD(ListGames)
     Con_PrintRuler();
 
     de::GameCollection::GameList found;
-    games->findAll(found);
+    games.findAll(found);
     // Sort so we get a nice alphabetical list.
     qSort(found.begin(), found.end());
 
@@ -273,17 +273,17 @@ D_CMD(ListGames)
     {
         de::Game* game = i->game;
 
-        Con_Printf(" %s %-16s %s (%s)\n", games->isCurrentGame(*game)? "*" :
+        Con_Printf(" %s %-16s %s (%s)\n", games.isCurrentGame(*game)? "*" :
                                    !game->allStartupFilesFound()? "!" : " ",
-                   Str_Text(&game->identityKey()), Str_Text(&game->title()),
-                   Str_Text(&game->author()));
+                   Str_Text(game->identityKey()), Str_Text(game->title()),
+                   Str_Text(game->author()));
 
         if(game->allStartupFilesFound())
             numCompleteGames++;
     }
 
     Con_PrintRuler();
-    Con_Printf("%i of %i games playable.\n", numCompleteGames, games->count());
+    Con_Printf("%i of %i games playable.\n", numCompleteGames, games.count());
     Con_Printf("Use the 'load' command to load a game. For example: \"load gamename\".\n");
 
     return true;
