@@ -30,7 +30,7 @@ namespace shell {
 /**
  * Utility for starting and stopping local servers.
  */
-class LocalServer
+class LIBSHELL_PUBLIC LocalServer
 {
 public:
     /// Failed to locate the server executable. @ingroup errors

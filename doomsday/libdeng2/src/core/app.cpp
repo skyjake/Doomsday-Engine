@@ -132,7 +132,7 @@ DENG2_PIMPL(App), DENG2_OBSERVES(Record, Deletion)
 #elif WIN32
         if(allowPlugins)
         {
-            binFolder.attach(new DirectoryFeed(app.nativePluginBinaryPath()));
+            binFolder.attach(new DirectoryFeed(self.nativePluginBinaryPath()));
         }
         NativePath appDir = appPath.fileNamePath();
         fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));

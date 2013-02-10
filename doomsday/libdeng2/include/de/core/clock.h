@@ -29,7 +29,7 @@ namespace de {
  * Time source.
  * @ingroup core
  */
-class Clock
+class DENG2_PUBLIC Clock
 {
 public:
     DENG2_DEFINE_AUDIENCE(TimeChange, void timeChanged(Clock const &))

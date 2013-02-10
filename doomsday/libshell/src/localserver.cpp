@@ -18,6 +18,7 @@
 
 #include "de/shell/LocalServer"
 #include "de/shell/Link"
+#include "de/shell/DoomsdayInfo"
 #include <de/CommandLine>
 #include <QCoreApplication>
 #include <QDir>
@@ -45,17 +46,17 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
 {
     NativePath userDir = runtimePath;
 
+    if(userDir.isEmpty())
+    {
+        // Default runtime location.
+        userDir = DoomsdayInfo::defaultServerRuntimeFolder();
+    }
+
     DENG2_ASSERT(d->link == 0);
 
     CommandLine cmd;
 
 #ifdef MACOSX
-    if(userDir.isEmpty())
-    {
-        // Default runtime location.
-        userDir = QDir::home().filePath("Library/Application Support/Doomsday Engine/server-runtime");
-    }
-
     // First locate the server executable.
     NativePath bin = NativePath(qApp->applicationDirPath()) / "../Resources/doomsday-server";
     if(!bin.exists())
@@ -104,6 +105,13 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
     cmd.append("-vdmap");
     cmd.append(plugDir / "hexen.bundle/Contents/Resources");
     cmd.append("}Data/jHexen/");
+#endif
+
+#ifdef WIN32
+    NativePath bin = NativePath(qApp->applicationDirPath()) / "doomsday-server.exe";
+    cmd.append(bin);
+    cmd.append("-basedir");
+    cmd.append(bin.fileNamePath() / "..");
 #endif
 
     cmd.append("-userdir");

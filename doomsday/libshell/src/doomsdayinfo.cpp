@@ -79,6 +79,8 @@ NativePath DoomsdayInfo::defaultServerRuntimeFolder()
 {
 #ifdef MACOSX
     return QDir::home().filePath("Library/Application Support/Doomsday Engine/server-runtime");
+#elif WIN32
+    return QDir::home().filePath("AppData/Local/Deng Team/Doomsday Engine/server-runtime");
 #else
     return NativePath(QDir::home().filePath(".doomsday")) / "server-runtime";
 #endif

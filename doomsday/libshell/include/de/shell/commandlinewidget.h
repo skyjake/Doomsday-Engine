@@ -27,7 +27,7 @@ namespace shell {
 /**
  * Text editor with a history.
  */
-class CommandLineWidget : public LineEditWidget
+class LIBSHELL_PUBLIC CommandLineWidget : public LineEditWidget
 {
     Q_OBJECT
 

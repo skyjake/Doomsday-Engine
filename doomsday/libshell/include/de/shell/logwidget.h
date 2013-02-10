@@ -25,7 +25,7 @@
 namespace de {
 namespace shell {
 
-class LogWidget : public TextWidget
+class LIBSHELL_PUBLIC LogWidget : public TextWidget
 {
     Q_OBJECT
 

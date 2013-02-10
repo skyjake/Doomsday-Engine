@@ -19,6 +19,7 @@
 #ifndef LIBSHELL_DOOMSDAYINFO_H
 #define LIBSHELL_DOOMSDAYINFO_H
 
+#include "libshell.h"
 #include <de/String>
 #include <de/NativePath>
 #include <QList>
@@ -29,7 +30,7 @@ namespace shell {
 /**
  * Information about Doomsday Engine and its plugins.
  */
-class DoomsdayInfo
+class LIBSHELL_PUBLIC DoomsdayInfo
 {
 public:
     struct GameMode
