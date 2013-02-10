@@ -23,6 +23,7 @@
 #include "Lexicon"
 #include <de/Protocol>
 #include <de/RecordPacket>
+#include <de/Vector>
 #include <QList>
 
 namespace de {
@@ -64,6 +65,58 @@ public:
 
 private:
     Entries _entries;
+};
+
+/**
+ * Packet containing an outline of a map's lines.
+ *
+ * The contained information is not intended to be a 100% accurate or complete
+ * representation of a map. It is only meant to be used as an informative
+ * visualization for the shell user (2D outline of the map).
+ */
+class LIBSHELL_PUBLIC MapOutlinePacket : public Packet
+{
+public:
+    enum LineType
+    {
+        OneSidedLine = 0,
+        TwoSidedLine = 1
+    };
+    struct Line
+    {
+        Vector2i start;
+        Vector2i end;
+        LineType type;
+    };
+
+    MapOutlinePacket();
+    ~MapOutlinePacket();
+
+    void clear();
+
+    void addLine(Vector2i const &vertex1, Vector2i const &vertex2, LineType type);
+
+    /**
+     * Returns the number of lines.
+     */
+    int lineCount() const;
+
+    /**
+     * Returns a line in the outline.
+     * @param index  Index of the line, in range [0, lineCount()).
+     * @return Line specs.
+     */
+    Line const &line(int index) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+    static Packet *fromBlock(Block const &block);
+
+private:
+    struct Instance;
+    Instance *d;
 };
 
 /**

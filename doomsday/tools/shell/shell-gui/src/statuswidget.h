@@ -22,6 +22,7 @@
 #include <QWidget>
 #include <de/String>
 #include <de/shell/Link>
+#include <de/shell/Protocol>
 
 /**
  * Widget for showing server's status.
@@ -35,6 +36,7 @@ public:
     ~StatusWidget();
 
     void setGameState(QString mode, QString rules, QString mapId, QString mapTitle);
+    void setMapOutline(de::shell::MapOutlinePacket const &outline);
 
     void paintEvent(QPaintEvent *);
 

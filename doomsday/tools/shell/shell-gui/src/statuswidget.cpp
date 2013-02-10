@@ -21,6 +21,7 @@
 #include <de/String>
 #include <de/shell/DoomsdayInfo>
 #include <QPainter>
+#include <QPicture>
 #include <QTimer>
 
 using namespace de;
@@ -31,6 +32,8 @@ DENG2_PIMPL(StatusWidget)
     QFont largeFont;
     String gameMode;
     String map;
+    QPicture mapOutline;
+    QRect mapBounds;
     shell::Link *link;
 
     Instance(Public &i) : Private(i), link(0)
@@ -43,6 +46,8 @@ DENG2_PIMPL(StatusWidget)
     {
         gameMode.clear();
         map.clear();
+        mapBounds = QRect();
+        mapOutline = QPicture();
     }
 };
 
@@ -65,7 +70,7 @@ StatusWidget::~StatusWidget()
 void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QString mapTitle)
 {
     d->gameMode = shell::DoomsdayInfo::titleForGameMode(mode);
-    if(!rules.isEmpty()) d->gameMode += " - " + rules;
+    if(!rules.isEmpty()) d->gameMode = rules + " - " + d->gameMode;
 
     d->map = mapTitle;
     if(!mapId.isEmpty() && !mapTitle.contains(mapId))
@@ -74,6 +79,33 @@ void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QStr
     }
 
     update();
+}
+
+void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
+{
+    d->mapBounds = QRect();
+    d->mapOutline = QPicture();
+
+    QPainter painter(&d->mapOutline);
+    for(int i = 0; i < outline.lineCount(); ++i)
+    {
+        shell::MapOutlinePacket::Line const &ln = outline.line(i);
+        painter.setPen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
+
+        QPoint a(ln.start.x, ln.start.y);
+        QPoint b(ln.end.x, ln.end.y);
+
+        painter.drawLine(a, b);
+
+        if(!i)
+            d->mapBounds = QRect(a, QSize(1, 1));
+        else
+            d->mapBounds = d->mapBounds.united(QRect(a, QSize(1, 1)));
+
+        d->mapBounds = d->mapBounds.united(QRect(b, QSize(1, 1)));
+    }
+
+    qDebug() << d->mapBounds;
 }
 
 void StatusWidget::paintEvent(QPaintEvent *)
@@ -97,6 +129,32 @@ void StatusWidget::paintEvent(QPaintEvent *)
     painter.setPen(Qt::black);
     painter.drawText(QRect(0, 15 + lineHeight, width(), largeMetrics.lineSpacing()),
                      d->map, QTextOption(Qt::AlignCenter));
+
+    QRect outlineRect(QPoint(15, 15 + lineHeight + largeMetrics.lineSpacing() + 10),
+                      QPoint(width() - 15, height() - 15));
+
+    if(!d->mapBounds.isNull())
+    {
+        painter.setWindow(d->mapBounds);
+
+        // First try fitting horizontally.
+        float mapRatio = float(d->mapBounds.width()) / float(d->mapBounds.height());
+        QSize viewSize;
+        viewSize.setWidth(outlineRect.width());
+        viewSize.setHeight(outlineRect.width() / mapRatio);
+        if(viewSize.height() > outlineRect.height())
+        {
+            // Doesn't fit this way, fit to vertically instead.
+            viewSize.setHeight(outlineRect.height());
+            viewSize.setWidth(outlineRect.height() * mapRatio);
+        }
+        painter.setViewport(QRect(outlineRect.center().x() - viewSize.width()/2,
+                                  outlineRect.center().y() - viewSize.height()/2,
+                                  viewSize.width(), viewSize.height()));
+
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        painter.drawPicture(0, 0, d->mapOutline);
+    }
 }
 
 /*

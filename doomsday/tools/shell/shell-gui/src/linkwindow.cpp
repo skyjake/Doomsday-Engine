@@ -308,8 +308,8 @@ void LinkWindow::handleIncomingPackets()
         {
         case shell::Protocol::LogEntries: {
             // Add the entries into the local log buffer.
-            LogEntryPacket *entries = static_cast<LogEntryPacket *>(packet.data());
-            foreach(LogEntry *e, entries->entries())
+            LogEntryPacket *pkt = static_cast<LogEntryPacket *>(packet.data());
+            foreach(LogEntry *e, pkt->entries())
             {
                 d->logBuffer.add(new LogEntry(*e));
             }
@@ -328,6 +328,10 @@ void LinkWindow::handleIncomingPackets()
                     rec["mapId"].value().asText(),
                     rec["mapTitle"].value().asText());
             break; }
+
+        case shell::Protocol::MapOutline:
+            d->status->setMapOutline(*static_cast<MapOutlinePacket *>(packet.data()));
+            break;
 
         default:
             break;

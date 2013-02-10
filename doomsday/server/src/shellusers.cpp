@@ -54,6 +54,7 @@ void ShellUsers::currentMapChanged()
     foreach(ShellUser *user, _users)
     {
         user->sendGameState();
+        user->sendMapOutline();
     }
 }
 

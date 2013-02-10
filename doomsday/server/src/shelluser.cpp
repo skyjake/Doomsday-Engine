@@ -33,14 +33,12 @@
 
 using namespace de;
 
-struct ShellUser::Instance : public LogSink
+DENG2_PIMPL(ShellUser), public LogSink
 {
-    ShellUser &self;
-
     /// Log entries to be sent are collected here.
     shell::LogEntryPacket logEntryPacket;
 
-    Instance(ShellUser &inst) : self(inst)
+    Instance(Public &i) : Private(i)
     {
         // We will send all log entries to a shell user.
         LogBuffer::appBuffer().addSink(*this);
@@ -97,6 +95,7 @@ void ShellUser::sendInitialUpdate()
     *this << *packet;
 
     sendGameState();
+    sendMapOutline();
 }
 
 void ShellUser::sendGameState()
@@ -143,6 +142,26 @@ void ShellUser::sendGameState()
     }
 
     QScopedPointer<RecordPacket> packet(protocol().newGameState(mode, rules, mapId, mapTitle));
+    *this << *packet;
+}
+
+void ShellUser::sendMapOutline()
+{
+    if(!theMap) return;
+
+    QScopedPointer<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
+
+    for(uint i = 0; i < theMap->lineDefCount(); ++i)
+    {
+        LineDef const &line = theMap->lineDefs[i];
+        packet->addLine(
+                Vector2i(line.v[0]->origin[VX], line.v[0]->origin[VY]),
+                Vector2i(line.v[1]->origin[VX], line.v[1]->origin[VY]),
+                (line.sides[0].sector && line.sides[1].sector)?
+                    shell::MapOutlinePacket::TwoSidedLine :
+                    shell::MapOutlinePacket::OneSidedLine);
+    }
+
     *this << *packet;
 }
 
