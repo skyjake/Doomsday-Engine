@@ -104,6 +104,19 @@ void ShellUser::sendGameState()
     de::Game *game = App_CurrentGame();
     String mode = (game? Str_Text(game->identityKey()) : "");
 
+    /**
+     * @todo The server is not the right place to compose a packet about
+     * game state. Work needed:
+     * - World class that contains the game world as a whole
+     * - WorldFactory that produces various world and map related instances
+     * - Game plugins can extend the world with their own code (games can
+     *   provide a Factory of their own for constructing world/map instances)
+     * - libcommon (i.e., libidtech1) needs an IdTech1World
+     *
+     * The server should just ask the World for the information for the game
+     * state packet.
+     */
+
     /// @todo This information needs to come form the Game Rules.
     int deathmatch = Con_GetInteger("server-game-deathmatch");
     String rules = (!deathmatch    ? "Coop" :
