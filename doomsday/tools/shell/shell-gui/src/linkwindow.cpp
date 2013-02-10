@@ -39,6 +39,15 @@
 using namespace de;
 using namespace de::shell;
 
+static QString statusText(QString txt)
+{
+#ifdef MACOSX
+    return "<small>" + txt + "</small>";
+#else
+    return txt;
+#endif
+}
+
 DENG2_PIMPL(LinkWindow)
 {
     LogBuffer logBuffer;
@@ -110,11 +119,7 @@ DENG2_PIMPL(LinkWindow)
                 txt = tr("Looking up host...");
             }
         }
-#ifdef MACOSX
-        currentHost->setText("<small>" + txt + "</small>");
-#else
-        currentHost->setText(txt);
-#endif
+        currentHost->setText(statusText(txt));
     }
 
     void disconnected()
@@ -182,10 +187,11 @@ LinkWindow::LinkWindow(QWidget *parent)
 
     // Status bar.
 #ifdef MACOSX
-    d->timeCounter = new QLabel("<small>0:00:00</small>");
-#else
-    d->timeCounter = new QLabel("0:00:00");
+    QFont statusFont(font());
+    statusFont.setPointSize(font().pointSize() * 4 / 5);
+    statusBar()->setFont(statusFont);
 #endif
+    d->timeCounter = new QLabel(statusText("0:00:00"));
     d->currentHost = new QLabel;
     statusBar()->addPermanentWidget(d->currentHost);
     statusBar()->addPermanentWidget(d->timeCounter);
@@ -306,6 +312,8 @@ void LinkWindow::closeConnection()
         d->link = 0;
 
         d->disconnected();
+
+        emit linkClosed(this);
     }
 }
 
@@ -327,15 +335,11 @@ void LinkWindow::updateWhenConnected()
     if(d->link)
     {
         TimeDelta elapsed = d->link->connectedAt().since();
-#ifdef MACOSX
-        String time = String("<small>%1:%2:%3</small>")
-#else
         String time = String("%1:%2:%3")
-#endif
                 .arg(int(elapsed.asHours()))
                 .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))
                 .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0'));
-        d->timeCounter->setText(time);
+        d->timeCounter->setText(statusText(time));
 
         QTimer::singleShot(1000, this, SLOT(updateWhenConnected()));
     }
@@ -415,6 +419,8 @@ void LinkWindow::connected()
     statusBar()->clearMessage();
     updateWhenConnected();
     d->stopAction->setEnabled(true);
+
+    emit linkOpened(this);
 }
 
 void LinkWindow::disconnected()
@@ -428,4 +434,6 @@ void LinkWindow::disconnected()
     d->link = 0;
 
     d->disconnected();
+
+    emit linkClosed(this);
 }

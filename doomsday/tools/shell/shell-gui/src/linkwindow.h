@@ -39,6 +39,8 @@ public:
     void closeEvent(QCloseEvent *);
 
 signals:
+    void linkOpened(LinkWindow *window);
+    void linkClosed(LinkWindow *window);
     void closed(LinkWindow *window);
 
 public slots:

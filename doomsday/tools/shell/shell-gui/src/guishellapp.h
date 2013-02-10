@@ -48,6 +48,7 @@ public slots:
     void stopServer();
     void updateLocalServerMenu();
     void aboutShell();
+    void updateMenu();
 
 protected slots:
     void windowClosed(LinkWindow *window);

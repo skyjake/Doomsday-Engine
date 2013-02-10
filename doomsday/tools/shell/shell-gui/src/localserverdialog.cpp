@@ -110,6 +110,7 @@ DENG2_PIMPL(LocalServerDialog)
         QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
         QObject::connect(opt, SIGNAL(clicked()), &self, SLOT(configureGameOptions()));
         yes->setDefault(true);
+        yes->setAutoDefault(true);
     }
 };
 

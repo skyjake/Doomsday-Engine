@@ -35,6 +35,9 @@ struct GuiShellApp::Instance
 
     QMenuBar *menuBar;
     QMenu *localMenu;
+#ifdef MACOSX
+    QAction *stopAction;
+#endif
     QList<LinkWindow *> windows;
 
     ~Instance()
@@ -55,7 +58,7 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     setApplicationName    ("doomsday-shell-gui");
     setApplicationVersion (SHELL_VERSION);
 
-    d->localMenu = new QMenu(tr("Local Servers"));
+    d->localMenu = new QMenu(tr("Running Servers"));
     connect(d->localMenu, SIGNAL(aboutToShow()), this, SLOT(updateLocalServerMenu()));
 
 #ifdef MACOSX
@@ -64,7 +67,7 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     // On Mac OS X, the menu is not window-specific.
     d->menuBar = new QMenuBar(0);
 
-    QMenu *menu = d->menuBar->addMenu(tr("Server"));
+    QMenu *menu = d->menuBar->addMenu(tr("Connection"));
     menu->addAction(tr("Connect..."), this, SLOT(connectToServer()),
                     QKeySequence(tr("Ctrl+O", "Server|Connect")));
     menu->addAction(tr("Disconnect"), this, SLOT(disconnectFromServer()),
@@ -72,12 +75,17 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     menu->addSeparator();
     menu->addAction(tr("Close Window"), this, SLOT(closeActiveWindow()),
                     QKeySequence(tr("Ctrl+W", "Server|Close Window")));
-    menu->addSeparator();
-    menu->addAction(tr("Start Local Server"), this, SLOT(startLocalServer()),
-                    QKeySequence(tr("Ctrl+N", "Server|Start Local Server")));
 
-    menu->addMenu(d->localMenu);
+    QMenu *svMenu = d->menuBar->addMenu(tr("Local Server"));
+    svMenu->addAction(tr("Start"), this, SLOT(startLocalServer()),
+                    QKeySequence(tr("Ctrl+N", "Local Server|Start")));
+    d->stopAction = svMenu->addAction(tr("Stop"), this, SLOT(stopServer()));
+    svMenu->addSeparator();
+    svMenu->addMenu(d->localMenu);
 
+    connect(svMenu, SIGNAL(aboutToShow()), this, SLOT(updateMenu()));
+
+    // This will appear in the application menu:
     menu->addAction(tr("About"), this, SLOT(aboutShell()));
 #endif
 
@@ -111,6 +119,8 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
     if(!found)
     {
         found = new LinkWindow;
+        connect(found, SIGNAL(linkOpened(LinkWindow*)),this, SLOT(updateMenu()));
+        connect(found, SIGNAL(linkClosed(LinkWindow*)), this, SLOT(updateMenu()));
         connect(found, SIGNAL(closed(LinkWindow *)), this, SLOT(windowClosed(LinkWindow *)));
 
         // Initial position and size.
@@ -234,6 +244,14 @@ void GuiShellApp::updateLocalServerMenu()
 void GuiShellApp::aboutShell()
 {
     AboutDialog().exec();
+}
+
+void GuiShellApp::updateMenu()
+{
+#ifdef MACOSX
+    LinkWindow *win = dynamic_cast<LinkWindow *>(activeWindow());
+    d->stopAction->setEnabled(win && win->isConnected());
+#endif
 }
 
 void GuiShellApp::windowClosed(LinkWindow *window)
