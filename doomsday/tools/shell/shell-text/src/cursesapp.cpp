@@ -85,7 +85,7 @@ DENG2_PIMPL(CursesApp)
 
     TextRootWidget *rootWidget;
 
-    Instance(Public &i) : Private(i), unicodeContinuation(0), rootWidget(0)
+    Instance(Public &i) : Base(i), unicodeContinuation(0), rootWidget(0)
     {
         logBuffer.enableStandardOutput(false);
 

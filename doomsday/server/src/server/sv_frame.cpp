@@ -830,14 +830,14 @@ size_t Sv_GetMaxFrameSize(int playerNumber)
 }
 
 /**
- * @return              A unique resend ID. Never returns zero.
+ * @return A unique resend ID. Never returns zero.
  */
 byte Sv_GetNewResendID(pool_t* pool)
 {
-    byte                id = pool->resendDealer;
+    byte id = pool->resendDealer;
 
     // Advance to next ID, skipping zero.
-    while(!++pool->resendDealer);
+    while(!++pool->resendDealer) {}
 
     return id;
 }

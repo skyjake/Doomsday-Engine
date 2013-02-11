@@ -82,7 +82,7 @@ DENG2_PIMPL(App), DENG2_OBSERVES(Record, Deletion)
     void (*terminateFunc)(char const *);
 
     Instance(Public &a, QStringList args)
-        : Private(a), cmdLine(args), persistentData(0), config(0), terminateFunc(0)
+        : Base(a), cmdLine(args), persistentData(0), config(0), terminateFunc(0)
     {
         singletonApp = &a;
 

@@ -47,7 +47,7 @@ DENG2_PIMPL(ShellApp)
     Link *link;
     ServerFinder finder;
 
-    Instance(Public &i) : Private(i), link(0)
+    Instance(Public &i) : Base(i), link(0)
     {
         RootWidget &root = self.rootWidget();
 

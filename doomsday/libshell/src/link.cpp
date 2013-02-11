@@ -39,7 +39,7 @@ DENG2_PIMPL(Link)
     Time connectedAt;
 
     Instance(Public &i)
-        : Private(i),
+        : Base(i),
           socket(0),
           status(Disconnected),
           connectedAt(Time::invalidTime()) {}

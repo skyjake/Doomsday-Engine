@@ -50,7 +50,7 @@ DENG2_PIMPL(MenuWidget)
     int cursor;
 
     Instance(Public &i)
-        : Private(i),
+        : Base(i),
           borderAttr(TextCanvas::Char::Reverse),
           backgroundAttr(TextCanvas::Char::Reverse),
           borderStyle(LineBorder),

@@ -36,7 +36,7 @@ static thid_t newMobjID(GameMap* map)
     assert(map);
     // Increment the ID dealer until a free ID is found.
     // @todo What if all IDs are in use? 65535 thinkers!?
-    while(GameMap_IsUsedMobjID(map, ++map->thinkers.iddealer));
+    while(GameMap_IsUsedMobjID(map, ++map->thinkers.iddealer)) {}
     // Mark this ID as used.
     GameMap_SetMobjID(map, map->thinkers.iddealer, true);
     return map->thinkers.iddealer;

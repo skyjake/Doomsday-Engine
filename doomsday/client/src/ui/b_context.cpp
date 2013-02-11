@@ -845,7 +845,7 @@ void B_PrintAllBindings(void)
                    (bc->flags & BCF_ACTIVE)? "active" : "inactive");
 
         // Commands.
-        for(count = 0, e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next, count++);
+        for(count = 0, e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next, count++) {}
 
         if(count)
             Con_Printf("  %i event bindings:\n", count);
@@ -858,7 +858,7 @@ void B_PrintAllBindings(void)
         }
 
         // Controls.
-        for(count = 0, c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next, count++);
+        for(count = 0, c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next, count++) {}
 
         if(count)
             Con_Printf("  %i control bindings.\n", count);
@@ -873,7 +873,7 @@ void B_PrintAllBindings(void)
             for(k = 0; k < DDMAXPLAYERS; ++k)
             {
                 for(count = 0, d = c->deviceBinds[k].next; d != &c->deviceBinds[k];
-                    d = d->next, count++);
+                    d = d->next, count++) {}
 
                 if(!count)
                     continue;

@@ -38,7 +38,7 @@ DENG2_PIMPL(ShellUser), public LogSink
     /// Log entries to be sent are collected here.
     shell::LogEntryPacket logEntryPacket;
 
-    Instance(Public &i) : Private(i)
+    Instance(Public &i) : Base(i)
     {
         // We will send all log entries to a shell user.
         LogBuffer::appBuffer().addSink(*this);

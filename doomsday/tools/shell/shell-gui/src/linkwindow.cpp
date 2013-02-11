@@ -64,7 +64,7 @@ DENG2_PIMPL(LinkWindow)
     QAction *stopAction;
 
     Instance(Public &i)
-        : Private(i),
+        : Base(i),
           link(0),
           statusButton(0),
           consoleButton(0),

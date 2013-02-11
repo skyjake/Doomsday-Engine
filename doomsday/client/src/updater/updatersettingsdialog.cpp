@@ -54,7 +54,7 @@ DENG2_PIMPL(UpdaterSettingsDialog)
     QComboBox* pathList;
     QCheckBox* deleteAfter;
 
-    Instance(Public &i) : Private(i)
+    Instance(Public &i) : Base(i)
     {
         // As a modal dialog it is implicitly clear that this belongs to
         // Doomsday, so we don't need to have the name in the window title.

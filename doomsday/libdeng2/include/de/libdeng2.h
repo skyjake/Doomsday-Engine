@@ -210,7 +210,7 @@
  * <pre>
  *    DENG2_PIMPL(MyClass)
  *    {
- *        Instance(Public &inst) : Private(inst) {
+ *        Instance(Public &inst) : Base(inst) {
  *            // constructor
  *        }
  *        // private data and methods
@@ -231,6 +231,7 @@ namespace de {
 template <typename Type>
 struct Private {
     Type &self;
+    typedef Private<Type> Base;
     Private(Type &i) : self(i) {}
 };
 

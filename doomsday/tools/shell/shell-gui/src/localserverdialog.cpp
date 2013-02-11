@@ -41,7 +41,7 @@ DENG2_PIMPL(LocalServerDialog)
     QLineEdit *folder;
     QLineEdit *iwadFolder;
 
-    Instance(Public &i) : Private(i)
+    Instance(Public &i) : Base(i)
     {
         QSettings st;
 

@@ -42,7 +42,7 @@ DENG2_PIMPL(CommandLineWidget)
     QList<Command> history;
     int historyPos;
 
-    Instance(Public &i) : Private(i), historyPos(0)
+    Instance(Public &i) : Base(i), historyPos(0)
     {
         history.append(Command());
     }

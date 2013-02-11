@@ -120,7 +120,7 @@ static void stopFinale(finale_t* f)
 static finaleid_t finalesUniqueId(void)
 {
     finaleid_t id = 0;
-    while(finalesById(++id));
+    while(finalesById(++id)) {}
     return id;
 }
 

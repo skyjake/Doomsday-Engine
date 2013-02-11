@@ -28,7 +28,7 @@ DENG2_PIMPL(StatusWidget)
     Link *link;
     QTimer *updateTimer;
 
-    Instance(Public &i) : Private(i), link(0)
+    Instance(Public &i) : Base(i), link(0)
     {
         updateTimer = new QTimer(&self);
     }

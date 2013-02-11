@@ -52,7 +52,7 @@ DENG2_PIMPL(QtRootWidget)
     QPoint origin;
     QString overlay;
 
-    Instance(Public &inst) : Private(inst),
+    Instance(Public &inst) : Base(inst),
         margin(4),
         canvas(new QtTextCanvas(Vector2i(1, 1))),
         root(canvas),

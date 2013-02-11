@@ -30,7 +30,7 @@ DENG2_PIMPL(ChoiceWidget)
     MenuWidget *menu;
     String prompt;
 
-    Instance(Public &i) : Private(i), selection(0)
+    Instance(Public &i) : Base(i), selection(0)
     {}
 
     void updateMenu()

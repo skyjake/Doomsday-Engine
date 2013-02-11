@@ -307,7 +307,7 @@ int GL_DeferredTaskCount(void)
         return 0;
 
     Sys_Lock(deferredMutex);
-    for(i = (deferredtask_t*) deferredTaskFirst; i; i = i->next, ++count);
+    for(i = (deferredtask_t*) deferredTaskFirst; i; i = i->next, ++count) {}
     Sys_Unlock(deferredMutex);
     return count;
 }

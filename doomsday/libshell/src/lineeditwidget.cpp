@@ -56,7 +56,7 @@ DENG2_PIMPL(LineEditWidget)
     LineWrapping wraps;
 
     Instance(Public &i)
-        : Private(i),
+        : Base(i),
           signalOnEnter(true),
           cursor(0)
     {

@@ -140,6 +140,8 @@ struct Animation::Instance
                 return value + t * delta;
             }
         }
+
+        return target;
     }
 };
 

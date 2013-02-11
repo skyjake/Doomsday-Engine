@@ -43,7 +43,7 @@ DENG2_PIMPL(OpenDialog)
     QStringList history;
     bool edited;
 
-    Instance(Public &i) : Private(i), edited(false)
+    Instance(Public &i) : Base(i), edited(false)
     {
         // Restore the historical entries.
         QSettings st;

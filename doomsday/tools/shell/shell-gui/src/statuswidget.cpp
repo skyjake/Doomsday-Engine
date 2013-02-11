@@ -36,7 +36,7 @@ DENG2_PIMPL(StatusWidget)
     QRect mapBounds;
     shell::Link *link;
 
-    Instance(Public &i) : Private(i), link(0)
+    Instance(Public &i) : Base(i), link(0)
     {
         //gameMode = "Ultimate DOOM";
         //map = "E1M3";

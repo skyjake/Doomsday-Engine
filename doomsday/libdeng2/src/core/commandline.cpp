@@ -57,7 +57,7 @@ DENG2_PIMPL(CommandLine)
     typedef std::map<std::string, ArgumentStrings> Aliases;
     Aliases aliases;
 
-    Instance(Public &i) : Private(i)
+    Instance(Public &i) : Base(i)
     {
         initialDir = QDir::current();
     }
