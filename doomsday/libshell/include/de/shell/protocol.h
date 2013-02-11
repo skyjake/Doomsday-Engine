@@ -30,6 +30,16 @@ namespace de {
 namespace shell {
 
 /**
+ * Password challenge.
+ */
+class LIBSHELL_PUBLIC ChallengePacket : public Packet
+{
+public:
+    ChallengePacket();
+    static Packet *fromBlock(Block const &block);
+};
+
+/**
  * Packet with one or more log entries.
  */
 class LIBSHELL_PUBLIC LogEntryPacket : public Packet
@@ -131,6 +141,7 @@ public:
     enum PacketType
     {
         Unknown,
+        PasswordChallenge,
         Command,        ///< Console command (only to server).
         LogEntries,     ///< Log entries.
         ConsoleLexicon, ///< Known words for command line completion.

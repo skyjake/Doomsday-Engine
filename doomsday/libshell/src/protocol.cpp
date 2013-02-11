@@ -31,6 +31,22 @@ static String const PT_COMMAND = "shell.command";
 static String const PT_LEXICON = "shell.lexicon";
 static String const PT_GAME_STATE = "shell.game.state";
 
+// ChallengePacket -----------------------------------------------------------
+
+static char const *CHALLENGE_PACKET_TYPE = "Psw?";
+
+ChallengePacket::ChallengePacket() : Packet(CHALLENGE_PACKET_TYPE)
+{}
+
+Packet *ChallengePacket::fromBlock(Block const &block)
+{
+    if(block == "Password?")
+    {
+        return new ChallengePacket;
+    }
+    return 0;
+}
+
 // LogEntryPacket ------------------------------------------------------------
 
 static char const *LOG_ENTRY_PACKET_TYPE = "LgEn";
@@ -173,12 +189,19 @@ Packet *MapOutlinePacket::fromBlock(Block const &block)
 
 Protocol::Protocol()
 {
+    define(ChallengePacket::fromBlock);
     define(LogEntryPacket::fromBlock);
     define(MapOutlinePacket::fromBlock);
 }
 
 Protocol::PacketType Protocol::recognize(Packet const *packet)
 {
+    if(packet->type() == CHALLENGE_PACKET_TYPE)
+    {
+        DENG2_ASSERT(dynamic_cast<ChallengePacket const *>(packet) != 0);
+        return PasswordChallenge;
+    }
+
     if(packet->type() == LOG_ENTRY_PACKET_TYPE)
     {
         DENG2_ASSERT(dynamic_cast<LogEntryPacket const *>(packet) != 0);

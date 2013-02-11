@@ -55,6 +55,7 @@
 #include <de/Socket>
 #include <de/LegacyCore>
 #include <de/LegacyNetwork>
+#include <QCryptographicHash>
 
 #define MAX_NODES                   32
 
@@ -538,11 +539,33 @@ static boolean serverHandleNodeRequest(nodeid_t node, const char *command, int l
 
         DEBUG_VERBOSE_Message(("serverHandleNodeRequest: Sending: %s\n", Str_Text(&msg)));
 
-        LegacyNetwork_Send(sock, Str_Text(&msg), (int) Str_Length(&msg));
+        LegacyNetwork_Send(sock, Str_Text(&msg), Str_Length(&msg));
         Str_Free(&msg);
     }
-    else if(length == 5 && !strncmp(command, "Shell", 5))
+    else if(length >= 5 && !strncmp(command, "Shell", 5))
     {
+        if(length == 5)
+        {
+            if(strlen(netPassword) > 0)
+            {
+                // Need to ask for a password, too.
+                LegacyNetwork_Send(sock, "Password?", 9);
+                return true;
+            }
+        }
+        else if(length > 5)
+        {
+            // A password was included.
+            QByteArray supplied(command + 5, length - 5);
+            QByteArray pwd(netPassword, strlen(netPassword));
+            if(supplied != QCryptographicHash::hash(pwd, QCryptographicHash::Sha1))
+            {
+                // Wrong!
+                N_TerminateNode(node);
+                return false;
+            }
+        }
+
         // This node will switch to shell mode: ownership of the socket is
         // passed to a ShellUser.
         switchNodeToShellMode(node);

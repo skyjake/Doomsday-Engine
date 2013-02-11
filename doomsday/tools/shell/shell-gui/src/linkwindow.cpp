@@ -27,6 +27,7 @@
 #include <de/shell/Link>
 #include <QToolBar>
 #include <QMenuBar>
+#include <QInputDialog>
 #include <QTimer>
 #include <QCloseEvent>
 #include <QMessageBox>
@@ -35,6 +36,7 @@
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QLabel>
+#include <QCryptographicHash>
 
 using namespace de;
 using namespace de::shell;
@@ -357,10 +359,16 @@ void LinkWindow::handleIncomingPackets()
         QScopedPointer<Packet> packet(d->link->nextPacket());
         if(packet.isNull()) break;
 
+        //qDebug() << "Packet:" << packet->type();
+
         // Process packet contents.
         shell::Protocol &protocol = d->link->protocol();
         switch(protocol.recognize(packet.data()))
         {
+        case shell::Protocol::PasswordChallenge:
+            askForPassword();
+            break;
+
         case shell::Protocol::LogEntries: {
             // Add the entries into the local log buffer.
             LogEntryPacket *pkt = static_cast<LogEntryPacket *>(packet.data());
@@ -439,4 +447,28 @@ void LinkWindow::disconnected()
     d->disconnected();
 
     emit linkClosed(this);
+}
+
+void LinkWindow::askForPassword()
+{
+    QInputDialog dlg(this);
+    dlg.setWindowModality(Qt::WindowModal);
+    dlg.setInputMode(QInputDialog::TextInput);
+    dlg.setTextEchoMode(QLineEdit::Password);
+    dlg.setLabelText(tr("Server password:"));
+
+    if(dlg.exec() == QDialog::Accepted)
+    {
+        if(d->link)
+        {
+            Block response;
+            response.append("Shell");
+            response += QCryptographicHash::hash(dlg.textValue().toUtf8(),
+                                                 QCryptographicHash::Sha1);
+            *d->link << response;
+        }
+        return;
+    }
+
+    QTimer::singleShot(1, this, SLOT(closeConnection()));
 }

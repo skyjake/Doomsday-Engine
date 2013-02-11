@@ -56,6 +56,7 @@ protected slots:
     void addressResolved();
     void connected();
     void disconnected();
+    void askForPassword();
 
 private:
     struct Instance;
