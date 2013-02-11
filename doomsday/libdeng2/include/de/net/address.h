@@ -109,6 +109,8 @@ DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Address const &address);
 
 } // namespace de
 
+#ifdef DENG2_USE_QT
 Q_DECLARE_METATYPE(de::Address)
+#endif
 
 #endif // LIBDENG2_ADDRESS_H
