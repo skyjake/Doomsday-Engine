@@ -66,7 +66,7 @@ typedef enum legacycore_loglevel_e {
     DE2_LOG_CRITICAL
 } legacycore_loglevel_t;
 
-DENG2_PUBLIC LegacyCore *LegacyCore_New(void *dengApp);
+DENG2_PUBLIC LegacyCore *LegacyCore_New();
 DENG2_PUBLIC void LegacyCore_Delete(LegacyCore *lc);
 DENG2_PUBLIC LegacyCore *LegacyCore_Instance();
 DENG2_PUBLIC void LegacyCore_SetLoopRate(int freqHz);
@@ -82,7 +82,6 @@ DENG2_PUBLIC int LegacyCore_SetLogFile(char const *filePath);
 DENG2_PUBLIC char const *LegacyCore_LogFile();
 DENG2_PUBLIC void LegacyCore_PrintLogFragment(char const *text);
 DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, char const *format, ...);
-DENG2_PUBLIC void LegacyCore_SetTerminateFunc(void (*func)(char const *));
 DENG2_PUBLIC void LegacyCore_FatalError(char const *msg);
 
 /*

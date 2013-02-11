@@ -17,7 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/App>
+#include <de/TextApp>
 #include <de/Log>
 
 #include <QDebug>
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 {
     try
     {
-        App app(argc, argv, App::GUIDisabled);
+        TextApp app(argc, argv);
         app.initSubsystems(App::DisablePlugins);
 
         for(int i = 0; i < LogEntry::MAX_LOG_LEVELS; ++i)

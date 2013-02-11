@@ -187,6 +187,8 @@ typedef struct inputdev_s {
     inputdevhat_t *hats;
 } inputdev_t;
 
+#ifdef __CLIENT__
+
 extern int      repWait1, repWait2;
 extern int      keyRepeatDelay1, keyRepeatDelay2;   // milliseconds
 extern boolean  shiftDown, altDown;
@@ -305,6 +307,8 @@ void Rend_AllInputDeviceStateVisuals(void);
 #else
 #  define Rend_AllInputDeviceStateVisuals()
 #endif
+
+#endif // __CLIENT__
 
 #ifdef __cplusplus
 } // extern "C"

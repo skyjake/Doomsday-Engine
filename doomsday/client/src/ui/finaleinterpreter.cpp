@@ -1433,6 +1433,7 @@ DEFFC(NoEvents)
 
 DEFFC(OnKey)
 {
+#ifdef __CLIENT__
     ddevent_t ev;
 
     // Construct a template event for this handler.
@@ -1447,10 +1448,12 @@ DEFFC(OnKey)
         return;
     // Allocate and attach another.
     createEventHandler(fi, &ev, OP_CSTRING(1));
+#endif
 }
 
 DEFFC(UnsetKey)
 {
+#ifdef __CLIENT__
     ddevent_t ev;
     fi_handler_t* h;
 
@@ -1465,6 +1468,7 @@ DEFFC(UnsetKey)
     {
         destroyEventHandler(fi, h);
     }
+#endif
 }
 
 DEFFC(If)
@@ -1480,7 +1484,7 @@ DEFFC(If)
     else if(!strnicmp(token, "mode:", 5))
     {
         if(DD_GameLoaded())
-            val = !stricmp(token + 5, Str_Text(Game_IdentityKey(App_CurrentGame())));
+            val = !stricmp(token + 5, Str_Text(App_CurrentGame()->identityKey()));
         else
             val = 0;
     }

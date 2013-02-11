@@ -31,7 +31,7 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name) : shell::InputDia
 
     setPrompt(tr("Address: "));
     lineEdit().setSignalOnEnter(false); // let menu handle it
-    lineEdit().setText(PersistentData::get("OpenConnection.address"));
+    lineEdit().setText(PersistentData::get("OpenConnection/address"));
 
     setAcceptLabel(tr("Connect to server"));
 }
@@ -47,6 +47,6 @@ void OpenConnectionDialog::finish(int result)
 
     if(result)
     {
-        PersistentData::set("OpenConnection.address", text());
+        PersistentData::set("OpenConnection/address", text());
     }
 }

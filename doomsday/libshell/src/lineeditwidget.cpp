@@ -28,9 +28,8 @@
 namespace de {
 namespace shell {
 
-struct LineEditWidget::Instance
+DENG2_PIMPL(LineEditWidget)
 {
-    LineEditWidget &self;
     ConstantRule *height;
     bool signalOnEnter;
     String prompt;
@@ -56,8 +55,8 @@ struct LineEditWidget::Instance
     // Word wrapping.
     LineWrapping wraps;
 
-    Instance(LineEditWidget &cli)
-        : self(cli),
+    Instance(Public &i)
+        : Private(i),
           signalOnEnter(true),
           cursor(0)
     {

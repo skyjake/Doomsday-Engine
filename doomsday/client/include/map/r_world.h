@@ -28,6 +28,12 @@
 #include "map/vertex.h"
 #include "map/sector.h"
 #include "map/plane.h"
+#include "map/sidedef.h"
+#include <de/Observers>
+
+/// @todo The MapChange audience belongs in a class.
+DENG2_DECLARE_AUDIENCE(MapChange, void currentMapChanged())
+DENG2_EXTERN_AUDIENCE(MapChange)
 
 // Used for vertex sector owners, side line owners and reverb BSP leafs.
 typedef struct ownernode_s {

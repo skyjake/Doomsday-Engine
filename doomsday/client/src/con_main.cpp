@@ -56,8 +56,11 @@
 #include "resource/fonts.h"
 #include "ui/displaymode.h"
 #include "ui/busyvisual.h"
-#include "updater/downloaddialog.h"
 #include "cbuffer.h"
+
+#ifdef __CLIENT__
+#  include "updater/downloaddialog.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -131,7 +134,6 @@ static void Con_SplitIntoSubCommands(const char *command,
                                      boolean isNetCmd);
 
 static void Con_ClearExecBuffer(void);
-static void updateDedicatedConsoleCmdLine(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1131,6 +1133,7 @@ static void Con_SplitIntoSubCommands(const char *command,
 #undef BUFFSIZE
 }
 
+#ifdef __CLIENT__
 /**
  * Ambiguous string check. 'amb' is cut at the first character that
  * differs when compared to 'str' (case ignored).
@@ -1318,6 +1321,7 @@ static int completeWord(int mode)
     free((void*)matches);
     return numMatches;
 }
+#endif // __CLIENT__
 
 /**
  * Wrapper for Con_Execute
@@ -1369,6 +1373,7 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     return Con_Execute(src, buffer, silent, false);
 }
 
+#ifdef __CLIENT__
 static const char* getCommandFromHistory(uint idx)
 {
     if(idx < oldCmdsSize) return oldCmds[idx];
@@ -1435,19 +1440,7 @@ static void updateCmdLine(void)
 
     cmdCursor = complPos = (uint) strlen(cmdLine);
 }
-
-static void updateDedicatedConsoleCmdLine(void)
-{
-    int flags = 0;
-
-    if(!isDedicated)
-        return;
-
-    if(cmdInsMode)
-        flags |= CLF_CURSOR_LARGE;
-
-    Sys_SetConWindowCmdLine(mainWindowIdx, cmdLine, cmdCursor+1, flags);
-}
+#endif // __CLIENT__
 
 void Con_Open(int yes)
 {
@@ -1471,7 +1464,9 @@ void Con_Open(int yes)
         ConsoleActive = false;
     }
 
+#ifdef __CLIENT__
     B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), yes);
+#endif
 }
 
 void Con_Resize(void)
@@ -1481,6 +1476,7 @@ void Con_Resize(void)
     Rend_ConsoleResize(true/*force*/);
 }
 
+#ifdef __CLIENT__
 static void insertOnCommandLine(byte ch)
 {
     size_t len = strlen(cmdLine);
@@ -1511,9 +1507,11 @@ static void insertOnCommandLine(byte ch)
     }
     complPos = cmdCursor;
 }
+#endif
 
 boolean Con_Responder(const ddevent_t* ev)
 {
+#ifdef __CLIENT__
     // The console is only interested in keyboard toggle events.
     if(!IS_KEY_TOGGLE(ev))
         return false;
@@ -1619,7 +1617,6 @@ boolean Con_Responder(const ddevent_t* ev)
             ocPos--;
         // Update the command line.
         updateCmdLine();
-        updateDedicatedConsoleCmdLine();
         return true;
 
     case DDKEY_DOWNARROW:
@@ -1630,7 +1627,6 @@ boolean Con_Responder(const ddevent_t* ev)
             ocPos++;
 
         updateCmdLine();
-        updateDedicatedConsoleCmdLine();
         return true;
 
     case DDKEY_PGUP: {
@@ -1684,7 +1680,6 @@ boolean Con_Responder(const ddevent_t* ev)
         cmdCursor = 0;
         complPos = 0;
         Rend_ConsoleCursorResetBlink();
-        updateDedicatedConsoleCmdLine();
         return true;
 
     case DDKEY_INS:
@@ -1692,7 +1687,6 @@ boolean Con_Responder(const ddevent_t* ev)
             break;
 
         cmdInsMode = !cmdInsMode; // Toggle text insert mode.
-        updateDedicatedConsoleCmdLine();
         return true;
 
     case DDKEY_DEL:
@@ -1705,7 +1699,6 @@ boolean Con_Responder(const ddevent_t* ev)
                     CMDLINE_SIZE - cmdCursor + 1);
             complPos = cmdCursor;
             Rend_ConsoleCursorResetBlink();
-            updateDedicatedConsoleCmdLine();
         }
         return true;
 
@@ -1719,7 +1712,6 @@ boolean Con_Responder(const ddevent_t* ev)
             cmdCursor--;
             complPos = cmdCursor;
             Rend_ConsoleCursorResetBlink();
-            updateDedicatedConsoleCmdLine();
         }
         return true;
 
@@ -1740,7 +1732,6 @@ boolean Con_Responder(const ddevent_t* ev)
 
             // Attempt to complete the word.
             completeWord(mode);
-            updateDedicatedConsoleCmdLine();
             if(0 == mode)
                 bLineOff = 0;
             Rend_ConsoleCursorResetBlink();
@@ -1760,7 +1751,6 @@ boolean Con_Responder(const ddevent_t* ev)
         }
         complPos = cmdCursor;
         Rend_ConsoleCursorResetBlink();
-        updateDedicatedConsoleCmdLine();
         break;
 
     case DDKEY_RIGHTARROW:
@@ -1779,7 +1769,6 @@ boolean Con_Responder(const ddevent_t* ev)
                     {
                         cmdLine[cmdCursor] = oldCmd[cmdCursor];
                         cmdCursor++;
-                        updateDedicatedConsoleCmdLine();
                     }
                 }
             }
@@ -1794,7 +1783,6 @@ boolean Con_Responder(const ddevent_t* ev)
 
         complPos = cmdCursor;
         Rend_ConsoleCursorResetBlink();
-        updateDedicatedConsoleCmdLine();
         break;
 
     case DDKEY_F5:
@@ -1817,7 +1805,6 @@ boolean Con_Responder(const ddevent_t* ev)
             cmdCursor = 0;
             complPos = 0;
             Rend_ConsoleCursorResetBlink();
-            updateDedicatedConsoleCmdLine();
             return true;
         }
 
@@ -1830,7 +1817,6 @@ boolean Con_Responder(const ddevent_t* ev)
             }
 
             Rend_ConsoleCursorResetBlink();
-            updateDedicatedConsoleCmdLine();
         }
         return true;
 
@@ -1841,6 +1827,9 @@ boolean Con_Responder(const ddevent_t* ev)
             return true;
 #endif
     }}
+#else
+    DENG_UNUSED(ev);
+#endif // __CLIENT__
     // The console is very hungry for keys...
     return true;
 }
@@ -1854,17 +1843,6 @@ void Con_PrintRuler(void)
 
     if(consoleDump)
     {
-        // A 70 characters long line.
-        if(isDedicated || novideo)
-        {
-            int i;
-            for(i = 0; i < 7; ++i)
-            {
-                Sys_ConPrint(mainWindowIdx, "----------", 0);
-            }
-            Sys_ConPrint(mainWindowIdx, "\n", 0);
-        }
-
         LegacyCore_PrintLogFragment(DENG2_STR_ESCAPE("R") "\n");
     }
 }
@@ -1900,11 +1878,7 @@ static void conPrintf(int flags, const char* format, va_list args)
     }
 #endif
 
-    if(isDedicated || novideo)
-    {
-        Sys_ConPrint(mainWindowIdx, text, flags);
-    }
-    else
+    if(!isDedicated && !novideo)
     {
         int cblFlags = 0;
 
@@ -2041,7 +2015,9 @@ void Con_Error(const char* error, ...)
     char        buff[2048], err[256];
     va_list     argptr;
 
+#ifdef __CLIENT__
     Window_TrapMouse(Window_Main(), false);
+#endif
 
     // Already in an error?
     if(!ConsoleInited || errorInProgress)
@@ -2111,9 +2087,10 @@ void Con_AbnormalShutdown(const char* message)
     Sys_Shutdown();
     DisplayMode_Shutdown();
 
+#ifdef __CLIENT__
     // Be a bit more graphic.
     Window_TrapMouse(Window_Main(), false);
-    //Sys_ShowCursor(true);
+#endif
 
     if(message) // Only show if a message given.
     {
@@ -2172,13 +2149,16 @@ D_CMD(Help)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    char actKeyName[40];
-
+#ifdef __CLIENT__
+    char actKeyName[40];   
     strcpy(actKeyName, B_ShortNameForKey(consoleActiveKey));
     actKeyName[0] = toupper(actKeyName[0]);
+#endif
 
     Con_PrintRuler();
     Con_FPrintf(CPF_YELLOW | CPF_CENTER, "-=- " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console -=-\n");
+
+#ifdef __CLIENT__
     Con_Printf("Keys:\n");
     Con_Printf("%-14s Open/close the console.\n", actKeyName);
     Con_Printf("Alt-%-10s Switch between half and full screen mode.\n", actKeyName);
@@ -2192,6 +2172,7 @@ D_CMD(Help)
     Con_Printf("End            Jump to the end of the buffer.\n");
     Con_Printf("PageUp/Down    Scroll up/down a couple of lines.\n");
     Con_Printf("\n");
+#endif
     Con_Printf("Getting started:\n");
     Con_Printf("Enter \"help (what)\" for information about (what).\n");
     Con_Printf("Enter \"listcmds\"  to list available commands.\n");

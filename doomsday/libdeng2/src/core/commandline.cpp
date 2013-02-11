@@ -43,7 +43,7 @@ static char *duplicateStringAsUtf8(QString const &s)
     return copy;
 }
 
-struct CommandLine::Instance
+DENG2_PIMPL(CommandLine)
 {
     QDir initialDir;
 
@@ -57,7 +57,7 @@ struct CommandLine::Instance
     typedef std::map<std::string, ArgumentStrings> Aliases;
     Aliases aliases;
 
-    Instance()
+    Instance(Public &i) : Private(i)
     {
         initialDir = QDir::current();
     }
@@ -122,15 +122,11 @@ struct CommandLine::Instance
     }
 };
 
-CommandLine::CommandLine()
-{
-    d = new Instance;
-}
+CommandLine::CommandLine() : d(new Instance(*this))
+{}
 
-CommandLine::CommandLine(QStringList const &args)
+CommandLine::CommandLine(QStringList const &args) : d(new Instance(*this))
 {
-    d = new Instance;
-
     for(int i = 0; i < args.size(); ++i)
     {
         if(args.at(i)[0] == '@')
@@ -145,10 +141,8 @@ CommandLine::CommandLine(QStringList const &args)
     }
 }
 
-CommandLine::CommandLine(CommandLine const &other)
+CommandLine::CommandLine(CommandLine const &other) : d(new Instance(*this))
 {
-    d = new Instance;
-
     DENG2_FOR_EACH_CONST(Instance::Arguments, i, other.d->arguments)
     {
         d->appendArg(*i);

@@ -163,6 +163,7 @@ static boolean writeConsoleState(const char* fileName)
     return false;
 }
 
+#ifdef __CLIENT__
 static boolean writeBindingsState(const char* fileName)
 {
     ddstring_t nativePath, fileDir;
@@ -196,6 +197,7 @@ static boolean writeBindingsState(const char* fileName)
     Con_Message("Warning:writeBindingsState: Failed opening \"%s\" for writing.\n", F_PrettyPath(fileName));
     return false;
 }
+#endif // __CLIENT__
 
 boolean Con_ParseCommands(const char* fileName)
 {
@@ -260,11 +262,13 @@ boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
     {
         writeConsoleState(fileName);
     }
+#ifdef __CLIENT__
     if(bindingsFileName && (flagsAllow & CPCF_ALLOW_SAVE_BINDINGS))
     {
         // Bindings go into a separate file.
         writeBindingsState(bindingsFileName);
     }
+#endif
     return true;
 }
 
@@ -274,7 +278,8 @@ boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
  */
 void Con_SaveDefaults(void)
 {
-    Con_WriteState(cfgFile, (!isDedicated? Str_Text(Game_BindingConfig(App_CurrentGame())) : 0));
+    Con_WriteState(cfgFile, (!isDedicated && App_CurrentGame()?
+                                 Str_Text(App_CurrentGame()->bindingConfig()) : 0));
 }
 
 D_CMD(WriteConsole)

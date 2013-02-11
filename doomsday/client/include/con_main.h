@@ -182,7 +182,7 @@ void Con_ShutdownDatabases(void);
 void Con_Ticker(timespan_t time);
 
 /// @return  @c true iff the event is 'eaten'.
-boolean Con_Responder(const ddevent_t* ev);
+boolean Con_Responder(ddevent_t const *ev);
 
 /**
  * Attempt to change the 'open' state of the console.

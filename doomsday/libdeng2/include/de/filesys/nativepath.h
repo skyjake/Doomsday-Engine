@@ -141,6 +141,8 @@ public:
      */
     String withSeparators(QChar sep) const;
 
+    bool exists() const;
+
     /**
      * Returns the current native working path.
      */

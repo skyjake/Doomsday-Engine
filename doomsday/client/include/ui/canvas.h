@@ -22,6 +22,10 @@
 #ifndef LIBDENG_CANVAS_H
 #define LIBDENG_CANVAS_H
 
+#ifndef __CLIENT__
+#  error "canvas.h requires __CLIENT__"
+#endif
+
 struct image_s; // see image.h
 
 #include <QGLWidget>

@@ -36,6 +36,8 @@
 #include "resource/materialsnapshot.h"
 #include "resource/materialvariant.h"
 
+#include <de/Observers>
+
 // $smoothplane: Maximum speed for a smoothed plane.
 #define MAX_SMOOTH_PLANE_MOVE   (64)
 
@@ -52,6 +54,9 @@ byte rendSkyLightAuto         = true;
 
 boolean firstFrameAfterLoad;
 boolean ddMapSetup;
+
+/// Notified when the current map changes.
+MapChangeAudience audienceForMapChange;
 
 void R_SurfaceListAdd(SurfaceSet *sl, Surface *suf)
 {
@@ -1214,9 +1219,11 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
             Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
         }
 
+#ifdef __CLIENT__
         // Clear any input events that might have accumulated during the
         // setup period.
         DD_ClearEvents();
+#endif
 
         // Now that the setup is done, let's reset the tictimer so it'll
         // appear that no time has passed during the setup.
@@ -1255,6 +1262,8 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;
+
+        DENG2_FOR_AUDIENCE(MapChange, i) i->currentMapChanged();
 
         Z_PrintStatus();
         return; }

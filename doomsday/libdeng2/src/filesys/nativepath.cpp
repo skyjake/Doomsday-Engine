@@ -23,6 +23,7 @@
 #include "de/NativePath"
 #include "de/App"
 #include <QDir>
+#include <QFile>
 
 /**
  * @def NATIVE_BASE_SYMBOLIC
@@ -210,6 +211,11 @@ String NativePath::pretty() const
 String NativePath::withSeparators(QChar sep) const
 {
     return Path::withSeparators(sep);
+}
+
+bool NativePath::exists() const
+{
+    return QFile::exists(toString());
 }
 
 NativePath NativePath::workPath()

@@ -1,4 +1,4 @@
-/** @file commandlinewidget.h  Widget for command line input.
+/** @file linkwindow.h  Window for a server link.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,30 +16,50 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef COMMANDLINEWIDGET_H
-#define COMMANDLINEWIDGET_H
+#ifndef LINKWINDOW_H
+#define LINKWINDOW_H
 
-#include <de/shell/LineEditWidget>
+#include <QMainWindow>
+#include <de/String>
 
 /**
- * Text editor with a history.
+ * Window for a server link.
  */
-class CommandLineWidget : public de::shell::LineEditWidget
+class LinkWindow : public QMainWindow
 {
     Q_OBJECT
-
+    
 public:
-    CommandLineWidget(de::String const &name = "");
-    virtual ~CommandLineWidget();
+    LinkWindow(QWidget *parent = 0);
+    ~LinkWindow();
 
-    bool handleEvent(de::Event const *event);
+    void setTitle(QString const &title);
+
+    bool isConnected() const;
+    void closeEvent(QCloseEvent *);
 
 signals:
-    void commandEntered(de::String command);
+    void linkOpened(LinkWindow *window);
+    void linkClosed(LinkWindow *window);
+    void closed(LinkWindow *window);
+
+public slots:
+    void openConnection(QString address);
+    void closeConnection();
+    void sendCommandToServer(de::String command);
+    void switchToStatus();
+    void switchToConsole();
+    void updateWhenConnected();
+
+protected slots:
+    void handleIncomingPackets();
+    void addressResolved();
+    void connected();
+    void disconnected();
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // COMMANDLINEWIDGET_H
+#endif // LINKWINDOW_H

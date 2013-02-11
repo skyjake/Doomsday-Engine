@@ -24,18 +24,11 @@ CONFIG -= app_bundle
 
 # External Dependencies ------------------------------------------------------
 
-# TODO: Get rid of this. The dedicated server should need no GL code.
-CONFIG += deng_qtopengl
-
 include(../dep_zlib.pri)
-include(../dep_curses.pri)
 include(../dep_lzss.pri)
 include(../dep_deng2.pri)
 include(../dep_deng1.pri)
 include(../dep_shell.pri)
-
-# TODO: Get rid of this. The dedicated server should need no GL code.
-win32: include(../dep_opengl.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -274,29 +267,16 @@ DENG_HEADERS += \
     $$SRC/include/resource/wad.h \
     $$SRC/include/resource/zip.h \
     $$SRC/include/resourceclass.h \
-    $$SRC/include/sys_console.h \
     $$SRC/include/sys_system.h \
     $$SRC/include/tab_anorms.h \
-    $$SRC/include/ui/b_command.h \
-    $$SRC/include/ui/b_context.h \
-    $$SRC/include/ui/b_device.h \
-    $$SRC/include/ui/b_main.h \
-    $$SRC/include/ui/b_util.h \
     $$SRC/include/ui/busyvisual.h \
-    $$SRC/include/ui/canvas.h \
-    $$SRC/include/ui/canvaswindow.h \
-    $$SRC/include/ui/consolewindow.h \
-    $$SRC/include/ui/dd_input.h \
     $$SRC/include/ui/dd_ui.h \
     $$SRC/include/ui/displaymode.h \
     $$SRC/include/ui/displaymode_native.h \
     $$SRC/include/ui/fi_main.h \
     $$SRC/include/ui/finaleinterpreter.h \
-    $$SRC/include/ui/keycode.h \
     $$SRC/include/ui/p_control.h \
-    $$SRC/include/ui/sys_input.h \
     $$SRC/include/ui/ui2_main.h \
-    $$SRC/include/ui/window.h \
     $$SRC/include/uri.hh
 
 INCLUDEPATH += \
@@ -313,15 +293,12 @@ win32 {
     # Windows.
     HEADERS += \
         $$DENG_WIN_INCLUDE_DIR/dd_winit.h \
-        $$DENG_WIN_INCLUDE_DIR/directinput.h \
         $$DENG_WIN_INCLUDE_DIR/resource.h
 
     INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
 
     SOURCES += \
-        $$SRC/src/windows/dd_winit.cpp \
-        $$SRC/src/windows/directinput.cpp \
-        $$SRC/src/windows/sys_console.cpp
+        $$SRC/src/windows/dd_winit.cpp
 }
 else:unix {
     # Common Unix (including Mac OS X).
@@ -331,8 +308,7 @@ else:unix {
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
 
     SOURCES += \
-        $$SRC/src/unix/dd_uinit.cpp \
-        $$SRC/src/unix/sys_console.cpp
+        $$SRC/src/unix/dd_uinit.cpp
 }
 
 macx {
@@ -344,6 +320,7 @@ else:unix {
 
 # Platform-independent sources.
 SOURCES += \
+    src/main_server.cpp \
     src/server_dummies.cpp \
     src/shelluser.cpp \
     src/shellusers.cpp \
@@ -368,7 +345,6 @@ SOURCES += \
     $$SRC/src/con_main.cpp \
     $$SRC/src/dd_games.cpp \
     $$SRC/src/dd_help.cpp \
-    $$SRC/src/dd_init.cpp \
     $$SRC/src/dd_loop.cpp \
     $$SRC/src/dd_main.cpp \
     $$SRC/src/dd_pinit.cpp \
@@ -474,23 +450,12 @@ SOURCES += \
     $$SRC/src/resource/zip.cpp \
     $$SRC/src/sys_system.cpp \
     $$SRC/src/tab_tables.c \
-    $$SRC/src/ui/b_command.cpp \
-    $$SRC/src/ui/b_context.cpp \
-    $$SRC/src/ui/b_device.cpp \
-    $$SRC/src/ui/b_main.cpp \
-    $$SRC/src/ui/b_util.cpp \
-    $$SRC/src/ui/canvas.cpp \
-    $$SRC/src/ui/canvaswindow.cpp \
-    $$SRC/src/ui/dd_input.cpp \
     $$SRC/src/ui/displaymode.cpp \
     $$SRC/src/ui/displaymode_dummy.c \
     $$SRC/src/ui/fi_main.cpp \
     $$SRC/src/ui/finaleinterpreter.cpp \
-    $$SRC/src/ui/keycode.cpp \
     $$SRC/src/ui/p_control.cpp \
-    $$SRC/src/ui/sys_input.cpp \
     $$SRC/src/ui/ui2_main.cpp \
-    $$SRC/src/ui/window.cpp \
     $$SRC/src/uri.cpp
 
 OTHER_FILES += \

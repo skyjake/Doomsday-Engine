@@ -22,16 +22,18 @@
 #include <de/TextValue>
 #include <de/Reader>
 #include <de/Writer>
+#include <QList>
 
 namespace de {
 namespace shell {
 
 static String const PT_COMMAND = "shell.command";
 static String const PT_LEXICON = "shell.lexicon";
+static String const PT_GAME_STATE = "shell.game.state";
 
 // LogEntryPacket ------------------------------------------------------------
 
-static char const *LOG_ENTRY_PACKET_TYPE = "LOGE";
+static char const *LOG_ENTRY_PACKET_TYPE = "LgEn";
 
 LogEntryPacket::LogEntryPacket() : Packet(LOG_ENTRY_PACKET_TYPE)
 {}
@@ -55,6 +57,11 @@ bool LogEntryPacket::isEmpty() const
 void LogEntryPacket::add(LogEntry const &entry)
 {
     _entries.append(new LogEntry(entry));
+}
+
+LogEntryPacket::Entries const &LogEntryPacket::entries() const
+{
+    return _entries;
 }
 
 void LogEntryPacket::execute() const
@@ -86,11 +93,88 @@ Packet *LogEntryPacket::fromBlock(Block const &block)
     return constructFromBlock<LogEntryPacket>(block, LOG_ENTRY_PACKET_TYPE);
 }
 
+// MapOutlinePacket ----------------------------------------------------------
+
+static char const *MAP_OUTLINE_PACKET_TYPE = "MpOL";
+
+struct MapOutlinePacket::Instance
+{
+    QList<Line> lines;
+};
+
+MapOutlinePacket::MapOutlinePacket()
+    : Packet(MAP_OUTLINE_PACKET_TYPE), d(new Instance)
+{}
+
+MapOutlinePacket::~MapOutlinePacket()
+{
+    delete d;
+}
+
+void MapOutlinePacket::clear()
+{
+    d->lines.clear();
+}
+
+void MapOutlinePacket::addLine(Vector2i const &vertex1, Vector2i const &vertex2, LineType type)
+{
+    Line ln;
+    ln.start = vertex1;
+    ln.end   = vertex2;
+    ln.type  = type;
+    d->lines.append(ln);
+}
+
+int MapOutlinePacket::lineCount() const
+{
+    return d->lines.size();
+}
+
+MapOutlinePacket::Line const &MapOutlinePacket::line(int index) const
+{
+    DENG2_ASSERT(index >= 0 && index < d->lines.size());
+    return d->lines[index];
+}
+
+void MapOutlinePacket::operator >> (Writer &to) const
+{
+    Packet::operator >> (to);
+
+    to << duint32(d->lines.size());
+    foreach(Line const &ln, d->lines)
+    {
+        to << ln.start << ln.end << dbyte(ln.type);
+    }
+}
+
+void MapOutlinePacket::operator << (Reader &from)
+{
+    clear();
+
+    Packet::operator << (from);
+
+    duint32 count;
+    from >> count;
+    while(count-- > 0)
+    {
+        Line ln;
+        from >> ln.start >> ln.end;
+        from.readAs<dbyte>(ln.type);
+        d->lines.append(ln);
+    }
+}
+
+Packet *MapOutlinePacket::fromBlock(Block const &block)
+{
+    return constructFromBlock<MapOutlinePacket>(block, MAP_OUTLINE_PACKET_TYPE);
+}
+
 // Protocol ------------------------------------------------------------------
 
 Protocol::Protocol()
 {
     define(LogEntryPacket::fromBlock);
+    define(MapOutlinePacket::fromBlock);
 }
 
 Protocol::PacketType Protocol::recognize(Packet const *packet)
@@ -101,14 +185,28 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
         return LogEntries;
     }
 
+    if(packet->type() == MAP_OUTLINE_PACKET_TYPE)
+    {
+        DENG2_ASSERT(dynamic_cast<MapOutlinePacket const *>(packet) != 0);
+        return MapOutline;
+    }
+
     // One of the generic-format packets?
     RecordPacket const *rec = dynamic_cast<RecordPacket const *>(packet);
     if(rec)
     {
         if(rec->name() == PT_COMMAND)
+        {
             return Command;
+        }
         else if(rec->name() == PT_LEXICON)
+        {
             return ConsoleLexicon;
+        }
+        else if(rec->name() == PT_GAME_STATE)
+        {
+            return GameState;
+        }
     }
     return Unknown;
 }
@@ -156,6 +254,18 @@ Lexicon Protocol::lexicon(Packet const &consoleLexiconPacket)
     }
     lexicon.setAdditionalWordChars(rec.valueAsText("extraChars"));
     return lexicon;
+}
+
+RecordPacket *Protocol::newGameState(String const &mode, String const &rules,
+                                     String const &mapId, String const &mapTitle)
+{
+    RecordPacket *gs = new RecordPacket(PT_GAME_STATE);
+    Record &r = gs->record();
+    r.addText("mode", mode);
+    r.addText("rules", rules);
+    r.addText("mapId", mapId);
+    r.addText("mapTitle", mapTitle);
+    return gs;
 }
 
 } // namespace shell

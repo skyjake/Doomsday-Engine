@@ -73,9 +73,8 @@ static de::Vector2i actualTerminalSize(de::Vector2i const &oldSize)
     return size;
 }
 
-struct CursesApp::Instance
+DENG2_PIMPL(CursesApp)
 {
-    CursesApp &self;
     de::LogBuffer logBuffer;
     de::Clock clock;
 
@@ -86,7 +85,7 @@ struct CursesApp::Instance
 
     TextRootWidget *rootWidget;
 
-    Instance(CursesApp &a) : self(a), unicodeContinuation(0), rootWidget(0)
+    Instance(Public &i) : Private(i), unicodeContinuation(0), rootWidget(0)
     {
         logBuffer.enableStandardOutput(false);
 
@@ -336,11 +335,13 @@ struct CursesApp::Instance
                     break;
 
                 default:
+#ifdef _DEBUG
                     if(key & KEY_CODE_YES)
                         qDebug() << "CURSES" << QString("0%1").arg(key, 0, 8).toAscii().constData();
                     else
                         // This key code is ignored.
                         qDebug() << QString("%1").arg(key, 0, 16);
+#endif
                     break;
                 }
 

@@ -684,12 +684,14 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
     boolean value = false;
 
     if(cond[0] == '-')
-    {   // A command line option.
+    {
+        // A command line option.
         value = (CommandLine_Check(token) != 0);
     }
-    else if(isalnum(cond[0]))
-    {   // A game mode.
-        value = !stricmp(cond, Str_Text(Game_IdentityKey(App_CurrentGame())));
+    else if(isalnum(cond[0]) && App_CurrentGame())
+    {
+        // A game mode.
+        value = !stricmp(cond, Str_Text(App_CurrentGame()->identityKey()));
     }
 
     return value == expected;

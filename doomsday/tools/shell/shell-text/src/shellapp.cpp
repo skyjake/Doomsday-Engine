@@ -17,8 +17,6 @@
  */
 
 #include "shellapp.h"
-#include "logwidget.h"
-#include "commandlinewidget.h"
 #include "statuswidget.h"
 #include "openconnectiondialog.h"
 #include "localserverdialog.h"
@@ -26,6 +24,8 @@
 #include "persistentdata.h"
 #include <de/shell/LabelWidget>
 #include <de/shell/MenuWidget>
+#include <de/shell/CommandLineWidget>
+#include <de/shell/LogWidget>
 #include <de/shell/Action>
 #include <de/shell/Link>
 #include <de/shell/LocalServer>
@@ -36,9 +36,8 @@
 using namespace de;
 using namespace shell;
 
-struct ShellApp::Instance
+DENG2_PIMPL(ShellApp)
 {
-    ShellApp &self;
     PersistentData persist;
     MenuWidget *menu;
     LogWidget *log;
@@ -48,7 +47,7 @@ struct ShellApp::Instance
     Link *link;
     ServerFinder finder;
 
-    Instance(ShellApp &a) : self(a), link(0)
+    Instance(Public &i) : Private(i), link(0)
     {
         RootWidget &root = self.rootWidget();
 
@@ -213,8 +212,10 @@ void ShellApp::askToStartLocalServer()
     LocalServerDialog dlg;
     if(dlg.exec(rootWidget()))
     {
+        QStringList opts = dlg.text().split(' ', QString::SkipEmptyParts);
+
         LocalServer sv;
-        sv.start(dlg.port(), dlg.gameMode());
+        sv.start(dlg.port(), dlg.gameMode(), opts);
 
         openConnection("localhost:" + String::number(dlg.port()));
     }

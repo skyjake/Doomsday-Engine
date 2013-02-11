@@ -24,9 +24,8 @@
 namespace de {
 namespace shell {
 
-struct MenuWidget::Instance
+DENG2_PIMPL(MenuWidget)
 {
-    MenuWidget &self;
     ConstantRule *width;
     ConstantRule *height;
     TextCanvas::Char::Attribs borderAttr;
@@ -50,8 +49,8 @@ struct MenuWidget::Instance
     QList<Item> items;
     int cursor;
 
-    Instance(MenuWidget &inst)
-        : self(inst),
+    Instance(Public &i)
+        : Private(i),
           borderAttr(TextCanvas::Char::Reverse),
           backgroundAttr(TextCanvas::Char::Reverse),
           borderStyle(LineBorder),

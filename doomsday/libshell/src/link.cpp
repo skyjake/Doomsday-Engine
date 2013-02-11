@@ -27,9 +27,8 @@
 namespace de {
 namespace shell {
 
-struct Link::Instance
+DENG2_PIMPL(Link)
 {
-    Link &self;
     String tryingToConnectToHost;
     Time startedTryingAt;
     TimeDelta timeout;
@@ -39,8 +38,8 @@ struct Link::Instance
     Status status;
     Time connectedAt;
 
-    Instance(Link &i)
-        : self(i),
+    Instance(Public &i)
+        : Private(i),
           socket(0),
           status(Disconnected),
           connectedAt(Time::invalidTime()) {}

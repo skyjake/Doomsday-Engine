@@ -163,8 +163,10 @@ void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 
 void R_LoadSystemFonts(void);
 
+#ifdef __CLIENT__
 char const *R_ChooseFixedFont(void);
 char const *R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
+#endif
 
 /**
  * Prepare resources for the current Map.

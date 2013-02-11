@@ -25,17 +25,20 @@
 #include <de/LogBuffer>
 
 #include "con_main.h"
+#include "dd_main.h"
+#include "dd_games.h"
+#include "game.h"
+#include "def_main.h"
+#include "map/gamemap.h"
 
 using namespace de;
 
-struct ShellUser::Instance : public LogSink
+DENG2_PIMPL(ShellUser), public LogSink
 {
-    ShellUser &self;
-
     /// Log entries to be sent are collected here.
     shell::LogEntryPacket logEntryPacket;
 
-    Instance(ShellUser &inst) : self(inst)
+    Instance(Public &i) : Private(i)
     {
         // We will send all log entries to a shell user.
         LogBuffer::appBuffer().addSink(*this);
@@ -89,6 +92,76 @@ void ShellUser::sendInitialUpdate()
     Con_IterateKnownWords(0, WT_ANY, addToTerms, &lexi);
     lexi.setAdditionalWordChars("-_.");
     QScopedPointer<RecordPacket> packet(protocol().newConsoleLexicon(lexi));
+    *this << *packet;
+
+    sendGameState();
+    sendMapOutline();
+}
+
+void ShellUser::sendGameState()
+{
+    de::Game *game = App_CurrentGame();
+    String mode = (game? Str_Text(game->identityKey()) : "");
+
+    /**
+     * @todo The server is not the right place to compose a packet about
+     * game state. Work needed:
+     * - World class that contains the game world as a whole
+     * - WorldFactory that produces various world and map related instances
+     * - Game plugins can extend the world with their own code (games can
+     *   provide a Factory of their own for constructing world/map instances)
+     * - libcommon (i.e., libidtech1) needs an IdTech1World
+     *
+     * The server should just ask the World for the information for the game
+     * state packet.
+     */
+
+    /// @todo This information needs to come form the Game Rules.
+    int deathmatch = Con_GetInteger("server-game-deathmatch");
+    String rules = (!deathmatch    ? "Coop" :
+                    deathmatch == 1? "Deathmatch"  :
+                                     "Deathmatch II");
+
+    String mapId;
+    String mapTitle;
+
+    // Check the map's information from definitions.
+    /// @todo DD_GetVariable() is not an appropriate place to ask for this --
+    /// should be moved to the GameMap class. (Ditto for the ID query below.)
+    char const *name = reinterpret_cast<char const *>(DD_GetVariable(DD_MAP_NAME));
+    if(name) mapTitle = name;
+
+    // Check the map's information from definitions.
+    if(theMap)
+    {
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(theMap->uri);
+        if(mapInfo)
+        {
+            mapId = Str_Text(Uri_ToString(mapInfo->uri));
+        }
+    }
+
+    QScopedPointer<RecordPacket> packet(protocol().newGameState(mode, rules, mapId, mapTitle));
+    *this << *packet;
+}
+
+void ShellUser::sendMapOutline()
+{
+    if(!theMap) return;
+
+    QScopedPointer<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
+
+    for(uint i = 0; i < theMap->lineDefCount(); ++i)
+    {
+        LineDef const &line = theMap->lineDefs[i];
+        packet->addLine(
+                Vector2i(line.v[0]->origin[VX], line.v[0]->origin[VY]),
+                Vector2i(line.v[1]->origin[VX], line.v[1]->origin[VY]),
+                (line.sides[0].sector && line.sides[1].sector)?
+                    shell::MapOutlinePacket::TwoSidedLine :
+                    shell::MapOutlinePacket::OneSidedLine);
+    }
+
     *this << *packet;
 }
 

@@ -23,17 +23,16 @@
 #ifndef LIBDENG_SYS_WINDOW_H
 #define LIBDENG_SYS_WINDOW_H
 
+#ifndef __CLIENT__
+#  error "window.h requires __CLIENT__"
+#endif
+
 #include "dd_types.h"
 #include "resource/image.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef enum {
-    WT_NORMAL,
-    WT_CONSOLE
-} ddwindowtype_t;
 
 #define WINDOW_MIN_WIDTH        320
 #define WINDOW_MIN_HEIGHT       240
@@ -124,7 +123,7 @@ boolean Sys_GetDesktopBPP(int* bpp);
  *
  * @return  Window instance. Caller does not get ownership.
  */
-Window* Window_New(ddwindowtype_t type, const char* title);
+Window* Window_New(const char* title);
 
 #if 0
 /**
@@ -161,17 +160,11 @@ Window* Window_Main(void);
 
 Window* Window_ByIndex(uint idx);
 
-ddwindowtype_t Window_Type(const Window* wnd);
-
 boolean Window_IsFullscreen(const Window* wnd);
 
 boolean Window_IsCentered(const Window* wnd);
 
 boolean Window_IsMaximized(const Window* wnd);
-
-struct consolewindow_s* Window_Console(Window* wnd);
-
-const struct consolewindow_s* Window_ConsoleConst(const Window* wnd);
 
 int Window_X(const Window* wnd);
 

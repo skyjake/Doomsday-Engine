@@ -24,7 +24,7 @@
 #include "de/concurrency.h"
 #include "de/garbage.h"
 #include <QMutex>
-#include <QApplication>
+#include <QCoreApplication>
 #include <QDebug>
 #include <de/Time>
 #include <de/Log>

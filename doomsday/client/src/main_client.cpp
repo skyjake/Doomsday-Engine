@@ -1,4 +1,4 @@
-/** @file dd_init.cpp Application entrypoint. 
+/** @file main_client.cpp Client application entrypoint.
  * @ingroup base
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -55,31 +55,24 @@
  * via LegacyCore.
  */
 
-#include <QApplication>
 #include <QAction>
 #include <QMenuBar>
+#include <de/GuiApp>
 #include <QNetworkProxyFactory>
 #include <QDebug>
 #include <stdlib.h>
-#include <de/App>
 #include <de/Log>
 #include <de/Error>
 #include <de/c_wrapper.h>
 #include <de/garbage.h>
 #include "de_platform.h"
+#include "dd_main.h"
 #include "dd_loop.h"
 #include "con_main.h"
-#include "ui/window.h"
 #include "ui/displaymode.h"
-#include "updater.h"
 #include "sys_system.h"
-
-extern "C" {
-
-/// @todo  Refactor this away.
-uint mainWindowIdx;   // Main window index.
-
-boolean DD_Init(void);
+#include "ui/window.h"
+#include "updater.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -91,8 +84,6 @@ boolean DD_Init(void);
  * libdeng2 application core.
  */
 static LegacyCore* de2LegacyCore;
-
-} // extern "C"
 
 static void continueInitWithEventLoopRunning(void)
 {
@@ -114,34 +105,14 @@ static void handleLegacyCoreTerminate(const char* msg)
  */
 int main(int argc, char** argv)
 {
-#ifdef Q_WS_X11
-    // Autodetect non-graphical mode on X11.
-    bool useGUI = (getenv("DISPLAY") != 0);
-#else
-    bool useGUI = true;
-#endif
-
-#ifdef __SERVER__
-    // The server is always running in the background without a UI.
-    useGUI = false;
-#endif
-
-    // Are we running in novideo mode?
-    for(int i = 1; i < argc; ++i)
-    {
-        if(!stricmp(argv[i], "-novideo"))
-        {
-            // Console mode.
-            useGUI = false;
-        }
-    }
-
-    novideo = !useGUI;
+    // Application core.
+    de::GuiApp guiApp(argc, argv);
+    de::App *dengApp = &guiApp;
+    novideo = false;
 
     QMenuBar* menuBar = 0;
 
-    // Application core.
-    de::App dengApp(argc, argv, useGUI? de::App::GUIEnabled : de::App::GUIDisabled);
+    dengApp->setTerminateFunc(handleLegacyCoreTerminate);
 
     try
     {
@@ -152,55 +123,36 @@ int main(int argc, char** argv)
         QNetworkProxyFactory::setUseSystemConfiguration(true);
 
         // Metadata.
-        QApplication::setOrganizationDomain("dengine.net");
-        QApplication::setOrganizationName("Deng Team");
-        QApplication::setApplicationName("Doomsday Engine");
-        QApplication::setApplicationVersion(DOOMSDAY_VERSION_BASE);
+        QCoreApplication::setOrganizationDomain ("dengine.net");
+        QCoreApplication::setOrganizationName   ("Deng Team");
+        QCoreApplication::setApplicationName    ("Doomsday Engine");
+        QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
 
         // C interface to the app.
-        de2LegacyCore = LegacyCore_New(&dengApp);
-        LegacyCore_SetTerminateFunc(handleLegacyCoreTerminate);
+        de2LegacyCore = LegacyCore_New();
 
-#ifdef __CLIENT__
-        if(useGUI)
-        {
-            // Config needs DisplayMode, so let's initialize it before the configuration.
-            DisplayMode_Init();
+        // Config needs DisplayMode, so let's initialize it before the configuration.
+        DisplayMode_Init();
 
-            /**
-             * @todo DisplayMode should be moved under de::App's ownership, so
-             * this is handled automatically.
-             */
-        }
-#endif
+        /**
+         * @todo DisplayMode should be moved under de::App's ownership, so
+         * this is handled automatically.
+         */
 
-#ifdef __SERVER__
-        if(dengApp.commandLine().has("-daemon"))
-        {
-            // In server mode, stay quiet on the standard outputs.
-            LogBuffer_EnableStandardOutput(false);
-        }
-#endif
-
-        dengApp.initSubsystems();
+        dengApp->initSubsystems();
 
         Libdeng_Init();
 
-#ifdef __CLIENT__
-        if(useGUI)
-        {
-            // Check for updates automatically.
-            Updater_Init();
+        // Check for updates automatically.
+        Updater_Init();
 
 #ifdef MACOSX
-            // Set up the application-wide menu.
-            menuBar = new QMenuBar;
-            QMenu* gameMenu = menuBar->addMenu("&Game");
-            QAction* checkForUpdates = gameMenu->addAction("Check For &Updates...", Updater_Instance(),
-                                                           SLOT(checkNowShowingProgress()));
-            checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
-#endif
-        }
+        // Set up the application-wide menu.
+        menuBar = new QMenuBar;
+        QMenu* gameMenu = menuBar->addMenu("&Game");
+        QAction* checkForUpdates = gameMenu->addAction("Check For &Updates...", Updater_Instance(),
+                                                       SLOT(checkNowShowingProgress()));
+        checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 #endif
 
         // Initialize.
@@ -213,11 +165,10 @@ int main(int argc, char** argv)
         // Create the main window.
         char title[256];
         DD_ComposeMainWindowTitle(title);
-        Window_New(novideo? WT_CONSOLE : WT_NORMAL, title);
-
+        Window_New(title);
         LegacyCore_SetLoopFunc(continueInitWithEventLoopRunning);
     }
-    catch(const de::Error& er)
+    catch(de::Error const &er)
     {
         qFatal("App init failed: %s", er.asText().toLatin1().constData());
     }
