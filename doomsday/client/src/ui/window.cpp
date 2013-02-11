@@ -1548,8 +1548,7 @@ void Window_UpdateCanvasFormat(Window* wnd)
 #if defined(UNIX) && !defined(MACOSX)
 void GL_AssertContextActive(void)
 {
-    Window* wnd = Window_Main();
-    if(wnd->type == WT_CONSOLE) return;
+    //Window* wnd = Window_Main();
     assert(QGLContext::currentContext() != 0);
 }
 #endif

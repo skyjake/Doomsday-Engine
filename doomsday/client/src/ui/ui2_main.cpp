@@ -500,6 +500,7 @@ void FI_DeleteObject(fi_object_t *obj)
     }
 }
 
+#ifdef __CLIENT__
 static void useColor(animator_t const *color, int components)
 {
     if(components == 3)
@@ -511,6 +512,7 @@ static void useColor(animator_t const *color, int components)
         glColor4f(color[0].value, color[1].value, color[2].value, color[3].value);
     }
 }
+#endif
 
 static void drawPageBackground(fi_page_t *p, float x, float y, float width, float height,
     float light, float alpha)
@@ -946,6 +948,7 @@ static size_t buildGeometry(float const /*dimensions*/[3], boolean flipTextureS,
     return 4;
 }
 
+#ifdef __CLIENT__
 static void drawGeometry(size_t numVerts, rvertex_t const *verts,
     ColorRawf const *colors, rtexcoord_t const *coords)
 {
@@ -958,6 +961,7 @@ static void drawGeometry(size_t numVerts, rvertex_t const *verts,
     }
     glEnd();
 }
+#endif
 
 static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     float /*const*/ scale[3], float const rgba[4], float const rgba2[4], float angle,
@@ -1167,7 +1171,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-#endif
+#endif // __CLIENT__
 }
 
 void FIData_PicDraw(fi_object_t *obj, const float offset[3])

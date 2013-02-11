@@ -141,10 +141,10 @@ DENG2_PIMPL(App), DENG2_OBSERVES(Record, Deletion)
 #else // UNIX
         if(allowPlugins)
         {
-            binFolder.attach(new DirectoryFeed(app.nativePluginBinaryPath()));
+            binFolder.attach(new DirectoryFeed(self.nativePluginBinaryPath()));
         }
-        fs.makeFolder("/data").attach(new DirectoryFeed(app.nativeBasePath() / "data"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(app.nativeBasePath() / "modules"));
+        fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
+        fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 #endif
 
         // User's home folder.
