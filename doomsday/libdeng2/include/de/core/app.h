@@ -71,7 +71,7 @@ public:
      */
     App(NativePath const &appFilePath, QStringList args);
 
-    ~App();
+    virtual ~App();
 
     /**
      * Sets a callback to be called when an uncaught exception occurs.
