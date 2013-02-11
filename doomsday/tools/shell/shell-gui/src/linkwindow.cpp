@@ -142,26 +142,29 @@ LinkWindow::LinkWindow(QWidget *parent)
 
     GuiShellApp *app = &GuiShellApp::app();
 
-    d->stopAction = new QAction(tr("Stop Server"), this);
+    d->stopAction = new QAction(tr("S&top"), this);
     connect(d->stopAction, SIGNAL(triggered()), app, SLOT(stopServer()));
 
 #ifndef MACOSX
+    QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
+    fileMenu->addAction(tr("&Quit"), app, SLOT(quit()), QKeySequence(tr("Ctrl+Q")));
+
     // Menus are window-specific on non-Mac platforms.
-    QMenu *menu = menuBar()->addMenu(tr("Server"));
-    menu->addAction(tr("Connect..."), app, SLOT(connectToServer()),
-                    QKeySequence(tr("Ctrl+O", "Server|Connect")));
-    menu->addAction(tr("Disconnect"), this, SLOT(closeConnection()),
-                    QKeySequence(tr("Ctrl+D", "Server|Disconnect")));
-    menu->addSeparator();
-    menu->addAction(tr("Start Local Server"), app, SLOT(startLocalServer()),
-                    QKeySequence(tr("Ctrl+N", "Server|Start Local Server")));
-    menu->addAction(d->stopAction);
+    QMenu *menu = menuBar()->addMenu(tr("&Connection"));
+    menu->addAction(tr("C&onnect..."), app, SLOT(connectToServer()),
+                    QKeySequence(tr("Ctrl+O", "Connection|Connect")));
+    menu->addAction(tr("&Disconnect"), this, SLOT(closeConnection()),
+                    QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
 
-    menu->addMenu(app->localServersMenu());
+    QMenu *svMenu = menuBar()->addMenu(tr("&Local Server"));
+    svMenu->addAction(tr("&Start..."), app, SLOT(startLocalServer()),
+                      QKeySequence(tr("Ctrl+N", "Local Server|Start")));
+    svMenu->addAction(d->stopAction);
+    svMenu->addSeparator();
+    svMenu->addMenu(app->localServersMenu());
 
-    menu->addSeparator();
-
-    menu->addAction(tr("&Quit"), app, SLOT(quit()), QKeySequence(tr("Ctrl+Q")));
+    QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
+    helpMenu->addAction(tr("About Doomsday Shell"), app, SLOT(aboutShell()));
 #endif
 
     d->stack = new QStackedWidget;
