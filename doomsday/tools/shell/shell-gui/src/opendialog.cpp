@@ -30,6 +30,8 @@
 #include <QLayoutItem>
 #include <QSettings>
 
+Q_DECLARE_METATYPE(de::Address)
+
 using namespace de;
 using namespace de::shell;
 

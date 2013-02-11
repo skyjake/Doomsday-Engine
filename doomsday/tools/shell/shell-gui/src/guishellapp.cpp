@@ -21,10 +21,12 @@
 #include "opendialog.h"
 #include "aboutdialog.h"
 #include "localserverdialog.h"
-#include <QMenuBar>
 #include <de/shell/LocalServer>
 #include <de/shell/ServerFinder>
+#include <QMenuBar>
 #include <QMessageBox>
+
+Q_DECLARE_METATYPE(de::Address)
 
 using namespace de;
 using namespace de::shell;
