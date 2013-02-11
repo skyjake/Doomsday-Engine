@@ -221,7 +221,7 @@
     typedef ClassName Public; \
     struct ClassName::Instance : public de::Private<ClassName>
 
-#if defined __cplusplus
+#if defined(__cplusplus)
 namespace de {
 
 /**
@@ -253,7 +253,7 @@ inline ToType function_cast(FromType ptr)
 } // namespace de
 #endif // __cplusplus
 
-#if defined __cplusplus && !defined DENG2_C_API_ONLY
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
 
 /**
