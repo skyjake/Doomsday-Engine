@@ -461,11 +461,7 @@ void LinkWindow::askForPassword()
     {
         if(d->link)
         {
-            Block response;
-            response.append("Shell");
-            response += QCryptographicHash::hash(dlg.textValue().toUtf8(),
-                                                 QCryptographicHash::Sha1);
-            *d->link << response;
+            *d->link << d->link->protocol().passwordResponse(dlg.textValue());
         }
         return;
     }

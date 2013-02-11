@@ -28,7 +28,7 @@ class StatusWidget : public de::shell::TextWidget
 
 public:
     StatusWidget(de::String const &name = "");
-    virtual ~StatusWidget();
+    virtual ~StatusWidget();    
 
     /**
      * Sets the shell Link whose status is to be shown on screen.
@@ -36,6 +36,8 @@ public:
      * @param link  Shell connection.
      */
     void setShellLink(de::shell::Link *link);
+
+    void setGameState(de::String const &mode, de::String const &rules, de::String const &mapId);
 
     void draw();
 

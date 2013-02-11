@@ -32,6 +32,7 @@
 #include <de/shell/ServerFinder>
 #include <de/LogBuffer>
 #include <QStringList>
+#include <QTimer>
 
 using namespace de;
 using namespace shell;
@@ -195,6 +196,26 @@ void ShellApp::closeConnection()
     }
 }
 
+void ShellApp::askForPassword()
+{
+    InputDialog dlg;
+    dlg.setDescription(tr("The server requires a password."));
+    dlg.setPrompt("Password: ");
+    dlg.lineEdit().setEchoMode(LineEditWidget::PasswordEchoMode);
+    dlg.lineEdit().setSignalOnEnter(false);
+
+    if(dlg.exec(rootWidget()))
+    {
+        if(d->link) *d->link << d->link->protocol().passwordResponse(dlg.text());
+    }
+    else
+    {
+        QTimer::singleShot(1, this, SLOT(closeConnection()));
+    }
+
+    rootWidget().setFocus(d->cli);
+}
+
 void ShellApp::askToOpenConnection()
 {
     OpenConnectionDialog dlg;
@@ -285,10 +306,22 @@ void ShellApp::handleIncomingPackets()
         shell::Protocol &protocol = d->link->protocol();
         switch(protocol.recognize(packet.data()))
         {
+        case shell::Protocol::PasswordChallenge:
+            askForPassword();
+            break;
+
         case shell::Protocol::ConsoleLexicon:
             // Terms for auto-completion.
             d->cli->setLexicon(protocol.lexicon(*packet));
             break;
+
+        case shell::Protocol::GameState: {
+            Record &rec = static_cast<RecordPacket *>(packet.data())->record();
+            d->status->setGameState(
+                    rec["mode"].value().asText(),
+                    rec["rules"].value().asText(),
+                    rec["mapId"].value().asText());
+            break; }
 
         default:
             break;
