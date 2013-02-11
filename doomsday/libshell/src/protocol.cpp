@@ -22,6 +22,7 @@
 #include <de/TextValue>
 #include <de/Reader>
 #include <de/Writer>
+#include <QCryptographicHash>
 #include <QList>
 
 namespace de {
@@ -232,6 +233,15 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
         }
     }
     return Unknown;
+}
+
+Block Protocol::passwordResponse(String const &plainPassword)
+{
+    Block response;
+    response.append("Shell");
+    response += QCryptographicHash::hash(plainPassword.toUtf8(),
+                                         QCryptographicHash::Sha1);
+    return response;
 }
 
 RecordPacket *Protocol::newCommand(String const &command)

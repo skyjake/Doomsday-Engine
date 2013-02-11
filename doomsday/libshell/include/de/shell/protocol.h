@@ -163,6 +163,8 @@ public:
      */
     static PacketType recognize(Packet const *packet);
 
+    static Block passwordResponse(String const &plainPassword);
+
     /**
      * Constructs a console command packet.
      *

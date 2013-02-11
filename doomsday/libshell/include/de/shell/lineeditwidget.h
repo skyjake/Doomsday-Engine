@@ -67,6 +67,18 @@ public:
      */
     void setLexicon(Lexicon const &lexicon);
 
+    enum EchoMode
+    {
+        NormalEchoMode,
+        PasswordEchoMode
+    };
+
+    /**
+     * Determines how the entered text is drawn on screen.
+     * @param mode  Echo mode.
+     */
+    void setEchoMode(EchoMode mode);
+
     /**
      * Enables or disables the signal emitted when the edit widget receives an
      * Enter key. By default, a signal is emitted.
