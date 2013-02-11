@@ -56,11 +56,7 @@ RESOURCES += \
 
 # Deployment ----------------------------------------------------------------
 
-win32 {
-    INSTALLS += target
-    target.path = $$DENG_BIN_DIR
-}
-else:macx {
+macx {
     ICON = res/macx/shell.icns
 
     # Clean up previous deployment.
@@ -68,4 +64,8 @@ else:macx {
     doPostLink("rm -f \"Doomsday Shell.app/Contents/Resources/qt.conf\"")
 
     doPostLink("macdeployqt \"Doomsday Shell.app\"")
+}
+else {
+    INSTALLS += target
+    target.path = $$DENG_BIN_DIR
 }
