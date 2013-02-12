@@ -48,7 +48,7 @@ namespace de {
  *
  * Property values are public for user convenience.
  *
- * @see Material, Material::Variant
+ * @see Material, MaterialVariant
  * @ingroup resource
  */
 struct MaterialVariantSpec

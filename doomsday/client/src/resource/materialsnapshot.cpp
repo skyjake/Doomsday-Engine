@@ -102,11 +102,11 @@ struct Store {
 DENG2_PIMPL(MaterialSnapshot)
 {
     /// Variant material used to derive this snapshot.
-    Material::Variant *variant;
+    MaterialVariant *variant;
 
     Store stored;
 
-    Instance(Public &a, Material::Variant &_variant) : Base(a),
+    Instance(Public &a, MaterialVariant &_variant) : Base(a),
         variant(&_variant),
         stored()
     {}
@@ -114,7 +114,7 @@ DENG2_PIMPL(MaterialSnapshot)
     void takeSnapshot();
 };
 
-MaterialSnapshot::MaterialSnapshot(Material::Variant &materialVariant)
+MaterialSnapshot::MaterialSnapshot(MaterialVariant &materialVariant)
     : d(new Instance(*this, materialVariant))
 {}
 
@@ -123,7 +123,7 @@ MaterialSnapshot::~MaterialSnapshot()
     delete d;
 }
 
-Material::Variant &MaterialSnapshot::materialVariant() const
+MaterialVariant &MaterialSnapshot::materialVariant() const
 {
     return *d->variant;
 }
@@ -213,7 +213,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
      */
     for(int i = 0; i < layers.count(); ++i)
     {
-        Material::Variant::LayerState const &l = variant->layer(i);
+        MaterialVariant::LayerState const &l = variant->layer(i);
 
         Material::Layer::Stage const *lsCur = layers[i]->stages()[l.stage];
         if(Texture *tex = lsCur->texture)
@@ -249,7 +249,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare detail texture(s)?
     if(!material->isSkyMasked() && material->isDetailed())
     {
-        Material::Variant::LayerState const &l = variant->detailLayer();
+        MaterialVariant::LayerState const &l = variant->detailLayer();
         Material::DetailLayer::Stage const *lsCur = detailLayer->stages()[l.stage];
 
         float const contrast = de::clamp(0.f, lsCur->strength, 1.f) * detailFactor /*Global strength multiplier*/;
@@ -275,7 +275,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare a shiny texture (and possibly a mask)?
     if(!material->isSkyMasked() && material->isShiny())
     {
-        Material::Variant::LayerState const &l = variant->shineLayer();
+        MaterialVariant::LayerState const &l = variant->shineLayer();
         Material::ShineLayer::Stage const *lsCur = shineLayer->stages()[l.stage];
 
         if(Texture *tex = lsCur->texture)
@@ -313,7 +313,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(stored.dimensions.isEmpty()) return;
 
-    Material::Variant::LayerState const &l = variant->layer(0);
+    MaterialVariant::LayerState const &l = variant->layer(0);
     Material::Layer::Stage const *lsCur  = layers[0]->stages()[l.stage];
     Material::Layer::Stage const *lsNext = layers[0]->stages()[(l.stage + 1) % layers[0]->stageCount()];
 
@@ -372,7 +372,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     if(!material->isSkyMasked() && material->isDetailed())
     {
 #ifdef __CLIENT__
-        Material::Variant::LayerState const &l = variant->detailLayer();
+        MaterialVariant::LayerState const &l = variant->detailLayer();
         Material::DetailLayer::Stage const *lsCur  = detailLayer->stages()[l.stage];
         Material::DetailLayer::Stage const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
 #endif
@@ -426,7 +426,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     if(!material->isSkyMasked() && material->isShiny())
     {
 #ifdef __CLIENT__
-        Material::Variant::LayerState const &l = variant->shineLayer();
+        MaterialVariant::LayerState const &l = variant->shineLayer();
         Material::ShineLayer::Stage const *lsCur  = shineLayer->stages()[l.stage];
         Material::ShineLayer::Stage const *lsNext = shineLayer->stages()[(l.stage + 1) % shineLayer->stageCount()];
 #endif
@@ -489,8 +489,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
     for(Material::Decorations::const_iterator it = decorations.begin();
         it != decorations.end(); ++it, ++idx)
     {
-        Material::Variant::DecorationState const &l = variant->decoration(idx);
-        Material::Decoration const *lDef = *it;
+        MaterialVariant::DecorationState const &l = variant->decoration(idx);
+        MaterialDecoration const *lDef = *it;
         ded_decorlight_stage_t const *lsCur  = lDef->stages()[l.stage];
         ded_decorlight_stage_t const *lsNext = lDef->stages()[(l.stage + 1) % lDef->stageCount()];
 

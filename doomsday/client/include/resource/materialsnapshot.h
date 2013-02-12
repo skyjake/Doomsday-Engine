@@ -78,14 +78,14 @@ public:
      * Construct a new material snapshot instance.
      * @param materialVariant  Material variant to capture to produce the snapshot.
      */
-    MaterialSnapshot(Material::Variant &materialVariant);
+    MaterialSnapshot(MaterialVariant &materialVariant);
 
     ~MaterialSnapshot();
 
     /**
      * Returns the material variant for the snapshot.
      */
-    Material::Variant &materialVariant() const;
+    MaterialVariant &materialVariant() const;
 
     /**
      * Returns the material for the snapshot, for convenience.

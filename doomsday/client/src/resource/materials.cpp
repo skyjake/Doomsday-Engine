@@ -539,7 +539,7 @@ Material *Materials::newFromDef(ded_material_t &def)
         // Is this valid? (A zero number of stages signifies the last).
         if(!lightDef.stageCount.num) break;
 
-        Material::Decoration *decor = Material::Decoration::fromDef(lightDef);
+        MaterialDecoration *decor = MaterialDecoration::fromDef(lightDef);
         material->addDecoration(*decor);
     }
 
@@ -555,7 +555,7 @@ Material *Materials::newFromDef(ded_material_t &def)
                 // Is this valid? (A zero-strength color signifies the last).
                 if(V3f_IsZero(lightDef.stage.color)) break;
 
-                Material::Decoration *decor = Material::Decoration::fromDef(lightDef);
+                MaterialDecoration *decor = MaterialDecoration::fromDef(lightDef);
                 material->addDecoration(*decor);
             }
         }
@@ -642,7 +642,7 @@ Materials::All const &Materials::all() const
     return d->materials;
 }
 
-static void printVariantInfo(Material::Variant &variant, int variantIdx)
+static void printVariantInfo(MaterialVariant &variant, int variantIdx)
 {
     Con_Printf("Variant #%i: Spec:%p\n", variantIdx, de::dintptr(&variant.spec()));
 
@@ -650,21 +650,21 @@ static void printVariantInfo(Material::Variant &variant, int variantIdx)
     int const layerCount = variant.generalCase().layerCount();
     for(int i = 0; i < layerCount; ++i)
     {
-        Material::Variant::LayerState const &l = variant.layer(i);
+        MaterialVariant::LayerState const &l = variant.layer(i);
         Con_Printf("  Layer #%i: Stage:%i Tics:%i\n", i, l.stage, int(l.tics));
     }
 
     // Print detail layer state info:
     if(variant.generalCase().isDetailed())
     {
-        Material::Variant::LayerState const &l = variant.detailLayer();
+        MaterialVariant::LayerState const &l = variant.detailLayer();
         Con_Printf("  DetailLayer #0: Stage:%i Tics:%i\n", l.stage, int(l.tics));
     }
 
     // Print shine layer state info:
     if(variant.generalCase().isShiny())
     {
-        Material::Variant::LayerState const &l = variant.shineLayer();
+        MaterialVariant::LayerState const &l = variant.shineLayer();
         Con_Printf("  ShineLayer #0: Stage:%i Tics:%i\n", l.stage, int(l.tics));
     }
 
@@ -672,7 +672,7 @@ static void printVariantInfo(Material::Variant &variant, int variantIdx)
     int const decorationCount = variant.generalCase().decorationCount();
     for(int i = 0; i < decorationCount; ++i)
     {
-        Material::Variant::DecorationState const &l = variant.decoration(i);
+        MaterialVariant::DecorationState const &l = variant.decoration(i);
         Con_Printf("  Decoration #%i: Stage:%i Tics:%i\n", i, l.stage, int(l.tics));
     }
 }
@@ -782,7 +782,7 @@ static void printMaterialInfo(Material &material)
     Material::Decorations const &decorations = material.decorations();
     for(int i = 0; i < decorations.count(); ++i)
     {
-        Material::Decoration const *lDef = decorations[i];
+        MaterialDecoration const *lDef = decorations[i];
 
         Con_Printf("Decoration #%i (%i %s):\n", i, lDef->stageCount(),
                    lDef->stageCount() == 1? "Stage" : "Stages");
@@ -808,7 +808,7 @@ static void printMaterialInfo(Material &material)
 
     // Print variant specs and current animation states:
     int variantIdx = 0;
-    foreach(Material::Variant *variant, material.variants())
+    foreach(MaterialVariant *variant, material.variants())
     {
         printVariantInfo(*variant, variantIdx);
         ++variantIdx;

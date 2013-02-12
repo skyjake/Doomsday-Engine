@@ -807,7 +807,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     if(!params) return; // Wha?
 
     MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
-    Material::Variant *variant = material.chooseVariant(spec, true);
+    MaterialVariant *variant = material.chooseVariant(spec, true);
 
 #ifdef DENG_DEBUG
     if(tClass || tMap)

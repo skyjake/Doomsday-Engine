@@ -546,7 +546,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
     if(renderTextures)
     {
         MaterialSnapshot const &ms =
-            reinterpret_cast<Material::Variant *>(p->material)->prepare();
+            reinterpret_cast<MaterialVariant *>(p->material)->prepare();
         tex = &ms.texture(MTU_PRIMARY);
     }
 
@@ -866,7 +866,7 @@ MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass, int tmap)
                                                   true, true, true, false);
 }
 
-static Material::Variant *chooseSpriteMaterial(rendspriteparams_t const &p)
+static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)
 {
     if(!renderTextures) return 0;
     if(renderTextures == 2)
@@ -876,7 +876,7 @@ static Material::Variant *chooseSpriteMaterial(rendspriteparams_t const &p)
     }
 
     // Use the pre-chosen sprite.
-    return reinterpret_cast<Material::Variant *>(p.material);
+    return reinterpret_cast<MaterialVariant *>(p.material);
 }
 
 void Rend_RenderSprite(rendspriteparams_t const *params)
@@ -890,7 +890,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     boolean restoreZ = false;
     coord_t spriteCenter[3];
     coord_t surfaceNormal[3];
-    Material::Variant *mat = 0;
+    MaterialVariant *mat = 0;
     MaterialSnapshot const *ms = 0;
     float s = 1, t = 1; ///< Bottom right coords.
     int i;
@@ -901,7 +901,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
         variantspecification_t const *texSpec;
 
         // Ensure this variant has been prepared.
-        ms = &reinterpret_cast<Material::Variant *>(params->material)->prepare();
+        ms = &reinterpret_cast<MaterialVariant *>(params->material)->prepare();
 
         texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
         DENG_ASSERT(texSpec);
@@ -917,7 +917,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
 
     // We may want to draw using another material instead.
     mat = chooseSpriteMaterial(*params);
-    if(mat != reinterpret_cast<Material::Variant *>(params->material))
+    if(mat != reinterpret_cast<MaterialVariant *>(params->material))
     {
         ms = mat? &mat->prepare() : 0;
     }

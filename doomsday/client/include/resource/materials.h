@@ -310,12 +310,12 @@ public:
     /**
      * Reset all material instance animations back to their initial state.
      *
-     * @see all(), Material::Variant::resetAnim()
+     * @see all(), MaterialVariant::resetAnim()
      */
     inline void resetAllAnims() const
     {
         foreach(Material *material, all())
-        foreach(Material::Variant *variant, material->variants())
+        foreach(MaterialVariant *variant, material->variants())
         {
             variant->resetAnim();
         }

@@ -441,7 +441,7 @@ static void updateSurfaceDecorations(Surface &suf, Vector2f const &offset,
     for(int i = 0; i < decorations.count(); ++i)
     {
         MaterialSnapshot::Decoration const &decor = ms.decoration(i);
-        Material::Decoration const *def = decorations[i];
+        MaterialDecoration const *def = decorations[i];
 
         generateDecorLights(decor, def->patternOffset(), def->patternSkip(),
                             suf, *suf.material, v1, v2, sufDimensions,

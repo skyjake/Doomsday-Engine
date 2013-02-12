@@ -721,4 +721,7 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)
 
+typedef Material::Decoration MaterialDecoration;
+typedef Material::Variant MaterialVariant;
+
 #endif /* LIBDENG_RESOURCE_MATERIAL_H */

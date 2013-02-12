@@ -145,7 +145,7 @@ DENG2_PIMPL(Material::Variant)
         }
     }
 
-    void animateDecoration(Material::Variant::DecorationState &ds, Material::Decoration const &decor)
+    void animateDecoration(Material::Variant::DecorationState &ds, MaterialDecoration const &decor)
     {
         if(DD_IsSharpTick() && ds.tics-- <= 0)
         {

@@ -62,7 +62,7 @@ typedef enum {
 } visspritetype_t;
 
 typedef struct rendmaskedwallparams_s {
-    void *material; /// Material::Variant
+    void *material; /// MaterialVariant
     blendmode_t blendMode; ///< Blendmode to be used when drawing
                                /// (two sided mid textures only)
     struct wall_vertex_s {
@@ -90,7 +90,7 @@ typedef struct rendspriteparams_s {
     blendmode_t blendMode;
 
     // Material:
-    void *material; /// Material::Variant
+    void *material; /// MaterialVariant
     boolean matFlip[2]; // [S, T] Flip along the specified axis.
 
     // Lighting/color:
