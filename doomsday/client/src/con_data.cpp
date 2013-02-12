@@ -373,7 +373,7 @@ static void updateKnownWords(void)
             numUniqueNamedCCmds +
             countCVarParams.count +
             numCAliases +
-            App_GameCollection().count();
+            App_Games().count();
     size_t len = sizeof(knownword_t) * numKnownWords;
     knownWords = (knownword_t*) M_Realloc(knownWords, len);
     memset(knownWords, 0, len);
@@ -413,11 +413,10 @@ static void updateKnownWords(void)
     }
 
     // Add games?
-    de::GameCollection& gameCollection = App_GameCollection();
-    DENG2_FOR_EACH_CONST(de::GameCollection::Games, i, gameCollection.games())
+    foreach(de::Game *game, App_Games().all())
     {
         knownWords[knownWordIdx].type = WT_GAME;
-        knownWords[knownWordIdx].data = *i;
+        knownWords[knownWordIdx].data = game;
         ++knownWordIdx;
     }
 
@@ -1562,11 +1561,11 @@ static void printHelpAbout(char const* query)
     {
         try
         {
-            de::Game& game = App_GameCollection().byIdentityKey(query);
+            de::Game &game = App_Games().byIdentityKey(query);
             de::Game::print(game, PGF_EVERYTHING);
             found = true;
         }
-        catch(de::GameCollection::NotFoundError const&)
+        catch(de::Games::NotFoundError const&)
         {} // Ignore this error.
     }
 

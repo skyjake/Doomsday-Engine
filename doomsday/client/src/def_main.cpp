@@ -834,7 +834,7 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        de::Game::Manifests const& gameResources = reinterpret_cast<de::Game *>(App_CurrentGame())->manifests();
+        de::Game::Manifests const& gameResources = App_CurrentGame().manifests();
         int packageIdx = 0;
         for(de::Game::Manifests::const_iterator i = gameResources.find(RC_DEFINITION);
             i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)

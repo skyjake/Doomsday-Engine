@@ -60,7 +60,7 @@ namespace de {
 
 class File1;
 class Manifest;
-class GameCollection;
+class Games;
 
 /**
  * Records top-level game configurations registered by the loaded game
@@ -85,7 +85,7 @@ public:
     virtual ~Game();
 
     /// @return  Collection in which this game exists.
-    GameCollection& collection() const;
+    Games& collection() const;
 
     /// @return  Unique plugin identifier attributed to that which registered this.
     pluginid_t pluginId() const;

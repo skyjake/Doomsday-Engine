@@ -48,6 +48,7 @@ public:
     void close(int socket);
     de::Address peerAddress(int socket) const;
     bool isOpen(int socket);
+    bool isLocal(int socket);
 
     int sendBytes(int socket, IByteArray const &data);
     bool receiveBlock(int socket, Block &data);

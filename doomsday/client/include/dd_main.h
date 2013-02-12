@@ -76,12 +76,6 @@ extern GETGAMEAPI GetGameAPI;
 
 extern int gameDataFormat;
 
-/// @return  The Game collection.
-de::GameCollection& App_GameCollection();
-
-/// @return  The current Game in the collection.
-de::Game *App_CurrentGame();
-
 int DD_EarlyInit(void);
 void DD_FinishInitializationAfterWindowReady(void);
 boolean DD_Init(void);
@@ -186,6 +180,12 @@ de::ResourceClass& DD_ResourceClassByName(de::String name);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
+
+/// @return  The application's global Game collection.
+de::Games& App_Games();
+
+/// @return  The current Game in the application's global collection.
+de::Game &App_CurrentGame();
 
 /// @return  The application's global Material collection.
 de::Materials &App_Materials();

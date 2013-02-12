@@ -75,7 +75,7 @@ void DD_ComposeMainWindowTitle(char* title)
     if(DD_GameLoaded() && gx.GetVariable)
     {
         sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s - %s",
-            (isDedicated? " (Dedicated)" : ""), Str_Text(App_CurrentGame()->title()));
+            (isDedicated? " (Dedicated)" : ""), Str_Text(App_CurrentGame().title()));
     }
     else
     {

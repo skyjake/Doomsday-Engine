@@ -155,6 +155,12 @@ bool LegacyNetwork::isOpen(int socket)
     return d->sockets[socket]->isOpen();
 }
 
+bool LegacyNetwork::isLocal(int socket)
+{
+    if(!d->sockets.contains(socket)) return false;
+    return d->sockets[socket]->isLocal();
+}
+
 de::Address LegacyNetwork::peerAddress(int socket) const
 {
     DENG2_ASSERT(d->sockets.contains(socket));

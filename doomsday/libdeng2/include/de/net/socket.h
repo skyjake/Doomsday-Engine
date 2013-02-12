@@ -170,6 +170,11 @@ public:
     bool isOpen() const;
 
     /**
+     * Determines if the socket is on the local computer.
+     */
+    bool isLocal() const;
+
+    /**
      * Determines whether there are any incoming messages waiting.
      */
     bool hasIncoming() const;

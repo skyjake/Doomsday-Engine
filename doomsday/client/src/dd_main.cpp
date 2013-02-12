@@ -158,7 +158,7 @@ extern GETGAMEAPI GetGameAPI;
 #endif
 
 // The Game collection.
-static de::GameCollection* games;
+static de::Games *games;
 
 // The Material collection.
 static de::Materials *materials;
@@ -1257,16 +1257,15 @@ static int DD_ActivateGameWorker(void* parameters)
     return 0;
 }
 
-de::GameCollection &App_GameCollection()
+de::Games &App_Games()
 {
     DENG2_ASSERT(games != 0);
     return *games;
 }
 
-de::Game *App_CurrentGame()
+de::Game &App_CurrentGame()
 {
-    if(!games) return 0;
-    return &games->currentGame();
+    return App_Games().currentGame();
 }
 
 static void populateGameInfo(GameInfo& info, de::Game& game)
@@ -1277,6 +1276,7 @@ static void populateGameInfo(GameInfo& info, de::Game& game)
 }
 
 /// @note Part of the Doomsday public API.
+#undef DD_GameInfo
 boolean DD_GameInfo(GameInfo* info)
 {
     if(!info)
@@ -1354,7 +1354,7 @@ gameid_t DD_DefineGame(GameDef const* def)
 #endif
         return 0; // Invalid id.
     }
-    catch(const de::GameCollection::NotFoundError&)
+    catch(de::Games::NotFoundError const &)
     {} // Ignore the error.
 
     de::Game* game = de::Game::fromDef(*def);
@@ -1374,7 +1374,7 @@ gameid_t DD_GameIdForKey(const char* identityKey)
     {
         return games->id(games->byIdentityKey(identityKey));
     }
-    catch(const de::GameCollection::NotFoundError&)
+    catch(de::Games::NotFoundError const &)
     {
         DEBUG_Message(("Warning: DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey));
     }
@@ -1684,7 +1684,7 @@ de::Game* DD_AutoselectGame(void)
                 return &game;
             }
         }
-        catch(const de::GameCollection::NotFoundError&)
+        catch(de::Games::NotFoundError const &)
         {} // Ignore the error.
     }
 
@@ -1723,7 +1723,7 @@ int DD_EarlyInit(void)
 #endif
 
     // Instantiate the Games collection.
-    games = new de::GameCollection();
+    games = new de::Games();
 
     return true;
 }
@@ -2780,7 +2780,7 @@ D_CMD(Load)
         didLoadGame = true;
         ++arg;
     }
-    catch(const de::GameCollection::NotFoundError&)
+    catch(de::Games::NotFoundError const &)
     {} // Ignore the error.
 
     // Try the resource locator.
@@ -2908,7 +2908,7 @@ D_CMD(Unload)
             Con_Message("%s is not currently loaded.\n", Str_Text(game.identityKey()));
             return true;
         }
-        catch(de::GameCollection::NotFoundError const&)
+        catch(de::Games::NotFoundError const &)
         {} // Ignore the error.
     }
 

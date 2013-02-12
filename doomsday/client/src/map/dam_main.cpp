@@ -157,16 +157,16 @@ AutoStr* DAM_ComposeCacheDir(char const* sourcePath)
 {
     if(!sourcePath || !sourcePath[0]) return NULL;
 
-    DENG_ASSERT(App_CurrentGame());
+    DENG_ASSERT(!de::isNullGame(App_CurrentGame()));
 
-    Str const* gameIdentityKey = App_CurrentGame()->identityKey();
+    Str const *gameIdentityKey = App_CurrentGame().identityKey();
     ushort mapPathIdentifier   = calculateIdentifierForMapPath(sourcePath);
 
-    AutoStr* mapFileName = AutoStr_NewStd();
+    AutoStr *mapFileName = AutoStr_NewStd();
     F_FileName(mapFileName, sourcePath);
 
     // Compose the final path.
-    AutoStr* path = AutoStr_NewStd();
+    AutoStr *path = AutoStr_NewStd();
     Str_Appendf(path, "%s%s/%s-%04X/", mapCacheDir, Str_Text(gameIdentityKey),
                                        Str_Text(mapFileName), mapPathIdentifier);
     F_ExpandBasePath(path, path);
@@ -219,7 +219,7 @@ static de::String DAM_ComposeUniqueId(de::File1& markerLump)
                    .arg(markerLump.name().fileNameWithoutExtension())
                    .arg(markerLump.container().name().fileNameWithoutExtension())
                    .arg(markerLump.container().hasCustom()? "pwad" : "iwad")
-                   .arg(Str_Text(App_CurrentGame()->identityKey()))
+                   .arg(Str_Text(App_CurrentGame().identityKey()))
                    .toLower();
 }
 
