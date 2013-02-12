@@ -24,10 +24,6 @@
 #include "api_plugin.h"
 #include <de/ddstring.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * @defgroup printGameFlags  Print Game Flags
  * @ingroup flags
@@ -41,17 +37,11 @@ extern "C" {
 #define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
 ///@}
 
-struct manifest_s;
-struct gamedef_s;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#ifdef __cplusplus
-
 #include <de/Error>
 #include <QMultiMap>
+
+struct manifest_s;
+struct gamedef_s;
 
 namespace de {
 
@@ -81,10 +71,14 @@ public:
          char const *title = "Unnamed", char const *author = "Unknown");
     virtual ~Game();
 
-    /// @return  Collection in which this game exists.
+    /**
+     * Returns the owning Games collection.
+     */
     Games &collection() const;
 
-    /// @return  @c true= @a game is the currently active game.
+    /**
+     * Returns @a true if the game is currently active in the owning collection.
+     */
     bool isCurrent() const;
 
     /// @return  Unique plugin identifier attributed to that which registered this.
@@ -222,51 +216,5 @@ inline bool isNullGame(Game const &game) {
 }
 
 } // namespace de
-
-extern "C" {
-#endif // __cplusplus
-
-/**
- * C wrapper API:
- */
-
-struct game_s; // The game instance (opaque).
-typedef struct game_s Game;
-
-Game *Game_New(char const *identityKey, char const *configDir, char const *title, char const *author);
-
-void Game_Delete(Game *game);
-
-boolean Game_IsNullObject(Game const *game);
-
-struct game_s *Game_AddManifest(Game *game, struct manifest_s *manifest);
-
-boolean Game_AllStartupFilesFound(Game const *game);
-
-Game *Game_SetPluginId(Game *game, pluginid_t pluginId);
-
-pluginid_t Game_PluginId(Game const *game);
-
-ddstring_t const *Game_IdentityKey(Game const *game);
-
-ddstring_t const *Game_Title(Game const *game);
-
-ddstring_t const *Game_Author(Game const *game);
-
-ddstring_t const *Game_MainConfig(Game const *game);
-
-ddstring_t const *Game_BindingConfig(Game const *game);
-
-Game *Game_FromDef(GameDef const *def);
-
-void Game_PrintBanner(Game const *game);
-
-void Game_PrintResources(Game const *game, boolean printStatus, int rflags);
-
-void Game_Print(Game const *game, int flags);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_GAME_H */

@@ -47,13 +47,7 @@ DENG2_PIMPL(Games)
     ~Instance()
     {
         qDeleteAll(games);
-
-        if(nullGame)
-        {
-            delete nullGame;
-            nullGame = 0;
-        }
-        currentGame = 0;
+        if(nullGame) delete nullGame;
     }
 };
 
