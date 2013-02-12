@@ -116,6 +116,7 @@ DENG2_PUBLIC int LegacyNetwork_Accept(int serverSocket);
 DENG2_PUBLIC int LegacyNetwork_Open(char const *ipAddress, unsigned short port);
 DENG2_PUBLIC void LegacyNetwork_GetPeerAddress(int socket, char *host, int hostMaxSize, unsigned short *port);
 DENG2_PUBLIC int LegacyNetwork_IsDisconnected(int socket);
+DENG2_PUBLIC int LegacyNetwork_IsLocal(int socket);
 DENG2_PUBLIC void LegacyNetwork_Close(int socket);
 
 DENG2_PUBLIC int LegacyNetwork_Send(int socket, void const *data, int size);

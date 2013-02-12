@@ -311,6 +311,12 @@ int LegacyNetwork_IsDisconnected(int socket)
     return !DENG2_LEGACYNETWORK().isOpen(socket);
 }
 
+int LegacyNetwork_IsLocal(int socket)
+{
+    if(!socket) return 0;
+    return DENG2_LEGACYNETWORK().isLocal(socket);
+}
+
 int LegacyNetwork_BytesReady(int socket)
 {
     if(!socket) return 0;
