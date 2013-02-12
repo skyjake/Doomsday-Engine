@@ -624,6 +624,18 @@ bool Socket::isOpen() const
     return d->socket && d->socket->state() != QTcpSocket::UnconnectedState;
 }
 
+bool Socket::isLocal() const
+{
+    QHostAddress const host = peerAddress().host();
+    if(host == QHostAddress::LocalHost) return true;
+    QHostInfo info = QHostInfo::fromName(QHostInfo::localHostName());    
+    foreach(QHostAddress addr, info.addresses())
+    {
+        if(addr == host) return true;
+    }
+    return false;
+}
+
 void Socket::socketDisconnected()
 {
     emit disconnected();

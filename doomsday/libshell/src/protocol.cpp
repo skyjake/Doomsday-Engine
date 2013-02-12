@@ -41,11 +41,7 @@ ChallengePacket::ChallengePacket() : Packet(CHALLENGE_PACKET_TYPE)
 
 Packet *ChallengePacket::fromBlock(Block const &block)
 {
-    if(block == "Password?")
-    {
-        return new ChallengePacket;
-    }
-    return 0;
+    return constructFromBlock<ChallengePacket>(block, CHALLENGE_PACKET_TYPE);
 }
 
 // LogEntryPacket ------------------------------------------------------------

@@ -12,7 +12,7 @@ SUBDIRS =    \
     libdeng1 \
     libshell
 
-!deng_noclient: SUBDIRS += client
+macx|!deng_noclient: SUBDIRS += client
 
 SUBDIRS += \
     server   \

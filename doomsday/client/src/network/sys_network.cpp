@@ -73,12 +73,15 @@ typedef struct netnode_s {
     int sock;
     char name[256];
 
-    // The node is owned by a client in the game.  This becomes true
+    /// The node is owned by a client in the game.  This becomes true
     // when the client issues the JOIN request.
     boolean hasJoined;
 
-    // This is the client's remote address.
+    /// This is the client's remote address.
     ipaddress_t addr;
+
+    /// The node is connecting from the local host.
+    boolean isFromLocalHost;
 
     expectedresponder_t expectedResponder;
 } netnode_t;
@@ -377,8 +380,13 @@ static boolean registerNewSocket(int sock)
             // Add this socket to the set of client sockets.
             LegacyNetwork_SocketSet_Add(sockSet, sock);
 
-            DEBUG_VERBOSE2_Message(("N_RegisterNewSocket: Socket #%i registered as node %i.\n", sock, i));
+            // The address where we should be sending data.
+            LegacyNetwork_GetPeerAddress(sock, node->addr.host, sizeof(node->addr.host), &node->addr.port);
 
+            node->isFromLocalHost = LegacyNetwork_IsLocal(sock);
+
+            LOG_VERBOSE("Socket #%i from %s registered as node %i (local:%b)")
+                    << sock << node->addr.host << i << node->isFromLocalHost;
             return true;
         }
     }
@@ -402,16 +410,6 @@ static boolean joinNode(nodeid_t id, int clientProtocol, const char *name)
         return false;
 
     node = &netNodes[id];
-
-    // The address where we should be sending data.
-    LegacyNetwork_GetPeerAddress(node->sock, node->addr.host, sizeof(node->addr.host), &node->addr.port);
-
-    if(verbose)
-    {
-        char buf[80];
-        N_IPToString(buf, &node->addr);
-        Con_Message("Node %i listens at %s.\n", id, buf);
-    }
 
     // Convert the network node into a real client node.
     node->hasJoined = true;
@@ -518,6 +516,8 @@ static void switchNodeToShellMode(nodeid_t node)
  */
 static boolean serverHandleNodeRequest(nodeid_t node, const char *command, int length)
 {
+    LOG_AS("serverHandleNodeRequest");
+
     int sock = netNodes[node].sock;
     serverinfo_t info;
     ddstring_t msg;
@@ -537,7 +537,7 @@ static boolean serverHandleNodeRequest(nodeid_t node, const char *command, int l
         Str_Appendf(&msg, "Info\n");
         Sv_InfoToString(&info, &msg);
 
-        DEBUG_VERBOSE_Message(("serverHandleNodeRequest: Sending: %s\n", Str_Text(&msg)));
+        LOG_DEBUG("Info reply:\n%s") << Str_Text(&msg);
 
         LegacyNetwork_Send(sock, Str_Text(&msg), Str_Length(&msg));
         Str_Free(&msg);
@@ -546,10 +546,11 @@ static boolean serverHandleNodeRequest(nodeid_t node, const char *command, int l
     {
         if(length == 5)
         {
-            if(strlen(netPassword) > 0)
+            // Password is not required for connections from the local computer.
+            if(strlen(netPassword) > 0 && !netNodes[node].isFromLocalHost)
             {
                 // Need to ask for a password, too.
-                LegacyNetwork_Send(sock, "Password?", 9);
+                LegacyNetwork_Send(sock, "Psw?", 4);
                 return true;
             }
         }
@@ -606,6 +607,7 @@ static boolean serverHandleNodeRequest(nodeid_t node, const char *command, int l
     else
     {
         // Too bad, scoundrel! Goodbye.
+        LOG_WARNING("Received an invalid request from node %i.") << node;
         N_TerminateNode(node);
         return false;
     }
@@ -653,7 +655,7 @@ void N_ServerListenUnjoinedNodes(void)
             if(node->sock && LegacyNetwork_IsDisconnected(node->sock))
             {
                 // Close this socket & node.
-                Con_Message("Connection to client closed on node %i.\n", i);
+                LOG_INFO("Connection to client closed on node %i.") << i;
                 N_TerminateNode(i);
                 continue;
             }
@@ -748,6 +750,7 @@ void N_PrintNetworkStatus(void)
 
     Con_Message("Configuration:\n");
     Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
+    Con_Message("  shell password (server-password): \"%s\"\n", netPassword);
 }
 
 void N_ServerUpdateBeacon()
