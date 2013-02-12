@@ -1483,7 +1483,7 @@ DEFFC(If)
     }
     else if(!strnicmp(token, "mode:", 5))
     {
-        if(DD_GameLoaded())
+        if(App_GameLoaded())
             val = !stricmp(token + 5, Str_Text(App_CurrentGame().identityKey()));
         else
             val = 0;

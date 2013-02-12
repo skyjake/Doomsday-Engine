@@ -84,7 +84,7 @@ boolean DD_Init(void);
 boolean DD_IsShuttingDown(void);
 
 /// @return  @c true iff there is presently a game loaded.
-boolean DD_GameLoaded(void);
+boolean App_GameLoaded(void);
 
 void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);

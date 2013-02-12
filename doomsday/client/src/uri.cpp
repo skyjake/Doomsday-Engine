@@ -137,18 +137,17 @@ struct Uri::Instance
         }
         else if(!symbol.compare("Game.IdentityKey", Qt::CaseInsensitive))
         {
-            de::Game &game = App_CurrentGame();
-            if(de::isNullGame(game))
+            if(!App_GameLoaded())
             {
                 /// @throw ResolveSymbolError  An unresolveable symbol was encountered.
                 throw ResolveSymbolError("Uri::resolveSymbol", "Symbol 'Game' did not resolve (no game loaded)");
             }
 
-            return Str_Text(game.identityKey());
+            return Str_Text(App_CurrentGame().identityKey());
         }
         else if(!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
         {
-            if(!DD_GameLoaded() || !gx.GetVariable)
+            if(!App_GameLoaded() || !gx.GetVariable)
             {
                 /// @throw ResolveSymbolError  An unresolveable symbol was encountered.
                 throw ResolveSymbolError("Uri::resolveSymbol", "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
@@ -353,7 +352,7 @@ String Uri::resolved() const
 String const &Uri::resolvedRef() const
 {
 #ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING
-    if(d->resolvedForGame && d->resolvedForGame == (void *) &App_CurrentGame())
+    if(d->resolvedForGame && d->resolvedForGame == (void *) (App_GameLoaded()? &App_CurrentGame() : 0))
     {
         // We can just return the previously prepared resolved URI.
         return d->resolvedPath.toStringRef();
@@ -367,7 +366,7 @@ String const &Uri::resolvedRef() const
 
     DENG2_ASSERT(d->resolvedPath.separator() == QChar('/'));
 
-    d->resolvedForGame = (void *) &App_CurrentGame();
+    d->resolvedForGame = (void *) (App_GameLoaded()? &App_CurrentGame() : 0);
 
     return d->resolvedPath.toStringRef();
 }

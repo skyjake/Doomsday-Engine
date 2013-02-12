@@ -157,7 +157,7 @@ AutoStr* DAM_ComposeCacheDir(char const* sourcePath)
 {
     if(!sourcePath || !sourcePath[0]) return NULL;
 
-    DENG_ASSERT(!de::isNullGame(App_CurrentGame()));
+    DENG_ASSERT(App_GameLoaded());
 
     Str const *gameIdentityKey = App_CurrentGame().identityKey();
     ushort mapPathIdentifier   = calculateIdentifierForMapPath(sourcePath);

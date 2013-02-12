@@ -607,7 +607,7 @@ struct ddwindow_s
 #ifdef __CLIENT__
         // Update viewports.
         R_SetViewGrid(0, 0);
-        if(BusyMode_Active() || UI_IsActive() || !DD_GameLoaded())
+        if(BusyMode_Active() || UI_IsActive() || !App_GameLoaded())
         {
             // Update for busy mode.
             R_UseViewPort(0);
@@ -859,7 +859,7 @@ static boolean setDDWindow(Window *window, int newWidth, int newHeight,
             hadFog = usingFog;
             GL_TotalReset();
 
-            if(DD_GameLoaded() && gx.UpdateState)
+            if(App_GameLoaded() && gx.UpdateState)
                 gx.UpdateState(DD_RENDER_RESTART_PRE);
 
             R_UnloadSvgs();
@@ -882,7 +882,7 @@ static boolean setDDWindow(Window *window, int newWidth, int newHeight,
             if(hadFog)
                 GL_UseFog(true);
 
-            if(DD_GameLoaded() && gx.UpdateState)
+            if(App_GameLoaded() && gx.UpdateState)
                 gx.UpdateState(DD_RENDER_RESTART_POST);
         }
 #endif

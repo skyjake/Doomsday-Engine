@@ -171,7 +171,7 @@ void Rend_ParticleLoadExtraTextures(void)
     if(novideo) return;
 
     Rend_ParticleReleaseExtraTextures();
-    if(!DD_GameLoaded()) return;
+    if(!App_GameLoaded()) return;
 
     for(i = 0; i < MAX_PTC_TEXTURES; ++i)
     {

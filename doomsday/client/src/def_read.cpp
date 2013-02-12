@@ -688,7 +688,7 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
         // A command line option.
         value = (CommandLine_Check(token) != 0);
     }
-    else if(isalnum(cond[0]) && !de::isNullGame(App_CurrentGame()))
+    else if(isalnum(cond[0]) && App_GameLoaded())
     {
         // A game mode.
         value = !stricmp(cond, Str_Text(App_CurrentGame().identityKey()));

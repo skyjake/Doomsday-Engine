@@ -101,7 +101,7 @@ void ShellUser::sendInitialUpdate()
 void ShellUser::sendGameState()
 {
     de::Game &game = App_CurrentGame();
-    String mode = (!de::isNullGame(game)? Str_Text(game.identityKey()) : "");
+    String mode = (App_GameLoaded()? Str_Text(game.identityKey()) : "");
 
     /**
      * @todo The server is not the right place to compose a packet about

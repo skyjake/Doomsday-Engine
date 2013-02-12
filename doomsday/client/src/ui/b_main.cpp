@@ -190,7 +190,7 @@ static int globalContextFallback(const ddevent_t* ddev)
 #endif
     if(Con_Responder(ddev)) return true;    // Eaten.
 
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         event_t ev;
         DD_ConvertEvent(ddev, &ev);
@@ -313,7 +313,7 @@ void B_BindDefaults(void)
 
 void B_BindGameDefaults(void)
 {
-    if(!DD_GameLoaded()) return;
+    if(!App_GameLoaded()) return;
     Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
 }
 

@@ -273,7 +273,7 @@ void Rend_ConsoleUpdateTitle()
     if(isDedicated || !inited) return;
 
     // Update the secondary title and the game status.
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         dd_snprintf(secondaryTitleText, sizeof(secondaryTitleText)-1, "%s", (char *) gx.GetVariable(DD_PLUGIN_NICENAME));
         strncpy(statusText, Str_Text(App_CurrentGame().title()), sizeof(statusText) - 1);
