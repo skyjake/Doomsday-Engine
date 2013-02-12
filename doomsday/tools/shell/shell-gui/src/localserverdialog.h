@@ -36,8 +36,6 @@ public:
     de::NativePath runtimeFolder() const;
 
 protected slots:
-    void pickFolder();
-    void pickIwadFolder();
     void configureGameOptions();
     void saveState();
     void validate();

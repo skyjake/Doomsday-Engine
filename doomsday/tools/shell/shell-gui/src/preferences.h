@@ -1,4 +1,4 @@
-/** @file shellapp.h  Shell GUI application.
+/** @file preferences.h  Widget for user preferences.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,48 +16,31 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GUISHELLAPP_H
-#define GUISHELLAPP_H
+#ifndef PREFERENCES_H
+#define PREFERENCES_H
 
-#include "qtguiapp.h"
-#include <de/shell/ServerFinder>
-#include <QMenu>
+#include <QDialog>
+#include <de/NativePath>
 
-class LinkWindow;
-
-class GuiShellApp : public QtGuiApp
+class Preferences : public QDialog
 {
     Q_OBJECT
 
 public:
-    GuiShellApp(int &argc, char **argv);
-    ~GuiShellApp();
+    explicit Preferences(QWidget *parent = 0);
+    ~Preferences();
+    
+    de::NativePath iwadFolder() const;
 
-    LinkWindow *newOrReusedConnectionWindow();
-    de::shell::ServerFinder &serverFinder();
-
-    static GuiShellApp &app();
-    QMenu *localServersMenu();
-
+signals:
+    
 public slots:
-    void connectToServer();
-    void connectToLocalServer();
-    void disconnectFromServer();
-    void closeActiveWindow();
-    void startLocalServer();
-    void stopServer();
-    void updateLocalServerMenu();
-    void aboutShell();
-    void showPreferences();
-    void preferencesDone();
-    void updateMenu();
-
-protected slots:
-    void windowClosed(LinkWindow *window);
-
+    void saveState();
+    void validate();
+    
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // GUISHELLAPP_H
+#endif // PREFERENCES_H

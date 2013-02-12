@@ -21,6 +21,7 @@
 #include "opendialog.h"
 #include "aboutdialog.h"
 #include "localserverdialog.h"
+#include "preferences.h"
 #include <de/shell/LocalServer>
 #include <de/shell/ServerFinder>
 #include <QMenuBar>
@@ -41,6 +42,11 @@ struct GuiShellApp::Instance
     QAction *stopAction;
 #endif
     QList<LinkWindow *> windows;
+
+    Preferences *prefs;
+
+    Instance() : prefs(0)
+    {}
 
     ~Instance()
     {
@@ -87,7 +93,8 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
 
     connect(svMenu, SIGNAL(aboutToShow()), this, SLOT(updateMenu()));
 
-    // This will appear in the application menu:
+    // These will appear in the application menu:
+    menu->addAction(tr("Preferences..."), this, SLOT(showPreferences()), QKeySequence(tr("Ctrl+,")));
     menu->addAction(tr("About"), this, SLOT(aboutShell()));
 #endif
 
@@ -246,6 +253,26 @@ void GuiShellApp::updateLocalServerMenu()
 void GuiShellApp::aboutShell()
 {
     AboutDialog().exec();
+}
+
+void GuiShellApp::showPreferences()
+{
+    if(!d->prefs)
+    {
+        d->prefs = new Preferences;
+        connect(d->prefs, SIGNAL(finished(int)), this, SLOT(preferencesDone()));
+        d->prefs->open();
+    }
+    else
+    {
+        d->prefs->activateWindow();
+    }
+}
+
+void GuiShellApp::preferencesDone()
+{
+    d->prefs->deleteLater();
+    d->prefs = 0;
 }
 
 void GuiShellApp::updateMenu()

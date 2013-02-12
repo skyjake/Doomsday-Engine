@@ -149,6 +149,7 @@ LinkWindow::LinkWindow(QWidget *parent)
 
 #ifndef MACOSX
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
+    fileMenu->addAction(tr("&Settings..."), app, SLOT(showPreferences()));
     fileMenu->addAction(tr("&Quit"), app, SLOT(quit()), QKeySequence(tr("Ctrl+Q")));
 
     // Menus are window-specific on non-Mac platforms.
@@ -201,9 +202,13 @@ LinkWindow::LinkWindow(QWidget *parent)
     statusBar()->addPermanentWidget(d->currentHost);
     statusBar()->addPermanentWidget(d->timeCounter);
 
+    QIcon icon(":/images/toolbar_placeholder.png");
+
     QToolBar *tools = addToolBar(tr("View"));
 
     d->statusButton = new QToolButton;
+    d->statusButton->setIcon(icon);
+    //d->statusButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     d->statusButton->setFocusPolicy(Qt::NoFocus);
     d->statusButton->setText(tr("Status"));
     d->statusButton->setCheckable(true);
@@ -212,6 +217,8 @@ LinkWindow::LinkWindow(QWidget *parent)
     tools->addWidget(d->statusButton);
 
     d->consoleButton = new QToolButton;
+    d->consoleButton->setIcon(icon);
+    //d->consoleButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     d->consoleButton->setFocusPolicy(Qt::NoFocus);
     d->consoleButton->setText(tr("Console"));
     d->consoleButton->setCheckable(true);
@@ -264,7 +271,7 @@ void LinkWindow::closeEvent(QCloseEvent *event)
         if(QMessageBox::question(
                     this,
                     tr("Close Connection?"),
-                    tr("Connection is still open. Do you want to close it?"),
+                    tr("Connection is still open. Do you want to close the window regardless?"),
                     QMessageBox::Close | QMessageBox::Cancel) == QMessageBox::Cancel)
         {
             event->ignore();

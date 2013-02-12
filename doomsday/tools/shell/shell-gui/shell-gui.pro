@@ -69,3 +69,15 @@ else {
     INSTALLS += target
     target.path = $$DENG_BIN_DIR
 }
+
+HEADERS += \
+    src/folderselection.h
+
+SOURCES += \
+    src/folderselection.cpp
+
+HEADERS += \
+    src/preferences.h
+
+SOURCES += \
+    src/preferences.cpp
