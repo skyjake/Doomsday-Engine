@@ -17,22 +17,21 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstdlib>
+//#include <cstdlib>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "gl/gl_texmanager.h"
-
-#include <QtAlgorithms>
-#include <QList>
+#include "resource/compositetexture.h"
+#include "TextureManifest"
 #include <de/Error>
 #include <de/Log>
 #include <de/PathTree>
 #include <de/mathutil.h> // for M_NumDigits
+#include <QList>
+#include <QtAlgorithms>
 
-#include "resource/compositetexture.h"
-#include "TextureManifest"
-#include "Textures"
+#include "resource/textures.h"
 
 char const *TexSource_Name(TexSource source)
 {
@@ -62,13 +61,13 @@ Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, void *use
     return tex;
 }
 
-struct Textures::Instance
+DENG2_PIMPL(Textures)
 {
     /// System subspace schemes containing the textures.
     Textures::Schemes schemes;
     QList<Textures::Scheme *> schemeCreationOrder;
 
-    Instance() {}
+    Instance(Public &a) : Base(a) {}
     ~Instance() { clearManifests(); }
 
     void clearManifests()
@@ -91,7 +90,7 @@ void Textures::consoleRegister()
 #endif
 }
 
-Textures::Textures() : d(new Instance())
+Textures::Textures() : d(new Instance(*this))
 {}
 
 Textures::~Textures()

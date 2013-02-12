@@ -72,7 +72,7 @@ int TextureVariantSpec_Compare(texturevariantspecification_t const *a,
 
 namespace de {
 
-struct Texture::Variant::Instance
+DENG2_PIMPL(Texture::Variant)
 {
     /// Superior Texture of which this is a derivative.
     Texture &texture;
@@ -92,15 +92,20 @@ struct Texture::Variant::Instance
     /// Prepared coordinates for the bottom right of the texture minus border.
     float s, t;
 
-    Instance(Texture &generalCase, texturevariantspecification_t const &spec)
-        : texture(generalCase), spec(spec),
-          flags(0), texSource(TEXS_NONE),
-          glTexName(0), s(0), t(0)
+    Instance(Public &a, Texture &generalCase,
+             texturevariantspecification_t const &spec) : Base(a),
+      texture(generalCase),
+      spec(spec),
+      flags(0),
+      texSource(TEXS_NONE),
+      glTexName(0),
+      s(0),
+      t(0)
     {}
 };
 
 Texture::Variant::Variant(Texture &generalCase, texturevariantspecification_t const &spec)
-    : d(new Instance(generalCase, spec))
+    : d(new Instance(*this, generalCase, spec))
 {}
 
 Texture::Variant::~Variant()

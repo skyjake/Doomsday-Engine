@@ -31,7 +31,7 @@
 
 namespace de {
 
-struct Texture::Instance
+DENG2_PIMPL(Texture)
 {
     /// Manifest derived to yield the texture.
     TextureManifest &manifest;
@@ -54,8 +54,8 @@ struct Texture::Instance
     /// on the variant specification.
     void *analyses[TEXTURE_ANALYSIS_COUNT];
 
-    Instance(TextureManifest &_manifest)
-        : manifest(_manifest), userData(0)
+    Instance(Public &a, TextureManifest &_manifest)
+        : Base(a), manifest(_manifest), userData(0)
     {
         std::memset(analyses, 0, sizeof(analyses));
     }
@@ -85,7 +85,7 @@ struct Texture::Instance
     }
 };
 
-Texture::Texture(TextureManifest &manifest) : d(new Instance(manifest))
+Texture::Texture(TextureManifest &manifest) : d(new Instance(*this, manifest))
 {}
 
 Texture::~Texture()

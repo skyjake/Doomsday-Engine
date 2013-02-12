@@ -132,7 +132,7 @@ struct VariantCacheTask
 /// the material is destroyed in the mean time.
 typedef QList<VariantCacheTask *> VariantCacheQueue;
 
-struct Materials::Instance
+DENG2_PIMPL(Materials)
 {
     /// System subspace schemes containing the manifests.
     Materials::Schemes schemes;
@@ -158,8 +158,10 @@ struct Materials::Instance
     uint manifestIdMapSize;
     Materials::Manifest **manifestIdMap;
 
-    Instance()
-        :  manifestCount(0), manifestIdMapSize(0), manifestIdMap(0)
+    Instance(Public &a) : Base(a),
+        manifestCount(0),
+        manifestIdMapSize(0),
+        manifestIdMap(0)
     {}
 
     ~Instance()
@@ -263,7 +265,7 @@ void Materials::consoleRegister()
 #endif
 }
 
-Materials::Materials() : d(new Instance())
+Materials::Materials() : d(new Instance(*this))
 {}
 
 Materials::~Materials()

@@ -24,7 +24,7 @@
 
 namespace de {
 
-struct MaterialManifest::Instance
+DENG2_PIMPL(MaterialManifest)
 {
     /// Material associated with this.
     Material *material;
@@ -35,12 +35,14 @@ struct MaterialManifest::Instance
     /// Classification flags.
     MaterialManifest::Flags flags;
 
-    Instance() : material(0), id(0)
+    Instance(Public &a) : Base(a),
+        material(0),
+        id(0)
     {}
 };
 
 MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
-    : Node(args), d(new Instance())
+    : Node(args), d(new Instance(*this))
 {}
 
 MaterialManifest::~MaterialManifest()

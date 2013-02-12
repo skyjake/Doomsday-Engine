@@ -235,7 +235,7 @@ Material::Decoration::Stages const &Material::Decoration::stages() const
     return stages_;
 }
 
-struct Material::Instance
+DENG2_PIMPL(Material)
 {
     /// Manifest derived to yield the material.
     MaterialManifest &manifest;
@@ -263,9 +263,13 @@ struct Material::Instance
     /// @c false= the material is no longer valid.
     bool valid;
 
-    Instance(MaterialManifest &_manifest)
-        : manifest(_manifest), envClass(AEC_UNKNOWN), flags(0),
-          detailLayer(0), shineLayer(0), valid(true)
+    Instance(Public &a, MaterialManifest &_manifest) : Base(a),
+        manifest(_manifest),
+        envClass(AEC_UNKNOWN),
+        flags(0),
+        detailLayer(0),
+        shineLayer(0),
+        valid(true)
     {}
 
     ~Instance()
@@ -301,7 +305,7 @@ struct Material::Instance
 };
 
 Material::Material(MaterialManifest &_manifest, ded_material_t const *def)
-    : de::MapElement(DMU_MATERIAL), d(new Instance(_manifest))
+    : de::MapElement(DMU_MATERIAL), d(new Instance(*this, _manifest))
 {
     DENG_ASSERT(def);
     if(def->flags & MATF_NO_DRAW) d->flags |= NoDraw;

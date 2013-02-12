@@ -22,7 +22,7 @@
 
 namespace de {
 
-struct TextureScheme::Instance
+DENG2_PIMPL(TextureScheme)
 {
     /// Symbolic name of the scheme.
     String name;
@@ -36,9 +36,11 @@ struct TextureScheme::Instance
     bool uniqueIdLutDirty;
     int uniqueIdBase;
 
-    Instance(String symbolicName)
-        : name(symbolicName),
-          uniqueIdLut(), uniqueIdLutDirty(false), uniqueIdBase(0)
+    Instance(Public &a, String symbolicName) : Base(a),
+        name(symbolicName),
+        uniqueIdLut(),
+        uniqueIdLutDirty(false),
+        uniqueIdBase(0)
     {}
 
     ~Instance() { DENG_ASSERT(index.isEmpty()); }
@@ -146,7 +148,7 @@ struct TextureScheme::Instance
     }
 };
 
-TextureScheme::TextureScheme(String symbolicName) : d(new Instance(symbolicName))
+TextureScheme::TextureScheme(String symbolicName) : d(new Instance(*this, symbolicName))
 {}
 
 TextureScheme::~TextureScheme()

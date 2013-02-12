@@ -22,7 +22,7 @@
 
 namespace de {
 
-struct MaterialScheme::Instance
+DENG2_PIMPL(MaterialScheme)
 {
     /// Symbolic name of the scheme.
     String name;
@@ -30,12 +30,15 @@ struct MaterialScheme::Instance
     /// Mappings from paths to manifests.
     MaterialScheme::Index index;
 
-    Instance(String symbolicName) : name(symbolicName) {}
+    Instance(Public &a, String symbolicName) : Base(a),
+        name(symbolicName)
+    {}
 
     ~Instance() { DENG_ASSERT(index.isEmpty()); }
 };
 
-MaterialScheme::MaterialScheme(String symbolicName) : d(new Instance(symbolicName))
+MaterialScheme::MaterialScheme(String symbolicName)
+    : d(new Instance(*this, symbolicName))
 {}
 
 MaterialScheme::~MaterialScheme()

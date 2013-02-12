@@ -24,7 +24,7 @@
 
 namespace de {
 
-struct TextureManifest::Instance
+DENG2_PIMPL(TextureManifest)
 {
     /// Scheme-unique identifier determined by the owner of the subspace.
     int uniqueId;
@@ -44,7 +44,8 @@ struct TextureManifest::Instance
     /// The associated logical Texture instance (if any).
     Texture *texture;
 
-    Instance() : uniqueId(0), resourceUri(), texture(0)
+    Instance(Public &a) : Base(a),
+        uniqueId(0), resourceUri(), texture(0)
     {}
 
     ~Instance()
@@ -54,7 +55,7 @@ struct TextureManifest::Instance
 };
 
 TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
-    : Node(args), d(new Instance())
+    : Node(args), d(new Instance(*this))
 {}
 
 TextureManifest::~TextureManifest()

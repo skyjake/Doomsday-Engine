@@ -43,7 +43,7 @@ bool MaterialVariantSpec::compare(MaterialVariantSpec const &other) const
 
 using namespace de;
 
-struct Material::Variant::Instance
+DENG2_PIMPL(Material::Variant)
 {
     /// Superior material of which this is a derivative.
     Material *material;
@@ -65,8 +65,8 @@ struct Material::Variant::Instance
     /// Decoration animation states.
     Material::Variant::DecorationState decorations[Material::max_decorations];
 
-    Instance(Material &generalCase, Material::VariantSpec const &_spec)
-        : material(&generalCase),
+    Instance(Public &a, Material &generalCase, Material::VariantSpec const &_spec)
+        : Base(a), material(&generalCase),
           spec(_spec), snapshot(0), snapshotPrepareFrame(-1)
     {}
 
@@ -179,7 +179,7 @@ struct Material::Variant::Instance
 };
 
 Material::Variant::Variant(Material &generalCase, Material::VariantSpec const &spec)
-    : d(new Instance(generalCase, spec))
+    : d(new Instance(*this, generalCase, spec))
 {
     // Initialize animation states.
     resetAnim();

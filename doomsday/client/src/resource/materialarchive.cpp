@@ -113,7 +113,7 @@ static Material *findRecordMaterial(Records &records, SerialId id)
     return (Material *) records.userPointer(id);
 }
 
-struct MaterialArchive::Instance
+DENG2_PIMPL(MaterialArchive)
 {
     /// Logical version number of the archive.
     int version;
@@ -127,9 +127,10 @@ struct MaterialArchive::Instance
     /// Used with older versions.
     int numFlats;
 
-    Instance(bool _useSegments)
-        : version(MATERIALARCHIVE_VERSION),
-          useSegments(_useSegments), numFlats(0)
+    Instance(Public &a, bool _useSegments) : Base(a),
+        version(MATERIALARCHIVE_VERSION),
+        useSegments(_useSegments),
+        numFlats(0)
     {}
 
     inline SerialId insertRecord(Uri const &uri)
@@ -200,8 +201,8 @@ struct MaterialArchive::Instance
 };
 
 MaterialArchive::MaterialArchive(int useSegments, bool recordSymbolicMaterials)
+    : d(new Instance(*this, useSegments))
 {
-    d = new Instance(useSegments);
     if(recordSymbolicMaterials)
     {
         // The first material is the special "unknown material".

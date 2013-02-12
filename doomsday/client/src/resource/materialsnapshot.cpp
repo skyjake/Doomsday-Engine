@@ -99,22 +99,23 @@ struct Store {
 #endif // __CLIENT__
 };
 
-struct MaterialSnapshot::Instance
+DENG2_PIMPL(MaterialSnapshot)
 {
     /// Variant material used to derive this snapshot.
     Material::Variant *variant;
 
     Store stored;
 
-    Instance(Material::Variant &_variant)
-        : variant(&_variant), stored()
+    Instance(Public &a, Material::Variant &_variant) : Base(a),
+        variant(&_variant),
+        stored()
     {}
 
     void takeSnapshot();
 };
 
 MaterialSnapshot::MaterialSnapshot(Material::Variant &materialVariant)
-    : d(new Instance(materialVariant))
+    : d(new Instance(*this, materialVariant))
 {}
 
 MaterialSnapshot::~MaterialSnapshot()
