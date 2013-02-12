@@ -321,6 +321,11 @@ def generate_apidoc():
     system_command('doxygen api.doxy >/dev/null 2>../doxyissues-api.txt')
     system_command('wc -l ../doxyissues-api.txt')
 
+    print >> sys.stderr, "\nlibshell docs..."
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/libshell'))
+    system_command('doxygen shell.doxy >/dev/null 2>../doxyissues-shell.txt')
+    system_command('wc -l ../doxyissues-shell.txt')
+
     print >> sys.stderr, "\nInternal Win32 docs..."
     system_command('doxygen client-win32.doxy >/dev/null 2>../doxyissues-win32.txt')
     system_command('wc -l ../doxyissues-win32.txt')
@@ -328,11 +333,6 @@ def generate_apidoc():
     print >> sys.stderr, "\nInternal Mac/Unix docs..."
     system_command('doxygen client-mac.doxy >/dev/null 2>../doxyissues-mac.txt')        
     system_command('wc -l ../doxyissues-mac.txt')
-
-    print >> sys.stderr, "\nlibshell docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/libshell'))
-    system_command('doxygen shell.doxy >/dev/null 2>../doxyissues-shell.txt')
-    system_command('wc -l ../doxyissues-shell.txt')
 
     print >> sys.stderr, "\nDoom plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/doom'))
