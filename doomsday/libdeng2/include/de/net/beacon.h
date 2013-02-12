@@ -44,6 +44,12 @@ public:
     virtual ~Beacon();
 
     /**
+     * Port the beacon uses for listening.
+     * @return  Port.
+     */
+    duint16 port() const;
+
+    /**
      * Starts the beacon with a message to give out.
      *
      * @param serviceListenPort
