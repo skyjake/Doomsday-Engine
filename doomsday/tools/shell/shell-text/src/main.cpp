@@ -16,7 +16,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <QApplication>
 #include <de/libdeng2.h>
 #include <de/Counted>
 #include "shellapp.h"

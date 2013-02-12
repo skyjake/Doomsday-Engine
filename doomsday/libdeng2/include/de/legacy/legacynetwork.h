@@ -17,8 +17,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LEGACYNETWORK_H
-#define LEGACYNETWORK_H
+#ifndef LIBDENG2_LEGACYNETWORK_H
+#define LIBDENG2_LEGACYNETWORK_H
 
 #include "../libdeng2.h"
 #include "../Time"
@@ -82,6 +82,6 @@ private:
     Instance *d;
 };
 
-}
+} // namespace de
 
-#endif // LEGACYNETWORK_H
+#endif // LIBDENG2_LEGACYNETWORK_H

@@ -402,6 +402,7 @@ void M_WriteTextEsc(FILE* file, const char* text)
 
 DENG_EXTERN_C int M_ScreenShot(const char* name, int bits)
 {
+#ifdef __CLIENT__
     ddstring_t fullName;
     boolean result;
 
@@ -417,6 +418,9 @@ DENG_EXTERN_C int M_ScreenShot(const char* name, int bits)
     result = Window_GrabToFile(Window_Main(), Str_Text(&fullName));
     Str_Free(&fullName);
     return result;
+#else
+    return false;
+#endif
 }
 
 void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)

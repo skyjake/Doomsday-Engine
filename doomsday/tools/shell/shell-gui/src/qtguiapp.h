@@ -1,4 +1,4 @@
-/** @file commandlinewidget.h  Widget for command line input.
+/** @file qtguiapp.h  Application based on Qt GUI widgets.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,30 +16,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef COMMANDLINEWIDGET_H
-#define COMMANDLINEWIDGET_H
+#ifndef QTGUIAPP_H
+#define QTGUIAPP_H
 
-#include <de/shell/LineEditWidget>
+#include <QApplication>
 
-/**
- * Text editor with a history.
- */
-class CommandLineWidget : public de::shell::LineEditWidget
+class QtGuiApp : public QApplication
 {
     Q_OBJECT
 
 public:
-    CommandLineWidget(de::String const &name = "");
-    virtual ~CommandLineWidget();
+    QtGuiApp(int &argc, char **argv);
+    ~QtGuiApp();
 
-    bool handleEvent(de::Event const *event);
-
-signals:
-    void commandEntered(de::String command);
+    bool notify(QObject *receiver, QEvent *event);
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // COMMANDLINEWIDGET_H
+#endif // QTGUIAPP_H

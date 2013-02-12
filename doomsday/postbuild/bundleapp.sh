@@ -1,12 +1,11 @@
 #!/bin/sh
 # Helper script for bundling the application on OS X
 
-echo "Bundling Doomsday.app..."
-
 CP="cp -fRp"
-
 SRCDIR=$1
 echo "Source directory: $SRCDIR"
+
+echo "Bundling Doomsday.app..."
 
 BUILDDIR=client
 
@@ -26,6 +25,7 @@ rm -rf $BUILDDIR/*.bundle
 echo "Copying shared libraries..."
 $CP $BUILDDIR/../libdeng2/libdeng2*dylib      $APPDIR/Frameworks
 $CP $BUILDDIR/../libdeng1/libdeng1*dylib      $APPDIR/Frameworks
+$CP $BUILDDIR/../libgui/libdeng_gui*dylib     $APPDIR/Frameworks
 $CP $BUILDDIR/../libshell/libdeng_shell*dylib $APPDIR/Frameworks
 
 echo "Copying server..."
@@ -86,5 +86,15 @@ if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     install_name_tool -change /usr/local/Cellar/gettext/0.18.1.1/lib/libintl.8.dylib \
     	@executable_path/../Frameworks/libintl.8.dylib $DSFS
 fi
+
+echo "Bundling Doomsday Shell.app..."
+
+BUILDDIR=tools/shell/shell-gui
+APPDIR="$BUILDDIR/Doomsday Shell.app/Contents"
+
+mkdir -p "$APPDIR/Frameworks"
+
+$CP libdeng2/libdeng2*dylib      "$APPDIR/Frameworks"
+$CP libshell/libdeng_shell*dylib "$APPDIR/Frameworks"
 
 echo "Bundling done."

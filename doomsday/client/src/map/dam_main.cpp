@@ -157,7 +157,9 @@ AutoStr* DAM_ComposeCacheDir(char const* sourcePath)
 {
     if(!sourcePath || !sourcePath[0]) return NULL;
 
-    Str const* gameIdentityKey = Game_IdentityKey(App_CurrentGame());
+    DENG_ASSERT(App_CurrentGame());
+
+    Str const* gameIdentityKey = App_CurrentGame()->identityKey();
     ushort mapPathIdentifier   = calculateIdentifierForMapPath(sourcePath);
 
     AutoStr* mapFileName = AutoStr_NewStd();
@@ -217,7 +219,7 @@ static de::String DAM_ComposeUniqueId(de::File1& markerLump)
                    .arg(markerLump.name().fileNameWithoutExtension())
                    .arg(markerLump.container().name().fileNameWithoutExtension())
                    .arg(markerLump.container().hasCustom()? "pwad" : "iwad")
-                   .arg(Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->identityKey()))
+                   .arg(Str_Text(App_CurrentGame()->identityKey()))
                    .toLower();
 }
 

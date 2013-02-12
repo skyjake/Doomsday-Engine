@@ -24,7 +24,12 @@
 #ifndef LIBDENG_MAIN_H
 #define LIBDENG_MAIN_H
 
+#ifndef __cplusplus
+#  error "C++ required"
+#endif
+
 #include "dd_types.h"
+#include "dd_games.h"
 #include "api_plugin.h"
 #include "api_gameexport.h"
 #include "Materials"
@@ -32,15 +37,10 @@
 #include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>
 
-#ifdef __cplusplus
-
 #include <QList>
 #include <QMap>
 #include <de/String>
 #include "resourceclass.h"
-
-extern "C" {
-#endif
 
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
@@ -56,7 +56,6 @@ extern "C" {
 #  define DEBUG_VERBOSE2_Message(code)
 #endif
 
-struct gamecollection_s;
 struct game_s;
 
 extern int verbose;
@@ -78,10 +77,10 @@ extern GETGAMEAPI GetGameAPI;
 extern int gameDataFormat;
 
 /// @return  The Game collection.
-struct gamecollection_s* App_GameCollection();
+de::GameCollection& App_GameCollection();
 
 /// @return  The current Game in the collection.
-struct game_s* App_CurrentGame();
+de::Game *App_CurrentGame();
 
 int DD_EarlyInit(void);
 void DD_FinishInitializationAfterWindowReady(void);
@@ -140,16 +139,12 @@ void DD_CreateResourceClasses();
 
 void DD_ClearResourceClasses();
 
-#ifdef __cplusplus
-} // extern "C"
+namespace de
+{
+    typedef QList<ResourceClass*> ResourceClasses;
 
-namespace de {
-
-typedef QList<ResourceClass*> ResourceClasses;
-
-/// Map of symbolic file type names to file types.
-typedef QMap<String, FileType*> FileTypes;
-
+    /// Map of symbolic file type names to file types.
+    typedef QMap<String, FileType*> FileTypes;
 }
 
 /**
@@ -198,16 +193,10 @@ de::Materials &App_Materials();
 /// @return  The application's global Texture collection.
 de::Textures &App_Textures();
 
-extern "C" {
-#endif // __cplusplus
-
 fontschemeid_t DD_ParseFontSchemeName(char const *str);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 AutoStr *DD_MaterialSchemeNameForTextureScheme(Str const *textureSchemeName);
-
-/// @return  Material associated with specified @a textureUri; otherwise @c NULL.
-Material *DD_MaterialForTextureUri(Uri const *textureUri);
 
 const char* value_Str(int val);
 
@@ -220,9 +209,5 @@ D_CMD(Load);
 D_CMD(Unload);
 D_CMD(Reset);
 D_CMD(ReloadGame);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_MAIN_H */

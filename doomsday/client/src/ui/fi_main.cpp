@@ -120,7 +120,7 @@ static void stopFinale(finale_t* f)
 static finaleid_t finalesUniqueId(void)
 {
     finaleid_t id = 0;
-    while(finalesById(++id));
+    while(finalesById(++id)) {}
     return id;
 }
 
@@ -224,8 +224,10 @@ void FI_Init(void)
         return; // Already been here.
     finales = 0; finalesSize = 0;
 
+#ifdef __CLIENT__
     B_SetContextFallbackForDDEvents("finale", (int (*)(const ddevent_t*)) gx.FinaleResponder);
     B_ActivateContext(B_ContextByName("finale"), true); // always on
+#endif
 
     inited = true;
 }
@@ -247,8 +249,10 @@ void FI_Shutdown(void)
     }
     finales = 0; finalesSize = 0;
 
+#ifdef __CLIENT__
     B_SetContextFallbackForDDEvents("finale", NULL);
     B_ActivateContext(B_ContextByName("finale"), false);
+#endif
 
     inited = false;
 }

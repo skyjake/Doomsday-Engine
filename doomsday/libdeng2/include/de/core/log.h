@@ -325,7 +325,9 @@ public:
 
     /**
      * Copy constructor.
-     * @param other  Log entry.
+     *
+     * @param other       Log entry.
+     * @param extraFlags  Additional flags to apply to the new entry.
      */
     LogEntry(LogEntry const &other, Flags extraFlags = 0);
 

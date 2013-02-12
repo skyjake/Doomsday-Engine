@@ -53,6 +53,7 @@ struct gamedef_s;
 
 #ifdef __cplusplus
 
+#include <de/Error>
 #include <QMultiMap>
 
 namespace de {
@@ -90,19 +91,19 @@ public:
     pluginid_t pluginId() const;
 
     /// @return  String containing the identity key.
-    ddstring_t const& identityKey() const;
+    ddstring_t const *identityKey() const;
 
     /// @return  String containing the default title.
-    ddstring_t const& title() const;
+    ddstring_t const *title() const;
 
     /// @return  String containing the default author.
-    ddstring_t const& author() const;
+    ddstring_t const *author() const;
 
     /// @return  String containing the name of the main config file.
-    ddstring_t const& mainConfig() const;
+    ddstring_t const *mainConfig() const;
 
     /// @return  String containing the name of the binding config file.
-    ddstring_t const& bindingConfig() const;
+    ddstring_t const *bindingConfig() const;
 
     /**
      * Change the identfier of the plugin associated with this.

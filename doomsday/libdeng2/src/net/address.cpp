@@ -73,7 +73,12 @@ Address &Address::operator = (Address const &other)
 
 bool Address::operator < (Address const &other) const
 {
-    return d->host.toIPv4Address() < other.d->host.toIPv4Address();
+    quint32 const a = d->host.toIPv4Address();
+    quint32 const b = other.d->host.toIPv4Address();
+    if(a == b)
+        return d->port < other.d->port;
+    else
+        return a < b;
 }
 
 bool Address::operator == (Address const &other) const

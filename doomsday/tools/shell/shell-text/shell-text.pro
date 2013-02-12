@@ -25,11 +25,9 @@ include(../../../dep_curses.pri)
 
 HEADERS += \
     src/aboutdialog.h \
-    src/commandlinewidget.h \
     src/cursesapp.h \
     src/cursestextcanvas.h \
     src/localserverdialog.h \
-    src/logwidget.h \
     src/main.h \
     src/openconnectiondialog.h \
     src/persistentdata.h \
@@ -38,11 +36,9 @@ HEADERS += \
 
 SOURCES += \
     src/aboutdialog.cpp \
-    src/commandlinewidget.cpp \
     src/cursesapp.cpp \
     src/cursestextcanvas.cpp \
     src/localserverdialog.cpp \
-    src/logwidget.cpp \
     src/main.cpp \
     src/openconnectiondialog.cpp \
     src/persistentdata.cpp \

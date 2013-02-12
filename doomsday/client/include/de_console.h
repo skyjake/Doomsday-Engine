@@ -31,8 +31,11 @@
 #include "con_main.h"
 #include "con_config.h"
 #include "con_bar.h"
-#include "ui/b_main.h"
-#include "ui/b_context.h"
+
+#ifdef __CLIENT__
+#  include "ui/b_main.h"
+#  include "ui/b_context.h"
+#endif
 
 #include "api_console.h"
 

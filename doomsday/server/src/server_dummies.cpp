@@ -23,12 +23,6 @@
 #include "TextureVariantSpec"
 #include "Texture"
 
-void DD_ReadMouse(void)
-{}
-
-void DD_ReadJoystick(void)
-{}
-
 /*
 void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
 {

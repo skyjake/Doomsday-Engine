@@ -23,6 +23,10 @@
 #ifndef LIBDENG_CANVASWINDOW_H
 #define LIBDENG_CANVASWINDOW_H
 
+#ifndef __CLIENT__
+#  error "canvaswindow.h is only for __CLIENT__"
+#endif
+
 #include <QMainWindow>
 #include "canvas.h"
 

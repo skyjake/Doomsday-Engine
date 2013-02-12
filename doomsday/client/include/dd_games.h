@@ -61,7 +61,7 @@ namespace de
             /// @return  @c true= this game's title is lexically less than that of @a other.
             bool operator < (GameListItem const& other) const
             {
-                return Str_CompareIgnoreCase(&game->title(), Str_Text(&other.game->title())) < 0;
+                return Str_CompareIgnoreCase(game->title(), Str_Text(other.game->title())) < 0;
             }
         };
         typedef QList<GameListItem> GameList;

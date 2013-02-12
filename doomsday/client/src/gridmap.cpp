@@ -263,7 +263,7 @@ static TreeCell* findLeaf(Gridmap* gm, GridmapCoord x, GridmapCoord y, boolean a
 static GridmapCoord ceilPow2(GridmapCoord unit)
 {
     GridmapCoord cumul;
-    for(cumul = 1; unit > cumul; cumul <<= 1);
+    for(cumul = 1; unit > cumul; cumul <<= 1) {}
     return cumul;
 }
 

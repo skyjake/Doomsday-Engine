@@ -205,8 +205,35 @@
 #define DENG2_FOR_EACH_CONST_REVERSE(IterClass, Var, ContainerRef) \
     for(IterClass::const_reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
 
-#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
+/**
+ * Macro for starting the definition of a private implementation struct. Example:
+ * <pre>
+ *    DENG2_PIMPL(MyClass)
+ *    {
+ *        Instance(Public &inst) : Base(inst) {
+ *            // constructor
+ *        }
+ *        // private data and methods
+ *    };
+ * </pre>
+ */
+#define DENG2_PIMPL(ClassName) \
+    typedef ClassName Public; \
+    struct ClassName::Instance : public de::Private<ClassName>
+
+#if defined(__cplusplus)
 namespace de {
+
+/**
+ * Utility template for defining private implementation data (pimpl idiom). Use
+ * this in source files, not in headers.
+ */
+template <typename Type>
+struct Private {
+    Type &self;
+    typedef Private<Type> Base;
+    Private(Type &i) : self(i) {}
+};
 
 template <typename FromType, typename ToType>
 inline ToType function_cast(FromType ptr)
@@ -222,6 +249,12 @@ inline ToType function_cast(FromType ptr)
     forcedCast.original = ptr;
     return forcedCast.target;
 }
+
+} // namespace de
+#endif // __cplusplus
+
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
+namespace de {
 
 /**
  * All serialization in all contexts use a common protocol version number.

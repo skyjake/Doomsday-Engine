@@ -20,6 +20,9 @@
 #define LIBSHELL_LOCALSERVER_H
 
 #include "Link"
+#include <de/Error>
+#include <de/NativePath>
+#include <QStringList>
 
 namespace de {
 namespace shell {
@@ -27,14 +30,21 @@ namespace shell {
 /**
  * Utility for starting and stopping local servers.
  */
-class LocalServer
+class LIBSHELL_PUBLIC LocalServer
 {
+public:
+    /// Failed to locate the server executable. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
 public:
     LocalServer();
 
     virtual ~LocalServer();
 
-    void start(duint16 port, String const &gameMode);
+    void start(duint16 port,
+               String const &gameMode,
+               QStringList additionalOptions = QStringList(),
+               NativePath const &runtimePath = "");
 
     void stop();
 

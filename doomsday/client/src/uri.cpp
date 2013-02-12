@@ -144,7 +144,7 @@ struct Uri::Instance
                 throw ResolveSymbolError("Uri::resolveSymbol", "Symbol 'Game' did not resolve (no game loaded)");
             }
 
-            return Str_Text(&game.identityKey());
+            return Str_Text(game.identityKey());
         }
         else if(!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
         {

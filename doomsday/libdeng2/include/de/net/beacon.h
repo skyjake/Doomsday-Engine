@@ -44,6 +44,12 @@ public:
     virtual ~Beacon();
 
     /**
+     * Port the beacon uses for listening.
+     * @return  Port.
+     */
+    duint16 port() const;
+
+    /**
      * Starts the beacon with a message to give out.
      *
      * @param serviceListenPort
@@ -67,7 +73,6 @@ public:
     /**
      * Looks for any beacons on all accessible networks.
      *
-     * @param port      UDP port to discover on.
      * @param timeOut   Maximum time to spend discovering. If the timeout
      *                  is zero or negative, discovery will not end.
      * @param interval  Interval between query broadcasts.

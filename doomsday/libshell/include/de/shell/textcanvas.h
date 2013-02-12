@@ -81,6 +81,21 @@ public:
             attribs |= Dirty;
         }
 
+        bool operator < (Char const &other) const
+        {
+            if(ch.unicode() == other.ch.unicode())
+            {
+                return (attribs & VisualAttributes) < (other.attribs & VisualAttributes);
+            }
+            return ch.unicode() < other.ch.unicode();
+        }
+
+        bool operator == (Char const &other) const
+        {
+            return (ch.unicode() == other.ch.unicode() &&
+                    (attribs & VisualAttributes) == (other.attribs & VisualAttributes));
+        }
+
         Char &operator = (Char const &other)
         {
             bool changed = false;
@@ -120,7 +135,7 @@ public:
     int height() const;
     Rectanglei rect() const;
 
-    void resize(Size const &newSize);
+    virtual void resize(Size const &newSize);
 
     /**
      * Returns a modifiable reference to a character. The character is

@@ -23,16 +23,30 @@
 #include "Lexicon"
 #include <de/Protocol>
 #include <de/RecordPacket>
+#include <de/Vector>
 #include <QList>
 
 namespace de {
 namespace shell {
 
 /**
+ * Password challenge.
+ */
+class LIBSHELL_PUBLIC ChallengePacket : public Packet
+{
+public:
+    ChallengePacket();
+    static Packet *fromBlock(Block const &block);
+};
+
+/**
  * Packet with one or more log entries.
  */
 class LIBSHELL_PUBLIC LogEntryPacket : public Packet
 {
+public:
+    typedef QList<LogEntry *> Entries;
+
 public:
     LogEntryPacket();
     ~LogEntryPacket();
@@ -46,6 +60,11 @@ public:
      */
     void add(LogEntry const &entry);
 
+    Entries const &entries() const;
+
+    /**
+     * Adds all the entries into the application's log buffer.
+     */
     void execute() const;
 
     // Implements ISerializable.
@@ -55,7 +74,59 @@ public:
     static Packet *fromBlock(Block const &block);
 
 private:
-    QList<LogEntry *> _entries;
+    Entries _entries;
+};
+
+/**
+ * Packet containing an outline of a map's lines.
+ *
+ * The contained information is not intended to be a 100% accurate or complete
+ * representation of a map. It is only meant to be used as an informative
+ * visualization for the shell user (2D outline of the map).
+ */
+class LIBSHELL_PUBLIC MapOutlinePacket : public Packet
+{
+public:
+    enum LineType
+    {
+        OneSidedLine = 0,
+        TwoSidedLine = 1
+    };
+    struct Line
+    {
+        Vector2i start;
+        Vector2i end;
+        LineType type;
+    };
+
+    MapOutlinePacket();
+    ~MapOutlinePacket();
+
+    void clear();
+
+    void addLine(Vector2i const &vertex1, Vector2i const &vertex2, LineType type);
+
+    /**
+     * Returns the number of lines.
+     */
+    int lineCount() const;
+
+    /**
+     * Returns a line in the outline.
+     * @param index  Index of the line, in range [0, lineCount()).
+     * @return Line specs.
+     */
+    Line const &line(int index) const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+    static Packet *fromBlock(Block const &block);
+
+private:
+    struct Instance;
+    Instance *d;
 };
 
 /**
@@ -70,6 +141,7 @@ public:
     enum PacketType
     {
         Unknown,
+        PasswordChallenge,
         Command,        ///< Console command (only to server).
         LogEntries,     ///< Log entries.
         ConsoleLexicon, ///< Known words for command line completion.
@@ -90,6 +162,8 @@ public:
      * @return Type of the packet.
      */
     static PacketType recognize(Packet const *packet);
+
+    static Block passwordResponse(String const &plainPassword);
 
     /**
      * Constructs a console command packet.
@@ -112,6 +186,21 @@ public:
     RecordPacket *newConsoleLexicon(Lexicon const &lexicon);
 
     Lexicon lexicon(Packet const &consoleLexiconPacket);
+
+    /**
+     * Constructs a packet that describes the current gameplay state.
+     *
+     * @param mode      Game mode (e.g., doom2).
+     * @param rules     Name of the game rules (e.g., Deathmatch).
+     * @param mapId     Identifier of the map (e.g., E1M3).
+     * @param mapTitle  Title of the map (from mapinfo/defs).
+     *
+     * @return Packet. Caller gets ownership.
+     */
+    RecordPacket *newGameState(String const &mode,
+                               String const &rules,
+                               String const &mapId,
+                               String const &mapTitle);
 };
 
 } // namespace shell

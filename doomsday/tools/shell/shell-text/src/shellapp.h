@@ -40,6 +40,7 @@ public slots:
     void updateMenuWithFoundServers();
     void connectToFoundServer();
     void closeConnection();
+    void askForPassword();
     void sendCommandToServer(de::String command);
     void handleIncomingPackets();
     void disconnected();

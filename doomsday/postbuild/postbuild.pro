@@ -16,7 +16,7 @@ macx {
     
     bundleapp.target = FORCE
     bundleapp.commands = \
-        cd "$$OUT_PWD/.." && sh "$$PWD/bundleapp.sh" "$$PWD/.."
+        "cd \"$$OUT_PWD/..\" && sh \"$$PWD/bundleapp.sh\" \"$$PWD/..\""
 }
 
 OTHER_FILES = bundleapp.sh

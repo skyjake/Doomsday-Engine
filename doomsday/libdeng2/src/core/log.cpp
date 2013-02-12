@@ -83,7 +83,8 @@ LogEntry::Arg::Arg(const LogEntry::Arg::Base &arg) : _type(arg.logEntryArgType()
     }
 }
 
-LogEntry::Arg::Arg(Arg const &other) : _type(other._type)
+LogEntry::Arg::Arg(Arg const &other)
+    : String::IPatternArg(), ISerializable(), _type(other._type)
 {
     switch(other._type)
     {
@@ -200,7 +201,8 @@ LogEntry::LogEntry(Level level, String const &section, int sectionDepth, String 
 }
 
 LogEntry::LogEntry(LogEntry const &other, Flags extraFlags)
-    : _when(other._when),
+    : Lockable(), ISerializable(),
+      _when(other._when),
       _level(other._level),
       _section(other._section),
       _sectionDepth(other._sectionDepth),

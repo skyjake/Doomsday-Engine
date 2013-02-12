@@ -16,15 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "mainwindow.h"
-#include <QApplication>
-
+#include "guishellapp.h"
 #include <de/libdeng2.h>
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    MainWindow w;
-    w.show();
+    GuiShellApp a(argc, argv);
     return a.exec();
 }

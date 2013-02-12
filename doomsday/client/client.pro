@@ -23,17 +23,17 @@ echo(Doomsday Client $${DENG_VERSION}.)
 
 # External Dependencies ------------------------------------------------------
 
-CONFIG += deng_qtopengl
+CONFIG += deng_qtgui deng_qtopengl
 
 include(../dep_sdl.pri)
 include(../dep_opengl.pri)
 include(../dep_zlib.pri)
-include(../dep_curses.pri)
 include(../dep_lzss.pri)
 win32 {
     include(../dep_directx.pri)
 }
 include(../dep_deng2.pri)
+include(../dep_gui.pri)
 include(../dep_deng1.pri)
 
 # Definitions ----------------------------------------------------------------
@@ -338,7 +338,6 @@ DENG_HEADERS += \
     include/resource/wad.h \
     include/resource/zip.h \
     include/resourceclass.h \
-    include/sys_console.h \
     include/sys_system.h \
     include/tab_anorms.h \
     include/ui/b_command.h \
@@ -349,7 +348,6 @@ DENG_HEADERS += \
     include/ui/busyvisual.h \
     include/ui/canvas.h \
     include/ui/canvaswindow.h \
-    include/ui/consolewindow.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
     include/ui/displaymode.h \
@@ -399,7 +397,6 @@ win32 {
     SOURCES += \
         src/windows/dd_winit.cpp \
         src/windows/directinput.cpp \
-        src/windows/sys_console.cpp \
         src/windows/joystick_win32.cpp \
         src/windows/mouse_win32.cpp
 
@@ -414,8 +411,7 @@ else:unix {
 
     SOURCES += \
         src/unix/dd_uinit.cpp \
-        src/unix/joystick.cpp \
-        src/unix/sys_console.cpp
+        src/unix/joystick.cpp
 }
 
 macx {
@@ -473,7 +469,6 @@ SOURCES += \
     src/con_main.cpp \
     src/dd_games.cpp \
     src/dd_help.cpp \
-    src/dd_init.cpp \
     src/dd_loop.cpp \
     src/dd_main.cpp \
     src/dd_pinit.cpp \
@@ -514,6 +509,7 @@ SOURCES += \
     src/m_decomp64.cpp \
     src/m_misc.cpp \
     src/m_nodepile.cpp \
+    src/main_client.cpp \
     src/map/blockmap.cpp \
     src/map/blockmapvisual.cpp \
     src/map/bsp/hplane.cpp \

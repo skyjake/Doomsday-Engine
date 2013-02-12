@@ -23,15 +23,14 @@
 namespace de {
 namespace shell {
 
-struct ChoiceWidget::Instance
+DENG2_PIMPL(ChoiceWidget)
 {
-    ChoiceWidget &self;
     Items items;
     int selection;
     MenuWidget *menu;
     String prompt;
 
-    Instance(ChoiceWidget &inst) : self(inst), selection(0)
+    Instance(Public &i) : Base(i), selection(0)
     {}
 
     void updateMenu()

@@ -19,6 +19,7 @@
 #ifndef LIBSHELL_SERVERFINDER_H
 #define LIBSHELL_SERVERFINDER_H
 
+#include "libshell.h"
 #include <QObject>
 #include <de/Error>
 #include <de/Address>
@@ -30,7 +31,7 @@ namespace shell {
 /**
  * Looks up servers via beacon.
  */
-class ServerFinder : public QObject
+class LIBSHELL_PUBLIC ServerFinder : public QObject
 {
     Q_OBJECT
 

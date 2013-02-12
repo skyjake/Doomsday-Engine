@@ -105,7 +105,12 @@ int DD_GameLoopExitCode(void)
 
 int DD_GameLoop(void)
 {
-    noninteractive = CommandLine_Exists("-noinput");
+#ifdef __CLIENT__
+    noninteractive = false;
+#endif
+#ifdef __SERVER__
+    noninteractive = true;
+#endif
 
     // Start the deng2 event loop.
     return LegacyCore_RunEventLoop();
@@ -606,6 +611,7 @@ static void runTics(void)
         // Will this be a sharp tick?
         DD_CheckSharpTick(ticLength);
 
+#ifdef __CLIENT__
         // Process input events.
         DD_ProcessEvents(ticLength);
         if(!processSharpEventsAfterTickers)
@@ -613,15 +619,18 @@ static void runTics(void)
             // We are allowed to process sharp events before tickers.
             DD_ProcessSharpEvents(ticLength);
         }
+#endif
 
         // Call all the tickers.
         baseTicker(ticLength);
 
+#ifdef __CLIENT__
         if(processSharpEventsAfterTickers)
         {
             // This is done after tickers for compatibility with ye olde game logic.
             DD_ProcessSharpEvents(ticLength);
         }
+#endif
 
         // Various global variables are used for counting time.
         advanceTime(ticLength);

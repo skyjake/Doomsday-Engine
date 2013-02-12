@@ -21,7 +21,6 @@
 #define LIBDENG2_LEGACYCORE_H
 
 #include "../libdeng2.h"
-#include "../App"
 #include "../Log"
 
 namespace de {
@@ -33,6 +32,8 @@ class LegacyNetwork;
  * libdeng2 functionality. The legacy engine needs to construct one of these
  * via the deng2 C API and make sure it gets destroyed at shutdown. The C API
  * can be used to access functionality in LegacyCore.
+ *
+ * @todo Move the Loop into its own class and get rid of this one.
  */
 class DENG2_PUBLIC LegacyCore : public QObject
 {
@@ -41,10 +42,8 @@ class DENG2_PUBLIC LegacyCore : public QObject
 public:
     /**
      * Initializes the legacy core.
-     *
-     * @param dengApp  Application instance.
      */
-    LegacyCore(App *dengApp);
+    LegacyCore();
 
     ~LegacyCore();
 
@@ -134,11 +133,6 @@ public:
     void printLogFragment(char const *text, LogEntry::Level level = LogEntry::MESSAGE);
 
     /**
-     * Sets a callback to be called when an uncaught exception occurs.
-     */
-    void setTerminateFunc(void (*func)(char const *msg));
-
-    /**
      * Returns the LegacyCore singleton instance.
      */
     static LegacyCore &instance();
@@ -150,20 +144,6 @@ public:
 
 public slots:
     void callback();
-
-    /**
-     * Requests engine shutdown by calling the specified termination callback
-     * (see setTerminateFunc()). Called when an exception is caught at the
-     * de::App level, at which point there is no way to gracefully handle it
-     * and the application has to be shut down.
-     *
-     * This should not be called directly. From C++ code, one should throw an
-     * exception in unrecoverable error situations. From C code, one should
-     * call the LegacyCore_FatalError() function.
-     *
-     * @param message  Error message to be shown to the user.
-     */
-    void handleUncaughtException(QString message);
 
 private:
     // Private instance data.

@@ -16,18 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "commandlinewidget.h"
+#include "de/shell/CommandLineWidget"
+#include "de/shell/TextRootWidget"
+#include "de/shell/KeyEvent"
 #include <de/String>
-#include <de/shell/TextRootWidget>
-#include <de/shell/KeyEvent>
 
-using namespace de;
-using namespace de::shell;
+namespace de {
+namespace shell {
 
-struct CommandLineWidget::Instance
+DENG2_PIMPL(CommandLineWidget)
 {
-    CommandLineWidget &self;
-
     /**
      * Line of text with a cursor.
      */
@@ -44,7 +42,7 @@ struct CommandLineWidget::Instance
     QList<Command> history;
     int historyPos;
 
-    Instance(CommandLineWidget &cli) : self(cli), historyPos(0)
+    Instance(Public &i) : Base(i), historyPos(0)
     {
         history.append(Command());
     }
@@ -185,3 +183,6 @@ bool CommandLineWidget::handleEvent(Event const *event)
         return LineEditWidget::handleEvent(event);
     }
 }
+
+} // namespace shell
+} // namespace de

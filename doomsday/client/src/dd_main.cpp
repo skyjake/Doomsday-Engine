@@ -614,14 +614,14 @@ void DD_Register(void)
 #endif
 
     DD_RegisterLoop();
-    DD_RegisterInput();
     F_Register();
-    B_Register(); // for control bindings
     Con_Register();
     DH_Register();
     R_Register();
     S_Register();
 #ifdef __CLIENT__
+    B_Register(); // for control bindings
+    DD_RegisterInput();
     SBE_Register(); // for bias editor
     Rend_Register();
     GL_Register();
@@ -629,9 +629,9 @@ void DD_Register(void)
     UI_Register();
     Demo_Register();
     P_ControlRegister();
+    I_Register();
 #endif
     Net_Register();
-    I_Register();
     DAM_Register();
     BspBuilder_Register();
     FI_Register();
@@ -1186,7 +1186,7 @@ static int DD_ActivateGameWorker(void* parameters)
     }
     else
     {
-        configFileName = &games->currentGame().mainConfig();
+        configFileName = games->currentGame().mainConfig();
     }
 
     Con_Message("Parsing primary config \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
@@ -1195,14 +1195,16 @@ static int DD_ActivateGameWorker(void* parameters)
         Str_Free(&tmp);
     }
 
-    if(!isDedicated && DD_GameLoaded())
+#ifdef __CLIENT__
+    if(DD_GameLoaded())
     {
         // Apply default control bindings for this game.
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands2(Str_Text(&games->currentGame().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
+        Con_ParseCommands2(Str_Text(games->currentGame().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
     }
+#endif
 
     if(p->initiatedBusyMode)
         Con_SetProgress(120);
@@ -1255,22 +1257,23 @@ static int DD_ActivateGameWorker(void* parameters)
     return 0;
 }
 
-struct gamecollection_s* App_GameCollection()
+de::GameCollection &App_GameCollection()
 {
-    return reinterpret_cast<struct gamecollection_s*>(games);
+    DENG2_ASSERT(games != 0);
+    return *games;
 }
 
-struct game_s* App_CurrentGame()
+de::Game *App_CurrentGame()
 {
     if(!games) return 0;
-    return reinterpret_cast<struct game_s*>(&games->currentGame());
+    return &games->currentGame();
 }
 
 static void populateGameInfo(GameInfo& info, de::Game& game)
 {
-    info.identityKey = Str_Text(&game.identityKey());
-    info.title       = Str_Text(&game.title());
-    info.author      = Str_Text(&game.author());
+    info.identityKey = Str_Text(game.identityKey());
+    info.title       = Str_Text(game.title());
+    info.author      = Str_Text(game.author());
 }
 
 /// @note Part of the Doomsday public API.
@@ -1391,7 +1394,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         if(!allowReload)
         {
             if(DD_GameLoaded())
-                Con_Message("%s (%s) - already loaded.\n", Str_Text(&game.title()), Str_Text(&game.identityKey()));
+                Con_Message("%s (%s) - already loaded.\n", Str_Text(game.title()), Str_Text(game.identityKey()));
             return true;
         }
         // We are re-loading.
@@ -1423,12 +1426,12 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         LO_Clear();
         R_DestroyObjlinkBlockmap();
         P_ControlShutdown();
-#endif
-        R_ClearAnimGroups();
 
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
         B_BindDefaults();
         B_InitialContextActivations();
+#endif
+        R_ClearAnimGroups();
 
         for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
@@ -1489,7 +1492,10 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
         Con_InitDatabases();
         DD_Register();
+
+#ifdef __CLIENT__
         I_InitVirtualInputDevices();
+#endif
 
         R_InitSvgs();
         R_InitViewWindow();
@@ -1519,7 +1525,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     VERBOSE(
         if(!isNullGame(game))
         {
-            Con_Message("Selecting game '%s'...\n", Str_Text(&game.identityKey()));
+            Con_Message("Selecting game '%s'...\n", Str_Text(game.identityKey()));
         }
         else if(!isReload)
         {
@@ -1529,9 +1535,11 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
     Library_ReleaseGames();
 
+#ifdef __CLIENT__
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
     Window_SetTitle(theWindow, buf);
+#endif
 
     if(!DD_IsShuttingDown())
     {
@@ -1552,8 +1560,10 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     // This is now the current game.
     games->setCurrentGame(game);
 
+#ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
     Window_SetTitle(theWindow, buf);
+#endif
 
     /**
      * If we aren't shutting down then we are either loading a game or switching
@@ -1624,12 +1634,14 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
     DENG_ASSERT(DD_ActivePluginId() == 0);
 
+#ifdef __CLIENT__
     /**
      * Clear any input events we may have accumulated during this process.
      * @note Only necessary here because we might not have been able to use
      *       busy mode (which would normally do this for us on end).
      */
     DD_ClearEvents();
+#endif
     return true;
 }
 
@@ -1705,8 +1717,10 @@ int DD_EarlyInit(void)
     // Register the engine's console commands and variables.
     DD_Register();
 
+#ifdef __CLIENT__
     // Bring the window manager online.
     Sys_InitWindowManager();
+#endif
 
     // Instantiate the Games collection.
     games = new de::GameCollection();
@@ -1720,23 +1734,22 @@ int DD_EarlyInit(void)
  */
 void DD_FinishInitializationAfterWindowReady(void)
 {
+#ifdef __CLIENT__
 #ifdef WIN32
     // Now we can get the color transfer table as the window is available.
     DisplayMode_SaveOriginalColorTransfer();
 #endif
-
-#ifdef __CLIENT__
     if(!Sys_GLInitialize())
     {
         Con_Error("Error initializing OpenGL.\n");
     }
     else
-#endif
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
         Window_SetTitle(theWindow, buf);
     }
+#endif
 
     // Now we can start executing the engine's main loop.
     LegacyCore_SetLoopFunc(DD_GameLoopCallback);
@@ -1748,8 +1761,10 @@ void DD_FinishInitializationAfterWindowReady(void)
         return;
     }
 
+#ifdef __CLIENT__
     // Start drawing with the game loop drawer.
     Window_SetDrawFunc(Window_Main(), DD_GameLoopDrawer);
+#endif
 }
 
 /**
@@ -1760,12 +1775,6 @@ void DD_FinishInitializationAfterWindowReady(void)
  */
 boolean DD_Init(void)
 {
-    // By default, use the resolution defined in (default).cfg.
-    //int winWidth = defResX, winHeight = defResY, winBPP = defBPP, winX = 0, winY = 0;
-    //uint winFlags = DDWF_VISIBLE | DDWF_CENTER | (defFullscreen? DDWF_FULLSCREEN : 0);
-    //boolean noCenter = false;
-    //int i; //, exitCode = 0;
-
 #ifdef _DEBUG
     // Type size check.
     {
@@ -1808,7 +1817,10 @@ boolean DD_Init(void)
 
     Fonts_Init();
     FR_Init();
+
+#ifdef __CLIENT__
     DD_InitInput();
+#endif
 
     // Enter busy mode until startup complete.
     Con_InitProgress2(200, 0, .25f); // First half.
@@ -1982,13 +1994,12 @@ boolean DD_Init(void)
 
         // Server start command.
         // (shortcut for -command "net init tcpip; net server start").
-        if(CommandLine_Exists("-server"))
-        {
-            if(!N_InitService(true))
-                Con_Message("Can't start server: network init failed.\n");
-            else
-                Con_Executef(CMDS_CMDLINE, false, "net server start");
-        }
+#ifdef __SERVER__
+        if(!N_InitService(true))
+            Con_Message("Can't start server: network init failed.\n");
+        else
+            Con_Executef(CMDS_CMDLINE, false, "net server start");
+#endif
     }
     else
     {
@@ -2112,9 +2123,11 @@ static int DD_StartupWorker(void* /*parm*/)
     DD_CreateMaterialSchemes();
     Con_SetProgress(140);
 
+#ifdef __CLIENT__
     Con_Message("Initializing Binding subsystem...\n");
     B_Init();
     Con_SetProgress(150);
+#endif
 
     R_Init();
     Con_SetProgress(165);
@@ -2336,10 +2349,11 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
 #endif
     {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches},
-    {&symbolicEchoMode, &symbolicEchoMode},
 #ifdef __CLIENT__
+    {&symbolicEchoMode, &symbolicEchoMode},
     {&numTexUnits, 0}
 #else
+    {0, 0},
     {0, 0},
 #endif
 };
@@ -2352,6 +2366,7 @@ int DD_GetInteger(int ddvalue)
 {
     switch(ddvalue)
     {
+#ifdef __CLIENT__
     case DD_SHIFT_DOWN:
         return I_ShiftDown();
 
@@ -2361,16 +2376,15 @@ int DD_GetInteger(int ddvalue)
     case DD_WINDOW_HEIGHT:
         return Window_Height(theWindow);
 
+    case DD_CURRENT_CLIENT_FINALE_ID:
+        return Cl_CurrentFinale();
+#endif
+
     case DD_DYNLIGHT_TEXTURE:
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);
 
     case DD_NUMLUMPS:
         return F_LumpCount();
-
-#ifdef __CLIENT__
-    case DD_CURRENT_CLIENT_FINALE_ID:
-        return Cl_CurrentFinale();
-#endif
 
     case DD_MAP_MUSIC: {
         GameMap* map = theMap;
@@ -2542,11 +2556,11 @@ void* DD_GetVariable(int ddvalue)
 
     case DD_TORCH_ADDITIVE:
         return &torchAdditive;
-#endif
 
-#ifdef WIN32
+# ifdef WIN32
     case DD_WINDOW_HANDLE:
         return Window_NativeHandle(Window_Main());
+# endif
 #endif
 
     // We have to separately calculate the 35 Hz ticks.
@@ -2754,7 +2768,7 @@ D_CMD(Load)
         {
             Con_Message("Failed to locate all required startup resources:\n");
             de::Game::printFiles(game, FF_STARTUP);
-            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(&game.title()), Str_Text(&game.identityKey()));
+            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(game.title()), Str_Text(game.identityKey()));
             Str_Free(&searchPath);
             return true;
         }
@@ -2891,7 +2905,7 @@ D_CMD(Unload)
                 return DD_ChangeGame(games->nullGame());
             }
 
-            Con_Message("%s is not currently loaded.\n", Str_Text(&game.identityKey()));
+            Con_Message("%s is not currently loaded.\n", Str_Text(game.identityKey()));
             return true;
         }
         catch(de::GameCollection::NotFoundError const&)

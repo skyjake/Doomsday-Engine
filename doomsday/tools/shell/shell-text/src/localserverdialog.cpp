@@ -23,6 +23,7 @@
 #include <de/shell/MenuWidget>
 #include <de/shell/ChoiceWidget>
 #include <de/shell/LineEditWidget>
+#include <de/shell/DoomsdayInfo>
 
 using namespace de;
 using namespace de::shell;
@@ -31,36 +32,6 @@ struct LocalServerDialog::Instance
 {
     ChoiceWidget *choice;
     LineEditWidget *port;
-};
-
-static struct
-{
-    char const *name;
-    char const *mode;
-}
-gameModes[] =
-{
-    //{ "None",                                   "" },
-
-    { "Shareware DOOM",                         "doom1-share" },
-    { "DOOM",                                   "doom1" },
-    { "Ultimate DOOM",                          "doom1-ultimate" },
-    { "DOOM II",                                "doom2" },
-    { "Final DOOM: Plutonia Experiment",        "doom2-plut" },
-    { "Final DOOM: TNT Evilution",              "doom2-tnt" },
-    { "Chex Quest",                             "chex" },
-    { "HacX",                                   "hacx" },
-
-    { "Shareware Heretic",                      "heretic-share" },
-    { "Heretic",                                "heretic" },
-    { "Heretic: Shadow of the Serpent Riders",  "heretic-ext" },
-
-    { "Hexen v1.1",                             "hexen" },
-    { "Hexen v1.0",                             "hexen-v10" },
-    { "Hexen: Death Kings of Dark Citadel",     "hexen-dk" },
-    { "Hexen Demo",                             "hexen-demo" },
-
-    { 0, 0 }
 };
 
 LocalServerDialog::LocalServerDialog() : d(new Instance)
@@ -72,9 +43,9 @@ LocalServerDialog::LocalServerDialog() : d(new Instance)
 
     // Define the contents for the choice list.
     ChoiceWidget::Items modes;
-    for(int i = 0; gameModes[i].name; ++i)
+    foreach(DoomsdayInfo::GameMode const &mode, DoomsdayInfo::allGameModes())
     {
-        modes << gameModes[i].name;
+        modes << mode.title;
     }
     d->choice->setItems(modes);
     d->choice->setPrompt(tr("Game mode: "));
@@ -112,9 +83,9 @@ LocalServerDialog::LocalServerDialog() : d(new Instance)
     setAcceptLabel(tr("Start local server"));
 
     // Values.
-    d->choice->select (PersistentData::geti("LocalServer.gameMode"));
-    d->port->setText  (PersistentData::get ("LocalServer.port", "13209"));
-    lineEdit().setText(PersistentData::get ("LocalServer.options"));
+    d->choice->select (PersistentData::geti("LocalServer/gameMode"));
+    d->port->setText  (PersistentData::get ("LocalServer/port", "13209"));
+    lineEdit().setText(PersistentData::get ("LocalServer/options"));
 }
 
 LocalServerDialog::~LocalServerDialog()
@@ -129,7 +100,7 @@ duint16 LocalServerDialog::port() const
 
 String LocalServerDialog::gameMode() const
 {
-    return gameModes[d->choice->selection()].mode;
+    return DoomsdayInfo::allGameModes()[d->choice->selection()].option;
 }
 
 void LocalServerDialog::prepare()
@@ -145,8 +116,8 @@ void LocalServerDialog::finish(int result)
 
     if(result)
     {
-        PersistentData::set("LocalServer.gameMode", d->choice->selection());
-        PersistentData::set("LocalServer.port",     d->port->text());
-        PersistentData::set("LocalServer.options",  lineEdit().text());
+        PersistentData::set("LocalServer/gameMode", d->choice->selection());
+        PersistentData::set("LocalServer/port",     d->port->text());
+        PersistentData::set("LocalServer/options",  lineEdit().text());
     }
 }

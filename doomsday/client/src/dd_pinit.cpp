@@ -75,8 +75,7 @@ void DD_ComposeMainWindowTitle(char* title)
     if(DD_GameLoaded() && gx.GetVariable)
     {
         sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s - %s",
-            (isDedicated? " (Dedicated)" : ""), Str_Text(Game_Title(App_CurrentGame()))/*,
-            (char*) gx.GetVariable(DD_PLUGIN_NICENAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT)*/);
+            (isDedicated? " (Dedicated)" : ""), Str_Text(App_CurrentGame()->title()));
     }
     else
     {
@@ -196,5 +195,7 @@ void DD_ShutdownAll(void)
     F_Shutdown();
     DD_ClearResourceClasses();
     Libdeng_Shutdown();
+#ifdef __CLIENT__
     Sys_ShutdownWindowManager();
+#endif
 }

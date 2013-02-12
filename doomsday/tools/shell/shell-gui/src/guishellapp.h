@@ -1,4 +1,4 @@
-/** @file logwidget.h  Widget for output message log.
+/** @file shellapp.h  Shell GUI application.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,38 +16,46 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LOGWIDGET_H
-#define LOGWIDGET_H
+#ifndef GUISHELLAPP_H
+#define GUISHELLAPP_H
 
-#include <de/shell/TextWidget>
-#include <de/LogSink>
+#include "qtguiapp.h"
+#include <de/shell/ServerFinder>
+#include <QMenu>
 
-class LogWidget : public de::shell::TextWidget
+class LinkWindow;
+
+class GuiShellApp : public QtGuiApp
 {
     Q_OBJECT
 
 public:
-    LogWidget(de::String const &name = "");
-    virtual ~LogWidget();
+    GuiShellApp(int &argc, char **argv);
+    ~GuiShellApp();
 
-    /**
-     * Returns the log sink that can be connected to a log buffer for receiving
-     * log entries into the widget's buffer.
-     */
-    de::LogSink &logSink();
+    LinkWindow *newOrReusedConnectionWindow();
+    de::shell::ServerFinder &serverFinder();
 
-    void draw();
-    bool handleEvent(de::Event const *event);
+    static GuiShellApp &app();
+    QMenu *localServersMenu();
 
 public slots:
-    /**
-     * Moves the scroll offset of the widget to the bottom of the history.
-     */
-    void scrollToBottom();
+    void connectToServer();
+    void connectToLocalServer();
+    void disconnectFromServer();
+    void closeActiveWindow();
+    void startLocalServer();
+    void stopServer();
+    void updateLocalServerMenu();
+    void aboutShell();
+    void updateMenu();
+
+protected slots:
+    void windowClosed(LinkWindow *window);
 
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // LOGWIDGET_H
+#endif // GUISHELLAPP_H

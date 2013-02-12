@@ -28,15 +28,15 @@
 namespace de {
 namespace shell {
 
-struct LineEditWidget::Instance
+DENG2_PIMPL(LineEditWidget)
 {
-    LineEditWidget &self;
     ConstantRule *height;
     bool signalOnEnter;
     String prompt;
     String text;
     int cursor; ///< Index in range [0...text.size()]
     Lexicon lexicon;
+    EchoMode echoMode;
     struct Completion
     {
         int pos;
@@ -56,10 +56,11 @@ struct LineEditWidget::Instance
     // Word wrapping.
     LineWrapping wraps;
 
-    Instance(LineEditWidget &cli)
-        : self(cli),
+    Instance(Public &i)
+        : Base(i),
           signalOnEnter(true),
-          cursor(0)
+          cursor(0),
+          echoMode(NormalEchoMode)
     {
         // Initial height of the command line (1 row).
         height = new ConstantRule(1);
@@ -345,7 +346,14 @@ void LineEditWidget::draw()
     {
         buf.setRichFormatRange(TextCanvas::Char::Underline, d->completion.range());
     }
-    buf.drawWrappedText(Vector2i(d->prompt.size(), 0), d->text, d->wraps, attr);
+
+    // Echo mode determines what we actually draw.
+    String text = d->text;
+    if(d->echoMode == PasswordEchoMode)
+    {
+        text = String(d->text.size(), '*');
+    }
+    buf.drawWrappedText(Vector2i(d->prompt.size(), 0), text, d->wraps, attr);
 
     targetCanvas().draw(buf, pos.topLeft);
 }
@@ -479,6 +487,11 @@ int LineEditWidget::cursor() const
 void LineEditWidget::setLexicon(Lexicon const &lexicon)
 {
     d->lexicon = lexicon;
+}
+
+void LineEditWidget::setEchoMode(EchoMode mode)
+{
+    d->echoMode = mode;
 }
 
 void LineEditWidget::setSignalOnEnter(int enterSignal)

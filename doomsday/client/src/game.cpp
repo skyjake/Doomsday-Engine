@@ -108,7 +108,7 @@ Game::~Game()
 
 GameCollection& Game::collection() const
 {
-    return *reinterpret_cast<de::GameCollection*>(App_GameCollection());
+    return App_GameCollection();
 }
 
 Game& Game::addManifest(Manifest& manifest)
@@ -146,29 +146,29 @@ pluginid_t Game::pluginId() const
     return d->pluginId;
 }
 
-ddstring_t const& Game::identityKey() const
+ddstring_t const *Game::identityKey() const
 {
-    return d->identityKey;
+    return &d->identityKey;
 }
 
-ddstring_t const& Game::mainConfig() const
+ddstring_t const *Game::mainConfig() const
 {
-    return d->mainConfig;
+    return &d->mainConfig;
 }
 
-ddstring_t const& Game::bindingConfig() const
+ddstring_t const *Game::bindingConfig() const
 {
-    return d->bindingConfig;
+    return &d->bindingConfig;
 }
 
-ddstring_t const& Game::title() const
+ddstring_t const *Game::title() const
 {
-    return d->title;
+    return &d->title;
 }
 
-ddstring_t const& Game::author() const
+ddstring_t const *Game::author() const
 {
-    return d->author;
+    return &d->author;
 }
 
 Game::Manifests const& Game::manifests() const
@@ -211,7 +211,7 @@ Game* Game::fromDef(GameDef const& def)
 void Game::printBanner(Game const& game)
 {
     Con_PrintRuler();
-    Con_FPrintf(CPF_WHITE | CPF_CENTER, "%s\n", Str_Text(&game.title()));
+    Con_FPrintf(CPF_WHITE | CPF_CENTER, "%s\n", Str_Text(game.title()));
     Con_PrintRuler();
 }
 
@@ -255,11 +255,11 @@ void Game::print(Game const& game, int flags)
         printBanner(game);
 
     if(!(flags & PGF_BANNER))
-        Con_Printf("Game: %s - ", Str_Text(&game.title()));
+        Con_Printf("Game: %s - ", Str_Text(game.title()));
     else
         Con_Printf("Author: ");
-    Con_Printf("%s\n", Str_Text(&game.author()));
-    Con_Printf("IdentityKey: %s\n", Str_Text(&game.identityKey()));
+    Con_Printf("%s\n", Str_Text(game.author()));
+    Con_Printf("IdentityKey: %s\n", Str_Text(game.identityKey()));
 
     if(flags & PGF_LIST_STARTUP_RESOURCES)
     {
@@ -355,31 +355,31 @@ pluginid_t Game_PluginId(struct game_s const* game)
 ddstring_t const* Game_IdentityKey(struct game_s const* game)
 {
     SELF_CONST(game);
-    return &self->identityKey();
+    return self->identityKey();
 }
 
 ddstring_t const* Game_Title(struct game_s const* game)
 {
     SELF_CONST(game);
-    return &self->title();
+    return self->title();
 }
 
 ddstring_t const* Game_Author(struct game_s const* game)
 {
     SELF_CONST(game);
-    return &self->author();
+    return self->author();
 }
 
 ddstring_t const* Game_MainConfig(struct game_s const* game)
 {
     SELF_CONST(game);
-    return &self->mainConfig();
+    return self->mainConfig();
 }
 
 ddstring_t const* Game_BindingConfig(struct game_s const* game)
 {
     SELF_CONST(game);
-    return &self->bindingConfig();
+    return self->bindingConfig();
 }
 
 struct game_s* Game_FromDef(GameDef const* def)

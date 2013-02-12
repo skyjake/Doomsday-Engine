@@ -24,6 +24,10 @@
 #ifndef LIBDENG_BIND_MAIN_H
 #define LIBDENG_BIND_MAIN_H
 
+#ifndef __CLIENT__
+#  error "Bindings only exist in the Client"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

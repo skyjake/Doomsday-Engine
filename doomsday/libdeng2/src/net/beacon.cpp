@@ -27,6 +27,12 @@
 
 namespace de {
 
+/**
+ * Maximum number of Beacon UDP ports in simultaneous use at one machine, i.e.,
+ * maximum number of servers on one machine.
+ */
+static duint16 const MAX_LISTEN_RANGE = 16;
+
 static char const *discoveryMessage = "Doomsday Beacon 1.0";
 
 struct Beacon::Instance
@@ -59,6 +65,11 @@ Beacon::~Beacon()
     delete d;
 }
 
+duint16 Beacon::port() const
+{
+    return d->port;
+}
+
 void Beacon::start(duint16 serviceListenPort)
 {
     DENG2_ASSERT(!d->socket);
@@ -68,11 +79,17 @@ void Beacon::start(duint16 serviceListenPort)
     d->socket = new QUdpSocket;
     connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncoming()));
 
-    if(!d->socket->bind(d->port, QUdpSocket::ShareAddress))
+    for(duint16 attempt = 0; attempt < MAX_LISTEN_RANGE; ++attempt)
     {
-        /// @throws PortError Could not open the UDP port.
-        throw PortError("Beacon::start", "Could not bind to UDP port " + String::number(d->port));
+        if(d->socket->bind(d->port + attempt, QUdpSocket::DontShareAddress))
+        {
+            d->port = d->port + attempt;
+            return;
+        }
     }
+
+    /// @throws PortError Could not open the UDP port.
+    throw PortError("Beacon::start", "Could not bind to UDP port " + String::number(d->port));
 }
 
 void Beacon::setMessage(IByteArray const &advertisedMessage)
@@ -101,10 +118,19 @@ void Beacon::discover(TimeDelta const &timeOut, TimeDelta const &interval)
     connect(d->socket, SIGNAL(readyRead()), this, SLOT(readDiscoveryReply()));
 
     // Choose a semi-random port for listening to replies from servers' beacons.
-    if(!d->socket->bind(d->port + 1 + qrand() % 1024, QUdpSocket::ShareAddress))
+    int tries = 10;
+    forever
     {
-        /// @throws PortError Could not open the UDP port.
-        throw PortError("Beacon::start", "Could not bind to UDP port " + String::number(d->port));
+        if(d->socket->bind(d->port + 1 + qrand() % 0x4000, QUdpSocket::DontShareAddress))
+        {
+            // Got a port open successfully.
+            break;
+        }
+        if(!--tries)
+        {
+            /// @throws PortError Could not open the UDP port.
+            throw PortError("Beacon::start", "Could not bind to UDP port " + String::number(d->port));
+        }
     }
 
     d->found.clear();
@@ -213,10 +239,13 @@ void Beacon::continueDiscovery()
 
     LOG_TRACE("Broadcasting %i bytes") << block.size();
 
-    // Send a new broadcast.
-    d->socket->writeDatagram(block,
-                             QHostAddress::Broadcast,
-                             d->port);
+    // Send a new broadcast to the whole listening range of the beacons.
+    for(duint16 range = 0; range < MAX_LISTEN_RANGE; ++range)
+    {
+        d->socket->writeDatagram(block,
+                                 QHostAddress::Broadcast,
+                                 d->port + range);
+    }
 }
 
 } // namespace de

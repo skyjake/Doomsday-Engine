@@ -23,13 +23,15 @@
 using namespace de;
 using namespace de::shell;
 
-struct StatusWidget::Instance
+DENG2_PIMPL(StatusWidget)
 {
-    StatusWidget &self;
     Link *link;
     QTimer *updateTimer;
+    String gameMode;
+    String rules;
+    String mapId;
 
-    Instance(StatusWidget &i) : self(i), link(0)
+    Instance(Public &i) : Base(i), link(0)
     {
         updateTimer = new QTimer(&self);
     }
@@ -61,6 +63,15 @@ void StatusWidget::setShellLink(Link *link)
     root().requestDraw();
 }
 
+void StatusWidget::setGameState(String const &mode, String const &rules, String const &mapId)
+{
+    d->gameMode = mode;
+    d->rules = rules;
+    d->mapId = mapId;
+
+    redraw();
+}
+
 void StatusWidget::draw()
 {
     Rectanglei pos = rule().recti();
@@ -86,6 +97,11 @@ void StatusWidget::draw()
     }
     else if(d->link->status() == Link::Connected)
     {
+        String msg = d->gameMode;
+        if(!d->rules.isEmpty()) msg += " (" + d->rules + ")";
+        if(!d->mapId.isEmpty()) msg += " " + d->mapId;
+        buf.drawText(Vector2i(1, 0), msg);
+
         TimeDelta elapsed = d->link->connectedAt().since();
         String time = String("| %1:%2:%3")
                 .arg(int(elapsed.asHours()))

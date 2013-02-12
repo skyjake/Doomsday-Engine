@@ -32,7 +32,9 @@
 #include "dd_pinit.h"
 #include "library.h"
 
-#include "updater/downloaddialog.h"
+#ifdef __CLIENT__
+#  include "updater/downloaddialog.h"
+#endif
 
 #include <de/findfile.h>
 

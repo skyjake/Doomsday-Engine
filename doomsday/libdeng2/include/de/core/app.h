@@ -29,33 +29,29 @@
 #include "../Module"
 #include "../Config"
 #include "../UnixInfo"
-#include <QApplication>
 
 /**
  * Macro for conveniently accessing the de::App singleton instance.
  */
-#define DENG2_APP   (static_cast<de::App *>(qApp))
+#define DENG2_APP   (&de::App::app())
 
 namespace de {
 
 class Archive;
 
 /**
- * Application whose event loop is protected against uncaught exceptions.
- * Catches the exception and shuts down the app cleanly.
+ * Represents the application and its subsystems. This is the common
+ * denominator (and abstract base class) for GUI and non-GUI apps. de::App is
+ * not usable on its own; instead you must use one of the derived variants.
+ * @ingroup core
+ *
+ * @see GuiApp, TextApp
  */
-class DENG2_PUBLIC App : public QApplication
+class DENG2_PUBLIC App
 {
-    Q_OBJECT
-
 public:
     /// The object or resource that was being looked for was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);
-
-    enum GUIMode {
-        GUIDisabled = 0,
-        GUIEnabled = 1
-    };
 
     enum SubsystemInitFlag {
         DefaultSubsystems   = 0x0,
@@ -67,18 +63,20 @@ public:
     /**
      * Construct an App instance. The application will not be fully usable
      * until initSubsystems() has been called -- you should call
-     * initSubsystems() as soon as possible after construction. Never throws
-     * an exception.
+     * initSubsystems() as soon as possible after construction. Never throws an
+     * exception.
      *
-     * @param argc     Argument count. Note that App holds the reference.
-     * @param argv     Arguments.
-     * @param guiMode  GUI can be enabled (client) or disabled (server).
+     * @param appFilePath  Path of the application binary.
+     * @param args         Arguments.
      */
-    App(int &argc, char **argv, GUIMode guiMode);
+    App(NativePath const &appFilePath, QStringList args);
 
-    ~App();
+    virtual ~App();
 
-    bool notify(QObject *receiver, QEvent *event);
+    /**
+     * Sets a callback to be called when an uncaught exception occurs.
+     */
+    void setTerminateFunc(void (*func)(char const *msg));
 
     /**
      * Finishes App construction by initializing all the application's
@@ -200,19 +198,42 @@ public:
     static Record &importModule(String const &name, String const &fromPath = "");
 
     /**
-     * Emits the displayModeChanged() signal.
+     * Starts the application's main loop.
      *
-     * @todo In the future when de::App (or a sub-object owned by it) is
-     * responsible for display modes, this should be handled internally and
-     * not via this public interface where anybody can call it.
+     * @return Return code after the loop exits.
      */
-    void notifyDisplayModeChanged();
+    virtual int execLoop() = 0;
 
-signals:
-    void uncaughtException(QString message);
+    /**
+     * Stops the application's main loop.
+     *
+     * @param code  Return code from the loop.
+     */
+    virtual void stopLoop(int code) = 0;
 
-    /// Emitted when the display mode has changed.
-    void displayModeChanged();
+    /**
+     * Requests engine shutdown by calling the specified termination callback
+     * (see setTerminateFunc()). Called when an exception is caught at the
+     * de::App level, at which point there is no way to gracefully handle it
+     * and the application has to be shut down.
+     *
+     * This should not be called directly. From C++ code, one should throw an
+     * exception in unrecoverable error situations. From C code, one should
+     * call the LegacyCore_FatalError() function.
+     *
+     * @param message  Error message to be shown to the user.
+     */
+    void handleUncaughtException(String message);
+
+protected:
+    /**
+     * Returns the native path of the directory where the application can store
+     * user-specific data. This is usually not the same as the user's native
+     * home folder.
+     *
+     * @return Application data path.
+     */
+    virtual NativePath appDataPath() const = 0;
 
 private:
     struct Instance;

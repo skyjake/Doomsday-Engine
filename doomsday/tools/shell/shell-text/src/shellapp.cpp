@@ -17,8 +17,6 @@
  */
 
 #include "shellapp.h"
-#include "logwidget.h"
-#include "commandlinewidget.h"
 #include "statuswidget.h"
 #include "openconnectiondialog.h"
 #include "localserverdialog.h"
@@ -26,19 +24,21 @@
 #include "persistentdata.h"
 #include <de/shell/LabelWidget>
 #include <de/shell/MenuWidget>
+#include <de/shell/CommandLineWidget>
+#include <de/shell/LogWidget>
 #include <de/shell/Action>
 #include <de/shell/Link>
 #include <de/shell/LocalServer>
 #include <de/shell/ServerFinder>
 #include <de/LogBuffer>
 #include <QStringList>
+#include <QTimer>
 
 using namespace de;
 using namespace shell;
 
-struct ShellApp::Instance
+DENG2_PIMPL(ShellApp)
 {
-    ShellApp &self;
     PersistentData persist;
     MenuWidget *menu;
     LogWidget *log;
@@ -48,7 +48,7 @@ struct ShellApp::Instance
     Link *link;
     ServerFinder finder;
 
-    Instance(ShellApp &a) : self(a), link(0)
+    Instance(Public &i) : Base(i), link(0)
     {
         RootWidget &root = self.rootWidget();
 
@@ -196,6 +196,26 @@ void ShellApp::closeConnection()
     }
 }
 
+void ShellApp::askForPassword()
+{
+    InputDialog dlg;
+    dlg.setDescription(tr("The server requires a password."));
+    dlg.setPrompt("Password: ");
+    dlg.lineEdit().setEchoMode(LineEditWidget::PasswordEchoMode);
+    dlg.lineEdit().setSignalOnEnter(false);
+
+    if(dlg.exec(rootWidget()))
+    {
+        if(d->link) *d->link << d->link->protocol().passwordResponse(dlg.text());
+    }
+    else
+    {
+        QTimer::singleShot(1, this, SLOT(closeConnection()));
+    }
+
+    rootWidget().setFocus(d->cli);
+}
+
 void ShellApp::askToOpenConnection()
 {
     OpenConnectionDialog dlg;
@@ -213,8 +233,10 @@ void ShellApp::askToStartLocalServer()
     LocalServerDialog dlg;
     if(dlg.exec(rootWidget()))
     {
+        QStringList opts = dlg.text().split(' ', QString::SkipEmptyParts);
+
         LocalServer sv;
-        sv.start(dlg.port(), dlg.gameMode());
+        sv.start(dlg.port(), dlg.gameMode(), opts);
 
         openConnection("localhost:" + String::number(dlg.port()));
     }
@@ -284,10 +306,22 @@ void ShellApp::handleIncomingPackets()
         shell::Protocol &protocol = d->link->protocol();
         switch(protocol.recognize(packet.data()))
         {
+        case shell::Protocol::PasswordChallenge:
+            askForPassword();
+            break;
+
         case shell::Protocol::ConsoleLexicon:
             // Terms for auto-completion.
             d->cli->setLexicon(protocol.lexicon(*packet));
             break;
+
+        case shell::Protocol::GameState: {
+            Record &rec = static_cast<RecordPacket *>(packet.data())->record();
+            d->status->setGameState(
+                    rec["mode"].value().asText(),
+                    rec["rules"].value().asText(),
+                    rec["mapId"].value().asText());
+            break; }
 
         default:
             break;

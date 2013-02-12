@@ -104,12 +104,14 @@ void R_Register()
     Materials::consoleRegister();
 }
 
+#ifdef __CLIENT__
 char const *R_ChooseFixedFont()
 {
     if(Window_Width(theWindow) < 300) return "console11";
     if(Window_Width(theWindow) > 768) return "console18";
     return "console14";
 }
+#endif
 
 char const *R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
 {
@@ -218,6 +220,7 @@ DENG_EXTERN_C void R_SetViewPitch(int consoleNum, float pitch)
 
 void R_SetupDefaultViewWindow(int consoleNum)
 {
+#ifdef __CLIENT__
     viewdata_t *vd = &viewDataOfConsole[consoleNum];
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
 
@@ -226,6 +229,7 @@ void R_SetupDefaultViewWindow(int consoleNum)
     vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = Window_Width(theWindow);
     vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = Window_Height(theWindow);
     vd->windowInter = 1;
+#endif
 }
 
 void R_ViewWindowTicker(int consoleNum, timespan_t ticLength)
@@ -392,6 +396,7 @@ DENG_EXTERN_C void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
  */
 void R_UpdateViewPortGeometry(viewport_t *port, int col, int row)
 {
+#ifdef __CLIENT__
     DENG_ASSERT(port);
 
     RectRaw *rect = &port->geometry;
@@ -422,6 +427,7 @@ void R_UpdateViewPortGeometry(viewport_t *port, int col, int row)
         std::memcpy(&p.geometry, rect, sizeof(p.geometry));
         DD_CallHooks(HOOK_VIEWPORT_RESHAPE, port->console, (void*)&p);
     }
+#endif // __CLIENT__
 }
 
 boolean R_SetViewGrid(int numCols, int numRows)

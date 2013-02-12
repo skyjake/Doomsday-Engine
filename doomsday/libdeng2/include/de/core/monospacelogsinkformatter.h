@@ -28,7 +28,7 @@ namespace de {
  * fonts. This formatter is for plain text output.
  * @ingroup core
  */
-class MonospaceLogSinkFormatter : public LogSink::IFormatter
+class DENG2_PUBLIC MonospaceLogSinkFormatter : public LogSink::IFormatter
 {
 public:
     MonospaceLogSinkFormatter();

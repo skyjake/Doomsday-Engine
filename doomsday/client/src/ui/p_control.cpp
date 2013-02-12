@@ -35,8 +35,10 @@
 #include "dd_main.h"
 
 #include "map/p_players.h"
-#include "ui/b_main.h"
-#include "ui/b_device.h"
+#ifdef __CLIENT__
+#  include "ui/b_main.h"
+#  include "ui/b_device.h"
+#endif
 #include "ui/p_control.h"
 
 // MACROS ------------------------------------------------------------------
@@ -228,6 +230,7 @@ void P_ControlShutdown(void)
     controlCounts = 0;
 }
 
+#ifdef __CLIENT__
 /**
  * Updates the double-click state of a control and marks it as double-clicked
  * when the double-click condition is met.
@@ -325,10 +328,12 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     db->previousClickState = newState;
     db->lastState = newState;
 }
+#endif // __CLIENT__
 
 #undef P_GetControlState
 DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
 {
+#ifdef __CLIENT__
     float tmp;
     struct bcontext_s* bc = 0;
     struct dbinding_s* binds = 0;
@@ -352,6 +357,12 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, flo
 
     // Mark for double-clicks.
     P_MaintainControlDoubleClicks(playerNum, P_PlayerControlIndexForId(control), *pos);
+#else
+    DENG_UNUSED(playerNum);
+    DENG_UNUSED(control);
+    DENG_UNUSED(pos);
+    DENG_UNUSED(relativeOffset);
+#endif
 }
 
 /**
@@ -422,9 +433,11 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int control)
 
     controlCounts[control]->impulseCounts[playerNum]++;
 
+#ifdef __CLIENT__
     // Mark for double clicks.
     P_MaintainControlDoubleClicks(playerNum, control, 1);
     P_MaintainControlDoubleClicks(playerNum, control, 0);
+#endif
 }
 
 void P_ImpulseByName(int playerNum, const char* control)

@@ -17,7 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/App>
+#include <de/TextApp>
 #include <de/ZipArchive>
 #include <de/Block>
 #include <de/Date>
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 {
     try
     {
-        App app(argc, argv, App::GUIDisabled);
+        TextApp app(argc, argv);
         app.initSubsystems(App::DisablePlugins);
 
         Block b;
