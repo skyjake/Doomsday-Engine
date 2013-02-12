@@ -276,7 +276,7 @@ void Rend_ConsoleUpdateTitle()
     if(DD_GameLoaded())
     {
         dd_snprintf(secondaryTitleText, sizeof(secondaryTitleText)-1, "%s", (char *) gx.GetVariable(DD_PLUGIN_NICENAME));
-        strncpy(statusText, Str_Text(App_CurrentGame()->title()), sizeof(statusText) - 1);
+        strncpy(statusText, Str_Text(App_CurrentGame().title()), sizeof(statusText) - 1);
         return;
     }
 

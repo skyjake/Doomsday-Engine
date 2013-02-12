@@ -1,12 +1,7 @@
-/**
- * @file dd_games.h
+/** @file dd_games.h Specialized collection for a set of logical Games.
  *
- * The Game collection.
- *
- * @ingroup core
- *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2012-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,222 +21,149 @@
 #ifndef LIBDENG_GAMES_H
 #define LIBDENG_GAMES_H
 
-#include <de/types.h>
 #include "game.h"
+#include <de/types.h>
+#include <de/str.h>
+#include <QList>
 
 struct gameinfo_s;
 struct gamedef_s;
 
-#ifdef __cplusplus
+namespace de {
 
-#include <QList>
-#include <de/str.h>
-
-namespace de
+/**
+ * Encapsulates a collection of de::Game instances and the logical operations
+ * which are performed upon it (such as searches and various index printing
+ * algorithms).
+ *
+ * @ingroup core
+ */
+class Games
 {
-    /**
-     * Encapsulates a collection of de::Game instances and the logical operations
-     * which are performed upon it (such as searches and various index printing
-     * algorithms).
-     */
-    class GameCollection
+public:
+    /// The requested game does not exist in the collection. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
+    /// Used for returning the result of game searches. @see findAll()
+    struct GameListItem
     {
-    public:
-        /// The requested game does not exist in the collection. @ingroup errors
-        DENG2_ERROR(NotFoundError);
+        Game *game;
 
-        /// Used for returning the result of game searches. @see findAll()
-        struct GameListItem
+        GameListItem(Game *_game = 0) : game(_game)
+        {}
+
+        /// @return  @c true= this game's title is lexically less than that of @a other.
+        bool operator < (GameListItem const &other) const
         {
-            Game* game;
-
-            GameListItem(Game* _game = 0) : game(_game)
-            {}
-
-            /// @return  @c true= this game's title is lexically less than that of @a other.
-            bool operator < (GameListItem const& other) const
-            {
-                return Str_CompareIgnoreCase(game->title(), Str_Text(other.game->title())) < 0;
-            }
-        };
-        typedef QList<GameListItem> GameList;
-
-        typedef QList<Game*> Games;
-
-    public:
-        GameCollection();
-        ~GameCollection();
-
-        /// Register the console commands, variables, etc..., of this module.
-        static void consoleRegister();
-
-        /// @return  The currently active Game instance.
-        Game& currentGame() const;
-
-        /// @return  The special "null" Game instance.
-        Game& nullGame() const;
-
-        /// Change the currently active game.
-        GameCollection& setCurrentGame(Game& game);
-
-        /// @return  @c true= @a game is the currently active game.
-        inline bool isCurrentGame(Game const& game) const {
-            return &game == &currentGame();
+            return Str_CompareIgnoreCase(game->title(), Str_Text(other.game->title())) < 0;
         }
-
-        /// @return  Total number of registered games.
-        int count() const;
-
-        /// @return  Number of games marked as currently playable.
-        int numPlayable() const;
-
-        /**
-         * @param game  Game instance.
-         * @return Unique identifier associated with @a game.
-         */
-        gameid_t id(Game& game) const;
-
-        /**
-         * @return  Game associated with @a identityKey.
-         *
-         * @throws NotFoundError if no game is associated with @a identityKey.
-         */
-        Game& byIdentityKey(char const* identityKey) const;
-
-        /**
-         * @return  Game associated with @a gameId.
-         *
-         * @throws NotFoundError if no game is associated with @a gameId.
-         */
-        Game& byId(gameid_t gameId) const;
-
-        /**
-         * Provides access to the games for efficient traversals.
-         */
-        Games const& games() const;
-
-        /**
-         * Finds all games.
-         *
-         * @param found  List of found games.
-         * @return  Number of games found.
-         */
-        int findAll(GameList& found);
-
-        /**
-         * Find the first playable game in this collection (in registration order).
-         * @return  The found game else @c NULL.
-         */
-        Game* firstPlayable() const;
-
-        /**
-         * Add a new Game to this collection. If @a game is already present in the
-         * collection this is no-op.
-         *
-         * @param game  Game to be added.
-         * @return  This collection.
-         */
-        GameCollection& add(Game& game);
-
-        /**
-         * Try to locate all startup resources for @a game.
-         * @return  This collection.
-         */
-        GameCollection& locateStartupResources(Game& game);
-
-        /**
-         * Try to locate all startup resources for all registered games.
-         * @return  This collection.
-         */
-        GameCollection& locateAllResources();
-
-        /**
-         * @return  Game associated with unique index @a idx.
-         *
-         * @deprecated Iterate games() instead.
-         *
-         * @throws NotFoundError if no game is associated with index @a idx.
-         */
-        Game& byIndex(int idx) const;
-
-    private:
-        struct Instance;
-        Instance* d;
     };
+    typedef QList<GameListItem> GameList;
+
+    /// Game instances.
+    typedef QList<Game *> All;
+
+public:
+    Games();
+    ~Games();
+
+    /// Register the console commands, variables, etc..., of this module.
+    static void consoleRegister();
+
+    /// @return  The currently active Game instance.
+    Game &currentGame() const;
+
+    /// @return  The special "null" Game instance.
+    Game &nullGame() const;
+
+    /// Change the currently active game.
+    void setCurrentGame(Game &game);
+
+    /// @return  @c true= @a game is the currently active game.
+    inline bool isCurrentGame(Game const &game) const {
+        return &game == &currentGame();
+    }
+
+    /// @return  Total number of registered games.
+    inline int count() const { return all().count(); }
+
+    /// @return  Number of games marked as currently playable.
+    int numPlayable() const;
+
+    /**
+     * @param game  Game instance.
+     * @return Unique identifier associated with @a game.
+     */
+    gameid_t id(Game &game) const;
+
+    /**
+     * @return  Game associated with @a identityKey.
+     *
+     * @throws NotFoundError if no game is associated with @a identityKey.
+     */
+    Game &byIdentityKey(char const *identityKey) const;
+
+    /**
+     * @return  Game associated with @a gameId.
+     *
+     * @throws NotFoundError if no game is associated with @a gameId.
+     */
+    Game &byId(gameid_t gameId) const;
+
+    /**
+     * @return  Game associated with unique index @a idx.
+     *
+     * @deprecated Iterate games() instead.
+     */
+    Game &byIndex(int idx) const;
+
+    /**
+     * Add a new Game to this collection. If @a game is already present in the
+     * collection this is no-op.
+     *
+     * @param game  Game to be added.
+     */
+    void add(Game &game);
+
+    /**
+     * Returns a list of all the Game instances in the collection.
+     */
+    All const &all() const;
+
+    /**
+     * Try to locate all startup resources for all registered games.
+     */
+    void locateAllResources();
+
+    /**
+     * Collects all games.
+     *
+     * @param collected  List to be populated with the collected games.
+     * @return  Number of collected games.
+     */
+    int collectAll(GameList &collected);
+
+    /**
+     * Find the first playable game in this collection (in registration order).
+     * @return  The found game else @c NULL.
+     */
+    Game *firstPlayable() const;
+
+    /**
+     * Try to locate all startup resources for @a game.
+     */
+    void locateStartupResources(Game &game);
+
+private:
+    struct Instance;
+    Instance *d;
+};
 
 } // namespace de
 
+#ifdef __cplusplus
 extern "C" {
 #endif
-
-/*
- * C wrapper API:
- */
-
-struct gamecollection_s;
-typedef struct gamecollection_s GameCollection;
-
-/// @return  The currently active Game instance.
-Game* GameCollection_CurrentGame(GameCollection* games);
-
-/// @return  Total number of registered games.
-int GameCollection_Count(GameCollection* games);
-
-/// @return  Number of games marked as currently playable.
-int GameCollection_NumPlayable(GameCollection* games);
-
-/**
- * Returns the unique identifier associated with @a game.
- *
- * @param games  Game collection.
- * @param game   Game instance.
- *
- * @return Game identifier.
- */
-gameid_t GameCollection_Id(GameCollection* games, Game* game);
-
-/**
- * Finds a game with a particular identifier in the game collection.
- *
- * @param games   Game collection.
- * @param gameId  Game identifier (see GameCollection_Id()).
- *
- * @return  Game associated with @a gameId else @c NULL.
- */
-Game* GameCollection_ById(GameCollection* games, gameid_t gameId);
-
-/**
- * @return  Game associated with @a identityKey else @c NULL.
- */
-Game* GameCollection_ByIdentityKey(GameCollection* games, char const* identityKey);
-
-/**
- * Locates a game in the collection.
- *
- * @param games  Game collection.
- * @param idx    Index of the game in the collection. Valid indices
- *               are in the range 0 ... GameCollection_Count() - 1.
- *
- * @return  Game associated with unique index @a idx else @c NULL.
- */
-Game* GameCollection_ByIndex(GameCollection* games, int idx);
-
-/**
- * Finds the first playable game in the collection according to registration
- * order.
- *
- * @param games  Game collection.
- *
- * @return Game instance.
- */
-Game* GameCollection_FirstPlayable(GameCollection* games);
-
-/**
- * Try to locate all startup resources for all registered games.
- *
- * @param games  Game collection.
- */
-void GameCollection_LocateAllResources(GameCollection* games);
 
 D_CMD(ListGames);
 

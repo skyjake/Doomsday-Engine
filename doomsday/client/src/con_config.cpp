@@ -232,8 +232,7 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
 
     // This file is filled with console commands.
     // Each line is a command.
-    { int line = 1;
-    for(;;)
+    for(int line = 1; ;)
     {
         M_ReadLine(buff, 512, file);
         if(buff[0] && !M_IsComment(buff))
@@ -242,10 +241,11 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
             if(!Con_Execute(CMDS_CONFIG, buff, setdefault, false))
                 Con_Message("%s(%d): error executing command\n \"%s\"\n", F_PrettyPath(fileName), line, buff);
         }
-        if(FileHandle_AtEnd(file))
-            break;
+
+        if(FileHandle_AtEnd(file)) break;
+
         line++;
-    }}
+    }
 
     F_Delete(file);
 
@@ -272,14 +272,10 @@ boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
     return true;
 }
 
-/**
- * Saves all bindings, aliases and archiveable console variables.
- * The output file is a collection of console commands.
- */
-void Con_SaveDefaults(void)
+void Con_SaveDefaults()
 {
-    Con_WriteState(cfgFile, (!isDedicated && App_CurrentGame()?
-                                 Str_Text(App_CurrentGame()->bindingConfig()) : 0));
+    Con_WriteState(cfgFile, (!isDedicated && !de::isNullGame(App_CurrentGame())?
+                                 Str_Text(App_CurrentGame().bindingConfig()) : 0));
 }
 
 D_CMD(WriteConsole)

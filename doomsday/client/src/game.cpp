@@ -106,9 +106,9 @@ Game::~Game()
     delete d;
 }
 
-GameCollection& Game::collection() const
+Games &Game::collection() const
 {
-    return App_GameCollection();
+    return App_Games();
 }
 
 Game& Game::addManifest(Manifest& manifest)

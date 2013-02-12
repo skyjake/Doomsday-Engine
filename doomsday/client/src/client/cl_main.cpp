@@ -133,7 +133,7 @@ void Cl_SendHello(void)
 
     // The game mode is included in the hello packet.
     memset(buf, 0, sizeof(buf));
-    strncpy(buf, Str_Text(App_CurrentGame()->identityKey()), sizeof(buf) - 1);
+    strncpy(buf, Str_Text(App_CurrentGame().identityKey()), sizeof(buf) - 1);
 
 #ifdef _DEBUG
     Con_Message("Cl_SendHello: game mode = %s\n", buf);

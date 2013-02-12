@@ -481,16 +481,14 @@ void MPIUpdateServerList(void)
         {
             N_MasterGet(i, &info);
 
-            DENG_ASSERT(App_CurrentGame());
-
             // Is this suitable?
             if(info.version != DOOMSDAY_VERSION ||
-                    stricmp(info.gameIdentityKey, Str_Text(App_CurrentGame()->identityKey())) ||
-                    !info.canJoin)
+               stricmp(info.gameIdentityKey, Str_Text(App_CurrentGame().identityKey())) ||
+               !info.canJoin)
             {
                 Con_Message("Server %s filtered out:\n", info.name);
                 Con_Message("  remote = %i, local = %i\n", info.version, DOOMSDAY_VERSION);
-                Con_Message("  remote = %s, local = %s\n", info.gameIdentityKey, Str_Text(App_CurrentGame()->identityKey()));
+                Con_Message("  remote = %s, local = %s\n", info.gameIdentityKey, Str_Text(App_CurrentGame().identityKey()));
                 Con_Message("  can join = %i\n", info.canJoin);
                 continue;
             }

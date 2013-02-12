@@ -36,6 +36,10 @@ boolean Con_ParseCommands(const char* fileName);
 
 boolean Con_ParseCommands2(const char* fileName, int flags);
 
+/**
+ * Saves all bindings, aliases and archiveable console variables.
+ * The output file is a collection of console commands.
+ */
 void Con_SaveDefaults(void);
 
 boolean Con_WriteState(const char* fileName, const char* bindingsFileName);

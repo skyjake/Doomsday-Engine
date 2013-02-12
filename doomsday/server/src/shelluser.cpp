@@ -1,7 +1,7 @@
 /** @file shelluser.cpp  Remote user of a shell connection.
- * @ingroup server
  *
- * @authors Copyright Â© 2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -100,17 +100,16 @@ void ShellUser::sendInitialUpdate()
 
 void ShellUser::sendGameState()
 {
-    de::Game *game = App_CurrentGame();
-    String mode = (game? Str_Text(game->identityKey()) : "");
+    de::Game &game = App_CurrentGame();
+    String mode = (!de::isNullGame(game)? Str_Text(game.identityKey()) : "");
 
     /**
      * @todo The server is not the right place to compose a packet about
      * game state. Work needed:
      * - World class that contains the game world as a whole
-     * - WorldFactory that produces various world and map related instances
+     * - WorldFactory that produces world and map related instances
      * - Game plugins can extend the world with their own code (games can
      *   provide a Factory of their own for constructing world/map instances)
-     * - libcommon (i.e., libidtech1) needs an IdTech1World
      *
      * The server should just ask the World for the information for the game
      * state packet.
@@ -134,7 +133,7 @@ void ShellUser::sendGameState()
     // Check the map's information from definitions.
     if(theMap)
     {
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(theMap->uri);
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(theMap->uri);
         if(mapInfo)
         {
             mapId = Str_Text(Uri_ToString(mapInfo->uri));
