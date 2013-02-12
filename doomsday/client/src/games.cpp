@@ -1,4 +1,4 @@
-/** @file dd_games.cpp Specialized collection for a set of logical Games.
+/** @file games.cpp Specialized collection for a set of logical Games.
  *
  * @authors Copyright &copy; 2012-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -21,12 +21,11 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
-#include "dd_games.h"
 #include "filesys/manifest.h"
 #include "resource/zip.h"
 #include <QtAlgorithms>
 
-#include "dd_games.h"
+#include "games.h"
 
 namespace de {
 
@@ -60,7 +59,7 @@ DENG2_PIMPL(Games)
 
 Games::Games() : d(new Instance(*this))
 {
-    /**
+    /*
      * One-time creation and initialization of the special "null-game"
      * object (activated once created).
      */
@@ -72,7 +71,7 @@ Games::~Games()
     delete d;
 }
 
-Game &Games::currentGame() const
+Game &Games::current() const
 {
     return *d->currentGame;
 }
@@ -82,7 +81,7 @@ Game &Games::nullGame() const
     return *d->nullGame;
 }
 
-void Games::setCurrentGame(Game &game)
+void Games::setCurrent(Game &game)
 {
     // Ensure the specified game is actually in this collection (NullGame is implicitly).
     DENG_ASSERT(isNullGame(game) || id(game) > 0);
@@ -262,7 +261,7 @@ D_CMD(ListGames)
     {
         de::Game *game = i->game;
 
-        Con_Printf(" %s %-16s %s (%s)\n", games.isCurrentGame(*game)? "*" :
+        Con_Printf(" %s %-16s %s (%s)\n",      game->isCurrent()? "*" :
                                    !game->allStartupFilesFound()? "!" : " ",
                    Str_Text(game->identityKey()), Str_Text(game->title()),
                    Str_Text(game->author()));

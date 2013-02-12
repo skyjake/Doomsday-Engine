@@ -47,7 +47,7 @@
 
 #include "resource/wad.h"
 #include "resource/zip.h"
-#include "game.h"
+#include "Game"
 
 using namespace de;
 

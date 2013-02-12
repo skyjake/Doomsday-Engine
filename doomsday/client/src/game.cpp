@@ -111,6 +111,11 @@ Games &Game::collection() const
     return App_Games();
 }
 
+bool Game::isCurrent() const
+{
+    return this == &collection().current();
+}
+
 Game& Game::addManifest(Manifest& manifest)
 {
     // Ensure we don't add duplicates.
@@ -276,9 +281,9 @@ void Game::print(Game const& game, int flags)
 
     if(flags & PGF_STATUS)
         Con_Printf("Status: %s\n",
-                   game.collection().isCurrentGame(game)? "Loaded" :
-                         game.allStartupFilesFound()? "Complete/Playable" :
-                                                      "Incomplete/Not playable");
+                              game.isCurrent()? "Loaded" :
+                   game.allStartupFilesFound()? "Complete/Playable" :
+                                                "Incomplete/Not playable");
 }
 
 NullGame::NullGame()

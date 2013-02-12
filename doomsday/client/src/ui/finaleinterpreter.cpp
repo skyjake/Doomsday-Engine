@@ -36,7 +36,7 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 #include "dd_main.h"
-#include "game.h"
+#include "Game"
 
 #include "api_material.h"
 #include "api_render.h"

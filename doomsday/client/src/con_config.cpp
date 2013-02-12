@@ -29,7 +29,7 @@
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_help.h"
-#include "dd_games.h"
+#include "Games"
 
 static filename_t cfgFile;
 static int flagsAllow = 0;
