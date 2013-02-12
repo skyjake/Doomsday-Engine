@@ -98,8 +98,8 @@ void StatusWidget::draw()
     else if(d->link->status() == Link::Connected)
     {
         String msg = d->gameMode;
-        if(!d->rules.isEmpty()) msg += " (" + d->rules + ")";
         if(!d->mapId.isEmpty()) msg += " " + d->mapId;
+        if(!d->rules.isEmpty()) msg += " (" + d->rules + ")";
         buf.drawText(Vector2i(1, 0), msg);
 
         TimeDelta elapsed = d->link->connectedAt().since();
