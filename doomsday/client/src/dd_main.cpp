@@ -688,13 +688,13 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
     *listSize = 0;
 }
 
-boolean DD_GameLoaded(void)
+boolean App_GameLoaded()
 {
-    DENG_ASSERT(games);
+    if(!games) return false;
     return !isNullGame(games->current());
 }
 
-void DD_DestroyGames(void)
+void DD_DestroyGames()
 {
     destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
 
@@ -889,7 +889,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
 
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         // Create default Auto mappings in the runtime directory.
 
@@ -1108,7 +1108,7 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
 
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         /**
          * Phase 3: Add real files from the Auto directory.
@@ -1160,7 +1160,7 @@ static int DD_ActivateGameWorker(void* parameters)
         Con_SetProgress(50);
 
     // Now that resources have been located we can begin to initialize the game.
-    if(DD_GameLoaded() && gx.PreInit)
+    if(App_GameLoaded() && gx.PreInit)
     {
         DENG_ASSERT(games->current().pluginId() != 0);
 
@@ -1196,7 +1196,7 @@ static int DD_ActivateGameWorker(void* parameters)
     }
 
 #ifdef __CLIENT__
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         // Apply default control bindings for this game.
         B_BindGameDefaults();
@@ -1289,7 +1289,7 @@ boolean DD_GameInfo(GameInfo *info)
 
     std::memset(info, 0, sizeof(*info));
 
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         populateGameInfo(*info, games->current());
         return true;
@@ -1393,7 +1393,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     {
         if(!allowReload)
         {
-            if(DD_GameLoaded())
+            if(App_GameLoaded())
                 Con_Message("%s (%s) - already loaded.\n", Str_Text(game.title()), Str_Text(game.identityKey()));
             return true;
         }
@@ -1416,7 +1416,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 #endif
 
     // If a game is presently loaded; unload it.
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         if(gx.Shutdown)
             gx.Shutdown();
@@ -1595,7 +1595,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
         p.initiatedBusyMode = !BusyMode_Active();
 
-        if(DD_GameLoaded())
+        if(App_GameLoaded())
         {
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
@@ -1621,7 +1621,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         Rend_ParticleLoadExtraTextures();
 #endif
 
-        if(DD_GameLoaded())
+        if(App_GameLoaded())
         {
             de::Game::printBanner(games->current());
         }
@@ -1982,7 +1982,7 @@ boolean DD_Init(void)
      * One-time execution of network commands on the command line.
      * Commands are only executed if we have loaded a game during startup.
      */
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         // Client connection command.
         if(CommandLine_CheckWith("-connect", 1))
@@ -2253,7 +2253,7 @@ void DD_UpdateEngineState(void)
     R_InitFlatTextures();
     R_InitSpriteTextures();
 
-    if(DD_GameLoaded() && gx.UpdateState)
+    if(App_GameLoaded() && gx.UpdateState)
         gx.UpdateState(DD_PRE);
 
     hadFog = usingFog;
@@ -2286,7 +2286,7 @@ void DD_UpdateEngineState(void)
     }
     }
 
-    if(DD_GameLoaded() && gx.UpdateState)
+    if(App_GameLoaded() && gx.UpdateState)
         gx.UpdateState(DD_POST);
 
     // Reset the material animations.
@@ -2867,7 +2867,7 @@ D_CMD(Unload)
     // No arguments; unload the current game if loaded.
     if(argc == 1)
     {
-        if(!DD_GameLoaded())
+        if(!App_GameLoaded())
         {
             Con_Message("There is no game currently loaded.\n");
             return true;
@@ -2900,7 +2900,7 @@ D_CMD(Unload)
         {
             de::Game& game = games->byIdentityKey(Str_Text(&searchPath));
             Str_Free(&searchPath);
-            if(DD_GameLoaded())
+            if(App_GameLoaded())
             {
                 return DD_ChangeGame(games->nullGame());
             }
@@ -2948,7 +2948,7 @@ D_CMD(ReloadGame)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    if(!DD_GameLoaded())
+    if(!App_GameLoaded())
     {
         Con_Message("No game is presently loaded.\n");
         return true;

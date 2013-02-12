@@ -623,7 +623,7 @@ void MPIUpdatePublicButton(void)
  */
 void DD_NetSetup(int serverMode)
 {
-    if(!DD_GameLoaded())
+    if(!App_GameLoaded())
     {
         Con_Message("%s setup can only be activated when a game is loaded.\n", serverMode? "Server" : "Client");
         return;

@@ -239,7 +239,7 @@ void DD_GameLoopDrawer(void)
 
     if(drawGame)
     {
-        if(DD_GameLoaded())
+        if(App_GameLoaded())
         {
             // Interpolate the world ready for drawing view(s) of it.
             if(theMap)
@@ -267,7 +267,7 @@ void DD_GameLoopDrawer(void)
             UI2_Drawer();
 
             // Draw any full window game graphics.
-            if(DD_GameLoaded() && gx.DrawWindow)
+            if(App_GameLoaded() && gx.DrawWindow)
                 gx.DrawWindow(Window_Size(theWindow));
         }
     }
@@ -372,7 +372,7 @@ static void baseTicker(timespan_t time)
         FI_Ticker();
 
         // Game logic.
-        if(DD_GameLoaded() && gx.Ticker)
+        if(App_GameLoaded() && gx.Ticker)
         {
             gx.Ticker(time);
         }

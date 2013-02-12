@@ -1082,7 +1082,7 @@ static void updateDeviceAxes(timespan_t ticLength)
  */
 static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean updateAxes)
 {
-    const boolean callGameResponders = DD_GameLoaded();
+    const boolean callGameResponders = App_GameLoaded();
     ddevent_t* ddev;
 
     while((ddev = nextFromQueue(q)))

@@ -36,7 +36,7 @@ static int flagsAllow = 0;
 
 static void writeHeaderComment(FILE* file)
 {
-    if(!DD_GameLoaded())
+    if(!App_GameLoaded())
         fprintf(file, "# " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n");
     else
         fprintf(file, "# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n",
@@ -274,7 +274,7 @@ boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
 
 void Con_SaveDefaults()
 {
-    Con_WriteState(cfgFile, (!isDedicated && !de::isNullGame(App_CurrentGame())?
+    Con_WriteState(cfgFile, (!isDedicated && App_GameLoaded()?
                                  Str_Text(App_CurrentGame().bindingConfig()) : 0));
 }
 

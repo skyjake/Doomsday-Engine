@@ -438,7 +438,7 @@ struct Zip::Instance
                     compressedSize = ULONG(header->size);
                 }
 
-                if(DD_GameLoaded())
+                if(App_GameLoaded())
                 {
                     // In some cases the path to the file is mapped to some
                     // other location in the virtual file system.

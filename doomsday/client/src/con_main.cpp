@@ -789,7 +789,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 
         // Trying to issue a command requiring a loaded game?
         // dj: This should be considered a short-term solution. Ideally we want some namespacing mechanics.
-        if((ccmd->flags & CMDF_NO_NULLGAME) && !DD_GameLoaded())
+        if((ccmd->flags & CMDF_NO_NULLGAME) && !App_GameLoaded())
         {
             Con_Printf("Execution of command '%s' not possible with no game loaded.\n", ccmd->name);
             return true;
@@ -1499,7 +1499,7 @@ boolean Con_Responder(const ddevent_t* ev)
     if(!IS_KEY_TOGGLE(ev))
         return false;
 
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         // Special console key: Shift-Escape opens the Control Panel.
         if(!conInputLock && shiftDown && IS_TOGGLE_DOWN_ID(ev, DDKEY_ESCAPE))
@@ -1522,7 +1522,7 @@ boolean Con_Responder(const ddevent_t* ev)
     else if(!ConsoleActive)
     {
         // Any key will open the console.
-        if(!DD_GameLoaded() && IS_TOGGLE_DOWN(ev))
+        if(!App_GameLoaded() && IS_TOGGLE_DOWN(ev))
         {
             Con_Open(true);
             return true;
@@ -2182,7 +2182,7 @@ D_CMD(Version)
     Con_Printf("Homepage: %s\n", DOOMSDAY_HOMEURL);
     Con_Printf("Project homepage: %s\n", DENGPROJECT_HOMEURL);
     // Print the version info of the current game if loaded.
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         Con_Printf("Game: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
     }
@@ -2201,7 +2201,7 @@ D_CMD(Quit)
     }
 #endif
 
-    if(argv[0][4] == '!' || isDedicated || !DD_GameLoaded() ||
+    if(argv[0][4] == '!' || isDedicated || !App_GameLoaded() ||
        gx.TryShutdown == 0)
     {
         // No questions asked.

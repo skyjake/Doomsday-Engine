@@ -305,7 +305,7 @@ acfnptr_t Def_GetActionPtr(const char* name)
     actionlink_t* linkIt;
 
     if(!name || !name[0]) return 0;
-    if(!DD_GameLoaded()) return 0;
+    if(!App_GameLoaded()) return 0;
 
     // Action links are provided by the game, who owns the actual action functions.
     for(linkIt = (actionlink_t*) gx.GetVariable(DD_ACTION_LINK);
@@ -320,7 +320,7 @@ acfnptr_t Def_GetActionPtr(const char* name)
 
 int Def_GetActionNum(const char* name)
 {
-    if(name && name[0] && DD_GameLoaded())
+    if(name && name[0] && App_GameLoaded())
     {
         // Action links are provided by the game, who owns the actual action functions.
         actionlink_t* links = (actionlink_t*) gx.GetVariable(DD_ACTION_LINK);
@@ -832,7 +832,7 @@ static void readAllDefinitions(void)
     }
 
     // Now any definition files required by the game on load.
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
     {
         de::Game::Manifests const& gameResources = App_CurrentGame().manifests();
         int packageIdx = 0;
@@ -857,7 +857,7 @@ static void readAllDefinitions(void)
     }
 
     // Next up are definition files in the Games' /auto directory.
-    if(!CommandLine_Exists("-noauto") && DD_GameLoaded())
+    if(!CommandLine_Exists("-noauto") && App_GameLoaded())
     {
         FS1::PathList found;
         if(App_FileSystem()->findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, found))

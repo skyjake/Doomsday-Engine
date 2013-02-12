@@ -126,7 +126,7 @@ void Sys_Shutdown(void)
     appShutdown = true;
 
     // Time to unload *everything*.
-    if(DD_GameLoaded())
+    if(App_GameLoaded())
         Con_Execute(CMDS_DDAY, "unload", true, false);
 
     Net_Shutdown();
