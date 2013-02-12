@@ -38,7 +38,7 @@
 
 #include "dd_def.h"
 #include "dd_share.h"
-#include "dd_games.h"
+#include "games.h"
 #include "api_gameexport.h"
 #include "api_plugin.h"
 #include "dd_main.h"

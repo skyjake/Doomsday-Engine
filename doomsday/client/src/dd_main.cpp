@@ -691,7 +691,7 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
 boolean DD_GameLoaded(void)
 {
     DENG_ASSERT(games);
-    return !isNullGame(games->currentGame());
+    return !isNullGame(games->current());
 }
 
 void DD_DestroyGames(void)
@@ -907,7 +907,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
      */
     Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
 
-    de::Game::Manifests const& gameManifests = games->currentGame().manifests();
+    de::Game::Manifests const& gameManifests = games->current().manifests();
     int const numPackages = gameManifests.count(RC_PACKAGE);
     int packageIdx = 0;
     for(de::Game::Manifests::const_iterator i = gameManifests.find(RC_PACKAGE);
@@ -1162,10 +1162,10 @@ static int DD_ActivateGameWorker(void* parameters)
     // Now that resources have been located we can begin to initialize the game.
     if(DD_GameLoaded() && gx.PreInit)
     {
-        DENG_ASSERT(games->currentGame().pluginId() != 0);
+        DENG_ASSERT(games->current().pluginId() != 0);
 
-        DD_SetActivePluginId(games->currentGame().pluginId());
-        gx.PreInit(games->id(games->currentGame()));
+        DD_SetActivePluginId(games->current().pluginId());
+        gx.PreInit(games->id(games->current()));
         DD_SetActivePluginId(0);
     }
 
@@ -1186,7 +1186,7 @@ static int DD_ActivateGameWorker(void* parameters)
     }
     else
     {
-        configFileName = games->currentGame().mainConfig();
+        configFileName = games->current().mainConfig();
     }
 
     Con_Message("Parsing primary config \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
@@ -1202,7 +1202,7 @@ static int DD_ActivateGameWorker(void* parameters)
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands2(Str_Text(games->currentGame().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
+        Con_ParseCommands2(Str_Text(games->current().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
     }
 #endif
 
@@ -1243,7 +1243,7 @@ static int DD_ActivateGameWorker(void* parameters)
 
     if(gx.PostInit)
     {
-        DD_SetActivePluginId(games->currentGame().pluginId());
+        DD_SetActivePluginId(games->current().pluginId());
         gx.PostInit();
         DD_SetActivePluginId(0);
     }
@@ -1265,7 +1265,7 @@ de::Games &App_Games()
 
 de::Game &App_CurrentGame()
 {
-    return App_Games().currentGame();
+    return App_Games().current();
 }
 
 static void populateGameInfo(GameInfo& info, de::Game& game)
@@ -1277,7 +1277,7 @@ static void populateGameInfo(GameInfo& info, de::Game& game)
 
 /// @note Part of the Doomsday public API.
 #undef DD_GameInfo
-boolean DD_GameInfo(GameInfo* info)
+boolean DD_GameInfo(GameInfo *info)
 {
     if(!info)
     {
@@ -1287,11 +1287,11 @@ boolean DD_GameInfo(GameInfo* info)
         return false;
     }
 
-    memset(info, 0, sizeof(*info));
+    std::memset(info, 0, sizeof(*info));
 
     if(DD_GameLoaded())
     {
-        populateGameInfo(*info, games->currentGame());
+        populateGameInfo(*info, games->current());
         return true;
     }
 
@@ -1301,9 +1301,9 @@ boolean DD_GameInfo(GameInfo* info)
     return false;
 }
 
-/// @note Part of the Doomsday public API.
+#undef DD_AddGameResource
 void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
-    char const* names, void* params)
+    char const *names, void *params)
 {
     DENG_ASSERT(games);
 
@@ -1311,8 +1311,8 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
     if(!names || !names[0]) Con_Error("DD_AddGameResource: Invalid name argument.");
 
     // Construct and attach the new resource record.
-    de::Game& game = games->byId(gameId);
-    Manifest* record = new Manifest(classId, rflags);
+    de::Game &game = games->byId(gameId);
+    Manifest *record = new Manifest(classId, rflags);
     game.addManifest(*record);
 
     // Add the name list to the resource record.
@@ -1325,7 +1325,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
     if(params && classId == RC_PACKAGE)
     {
         // Add the identityKey list to the resource record.
-        QStringList idKeys = String((char const*) params).split(";", QString::SkipEmptyParts);
+        QStringList idKeys = String((char const *) params).split(";", QString::SkipEmptyParts);
         DENG2_FOR_EACH_CONST(QStringList, i, idKeys)
         {
             record->addIdentityKey(*i);
@@ -1333,8 +1333,8 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
     }
 }
 
-/// @note Part of the Doomsday public API.
-gameid_t DD_DefineGame(GameDef const* def)
+#undef DD_DefineGame
+gameid_t DD_DefineGame(GameDef const *def)
 {
     if(!def)
     {
@@ -1354,10 +1354,10 @@ gameid_t DD_DefineGame(GameDef const* def)
 #endif
         return 0; // Invalid id.
     }
-    catch(de::Games::NotFoundError const &)
+    catch(Games::NotFoundError const &)
     {} // Ignore the error.
 
-    de::Game* game = de::Game::fromDef(*def);
+    de::Game *game = de::Game::fromDef(*def);
     if(!game) return 0; // Invalid def.
 
     // Add this game to our records.
@@ -1366,15 +1366,15 @@ gameid_t DD_DefineGame(GameDef const* def)
     return games->id(*game);
 }
 
-/// @note Part of the Doomsday public API.
-gameid_t DD_GameIdForKey(const char* identityKey)
+#undef DD_GameIdForKey
+gameid_t DD_GameIdForKey(char const *identityKey)
 {
     DENG_ASSERT(games);
     try
     {
         return games->id(games->byIdentityKey(identityKey));
     }
-    catch(de::Games::NotFoundError const &)
+    catch(Games::NotFoundError const &)
     {
         DEBUG_Message(("Warning: DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey));
     }
@@ -1389,7 +1389,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     bool isReload = false;
 
     // Ignore attempts to re-load the current game?
-    if(games->isCurrentGame(game))
+    if(game.isCurrent())
     {
         if(!allowReload)
         {
@@ -1480,15 +1480,15 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         Con_ClearDatabases();
 
         { // Tell the plugin it is being unloaded.
-            void* unloader = DD_FindEntryPoint(games->currentGame().pluginId(), "DP_Unload");
+            void* unloader = DD_FindEntryPoint(games->current().pluginId(), "DP_Unload");
             DEBUG_Message(("DD_ChangeGame: Calling DP_Unload (%p)\n", unloader));
-            DD_SetActivePluginId(games->currentGame().pluginId());
+            DD_SetActivePluginId(games->current().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
             DD_SetActivePluginId(0);
         }
 
         // The current game is now the special "null-game".
-        games->setCurrentGame(games->nullGame());
+        games->setCurrent(games->nullGame());
 
         Con_InitDatabases();
         DD_Register();
@@ -1558,7 +1558,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     }
 
     // This is now the current game.
-    games->setCurrentGame(game);
+    games->setCurrent(game);
 
 #ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
@@ -1599,9 +1599,9 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         {
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
-            void* loader = DD_FindEntryPoint(games->currentGame().pluginId(), "DP_Load");
+            void* loader = DD_FindEntryPoint(games->current().pluginId(), "DP_Load");
             DEBUG_Message(("DD_ChangeGame: Calling DP_Load (%p)\n", loader));
-            DD_SetActivePluginId(games->currentGame().pluginId());
+            DD_SetActivePluginId(games->current().pluginId());
             if(loader) ((pluginfunc_t)loader)();
             DD_SetActivePluginId(0);
         }
@@ -1623,7 +1623,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
         if(DD_GameLoaded())
         {
-            de::Game::printBanner(games->currentGame());
+            de::Game::printBanner(games->current());
         }
         else
         {
@@ -2836,7 +2836,7 @@ static bool tryUnloadFile(de::Uri const& search)
         QByteArray pathUtf8 = NativePath(foundFileUri.asText()).pretty().toUtf8();
 
         // Do not attempt to unload a resource required by the current game.
-        if(games->currentGame().isRequiredFile(file))
+        if(games->current().isRequiredFile(file))
         {
             Con_Message("\"%s\" is required by the current game.\n"
                         "Required game files cannot be unloaded in isolation.\n",
@@ -2953,7 +2953,7 @@ D_CMD(ReloadGame)
         Con_Message("No game is presently loaded.\n");
         return true;
     }
-    DD_ChangeGame(games->currentGame(), true/* allow reload */);
+    DD_ChangeGame(games->current(), true/* allow reload */);
     return true;
 }
 

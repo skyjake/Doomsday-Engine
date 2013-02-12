@@ -57,12 +57,13 @@
 #include "ui/displaymode.h"
 #include "ui/busyvisual.h"
 #include "cbuffer.h"
+#include "Game"
 
 #ifdef __CLIENT__
 #  include "updater/downloaddialog.h"
 #endif
 
-// MACROS ------------------------------------------------------------------
+using namespace de;
 
 #define SC_EMPTY_QUOTE  -1
 
@@ -90,8 +91,6 @@ enum {
         : src == CMDS_CMDLINE? "the command line" \
         : src == CMDS_SCRIPT? "an action command" : "???")
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct execbuff_s {
     boolean used;               // Is this in use?
     timespan_t when;            // System time when to execute the command.
@@ -100,10 +99,6 @@ typedef struct execbuff_s {
     boolean isNetCmd;           // Command was sent over the net to us.
     char    subCmd[1024];       // A single command w/args.
 } execbuff_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(AddSub);
 D_CMD(IncDec);
@@ -126,18 +121,12 @@ D_CMD(InspectMobj);
 D_CMD(DebugCrash);
 D_CMD(DebugError);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd);
 static void Con_SplitIntoSubCommands(const char *command,
                                      timespan_t markerOffset, byte src,
                                      boolean isNetCmd);
 
 static void Con_ClearExecBuffer(void);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     CmdReturnValue = 0;
 
@@ -150,8 +139,6 @@ int     consoleActiveKey = '`'; // Tilde.
 byte    consoleSnapBackOnPrint = false;
 
 char* prbuff = NULL; // Print buffer, used by conPrintf.
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static CBuffer* histBuf = NULL; // The console history buffer (log).
 static uint bLineOff; // How many lines from the last in the histBuf?
@@ -183,8 +170,6 @@ static void (*consolePrintFilter) (char* text); // Maybe alters text.
 
 static uint complPos; // Where is the completion cursor?
 static uint lastCompletion; // The last completed known word match (1-based index).
-
-// CODE --------------------------------------------------------------------
 
 void Con_Register(void)
 {
@@ -1004,11 +989,9 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                     break;
                 case CVT_URIPTR: {
                     /// @todo Sanitize and validate against known schemas.
-                    Uri* uri = Uri_NewWithPath2(argptr, RC_NULL);
-                    CVar_SetUri(cvar, uri);
-                    Uri_Delete(uri);
-                    break;
-                  }
+                    de::Uri uri(argptr, RC_NULL);
+                    CVar_SetUri(cvar, reinterpret_cast<uri_s *>(&uri));
+                    break; }
                 default: break;
                 }
             }
@@ -1259,8 +1242,8 @@ static int completeWord(int mode)
                 break;
               }
             case WT_GAME: {
-                Game* game = (Game*)(*match)->data;
-                foundWord = Str_Text(Game_IdentityKey(game));
+                Game *game = (Game *)(*match)->data;
+                foundWord = Str_Text(game->identityKey());
                 if(printCompletions)
                     Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", foundWord);
                 break;
@@ -1296,7 +1279,7 @@ static int completeWord(int mode)
             AutoStr* foundName = CVar_ComposePath((cvar_t*)completeWord->data);
             str = Str_Text(foundName);
             break; }
-        case WT_GAME: str = Str_Text(Game_IdentityKey((Game*)completeWord->data)); break;
+        case WT_GAME: str = Str_Text(reinterpret_cast<Game *>(completeWord->data)->identityKey()); break;
         default:
             Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
             exit(1); // Unreachable.
@@ -2581,9 +2564,8 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "default"))
     {
-        Uri* uri = Uri_NewWithPath2(R_ChooseFixedFont(), RC_NULL);
-        fontid_t newFont = Fonts_ResolveUri(uri);
-        Uri_Delete(uri);
+        de::Uri uri(R_ChooseFixedFont(), RC_NULL);
+        fontid_t newFont = Fonts_ResolveUri(reinterpret_cast<uri_s *>(&uri));
         if(newFont)
         {
             Con_SetFont(newFont);
@@ -2596,20 +2578,18 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "name") && argc == 3)
     {
-        Uri* uri = Uri_SetUri2(Uri_New(), argv[2], RC_NULL);
-        fontid_t newFont = Fonts_ResolveUri2(uri, true/*quiet please*/);
-        Uri_Delete(uri);
+        de::Uri uri(String(argv[2]), RC_NULL);
+        fontid_t newFont = Fonts_ResolveUri2(reinterpret_cast<uri_s *>(&uri), true/*quiet please*/);
         if(newFont)
         {
-            Uri* uri = Fonts_ComposeUri(newFont);
+            QScopedPointer<de::Uri> uri(reinterpret_cast<de::Uri *>(Fonts_ComposeUri(newFont)));
             Con_SetFont(newFont);
-            if(!Str_CompareIgnoreCase(Uri_Scheme(uri), "Game"))
+            if(!uri->scheme().compareWithoutCase("Game"))
             {
                 Con_SetFontScale(1.5f, 2);
                 Con_SetFontLeading(1.25f);
                 Con_SetFontTracking(1);
             }
-            Uri_Delete(uri);
             return true;
         }
         Con_Printf("Unknown font '%s'\n", argv[2]);

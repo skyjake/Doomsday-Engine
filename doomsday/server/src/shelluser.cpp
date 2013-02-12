@@ -26,8 +26,8 @@
 
 #include "con_main.h"
 #include "dd_main.h"
-#include "dd_games.h"
-#include "game.h"
+#include "games.h"
+#include "Game"
 #include "def_main.h"
 #include "map/gamemap.h"
 

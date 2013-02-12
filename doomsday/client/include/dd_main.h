@@ -29,7 +29,7 @@
 #endif
 
 #include "dd_types.h"
-#include "dd_games.h"
+#include "Games"
 #include "api_plugin.h"
 #include "api_gameexport.h"
 #include "Materials"

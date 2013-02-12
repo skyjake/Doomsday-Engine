@@ -33,7 +33,7 @@
 #include "de_console.h"
 
 #include "cbuffer.h"
-#include "dd_games.h"
+#include "Games"
 #include "dd_help.h"
 #include "dd_main.h"
 #include "m_misc.h"

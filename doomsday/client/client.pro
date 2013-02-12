@@ -128,6 +128,8 @@ DENG_API_HEADERS = \
 DENG_HEADERS += \
     include/BspBuilder \
     include/EntityDatabase \
+    include/Game \
+    include/Games \
 
 # Private headers.
 DENG_HEADERS += \
@@ -171,7 +173,7 @@ DENG_HEADERS += \
     include/con_config.h \
     include/con_main.h \
     include/dd_def.h \
-    include/dd_games.h \
+    include/games.h \
     include/dd_help.h \
     include/dd_loop.h \
     include/dd_main.h \
@@ -467,7 +469,7 @@ SOURCES += \
     src/con_config.cpp \
     src/con_data.cpp \
     src/con_main.cpp \
-    src/dd_games.cpp \
+    src/games.cpp \
     src/dd_help.cpp \
     src/dd_loop.cpp \
     src/dd_main.cpp \

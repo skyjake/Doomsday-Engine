@@ -32,7 +32,7 @@
 #include "de_base.h"
 #include "de_filesys.h"
 #include "dualstring.h"
-#include "game.h"
+#include "Game"
 
 namespace de {
 

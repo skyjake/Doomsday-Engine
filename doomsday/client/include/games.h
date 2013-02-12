@@ -1,4 +1,4 @@
-/** @file dd_games.h Specialized collection for a set of logical Games.
+/** @file games.h Specialized collection for a set of logical Games.
  *
  * @authors Copyright &copy; 2012-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -25,9 +25,6 @@
 #include <de/types.h>
 #include <de/str.h>
 #include <QList>
-
-struct gameinfo_s;
-struct gamedef_s;
 
 namespace de {
 
@@ -71,18 +68,13 @@ public:
     static void consoleRegister();
 
     /// @return  The currently active Game instance.
-    Game &currentGame() const;
+    Game &current() const;
 
     /// @return  The special "null" Game instance.
     Game &nullGame() const;
 
     /// Change the currently active game.
-    void setCurrentGame(Game &game);
-
-    /// @return  @c true= @a game is the currently active game.
-    inline bool isCurrentGame(Game const &game) const {
-        return &game == &currentGame();
-    }
+    void setCurrent(Game &game);
 
     /// @return  Total number of registered games.
     inline int count() const { return all().count(); }

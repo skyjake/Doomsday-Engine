@@ -1,10 +1,7 @@
-/**
- * @file game.h
+/** @file game.h
  *
- * @ingroup core
- *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,10 +24,6 @@
 #include "api_plugin.h"
 #include <de/ddstring.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * @defgroup printGameFlags  Print Game Flags
  * @ingroup flags
@@ -44,17 +37,11 @@ extern "C" {
 #define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
 ///@}
 
-struct manifest_s;
-struct gamedef_s;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#ifdef __cplusplus
-
 #include <de/Error>
 #include <QMultiMap>
+
+struct manifest_s;
+struct gamedef_s;
 
 namespace de {
 
@@ -71,7 +58,7 @@ class Games;
 class Game
 {
 public:
-    typedef QMultiMap<resourceclassid_t, Manifest*> Manifests;
+    typedef QMultiMap<resourceclassid_t, Manifest *> Manifests;
 
 public:
     /**
@@ -80,12 +67,19 @@ public:
      * @param title         Default game title.
      * @param author        Default game author.
      */
-    Game(char const* identityKey, char const* configDir,
-         char const* title = "Unnamed", char const* author = "Unknown");
+    Game(char const *identityKey, char const *configDir,
+         char const *title = "Unnamed", char const *author = "Unknown");
     virtual ~Game();
 
-    /// @return  Collection in which this game exists.
-    Games& collection() const;
+    /**
+     * Returns the owning Games collection.
+     */
+    Games &collection() const;
+
+    /**
+     * Returns @a true if the game is currently active in the owning collection.
+     */
+    bool isCurrent() const;
 
     /// @return  Unique plugin identifier attributed to that which registered this.
     pluginid_t pluginId() const;
@@ -109,7 +103,7 @@ public:
      * Change the identfier of the plugin associated with this.
      * @param newId  New identifier.
      */
-    Game& setPluginId(pluginid_t newId);
+    Game &setPluginId(pluginid_t newId);
 
     /**
      * Add a new manifest to the list of manifests.
@@ -118,14 +112,14 @@ public:
      *
      * @param manifest  Manifest to add.
      */
-    Game& addManifest(Manifest& manifest);
+    Game &addManifest(Manifest &manifest);
 
     bool allStartupFilesFound() const;
 
     /**
      * Provides access to the manifests for efficent traversals.
      */
-    Manifests const& manifests() const;
+    Manifests const &manifests() const;
 
     /**
      * Is @a file required by this game? This decision is made by comparing the
@@ -139,16 +133,16 @@ public:
      *
      * @return  @c true iff @a file is required by this game.
      */
-    bool isRequiredFile(File1& file);
+    bool isRequiredFile(File1 &file);
 
-// Static members ------------------------------------------------------------------
+public:
 
     /**
      * Construct a new Game instance from the specified definition @a def.
      *
      * @note May fail if the definition is incomplete or invalid (@c NULL is returned).
      */
-    static Game* fromDef(GameDef const& def);
+    static Game *fromDef(GameDef const &def);
 
     /**
      * Print a game mode banner with rulers.
@@ -156,7 +150,7 @@ public:
      * @todo This has been moved here so that strings like the game title and author
      *       can be overridden (e.g., via DEHACKED). Make it so!
      */
-    static void printBanner(Game const& game);
+    static void printBanner(Game const &game);
 
     /**
      * Print the list of resource files for @a Game.
@@ -167,7 +161,7 @@ public:
      * @param printStatus   @c true to  include the current availability/load status
      *                      of each file.
      */
-    static void printFiles(Game const& game, int rflags, bool printStatus = true);
+    static void printFiles(Game const &game, int rflags, bool printStatus = true);
 
     /**
      * Print extended information about game @a info.
@@ -175,15 +169,16 @@ public:
      * @param game   Game record to be printed.
      * @param flags  @ref printGameFlags
      */
-    static void print(Game const& game, int flags);
+    static void print(Game const &game, int flags);
 
 private:
     struct Instance;
-    Instance* d;
+    Instance *d;
 };
 
 /**
  * The special "null" Game object.
+ * @todo Should employ the Singleton pattern.
  */
 class NullGame : public Game
 {
@@ -206,66 +201,20 @@ public:
         return true; // Always.
     }
 
-    struct manifest_s* const* manifests(resourceclassid_t /*classId*/, int* /*count*/) const {
+    struct manifest_s *const *manifests(resourceclassid_t /*classId*/, int * /*count*/) const {
         return 0;
     }
 
-    static Game* fromDef(GameDef const& /*def*/) {
+    static Game *fromDef(GameDef const & /*def*/) {
         throw NullObjectError("NullGame::fromDef", "Not valid for null-object");
     }
 };
 
 /// @return  @c true= @a game is a "null-game" object (not a real playable game).
-inline bool isNullGame(Game const& game) {
-    return !!dynamic_cast<NullGame const*>(&game);
+inline bool isNullGame(Game const &game) {
+    return !!dynamic_cast<NullGame const *>(&game);
 }
 
 } // namespace de
-
-extern "C" {
-#endif // __cplusplus
-
-/**
- * C wrapper API:
- */
-
-struct game_s; // The game instance (opaque).
-typedef struct game_s Game;
-
-Game* Game_New(char const* identityKey, char const* configDir, char const* title, char const* author);
-
-void Game_Delete(Game* game);
-
-boolean Game_IsNullObject(Game const* game);
-
-struct game_s* Game_AddManifest(Game* game, struct manifest_s* record);
-
-boolean Game_AllStartupFilesFound(Game const* game);
-
-Game* Game_SetPluginId(Game* game, pluginid_t pluginId);
-
-pluginid_t Game_PluginId(Game const* game);
-
-ddstring_t const* Game_IdentityKey(Game const* game);
-
-ddstring_t const* Game_Title(Game const* game);
-
-ddstring_t const* Game_Author(Game const* game);
-
-ddstring_t const* Game_MainConfig(Game const* game);
-
-ddstring_t const* Game_BindingConfig(Game const* game);
-
-Game* Game_FromDef(GameDef const* def);
-
-void Game_PrintBanner(Game const* game);
-
-void Game_PrintResources(Game const* game, boolean printStatus, int rflags);
-
-void Game_Print(Game const* game, int flags);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_GAME_H */

@@ -30,7 +30,7 @@
 #include "de_system.h"
 #include "de_filesys.h"
 
-#include "game.h"
+#include "Game"
 #include "map/propertyvalue.h"
 #include "render/rend_bias.h"
 #include "render/vlight.h"
