@@ -253,7 +253,8 @@ public:
 
     virtual ~PathTree();
 
-    /// @return  @c true iff there are no paths in the hierarchy. Same as @c size() == 0
+    /// @return  @c true iff there are no paths in the hierarchy.
+    /// Same as <code>size() == 0</code>
     bool empty() const;
 
     inline bool isEmpty() const { return empty(); }

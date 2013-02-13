@@ -120,7 +120,7 @@ BlockmapCoord Blockmap_CellX(Blockmap* blockmap, coord_t x);
 BlockmapCoord Blockmap_CellY(Blockmap* blockmap, coord_t y);
 
 /**
- * Same as @a Blockmap_CellX() with alternative semantics for when the caller
+ * Same as @ref Blockmap_CellX() with alternative semantics for when the caller
  * needs to know if the coordinate specified was inside/outside the Blockmap.
  */
 boolean Blockmap_ClipCellX(Blockmap* blockmap, BlockmapCoord* outX, coord_t x);

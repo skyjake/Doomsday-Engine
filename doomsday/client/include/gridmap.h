@@ -128,7 +128,7 @@ void Gridmap_Size(const Gridmap* gridmap, GridmapCoord widthHeight[2]);
 void* Gridmap_Cell(Gridmap* gridmap, const_GridmapCell cell, boolean alloc);
 
 /**
- * Same as Gridmap::Cell except cell coordinates are expressed with @a x and @a y arguments.
+ * Same as Gridmap_Cell() except cell coordinates are expressed with @a x and @a y arguments.
  */
 void* Gridmap_CellXY(Gridmap* gridmap, GridmapCoord x, GridmapCoord y, boolean alloc);
 
@@ -169,7 +169,7 @@ int Gridmap_BlockIterate(Gridmap* gridmap, const GridmapCellBlock* block,
     Gridmap_IterateCallback callback); /*parameters=NULL*/
 
 /**
- * Same as Gridmap::BlockIterate except cell block coordinates are expressed with
+ * Same as Gridmap_BlockIterate() except cell block coordinates are expressed with
  * independent X and Y coordinate arguments. For convenience.
  */
 int Gridmap_BlockXYIterate2(Gridmap* gridmap, GridmapCoord minX, GridmapCoord minY,
