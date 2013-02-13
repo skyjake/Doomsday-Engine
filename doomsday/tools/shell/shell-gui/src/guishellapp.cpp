@@ -40,6 +40,7 @@ struct GuiShellApp::Instance
     QMenu *localMenu;
 #ifdef MACOSX
     QAction *stopAction;
+    QAction *disconnectAction;
 #endif
     QList<LinkWindow *> windows;
 
@@ -78,8 +79,9 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     QMenu *menu = d->menuBar->addMenu(tr("Connection"));
     menu->addAction(tr("Connect..."), this, SLOT(connectToServer()),
                     QKeySequence(tr("Ctrl+O", "Connection|Connect")));
-    menu->addAction(tr("Disconnect"), this, SLOT(disconnectFromServer()),
-                    QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
+    d->disconnectAction = menu->addAction(tr("Disconnect"), this, SLOT(disconnectFromServer()),
+                                          QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
+    d->disconnectAction->setDisabled(true);
     menu->addSeparator();
     menu->addAction(tr("Close Window"), this, SLOT(closeActiveWindow()),
                     QKeySequence(tr("Ctrl+W", "Connection|Close Window")));
@@ -91,6 +93,7 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     svMenu->addSeparator();
     svMenu->addMenu(d->localMenu);
 
+    connect(menu, SIGNAL(aboutToShow()), this, SLOT(updateMenu()));
     connect(svMenu, SIGNAL(aboutToShow()), this, SLOT(updateMenu()));
 
     // These will appear in the application menu:
@@ -281,6 +284,7 @@ void GuiShellApp::updateMenu()
 #ifdef MACOSX
     LinkWindow *win = dynamic_cast<LinkWindow *>(activeWindow());
     d->stopAction->setEnabled(win && win->isConnected());
+    d->disconnectAction->setEnabled(win && win->isConnected());
 #endif
     updateLocalServerMenu();
 }

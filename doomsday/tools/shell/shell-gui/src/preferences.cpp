@@ -10,7 +10,7 @@
 
 DENG2_PIMPL(Preferences)
 {
-    QCheckBox *useDefaultIwad;
+    QCheckBox *useCustomIwad;
     FolderSelection *iwadFolder;
 
     Instance(Public &i) : Base(i)
@@ -27,16 +27,17 @@ DENG2_PIMPL(Preferences)
         QGroupBox *group = new QGroupBox(tr("IWAD Folder"));
         mainLayout->addWidget(group);
 
-        useDefaultIwad = new QCheckBox(tr("Use Doomsday's configured IWAD folder"));
-        useDefaultIwad->setChecked(st.value("Preferences/defaultIwad", true).toBool());
-        useDefaultIwad->setToolTip(tr("Doomsday's IWAD folder can be configured using "
-                               "configuration files or environment variables."));
+        useCustomIwad = new QCheckBox(tr("Use a custom IWAD folder"));
+        useCustomIwad->setChecked(st.value("Preferences/customIwad", false).toBool());
+        useCustomIwad->setToolTip(tr("Doomsday's default IWAD folder can be configured\n"
+                                     "using configuration files, environment variables,\n"
+                                     "or command line options."));
 
         iwadFolder = new FolderSelection(tr("Select IWAD Folder"));
         iwadFolder->setPath(st.value("Preferences/iwadFolder").toString());
 
         QVBoxLayout *bl = new QVBoxLayout;
-        bl->addWidget(useDefaultIwad);
+        bl->addWidget(useCustomIwad);
         bl->addWidget(iwadFolder);
         group->setLayout(bl);
 
@@ -58,7 +59,7 @@ DENG2_PIMPL(Preferences)
 Preferences::Preferences(QWidget *parent) :
     QDialog(parent), d(new Instance(*this))
 {
-    connect(d->useDefaultIwad, SIGNAL(toggled(bool)), this, SLOT(validate()));
+    connect(d->useCustomIwad, SIGNAL(toggled(bool)), this, SLOT(validate()));
     connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
     validate();
 }
@@ -70,7 +71,7 @@ Preferences::~Preferences()
 
 de::NativePath Preferences::iwadFolder() const
 {
-    if(!d->useDefaultIwad->isChecked())
+    if(d->useCustomIwad->isChecked())
     {
         return d->iwadFolder->path();
     }
@@ -80,11 +81,11 @@ de::NativePath Preferences::iwadFolder() const
 void Preferences::saveState()
 {
     QSettings st;
-    st.setValue("Preferences/defaultIwad", d->useDefaultIwad->isChecked());
-    st.setValue("Preferences/iwadFolder", iwadFolder().toString());
+    st.setValue("Preferences/customIwad", d->useCustomIwad->isChecked());
+    st.setValue("Preferences/iwadFolder", d->iwadFolder->path().toString());
 }
 
 void Preferences::validate()
 {
-    d->iwadFolder->setDisabled(d->useDefaultIwad->isChecked());
+    d->iwadFolder->setEnabled(d->useCustomIwad->isChecked());
 }

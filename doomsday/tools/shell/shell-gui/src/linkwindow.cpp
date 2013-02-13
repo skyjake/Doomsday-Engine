@@ -205,12 +205,14 @@ LinkWindow::LinkWindow(QWidget *parent)
     QIcon icon(":/images/toolbar_placeholder.png");
 
     QToolBar *tools = addToolBar(tr("View"));
+    tools->setMovable(false);
+    tools->setFloatable(false);
 
     d->statusButton = new QToolButton;
-    d->statusButton->setIcon(icon);
-    //d->statusButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    d->statusButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     d->statusButton->setFocusPolicy(Qt::NoFocus);
     d->statusButton->setText(tr("Status"));
+    d->statusButton->setIcon(icon);
     d->statusButton->setCheckable(true);
     d->statusButton->setChecked(true);
     connect(d->statusButton, SIGNAL(pressed()), this, SLOT(switchToStatus()));
@@ -218,7 +220,7 @@ LinkWindow::LinkWindow(QWidget *parent)
 
     d->consoleButton = new QToolButton;
     d->consoleButton->setIcon(icon);
-    //d->consoleButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    d->consoleButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     d->consoleButton->setFocusPolicy(Qt::NoFocus);
     d->consoleButton->setText(tr("Console"));
     d->consoleButton->setCheckable(true);
@@ -266,6 +268,7 @@ bool LinkWindow::isConnected() const
 
 void LinkWindow::closeEvent(QCloseEvent *event)
 {
+    /*
     if(isConnected())
     {
         if(QMessageBox::question(
@@ -278,6 +281,7 @@ void LinkWindow::closeEvent(QCloseEvent *event)
             return;
         }
     }
+    */
 
     closeConnection();
     event->accept();

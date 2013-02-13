@@ -182,10 +182,8 @@ void OpenDialog::updateLocalList(bool autoselect)
     // Remove servers no longer present.
     for(int i = d->firstFoundIdx; i < d->address->count(); )
     {
-        Q_ASSERT(d->address->itemData(i).canConvert<Address>());
-
-        Address sv = d->address->itemData(i).value<Address>();
-        if(!finder.foundServers().contains(sv))
+        if(!d->address->itemData(i).canConvert<Address>() ||
+                !finder.foundServers().contains(d->address->itemData(i).value<Address>()))
         {
             d->address->removeItem(i);
             continue;
