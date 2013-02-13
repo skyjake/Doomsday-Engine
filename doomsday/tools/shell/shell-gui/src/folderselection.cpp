@@ -53,7 +53,11 @@ DENG2_PIMPL(FolderSelection)
 
         edit = new QLineEdit;
         edit->setMinimumWidth(280);
+#ifdef WIN32
+        button = new QPushButton(tr("&Browse..."));
+#else
         button = new QPushButton(tr("..."));
+#endif
 
         layout->addWidget(edit, 1);
         layout->addWidget(button, 0);

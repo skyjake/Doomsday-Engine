@@ -141,6 +141,9 @@ LinkWindow::LinkWindow(QWidget *parent)
     : QMainWindow(parent), d(new Instance(*this))
 {
     setUnifiedTitleAndToolBarOnMac(true);
+#ifndef MACOSX
+    setWindowIcon(QIcon(":/images/shell.png"));
+#endif
 
     GuiShellApp *app = &GuiShellApp::app();
 
@@ -165,6 +168,8 @@ LinkWindow::LinkWindow(QWidget *parent)
     svMenu->addAction(d->stopAction);
     svMenu->addSeparator();
     svMenu->addMenu(app->localServersMenu());
+
+    connect(svMenu, SIGNAL(aboutToShow()), app, SLOT(updateLocalServerMenu()));
 
     QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(tr("About Doomsday Shell"), app, SLOT(aboutShell()));

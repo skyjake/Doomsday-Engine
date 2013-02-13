@@ -52,6 +52,7 @@ DENG2_PIMPL(OpenDialog)
         history = st.value("OpenDialog/history", QStringList() << "localhost").toStringList();
 
         self.setWindowTitle(tr("Open Connection"));
+        self.setWindowFlags(self.windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
         QVBoxLayout *mainLayout = new QVBoxLayout;
         self.setLayout(mainLayout);
