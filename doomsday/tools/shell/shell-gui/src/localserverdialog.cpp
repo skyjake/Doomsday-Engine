@@ -27,6 +27,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QLabel>
+#include <QTabWidget>
 #include <QFileDialog>
 #include <QSettings>
 #include "preferences.h"
@@ -51,8 +52,13 @@ DENG2_PIMPL(LocalServerDialog)
         QVBoxLayout *mainLayout = new QVBoxLayout;
         self.setLayout(mainLayout);
 
+        QTabWidget *tabs = new QTabWidget;
+        mainLayout->addWidget(tabs, 1);
+
+        QWidget *gameTab = new QWidget;
         QFormLayout *form = new QFormLayout;
-        mainLayout->addLayout(form);
+        gameTab->setLayout(form);
+        tabs->addTab(gameTab, tr("&Settings"));
 
         games = new QComboBox;
         games->setEditable(false);
@@ -61,13 +67,21 @@ DENG2_PIMPL(LocalServerDialog)
             games->addItem(mode.title, mode.option);
         }
         games->setCurrentIndex(games->findData(st.value("LocalServer/gameMode", "doom1-share")));
-        form->addRow(tr("Game mode:"), games);
+        form->addRow(tr("&Game mode:"), games);
+
+        QPushButton *opt = new QPushButton(tr("Game &Options..."));
+        form->addRow(0, opt);
 
         port = new QLineEdit;
         port->setMaximumWidth(80);
         port->setText(QString::number(st.value("LocalServer/port", 13209).toInt()));
         port->setToolTip(tr("Port must be between 0 and 65535."));
-        form->addRow(tr("TCP port:"), port);
+        form->addRow(tr("TCP &port:"), port);
+
+        QWidget *advancedTab = new QWidget;
+        form = new QFormLayout;
+        advancedTab->setLayout(form);
+        tabs->addTab(advancedTab, tr("&Advanced"));
 
         runtime = new FolderSelection(tr("Select Runtime Folder"));
         runtime->setPath(st.value("LocalServer/runtime").toString());
@@ -87,7 +101,6 @@ DENG2_PIMPL(LocalServerDialog)
         mainLayout->addWidget(bbox);
         yes = bbox->addButton(tr("&Start Server"), QDialogButtonBox::YesRole);
         QPushButton* no = bbox->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-        QPushButton *opt = bbox->addButton(tr("Game Options..."), QDialogButtonBox::ActionRole);
         QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
         QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
         QObject::connect(opt, SIGNAL(clicked()), &self, SLOT(configureGameOptions()));
