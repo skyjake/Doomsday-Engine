@@ -26,8 +26,11 @@
 #include "resource/compositetexture.h"
 #include <de/Error>
 #include <de/Log>
+#include <QMap>
 
 #include "Texture"
+
+typedef QMap<de::Texture::AnalysisId, void *> Analyses;
 
 namespace de {
 
@@ -50,18 +53,16 @@ DENG2_PIMPL(Texture)
     /// World origin offset in map coordinate space units.
     QPoint origin;
 
-    /// Table of analyses object ptrs, used for various purposes depending
-    /// on the variant specification.
-    void *analyses[TEXTURE_ANALYSIS_COUNT];
+    /// Image analysis data, used for various purposes according to context.
+    Analyses analyses;
 
     Instance(Public &a, TextureManifest &_manifest)
         : Base(a), manifest(_manifest), userData(0)
-    {
-        std::memset(analyses, 0, sizeof(analyses));
-    }
+    {}
 
     ~Instance()
     {
+        self.clearAnalyses();
         clearVariants();
     }
 
@@ -108,16 +109,6 @@ TextureManifest &Texture::manifest() const
     return d->manifest;
 }
 
-void Texture::clearAnalyses()
-{
-    for(uint i = uint(TEXTURE_ANALYSIS_FIRST); i < uint(TEXTURE_ANALYSIS_COUNT); ++i)
-    {
-        texture_analysisid_t analysis = texture_analysisid_t(i);
-        void* data = analysisDataPointer(analysis);
-        if(data) M_Free(data);
-        setAnalysisDataPointer(analysis, 0);
-    }
-}
 
 void Texture::setUserDataPointer(void *newUserData)
 {
@@ -223,24 +214,37 @@ void Texture::clearVariants()
     d->clearVariants();
 }
 
-void *Texture::analysisDataPointer(texture_analysisid_t analysisId) const
+void Texture::clearAnalyses()
 {
-    DENG2_ASSERT(VALID_TEXTURE_ANALYSISID(analysisId));
-    return d->analyses[analysisId];
+    foreach(void *data, d->analyses)
+    {
+        M_Free(data);
+    }
+    d->analyses.clear();
 }
 
-void Texture::setAnalysisDataPointer(texture_analysisid_t analysisId, void *data)
+void *Texture::analysisDataPointer(AnalysisId analysisId) const
 {
-    DENG2_ASSERT(VALID_TEXTURE_ANALYSISID(analysisId));
-    if(d->analyses[analysisId] && data)
+    if(!d->analyses.contains(analysisId)) return 0;
+    return d->analyses.value(analysisId);
+}
+
+void Texture::setAnalysisDataPointer(AnalysisId analysisId, void *newData)
+{
+    LOG_AS("Texture::attachAnalysis");
+    void *existingData = analysisDataPointer(analysisId);
+    if(existingData)
     {
 #if _DEBUG
-        LOG_AS("Texture::attachAnalysis");
-        LOG_DEBUG("Image analysis (id:%i) already present for \"%s\" (replaced).")
-            << int(analysisId) << d->manifest.composeUri();
+        if(newData)
+        {
+            LOG_DEBUG("Image analysis (id:%i) already present for \"%s\", (will replace).")
+                << int(analysisId) << d->manifest.composeUri();
+        }
 #endif
+        M_Free(existingData);
     }
-    d->analyses[analysisId] = data;
+    d->analyses.insert(analysisId, newData);
 }
 
 Texture::Flags Texture::flags() const

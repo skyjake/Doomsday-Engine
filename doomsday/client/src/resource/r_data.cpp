@@ -243,7 +243,7 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         info->id = id;
         info->flags.isCustom = tex.flags().testFlag(Texture::Custom);
 
-        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex.analysisDataPointer(TA_ALPHA));
+        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex.analysisDataPointer(Texture::AverageAlphaAnalysis));
         info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
 
         info->geometry.size.width  = tex.width();

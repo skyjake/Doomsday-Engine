@@ -219,18 +219,18 @@ static void calculateSkyAmbientColor()
         if(ms.hasTexture(MTU_PRIMARY))
         {
             Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
-            averagecolor_analysis_t const *avgColor = (averagecolor_analysis_t const *) tex.analysisDataPointer(TA_COLOR);
-            if(!avgColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no TA_COLOR analysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+            averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageColorAnalysis));
+            if(!avgColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageColorAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
             if(i == firstSkyLayer)
             {
-                averagecolor_analysis_t const *avgLineColor = (averagecolor_analysis_t const *) tex.analysisDataPointer(TA_LINE_TOP_COLOR);
-                if(!avgLineColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no TA_LINE_TOP_COLOR analysis").arg(tex.manifest().composeUri()));
+                averagecolor_analysis_t const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageTopColorAnalysis));
+                if(!avgLineColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageTopColorAnalysis").arg(tex.manifest().composeUri()));
 
                 V3f_Copy(topCapColor.rgb, avgLineColor->color.rgb);
 
-                avgLineColor = (averagecolor_analysis_t const *) tex.analysisDataPointer(TA_LINE_BOTTOM_COLOR);
-                if(!avgLineColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no TA_LINE_BOTTOM_COLOR analysis").arg(tex.manifest().composeUri()));
+                avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageBottomColorAnalysis));
+                if(!avgLineColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageBottomColorAnalysis").arg(tex.manifest().composeUri()));
 
                 V3f_Copy(bottomCapColor.rgb, avgLineColor->color.rgb);
             }
@@ -826,10 +826,10 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         if(setupCap != HC_NONE)
         {
-            averagecolor_analysis_t const *avgLineColor = (averagecolor_analysis_t const *)
-                    ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer((setupCap == HC_TOP? TA_LINE_TOP_COLOR : TA_LINE_BOTTOM_COLOR));
+            averagecolor_analysis_t const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>
+                    (ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer((setupCap == HC_TOP? Texture::AverageTopColorAnalysis : Texture::AverageBottomColorAnalysis)));
             float const fadeoutLimit = Sky_LayerFadeoutLimit(layer);
-            if(!avgLineColor) throw Error("configureRenderHemisphereStateForLayer", QString("Texture \"%1\" has no %2 analysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()).arg(setupCap == HC_TOP? "TA_LINE_TOP_COLOR" : "TA_LINE_BOTTOM_COLOR"));
+            if(!avgLineColor) throw Error("configureRenderHemisphereStateForLayer", QString("Texture \"%1\" has no %2").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()).arg(setupCap == HC_TOP? "AverageTopColorAnalysis" : "AverageBottomColorAnalysis"));
 
             V3f_Copy(rs.capColor.rgb, avgLineColor->color.rgb);
             // Is the colored fadeout in use?

@@ -546,12 +546,12 @@ float R_ShadowStrength(mobj_t *mo)
             // Ensure we've prepared this.
             MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
 
-            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_ALPHA);
+            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
             float weightedSpriteAlpha;
             if(!aa)
             {
                 QByteArray uri = ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri().asText().toUtf8();
-                Con_Error("R_ShadowStrength: Texture \"%s\" has no TA_ALPHA analysis", uri.constData());
+                Con_Error("R_ShadowStrength: Texture \"%s\" has no AverageAlphaAnalysis", uri.constData());
             }
 
             // We use an average which factors in the coverage ratio
@@ -1289,11 +1289,11 @@ void R_ProjectSprite(mobj_t *mo)
         // Ensure we have up-to-date information about the material.
         MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
 
-        pointlight_analysis_t const *pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_SPRITE_AUTOLIGHT);
+        pointlight_analysis_t const *pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis);
         if(!pl)
         {
             QByteArray uri = ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri().asText().toUtf8();
-            Con_Error("R_ProjectSprite: Texture \"%s\" has no TA_SPRITE_AUTOLIGHT analysis", uri.constData());
+            Con_Error("R_ProjectSprite: Texture \"%s\" has no BrightPointAnalysis", uri.constData());
         }
 
         lumobj_t const *lum = LO_GetLuminous(mo->lumIdx);

@@ -749,8 +749,8 @@ static void addLuminous(mobj_t *mo)
     MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
     if(!ms.hasTexture(MTU_PRIMARY)) return; // An invalid sprite texture?
 
-    pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_SPRITE_AUTOLIGHT);
-    if(!pl) throw Error("addLuminous", QString("Texture \"%1\" has no TA_SPRITE_AUTOLIGHT analysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+    pl = reinterpret_cast<pointlight_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis));
+    if(!pl) throw Error("addLuminous", QString("Texture \"%1\" has no BrightPointAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
     size = pl->brightMul;
     yOffset = ms.dimensions().height() * pl->originY;
@@ -963,8 +963,8 @@ static void createGlowLightForSurface(Surface &suf)
         MaterialSnapshot const &ms = suf.material->prepare(Rend_MapSurfaceMaterialSpec());
         if(!(ms.glowStrength() > .001f)) break;
 
-        averagecolor_analysis_t const *avgColorAmplified = (averagecolor_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(TA_COLOR_AMPLIFIED);
-        if(!avgColorAmplified) throw Error("createGlowLightForSurface", QString("Texture \"%1\" has no TA_COLOR_AMPLIFIED analysis)").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+        averagecolor_analysis_t const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
+        if(!avgColorAmplified) throw Error("createGlowLightForSurface", QString("Texture \"%1\" has no AverageColorAmplifiedAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
         lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);

@@ -21,24 +21,6 @@
 #ifndef LIBDENG_RESOURCE_TEXTURE_H
 #define LIBDENG_RESOURCE_TEXTURE_H
 
-/// @addtogroup resource
-///@{
-typedef enum {
-    TEXTURE_ANALYSIS_FIRST = 0,
-    TA_COLORPALETTE = TEXTURE_ANALYSIS_FIRST,
-    TA_SPRITE_AUTOLIGHT,
-    TA_COLOR,                  ///< Average.
-    TA_COLOR_AMPLIFIED,        ///< Average amplified (max component ==1).
-    TA_ALPHA,                  ///< Average.
-    TA_LINE_TOP_COLOR,         ///< Average.
-    TA_LINE_BOTTOM_COLOR,      ///< Average.
-    TEXTURE_ANALYSIS_COUNT
-} texture_analysisid_t;
-
-#define VALID_TEXTURE_ANALYSISID(id) (\
-    (int)(id) >= TEXTURE_ANALYSIS_FIRST && (int)(id) < TEXTURE_ANALYSIS_COUNT)
-///@}
-
 #include "TextureVariantSpec"
 #include <de/Error>
 #include <QFlag>
@@ -78,6 +60,33 @@ public:
         UpscaleAndSharpen   = 0x8
     };
     Q_DECLARE_FLAGS(Flags, Flag)
+
+    /**
+     * Image analysis identifiers.
+     */
+    enum AnalysisId
+    {
+        /// Color palette info.
+        ColorPaletteAnalysis,
+
+        /// Brightest point for automatic light sources.
+        BrightPointAnalysis,
+
+        /// Average color.
+        AverageColorAnalysis,
+
+        /// Average color amplified (max component ==1).
+        AverageColorAmplifiedAnalysis,
+
+        /// Average alpha.
+        AverageAlphaAnalysis,
+
+        /// Average top line color.
+        AverageTopColorAnalysis,
+
+        /// Average bottom line color.
+        AverageBottomColorAnalysis
+    };
 
     /**
      * Context-specialized variant. Encapsulates all context variant values
@@ -293,23 +302,23 @@ public:
     void clearAnalyses();
 
     /**
-     * Retrieve the value of an identified @a analysis data pointer.
+     * Retrieve the value of an identified @a analysisId data pointer.
      * @return  Associated data pointer value.
      */
-    void *analysisDataPointer(texture_analysisid_t analysis) const;
+    void *analysisDataPointer(AnalysisId analysisId) const;
 
     /**
-     * Set the value of an identified @a analysis data pointer. Ownership of
+     * Set the value of an identified @a analysisId data pointer. Ownership of
      * the data is not given to this instance.
      *
      * @note If already set the old value will be replaced (so if it points
      *       to some dynamically constructed data/resource it is the caller's
      *       responsibility to release it beforehand).
      *
-     * @param analysis  Identifier of the data being attached.
+     * @param analysisId  Identifier of the data being attached.
      * @param data  Data to be attached.
      */
-    void setAnalysisDataPointer(texture_analysisid_t analysis, void *data);
+    void setAnalysisDataPointer(AnalysisId analysisId, void *data);
 
     /**
      * Retrieve the value of the associated user data pointer.
