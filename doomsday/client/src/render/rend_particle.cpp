@@ -147,36 +147,32 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
     return result;
 }}
 
-void Rend_ParticleLoadSystemTextures(void)
+void Rend_ParticleLoadSystemTextures()
 {
-    if(novideo)
-        return;
-    if(pointTex)
-        return; // Already been here.
+    if(novideo) return;
+    if(pointTex) return; // Already been here.
 
     // Load the default "zeroth" texture - a modification of the dynlight texture (a blurred point).
     pointTex = GL_PrepareExtTexture("Zeroth", LGM_WHITE_ALPHA, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-    if(pointTex == 0)
-    {
-        Con_Error("Rend_ParticleLoadSystemTextures: \"Zeroth\" not found.\n");
-    }
+
+    DENG2_ASSERT(pointTex != 0);
 }
 
-void Rend_ParticleLoadExtraTextures(void)
+void Rend_ParticleLoadExtraTextures()
 {
-    int i;
-    boolean reported = false;
-
     if(novideo) return;
 
     Rend_ParticleReleaseExtraTextures();
     if(!App_GameLoaded()) return;
 
-    for(i = 0; i < MAX_PTC_TEXTURES; ++i)
+    bool reported = false;
+    for(int i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
         if(!loadParticleTexture(i, reported))
+        {
             reported = true;
+        }
     }
 }
 

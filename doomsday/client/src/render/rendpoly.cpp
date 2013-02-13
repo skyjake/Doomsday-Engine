@@ -331,7 +331,7 @@ void Rtu_Init(rtexmapunit_t* rtu)
 boolean Rtu_HasTexture(rtexmapunit_t const *rtu)
 {
     if(rtu->texture.flags & TUF_TEXTURE_IS_MANAGED)
-        return reinterpret_cast<de::Texture::Variant *>(rtu->texture.variant)->glName() != 0;
+        return rtu->texture.variant->glName() != 0;
     return rtu->texture.gl.name != 0;
 }
 

@@ -1498,7 +1498,10 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 #endif
 
         R_InitSvgs();
+
+#ifdef __CLIENT__
         R_InitViewWindow();
+#endif
 
         App_FileSystem()->unloadAllNonStartupFiles();
 

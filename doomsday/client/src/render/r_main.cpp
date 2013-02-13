@@ -481,7 +481,9 @@ void R_Init()
     R_InitTranslationTables();
     R_InitRawTexs();
     R_InitSvgs();
+#ifdef __CLIENT__
     R_InitViewWindow();
+#endif
     Rend_Init();
     frameCount = 0;
 }

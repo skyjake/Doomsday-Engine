@@ -128,11 +128,14 @@ void R_ShutdownViewWindow(void)
     inited = false;
 }
 
-void R_DrawPatch3(struct texture_s *_tex, int x, int y, int w, int h, boolean useOffsets)
+texturevariantspecification_t *Rend_PatchTextureSpec(int flags, int wrapS, int wrapT)
 {
-    if(!_tex) return;
-    Texture &tex = reinterpret_cast<Texture &>(*_tex);
+    return GL_TextureVariantSpecificationForContext(TC_UI, flags, 0, 0, 0, wrapS, wrapT,
+                                                    0, -3, 0, false, false, false, false);
+}
 
+void R_DrawPatch(Texture &tex, int x, int y, int w, int h, bool useOffsets)
+{
     if(tex.manifest().schemeName().compareWithoutCase("Patches"))
     {
 #if _DEBUG
@@ -142,7 +145,11 @@ void R_DrawPatch3(struct texture_s *_tex, int x, int y, int w, int h, boolean us
         return;
     }
 
-    GL_BindTexture(GL_PreparePatchTexture(_tex));
+    texturevariantspecification_t *texSpec =
+        Rend_PatchTextureSpec(0 | (tex.flags().testFlag(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                | (tex.flags().testFlag(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+    GL_BindTexture(GL_PrepareTexture(tex, *texSpec));
+
     if(useOffsets)
     {
         x += tex.origin().x();
@@ -152,25 +159,19 @@ void R_DrawPatch3(struct texture_s *_tex, int x, int y, int w, int h, boolean us
     GL_DrawRectf2Color(x, y, w, h, 1, 1, 1, 1);
 }
 
-void R_DrawPatch2(struct texture_s *tex, int x, int y, int w, int h)
+void R_DrawPatch(Texture &tex, int x, int y)
 {
-    R_DrawPatch3(tex, x, y, w, h, true);
+    R_DrawPatch(tex, x, y, tex.width(), tex.height());
 }
 
-void R_DrawPatch(struct texture_s *_tex, int x, int y)
+void R_DrawPatchTiled(Texture &tex, int x, int y, int w, int h, int wrapS, int wrapT)
 {
-    if(!_tex) return;
-    Texture &tex = reinterpret_cast<Texture &>(*_tex);
+    texturevariantspecification_t *texSpec =
+        Rend_PatchTextureSpec(0 | (tex.flags().testFlag(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                | (tex.flags().testFlag(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
+                              wrapS, wrapT);
 
-    R_DrawPatch2(_tex, x, y, tex.width(), tex.height());
-}
-
-void R_DrawPatchTiled(struct texture_s *_tex, int x, int y, int w, int h, int wrapS, int wrapT)
-{
-    if(!_tex) return;
-    Texture &tex = reinterpret_cast<Texture &>(*_tex);
-
-    GL_BindTexture(GL_PreparePatchTexture2(_tex, wrapS, wrapT));
+    GL_BindTexture(GL_PrepareTexture(tex, *texSpec));
     GL_DrawRectf2Tiled(x, y, w, h, tex.width(), tex.height());
 }
 
@@ -221,7 +222,7 @@ void R_DrawViewBorder()
         MaterialSnapshot const &ms = App_Materials().find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]))
             .material().prepare(Ui_MaterialSpec());
 
-        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
+        GL_BindTexture(&ms.texture(MTU_PRIMARY));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.dimensions().width(), ms.dimensions().height(), 0, 0,
                             vd->window.origin.x - border, vd->window.origin.y - border,
                             vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
@@ -232,10 +233,10 @@ void R_DrawViewBorder()
     if(border != 0)
     {
         Textures &textures = App_Textures();
-        R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOP]).texture()),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOM]).texture()), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_LEFT]).texture()),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
-        R_DrawPatchTiled(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_RIGHT]).texture()),  vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOP]).texture(),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOM]).texture(), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_LEFT]).texture(),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_RIGHT]).texture(),  vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
     }
 
     glMatrixMode(GL_TEXTURE);
@@ -244,10 +245,10 @@ void R_DrawViewBorder()
     if(border != 0)
     {
         Textures &textures = App_Textures();
-        R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPLEFT]).texture()),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
-        R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPRIGHT]).texture()),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
-        R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMRIGHT]).texture()), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);
-        R_DrawPatch3(reinterpret_cast<texture_s *>(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMLEFT]).texture()),  vd->window.origin.x - border, vd->window.origin.y + vd->window.size.height, border, border, false);
+        R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPLEFT]).texture(),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
+        R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPRIGHT]).texture(),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
+        R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMRIGHT]).texture(), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);
+        R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMLEFT]).texture(),  vd->window.origin.x - border, vd->window.origin.y + vd->window.size.height, border, border, false);
     }
 
     glDisable(GL_TEXTURE_2D);

@@ -1,4 +1,4 @@
-/** @file texturescheme.h
+/** @file texturescheme.h Texture collection subspace.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -20,15 +20,18 @@
 #ifndef LIBDENG_RESOURCE_TEXTURESCHEME_H
 #define LIBDENG_RESOURCE_TEXTURESCHEME_H
 
-#include "api_uri.h"
-
-#include "TextureManifest"
+#include "uri.hh"
 #include <de/PathTree>
+#include <de/Error>
 
 namespace de {
 
+class TextureManifest;
+
 /**
- * TextureScheme defines a texture system subspace.
+ * Texture collection subspace.
+ *
+ * @see Textures
  * @ingroup resource
  */
 class TextureScheme
@@ -37,9 +40,9 @@ public:
     typedef class TextureManifest Manifest;
 
     /// Minimum length of a symbolic name.
-    static int const min_name_length = URI_MINSCHEMELENGTH;
+    static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
 
-    /// Texture manifests within the scheme are placed into a tree.
+    /// Manifests within the scheme are placed into a tree.
     typedef PathTreeT<Manifest> Index;
 
 public:
@@ -54,19 +57,16 @@ public:
      *                      have at least @ref min_name_length characters.
      */
     explicit TextureScheme(String symbolicName);
-
     ~TextureScheme();
 
     /// @return  Symbolic name of this scheme (e.g., "ModelSkins").
     String const &name() const;
 
     /// @return  Total number of manifests in the scheme.
-    int size() const;
+    inline int size() const { return index().size(); }
 
     /// @return  Total number of manifests in the scheme. Same as @ref size().
-    inline int count() const {
-        return size();
-    }
+    inline int count() const { return size(); }
 
     /**
      * Clear all manifests in the scheme (any GL textures which have been

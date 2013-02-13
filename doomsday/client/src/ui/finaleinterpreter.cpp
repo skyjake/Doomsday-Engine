@@ -1581,34 +1581,26 @@ DEFFC(ImageAt)
     Con_Message("FIC_ImageAt: Warning, missing lump '%s'.\n", name);
 }
 
-static DGLuint loadGraphics(const char* name, gfxmode_t mode, int useMipmap, boolean clamped, int otherFlags)
-{
-#ifdef __CLIENT__
-    return GL_PrepareExtTexture(name, mode, useMipmap,
-                                GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-                                clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
-                                clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
-                                otherFlags);
-#else
-    return 0;
-#endif
-}
-
 DEFFC(XImage)
 {
-    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    const char* fileName = OP_CSTRING(1);
-    DGLuint tex;
+    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    char const *fileName = OP_CSTRING(1);
 
     FIData_PicClearAnimation(obj);
 
+#ifdef __CLIENT__
     // Load the external resource.
-    if((tex = loadGraphics(fileName, LGM_NORMAL, false, true, 0)))
+    if(DGLuint tex = GL_PrepareExtTexture(fileName, LGM_NORMAL, false,
+                                          GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
+                                          GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0))
     {
         FIData_PicAppendFrame(obj, PFT_XIMAGE, -1, &tex, 0, false);
     }
     else
+    {
         Con_Message("FIC_XImage: Warning, missing graphic '%s'.\n", fileName);
+    }
+#endif // __CLIENT__
 }
 
 DEFFC(Patch)

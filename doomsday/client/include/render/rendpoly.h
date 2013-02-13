@@ -23,11 +23,8 @@
 #define LIBDENG_RENDER_RENDPOLY_H
 
 #include "color.h"
+#include "Texture"
 #include <de/vector1.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct walldivnode_s;
 
@@ -66,7 +63,7 @@ typedef struct rtexmapunit_texture_s {
             DGLuint name; ///< Texture used on this layer (if any).
             int magMode; ///< GL texture magnification filter.
         } gl;
-        struct texturevariant_s *variant;
+        de::Texture::Variant *variant;
     };
     /// @ref textureUnitFlags
     int flags;
@@ -94,6 +91,10 @@ typedef struct rtexmapuint_s {
     /// Texture-space origin translation (unscaled).
     vec2f_t offset;
 } rtexmapunit_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern byte rendInfoRPolys;
 

@@ -248,4 +248,16 @@ Texture::Flags Texture::flags() const
     return d->flags;
 }
 
+void Texture::setFlags(Texture::Flags flagsToChange, bool set)
+{
+    if(set)
+    {
+        d->flags |= flagsToChange;
+    }
+    else
+    {
+        d->flags &= ~flagsToChange;
+    }
+}
+
 } // namespace de

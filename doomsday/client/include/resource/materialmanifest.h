@@ -22,7 +22,6 @@
 
 #include "Material"
 #include "MaterialScheme"
-#include "def_data.h"
 #include "uri.hh"
 #include <de/Error>
 #include <de/PathTree>
@@ -32,8 +31,12 @@ namespace de {
 class Materials;
 
 /**
- * Description of a logical material resource.
+ * Description for a would-be logical Material resource.
  *
+ * Models a reference to and the associated metadata for a logical material
+ * in the material resource collection.
+ *
+ * @see MaterialScheme, Material
  * @ingroup resource
  */
 class MaterialManifest : public PathTree::Node
@@ -54,11 +57,10 @@ public:
 
 public:
     MaterialManifest(PathTree::NodeArgs const &args);
-
     virtual ~MaterialManifest();
 
     /**
-     * Returns the owning scheme of the material manifest.
+     * Returns the owning scheme of the manifest.
      */
     MaterialScheme &scheme() const;
 
@@ -107,11 +109,13 @@ public:
     /// @c true if the manifest was not produced for an original game resource.
     inline bool isCustom() const { return flags().testFlag(Custom); }
 
-    /// @return  @c true if the manifest has an associated material.
+    /**
+     * Returns @c true if a Material is presently associated with the manifest.
+     */
     bool hasMaterial() const;
 
     /**
-     * Returns the material associated with the manifest.
+     * Returns the logical Material associated with the manifest.
      */
     Material &material() const;
 
@@ -122,7 +126,7 @@ public:
      */
     void setMaterial(Material *material);
 
-    /// Returns a reference to the application's material system.
+    /// Returns a reference to the application's material collection.
     static Materials &materials();
 
 private:

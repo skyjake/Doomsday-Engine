@@ -54,6 +54,17 @@ typedef enum flaretexid_e {
     NUM_SYSFLARE_TEXTURES
 } flaretexid_t;
 
+typedef enum uitexid_e {
+    UITEX_MOUSE,
+    UITEX_CORNER,
+    UITEX_FILL,
+    UITEX_SHADE,
+    UITEX_HINT,
+    UITEX_LOGO,
+    UITEX_BACKGROUND,
+    NUM_UITEXTURES
+} uitexid_t;
+
 typedef struct {
     DGLuint tex;
 } ddtexture_t;

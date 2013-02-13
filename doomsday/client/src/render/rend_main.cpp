@@ -3898,7 +3898,7 @@ static void Rend_RenderBoundingBoxes()
     MaterialSnapshot const &ms = App_Materials().
             find(de::Uri("System", Path("bbox"))).material().prepare(Rend_SpriteMaterialSpec());
 
-    GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
+    GL_BindTexture(&ms.texture(MTU_PRIMARY));
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)

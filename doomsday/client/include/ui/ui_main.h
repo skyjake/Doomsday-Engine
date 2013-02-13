@@ -219,8 +219,6 @@ ui_color_t* UI_Color(uint id);
 
 /// @return  Height of the current UI font.
 int UI_FontHeight(void);
-void UI_LoadTextures(void);
-void UI_ReleaseTextures(void);
 
 /// Initializes UI page data prior to use.
 void UI_InitPage(ui_page_t* page, ui_object_t* objects);

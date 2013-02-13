@@ -45,9 +45,11 @@ static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
     {
         if(def.texture)
         {
-            return App_Textures().find(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+            return &App_Textures().find(*reinterpret_cast<de::Uri *>(def.texture)).texture();
         }
     }
+    catch(TextureManifest::MissingTextureError const &)
+    {} // Ignore this error.
     catch(Textures::NotFoundError const &)
     {} // Ignore this error.
     return 0;
@@ -92,10 +94,12 @@ static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
     {
         if(def.texture)
         {
-            return App_Textures().scheme("Details")
+            return &App_Textures().scheme("Details")
                         .findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
         }
     }
+    catch(TextureManifest::MissingTextureError const &)
+    {} // Ignore this error.
     catch(Textures::Scheme::NotFoundError const &)
     {} // Ignore this error.
     return 0;
@@ -142,7 +146,7 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
         {
             if(def.maskTexture)
             {
-                return App_Textures().scheme("Masks")
+                return &App_Textures().scheme("Masks")
                             .findByResourceUri(*reinterpret_cast<de::Uri *>(def.maskTexture)).texture();
             }
         }
@@ -150,11 +154,13 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
         {
             if(def.texture)
             {
-                return App_Textures().scheme("Reflections")
+                return &App_Textures().scheme("Reflections")
                             .findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
             }
         }
     }
+    catch(TextureManifest::MissingTextureError const &)
+    {} // Ignore this error.
     catch(Textures::Scheme::NotFoundError const &)
     {} // Ignore this error.
     return 0;

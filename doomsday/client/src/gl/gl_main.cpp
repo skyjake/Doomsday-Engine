@@ -755,7 +755,7 @@ void GL_SetMaterialUI2(Material *mat, int wrapS, int wrapT)
     MaterialVariantSpec const &spec =
         App_Materials().variantSpecForContext(MC_UI, 0, 1, 0, 0, wrapS, wrapT,
                                                0, 1, 0, false, false, false, false);
-    GL_BindTexture(reinterpret_cast<texturevariant_s *>(&mat->prepare(spec).texture(MTU_PRIMARY)));
+    GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
 }
 
 void GL_SetMaterialUI(Material* mat)
@@ -770,7 +770,7 @@ void GL_SetPSprite(Material *mat, int tClass, int tMap)
     MaterialVariantSpec const &spec =
         App_Materials().variantSpecForContext(MC_PSPRITE, 0, 1, tClass, tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                                0, 1, 0, false, true, true, false);
-    GL_BindTexture(reinterpret_cast<texturevariant_s *>(&mat->prepare(spec).texture(MTU_PRIMARY)));
+    GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
 }
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
@@ -787,12 +787,12 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
     }
 }
 
-void GL_BindTexture(Texture::Variant &tex)
+void GL_BindTexture(Texture::Variant *tex)
 {
     if(BusyMode_InWorkerThread()) return;
 
     // Ensure we've prepared this.
-    if(GL_PrepareTexture(tex) == PTR_NOTFOUND)
+    if(!tex || GL_PrepareTexture(*tex) == PTR_NOTFOUND)
     {
         GL_SetNoTexture();
         return;
@@ -801,11 +801,11 @@ void GL_BindTexture(Texture::Variant &tex)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBindTexture(GL_TEXTURE_2D, tex.glName());
+    glBindTexture(GL_TEXTURE_2D, tex->glName());
     Sys_GLCheckError();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
-    texturevariantspecification_t const &spec = tex.spec();
+    texturevariantspecification_t const &spec = tex->spec();
     if(spec.type == TST_GENERAL)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec)->wrapS);
@@ -820,22 +820,9 @@ void GL_BindTexture(Texture::Variant &tex)
     }
 }
 
-/// @todo Remove me.
-void GL_BindTexture(texturevariant_s *_tex)
-{
-    if(BusyMode_InWorkerThread()) return;
-    if(Texture::Variant *tex = reinterpret_cast<Texture::Variant *>(_tex))
-    {
-        GL_BindTexture(*tex);
-        return;
-    }
-    GL_SetNoTexture();
-}
-
 void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+    if(BusyMode_InWorkerThread()) return;
 
     if(glName == 0)
     {
@@ -843,7 +830,12 @@ void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
         return;
     }
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
     glBindTexture(GL_TEXTURE_2D, glName);
+    Sys_GLCheckError();
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
     if(GL_state.features.texFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
@@ -851,11 +843,13 @@ void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 
 void GL_SetNoTexture()
 {
+    if(BusyMode_InWorkerThread()) return;
+
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    /// @todo Don't actually change the current binding.
-    ///       Simply disable any currently enabled texture types.
+    /// @todo Don't actually change the current binding. Instead we should disable
+    ///       all currently enabled texture types.
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

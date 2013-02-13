@@ -23,11 +23,8 @@
 #ifndef LIBDENG_RENDER_MISC_H
 #define LIBDENG_RENDER_MISC_H
 
+#include "de_system.h"
 #include "Texture"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void R_InitViewWindow(void);
 void R_ShutdownViewWindow(void);
@@ -37,14 +34,12 @@ void R_ShutdownViewWindow(void);
  */
 void R_DrawViewBorder(void);
 
-void R_DrawPatch(struct texture_s *texture, int x, int y);
-void R_DrawPatch2(struct texture_s *texture, int x, int y, int w, int h);
-void R_DrawPatch3(struct texture_s *texture, int x, int y, int w, int h, boolean useOffsets);
+texturevariantspecification_t *Rend_PatchTextureSpec(int flags = 0,
+    int wrapS = GL_CLAMP_TO_EDGE, int wrapT = GL_CLAMP_TO_EDGE);
 
-void R_DrawPatchTiled(struct texture_s *texture, int x, int y, int w, int h, int wrapS, int wrapT);
+void R_DrawPatch(de::Texture &texture, int x, int y);
+void R_DrawPatch(de::Texture &texture, int x, int y, int w, int h, bool useOffsets = true);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+void R_DrawPatchTiled(de::Texture &texture, int x, int y, int w, int h, int wrapS, int wrapT);
 
 #endif /* LIBDENG_RENDER_MISC_H */

@@ -20,9 +20,9 @@
 #ifndef LIBDENG_RESOURCE_MATERIALSCHEME_H
 #define LIBDENG_RESOURCE_MATERIALSCHEME_H
 
-#include "api_uri.h"
-
+#include "uri.hh"
 #include <de/PathTree>
+#include <de/Error>
 
 namespace de {
 
@@ -31,15 +31,16 @@ class MaterialManifest;
 /**
  * Material collection subspace.
  *
+ * @see Materials
  * @ingroup resource
  */
 class MaterialScheme
 {
 public:
-    /// Minimum length of a symbolic name.
-    static int const min_name_length = URI_MINSCHEMELENGTH;
-
     typedef MaterialManifest Manifest;
+
+    /// Minimum length of a symbolic name.
+    static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
 
     /// Manifests in the scheme are placed into a tree.
     typedef PathTreeT<Manifest> Index;
@@ -56,7 +57,6 @@ public:
      *                      have at least @ref min_name_length characters.
      */
     explicit MaterialScheme(String symbolicName);
-
     ~MaterialScheme();
 
     /// @return  Symbolic name of this scheme (e.g., "Flats").
@@ -74,7 +74,7 @@ public:
     void clear();
 
     /**
-     * Insert a new material manifest at the given @a path into the scheme.
+     * Insert a new manifest at the given @a path into the scheme.
      * If a manifest already exists at this path, the existing manifest is
      * returned and the call is a no-op.
      *

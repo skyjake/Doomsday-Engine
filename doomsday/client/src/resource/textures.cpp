@@ -17,8 +17,6 @@
  * 02110-1301 USA</small>
  */
 
-//#include <cstdlib>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "gl/gl_texmanager.h"
@@ -33,18 +31,18 @@
 
 #include "resource/textures.h"
 
+D_CMD(ListTextures);
+D_CMD(InspectTexture);
+#if _DEBUG
+D_CMD(PrintTextureStats);
+#endif
+
 char const *TexSource_Name(TexSource source)
 {
     if(source == TEXS_ORIGINAL) return "original";
     if(source == TEXS_EXTERNAL) return "external";
     return "none";
 }
-
-D_CMD(ListTextures);
-D_CMD(InspectTexture);
-#if _DEBUG
-D_CMD(PrintTextureStats);
-#endif
 
 namespace de {
 
@@ -54,7 +52,7 @@ Texture *Textures::ResourceClass::interpret(TextureManifest &manifest, void *use
 {
     LOG_AS("Textures::ResourceClass::interpret");
     Texture *tex = new Texture(manifest);
-    tex->flags() = manifest.flags();
+    tex->setFlags(manifest.flags());
     tex->setDimensions(manifest.logicalDimensions());
     tex->setOrigin(manifest.origin());
     tex->setUserDataPointer(userData);
@@ -287,8 +285,10 @@ TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
     {
         manifest = &scheme(uri.scheme()).insertManifest(uri.path());
     }
-    if(!manifest)
+    catch(...)
+    {
         throw Error("Textures::declare", "Unexpected error declaring texture \"" + uri + "\"");
+    }
 
     /*
      * (Re)configure the manifest.
@@ -317,16 +317,28 @@ TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
         mustRelease = true;
     }
 
-    if(mustRelease)
+    if(mustRelease && manifest->hasTexture())
     {
-        if(de::Texture *tex = manifest->texture())
-        {
-            /// @todo Update any Materials (and thus Surfaces) which reference this.
-            GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(tex));
-        }
+        /// @todo Update any Materials (and thus Surfaces) which reference this.
+        GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(&manifest->texture()));
     }
 
     return manifest;
+}
+
+static int iterateTextures(TextureScheme const &scheme,
+    int (*callback)(Texture &tex, void *parameters), void *parameters)
+{
+    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
+    while(iter.hasNext())
+    {
+        TextureManifest &manifest = iter.next();
+        if(!manifest.hasTexture()) continue;
+
+        if(int result = callback(manifest.texture(), parameters))
+            return result;
+    }
+    return 0; // Continue iteration.
 }
 
 int Textures::iterate(String nameOfScheme,
@@ -334,34 +346,30 @@ int Textures::iterate(String nameOfScheme,
 {
     if(!callback) return 0;
 
+    // Limit iteration to a specific scheme?
     if(!nameOfScheme.isEmpty())
     {
-        PathTreeIterator<TextureScheme::Index> iter(scheme(nameOfScheme).index().leafNodes());
-        while(iter.hasNext())
-        {
-            TextureManifest &manifest = iter.next();
-            if(!manifest.texture()) continue;
-
-            int result = callback(*manifest.texture(), parameters);
-            if(result) return result;
-        }
+        return iterateTextures(scheme(nameOfScheme), callback, parameters);
     }
-    else
-    {
-        foreach(Scheme *scheme, d->schemes)
-        {
-            PathTreeIterator<TextureScheme::Index> iter(scheme->index().leafNodes());
-            while(iter.hasNext())
-            {
-                TextureManifest &manifest = iter.next();
-                if(!manifest.texture()) continue;
 
-                int result = callback(*manifest.texture(), parameters);
-                if(result) return result;
-            }
-        }
+    foreach(Scheme *scheme, d->schemes)
+    {
+        if(int result = iterateTextures(*scheme, callback, parameters))
+            return result;
     }
     return 0;
+}
+
+static int iterateManifests(TextureScheme const &scheme,
+    int (*callback)(TextureManifest &manifest, void *parameters), void *parameters)
+{
+    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
+    while(iter.hasNext())
+    {
+        if(int result = callback(iter.next(), parameters))
+            return result;
+    }
+    return 0; // Continue iteration.
 }
 
 int Textures::iterateDeclared(String nameOfScheme,
@@ -369,28 +377,16 @@ int Textures::iterateDeclared(String nameOfScheme,
 {
     if(!callback) return 0;
 
+    // Limit iteration to a specific scheme?
     if(!nameOfScheme.isEmpty())
     {
-        PathTreeIterator<TextureScheme::Index> iter(scheme(nameOfScheme).index().leafNodes());
-        while(iter.hasNext())
-        {
-            TextureManifest &manifest = iter.next();
-            int result = callback(manifest, parameters);
-            if(result) return result;
-        }
+        return iterateManifests(scheme(nameOfScheme), callback, parameters);
     }
-    else
+
+    foreach(Scheme *scheme, d->schemes)
     {
-        foreach(Scheme *scheme, d->schemes)
-        {
-            PathTreeIterator<TextureScheme::Index> iter(scheme->index().leafNodes());
-            while(iter.hasNext())
-            {
-                TextureManifest &manifest = iter.next();
-                int result = callback(manifest, parameters);
-                if(result) return result;
-            }
-        }
+        if(int result = iterateManifests(*scheme, callback, parameters))
+            return result;
     }
 
     return 0;
@@ -436,7 +432,7 @@ static void printTextureInfo(Texture &tex)
 
 static void printTextureSummary(TextureManifest &manifest, bool printSchemeName = true)
 {
-    Texture *texture = manifest.texture();
+    Texture *texture = manifest.hasTexture()? &manifest.texture() : 0;
     Uri uri = manifest.composeUri();
     QByteArray path = printSchemeName? uri.asText().toUtf8() : QByteArray::fromPercentEncoding(uri.path().toStringRef().toUtf8());
 
@@ -701,9 +697,9 @@ D_CMD(InspectTexture)
     try
     {
         de::TextureManifest &manifest = textures.find(search);
-        if(de::Texture* tex = manifest.texture())
+        if(manifest.hasTexture())
         {
-            de::printTextureInfo(*tex);
+            de::printTextureInfo(manifest.texture());
         }
         else
         {

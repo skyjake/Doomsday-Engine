@@ -137,13 +137,13 @@ public:
 
         void setCoords(float s, float t);
 
-        /// Returns @c true if the material is flagged as "masked".
+        /// Returns @c true if the variant is flagged as "masked".
         inline bool isMasked() const { return flags().testFlag(Masked); }
 
-        /// Returns @c true if the material is flagged as "uploaded".
+        /// Returns @c true if the variant is flagged as "uploaded".
         inline bool isUploaded() const { return flags().testFlag(Uploaded); }
 
-        /// Returns @c true if the material is "prepared".
+        /// Returns @c true if the variant is "prepared".
         inline bool isPrepared() const { return isUploaded() && glName() != 0; }
 
         /**
@@ -246,8 +246,18 @@ public:
      */
     void setOrigin(QPoint const &newOrigin);
 
-    /// @return  Provides access to the classification/processing flags.
+    /**
+     * Returns the flags for the texture.
+     */
     Flags flags() const;
+
+    /**
+     * Change the texture's flags.
+     *
+     * @param flagsToChange  Flags to change the value of.
+     * @param set  @c true to set, @c false to clear.
+     */
+    void setFlags(Flags flagsToChange, bool set = true);
 
     /**
      * Destroys all derived variants for the texture.

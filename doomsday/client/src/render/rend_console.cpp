@@ -561,7 +561,7 @@ static void drawConsoleBackground(Point2Raw const *origin, Size2Raw const *size,
                                                    0, 1, 0, false, false, false, false);
         MaterialSnapshot const &ms = consoleBackgroundMaterial->prepare(spec);
 
-        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
+        GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
         bgX = int(ms.dimensions().width()  * consoleBackgroundZoom);
         bgY = int(ms.dimensions().height() * consoleBackgroundZoom);

@@ -739,15 +739,16 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
         /// @todo We should not need to re-bind this texture here.
         GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), filterUI? GL_LINEAR : GL_NEAREST);
 
-        memcpy(&geometry, BitmapFont_CharGeometry(font, ch), sizeof(geometry));
+        std::memcpy(&geometry, BitmapFont_CharGeometry(font, ch), sizeof(geometry));
         BitmapFont_CharCoords(font, ch, coords);
         break;
 
     case FT_BITMAPCOMPOSITE: {
-        const uint8_t border = BitmapCompositeFont_CharBorder(font, ch);
+        uint8_t const border = BitmapCompositeFont_CharBorder(font, ch);
 
         GL_BindTexture(BitmapCompositeFont_CharTexture(font, ch));
-        memcpy(&geometry, BitmapCompositeFont_CharGeometry(font, ch), sizeof(geometry));
+
+        std::memcpy(&geometry, BitmapCompositeFont_CharGeometry(font, ch), sizeof(geometry));
         if(border)
         {
             geometry.origin.x -= border;
@@ -756,8 +757,8 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
             geometry.size.height += border*2;
         }
         BitmapCompositeFont_CharCoords(font, ch, coords);
-        break;
-      }
+        break; }
+
     default:
         Con_Error("FR_DrawChar: Invalid font type %i.", (int) Font_Type(font));
         exit(1); // Unreachable.

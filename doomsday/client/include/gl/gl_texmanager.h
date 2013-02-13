@@ -290,28 +290,24 @@ inline de::Texture::Variant *GL_PrepareTexture(de::Texture &texture,
     return variant;
 }
 
-extern "C" {
-#endif // __cplusplus
-
 /*
  * Here follows miscellaneous routines currently awaiting refactoring into the
  * revised texture management APIs.
  */
 
-/**
- * Set mode to 2 to include an alpha channel. Set to 3 to make the actual pixel
- * colors all white.
- */
+extern "C" {
+#endif // __cplusplus
+
 DGLuint GL_PrepareExtTexture(char const *name, gfxmode_t mode, int useMipmap,
     int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT, int flags);
 
-DGLuint GL_PrepareSysFlaremap(flaretexid_t flare);
-DGLuint GL_PrepareLightmap(Uri const *path);
+DGLuint GL_PrepareSysFlaremap(flaretexid_t which);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
+DGLuint GL_PrepareUITexture(uitexid_t which);
+
 DGLuint GL_PrepareRawTexture(rawtex_t *rawTex);
 
-struct texturevariant_s *GL_PreparePatchTexture2(struct texture_s *tex, int wrapS, int wrapT);
-struct texturevariant_s *GL_PreparePatchTexture(struct texture_s *tex);
+DGLuint GL_PrepareLightmap(Uri const *path);
 
 /**
  * Attempt to locate and prepare a flare texture.

@@ -1,8 +1,8 @@
 /** @file gl_main.h GL-Graphics Subsystem.
  * @ingroup gl
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,6 +27,7 @@
 #endif
 
 #include "render/r_main.h"
+#include "Texture"
 
 struct colorpalette_s;
 struct ColorRawf_s;
@@ -43,10 +44,6 @@ DENG_EXTERN_C int defResX, defResY, defBPP, defFullscreen;
 DENG_EXTERN_C int viewph, viewpw, viewpx, viewpy;
 DENG_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
 DENG_EXTERN_C int r_detail;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifdef _DEBUG
 #  define LIBDENG_ASSERT_GL_CONTEXT_ACTIVE()  {GL_AssertContextActive();}
@@ -188,7 +185,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
  *
  * @param tex  Texture::Variant object which represents the GL texture to be bound.
  */
-void GL_BindTexture(struct texturevariant_s *tex);
+void GL_BindTexture(de::Texture::Variant *tex);
 
 void GL_BindTextureUnmanaged(DGLuint texname, int magMode);
 
@@ -252,9 +249,5 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
 
 // Console commands.
 D_CMD(UpdateGammaRamp);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_GRAPHICS_H */

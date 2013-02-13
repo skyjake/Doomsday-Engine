@@ -78,21 +78,21 @@ Textures &TextureManifest::textures()
 Texture *TextureManifest::derive()
 {
     LOG_AS("TextureManifest::derive");
-    if(Texture *tex = texture())
+    if(hasTexture())
     {
 #if _DEBUG
         LOG_INFO("\"%s\" already has an existing texture, reconfiguring.") << composeUri();
 #endif
-        tex->flags() = d->flags;
-        tex->setDimensions(d->logicalDimensions);
-        tex->setOrigin(d->origin);
+        d->texture->setFlags(d->flags);
+        d->texture->setDimensions(d->logicalDimensions);
+        d->texture->setOrigin(d->origin);
 
         /// @todo Materials and Surfaces should be notified of this!
-        return tex;
+        return d->texture;
     }
 
     Texture *tex = Textures::ResourceClass::interpret(*this);
-    if(!texture()) setTexture(tex);
+    if(!hasTexture()) setTexture(tex);
     return tex;
 }
 
@@ -106,11 +106,6 @@ Textures::Scheme &TextureManifest::scheme() const
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
     throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%p].").arg(de::dintptr(this)));
-}
-
-String const &TextureManifest::schemeName() const
-{
-    return scheme().name();
 }
 
 Uri TextureManifest::composeUri(QChar sep) const
@@ -181,9 +176,14 @@ void TextureManifest::setOrigin(QPoint const &newOrigin)
     d->origin = newOrigin;
 }
 
-Texture *TextureManifest::texture() const
+bool TextureManifest::hasTexture() const
 {
-    return d->texture;
+    return !!d->texture;
+}
+
+Texture &TextureManifest::texture() const
+{
+    return *d->texture;
 }
 
 void TextureManifest::setTexture(Texture *newTexture)

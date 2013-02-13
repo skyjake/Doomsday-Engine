@@ -1,6 +1,7 @@
 /** @file material.h Logical material resource.
  *
- * @authors Copyright � 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

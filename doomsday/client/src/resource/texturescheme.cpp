@@ -70,11 +70,11 @@ DENG2_PIMPL(TextureScheme)
     void deindex(TextureManifest &manifest)
     {
         /// @todo Only destroy the texture if this is the last remaining reference.
-        Texture *texture = manifest.texture();
-        if(texture)
+        if(manifest.hasTexture())
         {
-            delete texture;
+            Texture *texture = &manifest.texture();
             manifest.setTexture(0);
+            delete texture;
         }
 
         unlinkInUniqueIdLut(manifest);
@@ -171,11 +171,6 @@ void TextureScheme::clear()
 String const &TextureScheme::name() const
 {
     return d->name;
-}
-
-int TextureScheme::size() const
-{
-    return d->index.size();
 }
 
 TextureManifest &TextureScheme::insertManifest(Path const &path)

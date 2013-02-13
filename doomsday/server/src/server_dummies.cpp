@@ -167,10 +167,13 @@ DENG_EXTERN_C void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
     DENG_UNUSED(paletteId);
 }
 
-struct texturevariant_s* GL_PreparePatchTexture(struct texture_s* /*tex*/)
+/*
+struct texturevariant_s* GL_PreparePatchTexture(struct texture_s *tex)
 {
+    DENG2_UNUSED(tex);
     return 0;
 }
+*/
 
 DENG_EXTERN_C texturevariantspecification_t *GL_TextureVariantSpecificationForContext(
     texturevariantusagecontext_t /*tc*/, int /*flags*/, byte /*border*/, int /*tClass*/, int /*tMap*/,
@@ -494,8 +497,10 @@ void Fonts_ClearDefinitionLinks(void)
 void Fonts_ClearRuntime(void)
 {}
 
+/*
 void R_InitViewWindow(void)
 {}
+*/
 
 void R_RenderPlayerView(int num)
 {

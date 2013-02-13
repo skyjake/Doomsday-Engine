@@ -392,7 +392,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const *params)
         MaterialSnapshot const &ms =
             App_Materials().find(de::Uri("System", Path("gray"))).material().prepare(PSprite_MaterialSpec());
 
-        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
+        GL_BindTexture(&ms.texture(MTU_PRIMARY));
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -577,7 +577,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
 
         // The actual texture.
         glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
-        GL_BindTexture(reinterpret_cast<texturevariant_s *>(tex));
+        GL_BindTexture(tex);
 
         withDyn = true;
     }
@@ -585,7 +585,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
     {
         GL_ModulateTexture(1);
         glEnable(GL_TEXTURE_2D);
-        GL_BindTexture(reinterpret_cast<texturevariant_s *>(tex));
+        GL_BindTexture(tex);
         normal = 0;
     }
 
@@ -924,7 +924,7 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
 
     if(ms)
     {
-        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms->texture(MTU_PRIMARY)));
+        GL_BindTexture(&ms->texture(MTU_PRIMARY));
         glEnable(GL_TEXTURE_2D);
     }
     else

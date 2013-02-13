@@ -47,17 +47,6 @@
 #define UICURSORWIDTH   32
 #define UICURSORHEIGHT  64
 
-enum {
-    UITEX_MOUSE,
-    UITEX_CORNER,
-    UITEX_FILL,
-    UITEX_SHADE,
-    UITEX_HINT,
-    UITEX_LOGO,
-    UITEX_BACKGROUND,
-    NUM_UITEXTURES
-};
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -88,7 +77,6 @@ static boolean uiActive = false; /// The user interface is active.
 static boolean uiShowMouse = true;
 static ui_page_t* uiCurrentPage = 0; /// Currently active page.
 static int uiFontHgt; /// Height of the UI font.
-static DGLuint uiTextures[NUM_UITEXTURES]; /// Cursor texture.
 static int uiCX, uiCY; /// Cursor position.
 static int uiRestCX, uiRestCY;
 static uint uiRestStart; /// Start time of current resting.
@@ -243,51 +231,6 @@ ui_page_t* UI_CurrentPage(void)
     if(uiActive)
         return uiCurrentPage;
     return NULL;
-}
-
-void UI_LoadTextures(void)
-{
-    const char* picNames[NUM_UITEXTURES] = {
-        "Mouse",
-        "BoxCorner",
-        "BoxFill",
-        "BoxShade",
-        "Hint",
-        "Logo",
-        "Background",
-    };
-    int i;
-
-    if(novideo) return;
-
-    for(i = 0; i < NUM_UITEXTURES; ++i)
-    {
-        image_t image;
-        if(uiTextures[i])
-            continue;
-
-        if(GL_LoadExtTexture(&image, picNames[i], (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL)))
-        {   // Loaded successfully and converted accordingly.
-            // Upload the image to GL.
-            uiTextures[i] = GL_NewTextureWithParams2(
-                ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-                  image.pixelSize == 3 ? DGL_RGB :
-                  image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-                image.size.width, image.size.height, image.pixels,
-                TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR,
-                0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-
-            Image_Destroy(&image);
-        }
-        else
-            uiTextures[i] = 0;
-    }
-}
-
-void UI_ReleaseTextures(void)
-{
-    glDeleteTextures(NUM_UITEXTURES, (const GLuint*) uiTextures);
-    memset(uiTextures, 0, sizeof(uiTextures));
 }
 
 void UI_DefaultFocus(ui_page_t* page)
@@ -1996,7 +1939,7 @@ void UI_Shade(const Point2Raw* origin, const Size2Raw* size, int border, ui_colo
         bottomAlpha = alpha;
 
     GL_BlendMode(BM_ADD);
-    GL_BindTextureUnmanaged(uiTextures[UITEX_SHADE], GL_LINEAR);
+    GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_SHADE), GL_LINEAR);
     glBegin(GL_QUADS);
     for(i = 0; i < 2; ++i)
     {
@@ -2043,7 +1986,7 @@ void UI_HorizGradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t*
     leftAlpha  *= uiAlpha;
     rightAlpha *= uiAlpha;
 
-    GL_BindTextureUnmanaged(uiTextures[UITEX_HINT], GL_LINEAR);
+    GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_HINT), GL_LINEAR);
     glBegin(GL_QUADS);
         UI_SetColorA(left, leftAlpha);
         glTexCoord2f(0, 1);
@@ -2185,7 +2128,7 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, bo
     // The fill comes first, if there's one.
     if(filled)
     {
-        GL_BindTextureUnmanaged(uiTextures[UITEX_FILL], GL_LINEAR);
+        GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_FILL), GL_LINEAR);
         glBegin(GL_QUADS);
         glTexCoord2f(0.5f, 0.5f);
         UI_SetColorA(topColor, alpha);
@@ -2197,7 +2140,7 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, bo
     }
     else
     {
-        GL_BindTextureUnmanaged(uiTextures[UITEX_CORNER], GL_LINEAR);
+        GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_CORNER), GL_LINEAR);
         glBegin(GL_QUADS);
     }
     if(!filled || border > 0)
@@ -2454,7 +2397,7 @@ void UI_DrawMouse(const Point2Raw* origin, const Size2Raw* size)
     assert(origin && size);
 
     glColor3f(1, 1, 1);
-    GL_BindTextureUnmanaged(uiTextures[UITEX_MOUSE], GL_LINEAR);
+    GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_MOUSE), GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
@@ -2478,22 +2421,24 @@ void UI_DrawLogo(const Point2Raw* origin, const Size2Raw* size)
     rect.size.width  = size->width;
     rect.size.height = size->height;
 
-    GL_BindTextureUnmanaged(uiTextures[UITEX_LOGO], GL_LINEAR);
+    GL_BindTextureUnmanaged(GL_PrepareUITexture(UITEX_LOGO), GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
     glColor4f(1, 1, 1, uiAlpha);
     GL_DrawRect(&rect);
     glDisable(GL_TEXTURE_2D);
 }
 
-void UI_DrawDDBackground(const Point2Raw* origin, const Size2Raw* size, float alpha)
+void UI_DrawDDBackground(Point2Raw const *origin, Size2Raw const *size, float alpha)
 {
-    float mul = (uiTextures[UITEX_BACKGROUND]? 1.5f : 1.0f);
-    ui_color_t* dark = UI_Color(UIC_BG_DARK);
-    ui_color_t* light = UI_Color(UIC_BG_LIGHT);
-    assert(origin && size);
+    DENG2_ASSERT(origin && size);
+
+    DGLuint bgTex = GL_PrepareUITexture(UITEX_BACKGROUND);
+    float mul = (bgTex? 1.5f : 1.0f);
+    ui_color_t const *dark  = UI_Color(UIC_BG_DARK);
+    ui_color_t const *light = UI_Color(UIC_BG_LIGHT);
 
     // Background gradient picture.
-    GL_BindTextureUnmanaged(uiTextures[UITEX_BACKGROUND], GL_LINEAR);
+    GL_BindTextureUnmanaged(bgTex, GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
 
     if(alpha < 1.0)
@@ -2530,8 +2475,10 @@ void UI_DrawDDBackground(const Point2Raw* origin, const Size2Raw* size, float al
  */
 D_CMD(UIColor)
 {
+    DENG2_UNUSED2(argc, src);
+
     struct colorname_s {
-        const char* str;
+        char const *str;
         uint colorIdx;
     } colors[] =
     {
@@ -2547,16 +2494,16 @@ D_CMD(UIColor)
         { "help",       UIC_HELP },
         { 0, 0 }
     };
-    size_t i;
-    for(i = 0; colors[i].str; ++i)
-        if(!stricmp(argv[1], colors[i].str))
-        {
-            uint idx = colors[i].colorIdx;
-            ui_colors[idx].red   = strtod(argv[2], 0);
-            ui_colors[idx].green = strtod(argv[3], 0);
-            ui_colors[idx].blue  = strtod(argv[4], 0);
-            return true;
-        }
+    for(int i = 0; colors[i].str; ++i)
+    {
+        if(stricmp(argv[1], colors[i].str)) continue;
+
+        uint idx = colors[i].colorIdx;
+        ui_colors[idx].red   = strtod(argv[2], 0);
+        ui_colors[idx].green = strtod(argv[3], 0);
+        ui_colors[idx].blue  = strtod(argv[4], 0);
+        return true;
+    }
 
     Con_Printf("Unknown UI color '%s'.\n", argv[1]);
     return false;

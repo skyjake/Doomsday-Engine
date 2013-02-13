@@ -53,8 +53,7 @@ DENG_EXTERN_C void GL_Shutdown();
 DENG_EXTERN_C void GL_ReleaseGLTexturesByTexture(struct texture_s *tex);
 DENG_EXTERN_C void GL_EarlyInitTextureManager();
 DENG_EXTERN_C void GL_PruneTextureVariantSpecifications();
-DENG_EXTERN_C struct texturevariant_s* GL_PreparePatchTexture(struct texture_s* tex);
-/*
+/*DENG_EXTERN_C struct texturevariant_s* GL_PreparePatchTexture(struct texture_s* tex);
 DENG_EXTERN_C void GL_SetFilter(int f);
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
 DENG_EXTERN_C void GL_UseFog(int yes);
@@ -64,9 +63,9 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t
                                                    float stretchEpsilon);
 DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp);
 DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp);
-*/
 
 DENG_EXTERN_C void R_InitViewWindow(void);
+*/
 DENG_EXTERN_C void R_RenderPlayerView(int num);
 DENG_EXTERN_C void R_SetBorderGfx(Uri const *const *paths);
 DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data);

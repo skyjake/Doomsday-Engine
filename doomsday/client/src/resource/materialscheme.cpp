@@ -57,14 +57,14 @@ String const &MaterialScheme::name() const
     return d->name;
 }
 
-MaterialScheme::Manifest &MaterialScheme::insertManifest(Path const &path, materialid_t id)
+MaterialManifest &MaterialScheme::insertManifest(Path const &path, materialid_t id)
 {
     Manifest &manifest = d->index.insert(path);
     manifest.setId(id);
     return manifest;
 }
 
-MaterialScheme::Manifest const &MaterialScheme::find(Path const &path) const
+MaterialManifest const &MaterialScheme::find(Path const &path) const
 {
     try
     {
@@ -76,7 +76,7 @@ MaterialScheme::Manifest const &MaterialScheme::find(Path const &path) const
     }
 }
 
-MaterialScheme::Manifest &MaterialScheme::find(Path const &path)
+MaterialManifest &MaterialScheme::find(Path const &path)
 {
     Index::Node const &found = const_cast<MaterialScheme const *>(this)->find(path);
     return const_cast<Index::Node &>(found);

@@ -1175,7 +1175,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         {
             Mod_SelectTexUnits(1);
             GL_BlendMode(blending);
-            GL_BindTexture(renderTextures? reinterpret_cast<texturevariant_s *>(skinTexture) : 0);
+            GL_BindTexture(renderTextures? skinTexture : 0);
 
             Mod_RenderCommands(RC_COMMAND_COORDS,
                                mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -1203,10 +1203,10 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                 GL_ModulateTexture(11);
 
                 glActiveTexture(GL_TEXTURE1);
-                GL_BindTexture(renderTextures ? reinterpret_cast<texturevariant_s *>(shinyTexture) : 0);
+                GL_BindTexture(renderTextures? shinyTexture : 0);
 
                 glActiveTexture(GL_TEXTURE0);
-                GL_BindTexture(renderTextures ? reinterpret_cast<texturevariant_s *>(skinTexture) : 0);
+                GL_BindTexture(renderTextures? skinTexture : 0);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -1219,7 +1219,8 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
             {
                 // Empty spots will get shine, too.
                 Mod_SelectTexUnits(1);
-                GL_BindTexture(renderTextures ? reinterpret_cast<texturevariant_s *>(shinyTexture) : 0);
+                GL_BindTexture(renderTextures? shinyTexture : 0);
+
                 Mod_RenderCommands(RC_OTHER_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
@@ -1237,7 +1238,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         GL_ModulateTexture(10);
 
         glActiveTexture(GL_TEXTURE1);
-        GL_BindTexture(renderTextures ? reinterpret_cast<texturevariant_s *>(shinyTexture) : 0);
+        GL_BindTexture(renderTextures? shinyTexture : 0);
 
         // Multiply by shininess.
         for(c = 0; c < 3; ++c)
@@ -1245,7 +1246,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
         glActiveTexture(GL_TEXTURE0);
-        GL_BindTexture(renderTextures ? reinterpret_cast<texturevariant_s *>(skinTexture) : 0);
+        GL_BindTexture(renderTextures? skinTexture : 0);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
                            /*numVerts,*/ modelVertices, modelColors,

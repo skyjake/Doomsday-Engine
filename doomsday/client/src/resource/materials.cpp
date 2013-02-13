@@ -494,7 +494,7 @@ Material *Materials::newFromDef(ded_material_t &def)
         {
             try
             {
-                tex = App_Textures().find(*texUri).texture();
+                tex = &App_Textures().find(*texUri).texture();
             }
             catch(Textures::NotFoundError const &er)
             {

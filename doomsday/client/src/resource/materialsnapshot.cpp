@@ -89,7 +89,7 @@ struct Store {
         DENG2_ASSERT(unit >= 0 && unit < NUM_TEXMAP_UNITS);
         rtexmapunit_t &tu = units[unit];
 
-        tu.texture.variant = reinterpret_cast<texturevariant_s *>(texture);
+        tu.texture.variant = texture;
         tu.texture.flags   = TUF_TEXTURE_IS_MANAGED;
         tu.opacity   = de::clamp(0.f, opacity, 1.f);
         tu.blendMode = blendMode;

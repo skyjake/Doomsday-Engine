@@ -21,12 +21,11 @@
 #define LIBDENG_BITMAPFONT_H
 
 #include "font.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct texturevariant_s;
+#include "Texture"
+#include <de/point.h>
+#include <de/rect.h>
+#include <de/size.h>
+#include <de/str.h>
 
 // Data for a character.
 typedef struct {
@@ -51,32 +50,32 @@ typedef struct bitmapfont_s {
     bitmapfont_char_t _chars[MAX_CHARS];
 } bitmapfont_t;
 
-font_t* BitmapFont_New(fontid_t bindId);
-void BitmapFont_Delete(font_t* font);
+font_t *BitmapFont_New(fontid_t bindId);
+void BitmapFont_Delete(font_t *font);
 
-void BitmapFont_Prepare(font_t* font);
+void BitmapFont_Prepare(font_t *font);
 
-void BitmapFont_SetFilePath(font_t* font, const char* filePath);
+void BitmapFont_SetFilePath(font_t *font, char const *filePath);
 
 /// @return  GL-texture name.
-DGLuint BitmapFont_GLTextureName(const font_t* font);
-const Size2Raw* BitmapFont_TextureSize(const font_t* font);
-int BitmapFont_TextureHeight(const font_t* font);
-int BitmapFont_TextureWidth(const font_t* font);
+DGLuint BitmapFont_GLTextureName(font_t const *font);
+Size2Raw const *BitmapFont_TextureSize(font_t const *font);
+int BitmapFont_TextureHeight(font_t const *font);
+int BitmapFont_TextureWidth(font_t const *font);
 
-void BitmapFont_DeleteGLTexture(font_t* font);
+void BitmapFont_DeleteGLTexture(font_t *font);
 
-const RectRaw* BitmapFont_CharGeometry(font_t* font, unsigned char chr);
-int BitmapFont_CharWidth(font_t* font, unsigned char ch);
-int BitmapFont_CharHeight(font_t* font, unsigned char ch);
+RectRaw const *BitmapFont_CharGeometry(font_t *font, unsigned char chr);
+int BitmapFont_CharWidth(font_t *font, unsigned char ch);
+int BitmapFont_CharHeight(font_t *font, unsigned char ch);
 
-void BitmapFont_CharCoords(font_t* font, unsigned char ch, Point2Raw coords[4]);
+void BitmapFont_CharCoords(font_t *font, unsigned char ch, Point2Raw coords[4]);
 
 // Data for a character.
 typedef struct {
     RectRaw geometry;
     patchid_t patch;
-    struct texturevariant_s* tex;
+    de::Texture::Variant *tex;
     uint8_t border;
 } bitmapcompositefont_char_t;
 
@@ -85,36 +84,32 @@ typedef struct bitmapcompositefont_s {
     font_t _base;
 
     /// Definition used to construct this else @c NULL if not applicable.
-    struct ded_compositefont_s* _def;
+    struct ded_compositefont_s *_def;
 
     /// Character map.
     bitmapcompositefont_char_t _chars[MAX_CHARS];
 } bitmapcompositefont_t;
 
-font_t* BitmapCompositeFont_New(fontid_t bindId);
-void BitmapCompositeFont_Delete(font_t* font);
+font_t *BitmapCompositeFont_New(fontid_t bindId);
+void BitmapCompositeFont_Delete(font_t *font);
 
-void BitmapCompositeFont_Prepare(font_t* font);
+void BitmapCompositeFont_Prepare(font_t *font);
 
-const RectRaw* BitmapCompositeFont_CharGeometry(font_t* font, unsigned char chr);
-int BitmapCompositeFont_CharWidth(font_t* font, unsigned char ch);
-int BitmapCompositeFont_CharHeight(font_t* font, unsigned char ch);
+RectRaw const *BitmapCompositeFont_CharGeometry(font_t *font, unsigned char chr);
+int BitmapCompositeFont_CharWidth(font_t *font, unsigned char ch);
+int BitmapCompositeFont_CharHeight(font_t *font, unsigned char ch);
 
-struct ded_compositefont_s* BitmapCompositeFont_Definition(const font_t* font);
-void BitmapCompositeFont_SetDefinition(font_t* font, struct ded_compositefont_s* def);
+struct ded_compositefont_s *BitmapCompositeFont_Definition(font_t const *font);
+void BitmapCompositeFont_SetDefinition(font_t *font, struct ded_compositefont_s *def);
 
-patchid_t BitmapCompositeFont_CharPatch(font_t* font, unsigned char ch);
-void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char* patchName);
+patchid_t BitmapCompositeFont_CharPatch(font_t *font, unsigned char ch);
+void BitmapCompositeFont_CharSetPatch(font_t *font, unsigned char ch, char const *patchName);
 
-struct texturevariant_s *BitmapCompositeFont_CharTexture(font_t* font, unsigned char ch);
-void BitmapCompositeFont_ReleaseTextures(font_t* font);
+de::Texture::Variant *BitmapCompositeFont_CharTexture(font_t *font, unsigned char ch);
+void BitmapCompositeFont_ReleaseTextures(font_t *font);
 
-uint8_t BitmapCompositeFont_CharBorder(font_t* font, unsigned char chr);
+uint8_t BitmapCompositeFont_CharBorder(font_t *font, unsigned char chr);
 
-void BitmapCompositeFont_CharCoords(font_t* font, unsigned char chr, Point2Raw coords[4]);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+void BitmapCompositeFont_CharCoords(font_t *font, unsigned char chr, Point2Raw coords[4]);
 
 #endif /* LIBDENG_BITMAPFONT_H */

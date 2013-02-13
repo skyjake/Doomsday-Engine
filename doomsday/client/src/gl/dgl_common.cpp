@@ -21,8 +21,8 @@
 
 #define DENG_NO_API_MACROS_GL
 
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -30,9 +30,11 @@
 #include "de_misc.h"
 #include "de_filesys.h"
 #include "de_resource.h"
-
+#include "render/r_draw.h"
 #include "gl/sys_opengl.h"
 #include "api_gl.h"
+
+using namespace de;
 
 /**
  * Requires a texture environment mode that can add and multiply.
@@ -363,6 +365,7 @@ void GL_SetMultisample(boolean on)
 #endif
 }
 
+#undef DGL_SetScissor
 DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
 {
     if(!rect) return;
@@ -373,6 +376,7 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
     glScissor(rect->origin.x, FLIP(rect->origin.y + rect->size.height - 1), rect->size.width, rect->size.height);
 }
 
+#undef DGL_SetScissor2
 DENG_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
 {
     RectRaw rect;
@@ -383,6 +387,7 @@ DENG_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
     DGL_SetScissor(&rect);
 }
 
+#undef DGL_Scissor
 DENG_EXTERN_C void DGL_Scissor(RectRaw *rect)
 {
     if(!rect) return;
@@ -401,6 +406,7 @@ DENG_EXTERN_C void DGL_Scissor(RectRaw *rect)
     rect->size.height = v[3];
 }
 
+#undef DGL_GetIntegerv
 boolean DGL_GetIntegerv(int name, int *v)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -456,6 +462,7 @@ boolean DGL_GetIntegerv(int name, int *v)
     return true;
 }
 
+#undef DGL_GetInteger
 int DGL_GetInteger(int name)
 {
     int values[10];
@@ -463,6 +470,7 @@ int DGL_GetInteger(int name)
     return values[0];
 }
 
+#undef DGL_SetInteger
 boolean DGL_SetInteger(int name, int value)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -485,6 +493,7 @@ boolean DGL_SetInteger(int name, int value)
     return true;
 }
 
+#undef DGL_GetFloatv
 boolean DGL_GetFloatv(int name, float *v)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -528,6 +537,7 @@ boolean DGL_GetFloatv(int name, float *v)
     return true;
 }
 
+#undef DGL_GetFloat
 float DGL_GetFloat(int name)
 {
     switch(name)
@@ -543,6 +553,7 @@ float DGL_GetFloat(int name)
     }
 }
 
+#undef DGL_SetFloat
 boolean DGL_SetFloat(int name, float value)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -567,6 +578,7 @@ boolean DGL_SetFloat(int name, float value)
     return true;
 }
 
+#undef DGL_Enable
 int DGL_Enable(int cap)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -604,6 +616,7 @@ int DGL_Enable(int cap)
     return 1;
 }
 
+#undef DGL_Disable
 void DGL_Disable(int cap)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -637,6 +650,7 @@ void DGL_Disable(int cap)
     }
 }
 
+#undef DGL_BlendOp
 void DGL_BlendOp(int op)
 {
     GL_BlendOp(op == DGL_SUBTRACT ? GL_FUNC_SUBTRACT : op ==
@@ -644,6 +658,7 @@ void DGL_BlendOp(int op)
                GL_FUNC_ADD);
 }
 
+#undef DGL_BlendFunc
 void DGL_BlendFunc(int param1, int param2)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -670,11 +685,13 @@ void DGL_BlendFunc(int param1, int param2)
                                                     GL_ZERO);
 }
 
+#undef DGL_BlendMode
 void DGL_BlendMode(blendmode_t mode)
 {
     GL_BlendMode(mode);
 }
 
+#undef DGL_MatrixMode
 void DGL_MatrixMode(int mode)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -685,6 +702,7 @@ void DGL_MatrixMode(int mode)
                  GL_MODELVIEW);
 }
 
+#undef DGL_PushMatrix
 void DGL_PushMatrix(void)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -698,6 +716,7 @@ if(glGetError() == GL_STACK_OVERFLOW)
 #endif
 }
 
+#undef DGL_SetNoMaterial
 void DGL_SetNoMaterial(void)
 {
     GL_SetNoTexture();
@@ -716,42 +735,53 @@ static int DGL_ToGLWrapCap(DGLint cap)
     }
 }
 
+#undef DGL_SetMaterialUI
 void DGL_SetMaterialUI(Material *mat, DGLint wrapS, DGLint wrapT)
 {
     GL_SetMaterialUI2(mat, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
 }
 
+#undef DGL_SetPatch
 void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 {
     try
     {
-        struct texture_s *tex = reinterpret_cast<texture_s *>(App_Textures().scheme("Patches").findByUniqueId(id).texture());
-        if(!tex) return;
+        TextureManifest &manifest = App_Textures().scheme("Patches").findByUniqueId(id);
+        if(!manifest.hasTexture()) return;
 
-        GL_BindTexture(GL_PreparePatchTexture2(tex, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT)));
+        Texture &tex = manifest.texture();
+        texturevariantspecification_t &texSpec =
+            *Rend_PatchTextureSpec(0 | (tex.flags().testFlag(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                     | (tex.flags().testFlag(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
+                                   DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
+        GL_BindTexture(GL_PrepareTexture(tex, texSpec));
     }
-    catch(de::Textures::Scheme::NotFoundError const &er)
+    catch(Textures::Scheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
     }
 }
 
+#undef DGL_SetPSprite
 void DGL_SetPSprite(Material *mat)
 {
     GL_SetPSprite(mat, 0, 0);
 }
 
+#undef DGL_SetPSprite2
 void DGL_SetPSprite2(Material *mat, int tclass, int tmap)
 {
     GL_SetPSprite(mat, tclass, tmap);
 }
 
+#undef DGL_SetRawImage
 void DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT)
 {
     GL_SetRawImage(lumpNum, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
 }
 
+#undef DGL_PopMatrix
 void DGL_PopMatrix(void)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -765,6 +795,7 @@ if(glGetError() == GL_STACK_UNDERFLOW)
 #endif
 }
 
+#undef DGL_LoadIdentity
 void DGL_LoadIdentity(void)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -773,6 +804,7 @@ void DGL_LoadIdentity(void)
     glLoadIdentity();
 }
 
+#undef DGL_Translatef
 void DGL_Translatef(float x, float y, float z)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -781,6 +813,7 @@ void DGL_Translatef(float x, float y, float z)
     glTranslatef(x, y, z);
 }
 
+#undef DGL_Rotatef
 void DGL_Rotatef(float angle, float x, float y, float z)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -789,6 +822,7 @@ void DGL_Rotatef(float angle, float x, float y, float z)
     glRotatef(angle, x, y, z);
 }
 
+#undef DGL_Scalef
 void DGL_Scalef(float x, float y, float z)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -797,6 +831,7 @@ void DGL_Scalef(float x, float y, float z)
     glScalef(x, y, z);
 }
 
+#undef DGL_Ortho
 void DGL_Ortho(float left, float top, float right, float bottom, float znear, float zfar)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -805,6 +840,7 @@ void DGL_Ortho(float left, float top, float right, float bottom, float znear, fl
     glOrtho(left, right, bottom, top, znear, zfar);
 }
 
+#undef DGL_DeleteTextures
 void DGL_DeleteTextures(int num, DGLuint const *names)
 {
     if(!num || !names) return;
@@ -812,6 +848,7 @@ void DGL_DeleteTextures(int num, DGLuint const *names)
     glDeleteTextures(num, (GLuint const *) names);
 }
 
+#undef DGL_Bind
 int DGL_Bind(DGLuint texture)
 {
     GL_BindTextureUnmanaged(texture, GL_LINEAR);
@@ -819,6 +856,7 @@ int DGL_Bind(DGLuint texture)
     return 0;
 }
 
+#undef DGL_NewTextureWithParams
 DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     uint8_t const *pixels, int flags, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT)
@@ -838,7 +876,7 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
                                      wrapT == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT));
 }
 
-// dgl_draw.c
+// dgl_draw.cpp
 DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode);
 DENG_EXTERN_C void DGL_End(void);
 DENG_EXTERN_C boolean DGL_NewList(DGLuint list, int mode);
@@ -874,7 +912,7 @@ DENG_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h
 DENG_EXTERN_C void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2Raw* br, const Point2Raw* bl, const float color[4]);
 DENG_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int brX, int brY, int blX, int blY, const float color[4]);
 
-// gl_draw.c
+// gl_draw.cpp
 DENG_EXTERN_C void GL_UseFog(int yes);
 DENG_EXTERN_C void GL_SetFilter(boolean enable);
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);

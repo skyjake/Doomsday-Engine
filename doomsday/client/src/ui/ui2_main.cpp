@@ -536,7 +536,7 @@ static void drawPageBackground(fi_page_t *p, float x, float y, float width, floa
                                                    0, 1, 0, false, false, false, false);
         MaterialSnapshot const &ms = p->_bg.material->prepare(spec);
 
-        GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
+        GL_BindTexture(&ms.texture(MTU_PRIMARY));
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -1029,7 +1029,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                                                            0, -3, 0, false, false, false, false);
                 MaterialSnapshot const &ms = mat->prepare(spec);
 
-                GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
+                GL_BindTexture(&ms.texture(MTU_PRIMARY));
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
@@ -1056,15 +1056,19 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             break; }
 
         case PFT_PATCH: {
-            Texture *texture = App_Textures().scheme("Patches").findByUniqueId(f->texRef.patch).texture();
-            if(texture)
+            TextureManifest &manifest = App_Textures().scheme("Patches").findByUniqueId(f->texRef.patch);
+            if(manifest.hasTexture())
             {
-                GL_BindTexture(GL_PreparePatchTexture(reinterpret_cast<texture_s *>(texture)));
+                Texture &tex = manifest.texture();
+                texturevariantspecification_t &texSpec =
+                    *Rend_PatchTextureSpec(0 | (tex.flags().testFlag(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                             | (tex.flags().testFlag(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+                GL_BindTexture(GL_PrepareTexture(tex, texSpec));
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
-                V3f_Set(offset, texture->origin().x(), texture->origin().y(), 0);
-                V3f_Set(dimensions, texture->width(), texture->height(), 0);
+                V3f_Set(offset, tex.origin().x(), tex.origin().y(), 0);
+                V3f_Set(dimensions, tex.width(), tex.height(), 0);
                 V2f_Set(rotateCenter, dimensions[VX]/2, dimensions[VY]/2);
             }
             break; }

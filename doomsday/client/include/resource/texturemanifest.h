@@ -1,4 +1,4 @@
-/** @file texturemanifest.h Texture Manifest.
+/** @file texturemanifest.h Description of a logical texture resource.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -21,25 +21,31 @@
 #define LIBDENG_RESOURCE_TEXTUREMANIFEST_H
 
 #include "Texture"
+#include "TextureScheme"
 #include "uri.hh"
+#include <de/Error>
 #include <de/PathTree>
 #include <QSize>
 
 namespace de {
 
 class Textures;
-class TextureScheme;
 
 /**
- * Metadata for a would-be logical Texture resource.
+ * Description for a would-be logical Texture resource.
  *
  * Models a reference to and the associated metadata for a logical texture
  * in the texture resource collection.
  *
+ * @see TextureScheme, Texture
  * @ingroup resource
  */
 class TextureManifest : public PathTree::Node
 {
+public:
+    /// Required texture instance is missing. @ingroup errors
+    DENG2_ERROR(MissingTextureError);
+
 public:
     TextureManifest(PathTree::NodeArgs const &args);
     virtual ~TextureManifest();
@@ -52,12 +58,12 @@ public:
     Texture *derive();
 
     /**
-     * Returns the owning scheme of the TextureManifest.
+     * Returns the owning scheme of the manifest.
      */
     TextureScheme &scheme() const;
 
     /// Convenience method for returning the name of the owning scheme.
-    String const &schemeName() const;
+    inline String const &schemeName() const { return scheme().name(); }
 
     /**
      * Compose a URI of the form "scheme:path" for the TextureManifest.
@@ -142,10 +148,14 @@ public:
     Texture::Flags &flags();
 
     /**
-     * Returns the logical Texture instance associated with the manifest;
-     * otherwise @c 0.
+     * Returns @c true if a Texture is presently associated with the manifest.
      */
-    Texture *texture() const;
+    bool hasTexture() const;
+
+    /**
+     * Returns the logical Texture associated with the manifest.
+     */
+    Texture &texture() const;
 
     /**
      * Change the logical Texture associated with the manifest.
@@ -154,7 +164,7 @@ public:
      */
     void setTexture(Texture *newTexture);
 
-    /// Returns a reference to the application's texture system.
+    /// Returns a reference to the application's texture collection.
     static Textures &textures();
 
 private:

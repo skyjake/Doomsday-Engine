@@ -38,6 +38,9 @@
 #include "de_resource.h"
 
 #include "def_main.h"
+#ifdef __CLIENT__
+#  include "render/r_draw.h"
+#endif
 #include "gl/gl_tex.h"
 #include "gl/gl_texmanager.h"
 #include "uri.hh"
@@ -227,28 +230,37 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 
     try
     {
-        Texture *tex = App_Textures().scheme("Patches").findByUniqueId(id).texture();
-        if(!tex) return false;
+        Texture &tex = App_Textures().scheme("Patches").findByUniqueId(id).texture();
 
+#ifdef __CLIENT__
         // Ensure we have up to date information about this patch.
-        GL_PreparePatchTexture(reinterpret_cast<texture_s*>(tex));
+        texturevariantspecification_t &texSpec =
+            *Rend_PatchTextureSpec(0 | (tex.flags().testFlag(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                     | (tex.flags().testFlag(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+        GL_PrepareTexture(tex, texSpec);
+#endif
 
         info->id = id;
-        info->flags.isCustom = tex->flags().testFlag(Texture::Custom);
+        info->flags.isCustom = tex.flags().testFlag(Texture::Custom);
 
-        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex->analysisDataPointer(TA_ALPHA));
+        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex.analysisDataPointer(TA_ALPHA));
         info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
 
-        info->geometry.size.width  = tex->width();
-        info->geometry.size.height = tex->height();
+        info->geometry.size.width  = tex.width();
+        info->geometry.size.height = tex.height();
 
-        info->geometry.origin.x = tex->origin().x();
-        info->geometry.origin.y = tex->origin().y();
+        info->geometry.origin.x = tex.origin().x();
+        info->geometry.origin.y = tex.origin().y();
 
         /// @todo fixme: kludge:
-        info->extraOffset[0] = info->extraOffset[1] = (tex->flags().testFlag(Texture::UpscaleAndSharpen)? -1 : 0);
+        info->extraOffset[0] = info->extraOffset[1] = (tex.flags().testFlag(Texture::UpscaleAndSharpen)? -1 : 0);
         // Kludge end.
         return true;
+    }
+    catch(TextureManifest::MissingTextureError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
     }
     catch(Textures::Scheme::NotFoundError const &er)
     {
@@ -610,18 +622,19 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
         if(manifest)
         {
             // Are we redefining an existing texture?
-            if(Texture *tex = manifest->texture())
+            if(manifest->hasTexture())
             {
                 // Yes. Destroy the existing definition (*should* exist).
-                CompositeTexture *oldDef = reinterpret_cast<CompositeTexture *>(tex->userDataPointer());
+                Texture &tex = manifest->texture();
+                CompositeTexture *oldDef = reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
                 if(oldDef)
                 {
-                    tex->setUserDataPointer(0);
+                    tex.setUserDataPointer(0);
                     delete oldDef;
                 }
 
                 // Attach the new definition.
-                tex->setUserDataPointer((void *)&def);
+                tex.setUserDataPointer((void *)&def);
 
                 continue;
             }
@@ -855,9 +868,10 @@ Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
     Textures::Scheme &scheme = App_Textures().scheme(schemeName);
     try
     {
-        Texture *tex = scheme.findByResourceUri(resourceUri).texture();
-        if(tex) return tex;
+        return &scheme.findByResourceUri(resourceUri).texture();
     }
+    catch(TextureManifest::MissingTextureError const &)
+    {} // Ignore this error.
     catch(Textures::Scheme::NotFoundError const &)
     {} // Ignore this error.
 
@@ -871,7 +885,7 @@ Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
 
     de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
     TextureManifest *manifest = App_Textures().declare(uri, Texture::Custom, dimensions,
-                                                        QPoint(0, 0), uniqueId, &resourceUri);
+                                                       QPoint(0, 0), uniqueId, &resourceUri);
     if(!manifest) return 0; // Invalid URI?
 
     /// @todo Defer until necessary (manifest texture is first referenced).

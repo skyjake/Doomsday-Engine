@@ -30,6 +30,8 @@
 #include <de/mathutil.h> // M_CeilPow2()
 #include <de/memory.h>
 
+using namespace de;
+
 void Font_Init(font_t *font, fonttype_t type, fontid_t bindId)
 {
     DENG_ASSERT(font && VALID_FONTTYPE(type));
@@ -94,21 +96,21 @@ int Font_Leading(font_t *font)
     return font->_leading;
 }
 
-static byte inByte(FileHandle *file)
+static byte inByte(de::FileHandle *file)
 {
     byte b;
-    FileHandle_Read(file, (uint8_t *)&b, sizeof(b));
+    file->read((uint8_t *)&b, sizeof(b));
     return b;
 }
 
-static unsigned short inShort(FileHandle *file)
+static unsigned short inShort(de::FileHandle *file)
 {
-    unsigned short s;
-    FileHandle_Read(file, (uint8_t *)&s, sizeof(s));
+    ushort s;
+    file->read((uint8_t *)&s, sizeof(s));
     return USHORT(s);
 }
 
-static void *readFormat0(font_t *font, FileHandle *file)
+static void *readFormat0(font_t *font, de::FileHandle *file)
 {
     DENG_ASSERT(font && font->_type == FT_BITMAP && file);
 
@@ -168,12 +170,8 @@ static void *readFormat0(font_t *font, FileHandle *file)
     bitmapFormat = inByte(file);
     if(bitmapFormat > 0)
     {
-        char buf[256];
-        Uri *uri = Fonts_ComposeUri(Fonts_Id(font));
-        AutoStr *uriStr = Uri_ToString(uri);
-        Uri_Delete(uri);
-        dd_snprintf(buf, 256, "%s", Str_Text(uriStr));
-        Con_Error("readFormat: Font \"%s\" uses unknown bitmap bitmapFormat %i.\n", buf, bitmapFormat);
+        QScopedPointer<de::Uri> uri(reinterpret_cast<de::Uri *>(Fonts_ComposeUri(Fonts_Id(font))));
+        throw Error("readFormat0", QString("Font \"%1\" uses unknown bitmap bitmapFormat %2").arg(*uri).arg(bitmapFormat));
     }
 
     numPels = bf->_texSize.width * bf->_texSize.height;
@@ -195,7 +193,7 @@ static void *readFormat0(font_t *font, FileHandle *file)
     return image;
 }
 
-static void *readFormat2(font_t *font, FileHandle *file)
+static void *readFormat2(font_t *font, de::FileHandle *file)
 {
     DENG_ASSERT(font && font->_type == FT_BITMAP && file);
 
@@ -343,13 +341,12 @@ void BitmapFont_Prepare(font_t *font)
     DENG_ASSERT(font && font->_type == FT_BITMAP);
 
     bitmapfont_t *bf = (bitmapfont_t *)font;
-    FileHandle *file;
     void *image = 0;
     int version;
 
     if(bf->_tex) return; // Already prepared.
 
-    file = F_Open(Str_Text(&bf->_filePath), "rb");
+    de::FileHandle *file = reinterpret_cast<de::FileHandle *>(F_Open(Str_Text(&bf->_filePath), "rb"));
     if(file)
     {
         BitmapFont_DeleteGLTexture(font);
@@ -369,12 +366,8 @@ void BitmapFont_Prepare(font_t *font)
         // Upload the texture.
         if(!novideo && !isDedicated)
         {
-            VERBOSE2(
-                Uri *uri = Fonts_ComposeUri(Fonts_Id(font));
-                AutoStr *path = Uri_ToString(uri);
-                Con_Printf("Uploading GL texture for font \"%s\"...\n", Str_Text(path));
-                Uri_Delete(uri)
-            )
+            QScopedPointer<de::Uri> uri(reinterpret_cast<de::Uri *>(Fonts_ComposeUri(Fonts_Id(font))));
+            LOG_VERBOSE("Uploading GL texture for font \"%s\"...") << *uri;
 
             bf->_tex = GL_NewTextureWithParams2(DGL_RGBA, bf->_texSize.width,
                 bf->_texSize.height, (uint8_t const *)image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
@@ -382,7 +375,8 @@ void BitmapFont_Prepare(font_t *font)
         }
 
         M_Free(image);
-        F_Delete(file);
+        App_FileSystem()->releaseFile(file->file());
+        delete file;
     }
 }
 
@@ -546,7 +540,7 @@ void BitmapCompositeFont_Prepare(font_t *font)
         if(0 == patch) continue;
 
         R_GetPatchInfo(patch, &info);
-        memcpy(&ch->geometry, &info.geometry, sizeof ch->geometry);
+        std::memcpy(&ch->geometry, &info.geometry, sizeof ch->geometry);
 
         ch->geometry.origin.x -= font->_marginWidth;
         ch->geometry.origin.y -= font->_marginHeight;
@@ -554,9 +548,9 @@ void BitmapCompositeFont_Prepare(font_t *font)
         ch->geometry.size.height += font->_marginHeight * 2;
         ch->border = 0;
 
-        de::Texture *tex = App_Textures().scheme("Patches").findByUniqueId(patch).texture();
-        ch->tex = reinterpret_cast<texturevariant_s *>(GL_PrepareTexture(*tex, *BitmapCompositeFont_CharSpec()));
-        if(ch->tex && reinterpret_cast<de::Texture::Variant *>(ch->tex)->source() == TEXS_ORIGINAL)
+        ch->tex = GL_PrepareTexture(App_Textures().scheme("Patches").findByUniqueId(patch).texture(),
+                                    *BitmapCompositeFont_CharSpec());
+        if(ch->tex && ch->tex->source() == TEXS_ORIGINAL)
         {
             // Upscale & Sharpen will have been applied.
             ch->border = 1;
@@ -594,7 +588,7 @@ void BitmapCompositeFont_ReleaseTextures(font_t *font)
     {
         bitmapcompositefont_char_t *ch = &cf->_chars[i];
         if(!ch->tex) continue;
-        GL_ReleaseVariantTexture(ch->tex);
+        GL_ReleaseVariantTexture(reinterpret_cast<struct texturevariant_s *>(ch->tex));
         ch->tex = 0;
     }
 }
@@ -613,7 +607,7 @@ void BitmapCompositeFont_SetDefinition(font_t *font, struct ded_compositefont_s 
     cf->_def = def;
 }
 
-struct texturevariant_s *BitmapCompositeFont_CharTexture(font_t *font, unsigned char ch)
+Texture::Variant *BitmapCompositeFont_CharTexture(font_t *font, unsigned char ch)
 {
     DENG_ASSERT(font->_type == FT_BITMAPCOMPOSITE);
     bitmapcompositefont_t *cf = (bitmapcompositefont_t *)font;

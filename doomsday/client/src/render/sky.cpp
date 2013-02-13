@@ -815,7 +815,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         if(rs.texSize.width && rs.texSize.height)
         {
             rs.texOffset = Sky_LayerOffset(layer);
-            GL_BindTexture(reinterpret_cast<texturevariant_s *>(&ms.texture(MTU_PRIMARY)));
+            GL_BindTexture(&ms.texture(MTU_PRIMARY));
         }
         else
         {
