@@ -18,7 +18,9 @@
 
 #include "localserverdialog.h"
 #include "folderselection.h"
+#include "guishellapp.h"
 #include <de/libdeng2.h>
+#include <de/Socket>
 #include <de/shell/DoomsdayInfo>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
@@ -162,10 +164,17 @@ void LocalServerDialog::validate()
 
     // Check port.
     QString txt = d->port->text().trimmed();
-    int num = txt.toInt();
-    if(txt.isEmpty() || num < 0 || num >= 0x10000)
+    int port = txt.toInt();
+    if(txt.isEmpty() || port < 0 || port >= 0x10000)
     {
         isValid = false;
+    }
+
+    // Check known running servers.
+    foreach(Address const &sv, GuiShellApp::app().serverFinder().foundServers())
+    {
+        if(Socket::isHostLocal(sv.host()) && sv.port() == port)
+            isValid = false;
     }
 
     if(d->runtime->path().isEmpty()) isValid = false;

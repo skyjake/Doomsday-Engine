@@ -27,7 +27,7 @@
 namespace de {
 namespace shell {
 
-static TimeDelta MSG_EXPIRATION_SECS = 10;
+static TimeDelta MSG_EXPIRATION_SECS = 4;
 
 struct ServerFinder::Instance
 {
