@@ -77,11 +77,6 @@ MaterialScheme &MaterialManifest::scheme() const
     throw Error("MaterialManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
 }
 
-Uri MaterialManifest::composeUri(QChar sep) const
-{
-    return Uri(schemeName(), path(sep));
-}
-
 String MaterialManifest::sourceDescription() const
 {
     if(!isCustom()) return "game";

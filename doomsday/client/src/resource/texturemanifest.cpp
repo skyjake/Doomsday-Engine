@@ -50,7 +50,7 @@ DENG2_PIMPL(TextureManifest)
 
     ~Instance()
     {
-        delete texture;
+        if(texture) delete texture;
     }
 };
 
@@ -106,16 +106,6 @@ Textures::Scheme &TextureManifest::scheme() const
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
     throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%p].").arg(de::dintptr(this)));
-}
-
-Uri TextureManifest::composeUri(QChar sep) const
-{
-    return Uri(scheme().name(), path(sep));
-}
-
-Uri TextureManifest::composeUrn() const
-{
-    return Uri("urn", String("%1:%2").arg(scheme().name()).arg(d->uniqueId, 0, 10));
 }
 
 Uri const &TextureManifest::resourceUri() const

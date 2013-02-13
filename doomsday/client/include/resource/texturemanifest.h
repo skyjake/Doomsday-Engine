@@ -74,7 +74,10 @@ public:
      * The path component of the URI will contain the percent-encoded path
      * of the TextureManifest.
      */
-    Uri composeUri(QChar sep = '/') const;
+    inline Uri composeUri(QChar sep = '/') const
+    {
+        return Uri(schemeName(), path(sep));
+    }
 
     /**
      * Compose a URN of the form "urn:scheme:uniqueid" for the texture
@@ -88,7 +91,10 @@ public:
      *
      * @see uniqueId(), setUniqueId()
      */
-    Uri composeUrn() const;
+    inline Uri composeUrn() const
+    {
+        return Uri("urn", String("%1:%2").arg(schemeName()).arg(uniqueId(), 0, 10));
+    }
 
     /**
      * Returns the URI to the associated resource. May be empty.

@@ -74,8 +74,7 @@ Texture::~Texture()
 {
     GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(this));
 
-    TextureScheme const &scheme = d->manifest.scheme();
-    if(!scheme.name().compareWithoutCase("Textures"))
+    if(!manifest().schemeName().compareWithoutCase("Textures"))
     {
         CompositeTexture *pcTex = reinterpret_cast<CompositeTexture *>(userDataPointer());
         if(pcTex) delete pcTex;
