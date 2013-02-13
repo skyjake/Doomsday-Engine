@@ -21,6 +21,7 @@
 #include <QPushButton>
 #include <QHBoxLayout>
 #include <QFileDialog>
+#include <QLabel>
 
 DENG2_PIMPL(FolderSelection)
 {
@@ -28,7 +29,7 @@ DENG2_PIMPL(FolderSelection)
     QLineEdit *edit;
     QPushButton *button;
 
-    Instance(Public &i) : Base(i),
+    Instance(Public &i, QString extraLabel) : Base(i),
         edit(0),
         button(0)
     {
@@ -44,6 +45,12 @@ DENG2_PIMPL(FolderSelection)
         layout->setContentsMargins(0, 0, 0, 0);
         self.setLayout(layout);
 
+        if(!extraLabel.isEmpty())
+        {
+            QLabel *lab = new QLabel(extraLabel);
+            layout->addWidget(lab, 0);
+        }
+
         edit = new QLineEdit;
         edit->setMinimumWidth(280);
         button = new QPushButton(tr("..."));
@@ -54,10 +61,16 @@ DENG2_PIMPL(FolderSelection)
 };
 
 FolderSelection::FolderSelection(QString const &prompt, QWidget *parent)
-    : QWidget(parent), d(new Instance(*this))
+    : QWidget(parent), d(new Instance(*this, ""))
 {
     d->prompt = prompt;
+    connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
+}
 
+FolderSelection::FolderSelection(QString const &prompt, QString const &extraLabel, QWidget *parent)
+    : QWidget(parent), d(new Instance(*this, extraLabel))
+{
+    d->prompt = prompt;
     connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
 }
 
@@ -78,7 +91,9 @@ de::NativePath FolderSelection::path() const
 
 void FolderSelection::selectFolder()
 {
-    QString dir = QFileDialog::getExistingDirectory(0, d->prompt, d->edit->text());
+    QString initial = d->edit->text();
+    if(initial.isEmpty()) initial = QDir::homePath();
+    QString dir = QFileDialog::getExistingDirectory(0, d->prompt, initial);
     if(!dir.isEmpty())
     {
         d->edit->setText(dir);
