@@ -206,14 +206,19 @@ void GuiShellApp::startLocalServer()
         LocalServerDialog dlg;
         if(dlg.exec() == QDialog::Accepted)
         {
+            QStringList opts = dlg.additionalOptions();
+            if(!Preferences::iwadFolder().isEmpty())
+            {
+                opts << "-iwad" << Preferences::iwadFolder().toString();
+            }
+
             LocalServer sv;
             sv.start(dlg.port(),
                      dlg.gameMode(),
                      dlg.additionalOptions(),
                      dlg.runtimeFolder());
 
-            newOrReusedConnectionWindow()->
-                    openConnection("localhost:" + String::number(dlg.port()));
+            newOrReusedConnectionWindow()->openConnection(sv.openLink());
         }
     }
     catch(Error const &er)

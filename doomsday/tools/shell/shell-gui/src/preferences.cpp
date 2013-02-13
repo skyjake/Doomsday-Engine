@@ -69,11 +69,12 @@ Preferences::~Preferences()
     delete d;
 }
 
-de::NativePath Preferences::iwadFolder() const
+de::NativePath Preferences::iwadFolder()
 {
-    if(d->useCustomIwad->isChecked())
+    QSettings st;
+    if(st.value("Preferences/customIwad", false).toBool())
     {
-        return d->iwadFolder->path();
+        return st.value("Preferences/iwadFolder").toString();
     }
     return "";
 }

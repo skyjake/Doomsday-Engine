@@ -29,8 +29,10 @@ namespace shell {
 struct LocalServer::Instance
 {
     Link *link;
+    duint16 port;
 
-    Instance() : link(0) {}
+    Instance() : link(0), port(0)
+    {}
 };
 
 LocalServer::LocalServer() : d(new Instance)
@@ -44,6 +46,8 @@ LocalServer::~LocalServer()
 void LocalServer::start(duint16 port, String const &gameMode, QStringList additionalOptions,
                         NativePath const &runtimePath)
 {
+    d->port = port;
+
     NativePath userDir = runtimePath;
 
     if(userDir.isEmpty())
@@ -132,6 +136,11 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
 void LocalServer::stop()
 {
     DENG2_ASSERT(d->link != 0);
+}
+
+Link *LocalServer::openLink()
+{
+    return new Link(String("localhost:%1").arg(d->port), 30);
 }
 
 /*Link &LocalServer::link()

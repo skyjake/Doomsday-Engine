@@ -135,14 +135,6 @@ QString LocalServerDialog::gameMode() const
 QStringList LocalServerDialog::additionalOptions() const
 {
     QStringList opts = d->options->text().split(' ', QString::SkipEmptyParts);
-
-    Preferences prefs;
-    NativePath iwadPath = prefs.iwadFolder();
-    if(!iwadPath.isEmpty())
-    {
-        opts << "-iwad" << iwadPath.toString();
-    }
-
     return opts;
 }
 
@@ -161,7 +153,6 @@ void LocalServerDialog::saveState()
     st.setValue("LocalServer/gameMode", d->games->itemData(d->games->currentIndex()).toString());
     st.setValue("LocalServer/port", d->port->text().toInt());
     st.setValue("LocalServer/runtime", d->runtime->path().toString());
-    //st.setValue("LocalServer/iwad", d->iwadFolder->text());
     st.setValue("LocalServer/options", d->options->text());
 }
 
@@ -178,8 +169,6 @@ void LocalServerDialog::validate()
     }
 
     if(d->runtime->path().isEmpty()) isValid = false;
-
-    //if(d->iwadFolder->text().isEmpty()) isValid = false;
 
     d->yes->setEnabled(isValid);
     if(isValid) d->yes->setDefault(true);

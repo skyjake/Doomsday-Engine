@@ -30,7 +30,7 @@ public:
     explicit Preferences(QWidget *parent = 0);
     ~Preferences();
     
-    de::NativePath iwadFolder() const;
+    static de::NativePath iwadFolder();
 
 signals:
     

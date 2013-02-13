@@ -21,6 +21,7 @@
 
 #include <QMainWindow>
 #include <de/String>
+#include <de/shell/Link>
 
 /**
  * Window for a server link.
@@ -45,6 +46,7 @@ signals:
 
 public slots:
     void openConnection(QString address);
+    void openConnection(de::shell::Link *link, de::String name = "");
     void closeConnection();
     void sendCommandToServer(de::String command);
     void switchToStatus();

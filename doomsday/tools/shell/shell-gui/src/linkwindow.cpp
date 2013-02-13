@@ -296,27 +296,32 @@ void LinkWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
-void LinkWindow::openConnection(QString address)
+void LinkWindow::openConnection(Link *link, String name)
 {
     closeConnection();
 
-    qDebug() << "Opening connection to" << address;
-
-    // Keep trying to connect to 30 seconds.
-    d->link = new Link(address, 30);
-    //d->status->setShellLink(d->link);
+    d->link = link;
 
     connect(d->link, SIGNAL(addressResolved()), this, SLOT(addressResolved()));
     connect(d->link, SIGNAL(connected()), this, SLOT(connected()));
     connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
     connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
 
-    setTitle(address);    
+    if(name.isEmpty()) name = link->address().asText();
+    setTitle(name);
     d->root->setOverlaidMessage(tr("Looking up host..."));
     statusBar()->showMessage(tr("Looking up host..."));
     d->status->linkConnected(d->link);
     d->updateCurrentHost();
     d->updateStyle();
+}
+
+void LinkWindow::openConnection(QString address)
+{
+    qDebug() << "Opening connection to" << address;
+
+    // Keep trying to connect to 30 seconds.
+    openConnection(new Link(address, 30), address);
 }
 
 void LinkWindow::closeConnection()
