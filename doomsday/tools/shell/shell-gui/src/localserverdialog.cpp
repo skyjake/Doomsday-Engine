@@ -42,6 +42,7 @@ DENG2_PIMPL(LocalServerDialog)
     QPushButton *yes;
     QComboBox *games;
     QLineEdit *port;
+    QLabel *portMsg;
     QLineEdit *options;
     FolderSelection *runtime;
 
@@ -74,11 +75,20 @@ DENG2_PIMPL(LocalServerDialog)
         QPushButton *opt = new QPushButton(tr("Game &Options..."));
         form->addRow(0, opt);
 
+        QHBoxLayout *hb = new QHBoxLayout;
         port = new QLineEdit;
+        port->setMinimumWidth(80);
         port->setMaximumWidth(80);
         port->setText(QString::number(st.value("LocalServer/port", 13209).toInt()));
         port->setToolTip(tr("Port must be between 0 and 65535."));
-        form->addRow(tr("TCP &port:"), port);
+        portMsg = new QLabel(tr("Port already in use."));
+        QPalette pal = portMsg->palette();
+        pal.setColor(portMsg->foregroundRole(), Qt::red);
+        portMsg->setPalette(pal);
+        hb->addWidget(port, 0);
+        hb->addWidget(portMsg, 1);
+        portMsg->hide();
+        form->addRow(tr("TCP port:"), hb);
 
         QWidget *advancedTab = new QWidget;
         form = new QFormLayout;
@@ -171,11 +181,16 @@ void LocalServerDialog::validate()
     }
 
     // Check known running servers.
+    bool inUse = false;
     foreach(Address const &sv, GuiShellApp::app().serverFinder().foundServers())
     {
         if(Socket::isHostLocal(sv.host()) && sv.port() == port)
+        {
             isValid = false;
+            inUse = true;
+        }
     }
+    d->portMsg->setVisible(inUse);
 
     if(d->runtime->path().isEmpty()) isValid = false;
 
