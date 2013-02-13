@@ -28,16 +28,21 @@
 #include "uri.hh"
 #include <de/Error>
 #include <de/Vector>
+#include <QFlag>
 #include <QList>
 #include <QSize>
 
 // Forward declarations:
 enum audioenvironmentclass_e;
+
 namespace de {
+
 class MaterialManifest;
 class MaterialSnapshot;
 struct MaterialVariantSpec;
+
 class Texture;
+
 }
 
 /**
@@ -47,7 +52,7 @@ class Texture;
  */
 class Material : public de::MapElement
 {
-    struct Instance; // Needs to be friended by Variant
+    struct Instance; // Needs to be friended by Variant.
 
     /// Internal typedefs for brevity/cleanliness.
     typedef de::MaterialManifest Manifest;
@@ -466,10 +471,9 @@ public:
         DecorationState const &decoration(int decorNum) const;
 
         /**
-         * Returns the MaterialSnapshot data for the variant if present;
-         * otherwise @c 0.
+         * Returns the MaterialSnapshot data for the variant.
          */
-        Snapshot *snapshot() const;
+        Snapshot &snapshot() const;
 
         friend class Material;
         friend struct Material::Instance;

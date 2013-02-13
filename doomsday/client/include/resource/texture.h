@@ -51,16 +51,17 @@ namespace de {
 class TextureManifest;
 
 /**
- * Logical texture object.
+ * Logical texture resource.
+ *
  * @ingroup resource
  */
 class Texture
 {
-    struct Instance; // Needs to be friended by Variant
+    struct Instance; // Needs to be friended by Variant.
 
 public:
     /**
-     * Classification/processing flags
+     * Classification/processing flags.
      */
     enum Flag
     {

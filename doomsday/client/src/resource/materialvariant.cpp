@@ -80,8 +80,9 @@ DENG2_PIMPL(Material::Variant)
      * present it will be replaced. Ownership of @a materialSnapshot is given to
      * the variant.
      */
-    void attachSnapshot(Material::Snapshot &newSnapshot)
+    void attachSnapshot(Material::Snapshot *newSnapshot)
     {
+        DENG2_ASSERT(newSnapshot);
         if(snapshot)
         {
 #ifdef DENG_DEBUG
@@ -90,17 +91,7 @@ DENG2_PIMPL(Material::Variant)
 #endif
             delete snapshot;
         }
-        snapshot = &newSnapshot;
-    }
-
-    /**
-     * Detach the snapshot data from the variant, relinquishing ownership to the caller.
-     */
-    Material::Snapshot *detachSnapshot()
-    {
-        Material::Snapshot *detachedSnapshot = snapshot;
-        snapshot = 0;
-        return detachedSnapshot;
+        snapshot = newSnapshot;
     }
 
     template <typename Type>
@@ -211,8 +202,34 @@ bool Material::Variant::isPaused() const
                              d->spec.context == MC_PSPRITE    ||
                              d->spec.context == MC_SKYSPHERE));
 #else
+    // On server side animation is never paused.
     return false;
 #endif
+}
+
+Material::Snapshot &Material::Variant::snapshot() const
+{
+    // Time to attach a snapshot?
+    if(!d->snapshot)
+    {
+        d->attachSnapshot(new Material::Snapshot(*const_cast<Material::Variant *>(this)));
+
+        // Mark the snapshot as dirty.
+        d->snapshotPrepareFrame = frameCount - 1;
+    }
+    return *d->snapshot;
+}
+
+Material::Snapshot const &Material::Variant::prepare(bool forceSnapshotUpdate)
+{
+    Material::Snapshot &snapshot_ = snapshot();
+    // Time to update the snapshot?
+    if(forceSnapshotUpdate || d->snapshotPrepareFrame != frameCount)
+    {
+        d->snapshotPrepareFrame = frameCount;
+        snapshot_.update();
+    }
+    return snapshot_;
 }
 
 void Material::Variant::ticker(timespan_t /*ticLength*/)
@@ -252,35 +269,6 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
         if(decorations[i]->isAnimated())
             d->animateDecoration(d->decorations[i], *decorations[i]);
     }
-}
-
-Material::Snapshot const &Material::Variant::prepare(bool forceSnapshotUpdate)
-{
-    // Acquire the snapshot we are interested in.
-    Material::Snapshot *snapshot = d->snapshot;
-    if(!snapshot)
-    {
-        // Time to allocate the snapshot.
-        snapshot = new Material::Snapshot(*this);
-        d->attachSnapshot(*snapshot);
-
-        // Update the snapshot right away.
-        forceSnapshotUpdate = true;
-    }
-    else if(d->snapshotPrepareFrame != frameCount)
-    {
-        // Time to update the snapshot.
-        forceSnapshotUpdate = true;
-    }
-
-    // We have work to do?
-    if(forceSnapshotUpdate)
-    {
-        d->snapshotPrepareFrame = frameCount;
-        snapshot->update();
-    }
-
-    return *snapshot;
 }
 
 void Material::Variant::resetAnim()
@@ -348,9 +336,4 @@ Material::Variant::DecorationState const &Material::Variant::decoration(int deco
     }
     /// @throw Material::UnknownDecorationError Invalid decoration reference.
     throw Material::UnknownDecorationError("Material::Variant::decoration", QString("Invalid material decoration #%1").arg(decorNum));
-}
-
-Material::Snapshot *Material::Variant::snapshot() const
-{
-    return d->snapshot;
 }
