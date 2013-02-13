@@ -63,26 +63,7 @@ DENG2_PIMPL(Texture)
     ~Instance()
     {
         self.clearAnalyses();
-        clearVariants();
-    }
-
-    void clearVariants()
-    {
-        while(!variants.isEmpty())
-        {
-            Texture::Variant *variant = variants.takeFirst();
-#if _DEBUG
-            uint glName = variant->glName();
-            if(glName)
-            {
-                LOG_AS("Texture::clearVariants")
-                LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
-                    << glName << manifest.composeUri() << (void *)this;
-                GL_PrintTextureVariantSpecification(&variant->spec());
-            }
-#endif
-            delete variant;
-        }
+        self.clearVariants();
     }
 };
 
@@ -100,7 +81,6 @@ Texture::~Texture()
         if(pcTex) delete pcTex;
     }
 
-    clearAnalyses();
     delete d;
 }
 
@@ -108,7 +88,6 @@ TextureManifest &Texture::manifest() const
 {
     return d->manifest;
 }
-
 
 void Texture::setUserDataPointer(void *newUserData)
 {
@@ -211,7 +190,21 @@ Texture::Variants const &Texture::variants() const
 
 void Texture::clearVariants()
 {
-    d->clearVariants();
+    while(!d->variants.isEmpty())
+    {
+        Texture::Variant *variant = d->variants.takeFirst();
+#if _DEBUG
+        uint glName = variant->glName();
+        if(glName)
+        {
+            LOG_AS("Texture::clearVariants")
+            LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
+                << glName << d->manifest.composeUri() << de::dintptr(this);
+            GL_PrintTextureVariantSpecification(&variant->spec());
+        }
+#endif
+        delete variant;
+    }
 }
 
 void Texture::clearAnalyses()
