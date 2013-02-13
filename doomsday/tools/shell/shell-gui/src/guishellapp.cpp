@@ -235,6 +235,7 @@ void GuiShellApp::stopServer()
 
 void GuiShellApp::updateLocalServerMenu()
 {
+    d->localMenu->setDisabled(d->finder.foundServers().isEmpty());
     d->localMenu->clear();
 
     foreach(Address const &host, d->finder.foundServers())
@@ -281,6 +282,7 @@ void GuiShellApp::updateMenu()
     LinkWindow *win = dynamic_cast<LinkWindow *>(activeWindow());
     d->stopAction->setEnabled(win && win->isConnected());
 #endif
+    updateLocalServerMenu();
 }
 
 void GuiShellApp::windowClosed(LinkWindow *window)
