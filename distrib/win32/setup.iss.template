@@ -72,6 +72,8 @@ Type: filesandordirs; Name: "{app}\config"
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 ; Binaries
 Source: "bin\doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\doomsday-server.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\doomsday-shell.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\audio_*.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\dehread.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\wadmapconverter.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
@@ -88,6 +90,8 @@ Source: "bin\wadtool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Component
 Source: "..\win32\vcredist_x86.exe"; DestDir: "{app}\bin"; Flags: ignoreversion deleteafterinstall; Components: Engine
 Source: "bin\deng1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng2.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_shell.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtCore4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
