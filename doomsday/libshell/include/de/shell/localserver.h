@@ -49,9 +49,12 @@ public:
     void stop();
 
     /**
-     * Returns the Link for communicating with the server.
+     * Opens a link for communicating with the server. The returned link will
+     * initially be in the Link::Connecting state.
+     *
+     * @return Link to the local server. Caller gets ownership.
      */
-    //Link *openLink();
+    Link *openLink();
 
 private:
     struct Instance;

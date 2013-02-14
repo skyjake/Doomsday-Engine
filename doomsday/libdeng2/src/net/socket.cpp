@@ -626,9 +626,14 @@ bool Socket::isOpen() const
 
 bool Socket::isLocal() const
 {
-    QHostAddress const host = peerAddress().host();
+    return isHostLocal(peerAddress().host());
+}
+
+bool Socket::isHostLocal(QHostAddress const &host) // static
+{
     if(host == QHostAddress::LocalHost) return true;
-    QHostInfo info = QHostInfo::fromName(QHostInfo::localHostName());    
+
+    QHostInfo info = QHostInfo::fromName(QHostInfo::localHostName());
     foreach(QHostAddress addr, info.addresses())
     {
         if(addr == host) return true;

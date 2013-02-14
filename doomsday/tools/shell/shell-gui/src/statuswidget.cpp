@@ -92,8 +92,8 @@ void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
         shell::MapOutlinePacket::Line const &ln = outline.line(i);
         painter.setPen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
 
-        QPoint a(ln.start.x, ln.start.y);
-        QPoint b(ln.end.x, ln.end.y);
+        QPoint a(ln.start.x, -ln.start.y);
+        QPoint b(ln.end.x, -ln.end.y);
 
         painter.drawLine(a, b);
 

@@ -2,5 +2,6 @@
     <qresource prefix="/images">
         <file>shell.png</file>
         <file>shell@2x.png</file>
+        <file>toolbar_placeholder.png</file>
     </qresource>
 </RCC>

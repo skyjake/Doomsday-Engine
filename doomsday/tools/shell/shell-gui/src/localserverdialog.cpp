@@ -17,7 +17,10 @@
  */
 
 #include "localserverdialog.h"
+#include "folderselection.h"
+#include "guishellapp.h"
 #include <de/libdeng2.h>
+#include <de/Socket>
 #include <de/shell/DoomsdayInfo>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
@@ -26,8 +29,10 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QLabel>
+#include <QTabWidget>
 #include <QFileDialog>
 #include <QSettings>
+#include "preferences.h"
 
 using namespace de;
 using namespace de::shell;
@@ -37,9 +42,9 @@ DENG2_PIMPL(LocalServerDialog)
     QPushButton *yes;
     QComboBox *games;
     QLineEdit *port;
+    QLabel *portMsg;
     QLineEdit *options;
-    QLineEdit *folder;
-    QLineEdit *iwadFolder;
+    FolderSelection *runtime;
 
     Instance(Public &i) : Base(i)
     {
@@ -50,8 +55,13 @@ DENG2_PIMPL(LocalServerDialog)
         QVBoxLayout *mainLayout = new QVBoxLayout;
         self.setLayout(mainLayout);
 
+        QTabWidget *tabs = new QTabWidget;
+        mainLayout->addWidget(tabs, 1);
+
+        QWidget *gameTab = new QWidget;
         QFormLayout *form = new QFormLayout;
-        mainLayout->addLayout(form);
+        gameTab->setLayout(form);
+        tabs->addTab(gameTab, tr("&Settings"));
 
         games = new QComboBox;
         games->setEditable(false);
@@ -60,41 +70,39 @@ DENG2_PIMPL(LocalServerDialog)
             games->addItem(mode.title, mode.option);
         }
         games->setCurrentIndex(games->findData(st.value("LocalServer/gameMode", "doom1-share")));
-        form->addRow(tr("Game mode:"), games);
+        form->addRow(tr("&Game mode:"), games);
 
+        QPushButton *opt = new QPushButton(tr("Game &Options..."));
+        form->addRow(0, opt);
+
+        QHBoxLayout *hb = new QHBoxLayout;
         port = new QLineEdit;
+        port->setMinimumWidth(80);
         port->setMaximumWidth(80);
         port->setText(QString::number(st.value("LocalServer/port", 13209).toInt()));
         port->setToolTip(tr("Port must be between 0 and 65535."));
-        form->addRow(tr("TCP port:"), port);
+        portMsg = new QLabel(tr("Port already in use."));
+        QPalette pal = portMsg->palette();
+        pal.setColor(portMsg->foregroundRole(), Qt::red);
+        portMsg->setPalette(pal);
+        hb->addWidget(port, 0);
+        hb->addWidget(portMsg, 1);
+        portMsg->hide();
+        form->addRow(tr("TCP port:"), hb);
 
-        folder = new QLineEdit;
-        folder->setMinimumWidth(300);
-        folder->setText(st.value("LocalServer/runtime").toString());
-        if(folder->text().isEmpty())
+        QWidget *advancedTab = new QWidget;
+        form = new QFormLayout;
+        advancedTab->setLayout(form);
+        tabs->addTab(advancedTab, tr("&Advanced"));
+
+        runtime = new FolderSelection(tr("Select Runtime Folder"));
+        runtime->setPath(st.value("LocalServer/runtime").toString());
+        if(runtime->path().isEmpty())
         {
-            folder->setText(DoomsdayInfo::defaultServerRuntimeFolder().toString());
+            runtime->setPath(DoomsdayInfo::defaultServerRuntimeFolder().toString());
         }
-        form->addRow(tr("Runtime folder:"), folder);
-
-        QPushButton *folderButton = new QPushButton(tr("Select Folder"));
-        connect(folderButton, SIGNAL(clicked()), &self, SLOT(pickFolder()));
-        form->addRow(0, folderButton);
-#ifdef WIN32
-        folderButton->setMaximumWidth(100);
-#endif
-
-        iwadFolder = new QLineEdit;
-        iwadFolder->setMinimumWidth(300);
-        iwadFolder->setText(st.value("LocalServer/iwad").toString());
-        form->addRow(tr("IWAD folder:"), iwadFolder);
-
-        QPushButton *iwadFolderButton = new QPushButton(tr("Select Folder"));
-        connect(iwadFolderButton, SIGNAL(clicked()), &self, SLOT(pickIwadFolder()));
-        form->addRow(0, iwadFolderButton);
-#ifdef WIN32
-        iwadFolderButton->setMaximumWidth(100);
-#endif
+        form->addRow(tr("Runtime folder:"), runtime);
+        QObject::connect(runtime, SIGNAL(selected()), &self, SLOT(validate()));
 
         options = new QLineEdit;
         options->setMinimumWidth(300);
@@ -105,12 +113,10 @@ DENG2_PIMPL(LocalServerDialog)
         mainLayout->addWidget(bbox);
         yes = bbox->addButton(tr("&Start Server"), QDialogButtonBox::YesRole);
         QPushButton* no = bbox->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-        QPushButton *opt = bbox->addButton(tr("Game Options..."), QDialogButtonBox::ActionRole);
         QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
         QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
         QObject::connect(opt, SIGNAL(clicked()), &self, SLOT(configureGameOptions()));
         yes->setDefault(true);
-        yes->setAutoDefault(true);
     }
 };
 
@@ -141,33 +147,12 @@ QString LocalServerDialog::gameMode() const
 QStringList LocalServerDialog::additionalOptions() const
 {
     QStringList opts = d->options->text().split(' ', QString::SkipEmptyParts);
-    opts << "-iwad" << d->iwadFolder->text();
     return opts;
 }
 
 NativePath LocalServerDialog::runtimeFolder() const
 {
-    return d->folder->text();
-}
-
-void LocalServerDialog::pickFolder()
-{
-    QString dir = QFileDialog::getExistingDirectory(this,
-                                                    tr("Select Runtime Folder"),
-                                                    d->folder->text());
-    if(!dir.isEmpty()) d->folder->setText(dir);
-
-    validate();
-}
-
-void LocalServerDialog::pickIwadFolder()
-{
-    QString dir = QFileDialog::getExistingDirectory(this,
-                                                    tr("Select IWAD Folder"),
-                                                    d->iwadFolder->text());
-    if(!dir.isEmpty()) d->iwadFolder->setText(dir);
-
-    validate();
+    return d->runtime->path();
 }
 
 void LocalServerDialog::configureGameOptions()
@@ -179,8 +164,7 @@ void LocalServerDialog::saveState()
     QSettings st;
     st.setValue("LocalServer/gameMode", d->games->itemData(d->games->currentIndex()).toString());
     st.setValue("LocalServer/port", d->port->text().toInt());
-    st.setValue("LocalServer/runtime", d->folder->text());
-    st.setValue("LocalServer/iwad", d->iwadFolder->text());
+    st.setValue("LocalServer/runtime", d->runtime->path().toString());
     st.setValue("LocalServer/options", d->options->text());
 }
 
@@ -190,15 +174,26 @@ void LocalServerDialog::validate()
 
     // Check port.
     QString txt = d->port->text().trimmed();
-    int num = txt.toInt();
-    if(txt.isEmpty() || num < 0 || num >= 0x10000)
+    int port = txt.toInt();
+    if(txt.isEmpty() || port < 0 || port >= 0x10000)
     {
         isValid = false;
     }
 
-    if(d->folder->text().isEmpty()) isValid = false;
+    // Check known running servers.
+    bool inUse = false;
+    foreach(Address const &sv, GuiShellApp::app().serverFinder().foundServers())
+    {
+        if(Socket::isHostLocal(sv.host()) && sv.port() == port)
+        {
+            isValid = false;
+            inUse = true;
+        }
+    }
+    d->portMsg->setVisible(inUse);
 
-    if(d->iwadFolder->text().isEmpty()) isValid = false;
+    if(d->runtime->path().isEmpty()) isValid = false;
 
     d->yes->setEnabled(isValid);
+    if(isValid) d->yes->setDefault(true);
 }

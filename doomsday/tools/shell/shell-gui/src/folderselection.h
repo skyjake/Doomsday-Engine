@@ -1,4 +1,4 @@
-/** @file shellapp.h  Shell GUI application.
+/** @file folderselection.h  Widget for selecting a folder.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,48 +16,38 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GUISHELLAPP_H
-#define GUISHELLAPP_H
+#ifndef FOLDERSELECTION_H
+#define FOLDERSELECTION_H
 
-#include "qtguiapp.h"
-#include <de/shell/ServerFinder>
-#include <QMenu>
+#include <de/libdeng2.h>
+#include <de/NativePath>
+#include <QWidget>
 
-class LinkWindow;
-
-class GuiShellApp : public QtGuiApp
+/**
+ * Widget for selecting a folder.
+ */
+class FolderSelection : public QWidget
 {
     Q_OBJECT
 
 public:
-    GuiShellApp(int &argc, char **argv);
-    ~GuiShellApp();
+    explicit FolderSelection(QString const &prompt, QWidget *parent = 0);
+    explicit FolderSelection(QString const &prompt, QString const &extraLabel, QWidget *parent = 0);
+    virtual ~FolderSelection();
 
-    LinkWindow *newOrReusedConnectionWindow();
-    de::shell::ServerFinder &serverFinder();
+    void setPath(de::NativePath const &path);
 
-    static GuiShellApp &app();
-    QMenu *localServersMenu();
-
+    de::NativePath path() const;
+    
+signals:
+    void selected();
+    
 public slots:
-    void connectToServer();
-    void connectToLocalServer();
-    void disconnectFromServer();
-    void closeActiveWindow();
-    void startLocalServer();
-    void stopServer();
-    void updateLocalServerMenu();
-    void aboutShell();
-    void showPreferences();
-    void preferencesDone();
-    void updateMenu();
-
-protected slots:
-    void windowClosed(LinkWindow *window);
-
+    void selectFolder();
+    
 private:
     struct Instance;
     Instance *d;
 };
 
-#endif // GUISHELLAPP_H
+#endif // FOLDERSELECTION_H

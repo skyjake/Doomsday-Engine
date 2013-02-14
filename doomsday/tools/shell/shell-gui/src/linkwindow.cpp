@@ -141,6 +141,9 @@ LinkWindow::LinkWindow(QWidget *parent)
     : QMainWindow(parent), d(new Instance(*this))
 {
     setUnifiedTitleAndToolBarOnMac(true);
+#ifndef MACOSX
+    setWindowIcon(QIcon(":/images/shell.png"));
+#endif
 
     GuiShellApp *app = &GuiShellApp::app();
 
@@ -149,6 +152,7 @@ LinkWindow::LinkWindow(QWidget *parent)
 
 #ifndef MACOSX
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
+    fileMenu->addAction(tr("&Settings..."), app, SLOT(showPreferences()));
     fileMenu->addAction(tr("&Quit"), app, SLOT(quit()), QKeySequence(tr("Ctrl+Q")));
 
     // Menus are window-specific on non-Mac platforms.
@@ -164,6 +168,8 @@ LinkWindow::LinkWindow(QWidget *parent)
     svMenu->addAction(d->stopAction);
     svMenu->addSeparator();
     svMenu->addMenu(app->localServersMenu());
+
+    connect(svMenu, SIGNAL(aboutToShow()), app, SLOT(updateLocalServerMenu()));
 
     QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(tr("About Doomsday Shell"), app, SLOT(aboutShell()));
@@ -201,17 +207,25 @@ LinkWindow::LinkWindow(QWidget *parent)
     statusBar()->addPermanentWidget(d->currentHost);
     statusBar()->addPermanentWidget(d->timeCounter);
 
+    QIcon icon(":/images/toolbar_placeholder.png");
+
     QToolBar *tools = addToolBar(tr("View"));
+    tools->setMovable(false);
+    tools->setFloatable(false);
 
     d->statusButton = new QToolButton;
+    d->statusButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     d->statusButton->setFocusPolicy(Qt::NoFocus);
     d->statusButton->setText(tr("Status"));
+    d->statusButton->setIcon(icon);
     d->statusButton->setCheckable(true);
     d->statusButton->setChecked(true);
     connect(d->statusButton, SIGNAL(pressed()), this, SLOT(switchToStatus()));
     tools->addWidget(d->statusButton);
 
     d->consoleButton = new QToolButton;
+    d->consoleButton->setIcon(icon);
+    d->consoleButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     d->consoleButton->setFocusPolicy(Qt::NoFocus);
     d->consoleButton->setText(tr("Console"));
     d->consoleButton->setCheckable(true);
@@ -259,18 +273,20 @@ bool LinkWindow::isConnected() const
 
 void LinkWindow::closeEvent(QCloseEvent *event)
 {
+    /*
     if(isConnected())
     {
         if(QMessageBox::question(
                     this,
                     tr("Close Connection?"),
-                    tr("Connection is still open. Do you want to close it?"),
+                    tr("Connection is still open. Do you want to close the window regardless?"),
                     QMessageBox::Close | QMessageBox::Cancel) == QMessageBox::Cancel)
         {
             event->ignore();
             return;
         }
     }
+    */
 
     closeConnection();
     event->accept();
@@ -280,27 +296,32 @@ void LinkWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
-void LinkWindow::openConnection(QString address)
+void LinkWindow::openConnection(Link *link, String name)
 {
     closeConnection();
 
-    qDebug() << "Opening connection to" << address;
-
-    // Keep trying to connect to 30 seconds.
-    d->link = new Link(address, 30);
-    //d->status->setShellLink(d->link);
+    d->link = link;
 
     connect(d->link, SIGNAL(addressResolved()), this, SLOT(addressResolved()));
     connect(d->link, SIGNAL(connected()), this, SLOT(connected()));
     connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
     connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
 
-    setTitle(address);    
+    if(name.isEmpty()) name = link->address().asText();
+    setTitle(name);
     d->root->setOverlaidMessage(tr("Looking up host..."));
     statusBar()->showMessage(tr("Looking up host..."));
     d->status->linkConnected(d->link);
     d->updateCurrentHost();
     d->updateStyle();
+}
+
+void LinkWindow::openConnection(QString address)
+{
+    qDebug() << "Opening connection to" << address;
+
+    // Keep trying to connect to 30 seconds.
+    openConnection(new Link(address, 30), address);
 }
 
 void LinkWindow::closeConnection()

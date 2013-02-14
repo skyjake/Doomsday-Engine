@@ -21,6 +21,7 @@
 #include "opendialog.h"
 #include "aboutdialog.h"
 #include "localserverdialog.h"
+#include "preferences.h"
 #include <de/shell/LocalServer>
 #include <de/shell/ServerFinder>
 #include <QMenuBar>
@@ -39,8 +40,14 @@ struct GuiShellApp::Instance
     QMenu *localMenu;
 #ifdef MACOSX
     QAction *stopAction;
+    QAction *disconnectAction;
 #endif
     QList<LinkWindow *> windows;
+
+    Preferences *prefs;
+
+    Instance() : prefs(0)
+    {}
 
     ~Instance()
     {
@@ -72,8 +79,9 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     QMenu *menu = d->menuBar->addMenu(tr("Connection"));
     menu->addAction(tr("Connect..."), this, SLOT(connectToServer()),
                     QKeySequence(tr("Ctrl+O", "Connection|Connect")));
-    menu->addAction(tr("Disconnect"), this, SLOT(disconnectFromServer()),
-                    QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
+    d->disconnectAction = menu->addAction(tr("Disconnect"), this, SLOT(disconnectFromServer()),
+                                          QKeySequence(tr("Ctrl+D", "Connection|Disconnect")));
+    d->disconnectAction->setDisabled(true);
     menu->addSeparator();
     menu->addAction(tr("Close Window"), this, SLOT(closeActiveWindow()),
                     QKeySequence(tr("Ctrl+W", "Connection|Close Window")));
@@ -85,9 +93,11 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
     svMenu->addSeparator();
     svMenu->addMenu(d->localMenu);
 
+    connect(menu, SIGNAL(aboutToShow()), this, SLOT(updateMenu()));
     connect(svMenu, SIGNAL(aboutToShow()), this, SLOT(updateMenu()));
 
-    // This will appear in the application menu:
+    // These will appear in the application menu:
+    menu->addAction(tr("Preferences..."), this, SLOT(showPreferences()), QKeySequence(tr("Ctrl+,")));
     menu->addAction(tr("About"), this, SLOT(aboutShell()));
 #endif
 
@@ -196,14 +206,19 @@ void GuiShellApp::startLocalServer()
         LocalServerDialog dlg;
         if(dlg.exec() == QDialog::Accepted)
         {
+            QStringList opts = dlg.additionalOptions();
+            if(!Preferences::iwadFolder().isEmpty())
+            {
+                opts << "-iwad" << Preferences::iwadFolder().toString();
+            }
+
             LocalServer sv;
             sv.start(dlg.port(),
                      dlg.gameMode(),
                      dlg.additionalOptions(),
                      dlg.runtimeFolder());
 
-            newOrReusedConnectionWindow()->
-                    openConnection("localhost:" + String::number(dlg.port()));
+            newOrReusedConnectionWindow()->openConnection(sv.openLink());
         }
     }
     catch(Error const &er)
@@ -228,6 +243,7 @@ void GuiShellApp::stopServer()
 
 void GuiShellApp::updateLocalServerMenu()
 {
+    d->localMenu->setDisabled(d->finder.foundServers().isEmpty());
     d->localMenu->clear();
 
     foreach(Address const &host, d->finder.foundServers())
@@ -248,12 +264,34 @@ void GuiShellApp::aboutShell()
     AboutDialog().exec();
 }
 
+void GuiShellApp::showPreferences()
+{
+    if(!d->prefs)
+    {
+        d->prefs = new Preferences;
+        connect(d->prefs, SIGNAL(finished(int)), this, SLOT(preferencesDone()));
+        d->prefs->open();
+    }
+    else
+    {
+        d->prefs->activateWindow();
+    }
+}
+
+void GuiShellApp::preferencesDone()
+{
+    d->prefs->deleteLater();
+    d->prefs = 0;
+}
+
 void GuiShellApp::updateMenu()
 {
 #ifdef MACOSX
     LinkWindow *win = dynamic_cast<LinkWindow *>(activeWindow());
     d->stopAction->setEnabled(win && win->isConnected());
+    d->disconnectAction->setEnabled(win && win->isConnected());
 #endif
+    updateLocalServerMenu();
 }
 
 void GuiShellApp::windowClosed(LinkWindow *window)

@@ -8,6 +8,7 @@ AboutDialog::AboutDialog(QWidget *parent)
     : QDialog(parent)
 {
     setWindowTitle(tr("About Doomsday Shell"));
+    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
     QVBoxLayout *box = new QVBoxLayout;
     setLayout(box);
