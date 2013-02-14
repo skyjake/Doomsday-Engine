@@ -41,6 +41,8 @@
 #  include <ctype.h>
 #endif
 
+#include <cstring>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
