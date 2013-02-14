@@ -96,6 +96,8 @@ struct FS1::Instance
     /// List of all loaded files present in the system.
     FileList loadedFiles;
 
+    uint loadedFilesCRC;
+
     /// Database of unique identifiers for all loaded/opened files.
     FileIds fileIds;
 
@@ -114,9 +116,10 @@ struct FS1::Instance
     /// System subspace schemes containing subsets of the total files.
     Schemes schemes;
 
-    Instance(FS1* d) : self(*d), loadingForStartup(true),
-        openFiles(), loadedFiles(), fileIds(),
-        primaryIndex(), zipFileIndex(LIF_UNIQUE_PATHS)
+    Instance(FS1* d) : self(*d),
+        loadingForStartup(true),
+        loadedFilesCRC(0),
+        zipFileIndex(LIF_UNIQUE_PATHS)
     {}
 
     ~Instance()
@@ -163,6 +166,8 @@ struct FS1::Instance
 
     void clearLoadedFiles(de::LumpIndex* index = 0)
     {
+        loadedFilesCRC = 0;
+
         // Unload in reverse load order.
         for(int i = loadedFiles.size() - 1; i >= 0; i--)
         {
@@ -511,6 +516,7 @@ void FS1::index(de::File1& file)
     // Add a handle to the loaded files list.
     FileHandle* loadedFilesHndl = FileHandleBuilder::fromFile(file);
     d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
+    d->loadedFilesCRC = 0;
 }
 
 void FS1::deindex(de::File1& file)
@@ -525,6 +531,7 @@ void FS1::deindex(de::File1& file)
     d->primaryIndex.pruneByFile(file);
 
     d->loadedFiles.erase(found);
+    d->loadedFilesCRC = 0;
     delete *found;
 }
 
@@ -760,13 +767,18 @@ static Wad* findFirstWadFile(FS1::FileList& list, bool custom)
 
 uint FS1::loadedFilesCRC()
 {
-    /**
-     * We define the CRC as that of the lump directory of the first loaded IWAD.
-     * @todo Really kludgy...
-     */
-    Wad* iwad = findFirstWadFile(d->loadedFiles, false/*not-custom*/);
-    if(!iwad) return 0;
-    return iwad->calculateCRC();
+    if(!d->loadedFilesCRC)
+    {
+        /**
+         * We define the CRC as that of the lump directory of the first loaded IWAD.
+         * @todo Really kludgy...
+         */
+        // CRC not calculated yet, let's do it now.
+        Wad* iwad = findFirstWadFile(d->loadedFiles, false/*not-custom*/);
+        if(!iwad) return 0;
+        d->loadedFilesCRC = iwad->calculateCRC();
+    }
+    return d->loadedFilesCRC;
 }
 
 int FS1::findAll(FS1::FileList& found) const
