@@ -65,10 +65,6 @@ typedef enum uitexid_e {
     NUM_UITEXTURES
 } uitexid_t;
 
-typedef struct {
-    DGLuint tex;
-} ddtexture_t;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

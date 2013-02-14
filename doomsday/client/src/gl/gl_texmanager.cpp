@@ -139,13 +139,13 @@ int glmode[6] = // Indexed by 'mipmapping'.
 };
 
 // Names of the dynamic light textures.
-ddtexture_t lightingTextures[NUM_LIGHTING_TEXTURES];
+DGLuint lightingTextures[NUM_LIGHTING_TEXTURES];
 
 // Names of the flare textures (halos).
-ddtexture_t sysFlareTextures[NUM_SYSFLARE_TEXTURES];
+DGLuint sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
 // Names of the UI textures.
-ddtexture_t uiTextures[NUM_UITEXTURES];
+DGLuint uiTextures[NUM_UITEXTURES];
 
 static boolean initedOk = false; // Init done.
 
@@ -1080,8 +1080,9 @@ void GL_InitTextureManager()
     highResWithPWAD = CommandLine_Exists("-pwadtex");
 
     // System textures loaded in GL_LoadSystemTextures.
-    memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
-    memset(lightingTextures, 0, sizeof(lightingTextures));
+    std::memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
+    std::memset(lightingTextures, 0, sizeof(lightingTextures));
+    std::memset(uiTextures, 0, sizeof(uiTextures));
 
     // Initialization done.
     initedOk = true;
@@ -1274,27 +1275,16 @@ void GL_ReleaseSystemTextures()
     // Which, obviously, can't persist any longer...
     RL_DeleteLists();
 
-    for(int i = 0; i < NUM_LIGHTING_TEXTURES; ++i)
-    {
-        glDeleteTextures(1, (GLuint const *) &lightingTextures[i].tex);
-    }
+    glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
     std::memset(lightingTextures, 0, sizeof(lightingTextures));
 
-    for(int i = 0; i < NUM_SYSFLARE_TEXTURES; ++i)
-    {
-        glDeleteTextures(1, (GLuint const *) &sysFlareTextures[i].tex);
-    }
+    glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
     std::memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
-    GL_ReleaseTexturesByScheme("System");
-
-    //glDeleteTextures(NUM_UITEXTURES, (const GLuint*) uiTextures);
-    for(int i = 0; i < NUM_UITEXTURES; ++i)
-    {
-        glDeleteTextures(1, (GLuint const *) &uiTextures[i].tex);
-    }
+    glDeleteTextures(NUM_UITEXTURES, (GLuint const *) uiTextures);
     std::memset(uiTextures, 0, sizeof(uiTextures));
 
+    GL_ReleaseTexturesByScheme("System");
     Rend_ParticleReleaseSystemTextures();
     Fonts_ReleaseSystemTextures();
 
@@ -2088,7 +2078,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
     };
     struct TexDef const &def = texDefs[which];
 
-    if(!lightingTextures[which].tex)
+    if(!lightingTextures[which])
     {
         image_t image;
 
@@ -2104,14 +2094,14 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
                 TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR, -1 /*best anisotropy*/,
                 def.wrapS, def.wrapT);
 
-            lightingTextures[which].tex = glName;
+            lightingTextures[which] = glName;
         }
 
         Image_Destroy(&image);
     }
 
-    DENG_ASSERT(lightingTextures[which].tex != 0);
-    return lightingTextures[which].tex;
+    DENG_ASSERT(lightingTextures[which] != 0);
+    return lightingTextures[which];
 }
 
 DGLuint GL_PrepareUITexture(uitexid_t which)
@@ -2133,7 +2123,7 @@ DGLuint GL_PrepareUITexture(uitexid_t which)
     };
     struct TexDef const &def = texDefs[which];
 
-    if(!uiTextures[which].tex)
+    if(!uiTextures[which])
     {
         image_t image;
 
@@ -2149,14 +2139,14 @@ DGLuint GL_PrepareUITexture(uitexid_t which)
                 TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR,
                 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-            uiTextures[which].tex = glName;
+            uiTextures[which] = glName;
         }
 
         Image_Destroy(&image);
     }
 
-    //DENG_ASSERT(uiTextures[which].tex != 0);
-    return uiTextures[which].tex;
+    //DENG_ASSERT(uiTextures[which] != 0);
+    return uiTextures[which];
 }
 
 DGLuint GL_PrepareSysFlaremap(flaretexid_t which)
@@ -2174,7 +2164,7 @@ DGLuint GL_PrepareSysFlaremap(flaretexid_t which)
     };
     struct TexDef const &def = texDefs[which];
 
-    if(!sysFlareTextures[which].tex)
+    if(!sysFlareTextures[which])
     {
         image_t image;
 
@@ -2190,14 +2180,14 @@ DGLuint GL_PrepareSysFlaremap(flaretexid_t which)
                 TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-            sysFlareTextures[which].tex = glName;
+            sysFlareTextures[which] = glName;
         }
 
         Image_Destroy(&image);
     }
 
-    DENG_ASSERT(sysFlareTextures[which].tex != 0);
-    return sysFlareTextures[which].tex;
+    DENG_ASSERT(sysFlareTextures[which] != 0);
+    return sysFlareTextures[which];
 }
 
 TexSource GL_LoadExtTexture(image_t *image, char const *_searchPath, gfxmode_t mode)
