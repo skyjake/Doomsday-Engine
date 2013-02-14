@@ -213,10 +213,7 @@ void GuiShellApp::startLocalServer()
             }
 
             LocalServer sv;
-            sv.start(dlg.port(),
-                     dlg.gameMode(),
-                     dlg.additionalOptions(),
-                     dlg.runtimeFolder());
+            sv.start(dlg.port(), dlg.gameMode(), opts, dlg.runtimeFolder());
 
             newOrReusedConnectionWindow()->openConnection(sv.openLink());
         }
