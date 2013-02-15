@@ -74,7 +74,7 @@ typedef struct {
 #define CEILSPEED           (1)
 #define CEILWAIT            (150)
 
-void T_MoveCeiling(ceiling_t* c);
+void T_MoveCeiling(void *ceilingThinkerPtr);
 
 #if __JHEXEN__
 int EV_DoCeiling(LineDef* line, byte* args, ceilingtype_e type);

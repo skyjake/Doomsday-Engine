@@ -77,6 +77,6 @@ boolean P_ToggleSwitch(SideDef* side, int sound, boolean silent, int tics);
  */
 boolean P_UseSpecialLine(mobj_t* activator, LineDef* line, int side);
 
-void T_MaterialChanger(materialchanger_t* mchanger);
+void T_MaterialChanger(void *materialChangedThinker);
 
 #endif /// LIBCOMMON_PLAY_SWITCH_H

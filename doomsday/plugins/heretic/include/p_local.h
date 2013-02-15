@@ -115,7 +115,7 @@ void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
 void        P_WindThrust(mobj_t* mo);
 int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
 boolean     P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax);
-void        P_MobjThinker(mobj_t* mo);
+void        P_MobjThinker(void *mo);
 void        P_RipperBlood(mobj_t* mo);
 boolean     P_HitFloor(mobj_t* thing);
 boolean     P_CheckMissileSpawn(mobj_t* missile);
