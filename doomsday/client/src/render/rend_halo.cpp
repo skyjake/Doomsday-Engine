@@ -103,6 +103,13 @@ void H_Register(void)
     C_CMD_FLAGS("flareconfig", NULL, FlareConfig, CMDF_NO_DEDICATED);
 }
 
+texturevariantspecification_t *Rend_HaloTextureSpec()
+{
+    return GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
+         TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+         1, 1, 0, false, false, false, true);
+}
+
 void H_SetupState(boolean dosetup)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();

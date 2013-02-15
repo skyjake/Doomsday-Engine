@@ -22,6 +22,8 @@
 #include "de_base.h"
 #ifdef __CLIENT__
 #  include "de_defs.h"
+#  include "render/lumobj.h" // Rend_LightmapTextureSpec()
+#  include "render/rend_halo.h" // Rend_HaloTextureSpec()
 #  include "render/rend_main.h" // detailFactor, detailScale, smoothTexAnim, etc...
 #  include "gl/gl_texmanager.h"
 #  include "gl/sys_opengl.h"
@@ -183,6 +185,62 @@ MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
         throw UnknownDecorationError("MaterialSnapshot::decoration", QString("Invalid decoration index %1").arg(index));
     }
     return d->stored.decorations[index];
+}
+
+static DGLuint prepareLightmap(de::Uri const *resourceUri)
+{
+    if(Texture *tex = R_FindTextureByResourceUri("Lightmaps", resourceUri))
+    {
+        if(TextureVariant *variant = GL_PrepareTexture(*tex, *Rend_LightmapTextureSpec()))
+        {
+            return variant->glName();
+        }
+        // Dang...
+    }
+    // Prepare the default lightmap instead.
+    return GL_PrepareLSTexture(LST_DYNAMIC);
+}
+
+/**
+ * Attempt to locate and prepare a flare texture.
+ * Somewhat more complicated than it needs to be due to the fact there
+ * are two different selection methods.
+ *
+ * @param resourceUri  Resource URI for the flaremap, or a texture indice [0..4].
+ * @param oldIdx  Old method of flare texture selection, by id.
+ *
+ * @return  @c 0= Use the automatic selection logic.
+ */
+static DGLuint prepareFlaremap(de::Uri const *resourceUri, int oldIdx)
+{
+    if(resourceUri && !resourceUri->isEmpty())
+    {
+        // Select a system flare by numeric identifier?
+        if(resourceUri->path().length() == 1)
+        {
+            QChar first = resourceUri->path().toStringRef().first();
+            int number = first.digitValue();
+            if(number == 0) return 0; // automatic
+            if(number >= 1 && number <= 4)
+            {
+                return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
+            }
+        }
+
+        if(Texture *tex = R_FindTextureByResourceUri("Flaremaps", resourceUri))
+        {
+            if(TextureVariant const *variant = GL_PrepareTexture(*tex, *Rend_HaloTextureSpec()))
+            {
+                return variant->glName();
+            }
+            // Dang...
+        }
+    }
+    else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
+    {
+        return GL_PrepareSysFlaremap(flaretexid_t(oldIdx - 1));
+    }
+    return 0; // Use the automatic selection logic.
 }
 #endif // __CLIENT__
 
@@ -524,10 +582,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
             }
         }
 
-        decor.tex      = GL_PrepareLightmap(lsCur->sides);
-        decor.ceilTex  = GL_PrepareLightmap(lsCur->up);
-        decor.floorTex = GL_PrepareLightmap(lsCur->down);
-        decor.flareTex = GL_PrepareFlareTexture(lsCur->flare, lsCur->flareTexture);
+        /// @todo Optimize: Locate the needed logical textures earlier.
+        decor.tex      = prepareLightmap(reinterpret_cast<de::Uri *>(lsCur->sides));
+        decor.ceilTex  = prepareLightmap(reinterpret_cast<de::Uri *>(lsCur->up));
+        decor.floorTex = prepareLightmap(reinterpret_cast<de::Uri *>(lsCur->down));
+        decor.flareTex = prepareFlaremap(reinterpret_cast<de::Uri *>(lsCur->flare), lsCur->flareTexture);
     }
 #endif // __CLIENT__
 

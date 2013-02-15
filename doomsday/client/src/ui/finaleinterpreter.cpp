@@ -1581,18 +1581,44 @@ DEFFC(ImageAt)
     Con_Message("FIC_ImageAt: Warning, missing lump '%s'.\n", name);
 }
 
+#ifdef __CLIENT__
+static DGLuint loadAndPrepareExtTexture(char const *fileName)
+{
+    image_t image;
+    DGLuint glTexName = 0;
+
+    if(GL_LoadExtTexture(&image, fileName, LGM_NORMAL))
+    {
+        // Loaded successfully and converted accordingly.
+        // Upload the image to GL.
+        glTexName = GL_NewTextureWithParams2(
+            ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
+              image.pixelSize == 3 ? DGL_RGB :
+              image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
+            image.size.width, image.size.height, image.pixels,
+            (image.size.width < 128 && image.size.height < 128? TXCF_NO_COMPRESSION : 0),
+            0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+        Image_Destroy(&image);
+    }
+
+    return glTexName;
+}
+#endif // __CLIENT__
+
 DEFFC(XImage)
 {
     fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+#ifdef __CLIENT__
     char const *fileName = OP_CSTRING(1);
+#endif
 
     FIData_PicClearAnimation(obj);
 
 #ifdef __CLIENT__
     // Load the external resource.
-    if(DGLuint tex = GL_PrepareExtTexture(fileName, LGM_NORMAL, false,
-                                          GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-                                          GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0))
+    if(DGLuint tex = loadAndPrepareExtTexture(fileName))
     {
         FIData_PicAppendFrame(obj, PFT_XIMAGE, -1, &tex, 0, false);
     }

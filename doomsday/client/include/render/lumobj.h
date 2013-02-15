@@ -57,7 +57,6 @@ typedef struct lumobj_s {
         struct lumobj_plane_s {
             float color[3];
             float intensity;
-            DGLuint tex;
             float normal[3];
         } plane;
     } data;
@@ -148,6 +147,11 @@ coord_t LO_DistanceToViewer(uint idx, int i);
  * @return  Attentuation factor [0..1]
  */
 float LO_AttenuationFactor(uint idx, coord_t distance);
+
+/**
+ * Returns the texture variant specification for lightmaps.
+ */
+texturevariantspecification_t *Rend_LightmapTextureSpec();
 
 /**
  * Clip lumobj, omni lights in the given BspLeaf.

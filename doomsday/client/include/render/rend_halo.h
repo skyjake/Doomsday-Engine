@@ -24,6 +24,8 @@
 #ifndef LIBDENG_RENDER_HALO_H
 #define LIBDENG_RENDER_HALO_H
 
+#include "TextureVariantSpec"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,6 +35,12 @@ extern int      haloMode, haloRealistic, haloBright, haloSize;
 extern float    haloFadeMax, haloFadeMin, minHaloSize;
 
 void            H_Register(void);
+
+/**
+ * Returns the texture variant specification for halos.
+ */
+texturevariantspecification_t *Rend_HaloTextureSpec();
+
 void            H_SetupState(boolean dosetup);
 
 /**

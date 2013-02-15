@@ -342,6 +342,8 @@ private:
     Instance *d;
 };
 
+typedef Texture::Variant TextureVariant;
+
 } // namespace de
 
 struct texture_s; // The texture instance (opaque).

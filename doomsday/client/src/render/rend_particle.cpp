@@ -102,7 +102,7 @@ static float pointDist(fixed_t c[3])
 static byte loadParticleTexture(uint particleTex, boolean silent)
 {
     DENG_ASSERT(particleTex < MAX_PTC_TEXTURES);
-{
+
     byte result = 0;
     image_t image;
     AutoStr* foundPath  = AutoStr_NewStd();
@@ -145,18 +145,33 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
 
     Uri_Delete(searchPath);
     return result;
-}}
+}
 
 void Rend_ParticleLoadSystemTextures()
 {
     if(novideo) return;
-    if(pointTex) return; // Already been here.
 
-    // Load the default "zeroth" texture - a modification of the dynlight texture (a blurred point).
-    pointTex = GL_PrepareExtTexture("Zeroth", LGM_WHITE_ALPHA, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
+    if(!pointTex)
+    {
+        // Load the default "zeroth" texture (a blurred point).
+        /// @todo Create a logical Texture in the "System" scheme for this.
+        image_t image;
+        if(GL_LoadExtTexture(&image, "Zeroth", LGM_WHITE_ALPHA))
+        {
+            // Loaded successfully and converted accordingly.
+            // Upload the image to GL.
+            pointTex = GL_NewTextureWithParams2(
+                ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
+                  image.pixelSize == 3 ? DGL_RGB :
+                  image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
+                image.size.width, image.size.height, image.pixels,
+                ( TXCF_MIPMAP | TXCF_NO_COMPRESSION ),
+                0, glmode[mipmapping], GL_LINEAR, 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-    DENG2_ASSERT(pointTex != 0);
+            DENG2_ASSERT(pointTex != 0);
+        }
+        Image_Destroy(&image);
+    }
 }
 
 void Rend_ParticleLoadExtraTextures()

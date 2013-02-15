@@ -79,6 +79,24 @@ static inline de::Uri composeLumpIndexResourceUrn(lumpnum_t lumpNum)
     return de::Uri("LumpIndex", Path(String("%1").arg(lumpNum)));
 }
 
+Texture *R_FindTextureByResourceUri(String schemeName, de::Uri const *resourceUri)
+{
+    if(resourceUri && !resourceUri->isEmpty())
+    {
+        if(!resourceUri->path().toStringRef().compareWithoutCase("-")) return 0;
+
+        try
+        {
+            return &App_Textures().scheme(schemeName).findByResourceUri(*resourceUri).texture();
+        }
+        catch(TextureManifest::MissingTextureError const &)
+        {} // Ignore this error.
+        catch(Textures::Scheme::NotFoundError const &)
+        {} // Ignore this error.
+    }
+    return 0;
+}
+
 void R_InitSystemTextures()
 {
     LOG_AS("R_InitSystemTextures");

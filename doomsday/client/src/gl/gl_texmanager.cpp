@@ -2068,13 +2068,13 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
         gfxmode_t mode;
         int wrapS, wrapT;
     } texDefs[NUM_LIGHTING_TEXTURES] = {
-        { "dlight",     LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        { "wallglow",   LGM_WHITE_ALPHA,    GL_REPEAT,          GL_CLAMP_TO_EDGE },
-        { "radioco",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        { "radiocc",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        { "radiooo",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        { "radiooe",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        { "vignette",   LGM_NORMAL,         GL_REPEAT,          GL_CLAMP_TO_EDGE }
+        /* LST_DYNAMIC */         { "dlight",     LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
+        /* LST_GRADIENT */        { "wallglow",   LGM_WHITE_ALPHA,    GL_REPEAT,          GL_CLAMP_TO_EDGE },
+        /* LST_RADIO_CO */        { "radioco",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
+        /* LST_RADIO_CC */        { "radiocc",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
+        /* LST_RADIO_OO */        { "radiooo",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
+        /* LST_RADIO_OE */        { "radiooe",    LGM_WHITE_ALPHA,    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
+        /* LST_CAMERA_VIGNETTE */ { "vignette",   LGM_NORMAL,         GL_REPEAT,          GL_CLAMP_TO_EDGE }
     };
     struct TexDef const &def = texDefs[which];
 
@@ -2113,13 +2113,13 @@ DGLuint GL_PrepareUITexture(uitexid_t which)
         char const *name;
         gfxmode_t mode;
     } texDefs[NUM_UITEXTURES] = {
-        { "Mouse",      LGM_NORMAL },
-        { "BoxCorner",  LGM_NORMAL },
-        { "BoxFill",    LGM_NORMAL },
-        { "BoxShade",   LGM_NORMAL },
-        { "Hint",       LGM_NORMAL },
-        { "Logo",       LGM_NORMAL },
-        { "Background", LGM_GRAYSCALE }
+        /* UITEX_MOUSE */       { "Mouse",      LGM_NORMAL },
+        /* UITEX_CORNER */      { "BoxCorner",  LGM_NORMAL },
+        /* UITEX_FILL */        { "BoxFill",    LGM_NORMAL },
+        /* UITEX_SHADE */       { "BoxShade",   LGM_NORMAL },
+        /* UITEX_HINT */        { "Hint",       LGM_NORMAL },
+        /* UITEX_LOGO */        { "Logo",       LGM_NORMAL },
+        /* UITEX_BACKGROUND */  { "Background", LGM_GRAYSCALE }
     };
     struct TexDef const &def = texDefs[which];
 
@@ -2157,10 +2157,10 @@ DGLuint GL_PrepareSysFlaremap(flaretexid_t which)
     static const struct TexDef {
         char const *name;
     } texDefs[NUM_SYSFLARE_TEXTURES] = {
-        { "dlight" },
-        { "flare" },
-        { "brflare" },
-        { "bigflare" }
+        /* FXT_ROUND */     { "dlight" },
+        /* FXT_FLARE */     { "flare" },
+        /* FXT_BRFLARE */   { "brflare" },
+        /* FXT_BIGFLARE */  { "bigflare" }
     };
     struct TexDef const &def = texDefs[which];
 
@@ -2411,33 +2411,6 @@ static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass, int
     return TEXS_NONE;
 }
 
-DGLuint GL_PrepareExtTexture(char const *name, gfxmode_t mode, int useMipmap,
-    int /*minFilter*/, int magFilter, int /*anisoFilter*/, int wrapS, int wrapT, int otherFlags)
-{
-    image_t image;
-    DGLuint texture = 0;
-
-    if(GL_LoadExtTexture(&image, name, mode))
-    {
-        // Loaded successfully and converted accordingly.
-        // Upload the image to GL.
-        texture = GL_NewTextureWithParams2(
-            ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-              image.pixelSize == 3 ? DGL_RGB :
-              image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-            image.size.width, image.size.height, image.pixels,
-            ( otherFlags | (useMipmap? TXCF_MIPMAP : 0) |
-              (useMipmap == DDMAXINT? TXCF_GRAY_MIPMAP : 0) |
-              (image.size.width < 128 && image.size.height < 128? TXCF_NO_COMPRESSION : 0) ),
-            0, (useMipmap ? glmode[mipmapping] : GL_LINEAR),
-            magFilter, texAniso, wrapS, wrapT);
-
-        Image_Destroy(&image);
-    }
-
-    return texture;
-}
-
 static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZero,
     bool useZeroOriginIfOneComponent)
 {
@@ -2585,84 +2558,6 @@ DGLuint GL_PrepareRawTexture(rawtex_t *raw)
     }
 
     return raw->tex;
-}
-
-DGLuint GL_PrepareLightmap(uri_s const *_resourceUri)
-{
-    de::Uri const *resourceUri = reinterpret_cast<de::Uri const *>(_resourceUri);
-    if(resourceUri && !resourceUri->isEmpty())
-    {
-        if(!resourceUri->path().toStringRef().compareWithoutCase("-")) return 0;
-
-        try
-        {
-            TextureManifest &manifest = App_Textures().scheme("Lightmaps").findByResourceUri(*resourceUri);
-            if(manifest.hasTexture())
-            {
-                /// @todo fixme: Render context texture specs should be defined only once.
-                texturevariantspecification_t &texSpec =
-                    *GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
-                         0, 0, 0, 0, GL_CLAMP, GL_CLAMP, 1, -1, -1, false, false, false, true);
-
-                Texture::Variant const *variant = GL_PrepareTexture(manifest.texture(), texSpec);
-                if(variant) return variant->glName();
-
-                // Dang...
-                return 0;
-            }
-        }
-        catch(Textures::Scheme::NotFoundError const &)
-        {} // Ignore this error.
-    }
-    // Return the default texture name.
-    return GL_PrepareLSTexture(LST_DYNAMIC);
-}
-
-DGLuint GL_PrepareFlareTexture(uri_s const *_resourceUri, int oldIdx)
-{
-    de::Uri const *resourceUri = reinterpret_cast<de::Uri const *>(_resourceUri);
-    if(resourceUri && !resourceUri->isEmpty())
-    {
-        if(resourceUri->path().length() == 1)
-        {
-            QChar first = resourceUri->path().toStringRef().first();
-            if(first == '-') return 0; // automatic
-
-            // Select a system flare by numeric identifier?
-            int number = first.digitValue();
-            if(number == 0) return 0; // automatic
-            if(number >= 1 && number <= 4)
-            {
-                return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
-            }
-        }
-
-        try
-        {
-            TextureManifest &manifest = App_Textures().scheme("Flaremaps").findByResourceUri(*resourceUri);
-            if(manifest.hasTexture())
-            {
-                /// @todo fixme: Render context texture specs should be defined only once.
-                texturevariantspecification_t &texSpec =
-                    *GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
-                         TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                         1, 1, 0, false, false, false, true);
-
-                Texture::Variant const *variant = GL_PrepareTexture(manifest.texture(), texSpec);
-                if(variant) return variant->glName();
-
-                // Dang...
-                return 0;
-            }
-        }
-        catch(Textures::Scheme::NotFoundError const &)
-        {} // Ignore this error.
-    }
-    else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
-    {
-        return GL_PrepareSysFlaremap(flaretexid_t(oldIdx - 1));
-    }
-    return 0; // Use the automatic selection logic.
 }
 
 boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,

@@ -395,7 +395,8 @@ static int projectPlaneLightToSurface(lumobj_t const *lum, void *paramaters)
     if(spParams->flags & PLF_NO_PLANE) return 0; // Continue iteration.
 
     // No lightmap texture?
-    if(!LUM_PLANE(lum)->tex) return 0; // Continue iteration.
+    DGLuint glTexName = GL_PrepareLSTexture(LST_GRADIENT);
+    if(!glTexName) return 0; // Continue iteration.
 
     // No height?
     if(bottom >= top) return 0; // Continue iteration.
@@ -431,7 +432,7 @@ static int projectPlaneLightToSurface(lumobj_t const *lum, void *paramaters)
     calcLightColor(color, LUM_PLANE(lum)->color, LUM_PLANE(lum)->intensity);
 
     newLightProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
-                       LUM_PLANE(lum)->tex, s, t, color, 1 * spParams->blendFactor);
+                       glTexName, s, t, color, 1 * spParams->blendFactor);
 
     return 0; // Continue iteration.
 }
@@ -698,6 +699,27 @@ float LO_AttenuationFactor(uint idx, coord_t distance)
     return 1;
 }
 
+texturevariantspecification_t *Rend_LightmapTextureSpec()
+{
+    return GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
+             0, 0, 0, 0, GL_CLAMP, GL_CLAMP, 1, -1, -1, false, false, false, true);
+
+}
+
+static DGLuint prepareLightmap(de::Uri const *resourceUri)
+{
+    if(Texture *tex = R_FindTextureByResourceUri("Lightmaps", resourceUri))
+    {
+        if(TextureVariant *variant = GL_PrepareTexture(*tex, *Rend_LightmapTextureSpec()))
+        {
+            return variant->glName();
+        }
+        // Dang...
+    }
+    // Prepare the default lightmap instead.
+    return GL_PrepareLSTexture(LST_DYNAMIC);
+}
+
 /**
  * Registers the given mobj as a luminous, light-emitting object.
  * @note: This is called each frame for each luminous object!
@@ -851,11 +873,13 @@ static void addLuminous(mobj_t *mo)
         LUM_OMNI(l)->color[i] = rgb[i];
     LUM_OMNI(l)->zOff = center;
 
+    /// @todo Only locate the needed logical textures at this time.
+    ///       (Preparation should be deferred until render time).
     if(def)
     {
-        LUM_OMNI(l)->tex = GL_PrepareLightmap(def->sides);
-        LUM_OMNI(l)->ceilTex = GL_PrepareLightmap(def->up);
-        LUM_OMNI(l)->floorTex = GL_PrepareLightmap(def->down);
+        LUM_OMNI(l)->tex      = prepareLightmap(reinterpret_cast<de::Uri const *>(def->sides));
+        LUM_OMNI(l)->ceilTex  = prepareLightmap(reinterpret_cast<de::Uri const *>(def->up));
+        LUM_OMNI(l)->floorTex = prepareLightmap(reinterpret_cast<de::Uri const *>(def->down));
     }
     else
     {
@@ -978,7 +1002,6 @@ static void createGlowLightForSurface(Surface &suf)
         if(glowFactor > .0001f)
             glowStrength *= glowFactor; // Global scale factor.
         LUM_PLANE(lum)->intensity = glowStrength;
-        LUM_PLANE(lum)->tex = GL_PrepareLSTexture(LST_GRADIENT);
         lum->maxDistance = 0;
         lum->decorSource = 0;
 

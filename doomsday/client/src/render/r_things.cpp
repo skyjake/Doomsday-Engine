@@ -948,6 +948,32 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
     }
 }
 
+static DGLuint prepareFlaremap(de::Uri const *resourceUri)
+{
+    if(resourceUri->path().length() == 1)
+    {
+        QChar first = resourceUri->path().toStringRef().first();
+        if(first == '-') return 0; // automatic
+
+        // Select a system flare by numeric identifier?
+        int number = first.digitValue();
+        if(number == 0) return 0; // automatic
+        if(number >= 1 && number <= 4)
+        {
+            return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
+        }
+    }
+    if(Texture *tex = R_FindTextureByResourceUri("Flaremaps", resourceUri))
+    {
+        if(TextureVariant const *variant = GL_PrepareTexture(*tex, *Rend_HaloTextureSpec()))
+        {
+            return variant->glName();
+        }
+        // Dang...
+    }
+    return 0;
+}
+
 void R_ProjectSprite(mobj_t *mo)
 {
     Sector *moSec;
@@ -1338,7 +1364,7 @@ void R_ProjectSprite(mobj_t *mo)
         {
             if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
             {
-                vis->data.flare.tex = GL_PrepareFlareTexture(def->flare, -1);
+                vis->data.flare.tex = prepareFlaremap(reinterpret_cast<de::Uri const *>(def->flare));
             }
             else
             {

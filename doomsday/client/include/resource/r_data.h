@@ -65,22 +65,22 @@ typedef enum uitexid_e {
     NUM_UITEXTURES
 } uitexid_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void R_InitSystemTextures(void);
 void R_InitCompositeTextures(void);
 void R_InitFlatTextures(void);
 void R_InitSpriteTextures(void);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+/**
+ * Search the application's Textures collection for a texture with the specified
+ * @a schemeName and @a resourceUri.
+ *
+ * @param schemeName  Unique name of the scheme in which to search.
+ * @param resourceUri  Path to the (image) resource to find the texture for.
+ * @return  The found texture; otherwise @c 0.
+ */
+de::Texture *R_FindTextureByResourceUri(de::String schemeName, de::Uri const *resourceUri);
 
-#ifdef __cplusplus
 de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri, QSize const &dimensions);
 de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri);
-#endif
 
 #endif /// LIBDENG_REFRESH_DATA_H

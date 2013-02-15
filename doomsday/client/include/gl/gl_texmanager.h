@@ -262,7 +262,7 @@ typedef enum {
  * @param texture  Texture variant to be prepared.
  * @return  Logical result.
  */
-preparetextureresult_t GL_PrepareTexture(de::Texture::Variant &texture);
+preparetextureresult_t GL_PrepareTexture(de::TextureVariant &texture);
 
 /**
  * Choose/create a variant of @a texture which fulfills @a spec and then
@@ -281,10 +281,10 @@ preparetextureresult_t GL_PrepareTexture(de::Texture::Variant &texture);
  *
  * @see de::Texture::chooseVariant()
  */
-inline de::Texture::Variant *GL_PrepareTexture(de::Texture &texture,
+inline de::TextureVariant *GL_PrepareTexture(de::Texture &texture,
     texturevariantspecification_t &spec, preparetextureresult_t *returnOutcome = 0)
 {
-    de::Texture::Variant *variant = texture.chooseVariant(de::Texture::MatchSpec, spec, true /*can create*/);
+    de::TextureVariant *variant = texture.chooseVariant(de::Texture::MatchSpec, spec, true /*can create*/);
     preparetextureresult_t result = GL_PrepareTexture(*variant);
     if(returnOutcome) *returnOutcome = result;
     return variant;
@@ -298,28 +298,11 @@ inline de::Texture::Variant *GL_PrepareTexture(de::Texture &texture,
 extern "C" {
 #endif // __cplusplus
 
-DGLuint GL_PrepareExtTexture(char const *name, gfxmode_t mode, int useMipmap,
-    int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT, int flags);
-
 DGLuint GL_PrepareSysFlaremap(flaretexid_t which);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
 DGLuint GL_PrepareUITexture(uitexid_t which);
 
 DGLuint GL_PrepareRawTexture(rawtex_t *rawTex);
-
-DGLuint GL_PrepareLightmap(Uri const *path);
-
-/**
- * Attempt to locate and prepare a flare texture.
- * Somewhat more complicated than it needs to be due to the fact there
- * are two different selection methods.
- *
- * @param name          Name of a flare texture or "0" to "4".
- * @param oldIdx        Old method of flare texture selection, by id.
- *
- * @return  @c 0= Use the automatic selection logic.
- */
-DGLuint GL_PrepareFlareTexture(Uri const *path, int oldIdx);
 
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
 DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
