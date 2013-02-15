@@ -30,10 +30,12 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 HEADERS += \
     src/aboutdialog.h \
+    src/folderselection.h \
     src/guishellapp.h \
-    src/localserverdialog.h \
     src/linkwindow.h \
+    src/localserverdialog.h \
     src/opendialog.h \
+    src/preferences.h \
     src/qtguiapp.h \
     src/qtrootwidget.h \
     src/qttextcanvas.h \
@@ -41,11 +43,13 @@ HEADERS += \
 
 SOURCES += \
     src/aboutdialog.cpp \
+    src/folderselection.cpp \
     src/guishellapp.cpp \
+    src/linkwindow.cpp \
     src/localserverdialog.cpp \
     src/main.cpp \
-    src/linkwindow.cpp \
     src/opendialog.cpp \
+    src/preferences.cpp \
     src/qtguiapp.cpp \
     src/qtrootwidget.cpp \
     src/qttextcanvas.cpp \
@@ -69,15 +73,3 @@ else {
     INSTALLS += target
     target.path = $$DENG_BIN_DIR
 }
-
-HEADERS += \
-    src/folderselection.h
-
-SOURCES += \
-    src/folderselection.cpp
-
-HEADERS += \
-    src/preferences.h
-
-SOURCES += \
-    src/preferences.cpp
