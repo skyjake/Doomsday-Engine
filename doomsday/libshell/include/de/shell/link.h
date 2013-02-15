@@ -49,7 +49,7 @@ public:
     /**
      * Opens a connection to a server over the network.
      *
-     * @param address  Domain/IP address of the server.
+     * @param domain   Domain/IP address of the server.
      * @param timeout  Keep trying until this much time has passed.
      */
     Link(String const &domain, TimeDelta const &timeout = 0);
