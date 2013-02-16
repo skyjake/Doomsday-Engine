@@ -78,7 +78,7 @@ typedef struct plat_s {
 #define PLATWAIT        (3)
 #define PLATSPEED       (1)
 
-void        T_PlatRaise(plat_t* pl);
+void        T_PlatRaise(void *platThinkerPtr);
 
 #if __JHEXEN__
 int         EV_DoPlat(LineDef* li, byte* args, plattype_e type,

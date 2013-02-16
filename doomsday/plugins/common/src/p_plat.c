@@ -106,8 +106,9 @@ static void stopPlat(plat_t* plat)
  *
  * @param plat          Ptr to the plat to be moved.
  */
-void T_PlatRaise(plat_t* plat)
+void T_PlatRaise(void *platThinkerPtr)
 {
+    plat_t* plat = platThinkerPtr;
     result_e            res;
 
     switch(plat->state)

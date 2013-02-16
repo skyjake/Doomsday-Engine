@@ -80,8 +80,9 @@ void PODoor_UpdateDestination(polydoor_t* pd)
 
 // ===== Polyobj Event Code =====
 
-void T_RotatePoly(polyevent_t* pe)
+void T_RotatePoly(void *polyThinker)
 {
+    polyevent_t* pe = polyThinker;
     unsigned int absSpeed;
     Polyobj* po = P_GetPolyobj(pe->polyobj);
 
@@ -217,8 +218,9 @@ boolean EV_RotatePoly(LineDef *line, byte *args, int direction,
     return true;
 }
 
-void T_MovePoly(polyevent_t* pe)
+void T_MovePoly(void *polyThinker)
 {
+    polyevent_t *pe = polyThinker;
     unsigned int        absSpeed;
     Polyobj*            po = P_GetPolyobj(pe->polyobj);
 
@@ -328,8 +330,9 @@ boolean EV_MovePoly(LineDef* line, byte* args, boolean timesEight,
     return true;
 }
 
-void T_PolyDoor(polydoor_t* pd)
+void T_PolyDoor(void *polyDoorThinker)
 {
+    polydoor_t* pd = polyDoorThinker;
     int                 absSpeed;
     Polyobj*            po = P_GetPolyobj(pd->polyobj);
 
