@@ -9,7 +9,7 @@ include(../../../config.pri)
 
 TEMPLATE = app
 TARGET   = doomsday-shell-text
-VERSION  = 1.0.0
+VERSION  = $$DENG_VERSION
 
 # Build Configuration -------------------------------------------------------
 

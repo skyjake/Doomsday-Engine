@@ -13,7 +13,7 @@ TEMPLATE = app
 else:win32: TARGET = Doomsday-Shell
       else: TARGET = doomsday-shell
 
-VERSION = 1.0.0
+VERSION = $$DENG_VERSION
 
 # Build Configuration -------------------------------------------------------
 
@@ -62,6 +62,10 @@ RESOURCES += \
 
 macx {
     ICON = res/macx/shell.icns
+    QMAKE_INFO_PLIST = res/macx/Info.plist
+    QMAKE_BUNDLE_DATA += res
+    res.path = Contents/Resources
+    res.files = res/macx/English.lproj
 
     # Clean up previous deployment.
     doPostLink("rm -rf \"Doomsday Shell.app/Contents/PlugIns/\"")

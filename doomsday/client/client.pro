@@ -690,7 +690,7 @@ macx {
 
     QMAKE_BUNDLE_DATA += mod res data startupfonts startupgfx
 
-    QMAKE_INFO_PLIST = ../build/mac/Info.plist
+    QMAKE_INFO_PLIST = res/macx/Info.plist
 
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
