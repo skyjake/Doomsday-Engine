@@ -72,4 +72,21 @@ macx {
 else {
     INSTALLS += target
     target.path = $$DENG_BIN_DIR
+    
+    unix {
+        INSTALLS += icon
+        icon.files = res/shell.png
+        icon.path = $$DENG_BASE_DIR/icons
+        
+        # Generate a .desktop file for the applications menu.
+        desktopFile = doomsday-shell.desktop
+        !system(sed \"s:BIN_DIR:$$DENG_BIN_DIR:; s:BASE_DIR:$$DENG_BASE_DIR:\" \
+            <\"../../../../distrib/linux/$$desktopFile\" \
+            >\"$$OUT_PWD/$$desktopFile\"): error(Can\'t build $$desktopFile)
+        desktop.files = $$OUT_PWD/$$desktopFile
+        desktop.path = $$PREFIX/share/applications        
+        INSTALLS += desktop
+
+        OTHER_FILES += ../../../../distrib/linux/$$desktopFile
+    }
 }
