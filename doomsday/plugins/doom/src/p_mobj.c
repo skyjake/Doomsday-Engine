@@ -577,8 +577,9 @@ void P_NightmareRespawn(mobj_t* corpse)
     P_MobjRemove(corpse, true);
 }
 
-void P_MobjThinker(mobj_t* mo)
+void P_MobjThinker(void *thinkerPtr)
 {
+    mobj_t *mo = thinkerPtr;
     coord_t floorZ;
 
     if(!mo) return; // Wha?

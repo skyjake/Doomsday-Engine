@@ -187,8 +187,10 @@ LinkWindow::LinkWindow(QWidget *parent)
 
 #ifdef MACOSX
     d->root->setFont(QFont("Menlo", 13));
-#else
+#elif WIN32
     d->root->setFont(QFont("Fixedsys", 9));
+#else
+    d->root->setFont(QFont("Monospace", 11));
 #endif
     d->updateStyle();
 

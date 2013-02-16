@@ -73,7 +73,7 @@ typedef struct {
     int             direction;
 } glow_t;
 
-void            T_FireFlicker(fireflicker_t* flick);
+void            T_FireFlicker(void *flickPtr);
 void            P_SpawnFireFlicker(Sector* sector);
 
 void            T_LightFlash(lightflash_t* flash);

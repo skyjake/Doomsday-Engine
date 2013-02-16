@@ -109,13 +109,17 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
     cmd.append("-vdmap");
     cmd.append(plugDir / "hexen.bundle/Contents/Resources");
     cmd.append("}Data/jHexen/");
-#endif
 
-#ifdef WIN32
+#elif WIN32
     NativePath bin = NativePath(qApp->applicationDirPath()) / "doomsday-server.exe";
     cmd.append(bin);
     cmd.append("-basedir");
     cmd.append(bin.fileNamePath() / "..");
+
+#else // UNIX
+    NativePath bin = NativePath(qApp->applicationDirPath()) / "doomsday-server";
+    if(!bin.exists()) bin = "doomsday-server"; // Perhaps it's on the path?
+    cmd.append(bin);
 #endif
 
     cmd.append("-userdir");

@@ -121,7 +121,7 @@ typedef struct {
     void          (*DrawWindow) (const Size2Raw* windowSize);
 
     // Miscellaneous.
-    void          (*MobjThinker) (struct mobj_s *mobj);
+    void          (*MobjThinker) (void *mobj);
     coord_t       (*MobjFriction) (void* mobj); // Returns a friction factor.
     boolean       (*MobjCheckPositionXYZ) (struct mobj_s* mobj, coord_t x, coord_t y, coord_t z);
     boolean       (*MobjTryMoveXYZ) (struct mobj_s* mobj, coord_t x, coord_t y, coord_t z);

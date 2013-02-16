@@ -87,7 +87,7 @@ void        P_DropWeapon(player_t* plr);
 void        P_SetPsprite(player_t* plr, int position, statenum_t stnum);
 
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
-void        P_MobjThinker(mobj_t* mo);
+void        P_MobjThinker(void *mo);
 void        P_RipperBlood(mobj_t* mo);
 
 void        P_SetDoomsdayFlags(mobj_t* mo);

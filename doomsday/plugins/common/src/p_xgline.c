@@ -2564,8 +2564,9 @@ void XL_DoChain(LineDef* lineDef, int chain, boolean activating, mobj_t* actThin
 /**
  * XG lines get to think.
  */
-void XL_Thinker(xlthinker_t* xl)
+void XL_Thinker(void *xlThinkerPtr)
 {
+    xlthinker_t* xl = xlThinkerPtr;
     float               levtime;
     LineDef*            line = xl->line;
     xline_t*            xline;

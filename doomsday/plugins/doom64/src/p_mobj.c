@@ -606,8 +606,10 @@ void P_NightmareRespawn(mobj_t* mobj)
     P_MobjRemove(mobj, true);
 }
 
-void P_MobjThinker(mobj_t *mobj)
+void P_MobjThinker(void *mobjThinkerPtr)
 {
+    mobj_t *mobj = mobjThinkerPtr;
+
     if(mobj->ddFlags & DDMF_REMOTE)
         return; // Remote mobjs are handled separately.
 

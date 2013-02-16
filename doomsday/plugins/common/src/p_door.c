@@ -106,8 +106,9 @@
 
 // CODE --------------------------------------------------------------------
 
-void T_Door(door_t* door)
+void T_Door(void *doorThinkerPtr)
 {
+    door_t* door = doorThinkerPtr;
     xsector_t*          xsec;
     result_e            res;
 

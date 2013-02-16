@@ -756,8 +756,10 @@ void P_NightmareRespawn(mobj_t* mobj)
     P_MobjRemove(mobj, true);
 }
 
-void P_MobjThinker(mobj_t* mobj)
+void P_MobjThinker(void *thinkerPtr)
 {
+    mobj_t *mobj = thinkerPtr;
+
     if(IS_CLIENT && !ClMobj_IsValid(mobj))
         return; // We should not touch this right now.
 
