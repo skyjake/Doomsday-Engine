@@ -37,9 +37,8 @@
 #include <QFont>
 #include <QLabel>
 
-struct UpdateAvailableDialog::Instance
+DENG2_PIMPL(UpdateAvailableDialog)
 {
-    UpdateAvailableDialog* self;
     QStackedLayout* stack;
     QWidget* checkPage;
     QWidget* resultPage;
@@ -51,12 +50,12 @@ struct UpdateAvailableDialog::Instance
     VersionInfo latestVersion;
     de::String changeLog;
 
-    Instance(UpdateAvailableDialog* d) : self(d)
+    Instance(Public *d) : Base(*d)
     {
         initForChecking();
     }
 
-    Instance(UpdateAvailableDialog* d, const VersionInfo& latest) : self(d)
+    Instance(Public *d, const VersionInfo& latest) : Base(*d)
     {
         initForResult(latest);
     }
@@ -82,17 +81,17 @@ struct UpdateAvailableDialog::Instance
     void init()
     {
 #ifndef MACOSX
-        self->setWindowTitle(tr(DOOMSDAY_NICENAME" %1").arg(VersionInfo().asText()));
+        self.setWindowTitle(tr(DOOMSDAY_NICENAME" %1").arg(VersionInfo().asText()));
 #endif
 
         emptyResultPage = true;
-        stack = new QStackedLayout(self);
-        checkPage = new QWidget(self);
-        resultPage = new QWidget(self);
+        stack = new QStackedLayout(&self);
+        checkPage = new QWidget(&self);
+        resultPage = new QWidget(&self);
 
 #ifdef MACOSX
         // Adjust spacing around all stacked widgets.
-        self->setContentsMargins(9, 9, 9, 9);
+        self.setContentsMargins(9, 9, 9, 9);
 #endif
 
         // Create the Check page.
@@ -103,12 +102,12 @@ struct UpdateAvailableDialog::Instance
         checkLayout->addWidget(checking, 1, Qt::AlignCenter);
 
         QPushButton* stop = new QPushButton(tr("Cancel"));
-        QObject::connect(stop, SIGNAL(clicked()), self, SLOT(reject()));
+        QObject::connect(stop, SIGNAL(clicked()), &self, SLOT(reject()));
         checkLayout->addWidget(stop, 0, Qt::AlignHCenter);
         stop->setAutoDefault(false);
         stop->setDefault(false);
 
-        self->setLayout(stack);
+        self.setLayout(stack);
     }
 
     void updateResult(const VersionInfo& latest)
@@ -126,7 +125,7 @@ struct UpdateAvailableDialog::Instance
         {
             stack->removeWidget(resultPage);
             delete resultPage;
-            resultPage = new QWidget(self);
+            resultPage = new QWidget(&self);
             stack->addWidget(resultPage);
         }
         emptyResultPage = false;
@@ -139,7 +138,7 @@ struct UpdateAvailableDialog::Instance
 
         VersionInfo currentVersion;
 
-        int bigFontSize        = self->font().pointSize() * 1.2;
+        int bigFontSize        = self.font().pointSize() * 1.2;
         de::String channel     = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
         de::String builtInType = (de::String(DOOMSDAY_RELEASE_TYPE) == "Stable"? "stable" : "unstable");
         bool askUpgrade        = false;
@@ -178,7 +177,7 @@ struct UpdateAvailableDialog::Instance
 
         neverCheck = new QCheckBox(tr("N&ever check for updates automatically"));
         neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
-        QObject::connect(neverCheck, SIGNAL(toggled(bool)), self, SLOT(neverCheckToggled(bool)));
+        QObject::connect(neverCheck, SIGNAL(toggled(bool)), &self, SLOT(neverCheckToggled(bool)));
 
         QDialogButtonBox* bbox = new QDialogButtonBox;
 
@@ -186,36 +185,36 @@ struct UpdateAvailableDialog::Instance
         {
             QPushButton* yes = bbox->addButton(tr("Downgrade to &Older"), QDialogButtonBox::YesRole);
             QPushButton* no = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
-            QObject::connect(yes, SIGNAL(clicked()), self, SLOT(accept()));
-            QObject::connect(no, SIGNAL(clicked()), self, SLOT(reject()));
+            QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
+            QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
             no->setDefault(true);
         }
         else if(askUpgrade)
         {
             QPushButton* yes = bbox->addButton(tr("&Upgrade"), QDialogButtonBox::YesRole);
             QPushButton* no = bbox->addButton(tr("&Not Now"), QDialogButtonBox::NoRole);
-            QObject::connect(yes, SIGNAL(clicked()), self, SLOT(accept()));
-            QObject::connect(no, SIGNAL(clicked()), self, SLOT(reject()));
+            QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
+            QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
             yes->setDefault(true);
         }
         else
         {
             QPushButton* reinst = bbox->addButton(tr("&Reinstall"), QDialogButtonBox::YesRole);
             QPushButton* ok = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
-            QObject::connect(reinst, SIGNAL(clicked()), self, SLOT(accept()));
-            QObject::connect(ok, SIGNAL(clicked()), self, SLOT(reject()));
+            QObject::connect(reinst, SIGNAL(clicked()), &self, SLOT(accept()));
+            QObject::connect(ok, SIGNAL(clicked()), &self, SLOT(reject()));
             reinst->setAutoDefault(false);
             ok->setDefault(true);
         }
 
         QPushButton* cfg = bbox->addButton(tr("&Settings..."), QDialogButtonBox::ActionRole);
-        QObject::connect(cfg, SIGNAL(clicked()), self, SLOT(editSettings()));
+        QObject::connect(cfg, SIGNAL(clicked()), &self, SLOT(editSettings()));
         cfg->setAutoDefault(false);
 
         if(askUpgrade)
         {
             QPushButton* whatsNew = bbox->addButton(tr("&What's New?"), QDialogButtonBox::HelpRole);
-            QObject::connect(whatsNew, SIGNAL(clicked()), self, SLOT(showWhatsNew()));
+            QObject::connect(whatsNew, SIGNAL(clicked()), &self, SLOT(showWhatsNew()));
             whatsNew->setAutoDefault(false);
         }
 
