@@ -154,9 +154,11 @@ Filename: "{app}\doomsday.url"; Section: "InternetShortcut"; Key: "URL"; String:
 
 [Icons]
 Name: "{group}\Doomsday Engine"; Filename: "{app}\snowberry\snowberry.exe"; WorkingDir: "{app}\snowberry"; Flags: createonlyiffileexists
+Name: "{group}\Doomsday Shell"; Filename: "{app}\bin\doomsday-shell.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists
 Name: "{group}\{cm:ProgramOnTheWeb,Doomsday Engine}"; Filename: "{app}\doomsday.url"
 Name: "{group}\{cm:UninstallProgram,Doomsday Engine}"; Filename: "{uninstallexe}"
 Name: "{userdesktop}\Doomsday Engine"; Filename: "{app}\snowberry\snowberry.exe"; WorkingDir: "{app}\snowberry"; Tasks: desktopicon; Flags: createonlyiffileexists
+Name: "{userdesktop}\Doomsday Shell"; Filename: "{app}\bin\doomsday-shell.exe"; WorkingDir: "{app}"; Tasks: desktopicon; Flags: createonlyiffileexists
 
 [Run]
 Filename: "{app}\bin\vcredist_x86.exe"; Parameters: "/q"; Flags: runascurrentuser
