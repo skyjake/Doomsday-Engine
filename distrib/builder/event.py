@@ -37,8 +37,8 @@ class Event:
         
         # Platforms:  Name                            File ext     sys_id()
         self.oses = [('Windows (x86)',                '.exe',      'win32-32bit'),
-                     ('Mac OS X 10.4+ (ppc/i386)',    '.dmg',      'darwin-32bit'),
-                     ('Mac OS X 10.6+ (x86_64/i386)', '64bit.dmg', 'darwin-64bit'),
+                     ('Mac OS X 10.4+ (ppc/i386)',    '32bit.dmg', 'darwin-32bit'),
+                     ('Mac OS X 10.6+ (x86_64/i386)', '.dmg',      'darwin-64bit'),
                      ('Ubuntu (x86)',                 'i386.deb',  'linux2-32bit'),
                      ('Ubuntu (x86_64)',              'amd64.deb', 'linux2-64bit')]
 
