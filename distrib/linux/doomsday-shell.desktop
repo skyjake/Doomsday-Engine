@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Doomsday Shell
+Comment=Shell for Doomsday Engine servers
+Categories=Game;ActionGame;
+Exec=BIN_DIR/doomsday-shell
+Terminal=false
+Type=Application
+Icon=BASE_DIR/icons/shell.png
+
+Name[en_US]=doomsday-shell.desktop
