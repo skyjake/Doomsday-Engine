@@ -204,15 +204,8 @@ def startGame(profile):
 
     # Locate the paths and binaries.  Most of these are configured in
     # the .conf files.
-    isServer = '-dedicated' in options
-    if isServer:
-        idx = options.index('-dedicated')
-        options = options[:idx] + options[idx+11:]
-        engineBin = st.getSystemString('doomsday-server-binary')
-        userPath = paths.getUserPath(paths.SERVER_RUNTIME)
-    else:
-        engineBin = st.getSystemString('doomsday-binary')        
-        userPath = paths.getUserPath(paths.RUNTIME)
+    engineBin = st.getSystemString('doomsday-binary')        
+    userPath = paths.getUserPath(paths.RUNTIME)
 
     options += ' -userdir ' + paths.quote(userPath)
 
@@ -223,44 +216,7 @@ def startGame(profile):
 
     # Execute the command line.
     if host.isWindows():
-        if isServer:
-            batFile = os.path.join(userPath, 'launch.bat')
-            bat = file(batFile, 'wt')
-            print >> bat, '@ECHO OFF'
-            print >> bat, 'ECHO Launching Doomsday...'
-            curDir = os.getcwd()
-            print >> bat, 'cd', paths.quote(curDir)
-            print >> bat, "%s @%s" % (paths.quote(engineBin), paths.quote(responseFile))
-            bat.close()
-            engineBin = batFile
-            spawnFunc = spawnWithTerminal
-        else:
-            spawnFunc = os.spawnv
-    elif host.isMac() and isServer:
-        # On the Mac, we'll tell Terminal to run it.
-        osaFile = os.path.join(userPath, 'Launch.scpt')
-        scpt = file(osaFile, 'w')
-        print >> scpt, 'tell application "Terminal"'
-        print >> scpt, '    activate'
-        def q1p(s): return '\\\"' + s + '\\\"'
-        def q2p(s): return '\\\\\\\"' + s + '\\\\\\\"'
-        curDir = os.getcwd()
-        print >> scpt, "    do script \"cd %s; %s @%s\"" % \
-            (q1p(curDir), engineBin.replace(' ', '\\\\ '), responseFile.replace(' ', '\\\\ '))
-        print >> scpt, 'end tell'
-        scpt.close()
-        engineBin = osaFile
-        spawnFunc = spawnWithTerminal
-    elif host.isUnix() and isServer:
-        shFile = os.path.join(userPath, 'launch.sh')
-        sh = file(shFile, 'w')
-        print >> sh, '#!/bin/sh'
-        print >> sh, "cd %s" % (paths.quote(os.getcwd()))
-        print >> sh, "%s @%s" % (paths.quote(engineBin), responseFile.replace(' ', '\\ '))
-        sh.close()
-        os.chmod(shFile, 0744)
-        engineBin = paths.quote(shFile)
-        spawnFunc = spawnWithTerminal
+        spawnFunc = os.spawnv
     else:
         spawnFunc = os.spawnvp
 
@@ -274,11 +230,6 @@ def startGame(profile):
     if not value or value.getValue() == 'yes':
         # Quit Snowberry.
         events.sendAfter(events.Command('quit'))
-
-
-def spawnWithTerminal(wait, launchScript, arguments):
-    term = st.getSystemString('system-terminal').split(' ')
-    subprocess.Popen(term + [launchScript])
 
 
 def generateOptions(profile):
