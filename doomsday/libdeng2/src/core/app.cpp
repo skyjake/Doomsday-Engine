@@ -58,13 +58,11 @@ DENG2_PIMPL(App)
     /// Primary (wall) clock.
     Clock clock;
 
-    ScriptSystem scriptSys;
-
     /// Subsystems (not owned).
     QList<System *> systems;
 
-    /// The file system.
-    FS fs;
+    FileSystem fs;
+    ScriptSystem scriptSys;
 
     /// Archive where persistent data should be stored. Written to /home/persist.pack.
     /// The archive is owned by the file system.
@@ -85,6 +83,7 @@ DENG2_PIMPL(App)
         Clock::setAppClock(&clock);
 
         // Built-in systems.
+        systems.append(&fs);
         systems.append(&scriptSys);
     }
 
@@ -106,30 +105,23 @@ DENG2_PIMPL(App)
 #ifdef MACOSX
         NativePath appDir = appPath.fileNamePath();
         binFolder.attach(new DirectoryFeed(appDir));
-        if(allowPlugins)
-        {
-            binFolder.attach(new DirectoryFeed(self.nativePluginBinaryPath()));
-        }
         fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
         fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 
 #elif WIN32
-        if(allowPlugins)
-        {
-            binFolder.attach(new DirectoryFeed(self.nativePluginBinaryPath()));
-        }
         NativePath appDir = appPath.fileNamePath();
         fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
         fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "..\\modules"));
 
 #else // UNIX
+        fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
+        fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
+#endif
+
         if(allowPlugins)
         {
             binFolder.attach(new DirectoryFeed(self.nativePluginBinaryPath()));
         }
-        fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
-        fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
-#endif
 
         // User's home folder.
         fs.makeFolder("/home").attach(new DirectoryFeed(self.nativeHomePath(),
@@ -424,7 +416,7 @@ NativePath App::nativeAppContentsPath()
 }
 #endif
 
-FS &App::fileSystem()
+FileSystem &App::fileSystem()
 {
     return DENG2_APP->d->fs;
 }

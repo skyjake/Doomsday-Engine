@@ -17,11 +17,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIBDENG2_FS_H
-#define LIBDENG2_FS_H
+#ifndef LIBDENG2_FILESYSTEM_H
+#define LIBDENG2_FILESYSTEM_H
 
 #include "../libdeng2.h"
 #include "../Folder"
+#include "../System"
 
 #include <map>
 
@@ -90,7 +91,7 @@ namespace internal {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC FS
+class DENG2_PUBLIC FileSystem : public System
 {
 public:
     /// No index is found for the specified type. @ingroup errors
@@ -114,9 +115,9 @@ public:
      * Constructs a new file system. The file system needs to be manually
      * refreshed; initially it is empty.
      */
-    FS();
+    FileSystem();
 
-    virtual ~FS();
+    virtual ~FileSystem();
 
     void printIndex();
 
@@ -238,11 +239,16 @@ public:
      */
     void deindex(File &file);
 
+    void timeChanged(Clock const &);
+
 private:
     struct Instance;
     Instance *d;
 };
 
+// Alias.
+typedef FileSystem FS;
+
 } // namespace de
 
-#endif /* LIBDENG2_FS_H */
+#endif // LIBDENG2_FILESYSTEM_H

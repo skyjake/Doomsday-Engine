@@ -22,7 +22,6 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include <de/FS>
 #include <de/App>
 #include <de/Log>
 #include <de/Reader>

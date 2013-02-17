@@ -247,9 +247,9 @@ const char* Library_LastError(void)
 
 int Library_IterateAvailableLibraries(int (*func)(void *, const char *, const char *, void *), void *data)
 {
-    const de::FS::Index& libs = DENG2_APP->fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
+    const de::FileSystem::Index& libs = DENG2_APP->fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
 
-    DENG2_FOR_EACH_CONST(de::FS::Index, i, libs)
+    DENG2_FOR_EACH_CONST(de::FileSystem::Index, i, libs)
     {
         de::LibraryFile* lib = static_cast<de::LibraryFile*>(i->second);
         const de::NativeFile* src = dynamic_cast<const de::NativeFile*>(lib->source());

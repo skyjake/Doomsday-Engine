@@ -135,7 +135,7 @@ Record &ScriptSystem::importModule(String const &name, String const &fromPath)
     {
         String dir = (*i)->asText();
         String p;
-        FS::FoundFiles matching;
+        FileSystem::FoundFiles matching;
         File *found = 0;
         if(dir.empty())
         {

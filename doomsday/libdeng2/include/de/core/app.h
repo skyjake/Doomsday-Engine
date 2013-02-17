@@ -26,7 +26,7 @@
 #include "../NativePath"
 #include "../LogBuffer"
 #include "../System"
-#include "../FS"
+#include "../FileSystem"
 #include "../ScriptSystem"
 #include "../Module"
 #include "../Config"
@@ -173,7 +173,7 @@ public:
     /**
      * Returns the application's file system.
      */
-    static FS &fileSystem();
+    static FileSystem &fileSystem();
 
     /**
      * Returns the application's script system.
@@ -234,6 +234,11 @@ public:
      */
     virtual bool processEvent(Event const &);
 
+    /**
+     * Informs all the subsystems about advancement of time. Subsystems will be
+     * notified in the order they were added with addSystem(). This will be
+     * automatically called by the application clock when time changes.
+     */
     void timeChanged(Clock const &);
 
 protected:
