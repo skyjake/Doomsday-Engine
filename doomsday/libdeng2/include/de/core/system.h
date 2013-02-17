@@ -33,7 +33,8 @@ namespace de {
  * Base class for application subsystems.
  *
  * System instances observe progress of time and may receive and process input
- * events.
+ * events. In other words, using traditional DOOM terminology, they have a
+ * ticker and a responder.
  *
  * @ingroup core
  */
