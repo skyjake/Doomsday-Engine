@@ -29,15 +29,17 @@ isEmpty(PREFIX) {
 DENG_BIN_DIR = $$PREFIX/bin
 
 # Library location.
-DENG_LIB_DIR = $$PREFIX/lib
+isEmpty(DENG_LIB_DIR) {
+	DENG_LIB_DIR = $$PREFIX/lib
 
-contains(QMAKE_HOST.arch, x86_64) {
-    exists($$PREFIX/lib64) {
-        DENG_LIB_DIR = $$PREFIX/lib64
-    }
-    exists($$PREFIX/lib/x86_64-linux-gnu) {
-        DENG_LIB_DIR = $$PREFIX/lib/x86_64-linux-gnu
-    }
+	contains(QMAKE_HOST.arch, x86_64) {
+	    exists($$PREFIX/lib64) {
+	        DENG_LIB_DIR = $$PREFIX/lib64
+	    }
+	    exists($$PREFIX/lib/x86_64-linux-gnu) {
+	        DENG_LIB_DIR = $$PREFIX/lib/x86_64-linux-gnu
+	    }
+	}
 }
 
 # Target location for plugin libraries.
