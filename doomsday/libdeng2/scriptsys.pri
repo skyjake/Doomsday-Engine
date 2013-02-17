@@ -28,6 +28,7 @@ HEADERS += \
     include/de/Process \
     include/de/Script \
     include/de/ScriptLex \
+    include/de/ScriptSystem \
     include/de/Statement \
     include/de/TokenBuffer \
     include/de/TokenRange \
@@ -64,6 +65,7 @@ HEADERS += \
     include/de/scriptsys/process.h \
     include/de/scriptsys/script.h \
     include/de/scriptsys/scriptlex.h \
+    include/de/scriptsys/scriptsystem.h \
     include/de/scriptsys/statement.h \
     include/de/scriptsys/tokenbuffer.h \
     include/de/scriptsys/tokenrange.h \
@@ -104,3 +106,6 @@ SOURCES += \
     src/scriptsys/tokenrange.cpp \
     src/scriptsys/trystatement.cpp \
     src/scriptsys/whilestatement.cpp
+
+SOURCES += \
+    src/scriptsys/scriptsystem.cpp

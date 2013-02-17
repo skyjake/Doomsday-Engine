@@ -139,7 +139,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     // Should we import a namespace?
     if(flags() & Import)
     {
-        Record *record = &App::importModule(_identifier,
+        Record *record = &App::scriptSystem().importModule(_identifier,
             evaluator.process().globals()["__file__"].value().asText());
 
         // Overwrite any existing member with this identifier.

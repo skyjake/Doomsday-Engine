@@ -29,6 +29,7 @@
 #include "de/NumberValue"
 #include "de/PackageFolder"
 #include "de/Record"
+#include "de/ScriptSystem"
 #include "de/Version"
 #include "de/Version"
 #include "de/Writer"
@@ -41,7 +42,7 @@ namespace de {
 
 static App *singletonApp;
 
-DENG2_PIMPL(App), DENG2_OBSERVES(Record, Deletion)
+DENG2_PIMPL(App)
 {
     CommandLine cmdLine;
 
@@ -56,6 +57,8 @@ DENG2_PIMPL(App), DENG2_OBSERVES(Record, Deletion)
 
     /// Primary (wall) clock.
     Clock clock;
+
+    ScriptSystem scriptSys;
 
     /// Subsystems (not owned).
     QList<System *> systems;
@@ -72,16 +75,6 @@ DENG2_PIMPL(App), DENG2_OBSERVES(Record, Deletion)
     /// The configuration.
     Config *config;
 
-    /// Built-in special modules. These are constructed by native code and thus not
-    /// parsed from any script.
-    typedef QMap<String, Record *> NativeModules;
-    NativeModules nativeModules;
-    Record versionModule; // Version: information about the platform and build
-
-    /// Resident modules.
-    typedef QMap<String, Module *> Modules;
-    Modules modules;
-
     void (*terminateFunc)(char const *);
 
     Instance(Public &a, QStringList args)
@@ -90,31 +83,17 @@ DENG2_PIMPL(App), DENG2_OBSERVES(Record, Deletion)
         singletonApp = &a;
 
         Clock::setAppClock(&clock);
+
+        // Built-in systems.
+        systems.append(&scriptSys);
     }
 
     ~Instance()
     {
-        clock.audienceForTimeChange -= &self;
+        clock.audienceForTimeChange -= self;
 
-        DENG2_FOR_EACH(NativeModules, i, nativeModules)
-        {
-            i.value()->audienceForDeletion -= this;
-        }
         delete config;
         Clock::setAppClock(0);
-    }
-
-    void recordBeingDeleted(Record &record)
-    {
-        QMutableMapIterator<String, Record *> iter(nativeModules);
-        while(iter.hasNext())
-        {
-            iter.next();
-            if(iter.value() == &record)
-            {
-                iter.remove();
-            }
-        }
     }
 
     void initFileSystem(bool allowPlugins)
@@ -212,20 +191,6 @@ App::App(NativePath const &appFilePath, QStringList args)
         DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
     }
 #endif
-
-    // Setup the Version module.
-    Version ver;
-    Record &mod = d->versionModule;
-    ArrayValue *num = new ArrayValue;
-    *num << NumberValue(ver.major) << NumberValue(ver.minor)
-         << NumberValue(ver.patch) << NumberValue(ver.build);
-    mod.addArray("VERSION", num).setReadOnly();
-    mod.addText("TEXT", ver.asText()).setReadOnly();
-    mod.addNumber("BUILD", ver.build).setReadOnly();
-    mod.addText("OS", Version::operatingSystem()).setReadOnly();
-    mod.addNumber("CPU_BITS", Version::cpuBits()).setReadOnly();
-    mod.addBoolean("DEBUG", Version::isDebugBuild()).setReadOnly();
-    addNativeModule("Version", mod);
 }
 
 App::~App()
@@ -379,7 +344,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     // The configuration.
     d->config = new Config("/modules/Config.de");
-    addNativeModule("Config", d->config->names());
+    d->scriptSys.addNativeModule("Config", d->config->names());
 
     d->config->read();
 
@@ -437,12 +402,6 @@ void App::removeSystem(System &system)
     d->systems.removeAll(&system);
 }
 
-void App::addNativeModule(String const &name, Record &module)
-{
-    d->nativeModules.insert(name, &module);
-    module.audienceForDeletion += d;
-}
-
 App &App::app()
 {
     return *singletonApp;
@@ -470,6 +429,11 @@ FS &App::fileSystem()
     return DENG2_APP->d->fs;
 }
 
+ScriptSystem &de::App::scriptSystem()
+{
+    return DENG2_APP->d->scriptSys;
+}
+
 Folder &App::rootFolder()
 {
     return fileSystem().root();
@@ -489,94 +453,6 @@ Config &App::config()
 UnixInfo &App::unixInfo()
 {
     return DENG2_APP->d->unixInfo;
-}
-
-static int sortFilesByModifiedAt(File const *a, File const *b)
-{
-    return cmp(a->status().modifiedAt, b->status().modifiedAt);
-}
-
-Record &App::importModule(String const &name, String const &fromPath)
-{
-    LOG_AS("App::importModule");
-
-    App &self = app();
-
-    // There are some special native modules.
-    Instance::NativeModules::const_iterator foundNative = self.d->nativeModules.constFind(name);
-    if(foundNative != self.d->nativeModules.constEnd())
-    {
-        return *foundNative.value();
-    }
-
-    // Maybe we already have this module?
-    Instance::Modules::iterator found = self.d->modules.find(name);
-    if(found != self.d->modules.end())
-    {
-        return found.value()->names();
-    }
-
-    /// @todo  Move this path searching logic to FS.
-
-    // Fall back on the default if the config hasn't been imported yet.
-    std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
-    defaultImportPath->add("");
-    defaultImportPath->add("*"); // Newest module with a matching name.
-    ArrayValue *importPath = defaultImportPath.get();
-    try
-    {
-        importPath = &config().names()["importPath"].value<ArrayValue>();
-    }
-    catch(Record::NotFoundError const &)
-    {}
-
-    // Search the import path (array of paths).
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, importPath->elements())
-    {
-        String dir = (*i)->asText();
-        String p;
-        FS::FoundFiles matching;
-        File *found = 0;
-        if(dir.empty())
-        {
-            if(!fromPath.empty())
-            {
-                // Try the local folder.
-                p = fromPath.fileNamePath() / name;
-            }
-            else
-            {
-                continue;
-            }
-        }
-        else if(dir == "*")
-        {
-            fileSystem().findAll(name + ".de", matching);
-            if(matching.empty())
-            {
-                continue;
-            }
-            matching.sort(sortFilesByModifiedAt);
-            found = matching.back();
-            LOG_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size()) << " candidates (latest modified).";
-        }
-        else
-        {
-            p = dir / name;
-        }
-        if(!found)
-        {
-            found = rootFolder().tryLocateFile(p + ".de");
-        }
-        if(found)
-        {
-            Module *module = new Module(*found);
-            self.d->modules.insert(name, module);
-            return module->names();
-        }
-    }
-
-    throw NotFoundError("App::importModule", "Cannot find module '" + name + "'");
 }
 
 } // namespace de

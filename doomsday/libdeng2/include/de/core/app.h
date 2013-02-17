@@ -27,6 +27,7 @@
 #include "../LogBuffer"
 #include "../System"
 #include "../FS"
+#include "../ScriptSystem"
 #include "../Module"
 #include "../Config"
 #include "../UnixInfo"
@@ -51,9 +52,6 @@ class Archive;
 class DENG2_PUBLIC App : DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
-    /// The object or resource that was being looked for was not found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
-
     enum SubsystemInitFlag {
         DefaultSubsystems   = 0x0,
         DisablePlugins      = 0x1
@@ -106,15 +104,6 @@ public:
      * @param system  System to remove.
      */
     void removeSystem(System &system);
-
-    /**
-     * Adds a native module to the set of modules that can be imported in
-     * scripts.
-     *
-     * @param name    Name of the module.
-     * @param module  Module namespace. App will observe this for deletion.
-     */
-    void addNativeModule(String const &name, Record &module);
 
     static App &app();
 
@@ -187,6 +176,11 @@ public:
     static FS &fileSystem();
 
     /**
+     * Returns the application's script system.
+     */
+    static ScriptSystem &scriptSystem();
+
+    /**
      * Returns the root folder of the file system.
      */
     static Folder &rootFolder();
@@ -205,16 +199,6 @@ public:
      * Returns the Unix system-level configuration preferences.
      */
     static UnixInfo &unixInfo();
-
-    /**
-     * Imports a script module that is located on the import path.
-     *
-     * @param name      Name of the module.
-     * @param fromPath  Absolute path of the script doing the importing.
-     *
-     * @return  The imported module.
-     */
-    static Record &importModule(String const &name, String const &fromPath = "");
 
     /**
      * Starts the application's main loop.

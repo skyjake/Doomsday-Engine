@@ -177,6 +177,11 @@ namespace de
             return *this;
         }
 
+        Observers<Type> &operator += (Type &observer) {
+            add(&observer);
+            return *this;
+        }
+
         Observers<Type> const &operator += (Type *observer) const {
             const_cast<Observers<Type> *>(this)->add(observer);
             return *this;
@@ -194,6 +199,11 @@ namespace de
         
         Observers<Type> &operator -= (Type *observer) {
             remove(observer);
+            return *this;
+        }
+
+        Observers<Type> &operator -= (Type &observer) {
+            remove(&observer);
             return *this;
         }
 
