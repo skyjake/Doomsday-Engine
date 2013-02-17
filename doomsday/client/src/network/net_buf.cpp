@@ -55,11 +55,6 @@ Reader* Reader_NewWithNetworkBuffer(void)
     return Reader_NewWithBuffer((const byte*) netBuffer.msg.data, netBuffer.length);
 }
 
-Writer* Writer_NewWithNetworkBuffer(void)
-{
-    return Writer_NewWithBuffer(netBuffer.msg.data, NETBUFFER_MAXSIZE);
-}
-
 /**
  * Initialize the low-level network subsystem. This is called always
  * during startup (via Sys_Init()).
