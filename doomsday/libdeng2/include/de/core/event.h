@@ -31,6 +31,7 @@ namespace de {
 class DENG2_PUBLIC Event
 {
 public:
+    /// Event type codes.
     enum {
         KeyPress = 1,
         KeyRelease = 2
