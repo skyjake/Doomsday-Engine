@@ -37,6 +37,9 @@ public:
 
     void setPath(de::NativePath const &path);
 
+    void setEnabled(bool yes);
+    void setDisabled(bool yes) { setEnabled(!yes); }
+
     de::NativePath path() const;
     
 signals:
