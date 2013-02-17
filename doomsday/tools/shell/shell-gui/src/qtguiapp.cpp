@@ -65,4 +65,3 @@ bool QtGuiApp::notify(QObject *receiver, QEvent *event)
     }
     return false;
 }
-

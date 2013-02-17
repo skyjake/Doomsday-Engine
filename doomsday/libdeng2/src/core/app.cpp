@@ -57,6 +57,9 @@ DENG2_PIMPL(App), DENG2_OBSERVES(Record, Deletion)
     /// Primary (wall) clock.
     Clock clock;
 
+    /// Subsystems (not owned).
+    QList<System *> systems;
+
     /// The file system.
     FS fs;
 
@@ -91,6 +94,8 @@ DENG2_PIMPL(App), DENG2_OBSERVES(Record, Deletion)
 
     ~Instance()
     {
+        clock.audienceForTimeChange -= &self;
+
         DENG2_FOR_EACH(NativeModules, i, nativeModules)
         {
             i.value()->audienceForDeletion -= this;
@@ -244,6 +249,30 @@ void App::handleUncaughtException(String message)
     if(d->terminateFunc) d->terminateFunc(message.toUtf8().constData());
 }
 
+bool App::processEvent(Event const &ev)
+{
+    foreach(System *sys, d->systems)
+    {
+        if(sys->behavior() & System::ReceivesInputEvents)
+        {
+            if(sys->processEvent(ev))
+                return true;
+        }
+    }
+    return false;
+}
+
+void App::timeChanged(Clock const &clock)
+{
+    foreach(System *sys, d->systems)
+    {
+        if(sys->behavior() & System::ObservesTime)
+        {
+            sys->timeChanged(clock);
+        }
+    }
+}
+
 NativePath App::nativePluginBinaryPath()
 {
     if(!d->cachedPluginBinaryPath.isEmpty()) return d->cachedPluginBinaryPath;
@@ -391,7 +420,21 @@ void App::initSubsystems(SubsystemInitFlags flags)
     // Update the wall clock time.
     d->clock.setTime(Time());
 
+    // Now we can start observing progress of time.
+    d->clock.audienceForTimeChange += this;
+
     LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
+}
+
+void App::addSystem(System &system)
+{
+    d->systems.removeAll(&system);
+    d->systems.append(&system);
+}
+
+void App::removeSystem(System &system)
+{
+    d->systems.removeAll(&system);
 }
 
 void App::addNativeModule(String const &name, Record &module)

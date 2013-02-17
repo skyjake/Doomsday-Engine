@@ -68,6 +68,9 @@ signals:
     /// Emitted when the display mode has changed.
     void displayModeChanged();
 
+protected slots:
+    void refresh();
+
 private:
     struct Instance;
     Instance *d;

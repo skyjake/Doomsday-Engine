@@ -25,6 +25,7 @@
 #include "../CommandLine"
 #include "../NativePath"
 #include "../LogBuffer"
+#include "../System"
 #include "../FS"
 #include "../Module"
 #include "../Config"
@@ -47,7 +48,7 @@ class Archive;
  *
  * @see GuiApp, TextApp
  */
-class DENG2_PUBLIC App
+class DENG2_PUBLIC App : DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
     /// The object or resource that was being looked for was not found. @ingroup errors
@@ -87,6 +88,24 @@ public:
      * @param flags  How to/which subsystems to initialize.
      */
     void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
+
+    /**
+     * Adds a system to the application. The order of systems is preserved; the
+     * system added last will be notified of time changes last and will receive
+     * input events last (if others don't eat them).
+     *
+     * @param system  System. Ownership kept by caller. The caller is
+     *                responsible for making sure the system has been
+     *                initialized properly.
+     */
+    void addSystem(System &system);
+
+    /**
+     * Removes a system from the application.
+     *
+     * @param system  System to remove.
+     */
+    void removeSystem(System &system);
 
     /**
      * Adds a native module to the set of modules that can be imported in
@@ -224,6 +243,14 @@ public:
      * @param message  Error message to be shown to the user.
      */
     void handleUncaughtException(String message);
+
+    /**
+     * Events received from the operating system should be passed here; the
+     * application will make sure all subsystems get a chance to process them.
+     */
+    virtual bool processEvent(Event const &);
+
+    void timeChanged(Clock const &);
 
 protected:
     /**
