@@ -31,7 +31,7 @@ $CP $BUILDDIR/../libshell/libdeng_shell*dylib $APPDIR/Frameworks
 echo "Copying server..."
 $CP server/doomsday-server $APPDIR/Resources
 
-echo "Copying doomsday-shell-text..."
+echo "Copying shell-text..."
 $CP tools/shell/shell-text/doomsday-shell-text $APPDIR/Resources
 
 echo "Copying bundles from plugins..."
