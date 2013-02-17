@@ -56,7 +56,7 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         mod.addNumber("CPU_BITS", Version::cpuBits()).setReadOnly();
         mod.addBoolean("DEBUG", Version::isDebugBuild()).setReadOnly();
 
-        self.addNativeModule("Version", mod);
+        addNativeModule("Version", mod);
     }
 
     ~Instance()
@@ -65,6 +65,12 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         {
             i.value()->audienceForDeletion -= this;
         }
+    }
+
+    void addNativeModule(String const &name, Record &module)
+    {
+        nativeModules.insert(name, &module);
+        module.audienceForDeletion += this;
     }
 
     void recordBeingDeleted(Record &record)
@@ -91,8 +97,7 @@ ScriptSystem::~ScriptSystem()
 
 void ScriptSystem::addNativeModule(String const &name, Record &module)
 {
-    d->nativeModules.insert(name, &module);
-    module.audienceForDeletion += d;
+    d->addNativeModule(name, module);
 }
 
 static int sortFilesByModifiedAt(File const *a, File const *b)
