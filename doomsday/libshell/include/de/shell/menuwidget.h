@@ -117,7 +117,7 @@ public:
 
     // Events.
     void draw();
-    bool handleEvent(Event const *);
+    bool handleEvent(Event const &);
 
 public slots:
     void open();

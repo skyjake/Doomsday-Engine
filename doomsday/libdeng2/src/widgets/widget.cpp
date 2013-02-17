@@ -276,7 +276,7 @@ void Widget::notifyTreeReversed(void (Widget::*notifyFunc)())
     }
 }
 
-bool Widget::dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event const *))
+bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
 {
     // Hidden widgets do not get events.
     if(isHidden()) return false;
@@ -343,7 +343,7 @@ void Widget::drawIfVisible()
 void Widget::draw()
 {}
 
-bool Widget::handleEvent(Event const *)
+bool Widget::handleEvent(Event const &)
 {
     // Event is not handled.
     return false;

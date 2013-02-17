@@ -40,7 +40,7 @@ public:
     LogSink &logSink();
 
     void draw();
-    bool handleEvent(Event const *event);
+    bool handleEvent(Event const &event);
 
 public slots:
     /**

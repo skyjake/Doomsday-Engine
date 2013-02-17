@@ -35,7 +35,7 @@ public:
     CommandLineWidget(String const &name = "");
     virtual ~CommandLineWidget();
 
-    bool handleEvent(Event const *event);
+    bool handleEvent(Event const &event);
 
 signals:
     void commandEntered(de::String command);

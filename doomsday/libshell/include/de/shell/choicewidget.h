@@ -63,7 +63,7 @@ public:
     void focusLost();
     void focusGained();
     void draw();
-    bool handleEvent(Event const *event);
+    bool handleEvent(Event const &event);
 
 protected slots:
     void updateSelectionFromMenu();

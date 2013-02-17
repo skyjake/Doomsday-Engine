@@ -95,7 +95,7 @@ public:
     void viewResized();
     void update();
     void draw();
-    bool handleEvent(Event const *event);
+    bool handleEvent(Event const &event);
 
 signals:
     void enterPressed(de::String text);

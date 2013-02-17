@@ -80,7 +80,7 @@ public:
      *
      * @return @c true, if event was eaten.
      */
-    bool processEvent(Event const *event);
+    bool processEvent(Event const &event);
 
     void initialize();
 

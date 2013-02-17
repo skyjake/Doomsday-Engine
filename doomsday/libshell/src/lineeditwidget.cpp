@@ -358,23 +358,23 @@ void LineEditWidget::draw()
     targetCanvas().draw(buf, pos.topLeft);
 }
 
-bool LineEditWidget::handleEvent(Event const *event)
+bool LineEditWidget::handleEvent(Event const &event)
 {
     // There are only key press events.
-    DENG2_ASSERT(event->type() == Event::KeyPress);
-    KeyEvent const *ev = static_cast<KeyEvent const *>(event);
+    DENG2_ASSERT(event.type() == Event::KeyPress);
+    KeyEvent const &ev = static_cast<KeyEvent const &>(event);
 
     bool eaten = true;
 
     // Insert text?
-    if(!ev->text().isEmpty())
+    if(!ev.text().isEmpty())
     {
-        d->insert(ev->text());
+        d->insert(ev.text());
     }
     else
     {
         // Control character.
-        eaten = handleControlKey(ev->key());
+        eaten = handleControlKey(ev.key());
     }
 
     if(eaten)

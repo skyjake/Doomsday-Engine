@@ -130,7 +130,7 @@ void RootWidget::draw()
     Rule::markRulesValid(); // All done for this frame.
 }
 
-bool RootWidget::processEvent(Event const *event)
+bool RootWidget::processEvent(Event const &event)
 {
     if(focus() && focus()->handleEvent(event))
     {

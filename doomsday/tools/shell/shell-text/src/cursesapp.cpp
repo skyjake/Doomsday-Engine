@@ -347,8 +347,7 @@ DENG2_PIMPL(CursesApp)
 
                 if(code)
                 {
-                    KeyEvent ev(code, mods);
-                    rootWidget->processEvent(&ev);
+                    rootWidget->processEvent(KeyEvent(code, mods));
                 }
             }
             else
@@ -377,8 +376,7 @@ DENG2_PIMPL(CursesApp)
                     }
                 }
 
-                KeyEvent ev(keyStr);
-                rootWidget->processEvent(&ev);
+                rootWidget->processEvent(KeyEvent(keyStr));
             }
         }
 

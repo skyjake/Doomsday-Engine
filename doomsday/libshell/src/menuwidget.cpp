@@ -351,18 +351,18 @@ void MenuWidget::draw()
     targetCanvas().draw(buf, pos.topLeft);
 }
 
-bool MenuWidget::handleEvent(Event const *event)
+bool MenuWidget::handleEvent(Event const &event)
 {
     if(!itemCount()) return false;
 
-    if(event->type() != Event::KeyPress) return false;
+    if(event.type() != Event::KeyPress) return false;
 
-    KeyEvent const *ev = static_cast<KeyEvent const *>(event);
+    KeyEvent const &ev = static_cast<KeyEvent const &>(event);
 
     // Check menu-related control keys.
-    if(ev->text().isEmpty())
+    if(ev.text().isEmpty())
     {
-        switch(ev->key())
+        switch(ev.key())
         {
         case Qt::Key_Up:
             if(d->cursor == 0)
@@ -412,7 +412,7 @@ bool MenuWidget::handleEvent(Event const *event)
         }
     }
 
-    if(ev->text() == " ")
+    if(ev.text() == " ")
     {
         itemAction(d->cursor).trigger();
         close();
@@ -426,7 +426,7 @@ bool MenuWidget::handleEvent(Event const *event)
         return true;
     }
 
-    if(ev->text().isEmpty())
+    if(ev.text().isEmpty())
     {
         if(d->closable)
         {
@@ -441,7 +441,7 @@ bool MenuWidget::handleEvent(Event const *event)
         for(int i = 0; i < d->items.size(); ++i)
         {
             int idx = (d->cursor + i + 1) % d->items.size();
-            if(d->items[idx].action->label().startsWith(ev->text(), Qt::CaseInsensitive))
+            if(d->items[idx].action->label().startsWith(ev.text(), Qt::CaseInsensitive))
             {
                 setCursor(idx);
                 return true;
