@@ -18,17 +18,28 @@
 
 #include "de/TextApp"
 #include <de/Log>
+#include <de/math.h>
 #include <QDir>
+#include <QTimer>
 
 namespace de {
 
-struct TextApp::Instance
-{};
+DENG2_PIMPL(TextApp)
+{
+    TimeDelta refreshInterval;
+    bool loopRunning;
+
+    Instance(Public *i)
+        : Base(i),
+          refreshInterval(0),
+          loopRunning(false)
+    {}
+};
 
 TextApp::TextApp(int &argc, char **argv)
     : QCoreApplication(argc, argv),
       App(applicationFilePath(), arguments()),
-      d(new Instance)
+      d(new Instance(this))
 {}
 
 TextApp::~TextApp()
@@ -55,17 +66,33 @@ bool TextApp::notify(QObject *receiver, QEvent *event)
 
 int TextApp::execLoop()
 {
+    d->loopRunning = true;
+    /// @todo LegacyCore currently updates clock time for us.
+    //refresh();
     return QCoreApplication::exec();
 }
 
 void TextApp::stopLoop(int code)
 {
+    d->loopRunning = false;
     return QCoreApplication::exit(code);
 }
 
 NativePath TextApp::appDataPath() const
 {
     return NativePath(QDir::homePath()) / ".doomsday";
+}
+
+void TextApp::refresh()
+{
+    if(!d->loopRunning) return;
+
+    // Update the clock time. App listens to this clock and will inform
+    // subsystems in the order they've been added in.
+    Clock::appClock().setTime(Time());
+
+    // Schedule the next refresh.
+    QTimer::singleShot(de::max(duint64(1), d->refreshInterval.asMilliSeconds()), this, SLOT(refresh()));
 }
 
 } // namespace de

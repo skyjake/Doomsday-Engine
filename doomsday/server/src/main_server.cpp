@@ -33,6 +33,7 @@
 #include "con_main.h"
 #include "ui/displaymode.h"
 #include "sys_system.h"
+#include "serversystem.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -86,6 +87,9 @@ int main(int argc, char** argv)
         }
 
         dengApp->initSubsystems();
+
+        ServerSystem sv;
+        dengApp->addSystem(sv);
 
         Libdeng_Init();
 

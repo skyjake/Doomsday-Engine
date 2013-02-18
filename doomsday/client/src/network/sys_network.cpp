@@ -40,13 +40,6 @@
 #ifdef __CLIENT__
 #  include "network/net_demo.h"
 #endif
-#ifdef __SERVER__
-#  include "server/sv_def.h"
-#  include "shellusers.h"
-#  include "map/gamemap.h"
-#  include <de/Beacon>
-#  include <de/ByteRefArray>
-#endif
 #include "network/protocol.h"
 #include "client/cl_def.h"
 #include "map/p_players.h"
@@ -57,7 +50,7 @@
 #include <de/LegacyNetwork>
 #include <QCryptographicHash>
 
-#define MAX_NODES                   32
+#define MAX_NODES   1
 
 typedef struct ipaddress_s {
     char host[256];
@@ -96,22 +89,15 @@ static void N_IPToString(char *buf, ipaddress_t *ip);
 
 char   *nptIPAddress = (char *) "";
 int     nptIPPort = 0;          // This is the port *we* use to communicate.
-int     defaultTCPPort = DEFAULT_TCP_PORT;
 
 // Operating mode of the currently active service provider.
 boolean netIsActive = false;
-boolean netServerMode = false;
 
-static int serverSock;
-static netnode_t netNodes[MAX_NODES];
-static int sockSet;
-static int joinedSockSet;
-static foundhost_t located;
-
-#ifdef __SERVER__
-// Beacon for informing clients that a server is present.
-static de::Beacon beacon(13209);
+#ifdef __CLIENT__
+netnode_t netNodes[MAX_NODES];
 #endif
+
+static foundhost_t located;
 
 void N_Register(void)
 {
@@ -129,7 +115,9 @@ void N_Register(void)
  */
 void N_SystemInit(void)
 {
+#ifdef __CLIENT__
     memset(netNodes, 0, sizeof(netNodes));
+#endif
 }
 
 /**
@@ -142,9 +130,6 @@ void N_SystemShutdown(void)
     {
 #ifdef __CLIENT__
         if(isClient) N_Disconnect();
-#endif
-#ifdef __SERVER__
-        N_ServerClose();
 #endif
     }
 
@@ -161,7 +146,7 @@ void N_IPToString(char *buf, ipaddress_t *ip)
 
 de::duint16 N_ServerPort()
 {
-    return (!nptIPPort ? defaultTCPPort : nptIPPort);
+    return (!nptIPPort ? DEFAULT_TCP_PORT : nptIPPort);
 }
 
 /**
@@ -169,11 +154,9 @@ de::duint16 N_ServerPort()
  * mode.  If a service provider has already been initialized, it will
  * be shut down first.  Returns true if successful.
  */
-boolean N_InitService(boolean inServerMode)
+boolean N_InitService(void)
 {
-    uint16_t port;
-
-    if(N_IsAvailable() && netServerMode == inServerMode)
+    if(N_IsAvailable())
     {
         // Nothing to change.
         return true;
@@ -182,30 +165,11 @@ boolean N_InitService(boolean inServerMode)
     // Get rid of the currently active service provider.
     N_ShutdownService();
 
-    if(inServerMode)
-    {
-        port = N_ServerPort();
-
-        Con_Message("Listening on TCP port %i.\n", port);
-
-        // Open a listening TCP socket. It will accept client connections.
-        if(!(serverSock = LegacyNetwork_OpenServerSocket(port)))
-            return false;
-
-        // Allocate socket sets, which we'll use for listening to the
-        // client sockets.
-        sockSet = LegacyNetwork_NewSocketSet();
-        joinedSockSet = LegacyNetwork_NewSocketSet();
-    }
-    else
-    {
-        // Let's forget about servers found earlier.
-        located.valid = false;
-    }
+    // Let's forget about servers found earlier.
+    located.valid = false;
 
     // Success.
     netIsActive = true;
-    netServerMode = inServerMode;
 
     return true;
 }
@@ -215,8 +179,6 @@ boolean N_InitService(boolean inServerMode)
  */
 void N_ShutdownService(void)
 {
-    uint        i;
-
     if(!N_IsAvailable())
         return;                 // Nothing to do.
 
@@ -229,30 +191,10 @@ void N_ShutdownService(void)
     // Any queued messages will be destroyed.
     N_ClearMessages();
 
-    if(netServerMode)
-    {
-        // Close the listening socket.
-        LegacyNetwork_Close(serverSock);
-        serverSock = 0;
-
-        // Clear the client nodes.
-        for(i = 1; i < MAX_NODES; ++i)
-            N_TerminateNode(i);
-
-        // Free the socket set.
-        LegacyNetwork_DeleteSocketSet(sockSet);
-        LegacyNetwork_DeleteSocketSet(joinedSockSet);
-        sockSet = 0;
-        joinedSockSet = 0;
-    }
-    else
-    {
-        // Let's forget about servers found earlier.
-        located.valid = false;
-    }
+    // Let's forget about servers found earlier.
+    located.valid = false;
 
     netIsActive = false;
-    netServerMode = false;
 }
 
 /**
@@ -325,25 +267,9 @@ boolean N_GetNodeName(nodeid_t id, char *name)
 void N_TerminateNode(nodeid_t id)
 {
     netnode_t *node = &netNodes[id];
-    netevent_t netEvent;
 
     if(!node->sock)
         return;  // There is nothing here...
-
-    if(netServerMode && node->hasJoined)
-    {
-        // Let the client know.
-        Msg_Begin(PSV_SERVER_CLOSE);
-        Msg_End();
-        Net_SendBuffer(N_IdentifyPlayer(id), 0);
-
-        // This causes a network event.
-        netEvent.type = NE_CLIENT_EXIT;
-        netEvent.id = id;
-        N_NEPost(&netEvent);
-
-        LegacyNetwork_SocketSet_Remove(joinedSockSet, node->sock);
-    }
 
     // Remove the node from the set of active sockets.
     LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
@@ -352,432 +278,6 @@ void N_TerminateNode(nodeid_t id)
     LegacyNetwork_Close(node->sock);
     memset(node, 0, sizeof(*node));
 }
-
-#ifdef __SERVER__
-
-static ShellUsers shellUsers;
-
-/**
- * Registers a new TCP socket as a client node. There can only be a limited
- * number of nodes at a time. This is only used by a server.
- */
-static boolean registerNewSocket(int sock)
-{
-    uint        i;
-    netnode_t  *node;
-
-    // Find a free node.
-    for(i = 1, node = netNodes + 1; i < MAX_NODES; ++i, node++)
-    {
-        if(!node->sock)
-        {
-            // This'll do.
-            node->sock = sock;
-
-            // We don't know the name yet.
-            memset(node->name, 0, sizeof(node->name));
-
-            // Add this socket to the set of client sockets.
-            LegacyNetwork_SocketSet_Add(sockSet, sock);
-
-            // The address where we should be sending data.
-            LegacyNetwork_GetPeerAddress(sock, node->addr.host, sizeof(node->addr.host), &node->addr.port);
-
-            node->isFromLocalHost = LegacyNetwork_IsLocal(sock);
-
-            LOG_VERBOSE("Socket #%i from %s registered as node %i (local:%b)")
-                    << sock << node->addr.host << i << node->isFromLocalHost;
-            return true;
-        }
-    }
-    return false;
-}
-
-/**
- * A network node wishes to become a real client. @return @c true if we allow
- * this.
- */
-static boolean joinNode(nodeid_t id, int clientProtocol, const char *name)
-{
-    netnode_t *node;
-    netevent_t netEvent;
-
-    if(clientProtocol != SV_VERSION)
-        return false; // Incompatible.
-
-    // If the server is full, attempts to connect are canceled.
-    if(Sv_GetNumConnected() >= svMaxPlayers)
-        return false;
-
-    node = &netNodes[id];
-
-    // Convert the network node into a real client node.
-    node->hasJoined = true;
-
-    // Move it to the joined socket set.
-    LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
-    LegacyNetwork_SocketSet_Add(joinedSockSet, node->sock);
-
-    // @todo We should use more discretion with the name. It has
-    // been provided by an untrusted source.
-    strncpy(node->name, name, sizeof(node->name) - 1);
-
-    // Inform the higher levels of this occurence.
-    netEvent.type = NE_CLIENT_ENTRY;
-    netEvent.id = id;
-    N_NEPost(&netEvent);
-
-    return true;
-}
-
-boolean N_ServerOpen(void)
-{
-    if(!isDedicated)
-    {
-        Con_Message("Server can only be started in dedicated mode! (run with -dedicated)\n");
-        return false;
-    }
-
-    // Let's make sure the correct service provider is initialized
-    // in server mode.
-    if(!N_InitService(true))
-    {
-        Con_Message("Failed to initialize server mode.\n");
-        return false;
-    }
-
-    // The game module may have something that needs doing before we
-    // actually begin.
-    if(gx.NetServerStart)
-        gx.NetServerStart(true);
-
-    Sv_StartNetGame();
-
-    // The game DLL might want to do something now that the
-    // server is started.
-    if(gx.NetServerStart)
-        gx.NetServerStart(false);
-
-    if(masterAware && N_UsingInternet())
-    {
-        // Let the master server know that we are running a public server.
-        N_MasterAnnounceServer(true);
-    }
-
-    // Start the beacon.
-    beacon.start(N_ServerPort());
-
-    return true;
-}
-
-boolean N_ServerClose(void)
-{
-    if(!N_IsAvailable())
-        return false;
-
-    // Stop the beacon.
-    beacon.stop();
-
-    if(masterAware && N_UsingInternet())
-    {
-        // Bye-bye, master server.
-        N_MAClear();
-        N_MasterAnnounceServer(false);
-    }
-    if(gx.NetServerStop)
-        gx.NetServerStop(true);
-    Net_StopGame();
-    Sv_StopNetGame();
-
-    // Exit server mode.
-    N_InitService(false);
-
-    if(gx.NetServerStop)
-        gx.NetServerStop(false);
-    return true;
-}
-
-static void switchNodeToShellMode(nodeid_t node)
-{
-    de::Socket *socket = de::LegacyCore::instance().network()
-            .takeSocket(netNodes[node].sock);
-
-    // The socket is no longer maintained by the legacy network.
-    memset(&netNodes[node], 0, sizeof(netnode_t));
-
-    shellUsers.add(new ShellUser(socket));
-}
-
-/**
- * Validate and process the command, which has been sent by a remote agent.
- *
- * If the command is invalid, the node is immediately closed. We don't have
- * time to fool around with badly behaving clients.
- */
-static boolean serverHandleNodeRequest(nodeid_t node, const char *command, int length)
-{
-    LOG_AS("serverHandleNodeRequest");
-
-    int sock = netNodes[node].sock;
-    serverinfo_t info;
-    ddstring_t msg;
-
-    // If the command is too long, it'll be considered invalid.
-    if(length >= 256)
-    {
-        N_TerminateNode(node);
-        return false;
-    }
-
-    // Status query?
-    if(length == 5 && !strncmp(command, "Info?", 5))
-    {
-        Sv_GetInfo(&info);
-        Str_Init(&msg);
-        Str_Appendf(&msg, "Info\n");
-        Sv_InfoToString(&info, &msg);
-
-        LOG_DEBUG("Info reply:\n%s") << Str_Text(&msg);
-
-        LegacyNetwork_Send(sock, Str_Text(&msg), Str_Length(&msg));
-        Str_Free(&msg);
-    }
-    else if(length >= 5 && !strncmp(command, "Shell", 5))
-    {
-        if(length == 5)
-        {
-            // Password is not required for connections from the local computer.
-            if(strlen(netPassword) > 0 && !netNodes[node].isFromLocalHost)
-            {
-                // Need to ask for a password, too.
-                LegacyNetwork_Send(sock, "Psw?", 4);
-                return true;
-            }
-        }
-        else if(length > 5)
-        {
-            // A password was included.
-            QByteArray supplied(command + 5, length - 5);
-            QByteArray pwd(netPassword, strlen(netPassword));
-            if(supplied != QCryptographicHash::hash(pwd, QCryptographicHash::Sha1))
-            {
-                // Wrong!
-                N_TerminateNode(node);
-                return false;
-            }
-        }
-
-        // This node will switch to shell mode: ownership of the socket is
-        // passed to a ShellUser.
-        switchNodeToShellMode(node);
-    }
-    else if(length >= 10 && !strncmp(command, "Join ", 5) && command[9] == ' ')
-    {
-        ddstring_t name;
-        int protocol = 0;
-        char protoStr[5];
-
-        strncpy(protoStr, command + 5, 4);
-        protocol = strtol(protoStr, 0, 16);
-
-        // Read the client's name and convert the network node into an actual
-        // client. Here we also decide if the client's protocol is compatible
-        // with ours.
-        Str_Init(&name);
-        Str_PartAppend(&name, command, 10, length - 10);
-        if(joinNode(node, protocol, Str_Text(&name)))
-        {
-            // Successful! Send a reply.
-            LegacyNetwork_Send(sock, "Enter", 5);
-        }
-        else
-        {
-            // Couldn't join the game, so close the connection.
-            LegacyNetwork_Send(sock, "Bye", 3);
-            N_TerminateNode(node);
-        }
-        Str_Free(&name);
-    }
-    /*
-    else if(length == 3 && !strcmp(command, "Bye"))
-    {
-        // Request for the server to terminate the connection.
-        N_TerminateNode(node);
-    }*/
-    else
-    {
-        // Too bad, scoundrel! Goodbye.
-        LOG_WARNING("Received an invalid request from node %i.") << node;
-        N_TerminateNode(node);
-        return false;
-    }
-
-    // Everything was OK.
-    return true;
-}
-
-void N_ServerListenUnjoinedNodes(void)
-{
-    int sock;
-
-    if(!serverSock) return;
-
-    // Any incoming connections on the listening socket?
-    while((sock = LegacyNetwork_Accept(serverSock)) != 0)
-    {
-        // A new client is attempting to connect. Let's try to
-        // register the new socket as a network node.
-        if(!registerNewSocket(sock))
-        {
-            // There was a failure, close the socket.
-            LegacyNetwork_Close(sock);
-        }
-    }
-
-    // Any activity on the client sockets? (Don't wait.)
-    while(LegacyNetwork_SocketSet_Activity(sockSet))
-    {
-        int i;
-        for(i = 0; i < MAX_NODES; ++i)
-        {
-            netnode_t* node = netNodes + i;
-            if(node->hasJoined || !node->sock) continue;
-
-            // Does this socket have incoming messages?
-            while(node->sock && LegacyNetwork_BytesReady(node->sock))
-            {
-                int size = 0;
-                byte* message = LegacyNetwork_Receive(node->sock, &size);
-                serverHandleNodeRequest(i, (const char*) message, size);
-                LegacyNetwork_FreeBuffer(message);
-            }
-
-            if(node->sock && LegacyNetwork_IsDisconnected(node->sock))
-            {
-                // Close this socket & node.
-                LOG_INFO("Connection to client closed on node %i.") << i;
-                N_TerminateNode(i);
-                continue;
-            }
-        }
-    }
-}
-
-void N_ServerListenJoinedNodes(void)
-{
-    if(!joinedSockSet) return;
-
-    // Any activity on the client sockets?
-    while(LegacyNetwork_SocketSet_Activity(joinedSockSet))
-    {
-        int i;
-        for(i = 0; i < MAX_NODES; ++i)
-        {
-            netnode_t* node = netNodes + i;
-
-            // Does this socket have got any activity?
-            if(node->hasJoined)
-            {
-                if(LegacyNetwork_IsDisconnected(node->sock) ||
-                   (LegacyNetwork_BytesReady(node->sock) && !Protocol_Receive(i)))
-                {
-                    netevent_t nev;
-                    nev.type = NE_TERMINATE_NODE;
-                    nev.id = i;
-                    N_NEPost(&nev);
-                }
-            }
-        }
-
-        // Should we go take care of the events?
-        if(N_NEPending()) break;
-    }
-}
-
-/**
- * Called from "net info" (server-side).
- */
-void N_PrintNetworkStatus(void)
-{
-    int i, first;
-
-    Con_Message("SERVER: ");
-    if(serverSock)
-    {
-        char buf[80];
-        N_IPToString(buf, &netNodes[0].addr);
-        Con_Message("Open at %s.\n", buf);
-    }
-    else
-    {
-        Con_Message("No server socket open.\n");
-    }
-    first = true;
-    for(i = 1; i < DDMAXPLAYERS; ++i)
-    {
-        client_t *cl = &clients[i];
-        player_t *plr = &ddPlayers[i];
-        netnode_t* node = &netNodes[cl->nodeID];
-        if(cl->nodeID)
-        {
-            if(first)
-            {
-                Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:\n");
-                first = false;
-            }
-            Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec\n",
-                        i, cl->name, cl->nodeID,
-                        node->hasJoined? '*' : ' ',
-                        cl->handshake? '*' : ' ',
-                        cl->ready? '*' : ' ',
-                        plr->shared.inGame? '*' : ' ',
-                        Timer_RealSeconds() - cl->enterTime);
-        }
-    }
-    if(first)
-    {
-        Con_Message("No clients connected.\n");
-    }
-
-    if(shellUsers.count())
-    {
-        Con_Message("%i connected shell user%s.\n",
-                    shellUsers.count(),
-                    shellUsers.count() == 1? "" : "s");
-    }
-
-    N_PrintBufferInfo();
-
-    Con_Message("Configuration:\n");
-    Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
-    Con_Message("  shell password (server-password): \"%s\"\n", netPassword);
-}
-
-void N_ServerUpdateBeacon()
-{
-    // Update the status message in the server's presence beacon.
-    if(serverSock && theMap)
-    {
-        serverinfo_t info;
-        Sv_GetInfo(&info);
-
-        QScopedPointer<de::Record> rec(Sv_InfoToRecord(&info));
-        de::Block msg;
-        de::Writer(msg).withHeader() << *rec;
-        beacon.setMessage(msg);
-    }
-}
-
-void N_ListenNodes(void)
-{
-    N_ServerUpdateBeacon();
-
-    // This is only for the server.
-    N_ServerListenUnjoinedNodes();
-    N_ServerListenJoinedNodes();
-}
-
-#endif // __SERVER__
 
 #ifdef __CLIENT__
 
@@ -838,7 +338,7 @@ boolean N_LookForHosts(const char *address, int port, expectedresponder_t respon
     netnode_t* svNode = &netNodes[0];
 
     // We must be a client.
-    if(!N_IsAvailable() || netServerMode)
+    if(!N_IsAvailable())
         return false;
 
     if(!port)

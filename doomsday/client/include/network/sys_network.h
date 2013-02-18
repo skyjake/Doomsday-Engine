@@ -46,8 +46,6 @@ extern "C" {
 extern boolean  allowSending;
 extern int      maxQueuePackets;
 
-extern boolean  netServerMode;
-
 extern char    *nptIPAddress;
 extern int      nptIPPort;
 
@@ -61,7 +59,7 @@ extern char    *masterPath;
 void            N_Register(void);
 void            N_SystemInit(void);
 void            N_SystemShutdown(void);
-boolean         N_InitService(boolean inServerMode);
+boolean         N_InitService(void);
 void            N_ShutdownService(void);
 boolean         N_IsAvailable(void);
 boolean         N_UsingInternet(void);

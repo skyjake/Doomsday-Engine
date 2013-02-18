@@ -33,7 +33,8 @@ class LegacyNetwork;
  * via the deng2 C API and make sure it gets destroyed at shutdown. The C API
  * can be used to access functionality in LegacyCore.
  *
- * @todo Move the Loop into its own class and get rid of this one.
+ * @todo Move the Loop into its own class and get rid of this one. A Loop
+ * instance should then be owned by GuiApp and TextApp.
  */
 class DENG2_PUBLIC LegacyCore : public QObject
 {

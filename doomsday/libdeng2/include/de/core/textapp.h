@@ -54,6 +54,9 @@ public:
 protected:
     NativePath appDataPath() const;
 
+protected slots:
+    void refresh();
+
 private:
     DENG2_PRIVATE(d)
 };
