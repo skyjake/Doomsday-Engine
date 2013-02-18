@@ -43,18 +43,17 @@ extern char    *nptIPAddress;
 extern int      nptIPPort;
 
 void            N_Register(void);
+
 void            N_SystemInit(void);
 void            N_SystemShutdown(void);
 void            N_PrintInfo(void);
 void            N_Listen(void);
 void            N_ListenNodes(void);
 
-#ifdef __CLIENT__
 boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
 void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
 boolean         N_Connect(void);
 boolean         N_Disconnect(void);
-#endif
 
 int             N_GetNodeSocket(nodeid_t id);
 boolean         N_HasNodeJoined(nodeid_t id);

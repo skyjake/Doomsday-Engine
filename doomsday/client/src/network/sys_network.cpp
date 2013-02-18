@@ -173,18 +173,6 @@ boolean N_HasNodeJoined(nodeid_t id)
     return netNodes[id].hasJoined;
 }
 
-void N_TerminateNode(nodeid_t id)
-{
-    netnode_t *node = &netNodes[id];
-
-    if(!node->sock)
-        return;  // There is nothing here...
-
-    // Close the socket and forget everything about the node.
-    LegacyNetwork_Close(node->sock);
-    memset(node, 0, sizeof(*node));
-}
-
 void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
 {
     netnode_t* svNode = &netNodes[nodeId];
