@@ -23,7 +23,7 @@
 
 #include "dd_def.h"
 #include "network/protocol.h"
-#include "network/sys_network.h"
+//#include "network/sys_network.h"
 #include <de/Record>
 
 struct material_s;

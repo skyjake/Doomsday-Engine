@@ -22,7 +22,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef __SERVER__
+#ifndef __CLIENT__
 #  error "sys_network.cpp is only for __CLIENT__"
 #endif
 
@@ -41,9 +41,7 @@
 #include "dd_def.h"
 #include "network/net_main.h"
 #include "network/net_event.h"
-#ifdef __CLIENT__
-#  include "network/net_demo.h"
-#endif
+#include "network/net_demo.h"
 #include "network/protocol.h"
 #include "client/cl_def.h"
 #include "map/p_players.h"
@@ -52,7 +50,6 @@
 #include <de/Socket>
 #include <de/LegacyCore>
 #include <de/LegacyNetwork>
-#include <QCryptographicHash>
 
 #define MAX_NODES   1
 
@@ -103,6 +100,7 @@ static foundhost_t located;
 void N_Register(void)
 {
     C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
+    C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
 
 #ifdef _DEBUG
     C_CMD("netfreq", NULL, NetFreqs);
@@ -130,7 +128,7 @@ void N_SystemShutdown(void)
     if(netGame)
     {
         // We seem to be shutting down while a netGame is running.
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
+        Con_Execute(CMDS_DDAY, "net disconnect", true, false);
     }
 
     // Any queued messages will be destroyed.
@@ -146,11 +144,6 @@ void N_SystemShutdown(void)
 void N_IPToString(char *buf, ipaddress_t *ip)
 {
     sprintf(buf, "%s:%i", ip->host, ip->port);
-}
-
-de::duint16 N_ServerPort()
-{
-    return (!nptIPPort ? DEFAULT_TCP_PORT : nptIPPort);
 }
 
 boolean N_GetHostInfo(int index, struct serverinfo_s *info)
@@ -180,31 +173,12 @@ boolean N_HasNodeJoined(nodeid_t id)
     return netNodes[id].hasJoined;
 }
 
-#if 0
-/**
- * Returns the player name associated with the given network node.
- */
-String N_GetNodeName(nodeid_t id)
-{
-    if(!netNodes[id].sock)
-    {
-        return "-unknown-";
-    }
-    return netNodes[id].name;
-}
-#endif
-
-#ifdef __CLIENT__
-
 void N_TerminateNode(nodeid_t id)
 {
     netnode_t *node = &netNodes[id];
 
     if(!node->sock)
         return;  // There is nothing here...
-
-    // Remove the node from the set of active sockets.
-    //LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
 
     // Close the socket and forget everything about the node.
     LegacyNetwork_Close(node->sock);
@@ -495,5 +469,3 @@ void N_ListenNodes(void)
     N_ClientListenUnjoined();
     N_ClientListen();
 }
-
-#endif // __CLIENT__

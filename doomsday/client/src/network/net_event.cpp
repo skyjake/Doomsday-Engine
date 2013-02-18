@@ -64,8 +64,10 @@ static int mqHead, mqTail;
 static netevent_t netEventQueue[NETEVENT_QUEUE_LEN];
 static int neqHead, neqTail;
 
+#ifdef __SERVER__
 // Countdown for master updates.
 static timespan_t masterHeartbeat = 0;
+#endif
 
 // CODE --------------------------------------------------------------------
 
@@ -257,11 +259,6 @@ void N_Update(void)
 #endif // __SERVER__
 
 #ifdef __CLIENT__
-        case NE_TERMINATE_NODE:
-            // The server receives this event when a client's connection is broken.
-            N_TerminateNode(nevent.id);
-            break;
-
         case NE_END_CONNECTION:
             // A client receives this event when the connection is
             // terminated.

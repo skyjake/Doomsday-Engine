@@ -35,9 +35,6 @@ extern "C" {
 
 #define NETBUFFER_MAXSIZE    0x7ffff  // 512 KB
 
-// Each network node is identified by a number.
-typedef unsigned int nodeid_t;
-
 // Incoming messages are stored in netmessage_s structs.
 typedef struct netmessage_s {
     struct netmessage_s *next;

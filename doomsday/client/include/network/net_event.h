@@ -25,6 +25,8 @@
 #ifndef __DOOMSDAY_NETWORK_EVENT_H__
 #define __DOOMSDAY_NETWORK_EVENT_H__
 
+#include "net_main.h"
+
 // Net events.
 typedef enum neteventtype_e {
 	NE_CLIENT_ENTRY,

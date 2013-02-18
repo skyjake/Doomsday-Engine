@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include "lzss.h"
 #include "dd_share.h"
-#include "sys_network.h"
 #include "net_msg.h"
 #include "map/p_mapdata.h"
 #include <de/smoother.h>
@@ -61,6 +60,18 @@ extern "C" {
 // The number of mobjs that can be stored in the input/visible buffer.
 // The server won't send more mobjs than this.
 #define MAX_CLMOBJS         80
+
+#define DEFAULT_TCP_PORT    13209
+#define DEFAULT_UDP_PORT    13209
+
+typedef void (*expectedresponder_t)(int, const byte*, int);
+
+// If a master action fails, the action queue is emptied.
+typedef enum {
+    MAC_REQUEST, // Retrieve the list of servers from the master.
+    MAC_WAIT, // Wait for the server list to arrive.
+    MAC_LIST // Print the server list in the console.
+} masteraction_t;
 
 // Packet types.
 // PKT = sent by anyone
@@ -200,6 +211,9 @@ typedef struct {
     // View console. Which player this client is viewing?
     int             viewConsole;
 } client_t;
+
+extern char    *serverName, *serverInfo, *playerName;
+extern int      serverData[];
 
 extern boolean  firstNetUpdate;
 extern int      resendStart;      // set when server needs our tics

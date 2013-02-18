@@ -23,21 +23,14 @@
 #ifndef LIBDENG_SYSTEM_NETWORK_H
 #define LIBDENG_SYSTEM_NETWORK_H
 
+#ifndef __CLIENT__
+#  error "sys_network.h requires __CLIENT__"
+#endif
+
 #include "dd_share.h"
 #include "net_buf.h"
+#include "net_main.h"
 #include "monitor.h"
-
-#define DEFAULT_TCP_PORT    13209
-#define DEFAULT_UDP_PORT    13209
-
-typedef void (*expectedresponder_t)(int, const byte*, int);
-
-// If a master action fails, the action queue is emptied.
-typedef enum {
-    MAC_REQUEST, // Retrieve the list of servers from the master.
-    MAC_WAIT, // Wait for the server list to arrive.
-    MAC_LIST // Print the server list in the console.
-} masteraction_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,13 +41,6 @@ extern int      maxQueuePackets;
 
 extern char    *nptIPAddress;
 extern int      nptIPPort;
-
-extern char    *serverName, *serverInfo, *playerName;
-extern int      serverData[];
-
-extern char    *masterAddress;
-extern int      masterPort;
-extern char    *masterPath;
 
 void            N_Register(void);
 void            N_SystemInit(void);
@@ -70,16 +56,8 @@ boolean         N_Connect(void);
 boolean         N_Disconnect(void);
 #endif
 
-#ifdef __SERVER__
-boolean         N_ServerOpen(void);
-boolean         N_ServerClose(void);
-#endif
-
-void            N_TerminateNode(nodeid_t id);
-
 int             N_GetNodeSocket(nodeid_t id);
 boolean         N_HasNodeJoined(nodeid_t id);
-//boolean         N_GetNodeName(nodeid_t id, char *name);
 
 int             N_GetHostCount(void);
 boolean         N_GetHostInfo(int index, struct serverinfo_s *info);

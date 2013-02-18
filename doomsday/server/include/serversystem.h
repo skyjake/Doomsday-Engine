@@ -71,6 +71,15 @@ private:
 };
 
 ServerSystem &App_ServerSystem();
-void Server_Register(); // old-fashioned cvars
+
+void    Server_Register(); // old-fashioned cvars
+boolean N_ServerOpen(void);
+boolean N_ServerClose(void);
+void    N_TerminateNode(nodeid_t id);
+int     N_GetNodeSocket(nodeid_t id);
+boolean N_HasNodeJoined(nodeid_t id);
+void    N_PrintNetworkStatus(void);
+
+extern int nptIPPort; // cvar
 
 #endif // SERVERSYSTEM_H

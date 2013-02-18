@@ -21,7 +21,7 @@
 #ifndef LIBDENG_NETWORK_PROTOCOL_H
 #define LIBDENG_NETWORK_PROTOCOL_H
 
-#include "sys_network.h"
+//#include "sys_network.h"
 
 /**
  * Server protocol version number.

@@ -21,6 +21,7 @@
 #include "server/sv_def.h"
 #include "network/net_main.h"
 #include "network/net_event.h"
+#include "network/monitor.h"
 #include "con_main.h"
 #include "map/gamemap.h"
 #include "map/p_players.h"

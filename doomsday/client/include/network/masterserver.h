@@ -115,4 +115,8 @@ int N_MasterGet(int index, serverinfo_t *info);
 } // extern "C"
 #endif
 
+extern char *masterAddress;
+extern int   masterPort;
+extern char *masterPath;
+
 #endif // LIBDENG_MASTER_SERVER_H
