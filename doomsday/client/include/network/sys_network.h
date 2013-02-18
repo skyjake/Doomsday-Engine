@@ -59,10 +59,6 @@ extern char    *masterPath;
 void            N_Register(void);
 void            N_SystemInit(void);
 void            N_SystemShutdown(void);
-boolean         N_InitService(void);
-void            N_ShutdownService(void);
-boolean         N_IsAvailable(void);
-boolean         N_UsingInternet(void);
 void            N_PrintInfo(void);
 void            N_Listen(void);
 void            N_ListenNodes(void);
@@ -70,7 +66,7 @@ void            N_ListenNodes(void);
 #ifdef __CLIENT__
 boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
 void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
-boolean         N_Connect(int index);
+boolean         N_Connect(void);
 boolean         N_Disconnect(void);
 #endif
 
@@ -83,8 +79,7 @@ void            N_TerminateNode(nodeid_t id);
 
 int             N_GetNodeSocket(nodeid_t id);
 boolean         N_HasNodeJoined(nodeid_t id);
-boolean         N_GetNodeName(nodeid_t id, char *name);
-const char     *N_GetProtocolName(void);
+//boolean         N_GetNodeName(nodeid_t id, char *name);
 
 int             N_GetHostCount(void);
 boolean         N_GetHostInfo(int index, struct serverinfo_s *info);

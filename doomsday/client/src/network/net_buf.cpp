@@ -68,9 +68,10 @@ void N_Init(void)
 
     //N_SockInit();
     N_MasterInit();
-    N_SystemInit();             // Platform dependent stuff.
 
-    N_InitService(false /* client mode by default */);
+#ifdef __CLIENT__
+    N_SystemInit();             // Platform dependent stuff.
+#endif
 }
 
 /**
@@ -79,7 +80,9 @@ void N_Init(void)
  */
 void N_Shutdown(void)
 {
+#ifdef __CLIENT__
     N_SystemShutdown();
+#endif
     N_MasterShutdown();
     //N_SockShutdown();
 
@@ -236,14 +239,14 @@ void N_ClearMessages(void)
  */
 void N_SendPacket(int flags)
 {
-    uint                i, dest = 0;
+    uint dest = 0;
 
     // Is the network available?
-    if(!allowSending || !N_IsAvailable())
+    if(!allowSending)
         return;
 
     // Figure out the destination DPNID.
-    if(netServerMode)
+#ifdef __SERVER__
     {
         if(netBuffer.player >= 0 && netBuffer.player < DDMAXPLAYERS)
         {
@@ -259,7 +262,7 @@ void N_SendPacket(int flags)
         else
         {
             // Broadcast to all non-local players, using recursive calls.
-            for(i = 0; i < DDMAXPLAYERS; ++i)
+            for(int i = 0; i < DDMAXPLAYERS; ++i)
             {
                 netBuffer.player = i;
                 N_SendPacket(flags);
@@ -270,6 +273,7 @@ void N_SendPacket(int flags)
             return;
         }
     }
+#endif
 
     // This is what will be sent.
     numOutBytes += netBuffer.headerLength + netBuffer.length;
@@ -287,7 +291,7 @@ void N_AddSentBytes(size_t bytes)
  */
 int N_IdentifyPlayer(nodeid_t id)
 {
-    if(netServerMode)
+#ifdef __SERVER__
     {
         // What is the corresponding player number? Only the server keeps
         // a list of all the IDs.
@@ -297,6 +301,7 @@ int N_IdentifyPlayer(nodeid_t id)
                 return i;
         return -1;
     }
+#endif
 
     // Clients receive messages only from the server.
     return 0;
@@ -332,7 +337,7 @@ boolean N_GetPacket(void)
     // If there are net events pending, let's not return any packets
     // yet. The net events may need to be processed before the
     // packets.
-    if(!N_IsAvailable() || N_NEPending())
+    if(N_NEPending())
         return false;
 
     netBuffer.player = -1;

@@ -49,6 +49,10 @@
 #  include "edit_bias.h"
 #endif
 
+#ifdef __SERVER__
+#  include "serversystem.h"
+#endif
+
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "map/p_players.h"
@@ -195,7 +199,12 @@ void Net_Register(void)
 #endif
     C_CMD("settics", "i", SetTicks);
 
+#ifdef __CLIENT__
     N_Register();
+#endif
+#ifdef __SERVER__
+    Server_Register();
+#endif
 }
 
 void Net_Init(void)
@@ -497,13 +506,11 @@ static void Net_DoUpdate(void)
 void Net_Update(void)
 {
     Net_DoUpdate();
-    N_ListenNodes();
 
     // Check for received packets.
 #ifdef __CLIENT__
+    N_ListenNodes();
     Cl_GetPackets();
-#elif __SERVER__
-    Sv_GetPackets();
 #endif
 }
 
@@ -1140,13 +1147,6 @@ void Net_FinishConnection(int nodeId, const byte* data, int size)
 
 int Net_StartConnection(const char* address, int port)
 {
-    // Make sure TCP/IP is active.
-    if(!N_InitService(false))
-    {
-        Con_Message("TCP/IP not available.\n");
-        return false;
-    }
-
     Con_Message("Net_StartConnection: Connecting to %s...\n", address);
 
     // Start searching at the specified location.
@@ -1245,7 +1245,7 @@ D_CMD(Net)
         Con_Printf("  setup client\n");
         Con_Printf("  search (address) [port]   (local or targeted query)\n");
         Con_Printf("  servers   (asks the master server)\n");
-        Con_Printf("  connect (idx)\n");
+        //Con_Printf("  connect (idx)\n");
         Con_Printf("  mconnect (m-idx)\n");
         Con_Printf("  disconnect\n");
 #endif
@@ -1257,36 +1257,9 @@ D_CMD(Net)
         return true;
     }
 
-    if(argc == 2 || argc == 3)
-    {
-        if(!stricmp(argv[1], "init"))
-        {
-            // Init the service (assume client mode).
-            if((success = N_InitService(false)))
-                Con_Message("Network initialization OK.\n");
-            else
-                Con_Message("Network initialization failed!\n");
-
-            // Let everybody know of this.
-            return CmdReturnValue = success;
-        }
-    }
-
     if(argc == 2) // One argument?
     {
-        if(!stricmp(argv[1], "shutdown"))
-        {
-            if(N_IsAvailable())
-            {
-                Con_Printf("Shutting down %s.\n", N_GetProtocolName());
-                N_ShutdownService();
-            }
-            else
-            {
-                success = false;
-            }
-        }
-        else if(!stricmp(argv[1], "announce"))
+        if(!stricmp(argv[1], "announce"))
         {
             N_MasterAnnounceServer(true);
         }
@@ -1380,6 +1353,7 @@ D_CMD(Net)
         {
             success = N_LookForHosts(argv[2], 0, 0);
         }
+        /*
         else if(!stricmp(argv[1], "connect"))
         {
             int             idx;
@@ -1391,13 +1365,13 @@ D_CMD(Net)
             }
 
             idx = strtol(argv[2], NULL, 10);
-            CmdReturnValue = success = N_Connect(idx);
+            CmdReturnValue = success = N_Connect();
 
             if(success)
             {
                 Con_Message("Connected.\n");
             }
-        }
+        }*/
         else if(!stricmp(argv[1], "mconnect"))
         {
             serverinfo_t    info;

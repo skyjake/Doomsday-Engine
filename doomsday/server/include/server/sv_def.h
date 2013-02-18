@@ -50,7 +50,7 @@ extern char* netPassword; // Remote login password.
 void            Sv_Shutdown(void);
 void            Sv_StartNetGame(void);
 void            Sv_StopNetGame(void);
-boolean         Sv_PlayerArrives(nodeid_t nodeID, char* name);
+boolean         Sv_PlayerArrives(nodeid_t nodeID, char const *name);
 void            Sv_PlayerLeaves(nodeid_t nodeID);
 void            Sv_Handshake(int playernum, boolean newplayer);
 void            Sv_GetPackets(void);

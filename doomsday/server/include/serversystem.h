@@ -21,6 +21,7 @@
 
 #include <de/libdeng2.h>
 #include <de/System>
+#include "network/net_buf.h" // nodeid_t
 
 /**
  * Subsystem for tending to clients.
@@ -43,10 +44,33 @@ public:
 
     bool isRunning() const;
 
+    /**
+     * The client is removed from the game immediately. This is used when the
+     * server needs to terminate a client's connection abnormally.
+     */
+    void terminateNode(nodeid_t id);
+
+    /**
+     * Returns the player name associated with the given network node.
+     */
+    de::String nodeName(nodeid_t node) const;
+
+    int nodeLegacySocket(nodeid_t node) const;
+
+    bool hasNodeJoined(nodeid_t node) const;
+
+    /**
+     * Prints the status of the server into the log.
+     */
+    void printStatus();
+
     void timeChanged(de::Clock const &);
 
 private:
     DENG2_PRIVATE(d)
 };
+
+ServerSystem &App_ServerSystem();
+void Server_Register(); // old-fashioned cvars
 
 #endif // SERVERSYSTEM_H

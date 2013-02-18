@@ -70,7 +70,7 @@ void    MPIGotoPage(ui_object_t *ob);
 void    MPIGoBack(ui_object_t *ob);
 void    MPIChooseMode(ui_object_t *ob);
 void    MPIToggleMasterItems(ui_object_t *ob);
-void    MPIStartServer(ui_object_t *ob);
+//void    MPIStartServer(ui_object_t *ob);
 void    MPIShowProtocolSettings(ui_object_t *ob);
 void    MPISetupProtocol(ui_object_t *ob);
 void    MPISearch(ui_object_t *ob);
@@ -103,8 +103,8 @@ uidata_listitem_t lstit_found[MAX_FOUND];
 
 static boolean mode_buttons[2] = { true, false };
 
-static uidata_edit_t ed_server = { str_server, 100 };
-static uidata_edit_t ed_desc = { str_desc, 200 };
+//static uidata_edit_t ed_server = { str_server, 100 };
+//static uidata_edit_t ed_desc = { str_desc, 200 };
 static uidata_edit_t ed_masterip = { str_masterip, 127 };
 static uidata_list_t lst_found = { lstit_found, 0 };
 static uidata_edit_t ed_ipsearch = { str_ipaddr, 127 };
@@ -113,6 +113,7 @@ static uidata_edit_t ed_portsearch = { str_ipport, 127 };
 
 static ui_page_t page_server, page_client;
 
+#if 0
 static ui_object_t ob_server[] = {  // Server setup
     {UI_TEXT, 0, 0, 50, 200, 0, 70, "Server name", UIText_Drawer},
     {UI_EDIT, 0, 0, 320, 200, 500, 70, "", UIEdit_Drawer, UIEdit_Responder, 0,
@@ -144,6 +145,7 @@ static ui_object_t ob_server[] = {  // Server setup
 
     {UI_NONE}
 };
+#endif
 
 static ui_object_t ob_client[] = {
     {UI_TEXT, 0, 0, 0, 0, 0, 70, "Get servers from:", UIText_Drawer},
@@ -356,11 +358,13 @@ void MPIServerInfoDrawer(ui_object_t *ob)
     UI_DrawHelpBox(&ob->geometry.origin, &ob->geometry.size, ob->flags & UIF_DISABLED ? .2f : 1, (char *) ob->data);
 }
 
+#if 0
 void MPIToggleMasterItems(ui_object_t *)
 {
     UI_FlagGroup(page_server._objects, 1, UIF_DISABLED, UIFG_XOR);
     MPIUpdatePublicButton();
 }
+#endif
 
 void MPIGotoPage(ui_object_t* ob)
 {
@@ -375,6 +379,7 @@ void MPIGoBack(ui_object_t *)
         UI_SetPage(UI_CurrentPage()->previous);
 }
 
+#if 0
 void MPIStartServer(ui_object_t *)
 {
     N_ShutdownService();
@@ -391,6 +396,7 @@ void MPIStartServer(ui_object_t *)
 
     UI_End();
 }
+#endif
 
 void MPIFinishCustomServerSearch(int nodeId, const byte* data, int size)
 {
@@ -402,10 +408,6 @@ void MPISearch(ui_object_t *ob)
 {
     if(retrieving)
         return;
-
-    // Network services are naturally needed for searching.
-    if(!N_IsAvailable())
-        N_InitService(false);
 
     if(searchMode == SEARCH_CUSTOM)
     {
@@ -570,11 +572,9 @@ void MPIConnect(ui_object_t *)
 {
     char    buf[80];
 
-    N_ShutdownService();
-    N_InitService(false);
-
     sprintf(buf, "net %sconnect %i", searchMode == SEARCH_MASTER ? "m" : "",
             lstit_found[lst_found.selection].data2);
+
     if(Con_Execute(CMDS_DDAY,buf, false, false))
     {
         // Success.
@@ -611,12 +611,12 @@ void MPIHelpDrawer(ui_object_t *ob)
                        UI_ScreenH(980 - yPos[selection]));
     }
 }
-#endif
 
 void MPIUpdatePublicButton(void)
 {
     strcpy(UI_FindObject(ob_server, 2, 0)->text, masterAware ? "Yes" : "No");
 }
+#endif
 
 /*
  * The GUI interface for setting up a server/client.
@@ -631,6 +631,7 @@ void DD_NetSetup(int serverMode)
 
     lookedForHosts = false;
 
+#if 0
     if(serverMode)
     {
         // Prepare Server Setup.
@@ -644,6 +645,7 @@ void DD_NetSetup(int serverMode)
         MPIUpdatePublicButton();
     }
     else
+#endif
     {
         // Prepare Client Setup.
         UI_InitPage(&page_client, ob_client);
@@ -673,12 +675,12 @@ void DD_NetSetup(int serverMode)
     //lst_protocol.selection = nptActive;
 
     UI_PageInit(true, true, false, false, false);
-    UI_SetPage(serverMode ? &page_server : &page_client);
+    UI_SetPage(&page_client);
 
-    CP_InitCvarSliders(ob_server);
+    //CP_InitCvarSliders(ob_server);
 
     // Automatically look for servers on the master.
-    if(!serverMode && searchMode == SEARCH_MASTER)
+    if(searchMode == SEARCH_MASTER)
     {
         MPIRetrieveServersFromMaster();
     }

@@ -22,6 +22,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef __SERVER__
+#  error "sys_network.cpp is only for __CLIENT__"
+#endif
+
 #include <errno.h>
 
 #ifndef WIN32
@@ -90,19 +94,15 @@ static void N_IPToString(char *buf, ipaddress_t *ip);
 char   *nptIPAddress = (char *) "";
 int     nptIPPort = 0;          // This is the port *we* use to communicate.
 
-// Operating mode of the currently active service provider.
-boolean netIsActive = false;
-
-#ifdef __CLIENT__
 netnode_t netNodes[MAX_NODES];
-#endif
+
+static int joinedSockSet;
 
 static foundhost_t located;
 
 void N_Register(void)
 {
     C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
-    C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
 
 #ifdef _DEBUG
     C_CMD("netfreq", NULL, NetFreqs);
@@ -115,9 +115,10 @@ void N_Register(void)
  */
 void N_SystemInit(void)
 {
-#ifdef __CLIENT__
     memset(netNodes, 0, sizeof(netNodes));
-#endif
+
+    // Let's forget about servers found earlier.
+    located.valid = false;
 }
 
 /**
@@ -128,12 +129,15 @@ void N_SystemShutdown(void)
 {
     if(netGame)
     {
-#ifdef __CLIENT__
-        if(isClient) N_Disconnect();
-#endif
+        // We seem to be shutting down while a netGame is running.
+        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
     }
 
-    N_ShutdownService();
+    // Any queued messages will be destroyed.
+    N_ClearMessages();
+
+    // Let's forget about servers found earlier.
+    located.valid = false;
 }
 
 /**
@@ -147,71 +151,6 @@ void N_IPToString(char *buf, ipaddress_t *ip)
 de::duint16 N_ServerPort()
 {
     return (!nptIPPort ? DEFAULT_TCP_PORT : nptIPPort);
-}
-
-/**
- * Initialize the chosen service provider each in server or client
- * mode.  If a service provider has already been initialized, it will
- * be shut down first.  Returns true if successful.
- */
-boolean N_InitService(void)
-{
-    if(N_IsAvailable())
-    {
-        // Nothing to change.
-        return true;
-    }
-
-    // Get rid of the currently active service provider.
-    N_ShutdownService();
-
-    // Let's forget about servers found earlier.
-    located.valid = false;
-
-    // Success.
-    netIsActive = true;
-
-    return true;
-}
-
-/**
- * Shut down the TCP/IP network services.
- */
-void N_ShutdownService(void)
-{
-    if(!N_IsAvailable())
-        return;                 // Nothing to do.
-
-    if(netGame)
-    {
-        // We seem to be shutting down while a netGame is running.
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
-    }
-
-    // Any queued messages will be destroyed.
-    N_ClearMessages();
-
-    // Let's forget about servers found earlier.
-    located.valid = false;
-
-    netIsActive = false;
-}
-
-/**
- * Returns true if the low-level network routines have been initialized
- * and are expected to be working.
- */
-boolean N_IsAvailable(void)
-{
-    return netIsActive;
-}
-
-/**
- * Returns true if the internet is available.
- */
-boolean N_UsingInternet(void)
-{
-    return netIsActive;
 }
 
 boolean N_GetHostInfo(int index, struct serverinfo_s *info)
@@ -229,11 +168,6 @@ int N_GetHostCount(void)
     return located.valid ? 1 : 0;
 }
 
-const char *N_GetProtocolName(void)
-{
-    return "TCP/IP";
-}
-
 int N_GetNodeSocket(nodeid_t id)
 {
     if(id >= MAX_NODES) return 0;
@@ -246,24 +180,22 @@ boolean N_HasNodeJoined(nodeid_t id)
     return netNodes[id].hasJoined;
 }
 
+#if 0
 /**
  * Returns the player name associated with the given network node.
  */
-boolean N_GetNodeName(nodeid_t id, char *name)
+String N_GetNodeName(nodeid_t id)
 {
     if(!netNodes[id].sock)
     {
-        strcpy(name, "-unknown-");
-        return false;
+        return "-unknown-";
     }
-    strcpy(name, netNodes[id].name);
-    return true;
+    return netNodes[id].name;
 }
+#endif
 
-/**
- * The client is removed from the game immediately. This is used when
- * the server needs to terminate a client's connection abnormally.
- */
+#ifdef __CLIENT__
+
 void N_TerminateNode(nodeid_t id)
 {
     netnode_t *node = &netNodes[id];
@@ -272,14 +204,12 @@ void N_TerminateNode(nodeid_t id)
         return;  // There is nothing here...
 
     // Remove the node from the set of active sockets.
-    LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
+    //LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
 
     // Close the socket and forget everything about the node.
     LegacyNetwork_Close(node->sock);
     memset(node, 0, sizeof(*node));
 }
-
-#ifdef __CLIENT__
 
 void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
 {
@@ -337,12 +267,10 @@ boolean N_LookForHosts(const char *address, int port, expectedresponder_t respon
 {
     netnode_t* svNode = &netNodes[0];
 
-    // We must be a client.
-    if(!N_IsAvailable())
-        return false;
-
     if(!port)
+    {
         port = DEFAULT_TCP_PORT;
+    }
 
     memset(svNode, 0, sizeof(*svNode));
 
@@ -412,14 +340,11 @@ void N_ClientHandleResponseToJoin(int nodeId, const byte* data, int size)
  * Connect a client to the server identified with 'index'.  We enter
  * clientside mode during this routine.
  */
-boolean N_Connect(int index)
+boolean N_Connect(void)
 {
     netnode_t *svNode = 0;
     foundhost_t *host;
     char buf[300], *pName;
-
-    if(!N_IsAvailable() || netServerMode || index != 0)
-        return false;
 
     Demo_StopPlayback();
 
@@ -458,9 +383,6 @@ boolean N_Connect(int index)
 boolean N_Disconnect(void)
 {
     netnode_t *svNode = &netNodes[0];
-
-    if(!N_IsAvailable())
-        return false;
 
     // Tell the Game that a disconnection is about to happen.
     if(gx.NetDisconnect)

@@ -19,15 +19,23 @@
 #include "serversystem.h"
 #include "shellusers.h"
 #include "server/sv_def.h"
+#include "network/net_main.h"
+#include "network/net_event.h"
+#include "con_main.h"
 #include "map/gamemap.h"
+#include "map/p_players.h"
 
 #include <de/Beacon>
 #include <de/ByteRefArray>
 #include <de/c_wrapper.h>
 #include <de/LegacyCore>
+#include <de/LegacyNetwork>
+
+#include <QCryptographicHash>
 
 using namespace de;
 
+/// @todo Get rid of these:
 
 #define MAX_NODES                   32
 
@@ -124,7 +132,7 @@ DENG2_PIMPL(ServerSystem)
     {
         beacon.stop();
 
-        if(serverSocket)
+        if(serverSock)
         {
             // Close the listening socket.
             LegacyNetwork_Close(serverSock);
@@ -132,8 +140,8 @@ DENG2_PIMPL(ServerSystem)
         }
 
         // Clear the client nodes.
-        for(i = 1; i < MAX_NODES; ++i)
-            N_TerminateNode(i);
+        for(int i = 1; i < MAX_NODES; ++i)
+            terminateNode(i);
 
         // Free the socket set.
         LegacyNetwork_DeleteSocketSet(sockSet);
@@ -243,7 +251,7 @@ DENG2_PIMPL(ServerSystem)
         // If the command is too long, it'll be considered invalid.
         if(length >= 256)
         {
-            N_TerminateNode(node);
+            terminateNode(node);
             return false;
         }
 
@@ -280,7 +288,7 @@ DENG2_PIMPL(ServerSystem)
                 if(supplied != QCryptographicHash::hash(pwd, QCryptographicHash::Sha1))
                 {
                     // Wrong!
-                    N_TerminateNode(node);
+                    terminateNode(node);
                     return false;
                 }
             }
@@ -312,7 +320,7 @@ DENG2_PIMPL(ServerSystem)
             {
                 // Couldn't join the game, so close the connection.
                 LegacyNetwork_Send(sock, "Bye", 3);
-                N_TerminateNode(node);
+                terminateNode(node);
             }
             Str_Free(&name);
         }
@@ -320,7 +328,7 @@ DENG2_PIMPL(ServerSystem)
         {
             // Too bad, scoundrel! Goodbye.
             LOG_WARNING("Received an invalid request from node %i.") << node;
-            N_TerminateNode(node);
+            terminateNode(node);
             return false;
         }
 
@@ -370,7 +378,7 @@ DENG2_PIMPL(ServerSystem)
                 {
                     // Close this socket & node.
                     LOG_INFO("Connection to client closed on node %i.") << i;
-                    N_TerminateNode(i);
+                    terminateNode(i);
                     continue;
                 }
             }
@@ -395,7 +403,8 @@ DENG2_PIMPL(ServerSystem)
                 if(node->hasJoined)
                 {
                     if(LegacyNetwork_IsDisconnected(node->sock) ||
-                       (LegacyNetwork_BytesReady(node->sock) && !Protocol_Receive(i)))
+                       (LegacyNetwork_BytesReady(node->sock) &&
+                        !Protocol_Receive(i)))
                     {
                         netevent_t nev;
                         nev.type = NE_TERMINATE_NODE;
@@ -464,6 +473,62 @@ DENG2_PIMPL(ServerSystem)
         LegacyNetwork_Close(node->sock);
         memset(node, 0, sizeof(*node));
     }
+
+    void printStatus()
+    {
+        int i, first;
+
+        Con_Message("SERVER: ");
+        if(serverSock)
+        {
+            char buf[80];
+            sprintf(buf, "%s:%i", netNodes[0].addr.host, netNodes[0].addr.port);
+            Con_Message("Open at %s.\n", buf);
+        }
+        else
+        {
+            Con_Message("No server socket open.\n");
+        }
+        first = true;
+        for(i = 1; i < DDMAXPLAYERS; ++i)
+        {
+            client_t *cl = &clients[i];
+            player_t *plr = &ddPlayers[i];
+            netnode_t* node = &netNodes[cl->nodeID];
+            if(cl->nodeID)
+            {
+                if(first)
+                {
+                    Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:\n");
+                    first = false;
+                }
+                Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec\n",
+                            i, cl->name, cl->nodeID,
+                            node->hasJoined? '*' : ' ',
+                            cl->handshake? '*' : ' ',
+                            cl->ready? '*' : ' ',
+                            plr->shared.inGame? '*' : ' ',
+                            Timer_RealSeconds() - cl->enterTime);
+            }
+        }
+        if(first)
+        {
+            Con_Message("No clients connected.\n");
+        }
+
+        if(shellUsers.count())
+        {
+            Con_Message("%i connected shell user%s.\n",
+                        shellUsers.count(),
+                        shellUsers.count() == 1? "" : "s");
+        }
+
+        N_PrintBufferInfo();
+
+        Con_Message("Configuration:\n");
+        Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
+        Con_Message("  shell password (server-password): \"%s\"\n", netPassword);
+    }
 };
 
 ServerSystem::ServerSystem() : d(new Instance(this))
@@ -482,7 +547,7 @@ void ServerSystem::start(duint16 port)
     d->init(port);
 }
 
-void ServerStop::stop()
+void ServerSystem::stop()
 {
     d->deinit();
 }
@@ -492,13 +557,53 @@ bool ServerSystem::isRunning() const
     return d->isStarted();
 }
 
+void ServerSystem::terminateNode(nodeid_t id)
+{
+    d->terminateNode(id);
+}
+
 void ServerSystem::timeChanged(Clock const &clock)
 {
     d->updateBeacon(clock);
+
     d->listenUnjoinedNodes();
     d->listenJoinedNodes();
 
+    Sv_GetPackets();
+
     /// @todo Kick unjoined nodes who are silent for too long.
+}
+
+void ServerSystem::printStatus()
+{
+    d->printStatus();
+}
+
+String ServerSystem::nodeName(nodeid_t node) const
+{
+    if(!d->netNodes[node].sock)
+    {
+        return "-unknown-";
+    }
+    return d->netNodes[node].name;
+}
+
+int ServerSystem::nodeLegacySocket(nodeid_t node) const
+{
+    if(node >= MAX_NODES) return 0;
+    return d->netNodes[node].sock;
+}
+
+bool ServerSystem::hasNodeJoined(nodeid_t node) const
+{
+    if(node >= MAX_NODES) return 0;
+    return d->netNodes[node].hasJoined;
+}
+
+ServerSystem &App_ServerSystem()
+{
+    DENG2_ASSERT(serverSys != 0);
+    return *serverSys;
 }
 
 //---------------------------------------------------------------------------
@@ -539,7 +644,7 @@ boolean N_ServerOpen(void)
 
 boolean N_ServerClose(void)
 {
-    if(!serverSys->isRunning()) return;
+    if(!serverSys->isRunning()) return true;
 
     if(masterAware)
     {
@@ -566,56 +671,26 @@ boolean N_ServerClose(void)
  */
 void N_PrintNetworkStatus(void)
 {
-    int i, first;
+    serverSys->printStatus();
+}
 
-    Con_Message("SERVER: ");
-    if(serverSock)
-    {
-        char buf[80];
-        sprintf(buf, "%s:%i", netNodes[0].addr.host, netNodes[0].addr.port);
-        Con_Message("Open at %s.\n", buf);
-    }
-    else
-    {
-        Con_Message("No server socket open.\n");
-    }
-    first = true;
-    for(i = 1; i < DDMAXPLAYERS; ++i)
-    {
-        client_t *cl = &clients[i];
-        player_t *plr = &ddPlayers[i];
-        netnode_t* node = &netNodes[cl->nodeID];
-        if(cl->nodeID)
-        {
-            if(first)
-            {
-                Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:\n");
-                first = false;
-            }
-            Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec\n",
-                        i, cl->name, cl->nodeID,
-                        node->hasJoined? '*' : ' ',
-                        cl->handshake? '*' : ' ',
-                        cl->ready? '*' : ' ',
-                        plr->shared.inGame? '*' : ' ',
-                        Timer_RealSeconds() - cl->enterTime);
-        }
-    }
-    if(first)
-    {
-        Con_Message("No clients connected.\n");
-    }
+/// @todo Get rid of this.
+void N_TerminateNode(nodeid_t id)
+{
+    serverSys->terminateNode(id);
+}
 
-    if(shellUsers.count())
-    {
-        Con_Message("%i connected shell user%s.\n",
-                    shellUsers.count(),
-                    shellUsers.count() == 1? "" : "s");
-    }
+String N_GetNodeName(nodeid_t id)
+{
+    return serverSys->nodeName(id);
+}
 
-    N_PrintBufferInfo();
+int N_GetNodeSocket(nodeid_t id)
+{
+    return serverSys->nodeLegacySocket(id);
+}
 
-    Con_Message("Configuration:\n");
-    Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
-    Con_Message("  shell password (server-password): \"%s\"\n", netPassword);
+boolean N_HasNodeJoined(nodeid_t id)
+{
+    return serverSys->hasNodeJoined(id);
 }
