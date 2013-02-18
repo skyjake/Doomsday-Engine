@@ -49,8 +49,7 @@ public slots:
     void scrollToBottom();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace shell

@@ -252,8 +252,7 @@ protected:
     virtual NativePath appDataPath() const = 0;
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(App::SubsystemInitFlags)

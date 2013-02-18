@@ -32,8 +32,7 @@ public:
     void show();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // CURSESTEXTCANVAS_H

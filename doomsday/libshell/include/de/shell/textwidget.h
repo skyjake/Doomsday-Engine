@@ -124,8 +124,7 @@ public:
     bool handleEvent(Event const &event);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace shell

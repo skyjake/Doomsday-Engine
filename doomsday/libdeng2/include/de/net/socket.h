@@ -239,8 +239,7 @@ protected:
     void send(IByteArray const &packet, duint channel);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 
     /**
      * ListenSocket creates instances of Socket so it needs to use

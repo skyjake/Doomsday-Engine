@@ -101,8 +101,7 @@ public:
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Address const &address);

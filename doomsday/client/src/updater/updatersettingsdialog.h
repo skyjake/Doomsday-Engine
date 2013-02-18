@@ -23,6 +23,7 @@
 #ifndef LIBDENG_UPDATERSETTINGSDIALOG_H
 #define LIBDENG_UPDATERSETTINGSDIALOG_H
 
+#include <de/libdeng2.h>
 #include "updaterdialog.h"
 
 class UpdaterSettingsDialog : public UpdaterDialog
@@ -44,8 +45,7 @@ public slots:
     void pathActivated(int index);
 
 private:
-    struct Instance;
-    Instance* d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBDENG_UPDATERSETTINGSDIALOG_H

@@ -121,9 +121,8 @@ static void switchBackToFullscreen(bool wasFull)
     }
 }
 
-struct Updater::Instance
+DENG2_PIMPL(Updater)
 {
-    Updater* self;
     QNetworkAccessManager* network;
     DownloadDialog* download;
     bool alwaysShowNotification;
@@ -137,8 +136,8 @@ struct Updater::Instance
     QString latestPackageUri2; // fallback location
     QString latestLogUri;
 
-    Instance(Updater* up)
-        : self(up),
+    Instance(Public *up)
+        : Base(up),
           network(0),
           download(0),
           availableDlg(0),
@@ -146,7 +145,7 @@ struct Updater::Instance
           backToFullscreen(false),
           savingSuggested(false)
     {
-        network = new QNetworkAccessManager(self);
+        network = new QNetworkAccessManager(thisPublic);
 
         // Delete a package installed earlier?
         UpdaterSettings st;
@@ -239,7 +238,7 @@ struct Updater::Instance
         if(!settingsDlg)
         {
             settingsDlg = new UpdaterSettingsDialog(Window_Widget(Window_Main()));
-            QObject::connect(settingsDlg, SIGNAL(finished(int)), self, SLOT(settingsDialogClosed(int)));
+            QObject::connect(settingsDlg, SIGNAL(finished(int)), thisPublic, SLOT(settingsDialogClosed(int)));
         }
         else
         {
@@ -322,7 +321,7 @@ struct Updater::Instance
 
     void execAvailableDialog(bool wasFull)
     {
-        QObject::connect(availableDlg, SIGNAL(checkAgain()), self, SLOT(recheck()));
+        QObject::connect(availableDlg, SIGNAL(checkAgain()), thisPublic, SLOT(recheck()));
 
         if(availableDlg->exec())
         {
@@ -330,7 +329,7 @@ struct Updater::Instance
 
             LOG_MSG("Download and install.");
             download = new DownloadDialog(latestPackageUri, latestPackageUri2);
-            QObject::connect(download, SIGNAL(finished(int)), self, SLOT(downloadCompleted(int)));
+            QObject::connect(download, SIGNAL(finished(int)), thisPublic, SLOT(downloadCompleted(int)));
             download->show();
         }
         else

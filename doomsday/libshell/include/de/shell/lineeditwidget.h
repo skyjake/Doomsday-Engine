@@ -101,8 +101,7 @@ signals:
     void enterPressed(de::String text);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace shell

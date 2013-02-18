@@ -216,8 +216,7 @@ public:
     virtual void setCursorPosition(Vector2i const &pos);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(TextCanvas::Char::Attribs)

@@ -39,8 +39,7 @@ public slots:
     void validate();
     
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // PREFERENCES_H

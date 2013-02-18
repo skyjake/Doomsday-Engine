@@ -25,12 +25,12 @@
 
 using namespace de;
 
-struct QtGuiApp::Instance
+DENG2_PIMPL(QtGuiApp)
 {
     LogBuffer logBuffer;
     Clock clock;
 
-    Instance()
+    Instance(Public *i) : Base(i)
     {
         LogBuffer::setAppBuffer(logBuffer);
         Clock::setAppClock(&clock);
@@ -45,7 +45,7 @@ struct QtGuiApp::Instance
 };
 
 QtGuiApp::QtGuiApp(int &argc, char **argv)
-    : QApplication(argc, argv), d(new Instance)
+    : QApplication(argc, argv), d(new Instance(this))
 {}
 
 QtGuiApp::~QtGuiApp()

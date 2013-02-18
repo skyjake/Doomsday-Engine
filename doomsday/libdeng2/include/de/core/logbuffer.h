@@ -170,8 +170,7 @@ public slots:
     void flush();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 
     /// The globally available application buffer.
     static LogBuffer *_appBuffer;

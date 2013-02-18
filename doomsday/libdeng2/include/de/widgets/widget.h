@@ -131,8 +131,7 @@ public:
     static void setFocusCycle(WidgetList const &order);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

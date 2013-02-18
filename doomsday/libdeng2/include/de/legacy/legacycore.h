@@ -146,9 +146,7 @@ public slots:
     void callback();
 
 private:
-    // Private instance data.
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 
     /// Globally available.
     static LegacyCore *_appCore;

@@ -20,6 +20,7 @@
 #define QTGUIAPP_H
 
 #include <QApplication>
+#include <de/libdeng2.h>
 
 class QtGuiApp : public QApplication
 {
@@ -32,8 +33,7 @@ public:
     bool notify(QObject *receiver, QEvent *event);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // QTGUIAPP_H
