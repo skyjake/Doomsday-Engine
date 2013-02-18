@@ -31,7 +31,7 @@ DENG2_PIMPL(GuiApp)
     bool loopRunning;
 
     Instance(Public *i)
-        : Base(*i),
+        : Base(i),
           refreshInterval(0),
           loopRunning(false)
     {}

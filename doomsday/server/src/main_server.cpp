@@ -61,22 +61,27 @@ int main(int argc, char** argv)
     de::App *dengApp = &textApp;
     novideo = true;
 
+    // Override the system locale (affects number/time formatting).
+    QLocale::setDefault(QLocale("en_US.UTF-8"));
+
+    // Use the host system's proxy configuration.
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
+
+    // Metadata.
+    QCoreApplication::setOrganizationDomain ("dengine.net");
+    QCoreApplication::setOrganizationName   ("Deng Team");
+    QCoreApplication::setApplicationName    ("Doomsday Server");
+    QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
+
     dengApp->setTerminateFunc(handleLegacyCoreTerminate);
 
+    /// @todo After LegacyNetwork is gone, ServerSystem can be a regular variable.
+    QScopedPointer<ServerSystem> sv(new ServerSystem);
+    dengApp->addSystem(*sv);
+
+    // Initialization.
     try
     {
-        // Override the system locale (affects number/time formatting).
-        QLocale::setDefault(QLocale("en_US.UTF-8"));
-
-        // Use the host system's proxy configuration.
-        QNetworkProxyFactory::setUseSystemConfiguration(true);
-
-        // Metadata.
-        QCoreApplication::setOrganizationDomain ("dengine.net");
-        QCoreApplication::setOrganizationName   ("Deng Team");
-        QCoreApplication::setApplicationName    ("Doomsday Server");
-        QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
-
         // C interface to the app.
         de2LegacyCore = LegacyCore_New();
 
@@ -87,9 +92,6 @@ int main(int argc, char** argv)
         }
 
         dengApp->initSubsystems();
-
-        ServerSystem sv;
-        dengApp->addSystem(sv);
 
         Libdeng_Init();
 
@@ -113,6 +115,8 @@ int main(int argc, char** argv)
     // Cleanup.
     Sys_Shutdown();
     DD_Shutdown();
+    dengApp->removeSystem(*sv);
+    delete sv.take();
     LegacyCore_Delete(de2LegacyCore);
 
     return result;

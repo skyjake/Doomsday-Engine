@@ -1353,10 +1353,9 @@ D_CMD(Net)
         {
             success = N_LookForHosts(argv[2], 0, 0);
         }
-        /*
         else if(!stricmp(argv[1], "connect"))
         {
-            int             idx;
+            int idx;
 
             if(netGame)
             {
@@ -1364,14 +1363,14 @@ D_CMD(Net)
                 return false;
             }
 
-            idx = strtol(argv[2], NULL, 10);
+            idx = strtol(argv[2], NULL, 10); // ignored!
             CmdReturnValue = success = N_Connect();
 
             if(success)
             {
                 Con_Message("Connected.\n");
             }
-        }*/
+        }
         else if(!stricmp(argv[1], "mconnect"))
         {
             serverinfo_t    info;
