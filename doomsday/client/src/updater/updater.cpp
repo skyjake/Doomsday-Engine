@@ -372,8 +372,6 @@ struct Updater::Instance
 #endif
         }
 
-        de::String appPath = execPath.fileNamePath();
-        de::String appName = "Doomsday Engine.app";
         de::String volName = "Doomsday Engine " + latestVersion.base();
 
         QString scriptPath = QDir(QDesktopServices::storageLocation(QDesktopServices::TempLocation))
@@ -383,24 +381,13 @@ struct Updater::Instance
         {
             QTextStream out(&file);
             out << "tell application \"Finder\"\n"
-                << "  set oldAppFile to POSIX file \"" << execPath << "\"\n"
-                << "  set dmgFile to POSIX file \"" << distribPackagePath << "\"\n"
-                << "  set destFolder to POSIX file \"" << appPath << "\"\n"
-                << "  open document file dmgFile\n"
+                << "  open document POSIX file \"" << distribPackagePath << "\"\n"
                 << "  -- Wait for it to get mounted\n"
                 << "  repeat until name of every disk contains \"" << volName << "\"\n"
                 << "    delay 1\n"
                 << "  end repeat\n"
-                << "  -- Move the old app to the trash\n"
-                << "  try\n"
-                << "    delete oldAppFile\n"
-                << "  end try\n"
-                << "  -- Copy the new one\n"
-                << "  duplicate \"" << volName << ":" << appName << "\" to folder (destFolder as string)\n"
-                << "  -- Eject the disk\n"
-                << "  eject \"" << volName << "\"\n"
-                << "  -- Open the new app\n"
-                << "  open (destFolder as string) & \":" << appName << "\"\n"
+                << "  -- Start the installer\n"
+                << "  open document file \"" << volName << ":Doomsday Installer.mpkg\"\n"
                 << "end tell\n";
             file.close();
         }
@@ -600,7 +587,6 @@ void Updater_ShowSettings(void)
 
 void Updater_PrintLastUpdated(void)
 {
-    de::Time when = UpdaterSettings().lastCheckTime();
     Con_Message("Latest update check was made %s.\n",
                 UpdaterSettings().lastCheckAgo().toAscii().constData());
 }

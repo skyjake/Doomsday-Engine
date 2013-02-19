@@ -100,8 +100,8 @@ def mac_os_version():
 
 
 def mac_target_ext():
-    if mac_os_version() == '10.6': return '_64bit.dmg'
-    return '.dmg'
+    if mac_os_version() == '10.6': return '.dmg'
+    return '_32bit.dmg'
 
 
 def output_filename(ext=''):
@@ -223,6 +223,7 @@ def mac_release():
         # Exclude jDoom64.
         if not 'jDoom64' in f:
             duptree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
+    duptree(os.path.join(MAC_WORK_DIR, 'tools/shell/shell-gui/Doomsday Shell.app'), 'Doomsday Shell.app')
 
     print 'Signing Doomsday.app...'
     os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Engine.app/Contents/Doomsday.app"')
@@ -230,9 +231,13 @@ def mac_release():
     print 'Signing Doomsday Engine.app...'
     os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Engine.app"')
 
-    print 'Creating disk image:', target
+    print 'Signing Doomsday Shell.app...'
+    os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Shell.app"')
 
-    masterDmg = target
+    print 'Creating disk:', target
+    os.system('osascript /Users/jaakko/Dropbox/Doomsday/package-installer.applescript')
+    
+    masterPkg = target
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
     templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage')
     if not os.path.exists(templateFile):
@@ -241,14 +246,13 @@ def mac_release():
     shutil.copy(templateFile, 'imaging.sparseimage')
     remkdir('imaging')
     os.system('hdiutil attach imaging.sparseimage -noautoopen -quiet -mountpoint imaging')
-    shutil.rmtree('imaging/Doomsday Engine.app', True)
+    shutil.rmtree('imaging/Doomsday Installer.mpkg', True)
     remove('imaging/Read Me.rtf')
-    duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
+    duptree('/Users/jaakko/Desktop/Doomsday Installer.mpkg', 'imaging/Doomsday Installer.mpkg')
     shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
 
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
     os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
-    #os.system("osascript %s/template-image/template.applescript \"%s\"" % (SNOWBERRY_DIR, volumeName))
 
     os.system('hdiutil detach -quiet imaging')
     os.system('hdiutil convert imaging.sparseimage -format UDZO -imagekey zlib-level=9 -o "' + target + '"')

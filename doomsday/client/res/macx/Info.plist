@@ -4,10 +4,12 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
-	<key>CFBundleExecutable</key>
-	<string>dsSDLMixer</string>
 	<key>CFBundleIdentifier</key>
-	<string>net.sourceforge.deng.dsSDLMixer</string>
+	<string>net.dengine.doomsday</string>
+	<key>CFBundleExecutable</key>
+	<string>Doomsday</string>
+	<key>CFBundleIconFile</key>
+	<string>deng.icns</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
@@ -15,8 +17,6 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1.0</string>
-	<key>CSResourcesFileMapped</key>
-	<string>yes</string>
+	<string>1.10</string>
 </dict>
 </plist>

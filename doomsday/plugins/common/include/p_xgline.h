@@ -338,7 +338,7 @@ void            XL_Init(void);
 // Called when reseting engine state.
 void            XL_Update(void);
 
-void            XL_Thinker(xlthinker_t* xl);
+void            XL_Thinker(void *xlThinkerPtr);
 
 void            XL_SetLineType(LineDef* line, int id);
 

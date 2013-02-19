@@ -41,6 +41,8 @@
 #  include <ctype.h>
 #endif
 
+#include <cstring>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
@@ -1882,7 +1884,7 @@ boolean DD_Init(void)
     */
 
     // Attempt automatic game selection.
-    if(!CommandLine_Exists("-noautoselect"))
+    if(!CommandLine_Exists("-noautoselect") || isDedicated)
     {
         de::Game* game = DD_AutoselectGame();
 
@@ -1911,6 +1913,16 @@ boolean DD_Init(void)
             // We do not want to load these resources again on next game change.
             destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
         }
+#ifdef __SERVER__
+        else
+        {
+            // A server is presently useless without a game, as shell
+            // connections can only be made after a game is loaded and the
+            // server mode started.
+            /// @todo Allow shell connections in ringzero mode, too.
+            Con_Error("No playable games available.");
+        }
+#endif
     }
 
     initPathLumpMappings();

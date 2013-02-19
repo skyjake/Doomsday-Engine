@@ -13,7 +13,7 @@ TEMPLATE = app
 else:win32: TARGET = Doomsday-Shell
       else: TARGET = doomsday-shell
 
-VERSION = 1.0.0
+VERSION = $$DENG_VERSION
 
 # Build Configuration -------------------------------------------------------
 
@@ -30,10 +30,12 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 HEADERS += \
     src/aboutdialog.h \
+    src/folderselection.h \
     src/guishellapp.h \
-    src/localserverdialog.h \
     src/linkwindow.h \
+    src/localserverdialog.h \
     src/opendialog.h \
+    src/preferences.h \
     src/qtguiapp.h \
     src/qtrootwidget.h \
     src/qttextcanvas.h \
@@ -41,11 +43,13 @@ HEADERS += \
 
 SOURCES += \
     src/aboutdialog.cpp \
+    src/folderselection.cpp \
     src/guishellapp.cpp \
+    src/linkwindow.cpp \
     src/localserverdialog.cpp \
     src/main.cpp \
-    src/linkwindow.cpp \
     src/opendialog.cpp \
+    src/preferences.cpp \
     src/qtguiapp.cpp \
     src/qtrootwidget.cpp \
     src/qttextcanvas.cpp \
@@ -58,6 +62,10 @@ RESOURCES += \
 
 macx {
     ICON = res/macx/shell.icns
+    QMAKE_INFO_PLIST = res/macx/Info.plist
+    QMAKE_BUNDLE_DATA += res
+    res.path = Contents/Resources
+    res.files = res/macx/English.lproj
 
     # Clean up previous deployment.
     doPostLink("rm -rf \"Doomsday Shell.app/Contents/PlugIns/\"")
@@ -68,16 +76,21 @@ macx {
 else {
     INSTALLS += target
     target.path = $$DENG_BIN_DIR
+    
+    unix {
+        INSTALLS += icon
+        icon.files = res/shell.png
+        icon.path = $$DENG_BASE_DIR/icons
+        
+        # Generate a .desktop file for the applications menu.
+        desktopFile = doomsday-shell.desktop
+        !system(sed \"s:BIN_DIR:$$DENG_BIN_DIR:; s:BASE_DIR:$$DENG_BASE_DIR:\" \
+            <\"../../../../distrib/linux/$$desktopFile\" \
+            >\"$$OUT_PWD/$$desktopFile\"): error(Can\'t build $$desktopFile)
+        desktop.files = $$OUT_PWD/$$desktopFile
+        desktop.path = $$PREFIX/share/applications        
+        INSTALLS += desktop
+
+        OTHER_FILES += ../../../../distrib/linux/$$desktopFile
+    }
 }
-
-HEADERS += \
-    src/folderselection.h
-
-SOURCES += \
-    src/folderselection.cpp
-
-HEADERS += \
-    src/preferences.h
-
-SOURCES += \
-    src/preferences.cpp

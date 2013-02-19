@@ -28,7 +28,7 @@ plist = dict(
     CFBundleShortVersionString = ver,
     CFBundleGetInfoString      = verstr,
     CFBundleExecutable         = name,
-    CFBundleIdentifier         = 'net.sourceforge.deng'
+    CFBundleIdentifier         = 'net.dengine.snowberry'
 )
 
 opts = dict(py2app = dict(

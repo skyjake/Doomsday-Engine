@@ -242,8 +242,6 @@ DENG_EXTERN_C ident_t Net_GetPlayerID(int player)
  */
 void Net_SendBuffer(int toPlayer, int spFlags)
 {
-    assert(!Msg_BeingWritten()); // Must finish writing before calling this.
-
 #ifdef __CLIENT__
     // Don't send anything during demo playback.
     if(playback)

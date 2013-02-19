@@ -128,8 +128,8 @@ void StatusWidget::paintEvent(QPaintEvent *)
     painter.drawText(QRect(0, 15 + lineHeight, width(), largeMetrics.lineSpacing()),
                      d->map, QTextOption(Qt::AlignCenter));
 
-    QRect outlineRect(QPoint(15, 15 + lineHeight + largeMetrics.lineSpacing() + 10),
-                      QPoint(width() - 15, height() - 15));
+    QRect outlineRect(QPoint(20, 15 + lineHeight + largeMetrics.lineSpacing() + 15),
+                      QPoint(width() - 20, height() - 20));
 
     if(!d->mapBounds.isNull())
     {

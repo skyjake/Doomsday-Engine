@@ -88,6 +88,21 @@ void FolderSelection::setPath(de::NativePath const &path)
     d->edit->setText(path.toString());
 }
 
+void FolderSelection::setEnabled(bool yes)
+{
+    d->edit->setEnabled(yes);
+    d->button->setEnabled(yes);
+
+    if(yes)
+    {
+        d->edit->setStyleSheet("");
+    }
+    else
+    {
+        d->edit->setStyleSheet("background-color:#eee; color:#888;");
+    }
+}
+
 de::NativePath FolderSelection::path() const
 {
     return d->edit->text();

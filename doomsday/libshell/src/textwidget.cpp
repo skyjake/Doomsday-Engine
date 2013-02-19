@@ -43,6 +43,7 @@ struct TextWidget::Instance
      * Navigates focus to another widget, assuming this widget currently has
      * focus. Used in focus cycle navigation.
      *
+     * @param root  Root widget.
      * @param name  Name of the widget to change focus to.
      *
      * @return Focus changed successfully.

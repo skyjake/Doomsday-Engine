@@ -110,7 +110,7 @@ typedef struct {
 
 #define FLOORSPEED          (1)
 
-void        T_MoveFloor(floor_t* floor);
+void        T_MoveFloor(void *floorThinker);
 #if __JHEXEN__
 int         EV_DoFloor(LineDef* li, byte* args, floortype_e type);
 #else

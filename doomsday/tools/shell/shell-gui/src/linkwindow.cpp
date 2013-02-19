@@ -56,6 +56,7 @@ DENG2_PIMPL(LinkWindow)
     LogWidget *log;
     CommandLineWidget *cli;
     Link *link;
+    QToolBar *tools;
     QToolButton *statusButton;
     QToolButton *consoleButton;
     QStackedWidget *stack;
@@ -68,6 +69,7 @@ DENG2_PIMPL(LinkWindow)
     Instance(Public &i)
         : Base(i),
           link(0),
+          tools(0),
           statusButton(0),
           consoleButton(0),
           stack(0),
@@ -135,6 +137,22 @@ DENG2_PIMPL(LinkWindow)
         updateCurrentHost();
         updateStyle();
     }
+
+    QToolButton *addToolButton(QString const &label, QIcon const &icon)
+    {
+        QToolButton *tb = new QToolButton;
+        tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+        tb->setFocusPolicy(Qt::NoFocus);
+        tb->setText(label);
+        tb->setIcon(icon);
+        tb->setCheckable(true);
+#ifdef MACOSX
+        // Tighter spacing, please.
+        tb->setStyleSheet("padding-bottom:-5px");
+#endif
+        tools->addWidget(tb);
+        return tb;
+    }
 };
 
 LinkWindow::LinkWindow(QWidget *parent)
@@ -187,8 +205,14 @@ LinkWindow::LinkWindow(QWidget *parent)
 
 #ifdef MACOSX
     d->root->setFont(QFont("Menlo", 13));
-#else
+    if(!d->root->font().exactMatch())
+    {
+        d->root->setFont(QFont("Monaco", 12));
+    }
+#elif WIN32
     d->root->setFont(QFont("Fixedsys", 9));
+#else
+    d->root->setFont(QFont("Monospace", 11));
 #endif
     d->updateStyle();
 
@@ -209,28 +233,25 @@ LinkWindow::LinkWindow(QWidget *parent)
 
     QIcon icon(":/images/toolbar_placeholder.png");
 
-    QToolBar *tools = addToolBar(tr("View"));
-    tools->setMovable(false);
-    tools->setFloatable(false);
+    d->tools = addToolBar(tr("View"));
+    d->tools->setMovable(false);
+    d->tools->setFloatable(false);
 
-    d->statusButton = new QToolButton;
-    d->statusButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    d->statusButton->setFocusPolicy(Qt::NoFocus);
-    d->statusButton->setText(tr("Status"));
-    d->statusButton->setIcon(icon);
-    d->statusButton->setCheckable(true);
-    d->statusButton->setChecked(true);
+    d->statusButton = d->addToolButton(tr("Status"), icon);
     connect(d->statusButton, SIGNAL(pressed()), this, SLOT(switchToStatus()));
-    tools->addWidget(d->statusButton);
+    d->statusButton->setChecked(true);
 
-    d->consoleButton = new QToolButton;
-    d->consoleButton->setIcon(icon);
-    d->consoleButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    d->consoleButton->setFocusPolicy(Qt::NoFocus);
-    d->consoleButton->setText(tr("Console"));
-    d->consoleButton->setCheckable(true);
+    QToolButton *btn = d->addToolButton(tr("Frags"), icon);
+    btn->setDisabled(true);
+
+    btn = d->addToolButton(tr("Chat"), icon);
+    btn->setDisabled(true);
+
+    btn = d->addToolButton(tr("Options"), icon);
+    btn->setDisabled(true);
+
+    d->consoleButton = d->addToolButton(tr("Console"), icon);
     connect(d->consoleButton, SIGNAL(pressed()), this, SLOT(switchToConsole()));
-    tools->addWidget(d->consoleButton);
 
     // Set up the widgets.
     TextRootWidget &root = d->root->rootWidget();

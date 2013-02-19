@@ -98,8 +98,9 @@ static void stopCeiling(ceiling_t* ceiling)
     Thinker_Remove(&ceiling->thinker);
 }
 
-void T_MoveCeiling(ceiling_t* ceiling)
+void T_MoveCeiling(void *ceilingThinkerPtr)
 {
+    ceiling_t* ceiling = ceilingThinkerPtr;
     result_e            res;
 
     switch(ceiling->state)

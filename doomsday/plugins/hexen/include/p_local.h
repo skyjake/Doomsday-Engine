@@ -113,7 +113,7 @@ extern coord_t* FloatBobOffset;
 void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
 int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
 boolean     P_SeekerMissile(mobj_t* mo, angle_t thresh, angle_t turnMax);
-void        P_MobjThinker(mobj_t* mo);
+void        P_MobjThinker(void *mo);
 boolean     P_HealRadius(player_t* plr);
 void        P_BlastRadius(player_t* plr);
 

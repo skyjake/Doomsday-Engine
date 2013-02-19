@@ -349,7 +349,7 @@ mobj_t* P_SpawnMotherMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z, m
 
 boolean P_MobjChangeState(mobj_t* mo, statenum_t state);
 
-void P_MobjThinker(mobj_t* mo);
+void P_MobjThinker(void *moThinkerPtr);
 
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 

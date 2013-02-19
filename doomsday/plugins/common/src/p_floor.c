@@ -312,9 +312,10 @@ result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
 /**
  * Move a floor to it's destination (up or down).
  */
-void T_MoveFloor(floor_t* floor)
+void T_MoveFloor(void *floorThinkerPtr)
 {
-    result_e            res;
+    floor_t* floor = floorThinkerPtr;
+    result_e res;
 
 #if __JHEXEN__
     if(floor->resetDelayCount)

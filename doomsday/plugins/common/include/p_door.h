@@ -74,7 +74,7 @@ typedef struct {
 #define DOORSPEED          (2)
 #define DOORWAIT           (150)
 
-void T_Door(door_t* door);
+void T_Door(void *doorThinkerPtr);
 
 boolean EV_VerticalDoor(LineDef* li, mobj_t* mo);
 

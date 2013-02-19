@@ -289,8 +289,10 @@ static Material* findSwitch(Material* mat, const switchlist_t** info)
     return NULL;
 }
 
-void T_MaterialChanger(materialchanger_t* mchanger)
+void T_MaterialChanger(void *materialChangerThinker)
 {
+    materialchanger_t* mchanger = materialChangerThinker;
+
     if(!(--mchanger->timer))
     {
         const int sectionFlags = DMU_FLAG_FOR_SIDEDEFSECTION(mchanger->section);

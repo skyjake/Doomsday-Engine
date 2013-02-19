@@ -73,6 +73,7 @@ DENG2_PIMPL(LocalServerDialog)
         form->addRow(tr("&Game mode:"), games);
 
         QPushButton *opt = new QPushButton(tr("Game &Options..."));
+        opt->setDisabled(true);
         form->addRow(0, opt);
 
         QHBoxLayout *hb = new QHBoxLayout;
@@ -80,8 +81,8 @@ DENG2_PIMPL(LocalServerDialog)
         port->setMinimumWidth(80);
         port->setMaximumWidth(80);
         port->setText(QString::number(st.value("LocalServer/port", 13209).toInt()));
-        port->setToolTip(tr("Port must be between 0 and 65535."));
-        portMsg = new QLabel(tr("Port already in use."));
+        port->setToolTip(tr("The default port is 13209."));
+        portMsg = new QLabel;
         QPalette pal = portMsg->palette();
         pal.setColor(portMsg->foregroundRole(), Qt::red);
         portMsg->setPalette(pal);
@@ -178,19 +179,25 @@ void LocalServerDialog::validate()
     if(txt.isEmpty() || port < 0 || port >= 0x10000)
     {
         isValid = false;
+        d->portMsg->setText(tr("Must be between 0 and 65535."));
+        d->portMsg->show();
     }
-
-    // Check known running servers.
-    bool inUse = false;
-    foreach(Address const &sv, GuiShellApp::app().serverFinder().foundServers())
+    else
     {
-        if(Socket::isHostLocal(sv.host()) && sv.port() == port)
+        // Check known running servers.
+        bool inUse = false;
+        foreach(Address const &sv, GuiShellApp::app().serverFinder().foundServers())
         {
-            isValid = false;
-            inUse = true;
+            if(Socket::isHostLocal(sv.host()) && sv.port() == port)
+            {
+                isValid = false;
+                inUse = true;
+                d->portMsg->setText(tr("Port already in use."));
+                break;
+            }
         }
+        d->portMsg->setVisible(inUse);
     }
-    d->portMsg->setVisible(inUse);
 
     if(d->runtime->path().isEmpty()) isValid = false;
 

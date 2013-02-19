@@ -34,8 +34,14 @@
 #include "de_network.h"
 #include "de_console.h"
 
+#include <QList>
+
 Writer* msgWriter;
 Reader* msgReader;
+
+/// An ongoing writer is pushed here if a new one is started before the
+/// earlier one is finished.
+static QList<Writer *> pendingWriters;
 
 void Msg_Begin(int type)
 {
@@ -45,12 +51,16 @@ void Msg_Begin(int type)
         Msg_EndRead();
     }
 
-    // The previous write must have been ended by now.
-    assert(msgWriter == NULL);
+    // An ongoing writer will have to wait.
+    if(msgWriter)
+    {
+        pendingWriters.prepend(msgWriter);
+        msgWriter = 0;
+    }
 
     // Allocate a new writer.
-    msgWriter = Writer_NewWithNetworkBuffer();
-    netBuffer.msg.type = type;
+    msgWriter = Writer_NewWithDynamicBuffer(1 /*type*/ + NETBUFFER_MAXSIZE);
+    Writer_WriteByte(msgWriter, type);
 }
 
 boolean Msg_BeingWritten(void)
@@ -60,16 +70,19 @@ boolean Msg_BeingWritten(void)
 
 void Msg_End(void)
 {
-    if(msgWriter)
+    DENG_ASSERT(msgWriter != 0);
+
+    // Finalize the netbuffer.
+    // Message type is included as the first byte.
+    netBuffer.length = Writer_Size(msgWriter) - 1 /*type*/;
+    memcpy(&netBuffer.msg, Writer_Data(msgWriter), Writer_Size(msgWriter));
+    Writer_Delete(msgWriter);
+    msgWriter = 0;
+
+    // Pop a pending writer off the stack.
+    if(!pendingWriters.isEmpty())
     {
-        // Finalize the netbuffer.
-        netBuffer.length = Writer_Size(msgWriter);
-        Writer_Delete(msgWriter);
-        msgWriter = 0;
-    }
-    else
-    {
-        Con_Error("Msg_End: No message being written.\n");
+        msgWriter = pendingWriters.takeFirst();
     }
 }
 

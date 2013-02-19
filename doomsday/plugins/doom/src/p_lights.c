@@ -55,8 +55,9 @@
 
 // CODE --------------------------------------------------------------------
 
-void T_FireFlicker(fireflicker_t *flick)
+void T_FireFlicker(void *flickPtr)
 {
+    fireflicker_t *flick = flickPtr;
     float               amount, lightLevel;
 
     if(--flick->count)

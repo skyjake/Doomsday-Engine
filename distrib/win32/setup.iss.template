@@ -72,6 +72,8 @@ Type: filesandordirs; Name: "{app}\config"
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 ; Binaries
 Source: "bin\doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\doomsday-server.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\doomsday-shell.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\audio_*.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\dehread.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\wadmapconverter.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
@@ -88,6 +90,8 @@ Source: "bin\wadtool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Component
 Source: "..\win32\vcredist_x86.exe"; DestDir: "{app}\bin"; Flags: ignoreversion deleteafterinstall; Components: Engine
 Source: "bin\deng1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng2.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_shell.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtCore4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
@@ -150,9 +154,11 @@ Filename: "{app}\doomsday.url"; Section: "InternetShortcut"; Key: "URL"; String:
 
 [Icons]
 Name: "{group}\Doomsday Engine"; Filename: "{app}\snowberry\snowberry.exe"; WorkingDir: "{app}\snowberry"; Flags: createonlyiffileexists
+Name: "{group}\Doomsday Shell"; Filename: "{app}\bin\doomsday-shell.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists
 Name: "{group}\{cm:ProgramOnTheWeb,Doomsday Engine}"; Filename: "{app}\doomsday.url"
 Name: "{group}\{cm:UninstallProgram,Doomsday Engine}"; Filename: "{uninstallexe}"
 Name: "{userdesktop}\Doomsday Engine"; Filename: "{app}\snowberry\snowberry.exe"; WorkingDir: "{app}\snowberry"; Tasks: desktopicon; Flags: createonlyiffileexists
+Name: "{userdesktop}\Doomsday Shell"; Filename: "{app}\bin\doomsday-shell.exe"; WorkingDir: "{app}"; Tasks: desktopicon; Flags: createonlyiffileexists
 
 [Run]
 Filename: "{app}\bin\vcredist_x86.exe"; Parameters: "/q"; Flags: runascurrentuser
