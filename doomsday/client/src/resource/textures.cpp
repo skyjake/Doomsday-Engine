@@ -19,7 +19,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "gl/gl_texmanager.h"
+#ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
+#endif
 #include "resource/compositetexture.h"
 #include "TextureManifest"
 #include <de/Error>
@@ -36,13 +38,6 @@ D_CMD(InspectTexture);
 #if _DEBUG
 D_CMD(PrintTextureStats);
 #endif
-
-char const *TexSource_Name(TexSource source)
-{
-    if(source == TEXS_ORIGINAL) return "original";
-    if(source == TEXS_EXTERNAL) return "external";
-    return "none";
-}
 
 namespace de {
 
@@ -415,10 +410,15 @@ static void printTextureInfo(Texture &tex)
 {
     Uri uri = tex.manifest().composeUri();
     QByteArray path = uri.asText().toUtf8();
-
+#ifdef __CLIENT__
     Con_Printf("Texture \"%s\" [%p] x%u origin:%s\n",
                path.constData(), (void *)&tex, tex.variantCount(),
                tex.flags().testFlag(Texture::Custom)? "addon" : "game");
+#else
+    Con_Printf("Texture \"%s\" [%p] origin:%s\n",
+               path.constData(), (void *)&tex,
+               tex.flags().testFlag(Texture::Custom)? "addon" : "game");
+#endif
 
     if(tex.dimensions().isEmpty())
         Con_Printf("Dimensions: unknown (not yet loaded)\n");
@@ -447,15 +447,23 @@ static void printTextureSummary(TextureManifest &manifest, bool printSchemeName 
     if(resourceUri.isEmpty()) resourceUri = "N/A";
 
     Con_FPrintf(!texture? CPF_LIGHT : CPF_WHITE,
-                "%-*s %-6s x%u %s\n", printSchemeName? 22 : 14, path.constData(),
-                !texture? "unknown" : texture->flags().testFlag(de::Texture::Custom)? "addon" : "game",
-                !texture? 0 : texture->variantCount(), resourceUri.constData());
+#ifdef __CLIENT__
+                "%-*s %-6s x%u %s\n",
+#else
+                "%-*s %-6s %s\n",
+#endif
+                printSchemeName? 22 : 14, path.constData(),
+                !texture? "unknown" : texture->flags().testFlag(Texture::Custom)? "addon" : "game",
+#ifdef __CLIENT__
+                !texture? 0 : texture->variantCount(),
+#endif
+                resourceUri.constData());
 }
 
 /**
  * @todo This logic should be implemented in de::PathTree -ds
  */
-static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme,
+static QList<TextureManifest *> collectTextureManifests(TextureScheme *scheme,
     Path const &path, QList<TextureManifest *> *storage = 0)
 {
     int count = 0;
@@ -463,7 +471,7 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
     if(scheme)
     {
         // Only consider textures in this scheme.
-        PathTreeIterator<Textures::Scheme::Index> iter(scheme->index().leafNodes());
+        PathTreeIterator<TextureScheme::Index> iter(scheme->index().leafNodes());
         while(iter.hasNext())
         {
             TextureManifest &manifest = iter.next();
@@ -486,9 +494,9 @@ static QList<TextureManifest *> collectTextureManifests(Textures::Scheme *scheme
     else
     {
         // Consider textures in any scheme.
-        foreach(Textures::Scheme *scheme, App_Textures().allSchemes())
+        foreach(TextureScheme *scheme, App_Textures().allSchemes())
         {
-            PathTreeIterator<Textures::Scheme::Index> iter(scheme->index().leafNodes());
+            PathTreeIterator<TextureScheme::Index> iter(scheme->index().leafNodes());
             while(iter.hasNext())
             {
                 TextureManifest &manifest = iter.next();
@@ -552,7 +560,7 @@ static bool compareTextureManifestPathsAssending(TextureManifest const *a,
  * @param like      Texture path search term.
  * @param flags     @ref printTextureFlags
  */
-static int printTextures2(Textures::Scheme *scheme, Path const &like, int flags)
+static int printTextures2(TextureScheme *scheme, Path const &like, int flags)
 {
     QList<TextureManifest *> found = collectTextureManifests(scheme, like);
     if(found.isEmpty()) return 0;
@@ -573,8 +581,13 @@ static int printTextures2(Textures::Scheme *scheme, Path const &like, int flags)
     // Print the result index key.
     int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
 
+#ifdef __CLIENT__
     Con_Printf(" %*s: %-*s origin n# uri\n", numFoundDigits, "idx",
                printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
+#else
+    Con_Printf(" %*s: %-*s origin uri\n", numFoundDigits, "idx",
+               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
+#endif
     Con_PrintRuler();
 
     // Sort and print the index.

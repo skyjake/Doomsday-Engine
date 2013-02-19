@@ -69,6 +69,7 @@ int loadInStartupMode = false;
 byte precacheSkins = true;
 byte precacheMapMaterials = true;
 byte precacheSprites = true;
+byte texGammaLut[256];
 
 fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
@@ -102,6 +103,20 @@ void R_Register()
 #endif
 
     Materials::consoleRegister();
+}
+
+void R_BuildTexGammaLut()
+{
+#ifdef __SERVER__
+    double invGamma = 1.0f;
+#else
+    double invGamma = 1.0f - MINMAX_OF(0, texGamma, 1); // Clamp to a sane range.
+#endif
+
+    for(int i = 0; i < 256; ++i)
+    {
+        texGammaLut[i] = byte(255.0f * pow(double(i / 255.0f), invGamma));
+    }
 }
 
 #ifdef __CLIENT__
@@ -1347,10 +1362,6 @@ DENG_EXTERN_C void Rend_CacheForMobjType(int num)
 
 void Rend_CacheForMap()
 {
-#ifdef __SERVER__
-    return;
-#endif
-
     // Don't precache when playing a demo (why not? -ds).
     if(playback) return;
 

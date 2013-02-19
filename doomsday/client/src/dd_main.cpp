@@ -2130,7 +2130,9 @@ static int DD_StartupWorker(void* /*parm*/)
     Con_ParseCommands("startup.cfg");
     Con_SetProgress(90);
 
+#ifdef __CLIENT__
     GL_EarlyInitTextureManager();
+#endif
 
     Con_Message("Initializing Texture subsystem...\n");
     DENG_ASSERT(!textures);
@@ -2222,10 +2224,10 @@ typedef struct {
     boolean initiatedBusyMode;
 } ddupdateenginestateworker_paramaters_t;
 
-static int DD_UpdateEngineStateWorker(void* parameters)
+static int DD_UpdateEngineStateWorker(void *parameters)
 {
     DENG_ASSERT(parameters);
-    ddupdateenginestateworker_paramaters_t* p = (ddupdateenginestateworker_paramaters_t*) parameters;
+    ddupdateenginestateworker_paramaters_t *p = (ddupdateenginestateworker_paramaters_t *) parameters;
 
 #ifdef __CLIENT__
     if(!novideo)
@@ -2291,7 +2293,7 @@ void DD_UpdateEngineState(void)
      * The bulk of this we can do in busy mode unless we are already busy
      * (which can happen during a runtime game change).
      */
-    { ddupdateenginestateworker_paramaters_t p;
+    ddupdateenginestateworker_paramaters_t p;
     p.initiatedBusyMode = !BusyMode_Active();
     if(p.initiatedBusyMode)
     {
@@ -2304,13 +2306,14 @@ void DD_UpdateEngineState(void)
         /// @todo Update the current task name and push progress.
         DD_UpdateEngineStateWorker(&p);
     }
-    }
 
     if(App_GameLoaded() && gx.UpdateState)
         gx.UpdateState(DD_POST);
 
-    // Reset the material animations.
+#ifdef __CLIENT__
+    // Reset material animations.
     App_Materials().resetAllAnims();
+#endif
 }
 
 /* *INDENT-OFF* */
@@ -2325,8 +2328,13 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #endif
     {&consolePlayer, &consolePlayer},
     {&displayPlayer, 0 /*&displayPlayer*/}, // use R_SetViewPortPlayer() instead
+#ifdef __CLIENT__
     {&mipmapping, 0},
     {&filterUI, 0},
+#else
+    {0, 0},
+    {0, 0},
+#endif
 #ifdef __CLIENT__
     {&defResX, &defResX},
     {&defResY, &defResY},
@@ -2361,18 +2369,23 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
 #endif
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
+#ifdef __CLIENT__
     {&monochrome, &monochrome},
+#else
+    {0, 0},
+#endif
     {&gameDataFormat, &gameDataFormat},
 #ifdef __CLIENT__
     {&gameDrawHUD, 0},
 #else
     {0, 0},
 #endif
-    {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches},
 #ifdef __CLIENT__
+    {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches},
     {&symbolicEchoMode, &symbolicEchoMode},
     {&numTexUnits, 0}
 #else
+    {0, 0},
     {0, 0},
     {0, 0},
 #endif

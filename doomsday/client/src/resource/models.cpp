@@ -43,8 +43,9 @@
 
 #include "def_main.h"
 
-#include "MaterialSnapshot"
-
+#ifdef __CLIENT__
+#  include "MaterialSnapshot"
+#endif
 #include "render/r_things.h"
 #include "render/rend_model.h"
 #include "render/sprite.h"

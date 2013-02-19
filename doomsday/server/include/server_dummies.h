@@ -42,7 +42,6 @@ DENG_EXTERN_C void Con_TransitionRegister();
 DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);
 
 DENG_EXTERN_C void GL_Shutdown();
-DENG_EXTERN_C void GL_EarlyInitTextureManager();
 
 DENG_EXTERN_C void R_RenderPlayerView(int num);
 DENG_EXTERN_C void R_SetBorderGfx(Uri const *const *paths);
@@ -62,7 +61,7 @@ DENG_EXTERN_C void Fonts_ClearRuntime(void);
 
 DENG_EXTERN_C void Rend_Init(void);
 DENG_EXTERN_C void Rend_DecorInit();
-DENG_EXTERN_C void Rend_CacheForMap();
+//DENG_EXTERN_C void Rend_CacheForMap();
 DENG_EXTERN_C void Rend_CacheForMobjType(int num);
 DENG_EXTERN_C void Rend_CalcLightModRange();
 DENG_EXTERN_C void Rend_ConsoleInit();

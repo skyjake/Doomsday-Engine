@@ -20,6 +20,10 @@
 #ifndef LIBDENG_RESOURCE_MATERIALSNAPSHOT_H
 #define LIBDENG_RESOURCE_MATERIALSNAPSHOT_H
 
+#ifndef __CLIENT__
+#  error "resource/materialsnapshot.h only exists in the Client"
+#endif
+
 // Material texture unit idents:
 enum {
     MTU_PRIMARY,
@@ -31,9 +35,7 @@ enum {
 
 #include "Material"
 #include "Texture"
-#ifdef __CLIENT__
-#  include "render/rendpoly.h"
-#endif
+#include "render/rendpoly.h"
 #include <de/Error>
 #include <de/Vector>
 #include <QSize>
@@ -48,7 +50,6 @@ namespace de {
 class MaterialSnapshot
 {
 public:
-#ifdef __CLIENT__
     /// Interpolated (light) decoration properties.
     struct Decoration
     {
@@ -62,16 +63,13 @@ public:
         DGLuint tex, ceilTex, floorTex;
         DGLuint flareTex;
     };
-#endif
 
 public:
     /// The referenced (texture) unit does not exist. @ingroup errors
     DENG2_ERROR(UnknownUnitError);
 
-#ifdef __CLIENT__
     /// The referenced decoration does not exist. @ingroup errors
     DENG2_ERROR(UnknownDecorationError);
-#endif
 
 public:
     /**
@@ -123,9 +121,8 @@ public:
      * @param index  Index of the texture to lookup.
      * @return  The texture associated with the logical material texture unit.
      */
-    Texture::Variant &texture(int index) const;
+    TextureVariant &texture(int index) const;
 
-#ifdef __CLIENT__
     /**
      * Lookup a material snapshot prepared texture unit by id.
      *
@@ -141,7 +138,6 @@ public:
      * @return  The associated decoration data.
      */
     Decoration &decoration(int index) const;
-#endif
 
     /**
      * Prepare all textures and update property values.

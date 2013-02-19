@@ -21,18 +21,17 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_audio.h" // For environmental audio properties.
-
+#ifdef __CLIENT__
+#  include "gl/gl_texmanager.h" // GL_TextureVariantSpecificationForContext
+#  include "MaterialSnapshot"
+#endif
+#include "r_util.h" // R_NameForBlendMode
 #include <de/Error>
 #include <de/Log>
 #include <de/PathTree>
 #include <de/memory.h>
 #include <de/math.h>
-
 #include <QtAlgorithms>
-
-#include "gl/gl_texmanager.h" // GL_TextureVariantSpecificationForContext
-#include "r_util.h" // R_NameForBlendMode
-#include "MaterialSnapshot"
 
 #include "Materials"
 
@@ -281,7 +280,9 @@ Materials::Materials() : d(new Instance(*this))
 
 Materials::~Materials()
 {
+#ifdef __CLIENT__
     purgeCacheQueue();
+#endif
     delete d;
 }
 
@@ -326,17 +327,16 @@ Materials::Schemes const& Materials::allSchemes() const
     return d->schemes;
 }
 
+#ifdef __CLIENT__
+
 void Materials::purgeCacheQueue()
 {
-#ifdef __CLIENT__
     qDeleteAll(d->variantCacheQueue);
     d->variantCacheQueue.clear();
-#endif
 }
 
 void Materials::processCacheQueue()
 {
-#ifdef __CLIENT__
     while(!d->variantCacheQueue.isEmpty())
     {
          QScopedPointer<VariantCacheTask> task(d->variantCacheQueue.takeFirst());
@@ -344,8 +344,9 @@ void Materials::processCacheQueue()
          /// @todo $revise-texture-animation: prepare all textures in the animation (if animated).
          task->material->prepare(*task->spec);
     }
-#endif
 }
+
+#endif // __CLIENT__
 
 Materials::Manifest &Materials::toManifest(materialid_t id) const
 {
@@ -579,10 +580,11 @@ Material *Materials::newFromDef(ded_material_t &def)
     return material;
 }
 
+#ifdef __CLIENT__
+
 void Materials::cache(Material &material, MaterialVariantSpec const &spec,
     bool cacheGroups)
 {
-#ifdef __CLIENT__
     // Already in the queue?
     DENG2_FOR_EACH_CONST(VariantCacheQueue, i, d->variantCacheQueue)
     {
@@ -610,12 +612,8 @@ void Materials::cache(Material &material, MaterialVariantSpec const &spec,
             cache(manifest->material(), spec, false /* do not cache groups */);
         }
     }
-#else
-    DENG2_UNUSED3(material, spec, cacheGroups);
-#endif
 }
 
-#ifdef __CLIENT__
 MaterialVariantSpec const &Materials::variantSpecForContext(
     materialcontext_t mc, int flags, byte border, int tClass, int tMap,
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
@@ -625,7 +623,8 @@ MaterialVariantSpec const &Materials::variantSpecForContext(
                                        minFilter, magFilter, anisoFilter,
                                        mipmapped, gammaCorrection, noStretch, toAlpha);
 }
-#endif
+
+#endif // __CLIENT__
 
 Materials::ManifestGroup &Materials::createGroup()
 {
@@ -663,6 +662,7 @@ Materials::All const &Materials::all() const
     return d->materials;
 }
 
+#ifdef __CLIENT__
 static void printVariantInfo(MaterialVariant &variant, int variantIdx)
 {
     Con_Printf("Variant #%i: Spec:%p\n", variantIdx, de::dintptr(&variant.spec()));
@@ -697,6 +697,7 @@ static void printVariantInfo(MaterialVariant &variant, int variantIdx)
         Con_Printf("  Decoration #%i: Stage:%i Tics:%i\n", i, l.stage, int(l.tics));
     }
 }
+#endif
 
 static void printMaterialInfo(Material &material)
 {
@@ -706,9 +707,15 @@ static void printMaterialInfo(Material &material)
     QByteArray sourceDescription = material.manifest().sourceDescription().toUtf8();
 
     // Print summary:
+#ifdef __CLIENT__
     Con_Printf("Material \"%s\" [%p] x%u source:%s\n",
                path.constData(), (void *) &material, material.variantCount(),
                sourceDescription.constData());
+#else
+    Con_Printf("Material \"%s\" [%p] source:%s\n",
+               path.constData(), (void *) &material,
+               sourceDescription.constData());
+#endif
 
     if(material.width() <= 0 || material.height() <= 0)
         Con_Printf("Dimensions:unknown (not yet prepared)\n");
@@ -823,6 +830,7 @@ static void printMaterialInfo(Material &material)
         }
     }
 
+#ifdef __CLIENT__
     if(!material.variantCount()) return;
 
     Con_PrintRuler();
@@ -834,6 +842,7 @@ static void printMaterialInfo(Material &material)
         printVariantInfo(*variant, variantIdx);
         ++variantIdx;
     }
+#endif
 }
 
 static void printMaterialSummary(Materials::Manifest &manifest, bool printSchemeName = true)
@@ -843,9 +852,17 @@ static void printMaterialSummary(Materials::Manifest &manifest, bool printScheme
     QByteArray sourceDescription = manifest.sourceDescription().toUtf8();
 
     Con_FPrintf(!manifest.hasMaterial()? CPF_LIGHT : CPF_WHITE,
-                "%-*s %-6s x%u\n", printSchemeName? 22 : 14, path.constData(),
-                sourceDescription.constData(),
-                !manifest.hasMaterial()? 0 : manifest.material().variantCount());
+#ifdef __CLIENT__
+                "%-*s %-6s x%u\n",
+#else
+                "%-*s %-6s\n",
+#endif
+                printSchemeName? 22 : 14, path.constData(),
+                sourceDescription.constData()
+#ifdef __CLIENT__
+                , !manifest.hasMaterial()? 0 : manifest.material().variantCount()
+#endif
+                );
 }
 
 /**
@@ -968,8 +985,13 @@ static int printMaterials2(Materials::Scheme *scheme, Path const &like, int flag
     // Print the result index key.
     int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
 
+#ifdef __CLIENT__
     Con_Printf(" %*s: %-*s source n#\n", numFoundDigits, "idx",
                printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
+#else
+    Con_Printf(" %*s: %-*s source\n", numFoundDigits, "idx",
+               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
+#endif
     Con_PrintRuler();
 
     // Sort and print the index.

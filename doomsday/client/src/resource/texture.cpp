@@ -22,7 +22,9 @@
 #include <cstring>
 
 #include "de_base.h"
-#include "gl/gl_texmanager.h"
+#ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
+#endif
 #include "resource/compositetexture.h"
 #include <de/Error>
 #include <de/Log>
@@ -30,9 +32,16 @@
 
 #include "Texture"
 
-typedef QMap<de::Texture::AnalysisId, void *> Analyses;
+using namespace de;
 
-namespace de {
+typedef QMap<Texture::AnalysisId, void *> Analyses;
+
+char const *TexSource_Name(TexSource source)
+{
+    if(source == TEXS_ORIGINAL) return "original";
+    if(source == TEXS_EXTERNAL) return "external";
+    return "none";
+}
 
 DENG2_PIMPL(Texture)
 {
@@ -41,8 +50,10 @@ DENG2_PIMPL(Texture)
 
     Texture::Flags flags;
 
-    /// List of variants (e.g., color translations).
+#ifdef __CLIENT__
+    /// Set of (render-) context variants.
     Texture::Variants variants;
+#endif
 
     /// User data associated with this texture.
     void *userData;
@@ -63,7 +74,9 @@ DENG2_PIMPL(Texture)
     ~Instance()
     {
         self.clearAnalyses();
+#ifdef __CLIENT__
         self.clearVariants();
+#endif
     }
 };
 
@@ -106,11 +119,6 @@ void *Texture::userDataPointer() const
     return d->userData;
 }
 
-uint Texture::variantCount() const
-{
-    return uint(d->variants.count());
-}
-
 QSize const &Texture::dimensions() const
 {
     return d->dimensions;
@@ -141,6 +149,13 @@ void Texture::setOrigin(QPoint const &newOrigin)
     d->origin = newOrigin;
 }
 
+#ifdef __CLIENT__
+
+uint Texture::variantCount() const
+{
+    return uint(d->variants.count());
+}
+
 Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
     texturevariantspecification_t const &spec, bool canCreate)
 {
@@ -166,7 +181,7 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
             break;
         }
     }
-#if _DEBUG
+# if _DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
     // As such, the following should NOT return a valid variant iff the rest of
     // this subsystem has been implemented correctly.
@@ -176,7 +191,7 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
     {
         DENG_ASSERT(!chooseVariant(FuzzyMatchSpec, spec));
     }
-#endif
+# endif
 
     if(!canCreate) return 0;
 
@@ -194,7 +209,7 @@ void Texture::clearVariants()
     while(!d->variants.isEmpty())
     {
         Texture::Variant *variant = d->variants.takeFirst();
-#if defined(__CLIENT__) && defined(_DEBUG)
+# ifdef _DEBUG
         if(variant->glName())
         {
             LOG_AS("Texture::clearVariants")
@@ -203,10 +218,12 @@ void Texture::clearVariants()
 
             GL_PrintTextureVariantSpecification(variant->spec());
         }
-#endif
+# endif
         delete variant;
     }
 }
+
+#endif // __CLIENT__
 
 void Texture::clearAnalyses()
 {
@@ -257,5 +274,3 @@ void Texture::setFlags(Texture::Flags flagsToChange, bool set)
         d->flags &= ~flagsToChange;
     }
 }
-
-} // namespace de

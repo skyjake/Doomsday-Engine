@@ -31,9 +31,8 @@
 #  include "gl/gl_tex.h"
 #  include "gl/gl_model.h"
 #  include "gl/gl_defer.h"
+#  include "gl/gl_texmanager.h"
 #endif
-
-#include "gl/gl_texmanager.h"
 
 #include "resource/pcx.h"
 #include "resource/tga.h"

@@ -38,8 +38,10 @@ enum audioenvironmentclass_e;
 namespace de {
 
 class MaterialManifest;
+#ifdef __CLIENT__
 class MaterialSnapshot;
 struct MaterialVariantSpec;
+#endif
 
 class Texture;
 
@@ -56,8 +58,10 @@ class Material : public de::MapElement
 
     /// Internal typedefs for brevity/cleanliness.
     typedef de::MaterialManifest Manifest;
+#ifdef __CLIENT__
     typedef de::MaterialSnapshot Snapshot;
     typedef de::MaterialVariantSpec VariantSpec;
+#endif
 
 public:
     /// Maximum number of layers a material supports.
@@ -339,6 +343,8 @@ public:
     /// A list of decorations.
     typedef QList<Decoration *> Decorations;
 
+#ifdef __CLIENT__
+
     /**
      * Context-specialized variant. Encapsulates all context variant values
      * and logics pertaining to a specialized version of the @em superior
@@ -437,6 +443,11 @@ public:
         Snapshot const &prepare(bool forceSnapshotUpdate = false);
 
         /**
+         * Returns the MaterialSnapshot data for the variant.
+         */
+        Snapshot &snapshot() const;
+
+        /**
          * Reset the staged animation point for the material. The animation
          * states of all layers and decorations will be rewound to the beginning.
          */
@@ -470,11 +481,6 @@ public:
          */
         DecorationState const &decoration(int decorNum) const;
 
-        /**
-         * Returns the MaterialSnapshot data for the variant.
-         */
-        Snapshot &snapshot() const;
-
         friend class Material;
         friend struct Material::Instance;
 
@@ -485,6 +491,8 @@ public:
 
     /// A list of variant instances.
     typedef QList<Variant *> Variants;
+
+#endif // __CLIENT__
 
 public:
     /**
@@ -535,6 +543,8 @@ public:
      */
     void ticker(timespan_t time);
 
+#ifdef __CLIENT__
+
     /**
      * Choose/create a variant of the material which fulfills @a spec and then
      * immediately prepare it for render (e.g., upload textures if necessary).
@@ -558,6 +568,8 @@ public:
     {
         return chooseVariant(spec, true /*can-create*/)->prepare(forceSnapshotUpdate);
     }
+
+#endif // __CLIENT__
 
     /// Returns @c true if the material has at least one animated layer.
     bool isAnimated() const;
@@ -679,23 +691,25 @@ public:
      */
     Decorations const &decorations() const;
 
+#ifdef __CLIENT__
+
     /**
-     * Returns the number of material variants.
+     * Returns the number of context variants for the material.
      */
     inline int variantCount() const { return variants().count(); }
 
     /**
-     * Destroys all derived variants for the material.
+     * Destroys all derived context variants for the material.
      */
     void clearVariants();
 
     /**
-     * Provides access to the list of variant instances for efficient traversal.
+     * Provides access to the list of context variants for efficient traversal.
      */
     Variants const &variants() const;
 
     /**
-     * Choose/create a variant of the material which fulfills @a spec.
+     * Choose/create a context variant of the material which fulfills @a spec.
      *
      * @param spec      Specification for the derivation of @a material.
      * @param canCreate @c true= Create a new variant if no suitable one exists.
@@ -703,6 +717,8 @@ public:
      * @return  The chosen variant; otherwise @c 0 (if none suitable, when not creating).
      */
     Variant *chooseVariant(VariantSpec const &spec, bool canCreate = false);
+
+#endif // __CLIENT__
 
     /**
      * Get a property value, selected by DMU_* name.
@@ -726,7 +742,10 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)
 
+// Aliases.
 typedef Material::Decoration MaterialDecoration;
+#ifdef __CLIENT__
 typedef Material::Variant MaterialVariant;
+#endif
 
 #endif /* LIBDENG_RESOURCE_MATERIAL_H */

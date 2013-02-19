@@ -34,15 +34,16 @@
 #include "de_system.h"
 
 #include "network/net_main.h"
-#include "MaterialSnapshot"
-#include "MaterialVariantSpec"
+#ifdef __CLIENT__
+#  include "MaterialSnapshot"
+#  include "MaterialVariantSpec"
+#endif
 #include "Texture"
 #include "map/blockmapvisual.h"
 #include "render/sprite.h"
+#include "gl/sys_opengl.h"
 
 using namespace de;
-
-#include "gl/sys_opengl.h"
 
 // Surface (tangent-space) Vector Flags.
 #define SVF_TANGENT             0x01

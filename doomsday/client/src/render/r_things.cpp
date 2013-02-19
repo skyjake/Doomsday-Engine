@@ -37,9 +37,12 @@
 #include "gl/sys_opengl.h" // TODO: get rid of this
 
 #include "def_main.h"
-#include "MaterialSnapshot"
-
+#ifdef __CLIENT__
+#  include "MaterialSnapshot"
+#endif
 #include <de/memoryblockset.h>
+
+#include "render/r_things.h"
 
 using namespace de;
 

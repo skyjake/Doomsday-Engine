@@ -19,8 +19,10 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "gl/gl_texmanager.h"
-
+#include "render/r_main.h"
+#ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
+#endif
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
@@ -351,9 +353,9 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
         ColorPalette_Color(palette, colorIdx, rgb);
         if(applyTexGamma)
         {
-            rgb[CR] = gammaTable[rgb[CR]];
-            rgb[CG] = gammaTable[rgb[CG]];
-            rgb[CB] = gammaTable[rgb[CB]];
+            rgb[CR] = texGammaLut[rgb[CR]];
+            rgb[CG] = texGammaLut[rgb[CG]];
+            rgb[CB] = texGammaLut[rgb[CB]];
         }
         return;
     }
@@ -383,9 +385,9 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
         ColorPalette_Color(palette, colorIdx, ubv);
         if(applyTexGamma)
         {
-            ubv[CR] = gammaTable[ubv[CR]];
-            ubv[CG] = gammaTable[ubv[CG]];
-            ubv[CB] = gammaTable[ubv[CB]];
+            ubv[CR] = texGammaLut[ubv[CR]];
+            ubv[CG] = texGammaLut[ubv[CG]];
+            ubv[CB] = texGammaLut[ubv[CB]];
         }
         rgb[CR] = ubv[CR] * reciprocal255;
         rgb[CG] = ubv[CG] * reciprocal255;

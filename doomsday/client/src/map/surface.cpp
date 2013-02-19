@@ -21,13 +21,10 @@
 #include "de_base.h"
 #include "de_play.h"
 #include "de_defs.h"
-
+#include "Materials"
 #include <de/LegacyCore>
 #include <de/Log>
 #include <de/String>
-
-#include "MaterialVariantSpec"
-#include "Materials"
 
 using namespace de;
 

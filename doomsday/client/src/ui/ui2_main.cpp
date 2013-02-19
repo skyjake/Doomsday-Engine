@@ -33,7 +33,9 @@
 #include <de/memoryzone.h>
 #include <cstring> // memcpy, memmove
 
-#include "MaterialSnapshot"
+#ifdef __CLIENT__
+#  include "MaterialSnapshot"
+#endif
 
 using namespace de;
 

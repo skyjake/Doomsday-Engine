@@ -18,9 +18,7 @@
  */
 
 #include "de_base.h"
-#ifdef __CLIENT__
-#  include "de_network.h" // playback / clientPaused
-#endif
+#include "de_network.h" // playback / clientPaused
 #include "map/r_world.h" // R_UpdateMapSurfacesOnMaterialChange
 #include "render/r_main.h" // frameCount, frameTimePos
 #include "MaterialSnapshot"
@@ -67,7 +65,9 @@ DENG2_PIMPL(Material::Variant)
 
     Instance(Public &a, Material &generalCase, Material::VariantSpec const &_spec)
         : Base(a), material(&generalCase),
-          spec(_spec), snapshot(0), snapshotPrepareFrame(-1)
+          spec(_spec),
+          snapshot(0),
+          snapshotPrepareFrame(-1)
     {}
 
     ~Instance()
@@ -193,7 +193,6 @@ Material::VariantSpec const &Material::Variant::spec() const
 
 bool Material::Variant::isPaused() const
 {
-#ifdef __CLIENT__
     // Depending on the usage context, the animation should only progress
     // when the game is not paused.
     return (clientPaused && (d->spec.context == MC_MAPSURFACE ||
@@ -201,10 +200,6 @@ bool Material::Variant::isPaused() const
                              d->spec.context == MC_MODELSKIN  ||
                              d->spec.context == MC_PSPRITE    ||
                              d->spec.context == MC_SKYSPHERE));
-#else
-    // On server side animation is never paused.
-    return false;
-#endif
 }
 
 Material::Snapshot &Material::Variant::snapshot() const

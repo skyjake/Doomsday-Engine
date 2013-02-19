@@ -1111,8 +1111,10 @@ static void interpretMaterialDef(ded_material_t &def)
         // Update existing.
         Material &material = App_Materials().find(*reinterpret_cast<de::Uri *>(def.uri)).material();
 
+#ifdef __CLIENT__
         /// @todo We should be able to rebuild the variants.
         material.clearVariants();
+#endif
 
         updateMaterialFromDef(material, def);
     }

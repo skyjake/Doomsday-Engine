@@ -20,7 +20,6 @@
 #include "server_dummies.h"
 #include "ui/nativeui.h"
 #include "ui/finaleinterpreter.h"
-#include "TextureVariantSpec"
 #include "Texture"
 
 /*
@@ -71,9 +70,6 @@ void Con_TransitionTicker(timespan_t t)
 }
 
 void GL_Shutdown()
-{}
-
-void GL_EarlyInitTextureManager()
 {}
 
 void FR_Init(void)
@@ -437,9 +433,6 @@ void Rend_Init(void)
 {}
 
 void Rend_DecorInit()
-{}
-
-void Rend_CacheForMap()
 {}
 
 void Rend_CacheForMobjType(int num)

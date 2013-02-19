@@ -180,10 +180,10 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
         // Make sure that the next frame doesn't use a filtered viewer.
         R_ResetViewer();
 
+#ifdef __CLIENT__
         // Material animations should begin from their first step.
         App_Materials().resetAllAnims();
 
-#ifdef __CLIENT__
         R_InitObjlinkBlockmapForMap();
 
         LO_InitForMap(); // Lumobj management.

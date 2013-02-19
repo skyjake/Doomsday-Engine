@@ -20,6 +20,10 @@
 #ifndef LIBDENG_RESOURCE_MATERIALVARIANTSPEC_H
 #define LIBDENG_RESOURCE_MATERIALVARIANTSPEC_H
 
+#ifndef __CLIENT__
+#  error "resource/materialvariantspec.h only exists in the Client"
+#endif
+
 #include "def_data.h"
 #include "Texture" // TextureVariantSpec
 

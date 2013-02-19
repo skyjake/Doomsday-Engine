@@ -180,7 +180,6 @@ DENG_HEADERS += \
     $$SRC/include/filesys/sys_direc.h \
     $$SRC/include/filetype.h \
     $$SRC/include/game.h \
-    $$SRC/include/gl/gl_texmanager.h \
     $$SRC/include/gridmap.h \
     $$SRC/include/library.h \
     $$SRC/include/m_decomp64.h \
@@ -251,8 +250,6 @@ DENG_HEADERS += \
     $$SRC/include/resource/materialmanifest.h \
     $$SRC/include/resource/materials.h \
     $$SRC/include/resource/materialscheme.h \
-    $$SRC/include/resource/materialsnapshot.h \
-    $$SRC/include/resource/materialvariantspec.h \
     $$SRC/include/resource/patch.h \
     $$SRC/include/resource/patchname.h \
     $$SRC/include/resource/pcx.h \
@@ -262,7 +259,6 @@ DENG_HEADERS += \
     $$SRC/include/resource/texturemanifest.h \
     $$SRC/include/resource/textures.h \
     $$SRC/include/resource/texturescheme.h \
-    $$SRC/include/resource/texturevariantspec.h \
     $$SRC/include/resource/tga.h \
     $$SRC/include/resource/wad.h \
     $$SRC/include/resource/zip.h \
@@ -367,7 +363,6 @@ SOURCES += \
     $$SRC/src/filesys/searchpath.cpp \
     $$SRC/src/filesys/sys_direc.cpp \
     $$SRC/src/game.cpp \
-    $$SRC/src/gl/gl_texmanager.cpp \
     $$SRC/src/gridmap.cpp \
     $$SRC/src/library.cpp \
     $$SRC/src/m_decomp64.cpp \
@@ -432,8 +427,6 @@ SOURCES += \
     $$SRC/src/resource/materialmanifest.cpp \
     $$SRC/src/resource/materials.cpp \
     $$SRC/src/resource/materialscheme.cpp \
-    $$SRC/src/resource/materialsnapshot.cpp \
-    $$SRC/src/resource/materialvariant.cpp \
     $$SRC/src/resource/patch.cpp \
     $$SRC/src/resource/patchname.cpp \
     $$SRC/src/resource/pcx.cpp \
@@ -443,7 +436,6 @@ SOURCES += \
     $$SRC/src/resource/texturemanifest.cpp \
     $$SRC/src/resource/texturescheme.cpp \
     $$SRC/src/resource/textures.cpp \
-    $$SRC/src/resource/texturevariant.cpp \
     $$SRC/src/resource/tga.cpp \
     $$SRC/src/resource/wad.cpp \
     $$SRC/src/resource/zip.cpp \

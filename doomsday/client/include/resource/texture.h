@@ -21,12 +21,25 @@
 #ifndef LIBDENG_RESOURCE_TEXTURE_H
 #define LIBDENG_RESOURCE_TEXTURE_H
 
-#include "TextureVariantSpec"
+#ifdef __CLIENT__
+#  include "TextureVariantSpec"
+#endif
 #include <de/Error>
 #include <QFlag>
 #include <QList>
 #include <QPoint>
 #include <QSize>
+
+/**
+ * Texture (content) Source.
+ */
+typedef enum {
+    TEXS_NONE,                    /// Not a valid source.
+    TEXS_ORIGINAL,                /// An "original".
+    TEXS_EXTERNAL                 /// An "external" replacement.
+} TexSource;
+
+char const *TexSource_Name(TexSource source);
 
 namespace de {
 
@@ -87,6 +100,8 @@ public:
         /// Average bottom line color.
         AverageBottomColorAnalysis
     };
+
+#ifdef __CLIENT__
 
     /**
      * Context-specialized variant. Encapsulates all context variant values
@@ -150,13 +165,11 @@ public:
         /// Returns @c true if the variant is flagged as "masked".
         inline bool isMasked() const { return flags().testFlag(Masked); }
 
-#ifdef __CLIENT__
         /// Returns @c true if the variant is flagged as "uploaded".
         inline bool isUploaded() const { return flags().testFlag(Uploaded); }
 
         /// Returns @c true if the variant is "prepared".
         inline bool isPrepared() const { return isUploaded() && glName() != 0; }
-#endif
 
         /**
          * Returns the flags for the variant.
@@ -171,7 +184,6 @@ public:
          */
         void setFlags(Flags flagsToChange, bool set = true);
 
-#ifdef __CLIENT__
         /**
          * Returns the GL-name of the uploaded texture content for the variant;
          * otherwise @c 0 (not uploaded).
@@ -185,7 +197,6 @@ public:
          * @param newGLName  New GL-name. Can be @c 0.
          */
         void setGLName(uint newGLName);
-#endif
 
         friend class Texture;
         friend struct Texture::Instance;
@@ -213,6 +224,8 @@ public:
         /// we can avoid creating a new variant.
         FuzzyMatchSpec
     };
+
+#endif // __CLIENT__
 
 public:
     /**
@@ -283,6 +296,8 @@ public:
      */
     void setFlags(Flags flagsToChange, bool set = true);
 
+#ifdef __CLIENT__
+
     /**
      * Destroys all derived variants for the texture.
      */
@@ -309,6 +324,8 @@ public:
      * Returns the number of variants for the texture.
      */
     uint variantCount() const;
+
+#endif // __CLIENT__
 
     /**
      * Destroys all analyses for the texture.
@@ -356,7 +373,10 @@ private:
     Instance *d;
 };
 
+#ifdef __CLIENT__
+// Alias.
 typedef Texture::Variant TextureVariant;
+#endif
 
 } // namespace de
 

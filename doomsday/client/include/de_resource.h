@@ -36,11 +36,11 @@
 
 #ifdef __CLIENT__
 #  include "resource/bitmapfont.h"
+#  include "resource/materialsnapshot.h"
+#  include "resource/materialvariantspec.h"
 #endif
 
 #ifdef __cplusplus
-#  include "resource/materialvariantspec.h"
-#  include "resource/materialsnapshot.h"
 #  include "resource/patch.h"
 #  include "resource/texturemanifest.h"
 #  include "resource/wad.h"

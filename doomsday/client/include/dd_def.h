@@ -108,7 +108,6 @@ extern "C" {
 //enum { VX, VY, VZ };               // Vertex indices.
 enum { CR, CG, CB, CA };           // Color indices.
 
-extern byte     gammaTable[256];
 extern float    texGamma;
 
 // tab_tables.c

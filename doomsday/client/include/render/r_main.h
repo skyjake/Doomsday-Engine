@@ -75,6 +75,8 @@ DENG_EXTERN_C fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
 DENG_EXTERN_C fixed_t  fineTangent[FINEANGLES / 2];
 
+DENG_EXTERN_C byte     texGammaLut[256];
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -83,6 +85,8 @@ extern "C" {
  * Register console variables.
  */
 void R_Register(void);
+
+void R_BuildTexGammaLut(void);
 
 /**
  * One-time initialization of the refresh daemon. Called by DD_Main.

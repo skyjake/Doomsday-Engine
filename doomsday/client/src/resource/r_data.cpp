@@ -42,7 +42,9 @@
 #  include "render/r_draw.h"
 #endif
 #include "gl/gl_tex.h"
-#include "gl/gl_texmanager.h"
+#ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
+#endif
 #include "uri.hh"
 
 using namespace de;
@@ -195,9 +197,11 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
 
+#ifdef __CLIENT__
     // Take a copy of the current texture filter state.
     if(monochrome)               flags |= Texture::Monochrome;
     if(upscaleAndSharpenPatches) flags |= Texture::UpscaleAndSharpen;
+#endif
 
     QSize dimensions(0, 0);
     QPoint origin(0, 0);

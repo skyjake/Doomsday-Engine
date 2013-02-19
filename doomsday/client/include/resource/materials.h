@@ -24,7 +24,9 @@
 #include "Material"
 #include "MaterialManifest"
 #include "MaterialScheme"
-#include "MaterialVariantSpec"
+#ifdef __CLIENT__
+#  include "MaterialVariantSpec"
+#endif
 #include "def_data.h"
 #include "uri.hh"
 #include <de/Error>
@@ -307,6 +309,8 @@ public:
      */
     All const &all() const;
 
+#ifdef __CLIENT__
+
     /**
      * Reset all material instance animations back to their initial state.
      *
@@ -321,23 +325,6 @@ public:
         }
     }
 
-    /**
-     * Add a variant of @a material to the cache queue for deferred preparation.
-     *
-     * @param material      Base material from which to derive a context variant.
-     * @param spec          Specification for the derivation of @a material.
-     * @param cacheGroups   @c true= variants for all materials in any applicable
-     *                      groups are desired; otherwise just specified material.
-     */
-    void cache(Material &material, VariantSpec const &spec, bool cacheGroups = true);
-
-    /// Process all outstanding tasks in the cache queue.
-    void processCacheQueue();
-
-    /// Empty the Material cache queue, cancelling all outstanding tasks.
-    void purgeCacheQueue();
-
-#ifdef __CLIENT__
     /**
      * Prepare a material variant specification in accordance to the specified
      * usage context. If incomplete context information is supplied, suitable
@@ -364,7 +351,24 @@ public:
         int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
         int minFilter, int magFilter, int anisoFilter,
         bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha);
-#endif
+
+    /**
+     * Add a variant of @a material to the cache queue for deferred preparation.
+     *
+     * @param material      Base material from which to derive a context variant.
+     * @param spec          Specification for the derivation of @a material.
+     * @param cacheGroups   @c true= variants for all materials in any applicable
+     *                      groups are desired; otherwise just specified material.
+     */
+    void cache(Material &material, VariantSpec const &spec, bool cacheGroups = true);
+
+    /// Process all outstanding tasks in the cache queue.
+    void processCacheQueue();
+
+    /// Empty the Material cache queue, cancelling all outstanding tasks.
+    void purgeCacheQueue();
+
+#endif // __CLIENT__
 
 private:
     struct Instance;

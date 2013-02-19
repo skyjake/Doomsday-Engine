@@ -20,18 +20,11 @@
 #ifndef LIBDENG_RESOURCE_TEXTUREVARIANTSPEC_H
 #define LIBDENG_RESOURCE_TEXTUREVARIANTSPEC_H
 
+#ifndef __CLIENT__
+#  error "resource/texturevariantspec.h only exists in the Client"
+#endif
+
 #include "dd_types.h"
-
-/**
- * Texture (content) Source.
- */
-typedef enum {
-    TEXS_NONE,                    /// Not a valid source.
-    TEXS_ORIGINAL,                /// An "original".
-    TEXS_EXTERNAL                 /// An "external" replacement.
-} TexSource;
-
-char const *TexSource_Name(TexSource source);
 
 typedef enum {
     TC_UNKNOWN = -1,

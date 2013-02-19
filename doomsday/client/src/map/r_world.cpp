@@ -33,8 +33,10 @@
 #include "de_misc.h"
 
 #include "map/plane.h"
-#include "MaterialSnapshot"
-#include "MaterialVariantSpec"
+#ifdef __CLIENT__
+#  include "MaterialSnapshot"
+#  include "MaterialVariantSpec"
+#endif
 
 #include <de/Observers>
 
@@ -1073,7 +1075,9 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         // A new map is about to be setup.
         ddMapSetup = true;
 
+#ifdef __CLIENT__
         App_Materials().purgeCacheQueue();
+#endif
         return;
 
     case DDSMM_AFTER_LOADING:
@@ -1115,10 +1119,12 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         R_MapInitSurfaces(true);
         R_MapInitSurfaceLists();
 
+#ifdef __CLIENT__
         float startTime = Timer_Seconds();
         Rend_CacheForMap();
         App_Materials().processCacheQueue();
         VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Timer_Seconds() - startTime) )
+#endif
 
         S_SetupForChangedMap();
 

@@ -246,8 +246,10 @@ DENG2_PIMPL(Material)
     /// Manifest derived to yield the material.
     MaterialManifest &manifest;
 
+#ifdef __CLIENT__
     /// Set of use-case/context variant instances.
     Material::Variants variants;
+#endif
 
     /// Environment audio class.
     AudioEnvironmentClass envClass;
@@ -280,11 +282,14 @@ DENG2_PIMPL(Material)
 
     ~Instance()
     {
+#ifdef __CLIENT__
         clearVariants();
+#endif
         clearDecorations();
         clearLayers();
     }
 
+#ifdef __CLIENT__
     void clearVariants()
     {
         while(!variants.isEmpty())
@@ -293,6 +298,7 @@ DENG2_PIMPL(Material)
         }
         variants.clear();
     }
+#endif // __CLIENT__
 
     void clearLayers()
     {
@@ -365,10 +371,12 @@ MaterialManifest &Material::manifest() const
 
 void Material::ticker(timespan_t time)
 {
+#ifdef __CLIENT__
     foreach(Variant *variant, d->variants)
     {
         variant->ticker(time);
     }
+#endif
 }
 
 QSize const &Material::dimensions() const
@@ -497,6 +505,8 @@ Material::Decorations const &Material::decorations() const
     return d->decorations;
 }
 
+#ifdef __CLIENT__
+
 Material::Variants const &Material::variants() const
 {
     return d->variants;
@@ -524,6 +534,8 @@ void Material::clearVariants()
 {
     d->clearVariants();
 }
+
+#endif // __CLIENT__
 
 int Material::property(setargs_t &args) const
 {
