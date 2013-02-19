@@ -26,14 +26,13 @@
 
 #include "dd_share.h"
 
-#ifdef __cplusplus
-
 #include <QObject>
 #include <QNetworkReply>
 #include <QByteArray>
 
 /**
  * Network request worker for communicating with the master server.
+ * @ingroup network
  */
 class MasterWorker : public QObject
 {
@@ -70,12 +69,6 @@ private:
     Instance* d;
 };
 
-#endif // __cplusplus
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Called while initializing the low-level network subsystem.
  */
@@ -110,10 +103,6 @@ void N_MasterRequestList(void);
  * the requested server.
  */
 int N_MasterGet(int index, serverinfo_t *info);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 extern char *masterAddress;
 extern int   masterPort;
