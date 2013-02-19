@@ -948,22 +948,19 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
     }
 }
 
-static DGLuint prepareFlaremap(de::Uri const *resourceUri)
+static DGLuint prepareFlaremap(de::Uri const &resourceUri)
 {
-    if(resourceUri->path().length() == 1)
+    if(resourceUri.path().length() == 1)
     {
-        QChar first = resourceUri->path().toStringRef().first();
-        if(first == '-') return 0; // automatic
-
         // Select a system flare by numeric identifier?
-        int number = first.digitValue();
+        int number = resourceUri.path().toStringRef().first().digitValue();
         if(number == 0) return 0; // automatic
         if(number >= 1 && number <= 4)
         {
             return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
         }
     }
-    if(Texture *tex = R_FindTextureByResourceUri("Flaremaps", resourceUri))
+    if(Texture *tex = R_FindTextureByResourceUri("Flaremaps", &resourceUri))
     {
         if(TextureVariant const *variant = GL_PrepareTexture(*tex, *Rend_HaloTextureSpec()))
         {
@@ -1360,16 +1357,17 @@ void R_ProjectSprite(mobj_t *mo)
         vis->data.flare.xOff = xOffset;
         vis->data.flare.mul = 1;
 
-        if(def)
+        vis->data.flare.tex = 0;
+        if(def && def->flare)
         {
-            if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
+            de::Uri const &flaremapResourceUri = *reinterpret_cast<de::Uri const *>(def->flare);
+            if(flaremapResourceUri.path().toStringRef().compareWithoutCase("-"))
             {
-                vis->data.flare.tex = prepareFlaremap(reinterpret_cast<de::Uri const *>(def->flare));
+                vis->data.flare.tex = prepareFlaremap(flaremapResourceUri);
             }
             else
             {
                 vis->data.flare.flags |= RFF_NO_PRIMARY;
-                vis->data.flare.tex = 0;
             }
         }
     }
@@ -1378,15 +1376,15 @@ void R_ProjectSprite(mobj_t *mo)
 #endif // __CLIENT__
 
 typedef struct {
-    BspLeaf* bspLeaf;
+    BspLeaf *bspLeaf;
 } addspriteparams_t;
 
-int RIT_AddSprite(void* ptr, void* paramaters)
+int RIT_AddSprite(void *ptr, void *parameters)
 {
-    mobj_t* mo = (mobj_t*) ptr;
-    addspriteparams_t* params = (addspriteparams_t*)paramaters;
-    Sector* sec = params->bspLeaf->sector;
-    GameMap* map = theMap; /// @todo Do not assume mobj is from the CURRENT map.
+    mobj_t *mo = (mobj_t*) ptr;
+    addspriteparams_t* params = (addspriteparams_t*)parameters;
+    Sector *sec = params->bspLeaf->sector;
+    GameMap *map = theMap; /// @todo Do not assume mobj is from the CURRENT map.
 
     if(mo->addFrameCount != frameCount)
     {
