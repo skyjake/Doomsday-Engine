@@ -30,6 +30,7 @@
 
 #include <de/memory.h>
 #include <de/c_wrapper.h>
+#include <de/ByteRefArray>
 
 #define MSG_MUTEX_NAME  "MsgQueueMutex"
 
@@ -203,7 +204,12 @@ void N_ReleaseMessage(netmessage_t *msg)
 {
     if(msg->handle)
     {
+#ifdef __CLIENT__
         LegacyNetwork_FreeBuffer((unsigned char *)msg->handle);
+#endif
+#ifdef __SERVER__
+        delete [] reinterpret_cast<byte *>(msg->handle);
+#endif
         msg->handle = 0;
     }
     M_Free(msg);
@@ -278,7 +284,13 @@ void N_SendPacket(int flags)
     // This is what will be sent.
     numOutBytes += netBuffer.headerLength + netBuffer.length;
 
+#ifdef __CLIENT__
     Protocol_Send(&netBuffer.msg, netBuffer.headerLength + netBuffer.length, dest);
+#endif
+#ifdef __SERVER__
+    App_ServerSystem().user(dest)
+            << de::ByteRefArray(&netBuffer.msg, netBuffer.headerLength + netBuffer.length);
+#endif
 }
 
 void N_AddSentBytes(size_t bytes)

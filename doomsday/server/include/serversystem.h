@@ -21,7 +21,12 @@
 
 #include <de/libdeng2.h>
 #include <de/System>
-#include "dd_types.h" // nodeid_t
+#include <de/Id>
+#include <de/Error>
+#include "remoteuser.h"
+#include "dd_types.h"
+
+#include <QObject>
 
 /**
  * Subsystem for tending to clients.
@@ -37,8 +42,14 @@
  * - Silent sockets that hang around too long will be automatically
  *   terminated if haven't joined the game.
  */
-class ServerSystem : public de::System
-{
+class ServerSystem : public QObject, public de::System
+{   
+    Q_OBJECT
+
+public:
+    /// An error related to identifiers (e.g., invalid ID specified). @ingroup errors
+    DENG2_ERROR(IdError);
+
 public:
     ServerSystem();
 
@@ -59,16 +70,17 @@ public:
      * The client is removed from the game immediately. This is used when the
      * server needs to terminate a client's connection abnormally.
      */
-    void terminateNode(nodeid_t id);
+    void terminateNode(de::Id const &id);
+
+    RemoteUser &user(de::Id const &id) const;
 
     /**
-     * Returns the player name associated with the given network node.
+     * A network node wishes to become a real client.
+     * @return @c true if we allow this.
      */
-    de::String nodeName(nodeid_t node) const;
+    bool isUserAllowedToJoin(RemoteUser &user) const;
 
-    int nodeLegacySocket(nodeid_t node) const;
-
-    bool hasNodeJoined(nodeid_t node) const;
+    void convertToShellUser(RemoteUser *user);
 
     /**
      * Prints the status of the server into the log.
@@ -76,6 +88,10 @@ public:
     void printStatus();
 
     void timeChanged(de::Clock const &);
+
+protected slots:
+    void handleIncomingConnection();
+    void userDestroyed(QObject *);
 
 private:
     DENG2_PRIVATE(d)
@@ -86,8 +102,6 @@ ServerSystem &App_ServerSystem();
 void    Server_Register(); // old-fashioned cvars
 boolean N_ServerOpen(void);
 boolean N_ServerClose(void);
-int     N_GetNodeSocket(nodeid_t id);
-boolean N_HasNodeJoined(nodeid_t id);
 void    N_PrintNetworkStatus(void);
 
 extern int nptIPPort; // cvar

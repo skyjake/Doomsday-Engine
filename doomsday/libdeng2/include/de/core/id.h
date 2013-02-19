@@ -74,8 +74,10 @@ public:
 
     operator Value::Number () const;
 
-    /// Converts the Id to a text string.
+    /// Converts the Id to a text string, using the format "{id}".
     String asText() const;
+
+    ddouble asNumber() const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -86,6 +88,7 @@ public:
 
 private:
     Type _id;
+
     static Type _generator;
 };
 

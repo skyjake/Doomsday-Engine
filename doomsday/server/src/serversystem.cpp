@@ -18,6 +18,7 @@
 
 #include "serversystem.h"
 #include "shellusers.h"
+#include "remoteuser.h"
 #include "server/sv_def.h"
 #include "network/net_main.h"
 #include "network/net_buf.h"
@@ -27,25 +28,18 @@
 #include "map/gamemap.h"
 #include "map/p_players.h"
 
+#include <de/Address>
 #include <de/Beacon>
+#include <de/ListenSocket>
 #include <de/ByteRefArray>
 #include <de/c_wrapper.h>
 #include <de/LegacyCore>
-#include <de/LegacyNetwork>
-
-#include <QCryptographicHash>
 
 using namespace de;
 
 /// @todo Get rid of these:
 
-#define MAX_NODES                   32
-
-typedef struct ipaddress_s {
-    char host[256];
-    unsigned short port;
-} ipaddress_t;
-
+#if 0
 /**
  * On serverside, each client has its own network node. A node
  * represents the TCP connection between the client and the server. On
@@ -67,6 +61,7 @@ typedef struct netnode_s {
 
     expectedresponder_t expectedResponder;
 } netnode_t;
+#endif
 
 int nptIPPort = 0; ///< Server TCP port (cvar).
 
@@ -81,24 +76,17 @@ DENG2_PIMPL(ServerSystem)
 {
     /// Beacon for informing clients that a server is present.
     Beacon beacon;
-
-    ShellUsers shellUsers;
-
-    int serverSock;
-    int sockSet;
-    int joinedSockSet;
-    netnode_t netNodes[MAX_NODES];
-
     Time lastBeaconUpdateAt;
+
+    ListenSocket *serverSock;
+
+    QMap<Id, RemoteUser *> users;
+    ShellUsers shellUsers;
 
     Instance(Public *i) : Base(i),
         beacon(DEFAULT_UDP_PORT),
-        serverSock(0),
-        sockSet(0),
-        joinedSockSet(0)
-    {
-        memset(netNodes, 0, sizeof(netNodes));
-    }
+        serverSock(0)
+    {}
 
     ~Instance()
     {
@@ -117,308 +105,41 @@ DENG2_PIMPL(ServerSystem)
         deinit();
 
         // Open a listening TCP socket. It will accept client connections.
-        if(!(serverSock = LegacyNetwork_OpenServerSocket(port)))
+        if(!(serverSock = new ListenSocket(port)))
             return false;
 
-        // Allocate socket sets, which we'll use for listening to the
-        // client sockets.
-        sockSet = LegacyNetwork_NewSocketSet();
-        joinedSockSet = LegacyNetwork_NewSocketSet();
+        QObject::connect(serverSock, SIGNAL(incomingConnection()), thisPublic, SLOT(handleIncomingConnection()));
 
         // Update the beacon with the new port.
         beacon.start(port);
         return true;
     }
 
+    void clearUsers()
+    {
+        // Clear the client nodes.
+        foreach(RemoteUser *u, users.values())
+        {
+            delete u;
+        }
+        DENG2_ASSERT(users.isEmpty());
+    }
+
     void deinit()
     {
         beacon.stop();
 
-        if(serverSock)
-        {
-            // Close the listening socket.
-            LegacyNetwork_Close(serverSock);
-            serverSock = 0;
-        }
+        // Close the listening socket.
+        delete serverSock;
+        serverSock = 0;
 
-        // Clear the client nodes.
-        for(int i = 1; i < MAX_NODES; ++i)
-            terminateNode(i);
-
-        // Free the socket set.
-        LegacyNetwork_DeleteSocketSet(sockSet);
-        LegacyNetwork_DeleteSocketSet(joinedSockSet);
-        sockSet = 0;
-        joinedSockSet = 0;
+        clearUsers();
     }
 
-    /**
-     * Registers a new TCP socket as a client node. There can only be a limited
-     * number of nodes at a time. This is only used by a server.
-     */
-    bool registerNewSocket(int sock)
+    RemoteUser &findUser(Id const &id) const
     {
-        uint        i;
-        netnode_t  *node;
-
-        // Find a free node.
-        for(i = 1, node = netNodes + 1; i < MAX_NODES; ++i, node++)
-        {
-            if(!node->sock)
-            {
-                // This'll do.
-                node->sock = sock;
-
-                // We don't know the name yet.
-                memset(node->name, 0, sizeof(node->name));
-
-                // Add this socket to the set of client sockets.
-                LegacyNetwork_SocketSet_Add(sockSet, sock);
-
-                // The address where we should be sending data.
-                LegacyNetwork_GetPeerAddress(sock, node->addr.host, sizeof(node->addr.host), &node->addr.port);
-
-                node->isFromLocalHost = LegacyNetwork_IsLocal(sock);
-
-                LOG_VERBOSE("Socket #%i from %s registered as node %i (local:%b)")
-                        << sock << node->addr.host << i << node->isFromLocalHost;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * A network node wishes to become a real client. @return @c true if we allow
-     * this.
-     */
-    bool joinNode(nodeid_t id, int clientProtocol, const char *name)
-    {
-        netnode_t *node;
-        netevent_t netEvent;
-
-        if(clientProtocol != SV_VERSION)
-            return false; // Incompatible.
-
-        // If the server is full, attempts to connect are canceled.
-        if(Sv_GetNumConnected() >= svMaxPlayers)
-            return false;
-
-        node = &netNodes[id];
-
-        // Convert the network node into a real client node.
-        node->hasJoined = true;
-
-        // Move it to the joined socket set.
-        LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
-        LegacyNetwork_SocketSet_Add(joinedSockSet, node->sock);
-
-        /// @todo We should use more discretion with the name. It has
-        /// been provided by an untrusted source.
-        strncpy(node->name, name, sizeof(node->name) - 1);
-
-        // Inform the higher levels of this occurence.
-        netEvent.type = NE_CLIENT_ENTRY;
-        netEvent.id = id;
-        N_NEPost(&netEvent);
-
-        return true;
-    }
-
-    void switchNodeToShellMode(nodeid_t node)
-    {
-        Socket *socket = de::LegacyCore::instance().network()
-                .takeSocket(netNodes[node].sock);
-
-        // The socket is no longer maintained by the legacy network.
-        memset(&netNodes[node], 0, sizeof(netnode_t));
-
-        shellUsers.add(new ShellUser(socket));
-    }
-
-    /**
-     * Validate and process the command, which has been sent by a remote agent.
-     *
-     * If the command is invalid, the node is immediately closed. We don't have
-     * time to fool around with badly behaving clients.
-     */
-    bool handleNodeRequest(nodeid_t node, const char *command, int length)
-    {
-        LOG_AS("handleNodeRequest");
-
-        int sock = netNodes[node].sock;
-        serverinfo_t info;
-        ddstring_t msg;
-
-        // If the command is too long, it'll be considered invalid.
-        if(length >= 256)
-        {
-            terminateNode(node);
-            return false;
-        }
-
-        // Status query?
-        if(length == 5 && !strncmp(command, "Info?", 5))
-        {
-            Sv_GetInfo(&info);
-            Str_Init(&msg);
-            Str_Appendf(&msg, "Info\n");
-            Sv_InfoToString(&info, &msg);
-
-            LOG_DEBUG("Info reply:\n%s") << Str_Text(&msg);
-
-            LegacyNetwork_Send(sock, Str_Text(&msg), Str_Length(&msg));
-            Str_Free(&msg);
-        }
-        else if(length >= 5 && !strncmp(command, "Shell", 5))
-        {
-            if(length == 5)
-            {
-                // Password is not required for connections from the local computer.
-                if(strlen(netPassword) > 0 && !netNodes[node].isFromLocalHost)
-                {
-                    // Need to ask for a password, too.
-                    LegacyNetwork_Send(sock, "Psw?", 4);
-                    return true;
-                }
-            }
-            else if(length > 5)
-            {
-                // A password was included.
-                QByteArray supplied(command + 5, length - 5);
-                QByteArray pwd(netPassword, strlen(netPassword));
-                if(supplied != QCryptographicHash::hash(pwd, QCryptographicHash::Sha1))
-                {
-                    // Wrong!
-                    terminateNode(node);
-                    return false;
-                }
-            }
-
-            // This node will switch to shell mode: ownership of the socket is
-            // passed to a ShellUser.
-            switchNodeToShellMode(node);
-        }
-        else if(length >= 10 && !strncmp(command, "Join ", 5) && command[9] == ' ')
-        {
-            ddstring_t name;
-            int protocol = 0;
-            char protoStr[5];
-
-            strncpy(protoStr, command + 5, 4);
-            protocol = strtol(protoStr, 0, 16);
-
-            // Read the client's name and convert the network node into an actual
-            // client. Here we also decide if the client's protocol is compatible
-            // with ours.
-            Str_Init(&name);
-            Str_PartAppend(&name, command, 10, length - 10);
-            if(joinNode(node, protocol, Str_Text(&name)))
-            {
-                // Successful! Send a reply.
-                LegacyNetwork_Send(sock, "Enter", 5);
-            }
-            else
-            {
-                // Couldn't join the game, so close the connection.
-                LegacyNetwork_Send(sock, "Bye", 3);
-                terminateNode(node);
-            }
-            Str_Free(&name);
-        }
-        else
-        {
-            // Too bad, scoundrel! Goodbye.
-            LOG_WARNING("Received an invalid request from node %i.") << node;
-            terminateNode(node);
-            return false;
-        }
-
-        // Everything was OK.
-        return true;
-    }
-
-    void listenUnjoinedNodes(void)
-    {
-        /// @todo Refactor this to respond to incoming messages rather than polling.
-
-        int sock;
-
-        if(!serverSock) return;
-
-        // Any incoming connections on the listening socket?
-        while((sock = LegacyNetwork_Accept(serverSock)) != 0)
-        {
-            // A new client is attempting to connect. Let's try to
-            // register the new socket as a network node.
-            if(!registerNewSocket(sock))
-            {
-                // There was a failure, close the socket.
-                LegacyNetwork_Close(sock);
-            }
-        }
-
-        // Any activity on the client sockets? (Don't wait.)
-        while(LegacyNetwork_SocketSet_Activity(sockSet))
-        {
-            int i;
-            for(i = 0; i < MAX_NODES; ++i)
-            {
-                netnode_t* node = netNodes + i;
-                if(node->hasJoined || !node->sock) continue;
-
-                // Does this socket have incoming messages?
-                while(node->sock && LegacyNetwork_BytesReady(node->sock))
-                {
-                    int size = 0;
-                    byte* message = LegacyNetwork_Receive(node->sock, &size);
-                    handleNodeRequest(i, (const char*) message, size);
-                    LegacyNetwork_FreeBuffer(message);
-                }
-
-                if(node->sock && LegacyNetwork_IsDisconnected(node->sock))
-                {
-                    // Close this socket & node.
-                    LOG_INFO("Connection to client closed on node %i.") << i;
-                    terminateNode(i);
-                    continue;
-                }
-            }
-        }
-    }
-
-    void listenJoinedNodes(void)
-    {
-        /// @todo Refactor this to respond to incoming messages rather than polling.
-
-        if(!joinedSockSet) return;
-
-        // Any activity on the client sockets?
-        while(LegacyNetwork_SocketSet_Activity(joinedSockSet))
-        {
-            int i;
-            for(i = 0; i < MAX_NODES; ++i)
-            {
-                netnode_t* node = netNodes + i;
-
-                // Does this socket have got any activity?
-                if(node->hasJoined)
-                {
-                    if(LegacyNetwork_IsDisconnected(node->sock) ||
-                       (LegacyNetwork_BytesReady(node->sock) &&
-                        !Protocol_Receive(i)))
-                    {
-                        netevent_t nev;
-                        nev.type = NE_TERMINATE_NODE;
-                        nev.id = i;
-                        N_NEPost(&nev);
-                    }
-                }
-            }
-
-            // Should we go take care of the events?
-            if(N_NEPending()) break;
-        }
+        DENG2_ASSERT(users.contains(id));
+        return *users[id];
     }
 
     void updateBeacon(Clock const &clock)
@@ -445,35 +166,16 @@ DENG2_PIMPL(ServerSystem)
      * The client is removed from the game immediately. This is used when
      * the server needs to terminate a client's connection abnormally.
      */
-    void terminateNode(nodeid_t id)
+    void terminateNode(Id const &id)
     {
-        netnode_t *node = &netNodes[id];
-        netevent_t netEvent;
-
-        if(!node->sock)
-            return;  // There is nothing here...
-
-        if(node->hasJoined)
+        if(id)
         {
-            // Let the client know.
-            Msg_Begin(PSV_SERVER_CLOSE);
-            Msg_End();
-            Net_SendBuffer(N_IdentifyPlayer(id), 0);
+            DENG2_ASSERT(users.contains(id));
 
-            // This causes a network event.
-            netEvent.type = NE_CLIENT_EXIT;
-            netEvent.id = id;
-            N_NEPost(&netEvent);
+            delete users[id];
 
-            LegacyNetwork_SocketSet_Remove(joinedSockSet, node->sock);
+            DENG2_ASSERT(!users.contains(id));
         }
-
-        // Remove the node from the set of active sockets.
-        LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
-
-        // Close the socket and forget everything about the node.
-        LegacyNetwork_Close(node->sock);
-        memset(node, 0, sizeof(*node));
     }
 
     void printStatus()
@@ -483,9 +185,7 @@ DENG2_PIMPL(ServerSystem)
         Con_Message("SERVER: ");
         if(serverSock)
         {
-            char buf[80];
-            sprintf(buf, "%s:%i", netNodes[0].addr.host, netNodes[0].addr.port);
-            Con_Message("Open at %s.\n", buf);
+            Con_Message("Listening on TCP port %i.\n", serverSock->port());
         }
         else
         {
@@ -496,9 +196,10 @@ DENG2_PIMPL(ServerSystem)
         {
             client_t *cl = &clients[i];
             player_t *plr = &ddPlayers[i];
-            netnode_t* node = &netNodes[cl->nodeID];
             if(cl->nodeID)
             {
+                DENG2_ASSERT(users.contains(cl->nodeID));
+                RemoteUser *user = users[cl->nodeID];
                 if(first)
                 {
                     Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:\n");
@@ -506,7 +207,7 @@ DENG2_PIMPL(ServerSystem)
                 }
                 Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec\n",
                             i, cl->name, cl->nodeID,
-                            node->hasJoined? '*' : ' ',
+                            user->isJoined()? '*' : ' ',
                             cl->handshake? '*' : ' ',
                             cl->ready? '*' : ' ',
                             plr->shared.inGame? '*' : ' ',
@@ -559,47 +260,76 @@ bool ServerSystem::isListening() const
     return d->isStarted();
 }
 
-void ServerSystem::terminateNode(nodeid_t id)
+void ServerSystem::terminateNode(Id const &id)
 {
     d->terminateNode(id);
+}
+
+RemoteUser &ServerSystem::user(Id const &id) const
+{
+    if(!d->users.contains(id))
+    {
+        throw IdError("ServerSystem::user", "No user with identifier " + id.asText());
+    }
+    return *d->users[id];
+}
+
+bool ServerSystem::isUserAllowedToJoin(RemoteUser &/*user*/) const
+{
+    // If the server is full, attempts to connect are canceled.
+    if(Sv_GetNumConnected() >= svMaxPlayers)
+        return false;
+
+    return true;
+}
+
+void ServerSystem::convertToShellUser(RemoteUser *user)
+{
+    Socket *socket = user->takeSocket();
+    user->deleteLater();
+
+    d->shellUsers.add(new ShellUser(socket));
 }
 
 void ServerSystem::timeChanged(Clock const &clock)
 {
     d->updateBeacon(clock);
 
-    d->listenUnjoinedNodes();
-    d->listenJoinedNodes();
-
     Sv_GetPackets();
 
     /// @todo Kick unjoined nodes who are silent for too long.
 }
 
+void ServerSystem::handleIncomingConnection()
+{
+    LOG_AS("ServerSystem");
+    forever
+    {
+        Socket *sock = d->serverSock->accept();
+        if(!sock) break;
+
+        RemoteUser *user = new RemoteUser(sock);
+        connect(user, SIGNAL(destroyed(QObject*)), this, SLOT(userDestroyed(QObject*)));
+        d->users.insert(user->id(), user);
+
+        // Immediately handle pending messages, if there are any.
+        user->handleIncomingPackets();
+    }
+}
+
+void ServerSystem::userDestroyed(QObject *ob)
+{
+    RemoteUser *u = static_cast<RemoteUser *>(ob);
+
+    LOG_AS("ServerSystem");
+    LOG_VERBOSE("Removing user %s") << u->id();
+
+    d->users.remove(u->id());
+}
+
 void ServerSystem::printStatus()
 {
     d->printStatus();
-}
-
-String ServerSystem::nodeName(nodeid_t node) const
-{
-    if(!d->netNodes[node].sock)
-    {
-        return "-unknown-";
-    }
-    return d->netNodes[node].name;
-}
-
-int ServerSystem::nodeLegacySocket(nodeid_t node) const
-{
-    if(node >= MAX_NODES) return 0;
-    return d->netNodes[node].sock;
-}
-
-bool ServerSystem::hasNodeJoined(nodeid_t node) const
-{
-    if(node >= MAX_NODES) return 0;
-    return d->netNodes[node].hasJoined;
 }
 
 ServerSystem &App_ServerSystem()
@@ -671,19 +401,4 @@ boolean N_ServerClose(void)
 void N_PrintNetworkStatus(void)
 {
     serverSys->printStatus();
-}
-
-String N_GetNodeName(nodeid_t id)
-{
-    return serverSys->nodeName(id);
-}
-
-int N_GetNodeSocket(nodeid_t id)
-{
-    return serverSys->nodeLegacySocket(id);
-}
-
-boolean N_HasNodeJoined(nodeid_t id)
-{
-    return serverSys->hasNodeJoined(id);
 }

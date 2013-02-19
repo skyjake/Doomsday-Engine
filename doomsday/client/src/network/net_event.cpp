@@ -235,11 +235,8 @@ void N_Update(void)
         {
 #ifdef __SERVER__
         case NE_CLIENT_ENTRY: {
-            // Find out the name of the new player.
-            de::String name = App_ServerSystem().nodeName(nevent.id);
-
             // Assign a console to the new player.
-            Sv_PlayerArrives(nevent.id, name.toUtf8());
+            Sv_PlayerArrives(nevent.id, App_ServerSystem().user(nevent.id).name().toUtf8());
 
             // Update the master.
             masterHeartbeat = MASTER_UPDATETIME;
@@ -252,10 +249,10 @@ void N_Update(void)
             masterHeartbeat = MASTER_UPDATETIME;
             break;
 
-        case NE_TERMINATE_NODE:
+        /*case NE_TERMINATE_NODE:
             // The server receives this event when a client's connection is broken.
             App_ServerSystem().terminateNode(nevent.id);
-            break;
+            break;*/
 #endif // __SERVER__
 
 #ifdef __CLIENT__

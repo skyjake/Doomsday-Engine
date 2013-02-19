@@ -118,6 +118,7 @@ DENG_HEADERS += \
 
 # Private headers.
 DENG_HEADERS += \
+    include/remoteuser.h \
     include/server_dummies.h \
     include/shelluser.h \
     include/shellusers.h \
@@ -234,7 +235,6 @@ DENG_HEADERS += \
     $$SRC/include/network/net_event.h \
     $$SRC/include/network/net_main.h \
     $$SRC/include/network/net_msg.h \
-    $$SRC/include/network/protocol.h \
     $$SRC/include/r_util.h \
     $$SRC/include/render/r_main.h \
     $$SRC/include/render/r_things.h \
@@ -323,6 +323,7 @@ else:unix {
 # Platform-independent sources.
 SOURCES += \
     src/main_server.cpp \
+    src/remoteuser.cpp \
     src/server_dummies.cpp \
     src/shelluser.cpp \
     src/shellusers.cpp \
@@ -417,7 +418,6 @@ SOURCES += \
     $$SRC/src/network/net_main.cpp \
     $$SRC/src/network/net_msg.cpp \
     $$SRC/src/network/net_ping.cpp \
-    $$SRC/src/network/protocol.cpp \
     $$SRC/src/r_util.cpp \
     $$SRC/src/render/r_main.cpp \
     $$SRC/src/render/r_things.cpp \

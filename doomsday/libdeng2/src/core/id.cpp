@@ -31,7 +31,7 @@ Id::Id() : _id(_generator++)
 {
     if(_id == NONE) 
     {
-        ++_id;   
+        ++_id;
     }
 }
 
@@ -59,6 +59,11 @@ Id::operator Value::Number () const
 String Id::asText() const
 {
     return QString("{%1}").arg(_id);
+}
+
+ddouble Id::asNumber() const
+{
+    return _id;
 }
 
 QTextStream &de::operator << (QTextStream &os, Id const &id)
