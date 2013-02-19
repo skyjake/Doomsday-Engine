@@ -21,20 +21,31 @@
 
 #include <de/libdeng2.h>
 #include <de/System>
-#include "network/net_buf.h" // nodeid_t
+#include "dd_types.h" // nodeid_t
 
 /**
  * Subsystem for tending to clients.
  * @ingroup server
+ *
+ * @todo The entire concept of "nodes" should be retired along with
+ * LegacyNetwork. Instead:
+ * - Immediately after connecting to a server the socket is put into the
+ *   set of connected sockets.
+ * - Sockets may request upgrade to Shell user, in which case ownership
+ *   of the socket is given to a ShellUser instance.
+ * - Sockets may join the game, becoming clients.
+ * - Silent sockets that hang around too long will be automatically
+ *   terminated if haven't joined the game.
  */
 class ServerSystem : public de::System
 {
 public:
     ServerSystem();
+
     ~ServerSystem();
 
     /**
-     * Start listening for client connections.
+     * Start listening for incoming connections.
      *
      * @param port  TCP port to listen on.
      */
@@ -42,7 +53,7 @@ public:
 
     void stop();
 
-    bool isRunning() const;
+    bool isListening() const;
 
     /**
      * The client is removed from the game immediately. This is used when the
@@ -75,7 +86,6 @@ ServerSystem &App_ServerSystem();
 void    Server_Register(); // old-fashioned cvars
 boolean N_ServerOpen(void);
 boolean N_ServerClose(void);
-void    N_TerminateNode(nodeid_t id);
 int     N_GetNodeSocket(nodeid_t id);
 boolean N_HasNodeJoined(nodeid_t id);
 void    N_PrintNetworkStatus(void);

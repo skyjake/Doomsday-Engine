@@ -172,7 +172,7 @@ void N_NETicker(timespan_t time)
         masterHeartbeat -= time;
 
         // Update master every 2 minutes.
-        if(masterAware && App_ServerSystem().isRunning() && theMap && masterHeartbeat < 0)
+        if(masterAware && App_ServerSystem().isListening() && theMap && masterHeartbeat < 0)
         {
             masterHeartbeat = MASTER_HEARTBEAT;
             N_MasterAnnounceServer(true);
@@ -292,7 +292,7 @@ void N_TerminateClient(int console)
     Con_Message("N_TerminateClient: '%s' from console %i.\n",
                 clients[console].name, console);
 
-    N_TerminateNode(clients[console].nodeID);
+    App_ServerSystem().terminateNode(clients[console].nodeID);
 
     // Update the master.
     masterHeartbeat = MASTER_UPDATETIME;

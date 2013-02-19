@@ -20,6 +20,7 @@
 #include "shellusers.h"
 #include "server/sv_def.h"
 #include "network/net_main.h"
+#include "network/net_buf.h"
 #include "network/net_event.h"
 #include "network/monitor.h"
 #include "con_main.h"
@@ -55,7 +56,7 @@ typedef struct netnode_s {
     char name[256];
 
     /// The node is owned by a client in the game.  This becomes true
-    // when the client issues the JOIN request.
+    /// when the client issues the JOIN request.
     boolean hasJoined;
 
     /// This is the client's remote address.
@@ -212,8 +213,8 @@ DENG2_PIMPL(ServerSystem)
         LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
         LegacyNetwork_SocketSet_Add(joinedSockSet, node->sock);
 
-        // @todo We should use more discretion with the name. It has
-        // been provided by an untrusted source.
+        /// @todo We should use more discretion with the name. It has
+        /// been provided by an untrusted source.
         strncpy(node->name, name, sizeof(node->name) - 1);
 
         // Inform the higher levels of this occurence.
@@ -553,7 +554,7 @@ void ServerSystem::stop()
     d->deinit();
 }
 
-bool ServerSystem::isRunning() const
+bool ServerSystem::isListening() const
 {
     return d->isStarted();
 }
@@ -645,7 +646,7 @@ boolean N_ServerOpen(void)
 
 boolean N_ServerClose(void)
 {
-    if(!serverSys->isRunning()) return true;
+    if(!serverSys->isListening()) return true;
 
     if(masterAware)
     {
@@ -667,18 +668,9 @@ boolean N_ServerClose(void)
     return true;
 }
 
-/**
- * Called from "net info" (server-side).
- */
 void N_PrintNetworkStatus(void)
 {
     serverSys->printStatus();
-}
-
-/// @todo Get rid of this.
-void N_TerminateNode(nodeid_t id)
-{
-    serverSys->terminateNode(id);
 }
 
 String N_GetNodeName(nodeid_t id)
