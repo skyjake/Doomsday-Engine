@@ -83,21 +83,24 @@ void P_SetCurrentMap(GameMap* map)
     theMap = map;
 }
 
-DENG_EXTERN_C boolean P_MapExists(char const* uriCString)
+#undef P_MapExists
+DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
     return (lumpNum >= 0);
 }
 
-DENG_EXTERN_C boolean P_MapIsCustom(char const* uriCString)
+#undef P_MapIsCustom
+DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
     return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
 
-DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString)
+#undef P_MapSourceFile
+DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toAscii().constData(), true/*quiet please*/);
@@ -105,14 +108,15 @@ DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString)
     return W_LumpSourceFile(lumpNum);
 }
 
-DENG_EXTERN_C boolean P_LoadMap(char const* uriCString)
+#undef P_LoadMap
+DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 {
     if(!uriCString || !uriCString[0])
     {
         LegacyCore_FatalError("P_LoadMap: Invalid Uri argument.");
     }
 
-    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    de::Uri uri(uriCString, RC_NULL);
     LOG_MSG("Loading Map \"%s\"...") << uri;
 
     // It would be very cool if map loading happened in another
@@ -179,9 +183,9 @@ DENG_EXTERN_C boolean P_LoadMap(char const* uriCString)
         // Material animations should begin from their first step.
         App_Materials().resetAllAnims();
 
+#ifdef __CLIENT__
         R_InitObjlinkBlockmapForMap();
 
-#ifdef __CLIENT__
         LO_InitForMap(); // Lumobj management.
         R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.

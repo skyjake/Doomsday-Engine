@@ -243,14 +243,18 @@ void R_ProjectSprite(struct mobj_s *mobj);
  */
 void R_ProjectPlayerSprites(void);
 
-void R_SortVisSprites(void);
+/// To be called at the start of the current render frame to clear the vissprite list.
+void R_ClearVisSprites(void);
 
 vissprite_t *R_NewVisSprite(void);
 
+#ifdef __CLIENT__
+
 void R_AddSprites(BspLeaf *bspLeaf);
 
-/// To be called at the start of the current render frame to clear the vissprite list.
-void R_ClearVisSprites(void);
+void R_SortVisSprites(void);
+
+#endif // __CLIENT__
 
 void R_InitSprites(void);
 

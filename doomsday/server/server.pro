@@ -213,7 +213,6 @@ DENG_HEADERS += \
     $$SRC/include/map/p_maptypes.h \
     $$SRC/include/map/p_maputil.h \
     $$SRC/include/map/p_object.h \
-    $$SRC/include/map/p_objlink.h \
     $$SRC/include/map/p_particle.h \
     $$SRC/include/map/p_players.h \
     $$SRC/include/map/p_polyobjs.h \
@@ -393,7 +392,6 @@ SOURCES += \
     $$SRC/src/map/p_intercept.cpp \
     $$SRC/src/map/p_maputil.cpp \
     $$SRC/src/map/p_mobj.cpp \
-    $$SRC/src/map/p_objlink.cpp \
     $$SRC/src/map/p_particle.cpp \
     $$SRC/src/map/p_players.cpp \
     $$SRC/src/map/p_polyobjs.cpp \
