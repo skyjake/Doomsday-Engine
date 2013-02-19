@@ -17,18 +17,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <stdlib.h>
-#include <math.h>
-#include <ctype.h>
+#include <cstdlib>
+#include <cmath>
+#include <cctype>
 
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
-
 #include "color.h"
-#include "gl/gl_tex.h"
 #include "resource/colorpalettes.h"
 #include "resource/r_data.h"
+
+#include "gl/gl_tex.h"
 
 static uint8_t* scratchBuffer = NULL;
 static size_t scratchBufferSize = 0;
@@ -770,9 +770,9 @@ boolean GL_PalettizeImage(uint8_t* out, int outformat, const colorpalette_t* pal
             ColorPalette_Color(palette, *in, out);
             if(applyTexGamma)
             {
-                out[CR] = gammaTable[out[CR]];
-                out[CG] = gammaTable[out[CG]];
-                out[CB] = gammaTable[out[CB]];
+                out[CR] = texGammaLut[out[CR]];
+                out[CG] = texGammaLut[out[CG]];
+                out[CB] = texGammaLut[out[CB]];
             }
 
             if(outformat == 4)

@@ -55,7 +55,6 @@ int mipmapping = 5;
 int filterUI   = 1;
 int texQuality = TEXQ_BEST;
 int upscaleAndSharpenPatches = 0;
-byte gammaTable[256];
 
 #ifdef __CLIENT__
 
@@ -96,8 +95,6 @@ void GL_DoUpdateTexGamma();
 void GL_DoUpdateTexParams();
 
 static int hashDetailVariantSpecification(detailvariantspecification_t const &spec);
-
-static void calcGammaTable();
 
 static bool interpretPcx(de::FileHandle &hndl, String filePath, image_t &img);
 static bool interpretPng(de::FileHandle &hndl, String filePath, image_t &img);
@@ -1051,7 +1048,7 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant &tex, 
 void GL_EarlyInitTextureManager()
 {
     GL_InitSmartFilterHQ2x();
-    calcGammaTable();
+    R_BuildTexGammaLut();
 
     variantSpecs = NULL;
     memset(detailVariantSpecs, 0, sizeof(detailVariantSpecs));
@@ -1220,15 +1217,6 @@ void GL_ShutdownTextureManager()
 
     destroyVariantSpecifications();
     initedOk = false;
-}
-
-static void calcGammaTable()
-{
-    double invGamma = 1.0f - MINMAX_OF(0, texGamma, 1); // Clamp to a sane range.
-    for(int i = 0; i < 256; ++i)
-    {
-        gammaTable[i] = byte(255.0f * pow(double(i / 255.0f), invGamma));
-    }
 }
 
 void GL_LoadSystemTextures()
@@ -1827,9 +1815,9 @@ void GL_UploadTextureContent(texturecontent_t const &content)
 
             for(long i = 0; i < numPels; ++i)
             {
-                dst[CR] = gammaTable[src[CR]];
-                dst[CG] = gammaTable[src[CG]];
-                dst[CB] = gammaTable[src[CB]];
+                dst[CR] = texGammaLut[src[CR]];
+                dst[CG] = texGammaLut[src[CG]];
+                dst[CB] = texGammaLut[src[CB]];
                 if(comps == 4)
                     dst[CA] = src[CA];
 
@@ -2708,7 +2696,7 @@ void GL_DoUpdateTexGamma()
 {
     if(initedOk)
     {
-        calcGammaTable();
+        R_BuildTexGammaLut();
         GL_TexReset();
     }
 

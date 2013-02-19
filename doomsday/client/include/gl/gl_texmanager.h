@@ -27,13 +27,16 @@
 #ifndef LIBDENG_GL_TEXMANAGER_H
 #define LIBDENG_GL_TEXMANAGER_H
 
+#ifndef __CLIENT__
+#  error "GL Texture Manager only exists in the Client"
+#endif
+
 #ifndef __cplusplus
 #  error "gl/gl_texmanager.h requires C++"
 #endif
 
 #include "sys_opengl.h"
 
-//#include "filehandle.h"
 #include "gl/texturecontent.h"
 #include "resource/image.h"
 #include "resource/r_data.h" // For flaretexid_t, lightingtexid_t, etc...
@@ -64,7 +67,7 @@ void GL_TexRegister();
  * Called before real texture management is up and running, during engine
  * early init.
  */
-DENG_EXTERN_C void GL_EarlyInitTextureManager();
+void GL_EarlyInitTextureManager();
 
 void GL_InitTextureManager();
 
