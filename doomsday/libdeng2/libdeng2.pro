@@ -72,6 +72,7 @@ HEADERS += \
     include/de/Error \
     include/de/Event \
     include/de/FileLogSink \
+    include/de/Id \
     include/de/Library \
     include/de/Log \
     include/de/LogBuffer \
@@ -100,6 +101,7 @@ HEADERS += \
     include/de/core/debuglogsink.h \
     include/de/core/event.h \
     include/de/core/filelogsink.h \
+    include/de/core/id.h \
     include/de/core/library.h \
     include/de/core/log.h \
     include/de/core/logbuffer.h \
@@ -126,6 +128,7 @@ SOURCES += \
     src/core/config.cpp \
     src/core/debuglogsink.cpp \
     src/core/filelogsink.cpp \
+    src/core/id.cpp \
     src/core/library.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp \
