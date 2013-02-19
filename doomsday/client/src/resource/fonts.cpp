@@ -484,7 +484,9 @@ void Fonts_Clear(void)
     if(!Fonts_Size()) return;
 
     Fonts_ClearScheme(FS_ANY);
+#ifdef __CLIENT__
     GL_PruneTextureVariantSpecifications();
+#endif
 }
 
 void Fonts_ClearRuntime(void)
@@ -492,7 +494,9 @@ void Fonts_ClearRuntime(void)
     if(!Fonts_Size()) return;
 
     Fonts_ClearScheme(FS_GAME);
+#ifdef __CLIENT__
     GL_PruneTextureVariantSpecifications();
+#endif
 }
 
 void Fonts_ClearSystem(void)
@@ -500,7 +504,9 @@ void Fonts_ClearSystem(void)
     if(!Fonts_Size()) return;
 
     Fonts_ClearScheme(FS_SYSTEM);
+#ifdef __CLIENT__
     GL_PruneTextureVariantSpecifications();
+#endif
 }
 
 static int destroyFontAndRecordWorker(FontRepository::Node& node, void* /*parameters*/)

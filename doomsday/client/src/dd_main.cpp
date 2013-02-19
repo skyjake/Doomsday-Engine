@@ -575,7 +575,9 @@ void DD_ClearRuntimeTextureSchemes()
     textures.scheme("Lightmaps").clear();
     textures.scheme("Flaremaps").clear();
 
+#ifdef __CLIENT__
     GL_PruneTextureVariantSpecifications();
+#endif
 }
 
 void DD_ClearSystemTextureSchemes()
@@ -583,7 +585,10 @@ void DD_ClearSystemTextureSchemes()
     Textures &textures = App_Textures();
 
     textures.scheme("System").clear();
+
+#ifdef __CLIENT__
     GL_PruneTextureVariantSpecifications();
+#endif
 }
 
 Materials &App_Materials()
@@ -2377,6 +2382,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 /**
  * Get a 32-bit signed integer value.
  */
+#undef DD_GetInteger
 int DD_GetInteger(int ddvalue)
 {
     switch(ddvalue)
@@ -2393,26 +2399,24 @@ int DD_GetInteger(int ddvalue)
 
     case DD_CURRENT_CLIENT_FINALE_ID:
         return Cl_CurrentFinale();
-#endif
 
     case DD_DYNLIGHT_TEXTURE:
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);
+#endif
 
     case DD_NUMLUMPS:
         return F_LumpCount();
 
     case DD_MAP_MUSIC: {
-        GameMap* map = theMap;
-        if(map)
+        if(GameMap *map = theMap)
         {
-            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
-            if(mapInfo)
+            if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(GameMap_Uri(map)))
             {
                 return Def_GetMusicNum(mapInfo->music);
             }
         }
-        return -1;
-      }
+        return -1; }
+
     default: break;
     }
 
@@ -2426,6 +2430,7 @@ int DD_GetInteger(int ddvalue)
 /**
  * Set a 32-bit signed integer value.
  */
+#undef DD_SetInteger
 void DD_SetInteger(int ddvalue, int parm)
 {
     if(ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)

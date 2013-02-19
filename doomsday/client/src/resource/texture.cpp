@@ -72,7 +72,9 @@ Texture::Texture(TextureManifest &manifest) : d(new Instance(*this, manifest))
 
 Texture::~Texture()
 {
-    GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(this));
+#ifdef __CLIENT__
+    GL_ReleaseGLTexturesByTexture(*this);
+#endif
 
     if(!manifest().schemeName().compareWithoutCase("Textures"))
     {
@@ -192,14 +194,14 @@ void Texture::clearVariants()
     while(!d->variants.isEmpty())
     {
         Texture::Variant *variant = d->variants.takeFirst();
-#if _DEBUG
-        uint glName = variant->glName();
-        if(glName)
+#if defined(__CLIENT__) && defined(_DEBUG)
+        if(variant->glName())
         {
             LOG_AS("Texture::clearVariants")
             LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
-                << glName << d->manifest.composeUri() << de::dintptr(this);
-            GL_PrintTextureVariantSpecification(&variant->spec());
+                << variant->glName() << d->manifest.composeUri() << de::dintptr(this);
+
+            GL_PrintTextureVariantSpecification(variant->spec());
         }
 #endif
         delete variant;

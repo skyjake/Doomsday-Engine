@@ -32,6 +32,7 @@
 #include <de/mathutil.h>
 #include <de/binangle.h>
 
+#ifdef __CLIENT__
 static void calcNormal(const LineDef* l, byte side, pvec2f_t normal)
 {
     V2f_Set(normal, (l->L_vorigin(side^1)[VY] - l->L_vorigin(side)  [VY]) / l->length,
@@ -74,16 +75,17 @@ static boolean backClosedForBlendNeighbor(LineDef* lineDef, int side, boolean ig
     return R_MiddleMaterialCoversLineOpening(lineDef, side, ignoreOpacity);
 }
 
-static LineDef* findBlendNeighbor(LineDef* l, byte side, byte right,
-    binangle_t* diff)
+static LineDef *findBlendNeighbor(LineDef *l, byte side, byte right,
+    binangle_t *diff)
 {
-    const lineowner_t* farVertOwner = l->L_vo(right^side);
+    lineowner_t const *farVertOwner = l->L_vo(right^side);
     if(backClosedForBlendNeighbor(l, side, true/*ignore opacity*/))
     {
         return R_FindSolidLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);
     }
     return R_FindLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);
 }
+#endif // __CLIENT__
 
 #undef LineDef_PointDistance
 DENG_EXTERN_C coord_t LineDef_PointDistance(LineDef* line, coord_t const point[2], coord_t* offset)
@@ -255,16 +257,9 @@ void LineDef_UpdateAABox(LineDef* line)
     line->aaBox.maxY = MAX_OF(line->L_v2origin[VY], line->L_v1origin[VY]);
 }
 
-/**
- * @todo Now that we store surface tangent space normals use those rather than angles.
- */
-void LineDef_LightLevelDelta(LineDef* l, int side, float* deltaL, float* deltaR)
+void LineDef_LightLevelDelta(LineDef *l, int side, float* deltaL, float* deltaR)
 {
-    binangle_t diff;
-    LineDef* other;
-    vec2f_t normal;
-    float delta;
-
+#ifdef __CLIENT__
     // Disabled?
     if(!(rendLightWallAngle > 0))
     {
@@ -272,8 +267,9 @@ void LineDef_LightLevelDelta(LineDef* l, int side, float* deltaL, float* deltaR)
         return;
     }
 
+    vec2f_t normal;
     calcNormal(l, side, normal);
-    delta = lightLevelDelta(normal);
+    float delta = lightLevelDelta(normal);
 
     // If smoothing is disabled use this delta for left and right edges.
     // Must forcibly disable smoothing for polyobj linedefs as they have
@@ -288,8 +284,8 @@ void LineDef_LightLevelDelta(LineDef* l, int side, float* deltaL, float* deltaR)
     // lightlevel delta and then blend with this to produce the value for
     // the left edge. Blend iff the angle between the two linedefs is less
     // than 45 degrees.
-    diff = 0;
-    other = findBlendNeighbor(l, side, 0, &diff);
+    binangle_t diff = 0;
+    LineDef *other = findBlendNeighbor(l, side, 0, &diff);
     if(other && INRANGE_OF(diff, BANG_180, BANG_45))
     {
         vec2f_t otherNormal;
@@ -324,6 +320,12 @@ void LineDef_LightLevelDelta(LineDef* l, int side, float* deltaL, float* deltaR)
     {
         *deltaR = delta;
     }
+#else // !__CLIENT__
+    DENG2_UNUSED2(l, side);
+
+    if(deltaL) *deltaL = 0;
+    if(deltaR) *deltaR = 0;
+#endif
 }
 
 int LineDef_SetProperty(LineDef* lin, const setargs_t* args)

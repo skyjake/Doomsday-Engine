@@ -438,7 +438,7 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     {
         // We have no information to return.
         LOG_WARNING("Invalid sprite frame %i.") << frame;
-        memset(info, 0, sizeof(*info));
+        std::memset(info, 0, sizeof(*info));
         return false;
     }
     spriteframe_t *sprFrame = &sprDef->spriteFrames[frame];
@@ -446,33 +446,41 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     if(novideo)
     {
         // We can't prepare the material.
-        memset(info, 0, sizeof(*info));
+        std::memset(info, 0, sizeof(*info));
         info->numFrames = sprDef->numFrames;
         info->flip = sprFrame->flip[0];
         return true;
     }
 
-    Material *mat = sprFrame->mats[0];
+    info->material  = sprFrame->mats[0];
+    info->numFrames = sprDef->numFrames;
+    info->flip      = sprFrame->flip[0];
 
+#ifdef __CLIENT__
     /// @todo fixme: We should not be using the PSprite spec here. -ds
     MaterialVariantSpec const &spec =
             App_Materials().variantSpecForContext(MC_PSPRITE, 0, 1, 0, 0,
-                                                   GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
-                                                   false, true, true, false);
-    MaterialSnapshot const &ms = mat->prepare(spec);
+                                                  GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1,
+                                                  false, true, true, false);
+    MaterialSnapshot const &ms = info->material->prepare(spec);
 
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
-    variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
-    DENG_ASSERT(texSpec);
+    variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
 
-    info->numFrames = sprDef->numFrames;
-    info->material = mat;
-    info->flip = sprFrame->flip[0];
-    info->geometry.origin.x = -tex.origin().x() + -texSpec->border;
-    info->geometry.origin.y = -tex.origin().y() +  texSpec->border;
-    info->geometry.size.width  = ms.dimensions().width()  + texSpec->border*2;
-    info->geometry.size.height = ms.dimensions().height() + texSpec->border*2;
+    info->geometry.origin.x    = -tex.origin().x() + -texSpec.border;
+    info->geometry.origin.y    = -tex.origin().y() +  texSpec.border;
+    info->geometry.size.width  = ms.dimensions().width()  + texSpec.border * 2;
+    info->geometry.size.height = ms.dimensions().height() + texSpec.border * 2;
+
     ms.texture(MTU_PRIMARY).coords(&info->texCoord[0], &info->texCoord[1]);
+#else
+    Texture &tex = *info->material->layers()[0]->stages()[0]->texture;
+
+    info->geometry.origin.x    = -tex.origin().x();
+    info->geometry.origin.y    = -tex.origin().y();
+    info->geometry.size.width  = info->material->dimensions().width();
+    info->geometry.size.height = info->material->dimensions().height();
+#endif
 
     return true;
 }
@@ -1373,8 +1381,6 @@ void R_ProjectSprite(mobj_t *mo)
     }
 }
 
-#endif // __CLIENT__
-
 typedef struct {
     BspLeaf *bspLeaf;
 } addspriteparams_t;
@@ -1485,6 +1491,8 @@ void R_SortVisSprites()
     }
 }
 
+#endif // __CLIENT__
+
 coord_t R_GetBobOffset(mobj_t* mo)
 {
     if(mo->ddFlags & DDMF_BOB)
@@ -1493,4 +1501,3 @@ coord_t R_GetBobOffset(mobj_t* mo)
     }
     return 0;
 }
-

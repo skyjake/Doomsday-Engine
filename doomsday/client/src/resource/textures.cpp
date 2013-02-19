@@ -319,8 +319,10 @@ TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
 
     if(mustRelease && manifest->hasTexture())
     {
+#ifdef __CLIENT__
         /// @todo Update any Materials (and thus Surfaces) which reference this.
-        GL_ReleaseGLTexturesByTexture(reinterpret_cast<texture_s *>(&manifest->texture()));
+        GL_ReleaseGLTexturesByTexture(manifest->texture());
+#endif
     }
 
     return manifest;
@@ -392,19 +394,22 @@ int Textures::iterateDeclared(String nameOfScheme,
     return 0;
 }
 
-static void printVariantInfo(Texture::Variant &variant)
+#ifdef __CLIENT__
+static void printVariantInfo(TextureVariant &variant)
 {
     float s, t;
     variant.coords(&s, &t);
-    Con_Printf("  Source:%s Masked:%s Prepared:%s Uploaded:%s\n  Coords:(s:%g t:%g)\n",
+    Con_Printf("  Source:%s GLName:%u Masked:%s Prepared:%s Uploaded:%s\n  Coords:(s:%g t:%g)\n",
                TexSource_Name(variant.source()),
+               variant.glName(),
                variant.isMasked()  ? "yes":"no",
                variant.isPrepared()? "yes":"no",
                variant.isUploaded()? "yes":"no", s, t);
 
     Con_Printf("  Specification: ");
-    GL_PrintTextureVariantSpecification(&variant.spec());
+    GL_PrintTextureVariantSpecification(variant.spec());
 }
+#endif
 
 static void printTextureInfo(Texture &tex)
 {
@@ -420,14 +425,16 @@ static void printTextureInfo(Texture &tex)
     else
         Con_Printf("Dimensions: %d x %d\n", tex.width(), tex.height());
 
+#ifdef __CLIENT__
     uint variantIdx = 0;
-    foreach(Texture::Variant *variant, tex.variants())
+    foreach(TextureVariant *variant, tex.variants())
     {
-        Con_Printf("Variant #%i: GLName:%u\n", variantIdx, variant->glName());
+        Con_Printf("Variant #%i:\n", variantIdx);
         printVariantInfo(*variant);
 
         ++variantIdx;
     }
+#endif
 }
 
 static void printTextureSummary(TextureManifest &manifest, bool printSchemeName = true)

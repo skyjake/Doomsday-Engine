@@ -138,11 +138,13 @@ DENG2_PIMPL(Materials)
     Materials::Schemes schemes;
     QList<Materials::Scheme *> schemeCreationOrder;
 
+#ifdef __CLIENT__
     /// Material variant specifications.
     VariantSpecs variantSpecs;
 
     /// Queue of variant cache tasks.
     VariantCacheQueue variantCacheQueue;
+#endif
 
     /// All material instances in the system (from all schemes).
     Materials::All materials;
@@ -169,14 +171,19 @@ DENG2_PIMPL(Materials)
         clearGroups();
         clearManifests();
         clearMaterials();
+
+#ifdef __CLIENT__
         clearVariantSpecs();
+#endif
     }
 
+#ifdef __CLIENT__
     void clearVariantSpecs()
     {
         qDeleteAll(variantSpecs);
         variantSpecs.clear();
     }
+#endif
 
     void clearMaterials()
     {
@@ -205,6 +212,7 @@ DENG2_PIMPL(Materials)
         groups.clear();
     }
 
+#ifdef __CLIENT__
     Materials::VariantSpec *findVariantSpec(Materials::VariantSpec const &tpl,
                                             bool canCreate)
     {
@@ -250,6 +258,7 @@ DENG2_PIMPL(Materials)
         applyVariantSpec(tpl, mc, primarySpec);
         return *findVariantSpec(tpl, true);
     }
+#endif
 };
 
 void Materials::consoleRegister()
@@ -317,12 +326,15 @@ Materials::Schemes const& Materials::allSchemes() const
 
 void Materials::purgeCacheQueue()
 {
+#ifdef __CLIENT__
     qDeleteAll(d->variantCacheQueue);
     d->variantCacheQueue.clear();
+#endif
 }
 
 void Materials::processCacheQueue()
 {
+#ifdef __CLIENT__
     while(!d->variantCacheQueue.isEmpty())
     {
          QScopedPointer<VariantCacheTask> task(d->variantCacheQueue.takeFirst());
@@ -330,6 +342,7 @@ void Materials::processCacheQueue()
          /// @todo $revise-texture-animation: prepare all textures in the animation (if animated).
          task->material->prepare(*task->spec);
     }
+#endif
 }
 
 Materials::Manifest &Materials::toManifest(materialid_t id) const
@@ -567,6 +580,7 @@ Material *Materials::newFromDef(ded_material_t &def)
 void Materials::cache(Material &material, MaterialVariantSpec const &spec,
     bool cacheGroups)
 {
+#ifdef __CLIENT__
     // Already in the queue?
     DENG2_FOR_EACH_CONST(VariantCacheQueue, i, d->variantCacheQueue)
     {
@@ -594,8 +608,12 @@ void Materials::cache(Material &material, MaterialVariantSpec const &spec,
             cache(manifest->material(), spec, false /* do not cache groups */);
         }
     }
+#else
+    DENG2_UNUSED3(material, spec, cacheGroups);
+#endif
 }
 
+#ifdef __CLIENT__
 MaterialVariantSpec const &Materials::variantSpecForContext(
     materialcontext_t mc, int flags, byte border, int tClass, int tMap,
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
@@ -605,6 +623,7 @@ MaterialVariantSpec const &Materials::variantSpecForContext(
                                        minFilter, magFilter, anisoFilter,
                                        mipmapped, gammaCorrection, noStretch, toAlpha);
 }
+#endif
 
 Materials::ManifestGroup &Materials::createGroup()
 {

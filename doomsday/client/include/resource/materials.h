@@ -337,6 +337,7 @@ public:
     /// Empty the Material cache queue, cancelling all outstanding tasks.
     void purgeCacheQueue();
 
+#ifdef __CLIENT__
     /**
      * Prepare a material variant specification in accordance to the specified
      * usage context. If incomplete context information is supplied, suitable
@@ -363,6 +364,7 @@ public:
         int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
         int minFilter, int magFilter, int anisoFilter,
         bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha);
+#endif
 
 private:
     struct Instance;

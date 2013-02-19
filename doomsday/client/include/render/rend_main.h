@@ -104,7 +104,10 @@ void R_DrawLightRange(void);
 #ifdef __cplusplus
 } // extern "C"
 
+#ifdef __CLIENT__
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
 #endif
 
-#endif /* LIBDENG_REND_MAIN_H */
+#endif // __cplusplus
+
+#endif // LIBDENG_REND_MAIN_H

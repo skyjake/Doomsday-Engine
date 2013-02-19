@@ -789,6 +789,7 @@ coord_t R_VisOpenRange(Sector const *frontSec, Sector const *backSec, coord_t *r
     return top - bottom;
 }
 
+#ifdef __CLIENT__
 boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *backSec,
     SideDef *frontDef, SideDef *backDef, boolean ignoreOpacity)
 {
@@ -978,6 +979,7 @@ LineDef *R_FindLineAlignNeighbor(Sector const *sec, LineDef const *line,
     // Not suitable, try the next.
     return R_FindLineAlignNeighbor(sec, line, cown, antiClockwise, alignment);
 }
+#endif // __CLIENT__
 
 static inline void initSurfaceMaterialOffset(Surface *suf)
 {
@@ -1255,6 +1257,8 @@ boolean R_SectorContainsSkySurfaces(Sector const *sec)
     return sectorContainsSkySurfaces;
 }
 
+#ifdef __CLIENT__
+
 /**
  * Given a sidedef section, look at the neighbouring surfaces and pick the
  * best choice of material used on those surfaces to be applied to "this"
@@ -1377,9 +1381,11 @@ static void addMissingMaterial(SideDef *s, SideDefSection section)
             << path;
     }
 }
+#endif // __CLIENT__
 
 static void R_UpdateLinedefsOfSector(Sector *sec)
 {
+#ifdef __CLIENT__
     if(!sec) return;
 
     for(uint i = 0; i < sec->lineDefCount; ++i)
@@ -1400,7 +1406,6 @@ static void R_UpdateLinedefsOfSector(Sector *sec)
          * extend the floor/ceiling to fill the space (unless it is skymasked),
          * or if there is a midtexture use that instead.
          */
-
         if(backSec)
         {
             // Bottom section.
@@ -1421,6 +1426,9 @@ static void R_UpdateLinedefsOfSector(Sector *sec)
             addMissingMaterial(front, SS_MIDDLE);
         }
     }
+#else // !__CLIENT__
+    DENG2_UNUSED(sec);
+#endif
 }
 
 boolean R_UpdatePlane(Plane *pln, boolean forceUpdate)

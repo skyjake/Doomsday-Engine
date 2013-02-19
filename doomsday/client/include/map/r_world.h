@@ -132,6 +132,7 @@ coord_t R_OpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retB
 /// height coordinates rather than the "sharp" coordinates.
 coord_t R_VisOpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
 
+#ifdef __CLIENT__
 /**
  * @param lineFlags     @ref ldefFlags.
  * @param frontSec      Sector in front of the wall.
@@ -154,6 +155,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector* frontSec, Sector* b
  *       hedges instead).
  */
 boolean R_MiddleMaterialCoversLineOpening(LineDef* line, int side, boolean ignoreOpacity);
+#endif // __CLIENT__
 
 Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);
@@ -189,6 +191,7 @@ float R_GlowStrength(const Plane* pln);
 
 lineowner_t* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
 
+#ifdef __CLIENT__
 /**
  * A neighbour is a line that shares a vertex with 'line', and faces the
  * specified sector.
@@ -214,6 +217,7 @@ LineDef* R_FindLineAlignNeighbor(const Sector* sec, const LineDef* line,
  */
 LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
     const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
+#endif // __CLIENT__
 
 /**
  * @defgroup skyCapFlags  Sky Cap Flags

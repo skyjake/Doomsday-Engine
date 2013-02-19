@@ -3960,10 +3960,10 @@ static void Rend_RenderBoundingBoxes()
     glEnable(GL_DEPTH_TEST);
 }
 
-#endif // __CLIENT__
-
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 {
     return App_Materials().variantSpecForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                                   -1, -1, -1, true, true, false, false);
 }
+
+#endif // __CLIENT__

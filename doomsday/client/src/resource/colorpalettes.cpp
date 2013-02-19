@@ -275,28 +275,28 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const* fmt, char const*
     if(0 != (id = colorPaletteNumForName(name)))
     {
         // Replacing an existing palette.
-        colorpalette_t* palette;
-
-        bind = &colorPaletteBinds[id-1];
-        palette = R_GetColorPaletteByIndex(bind->idx);
+        bind = &colorPaletteBinds[id - 1];
+        colorpalette_t *palette = R_GetColorPaletteByIndex(bind->idx);
         ColorPalette_ReplaceColorTable(palette, compOrder, compSize, colorData, colorCount);
+
+#ifdef __CLIENT__
         GL_ReleaseTexturesByColorPalette(id);
+#endif
     }
     else
     {
         // A new palette.
-        colorPaletteBinds = (ColorPaletteBind*) M_Realloc(colorPaletteBinds, (numColorPaletteBinds + 1) * sizeof(ColorPaletteBind));
-        if(!colorPaletteBinds) Con_Error("R_CreateColorPalette: Failed on (re)allocation of %lu bytes for color palette bind list.", (unsigned long) ((numColorPaletteBinds + 1) * sizeof(ColorPaletteBind)));
+        colorPaletteBinds = (ColorPaletteBind *) M_Realloc(colorPaletteBinds, (numColorPaletteBinds + 1) * sizeof(ColorPaletteBind));
 
         bind = &colorPaletteBinds[numColorPaletteBinds];
-        memset(bind, 0, sizeof(*bind));
+        std::memset(bind, 0, sizeof(*bind));
 
         strncpy(bind->name, name, COLORPALETTENAME_MAXLEN);
 
         id = (colorpaletteid_t) ++numColorPaletteBinds; // 1-based index.
-        if(1 == numColorPaletteBinds)
+        if(numColorPaletteBinds == 1)
         {
-            defaultColorPalette = (colorpaletteid_t) numColorPaletteBinds;
+            defaultColorPalette = colorpaletteid_t(numColorPaletteBinds);
         }
     }
 

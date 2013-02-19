@@ -162,6 +162,7 @@ void Texture::Variant::setCoords(float newS, float newT)
     d->t = newT;
 }
 
+#ifdef __CLIENT__
 uint Texture::Variant::glName() const
 {
     return d->glTexName;
@@ -171,5 +172,6 @@ void Texture::Variant::setGLName(uint newGLName)
 {
     d->glTexName = newGLName;
 }
+#endif
 
 } // namespace de
