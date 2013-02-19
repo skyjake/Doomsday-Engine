@@ -2130,6 +2130,7 @@ static int DD_StartupWorker(void* /*parm*/)
     Con_ParseCommands("startup.cfg");
     Con_SetProgress(90);
 
+    R_BuildTexGammaLut();
 #ifdef __CLIENT__
     GL_EarlyInitTextureManager();
 #endif

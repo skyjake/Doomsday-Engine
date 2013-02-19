@@ -1048,7 +1048,6 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant &tex, 
 void GL_EarlyInitTextureManager()
 {
     GL_InitSmartFilterHQ2x();
-    R_BuildTexGammaLut();
 
     variantSpecs = NULL;
     memset(detailVariantSpecs, 0, sizeof(detailVariantSpecs));
