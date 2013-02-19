@@ -37,32 +37,6 @@
 
 using namespace de;
 
-/// @todo Get rid of these:
-
-#if 0
-/**
- * On serverside, each client has its own network node. A node
- * represents the TCP connection between the client and the server. On
- * clientside, the node zero is used always.
- */
-typedef struct netnode_s {
-    int sock;
-    char name[256];
-
-    /// The node is owned by a client in the game.  This becomes true
-    /// when the client issues the JOIN request.
-    boolean hasJoined;
-
-    /// This is the client's remote address.
-    ipaddress_t addr;
-
-    /// The node is connecting from the local host.
-    boolean isFromLocalHost;
-
-    expectedresponder_t expectedResponder;
-} netnode_t;
-#endif
-
 int nptIPPort = 0; ///< Server TCP port (cvar).
 
 static de::duint16 Server_ListenPort()
@@ -199,6 +173,7 @@ DENG2_PIMPL(ServerSystem)
             if(cl->nodeID)
             {
                 DENG2_ASSERT(users.contains(cl->nodeID));
+
                 RemoteUser *user = users[cl->nodeID];
                 if(first)
                 {
@@ -269,7 +244,7 @@ RemoteUser &ServerSystem::user(Id const &id) const
 {
     if(!d->users.contains(id))
     {
-        throw IdError("ServerSystem::user", "No user with identifier " + id.asText());
+        throw IdError("ServerSystem::user", "User " + id.asText() + " does not exist");
     }
     return *d->users[id];
 }
@@ -295,6 +270,8 @@ void ServerSystem::timeChanged(Clock const &clock)
 {
     d->updateBeacon(clock);
 
+    /// @todo There's no need to queue packets via net_buf, just handle
+    /// them right away.
     Sv_GetPackets();
 
     /// @todo Kick unjoined nodes who are silent for too long.

@@ -217,7 +217,6 @@ RemoteUser::RemoteUser(Socket *socket) : d(new Instance(this, socket))
 RemoteUser::~RemoteUser()
 {
     d->disconnect();
-
     delete d;
 }
 
@@ -263,7 +262,8 @@ void RemoteUser::handleIncomingPackets()
             break;
 
         case Instance::Joined: {
-            /// @todo Refactor the incoming message queue (net_buf) into something nicer.
+            /// @todo The incoming packets should go through a de::Protocol and
+            /// be handled immediately.
 
             // Post the data into the queue.
             netmessage_t *msg = (netmessage_t *) M_Calloc(sizeof(netmessage_t));
