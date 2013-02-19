@@ -31,20 +31,20 @@
 
 using namespace de;
 
+enum RemoteUserState {
+    Disconnected,
+    Unjoined,
+    Joined
+};
+
 DENG2_PIMPL(RemoteUser)
 {
-    enum State {
-        Disconnected,
-        Unjoined,
-        Joined
-    };
-
     Id id;
     Socket *socket;
     int protocolVersion;
     Address address;
     bool isFromLocal;
-    State state;
+    RemoteUserState state;
     String name;
 
     Instance(Public *i, Socket *sock)
@@ -234,13 +234,13 @@ Socket *RemoteUser::takeSocket()
 {
     Socket *sock = d->socket;
     d->socket = 0;
-    d->state = Instance::Disconnected; // not signaled
+    d->state = Disconnected; // not signaled
     return sock;
 }
 
 void RemoteUser::send(IByteArray const &data)
 {
-    if(d->state != Instance::Disconnected && d->socket->isOpen())
+    if(d->state != Disconnected && d->socket->isOpen())
     {
         d->socket->send(data);
     }
@@ -256,12 +256,12 @@ void RemoteUser::handleIncomingPackets()
 
         switch(d->state)
         {
-        case Instance::Unjoined:
+        case Unjoined:
             // Let's see if it is a command we recognize.
             if(!d->handleRequest(*packet)) return;
             break;
 
-        case Instance::Joined: {
+        case Joined: {
             /// @todo The incoming packets should go through a de::Protocol and
             /// be handled immediately.
 
@@ -287,7 +287,7 @@ void RemoteUser::handleIncomingPackets()
 
 void RemoteUser::socketDisconnected()
 {
-    d->state = Instance::Disconnected;
+    d->state = Disconnected;
     d->notifyClientExit();
 
     deleteLater();
@@ -295,5 +295,5 @@ void RemoteUser::socketDisconnected()
 
 bool RemoteUser::isJoined() const
 {
-    return d->state == Instance::Joined;
+    return d->state == Joined;
 }
