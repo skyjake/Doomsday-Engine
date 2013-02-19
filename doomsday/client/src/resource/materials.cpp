@@ -100,16 +100,18 @@ Materials::ManifestGroup::All const &Materials::ManifestGroup::all() const
     return d->manifests;
 }
 
+#ifdef __CLIENT__
 static void applyVariantSpec(MaterialVariantSpec &spec, materialcontext_t mc,
-    texturevariantspecification_t *primarySpec)
+    texturevariantspecification_t &primarySpec)
 {
-    DENG2_ASSERT(mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc) && primarySpec);
+    DENG2_ASSERT(mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc));
     spec.context     = mc;
-    spec.primarySpec = primarySpec;
+    spec.primarySpec = &primarySpec;
 }
 
 /// A list of specifications for material variants.
 typedef QList<MaterialVariantSpec *> VariantSpecs;
+#endif
 
 /**
  * Stores the arguments for a material variant cache work item.
@@ -248,7 +250,7 @@ DENG2_PIMPL(Materials)
         default:                primaryContext = TC_UNKNOWN;            break;
         }
 
-        texturevariantspecification_t* primarySpec =
+        texturevariantspecification_t &primarySpec =
             GL_TextureVariantSpecificationForContext(primaryContext, flags, border,
                                                      tClass, tMap, wrapS, wrapT,
                                                      minFilter, magFilter, anisoFilter,

@@ -245,8 +245,11 @@ void LineDef_UpdateAABox(LineDef* lineDef);
  * @param side  Side of the LineDef we are interested in.
  * @param deltaL  Light delta for the left edge written here.
  * @param deltaR  Light delta for the right edge written here.
+ *
+ * @deprecated Now that we store surface tangent space normals use those
+ *             rather than angles. @todo Remove me.
  */
-void LineDef_LightLevelDelta(LineDef* lineDef, int side, float* deltaL, float* deltaR);
+void LineDef_LightLevelDelta(LineDef *lineDef, int side, float *deltaL, float *deltaR);
 
 /**
  * Get a property value, selected by DMU_* name.

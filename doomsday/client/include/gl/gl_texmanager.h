@@ -27,17 +27,19 @@
 #ifndef LIBDENG_GL_TEXMANAGER_H
 #define LIBDENG_GL_TEXMANAGER_H
 
+#ifndef __cplusplus
+#  error "gl/gl_texmanager.h requires C++"
+#endif
+
 #include "sys_opengl.h"
 
-#include "filehandle.h"
+//#include "filehandle.h"
+#include "gl/texturecontent.h"
+#include "resource/image.h"
 #include "resource/r_data.h" // For flaretexid_t, lightingtexid_t, etc...
 #include "resource/rawtexture.h"
 #include "Texture"
 #include "TextureVariantSpec"
-
-struct image_s;
-struct texturecontent_s;
-struct texturevariant_s;
 
 #define TEXQ_BEST               8
 #define MINTEXWIDTH             8
@@ -56,28 +58,24 @@ DENG_EXTERN_C boolean noHighResPatches;
 DENG_EXTERN_C boolean highResWithPWAD;
 DENG_EXTERN_C byte loadExtAlways;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void GL_TexRegister(void);
+void GL_TexRegister();
 
 /**
  * Called before real texture management is up and running, during engine
  * early init.
  */
-void GL_EarlyInitTextureManager(void);
+DENG_EXTERN_C void GL_EarlyInitTextureManager();
 
-void GL_InitTextureManager(void);
+void GL_InitTextureManager();
 
-void GL_ShutdownTextureManager(void);
+void GL_ShutdownTextureManager();
 
 /**
  * Call this if a full cleanup of the textures is required (engine update).
  */
-void GL_ResetTextureManager(void);
+void GL_ResetTextureManager();
 
-void GL_TexReset(void);
+void GL_TexReset();
 
 /**
  * Determine the optimal size for a texture. Usually the dimensions are scaled
@@ -104,13 +102,13 @@ void GL_UpdateTexParams(int mipMode);
 void GL_SetTextureParams(int minMode, int gameTex, int uiTex);
 
 /// Release all textures in all schemes.
-void GL_ReleaseTextures(void);
+void GL_ReleaseTextures();
 
 /// Release all textures flagged 'runtime'.
-void GL_ReleaseRuntimeTextures(void);
+void GL_ReleaseRuntimeTextures();
 
 /// Release all textures flagged 'system'.
-void GL_ReleaseSystemTextures(void);
+void GL_ReleaseSystemTextures();
 
 /**
  * Release all textures in the identified scheme.
@@ -123,12 +121,12 @@ void GL_ReleaseTexturesByScheme(char const *schemeName);
  * Release all textures associated with the specified @a texture.
  * @param texture  Logical Texture. Can be @c NULL, in which case this is a null-op.
  */
-void GL_ReleaseGLTexturesByTexture(struct texture_s *texture);
+void GL_ReleaseGLTexturesByTexture(de::Texture &texture);
 
 /**
  * Release all textures associated with the specified variant @a texture.
  */
-void GL_ReleaseVariantTexture(struct texturevariant_s *texture);
+void GL_ReleaseVariantTexture(de::TextureVariant &texture);
 
 /**
  * Release all variants of @a tex which match @a spec.
@@ -136,20 +134,20 @@ void GL_ReleaseVariantTexture(struct texturevariant_s *texture);
  * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
  * @param spec  Specification to match. Comparision mode is exact and not fuzzy.
  */
-void GL_ReleaseVariantTexturesBySpec(struct texture_s *tex, texturevariantspecification_t *spec);
+void GL_ReleaseVariantTexturesBySpec(de::Texture &texture, texturevariantspecification_t &spec);
 
 /// Release all textures associated with the identified colorpalette @a paletteId.
 void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId);
 
 /// Release all textures used with 'Raw Images'.
-void GL_ReleaseTexturesForRawImages(void);
+void GL_ReleaseTexturesForRawImages();
 
-void GL_PruneTextureVariantSpecifications(void);
+DENG_EXTERN_C void GL_PruneTextureVariantSpecifications();
 
 /**
  * Prepares all the system textures (dlight, ptcgens).
  */
-void GL_LoadSystemTextures(void);
+void GL_LoadSystemTextures();
 
 /**
  * @param glFormat  Identifier of the desired GL texture format.
@@ -182,16 +180,15 @@ boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, uint8_t const *
  * @note Can be rather time-consuming due to forced scaling operations and
  * the generation of mipmaps.
  */
-void GL_UploadTextureContent(struct texturecontent_s const *content);
+void GL_UploadTextureContent(texturecontent_t const &content);
 
-uint8_t *GL_LoadImage(struct image_s *img, char const *filePath);
-uint8_t *GL_LoadImageStr(struct image_s *img, ddstring_t const *filePath);
+uint8_t *GL_LoadImage(image_t &image, de::String nativePath);
 
-TexSource GL_LoadExtTexture(struct image_s *image, char const *name, gfxmode_t mode);
+TexSource GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode);
 
-GLint GL_MinFilterForVariantSpec(variantspecification_t const *spec);
-GLint GL_MagFilterForVariantSpec(variantspecification_t const *spec);
-int GL_LogicalAnisoLevelForVariantSpec(variantspecification_t const *spec);
+GLint GL_MinFilterForVariantSpec(variantspecification_t const &spec);
+GLint GL_MagFilterForVariantSpec(variantspecification_t const &spec);
+int GL_LogicalAnisoLevelForVariantSpec(variantspecification_t const &spec);
 
 /**
  * Prepare a TextureVariantSpecification according to usage context. If incomplete
@@ -203,9 +200,9 @@ int GL_LogicalAnisoLevelForVariantSpec(variantspecification_t const *spec);
  * @param tClass  Color palette translation class.
  * @param tMap  Color palette translation map.
  *
- * @return  A rationalized and valid TextureVariantSpecification or @c NULL if out of memory.
+ * @return  A rationalized and valid TextureVariantSpecification.
  */
-texturevariantspecification_t *GL_TextureVariantSpecificationForContext(
+texturevariantspecification_t &GL_TextureVariantSpecificationForContext(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass,
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
@@ -214,9 +211,9 @@ texturevariantspecification_t *GL_TextureVariantSpecificationForContext(
  * Prepare a TextureVariantSpecification according to usage context. If incomplete
  * context information is supplied, suitable defaults are chosen in their place.
  *
- * @return  A rationalized and valid TextureVariantSpecification or @c NULL if out of memory.
+ * @return  A rationalized and valid TextureVariantSpecification.
  */
-texturevariantspecification_t *GL_DetailTextureVariantSpecificationForContext(
+texturevariantspecification_t &GL_DetailTextureVariantSpecificationForContext(
     float contrast);
 
 /**
@@ -224,12 +221,12 @@ texturevariantspecification_t *GL_DetailTextureVariantSpecificationForContext(
  *
  * @param spec  Specification to echo.
  */
-void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *spec);
+void GL_PrintTextureVariantSpecification(texturevariantspecification_t const &spec);
 
 /**
  * Dump the pixel data of @a img to an ARGB32 at @a filePath.
  *
- * @param img           The image to be dumped. A temporary copy will be made if
+ * @param image         The image to be dumped. A temporary copy will be made if
  *                      the pixel data is not already in either ARGB32 or ABGR32
  *                      formats.
  * @param filePath      Location to write the new file. If an extension is not
@@ -237,10 +234,7 @@ void GL_PrintTextureVariantSpecification(texturevariantspecification_t const *sp
  *
  * @return @c true= Dump was successful.
  */
-boolean GL_DumpImage(struct image_s const *img, char const *filePath);
-
-#ifdef __cplusplus
-} // extern "C"
+boolean GL_DumpImage(image_t const &image, char const *filePath);
 
 /// Result of a request to prepare a Texture::Variant
 typedef enum {
@@ -295,21 +289,14 @@ inline de::TextureVariant *GL_PrepareTexture(de::Texture &texture,
  * revised texture management APIs.
  */
 
-extern "C" {
-#endif // __cplusplus
-
 DGLuint GL_PrepareSysFlaremap(flaretexid_t which);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
 DGLuint GL_PrepareUITexture(uitexid_t which);
 
-DGLuint GL_PrepareRawTexture(rawtex_t *rawTex);
+DGLuint GL_PrepareRawTexture(rawtex_t &rawTex);
 
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
-DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
-                                 int grayMipmap, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
+                                int grayMipmap, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
 
 #endif /* LIBDENG_GL_TEXMANAGER_H */

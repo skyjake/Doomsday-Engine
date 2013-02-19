@@ -1587,11 +1587,11 @@ static DGLuint loadAndPrepareExtTexture(char const *fileName)
     image_t image;
     DGLuint glTexName = 0;
 
-    if(GL_LoadExtTexture(&image, fileName, LGM_NORMAL))
+    if(GL_LoadExtImage(image, fileName, LGM_NORMAL))
     {
         // Loaded successfully and converted accordingly.
         // Upload the image to GL.
-        glTexName = GL_NewTextureWithParams2(
+        glTexName = GL_NewTextureWithParams(
             ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
               image.pixelSize == 3 ? DGL_RGB :
               image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),

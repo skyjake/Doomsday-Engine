@@ -311,7 +311,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         Material::DetailLayer::Stage const *lsCur = detailLayer->stages()[l.stage];
 
         float const contrast = de::clamp(0.f, lsCur->strength, 1.f) * detailFactor /*Global strength multiplier*/;
-        texturevariantspecification_t &texSpec = *GL_DetailTextureVariantSpecificationForContext(contrast);
+        texturevariantspecification_t &texSpec = GL_DetailTextureVariantSpecificationForContext(contrast);
         if(Texture *tex = lsCur->texture)
         {
             // Pick the instance matching the specified context.
@@ -339,7 +339,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(Texture *tex = lsCur->texture)
         {
             texturevariantspecification_t &texSpec =
-                *GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
+                GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
                      TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
                      false, false, false, false);
 
@@ -352,7 +352,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(Texture *tex = lsCur->maskTexture)
         {
             texturevariantspecification_t &texSpec =
-                *GL_TextureVariantSpecificationForContext(
+                GL_TextureVariantSpecificationForContext(
                      TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                      -1, -1, -1, true, false, false, false);
 

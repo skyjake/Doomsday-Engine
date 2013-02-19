@@ -833,18 +833,18 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
 
 texturevariantspecification_t *Rend_ModelDiffuseTextureSpec(boolean noCompression)
 {
-    return GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
-                                                    (noCompression? TSF_NO_COMPRESSION : 0),
-                                                    0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
-                                                    true, true, false, false);
+    return &GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
+                                                     (noCompression? TSF_NO_COMPRESSION : 0),
+                                                     0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
+                                                     true, true, false, false);
 }
 
 texturevariantspecification_t *Rend_ModelShinyTextureSpec()
 {
-    return GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
-                                                    TSF_NO_COMPRESSION, 0, 0, 0,
-                                                    GL_REPEAT, GL_REPEAT, 1, -2, -1,
-                                                    false, false, false, false);
+    return &GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
+                                                     TSF_NO_COMPRESSION, 0, 0, 0,
+                                                     GL_REPEAT, GL_REPEAT, 1, -2, -1,
+                                                     false, false, false, false);
 }
 
 /**

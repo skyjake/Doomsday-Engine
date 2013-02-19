@@ -24,35 +24,35 @@
  * will be handled through dynamic changes to GL's texture environment state.
  * Consequently they should be ignored here.
  */
-static int compareVariantSpecifications(variantspecification_t const *a,
-    variantspecification_t const *b)
+static int compareVariantSpecifications(variantspecification_t const &a,
+    variantspecification_t const &b)
 {
     /// @todo We can be a bit cleverer here...
-    if(a->context != b->context) return 0;
-    if(a->flags != b->flags) return 0;
-    if(a->wrapS != b->wrapS || a->wrapT != b->wrapT) return 0;
-    //if(a->magFilter != b->magFilter) return 0;
-    //if(a->anisoFilter != b->anisoFilter) return 0;
-    if(a->mipmapped != b->mipmapped) return 0;
-    if(a->noStretch != b->noStretch) return 0;
-    if(a->gammaCorrection != b->gammaCorrection) return 0;
-    if(a->toAlpha != b->toAlpha) return 0;
-    if(a->border != b->border) return 0;
-    if(a->flags & TSF_HAS_COLORPALETTE_XLAT)
+    if(a.context != b.context) return 0;
+    if(a.flags != b.flags) return 0;
+    if(a.wrapS != b.wrapS || a.wrapT != b.wrapT) return 0;
+    //if(a.magFilter != b.magFilter) return 0;
+    //if(a.anisoFilter != b.anisoFilter) return 0;
+    if(a.mipmapped != b.mipmapped) return 0;
+    if(a.noStretch != b.noStretch) return 0;
+    if(a.gammaCorrection != b.gammaCorrection) return 0;
+    if(a.toAlpha != b.toAlpha) return 0;
+    if(a.border != b.border) return 0;
+    if(a.flags & TSF_HAS_COLORPALETTE_XLAT)
     {
-        colorpalettetranslationspecification_t const *cptA = a->translated;
-        colorpalettetranslationspecification_t const *cptB = b->translated;
+        colorpalettetranslationspecification_t const *cptA = a.translated;
+        colorpalettetranslationspecification_t const *cptB = b.translated;
         DENG_ASSERT(cptA && cptB);
         if(cptA->tClass != cptB->tClass) return 0;
-        if(cptA->tMap != cptB->tMap) return 0;
+        if(cptA->tMap   != cptB->tMap) return 0;
     }
     return 1; // Equal.
 }
 
-static int compareDetailVariantSpecifications(detailvariantspecification_t const *a,
-    detailvariantspecification_t const *b)
+static int compareDetailVariantSpecifications(detailvariantspecification_t const &a,
+    detailvariantspecification_t const &b)
 {
-    if(a->contrast != b->contrast) return 0;
+    if(a.contrast != b.contrast) return 0;
     return 1; // Equal.
 }
 

@@ -105,19 +105,20 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
 
     byte result = 0;
     image_t image;
-    AutoStr* foundPath  = AutoStr_NewStd();
-    AutoStr* texName = Str_Appendf(AutoStr_NewStd(), "Textures:Particle%02i", particleTex);
+    AutoStr *foundPath  = AutoStr_NewStd();
+    AutoStr *texName = Str_Appendf(AutoStr_NewStd(), "Textures:Particle%02i", particleTex);
 
     // First look for a colorkeyed version.
-    Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "%s-ck", Str_Text(texName))));
-    boolean found = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
+    Uri *searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "%s-ck", Str_Text(texName))));
+    bool found      = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
+
     if(!found)
     {
         Uri_SetUri(searchPath, Str_Text(texName));
         found = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
     }
 
-    if(found && GL_LoadImage(&image, Str_Text(foundPath)))
+    if(found && GL_LoadImage(image, Str_Text(foundPath)))
     {
         result = 2;
     }
@@ -156,11 +157,11 @@ void Rend_ParticleLoadSystemTextures()
         // Load the default "zeroth" texture (a blurred point).
         /// @todo Create a logical Texture in the "System" scheme for this.
         image_t image;
-        if(GL_LoadExtTexture(&image, "Zeroth", LGM_WHITE_ALPHA))
+        if(GL_LoadExtImage(image, "Zeroth", LGM_WHITE_ALPHA))
         {
             // Loaded successfully and converted accordingly.
             // Upload the image to GL.
-            pointTex = GL_NewTextureWithParams2(
+            pointTex = GL_NewTextureWithParams(
                 ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
                   image.pixelSize == 3 ? DGL_RGB :
                   image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),

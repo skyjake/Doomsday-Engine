@@ -369,7 +369,7 @@ void BitmapFont_Prepare(font_t *font)
             QScopedPointer<de::Uri> uri(reinterpret_cast<de::Uri *>(Fonts_ComposeUri(Fonts_Id(font))));
             LOG_VERBOSE("Uploading GL texture for font \"%s\"...") << *uri;
 
-            bf->_tex = GL_NewTextureWithParams2(DGL_RGBA, bf->_texSize.width,
+            bf->_tex = GL_NewTextureWithParams(DGL_RGBA, bf->_texSize.width,
                 bf->_texSize.height, (uint8_t const *)image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         }
@@ -507,7 +507,7 @@ int BitmapCompositeFont_CharHeight(font_t *font, unsigned char ch)
     return cf->_chars[ch].geometry.size.height;
 }
 
-static inline texturevariantspecification_t *BitmapCompositeFont_CharSpec()
+static inline texturevariantspecification_t &BitmapCompositeFont_CharSpec()
 {
     return GL_TextureVariantSpecificationForContext(
                 TC_UI, TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN, 0, 0, 0,
@@ -549,7 +549,7 @@ void BitmapCompositeFont_Prepare(font_t *font)
         ch->border = 0;
 
         ch->tex = GL_PrepareTexture(App_Textures().scheme("Patches").findByUniqueId(patch).texture(),
-                                    *BitmapCompositeFont_CharSpec());
+                                    BitmapCompositeFont_CharSpec());
         if(ch->tex && ch->tex->source() == TEXS_ORIGINAL)
         {
             // Upscale & Sharpen will have been applied.
@@ -588,7 +588,7 @@ void BitmapCompositeFont_ReleaseTextures(font_t *font)
     {
         bitmapcompositefont_char_t *ch = &cf->_chars[i];
         if(!ch->tex) continue;
-        GL_ReleaseVariantTexture(reinterpret_cast<struct texturevariant_s *>(ch->tex));
+        GL_ReleaseVariantTexture(*ch->tex);
         ch->tex = 0;
     }
 }

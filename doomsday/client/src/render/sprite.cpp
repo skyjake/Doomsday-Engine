@@ -308,13 +308,12 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     MaterialSnapshot const &ms = sprFrame->mats[0]->prepare(spec);
 
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
-    variantspecification_t const *texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
-    DENG_ASSERT(texSpec);
+    variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
 
-    params->pos[VX] = psp->pos[VX] - -tex.origin().x() + pspOffset[VX] + -texSpec->border;
-    params->pos[VY] = offScaleY * (psp->pos[VY] - -tex.origin().y()) + pspOffset[VY] + -texSpec->border;
-    params->width  = ms.dimensions().width()  + texSpec->border*2;
-    params->height = ms.dimensions().height() + texSpec->border*2;
+    params->pos[VX] = psp->pos[VX] - -tex.origin().x() + pspOffset[VX] + -texSpec.border;
+    params->pos[VY] = offScaleY * (psp->pos[VY] - -tex.origin().y()) + pspOffset[VY] + -texSpec.border;
+    params->width  = ms.dimensions().width()  + texSpec.border*2;
+    params->height = ms.dimensions().height() + texSpec.border*2;
 
     ms.texture(MTU_PRIMARY).coords(&params->texOffset[0], &params->texOffset[1]);
 
@@ -898,16 +897,13 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
     // Many sprite properties are inherited from the material.
     if(params->material)
     {
-        variantspecification_t const *texSpec;
-
         // Ensure this variant has been prepared.
         ms = &reinterpret_cast<MaterialVariant *>(params->material)->prepare();
 
-        texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
-        DENG_ASSERT(texSpec);
-        size.width  = ms->dimensions().width()  + texSpec->border*2;
-        size.height = ms->dimensions().height() + texSpec->border*2;
-        viewOffset.x = -size.width/2;
+        variantspecification_t const &texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
+        size.width  = ms->dimensions().width()  + texSpec.border * 2;
+        size.height = ms->dimensions().height() + texSpec.border * 2;
+        viewOffset.x = -size.width / 2;
 
         ms->texture(MTU_PRIMARY).coords(&s, &t);
 

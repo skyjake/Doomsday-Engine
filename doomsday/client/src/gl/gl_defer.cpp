@@ -197,14 +197,15 @@ LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
     enqueueTask(DTT_FUNC_PTR_UINT_ARRAY, api);
 }
 
-static void processTask(deferredtask_t* task)
+static void processTask(deferredtask_t *task)
 {
-    apifunc_t* api = (apifunc_t*) task->data;
+    apifunc_t *api = (apifunc_t *) task->data;
 
     switch(task->type)
     {
     case DTT_UPLOAD_TEXTURECONTENT:
-        GL_UploadTextureContent((struct texturecontent_s *) task->data);
+        DENG2_ASSERT(task->data);
+        GL_UploadTextureContent(*reinterpret_cast<texturecontent_t *>(task->data));
         break;
 
     case DTT_SET_VSYNC:
@@ -433,7 +434,7 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
     GL_ReserveNames();
 }
 
-void GL_DeferTextureUpload(const struct texturecontent_s* content)
+void GL_DeferTextureUpload(struct texturecontent_s const *content)
 {
     // Defer this operation. Need to make a copy.
     enqueueTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));

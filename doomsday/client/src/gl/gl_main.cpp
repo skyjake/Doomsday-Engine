@@ -781,7 +781,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
         LIBDENG_ASSERT_IN_MAIN_THREAD();
         LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        GL_BindTextureUnmanaged(GL_PrepareRawTexture(rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     }
@@ -808,8 +808,8 @@ void GL_BindTexture(Texture::Variant *tex)
     texturevariantspecification_t const &spec = tex->spec();
     if(spec.type == TST_GENERAL)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec)->wrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(spec)->wrapT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec).wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(spec).wrapT);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_MagFilterForVariantSpec(TS_GENERAL(spec)));
         if(GL_state.features.texFilterAniso)

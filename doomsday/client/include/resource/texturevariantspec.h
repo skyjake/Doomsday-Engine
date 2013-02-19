@@ -147,8 +147,8 @@ typedef struct {
     uint8_t contrast;
 } detailvariantspecification_t;
 
-#define TS_GENERAL(ts)      (&(ts).data.variant)
-#define TS_DETAIL(ts)       (&(ts).data.detailvariant)
+#define TS_GENERAL(ts)      ((ts).data.variant)
+#define TS_DETAIL(ts)       ((ts).data.detailvariant)
 
 typedef struct texturevariantspecification_s {
     texturevariantspecificationtype_t type;

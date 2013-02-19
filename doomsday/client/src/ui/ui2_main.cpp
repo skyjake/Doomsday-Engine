@@ -988,7 +988,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             rawtex_t *rawTex = R_GetRawTex(f->texRef.lumpNum);
             if(rawTex)
             {
-                DGLuint glName = GL_PrepareRawTexture(rawTex);
+                DGLuint glName = GL_PrepareRawTexture(*rawTex);
                 V3f_Set(offset, 0, 0, 0);
                 // Raw images are always considered to have a logical size of 320x200
                 // even though the actual texture resolution may be different.
@@ -1037,9 +1037,9 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
 
                 /// @todo Utilize *all* properties of the Material.
                 V3f_Set(dimensions,
-                        ms.dimensions().width()  + TS_GENERAL(texSpec)->border*2,
-                        ms.dimensions().height() + TS_GENERAL(texSpec)->border*2, 0);
-                V2f_Set(rotateCenter, dimensions[VX]/2, dimensions[VY]/2);
+                        ms.dimensions().width()  + TS_GENERAL(texSpec).border * 2,
+                        ms.dimensions().height() + TS_GENERAL(texSpec).border * 2, 0);
+                V2f_Set(rotateCenter, dimensions[VX] / 2, dimensions[VY] / 2);
                 ms.texture(MTU_PRIMARY).coords(&texScale[VX], &texScale[VY]);
 
                 Texture const &texture = ms.texture(MTU_PRIMARY).generalCase();
