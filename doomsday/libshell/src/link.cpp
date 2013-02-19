@@ -22,6 +22,7 @@
 #include <de/Socket>
 #include <de/Time>
 #include <de/Log>
+#include <de/ByteRefArray>
 #include <QTimer>
 
 namespace de {
@@ -29,76 +30,25 @@ namespace shell {
 
 DENG2_PIMPL(Link)
 {
-    String tryingToConnectToHost;
-    Time startedTryingAt;
-    TimeDelta timeout;
-    Address peerAddress;
-    Socket *socket;
     Protocol protocol;
-    Status status;
-    Time connectedAt;
 
-    Instance(Public &i)
-        : Base(i),
-          socket(0),
-          status(Disconnected),
-          connectedAt(Time::invalidTime()) {}
-
-    ~Instance()
-    {
-        delete socket;
-    }
+    Instance(Public *i) : Base(i)
+    {}
 };
 
-Link::Link(String const &domain, TimeDelta const &timeout) : d(new Instance(*this))
+Link::Link(String const &domain, TimeDelta const &timeout) : d(new Instance(this))
 {
-    d->socket = new Socket;
-
-    connect(d->socket, SIGNAL(addressResolved()), this, SIGNAL(addressResolved()));
-    connect(d->socket, SIGNAL(connected()), this, SLOT(socketConnected()));
-    connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(d->socket, SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
-
-    // Fallback to default port.
-    d->tryingToConnectToHost = domain;
-    d->socket->setQuiet(true); // we'll be retrying a few times
-    d->socket->connectToDomain(d->tryingToConnectToHost, 13209 /* default port */);
-
-    d->status = Connecting;
-    d->startedTryingAt = Time();
-    d->timeout = timeout;
+    connect(domain, timeout);
 }
 
-Link::Link(Address const &address) : d(new Instance(*this))
+Link::Link(Address const &address) : d(new Instance(this))
 {
-    d->peerAddress = address;
-    d->socket = new Socket;
-
-    connect(d->socket, SIGNAL(connected()), this, SLOT(socketConnected()));
-    connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(d->socket, SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
-
-    // Fallback to default port.
-    if(!d->peerAddress.port()) d->peerAddress.setPort(13209);
-
-    d->socket->connect(d->peerAddress);
-
-    d->status = Connecting;
-    d->startedTryingAt = Time();
-    d->timeout = 0;
+    connect(address);
 }
 
-Link::Link(Socket *openSocket) : d(new Instance(*this))
+Link::Link(Socket *openSocket) : d(new Instance(this))
 {
-    d->peerAddress = openSocket->peerAddress();
-    d->socket = openSocket;
-
-    // Note: socketConnected() not used because the socket is already open.
-    connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(d->socket, SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
-
-    d->status = Connected;
-    d->connectedAt = Time();
+    takeOver(openSocket);
 }
 
 Link::~Link()
@@ -106,88 +56,20 @@ Link::~Link()
     delete d;
 }
 
-Address Link::address() const
-{
-    if(d->socket->isOpen()) return d->socket->peerAddress();
-    return d->peerAddress;
-}
-
-Link::Status Link::status() const
-{
-    return d->status;
-}
-
-Time Link::connectedAt() const
-{
-    return d->connectedAt;
-}
-
 Protocol &Link::protocol()
 {
     return d->protocol;
 }
 
-Packet *Link::nextPacket()
+Packet *Link::interpret(Message const &msg)
 {
-    if(!d->socket->hasIncoming()) return 0;
-
-    std::auto_ptr<Message> data(d->socket->receive());
-    Packet *packet = d->protocol.interpret(*data.get());
-    if(packet) packet->setFrom(data->address());
-    return packet;
+    return d->protocol.interpret(msg);
 }
 
-void Link::send(IByteArray const &data)
+void Link::initiateCommunications()
 {
-    d->socket->send(data);
-}
-
-void Link::socketConnected()
-{
-    LOG_AS("Link");
-    LOG_VERBOSE("Successfully connected to server %s") << d->socket->peerAddress();
-
     // Tell the server to switch to shell mode (v1).
-    *d->socket << String("Shell").toLatin1();
-
-    d->status = Connected;
-    d->connectedAt = Time();
-    d->peerAddress = d->socket->peerAddress();
-
-    emit connected();
-}
-
-void Link::socketDisconnected()
-{
-    LOG_AS("Link");
-
-    if(d->status == Connecting)
-    {
-        if(d->startedTryingAt.since() < d->timeout)
-        {
-            // Let's try again a bit later.
-            QTimer::singleShot(500, d->socket, SLOT(reconnect()));
-            return;
-        }
-        d->socket->setQuiet(false);
-    }
-
-    if(!d->peerAddress.isNull())
-    {
-        LOG_INFO("Disconnected from %s") << d->peerAddress;
-    }
-    else
-    {
-        LOG_INFO("Disconnected");
-    }
-
-    d->status = Disconnected;
-
-    emit disconnected();
-
-    // Slots have now had an opportunity to observe the total
-    // duration of the connection that has just ended.
-    d->connectedAt = Time::invalidTime();
+    *this << ByteRefArray("Shell", 5);
 }
 
 } // namespace shell
