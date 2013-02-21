@@ -41,6 +41,7 @@ public:
     Block(IByteArray const &array);
     Block(Block const &other);
     Block(QByteArray const &byteArray);
+    Block(void const *data, Size length);
 
     /**
      * Constructs a block by reading the contents of an input stream. The block

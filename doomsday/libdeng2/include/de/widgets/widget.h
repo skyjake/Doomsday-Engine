@@ -115,7 +115,7 @@ public:
     String uniqueName(String const &name) const;
     void notifyTree(void (Widget::*notifyFunc)());
     void notifyTreeReversed(void (Widget::*notifyFunc)());
-    bool dispatchEvent(Event const *event, bool (Widget::*memberFunc)(Event const *));
+    bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
 
     // Events.
     virtual void initialize();
@@ -125,14 +125,13 @@ public:
     virtual void update();
     virtual void drawIfVisible();
     virtual void draw();
-    virtual bool handleEvent(Event const *event);
+    virtual bool handleEvent(Event const &event);
 
 public:
     static void setFocusCycle(WidgetList const &order);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

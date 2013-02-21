@@ -24,6 +24,7 @@
 #include <de/Socket>
 #include <de/Time>
 #include <de/Transmitter>
+#include <de/shell/AbstractLink>
 #include <de/shell/Protocol>
 #include <QObject>
 
@@ -33,17 +34,9 @@ namespace shell {
 /**
  * Network connection to a server using the shell protocol.
  */
-class LIBSHELL_PUBLIC Link : public QObject, public Transmitter
+class LIBSHELL_PUBLIC Link : public AbstractLink
 {
     Q_OBJECT
-
-public:
-    enum Status
-    {
-        Disconnected,
-        Connecting,
-        Connected
-    };
 
 public:
     /**
@@ -71,50 +64,16 @@ public:
     virtual ~Link();
 
     /**
-     * Peer address of the link. The address may be a null address if the IP
-     * address hasn't been resolved yet.
-     */
-    Address address() const;
-
-    /**
-     * Current status of the connection.
-     */
-    Status status() const;
-
-    /**
-     * Returns the time when the link was successfully connected.
-     */
-    Time connectedAt() const;
-
-    /**
      * Shell protocol for constructing and interpreting packets.
      */
     Protocol &protocol();
 
-    /**
-     * Returns the next received packet.
-     *
-     * @return Received packet. Ownership given to caller. Returns @c NULL if
-     * there are no more packets ready.
-     */
-    Packet *nextPacket();
-
-    // Transmitter.
-    void send(IByteArray const &data);
-
-protected slots:
-    void socketConnected();
-    void socketDisconnected();
-
-signals:
-    void addressResolved();
-    void connected();
-    void disconnected();
-    void packetsReady();
+protected:
+    Packet *interpret(Message const &msg);
+    void initiateCommunications();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace shell

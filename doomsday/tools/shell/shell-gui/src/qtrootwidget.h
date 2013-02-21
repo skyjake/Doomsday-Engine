@@ -61,8 +61,7 @@ protected slots:
     void cursorBlink();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // QTROOTWIDGET_H

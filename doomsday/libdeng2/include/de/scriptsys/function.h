@@ -214,8 +214,7 @@ protected:
     ~Function(); // Counted
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

@@ -56,8 +56,7 @@ protected slots:
     void windowClosed(LinkWindow *window);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // GUISHELLAPP_H

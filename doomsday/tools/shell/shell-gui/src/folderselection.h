@@ -49,8 +49,7 @@ public slots:
     void selectFolder();
     
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // FOLDERSELECTION_H

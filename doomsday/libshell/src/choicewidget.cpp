@@ -142,16 +142,16 @@ void ChoiceWidget::draw()
                        TextCanvas::Char('>', attribs()));
 }
 
-bool ChoiceWidget::handleEvent(Event const *ev)
+bool ChoiceWidget::handleEvent(Event const &ev)
 {
-    if(ev->type() == Event::KeyPress)
+    if(ev.type() == Event::KeyPress)
     {
-        KeyEvent const *event = static_cast<KeyEvent const *>(ev);
-        if(!event->text().isEmpty() || event->key() == Qt::Key_Enter)
+        KeyEvent const &event = static_cast<KeyEvent const &>(ev);
+        if(!event.text().isEmpty() || event.key() == Qt::Key_Enter)
         {
             DENG2_ASSERT(!isOpen());
 
-            if(event->text().isEmpty() || event->text() == " ")
+            if(event.text().isEmpty() || event.text() == " ")
             {
                 d->menu->setCursor(d->selection);
             }
@@ -161,7 +161,7 @@ bool ChoiceWidget::handleEvent(Event const *ev)
                 int curs = d->selection;
                 for(int i = 0; i < d->items.size(); ++i)
                 {
-                    if(d->items[i].startsWith(event->text(), Qt::CaseInsensitive))
+                    if(d->items[i].startsWith(event.text(), Qt::CaseInsensitive))
                     {
                         curs = i;
                         break;

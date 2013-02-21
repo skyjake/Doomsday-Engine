@@ -20,6 +20,8 @@
 #include "de/Address"
 #include "de/String"
 
+#include <QHostInfo>
+
 namespace de {
 
 struct Address::Instance
@@ -101,6 +103,11 @@ void Address::setHost(QHostAddress const &host)
     d->host = host;
 }
 
+bool Address::isLocal() const
+{
+    return isHostLocal(d->host);
+}
+
 duint16 Address::port() const
 {
     return d->port;
@@ -143,6 +150,18 @@ QTextStream &operator << (QTextStream &os, Address const &address)
 {
     os << address.asText();
     return os;
+}
+
+bool Address::isHostLocal(QHostAddress const &host) // static
+{
+    if(host == QHostAddress::LocalHost) return true;
+
+    QHostInfo info = QHostInfo::fromName(QHostInfo::localHostName());
+    foreach(QHostAddress addr, info.addresses())
+    {
+        if(addr == host) return true;
+    }
+    return false;
 }
 
 } // namespace de

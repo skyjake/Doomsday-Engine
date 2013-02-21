@@ -2015,10 +2015,7 @@ boolean DD_Init(void)
         // Server start command.
         // (shortcut for -command "net init tcpip; net server start").
 #ifdef __SERVER__
-        if(!N_InitService(true))
-            Con_Message("Can't start server: network init failed.\n");
-        else
-            Con_Executef(CMDS_CMDLINE, false, "net server start");
+        Con_Executef(CMDS_CMDLINE, false, "net server start");
 #endif
     }
     else

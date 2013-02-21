@@ -239,13 +239,13 @@ void LogWidget::draw()
     d->sink.unlock();
 }
 
-bool LogWidget::handleEvent(Event const *event)
+bool LogWidget::handleEvent(Event const &event)
 {
-    if(event->type() != Event::KeyPress) return false;
+    if(event.type() != Event::KeyPress) return false;
 
-    KeyEvent const *ev = static_cast<KeyEvent const *>(event);
+    KeyEvent const &ev = static_cast<KeyEvent const &>(event);
 
-    switch(ev->key())
+    switch(ev.key())
     {
     case Qt::Key_PageUp:
         d->visibleOffset += 5;

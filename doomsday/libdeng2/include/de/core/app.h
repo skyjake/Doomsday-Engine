@@ -25,7 +25,9 @@
 #include "../CommandLine"
 #include "../NativePath"
 #include "../LogBuffer"
-#include "../FS"
+#include "../System"
+#include "../FileSystem"
+#include "../ScriptSystem"
 #include "../Module"
 #include "../Config"
 #include "../UnixInfo"
@@ -47,12 +49,9 @@ class Archive;
  *
  * @see GuiApp, TextApp
  */
-class DENG2_PUBLIC App
+class DENG2_PUBLIC App : DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
-    /// The object or resource that was being looked for was not found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
-
     enum SubsystemInitFlag {
         DefaultSubsystems   = 0x0,
         DisablePlugins      = 0x1
@@ -89,13 +88,22 @@ public:
     void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
 
     /**
-     * Adds a native module to the set of modules that can be imported in
-     * scripts.
+     * Adds a system to the application. The order of systems is preserved; the
+     * system added last will be notified of time changes last and will receive
+     * input events last (if others don't eat them).
      *
-     * @param name    Name of the module.
-     * @param module  Module namespace. App will observe this for deletion.
+     * @param system  System. Ownership kept by caller. The caller is
+     *                responsible for making sure the system has been
+     *                initialized properly.
      */
-    void addNativeModule(String const &name, Record &module);
+    void addSystem(System &system);
+
+    /**
+     * Removes a system from the application.
+     *
+     * @param system  System to remove.
+     */
+    void removeSystem(System &system);
 
     static App &app();
 
@@ -165,7 +173,12 @@ public:
     /**
      * Returns the application's file system.
      */
-    static FS &fileSystem();
+    static FileSystem &fileSystem();
+
+    /**
+     * Returns the application's script system.
+     */
+    static ScriptSystem &scriptSystem();
 
     /**
      * Returns the root folder of the file system.
@@ -186,16 +199,6 @@ public:
      * Returns the Unix system-level configuration preferences.
      */
     static UnixInfo &unixInfo();
-
-    /**
-     * Imports a script module that is located on the import path.
-     *
-     * @param name      Name of the module.
-     * @param fromPath  Absolute path of the script doing the importing.
-     *
-     * @return  The imported module.
-     */
-    static Record &importModule(String const &name, String const &fromPath = "");
 
     /**
      * Starts the application's main loop.
@@ -225,6 +228,19 @@ public:
      */
     void handleUncaughtException(String message);
 
+    /**
+     * Events received from the operating system should be passed here; the
+     * application will make sure all subsystems get a chance to process them.
+     */
+    virtual bool processEvent(Event const &);
+
+    /**
+     * Informs all the subsystems about advancement of time. Subsystems will be
+     * notified in the order they were added with addSystem(). This will be
+     * automatically called by the application clock when time changes.
+     */
+    void timeChanged(Clock const &);
+
 protected:
     /**
      * Returns the native path of the directory where the application can store
@@ -236,8 +252,7 @@ protected:
     virtual NativePath appDataPath() const = 0;
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(App::SubsystemInitFlags)

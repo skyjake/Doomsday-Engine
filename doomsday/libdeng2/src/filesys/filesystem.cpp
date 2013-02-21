@@ -28,14 +28,14 @@
 #include "de/ZipArchive"
 #include "de/Log"
 
-using namespace de;
+namespace de {
 
-static FS::Index const emptyIndex;
+static FileSystem::Index const emptyIndex;
 
-struct FS::Instance
+struct FileSystem::Instance
 {
     /// The main index to all files in the file system.
-    FS::Index index;
+    FileSystem::Index index;
 
     /// Index of file types. Each entry in the index is another index of names
     /// to file instances.
@@ -46,17 +46,15 @@ struct FS::Instance
     Folder root;
 };
 
-FS::FS()
-{
-    d = new Instance;
-}
+FileSystem::FileSystem() : d(new Instance)
+{}
 
-FS::~FS()
+FileSystem::~FileSystem()
 {
     delete d;
 }
 
-void FS::refresh()
+void FileSystem::refresh()
 {
     LOG_AS("FS::refresh");
 
@@ -68,7 +66,7 @@ void FS::refresh()
     printIndex();
 }
 
-Folder &FS::makeFolder(String const &path)
+Folder &FileSystem::makeFolder(String const &path)
 {
     Folder *subFolder = d->root.tryLocate<Folder>(path);
     if(!subFolder)
@@ -82,7 +80,7 @@ Folder &FS::makeFolder(String const &path)
     return *subFolder;
 }
 
-File *FS::interpret(File *sourceData)
+File *FileSystem::interpret(File *sourceData)
 {
     LOG_AS("FS::interpret");
 
@@ -139,12 +137,12 @@ File *FS::interpret(File *sourceData)
     return sourceData;
 }
 
-FS::Index const &FS::nameIndex() const
+FileSystem::Index const &FileSystem::nameIndex() const
 {
     return d->index;
 }
 
-int FS::findAll(String const &path, FoundFiles &found) const
+int FileSystem::findAll(String const &path, FoundFiles &found) const
 {
     LOG_AS("FS::findAll");
 
@@ -169,12 +167,12 @@ int FS::findAll(String const &path, FoundFiles &found) const
     return found.size();
 }
 
-File &FS::find(String const &path) const
+File &FileSystem::find(String const &path) const
 {
     return find<File>(path);
 }
 
-void FS::index(File &file)
+void FileSystem::index(File &file)
 {
     String const lowercaseName = file.name().lower();
 
@@ -185,7 +183,7 @@ void FS::index(File &file)
     indexOfType.insert(IndexEntry(lowercaseName, &file));
 }
 
-static void removeFromIndex(FS::Index &idx, File &file)
+static void removeFromIndex(FileSystem::Index &idx, File &file)
 {
     if(idx.empty())
     {
@@ -193,9 +191,9 @@ static void removeFromIndex(FS::Index &idx, File &file)
     }
 
     // Look up the ones that might be this file.
-    FS::IndexRange range = idx.equal_range(file.name().lower());
+    FileSystem::IndexRange range = idx.equal_range(file.name().lower());
 
-    for(FS::Index::iterator i = range.first; i != range.second; ++i)
+    for(FileSystem::Index::iterator i = range.first; i != range.second; ++i)
     {
         if(i->second == &file)
         {
@@ -206,13 +204,18 @@ static void removeFromIndex(FS::Index &idx, File &file)
     }
 }
 
-void FS::deindex(File &file)
+void FileSystem::deindex(File &file)
 {
     removeFromIndex(d->index, file);
     removeFromIndex(d->typeIndex[DENG2_TYPE_NAME(file)], file);
 }
 
-FS::Index const &FS::indexFor(String const &typeName) const
+void FileSystem::timeChanged(Clock const &)
+{
+    // perform time-based processing (indexing/pruning/refreshing)
+}
+
+FileSystem::Index const &FileSystem::indexFor(String const &typeName) const
 {
     Instance::TypeIndex::const_iterator found = d->typeIndex.find(typeName);
     if(found != d->typeIndex.end())
@@ -226,7 +229,7 @@ FS::Index const &FS::indexFor(String const &typeName) const
     */
 }
 
-void FS::printIndex()
+void FileSystem::printIndex()
 {
     LOG_DEBUG("Main FS index has %i entries") << d->index.size();
 
@@ -247,7 +250,9 @@ void FS::printIndex()
     }
 }
 
-Folder &FS::root()
+Folder &FileSystem::root()
 {
     return d->root;
 }
+
+} // namespace de

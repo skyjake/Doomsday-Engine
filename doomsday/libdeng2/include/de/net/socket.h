@@ -201,11 +201,6 @@ public:
      */
     void setQuiet(bool noLogOutput);
 
-    /**
-     * Determines whether a host address refers to the local host.
-     */
-    static bool isHostLocal(QHostAddress const &host);
-
 signals:
     void addressResolved();
     void connected();
@@ -239,8 +234,7 @@ protected:
     void send(IByteArray const &packet, duint channel);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 
     /**
      * ListenSocket creates instances of Socket so it needs to use

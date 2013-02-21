@@ -33,6 +33,7 @@ win32 {
     include(../dep_directx.pri)
 }
 include(../dep_deng2.pri)
+include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_deng1.pri)
 
@@ -280,6 +281,7 @@ DENG_HEADERS += \
     include/network/net_main.h \
     include/network/net_msg.h \
     include/network/protocol.h \
+    include/network/serverlink.h \
     include/network/sys_network.h \
     include/network/ui_mpi.h \
     include/r_util.h \
@@ -555,7 +557,7 @@ SOURCES += \
     src/network/net_main.cpp \
     src/network/net_msg.cpp \
     src/network/net_ping.cpp \
-    src/network/protocol.cpp \
+    src/network/serverlink.cpp \
     src/network/sys_network.cpp \
     src/network/ui_mpi.cpp \
     src/r_util.cpp \
@@ -721,6 +723,7 @@ macx {
     # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng2.2.dylib, ..)
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng1.1.dylib, ..)
+    linkBinaryToBundledLibdengShell(Doomsday.app/Contents/MacOS/Doomsday)
 
     # Clean up previous deployment.
     doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")

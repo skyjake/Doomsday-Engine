@@ -240,8 +240,7 @@ public:
         Nodes &childNodes(NodeType type);
 
     private:
-        struct Instance;
-        Instance *d;
+        DENG2_PRIVATE(d)
     };
 
 public:

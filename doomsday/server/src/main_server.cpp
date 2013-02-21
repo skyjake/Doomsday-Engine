@@ -33,6 +33,7 @@
 #include "con_main.h"
 #include "ui/displaymode.h"
 #include "sys_system.h"
+#include "serversystem.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -60,22 +61,26 @@ int main(int argc, char** argv)
     de::App *dengApp = &textApp;
     novideo = true;
 
+    // Override the system locale (affects number/time formatting).
+    QLocale::setDefault(QLocale("en_US.UTF-8"));
+
+    // Use the host system's proxy configuration.
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
+
+    // Metadata.
+    QCoreApplication::setOrganizationDomain ("dengine.net");
+    QCoreApplication::setOrganizationName   ("Deng Team");
+    QCoreApplication::setApplicationName    ("Doomsday Server");
+    QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
+
     dengApp->setTerminateFunc(handleLegacyCoreTerminate);
 
+    ServerSystem serverSystem;
+    dengApp->addSystem(serverSystem);
+
+    // Initialization.
     try
     {
-        // Override the system locale (affects number/time formatting).
-        QLocale::setDefault(QLocale("en_US.UTF-8"));
-
-        // Use the host system's proxy configuration.
-        QNetworkProxyFactory::setUseSystemConfiguration(true);
-
-        // Metadata.
-        QCoreApplication::setOrganizationDomain ("dengine.net");
-        QCoreApplication::setOrganizationName   ("Deng Team");
-        QCoreApplication::setApplicationName    ("Doomsday Server");
-        QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
-
         // C interface to the app.
         de2LegacyCore = LegacyCore_New();
 

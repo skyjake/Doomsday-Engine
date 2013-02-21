@@ -118,7 +118,7 @@ Library* Library_New(const char* filePath)
     {
         Str_Clear(lastError);
 
-        de::LibraryFile& libFile = DENG2_APP->rootFolder().locate<de::LibraryFile>(filePath);
+        de::LibraryFile &libFile = de::App::rootFolder().locate<de::LibraryFile>(filePath);
         if(libFile.library().type() == de::Library::DEFAULT_TYPE)
         {
             // This is just a shared library, not a plugin.
@@ -247,12 +247,17 @@ const char* Library_LastError(void)
 
 int Library_IterateAvailableLibraries(int (*func)(void *, const char *, const char *, void *), void *data)
 {
-    const de::FS::Index& libs = DENG2_APP->fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
+    using de::FS;
+    using de::App;
+    using de::LibraryFile;
+    using de::NativeFile;
 
-    DENG2_FOR_EACH_CONST(de::FS::Index, i, libs)
+    FS::Index const &libs = App::fileSystem().indexFor(DENG2_TYPE_NAME(LibraryFile));
+
+    DENG2_FOR_EACH_CONST(FS::Index, i, libs)
     {
-        de::LibraryFile* lib = static_cast<de::LibraryFile*>(i->second);
-        const de::NativeFile* src = dynamic_cast<const de::NativeFile*>(lib->source());
+        LibraryFile *lib = static_cast<LibraryFile *>(i->second);
+        NativeFile const *src = dynamic_cast<de::NativeFile const *>(lib->source());
         if(src)
         {
             int result = func(lib, src->name().toUtf8().constData(),

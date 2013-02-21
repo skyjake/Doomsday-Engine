@@ -221,6 +221,13 @@
     typedef ClassName Public; \
     struct ClassName::Instance : public de::Private<ClassName>
 
+/**
+ * Macro for publicly declaring a pointer to the private implementation.
+ */
+#define DENG2_PRIVATE(Var) \
+    struct Instance; \
+    Instance *Var;
+
 #if defined(__cplusplus)
 namespace de {
 
@@ -231,8 +238,10 @@ namespace de {
 template <typename Type>
 struct Private {
     Type &self;
+    Type *thisPublic;
     typedef Private<Type> Base;
-    Private(Type &i) : self(i) {}
+    Private(Type &i) : self(i), thisPublic(&i) {}
+    Private(Type *i) : self(*i), thisPublic(i) {}
 };
 
 template <typename FromType, typename ToType>

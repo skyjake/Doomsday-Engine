@@ -30,6 +30,11 @@
 #include "de_console.h"
 #include "de_network.h"
 
+#ifdef __SERVER__
+#  include "serversystem.h"
+#  include "map/gamemap.h"
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 #define MASTER_QUEUE_LEN    16
@@ -59,8 +64,10 @@ static int mqHead, mqTail;
 static netevent_t netEventQueue[NETEVENT_QUEUE_LEN];
 static int neqHead, neqTail;
 
+#ifdef __SERVER__
 // Countdown for master updates.
 static timespan_t masterHeartbeat = 0;
+#endif
 
 // CODE --------------------------------------------------------------------
 
@@ -159,17 +166,19 @@ void N_NETicker(timespan_t time)
     masteraction_t act;
     int i, num;
 
+#ifdef __SERVER__
     if(netGame)
     {
         masterHeartbeat -= time;
 
         // Update master every 2 minutes.
-        if(masterAware && N_UsingInternet() && masterHeartbeat < 0)
+        if(masterAware && App_ServerSystem().isListening() && theMap && masterHeartbeat < 0)
         {
             masterHeartbeat = MASTER_HEARTBEAT;
             N_MasterAnnounceServer(true);
         }
     }
+#endif
 
     // Is there a master action to worry about?
     if(N_MAGet(&act))
@@ -219,27 +228,19 @@ void N_Update(void)
 {
     netevent_t  nevent;
 
-#ifdef __SERVER__
-    char name[256];
-#endif
-
     // Are there any events to process?
     while(N_NEGet(&nevent))
     {
         switch(nevent.type)
         {
 #ifdef __SERVER__
-        case NE_CLIENT_ENTRY:
-            // Find out the name of the new player.
-            memset(name, 0, sizeof(name));
-            N_GetNodeName(nevent.id, name);
-
+        case NE_CLIENT_ENTRY: {
             // Assign a console to the new player.
-            Sv_PlayerArrives(nevent.id, name);
+            Sv_PlayerArrives(nevent.id, App_ServerSystem().user(nevent.id).name().toUtf8());
 
             // Update the master.
             masterHeartbeat = MASTER_UPDATETIME;
-            break;
+            break; }
 
         case NE_CLIENT_EXIT:
             Sv_PlayerLeaves(nevent.id);
@@ -247,15 +248,15 @@ void N_Update(void)
             // Update the master.
             masterHeartbeat = MASTER_UPDATETIME;
             break;
+
+        /*case NE_TERMINATE_NODE:
+            // The server receives this event when a client's connection is broken.
+            App_ServerSystem().terminateNode(nevent.id);
+            break;*/
 #endif // __SERVER__
 
-        case NE_TERMINATE_NODE:
-            // The server receives this event when a client's connection is broken.
-            N_TerminateNode(nevent.id);
-            break;
-
 #ifdef __CLIENT__
-        case NE_END_CONNECTION:
+        /*case NE_END_CONNECTION:
             // A client receives this event when the connection is
             // terminated.
             if(netGame)
@@ -265,7 +266,7 @@ void N_Update(void)
                 Con_Message("N_Update: Connection was terminated.\n");
                 N_Disconnect();
             }
-            break;
+            break;*/
 #endif
 
         default:
@@ -281,14 +282,16 @@ void N_Update(void)
  */
 void N_TerminateClient(int console)
 {
-    if(!N_IsAvailable() || !clients[console].connected || !netServerMode)
+#ifdef __SERVER__
+    if(!clients[console].connected)
         return;
 
     Con_Message("N_TerminateClient: '%s' from console %i.\n",
                 clients[console].name, console);
 
-    N_TerminateNode(clients[console].nodeID);
+    App_ServerSystem().terminateNode(clients[console].nodeID);
 
     // Update the master.
     masterHeartbeat = MASTER_UPDATETIME;
+#endif
 }

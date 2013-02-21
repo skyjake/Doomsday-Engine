@@ -334,8 +334,7 @@ public:
     void variableBeingDeleted(Variable &variable);
 
 private:
-    struct Instance;
-    Instance * d;
+    DENG2_PRIVATE(d)
 };
 
 /// Converts the record into a human-readable text representation.

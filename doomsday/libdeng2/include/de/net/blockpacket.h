@@ -1,6 +1,6 @@
-/** @file event.h Base class for events.
+/** @file blockpacket.h  Packet that contains a Block.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -13,43 +13,38 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_EVENT_H
-#define LIBDENG2_EVENT_H
+#ifndef LIBDENG2_BLOCKPACKET_H
+#define LIBDENG2_BLOCKPACKET_H
 
-#include "../libdeng2.h"
+#include "../Packet"
+#include "../Block"
 
 namespace de {
 
 /**
- * Base class for events.
+ * Packet that contains a Block.
  *
- * @ingroup widgets
+ * @ingroup protocol
  */
-class DENG2_PUBLIC Event
+class DENG2_PUBLIC BlockPacket : public Packet, public Block
 {
 public:
-    enum {
-        KeyPress = 1,
-        KeyRelease = 2
-    };
+    BlockPacket();
+
+    BlockPacket(Block const &block);
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
 
 public:
-    Event(int type_ = 0) : _type(type_) {}
-
-    virtual ~Event() {}
-
-    /**
-     * Returns the type code of the event.
-     */
-    int type() const { return _type; }
-
-private:
-    int _type;
+    /// Constructor for a Protocol.
+    static Packet *fromBlock(Block const &block);
 };
 
 } // namespace de
 
-#endif // LIBDENG2_EVENT_H
+#endif // LIBDENG2_BLOCKPACKET_H

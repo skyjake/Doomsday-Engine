@@ -34,6 +34,7 @@
 
 #include "network/net_main.h"
 #include "network/net_event.h"
+#include "network/serverlink.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -70,7 +71,7 @@ void    MPIGotoPage(ui_object_t *ob);
 void    MPIGoBack(ui_object_t *ob);
 void    MPIChooseMode(ui_object_t *ob);
 void    MPIToggleMasterItems(ui_object_t *ob);
-void    MPIStartServer(ui_object_t *ob);
+//void    MPIStartServer(ui_object_t *ob);
 void    MPIShowProtocolSettings(ui_object_t *ob);
 void    MPISetupProtocol(ui_object_t *ob);
 void    MPISearch(ui_object_t *ob);
@@ -103,8 +104,8 @@ uidata_listitem_t lstit_found[MAX_FOUND];
 
 static boolean mode_buttons[2] = { true, false };
 
-static uidata_edit_t ed_server = { str_server, 100 };
-static uidata_edit_t ed_desc = { str_desc, 200 };
+//static uidata_edit_t ed_server = { str_server, 100 };
+//static uidata_edit_t ed_desc = { str_desc, 200 };
 static uidata_edit_t ed_masterip = { str_masterip, 127 };
 static uidata_list_t lst_found = { lstit_found, 0 };
 static uidata_edit_t ed_ipsearch = { str_ipaddr, 127 };
@@ -113,6 +114,7 @@ static uidata_edit_t ed_portsearch = { str_ipport, 127 };
 
 static ui_page_t page_server, page_client;
 
+#if 0
 static ui_object_t ob_server[] = {  // Server setup
     {UI_TEXT, 0, 0, 50, 200, 0, 70, "Server name", UIText_Drawer},
     {UI_EDIT, 0, 0, 320, 200, 500, 70, "", UIEdit_Drawer, UIEdit_Responder, 0,
@@ -144,6 +146,7 @@ static ui_object_t ob_server[] = {  // Server setup
 
     {UI_NONE}
 };
+#endif
 
 static ui_object_t ob_client[] = {
     {UI_TEXT, 0, 0, 0, 0, 0, 70, "Get servers from:", UIText_Drawer},
@@ -213,7 +216,7 @@ static ui_object_t ob_client[] = {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static searchmode_t searchMode = SEARCH_MASTER;
-static boolean lookedForHosts = false;
+//static boolean lookedForHosts = false;
 static boolean retrieving = false;
 static unsigned int myCrc = 0;
 static char warningString[256];
@@ -356,11 +359,13 @@ void MPIServerInfoDrawer(ui_object_t *ob)
     UI_DrawHelpBox(&ob->geometry.origin, &ob->geometry.size, ob->flags & UIF_DISABLED ? .2f : 1, (char *) ob->data);
 }
 
+#if 0
 void MPIToggleMasterItems(ui_object_t *)
 {
     UI_FlagGroup(page_server._objects, 1, UIF_DISABLED, UIFG_XOR);
     MPIUpdatePublicButton();
 }
+#endif
 
 void MPIGotoPage(ui_object_t* ob)
 {
@@ -375,6 +380,7 @@ void MPIGoBack(ui_object_t *)
         UI_SetPage(UI_CurrentPage()->previous);
 }
 
+#if 0
 void MPIStartServer(ui_object_t *)
 {
     N_ShutdownService();
@@ -391,27 +397,26 @@ void MPIStartServer(ui_object_t *)
 
     UI_End();
 }
+#endif
 
+/*
 void MPIFinishCustomServerSearch(int nodeId, const byte* data, int size)
 {
     N_ClientHandleResponseToInfoQuery(nodeId, data, size);
     MPIUpdateServerList();
 }
+*/
 
 void MPISearch(ui_object_t *ob)
 {
     if(retrieving)
         return;
 
-    // Network services are naturally needed for searching.
-    if(!N_IsAvailable())
-        N_InitService(false);
-
     if(searchMode == SEARCH_CUSTOM)
     {
-        // This is a synchronous operation.
-        N_LookForHosts(str_ipaddr, strtol(str_ipport, 0, 0), MPIFinishCustomServerSearch);
-        lookedForHosts = true;
+        // This is an asynchronous operation.
+        Net_ServerLink().discover(de::String("%1:%2").arg(str_ipaddr).arg(str_ipport));
+        //lookedForHosts = true;
     }
     else
     {
@@ -429,27 +434,37 @@ void MPIFormatServerInfo(char* dest, serverinfo_t *info)
             info->maxPlayers, info->map, info->gameIdentityKey);
 }
 
+struct ServerDiscoveryObserver : DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
+{
+    void linkDiscoveryUpdate(ServerLink const &)
+    {
+        LOG_DEBUG("ServerDiscoveryObserver notified, updating server list");
+        MPIUpdateServerList();
+    }
+};
+
+static ServerDiscoveryObserver mpiDiscoveryObserver;
+
 /*
  * Fill the server list with the list of currently known servers.
  */
 void MPIUpdateServerList(void)
 {
-    int     num, i, k;
+    int num, i, k;
     serverinfo_t info;
     ui_object_t *listObject = UI_FindObject(ob_client, 0, UIF_SERVER_LIST);
 
     if(searchMode == SEARCH_CUSTOM)
     {
         num = N_GetHostCount();
-        if(!num)
+        if(!num) // No servers.
         {
             lst_found.selection = -1;
-            if(lookedForHosts)
+            if(!Net_ServerLink().isDiscovering())
             {
                 lst_found.count = 1;
                 lstit_found[0].data = -1;
-                sprintf(lstit_found[0].text, "(No response from %s)",
-                        str_ipaddr);
+                sprintf(lstit_found[0].text, "(No response from %s)", str_ipaddr);
             }
             else
             {
@@ -570,11 +585,9 @@ void MPIConnect(ui_object_t *)
 {
     char    buf[80];
 
-    N_ShutdownService();
-    N_InitService(false);
-
     sprintf(buf, "net %sconnect %i", searchMode == SEARCH_MASTER ? "m" : "",
             lstit_found[lst_found.selection].data2);
+
     if(Con_Execute(CMDS_DDAY,buf, false, false))
     {
         // Success.
@@ -611,12 +624,12 @@ void MPIHelpDrawer(ui_object_t *ob)
                        UI_ScreenH(980 - yPos[selection]));
     }
 }
-#endif
 
 void MPIUpdatePublicButton(void)
 {
     strcpy(UI_FindObject(ob_server, 2, 0)->text, masterAware ? "Yes" : "No");
 }
+#endif
 
 /*
  * The GUI interface for setting up a server/client.
@@ -629,8 +642,9 @@ void DD_NetSetup(int serverMode)
         return;
     }
 
-    lookedForHosts = false;
+    //lookedForHosts = false;
 
+#if 0
     if(serverMode)
     {
         // Prepare Server Setup.
@@ -644,10 +658,13 @@ void DD_NetSetup(int serverMode)
         MPIUpdatePublicButton();
     }
     else
+#endif
     {
         // Prepare Client Setup.
         UI_InitPage(&page_client, ob_client);
         strcpy(str_ipaddr, nptIPAddress);
+
+        Net_ServerLink().audienceForDiscoveryUpdate += mpiDiscoveryObserver;
 
         UI_FlagGroup(ob_client, 1, UIF_ACTIVE, searchMode == SEARCH_MASTER);
         UI_FlagGroup(ob_client, 2, UIF_ACTIVE, searchMode != SEARCH_MASTER);
@@ -673,12 +690,12 @@ void DD_NetSetup(int serverMode)
     //lst_protocol.selection = nptActive;
 
     UI_PageInit(true, true, false, false, false);
-    UI_SetPage(serverMode ? &page_server : &page_client);
+    UI_SetPage(&page_client);
 
-    CP_InitCvarSliders(ob_server);
+    //CP_InitCvarSliders(ob_server);
 
     // Automatically look for servers on the master.
-    if(!serverMode && searchMode == SEARCH_MASTER)
+    if(searchMode == SEARCH_MASTER)
     {
         MPIRetrieveServersFromMaster();
     }

@@ -578,7 +578,7 @@ void Sv_GetPackets(void)
  * Assign a new console to the player. Returns true if successful.
  * Called by N_Update().
  */
-boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
+boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
 {
     int                 i;
 

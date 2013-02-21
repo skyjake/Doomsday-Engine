@@ -117,7 +117,7 @@ public:
 
     // Events.
     void draw();
-    bool handleEvent(Event const *);
+    bool handleEvent(Event const &);
 
 public slots:
     void open();
@@ -127,8 +127,7 @@ signals:
     void closed();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace shell

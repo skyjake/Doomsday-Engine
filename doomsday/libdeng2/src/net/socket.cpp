@@ -430,6 +430,7 @@ void Socket::connectToDomain(String const &domainNameWithOptionalPort,
     {
         int pos = str.indexOf(':');
         port = str.mid(pos + 1).toInt();
+        if(port <= 0 || port > 0xffff) port = defaultPort;
         str = str.left(pos);
     }
     if(str == "localhost")
@@ -626,19 +627,7 @@ bool Socket::isOpen() const
 
 bool Socket::isLocal() const
 {
-    return isHostLocal(peerAddress().host());
-}
-
-bool Socket::isHostLocal(QHostAddress const &host) // static
-{
-    if(host == QHostAddress::LocalHost) return true;
-
-    QHostInfo info = QHostInfo::fromName(QHostInfo::localHostName());
-    foreach(QHostAddress addr, info.addresses())
-    {
-        if(addr == host) return true;
-    }
-    return false;
+    return peerAddress().isLocal();
 }
 
 void Socket::socketDisconnected()

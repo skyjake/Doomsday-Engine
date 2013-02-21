@@ -31,6 +31,7 @@
 
 #ifdef __cplusplus
 
+#include <de/libdeng2.h>
 #include <QObject>
 #include <QNetworkReply>
 
@@ -67,8 +68,7 @@ public slots:
     void checkNowShowingProgress();
 
 private:
-    struct Instance;
-    Instance* d;
+    DENG2_PRIVATE(d)
 };
 
 /**

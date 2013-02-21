@@ -55,9 +55,7 @@ public:
     void assertLocked() const;
 
 private:
-    /// Pointer to the internal mutex data.
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

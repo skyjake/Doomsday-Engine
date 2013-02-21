@@ -86,8 +86,7 @@ protected:
     static void initCanvasAfterRecreation(Canvas& canvas);
 
 private:
-    struct Instance;
-    Instance* d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // CANVASWINDOW_H

@@ -314,8 +314,7 @@ public:
     void operator << (Reader &from);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::PrintFlags)

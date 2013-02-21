@@ -42,6 +42,7 @@
 #endif
 #include "ui/nativeui.h"
 #include "network/net_main.h"
+#include "network/net_buf.h"
 #include "audio/s_main.h"
 
 int novideo;                // if true, stay in text mode for debugging

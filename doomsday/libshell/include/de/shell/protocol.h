@@ -125,8 +125,7 @@ public:
     static Packet *fromBlock(Block const &block);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 /**

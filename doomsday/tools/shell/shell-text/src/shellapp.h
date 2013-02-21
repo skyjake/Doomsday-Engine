@@ -48,8 +48,7 @@ public slots:
     void menuClosed();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // SHELLAPP_H

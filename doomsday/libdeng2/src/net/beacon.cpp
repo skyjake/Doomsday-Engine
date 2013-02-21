@@ -203,15 +203,22 @@ void Beacon::readDiscoveryReply()
         if(block == discoveryMessage)
             continue;
 
-        // Remove the service listening port from the beginning.
-        duint16 listenPort = 0;
-        Reader(block) >> listenPort;
-        block.remove(0, 2);
+        try
+        {
+            // Remove the service listening port from the beginning.
+            duint16 listenPort = 0;
+            Reader(block) >> listenPort;
+            block.remove(0, 2);
 
-        Address host(from, listenPort);
-        d->found.insert(host, block);
+            Address host(from, listenPort);
+            d->found.insert(host, block);
 
-        emit found(host, block);
+            emit found(host, block);
+        }
+        catch(Error const &)
+        {
+            // Bogus message, ignore.
+        }
     }
 }
 
