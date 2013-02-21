@@ -188,7 +188,7 @@ void LocalServerDialog::validate()
         bool inUse = false;
         foreach(Address const &sv, GuiShellApp::app().serverFinder().foundServers())
         {
-            if(Socket::isHostLocal(sv.host()) && sv.port() == port)
+            if(sv.isLocal() && sv.port() == port)
             {
                 isValid = false;
                 inUse = true;
