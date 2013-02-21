@@ -51,16 +51,16 @@ AbstractLink::~AbstractLink()
     delete d;
 }
 
-void AbstractLink::connect(String const &domain, TimeDelta const &timeout)
+void AbstractLink::connectDomain(String const &domain, TimeDelta const &timeout)
 {
     disconnect();
 
     d->socket.reset(new Socket);
 
-    QObject::connect(d->socket.get(), SIGNAL(addressResolved()), this, SIGNAL(addressResolved()));
-    QObject::connect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
-    QObject::connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    QObject::connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
+    connect(d->socket.get(), SIGNAL(addressResolved()), this, SIGNAL(addressResolved()));
+    connect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
+    connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
 
     // Fallback to default port.
     d->tryingToConnectToHost = domain;
@@ -72,16 +72,16 @@ void AbstractLink::connect(String const &domain, TimeDelta const &timeout)
     d->timeout = timeout;
 }
 
-void AbstractLink::connect(Address const &address)
+void AbstractLink::connectHost(Address const &address)
 {
     disconnect();
 
     d->peerAddress = address;
     d->socket.reset(new Socket);
 
-    QObject::connect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
-    QObject::connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    QObject::connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
+    connect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
+    connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
 
     // Fallback to default port.
     if(!d->peerAddress.port()) d->peerAddress.setPort(13209);
@@ -101,8 +101,8 @@ void AbstractLink::takeOver(Socket *openSocket)
     d->socket.reset(openSocket);
 
     // Note: socketConnected() not used because the socket is already open.
-    QObject::connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    QObject::connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
+    connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
 
     d->status = Connected;
     d->connectedAt = Time();

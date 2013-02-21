@@ -38,12 +38,12 @@ DENG2_PIMPL(Link)
 
 Link::Link(String const &domain, TimeDelta const &timeout) : d(new Instance(this))
 {
-    connect(domain, timeout);
+    connectDomain(domain, timeout);
 }
 
 Link::Link(Address const &address) : d(new Instance(this))
 {
-    connect(address);
+    connectHost(address);
 }
 
 Link::Link(Socket *openSocket) : d(new Instance(this))

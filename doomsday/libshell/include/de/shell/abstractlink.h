@@ -57,26 +57,26 @@ public:
      * @param domain   Domain/IP address of the server.
      * @param timeout  Keep trying until this much time has passed.
      */
-    void connect(String const &domain, TimeDelta const &timeout = 0);
+    virtual void connectDomain(String const &domain, TimeDelta const &timeout = 0);
 
     /**
      * Opens a connection to a server over the network.
      *
      * @param address  Address of the server.
      */
-    void connect(Address const &address);
+    virtual void connectHost(Address const &address);
 
     /**
      * Takes over an existing socket.
      *
      * @param openSocket  Socket. AbstractLink takes ownership.
      */
-    void takeOver(Socket *openSocket);
+    virtual void takeOver(Socket *openSocket);
 
     /**
      * Closes the connection.
      */
-    void disconnect();
+    virtual void disconnect();
 
     /**
      * Peer address of the link. The address may be a null address if the IP
