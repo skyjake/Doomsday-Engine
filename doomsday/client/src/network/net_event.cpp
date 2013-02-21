@@ -256,7 +256,7 @@ void N_Update(void)
 #endif // __SERVER__
 
 #ifdef __CLIENT__
-        case NE_END_CONNECTION:
+        /*case NE_END_CONNECTION:
             // A client receives this event when the connection is
             // terminated.
             if(netGame)
@@ -266,7 +266,7 @@ void N_Update(void)
                 Con_Message("N_Update: Connection was terminated.\n");
                 N_Disconnect();
             }
-            break;
+            break;*/
 #endif
 
         default:

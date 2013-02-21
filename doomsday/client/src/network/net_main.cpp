@@ -57,6 +57,8 @@
 #include "dd_loop.h"
 #include "map/p_players.h"
 
+#include <de/Value>
+
 // MACROS ------------------------------------------------------------------
 
 #define OBSOLETE                CVF_NO_ARCHIVE|CVF_HIDE // Old ccmds.
@@ -509,7 +511,6 @@ void Net_Update(void)
 
     // Check for received packets.
 #ifdef __CLIENT__
-    N_ListenNodes();
     Cl_GetPackets();
 #endif
 }
@@ -1123,6 +1124,7 @@ D_CMD(SetConsole)
     return true;
 }
 
+#if 0
 void Net_FinishConnection(int nodeId, const byte* data, int size)
 {
     serverinfo_t info;
@@ -1144,42 +1146,15 @@ void Net_FinishConnection(int nodeId, const byte* data, int size)
         Con_Message("Net_FinishConnection: Failed to retrieve server info.\n");
     }
 }
+#endif
 
 int Net_StartConnection(const char* address, int port)
 {
     Con_Message("Net_StartConnection: Connecting to %s...\n", address);
 
     // Start searching at the specified location.
-    return N_LookForHosts(address, port, Net_FinishConnection);
-
-
-/*
-            if(N_GetHostInfo(0, &param->info))
-            {   // Found something!
-                Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
-
-                returnValue = true;
-                isDone = true;
-            }
-            else
-            {   // Nothing yet, should we wait a while longer?
-                if(Sys_GetSeconds() - startTime >= netConnectTimeout)
-                    isDone = true;
-                else
-                    Sys_Sleep(250); // Wait a while.
-            }
-        }
-
-        if(!returnValue)
-            Con_Message("No response from %s.\n", param->address);
-    }
-    else
-    {
-        Con_Message("TCP/IP not available.\n");
-    }
-
-    BusyMode_WorkerEnd();
-    return returnValue;*/
+    Net_ServerLink().connectDomain(de::String(address) + ":" + port, 7 /*timeout*/);
+    return true;
 }
 
 /**
@@ -1294,10 +1269,9 @@ D_CMD(Net)
                 return false;
             }
 
-            if((success = N_Disconnect()) != false)
-            {
-                Con_Message("Disconnected.\n");
-            }
+            Net_ServerLink().disconnect();
+
+            Con_Message("Disconnected.\n");
         }
 #endif
         else
@@ -1351,25 +1325,25 @@ D_CMD(Net)
 #ifdef __CLIENT__
         if(!stricmp(argv[1], "search"))
         {
-            success = N_LookForHosts(argv[2], 0, 0);
+            Net_ServerLink().discover(argv[2]);
         }
         else if(!stricmp(argv[1], "connect"))
         {
-            int idx;
-
             if(netGame)
             {
                 Con_Printf("Already connected.\n");
                 return false;
             }
 
-            idx = strtol(argv[2], NULL, 10); // ignored!
-            CmdReturnValue = success = N_Connect();
+            Net_ServerLink().connectDomain(argv[2], 5);
 
+            //idx = strtol(argv[2], NULL, 10); // ignored!
+            //CmdReturnValue = success = N_Connect();
+            /*
             if(success)
             {
                 Con_Message("Connected.\n");
-            }
+            }*/
         }
         else if(!stricmp(argv[1], "mconnect"))
         {
@@ -1398,7 +1372,8 @@ D_CMD(Net)
     {
         if(!stricmp(argv[1], "search"))
         {
-            success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0), 0);
+            //success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0), 0);
+            Net_ServerLink().discover(de::String(argv[2]) + ":" + argv[3]);
         }
     }
 #endif
@@ -1429,6 +1404,33 @@ static boolean tokenize(char const *line, char *label, char *value, int max)
 
     // Everything is OK.
     return true;
+}
+
+void Net_RecordToServerInfo(de::Record const &rec, serverinfo_t *info)
+{
+    memset(info, 0, sizeof(*info));
+
+    info->port           = (int)  rec["port"].value().asNumber();
+    info->version        = (int)  rec["ver" ].value().asNumber();
+    info->loadedFilesCRC = (uint) rec["wcrc"].value().asNumber();
+    info->numPlayers     = (int)  rec["nump"].value().asNumber();
+    info->maxPlayers     = (int)  rec["maxp"].value().asNumber();
+    info->canJoin        =        rec["open"].value().isTrue();
+
+#define COPY_STR(Member, VarName) \
+    strncpy(Member, rec[VarName].value().asText().toUtf8(), sizeof(Member) - 1);
+
+    COPY_STR(info->name,            "name" );
+    COPY_STR(info->description,     "info" );
+    COPY_STR(info->plugin,          "game" );
+    COPY_STR(info->gameIdentityKey, "mode" );
+    COPY_STR(info->gameConfig,      "setup");
+    COPY_STR(info->iwad,            "iwad" );
+    COPY_STR(info->pwads,           "pwads");
+    COPY_STR(info->map,             "map"  );
+    COPY_STR(info->clientNames,     "plrn" );
+
+#undef COPY_STR
 }
 
 boolean Net_StringToServerInfo(const char *valuePair, serverinfo_t *info)

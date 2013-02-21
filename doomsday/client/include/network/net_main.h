@@ -29,6 +29,7 @@
 #include "dd_share.h"
 #include "net_msg.h"
 #include "map/p_mapdata.h"
+#include <de/Record>
 #include <de/smoother.h>
 
 #ifdef __cplusplus
@@ -261,6 +262,8 @@ void            Net_PrintServerInfo(int index, serverinfo_t *info);
  * label/value pair is recognized.
  */
 boolean Net_StringToServerInfo(char const *valuePair, serverinfo_t *info);
+
+void Net_RecordToServerInfo(de::Record const &rec, serverinfo_t *info);
 
 #ifdef __cplusplus
 } // extern "C"

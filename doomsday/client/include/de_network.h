@@ -41,8 +41,8 @@
 #endif
 
 #ifdef __CLIENT__
-#  include "network/net_demo.h"
 #  include "api_client.h"
+#  include "network/net_demo.h"
 #  include "client/cl_def.h"
 #  include "client/cl_player.h"
 #  include "client/cl_mobj.h"

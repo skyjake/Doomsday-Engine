@@ -31,10 +31,7 @@
 #include "net_buf.h"
 #include "net_main.h"
 #include "monitor.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "serverlink.h"
 
 extern boolean  allowSending;
 extern int      maxQueuePackets;
@@ -42,29 +39,15 @@ extern int      maxQueuePackets;
 extern char    *nptIPAddress;
 extern int      nptIPPort;
 
-void            N_Register(void);
+ServerLink &Net_ServerLink(void);
 
-void            N_SystemInit(void);
-void            N_SystemShutdown(void);
-void            N_PrintInfo(void);
-void            N_Listen(void);
-void            N_ListenNodes(void);
+void    N_Register(void);
 
-boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
-void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
-boolean         N_Connect(void);
-boolean         N_Disconnect(void);
-
-int             N_GetNodeSocket(nodeid_t id);
-boolean         N_HasNodeJoined(nodeid_t id);
-
-int             N_GetHostCount(void);
-boolean         N_GetHostInfo(int index, struct serverinfo_s *info);
-
-void            N_PrintNetworkStatus(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+void    N_SystemInit(void);
+void    N_SystemShutdown(void);
+void    N_PrintInfo(void);
+int     N_GetHostCount(void);
+boolean N_GetHostInfo(int index, struct serverinfo_s *info);
+void    N_PrintNetworkStatus(void);
 
 #endif /* LIBDENG_SYSTEM_NETWORK_H */

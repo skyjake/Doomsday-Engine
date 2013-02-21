@@ -34,6 +34,7 @@
 
 #include "network/net_main.h"
 #include "network/net_event.h"
+#include "network/serverlink.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -215,7 +216,7 @@ static ui_object_t ob_client[] = {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static searchmode_t searchMode = SEARCH_MASTER;
-static boolean lookedForHosts = false;
+//static boolean lookedForHosts = false;
 static boolean retrieving = false;
 static unsigned int myCrc = 0;
 static char warningString[256];
@@ -398,11 +399,13 @@ void MPIStartServer(ui_object_t *)
 }
 #endif
 
+/*
 void MPIFinishCustomServerSearch(int nodeId, const byte* data, int size)
 {
     N_ClientHandleResponseToInfoQuery(nodeId, data, size);
     MPIUpdateServerList();
 }
+*/
 
 void MPISearch(ui_object_t *ob)
 {
@@ -411,9 +414,9 @@ void MPISearch(ui_object_t *ob)
 
     if(searchMode == SEARCH_CUSTOM)
     {
-        // This is a synchronous operation.
-        N_LookForHosts(str_ipaddr, strtol(str_ipport, 0, 0), MPIFinishCustomServerSearch);
-        lookedForHosts = true;
+        // This is an asynchronous operation.
+        Net_ServerLink().discover(de::String("%1:%2").arg(str_ipaddr).arg(str_ipport));
+        //lookedForHosts = true;
     }
     else
     {
@@ -431,27 +434,37 @@ void MPIFormatServerInfo(char* dest, serverinfo_t *info)
             info->maxPlayers, info->map, info->gameIdentityKey);
 }
 
+struct ServerDiscoveryObserver : DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
+{
+    void linkDiscoveryUpdate(ServerLink const &)
+    {
+        LOG_DEBUG("ServerDiscoveryObserver notified, updating server list");
+        MPIUpdateServerList();
+    }
+};
+
+static ServerDiscoveryObserver mpiDiscoveryObserver;
+
 /*
  * Fill the server list with the list of currently known servers.
  */
 void MPIUpdateServerList(void)
 {
-    int     num, i, k;
+    int num, i, k;
     serverinfo_t info;
     ui_object_t *listObject = UI_FindObject(ob_client, 0, UIF_SERVER_LIST);
 
     if(searchMode == SEARCH_CUSTOM)
     {
         num = N_GetHostCount();
-        if(!num)
+        if(!num) // No servers.
         {
             lst_found.selection = -1;
-            if(lookedForHosts)
+            if(!Net_ServerLink().isDiscovering())
             {
                 lst_found.count = 1;
                 lstit_found[0].data = -1;
-                sprintf(lstit_found[0].text, "(No response from %s)",
-                        str_ipaddr);
+                sprintf(lstit_found[0].text, "(No response from %s)", str_ipaddr);
             }
             else
             {
@@ -629,7 +642,7 @@ void DD_NetSetup(int serverMode)
         return;
     }
 
-    lookedForHosts = false;
+    //lookedForHosts = false;
 
 #if 0
     if(serverMode)
@@ -650,6 +663,8 @@ void DD_NetSetup(int serverMode)
         // Prepare Client Setup.
         UI_InitPage(&page_client, ob_client);
         strcpy(str_ipaddr, nptIPAddress);
+
+        Net_ServerLink().audienceForDiscoveryUpdate += mpiDiscoveryObserver;
 
         UI_FlagGroup(ob_client, 1, UIF_ACTIVE, searchMode == SEARCH_MASTER);
         UI_FlagGroup(ob_client, 2, UIF_ACTIVE, searchMode != SEARCH_MASTER);

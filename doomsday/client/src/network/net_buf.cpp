@@ -204,12 +204,7 @@ void N_ReleaseMessage(netmessage_t *msg)
 {
     if(msg->handle)
     {
-#ifdef __CLIENT__
-        LegacyNetwork_FreeBuffer((unsigned char *)msg->handle);
-#endif
-#ifdef __SERVER__
         delete [] reinterpret_cast<byte *>(msg->handle);
-#endif
         msg->handle = 0;
     }
     M_Free(msg);
@@ -245,7 +240,9 @@ void N_ClearMessages(void)
  */
 void N_SendPacket(int flags)
 {
+#ifdef __SERVER__
     uint dest = 0;
+#endif
 
     // Is the network available?
     if(!allowSending)
@@ -285,12 +282,12 @@ void N_SendPacket(int flags)
     numOutBytes += netBuffer.headerLength + netBuffer.length;
 
 #ifdef __CLIENT__
-    Protocol_Send(&netBuffer.msg, netBuffer.headerLength + netBuffer.length, dest);
+    de::Transmitter &out = Net_ServerLink();
+#else
+    de::Transmitter &out = App_ServerSystem().user(dest);
 #endif
-#ifdef __SERVER__
-    App_ServerSystem().user(dest)
-            << de::ByteRefArray(&netBuffer.msg, netBuffer.headerLength + netBuffer.length);
-#endif
+
+    out << de::ByteRefArray(&netBuffer.msg, netBuffer.headerLength + netBuffer.length);
 }
 
 void N_AddSentBytes(size_t bytes)

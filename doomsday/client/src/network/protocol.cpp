@@ -16,6 +16,8 @@
  * 02110-1301 USA</small>
  */
 
+#if 0
+
 #include <de/memory.h>
 #include <de/memoryzone.h>
 #include <de/c_wrapper.h>
@@ -78,3 +80,4 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
 
     LegacyNetwork_Send(N_GetNodeSocket(destination), data, size);
 }
+#endif 0
