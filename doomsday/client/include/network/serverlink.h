@@ -67,6 +67,8 @@ public:
 
     bool foundServerInfo(de::Address const &host, serverinfo_t *info) const;
 
+    bool foundServerInfo(int index, serverinfo_t *info) const;
+
 signals:
     void serversDiscovered();
 

@@ -185,14 +185,16 @@ void AbstractLink::socketDisconnected()
         }
         d->socket->setQuiet(false);
     }
-
-    if(!d->peerAddress.isNull())
-    {
-        LOG_INFO("Disconnected from %s") << d->peerAddress;
-    }
     else
     {
-        LOG_INFO("Disconnected");
+        if(!d->peerAddress.isNull())
+        {
+            LOG_INFO("Disconnected from %s") << d->peerAddress;
+        }
+        else
+        {
+            LOG_INFO("Disconnected");
+        }
     }
 
     d->status = Disconnected;

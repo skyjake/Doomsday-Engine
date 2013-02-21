@@ -90,7 +90,7 @@ public:
 
 protected slots:
     void handleIncomingConnection();
-    void userDestroyed(QObject *);
+    void userDestroyed();
 
 private:
     DENG2_PRIVATE(d)

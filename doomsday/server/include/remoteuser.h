@@ -76,6 +76,9 @@ public:
     // Implements Transmitter.
     void send(de::IByteArray const &data);
 
+signals:
+    void destroyed();
+
 public slots:
     void handleIncomingPackets();
 

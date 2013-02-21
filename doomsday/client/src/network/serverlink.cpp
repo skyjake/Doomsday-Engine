@@ -103,6 +103,10 @@ DENG2_PIMPL(ServerLink)
 
             LOG_DEBUG("Discovered server at ") << svAddress;
 
+            // Update with the correct address.
+            strncpy(svInfo.address, svAddress.host().toString().toAscii(),
+                    sizeof(svInfo.address) - 1);
+
             discovered.insert(svAddress, svInfo);
 
             // Show the information in the console.
@@ -162,12 +166,16 @@ DENG2_PIMPL(ServerLink)
         Servers all = discovered;
 
         // Append the ones from the server finder.
-        foreach(Address host, finder.foundServers())
+        foreach(Address sv, finder.foundServers())
         {
             serverinfo_t info;
-            if(host.isLocal()) host.setHost(QHostAddress::LocalHost);
-            Net_RecordToServerInfo(finder.messageFromServer(host), &info);
-            all.insert(host, info);
+            Net_RecordToServerInfo(finder.messageFromServer(sv), &info);
+
+            // Update the address in the info, which is missing because this
+            // information didn't come from the master.
+            strncpy(info.address, sv.host().toString().toAscii(), sizeof(info.address) - 1);
+
+            all.insert(sv, info);
         }
 
         return all;
@@ -211,10 +219,13 @@ void ServerLink::connectHost(Address const &address)
 void ServerLink::linkDisconnected()
 {
     LOG_AS("ServerLink");
-    LOG_INFO("Connection to server was disconnected");
+    if(d->state != None)
+    {
+        LOG_INFO("Connection to server was disconnected");
 
-    // Update our state and notify the game.
-    disconnect();
+        // Update our state and notify the game.
+        disconnect();
+    }
 }
 
 void ServerLink::disconnect()
@@ -225,6 +236,8 @@ void ServerLink::disconnect()
 
     if(d->state == InGame)
     {
+        d->state = None;
+
         // Tell the Game that a disconnection is about to happen.
         if(gx.NetDisconnect)
             gx.NetDisconnect(true);
@@ -241,10 +254,11 @@ void ServerLink::disconnect()
     }
     else
     {
+        d->state = None;
+
         LOG_INFO("Connection attempts aborted");
         AbstractLink::disconnect();
     }
-    d->state = None;
 }
 
 void ServerLink::discover(String const &domain)
@@ -268,6 +282,15 @@ int ServerLink::foundServerCount() const
 QList<Address> ServerLink::foundServers() const
 {
     return d->allFound().keys();
+}
+
+bool ServerLink::foundServerInfo(int index, serverinfo_t *info) const
+{
+    Instance::Servers all = d->allFound();
+    QList<Address> listed = all.keys();
+    if(index < 0 || index >= listed.size()) return false;
+    memcpy(info, &all[listed[index]], sizeof(*info));
+    return true;
 }
 
 bool ServerLink::foundServerInfo(Address const &host, serverinfo_t *info) const

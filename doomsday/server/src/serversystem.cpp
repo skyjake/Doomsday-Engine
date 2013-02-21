@@ -260,7 +260,11 @@ bool ServerSystem::isUserAllowedToJoin(RemoteUser &/*user*/) const
 
 void ServerSystem::convertToShellUser(RemoteUser *user)
 {
+    LOG_AS("convertToShellUser");
+
     Socket *socket = user->takeSocket();
+
+    LOG_DEBUG("Remote user %s converted to shell user") << user->id();
     user->deleteLater();
 
     d->shellUsers.add(new ShellUser(socket));
@@ -286,7 +290,7 @@ void ServerSystem::handleIncomingConnection()
         if(!sock) break;
 
         RemoteUser *user = new RemoteUser(sock);
-        connect(user, SIGNAL(destroyed(QObject*)), this, SLOT(userDestroyed(QObject*)));
+        connect(user, SIGNAL(destroyed()), this, SLOT(userDestroyed()));
         d->users.insert(user->id(), user);
 
         // Immediately handle pending messages, if there are any.
@@ -294,14 +298,16 @@ void ServerSystem::handleIncomingConnection()
     }
 }
 
-void ServerSystem::userDestroyed(QObject *ob)
+void ServerSystem::userDestroyed()
 {
-    RemoteUser *u = static_cast<RemoteUser *>(ob);
+    RemoteUser *u = static_cast<RemoteUser *>(sender());
 
     LOG_AS("ServerSystem");
     LOG_VERBOSE("Removing user %s") << u->id();
 
     d->users.remove(u->id());
+
+    LOG_DEBUG("%i remote users remain") << d->users.size();
 }
 
 void ServerSystem::printStatus()

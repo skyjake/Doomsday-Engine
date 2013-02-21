@@ -1335,15 +1335,13 @@ D_CMD(Net)
                 return false;
             }
 
-            Net_ServerLink().connectDomain(argv[2], 5);
-
-            //idx = strtol(argv[2], NULL, 10); // ignored!
-            //CmdReturnValue = success = N_Connect();
-            /*
-            if(success)
+            int index = strtoul(argv[2], 0, 10);
+            serverinfo_t info;
+            if(Net_ServerLink().foundServerInfo(index, &info))
             {
-                Con_Message("Connected.\n");
-            }*/
+                Net_PrintServerInfo(index, &info);
+                Net_ServerLink().connectDomain(de::String("%1:%2").arg(info.address).arg(info.port), 5);
+            }
         }
         else if(!stricmp(argv[1], "mconnect"))
         {
