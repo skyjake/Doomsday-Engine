@@ -130,6 +130,9 @@ Record const &ServerFinder::messageFromServer(Address const &address) const
 
 void ServerFinder::found(Address host, Block block)
 {
+    // Normalize the local host address.
+    if(host.isLocal()) host.setHost(QHostAddress::LocalHost);
+
     try
     {
         LOG_TRACE("Received a server message from %s with %i bytes")

@@ -117,13 +117,13 @@ void AbstractLink::disconnect()
         d->timeout = 0;
         d->socket->close(); // emits signal
 
+        d->status = Disconnected;
+
         QObject::disconnect(d->socket.get(), SIGNAL(addressResolved()), this, SIGNAL(addressResolved()));
         QObject::disconnect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
         QObject::disconnect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
         QObject::disconnect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
     }
-
-    DENG2_ASSERT(d->status == Disconnected);
 }
 
 Address AbstractLink::address() const

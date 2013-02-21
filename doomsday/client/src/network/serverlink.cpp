@@ -68,13 +68,16 @@ DENG2_PIMPL(ServerLink)
         DENG2_ASSERT(state == WaitingForInfoResponse);
 
         // Address of the server where the info was received.
-        Address const svAddress = self.address();
+        Address svAddress = self.address();
+
+        // Local addresses are all represented as "localhost".
+        if(svAddress.isLocal()) svAddress.setHost(QHostAddress::LocalHost);
 
         // Close the connection; that was all the information we need.
         self.disconnect();
 
         // Did we receive what we expected to receive?
-        if(reply.size() >= 5 && reply == "Info\n")
+        if(reply.size() >= 5 && reply.startsWith("Info\n"))
         {
             const char *ch;
             ddstring_t *line;
@@ -97,6 +100,8 @@ DENG2_PIMPL(ServerLink)
 
             Str_Delete(line);
             Str_Delete(response);
+
+            LOG_DEBUG("Discovered server at ") << svAddress;
 
             discovered.insert(svAddress, svInfo);
 
@@ -157,9 +162,10 @@ DENG2_PIMPL(ServerLink)
         Servers all = discovered;
 
         // Append the ones from the server finder.
-        foreach(Address const &host, finder.foundServers())
+        foreach(Address host, finder.foundServers())
         {
             serverinfo_t info;
+            if(host.isLocal()) host.setHost(QHostAddress::LocalHost);
             Net_RecordToServerInfo(finder.messageFromServer(host), &info);
             all.insert(host, info);
         }
@@ -326,6 +332,7 @@ void ServerLink::handleIncomingPackets()
     {
         // Only BlockPackets received (see interpret()).
         QScopedPointer<BlockPacket> packet(static_cast<BlockPacket *>(nextPacket()));
+        if(packet.isNull()) break;
 
         switch(d->state)
         {
