@@ -75,9 +75,8 @@ int main(int argc, char** argv)
 
     dengApp->setTerminateFunc(handleLegacyCoreTerminate);
 
-    /// @todo After LegacyNetwork is gone, ServerSystem can be a regular variable.
-    QScopedPointer<ServerSystem> sv(new ServerSystem);
-    dengApp->addSystem(*sv);
+    ServerSystem serverSystem;
+    dengApp->addSystem(serverSystem);
 
     // Initialization.
     try
@@ -115,8 +114,6 @@ int main(int argc, char** argv)
     // Cleanup.
     Sys_Shutdown();
     DD_Shutdown();
-    dengApp->removeSystem(*sv);
-    delete sv.take();
     LegacyCore_Delete(de2LegacyCore);
 
     return result;

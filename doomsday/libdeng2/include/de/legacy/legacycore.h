@@ -25,8 +25,6 @@
 
 namespace de {
 
-class LegacyNetwork;
-
 /**
  * Transitional kernel for supporting legacy Doomsday C code in accessing
  * libdeng2 functionality. The legacy engine needs to construct one of these
@@ -137,11 +135,6 @@ public:
      * Returns the LegacyCore singleton instance.
      */
     static LegacyCore &instance();
-
-    /**
-     * Returns the legacy network subsystem interface.
-     */
-    LegacyNetwork &network();
 
 public slots:
     void callback();

@@ -32,14 +32,13 @@
  * Subsystem for tending to clients.
  * @ingroup server
  *
- * @todo The entire concept of "nodes" should be retired along with
- * LegacyNetwork. Instead:
  * - Immediately after connecting to a server the socket is put into the
- *   set of connected sockets.
- * - Sockets may request upgrade to Shell user, in which case ownership
+ *   set of remote users (RemoteUser class). One RemoteUser instance is
+ *   responsible for each connected socket.
+ * - Remote users may request upgrade to a Shell user, in which case ownership
  *   of the socket is given to a ShellUser instance.
- * - Sockets may join the game, becoming clients.
- * - Silent sockets that hang around too long will be automatically
+ * - Remote users may join the game, becoming players in the game.
+ * - Silent remote users that hang around too long will be automatically
  *   terminated if haven't joined the game.
  */
 class ServerSystem : public QObject, public de::System

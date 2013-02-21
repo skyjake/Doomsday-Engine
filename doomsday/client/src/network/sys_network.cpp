@@ -111,42 +111,6 @@ int N_GetHostCount(void)
     return svLink.foundServerCount();
 }
 
-/*
-int N_GetNodeSocket(nodeid_t id)
-{
-    if(id) return 0;
-    return 1; // There is only the one socket.
-}
-
-boolean N_HasNodeJoined(nodeid_t id)
-{
-    if(id >= MAX_NODES) return 0;
-    return netNodes[id].hasJoined;
-}
-*/
-
-/*
-void N_ClientListen(void)
-{
-    if(!joinedSockSet) return;
-
-    // Clientside listening.  On clientside, the socket set only
-    // includes the server's socket.
-    while(LegacyNetwork_SocketSet_Activity(joinedSockSet))
-    {
-        if(!Protocol_Receive(0))
-        {
-            netevent_t nev;
-            nev.id = 0;
-            nev.type = NE_END_CONNECTION;
-            N_NEPost(&nev);
-
-            // No point in continuing with the listener.
-            break;
-        }
-    }
-}*/
-
 /**
  * Called from "net info" (client-side).
  */

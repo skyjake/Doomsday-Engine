@@ -21,7 +21,6 @@
 #include "de/Error"
 #include "de/App"
 #include "de/LegacyCore"
-#include "de/LegacyNetwork"
 #include "de/Address"
 #include "de/ByteRefArray"
 #include "de/Block"
@@ -236,117 +235,6 @@ void LogBuffer_Clear(void)
 void LogBuffer_EnableStandardOutput(int enable)
 {
 	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);
-}
-
-int LegacyNetwork_OpenServerSocket(unsigned short port)
-{
-    try
-    {
-        return DENG2_LEGACYNETWORK().openServerSocket(port);
-    }
-    catch(de::Error const &er)
-    {
-        LOG_AS("LegacyNetwork_OpenServerSocket");
-        LOG_WARNING(er.asText());
-        return 0;
-    }
-}
-
-int LegacyNetwork_Accept(int serverSocket)
-{
-    return DENG2_LEGACYNETWORK().accept(serverSocket);
-}
-
-int LegacyNetwork_Open(char const *ipAddress, unsigned short port)
-{
-    return DENG2_LEGACYNETWORK().open(de::Address(ipAddress, port));
-}
-
-void LegacyNetwork_GetPeerAddress(int socket, char *host, int hostMaxSize, unsigned short *port)
-{
-    de::Address peer = DENG2_LEGACYNETWORK().peerAddress(socket);
-    std::memset(host, 0, hostMaxSize);
-    std::strncpy(host, peer.host().toString().toAscii().constData(), hostMaxSize - 1);
-    if(port) *port = peer.port();
-}
-
-void LegacyNetwork_Close(int socket)
-{
-    DENG2_LEGACYNETWORK().close(socket);
-}
-
-int LegacyNetwork_Send(int socket, void const *data, int size)
-{
-    return DENG2_LEGACYNETWORK().sendBytes(
-                socket, de::ByteRefArray(reinterpret_cast<de::IByteArray::Byte const *>(data), size));
-}
-
-unsigned char *LegacyNetwork_Receive(int socket, int *size)
-{
-    de::Block data;
-    if(DENG2_LEGACYNETWORK().receiveBlock(socket, data))
-    {
-        // Successfully got a block of data. Return a copy of it.
-        unsigned char *buffer = new unsigned char[data.size()];
-        std::memcpy(buffer, data.constData(), data.size());
-        *size = data.size();
-        return buffer;
-    }
-    else
-    {
-        // We did not receive anything.
-        *size = 0;
-        return 0;
-    }
-}
-
-void LegacyNetwork_FreeBuffer(unsigned char *buffer)
-{
-    delete [] buffer;
-}
-
-int LegacyNetwork_IsDisconnected(int socket)
-{
-    if(!socket) return 0;
-    return !DENG2_LEGACYNETWORK().isOpen(socket);
-}
-
-int LegacyNetwork_IsLocal(int socket)
-{
-    if(!socket) return 0;
-    return DENG2_LEGACYNETWORK().isLocal(socket);
-}
-
-int LegacyNetwork_BytesReady(int socket)
-{
-    if(!socket) return 0;
-    return DENG2_LEGACYNETWORK().incomingForSocket(socket);
-}
-
-int LegacyNetwork_NewSocketSet()
-{
-    return DENG2_LEGACYNETWORK().newSocketSet();
-}
-
-void LegacyNetwork_DeleteSocketSet(int set)
-{
-    DENG2_LEGACYNETWORK().deleteSocketSet(set);
-}
-
-void LegacyNetwork_SocketSet_Add(int set, int socket)
-{
-    DENG2_LEGACYNETWORK().addToSet(set, socket);
-}
-
-void LegacyNetwork_SocketSet_Remove(int set, int socket)
-{
-    DENG2_LEGACYNETWORK().removeFromSet(set, socket);
-}
-
-int LegacyNetwork_SocketSet_Activity(int set)
-{
-    if(!set) return 0;
-    return DENG2_LEGACYNETWORK().checkSetForActivity(set);
 }
 
 Info *Info_NewFromString(char const *utf8text)

@@ -189,33 +189,6 @@ extern "C" {
 /// Largest message sendable using the protocol.
 #define PROTOCOL_MAX_DATAGRAM_SIZE (1 << 22) // 4 MB
 
-#ifdef __CLIENT__ // used with LegacyNetwork
-
-/**
- * Send the data buffer over a TCP connection.
- * The data may be compressed with zlib.
- */
-void Protocol_Send(void *data, size_t size, nodeid_t destination);
-
-/**
- * Read a packet from the TCP connection and put it in the incoming
- * packet queue.  This function blocks until the entire packet has
- * been read, so large packets should be avoided during normal
- * gameplay.
- *
- * @return @c true, if a packet was successfully received.
- */
-boolean Protocol_Receive(nodeid_t from);
-
-/**
- * Free a message buffer.
- *
- * @param handle  Message buffer received with Protocol_Receive().
- */
-void Protocol_FreeBuffer(void *handle);
-
-#endif // __CLIENT__
-
 #ifdef __cplusplus
 } // extern "C"
 #endif
