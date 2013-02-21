@@ -54,7 +54,7 @@ using namespace de;
 char *nptIPAddress = (char *) ""; ///< Address to connect to by default (cvar).
 int   nptIPPort = 0;              ///< Port to connect to by default (cvar).
 
-static ServerLink svLink;
+static ServerLink *svLink;
 
 void N_Register(void)
 {
@@ -68,11 +68,12 @@ void N_Register(void)
 
 ServerLink &Net_ServerLink(void)
 {
-    return svLink;
+    return *svLink;
 }
 
 void N_SystemInit(void)
 {
+    svLink = new ServerLink;
 }
 
 /**
@@ -95,20 +96,23 @@ void N_SystemShutdown(void)
 
     // Let's forget about servers found earlier.
     //located.clear();
+
+    delete svLink;
+    svLink = 0;
 }
 
 boolean N_GetHostInfo(int index, struct serverinfo_s *info)
 {
-    QList<Address> const listed = svLink.foundServers();
+    QList<Address> const listed = svLink->foundServers();
     if(index < 0 || index >= listed.size())
         return false;
-    svLink.foundServerInfo(listed[index], info);
+    svLink->foundServerInfo(listed[index], info);
     return true;
 }
 
 int N_GetHostCount(void)
 {
-    return svLink.foundServerCount();
+    return svLink->foundServerCount();
 }
 
 /**
@@ -119,7 +123,7 @@ void N_PrintNetworkStatus(void)
     if(isClient)
     {
         Con_Message("CLIENT: Connected to server at %s.\n",
-                    svLink.address().asText().toAscii().constData());
+                    svLink->address().asText().toAscii().constData());
     }
     else
     {
