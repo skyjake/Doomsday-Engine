@@ -66,7 +66,7 @@ ddouble Id::asNumber() const
     return _id;
 }
 
-QTextStream &de::operator << (QTextStream &os, Id const &id)
+QTextStream &operator << (QTextStream &os, Id const &id)
 {
     os << id.asText();
     return os;
