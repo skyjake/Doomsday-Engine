@@ -24,12 +24,9 @@
 
 namespace de {
 
-static duint32 widgetIdGen = 0;
-
-struct Widget::Instance
+DENG2_PIMPL(Widget::Instance)
 {
-    Widget &self;
-    duint32 id;
+    Id id;
     String name;
     Widget *parent;
     Behaviors behavior;
@@ -41,11 +38,8 @@ struct Widget::Instance
     Children children;
     NamedChildren index;
 
-    Instance(Widget &w, String const &n) : self(w), name(n), parent(0)
-    {
-        // A unique ID is generated for each Widget instance.
-        id = ++widgetIdGen;
-    }
+    Instance(Public *i, String const &n) : Base(i), name(n), parent(0)
+    {}
 
     ~Instance()
     {
@@ -63,7 +57,7 @@ struct Widget::Instance
     }
 };
 
-Widget::Widget(String const &name) : d(new Instance(*this, name))
+Widget::Widget(String const &name) : d(new Instance(this, name))
 {}
 
 Widget::~Widget()
@@ -82,7 +76,7 @@ Widget::~Widget()
     delete d;
 }
 
-duint32 Widget::id() const
+Id Widget::id() const
 {
     return d->id;
 }

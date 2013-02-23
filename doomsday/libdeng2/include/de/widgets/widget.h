@@ -23,6 +23,7 @@
 
 #include "../String"
 #include "../Event"
+#include "../Id"
 
 namespace de {
 
@@ -62,7 +63,7 @@ public:
     /**
      * Returns the automatically generated, unique identifier of the widget.
      */
-    duint32 id() const;
+    Id id() const;
 
     String name() const;
     void setName(String const &name);
