@@ -77,6 +77,11 @@ public:
 
     void setHost(QHostAddress const &host);
 
+    /**
+     * Determines if the address is on the local host.
+     */
+    bool isLocal() const;
+
     duint16 port() const;
 
     void setPort(duint16 p);
@@ -96,6 +101,11 @@ public:
     String asText() const;
 
     static Address parse(String const &addressWithOptionalPort, duint16 defaultPort = 0);
+
+    /**
+     * Determines whether a host address refers to the local host.
+     */
+    static bool isHostLocal(QHostAddress const &host);
 
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }

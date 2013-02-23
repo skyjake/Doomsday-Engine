@@ -201,11 +201,6 @@ public:
      */
     void setQuiet(bool noLogOutput);
 
-    /**
-     * Determines whether a host address refers to the local host.
-     */
-    static bool isHostLocal(QHostAddress const &host);
-
 signals:
     void addressResolved();
     void connected();

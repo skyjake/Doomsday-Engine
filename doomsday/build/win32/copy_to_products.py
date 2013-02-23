@@ -32,7 +32,7 @@ copy_if_newer(os.path.join(solDir, 'libheretic.pk3'), os.path.join(dest, '..', '
 copy_if_newer(os.path.join(solDir, 'libhexen.pk3'), os.path.join(dest, '..', 'data', 'jhexen', 'libhexen.pk3'))
 copy_if_newer(os.path.join(solDir, 'libdoom64.pk3'), os.path.join(dest, '..', 'data', 'jdoom64', 'libdoom64.pk3'))
 
-targets = ['libdeng2', 'libdeng1', 'libshell',
+targets = ['libdeng2', 'libdeng1', 'libshell', 'libgui',
            'client', 'server', 
            'plugins\*', 'tools\*', 'tools\shell\*', 'tests\*'] 
 

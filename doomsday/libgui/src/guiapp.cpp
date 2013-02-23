@@ -30,9 +30,10 @@ DENG2_PIMPL(GuiApp)
     TimeDelta refreshInterval;
     bool loopRunning;
 
-    Instance(Public *i) : Base(*i),
-        refreshInterval(0),
-        loopRunning(false)
+    Instance(Public *i)
+        : Base(i),
+          refreshInterval(0),
+          loopRunning(false)
     {}
 };
 
@@ -72,6 +73,8 @@ void GuiApp::notifyDisplayModeChanged()
 int GuiApp::execLoop()
 {
     d->loopRunning = true;
+    /// @todo LegacyCore currently updates clock time for us.
+    //refresh();
     return QApplication::exec();
 }
 

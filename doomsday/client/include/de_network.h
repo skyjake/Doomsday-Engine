@@ -29,6 +29,7 @@
 #include "network/net_msg.h"
 #include "network/net_buf.h"
 #include "network/protocol.h"
+#include "network/monitor.h"
 
 #ifdef __SERVER__
 #  include "server/sv_def.h"
@@ -40,8 +41,8 @@
 #endif
 
 #ifdef __CLIENT__
-#  include "network/net_demo.h"
 #  include "api_client.h"
+#  include "network/net_demo.h"
 #  include "client/cl_def.h"
 #  include "client/cl_player.h"
 #  include "client/cl_mobj.h"

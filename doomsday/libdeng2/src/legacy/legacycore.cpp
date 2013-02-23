@@ -18,7 +18,6 @@
  */
 
 #include "de/LegacyCore"
-#include "de/LegacyNetwork"
 #include "de/LogBuffer"
 #include "de/App"
 
@@ -46,7 +45,6 @@ struct LegacyCore::Instance
 
     App *app;
     QTimer *loopTimer;
-    LegacyNetwork network;
     Loop loop;
 
     /// Pointer returned to callers, see LegacyCore::logFileName().
@@ -85,11 +83,6 @@ LegacyCore &LegacyCore::instance()
     DENG2_ASSERT(_appCore != 0);
     DENG2_ASSERT(_appCore->d != 0);
     return *_appCore;
-}
-
-LegacyNetwork &LegacyCore::network()
-{
-    return instance().d->network;
 }
 
 void LegacyCore::setLoopFunc(void (*func)(void))

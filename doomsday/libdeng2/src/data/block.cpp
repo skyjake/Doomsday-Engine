@@ -34,11 +34,16 @@ Block::Block(IByteArray const &other)
     other.get(0, (dbyte *) data(), other.size());
 }
 
-Block::Block(Block const &other) : QByteArray(other), IByteArray(), IBlock()
+Block::Block(Block const &other)
+    : QByteArray(other), IByteArray(), IBlock()
 {}
 
 Block::Block(QByteArray const &byteArray)
     : QByteArray(byteArray)
+{}
+
+Block::Block(void const *data, Size length)
+    : QByteArray(reinterpret_cast<char const *>(data), length), IByteArray(), IBlock()
 {}
 
 Block::Block(IIStream &stream)

@@ -99,6 +99,16 @@
 #define DENG2_FOR_AUDIENCE(Name, Var) \
     DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name)
 
+/**
+ * Macro for looping through the public audience members from inside a private
+ * implementation.
+ *
+ * @param Name  Name of the audience.
+ * @param Var   Variable used in the loop.
+ */
+#define DENG2_FOR_PUBLIC_AUDIENCE(Name, Var) \
+    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, self.audienceFor##Name)
+
 namespace de
 {
     /**

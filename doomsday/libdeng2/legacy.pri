@@ -2,10 +2,7 @@
 
 HEADERS += \
     include/de/LegacyCore \
-    include/de/LegacyNetwork \
-    include/de/legacy/legacycore.h \
-    include/de/legacy/legacynetwork.h
+    include/de/legacy/legacycore.h
 
 SOURCES += \
-    src/legacy/legacycore.cpp \
-    src/legacy/legacynetwork.cpp
+    src/legacy/legacycore.cpp
