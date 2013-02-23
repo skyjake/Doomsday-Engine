@@ -225,6 +225,10 @@ def mac_release():
             duptree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
     duptree(os.path.join(MAC_WORK_DIR, 'tools/shell/shell-gui/Doomsday Shell.app'), 'Doomsday Shell.app')
 
+    print 'Correcting permissions...'
+    os.system('chmod -R o-w "Doomsday Engine.app"')
+    os.system('chmod -R o-w "Doomsday Shell.app"')
+
     print 'Signing Doomsday.app...'
     os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Engine.app/Contents/Doomsday.app"')
 
@@ -246,9 +250,7 @@ def mac_release():
     shutil.copy(templateFile, 'imaging.sparseimage')
     remkdir('imaging')
     os.system('hdiutil attach imaging.sparseimage -noautoopen -quiet -mountpoint imaging')
-    shutil.rmtree('imaging/Doomsday Installer.mpkg', True)
-    remove('imaging/Read Me.rtf')
-    duptree('/Users/jaakko/Desktop/Doomsday Installer.mpkg', 'imaging/Doomsday Installer.mpkg')
+    shutil.copy('/Users/jaakko/Desktop/Doomsday.pkg', 'imaging/Doomsday.pkg')
     shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
 
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
