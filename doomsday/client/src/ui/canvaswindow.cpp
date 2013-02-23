@@ -76,6 +76,11 @@ CanvasWindow::~CanvasWindow()
     delete d;
 }
 
+de::RootWidget &CanvasWindow::root()
+{
+    return d->rootWidget;
+}
+
 void CanvasWindow::initCanvasAfterRecreation(Canvas &canvas)
 {
     CanvasWindow *self = dynamic_cast<CanvasWindow *>(canvas.parentWidget());
@@ -211,10 +216,10 @@ void CanvasWindow::resizeEvent(QResizeEvent *)
 {
     LOG_AS("CanvasWindow");
 
-    de::Vector2i dims(width(), height());
-    LOG_DEBUG("Resized ") << dims.asText();
+    de::Vector2i size(width(), height());
+    LOG_DEBUG("Resized ") << size.asText();
 
-    d->rootWidget.setViewSize(dims);
+    d->rootWidget.setViewSize(size);
 }
 
 void CanvasWindow::hideEvent(QHideEvent *ev)

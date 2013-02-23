@@ -28,6 +28,7 @@
 #endif
 
 #include <QMainWindow>
+#include <de/RootWidget>
 #include "canvas.h"
 
 /**
@@ -41,6 +42,8 @@ class CanvasWindow : public QMainWindow
 public:
     explicit CanvasWindow(QWidget *parent = 0);
     ~CanvasWindow();
+
+    de::RootWidget &root();
 
     /**
      * Recreates the contained Canvas with an update GL format.
