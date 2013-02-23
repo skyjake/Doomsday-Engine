@@ -39,23 +39,30 @@
 
 #include <assert.h>
 
-struct CanvasWindow::Instance
+DENG2_PIMPL(CanvasWindow)
 {
-    Canvas* canvas;
+    Canvas* canvas; ///< Drawing surface for the contents of the window.
     Canvas* recreated;
     void (*moveFunc)(CanvasWindow&);
     bool (*closeFunc)(CanvasWindow&);
     bool mouseWasTrapped;
 
+    /// Root of the UI widgets of this window.
     de::RootWidget rootWidget;
 
-    Instance() : canvas(0), moveFunc(0), closeFunc(0), mouseWasTrapped(false) {}
+    Instance(Public *i)
+        : Base(i),
+          canvas(0),
+          moveFunc(0),
+          closeFunc(0),
+          mouseWasTrapped(false)
+    {}
 };
 
 CanvasWindow::CanvasWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    d = new Instance;
+    d = new Instance(this);
 
     // Create the drawing canvas for this window.
     setCentralWidget(d->canvas = new Canvas); // takes ownership
@@ -69,9 +76,9 @@ CanvasWindow::~CanvasWindow()
     delete d;
 }
 
-void CanvasWindow::initCanvasAfterRecreation(Canvas& canvas)
+void CanvasWindow::initCanvasAfterRecreation(Canvas &canvas)
 {
-    CanvasWindow* self = dynamic_cast<CanvasWindow*>(canvas.parentWidget());
+    CanvasWindow *self = dynamic_cast<CanvasWindow *>(canvas.parentWidget());
     assert(self);
 
     LOG_DEBUG("About to replace Canvas %p with %p")
@@ -155,7 +162,7 @@ bool CanvasWindow::ownsCanvas(Canvas *c) const
     return (d->canvas == c || d->recreated == c);
 }
 
-void CanvasWindow::setMoveFunc(void (*func)(CanvasWindow&))
+void CanvasWindow::setMoveFunc(void (*func)(CanvasWindow &))
 {
     d->moveFunc = func;
 }
@@ -165,7 +172,7 @@ void CanvasWindow::setCloseFunc(bool (*func)(CanvasWindow &))
     d->closeFunc = func;
 }
 
-bool CanvasWindow::event(QEvent* ev)
+bool CanvasWindow::event(QEvent *ev)
 {
     if(ev->type() == QEvent::ActivationChange)
     {
@@ -176,7 +183,7 @@ bool CanvasWindow::event(QEvent* ev)
     return QMainWindow::event(ev);
 }
 
-void CanvasWindow::closeEvent(QCloseEvent* ev)
+void CanvasWindow::closeEvent(QCloseEvent *ev)
 {
     if(d->closeFunc)
     {
@@ -200,11 +207,23 @@ void CanvasWindow::moveEvent(QMoveEvent *ev)
     }
 }
 
-void CanvasWindow::hideEvent(QHideEvent* ev)
+void CanvasWindow::resizeEvent(QResizeEvent *)
 {
+    LOG_AS("CanvasWindow");
+
+    de::Vector2i dims(width(), height());
+    LOG_DEBUG("Resized ") << dims.asText();
+
+    d->rootWidget.setViewSize(dims);
+}
+
+void CanvasWindow::hideEvent(QHideEvent *ev)
+{
+    LOG_AS("CanvasWindow");
+
     QMainWindow::hideEvent(ev);
 
-    LOG_DEBUG("CanvasWindow: hide event (hidden:%b)") << isHidden();
+    LOG_DEBUG("Hide event (hidden:%b)") << isHidden();
 }
 
 bool CanvasWindow::setDefaultGLFormat() // static

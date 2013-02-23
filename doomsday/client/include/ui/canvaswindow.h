@@ -49,25 +49,26 @@ public:
     void recreateCanvas();
 
     Canvas& canvas();
-    bool ownsCanvas(Canvas* c) const;
+    bool ownsCanvas(Canvas *c) const;
 
     /**
      * Sets a callback function for notifying about window movement.
      */
-    void setMoveFunc(void (*func)(CanvasWindow&));
+    void setMoveFunc(void (*func)(CanvasWindow &));
 
     /**
      * Sets a callback function for notifying about window closing.
      * The window closing is cancelled if the callback is defined
      * and returned false.
      */
-    void setCloseFunc(bool (*func)(CanvasWindow&));
+    void setCloseFunc(bool (*func)(CanvasWindow &));
 
     // Events.
-    bool event(QEvent* ev);
-    void closeEvent(QCloseEvent* ev);
-    void moveEvent(QMoveEvent* ev);
-    void hideEvent(QHideEvent* ev);
+    bool event(QEvent *);
+    void closeEvent(QCloseEvent *);
+    void moveEvent(QMoveEvent *);
+    void resizeEvent(QResizeEvent *);
+    void hideEvent(QHideEvent *);
 
     /**
      * Must be called before any canvas windows are created. Defines the
@@ -83,7 +84,7 @@ signals:
 public slots:
 
 protected:
-    static void initCanvasAfterRecreation(Canvas& canvas);
+    static void initCanvasAfterRecreation(Canvas &canvas);
 
 private:
     DENG2_PRIVATE(d)
