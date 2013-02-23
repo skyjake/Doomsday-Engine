@@ -27,6 +27,7 @@
 #include <de/Record>
 #include <de/NumberValue>
 #include <de/Log>
+#include <de/RootWidget>
 #include <de/c_wrapper.h>
 
 #include "de_platform.h"
@@ -45,6 +46,8 @@ struct CanvasWindow::Instance
     void (*moveFunc)(CanvasWindow&);
     bool (*closeFunc)(CanvasWindow&);
     bool mouseWasTrapped;
+
+    de::RootWidget rootWidget;
 
     Instance() : canvas(0), moveFunc(0), closeFunc(0), mouseWasTrapped(false) {}
 };
