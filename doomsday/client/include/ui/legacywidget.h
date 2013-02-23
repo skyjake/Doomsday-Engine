@@ -20,17 +20,22 @@
 #ifndef CLIENT_LEGACYWIDGET_H
 #define CLIENT_LEGACYWIDGET_H
 
-#include <de/Widget>
+#include "guiwidget.h"
 
 /**
  * Widget for legacy UI components.
  * @ingroup gui
  */
-class LegacyWidget : public de::Widget
+class LegacyWidget : public GuiWidget
 {
 public:
     LegacyWidget(de::String const &name = "");
     ~LegacyWidget();
+
+    void viewResized();
+    void update();
+    void draw();
+    bool handleEvent(de::Event const &event);
 
 private:
     DENG2_PRIVATE(d)

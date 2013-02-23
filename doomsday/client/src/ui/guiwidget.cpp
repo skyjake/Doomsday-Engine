@@ -1,4 +1,4 @@
-/** @file legacywidget.cpp
+/** @file guiwidget.cpp  Base class for graphical widgets.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,38 +16,32 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/legacywidget.h"
+#include "ui/guiwidget.h"
 
 using namespace de;
 
-DENG2_PIMPL(LegacyWidget)
+DENG2_PIMPL(GuiWidget)
 {
+    RuleRectangle rule;
+
     Instance(Public *i) : Base(i)
     {}
 };
 
-LegacyWidget::LegacyWidget(String const &name)
-    : GuiWidget(name), d(new Instance(this))
+GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
 {}
 
-LegacyWidget::~LegacyWidget()
+GuiWidget::~GuiWidget()
 {
     delete d;
 }
 
-void LegacyWidget::viewResized()
+RuleRectangle &GuiWidget::rule()
 {
+    return d->rule;
 }
 
-void LegacyWidget::update()
+RuleRectangle const &GuiWidget::rule() const
 {
-}
-
-void LegacyWidget::draw()
-{
-}
-
-bool LegacyWidget::handleEvent(Event const &/*event*/)
-{
-    return false;
+    return d->rule;
 }

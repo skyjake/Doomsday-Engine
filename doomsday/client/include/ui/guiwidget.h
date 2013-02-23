@@ -1,4 +1,4 @@
-/** @file legacywidget.cpp
+/** @file guiwidget.h  Base class for graphical widgets.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,38 +16,36 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/legacywidget.h"
+#ifndef GUIWIDGET_H
+#define GUIWIDGET_H
 
-using namespace de;
+#include <de/Widget>
+#include <de/RuleRectangle>
 
-DENG2_PIMPL(LegacyWidget)
+/**
+ * Base class for graphical widgets.
+ * @ingroup gui
+ */
+class GuiWidget : public de::Widget
 {
-    Instance(Public *i) : Base(i)
-    {}
+public:
+    GuiWidget(de::String const &name = "");
+    ~GuiWidget();
+
+    /**
+     * Returns the rule rectangle that defines the placement of the widget on
+     * the target canvas.
+     */
+    de::RuleRectangle &rule();
+
+    /**
+     * Returns the rule rectangle that defines the placement of the widget on
+     * the target canvas.
+     */
+    de::RuleRectangle const &rule() const;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-LegacyWidget::LegacyWidget(String const &name)
-    : GuiWidget(name), d(new Instance(this))
-{}
-
-LegacyWidget::~LegacyWidget()
-{
-    delete d;
-}
-
-void LegacyWidget::viewResized()
-{
-}
-
-void LegacyWidget::update()
-{
-}
-
-void LegacyWidget::draw()
-{
-}
-
-bool LegacyWidget::handleEvent(Event const &/*event*/)
-{
-    return false;
-}
+#endif // GUIWIDGET_H

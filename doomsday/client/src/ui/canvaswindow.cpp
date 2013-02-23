@@ -36,6 +36,7 @@
 #  include "gl/gl_main.h"
 #endif
 #include "ui/canvaswindow.h"
+#include "ui/legacywidget.h"
 
 #include <assert.h>
 
@@ -56,7 +57,13 @@ DENG2_PIMPL(CanvasWindow)
           moveFunc(0),
           closeFunc(0),
           mouseWasTrapped(false)
-    {}
+    {
+        LegacyWidget *legacy = new LegacyWidget;
+        legacy->rule()
+                .setLeftTop    (rootWidget.viewLeft(),  rootWidget.viewTop())
+                .setRightBottom(rootWidget.viewRight(), rootWidget.viewBottom());
+        rootWidget.add(legacy);
+    }
 };
 
 CanvasWindow::CanvasWindow(QWidget *parent)

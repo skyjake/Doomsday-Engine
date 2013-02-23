@@ -347,6 +347,7 @@ DENG_HEADERS += \
     include/ui/displaymode_native.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
+    include/ui/guiwidget.h \
     include/ui/joystick.h \
     include/ui/keycode.h \
     include/ui/legacywidget.h \
@@ -622,6 +623,7 @@ SOURCES += \
     src/ui/displaymode.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
+    src/ui/guiwidget.cpp \
     src/ui/keycode.cpp \
     src/ui/legacywidget.cpp \
     src/ui/mouse_qt.cpp \
