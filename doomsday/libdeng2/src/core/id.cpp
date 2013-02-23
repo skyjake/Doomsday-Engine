@@ -61,7 +61,12 @@ String Id::asText() const
     return QString("{%1}").arg(_id);
 }
 
-ddouble Id::asNumber() const
+ddouble Id::asDouble() const
+{
+    return _id;
+}
+
+dint64 Id::asInt64() const
 {
     return _id;
 }

@@ -77,7 +77,9 @@ public:
     /// Converts the Id to a text string, using the format "{id}".
     String asText() const;
 
-    ddouble asNumber() const;
+    ddouble asDouble() const;
+
+    dint64 asInt64() const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

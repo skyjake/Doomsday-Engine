@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Widget::Instance)
+DENG2_PIMPL(Widget)
 {
     Id id;
     String name;
@@ -248,7 +248,7 @@ Widget *Widget::parent() const
 
 String Widget::uniqueName(String const &name) const
 {
-    return String("#%1.%2").arg(id()).arg(name);
+    return String("#%1.%2").arg(id().asInt64()).arg(name);
 }
 
 void Widget::notifyTree(void (Widget::*notifyFunc)())
