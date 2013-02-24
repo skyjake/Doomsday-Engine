@@ -1,6 +1,6 @@
 /** @file materialsnapshot.cpp Logical material state snapshot.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2011-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -108,7 +108,7 @@ DENG2_PIMPL(MaterialSnapshot)
 
     Store stored;
 
-    Instance(Public &a, MaterialVariant &_variant) : Base(a),
+    Instance(Public *i, MaterialVariant &_variant) : Base(i),
         variant(&_variant),
         stored()
     {}
@@ -117,7 +117,7 @@ DENG2_PIMPL(MaterialSnapshot)
 };
 
 MaterialSnapshot::MaterialSnapshot(MaterialVariant &materialVariant)
-    : d(new Instance(*this, materialVariant))
+    : d(new Instance(this, materialVariant))
 {}
 
 MaterialSnapshot::~MaterialSnapshot()
