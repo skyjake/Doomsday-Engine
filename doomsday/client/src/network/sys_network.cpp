@@ -47,11 +47,7 @@ ServerLink &Net_ServerLink(void)
 
 boolean N_GetHostInfo(int index, struct serverinfo_s *info)
 {
-    QList<Address> const listed = Net_ServerLink().foundServers();
-    if(index < 0 || index >= listed.size())
-        return false;
-    Net_ServerLink().foundServerInfo(listed[index], info);
-    return true;
+    return Net_ServerLink().foundServerInfo(index, info);
 }
 
 int N_GetHostCount(void)
