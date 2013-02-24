@@ -45,10 +45,10 @@
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 
+using namespace de;
+
 #define LOOPi(n)    for(i = 0; i < (n); ++i)
 #define LOOPk(n)    for(k = 0; k < (n); ++k)
-
-using namespace de;
 
 typedef struct {
     char* name; // Name of the routine.
@@ -805,105 +805,101 @@ int Def_GetIntValue(char* val, int* returned_val)
     return false;
 }
 
-static __inline void readDefinitionFile(const char* fileName)
+static void readDefinitionFile(String path)
 {
-    if(!fileName || !fileName[0])
-        return;
-    Def_ReadProcessDED(fileName);
+    if(path.isEmpty()) return;
+
+    QByteArray pathUtf8 = path.toUtf8();
+    LOG_VERBOSE("  Processing '%s'...") << F_PrettyPath(pathUtf8.constData());
+    Def_ReadProcessDED(pathUtf8);
 }
 
-static void readAllDefinitions(void)
+static void readAllDefinitions()
 {
-    uint startTime = Timer_RealMilliseconds();
-    ddstring_t buf;
-    int p;
+    de::Time begunAt;
 
-    // Start with engine's own top-level definition file, it is always read first.
-    de::Uri searchPath("doomsday.ded", RC_DEFINITION);
-    AutoStr* foundPath = AutoStr_NewStd();
-    if(F_FindPath(RC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
-    {
-        VERBOSE2( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(foundPath))) )
-        readDefinitionFile(Str_Text(foundPath));
-    }
-    else
-    {
-        Con_Error("readAllDefinitions: Error, failed to locate main engine definition file \"doomsday.ded\".");
-    }
+    /*
+     * Start with engine's own top-level definition file.
+     */
+    String foundPath = App_FileSystem()->findPath(de::Uri("doomsday.ded", RC_DEFINITION),
+                                                  RLF_DEFAULT, DD_ResourceClassById(RC_DEFINITION));
+    foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
-    // Now any definition files required by the game on load.
+    readDefinitionFile(foundPath);
+
+    /*
+     * Now any definition files required by the game on load.
+     */
     if(App_GameLoaded())
     {
-        de::Game::Manifests const& gameResources = App_CurrentGame().manifests();
+        Game::Manifests const& gameResources = App_CurrentGame().manifests();
         int packageIdx = 0;
-        for(de::Game::Manifests::const_iterator i = gameResources.find(RC_DEFINITION);
+        for(Game::Manifests::const_iterator i = gameResources.find(RC_DEFINITION);
             i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
         {
-            Manifest &record = **i;
+            ResourceManifest &record = **i;
             /// Try to locate this resource now.
             QString const &path = record.resolvedPath(true/*try to locate*/);
-
             if(path.isEmpty())
             {
                 QByteArray names = record.names().join(";").toUtf8();
                 Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", names.constData());
             }
 
-            QByteArray pathUtf8 = path.toUtf8();
-            LOG_VERBOSE("  Processing '%s'...") << F_PrettyPath(pathUtf8.constData());
-
-            readDefinitionFile(pathUtf8.constData());
+            readDefinitionFile(path);
         }
     }
 
-    // Next up are definition files in the Games' /auto directory.
+    /*
+     * Next up are definition files in the games' /auto directory.
+     */
     if(!CommandLine_Exists("-noauto") && App_GameLoaded())
     {
-        FS1::PathList found;
-        if(App_FileSystem()->findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, found))
+        FS1::PathList foundPaths;
+        if(App_FileSystem()->findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, foundPaths))
         {
-            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+            foreach(FS1::PathListItem const &found, foundPaths)
             {
                 // Ignore directories.
-                if(i->attrib & A_SUBDIR) continue;
+                if(found.attrib & A_SUBDIR) continue;
 
-                QByteArray foundPathUtf8 = i->path.toUtf8();
-                readDefinitionFile(foundPathUtf8.constData());
+                readDefinitionFile(found.path);
             }
         }
     }
 
-    // Any definition files on the command line?
-    Str_Init(&buf);
-    for(p = 0; p < CommandLine_Count(); ++p)
+    /*
+     * Next up are any definition files specified on the command line.
+     */
+    AutoStr *buf = AutoStr_NewStd();
+    for(int p = 0; p < CommandLine_Count(); ++p)
     {
-        const char* arg = CommandLine_At(p);
+        char const *arg = CommandLine_At(p);
         if(!CommandLine_IsMatchingAlias("-def", arg) &&
            !CommandLine_IsMatchingAlias("-defs", arg)) continue;
 
         while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            const char* searchPath = CommandLine_PathAt(p);
+            char const *searchPath = CommandLine_PathAt(p);
 
-            Con_Message("  Processing '%s'...\n", F_PrettyPath(searchPath));
-
-            Str_Clear(&buf); Str_Set(&buf, searchPath);
-            F_FixSlashes(&buf, &buf);
-            F_ExpandBasePath(&buf, &buf);
+            Str_Clear(buf); Str_Set(buf, searchPath);
+            F_FixSlashes(buf, buf);
+            F_ExpandBasePath(buf, buf);
             // We must have an absolute path. If we still do not have one then
             // prepend the current working directory if necessary.
-            F_PrependWorkPath(&buf, &buf);
+            F_PrependWorkPath(buf, buf);
 
-            readDefinitionFile(Str_Text(&buf));
+            readDefinitionFile(String(Str_Text(buf)));
         }
         p--; /* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }
-    Str_Free(&buf);
 
-    // Read DD_DEFNS definition lumps.
+    /*
+     * Last up are any DD_DEFNS definition lumps from loaded add-ons.
+     */
     Def_ReadLumpDefs();
 
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+    LOG_INFO(String("readAllDefinitions: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 static animgroup_t const *findAnimGroupForTexture(TextureManifest &manifest)

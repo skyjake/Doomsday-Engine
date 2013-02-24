@@ -1671,82 +1671,21 @@ uint F_LoadedFilesCRC(void)
     return App_FileSystem()->loadedFilesCRC();
 }
 
-boolean F_FindPath2(resourceclassid_t classId, uri_s const* searchPath,
-    ddstring_t* foundPath, int flags)
-{
-    DENG_ASSERT(searchPath);
-    try
-    {
-        String found = App_FileSystem()->findPath(reinterpret_cast<de::Uri const&>(*searchPath), flags,
-                                                  DD_ResourceClassById(classId));
-        // Does the caller want to know the matched path?
-        if(foundPath)
-        {
-            Str_Set(foundPath, found.toUtf8().constData());
-            F_PrependBasePath(foundPath, foundPath);
-        }
-        return true;
-    }
-    catch(FS1::NotFoundError const&)
-    {} // Ignore this error.
-    return false;
-}
-
-boolean F_FindPath(resourceclassid_t classId, uri_s const* searchPath,
-    ddstring_t* foundPath)
-{
-    return F_FindPath2(classId, searchPath, foundPath, RLF_DEFAULT);
-}
-
-uint F_FindPathInList(resourceclassid_t classId, char const* searchPaths,
-    ddstring_t* foundPath, int flags)
-{
-    DENG_ASSERT(classId != RC_UNKNOWN);
-    if(!searchPaths || !searchPaths[0]) return 0;
-
-    ResourceClass& rclass = DD_ResourceClassById(classId);
-
-    QStringList paths = String(searchPaths).split(';', QString::SkipEmptyParts);
-    int pathIndex = 0;
-    for(QStringList::const_iterator i = paths.constBegin(); i != paths.constEnd(); ++i, ++pathIndex)
-    {
-        de::Uri searchPath = de::Uri(*i, classId);
-        try
-        {
-            String found = App_FileSystem()->findPath(searchPath, flags, rclass);
-            if(!found.isEmpty())
-            {
-                // Does the caller want to know the matched path?
-                if(foundPath)
-                {
-                    Str_Set(foundPath, found.toUtf8().constData());
-                    F_PrependBasePath(foundPath, foundPath);
-                }
-                return pathIndex + 1; // 1-based index.
-            }
-        }
-        catch(FS1::NotFoundError const&)
-        {} // Ignore this error.
-    }
-
-    return 0; // Not found.
-}
-
 // TODO: consolidate public API into a single file
 
 // fs_util.cpp
-extern int F_FileExists(const char* path);
-extern uint F_GetLastModified(const char* path);
-extern boolean F_MakePath(const char* path);
-extern void F_FileName(ddstring_t* dst, const char* src);
-extern void F_ExtractFileBase(char* dest, const char* path, size_t len);
-extern const char* F_FindFileExtension(const char* path);
-extern boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
-extern const char* F_PrettyPath(const char* path);
+extern int F_FileExists(char const *path);
+extern uint F_GetLastModified(char const *path);
+extern boolean F_MakePath(char const *path);
+extern void F_FileName(ddstring_t *dst, char const *src);
+extern void F_ExtractFileBase(char *dest, char const *path, size_t len);
+extern const char* F_FindFileExtension(char const *path);
+extern boolean F_TranslatePath(ddstring_t *dst, ddstring_t const *src);
+extern const char* F_PrettyPath(char const *path);
 
 // m_misc.c
-DENG_EXTERN_C size_t M_ReadFile(const char* name, char** buffer);
-DENG_EXTERN_C boolean M_WriteFile(const char* name, const char* source, size_t length);
+DENG_EXTERN_C size_t M_ReadFile(char const *name, char **buffer);
+DENG_EXTERN_C boolean M_WriteFile(char const *name, char const *source, size_t length);
 
 DENG_DECLARE_API(F) =
 {

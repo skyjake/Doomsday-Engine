@@ -837,11 +837,11 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
     return true;
 }
 
-static void loadResource(Manifest& record)
+static void loadResource(ResourceManifest &manifest)
 {
-    DENG_ASSERT(record.resourceClass() == RC_PACKAGE);
+    DENG_ASSERT(manifest.resourceClass() == RC_PACKAGE);
 
-    de::Uri path = de::Uri(record.resolvedPath(false/*do not locate resource*/), RC_NULL);
+    de::Uri path(manifest.resolvedPath(false/*do not locate resource*/), RC_NULL);
     if(path.isEmpty()) return;
 
     if(de::File1* file = tryLoadFile(path, 0/*base offset*/))
@@ -850,7 +850,7 @@ static void loadResource(Manifest& record)
         file->setCustom(false);
 
         // Print the 'CRC' number of IWADs, so they can be identified.
-        if(Wad* wad = dynamic_cast<Wad*>(file))
+        if(Wad *wad = dynamic_cast<Wad*>(file))
         {
             Con_Message("  IWAD identification: %08x\n", wad->calculateCRC());
         }
@@ -920,8 +920,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     for(de::Game::Manifests::const_iterator i = gameManifests.find(RC_PACKAGE);
         i != gameManifests.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
     {
-        Manifest& record = **i;
-        loadResource(record);
+        loadResource(**i);
 
         // Update our progress.
         if(p->initiatedBusyMode)
@@ -1312,30 +1311,29 @@ boolean DD_GameInfo(GameInfo *info)
 void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
     char const *names, void *params)
 {
-    DENG_ASSERT(games);
-
+    if(!games) Con_Error("DD_AddGameResource: Game collection not yet initialized.");
     if(!VALID_RESOURCECLASSID(classId)) Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
     if(!names || !names[0]) Con_Error("DD_AddGameResource: Invalid name argument.");
 
     // Construct and attach the new resource record.
     de::Game &game = games->byId(gameId);
-    Manifest *record = new Manifest(classId, rflags);
-    game.addManifest(*record);
+    ResourceManifest *manifest = new ResourceManifest(classId, rflags);
+    game.addManifest(*manifest);
 
     // Add the name list to the resource record.
     QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
-    DENG2_FOR_EACH_CONST(QStringList, i, nameList)
+    foreach(QString const &nameRef, nameList)
     {
-        record->addName(*i);
+        manifest->addName(nameRef);
     }
 
     if(params && classId == RC_PACKAGE)
     {
         // Add the identityKey list to the resource record.
         QStringList idKeys = String((char const *) params).split(";", QString::SkipEmptyParts);
-        DENG2_FOR_EACH_CONST(QStringList, i, idKeys)
+        foreach(QString const &idKeyRef, idKeys)
         {
-            record->addIdentityKey(*i);
+            manifest->addIdentityKey(idKeyRef);
         }
     }
 }
@@ -2107,16 +2105,18 @@ static int DD_StartupWorker(void* /*parm*/)
         VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
     }
 
-    // Add required engine resource files.
-    de::Uri searchPath("Packages:doomsday.pk3");
-    AutoStr* foundPath = AutoStr_NewStd();
-    if(!F_FindPath(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath) ||
-       !tryLoadFile(de::Uri(Str_Text(foundPath), RC_NULL)))
-    {
-        Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
-    }
+    /*
+     * Add required engine resource files.
+     */
+    String foundPath = App_FileSystem()->findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
+                                                  RLF_DEFAULT, DD_ResourceClassById(RC_PACKAGE));
+    foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
+    de::File1 *loadedFile = tryLoadFile(de::Uri(foundPath, RC_NULL));
+    DENG2_ASSERT(loadedFile);
 
-    // No more lumps/packages will be loaded in startup mode after this point.
+    /*
+     * No more lumps/packages will be loaded in startup mode after this point.
+     */
     F_EndStartup();
 
     // Load engine help resources.
@@ -2769,69 +2769,66 @@ D_CMD(Load)
 {
     DENG_UNUSED(src);
 
-    boolean didLoadGame = false, didLoadResource = false;
-    ddstring_t searchPath;
+    bool didLoadGame = false, didLoadResource = false;
     int arg = 1;
 
-    Str_Init(&searchPath);
-    Str_Set(&searchPath, argv[arg]);
-    Str_Strip(&searchPath);
-    if(Str_IsEmpty(&searchPath))
-    {
-        Str_Free(&searchPath);
-        return false;
-    }
-    F_FixSlashes(&searchPath, &searchPath);
+    AutoStr *searchPath = AutoStr_NewStd();
+    Str_Set(searchPath, argv[arg]);
+    Str_Strip(searchPath);
+    if(Str_IsEmpty(searchPath)) return false;
+
+    F_FixSlashes(searchPath, searchPath);
 
     // Ignore attempts to load directories.
-    if(Str_RAt(&searchPath, 0) == '/')
+    if(Str_RAt(searchPath, 0) == '/')
     {
         Con_Message("Directories cannot be \"loaded\" (only files and/or known games).\n");
-        Str_Free(&searchPath);
         return true;
     }
 
     // Are we loading a game?
     try
     {
-        de::Game& game = games->byIdentityKey(Str_Text(&searchPath));
+        Game &game = games->byIdentityKey(Str_Text(searchPath));
         if(!game.allStartupFilesFound())
         {
             Con_Message("Failed to locate all required startup resources:\n");
-            de::Game::printFiles(game, FF_STARTUP);
+            Game::printFiles(game, FF_STARTUP);
             Con_Message("%s (%s) cannot be loaded.\n", Str_Text(game.title()), Str_Text(game.identityKey()));
-            Str_Free(&searchPath);
             return true;
         }
-        if(!DD_ChangeGame(game))
-        {
-            Str_Free(&searchPath);
-            return false;
-        }
+        if(!DD_ChangeGame(game)) return false;
+
         didLoadGame = true;
         ++arg;
     }
-    catch(de::Games::NotFoundError const &)
+    catch(Games::NotFoundError const &)
     {} // Ignore the error.
 
     // Try the resource locator.
-    AutoStr* foundPath = AutoStr_NewStd();
     for(; arg < argc; ++arg)
     {
-        de::Uri searchPath = de::Uri::fromNativePath(argv[arg], RC_PACKAGE);
-        if(!F_FindPath2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath, RLF_MATCH_EXTENSION)) continue;
-
-        if(tryLoadFile(de::Uri(Str_Text(foundPath), RC_NULL)))
+        try
         {
-            didLoadResource = true;
+            String foundPath = App_FileSystem()->findPath(de::Uri::fromNativePath(argv[arg], RC_PACKAGE),
+                                                          RLF_MATCH_EXTENSION, DD_ResourceClassById(RC_PACKAGE));
+            foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
+
+            if(tryLoadFile(de::Uri(foundPath, RC_NULL)))
+            {
+                didLoadResource = true;
+            }
         }
+        catch(FS1::NotFoundError const&)
+        {} // Ignore this error.
     }
 
     if(didLoadResource)
+    {
         DD_UpdateEngineState();
+    }
 
-    Str_Free(&searchPath);
-    return (didLoadGame || didLoadResource);
+    return didLoadGame || didLoadResource;
 }
 
 static de::File1* tryLoadFile(de::Uri const& search, size_t baseOffset)
@@ -2892,9 +2889,6 @@ D_CMD(Unload)
 {
     DENG_UNUSED(src);
 
-    ddstring_t searchPath;
-    int i;
-
     // No arguments; unload the current game if loaded.
     if(argc == 1)
     {
@@ -2906,21 +2900,17 @@ D_CMD(Unload)
         return DD_ChangeGame(games->nullGame());
     }
 
-    Str_Init(&searchPath);
-    Str_Set(&searchPath, argv[1]);
-    Str_Strip(&searchPath);
-    if(Str_IsEmpty(&searchPath))
-    {
-        Str_Free(&searchPath);
-        return false;
-    }
-    F_FixSlashes(&searchPath, &searchPath);
+    AutoStr *searchPath = AutoStr_NewStd();
+    Str_Set(searchPath, argv[1]);
+    Str_Strip(searchPath);
+    if(Str_IsEmpty(searchPath)) return false;
+
+    F_FixSlashes(searchPath, searchPath);
 
     // Ignore attempts to unload directories.
-    if(Str_RAt(&searchPath, 0) == '/')
+    if(Str_RAt(searchPath, 0) == '/')
     {
         Con_Message("Directories cannot be \"unloaded\" (only files and/or known games).\n");
-        Str_Free(&searchPath);
         return true;
     }
 
@@ -2929,8 +2919,7 @@ D_CMD(Unload)
     {
         try
         {
-            de::Game& game = games->byIdentityKey(Str_Text(&searchPath));
-            Str_Free(&searchPath);
+            Game &game = games->byIdentityKey(Str_Text(searchPath));
             if(App_GameLoaded())
             {
                 return DD_ChangeGame(games->nullGame());
@@ -2939,22 +2928,27 @@ D_CMD(Unload)
             Con_Message("%s is not currently loaded.\n", Str_Text(game.identityKey()));
             return true;
         }
-        catch(de::Games::NotFoundError const &)
+        catch(Games::NotFoundError const &)
         {} // Ignore the error.
     }
 
     // Try the resource locator.
     bool didUnloadFiles = false;
-    AutoStr* foundPath = AutoStr_NewStd();
-    for(i = 1; i < argc; ++i)
+    for(int i = 1; i < argc; ++i)
     {
-        de::Uri searchPath = de::Uri(NativePath(argv[1]).expand().withSeparators('/'), RC_PACKAGE);
-        if(!F_FindPath(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath)) continue;
-
-        if(tryUnloadFile(de::Uri(Str_Text(foundPath), RC_NULL)))
+        try
         {
-            didUnloadFiles = true;
+            String foundPath = App_FileSystem()->findPath(de::Uri::fromNativePath(argv[1], RC_PACKAGE),
+                                                          RLF_MATCH_EXTENSION, DD_ResourceClassById(RC_PACKAGE));
+            foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
+
+            if(tryUnloadFile(de::Uri(foundPath, RC_NULL)))
+            {
+                didUnloadFiles = true;
+            }
         }
+        catch(FS1::NotFoundError const&)
+        {} // Ignore this error.
     }
 
     if(didUnloadFiles)
@@ -2963,13 +2957,12 @@ D_CMD(Unload)
         DD_UpdateEngineState();
     }
 
-    Str_Free(&searchPath);
     return didUnloadFiles;
 }
 
 D_CMD(Reset)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     DD_UpdateEngineState();
     return true;

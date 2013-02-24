@@ -551,15 +551,21 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
          */
         if(info->lumpNum < 0 || !F_LumpIsCustom(info->lumpNum))
         {
-            de::Uri searchPath(info->lumpName, RC_SOUND);
-            AutoStr *foundPath = AutoStr_NewStd();
-
-            if(F_FindPath(RC_SOUND, reinterpret_cast<uri_s *>(&searchPath), foundPath) &&
-               (data = WAV_Load(Str_Text(foundPath), &bytesPer, &rate, &numSamples)))
+            try
             {
-                // Loading was successful.
-                bytesPer /= 8; // Was returned as bits.
+                String foundPath = App_FileSystem()->findPath(de::Uri(info->lumpName, RC_SOUND),
+                                                              RLF_DEFAULT, DD_ResourceClassById(RC_SOUND));
+                foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
+
+                data = WAV_Load(foundPath.toUtf8().constData(), &bytesPer, &rate, &numSamples);
+                if(data)
+                {
+                    // Loading was successful.
+                    bytesPer /= 8; // Was returned as bits.
+                }
             }
+            catch(FS1::NotFoundError const&)
+            {} // Ignore this error.
         }
     }
 

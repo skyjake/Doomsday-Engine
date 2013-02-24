@@ -553,21 +553,25 @@ static void defineAllSkins(model_t &mdl)
     if(!numFoundSkins)
     {
         // Lastly try a skin named similarly to the model in the same directory.
-        de::Uri skinSearchPath = de::Uri(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
+        de::Uri searchPath(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
 
-        AutoStr *foundSkinPath = AutoStr_NewStd();
-        if(F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s *>(&skinSearchPath), foundSkinPath))
+        try
         {
-            // Huzzah! we found a skin.
-            defineSkinAndAddToModelIndex(mdl, Path(Str_Text(foundSkinPath)));
+            String foundPath = App_FileSystem()->findPath(searchPath, RLF_DEFAULT,
+                                                          DD_ResourceClassById(RC_GRAPHIC));
+            // Ensure the found path is absolute.
+            foundPath = App_BasePath() / foundPath;
 
+            defineSkinAndAddToModelIndex(mdl, foundPath);
             // We have found one more skin for this model.
             numFoundSkins = 1;
 
             LOG_INFO("Assigned fallback skin \"%s\" to index #0 for model \"%s\".")
-                << NativePath(Str_Text(foundSkinPath)).pretty()
+                << NativePath(foundPath).pretty()
                 << NativePath(modelFilePath).pretty();
         }
+        catch(FS1::NotFoundError const&)
+        {} // Ignore this error.
     }
 
     if(!numFoundSkins)
@@ -1062,121 +1066,124 @@ static void setupModel(ded_model_t& def)
 
         if(!subdef->filename || Uri_IsEmpty(subdef->filename)) continue;
 
-        AutoStr* foundPath = AutoStr_NewStd();
-        if(!F_FindPath(RC_MODEL, subdef->filename, foundPath))
+        de::Uri const &searchPath = reinterpret_cast<de::Uri &>(*subdef->filename);
+        try
         {
-            de::Uri const &searchPath = reinterpret_cast<de::Uri &>(*subdef->filename);
+            String foundPath = App_FileSystem()->findPath(searchPath, RLF_DEFAULT,
+                                                          DD_ResourceClassById(RC_MODEL));
+            // Ensure the found path is absolute.
+            foundPath = App_BasePath() / foundPath;
+
+            model_t* mdl = loadModel(foundPath);
+            if(!mdl) continue;
+
+            sub->modelId = mdl->modelId;
+            sub->frame = mdl->frameNumForName(subdef->frame);
+            sub->frameRange = MAX_OF(1, subdef->frameRange); // Frame range must always be greater than zero.
+
+            sub->alpha = byte(255 - subdef->alpha * 255);
+            sub->blendMode = subdef->blendMode;
+
+            // Submodel-specific flags cancel out model-scope flags!
+            sub->flags = modelScopeFlags ^ subdef->flags;
+
+            // Flags may override alpha and/or blendmode.
+            if(sub->flags & MFF_BRIGHTSHADOW)
+            {
+                sub->alpha = byte(256 * .80f);
+                sub->blendMode = BM_ADD;
+            }
+            else if(sub->flags & MFF_BRIGHTSHADOW2)
+            {
+                sub->blendMode = BM_ADD;
+            }
+            else if(sub->flags & MFF_DARKSHADOW)
+            {
+                sub->blendMode = BM_DARK;
+            }
+            else if(sub->flags & MFF_SHADOW2)
+            {
+                sub->alpha = byte(256 * .2f);
+            }
+            else if(sub->flags & MFF_SHADOW1)
+            {
+                sub->alpha = byte(256 * .62f);
+            }
+
+            // Extra blendmodes:
+            if(sub->flags & MFF_REVERSE_SUBTRACT)
+            {
+                sub->blendMode = BM_REVERSE_SUBTRACT;
+            }
+            else if(sub->flags & MFF_SUBTRACT)
+            {
+                sub->blendMode = BM_SUBTRACT;
+            }
+
+            if(subdef->skinFilename && !Uri_IsEmpty(subdef->skinFilename))
+            {
+                // A specific file name has been given for the skin.
+                String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->skinFilename).path();
+                String const &modelFilePath = findModelPath(sub->modelId);
+                try
+                {
+                    Path foundResourcePath(findSkinPath(skinFilePath, modelFilePath));
+
+                    sub->skin = defineSkinAndAddToModelIndex(*mdl, foundResourcePath);
+                }
+                catch(FS1::NotFoundError const&)
+                {
+                    LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
+                        << reinterpret_cast<de::Uri &>(*subdef->skinFilename) << NativePath(modelFilePath).pretty();
+                }
+            }
+            else
+            {
+                sub->skin = subdef->skin;
+            }
+
+            sub->skinRange = subdef->skinRange;
+            // Skin range must always be greater than zero.
+            if(sub->skinRange < 1)
+                sub->skinRange = 1;
+
+            // Offset within the model.
+            for(int k = 0; k < 3; ++k)
+            {
+                sub->offset[k] = subdef->offset[k];
+            }
+
+            if(subdef->shinySkin && !Uri_IsEmpty(subdef->shinySkin))
+            {
+                String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->shinySkin).path();
+                String const &modelFilePath = findModelPath(sub->modelId);
+                try
+                {
+                    de::Uri foundResourceUri(Path(findSkinPath(skinFilePath, modelFilePath)));
+
+                    sub->shinySkin = reinterpret_cast<texture_s *>(R_DefineTexture("ModelReflectionSkins", foundResourceUri));
+                }
+                catch(FS1::NotFoundError const &)
+                {
+                    LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
+                        << skinFilePath << NativePath(modelFilePath).pretty();
+                }
+            }
+            else
+            {
+                sub->shinySkin = 0;
+            }
+
+            // Should we allow texture compression with this model?
+            if(sub->flags & MFF_NO_TEXCOMP)
+            {
+                // All skins of this model will no longer use compression.
+                mdl->allowTexComp = false;
+            }
+        }
+        catch(FS1::NotFoundError const &)
+        {
             LOG_WARNING("Failed to locate \"%s\", ignoring.") << searchPath;
-            continue;
-        }
-
-        model_t* mdl = loadModel(Str_Text(foundPath));
-        if(!mdl) continue;
-
-        sub->modelId = mdl->modelId;
-        sub->frame = mdl->frameNumForName(subdef->frame);
-        sub->frameRange = MAX_OF(1, subdef->frameRange); // Frame range must always be greater than zero.
-
-        sub->alpha = byte(255 - subdef->alpha * 255);
-        sub->blendMode = subdef->blendMode;
-
-        // Submodel-specific flags cancel out model-scope flags!
-        sub->flags = modelScopeFlags ^ subdef->flags;
-
-        // Flags may override alpha and/or blendmode.
-        if(sub->flags & MFF_BRIGHTSHADOW)
-        {
-            sub->alpha = byte(256 * .80f);
-            sub->blendMode = BM_ADD;
-        }
-        else if(sub->flags & MFF_BRIGHTSHADOW2)
-        {
-            sub->blendMode = BM_ADD;
-        }
-        else if(sub->flags & MFF_DARKSHADOW)
-        {
-            sub->blendMode = BM_DARK;
-        }
-        else if(sub->flags & MFF_SHADOW2)
-        {
-            sub->alpha = byte(256 * .2f);
-        }
-        else if(sub->flags & MFF_SHADOW1)
-        {
-            sub->alpha = byte(256 * .62f);
-        }
-
-        // Extra blendmodes:
-        if(sub->flags & MFF_REVERSE_SUBTRACT)
-        {
-            sub->blendMode = BM_REVERSE_SUBTRACT;
-        }
-        else if(sub->flags & MFF_SUBTRACT)
-        {
-            sub->blendMode = BM_SUBTRACT;
-        }
-
-        if(subdef->skinFilename && !Uri_IsEmpty(subdef->skinFilename))
-        {
-            // A specific file name has been given for the skin.
-            String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->skinFilename).path();
-            String const &modelFilePath = findModelPath(sub->modelId);
-
-            try
-            {
-                Path foundResourcePath(findSkinPath(skinFilePath, modelFilePath));
-
-                sub->skin = defineSkinAndAddToModelIndex(*mdl, foundResourcePath);
-            }
-            catch(FS1::NotFoundError const&)
-            {
-                LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
-                    << reinterpret_cast<de::Uri &>(*subdef->skinFilename) << NativePath(modelFilePath).pretty();
-            }
-        }
-        else
-        {
-            sub->skin = subdef->skin;
-        }
-
-        sub->skinRange = subdef->skinRange;
-        // Skin range must always be greater than zero.
-        if(sub->skinRange < 1)
-            sub->skinRange = 1;
-
-        // Offset within the model.
-        for(int k = 0; k < 3; ++k)
-        {
-            sub->offset[k] = subdef->offset[k];
-        }
-
-        if(subdef->shinySkin && !Uri_IsEmpty(subdef->shinySkin))
-        {
-            String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->shinySkin).path();
-            String const &modelFilePath = findModelPath(sub->modelId);
-
-            try
-            {
-                de::Uri foundResourceUri(Path(findSkinPath(skinFilePath, modelFilePath)));
-
-                sub->shinySkin = reinterpret_cast<texture_s *>(R_DefineTexture("ModelReflectionSkins", foundResourceUri));
-            }
-            catch(FS1::NotFoundError const &)
-            {
-                LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
-                    << skinFilePath << NativePath(modelFilePath).pretty();
-            }
-        }
-        else
-        {
-            sub->shinySkin = 0;
-        }
-
-        // Should we allow texture compression with this model?
-        if(sub->flags & MFF_NO_TEXCOMP)
-        {
-            // All skins of this model will no longer use compression.
-            mdl->allowTexComp = false;
         }
     }
 

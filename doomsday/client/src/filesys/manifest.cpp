@@ -1,8 +1,7 @@
-/** @file manifest.cpp Manifest. 
- * @ingroup fs
+/** @file manifest.cpp Game Resource Manifest.
  *
- * @authors Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,16 +21,15 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
-
-#include "filesys/manifest.h"
 #include "resource/wad.h"
 #include "resource/zip.h"
-
 #include <de/Path>
 
-namespace de {
+#include "filesys/manifest.h"
 
-struct Manifest::Instance
+using namespace de;
+
+DENG2_PIMPL(ResourceManifest)
 {
     /// Class of resource.
     resourceclassid_t classId;
@@ -54,24 +52,28 @@ struct Manifest::Instance
     /// Set during resource location.
     String foundPath;
 
-    Instance(resourceclassid_t _rclass, int rflags)
-        : classId(_rclass), flags(rflags & ~FF_FOUND), names(),
-          identityKeys(), foundNameIndex(-1), foundPath()
+    Instance(Public *i, resourceclassid_t _rclass, int rflags) : Base(i),
+        classId(_rclass),
+        flags(rflags & ~FF_FOUND),
+        names(),
+        identityKeys(),
+        foundNameIndex(-1),
+        foundPath()
     {}
 };
 
-Manifest::Manifest(resourceclassid_t fClass, int fFlags, String* name)
+ResourceManifest::ResourceManifest(resourceclassid_t fClass, int fFlags, String *name)
+    : d(new Instance(this, fClass, fFlags))
 {
-    d = new Instance(fClass, fFlags);
     if(name) addName(*name);
 }
 
-Manifest::~Manifest()
+ResourceManifest::~ResourceManifest()
 {
     delete d;
 }
 
-Manifest& Manifest::addName(String newName, bool* didAdd)
+ResourceManifest &ResourceManifest::addName(String newName, bool *didAdd)
 {
     // Is this name unique? We don't want duplicates.
     if(newName.isEmpty() || d->names.contains(newName, Qt::CaseInsensitive))
@@ -87,7 +89,7 @@ Manifest& Manifest::addName(String newName, bool* didAdd)
     return *this;
 }
 
-Manifest& Manifest::addIdentityKey(String newIdentityKey, bool* didAdd)
+ResourceManifest &ResourceManifest::addIdentityKey(String newIdentityKey, bool *didAdd)
 {
     // Is this key unique? We don't want duplicates.
     if(newIdentityKey.isEmpty() || d->identityKeys.contains(newIdentityKey, Qt::CaseInsensitive))
@@ -192,14 +194,14 @@ static lumpnum_t lumpNumForIdentityKey(LumpIndex const& lumpIndex, String idKey)
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
-static bool validateWad(String const& filePath, QStringList const& identityKeys)
+static bool validateWad(String const &filePath, QStringList const &identityKeys)
 {
     bool validated = true;
     try
     {
-        de::FileHandle& hndl = App_FileSystem()->openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
+        de::FileHandle &hndl = App_FileSystem()->openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
 
-        if(de::Wad* wad = dynamic_cast<de::Wad*>(&hndl.file()))
+        if(Wad *wad = dynamic_cast<Wad *>(&hndl.file()))
         {
             // Ensure all identity lumps are present.
             if(identityKeys.count())
@@ -239,75 +241,77 @@ static bool validateWad(String const& filePath, QStringList const& identityKeys)
         App_FileSystem()->releaseFile(hndl.file());
         delete &hndl;
     }
-    catch(FS1::NotFoundError const&)
+    catch(FS1::NotFoundError const &)
     {} // Ignore this error.
 
     return validated;
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
-static bool validateZip(String const& filePath, QStringList const& /*identityKeys*/)
+static bool validateZip(String const &filePath, QStringList const & /*identityKeys*/)
 {
     try
     {
-        FileHandle& hndl = App_FileSystem()->openFile(filePath, "rbf");
+        de::FileHandle &hndl = App_FileSystem()->openFile(filePath, "rbf");
         bool result = Zip::recognise(hndl);
         /// @todo Check files. We should implement an auxiliary zip lump index...
         App_FileSystem()->releaseFile(hndl.file());
         delete &hndl;
         return result;
     }
-    catch(FS1::NotFoundError const&)
+    catch(FS1::NotFoundError const &)
     {} // Ignore error.
     return false;
 }
 
-Manifest& Manifest::locateFile()
+ResourceManifest &ResourceManifest::locateFile()
 {
     // Already found?
     if(d->flags & FF_FOUND) return *this;
 
     // Perform the search.
-    AutoStr* found = AutoStr_NewStd();
     int nameIndex = 0;
     for(QStringList::const_iterator i = d->names.constBegin(); i != d->names.constEnd(); ++i, ++nameIndex)
     {
-        Uri path = Uri(*i, d->classId);
-
         // Attempt to resolve a path to the named resource.
-        if(!F_FindPath(d->classId, reinterpret_cast<uri_s*>(&path), found)) continue;
-
-        // We've found *something*.
-        String foundPath = String(Str_Text(found));
-
-        // Perform identity validation.
-        bool validated = false;
-        if(d->classId == RC_PACKAGE)
+        try
         {
-            /// @todo The identity configuration should declare the type of resource...
-                validated = validateWad(foundPath, d->identityKeys);
-            if(!validated)
-                validated = validateZip(foundPath, d->identityKeys);
-        }
-        else
-        {
-            // Other resource types are not validated.
-            validated = true;
-        }
+            String foundPath = App_FileSystem()->findPath(de::Uri(*i, d->classId),
+                                                          RLF_DEFAULT, DD_ResourceClassById(d->classId));
+            foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
-        if(!validated) continue;
+            // Perform identity validation.
+            bool validated = false;
+            if(d->classId == RC_PACKAGE)
+            {
+                /// @todo The identity configuration should declare the type of resource...
+                    validated = validateWad(foundPath, d->identityKeys);
+                if(!validated)
+                    validated = validateZip(foundPath, d->identityKeys);
+            }
+            else
+            {
+                // Other resource types are not validated.
+                validated = true;
+            }
 
-        // This is the resource we've been looking for.
-        d->flags |= FF_FOUND;
-        d->foundPath = foundPath;
-        d->foundNameIndex = nameIndex;
-        break;
+            if(validated)
+            {
+                // This is the resource we've been looking for.
+                d->flags |= FF_FOUND;
+                d->foundPath = foundPath;
+                d->foundNameIndex = nameIndex;
+                break;
+            }
+        }
+        catch(FS1::NotFoundError const&)
+        {} // Ignore this error.
     }
 
     return *this;
 }
 
-Manifest& Manifest::forgetFile()
+ResourceManifest &ResourceManifest::forgetFile()
 {
     if(d->flags & FF_FOUND)
     {
@@ -318,7 +322,7 @@ Manifest& Manifest::forgetFile()
     return *this;
 }
 
-String const& Manifest::resolvedPath(bool tryLocate)
+String const &ResourceManifest::resolvedPath(bool tryLocate)
 {
     if(tryLocate)
     {
@@ -327,27 +331,27 @@ String const& Manifest::resolvedPath(bool tryLocate)
     return d->foundPath;
 }
 
-resourceclassid_t Manifest::resourceClass() const
+resourceclassid_t ResourceManifest::resourceClass() const
 {
     return d->classId;
 }
 
-int Manifest::fileFlags() const
+int ResourceManifest::fileFlags() const
 {
     return d->flags;
 }
 
-QStringList const& Manifest::identityKeys() const
+QStringList const &ResourceManifest::identityKeys() const
 {
     return d->identityKeys;
 }
 
-QStringList const& Manifest::names() const
+QStringList const &ResourceManifest::names() const
 {
     return d->names;
 }
 
-void Manifest::consolePrint(Manifest& manifest, bool showStatus)
+void ResourceManifest::consolePrint(ResourceManifest &manifest, bool showStatus)
 {
     QByteArray names = manifest.names().join(";").toUtf8();
     bool const resourceFound = !!(manifest.fileFlags() & FF_FOUND);
@@ -364,5 +368,3 @@ void Manifest::consolePrint(Manifest& manifest, bool showStatus)
     }
     Con_Printf("\n");
 }
-
-} // namespace de

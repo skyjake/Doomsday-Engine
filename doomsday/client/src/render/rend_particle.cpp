@@ -34,6 +34,8 @@
 #include "gl/texturecontent.h"
 #include "map/generators.h"
 
+using namespace de;
+
 // Point + custom textures.
 #define NUM_TEX_NAMES           (MAX_PTC_TEXTURES)
 
@@ -98,54 +100,71 @@ static float pointDist(fixed_t c[3])
     return dist;
 }
 
+static Path tryFindImage(String name)
+{
+    /*
+     * First look for a colorkeyed version.
+     */
+    try
+    {
+        String foundPath = App_FileSystem()->findPath(de::Uri("Textures", name + "-ck"),
+                                                      RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+        // Ensure the path is absolute.
+        return App_BasePath() / foundPath;
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+
+    /*
+     * Look for the regular version.
+     */
+    try
+    {
+        String foundPath = App_FileSystem()->findPath(de::Uri("Textures", name),
+                                                      RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+        // Ensure the path is absolute.
+        return App_BasePath() / foundPath;
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+
+    return Path(); // Not found.
+}
+
 // Try to load the texture.
-static byte loadParticleTexture(uint particleTex, boolean silent)
+static byte loadParticleTexture(uint particleTex, bool silent)
 {
     DENG_ASSERT(particleTex < MAX_PTC_TEXTURES);
 
-    byte result = 0;
+    String particleImageName = String("Particle%1").arg(particleTex, 2, 10, QChar('0'));
+    Path foundPath = tryFindImage(particleImageName);
+    if(foundPath.isEmpty())
+    {
+        if(!silent)
+        {
+            LOG_WARNING("Failed locating image resource for \"%s\".") << particleImageName;
+        }
+        return 0;
+    }
+
     image_t image;
-    AutoStr *foundPath  = AutoStr_NewStd();
-    AutoStr *texName = Str_Appendf(AutoStr_NewStd(), "Textures:Particle%02i", particleTex);
+    if(!GL_LoadImage(image, foundPath.toUtf8().constData()))
+        return 0;
 
-    // First look for a colorkeyed version.
-    Uri *searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "%s-ck", Str_Text(texName))));
-    bool found      = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
+    // If 8-bit with no alpha, generate alpha automatically.
+    if(image.pixelSize == 1)
+        Image_ConvertToAlpha(&image, true);
 
-    if(!found)
-    {
-        Uri_SetUri(searchPath, Str_Text(texName));
-        found = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
-    }
+    // Create a new texture and upload the image.
+    ptctexname[particleTex] = GL_NewTextureWithParams(
+        image.pixelSize == 4 ? DGL_RGBA :
+        image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
+        image.size.width, image.size.height, image.pixels,
+        TXCF_NO_COMPRESSION);
 
-    if(found && GL_LoadImage(image, Str_Text(foundPath)))
-    {
-        result = 2;
-    }
-
-    if(result != 0)
-    {
-        // If 8-bit with no alpha, generate alpha automatically.
-        if(image.pixelSize == 1)
-            Image_ConvertToAlpha(&image, true);
-
-        // Create a new texture and upload the image.
-        ptctexname[particleTex] = GL_NewTextureWithParams(
-            image.pixelSize == 4 ? DGL_RGBA :
-            image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
-            image.size.width, image.size.height, image.pixels,
-            TXCF_NO_COMPRESSION);
-
-        // Free the buffer.
-        Image_Destroy(&image);
-    }
-    else if(!silent)
-    {
-        Con_Message("Warning: Texture \"Particle%02i\" not found.\n", particleTex);
-    }
-
-    Uri_Delete(searchPath);
-    return result;
+    // Free the buffer.
+    Image_Destroy(&image);
+    return 2; // External
 }
 
 void Rend_ParticleLoadSystemTextures()

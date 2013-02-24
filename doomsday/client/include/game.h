@@ -46,7 +46,7 @@ struct gamedef_s;
 namespace de {
 
 class File1;
-class Manifest;
+class ResourceManifest;
 class Games;
 
 /**
@@ -58,7 +58,7 @@ class Games;
 class Game
 {
 public:
-    typedef QMultiMap<resourceclassid_t, Manifest *> Manifests;
+    typedef QMultiMap<resourceclassid_t, ResourceManifest *> Manifests;
 
 public:
     /**
@@ -112,7 +112,7 @@ public:
      *
      * @param manifest  Manifest to add.
      */
-    Game &addManifest(Manifest &manifest);
+    Game &addManifest(ResourceManifest &manifest);
 
     bool allStartupFilesFound() const;
 

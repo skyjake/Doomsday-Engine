@@ -112,7 +112,7 @@ bool Game::isCurrent() const
     return this == &collection().current();
 }
 
-Game &Game::addManifest(Manifest &manifest)
+Game &Game::addManifest(ResourceManifest &manifest)
 {
     // Ensure we don't add duplicates.
     Manifests::const_iterator found = d->manifests.find(manifest.resourceClass(), &manifest);
@@ -125,7 +125,7 @@ Game &Game::addManifest(Manifest &manifest)
 
 bool Game::allStartupFilesFound() const
 {
-    foreach(Manifest *manifest, d->manifests)
+    foreach(ResourceManifest *manifest, d->manifests)
     {
         int const flags = manifest->fileFlags();
 
@@ -190,7 +190,7 @@ bool Game::isRequiredFile(File1 &file)
     for(Manifests::const_iterator i = d->manifests.find(RC_PACKAGE);
         i != d->manifests.end() && i.key() == RC_PACKAGE; ++i)
     {
-        Manifest &manifest = **i;
+        ResourceManifest &manifest = **i;
         if(!(manifest.fileFlags() & FF_STARTUP)) continue;
 
         if(!manifest.resolvedPath(true/*try locate*/).compare(absolutePath, Qt::CaseInsensitive))
@@ -227,10 +227,10 @@ void Game::printFiles(Game const &game, int rflags, bool printStatus)
         for(Manifests::const_iterator i = manifests.find(classId);
             i != manifests.end() && i.key() == classId; ++i)
         {
-            Manifest &manifest = **i;
+            ResourceManifest &manifest = **i;
             if(rflags >= 0 && (rflags & manifest.fileFlags()))
             {
-                Manifest::consolePrint(manifest, printStatus);
+                ResourceManifest::consolePrint(manifest, printStatus);
                 numPrinted += 1;
             }
         }

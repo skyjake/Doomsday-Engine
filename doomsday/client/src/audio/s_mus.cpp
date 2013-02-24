@@ -20,9 +20,9 @@
  * 02110-1301 USA</small>
  */
 
-//#if WIN32
-//# include <math.h> // for sqrt() ?
-//#endif
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
 
 #include "de_base.h"
 #include "de_console.h"
@@ -34,9 +34,7 @@
 #include "audio/sys_audio.h"
 #include "audio/m_mus2midi.h"
 
-#ifdef __SERVER__
-#  error "audio" is not available in a SERVER build
-#endif
+using namespace de;
 
 D_CMD(PlayMusic);
 D_CMD(PauseMusic);
@@ -227,40 +225,54 @@ boolean Mus_IsMUSLump(lumpnum_t lumpNum)
  *
  * @return  Non-zero if an external file of that name exists.
  */
-int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
+int Mus_GetExt(ded_music_t *def, ddstring_t *retPath)
 {
-    Uri* searchPath;
-    int result;
+    LOG_AS("Mus_GetExt");
 
     if(!musAvail || !AudioDriver_Music_Available()) return false;
 
-    // All external music files are specified relative to the base path.
     if(def->path && !Str_IsEmpty(Uri_Path(def->path)))
     {
-        AutoStr* path;
-        AutoStr* fullPath = AutoStr_NewStd();
+        // All external music files are specified relative to the base path.
+        AutoStr *fullPath = AutoStr_NewStd();
         F_PrependBasePath(fullPath, Uri_Path(def->path));
+
         if(F_Access(Str_Text(fullPath)))
         {
             if(retPath) Str_Set(retPath, Str_Text(fullPath));
             return true;
         }
 
-        path = Uri_ToString(def->path);
-        Con_Message("Warning \"%s\" for id '%s' not found.\n", Str_Text(path), def->id);
+        LOG_WARNING("Music file \"%s\" not found (id '%s').")
+            << *reinterpret_cast<de::Uri *>(def->path) << def->id;
     }
 
-    // Try the resource locator.
-    searchPath = Uri_NewWithPath2(def->lumpName, RC_MUSIC);
-    result = F_FindPath(RC_MUSIC, searchPath, retPath);
-    Uri_Delete(searchPath);
-    return result;
+    // Try the resource locator?
+    if(def->lumpName[0])
+    {
+        try
+        {
+            String foundPath = App_FileSystem()->findPath(de::Uri(def->lumpName, RC_MUSIC), RLF_DEFAULT,
+                                                          DD_ResourceClassById(RC_MUSIC));
+            foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
+
+            // Does the caller want to know the matched path?
+            if(retPath)
+            {
+                Str_Set(retPath, foundPath.toUtf8().constData());
+            }
+            return true;
+        }
+        catch(FS1::NotFoundError const&)
+        {} // Ignore this error.
+    }
+    return false;
 }
 
 /**
  * @return  The track number if successful else zero.
  */
-int Mus_GetCD(ded_music_t* def)
+int Mus_GetCD(ded_music_t *def)
 {
     if(!musAvail || !AudioDriver_CD() || !def)
         return 0;

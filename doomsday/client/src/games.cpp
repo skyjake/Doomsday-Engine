@@ -185,7 +185,7 @@ void Games::locateStartupResources(Game &game)
         App_FileSystem()->resetAllSchemes();
     }
 
-    foreach(Manifest *manifest, game.manifests())
+    foreach(ResourceManifest *manifest, game.manifests())
     {
         // We are only interested in startup resources at this time.
         if(!(manifest->fileFlags() & FF_STARTUP)) continue;

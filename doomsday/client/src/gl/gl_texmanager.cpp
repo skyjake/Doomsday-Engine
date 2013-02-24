@@ -2015,24 +2015,36 @@ void GL_UploadTextureContent(texturecontent_t const &content)
 static TexSource loadExternalTexture(image_t &image, String searchPath,
     String optionalSuffix)
 {
-    AutoStr *foundPath = AutoStr_NewStd();
     // First look for a version with an optional suffix.
-    de::Uri search = de::Uri(Path(searchPath) + optionalSuffix, RC_GRAPHIC);
-    bool found = F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s *>(&search), foundPath);
+    try
+    {
+        String foundPath = App_FileSystem()->findPath(de::Uri(searchPath + optionalSuffix, RC_GRAPHIC),
+                                                      RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+        // Ensure the found path is absolute.
+        foundPath = App_BasePath() / foundPath;
+
+        return GL_LoadImage(image, foundPath)? TEXS_EXTERNAL : TEXS_NONE;
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
 
     // Try again without the suffix?
-    if(!found && !optionalSuffix.empty())
+    if(!optionalSuffix.empty())
     {
-        search.setUri(Path(searchPath), RC_GRAPHIC);
-        found = F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s *>(&search), foundPath);
+        try
+        {
+            String foundPath = App_FileSystem()->findPath(de::Uri(searchPath, RC_GRAPHIC),
+                                                          RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+            // Ensure the found path is absolute.
+            foundPath = App_BasePath() / foundPath;
+
+            return GL_LoadImage(image, foundPath)? TEXS_EXTERNAL : TEXS_NONE;
+        }
+        catch(FS1::NotFoundError const&)
+        {} // Ignore this error.
     }
 
-    if(!found || !GL_LoadImage(image, Str_Text(foundPath)))
-    {
-        return TEXS_NONE;
-    }
-
-    return TEXS_EXTERNAL;
+    return TEXS_NONE;
 }
 
 DGLuint GL_PrepareLSTexture(lightingtexid_t which)
@@ -2451,59 +2463,58 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZ
 
 static TexSource loadRaw(image_t &image, rawtex_t const &raw)
 {
-    AutoStr *foundPath = AutoStr_NewStd();
-    TexSource source = TEXS_NONE;
-
-    // First try to find an external resource.
-    de::Uri searchPath("Patches", Path(Str_Text(&raw.name)));
-
-    if(F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s *>(&searchPath), foundPath) &&
-       GL_LoadImage(image, Str_Text(foundPath)))
+    // First try an external resource.
+    try
     {
-        // "External" image loaded.
-        source = TEXS_EXTERNAL;
+        String foundPath = App_FileSystem()->findPath(de::Uri("Patches", Path(Str_Text(&raw.name))),
+                                                      RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+        // Ensure the found path is absolute.
+        foundPath = App_BasePath() / foundPath;
+
+        return GL_LoadImage(image, foundPath)? TEXS_EXTERNAL : TEXS_NONE;
     }
-    else if(raw.lumpNum >= 0)
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+
+    if(raw.lumpNum >= 0)
     {
         filehandle_s *file = F_OpenLump(raw.lumpNum);
         if(file)
         {
             if(Image_LoadFromFile(&image, file))
             {
-                source = TEXS_ORIGINAL;
+                F_Delete(file);
+                return TEXS_ORIGINAL;
             }
-            else
-            {
-                // It must be an old-fashioned "raw" image.
+
+            // It must be an old-fashioned "raw" image.
 #define RAW_WIDTH           320
 #define RAW_HEIGHT          200
 
-                Image_Init(&image);
+            Image_Init(&image);
 
-                size_t fileLength = FileHandle_Length(file);
-                size_t bufSize = 3 * RAW_WIDTH * RAW_HEIGHT;
+            size_t fileLength = FileHandle_Length(file);
+            size_t bufSize = 3 * RAW_WIDTH * RAW_HEIGHT;
 
-                image.pixels = (uint8_t *) M_Malloc(bufSize);
-                if(fileLength < bufSize)
-                    std::memset(image.pixels, 0, bufSize);
+            image.pixels = (uint8_t *) M_Malloc(bufSize);
+            if(fileLength < bufSize)
+                std::memset(image.pixels, 0, bufSize);
 
-                // Load the raw image data.
-                FileHandle_Read(file, image.pixels, fileLength);
-                image.size.width = RAW_WIDTH;
-                image.size.height = int(fileLength / image.size.width);
-                image.pixelSize = 1;
+            // Load the raw image data.
+            FileHandle_Read(file, image.pixels, fileLength);
+            image.size.width = RAW_WIDTH;
+            image.size.height = int(fileLength / image.size.width);
+            image.pixelSize = 1;
 
-                source = TEXS_ORIGINAL;
+            F_Delete(file);
+            return TEXS_ORIGINAL;
 
 #undef RAW_HEIGHT
 #undef RAW_WIDTH
-            }
-
-            F_Delete(file);
         }
     }
 
-    return source;
+    return TEXS_NONE;
 }
 
 DGLuint GL_PrepareRawTexture(rawtex_t &raw)

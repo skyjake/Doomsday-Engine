@@ -49,6 +49,19 @@
  * @defgroup fs File System
  */
 
+/**
+ * @defgroup resourceLocationFlags  Resource Location Flags
+ *
+ * Flags used with @ref FS1::find().
+ * @ingroup flags
+ */
+///@{
+#define RLF_MATCH_EXTENSION     0x1 /// If an extension is specified in the search term the found file should have it too.
+
+/// Default flags.
+#define RLF_DEFAULT             0
+///@}
+
 namespace de {
 
 namespace internal {
@@ -646,47 +659,6 @@ void F_UnlockLump(struct file1_s *file, int lumpIdx);
 void F_ComposePWADFileList(char *outBuf, size_t outBufSize, char const *delimiter);
 
 uint F_LoadedFilesCRC(void);
-
-/**
- * @defgroup resourceLocationFlags  Resource Location Flags
- *
- * Flags used with the F_Find family of functions which dictate the
- * logic used during resource location.
- * @ingroup flags
- */
-///@{
-#define RLF_MATCH_EXTENSION     0x1 /// If an extension is specified in the search term the found file should have it too.
-
-/// Default flags.
-#define RLF_DEFAULT             0
-///@}
-
-/**
- * Attempt to locate a named resource.
- *
- * @param classId        Class of resource being searched for (if known).
- *
- * @param searchPath    Path/name of the resource being searched for. Note that
- *                      the resource class (@a classId) specified significantly
- *                      alters search behavior. This allows text replacements of
- *                      symbolic escape sequences in the path, allowing access to
- *                      the engine's view of the virtual file system.
- *
- * @param foundPath     If found, the fully qualified path is written back here.
- *
- * @param flags         @ref resourceLocationFlags
- *
- * @return  @c true iff a resource was found.
- */
-boolean F_FindPath2(resourceclassid_t classId, struct uri_s const *searchPath, ddstring_t *foundPath, int flags);
-boolean F_FindPath(resourceclassid_t classId, struct uri_s const *searchPath, ddstring_t *foundPath/*, flags = RLF_DEFAULT*/);
-
-/**
- * @return  If a resource is found, the index + 1 of the path from @a searchPaths
- *          that was used to find it; otherwise @c 0.
- */
-uint F_FindPathInList(resourceclassid_t classId, char const *searchPaths,
-    ddstring_t *foundPath, int flags);
 
 #ifdef __cplusplus
 } // extern "C"
