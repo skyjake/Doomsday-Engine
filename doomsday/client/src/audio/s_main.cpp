@@ -110,11 +110,6 @@ void S_Register(void)
 #endif
 }
 
-/**
- * Main sound system initialization. Inits both the Sfx and Mus modules.
- *
- * @return  @c true, if there were no errors.
- */
 boolean S_Init(void)
 {
 #ifdef __CLIENT__
@@ -148,9 +143,6 @@ boolean S_Init(void)
     return true;
 }
 
-/**
- * Shutdown the whole sound system (Sfx + Mus).
- */
 void S_Shutdown(void)
 {
 #ifdef __CLIENT__
@@ -162,9 +154,7 @@ void S_Shutdown(void)
 #endif
 }
 
-/**
- * Must be called before the map is changed.
- */
+#undef S_MapChange
 void S_MapChange(void)
 {
     // Stop everything in the LSM.
@@ -185,9 +175,6 @@ void S_SetupForChangedMap(void)
 #endif
 }
 
-/**
- * Stop all channels and music, delete the entire sample cache.
- */
 void S_Reset(void)
 {
 #ifdef __CLIENT__
@@ -292,21 +279,9 @@ boolean S_IsRepeating(int idFlags)
         return (info->flags & SF_REPEAT) != 0;
 }
 
-/**
- * Play a sound on the local system. A public interface.
- *
- * If @a origin and @a point are both @c NULL, the sound is played in 2D and
- * centered.
- *
- * @param soundIdAndFlags ID of the sound to play. Flags can be included (DDSF_*).
- * @param origin        Mobj where the sound originates. May be @c NULL.
- * @param point         World coordinates where the sound originate. May be @c NULL.
- * @param volume        Volume for the sound (0...1).
- *
- * @return              Non-zero if a sound was started.
- */
-int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
-                             coord_t* point, float volume)
+#undef S_LocalSoundAtVolumeFrom
+int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
+                             coord_t *point, float volume)
 {
 #ifdef __CLIENT__
 
@@ -392,49 +367,31 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
 
     return result;
 #else
+    DENG2_UNUSED4(soundIdAndFlags, origin, point, volume);
     return false;
 #endif
 }
 
-/**
- * Plays a sound on the local system at the given volume.
- * This is a public sound interface.
- *
- * @return              Non-zero if a sound was started.
- */
+#undef S_LocalSoundAtVolume
 int S_LocalSoundAtVolume(int soundID, mobj_t* origin, float volume)
 {
     return S_LocalSoundAtVolumeFrom(soundID, origin, NULL, volume);
 }
 
-/**
- * Plays a sound on the local system from the given origin.
- * This is a public sound interface.
- *
- * @return              Non-zero if a sound was started.
- */
+#undef S_LocalSound
 int S_LocalSound(int soundID, mobj_t* origin)
 {
     // Play local sound at max volume.
     return S_LocalSoundAtVolumeFrom(soundID, origin, NULL, 1);
 }
 
-/**
- * Plays a sound on the local system at a give distance from listener.
- * This is a public sound interface.
- *
- * @return              Non-zero if a sound was started.
- */
+#undef S_LocalSoundFrom
 int S_LocalSoundFrom(int soundID, coord_t* fixedPos)
 {
     return S_LocalSoundAtVolumeFrom(soundID, NULL, fixedPos, 1);
 }
 
-/**
- * Play a world sound. All players in the game will hear it.
- *
- * @return              Non-zero if a sound was started.
- */
+#undef S_StartSound
 int S_StartSound(int soundID, mobj_t* origin)
 {
 #ifdef __SERVER__
@@ -446,16 +403,7 @@ int S_StartSound(int soundID, mobj_t* origin)
     return S_LocalSound(soundID, origin);
 }
 
-/**
- * Play a world sound. The sound is sent to all players except the one who
- * owns the origin mobj. The server assumes that the owner of the origin plays
- * the sound locally, which is done here, in the end of S_StartSoundEx().
- *
- * @param soundID       Id of the sound.
- * @param origin        Origin mobj for the sound.
- *
- * @return              Non-zero if a sound was successfully started.
- */
+#undef S_StartSoundEx
 int S_StartSoundEx(int soundID, mobj_t* origin)
 {
 #ifdef __SERVER__
@@ -466,11 +414,7 @@ int S_StartSoundEx(int soundID, mobj_t* origin)
     return S_LocalSound(soundID, origin);
 }
 
-/**
- * Play a world sound. All players in the game will hear it.
- *
- * @return              Non-zero if a sound was started.
- */
+#undef S_StartSoundAtVolume
 int S_StartSoundAtVolume(int soundID, mobj_t* origin, float volume)
 {
 #ifdef __SERVER__
@@ -482,11 +426,7 @@ int S_StartSoundAtVolume(int soundID, mobj_t* origin, float volume)
     return S_LocalSoundAtVolume(soundID, origin, volume);
 }
 
-/**
- * Play a player sound. Only the specified player will hear it.
- *
- * @return              Non-zero if a sound was started (always).
- */
+#undef S_ConsoleSound
 int S_ConsoleSound(int soundID, mobj_t* origin, int targetConsole)
 {
 #ifdef __SERVER__
@@ -531,6 +471,7 @@ static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flag
     }
 }
 
+#undef S_StopSound
 void S_StopSound(int soundID, mobj_t* emitter)
 {
 #ifdef __CLIENT__
@@ -551,6 +492,7 @@ void S_StopSound(int soundID, mobj_t* emitter)
     }
 }
 
+#undef S_StopSound2
 void S_StopSound2(int soundID, mobj_t* emitter, int flags)
 {
     // Are we performing any special stop behaviors?
@@ -577,65 +519,48 @@ void S_StopSound2(int soundID, mobj_t* emitter, int flags)
     S_StopSound(soundID, emitter);
 }
 
-/**
- * Is an instance of the sound being played using the given emitter?
- * If sound_id is zero, returns true if the source is emitting any sounds.
- * An exported function.
- *
- * @return              Non-zero if a sound is playing.
- */
+#undef S_IsPlaying
 int S_IsPlaying(int soundID, mobj_t* emitter)
 {
     // The Logical Sound Manager (under Sfx) provides a routine for this.
     return Sfx_IsPlaying(soundID, emitter);
 }
 
-/**
- * Start a song based on its number.
- *
- * @return              @c NULL, if the ID exists.
- */
+#undef S_StartMusicNum
 int S_StartMusicNum(int id, boolean looped)
 {
 #ifdef __CLIENT__
 
-    ded_music_t*        def;
-
-    if(id < 0 || id >= defs.count.music.num)
-        return false;
-
-    def = &defs.music[id];
-
     // Don't play music if the volume is at zero.
-    if(isDedicated)
-        return true;
+    if(isDedicated) return true;
+
+    if(id < 0 || id >= defs.count.music.num) return false;
+    ded_music_t *def = &defs.music[id];
 
     VERBOSE( Con_Message("Starting music '%s'...\n", def->id) )
 
     return Mus_Start(def, looped);
 
 #else
+    DENG2_UNUSED2(id, looped);
     return false;
 #endif
 }
 
-/**
- * @return  @c NULL, if the song is found.
- */
+#undef S_StartMusic
 int S_StartMusic(const char* musicID, boolean looped)
 {
+    LOG_AS("S_StartMusic");
     int idx = Def_GetMusicNum(musicID);
     if(idx < 0)
     {
-        Con_Message("Warning:S_StartMusic: Song \"%s\" not defined.\n", musicID);
+        LOG_WARNING("Song \"%s\" not defined, cannot schedule playback.") << musicID;
         return false;
     }
     return S_StartMusicNum(idx, looped);
 }
 
-/**
- * Stops playing a song.
- */
+#undef S_StopMusic
 void S_StopMusic(void)
 {
 #ifdef __CLIENT__
@@ -643,13 +568,13 @@ void S_StopMusic(void)
 #endif
 }
 
-/**
- * Change paused state of the current music.
- */
+#undef S_PauseMusic
 void S_PauseMusic(boolean paused)
 {
 #ifdef __CLIENT__
     Mus_Pause(paused);
+#else
+    DENG2_UNUSED(paused);
 #endif
 }
 
@@ -747,8 +672,8 @@ DENG_DECLARE_API(S) =
     S_StartSoundEx,
     S_StartSoundAtVolume,
     S_ConsoleSound,
-    S_StopSound2,
     S_StopSound,
+    S_StopSound2,
     S_IsPlaying,
     S_StartMusic,
     S_StartMusicNum,

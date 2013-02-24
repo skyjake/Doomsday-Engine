@@ -141,22 +141,27 @@
 /**
  * Macro for determining the name of a type (using RTTI).
  */
-#define DENG2_TYPE_NAME(x)  (typeid(x).name())
+#define DENG2_TYPE_NAME(t)  (typeid(t).name())
     
 /**
  * Macro for hiding the warning about an unused parameter.
  */
-#define DENG2_UNUSED(x)         (void)x
+#define DENG2_UNUSED(a)         (void)a
 
 /**
- * Macro for hiding the warning about an two unused parameters.
+ * Macro for hiding the warning about two unused parameters.
  */
-#define DENG2_UNUSED2(x, y)     (void)x, (void)y
+#define DENG2_UNUSED2(a, b)     (void)a, (void)b
 
 /**
- * Macro for hiding the warning about an three unused parameters.
+ * Macro for hiding the warning about three unused parameters.
  */
-#define DENG2_UNUSED3(x, y, z)  (void)x, (void)y, (void)z
+#define DENG2_UNUSED3(a, b, c)  (void)a, (void)b, (void)c
+
+/**
+ * Macro for hiding the warning about four unused parameters.
+ */
+#define DENG2_UNUSED4(a, b, c, d) (void)a, (void)b, (void)c, (void)d
 
 /**
  * Forms an escape sequence string literal. Escape sequences begin

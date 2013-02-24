@@ -1,4 +1,4 @@
-/** @file
+/** @file s_main.h Sound Subsystem
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -15,10 +15,6 @@
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
- */
-
-/*
- * Sound Subsystem.
  */
 
 #ifndef LIBDENG_SOUND_MAIN_H
@@ -53,7 +49,17 @@ extern int sfxBits, sfxRate;
 extern byte sfxOneSoundPerEmitter;
 
 void S_Register(void);
+
+/**
+ * Main sound system initialization. Inits both the Sfx and Mus modules.
+ *
+ * @return  @c true, if there were no errors.
+ */
 boolean S_Init(void);
+
+/**
+ * Shutdown the whole sound system (Sfx + Mus).
+ */
 void S_Shutdown(void);
 
 /**
@@ -61,8 +67,13 @@ void S_Shutdown(void);
  */
 void S_SetupForChangedMap(void);
 
+/**
+ * Stop all channels and music, delete the entire sample cache.
+ */
 void S_Reset(void);
+
 void S_StartFrame(void);
+
 void S_EndFrame(void);
 
 /**
@@ -74,9 +85,9 @@ void S_EndFrame(void);
  *
  * @return  Sound info (from definitions).
  */
-sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume);
+sfxinfo_t *S_GetSoundInfo(int soundID, float *freq, float *volume);
 
-mobj_t* S_GetListenerMobj(void);
+mobj_t *S_GetListenerMobj(void);
 
 void S_Drawer(void);
 
