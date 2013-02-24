@@ -53,9 +53,9 @@ public:
     /// Interpolated (light) decoration properties.
     struct Decoration
     {
-        float pos[2]; // Coordinates in material space.
+        de::Vector2f pos; // Coordinates in material space.
         float elevation; // Distance from the surface.
-        float color[3]; // Light color.
+        de::Vector3f color; // Light color.
         float radius; // Dynamic light radius (-1 = no light).
         float haloRadius; // Halo radius (zero = no halo).
         float lightLevels[2]; // Fade by sector lightlevel.

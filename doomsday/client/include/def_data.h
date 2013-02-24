@@ -482,9 +482,9 @@ typedef struct ded_decorlight_stage_s {
     float radius; // Dynamic light radius (-1 = no light).
     float haloRadius; // Halo radius (zero = no halo).
     float lightLevels[2]; // Fade by sector lightlevel.
-    int flareTexture;
+    int sysFlareIdx;
     Uri *up, *down, *sides;
-    Uri *flare; // Overrides flare_texture
+    Uri *flare; // Overrides sysFlareIdx
 } ded_decorlight_stage_t;
 
 typedef struct ded_material_decoration_s {

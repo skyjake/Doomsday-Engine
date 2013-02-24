@@ -55,17 +55,19 @@ static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
     return 0;
 }
 
+Material::Layer::Stage *Material::Layer::Stage::fromDef(ded_material_layer_stage_t const &def)
+{
+    Texture *texture = findTextureForLayerStage(def);
+    return new Stage(texture, def.tics, def.variance, def.glowStrength,
+                     def.glowStrengthVariance, Vector2f(def.texOrigin));
+}
+
 Material::Layer *Material::Layer::fromDef(ded_material_layer_t const &layerDef)
 {
     Layer *layer = new Layer();
     for(int i = 0; i < layerDef.stageCount.num; ++i)
     {
-        ded_material_layer_stage_t const &stageDef = layerDef.stages[i];
-
-        Texture *texture = findTextureForLayerStage(stageDef);
-        Stage *stage = new Stage(texture, stageDef.tics, stageDef.variance, stageDef.glowStrength,
-                                 stageDef.glowStrengthVariance, Vector2f(stageDef.texOrigin));
-        layer->stages_.push_back(stage);
+        layer->stages_.push_back(Stage::fromDef(layerDef.stages[i]));
     }
     return layer;
 }
@@ -105,18 +107,19 @@ static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
     return 0;
 }
 
+Material::DetailLayer::Stage *Material::DetailLayer::Stage::fromDef(ded_detail_stage_t const &def)
+{
+    Texture *texture = findTextureForDetailLayerStage(def);
+
+    return new Stage(def.tics, def.variance, texture,
+                     def.scale, def.strength, def.maxDistance);
+}
+
 Material::DetailLayer *Material::DetailLayer::fromDef(ded_detailtexture_t const &layerDef)
 {
     DetailLayer *layer = new DetailLayer();
-    for(int i = 0; i < 1/*def.stageCount.num*/; ++i)
-    {
-        ded_detail_stage_t const &stageDef = layerDef.stage; //layerDef.stages[i];
-
-        Texture *texture = findTextureForDetailLayerStage(stageDef);
-        Stage *stage = new Stage(stageDef.tics, stageDef.variance, texture,
-                                 stageDef.scale, stageDef.strength, stageDef.maxDistance);
-        layer->stages_.push_back(stage);
-    }
+    // Only the one stage.
+    layer->stages_.push_back(Stage::fromDef(layerDef.stage));
     return layer;
 }
 
@@ -166,20 +169,21 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
     return 0;
 }
 
+Material::ShineLayer::Stage *Material::ShineLayer::Stage::fromDef(ded_shine_stage_t const &def)
+{
+    Texture *texture     = findTextureForShineLayerStage(def, false/*not mask*/);
+    Texture *maskTexture = findTextureForShineLayerStage(def, true/*mask*/);
+
+    return new Stage(def.tics, def.variance, texture, maskTexture,
+                     def.blendMode, def.shininess, Vector3f(def.minColor),
+                     QSizeF(def.maskWidth, def.maskHeight));
+}
+
 Material::ShineLayer *Material::ShineLayer::fromDef(ded_reflection_t const &layerDef)
 {
     ShineLayer *layer = new ShineLayer();
-    for(int i = 0; i < 1/*def.stageCount.num*/; ++i)
-    {
-        ded_shine_stage_t const &stageDef = layerDef.stage; //layerDef.stages[i];
-
-        Texture *texture = findTextureForShineLayerStage(stageDef, false/*not mask*/);
-        Texture *maskTexture = findTextureForShineLayerStage(stageDef, true/*mask*/);
-        Stage *stage = new Stage(stageDef.tics, stageDef.variance, texture, maskTexture,
-                                 stageDef.blendMode, stageDef.shininess, Vector3f(stageDef.minColor),
-                                 QSizeF(stageDef.maskWidth, stageDef.maskHeight));
-        layer->stages_.push_back(stage);
-    }
+    // Only the one stage.
+    layer->stages_.push_back(Stage::fromDef(layerDef.stage));
     return layer;
 }
 
@@ -193,6 +197,37 @@ Material::ShineLayer::Stages const &Material::ShineLayer::stages() const
     return stages_;
 }
 
+Material::Decoration::Stage *Material::Decoration::Stage::fromDef(ded_decorlight_stage_t const &def)
+{
+    Texture *upTexture    = R_FindTextureByResourceUri("Lightmaps", reinterpret_cast<de::Uri *>(def.up));
+    Texture *downTexture  = R_FindTextureByResourceUri("Lightmaps", reinterpret_cast<de::Uri *>(def.down));
+    Texture *sidesTexture = R_FindTextureByResourceUri("Lightmaps", reinterpret_cast<de::Uri *>(def.sides));
+
+    Texture *flareTexture = 0;
+    int sysFlareIdx = def.sysFlareIdx;
+
+    if(def.flare && !Uri_IsEmpty(def.flare))
+    {
+        de::Uri const *resourceUri = reinterpret_cast<de::Uri *>(def.flare);
+
+        // Select a system flare by numeric identifier?
+        if(resourceUri->path().length() == 1 &&
+           resourceUri->path().toStringRef().first().isDigit())
+        {
+            sysFlareIdx = resourceUri->path().toStringRef().first().digitValue();
+        }
+        else
+        {
+            flareTexture = R_FindTextureByResourceUri("Flaremaps", resourceUri);
+        }
+    }
+
+    return new Stage(def.tics, def.variance, Vector2f(def.pos), def.elevation,
+                     Vector3f(def.color), def.radius, def.haloRadius,
+                     Stage::LightLevels(def.lightLevels),
+                     upTexture, downTexture, sidesTexture, flareTexture, def.sysFlareIdx);
+}
+
 Material::Decoration::Decoration()
     : patternSkip_(0, 0), patternOffset_(0, 0)
 {}
@@ -201,13 +236,18 @@ Material::Decoration::Decoration(Vector2i const &_patternSkip, Vector2i const &_
     : patternSkip_(_patternSkip), patternOffset_(_patternOffset)
 {}
 
+Material::Decoration::~Decoration()
+{
+    qDeleteAll(stages_);
+}
+
 Material::Decoration *Material::Decoration::fromDef(ded_material_decoration_t &def)
 {
     Decoration *dec = new Decoration(Vector2i(def.patternSkip),
                                      Vector2i(def.patternOffset));
     for(int i = 0; i < def.stageCount.num; ++i)
     {
-        dec->stages_.push_back(&def.stages[i]);
+        dec->stages_.push_back(Stage::fromDef(def.stages[i]));
     }
     return dec;
 }
@@ -217,7 +257,7 @@ Material::Decoration *Material::Decoration::fromDef(ded_decoration_t &def)
     Decoration *dec = new Decoration(Vector2i(def.patternSkip),
                                      Vector2i(def.patternOffset));
     // Only the one stage.
-    dec->stages_.push_back(&def.stage);
+    dec->stages_.push_back(Stage::fromDef(def.stage));
     return dec;
 }
 

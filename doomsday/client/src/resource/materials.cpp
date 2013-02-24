@@ -817,16 +817,16 @@ static void printMaterialInfo(Material &material)
 
         for(int k = 0; k < lDef->stageCount(); ++k)
         {
-            ded_decorlight_stage_t const *sDef = lDef->stages()[k];
+            MaterialDecoration::Stage const *sDef = lDef->stages()[k];
 
             Con_Printf("  #%i: Tics:%i (~%.2f) Offset:%.2f x %.2f Elevation:%.2f"
                        "\n      Color:(r:%.2f, g:%.2f, g:%.2f) Radius:%.2f HaloRadius:%.2f"
                        "\n      LightLevels:(min:%.2f, max:%.2f)\n",
                        k, sDef->tics, sDef->variance,
-                       sDef->pos[0], sDef->pos[1], sDef->elevation,
-                       sDef->color[0], sDef->color[1], sDef->color[2],
+                       sDef->pos.x, sDef->pos.y, sDef->elevation,
+                       sDef->color.x, sDef->color.y, sDef->color.z,
                        sDef->radius, sDef->haloRadius,
-                       sDef->lightLevels[0], sDef->lightLevels[1]);
+                       sDef->lightLevels.min, sDef->lightLevels.max);
         }
     }
 

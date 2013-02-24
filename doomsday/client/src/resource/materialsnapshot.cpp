@@ -187,11 +187,11 @@ MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
     return d->stored.decorations[index];
 }
 
-static DGLuint prepareLightmap(de::Uri const *resourceUri)
+static DGLuint prepareLightmap(Texture *texture)
 {
-    if(Texture *tex = R_FindTextureByResourceUri("Lightmaps", resourceUri))
+    if(texture)
     {
-        if(TextureVariant *variant = GL_PrepareTexture(*tex, *Rend_LightmapTextureSpec()))
+        if(TextureVariant *variant = GL_PrepareTexture(*texture, *Rend_LightmapTextureSpec()))
         {
             return variant->glName();
         }
@@ -206,35 +206,20 @@ static DGLuint prepareLightmap(de::Uri const *resourceUri)
  * Somewhat more complicated than it needs to be due to the fact there
  * are two different selection methods.
  *
- * @param resourceUri  Resource URI for the flaremap, or a texture indice [0..4].
+ * @param texture  Logical texture to prepare an variant of.
  * @param oldIdx  Old method of flare texture selection, by id.
  *
  * @return  @c 0= Use the automatic selection logic.
  */
-static DGLuint prepareFlaremap(de::Uri const *resourceUri, int oldIdx)
+static DGLuint prepareFlaremap(Texture *texture, int oldIdx)
 {
-    if(resourceUri && !resourceUri->isEmpty())
+    if(texture)
     {
-        // Select a system flare by numeric identifier?
-        if(resourceUri->path().length() == 1)
+        if(TextureVariant const *variant = GL_PrepareTexture(*texture, *Rend_HaloTextureSpec()))
         {
-            QChar first = resourceUri->path().toStringRef().first();
-            int number = first.digitValue();
-            if(number == 0) return 0; // automatic
-            if(number >= 1 && number <= 4)
-            {
-                return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
-            }
+            return variant->glName();
         }
-
-        if(Texture *tex = R_FindTextureByResourceUri("Flaremaps", resourceUri))
-        {
-            if(TextureVariant const *variant = GL_PrepareTexture(*tex, *Rend_HaloTextureSpec()))
-            {
-                return variant->glName();
-            }
-            // Dang...
-        }
+        // Dang...
     }
     else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
     {
@@ -549,32 +534,30 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         MaterialVariant::DecorationState const &l = variant->decoration(idx);
         MaterialDecoration const *lDef = *it;
-        ded_decorlight_stage_t const *lsCur  = lDef->stages()[l.stage];
-        ded_decorlight_stage_t const *lsNext = lDef->stages()[(l.stage + 1) % lDef->stageCount()];
+        MaterialDecoration::Stage const *lsCur  = lDef->stages()[l.stage];
+        MaterialDecoration::Stage const *lsNext = lDef->stages()[(l.stage + 1) % lDef->stageCount()];
 
         MaterialSnapshot::Decoration &decor = stored.decorations[idx];
 
         if(l.inter == 0)
         {
-            decor.pos[0]         = lsCur->pos[0];
-            decor.pos[1]         = lsCur->pos[1];
+            decor.pos            = lsCur->pos;
             decor.elevation      = lsCur->elevation;
             decor.radius         = lsCur->radius;
             decor.haloRadius     = lsCur->haloRadius;
-            decor.lightLevels[0] = lsCur->lightLevels[0];
-            decor.lightLevels[1] = lsCur->lightLevels[1];
-
-            std::memcpy(decor.color, lsCur->color, sizeof(decor.color));
+            decor.lightLevels[0] = lsCur->lightLevels.min;
+            decor.lightLevels[1] = lsCur->lightLevels.max;
+            decor.color          = lsCur->color;
         }
         else // Interpolate.
         {
-            decor.pos[0]         = LERP(lsCur->pos[0], lsNext->pos[0], l.inter);
-            decor.pos[1]         = LERP(lsCur->pos[1], lsNext->pos[1], l.inter);
+            decor.pos.x          = LERP(lsCur->pos.x, lsNext->pos.x, l.inter);
+            decor.pos.y          = LERP(lsCur->pos.y, lsNext->pos.y, l.inter);
             decor.elevation      = LERP(lsCur->elevation, lsNext->elevation, l.inter);
             decor.radius         = LERP(lsCur->radius, lsNext->radius, l.inter);
             decor.haloRadius     = LERP(lsCur->haloRadius, lsNext->haloRadius, l.inter);
-            decor.lightLevels[0] = LERP(lsCur->lightLevels[0], lsNext->lightLevels[0], l.inter);
-            decor.lightLevels[1] = LERP(lsCur->lightLevels[1], lsNext->lightLevels[1], l.inter);
+            decor.lightLevels[0] = LERP(lsCur->lightLevels.min, lsNext->lightLevels.min, l.inter);
+            decor.lightLevels[1] = LERP(lsCur->lightLevels.max, lsNext->lightLevels.max, l.inter);
 
             for(int c = 0; c < 3; ++c)
             {
@@ -582,11 +565,10 @@ void MaterialSnapshot::Instance::takeSnapshot()
             }
         }
 
-        /// @todo Optimize: Locate the needed logical textures earlier.
-        decor.tex      = prepareLightmap(reinterpret_cast<de::Uri *>(lsCur->sides));
-        decor.ceilTex  = prepareLightmap(reinterpret_cast<de::Uri *>(lsCur->up));
-        decor.floorTex = prepareLightmap(reinterpret_cast<de::Uri *>(lsCur->down));
-        decor.flareTex = prepareFlaremap(reinterpret_cast<de::Uri *>(lsCur->flare), lsCur->flareTexture);
+        decor.tex      = prepareLightmap(lsCur->sides);
+        decor.ceilTex  = prepareLightmap(lsCur->up);
+        decor.floorTex = prepareLightmap(lsCur->down);
+        decor.flareTex = prepareFlaremap(lsCur->flare, lsCur->sysFlareIdx);
     }
 #endif // __CLIENT__
 

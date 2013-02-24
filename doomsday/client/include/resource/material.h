@@ -42,7 +42,6 @@ class MaterialManifest;
 class MaterialSnapshot;
 struct MaterialVariantSpec;
 #endif
-
 class Texture;
 
 }
@@ -120,6 +119,8 @@ public:
                   glowStrengthVariance(_glowStrengthVariance),
                   texOrigin(_texOrigin)
             {}
+
+            static Stage *fromDef(ded_material_layer_stage_t const &def);
         };
 
         /// A list of stages.
@@ -176,6 +177,8 @@ public:
                 : tics(_tics), variance(_variance), texture(_texture),
                   scale(_scale), strength(_strength), maxDistance(_maxDistance)
             {}
+
+            static Stage *fromDef(ded_detail_stage_t const &def);
         };
 
         /// A list of stages.
@@ -235,6 +238,8 @@ public:
                   shininess(_shininess), minColor(_minColor),
                   maskDimensions(_maskDimensions)
             {}
+
+            static Stage *fromDef(ded_shine_stage_t const &def);
         };
 
         /// A list of stages.
@@ -276,8 +281,56 @@ public:
     class Decoration
     {
     public:
+        struct Stage
+        {
+            struct LightLevels
+            {
+                float min;
+                float max;
+
+                LightLevels(float _min = 0, float _max = 0)
+                    : min(_min), max(_max)
+                {}
+
+                LightLevels(float const minMax[2])
+                    : min(minMax[0]), max(minMax[1])
+                {}
+
+                LightLevels(LightLevels const &other)
+                    : min(other.min), max(other.max)
+                {}
+            };
+
+            int tics;
+            float variance; // Stage variance (time).
+            de::Vector2f pos; // Coordinates on the surface.
+            float elevation; // Distance from the surface.
+            de::Vector3f color; // Light color.
+            float radius; // Dynamic light radius (-1 = no light).
+            float haloRadius; // Halo radius (zero = no halo).
+            LightLevels lightLevels; // Fade by sector lightlevel.
+
+            de::Texture *up, *down, *sides;
+            de::Texture *flare;
+            int sysFlareIdx; /// @todo Remove me
+
+            Stage(int _tics, float _variance, de::Vector2f const &_pos, float _elevation,
+                  de::Vector3f const &_color, float _radius, float _haloRadius,
+                  LightLevels const &_lightLevels,
+                  de::Texture *upTexture, de::Texture *downTexture, de::Texture *sidesTexture,
+                  de::Texture *flareTexture,
+                  int _sysFlareIdx = -1 /** @todo Remove me */)
+                : tics(_tics), variance(_variance), pos(_pos), elevation(_elevation), color(_color),
+                  radius(_radius), haloRadius(_haloRadius), lightLevels(_lightLevels),
+                  up(upTexture), down(downTexture), sides(sidesTexture), flare(flareTexture),
+                  sysFlareIdx(_sysFlareIdx)
+            {}
+
+            static Stage *fromDef(ded_decorlight_stage_t const &def);
+        };
+
         /// A list of stages.
-        typedef QList<ded_decorlight_stage_t *> Stages;
+        typedef QList<Stage *> Stages;
 
     public:
         /**
@@ -287,6 +340,8 @@ public:
 
         Decoration(de::Vector2i const &_patternSkip,
                    de::Vector2i const &_patternOffset);
+
+        ~Decoration();
 
         /**
          * Construct a new decoration from the specified definition.

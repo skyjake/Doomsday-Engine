@@ -1352,7 +1352,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                                     ReadToken();
                                 }
                                 else
-                                RV_INT("Flare texture", st->flareTexture)
+                                RV_INT("Flare texture", st->sysFlareIdx)
                                 RV_URI("Flare map", &st->flare, "LightMaps")
                                 RV_URI("Top map", &st->up, "LightMaps")
                                 RV_URI("Bottom map", &st->down, "LightMaps")
@@ -2339,7 +2339,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                             ReadToken();
                         }
                         else
-                        RV_INT("Flare texture", dl->stage.flareTexture)
+                        RV_INT("Flare texture", dl->stage.sysFlareIdx)
                         RV_URI("Flare map",     &dl->stage.flare, "LightMaps")
                         RV_URI("Top map",       &dl->stage.up,    "LightMaps")
                         RV_URI("Bottom map",    &dl->stage.down,  "LightMaps")

@@ -100,7 +100,7 @@ DENG2_PIMPL(Material::Variant)
     }
 
     void resetDecoration(Material::Variant::DecorationState &ds,
-                         ded_decorlight_stage_t const &stage)
+                         Material::Decoration::Stage const &stage)
     {
         ds.stage = 0;
         ds.tics  = stage.tics;
@@ -133,7 +133,7 @@ DENG2_PIMPL(Material::Variant)
         }
     }
 
-    void animateDecoration(Material::Variant::DecorationState &ds, MaterialDecoration const &decor)
+    void animateDecoration(Material::Variant::DecorationState &ds, Material::Decoration const &decor)
     {
         if(DD_IsSharpTick() && ds.tics-- <= 0)
         {
@@ -145,7 +145,7 @@ DENG2_PIMPL(Material::Variant)
             }
             ds.inter = 0;
 
-            ded_decorlight_stage_t const *lsCur = decor.stages()[ds.stage];
+            Material::Decoration::Stage const *lsCur = decor.stages()[ds.stage];
             if(lsCur->variance != 0)
                 ds.tics = lsCur->tics * (1 - lsCur->variance * RNG_RandFloat());
             else
@@ -160,7 +160,7 @@ DENG2_PIMPL(Material::Variant)
         }
         else
         {
-            ded_decorlight_stage_t const *lsCur = decor.stages()[ds.stage];
+            Material::Decoration::Stage const *lsCur = decor.stages()[ds.stage];
             ds.inter = 1 - (ds.tics - frameTimePos) / float( lsCur->tics );
         }
     }
