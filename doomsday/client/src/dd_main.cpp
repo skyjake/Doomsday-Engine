@@ -404,7 +404,7 @@ FileTypes const& DD_FileTypes()
 
 static void createPackagesScheme()
 {
-    FS1::Scheme& scheme = App_FileSystem()->createScheme("Packages");
+    FS1::Scheme& scheme = App_FileSystem().createScheme("Packages");
 
     /*
      * Add default search paths.
@@ -507,7 +507,7 @@ void DD_CreateFileSystemSchemes()
     struct schemedef_s const* def = defs;
     for(int i = 0; defs[i].name; ++i, ++def)
     {
-        FS1::Scheme& scheme = App_FileSystem()->createScheme(def->name, def->flags);
+        FS1::Scheme& scheme = App_FileSystem().createScheme(def->name, def->flags);
 
         int searchPathCount = 0;
         while(def->searchPaths[searchPathCount] && ++searchPathCount < schemedef_max_searchpaths)
@@ -761,7 +761,7 @@ static int findAllGameDataPaths(FS1::PathList &found)
     for(uint extIdx = 0; !extensions[extIdx].isEmpty(); ++extIdx)
     {
         Path pattern = Path("$(App.DataPath)/$(GamePlugin.Name)/auto/*." + extensions[extIdx]);
-        App_FileSystem()->findAllPaths(de::Uri(pattern).resolved(), 0, found);
+        App_FileSystem().findAllPaths(de::Uri(pattern).resolved(), 0, found);
     }
     return found.count() - numFoundSoFar;
 }
@@ -889,9 +889,9 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     DENG_ASSERT(p);
 
     // Reset file Ids so previously seen files can be processed again.
-    App_FileSystem()->resetFileIds();
+    App_FileSystem().resetFileIds();
     initPathMappings();
-    App_FileSystem()->resetAllSchemes();
+    App_FileSystem().resetAllSchemes();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -901,10 +901,10 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
         // Create default Auto mappings in the runtime directory.
 
         // Data class resources.
-        App_FileSystem()->addPathMapping("auto/", de::Uri("$(App.DataPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
+        App_FileSystem().addPathMapping("auto/", de::Uri("$(App.DataPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
 
         // Definition class resources.
-        App_FileSystem()->addPathMapping("auto/", de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
+        App_FileSystem().addPathMapping("auto/", de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
     }
 
     /**
@@ -958,7 +958,7 @@ static int addListFiles(ddstring_t*** list, size_t* listSize, FileType const& ft
  */
 static void initPathMappings()
 {
-    App_FileSystem()->clearPathMappings();
+    App_FileSystem().clearPathMappings();
 
     if(DD_IsShuttingDown()) return;
 
@@ -972,7 +972,7 @@ static void initPathMappings()
         {
             String source      = NativePath(CommandLine_PathAt(i + 1)).expand().withSeparators('/');
             String destination = NativePath(CommandLine_PathAt(i + 2)).expand().withSeparators('/');
-            App_FileSystem()->addPathMapping(source, destination);
+            App_FileSystem().addPathMapping(source, destination);
             i += 2;
         }
     }
@@ -1048,7 +1048,7 @@ static bool parsePathLumpMappings(char const* buffer)
         else
         {
             String destination = NativePath(Str_Text(&path)).expand().withSeparators('/');
-            App_FileSystem()->addPathLumpMapping(lumpName, destination);
+            App_FileSystem().addPathLumpMapping(lumpName, destination);
         }
     } while(*ch);
 
@@ -1068,7 +1068,7 @@ static bool parsePathLumpMappings(char const* buffer)
 static void initPathLumpMappings()
 {
     // Free old paths, if any.
-    App_FileSystem()->clearPathLumpMappings();
+    App_FileSystem().clearPathLumpMappings();
 
     if(DD_IsShuttingDown()) return;
 
@@ -1076,7 +1076,7 @@ static void initPathLumpMappings()
     uint8_t* buf = NULL;
 
     // Add the contents of all DD_DIREC lumps.
-    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem()->nameIndex().lumps())
+    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem().nameIndex().lumps())
     {
         de::File1& lump = **i;
         FileInfo const& lumpInfo = lump.info();
@@ -1139,7 +1139,7 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
 
     // Re-initialize the resource locator as there are now new resources to be found
     // on existing search paths (probably that is).
-    App_FileSystem()->resetAllSchemes();
+    App_FileSystem().resetAllSchemes();
 
     if(p->initiatedBusyMode)
     {
@@ -1508,19 +1508,19 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         R_InitViewWindow();
 #endif
 
-        App_FileSystem()->unloadAllNonStartupFiles();
+        App_FileSystem().unloadAllNonStartupFiles();
 
         // Reset file IDs so previously seen files can be processed again.
         /// @todo this releases the IDs of startup files too but given the
         /// only startup file is doomsday.pk3 which we never attempt to load
         /// again post engine startup, this isn't an immediate problem.
-        App_FileSystem()->resetFileIds();
+        App_FileSystem().resetFileIds();
 
         // Update the dir/WAD translations.
         initPathLumpMappings();
         initPathMappings();
 
-        App_FileSystem()->resetAllSchemes();
+        App_FileSystem().resetAllSchemes();
     }
 
     FI_Shutdown();
@@ -1847,7 +1847,7 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    FS1::Scheme& scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_PACKAGE").defaultScheme());
+    FS1::Scheme& scheme = App_FileSystem().scheme(DD_ResourceClassByName("RC_PACKAGE").defaultScheme());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
@@ -1932,13 +1932,13 @@ boolean DD_Init(void)
 
     // Re-initialize the filesystem subspace schemess as there are now new
     // resources to be found on existing search paths (probably that is).
-    App_FileSystem()->resetAllSchemes();
+    App_FileSystem().resetAllSchemes();
 
     // One-time execution of various command line features available during startup.
     if(CommandLine_CheckWith("-dumplump", 1))
     {
         String name = CommandLine_Next();
-        lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(name);
+        lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
         if(lumpNum >= 0)
         {
             F_DumpLump(lumpNum);
@@ -2021,10 +2021,10 @@ boolean DD_Init(void)
         // No game loaded.
         // Lets get most of everything else initialized.
         // Reset file IDs so previously seen files can be processed again.
-        App_FileSystem()->resetFileIds();
+        App_FileSystem().resetFileIds();
         initPathLumpMappings();
         initPathMappings();
-        App_FileSystem()->resetAllSchemes();
+        App_FileSystem().resetAllSchemes();
 
         R_InitCompositeTextures();
         R_InitFlatTextures();
@@ -2058,7 +2058,7 @@ static void DD_InitResourceSystem(void)
 
     initPathMappings();
 
-    App_FileSystem()->resetAllSchemes();
+    App_FileSystem().resetAllSchemes();
 
     // Initialize the definition databases.
     Def_Init();
@@ -2108,8 +2108,8 @@ static int DD_StartupWorker(void* /*parm*/)
     /*
      * Add required engine resource files.
      */
-    String foundPath = App_FileSystem()->findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
-                                                  RLF_DEFAULT, DD_ResourceClassById(RC_PACKAGE));
+    String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
+                                                 RLF_DEFAULT, DD_ResourceClassById(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
     de::File1 *loadedFile = tryLoadFile(de::Uri(foundPath, RC_NULL));
     DENG2_ASSERT(loadedFile);
@@ -2260,14 +2260,14 @@ void DD_UpdateEngineState(void)
     Demo_StopPlayback();
 #endif
 
-    //App_FileSystem()->resetFileIds();
+    //App_FileSystem().resetFileIds();
 
     // Update the dir/WAD translations.
     initPathLumpMappings();
     initPathMappings();
 
     // Re-build the filesystem subspace schemes as there may be new resources to be found.
-    App_FileSystem()->resetAllSchemes();
+    App_FileSystem().resetAllSchemes();
 
     R_InitCompositeTextures();
     R_InitFlatTextures();
@@ -2810,7 +2810,7 @@ D_CMD(Load)
     {
         try
         {
-            String foundPath = App_FileSystem()->findPath(de::Uri::fromNativePath(argv[arg], RC_PACKAGE),
+            String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[arg], RC_PACKAGE),
                                                           RLF_MATCH_EXTENSION, DD_ResourceClassById(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
@@ -2835,18 +2835,18 @@ static de::File1* tryLoadFile(de::Uri const& search, size_t baseOffset)
 {
     try
     {
-        de::FileHandle& hndl = App_FileSystem()->openFile(search.path(), "rb", baseOffset, false /* no duplicates */);
+        de::FileHandle& hndl = App_FileSystem().openFile(search.path(), "rb", baseOffset, false /* no duplicates */);
 
         de::Uri foundFileUri = hndl.file().composeUri();
         VERBOSE( Con_Message("Loading \"%s\"...\n", NativePath(foundFileUri.asText()).pretty().toUtf8().constData()) )
 
-        App_FileSystem()->index(hndl.file());
+        App_FileSystem().index(hndl.file());
 
         return &hndl.file();
     }
     catch(FS1::NotFoundError const&)
     {
-        if(App_FileSystem()->accessFile(search))
+        if(App_FileSystem().accessFile(search))
         {
             // Must already be loaded.
             LOG_VERBOSE("\"%s\" already loaded.") << NativePath(search.asText()).pretty();
@@ -2859,7 +2859,7 @@ static bool tryUnloadFile(de::Uri const& search)
 {
     try
     {
-        de::File1& file = App_FileSystem()->find(search);
+        de::File1& file = App_FileSystem().find(search);
         de::Uri foundFileUri = file.composeUri();
         QByteArray pathUtf8 = NativePath(foundFileUri.asText()).pretty().toUtf8();
 
@@ -2874,7 +2874,7 @@ static bool tryUnloadFile(de::Uri const& search)
 
         VERBOSE2( Con_Message("Unloading \"%s\"...\n", pathUtf8.constData()) )
 
-        App_FileSystem()->deindex(file);
+        App_FileSystem().deindex(file);
         delete &file;
 
         VERBOSE2( Con_Message("Done unloading \"%s\".\n", pathUtf8.constData()) )
@@ -2938,7 +2938,7 @@ D_CMD(Unload)
     {
         try
         {
-            String foundPath = App_FileSystem()->findPath(de::Uri::fromNativePath(argv[1], RC_PACKAGE),
+            String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[1], RC_PACKAGE),
                                                           RLF_MATCH_EXTENSION, DD_ResourceClassById(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 

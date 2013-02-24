@@ -43,7 +43,7 @@ File1::File1(FileHandle& hndl, String _path, FileInfo const& _info, File1* _cont
 
 File1::~File1()
 {
-    App_FileSystem()->releaseFile(*this);
+    App_FileSystem().releaseFile(*this);
     if(handle_) delete handle_;
 }
 

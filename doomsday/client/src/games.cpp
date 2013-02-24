@@ -182,7 +182,7 @@ void Games::locateStartupResources(Game &game)
         DD_ExchangeGamePluginEntryPoints(game.pluginId());
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.
-        App_FileSystem()->resetAllSchemes();
+        App_FileSystem().resetAllSchemes();
     }
 
     foreach(ResourceManifest *manifest, game.manifests())
@@ -200,7 +200,7 @@ void Games::locateStartupResources(Game &game)
         DD_ExchangeGamePluginEntryPoints(oldCurrrentGame->pluginId());
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.
-        App_FileSystem()->resetAllSchemes();
+        App_FileSystem().resetAllSchemes();
     }
 }
 

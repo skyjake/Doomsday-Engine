@@ -667,12 +667,12 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                 try
                 {
                     lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                    de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
-                    de::FileHandle &hndl = App_FileSystem()->openLump(lump);
+                    de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                    de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
                     source = loadFlat(image, hndl);
 
-                    App_FileSystem()->releaseFile(hndl.file());
+                    App_FileSystem().releaseFile(hndl.file());
                     delete &hndl;
                 }
                 catch(LumpIndex::NotFoundError const&)
@@ -705,12 +705,12 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                 try
                 {
                     lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                    de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
-                    de::FileHandle &hndl = App_FileSystem()->openLump(lump);
+                    de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                    de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
                     source = loadPatch(image, hndl, tclass, tmap, spec.border);
 
-                    App_FileSystem()->releaseFile(hndl.file());
+                    App_FileSystem().releaseFile(hndl.file());
                     delete &hndl;
                 }
                 catch(LumpIndex::NotFoundError const&)
@@ -757,12 +757,12 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
                 try
                 {
                     lumpnum_t lumpNum = resourceUri.path().toString().toInt();
-                    de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
-                    de::FileHandle &hndl = App_FileSystem()->openLump(lump);
+                    de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                    de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
                     source = loadPatch(image, hndl, tclass, tmap, spec.border);
 
-                    App_FileSystem()->releaseFile(hndl.file());
+                    App_FileSystem().releaseFile(hndl.file());
                     delete &hndl;
                 }
                 catch(LumpIndex::NotFoundError const&)
@@ -779,15 +779,15 @@ static TexSource loadSourceImage(de::Texture &tex, texturevariantspecification_t
         }
         else
         {
-            lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(resourceUri.path());
+            lumpnum_t lumpNum = App_FileSystem().lumpNumForName(resourceUri.path());
             try
             {
-                de::File1 &lump = App_FileSystem()->nameIndex().lump(lumpNum);
-                de::FileHandle &hndl = App_FileSystem()->openLump(lump);
+                de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                de::FileHandle &hndl = App_FileSystem().openLump(lump);
 
                 source = loadDetail(image, hndl);
 
-                App_FileSystem()->releaseFile(hndl.file());
+                App_FileSystem().releaseFile(hndl.file());
                 delete &hndl;
             }
             catch(LumpIndex::NotFoundError const&)
@@ -1465,10 +1465,10 @@ uint8_t *GL_LoadImage(image_t &image, String nativePath)
         // Relative paths are relative to the native working directory.
         String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
 
-        de::FileHandle &hndl = App_FileSystem()->openFile(path, "rb");
+        de::FileHandle &hndl = App_FileSystem().openFile(path, "rb");
         uint8_t *pixels = Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl));
 
-        App_FileSystem()->releaseFile(hndl.file());
+        App_FileSystem().releaseFile(hndl.file());
         delete &hndl;
 
         return pixels;
@@ -2018,8 +2018,8 @@ static TexSource loadExternalTexture(image_t &image, String searchPath,
     // First look for a version with an optional suffix.
     try
     {
-        String foundPath = App_FileSystem()->findPath(de::Uri(searchPath + optionalSuffix, RC_GRAPHIC),
-                                                      RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+        String foundPath = App_FileSystem().findPath(de::Uri(searchPath + optionalSuffix, RC_GRAPHIC),
+                                                     RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 
@@ -2033,8 +2033,8 @@ static TexSource loadExternalTexture(image_t &image, String searchPath,
     {
         try
         {
-            String foundPath = App_FileSystem()->findPath(de::Uri(searchPath, RC_GRAPHIC),
-                                                          RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+            String foundPath = App_FileSystem().findPath(de::Uri(searchPath, RC_GRAPHIC),
+                                                         RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
 
@@ -2185,8 +2185,8 @@ TexSource GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mod
 
     try
     {
-        String foundPath = App_FileSystem()->findPath(de::Uri(RC_GRAPHIC, _searchPath),
-                                                      RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+        String foundPath = App_FileSystem().findPath(de::Uri(RC_GRAPHIC, _searchPath),
+                                                     RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 
@@ -2424,7 +2424,7 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZ
     CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
     {
-        de::File1 &file = App_FileSystem()->nameIndex().lump(i->lumpNum());
+        de::File1 &file = App_FileSystem().nameIndex().lump(i->lumpNum());
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
         // A DOOM patch?
@@ -2466,8 +2466,8 @@ static TexSource loadRaw(image_t &image, rawtex_t const &raw)
     // First try an external resource.
     try
     {
-        String foundPath = App_FileSystem()->findPath(de::Uri("Patches", Path(Str_Text(&raw.name))),
-                                                      RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+        String foundPath = App_FileSystem().findPath(de::Uri("Patches", Path(Str_Text(&raw.name))),
+                                                     RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 

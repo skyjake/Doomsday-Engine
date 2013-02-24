@@ -813,7 +813,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             CHECKSC;
 
             de::Uri newSearchPath = de::Uri::fromNativeDirPath(NativePath(label));
-            FS1::Scheme& scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
+            FS1::Scheme& scheme = App_FileSystem().scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
             scheme.addSearchPath(reinterpret_cast<de::Uri const&>(newSearchPath), FS1::ExtraPaths);
         }
 

@@ -1154,12 +1154,12 @@ D_CMD(Dir)
         for(int i = 1; i < argc; ++i)
         {
             String path = NativePath(argv[i]).expand().withSeparators('/');
-            App_FileSystem()->printDirectory(path);
+            App_FileSystem().printDirectory(path);
         }
     }
     else
     {
-        App_FileSystem()->printDirectory(String("/"));
+        App_FileSystem().printDirectory(String("/"));
     }
     return true;
 }
@@ -1172,7 +1172,7 @@ D_CMD(DumpLump)
 
     if(fileSystem)
     {
-        lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(argv[1]);
+        lumpnum_t lumpNum = App_FileSystem().lumpNumForName(argv[1]);
         if(lumpNum >= 0)
         {
             return F_DumpLump(lumpNum);
@@ -1191,7 +1191,7 @@ D_CMD(ListLumps)
 
     if(fileSystem)
     {
-        LumpIndex::print(App_FileSystem()->nameIndex());
+        LumpIndex::print(App_FileSystem().nameIndex());
         return true;
     }
     Con_Printf("WAD module is not presently initialized.\n");
@@ -1209,7 +1209,7 @@ D_CMD(ListFiles)
     if(fileSystem)
     {
         FS1::FileList foundFiles;
-        int fileCount = App_FileSystem()->findAll(foundFiles);
+        int fileCount = App_FileSystem().findAll(foundFiles);
         if(!fileCount) return true;
 
         DENG2_FOR_EACH_CONST(FS1::FileList, i, foundFiles)
@@ -1248,10 +1248,10 @@ D_CMD(ListFiles)
  * C Wrapper API
  */
 
-FS1* App_FileSystem()
+FS1 &App_FileSystem()
 {
     if(!fileSystem) throw Error("App_FileSystem", "File system not yet initialized");
-    return fileSystem;
+    return *fileSystem;
 }
 
 String App_BasePath()
@@ -1279,64 +1279,64 @@ void F_Shutdown(void)
 
 void F_EndStartup(void)
 {
-    App_FileSystem()->endStartup();
+    App_FileSystem().endStartup();
 }
 
 int F_UnloadAllNonStartupFiles(void)
 {
-    return App_FileSystem()->unloadAllNonStartupFiles();
+    return App_FileSystem().unloadAllNonStartupFiles();
 }
 
 void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nativeDestinationPath)
 {
     String source      = NativePath(nativeSourcePath).expand().withSeparators('/');
     String destination = NativePath(nativeDestinationPath).expand().withSeparators('/');
-    App_FileSystem()->addPathMapping(source, destination);
+    App_FileSystem().addPathMapping(source, destination);
 }
 
 void F_AddLumpDirectoryMapping(char const* lumpName, char const* nativeDestinationPath)
 {
     String destination = NativePath(nativeDestinationPath).expand().withSeparators('/');
-    App_FileSystem()->addPathLumpMapping(destination, String(lumpName));
+    App_FileSystem().addPathLumpMapping(destination, String(lumpName));
 }
 
 void F_ResetFileIds(void)
 {
-    App_FileSystem()->resetFileIds();
+    App_FileSystem().resetFileIds();
 }
 
 boolean F_CheckFileId(char const* nativePath)
 {
-    return App_FileSystem()->checkFileId(de::Uri::fromNativePath(nativePath));
+    return App_FileSystem().checkFileId(de::Uri::fromNativePath(nativePath));
 }
 
 int F_LumpCount(void)
 {
-    return App_FileSystem()->nameIndex().size();
+    return App_FileSystem().nameIndex().size();
 }
 
 int F_Access(char const* nativePath)
 {
     de::Uri path = de::Uri::fromNativePath(nativePath);
-    return App_FileSystem()->accessFile(path)? 1 : 0;
+    return App_FileSystem().accessFile(path)? 1 : 0;
 }
 
 void F_Index(struct file1_s* file)
 {
     if(!file) return;
-    App_FileSystem()->index(*reinterpret_cast<de::File1*>(file));
+    App_FileSystem().index(*reinterpret_cast<de::File1*>(file));
 }
 
 void F_Deindex(struct file1_s* file)
 {
     if(!file) return;
-    App_FileSystem()->deindex(*reinterpret_cast<de::File1*>(file));
+    App_FileSystem().deindex(*reinterpret_cast<de::File1*>(file));
 }
 
 void F_ReleaseFile(struct file1_s* file)
 {
     if(!file) return;
-    App_FileSystem()->releaseFile(*reinterpret_cast<de::File1*>(file));
+    App_FileSystem().releaseFile(*reinterpret_cast<de::File1*>(file));
 }
 
 struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t baseOffset, boolean allowDuplicate)
@@ -1345,7 +1345,7 @@ struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t ba
     {
         // Relative paths are relative to the native working directory.
         String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
-        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
+        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem().openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore error.
@@ -1366,8 +1366,8 @@ struct filehandle_s* F_OpenLump(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1& lump = App_FileSystem()->nameIndex().lump(lumpNum);
-        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openLump(lump));
+        de::File1& lump = App_FileSystem().nameIndex().lump(lumpNum);
+        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem().openLump(lump));
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
@@ -1376,14 +1376,14 @@ struct filehandle_s* F_OpenLump(lumpnum_t lumpNum)
 
 boolean F_IsValidLumpNum(lumpnum_t lumpNum)
 {
-    return App_FileSystem()->nameIndex().isValidIndex(lumpNum);
+    return App_FileSystem().nameIndex().isValidIndex(lumpNum);
 }
 
 lumpnum_t F_LumpNumForName(char const* name)
 {
     try
     {
-        return App_FileSystem()->lumpNumForName(name);
+        return App_FileSystem().lumpNumForName(name);
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore error.
@@ -1394,7 +1394,7 @@ AutoStr* F_LumpName(lumpnum_t lumpNum)
 {
     try
     {
-        String const& name = App_FileSystem()->nameIndex().lump(lumpNum).name();
+        String const& name = App_FileSystem().nameIndex().lump(lumpNum).name();
         QByteArray nameUtf8 = name.toUtf8();
         return AutoStr_FromTextStd(nameUtf8.constData());
     }
@@ -1407,7 +1407,7 @@ size_t F_LumpLength(lumpnum_t lumpNum)
 {
     try
     {
-        return App_FileSystem()->nameIndex().lump(lumpNum).size();
+        return App_FileSystem().nameIndex().lump(lumpNum).size();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1418,7 +1418,7 @@ uint F_LumpLastModified(lumpnum_t lumpNum)
 {
     try
     {
-        return App_FileSystem()->nameIndex().lump(lumpNum).lastModified();
+        return App_FileSystem().nameIndex().lump(lumpNum).lastModified();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1429,7 +1429,7 @@ void F_Delete(struct filehandle_s* _hndl)
 {
     if(!_hndl) return;
     de::FileHandle& hndl = *reinterpret_cast<de::FileHandle*>(_hndl);
-    App_FileSystem()->releaseFile(hndl.file());
+    App_FileSystem().releaseFile(hndl.file());
     delete &hndl;
 }
 
@@ -1514,7 +1514,7 @@ struct file1_s* F_FindFileForLumpNum2(lumpnum_t lumpNum, int* lumpIdx)
 {
     try
     {
-        de::File1 const& lump = App_FileSystem()->nameIndex().lump(lumpNum);
+        de::File1 const& lump = App_FileSystem().nameIndex().lump(lumpNum);
         if(lumpIdx) *lumpIdx = lump.info().lumpIdx;
         return reinterpret_cast<struct file1_s*>(&lump.container());
     }
@@ -1527,7 +1527,7 @@ struct file1_s* F_FindFileForLumpNum(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const& lump = App_FileSystem()->nameIndex().lump(lumpNum);
+        de::File1 const& lump = App_FileSystem().nameIndex().lump(lumpNum);
         return reinterpret_cast<struct file1_s*>(&lump.container());
     }
     catch(LumpIndex::NotFoundError const&)
@@ -1539,7 +1539,7 @@ AutoStr* F_ComposeLumpFilePath(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const& lump = App_FileSystem()->nameIndex().lump(lumpNum);
+        de::File1 const& lump = App_FileSystem().nameIndex().lump(lumpNum);
         QByteArray path = lump.container().composePath().toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
@@ -1552,7 +1552,7 @@ boolean F_LumpIsCustom(lumpnum_t lumpNum)
 {
     try
     {
-        de::File1 const& lump = App_FileSystem()->nameIndex().lump(lumpNum);
+        de::File1 const& lump = App_FileSystem().nameIndex().lump(lumpNum);
         return lump.container().hasCustom();
     }
     catch(LumpIndex::NotFoundError const&)
@@ -1659,7 +1659,7 @@ void F_ComposePWADFileList(char* outBuf, size_t outBufSize, char const* delimite
     memset(outBuf, 0, outBufSize);
 
     FS1::FileList foundFiles;
-    if(!App_FileSystem()->findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
+    if(!App_FileSystem().findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
 
     String str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_PATH, delimiter);
     QByteArray strUtf8 = str.toUtf8();
@@ -1668,7 +1668,7 @@ void F_ComposePWADFileList(char* outBuf, size_t outBufSize, char const* delimite
 
 uint F_LoadedFilesCRC(void)
 {
-    return App_FileSystem()->loadedFilesCRC();
+    return App_FileSystem().loadedFilesCRC();
 }
 
 // TODO: consolidate public API into a single file

@@ -699,7 +699,7 @@ boolean F_DumpLump2(lumpnum_t lumpNum, char const* _path)
 {
     try
     {
-        de::File1& lump = App_FileSystem()->nameIndex().lump(lumpNum);
+        de::File1& lump = App_FileSystem().nameIndex().lump(lumpNum);
         String path = String(_path? _path : "");
         return dumpLump(lump, path);
     }

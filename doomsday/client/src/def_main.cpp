@@ -705,14 +705,14 @@ void Def_ReadProcessDED(char const* path)
     if(!path || !path[0]) return;
 
     de::Uri path_ = de::Uri(path, RC_NULL);
-    if(!App_FileSystem()->accessFile(path_))
+    if(!App_FileSystem().accessFile(path_))
     {
         LOG_WARNING("\"%s\" not found!") << NativePath(path_.asText()).pretty();
         return;
     }
 
     // We use the File Ids to prevent loading the same files multiple times.
-    if(!App_FileSystem()->checkFileId(path_))
+    if(!App_FileSystem().checkFileId(path_))
     {
         // Already handled.
         LOG_DEBUG("\"%s\" has already been read.") << NativePath(path_.asText()).pretty();
@@ -742,7 +742,7 @@ void Def_CountMsg(int count, const char* label)
 void Def_ReadLumpDefs(void)
 {
     int numProcessedLumps = 0;
-    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem()->nameIndex().lumps())
+    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem().nameIndex().lumps())
     {
         de::File1 const& lump = **i;
         if(!lump.name().beginsWith("DD_DEFNS", Qt::CaseInsensitive)) continue;
@@ -821,7 +821,7 @@ static void readAllDefinitions()
     /*
      * Start with engine's own top-level definition file.
      */
-    String foundPath = App_FileSystem()->findPath(de::Uri("doomsday.ded", RC_DEFINITION),
+    String foundPath = App_FileSystem().findPath(de::Uri("doomsday.ded", RC_DEFINITION),
                                                   RLF_DEFAULT, DD_ResourceClassById(RC_DEFINITION));
     foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
@@ -856,7 +856,7 @@ static void readAllDefinitions()
     if(!CommandLine_Exists("-noauto") && App_GameLoaded())
     {
         FS1::PathList foundPaths;
-        if(App_FileSystem()->findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, foundPaths))
+        if(App_FileSystem().findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, foundPaths))
         {
             foreach(FS1::PathListItem const &found, foundPaths)
             {
@@ -1137,7 +1137,7 @@ void Def_Read()
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        FS1::Scheme &scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
+        FS1::Scheme &scheme = App_FileSystem().scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
         scheme.reset();
 
         invalidateAllMaterials();
@@ -1350,7 +1350,7 @@ void Def_Read()
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
-        si->lumpNum     = (strlen(snd->lumpName) > 0? App_FileSystem()->lumpNumForName(snd->lumpName) : -1);
+        si->lumpNum     = (strlen(snd->lumpName) > 0? App_FileSystem().lumpNumForName(snd->lumpName) : -1);
         strcpy(si->name, snd->name);
 
         int const soundIdx = Def_GetSoundNum(snd->link);
@@ -2085,7 +2085,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
             strcpy(sounds[index].lumpName, (char const*) ptr);
             if(strlen(sounds[index].lumpName))
             {
-                sounds[index].lumpNum = App_FileSystem()->lumpNumForName(sounds[index].lumpName);
+                sounds[index].lumpNum = App_FileSystem().lumpNumForName(sounds[index].lumpName);
                 if(sounds[index].lumpNum < 0)
                 {
                     Con_Message("Warning: Def_Set: Unknown sound lump name \"%s\", sound (#%i) will be inaudible.\n",

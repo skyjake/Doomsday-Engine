@@ -375,7 +375,7 @@ void BitmapFont_Prepare(font_t *font)
         }
 
         M_Free(image);
-        App_FileSystem()->releaseFile(file->file());
+        App_FileSystem().releaseFile(file->file());
         delete file;
     }
 }

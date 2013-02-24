@@ -41,7 +41,7 @@ lumpnum_t PatchName::lumpNum()
         // Perform the search.
         try
         {
-            lumpNum_ = App_FileSystem()->lumpNumForName(name);
+            lumpNum_ = App_FileSystem().lumpNumForName(name);
         }
         catch(FS1::NotFoundError const &er)
         {

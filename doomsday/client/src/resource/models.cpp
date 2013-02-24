@@ -486,7 +486,7 @@ static String findSkinPath(Path const &skinPath, Path const &modelFilePath)
         try
         {
             de::Uri searchPath("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName());
-            return App_FileSystem()->findPath(searchPath, RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+            return App_FileSystem().findPath(searchPath, RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
         }
         catch(FS1::NotFoundError const &)
         {} // Ignore this error.
@@ -494,7 +494,7 @@ static String findSkinPath(Path const &skinPath, Path const &modelFilePath)
 
     /// @throws FS1::NotFoundError if no resource was found.
     de::Uri searchPath("Models", skinPath);
-    return App_FileSystem()->findPath(searchPath, RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+    return App_FileSystem().findPath(searchPath, RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
 }
 
 /**
@@ -557,8 +557,8 @@ static void defineAllSkins(model_t &mdl)
 
         try
         {
-            String foundPath = App_FileSystem()->findPath(searchPath, RLF_DEFAULT,
-                                                          DD_ResourceClassById(RC_GRAPHIC));
+            String foundPath = App_FileSystem().findPath(searchPath, RLF_DEFAULT,
+                                                         DD_ResourceClassById(RC_GRAPHIC));
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
 
@@ -686,12 +686,12 @@ static model_t *loadModel(String path)
     try
     {
         // Attempt to interpret and load this model file.
-        de::FileHandle &hndl = App_FileSystem()->openFile(path, "rb");
+        de::FileHandle &hndl = App_FileSystem().openFile(path, "rb");
 
         mdl = interpretModel(hndl, path, modelId);
 
         // We're done with the file.
-        App_FileSystem()->releaseFile(hndl.file());
+        App_FileSystem().releaseFile(hndl.file());
         delete &hndl;
 
         // Loaded?
@@ -1069,8 +1069,8 @@ static void setupModel(ded_model_t& def)
         de::Uri const &searchPath = reinterpret_cast<de::Uri &>(*subdef->filename);
         try
         {
-            String foundPath = App_FileSystem()->findPath(searchPath, RLF_DEFAULT,
-                                                          DD_ResourceClassById(RC_MODEL));
+            String foundPath = App_FileSystem().findPath(searchPath, RLF_DEFAULT,
+                                                         DD_ResourceClassById(RC_MODEL));
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
 

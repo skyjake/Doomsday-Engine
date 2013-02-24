@@ -263,7 +263,7 @@ struct FS1::Scheme::Instance
 
         // Process this search.
         FS1::PathList found;
-        App_FileSystem()->findAllPaths(searchPattern, flags, found);
+        App_FileSystem().findAllPaths(searchPattern, flags, found);
         DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
         {
             addDirectoryPathAndMaybeDescendBranch(!(flags & SearchPath::NoDescend),

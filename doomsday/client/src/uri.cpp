@@ -104,7 +104,7 @@ struct Uri::Instance
 
         if(!scheme.isEmpty())
         {
-            if(defaultResourceClass == RC_NULL || App_FileSystem()->knownScheme(scheme))
+            if(defaultResourceClass == RC_NULL || App_FileSystem().knownScheme(scheme))
             {
                 // Scheme is accepted as is.
                 return;
@@ -120,7 +120,7 @@ struct Uri::Instance
 
         if(VALID_RESOURCECLASSID(defaultResourceClass))
         {
-            FS1::Scheme &fsScheme = App_FileSystem()->scheme(DD_ResourceClassById(defaultResourceClass).defaultScheme());
+            FS1::Scheme &fsScheme = App_FileSystem().scheme(DD_ResourceClassById(defaultResourceClass).defaultScheme());
             scheme = fsScheme.name();
         }
     }

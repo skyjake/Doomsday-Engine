@@ -568,7 +568,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Scheme::Flags)
 
 } // namespace de
 
-de::FS1 *App_FileSystem();
+de::FS1 &App_FileSystem();
 
 /**
  * Returns the application's data base path in the format expected by FS1.

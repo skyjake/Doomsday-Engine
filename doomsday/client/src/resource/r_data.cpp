@@ -185,14 +185,14 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
     {} // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
-    lumpnum_t lumpNum = App_FileSystem()->nameIndex().lastIndexForPath(lumpPath);
+    lumpnum_t lumpNum = App_FileSystem().nameIndex().lastIndexForPath(lumpPath);
     if(lumpNum < 0)
     {
         LOG_WARNING("Failed to locate lump for \"%s\", ignoring.") << uri;
         return 0;
     }
 
-    de::File1 &file = App_FileSystem()->nameIndex().lump(lumpNum);
+    de::File1 &file = App_FileSystem().nameIndex().lump(lumpNum);
 
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
@@ -301,8 +301,8 @@ static void loadPatchNames(String lumpName)
 
     try
     {
-        lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(lumpName);
-        de::File1 &file = App_FileSystem()->nameIndex().lump(lumpNum);
+        lumpnum_t lumpNum = App_FileSystem().lumpNumForName(lumpName);
+        de::File1 &file = App_FileSystem().nameIndex().lump(lumpNum);
 
         if(file.size() < 4)
         {
@@ -360,9 +360,9 @@ static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
      *
      * (last)TEXTURE2 > (last)TEXTURE1
      */
-    LumpIndex const &index = App_FileSystem()->nameIndex();
-    lumpnum_t firstTexLump  = App_FileSystem()->lumpNumForName("TEXTURE1");
-    lumpnum_t secondTexLump = App_FileSystem()->lumpNumForName("TEXTURE2");
+    LumpIndex const &index = App_FileSystem().nameIndex();
+    lumpnum_t firstTexLump  = App_FileSystem().lumpNumForName("TEXTURE1");
+    lumpnum_t secondTexLump = App_FileSystem().lumpNumForName("TEXTURE2");
 
     /*
      * Also process all other lumps named TEXTURE1/2.
@@ -698,7 +698,7 @@ void R_InitFlatTextures()
 
     Textures &textures = App_Textures();
 
-    LumpIndex const &index = App_FileSystem()->nameIndex();
+    LumpIndex const &index = App_FileSystem().nameIndex();
     lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
     if(firstFlatMarkerLumpNum >= 0)
     {
@@ -794,7 +794,7 @@ void R_InitSpriteTextures()
     /// @todo fixme: Order here does not respect id tech1 logic.
     ddstack_t *stack = Stack_New();
 
-    LumpIndex const &index = App_FileSystem()->nameIndex();
+    LumpIndex const &index = App_FileSystem().nameIndex();
     for(int i = 0; i < index.size(); ++i)
     {
         de::File1 &file = index.lump(i);

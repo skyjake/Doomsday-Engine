@@ -107,8 +107,8 @@ static Path tryFindImage(String name)
      */
     try
     {
-        String foundPath = App_FileSystem()->findPath(de::Uri("Textures", name + "-ck"),
-                                                      RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+        String foundPath = App_FileSystem().findPath(de::Uri("Textures", name + "-ck"),
+                                                     RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
         // Ensure the path is absolute.
         return App_BasePath() / foundPath;
     }
@@ -120,8 +120,8 @@ static Path tryFindImage(String name)
      */
     try
     {
-        String foundPath = App_FileSystem()->findPath(de::Uri("Textures", name),
-                                                      RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+        String foundPath = App_FileSystem().findPath(de::Uri("Textures", name),
+                                                     RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
         // Ensure the path is absolute.
         return App_BasePath() / foundPath;
     }

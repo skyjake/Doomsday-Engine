@@ -199,7 +199,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
     bool validated = true;
     try
     {
-        de::FileHandle &hndl = App_FileSystem()->openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
+        de::FileHandle &hndl = App_FileSystem().openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
 
         if(Wad *wad = dynamic_cast<Wad *>(&hndl.file()))
         {
@@ -238,7 +238,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
         }
 
         // We're done with the file.
-        App_FileSystem()->releaseFile(hndl.file());
+        App_FileSystem().releaseFile(hndl.file());
         delete &hndl;
     }
     catch(FS1::NotFoundError const &)
@@ -252,10 +252,10 @@ static bool validateZip(String const &filePath, QStringList const & /*identityKe
 {
     try
     {
-        de::FileHandle &hndl = App_FileSystem()->openFile(filePath, "rbf");
+        de::FileHandle &hndl = App_FileSystem().openFile(filePath, "rbf");
         bool result = Zip::recognise(hndl);
         /// @todo Check files. We should implement an auxiliary zip lump index...
-        App_FileSystem()->releaseFile(hndl.file());
+        App_FileSystem().releaseFile(hndl.file());
         delete &hndl;
         return result;
     }
@@ -276,7 +276,7 @@ ResourceManifest &ResourceManifest::locateFile()
         // Attempt to resolve a path to the named resource.
         try
         {
-            String foundPath = App_FileSystem()->findPath(de::Uri(*i, d->classId),
+            String foundPath = App_FileSystem().findPath(de::Uri(*i, d->classId),
                                                           RLF_DEFAULT, DD_ResourceClassById(d->classId));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 

@@ -311,8 +311,8 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
             map->uri = Uri_Dup(dam->uri);
 
             // Generate the unique map id.
-            lumpnum_t markerLumpNum = App_FileSystem()->lumpNumForName(Str_Text(Uri_Path(map->uri)));
-            de::File1& markerLump   = App_FileSystem()->nameIndex().lump(markerLumpNum);
+            lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(Str_Text(Uri_Path(map->uri)));
+            de::File1& markerLump   = App_FileSystem().nameIndex().lump(markerLumpNum);
 
             de::String uniqueId     = DAM_ComposeUniqueId(markerLump);
             QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
