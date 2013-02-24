@@ -22,14 +22,13 @@
 /**
  * @page mainFlow Engine Control Flow
  *
- * The main Qt application instance is de::App, which is a slightly modified
- * version of the normal QApplication: it catches stray exceptions and forces a
- * clean shutdown of the application.
+ * The main Qt application instance is ClientApp, based on de::GuiApp, a
+ * slightly modified version of the normal QApplication: it catches stray
+ * exceptions and forces a clean shutdown of the application.
  *
  * LegacyCore is a thin wrapper around de::App that manages the event loop in a
  * way that is compatible with the legacy C implementation. The LegacyCore
- * instance is created in the main() function and is globally available
- * throughout the libdeng implementation as de2LegacyCore.
+ * instance is created in ClientApp and is globally available.
  *
  * The application's event loop is started as soon as the main window has been
  * created (but not shown yet). After the window appears with a fully
@@ -43,145 +42,38 @@
  * (continueInitWithEventLoopRunning()) after which it switches to the engine's
  * main loop callback (DD_GameLoopCallback()).
  *
- * During startup the engine goes through a series of busy tasks. While a busy
- * task is running, the event loop started in LegacyCore is blocked. However,
- * BusyTask starts another loop that continues to handle events received by the
- * application, including making calls to the loop callback function. Busy mode
- * uses its own loop callback function that monitors the progress of the busy
- * worker and keeps updating the busy mode progress indicator on screen. After
- * busy mode ends, the main loop callback is restored.
+ * During startup the engine goes through a series of busy mode tasks. While a
+ * busy task is running, the event loop started in LegacyCore is blocked.
+ * However, BusyTask starts another loop that continues to handle events
+ * received by the application, including making calls to the loop callback
+ * function. Busy mode uses its own loop callback function that monitors the
+ * progress of the busy worker and keeps updating the busy mode progress
+ * indicator on screen. After busy mode ends, the main loop callback is
+ * restored.
  *
  * The rate at which the main loop calls the loop callback can be configured
  * via LegacyCore.
  */
 
-#include <QAction>
-#include <QMenuBar>
-#include <de/GuiApp>
-#include <QNetworkProxyFactory>
-#include <QDebug>
-#include <stdlib.h>
-#include <de/Log>
-#include <de/Error>
-#include <de/c_wrapper.h>
-#include <de/garbage.h>
-#include "de_platform.h"
-#include "dd_main.h"
+#include "clientapp.h"
 #include "dd_loop.h"
-#include "con_main.h"
-#include "ui/displaymode.h"
-#include "sys_system.h"
-#include "ui/window.h"
-#include "updater.h"
 
-#if WIN32
-#  include "dd_winit.h"
-#elif UNIX
-#  include "dd_uinit.h"
-#endif
-
-/**
- * libdeng2 application core.
- */
-static LegacyCore* de2LegacyCore;
-
-static void continueInitWithEventLoopRunning(void)
-{
-    // This function only needs to be called once, so clear the callback.
-    LegacyCore_SetLoopFunc(0);
-
-    // Show the main window. This causes initialization to finish (in busy mode)
-    // as the canvas is visible and ready for initialization.
-    Window_Show(Window_Main(), true);
-}
-
-static void handleLegacyCoreTerminate(const char* msg)
-{
-    Con_Error("Application terminated due to exception:\n%s\n", msg);
-}
+#include <QDebug>
 
 /**
  * Application entry point.
  */
 int main(int argc, char** argv)
 {
-    // Application core.
-    de::GuiApp guiApp(argc, argv);
-    de::App *dengApp = &guiApp;
-    novideo = false;
-
-    QMenuBar* menuBar = 0;
-
-    dengApp->setTerminateFunc(handleLegacyCoreTerminate);
-
+    ClientApp clientApp(argc, argv);
     try
     {
-        // Override the system locale (affects number/time formatting).
-        QLocale::setDefault(QLocale("en_US.UTF-8"));
-
-        // Use the host system's proxy configuration.
-        QNetworkProxyFactory::setUseSystemConfiguration(true);
-
-        // Metadata.
-        QCoreApplication::setOrganizationDomain ("dengine.net");
-        QCoreApplication::setOrganizationName   ("Deng Team");
-        QCoreApplication::setApplicationName    ("Doomsday Engine");
-        QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
-
-        // C interface to the app.
-        de2LegacyCore = LegacyCore_New();
-
-        // Config needs DisplayMode, so let's initialize it before the configuration.
-        DisplayMode_Init();
-
-        /**
-         * @todo DisplayMode should be moved under de::App's ownership, so
-         * this is handled automatically.
-         */
-
-        dengApp->initSubsystems();
-
-        Libdeng_Init();
-
-        // Check for updates automatically.
-        Updater_Init();
-
-#ifdef MACOSX
-        // Set up the application-wide menu.
-        menuBar = new QMenuBar;
-        QMenu* gameMenu = menuBar->addMenu("&Game");
-        QAction* checkForUpdates = gameMenu->addAction("Check For &Updates...", Updater_Instance(),
-                                                       SLOT(checkNowShowingProgress()));
-        checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
-#endif
-
-        // Initialize.
-#if WIN32
-        if(!DD_Win32_Init()) return 1;
-#elif UNIX
-        if(!DD_Unix_Init()) return 1;
-#endif
-
-        // Create the main window.
-        char title[256];
-        DD_ComposeMainWindowTitle(title);
-        Window_New(title);
-        LegacyCore_SetLoopFunc(continueInitWithEventLoopRunning);
+        clientApp.initialize();
+        return DD_GameLoop();
     }
     catch(de::Error const &er)
     {
         qFatal("App init failed: %s", er.asText().toLatin1().constData());
+        return -1;
     }
-
-    // Run the main loop.
-    int result = DD_GameLoop();
-
-    // Cleanup.
-    Sys_Shutdown();
-    DD_Shutdown();
-    LegacyCore_Delete(de2LegacyCore);
-
-    delete menuBar;
-
-    return result;
 }

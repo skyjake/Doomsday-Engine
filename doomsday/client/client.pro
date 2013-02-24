@@ -156,6 +156,7 @@ DENG_HEADERS += \
     include/client/cl_player.h \
     include/client/cl_sound.h \
     include/client/cl_world.h \
+    include/clientapp.h \
     include/color.h \
     include/con_bar.h \
     include/con_bind.h \
@@ -457,6 +458,7 @@ SOURCES += \
     src/client/cl_player.cpp \
     src/client/cl_sound.cpp \
     src/client/cl_world.cpp \
+    src/clientapp.cpp \
     src/color.cpp \
     src/con_bar.cpp \
     src/con_config.cpp \
