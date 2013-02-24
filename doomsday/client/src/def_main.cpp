@@ -1086,6 +1086,28 @@ static void rebuildMaterialDecorations(Material &material, ded_material_t const 
         // Is this valid? (A zero number of stages signifies the last).
         if(!lightDef.stageCount.num) break;
 
+        for(int k = 0; k < lightDef.stageCount.num; ++k)
+        {
+            ded_decorlight_stage_t *stage = &lightDef.stages[k];
+
+            if(stage->up)
+            {
+                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->up));
+            }
+            if(stage->down)
+            {
+                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->down));
+            }
+            if(stage->sides)
+            {
+                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->sides));
+            }
+            if(stage->flare)
+            {
+                defineFlaremap(*reinterpret_cast<de::Uri const *>(stage->flare));
+            }
+        }
+
         MaterialDecoration *decor = MaterialDecoration::fromDef(lightDef);
         material.addDecoration(*decor);
     }
@@ -1119,32 +1141,6 @@ static void interpretMaterialDef(ded_material_t &def)
     de::Uri &uri = *reinterpret_cast<de::Uri *>(def.uri);
     if(!App_Materials().validateUri(uri, 0, (verbose >= 1)))
         return;
-
-    for(int i = 0; i < DED_MAX_MATERIAL_DECORATIONS; ++i)
-    {
-        ded_material_decoration_t *lig = &def.decorations[i];
-        for(int k = 0; k < lig->stageCount.num; ++k)
-        {
-            ded_decorlight_stage_t *stage = &lig->stages[k];
-
-            if(stage->up)
-            {
-                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->up));
-            }
-            if(stage->down)
-            {
-                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->down));
-            }
-            if(stage->sides)
-            {
-                defineLightmap(*reinterpret_cast<de::Uri const *>(stage->sides));
-            }
-            if(stage->flare)
-            {
-                defineFlaremap(*reinterpret_cast<de::Uri const *>(stage->flare));
-            }
-        }
-    }
 
     // Have we already created a manifest for this?
     MaterialManifest *manifest = &App_Materials().newManifest(App_Materials().scheme(uri.scheme()), uri.path());
@@ -1183,25 +1179,16 @@ static void interpretMaterialDef(ded_material_t &def)
     // An entirely new material?
     if(!manifest->hasMaterial())
     {
-        Material &material = *(new Material(*manifest));
-
-        // Associate the new material with the manifest.
-        manifest->setMaterial(&material);
+        // Instantiate and associate the new material with the manifest.
+        manifest->setMaterial(new Material(*manifest));
 
         // Include the material in the scheme-agnostic list of instances.
-        App_Materials().addMaterial(material);
-    }
-    else
-    {
-        // Updating the existing material.
-#ifdef __CLIENT__
-        Material &material = manifest->material();
-
-        /// @todo We should be able to rebuild the variants.
-        material.clearVariants();
-#endif
+        App_Materials().addMaterial(manifest->material());
     }
 
+    /*
+     * (Re)configure the material:
+     */
     Material &material = manifest->material();
 
     Material::Flags newFlags;
