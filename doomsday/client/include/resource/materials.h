@@ -290,17 +290,8 @@ public:
     ///
     Manifest &newManifest(Scheme &scheme, Path const &path);
 
-    /**
-     * Create a new Material unless an existing Material is found at the path
-     * (and within the same scheme) as that specified in @a def, in which case
-     * it is returned instead.
-     *
-     * @note: May fail on invalid definitions (return= @c NULL).
-     *
-     * @param def  Material definition to construct from.
-     * @return  The newly-created/existing material; otherwise @c NULL.
-     */
-    Material *newFromDef(ded_material_t &def);
+    ///
+    void addMaterial(Material &material);
 
     /**
      * Returns a list of all the unique material instances in the collection,

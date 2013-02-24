@@ -23,7 +23,7 @@
 #include "api_map.h"
 #include "audio/s_environ.h"
 #include "map/r_world.h"
-
+#include "r_util.h" // R_NameForBlendMode
 #include <de/math.h>
 #include <QtAlgorithms>
 
@@ -197,6 +197,7 @@ Material::ShineLayer::Stages const &Material::ShineLayer::stages() const
     return stages_;
 }
 
+
 Material::Decoration::Stage *Material::Decoration::Stage::fromDef(ded_decorlight_stage_t const &def)
 {
     Texture *upTexture    = R_FindTextureByResourceUri("Lightmaps", reinterpret_cast<de::Uri *>(def.up));
@@ -228,6 +229,13 @@ Material::Decoration::Stage *Material::Decoration::Stage::fromDef(ded_decorlight
                      upTexture, downTexture, sidesTexture, flareTexture, def.sysFlareIdx);
 }
 
+String Material::Decoration::Stage::LightLevels::asText() const
+{
+    return String("(min:%1 max:%2)")
+               .arg(min, 0, 'g', 2)
+               .arg(max, 0, 'g', 2);
+}
+
 Material::Decoration::Decoration()
     : patternSkip_(0, 0), patternOffset_(0, 0)
 {}
@@ -241,7 +249,7 @@ Material::Decoration::~Decoration()
     qDeleteAll(stages_);
 }
 
-Material::Decoration *Material::Decoration::fromDef(ded_material_decoration_t &def)
+Material::Decoration *Material::Decoration::fromDef(ded_material_decoration_t const &def)
 {
     Decoration *dec = new Decoration(Vector2i(def.patternSkip),
                                      Vector2i(def.patternOffset));
@@ -252,7 +260,7 @@ Material::Decoration *Material::Decoration::fromDef(ded_material_decoration_t &d
     return dec;
 }
 
-Material::Decoration *Material::Decoration::fromDef(ded_decoration_t &def)
+Material::Decoration *Material::Decoration::fromDef(ded_decoration_t const &def)
 {
     Decoration *dec = new Decoration(Vector2i(def.patternSkip),
                                      Vector2i(def.patternOffset));
@@ -323,22 +331,11 @@ DENG2_PIMPL(Material)
     ~Instance()
     {
 #ifdef __CLIENT__
-        clearVariants();
+        self.clearVariants();
+        self.clearDecorations();
 #endif
-        clearDecorations();
         clearLayers();
     }
-
-#ifdef __CLIENT__
-    void clearVariants()
-    {
-        while(!variants.isEmpty())
-        {
-             delete variants.takeFirst();
-        }
-        variants.clear();
-    }
-#endif // __CLIENT__
 
     void clearLayers()
     {
@@ -347,12 +344,6 @@ DENG2_PIMPL(Material)
 
         if(detailLayer) delete detailLayer;
         if(shineLayer) delete shineLayer;
-    }
-
-    void clearDecorations()
-    {
-        qDeleteAll(decorations);
-        decorations.clear();
     }
 };
 
@@ -537,6 +528,8 @@ Material::ShineLayer const &Material::shineLayer() const
     throw UnknownLayerError("Material::shineLayer", "Material has no shine layer");
 }
 
+#ifdef __CLIENT__
+
 void Material::addDecoration(Material::Decoration &decor)
 {
     d->decorations.push_back(&decor);
@@ -547,7 +540,11 @@ Material::Decorations const &Material::decorations() const
     return d->decorations;
 }
 
-#ifdef __CLIENT__
+void Material::clearDecorations()
+{
+    qDeleteAll(d->decorations);
+    d->decorations.clear();
+}
 
 Material::Variants const &Material::variants() const
 {
@@ -574,7 +571,11 @@ Material::Variant *Material::chooseVariant(Material::VariantSpec const &spec, bo
 
 void Material::clearVariants()
 {
-    d->clearVariants();
+    while(!d->variants.isEmpty())
+    {
+         delete d->variants.takeFirst();
+    }
+    d->variants.clear();
 }
 
 #endif // __CLIENT__
@@ -620,4 +621,155 @@ void Material::markValid(bool yes)
 {
     if(d->valid == yes) return;
     d->valid = yes;
+}
+
+String Material::composeDescription() const
+{
+    String str = String("Material \"%1\" [%2]")
+                     .arg(manifest().composeUri().asText())
+                     .arg(de::dintptr(this))
+               + " Dimensions:" + (dimensions().isEmpty()? String("unknown (not yet prepared)")
+                                                         : String("(%1 x %2)").arg(width()).arg(height()))
+               + " Source:" + manifest().sourceDescription();
+#ifdef __CLIENT__
+    str += String(" x%1").arg(variantCount());
+#endif
+    return str;
+}
+
+String Material::composeSynopsis() const
+{
+    String str = String("Drawable:%1 EnvClass:\"%2\"")
+                   .arg(isDrawable()? "yes" : "no")
+                   .arg(audioEnvironment() == AEC_UNKNOWN? "N/A" : S_AudioEnvironmentName(audioEnvironment()));
+#ifdef __CLIENT__
+    str += String(" Decorated:%1").arg(isDecorated()? "yes" : "no");
+#endif
+    str += String("\nDetailed:%1 Glowing:%2 Shiny:%3 SkyMasked:%4")
+               .arg(isDetailed()     ? "yes" : "no")
+               .arg(hasGlow()        ? "yes" : "no")
+               .arg(isShiny()        ? "yes" : "no")
+               .arg(isSkyMasked()    ? "yes" : "no");
+
+    // Add the layer config:
+    for(int i = 0; i < layers().count(); ++i)
+    {
+        Material::Layer const &lDef = *(layers()[i]);
+        int const stageCount = lDef.stageCount();
+
+        str += String("\nLayer #%1 (%2 %3):")
+                   .arg(i).arg(stageCount).arg(stageCount == 1? "Stage" : "Stages");
+
+        for(int k = 0; k < stageCount; ++k)
+        {
+            Material::Layer::Stage const &sDef = *(lDef.stages()[k]);
+            String path = sDef.texture? sDef.texture->manifest().composeUri().asText()
+                                      : QString("(prev)");
+
+            str += String("\n  #%1: Texture:\"%2\" Tics:%3 (~%4)"
+                          "\n       Offset:%5 Glow:%6 (~%7)")
+                       .arg(k)
+                       .arg(path)
+                       .arg(sDef.tics)
+                       .arg(sDef.variance,             0, 'g', 2)
+                       .arg(sDef.texOrigin.asText())
+                       .arg(sDef.glowStrength,         0, 'g', 2)
+                       .arg(sDef.glowStrengthVariance, 0, 'g', 2);
+        }
+    }
+
+    // Add the detail layer config:
+    if(isDetailed())
+    {
+        Material::DetailLayer const &lDef = detailLayer();
+        int const stageCount = lDef.stageCount();
+
+        str += String("\nDetailLayer #0 (%1 %2):")
+                   .arg(stageCount).arg(stageCount == 1? "Stage" : "Stages");
+
+        for(int i = 0; i < stageCount; ++i)
+        {
+            Material::DetailLayer::Stage const &sDef = *(lDef.stages()[i]);
+            String path = sDef.texture? sDef.texture->manifest().composeUri().asText()
+                                      : QString("(prev)");
+
+            str += String("\n  #%1: Texture:\"%2\" Tics:%3 (~%4)"
+                          "\n       Scale:%5 Strength:%6 MaxDistance:%7")
+                       .arg(i)
+                       .arg(path)
+                       .arg(sDef.tics)
+                       .arg(sDef.variance,    0, 'g', 2)
+                       .arg(sDef.scale,       0, 'g', 2)
+                       .arg(sDef.strength,    0, 'g', 2)
+                       .arg(sDef.maxDistance, 0, 'g', 2);
+        }
+    }
+
+    // Add the shine layer config:
+    if(isShiny())
+    {
+        Material::ShineLayer const &lDef = shineLayer();
+        int const stageCount = lDef.stageCount();
+
+        str += String("\nShineLayer #0 (%1 %2):")
+                   .arg(stageCount).arg(stageCount == 1? "Stage" : "Stages");
+
+        for(int i = 0; i < stageCount; ++i)
+        {
+            Material::ShineLayer::Stage const &sDef = *(lDef.stages()[i]);
+            String path = sDef.texture? sDef.texture->manifest().composeUri().asText()
+                                      : QString("(prev)");
+            String maskPath = sDef.maskTexture? sDef.maskTexture->manifest().composeUri().asText()
+                                              : QString("(none)");
+
+            str += String("\n  #%1: Texture:\"%2\" MaskTexture:\"%3\" Tics:%4 (~%5)"
+                          "\n      Shininess:%6 BlendMode:%7 MaskDimensions:%8"
+                          "\n      MinColor:%9")
+                       .arg(i)
+                       .arg(path)
+                       .arg(maskPath)
+                       .arg(sDef.tics)
+                       .arg(sDef.variance, 0, 'g', 2)
+                       .arg(sDef.shininess, 0, 'g', 2)
+                       .arg(R_NameForBlendMode(sDef.blendMode))
+                       .arg(Vector2i(sDef.maskDimensions.width(),
+                                     sDef.maskDimensions.height()).asText())
+                       .arg(sDef.minColor.asText());
+        }
+    }
+
+#ifdef __CLIENT__
+    // Add the decoration config:
+    if(isDecorated())
+    {
+        for(int i = 0; i < decorations().count(); ++i)
+        {
+            MaterialDecoration const *lDef = decorations()[i];
+            int const stageCount = lDef->stageCount();
+
+            str += String("\nDecoration #%1 (%2 %3):")
+                       .arg(i).arg(stageCount).arg(stageCount == 1? "Stage" : "Stages");
+
+            for(int k = 0; k < stageCount; ++k)
+            {
+                MaterialDecoration::Stage const &sDef = *lDef->stages()[k];
+
+                str += String("\n  #%1: Tics:%i (~%2) Offset:%3 Elevation:%4"
+                              "\n       Color:%5 Radius:%6f HaloRadius:%7"
+                              "\n       LightLevels:%8")
+                           .arg(k)
+                           .arg(sDef.tics)
+                           .arg(sDef.variance, 0, 'g', 2)
+                           .arg(sDef.pos.asText())
+                           .arg(sDef.elevation, 0, 'g', 2)
+                           .arg(sDef.color.asText())
+                           .arg(sDef.radius, 0, 'g', 2)
+                           .arg(sDef.haloRadius, 0, 'g', 2)
+                           .arg(sDef.lightLevels.asText());
+            }
+        }
+    }
+#endif
+
+    return str;
 }

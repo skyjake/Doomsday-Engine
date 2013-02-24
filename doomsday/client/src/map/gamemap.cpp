@@ -79,10 +79,12 @@ SurfaceSet &GameMap::scrollingSurfaces()
     return scrollingSurfaces_;
 }
 
+#ifdef __CLIENT__
 SurfaceSet &GameMap::decoratedSurfaces()
 {
     return decoratedSurfaces_;
 }
+#endif
 
 SurfaceSet &GameMap::glowingSurfaces()
 {

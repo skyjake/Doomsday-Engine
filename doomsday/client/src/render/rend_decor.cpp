@@ -90,7 +90,7 @@ static void projectSource(decorsource_t const &src)
     MaterialSnapshot::Decoration const *decor = src.decor;
 
     // Don't project decorations which emit no color.
-    if(V3f_IsZero(decor->color)) return;
+    if(decor->color.x == 0 && decor->color.y == 0 && decor->color.z == 0) return;
 
     // Does it pass the sector light limitation?
     float min = decor->lightLevels[0];
@@ -181,7 +181,7 @@ static void addLuminousDecoration(decorsource_t &src)
     MaterialSnapshot::Decoration const *decor = src.decor;
 
     // Don't add decorations which emit no color.
-    if(V3f_IsZero(decor->color)) return;
+    if(decor->color.x == 0 && decor->color.y == 0 && decor->color.z == 0) return;
 
     // Does it pass the sector light limitation?
     float min = decor->lightLevels[0];

@@ -2859,7 +2859,7 @@ static bool tryUnloadFile(de::Uri const& search)
 {
     try
     {
-        de::File1& file = App_FileSystem().find(search);
+        de::File1 &file = App_FileSystem().find(search);
         de::Uri foundFileUri = file.composeUri();
         QByteArray pathUtf8 = NativePath(foundFileUri.asText()).pretty().toUtf8();
 
@@ -2939,7 +2939,7 @@ D_CMD(Unload)
         try
         {
             String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[1], RC_PACKAGE),
-                                                          RLF_MATCH_EXTENSION, DD_ResourceClassById(RC_PACKAGE));
+                                                         RLF_MATCH_EXTENSION, DD_ResourceClassById(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
             if(tryUnloadFile(de::Uri(foundPath, RC_NULL)))

@@ -299,6 +299,9 @@ public:
                 LightLevels(LightLevels const &other)
                     : min(other.min), max(other.max)
                 {}
+
+                /// Returns a textual representation of the lightlevels.
+                de::String asText() const;
             };
 
             int tics;
@@ -346,12 +349,12 @@ public:
         /**
          * Construct a new decoration from the specified definition.
          */
-        static Decoration *fromDef(ded_material_decoration_t &def);
+        static Decoration *fromDef(ded_material_decoration_t const &def);
 
         /**
          * Construct a new decoration from the specified definition.
          */
-        static Decoration *fromDef(ded_decoration_t &def);
+        static Decoration *fromDef(ded_decoration_t const &def);
 
         /// @return  @c true if the decoration is animated; otherwise @c false.
         inline bool isAnimated() const { return stageCount() > 1; }
@@ -564,6 +567,20 @@ public:
     Manifest &manifest() const;
 
     /**
+     * Returns a brief textual description/overview of the material.
+     *
+     * @return Human-friendly description/overview of the material.
+     */
+    de::String composeDescription() const;
+
+    /**
+     * Returns a textual synopsis of the material's configuration.
+     *
+     * @return Human-friendly synopsis of the material's configuration.
+     */
+    de::String composeSynopsis() const;
+
+    /**
      * Returns @c true if the material is considered @em valid. A material is
      * only invalidated when resources it depends on (such as the definition
      * from which it was produced) are destroyed as result of runtime file
@@ -628,9 +645,11 @@ public:
     /// Returns @c true if the material has at least one animated layer.
     bool isAnimated() const;
 
+#ifdef __CLIENT__
     /// Returns @c true if the material has one or more (light) decorations.
     /// Equivalent to @code decorationCount() != 0; @endcode, for convenience.
     inline bool isDecorated() const { return decorationCount() != 0; }
+#endif
 
     /// Returns @c true if the material has a detail texturing layer.
     bool isDetailed() const;
@@ -726,10 +745,17 @@ public:
      */
     ShineLayer const &shineLayer() const;
 
+#ifdef __CLIENT__
+
     /**
      * Returns the number of material (light) decorations.
      */
     int decorationCount() const { return decorations().count(); }
+
+    /**
+     * Destroys all derived context variants for the material.
+     */
+    void clearDecorations();
 
     /**
      * Add a new (light) decoration to the material.
@@ -744,8 +770,6 @@ public:
      * Provides access to the list of decorations for efficient traversal.
      */
     Decorations const &decorations() const;
-
-#ifdef __CLIENT__
 
     /**
      * Returns the number of context variants for the material.

@@ -113,7 +113,9 @@ public:
 
     PlaneSet trackedPlanes;
     SurfaceSet scrollingSurfaces_;
+#ifdef __CLIENT__
     SurfaceSet decoratedSurfaces_;
+#endif
     SurfaceSet glowingSurfaces_;
 
     struct blockmap_s* mobjBlockmap;
@@ -149,20 +151,24 @@ public:
 
     uint lineDefCount() const { return lineDefs.size(); }
 
-    /**
-     * Returns the set of scrolling surfaces for the map.
-     */
-    SurfaceSet &scrollingSurfaces();
+#ifdef __CLIENT__
 
     /**
      * Returns the set of decorated surfaces for the map.
      */
     SurfaceSet &decoratedSurfaces();
 
+#endif // __CLIENT__
+
     /**
      * Returns the set of glowing surfaces for the map.
      */
     SurfaceSet &glowingSurfaces();
+
+    /**
+     * Returns the set of scrolling surfaces for the map.
+     */
+    SurfaceSet &scrollingSurfaces();
 };
 
 /**

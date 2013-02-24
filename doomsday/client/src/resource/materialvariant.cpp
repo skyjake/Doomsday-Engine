@@ -265,6 +265,7 @@ void Material::Variant::ticker(timespan_t /*ticLength*/)
 
 void Material::Variant::resetAnim()
 {
+    // Animation ceases once the material is no longer valid.
     if(!d->material->isValid()) return;
 
     Material::Layers const &layers = d->material->layers();

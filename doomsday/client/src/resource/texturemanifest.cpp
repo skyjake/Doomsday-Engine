@@ -101,7 +101,7 @@ Textures::Scheme &TextureManifest::scheme() const
         if(&scheme->index() == &tree()) return *scheme;
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
-    throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%p].").arg(de::dintptr(this)));
+    throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%1].").arg(de::dintptr(this)));
 }
 
 de::Uri const &TextureManifest::resourceUri() const
