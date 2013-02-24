@@ -23,6 +23,7 @@
 #define LIBDENG_RENDER_RENDPOLY_H
 
 #include "color.h"
+#include "api_gl.h"
 #include <de/vector1.h>
 
 #ifdef __cplusplus

@@ -29,10 +29,7 @@
 
 #include "dd_types.h"
 #include "resource/image.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "canvaswindow.h"
 
 #define WINDOW_MIN_WIDTH        320
 #define WINDOW_MIN_HEIGHT       240
@@ -340,17 +337,11 @@ void Window_GLDone(Window* wnd);
 
 void* Window_NativeHandle(const Window* wnd);
 
-#ifdef __cplusplus
-} // extern "C"
-
-// C++ API
-class QWidget;
-
 /**
  * Returns the window's native widget, if one exists.
  */
 QWidget* Window_Widget(Window* wnd);
 
-#endif // __cplusplus
+CanvasWindow *Window_CanvasWindow(Window *wnd);
 
 #endif /* LIBDENG_SYS_WINDOW_H */

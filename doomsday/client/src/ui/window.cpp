@@ -1584,3 +1584,9 @@ QWidget* Window_Widget(Window* wnd)
     if(!wnd) return 0;
     return wnd->widget;
 }
+
+CanvasWindow *Window_CanvasWindow(Window *wnd)
+{
+    if(!wnd) return 0;
+    return wnd->widget;
+}

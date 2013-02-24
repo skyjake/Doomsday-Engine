@@ -67,8 +67,6 @@ boolean stopTime = false; // If true the time counters won't be incremented
 boolean tickUI = false; // If true the UI will be tick'd
 boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netGame)
 
-boolean drawGame = true; // If false the game viewport won't be rendered
-
 static int gameLoopExitCode = 0;
 
 static double lastRunTicsTime;
@@ -237,65 +235,10 @@ void DD_GameLoopDrawer(void)
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    if(drawGame)
-    {
-        if(App_GameLoaded())
-        {
-            // Interpolate the world ready for drawing view(s) of it.
-            if(theMap)
-            {
-                R_BeginWorldFrame();
-            }
-            R_RenderViewPorts();
-        }
-        else if(titleFinale == 0)
-        {
-            // Title finale is not playing. Lets do it manually.
-            glMatrixMode(GL_PROJECTION);
-            glPushMatrix();
-            glLoadIdentity();
-            glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+    CanvasWindow *win = Window_CanvasWindow(Window_Main());
+    DENG_ASSERT(win != 0);
 
-            R_RenderBlankView();
-
-            glMatrixMode(GL_PROJECTION);
-            glPopMatrix();
-        }
-
-        if(!(UI_IsActive() && UI_Alpha() >= 1.0))
-        {
-            UI2_Drawer();
-
-            // Draw any full window game graphics.
-            if(App_GameLoaded() && gx.DrawWindow)
-                gx.DrawWindow(Window_Size(theWindow));
-        }
-    }
-
-    if(Con_TransitionInProgress())
-        Con_DrawTransition();
-
-    if(drawGame)
-    {
-        // Debug information.
-        Net_Drawer();
-        S_Drawer();
-
-        // Finish up any tasks that must be completed after view(s) have been drawn.
-        R_EndWorldFrame();
-    }
-
-    if(UI_IsActive())
-    {
-        // Draw user interface.
-        UI_Drawer();
-    }
-
-    // Draw console.
-    Rend_Console();
-
-    // End any open DGL sequence.
-    DGL_End();
+    win->root().draw();
 
     // Finish GL drawing and swap it on to the screen.
     GL_DoUpdate();
