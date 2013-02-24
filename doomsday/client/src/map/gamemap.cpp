@@ -84,14 +84,15 @@ SurfaceSet &GameMap::decoratedSurfaces()
 {
     return decoratedSurfaces_;
 }
-#endif
 
 SurfaceSet &GameMap::glowingSurfaces()
 {
     return glowingSurfaces_;
 }
 
-const Uri* GameMap_Uri(GameMap* map)
+#endif // __CLIENT__
+
+Uri const *GameMap_Uri(GameMap *map)
 {
     DENG2_ASSERT(map);
     return map->uri;

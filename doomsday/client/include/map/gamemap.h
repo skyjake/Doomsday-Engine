@@ -115,8 +115,8 @@ public:
     SurfaceSet scrollingSurfaces_;
 #ifdef __CLIENT__
     SurfaceSet decoratedSurfaces_;
-#endif
     SurfaceSet glowingSurfaces_;
+#endif
 
     struct blockmap_s* mobjBlockmap;
     struct blockmap_s* polyobjBlockmap;
@@ -158,12 +158,12 @@ public:
      */
     SurfaceSet &decoratedSurfaces();
 
-#endif // __CLIENT__
-
     /**
      * Returns the set of glowing surfaces for the map.
      */
     SurfaceSet &glowingSurfaces();
+
+#endif // __CLIENT__
 
     /**
      * Returns the set of scrolling surfaces for the map.

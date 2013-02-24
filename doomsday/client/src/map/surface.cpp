@@ -87,24 +87,24 @@ bool Surface::setMaterial(Material *newMaterial)
 
             if(!ddMapSetup)
             {
+#ifdef __CLIENT__
                 GameMap *map = theMap; /// @todo Do not assume surface is from the CURRENT map.
 
-#ifdef __CLIENT__
                 // If this plane's surface is in the decorated list, remove it.
                 map->decoratedSurfaces().remove(this);
-#endif // __CLIENT__
 
                 // If this plane's surface is in the glowing list, remove it.
                 map->glowingSurfaces().remove(this);
+#endif // __CLIENT__
 
                 if(newMaterial)
                 {
+#ifdef __CLIENT__
                     if(newMaterial->hasGlow())
                     {
                         map->glowingSurfaces().insert(this);
                     }
 
-#ifdef __CLIENT__
                     if(newMaterial->isDecorated())
                     {
                         map->decoratedSurfaces().insert(this);

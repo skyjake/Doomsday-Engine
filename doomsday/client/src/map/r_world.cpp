@@ -408,12 +408,12 @@ void R_DestroyPlaneOfSector(uint id, Sector *sec)
     // If this plane's surface is in the moving list, remove it.
     theMap->scrollingSurfaces().remove(&plane->surface);
 
+#ifdef __CLIENT__
+
     // If this plane's surface is in the glowing list, remove it.
     theMap->glowingSurfaces().remove(&plane->surface);
 
-#ifdef __CLIENT__
-
-    // If this plane's surface is in the deocrated list, remove it.
+    // If this plane's surface is in the decorated list, remove it.
     theMap->decoratedSurfaces().remove(&plane->surface);
 
     // Destroy the biassurfaces for this plane.
@@ -1027,6 +1027,7 @@ void R_MapInitSurfaces(boolean forceUpdate)
     }
 }
 
+#ifdef __CLIENT__
 static void addToSurfaceSets(Surface *suf, Material *material)
 {
     if(!suf || !material) return;
@@ -1036,19 +1037,18 @@ static void addToSurfaceSets(Surface *suf, Material *material)
         theMap->glowingSurfaces().insert(suf);
     }
 
-#ifdef __CLIENT__
     if(material->isDecorated())
     {
         theMap->decoratedSurfaces().insert(suf);
     }
-#endif
 }
+#endif // __CLIENT__
 
 void R_MapInitSurfaceLists()
 {
 #ifdef __CLIENT__
+
     theMap->decoratedSurfaces().clear();
-#endif
     theMap->glowingSurfaces().clear();
 
     for(uint i = 0; i < NUM_SIDEDEFS; ++i)
@@ -1070,6 +1070,8 @@ void R_MapInitSurfaceLists()
             addToSurfaceSets(&sec->SP_planesurface(j), sec->SP_planematerial(j));
         }
     }
+
+#endif // __CLIENT__
 }
 
 #undef R_SetupMap
