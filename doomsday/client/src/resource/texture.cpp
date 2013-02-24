@@ -1,7 +1,7 @@
 /** @file texture.cpp Logical Texture.
  *
- * @authors Copyright � 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright � 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,7 +30,7 @@
 #include <de/Log>
 #include <QMap>
 
-#include "Texture"
+#include "resource/texture.h"
 
 using namespace de;
 
@@ -67,8 +67,9 @@ DENG2_PIMPL(Texture)
     /// Image analysis data, used for various purposes according to context.
     Analyses analyses;
 
-    Instance(Public &a, TextureManifest &_manifest)
-        : Base(a), manifest(_manifest), userData(0)
+    Instance(Public *i, TextureManifest &_manifest) : Base(i),
+        manifest(_manifest),
+        userData(0)
     {}
 
     ~Instance()
@@ -80,7 +81,7 @@ DENG2_PIMPL(Texture)
     }
 };
 
-Texture::Texture(TextureManifest &manifest) : d(new Instance(*this, manifest))
+Texture::Texture(TextureManifest &manifest) : d(new Instance(this, manifest))
 {}
 
 Texture::~Texture()

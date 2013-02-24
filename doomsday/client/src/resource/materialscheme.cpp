@@ -1,6 +1,6 @@
 /** @file materialscheme.cpp Material system subspace scheme.
  *
- * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2010-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,9 +18,10 @@
  */
 
 #include "MaterialManifest"
-#include "MaterialScheme"
 
-namespace de {
+#include "resource/materialscheme.h"
+
+using namespace de;
 
 DENG2_PIMPL(MaterialScheme)
 {
@@ -30,7 +31,7 @@ DENG2_PIMPL(MaterialScheme)
     /// Mappings from paths to manifests.
     MaterialScheme::Index index;
 
-    Instance(Public &a, String symbolicName) : Base(a),
+    Instance(Public *i, String symbolicName) : Base(i),
         name(symbolicName)
     {}
 
@@ -38,7 +39,7 @@ DENG2_PIMPL(MaterialScheme)
 };
 
 MaterialScheme::MaterialScheme(String symbolicName)
-    : d(new Instance(*this, symbolicName))
+    : d(new Instance(this, symbolicName))
 {}
 
 MaterialScheme::~MaterialScheme()
@@ -86,5 +87,3 @@ MaterialScheme::Index const &MaterialScheme::index() const
 {
     return d->index;
 }
-
-} // namespace de

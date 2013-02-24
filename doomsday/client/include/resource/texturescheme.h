@@ -1,6 +1,6 @@
 /** @file texturescheme.h Texture collection subspace.
  *
- * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2010-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -125,8 +125,7 @@ public:
     void markUniqueIdLutDirty();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

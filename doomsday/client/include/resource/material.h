@@ -485,8 +485,7 @@ public:
         friend struct Material::Instance;
 
     private:
-        struct Instance;
-        Instance *d;
+        DENG2_PRIVATE(d)
     };
 
     /// A list of variant instances.

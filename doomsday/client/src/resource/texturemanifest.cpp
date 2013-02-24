@@ -1,6 +1,6 @@
 /** @file texturemanifest.cpp Texture Manifest.
  *
- * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2010-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,11 +18,11 @@
  */
 
 #include "de_base.h"
-
 #include "Textures"
-#include "TextureManifest"
 
-namespace de {
+#include "resource/texturemanifest.h"
+
+using namespace de;
 
 DENG2_PIMPL(TextureManifest)
 {
@@ -44,8 +44,10 @@ DENG2_PIMPL(TextureManifest)
     /// The associated logical Texture instance (if any).
     Texture *texture;
 
-    Instance(Public &a) : Base(a),
-        uniqueId(0), resourceUri(), texture(0)
+    Instance(Public *i) : Base(i),
+        uniqueId(0),
+        resourceUri(),
+        texture(0)
     {}
 
     ~Instance()
@@ -55,18 +57,12 @@ DENG2_PIMPL(TextureManifest)
 };
 
 TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
-    : Node(args), d(new Instance(*this))
+    : Node(args), d(new Instance(this))
 {}
 
 TextureManifest::~TextureManifest()
 {
     LOG_AS("~TextureManifest");
-    if(d->texture)
-    {
-#if _DEBUG
-        LOG_WARNING("\"%s\" still has an associated texture!") << composeUri();
-#endif
-    }
     delete d;
 }
 
@@ -108,12 +104,12 @@ Textures::Scheme &TextureManifest::scheme() const
     throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%p].").arg(de::dintptr(this)));
 }
 
-Uri const &TextureManifest::resourceUri() const
+de::Uri const &TextureManifest::resourceUri() const
 {
     return d->resourceUri;
 }
 
-bool TextureManifest::setResourceUri(Uri const &newUri)
+bool TextureManifest::setResourceUri(de::Uri const &newUri)
 {
     // Avoid resolving; compare as text.
     if(d->resourceUri.asText() != newUri.asText())
@@ -180,5 +176,3 @@ void TextureManifest::setTexture(Texture *newTexture)
 {
     d->texture = newTexture;
 }
-
-} // namespace de

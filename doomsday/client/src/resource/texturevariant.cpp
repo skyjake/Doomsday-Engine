@@ -1,6 +1,6 @@
-/** @file texturevariant.cpp Logical Texture Variant.
+/** @file texturevariant.cpp Context specialized logical texture variant.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2011-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,7 +17,9 @@
  * 02110-1301 USA</small>
  */
 
-#include "Texture"
+#include "resource/texture.h"
+
+using namespace de;
 
 /**
  * @todo Magnification, Anisotropic filter level and GL texture wrap modes
@@ -67,10 +69,8 @@ int TextureVariantSpec_Compare(texturevariantspecification_t const *a,
     case TST_GENERAL: return compareVariantSpecifications(TS_GENERAL(*a), TS_GENERAL(*b));
     case TST_DETAIL:  return compareDetailVariantSpecifications(TS_DETAIL(*a), TS_DETAIL(*b));
     }
-    throw de::Error("TextureVariantSpec_Compare", QString("Invalid type %1").arg(a->type));
+    throw Error("TextureVariantSpec_Compare", QString("Invalid type %1").arg(a->type));
 }
-
-namespace de {
 
 DENG2_PIMPL(Texture::Variant)
 {
@@ -92,8 +92,8 @@ DENG2_PIMPL(Texture::Variant)
     /// Prepared coordinates for the bottom right of the texture minus border.
     float s, t;
 
-    Instance(Public &a, Texture &generalCase,
-             texturevariantspecification_t const &spec) : Base(a),
+    Instance(Public *i, Texture &generalCase,
+             texturevariantspecification_t const &spec) : Base(i),
       texture(generalCase),
       spec(spec),
       flags(0),
@@ -105,7 +105,7 @@ DENG2_PIMPL(Texture::Variant)
 };
 
 Texture::Variant::Variant(Texture &generalCase, texturevariantspecification_t const &spec)
-    : d(new Instance(*this, generalCase, spec))
+    : d(new Instance(this, generalCase, spec))
 {}
 
 Texture::Variant::~Variant()
@@ -162,7 +162,6 @@ void Texture::Variant::setCoords(float newS, float newT)
     d->t = newT;
 }
 
-#ifdef __CLIENT__
 uint Texture::Variant::glName() const
 {
     return d->glTexName;
@@ -172,6 +171,3 @@ void Texture::Variant::setGLName(uint newGLName)
 {
     d->glTexName = newGLName;
 }
-#endif
-
-} // namespace de

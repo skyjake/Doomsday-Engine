@@ -114,8 +114,7 @@ public:
         All const &all() const;
 
     private:
-        struct Instance;
-        Instance *d;
+        DENG2_PRIVATE(d)
     };
 
     /**
@@ -371,8 +370,7 @@ public:
 #endif // __CLIENT__
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Materials::UriValidationFlags)

@@ -1,6 +1,6 @@
 /** @file material.cpp Logical Material.
  *
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,7 +27,7 @@
 #include <de/math.h>
 #include <QtAlgorithms>
 
-#include "Material"
+#include "resource/material.h"
 
 using namespace de;
 
@@ -271,7 +271,7 @@ DENG2_PIMPL(Material)
     /// @c false= the material is no longer valid.
     bool valid;
 
-    Instance(Public &a, MaterialManifest &_manifest) : Base(a),
+    Instance(Public *i, MaterialManifest &_manifest) : Base(i),
         manifest(_manifest),
         envClass(AEC_UNKNOWN),
         flags(0),
@@ -317,7 +317,7 @@ DENG2_PIMPL(Material)
 };
 
 Material::Material(MaterialManifest &_manifest, ded_material_t const *def)
-    : de::MapElement(DMU_MATERIAL), d(new Instance(*this, _manifest))
+    : de::MapElement(DMU_MATERIAL), d(new Instance(this, _manifest))
 {
     DENG_ASSERT(def);
     if(def->flags & MATF_NO_DRAW) d->flags |= NoDraw;
@@ -376,6 +376,8 @@ void Material::ticker(timespan_t time)
     {
         variant->ticker(time);
     }
+#else
+    DENG2_UNUSED(time);
 #endif
 }
 

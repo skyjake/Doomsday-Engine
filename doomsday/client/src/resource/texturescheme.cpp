@@ -1,6 +1,6 @@
 /** @file texturescheme.cpp Texture system subspace scheme.
  *
- * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2010-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,9 +18,10 @@
  */
 
 #include "TextureManifest"
-#include "TextureScheme"
 
-namespace de {
+#include "resource/texturescheme.h"
+
+using namespace de;
 
 DENG2_PIMPL(TextureScheme)
 {
@@ -36,14 +37,17 @@ DENG2_PIMPL(TextureScheme)
     bool uniqueIdLutDirty;
     int uniqueIdBase;
 
-    Instance(Public &a, String symbolicName) : Base(a),
+    Instance(Public *i, String symbolicName) : Base(i),
         name(symbolicName),
         uniqueIdLut(),
         uniqueIdLutDirty(false),
         uniqueIdBase(0)
     {}
 
-    ~Instance() { DENG_ASSERT(index.isEmpty()); }
+    ~Instance()
+    {
+        DENG_ASSERT(index.isEmpty());
+    }
 
     bool inline uniqueIdInLutRange(int uniqueId) const
     {
@@ -148,7 +152,7 @@ DENG2_PIMPL(TextureScheme)
     }
 };
 
-TextureScheme::TextureScheme(String symbolicName) : d(new Instance(*this, symbolicName))
+TextureScheme::TextureScheme(String symbolicName) : d(new Instance(this, symbolicName))
 {}
 
 TextureScheme::~TextureScheme()
@@ -203,7 +207,7 @@ TextureManifest &TextureScheme::find(Path const &path)
     return const_cast<TextureManifest &>(found);
 }
 
-TextureManifest const &TextureScheme::findByResourceUri(Uri const &uri) const
+TextureManifest const &TextureScheme::findByResourceUri(de::Uri const &uri) const
 {
     if(!uri.isEmpty())
     {
@@ -218,10 +222,10 @@ TextureManifest const &TextureScheme::findByResourceUri(Uri const &uri) const
         }
     }
     /// @throw NotFoundError  No manifest was found with a matching resource URI.
-    throw NotFoundError("Textures::Scheme::findByResourceUri", "No manifest found with a resource URI matching \"" + uri + "\"");
+    throw NotFoundError("TextureScheme::findByResourceUri", "No manifest found with a resource URI matching \"" + uri + "\"");
 }
 
-TextureManifest &TextureScheme::findByResourceUri(Uri const &uri)
+TextureManifest &TextureScheme::findByResourceUri(de::Uri const &uri)
 {
     TextureManifest const &found = const_cast<TextureScheme const *>(this)->findByResourceUri(uri);
     return const_cast<TextureManifest &>(found);
@@ -237,7 +241,7 @@ TextureManifest const &TextureScheme::findByUniqueId(int uniqueId) const
         if(manifest) return *manifest;
     }
     /// @throw NotFoundError  No manifest was found with a matching resource URI.
-    throw NotFoundError("Textures::Scheme::findByUniqueId", "No manifest found with a unique ID matching \"" + QString("%1").arg(uniqueId) + "\"");
+    throw NotFoundError("TextureScheme::findByUniqueId", "No manifest found with a unique ID matching \"" + QString("%1").arg(uniqueId) + "\"");
 }
 
 TextureManifest &TextureScheme::findByUniqueId(int uniqueId)
@@ -255,5 +259,3 @@ void TextureScheme::markUniqueIdLutDirty()
 {
     d->uniqueIdLutDirty = true;
 }
-
-} // namespace de

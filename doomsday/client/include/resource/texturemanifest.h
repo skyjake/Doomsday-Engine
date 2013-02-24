@@ -1,6 +1,6 @@
 /** @file texturemanifest.h Description of a logical texture resource.
  *
- * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2010-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -174,8 +174,7 @@ public:
     static Textures &textures();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

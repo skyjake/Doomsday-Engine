@@ -819,7 +819,7 @@ static void readAllDefinitions(void)
     int p;
 
     // Start with engine's own top-level definition file, it is always read first.
-    de::Uri searchPath = de::Uri("doomsday.ded", RC_DEFINITION);
+    de::Uri searchPath("doomsday.ded", RC_DEFINITION);
     AutoStr* foundPath = AutoStr_NewStd();
     if(F_FindPath(RC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
     {

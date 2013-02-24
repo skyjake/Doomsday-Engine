@@ -1,6 +1,6 @@
 /** @file materialvariant.cpp Context-specialized logical material variant.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2011-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,13 +22,14 @@
 #include "map/r_world.h" // R_UpdateMapSurfacesOnMaterialChange
 #include "render/r_main.h" // frameCount, frameTimePos
 #include "MaterialSnapshot"
+#include "MaterialVariantSpec"
 #include <de/Error>
 #include <de/Log>
 #include <de/mathutil.h>
 
-#include "MaterialVariantSpec"
+#include "resource/material.h"
 
-namespace de {
+using namespace de;
 
 bool MaterialVariantSpec::compare(MaterialVariantSpec const &other) const
 {
@@ -36,10 +37,6 @@ bool MaterialVariantSpec::compare(MaterialVariantSpec const &other) const
     if(context != other.context) return 0;
     return 1 == TextureVariantSpec_Compare(primarySpec, other.primarySpec);
 }
-
-}
-
-using namespace de;
 
 DENG2_PIMPL(Material::Variant)
 {
@@ -63,8 +60,8 @@ DENG2_PIMPL(Material::Variant)
     /// Decoration animation states.
     Material::Variant::DecorationState decorations[Material::max_decorations];
 
-    Instance(Public &a, Material &generalCase, Material::VariantSpec const &_spec)
-        : Base(a), material(&generalCase),
+    Instance(Public *i, Material &generalCase, Material::VariantSpec const &_spec)
+        : Base(i), material(&generalCase),
           spec(_spec),
           snapshot(0),
           snapshotPrepareFrame(-1)
@@ -170,7 +167,7 @@ DENG2_PIMPL(Material::Variant)
 };
 
 Material::Variant::Variant(Material &generalCase, Material::VariantSpec const &spec)
-    : d(new Instance(*this, generalCase, spec))
+    : d(new Instance(this, generalCase, spec))
 {
     // Initialize animation states.
     resetAnim();

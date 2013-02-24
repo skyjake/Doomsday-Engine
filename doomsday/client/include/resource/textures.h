@@ -1,7 +1,7 @@
 /** @file textures.h Texture Resource Collection.
  *
- * @authors Copyright � 2010-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright � 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -263,8 +263,7 @@ public:
                         void* parameters = 0) const;
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Textures::UriValidationFlags)

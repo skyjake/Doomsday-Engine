@@ -1,6 +1,6 @@
 /** @file materialmanifest.cpp Description of a logical material resource.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2011-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,11 +18,11 @@
  */
 
 #include "de_base.h"
-
 #include "Materials"
-#include "MaterialManifest"
 
-namespace de {
+#include "resource/materialmanifest.h"
+
+using namespace de;
 
 DENG2_PIMPL(MaterialManifest)
 {
@@ -35,14 +35,14 @@ DENG2_PIMPL(MaterialManifest)
     /// Classification flags.
     MaterialManifest::Flags flags;
 
-    Instance(Public &a) : Base(a),
+    Instance(Public *i) : Base(i),
         material(0),
         id(0)
     {}
 };
 
 MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
-    : Node(args), d(new Instance(*this))
+    : Node(args), d(new Instance(this))
 {}
 
 MaterialManifest::~MaterialManifest()
@@ -121,5 +121,3 @@ void MaterialManifest::setMaterial(Material *newMaterial)
     if(d->material == newMaterial) return;
     d->material = newMaterial;
 }
-
-} // namespace de

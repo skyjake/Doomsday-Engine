@@ -1,6 +1,6 @@
 /** @file textures.cpp Texture Resource Collection.
  *
- * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2010-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -60,8 +60,13 @@ DENG2_PIMPL(Textures)
     Textures::Schemes schemes;
     QList<Textures::Scheme *> schemeCreationOrder;
 
-    Instance(Public &a) : Base(a) {}
-    ~Instance() { clearManifests(); }
+    Instance(Public *i) : Base(i)
+    {}
+
+    ~Instance()
+    {
+        clearManifests();
+    }
 
     void clearManifests()
     {
@@ -83,7 +88,7 @@ void Textures::consoleRegister()
 #endif
 }
 
-Textures::Textures() : d(new Instance(*this))
+Textures::Textures() : d(new Instance(this))
 {}
 
 Textures::~Textures()

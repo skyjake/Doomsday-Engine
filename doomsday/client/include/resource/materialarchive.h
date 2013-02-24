@@ -1,7 +1,7 @@
 /** @file materialarchive.h Collection of identifier-material pairs.
  *
- * @authors Copyright � 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright � 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -108,8 +108,7 @@ public:
     void read(reader_s &reader, int forcedVersion = -1);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

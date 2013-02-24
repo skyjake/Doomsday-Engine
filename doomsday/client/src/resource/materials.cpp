@@ -1,7 +1,7 @@
 /** @file materials.cpp Material Resource Collection.
  *
- * @authors Copyright � 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright � 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -33,7 +33,7 @@
 #include <de/math.h>
 #include <QtAlgorithms>
 
-#include "Materials"
+#include "resource/materials.h"
 
 /// Number of elements to block-allocate in the material index to material manifest map.
 #define MANIFESTIDMAP_BLOCK_ALLOC (32)
@@ -161,7 +161,7 @@ DENG2_PIMPL(Materials)
     uint manifestIdMapSize;
     Materials::Manifest **manifestIdMap;
 
-    Instance(Public &a) : Base(a),
+    Instance(Public *i) : Base(i),
         manifestCount(0),
         manifestIdMapSize(0),
         manifestIdMap(0)
@@ -275,7 +275,7 @@ void Materials::consoleRegister()
 #endif
 }
 
-Materials::Materials() : d(new Instance(*this))
+Materials::Materials() : d(new Instance(this))
 {}
 
 Materials::~Materials()

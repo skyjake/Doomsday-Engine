@@ -1,7 +1,7 @@
 /** @file materialarchive.cpp Material Archive.
  *
- * @authors Copyright � 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright � 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,14 +18,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/StringPool>
-#include "uri.hh"
-
 #include "de_base.h"
 #include "de_console.h"
-
+#include "uri.hh"
 #include "Materials"
-#include "MaterialArchive"
+#include <de/StringPool>
+
+#include "resource/materialarchive.h"
 
 /// For identifying the archived format version. Written to disk.
 #define MATERIALARCHIVE_VERSION     4
@@ -127,7 +126,7 @@ DENG2_PIMPL(MaterialArchive)
     /// Used with older versions.
     int numFlats;
 
-    Instance(Public &a, bool _useSegments) : Base(a),
+    Instance(Public *i, bool _useSegments) : Base(i),
         version(MATERIALARCHIVE_VERSION),
         useSegments(_useSegments),
         numFlats(0)
@@ -201,7 +200,7 @@ DENG2_PIMPL(MaterialArchive)
 };
 
 MaterialArchive::MaterialArchive(int useSegments, bool recordSymbolicMaterials)
-    : d(new Instance(*this, useSegments))
+    : d(new Instance(this, useSegments))
 {
     if(recordSymbolicMaterials)
     {
