@@ -360,6 +360,7 @@ DENG_HEADERS += \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
     include/ui/window.h \
+    include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
     include/uri.hh \
@@ -636,6 +637,7 @@ SOURCES += \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
     src/ui/window.cpp \
+    src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \

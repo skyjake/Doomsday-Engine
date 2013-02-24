@@ -344,4 +344,15 @@ QWidget* Window_Widget(Window* wnd);
 
 CanvasWindow *Window_CanvasWindow(Window *wnd);
 
+/**
+ * Utility to call after changing the size of a CanvasWindow. This will update
+ * the Window state.
+ *
+ * @param win  Window instance.
+ *
+ * @deprecated In the future, size management will be done internally in
+ * CanvasWindow/WindowSystem.
+ */
+void Window_UpdateAfterResize(Window *win);
+
 #endif /* LIBDENG_SYS_WINDOW_H */

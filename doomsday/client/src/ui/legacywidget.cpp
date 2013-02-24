@@ -22,12 +22,22 @@
 #include "ui/ui2_main.h"
 #include "ui/busyvisual.h"
 #include "dd_main.h"
+#include "dd_loop.h"
+#include "sys_system.h"
 #include "map/gamemap.h"
 #include "network/net_main.h"
 #include "render/rend_list.h"
 #include "render/rend_console.h"
 #include "audio/s_main.h"
 #include "gl/sys_opengl.h"
+#include "gl/gl_defer.h"
+
+/**
+ * Maximum number of milliseconds spent uploading textures at the beginning
+ * of a frame. Note that non-uploaded textures will appear as pure white
+ * until their content gets uploaded (you should precache them).
+ */
+#define FRAME_DEFERRED_UPLOAD_TIMEOUT 20
 
 boolean drawGame = true; // If false the game viewport won't be rendered
 
@@ -50,10 +60,44 @@ LegacyWidget::~LegacyWidget()
 
 void LegacyWidget::viewResized()
 {
+    LOG_AS("LegacyWidget");
+    LOG_DEBUG("View resized to ") << root().viewSize().asText();
+
+    // Update viewports.
+    R_SetViewGrid(0, 0);
+    if(BusyMode_Active() || UI_IsActive() || !App_GameLoaded())
+    {
+        // Update for busy mode.
+        R_UseViewPort(0);
+    }
+    R_LoadSystemFonts();
+    if(UI_IsActive())
+    {
+        UI_UpdatePageLayout();
+    }
 }
 
 void LegacyWidget::update()
-{
+{    
+    if(BusyMode_Active())
+    {
+        /// @todo During busy mode, a BusyWidget should be in the widget
+        /// tree instead of a LegacyWidget.
+        return;
+    }
+
+    // We may be performing GL operations.
+    Window_GLActivate(Window_Main());
+
+    // Run at least one (fractional) tic.
+    Loop_RunTics();
+
+    // We may have received a Quit message from the windowing system
+    // during events/tics processing.
+    if(Sys_IsShuttingDown())
+        return;
+
+    GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 }
 
 void LegacyWidget::draw()

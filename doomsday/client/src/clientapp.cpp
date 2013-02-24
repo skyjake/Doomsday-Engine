@@ -34,6 +34,7 @@
 #include "con_main.h"
 #include "ui/displaymode.h"
 #include "sys_system.h"
+#include "ui/windowsystem.h"
 #include "ui/window.h"
 #include "updater.h"
 
@@ -66,6 +67,7 @@ DENG2_PIMPL(ClientApp)
 {
     LegacyCore *de2LegacyCore;
     QMenuBar *menuBar;
+    WindowSystem winSys;
     ServerLink *svLink;
 
     Instance(Public *i)
@@ -124,6 +126,9 @@ ClientApp::ClientApp(int &argc, char **argv)
     QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
 
     setTerminateFunc(handleLegacyCoreTerminate);
+
+    // Subsystems.
+    addSystem(d->winSys);
 }
 
 ClientApp::~ClientApp()

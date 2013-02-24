@@ -210,6 +210,8 @@ void N_ReleaseMessage(netmessage_t *msg)
  */
 void N_ClearMessages(void)
 {
+    if(!msgMutex) return; // Not initialized yet.
+
     netmessage_t *msg;
     float oldSim = netSimulatedLatencySeconds;
 

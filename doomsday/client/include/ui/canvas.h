@@ -75,13 +75,6 @@ public:
     void setDrawFunc(void (*canvasDrawFunc)(Canvas&));
 
     /**
-     * Sets the callback function that is called after the size of the canvas changes.
-     *
-     * @param canvasResizedFunc  Callback.
-     */
-    void setResizedFunc(void (*canvasResizedFunc)(Canvas&));
-
-    /**
      * Sets the callback function that is called when the window's focus state changes.
      * The callback is given @c true or @c false as argument, with
      *  - @c true   Focus was gained.

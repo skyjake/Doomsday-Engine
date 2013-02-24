@@ -47,13 +47,6 @@
  */
 #define MAX_FRAME_TIME (1.0/MIN_TIC_RATE)
 
-/**
- * Maximum number of milliseconds spent uploading textures at the beginning
- * of a frame. Note that non-uploaded textures will appear as pure white
- * until their content gets uploaded (you should precache them).
- */
-#define FRAME_DEFERRED_UPLOAD_TIMEOUT 20
-
 int maxFrameRate = 120; // Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 int rFrameCount = 0;
@@ -80,8 +73,6 @@ static int timeDeltas[NUM_FRAMETIME_DELTAS];
 static int timeDeltasIndex = 0;
 
 static float realFrameTimePos = 0;
-
-static void runTics(void);
 
 void DD_RegisterLoop(void)
 {
@@ -130,7 +121,7 @@ void DD_GameLoopCallback(void)
 
         LegacyCore_SetLoopRate(count || !noninteractive? 35 : 3);
 
-        runTics();
+        Loop_RunTics();
 
         // Update clients at regular intervals.
         Sv_TransmitFrame();
@@ -139,27 +130,18 @@ void DD_GameLoopCallback(void)
 
 #ifdef __CLIENT__
     {
-        // Normal client-side/singleplayer mode.
-        //assert(!novideo);
-
-        // We may be performing GL operations.
-        Window_GLActivate(Window_Main());
-
-        // Run at least one (fractional) tic.
-        runTics();
-
-        // We may have received a Quit message from the windowing system
-        // during events/tics processing.
-        if(Sys_IsShuttingDown())
-            return;
-
-        GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
+        /**
+         * @todo The appropriate way to update the window is to have a
+         * repeating GuiApp::refresh() method posting window update events
+         * continually. We are drawing from here because LegacyCore is still
+         * controlling the main loop.
+         */
 
         // Request update of window contents.
         Window_Draw(Window_Main());
 
         // After the first frame, start timedemo.
-        DD_CheckTimeDemo();
+        //DD_CheckTimeDemo();
     }
 #endif
 }
@@ -516,12 +498,7 @@ timespan_t DD_LatestRunTicsStartTime(void)
     return lastRunTicsTime;
 }
 
-/**
- * Runs one or more tics depending on how much time has passed since the
- * previous call to this function. This gets called once per each main loop
- * iteration. Finishes as quickly as possible.
- */
-static void runTics(void)
+void Loop_RunTics(void)
 {
     double elapsedTime, ticLength, nowTime;
 

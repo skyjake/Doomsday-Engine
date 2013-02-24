@@ -69,7 +69,6 @@ struct Canvas::Instance
     QSize currentSize;
     void (*initCallback)(Canvas&);
     void (*drawCallback)(Canvas&);
-    void (*resizedCallback)(Canvas&);
     void (*focusCallback)(Canvas&, bool);
     bool cursorHidden;
     bool mouseGrabbed;
@@ -84,7 +83,6 @@ struct Canvas::Instance
         : self(c),
           initNotified(false), initCallback(0),
           drawCallback(0),
-          resizedCallback(0),
           focusCallback(0),
           cursorHidden(false),
           mouseGrabbed(false)
@@ -197,11 +195,6 @@ void Canvas::setDrawFunc(void (*canvasDrawFunc)(Canvas&))
     d->drawCallback = canvasDrawFunc;
 }
 
-void Canvas::setResizedFunc(void (*canvasResizedFunc)(Canvas&))
-{
-    d->resizedCallback = canvasResizedFunc;
-}
-
 void Canvas::setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool))
 {
     d->focusCallback = canvasFocusChanged;
@@ -211,7 +204,6 @@ void Canvas::useCallbacksFrom(Canvas &other)
 {
     d->drawCallback = other.d->drawCallback;
     d->focusCallback = other.d->focusCallback;
-    d->resizedCallback = other.d->resizedCallback;
 }
 
 QImage Canvas::grabImage(const QSize& outputSize)
@@ -296,11 +288,6 @@ void Canvas::resizeGL(int w, int h)
     if(d->currentSize != newSize)
     {
         d->currentSize = newSize;
-
-        if(d->resizedCallback)
-        {
-            d->resizedCallback(*this);
-        }
     }
 }
 

@@ -1,4 +1,4 @@
-/** @file sys_network.cpp Low-level network socket routines.
+/** @file sys_network.cpp Low-level network socket routines (deprecated).
  * @ingroup network
  *
  * @todo Remove this source file entirely once dependent code is revised.

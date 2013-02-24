@@ -48,6 +48,13 @@ int DD_GameLoop(void);
 void DD_GameLoopCallback(void);
 
 /**
+ * Runs one or more tics depending on how much time has passed since the
+ * previous call to this function. This gets called once per each main loop
+ * iteration. Finishes as quickly as possible.
+ */
+void Loop_RunTics(void);
+
+/**
  * Window drawing callback.
  *
  * Drawing anything outside this routine is frowned upon.

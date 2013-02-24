@@ -219,12 +219,16 @@ void CanvasWindow::moveEvent(QMoveEvent *ev)
     }
 }
 
-void CanvasWindow::resizeEvent(QResizeEvent *)
+void CanvasWindow::resizeEvent(QResizeEvent *ev)
 {
+    QMainWindow::resizeEvent(ev);
+
     LOG_AS("CanvasWindow");
 
     de::Vector2i size(width(), height());
     LOG_DEBUG("Resized ") << size.asText();
+
+    Window_UpdateAfterResize(Window_Main()); /// @todo remove this
 
     d->rootWidget.setViewSize(size);
 }
