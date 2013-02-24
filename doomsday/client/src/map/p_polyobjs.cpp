@@ -31,78 +31,81 @@ void P_PolyobjCallback(mobj_t* mobj, LineDef* lineDef, Polyobj* polyobj)
     po_callback(mobj, lineDef, polyobj);
 }
 
+#undef P_SetPolyobjCallback
 DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*))
 {
     po_callback = func;
 }
 
-void P_PolyobjChanged(Polyobj* po)
+void P_PolyobjChanged(Polyobj *po)
 {
-    LineDef** lineIter;
-    for(lineIter = po->lines; *lineIter; lineIter++)
-    {
-        LineDef* line = *lineIter;
-        HEdge* hedge = line->L_frontside.hedgeLeft;
-        int i;
-
 #ifdef __CLIENT__
+    for(LineDef **lineIter = po->lines; *lineIter; lineIter++)
+    {
+        LineDef *line = *lineIter;
+        HEdge *hedge = line->L_frontside.hedgeLeft;
+
         // Shadow bias must be told.
-        for(i = 0; i < 3; ++i)
+        for(int i = 0; i < 3; ++i)
         {
             SB_SurfaceMoved(hedge->bsuf[i]);
         }
-#endif
     }
+#else // !__CLIENT__
+    DENG2_UNUSED(po);
+#endif
 }
 
+#undef P_PolyobjUnlink
 DENG_EXTERN_C void P_PolyobjUnlink(Polyobj* po)
 {
     GameMap* map = theMap; /// @todo Do not assume polyobj is from the CURRENT map.
     GameMap_UnlinkPolyobj(map, po);
 }
 
+#undef P_PolyobjLink
 DENG_EXTERN_C void P_PolyobjLink(Polyobj* po)
 {
     GameMap* map = theMap; /// @todo Do not assume polyobj is from the CURRENT map.
     GameMap_LinkPolyobj(map, po);
 }
 
-/// @note Part of the Doomsday public API
+#undef P_PolyobjByID
 DENG_EXTERN_C Polyobj* P_PolyobjByID(uint id)
 {
     if(!theMap) return NULL;
     return GameMap_PolyobjByID(theMap, id);
 }
 
-/// @note Part of the Doomsday public API
+#undef P_PolyobjByTag
 DENG_EXTERN_C Polyobj* P_PolyobjByTag(int tag)
 {
     if(!theMap) return NULL;
     return GameMap_PolyobjByTag(theMap, tag);
 }
 
-/// @note Part of the Doomsday public API
+#undef P_PolyobjByBase
 DENG_EXTERN_C Polyobj* P_PolyobjByBase(void* ddMobjBase)
 {
     if(!theMap) return NULL;
     return GameMap_PolyobjByBase(theMap, ddMobjBase);
 }
 
-/// @note Part of the Doomsday public API
+#undef P_PolyobjMove
 DENG_EXTERN_C boolean P_PolyobjMove(Polyobj* po, coord_t xy[2])
 {
     if(!po) return false;
     return Polyobj_Move(po, xy);
 }
 
-/// @note Part of the Doomsday public API
+#undef P_PolyobjMoveXY
 DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj* po, coord_t x, coord_t y)
 {
     if(!po) return false;
     return Polyobj_MoveXY(po, x, y);
 }
 
-/// @note Part of the Doomsday public API
+#undef P_PolyobjRotate
 DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj* po, angle_t angle)
 {
     if(!po) return false;
