@@ -1042,6 +1042,36 @@ static void generateMaterialDefs()
     textures.iterateDeclared("Sprites",  generateMaterialDefForTextureWorker);
 }
 
+static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
+{
+    material.clearLayers();
+
+    for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
+    {
+        Material::Layer *layer = material.newLayer(&def.layers[i]);
+
+        foreach(Material::Layer::Stage *stageDef, layer->stages())
+        {
+            if(!stageDef->texture) continue;
+
+            de::Uri textureUri(stageDef->texture->manifest().composeUri());
+            ded_detailtexture_t *detailDef = Def_GetDetailTex(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
+            if(detailDef)
+            {
+                material.newDetailLayer(detailDef);
+                // Add stages.
+            }
+
+            ded_reflection_t *shineDef = Def_GetReflection(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
+            if(shineDef)
+            {
+                material.newShineLayer(shineDef);
+                // Add stages.
+            }
+        }
+    }
+}
+
 #ifdef __CLIENT__
 static void rebuildMaterialDecorations(Material &material, ded_material_t const &def)
 {
@@ -1153,42 +1183,41 @@ static void interpretMaterialDef(ded_material_t &def)
     // An entirely new material?
     if(!manifest->hasMaterial())
     {
-        {
-            Material *material = new Material(*manifest, &def);
-            // Associate the new material with the manifest.
-            manifest->setMaterial(material);
-            // Include the material in the scheme-agnostic list of instances.
-            App_Materials().addMaterial(*material);
-        }
-        Material &material = manifest->material();
+        Material &material = *(new Material(*manifest));
 
-        material.setAudioEnvironment(S_AudioEnvironmentForMaterial(reinterpret_cast<struct uri_s const *>(&uri)));
+        // Associate the new material with the manifest.
+        manifest->setMaterial(&material);
+
+        // Include the material in the scheme-agnostic list of instances.
+        App_Materials().addMaterial(material);
     }
     else
     {
-        // Update the existing material.
+        // Updating the existing material.
+#ifdef __CLIENT__
         Material &material = manifest->material();
 
-#ifdef __CLIENT__
         /// @todo We should be able to rebuild the variants.
         material.clearVariants();
 #endif
-
-        Material::Flags newFlags;
-        if(def.flags & MATF_NO_DRAW) newFlags |= Material::NoDraw;
-        if(def.flags & MATF_SKYMASK) newFlags |= Material::SkyMask;
-        material.setFlags(newFlags);
-
-        material.setDimensions(QSize(MAX_OF(0, def.width), MAX_OF(0, def.height)));
-        material.setAudioEnvironment(S_AudioEnvironmentForMaterial(def.uri));
-
-        /// @todo $revise-texture-animation Rebuild layers.
     }
 
     Material &material = manifest->material();
+
+    Material::Flags newFlags;
+    if(def.flags & MATF_NO_DRAW) newFlags |= Material::NoDraw;
+    if(def.flags & MATF_SKYMASK) newFlags |= Material::SkyMask;
+    material.setFlags(newFlags);
+
+    material.setDimensions(QSize(de::max(0, def.width), de::max(0, def.height)));
+
+    material.setAudioEnvironment(S_AudioEnvironmentForMaterial(def.uri));
+
+    rebuildMaterialLayers(material, def);
 #ifdef __CLIENT__
     rebuildMaterialDecorations(material, def);
 #endif
+
     material.markValid(true);
 }
 

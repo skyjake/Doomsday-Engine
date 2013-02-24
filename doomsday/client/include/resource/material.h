@@ -553,12 +553,9 @@ public:
 
 public:
     /**
-     * Construct a new material.
-     *
      * @param manifest  Manifest derived to yield the material.
-     * @param def  Definition for the material.
      */
-    Material(Manifest &manifest, ded_material_t const *def);
+    Material(Manifest &manifest);
     ~Material();
 
     /**
@@ -722,9 +719,59 @@ public:
     void setAudioEnvironment(audioenvironmentclass_e newEnvironment);
 
     /**
+     * Add a new layer to the end of the material's layer stack. Ownership of the
+     * layer is @em not transferred to the caller.
+     *
+     * @note As this invalidates the existing logical state, any previously derived
+     *       context variants are cleared in the process (they will be automatically
+     *       rebuilt later if/when needed).
+     *
+     * @param def  Definition for the new layer. Can be @c NULL in which case a
+     *             default-initialized layer will be constructed.
+     */
+    Layer *newLayer(ded_material_layer_t const *def);
+
+    /**
+     * Add a new detail layer to the material. Note that only one detail layer is
+     * supported (any existing layer will be replaced). Ownership of the layer is
+     * @em not transferred to the caller.
+     *
+     * @note As this invalidates the existing logical state, any previously derived
+     *       context variants are cleared in the process (they will be automatically
+     *       rebuilt later if/when needed).
+     *
+     * @param def  Definition for the new layer. Can be @c NULL in which case a
+     *             default-initialized layer will be constructed.
+     */
+    DetailLayer *newDetailLayer(ded_detailtexture_t const *def);
+
+    /**
+     * Add a new shine layer to the material. Note that only one shine layer is
+     * supported (any existing layer will be replaced). Ownership of the layer is
+     * @em not transferred to the caller.
+     *
+     * @note As this invalidates the existing logical state, any previously derived
+     *       context variants are cleared in the process (they will be automatically
+     *       rebuilt later if/when needed).
+     *
+     * @param def  Definition for the new layer. Can be @c NULL in which case a
+     *             default-initialized layer will be constructed.
+     */
+    ShineLayer *newShineLayer(ded_reflection_t const *def);
+
+    /**
      * Returns the number of material layers.
      */
     inline int layerCount() const { return layers().count(); }
+
+    /**
+     * Destroys all the material's layers.
+     *
+     * @note As this invalidates the existing logical state, any previously derived
+     *       context variants are cleared in the process (they will be automatically
+     *       rebuilt later if/when needed).
+     */
+    void clearLayers();
 
     /**
      * Provides access to the list of layers for efficient traversal.
@@ -753,7 +800,7 @@ public:
     int decorationCount() const { return decorations().count(); }
 
     /**
-     * Destroys all derived context variants for the material.
+     * Destroys all the material's decorations.
      */
     void clearDecorations();
 

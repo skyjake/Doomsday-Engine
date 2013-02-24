@@ -334,61 +334,13 @@ DENG2_PIMPL(Material)
         self.clearVariants();
         self.clearDecorations();
 #endif
-        clearLayers();
-    }
-
-    void clearLayers()
-    {
-        qDeleteAll(layers);
-        layers.clear();
-
-        if(detailLayer) delete detailLayer;
-        if(shineLayer) delete shineLayer;
+        self.clearLayers();
     }
 };
 
-Material::Material(MaterialManifest &_manifest, ded_material_t const *def)
+Material::Material(MaterialManifest &_manifest)
     : de::MapElement(DMU_MATERIAL), d(new Instance(this, _manifest))
-{
-    DENG_ASSERT(def);
-    if(def->flags & MATF_NO_DRAW) d->flags |= NoDraw;
-    if(def->flags & MATF_SKYMASK) d->flags |= SkyMask;
-    d->dimensions = QSize(de::max(0, def->width), de::max(0, def->height));
-
-    for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
-    {
-        Layer *layer = Layer::fromDef(def->layers[i]);
-        d->layers.push_back(layer);
-
-        foreach(Layer::Stage *stageDef, layer->stages())
-        {
-            if(!stageDef->texture) continue;
-
-            de::Uri textureUri(stageDef->texture->manifest().composeUri());
-            ded_detailtexture_t *detailDef = Def_GetDetailTex(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
-            if(detailDef)
-            {
-                // Time to allocate the detail layer?
-                if(!d->detailLayer)
-                {
-                    d->detailLayer = DetailLayer::fromDef(*detailDef);
-                }
-                // Add stages.
-            }
-
-            ded_reflection_t *reflectionDef = Def_GetReflection(reinterpret_cast<uri_s *>(&textureUri)/*, UNKNOWN VALUE, manifest.isCustom()*/);
-            if(reflectionDef)
-            {
-                // Time to allocate the shine layer?
-                if(!d->shineLayer)
-                {
-                    d->shineLayer = ShineLayer::fromDef(*reflectionDef);
-                }
-                // Add stages.
-            }
-        }
-    }
-}
+{}
 
 Material::~Material()
 {
@@ -501,6 +453,64 @@ void Material::setAudioEnvironment(AudioEnvironmentClass envClass)
     d->envClass = envClass;
 }
 
+void Material::clearLayers()
+{
+#ifdef __CLIENT__
+    // Context variants will be invalid after this, so clear them.
+    clearVariants();
+#endif
+
+    qDeleteAll(d->layers);
+    d->layers.clear();
+
+    if(d->detailLayer)
+    {
+        delete d->detailLayer; d->detailLayer = 0;
+    }
+    if(d->shineLayer)
+    {
+        delete d->shineLayer; d->shineLayer = 0;
+    }
+}
+
+Material::Layer *Material::newLayer(ded_material_layer_t const *def)
+{
+#ifdef __CLIENT__
+    // Context variants will be invalid after this, so clear them.
+    clearVariants();
+#endif
+
+    Layer *newLayer = def? Layer::fromDef(*def) : new Layer();
+    d->layers.push_back(newLayer);
+    return newLayer;
+}
+
+Material::DetailLayer *Material::newDetailLayer(ded_detailtexture_t const *def)
+{
+#ifdef __CLIENT__
+    // Context variants will be invalid after this, so clear them.
+    clearVariants();
+#endif
+
+    DetailLayer *newLayer = def? DetailLayer::fromDef(*def) : new DetailLayer();
+    if(d->detailLayer) delete d->detailLayer;
+    d->detailLayer = newLayer;
+    return newLayer;
+}
+
+Material::ShineLayer *Material::newShineLayer(ded_reflection_t const *def)
+{
+#ifdef __CLIENT__
+    // Context variants will be invalid after this, so clear them.
+    clearVariants();
+#endif
+
+    ShineLayer *newLayer = def? ShineLayer::fromDef(*def) : new ShineLayer();
+    if(d->shineLayer) delete d->shineLayer;
+    d->shineLayer = newLayer;
+    return newLayer;
+}
+
 Material::Layers const &Material::layers() const
 {
     return d->layers;
@@ -532,6 +542,7 @@ Material::ShineLayer const &Material::shineLayer() const
 
 void Material::addDecoration(Material::Decoration &decor)
 {
+    if(d->decorations.contains(&decor)) return;
     d->decorations.push_back(&decor);
 }
 
