@@ -20,6 +20,7 @@
 #define CLIENTAPP_H
 
 #include <de/GuiApp>
+#include "network/serverlink.h"
 
 /**
  * The client application.
@@ -36,6 +37,10 @@ public:
      * event loop is started.
      */
     void initialize();
+
+public:
+    static ClientApp &app();
+    static ServerLink &serverLink();
 
 private:
     DENG2_PRIVATE(d)

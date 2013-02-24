@@ -42,9 +42,6 @@ extern int      nptIPPort;
 ServerLink &Net_ServerLink(void);
 
 void    N_Register(void);
-
-void    N_SystemInit(void);
-void    N_SystemShutdown(void);
 void    N_PrintInfo(void);
 int     N_GetHostCount(void);
 boolean N_GetHostInfo(int index, struct serverinfo_s *info);

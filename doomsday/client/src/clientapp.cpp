@@ -45,6 +45,8 @@
 
 using namespace de;
 
+static ClientApp *clientAppSingleton = 0;
+
 static void handleLegacyCoreTerminate(char const *msg)
 {
     Con_Error("Application terminated due to exception:\n%s\n", msg);
@@ -64,15 +66,20 @@ DENG2_PIMPL(ClientApp)
 {
     LegacyCore *de2LegacyCore;
     QMenuBar *menuBar;
+    ServerLink *svLink;
 
     Instance(Public *i)
         : Base(i),
           de2LegacyCore(0),
-          menuBar(0)
-    {}
+          menuBar(0),
+          svLink(0)
+    {
+        clientAppSingleton = thisPublic;
+    }
 
     ~Instance()
     {
+        delete svLink;
         delete menuBar;
 
         // Cleanup.
@@ -80,6 +87,8 @@ DENG2_PIMPL(ClientApp)
         DD_Shutdown();
 
         LegacyCore_Delete(de2LegacyCore);
+
+        clientAppSingleton = 0;
     }
 
     /**
@@ -127,6 +136,8 @@ void ClientApp::initialize()
     // C interface to the app.
     d->de2LegacyCore = LegacyCore_New();
 
+    d->svLink = new ServerLink;
+
     // Config needs DisplayMode, so let's initialize it before the libdeng2
     // subsystems and Config.
     DisplayMode_Init();
@@ -159,4 +170,17 @@ void ClientApp::initialize()
     Window_New(title);
 
     LegacyCore_SetLoopFunc(continueInitWithEventLoopRunning);
+}
+
+ClientApp &ClientApp::app()
+{
+    DENG2_ASSERT(clientAppSingleton != 0);
+    return *clientAppSingleton;
+}
+
+ServerLink &ClientApp::serverLink()
+{
+    ClientApp &a = ClientApp::app();
+    DENG2_ASSERT(a.d->svLink != 0);
+    return *a.d->svLink;
 }

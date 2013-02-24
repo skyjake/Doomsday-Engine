@@ -69,10 +69,6 @@ void N_Init(void)
 
     //N_SockInit();
     N_MasterInit();
-
-#ifdef __CLIENT__
-    N_SystemInit();             // Platform dependent stuff.
-#endif
 }
 
 /**
@@ -81,11 +77,10 @@ void N_Init(void)
  */
 void N_Shutdown(void)
 {
-#ifdef __CLIENT__
-    N_SystemShutdown();
-#endif
+    // Any queued messages will be destroyed.
+    N_ClearMessages();
+
     N_MasterShutdown();
-    //N_SockShutdown();
 
     allowSending = false;
 
