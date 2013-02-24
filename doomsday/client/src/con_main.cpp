@@ -1963,32 +1963,32 @@ void Con_PrintPathList(const char* pathList)
 }
 
 #undef Con_Message
-
-void Con_Message(const char *message, ...)
+void Con_Message(char const *message, ...)
 {
+    if(!message[0]) return;
+
     va_list argptr;
-    char   *buffer;
+    char *buffer = (char *) M_Malloc(PRBUFF_SIZE);
+    va_start(argptr, message);
+    dd_vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
+    va_end(argptr);
 
-    if(message[0])
+    // Ensure the message has a terminating new line character.
+    if(buffer[qstrlen(buffer)] != '\n')
+        std::strcat(buffer, "\n");
+
+    // These messages are always dumped. If consoleDump is set,
+    // Con_Printf() will dump the message for us.
+    if(!consoleDump)
     {
-        buffer = (char *) M_Malloc(PRBUFF_SIZE);
-        va_start(argptr, message);
-        dd_vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
-        va_end(argptr);
-
-        // These messages are always dumped. If consoleDump is set,
-        // Con_Printf() will dump the message for us.
-        if(!consoleDump)
-        {
-            //printf("%s", buffer);
-            LegacyCore_PrintLogFragment(buffer);
-        }
-
-        // Also print in the console.
-        Con_Printf("%s", buffer);
-
-        M_Free(buffer);
+        //printf("%s", buffer);
+        LegacyCore_PrintLogFragment(buffer);
     }
+
+    // Also print in the console.
+    Con_Printf("%s", buffer);
+
+    M_Free(buffer);
 }
 
 void Con_Error(const char* error, ...)

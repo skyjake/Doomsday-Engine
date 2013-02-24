@@ -341,20 +341,23 @@ const knownword_t** Con_CollectKnownWordsMatchingWord(const char* word,
 AutoStr *Con_KnownWordToString(knownword_t const *word);
 
 /**
- * Print a 'global' message (to stdout and the console).
+ * Print a 'global' message (to stdout and the console) consisting of (at least)
+ * one full line of text.
  *
  * @param message  Message with printf() formatting syntax for arguments.
+ *                 The terminating line break character may be omitted, however
+ *                 the message cannot be continued in a subsequent call.
  */
-void Con_Message(const char* message, ...) PRINTF_F(1,2);
+void Con_Message(char const *message, ...) PRINTF_F(1,2);
 
 /**
- * Print into the console.
+ * Print a text fragment (manual/no line breaks) to the console.
  *
  * @param flags   @ref consolePrintFlags
  * @param format  Format for the output using printf() formatting syntax.
  */
-void Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
-void Con_Printf(const char* format, ...) PRINTF_F(1,2);
+void Con_FPrintf(int flags, char const *format, ...) PRINTF_F(2,3);
+void Con_Printf(char const *format, ...) PRINTF_F(1,2);
 
 /// Print a ruler into the console.
 void Con_PrintRuler(void);
