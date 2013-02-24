@@ -1,20 +1,21 @@
-/*
- * The Doomsday Engine Project -- libdeng2
+/** @file vector.h Vector templates.
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG2_VECTOR_H
@@ -59,10 +60,13 @@ public:
     operator Vector2<ddouble> () const {
         return Vector2<ddouble>(ddouble(x), ddouble(y));
     }
-    Type operator [] (int index) const {
+    Type &operator [] (int index) {
         if(index == 0) return x;
         if(index == 1) return y;
         throw Error("Vector2::operator []", QString("Illegal index %1").arg(index));
+    }
+    Type const &operator [] (int index) const {
+        return const_cast<Vector2<Type> &>(*this)[index];
     }
     Vector2 operator + (Vector2 const &other) const {
         return Vector2(x + other.x, y + other.y);
@@ -181,10 +185,13 @@ public:
     operator Vector3<ddouble> () const {
         return Vector3<ddouble>(Vector2<Type>::x, Vector2<Type>::y, z);
     }
-    Type operator [] (int index) const {
+    Type &operator [] (int index) {
         if(index < 2) return Vector2<Type>::operator [] (index);
         if(index == 2) return z;
         throw Error("Vector3::operator[]", QString("Illegal index %1").arg(index));
+    }
+    Type const &operator [] (int index) const {
+        return const_cast<Vector3<Type> &>(*this)[index];
     }
     Vector3 operator + (Vector3 const &other) const {
         return Vector3(Vector2<Type>::x + other.x, Vector2<Type>::y + other.y, z + other.z);
@@ -307,10 +314,13 @@ public:
     operator Vector4<ddouble> () const {
         return Vector4<ddouble>(Vector3<Type>::x, Vector3<Type>::y, Vector3<Type>::z, w);
     }
-    Type operator [] (int index) const {
+    Type &operator [] (int index) {
         if(index < 3) return Vector3<Type>::operator [] (index);
         if(index == 3) return w;
         throw Error("Vector4::operator[]", QString("Illegal index %1").arg(index));
+    }
+    Type const &operator [] (int index) const {
+        return const_cast<Vector4<Type> &>(*this)[index];
     }
     Vector4 operator + (Vector4 const &other) const {
         return Vector4(Vector3<Type>::x + other.x, Vector3<Type>::y + other.y,
