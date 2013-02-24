@@ -430,10 +430,12 @@ void Sfx_PurgeCache()
     // Count the total size of the cache.
     // Also get rid of all sounds that have timed out.
     int totalSize = 0;
+    SfxCache *next = 0;
     for(int i = 0; i < CACHE_HASH_SIZE; i++)
     {
-        for(SfxCache *it = scHash[i].first; it; it = it->next)
+        for(SfxCache *it = scHash[i].first; it; it = next)
         {
+            next = it->next;
             if(nowTime - it->lastUsed > sfxMaxCacheTics)
             {
                 // This sound hasn't been used in a looong time.
