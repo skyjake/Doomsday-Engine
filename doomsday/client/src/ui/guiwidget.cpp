@@ -17,6 +17,7 @@
  */
 
 #include "ui/guiwidget.h"
+#include <de/garbage.h>
 
 using namespace de;
 
@@ -44,4 +45,14 @@ RuleRectangle &GuiWidget::rule()
 RuleRectangle const &GuiWidget::rule() const
 {
     return d->rule;
+}
+
+static void deleteGuiWidget(void *ptr)
+{
+    delete reinterpret_cast<GuiWidget *>(ptr);
+}
+
+void GuiWidget::deleteLater()
+{
+    Garbage_TrashInstance(this, deleteGuiWidget);
 }

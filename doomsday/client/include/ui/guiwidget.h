@@ -44,6 +44,8 @@ public:
      */
     de::RuleRectangle const &rule() const;
 
+    void deleteLater();
+
 private:
     DENG2_PRIVATE(d)
 };
