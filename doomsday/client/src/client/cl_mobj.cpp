@@ -289,7 +289,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     {
         localMobj->angle = remoteClientMobj->angle;
 #ifdef _DEBUG
-        VERBOSE2( Con_Message("Cl_UpdateRealPlayerMobj: localMobj=%p angle=%x\n", localMobj, localMobj->angle) );
+        VERBOSE2( Con_Message("Cl_UpdateRealPlayerMobj: localMobj=%p angle=%x", localMobj, localMobj->angle) );
 #endif
     }
     localMobj->sprite = remoteClientMobj->sprite;
@@ -311,7 +311,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
 /*#ifdef _DEBUG
     if(localMobj->floorClip != remoteClientMobj->floorClip)
     {
-        Con_Message("Cl_UpdateRealPlayerMobj: Floorclip=%f\n", remoteClientMobj->floorClip);
+        Con_Message("Cl_UpdateRealPlayerMobj: Floorclip=%f", remoteClientMobj->floorClip);
     }
 #endif
     localMobj->floorClip = remoteClientMobj->floorClip;*/
@@ -425,7 +425,7 @@ void GameMap_ExpireClMobjs(GameMap* map)
                 if(nowTime - info->time > CLMOBJ_TIMEOUT)
                 {
 #ifdef _DEBUG
-                    Con_Message("GameMap_ExpireClMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].\n",
+                    Con_Message("GameMap_ExpireClMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].",
                                 mo->thinker.id,
                                 info->time, nowTime,
                                 Def_GetStateName(mo->state),
@@ -673,7 +673,7 @@ boolean ClMobj_Reveal(mobj_t *mo)
         return false;
     }
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("Cl_RevealMobj: clmobj %i Hidden status lifted (z=%f).\n", mo->thinker.id, mo->origin[VZ]) );
+    VERBOSE2( Con_Message("Cl_RevealMobj: clmobj %i Hidden status lifted (z=%f).", mo->thinker.id, mo->origin[VZ]) );
 #endif
 
     info->flags &= ~CLMF_HIDDEN;
@@ -764,7 +764,7 @@ void ClMobj_ReadDelta2(boolean skip)
     }
 
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("Cl_ReadMobjDelta: Reading mobj delta for %i (df:0x%x edf:0x%x skip:%i)\n", id, df, moreFlags, skip) );
+    VERBOSE2( Con_Message("Cl_ReadMobjDelta: Reading mobj delta for %i (df:0x%x edf:0x%x skip:%i)", id, df, moreFlags, skip) );
 #endif
 
     if(!skip)
@@ -775,7 +775,7 @@ void ClMobj_ReadDelta2(boolean skip)
         if(!mo)
         {
 #ifdef _DEBUG
-            VERBOSE2( Con_Message("Cl_ReadMobjDelta: Creating new clmobj %i (hidden).\n", id) );
+            VERBOSE2( Con_Message("Cl_ReadMobjDelta: Creating new clmobj %i (hidden).", id) );
 #endif
 
             // This is a new ID, allocate a new mobj.
@@ -870,7 +870,7 @@ void ClMobj_ReadDelta2(boolean skip)
 /*#if _DEBUG
     if((df & MDF_ORIGIN_Z) && d->dPlayer && P_GetDDPlayerIdx(d->dPlayer) != consolePlayer)
     {
-        Con_Message("ClMobj_ReadDelta2: Player=%i z=%f onFloor=%i\n", P_GetDDPlayerIdx(d->dPlayer),
+        Con_Message("ClMobj_ReadDelta2: Player=%i z=%f onFloor=%i", P_GetDDPlayerIdx(d->dPlayer),
                     d->pos[VZ], onFloor);
     }
 #endif*/
@@ -1007,7 +1007,7 @@ void ClMobj_ReadDelta2(boolean skip)
         if(d->dPlayer)
         {
 #ifdef _DEBUG
-            VERBOSE2( Con_Message("ClMobj_ReadDelta2: Updating player %i local mobj with new clmobj state {%f, %f, %f}.\n",
+            VERBOSE2( Con_Message("ClMobj_ReadDelta2: Updating player %i local mobj with new clmobj state {%f, %f, %f}.",
                                   P_GetDDPlayerIdx(d->dPlayer), d->origin[VX], d->origin[VY], d->origin[VZ]) );
 #endif
             // Players have real mobjs. The client mobj is hidden (unlinked).
@@ -1056,7 +1056,7 @@ void ClMobj_ReadNullDelta2(boolean skip)
     else
     {
 #ifdef _DEBUG
-        Con_Message("ClMobj_ReadNullDelta2: clmobj of player %i deleted.\n",
+        Con_Message("ClMobj_ReadNullDelta2: clmobj of player %i deleted.",
                     P_GetDDPlayerIdx(mo->dPlayer));
 #endif
 

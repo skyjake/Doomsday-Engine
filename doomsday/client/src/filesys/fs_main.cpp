@@ -1101,7 +1101,7 @@ void FS1::clearPathMappings()
 void FS1::printDirectory(Path path)
 {
     QByteArray pathUtf8 = NativePath(path).pretty().toUtf8();
-    Con_Message("Directory: %s\n", pathUtf8.constData());
+    Con_Message("Directory: %s", pathUtf8.constData());
 
     // We are interested in *everything*.
     path = path / "*";
@@ -1114,7 +1114,7 @@ void FS1::printDirectory(Path path)
         DENG2_FOR_EACH_CONST(PathList, i, found)
         {
             QByteArray foundPath = NativePath(i->path).pretty().toUtf8();
-            Con_Message("  %s\n", foundPath.constData());
+            Con_Message("  %s", foundPath.constData());
         }
     }
 }

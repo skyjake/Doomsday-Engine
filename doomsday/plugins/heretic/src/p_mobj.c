@@ -526,7 +526,7 @@ void P_MobjMoveZ(mobj_t* mo)
         if(!P_CheckPosition(mo, mo->origin))
         {
 #ifdef _DEBUG
-            Con_Message("Floating thing %i has gotten stuck! onmobj=%i z=%f flz=%f tmfz=%f\n",
+            Con_Message("Floating thing %i has gotten stuck! onmobj=%i z=%f flz=%f tmfz=%f",
                         mo->thinker.id, mo->onMobj? mo->onMobj->thinker.id : 0, mo->origin[VZ], mo->floorZ, tmFloorZ);
 #endif
             if(mo->origin[VZ] < tmFloorZ)

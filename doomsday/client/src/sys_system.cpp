@@ -75,12 +75,12 @@ void Sys_Init(void)
 {
     uint startTime;
 
-    Con_Message("Setting up platform state...\n");
+    Con_Message("Setting up platform state...");
 
     startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
 
 #ifdef __CLIENT__
-    VERBOSE( Con_Message("Initializing Input subsystem...\n") )
+    VERBOSE( Con_Message("Initializing Input subsystem...") )
     if(!I_Init())
         Con_Error("Failed to initialize Input subsystem.\n");
 
@@ -88,7 +88,7 @@ void Sys_Init(void)
     I_InitVirtualInputDevices();
 #endif
 
-    VERBOSE( Con_Message("Initializing Audio subsystem...\n") )
+    VERBOSE( Con_Message("Initializing Audio subsystem...") )
     S_Init();
 
 #if defined(WIN32) && !defined(_DEBUG)
@@ -107,10 +107,10 @@ void Sys_Init(void)
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    VERBOSE( Con_Message("Initializing Network subsystem...\n") )
+    VERBOSE( Con_Message("Initializing Network subsystem...") )
     N_Init();
 
-    VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
 }
 
 boolean Sys_IsShuttingDown(void)

@@ -44,7 +44,7 @@ typedef struct profiler_s {
 # define END_PROF_TIMERS()  ,NUM_PROFS }; static profiler_t profiler_[NUM_PROFS];
 # define BEGIN_PROF(x)      (profiler_[x].startCount++, profiler_[x].startTime = Timer_RealMilliseconds())
 # define END_PROF(x)        (profiler_[x].totalTime += Timer_RealMilliseconds() - profiler_[x].startTime)
-# define PRINT_PROF(x)      Con_Message("[%f ms] " #x ": %i ms (%i starts)\n", \
+# define PRINT_PROF(x)      Con_Message("[%f ms] " #x ": %i ms (%i starts)", \
                                 profiler_[x].startCount? profiler_[x].totalTime / \
                                 (float) profiler_[x].startCount : 0, \
                                 profiler_[x].totalTime, profiler_[x].startCount)

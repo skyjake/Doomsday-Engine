@@ -158,7 +158,7 @@ void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc)
     playerRespawnAsClass[plrNum] = pc;
 
 #ifdef _DEBUG
-    Con_Message("SetPlayerRespawnClass: plrNum=%i class=%i\n", plrNum, pc);
+    Con_Message("SetPlayerRespawnClass: plrNum=%i class=%i", plrNum, pc);
 #endif
 }
 
@@ -171,7 +171,7 @@ playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
 #endif
 
 #ifdef _DEBUG
-    Con_Message("ClassForPlayerWhenRespawning: plrNum=%i reqclass=%i\n", plrNum, playerRespawnAsClass[plrNum]);
+    Con_Message("ClassForPlayerWhenRespawning: plrNum=%i reqclass=%i", plrNum, playerRespawnAsClass[plrNum]);
 #endif
 
     if(playerRespawnAsClass[plrNum] != -1)
@@ -184,7 +184,7 @@ playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
         }
     }
 #ifdef _DEBUG
-    Con_Message("ClassForPlayerWhenRespawning: plrNum=%i actualclass=%i\n", plrNum, pClass);
+    Con_Message("ClassForPlayerWhenRespawning: plrNum=%i actualclass=%i", plrNum, pClass);
 #endif
 
     return pClass;
@@ -389,7 +389,7 @@ void P_DealPlayerStarts(uint entryPoint)
 
     if(!numPlayerStarts)
     {
-        Con_Message("Warning: Zero player starts found, players will spawn as cameras.\n");
+        Con_Message("Warning: Zero player starts found, players will spawn as cameras.");
         return;
     }
 
@@ -467,7 +467,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
                   x, y, z, angle);
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player #%i spawned pos:[%g, %g, %g] angle:%x floorz:%g mobjid:%i\n",
+    Con_Message("P_SpawnPlayer: Player #%i spawned pos:[%g, %g, %g] angle:%x floorz:%g mobjid:%i",
                 plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ], mo->angle, mo->floorZ,
                 mo->thinker.id);
 #endif
@@ -497,7 +497,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
         */
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player #%i spawning with color translation %i.\n",
+    Con_Message("P_SpawnPlayer: Player #%i spawning with color translation %i.",
                 plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
 #endif
 
@@ -534,7 +534,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        VERBOSE( Con_Message("Player #%i spawned as a camera.\n", plrNum) )
+        VERBOSE( Con_Message("Player #%i spawned as a camera.", plrNum) )
 
         p->plr->mo->origin[VZ] += (coord_t) cfg.plrViewHeight;
         p->viewHeight = 0;
@@ -657,7 +657,7 @@ void P_SpawnClient(int plrNum)
     playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, true);
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnClient: Spawning client player mobj (for player %i; console player is %i).\n", plrNum, CONSOLEPLAYER);
+    Con_Message("P_SpawnClient: Spawning client player mobj (for player %i; console player is %i).", plrNum, CONSOLEPLAYER);
 #endif
 
     // The server will fix the player's position and angles soon after.
@@ -702,7 +702,7 @@ void P_RebornPlayer(int plrNum)
     pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
     p = &players[plrNum];
 
-    Con_Message("P_RebornPlayer: player %i (class %i).\n", plrNum, pClass);
+    Con_Message("P_RebornPlayer: player %i (class %i).", plrNum, pClass);
 
     if(p->plr->mo)
     {
@@ -714,7 +714,7 @@ void P_RebornPlayer(int plrNum)
     if(G_GameState() != GS_MAP)
     {
 #ifdef _DEBUG
-        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.\n", G_GameState());
+        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.", G_GameState());
 #endif
         return; // Nothing else to do.
     }
@@ -780,7 +780,7 @@ void P_RebornPlayer(int plrNum)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         if(!foundSpot)
         {
-            Con_Message("- force spawning at %i.\n", p->startSpot);
+            Con_Message("- force spawning at %i.", p->startSpot);
 
             if(assigned)
             {
@@ -811,7 +811,7 @@ void P_RebornPlayer(int plrNum)
             int i;
 
 #ifdef _DEBUG
-            Con_Message("P_RebornPlayer: Trying other spots for %i.\n", plrNum);
+            Con_Message("P_RebornPlayer: Trying other spots for %i.", plrNum);
 #endif
 
             // Try to spawn at one of the other player start spots.
@@ -835,12 +835,12 @@ void P_RebornPlayer(int plrNum)
                         foundSpot = true;
 
 #ifdef _DEBUG
-                        Con_Message("P_RebornPlayer: Spot [%f, %f] selected.\n", spot->origin[VX], spot->origin[VY]);
+                        Con_Message("P_RebornPlayer: Spot [%f, %f] selected.", spot->origin[VX], spot->origin[VY]);
 #endif
                         break;
                     }
 #ifdef _DEBUG
-                    Con_Message("P_RebornPlayer: Spot [%f, %f] is not available.\n", spot->origin[VX], spot->origin[VY]);
+                    Con_Message("P_RebornPlayer: Spot [%f, %f] is not available.", spot->origin[VX], spot->origin[VY]);
 #endif
                 }
             }
@@ -873,7 +873,7 @@ void P_RebornPlayer(int plrNum)
     }
 
 #ifdef _DEBUG
-    Con_Message("P_RebornPlayer: Spawning player at (%f,%f,%f) angle:%x.\n",
+    Con_Message("P_RebornPlayer: Spawning player at (%f,%f,%f) angle:%x.",
                 pos[VX], pos[VY], pos[VZ], angle);
 #endif
 
@@ -1044,7 +1044,7 @@ void P_SpawnPlayers(void)
                             spawnFlags, makeCamera, false, true);
 
 #ifdef _DEBUG
-                Con_Message("P_SpawnPlayers: Player %i at %f, %f, %f\n", i, pos[VX], pos[VY], pos[VZ]);
+                Con_Message("P_SpawnPlayers: Player %i at %f, %f, %f", i, pos[VX], pos[VY], pos[VZ]);
 #endif
             }
     }
@@ -1212,7 +1212,7 @@ static int turnMobjToNearestLine(thinker_t* th, void* context)
         return false; // Continue iteration.
 
 #ifdef _DEBUG
-    VERBOSE( Con_Message("Checking mo %i...\n", mo->thinker.id) );
+    VERBOSE( Con_Message("Checking mo %i...", mo->thinker.id) );
 #endif
 
     memset(&params, 0, sizeof(params));
@@ -1231,13 +1231,13 @@ static int turnMobjToNearestLine(thinker_t* th, void* context)
     {
         mo->angle = P_GetAnglep(params.line, DMU_ANGLE) - ANGLE_90;
 #ifdef _DEBUG
-        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i angle=%x\n", mo->thinker.id, mo->angle) );
+        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i angle=%x", mo->thinker.id, mo->angle) );
 #endif
     }
     else
     {
 #ifdef _DEBUG
-        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i => no nearest line found\n", mo->thinker.id) );
+        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i => no nearest line found", mo->thinker.id) );
 #endif
     }
 

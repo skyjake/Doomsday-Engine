@@ -395,7 +395,7 @@ uint8_t* TGA_Load(FileHandle* file, int* w, int* h, int* pixelSize)
     }
 
 /*#if _DEBUG
-    Con_Message("TGA: type=%i pxsize=%i abits=%i\n", header.imageType,
+    Con_Message("TGA: type=%i pxsize=%i abits=%i", header.imageType,
                 imageSpec.pixelDepth, imageSpec.attributeBits);
 #endif*/
 

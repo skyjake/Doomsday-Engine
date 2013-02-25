@@ -73,7 +73,7 @@ void Cl_InitID(void)
     if((i = CommandLine_CheckWith("-id", 1)) != 0)
     {
         clientID = strtoul(CommandLine_At(i + 1), 0, 0);
-        Con_Message("Cl_InitID: Using custom id 0x%08x.\n", clientID);
+        Con_Message("Cl_InitID: Using custom id 0x%08x.", clientID);
         return;
     }
 
@@ -136,7 +136,7 @@ void Cl_SendHello(void)
     strncpy(buf, Str_Text(App_CurrentGame().identityKey()), sizeof(buf) - 1);
 
 #ifdef _DEBUG
-    Con_Message("Cl_SendHello: game mode = %s\n", buf);
+    Con_Message("Cl_SendHello: game mode = %s", buf);
 #endif
 
     Writer_Write(msgWriter, buf, 16);
@@ -162,7 +162,7 @@ void Cl_AnswerHandshake(void)
     // Check the version number.
     if(remoteVersion != SV_VERSION)
     {
-        Con_Message("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
+        Con_Message("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)",
                     SV_VERSION, remoteVersion);
         Con_Execute(CMDS_DDAY, "net disconnect", false, false);
         Demo_StopPlayback();
@@ -202,7 +202,7 @@ void Cl_AnswerHandshake(void)
     gameReady = false;
     Cl_InitFrame();
 
-    Con_Message("Cl_AnswerHandshake: myConsole:%i, remoteGameTime:%f.\n",
+    Con_Message("Cl_AnswerHandshake: myConsole:%i, remoteGameTime:%f.",
                 myConsole, remoteGameTime);
 
     /**
@@ -234,7 +234,7 @@ void Cl_HandlePlayerInfo(void)
     Reader_Read(msgReader, name, len);
 
 #ifdef _DEBUG
-    Con_Message("Cl_HandlePlayerInfo: console:%i name:%s\n", console, name);
+    Con_Message("Cl_HandlePlayerInfo: console:%i name:%s", console, name);
 #endif
 
     // Is the console number valid?
@@ -401,7 +401,7 @@ void Cl_GetPackets(void)
             else
             {
 #ifdef _DEBUG
-                Con_Message("Cl_GetPackets: Packet (type %i) was discarded!\n", netBuffer.msg.type);
+                Con_Message("Cl_GetPackets: Packet (type %i) was discarded!", netBuffer.msg.type);
 #endif
             }
         }
@@ -433,24 +433,24 @@ void Cl_Assertions(int plrNum)
     clmo = ClMobj_Find(s->clMobjId);
     if(!clmo)
     {
-        Con_Message("Cl_Assertions: client %i does not have a clmobj yet [%i].\n", plrNum, s->clMobjId);
+        Con_Message("Cl_Assertions: client %i does not have a clmobj yet [%i].", plrNum, s->clMobjId);
         return;
     }
     mo = plr->shared.mo;
 
     /*
-    Con_Message("Assert: client %i, clmo %i (flags 0x%x)\n",
+    Con_Message("Assert: client %i, clmo %i (flags 0x%x)",
                 plrNum, clmo->thinker.id, clmo->ddFlags);
                 */
 
     // Make sure the flags are correctly set for a client.
     if(mo->ddFlags & DDMF_REMOTE)
     {
-        Con_Message("Cl_Assertions: client %i, mobj should not be remote!\n", plrNum);
+        Con_Message("Cl_Assertions: client %i, mobj should not be remote!", plrNum);
     }
     if(clmo->ddFlags & DDMF_SOLID)
     {
-        Con_Message("Cl_Assertions: client %i, clmobj should not be solid (when player is alive)!\n", plrNum);
+        Con_Message("Cl_Assertions: client %i, clmobj should not be solid (when player is alive)!", plrNum);
     }
 }
 

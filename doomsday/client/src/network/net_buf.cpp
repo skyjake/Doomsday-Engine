@@ -354,7 +354,7 @@ boolean N_GetPacket(void)
 
     /*{extern byte monitorMsgQueue;
     if(monitorMsgQueue)
-        Con_Message("N_GetPacket: %i messages queued.\n", msgCount);
+        Con_Message("N_GetPacket: %i messages queued.", msgCount);
     }*/
 
     if((msg = N_GetNextMessage()) == NULL)
@@ -366,7 +366,7 @@ boolean N_GetPacket(void)
     // There was a packet!
 /*
 #if _DEBUG
-   Con_Message("N_GetPacket: from=%x, len=%i\n", msg->sender, msg->size);
+   Con_Message("N_GetPacket: from=%x, len=%i", msg->sender, msg->size);
 #endif
 */
     netBuffer.player = msg->player;
@@ -415,12 +415,12 @@ void N_PrintTransmissionStats(void)
 {
     if(numOutBytes == 0)
     {
-        Con_Message("Transmission efficiency: Nothing has been sent yet.\n");
+        Con_Message("Transmission efficiency: Nothing has been sent yet.");
     }
     else
     {
         Con_Message("Transmission efficiency: %.3f%% (data: %i bytes, sent: %i "
-                    "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
+                    "bytes)", 100 - (100.0f * numSentBytes) / numOutBytes,
                     (int)numOutBytes, (int)numSentBytes);
     }
 }

@@ -131,7 +131,7 @@ static boolean writeConsoleState(const char* fileName)
     FILE* file;
     if(!fileName || !fileName[0]) return false;
 
-    VERBOSE(Con_Message("Writing state to \"%s\"...\n", fileName));
+    VERBOSE(Con_Message("Writing state to \"%s\"...", fileName));
 
     Str_Init(&nativePath);
     Str_Set(&nativePath, fileName);
@@ -159,7 +159,7 @@ static boolean writeConsoleState(const char* fileName)
         fclose(file);
         return true;
     }
-    Con_Message("Warning:writeConsoleState: Failed opening \"%s\" for writing.\n", F_PrettyPath(fileName));
+    Con_Message("Warning:writeConsoleState: Failed opening \"%s\" for writing.", F_PrettyPath(fileName));
     return false;
 }
 
@@ -170,7 +170,7 @@ static boolean writeBindingsState(const char* fileName)
     FILE* file;
     if(!fileName || !fileName[0]) return false;
 
-    VERBOSE(Con_Message("Writing bindings to \"%s\"...\n", fileName));
+    VERBOSE(Con_Message("Writing bindings to \"%s\"...", fileName));
 
     Str_Init(&nativePath);
     Str_Set(&nativePath, fileName);
@@ -194,7 +194,7 @@ static boolean writeBindingsState(const char* fileName)
         fclose(file);
         return true;
     }
-    Con_Message("Warning:writeBindingsState: Failed opening \"%s\" for writing.\n", F_PrettyPath(fileName));
+    Con_Message("Warning:writeBindingsState: Failed opening \"%s\" for writing.", F_PrettyPath(fileName));
     return false;
 }
 #endif // __CLIENT__
@@ -224,11 +224,11 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
     file = F_Open(fileName, "rt");
     if(!file)
     {
-        VERBOSE(Con_Message("Could not open: \"%s\"\n", fileName));
+        VERBOSE(Con_Message("Could not open: \"%s\"", fileName));
         return false;
     }
 
-    VERBOSE(Con_Message("Con_ParseCommands: %s (def:%i)\n", F_PrettyPath(fileName), setdefault));
+    VERBOSE(Con_Message("Con_ParseCommands: %s (def:%i)", F_PrettyPath(fileName), setdefault));
 
     // This file is filled with console commands.
     // Each line is a command.
@@ -239,7 +239,7 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
         {
             // Execute the commands silently.
             if(!Con_Execute(CMDS_CONFIG, buff, setdefault, false))
-                Con_Message("%s(%d): error executing command\n \"%s\"\n", F_PrettyPath(fileName), line, buff);
+                Con_Message("%s(%d): error executing command\n \"%s\"", F_PrettyPath(fileName), line, buff);
         }
 
         if(FileHandle_AtEnd(file)) break;
@@ -282,6 +282,6 @@ D_CMD(WriteConsole)
 {
     DENG2_UNUSED2(src, argc);
 
-    Con_Message("Writing to \"%s\"...\n", argv[1]);
+    Con_Message("Writing to \"%s\"...", argv[1]);
     return !Con_WriteState(argv[1], NULL);
 }

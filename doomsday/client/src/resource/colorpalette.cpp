@@ -75,13 +75,12 @@ void ColorPalette_ReplaceColorTable(colorpalette_t* pal, const int compOrder[3],
 
 void ColorPalette_Color(const colorpalette_t* pal, int colorIdx, uint8_t rgb[3])
 {
-    assert(pal && rgb);
-    {
-    size_t offset;
+    DENG_ASSERT(pal && rgb);
+
 
 #if _DEBUG
     if(colorIdx < 0 || colorIdx >= pal->_colorCount)
-        Con_Message("Warning:ColorPalette::Color: ColorIdx %u out of range [0...%u].\n",
+        Con_Message("Warning: ColorPalette::Color: ColorIdx %u out of range [0..%u).",
             colorIdx, pal->_colorCount);
 #endif
 
@@ -91,11 +90,10 @@ void ColorPalette_Color(const colorpalette_t* pal, int colorIdx, uint8_t rgb[3])
         return;
     }
 
-    offset = 3 * (size_t)MINMAX_OF(0, colorIdx, pal->_colorCount-1);
+    size_t offset = 3 * (size_t)MINMAX_OF(0, colorIdx, pal->_colorCount-1);
     rgb[CR] = pal->_colorData[offset + CR];
     rgb[CG] = pal->_colorData[offset + CG];
     rgb[CB] = pal->_colorData[offset + CB];
-    }
 }
 
 int ColorPalette_NearestIndex(colorpalette_t* pal, uint8_t red, uint8_t green, uint8_t blue)

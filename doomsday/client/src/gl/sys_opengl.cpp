@@ -18,8 +18,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
@@ -29,22 +27,13 @@
 #include "gl/sys_opengl.h"
 
 #include <de/libdeng2.h>
-
-// MACROS ------------------------------------------------------------------
+#include <QStringList>
 
 #ifdef WIN32
 #   define GETPROC(Type, x)   x = de::function_cast<void *, Type>(wglGetProcAddress(#x))
 #elif defined(UNIX)
 #   define GETPROC(Type, x)   x = SDL_GL_GetProcAddress(#x)
 #endif
-
-// TYPES -------------------------------------------------------------------
-
-// FUNCTION PROTOTYPES -----------------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 gl_state_t GL_state;
 
@@ -63,8 +52,6 @@ PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT = NULL;
 PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT = NULL;
 #endif
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean doneEarlyInit = false;
 static boolean inited = false;
 static boolean firstTimeInit = true;
@@ -72,8 +59,6 @@ static boolean firstTimeInit = true;
 #if WIN32
 static PROC wglGetExtString;
 #endif
-
-// CODE --------------------------------------------------------------------
 
 static int query(const char* ext)
 {
@@ -197,40 +182,40 @@ static void printGLUInfo(void)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    Con_Message("OpenGL information:\n");
-    Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
-    Con_Message("  Renderer: %s\n", glGetString(GL_RENDERER));
-    Con_Message("  Version: %s\n", glGetString(GL_VERSION));
+    Con_Message("OpenGL information:");
+    Con_Message("  Vendor: %s", glGetString(GL_VENDOR));
+    Con_Message("  Renderer: %s", glGetString(GL_RENDERER));
+    Con_Message("  Version: %s", glGetString(GL_VERSION));
 
 #ifdef USE_TEXTURE_COMPRESSION_S3
     if(GL_state.extensions.texCompressionS3)
     {
         glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-        Con_Message("  Available Compressed Texture Formats: %i\n", iVal);
+        Con_Message("  Available Compressed Texture Formats: %i", iVal);
     }
 #endif
 
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
-    Con_Message("  Available Texture Units: %i\n", iVal);
+    Con_Message("  Available Texture Units: %i", iVal);
 
     if(GL_state.extensions.texFilterAniso)
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
-        Con_Message("  Maximum Texture Anisotropy: %i\n", iVal);
+        Con_Message("  Maximum Texture Anisotropy: %i", iVal);
     }
     else
     {
-        Con_Message("  Variable Texture Anisotropy Unavailable.\n");
+        Con_Message("  Variable Texture Anisotropy Unavailable.");
     }
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
-    Con_Message("  Maximum Texture Size: %i\n", iVal);
+    Con_Message("  Maximum Texture Size: %i", iVal);
 
     glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
-    Con_Message("  Line Width Granularity: %3.1f\n", fVals[0]);
+    Con_Message("  Line Width Granularity: %3.1f", fVals[0]);
 
     glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
-    Con_Message("  Line Width Range: %3.1f...%3.1f\n", fVals[0], fVals[1]);
+    Con_Message("  Line Width Range: %3.1f...%3.1f", fVals[0], fVals[1]);
 
     Sys_GLPrintExtensions();
 }
@@ -471,8 +456,8 @@ boolean Sys_GLInitialize(void)
         double version = (versionStr? strtod((const char*) versionStr, NULL) : 0);
         if(version == 0)
         {
-            Con_Message("Sys_GLInitialize: Failed to determine OpenGL version.\n");
-            Con_Message("  OpenGL version: %s\n", glGetString(GL_VERSION));
+            Con_Message("Sys_GLInitialize: Failed to determine OpenGL version.");
+            Con_Message("  OpenGL version: %s", glGetString(GL_VERSION));
         }
         else if(version < 1.4)
         {
@@ -486,8 +471,8 @@ boolean Sys_GLInitialize(void)
             }
             else
             {
-                Con_Message("Warning: Sys_GLInitialize: OpenGL implementation may be too old (1.4+ required).\n");
-                Con_Message("  OpenGL version: %s\n", glGetString(GL_VERSION));
+                Con_Message("Warning: Sys_GLInitialize: OpenGL implementation may be too old (1.4+ required).");
+                Con_Message("  OpenGL version: %s", glGetString(GL_VERSION));
             }
         }
 
@@ -643,53 +628,41 @@ boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions)
     return false;
 }
 
-static void printExtensions(const GLubyte* extensions)
+static void printExtensions(QStringList extensions)
 {
-    char* token, *extbuf;
-    size_t len;
+    QString const indent(4, ' ');
 
-    if(!extensions || !extensions[0])
-        return;
-    len = strlen((const char*) extensions);
-
-    if(0 == (extbuf = (char *) M_Malloc(len+1)))
-        Con_Error("printExtensions: Failed on allocation of %lu bytes for print buffer.",
-                  (unsigned long) (len+1));
-
-    strcpy(extbuf, (const char*) extensions);
-    token = strtok(extbuf, " ");
-    while(token)
+    while(!extensions.isEmpty())
     {
-        Con_Message("    "); // Indent.
+        QString str = indent;
         if(verbose)
         {
             // Show full names.
-            Con_Message("%s\n", token);
+            str += extensions.takeFirst();
         }
         else
         {
-            // Two on one line, clamp to 30 characters.
-            Con_Message("%-30.30s", token);
-            token = strtok(NULL, " ");
-            if(token)
-                Con_Message(" %-30.30s", token);
-            Con_Message("\n");
+            // Two on one line, clamp to 30 characters max.
+            str += extensions.takeFirst().leftJustified(30, ' ', true /*truncate*/);
+            if(!extensions.isEmpty())
+                str += " " + extensions.takeFirst().leftJustified(30, ' ', true /*truncate*/);
         }
-        token = strtok(NULL, " ");
+
+        Con_Message(str.toUtf8().constData());
     }
-    free(extbuf);
 }
 
 void Sys_GLPrintExtensions(void)
 {
-    Con_Message("  Extensions:\n");
-    printExtensions(glGetString(GL_EXTENSIONS));
+    Con_Message("  Extensions:");
+    printExtensions(QString((char const *) glGetString(GL_EXTENSIONS)).split(" ", QString::SkipEmptyParts));
+
 #if WIN32
     // List the WGL extensions too.
     if(wglGetExtString)
     {
-        Con_Message("  Extensions (WGL):\n");
-        printExtensions(((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC()));
+        Con_Message("  Extensions (WGL):");
+        printExtensions(QString((char const *) ((GLubyte const *(__stdcall *)(HDC))wglGetExtString)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
     }
 #endif
 }
@@ -701,7 +674,7 @@ boolean Sys_GLCheckError(void)
     {
         GLenum error = glGetError();
         if(error != GL_NO_ERROR)
-            Con_Message("OpenGL error: 0x%x\n", error);
+            Con_Message("OpenGL error: 0x%x", error);
     }
 #endif
     return false;

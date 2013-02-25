@@ -93,7 +93,7 @@ static void openScriptLump(lumpnum_t lumpNum)
 
     if(lumpNum < 0 || lumpNum >= Get(DD_NUMLUMPS))
     {
-        Con_Message("Warning: SC_OpenLump: Invalid lump #%i, ignoring.\n", lumpNum);
+        Con_Message("Warning: SC_OpenLump: Invalid lump #%i, ignoring.", lumpNum);
         return;
     }
 
@@ -123,7 +123,7 @@ static void openScriptFile(const char* name)
     ScriptSize = M_ReadFile(name, &bufferHandle);
     if(0 == ScriptSize)
     {
-        Con_Message("Warning:SC_Open: Failed opening \"%s\" for reading.\n", name);
+        Con_Message("Warning: SC_Open: Failed opening \"%s\" for reading.", name);
         return;
     }
 

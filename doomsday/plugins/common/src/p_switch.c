@@ -221,12 +221,12 @@ void P_InitSwitchList(void)
     // Has a custom SWITCHES lump been loaded?
     if(lumpNum >= 0)
     {
-        VERBOSE( Con_Message("Processing lump %s::SWITCHES...\n", F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum)))) )
+        VERBOSE( Con_Message("Processing lump %s::SWITCHES...", F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum)))) )
         sList = (switchlist_t*) W_CacheLump(lumpNum);
     }
     else
     {
-        VERBOSE( Con_Message("Registering default switches...\n") );
+        VERBOSE( Con_Message("Registering default switches...") );
     }
 
     uri = Uri_New();
@@ -253,7 +253,7 @@ void P_InitSwitchList(void)
             switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
             if(verbose > (lumpNum >= 0? 1 : 2))
             {
-                Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"\n", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);
+                Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);
             }
         }
     }

@@ -136,8 +136,8 @@ void SV_ConfigureSavePaths(void)
         savePathExists = false;
 #endif
     if(!savePathExists)
-        Con_Message("Warning:configureSavePaths: Failed to locate \"%s\"\nPerhaps it could "
-                    "not be created (insufficent permissions?). Saving will not be possible.\n",
+        Con_Message("Warning: configureSavePaths: Failed to locate \"%s\"\nPerhaps it could "
+                    "not be created (insufficent permissions?). Saving will not be possible.",
                     Str_Text(&savePath));
     }
 }
@@ -192,7 +192,7 @@ void SV_CopyFile(const Str* srcPath, const Str* destPath)
     length = M_ReadFile(Str_Text(srcPath), &buffer);
     if(0 == length)
     {
-        Con_Message("Warning: SV_CopyFile: Failed opening \"%s\" for reading.\n", Str_Text(srcPath));
+        Con_Message("Warning: SV_CopyFile: Failed opening \"%s\" for reading.", Str_Text(srcPath));
         return;
     }
 

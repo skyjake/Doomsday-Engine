@@ -45,7 +45,7 @@ static int ExampleHook(int hookType, int parm, void *data)
     DENG_UNUSED(parm);
     DENG_UNUSED(data);
 
-    Con_Message("ExampleHook: Hook successful!\n");
+    Con_Message("ExampleHook: Hook successful!");
     return true;
 }
 

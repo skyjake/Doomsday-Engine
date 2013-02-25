@@ -241,7 +241,7 @@ boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
     file = fopen(Str_Text(&nativePath), "wb");
     if(!file)
     {
-        Con_Message("Warning: M_Mus2Midi: Failed opening output file \"%s\".\n", F_PrettyPath(Str_Text(&nativePath)));
+        Con_Message("Warning: M_Mus2Midi: Failed opening output file \"%s\".", F_PrettyPath(Str_Text(&nativePath)));
         Str_Free(&nativePath);
         return false;
     }

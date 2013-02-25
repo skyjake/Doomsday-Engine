@@ -151,7 +151,7 @@ int DS_Init(void)
     device = alcOpenDevice((ALCchar*) "DirectSound3D");
     if(!device)
     {
-        Con_Message("OpenAL init failed (device: DirectSound3D).\n");
+        Con_Message("OpenAL init failed (device: DirectSound3D).");
         return false;
     }
 
@@ -300,14 +300,6 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     if(!buf || !buf->sample) return;
 
     source = SRC(buf);
-
-/*#if _DEBUG
-    alGetSourcei(source, AL_BUFFER, &bn);
-    Con_Message("Buffer = %x\n", bn);
-    if(bn != BUF(buf))
-        Con_Message("Not the same!\n");
-#endif*/
-
     alSourcei(source, AL_BUFFER, BUF(buf));
     alSourcei(source, AL_LOOPING, (buf->flags & SFXBF_REPEAT) != 0);
     alSourcePlay(source);

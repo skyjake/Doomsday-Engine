@@ -384,7 +384,7 @@ void X_PostInit(void)
         if(scale > 400)
             scale = 400;
 
-        Con_Message("Turbo scale: %i%%\n", scale);
+        Con_Message("Turbo scale: %i%%", scale);
         turboMul = scale / 100.f;
     }
 
@@ -396,10 +396,10 @@ void X_PostInit(void)
 
     P_InitMapMusicInfo(); // Init music fields in mapinfo.
 
-    Con_Message("Parsing SNDINFO...\n");
+    Con_Message("Parsing SNDINFO...");
     S_ParseSndInfoLump();
 
-    Con_Message("SN_InitSequenceScript: Registering sound sequences.\n");
+    Con_Message("SN_InitSequenceScript: Registering sound sequences.");
     SN_InitSequenceScript();
 
     // Load a saved game?
@@ -425,11 +425,11 @@ void X_PostInit(void)
         playerclass_t pClass = (playerclass_t)atoi(CommandLine_At(p + 1));
         if(!VALID_PLAYER_CLASS(pClass))
         {
-            Con_Message("Warning: Invalid player class id=%d specified with -class, ignoring.\n", (int)pClass);
+            Con_Message("Warning: Invalid player class id=%d specified with -class, ignoring.", (int)pClass);
         }
         else if(!PCLASS_INFO(pClass)->userSelectable)
         {
-            Con_Message("Warning: Non-user-selectable player class id=%d specified with -class, ignoring.\n", (int)pClass);
+            Con_Message("Warning: Non-user-selectable player class id=%d specified with -class, ignoring.", (int)pClass);
         }
         else
         {
@@ -439,7 +439,7 @@ void X_PostInit(void)
 
     if(startPlayerClass != PCLASS_NONE)
     {
-        Con_Message("Player Class: '%s'\n", PCLASS_INFO(startPlayerClass)->niceName);
+        Con_Message("Player Class: '%s'", PCLASS_INFO(startPlayerClass)->niceName);
         cfg.playerClass[CONSOLEPLAYER] = startPlayerClass;
         autoStart = true;
     }
@@ -461,7 +461,7 @@ void X_PostInit(void)
     // Are we autostarting?
     if(autoStart)
     {
-        Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", warpMap+1, P_GetMapName(startMap), startMap+1, startSkill + 1);
+        Con_Message("Warp to Map %d (\"%s\":%d), Skill %d", warpMap+1, P_GetMapName(startMap), startMap+1, startSkill + 1);
     }
 
     // Validate episode and map.

@@ -233,7 +233,7 @@ int WinMIDIStreamer::GetNextEvent(MIDIEVENT* mev)
         midiParm2 = i;
 
 /*#if _DEBUG
-Con_Message("time: %i note: p1:%i p2:%i\n", mev->dwDeltaTime, midiParm1,
+Con_Message("time: %i note: p1:%i p2:%i", mev->dwDeltaTime, midiParm1,
             midiParm2);
 #endif*/
         break;
@@ -269,7 +269,7 @@ Con_Message("time: %i note: p1:%i p2:%i\n", mev->dwDeltaTime, midiParm1,
         midiParm2 = i >> 7;
 
 /*#if _DEBUG
-Con_Message("pitch wheel: ch %d (%x %x = %x)\n", evDesc->channel,
+Con_Message("pitch wheel: ch %d (%x %x = %x)", evDesc->channel,
             midiParm1, midiParm2, midiParm1 | (midiParm2 << 7));
 #endif*/
         break;
@@ -294,7 +294,7 @@ Con_Message("pitch wheel: ch %d (%x %x = %x)\n", evDesc->channel,
         midiChan = 15;
 
 /*#if _DEBUG
-Con_Message("MIDI event/%d: %x %d %d\n",evDesc->channel,midiStatus,
+Con_Message("MIDI event/%d: %x %d %d",evDesc->channel,midiStatus,
             midiParm1,midiParm2);
 #endif*/
 

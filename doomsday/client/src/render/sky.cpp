@@ -427,7 +427,7 @@ void Sky_LayerSetActive(int id, boolean active)
     if(!layer)
     {
 #if _DEBUG
-        Con_Message("Warning: Sky_LayerSetActive: Invalid layer id #%i, ignoring.\n", id);
+        Con_Message("Warning: Sky_LayerSetActive: Invalid layer id #%i, ignoring.", id);
 #endif
         return;
     }
@@ -444,7 +444,7 @@ boolean Sky_LayerActive(int id)
     if(!layer)
     {
 #if _DEBUG
-        Con_Message("Warning: Sky_LayerActive: Invalid layer id #%i, returning false.\n", id);
+        Con_Message("Warning: Sky_LayerActive: Invalid layer id #%i, returning false.", id);
 #endif
         return false;
     }
@@ -457,7 +457,7 @@ void Sky_LayerSetMasked(int id, boolean masked)
     if(!layer)
     {
 #if _DEBUG
-        Con_Message("Warning: Sky_LayerSetMasked: Invalid layer id #%i, ignoring.\n", id);
+        Con_Message("Warning: Sky_LayerSetMasked: Invalid layer id #%i, ignoring.", id);
 #endif
         return;
     }
@@ -473,7 +473,7 @@ boolean Sky_LayerMasked(int id)
     if(!layer)
     {
 #if _DEBUG
-        Con_Message("Warning: Sky_LayerMasked: Invalid layer id #%i, returning false.\n", id);
+        Con_Message("Warning: Sky_LayerMasked: Invalid layer id #%i, returning false.", id);
 #endif
         return false;
     }
@@ -486,7 +486,7 @@ Material *Sky_LayerMaterial(int id)
     if(!layer)
     {
 #if _DEBUG
-        Con_Message("Warning: Sky_LayerMaterial: Invalid layer id #%i, returning NULL.\n", id);
+        Con_Message("Warning: Sky_LayerMaterial: Invalid layer id #%i, returning NULL.", id);
 #endif
         return 0;
     }
@@ -499,7 +499,7 @@ void Sky_LayerSetMaterial(int id, Material *mat)
     if(!layer)
     {
 #if _DEBUG
-        Con_Message("Warning: Sky_LayerSetMaterial: Invalid layer id #%i, ignoring.\n", id);
+        Con_Message("Warning: Sky_LayerSetMaterial: Invalid layer id #%i, ignoring.", id);
 #endif
         return;
     }
@@ -515,7 +515,7 @@ float Sky_LayerFadeoutLimit(int id)
     if(!layer)
     {
 #if _DEBUG
-        Con_Message("Warning: Sky_LayerFadeoutLimit: Invalid layer id #%i, returning default.\n", id);
+        Con_Message("Warning: Sky_LayerFadeoutLimit: Invalid layer id #%i, returning default.", id);
 #endif
         return DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
     }
@@ -528,7 +528,7 @@ void Sky_LayerSetFadeoutLimit(int id, float limit)
     if(!layer)
     {
 #if _DEBUG
-        Con_Message("Warning: Sky_LayerSetFadeoutLimit: Invalid layer id #%i, ignoring.\n", id);
+        Con_Message("Warning: Sky_LayerSetFadeoutLimit: Invalid layer id #%i, ignoring.", id);
 #endif
         return;
     }
@@ -544,7 +544,7 @@ float Sky_LayerOffset(int id)
     if(!layer)
     {
 #if _DEBUG
-        Con_Message("Warning: Sky_LayerOffset: Invalid layer id #%i, returning default.\n", id);
+        Con_Message("Warning: Sky_LayerOffset: Invalid layer id #%i, returning default.", id);
 #endif
         return DEFAULT_SKY_SPHERE_XOFFSET;
     }
@@ -557,7 +557,7 @@ void Sky_LayerSetOffset(int id, float offset)
     if(!layer)
     {
 #if _DEBUG
-        Con_Message("Warning: Sky_LayerOffset: Invalid layer id #%i, ignoring.\n", id);
+        Con_Message("Warning: Sky_LayerOffset: Invalid layer id #%i, ignoring.", id);
 #endif
         return;
     }

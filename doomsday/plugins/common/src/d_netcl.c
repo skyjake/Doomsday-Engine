@@ -80,7 +80,7 @@ void NetCl_UpdateGameState(Reader* msg)
 
     VERBOSE(
         AutoStr* str = Uri_ToString(mapUri);
-        Con_Message("NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"\n", gsFlags, Str_Text(str));
+        Con_Message("NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"", gsFlags, Str_Text(str));
     )
 
     // Demo game state changes are only effective during demo playback.
@@ -96,7 +96,7 @@ void NetCl_UpdateGameState(Reader* msg)
         DD_GameInfo(&gameInfo);
         if(strcmp(gameInfo.identityKey, gsGameIdentity))
         {
-            Con_Message("NetCl_UpdateGameState: Server's game mode (%s) is different than yours (%s).\n",
+            Con_Message("NetCl_UpdateGameState: Server's game mode (%s) is different than yours (%s).",
                         gsGameIdentity, gameInfo.identityKey);
             DD_Execute(false, "net disconnect");
             return;
@@ -111,21 +111,21 @@ void NetCl_UpdateGameState(Reader* msg)
 
     // Some statistics.
 #if __JHEXEN__
-    Con_Message("Game state: Map=%u Skill=%i %s\n", gsMap+1, gsSkill,
+    Con_Message("Game state: Map=%u Skill=%i %s", gsMap+1, gsSkill,
                 deathmatch == 1 ? "Deathmatch" : deathmatch ==
                 2 ? "Deathmatch2" : "Co-op");
 #else
-    Con_Message("Game state: Map=%u Episode=%u Skill=%i %s\n", gsMap+1,
+    Con_Message("Game state: Map=%u Episode=%u Skill=%i %s", gsMap+1,
                 gsEpisode+1, gsSkill,
                 deathmatch == 1 ? "Deathmatch" : deathmatch ==
                 2 ? "Deathmatch2" : "Co-op");
 #endif
 #if !__JHEXEN__
-    Con_Message("  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f\n",
+    Con_Message("  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f",
                 respawnMonsters ? "yes" : "no", !noMonstersParm ? "yes" : "no",
                 gsJumping ? "yes" : "no", gsGravity);
 #else
-    Con_Message("  Monsters=%s Jumping=%s Gravity=%.1f\n",
+    Con_Message("  Monsters=%s Jumping=%s Gravity=%.1f",
                 !noMonstersParm ? "yes" : "no",
                 gsJumping ? "yes" : "no", gsGravity);
 #endif
@@ -182,8 +182,8 @@ void NetCl_UpdateGameState(Reader* msg)
             float my = Reader_ReadFloat(msg);
             float mz = Reader_ReadFloat(msg);
             angle_t angle = Reader_ReadUInt32(msg);
-            Con_Message("NetCl_UpdateGameState: Got camera init, but player has no mobj.\n");
-            Con_Message("  Pos=%f,%f,%f Angle=%x\n", mx, my, mz, angle);
+            Con_Message("NetCl_UpdateGameState: Got camera init, but player has no mobj.");
+            Con_Message("  Pos=%f,%f,%f Angle=%x", mx, my, mz, angle);
         }
     }
 
@@ -207,7 +207,7 @@ void NetCl_MobjImpulse(Reader* msg)
     }
 
 #ifdef _DEBUG
-    Con_Message("NetCl_MobjImpulse: Player %i, clmobj %i\n", CONSOLEPLAYER, id);
+    Con_Message("NetCl_MobjImpulse: Player %i, clmobj %i", CONSOLEPLAYER, id);
 #endif
 
     // Apply to the local mobj.
@@ -229,7 +229,7 @@ void NetCl_PlayerSpawnPosition(Reader* msg)
     angle = Reader_ReadUInt32(msg);
 
 #ifdef _DEBUG
-    Con_Message("NetCl_PlayerSpawnPosition: Got spawn position %f, %f, %f facing %x\n",
+    Con_Message("NetCl_PlayerSpawnPosition: Got spawn position %f, %f, %f facing %x",
                 x, y, z, angle);
 #endif
 
@@ -251,7 +251,7 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
     if(!Get(DD_GAME_READY))
     {
 #ifdef _DEBUG
-        Con_Message("NetCl_UpdatePlayerState2: Discarded because game isn't ready.\n");
+        Con_Message("NetCl_UpdatePlayerState2: Discarded because game isn't ready.");
 #endif
         return;
     }
@@ -291,7 +291,7 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
 #endif
 
 #ifdef _DEBUG
-        Con_Message("NetCl_UpdatePlayerState2: New state = %s\n",
+        Con_Message("NetCl_UpdatePlayerState2: New state = %s",
                     pl->playerState == PST_LIVE?  "PST_LIVE" :
                     pl->playerState == PST_DEAD? "PST_DEAD" : "PST_REBORN");
 #endif
@@ -306,7 +306,7 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
                 // After being reborn, the server will tell us the new weapon.
                 pl->plr->flags |= DDPF_UNDEFINED_WEAPON;
 #ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState2: Player %i: Marking weapon as undefined.\n", (int)(pl - players));
+                Con_Message("NetCl_UpdatePlayerState2: Player %i: Marking weapon as undefined.", (int)(pl - players));
 #endif
 
                 pl->plr->flags &= ~DDPF_DEAD;
@@ -347,7 +347,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 
     /*
 #ifdef _DEBUG
-    VERBOSE( Con_Message("NetCl_UpdatePlayerState: fl=%x\n", flags) );
+    VERBOSE( Con_Message("NetCl_UpdatePlayerState: fl=%x", flags) );
 #endif
     */
 
@@ -385,7 +385,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
         else
         {
 #if _DEBUG
-            Con_Message("FIXME: NetCl_UpdatePlayerState: Player mobj not yet allocated at this time, ignoring.\n");
+            Con_Message("FIXME: NetCl_UpdatePlayerState: Player mobj not yet allocated at this time, ignoring.");
 #endif
         }
     }
@@ -483,7 +483,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
                 if(val && i == PT_ALLMAP && plrNum == CONSOLEPLAYER)
                 {
 #ifdef _DEBUG
-                    Con_Message("NetCl_UpdatePlayerState: Revealing automap.\n");
+                    Con_Message("NetCl_UpdatePlayerState: Revealing automap.");
 #endif
                     ST_RevealAutomap(plrNum, true);
                 }
@@ -580,7 +580,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
                 {
                     P_Impulse(pl - players, CTL_WEAPON1 + weapon);
 #ifdef _DEBUG
-                    Con_Message("NetCl_UpdatePlayerState: Weapon already known, using an impulse to switch to %i.\n", weapon);
+                    Con_Message("NetCl_UpdatePlayerState: Weapon already known, using an impulse to switch to %i.", weapon);
 #endif
                 }
             }
@@ -588,7 +588,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             {
                 pl->pendingWeapon = b & 0xf;
 #ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState: pendingweapon=%i\n", pl->pendingWeapon);
+                Con_Message("NetCl_UpdatePlayerState: pendingweapon=%i", pl->pendingWeapon);
 #endif
             }
 
@@ -601,13 +601,13 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             {
                 pl->readyWeapon = b >> 4;
 #ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState: readyweapon=%i\n", pl->readyWeapon);
+                Con_Message("NetCl_UpdatePlayerState: readyweapon=%i", pl->readyWeapon);
 #endif
             }
             else
             {
 #ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState: Readyweapon already known (%i), not setting server's value %i.\n",
+                Con_Message("NetCl_UpdatePlayerState: Readyweapon already known (%i), not setting server's value %i.",
                             pl->readyWeapon, b >> 4);
 #endif
             }
@@ -618,7 +618,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
         if(!(pl->plr->flags & DDPF_UNDEFINED_WEAPON) && wasUndefined)
         {
 #ifdef _DEBUG
-            Con_Message("NetCl_UpdatePlayerState: Weapon was undefined, bringing it up now.\n");
+            Con_Message("NetCl_UpdatePlayerState: Weapon was undefined, bringing it up now.");
 #endif
 
             // Bring it up now.
@@ -636,7 +636,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
     {
         pl->morphTics = Reader_ReadByte(msg) * 35;
 #ifdef _DEBUG
-        Con_Message("NetCl_UpdatePlayerState: Player %i morphtics = %i\n", plrNum, pl->morphTics);
+        Con_Message("NetCl_UpdatePlayerState: Player %i morphtics = %i", plrNum, pl->morphTics);
 #endif
     }
 #endif
@@ -810,10 +810,10 @@ void NetCl_UpdatePlayerInfo(Reader *msg)
     players[num].class_ = cfg.playerClass[num];
 #endif
 
-#if __JDOOM__ || __JSTRIFE__ || __JDOOM64__
-    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num, cfg.playerColor[num]);
+#if __JDOOM__ || __JDOOM64__
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i", num, cfg.playerColor[num]);
 #else
-    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num, cfg.playerColor[num], cfg.playerClass[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i", num, cfg.playerColor[num], cfg.playerClass[num]);
 #endif
 }
 
@@ -903,7 +903,7 @@ void NetCl_UpdateJumpPower(Reader* msg)
 {
     netJumpPower = Reader_ReadFloat(msg);
 #ifdef _DEBUG
-    Con_Message("NetCl_UpdateJumpPower: %g\n", netJumpPower);
+    Con_Message("NetCl_UpdateJumpPower: %g", netJumpPower);
 #endif
 }
 
@@ -919,7 +919,7 @@ void NetCl_FloorHitRequest(player_t* player)
     msg = D_NetWrite();
 
 #ifdef _DEBUG
-    Con_Message("NetCl_FloorHitRequest: Player %i.\n", (int)(player - players));
+    Con_Message("NetCl_FloorHitRequest: Player %i.", (int)(player - players));
 #endif
 
     // Include the position and momentum of the hit.
@@ -950,7 +950,7 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
     msg = D_NetWrite();
 
 #ifdef _DEBUG
-    Con_Message("NetCl_PlayerActionRequest: Player %i, action %i.\n",
+    Con_Message("NetCl_PlayerActionRequest: Player %i, action %i.",
                 (int)(player - players), actionType);
 #endif
 
@@ -1009,7 +1009,7 @@ void NetCl_LocalMobjState(Reader* msg)
     if(!(mo = ClMobj_Find(mobjId)))
     {
 #ifdef _DEBUG
-        Con_Message("NetCl_LocalMobjState: ClMobj %i not found.\n", mobjId);
+        Con_Message("NetCl_LocalMobjState: ClMobj %i not found.", mobjId);
         return;
 #endif
     }
@@ -1018,7 +1018,7 @@ void NetCl_LocalMobjState(Reader* msg)
     ClMobj_EnableLocalActions(mo, true);
 
 #ifdef _DEBUG
-    Con_Message("NetCl_LocalMobjState: ClMobj %i => state %i (target:%i, special1:%i)\n",
+    Con_Message("NetCl_LocalMobjState: ClMobj %i => state %i (target:%i, special1:%i)",
                 mobjId, newState, targetId, special1);
 #endif
 
@@ -1045,7 +1045,7 @@ void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int 
     msg = D_NetWrite();
 
 #ifdef _DEBUG
-    Con_Message("NetCl_DamageRequest: Damage %i on target=%i via inflictor=%i by source=%i.\n",
+    Con_Message("NetCl_DamageRequest: Damage %i on target=%i via inflictor=%i by source=%i.",
                 damage, target->thinker.id, inflictor? inflictor->thinker.id : 0,
                 source? source->thinker.id : 0);
 #endif

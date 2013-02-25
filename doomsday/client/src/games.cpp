@@ -210,7 +210,7 @@ static int locateAllResourcesWorker(void *parameters)
     int n = 0;
     foreach(Game *game, games->all())
     {
-        Con_Message("Locating \"%s\"...\n", Str_Text(game->title()));
+        Con_Message("Locating \"%s\"...", Str_Text(game->title()));
 
         games->locateStartupResources(*game);
         Con_SetProgress((n + 1) * 200 / games->count() - 1);

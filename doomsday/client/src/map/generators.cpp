@@ -121,7 +121,7 @@ static listnode_t* Generators_NewLink(Generators* gens)
     if(gens->linkStoreCursor < gens->linkStoreSize)
         return &gens->linkStore[gens->linkStoreCursor++];
 
-    VERBOSE( Con_Message("Generators_NewLink: Exhausted store.\n") );
+    VERBOSE( Con_Message("Generators_NewLink: Exhausted store.") );
     return NULL;
 }
 

@@ -36,7 +36,7 @@ void S_MapMusic(uint episode, uint map)
 
     // Update the 'currentmap' music definition.
 
-    VERBOSE( Con_Message("S_MapMusic: Ep %i, map %i, lump %s\n", episode, map, P_GetMapSongLump(map)) )
+    VERBOSE( Con_Message("S_MapMusic: Ep %i, map %i, lump %s", episode, map, P_GetMapSongLump(map)) )
 
     Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(map));
     Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);

@@ -103,7 +103,7 @@ static int musicPlayFile(audiointerface_music_t* iMusic, const char* virtualOrNa
         if(!buf)
         {
             F_Delete(file);
-            Con_Message("Warning: Failed on allocation of %lu bytes for temporary song write buffer.\n", (unsigned long) len);
+            Con_Message("Warning: Failed on allocation of %lu bytes for temporary song write buffer.", (unsigned long) len);
             return false;
         }
         FileHandle_Read(file, buf, len);
@@ -169,9 +169,9 @@ void AudioDriver_Music_Set(int property, void* ptr)
         if(!fn || !fn[0]) return; // No path.
 
         if(F_FileExists(fn))
-            Con_Message("Current soundfont set to: \"%s\"\n", fn);
+            Con_Message("Current soundfont set to: \"%s\"", fn);
         else
-            Con_Message("Warning: Soundfont \"%s\" not found.\n", fn);
+            Con_Message("Warning: Soundfont \"%s\" not found.", fn);
     }
 }
 

@@ -157,7 +157,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         }
         else
         {
-            Con_Message("B_ParseEvent: Unrecognized \"%s\".\n", desc);
+            Con_Message("B_ParseEvent: Unrecognized \"%s\".", desc);
             return false;
         }
     }

@@ -169,7 +169,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
         if(numFrames < 2)
         {
-            Con_Message("Warning:loadAnimDefs: Bad cycle from '%s' to '%s' in sequence #%i, ignoring.\n",
+            Con_Message("Warning: loadAnimDefs: Bad cycle from '%s' to '%s' in sequence #%i, ignoring.",
                         animDefs[i].startname, animDefs[i].endname, i);
             continue;
         }
@@ -189,7 +189,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         {
             AutoStr* from = Uri_ToString(startUri);
             AutoStr* to = Uri_ToString(endUri);
-            Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n", i, Str_Text(from), Str_Text(to), ticsPerFrame);
+            Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i", i, Str_Text(from), Str_Text(to), ticsPerFrame);
         }
 
         // Find an animation group for this.
@@ -227,13 +227,13 @@ void P_InitPicAnims(void)
          * Support for this extension should be considered depreciated.
          * All new features should be added, accessed via DED.
          */
-        VERBOSE( Con_Message("Processing lump %s::ANIMATED...\n", F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum)))) )
+        VERBOSE( Con_Message("Processing lump %s::ANIMATED...", F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum)))) )
         loadAnimDefs((animdef_t*)W_CacheLump(lumpNum), true);
         W_UnlockLump(lumpNum);
         return;
     }}
 
-    VERBOSE( Con_Message("Registering default texture animations...\n") );
+    VERBOSE( Con_Message("Registering default texture animations...") );
     loadAnimDefs(animsShared, false);
 }
 

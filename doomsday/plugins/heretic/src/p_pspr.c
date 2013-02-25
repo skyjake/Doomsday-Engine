@@ -608,7 +608,7 @@ void P_BringUpWeapon(struct player_s* player)
     wminfo = WEAPON_INFO(raiseWeapon, player->class_, (player->powers[PT_WEAPONLEVEL2]? 1:0));
 
 #if _DEBUG
-    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i\n",
+    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
                 (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
 #endif
 
@@ -624,7 +624,7 @@ void P_FireWeapon(player_t *player)
     int                 lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
 #ifdef _DEBUG
-    Con_Message("P_FireWeapon: player %i\n", (int)(player - players));
+    Con_Message("P_FireWeapon: player %i", (int)(player - players));
 #endif
 
     if(!P_CheckAmmo(player))
@@ -634,7 +634,7 @@ void P_FireWeapon(player_t *player)
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
 #ifdef _DEBUG
-    Con_Message("P_FireWeapon: Setting player %i to attack state.\n", (int)(player - players));
+    Con_Message("P_FireWeapon: Setting player %i to attack state.", (int)(player - players));
 #endif
 
     if(player->refire)
@@ -1935,7 +1935,7 @@ void C_DECL A_Egg(mobj_t* mo)
         return;
 
 #ifdef _DEBUG
-    Con_Message("A_Egg: Spawning EGGFXs.\n");
+    Con_Message("A_Egg: Spawning EGGFXs.");
 #endif
 
 #if __JHEXEN__

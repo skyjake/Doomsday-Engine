@@ -144,13 +144,13 @@ void DD_ConsoleInit(void)
     // Get the console online ASAP.
     Con_Init();
 
-    Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".\n");
+    Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".");
 
     // Print the used command line.
-    Con_Message("Command line (%i strings):\n", CommandLine_Count());
+    Con_Message("Command line (%i strings):", CommandLine_Count());
     for(p = 0; p < CommandLine_Count(); ++p)
     {
-        Con_Message("  %i: %s\n", p, CommandLine_At(p));
+        Con_Message("  %i: %s", p, CommandLine_At(p));
     }
 }
 

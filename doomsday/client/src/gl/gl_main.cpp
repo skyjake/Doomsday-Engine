@@ -285,7 +285,7 @@ static void printConfiguration()
     Con_Printf("  Texture Compression: %s\n", enabled[GL_state.features.texCompression? 1:0]);
     Con_Printf("  Texture NPOT: %s\n", enabled[GL_state.features.texNonPowTwo? 1:0]);
     if(GL_state.forceFinishBeforeSwap)
-        Con_Message("  glFinish() forced before swapping buffers.\n");
+        Con_Message("  glFinish() forced before swapping buffers.");
 }
 
 boolean GL_EarlyInit()
@@ -293,7 +293,7 @@ boolean GL_EarlyInit()
     if(novideo) return true;
     if(initGLOk) return true; // Already initialized.
 
-    Con_Message("Initializing Render subsystem...\n");
+    Con_Message("Initializing Render subsystem...");
 
     gamma_support = !CommandLine_Check("-noramp");
 
@@ -310,7 +310,7 @@ boolean GL_EarlyInit()
     // Check the maximum texture size.
     if(GL_state.maxTexSize == 256)
     {
-        Con_Message("Using restricted texture w/h ratio (1:8).\n");
+        Con_Message("Using restricted texture w/h ratio (1:8).");
         ratioLimit = 8;
     }
     // Set a custom maximum size?
@@ -321,12 +321,12 @@ boolean GL_EarlyInit()
         if(GL_state.maxTexSize < customSize)
             customSize = GL_state.maxTexSize;
         GL_state.maxTexSize = customSize;
-        Con_Message("Using maximum texture size of %i x %i.\n", GL_state.maxTexSize, GL_state.maxTexSize);
+        Con_Message("Using maximum texture size of %i x %i.", GL_state.maxTexSize, GL_state.maxTexSize);
     }
     if(CommandLine_Check("-outlines"))
     {
         fillOutlines = false;
-        Con_Message("Textures have outlines.\n");
+        Con_Message("Textures have outlines.");
     }
 
     renderTextures = !CommandLine_Exists("-notex");
@@ -1198,7 +1198,7 @@ D_CMD(ToggleFullscreen)
 
 D_CMD(SetBPP)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc);
+    DENG2_UNUSED2(src, argc);
 
     int attribs[] = {
         DDWA_COLOR_DEPTH_BITS, atoi(argv[1]),
@@ -1209,44 +1209,50 @@ D_CMD(SetBPP)
 
 D_CMD(DisplayModeInfo)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     Window const *wnd = Window_Main();
     DisplayMode const *mode = DisplayMode_Current();
 
-    Con_Message("Current display mode: %i x %i x %i (%i:%i",
-                mode->width, mode->height, mode->depth, mode->ratioX, mode->ratioY);
+    QString str = QString("Current display mode:%1 depth:%2 (%3:%4")
+                      .arg(de::Vector2i(mode->width, mode->height).asText())
+                      .arg(mode->depth)
+                      .arg(mode->ratioX)
+                      .arg(mode->ratioY);
     if(mode->refreshRate > 0)
     {
-        Con_Message(", refresh: %.1f Hz", mode->refreshRate);
+        str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'g', 1);
     }
-    Con_Message(")\nMain window: (%i,%i) %ix%i fullscreen:%s centered:%s maximized:%s\n",
-                Window_X(wnd), Window_Y(wnd), Window_Width(wnd), Window_Height(wnd),
-                Window_IsFullscreen(wnd)? "yes" : "no",
-                Window_IsCentered(wnd)? "yes" : "no",
-                Window_IsMaximized(wnd)? "yes" : "no");
-    Con_Message("Normal geometry: (%i,%i) %ix%i\n",
-                Window_NormalX(wnd), Window_NormalY(wnd),
-                Window_NormalWidth(wnd), Window_NormalHeight(wnd));
+    str += QString(")\nMain window origin:%1 dimensions:%2 fullscreen:%3 centered:%4 maximized:%5")
+                .arg(de::Vector2i(Window_X(wnd), Window_Y(wnd)).asText())
+                .arg(de::Vector2i(Window_Width(wnd), Window_Height(wnd)).asText())
+                .arg(Window_IsFullscreen(wnd)? "yes" : "no")
+                .arg(Window_IsCentered(wnd)  ? "yes" : "no")
+                .arg(Window_IsMaximized(wnd) ? "yes" : "no");
+    str += QString("\nNormal geometry:%1 %2")
+                .arg(de::Vector2i(Window_NormalX(wnd), Window_NormalY(wnd)).asText())
+                .arg(de::Vector2i(Window_NormalWidth(wnd), Window_NormalHeight(wnd)).asText());
+
+    Con_Message(str.toUtf8().constData());
     return true;
 }
 
 D_CMD(ListDisplayModes)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
-    Con_Message("There are %i display modes available:\n", DisplayMode_Count());
+    Con_Message("There are %i display modes available:", DisplayMode_Count());
     for(int i = 0; i < DisplayMode_Count(); ++i)
     {
         DisplayMode const *mode = DisplayMode_ByIndex(i);
         if(mode->refreshRate > 0)
         {
-            Con_Message("  %i x %i x %i (%i:%i, refresh: %.1f Hz)\n", mode->width, mode->height,
+            Con_Message("  %i x %i x %i (%i:%i, refresh: %.1f Hz)", mode->width, mode->height,
                         mode->depth, mode->ratioX, mode->ratioY, mode->refreshRate);
         }
         else
         {
-            Con_Message("  %i x %i x %i (%i:%i)\n", mode->width, mode->height,
+            Con_Message("  %i x %i x %i (%i:%i)", mode->width, mode->height,
                         mode->depth, mode->ratioX, mode->ratioY);
         }
     }
@@ -1255,10 +1261,10 @@ D_CMD(ListDisplayModes)
 
 D_CMD(UpdateGammaRamp)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     GL_SetGamma();
-    Con_Printf("Gamma ramp set.\n");
+    Con_Message("Gamma ramp set.");
     return true;
 }
 

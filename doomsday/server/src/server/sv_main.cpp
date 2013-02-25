@@ -222,7 +222,7 @@ void Sv_HandlePlayerInfoFromClient(client_t* sender)
 
     assert(netBuffer.player == (sender - clients));
 #ifdef _DEBUG
-    Con_Message("Sv_HandlePlayerInfoFromClient: from=%i, console=%i\n", netBuffer.player, console);
+    Con_Message("Sv_HandlePlayerInfoFromClient: from=%i, console=%i", netBuffer.player, console);
 #endif
     console = netBuffer.player;
 
@@ -378,7 +378,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
         finaleid_t fid = Reader_ReadUInt32(msgReader);
         uint16_t params = Reader_ReadUInt16(msgReader);
 #ifdef _DEBUG
-        Con_Message("PCL_FINALE_REQUEST: fid=%i params=%i\n", fid, params);
+        Con_Message("PCL_FINALE_REQUEST: fid=%i params=%i", fid, params);
 #endif
         if(params == 1)
         {
@@ -426,7 +426,7 @@ void Sv_Login(void)
 
     // OK!
     netRemoteUser = netBuffer.player;
-    Con_Message("Sv_Login: %s (client %i) logged in.\n",
+    Con_Message("Sv_Login: %s (client %i) logged in.",
                 clients[netRemoteUser].name, netRemoteUser);
     // Send a confirmation packet to the client.
     Msg_Begin(PKT_LOGIN);
@@ -449,7 +449,7 @@ void Sv_ExecuteCommand(void)
 
     if(!netRemoteUser)
     {
-        Con_Message("Sv_ExecuteCommand: Cmd received but no one's logged in!\n");
+        Con_Message("Sv_ExecuteCommand: Cmd received but no one's logged in!");
         return;
     }
     // The command packet is very simple.
@@ -528,7 +528,7 @@ void Sv_GetPackets(void)
             acked->origin = Reader_ReadInt32(msgReader);
             acked->mom = Reader_ReadInt32(msgReader);
 #ifdef _DEBUG
-            Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\n",
+            Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).",
                         netBuffer.player,
                         acked->angles,
                         ddpl->fixCounter.angles,
@@ -582,7 +582,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
 {
     int                 i;
 
-    Con_Message("Sv_PlayerArrives: '%s' has arrived.\n", name);
+    Con_Message("Sv_PlayerArrives: '%s' has arrived.", name);
 
     // We need to find the new player a client entry.
     for(i = 1; i < DDMAXPLAYERS; ++i)
@@ -645,7 +645,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     plr = &ddPlayers[plrNum];
 
     // Print a little something in the console.
-    Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left, was connected for %f seconds.\n",
+    Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left, was connected for %f seconds.",
                 cl->name, plrNum, Timer_RealSeconds() - cl->enterTime);
 
     wasInGame = plr->shared.inGame;
@@ -686,7 +686,7 @@ void Sv_Handshake(int plrNum, boolean newPlayer)
     uint playersInGame = 0;
 
 #ifdef _DEBUG
-    Con_Message("Sv_Handshake: Shaking hands with player %i.\n", plrNum);
+    Con_Message("Sv_Handshake: Shaking hands with player %i.", plrNum);
 #endif
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -797,7 +797,7 @@ void Sv_StartNetGame(void)
     // Prepare the material dictionary we'll be using with clients.
     materialDict = MaterialArchive_New(false);
 #ifdef _DEBUG
-    Con_Message("Sv_StartNetGame: Prepared material dictionary with %i materials.\n",
+    Con_Message("Sv_StartNetGame: Prepared material dictionary with %i materials.",
                 MaterialArchive_Count(materialDict));
 #endif
 
@@ -888,7 +888,7 @@ void Sv_SendPlayerFixes(int plrNum)
     Writer_WriteUInt16(msgWriter, ddpl->mo->thinker.id);
 
 #ifdef _DEBUG
-    Con_Message("Sv_SendPlayerFixes: Fixing mobj %i...\n", ddpl->mo->thinker.id);
+    Con_Message("Sv_SendPlayerFixes: Fixing mobj %i...", ddpl->mo->thinker.id);
 #endif
 
     // Increment counters.
@@ -899,7 +899,7 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteFloat(msgWriter, ddpl->lookDir);
 
 #ifdef _DEBUG
-        Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%x lookdir=%f\n",
+        Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%x lookdir=%f",
                     ddpl->fixCounter.angles, ddpl->mo->angle, ddpl->lookDir);
 #endif
     }
@@ -912,7 +912,7 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteFloat(msgWriter, ddpl->mo->origin[VZ]);
 
 #ifdef _DEBUG
-        Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
+        Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f",
                     ddpl->fixCounter.origin,
                     ddpl->mo->origin[VX], ddpl->mo->origin[VY], ddpl->mo->origin[VZ]);
 #endif
@@ -926,7 +926,7 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteFloat(msgWriter, ddpl->mo->mom[MZ]);
 
 #ifdef _DEBUG
-        Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
+        Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f",
                     ddpl->fixCounter.mom,
                     ddpl->mo->mom[MX], ddpl->mo->mom[MY], ddpl->mo->mom[MZ]);
 #endif
@@ -939,7 +939,7 @@ void Sv_SendPlayerFixes(int plrNum)
 
     ddpl->flags &= ~(DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM);
 #ifdef _DEBUG
-    Con_Message("Sv_SendPlayerFixes: Cleared FIX flags of player %i.\n", plrNum);
+    Con_Message("Sv_SendPlayerFixes: Cleared FIX flags of player %i.", plrNum);
 #endif
 
     // Clear the smoother for this client.
@@ -1125,14 +1125,14 @@ void Sv_ClientCoords(int plrNum)
     if(ddpl->fixCounter.angles == ddpl->fixAcked.angles && !(ddpl->flags & DDPF_FIXANGLES))
     {
 #ifdef _DEBUG
-        VERBOSE2( Con_Message("Sv_ClientCoords: Setting angles for player %i: %x, %f\n", plrNum, clientAngle, clientLookDir) );
+        VERBOSE2( Con_Message("Sv_ClientCoords: Setting angles for player %i: %x, %f", plrNum, clientAngle, clientLookDir) );
 #endif
         mo->angle = clientAngle;
         ddpl->lookDir = clientLookDir;
     }
 
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("Sv_ClientCoords: Received coords for player %i: %f, %f, %f\n", plrNum,
+    VERBOSE2( Con_Message("Sv_ClientCoords: Received coords for player %i: %f, %f, %f", plrNum,
                           clientPos[VX], clientPos[VY], clientPos[VZ]) );
 #endif
 
@@ -1141,7 +1141,7 @@ void Sv_ClientCoords(int plrNum)
     if(Sv_CanTrustClientPos(plrNum))
     {
 #ifdef _DEBUG
-        VERBOSE2( Con_Message("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f\n", plrNum,
+        VERBOSE2( Con_Message("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f", plrNum,
                               clientPos[VX], clientPos[VY], clientPos[VZ]) );
 #endif
         Smoother_AddPos(clients[plrNum].smoother, clientGameTime,

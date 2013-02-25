@@ -82,7 +82,7 @@ static int sendMCICmd(char* returnInfo, int returnLength,
     if((error = mciSendStringA(buf, returnInfo, returnLength, NULL)))
     {
         mciGetErrorStringA(error, buf, 300);
-        Con_Message("DM_WinCD: %s\n", buf);
+        Con_Message("DM_WinCD: %s", buf);
 
         return false;
     }

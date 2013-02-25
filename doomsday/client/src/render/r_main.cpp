@@ -694,7 +694,7 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
     if(abs(int(dst->angle) - int(src->angle)) >= ANGLE_45)
     {
 #ifdef _DEBUG
-        Con_Message("R_CheckViewerLimits: Snap camera angle to %08x.\n", dst->angle);
+        Con_Message("R_CheckViewerLimits: Snap camera angle to %08x.", dst->angle);
 #endif
         src->angle = dst->angle;
     }
@@ -928,7 +928,7 @@ void R_UpdateViewer(int consoleNum)
             float yaw = (double)smoothView.angle / ANGLE_MAX * 360;
 
             Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
-                        "Rdx=%-10.3f Rdy=%-10.3f\n",
+                        "Rdx=%-10.3f Rdy=%-10.3f",
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
                         sysTime - old->time,
@@ -953,7 +953,7 @@ void R_UpdateViewer(int consoleNum)
             static oldpos_t oldpos[DDMAXPLAYERS];
             oldpos_t *old = &oldpos[viewPlayer - ddPlayers];
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f\n",
+            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f",
                         //"Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
@@ -1187,7 +1187,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
         float time = sysTime - devCameraMovementStartTime;
         float elapsed = time - prevTime;
 
-        Con_Message("%f,%f,%f,%f,%f\n", Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs,
+        Con_Message("%f,%f,%f,%f,%f", Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs,
                     time, elapsed, speed/elapsed, speed/elapsed - prevSpeed);
 
         V3f_Copy(prevPos, vd->current.pos);

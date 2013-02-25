@@ -566,7 +566,7 @@ struct ddwindow_s
 
         if(!changed)
         {
-            VERBOSE(Con_Message("New window attributes same as before.\n"));
+            VERBOSE(Con_Message("New window attributes same as before."));
             return true;
         }
 
@@ -962,7 +962,7 @@ boolean Sys_ShutdownWindowManager(void)
  */
 static boolean createContext(void)
 {
-    Con_Message("createContext: OpenGL.\n");
+    Con_Message("createContext: OpenGL.");
 
 #if 0
     // Set GL attributes.  We want at least 5 bits per color and a 16

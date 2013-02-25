@@ -78,7 +78,7 @@ void Cl_ReadServerMaterials(void)
     MaterialArchive_Read(serverMaterials, msgReader, -1 /*no forced version*/);
 
 #ifdef _DEBUG
-    Con_Message("Cl_ReadServerMaterials: Received %i materials.\n", MaterialArchive_Count(serverMaterials));
+    Con_Message("Cl_ReadServerMaterials: Received %i materials.", MaterialArchive_Count(serverMaterials));
 #endif
 }
 
@@ -103,7 +103,7 @@ void Cl_ReadServerMobjTypeIDs(void)
     StringArray* ar = StringArray_New();
     StringArray_Read(ar, msgReader);
 #ifdef _DEBUG
-    Con_Message("Cl_ReadServerMobjTypeIDs: Received %i mobj type IDs.\n", StringArray_Size(ar));
+    Con_Message("Cl_ReadServerMobjTypeIDs: Received %i mobj type IDs.", StringArray_Size(ar));
 #endif
 
     setTableSize(&xlatMobjType, StringArray_Size(ar));
@@ -114,7 +114,7 @@ void Cl_ReadServerMobjTypeIDs(void)
         xlatMobjType.serverToLocal[i] = Def_GetMobjNum(StringArray_At(ar, i));
         if(xlatMobjType.serverToLocal[i] < 0)
         {
-            Con_Message("Could not find '%s' in local thing definitions.\n",
+            Con_Message("Could not find '%s' in local thing definitions.",
                         StringArray_At(ar, i));
         }
     }
@@ -128,7 +128,7 @@ void Cl_ReadServerMobjStateIDs(void)
     StringArray* ar = StringArray_New();
     StringArray_Read(ar, msgReader);
 #ifdef _DEBUG
-    Con_Message("Cl_ReadServerMobjStateIDs: Received %i mobj state IDs.\n", StringArray_Size(ar));
+    Con_Message("Cl_ReadServerMobjStateIDs: Received %i mobj state IDs.", StringArray_Size(ar));
 #endif
 
     setTableSize(&xlatMobjState, StringArray_Size(ar));
@@ -139,7 +139,7 @@ void Cl_ReadServerMobjStateIDs(void)
         xlatMobjState.serverToLocal[i] = Def_GetStateNum(StringArray_At(ar, i));
         if(xlatMobjState.serverToLocal[i] < 0)
         {
-            Con_Message("Could not find '%s' in local state definitions.\n",
+            Con_Message("Could not find '%s' in local state definitions.",
                         StringArray_At(ar, i));
         }
     }
@@ -152,7 +152,7 @@ static Material *Cl_FindLocalMaterial(materialarchive_serialid_t archId)
     if(!serverMaterials)
     {
         // Can't do it.
-        Con_Message("Cl_FindLocalMaterial: Cannot translate serial id %i, server has not sent its materials!\n", archId);
+        Con_Message("Cl_FindLocalMaterial: Cannot translate serial id %i, server has not sent its materials!", archId);
         return 0;
     }
     return (Material *)MaterialArchive_Find(serverMaterials, archId, 0);
@@ -325,7 +325,7 @@ void Cl_MoverThinker(clplane_t* mover)
 #ifdef _DEBUG
     if(GameMap_ClPlaneIndex(map, mover) < 0)
     {
-        Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!\n");
+        Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!");
     }
 #endif
 
@@ -576,7 +576,7 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
     clpolyobj_t* mover = Cl_FindOrMakeActivePoly(number);
     if(!mover)
     {
-        Con_Message("Cl_SetPolyMover: Out of polymovers.\n");
+        Con_Message("Cl_SetPolyMover: Out of polymovers.");
         return;
     }
 
@@ -865,7 +865,7 @@ void Cl_ReadPolyDelta2(boolean skip)
         angleSpeed = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
 
 /*#ifdef _DEBUG
-    Con_Message("Cl_ReadPolyDelta2: PO %i, angle %f, speed %f\n", num, FIX2FLT(destAngle), FIX2FLT(angleSpeed));
+    Con_Message("Cl_ReadPolyDelta2: PO %i, angle %f, speed %f", num, FIX2FLT(destAngle), FIX2FLT(angleSpeed));
 #endif*/
 
     if(skip)

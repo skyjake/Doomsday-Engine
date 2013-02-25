@@ -67,7 +67,7 @@ int DS_Init(void)
     fsSynth = new_fluid_synth(fsConfig);
     if(!fsSynth)
     {
-        Con_Message("Failed to create FluidSynth synthesizer.\n");
+        Con_Message("Failed to create FluidSynth synthesizer.");
         return false;
     }
 
@@ -82,7 +82,7 @@ int DS_Init(void)
     fsDriver = new_fluid_audio_driver(fsConfig, fsSynth);
     if(!fsDriver)
     {
-        Con_Message("Failed to create FluidSynth audio driver '%s'.\n", driverName);
+        Con_Message("Failed to create FluidSynth audio driver '%s'.", driverName);
         return false;
     }
 #else

@@ -68,7 +68,7 @@ Blockmap* Blockmap_New(coord_t const min[2], coord_t const max[2], uint cellWidt
     height = (uint)ceil((max[1] - min[1]) / (coord_t)cellHeight);
     bm->gridmap = Gridmap_New(width, height, sizeof(BlockmapCellData), PU_MAPSTATIC);
 
-    VERBOSE( Con_Message("Blockmap::New: Width:%u Height:%u\n", width, height) )
+    VERBOSE( Con_Message("Blockmap::New: Width:%u Height:%u", width, height) )
     return bm;
 }
 

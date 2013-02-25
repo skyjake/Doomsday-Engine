@@ -116,7 +116,7 @@ void R_UpdateViewFilter(int player)
     if(player < 0 || player >= MAXPLAYERS)
     {
 #if _DEBUG
-        Con_Message("Warning:R_UpdateViewFilter: Invalid player #%i, ignoring.\n", player);
+        Con_Message("Warning: R_UpdateViewFilter: Invalid player #%i, ignoring.", player);
 #endif
         return;
     }
@@ -180,7 +180,7 @@ static void rendPlayerView(int player)
 
     if(!plr->plr->mo)
     {
-        Con_Message("rendPlayerView: Rendering view of player %i, who has no mobj!\n", player);
+        Con_Message("rendPlayerView: Rendering view of player %i, who has no mobj!", player);
         return;
     }
 

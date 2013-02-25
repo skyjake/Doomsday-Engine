@@ -372,7 +372,7 @@ void B_DeleteMatching(bcontext_t* bc, evbinding_t* eventBinding,
         if(bid)
         {
             Con_Message("B_BindCommand: Deleting binding %i, it has been overridden by "
-                        "binding %i.\n", bid, eventBinding? eventBinding->bid : deviceBinding->bid);
+                        "binding %i.", bid, eventBinding? eventBinding->bid : deviceBinding->bid);
             B_DeleteBinding(bc, bid);
         }
     }
@@ -428,7 +428,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         localNum = strtoul(Str_Text(str) + 5, NULL, 10) - 1;
         if(localNum < 0 || localNum >= DDMAXPLAYERS)
         {
-            Con_Message("B_BindControl: Local player number %i is invalid.\n", localNum);
+            Con_Message("B_BindControl: Local player number %i is invalid.", localNum);
             return NULL;
         }
 
@@ -441,7 +441,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     control = P_PlayerControlByName(Str_Text(str));
     if(!control)
     {
-        Con_Message("B_BindControl: Player control \"%s\" not defined.\n", Str_Text(str));
+        Con_Message("B_BindControl: Player control \"%s\" not defined.", Str_Text(str));
         return NULL;
     }
 
@@ -451,7 +451,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         bc = B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME);
     }
     VERBOSE( Con_Message("B_BindControl: Control '%s' in context '%s' of local player %i to be "
-                         "bound to '%s'.\n", control->name, bc->name, localNum, device) );
+                         "bound to '%s'.", control->name, bc->name, localNum, device) );
 
     if((conBin = B_FindControlBinding(bc, control->id)) == NULL)
     {
@@ -628,7 +628,7 @@ D_CMD(ActivateBindingContext)
 
     if(bc->flags & BCF_PROTECTED)
     {
-        Con_Message("Binding Context '%s' is protected. It can not be manually %s.\n", bc->name,
+        Con_Message("Binding Context '%s' is protected. It can not be manually %s.", bc->name,
                     doActivate? "activated" : "deactivated");
         return false;
     }
@@ -869,7 +869,7 @@ boolean B_Responder(ddevent_t* ev)
         echo.type = E_SYMBOLIC;
         echo.symbolic.id = 0;
         echo.symbolic.name = Str_Text(&name);
-        VERBOSE( Con_Message("B_Responder: Symbolic echo: %s\n", echo.symbolic.name) );
+        VERBOSE( Con_Message("B_Responder: Symbolic echo: %s", echo.symbolic.name) );
         DD_PostEvent(&echo);
         Str_Free(&name);
         return true;

@@ -707,7 +707,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
 #ifdef _DEBUG
     if(df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
-        Con_Message("Sector %i: ceiling state change noted (target = %f)\n", number, s->planes[PLN_CEILING]->target);
+        Con_Message("Sector %i: ceiling state change noted (target = %f)", number, s->planes[PLN_CEILING]->target);
     }
 #endif
 
@@ -2275,7 +2275,7 @@ void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
 #ifdef _DEBUG
-            VERBOSE( Con_Message("Sv_NewPolyDeltas: Change in %i\n", i) );
+            VERBOSE( Con_Message("Sv_NewPolyDeltas: Change in %i", i) );
 #endif
             Sv_AddDeltaToPools(&delta, targets);
         }

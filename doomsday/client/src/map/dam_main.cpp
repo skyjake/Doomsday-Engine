@@ -187,7 +187,7 @@ static bool convertMap(GameMap** map, archivedmap_t* dam)
 
     VERBOSE(
         AutoStr* path = Uri_ToString(dam->uri);
-        Con_Message("convertMap: Attempting conversion of '%s'.\n", Str_Text(path));
+        Con_Message("convertMap: Attempting conversion of '%s'.", Str_Text(path));
         );
 
     // Any converters available?
@@ -208,7 +208,7 @@ static bool convertMap(GameMap** map, archivedmap_t* dam)
     }
 
     if(!converted || verbose >= 2)
-        Con_Message("convertMap: %s.\n", (converted? "Successful" : "Failed"));
+        Con_Message("convertMap: %s.", (converted? "Successful" : "Failed"));
 
     return converted;
 }
@@ -363,7 +363,7 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
 
             { uint startTime = Timer_RealMilliseconds();
             GameMap_InitSkyFix(map);
-            VERBOSE2( Con_Message("Initial sky fix done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+            VERBOSE2( Con_Message("Initial sky fix done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
             }
         }
     }

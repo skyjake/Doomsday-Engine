@@ -181,7 +181,7 @@ boolean R_SetDefaultColorPalette(colorpaletteid_t id)
         defaultColorPalette = id;
         return true;
     }
-    VERBOSE( Con_Message("R_SetDefaultColorPalette: Invalid id %u.\n", id) );
+    VERBOSE( Con_Message("R_SetDefaultColorPalette: Invalid id %u.", id) );
     return false;
 }
 
@@ -360,7 +360,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
         return;
     }
 
-    Con_Message("Warning:R_GetColorPaletteRGBubv: Failed to locate ColorPalette for id %i.\n", paletteId);
+    Con_Message("Warning: R_GetColorPaletteRGBubv: Failed to locate ColorPalette for id %i.", paletteId);
 }
 
 #undef R_GetColorPaletteRGBf
@@ -395,5 +395,5 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
         return;
     }
 
-    Con_Message("Warning:R_GetColorPaletteRGBf: Failed to locate ColorPalette for id %i.\n", paletteId);
+    Con_Message("Warning: R_GetColorPaletteRGBf: Failed to locate ColorPalette for id %i.", paletteId);
 }

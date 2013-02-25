@@ -405,7 +405,7 @@ D_CMD(FlareConfig)
         {
             for(i = 0; i < NUM_FLARES; ++i)
             {
-                Con_Message("%i: pos:%f s:%.2f a:%.2f tex:%i\n", i,
+                Con_Message("%i: pos:%f s:%.2f a:%.2f tex:%i", i,
                             flares[i].offset, flares[i].size, flares[i].alpha,
                             flares[i].texture);
             }

@@ -260,7 +260,7 @@ DENG2_PIMPL(Updater)
 
         if(reply->error() != QNetworkReply::NoError)
         {
-            Con_Message("Network request failed: %s\n", reply->url().toString().toUtf8().constData());
+            Con_Message("Network request failed: %s", reply->url().toString().toUtf8().constData());
             return;
         }
 
@@ -303,7 +303,7 @@ DENG2_PIMPL(Updater)
         // Is this newer than what we're running?
         if(latestVersion > currentVersion || alwaysShowNotification)
         {
-            Con_Message("Found an update: %s\n", latestVersion.asText().toUtf8().constData());
+            Con_Message("Found an update: %s", latestVersion.asText().toUtf8().constData());
 
             // Automatically switch to windowed mode for convenience.
             bool wasFull = switchToWindowedMode();
@@ -314,7 +314,7 @@ DENG2_PIMPL(Updater)
         }
         else
         {
-            Con_Message("You are running the latest available %s release.\n",
+            Con_Message("You are running the latest available %s release.",
                         UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
         }
     }
@@ -586,6 +586,6 @@ void Updater_ShowSettings(void)
 
 void Updater_PrintLastUpdated(void)
 {
-    Con_Message("Latest update check was made %s.\n",
+    Con_Message("Latest update check was made %s.",
                 UpdaterSettings().lastCheckAgo().toAscii().constData());
 }

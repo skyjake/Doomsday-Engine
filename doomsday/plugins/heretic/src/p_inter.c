@@ -855,7 +855,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
     else
     {
-        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.\n",
+        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.",
                     (int) special->type);
     }
 
@@ -988,7 +988,7 @@ boolean P_MorphPlayer(player_t* player)
     int oldFlags2;
 
 #ifdef _DEBUG
-    Con_Message("P_MorphPlayer: Player %i.\n", (int)(player - players));
+    Con_Message("P_MorphPlayer: Player %i.", (int)(player - players));
 #endif
 
     if(player->morphTics)
@@ -1204,13 +1204,13 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     }
 
 #ifdef _DEBUG
-    Con_Message("P_DamageMobj2: Damaging %i with %i points.\n", target->thinker.id, damage);
+    Con_Message("P_DamageMobj2: Damaging %i with %i points.", target->thinker.id, damage);
 #endif
 
     if(!(target->flags & MF_SHOOTABLE))
     {
 #ifdef _DEBUG
-        Con_Message("P_DamageMobj2: Target %i is not shootable!\n", target->thinker.id);
+        Con_Message("P_DamageMobj2: Target %i is not shootable!", target->thinker.id);
 #endif
         return 0; // Shouldn't happen...
     }

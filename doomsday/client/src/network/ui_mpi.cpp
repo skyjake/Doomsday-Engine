@@ -501,10 +501,10 @@ void MPIUpdateServerList(void)
                stricmp(info.gameIdentityKey, Str_Text(App_CurrentGame().identityKey())) ||
                !info.canJoin)
             {
-                Con_Message("Server %s filtered out:\n", info.name);
-                Con_Message("  remote = %i, local = %i\n", info.version, DOOMSDAY_VERSION);
-                Con_Message("  remote = %s, local = %s\n", info.gameIdentityKey, Str_Text(App_CurrentGame().identityKey()));
-                Con_Message("  can join = %i\n", info.canJoin);
+                Con_Message("Server %s filtered out:", info.name);
+                Con_Message("  remote = %i, local = %i", info.version, DOOMSDAY_VERSION);
+                Con_Message("  remote = %s, local = %s", info.gameIdentityKey, Str_Text(App_CurrentGame().identityKey()));
+                Con_Message("  can join = %i", info.canJoin);
                 continue;
             }
 
@@ -638,7 +638,7 @@ void DD_NetSetup(int serverMode)
 {
     if(!App_GameLoaded())
     {
-        Con_Message("%s setup can only be activated when a game is loaded.\n", serverMode? "Server" : "Client");
+        Con_Message("%s setup can only be activated when a game is loaded.", serverMode? "Server" : "Client");
         return;
     }
 

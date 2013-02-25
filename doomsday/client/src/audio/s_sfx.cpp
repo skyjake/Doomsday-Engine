@@ -714,7 +714,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
                  * stop enough channels to accommodate the limitation.
                  */
 #ifdef _DEBUG
-                Con_Message("Sfx_StartSound: Not playing %i because channels are busy.\n", sample->id);
+                Con_Message("Sfx_StartSound: Not playing %i because channels are busy.", sample->id);
 #endif
                 return false;
             }
@@ -803,7 +803,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     {   // A suitable channel was not found.
         END_COP;
 #ifdef _DEBUG
-        Con_Message("Sfx_StartSound: Failed to find suitable channel for sample %i.\n", sample->id);
+        Con_Message("Sfx_StartSound: Failed to find suitable channel for sample %i.", sample->id);
 #endif
         return false;
     }
@@ -935,7 +935,7 @@ void Sfx_StartFrame(void)
     // Check that the rate is valid.
     if(sfxSampleRate != 11025 && sfxSampleRate != 22050 && sfxSampleRate != 44100)
     {
-        Con_Message("Sfx_StartFrame: sound-rate corrected to 11025.\n");
+        Con_Message("Sfx_StartFrame: sound-rate corrected to 11025.");
         sfxSampleRate = 11025;
     }
 
@@ -989,8 +989,7 @@ static void createChannels(int num2D, int bits, int rate)
         ch->buffer = AudioDriver_SFX()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
         if(!ch->buffer)
         {
-            Con_Message("Sfx_CreateChannels: Failed to create "
-                        "buffer for #%i.\n", i);
+            Con_Message("Sfx_CreateChannels: Failed to create buffer for #%i.", i);
             continue;
         }
     }
@@ -1028,7 +1027,7 @@ void Sfx_InitChannels(void)
         if(numChannels > SFX_MAX_CHANNELS)
             numChannels = SFX_MAX_CHANNELS;
 
-        Con_Message("Sfx_InitChannels: %i channels.\n", numChannels);
+        Con_Message("Sfx_InitChannels: %i channels.", numChannels);
     }
 
     // Allocate and init the channels.
@@ -1075,7 +1074,7 @@ void Sfx_StartRefresh(void)
     else
     {
 noRefresh:
-        VERBOSE( Con_Message("Sfx_StartRefresh: Driver does not require a refresh thread.\n") );
+        VERBOSE( Con_Message("Sfx_StartRefresh: Driver does not require a refresh thread.") );
     }
 }
 
@@ -1092,11 +1091,11 @@ boolean Sfx_Init(void)
     // Check if sound has been disabled with a command line option.
     if(CommandLine_Exists("-nosfx"))
     {
-        Con_Message("Sound Effects disabled.\n");
+        Con_Message("Sound Effects disabled.");
         return true;
     }
 
-    VERBOSE( Con_Message("Initializing Sound Effects subsystem...\n") )
+    VERBOSE( Con_Message("Initializing Sound Effects subsystem...") )
 
     if(!AudioDriver_SFX())
     {   // No interface for SFX playback.

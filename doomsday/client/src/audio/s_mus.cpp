@@ -82,11 +82,11 @@ boolean Mus_Init(void)
 
     if(isDedicated || CommandLine_Exists("-nomusic"))
     {
-        Con_Message("Music disabled.\n");
+        Con_Message("Music disabled.");
         return true;
     }
 
-    VERBOSE( Con_Message("Initializing Music subsystem...\n") );
+    VERBOSE( Con_Message("Initializing Music subsystem...") );
 
     // Let's see which interfaces are available for music playback.
     count = getInterfaces(iMusic);
@@ -103,7 +103,7 @@ boolean Mus_Init(void)
     {
         if(!iMusic[i]->Init())
         {
-            Con_Message("Warning: Failed to initialize %s for music playback.\n",
+            Con_Message("Warning: Failed to initialize %s for music playback.",
                         Str_Text(AudioDriver_InterfaceName(iMusic[i])));
         }
     }
@@ -320,8 +320,8 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
         buf = (uint8_t*) malloc(lumpLength);
         if(!buf)
         {
-            Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for "
-                        "temporary MUS to MIDI conversion buffer.\n", (unsigned long) lumpLength);
+            Con_Message("Warning: Mus_Start: Failed on allocation of %lu bytes for "
+                        "temporary MUS to MIDI conversion buffer.", (unsigned long) lumpLength);
             return 0;
         }
 
@@ -409,7 +409,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
             Str_Init(&path);
             if(Mus_GetExt(def, &path))
             {
-                VERBOSE( Con_Message("Attempting to play song '%s' (file \"%s\").\n",
+                VERBOSE( Con_Message("Attempting to play song '%s' (file \"%s\").",
                                      def->id, F_PrettyPath(Str_Text(&path))) )
 
                 // Its an external file.

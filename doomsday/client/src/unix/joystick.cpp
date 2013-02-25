@@ -72,14 +72,14 @@ static void initialize(void)
 
     if(SDL_InitSubSystem(SDL_INIT_JOYSTICK))
     {
-        Con_Message("SDL init failed for joystick: %s\n", SDL_GetError());
+        Con_Message("SDL init failed for joystick: %s", SDL_GetError());
     }
 
     if((joycount = SDL_NumJoysticks()) > 0)
     {
         if(joydevice > joycount)
         {
-            Con_Message("I_InitJoystick: joydevice = %i, out of range.\n",
+            Con_Message("I_InitJoystick: joydevice = %i, out of range.",
                         joydevice);
             joy = SDL_JoystickOpen(0);
         }
@@ -90,7 +90,7 @@ static void initialize(void)
     if(joy)
     {
         // Show some info.
-        Con_Message("I_InitJoystick: %s\n", SDL_JoystickName(SDL_JoystickIndex(joy)));
+        Con_Message("I_InitJoystick: %s", SDL_JoystickName(SDL_JoystickIndex(joy)));
 
         // We'll handle joystick events manually
         SDL_JoystickEventState(SDL_ENABLE);
@@ -98,7 +98,7 @@ static void initialize(void)
         if(verbose)
         {
             Con_Message("I_InitJoystick: Joystick reports %i axes, %i buttons, %i hats, "
-                        "and %i trackballs.\n",
+                        "and %i trackballs.",
                         SDL_JoystickNumAxes(joy),
                         SDL_JoystickNumButtons(joy),
                         SDL_JoystickNumHats(joy),
@@ -109,7 +109,7 @@ static void initialize(void)
     }
     else
     {
-        Con_Message("I_InitJoystick: No joysticks found\n");
+        Con_Message("I_InitJoystick: No joysticks found");
         joyAvailable = false;
     }
 }

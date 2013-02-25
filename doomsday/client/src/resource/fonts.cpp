@@ -1651,7 +1651,7 @@ D_CMD(ListFonts)
 
     if(!Fonts_Size())
     {
-        Con_Message("There are currently no fonts defined/loaded.\n");
+        Con_Message("There are currently no fonts defined/loaded.");
         return true;
     }
 
@@ -1704,11 +1704,11 @@ D_CMD(ListFonts)
 #if _DEBUG
 D_CMD(PrintFontStats)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argv); DENG_UNUSED(argc);
+    DENG2_UNUSED3(src, argv, argc);
 
     if(!Fonts_Size())
     {
-        Con_Message("There are currently no fonts defined/loaded.\n");
+        Con_Message("There are currently no fonts defined/loaded.");
         return true;
     }
 

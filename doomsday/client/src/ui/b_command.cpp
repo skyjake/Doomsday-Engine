@@ -189,14 +189,14 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
     }
     else
     {
-        Con_Message("B_ParseEvent: Device \"%s\" unknown.\n", Str_Text(str));
+        Con_Message("B_ParseEvent: Device \"%s\" unknown.", Str_Text(str));
         return false;
     }
 
     // Anything left that wasn't used?
     if(desc)
     {
-        Con_Message("B_ParseEvent: Unrecognized \"%s\".\n", desc);
+        Con_Message("B_ParseEvent: Unrecognized \"%s\".", desc);
         return false;
     }
 

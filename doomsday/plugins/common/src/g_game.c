@@ -703,7 +703,7 @@ void R_LoadColorPalettes(void)
                 name[7] = 'A' + idx - 10;
             idx++;
 #ifdef _DEBUG
-            Con_Message("Reading translation table '%s' as tclass=%i tmap=%i.\n", name, cl, i);
+            Con_Message("Reading translation table '%s' as tclass=%i tmap=%i.", name, cl, i);
 #endif
             if(-1 != (lumpNum = W_CheckLumpNumForName(name)))
             {
@@ -891,7 +891,7 @@ void R_InitRefresh(void)
 {
     if(IS_DEDICATED) return;
 
-    VERBOSE( Con_Message("R_InitRefresh: Loading data for referesh.\n") );
+    VERBOSE( Con_Message("R_InitRefresh: Loading data for referesh.") );
 
     // Setup the view border.
     cfg.screenBlocks = cfg.setBlocks;
@@ -931,17 +931,17 @@ void R_InitHud(void)
     Hu_LoadData();
 
 #if __JHERETIC__ || __JHEXEN__
-    VERBOSE( Con_Message("Initializing inventory...\n") )
+    VERBOSE( Con_Message("Initializing inventory...") )
     Hu_InventoryInit();
 #endif
 
-    VERBOSE2( Con_Message("Initializing statusbar...\n") )
+    VERBOSE2( Con_Message("Initializing statusbar...") )
     ST_Init();
 
-    VERBOSE2( Con_Message("Initializing menu...\n") )
+    VERBOSE2( Con_Message("Initializing menu...") )
     Hu_MenuInit();
 
-    VERBOSE2( Con_Message("Initializing status-message/question system...\n") )
+    VERBOSE2( Con_Message("Initializing status-message/question system...") )
     Hu_MsgInit();
 }
 
@@ -963,10 +963,10 @@ void G_CommonPostInit(void)
     XG_ReadTypes();
 #endif
 
-    VERBOSE( Con_Message("Initializing playsim...\n") )
+    VERBOSE( Con_Message("Initializing playsim...") )
     P_Init();
 
-    VERBOSE( Con_Message("Initializing head-up displays...\n") )
+    VERBOSE( Con_Message("Initializing head-up displays...") )
     R_InitHud();
 
     G_InitEventSequences();
@@ -1086,7 +1086,7 @@ void G_ChangeGameState(gamestate_t state)
     {
 #if _DEBUG
         // Log gamestate changes in debug builds, with verbose.
-        Con_Message("G_ChangeGameState: New state %s.\n", getGameStateStr(state));
+        Con_Message("G_ChangeGameState: New state %s.", getGameStateStr(state));
 #endif
         gameState = state;
     }
@@ -1167,7 +1167,7 @@ void G_StartHelp(void)
         G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "help");
         return;
     }
-    Con_Message("Warning: InFine script 'help' not defined, ignoring.\n");
+    Con_Message("Warning: InFine script 'help' not defined, ignoring.");
 }
 
 /**
@@ -1715,7 +1715,7 @@ static void rebornPlayers(void)
 
                 // Let's get rid of the mobj.
 #ifdef _DEBUG
-                Con_Message("rebornPlayers: Removing player %i's mobj.\n", i);
+                Con_Message("rebornPlayers: Removing player %i's mobj.", i);
 #endif
                 P_MobjRemove(mo, true);
                 ddplr->mo = NULL;
@@ -2081,7 +2081,7 @@ void G_PlayerReborn(int player)
         int k;
         for(k = 0; k < NUM_WEAPON_TYPES; ++k)
         {
-            Con_Message("Player %i owns wpn %i: %i\n", player, k, p->weapons[k].owned);
+            Con_Message("Player %i owns wpn %i: %i", player, k, p->weapons[k].owned);
         }
     }
 #endif
@@ -2863,7 +2863,7 @@ boolean G_LoadGame(int slot)
 
     if(!SV_IsSlotUsed(slot))
     {
-        Con_Message("Warning:G_LoadGame: Save slot #%i is not in use, aborting load.\n", slot);
+        Con_Message("Warning:G_LoadGame: Save slot #%i is not in use, aborting load.", slot);
         return false;
     }
 
@@ -3697,7 +3697,7 @@ void G_DoScreenShot(void)
         return;
     }
 
-    Con_Message("Failed to write screenshot \"%s\".\n", fileName? F_PrettyPath(Str_Text(fileName)) : "(null)");
+    Con_Message("Failed to write screenshot \"%s\".", fileName? F_PrettyPath(Str_Text(fileName)) : "(null)");
 }
 
 static void openLoadMenu(void)
@@ -3790,7 +3790,7 @@ D_CMD(LoadGame)
     }
 
     // Clearly the caller needs some assistance...
-    Con_Message("Failed to determine game-save slot from \"%s\"\n", argv[1]);
+    Con_Message("Failed to determine game-save slot from \"%s\"", argv[1]);
 
     // We'll open the load menu if caller is the console.
     // Reasoning: User attempted to load a named game-save however the name
@@ -3798,7 +3798,7 @@ D_CMD(LoadGame)
     // the user to see the names of the known game-saves.
     if(CMDS_CONSOLE == src)
     {
-        Con_Message("Opening game-save load menu...\n");
+        Con_Message("Opening game-save load menu...");
         openLoadMenu();
         return true;
     }
@@ -3836,7 +3836,7 @@ D_CMD(SaveGame)
 
     if(IS_CLIENT || IS_NETWORK_SERVER)
     {
-        Con_Message("Network savegames are not supported at the moment.\n");
+        Con_Message("Network savegames are not supported at the moment.");
         return false;
     }
 
@@ -3896,9 +3896,9 @@ D_CMD(SaveGame)
 
     // Clearly the caller needs some assistance...
     if(!SV_IsValidSlot(slot))
-        Con_Message("Failed to determine game-save slot from \"%s\".\n", argv[1]);
+        Con_Message("Failed to determine game-save slot from \"%s\".", argv[1]);
     else
-        Con_Message("Game-save slot #%i is non-user-writable.\n", slot);
+        Con_Message("Game-save slot #%i is non-user-writable.", slot);
 
     // No action means the command failed.
     return false;
@@ -3978,9 +3978,9 @@ D_CMD(DeleteGameSave)
 
     // Clearly the caller needs some assistance...
     if(!SV_IsValidSlot(slot))
-        Con_Message("Failed to determine game-save slot from \"%s\".\n", argv[1]);
+        Con_Message("Failed to determine game-save slot from \"%s\".", argv[1]);
     else
-        Con_Message("Game-save slot #%i is non-user-writable.\n", slot);
+        Con_Message("Game-save slot #%i is non-user-writable.", slot);
 
     // No action means the command failed.
     return false;
@@ -4006,7 +4006,7 @@ D_CMD(CycleTextureGamma)
 
 D_CMD(ListMaps)
 {
-    Con_Message("Available maps:\n");
+    Con_Message("Available maps:");
     G_PrintMapList();
     return true;
 }

@@ -621,7 +621,7 @@ void PO_InitForMap(void)
 {
     uint                i;
 
-    Con_Message("PO_InitForMap: Initializing polyobjects.\n");
+    Con_Message("PO_InitForMap: Initializing polyobjects.");
 
     // thrustMobj will handle polyobj <-> mobj interaction.
     P_SetPolyobjCallback(thrustMobj);

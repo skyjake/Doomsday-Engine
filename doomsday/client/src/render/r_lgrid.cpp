@@ -275,7 +275,7 @@ void LG_InitForMap(void)
 /*
 #if _DEBUG
     for(n = 0; n < numSamples; ++n)
-        Con_Message(" %i of %i %i(%f %f)\n",
+        Con_Message(" %i of %i %i(%f %f)",
                     n, numSamples, (n == center)? 1 : 0,
                     samplePoints[n].pos[VX], samplePoints[n].pos[VY]);
 #endif
@@ -375,7 +375,7 @@ void LG_InitForMap(void)
     grid = (gridblock_t* ) Z_Calloc(sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight,
                                     PU_MAPSTATIC, NULL);
 
-    Con_Message("LG_InitForMap: %i x %i grid (%lu bytes).\n",
+    Con_Message("LG_InitForMap: %i x %i grid (%lu bytes).",
                 lgBlockWidth, lgBlockHeight,
                 (unsigned long) (sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight));
 
@@ -514,7 +514,7 @@ void LG_InitForMap(void)
         }
 
 /*if _DEBUG
-Con_Message("  Sector %i: %i / %i\n", s, changedCount, count);
+Con_Message("  Sector %i: %i / %i", s, changedCount, count);
 #endif*/
 
         sector->changedBlockCount = changedCount;
@@ -543,7 +543,7 @@ Con_Message("  Sector %i: %i / %i\n", s, changedCount, count);
 
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("LG_InitForMap: Done in %.2f seconds.\n",
+            ("LG_InitForMap: Done in %.2f seconds.",
              (Timer_RealMilliseconds() - startTime) / 1000.0f));
 }
 

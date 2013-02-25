@@ -153,7 +153,7 @@ static fi_state_t* stateForFinaleId(finaleid_t id)
         if(remoteFinaleState.finaleId)
         {
 #ifdef _DEBUG
-            VERBOSE2( Con_Message("stateForFinaleId: Finale %i is remote, using server's state (id %i).\n",
+            VERBOSE2( Con_Message("stateForFinaleId: Finale %i is remote, using server's state (id %i).",
                                   id, remoteFinaleState.finaleId) );
 #endif
             return &remoteFinaleState;
@@ -239,7 +239,7 @@ void NetCl_UpdateFinaleState(Reader* msg)
     }
 
 #ifdef _DEBUG
-    Con_Message("NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hud=%i\n",
+    Con_Message("NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hud=%i",
                 s->finaleId, s->mode, s->conditions.secret, s->conditions.leave_hub);
 #endif
 }
@@ -292,7 +292,7 @@ void FI_StackExecuteWithId(const char* scriptSrc, int flags, finale_mode_t mode,
     // Should we ignore this?
     if(defId && stackHasDefId(defId))
     {
-        Con_Message("There already is a finale running with ID \"%s\"; won't execute again.\n", defId);
+        Con_Message("There already is a finale running with ID \"%s\"; won't execute again.", defId);
         return;
     }
 
@@ -425,7 +425,7 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
     if(IS_CLIENT && s == &remoteFinaleState)
     {
 #ifdef _DEBUG
-        Con_Message("Hook_FinaleScriptStop: Clientside script stopped, clearing remote state.\n");
+        Con_Message("Hook_FinaleScriptStop: Clientside script stopped, clearing remote state.");
         memset(&remoteFinaleState, 0, sizeof(remoteFinaleState));
 #endif
         return true;

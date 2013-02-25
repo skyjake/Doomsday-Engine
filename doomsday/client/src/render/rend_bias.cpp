@@ -456,7 +456,7 @@ void SB_InitForMap(const char* uniqueID)
     }
     }
 
-    VERBOSE2( Con_Message("SB_InitForMap: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
+    VERBOSE2( Con_Message("SB_InitForMap: Done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
 }
 
 void SB_SetColor(float* dest, float* src)
@@ -1258,8 +1258,6 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
 
     if(illum)
     {
-        //Con_Message("\n");
-
         boolean             willOverride = false;
 
         // Combine the casted light from each source.
@@ -1277,8 +1275,7 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
                 int n;
                 Con_Message("affected: ");
                 for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
-                    Con_Message("%i ", affectedSources[n].source);
-                Con_Message("\n");
+                    Con_Message(" - %i", affectedSources[n].source);
                 Con_Error("not updated: s=%i\n", aff->index);
             }
 */

@@ -1255,7 +1255,7 @@ boolean P_CheckPositionXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
 #if _DEBUG
         VERBOSE2(
             if(thing->onMobj)
-                Con_Message("thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]\n", thing->onMobj,
+                Con_Message("thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]", thing->onMobj,
                             thing->onMobj->thinker.id,
                             (thing->onMobj->flags & MF_SOLID)!=0,
                             thing, thing->thinker.id)
@@ -1581,7 +1581,7 @@ static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y, boolean dropoff)
 #ifdef _DEBUG
                     if(!IS_CLIENT && thing->player)
                     {
-                        Con_Message("P_TryMove2: Mobj %i crossing line %i from %f,%f to %f,%f\n",
+                        Con_Message("P_TryMove2: Mobj %i crossing line %i from %f,%f to %f,%f",
                                     thing->thinker.id, P_ToIndex(ld),
                                     oldpos[VX], oldpos[VY],
                                     thing->origin[VX], thing->origin[VY]);
@@ -1867,7 +1867,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* parameters)
         }
 /*
 if(lineWasHit)
-    Con_Message("Hit line [%i,%i]\n", P_GetIntp(li, DMU_SIDEDEF0), P_GetIntp(li, DMU_SIDEDEF1));
+    Con_Message("Hit line [%i,%i]", P_GetIntp(li, DMU_SIDEDEF0), P_GetIntp(li, DMU_SIDEDEF1));
 */
 #endif
         // Don't go any farther.
@@ -2405,7 +2405,7 @@ void P_UseLines(player_t* player)
     if(IS_CLIENT)
     {
 #ifdef _DEBUG
-        Con_Message("P_UseLines: Sending a use request for player %i.\n", (int) (player - players));
+        Con_Message("P_UseLines: Sending a use request for player %i.", (int) (player - players));
 #endif
         NetCl_PlayerActionRequest(player, GPA_USE, 0);
         return;
@@ -2714,7 +2714,7 @@ void P_SlideMove(mobj_t* mo)
     // Didn't move?
     if(mo->player && mo->origin[VX] == oldPos[VX] && mo->origin[VY] == oldPos[VY])
     {
-        Con_Message("P_SlideMove: Mobj pos stays the same.\n");
+        Con_Message("P_SlideMove: Mobj pos stays the same.");
     }
 #endif
 }

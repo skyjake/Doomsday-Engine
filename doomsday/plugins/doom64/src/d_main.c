@@ -391,10 +391,7 @@ void D_PostInit(void)
     if(p && p < myargc - 1 && deathmatch)
     {
         int time = atoi(CommandLine_At(p + 1));
-        Con_Message("Levels will end after %d minute", time);
-        if(time > 1)
-            Con_Message("s");
-        Con_Message(".\n");
+        Con_Message("Maps will end after %d %s", time, time == 1? "minute" : "minutes");
     }
 
     // Turbo option.
@@ -412,7 +409,7 @@ void D_PostInit(void)
         if(scale > 400)
             scale = 400;
 
-        Con_Message("turbo scale: %i%%\n", scale);
+        Con_Message("turbo scale: %i%%", scale);
         turboMul = scale / 100.f;
     }
 
@@ -445,7 +442,7 @@ void D_PostInit(void)
     // Are we autostarting?
     if(autoStart)
     {
-        Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode+1,
+        Con_Message("Warp to Episode %d, Map %d, Skill %d", startEpisode+1,
                     startMap+1, startSkill + 1);
     }
 

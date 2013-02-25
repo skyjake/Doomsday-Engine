@@ -66,7 +66,7 @@ int DS_Init(void)
     FMOD_RESULT result;
     if((result = FMOD::System_Create(&fmodSystem)) != FMOD_OK)
     {
-        Con_Message("FMOD::System_Create failed: (%d) %s\n", result, FMOD_ErrorString(result));
+        Con_Message("FMOD::System_Create failed: (%d) %s", result, FMOD_ErrorString(result));
         fmodSystem = 0;
         return false;
     }
@@ -98,7 +98,7 @@ int DS_Init(void)
     // Initialize FMOD.
     if((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_HRTF_LOWPASS, 0)) != FMOD_OK)
     {
-        Con_Message("FMOD init failed: (%d) %s\n", result, FMOD_ErrorString(result));
+        Con_Message("FMOD init failed: (%d) %s", result, FMOD_ErrorString(result));
         fmodSystem->release();
         fmodSystem = 0;
         return false;
@@ -132,7 +132,7 @@ int DS_Init(void)
 #endif
 
     // Print the credit required by FMOD license.
-    Con_Message("FMOD Sound System (c) Firelight Technologies Pty, Ltd., 1994-2012.\n");
+    Con_Message("FMOD Sound System (c) Firelight Technologies Pty, Ltd., 1994-2013.");
 
     DSFMOD_TRACE("DS_Init: FMOD initialized.");
     return true;

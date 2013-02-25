@@ -733,7 +733,7 @@ void Def_CountMsg(int count, const char* label)
     if(!verbose && !count)
         return; // Don't print zeros if not verbose.
 
-    Con_Message("%5i %s\n", count, label);
+    Con_Message("%5i %s", count, label);
 }
 
 /**
@@ -758,7 +758,7 @@ void Def_ReadLumpDefs(void)
 
     if(verbose && numProcessedLumps > 0)
     {
-        Con_Message("ReadLumpDefs: %i definition lump%s read.\n", numProcessedLumps, numProcessedLumps != 1 ? "s" : "");
+        Con_Message("ReadLumpDefs: %i definition lump%s read.", numProcessedLumps, numProcessedLumps != 1 ? "s" : "");
     }
 }
 
@@ -1241,7 +1241,7 @@ void Def_Read()
     generateMaterialDefs();
 
     // Read all definitions files and lumps.
-    Con_Message("Parsing definition files%s\n", verbose >= 1? ":" : "...");
+    Con_Message("Parsing definition files%s", verbose >= 1? ":" : "...");
     readAllDefinitions();
 
     // Any definition hooks?
@@ -1417,7 +1417,7 @@ void Def_Read()
             // It's probably a bias light definition, then?
             if(!defs.lights[i].uniqueMapID[0])
             {
-                Con_Message("Warning: Def_Read: Undefined state '%s' in Light definition.\n", defs.lights[i].state);
+                Con_Message("Warning: Def_Read: Undefined state '%s' in Light definition.", defs.lights[i].state);
             }
             continue;
         }
@@ -1579,7 +1579,7 @@ void Def_Read()
     }
 
     // Log a summary of the definition database.
-    Con_Message("Definitions:\n");
+    Con_Message("Definitions:");
     Def_CountMsg(defs.count.groups.num, "animation groups");
     Def_CountMsg(defs.count.compositeFonts.num, "composite fonts");
     Def_CountMsg(defs.count.details.num, "detail textures");
@@ -2144,7 +2144,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
 
             if(sprite < 0 || sprite >= defs.count.sprites.num)
             {
-                Con_Message("Warning: Def_Set: Unknown sprite index %i.\n", sprite);
+                Con_Message("Warning: Def_Set: Unknown sprite index %i.", sprite);
                 break;
             }
 
@@ -2173,7 +2173,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
                 sounds[index].lumpNum = App_FileSystem().lumpNumForName(sounds[index].lumpName);
                 if(sounds[index].lumpNum < 0)
                 {
-                    Con_Message("Warning: Def_Set: Unknown sound lump name \"%s\", sound (#%i) will be inaudible.\n",
+                    Con_Message("Warning: Def_Set: Unknown sound lump name \"%s\", sound (#%i) will be inaudible.",
                                 sounds[index].lumpName, index);
                 }
             }
@@ -2289,7 +2289,7 @@ D_CMD(ListMobjs)
 
     if(defs.count.mobjs.num <= 0)
     {
-        Con_Message("There are currently no mobjtypes defined/loaded.\n");
+        Con_Message("There are currently no mobjtypes defined/loaded.");
         return true;
     }
 

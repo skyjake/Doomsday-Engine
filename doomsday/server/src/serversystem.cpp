@@ -156,15 +156,15 @@ DENG2_PIMPL(ServerSystem)
     {
         int i, first;
 
-        Con_Message("SERVER: ");
         if(serverSock)
         {
-            Con_Message("Listening on TCP port %i.\n", serverSock->port());
+            Con_Message("SERVER: Listening on TCP port %i.", serverSock->port());
         }
         else
         {
-            Con_Message("No server socket open.\n");
+            Con_Message("SERVER: No server socket open.");
         }
+
         first = true;
         for(i = 1; i < DDMAXPLAYERS; ++i)
         {
@@ -177,10 +177,10 @@ DENG2_PIMPL(ServerSystem)
                 RemoteUser *user = users[cl->nodeID];
                 if(first)
                 {
-                    Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:\n");
+                    Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:");
                     first = false;
                 }
-                Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec\n",
+                Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec",
                             i, cl->name, cl->nodeID,
                             user->isJoined()? '*' : ' ',
                             cl->handshake? '*' : ' ',
@@ -191,21 +191,21 @@ DENG2_PIMPL(ServerSystem)
         }
         if(first)
         {
-            Con_Message("No clients connected.\n");
+            Con_Message("No clients connected.");
         }
 
         if(shellUsers.count())
         {
-            Con_Message("%i connected shell user%s.\n",
+            Con_Message("%i connected shell user%s.",
                         shellUsers.count(),
                         shellUsers.count() == 1? "" : "s");
         }
 
         N_PrintBufferInfo();
 
-        Con_Message("Configuration:\n");
-        Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
-        Con_Message("  shell password (server-password): \"%s\"\n", netPassword);
+        Con_Message("Configuration:");
+        Con_Message("  Port for hosting games (net-ip-port): %i", Con_GetInteger("net-ip-port"));
+        Con_Message("  Shell password (server-password): \"%s\"", netPassword);
     }
 };
 

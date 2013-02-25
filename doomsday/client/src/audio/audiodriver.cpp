@@ -164,7 +164,7 @@ static boolean loadAudioDriver(driver_t* driver, const char* name)
         }
         else
         {
-            Con_Message("Warning: loadAudioDriver: Loading of \"%s\" failed.\n", name);
+            Con_Message("Warning: loadAudioDriver: Loading of \"%s\" failed.", name);
         }
     }
     return ok;
@@ -193,7 +193,7 @@ static audiodriverid_t identifierToDriverId(const char* name)
     {
         if(!stricmp(name, driverIdentifier[i])) return (audiodriverid_t) i;
     }
-    Con_Message("'%s' is not a valid audio driver name.\n", name);
+    Con_Message("'%s' is not a valid audio driver name.", name);
     return AUDIOD_INVALID;
 }
 
@@ -417,18 +417,18 @@ void AudioDriver_PrintInterfaces(void)
 {
     int i;
 
-    Con_Message("Audio configuration (by decreasing priority):\n");
+    Con_Message("Audio configuration (by decreasing priority):");
     for(i = MAX_AUDIO_INTERFACES - 1; i >= 0; --i)
     {
         audiointerface_t* a = &activeInterfaces[i];
         if(a->type == AUDIO_IMUSIC || a->type == AUDIO_ICD)
         {
-            Con_Message("  %-5s: %s\n", a->type == AUDIO_IMUSIC? "Music" : "CD",
+            Con_Message("  %-5s: %s", a->type == AUDIO_IMUSIC? "Music" : "CD",
                         Str_Text(AudioDriver_InterfaceName(a->i.any)));
         }
         else if(a->type == AUDIO_ISFX)
         {
-            Con_Message("  SFX  : %s\n", Str_Text(AudioDriver_InterfaceName(a->i.sfx)));
+            Con_Message("  SFX  : %s", Str_Text(AudioDriver_InterfaceName(a->i.sfx)));
         }
     }
 }
@@ -458,7 +458,7 @@ boolean AudioDriver_Init(void)
     ok = initDriver(defaultDriverId);
     if(!ok)
     {
-        Con_Message("Warning: Failed initializing audio driver \"%s\"\n", getDriverName(defaultDriverId));
+        Con_Message("Warning: Failed initializing audio driver \"%s\"", getDriverName(defaultDriverId));
     }
 
     // Fallback option for the default driver.

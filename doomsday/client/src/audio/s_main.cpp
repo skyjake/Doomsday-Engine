@@ -126,7 +126,7 @@ boolean S_Init(void)
     // Try to load the audio driver plugin(s).
     if(!AudioDriver_Init())
     {
-        Con_Message("Music and Sound Effects disabled.\n");
+        Con_Message("Music and Sound Effects disabled.");
         return false;
     }
 
@@ -135,7 +135,7 @@ boolean S_Init(void)
 
     if(!sfxOK || !musOK)
     {
-        Con_Message("Errors during audio subsystem initialization.\n");
+        Con_Message("Errors during audio subsystem initialization.");
         return false;
     }
 #endif
@@ -303,8 +303,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
 #if _DEBUG
     if(volume > 1)
     {
-        Con_Message("S_LocalSoundAtVolumeFrom: Warning! "
-                    "Too high volume (%f).\n", volume);
+        Con_Message("S_LocalSoundAtVolumeFrom: Warning! Too high volume (%f).", volume);
     }
 #endif
 
@@ -333,7 +332,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
         if(sfxAvail)
         {
             VERBOSE(Con_Message
-                    ("S_LocalSoundAtVolumeFrom: Sound %i " "caching failed.\n",
+                    ("S_LocalSoundAtVolumeFrom: Sound %i " "caching failed.",
                      soundId));
         }
         return false;
@@ -537,7 +536,7 @@ int S_StartMusicNum(int id, boolean looped)
     if(id < 0 || id >= defs.count.music.num) return false;
     ded_music_t *def = &defs.music[id];
 
-    VERBOSE( Con_Message("Starting music '%s'...\n", def->id) )
+    VERBOSE( Con_Message("Starting music '%s'...", def->id) )
 
     return Mus_Start(def, looped);
 

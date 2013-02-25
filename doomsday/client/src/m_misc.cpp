@@ -331,7 +331,7 @@ static size_t FileReader(const char* name, char** buffer)
     if(handle == -1)
     {
 #if _DEBUG
-        Con_Message("Warning:FileReader: Failed opening \"%s\" for reading.\n", name);
+        Con_Message("Warning:FileReader: Failed opening \"%s\" for reading.", name);
 #endif
         return length;
     }

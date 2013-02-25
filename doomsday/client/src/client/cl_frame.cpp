@@ -289,7 +289,7 @@ void Cl_Frame2Received(int packetType)
             skip = false;
 /*
 #ifdef _DEBUG
-            Con_Message("Received delta %i.\n", deltaType);
+            Con_Message("Received delta %i.", deltaType);
 #endif
 */
             switch(deltaType)
@@ -342,7 +342,7 @@ void Cl_Frame2Received(int packetType)
 #ifdef _DEBUG
         if(!gotFrame)
         {
-            Con_Message("Cl_Frame2Received: First frame received.\n");
+            Con_Message("Cl_Frame2Received: First frame received.");
         }
 #endif
 

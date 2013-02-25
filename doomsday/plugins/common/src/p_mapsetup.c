@@ -554,7 +554,7 @@ static void loadMapSpots(void)
 
         if(numDMStarts < playerCount)
         {
-            Con_Message("P_SetupMap: Player count (%i) exceeds deathmatch spots (%i).\n", playerCount, numDMStarts);
+            Con_Message("P_SetupMap: Player count (%i) exceeds deathmatch spots (%i).", playerCount, numDMStarts);
         }
     }
 }
@@ -593,7 +593,7 @@ static void spawnMapObjects(void)
             }
 
 /*#if _DEBUG
-            Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
+            Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i",
                     spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
                     spot->doomedNum, spot->flags);
 #endif*/
@@ -628,7 +628,7 @@ static void spawnMapObjects(void)
         }
         else
         {
-            Con_Message("Warning: Unknown DoomEdNum %i at [%g, %g, %g].\n", spot->doomEdNum,
+            Con_Message("Warning: Unknown DoomEdNum %i at [%g, %g, %g].", spot->doomEdNum,
                         spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
         }
     }

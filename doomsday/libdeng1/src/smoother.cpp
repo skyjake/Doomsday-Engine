@@ -212,7 +212,7 @@ boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
     if(!Smoother_IsValid(sm))
     {
 /*#ifdef _DEBUG
-        Con_Message("Smoother_Evaluate: sm=%p not valid!\n", sm);
+        Con_Message("Smoother_Evaluate: sm=%p not valid!", sm);
 #endif*/
         return false;
     }
@@ -224,7 +224,7 @@ boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         xyz[VY] = past->xyz[VY];
         xyz[VZ] = past->xyz[VZ];
 /*#if _DEBUG
-        Con_Message("Smoother_Evaluate: falling behind\n");
+        Con_Message("Smoother_Evaluate: falling behind");
         ((Smoother *)sm)->prevEval[0] = xyz[0];
         ((Smoother *)sm)->prevEval[1] = xyz[1];
 #endif*/
@@ -238,7 +238,7 @@ boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         xyz[VY] = now->xyz[VY];
         xyz[VZ] = now->xyz[VZ];
 /*#if _DEBUG
-        Con_Message("Smoother_Evaluate: stalling\n");
+        Con_Message("Smoother_Evaluate: stalling");
         ((Smoother *)sm)->prevEval[0] = xyz[0];
         ((Smoother *)sm)->prevEval[1] = xyz[1];
 #endif*/
@@ -260,7 +260,7 @@ boolean Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         if(dt > 0)
         {
             float diff[2] = { xyz[0] - sm->prevEval[0], xyz[1] - sm->prevEval[1] };
-            Con_Message("Smoother_Evaluate: [%05.3f] diff = %+06.3f  %+06.3f\n", dt, diff[0]/dt, diff[1]/dt);
+            Con_Message("Smoother_Evaluate: [%05.3f] diff = %+06.3f  %+06.3f", dt, diff[0]/dt, diff[1]/dt);
             ((Smoother *)sm)->prevEval[0] = xyz[0];
             ((Smoother *)sm)->prevEval[1] = xyz[1];
         }

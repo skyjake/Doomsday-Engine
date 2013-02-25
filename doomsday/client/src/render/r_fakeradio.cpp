@@ -267,5 +267,5 @@ void Rend_RadioInitForMap(void)
         }
     }
 
-    VERBOSE2( Con_Message("R_InitFakeRadioForMap: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
+    VERBOSE2( Con_Message("R_InitFakeRadioForMap: Done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
 }

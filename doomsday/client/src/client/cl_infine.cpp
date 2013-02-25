@@ -59,7 +59,7 @@ void Cl_Finale(Reader* msg)
         currentFinale = FI_Execute((const char*)script, FF_LOCAL);
         remoteFinale = finaleId;
 #ifdef _DEBUG
-        Con_Message("Cl_Finale: Started finale %i (remote id %i).\n", currentFinale, remoteFinale);
+        Con_Message("Cl_Finale: Started finale %i (remote id %i).", currentFinale, remoteFinale);
 #endif
     }
 
@@ -90,7 +90,7 @@ void Cl_RequestFinaleSkip(void)
     Msg_End();
 
 #ifdef _DEBUG
-    Con_Message("Cl_RequestFinaleSkip: Requesting skip on finale %i.\n", remoteFinale);
+    Con_Message("Cl_RequestFinaleSkip: Requesting skip on finale %i.", remoteFinale);
 #endif
 
     Net_SendBuffer(0, 0);

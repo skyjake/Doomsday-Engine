@@ -580,7 +580,7 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
     inv = &inventories[player];
 
 #ifdef _DEBUG
-    Con_Message("P_InventoryUse: Player %i using item %i\n", player, type);
+    Con_Message("P_InventoryUse: Player %i using item %i", player, type);
 #endif
 
     if(IS_CLIENT)

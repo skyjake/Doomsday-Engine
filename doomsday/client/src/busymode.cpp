@@ -168,7 +168,7 @@ static void endTask(BusyTask* task)
 
     if(verbose)
     {
-        Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
+        Con_Message("Con_Busy: Was busy for %.2lf seconds.", busyTime);
     }
 
     // The window drawer will be restored later to the appropriate function.

@@ -155,7 +155,7 @@ DENG_EXTERN_C void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale
     {
 #if _DEBUG
         if(id != 0)
-            Con_Message("GL_DrawSvg: Invalid origin argument (=NULL), aborting draw.\n");
+            Con_Message("GL_DrawSvg: Invalid origin argument (=NULL), aborting draw.");
 #endif
         return;
     }
@@ -163,14 +163,14 @@ DENG_EXTERN_C void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale
     {
 #if _DEBUG
         if(id != 0)
-            Con_Message("GL_DrawSvg: Unknown SVG id #%u, aborting draw.\n", (unsigned int)id);
+            Con_Message("GL_DrawSvg: Unknown SVG id #%u, aborting draw.", (unsigned int)id);
 #endif
         return;
     }
     if(!Svg_Prepare(svg))
     {
 #if _DEBUG
-        Con_Message("GL_DrawSvg: Failed preparing SVG #%u, aborting draw.\n", (unsigned int)id);
+        Con_Message("GL_DrawSvg: Failed preparing SVG #%u, aborting draw.", (unsigned int)id);
 #endif
         return;
     }

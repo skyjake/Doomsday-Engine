@@ -333,7 +333,7 @@ void P_PlayerRemoteMove(player_t* player)
 
     /*
 #ifdef _DEBUG
-    Con_Message("P_PlayerRemoteMove: player=%i IS_NETGAME=%i mo=%p smoother=%p IS_CLIENT=%i IS_SERVER=%i CNSPLR=%i\n",
+    Con_Message("P_PlayerRemoteMove: player=%i IS_NETGAME=%i mo=%p smoother=%p IS_CLIENT=%i IS_SERVER=%i CNSPLR=%i",
                 plrNum, IS_NETGAME, mo, smoother, IS_CLIENT, IS_SERVER, CONSOLEPLAYER);
 #endif
     */
@@ -380,14 +380,14 @@ void P_PlayerRemoteMove(player_t* player)
                     // It successfully moved to the right XY coords.
                     mo->origin[VZ] = mo->floorZ;
 #ifdef _DEBUG
-                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
+                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)",
                                          plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]) );
 #endif
                 }
                 else
                 {
 #ifdef _DEBUG
-                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
+                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f",
                                           plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]) );
 #endif
                 }
@@ -397,17 +397,17 @@ void P_PlayerRemoteMove(player_t* player)
             {
                 // The player must have teleported.
 #ifdef _DEBUG
-                Con_Message("P_PlayerRemoteMove: Player %i: Clearing smoother because of FIXPOS.\n", plrNum);
+                Con_Message("P_PlayerRemoteMove: Player %i: Clearing smoother because of FIXPOS.", plrNum);
 #endif
                 Smoother_Clear(smoother);
             }
         }
         else
         {
-    #ifdef _DEBUG
-            Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!\n",
+#ifdef _DEBUG
+            Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!",
                         plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
-    #endif
+#endif
         }
     }
     else
@@ -415,7 +415,7 @@ void P_PlayerRemoteMove(player_t* player)
 #ifdef _DEBUG
         //Smoother_Debug(smoother);
 #endif
-        /*Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
+        /*Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)",
                     plrNum, xyz[VX], xyz[VY], xyz[VZ]);*/
 
         /*
@@ -467,7 +467,7 @@ void P_MovePlayer(player_t *player)
         if(dp->fixCounter.angles == dp->fixAcked.angles)  // all acked?
         {
 #ifdef _DEBUG
-            VERBOSE2( Con_Message("Server accepts client %i angle from command (ang=%i).\n",
+            VERBOSE2( Con_Message("Server accepts client %i angle from command (ang=%i).",
                                   player - players, cmd->angle) );
 #endif
             // Accept the client's version of the angles.
@@ -736,7 +736,7 @@ void P_PlayerReborn(player_t* player)
     if(plrNum == CONSOLEPLAYER)
     {
 #ifdef _DEBUG
-        Con_Message("P_PlayerReborn: Console player reborn, reseting InFine.\n");
+        Con_Message("P_PlayerReborn: Console player reborn, reseting InFine.");
 #endif
         // Clear the currently playing script, if any.
         FI_StackClear();
@@ -1283,7 +1283,7 @@ void P_PlayerThinkWeapons(player_t* player)
 
             if(!player->weapons[newweapon].owned)
             {
-                Con_Message("P_PlayerThinkWeapons: Player %i tried to change to unowned weapon %i!\n",
+                Con_Message("P_PlayerThinkWeapons: Player %i tried to change to unowned weapon %i!",
                             (int)(player - players), newweapon);
                 newweapon = WT_NOCHANGE;
             }
@@ -1337,7 +1337,7 @@ void P_PlayerThinkWeapons(player_t* player)
                 NetCl_PlayerActionRequest(player, GPA_CHANGE_WEAPON, newweapon);
             }
 #ifdef _DEBUG
-            Con_Message("P_PlayerThinkWeapons: Player %i changing weapon to %i (brain thinks %i).\n",
+            Con_Message("P_PlayerThinkWeapons: Player %i changing weapon to %i (brain thinks %i).",
                         (int)(player - players), newweapon, brain->changeWeapon);
 #endif
             player->pendingWeapon = newweapon;
@@ -1898,14 +1898,14 @@ void P_PlayerThinkAssertions(player_t* player)
         {
             if(!(mo->ddFlags & DDMF_SOLID))
             {
-                Con_Message("P_PlayerThinkAssertions: player %i, mobj should be solid when alive!\n", plrNum);
+                Con_Message("P_PlayerThinkAssertions: player %i, mobj should be solid when alive!", plrNum);
             }
         }
         else if(player->playerState == PST_DEAD)
         {
             if(mo->ddFlags & DDMF_SOLID)
             {
-                Con_Message("P_PlayerThinkAssertions: player %i, mobj should not be solid when dead!\n", plrNum);
+                Con_Message("P_PlayerThinkAssertions: player %i, mobj should not be solid when dead!", plrNum);
             }
         }
     }

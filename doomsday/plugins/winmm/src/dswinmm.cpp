@@ -169,17 +169,17 @@ static void initMixerLine(mixerdata_t* mix, DWORD type)
        MMSYSERR_NOERROR)
     {
         if(verbose)
-            Con_Message("  Error getting line info: " "Error %i\n", res);
+            Con_Message("  Error getting line info: Error %i", res);
         return;
     }
 
     if(verbose)
     {
-        Con_Message("  Destination line idx: %i\n", mix->line.dwDestination);
-        Con_Message("  Line ID: 0x%x\n", mix->line.dwLineID);
-        Con_Message("  Channels: %i\n", mix->line.cChannels);
-        Con_Message("  Controls: %i\n", mix->line.cControls);
-        Con_Message("  Name: %s (%s)\n", mix->line.szName,
+        Con_Message("  Destination line idx: %i", mix->line.dwDestination);
+        Con_Message("  Line ID: 0x%x", mix->line.dwLineID);
+        Con_Message("  Channels: %i", mix->line.cChannels);
+        Con_Message("  Controls: %i", mix->line.cControls);
+        Con_Message("  Name: %s (%s)", mix->line.szName,
                     mix->line.szShortName);
     }
 
@@ -195,17 +195,15 @@ static void initMixerLine(mixerdata_t* mix, DWORD type)
        MMSYSERR_NOERROR)
     {
         if(verbose)
-            Con_Message("  Error getting line controls " "(vol): error %i\n",
-                        res);
+            Con_Message("  Error getting line controls " "(vol): error %i", res);
         return;
     }
 
     if(verbose)
     {
-        Con_Message("  Volume control ID: 0x%x\n", mix->volume.dwControlID);
-        Con_Message("  Name: %s (%s)\n", mix->volume.szName,
-                    mix->volume.szShortName);
-        Con_Message("  Min/Max: %i/%i\n", mix->volume.Bounds.dwMinimum,
+        Con_Message("  Volume control ID: 0x%x", mix->volume.dwControlID);
+        Con_Message("  Name: %s (%s)", mix->volume.szName, mix->volume.szShortName);
+        Con_Message("  Min/Max: %i/%i", mix->volume.Bounds.dwMinimum,
                     mix->volume.Bounds.dwMaximum);
     }
 
@@ -229,7 +227,7 @@ static int initMixer(void)
     if(verbose)
     {
         // In verbose mode, print a lot of extra information.
-        Con_Message("dsWinMM::initMixer: Number of mixer devices: %i\n", num);
+        Con_Message("dsWinMM::initMixer: Number of mixer devices: %i", num);
     }
 
     // Open the mixer device.
@@ -237,24 +235,24 @@ static int initMixer(void)
     if(res != MMSYSERR_NOERROR)
     {
         if(verbose)
-            Con_Message("  Error opening mixer: Error %i\n", res);
+            Con_Message("  Error opening mixer: Error %i", res);
         return 0;
     }
 
     // Get the device caps.
     mixerGetDevCaps((UINT_PTR) mixer, &mixerCaps, sizeof(mixerCaps));
 
-    Con_Message("dsWinMM::initMixer: %s\n", mixerCaps.szPname);
+    Con_Message("dsWinMM::initMixer: %s", mixerCaps.szPname);
     if(verbose)
-        Con_Message("  Audio line destinations: %i\n",
+        Con_Message("  Audio line destinations: %i",
                     mixerCaps.cDestinations);
 
     // Init CD mixer.
     if(verbose)
-        Con_Message("Init CD audio line:\n");
+        Con_Message("Init CD audio line:");
     initMixerLine(&mixCD, MIXERLINE_COMPONENTTYPE_SRC_COMPACTDISC);
     if(verbose)
-        Con_Message("Init synthesizer line:\n");
+        Con_Message("Init synthesizer line:");
     initMixerLine(&mixMidi, MIXERLINE_COMPONENTTYPE_SRC_SYNTHESIZER);
 
     // We're successful.
@@ -324,7 +322,7 @@ int DM_Music_Init(void)
     if(midiAvail)
         return true; // Already initialized.
 
-    Con_Message("DM_WinMusInit: %i MIDI-Out devices present.\n",
+    Con_Message("DM_WinMusInit: %i MIDI-Out devices present.",
                 midiOutGetNumDevs());
 
     MIDIStreamer = new WinMIDIStreamer;
@@ -337,7 +335,7 @@ int DM_Music_Init(void)
     MIDIStreamer->volumeShift = CommandLine_Exists("-mdvol") ? 1 : 0;
 
     // Now the MIDI is available.
-    Con_Message("DM_WinMusInit: MIDI initialized.\n");
+    Con_Message("DM_WinMusInit: MIDI initialized.");
 
     return midiAvail = true;
 }

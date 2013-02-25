@@ -324,7 +324,7 @@ void UIGroup_AddWidget(uiwidget_t* obj, uiwidget_t* other)
     if(!other || other == obj)
     {
 #if _DEBUG
-        Con_Message("Warning:UIGroup::AddWidget: Attempt to add invalid widget %s, ignoring.\n", obj? "(this)" : "(null)");
+        Con_Message("Warning: UIGroup::AddWidget: Attempt to add invalid widget %s, ignoring.", obj? "(this)" : "(null)");
 #endif
         return;
     }
@@ -1297,7 +1297,7 @@ void MNPage_Refocus(mn_page_t* page)
 #if _DEBUG
         else
         {
-            Con_Message("Warning:MNPage::Refocus: No focusable object on page.\n");
+            Con_Message("Warning: MNPage::Refocus: No focusable object on page.");
         }
 #endif
     }
@@ -1403,7 +1403,7 @@ void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fon
     if(!VALID_MNPAGE_FONTID(id))
     {
 #if _DEBUG
-        Con_Message("MNPage::SetPredefinedFont: Invalid font id #%i, ignoring.\n", id);
+        Con_Message("MNPage::SetPredefinedFont: Invalid font id #%i, ignoring.", id);
 #endif
         return;
     }

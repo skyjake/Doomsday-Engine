@@ -149,7 +149,7 @@ static int clearVariable(CVarDirectory::Node& node, void* parameters)
             default: {
 #if _DEBUG
                 AutoStr* path = CVar_ComposePath(var);
-                Con_Message("Warning: clearVariable: Attempt to free user data for non-pointer type variable %s [%p], ignoring.\n",
+                Con_Message("Warning: clearVariable: Attempt to free user data for non-pointer type variable %s [%p], ignoring.",
                             Str_Text(path), (void*)var);
 #endif
                 break; }
@@ -587,7 +587,7 @@ void CVar_SetInteger2(cvar_t* var, int value, int svFlags)
 
     default: {
         AutoStr* path = CVar_ComposePath(var);
-        Con_Message("Warning: CVar::SetInteger: Attempt to set incompatible var %s to %i, ignoring.\n", Str_Text(path), value);
+        Con_Message("Warning: CVar::SetInteger: Attempt to set incompatible var %s to %i, ignoring.", Str_Text(path), value);
         return; }
     }
 
@@ -634,7 +634,7 @@ void CVar_SetFloat2(cvar_t* var, float value, int svFlags)
 
     default: {
         AutoStr* path = CVar_ComposePath(var);
-        Con_Message("Warning: CVar::SetFloat: Attempt to set incompatible cvar %s to %g, ignoring.\n", Str_Text(path), value);
+        Con_Message("Warning: CVar::SetFloat: Attempt to set incompatible cvar %s to %g, ignoring.", Str_Text(path), value);
         return; }
     }
 
@@ -660,7 +660,7 @@ int CVar_Integer(cvar_t const* var)
     default: {
 #if _DEBUG
         AutoStr* path = CVar_ComposePath(var);
-        Con_Message("Warning: CVar::Integer: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
+        Con_Message("Warning: CVar::Integer: Attempted on incompatible variable %s [%p type:%s], returning 0",
                     Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
         return 0; }
@@ -679,7 +679,7 @@ float CVar_Float(cvar_t const* var)
     default: {
 #if _DEBUG
         AutoStr* path = CVar_ComposePath(var);
-        Con_Message("Warning: CVar::Float: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
+        Con_Message("Warning: CVar::Float: Attempted on incompatible variable %s [%p type:%s], returning 0",
                     Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
         return 0;
@@ -699,7 +699,7 @@ byte CVar_Byte(cvar_t const* var)
     default: {
 #if _DEBUG
         AutoStr* path = CVar_ComposePath(var);
-        Con_Message("Warning: CVar::Byte: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
+        Con_Message("Warning: CVar::Byte: Attempted on incompatible variable %s [%p type:%s], returning 0",
                     Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
         return 0;
@@ -717,7 +717,7 @@ char const* CVar_String(cvar_t const* var)
     default: {
 #if _DEBUG
         AutoStr* path = CVar_ComposePath(var);
-        Con_Message("Warning: CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyString\n",
+        Con_Message("Warning: CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyString",
                     Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
         return Str_Text(emptyStr); }
@@ -734,7 +734,7 @@ Uri const* CVar_Uri(cvar_t const* var)
     default: {
 #if _DEBUG
         AutoStr* path = CVar_ComposePath(var);
-        Con_Message("Warning: CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyUri\n",
+        Con_Message("Warning: CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyUri",
                     Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
         return emptyUri; }
@@ -767,7 +767,7 @@ void Con_AddVariableList(cvartemplate_t const* tplList)
     if(!tplList)
     {
         Con_Message("Warning: Con_AddVariableList: Passed invalid value for "
-                    "argument 'tplList', ignoring.\n");
+                    "argument 'tplList', ignoring.");
         return;
     }
     for(; tplList->path; ++tplList)
@@ -849,7 +849,7 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
         Con_Error("Con_AddCommand: CCmd missing a name.");
 
 /*#if _DEBUG
-Con_Message("Con_AddCommand: '%s' \"%s\" (%i).\n", ccmd->name,
+Con_Message("Con_AddCommand: '%s' \"%s\" (%i).", ccmd->name,
             ccmd->argTemplate, ccmd->flags);
 #endif*/
 
@@ -917,8 +917,6 @@ Con_Message("Con_AddCommand: '%s' \"%s\" (%i).\n", ccmd->name,
         }
 
 /*#if _DEBUG
-        Con_Message("Con_AddCommand: CCmd '%s': minArgs %i, maxArgs %i: \"",
-                    ccmd->name, minArgs, maxArgs);
         for(int i = 0; i < minArgs; ++i)
         {
             switch(args[i])
@@ -930,7 +928,8 @@ Con_Message("Con_AddCommand: '%s' \"%s\" (%i).\n", ccmd->name,
             }
             Con_Printf("%c", c);
         }
-        Con_Printf("\".\n");
+        Con_Message("Con_AddCommand: CCmd \"%s\": minArgs %i, maxArgs %i:, '%c'.",
+                    ccmd->name, minArgs, maxArgs, c);
 #endif*/
     }
     else // It's usage is NOT validated by Doomsday.
@@ -939,7 +938,7 @@ Con_Message("Con_AddCommand: '%s' \"%s\" (%i).\n", ccmd->name,
 
 /*#if _DEBUG
         if(ccmd->args == NULL)
-          Con_Message("Con_AddCommand: CCmd '%s' will not have it's usage validated.\n", ccmd->name);
+          Con_Message("Con_AddCommand: CCmd '%s' will not have it's usage validated.", ccmd->name);
 #endif*/
     }
 

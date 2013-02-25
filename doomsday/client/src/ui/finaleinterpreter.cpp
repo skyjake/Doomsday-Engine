@@ -1506,7 +1506,7 @@ DEFFC(If)
     }
     else
     {
-        Con_Message("FIC_If: Unknown condition '%s'.\n", token);
+        Con_Message("FIC_If: Unknown condition '%s'.", token);
     }
 
     // Skip the next command if the value is false.
@@ -1557,7 +1557,7 @@ DEFFC(Image)
         FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
     }
-    Con_Message("FIC_Image: Warning, missing lump '%s'.\n", name);
+    Con_Message("FIC_Image: Warning, missing lump '%s'.", name);
 }
 
 DEFFC(ImageAt)
@@ -1578,7 +1578,7 @@ DEFFC(ImageAt)
         FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
     }
-    Con_Message("FIC_ImageAt: Warning, missing lump '%s'.\n", name);
+    Con_Message("FIC_ImageAt: Warning, missing lump '%s'.", name);
 }
 
 #ifdef __CLIENT__
@@ -1624,7 +1624,7 @@ DEFFC(XImage)
     }
     else
     {
-        Con_Message("FIC_XImage: Warning, missing graphic '%s'.\n", fileName);
+        Con_Message("FIC_XImage: Warning, missing graphic '%s'.", fileName);
     }
 #endif // __CLIENT__
 }
@@ -1645,7 +1645,7 @@ DEFFC(Patch)
     }
     else
     {
-        Con_Message("FIC_Patch: Warning, missing Patch '%s'.\n", name);
+        Con_Message("FIC_Patch: Warning, missing Patch '%s'.", name);
     }
 }
 
@@ -1659,7 +1659,7 @@ DEFFC(SetPatch)
     patchId = R_DeclarePatch(name);
     if(patchId == 0)
     {
-        Con_Message("FIC_SetPatch: Warning, missing Patch '%s'.\n", name);
+        Con_Message("FIC_SetPatch: Warning, missing Patch '%s'.", name);
         return;
     }
 
@@ -1695,7 +1695,7 @@ DEFFC(Anim)
     patchId = R_DeclarePatch(name);
     if(patchId == 0)
     {
-        Con_Message("FIC_Anim: Warning, Patch '%s' not found.\n", name);
+        Con_Message("FIC_Anim: Warning, Patch '%s' not found.", name);
         return;
     }
 
@@ -1716,7 +1716,7 @@ DEFFC(AnimImage)
         ((fidata_pic_t*)obj)->animComplete = false;
         return;
     }
-    Con_Message("FIC_AnimImage: Warning, lump '%s' not found.\n", name);
+    Con_Message("FIC_AnimImage: Warning, lump '%s' not found.", name);
 }
 
 DEFFC(Repeat)
@@ -2144,7 +2144,7 @@ DEFFC(PredefinedFont)
     }
 
     { AutoStr* fontPath = Uri_ToString(OP_URI(1));
-    Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.\n", Str_Text(fontPath));
+    Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.", Str_Text(fontPath));
     }
 #endif
 }
@@ -2222,7 +2222,7 @@ DEFFC(Font)
     }
 
     { AutoStr* fontPath = Uri_ToString(OP_URI(1));
-    Con_Message("FIC_Font: Warning, unknown font '%s'.\n", Str_Text(fontPath));
+    Con_Message("FIC_Font: Warning, unknown font '%s'.", Str_Text(fontPath));
     }
 #endif
 }

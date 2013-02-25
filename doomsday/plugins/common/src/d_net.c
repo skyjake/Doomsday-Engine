@@ -290,14 +290,14 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         else if(plrNumber == CONSOLEPLAYER)
         {
             // We have arrived, the game should be begun.
-            Con_Message("PE: (client) arrived in netgame.\n");
+            Con_Message("PE: (client) arrived in netgame.");
             G_ChangeGameState(GS_WAITING);
             showmsg = false;
         }
         else
         {
             // Client responds to new player?
-            Con_Message("PE: (client) player %i has arrived.\n", plrNumber);
+            Con_Message("PE: (client) player %i has arrived.", plrNumber);
             G_DoReborn(plrNumber);
             //players[plrNumber].playerstate = PST_REBORN;
         }
@@ -313,7 +313,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     {
         AutoStr *str = AutoStr_New();
 
-        Con_Message("PE: player %i has left.\n", plrNumber);
+        Con_Message("PE: player %i has left.", plrNumber);
 
         players[plrNumber].playerState = PST_GONE;
 
@@ -367,7 +367,7 @@ int D_NetWorldEvent(int type, int parm, void* data)
         // the handshake packet(s) to update his world.
         // If 'data' is zero, this is a re-handshake that's used to
         // begin demos.
-        Con_Message("D_NetWorldEvent: Sending a %shandshake to player %i.\n",
+        Con_Message("D_NetWorldEvent: Sending a %shandshake to player %i.",
                     newPlayer ? "" : "(re)", parm);
 
         // Mark new player for update.
@@ -467,7 +467,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
     {
     case GPT_GAME_STATE:
 #ifdef _DEBUG
-        Con_Message("Received GTP_GAME_STATE\n");
+        Con_Message("Received GTP_GAME_STATE");
 #endif
         NetCl_UpdateGameState(reader);
 
@@ -496,7 +496,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         size_t len = 0;
         char *msg = 0;
 #ifdef _DEBUG
-        Con_Message("D_HandlePacket: GPT_MESSAGE\n");
+        Con_Message("D_HandlePacket: GPT_MESSAGE");
 #endif
         len = Reader_ReadUInt16(reader);
         msg = Z_Malloc(len + 1, PU_GAMESTATIC, 0);
@@ -566,7 +566,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         int oldClass = plr->class_;
         plr->class_ = newClass;
 #ifdef _DEBUG
-        Con_Message("D_HandlePacket: Player %i class set to %i.\n", CONSOLEPLAYER, plr->class_);
+        Con_Message("D_HandlePacket: Player %i class set to %i.", CONSOLEPLAYER, plr->class_);
 #endif
 #if __JHERETIC__
         if(oldClass != newClass)
@@ -574,14 +574,14 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
             if(newClass == PCLASS_CHICKEN)
             {
 #ifdef _DEBUG
-                Con_Message("D_HandlePacket: Player %i activating morph..\n", CONSOLEPLAYER);
+                Con_Message("D_HandlePacket: Player %i activating morph..", CONSOLEPLAYER);
 #endif
                 P_ActivateMorphWeapon(plr);
             }
             else if(oldClass == PCLASS_CHICKEN)
             {
 #ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState: Player %i post-morph weapon %i.\n", CONSOLEPLAYER, plr->readyWeapon);
+                Con_Message("NetCl_UpdatePlayerState: Player %i post-morph weapon %i.", CONSOLEPLAYER, plr->readyWeapon);
 #endif
                 // The morph has ended.
                 P_PostMorphWeapon(plr, plr->readyWeapon);
@@ -609,7 +609,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         break;
 
     default:
-        Con_Message("H_HandlePacket: Received unknown packet, type=%i.\n", type);
+        Con_Message("H_HandlePacket: Received unknown packet, type=%i.", type);
     }
 }
 
@@ -842,7 +842,7 @@ D_CMD(SetMap)
     map = P_TranslateMapIfExists(map);
     if(map == P_INVALID_LOGICAL_MAP)
     {
-        Con_Message("Map not found.\n");
+        Con_Message("Map not found.");
         return false;
     }
 #endif

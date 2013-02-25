@@ -263,7 +263,7 @@ void N_Update(void)
             {
                 // We're still in a netGame, which means we didn't disconnect
                 // voluntarily.
-                Con_Message("N_Update: Connection was terminated.\n");
+                Con_Message("N_Update: Connection was terminated.");
                 N_Disconnect();
             }
             break;*/
@@ -286,7 +286,7 @@ void N_TerminateClient(int console)
     if(!clients[console].connected)
         return;
 
-    Con_Message("N_TerminateClient: '%s' from console %i.\n",
+    Con_Message("N_TerminateClient: '%s' from console %i.",
                 clients[console].name, console);
 
     App_ServerSystem().terminateNode(clients[console].nodeID);

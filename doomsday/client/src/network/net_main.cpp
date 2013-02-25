@@ -338,7 +338,7 @@ void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
     nameLen = strlen(clients[srcPlrNum].name);
 
 #ifdef _DEBUG
-    Con_Message("Net_SendPlayerInfo: src=%i dest=%i name=%s\n",
+    Con_Message("Net_SendPlayerInfo: src=%i dest=%i name=%s",
                 srcPlrNum, destPlrNum, clients[srcPlrNum].name);
 #endif
 
@@ -462,7 +462,7 @@ static void Net_DoUpdate(void)
 #ifdef _DEBUG
     if(netGame && verbose >= 2)
     {
-        Con_Message("Net_DoUpdate: coordTimer=%i cl:%i shmo:%p\n", coordTimer,
+        Con_Message("Net_DoUpdate: coordTimer=%i cl:%i shmo:%p", coordTimer,
                     isClient, ddPlayers[consolePlayer].shared.mo);
     }
 #endif
@@ -592,7 +592,7 @@ void Net_StopGame(void)
 
 #ifdef __CLIENT__
 # ifdef _DEBUG
-    Con_Message("Net_StopGame: Sending PCL_GOODBYE.\n");
+    Con_Message("Net_StopGame: Sending PCL_GOODBYE.");
 # endif
     // We are a connected client.
     Msg_Begin(PCL_GOODBYE);
@@ -642,7 +642,7 @@ void Net_StopGame(void)
     }
 
 #ifdef _DEBUG
-    Con_Message("Net_StopGame: Reseting console & view player to zero.\n");
+    Con_Message("Net_StopGame: Reseting console & view player to zero.");
 #endif
     consolePlayer = displayPlayer = 0;
     ddPlayers[0].shared.inGame = true;
@@ -791,7 +791,7 @@ void Net_Ticker(timespan_t time)
                 if(Sv_IsFrameTarget(i))
                 {
                     Con_Message("%i(rdy%i): avg=%05ims thres=%05ims "
-                                "bwr=%05i maxfs=%05lub unakd=%05i\n", i,
+                                "bwr=%05i maxfs=%05lub unakd=%05i", i,
                                 clients[i].ready, 0, 0,
                                 clients[i].bandwidthRating,
                                 /*clients[i].bwrAdjustTime,*/
@@ -799,7 +799,7 @@ void Net_Ticker(timespan_t time)
                                 Sv_CountUnackedDeltas(i));
                 }
                 /*if(ddPlayers[i].inGame)
-                    Con_Message("%i: cmds=%i\n", i, clients[i].numTics);*/
+                    Con_Message("%i: cmds=%i", i, clients[i].numTics);*/
             }
         }
     }
@@ -1129,7 +1129,7 @@ void Net_FinishConnection(int nodeId, const byte* data, int size)
 {
     serverinfo_t info;
 
-    Con_Message("Net_FinishConnection: Got reply with %i bytes.\n", size);
+    Con_Message("Net_FinishConnection: Got reply with %i bytes.", size);
 
     // Parse the response for server info.
     N_ClientHandleResponseToInfoQuery(nodeId, data, size);
@@ -1143,14 +1143,14 @@ void Net_FinishConnection(int nodeId, const byte* data, int size)
     }
     else
     {
-        Con_Message("Net_FinishConnection: Failed to retrieve server info.\n");
+        Con_Message("Net_FinishConnection: Failed to retrieve server info.");
     }
 }
 #endif
 
 int Net_StartConnection(const char* address, int port)
 {
-    Con_Message("Net_StartConnection: Connecting to %s...\n", address);
+    Con_Message("Net_StartConnection: Connecting to %s...", address);
 
     // Start searching at the specified location.
     Net_ServerLink().connectDomain(de::String(address) + ":" + port, 7 /*timeout*/);
@@ -1251,32 +1251,32 @@ D_CMD(Net)
         else if(!stricmp(argv[1], "info"))
         {
             N_PrintNetworkStatus();
-            Con_Message("Network game: %s\n", netGame ? "yes" : "no");
-            Con_Message("This is console %i (local player %i).\n", consolePlayer, P_ConsoleToLocal(consolePlayer));
+            Con_Message("Network game: %s", netGame ? "yes" : "no");
+            Con_Message("This is console %i (local player %i).", consolePlayer, P_ConsoleToLocal(consolePlayer));
         }
 #ifdef __CLIENT__
         else if(!stricmp(argv[1], "disconnect"))
         {
             if(!netGame)
             {
-                Con_Printf("This client is not connected to a server.\n");
+                Con_Message("This client is not connected to a server.");
                 return false;
             }
 
             if(!isClient)
             {
-                Con_Printf("This is not a client.\n");
+                Con_Message("This is not a client.");
                 return false;
             }
 
             Net_ServerLink().disconnect();
 
-            Con_Message("Disconnected.\n");
+            Con_Message("Disconnected.");
         }
 #endif
         else
         {
-            Con_Printf("Bad arguments.\n");
+            Con_Message("Bad arguments.");
             return false; // Bad args.
         }
     }
@@ -1290,7 +1290,7 @@ D_CMD(Net)
             {
                 if(netGame)
                 {
-                    Con_Printf("Already in a netGame.\n");
+                    Con_Message("Already in a netGame.");
                     return false;
                 }
 
@@ -1298,26 +1298,26 @@ D_CMD(Net)
 
                 if(success)
                 {
-                    Con_Message("Server \"%s\" started.\n", serverName);
+                    Con_Message("Server \"%s\" started.", serverName);
                 }
             }
             else if(!stricmp(argv[2], "close") || !stricmp(argv[2], "stop"))
             {
                 if(!isServer)
                 {
-                    Con_Printf("This is not a server!\n");
+                    Con_Message("This is not a server!");
                     return false;
                 }
 
                 // Close the server and kick everybody out.
                 if((success = N_ServerClose()) != false)
                 {
-                    Con_Message("Server \"%s\" closed.\n", serverName);
+                    Con_Message("Server \"%s\" closed.", serverName);
                 }
             }
             else
             {
-                Con_Printf("Bad arguments.\n");
+                Con_Message("Bad arguments.");
                 return false;
             }
         }
@@ -1331,7 +1331,7 @@ D_CMD(Net)
         {
             if(netGame)
             {
-                Con_Printf("Already connected.\n");
+                Con_Message("Already connected.");
                 return false;
             }
 

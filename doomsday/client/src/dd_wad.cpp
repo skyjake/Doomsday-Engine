@@ -117,12 +117,12 @@ lumpnum_t W_CheckLumpNumForName2(char const* name, boolean silent)
     if(!name || !name[0])
     {
         if(!silent)
-            VERBOSE2( Con_Message("Warning: W_CheckLumpNumForName: Empty name, returning invalid lumpnum.\n") )
+            VERBOSE2( Con_Message("Warning: W_CheckLumpNumForName: Empty name, returning invalid lumpnum.") )
         return -1;
     }
     lumpNum = App_FileSystem().lumpNumForName(name);
     if(!silent && lumpNum < 0)
-        VERBOSE2( Con_Message("Warning: W_CheckLumpNumForName: Lump \"%s\" not found.\n", name) )
+        VERBOSE2( Con_Message("Warning: W_CheckLumpNumForName: Lump \"%s\" not found.", name) )
     return lumpNum;
 }
 

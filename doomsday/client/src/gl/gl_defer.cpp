@@ -361,7 +361,7 @@ DGLuint GL_GetReservedTextureName(void)
         while(reservedCount == 0)
         {
             // Wait for someone to refill the names buffer.
-            Con_Message("GL_GetReservedTextureName: Sleeping until new names available.\n");
+            Con_Message("GL_GetReservedTextureName: Sleeping until new names available.");
             Sys_Sleep(5);
         }
         Sys_Lock(deferredMutex);

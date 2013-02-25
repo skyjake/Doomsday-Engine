@@ -1136,7 +1136,7 @@ static boolean doArchiveMap(GameMap* map, const char* path, boolean write)
     if(!openMapFile(path, write))
         return false; // Hmm, invalid path?
 
-    Con_Message("DAM_MapRead: %s cached map %s.\n", write? "Saving" : "Loading", path);
+    Con_Message("DAM_MapRead: %s cached map %s.", write? "Saving" : "Loading", path);
 
     /*materialDict = M_Calloc(sizeof(*materialDict));
     if(write)

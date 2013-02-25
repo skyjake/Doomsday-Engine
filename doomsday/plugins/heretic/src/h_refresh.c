@@ -106,7 +106,7 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
     }
 
     if(filter)
-        Con_Message("R_ViewFilterColor: Real strange filter number: %d.\n", filter);
+        Con_Message("R_ViewFilterColor: Real strange filter number: %d.", filter);
 
     return false;
 }
@@ -123,7 +123,7 @@ void R_UpdateViewFilter(int player)
     if(player < 0 || player >= MAXPLAYERS)
     {
 #if _DEBUG
-        Con_Message("Warning:R_UpdateViewFilter: Invalid player #%i, ignoring.\n", player);
+        Con_Message("Warning: R_UpdateViewFilter: Invalid player #%i, ignoring.", player);
 #endif
         return;
     }

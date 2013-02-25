@@ -370,7 +370,7 @@ static boolean SBE_Save(const char* name)
     file = fopen(Str_Text(&fileName), "wt");
     if(!file)
     {
-        Con_Message("Warning: Failed opening \"%s\" for write. Bias Lights not saved.\n", F_PrettyPath(Str_Text(&fileName)));
+        Con_Message("Warning: Failed opening \"%s\" for write. Bias Lights not saved.", F_PrettyPath(Str_Text(&fileName)));
         Str_Free(&fileName);
         return false;
     }

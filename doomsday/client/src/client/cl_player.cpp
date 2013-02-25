@@ -189,7 +189,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         sendAck = true;
 
 #ifdef _DEBUG
-        Con_Message("ClPlayer_ApplyPendingFixes: Applying angle %x to mobj %p and clmo %i...\n",
+        Con_Message("ClPlayer_ApplyPendingFixes: Applying angle %x to mobj %p and clmo %i...",
                     state->pendingAngleFix, mo, clmo->thinker.id);
 #endif
         clmo->angle = mo->angle = state->pendingAngleFix;
@@ -203,7 +203,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         sendAck = true;
 
 #ifdef _DEBUG
-        Con_Message("ClPlayer_ApplyPendingFixes: Applying pos (%f, %f, %f) to mobj %p and clmo %i...\n",
+        Con_Message("ClPlayer_ApplyPendingFixes: Applying pos (%f, %f, %f) to mobj %p and clmo %i...",
                     state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ],
                     mo, clmo->thinker.id);
 #endif
@@ -224,7 +224,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         sendAck = true;
 
 #ifdef _DEBUG
-        Con_Message("ClPlayer_ApplyPendingFixes: Applying mom (%f, %f, %f) to mobj %p and clmo %i...\n",
+        Con_Message("ClPlayer_ApplyPendingFixes: Applying mom (%f, %f, %f) to mobj %p and clmo %i...",
                     state->pendingMomFix[VX], state->pendingMomFix[VY], state->pendingMomFix[VZ],
                     mo, clmo->thinker.id);
 #endif
@@ -273,7 +273,7 @@ void ClPlayer_HandleFix(void)
         state->pendingFixes |= DDPF_FIXANGLES;
 
 #ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix angles %i. Angle=%x, lookdir=%f\n", plrNum,
+        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix angles %i. Angle=%x, lookdir=%f", plrNum,
                     ddpl->fixAcked.angles, state->pendingAngleFix, state->pendingLookDirFix);
 #endif
     }
@@ -287,7 +287,7 @@ void ClPlayer_HandleFix(void)
         state->pendingFixes |= DDPF_FIXORIGIN;
 
 #ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix pos %i. Pos=%f, %f, %f\n", plrNum,
+        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix pos %i. Pos=%f, %f, %f", plrNum,
                     ddpl->fixAcked.origin, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
 #endif
     }
@@ -412,7 +412,7 @@ void ClPlayer_ReadDelta2(boolean skip)
             if(!clmo)
             {
 #ifdef _DEBUG
-                Con_Message("ClPlayer_ReadDelta2: Player %i's new clmobj is %i, but we don't know it yet.\n",
+                Con_Message("ClPlayer_ReadDelta2: Player %i's new clmobj is %i, but we don't know it yet.",
                             num, newId);
 #endif
                 // This mobj hasn't yet been sent to us.
@@ -448,7 +448,7 @@ void ClPlayer_ReadDelta2(boolean skip)
             if(!justCreated) // && num != consolePlayer)
             {
 #ifdef _DEBUG
-                Con_Message("ClPlayer_ReadDelta2: Copying clmo %i state to real player %i mobj %p.\n",
+                Con_Message("ClPlayer_ReadDelta2: Copying clmo %i state to real player %i mobj %p.",
                             newId, num, ddpl->mo);
 #endif
                 Cl_UpdateRealPlayerMobj(ddpl->mo, clmo, 0xffffffff, true);
@@ -459,8 +459,8 @@ void ClPlayer_ReadDelta2(boolean skip)
                 // Update the new client mobj's information from the real
                 // mobj, which is already known.
 #if _DEBUG
-                Con_Message("Cl_RdPlrD2: Pl%i: Copying pos&angle from real mobj to clmobj.\n", num);
-                Con_Message("  x=%g y=%g z=%g\n", ddpl->mo->origin[VX], ddpl->mo->origin[VY], ddpl->mo->origin[VZ]);
+                Con_Message("Cl_RdPlrD2: Pl%i: Copying pos&angle from real mobj to clmobj.", num);
+                Con_Message("  x=%g y=%g z=%g", ddpl->mo->origin[VX], ddpl->mo->origin[VY], ddpl->mo->origin[VZ]);
 #endif
                 clmo->pos[VX] = ddpl->mo->origin[VX];
                 clmo->pos[VY] = ddpl->mo->origin[VY];
@@ -472,10 +472,10 @@ void ClPlayer_ReadDelta2(boolean skip)
             */
 
 #if _DEBUG
-            Con_Message("ClPlr_RdD2: Pl%i: mobj=%i old=%p\n", num, s->clMobjId, old);
-            Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", clmo->origin[VX],
+            Con_Message("ClPlr_RdD2: Pl%i: mobj=%i old=%p", num, s->clMobjId, old);
+            Con_Message("  x=%g y=%g z=%g fz=%g cz=%g", clmo->origin[VX],
                         clmo->origin[VY], clmo->origin[VZ], clmo->floorZ, clmo->ceilingZ);
-            Con_Message("ClPlr_RdD2: pl=%i => moid=%i\n", (skip? -1 : num), s->clMobjId);
+            Con_Message("ClPlr_RdD2: pl=%i => moid=%i", (skip? -1 : num), s->clMobjId);
 #endif
         }
     }
@@ -517,7 +517,7 @@ void ClPlayer_ReadDelta2(boolean skip)
             ddpl->flags &= ~DDPF_REMOTE_VIEW_FILTER;
         }
 #ifdef _DEBUG
-        Con_Message("ClPlayer_ReadDelta2: Filter color set remotely to (%f,%f,%f,%f)\n",
+        Con_Message("ClPlayer_ReadDelta2: Filter color set remotely to (%f,%f,%f,%f)",
                     ddpl->filterColor[CR],
                     ddpl->filterColor[CG],
                     ddpl->filterColor[CB],

@@ -358,7 +358,7 @@ void FI_ScriptTerminate(finaleid_t id)
     f = finalesById(id);
     if(!f)
     {
-        Con_Message("FI_ScriptTerminate: Unknown finale %u.\n", id);
+        Con_Message("FI_ScriptTerminate: Unknown finale %u.", id);
         return;
     }
     if(f->active)
@@ -433,7 +433,7 @@ int FI_ScriptResponder(finaleid_t id, const void* ev)
     f = finalesById(id);
     if(!f)
     {
-        Con_Message("FI_ScriptResponder: Unknown finaleid %u.\n", id);
+        Con_Message("FI_ScriptResponder: Unknown finaleid %u.", id);
         return false;
     }
     if(f->active)

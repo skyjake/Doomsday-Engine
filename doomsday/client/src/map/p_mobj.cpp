@@ -83,7 +83,7 @@ mobj_t* P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
 #ifdef _DEBUG
     if(isClient)
     {
-        VERBOSE2( Con_Message("P_MobjCreate: Client creating mobj at [x:%f, y:%f, z:%f]\n", pos[VX], pos[VY], pos[VZ]) );
+        VERBOSE2( Con_Message("P_MobjCreate: Client creating mobj at [x:%f, y:%f, z:%f]", pos[VX], pos[VY], pos[VZ]) );
     }
 #endif
 
@@ -136,7 +136,7 @@ DENG_EXTERN_C void P_MobjDestroy(mobj_t* mo)
 #ifdef _DEBUG
     if(mo->ddFlags & DDMF_MISSILE)
     {
-        VERBOSE2( Con_Message("P_MobjDestroy: Destroying missile %i.\n", mo->thinker.id) );
+        VERBOSE2( Con_Message("P_MobjDestroy: Destroying missile %i.", mo->thinker.id) );
     }
 #endif
 
@@ -175,7 +175,7 @@ DENG_EXTERN_C void P_MobjSetState(mobj_t* mobj, int statenum)
     /*
     if(mobj->ddFlags & DDMF_MISSILE)
     {
-        Con_Message("P_MobjSetState: Missile %i going to state %i.\n", mobj->thinker.id, statenum);
+        Con_Message("P_MobjSetState: Missile %i going to state %i.", mobj->thinker.id, statenum);
     }
     */
 #endif

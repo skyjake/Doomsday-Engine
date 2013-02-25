@@ -409,7 +409,7 @@ void G_RegisterBindClasses(void)
 /*
     uint        i;
 
-    Con_Message("G_PreInit: Registering Bind Classes...\n");
+    Con_Message("G_PreInit: Registering Bind Classes...");
 
     for(i = 0; BindClasses[i].name; ++i)
         DD_AddBindClass(BindClasses + i);

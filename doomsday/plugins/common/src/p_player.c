@@ -427,7 +427,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     }
 
 #ifdef _DEBUG
-    Con_Message("P_MaybeChangeWeapon: plr %i, weapon %i, ammo %i, force %i\n",
+    Con_Message("P_MaybeChangeWeapon: plr %i, weapon %i, ammo %i, force %i",
                 (int)(player - players), weapon, ammo, force);
 #endif
 
@@ -590,7 +590,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     if(returnval != WT_NOCHANGE)
     {
 #ifdef _DEBUG
-        Con_Message("P_MaybeChangeWeapon: Decided to change to weapon %i.\n", returnval);
+        Con_Message("P_MaybeChangeWeapon: Decided to change to weapon %i.", returnval);
 #endif
         player->pendingWeapon = returnval;
 

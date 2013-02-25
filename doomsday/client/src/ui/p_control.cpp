@@ -310,7 +310,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
         Str_Append(symbolicName, playerControls[control].name);
 
         VERBOSE( Con_Message("P_MaintainControlDoubleClicks: Triggered plr %i, ctl %i, "
-                             "state %i - threshold %i (%s)\n",
+                             "state %i - threshold %i (%s)",
                              playerNum, control, newState, nowTime - db->previousClickTime,
                              Str_Text(symbolicName)) );
 
@@ -421,7 +421,7 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int control)
     // Check that this is really an impulse control.
     if(pc->type != CTLT_IMPULSE)
     {
-        Con_Message("P_Impulse: Control '%s' is not an impulse control.\n",
+        Con_Message("P_Impulse: Control '%s' is not an impulse control.",
                     pc->name);
         return;
     }
@@ -485,21 +485,21 @@ D_CMD(ListPlayerControls)
     uint        i, j;
     char        buf[MAX_DESCRIPTOR_LENGTH+1];
 
-    Con_Message("Player Controls:\n");
+    Con_Message("Player Controls:");
     for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
     {
         controlclass_t *cClass = &ctlClass[i];
 
         if(cClass->count > 0)
         {
-            Con_Message("%i %s:\n", cClass->count,
+            Con_Message("%i %s:", cClass->count,
                         ctlClassNames[i][cClass->count > 1]);
             for(j = 0; j < cClass->count; ++j)
             {
                 strncpy(buf, cClass->desc[j].name, sizeof(buf) - 1);
                 strlwr(buf);
                 buf[strlen(cClass->desc[j].name)] = 0;
-                Con_Message("  %s\n", buf);
+                Con_Message("  %s", buf);
             }
         }
     }*/

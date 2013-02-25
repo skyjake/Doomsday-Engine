@@ -185,7 +185,7 @@ int EV_Teleport(LineDef* line, int side, mobj_t* mo, boolean spawnFog)
             //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
             mo->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
 #ifdef _DEBUG
-            Con_Message("EV_Teleport: Player %p set FIX flags.\n", mo->dPlayer);
+            Con_Message("EV_Teleport: Player %p set FIX flags.", mo->dPlayer);
 #endif
         }
 

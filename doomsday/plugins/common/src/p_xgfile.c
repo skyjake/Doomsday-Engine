@@ -340,7 +340,7 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
 
     xgDataLumps = true;
 
-    Con_Message("XG_ReadTypes: Reading XG types from DDXGDATA.\n");
+    Con_Message("XG_ReadTypes: Reading XG types from DDXGDATA.");
 
     len = W_LumpLength(lumpNum);
     buf = (uint8_t*) malloc(len);

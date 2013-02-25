@@ -881,7 +881,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 idx = Def_GetMobjNum(otherMobjId);
                 if(idx < 0)
                 {
-                    VERBOSE( Con_Message("Warning: Unknown Mobj %s in %s on line #%i, will be ignored.\n",
+                    VERBOSE( Con_Message("Warning: Unknown Mobj %s in %s on line #%i, will be ignored.",
                                          otherMobjId, source ? source->fileName : "?", source ? source->lineNumber : 0) )
 
                     // We'll read into a dummy definition.
@@ -980,7 +980,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 idx = Def_GetStateNum(otherStateId);
                 if(idx < 0)
                 {
-                    VERBOSE( Con_Message("Warning: Unknown State %s in %s on line #%i, will be ignored.\n",
+                    VERBOSE( Con_Message("Warning: Unknown State %s in %s on line #%i, will be ignored.",
                                          otherStateId, source ? source->fileName : "?", source ? source->lineNumber : 0) )
 
                     // We'll read into a dummy definition.
@@ -1167,7 +1167,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 {
                     VERBOSE(
                         AutoStr* path = Uri_ToString(otherMat);
-                        Con_Message("Warning: Unknown Material %s in %s on line #%i, will be ignored.\n",
+                        Con_Message("Warning: Unknown Material %s in %s on line #%i, will be ignored.",
                                     Str_Text(path), source ? source->fileName : "?", source ? source->lineNumber : 0);
                         )
 

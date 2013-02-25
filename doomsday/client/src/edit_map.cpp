@@ -310,7 +310,7 @@ static void pruneLinedefs(EditMap* map)
     if(newNum < map->numLineDefs)
     {
         if(unused > 0)
-            Con_Message("  Pruned %d unused linedefs\n", unused);
+            Con_Message("  Pruned %d unused linedefs.", unused);
 
         map->numLineDefs = newNum;
     }
@@ -346,10 +346,10 @@ static void pruneVertices(EditMap* map)
         int dupNum = map->vertexCount() - newNum - unused;
 
         if(unused > 0)
-            Con_Message("  Pruned %d unused vertices.\n", unused);
+            Con_Message("  Pruned %d unused vertices.", unused);
 
         if(dupNum > 0)
-            Con_Message("  Pruned %d duplicate vertices\n", dupNum);
+            Con_Message("  Pruned %d duplicate vertices.", dupNum);
 
         map->vertexCount() = newNum;
     }
@@ -380,10 +380,10 @@ static void pruneUnusedSidedefs(EditMap* map)
         int dupNum = map->numSideDefs - newNum - unused;
 
         if(unused > 0)
-            Con_Message("  Pruned %d unused sidedefs\n", unused);
+            Con_Message("  Pruned %d unused sidedefs.", unused);
 
         if(dupNum > 0)
-            Con_Message("  Pruned %d duplicate sidedefs\n", dupNum);
+            Con_Message("  Pruned %d duplicate sidedefs.", dupNum);
 
         map->numSideDefs = newNum;
     }
@@ -418,7 +418,7 @@ static void pruneUnusedSectors(EditMap* map)
 
     if(newNum < map->sectorCount())
     {
-        Con_Message("  Pruned %d unused sectors\n", map->sectorCount() - newNum);
+        Con_Message("  Pruned %d unused sectors.", map->sectorCount() - newNum);
         map->sectorCount() = newNum;
     }
 }
@@ -510,7 +510,7 @@ static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
 static void buildSectorBspLeafLists(GameMap* map)
 {
     uint i;
-    VERBOSE( Con_Message(" Build BSP leaf tables...\n") )
+    VERBOSE( Con_Message(" Build BSP leaf tables...") )
 
     for(i = 0; i < map->sectorCount(); ++i)
     {
@@ -1016,14 +1016,14 @@ static void hardenVertexOwnerRings(GameMap* dest, EditMap* src)
         uint idx;
 
         if(verbose >= 2)
-            Con_Message("Vertex #%i: line owners #%i\n", i, v->numLineOwners);
+            Con_Message("Vertex #%i: line owners #%i", i, v->numLineOwners);
 
         p = base = v->lineOwners;
         idx = 0;
         do
         {
             if(verbose >= 2)
-                Con_Message("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f\n",
+                Con_Message("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f",
                             idx, p->LO_prev->line - map->lineDefs,
                             p->line - map->lineDefs,
                             p->LO_next->line - map->lineDefs, BANG2DEG(p->angle));
@@ -1294,7 +1294,7 @@ void MPE_DetectOverlappingLines(GameMap* map)
 
     if(numOverlaps == 0) return;
 
-    VERBOSE( Con_Message("Detected %lu overlapped linedefs\n", (unsigned long) numOverlaps) )
+    VERBOSE( Con_Message("Detected %lu overlapping linedefs.", (unsigned long) numOverlaps) )
 }
 #endif
 
@@ -1745,7 +1745,7 @@ static int printMissingMaterialWorker(StringPool::Id internId, void* parameters)
                 int const refCount = materialDict->userValue(internId);
                 String const& materialUri = materialDict->string(internId);
                 QByteArray materialUriUtf8 = materialUri.toUtf8();
-                Con_Message(" %4u x \"%s\"\n", refCount, materialUriUtf8.constData());
+                Con_Message(" %4u x \"%s\"", refCount, materialUriUtf8.constData());
             }
         }
     }
@@ -1764,7 +1764,7 @@ static void printMissingMaterials(void)
     materialDict->iterate(printMissingMaterialWorker, &numMissing);
     if(!numMissing) return;
 
-    Con_Message("  [110] Warning: Found %u unknown %s:\n", numMissing, numMissing == 1? "material":"materials");
+    Con_Message("  [110] Warning: Found %u unknown %s:", numMissing, numMissing == 1? "material":"materials");
     // List the missing materials.
     materialDict->iterate(printMissingMaterialWorker, 0);
 }
@@ -2032,14 +2032,14 @@ boolean MPE_GameObjProperty(const char* entityName, uint elementIndex,
     entityDef = P_MapEntityDefByName(entityName);
     if(!entityDef)
     {
-        Con_Message("Warning: MPE_GameObjProperty: Unknown entity name:\"%s\", ignoring.\n", entityName);
+        Con_Message("Warning: MPE_GameObjProperty: Unknown entity name:\"%s\", ignoring.", entityName);
         return false;
     }
 
     // Is this a known property?
     if(MapEntityDef_PropertyByName2(entityDef, propertyName, &propertyDef) < 0)
     {
-        Con_Message("Warning: MPE_GameObjProperty: Entity \"%s\" has no \"%s\" property, ignoring.\n", entityName, propertyName);
+        Con_Message("Warning: MPE_GameObjProperty: Entity \"%s\" has no \"%s\" property, ignoring.", entityName, propertyName);
         return false;
     }
 

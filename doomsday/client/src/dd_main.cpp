@@ -174,7 +174,7 @@ D_CMD(CheckForUpdates)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    Con_Message("Checking for available updates...\n");
+    Con_Message("Checking for available updates...");
     Updater_CheckNow(false/* don't notify */);
     return true;
 }
@@ -184,7 +184,7 @@ D_CMD(CheckForUpdatesAndNotify)
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
     /// @todo Combine into the same command with CheckForUpdates?
-    Con_Message("Checking for available updates...\n");
+    Con_Message("Checking for available updates...");
     Updater_CheckNow(true/* do notify */);
     return true;
 }
@@ -852,7 +852,7 @@ static void loadResource(ResourceManifest &manifest)
         // Print the 'CRC' number of IWADs, so they can be identified.
         if(Wad *wad = dynamic_cast<Wad*>(file))
         {
-            Con_Message("  IWAD identification: %08x\n", wad->calculateCRC());
+            Con_Message("  IWAD identification: %08x", wad->calculateCRC());
         }
     }
 }
@@ -912,7 +912,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
      * @note  Duplicate processing of the same file is automatically guarded
      *        against by the virtual file system layer.
      */
-    Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
+    Con_Message("Loading game resources%s", verbose >= 1? ":" : "...");
 
     de::Game::Manifests const& gameManifests = games->current().manifests();
     int const numPackages = gameManifests.count(RC_PACKAGE);
@@ -1195,7 +1195,7 @@ static int DD_ActivateGameWorker(void* parameters)
         configFileName = games->current().mainConfig();
     }
 
-    Con_Message("Parsing primary config \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
+    Con_Message("Parsing primary config \"%s\"...", F_PrettyPath(Str_Text(configFileName)));
     Con_ParseCommands2(Str_Text(configFileName), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
     if(configFileName == &tmp)
         Str_Free(&tmp);
@@ -1302,7 +1302,7 @@ boolean DD_GameInfo(GameInfo *info)
     }
 
 #if _DEBUG
-    Con_Message("DD_GameInfo: Warning, no game currently loaded - returning false.\n");
+    Con_Message("DD_GameInfo: Warning, no game currently loaded - returning false.");
 #endif
     return false;
 }
@@ -1355,7 +1355,7 @@ gameid_t DD_DefineGame(GameDef const *def)
     {
         /*de::Game& game =*/ games->byIdentityKey(def->identityKey);
 #if _DEBUG
-        Con_Message("Warning: DD_DefineGame: Failed adding game \"%s\", identity key '%s' already in use, ignoring.\n", def->defaultTitle, def->identityKey);
+        Con_Message("Warning: DD_DefineGame: Failed adding game \"%s\", identity key '%s' already in use, ignoring.", def->defaultTitle, def->identityKey);
 #endif
         return 0; // Invalid id.
     }
@@ -1399,7 +1399,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         if(!allowReload)
         {
             if(App_GameLoaded())
-                Con_Message("%s (%s) - already loaded.\n", Str_Text(game.title()), Str_Text(game.identityKey()));
+                Con_Message("%s (%s) - already loaded.", Str_Text(game.title()), Str_Text(game.identityKey()));
             return true;
         }
         // We are re-loading.
@@ -1533,11 +1533,11 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     VERBOSE(
         if(!isNullGame(game))
         {
-            Con_Message("Selecting game '%s'...\n", Str_Text(game.identityKey()));
+            Con_Message("Selecting game '%s'...", Str_Text(game.identityKey()));
         }
         else if(!isReload)
         {
-            Con_Message("Unloaded game.\n");
+            Con_Message("Unloaded game.");
         }
     )
 
@@ -1554,7 +1554,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         // Re-initialize subsystems needed even when in ringzero.
         if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
         {
-            Con_Message("Warning: DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)game.pluginId());
+            Con_Message("Warning: DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.", (int)game.pluginId());
             return false;
         }
 
@@ -1670,7 +1670,7 @@ static void DD_AutoLoad(void)
     int numNewFiles;
     while((numNewFiles = loadFilesFromDataGameAuto()) > 0)
     {
-        VERBOSE( Con_Message("Autoload round completed with %i new files.\n", numNewFiles) );
+        VERBOSE( Con_Message("Autoload round completed with %i new files.", numNewFiles) );
     }
 }
 
@@ -1945,7 +1945,7 @@ boolean DD_Init(void)
         }
         else
         {
-            Con_Message("Warning: Cannot dump unknown lump \"%s\", ignoring.\n", name.toAscii().constData());
+            Con_Message("Warning: Cannot dump unknown lump \"%s\", ignoring.", name.toAscii().constData());
         }
     }
 
@@ -1963,17 +1963,17 @@ boolean DD_Init(void)
     if(CommandLine_CheckWith("-parse", 1))
     {
         uint startTime;
-        Con_Message("Parsing additional (pre-init) config files:\n");
+        Con_Message("Parsing additional (pre-init) config files:");
         startTime = Timer_RealMilliseconds();
         for(;;)
         {
             const char* arg = CommandLine_Next();
             if(!arg || arg[0] == '-') break;
 
-            Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
+            Con_Message("  Processing \"%s\"...", F_PrettyPath(arg));
             Con_ParseCommands(arg);
         }
-        VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+        VERBOSE( Con_Message("  Done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
     }
 
     // A console command on the command line?
@@ -2045,7 +2045,7 @@ boolean DD_Init(void)
         // We'll open the console and print a list of the known games too.
         Con_Execute(CMDS_DDAY, "conopen", true, false);
         if(!CommandLine_Exists("-noautoselect"))
-            Con_Message("Automatic game selection failed.\n");
+            Con_Message("Automatic game selection failed.");
         Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
 
@@ -2054,7 +2054,7 @@ boolean DD_Init(void)
 
 static void DD_InitResourceSystem(void)
 {
-    Con_Message("Initializing Resource subsystem...\n");
+    Con_Message("Initializing Resource subsystem...");
 
     initPathMappings();
 
@@ -2078,7 +2078,7 @@ static int DD_StartupWorker(void* /*parm*/)
 
     // Was the change to userdir OK?
     if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
-        Con_Message("--(!)-- User directory not found (check -userdir).\n");
+        Con_Message("--(!)-- User directory not found (check -userdir).");
 
     DD_InitResourceSystem();
 
@@ -2093,16 +2093,16 @@ static int DD_StartupWorker(void* /*parm*/)
     {
         uint startTime = Timer_RealMilliseconds();
 
-        Con_Message("Parsing additional (pre-init) config files:\n");
+        Con_Message("Parsing additional (pre-init) config files:");
         for(;;)
         {
             char const *arg = CommandLine_NextAsPath();
             if(!arg || arg[0] == '-') break;
 
-            Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
+            Con_Message("  Processing \"%s\"...", F_PrettyPath(arg));
             Con_ParseCommands(arg);
         }
-        VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+        VERBOSE( Con_Message("  Done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
     }
 
     /*
@@ -2132,19 +2132,19 @@ static int DD_StartupWorker(void* /*parm*/)
     GL_EarlyInitTextureManager();
 #endif
 
-    Con_Message("Initializing Texture subsystem...\n");
+    Con_Message("Initializing Texture subsystem...");
     DENG_ASSERT(!textures);
     textures = new Textures();
     DD_CreateTextureSchemes();
 
-    Con_Message("Initializing Material subsystem...\n");
+    Con_Message("Initializing Material subsystem...");
     DENG_ASSERT(!materials);
     materials = new Materials();
     DD_CreateMaterialSchemes();
     Con_SetProgress(140);
 
 #ifdef __CLIENT__
-    Con_Message("Initializing Binding subsystem...\n");
+    Con_Message("Initializing Binding subsystem...");
     B_Init();
     Con_SetProgress(150);
 #endif
@@ -2157,10 +2157,10 @@ static int DD_StartupWorker(void* /*parm*/)
     Demo_Init();
 #endif
 
-    Con_Message("Initializing InFine subsystem...\n");
+    Con_Message("Initializing InFine subsystem...");
     FI_Init();
 
-    Con_Message("Initializing UI subsystem...\n");
+    Con_Message("Initializing UI subsystem...");
     UI_Init();
     Con_SetProgress(190);
 
@@ -2251,7 +2251,7 @@ void DD_UpdateEngineState(void)
 {
     boolean hadFog;
 
-    Con_Message("Updating engine state...\n");
+    Con_Message("Updating engine state...");
 
     // Stop playing sounds and music.
     S_Reset();
@@ -2782,7 +2782,7 @@ D_CMD(Load)
     // Ignore attempts to load directories.
     if(Str_RAt(searchPath, 0) == '/')
     {
-        Con_Message("Directories cannot be \"loaded\" (only files and/or known games).\n");
+        Con_Message("Directories cannot be \"loaded\" (only files and/or known games).");
         return true;
     }
 
@@ -2792,9 +2792,9 @@ D_CMD(Load)
         Game &game = games->byIdentityKey(Str_Text(searchPath));
         if(!game.allStartupFilesFound())
         {
-            Con_Message("Failed to locate all required startup resources:\n");
+            Con_Message("Failed to locate all required startup resources:");
             Game::printFiles(game, FF_STARTUP);
-            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(game.title()), Str_Text(game.identityKey()));
+            Con_Message("%s (%s) cannot be loaded.", Str_Text(game.title()), Str_Text(game.identityKey()));
             return true;
         }
         if(!DD_ChangeGame(game)) return false;
@@ -2838,7 +2838,7 @@ static de::File1* tryLoadFile(de::Uri const& search, size_t baseOffset)
         de::FileHandle& hndl = App_FileSystem().openFile(search.path(), "rb", baseOffset, false /* no duplicates */);
 
         de::Uri foundFileUri = hndl.file().composeUri();
-        VERBOSE( Con_Message("Loading \"%s\"...\n", NativePath(foundFileUri.asText()).pretty().toUtf8().constData()) )
+        VERBOSE( Con_Message("Loading \"%s\"...", NativePath(foundFileUri.asText()).pretty().toUtf8().constData()) )
 
         App_FileSystem().index(hndl.file());
 
@@ -2867,17 +2867,17 @@ static bool tryUnloadFile(de::Uri const& search)
         if(games->current().isRequiredFile(file))
         {
             Con_Message("\"%s\" is required by the current game.\n"
-                        "Required game files cannot be unloaded in isolation.\n",
+                        "Required game files cannot be unloaded in isolation.",
                         pathUtf8.constData());
             return false;
         }
 
-        VERBOSE2( Con_Message("Unloading \"%s\"...\n", pathUtf8.constData()) )
+        VERBOSE2( Con_Message("Unloading \"%s\"...", pathUtf8.constData()) )
 
         App_FileSystem().deindex(file);
         delete &file;
 
-        VERBOSE2( Con_Message("Done unloading \"%s\".\n", pathUtf8.constData()) )
+        VERBOSE2( Con_Message("Done unloading \"%s\".", pathUtf8.constData()) )
         return true;
     }
     catch(FS1::NotFoundError const&)
@@ -2894,7 +2894,7 @@ D_CMD(Unload)
     {
         if(!App_GameLoaded())
         {
-            Con_Message("There is no game currently loaded.\n");
+            Con_Message("There is no game currently loaded.");
             return true;
         }
         return DD_ChangeGame(games->nullGame());
@@ -2910,7 +2910,7 @@ D_CMD(Unload)
     // Ignore attempts to unload directories.
     if(Str_RAt(searchPath, 0) == '/')
     {
-        Con_Message("Directories cannot be \"unloaded\" (only files and/or known games).\n");
+        Con_Message("Directories cannot be \"unloaded\" (only files and/or known games).");
         return true;
     }
 
@@ -2925,7 +2925,7 @@ D_CMD(Unload)
                 return DD_ChangeGame(games->nullGame());
             }
 
-            Con_Message("%s is not currently loaded.\n", Str_Text(game.identityKey()));
+            Con_Message("%s is not currently loaded.", Str_Text(game.identityKey()));
             return true;
         }
         catch(Games::NotFoundError const &)
@@ -2974,7 +2974,7 @@ D_CMD(ReloadGame)
 
     if(!App_GameLoaded())
     {
-        Con_Message("No game is presently loaded.\n");
+        Con_Message("No game is presently loaded.");
         return true;
     }
     DD_ChangeGame(games->current(), true/* allow reload */);

@@ -169,7 +169,7 @@ static void calcViewScaleFactors(uiwidget_t* obj)
     am->maxScaleMTOF = Rect_Height(UIWidget_Geometry(obj)) / am->minScale;
 
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("calcViewScaleFactors: dx=%f dy=%f dist=%f w=%i h=%i a=%f b=%f minmtof=%f\n",
+    VERBOSE2( Con_Message("calcViewScaleFactors: dx=%f dy=%f dist=%f w=%i h=%i a=%f b=%f minmtof=%f",
                           dx, dy, dist, Rect_Width(UIWidget_Geometry(obj)),
                           Rect_Height(UIWidget_Geometry(obj)), a, b, am->minScaleMTOF) );
 #endif
@@ -1876,7 +1876,7 @@ void UIAutomap_UpdateGeometry(uiwidget_t* obj)
     R_ViewWindowGeometry(UIWidget_Player(obj), &newGeom);
 
 /*#ifdef _DEBUG
-    Con_Message("UIAutomap_UpdateGeometry: newGeom %i,%i %i,%i current %i,%i %i,%i\n",
+    Con_Message("UIAutomap_UpdateGeometry: newGeom %i,%i %i,%i current %i,%i %i,%i",
                 newGeom.origin.x, newGeom.origin.y,
                 newGeom.size.width, newGeom.size.height,
                 Rect_X(obj->geometry), Rect_Y(obj->geometry), Rect_Width(obj->geometry), Rect_Height(obj->geometry));
@@ -2287,7 +2287,7 @@ void UIAutomap_SetWorldBounds(uiwidget_t* obj, coord_t lowX, coord_t hiX, coord_
     calcViewScaleFactors(obj);
 
 #ifdef _DEBUG
-    Con_Message("SetWorldBounds: low=%f,%f hi=%f,%f minScaleMTOF=%f\n", lowX, lowY, hiX, hiY,
+    Con_Message("SetWorldBounds: low=%f,%f hi=%f,%f minScaleMTOF=%f", lowX, lowY, hiX, hiY,
                 am->minScaleMTOF);
 #endif
 

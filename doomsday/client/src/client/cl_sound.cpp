@@ -97,7 +97,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         else
         {
             Con_Message("Cl_ReadSoundDelta2: DT_SECTOR_SOUND contains "
-                        "invalid sector num %u. Skipping.\n", index);
+                        "invalid sector num %u. Skipping.", index);
             skip = true;
         }
     }
@@ -114,7 +114,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         else
         {
             Con_Message("Cl_ReadSoundDelta2: DT_POLY_SOUND contains "
-                        "invalid polyobj num %u. Skipping.\n", index);
+                        "invalid polyobj num %u. Skipping.", index);
             skip = true;
         }
     }
@@ -272,7 +272,7 @@ void Cl_Sound(void)
     // Is the ID valid?
     if(sound < 1 || sound >= defs.count.sounds.num)
     {
-        Con_Message("Cl_Sound: Out of bounds ID %i.\n", sound);
+        Con_Message("Cl_Sound: Out of bounds ID %i.", sound);
         return;                 // Bad sound ID!
     }
 #ifdef _DEBUG
@@ -302,7 +302,7 @@ void Cl_Sound(void)
         num = Reader_ReadPackedUInt16(msgReader);
         if(num >= NUM_SECTORS)
         {
-            Con_Message("Cl_Sound: Invalid sector number %i.\n", num);
+            Con_Message("Cl_Sound: Invalid sector number %i.", num);
             return;
         }
         mo = (mobj_t*) &SECTOR_PTR(num)->base;

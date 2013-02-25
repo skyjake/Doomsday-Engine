@@ -174,7 +174,7 @@ int DS_SDLMixerInit(void)
 
     if(SDL_InitSubSystem(SDL_INIT_AUDIO))
     {
-        Con_Message("Warning:DS_SDLMixerInit: Error initializing SDL AUDIO\n %s\n", SDL_GetError());
+        Con_Message("Warning:DS_SDLMixerInit: Error initializing SDL AUDIO\n %s", SDL_GetError());
         return false;
     }
 
@@ -185,13 +185,13 @@ int DS_SDLMixerInit(void)
        SDL_VERSIONNUM(compVer.major, compVer.minor, compVer.patch))
     {
         Con_Message("Warning:DS_SDLMixerInit: Linked version of SDLMixer (%u.%u.%u) is "
-                    "newer than expected (%u.%u.%u)\n", linkVer->major, linkVer->minor,
+                    "newer than expected (%u.%u.%u)", linkVer->major, linkVer->minor,
                     linkVer->patch, compVer.major, compVer.minor, compVer.patch);
     }
 
     if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024))
     {
-        Con_Message("Warning:DS_SDLMixerInit: Failed opening mixer %s.\n", Mix_GetError());
+        Con_Message("Warning:DS_SDLMixerInit: Failed opening mixer %s.", Mix_GetError());
         return false;
     }
 
@@ -348,7 +348,7 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     buf->ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), 1);
     if(!buf->ptr)
     {
-        Con_Message("DS_SDLMixer_SFX_Load: Warning, failed loading sample (%s).\n",
+        Con_Message("DS_SDLMixer_SFX_Load: Warning, failed loading sample (%s).",
                     Mix_GetError());
     }
 
@@ -554,7 +554,7 @@ int DS_SDLMixer_Music_PlayFile(const char* filename, int looped)
 
     if(!(lastMusic = Mix_LoadMUS(filename)))
     {
-        Con_Message("DS_SDLMixer_Music_PlayFile: Error %s.\n", Mix_GetError());
+        Con_Message("DS_SDLMixer_Music_PlayFile: Error %s.", Mix_GetError());
         return false;
     }
 

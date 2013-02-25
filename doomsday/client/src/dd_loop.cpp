@@ -190,7 +190,7 @@ static void endFrame(void)
     uint nowTime = Timer_RealMilliseconds();
 
     /*
-    Con_Message("endFrame with %i ms (%i render)\n", nowTime - lastShowAt, nowTime - frameStartAt);
+    Con_Message("endFrame with %i ms (%i render)", nowTime - lastShowAt, nowTime - frameStartAt);
     lastShowAt = nowTime;
     */
 
@@ -408,7 +408,7 @@ static void baseTicker(timespan_t time)
                 coord_t actualMom[2] = { mo->origin[0] - prevPos[0], mo->origin[1] - prevPos[1] };
                 coord_t actualSpeed = V2d_Length(actualMom);
 
-                Con_Message("%i,%f,%f,%f,%f\n", SECONDS_TO_TICKS(sysTime + time),
+                Con_Message("%i,%f,%f,%f,%f", SECONDS_TO_TICKS(sysTime + time),
                             ddPlayers[0].shared.forwardMove, speed, actualSpeed, speed - prevSpeed);
 
                 V3d_Copy(prevPos, mo->origin);
@@ -515,7 +515,7 @@ static void timeDeltaStatistics(int deltaMs)
             }
             average /= NUM_FRAMETIME_DELTAS;
             variance /= NUM_FRAMETIME_DELTAS;
-            Con_Message("Time deltas [%i frames]: min=%-6i max=%-6i avg=%-11.7f late=%5.1f%% var=%12.10f\n",
+            Con_Message("Time deltas [%i frames]: min=%-6i max=%-6i avg=%-11.7f late=%5.1f%% var=%12.10f",
                         NUM_FRAMETIME_DELTAS, minDelta, maxDelta, average,
                         lateCount/(float)NUM_FRAMETIME_DELTAS*100,
                         variance);

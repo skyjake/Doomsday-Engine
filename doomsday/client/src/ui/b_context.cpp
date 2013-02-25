@@ -337,7 +337,7 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
     if(!(bc->flags & BCF_PROTECTED) && verbose >= 1)
 #endif
     {
-        Con_Message("%s binding context '%s'...\n", doActivate? "Activating" : "Deactivating", bc->name);
+        Con_Message("%s binding context '%s'...", doActivate? "Activating" : "Deactivating", bc->name);
     }
 
     bc->flags &= ~BCF_ACTIVE;

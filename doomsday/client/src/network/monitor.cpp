@@ -57,29 +57,29 @@ static void Monitor_Print(void)
 
     if(!monitoredBytes)
     {
-        Con_Message("Nothing has been sent yet.\n");
+        Con_Message("Nothing has been sent yet.");
         return;
     }
-    Con_Message("%u bytes sent (%i packets).\n", monitoredBytes, monitoredPackets);
+    Con_Message("%u bytes sent (%i packets).", monitoredBytes, monitoredPackets);
 
     for(i = 0, k = 0; i < 256; ++i)
     {
-        if(!k) Con_Message("    ");
+        if(!k) Con_Printf("    ");
 
-        Con_Message("%10.10lf", (double)(monitor[i]) / (double)monitoredBytes);
+        Con_Printf("%10.10lf", (double)(monitor[i]) / (double)monitoredBytes);
 
         // Break lines.
         if(++k == 4)
         {
             k = 0;
-            Con_Message(",\n");
+            Con_Printf(",\n");
         }
         else
         {
-            Con_Message(", ");
+            Con_Printf(", ");
         }
     }
-    if(k) Con_Message("\n");
+    if(k) Con_Printf("\n");
 }
 
 D_CMD(NetFreqs)

@@ -82,7 +82,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
 
     if(!WAV_CheckFormat((const char*)data))
     {
-        Con_Message("WAV_MemoryLoad: Not a WAV file.\n");
+        Con_Message("WAV_MemoryLoad: Not a WAV file.");
         return NULL;
     }
 
@@ -123,13 +123,12 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
             // Check that it's a format we know how to read.
             if(wave_format.wFormatTag != WAVE_FORMAT_PCM)
             {
-                Con_Message("WAV_MemoryLoad: Unsupported format (%i).\n", wave_format.wFormatTag);
+                Con_Message("WAV_MemoryLoad: Unsupported format (%i).", wave_format.wFormatTag);
                 return NULL;
             }
             if(wave_format.wChannels != 1)
             {
-                Con_Message
-                    ("WAV_MemoryLoad: Too many channels (only mono supported).\n");
+                Con_Message("WAV_MemoryLoad: Too many channels (only mono supported).");
                 return NULL;
             }
             // Read the extra format information.
@@ -145,7 +144,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
             if(wave_format.wBitsPerSample != 8 &&
                wave_format.wBitsPerSample != 16)
             {
-                Con_Message("WAV_MemoryLoad: Not a 8/16 bit WAVE.\n");
+                Con_Message("WAV_MemoryLoad: Not a 8/16 bit WAVE.");
                 return NULL;
             }
             // Now we know some information about the sample.
@@ -156,7 +155,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
         {
             if(!wave_format.wFormatTag)
             {
-                Con_Message("WAV_MemoryLoad: Malformed WAVE data.\n");
+                Con_Message("WAV_MemoryLoad: Malformed WAVE data.");
                 return NULL;
             }
             // Read data chunk.
@@ -214,7 +213,7 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
     sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate, samples);
     if(!sampledata)
     {
-        Con_Message("WAV_Load: Failed to load %s.\n", filename);
+        Con_Message("WAV_Load: Failed to load %s.", filename);
     }
 
     free(data);

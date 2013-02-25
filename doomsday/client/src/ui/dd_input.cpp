@@ -1438,13 +1438,14 @@ void DD_ReadMouse(void)
     if(verbose >= 3)
     {
         for(i = 0; i < IMB_MAXBUTTONS; ++i)
+        {
             if(mouse.buttonDowns[i] || mouse.buttonUps[i])
                 break;
+        }
         if(i < IMB_MAXBUTTONS)
         {
             for(i = 0; i < IMB_MAXBUTTONS; ++i)
-                Con_Message("[%02i] %i/%i ", i, mouse.buttonDowns[i], mouse.buttonUps[i]);
-            Con_Message("\n");
+                Con_Message("[%02i] %i/%i", i, mouse.buttonDowns[i], mouse.buttonUps[i]);
         }
     }
 

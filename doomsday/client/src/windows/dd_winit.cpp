@@ -275,7 +275,7 @@ boolean DD_Win32_Init(void)
     {
         // Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.  A bit of a hack...
         SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
-        Con_Message("Windows system keys disabled.\n");
+        Con_Message("Windows system keys disabled.");
     }
 #endif
 

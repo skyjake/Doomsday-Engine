@@ -122,12 +122,12 @@ void N_PrintNetworkStatus(void)
 {
     if(isClient)
     {
-        Con_Message("CLIENT: Connected to server at %s.\n",
+        Con_Message("CLIENT: Connected to server at %s.",
                     svLink->address().asText().toAscii().constData());
     }
     else
     {
-        Con_Message("OFFLINE: Single-player mode.\n");
+        Con_Message("OFFLINE: Single-player mode.");
     }
 
     N_PrintBufferInfo();

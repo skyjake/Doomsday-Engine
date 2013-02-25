@@ -148,8 +148,7 @@ static IDirectSound3DBuffer8* get3DBuffer(IDirectSoundBuffer8* buf8)
     if(FAILED(hr = buf8->QueryInterface(IID_IDirectSound3DBuffer8,
                                         (LPVOID*) &buf3d)))
     {
-        Con_Message("dsDirectSound::get3DBuffer: "
-                    "Failed to get 3D interface (0x%x).\n", hr);
+        Con_Message("dsDirectSound::get3DBuffer: Failed to get 3D interface (0x%x).", hr);
         buf3d = NULL;
     }
 
@@ -221,7 +220,7 @@ int DS_Init(void)
     verbose = CommandLine_Exists("-verbose");
 
     if(verbose)
-        Con_Message("dsDirectSound::DS_Init: Initializing Direct Sound...\n");
+        Con_Message("dsDirectSound::DS_Init: Initializing Direct Sound...");
 
     // Can we set the Primary Sound Format?
     canSetPSF = !CommandLine_Exists("-nopsf");
@@ -246,8 +245,7 @@ int DS_Init(void)
         else
         {
             if(verbose)
-                Con_Message("dsDirectSound::DS_Init: "
-                            "EAX couldn't be initialized (0x%x).\n", hr);
+                Con_Message("dsDirectSound::DS_Init: EAX couldn't be initialized (0x%x).", hr);
         }
     }
 
@@ -260,8 +258,7 @@ int DS_Init(void)
         }
         else
         {
-            Con_Message("dsDirectSound::DS_Init: "
-                        "Failed to create the DS8 instance (0x%x).\n", hr);
+            Con_Message("dsDirectSound::DS_Init: Failed to create the DS8 instance (0x%x).", hr);
         }
     }
 
@@ -273,8 +270,7 @@ int DS_Init(void)
     // Set cooperative level.
     if((hr = dsound->SetCooperativeLevel(hWnd, DSSCL_PRIORITY)) != DS_OK)
     {
-        Con_Message("dsDirectSound::DS_Init: "
-                    "Failed to set cooperative level (0x%x).\n", hr);
+        Con_Message("dsDirectSound::DS_Init: Failed to set cooperative level (0x%x).", hr);
         return false;
     }
 
@@ -282,8 +278,7 @@ int DS_Init(void)
     dsoundCaps.dwSize = sizeof(dsoundCaps);
     if((hr = dsound->GetCaps(&dsoundCaps)) != DS_OK)
     {
-        Con_Message("dsDirectSound::DS_Init: "
-                    "Failed querying device caps (0x%x).\n", hr);
+        Con_Message("dsDirectSound::DS_Init: Failed querying device caps (0x%x).", hr);
         return false;
     }
 
@@ -316,8 +311,7 @@ int DS_Init(void)
 
         if((hr = dsound->CreateSoundBuffer(&desc, &primary, NULL)) != DS_OK)
         {
-            Con_Message("dsDirectSound::DS_Init: "
-                        "Failed creating primary (2D) buffer (0x%x).\n", hr);
+            Con_Message("dsDirectSound::DS_Init: Failed creating primary (2D) buffer (0x%x).", hr);
             return false;
         }
 
@@ -334,8 +328,7 @@ int DS_Init(void)
                                     (LPVOID*) &dsListener)))
         {
             if(verbose)
-                Con_Message("dsDirectSound::DS_Init: "
-                            "3D listener not available (0x%x).\n", hr);
+                Con_Message("dsDirectSound::DS_Init: 3D listener not available (0x%x).", hr);
         }
     }
 
@@ -416,7 +409,7 @@ int DS_Init(void)
             useEAX = false;
 
             if(verbose)
-                Con_Message("dsDirectSound::DS_Init: Failed retrieving property set.\n");
+                Con_Message("dsDirectSound::DS_Init: Failed retrieving property set.");
         }
     }
 
@@ -439,14 +432,14 @@ int DS_Init(void)
         {
             const eaxproperty_t* p = &eaxProps[i];
 
-            Con_Message("    %s: %s\n", p->name,
+            Con_Message("    %s: %s", p->name,
                         queryEAXSupport(p->prop)? "Present" : "Not available");
         }
     }
 
     // Success!
     if(verbose)
-        Con_Message("dsDirectSound::DS_Init: Initialization complete, OK.\n");
+        Con_Message("dsDirectSound::DS_Init: Initialization complete, OK.");
     return true;
 
 #undef NUMBUFFERS_HW_3D
@@ -554,8 +547,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     buf_object8 = createBuffer(&desc);
     if(!buf_object8)
     {
-        Con_Message("dsDirectSound::DS_SFX_CreateBuffer: "
-                    "Failed creating buffer [rate:%i bits:%i].\n",
+        Con_Message("dsDirectSound::DS_SFX_CreateBuffer: Failed creating buffer [rate:%i bits:%i].",
                     rate, bits);
         return NULL;
     }
@@ -566,8 +558,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
         buf_object3d = get3DBuffer(buf_object8);
         if(!buf_object3d)
         {
-            Con_Message("dsDirectSound::DS_SFX_CreateBuffer: "
-                        "Failed to retrieve 3D interface.\n");
+            Con_Message("dsDirectSound::DS_SFX_CreateBuffer: Failed to retrieve 3D interface.");
             buf_object8->Release();
             return NULL;
         }
@@ -1068,7 +1059,7 @@ static void setEAXdw(DWORD prop, int value)
                               0, &value, sizeof(DWORD))))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("setEAXdw (prop:%i value:%i) failed. Result: %x.\n",
+            Con_Message("setEAXdw (prop:%i value:%i) failed. Result: %x.",
                         prop, value, hr);
     }
 }
@@ -1083,7 +1074,7 @@ static void setEAXf(DWORD prop, float value)
                               0, &value, sizeof(float))))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("setEAXf (prop:%i value:%f) failed. Result: %x.\n",
+            Con_Message("setEAXf (prop:%i value:%f) failed. Result: %x.",
                         prop, value, hr);
     }
 }
@@ -1103,7 +1094,7 @@ static void mulEAXdw(DWORD prop, float mul)
                               &retBytes)))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("mulEAXdw (prop:%i) get failed. Result: %x.\n",
+            Con_Message("mulEAXdw (prop:%i) get failed. Result: %x.",
                         prop, hr & 0xffff);
     }
 
@@ -1125,7 +1116,7 @@ static void mulEAXf(DWORD prop, float mul, float min, float max)
                               &retBytes)))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("mulEAXf (prop:%i) get failed. Result: %x.\n",
+            Con_Message("mulEAXf (prop:%i) get failed. Result: %x.",
                         prop, hr & 0xffff);
     }
 

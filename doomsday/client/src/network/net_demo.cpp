@@ -368,7 +368,7 @@ void Demo_StopPlayback(void)
     if(!playback)
         return;
 
-    Con_Message("Demo was %.2f seconds (%i tics) long.\n",
+    Con_Message("Demo was %.2f seconds (%i tics) long.",
                 (DEMOTIC - demoStartTic) / (float) TICSPERSEC,
                 DEMOTIC - demoStartTic);
 
@@ -385,9 +385,8 @@ void Demo_StopPlayback(void)
         if(!diff)
             diff = 1;
         // Print summary and exit.
-        Con_Message("Timedemo results: ");
-        Con_Message("%i game tics in %.1f seconds\n", r_framecounter, diff);
-        Con_Message("%f FPS\n", r_framecounter / diff);
+        Con_Message("Timedemo results: %i game tics in %.1f seconds", r_framecounter, diff);
+        Con_Message("%f FPS", r_framecounter / diff);
         Sys_Quit();
     }
     */

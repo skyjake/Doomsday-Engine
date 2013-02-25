@@ -1023,7 +1023,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                     }
                 }
 
-                Con_Message("Warning:parseParamaterBlock: Unknown font '%s'.\n", (*strPtr));
+                Con_Message("Warning:parseParamaterBlock: Unknown font '%s'.", (*strPtr));
                 continue;
             }
 

@@ -167,7 +167,7 @@ void P_BringUpWeapon(player_t* player)
     wminfo = WEAPON_INFO(raiseWeapon, player->class_, 0);
 
 #if _DEBUG
-    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i\n",
+    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
                 (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
 #endif
 

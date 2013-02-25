@@ -325,7 +325,7 @@ void P_InitMapInfo(void)
         }
 
 #ifdef _DEBUG
-        Con_Message("MAPINFO: map%i \"%s\" warp:%i\n", map, info->name, info->warpTrans);
+        Con_Message("MAPINFO: map%i \"%s\" warp:%i", map, info->name, info->warpTrans);
 #endif
 
         mapMax = map > mapMax ? map : mapMax;
@@ -355,7 +355,7 @@ static void setSongCDTrack(int index, int track)
     int         cdTrack = track;
 
 #ifdef _DEBUG
-    Con_Message("setSongCDTrack: index=%i, track=%i\n", index, track);
+    Con_Message("setSongCDTrack: index=%i, track=%i", index, track);
 #endif
 
     // Set the internal array.
@@ -385,14 +385,14 @@ uint P_TranslateMapIfExists(uint map)
             if(info->cluster)
             {
 #ifdef _DEBUG
-                Con_Message("P_TranslateMapIfExists: warp %i translated to logical %i, cluster %i\n", map, i, info->cluster);
+                Con_Message("P_TranslateMapIfExists: warp %i translated to logical %i, cluster %i", map, i, info->cluster);
 #endif
                 return i;
             }
             else
             {
 #ifdef _DEBUG
-                Con_Message("P_TranslateMapIfExists: warp %i matches logical %i, but it has no cluster\n", map, i);
+                Con_Message("P_TranslateMapIfExists: warp %i matches logical %i, but it has no cluster", map, i);
 #endif
                 matchedWithoutCluster = i;
             }
@@ -400,7 +400,7 @@ uint P_TranslateMapIfExists(uint map)
     }
 
 #ifdef _DEBUG
-    Con_Message("P_TranslateMapIfExists: could not find warp %i, translating to logical %i\n",
+    Con_Message("P_TranslateMapIfExists: could not find warp %i, translating to logical %i",
                 map, matchedWithoutCluster);
 #endif
     return matchedWithoutCluster;

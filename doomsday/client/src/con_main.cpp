@@ -391,7 +391,7 @@ boolean Con_Init(void)
         return true;
     }
 
-    Con_Message("Initializing the console...\n");
+    Con_Message("Initializing the console...");
 
     histBuf = CBuffer_New(512, 70, 0);
     bLineOff = 0;
@@ -429,16 +429,20 @@ void Con_Shutdown(void)
 {
     if(!ConsoleInited) return;
 
-    Con_Message("Shutting down the console...\n");
+    Con_Message("Shutting down the console...");
 
     Con_ClearExecBuffer();
     Con_ShutdownDatabases();
 
     if(prbuff)
-        M_Free(prbuff), prbuff = NULL;
+    {
+        M_Free(prbuff); prbuff = 0;
+    }
 
     if(histBuf)
-        CBuffer_Delete(histBuf), histBuf = NULL;
+    {
+        CBuffer_Delete(histBuf); histBuf = 0;
+    }
 
     clearCommandHistory();
 
@@ -576,7 +580,7 @@ static void Con_Send(const char *command, byte src, int silent)
 
     if(len >= 0x8000)
     {
-        Con_Message("Con_Send: Command is too long, length=%i.\n", len);
+        Con_Message("Con_Send: Command is too long, length=%i.", len);
         return;
     }
 
@@ -663,8 +667,7 @@ static boolean Con_CheckExecBuffer(void)
 
         if(count++ > 100)
         {
-            Con_Message("Console execution buffer overflow! "
-                        "Everything canceled.\n");
+            Con_Message("Console execution buffer overflow! Everything canceled.");
             Con_ClearExecBuffer();
             break;
         }
@@ -1974,7 +1977,8 @@ void Con_Message(char const *message, ...)
     va_end(argptr);
 
     // Ensure the message has a terminating new line character.
-    if(buffer[qstrlen(buffer)] != '\n')
+    int messageLen = qstrlen(buffer);
+    if(messageLen && buffer[messageLen - 1] != '\n')
         std::strcat(buffer, "\n");
 
     // These messages are always dumped. If consoleDump is set,
@@ -2196,7 +2200,7 @@ D_CMD(Quit)
 #ifdef __CLIENT__
     if(Updater_IsDownloadInProgress())
     {
-        Con_Message("Cannot quit while downloading update.\n");
+        Con_Message("Cannot quit while downloading update.");
         return false;
     }
 #endif

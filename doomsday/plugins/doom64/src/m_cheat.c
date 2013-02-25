@@ -202,19 +202,19 @@ void printDebugInfo(player_t* plr)
     // Also print some information to the console.
     Con_Message("%s", textBuffer);
     sub = plr->plr->mo->bspLeaf;
-    Con_Message("\nBspLeaf %i:\n", P_ToIndex(sub));
+    Con_Message("BspLeaf %i:", P_ToIndex(sub));
 
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
     path = Uri_ToString(uri);
-    Con_Message("  FloorZ:%g Material:%s\n", P_GetDoublep(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
+    Con_Message("  FloorZ:%g Material:%s", P_GetDoublep(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
     Uri_Delete(uri);
 
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_CEILING_MATERIAL));
     path = Uri_ToString(uri);
-    Con_Message("  CeilingZ:%g Material:%s\n", P_GetDoublep(sub, DMU_CEILING_HEIGHT), Str_Text(path));
+    Con_Message("  CeilingZ:%g Material:%s", P_GetDoublep(sub, DMU_CEILING_HEIGHT), Str_Text(path));
     Uri_Delete(uri);
 
-    Con_Message("Player height:%g   Player radius:%g\n", plr->plr->mo->height, plr->plr->mo->radius);
+    Con_Message("Player height:%g Player radius:%g", plr->plr->mo->height, plr->plr->mo->radius);
 }
 
 /**

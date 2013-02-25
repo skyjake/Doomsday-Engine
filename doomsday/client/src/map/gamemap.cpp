@@ -449,7 +449,7 @@ static void initPolyobj(Polyobj* po)
         if(bspLeaf->polyObj)
         {
             Con_Message("Warning: GameMap::initPolyobj: Multiple polyobjs in a single BSP leaf\n"
-                        "  (BSP leaf %lu, sector %lu). Previous polyobj overridden.\n",
+                        "  (BSP leaf %lu, sector %lu). Previous polyobj overridden.",
                         (unsigned long)GET_BSPLEAF_IDX(bspLeaf), (unsigned long)GET_SECTOR_IDX(bspLeaf->sector));
         }
         bspLeaf->polyObj = po;
@@ -496,7 +496,7 @@ void GameMap_InitNodePiles(GameMap* map)
 
     DENG2_ASSERT(map);
 
-    VERBOSE( Con_Message("GameMap::InitNodePiles: Initializing...\n") )
+    VERBOSE( Con_Message("GameMap::InitNodePiles: Initializing...") )
     VERBOSE2( starttime = Timer_RealMilliseconds() )
 
     // Initialize node piles and line rings.
@@ -512,7 +512,7 @@ void GameMap_InitNodePiles(GameMap* map)
     }
 
     // How much time did we spend?
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Timer_RealMilliseconds() - starttime) / 1000.0f) )
+    VERBOSE2( Con_Message("  Done in %.2f seconds.", (Timer_RealMilliseconds() - starttime) / 1000.0f) )
 }
 
 void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d_t max_)

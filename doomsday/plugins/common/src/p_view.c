@@ -92,7 +92,7 @@ void P_CalcHeight(player_t* plr)
     if((pmo->flags2 & MF2_FLY) && pmo->origin[VZ] > pmo->floorZ)
     {
 #ifdef _DEBUG
-        Con_Message("Flying! z=%f flz=%f\n", pmo->origin[VZ], pmo->floorZ);
+        Con_Message("Flying! z=%f flz=%f", pmo->origin[VZ], pmo->floorZ);
 #endif
         plr->bob = 1.0f / 2;
     }

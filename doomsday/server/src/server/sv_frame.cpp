@@ -146,7 +146,7 @@ void Sv_TransmitFrame(void)
         if(clients[i].ready) // && clients[i].updateCount > 0)
         {
 /*#ifdef _DEBUG
-            Con_Message("Sv_TransmitFrame: Sending at tic %i to plr %i\n", lastTransmitTic, i);
+            Con_Message("Sv_TransmitFrame: Sending at tic %i to plr %i", lastTransmitTic, i);
 #endif*/
             // A frame will be sent to this client. If the client
             // doesn't send ticcmds, the updatecount will eventually
@@ -158,7 +158,7 @@ void Sv_TransmitFrame(void)
 #ifdef _DEBUG
         else
         {
-            Con_Message("Sv_TransmitFrame: NOT sending at tic %i to plr %i (ready:%i)\n", lastTransmitTic, i,
+            Con_Message("Sv_TransmitFrame: NOT sending at tic %i to plr %i (ready:%i)", lastTransmitTic, i,
                         clients[i].ready);
         }
 #endif
@@ -412,7 +412,7 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
     {
         Writer_WriteUInt32(msgWriter, d->filter);
 #ifdef _DEBUG
-        Con_Message("Sv_WritePlayerDelta: Plr %i, filter %08x\n", delta->delta.id, d->filter);
+        Con_Message("Sv_WritePlayerDelta: Plr %i, filter %08x", delta->delta.id, d->filter);
 #endif
     }
     if(df & PDF_PSPRITES)       // Only set if there's something to write.

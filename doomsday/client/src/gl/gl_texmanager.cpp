@@ -3213,7 +3213,7 @@ D_CMD(MipMap)
     int newMipMode = String(argv[1]).toInt();
     if(newMipMode < 0 || newMipMode > 5)
     {
-        Con_Message("Invalid mipmapping mode %i specified. Valid range is [0..5).\n", newMipMode);
+        Con_Message("Invalid mipmapping mode %i specified. Valid range is [0..5).", newMipMode);
         return false;
     }
 

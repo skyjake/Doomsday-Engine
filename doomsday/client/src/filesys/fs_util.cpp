@@ -674,7 +674,7 @@ boolean F_Dump(void const* data, size_t size, char const* path)
     FILE* outFile = fopen(Str_Text(nativePath), "wb");
     if(!outFile)
     {
-        Con_Message("Warning: Failed to open \"%s\" for writing (error: %s), aborting.\n",
+        Con_Message("Warning: Failed to open \"%s\" for writing (error: %s), aborting.",
                     F_PrettyPath(Str_Text(nativePath)), strerror(errno));
         return false;
     }

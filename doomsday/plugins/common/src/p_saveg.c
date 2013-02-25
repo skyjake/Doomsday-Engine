@@ -622,7 +622,7 @@ void SV_ClearSlot(int slot)
 #endif
     {
         AutoStr* ident = SV_ComposeSlotIdentifier(slot);
-        Con_Message("Clearing save slot %s\n", Str_Text(ident));
+        Con_Message("Clearing save slot %s", Str_Text(ident));
     }
 
     { int i;
@@ -850,7 +850,7 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     if(!SV_IsValidSlot(sourceSlot))
     {
 #if _DEBUG
-        Con_Message("Warning: SV_CopySlot: Source slot %i invalid, save game not copied.\n", sourceSlot);
+        Con_Message("Warning: SV_CopySlot: Source slot %i invalid, save game not copied.", sourceSlot);
 #endif
         return;
     }
@@ -858,7 +858,7 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     if(!SV_IsValidSlot(destSlot))
     {
 #if _DEBUG
-        Con_Message("Warning: SV_CopySlot: Dest slot %i invalid, save game not copied.\n", destSlot);
+        Con_Message("Warning: SV_CopySlot: Dest slot %i invalid, save game not copied.", destSlot);
 #endif
         return;
     }
@@ -1115,7 +1115,7 @@ mobj_t* SV_GetArchiveThing(int thingid, void *address)
 
         if(thingid < 1 || (uint) thingid > thingArchiveSize)
         {
-            Con_Message("SV_GetArchiveThing: Invalid NUM %i??\n", thingid);
+            Con_Message("SV_GetArchiveThing: Invalid NUM %i??", thingid);
             return NULL;
         }
 
@@ -5376,11 +5376,11 @@ boolean SV_LoadGame(int slot)
     path = composeGameSavePathForSlot(slot);
     if(Str_IsEmpty(path))
     {
-        Con_Message("Warning: Path \"%s\" is unreachable, game not loaded.\n", SV_SavePath());
+        Con_Message("Warning: Path \"%s\" is unreachable, game not loaded.", SV_SavePath());
         return false;
     }
 
-    VERBOSE( Con_Message("Attempting load of game-save slot #%i...\n", slot) )
+    VERBOSE( Con_Message("Attempting load of game-save slot #%i...", slot) )
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot.
@@ -5401,7 +5401,7 @@ boolean SV_LoadGame(int slot)
     }
     else
     {
-        Con_Message("Warning: Failed loading game-save slot #%i.\n", slot);
+        Con_Message("Warning: Failed loading game-save slot #%i.", slot);
     }
 
     return !loadError;
@@ -5425,7 +5425,7 @@ void SV_SaveGameClient(uint gameId)
     gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(Str_Text(gameSavePath), "wp"))
     {
-        Con_Message("Warning:SV_SaveGameClient: Failed opening \"%s\" for writing.\n", Str_Text(gameSavePath));
+        Con_Message("Warning: SV_SaveGameClient: Failed opening \"%s\" for writing.", Str_Text(gameSavePath));
         return;
     }
 
@@ -5483,7 +5483,7 @@ void SV_LoadGameClient(uint gameId)
     gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(Str_Text(gameSavePath), "rp"))
     {
-        Con_Message("Warning:SV_LoadGameClient: Failed opening \"%s\" for reading.\n", Str_Text(gameSavePath));
+        Con_Message("Warning: SV_LoadGameClient: Failed opening \"%s\" for reading.", Str_Text(gameSavePath));
         return;
     }
 
@@ -5495,7 +5495,7 @@ void SV_LoadGameClient(uint gameId)
     {
         SaveInfo_Delete(saveInfo);
         SV_CloseFile();
-        Con_Message("SV_LoadGameClient: Bad magic!\n");
+        Con_Message("SV_LoadGameClient: Bad magic!");
         return;
     }
 
@@ -5566,7 +5566,7 @@ static void unarchiveMap(void)
     bufferSize = M_ReadFile(Str_Text(path), (char**)&saveBuffer);
     if(0 == bufferSize)
     {
-        Con_Message("Warning:unarchiveMap: Failed opening \"%s\" for reading.\n", Str_Text(path));
+        Con_Message("Warning: unarchiveMap: Failed opening \"%s\" for reading.", Str_Text(path));
         return;
     }
 
@@ -5585,7 +5585,7 @@ static void unarchiveMap(void)
 static int saveStateWorker(const char* path, SaveInfo* saveInfo)
 {
 #if _DEBUG
-    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", path) )
+    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".", path) )
 #endif
 
     if(!openGameSaveFile(path, true))
@@ -5693,19 +5693,19 @@ boolean SV_SaveGame(int slot, const char* name)
 
     if(!SV_IsValidSlot(slot))
     {
-        Con_Message("Warning: Invalid slot '%i' specified, game not saved.\n", slot);
+        Con_Message("Warning: Invalid slot '%i' specified, game not saved.", slot);
         return false;
     }
     if(!name[0])
     {
-        Con_Message("Warning: Empty name specified for slot #%i, game not saved.\n", slot);
+        Con_Message("Warning: Empty name specified for slot #%i, game not saved.", slot);
         return false;
     }
 
     path = composeGameSavePathForSlot(logicalSlot);
     if(Str_IsEmpty(path))
     {
-        Con_Message("Warning: Path \"%s\" is unreachable, game not saved.\n", SV_SavePath());
+        Con_Message("Warning: Path \"%s\" is unreachable, game not saved.", SV_SavePath());
         return false;
     }
 
@@ -5732,7 +5732,7 @@ boolean SV_SaveGame(int slot, const char* name)
 
         if(saveError == SV_INVALIDFILENAME)
         {
-            Con_Message("Warning: Failed opening \"%s\" for writing.\n", Str_Text(path));
+            Con_Message("Warning: Failed opening \"%s\" for writing.", Str_Text(path));
         }
     }
 

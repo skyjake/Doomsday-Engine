@@ -256,7 +256,7 @@ void P_LoadACScripts(int lump)
     acsinfo_t* info;
     int i;
 
-    VERBOSE( Con_Message("Loading ACS bytecode lump %s:%s (#%i)...\n",
+    VERBOSE( Con_Message("Loading ACS bytecode lump %s:%s (#%i)...",
                          F_PrettyPath(Str_Text(W_LumpSourceFile(lump))), Str_Text(W_LumpName(lump)), lump) )
     ACScriptCount = 0;
 
@@ -277,7 +277,7 @@ void P_LoadACScripts(int lump)
     if(ACScriptCount == 0 || IS_CLIENT)
     {
         // Empty/Invalid lump.
-        Con_Message("Warning: P_LoadACSScripts: lumpnum %i does not appear to be valid ACS bytecode, ignoring.\n", lump);
+        Con_Message("Warning: P_LoadACSScripts: lumpnum %i does not appear to be valid ACS bytecode, ignoring.", lump);
         return;
     }
 
@@ -383,7 +383,7 @@ boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
 #ifdef _DEBUG
     if(IS_CLIENT)
     {
-        Con_Message("P_StartACS: Client is attempting to start a script!\n");
+        Con_Message("P_StartACS: Client is attempting to start a script!");
     }
 #endif
 

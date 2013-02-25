@@ -448,7 +448,7 @@ void NetSv_TellCycleRulesToPlayer(int destPlr)
     if(!cyclingMaps) return;
 
 #ifdef _DEBUG
-    Con_Message("NetSv_TellCycleRulesToPlayer: %i\n", destPlr);
+    Con_Message("NetSv_TellCycleRulesToPlayer: %i", destPlr);
 #endif
 
     // Get the rules of the current map.
@@ -511,7 +511,7 @@ void NetSv_MapCycleTicker(void)
                 if(map < 0)
                 {
                     // Hmm?! Abort cycling.
-                    Con_Message("NetSv_CheckCycling: All of a sudden MapCycle is invalid!\n");
+                    Con_Message("NetSv_CheckCycling: All of a sudden MapCycle is invalid!");
                     DD_Execute(false, "endcycle");
                     return;
                 }
@@ -569,7 +569,7 @@ void NetSv_MapCycleTicker(void)
                 if(map < 0)
                 {
                     // Hmm?! Abort cycling.
-                    Con_Message("NetSv_CheckCycling: All of a sudden MapCycle is invalid!\n");
+                    Con_Message("NetSv_CheckCycling: All of a sudden MapCycle is invalid!");
                     DD_Execute(false, "endcycle");
                     return;
                 }
@@ -593,7 +593,7 @@ void NetSv_ResetPlayerFrags(int plrNum)
     player_t* plr = &players[plrNum];
 
 #ifdef _DEBUG
-    Con_Message("NetSv_ResetPlayerFrags: Player %i.\n", plrNum);
+    Con_Message("NetSv_ResetPlayerFrags: Player %i.", plrNum);
 #endif
     memset(plr->frags, 0, sizeof(plr->frags));
 
@@ -614,7 +614,7 @@ void NetSv_NewPlayerEnters(int plrNum)
 {
     player_t* plr = &players[plrNum];
 
-    Con_Message("NetSv_NewPlayerEnters: spawning player %i.\n", plrNum);
+    Con_Message("NetSv_NewPlayerEnters: spawning player %i.", plrNum);
 
     plr->playerState = PST_REBORN;  // Force an init.
 
@@ -638,7 +638,7 @@ void NetSv_NewPlayerEnters(int plrNum)
         {
             const mapspot_t* spot = &mapSpots[start->spot];
 #ifdef _DEBUG
-            Con_Message("NetSv_NewPlayerEnters: Spawning player with angle:%x\n", spot->angle);
+            Con_Message("NetSv_NewPlayerEnters: Spawning player with angle:%x", spot->angle);
 #endif
             P_SpawnPlayer(plrNum, pClass, spot->origin[VX], spot->origin[VY],
                           spot->origin[VZ], spot->angle, spot->flags,
@@ -758,7 +758,7 @@ void NetSv_SendGameState(int flags, int to)
     // Print a short message that describes the game state.
     str = Uri_Resolved(mapUri);
 #ifdef _DEBUG
-    Con_Message("NetSv_SendGameState: Game setup: %s %s %s\n",
+    Con_Message("NetSv_SendGameState: Game setup: %s %s %s",
                 gameInfo.identityKey, Str_Text(str), gameConfigString);
 #endif
 
@@ -844,7 +844,7 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
     if(!IS_SERVER) return;
 
 #ifdef _DEBUG
-    Con_Message("NetSv_SendPlayerSpawnPosition: Player #%i pos:[%g, %g, %g] angle:%x\n",
+    Con_Message("NetSv_SendPlayerSpawnPosition: Player #%i pos:[%g, %g, %g] angle:%x",
         plrNum, x, y, z, angle);
 #endif
     writer = D_NetWrite();
@@ -921,7 +921,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean rel
         return;
 
 #ifdef _DEBUG
-    Con_Message("NetSv_SendPlayerState: src=%i, dest=%i, flags=%x\n", srcPlrNum, destPlrNum, flags);
+    Con_Message("NetSv_SendPlayerState: src=%i, dest=%i, flags=%x", srcPlrNum, destPlrNum, flags);
 #endif
 
     writer = D_NetWrite();
@@ -1101,7 +1101,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean rel
     if(flags & PSF_MORPH_TIME)
     {
 #ifdef _DEBUG
-        Con_Message("NetSv_SendPlayerState: Player %i, sending morph tics as %i seconds.\n", srcPlrNum, (pl->morphTics + 34) / 35);
+        Con_Message("NetSv_SendPlayerState: Player %i, sending morph tics as %i seconds.", srcPlrNum, (pl->morphTics + 34) / 35);
 #endif
         // Send as seconds.
         Writer_WriteByte(writer, (pl->morphTics + 34) / 35);
@@ -1132,7 +1132,7 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
     Writer_WriteByte(writer, whose);
     Writer_WriteByte(writer, cfg.playerColor[whose]);
 /*#ifdef _DEBUG
-    Con_Message("NetSv_SendPlayerInfo: To %i, player %i's color is %i.\n", to_whom, whose, cfg.playerColor[whose]);
+    Con_Message("NetSv_SendPlayerInfo: To %i, player %i's color is %i.", to_whom, whose, cfg.playerColor[whose]);
 #endif*/
 #if __JHERETIC__ || __JHEXEN__
     Writer_WriteByte(writer, cfg.playerClass[whose]); // current class
@@ -1155,7 +1155,7 @@ void NetSv_ChangePlayerInfo(int from, Reader* msg)
     P_SetPlayerRespawnClass(from, newClass); // requesting class change?
 
 #ifdef _DEBUG
-    Con_Message("NetSv_ChangePlayerInfo: pl%i, col=%i, requested class=%i\n",
+    Con_Message("NetSv_ChangePlayerInfo: pl%i, col=%i, requested class=%i",
                 from, cfg.playerColor[from], newClass);
 #endif
 
@@ -1173,7 +1173,7 @@ void NetSv_ChangePlayerInfo(int from, Reader* msg)
 #ifdef _DEBUG
     if(pl->plr->mo)
     {
-        Con_Message("Player %i mo %i translation flags %x\n", from, pl->plr->mo->thinker.id,
+        Con_Message("Player %i mo %i translation flags %x", from, pl->plr->mo->thinker.id,
                     (pl->plr->mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
     }
 #endif
@@ -1265,7 +1265,7 @@ void NetSv_SendPlayerClass(int plrNum, char cls)
     Writer* writer;
 
 #ifdef _DEBUG
-    Con_Message("NetSv_SendPlayerClass: Player %i has class %i.\n", plrNum, cls);
+    Con_Message("NetSv_SendPlayerClass: Player %i has class %i.", plrNum, cls);
 #endif
     writer = D_NetWrite();
     Writer_WriteByte(writer, cls);
@@ -1376,7 +1376,7 @@ static void NetSv_FireWeaponCallback(mobj_t* mo, void* param)
 static void NetSv_HitFloorCallback(mobj_t* mo, void* param)
 {
 #ifdef _DEBUG
-    Con_Message("NetSv_HitFloorCallback: mo %i\n", mo->thinker.id);
+    Con_Message("NetSv_HitFloorCallback: mo %i", mo->thinker.id);
 #endif
     P_HitFloor(mo);
 }
@@ -1428,7 +1428,7 @@ void NetSv_DoAction(int player, Reader* msg)
 
 #ifdef _DEBUG
     Con_Message("NetSv_DoAction: player=%i, type=%i, xyz=(%.1f,%.1f,%.1f)\n  "
-                "angle=%x lookDir=%g weapon=%i\n",
+                "angle=%x lookDir=%g weapon=%i",
                 player, type, pos[VX], pos[VY], pos[VZ],
                 angle, lookDir, actionParam);
 #endif
@@ -1440,7 +1440,7 @@ void NetSv_DoAction(int player, Reader* msg)
             if(type == GPA_USE || type == GPA_FIRE)
             {
 #ifdef _DEBUG
-                Con_Message("NetSv_DoAction: Intermission accelerate.\n");
+                Con_Message("NetSv_DoAction: Intermission accelerate.");
 #endif
                 IN_SkipToNext();
             }
@@ -1521,7 +1521,7 @@ void NetSv_DoDamage(int player, Reader* msg)
     thid_t source = Reader_ReadUInt16(msg);
 
 #ifdef _DEBUG
-    Con_Message("NetSv_DoDamage: Client %i requests damage %i on %i via %i by %i.\n",
+    Con_Message("NetSv_DoDamage: Client %i requests damage %i on %i via %i by %i.",
                 player, damage, target, inflictor, source);
 #endif
 
@@ -1581,7 +1581,7 @@ void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
             return;
 
 #ifdef _DEBUG
-    Con_Message("NetSv_SendMessageEx: Message '%s'\n", msg);
+    Con_Message("NetSv_SendMessageEx: Message '%s'", msg);
 #endif
 
     if(plrNum == DDSP_ALL_PLAYERS)
@@ -1617,7 +1617,7 @@ void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force)
         return;
 
 #ifdef _DEBUG
-    Con_Message("NetSv_MaybeChangeWeapon: Plr=%i Weapon=%i Ammo=%i Force=%i\n",
+    Con_Message("NetSv_MaybeChangeWeapon: Plr=%i Weapon=%i Ammo=%i Force=%i",
                 plrNum, weapon, ammo, force);
 #endif
 

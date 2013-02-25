@@ -1133,7 +1133,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         float startTime = Timer_Seconds();
         Rend_CacheForMap();
         App_Materials().processCacheQueue();
-        VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Timer_Seconds() - startTime) )
+        VERBOSE( Con_Message("Precaching took %.2f seconds.", Timer_Seconds() - startTime) )
 #endif
 
         S_SetupForChangedMap();
