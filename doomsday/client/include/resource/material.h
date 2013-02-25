@@ -65,14 +65,18 @@ public:
     /// Maximum number of layers a material supports.
     static int const max_layers = 1;
 
+#ifdef __CLIENT__
     /// Maximum number of (light) decorations a material supports.
     static int const max_decorations = 16;
+#endif
 
     /// The referenced layer does not exist. @ingroup errors
     DENG2_ERROR(UnknownLayerError);
 
+#ifdef __CLIENT__
     /// The referenced decoration does not exist. @ingroup errors
     DENG2_ERROR(UnknownDecorationError);
+#endif
 
     /// The referenced property does not exist. @ingroup errors
     DENG2_ERROR(UnknownPropertyError);
@@ -274,6 +278,8 @@ public:
         Stages stages_;
     };
 
+#ifdef __CLIENT__
+
     /**
      * (Light) decoration.
      */
@@ -399,8 +405,6 @@ public:
 
     /// A list of decorations.
     typedef QList<Decoration *> Decorations;
-
-#ifdef __CLIENT__
 
     /**
      * Context-specialized variant. Encapsulates all context variant values
@@ -867,8 +871,8 @@ private:
 Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)
 
 // Aliases.
-typedef Material::Decoration MaterialDecoration;
 #ifdef __CLIENT__
+typedef Material::Decoration MaterialDecoration;
 typedef Material::Variant MaterialVariant;
 #endif
 

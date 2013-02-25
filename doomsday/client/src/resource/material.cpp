@@ -197,6 +197,7 @@ Material::ShineLayer::Stages const &Material::ShineLayer::stages() const
     return stages_;
 }
 
+#ifdef __CLIENT__
 
 Material::Decoration::Stage *Material::Decoration::Stage::fromDef(ded_decorlight_stage_t const &def)
 {
@@ -289,6 +290,8 @@ Material::Decoration::Stages const &Material::Decoration::stages() const
     return stages_;
 }
 
+#endif // __CLIENT__
+
 DENG2_PIMPL(Material)
 {
     /// Manifest derived to yield the material.
@@ -313,8 +316,10 @@ DENG2_PIMPL(Material)
     Material::DetailLayer *detailLayer;
     Material::ShineLayer *shineLayer;
 
+#ifdef __CLIENT__
     /// Decorations (will be projected into the map relative to a surface).
     Material::Decorations decorations;
+#endif
 
     /// @c false= the material is no longer valid.
     bool valid;
