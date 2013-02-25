@@ -152,8 +152,8 @@ void R_DrawPatch(Texture &tex, int x, int y, int w, int h, bool useOffsets)
 
     if(useOffsets)
     {
-        x += tex.origin().x();
-        y += tex.origin().y();
+        x += tex.origin().x;
+        y += tex.origin().y;
     }
 
     GL_DrawRectf2Color(x, y, w, h, 1, 1, 1, 1);
@@ -223,7 +223,7 @@ void R_DrawViewBorder()
             .material().prepare(Ui_MaterialSpec());
 
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
-        GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.dimensions().width(), ms.dimensions().height(), 0, 0,
+        GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.width(), ms.height(), 0, 0,
                             vd->window.origin.x - border, vd->window.origin.y - border,
                             vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
     }

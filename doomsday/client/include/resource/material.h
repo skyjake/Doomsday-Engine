@@ -30,7 +30,6 @@
 #include <de/Vector>
 #include <QFlag>
 #include <QList>
-#include <QSize>
 
 // Forward declarations:
 enum audioenvironmentclass_e;
@@ -53,7 +52,7 @@ class Texture;
  */
 class Material : public de::MapElement
 {
-    struct Instance; // Needs to be friended by Variant.
+    struct Instance; // Needs to be friended by Variant (etc...).
 
     /// Internal typedefs for brevity/cleanliness.
     typedef de::MaterialManifest Manifest;
@@ -227,12 +226,12 @@ public:
             blendmode_t blendMode; // Blend mode flags (bm_*).
             float shininess;
             de::Vector3f minColor;
-            QSizeF maskDimensions;
+            de::Vector2f maskDimensions;
 
             Stage(int _tics, float _variance, de::Texture *_texture,
                   de::Texture *_maskTexture, blendmode_t _blendMode,
                   float _shininess, de::Vector3f const &_minColor,
-                  QSizeF const &_maskDimensions)
+                  de::Vector2f const &_maskDimensions)
                 : tics(_tics), variance(_variance), texture(_texture),
                   maskTexture(_maskTexture), blendMode(_blendMode),
                   shininess(_shininess), minColor(_minColor),
@@ -666,19 +665,19 @@ public:
     /**
      * Returns the dimensions of the material in map coordinate space units.
      */
-    QSize const &dimensions() const;
+    de::Vector2i const &dimensions() const;
 
     /// Returns the width of the material in map coordinate space units.
-    inline int width() const { return dimensions().width(); }
+    inline int width() const { return dimensions().x; }
 
     /// Returns the height of the material in map coordinate space units.
-    inline int height() const { return dimensions().height(); }
+    inline int height() const { return dimensions().y; }
 
     /**
      * Change the world dimensions of the material.
      * @param newDimensions  New dimensions in map coordinate space units.
      */
-    void setDimensions(QSize const &newDimensions);
+    void setDimensions(de::Vector2i const &newDimensions);
 
     /**
      * Change the world width of the material.

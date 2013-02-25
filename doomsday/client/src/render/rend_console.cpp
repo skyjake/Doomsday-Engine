@@ -563,8 +563,8 @@ static void drawConsoleBackground(Point2Raw const *origin, Size2Raw const *size,
 
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
-        bgX = int(ms.dimensions().width()  * consoleBackgroundZoom);
-        bgY = int(ms.dimensions().height() * consoleBackgroundZoom);
+        bgX = int(ms.width() * consoleBackgroundZoom);
+        bgY = int(ms.height() * consoleBackgroundZoom);
 
         glEnable(GL_TEXTURE_2D);
         if(consoleBackgroundTurn != 0)

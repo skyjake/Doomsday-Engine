@@ -470,19 +470,19 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
 
-    info->geometry.origin.x    = -tex.origin().x() + -texSpec.border;
-    info->geometry.origin.y    = -tex.origin().y() +  texSpec.border;
-    info->geometry.size.width  = ms.dimensions().width()  + texSpec.border * 2;
-    info->geometry.size.height = ms.dimensions().height() + texSpec.border * 2;
+    info->geometry.origin.x    = -tex.origin().x + -texSpec.border;
+    info->geometry.origin.y    = -tex.origin().y +  texSpec.border;
+    info->geometry.size.width  = ms.width()  + texSpec.border * 2;
+    info->geometry.size.height = ms.height() + texSpec.border * 2;
 
     ms.texture(MTU_PRIMARY).coords(&info->texCoord[0], &info->texCoord[1]);
 #else
     Texture &tex = *info->material->layers()[0]->stages()[0]->texture;
 
-    info->geometry.origin.x    = -tex.origin().x();
-    info->geometry.origin.y    = -tex.origin().y();
-    info->geometry.size.width  = info->material->dimensions().width();
-    info->geometry.size.height = info->material->dimensions().height();
+    info->geometry.origin.x    = -tex.origin().x;
+    info->geometry.origin.y    = -tex.origin().y;
+    info->geometry.size.width  = info->material->width();
+    info->geometry.size.height = info->material->height();
 #endif
 
     return true;
@@ -513,7 +513,7 @@ coord_t R_VisualRadius(mobj_t *mo)
     if(Material *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
     {
         MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
-        return ms.dimensions().width() / 2;
+        return ms.width() / 2;
     }
 
     // Use the physical radius.
@@ -1101,7 +1101,7 @@ void R_ProjectSprite(mobj_t *mo)
     // Perform visibility checking.
     /// @todo R_VisualRadius() does not consider sprite rotation.
     coord_t const width = R_VisualRadius(mo) * 2;
-    coord_t const offset = (mf? 0 : coord_t(-tex.origin().x()) - (width / 2.0f));
+    coord_t const offset = (mf? 0 : coord_t(-tex.origin().x) - (width / 2.0f));
     coord_t v1[2], v2[2];
 
     // Project a line segment relative to the view in 2D, then check if not
@@ -1143,7 +1143,7 @@ void R_ProjectSprite(mobj_t *mo)
     params.floorAdjust = floorAdjust;
     P_MobjSectorsIterator(mo, RIT_VisMobjZ, &params);
 
-    gzt = vis->origin[VZ] + -tex.origin().y();
+    gzt = vis->origin[VZ] + -tex.origin().y;
 
     viewAlign  = (align || alwaysAlign == 3)? true : false;
     fullBright = ((mo->state->flags & STF_FULLBRIGHT) || levelFullBright)? true : false;
@@ -1249,27 +1249,27 @@ void R_ProjectSprite(mobj_t *mo)
 
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
-        if(ms.dimensions().height() < secCeil - secFloor)
+        if(ms.height() < secCeil - secFloor)
         {
             // Sprite fits in, adjustment possible?
             // Check top.
             if(fitTop && gzt > secCeil)
                 gzt = secCeil;
             // Check bottom.
-            if(floorAdjust && fitBottom && gzt - ms.dimensions().height() < secFloor)
-                gzt = secFloor + ms.dimensions().height();
+            if(floorAdjust && fitBottom && gzt - ms.height() < secFloor)
+                gzt = secFloor + ms.height();
         }
         // Adjust by the floor clip.
         gzt -= floorClip;
 
         getLightingParams(vis->origin[VX], vis->origin[VY],
-                          gzt - ms.dimensions().height() / 2.0f,
+                          gzt - ms.height() / 2.0f,
                           mo->bspLeaf, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupSpriteParamsForVisSprite(&vis->data.sprite,
                                       vis->origin[VX], vis->origin[VY],
-                                      gzt - ms.dimensions().height() / 2.0f,
+                                      gzt - ms.height() / 2.0f,
                                       vis->distance,
                                       visOff[VX], visOff[VY], visOff[VZ],
                                       secFloor, secCeil,
@@ -1343,7 +1343,7 @@ void R_ProjectSprite(mobj_t *mo)
 
         float flareSize = pl->brightMul;
         // X offset to the flare position.
-        float xOffset = ms.dimensions().width() * pl->originX - -tex.origin().x();
+        float xOffset = ms.width() * pl->originX - -tex.origin().x;
 
         // Does the mobj have an active light definition?
         if(def)

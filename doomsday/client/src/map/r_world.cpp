@@ -816,7 +816,7 @@ boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector *frontSec, Sector *b
 
         // Might the material cover the opening?
         openRange = R_VisOpenRange(frontSec, backSec, &openBottom, &openTop);
-        if(ms.dimensions().height() >= openRange)
+        if(ms.height() >= openRange)
         {
             // Possibly; check the placement.
             coord_t bottom, top;

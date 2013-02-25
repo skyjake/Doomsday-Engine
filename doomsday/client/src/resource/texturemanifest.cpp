@@ -33,10 +33,10 @@ DENG2_PIMPL(TextureManifest)
     Uri resourceUri;
 
     /// World dimensions in map coordinate space units.
-    QSize logicalDimensions;
+    Vector2i logicalDimensions;
 
     /// World origin offset in map coordinate space units.
-    QPoint origin;
+    Vector2i origin;
 
     /// Texture classification flags.
     Texture::Flags flags;
@@ -79,12 +79,14 @@ Texture *TextureManifest::derive()
 #if _DEBUG
         LOG_INFO("\"%s\" already has an existing texture, reconfiguring.") << composeUri();
 #endif
-        d->texture->setFlags(d->flags);
-        d->texture->setDimensions(d->logicalDimensions);
-        d->texture->setOrigin(d->origin);
+        Texture *tex = d->texture;
+
+        tex->setFlags(d->flags);
+        tex->setDimensions(d->logicalDimensions);
+        tex->setOrigin(d->origin);
 
         /// @todo Materials and Surfaces should be notified of this!
-        return d->texture;
+        return tex;
     }
 
     Texture *tex = Textures::ResourceClass::interpret(*this);
@@ -140,26 +142,29 @@ Texture::Flags &TextureManifest::flags()
     return d->flags;
 }
 
-QSize const &TextureManifest::logicalDimensions() const
+Vector2i const &TextureManifest::logicalDimensions() const
 {
     return d->logicalDimensions;
 }
 
-bool TextureManifest::setLogicalDimensions(QSize const &newDimensions)
+bool TextureManifest::setLogicalDimensions(Vector2i const &newDimensions)
 {
     if(d->logicalDimensions == newDimensions) return false;
     d->logicalDimensions = newDimensions;
     return true;
 }
 
-QPoint const &TextureManifest::origin() const
+Vector2i const &TextureManifest::origin() const
 {
     return d->origin;
 }
 
-void TextureManifest::setOrigin(QPoint const &newOrigin)
+void TextureManifest::setOrigin(Vector2i const &newOrigin)
 {
-    d->origin = newOrigin;
+    if(d->origin != newOrigin)
+    {
+        d->origin = newOrigin;
+    }
 }
 
 bool TextureManifest::hasTexture() const

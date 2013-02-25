@@ -37,7 +37,7 @@ CompositeTexture::Component::Component(int xOrigin, int yOrigin)
     : origin_(xOrigin, yOrigin), lumpNum_(-1)
 {}
 
-QPoint const &CompositeTexture::Component::origin() const {
+Vector2i const &CompositeTexture::Component::origin() const {
     return origin_;
 }
 
@@ -62,11 +62,11 @@ String const &CompositeTexture::percentEncodedNameRef() const {
     return name;
 }
 
-QSize const &CompositeTexture::logicalDimensions() const {
+Vector2i const &CompositeTexture::logicalDimensions() const {
     return logicalDimensions_;
 }
 
-QSize const &CompositeTexture::dimensions() const {
+Vector2i const &CompositeTexture::dimensions() const {
     return dimensions_;
 }
 
@@ -119,8 +119,8 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
 
     // We'll initially accept these values as logical dimensions. However
     // we may need to adjust once we've checked the patch dimensions.
-    pctex->logicalDimensions_.setWidth(dimensions[0]);
-    pctex->logicalDimensions_.setHeight(dimensions[1]);
+    pctex->logicalDimensions_.x = dimensions[0];
+    pctex->logicalDimensions_.y = dimensions[1];
 
     pctex->dimensions_ = pctex->logicalDimensions_;
 
@@ -139,7 +139,8 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
     dint16 componentCount;
     reader >> componentCount;
 
-    QRect geom(QPoint(0, 0), pctex->logicalDimensions_);
+    QRect geom(QPoint(0, 0), QSize(pctex->logicalDimensions_.x,
+                                   pctex->logicalDimensions_.y));
 
     int foundComponentCount = 0;
     for(dint16 i = 0; i < componentCount; ++i)
@@ -148,8 +149,8 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
 
         dint16 origin16[2];
         reader >> origin16[0] >> origin16[1];
-        patch.origin_.setX(origin16[0]);
-        patch.origin_.setY(origin16[1]);
+        patch.origin_.x = origin16[0];
+        patch.origin_.y = origin16[1];
 
         dint16 pnamesIndex;
         reader >> pnamesIndex;
@@ -183,7 +184,8 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
                     try
                     {
                         Patch::Metadata info = Patch::loadMetadata(fileData);
-                        geom |= QRect(patch.origin_, info.dimensions);
+                        geom |= QRect(QPoint(patch.origin_.x, patch.origin_.y),
+                                      QSize(info.dimensions.x, info.dimensions.y));
                     }
                     catch(IByteArray::OffsetError const &)
                     {
@@ -212,8 +214,8 @@ CompositeTexture *CompositeTexture::constructFrom(Reader &reader,
 
     // Clip and apply the final height.
     if(geom.top()  < 0) geom.setTop(0);
-    if(geom.height() > pctex->logicalDimensions_.height())
-        pctex->dimensions_.setHeight(geom.height());
+    if(geom.height() > pctex->logicalDimensions_.y)
+        pctex->dimensions_.y = geom.height();
 
     if(!foundComponentCount)
     {

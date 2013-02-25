@@ -262,7 +262,7 @@ bool Textures::has(Uri const &path) const
 }
 
 TextureManifest *Textures::declare(Uri const &uri, de::Texture::Flags flags,
-    QSize const &dimensions, QPoint const &origin, int uniqueId, de::Uri const *resourceUri)
+    Vector2i const &dimensions, Vector2i const &origin, int uniqueId, de::Uri const *resourceUri)
 {
     LOG_AS("Textures::declare");
 
@@ -415,6 +415,7 @@ static void printTextureInfo(Texture &tex)
 {
     Uri uri = tex.manifest().composeUri();
     QByteArray path = uri.asText().toUtf8();
+
 #ifdef __CLIENT__
     Con_Printf("Texture \"%s\" [%p] x%u origin:%s\n",
                path.constData(), (void *)&tex, tex.variantCount(),
@@ -425,7 +426,7 @@ static void printTextureInfo(Texture &tex)
                tex.flags().testFlag(Texture::Custom)? "addon" : "game");
 #endif
 
-    if(tex.dimensions().isEmpty())
+    if(tex.width() == 0 && tex.height() == 0)
         Con_Printf("Dimensions: unknown (not yet loaded)\n");
     else
         Con_Printf("Dimensions: %d x %d\n", tex.width(), tex.height());

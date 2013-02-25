@@ -2310,18 +2310,18 @@ static TexSource loadFlat(image_t &image, de::FileHandle &hndl)
  *
  * @todo Optimize: Should be redesigned to composite whole rows -ds
  */
-static void compositePaletted(dbyte *dst, QSize const &dstDimensions,
-    IByteArray const &src, QSize const &srcDimensions, QPoint const &origin)
+static void compositePaletted(dbyte *dst, Vector2i const &dstDimensions,
+    IByteArray const &src, Vector2i const &srcDimensions, Vector2i const &origin)
 {
-    if(dstDimensions.isEmpty()) return;
-    if(srcDimensions.isEmpty()) return;
+    if(dstDimensions.x == 0 && dstDimensions.y == 0) return;
+    if(srcDimensions.x == 0 && srcDimensions.y == 0) return;
 
-    int const    srcW = srcDimensions.width();
-    int const    srcH = srcDimensions.height();
+    int const    srcW = srcDimensions.x;
+    int const    srcH = srcDimensions.y;
     size_t const srcPels = srcW * srcH;
 
-    int const    dstW = dstDimensions.width();
-    int const    dstH = dstDimensions.height();
+    int const    dstW = dstDimensions.x;
+    int const    dstH = dstDimensions.y;
     size_t const dstPels = dstW * dstH;
 
     int dstX, dstY;
@@ -2329,8 +2329,8 @@ static void compositePaletted(dbyte *dst, QSize const &dstDimensions,
     for(int srcY = 0; srcY < srcH; ++srcY)
     for(int srcX = 0; srcX < srcW; ++srcX)
     {
-        dstX = origin.x() + srcX;
-        dstY = origin.y() + srcY;
+        dstX = origin.x + srcX;
+        dstY = origin.y + srcY;
         if(dstX < 0 || dstX >= dstW) continue;
         if(dstY < 0 || dstY >= dstH) continue;
 
@@ -2377,16 +2377,16 @@ static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass, int
             Patch::Metadata info = Patch::loadMetadata(fileData);
 
             Image_Init(&image);
-            image.size.width  = info.logicalDimensions.width()  + border*2;
-            image.size.height = info.logicalDimensions.height() + border*2;
+            image.size.width  = info.logicalDimensions.x + border*2;
+            image.size.height = info.logicalDimensions.y + border*2;
             image.pixelSize   = 1;
             image.paletteId   = defaultColorPalette;
 
             image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
             if(!image.pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image.size.width * image.size.height));
 
-            compositePaletted(image.pixels, QSize(image.size.width, image.size.height),
-                              patchImg, info.logicalDimensions, QPoint(border, border));
+            compositePaletted(image.pixels, Vector2i(image.size.width, image.size.height),
+                              patchImg, info.logicalDimensions, Vector2i(border, border));
 
             if(palettedIsMasked(image.pixels, image.size.width, image.size.height))
             {
@@ -2437,12 +2437,12 @@ static TexSource loadPatchComposite(image_t &image, de::Texture &tex, bool maskZ
                 Block patchImg = Patch::load(fileData, loadFlags);
                 Patch::Metadata info = Patch::loadMetadata(fileData);
 
-                QPoint origin = i->origin();
+                Vector2i origin = i->origin();
                 if(useZeroOriginIfOneComponent && texDef.componentCount() == 1)
-                    origin = QPoint(0, 0);
+                    origin = Vector2i(0, 0);
 
                 // Draw the patch in the buffer.
-                compositePaletted(image.pixels, QSize(image.size.width, image.size.height),
+                compositePaletted(image.pixels, Vector2i(image.size.width, image.size.height),
                                   patchImg, info.dimensions, origin);
             }
             catch(IByteArray::OffsetError const &)
@@ -2958,13 +2958,13 @@ preparetextureresult_t GL_PrepareTexture(TextureVariant &variant)
     if(source == TEXS_NONE) return PTR_NOTFOUND;
 
     // Are we setting the logical dimensions to the actual pixel dimensions?
-    if(tex.dimensions().isEmpty())
+    if(tex.width() == 0 && tex.height() == 0)
     {
 #if _DEBUG
         LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels (%ix%i).")
             << tex.manifest().composeUri() << image.size.width << image.size.height;
 #endif
-        tex.setDimensions(QSize(image.size.width, image.size.height));
+        tex.setDimensions(Vector2i(image.size.width, image.size.height));
     }
 
     performImageAnalyses(tex, &image, spec, true /*Always update*/);

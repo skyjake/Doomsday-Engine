@@ -176,7 +176,7 @@ Material::ShineLayer::Stage *Material::ShineLayer::Stage::fromDef(ded_shine_stag
 
     return new Stage(def.tics, def.variance, texture, maskTexture,
                      def.blendMode, def.shininess, Vector3f(def.minColor),
-                     QSizeF(def.maskWidth, def.maskHeight));
+                     Vector2f(def.maskWidth, def.maskHeight));
 }
 
 Material::ShineLayer *Material::ShineLayer::fromDef(ded_reflection_t const &layerDef)
@@ -303,7 +303,7 @@ DENG2_PIMPL(Material)
     AudioEnvironmentClass envClass;
 
     /// World dimensions in map coordinate space units.
-    QSize dimensions;
+    Vector2i dimensions;
 
     /// @see materialFlags
     Material::Flags flags;
@@ -364,13 +364,14 @@ void Material::ticker(timespan_t time)
 #endif
 }
 
-QSize const &Material::dimensions() const
+Vector2i const &Material::dimensions() const
 {
     return d->dimensions;
 }
 
-void Material::setDimensions(QSize const &newDimensions)
+void Material::setDimensions(Vector2i const &_newDimensions)
 {
+    Vector2i newDimensions = _newDimensions.max(Vector2i(0, 0));
     if(d->dimensions != newDimensions)
     {
         d->dimensions = newDimensions;
@@ -380,18 +381,18 @@ void Material::setDimensions(QSize const &newDimensions)
 
 void Material::setWidth(int newWidth)
 {
-    if(d->dimensions.width() != newWidth)
+    if(d->dimensions.x != newWidth)
     {
-        d->dimensions.setWidth(newWidth);
+        d->dimensions.x = newWidth;
         R_UpdateMapSurfacesOnMaterialChange(this);
     }
 }
 
 void Material::setHeight(int newHeight)
 {
-    if(d->dimensions.height() != newHeight)
+    if(d->dimensions.y != newHeight)
     {
-        d->dimensions.setHeight(newHeight);
+        d->dimensions.y = newHeight;
         R_UpdateMapSurfacesOnMaterialChange(this);
     }
 }
@@ -639,8 +640,8 @@ String Material::composeDescription() const
     String str = String("Material \"%1\" [%2]")
                      .arg(manifest().composeUri().asText())
                      .arg(de::dintptr(this))
-               + " Dimensions:" + (dimensions().isEmpty()? String("unknown (not yet prepared)")
-                                                         : String("(%1 x %2)").arg(width()).arg(height()))
+               + " Dimensions:" + (width() == 0 && height() == 0? String("unknown (not yet prepared)")
+                                                                : String("(%1 x %2)").arg(width()).arg(height()))
                + " Source:" + manifest().sourceDescription();
 #ifdef __CLIENT__
     str += String(" x%1").arg(variantCount());
@@ -743,8 +744,7 @@ String Material::composeSynopsis() const
                        .arg(sDef.variance, 0, 'g', 2)
                        .arg(sDef.shininess, 0, 'g', 2)
                        .arg(R_NameForBlendMode(sDef.blendMode))
-                       .arg(Vector2i(sDef.maskDimensions.width(),
-                                     sDef.maskDimensions.height()).asText())
+                       .arg(sDef.maskDimensions.asText())
                        .arg(sDef.minColor.asText());
         }
     }

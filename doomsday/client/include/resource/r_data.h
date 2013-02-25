@@ -29,6 +29,7 @@
 #include "def_data.h"
 #include "Textures"
 #include "api_thinker.h"
+#include <de/Vector>
 
 struct font_s;
 
@@ -80,7 +81,7 @@ void R_InitSpriteTextures(void);
  */
 de::Texture *R_FindTextureByResourceUri(de::String schemeName, de::Uri const *resourceUri);
 
-de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri, QSize const &dimensions);
+de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri, de::Vector2i const &dimensions);
 de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri);
 
 #endif /// LIBDENG_REFRESH_DATA_H

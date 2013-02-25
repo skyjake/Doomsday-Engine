@@ -196,7 +196,7 @@ static Block compositeImage(Reader &reader, IByteArray const *xlatTable,
 #ifdef DENG_DEBUG
     // Is the "logical" height of the image equal to the actual height of the
     // composited pixel posts?
-    if(meta.logicalDimensions.height() != meta.dimensions.height())
+    if(meta.logicalDimensions.y != meta.dimensions.y)
     {
         int postCount = 0;
         DENG2_FOR_EACH_CONST(Columns, i, columns)
@@ -205,16 +205,16 @@ static Block compositeImage(Reader &reader, IByteArray const *xlatTable,
         }
 
         LOG_INFO("Inequal heights, logical: %i != actual: %i (%i %s).")
-            << meta.logicalDimensions.height() << meta.dimensions.height()
+            << meta.logicalDimensions.y << meta.dimensions.y
             << postCount << (postCount == 1? "post" : "posts");
     }
 #endif
 
     // Determine the dimensions of the output buffer.
-    QSize const &dimensions = clipToLogicalDimensions? meta.logicalDimensions : meta.dimensions;
-    int const             w = dimensions.width();
-    int const             h = dimensions.height();
-    size_t const       pels = w * h;
+    Vector2i const &dimensions = clipToLogicalDimensions? meta.logicalDimensions : meta.dimensions;
+    int const w = dimensions.x;
+    int const h = dimensions.y;
+    size_t const pels = w * h;
 
     // Create the output buffer and fill with default color (black) and alpha (transparent).
     Block output    = QByteArray(2 * pels, 0);
@@ -307,9 +307,9 @@ static Block compositeImage(Reader &reader, IByteArray const *xlatTable,
 static Patch::Metadata prepareMetadata(internal::Header const &hdr, int realHeight)
 {
     Patch::Metadata meta;
-    meta.dimensions         = QSize(hdr.dimensions[0], realHeight);
-    meta.logicalDimensions  = QSize(hdr.dimensions[0], hdr.dimensions[1]);
-    meta.origin             = QPoint(hdr.origin[0], hdr.origin[1]);
+    meta.dimensions         = Vector2i(hdr.dimensions[0], realHeight);
+    meta.logicalDimensions  = Vector2i(hdr.dimensions[0], hdr.dimensions[1]);
+    meta.origin             = Vector2i(hdr.origin[0], hdr.origin[1]);
     return meta;
 }
 

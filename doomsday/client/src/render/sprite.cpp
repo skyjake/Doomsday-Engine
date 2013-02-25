@@ -310,10 +310,10 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
 
-    params->pos[VX] = psp->pos[VX] - -tex.origin().x() + pspOffset[VX] + -texSpec.border;
-    params->pos[VY] = offScaleY * (psp->pos[VY] - -tex.origin().y()) + pspOffset[VY] + -texSpec.border;
-    params->width  = ms.dimensions().width()  + texSpec.border*2;
-    params->height = ms.dimensions().height() + texSpec.border*2;
+    params->pos[VX] = psp->pos[VX] - -tex.origin().x + pspOffset[VX] + -texSpec.border;
+    params->pos[VY] = offScaleY * (psp->pos[VY] - -tex.origin().y) + pspOffset[VY] + -texSpec.border;
+    params->width  = ms.width() + texSpec.border*2;
+    params->height = ms.height() + texSpec.border*2;
 
     ms.texture(MTU_PRIMARY).coords(&params->texOffset[0], &params->texOffset[1]);
 
@@ -901,14 +901,14 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
         ms = &reinterpret_cast<MaterialVariant *>(params->material)->prepare();
 
         variantspecification_t const &texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
-        size.width  = ms->dimensions().width()  + texSpec.border * 2;
-        size.height = ms->dimensions().height() + texSpec.border * 2;
+        size.width  = ms->width() + texSpec.border * 2;
+        size.height = ms->height() + texSpec.border * 2;
         viewOffset.x = -size.width / 2;
 
         ms->texture(MTU_PRIMARY).coords(&s, &t);
 
         Texture &tex = ms->texture(MTU_PRIMARY).generalCase();
-        viewOffset.x += float(-tex.origin().x());
+        viewOffset.x += float(-tex.origin().x);
     }
 
     // We may want to draw using another material instead.

@@ -38,7 +38,6 @@ enum {
 #include "render/rendpoly.h"
 #include <de/Error>
 #include <de/Vector>
-#include <QSize>
 
 namespace de {
 
@@ -93,7 +92,13 @@ public:
     /**
      * Returns the dimensions in the world coordinate space for the material snapshot.
      */
-    QSize const &dimensions() const;
+    Vector2i const &dimensions() const;
+
+    /// Returns the width of the material snapshot in map coordinate space units.
+    inline int width() const { return dimensions().x; }
+
+    /// Returns the height of the material snapshot in map coordinate space units.
+    inline int height() const { return dimensions().y; }
 
     /**
      * Returns @c true if the material snapshot is completely opaque.

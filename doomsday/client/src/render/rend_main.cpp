@@ -509,11 +509,11 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
         MaterialSnapshot const &ms = material->prepare();
         int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
 
-        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms.dimensions().width();
-        VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / ms.dimensions().width();
-        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / ms.dimensions().height();
+        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms.width();
+        VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / ms.width();
+        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / ms.height();
         VS_WALL(vis)->texCoord[1][VY] = VS_WALL(vis)->texCoord[0][VY] +
-                (rvertices[3].pos[VZ] - rvertices[0].pos[VZ]) / ms.dimensions().height();
+                (rvertices[3].pos[VZ] - rvertices[0].pos[VZ]) / ms.height();
 
         if(!ms.isOpaque())
         {

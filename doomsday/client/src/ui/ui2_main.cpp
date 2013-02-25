@@ -1039,8 +1039,8 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
 
                 /// @todo Utilize *all* properties of the Material.
                 V3f_Set(dimensions,
-                        ms.dimensions().width()  + TS_GENERAL(texSpec).border * 2,
-                        ms.dimensions().height() + TS_GENERAL(texSpec).border * 2, 0);
+                        ms.width() + TS_GENERAL(texSpec).border * 2,
+                        ms.height() + TS_GENERAL(texSpec).border * 2, 0);
                 V2f_Set(rotateCenter, dimensions[VX] / 2, dimensions[VY] / 2);
                 ms.texture(MTU_PRIMARY).coords(&texScale[VX], &texScale[VY]);
 
@@ -1048,7 +1048,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 de::Uri uri = texture.manifest().composeUri();
                 if(!uri.scheme().compareWithoutCase("Sprites"))
                 {
-                    V3f_Set(offset, texture.origin().x(), texture.origin().y(), 0);
+                    V3f_Set(offset, texture.origin().x, texture.origin().y, 0);
                 }
                 else
                 {
@@ -1069,7 +1069,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
-                V3f_Set(offset, tex.origin().x(), tex.origin().y(), 0);
+                V3f_Set(offset, tex.origin().x, tex.origin().y, 0);
                 V3f_Set(dimensions, tex.width(), tex.height(), 0);
                 V2f_Set(rotateCenter, dimensions[VX]/2, dimensions[VY]/2);
             }

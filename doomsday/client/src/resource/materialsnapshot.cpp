@@ -45,7 +45,7 @@ struct Store {
     float glowStrength;
 
     /// Dimensions in the world coordinate space.
-    QSize dimensions;
+    Vector2i dimensions;
 
     /// Minimum ambient light color for shine texture.
     Vector3f shineMinColor;
@@ -66,7 +66,7 @@ struct Store {
 
     void initialize()
     {
-        dimensions    = QSize(0, 0);
+        dimensions    = Vector2i(0, 0);
         shineMinColor = Vector3f(0, 0, 0);
         opaque        = true;
         glowStrength  = 0;
@@ -85,7 +85,7 @@ struct Store {
 
 #ifdef __CLIENT__
     void writeTexUnit(rtexmapunitid_t unit, Texture::Variant *texture,
-                      blendmode_t blendMode, QSizeF scale, QPointF offset,
+                      blendmode_t blendMode, Vector2f scale, Vector2f offset,
                       float opacity)
     {
         DENG2_ASSERT(unit >= 0 && unit < NUM_TEXMAP_UNITS);
@@ -95,8 +95,8 @@ struct Store {
         tu.texture.flags   = TUF_TEXTURE_IS_MANAGED;
         tu.opacity   = de::clamp(0.f, opacity, 1.f);
         tu.blendMode = blendMode;
-        V2f_Set(tu.scale, scale.width(), scale.height());
-        V2f_Set(tu.offset, offset.x(), offset.y());
+        V2f_Set(tu.scale, scale.x, scale.y);
+        V2f_Set(tu.offset, offset.x, offset.y);
     }
 #endif // __CLIENT__
 };
@@ -130,7 +130,7 @@ MaterialVariant &MaterialSnapshot::materialVariant() const
     return *d->variant;
 }
 
-QSize const &MaterialSnapshot::dimensions() const
+Vector2i const &MaterialSnapshot::dimensions() const
 {
     return d->stored.dimensions;
 }
@@ -270,7 +270,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
             {
                 // Are we inheriting the logical dimensions from the texture?
-                if(material->dimensions().isEmpty())
+                if(material->width() == 0 && material->height() == 0)
                 {
                     material->setDimensions(tex->dimensions());
                 }
@@ -347,14 +347,13 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 #endif // __CLIENT__
 
-    stored.dimensions.setWidth(material->width());
-    stored.dimensions.setHeight(material->height());
+    stored.dimensions = material->dimensions();
 
 #ifdef __CLIENT__
     stored.opaque = (prepTextures[MTU_PRIMARY][0] && !prepTextures[MTU_PRIMARY][0]->isMasked());
 #endif
 
-    if(stored.dimensions.isEmpty()) return;
+    if(stored.dimensions.x == 0 && stored.dimensions.y == 0) return;
 
     MaterialVariant::LayerState const &l = variant->layer(0);
     Material::Layer::Stage const *lsCur  = layers[0]->stages()[l.stage];
@@ -375,20 +374,20 @@ void MaterialSnapshot::Instance::takeSnapshot()
     {
         stored.textures[MTU_PRIMARY] = tex;
 #ifdef __CLIENT__
-        QPointF offset;
+        Vector2f offset;
         if(l.inter == 0)
         {
-            offset = QPointF(lsCur->texOrigin[0], lsCur->texOrigin[1]);
+            offset = lsCur->texOrigin;
         }
         else // Interpolate.
         {
-            offset.setX(LERP(lsCur->texOrigin[0], lsNext->texOrigin[0], l.inter));
-            offset.setY(LERP(lsCur->texOrigin[1], lsNext->texOrigin[1], l.inter));
+            offset.x = LERP(lsCur->texOrigin.x, lsNext->texOrigin.x, l.inter);
+            offset.y = LERP(lsCur->texOrigin.y, lsNext->texOrigin.y, l.inter);
         }
 
         stored.writeTexUnit(RTU_PRIMARY, tex, BM_NORMAL,
-                            QSizeF(1.f / stored.dimensions.width(),
-                                   1.f / stored.dimensions.height()),
+                            Vector2f(1.f / stored.dimensions.x,
+                                     1.f / stored.dimensions.y),
                             offset, 1);
 #endif
     }
@@ -403,10 +402,10 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(!(!usingFog && l.inter == 0))
         {
             stored.writeTexUnit(RTU_INTER, tex, BM_NORMAL,
-                                QSizeF(stored.units[RTU_PRIMARY].scale[0],
-                                       stored.units[RTU_PRIMARY].scale[1]),
-                                QPointF(stored.units[RTU_PRIMARY].offset[0],
-                                        stored.units[RTU_PRIMARY].offset[1]),
+                                Vector2f(stored.units[RTU_PRIMARY].scale[0],
+                                         stored.units[RTU_PRIMARY].scale[1]),
+                                Vector2f(stored.units[RTU_PRIMARY].offset[0],
+                                         stored.units[RTU_PRIMARY].offset[1]),
                                 l.inter);
         }
     }
@@ -440,9 +439,9 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 scale *= detailScale;
 
             stored.writeTexUnit(RTU_PRIMARY_DETAIL, tex, BM_NORMAL,
-                                QSizeF(1.f / tex->generalCase().width()  * scale,
-                                       1.f / tex->generalCase().height() * scale),
-                                QPointF(0, 0), 1);
+                                Vector2f(1.f / tex->generalCase().width()  * scale,
+                                         1.f / tex->generalCase().height() * scale),
+                                Vector2f(), 1);
 #endif
         }
 
@@ -456,10 +455,10 @@ void MaterialSnapshot::Instance::takeSnapshot()
             if(!(!usingFog && l.inter == 0))
             {
                 stored.writeTexUnit(RTU_INTER_DETAIL, tex, BM_NORMAL,
-                                    QSizeF(stored.units[RTU_PRIMARY_DETAIL].scale[0],
-                                           stored.units[RTU_PRIMARY_DETAIL].scale[1]),
-                                    QPointF(stored.units[RTU_PRIMARY_DETAIL].offset[0],
-                                            stored.units[RTU_PRIMARY_DETAIL].offset[1]),
+                                    Vector2f(stored.units[RTU_PRIMARY_DETAIL].scale[0],
+                                             stored.units[RTU_PRIMARY_DETAIL].scale[1]),
+                                    Vector2f(stored.units[RTU_PRIMARY_DETAIL].offset[0],
+                                             stored.units[RTU_PRIMARY_DETAIL].offset[1]),
                                     l.inter);
             }
         }
@@ -480,7 +479,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
             stored.textures[MTU_REFLECTION] = tex;
 
 #ifdef __CLIENT__
-            float minColor[3];
+            Vector3f minColor;
             for(int i = 0; i < 3; ++i)
             {
                 if(l.inter == 0)
@@ -493,7 +492,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 }
                 minColor[i] = de::clamp(0.0f, minColor[i], 1.0f);
             }
-            stored.shineMinColor = Vector3f(minColor);
+            stored.shineMinColor = minColor;
 
             float shininess;
             if(l.inter == 0)
@@ -507,7 +506,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
             shininess = de::clamp(0.0f, shininess, 1.0f);
 
             stored.writeTexUnit(RTU_REFLECTION, tex, lsCur->blendMode,
-                                QSizeF(1, 1), QPointF(0, 0), shininess);
+                                Vector2f(1, 1), Vector2f(), shininess);
 #endif
         }
 
@@ -518,10 +517,10 @@ void MaterialSnapshot::Instance::takeSnapshot()
             stored.textures[MTU_REFLECTION_MASK] = tex;
 #ifdef __CLIENT__
             stored.writeTexUnit(RTU_REFLECTION_MASK, tex, BM_NORMAL,
-                                QSizeF(1.f / (stored.dimensions.width()  * tex->generalCase().width()),
-                                       1.f / (stored.dimensions.height() * tex->generalCase().height())),
-                                QPointF(stored.units[RTU_PRIMARY].offset[0],
-                                        stored.units[RTU_PRIMARY].offset[1]), 1);
+                                Vector2f(1.f / (stored.dimensions.x * tex->generalCase().width()),
+                                         1.f / (stored.dimensions.y * tex->generalCase().height())),
+                                Vector3f(stored.units[RTU_PRIMARY].offset[0],
+                                         stored.units[RTU_PRIMARY].offset[1]), 1);
 #endif
         }
     }

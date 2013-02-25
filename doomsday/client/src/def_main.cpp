@@ -1196,7 +1196,7 @@ static void interpretMaterialDef(ded_material_t &def)
     if(def.flags & MATF_SKYMASK) newFlags |= Material::SkyMask;
     material.setFlags(newFlags);
 
-    material.setDimensions(QSize(de::max(0, def.width), de::max(0, def.height)));
+    material.setDimensions(Vector2i(def.width, def.height));
 
     material.setAudioEnvironment(S_AudioEnvironmentForMaterial(def.uri));
 
@@ -1396,7 +1396,7 @@ void Def_Read()
         if(ref->stage.maskTexture)
         {
             R_DefineTexture("Masks", reinterpret_cast<de::Uri &>(*ref->stage.maskTexture),
-                            QSize(ref->stage.maskWidth, ref->stage.maskHeight));
+                            Vector2i(ref->stage.maskWidth, ref->stage.maskHeight));
         }
     }
 

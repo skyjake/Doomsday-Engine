@@ -21,12 +21,11 @@
 #ifndef LIBDENG_RESOURCE_PATCH_H
 #define LIBDENG_RESOURCE_PATCH_H
 
-#include <QSize>
-#include <QPoint>
 #include <de/Block>
 #include <de/IByteArray>
 #include <de/IReadable>
 #include <de/Reader>
+#include <de/Vector>
 
 namespace de {
 
@@ -51,14 +50,14 @@ public:
     struct Metadata
     {
         /// Dimensions of the patch in pixels.
-        QSize dimensions;
+        Vector2i dimensions;
 
         /// Logical dimensions of the patch in pixels (@see Patch notes).
-        QSize logicalDimensions;
+        Vector2i logicalDimensions;
 
         /// Origin offset (top left) in world coordinate space units.
         /// Used for various purposes depending on context.
-        QPoint origin;
+        Vector2i origin;
     };
 
     /**

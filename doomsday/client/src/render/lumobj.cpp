@@ -775,7 +775,7 @@ static void addLuminous(mobj_t *mo)
     if(!pl) throw Error("addLuminous", QString("Texture \"%1\" has no BrightPointAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
     size = pl->brightMul;
-    yOffset = ms.dimensions().height() * pl->originY;
+    yOffset = ms.height() * pl->originY;
     // Does the mobj have an active light definition?
     if(def)
     {
@@ -786,10 +786,10 @@ static void addLuminous(mobj_t *mo)
     }
 
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
-    center = -tex.origin().y() - mo->floorClip - R_GetBobOffset(mo) - yOffset;
+    center = -tex.origin().y - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
-    mul = mo->origin[VZ] + -tex.origin().y() - (float) ms.dimensions().height() - mo->bspLeaf->sector->SP_floorheight;
+    mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->sector->SP_floorheight;
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
     {
         // Must adjust.

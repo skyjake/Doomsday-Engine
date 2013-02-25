@@ -25,10 +25,9 @@
 #  include "TextureVariantSpec"
 #endif
 #include <de/Error>
+#include <de/Vector>
 #include <QFlag>
 #include <QList>
-#include <QPoint>
-#include <QSize>
 
 /**
  * Texture (content) Source.
@@ -239,13 +238,13 @@ public:
     TextureManifest &manifest() const;
 
     /// Returns the dimensions of the texture in map coordinate space units.
-    QSize const &dimensions() const;
+    Vector2i const &dimensions() const;
 
     /// Returns the world width of the texture in map coordinate space units.
-    inline int width() const { return dimensions().width(); }
+    inline int width() const { return dimensions().x; }
 
     /// Returns the world height of the texture in map coordinate space units.
-    inline int height() const { return dimensions().height(); }
+    inline int height() const { return dimensions().y; }
 
     /**
      * Change the world dimensions of the texture.
@@ -253,7 +252,7 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setDimensions(QSize const &newDimensions);
+    void setDimensions(Vector2i const &newDimensions);
 
     /**
      * Change the world width of the texture.
@@ -274,13 +273,13 @@ public:
     /**
      * Returns the world origin offset of texture in map coordinate space units.
      */
-    QPoint const &origin() const;
+    Vector2i const &origin() const;
 
     /**
      * Change the world origin offset of the texture.
      * @param newOrigin  New origin in map coordinate space units.
      */
-    void setOrigin(QPoint const &newOrigin);
+    void setOrigin(Vector2i const &newOrigin);
 
     /**
      * Returns the flags for the texture.

@@ -30,9 +30,9 @@
 #include <de/Path>
 #include <de/String>
 #include <de/PathTree>
+#include <de/Vector>
 #include <QList>
 #include <QMap>
-#include <QSize>
 
 namespace de {
 
@@ -93,7 +93,7 @@ public:
     Q_DECLARE_FLAGS(UriValidationFlags, UriValidationFlag)
 
     /// Texture-system subspace schemes.
-    typedef QMap<String, Scheme*> Schemes;
+    typedef QMap<String, Scheme *> Schemes;
 
 public:
     /// The referenced texture was not found. @ingroup errors
@@ -211,7 +211,7 @@ public:
      * @return  Manifest for this URI; otherwise @c 0 if @a uri is invalid.
      */
     Manifest *declare(Uri const &uri, de::Texture::Flags flags,
-                      QSize const &dimensions, QPoint const &origin, int uniqueId,
+                      Vector2i const &dimensions, Vector2i const &origin, int uniqueId,
                       de::Uri const *resourceUri = 0);
 
     /**

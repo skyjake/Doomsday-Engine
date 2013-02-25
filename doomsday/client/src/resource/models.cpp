@@ -932,8 +932,8 @@ static void scaleModelToSprite(modeldef_t &mf, int sprite, int frame)
 
     MaterialSnapshot const &ms = spr.spriteFrames[frame].mats[0]->prepare(Rend_SpriteMaterialSpec());
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
-    int off = MAX_OF(0, -tex.origin().y() - ms.dimensions().height());
-    scaleModel(mf, ms.dimensions().height(), off);
+    int off = MAX_OF(0, -tex.origin().y - ms.height());
+    scaleModel(mf, ms.height(), off);
 }
 
 static float calcModelVisualRadius(modeldef_t *def)

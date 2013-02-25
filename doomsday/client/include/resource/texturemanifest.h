@@ -25,7 +25,7 @@
 #include "uri.hh"
 #include <de/Error>
 #include <de/PathTree>
-#include <QSize>
+#include <de/Vector>
 
 namespace de {
 
@@ -125,7 +125,7 @@ public:
     /**
      * Returns the logical dimensions property of the manifest.
      */
-    QSize const &logicalDimensions() const;
+    Vector2i const &logicalDimensions() const;
 
     /**
      * Change the logical dimensions property of the manifest.
@@ -134,19 +134,19 @@ public:
      * which case their value will be inherited from the pixel dimensions of
      * the image at load time.
      */
-    bool setLogicalDimensions(QSize const &newDimensions);
+    bool setLogicalDimensions(Vector2i const &newDimensions);
 
     /**
      * Returns the world origin offset property of the manifest.
      */
-    QPoint const &origin() const;
+    Vector2i const &origin() const;
 
     /**
      * Change the world origin offest property of the manifest.
      *
      * @param newOrigin  New origin offset.
      */
-    void setOrigin(QPoint const &newOrigin);
+    void setOrigin(Vector2i const &newOrigin);
 
     /**
      * Returns the texture flags property of the manifest.

@@ -112,8 +112,8 @@ void R_InitSystemTextures()
     {
         de::Uri uri("System", Path(names[i]));
         Texture::Flags flags = Texture::Custom;
-        QSize dimensions;
-        QPoint origin;
+        Vector2i dimensions;
+        Vector2i origin;
         int uniqueId = i + 1/*1-based index*/;
         de::Uri resourceUri("Graphics", Path(names[i]));
 
@@ -203,8 +203,8 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
     if(upscaleAndSharpenPatches) flags |= Texture::UpscaleAndSharpen;
 #endif
 
-    QSize dimensions(0, 0);
-    QPoint origin(0, 0);
+    Vector2i dimensions;
+    Vector2i origin;
 
     // If this is a Patch (the format) read the world dimension and origin offset values.
     ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
@@ -215,7 +215,7 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *name)
             Patch::Metadata info = Patch::loadMetadata(fileData);
 
             dimensions = info.logicalDimensions;
-            origin     = QPoint(-info.origin.x(), -info.origin.y());
+            origin     = Vector2i(-info.origin.x, -info.origin.y);
         }
         catch(IByteArray::OffsetError const &)
         {
@@ -271,8 +271,8 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         info->geometry.size.width  = tex.width();
         info->geometry.size.height = tex.height();
 
-        info->geometry.origin.x = tex.origin().x();
-        info->geometry.origin.y = tex.origin().y();
+        info->geometry.origin.x = tex.origin().x;
+        info->geometry.origin.y = tex.origin().y;
 
         /// @todo fixme: kludge:
         info->extraOffset[0] = info->extraOffset[1] = (tex.flags().testFlag(Texture::UpscaleAndSharpen)? -1 : 0);
@@ -640,7 +640,7 @@ static void processCompositeTextureDefs(CompositeTextures &defs)
         if(def.origIndex() == 0) flags |= Texture::NoDraw;
 
 
-        TextureManifest *manifest = App_Textures().declare(uri, flags, def.logicalDimensions(), QPoint(), def.origIndex());
+        TextureManifest *manifest = App_Textures().declare(uri, flags, def.logicalDimensions(), Vector2i(), def.origIndex());
         if(manifest)
         {
             // Are we redefining an existing texture?
@@ -748,8 +748,8 @@ void R_InitFlatTextures()
              *
              * @todo Always determine size from the lowres original.
              */
-            QSize dimensions(64, 64);
-            QPoint origin(0, 0);
+            Vector2i dimensions(64, 64);
+            Vector2i origin(0, 0);
             int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
             de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
@@ -835,8 +835,8 @@ void R_InitSpriteTextures()
             flags |= Texture::Custom;
         }
 
-        QSize dimensions(0, 0);
-        QPoint origin(0, 0);
+        Vector2i dimensions;
+        Vector2i origin;
 
         // If this is a Patch read the world dimension and origin offset values.
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
@@ -847,7 +847,7 @@ void R_InitSpriteTextures()
                 Patch::Metadata info = Patch::loadMetadata(fileData);
 
                 dimensions = info.logicalDimensions;
-                origin     = QPoint(-info.origin.x(), -info.origin.y());
+                origin     = -info.origin;
             }
             catch(IByteArray::OffsetError const &)
             {
@@ -880,7 +880,7 @@ void R_InitSpriteTextures()
 }
 
 Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
-                         QSize const &dimensions)
+                         Vector2i const &dimensions)
 {
     LOG_AS("R_DefineTexture");
 
@@ -907,7 +907,7 @@ Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
 
     de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
     TextureManifest *manifest = App_Textures().declare(uri, Texture::Custom, dimensions,
-                                                       QPoint(0, 0), uniqueId, &resourceUri);
+                                                       Vector2i(), uniqueId, &resourceUri);
     if(!manifest) return 0; // Invalid URI?
 
     /// @todo Defer until necessary (manifest texture is first referenced).
@@ -916,5 +916,5 @@ Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri,
 
 Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri)
 {
-    return R_DefineTexture(schemeName, resourceUri, QSize());
+    return R_DefineTexture(schemeName, resourceUri, Vector2i());
 }

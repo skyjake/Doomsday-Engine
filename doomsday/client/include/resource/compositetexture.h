@@ -22,15 +22,12 @@
 #ifndef LIBDENG_RESOURCE_COMPOSITETEXTURE_H
 #define LIBDENG_RESOURCE_COMPOSITETEXTURE_H
 
-#ifdef __cplusplus
-
 #include "dd_types.h" // For lumpnum_t
-#include <QList>
-#include <QPoint>
-#include <QSize>
-#include <de/String>
-#include <de/Reader>
 #include "patchname.h"
+#include <de/Reader>
+#include <de/String>
+#include <de/Vector>
+#include <QList>
 
 namespace de {
 
@@ -77,17 +74,13 @@ public:
 
     public:
         /// Origin of the top left corner of the component (in texture space units).
-        QPoint const &origin() const;
+        Vector2i const &origin() const;
 
         /// X-axis origin of the top left corner of the component (in texture space units).
-        inline int xOrigin() const {
-            return origin().x();
-        }
+        inline int xOrigin() const { return origin().x; }
 
         /// Y-axis origin of the top left corner of the component (in texture space units).
-        inline int yOrigin() const {
-            return origin().y();
-        }
+        inline int yOrigin() const { return origin().y; }
 
         /// Returns the number of the lump (file) containing the associated
         /// image; otherwise @c -1 (not found).
@@ -97,7 +90,7 @@ public:
 
     private:
         /// Origin of the top left corner in the texture coordinate space.
-        QPoint origin_;
+        Vector2i origin_;
 
         /// Index of the lump containing the associated image.
         lumpnum_t lumpNum_;
@@ -133,30 +126,22 @@ public:
     String const &percentEncodedNameRef() const;
 
     /// Returns the logical dimensions of the texture (in map space units).
-    QSize const &logicalDimensions() const;
+    Vector2i const &logicalDimensions() const;
 
     /// Returns the logical width of the texture (in map space units).
-    inline int logicalWidth() const {
-        return logicalDimensions().width();
-    }
+    inline int logicalWidth() const { return logicalDimensions().x; }
 
     /// Returns the logical height of the texture (in map space units).
-    inline int logicalHeight() const {
-        return logicalDimensions().height();
-    }
+    inline int logicalHeight() const { return logicalDimensions().y; }
 
     /// Returns the pixel dimensions of the texture.
-    QSize const &dimensions() const;
+    Vector2i const &dimensions() const;
 
     /// Returns the pixel width of the texture.
-    inline int width() const {
-        return dimensions().width();
-    }
+    inline int width() const { return dimensions().x; }
 
     /// Returns the pixel height of the texture.
-    inline int height() const {
-        return dimensions().height();
-    }
+    inline int height() const { return dimensions().y; }
 
     /// Returns the associated "original index" for the texture.
     int origIndex() const;
@@ -165,9 +150,7 @@ public:
     void setOrigIndex(int newIndex);
 
     /// Returns the total number of component images.
-    inline int componentCount() const {
-        return components().count();
-    }
+    inline int componentCount() const { return components().count(); }
 
     /**
      * Provides access to the component images of the texture for efficent traversal.
@@ -187,10 +170,10 @@ private:
     Flags flags_;
 
     /// Logical dimensions of the texture in map coordinate space units.
-    QSize logicalDimensions_;
+    Vector2i logicalDimensions_;
 
     /// Dimensions of the texture in pixels.
-    QSize dimensions_;
+    Vector2i dimensions_;
 
     /// Index of this resource determined by the logic of the indexing algorithm
     /// used by the original game.
@@ -203,6 +186,5 @@ private:
 Q_DECLARE_OPERATORS_FOR_FLAGS(CompositeTexture::Flags)
 
 } // namespace de
-#endif // __cplusplus
 
 #endif /// LIBDENG_RESOURCE_COMPOSITETEXTURE_H

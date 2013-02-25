@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <cctype>
-#include <cstring>
+//#include <cctype>
+//#include <cstring>
 
 #include "de_base.h"
 #ifdef __CLIENT__
@@ -59,10 +59,10 @@ DENG2_PIMPL(Texture)
     void *userData;
 
     /// World dimensions in map coordinate space units.
-    QSize dimensions;
+    Vector2i dimensions;
 
     /// World origin offset in map coordinate space units.
-    QPoint origin;
+    Vector2i origin;
 
     /// Image analysis data, used for various purposes according to context.
     Analyses analyses;
@@ -120,34 +120,47 @@ void *Texture::userDataPointer() const
     return d->userData;
 }
 
-QSize const &Texture::dimensions() const
+Vector2i const &Texture::dimensions() const
 {
     return d->dimensions;
 }
 
-void Texture::setDimensions(QSize const &newDimensions)
+void Texture::setDimensions(Vector2i const &_newDimensions)
 {
-    d->dimensions = newDimensions;
+    Vector2i newDimensions = _newDimensions.max(Vector2i(0, 0));
+    if(d->dimensions != newDimensions)
+    {
+        d->dimensions = newDimensions;
+    }
 }
 
 void Texture::setWidth(int newWidth)
 {
-    d->dimensions.setWidth(newWidth);
+    if(d->dimensions.x != newWidth)
+    {
+        d->dimensions.x = newWidth;
+    }
 }
 
 void Texture::setHeight(int newHeight)
 {
-    d->dimensions.setHeight(newHeight);
+    if(d->dimensions.y != newHeight)
+    {
+        d->dimensions.y = newHeight;
+    }
 }
 
-QPoint const &Texture::origin() const
+Vector2i const &Texture::origin() const
 {
     return d->origin;
 }
 
-void Texture::setOrigin(QPoint const &newOrigin)
+void Texture::setOrigin(Vector2i const &newOrigin)
 {
-    d->origin = newOrigin;
+    if(d->origin != newOrigin)
+    {
+        d->origin = newOrigin;
+    }
 }
 
 #ifdef __CLIENT__
