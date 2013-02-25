@@ -47,8 +47,12 @@ public:
         /// Widget is invisible: not drawn. Hidden widgets also receive no events.
         Hidden = 0x1,
 
+        /// Widget is disabled. The meaning of this is Widget-specific. The
+        /// Widget will not be given events.
+        Disabled = 0x2,
+
         /// Widget will only receive events if it has focus.
-        HandleEventsOnlyWhenFocused = 0x2,
+        HandleEventsOnlyWhenFocused = 0x4,
 
         DefaultBehavior = 0
     };
@@ -70,9 +74,15 @@ public:
     bool hasRoot() const;
     RootWidget &root() const;
     bool hasFocus() const;
-    bool isHidden() const;
-    inline void hide() { show(false); }
+
     void show(bool doShow = true);
+    inline void hide() { show(false); }
+    void enable(bool yes = true) { setBehavior(Disabled, !yes); }
+    void disable(bool yes = true) { setBehavior(Disabled, yes); }
+
+    bool isHidden() const;
+    inline bool isEnabled() const { return !behavior().testFlag(Disabled); }
+    inline bool isDisabled() const { return behavior().testFlag(Disabled); }
 
     /**
      * Sets or clears one or more behavior flags.
