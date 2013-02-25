@@ -386,7 +386,7 @@ DENG2_PIMPL(Updater)
                 << "    delay 1\n"
                 << "  end repeat\n"
                 << "  -- Start the installer\n"
-                << "  open document file \"" << volName << ":Doomsday Installer.mpkg\"\n"
+                << "  open document file \"" << volName << ":Doomsday.pkg\"\n"
                 << "end tell\n";
             file.close();
         }
