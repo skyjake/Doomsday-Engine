@@ -31,7 +31,14 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
-#include "ui/busyvisual.h"
+#ifdef __SERVER__
+#  include <de/TextApp>
+#endif
+
+#ifdef __CLIENT__
+#  include "ui/busyvisual.h"
+#  include "ui/window.h"
+#endif
 
 /// Development utility: on sharp tics, print player 0 movement state.
 //#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
@@ -63,10 +70,8 @@ boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netG
 static int gameLoopExitCode = 0;
 
 static double lastRunTicsTime;
-static float fps;
 static boolean firstTic = true;
 static boolean tickIsSharp = false;
-static boolean noninteractive = false;
 
 #define NUM_FRAMETIME_DELTAS    200
 static int timeDeltas[NUM_FRAMETIME_DELTAS];
@@ -94,146 +99,17 @@ int DD_GameLoopExitCode(void)
 
 int DD_GameLoop(void)
 {
-#ifdef __CLIENT__
-    noninteractive = false;
-#endif
-#ifdef __SERVER__
-    noninteractive = true;
-#endif
-
     // Start the deng2 event loop.
     return LegacyCore_RunEventLoop();
 }
 
-void DD_GameLoopCallback(void)
-{
-    if(Sys_IsShuttingDown())
-        return; // Shouldn't run this while shutting down.
-
-    Garbage_Recycle();
-
-#ifdef __SERVER__
-    {
-        // Adjust loop rate depending on whether players are in game.
-        int i, count = 0;
-        for(i = 1; i < DDMAXPLAYERS; ++i)
-            if(ddPlayers[i].shared.inGame) count++;
-
-        LegacyCore_SetLoopRate(count || !noninteractive? 35 : 3);
-
-        Loop_RunTics();
-
-        // Update clients at regular intervals.
-        Sv_TransmitFrame();
-    }
-#endif
-
-#ifdef __CLIENT__
-    {
-        /**
-         * @todo The appropriate way to update the window is to have a
-         * repeating GuiApp::refresh() method posting window update events
-         * continually. We are drawing from here because LegacyCore is still
-         * controlling the main loop.
-         */
-
-        // Request update of window contents.
-        Window_Draw(Window_Main());
-
-        // After the first frame, start timedemo.
-        //DD_CheckTimeDemo();
-    }
-#endif
-}
-
-#ifdef __CLIENT__
-
-//static uint frameStartAt;
-
-static void startFrame(void)
-{
-    //frameStartAt = Timer_RealMilliseconds();
-
-    S_StartFrame();
-    if(gx.BeginFrame)
-    {
-        gx.BeginFrame();
-    }
-}
-
-//static uint lastShowAt;
-
-static void endFrame(void)
-{
-    static uint lastFpsTime = 0;
-
-    uint nowTime = Timer_RealMilliseconds();
-
-    /*
-    Con_Message("endFrame with %i ms (%i render)\n", nowTime - lastShowAt, nowTime - frameStartAt);
-    lastShowAt = nowTime;
-    */
-
-    // Increment the (local) frame counter.
-    rFrameCount++;
-
-    // Count the frames every other second.
-    if(nowTime - 2500 >= lastFpsTime)
-    {
-        static int lastFrameCount = 0;
-        fps = (rFrameCount - lastFrameCount) / ((nowTime - lastFpsTime)/1000.0f);
-        lastFpsTime = nowTime;
-        lastFrameCount = rFrameCount;
-    }
-
-    if(gx.EndFrame)
-    {
-        gx.EndFrame();
-    }
-
-    S_EndFrame();
-}
-
-#endif // __CLIENT__
-
-void DD_GameLoopDrawer(void)
-{
-    if(novideo || Sys_IsShuttingDown()) return;
-
-#ifdef __CLIENT__
-
-    assert(!BusyMode_Active()); // Busy mode has its own drawer.
-
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // Frame syncronous I/O operations.
-    startFrame();
-
-    if(renderWireframe)
-    {
-        // When rendering is wireframe mode, we must clear the screen
-        // before rendering a frame.
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-
-    CanvasWindow *win = Window_CanvasWindow(Window_Main());
-    DENG_ASSERT(win != 0);
-
-    win->root().draw();
-
-    // Finish GL drawing and swap it on to the screen.
-    GL_DoUpdate();
-
-    // Finish the refresh frame.
-    endFrame();
-
-#endif // __CLIENT__
-}
-
 float DD_GetFrameRate(void)
 {
-    return fps;
+#ifdef __CLIENT__
+    return Window_CanvasWindow(Window_Main())->frameRate();
+#else
+    return 0;
+#endif
 }
 
 #undef DD_IsSharpTick

@@ -43,11 +43,6 @@ void DD_RegisterLoop(void);
 int DD_GameLoop(void);
 
 /**
- * Called periodically while the game loop is running.
- */
-void DD_GameLoopCallback(void);
-
-/**
  * Runs one or more tics depending on how much time has passed since the
  * previous call to this function. This gets called once per each main loop
  * iteration. Finishes as quickly as possible.

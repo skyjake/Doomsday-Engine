@@ -29,7 +29,8 @@ DENG2_PIMPL(WindowSystem)
     {}
 };
 
-WindowSystem::WindowSystem() : System(), d(new Instance(this))
+WindowSystem::WindowSystem()
+    : System(ObservesTime | ReceivesInputEvents), d(new Instance(this))
 {}
 
 WindowSystem::~WindowSystem()

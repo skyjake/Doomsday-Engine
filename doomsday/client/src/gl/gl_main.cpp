@@ -164,9 +164,10 @@ void GL_AssertContextActive()
 void GL_DoUpdate()
 {
     // Check for color adjustment changes.
-    if(oldgamma != vid_gamma || oldcontrast != vid_contrast ||
-       oldbright != vid_bright)
+    if(oldgamma != vid_gamma || oldcontrast != vid_contrast || oldbright != vid_bright)
+    {
         GL_SetGamma();
+    }
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();

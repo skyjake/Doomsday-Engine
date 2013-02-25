@@ -1,4 +1,4 @@
-/** @file clientapp.h  The client application.
+/** @file busywidget.cpp
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,37 +16,40 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef CLIENTAPP_H
-#define CLIENTAPP_H
+#include "ui/busywidget.h"
+#include "ui/busyvisual.h"
+#include "busymode.h"
 
-#include <de/GuiApp>
-#include "network/serverlink.h"
+using namespace de;
 
-/**
- * The client application.
- */
-class ClientApp : public de::GuiApp
+DENG2_PIMPL(BusyWidget)
 {
-public:
-    ClientApp(int &argc, char **argv);
-
-    ~ClientApp();
-
-    /**
-     * Sets up all the subsystems of the application. Must be called before the
-     * event loop is started.
-     */
-    void initialize();
-
-    void preFrame();
-    void postFrame();
-
-public:
-    static ClientApp &app();
-    static ServerLink &serverLink();
-
-private:
-    DENG2_PRIVATE(d)
+    Instance(Public *i) : Base(i)
+    {}
 };
 
-#endif // CLIENTAPP_H
+BusyWidget::BusyWidget(String const &name)
+    : GuiWidget(name), d(new Instance(this))
+{
+}
+
+BusyWidget::~BusyWidget()
+{
+    delete d;
+}
+
+void BusyWidget::update()
+{
+    BusyMode_Loop();
+}
+
+void BusyWidget::draw()
+{
+    BusyVisual_Render();
+}
+
+bool BusyWidget::handleEvent(Event const &)
+{
+    // Eat events and ignore them.
+    return true;
+}

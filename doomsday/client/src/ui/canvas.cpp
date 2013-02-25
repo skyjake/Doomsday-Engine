@@ -62,9 +62,9 @@ static const int MOUSE_TRACK_INTERVAL = 1; // ms
 
 static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
-struct Canvas::Instance
+DENG2_PIMPL(Canvas)
 {
-    Canvas* self;
+    CanvasWindow *parent;
     bool initNotified;
     QSize currentSize;
     void (*initCallback)(Canvas&);
@@ -79,10 +79,12 @@ struct Canvas::Instance
     QTime prevWheelAt;
     int wheelDir[2];
 
-    Instance(Canvas* c)
-        : self(c),
-          initNotified(false), initCallback(0),
-          drawCallback(0),
+    Instance(Public *i, CanvasWindow *parentWindow)
+        : Base(i),
+          parent(parentWindow),
+          initNotified(false),
+          initCallback(0),
+          //drawCallback(0),
           focusCallback(0),
           cursorHidden(false),
           mouseGrabbed(false)
@@ -101,20 +103,20 @@ struct Canvas::Instance
         if(!yes && !cursorHidden)
         {
             cursorHidden = true;
-            self->setCursor(QCursor(Qt::BlankCursor));
+            self.setCursor(QCursor(Qt::BlankCursor));
             qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
         }
         else if(yes && cursorHidden)
         {
             cursorHidden = false;
             qApp->restoreOverrideCursor();
-            self->setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
+            self.setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
         }
     }
 
     void grabMouse()
     {
-        if(!self->isVisible()) return;
+        if(!self.isVisible()) return;
 
         LOG_DEBUG("grabbing mouse (already grabbed? %b)") << mouseGrabbed;
 
@@ -126,8 +128,8 @@ struct Canvas::Instance
 
 #ifndef WIN32
         // Start tracking the mouse now.
-        QCursor::setPos(self->mapToGlobal(self->rect().center()));
-        self->grabMouse();
+        QCursor::setPos(self.mapToGlobal(self.rect().center()));
+        self.grabMouse();
         showCursor(false);
 #endif
 
@@ -138,14 +140,14 @@ struct Canvas::Instance
 
     void ungrabMouse()
     {
-        if(!self->isVisible()) return;
+        if(!self.isVisible()) return;
 
         LOG_DEBUG("ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
 
         if(!mouseGrabbed) return;
 
 #ifndef WIN32
-        self->releaseMouse();
+        self.releaseMouse();
         showCursor(true);
 #endif
 #ifdef MACOSX
@@ -157,10 +159,9 @@ struct Canvas::Instance
     }
 };
 
-Canvas::Canvas(QWidget* parent, QGLWidget* shared) : QGLWidget(parent, shared)
+Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
+    : QGLWidget(parent, shared), d(new Instance(this, parent))
 {
-    d = new Instance(this);
-
     LOG_AS("Canvas");
     LOG_DEBUG("swap interval: ") << format().swapInterval();
     LOG_DEBUG("multisample: %b") << format().sampleBuffers();
@@ -190,10 +191,12 @@ void Canvas::setInitFunc(void (*canvasInitializeFunc)(Canvas&))
     d->initCallback = canvasInitializeFunc;
 }
 
+/*
 void Canvas::setDrawFunc(void (*canvasDrawFunc)(Canvas&))
 {
     d->drawCallback = canvasDrawFunc;
 }
+*/
 
 void Canvas::setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool))
 {
@@ -202,7 +205,7 @@ void Canvas::setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool))
 
 void Canvas::useCallbacksFrom(Canvas &other)
 {
-    d->drawCallback = other.d->drawCallback;
+    //d->drawCallback = other.d->drawCallback;
     d->focusCallback = other.d->focusCallback;
 }
 
@@ -309,12 +312,18 @@ void Canvas::notifyInit()
     if(!d->initNotified && d->initCallback)
     {
         d->initNotified = true;
+
         d->initCallback(*this);
+        d->parent->canvasReady(*this);
     }
 }
 
 void Canvas::paintGL()
 {
+    // The parent knows what to draw here (UI widgets).
+    d->parent->paintCanvas(*this);
+
+    /*
     if(d->drawCallback)
     {
         d->drawCallback(*this);
@@ -329,7 +338,7 @@ void Canvas::paintGL()
         glClear(GL_COLOR_BUFFER_BIT);
 
         swapBuffers();
-    }
+    }*/
 }
 
 void Canvas::focusInEvent(QFocusEvent*)

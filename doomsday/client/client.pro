@@ -340,6 +340,7 @@ DENG_HEADERS += \
     include/ui/b_main.h \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
+    include/ui/busywidget.h \
     include/ui/canvas.h \
     include/ui/canvaswindow.h \
     include/ui/dd_input.h \
@@ -620,6 +621,7 @@ SOURCES += \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
+    src/ui/busywidget.cpp \
     src/ui/canvas.cpp \
     src/ui/canvaswindow.cpp \
     src/ui/dd_input.cpp \

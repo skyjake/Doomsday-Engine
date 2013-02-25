@@ -1,4 +1,4 @@
-/** @file canvaswindow.cpp Canvas window implementation. 
+/** @file canvaswindow.cpp Canvas window implementation.
  * @ingroup base
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -31,14 +31,23 @@
 #include <de/c_wrapper.h>
 
 #include "de_platform.h"
+#include "dd_loop.h"
 #include "con_main.h"
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
 #endif
 #include "ui/canvaswindow.h"
 #include "ui/legacywidget.h"
+#include "ui/busywidget.h"
+#include "clientapp.h"
 
 #include <assert.h>
+#include <QThread>
+
+using namespace de;
+
+static String const BUSY_WIDGET_NAME = "busy";
+static String const LEGACY_WIDGET_NAME = "legacy";
 
 DENG2_PIMPL(CanvasWindow)
 {
@@ -47,22 +56,71 @@ DENG2_PIMPL(CanvasWindow)
     void (*moveFunc)(CanvasWindow&);
     bool (*closeFunc)(CanvasWindow&);
     bool mouseWasTrapped;
+    float fps;
 
-    /// Root of the UI widgets of this window.
-    de::RootWidget rootWidget;
+    Mode mode;
+
+    /// Root of the nomal UI widgets of this window.
+    RootWidget root;
+
+    RootWidget busyRoot;
 
     Instance(Public *i)
         : Base(i),
           canvas(0),
           moveFunc(0),
           closeFunc(0),
-          mouseWasTrapped(false)
+          mouseWasTrapped(false),
+          fps(0),
+          mode(Normal)
     {
-        LegacyWidget *legacy = new LegacyWidget;
+        LegacyWidget *legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
         legacy->rule()
-                .setLeftTop    (rootWidget.viewLeft(),  rootWidget.viewTop())
-                .setRightBottom(rootWidget.viewRight(), rootWidget.viewBottom());
-        rootWidget.add(legacy);
+                .setLeftTop    (root.viewLeft(),  root.viewTop())
+                .setRightBottom(root.viewRight(), root.viewBottom());
+        root.add(legacy);
+
+        // Initially the widget is disabled. It will be enabled when the window
+        // is visible and ready to be drawn.
+        legacy->disable();
+
+        // For busy mode we have an entirely different widget tree.
+        BusyWidget *busy = new BusyWidget(BUSY_WIDGET_NAME);
+        busy->rule()
+                .setLeftTop    (busyRoot.viewLeft(),  busyRoot.viewTop())
+                .setRightBottom(busyRoot.viewRight(), busyRoot.viewBottom());
+        busyRoot.add(busy);
+    }
+
+    void setMode(Mode const &newMode)
+    {
+        LOG_VERBOSE("Switching to %s mode") << (newMode == Busy? "Busy" : "Normal");
+
+        mode = newMode;
+    }
+
+    void updateFrameRateStatistics(void)
+    {
+        static uint lastFpsTime = 0;
+
+        uint nowTime = Timer_RealMilliseconds();
+
+        /*
+        Con_Message("endFrame with %i ms (%i render)\n", nowTime - lastShowAt, nowTime - frameStartAt);
+        lastShowAt = nowTime;
+        */
+
+        // Increment the (local) frame counter.
+        rFrameCount++;
+
+        // Count the frames every other second.
+        if(nowTime - 2500 >= lastFpsTime)
+        {
+            static int lastFrameCount = 0;
+            fps = (rFrameCount - lastFrameCount) / ((nowTime - lastFpsTime)/1000.0f);
+            lastFpsTime = nowTime;
+            lastFrameCount = rFrameCount;
+        }
     }
 };
 
@@ -72,7 +130,7 @@ CanvasWindow::CanvasWindow(QWidget *parent)
     d = new Instance(this);
 
     // Create the drawing canvas for this window.
-    setCentralWidget(d->canvas = new Canvas); // takes ownership
+    setCentralWidget(d->canvas = new Canvas(this)); // takes ownership
 
     // All input goes to the canvas.
     d->canvas->setFocus();
@@ -85,7 +143,18 @@ CanvasWindow::~CanvasWindow()
 
 de::RootWidget &CanvasWindow::root()
 {
-    return d->rootWidget;
+    return d->mode == Busy? d->busyRoot : d->root;
+}
+
+void CanvasWindow::setMode(Mode const &mode)
+{
+    LOG_AS("CanvasWindow");
+    d->setMode(mode);
+}
+
+float CanvasWindow::frameRate() const
+{
+    return d->fps;
 }
 
 void CanvasWindow::initCanvasAfterRecreation(Canvas &canvas)
@@ -132,20 +201,6 @@ void CanvasWindow::recreateCanvas()
         return;
     }
 
-#if 0
-    canvas().setFormat(QGLFormat::defaultFormat());
-    LOG_DEBUG("Updated Canvas GL format.");
-
-#else
-    /// @todo Instead of recreating, there is also the option of modifying the
-    /// existing QGLContext -- however, changing its format causes it to be
-    /// reset. We are doing it this way because we wish to retain the current
-    /// GL context's texture objects by sharing them with the new Canvas.
-
-    /// @todo See if reseting the QGLContext actually causes all textures to be
-    /// lost. If not, it would be better to just change the format and
-    /// reinitialize the context state.
-
     // We'll re-trap the mouse after the new canvas is ready.
     d->mouseWasTrapped = canvas().isMouseTrapped();
     canvas().trapMouse(false);
@@ -159,7 +214,6 @@ void CanvasWindow::recreateCanvas()
     d->recreated->show();
 
     LOG_DEBUG("Canvas recreated, old one still exists.");
-#endif
 }
 
 Canvas& CanvasWindow::canvas()
@@ -230,7 +284,8 @@ void CanvasWindow::resizeEvent(QResizeEvent *ev)
 
     Window_UpdateAfterResize(Window_Main()); /// @todo remove this
 
-    d->rootWidget.setViewSize(size);
+    d->root.setViewSize(size);
+    d->busyRoot.setViewSize(size);
 }
 
 void CanvasWindow::hideEvent(QHideEvent *ev)
@@ -240,6 +295,35 @@ void CanvasWindow::hideEvent(QHideEvent *ev)
     QMainWindow::hideEvent(ev);
 
     LOG_DEBUG("Hide event (hidden:%b)") << isHidden();
+}
+
+void CanvasWindow::canvasReady(Canvas &/*canvas*/)
+{
+    // Now that the Canvas is ready for drawing we can enable
+    // the LegacyWidget.
+    d->root.find(LEGACY_WIDGET_NAME)->enable();
+
+    LOG_DEBUG("LegacyWidget enabled");
+}
+
+void CanvasWindow::paintCanvas(Canvas &/*canvas*/)
+{
+    // All of this occurs during the Canvas paintGL event.
+
+    ClientApp::app().preFrame(); /// @todo what about multiwindow?
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    root().draw();
+
+    // Finish GL drawing and swap it on to the screen. Blocks until buffers
+    // swapped.
+    GL_DoUpdate();
+
+    d->updateFrameRateStatistics();
+
+    ClientApp::app().postFrame(); /// @todo what about multiwindow?
 }
 
 bool CanvasWindow::setDefaultGLFormat() // static

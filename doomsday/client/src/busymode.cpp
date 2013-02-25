@@ -37,7 +37,8 @@
 
 #ifdef __CLIENT__
 
-static void BusyMode_Loop(void);
+#include "clientapp.h"
+
 static void BusyMode_Exit(void);
 
 static QEventLoop* eventLoop;
@@ -150,11 +151,6 @@ static void beginTask(BusyTask* task)
     busyThread = Sys_StartThread(busyTask->worker, busyTask->workerData);
     Thread_SetCallback(busyThread, busyWorkerTerminated);
 
-    // Switch the engine loop and window to the busy mode.
-    LegacyCore_SetLoopFunc(BusyMode_Loop);
-
-    Window_SetDrawFunc(Window_Main(), BusyVisual_Render);
-
     busyTask->_startTime = Timer_RealSeconds();
 }
 
@@ -170,9 +166,6 @@ static void endTask(BusyTask* task)
     {
         Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
     }
-
-    // The window drawer will be restored later to the appropriate function.
-    Window_SetDrawFunc(Window_Main(), 0);
 
     if(busyTaskEndedWithError)
     {
@@ -245,17 +238,14 @@ static void preBusySetup(int initialMode)
 
     busyWasIgnoringInput = DD_IgnoreInput(true);
 
-    // Save the present loop.
-    LegacyCore_PushLoop();
-
-    // Set up loop for busy mode.
-    LegacyCore_SetLoopRate(60);
-    LegacyCore_SetLoopFunc(NULL); // don't call main loop's func while busy
-
     BusyVisual_PrepareFont();
     BusyVisual_LoadTextures();
 
-    Window_SetDrawFunc(Window_Main(), 0);
+    // Limit frame rate to 60, no point pushing it any faster while busy.
+    ClientApp::app().loop().setRate(60);
+
+    // Switch the window to busy mode UI.
+    Window_CanvasWindow(Window_Main())->setMode(CanvasWindow::Busy);
 
 #else
     DENG_UNUSED(initialMode);
@@ -271,11 +261,11 @@ static void postBusyCleanup(void)
 
     BusyVisual_ReleaseTextures();
 
-    // Restore old loop.
-    LegacyCore_PopLoop();
+    // Back to unlimited frame rate.
+    ClientApp::app().loop().setRate(0);
 
-    // Resume drawing with the game loop drawer.
-    Window_SetDrawFunc(Window_Main(), !Sys_IsShuttingDown()? DD_GameLoopDrawer : 0);
+    // Switch the window to normal UI.
+    Window_CanvasWindow(Window_Main())->setMode(CanvasWindow::Normal);
 #endif
 }
 
@@ -407,7 +397,7 @@ static void stopEventLoopWithValue(int result)
 {
     // After the event loop is gone, we don't want any loop callbacks until the
     // busy state has been properly torn down.
-    LegacyCore_SetLoopFunc(0);
+    //LegacyCore_SetLoopFunc(0);
 
     DENG_ASSERT(eventLoop != 0);
     eventLoop->exit(result);
@@ -438,15 +428,10 @@ static void BusyMode_Exit(void)
  * The busy loop callback function. Called periodically in the main (UI) thread
  * while the busy worker is running.
  */
-static void BusyMode_Loop(void)
+void BusyMode_Loop(void)
 {
     boolean canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
     timespan_t oldTime;
-
-    Garbage_Recycle();
-
-    // Make sure the audio system gets regularly updated.
-    S_StartFrame();
 
     // Post and discard all input events.
     DD_ProcessEvents(0);
@@ -459,8 +444,6 @@ static void BusyMode_Loop(void)
         // Any deferred content needs to get uploaded.
         GL_ProcessDeferredTasks(15);
     }
-
-    S_EndFrame();
 
     // We accumulate time in the busy loop so that the animation of a task
     // sequence doesn't jump around but remains continuous.

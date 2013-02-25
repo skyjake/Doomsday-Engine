@@ -30,10 +30,13 @@
 #include "clientapp.h"
 #include "de_platform.h"
 #include "dd_main.h"
+#include "dd_def.h"
 #include "dd_loop.h"
 #include "con_main.h"
-#include "ui/displaymode.h"
 #include "sys_system.h"
+#include "audio/s_main.h"
+#include "gl/gl_main.h"
+#include "ui/displaymode.h"
 #include "ui/windowsystem.h"
 #include "ui/window.h"
 #include "updater.h"
@@ -56,7 +59,7 @@ static void handleLegacyCoreTerminate(char const *msg)
 static void continueInitWithEventLoopRunning(void)
 {
     // This function only needs to be called once, so clear the callback.
-    LegacyCore_SetLoopFunc(0);
+    //LegacyCore_SetLoopFunc(0);
 
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
@@ -65,14 +68,14 @@ static void continueInitWithEventLoopRunning(void)
 
 DENG2_PIMPL(ClientApp)
 {
-    LegacyCore *de2LegacyCore;
+    LegacyCore *legacyCore;
     QMenuBar *menuBar;
     WindowSystem winSys;
     ServerLink *svLink;
 
     Instance(Public *i)
         : Base(i),
-          de2LegacyCore(0),
+          legacyCore(0),
           menuBar(0),
           svLink(0)
     {
@@ -81,15 +84,13 @@ DENG2_PIMPL(ClientApp)
 
     ~Instance()
     {
-        delete svLink;
-        delete menuBar;
-
-        // Cleanup.
         Sys_Shutdown();
         DD_Shutdown();
 
-        LegacyCore_Delete(de2LegacyCore);
+        LegacyCore_Delete(legacyCore);
 
+        delete svLink;
+        delete menuBar;
         clientAppSingleton = 0;
     }
 
@@ -138,9 +139,7 @@ ClientApp::~ClientApp()
 
 void ClientApp::initialize()
 {
-    // C interface to the app.
-    d->de2LegacyCore = LegacyCore_New();
-
+    d->legacyCore = LegacyCore_New();
     d->svLink = new ServerLink;
 
     // Config needs DisplayMode, so let's initialize it before the libdeng2
@@ -174,7 +173,32 @@ void ClientApp::initialize()
     DD_ComposeMainWindowTitle(title);
     Window_New(title);
 
-    LegacyCore_SetLoopFunc(continueInitWithEventLoopRunning);
+    LegacyCore_Timer(1, continueInitWithEventLoopRunning);
+}
+
+void ClientApp::preFrame()
+{
+    // Frame syncronous I/O operations.
+    S_StartFrame(); /// @todo belongs in AudioSystem::timeChanged()
+
+    if(gx.BeginFrame) /// @todo GameSystem::timeChanged()
+    {
+        gx.BeginFrame();
+    }
+}
+
+void ClientApp::postFrame()
+{
+    /// @todo should these be here?
+
+    if(gx.EndFrame)
+    {
+        gx.EndFrame();
+    }
+
+    S_EndFrame();
+
+    Garbage_Recycle();
 }
 
 ClientApp &ClientApp::app()

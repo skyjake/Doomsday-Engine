@@ -60,6 +60,8 @@ LegacyWidget::~LegacyWidget()
 
 void LegacyWidget::viewResized()
 {
+    if(isDisabled()) return;
+
     LOG_AS("LegacyWidget");
     LOG_DEBUG("View resized to ") << root().viewSize().asText();
 
@@ -79,12 +81,9 @@ void LegacyWidget::viewResized()
 
 void LegacyWidget::update()
 {    
-    if(BusyMode_Active())
-    {
-        /// @todo During busy mode, a BusyWidget should be in the widget
-        /// tree instead of a LegacyWidget.
-        return;
-    }
+    if(isDisabled()) return;
+
+    DENG2_ASSERT(!BusyMode_Active());
 
     // We may be performing GL operations.
     Window_GLActivate(Window_Main());
@@ -98,10 +97,25 @@ void LegacyWidget::update()
         return;
 
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
+
+    // Request update of window contents.
+    Window_Draw(Window_Main());
+
+    // After the first frame, start timedemo.
+    //DD_CheckTimeDemo();
 }
 
 void LegacyWidget::draw()
 {
+    if(renderWireframe || isDisabled())
+    {
+        // When rendering is wireframe mode, we must clear the screen
+        // before rendering a frame.
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
+    if(isDisabled()) return;
+
     if(drawGame)
     {
         if(App_GameLoaded())

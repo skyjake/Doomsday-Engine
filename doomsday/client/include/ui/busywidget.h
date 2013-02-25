@@ -1,4 +1,4 @@
-/** @file clientapp.h  The client application.
+/** @file busywidget.h
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,37 +16,26 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef CLIENTAPP_H
-#define CLIENTAPP_H
+#ifndef CLIENT_BUSYWIDGET_H
+#define CLIENT_BUSYWIDGET_H
 
-#include <de/GuiApp>
-#include "network/serverlink.h"
+#include "guiwidget.h"
 
 /**
- * The client application.
+ * Widget that takes care of the UI while busy mode is active.
  */
-class ClientApp : public de::GuiApp
+class BusyWidget : public GuiWidget
 {
 public:
-    ClientApp(int &argc, char **argv);
+    BusyWidget(de::String const &name = "");
+    ~BusyWidget();
 
-    ~ClientApp();
-
-    /**
-     * Sets up all the subsystems of the application. Must be called before the
-     * event loop is started.
-     */
-    void initialize();
-
-    void preFrame();
-    void postFrame();
-
-public:
-    static ClientApp &app();
-    static ServerLink &serverLink();
+    void update();
+    void draw();
+    bool handleEvent(de::Event const &event);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // CLIENTAPP_H
+#endif // CLIENT_BUSYWIDGET_H

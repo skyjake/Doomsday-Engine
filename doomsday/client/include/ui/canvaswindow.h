@@ -40,10 +40,27 @@ class CanvasWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    enum Mode
+    {
+        Normal,
+        Busy
+    };
+
+public:
     explicit CanvasWindow(QWidget *parent = 0);
     ~CanvasWindow();
 
     de::RootWidget &root();
+
+    /**
+     * Sets the operating mode of the window. In Busy mode, the normal
+     * widgets of the window will be replaced with a single BusyWidget.
+     *
+     * @param mode  Mode.
+     */
+    void setMode(Mode const &mode);
+
+    float frameRate() const;
 
     /**
      * Recreates the contained Canvas with an update GL format.
@@ -72,6 +89,21 @@ public:
     void moveEvent(QMoveEvent *);
     void resizeEvent(QResizeEvent *);
     void hideEvent(QHideEvent *);
+
+    /**
+     * Called from Canvas when it is ready for OpenGL drawing (visible).
+     *
+     * @param canvas  Canvas.
+     */
+    void canvasReady(Canvas &canvas);
+
+    /**
+     * Called from Canvas when a GL draw is requested. The UI widgets will be
+     * rendered onto the canvas.
+     *
+     * @param canvas  Canvas to paint.
+     */
+    void paintCanvas(Canvas &canvas);
 
     /**
      * Must be called before any canvas windows are created. Defines the

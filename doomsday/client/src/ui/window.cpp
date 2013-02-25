@@ -987,6 +987,7 @@ static Window* canvasToWindow(Canvas& DENG_DEBUG_ONLY(canvas))
     return &mainWindow;
 }
 
+/*
 static void drawCanvasWithCallback(Canvas& canvas)
 {
     Window* win = canvasToWindow(canvas);
@@ -997,6 +998,7 @@ static void drawCanvasWithCallback(Canvas& canvas)
     // Now we can continue with the main loop (if it was paused).
     LegacyCore_ResumeLoop();
 }
+*/
 
 static void windowFocusChanged(Canvas& canvas, bool focus)
 {
@@ -1287,6 +1289,7 @@ void* Window_NativeHandle(const Window* wnd)
     return reinterpret_cast<void*>(wnd->widget->winId());
 }
 
+/*
 void Window_SetDrawFunc(Window* win, void (*drawFunc)(void))
 {
     assert(win);
@@ -1296,6 +1299,7 @@ void Window_SetDrawFunc(Window* win, void (*drawFunc)(void))
     win->widget->canvas().setDrawFunc(drawFunc? drawCanvasWithCallback : 0);
     win->widget->update();
 }
+*/
 
 void Window_Draw(Window* win)
 {
@@ -1321,7 +1325,7 @@ void Window_Draw(Window* win)
     else
     {
         // Don't run the main loop until after the paint event has been dealt with.
-        LegacyCore_PauseLoop();
+        //LegacyCore_PauseLoop();
 
         // Request update at the earliest convenience.
         win->widget->canvas().update();
