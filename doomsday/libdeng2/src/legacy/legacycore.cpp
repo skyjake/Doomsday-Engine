@@ -35,6 +35,7 @@ LegacyCore *LegacyCore::_appCore;
 
 struct LegacyCore::Instance
 {
+    /*
     struct Loop {
         int interval;
         bool paused;
@@ -42,10 +43,11 @@ struct LegacyCore::Instance
         Loop() : interval(1), paused(false), func(0) {}
     };
     QList<Loop> loopStack;
+    */
 
     App *app;
-    QTimer *loopTimer;
-    Loop loop;
+    //QTimer *loopTimer;
+    //Loop loop;
 
     /// Pointer returned to callers, see LegacyCore::logFileName().
     std::string logName;
@@ -65,9 +67,11 @@ LegacyCore::LegacyCore()
     // Construct a new core application (must have one for the event loop).
     d->app = DENG2_APP;
 
+    /*
     // This will trigger loop callbacks.
     d->loopTimer = new QTimer(this);
     connect(d->loopTimer, SIGNAL(timeout()), this, SLOT(callback()));
+    */
 }
 
 LegacyCore::~LegacyCore()
@@ -85,6 +89,7 @@ LegacyCore &LegacyCore::instance()
     return *_appCore;
 }
 
+/*
 void LegacyCore::setLoopFunc(void (*func)(void))
 {
     LOG_DEBUG("Loop function changed from %p set to %p.") << dintptr(d->loop.func) << dintptr(func);
@@ -145,6 +150,7 @@ void LegacyCore::resumeLoop()
         d->loopTimer->start(d->loop.interval);
     }
 }
+*/
 
 int LegacyCore::runEventLoop()
 {
@@ -158,6 +164,7 @@ int LegacyCore::runEventLoop()
     return code;
 }
 
+/*
 void LegacyCore::setLoopRate(int freqHz)
 {
     int const oldInterval = d->loop.interval;
@@ -173,10 +180,11 @@ void LegacyCore::setLoopRate(int freqHz)
         }
     }
 }
+*/
 
 void LegacyCore::stop(int exitCode)
 {
-    d->loopTimer->stop();
+    //d->loopTimer->stop();
     d->app->stopLoop(exitCode);
 }
 
@@ -211,15 +219,17 @@ void LegacyCore::printLogFragment(char const *text, LogEntry::Level level)
     }
 }
 
+/*
 void LegacyCore::callback()
 {
     // Update the application clock.
-    Clock::appClock().setTime(Time());
+    //Clock::appClock().setTime(Time());
 
     if(d->loop.func)
     {
         d->loop.func();
     }
 }
+*/
 
 } // namespace de

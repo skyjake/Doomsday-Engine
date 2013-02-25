@@ -18,7 +18,6 @@
 
 #include "de/GuiApp"
 #include <de/Log>
-#include <de/math.h>
 
 #include <QTimer>
 #include <QDesktopServices>
@@ -27,14 +26,12 @@ namespace de {
 
 DENG2_PIMPL(GuiApp)
 {
-    TimeDelta refreshInterval;
-    bool loopRunning;
+    Loop loop;
 
-    Instance(Public *i)
-        : Base(i),
-          refreshInterval(0),
-          loopRunning(false)
-    {}
+    Instance(Public *i) : Base(i)
+    {
+        loop.audienceForIteration += self;
+    }
 };
 
 GuiApp::GuiApp(int &argc, char **argv)
@@ -72,28 +69,26 @@ void GuiApp::notifyDisplayModeChanged()
 
 int GuiApp::execLoop()
 {
-    d->loopRunning = true;
-    /// @todo LegacyCore currently updates clock time for us.
-    //refresh();
+    d->loop.start();
     return QApplication::exec();
 }
 
 void GuiApp::stopLoop(int code)
 {
-    d->loopRunning = false;
+    d->loop.stop();
     return QApplication::exit(code);
 }
 
-void GuiApp::refresh()
+Loop &GuiApp::loop()
 {
-    if(!d->loopRunning) return;
+    return d->loop;
+}
 
+void GuiApp::loopIteration()
+{
     // Update the clock time. App listens to this clock and will inform
     // subsystems in the order they've been added in.
     Clock::appClock().setTime(Time());
-
-    // Schedule the next refresh.
-    QTimer::singleShot(de::max(duint64(1), d->refreshInterval.asMilliSeconds()), this, SLOT(refresh()));
 }
 
 NativePath GuiApp::appDataPath() const

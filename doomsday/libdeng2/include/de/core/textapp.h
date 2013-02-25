@@ -21,6 +21,7 @@
 
 #include <QCoreApplication>
 #include <de/App>
+#include <de/Loop>
 
 /**
  * Macro for conveniently accessing the de::TextApp singleton instance.
@@ -37,7 +38,8 @@ namespace de {
  *
  * @ingroup core
  */
-class DENG2_PUBLIC TextApp : public QCoreApplication, public App
+class DENG2_PUBLIC TextApp : public QCoreApplication, public App,
+                             DENG2_OBSERVES(Loop, Iteration)
 {
     Q_OBJECT
 
@@ -51,11 +53,11 @@ public:
     int execLoop();
     void stopLoop(int code);
 
+    Loop &loop();
+
 protected:
     NativePath appDataPath() const;
-
-protected slots:
-    void refresh();
+    void loopIteration();
 
 private:
     DENG2_PRIVATE(d)

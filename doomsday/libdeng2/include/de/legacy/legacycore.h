@@ -54,6 +54,7 @@ public:
      */
     int runEventLoop();
 
+#if 0
     /**
      * Sets the frequency for calling the loop function (e.g., 35 Hz for a
      * dedicated server). Not very accurate: the actual rate at which the
@@ -91,7 +92,7 @@ public:
      * Resumes calls to the loop function callback.
      */
     void resumeLoop();
-
+#endif
     /**
      * Stops the event loop. This is automatically called when the core is
      * destroyed.
@@ -135,9 +136,6 @@ public:
      * Returns the LegacyCore singleton instance.
      */
     static LegacyCore &instance();
-
-public slots:
-    void callback();
 
 private:
     DENG2_PRIVATE(d)

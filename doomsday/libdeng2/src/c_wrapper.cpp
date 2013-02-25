@@ -65,6 +65,7 @@ void LegacyCore_Stop(int exitCode)
     DENG2_LEGACYCORE().stop(exitCode);
 }
 
+/*
 void LegacyCore_SetLoopRate(int freqHz)
 {
     DENG2_LEGACYCORE().setLoopRate(freqHz);
@@ -94,6 +95,7 @@ void LegacyCore_ResumeLoop()
 {
     DENG2_LEGACYCORE().resumeLoop();
 }
+*/
 
 void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void))
 {
