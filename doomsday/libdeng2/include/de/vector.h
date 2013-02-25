@@ -464,6 +464,37 @@ inline bool operator == (Vector4<duint> const &a, Vector4<duint> const &b)
     return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
 }
 
+// Inequality operators for integer types.
+inline bool operator != (Vector2<dint> const &a, Vector2<dint> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector3<dint> const &a, Vector3<dint> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector4<dint> const &a, Vector4<dint> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector2<duint> const &a, Vector2<duint> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector3<duint> const &a, Vector3<duint> const &b)
+{
+    return !(a == b);
+}
+
+inline bool operator != (Vector4<duint> const &a, Vector4<duint> const &b)
+{
+    return !(a == b);
+}
+
 //@{
 /// @ingroup types
 typedef Vector2<dint>    Vector2i;  ///< 2-component vector of integer values.
