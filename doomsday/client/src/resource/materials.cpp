@@ -118,7 +118,7 @@ DENG2_PIMPL(Materials)
         self.purgeCacheQueue();
 #endif
 
-        clearGroups();
+        self.destroyAllGroups();
         clearManifests();
         clearMaterials();
 
@@ -154,12 +154,6 @@ DENG2_PIMPL(Materials)
             manifestIdMapSize = 0;
         }
         manifestCount = 0;
-    }
-
-    void clearGroups()
-    {
-        qDeleteAll(groups);
-        groups.clear();
     }
 
 #ifdef __CLIENT__
@@ -495,7 +489,8 @@ Materials::ManifestGroups const &Materials::allGroups() const
 
 void Materials::destroyAllGroups()
 {
-    d->clearGroups();
+    qDeleteAll(d->groups);
+    d->groups.clear();
 }
 
 Materials::All const &Materials::all() const
