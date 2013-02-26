@@ -91,7 +91,8 @@ def init():
                                             'maps-list-deselected',
                                             'addon-attached',
                                             'addon-detached',
-                                            'addon-database-reloaded'])
+                                            'addon-database-reloaded',
+                                            'language-changed'])
 
     
 def handleCommand(event):
@@ -129,6 +130,9 @@ def handleNotify(event):
         
     if event.hasId('addon-database-reloaded'):
         refreshList()
+        
+    if event.hasId('language-changed'):
+        mapListBox.retranslateColumns()
     
 
 def refreshList():

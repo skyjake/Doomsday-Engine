@@ -405,46 +405,32 @@ Uri &Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar se
     return *this;
 }
 
-String Uri::compose(QChar sep) const
+String Uri::compose(ComposeAsTextFlags compositionFlags, QChar sep) const
 {
-    String result;
-    if(!d->scheme.isEmpty())
+    String text;
+    if(!(compositionFlags & OmitScheme))
     {
-        result += d->scheme + ":" + d->path;
+        if(!d->scheme.isEmpty())
+        {
+            text += d->scheme + ":";
+        }
     }
-    else
+    if(!(compositionFlags & OmitPath))
     {
-        result = d->path;
+        QString path = d->path;
+        if(compositionFlags & DecodePath)
+        {
+            path = QByteArray::fromPercentEncoding(path.toUtf8());
+        }
+        if(sep != '/') path.replace('/', sep);
+        text += path;
     }
-    if(sep != '/')
-    {
-        result.replace('/', sep);
-    }
-    return result;
+    return text;
 }
 
 String Uri::asText() const
 {
-    // Just compose it for now, we can worry about making it 'pretty' later.
-    AutoStr *path = AutoStr_FromTextStd(compose().toUtf8().constData());
-    Str_PercentDecode(path);
-    return String(Str_Text(path));
-}
-
-void Uri::debugPrint(int indent, PrintFlags flags, String unresolvedText) const
-{
-    indent = MAX_OF(0, indent);
-
-    bool resolvedPath = (flags & OutputResolved) && !d->resolvedPath.isEmpty();
-    if(unresolvedText.isEmpty()) unresolvedText = "--(!)incomplete";
-
-    LOG_DEBUG("%s\"%s\"%s%s")
-        << String(indent, ' ') << ""
-        << ((flags & PrettifyPath)? NativePath(asText()).pretty() : asText())
-        << ((flags & OutputResolved)? (resolvedPath? "=> " : unresolvedText) : "")
-        << ((flags & OutputResolved) && resolvedPath?
-                ((flags & PrettifyPath)? NativePath(d->resolvedPath).pretty() : NativePath(d->resolvedPath).toString())
-              : "");
+    return compose(DefaultComposeAsTextFlags | DecodePath);
 }
 
 void Uri::operator >> (Writer &to) const

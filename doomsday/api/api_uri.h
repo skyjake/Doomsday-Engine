@@ -50,14 +50,17 @@
 ///@}
 
 /**
- * @defgroup printUriFlags  Print Uri Flags
+ * @defgroup uriComposeAsTextFlags  Uri Compose As Text Flags
  * @ingroup base
+ *
+ * Flags which determine how a textual URI representation is composited.
  */
 ///@{
-#define UPF_OUTPUT_RESOLVED           0x1 ///< Include the resolved path in the output.
-#define UPF_TRANSFORM_PATH_MAKEPRETTY 0x2 ///< Transform paths making them "pretty".
+#define UCTF_OMITSCHEME      0x1 ///< Exclude the scheme.
+#define UCTF_OMITPATH        0x2 ///< Exclude the path.
+#define UCTF_DECODEPATH      0x4 ///< Decode percent-endcoded characters in the path.
 
-#define DEFAULT_PRINTURIFLAGS (UPF_OUTPUT_RESOLVED|UPF_TRANSFORM_PATH_MAKEPRETTY)
+#define DEFAULT_URI_COMPOSE_AS_TEXT_FLAGS 0
 ///@}
 
 struct uri_s; // The uri instance (opaque).
@@ -188,8 +191,12 @@ DENG_API_TYPEDEF(Uri) // v1
      * the resultant string.
      *
      * @param uri  Uri instance.
+     * @param flags  @ref uriComposeAsTextFlags.
+     *
      * @return  Plain-text String representation.
      */
+    AutoStr* (*Compose2)(Uri const* uri, int flags);
+
     AutoStr* (*Compose)(Uri const* uri);
 
     /**
@@ -243,20 +250,6 @@ DENG_API_TYPEDEF(Uri) // v1
      */
     void (*ReadWithDefaultScheme)(Uri* uri, Reader* reader, char const* defaultScheme);
 
-    /**
-     * Print debug output for @a uri.
-     *
-     * @param uri               Uri instance.
-     * @param indent            Number of characters to indent the print output.
-     * @param flags             @ref printUriFlags
-     * @param unresolvedText    Text string to be printed if @a uri is not resolvable.
-     */
-    void (*DebugPrint3)(Uri const* uri, int indent, int flags, char const* unresolvedText);
-
-    void (*DebugPrint2)(Uri const* uri, int indent, int flags/*, use the default unresolved text */);
-
-    void (*DebugPrint)(Uri const* uri, int indent/*, flags = DEFAULT_PRINTURIFLAGS */);
-
 } DENG_API_T(Uri);
 
 // Macros for accessing exported functions.
@@ -279,15 +272,13 @@ DENG_API_TYPEDEF(Uri) // v1
 #define Uri_SetUri                  _api_Uri.SetUri
 #define Uri_SetUriStr               _api_Uri.SetUriStr
 #define Uri_Compose                 _api_Uri.Compose
+#define Uri_Compose2                _api_Uri.Compose2
 #define Uri_ToString                _api_Uri.ToString
 #define Uri_Equality                _api_Uri.Equality
 #define Uri_Write2                  _api_Uri.Write2
 #define Uri_Write                   _api_Uri.Write
 #define Uri_Read                    _api_Uri.Read
 #define Uri_ReadWithDefaultScheme   _api_Uri.ReadWithDefaultScheme
-#define Uri_DebugPrint3             _api_Uri.DebugPrint3
-#define Uri_DebugPrint2             _api_Uri.DebugPrint2
-#define Uri_DebugPrint              _api_Uri.DebugPrint
 #endif
 
 // Internal access.

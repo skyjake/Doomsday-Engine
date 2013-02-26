@@ -55,18 +55,21 @@ static void writeUri(const Uri* uri, Writer* writer, int omitComponents = 0)
     Str_Write(de::DualString(self->path()).toStrUtf8(), writer);
 }
 
+#undef Uri_Clear
 Uri* Uri_Clear(Uri* uri)
 {
     SELF(uri);
     return reinterpret_cast<Uri*>(&self->clear());
 }
 
+#undef Uri_SetScheme
 Uri* Uri_SetScheme(Uri* uri, char const* scheme)
 {
     SELF(uri);
     return reinterpret_cast<Uri*>(&self->setScheme(scheme));
 }
 
+#undef Uri_SetPath
 Uri* Uri_SetPath(Uri* uri, char const* path)
 {
     SELF(uri);
@@ -94,27 +97,32 @@ static void readUri(Uri* uri, Reader* reader, de::String defaultScheme = "")
     Uri_SetPath  (uri, Str_Text(&path  ));
 }
 
+#undef Uri_NewWithPath2
 Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass)
 {
     return reinterpret_cast<Uri*>( new de::Uri(path, defaultResourceClass) );
 }
 
+#undef Uri_NewWithPath
 Uri* Uri_NewWithPath(char const* path)
 {
     return reinterpret_cast<Uri*>( new de::Uri(path) );
 }
 
+#undef Uri_New
 Uri* Uri_New(void)
 {
     return reinterpret_cast<Uri*>( new de::Uri() );
 }
 
+#undef Uri_Dup
 Uri* Uri_Dup(Uri const* other)
 {
     DENG_ASSERT(other);
     return reinterpret_cast<Uri*>( new de::Uri(*(TOINTERNAL_CONST(other))) );
 }
 
+#undef Uri_FromReader
 Uri* Uri_FromReader(Reader* reader)
 {
     DENG_ASSERT(reader);
@@ -127,6 +135,7 @@ Uri* Uri_FromReader(Reader* reader)
     return uri;
 }
 
+#undef Uri_Delete
 void Uri_Delete(Uri* uri)
 {
     if(uri)
@@ -136,6 +145,7 @@ void Uri_Delete(Uri* uri)
     }
 }
 
+#undef Uri_Copy
 Uri* Uri_Copy(Uri* uri, Uri const* other)
 {
     SELF(uri);
@@ -144,6 +154,7 @@ Uri* Uri_Copy(Uri* uri, Uri const* other)
     return reinterpret_cast<Uri*>(self);
 }
 
+#undef Uri_Equality
 boolean Uri_Equality(Uri const* uri, Uri const* other)
 {
     SELF_CONST(uri);
@@ -151,12 +162,14 @@ boolean Uri_Equality(Uri const* uri, Uri const* other)
     return *self == (*(TOINTERNAL_CONST(other)));
 }
 
+#undef Uri_IsEmpty
 boolean Uri_IsEmpty(Uri const* uri)
 {
     SELF_CONST(uri);
     return self->isEmpty();
 }
 
+#undef Uri_Resolved
 AutoStr* Uri_Resolved(Uri const* uri)
 {
     SELF_CONST(uri);
@@ -171,48 +184,72 @@ AutoStr* Uri_Resolved(Uri const* uri)
     return AutoStr_NewStd();
 }
 
+#undef Uri_Scheme
 const Str* Uri_Scheme(Uri const* uri)
 {
     SELF_CONST(uri);
     return self->schemeStr();
 }
 
+#undef Uri_Path
 const Str* Uri_Path(Uri const* uri)
 {
     SELF_CONST(uri);
     return self->pathStr();
 }
 
+#undef Uri_SetUri2
 Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclassid_t defaultResourceClass)
 {
     SELF(uri);
     return reinterpret_cast<Uri*>(&self->setUri(path, defaultResourceClass));
 }
 
+#undef Uri_SetUri
 Uri* Uri_SetUri(Uri* uri, char const* path)
 {
     SELF(uri);
     return reinterpret_cast<Uri*>(&self->setUri(path));
 }
 
+#undef Uri_SetUriStr
 Uri* Uri_SetUriStr(Uri* uri, ddstring_t const* path)
 {
     SELF(uri);
     return reinterpret_cast<Uri*>(&self->setUri(Str_Text(path)));
 }
 
+static de::Uri::ComposeAsTextFlags translateFlags(int flags)
+{
+    de::Uri::ComposeAsTextFlags catf;
+    if(flags & UCTF_OMITSCHEME) catf |= de::Uri::OmitScheme;
+    if(flags & UCTF_OMITPATH)   catf |= de::Uri::OmitPath;
+    if(flags & UCTF_DECODEPATH) catf |= de::Uri::DecodePath;
+    return catf;
+}
+
+#undef Uri_Compose2
+AutoStr* Uri_Compose2(Uri const* uri, int flags)
+{
+    SELF_CONST(uri);
+    return AutoStr_FromTextStd(self->compose(translateFlags(flags)).toUtf8().constData());
+}
+
+#undef Uri_Compose
 AutoStr* Uri_Compose(Uri const* uri)
 {
     SELF_CONST(uri);
     return AutoStr_FromTextStd(self->compose().toUtf8().constData());
 }
 
+#undef Uri_ToString
 AutoStr* Uri_ToString(Uri const* uri)
 {
     SELF_CONST(uri);
     return AutoStr_FromTextStd(self->asText().toUtf8().constData());
 }
 
+#undef Uri_Write2
 void Uri_Write2(Uri const* uri, struct writer_s* writer, int omitComponents)
 {
     DENG_ASSERT(uri);
@@ -220,6 +257,7 @@ void Uri_Write2(Uri const* uri, struct writer_s* writer, int omitComponents)
     writeUri(uri, writer, omitComponents);
 }
 
+#undef Uri_Write
 void Uri_Write(Uri const* uri, struct writer_s* writer)
 {
     DENG_ASSERT(uri);
@@ -227,6 +265,7 @@ void Uri_Write(Uri const* uri, struct writer_s* writer)
     writeUri(uri, writer);
 }
 
+#undef Uri_Read
 Uri* Uri_Read(Uri* uri, struct reader_s* reader)
 {
     DENG_ASSERT(uri);
@@ -235,37 +274,12 @@ Uri* Uri_Read(Uri* uri, struct reader_s* reader)
     return uri;
 }
 
+#undef Uri_ReadWithDefaultScheme
 void Uri_ReadWithDefaultScheme(Uri* uri, struct reader_s* reader, char const* defaultScheme)
 {
     DENG_ASSERT(uri);
     DENG_ASSERT(reader);
     readUri(uri, reader, defaultScheme);
-}
-
-static de::Uri::PrintFlags translateFlags(int flags)
-{
-    de::Uri::PrintFlags pf;
-    if(flags & UPF_OUTPUT_RESOLVED)           pf |= de::Uri::OutputResolved;
-    if(flags & UPF_TRANSFORM_PATH_MAKEPRETTY) pf |= de::Uri::PrettifyPath;
-    return pf;
-}
-
-void Uri_DebugPrint3(Uri const* uri, int indent, int flags, char const* unresolvedText)
-{
-    SELF_CONST(uri);
-    self->debugPrint(indent, translateFlags(flags), unresolvedText);
-}
-
-void Uri_DebugPrint2(Uri const* uri, int indent, int flags)
-{
-    SELF_CONST(uri);
-    self->debugPrint(indent, translateFlags(flags));
-}
-
-void Uri_DebugPrint(Uri const* uri, int indent)
-{
-    SELF_CONST(uri);
-    self->debugPrint(indent);
 }
 
 DENG_DECLARE_API(Uri) =
@@ -288,14 +302,12 @@ DENG_DECLARE_API(Uri) =
     Uri_SetUri2,
     Uri_SetUri,
     Uri_SetUriStr,
+    Uri_Compose2,
     Uri_Compose,
     Uri_ToString,
     Uri_Equality,
     Uri_Write2,
     Uri_Write,
     Uri_Read,
-    Uri_ReadWithDefaultScheme,
-    Uri_DebugPrint3,
-    Uri_DebugPrint2,
-    Uri_DebugPrint
+    Uri_ReadWithDefaultScheme
 };
