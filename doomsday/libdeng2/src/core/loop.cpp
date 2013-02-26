@@ -67,7 +67,7 @@ void Loop::nextLoopIteration()
 {
     if(d->running)
     {
-        d->schedule();
+        d->schedule();        
         DENG2_FOR_AUDIENCE(Iteration, i) i->loopIteration();
     }
 }

@@ -56,7 +56,7 @@ public:
     /**
      * Sets the frequency for loop iteration (e.g., 35 Hz for a dedicated
      * server). Not very accurate: the actual rate at which the function is
-     * called is likely less than this value.
+     * called is likely less than this value (but never more frequently).
      *
      * @param freqHz  Frequency in Hz.
      */
