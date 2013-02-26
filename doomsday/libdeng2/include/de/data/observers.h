@@ -99,6 +99,16 @@
 #define DENG2_FOR_AUDIENCE(Name, Var) \
     DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name)
 
+/**
+ * Macro for looping through the public audience members from inside a private
+ * implementation.
+ *
+ * @param Name  Name of the audience.
+ * @param Var   Variable used in the loop.
+ */
+#define DENG2_FOR_PUBLIC_AUDIENCE(Name, Var) \
+    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, self.audienceFor##Name)
+
 namespace de
 {
     /**
@@ -177,6 +187,11 @@ namespace de
             return *this;
         }
 
+        Observers<Type> &operator += (Type &observer) {
+            add(&observer);
+            return *this;
+        }
+
         Observers<Type> const &operator += (Type *observer) const {
             const_cast<Observers<Type> *>(this)->add(observer);
             return *this;
@@ -194,6 +209,11 @@ namespace de
         
         Observers<Type> &operator -= (Type *observer) {
             remove(observer);
+            return *this;
+        }
+
+        Observers<Type> &operator -= (Type &observer) {
+            remove(&observer);
             return *this;
         }
 

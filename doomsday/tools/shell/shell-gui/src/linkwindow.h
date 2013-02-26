@@ -61,8 +61,7 @@ protected slots:
     void askForPassword();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // LINKWINDOW_H

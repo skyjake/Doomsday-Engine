@@ -36,7 +36,11 @@ REM -- Update readme (could also run Amethyst here).
 copy "C:\Users\Virtual\Dropbox\Doomsday\readme\readme.txt" ..\products\doc
 
 REM -- Run the Inno Setup Compiler.
-"C:\Program Files\Inno Setup 5\Compil32.exe" /cc setup.iss
+IF EXIST "c:\Program Files\Inno Setup 5\Compil32.exe" (
+    "C:\Program Files\Inno Setup 5\Compil32.exe" /cc setup.iss
+) ELSE (
+    "C:\Program Files (x86)\Inno Setup 5\Compil32.exe" /cc setup.iss
+)
 
 goto TheEnd
 

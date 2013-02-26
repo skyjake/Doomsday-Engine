@@ -249,7 +249,8 @@ void ShellApp::updateMenuWithFoundServers()
     // Remove old servers.
     for(int i = 2; i < d->menu->itemCount() - 3; ++i)
     {
-        if(d->menu->itemAction(i).label()[0].isDigit())
+        if(d->menu->itemAction(i).label()[0].isDigit() ||
+           d->menu->itemAction(i).label().startsWith("localhost"))
         {
             d->menu->removeItem(i);
             --i;

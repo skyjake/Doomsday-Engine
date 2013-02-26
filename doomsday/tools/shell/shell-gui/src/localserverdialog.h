@@ -41,8 +41,7 @@ protected slots:
     void validate();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // LOCALSERVERGUIDIALOG_H

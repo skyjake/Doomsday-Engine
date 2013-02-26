@@ -162,14 +162,14 @@ static de::Value *Binding_DisplayMode_OriginalMode(de::Context &, de::Function::
     DisplayMode const *mode = DisplayMode_OriginalMode();
 
     de::DictionaryValue *dict = new de::DictionaryValue;
-    dict->add(new TextValue("width"), new NumberValue(mode->width));
-    dict->add(new TextValue("height"), new NumberValue(mode->height));
-    dict->add(new TextValue("depth"), new NumberValue(mode->depth));
+    dict->add(new TextValue("width"),       new NumberValue(mode->width));
+    dict->add(new TextValue("height"),      new NumberValue(mode->height));
+    dict->add(new TextValue("depth"),       new NumberValue(mode->depth));
     dict->add(new TextValue("refreshRate"), new NumberValue(mode->refreshRate));
 
     de::ArrayValue *ratio = new de::ArrayValue;
     *ratio << NumberValue(mode->ratioX) << NumberValue(mode->ratioY);
-    dict->add(new TextValue("ratio"),  ratio);
+    dict->add(new TextValue("ratio"), ratio);
 
     return dict;
 }
@@ -179,12 +179,10 @@ static void setupBindings()
     de::Function::registerNativeEntryPoint("DisplayMode_OriginalMode", Binding_DisplayMode_OriginalMode);
 
     bindings = new de::Record;
-
     bindings->addFunction("originalMode",
-                          de::refless(new de::Function("DisplayMode_OriginalMode")))
-            .setReadOnly();
+            de::refless(new de::Function("DisplayMode_OriginalMode"))).setReadOnly();
 
-    DENG2_APP->addNativeModule("DisplayMode", *bindings);
+    de::App::scriptSystem().addNativeModule("DisplayMode", *bindings);
 }
 
 static void tearDownBindings()

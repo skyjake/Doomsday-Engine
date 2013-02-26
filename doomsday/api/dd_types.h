@@ -49,6 +49,9 @@
 #  endif
 #endif
 
+/// Each network node is identified by a number.
+typedef unsigned int nodeid_t;
+
 /// @todo Should be a public typedef of a type defined by de::LumpIndex.
 typedef int32_t         lumpnum_t;
 #define LUMPNAME_T_MAXLEN 9

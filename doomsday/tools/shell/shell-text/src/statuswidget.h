@@ -47,8 +47,7 @@ public slots:
     void linkDisconnected();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // STATUSWIDGET_H

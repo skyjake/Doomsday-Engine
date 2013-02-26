@@ -37,8 +37,7 @@ protected:
     void finish(int result);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // LOCALSERVERDIALOG_H

@@ -134,29 +134,29 @@ void TextWidget::removeAction(Action &action)
     d->actions.removeAll(&action);
 }
 
-bool TextWidget::handleEvent(Event const *event)
+bool TextWidget::handleEvent(Event const &event)
 {
     // We only support KeyEvents.
-    if(event->type() == Event::KeyPress)
+    if(event.type() == Event::KeyPress)
     {
-        DENG2_ASSERT(dynamic_cast<KeyEvent const *>(event) != 0);
+        DENG2_ASSERT(dynamic_cast<KeyEvent const *>(&event) != 0);
 
-        KeyEvent const *keyEvent = static_cast<KeyEvent const *>(event);
+        KeyEvent const &keyEvent = static_cast<KeyEvent const &>(event);
 
         foreach(Action *act, d->actions)
         {
             // Event will be used by actions.
-            if(act->tryTrigger(*keyEvent)) return true;
+            if(act->tryTrigger(keyEvent)) return true;
         }
 
         // Focus navigation.
-        if((keyEvent->key() == Qt::Key_Tab || keyEvent->key() == Qt::Key_Down) &&
+        if((keyEvent.key() == Qt::Key_Tab || keyEvent.key() == Qt::Key_Down) &&
                 hasFocus() && !focusNext().isEmpty())
         {
             if(d->navigateFocus(root(), focusNext()))
                 return true;
         }
-        if((keyEvent->key() == Qt::Key_Backtab || keyEvent->key() == Qt::Key_Up) &&
+        if((keyEvent.key() == Qt::Key_Backtab || keyEvent.key() == Qt::Key_Up) &&
                 hasFocus() && !focusPrev().isEmpty())
         {
             if(d->navigateFocus(root(), focusPrev()))

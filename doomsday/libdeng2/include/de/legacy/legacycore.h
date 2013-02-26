@@ -25,15 +25,14 @@
 
 namespace de {
 
-class LegacyNetwork;
-
 /**
  * Transitional kernel for supporting legacy Doomsday C code in accessing
  * libdeng2 functionality. The legacy engine needs to construct one of these
  * via the deng2 C API and make sure it gets destroyed at shutdown. The C API
  * can be used to access functionality in LegacyCore.
  *
- * @todo Move the Loop into its own class and get rid of this one.
+ * @todo Move the Loop into its own class and get rid of this one. A Loop
+ * instance should then be owned by GuiApp and TextApp.
  */
 class DENG2_PUBLIC LegacyCore : public QObject
 {
@@ -137,18 +136,11 @@ public:
      */
     static LegacyCore &instance();
 
-    /**
-     * Returns the legacy network subsystem interface.
-     */
-    LegacyNetwork &network();
-
 public slots:
     void callback();
 
 private:
-    // Private instance data.
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 
     /// Globally available.
     static LegacyCore *_appCore;

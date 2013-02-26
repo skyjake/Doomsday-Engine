@@ -85,12 +85,12 @@ void DialogWidget::draw()
     targetCanvas().drawLineRect(pos);
 }
 
-bool DialogWidget::handleEvent(Event const *event)
+bool DialogWidget::handleEvent(Event const &event)
 {
-    if(event->type() == Event::KeyPress)
+    if(event.type() == Event::KeyPress)
     {
-        KeyEvent const *ev = static_cast<KeyEvent const *>(event);
-        if(ev->key() == Qt::Key_Escape)
+        KeyEvent const &ev = static_cast<KeyEvent const &>(event);
+        if(ev.key() == Qt::Key_Escape)
         {
             reject();
             return true;

@@ -50,8 +50,7 @@ signals:
     void checkAgain();
 
 private:
-    struct Instance;
-    Instance* d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBDENG_UPDATEAVAILABLEDIALOG_H

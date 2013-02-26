@@ -73,7 +73,7 @@ void File::clear()
     verifyWriteAccess();
 }
 
-FS &File::fileSystem()
+FileSystem &File::fileSystem()
 {
     return DENG2_APP->fileSystem();
 }

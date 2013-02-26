@@ -112,19 +112,19 @@ CommandLineWidget::~CommandLineWidget()
     delete d;
 }
 
-bool CommandLineWidget::handleEvent(Event const *event)
+bool CommandLineWidget::handleEvent(Event const &event)
 {
     // There are only key press events.
-    DENG2_ASSERT(event->type() == Event::KeyPress);
-    KeyEvent const *ev = static_cast<KeyEvent const *>(event);
+    DENG2_ASSERT(event.type() == Event::KeyPress);
+    KeyEvent const &ev = static_cast<KeyEvent const &>(event);
 
     bool eaten = true;
 
     // Control char?
-    if(ev->text().isEmpty())
+    if(ev.text().isEmpty())
     {
         // Override the editor's normal Enter handling.
-        if(ev->key() == Qt::Key_Enter)
+        if(ev.key() == Qt::Key_Enter)
         {
             d->updateCommandFromEditor();
 
@@ -160,7 +160,7 @@ bool CommandLineWidget::handleEvent(Event const *event)
         if(!eaten)
         {
             // History navigation.
-            switch(ev->key())
+            switch(ev.key())
             {
             case Qt::Key_Up:
                 d->navigateHistory(-1);

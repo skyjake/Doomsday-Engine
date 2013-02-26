@@ -121,11 +121,10 @@ public:
     /**
      * Checks actions and triggers them when suitable event is received.
      */
-    bool handleEvent(Event const *event);
+    bool handleEvent(Event const &event);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace shell

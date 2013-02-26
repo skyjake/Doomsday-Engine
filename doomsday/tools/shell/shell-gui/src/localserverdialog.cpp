@@ -73,6 +73,7 @@ DENG2_PIMPL(LocalServerDialog)
         form->addRow(tr("&Game mode:"), games);
 
         QPushButton *opt = new QPushButton(tr("Game &Options..."));
+        opt->setDisabled(true);
         form->addRow(0, opt);
 
         QHBoxLayout *hb = new QHBoxLayout;
@@ -187,7 +188,7 @@ void LocalServerDialog::validate()
         bool inUse = false;
         foreach(Address const &sv, GuiShellApp::app().serverFinder().foundServers())
         {
-            if(Socket::isHostLocal(sv.host()) && sv.port() == port)
+            if(sv.isLocal() && sv.port() == port)
             {
                 isValid = false;
                 inUse = true;

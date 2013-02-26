@@ -48,7 +48,7 @@ public:
 
     // Events.
     void draw();
-    bool handleEvent(Event const *event);
+    bool handleEvent(Event const &event);
 
 public slots:
     void accept(int result = 1);
@@ -75,8 +75,7 @@ signals:
     void rejected(int result);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace shell

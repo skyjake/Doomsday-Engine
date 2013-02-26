@@ -107,30 +107,6 @@ DENG2_PUBLIC void LogBuffer_Flush(void);
 DENG2_PUBLIC void LogBuffer_Clear(void);
 
 /*
- * LegacyNetwork
- */
-DENG2_OPAQUE(LegacyNetwork)
-
-DENG2_PUBLIC int LegacyNetwork_OpenServerSocket(unsigned short port);
-DENG2_PUBLIC int LegacyNetwork_Accept(int serverSocket);
-DENG2_PUBLIC int LegacyNetwork_Open(char const *ipAddress, unsigned short port);
-DENG2_PUBLIC void LegacyNetwork_GetPeerAddress(int socket, char *host, int hostMaxSize, unsigned short *port);
-DENG2_PUBLIC int LegacyNetwork_IsDisconnected(int socket);
-DENG2_PUBLIC int LegacyNetwork_IsLocal(int socket);
-DENG2_PUBLIC void LegacyNetwork_Close(int socket);
-
-DENG2_PUBLIC int LegacyNetwork_Send(int socket, void const *data, int size);
-DENG2_PUBLIC unsigned char *LegacyNetwork_Receive(int socket, int *size);
-DENG2_PUBLIC void LegacyNetwork_FreeBuffer(unsigned char *buffer);
-DENG2_PUBLIC int LegacyNetwork_BytesReady(int socket);
-
-DENG2_PUBLIC int LegacyNetwork_NewSocketSet();
-DENG2_PUBLIC void LegacyNetwork_DeleteSocketSet(int set);
-DENG2_PUBLIC void LegacyNetwork_SocketSet_Add(int set, int socket);
-DENG2_PUBLIC void LegacyNetwork_SocketSet_Remove(int set, int socket);
-DENG2_PUBLIC int LegacyNetwork_SocketSet_Activity(int set);
-
-/*
  * Info
  */
 DENG2_OPAQUE(Info)

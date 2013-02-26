@@ -80,7 +80,7 @@ public:
      *
      * @return @c true, if event was eaten.
      */
-    bool processEvent(Event const *event);
+    bool processEvent(Event const &event);
 
     void initialize();
 
@@ -96,8 +96,7 @@ public:
     void draw();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

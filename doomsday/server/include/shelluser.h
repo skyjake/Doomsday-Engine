@@ -61,8 +61,7 @@ protected slots:
     void handleIncomingPackets();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // SERVER_SHELLUSER_H

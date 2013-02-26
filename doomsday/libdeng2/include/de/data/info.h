@@ -233,8 +233,7 @@ public:
     bool findValueForKey(String const &key, String &value) const;
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

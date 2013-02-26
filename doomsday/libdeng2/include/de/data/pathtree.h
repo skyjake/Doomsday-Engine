@@ -28,8 +28,7 @@
 #include <QList>
 #include <QMultiHash>
 
-namespace de
-{
+namespace de {
 
 /**
  * Data structure for modelling a hierarchical relationship tree of
@@ -240,8 +239,7 @@ public:
         Nodes &childNodes(NodeType type);
 
     private:
-        struct Instance;
-        Instance *d;
+        DENG2_PRIVATE(d)
     };
 
 public:

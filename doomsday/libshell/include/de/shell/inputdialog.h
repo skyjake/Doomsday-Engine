@@ -69,8 +69,7 @@ public:
     int result() const;
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace shell

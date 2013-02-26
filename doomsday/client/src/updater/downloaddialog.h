@@ -61,8 +61,7 @@ public slots:
     void finished(QNetworkReply*);
 
 private:
-    struct Instance;
-    Instance* d;
+    DENG2_PRIVATE(d)
 };
 
 #endif // __cplusplus

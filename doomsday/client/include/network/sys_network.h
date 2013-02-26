@@ -23,78 +23,31 @@
 #ifndef LIBDENG_SYSTEM_NETWORK_H
 #define LIBDENG_SYSTEM_NETWORK_H
 
+#ifndef __CLIENT__
+#  error "sys_network.h requires __CLIENT__"
+#endif
+
 #include "dd_share.h"
 #include "net_buf.h"
+#include "net_main.h"
 #include "monitor.h"
-
-#define DEFAULT_TCP_PORT    13209
-#define DEFAULT_UDP_PORT    13209
-
-typedef void (*expectedresponder_t)(int, const byte*, int);
-
-// If a master action fails, the action queue is emptied.
-typedef enum {
-    MAC_REQUEST, // Retrieve the list of servers from the master.
-    MAC_WAIT, // Wait for the server list to arrive.
-    MAC_LIST // Print the server list in the console.
-} masteraction_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "serverlink.h"
 
 extern boolean  allowSending;
 extern int      maxQueuePackets;
 
-extern boolean  netServerMode;
-
 extern char    *nptIPAddress;
 extern int      nptIPPort;
 
-extern char    *serverName, *serverInfo, *playerName;
-extern int      serverData[];
+ServerLink &Net_ServerLink(void);
 
-extern char    *masterAddress;
-extern int      masterPort;
-extern char    *masterPath;
+void    N_Register(void);
 
-void            N_Register(void);
-void            N_SystemInit(void);
-void            N_SystemShutdown(void);
-boolean         N_InitService(boolean inServerMode);
-void            N_ShutdownService(void);
-boolean         N_IsAvailable(void);
-boolean         N_UsingInternet(void);
-void            N_PrintInfo(void);
-void            N_Listen(void);
-void            N_ListenNodes(void);
-
-#ifdef __CLIENT__
-boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
-void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
-boolean         N_Connect(int index);
-boolean         N_Disconnect(void);
-#endif
-
-#ifdef __SERVER__
-boolean         N_ServerOpen(void);
-boolean         N_ServerClose(void);
-#endif
-
-void            N_TerminateNode(nodeid_t id);
-
-int             N_GetNodeSocket(nodeid_t id);
-boolean         N_HasNodeJoined(nodeid_t id);
-boolean         N_GetNodeName(nodeid_t id, char *name);
-const char     *N_GetProtocolName(void);
-
-int             N_GetHostCount(void);
-boolean         N_GetHostInfo(int index, struct serverinfo_s *info);
-
-void            N_PrintNetworkStatus(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+void    N_SystemInit(void);
+void    N_SystemShutdown(void);
+void    N_PrintInfo(void);
+int     N_GetHostCount(void);
+boolean N_GetHostInfo(int index, struct serverinfo_s *info);
+void    N_PrintNetworkStatus(void);
 
 #endif /* LIBDENG_SYSTEM_NETWORK_H */

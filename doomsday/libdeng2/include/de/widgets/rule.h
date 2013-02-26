@@ -140,8 +140,7 @@ protected:
     void ruleInvalidated();
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 
     static bool _invalidRulesExist;
 };

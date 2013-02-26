@@ -121,9 +121,8 @@ static void switchBackToFullscreen(bool wasFull)
     }
 }
 
-struct Updater::Instance
+DENG2_PIMPL(Updater)
 {
-    Updater* self;
     QNetworkAccessManager* network;
     DownloadDialog* download;
     bool alwaysShowNotification;
@@ -137,8 +136,8 @@ struct Updater::Instance
     QString latestPackageUri2; // fallback location
     QString latestLogUri;
 
-    Instance(Updater* up)
-        : self(up),
+    Instance(Public *up)
+        : Base(up),
           network(0),
           download(0),
           availableDlg(0),
@@ -146,7 +145,7 @@ struct Updater::Instance
           backToFullscreen(false),
           savingSuggested(false)
     {
-        network = new QNetworkAccessManager(self);
+        network = new QNetworkAccessManager(thisPublic);
 
         // Delete a package installed earlier?
         UpdaterSettings st;
@@ -239,7 +238,7 @@ struct Updater::Instance
         if(!settingsDlg)
         {
             settingsDlg = new UpdaterSettingsDialog(Window_Widget(Window_Main()));
-            QObject::connect(settingsDlg, SIGNAL(finished(int)), self, SLOT(settingsDialogClosed(int)));
+            QObject::connect(settingsDlg, SIGNAL(finished(int)), thisPublic, SLOT(settingsDialogClosed(int)));
         }
         else
         {
@@ -322,7 +321,7 @@ struct Updater::Instance
 
     void execAvailableDialog(bool wasFull)
     {
-        QObject::connect(availableDlg, SIGNAL(checkAgain()), self, SLOT(recheck()));
+        QObject::connect(availableDlg, SIGNAL(checkAgain()), thisPublic, SLOT(recheck()));
 
         if(availableDlg->exec())
         {
@@ -330,7 +329,7 @@ struct Updater::Instance
 
             LOG_MSG("Download and install.");
             download = new DownloadDialog(latestPackageUri, latestPackageUri2);
-            QObject::connect(download, SIGNAL(finished(int)), self, SLOT(downloadCompleted(int)));
+            QObject::connect(download, SIGNAL(finished(int)), thisPublic, SLOT(downloadCompleted(int)));
             download->show();
         }
         else
@@ -372,8 +371,6 @@ struct Updater::Instance
 #endif
         }
 
-        de::String appPath = execPath.fileNamePath();
-        de::String appName = "Doomsday Engine.app";
         de::String volName = "Doomsday Engine " + latestVersion.base();
 
         QString scriptPath = QDir(QDesktopServices::storageLocation(QDesktopServices::TempLocation))
@@ -383,24 +380,13 @@ struct Updater::Instance
         {
             QTextStream out(&file);
             out << "tell application \"Finder\"\n"
-                << "  set oldAppFile to POSIX file \"" << execPath << "\"\n"
-                << "  set dmgFile to POSIX file \"" << distribPackagePath << "\"\n"
-                << "  set destFolder to POSIX file \"" << appPath << "\"\n"
-                << "  open document file dmgFile\n"
+                << "  open document POSIX file \"" << distribPackagePath << "\"\n"
                 << "  -- Wait for it to get mounted\n"
                 << "  repeat until name of every disk contains \"" << volName << "\"\n"
                 << "    delay 1\n"
                 << "  end repeat\n"
-                << "  -- Move the old app to the trash\n"
-                << "  try\n"
-                << "    delete oldAppFile\n"
-                << "  end try\n"
-                << "  -- Copy the new one\n"
-                << "  duplicate \"" << volName << ":" << appName << "\" to folder (destFolder as string)\n"
-                << "  -- Eject the disk\n"
-                << "  eject \"" << volName << "\"\n"
-                << "  -- Open the new app\n"
-                << "  open (destFolder as string) & \":" << appName << "\"\n"
+                << "  -- Start the installer\n"
+                << "  open document file \"" << volName << ":Doomsday.pkg\"\n"
                 << "end tell\n";
             file.close();
         }
@@ -600,7 +586,6 @@ void Updater_ShowSettings(void)
 
 void Updater_PrintLastUpdated(void)
 {
-    de::Time when = UpdaterSettings().lastCheckTime();
     Con_Message("Latest update check was made %s.\n",
                 UpdaterSettings().lastCheckAgo().toAscii().constData());
 }

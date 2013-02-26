@@ -152,8 +152,7 @@ void QtRootWidget::keyPressEvent(QKeyEvent *ev)
     if(!ev->text().isEmpty() && ev->text()[0].isPrint() &&
             !ev->modifiers().testFlag(CONTROL_MOD))
     {
-        KeyEvent event(ev->text());
-        eaten = d->root.processEvent(&event);
+        eaten = d->root.processEvent(KeyEvent(ev->text()));
     }
     else
     {
@@ -188,8 +187,7 @@ void QtRootWidget::keyPressEvent(QKeyEvent *ev)
             }
         }
 
-        KeyEvent event(key, mods);
-        eaten = d->root.processEvent(&event);
+        eaten = d->root.processEvent(KeyEvent(key, mods));
     }
 
     if(eaten)

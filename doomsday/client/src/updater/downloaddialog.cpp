@@ -38,9 +38,8 @@
 
 static DownloadDialog* downloadInProgress;
 
-struct DownloadDialog::Instance
+DENG2_PIMPL(DownloadDialog)
 {
-    DownloadDialog* self;
     QNetworkAccessManager* network;
     bool downloading;
     QPushButton* install;
@@ -54,11 +53,11 @@ struct DownloadDialog::Instance
     QNetworkReply* reply;
     de::String redirected;
 
-    Instance(DownloadDialog* d, de::String downloadUri, de::String fallbackUri)
-        : self(d), downloading(false), uri(downloadUri), uri2(fallbackUri), fileReady(false), reply(0)
+    Instance(Public *d, de::String downloadUri, de::String fallbackUri)
+        : Base(d), downloading(false), uri(downloadUri), uri2(fallbackUri), fileReady(false), reply(0)
     {
         QVBoxLayout* mainLayout = new QVBoxLayout;
-        self->setLayout(mainLayout);
+        self.setLayout(mainLayout);
 
         bar = new QProgressBar;
         bar->setTextVisible(false);
@@ -69,8 +68,8 @@ struct DownloadDialog::Instance
         install = bbox->addButton(tr("Install"), QDialogButtonBox::AcceptRole);
         install->setEnabled(false);
         QPushButton* cancel = bbox->addButton(QDialogButtonBox::Cancel);
-        QObject::connect(install, SIGNAL(clicked()), self, SLOT(accept()));
-        QObject::connect(cancel, SIGNAL(clicked()), self, SLOT(reject()));
+        QObject::connect(install, SIGNAL(clicked()), thisPublic, SLOT(accept()));
+        QObject::connect(cancel, SIGNAL(clicked()), thisPublic, SLOT(reject()));
 
         hostText = new QLabel;
         updateLocation(uri);
@@ -84,8 +83,8 @@ struct DownloadDialog::Instance
 
         mainLayout->addWidget(bbox);
 
-        network = new QNetworkAccessManager(self);
-        QObject::connect(network, SIGNAL(finished(QNetworkReply*)), self, SLOT(finished(QNetworkReply*)));
+        network = new QNetworkAccessManager(thisPublic);
+        QObject::connect(network, SIGNAL(finished(QNetworkReply*)), thisPublic, SLOT(finished(QNetworkReply*)));
 
         startDownload();
     }
@@ -104,19 +103,19 @@ struct DownloadDialog::Instance
         savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
 
         reply = network->get(QNetworkRequest(uri));
-        QObject::connect(reply, SIGNAL(metaDataChanged()), self, SLOT(replyMetaDataChanged()));
-        QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), self, SLOT(progress(qint64,qint64)));
+        QObject::connect(reply, SIGNAL(metaDataChanged()), thisPublic, SLOT(replyMetaDataChanged()));
+        QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), thisPublic, SLOT(progress(qint64,qint64)));
 
         LOG_INFO("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
 
         // Global state flag.
-        downloadInProgress = self;
+        downloadInProgress = thisPublic;
     }
 
     void setProgressText(de::String text)
     {
         progText->setText("<small>" + text + "</small>");
-        self->resize(self->sizeHint());
+        self.resize(self.sizeHint());
     }
 };
 

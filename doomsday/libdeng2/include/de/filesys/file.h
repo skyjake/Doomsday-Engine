@@ -32,7 +32,7 @@
 
 namespace de {
 
-class FS;
+class FileSystem;
 class Folder;
 class Feed;
 
@@ -183,7 +183,7 @@ public:
     virtual void clear();
 
     /// Returns a reference to the application's file system.
-    static FS &fileSystem();
+    static FileSystem &fileSystem();
 
     /// Returns the name of the file.
     String const &name() const { return _name; }

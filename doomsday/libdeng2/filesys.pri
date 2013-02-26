@@ -7,6 +7,7 @@ HEADERS += \
     include/de/File \
     include/de/Folder \
     include/de/FS \
+    include/de/FileSystem \
     include/de/LibraryFile \
     include/de/NativeFile \
     include/de/NativePath \
@@ -20,7 +21,7 @@ HEADERS += \
     include/de/filesys/feed.h \
     include/de/filesys/file.h \
     include/de/filesys/folder.h \
-    include/de/filesys/fs.h \
+    include/de/filesys/filesystem.h \
     include/de/filesys/libraryfile.h \
     include/de/filesys/nativefile.h \
     include/de/filesys/nativepath.h \
@@ -34,7 +35,7 @@ SOURCES += \
     src/filesys/feed.cpp \
     src/filesys/file.cpp \
     src/filesys/folder.cpp \
-    src/filesys/fs.cpp \
+    src/filesys/filesystem.cpp \
     src/filesys/libraryfile.cpp \
     src/filesys/nativefile.cpp \
     src/filesys/nativepath.cpp \

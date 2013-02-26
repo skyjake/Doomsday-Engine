@@ -30,6 +30,7 @@
 
 #include <de/memory.h>
 #include <de/c_wrapper.h>
+#include <de/ByteRefArray>
 
 #define MSG_MUTEX_NAME  "MsgQueueMutex"
 
@@ -55,11 +56,6 @@ Reader* Reader_NewWithNetworkBuffer(void)
     return Reader_NewWithBuffer((const byte*) netBuffer.msg.data, netBuffer.length);
 }
 
-Writer* Writer_NewWithNetworkBuffer(void)
-{
-    return Writer_NewWithBuffer(netBuffer.msg.data, NETBUFFER_MAXSIZE);
-}
-
 /**
  * Initialize the low-level network subsystem. This is called always
  * during startup (via Sys_Init()).
@@ -73,9 +69,10 @@ void N_Init(void)
 
     //N_SockInit();
     N_MasterInit();
-    N_SystemInit();             // Platform dependent stuff.
 
-    N_InitService(false /* client mode by default */);
+#ifdef __CLIENT__
+    N_SystemInit();             // Platform dependent stuff.
+#endif
 }
 
 /**
@@ -84,7 +81,9 @@ void N_Init(void)
  */
 void N_Shutdown(void)
 {
+#ifdef __CLIENT__
     N_SystemShutdown();
+#endif
     N_MasterShutdown();
     //N_SockShutdown();
 
@@ -205,7 +204,7 @@ void N_ReleaseMessage(netmessage_t *msg)
 {
     if(msg->handle)
     {
-        LegacyNetwork_FreeBuffer((unsigned char *)msg->handle);
+        delete [] reinterpret_cast<byte *>(msg->handle);
         msg->handle = 0;
     }
     M_Free(msg);
@@ -241,14 +240,16 @@ void N_ClearMessages(void)
  */
 void N_SendPacket(int flags)
 {
-    uint                i, dest = 0;
+#ifdef __SERVER__
+    uint dest = 0;
+#endif
 
     // Is the network available?
-    if(!allowSending || !N_IsAvailable())
+    if(!allowSending)
         return;
 
     // Figure out the destination DPNID.
-    if(netServerMode)
+#ifdef __SERVER__
     {
         if(netBuffer.player >= 0 && netBuffer.player < DDMAXPLAYERS)
         {
@@ -264,7 +265,7 @@ void N_SendPacket(int flags)
         else
         {
             // Broadcast to all non-local players, using recursive calls.
-            for(i = 0; i < DDMAXPLAYERS; ++i)
+            for(int i = 0; i < DDMAXPLAYERS; ++i)
             {
                 netBuffer.player = i;
                 N_SendPacket(flags);
@@ -275,11 +276,18 @@ void N_SendPacket(int flags)
             return;
         }
     }
+#endif
 
     // This is what will be sent.
     numOutBytes += netBuffer.headerLength + netBuffer.length;
 
-    Protocol_Send(&netBuffer.msg, netBuffer.headerLength + netBuffer.length, dest);
+#ifdef __CLIENT__
+    de::Transmitter &out = Net_ServerLink();
+#else
+    de::Transmitter &out = App_ServerSystem().user(dest);
+#endif
+
+    out << de::ByteRefArray(&netBuffer.msg, netBuffer.headerLength + netBuffer.length);
 }
 
 void N_AddSentBytes(size_t bytes)
@@ -292,7 +300,7 @@ void N_AddSentBytes(size_t bytes)
  */
 int N_IdentifyPlayer(nodeid_t id)
 {
-    if(netServerMode)
+#ifdef __SERVER__
     {
         // What is the corresponding player number? Only the server keeps
         // a list of all the IDs.
@@ -302,6 +310,7 @@ int N_IdentifyPlayer(nodeid_t id)
                 return i;
         return -1;
     }
+#endif
 
     // Clients receive messages only from the server.
     return 0;
@@ -337,7 +346,7 @@ boolean N_GetPacket(void)
     // If there are net events pending, let's not return any packets
     // yet. The net events may need to be processed before the
     // packets.
-    if(!N_IsAvailable() || N_NEPending())
+    if(N_NEPending())
         return false;
 
     netBuffer.player = -1;
